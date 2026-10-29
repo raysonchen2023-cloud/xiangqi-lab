@@ -8,8 +8,16 @@ var XQEngine=(function(){
   function onLine(l){for(const w of waiters.slice())w(l)}
   const until=(pred,onEach)=>new Promise(res=>{const w=l=>{if(onEach)onEach(l);if(pred(l)){waiters=waiters.filter(x=>x!==w);res(l)}};waiters.push(w)});
   // 下載神經網路檔，回報進度（第一次約 48 MB，之後由 service worker 從手機快取拿）
+  // 斷線會自動重試 3 次；下載完整後自己存進手機快取（service worker 下次直接從快取拿）
+  async function fetchNnue(url){
+    try{const c=await caches.open("xqlab-engine"),hit=await c.match(url);if(hit)return new Uint8Array(await hit.arrayBuffer())}catch(e){}
+    let last=null;
+    for(let i=1;i<=3;i++){try{const bytes=await fetchBytes(url);
+        try{const c=await caches.open("xqlab-engine");await c.put(url,new Response(bytes,{headers:{"content-type":"application/octet-stream","content-length":String(bytes.length)}}))}catch(e){}
+        return bytes}catch(e){last=e;await new Promise(r=>setTimeout(r,1500*i))}}
+    throw new Error("Pikafish 引擎下載失敗（"+(last&&last.message)+"），請確認網路後再試一次")}
   async function fetchBytes(url){
-    const r=await fetch(url);if(!r.ok)throw new Error("下載失敗："+url+"（"+r.status+"）");
+    const r=await fetch(url,{cache:"no-store"});if(!r.ok)throw new Error("下載失敗："+url+"（"+r.status+"）");
     const total=+r.headers.get("content-length")||0;
     if(!r.body||!total)return new Uint8Array(await r.arrayBuffer());
     const reader=r.body.getReader(),chunks=[];let got=0;
@@ -20,7 +28,7 @@ var XQEngine=(function(){
     if(loading)return loading;
     loading=(async()=>{
       if(!self.crossOriginIsolated)throw new Error("瀏覽器還沒開啟多執行緒模式，請把 App 關掉重開一次");
-      const nnue=await fetchBytes(BASE+"engine/pikafish.nnue");
+      const nnue=await fetchNnue(BASE+"engine/pikafish.nnue");
       if(!window.PikafishModule)await loadScript(BASE+"engine/pikafish.js");
       mod=await window.PikafishModule({locateFile:f=>BASE+"engine/"+f,mainScriptUrlOrBlob:BASE+"engine/pikafish.js",
         print:onLine,printErr:()=>{},preRun:[m=>m.FS.writeFile("/pikafish.nnue",nnue)]});

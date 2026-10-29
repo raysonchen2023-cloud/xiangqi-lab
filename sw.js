@@ -1,7 +1,7 @@
 // Service worker：
 // 1) 離線快取：App、古譜、引擎存在手機裡；神經網路檔（48 MB）放在另一個快取，更新 App 時不用重新下載
 // 2) 多執行緒：幫每個回應加上 COOP/COEP 標頭（WebAssembly 多執行緒需要「跨來源隔離」，GitHub Pages 自己不能設）
-const VERSION="13c66f6f0c9a";
+const VERSION="2c2b0d6b7bff";
 const APP_CACHE="xqlab-app-"+VERSION,ENGINE_CACHE="xqlab-engine";
 const APP_FILES=["./","index.html","core.js","engine.js","local.js","manifest.json","icon.svg","engine/pikafish.js","engine/pikafish.wasm",
   "data/books.json","data/shiqingyaqu.json","data/juzhongmi.json","data/meihuapu.json","data/kaiju.json","data/canju.json"];
@@ -19,8 +19,8 @@ self.addEventListener("fetch",e=>{
   if(req.method!=="GET"||url.origin!==self.location.origin)return;   // 連電腦的請求、外站一律不攔
   const isNnue=url.pathname.endsWith("/pikafish.nnue"),isPage=req.mode==="navigate";
   e.respondWith((async()=>{
-    if(isNnue){const c=await caches.open(ENGINE_CACHE),hit=await c.match(req);if(hit)return isolate(hit);
-      const res=await fetch(req);if(res.ok)c.put(req,res.clone());return isolate(res)}
+    // 神經網路檔：有存就用存的；沒有就直接從網路拿（不在這裡邊下載邊存，48 MB 邊傳邊存容易中斷，改由 engine.js 下載完整後自己存）
+    if(isNnue){const c=await caches.open(ENGINE_CACHE),hit=await c.match(req.url);if(hit)return isolate(hit);return isolate(await fetch(req))}
     const c=await caches.open(APP_CACHE);
     // 頁面：有網路先拿最新的，沒網路用手機裡的
     if(isPage){try{const res=await fetch(req);if(res.ok)c.put("index.html",res.clone());return isolate(res)}
