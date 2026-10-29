@@ -1,0 +1,627 @@
+<!doctype html>
+<html lang="zh-Hant"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover,user-scalable=no">
+<title>象棋研究室</title>
+<meta name="theme-color" content="#3B2A1A">
+<meta name="apple-mobile-web-app-capable" content="yes"><meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent"><meta name="apple-mobile-web-app-title" content="象棋研究室">
+<link rel="manifest" href="manifest.json"><link rel="icon" href="icon.svg"><link rel="apple-touch-icon" href="icon.svg">
+<style>
+:root{--bg:#F3EDE2;--card:#FFFDF8;--ink:#2A1F15;--muted:#7A6A58;--line:#E2D6C3;--accent:#B5452B;--accent2:#2F6B4F;--red:#B3261E;--blk:#1B1F1C;
+--wood:#E6BF83;--grid:#5B3B1C;--piece:#F8ECD4;--hl:#2F6B4F55;--bar:#3B2A1A;--barink:#F6E7CF;--warn:#B76E00;
+--serif:"Noto Serif TC","Songti TC","SimSun",serif;--sans:"Noto Sans TC","PingFang TC","Microsoft JhengHei",system-ui,sans-serif;
+--safeT:env(safe-area-inset-top);--safeB:env(safe-area-inset-bottom)}
+@media (prefers-color-scheme:dark){:root{--bg:#15110D;--card:#211A13;--ink:#F1E6D6;--muted:#A8987F;--line:#3A2E22;--accent:#E0714F;--accent2:#6FBF95;--red:#E0574B;--blk:#151816;
+--wood:#B98C52;--grid:#3A2410;--piece:#EFE0C2;--hl:#6FBF9555;--bar:#0E0B08;--barink:#F1E6D6;--warn:#E3A34A;color-scheme:dark}}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}[hidden]{display:none!important}
+html,body{margin:0;height:100%;overflow:hidden;background:var(--bg);color:var(--ink);font-family:var(--sans);font-size:15px;line-height:1.5;
+  -webkit-user-select:none;user-select:none;overscroll-behavior:none}
+button{font:inherit;color:inherit;background:none;border:none;padding:0;cursor:pointer}
+input,select{font:inherit;font-size:16px;color:inherit}
+.app{position:fixed;inset:0;display:flex;flex-direction:column}
+/* 頂部列 */
+.topbar{flex:none;background:var(--bar);color:var(--barink);padding:calc(var(--safeT) + 6px) 6px 6px;display:flex;align-items:center;gap:4px;min-height:52px}
+.topbar h1{flex:1;margin:0;font-family:var(--serif);font-size:18px;font-weight:900;letter-spacing:.06em;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;padding-left:6px}
+.topbar .ib{width:40px;height:40px;border-radius:20px;display:flex;align-items:center;justify-content:center;font-size:20px}
+.topbar .ib:active{background:#ffffff22}
+/* 內容區 */
+.view{flex:1;min-height:0;overflow:auto;-webkit-overflow-scrolling:touch}
+.view.fixed{overflow:hidden;display:flex;flex-direction:column}
+/* 底部導覽列 */
+.tabbar{flex:none;display:flex;background:var(--card);border-top:1px solid var(--line);padding-bottom:var(--safeB)}
+.tabbar button{flex:1;display:flex;flex-direction:column;align-items:center;gap:1px;padding:7px 0 6px;font-size:11px;color:var(--muted)}
+.tabbar button .ic{font-size:22px;line-height:1.1;filter:grayscale(1);opacity:.7}
+.tabbar button.on{color:var(--accent);font-weight:700}.tabbar button.on .ic{filter:none;opacity:1}
+/* 卡片 */
+.pad{padding:12px}
+.card{background:var(--card);border-radius:16px;padding:14px;box-shadow:0 1px 3px #0000001a;border:1px solid var(--line)}
+.hero{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.tile{background:var(--card);border-radius:18px;padding:14px;border:1px solid var(--line);display:flex;flex-direction:column;gap:4px;min-height:118px;text-align:left;position:relative;overflow:hidden}
+.tile:active{transform:scale(.98)}
+.tile .big{font-size:34px;line-height:1}.tile .t{font-weight:900;font-size:16px;font-family:var(--serif)}.tile .s{font-size:12px;color:var(--muted)}
+.tile.main{grid-column:1/-1;background:linear-gradient(135deg,var(--accent),#7A2A18);color:#fff;border:none;min-height:130px}
+.tile.main .s{color:#ffffffcc}
+.sec-t{font-weight:900;font-family:var(--serif);font-size:16px;margin:18px 4px 8px;display:flex;justify-content:space-between;align-items:baseline}
+.sec-t a,.sec-t button{font-size:13px;color:var(--accent);font-family:var(--sans);font-weight:500}
+.row{display:flex;align-items:center;gap:10px}
+.muted{color:var(--muted);font-size:13px}
+.pill{display:inline-block;padding:2px 9px;border-radius:999px;font-size:12px;background:var(--bg);border:1px solid var(--line)}
+.live{display:inline-flex;align-items:center;gap:5px;color:var(--red);font-weight:700;font-size:12px}.live:before{content:"";width:8px;height:8px;border-radius:4px;background:var(--red);animation:blink 1.2s infinite}
+@keyframes blink{50%{opacity:.25}}
+/* 棋盤區 */
+.boardbox{flex:none;padding:6px 8px 4px;display:flex;justify-content:center}
+.boardbox svg{display:block;width:100%;max-width:560px;height:auto;touch-action:none}
+.evline{flex:none;height:6px;margin:0 10px;border-radius:3px;background:var(--blk);overflow:hidden;display:flex}
+.evline div{background:var(--red);height:100%;width:50%;transition:width .5s}
+.player{flex:none;display:flex;align-items:center;gap:10px;padding:6px 12px}
+.player .av{width:36px;height:36px;border-radius:18px;display:flex;align-items:center;justify-content:center;font-family:var(--serif);font-weight:900;font-size:17px;flex:none}
+.player .av.r{background:var(--red);color:#fff}.player .av.b{background:var(--blk);color:#fff;border:1px solid #666}
+.player .nm{flex:1;min-width:0}.player .nm b{display:block;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.player .nm span{font-size:12px;color:var(--muted)}
+.player .clk{font-variant-numeric:tabular-nums;font-weight:700;font-size:18px;padding:3px 10px;border-radius:10px;background:var(--card);border:1px solid var(--line)}
+.player.on .clk{background:var(--accent2);color:#fff;border-color:var(--accent2)}
+.player.on .av{box-shadow:0 0 0 3px var(--accent2)}
+.status{flex:none;text-align:center;font-size:13px;color:var(--muted);padding:2px 12px;min-height:22px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.status.hot{color:var(--accent);font-weight:700}
+/* 著法條（橫向） */
+.strip{flex:none;display:flex;gap:6px;overflow-x:auto;padding:6px 10px;scrollbar-width:none;-webkit-overflow-scrolling:touch}
+.strip::-webkit-scrollbar{display:none}
+.chip{flex:none;padding:5px 10px;border-radius:999px;background:var(--card);border:1px solid var(--line);font-family:var(--serif);font-weight:700;font-size:14px;white-space:nowrap}
+.chip.r{color:var(--red)}.chip.on{background:var(--ink);color:var(--bg);border-color:var(--ink)}
+.chip .n{font-family:var(--sans);font-weight:400;font-size:11px;opacity:.6;margin-right:3px}
+.chip .q{font-family:var(--sans);font-size:10px;margin-left:3px;font-weight:700}
+.chip.var{border-style:dashed}
+.note{flex:1;min-height:0;overflow:auto;padding:4px 14px;font-size:13px;color:var(--muted);white-space:pre-wrap;-webkit-user-select:text;user-select:text}
+/* 底部動作列 */
+.actions{flex:none;display:flex;justify-content:space-around;background:var(--card);border-top:1px solid var(--line);padding:6px 4px calc(6px + var(--safeB))}
+.actions button{flex:1;display:flex;flex-direction:column;align-items:center;gap:1px;font-size:11px;color:var(--ink);padding:4px 0;border-radius:12px;min-height:52px;justify-content:center}
+.actions button .ic{font-size:22px;line-height:1.1}
+.actions button:active{background:var(--bg)}
+.actions button:disabled{opacity:.3}
+.actions button.pri .ic{background:var(--accent);color:#fff;width:42px;height:42px;border-radius:21px;display:flex;align-items:center;justify-content:center;font-size:20px}
+/* 底部彈出選單 */
+.scrim{position:fixed;inset:0;background:#0008;z-index:50;opacity:0;transition:opacity .2s}
+.scrim.show{opacity:1}
+.sheet{position:fixed;left:0;right:0;bottom:0;z-index:51;background:var(--card);border-radius:20px 20px 0 0;max-height:85vh;display:flex;flex-direction:column;
+  transform:translateY(100%);transition:transform .25s ease;padding-bottom:var(--safeB)}
+.sheet.show{transform:none}
+.sheet .grab{width:40px;height:5px;border-radius:3px;background:var(--line);margin:8px auto 2px}
+.sheet .sh-t{font-weight:900;font-family:var(--serif);font-size:17px;padding:6px 16px 8px}
+.sheet .sh-b{overflow:auto;padding:0 16px 16px;-webkit-user-select:text;user-select:text}
+.opt{display:flex;flex-wrap:wrap;gap:8px;margin:6px 0 12px}
+.opt button{padding:9px 14px;border-radius:12px;background:var(--bg);border:1px solid var(--line);font-weight:500}
+.opt button.on{background:var(--accent);color:#fff;border-color:var(--accent)}
+.btn{display:block;width:100%;padding:13px;border-radius:14px;background:var(--accent);color:#fff;font-weight:900;font-size:16px;text-align:center;margin-top:6px}
+.btn.ghost{background:var(--bg);color:var(--ink);border:1px solid var(--line)}
+.lvl{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin:8px 0 12px}
+.lvl button{border-radius:14px;padding:10px 4px;background:var(--bg);border:1px solid var(--line);display:flex;flex-direction:column;align-items:center;gap:2px}
+.lvl button b{font-size:20px;font-family:var(--serif)}.lvl button span{font-size:11px;color:var(--muted)}
+.lvl button.on{background:var(--accent);border-color:var(--accent);color:#fff}.lvl button.on span{color:#ffffffcc}
+.lvl button .ok{font-size:10px;color:var(--accent2);font-weight:700}.lvl button.on .ok{color:#fff}
+.field{display:flex;align-items:center;gap:10px;margin:6px 0}.field label{width:3em;color:var(--muted);font-size:14px}
+.field input{flex:1;min-width:0;padding:10px 12px;border-radius:12px;border:1px solid var(--line);background:var(--bg)}
+.anl{display:flex;flex-direction:column;gap:8px}
+.anl .ln{background:var(--bg);border-radius:12px;padding:10px 12px}
+.anl .ln b{font-family:var(--serif);font-size:16px}.anl .ln .pv{font-family:var(--serif);color:var(--muted);font-size:13px;margin-top:2px}
+/* 結果畫面 */
+.modal{position:fixed;inset:0;z-index:60;display:flex;align-items:center;justify-content:center;padding:24px;background:#000a}
+.modal .box{background:var(--card);border-radius:22px;padding:24px 20px;width:100%;max-width:340px;text-align:center}
+.modal .em{font-size:56px;line-height:1}.modal h2{font-family:var(--serif);font-size:24px;margin:8px 0 4px}
+.toast{position:fixed;left:50%;bottom:calc(90px + var(--safeB));transform:translateX(-50%);background:#000d;color:#fff;padding:9px 16px;border-radius:999px;font-size:14px;z-index:70;max-width:90vw;text-align:center}
+/* 清單 */
+.search{display:flex;gap:8px;padding:10px 12px 6px}
+.search input{flex:1;min-width:0;padding:10px 14px;border-radius:999px;border:1px solid var(--line);background:var(--card)}
+.search button{padding:0 14px;border-radius:999px;background:var(--card);border:1px solid var(--line);font-size:14px;white-space:nowrap}
+.search button.on{background:var(--accent);color:#fff;border-color:var(--accent)}
+.chips{display:flex;gap:8px;overflow-x:auto;padding:8px 12px 4px;scrollbar-width:none}.chips::-webkit-scrollbar{display:none}
+.chips button{flex:none;padding:7px 13px;border-radius:999px;background:var(--card);border:1px solid var(--line);font-size:14px;white-space:nowrap}
+.chips button.on{background:var(--ink);color:var(--bg);border-color:var(--ink);font-weight:700}
+.items{padding:4px 12px 16px;display:flex;flex-direction:column;gap:8px}
+.item{background:var(--card);border-radius:14px;padding:11px 14px;border:1px solid var(--line);text-align:left;display:flex;gap:12px;align-items:center}
+.item:active{background:var(--bg)}
+.item .lb{flex:none;min-width:42px;text-align:center;font-size:12px;color:var(--muted);font-variant-numeric:tabular-nums}
+.item .tx{flex:1;min-width:0}.item .tx b{display:block;font-family:var(--serif);font-size:15px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.item .tx span{font-size:12px;color:var(--muted);display:block;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.item .rn{color:var(--red)}.item .res{font-size:12px;font-weight:700;flex:none}
+.more{margin:4px 12px 20px}
+.pl-list button{display:flex;justify-content:space-between;width:100%;padding:11px 4px;border-bottom:1px solid var(--line);font-size:15px}
+.badge{font-size:11px;padding:1px 7px;border-radius:999px;background:var(--accent2);color:#fff;font-weight:700}
+.lesson{font-size:13px;margin:4px 0;padding-left:1em;text-indent:-1em}
+</style></head><body>
+<div class="app">
+ <div class="topbar" id="topbar"><button class="ib" id="back" hidden>‹</button><h1 id="title">象棋研究室</h1><span id="topRight"></span></div>
+ <div class="view" id="view"></div>
+ <nav class="tabbar" id="tabbar">
+  <button data-go="#/"><span class="ic">🏠</span>首頁</button>
+  <button data-go="#/play"><span class="ic">♟</span>對弈</button>
+  <button data-go="#/db"><span class="ic">📚</span>棋譜</button>
+  <button data-go="#/watch"><span class="ic">📺</span>觀戰</button>
+ </nav>
+</div>
+<script>window.XQ_OFFLINE=true;</script>
+<script src="core.js"></script>
+<script src="engine.js"></script>
+<script src="local.js"></script>
+<script>
+"use strict";
+// ================= 共用小工具 =================
+const $=s=>document.querySelector(s);
+const NAMES={r:{K:"帥",A:"仕",B:"相",N:"傌",R:"俥",C:"炮",P:"兵"},b:{K:"將",A:"士",B:"象",N:"馬",R:"車",C:"砲",P:"卒"}};
+const CN=["","一","二","三","四","五","六","七","八","九"],PLAYER={r:"紅方",b:"黑方"};
+const QC={"妙手":"#C27C0E","正手":"#2F6B4F","優著":"#3A7BD5","良著":"#888","錯著":"#D9822B","露著":"#C0392B"};
+const sideOf=p=>p?(p===p.toUpperCase()?"r":"b"):null,opp=s=>s==="r"?"b":"r";
+const START="rnbakabnr/9/1c5c1/p1p1p1p1p/9/9/P1P1P1P1P/1C5C1/9/RNBAKABNR";
+function parseFen(f){const b=Array(90).fill(null);let r=0,c=0;for(const ch of f){if(ch==="/"){r++;c=0}else if(ch>="0"&&ch<="9")c+=+ch;else{b[r*9+c]=ch;c++}}return b}
+const fenC=(b,s)=>{const rows=[];for(let r=0;r<10;r++){let row="",e=0;for(let c=0;c<9;c++){const p=b[r*9+c];if(!p)e++;else{if(e){row+=e;e=0}row+=p}}if(e)row+=e;rows.push(row)}return rows.join("/")+" "+(s==="r"?"w":"b")};
+const iccsC=(f,t)=>String.fromCharCode(97+f%9)+(9-(f/9|0))+String.fromCharCode(97+t%9)+(9-(t/9|0));
+const sqI=s=>(9-(+s[1]))*9+(s.charCodeAt(0)-97);
+const evt=v=>v==null?"":Math.abs(v)>=20000?(v>0?"紅方":"黑方")+"有殺":Math.abs(v)<30?"均勢":(v>0?"紅優 ":"黑優 ")+(Math.abs(v)/100).toFixed(1);
+const evPct=v=>v==null?50:50+50*Math.tanh(v/600);
+const fmt=ms=>{if(ms==null)return"";ms=Math.max(0,ms);const t=Math.ceil(ms/1000),h=Math.floor(t/3600),m=Math.floor(t%3600/60),s=t%60;return(h?h+":"+String(m).padStart(2,"0"):String(m).padStart(2,"0"))+":"+String(s).padStart(2,"0")};
+const esc=s=>String(s==null?"":s).replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
+const vibrate=n=>{try{navigator.vibrate&&navigator.vibrate(n||10)}catch(e){}};
+const store={get(k,d){try{const v=localStorage.getItem("m_"+k);return v==null?d:JSON.parse(v)}catch(e){return d}},set(k,v){try{localStorage.setItem("m_"+k,JSON.stringify(v))}catch(e){}}};
+async function api(u,b){if(window.XQ)return XQ.api(u,b);   // 離線版：由手機裡的 local.js 處理
+  const r=await fetch(u,b===undefined?{}:{method:"POST",headers:{"content-type":"application/json"},body:JSON.stringify(b)});
+  const d=await r.json().catch(()=>({error:"伺服器回應有問題"}));if(d&&d.error)throw new Error(d.error);return d}
+let toastT=null;
+function toast(msg){let t=$("#toast");if(!t){t=document.createElement("div");t.id="toast";t.className="toast";document.body.append(t)}t.textContent=msg;t.hidden=false;clearTimeout(toastT);toastT=setTimeout(()=>t.hidden=true,2200)}
+// 底部彈出選單
+function sheet(title,build){
+  closeSheet();const sc=document.createElement("div");sc.className="scrim";sc.id="scrim";
+  const sh=document.createElement("div");sh.className="sheet";sh.id="sheet";
+  sh.innerHTML=`<div class="grab"></div><div class="sh-t">${esc(title)}</div><div class="sh-b"></div>`;
+  document.body.append(sc,sh);build(sh.querySelector(".sh-b"));
+  sh.getBoundingClientRect();setTimeout(()=>{sc.classList.add("show");sh.classList.add("show")},16);
+  sc.onclick=closeSheet;
+  // 往下拉關閉
+  let y0=null;sh.querySelector(".grab").parentElement.addEventListener("touchstart",e=>{if(e.target.closest(".sh-b"))return;y0=e.touches[0].clientY},{passive:true});
+  sh.addEventListener("touchend",e=>{if(y0!=null&&e.changedTouches[0].clientY-y0>60)closeSheet();y0=null});
+  return sh}
+function closeSheet(){const a=$("#scrim"),b=$("#sheet");if(b){b.classList.remove("show");a&&a.classList.remove("show");setTimeout(()=>{a&&a.remove();b.remove()},220)}}
+function modal(html,buttons){
+  const m=document.createElement("div");m.className="modal";m.innerHTML=`<div class="box">${html}<div class="mb"></div></div>`;
+  for(const[label,fn,ghost]of buttons){const b=document.createElement("button");b.className="btn"+(ghost?" ghost":"");b.textContent=label;b.onclick=()=>{m.remove();fn&&fn()};m.querySelector(".mb").append(b)}
+  document.body.append(m);return m}
+function confirmBox(text,yes,label){modal(`<h2 style="font-size:19px">${esc(text)}</h2>`,[[label||"確定",yes],["取消",null,true]])}
+
+// ================= 棋盤 =================
+// opts：flip, last{f,t}, sel, targets[], hint[f,t], check
+function Board(onTap,onSwipe){
+  const NS="http://www.w3.org/2000/svg",X0=40,Y0=40,S=60;
+  const svg=document.createElementNS(NS,"svg");svg.setAttribute("viewBox","0 0 560 620");
+  const el=(t,a,txt)=>{const e=document.createElementNS(NS,t);for(const k in a)e.setAttribute(k,a[k]);if(txt!=null)e.textContent=txt;return e};
+  let flip=false;
+  const vc=i=>flip?8-i%9:i%9,vr=i=>flip?9-(i/9|0):(i/9|0),X=i=>X0+vc(i)*S,Y=i=>Y0+vr(i)*S;
+  function draw(board,o){o=o||{};flip=!!o.flip;svg.innerHTML="";
+    const px=c=>X0+c*S,py=r=>Y0+r*S;
+    svg.append(el("rect",{x:0,y:0,width:560,height:620,rx:14,fill:"var(--wood)"}));
+    svg.append(el("rect",{x:X0-8,y:Y0-8,width:8*S+16,height:9*S+16,fill:"none",stroke:"var(--grid)","stroke-width":3}));
+    const g=el("g",{stroke:"var(--grid)","stroke-width":1.5,fill:"none"});
+    for(let r=0;r<10;r++)g.append(el("line",{x1:px(0),y1:py(r),x2:px(8),y2:py(r)}));
+    for(let c=0;c<9;c++){if(c===0||c===8)g.append(el("line",{x1:px(c),y1:py(0),x2:px(c),y2:py(9)}));else{g.append(el("line",{x1:px(c),y1:py(0),x2:px(c),y2:py(4)}));g.append(el("line",{x1:px(c),y1:py(5),x2:px(c),y2:py(9)}))}}
+    for(const r0 of[0,7]){g.append(el("line",{x1:px(3),y1:py(r0),x2:px(5),y2:py(r0+2)}));g.append(el("line",{x1:px(5),y1:py(r0),x2:px(3),y2:py(r0+2)}))}
+    svg.append(g);
+    svg.append(el("text",{x:px(2),y:py(4.5)+10,"text-anchor":"middle","font-family":"var(--serif)","font-size":28,fill:"var(--grid)","font-weight":900},flip?"漢 界":"楚 河"));
+    svg.append(el("text",{x:px(6),y:py(4.5)+10,"text-anchor":"middle","font-family":"var(--serif)","font-size":28,fill:"var(--grid)","font-weight":900},flip?"楚 河":"漢 界"));
+    const lab=el("g",{"font-size":12,fill:"var(--grid)","text-anchor":"middle","font-family":"var(--sans)"});
+    for(let c=0;c<9;c++){lab.append(el("text",{x:px(c),y:17},flip?CN[c+1]:String(c+1)));lab.append(el("text",{x:px(c),y:612},flip?String(9-c):CN[9-c]))}svg.append(lab);
+    if(o.last)for(const q of[o.last.f,o.last.t])svg.append(el("rect",{x:X(q)-28,y:Y(q)-28,width:56,height:56,rx:8,fill:"var(--hl)"}));
+    if(o.hint)for(const q of o.hint)svg.append(el("rect",{x:X(q)-29,y:Y(q)-29,width:58,height:58,rx:9,fill:"none",stroke:"#E39B0F","stroke-width":4,"stroke-dasharray":"7 5"}));
+    board.forEach((p,i)=>{if(!p)return;const s=sideOf(p),col=s==="r"?"var(--red)":"var(--blk)",up=i===o.sel;
+      const dy=up?-5:0;
+      svg.append(el("circle",{cx:X(i),cy:Y(i)+3,r:27,fill:"#0000003a"}));
+      svg.append(el("circle",{cx:X(i),cy:Y(i)+dy,r:27,fill:"var(--piece)",stroke:up?"var(--accent2)":col,"stroke-width":up?5:2.5}));
+      svg.append(el("circle",{cx:X(i),cy:Y(i)+dy,r:22,fill:"none",stroke:col,"stroke-width":1.2}));
+      svg.append(el("text",{x:X(i),y:Y(i)+dy+10,"text-anchor":"middle","font-family":"var(--serif)","font-weight":900,"font-size":28,fill:col},NAMES[s][p.toUpperCase()]))});
+    for(const t of o.targets||[])svg.append(el("circle",{cx:X(t),cy:Y(t),r:board[t]?30:10,fill:board[t]?"none":"var(--accent2)",stroke:"var(--accent2)","stroke-width":4,opacity:.85}));
+    if(o.check>=0)svg.append(el("circle",{cx:X(o.check),cy:Y(o.check),r:31,fill:"none",stroke:"var(--red)","stroke-width":4,"stroke-dasharray":"7 4"}));
+  }
+  // 點擊與左右滑動
+  let p0=null;
+  svg.addEventListener("pointerdown",e=>{p0={x:e.clientX,y:e.clientY,t:Date.now()}});
+  svg.addEventListener("pointerup",e=>{if(!p0)return;const dx=e.clientX-p0.x,dy=e.clientY-p0.y;
+    if(onSwipe&&Math.abs(dx)>45&&Math.abs(dx)>Math.abs(dy)*1.3){onSwipe(dx<0?1:-1);p0=null;return}
+    if(Math.abs(dx)<12&&Math.abs(dy)<12&&onTap){const pt=svg.createSVGPoint();pt.x=e.clientX;pt.y=e.clientY;
+      const q=pt.matrixTransform(svg.getScreenCTM().inverse()),c=Math.round((q.x-X0)/S),r=Math.round((q.y-Y0)/S);
+      if(c>=0&&c<=8&&r>=0&&r<=9)onTap((flip?9-r:r)*9+(flip?8-c:c))}p0=null});
+  return{svg,draw}}
+
+// ================= 版面骨架與路由 =================
+let screen=null;   // 目前畫面：{stop()}
+function setTop(title,back,right){$("#title").textContent=title;$("#back").hidden=!back;$("#back").onclick=()=>{if(back===true)history.back();else location.hash=back};
+  const tr=$("#topRight");tr.innerHTML="";if(right)for(const[icon,fn,label]of right){const b=document.createElement("button");b.className="ib";b.textContent=icon;b.title=label||"";b.onclick=fn;tr.append(b)}}
+function setTabs(show,on){$("#tabbar").hidden=!show;for(const b of $("#tabbar").children)b.classList.toggle("on",b.dataset.go===on)}
+for(const b of $("#tabbar").children)b.onclick=()=>{vibrate(5);location.hash=b.dataset.go};
+function route(){
+  closeSheet();if(screen&&screen.stop)screen.stop();screen=null;
+  const v=$("#view");v.className="view";v.innerHTML="";v.scrollTop=0;
+  if(window.XQ&&XQ.parseConnect&&location.hash.startsWith("#connect=")){XQ.parseConnect();return route()}   // 離線版：掃 QR code 帶來的連線資訊
+  const h=location.hash.replace(/^#/,"")||"/",p=h.split("/").filter(Boolean).map(decodeURIComponent);
+  if(!p.length)return screen=Home(v);
+  if(p[0]==="play")return screen=PlayHub(v);
+  if(p[0]==="cpu")return screen=CpuGame(v);
+  if(p[0]==="pvp")return screen=PvpGame(v);
+  if(p[0]==="watch")return screen=Watch(v);
+  if(p[0]==="db"&&p.length>=3)return screen=Viewer(v,p[1],p.slice(2).join("/"));
+  if(p[0]==="db")return screen=Library(v,p[1]);
+  screen=Home(v)}
+window.addEventListener("hashchange",route);
+function poller(fn,ms){let on=true,t=null;const tick=async()=>{if(!on)return;try{await fn()}catch(e){}if(on)t=setTimeout(tick,typeof ms==="function"?ms():ms)};tick();return()=>{on=false;clearTimeout(t)}}
+
+// ================= 離線版專用：連線、引擎下載 =================
+const OFF=!!window.XQ_OFFLINE;
+if(OFF&&"serviceWorker" in navigator){
+  // 註冊 service worker；第一次要重新整理一次，多執行緒（跨來源隔離）才會生效
+  navigator.serviceWorker.register("sw.js").then(()=>{
+    if(!self.crossOriginIsolated&&!sessionStorage.getItem("xqReload")){sessionStorage.setItem("xqReload","1");
+      if(navigator.serviceWorker.controller)location.reload();else navigator.serviceWorker.addEventListener("controllerchange",()=>location.reload())}}).catch(()=>{})}
+if(OFF&&window.XQEngine){let bar=null;
+  XQEngine.onProgress((got,total)=>{if(!bar){bar=document.createElement("div");bar.className="toast";bar.style.bottom="auto";bar.style.top="calc(70px + var(--safeT))";document.body.append(bar)}
+    const p=Math.round(got/total*100);bar.textContent=`第一次使用：下載 Pikafish 引擎 ${p}%（${(got/1048576).toFixed(0)}／${(total/1048576).toFixed(0)} MB）`;
+    if(got>=total)setTimeout(()=>{bar&&bar.remove();bar=null},800)})}
+function connectSheet(){const r=OFF&&XQ.remoteInfo();
+  sheet("連線到電腦",b=>{b.innerHTML=`<p>連上電腦後可以：看 AI 對戰、請 Claude/GPT 講解、把特級大師與許銀川對局同步到手機。挑戰電腦、雙人對戰、古譜研究不需要連線。</p>
+    <p class="muted">怎麼連：在電腦執行 <b>node xiangqi-referee.js --tunnel</b>，再用手機相機掃電腦頁面上「📱 手機」的 QR code。電腦程式重開後網址會換，要重新掃。</p>
+    <div class="card" id="cs">${r?"檢查連線中…":"目前沒有連線設定"}</div>${r?'<button class="btn ghost" id="dc">取消連線設定</button>':""}`;
+    if(r){XQ.ping().then(ok=>{const c=b.querySelector("#cs");if(c)c.innerHTML=ok?`✅ 已連上電腦<div class="muted" style="word-break:break-all">${esc(r.base)}</div>`:`⚠ 連不到電腦（電腦程式可能關了，或網址已換）<div class="muted" style="word-break:break-all">${esc(r.base)}</div>`});
+      b.querySelector("#dc").onclick=()=>{XQ.disconnect();closeSheet();toast("已取消連線設定");route()}}})}
+async function homeStatus(box){
+  const r=XQ.remoteInfo(),ok=r?await XQ.ping():false,eng=await XQ.engineCached();
+  box.innerHTML=`<div class="row" style="justify-content:space-between"><span>${ok?"🟢 已連上電腦":r?"🟠 連不到電腦（離線使用中）":"⚪ 離線模式"}</span><button class="pill" id="cBtn">${ok?"連線資訊":"怎麼連線"}</button></div>
+    <div class="row" style="justify-content:space-between;margin-top:8px"><span>${eng?"✅ Pikafish 已在手機裡，可離線下棋與分析":"⬇ Pikafish 引擎還沒下載（約 48 MB）"}</span>${eng?"":'<button class="pill" id="eBtn">下載</button>'}</div>`;
+  box.querySelector("#cBtn").onclick=connectSheet;
+  const e=box.querySelector("#eBtn");if(e)e.onclick=()=>{e.disabled=true;e.textContent="下載中…";XQEngine.load().then(()=>{toast("Pikafish 已下載，可以離線使用");homeStatus(box)}).catch(err=>{toast(err.message);e.disabled=false;e.textContent="下載"})}}
+
+// ================= 首頁 =================
+function Home(v){
+  setTop("象棋研究室",false,OFF?[["🔗",connectSheet,"連線到電腦"]]:[["🖥",()=>location.href="/","電腦版"]]);setTabs(true,"#/");
+  v.innerHTML=`<div class="pad">
+   ${OFF?'<div class="card" id="hStatus" style="margin-bottom:12px"><span class="muted">檢查中…</span></div>':""}
+   <div class="hero">
+    <button class="tile main" data-go="#/cpu"><span class="big">🤖</span><span class="t" style="font-size:19px">挑戰電腦</span><span class="s" id="hCpu">Pikafish・八個難度</span></button>
+    <button class="tile" data-go="#/pvp"><span class="big">👥</span><span class="t">雙人對戰</span><span class="s" id="hPvp">同一支手機輪流下</span></button>
+    <button class="tile" data-go="#/watch"><span class="big">📺</span><span class="t">AI 對戰</span><span class="s" id="hAi">GPT 對 Claude</span></button>
+   </div>
+   <div class="sec-t">繼續研究</div><div id="hRecent"></div>
+   <div class="sec-t">棋譜庫 <button data-go="#/db">全部 ›</button></div><div class="chips" id="hBooks" style="padding:0 0 4px"></div>
+   <div class="sec-t">挑戰進度</div><div class="card" id="hProg"><span class="muted">載入中…</span></div>
+   <p class="muted" style="text-align:center;margin:22px 0 8px">提示：在瀏覽器選單點「加入主畫面」，就能像 App 一樣全螢幕使用。</p>
+  </div>`;
+  v.querySelectorAll("[data-go]").forEach(b=>b.onclick=()=>{vibrate(5);location.hash=b.dataset.go});
+  if(OFF){homeStatus(v.querySelector("#hStatus"));if(window.XQ_justConnected){XQ_justConnected=false;setTimeout(()=>toast("已連上電腦！"),300)}}
+  const recent=store.get("recent",[]);
+  const hr=v.querySelector("#hRecent");
+  if(!recent.length)hr.innerHTML=`<div class="card muted">還沒看過棋譜。到「棋譜」挑一局開始研究吧。</div>`;
+  else{hr.className="items";hr.style.padding="0";for(const r of recent.slice(0,3)){const b=document.createElement("button");b.className="item";
+    b.innerHTML=`<span class="lb">📖</span><span class="tx"><b>${esc(r.title)}</b><span>${esc(r.book)}${r.ply?"・看到第 "+r.ply+" 步":""}</span></span><span class="muted">›</span>`;
+    b.onclick=()=>location.hash=`#/db/${encodeURIComponent(r.c)}/${encodeURIComponent(r.id)}`;hr.append(b)}}
+  api("/db/books").then(bs=>{const box=v.querySelector("#hBooks");for(const b of bs.filter(x=>!["ai","play","pvp"].includes(x.key))){const c=document.createElement("button");c.textContent=`${b.name}`;c.onclick=()=>location.hash="#/db/"+b.key;box.append(c)}}).catch(()=>{});
+  api("/play/state").then(st=>{
+    const won=st.levels.filter(l=>(st.record[l.n]||{}).w>0).length;
+    v.querySelector("#hCpu").textContent=st.result||!st.moves.length?`已通關 ${won}／8 級`:`對局進行中・第 ${st.level} 級`;
+    const box=v.querySelector("#hProg");box.innerHTML=`<div class="row" style="justify-content:space-between;margin-bottom:8px"><b>已通關 ${won} / 8 級</b><span class="muted">贏過一次就算通關</span></div>
+      <div style="display:grid;grid-template-columns:repeat(8,1fr);gap:4px">${st.levels.map(l=>{const r=st.record[l.n]||{w:0};return`<div title="${esc(l.name)}" style="height:30px;border-radius:8px;display:flex;align-items:center;justify-content:center;font-weight:900;font-size:13px;${r.w?"background:var(--accent2);color:#fff":"background:var(--bg);color:var(--muted);border:1px solid var(--line)"}">${l.n}</div>`}).join("")}</div>`}).catch(()=>{v.querySelector("#hProg").innerHTML='<span class="muted">連不到電腦上的程式</span>'});
+  api("/pvp/state").then(st=>{if(st.moves.length&&!st.result)v.querySelector("#hPvp").textContent=`進行中・第 ${Math.ceil(st.moves.length/2)} 回合`}).catch(()=>{});
+  api("/state").then(st=>{v.querySelector("#hAi").innerHTML=st.running?'<span class="live">直播中</span>':st.result?"上一盤："+(st.result.w?PLAYER[st.result.w]+"勝":"和局"):"按進去可以開始"}).catch(()=>{});
+  return{}}
+
+// ================= 對弈入口 =================
+function PlayHub(v){
+  setTop("對弈",false);setTabs(true,"#/play");
+  v.innerHTML=`<div class="pad"><div class="hero">
+   <button class="tile main" data-go="#/cpu"><span class="big">🤖</span><span class="t" style="font-size:19px">挑戰電腦</span><span class="s">對手是 Pikafish，從入門到全力共八級</span></button>
+   <button class="tile" data-go="#/pvp" style="grid-column:1/-1;min-height:96px"><span class="big">👥</span><span class="t">雙人對戰</span><span class="s">同一支手機或兩台裝置輪流下，可計時</span></button></div>
+   <div class="sec-t">怎麼操作</div><div class="card muted" style="line-height:1.8">・點自己的棋子，再點綠點就能走<br>・底下大按鈕：悔棋、提示、新局、認輸<br>・每一步都會由 Pikafish 評等（妙手、正手、露著…）<br>・下完會跳出結果，可以直接檢討</div></div>`;
+  v.querySelectorAll("[data-go]").forEach(b=>b.onclick=()=>{vibrate(5);location.hash=b.dataset.go});return{}}
+
+// 遊戲畫面共用：棋盤＋上下玩家條＋狀態＋著法條＋動作列
+function gameLayout(v){
+  v.className="view fixed";
+  v.innerHTML=`<div class="player" id="pTop"></div><div class="evline"><div id="evf"></div></div><div class="boardbox" id="bbox"></div>
+   <div class="player" id="pBot"></div><div class="status" id="stat"></div><div class="strip" id="strip"></div><div style="flex:1"></div><div class="actions" id="acts"></div>`;}
+function playerHTML(side,name,sub,clock){return`<div class="av ${side}">${side==="r"?"帥":"將"}</div><div class="nm"><b>${esc(name)}</b><span>${esc(sub||"")}</span></div>${clock!=null?`<div class="clk">${clock}</div>`:""}`}
+function renderStrip(box,moves,curIdx,onPick){
+  const key=moves.map(m=>m.cn+(m.q||"")).join()+"|"+curIdx;if(box.dataset.k===key)return;box.dataset.k=key;box.innerHTML="";
+  moves.forEach((m,i)=>{const c=document.createElement("button");c.className="chip "+(m.by||(i%2?"b":"r"))+(i===curIdx?" on":"");
+    c.innerHTML=`<span class="n">${i+1}</span>${esc(m.cn)}${m.q&&m.q!=="—"?`<span class="q" style="color:${QC[m.q]}">${m.q}</span>`:""}`;if(onPick)c.onclick=()=>onPick(i);box.append(c)});
+  const on=box.children[curIdx<0?box.children.length-1:curIdx];if(on)box.scrollLeft=on.offsetLeft-box.clientWidth/2+on.offsetWidth/2;else box.scrollLeft=box.scrollWidth}
+function actionBar(box,items){box.innerHTML="";const out={};for(const[id,icon,label,fn,pri]of items){const b=document.createElement("button");if(pri)b.className="pri";
+  b.innerHTML=`<span class="ic">${icon}</span>${label}`;b.onclick=()=>{vibrate(8);fn()};box.append(b);out[id]=b}return out}
+
+// ================= 挑戰電腦 =================
+function CpuGame(v){
+  setTabs(false);gameLayout(v);
+  let st=null,sel=-1,shownResult=null,busy=false;
+  const bd=Board(i=>tap(i));v.querySelector("#bbox").append(bd.svg);
+  setTop("挑戰電腦","#/play",[["⚙",()=>newSheet(),"新局設定"]]);
+  const acts=actionBar(v.querySelector("#acts"),[["undo","↶","悔棋",()=>post("/play/undo")],["hint","💡","提示",()=>{toast("Pikafish 幫你想一步…");post("/play/hint")}],
+    ["new","＋","新局",()=>newSheet(),true],["resign","🏳","認輸",()=>confirmBox("確定認輸？",()=>post("/play/resign"),"認輸")],["review","📖","檢討",()=>review()]]);
+  async function post(u,b){if(busy)return;busy=true;try{render(await api(u,b||{}))}catch(e){toast(e.message)}finally{busy=false}}
+  function tap(i){if(!st||st.result||st.turn!==st.human||st.thinking)return;
+    if(sel>=0&&st.legal.some(([f,t])=>f===sel&&t===i)){const f=sel;sel=-1;vibrate(15);return post("/play/move",{f,t:i})}
+    sel=st.legal.some(([f])=>f===i)?i:-1;if(sel>=0)vibrate(5);draw()}
+  function draw(){if(!st)return;const last=st.moves[st.moves.length-1];
+    bd.draw(st.board,{flip:st.human==="b",last,sel,targets:sel>=0?st.legal.filter(([f])=>f===sel).map(x=>x[1]):[],hint:st.hint?[st.hint.f,st.hint.t]:null,check:st.check})}
+  function render(s){st=s;if(!st.legal.some(([f])=>f===sel))sel=-1;draw();
+    const lv=st.levels[st.level-1]||{},me=st.human,bot=opp(me);
+    v.querySelector("#pTop").innerHTML=playerHTML(bot,"Pikafish",`第 ${st.level} 級・${lv.name||""}`);
+    v.querySelector("#pBot").innerHTML=playerHTML(me,"你",PLAYER[me]);
+    v.querySelector("#pTop").classList.toggle("on",!st.result&&st.turn===bot);v.querySelector("#pBot").classList.toggle("on",!st.result&&st.turn===me);
+    v.querySelector("#evf").style.width=evPct(st.eval&&st.eval.v)+"%";
+    const s2=v.querySelector("#stat");s2.classList.remove("hot");
+    if(st.msg)s2.textContent=st.msg;else if(st.result)s2.textContent=st.result.why;
+    else if(st.thinking)s2.textContent="Pikafish 思考中…";
+    else{s2.textContent=st.check>=0?"⚠ 你被將軍了！":st.hint?"💡 提示："+st.hint.cn:"輪到你"+(st.eval?`・${evt(st.eval.v)}`:"");s2.classList.toggle("hot",st.check>=0||!!st.hint)}
+    renderStrip(v.querySelector("#strip"),st.moves,st.moves.length-1);
+    acts.undo.disabled=st.thinking||!st.moves.some(m=>m.by===st.human);acts.hint.disabled=!!st.result||st.thinking||st.turn!==st.human;
+    acts.resign.hidden=!!st.result;acts.review.hidden=!st.result;
+    if(st.result&&shownResult!==JSON.stringify(st.result)+st.moves.length){shownResult=JSON.stringify(st.result)+st.moves.length;
+      const win=st.result.w===st.human,draw0=!st.result.w;vibrate([30,40,30]);
+      modal(`<div class="em">${win?"🏆":draw0?"🤝":"💪"}</div><h2>${win?"你贏了！":draw0?"和局":"這盤輸了"}</h2><p class="muted">${esc(st.result.why)}・對手第 ${st.level} 級「${esc(lv.name||"")}」</p>`,
+        [[win&&st.level<8?"挑戰下一級 ›":"再來一局",()=>api("/play/new",{human:st.human,level:win&&st.level<8?st.level+1:st.level}).then(render).catch(e=>toast(e.message))],["檢討這盤",review,true],["關閉",null,true]])}}
+  function review(){api("/db/items?c=play").then(d=>{const it=d.items[0];if(it)location.hash="#/db/play/"+encodeURIComponent(it.id);else toast("找不到存檔")}).catch(e=>toast(e.message))}
+  function newSheet(){let side=st?st.human:"r",level=st?st.level:3;
+    sheet("開新局",b=>{const rec=st?st.record:{};
+      const paint=()=>{b.innerHTML=`<div class="muted">你執</div><div class="opt"><button data-s="r" class="${side==="r"?"on":""}">紅方（先走）</button><button data-s="b" class="${side==="b"?"on":""}">黑方（後走）</button></div>
+        <div class="muted">難度</div><div class="lvl">${(st?st.levels:[]).map(l=>`<button data-l="${l.n}" class="${l.n===level?"on":""}"><b>${l.n}</b><span>${esc(l.name)}</span>${(rec[l.n]||{}).w?'<span class="ok">✔ 通關</span>':""}</button>`).join("")}</div>
+        <div class="muted" style="min-height:2.6em">${esc(((st?st.levels:[])[level-1]||{}).desc||"")}</div><button class="btn" id="go">開始</button>`;
+        b.querySelectorAll("[data-s]").forEach(x=>x.onclick=()=>{side=x.dataset.s;paint()});b.querySelectorAll("[data-l]").forEach(x=>x.onclick=()=>{level=+x.dataset.l;paint()});
+        b.querySelector("#go").onclick=()=>{closeSheet();shownResult=null;sel=-1;post("/play/new",{human:side,level})}};paint()})}
+  const stop=poller(async()=>{if(!busy)render(await api("/play/state"))},()=>st&&st.thinking?500:1500);
+  return{stop}}
+
+// ================= 雙人對戰 =================
+function PvpGame(v){
+  setTabs(false);gameLayout(v);
+  let st=null,sel=-1,flipMan=null,shownResult=null,busy=false,autoFlip=store.get("autoFlip",true),clockBase=null,drawAsked=null;
+  const bd=Board(i=>tap(i));v.querySelector("#bbox").append(bd.svg);
+  setTop("雙人對戰","#/play",[["⚙",()=>newSheet(),"新局設定"]]);
+  const acts=actionBar(v.querySelector("#acts"),[["undo","↶","悔棋",()=>post("/pvp/undo")],["flip","⇅","翻轉",()=>{flipMan=!isFlip();autoFlip=false;store.set("autoFlip",false);draw();toast("已關閉自動轉向")}],
+    ["new","＋","新局",()=>newSheet(),true],["draw","🤝","提和",()=>{if(st)post("/pvp/draw",{side:st.turn})}],["resign","🏳","認輸",()=>{if(st)confirmBox(`${PLAYER[st.turn]}（${st.turn==="r"?st.red:st.black}）確定認輸？`,()=>post("/pvp/resign",{side:st.turn}),"認輸")}]]);
+  const isFlip=()=>flipMan!=null?flipMan:(autoFlip&&st&&!st.result?st.turn==="b":false);
+  async function post(u,b){if(busy)return;busy=true;try{render(await api(u,b||{}))}catch(e){toast(e.message)}finally{busy=false}}
+  function tap(i){if(!st||st.result)return;
+    if(sel>=0&&st.legal.some(([f,t])=>f===sel&&t===i)){const f=sel;sel=-1;vibrate(15);flipMan=null;return post("/pvp/move",{f,t:i})}
+    sel=st.legal.some(([f])=>f===i)?i:-1;if(sel>=0)vibrate(5);draw()}
+  function draw(){if(!st)return;bd.draw(st.board,{flip:isFlip(),last:st.moves[st.moves.length-1],sel,targets:sel>=0?st.legal.filter(([f])=>f===sel).map(x=>x[1]):[],check:st.check})}
+  function clocks(){if(!st||!clockBase||!clockBase.c)return;const b=clockBase;for(const s of["r","b"]){const el=v.querySelector(`#ck_${s}`);if(el){const x=b.c[s]-(b.run&&b.turn===s?Date.now()-b.at:0);el.textContent=fmt(x);el.style.color=x<60000&&!(b.turn===s&&b.run)?"var(--red)":""}}}
+  const ckT=setInterval(clocks,250);
+  function render(s){st=s;if(!st.legal.some(([f])=>f===sel))sel=-1;draw();
+    const fl=isFlip(),top=fl?"r":"b",bot=fl?"b":"r",nm=x=>x==="r"?st.red:st.black;
+    const strip=(x)=>playerHTML(x,nm(x),PLAYER[x],st.clocks?"":null).replace('<div class="clk">',`<div class="clk" id="ck_${x}">`);
+    v.querySelector("#pTop").innerHTML=strip(top);v.querySelector("#pBot").innerHTML=strip(bot);
+    v.querySelector("#pTop").classList.toggle("on",!st.result&&st.turn===top);v.querySelector("#pBot").classList.toggle("on",!st.result&&st.turn===bot);
+    clockBase={at:Date.now(),c:st.clocks,turn:st.turn,run:st.running&&!st.result};clocks();
+    v.querySelector("#evf").style.width=evPct(st.eval&&st.eval.v)+"%";
+    const s2=v.querySelector("#stat");s2.classList.toggle("hot",st.check>=0&&!st.result);
+    s2.textContent=st.result?st.result.why:`輪到${PLAYER[st.turn]}（${nm(st.turn)}）`+(st.check>=0?"・被將軍！":"")+(st.eval?`・${evt(st.eval.v)}`:"");
+    renderStrip(v.querySelector("#strip"),st.moves,st.moves.length-1);
+    acts.undo.disabled=!!st.result||!st.moves.length;acts.draw.disabled=acts.resign.disabled=!!st.result;
+    // 對方提和：問輪到的人（或另一方）要不要同意
+    if(st.draw&&!st.result&&drawAsked!==st.draw+st.moves.length){drawAsked=st.draw+st.moves.length;const o=opp(st.draw);
+      modal(`<div class="em">🤝</div><h2>${PLAYER[st.draw]}提議和棋</h2><p class="muted">${esc(nm(o))}（${PLAYER[o]}）要同意嗎？</p>`,[["同意和棋",()=>post("/pvp/draw",{side:o})],["拒絕",()=>post("/pvp/draw",{side:st.draw}),true]])}
+    if(!st.draw)drawAsked=null;
+    if(st.result&&shownResult!==st.id){shownResult=st.id;vibrate([30,40,30]);
+      modal(`<div class="em">${st.result.w?"🏆":"🤝"}</div><h2>${st.result.w?`${PLAYER[st.result.w]}（${esc(nm(st.result.w))}）勝`:"和局"}</h2><p class="muted">${esc(st.result.why)}</p>`,
+        [["再來一局",()=>post("/pvp/new",{red:st.red,black:st.black,tc:st.tcKey})],["檢討這盤",()=>location.hash="#/db/pvp/"+encodeURIComponent(st.id),true],["關閉",null,true]])}}
+  function newSheet(){let tc=st?st.tcKey:"none",red=st&&st.red!=="紅方"?st.red:"",black=st&&st.black!=="黑方"?st.black:"";
+    sheet("開新局",b=>{const TCS=[["none","不計時"],["10+5","10 分＋5 秒"],["20+10","20 分＋10 秒"],["60+30","60 分＋30 秒"]];
+      const paint=()=>{b.innerHTML=`<div class="field"><label>紅方</label><input id="nR" maxlength="20" placeholder="紅方名字" value="${esc(red)}"></div>
+        <div class="field"><label>黑方</label><input id="nB" maxlength="20" placeholder="黑方名字" value="${esc(black)}"></div>
+        <div class="muted" style="margin-top:10px">計時</div><div class="opt">${TCS.map(([k,l])=>`<button data-t="${k}" class="${k===tc?"on":""}">${l}</button>`).join("")}</div>
+        <div class="opt"><button id="af" class="${autoFlip?"on":""}">${autoFlip?"✔ ":""}棋盤自動轉向輪到的一方</button></div>
+        <button class="btn" id="go">開始</button>${st&&st.moves.length&&!st.result?'<p class="muted" style="text-align:center">目前這局還沒下完，開新局會放棄它</p>':""}`;
+        b.querySelectorAll("[data-t]").forEach(x=>x.onclick=()=>{red=b.querySelector("#nR").value;black=b.querySelector("#nB").value;tc=x.dataset.t;paint()});
+        b.querySelector("#af").onclick=()=>{red=b.querySelector("#nR").value;black=b.querySelector("#nB").value;autoFlip=!autoFlip;store.set("autoFlip",autoFlip);flipMan=null;paint();draw()};
+        b.querySelector("#go").onclick=()=>{closeSheet();shownResult=null;sel=-1;flipMan=null;post("/pvp/new",{red:b.querySelector("#nR").value,black:b.querySelector("#nB").value,tc})}};paint()})}
+  const stop=poller(async()=>{if(!busy)render(await api("/pvp/state"))},1000);
+  return{stop:()=>{stop();clearInterval(ckT)}}}
+
+// ================= 棋譜庫（清單） =================
+const libState={c:null,q:"",player:"",side:"",res:"",limit:60};
+function Library(v,c0){
+  setTop("棋譜庫",false);setTabs(true,"#/db");
+  v.innerHTML=`<div class="chips" id="cols"></div><div class="search"><input id="q" placeholder="搜尋局名、棋手、賽事、年份" enterkeyhint="search"><button id="pf" hidden>👤 棋手</button></div>
+    <div class="muted" id="cnt" style="padding:0 16px"></div><div class="items" id="items"></div><div class="more" id="more"></div>`;
+  let books=[],data=null,shown=[];
+  const T2S={};"馬马車车將将帥帅砲炮龍龙鳳凤雲云風风門门關关陣阵戰战劍剑書书歸归飛飞騎骑雙双營营師师寶宝鐵铁蘭兰燈灯陽阳陰阴們们長长東东應应開开從从來来見见說说過过還还進进對对漢汉蘇苏韓韩趙赵張张劉刘孫孙鄭郑齊齐萬万與与為为無无個个這这邊边轉转難难興兴廣广鄉乡聖圣靈灵條条樓楼鶴鹤鷹鹰雞鸡魚鱼鳥鸟龜龟園园圍围國国華华紅红綠绿藍蓝黃黄詩诗畫画夢梦蓮莲樂乐歡欢壽寿勝胜敗败殺杀奪夺斬斩鬥斗會会盤盘陳陈縱纵橫横險险絕绝銀银呂吕楊杨許许謝谢單单趙赵陶陶黎黎譜谱".replace(/(.)(.)/g,(_,a,b)=>{T2S[a]=b;return""});
+  const s2=t=>[...String(t||"")].map(c=>T2S[c]||c).join("");
+  const qi=v.querySelector("#q");qi.value=libState.q;
+  qi.oninput=()=>{libState.q=qi.value;libState.limit=60;filter()};
+  v.querySelector("#pf").onclick=()=>playerSheet();
+  async function load(c){libState.c=c;store.set("libC",c);v.querySelectorAll("#cols button").forEach(b=>b.classList.toggle("on",b.dataset.c===c));
+    v.querySelector("#items").innerHTML='<div class="muted" style="text-align:center;padding:30px">載入中…</div>';
+    try{data=await api("/db/items?c="+encodeURIComponent(c))}catch(e){v.querySelector("#items").innerHTML=`<div class="card muted">${esc(e.message)}</div>`;return}
+    const hasP=data.items.some(x=>x.red||x.black);v.querySelector("#pf").hidden=!hasP;if(!hasP)libState.player="";filter()}
+  function filter(){if(!data)return;const q=s2(libState.q.trim()),pn=libState.player;
+    shown=data.items.filter(it=>{
+      if(pn){const r=(it.red||"").includes(pn),b=(it.black||"").includes(pn);if(libState.side==="r"?!r:libState.side==="b"?!b:!(r||b))return false;
+        if(libState.res){const me=r?"r":"b",w=it.result==="紅勝"?"r":it.result==="黑勝"?"b":null;if(libState.res==="d"?it.result!=="和局":libState.res==="w"?w!==me:!(w&&w!==me))return false}}
+      return!q||[it.no,it.year,it.name,it.title,it.red,it.black,it.event,it.open,it.part,it.label].some(x=>s2(x).includes(q))});
+    const pb=v.querySelector("#pf");pb.classList.toggle("on",!!pn);pb.textContent=pn?"👤 "+pn:"👤 棋手";
+    v.querySelector("#cnt").textContent=`${shown.length} 局`+(data.note?"・"+data.note:"");
+    const box=v.querySelector("#items");box.innerHTML="";
+    if(!shown.length){const go={pvp:["#/pvp","去雙人對戰下一盤"],play:["#/cpu","去挑戰電腦"],ai:["#/watch","去看 AI 對戰"]}[libState.c];
+      box.innerHTML=`<div class="card muted" style="text-align:center">${data.items.length?"沒有符合的棋局":"這裡還沒有棋局"}</div>`;
+      if(go&&!data.items.length){const b=document.createElement("button");b.className="btn";b.textContent=go[1];b.onclick=()=>location.hash=go[0];box.append(b)}}
+    for(const it of shown.slice(0,libState.limit)){const b=document.createElement("button");b.className="item";
+      const isG=it.red||it.black;
+      const res=it.result==="紅勝"?["紅勝","var(--red)"]:it.result==="黑勝"?["黑勝","var(--ink)"]:it.result==="和局"?["和","var(--muted)"]:["",""];
+      b.innerHTML=isG?`<span class="lb">${esc(it.year||"")}</span><span class="tx"><b><span class="rn">${esc(it.red||"？")}</span> 對 ${esc(it.black||"？")}</b><span>${esc(it.event||it.name||"")}</span></span><span class="res" style="color:${res[1]}">${res[0]}</span>`
+        :`<span class="lb">${esc(it.label||it.no||"")}</span><span class="tx"><b>${esc(it.title||it.name)}</b><span>${esc([it.part,it.result,it.type].filter(Boolean).join("・"))}</span></span><span class="muted">›</span>`;
+      b.onclick=()=>{vibrate(5);location.hash=`#/db/${encodeURIComponent(libState.c)}/${encodeURIComponent(it.id)}`};box.append(b)}
+    const more=v.querySelector("#more");more.innerHTML="";
+    if(shown.length>libState.limit){const b=document.createElement("button");b.className="btn ghost";b.textContent=`再顯示 60 局（還有 ${shown.length-libState.limit} 局）`;b.onclick=()=>{libState.limit+=60;filter()};more.append(b)}}
+  function playerSheet(){const pl=data.players||Object.entries(data.items.reduce((m,it)=>{for(const n of[it.red,it.black])if(n)m[n]=(m[n]||0)+1;return m},{})).sort((a,b)=>b[1]-a[1]).map(([name,count])=>({name,count}));
+    sheet("篩選棋手",b=>{const paint=()=>{b.innerHTML=`<div class="muted">執</div><div class="opt">${[["","紅黑都看"],["r","只看執紅"],["b","只看執黑"]].map(([k,l])=>`<button data-s="${k}" class="${libState.side===k?"on":""}">${l}</button>`).join("")}</div>
+        <div class="muted">結果</div><div class="opt">${[["","全部"],["w","他贏的"],["l","他輸的"],["d","和局"]].map(([k,l])=>`<button data-r="${k}" class="${libState.res===k?"on":""}">${l}</button>`).join("")}</div>
+        <div class="search" style="padding:4px 0"><input id="ps" placeholder="找棋手"></div><div class="pl-list" id="pl"></div>`;
+        b.querySelectorAll("[data-s]").forEach(x=>x.onclick=()=>{libState.side=x.dataset.s;paint()});b.querySelectorAll("[data-r]").forEach(x=>x.onclick=()=>{libState.res=x.dataset.r;paint()});
+        const list=()=>{const q=s2(b.querySelector("#ps").value.trim()),box=b.querySelector("#pl");box.innerHTML="";
+          const all=[{name:"",count:data.items.length}].concat(pl).filter(p=>!q||s2(p.name).includes(q)).slice(0,120);
+          for(const p of all){const x=document.createElement("button");x.innerHTML=`<span>${p.name?esc(p.name)+(p.revoked?" ＊":""):"全部棋手"}${p.name===libState.player?' <span class="badge">已選</span>':""}</span><span class="muted">${p.count} 局</span>`;
+            x.onclick=()=>{libState.player=p.name;libState.limit=60;closeSheet();filter()};box.append(x)}};
+        b.querySelector("#ps").oninput=list;list()};paint()})}
+  api("/db/books").then(bs=>{books=bs;const box=v.querySelector("#cols");
+    for(const b of bs){const x=document.createElement("button");x.dataset.c=b.key;x.textContent=`${b.name}${b.count?" "+b.count:""}`;x.onclick=()=>{libState.player="";libState.q="";qi.value="";libState.limit=60;load(b.key)};box.append(x)}
+    if(OFF){const x=document.createElement("button");x.textContent="☁ 從電腦同步";x.style.borderStyle="dashed";x.onclick=()=>syncSheet();box.append(x)}
+    const c=c0||libState.c||store.get("libC",null)||(bs[0]||{}).key;if(c)load(c);
+    const on=box.querySelector(".on");if(on)box.scrollLeft=on.offsetLeft-16}).catch(e=>{v.querySelector("#items").innerHTML=`<div class="card muted">連不到電腦上的程式：${esc(e.message)}</div>`});
+  return{}}
+
+// 離線版：把電腦上的對局集同步到手機（之後離線也能看）
+const SYNCABLE=[["xuyinchuan","許銀川對局","887 局，約 1 MB"],["gmgames","特級大師對局","31,531 局，約 32 MB"]];
+function syncSheet(){
+  sheet("從電腦同步棋譜",async b=>{
+    b.innerHTML='<p class="muted">檢查連線中…</p>';
+    const ok=await XQ.ping(),have=await XQ.syncedBooks();
+    b.innerHTML=`<p class="muted">${ok?"已連上電腦。同步後存在這支手機裡，沒網路也能看。":"⚠ 現在沒有連上電腦，只能管理已經同步的資料。"}</p><div id="sl"></div>`+(ok?"":'<button class="btn ghost" id="hc">怎麼連線</button>');
+    const hc=b.querySelector("#hc");if(hc)hc.onclick=connectSheet;
+    for(const[key,name,size]of SYNCABLE){const h=have.find(x=>x.key===key),row=document.createElement("div");row.className="card";row.style.marginBottom="8px";
+      row.innerHTML=`<b>${name}</b> <span class="muted">${size}</span><div class="muted" id="st_${key}">${h?`已同步 ${h.count} 局（${h.at.slice(0,10)}）`:"還沒同步"}</div>
+        <div class="opt" style="margin-bottom:0">${ok?`<button data-k="${key}" class="on">${h?"重新同步":"同步到手機"}</button>`:""}${h?`<button data-d="${key}">從手機刪除</button>`:""}</div>`;
+      b.querySelector("#sl").append(row)}
+    b.querySelectorAll("[data-k]").forEach(x=>x.onclick=async()=>{const k=x.dataset.k,st=b.querySelector("#st_"+k);x.disabled=true;
+      try{const n=await XQ.sync(k,SYNCABLE.find(s=>s[0]===k)[1],(got,total)=>{st.textContent=`下載中 ${(got/1048576).toFixed(1)}${total?" / "+(total/1048576).toFixed(1):""} MB`});
+        st.textContent=`✅ 已同步 ${n} 局`;toast("同步完成");setTimeout(()=>{closeSheet();route()},700)}catch(e){st.textContent="⚠ "+e.message;x.disabled=false}});
+    b.querySelectorAll("[data-d]").forEach(x=>x.onclick=()=>confirmBox("從這支手機刪除這個資料夾？",async()=>{await XQ.unsync(x.dataset.d);closeSheet();toast("已刪除");route()},"刪除"))})}
+
+// ================= 棋譜閱讀＋研究 =================
+function Viewer(v,c,id){
+  setTabs(false);v.className="view fixed";
+  v.innerHTML=`<div class="evline" style="margin-top:6px"><div id="evf"></div></div><div class="boardbox" id="bbox"></div>
+    <div class="status" id="stat"></div><div class="strip" id="strip"></div><div class="strip" id="alts" style="padding-top:0"></div>
+    <div class="note" id="note"></div><div class="actions" id="acts"></div>`;
+  let it=null,L=new Map(),line=0,ply=0,FREE=null,sel=-1,LEGAL=null,AN=null,grades={},bookName="";
+  const bd=Board(i=>tap(i),d=>step(d));v.querySelector("#bbox").append(bd.svg);
+  setTop("載入中…","#/db/"+encodeURIComponent(c),[["ℹ",()=>info(),"棋局資訊"]]);
+  const acts=actionBar(v.querySelector("#acts"),[["first","⏮","開局",()=>go(0)],["prev","◀","上一步",()=>step(-1)],["an","🔍","分析",()=>anSheet(),true],["next","▶","下一步",()=>step(1)],["last","⏭","最後",()=>go(1e9)]]);
+  const seq=(lid,p)=>{const l=L.get(lid);if(!l)return[];if(p<l.start)return l.parent==null?[]:seq(l.parent,p);return(l.parent==null?[]:seq(l.parent,l.start-1)).concat(l.moves.slice(0,p-l.start+1))};
+  const endPly=lid=>{const l=L.get(lid);return l.start+l.moves.length-1};
+  const owner=(lid,p)=>{const l=L.get(lid);return l.parent!=null&&p<l.start?owner(l.parent,p):lid};
+  const boardAt=(lid,p)=>{const b=it.board.slice();for(const m of seq(lid,p)){b[m.t]=b[m.f];b[m.f]=null}return b};
+  const firstSide=()=>{const m=it.lines[0].moves[0];return m?sideOf(it.board[m.f]):"r"};
+  const moverAt=p=>(p-1)%2===0?firstSide():opp(firstSide());
+  const curPos=()=>FREE?{board:FREE.board,side:FREE.side}:{board:boardAt(line,ply),side:ply%2===0?firstSide():opp(firstSide())};
+  const posKey=p=>fenC(p.board,p.side);
+  const gradeOf=p=>{const m=seq(line,p)[p-1];if(m&&m.q&&m.q!=="—")return m;return grades[owner(line,p)+"|"+p]||null};
+  function alternatives(p){const key=ms=>ms.map(m=>m.f+"-"+m.t).join(","),pre=key(seq(line,p-1)),groups=new Map();
+    for(const l of it.lines){if(endPly(l.id)<p)continue;const s=seq(l.id,p);if(s.length!==p||key(s.slice(0,p-1))!==pre)continue;
+      const m=s[p-1],k=m.f+"-"+m.t;if(!groups.has(k))groups.set(k,{m,ids:[]});groups.get(k).ids.push(l.id)}return[...groups.values()]}
+  function go(p,lid){FREE=null;sel=-1;if(lid!=null)line=lid;ply=Math.max(0,Math.min(p,endPly(line)));show();remember()}
+  function step(d){if(!it)return;if(FREE){if(d<0)undoFree();return}vibrate(5);go(ply+d)}
+  function remember(){const r=store.get("recent",[]).filter(x=>!(x.c===c&&x.id===id));r.unshift({c,id,title:title(),book:bookName,ply});store.set("recent",r.slice(0,10))}
+  const title=()=>it?(it.red||it.black?`${it.red||"？"} 對 ${it.black||"？"}`:it.no?`${it.part?it.part+"・":""}第 ${it.no} 局 ${it.title||""}`:it.name||it.title):"";
+  async function tap(i){if(!it)return;const pos=curPos(),k=posKey(pos);
+    try{if(!LEGAL||LEGAL.k!==k)LEGAL={k,list:(await api("/an/legal",pos)).legal}}catch(e){return toast(e.message)}
+    if(sel>=0&&LEGAL.list.some(([f,t])=>f===sel&&t===i)){const f=sel;sel=-1;return freeMove(f,i)}
+    sel=LEGAL.list.some(([f])=>f===i)?i:-1;if(sel>=0)vibrate(5);show()}
+  async function freeMove(f,t){const pos=curPos();if(!FREE)FREE={board:pos.board,side:pos.side,moves:[],base:ply};
+    const before={board:FREE.board.slice(),side:FREE.side};
+    try{const r=await api("/an/legal",{...before,f,t});vibrate(15);const m={f,t,cn:r.cn,by:before.side,before};FREE.moves.push(m);FREE.board=r.board;FREE.side=r.side;FREE.check=r.check;LEGAL={k:posKey(r),list:r.legal};AN=null;show();
+      api("/an/classify",{...before,f,t}).then(g=>{m.q=g.q;m.loss=g.loss;m.ev=g.ev;m.bc=g.bc;show()}).catch(()=>{})}catch(e){toast(e.message)}}
+  function undoFree(){if(!FREE)return;const m=FREE.moves.pop();if(!FREE.moves.length)FREE=null;else{FREE.board=m.before.board;FREE.side=m.before.side;FREE.check=-1}sel=-1;AN=null;show()}
+  function show(){if(!it)return;const s=seq(line,ply),pos=curPos();
+    const last=FREE?FREE.moves[FREE.moves.length-1]:s[s.length-1];
+    const hint=AN&&AN.k===posKey(pos)&&AN.lines&&AN.lines[0]?[sqI(AN.lines[0].mv.slice(0,2)),sqI(AN.lines[0].mv.slice(2,4))]:null;
+    bd.draw(pos.board,{last,sel,targets:sel>=0&&LEGAL?LEGAL.list.filter(([f])=>f===sel).map(x=>x[1]):[],hint,check:FREE?FREE.check:-1});
+    // 優勢條：分析結果優先，其次是上一步的評等
+    let ev=AN&&AN.k===posKey(pos)&&AN.lines&&AN.lines[0]?AN.lines[0].vr:null;
+    if(ev==null){const g=FREE?FREE.moves[FREE.moves.length-1]:ply>0&&gradeOf(ply);if(g&&g.ev!=null)ev=g.ev}
+    v.querySelector("#evf").style.width=evPct(ev)+"%";
+    const st=v.querySelector("#stat");st.classList.toggle("hot",!!FREE);
+    if(FREE)st.textContent=`✏️ 自由走棋中（第 ${FREE.base} 步之後）・按 ◀ 退回`;
+    else{const g=ply>0&&gradeOf(ply);st.textContent=ply===0?"開局局面・左右滑棋盤可換步":`第 ${ply} 步 ${s[ply-1].cn}`+(g?`【${g.q}】`:"")+(ev!=null?"・"+evt(ev):"")}
+    const moves=FREE?FREE.moves:seq(line,endPly(line)).map((m,i)=>{const g=gradeOf(i+1);return{...m,by:moverAt(i+1),q:g&&g.q}});
+    renderStrip(v.querySelector("#strip"),moves,FREE?FREE.moves.length-1:ply-1,FREE?null:i=>go(i+1));
+    // 變著
+    const ab=v.querySelector("#alts");ab.innerHTML="";
+    if(!FREE){const alts=alternatives(ply+1);if(alts.length>1){const lb=document.createElement("span");lb.className="muted";lb.style.cssText="flex:none;align-self:center;font-size:12px";lb.textContent="下一步變著：";ab.append(lb);
+      for(const g of alts){const mine=g.ids.includes(line),b=document.createElement("button");b.className="chip var"+(mine?" on":"");b.textContent=g.m.cn;b.onclick=()=>go(ply+1,mine?line:g.ids[0]);ab.append(b)}}}
+    ab.hidden=!ab.children.length;
+    // 評註
+    const note=v.querySelector("#note");
+    if(FREE){const g=FREE.moves[FREE.moves.length-1];note.textContent=g&&g.q?`${g.cn}：${g.q}`+(g.q!=="正手"&&g.q!=="妙手"?`，比最佳著法少 ${g.loss} 分，Pikafish 建議 ${g.bc}`:""):"點棋子可以繼續往下走，看看不同的變化。"}
+    else{const ck=owner(line,ply)+"_"+ply,g=ply>0&&gradeOf(ply);
+      note.textContent=[ply===0?(it.comments["0_0"]||it.note||""):it.comments[ck]||"",g&&g.q&&g.q!=="正手"&&g.q!=="妙手"?`Pikafish：這步比最佳著法少 ${g.loss} 分，建議 ${g.bc}`:""].filter(Boolean).join("\n")||(ply===0?"點棋子可以自由走棋；按 🔍 看 Pikafish 分析。":"")}
+    acts.first.disabled=acts.prev.disabled=!FREE&&ply===0;acts.next.disabled=acts.last.disabled=!!FREE||ply>=endPly(line);
+    acts.prev.disabled=!FREE&&ply===0;
+    if(!(AN&&AN.k===posKey(pos)))lookupSoon()}
+  let lt=null;function lookupSoon(){clearTimeout(lt);lt=setTimeout(async()=>{const pos=curPos(),k=posKey(pos);try{const d=await api("/an/lookup",{engine:[k]});const e=Object.values(d.engine)[0];if(e&&posKey(curPos())===k){AN={k,...e,cached:true};show()}}catch(e){}},150)}
+  async function loadGrades(){const want=new Map();
+    for(const l of it.lines){let b=boardAt(l.id,l.start-1);l.moves.forEach((m,i)=>{const p=l.start+i;want.set(fenC(b,moverAt(p))+"|"+iccsC(m.f,m.t),l.id+"|"+p);b=b.slice();b[m.t]=b[m.f];b[m.f]=null})}
+    if(!want.size)return;try{const d=await api("/an/lookup",{grade:[...want.keys()].slice(0,5000)});for(const[k,g]of Object.entries(d.grade))grades[want.get(k)]=g;show()}catch(e){}}
+  function anSheet(){const pos=curPos(),k=posKey(pos);
+    sheet("Pikafish 分析",b=>{
+      const paint=()=>{const a=AN&&AN.k===k?AN:null;
+        b.innerHTML=a?(a.dead?`<p>${PLAYER[pos.side]}沒有合法著法（被將死或困斃）。</p>`:`${a.cached?'<p class="muted">📁 之前存的分析，不用重算</p>':""}<div class="anl">${a.lines.map((l,i)=>`<div class="ln"><b>${i+1}. ${esc(l.cn)}</b>　<span class="pill">${evt(l.vr)}</span><div class="pv">${esc(l.pv.join(" "))}</div><div class="muted" style="font-size:11px">往後算 ${l.depth||"?"} 步（約 ${Math.round((l.depth||0)/2)} 回合）</div></div>`).join("")}</div>`)
+          :'<p class="muted" style="text-align:center;padding:20px">Pikafish 思考中…（約 1.5 秒）</p>';
+        b.insertAdjacentHTML("beforeend",`<div class="opt" style="margin-top:12px"><button id="re">🔄 重新分析</button><button id="gr">📊 評等這條著法</button></div>
+          <div class="opt"><button id="ec">💬 請 Claude 講解</button><button id="eg">💬 請 GPT 講解</button></div><div id="llm" style="white-space:pre-wrap;font-size:14px"></div>
+          <p class="muted" style="font-size:12px">分數是紅方視角，1.0 約等於一個兵。講解會用到你的 Claude 或 ChatGPT 額度，分析和評等不會。</p>`);
+        b.querySelector("#re").onclick=()=>run(true);b.querySelector("#gr").onclick=()=>{closeSheet();gradeLine()};
+        b.querySelector("#ec").onclick=()=>explain("claude");b.querySelector("#eg").onclick=()=>explain("gpt")};
+      const run=async fresh=>{if(fresh)AN=null;paint();try{const d=await api("/an/engine",{...pos,ms:1500,multipv:3,fresh:!!fresh});AN={k,...d};show();if($("#sheet"))paint()}catch(e){toast(e.message)}};
+      const explain=async who=>{const box=b.querySelector("#llm");box.textContent=(who==="gpt"?"GPT":"Claude")+" 講解中…（大約半分鐘到幾分鐘）";
+        const hist=(FREE?seq(line,FREE.base).map(m=>m.cn).concat(FREE.moves.map(m=>m.cn)):seq(line,ply).map(m=>m.cn)).join(" ");
+        try{const d=await api("/an/explain",{...pos,who,lines:(AN&&AN.lines)||[],history:hist});box.textContent=d.text}catch(e){box.textContent="⚠ "+e.message}};
+      if(AN&&AN.k===k)paint();else run(false)})}
+  async function gradeLine(){const end=endPly(line);toast("開始評等，每步約 0.6 秒");
+    for(let p=1;p<=end;p++){if(screen!==self||!it)return;if(gradeOf(p))continue;const m=seq(line,p)[p-1];
+      try{grades[owner(line,p)+"|"+p]=await api("/an/classify",{board:boardAt(line,p-1),side:moverAt(p),f:m.f,t:m.t});show()}catch(e){toast(e.message);return}}
+    toast("評等完成")}
+  function info(){if(!it)return;sheet(title(),b=>{
+    b.innerHTML=[it.red||it.black?`<p><span style="color:var(--red);font-weight:700">紅方 ${esc(it.red||"？")}</span>　對　<b>黑方 ${esc(it.black||"？")}</b></p>`:"",
+      it.event?`<p class="muted">${esc(it.event)}${it.date?"　"+esc(it.date):""}</p>`:"",it.result?`<p>結果：${esc(it.result)}</p>`:"",it.open?`<p>開局：${esc(it.open.replace(/^[A-E]\d\d\s*/,""))}</p>`:"",
+      `<p class="muted">${esc(bookName)}</p>`,
+      it.lessons?`<div class="sec-t" style="margin-left:0">賽後心得</div>${["r","b"].map(s=>(it.lessons[s]||[]).map(x=>`<div class="lesson">${s==="r"?"🔴":"⚫"} ${esc(x)}</div>`).join("")).join("")}`:""].join("")})}
+  const self={stop(){clearTimeout(lt)}};
+  Promise.all([api(`/db/item?c=${encodeURIComponent(c)}&id=${encodeURIComponent(id)}`),api("/db/books").catch(()=>[])]).then(([d,bs])=>{
+    it=d;L=new Map(it.lines.map(l=>[l.id,l]));bookName=(bs.find(b=>b.key===c)||{}).name||"";
+    setTop(title(),"#/db/"+encodeURIComponent(c),[["ℹ",()=>info(),"棋局資訊"]]);
+    const r=store.get("recent",[]).find(x=>x.c===c&&x.id===id);ply=r&&r.ply?Math.min(r.ply,endPly(0)):0;
+    show();remember();loadGrades()}).catch(e=>{v.querySelector("#note").textContent="⚠ "+e.message});
+  return self}
+
+// ================= AI 對戰直播 =================
+function Watch(v){
+  if(OFF&&!XQ.remoteInfo()){setTop("AI 對戰",false);setTabs(true,"#/watch");
+    v.innerHTML=`<div class="pad"><div class="card" style="text-align:center;padding:24px 16px"><div style="font-size:52px">📺</div><h2 style="font-family:var(--serif);margin:8px 0">要連上電腦才能看 AI 對戰</h2>
+      <p class="muted">AI 對戰是電腦上的 GPT 和 Claude 在下棋，手機要連上電腦才看得到。挑戰電腦、雙人對戰、古譜研究不需要連線。</p><button class="btn" id="cn">怎麼連線</button></div></div>`;
+    v.querySelector("#cn").onclick=connectSheet;return{}}
+  setTop("AI 對戰",false);setTabs(true,"#/watch");gameLayout(v);
+  let st=null,view=null,clockBase=null;
+  const bd=Board(null,d=>{if(!st)return;const n=st.moves.length;let x=view==null?n:view;x=Math.max(0,Math.min(n,x+d));view=x>=n?null:x;draw()});
+  v.querySelector("#bbox").append(bd.svg);
+  const note=document.createElement("div");note.className="note";note.id="think";v.querySelector("#acts").before(note);v.querySelector("#acts").previousElementSibling.previousElementSibling.remove();
+  const acts=actionBar(v.querySelector("#acts"),[["start","▶","開始",()=>post("/start")],["pause","⏸","暫停",()=>post("/pause")],["live","⏭","回到最新",()=>{view=null;draw()}],
+    ["rec","📖","棋譜",()=>location.hash="#/db/ai/"+encodeURIComponent(st&&st.id||"current")],["new","＋","新局",()=>confirmBox("放棄目前對局、開新局？",()=>post("/new"),"開新局")]]);
+  async function post(u){try{await api(u,{});render(await api("/state"))}catch(e){toast(e.message)}}
+  function boardAtN(n){const b=parseFen(START);for(const m of st.moves.slice(0,n)){b[m.t]=b[m.f];b[m.f]=null}return b}
+  function draw(){if(!st)return;const n=view==null?st.moves.length:view;
+    bd.draw(view==null?st.board:boardAtN(n),{last:st.moves[n-1],check:view==null?st.check:-1});
+    const m=st.moves[n-1],ev=view==null?(st.ev&&st.ev.v):m&&m.ev;v.querySelector("#evf").style.width=evPct(ev)+"%";
+    renderStrip(v.querySelector("#strip"),st.moves,n-1,i=>{view=i+1>=st.moves.length?null:i+1;draw()});
+    const s2=v.querySelector("#stat");s2.classList.toggle("hot",view!=null);
+    s2.textContent=view!=null?`回顧第 ${n} 步${m?" "+m.cn:""}${m&&m.q?"【"+m.q+"】":""}・按 ⏭ 回到最新`:st.status;
+    const th=v.querySelector("#think");
+    th.textContent=view!=null&&m?`${PLAYER[m.by]}：${m.cm||""}`+(m.q&&m.q!=="正手"&&m.q!=="妙手"?`\nPikafish：比最佳著法少 ${m.loss} 分，建議 ${m.bc}`:""):st.liveSide?`${PLAYER[st.liveSide]}思考中…\n${(st.live||"").slice(-600)}`:(m&&m.cm?`${PLAYER[m.by]}：${m.cm}`:"");
+    if(view==null&&st.liveSide)th.scrollTop=th.scrollHeight;
+    acts.live.disabled=view==null}
+  function clocks(){if(!clockBase)return;for(const s of["r","b"]){const el=v.querySelector("#ck_"+s);if(el){const x=clockBase.c[s]-(clockBase.run&&clockBase.turn===s?Date.now()-clockBase.at:0);el.textContent=st.clock?fmt(x):"--:--"}}}
+  const ckT=setInterval(clocks,500);
+  function render(s){const n0=st?st.moves.length:-1;st=s;
+    v.querySelector("#pTop").innerHTML=playerHTML("b",st.black,"黑方・Claude","").replace('<div class="clk">','<div class="clk" id="ck_b">');
+    v.querySelector("#pBot").innerHTML=playerHTML("r",st.red,"紅方・GPT","").replace('<div class="clk">','<div class="clk" id="ck_r">');
+    v.querySelector("#pTop").classList.toggle("on",!st.result&&st.turn==="b");v.querySelector("#pBot").classList.toggle("on",!st.result&&st.turn==="r");
+    clockBase={at:Date.now(),c:st.clocks,turn:st.turn,run:st.running&&!st.result};clocks();
+    $("#title").innerHTML=st.running?'AI 對戰 <span class="live" style="color:#ff8a7a">直播</span>':"AI 對戰";
+    acts.start.hidden=st.running||!!st.result;acts.pause.hidden=!st.running;acts.start.querySelector("span").nextSibling.textContent=st.started?"繼續":"開始";
+    if(n0>=0&&st.moves.length>n0&&view==null)vibrate(8);draw()}
+  let warned=false;
+  const stop=poller(async()=>{try{render(await api("/state"));warned=false}catch(e){if(!warned){warned=true;v.querySelector("#stat").textContent="⚠ "+e.message}}},1500);
+  return{stop:()=>{stop();clearInterval(ckT)}}}
+
+route();
+</script></body></html>
