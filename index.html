@@ -875,13 +875,23 @@ function Settings(v){
 // ================= 意見回饋：存到 Google 表單（沒網路先存在手機，之後自動補送） =================
 // 表單的「formResponse」網址和每一題的 entry 代號；空的時候回饋先存在手機佇列裡
 const FEEDBACK_FORM={action:"https://docs.google.com/forms/d/e/1FAIpQLScxK1rQLe70m7lcNg1Ay-mWOhp-pgcRrlHB7KAXYShiLjqyfA/formResponse",
-  entries:{type:"entry.878459997",text:"entry.19788072",contact:"entry.1564431672",id:"entry.1681425457",name:"entry.1153998021",rank:"entry.1077510185",ver:"entry.1173886447",dev:"entry.1485904009",page:"entry.954611964"}};
+  entries:{type:"entry.878459997",text:"entry.19788072",contact:"entry.1564431672",id:"entry.1681425457",name:"entry.1153998021",rank:"entry.1077510185",ver:"entry.1173886447",dev:"entry.1485904009",page:"entry.954611964",img:"entry.706229975"}};
+// 截圖：縮小成 JPEG 文字（表單一格最多約 3 萬字），開發者看得清楚畫面就好
+function shrinkImage(file){return new Promise((ok,no)=>{const u=URL.createObjectURL(file),im=new Image();
+  im.onload=()=>{URL.revokeObjectURL(u);const cv=document.createElement("canvas"),cx=cv.getContext("2d");
+    for(const[side,q]of[[1100,.6],[900,.55],[760,.5],[640,.45],[520,.4],[420,.35]]){const k=Math.min(1,side/Math.max(im.width,im.height));
+      cv.width=Math.round(im.width*k);cv.height=Math.round(im.height*k);cx.fillStyle="#fff";cx.fillRect(0,0,cv.width,cv.height);cx.drawImage(im,0,0,cv.width,cv.height);
+      const d=cv.toDataURL("image/jpeg",q);if(d.length<=30000)return ok(d)}
+    no(new Error("圖片太大，請換一張或先裁切"))};
+  im.onerror=()=>{URL.revokeObjectURL(u);no(new Error("讀不到這張圖片"))};im.src=u})}
 async function feedbackInfo(){const m=meInfo(),r=window.XQNet&&XQNet.rating?XQNet.rating():null;
   return{id:m.id||"",name:m.name||"",rank:r?`${r.rank} ${r.pts}分 (${r.w}勝${r.l}負${r.d}和)`:"",ver:(await appVer())||"",
     dev:(MY_KIND||"其他")+((matchMedia("(display-mode: standalone)").matches||navigator.standalone)?"・主畫面App":"・瀏覽器")+`・${innerWidth}x${innerHeight}`,page:location.hash||"#/"}}
 async function postForm(rec){const F=FEEDBACK_FORM;if(!F.action)throw new Error("表單還沒設定");
-  const body=new URLSearchParams();for(const k in F.entries)if(F.entries[k]&&rec[k]!=null)body.append(F.entries[k],String(rec[k]).slice(0,2000));
-  await fetch(F.action,{method:"POST",mode:"no-cors",body})}
+  const body=new URLSearchParams();for(const k in F.entries)if(F.entries[k]&&rec[k]!=null)body.append(F.entries[k],String(rec[k]).slice(0,k==="img"?31000:2000));
+  // 用 sendBeacon「送出就好、不等回覆」：App 為了跑 Pikafish 開了嚴格的跨網域模式，fetch 讀不到 Google 的回覆會被當成失敗（其實已經送到），造成重複送出
+  if(navigator.sendBeacon){if(navigator.sendBeacon(F.action,body))return;}
+  try{await fetch(F.action,{method:"POST",mode:"no-cors",body})}catch(e){if(!navigator.onLine)throw e}}   // 有網路時，讀不到回覆不算失敗
 async function flushFeedback(){const q=store.get("fbQueue",[]);if(!q.length||!FEEDBACK_FORM.action||!navigator.onLine)return;const left=[];
   for(const r of q){try{await postForm(r)}catch(e){left.push(r)}}store.set("fbQueue",left)}
 async function sendRecord(rec){try{await postForm(rec);return true}catch(e){const q=store.get("fbQueue",[]);q.push(rec);store.set("fbQueue",q.slice(-30));return false}}
@@ -890,11 +900,16 @@ function feedbackSheet(){let type="🐞 錯誤";
     <div class="opt" id="ty">${["🐞 錯誤","💡 建議","💬 其他"].map(t=>`<button data-y="${t}" class="${t===type?"on":""}">${t}</button>`).join("")}</div>
     <textarea id="fx" rows="5" maxlength="1500" placeholder="例如：在哪個畫面、按了什麼、發生什麼事；或是希望增加的功能" style="width:100%;padding:11px;border:1px solid var(--line);border-radius:12px;background:var(--card);color:inherit;font:inherit;font-size:16px;-webkit-user-select:text;user-select:text"></textarea>
     <input id="fc" maxlength="80" placeholder="聯絡方式（選填，例如 LINE ID）" style="width:100%;margin-top:8px;padding:11px;border:1px solid var(--line);border-radius:12px;background:var(--card);color:inherit">
+    <div class="row" style="margin-top:8px;gap:10px"><label class="pill" style="padding:9px 14px;cursor:pointer">📷 附上截圖（選填）<input type="file" id="fi" accept="image/*" hidden></label>
+      <img id="fp" alt="" style="display:none;max-height:72px;max-width:96px;border-radius:8px;border:1px solid var(--line)"><button class="pill" id="fr" hidden>✕ 移除</button></div>
     <p class="muted" style="font-size:12px">會一起附上：你的線上 ID、名字、段位、App 版本、裝置類型和目前畫面，方便找問題。</p>
     <button class="btn" id="go">送出</button>`;
+    let img="";const fi=b.querySelector("#fi"),fp=b.querySelector("#fp"),fr=b.querySelector("#fr");
+    fi.onchange=async()=>{const f=fi.files&&fi.files[0];if(!f)return;try{img=await shrinkImage(f);fp.src=img;fp.style.display="block";fr.hidden=false}catch(e){toast(e.message)}fi.value=""};
+    fr.onclick=()=>{img="";fp.style.display="none";fr.hidden=true};
     b.querySelectorAll("[data-y]").forEach(x=>x.onclick=()=>{type=x.dataset.y;b.querySelectorAll("[data-y]").forEach(y=>y.classList.toggle("on",y===x))});
     b.querySelector("#go").onclick=async e=>{const t=b.querySelector("#fx").value.trim();if(t.length<2)return toast("請先寫下內容");e.target.disabled=true;e.target.textContent="送出中…";
-      const rec=Object.assign(await feedbackInfo(),{type,text:t,contact:b.querySelector("#fc").value.trim()});
+      const rec=Object.assign(await feedbackInfo(),{type,text:t,contact:b.querySelector("#fc").value.trim(),img});
       const ok=await sendRecord(rec);closeSheet();toast(ok?"✅ 已送出，謝謝你的回饋！":"已存在手機裡，有網路時會自動送出")}})}
 // 線上 ID 登記：名字或段位有變、或超過 7 天，就送一筆「玩家」紀錄到同一個表單
 async function reportPlayer(){if(!OFF||!FEEDBACK_FORM.action)return;const i=await feedbackInfo(),key=i.id+"|"+i.name+"|"+i.rank.split(" ")[0],last=store.get("playerRep",null);
@@ -1234,9 +1249,14 @@ function syncSheet(){
 // 賽後：Pikafish 建議的走法寫成「建議 1. 炮二平五 2. 馬8進7 3. …（藍色箭頭）」
 // 舊棋譜只存了建議的文字（例如「炮二平五」）：用規則找出是哪一步，才能畫箭頭
 function bcMove(b,s,cn){try{const C=window.XQCore;if(!C)return null;const m=C.legal(b,s).find(([f,t])=>C.notate(b,f,t)===cn);return m?{f:m[0],t:m[1]}:null}catch(e){return null}}
-function sugText(g,b){const L=(g.bp&&g.bp.length?g.bp:g.bm?[g.bm]:[]).slice(0,3);if(!L.length)return g.bc?`建議 ${g.bc}`:"";
+// 每一步下面的說明：好棋說清楚「就是最佳著法」，不好的棋列出藍色箭頭的建議，還沒評等的提示怎麼補算
+function gradeNote(g,b){if(!g||!g.q)return"這步還沒評等（按 📊 賽後報告，Pikafish 會補算，再顯示藍色建議箭頭）";
+  if(g.q==="—")return"";if(g.q==="妙手")return"✨ 妙手：就是 Pikafish 的首選，而且是不容易找到的好棋，沒有更好的走法。";
+  if(g.q==="正手")return"✅ 正手：跟 Pikafish 的首選一樣，沒有更好的走法（所以沒有藍色箭頭）。";
+  return`Pikafish：這步比最佳著法少 ${g.loss} 分。`+sugText(g,b)}
+function sugText(g,b){const L=(g.bp&&g.bp.length?g.bp:g.bm?[g.bm]:[]).slice(0,3);if(!L.length)return g.bc?`建議 ${g.bc}（藍色箭頭）`:"";
   const out=[];try{const C=window.XQCore;for(const u of L){const f=sqI(u.slice(0,2)),t=sqI(u.slice(2,4));if(!b[f]||!C)break;out.push(C.notate(b,f,t));b=b.slice();b[t]=b[f];b[f]=null}}catch(e){}
-  if(!out.length)return`建議 ${g.bc||""}`;return(out.length>1?"建議走法（藍色箭頭）："+out.map((x,i)=>`${i+1}. ${x}`).join("　"):`建議 ${out[0]}（藍色箭頭）`)+"\n綠色箭頭是實際走的"}
+  if(!out.length)return`建議 ${g.bc||""}（藍色箭頭）`;return(out.length>1?"建議走法（藍色箭頭）："+out.map((x,i)=>`${i+1}. ${x}`).join("　"):`建議 ${out[0]}（藍色箭頭）`)+"\n綠色箭頭是實際走的"}
 function Viewer(v,c,id){
   setTabs(false);v.className="view fixed";
   v.innerHTML=`<div class="evline" style="margin-top:6px"><div id="evf"></div></div><div class="boardbox" id="bbox"></div>
@@ -1337,7 +1357,7 @@ function Viewer(v,c,id){
         :`${FREE.base+FREE.cur}. ${PLAYER[m.by]} ${m.cn}`+(m.tags&&m.tags.length?`【${m.tags.join("、")}】`:"")+(g&&g.q&&g.q!=="—"?`　${g.q}`:"")
          +(g&&g.q&&g.q!=="正手"&&g.q!=="妙手"&&g.bc?`\nPikafish 認為更好的是：${g.bc}`:"")}
     else{const ck=owner(line,ply)+"_"+ply,g=ply>0&&gradeOf(ply);
-      note.textContent=[ply===0?(it.comments["0_0"]||it.note||""):it.comments[ck]||"",g&&g.q&&g.q!=="正手"&&g.q!=="妙手"&&g.q!=="—"?`Pikafish：這步比最佳著法少 ${g.loss} 分。`+sugText(g,boardAt(line,ply-1)):""].filter(Boolean).join("\n")||(ply===0?"點棋子可以自由走棋；按 🔍 看 Pikafish 分析。":"")}
+      note.textContent=[ply===0?(it.comments["0_0"]||it.note||""):it.comments[ck]||"",ply>0?gradeNote(g,boardAt(line,ply-1)):""].filter(Boolean).join("\n")||(ply===0?"點棋子可以自由走棋；按 🔍 看 Pikafish 分析。":"")}
     if(FREE){acts.first.disabled=acts.prev.disabled=FREE.cur===0;acts.next.disabled=acts.last.disabled=FREE.cur>=FREE.all.length}
     else{acts.first.disabled=acts.prev.disabled=ply===0;acts.next.disabled=acts.last.disabled=ply>=endPly(line)}
     if(!(AN&&AN.k===posKey(pos)))lookupSoon()}
