@@ -17,6 +17,7 @@
 --wood:#B98C52;--grid:#3A2410;--piece:#EFE0C2;--hl:#6FBF9555;--bar:#0E0B08;--barink:#F1E6D6;--warn:#E3A34A;--info:#7FA6D6;color-scheme:dark}
 :root[data-theme=light]{color-scheme:light}
 *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}[hidden]{display:none!important}
+html.gapfix{background:var(--card)}
 html,body{margin:0;height:100%;overflow:hidden;background:var(--bg);color:var(--ink);font-family:var(--sans);font-size:15px;line-height:1.5;
   -webkit-user-select:none;user-select:none;overscroll-behavior:none}
 button{font:inherit;color:inherit;background:none;border:none;padding:0;cursor:pointer}
@@ -341,7 +342,12 @@ function Board(onTap,onSwipe){
       g.append(el("circle",{cx:X(i),cy:Y(i)+dy,r:22,fill:"none",stroke:col,"stroke-width":1.2}));
       g.append(el("text",{x:X(i),y:Y(i)+dy+10,"text-anchor":"middle","font-family":"var(--serif)","font-weight":900,"font-size":28,fill:col},NAMES[s][p.toUpperCase()]))}
     return g}
-  function draw(board,o){o=o||{};flip=!!o.flip;svg.innerHTML="";
+  let lastKey="";
+  function draw(board,o){o=o||{};
+    // 跟上一次畫的完全一樣（盤面、選子、箭頭、風格都沒變）就不重畫：對戰畫面每秒更新，重畫整個棋盤在手機上會卡、會閃
+    const key=board.join(",")+"|"+JSON.stringify(o)+"|"+[store.get("boardTheme",""),store.get("pieceStyle",""),store.get("mvArrow",true),store.get("pageTheme","")].join(",");
+    if(key===lastKey&&svg.firstChild)return;lastKey=key;
+    flip=!!o.flip;svg.innerHTML="";
     const px=c=>X0+c*S,py=r=>Y0+r*S,T=boardTheme(o.theme),PS=o.pstyle||store.get("pieceStyle","3d");
     let bgFill=T.bg;if(Array.isArray(T.bg)){const d=el("defs",{}),lg=el("linearGradient",{id:"bbg"+uid,x1:0,y1:0,x2:.35,y2:1});
       lg.append(el("stop",{offset:0,"stop-color":T.bg[0]}),el("stop",{offset:1,"stop-color":T.bg[1]}));d.append(lg);svg.append(d);bgFill=`url(#bbg${uid})`}
@@ -444,7 +450,11 @@ const OFF=!!window.XQ_OFFLINE;
   const pr=document.createElement("div");pr.style.cssText="position:fixed;top:0;height:env(safe-area-inset-top);visibility:hidden";document.body.append(pr);
   const got=pr.getBoundingClientRect().height;pr.remove();
   const full=Math.abs(innerHeight-window.screen.height)<2;   // 內容從螢幕最頂端開始（在狀態列底下）
-  if(got<10&&full){const h=window.screen.height;document.documentElement.style.setProperty("--safeT",(h>=852?59:h>=812?47:20)+"px")}}catch(e){}})();
+  if(got<10&&full){const h=window.screen.height;document.documentElement.style.setProperty("--safeT",(h>=852?59:h>=812?47:20)+"px")}
+  // 新版 iOS 的主畫面 App 有時把可用高度少算一個狀態列（底部露出一條空白）：把空白塗成分頁列的顏色，並拿掉分頁列底部原本留給橫條的空間
+  const gap=()=>{const port=innerHeight>innerWidth,W=window.screen,sh=port?Math.max(W.width,W.height):Math.min(W.width,W.height),g=sh-innerHeight,R=document.documentElement;
+    if(g>20&&g<110){R.classList.add("gapfix");R.style.setProperty("--safeB","0px")}else{R.classList.remove("gapfix");R.style.removeProperty("--safeB")}};
+  gap();addEventListener("resize",()=>setTimeout(gap,300))}catch(e){}})();
 if(OFF&&"serviceWorker" in navigator){
   // 註冊 service worker；第一次要重新整理一次，多執行緒（跨來源隔離）才會生效
   navigator.serviceWorker.register("sw.js").then(()=>{
