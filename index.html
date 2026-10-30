@@ -1035,7 +1035,9 @@ function CpuGame(v){
     if(first){first=false;if(s.result){shownResult=JSON.stringify(s.result)+s.moves.length;await post("/play/new",{human:s.human,level:s.level});
       toast(`新的一局・第 ${s.level} 級（按右上角 ⚙ 換難度）`);return}}
     render(s)},()=>st&&st.thinking?500:1500);
-  return{stop}}
+  // 電腦一走完就馬上畫出來（不等下一次輪詢）
+  const onPlay=()=>{if(!busy)api("/play/state").then(s=>{if(!busy&&s)render(s)}).catch(()=>{})};window.addEventListener("xq-play",onPlay);
+  return{stop:()=>{stop();window.removeEventListener("xq-play",onPlay)}}}
 
 // ================= 雙人對戰 =================
 // 連線對戰的調侃表情
@@ -1150,7 +1152,9 @@ function PvpGame(v){
         b.querySelector("#go").onclick=()=>{closeSheet();shownResult=null;sel=-1;flipMan=null;post("/pvp/new",{red:b.querySelector("#nR").value,black:b.querySelector("#nB").value,tc})}};paint()})}
   const refresh=async()=>{try{if(!busy)render(await api("/pvp/state"+(seat?"?seat="+seat:"")))}catch(e){if(seat)v.querySelector("#stat").textContent="⚠ "+e.message}};
   const stop=poller(refresh,1000);
-  return{stop:()=>{stop();clearInterval(ckT)}}}
+  // 網路對局：對方的棋一到就馬上畫出來（原本要等最多 1 秒的輪詢）
+  const offG=OFF&&window.XQNet?XQNet.on("game",()=>{if(XQNet.active())refresh()}):null;
+  return{stop:()=>{stop();clearInterval(ckT);if(offG)offG()}}}
 
 // ================= 棋譜庫（清單） =================
 const libState={c:null,q:"",player:"",side:"",res:"",limit:60};

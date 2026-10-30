@@ -21,8 +21,9 @@ var XQ=(function(){
   async function classify(b,s,f,t){const k="g:"+fen(b,s)+"|"+iccs(f,t);const c=await idb.get(k);if(c)return c;
     const r=await classifyRaw(b,s,f,t);if(r)await idb.set(k,r);return r}
   // 依序評等一盤棋裡還沒評等的步
-  async function analyzeList(S,save){
-    for(let i=0;i<S.moves.length;i++){const m=S.moves[i];if(m.q)continue;
+  // pause()：回傳 true 就先停下來（例如輪到電腦走，讓 Pikafish 先想棋，評等等一下再補）
+  async function analyzeList(S,save,pause){
+    for(let i=0;i<S.moves.length;i++){const m=S.moves[i];if(m.q)continue;if(pause&&pause())return;
       const[bs,sd]=S.pos[i].split(" ");let r=null;try{r=await classify(parseFen(bs),sd==="w"?"r":"b",m.f,m.t)}catch(e){return}
       if(S.moves[i]!==m)return;if(r)Object.assign(m,r);else m.q="—";save()}}
   const moveOut=m=>({f:m.f,t:m.t,by:m.by,cn:m.cn,ck:m.ck,q:m.q,loss:m.loss,ev:m.ev,bc:m.bc,bm:m.bm,bp:m.bp});
@@ -35,11 +36,12 @@ var XQ=(function(){
   const savePlay=()=>ls.set("play",{id:P.id,human:P.human,level:P.level,result:P.result,moves:saveMoves(P.moves)});
   function ensureP(){if(P)return;const s=ls.get("play",null);if(s&&s.moves){P=s;P.hint=null;stateRebuild(P)}else playNew("r",3);setTimeout(playEngine,0)}
   function playNew(human,level){P={id:gameId(),human,level,moves:[],result:null,hint:null};stateRebuild(P);savePlay()}
-  function playApply(f,t){stateApply(P,f,t);P.hint=null;const r=judgeState(P);if(r)playEnd(r.w,r.why);savePlay();setTimeout(analyzePlay,0)}
+  function playApply(f,t){stateApply(P,f,t);P.hint=null;const r=judgeState(P);if(r)playEnd(r.w,r.why);savePlay();setTimeout(analyzePlay,0);
+    try{window.dispatchEvent(new Event("xq-play"))}catch(e){}}   // 通知畫面馬上更新，不用等下一次輪詢
   function playEnd(w,why){P.result={w,why};const rec=ls.get("record",{}),L=rec[P.level]||(rec[P.level]={w:0,l:0,d:0});
     if(!w)L.d++;else if(w===P.human)L.w++;else L.l++;ls.set("record",rec);
     pushGame("play",{id:P.id,date:P.id.slice(0,10),level:P.level,human:P.human,result:P.result,moves:saveMoves(P.moves)});savePlay()}
-  async function analyzePlay(){if(paBusy||!P)return;paBusy=true;try{await analyzeList(P,savePlay)}finally{paBusy=false}}
+  async function analyzePlay(){if(paBusy||!P)return;paBusy=true;try{await analyzeList(P,savePlay,()=>!!P&&!P.result&&P.turn!==P.human)}finally{paBusy=false}}
   const ucis=()=>P.moves.map(m=>iccs(m.f,m.t));
   async function playEngine(){
     if(!P||P.result||P.turn===P.human||playBusy)return;
