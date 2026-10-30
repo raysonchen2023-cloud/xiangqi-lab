@@ -17,7 +17,10 @@
 --wood:#B98C52;--grid:#3A2410;--piece:#EFE0C2;--hl:#6FBF9555;--bar:#0E0B08;--barink:#F1E6D6;--warn:#E3A34A;--info:#7FA6D6;color-scheme:dark}
 :root[data-theme=light]{color-scheme:light}
 *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}[hidden]{display:none!important}
-html.gapfix{background:var(--card)}
+/* 新版 iOS 主畫面 App：頁面背後（含底部多出來那條）用分頁列的顏色，App 內容區自己鋪底色 */
+html.gapfix,html.gapfix body{background:var(--card)}html.gapfix .app{background:var(--bg)}
+/* 新版 iOS 會在螢幕頂端加一段模糊漸層：頂部列多留一點空間，讓標題移出模糊區 */
+html.gapfix .topbar{padding-top:calc(var(--safeT) + 34px)}
 html,body{margin:0;height:100%;overflow:hidden;background:var(--bg);color:var(--ink);font-family:var(--sans);font-size:15px;line-height:1.5;
   -webkit-user-select:none;user-select:none;overscroll-behavior:none}
 button{font:inherit;color:inherit;background:none;border:none;padding:0;cursor:pointer}
