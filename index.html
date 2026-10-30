@@ -111,6 +111,11 @@ input,select{font:inherit;font-size:16px;color:inherit}
 .modal .em{font-size:56px;line-height:1}.modal h2{font-family:var(--serif);font-size:24px;margin:8px 0 4px}
 .emo{position:fixed;left:50%;top:38%;transform:translate(-50%,-50%) scale(.6);z-index:65;background:var(--card,#fff);color:var(--ink,#222);border-radius:22px;padding:14px 20px;box-shadow:0 10px 40px #0006;text-align:center;opacity:0;transition:.25s;pointer-events:none}.emo.show{opacity:1;transform:translate(-50%,-50%) scale(1)}.emo .big{font-size:64px;line-height:1.1}.emo .t{font-weight:700;font-size:18px}.emo.mine{top:auto;bottom:calc(120px + var(--safeB))}.emo.mine .big{font-size:40px}
 .emogrid{display:grid;grid-template-columns:repeat(2,1fr);gap:8px}.emogrid button{padding:12px 8px;border-radius:14px;background:var(--bg);border:1px solid var(--line);font-size:16px;font-weight:600}.emogrid button span{font-size:26px;display:block}
+.scanov{position:fixed;inset:0;z-index:200;background:#000;display:flex;flex-direction:column;align-items:center;justify-content:center}
+.scanov video{position:absolute;inset:0;width:100%;height:100%;object-fit:cover}
+.scanbox{position:relative;width:62vmin;height:62vmin;border:3px solid #fff;border-radius:18px;box-shadow:0 0 0 100vmax rgba(0,0,0,.45)}
+.scantip{position:relative;color:#fff;margin-top:16px;font-weight:700}
+.scanov .btn{position:absolute;bottom:calc(24px + var(--safeB,0px));left:24px;right:24px;width:auto;background:rgba(255,255,255,.9);color:#000}
 .qrbox{display:flex;justify-content:center;padding:12px;background:#fff;border-radius:14px;margin:8px auto;width:fit-content}
 .rp-top{display:flex;gap:16px;align-items:center;margin:6px 0 12px}.rp-g{width:72px;height:72px;border-radius:20px;color:#fff;font:900 44px/72px var(--serif);text-align:center;flex:none}.rp-s{font-size:34px;font-weight:900;line-height:1.1}.rp-s small{font-size:15px}
 .rp-ph{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:10px}.rp-ph>div{background:var(--bg);border:1px solid var(--line);border-radius:12px;padding:8px 10px;display:flex;flex-direction:column;gap:2px}.rp-ph b{font-size:22px}.rp-ph i{display:block;height:5px;border-radius:3px}
@@ -277,10 +282,40 @@ if(OFF&&window.XQEngine){let bar=null;
     if(got>=total)setTimeout(()=>{bar&&bar.remove();bar=null},800)})}
 function connectSheet(){const r=OFF&&XQ.remoteInfo();
   sheet("連線到電腦",b=>{b.innerHTML=`<p>連上電腦後可以：看 AI 對戰、請 Claude/GPT 講解、把特級大師與許銀川對局同步到手機。挑戰電腦、雙人對戰、古譜研究不需要連線。</p>
-    <p class="muted">怎麼連：在電腦執行 <b>node xiangqi-referee.js --tunnel</b>，再用手機相機掃電腦頁面上「📱 手機」的 QR code。電腦程式重開後網址會換，要重新掃。</p>
-    <div class="card" id="cs">${r?"檢查連線中…":"目前沒有連線設定"}</div>${r?'<button class="btn ghost" id="dc">取消連線設定</button>':""}`;
+    <p class="muted">怎麼連：在電腦執行 <b>node xiangqi-referee.js --tunnel</b>，按下面「📷 掃描」對準電腦頁面上「📱 手機」的 QR code。電腦程式重開後網址會換，要再掃一次。</p>
+    <div class="card" id="cs">${r?"檢查連線中…":"目前沒有連線設定"}</div>
+    <button class="btn" id="scan">📷 掃描電腦上的 QR code</button>
+    <details style="margin:8px 0"><summary class="muted">掃不到？改貼上連結</summary>
+      <div class="row" style="gap:6px;margin-top:6px"><input id="lk" placeholder="貼上 #connect=… 或 /m?k=… 的網址" style="flex:1;min-width:0;padding:10px;border:1px solid var(--line);border-radius:10px;background:var(--card);color:inherit"><button class="pill" id="lkGo">連線</button></div></details>
+    ${r?'<button class="btn ghost" id="dc">取消連線設定</button>':""}`;
+    b.querySelector("#scan").onclick=()=>scanQR(useLink);
+    b.querySelector("#lkGo").onclick=()=>{if(!useLink(b.querySelector("#lk").value))toast("看不懂這個網址")};
     if(r){XQ.ping().then(ok=>{const c=b.querySelector("#cs");if(c)c.innerHTML=ok?`✅ 已連上電腦<div class="muted" style="word-break:break-all">${esc(r.base)}</div>`:`⚠ 連不到電腦（電腦程式可能關了，或網址已換）<div class="muted" style="word-break:break-all">${esc(r.base)}</div>`});
       b.querySelector("#dc").onclick=()=>{XQ.disconnect();closeSheet();toast("已取消連線設定");route()}}})}
+// 把掃到／貼上的網址變成連線設定。看得懂三種：離線版 App 的 #connect=…（可帶 &seat=）、電腦手機版的 …/m?k=…、雙人對戰的 …/m?k=…#/join/r
+function useLink(text){text=String(text||"").trim();let h=null;
+  const i=text.indexOf("#connect=");if(i>=0)h=text.slice(i);
+  else{let u;try{u=new URL(text)}catch(e){return false}const k=u.searchParams.get("k");if(!/^https:$/.test(u.protocol)||!k)return false;
+    const seat=(u.hash.match(/#\/join\/([rb])/)||[])[1];h=`#connect=${encodeURIComponent(u.origin)}&k=${encodeURIComponent(k)}`+(seat?`&seat=${seat}`:"")}
+  closeSheet();toast("連線中…");location.hash=h;return true}
+// App 內的相機掃描（iPhone 加到主畫面的 App 用相機 App 掃會跳到 Safari，連線資料存不進 App，所以要在 App 裡掃）
+async function scanQR(done){let stream=null,stop=false;
+  const ov=document.createElement("div");ov.className="scanov";
+  ov.innerHTML='<video playsinline muted></video><div class="scanbox"></div><div class="scantip">對準電腦上的 QR code</div><button class="btn ghost" id="sx">✕ 關閉</button>';
+  document.body.append(ov);const vid=ov.querySelector("video");
+  const end=()=>{stop=true;if(stream)stream.getTracks().forEach(t=>t.stop());ov.remove()};ov.querySelector("#sx").onclick=end;
+  try{stream=await navigator.mediaDevices.getUserMedia({video:{facingMode:"environment"},audio:false})}
+  catch(e){end();return toast("沒辦法開相機："+(e.name==="NotAllowedError"?"請在設定裡允許這個 App 使用相機":e.message))}
+  vid.srcObject=stream;await vid.play().catch(()=>{});
+  let det=null;try{if("BarcodeDetector" in window)det=new BarcodeDetector({formats:["qr_code"]})}catch(e){}
+  if(!det)try{await loadScript("jsQR.min.js")}catch(e){end();return toast(e.message)}
+  const cv=document.createElement("canvas"),cx=cv.getContext("2d",{willReadFrequently:true});
+  const tick=async()=>{if(stop)return;let txt=null;
+    try{if(vid.readyState>=2){if(det){const r=await det.detect(vid);if(r[0])txt=r[0].rawValue}
+      else{const w=vid.videoWidth,h=vid.videoHeight,sc=Math.min(1,640/Math.max(w,h));cv.width=w*sc|0;cv.height=h*sc|0;cx.drawImage(vid,0,0,cv.width,cv.height);
+        const r=jsQR(cx.getImageData(0,0,cv.width,cv.height).data,cv.width,cv.height,{inversionAttempts:"dontInvert"});if(r)txt=r.data}}}catch(e){}
+    if(txt){vibrate(30);end();if(!done(txt))toast("這不是連線用的 QR code");return}
+    setTimeout(tick,150)};tick()}
 async function homeStatus(box){
   const r=XQ.remoteInfo(),ok=r?await XQ.ping():false,eng=await XQ.engineCached();
   box.innerHTML=`<div class="row" style="justify-content:space-between"><span>${ok?"🟢 已連上電腦":r?"🟠 連不到電腦（離線使用中）":"⚪ 離線模式"}</span><button class="pill" id="cBtn">${ok?"連線資訊":"怎麼連線"}</button></div>
