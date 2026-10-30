@@ -539,9 +539,9 @@ if(OFF&&window.XQEngine&&XQEngine.prefetch)setTimeout(async()=>{try{if(await XQ.
 // 從背景切回 App：首頁的連線燈號重新檢查（手機網路要一點時間恢復，所以等一下再測）
 if(OFF)document.addEventListener("visibilitychange",()=>{if(document.hidden)return;const h=document.querySelector("#hStatus");if(h)setTimeout(()=>{if(h.isConnected)homeStatus(h)},1200)});
 // ================= 我的名字、誰在線上 =================
-function nameSheet(first){sheet(first?"✅ 已連上電腦，取個名字吧":"我的名字",b=>{
+function nameSheet(first){sheet(first?"👋 歡迎！取個名字吧":"我的名字",b=>{
   const sug="棋友"+Math.floor(1000+Math.random()*9000);
-  b.innerHTML=`<p class="muted">${first?"電腦和其他人會看到這個名字（例如連線對戰時對手看到的是你）。":"這個名字會顯示在電腦上和連線對戰裡。"}</p>
+  b.innerHTML=`<p class="muted">${first?"其他棋友會看到這個名字（例如線上對戰時，對手看到的就是你）。":"這個名字會顯示在線上大廳和對戰裡。"}</p>
     <input id="nm" maxlength="16" placeholder="${sug}" value="${esc(myName())}" style="width:100%;padding:12px;border:1px solid var(--line);border-radius:12px;background:var(--card);color:inherit;margin:4px 0 10px">
     <button class="btn" id="ok">確定</button>${first?'<button class="btn ghost" id="sk">先不要，用「'+sug+'」</button>':""}`;
   const save=n=>{setMyName(n);if(window.XQNet)XQNet.refresh();closeSheet();toast("你好，"+myName()+"！");api("/clients").catch(()=>{});route()};
@@ -574,7 +574,7 @@ function Lobby(v){setTop("線上大廳",false,[["📤",shareSheet,"分享給朋�
       ${ps.length?ps.map(p=>`<div class="card row" style="justify-content:space-between;margin-bottom:8px"><span><b>${esc(p.name)}</b> <span class="pill">${esc(XQNet.rankOf(p.pts))}</span><br><span class="muted">${ST[p.st]||""}</span></span>
         ${p.st==="idle"||p.st==="seeking"?`<button class="pill" data-i="${esc(p.id)}" style="background:var(--accent);color:#fff;border:none;padding:6px 12px">⚔ 邀請對戰</button>`:p.st==="playing"&&p.gid?`<button class="pill" data-w="${esc(p.gid)}">👀 觀看</button>`:""}</div>`).join("")
         :`<div class="card muted">${up?"目前只有你在線上。請朋友打開象棋研究室（按右上角 📤 分享），他們就會出現在這裡。":"連線中…"}</div>`}
-      <p class="muted" style="font-size:12px;margin-top:14px">大廳透過免費的公開伺服器連線，電腦不用開。只會傳名字和棋步，不要把名字取成個人資料。App 切到背景時會暫時離線。</p>`;
+      <p class="muted" style="font-size:12px;margin-top:14px">大廳透過免費的公開伺服器連線。只會傳名字和棋步，不要把名字取成個人資料。App 切到背景時會暫時離線。</p>`;
     box.querySelector("#ed").onclick=()=>nameSheet(false);box.querySelector("#rk").onclick=()=>location.hash="#/stats";
     const s1=box.querySelector("#sk1"),s0=box.querySelector("#sk0");if(s1)s1.onclick=()=>{vibrate(10);XQNet.seek(true)};if(s0)s0.onclick=()=>XQNet.seek(false);
     const bk=box.querySelector("#back");if(bk)bk.onclick=()=>location.hash="#/pvp";
@@ -602,6 +602,9 @@ if(OFF&&window.XQNet){XQNet.start();
 
 // ================= 分享：讓別的手機也裝象棋研究室 =================
 const APP_HOME="https://raysonchen2023-cloud.github.io/xiangqi-lab/";
+// 開發者模式：電腦網頁一律是；手機要在 設定→進階 自己打開。掃過電腦 QR code 的玩家也只是玩家，看不到「電腦」相關的字
+const DEVMODE=()=>!OFF||!!store.get("devMode",false);
+const DEVREMOTE=()=>OFF&&DEVMODE()&&!!(window.XQ&&XQ.remoteInfo&&XQ.remoteInfo());
 // ================= 加到主畫面：用瀏覽器打開時問一次，玩家自己決定 =================
 // iPhone 不能用程式安裝，只能教步驟；Android 可以直接跳出系統的安裝視窗。LINE 內建瀏覽器不能加，要先改用手機的瀏覽器。
 let installEvt=null;addEventListener("beforeinstallprompt",e=>{e.preventDefault();installEvt=e});
@@ -648,7 +651,7 @@ function standaloneOnlineWarn(v){if(OFF||!(matchMedia("(display-mode: standalone
   c.innerHTML=`<b>⚠ 這個主畫面圖示會失效</b><p class="muted" style="margin:6px 0">它記住的是電腦這次的臨時網址，電腦程式一重開就連不上。請改裝「象棋研究室」正式版：按下面按鈕，在 Safari 打開後選「加入主畫面」，再把這個舊圖示刪掉。正式版會自己找到電腦的新網址。</p><button class="btn" id="gh">打開正式版（已帶好連線設定）</button>`;
   v.prepend(c);c.querySelector("#gh").onclick=async()=>{let u=APP_HOME;try{const r=await api("/remote");u=(r.urls||[]).find(x=>x.includes("#connect="))||u}catch(e){}location.href=u}}
 function Home(v){
-  const RI=OFF&&window.XQ&&XQ.remoteInfo?XQ.remoteInfo():null;  // 這支手機連過主人的電腦嗎
+  const RI=DEVREMOTE()?XQ.remoteInfo():null;  // 這支手機連過主人的電腦嗎
   const standalone=matchMedia("(display-mode: standalone)").matches||navigator.standalone;
   setTop("象棋研究室",false,OFF?[["📤",shareSheet,"分享給朋友"]].concat(RI?[["🔗",connectSheet,"連線到電腦"]]:[],[["⚙",()=>location.hash="#/settings","設定"]]):[["📤",shareSheet,"分享給朋友"],["👥",whoSheet,"誰在線上"],["⚙",()=>location.hash="#/settings","設定"]]);setTabs(true,"#/");
   const T=(k,go,ic,t,id,s,x)=>`<button class="tile ${k}${x||""}" data-go="${go}"><span class="ic">${ic}</span><span class="t">${t}</span><span class="s"${id?` id="${id}"`:""}>${s}</span></button>`;
@@ -684,7 +687,7 @@ function Home(v){
   v.querySelector("#hFb").onclick=()=>feedbackSheet();const hi=v.querySelector("#hInst");if(hi)hi.onclick=()=>installGuide(true);
   v.querySelectorAll("[data-go]").forEach(b=>b.onclick=()=>{vibrate(5);location.hash=b.dataset.go});
   standaloneOnlineWarn(v.firstElementChild||v);
-  if(OFF){if(RI)homeStatus(v.querySelector("#hStatus"));if(window.XQ_justConnected){XQ_justConnected=false;setTimeout(()=>toast("已連上電腦！"),300)}}
+  if(OFF){if(RI)homeStatus(v.querySelector("#hStatus"));if(window.XQ_justConnected){XQ_justConnected=false;if(DEVMODE())setTimeout(()=>toast("已連上電腦！"),300)}}
   const qb=store.get("quizBest",null);if(qb)v.querySelector("#hQuiz").textContent="最好："+qb.rank;
   let offNet=[];if(OFF&&window.XQNet){const upd=()=>{const e=v.querySelector("#hNet");if(!e)return;const n=XQNet.people().length;
       e.textContent=(XQNet.playing()?"🔴 你有一盤進行中・":"")+(XQNet.status()!=="up"?"連線中…":n?`🟢 ${n} 位棋友在線上`:"目前只有你在線上");
@@ -884,7 +887,9 @@ function Settings(v){
       <button class="item" id="nm"><span class="lb">✏</span><span class="tx"><b>我的名字</b><span id="nmS"></span></span><span class="muted">›</span></button>
       <button class="item" id="fb"><span class="lb">💬</span><span class="tx"><b>意見回饋</b><span>回報錯誤、想要的功能</span></span><span class="muted">›</span></button>
       <button class="item" id="sh"><span class="lb">📤</span><span class="tx"><b>分享給朋友</b><span>QR code・LINE</span></span><span class="muted">›</span></button></div>
-    ${OFF?'<div class="sec-t">進階（開發者用）</div><div class="items" style="padding:0"><button class="item" id="cn"><span class="lb">🖥</span><span class="tx"><b>連線到主人的電腦</b><span>看 AI 對戰、同步大師棋譜。一般玩家不用設定</span></span><span class="muted">›</span></button></div>':""}</div>`;
+    ${OFF?'<div class="sec-t">進階</div><div class="card"><label class="row" style="justify-content:space-between"><span><b>開發者模式</b><br><span class="muted">一般玩家不用打開。打開後才會顯示連線電腦、AI 對戰等開發者功能</span></span><input type="checkbox" class="sw" id="dm"></label></div>'
+      +(DEVMODE()?'<div class="items" style="padding:0;margin-top:8px"><button class="item" id="cn"><span class="lb">🖥</span><span class="tx"><b>連線到開發者的電腦</b><span>看 AI 對戰、同步大師棋譜</span></span><span class="muted">›</span></button></div>':""):""}</div>`;
+  const dm=v.querySelector("#dm");if(dm){dm.checked=DEVMODE();dm.onchange=()=>{store.set("devMode",dm.checked);toast(dm.checked?"已打開開發者模式":"已關閉開發者模式");route()}}
   const b0=parseFen(SAMPLE_FEN0),b1=parseFen(SAMPLE_FEN1),pv=Board(null);v.querySelector("#pv").append(pv.svg);
   const show=animate=>{if(animate){pv.draw(b0,{anim:false});setTimeout(()=>pv.draw(b1,{last:SAMPLE_LAST}),250)}else pv.draw(b1,{last:SAMPLE_LAST,anim:false})};
   v.querySelector("#replay").onclick=()=>show(true);
@@ -1098,7 +1103,7 @@ function PvpGame(v){
   let seat=NET?(XQNet.side()||"w"):store.get("pvpSeat",null);if(!NET&&OFF&&seat&&!XQ.remoteInfo()){seat=null;store.set("pvpSeat",null);XQ.setPvpOnline(false)}
   const bd=Board(i=>tap(i));v.querySelector("#bbox").append(bd.svg);
   const setTitle=()=>NET?setTop(seat==="w"?"👀 觀戰中":`網路對戰・我執${seat==="r"?"紅":"黑"}`,"#/lobby",[["🌐",()=>netSheet(),"大廳"]])
-    :setTop(seat?`連線對戰・我執${seat==="r"?"紅":"黑"}`:"雙人對戰","#/",[["👥",()=>seatSheet(),"連線對戰"],["⚙",()=>newSheet(),"新局設定"]]);setTitle();
+    :setTop(seat?`連線對戰・我執${seat==="r"?"紅":"黑"}`:"雙人對戰","#/",(DEVMODE()?[["👥",()=>seatSheet(),"連線對戰"]]:[]).concat([["⚙",()=>newSheet(),"新局設定"]]));setTitle();   // 透過電腦的連線對戰只給開發者；玩家用「線上對戰」
   function netSheet(){sheet(seat==="w"?"觀戰中":"網路對戰",b=>{b.innerHTML=`<button class="btn" id="lb">🌐 回大廳（這盤會保留）</button><button class="btn ghost" id="lv">${seat==="w"?"不看了":"離開這盤"}</button>`;
     b.querySelector("#lb").onclick=()=>{closeSheet();location.hash="#/lobby"};
     b.querySelector("#lv").onclick=()=>{closeSheet();const go=()=>{XQNet.leave();location.hash="#/lobby"};
@@ -1213,14 +1218,14 @@ function Library(v,c0){
   v.querySelector("#clr").onclick=()=>{libState.q="";qi.value="";libState.player="";libState.side="";libState.res="";libState.limit=60;filter(true)};
   const pick=c=>{libState.player="";libState.q="";qi.value="";libState.limit=60;load(c)};
   function paintCols(){const seg=v.querySelector("#grp"),box=v.querySelector("#cols");
-    const gs=GRPS.filter(([g])=>books.some(b=>grpOf(b)===g)||(g==="gm"&&(OFF&&!!(window.XQ&&XQ.remoteInfo&&XQ.remoteInfo()))));
+    const gs=GRPS.filter(([g])=>books.some(b=>grpOf(b)===g)||(g==="gm"&&DEVREMOTE()));
     seg.hidden=gs.length<2;seg.innerHTML="";
     for(const[g,l]of gs){const x=document.createElement("button");x.textContent=l;x.classList.toggle("on",g===grp);
       x.onclick=()=>{if(g===grp)return;grp=g;const f=books.find(b=>grpOf(b)===g);if(f)pick(f.key);else{paintCols();libState.c=null;data=null;showNone()}};seg.append(x)}
     box.innerHTML="";
     for(const b of books.filter(b=>grpOf(b)===grp)){const x=document.createElement("button");x.dataset.c=b.key;x.classList.toggle("on",b.key===libState.c);
       x.innerHTML=esc(b.name)+(b.count?`<span class="n">${b.count}</span>`:"");x.onclick=()=>{if(b.key!==libState.c)pick(b.key)};box.append(x)}
-    if((OFF&&!!(window.XQ&&XQ.remoteInfo&&XQ.remoteInfo()))&&grp==="gm"){const x=document.createElement("button");x.className="sync";x.textContent="☁ 從電腦同步";x.onclick=()=>syncSheet();box.append(x)}
+    if(DEVREMOTE()&&grp==="gm"){const x=document.createElement("button");x.className="sync";x.textContent="☁ 從電腦同步";x.onclick=()=>syncSheet();box.append(x)}
     const on=box.querySelector(".on"),x=on?on.offsetLeft-box.offsetLeft:0;box.scrollLeft=on&&x+on.offsetWidth>box.clientWidth-12?x-(box.clientWidth-on.offsetWidth)/2:0}
   function showNone(){v.querySelector("#pf").hidden=true;v.querySelector("#clr").hidden=true;v.querySelector("#cnt").textContent="";v.querySelector("#more").innerHTML="";
     empty("🏆","還沒有大師對局<br>從電腦同步到手機，沒網路也能看",["☁ 從電腦同步",()=>syncSheet()])}
@@ -1452,7 +1457,7 @@ function Viewer(v,c,id){
 
 // ================= AI 對戰直播 =================
 // ================= 觀戰：線上棋友正在下的棋＋AI 對戰 =================
-function WatchHub(v){setTop("觀戰",false);setTabs(true,"#/watch");const RI=!OFF||!!XQ.remoteInfo();   // 一般玩家（沒連過電腦）看不到 AI 對戰
+function WatchHub(v){setTop("觀戰",false);setTabs(true,"#/watch");const RI=!OFF||DEVREMOTE();   // 一般玩家（沒連過電腦）看不到 AI 對戰
   v.innerHTML=`<div class="pad home"><div class="sec-t" style="margin-top:4px">線上對局 <button id="lb">線上大廳 ›</button></div><div id="wl"></div>
     ${RI?`<div class="sec-t">AI 對戰</div><button class="item card" id="ai" style="width:100%;display:flex;gap:12px;align-items:center;text-align:left">
       <span style="font-size:30px">📺</span><span style="flex:1;min-width:0"><b>GPT 對 Claude</b><br><span class="muted" id="aiS">電腦上的兩個 AI 在下棋</span></span><span class="muted">›</span></button>`:""}
