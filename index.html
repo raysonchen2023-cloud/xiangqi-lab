@@ -8,11 +8,11 @@
 <link rel="manifest" href="manifest.json"><link rel="icon" href="icon.svg"><link rel="apple-touch-icon" href="icon-180.png">
 <style>
 :root{--bg:#F3EDE2;--card:#FFFDF8;--ink:#2A1F15;--muted:#7A6A58;--line:#E2D6C3;--accent:#B5452B;--accent2:#2F6B4F;--red:#B3261E;--blk:#1B1F1C;
---wood:#E6BF83;--grid:#5B3B1C;--piece:#F8ECD4;--hl:#2F6B4F55;--bar:#3B2A1A;--barink:#F6E7CF;--warn:#B76E00;
+--wood:#E6BF83;--grid:#5B3B1C;--piece:#F8ECD4;--hl:#2F6B4F55;--bar:#3B2A1A;--barink:#F6E7CF;--warn:#B76E00;--info:#3D6A9E;
 --serif:"Noto Serif TC","Songti TC","SimSun",serif;--sans:"Noto Sans TC","PingFang TC","Microsoft JhengHei",system-ui,sans-serif;
 --safeT:env(safe-area-inset-top);--safeB:env(safe-area-inset-bottom)}
 @media (prefers-color-scheme:dark){:root{--bg:#15110D;--card:#211A13;--ink:#F1E6D6;--muted:#A8987F;--line:#3A2E22;--accent:#E0714F;--accent2:#6FBF95;--red:#E0574B;--blk:#151816;
---wood:#B98C52;--grid:#3A2410;--piece:#EFE0C2;--hl:#6FBF9555;--bar:#0E0B08;--barink:#F1E6D6;--warn:#E3A34A;color-scheme:dark}}
+--wood:#B98C52;--grid:#3A2410;--piece:#EFE0C2;--hl:#6FBF9555;--bar:#0E0B08;--barink:#F1E6D6;--warn:#E3A34A;--info:#7FA6D6;color-scheme:dark}}
 *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}[hidden]{display:none!important}
 html,body{margin:0;height:100%;overflow:hidden;background:var(--bg);color:var(--ink);font-family:var(--sans);font-size:15px;line-height:1.5;
   -webkit-user-select:none;user-select:none;overscroll-behavior:none}
@@ -37,12 +37,28 @@ input,select{font:inherit;font-size:16px;color:inherit}
 /* 卡片 */
 .pad{padding:12px}
 .card{background:var(--card);border-radius:16px;padding:14px;box-shadow:0 1px 3px #0000001a;border:1px solid var(--line)}
+/* 首頁／對弈入口：同一種方塊 */
+.home{padding:12px;max-width:680px;margin:0 auto}
 .hero{display:grid;grid-template-columns:1fr 1fr;gap:10px}
-.tile{background:var(--card);border-radius:18px;padding:14px;border:1px solid var(--line);display:flex;flex-direction:column;gap:4px;min-height:118px;text-align:left;position:relative;overflow:hidden}
-.tile:active{transform:scale(.98)}
-.tile .big{font-size:34px;line-height:1}.tile .t{font-weight:900;font-size:16px;font-family:var(--serif)}.tile .s{font-size:12px;color:var(--muted)}
-.tile.main{grid-column:1/-1;background:linear-gradient(135deg,var(--accent),#7A2A18);color:#fff;border:none;min-height:130px}
-.tile.main .s{color:#ffffffcc}
+.hero.c3{grid-template-columns:repeat(3,1fr)}
+.tile{--c:var(--accent);background:var(--card);border-radius:16px;padding:12px;border:1px solid var(--line);box-shadow:0 1px 3px #0000001a;
+  display:flex;flex-direction:column;align-items:stretch;gap:1px;height:124px;min-width:0;text-align:left;position:relative;overflow:hidden;transition:transform .1s}
+.tile:active{transform:scale(.97)}
+.tile .ic{width:44px;height:44px;border-radius:12px;display:flex;align-items:center;justify-content:center;font-size:24px;line-height:1;margin-bottom:auto;
+  background:var(--bg);background:color-mix(in srgb,var(--c) 15%,var(--card))}
+.tile .t,.tile .s{display:block;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.tile .t{font-weight:900;font-size:16px;font-family:var(--serif);line-height:1.35}
+.tile .s{font-size:12px;color:var(--muted);line-height:1.4}
+.tile .bd{position:absolute;top:12px;right:12px;font-size:12px;font-weight:700;padding:2px 8px;border-radius:999px;color:var(--c);border:1px solid var(--c);background:var(--card)}
+.tile.off .ic{filter:grayscale(1);opacity:.55}
+.tile.sm{height:104px}.tile.sm .ic{width:36px;height:36px;border-radius:10px;font-size:20px}.tile.sm .t{font-size:15px}
+.tile.k1{--c:var(--accent)}.tile.k2{--c:var(--accent2)}.tile.k3{--c:var(--warn)}.tile.k4{--c:var(--info)}
+.hstat{padding:9px 12px;margin-bottom:12px;font-size:13px;border-radius:14px}
+.hstat .row{min-height:28px}.hstat .row+.row{margin-top:2px!important}
+.hstat .row+.row:not(:has(button)){display:none}
+.hfoot{display:flex;flex-wrap:wrap;justify-content:center;align-items:center;gap:6px 10px;margin:24px 0 8px;font-size:12px;color:var(--muted);text-align:center}
+.hfoot .lk{color:var(--muted);font-size:12px;padding:6px 4px;text-decoration:underline;text-underline-offset:3px}
+@media (min-width:700px){.home{padding:20px 16px}.hero{gap:12px}.hero.c4{grid-template-columns:repeat(4,1fr)}.tile{height:136px;padding:14px}.tile.sm{height:112px}}
 .sec-t{font-weight:900;font-family:var(--serif);font-size:16px;margin:18px 4px 8px;display:flex;justify-content:space-between;align-items:baseline}
 .sec-t a,.sec-t button{font-size:13px;color:var(--accent);font-family:var(--sans);font-weight:500}
 .row{display:flex;align-items:center;gap:10px}
@@ -345,8 +361,8 @@ function connectSheet(){const r=OFF&&XQ.remoteInfo();
     ${r?'<button class="btn ghost" id="dc">取消連線設定</button>':""}`;
     b.querySelector("#scan").onclick=()=>scanQR(useLink);
     b.querySelector("#lkGo").onclick=()=>{if(!useLink(b.querySelector("#lk").value))toast("看不懂這個網址")};
-    if(r){XQ.ping().then(ok=>{const c=b.querySelector("#cs");if(c)c.innerHTML=ok?`✅ 已連上電腦（我是 <b>${esc(myName()||"未取名")}</b>）<div class="muted" style="word-break:break-all">${esc(r.base)}</div><div class="row" style="gap:6px;margin-top:8px"><button class="pill" id="who">👥 誰在線上</button><button class="pill" id="nmB">✏ 改名字</button></div>`:`⚠ 連不到電腦（電腦程式可能關了，或網址已換）<div class="muted" style="word-break:break-all">${esc(r.base)}</div>`;
-        const w=c&&c.querySelector("#who"),n=c&&c.querySelector("#nmB");if(w)w.onclick=whoSheet;if(n)n.onclick=()=>nameSheet(false)});
+    if(r){XQ.ping().then(ok=>{const c=b.querySelector("#cs");if(c)c.innerHTML=ok?`✅ 已連上電腦（我是 <b>${esc(myName()||"未取名")}</b>）<div class="muted" style="word-break:break-all">${esc(r.base)}</div><div class="row" style="gap:6px;margin-top:8px;flex-wrap:wrap"><button class="pill" id="who">👥 誰在線上</button><button class="pill" id="nmB">✏ 改名字</button><button class="pill" id="dq">📱 另一台裝置也連</button></div>`:`⚠ 連不到電腦（電腦程式可能關了，或網址已換）<div class="muted" style="word-break:break-all">${esc(r.base)}</div>`;
+        const w=c&&c.querySelector("#who"),n=c&&c.querySelector("#nmB");if(w)w.onclick=whoSheet;if(n)n.onclick=()=>nameSheet(false);const q=c&&c.querySelector("#dq");if(q)q.onclick=()=>deviceQR(r.base,r.key)});
       b.querySelector("#dc").onclick=()=>{XQ.disconnect();closeSheet();toast("已取消連線設定");route()}}})}
 // 把掃到／貼上的網址變成連線設定。看得懂三種：離線版 App 的 #connect=…（可帶 &seat=）、電腦手機版的 …/m?k=…、雙人對戰的 …/m?k=…#/join/r
 function useLink(text){text=String(text||"").trim();let h=null;
@@ -411,17 +427,17 @@ function Lobby(v){setTop("線上大廳","#/",[["📤",shareSheet,"分享給朋�
   function paint(){const box=v.querySelector("#lb");if(!box)return;const ps=XQNet.people(),up=XQNet.status()==="up";
     const games={};for(const p of ps)if(p.st==="playing"&&p.gid&&p.gid!==XQNet.gid())(games[p.gid]=games[p.gid]||[]).push(p);
     box.innerHTML=`<div class="card"><div class="row" style="justify-content:space-between"><span>我是 <b>${esc(XQNet.me().name)}</b></span><button class="pill" id="ed">✏ 改名字</button></div>
-        <div class="muted" style="margin-top:6px">${up?"🟢 已進入大廳":"⏳ 連線到大廳中…"}</div></div>
+        <div class="row" style="justify-content:space-between;margin-top:6px"><span class="muted">${up?"🟢 已進入大廳":"⏳ 連線到大廳中…"}</span><button class="pill" id="rk">🏅 ${esc(XQNet.rating().rank)}・${XQNet.rating().pts} 分</button></div></div>
       ${XQNet.playing()?'<button class="btn" id="back" style="margin-top:10px">♟ 回到我進行中的對局</button>'
         :XQNet.seeking()?`<div class="card" style="margin-top:10px;text-align:center"><div style="font-size:30px">🎲</div><b>正在幫你找對手…</b><div class="muted">${XQNet.seekers()?`另外有 ${XQNet.seekers()} 人也在找，馬上配對`:"有人按「隨機配對」就會自動開始"}</div><button class="btn ghost" id="sk0" style="margin-top:8px">取消</button></div>`
         :'<button class="btn" id="sk1" style="margin-top:10px">🎲 隨機配對（自動找一位線上對手）</button>'}
       ${Object.keys(games).length?`<div class="sec-t">正在對戰</div>`+Object.entries(games).map(([g,l])=>`<div class="card row" style="justify-content:space-between;margin-bottom:8px"><span>⚔ ${l.map(p=>esc(p.name)).join(" 對 ")}</span><button class="pill" data-w="${esc(g)}">👀 觀看</button></div>`).join(""):""}
       <div class="sec-t">在線棋友（${ps.length}）</div>
-      ${ps.length?ps.map(p=>`<div class="card row" style="justify-content:space-between;margin-bottom:8px"><span><b>${esc(p.name)}</b><br><span class="muted">${ST[p.st]||""}</span></span>
+      ${ps.length?ps.map(p=>`<div class="card row" style="justify-content:space-between;margin-bottom:8px"><span><b>${esc(p.name)}</b> <span class="pill">${esc(XQNet.rankOf(p.pts))}</span><br><span class="muted">${ST[p.st]||""}</span></span>
         ${p.st==="idle"||p.st==="seeking"?`<button class="pill" data-i="${esc(p.id)}" style="background:var(--accent);color:#fff;border:none;padding:6px 12px">⚔ 邀請對戰</button>`:p.st==="playing"&&p.gid?`<button class="pill" data-w="${esc(p.gid)}">👀 觀看</button>`:""}</div>`).join("")
         :`<div class="card muted">${up?"目前只有你在線上。請朋友打開象棋研究室（按右上角 📤 分享），他們就會出現在這裡。":"連線中…"}</div>`}
       <p class="muted" style="font-size:12px;margin-top:14px">大廳透過免費的公開伺服器連線，電腦不用開。只會傳名字和棋步，不要把名字取成個人資料。App 切到背景時會暫時離線。</p>`;
-    box.querySelector("#ed").onclick=()=>nameSheet(false);
+    box.querySelector("#ed").onclick=()=>nameSheet(false);box.querySelector("#rk").onclick=()=>location.hash="#/stats";
     const s1=box.querySelector("#sk1"),s0=box.querySelector("#sk0");if(s1)s1.onclick=()=>{vibrate(10);XQNet.seek(true)};if(s0)s0.onclick=()=>XQNet.seek(false);
     const bk=box.querySelector("#back");if(bk)bk.onclick=()=>location.hash="#/pvp";
     box.querySelectorAll("[data-w]").forEach(b=>b.onclick=()=>{XQNet.watch(b.dataset.w);location.hash="#/pvp"});
@@ -441,6 +457,7 @@ if(OFF&&window.XQNet){XQNet.start();
     modal(`<div class="em">⚔</div><h2>${esc(x.from.name)} 邀請你下一盤</h2><p class="muted">接受的話你執黑，對方先走。</p>`,
       [["接受",()=>{const go=()=>{XQNet.respond(x,true);goGame()};if(XQNet.active()&&XQNet.game()&&!XQNet.game().result&&XQNet.side())XQNet.leave();go()}],["婉拒",()=>XQNet.respond(x,false),true]])});
   XQNet.on("cancel",x=>toast(`${x.from.name} 取消了邀請`));
+  XQNet.on("rated",x=>setTimeout(()=>toast(`${x.res==="w"?"🏆 贏了":x.res==="l"?"輸了":"和棋"}　積分 ${x.d>0?"+"+x.d:x.d<0?x.d:"±0"}　→ ${x.pts} 分`+(x.rank!==x.was?`（${x.d>0?"升":"降"}為 ${x.rank}）`:"")),1200));
   XQNet.on("start",()=>{closeSheet();toast("對方接受了！你執紅先走");goGame()});
   XQNet.on("matchfail",x=>{toast(x.auto?"對方離開了，繼續幫你找對手…":"對方離開了，這盤沒有開始");location.hash="#/lobby"});
   XQNet.on("matched",x=>{vibrate([40,60,40]);closeSheet();toast(`🎲 配對成功：對手是 ${x.name}`);goGame()})}
@@ -449,23 +466,24 @@ if(OFF&&window.XQNet){XQNet.start();
 const APP_HOME="https://raysonchen2023-cloud.github.io/xiangqi-lab/";
 async function shareSheet(){
   const app=OFF&&/^https:/.test(location.origin)?location.origin+location.pathname:APP_HOME;
-  // 連線網址（含存取碼）只在這支手機連得上電腦時才提供，而且預設不勾
-  let conn=null;
-  try{if(OFF){const r=XQ.remoteInfo();if(r&&await XQ.ping())conn=`${app}#connect=${encodeURIComponent(r.base)}&k=${encodeURIComponent(r.key)}`}
-    else{const r=await api("/remote");conn=(r.urls||[]).find(u=>u.includes("#connect="))||null}}catch(e){}
+  // 給一般玩家：只有 App 本身。連到電腦的 QR code 放在「🔗 連線到電腦」裡（只有連過電腦的裝置看得到）
   try{await loadScript("qrcode.min.js")}catch(e){return toast(e.message)}
   sheet("分享象棋研究室",b=>{
-    b.innerHTML=`<p style="text-align:center">朋友用手機相機掃這個 QR code，就能打開<b>象棋研究室</b>。<br><span class="muted">iPhone：用 Safari 打開 → 分享 →「加入主畫面」，就像 App 一樣。挑戰電腦、雙人同機、古譜、測驗、術語都不用連電腦。</span></p>
+    b.innerHTML=`<p style="text-align:center">朋友用手機相機掃這個 QR code，就能打開<b>象棋研究室</b>。</p>
       <div class="qrbox" id="qrc"></div>
-      ${conn?`<label class="row" style="justify-content:center;margin:6px 0 2px"><input type="checkbox" id="wc"> 同時連到我的電腦</label>
-        <p class="muted" id="wcN" style="text-align:center;margin:0 0 6px" hidden>⚠ 這個 QR code 含存取碼，掃到的人能看 AI 對戰、跟你連線對戰，也能操作電腦上的對局。只給信任的人。</p>`:""}
+      <p class="muted" style="text-align:center;margin:4px 0 10px">iPhone：Safari 打開 → 分享 →「加入主畫面」<br>Android：Chrome 選單 →「加到主畫面」<br>有新版會自動更新，不用再分享一次。</p>
       <button class="btn" id="sh">${navigator.share?"用 LINE／訊息分享連結":"複製連結"}</button>`;
-    let cur=app;
-    const draw=()=>{const box=b.querySelector("#qrc");box.innerHTML="";new QRCode(box,{text:cur,width:220,height:220,correctLevel:QRCode.CorrectLevel.L})};draw();
-    const wc=b.querySelector("#wc");if(wc)wc.onchange=()=>{cur=wc.checked?conn:app;b.querySelector("#wcN").hidden=!wc.checked;draw()};
+    new QRCode(b.querySelector("#qrc"),{text:app,width:220,height:220,correctLevel:QRCode.CorrectLevel.L});
     b.querySelector("#sh").onclick=async()=>{
-      if(navigator.share){try{await navigator.share({title:"象棋研究室",text:"一起來下象棋：",url:cur})}catch(e){}return}
-      try{await navigator.clipboard.writeText(cur);toast("已複製連結")}catch(e){prompt("複製這個連結",cur)}}})}
+      if(navigator.share){try{await navigator.share({title:"象棋研究室",text:"一起來下象棋：",url:app})}catch(e){}return}
+      try{await navigator.clipboard.writeText(app);toast("已複製連結")}catch(e){prompt("複製這個連結",app)}}})}
+// 給開發者：讓自己的另一台裝置也連到電腦（含存取碼，只給自己或信任的人）
+async function deviceQR(base,key){
+  const app=/^https:/.test(location.origin)?location.origin+location.pathname:APP_HOME,u=`${app}#connect=${encodeURIComponent(base)}&k=${encodeURIComponent(key)}`;
+  try{await loadScript("qrcode.min.js")}catch(e){return toast(e.message)}
+  sheet("讓另一台裝置連到電腦",b=>{b.innerHTML=`<p style="text-align:center">用另一台手機／平板的相機掃這個 QR code，打開後就會連到你的電腦。</p><div class="qrbox" id="qrc"></div>
+    <p class="muted" style="text-align:center">⚠ 含存取碼：掃到的人能操作電腦上的對局。只給自己的裝置或信任的人。</p>`;
+    new QRCode(b.querySelector("#qrc"),{text:u,width:220,height:220,correctLevel:QRCode.CorrectLevel.L})})}
 
 // ================= 首頁 =================
 // 線上版（電腦給的 trycloudflare 網址）被加到主畫面的話，電腦重開後網址就失效；請改裝 GitHub 版
@@ -474,56 +492,61 @@ function standaloneOnlineWarn(v){if(OFF||!(matchMedia("(display-mode: standalone
   c.innerHTML=`<b>⚠ 這個主畫面圖示會失效</b><p class="muted" style="margin:6px 0">它記住的是電腦這次的臨時網址，電腦程式一重開就連不上。請改裝「象棋研究室」正式版：按下面按鈕，在 Safari 打開後選「加入主畫面」，再把這個舊圖示刪掉。正式版會自己找到電腦的新網址。</p><button class="btn" id="gh">打開正式版（已帶好連線設定）</button>`;
   v.prepend(c);c.querySelector("#gh").onclick=async()=>{let u=APP_HOME;try{const r=await api("/remote");u=(r.urls||[]).find(x=>x.includes("#connect="))||u}catch(e){}location.href=u}}
 function Home(v){
-  setTop("象棋研究室",false,OFF?[["📤",shareSheet,"分享給朋友"],["🔗",connectSheet,"連線到電腦"]]:[["📤",shareSheet,"分享給朋友"],["👥",whoSheet,"誰在線上"],["🖥",()=>location.href="/","電腦版"]]);setTabs(true,"#/");
-  v.innerHTML=`<div class="pad">
-   ${OFF?'<div class="card" id="hStatus" style="margin-bottom:12px"><span class="muted">檢查中…</span></div>':""}
-   <div class="hero">
-    <button class="tile main" data-go="#/cpu"><span class="big">🤖</span><span class="t" style="font-size:19px">挑戰電腦</span><span class="s" id="hCpu">Pikafish・八個難度</span></button>
-    <button class="tile" data-go="#/pvp"><span class="big">👥</span><span class="t">雙人對戰</span><span class="s" id="hPvp">同一支手機輪流下</span></button>
-    <button class="tile" data-go="#/watch"><span class="big">📺</span><span class="t">AI 對戰</span><span class="s" id="hAi">GPT 對 Claude</span></button>
+  const RI=OFF&&window.XQ&&XQ.remoteInfo?XQ.remoteInfo():null;  // 這支手機連過主人的電腦嗎
+  const standalone=matchMedia("(display-mode: standalone)").matches||navigator.standalone;
+  setTop("象棋研究室",false,OFF?[["📤",shareSheet,"分享給朋友"]].concat(RI?[["🔗",connectSheet,"連線到電腦"]]:[]):[["📤",shareSheet,"分享給朋友"],["👥",whoSheet,"誰在線上"],["🖥",()=>location.href="/","電腦版"]]);setTabs(true,"#/");
+  const T=(k,go,ic,t,id,s,x)=>`<button class="tile ${k}${x||""}" data-go="${go}"><span class="ic">${ic}</span><span class="t">${t}</span><span class="s"${id?` id="${id}"`:""}>${s}</span></button>`;
+  v.innerHTML=`<div class="home">
+   ${RI?'<div class="card hstat" id="hStatus"><span class="muted">檢查中…</span></div>':""}
+   <div class="hero c4">
+    ${T("k1","#/cpu","🤖","挑戰電腦","hCpu","Pikafish・八個難度")}
+    ${OFF?T("k2","#/lobby","🌐","線上對戰","hNet","看誰在線上・邀請對戰"):""}
+    ${T("k3","#/pvp","👥","雙人對戰","hPvp","同一支手機輪流下")}
+    ${OFF&&!RI?T("k4","#/watch","📺","AI 對戰","hAi","需要連到電腦"," off"):T("k4","#/watch","📺","AI 對戰","hAi","GPT 對 Claude")}
+    ${OFF?"":T("k2","#/db","📜","棋譜庫","","古譜・對局紀錄")}
    </div>
-   ${OFF?`<div class="hero" style="margin-top:10px"><button class="tile" data-go="#/lobby" style="grid-column:1/-1;min-height:74px;flex-direction:row;align-items:center;gap:12px">
-     <span class="big">🌐</span><span style="display:flex;flex-direction:column;gap:2px"><span class="t">線上大廳</span><span class="s" id="hNet">看誰在線上・邀請對戰・觀戰（不用連電腦）</span></span></button></div>`:""}
    <div class="sec-t">學習</div>
-   <div class="hero" style="grid-template-columns:repeat(3,1fr)">
-    <button class="tile" data-go="#/quiz" style="min-height:92px"><span class="big">🎯</span><span class="t">棋力測驗</span><span class="s" id="hQuiz">業1～專2</span></button>
-    <button class="tile" data-go="#/terms" style="min-height:92px"><span class="big">📚</span><span class="t">象棋術語</span><span class="s">殺法・開局</span></button>
-    <button class="tile" data-go="#/stats" style="min-height:92px"><span class="big">🏅</span><span class="t">我的戰績</span><span class="s">勝負・評級</span></button>
+   <div class="hero c3">
+    ${T("k1 sm","#/quiz","🎯","棋力測驗","hQuiz","業1～專2")}
+    ${T("k2 sm","#/terms","📚","象棋術語","","殺法・開局")}
+    ${T("k3 sm","#/stats","🏅","我的戰績","","勝負・評級")}
    </div>
-   <div class="sec-t">繼續研究</div><div id="hRecent"></div>
-   <div class="sec-t">棋譜庫 <button data-go="#/db">全部 ›</button></div><div class="chips" id="hBooks" style="padding:0 0 4px"></div>
-   <div class="sec-t">挑戰進度 <button data-go="#/stats">我的戰績 ›</button></div><div class="card" id="hProg"><span class="muted">載入中…</span></div>
-   <p class="muted" style="text-align:center;margin:22px 0 8px">提示：在瀏覽器選單點「加入主畫面」，就能像 App 一樣全螢幕使用。</p>
-   ${OFF?'<p class="muted" style="text-align:center;font-size:12px;margin:0 0 14px"><span id="hVer">版本讀取中…</span>　<button class="pill" id="hUpd">檢查更新</button></p>':""}
+   <div id="hRecentBox" hidden><div class="sec-t">繼續研究 <button data-go="#/db">棋譜庫 ›</button></div><div class="items" id="hRecent" style="padding:0"></div></div>
+   <div class="hfoot">
+    ${standalone?"":'<div style="flex-basis:100%">提示：瀏覽器選單點「加入主畫面」，就能全螢幕使用</div>'}
+    ${OFF?`<span id="hVer">版本讀取中…</span><button class="pill" id="hUpd">檢查更新</button>${RI?"":'<button class="lk" id="hConn">🔗 連線到電腦</button>'}`:""}
+   </div>
   </div>`;
   if(OFF){appVer().then(x=>{const e=v.querySelector("#hVer");if(e)e.textContent="版本 "+(!x?"未知":/^\d{8}-\d{4}$/.test(x)?`${x.slice(0,4)}/${x.slice(4,6)}/${x.slice(6,8)} ${x.slice(9,11)}:${x.slice(11,13)}`:x.slice(0,8))});
     v.querySelector("#hUpd").onclick=async e=>{const b=e.target;b.disabled=true;b.textContent="檢查中…";
       const r=window.XQ_checkUpdate?await XQ_checkUpdate():{};
       if(!r.n){b.textContent="沒有網路";b.disabled=false;return}
       if(r.a===r.n){b.textContent="✓ 已是最新版";return}
-      b.textContent="下載新版中…";setTimeout(()=>location.reload(),6000)}}
+      b.textContent="下載新版中…";setTimeout(()=>location.reload(),6000)};
+    const hc=v.querySelector("#hConn");if(hc)hc.onclick=connectSheet}
   v.querySelectorAll("[data-go]").forEach(b=>b.onclick=()=>{vibrate(5);location.hash=b.dataset.go});
   standaloneOnlineWarn(v.firstElementChild||v);
-  if(OFF){homeStatus(v.querySelector("#hStatus"));if(window.XQ_justConnected){XQ_justConnected=false;setTimeout(()=>toast("已連上電腦！"),300)}}
+  if(OFF){if(RI)homeStatus(v.querySelector("#hStatus"));if(window.XQ_justConnected){XQ_justConnected=false;setTimeout(()=>toast("已連上電腦！"),300)}}
   const qb=store.get("quizBest",null);if(qb)v.querySelector("#hQuiz").textContent="最好："+qb.rank;
-  let offNet=null;if(OFF&&window.XQNet){const upd=()=>{const e=v.querySelector("#hNet");if(!e)return;const n=XQNet.people().length;
-      e.textContent=(XQNet.playing()?"🔴 你有一盤進行中・":"")+(XQNet.status()!=="up"?"連線中…":n?`🟢 ${n} 位棋友在線上・點進去邀請對戰`:"目前只有你在線上・把 App 分享給朋友吧")};
+  let offNet=[];if(OFF&&window.XQNet){const upd=()=>{const e=v.querySelector("#hNet");if(!e)return;const n=XQNet.people().length;
+      e.textContent=(XQNet.playing()?"🔴 你有一盤進行中・":"")+(XQNet.status()!=="up"?"連線中…":n?`🟢 ${n} 位棋友在線上`:"目前只有你在線上");
+      // 線上段位（XQNet.rating() 回傳 {pts,rank,w,l,d}）
+      let rt=null;try{rt=XQNet.rating?XQNet.rating():null}catch(x){}
+      const tile=e.closest(".tile");let bd=tile.querySelector(".bd");
+      if(rt&&rt.rank){if(!bd){bd=document.createElement("span");bd.className="bd";tile.append(bd)}bd.textContent=rt.rank;bd.title=`我的段位 ${rt.rank}・${rt.pts} 分`}else if(bd)bd.remove()};
     upd();offNet=[XQNet.on("people",upd),XQNet.on("status",upd)]}
   const recent=store.get("recent",[]);
-  const hr=v.querySelector("#hRecent");
-  if(!recent.length)hr.innerHTML=`<div class="card muted">還沒看過棋譜。到「棋譜」挑一局開始研究吧。</div>`;
-  else{hr.className="items";hr.style.padding="0";for(const r of recent.slice(0,3)){const b=document.createElement("button");b.className="item";
-    b.innerHTML=`<span class="lb">📖</span><span class="tx"><b>${esc(r.title)}</b><span>${esc(r.book)}${r.ply?"・看到第 "+r.ply+" 步":""}</span></span><span class="muted">›</span>`;
-    b.onclick=()=>location.hash=`#/db/${encodeURIComponent(r.c)}/${encodeURIComponent(r.id)}`;hr.append(b)}}
-  api("/db/books").then(bs=>{const box=v.querySelector("#hBooks");for(const b of bs.filter(x=>!["ai","play","pvp"].includes(x.key))){const c=document.createElement("button");c.textContent=`${b.name}`;c.onclick=()=>location.hash="#/db/"+b.key;box.append(c)}}).catch(()=>{});
+  if(recent.length){const hr=v.querySelector("#hRecent");v.querySelector("#hRecentBox").hidden=false;
+    for(const r of recent.slice(0,3)){const b=document.createElement("button");b.className="item";
+      b.innerHTML=`<span class="lb">📖</span><span class="tx"><b>${esc(r.title)}</b><span>${esc(r.book)}${r.ply?"・看到第 "+r.ply+" 步":""}</span></span><span class="muted">›</span>`;
+      b.onclick=()=>location.hash=`#/db/${encodeURIComponent(r.c)}/${encodeURIComponent(r.id)}`;hr.append(b)}
+    const bt=v.querySelector("#hRecentBox [data-go]");bt.onclick=()=>location.hash=bt.dataset.go}
   api("/play/state").then(st=>{
     const won=st.levels.filter(l=>(st.record[l.n]||{}).w>0).length;
-    v.querySelector("#hCpu").textContent=st.result||!st.moves.length?`已通關 ${won}／8 級`:`對局進行中・第 ${st.level} 級`;
-    const box=v.querySelector("#hProg");box.innerHTML=`<div class="row" style="justify-content:space-between;margin-bottom:8px"><b>已通關 ${won} / 8 級</b><span class="muted">贏過一次就算通關</span></div>
-      <div style="display:grid;grid-template-columns:repeat(8,1fr);gap:4px">${st.levels.map(l=>{const r=st.record[l.n]||{w:0};return`<div title="${esc(l.name)}" style="height:30px;border-radius:8px;display:flex;align-items:center;justify-content:center;font-weight:900;font-size:13px;${r.w?"background:var(--accent2);color:#fff":"background:var(--bg);color:var(--muted);border:1px solid var(--line)"}">${l.n}</div>`}).join("")}</div>`}).catch(()=>{v.querySelector("#hProg").innerHTML='<span class="muted">連不到電腦上的程式</span>'});
+    v.querySelector("#hCpu").textContent=st.result||!st.moves.length?`已通關 ${won}／8 級`:`對局進行中・第 ${st.level} 級`}).catch(()=>{});
   api("/pvp/state").then(st=>{if(st.moves.length&&!st.result)v.querySelector("#hPvp").textContent=`進行中・第 ${Math.ceil(st.moves.length/2)} 回合`}).catch(()=>{});
-  api("/state").then(st=>{v.querySelector("#hAi").innerHTML=st.running?'<span class="live">直播中</span>':st.result?"上一盤："+(st.result.w?PLAYER[st.result.w]+"勝":"和局"):"按進去可以開始"}).catch(()=>{});
-  return{}}
+  if(!(OFF&&!RI))api("/state").then(st=>{v.querySelector("#hAi").innerHTML=st.running?'<span class="live">直播中</span>':st.result?"上一盤："+(st.result.w?PLAYER[st.result.w]+"勝":"和局"):"按進去可以開始"}).catch(()=>{});
+  return{stop:()=>offNet.forEach(f=>f())}}
 
 // ================= 棋力測驗：11 個等級（業1～業9、專1、專2）各出 2 題，由淺到深 =================
 // 題目來自公版古譜，答案由 Pikafish 算好存在題庫裡（離線也能測）。等級只是估計，不是正式段位。
@@ -616,10 +639,21 @@ function Terms(v,pick){
 // ================= 我的戰績（跟電腦下的勝負和、賽後報告分數、棋力測驗） =================
 function Stats(v){
   setTop("我的戰績","#/");setTabs(false);
-  v.innerHTML=`<div class="pad"><div class="card" id="sTot"><span class="muted">載入中…</span></div>
+  v.innerHTML=`<div class="pad">${OFF&&window.XQNet?'<div class="sec-t" style="margin-top:4px;margin-left:0">線上對戰</div><div class="card" id="sNet"></div><div class="items" id="sNetH" style="padding:0;margin-top:8px"></div>':""}
+    <div class="sec-t" style="margin-left:0${OFF&&window.XQNet?"":";margin-top:4px"}">挑戰電腦</div><div class="card" id="sTot"><span class="muted">載入中…</span></div>
     <div class="sec-t" style="margin-left:0">各難度</div><div class="card" id="sLv" style="padding:6px 10px"></div>
     <div class="sec-t" style="margin-left:0">棋力測驗</div><div class="card" id="sQz"></div>
     <div class="sec-t" style="margin-left:0">最近對局</div><div class="items" id="sRec" style="padding:0"></div></div>`;
+  if(OFF&&window.XQNet){const R=XQNet.rating(),N=R.w+R.l+R.d,pc=R.hi?Math.round((R.pts-R.lo)*100/(R.hi-R.lo)):100;
+    v.querySelector("#sNet").innerHTML=`<div class="row" style="justify-content:space-between;align-items:flex-end"><div><div class="muted">我的段位</div><b style="font-size:30px;font-family:var(--serif)">${esc(R.rank)}</b></div>
+        <div style="text-align:right"><b style="font-size:22px">${R.pts}</b> <span class="muted">分</span><div class="muted">${R.next?`再 ${R.toNext} 分升 ${esc(R.next)}`:"最高段位"}</div></div></div>
+      <div style="height:8px;border-radius:4px;background:var(--bg);border:1px solid var(--line);margin:10px 0;overflow:hidden"><div style="height:100%;width:${pc}%;background:var(--accent2)"></div></div>
+      <div style="display:grid;grid-template-columns:repeat(4,1fr);text-align:center;gap:6px">
+      ${[["勝",R.w,"var(--accent2)"],["負",R.l,"var(--red)"],["和",R.d,"var(--muted)"],["勝率",N?Math.round(R.w*100/N)+"%":"—",""]].map(([l,x,c])=>`<div><div style="font-size:22px;font-weight:900;color:${c}">${x}</div><div class="muted">${l}</div></div>`).join("")}</div>
+      <details style="margin-top:10px"><summary class="muted">段位怎麼算？</summary><p class="muted" style="line-height:1.7;margin:6px 0 0">從 0 分（新手）開始。贏一盤約 +20、輸一盤約 −15、和棋 0；對手段位比你高，贏得更多、輸得更少，反過來也一樣。中途取消、對方斷線中止、雙方還沒各走一步就結束的對局不計分。<br>${XQNet.ranks().map(([n,p])=>`${esc(n)} ${p}`).join("・")}</p></details>`;
+    const hb=v.querySelector("#sNetH");if(!R.hist.length)hb.innerHTML='<div class="card muted">還沒有線上對局。到「線上大廳」按隨機配對，或邀請在線上的朋友。</div>';
+    for(const h of R.hist.slice(0,20)){const b=document.createElement("div");b.className="item";
+      b.innerHTML=`<span class="lb" style="background:${h.res==="w"?"var(--accent2)":h.res==="l"?"var(--red)":"var(--muted)"};color:#fff">${h.res==="w"?"勝":h.res==="l"?"負":"和"}</span><span class="tx"><b>對 ${esc(h.opp||"棋友")}</b><span>${new Date(h.at).toLocaleDateString()}・${h.n} 步・${esc(h.why||"")}</span></span><b style="color:${h.d>=0?"var(--accent2)":"var(--red)"}">${h.d>=0?"+":""}${h.d}</b>`;hb.append(b)}}
   const reps=store.get("reports",{}),qz=store.get("quizBest",null);
   v.querySelector("#sQz").innerHTML=qz?`<div class="row" style="justify-content:space-between"><div><b style="font-size:22px">${esc(qz.rank)}</b><div class="muted">${new Date(qz.at).toLocaleDateString()}・答對 ${qz.ok}/${qz.n}</div></div><button class="btn ghost" style="width:auto" id="qz">再測一次</button></div>`
     :`<div class="row" style="justify-content:space-between"><span class="muted">還沒測過</span><button class="btn" style="width:auto" id="qz">開始測驗</button></div>`;
@@ -643,9 +677,9 @@ function Stats(v){
 // ================= 對弈入口 =================
 function PlayHub(v){
   setTop("對弈",false);setTabs(true,"#/play");
-  v.innerHTML=`<div class="pad"><div class="hero">
-   <button class="tile main" data-go="#/cpu"><span class="big">🤖</span><span class="t" style="font-size:19px">挑戰電腦</span><span class="s">對手是 Pikafish，從入門到全力共八級</span></button>
-   <button class="tile" data-go="#/pvp" style="grid-column:1/-1;min-height:96px"><span class="big">👥</span><span class="t">雙人對戰</span><span class="s">同一支手機或兩台裝置輪流下，可計時</span></button></div>
+  v.innerHTML=`<div class="home"><div class="hero">
+   <button class="tile k1" data-go="#/cpu"><span class="ic">🤖</span><span class="t">挑戰電腦</span><span class="s">Pikafish・入門到全力八級</span></button>
+   <button class="tile k3" data-go="#/pvp"><span class="ic">👥</span><span class="t">雙人對戰</span><span class="s">同機或兩台裝置・可計時</span></button></div>
    <div class="sec-t">怎麼操作</div><div class="card muted" style="line-height:1.8">・點自己的棋子，再點綠點就能走<br>・底下大按鈕：悔棋、提示、新局、認輸<br>・每一步都會由 Pikafish 評等（妙手、正手、露著…）<br>・下完會跳出結果，可以直接檢討</div></div>`;
   v.querySelectorAll("[data-go]").forEach(b=>b.onclick=()=>{vibrate(5);location.hash=b.dataset.go});return{}}
 
