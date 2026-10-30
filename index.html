@@ -604,6 +604,17 @@ if(OFF&&window.XQNet){XQNet.start();
 const APP_HOME="https://raysonchen2023-cloud.github.io/xiangqi-lab/";
 // 開發者模式：電腦網頁一律是；手機要在 設定→進階 自己打開。掃過電腦 QR code 的玩家也只是玩家，看不到「電腦」相關的字
 const DEVMODE=()=>!OFF||!!store.get("devMode",false);
+// 開發者登入：程式裡只放「帳號＋密碼」的雜湊值，不放明碼；輸入的帳密算出一樣的雜湊才放行
+const DEV_HASH="4e72cb09c4ef78623b6da77400fb8f31c53bf87f847fd4659e8e1c4c4c1a48ed";
+async function devHash(u,p){const d=await crypto.subtle.digest("SHA-256",new TextEncoder().encode("xqlab-dev:"+u+":"+p));return[...new Uint8Array(d)].map(x=>x.toString(16).padStart(2,"0")).join("")}
+function devLogin(ok){sheet("🔒 開發者登入",b=>{const inp='width:100%;padding:12px;border:1px solid var(--line);border-radius:12px;background:var(--card);color:inherit;margin:4px 0 10px;-webkit-user-select:text;user-select:text';
+  b.innerHTML=`<p class="muted">開發者模式要輸入帳號和密碼。一般玩家不用打開。</p>
+    <input id="du" placeholder="帳號" autocomplete="username" autocapitalize="off" style="${inp}"><input id="dp" type="password" placeholder="密碼" autocomplete="current-password" style="${inp}">
+    <p id="de" style="color:var(--red);min-height:1.4em;margin:0 0 6px"></p><button class="btn" id="dg">登入</button>`;
+  const go=async()=>{const u=b.querySelector("#du").value.trim(),p=b.querySelector("#dp").value;if(!u||!p)return;
+    let h="";try{h=await devHash(u,p)}catch(e){}
+    if(h===DEV_HASH){closeSheet();ok()}else{b.querySelector("#de").textContent="帳號或密碼不對";b.querySelector("#dp").value="";vibrate([30,40,30])}};
+  b.querySelector("#dg").onclick=go;b.querySelector("#dp").onkeydown=e=>{if(e.key==="Enter")go()};setTimeout(()=>b.querySelector("#du").focus(),300)})}
 const DEVREMOTE=()=>OFF&&DEVMODE()&&!!(window.XQ&&XQ.remoteInfo&&XQ.remoteInfo());
 // ================= 加到主畫面：用瀏覽器打開時問一次，玩家自己決定 =================
 // iPhone 不能用程式安裝，只能教步驟；Android 可以直接跳出系統的安裝視窗。LINE 內建瀏覽器不能加，要先改用手機的瀏覽器。
@@ -889,7 +900,10 @@ function Settings(v){
       <button class="item" id="sh"><span class="lb">📤</span><span class="tx"><b>分享給朋友</b><span>QR code・LINE</span></span><span class="muted">›</span></button></div>
     ${OFF?'<div class="sec-t">進階</div><div class="card"><label class="row" style="justify-content:space-between"><span><b>開發者模式</b><br><span class="muted">一般玩家不用打開。打開後才會顯示連線電腦、AI 對戰等開發者功能</span></span><input type="checkbox" class="sw" id="dm"></label></div>'
       +(DEVMODE()?'<div class="items" style="padding:0;margin-top:8px"><button class="item" id="cn"><span class="lb">🖥</span><span class="tx"><b>連線到開發者的電腦</b><span>看 AI 對戰、同步大師棋譜</span></span><span class="muted">›</span></button></div>':""):""}</div>`;
-  const dm=v.querySelector("#dm");if(dm){dm.checked=DEVMODE();dm.onchange=()=>{store.set("devMode",dm.checked);toast(dm.checked?"已打開開發者模式":"已關閉開發者模式");route()}}
+  // 打開開發者模式要登入（關閉不用）
+  const dm=v.querySelector("#dm");if(dm){dm.checked=DEVMODE();dm.onchange=()=>{
+    if(!dm.checked){store.set("devMode",false);toast("已關閉開發者模式");return route()}
+    dm.checked=false;devLogin(()=>{store.set("devMode",true);toast("已打開開發者模式");route()})}}
   const b0=parseFen(SAMPLE_FEN0),b1=parseFen(SAMPLE_FEN1),pv=Board(null);v.querySelector("#pv").append(pv.svg);
   const show=animate=>{if(animate){pv.draw(b0,{anim:false});setTimeout(()=>pv.draw(b1,{last:SAMPLE_LAST}),250)}else pv.draw(b1,{last:SAMPLE_LAST,anim:false})};
   v.querySelector("#replay").onclick=()=>show(true);
