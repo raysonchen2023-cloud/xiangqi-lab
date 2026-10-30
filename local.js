@@ -25,9 +25,9 @@ var XQ=(function(){
     for(let i=0;i<S.moves.length;i++){const m=S.moves[i];if(m.q)continue;
       const[bs,sd]=S.pos[i].split(" ");let r=null;try{r=await classify(parseFen(bs),sd==="w"?"r":"b",m.f,m.t)}catch(e){return}
       if(S.moves[i]!==m)return;if(r)Object.assign(m,r);else m.q="—";save()}}
-  const moveOut=m=>({f:m.f,t:m.t,by:m.by,cn:m.cn,ck:m.ck,q:m.q,loss:m.loss,ev:m.ev,bc:m.bc});
+  const moveOut=m=>({f:m.f,t:m.t,by:m.by,cn:m.cn,ck:m.ck,q:m.q,loss:m.loss,ev:m.ev,bc:m.bc,bm:m.bm,bp:m.bp});
   const lastEv=ms=>{for(let i=ms.length-1;i>=0;i--)if(ms[i].ev!=null)return{v:ms[i].ev,ply:i+1};return null};
-  const saveMoves=ms=>ms.map(m=>({f:m.f,t:m.t,by:m.by,q:m.q,loss:m.loss,ev:m.ev,bc:m.bc}));
+  const saveMoves=ms=>ms.map(m=>({f:m.f,t:m.t,by:m.by,q:m.q,loss:m.loss,ev:m.ev,bc:m.bc,bm:m.bm,bp:m.bp}));
   async function pushGame(kind,g){const list=(await idb.get("games:"+kind))||[];list.push(g);await idb.set("games:"+kind,list)}
 
   // ---------- 挑戰電腦 ----------

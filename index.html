@@ -292,7 +292,7 @@ function confirmBox(text,yes,label){modal(`<h2 style="font-size:19px">${esc(text
 // opts：flip, last{f,t}, sel, targets[], hint[f,t], check
 // 棋盤風格（設定頁可選）。auto＝跟著 App 的深淺色
 const BOARD_THEMES=[
-  ["auto","預設",{bg:"var(--wood)",grid:"var(--grid)",piece:"var(--piece)",r:"var(--red)",b:"var(--blk)",mv:"var(--accent2)"}],
+  ["auto","跟著深淺色",{bg:"var(--wood)",grid:"var(--grid)",piece:"var(--piece)",r:"var(--red)",b:"var(--blk)",mv:"var(--accent2)"}],
   ["wood3d","立體木紋",{bg:["#F0CD8E","#B9813F"],grid:"#4A2E12",piece:"#F8ECD4",r:"#B3261E",b:"#1B1F1C",mv:"#2F6B4F",bevel:1}],
   ["wood","經典木紋",{bg:["#EDCB91","#D3A05F"],grid:"#5B3B1C",piece:"#F8ECD4",r:"#B3261E",b:"#1B1F1C",mv:"#2F6B4F"}],
   ["maple","淺色楓木",{bg:["#F7E8CB","#E8CF9E"],grid:"#7A5530",piece:"#FFF8EA",r:"#B3261E",b:"#222222",mv:"#2F6B4F"}],
@@ -305,13 +305,13 @@ const BOARD_THEMES=[
   ["gold","黑金",{bg:["#26201A","#100D09"],grid:"#C9A65A",piece:"#F3E3BD",r:"#C0392B",b:"#1A1712",mv:"#E8C76A"}],
   ["night","夜間",{bg:["#2D2C36","#1C1B22"],grid:"#8F8CA0",piece:"#E8E1D0",r:"#D2453B",b:"#1B1B22",mv:"#6FBF95"}]];
 (()=>{const t=store.get("pageTheme","auto");if(t!=="auto")document.documentElement.dataset.theme=t})();
-const boardTheme=k=>{k=k||store.get("boardTheme","auto");return(BOARD_THEMES.find(t=>t[0]===k)||BOARD_THEMES[0])[2]};
+const boardTheme=k=>{k=k||store.get("boardTheme","wood3d");return(BOARD_THEMES.find(t=>t[0]===k)||BOARD_THEMES[0])[2]};
 let boardN=0;
 // 走棋音效：用 WebAudio 合成木頭棋子的「叩」聲（吃子比較重），設定裡可以關
 let AC=null;
 const unlockAudio=()=>{try{if(!AC){const C=window.AudioContext||window.webkitAudioContext;if(C)AC=new C()}if(AC&&AC.state==="suspended")AC.resume()}catch(e){}};
 document.addEventListener("pointerdown",unlockAudio,{passive:true});
-function moveSound(cap){if(!store.get("mvSound",true)||!AC||AC.state!=="running")return;try{const t=AC.currentTime;
+function moveSound(cap){if(!store.get("mvSound",false)||!AC||AC.state!=="running")return;try{const t=AC.currentTime;
   const hit=(f,dur,vol,at)=>{const o=AC.createOscillator(),g=AC.createGain();o.type="triangle";o.frequency.setValueAtTime(f,t+at);o.frequency.exponentialRampToValueAtTime(f*.55,t+at+dur);
     g.gain.setValueAtTime(vol,t+at);g.gain.exponentialRampToValueAtTime(.001,t+at+dur);o.connect(g).connect(AC.destination);o.start(t+at);o.stop(t+at+dur+.02)};
   const n=AC.createBufferSource(),buf=AC.createBuffer(1,AC.sampleRate*.04|0,AC.sampleRate),d=buf.getChannelData(0);for(let i=0;i<d.length;i++)d[i]=(Math.random()*2-1)*Math.pow(1-i/d.length,3);
@@ -342,7 +342,7 @@ function Board(onTap,onSwipe){
       g.append(el("text",{x:X(i),y:Y(i)+dy+10,"text-anchor":"middle","font-family":"var(--serif)","font-weight":900,"font-size":28,fill:col},NAMES[s][p.toUpperCase()]))}
     return g}
   function draw(board,o){o=o||{};flip=!!o.flip;svg.innerHTML="";
-    const px=c=>X0+c*S,py=r=>Y0+r*S,T=boardTheme(o.theme),PS=o.pstyle||store.get("pieceStyle","classic");
+    const px=c=>X0+c*S,py=r=>Y0+r*S,T=boardTheme(o.theme),PS=o.pstyle||store.get("pieceStyle","3d");
     let bgFill=T.bg;if(Array.isArray(T.bg)){const d=el("defs",{}),lg=el("linearGradient",{id:"bbg"+uid,x1:0,y1:0,x2:.35,y2:1});
       lg.append(el("stop",{offset:0,"stop-color":T.bg[0]}),el("stop",{offset:1,"stop-color":T.bg[1]}));d.append(lg);svg.append(d);bgFill=`url(#bbg${uid})`}
     if(PS==="3d"){const d=el("defs",{}),rg=el("radialGradient",{id:"p3d"+uid,cx:.38,cy:.32,r:.75});
@@ -746,17 +746,25 @@ function Terms(v,pick){
     const its=D.items.filter(t=>(cat==="全部"||t.k===cat)&&(!k||t.n.includes(k)||t.d.includes(k)));
     v.querySelectorAll("#cats button").forEach(b=>b.classList.toggle("on",b.textContent===cat));
     for(const t of its){const b=document.createElement("button");b.className="item";
-      b.innerHTML=`<span class="lb">${{殺法:"⚔",開局:"🚩",戰術:"🎯",棋形:"🧩",規則:"⚖",俗語:"🏮"}[t.k]||"•"}</span><span class="tx"><b>${esc(t.n)}${t.ex||t.op?' <span class="pill" style="font-size:11px">有例局</span>':""}</b><span>${esc(t.d.slice(0,40))}${t.d.length>40?"…":""}</span></span><span class="muted">›</span>`;
+      b.innerHTML=`<span class="lb">${{殺法:"⚔",開局:"🚩",戰術:"🎯",棋形:"🧩",規則:"⚖",俗語:"🏮"}[t.k]||"•"}</span><span class="tx"><b>${esc(t.n)}${t.ex||t.op||t.sh?' <span class="pill" style="font-size:11px">有例局</span>':""}</b><span>${esc(t.d.slice(0,40))}${t.d.length>40?"…":""}</span></span><span class="muted">›</span>`;
       b.onclick=()=>open(t);box.append(b)}
     if(!its.length)box.innerHTML='<div class="card muted">找不到這個術語</div>'}
   function open(t){sheet(t.n,b=>{b.innerHTML=`<p style="line-height:1.8">${esc(t.d)}</p>`;
-    if(!t.ex&&!t.op)return;
+    if(!t.ex&&!t.op&&!t.sh)return;
     const wrap=document.createElement("div");wrap.style.cssText="max-width:340px;margin:0 auto";const bd=Board(null);wrap.append(bd.svg);b.append(wrap);
     const cap=document.createElement("p");cap.style.textAlign="center";const ctl=document.createElement("div");ctl.className="opt";ctl.style.justifyContent="center";b.append(cap,ctl);
     if(t.ex){const b0=t.ex.board.split(",").map(x=>x||null);let solved=false;
       const draw=()=>{if(!solved){bd.draw(b0,{});cap.textContent=`${PLAYER[t.ex.side]}走一步就能將死，想想看是哪一步？`}
         else{const nb=b0.slice();nb[t.ex.t]=nb[t.ex.f];nb[t.ex.f]=null;bd.draw(nb,{last:{f:t.ex.f,t:t.ex.t},check:nb.indexOf(t.ex.side==="r"?"k":"K")});cap.textContent=`${t.ex.cn}，將死！`}
         ctl.innerHTML=`<button>${solved?"↺ 再看一次":"👀 看答案"}</button>`;ctl.firstChild.onclick=()=>{solved=!solved;draw()}};draw()}
+    else if(t.sh){const S=t.sh,b0=S.board.split(",").map(x=>x||null),has=S.f>=0;let shown=!has;
+      const draw=()=>{const mk=S.mark&&S.mark.length?S.mark:null;
+        if(!shown){bd.draw(b0,{hint:mk});cap.textContent=S.illegal?"想想看：這步為什麼不能走？":`${PLAYER[S.side]}走，按「看示範」`}
+        else if(S.illegal){bd.draw(b0,{hint:mk,sugg:[{f:S.f,t:S.t}]});cap.textContent="✘ "+S.msg}
+        else if(has){const nb=b0.slice();nb[S.t]=nb[S.f];nb[S.f]=null;const k=nb.indexOf(S.side==="r"?"k":"K");
+          bd.draw(nb,{last:{f:S.f,t:S.t},hint:mk,check:S.want==="check"||S.want==="mate"?k:-1});cap.textContent=`${S.cn}：${S.msg}`}
+        else{bd.draw(b0,{hint:mk});cap.textContent=S.msg}
+        ctl.innerHTML=has?`<button>${shown?"↺ 再看一次":"👀 看示範"}</button>`:"";if(has)ctl.firstChild.onclick=()=>{shown=!shown;draw()}};draw()}
     else{let n=t.op.moves.length;const b0=parseFen(START);
       const draw=()=>{const bb=b0.slice();t.op.moves.slice(0,n).forEach(([f,to])=>{bb[to]=bb[f];bb[f]=null});const l=t.op.moves[n-1];
         bd.draw(bb,{last:l?{f:l[0],t:l[1]}:null});
@@ -849,7 +857,7 @@ function Settings(v){
   const show=animate=>{if(animate){pv.draw(b0,{anim:false});setTimeout(()=>pv.draw(b1,{last:SAMPLE_LAST}),250)}else pv.draw(b1,{last:SAMPLE_LAST,anim:false})};
   v.querySelector("#replay").onclick=()=>show(true);
   const th=v.querySelector("#th");
-  const paint=()=>{const cur=store.get("boardTheme","auto"),ps=store.get("pieceStyle","classic");th.innerHTML="";
+  const paint=()=>{const cur=store.get("boardTheme","wood3d"),ps=store.get("pieceStyle","3d");th.innerHTML="";
     for(const[k,name]of BOARD_THEMES){const b=document.createElement("button");b.className=k===cur?"on":"";const bd=Board(null);bd.draw(b1,{last:SAMPLE_LAST,theme:k,anim:false,arrow:false});
       b.append(bd.svg);const s=document.createElement("span");s.textContent=name;b.append(s);
       b.onclick=()=>{vibrate(5);store.set("boardTheme",k);paint();show(true)};th.append(b)}
@@ -857,7 +865,7 @@ function Settings(v){
     v.querySelectorAll("[data-p]").forEach(x=>x.onclick=()=>{store.set("pieceStyle",x.dataset.p);paint();show(false)});
     const pt=store.get("pageTheme","auto");v.querySelector("#pt").innerHTML=[["auto","跟著手機"],["light","☀ 淺色"],["dark","🌙 深色"]].map(([k,l])=>`<button data-m="${k}" class="${pt===k?"on":""}">${l}</button>`).join("");
     v.querySelectorAll("[data-m]").forEach(x=>x.onclick=()=>{const k=x.dataset.m;store.set("pageTheme",k);if(k==="auto")delete document.documentElement.dataset.theme;else document.documentElement.dataset.theme=k;paint()});
-    const tg=(k,label,sub)=>`<label class="row" style="justify-content:space-between;padding:6px 0"><span><b>${label}</b><br><span class="muted">${sub}</span></span><input type="checkbox" class="sw" data-t="${k}" ${store.get(k,true)?"checked":""}></label>`;
+    const tg=(k,label,sub)=>`<label class="row" style="justify-content:space-between;padding:6px 0"><span><b>${label}</b><br><span class="muted">${sub}</span></span><input type="checkbox" class="sw" data-t="${k}" ${store.get(k,k!=="mvSound")?"checked":""}></label>`;
     v.querySelector("#mv").innerHTML=tg("mvArrow","箭頭","從原來位置畫箭頭指到新位置")+'<div style="border-top:1px solid var(--line)"></div>'+tg("mvAnim","動畫","棋子滑過去，被吃的棋子淡出")+'<div style="border-top:1px solid var(--line)"></div>'+tg("mvSound","音效","走棋時「叩」一聲，吃子比較重");
     v.querySelectorAll("[data-t]").forEach(x=>x.onchange=()=>{store.set(x.dataset.t,x.checked);show(true)});
     v.querySelector("#nmS").textContent=myName()||"還沒取名字";show(false)};
@@ -1224,8 +1232,10 @@ function syncSheet(){
 
 // ================= 棋譜閱讀＋研究 =================
 // 賽後：Pikafish 建議的走法寫成「建議 1. 炮二平五 2. 馬8進7 3. …（藍色箭頭）」
+// 舊棋譜只存了建議的文字（例如「炮二平五」）：用規則找出是哪一步，才能畫箭頭
+function bcMove(b,s,cn){try{const C=window.XQCore;if(!C)return null;const m=C.legal(b,s).find(([f,t])=>C.notate(b,f,t)===cn);return m?{f:m[0],t:m[1]}:null}catch(e){return null}}
 function sugText(g,b){const L=(g.bp&&g.bp.length?g.bp:g.bm?[g.bm]:[]).slice(0,3);if(!L.length)return g.bc?`建議 ${g.bc}`:"";
-  const out=[];try{for(const u of L){const f=sqI(u.slice(0,2)),t=sqI(u.slice(2,4));if(!b[f])break;out.push(notate(b,f,t));b=b.slice();b[t]=b[f];b[f]=null}}catch(e){}
+  const out=[];try{const C=window.XQCore;for(const u of L){const f=sqI(u.slice(0,2)),t=sqI(u.slice(2,4));if(!b[f]||!C)break;out.push(C.notate(b,f,t));b=b.slice();b[t]=b[f];b[f]=null}}catch(e){}
   if(!out.length)return`建議 ${g.bc||""}`;return(out.length>1?"建議走法（藍色箭頭）："+out.map((x,i)=>`${i+1}. ${x}`).join("　"):`建議 ${out[0]}（藍色箭頭）`)+"\n綠色箭頭是實際走的"}
 function Viewer(v,c,id){
   setTabs(false);v.className="view fixed";
@@ -1302,7 +1312,8 @@ function Viewer(v,c,id){
     const ckSq=FREE&&last&&last.ck?pos.board.indexOf(pos.side==="r"?"K":"k"):-1;
     // 這步不是好棋：把 Pikafish 建議的走法（最多 3 步）畫成藍色箭頭
     let sugg=null;if(!FREE&&ply>0&&!hint){const g=gradeOf(ply);if(g&&g.q&&!["正手","妙手","—"].includes(g.q)&&(g.bp&&g.bp.length||g.bm))
-      sugg=(g.bp&&g.bp.length?g.bp:[g.bm]).slice(0,3).map(u=>({f:sqI(u.slice(0,2)),t:sqI(u.slice(2,4))}))}
+      sugg=(g.bp&&g.bp.length?g.bp:[g.bm]).slice(0,3).map(u=>({f:sqI(u.slice(0,2)),t:sqI(u.slice(2,4))}))
+      else if(g&&g.bc&&g.q&&!["正手","妙手","—"].includes(g.q)){const m=bcMove(boardAt(line,ply-1),moverAt(ply),g.bc);if(m)sugg=[m]}}
     bd.draw(pos.board,{last,sel,targets:sel>=0&&LEGAL?LEGAL.list.filter(([f])=>f===sel).map(x=>x[1]):[],hint,check:ckSq,sugg});
     // 優勢條：分析結果優先，其次是上一步的評等
     let ev=AN&&AN.k===posKey(pos)&&AN.lines&&AN.lines[0]?AN.lines[0].vr:null;
@@ -1362,7 +1373,7 @@ function Viewer(v,c,id){
       try{for(let k=0;k<miss.length;k++){if(screen!==self||!it||!document.body.contains(sh))return;const p=miss[k],m=seq(line,p)[p-1];
         grades[owner(line,p)+"|"+p]=(await api("/an/classify",{board:boardAt(line,p-1),side:moverAt(p),f:m.f,t:m.t}))||{q:"—"};const n=sh.querySelector("#rpn");if(n)n.textContent=k+1}}
       catch(e){toast(e.message);return}finally{rpBusy=false}show()}
-    const moves=seq(line,end).map((m,i)=>{const g=gradeOf(i+1)||{};return{f:m.f,t:m.t,cn:m.cn,by:moverAt(i+1),q:g.q,loss:g.loss,ev:g.ev,bc:g.bc,ck:m.ck}});
+    const moves=seq(line,end).map((m,i)=>{const g=gradeOf(i+1)||{};return{f:m.f,t:m.t,cn:m.cn,by:moverAt(i+1),q:g.q,loss:g.loss,ev:g.ev,bc:g.bc,bm:g.bm,bp:g.bp,ck:m.ck}});
     const rep=gameReport(it.board,moves),names={r:it.red||"紅方",b:it.black||"黑方"},side=it.black==="你"?"b":"r";
     // 自己跟電腦下的對局：記下分數給「我的戰績」用
     if(c==="play"&&rep.sides[side].score!=null){const all=store.get("reports",{}),R=rep.sides[side];

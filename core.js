@@ -78,7 +78,7 @@ const summary=it=>({id:it.id,no:it.no,label:it.label,part:it.part,title:it.title
   type:it.type,red:it.red,black:it.black,event:it.event,year:it.year,date:it.date,open:it.open});
 function fullItem(it){if(!it.board)it.board=parseFen(START);if(!it._an){annotate(it);Object.defineProperty(it,"_an",{value:true})}return it}
 function gameItem(g,isLive){
-  let b=parseFen(START);const moves=g.moves.map(m=>{const cn=notate(b,m.f,m.t);b=make(b,m.f,m.t);return{f:m.f,t:m.t,cn,q:m.q,loss:m.loss,ev:m.ev,bc:m.bc}});
+  let b=parseFen(START);const moves=g.moves.map(m=>{const cn=notate(b,m.f,m.t);b=make(b,m.f,m.t);return{f:m.f,t:m.t,cn,q:m.q,loss:m.loss,ev:m.ev,bc:m.bc,bm:m.bm,bp:m.bp}});
   const comments={};g.moves.forEach((m,i)=>{if(m.cm)comments["0_"+(i+1)]=PLAYER[m.by]+"："+m.cm});
   return{id:g.id||"current",title:`${g.red} 對 ${g.black}`,red:g.red,black:g.black,year:+String(g.date||g.id||"").slice(0,4)||null,name:(isLive?"【進行中】":"")+(g.date||String(g.id||"").slice(0,10))+"　"+g.red+" 對 "+g.black,
     result:isLive||!g.result?"進行中":(g.result.w?PLAYER[g.result.w]+"勝":"和局")+"（"+g.result.why+"）",
@@ -102,7 +102,7 @@ function stateApply(S,f,t){
   m.ch=[...chasePairs(S.board,mover)].some(x=>!chB.has(x));
   S.moves.push(m);return m}
 function stateRebuild(S){const old=S.moves||[];S.moves=[];S.board=parseFen(START);S.turn="r";S.pos=[fen(S.board,"r")];
-  for(const o of old){const m=stateApply(S,o.f,o.t);for(const k of["q","loss","ev","bc"])if(o[k]!==undefined)m[k]=o[k]}}
+  for(const o of old){const m=stateApply(S,o.f,o.t);for(const k of["q","loss","ev","bc","bm","bp"])if(o[k]!==undefined)m[k]=o[k]}}
 function judgeState(S){
   const n=S.moves.length,mover=S.moves[n-1].by,other=opp(mover);
   if(legal(S.board,other).length===0)return{w:mover,why:inCheck(S.board,other)?"將死":"困斃"};
