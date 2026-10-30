@@ -186,7 +186,7 @@ function myName(){return meInfo().name}
 function setMyName(n){const m=meInfo();m.name=String(n||"").replace(/[\u0000-\u001f<>]/g,"").trim().slice(0,16);try{localStorage.setItem("xq_me",JSON.stringify(m))}catch(e){}}
 // iPad 的瀏覽器自稱 Mac，用觸控點數分辨
 const MY_KIND=/iPad/.test(navigator.userAgent)||/Macintosh/.test(navigator.userAgent)&&navigator.maxTouchPoints>1?"iPad":/iPhone/.test(navigator.userAgent)?"iPhone":/Android/.test(navigator.userAgent)?"Android":/Windows/.test(navigator.userAgent)?"Windows":/Mac/.test(navigator.userAgent)?"Mac":"";
-window.XQ_ME=()=>{const m=meInfo();return{"x-xq-dev":m.id,"x-xq-name":encodeURIComponent(m.name||""),...(MY_KIND?{"x-xq-kind":MY_KIND}:{})}};
+window.XQ_ME=()=>{const m=meInfo();return{"x-xq-dev":m.id+(MY_KIND?"-"+MY_KIND:""),"x-xq-name":encodeURIComponent(m.name||"")}};
 async function api(u,b){if(window.XQ)return XQ.api(u,b);   // 離線版：由手機裡的 local.js 處理
   const r=await fetch(u,b===undefined?{headers:XQ_ME()}:{method:"POST",headers:{"content-type":"application/json",...XQ_ME()},body:JSON.stringify(b)});
   const d=await r.json().catch(()=>({error:"伺服器回應有問題"}));if(d&&d.error)throw new Error(d.error);return d}
@@ -300,18 +300,21 @@ if(OFF&&"serviceWorker" in navigator){
   navigator.serviceWorker.register("sw.js").then(()=>{
     if(!self.crossOriginIsolated&&!sessionStorage.getItem("xqReload")){sessionStorage.setItem("xqReload","1");
       if(navigator.serviceWorker.controller)location.reload();else navigator.serviceWorker.addEventListener("controllerchange",()=>location.reload())}}).catch(()=>{});
-  // 自動更新：iPhone 主畫面 App 切回來時通常不會重新載入，所以每次回到 App 都檢查一次有沒有新版；
-  // 新版裝好後顯示「點這裡更新」，不自動重新整理（避免下到一半的棋被打斷）
-  const hadCtl=!!navigator.serviceWorker.controller;let lastChk=0,shown=false;
-  const chk=()=>{if(Date.now()-lastChk<30000)return;lastChk=Date.now();navigator.serviceWorker.getRegistration().then(r=>r&&r.update()).catch(()=>{})};
-  document.addEventListener("visibilitychange",()=>{if(!document.hidden)chk()});setTimeout(chk,3000);
-  // 在首頁、棋譜列表、術語、戰績這些畫面直接換新版；下棋、測驗中只顯示提示，不打斷
-  const safeNow=()=>/^#?\/?$|^#\/(db|terms|stats|lobby)(\/|$)/.test(location.hash)&&!document.querySelector(".sheet.show");
-  window.XQ_checkUpdate=async()=>{lastChk=0;chk();const[a,n]=await Promise.all([appVer(),netVer()]);return{a,n}};
-  if(hadCtl)navigator.serviceWorker.addEventListener("controllerchange",()=>{if(shown||sessionStorage.getItem("xqReload")==="1"&&!self.crossOriginIsolated)return;shown=true;
-    if(safeNow())return location.reload();
-    const t=document.createElement("button");t.className="toast";t.style.cssText="bottom:auto;top:calc(64px + var(--safeT));pointer-events:auto;z-index:300";
-    t.textContent="🆕 有新版本，點這裡更新";t.onclick=()=>location.reload();document.body.append(t)})}
+  // 自動更新：打開 App、切回 App、以及開著的時候每 5 分鐘，都去問一次有沒有新版。
+  // 新版下載好就跳出視窗「有新版本」；下棋或測驗中只在上方顯示一條提示，不打斷。
+  const hadCtl=!!navigator.serviceWorker.controller;let lastChk=0,shown=false,updating=false;
+  const chk=force=>{if(!force&&Date.now()-lastChk<30000)return;lastChk=Date.now();navigator.serviceWorker.getRegistration().then(r=>r&&r.update()).catch(()=>{})};
+  document.addEventListener("visibilitychange",()=>{if(!document.hidden)chk()});setTimeout(()=>chk(true),3000);
+  setInterval(()=>{if(!document.hidden)chk(true)},5*60000);
+  const inGame=()=>/^#\/(cpu|pvp|quiz|watch)(\/|$)/.test(location.hash);
+  const fmtV=x=>!x?"":/^\d{8}-\d{4}$/.test(x)?`${x.slice(0,4)}/${x.slice(4,6)}/${x.slice(6,8)} ${x.slice(9,11)}:${x.slice(11,13)}`:x.slice(0,8);
+  const doUpdate=()=>{updating=true;location.reload()};
+  async function notifyNew(){if(shown)return;shown=true;const v=fmtV(await appVer());vibrate([20,40,20]);
+    if(inGame()){const t=document.createElement("button");t.className="toast";t.style.cssText="bottom:auto;top:calc(64px + var(--safeT));pointer-events:auto;z-index:300";
+      t.textContent="🆕 有新版本"+(v?"（"+v+"）":"")+"，下完這盤點這裡更新";t.onclick=doUpdate;document.body.append(t);return}
+    modal(`<div class="em">🆕</div><h2>有新版本</h2><p class="muted">${v?"版本 "+esc(v)+"<br>":""}更新只要一秒，你的戰績、棋譜和設定都會保留。</p>`,[["立即更新",doUpdate],["稍後",()=>{shown=false},true]])}
+  window.XQ_checkUpdate=async()=>{chk(true);const[a,n]=await Promise.all([appVer(),netVer()]);return{a,n}};
+  if(hadCtl)navigator.serviceWorker.addEventListener("controllerchange",()=>{if(updating)return;if(sessionStorage.getItem("xqReload")==="1"&&!self.crossOriginIsolated)return;notifyNew()})}
 if(OFF&&window.XQEngine){let bar=null;
   XQEngine.onProgress((got,total)=>{if(!bar){bar=document.createElement("div");bar.className="toast";bar.style.bottom="auto";bar.style.top="calc(70px + var(--safeT))";document.body.append(bar)}
     const p=Math.round(got/total*100);bar.textContent=`第一次使用：下載 Pikafish 引擎 ${p}%（${(got/1048576).toFixed(0)}／${(total/1048576).toFixed(0)} MB）`;
