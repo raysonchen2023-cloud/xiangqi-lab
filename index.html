@@ -53,6 +53,9 @@ input,select{font:inherit;font-size:16px;color:inherit}
 /* 棋盤區 */
 .boardbox{flex:none;padding:6px 8px 4px;display:flex;justify-content:center}
 .boardbox svg{display:block;width:100%;max-width:560px;height:auto;touch-action:none}
+/* 對局畫面：螢幕不夠高時棋盤自動縮小，底部按鈕列不會被擠出畫面 */
+.view.fixed .boardbox{flex:0 1 auto;min-height:120px}
+.view.fixed .boardbox svg{max-height:100%}
 .evline{flex:none;height:6px;margin:0 10px;border-radius:3px;background:var(--blk);overflow:hidden;display:flex}
 .evline div{background:var(--red);height:100%;width:50%;transition:width .5s}
 .player{flex:none;display:flex;align-items:center;gap:10px;padding:6px 12px}
@@ -271,6 +274,13 @@ function poller(fn,ms){let on=true,t=null;const tick=async()=>{if(!on)return;try
 
 // ================= 離線版專用：連線、引擎下載 =================
 const OFF=!!window.XQ_OFFLINE;
+// iPhone 從主畫面打開（全螢幕）時，頂部列要讓開狀態列（時間、電池）。
+// 有些 iOS 版本讀不到安全區（算成 0），標題就會跑到狀態列底下、被模糊效果蓋住；這時依螢幕高度補上狀態列高度。
+(function fixTop(){const sa=matchMedia("(display-mode: standalone)").matches||navigator.standalone;if(!sa)return;
+  const pr=document.createElement("div");pr.style.cssText="position:fixed;top:0;height:env(safe-area-inset-top);visibility:hidden";document.body.append(pr);
+  const got=pr.getBoundingClientRect().height;pr.remove();
+  const full=Math.abs(innerHeight-screen.height)<2;   // 內容從螢幕最頂端開始（在狀態列底下）
+  if(got<10&&full){const h=screen.height;document.documentElement.style.setProperty("--safeT",(h>=852?59:h>=812?47:20)+"px")}})();
 if(OFF&&"serviceWorker" in navigator){
   // 註冊 service worker；第一次要重新整理一次，多執行緒（跨來源隔離）才會生效
   navigator.serviceWorker.register("sw.js").then(()=>{
@@ -323,9 +333,31 @@ async function homeStatus(box){
   box.querySelector("#cBtn").onclick=connectSheet;
   const e=box.querySelector("#eBtn");if(e)e.onclick=()=>{e.disabled=true;e.textContent="下載中…";XQEngine.load().then(()=>{toast("Pikafish 已下載，可以離線使用");homeStatus(box)}).catch(err=>{toast(err.message);e.disabled=false;e.textContent="下載"})}}
 
+// ================= 分享：讓別的手機也裝象棋研究室 =================
+const APP_HOME="https://raysonchen2023-cloud.github.io/xiangqi-lab/";
+async function shareSheet(){
+  const app=OFF&&/^https:/.test(location.origin)?location.origin+location.pathname:APP_HOME;
+  // 連線網址（含存取碼）只在這支手機連得上電腦時才提供，而且預設不勾
+  let conn=null;
+  try{if(OFF){const r=XQ.remoteInfo();if(r&&await XQ.ping())conn=`${app}#connect=${encodeURIComponent(r.base)}&k=${encodeURIComponent(r.key)}`}
+    else{const r=await api("/remote");conn=(r.urls||[]).find(u=>u.includes("#connect="))||null}}catch(e){}
+  try{await loadScript("qrcode.min.js")}catch(e){return toast(e.message)}
+  sheet("分享象棋研究室",b=>{
+    b.innerHTML=`<p style="text-align:center">朋友用手機相機掃這個 QR code，就能打開<b>象棋研究室</b>。<br><span class="muted">iPhone：用 Safari 打開 → 分享 →「加入主畫面」，就像 App 一樣。挑戰電腦、雙人同機、古譜、測驗、術語都不用連電腦。</span></p>
+      <div class="qrbox" id="qrc"></div>
+      ${conn?`<label class="row" style="justify-content:center;margin:6px 0 2px"><input type="checkbox" id="wc"> 同時連到我的電腦</label>
+        <p class="muted" id="wcN" style="text-align:center;margin:0 0 6px" hidden>⚠ 這個 QR code 含存取碼，掃到的人能看 AI 對戰、跟你連線對戰，也能操作電腦上的對局。只給信任的人。</p>`:""}
+      <button class="btn" id="sh">${navigator.share?"用 LINE／訊息分享連結":"複製連結"}</button>`;
+    let cur=app;
+    const draw=()=>{const box=b.querySelector("#qrc");box.innerHTML="";new QRCode(box,{text:cur,width:220,height:220,correctLevel:QRCode.CorrectLevel.L})};draw();
+    const wc=b.querySelector("#wc");if(wc)wc.onchange=()=>{cur=wc.checked?conn:app;b.querySelector("#wcN").hidden=!wc.checked;draw()};
+    b.querySelector("#sh").onclick=async()=>{
+      if(navigator.share){try{await navigator.share({title:"象棋研究室",text:"一起來下象棋：",url:cur})}catch(e){}return}
+      try{await navigator.clipboard.writeText(cur);toast("已複製連結")}catch(e){prompt("複製這個連結",cur)}}})}
+
 // ================= 首頁 =================
 function Home(v){
-  setTop("象棋研究室",false,OFF?[["🔗",connectSheet,"連線到電腦"]]:[["🖥",()=>location.href="/","電腦版"]]);setTabs(true,"#/");
+  setTop("象棋研究室",false,OFF?[["📤",shareSheet,"分享給朋友"],["🔗",connectSheet,"連線到電腦"]]:[["📤",shareSheet,"分享給朋友"],["🖥",()=>location.href="/","電腦版"]]);setTabs(true,"#/");
   v.innerHTML=`<div class="pad">
    ${OFF?'<div class="card" id="hStatus" style="margin-bottom:12px"><span class="muted">檢查中…</span></div>':""}
    <div class="hero">
