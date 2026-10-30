@@ -285,7 +285,15 @@ if(OFF&&"serviceWorker" in navigator){
   // 註冊 service worker；第一次要重新整理一次，多執行緒（跨來源隔離）才會生效
   navigator.serviceWorker.register("sw.js").then(()=>{
     if(!self.crossOriginIsolated&&!sessionStorage.getItem("xqReload")){sessionStorage.setItem("xqReload","1");
-      if(navigator.serviceWorker.controller)location.reload();else navigator.serviceWorker.addEventListener("controllerchange",()=>location.reload())}}).catch(()=>{})}
+      if(navigator.serviceWorker.controller)location.reload();else navigator.serviceWorker.addEventListener("controllerchange",()=>location.reload())}}).catch(()=>{});
+  // 自動更新：iPhone 主畫面 App 切回來時通常不會重新載入，所以每次回到 App 都檢查一次有沒有新版；
+  // 新版裝好後顯示「點這裡更新」，不自動重新整理（避免下到一半的棋被打斷）
+  const hadCtl=!!navigator.serviceWorker.controller;let lastChk=0,shown=false;
+  const chk=()=>{if(Date.now()-lastChk<30000)return;lastChk=Date.now();navigator.serviceWorker.getRegistration().then(r=>r&&r.update()).catch(()=>{})};
+  document.addEventListener("visibilitychange",()=>{if(!document.hidden)chk()});setTimeout(chk,3000);
+  if(hadCtl)navigator.serviceWorker.addEventListener("controllerchange",()=>{if(shown||sessionStorage.getItem("xqReload")==="1"&&!self.crossOriginIsolated)return;shown=true;
+    const t=document.createElement("button");t.className="toast";t.style.cssText="bottom:auto;top:calc(64px + var(--safeT));pointer-events:auto;z-index:300";
+    t.textContent="🆕 有新版本，點這裡更新";t.onclick=()=>location.reload();document.body.append(t)})}
 if(OFF&&window.XQEngine){let bar=null;
   XQEngine.onProgress((got,total)=>{if(!bar){bar=document.createElement("div");bar.className="toast";bar.style.bottom="auto";bar.style.top="calc(70px + var(--safeT))";document.body.append(bar)}
     const p=Math.round(got/total*100);bar.textContent=`第一次使用：下載 Pikafish 引擎 ${p}%（${(got/1048576).toFixed(0)}／${(total/1048576).toFixed(0)} MB）`;
