@@ -24,11 +24,14 @@ var XQEngine=(function(){
     for(;;){const{done,value}=await reader.read();if(done)break;chunks.push(value);got+=value.length;if(progress)progress(got,total)}
     const out=new Uint8Array(got);let o=0;for(const c of chunks){out.set(c,o);o+=c.length}return out}
   function loadScript(src){return new Promise((res,rej)=>{const s=document.createElement("script");s.src=src;s.onload=res;s.onerror=()=>rej(new Error("載入失敗："+src));document.head.append(s)})}
+  // 只下載神經網路檔存進手機（App 打開後自動在背景做），同時呼叫只會下載一次
+  let nnueP=null;
+  function prefetch(){return nnueP||(nnueP=fetchNnue(BASE+"engine/pikafish.nnue").finally(()=>setTimeout(()=>{nnueP=null},0)))}
   function load(){
     if(loading)return loading;
     loading=(async()=>{
       if(!self.crossOriginIsolated)throw new Error("瀏覽器還沒開啟多執行緒模式，請把 App 關掉重開一次");
-      const nnue=await fetchNnue(BASE+"engine/pikafish.nnue");
+      const nnue=await prefetch();
       if(!window.PikafishModule)await loadScript(BASE+"engine/pikafish.js");
       mod=await window.PikafishModule({locateFile:f=>BASE+"engine/"+f,mainScriptUrlOrBlob:BASE+"engine/pikafish.js",
         print:onLine,printErr:()=>{},preRun:[m=>m.FS.writeFile("/pikafish.nnue",nnue)]});
@@ -52,5 +55,5 @@ var XQEngine=(function(){
         info.set(m?+m[1]:1,{k:m?+m[1]:1,v,mv:pvs[0],pv:pvs,depth:dp?+dp[1]:null,mate:sc[1]==="mate"?+sc[2]:null})});
       return{best:best.split(/\s+/)[1],lines:[...info.values()].sort((a,b)=>a.k-b.k)}};
     const r=q.then(job);q=r.catch(()=>{});return r}
-  return{load,search,get ready(){return!!mod},onProgress(f){progress=f},threads:0};
+  return{load,prefetch,search,get ready(){return!!mod},onProgress(f){progress=f},threads:0};
 })();

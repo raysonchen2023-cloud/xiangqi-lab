@@ -84,7 +84,8 @@ var XQNet=(function(){
     cli.onmsg=onMsg;
     cli.ondown=was=>{cli=null;clearInterval(hb);if(!downAt)downAt=Date.now();emit("status");
       clearTimeout(retryT);if(want)retryT=setTimeout(connect,was?800:3000)}}
-  function onMsg(topic,msg){const p=topic.slice(ROOT.length+1).split("/");
+  const W={};   // 一次性查詢保留訊息（例如電腦的新網址）
+  function onMsg(topic,msg){if(W[topic]){W[topic](msg);return}const p=topic.slice(ROOT.length+1).split("/");
     if(p[0]==="sys"&&p[1]==="ver"){try{emit("version",JSON.parse(msg))}catch(e){}return}
     if(p[0]==="u"){if(!msg)delete people[p[1]];else{try{const x=JSON.parse(msg);if(x&&x.id===p[1])people[p[1]]=x}catch(e){}}emit("people");tryMatch();return}
     if(p[0]==="i"){let x;try{x=JSON.parse(msg)}catch(e){return}if(!x||!x.from||Date.now()-(x.at||0)>120000)return;
@@ -126,7 +127,9 @@ var XQNet=(function(){
   window.addEventListener("pageshow",kick);
 
   return{
-    on,start(){want=true;connect()},refresh:()=>presence(),
+    on,start(){want=true;connect()},
+    getRetained(topic,ms){return new Promise(res=>{let t=null,g=null;const done=v=>{clearTimeout(t);clearTimeout(g);delete W[topic];try{if(cli&&cli.up)cli.unsub([topic])}catch(e){}res(v||null)};
+      t=setTimeout(()=>done(null),ms||8000);W[topic]=done;if(!want){want=true;connect()}const go=()=>{if(cli&&cli.up)cli.sub([topic]);else g=setTimeout(go,400)};go()})},refresh:()=>presence(),
     status:()=>cli&&cli.up?"up":want?"connecting":"off",
     downFor:()=>cli&&cli.up||!downAt?0:Date.now()-downAt,pendingSend:()=>dirty,
     people:()=>{const now=Date.now(),i=me().id;return Object.values(people).filter(x=>x.id!==i&&now-x.at<ALIVE)},

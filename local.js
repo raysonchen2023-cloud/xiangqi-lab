@@ -228,8 +228,11 @@ var XQ=(function(){
   let lastDiscover=0;
   async function discover(){const r=remoteInfo();if(!r||!r.key||!crypto.subtle||Date.now()-lastDiscover<15000)return false;lastDiscover=Date.now();
     try{const h=[...new Uint8Array(await crypto.subtle.digest("SHA-256",new TextEncoder().encode("xqlab:"+r.key)))].map(x=>x.toString(16).padStart(2,"0")).join("").slice(0,32);
-      const t=await(await fetch("https://ntfy.sh/xqlab-"+h+"/json?poll=1&since=12h",{signal:AbortSignal.timeout?AbortSignal.timeout(8000):undefined})).text();
-      let base=null;for(const line of t.split("\n")){try{const m=JSON.parse(line);if(m.event==="message"&&/^https:\/\/[a-z0-9-]+\.trycloudflare\.com$/.test(m.message||""))base=m.message}catch(e){}}
+      const okU=u=>/^https:\/\/[a-z0-9-]+\.trycloudflare\.com$/.test(u||"");let base=null;
+      // 先查線上大廳伺服器的保留訊息（不會過期），再查 ntfy（只保留 12 小時）
+      if(window.XQNet&&XQNet.getRetained){const m=await XQNet.getRetained("xqlab-r7k2q/v1/c/"+h,8000);if(okU(m)&&m!==r.base)base=m}
+      if(!base){try{const t=await(await fetch("https://ntfy.sh/xqlab-"+h+"/json?poll=1&since=12h",{signal:AbortSignal.timeout?AbortSignal.timeout(8000):undefined})).text();
+        for(const line of t.split("\n")){try{const m=JSON.parse(line);if(m.event==="message"&&okU(m.message))base=m.message}catch(e){}}}catch(e){}}
       if(!base||base===r.base)return false;
       ls.set("remote",{...r,base,at:Date.now()});lastPing={at:0,ok:false};return true}catch(e){return false}}
   // 從電腦把棋譜同步到手機（之後離線也能看）
