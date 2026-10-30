@@ -894,8 +894,8 @@ async function postForm(rec){const F=FEEDBACK_FORM;if(!F.action)throw new Error(
   if(navigator.sendBeacon){if(navigator.sendBeacon(F.action,body))return;}
   try{await fetch(F.action,{method:"POST",mode:"no-cors",body})}catch(e){if(!navigator.onLine)throw e}}   // 有網路時，讀不到回覆不算失敗
 async function flushFeedback(){const q=store.get("fbQueue",[]);if(!q.length||!FEEDBACK_FORM.action||!navigator.onLine)return;const left=[];
-  for(const r of q){try{await postForm(r)}catch(e){left.push(r)}}store.set("fbQueue",left)}
-async function sendRecord(rec){try{await postForm(rec);return true}catch(e){const q=store.get("fbQueue",[]);q.push(rec);store.set("fbQueue",q.slice(-30));return false}}
+  for(const r of q){try{await postForm(r);if(r.type&&!/玩家/.test(r.type)&&window.XQNet&&XQNet.bell)XQNet.bell({type:r.type,img:!!r.img})}catch(e){left.push(r)}}store.set("fbQueue",left)}
+async function sendRecord(rec){try{await postForm(rec);if(rec.type&&!/玩家/.test(rec.type)&&window.XQNet&&XQNet.bell)XQNet.bell({type:rec.type,img:!!rec.img});return true}catch(e){const q=store.get("fbQueue",[]);q.push(rec);store.set("fbQueue",q.slice(-30));return false}}
 function feedbackSheet(){let type="🐞 錯誤";
   sheet("💬 意見回饋",b=>{b.innerHTML=`<p class="muted" style="margin-top:0">遇到問題或想要新功能，都可以寫在這裡，開發者會看到。</p>
     <div class="opt" id="ty">${["🐞 錯誤","💡 建議","💬 其他"].map(t=>`<button data-y="${t}" class="${t===type?"on":""}">${t}</button>`).join("")}</div>

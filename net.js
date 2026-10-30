@@ -149,6 +149,8 @@ var XQNet=(function(){
     rating(){const R=rec(),i=rankIdx(R.pts),nx=RANKS[i+1];return{pts:R.pts,rank:RANKS[i][0],w:R.w,l:R.l,d:R.d,next:nx?nx[0]:null,toNext:nx?nx[1]-R.pts:0,lo:RANKS[i][1],hi:nx?nx[1]:null,hist:R.hist}},
     rankOf,ranks:()=>RANKS.slice(),
     playing,finished:()=>!!(cur&&G&&G.result),
+    // 有人送出意見回饋：通知開發者電腦上的監看程式（只送類型和時間，不送內容）
+    bell(o){const go=k=>{if(cli&&cli.up)cli.pub(`${ROOT}/fb`,JSON.stringify({...o,at:Date.now()}));else if(k<5){if(!want){want=true;connect()}setTimeout(()=>go(k+1),2000)}};go(0)},
     emote(by,e){if(cli&&cli.up&&cur)cli.pub(`${ROOT}/g/${cur.gid}/e`,JSON.stringify({by,e}))},
     say(by,text){text=String(text||"").trim().slice(0,80);if(!text)return;if(!(cli&&cli.up&&cur))throw new Error("網路斷線中，等一下再傳");cli.pub(`${ROOT}/g/${cur.gid}/e`,JSON.stringify({by,text,name:me().name}))},
     chatLog:()=>emos.filter(x=>x.text),
