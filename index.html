@@ -879,7 +879,8 @@ const FEEDBACK_FORM={action:"https://docs.google.com/forms/d/e/1FAIpQLScxK1rQLe7
 // 截圖：縮小成 JPEG 文字（表單一格最多約 3 萬字），開發者看得清楚畫面就好
 function shrinkImage(file){return new Promise((ok,no)=>{const u=URL.createObjectURL(file),im=new Image();
   im.onload=()=>{URL.revokeObjectURL(u);const cv=document.createElement("canvas"),cx=cv.getContext("2d");
-    for(const[side,q]of[[1100,.6],[900,.55],[760,.5],[640,.45],[520,.4],[420,.35]]){const k=Math.min(1,side/Math.max(im.width,im.height));
+    for(const[side,q]of[[1100,.5],[960,.42],[860,.36],[780,.32],[720,.28],[640,.25],[560,.22],[480,.2]])   // 先降畫質、最後才縮小，字比較看得清楚
+      {const k=Math.min(1,side/Math.max(im.width,im.height));
       cv.width=Math.round(im.width*k);cv.height=Math.round(im.height*k);cx.fillStyle="#fff";cx.fillRect(0,0,cv.width,cv.height);cx.drawImage(im,0,0,cv.width,cv.height);
       const d=cv.toDataURL("image/jpeg",q);if(d.length<=30000)return ok(d)}
     no(new Error("圖片太大，請換一張或先裁切"))};
@@ -1335,7 +1336,8 @@ function Viewer(v,c,id){
     const hint=AN&&AN.k===posKey(pos)&&AN.lines&&AN.lines[0]?[sqI(AN.lines[0].mv.slice(0,2)),sqI(AN.lines[0].mv.slice(2,4))]:null;
     const ckSq=FREE&&last&&last.ck?pos.board.indexOf(pos.side==="r"?"K":"k"):-1;
     // 這步不是好棋：把 Pikafish 建議的走法（最多 3 步）畫成藍色箭頭
-    let sugg=null;if(!FREE&&ply>0&&!hint){const g=gradeOf(ply);if(g&&g.q&&!["正手","妙手","—"].includes(g.q)&&(g.bp&&g.bp.length||g.bm))
+    let sugg=null;if(!FREE&&ply>0){   // 開著 🔍 分析（橘色虛線框）時也要畫建議箭頭
+      const g=gradeOf(ply);if(g&&g.q&&!["正手","妙手","—"].includes(g.q)&&(g.bp&&g.bp.length||g.bm))
       sugg=(g.bp&&g.bp.length?g.bp:[g.bm]).slice(0,3).map(u=>({f:sqI(u.slice(0,2)),t:sqI(u.slice(2,4))}))
       else if(g&&g.bc&&g.q&&!["正手","妙手","—"].includes(g.q)){const m=bcMove(boardAt(line,ply-1),moverAt(ply),g.bc);if(m)sugg=[m]}}
     bd.draw(pos.board,{last,sel,targets:sel>=0&&LEGAL?LEGAL.list.filter(([f])=>f===sel).map(x=>x[1]):[],hint,check:ckSq,sugg});
