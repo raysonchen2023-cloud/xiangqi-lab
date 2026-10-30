@@ -167,8 +167,10 @@ var XQ=(function(){
   // 網頁剛打開，或 App 已經開著時網址被換成 #connect=…，都要讀取
   function parseConnect(){const h=location.hash;if(!h.startsWith("#connect="))return false;
     const ps=new URLSearchParams(h.slice(1)),base=(ps.get("connect")||"").replace(/\/+$/,""),key=ps.get("k");
-    if(/^https:\/\//.test(base)&&key){ls.set("remote",{base,key,at:Date.now()});lastPing={at:0,ok:false};XQ_justConnected=true}
-    history.replaceState(null,"",location.pathname+location.search+"#/");return true}
+    let ok=false;if(/^https:\/\//.test(base)&&key){ls.set("remote",{base,key,at:Date.now()});lastPing={at:0,ok:false};XQ_justConnected=true;ok=true}
+    // 對手在雙人對戰畫面給的 QR code 會多帶 seat=r／b：直接坐那一邊、進對局
+    const seat=ps.get("seat");if(ok&&/^[rb]$/.test(seat||"")){try{localStorage.setItem("m_pvpSeat",JSON.stringify(seat))}catch(e){}ls.set("pvpOnline",true)}
+    history.replaceState(null,"",location.pathname+location.search+(ok&&seat?"#/pvp":"#/"));return true}
   let lastPing={at:0,ok:false};
   parseConnect();
   function remoteInfo(){return ls.get("remote",null)}
@@ -201,6 +203,7 @@ var XQ=(function(){
     if(p==="/db/books")return dbBooks();
     if(p==="/db/items")return dbItems(c);
     if(p==="/db/item")return dbItem(c,url.searchParams.get("id"));
+    if(p==="/quiz/data"||p==="/terms/data"){const r=await fetch("data/"+p.slice(1,-5)+".json");if(!r.ok)throw new Error("找不到題庫");return r.json()}
     if(p==="/play/state")return playState();
     if(p.startsWith("/play/"))return playPost(p,b||{});
     // 兩支手機連線對戰：雙人對戰改走電腦（兩支手機看同一盤）

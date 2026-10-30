@@ -5,7 +5,7 @@
 <meta name="theme-color" content="#3B2A1A">
 <meta name="apple-mobile-web-app-capable" content="yes"><meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent"><meta name="apple-mobile-web-app-title" content="象棋研究室">
-<link rel="manifest" href="manifest.json"><link rel="icon" href="icon.svg"><link rel="apple-touch-icon" href="icon.svg">
+<link rel="manifest" href="manifest.json"><link rel="icon" href="icon.svg"><link rel="apple-touch-icon" href="icon-180.png">
 <style>
 :root{--bg:#F3EDE2;--card:#FFFDF8;--ink:#2A1F15;--muted:#7A6A58;--line:#E2D6C3;--accent:#B5452B;--accent2:#2F6B4F;--red:#B3261E;--blk:#1B1F1C;
 --wood:#E6BF83;--grid:#5B3B1C;--piece:#F8ECD4;--hl:#2F6B4F55;--bar:#3B2A1A;--barink:#F6E7CF;--warn:#B76E00;
@@ -22,7 +22,9 @@ input,select{font:inherit;font-size:16px;color:inherit}
 /* 頂部列 */
 .topbar{flex:none;background:var(--bar);color:var(--barink);padding:calc(var(--safeT) + 6px) 6px 6px;display:flex;align-items:center;gap:4px;min-height:52px}
 .topbar h1{flex:1;margin:0;font-family:var(--serif);font-size:18px;font-weight:900;letter-spacing:.06em;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;padding-left:6px}
+#topRight{display:flex;flex:none;gap:0}
 .topbar .ib{width:40px;height:40px;border-radius:20px;display:flex;align-items:center;justify-content:center;font-size:20px}
+#back{width:auto;padding:0 10px 0 4px;font-size:16px;gap:2px}#back b{font-size:28px;line-height:1;margin-top:-3px}
 .topbar .ib:active{background:#ffffff22}
 /* 內容區 */
 .view{flex:1;min-height:0;overflow:auto;-webkit-overflow-scrolling:touch}
@@ -107,6 +109,13 @@ input,select{font:inherit;font-size:16px;color:inherit}
 .modal{position:fixed;inset:0;z-index:60;display:flex;align-items:center;justify-content:center;padding:24px;background:#000a}
 .modal .box{background:var(--card);border-radius:22px;padding:24px 20px;width:100%;max-width:340px;text-align:center}
 .modal .em{font-size:56px;line-height:1}.modal h2{font-family:var(--serif);font-size:24px;margin:8px 0 4px}
+.emo{position:fixed;left:50%;top:38%;transform:translate(-50%,-50%) scale(.6);z-index:65;background:var(--card,#fff);color:var(--ink,#222);border-radius:22px;padding:14px 20px;box-shadow:0 10px 40px #0006;text-align:center;opacity:0;transition:.25s;pointer-events:none}.emo.show{opacity:1;transform:translate(-50%,-50%) scale(1)}.emo .big{font-size:64px;line-height:1.1}.emo .t{font-weight:700;font-size:18px}.emo.mine{top:auto;bottom:calc(120px + var(--safeB))}.emo.mine .big{font-size:40px}
+.emogrid{display:grid;grid-template-columns:repeat(2,1fr);gap:8px}.emogrid button{padding:12px 8px;border-radius:14px;background:var(--bg);border:1px solid var(--line);font-size:16px;font-weight:600}.emogrid button span{font-size:26px;display:block}
+.qrbox{display:flex;justify-content:center;padding:12px;background:#fff;border-radius:14px;margin:8px auto;width:fit-content}
+.rp-top{display:flex;gap:16px;align-items:center;margin:6px 0 12px}.rp-g{width:72px;height:72px;border-radius:20px;color:#fff;font:900 44px/72px var(--serif);text-align:center;flex:none}.rp-s{font-size:34px;font-weight:900;line-height:1.1}.rp-s small{font-size:15px}
+.rp-ph{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:10px}.rp-ph>div{background:var(--bg);border:1px solid var(--line);border-radius:12px;padding:8px 10px;display:flex;flex-direction:column;gap:2px}.rp-ph b{font-size:22px}.rp-ph i{display:block;height:5px;border-radius:3px}
+.rp-q{display:flex;flex-wrap:wrap;gap:6px 12px;font-size:13px;margin-bottom:6px}.rp-q b{font-size:17px;margin-right:2px}
+.rp-t{padding:9px 12px;border-radius:12px;background:var(--bg);margin:6px 0;border-left:4px solid var(--line);font-size:14px}.rp-t b{margin-right:6px}.rp-t.bad{border-left-color:#C0392B}.rp-t.good{border-left-color:#C27C0E}.rp-t .go{float:right;color:var(--accent);font-size:13px}.rp-t[data-p]{cursor:pointer}
 .toast{position:fixed;left:50%;bottom:calc(90px + var(--safeB));transform:translateX(-50%);background:#000d;color:#fff;padding:9px 16px;border-radius:999px;font-size:14px;z-index:70;max-width:90vw;text-align:center}
 /* 清單 */
 .search{display:flex;gap:8px;padding:10px 12px 6px}
@@ -129,7 +138,7 @@ input,select{font:inherit;font-size:16px;color:inherit}
 .lesson{font-size:13px;margin:4px 0;padding-left:1em;text-indent:-1em}
 </style></head><body>
 <div class="app">
- <div class="topbar" id="topbar"><button class="ib" id="back" hidden>‹</button><h1 id="title">象棋研究室</h1><span id="topRight"></span></div>
+ <div class="topbar" id="topbar"><button class="ib" id="back" hidden><b>‹</b>返回</button><h1 id="title">象棋研究室</h1><span id="topRight"></span></div>
  <div class="view" id="view"></div>
  <nav class="tabbar" id="tabbar">
   <button data-go="#/"><span class="ic">🏠</span>首頁</button>
@@ -230,7 +239,9 @@ function Board(onTap,onSwipe){
 // ================= 版面骨架與路由 =================
 let screen=null;   // 目前畫面：{stop()}
 function setTop(title,back,right){$("#title").textContent=title;$("#back").hidden=!back;$("#back").onclick=()=>{if(back===true)history.back();else location.hash=back};
-  const tr=$("#topRight");tr.innerHTML="";if(right)for(const[icon,fn,label]of right){const b=document.createElement("button");b.className="ib";b.textContent=icon;b.title=label||"";b.onclick=fn;tr.append(b)}}
+  const tr=$("#topRight");tr.innerHTML="";if(right)for(const[icon,fn,label]of right){const b=document.createElement("button");b.className="ib";b.textContent=icon;b.title=label||"";b.onclick=fn;tr.append(b)}
+  // 全螢幕畫面（沒有底部導覽列）一律加「回首頁」，加入主畫面的 App 模式沒有瀏覽器上一頁也能回去
+  if(back){const h=document.createElement("button");h.className="ib";h.textContent="🏠";h.title="回首頁";h.onclick=()=>{location.hash="#/"};tr.append(h)}}
 function setTabs(show,on){$("#tabbar").hidden=!show;for(const b of $("#tabbar").children)b.classList.toggle("on",b.dataset.go===on)}
 for(const b of $("#tabbar").children)b.onclick=()=>{vibrate(5);location.hash=b.dataset.go};
 function route(){
@@ -241,8 +252,12 @@ function route(){
   if(!p.length)return screen=Home(v);
   if(p[0]==="play")return screen=PlayHub(v);
   if(p[0]==="cpu")return screen=CpuGame(v);
+  if(p[0]==="join"&&/^[rb]$/.test(p[1]||"")){store.set("pvpSeat",p[1]);if(OFF)XQ.setPvpOnline(true);location.replace("#/pvp");return}
   if(p[0]==="pvp")return screen=PvpGame(v);
   if(p[0]==="watch")return screen=Watch(v);
+  if(p[0]==="stats")return screen=Stats(v);
+  if(p[0]==="quiz")return screen=Quiz(v);
+  if(p[0]==="terms")return screen=Terms(v,p[1]);
   if(p[0]==="db"&&p.length>=3)return screen=Viewer(v,p[1],p.slice(2).join("/"));
   if(p[0]==="db")return screen=Library(v,p[1]);
   screen=Home(v)}
@@ -283,13 +298,20 @@ function Home(v){
     <button class="tile" data-go="#/pvp"><span class="big">👥</span><span class="t">雙人對戰</span><span class="s" id="hPvp">同一支手機輪流下</span></button>
     <button class="tile" data-go="#/watch"><span class="big">📺</span><span class="t">AI 對戰</span><span class="s" id="hAi">GPT 對 Claude</span></button>
    </div>
+   <div class="sec-t">學習</div>
+   <div class="hero" style="grid-template-columns:repeat(3,1fr)">
+    <button class="tile" data-go="#/quiz" style="min-height:92px"><span class="big">🎯</span><span class="t">棋力測驗</span><span class="s" id="hQuiz">業1～專2</span></button>
+    <button class="tile" data-go="#/terms" style="min-height:92px"><span class="big">📚</span><span class="t">象棋術語</span><span class="s">殺法・開局</span></button>
+    <button class="tile" data-go="#/stats" style="min-height:92px"><span class="big">🏅</span><span class="t">我的戰績</span><span class="s">勝負・評級</span></button>
+   </div>
    <div class="sec-t">繼續研究</div><div id="hRecent"></div>
    <div class="sec-t">棋譜庫 <button data-go="#/db">全部 ›</button></div><div class="chips" id="hBooks" style="padding:0 0 4px"></div>
-   <div class="sec-t">挑戰進度</div><div class="card" id="hProg"><span class="muted">載入中…</span></div>
+   <div class="sec-t">挑戰進度 <button data-go="#/stats">我的戰績 ›</button></div><div class="card" id="hProg"><span class="muted">載入中…</span></div>
    <p class="muted" style="text-align:center;margin:22px 0 8px">提示：在瀏覽器選單點「加入主畫面」，就能像 App 一樣全螢幕使用。</p>
   </div>`;
   v.querySelectorAll("[data-go]").forEach(b=>b.onclick=()=>{vibrate(5);location.hash=b.dataset.go});
   if(OFF){homeStatus(v.querySelector("#hStatus"));if(window.XQ_justConnected){XQ_justConnected=false;setTimeout(()=>toast("已連上電腦！"),300)}}
+  const qb=store.get("quizBest",null);if(qb)v.querySelector("#hQuiz").textContent="最好："+qb.rank;
   const recent=store.get("recent",[]);
   const hr=v.querySelector("#hRecent");
   if(!recent.length)hr.innerHTML=`<div class="card muted">還沒看過棋譜。到「棋譜」挑一局開始研究吧。</div>`;
@@ -304,6 +326,121 @@ function Home(v){
       <div style="display:grid;grid-template-columns:repeat(8,1fr);gap:4px">${st.levels.map(l=>{const r=st.record[l.n]||{w:0};return`<div title="${esc(l.name)}" style="height:30px;border-radius:8px;display:flex;align-items:center;justify-content:center;font-weight:900;font-size:13px;${r.w?"background:var(--accent2);color:#fff":"background:var(--bg);color:var(--muted);border:1px solid var(--line)"}">${l.n}</div>`}).join("")}</div>`}).catch(()=>{v.querySelector("#hProg").innerHTML='<span class="muted">連不到電腦上的程式</span>'});
   api("/pvp/state").then(st=>{if(st.moves.length&&!st.result)v.querySelector("#hPvp").textContent=`進行中・第 ${Math.ceil(st.moves.length/2)} 回合`}).catch(()=>{});
   api("/state").then(st=>{v.querySelector("#hAi").innerHTML=st.running?'<span class="live">直播中</span>':st.result?"上一盤："+(st.result.w?PLAYER[st.result.w]+"勝":"和局"):"按進去可以開始"}).catch(()=>{});
+  return{}}
+
+// ================= 棋力測驗：11 個等級（業1～業9、專1、專2）各出 2 題，由淺到深 =================
+// 題目來自公版古譜，答案由 Pikafish 算好存在題庫裡（離線也能測）。等級只是估計，不是正式段位。
+function quizRank(ans,ranks){let best=-1,miss=0;
+  for(let t=0;t<ranks.length;t++){const a=ans.filter(x=>x.tier===t);if(!a.length)continue;if(a.some(x=>x.ok)){best=t;miss=0}else if(++miss>=2)break}
+  return{ti:best,rank:best<0?"業1 以下":ranks[best]}}
+function Quiz(v){
+  setTop("棋力測驗","#/");setTabs(false);
+  let D=null,list=[],i=0,ans=[],sel=-1,LEGAL=[],q=null,board=null,answered=false;
+  const bd=Board(x=>tap(x));
+  function intro(){v.className="view";const best=store.get("quizBest",null);
+    v.innerHTML=`<div class="pad"><div class="card" style="line-height:1.8"><div style="font-size:40px;text-align:center">🎯</div>
+      <h2 style="text-align:center;margin:4px 0 8px">測測你的棋力</h2>
+      <p>共 <b>22 題</b>，從業1到專2每個等級 2 題，越後面越難。每題輪到一方走，找出<b>最好的一步</b>：點棋子，再點要去的位置。</p>
+      <p class="muted">題目取自《適情雅趣》、《橘中秘》、《梅花譜》等古譜，答案由 Pikafish 深度計算；難度依「Pikafish 要算多深才找到這步」分級。結果是<b>估計值</b>，不是正式段位。</p>
+      ${best?`<p>目前最好成績：<b>${esc(best.rank)}</b>（${new Date(best.at).toLocaleDateString()}）</p>`:""}
+      <button class="btn" id="go">開始測驗</button></div></div>`;
+    v.querySelector("#go").onclick=start}
+  async function start(){try{D=D||await api("/quiz/data")}catch(e){return toast(e.message)}
+    const seen=new Set(store.get("quizSeen",[]));list=[];
+    for(let t=0;t<D.ranks.length;t++){const all=D.items.filter(x=>x.tier===t),fresh=all.filter(x=>!seen.has(x.id)),src=fresh.length>=2?fresh:all;
+      const pick=src.slice().sort(()=>Math.random()-.5).slice(0,2);list.push(...pick)}
+    store.set("quizSeen",[...seen,...list.map(x=>x.id)].slice(-400));
+    i=0;ans=[];layout();show()}
+  function layout(){v.className="view fixed";
+    v.innerHTML=`<div class="status" id="qh" style="margin-top:6px"></div><div class="boardbox" id="bbox"></div><div class="status" id="stat"></div><div class="note" id="note" style="white-space:pre-wrap"></div><div style="flex:1"></div><div class="actions" id="acts"></div>`;
+    v.querySelector("#bbox").append(bd.svg)}
+  async function show(){q=list[i];board=q.board.split(",").map(x=>x||null);sel=-1;answered=false;
+    v.querySelector("#qh").innerHTML=`<b>第 ${i+1} / ${list.length} 題</b>・難度 ${esc(q.rank)}　<span class="muted">${esc(q.src)}</span>`;
+    v.querySelector("#stat").textContent=`${PLAYER[q.side]}走，找出最好的一步`+(q.mate?"（有殺棋）":"");v.querySelector("#stat").classList.add("hot");
+    v.querySelector("#note").textContent="";
+    const acts=actionBar(v.querySelector("#acts"),[["skip","⏭","不會，看答案",()=>judge(-1,-1)],["quit","✕","結束",()=>confirmBox("結束測驗？這次不計成績",()=>intro(),"結束")]]);
+    draw();try{LEGAL=(await api("/an/legal",{board,side:q.side})).legal}catch(e){toast(e.message)}}
+  function draw(o){bd.draw(o&&o.board||board,{flip:q.side==="b",sel,targets:sel>=0?LEGAL.filter(([f])=>f===sel).map(x=>x[1]):[],...(o||{})})}
+  function tap(x){if(!q||answered)return;
+    if(sel>=0&&LEGAL.some(([f,t])=>f===sel&&t===x)){const f=sel;sel=-1;return judge(f,x)}
+    sel=LEGAL.some(([f])=>f===x)?x:-1;if(sel>=0)vibrate(5);draw()}
+  function judge(f,t){answered=true;const ok=f===q.f&&t===q.t;ans.push({id:q.id,tier:q.tier,ok});vibrate(ok?15:[20,40,20]);
+    const nb=board.slice();nb[q.t]=nb[q.f];nb[q.f]=null;
+    draw({board:nb,last:{f:q.f,t:q.t},sel:-1,targets:[]});
+    const s=v.querySelector("#stat");s.classList.remove("hot");s.textContent=ok?"✔ 答對了！":f<0?"正解如下":"✘ 不是這步";
+    const rv=q.side==="r"?q.v:-q.v;
+    v.querySelector("#note").textContent=`正解：${q.cn}`+(q.mate?`，${q.mate} 步內殺棋`:`，走完${evt(rv)}`)+`\nPikafish 的後續：${q.pv.join(" ")}`;
+    actionBar(v.querySelector("#acts"),[["next",i+1<list.length?"›":"🏁",i+1<list.length?"下一題":"看結果",()=>{if(++i<list.length)show();else result()},true]])}
+  function result(){const r=quizRank(ans,D.ranks),ok=ans.filter(x=>x.ok).length;v.className="view";
+    const best=store.get("quizBest",null),better=!best||r.ti>best.ti;
+    if(better)store.set("quizBest",{rank:r.rank,ti:r.ti,ok,n:ans.length,at:Date.now()});
+    v.innerHTML=`<div class="pad"><div class="card" style="text-align:center"><div style="font-size:44px">🏅</div><div class="muted">估計棋力</div>
+      <div style="font-size:42px;font-weight:900;font-family:var(--serif)">${esc(r.rank)}</div><p class="muted">答對 ${ok} / ${ans.length} 題${better&&best?"・🎉 新紀錄！":""}</p>
+      <div style="display:grid;grid-template-columns:repeat(11,1fr);gap:3px;margin:12px 0">${D.ranks.map((rk,t)=>{const a=ans.filter(x=>x.tier===t),n=a.filter(x=>x.ok).length;
+        return`<div><div style="height:34px;border-radius:6px;background:${n===2?"var(--accent2)":n===1?"#E3B04B":"var(--bg)"};border:1px solid var(--line)"></div><div style="font-size:10px" class="muted">${rk}</div></div>`}).join("")}</div>
+      <p class="muted" style="font-size:12px;text-align:left">判定方式：由業1往上，某一級 2 題中答對 1 題就算通過；連續兩級都沒答對就停止。綠色＝2 題全對，黃色＝對 1 題。結果只是依 Pikafish 難度估計，不是正式段位。</p>
+      <button class="btn" id="again">再測一次（換新題目）</button><button class="btn ghost" id="st">我的戰績</button></div></div>`;
+    v.querySelector("#again").onclick=start;v.querySelector("#st").onclick=()=>location.hash="#/stats"}
+  intro();return{}}
+
+// ================= 象棋術語：殺法、開局、戰術、棋形、規則 =================
+function Terms(v,pick){
+  setTop("象棋術語","#/");setTabs(false);
+  v.innerHTML=`<div class="search"><input id="q" placeholder="搜尋術語，例如：馬後炮、屏風馬"></div><div class="chips" id="cats"></div><div class="items" id="list"></div>
+    <p class="muted" id="src" style="padding:4px 16px 20px;font-size:12px"></p>`;
+  let D=null,cat="全部";
+  const qi=v.querySelector("#q");qi.oninput=()=>paint();
+  function paint(){const k=qi.value.trim(),box=v.querySelector("#list");box.innerHTML="";
+    const its=D.items.filter(t=>(cat==="全部"||t.k===cat)&&(!k||t.n.includes(k)||t.d.includes(k)));
+    v.querySelectorAll("#cats button").forEach(b=>b.classList.toggle("on",b.textContent===cat));
+    for(const t of its){const b=document.createElement("button");b.className="item";
+      b.innerHTML=`<span class="lb">${{殺法:"⚔",開局:"🚩",戰術:"🎯",棋形:"🧩",規則:"⚖",俗語:"🏮"}[t.k]||"•"}</span><span class="tx"><b>${esc(t.n)}${t.ex||t.op?' <span class="pill" style="font-size:11px">有例局</span>':""}</b><span>${esc(t.d.slice(0,40))}${t.d.length>40?"…":""}</span></span><span class="muted">›</span>`;
+      b.onclick=()=>open(t);box.append(b)}
+    if(!its.length)box.innerHTML='<div class="card muted">找不到這個術語</div>'}
+  function open(t){sheet(t.n,b=>{b.innerHTML=`<p style="line-height:1.8">${esc(t.d)}</p>`;
+    if(!t.ex&&!t.op)return;
+    const wrap=document.createElement("div");wrap.style.cssText="max-width:340px;margin:0 auto";const bd=Board(null);wrap.append(bd.svg);b.append(wrap);
+    const cap=document.createElement("p");cap.style.textAlign="center";const ctl=document.createElement("div");ctl.className="opt";ctl.style.justifyContent="center";b.append(cap,ctl);
+    if(t.ex){const b0=t.ex.board.split(",").map(x=>x||null);let solved=false;
+      const draw=()=>{if(!solved){bd.draw(b0,{});cap.textContent=`${PLAYER[t.ex.side]}走一步就能將死，想想看是哪一步？`}
+        else{const nb=b0.slice();nb[t.ex.t]=nb[t.ex.f];nb[t.ex.f]=null;bd.draw(nb,{last:{f:t.ex.f,t:t.ex.t},check:nb.indexOf(t.ex.side==="r"?"k":"K")});cap.textContent=`${t.ex.cn}，將死！`}
+        ctl.innerHTML=`<button>${solved?"↺ 再看一次":"👀 看答案"}</button>`;ctl.firstChild.onclick=()=>{solved=!solved;draw()}};draw()}
+    else{let n=t.op.moves.length;const b0=parseFen(START);
+      const draw=()=>{const bb=b0.slice();t.op.moves.slice(0,n).forEach(([f,to])=>{bb[to]=bb[f];bb[f]=null});const l=t.op.moves[n-1];
+        bd.draw(bb,{last:l?{f:l[0],t:l[1]}:null});
+        cap.innerHTML=t.op.cn.map((c,j)=>`<span style="${j<n?"font-weight:700":"opacity:.45"}">${j%2?"":(j/2+1)+". "}${esc(c)}</span>`).join("　");
+        ctl.innerHTML='<button id="p">◀ 上一步</button><button id="n">下一步 ▶</button>';
+        ctl.querySelector("#p").onclick=()=>{if(n>0){n--;draw()}};ctl.querySelector("#n").onclick=()=>{if(n<t.op.moves.length){n++;draw()}}};draw()}})}
+  api("/terms/data").then(d=>{D=d;const cats=["全部",...new Set(d.items.map(x=>x.k))],cb=v.querySelector("#cats");
+    for(const c of cats){const b=document.createElement("button");b.textContent=c;b.onclick=()=>{cat=c;paint()};cb.append(b)}
+    v.querySelector("#src").textContent=d.note;paint();if(pick){const t=d.items.find(x=>x.n===pick);if(t)open(t)}}).catch(e=>{v.querySelector("#list").innerHTML=`<div class="card muted">⚠ ${esc(e.message)}</div>`});
+  return{}}
+
+// ================= 我的戰績（跟電腦下的勝負和、賽後報告分數、棋力測驗） =================
+function Stats(v){
+  setTop("我的戰績","#/");setTabs(false);
+  v.innerHTML=`<div class="pad"><div class="card" id="sTot"><span class="muted">載入中…</span></div>
+    <div class="sec-t" style="margin-left:0">各難度</div><div class="card" id="sLv" style="padding:6px 10px"></div>
+    <div class="sec-t" style="margin-left:0">棋力測驗</div><div class="card" id="sQz"></div>
+    <div class="sec-t" style="margin-left:0">最近對局</div><div class="items" id="sRec" style="padding:0"></div></div>`;
+  const reps=store.get("reports",{}),qz=store.get("quizBest",null);
+  v.querySelector("#sQz").innerHTML=qz?`<div class="row" style="justify-content:space-between"><div><b style="font-size:22px">${esc(qz.rank)}</b><div class="muted">${new Date(qz.at).toLocaleDateString()}・答對 ${qz.ok}/${qz.n}</div></div><button class="btn ghost" style="width:auto" id="qz">再測一次</button></div>`
+    :`<div class="row" style="justify-content:space-between"><span class="muted">還沒測過</span><button class="btn" style="width:auto" id="qz">開始測驗</button></div>`;
+  v.querySelector("#qz").onclick=()=>location.hash="#/quiz";
+  Promise.all([api("/play/state"),api("/db/items?c=play&limit=30").catch(()=>({items:[]}))]).then(([st,d])=>{
+    let W=0,L=0,D=0;for(const r of Object.values(st.record||{})){W+=r.w||0;L+=r.l||0;D+=r.d||0}const N=W+L+D;
+    const sc=Object.values(reps).map(r=>r.score).filter(x=>x!=null),avg=sc.length?Math.round(sc.reduce((a,b)=>a+b,0)/sc.length):null;
+    v.querySelector("#sTot").innerHTML=`<div style="display:grid;grid-template-columns:repeat(4,1fr);text-align:center;gap:6px">
+      ${[["勝",W,"var(--accent2)"],["負",L,"var(--red)"],["和",D,"var(--muted)"],["勝率",N?Math.round(W*100/N)+"%":"—",""]].map(([l,x,c])=>`<div><div style="font-size:26px;font-weight:900;color:${c}">${x}</div><div class="muted">${l}</div></div>`).join("")}</div>
+      ${avg!=null?`<p class="muted" style="text-align:center;margin:10px 0 0">賽後報告平均 <b style="color:${gradeFor(avg)[2]}">${avg} 分（${gradeFor(avg)[0]}）</b>・共 ${sc.length} 盤</p>`:'<p class="muted" style="text-align:center;margin:10px 0 0">下完一盤按「📊 賽後報告」，分數會記在這裡</p>'}`;
+    v.querySelector("#sLv").innerHTML=`<table style="width:100%;border-collapse:collapse;font-size:14px"><tr class="muted"><td>難度</td><td>勝</td><td>負</td><td>和</td><td></td></tr>${st.levels.map(l=>{const r=st.record[l.n]||{w:0,l:0,d:0};
+      return`<tr style="border-top:1px solid var(--line)"><td style="padding:7px 0"><b>${l.n}</b> ${esc(l.name)}</td><td>${r.w||0}</td><td>${r.l||0}</td><td>${r.d||0}</td><td>${r.w?"✔":""}</td></tr>`}).join("")}</table>`;
+    const box=v.querySelector("#sRec");if(!d.items.length){box.innerHTML='<div class="card muted">還沒有跟電腦下完的對局</div>';return}
+    for(const it of d.items.slice(0,30)){const me=it.black==="你"?"b":"r",res=String(it.result||""),win=res.startsWith(PLAYER[me]+"勝"),lose=res.startsWith(PLAYER[opp(me)]+"勝"),R=reps[it.id];
+      const b=document.createElement("button");b.className="item";
+      b.innerHTML=`<span class="lb" style="background:${win?"var(--accent2)":lose?"var(--red)":"var(--muted)"};color:#fff">${win?"勝":lose?"負":"和"}</span><span class="tx"><b>${esc(me==="r"?it.black:it.red)}</b><span>${esc(String(it.date||it.id).slice(0,10))}・你執${me==="r"?"紅":"黑"}・${esc(res.replace(/^.*?（/,"").replace(/）$/,""))}</span></span>${R?`<b style="color:${gradeFor(R.score)[2]};font-size:18px">${R.grade}</b>`:'<span class="muted">›</span>'}`;
+      b.onclick=()=>{if(!R)store.set("openReport","play/"+it.id);location.hash="#/db/play/"+encodeURIComponent(it.id)};box.append(b)}
+  }).catch(e=>{v.querySelector("#sTot").innerHTML=`<span class="muted">⚠ ${esc(e.message)}</span>`});
   return{}}
 
 // ================= 對弈入口 =================
@@ -328,6 +465,65 @@ function renderStrip(box,moves,curIdx,onPick){
   const on=box.children[curIdx<0?box.children.length-1:curIdx];if(on)box.scrollLeft=on.offsetLeft-box.clientWidth/2+on.offsetWidth/2;else box.scrollLeft=box.scrollWidth}
 function actionBar(box,items){box.innerHTML="";const out={};for(const[id,icon,label,fn,pri]of items){const b=document.createElement("button");if(pri)b.className="pri";
   b.innerHTML=`<span class="ic">${icon}</span>${label}`;b.onclick=()=>{vibrate(8);fn()};box.append(b);out[id]=b}return out}
+
+// ================= 賽後報告：準確度、開局／中局／殘局分數、S～D 評級、Pikafish 講解 =================
+// 每步準確度＝100×e^(−損失/200)（損失＝比引擎最佳著法少幾分，1 兵＝100 分）；
+// 已經大優或大劣（±12 兵以上）時小誤差不影響結果，損失最多算 30 分。
+// 總分＝平均準確度＋妙手加分（每個 +2，最多 +6）。評級 S≥90、A≥80、B≥70、C≥60、D<60。
+// 階段：前 20 步（各走 10 回合）是開局；雙方車馬炮合計剩 6 個以下起算殘局；其他是中局。
+const GRADES=[["S",90,"#C27C0E","幾乎跟引擎同步，這盤下得非常漂亮"],["A",80,"#2F6B4F","下得很穩，只有少數不夠精確的地方"],["B",70,"#3A7BD5","整體不錯，但有幾步把優勢讓了出去"],
+  ["C",60,"#D9822B","有明顯的失誤，算棋還要再仔細一點"],["D",0,"#C0392B","失誤偏多，建議多做殺法和殘局練習"]];
+const gradeFor=x=>GRADES.find(g=>x>=g[1]);
+const rnd=n=>Math.ceil(n/2);
+function gameReport(board0,moves){
+  const b=board0.slice(),out={r:null,b:null},plies=[];let endFrom=null;
+  moves.forEach((m,i)=>{const cap=b[m.t];b[m.t]=b[m.f];b[m.f]=null;
+    const big=b.filter(p=>p&&"RNCrnc".includes(p)).length;if(endFrom==null&&big<=6)endFrom=i+1;
+    plies.push({...m,ply:i+1,cap,phase:endFrom!=null?"end":i<20?"open":"mid"})});
+  for(const s of["r","b"]){const mine=plies.filter(m=>m.by===s),graded=mine.filter(m=>m.loss!=null&&m.q&&m.q!=="—");
+    const sg=s==="r"?1:-1,cnt={};for(const m of graded)cnt[m.q]=(cnt[m.q]||0)+1;
+    const acc=m=>{const after=sg*(m.ev||0),best=after+m.loss;let L=m.loss;if((best>=1200&&after>=1200)||(best<=-1200&&after<=-1200))L=Math.min(L,30);return 100*Math.exp(-L/200)};
+    const avg=a=>a.length?a.reduce((x,m)=>x+acc(m),0)/a.length:null;
+    const ph={};for(const k of["open","mid","end"]){const a=graded.filter(m=>m.phase===k);ph[k]=a.length?{score:Math.round(avg(a)),n:a.length}:null}
+    const base=avg(graded),bonus=Math.min(6,2*(cnt["妙手"]||0)),score=base==null?null:Math.min(100,Math.round(base+bonus));
+    const checks=mine.filter(m=>m.ck).length,caps=mine.filter(m=>m.cap).length;
+    const style=!mine.length?"":checks>=mine.length*.15||caps>=mine.length*.35?"🔥 攻殺型":(cnt["錯著"]||0)+(cnt["露著"]||0)===0&&(score||0)>=75?"🛡 穩健型":"⚖ 均衡型";
+    out[s]={score,grade:score==null?null:gradeFor(score),base,bonus,phases:ph,cnt,n:mine.length,graded:graded.length,style,talk:talk(s,plies,graded,ph,score)}}
+  return{sides:out,plies,endFrom,complete:plies.every(m=>m.q)}}
+// 講解：只用 Pikafish 的評估數字整理出來，不是抄別人的講評
+function talk(s,plies,graded,ph,score){if(score==null)return[];const sg=s==="r"?1:-1,T=[];
+  T.push({t:"總評",x:gradeFor(score)[3]+"。"});
+  const PN={open:"開局",mid:"中局",end:"殘局"},have=Object.entries(ph).filter(([,v])=>v&&v.n>=3);
+  if(have.length>=2){have.sort((a,b)=>b[1].score-a[1].score);const hi=have[0],lo=have[have.length-1];
+    T.push({t:"階段",x:hi[1].score-lo[1].score<5?`各階段表現差不多（${have.map(([k,v])=>PN[k]+" "+v.score).join("、")}），很平均。`
+      :`${PN[hi[0]]}最好（${hi[1].score} 分），${PN[lo[0]]}最需要加強（${lo[1].score} 分）。`+(lo[0]==="open"?"可以多看開局譜，熟悉前十回合的常見走法。":lo[0]==="end"?"殘局要算得更細，建議多練古典殘局譜。":"中局要多注意對方的威脅再出手。")})}
+  // 優勢易手：局勢從這方有利（≥1.5 兵）變成不利，或反過來
+  let lead=0;for(const m of plies){if(m.ev==null)continue;const v=sg*m.ev,now=v>=150?1:v<=-150?-1:0;
+    if(now&&lead&&now!==lead)T.push({t:now>0?"翻盤":"被翻盤",ply:m.ply,x:`第 ${rnd(m.ply)} 回合${m.by===s?"你":"對方"}走${m.cn}之後，局勢${now>0?"轉成你有利":"變成對方有利"}（${evt(m.ev)}）。`});
+    if(now)lead=now}
+  // 最大失誤：錯過殺棋、露著、錯著
+  const bad=graded.filter(m=>m.q==="錯著"||m.q==="露著").sort((a,b)=>b.loss-a.loss).slice(0,3);
+  for(const m of bad){const after=sg*(m.ev||0),best=after+m.loss,missMate=best>=1900&&after<1900;
+    T.push({t:missMate?"錯過殺棋":m.q,ply:m.ply,bad:1,x:`第 ${rnd(m.ply)} 回合 ${m.cn}：${missMate?"這時已經有殺棋":"比最佳著法少了 "+(m.loss/100).toFixed(1)+" 兵"}`+(m.bc?`，Pikafish 建議 ${m.bc}`:"")+`。走完之後${evt(m.ev)}。`})}
+  for(const m of graded.filter(m=>m.q==="妙手").slice(0,3))T.push({t:"妙手",ply:m.ply,good:1,x:`第 ${rnd(m.ply)} 回合 ${m.cn}：其他走法都差 1.5 兵以上，只有這步最好。`});
+  if(!bad.length&&graded.length>=10)T.push({t:"亮點",x:"整盤沒有錯著或露著，防守很紮實。"});
+  return T.sort((a,b)=>(a.ply||0)-(b.ply||0))}
+// 報告畫面（底部選單）。opts：{title, side:預設看哪一方, names:{r,b}, goto(ply)}
+function reportSheet(rep,opts){let s=opts.side||"r";
+  sheet(opts.title||"賽後報告",b=>{const paint=()=>{const R=rep.sides[s],nm=opts.names||{r:"紅方",b:"黑方"};
+    const PN=[["open","開局"],["mid","中局"],["end","殘局"]],QS=["妙手","正手","優著","良著","錯著","露著"];
+    b.innerHTML=`<div class="opt">${["r","b"].map(x=>`<button data-sd="${x}" class="${x===s?"on":""}">${x==="r"?"🔴":"⚫"} ${esc(nm[x])}</button>`).join("")}</div>`+
+      (R.score==null?`<p class="muted">這一方還沒有評等過的著法。</p>`:`
+      <div class="rp-top"><div class="rp-g" style="background:${R.grade[2]}">${R.grade[0]}</div><div><div class="rp-s">${R.score}<small> 分</small></div>
+        <div class="muted">準確度 ${R.base.toFixed(1)}${R.bonus?`＋妙手 ${R.bonus}`:""}・${R.style}</div></div></div>
+      ${rep.complete?"":`<p class="muted">⚠ 還有 ${rep.plies.filter(m=>!m.q).length} 步沒評等，分數暫時不完整</p>`}
+      <div class="rp-ph">${PN.map(([k,l])=>{const p=R.phases[k];return`<div><span>${l}</span><b>${p?p.score:"—"}</b><i style="width:${p?p.score:0}%;background:${p?gradeFor(p.score)[2]:"transparent"}"></i><small class="muted">${p?p.n+" 步・"+gradeFor(p.score)[0]:"沒走到"}</small></div>`}).join("")}</div>
+      <div class="rp-q">${QS.map(q=>`<span style="color:${QC[q]}"><b>${R.cnt[q]||0}</b>${q}</span>`).join("")}</div>
+      <div class="sec-t" style="margin-left:0">Pikafish 講解</div>
+      ${R.talk.map(t=>`<div class="rp-t${t.bad?" bad":t.good?" good":""}"${t.ply?` data-p="${t.ply}"`:""}><b>${esc(t.t)}</b>${esc(t.x)}${t.ply&&opts.goto?'<span class="go">看這步 ›</span>':""}</div>`).join("")}
+      <p class="muted" style="font-size:12px;margin-top:12px">評級：S≥90、A≥80、B≥70、C≥60、D&lt;60。每步準確度依「比 Pikafish 最佳著法少幾分」換算，再加妙手分。開局＝前 10 回合；殘局＝雙方車馬炮合計剩 6 個以下。</p>`);
+    b.querySelectorAll("[data-sd]").forEach(x=>x.onclick=()=>{s=x.dataset.sd;paint()});
+    if(opts.goto)b.querySelectorAll("[data-p]").forEach(x=>x.onclick=()=>{closeSheet();opts.goto(+x.dataset.p)})};paint()})}
 
 // ================= 挑戰電腦 =================
 function CpuGame(v){
@@ -359,8 +555,8 @@ function CpuGame(v){
     if(st.result&&shownResult!==JSON.stringify(st.result)+st.moves.length){shownResult=JSON.stringify(st.result)+st.moves.length;
       const win=st.result.w===st.human,draw0=!st.result.w;vibrate([30,40,30]);
       modal(`<div class="em">${win?"🏆":draw0?"🤝":"💪"}</div><h2>${win?"你贏了！":draw0?"和局":"這盤輸了"}</h2><p class="muted">${esc(st.result.why)}・對手第 ${st.level} 級「${esc(lv.name||"")}」</p>`,
-        [[win&&st.level<8?"挑戰下一級 ›":"再來一局",()=>api("/play/new",{human:st.human,level:win&&st.level<8?st.level+1:st.level}).then(render).catch(e=>toast(e.message))],["檢討這盤",review,true],["關閉",null,true]])}}
-  function review(){api("/db/items?c=play").then(d=>{const it=d.items[0];if(it)location.hash="#/db/play/"+encodeURIComponent(it.id);else toast("找不到存檔")}).catch(e=>toast(e.message))}
+        [[win&&st.level<8?"挑戰下一級 ›":"再來一局",()=>api("/play/new",{human:st.human,level:win&&st.level<8?st.level+1:st.level}).then(render).catch(e=>toast(e.message))],["📊 賽後報告",()=>review(true)],["檢討這盤",()=>review(),true],["關閉",null,true]])}}
+  function review(rep){api("/db/items?c=play").then(d=>{const it=d.items[0];if(!it)return toast("找不到存檔");if(rep)store.set("openReport","play/"+it.id);location.hash="#/db/play/"+encodeURIComponent(it.id)}).catch(e=>toast(e.message))}
   function newSheet(){let side=st?st.human:"r",level=st?st.level:3;
     sheet("開新局",b=>{const rec=st?st.record:{};
       const paint=()=>{b.innerHTML=`<div class="muted">你執</div><div class="opt"><button data-s="r" class="${side==="r"?"on":""}">紅方（先走）</button><button data-s="b" class="${side==="b"?"on":""}">黑方（後走）</button></div>
@@ -372,6 +568,17 @@ function CpuGame(v){
   return{stop}}
 
 // ================= 雙人對戰 =================
+// 連線對戰的調侃表情
+const EMOTES=[["smug","😏","就這？"],["slow","🐢","快一點啦"],["good","👍","好棋！"],["oops","😱","失誤了吧"],["think","🤔","想好久喔"],["tea","🍵","喝茶等你"],["fire","🔥","要殺了喔"],["mercy","🙏","手下留情"],["lol","😂","哈哈哈"],["gg","🤝","好棋相惜"]];
+function showEmote(k,mine){const e=EMOTES.find(x=>x[0]===k);if(!e)return;const d=document.createElement("div");d.className="emo"+(mine?" mine":"");
+  d.innerHTML=`<div class="big">${e[1]}</div><div class="t">${esc(e[2])}</div>`;document.body.append(d);d.getBoundingClientRect();d.classList.add("show");
+  if(!mine)vibrate([20,40,20]);setTimeout(()=>{d.classList.remove("show");setTimeout(()=>d.remove(),300)},mine?1300:2600)}
+function loadScript(src){return new Promise((ok,no)=>{if(document.querySelector(`script[data-s="${src}"]`))return ok();const s=document.createElement("script");s.src=src;s.dataset.s=src;s.onload=ok;s.onerror=()=>no(new Error("載入 "+src+" 失敗"));document.head.append(s)})}
+// 產生「對手掃這個就能加入、自動坐另一邊」的網址
+async function joinLink(other){
+  if(OFF){const r=XQ.remoteInfo();if(!r)return null;return location.origin+location.pathname+`#connect=${encodeURIComponent(r.base)}&k=${encodeURIComponent(r.key)}&seat=${other}`}
+  const d=await api("/remote"),us=d.urls||[],u=us.find(x=>/\/m\?k=/.test(x)&&/^https:/.test(x))||us.find(x=>/\/m\?k=/.test(x));
+  return u?u+"#/join/"+other:null}
 function PvpGame(v){
   setTabs(false);gameLayout(v);
   let st=null,sel=-1,flipMan=null,shownResult=null,busy=false,autoFlip=store.get("autoFlip",true),clockBase=null,drawAsked=null;
@@ -380,9 +587,10 @@ function PvpGame(v){
   const bd=Board(i=>tap(i));v.querySelector("#bbox").append(bd.svg);
   const setTitle=()=>setTop(seat?`連線對戰・我執${seat==="r"?"紅":"黑"}`:"雙人對戰","#/play",[["👥",()=>seatSheet(),"連線對戰"],["⚙",()=>newSheet(),"新局設定"]]);setTitle();
   const mySide=()=>seat||(st&&st.turn);
-  const acts=actionBar(v.querySelector("#acts"),[["undo","↶","悔棋",()=>post("/pvp/undo")],["flip","⇅","翻轉",()=>{flipMan=!isFlip();autoFlip=false;store.set("autoFlip",false);draw();toast("已關閉自動轉向")}],
+  const acts=actionBar(v.querySelector("#acts"),[["undo","↶","悔棋",()=>post("/pvp/undo")],["flip","⇅","翻轉",()=>{if(seat)return emoteSheet();flipMan=!isFlip();autoFlip=false;store.set("autoFlip",false);draw();toast("已關閉自動轉向")}],
     ["new","＋","新局",()=>newSheet(),true],["draw","🤝","提和",()=>{if(st)post("/pvp/draw",{side:mySide()})}],
     ["resign","🏳","認輸",()=>{if(st){const s=mySide();confirmBox(`${PLAYER[s]}（${s==="r"?st.red:st.black}）確定認輸？`,()=>post("/pvp/resign",{side:s}),"認輸")}}]]);
+  const flipBtn=()=>{acts.flip.innerHTML=seat?'<span class="ic">😏</span>表情':'<span class="ic">⇅</span>翻轉'};flipBtn();
   const isFlip=()=>flipMan!=null?flipMan:seat?seat==="b":(autoFlip&&st&&!st.result?st.turn==="b":false);
   async function post(u,b){if(busy)return;busy=true;try{render(await api(u,{...(b||{}),seat}))}catch(e){toast(e.message)}finally{busy=false}}
   // 連線對戰設定：兩支手機都掃電腦上同一個 QR code，再各選一方
@@ -391,10 +599,24 @@ function PvpGame(v){
       b.innerHTML=`<p>兩個人都用手機掃<b>電腦上同一個 QR code</b>，進到「雙人對戰」，一個選「我執紅」、一個選「我執黑」，就能各用各的手機下。棋局透過電腦同步，所以電腦的程式要開著。</p>
         ${can?"":'<p class="muted">⚠ 這支手機還沒連上電腦，先掃電腦上的 QR code。</p>'}
         <div class="opt"><button data-s="" class="${!seat?"on":""}">同一支手機輪流下</button><button data-s="r" class="${seat==="r"?"on":""}" ${can?"":"disabled"}>我執紅（這支手機）</button><button data-s="b" class="${seat==="b"?"on":""}" ${can?"":"disabled"}>我執黑（這支手機）</button></div>
-        ${can?"":'<button class="btn ghost" id="hc">怎麼連上電腦</button>'}`;
+        ${can?'<button class="btn" id="qr">📱 顯示 QR code 讓對手掃描加入</button>':'<button class="btn ghost" id="hc">怎麼連上電腦</button>'}`;
       const hc=b.querySelector("#hc");if(hc)hc.onclick=connectSheet;
+      const qb=b.querySelector("#qr");if(qb)qb.onclick=()=>{if(!seat){seat="r";store.set("pvpSeat",seat);if(OFF)XQ.setPvpOnline(true);setTitle();flipBtn();refresh()}qrSheet()};
       b.querySelectorAll("[data-s]").forEach(x=>x.onclick=()=>{if(x.disabled)return;seat=x.dataset.s||null;store.set("pvpSeat",seat);if(OFF)XQ.setPvpOnline(!!seat);
-        flipMan=null;sel=-1;closeSheet();setTitle();toast(seat?`這支手機執${seat==="r"?"紅":"黑"}，請對方選另一邊`:"改成同一支手機輪流下");refresh()})})}
+        flipMan=null;sel=-1;closeSheet();setTitle();flipBtn();toast(seat?`這支手機執${seat==="r"?"紅":"黑"}，請對方選另一邊`:"改成同一支手機輪流下");refresh()})})}
+  // 讓第二支手機掃：網址裡帶著另一邊的座位，掃完直接進對局
+  async function qrSheet(){const other=seat==="b"?"r":"b";let link=null,err="";
+    try{link=await joinLink(other);if(link)await loadScript("qrcode.min.js")}catch(e){err=e.message}
+    sheet("讓對手掃描加入",b=>{
+      if(!link){b.innerHTML=`<p>${err?esc(err):"電腦的程式沒有開對外連線。請在電腦用 <b>--tunnel</b>（任何網路）或 <b>--lan</b>（同一個 Wi-Fi）啟動，再試一次。"}</p>`;return}
+      b.innerHTML=`<p style="text-align:center">對手用手機相機掃這個 QR code，會自動<b>執${other==="r"?"紅":"黑"}</b>進到這盤棋。<br><span class="muted">你這支手機執${seat==="r"?"紅":"黑"}</span></p><div class="qrbox" id="qrc"></div>
+        <button class="btn ghost" id="cp">複製連結（用訊息傳給對手）</button>`;
+      new QRCode(b.querySelector("#qrc"),{text:link,width:220,height:220,correctLevel:QRCode.CorrectLevel.L});
+      b.querySelector("#cp").onclick=async()=>{try{await navigator.clipboard.writeText(link);toast("已複製連結")}catch(e){prompt("複製這個連結",link)}}})}
+  // 表情：只在連線對戰時用
+  let lastEmo=null;
+  function emoteSheet(){sheet("傳個表情給對手",b=>{b.innerHTML=`<div class="emogrid">${EMOTES.map(([k,i,t])=>`<button data-e="${k}"><span>${i}</span>${esc(t)}</button>`).join("")}</div>`;
+    b.querySelectorAll("[data-e]").forEach(x=>x.onclick=async()=>{closeSheet();try{const s=await api("/pvp/emote",{seat,e:x.dataset.e});showEmote(x.dataset.e,true);lastEmo=Math.max(lastEmo||0,...(s.emotes||[]).map(m=>m.id));render(s)}catch(e){toast(e.message)}})})}
   function tap(i){if(!st||st.result)return;
     if(seat&&st.turn!==seat){toast("還沒輪到你，等對方走");return}
     if(sel>=0&&st.legal.some(([f,t])=>f===sel&&t===i)){const f=sel;sel=-1;vibrate(15);flipMan=null;return post("/pvp/move",{f,t:i})}
@@ -403,6 +625,8 @@ function PvpGame(v){
   function clocks(){if(!st||!clockBase||!clockBase.c)return;const b=clockBase;for(const s of["r","b"]){const el=v.querySelector(`#ck_${s}`);if(el){const x=b.c[s]-(b.run&&b.turn===s?Date.now()-b.at:0);el.textContent=fmt(x);el.style.color=x<60000&&!(b.turn===s&&b.run)?"var(--red)":""}}}
   const ckT=setInterval(clocks,250);
   function render(s){st=s;if(!st.legal.some(([f])=>f===sel))sel=-1;draw();
+    const ems=st.emotes||[];if(lastEmo==null)lastEmo=ems.reduce((m,x)=>Math.max(m,x.id),0);
+    else for(const x of ems)if(x.id>lastEmo){lastEmo=x.id;if(seat&&x.by!==seat)showEmote(x.e,false)}
     const fl=isFlip(),top=fl?"r":"b",bot=fl?"b":"r",nm=x=>x==="r"?st.red:st.black;
     // 連線對戰：自己標「這支手機」，對方標在不在線上
     const sub=x=>!seat?PLAYER[x]:x===seat?PLAYER[x]+"・這支手機":PLAYER[x]+((st.online||{})[x]?"・🟢 在線":"・⚪ 對方還沒連上");
@@ -422,7 +646,7 @@ function PvpGame(v){
     if(!st.draw)drawAsked=null;
     if(st.result&&shownResult!==st.id){shownResult=st.id;vibrate([30,40,30]);
       modal(`<div class="em">${st.result.w?"🏆":"🤝"}</div><h2>${st.result.w?`${PLAYER[st.result.w]}（${esc(nm(st.result.w))}）勝`:"和局"}</h2><p class="muted">${esc(st.result.why)}</p>`,
-        [["再來一局",()=>post("/pvp/new",{red:st.red,black:st.black,tc:st.tcKey})],["檢討這盤",()=>location.hash="#/db/pvp/"+encodeURIComponent(st.id),true],["關閉",null,true]])}}
+        [["再來一局",()=>post("/pvp/new",{red:st.red,black:st.black,tc:st.tcKey})],["📊 賽後報告",()=>{store.set("openReport","pvp/"+st.id);location.hash="#/db/pvp/"+encodeURIComponent(st.id)}],["檢討這盤",()=>location.hash="#/db/pvp/"+encodeURIComponent(st.id),true],["關閉",null,true]])}}
   function newSheet(){let tc=st?st.tcKey:"none",red=st&&st.red!=="紅方"?st.red:"",black=st&&st.black!=="黑方"?st.black:"";
     sheet("開新局",b=>{const TCS=[["none","不計時"],["10+5","10 分＋5 秒"],["20+10","20 分＋10 秒"],["60+30","60 分＋30 秒"]];
       const paint=()=>{b.innerHTML=`<div class="field"><label>紅方</label><input id="nR" maxlength="20" placeholder="紅方名字" value="${esc(red)}"></div>
@@ -631,6 +855,20 @@ function Viewer(v,c,id){
     for(let p=1;p<=end;p++){if(screen!==self||!it)return;if(gradeOf(p))continue;const m=seq(line,p)[p-1];
       try{grades[owner(line,p)+"|"+p]=await api("/an/classify",{board:boardAt(line,p-1),side:moverAt(p),f:m.f,t:m.t});show()}catch(e){toast(e.message);return}}
     toast("評等完成")}
+  // 📊 賽後報告：主線每步都要評等過；還沒評等的先請 Pikafish 補算
+  let rpBusy=false;
+  async function report(){if(!it||rpBusy)return;FREE=null;const end=endPly(line);
+    const miss=[];for(let p=1;p<=end;p++)if(!gradeOf(p))miss.push(p);
+    if(miss.length){rpBusy=true;const sh=sheet("賽後報告",b=>{b.innerHTML=`<p style="text-align:center;padding:16px 0">Pikafish 評等中… <b id="rpn">0</b> / ${miss.length} 步<br><span class="muted">每步約 0.6 秒，評過的會記住，下次直接看</span></p>`});
+      try{for(let k=0;k<miss.length;k++){if(screen!==self||!it||!document.body.contains(sh))return;const p=miss[k],m=seq(line,p)[p-1];
+        grades[owner(line,p)+"|"+p]=(await api("/an/classify",{board:boardAt(line,p-1),side:moverAt(p),f:m.f,t:m.t}))||{q:"—"};const n=sh.querySelector("#rpn");if(n)n.textContent=k+1}}
+      catch(e){toast(e.message);return}finally{rpBusy=false}show()}
+    const moves=seq(line,end).map((m,i)=>{const g=gradeOf(i+1)||{};return{f:m.f,t:m.t,cn:m.cn,by:moverAt(i+1),q:g.q,loss:g.loss,ev:g.ev,bc:g.bc,ck:m.ck}});
+    const rep=gameReport(it.board,moves),names={r:it.red||"紅方",b:it.black||"黑方"},side=it.black==="你"?"b":"r";
+    // 自己跟電腦下的對局：記下分數給「我的戰績」用
+    if(c==="play"&&rep.sides[side].score!=null){const all=store.get("reports",{}),R=rep.sides[side];
+      all[id]={score:R.score,grade:R.grade[0],ph:{open:R.phases.open&&R.phases.open.score,mid:R.phases.mid&&R.phases.mid.score,end:R.phases.end&&R.phases.end.score},at:Date.now()};store.set("reports",all)}
+    reportSheet(rep,{title:"賽後報告・"+title(),side,names,goto:p=>go(p)})}
   function info(){if(!it)return;sheet(title(),b=>{
     b.innerHTML=[it.red||it.black?`<p><span style="color:var(--red);font-weight:700">紅方 ${esc(it.red||"？")}</span>　對　<b>黑方 ${esc(it.black||"？")}</b></p>`:"",
       it.event?`<p class="muted">${esc(it.event)}${it.date?"　"+esc(it.date):""}</p>`:"",it.result?`<p>結果：${esc(it.result)}</p>`:"",it.open?`<p>開局：${esc(it.open.replace(/^[A-E]\d\d\s*/,""))}</p>`:"",
@@ -639,9 +877,9 @@ function Viewer(v,c,id){
   const self={stop(){clearTimeout(lt)}};
   Promise.all([api(`/db/item?c=${encodeURIComponent(c)}&id=${encodeURIComponent(id)}`),api("/db/books").catch(()=>[])]).then(([d,bs])=>{
     it=d;L=new Map(it.lines.map(l=>[l.id,l]));bookName=(bs.find(b=>b.key===c)||{}).name||"";
-    setTop(title(),"#/db/"+encodeURIComponent(c),[["ℹ",()=>info(),"棋局資訊"]]);
+    setTop(title(),"#/db/"+encodeURIComponent(c),[["📊",()=>report(),"賽後報告"],["ℹ",()=>info(),"棋局資訊"]]);
     const r=store.get("recent",[]).find(x=>x.c===c&&x.id===id);ply=r&&r.ply?Math.min(r.ply,endPly(0)):0;
-    show();remember();loadGrades()}).catch(e=>{v.querySelector("#note").textContent="⚠ "+e.message});
+    show();remember();loadGrades().then(()=>{if(store.get("openReport")===c+"/"+id){store.set("openReport",null);report()}})}).catch(e=>{v.querySelector("#note").textContent="⚠ "+e.message});
   return self}
 
 // ================= AI 對戰直播 =================
