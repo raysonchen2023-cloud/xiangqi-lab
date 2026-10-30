@@ -176,15 +176,29 @@ var XQ=(function(){
   function remoteInfo(){return ls.get("remote",null)}
   async function remote(u,b,opt){const r=remoteInfo();
     if(!r)throw new Error("這個功能要連上電腦：在電腦執行裁判程式（加 --tunnel），再用手機掃電腦上的 QR code");
-    let res;try{res=await fetch(r.base+u,{method:b===undefined?"GET":"POST",headers:{"x-xq-key":r.key,"content-type":"application/json",...(window.XQ_ME?XQ_ME():{})},body:b===undefined?undefined:JSON.stringify(b),signal:opt&&opt.signal})}
-    catch(e){throw new Error("連不到電腦：電腦的程式可能關了，或網址已經換了（重開程式後要重新掃 QR code）")}
+    // 手機剛從背景切回來、或 4G 訊號不穩時，第一個請求常常直接失敗；讀取類的請求自動再試兩次
+    const go=()=>fetch(r.base+u,{method:b===undefined?"GET":"POST",headers:{"x-xq-key":r.key,"content-type":"application/json",...(window.XQ_ME?XQ_ME():{})},body:b===undefined?undefined:JSON.stringify(b),signal:opt&&opt.signal});
+    let res;for(let i=0;;i++){try{res=await go();break}
+      catch(e){if(i>=2&&!(opt&&opt.retried)&&await discover())return remote(u,b,{...(opt||{}),retried:true});
+        if(b!==undefined||i>=2||(opt&&opt.signal&&opt.signal.aborted))throw new Error(navigator.onLine===false?"手機沒有網路":"連不到電腦：電腦的程式可能關了，或網址已經換了（重開程式後要重新掃 QR code）");
+        await new Promise(z=>setTimeout(z,800*(i+1)))}}
     if(res.status===403)throw new Error("存取碼不對或過期：電腦的程式重開後，要重新掃 QR code");
     if(opt&&opt.raw)return res;
     const d=await res.json();if(d&&d.error)throw new Error(d.error);return d}
   async function ping(){const r=remoteInfo();if(!r)return false;if(Date.now()-lastPing.at<8000)return lastPing.ok;
-    const ac=new AbortController(),tm=setTimeout(()=>ac.abort(),5000);
-    try{await remote("/remote",undefined,{signal:ac.signal});lastPing={at:Date.now(),ok:true}}catch(e){lastPing={at:Date.now(),ok:false}}finally{clearTimeout(tm)}
+    const ac=new AbortController(),tm=setTimeout(()=>ac.abort(),12000);
+    // 失敗只記 3 秒，下次很快會再試；成功記 8 秒
+    try{await remote("/remote",undefined,{signal:ac.signal});lastPing={at:Date.now(),ok:true}}catch(e){lastPing={at:Date.now()-5000,ok:false}}finally{clearTimeout(tm)}
+    if(!lastPing.ok&&await discover())return ping();
     return lastPing.ok}
+  // 電腦程式重開後通道網址會換：到 ntfy.sh 的秘密頻道（由存取碼算出來）查電腦公告的新網址，自動換過去
+  let lastDiscover=0;
+  async function discover(){const r=remoteInfo();if(!r||!r.key||!crypto.subtle||Date.now()-lastDiscover<15000)return false;lastDiscover=Date.now();
+    try{const h=[...new Uint8Array(await crypto.subtle.digest("SHA-256",new TextEncoder().encode("xqlab:"+r.key)))].map(x=>x.toString(16).padStart(2,"0")).join("").slice(0,32);
+      const t=await(await fetch("https://ntfy.sh/xqlab-"+h+"/json?poll=1&since=12h",{signal:AbortSignal.timeout?AbortSignal.timeout(8000):undefined})).text();
+      let base=null;for(const line of t.split("\n")){try{const m=JSON.parse(line);if(m.event==="message"&&/^https:\/\/[a-z0-9-]+\.trycloudflare\.com$/.test(m.message||""))base=m.message}catch(e){}}
+      if(!base||base===r.base)return false;
+      ls.set("remote",{...r,base,at:Date.now()});lastPing={at:0,ok:false};return true}catch(e){return false}}
   // 從電腦把棋譜同步到手機（之後離線也能看）
   async function sync(key,name,onProgress){
     const res=await remote("/db/raw?c="+encodeURIComponent(key),undefined,{raw:true});if(!res.ok)throw new Error("電腦上沒有這個資料夾");

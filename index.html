@@ -314,7 +314,7 @@ if(OFF&&window.XQEngine){let bar=null;
     if(got>=total)setTimeout(()=>{bar&&bar.remove();bar=null},800)})}
 function connectSheet(){const r=OFF&&XQ.remoteInfo();
   sheet("連線到電腦",b=>{b.innerHTML=`<p>連上電腦後可以：看 AI 對戰、請 Claude/GPT 講解、把特級大師與許銀川對局同步到手機。挑戰電腦、雙人對戰、古譜研究不需要連線。</p>
-    <p class="muted">怎麼連：在電腦執行 <b>node xiangqi-referee.js --tunnel</b>，按下面「📷 掃描」對準電腦頁面上「📱 手機」的 QR code。電腦程式重開後網址會換，要再掃一次。</p>
+    <p class="muted">怎麼連：在電腦執行 <b>node xiangqi-referee.js --tunnel</b>，按下面「📷 掃描」對準電腦頁面上「📱 手機」的 QR code。只要掃過一次就好：電腦程式重開後網址雖然會換，App 會自己找到新網址。</p>
     <div class="card" id="cs">${r?"檢查連線中…":"目前沒有連線設定"}</div>
     <button class="btn" id="scan">📷 掃描電腦上的 QR code</button>
     <details style="margin:8px 0"><summary class="muted">掃不到？改貼上連結</summary>
@@ -349,13 +349,18 @@ async function scanQR(done){let stream=null,stop=false;
         const r=jsQR(cx.getImageData(0,0,cv.width,cv.height).data,cv.width,cv.height,{inversionAttempts:"dontInvert"});if(r)txt=r.data}}}catch(e){}
     if(txt){vibrate(30);end();if(!done(txt))toast("這不是連線用的 QR code");return}
     setTimeout(tick,150)};tick()}
-async function homeStatus(box){
+async function homeStatus(box,tries){
   const r=XQ.remoteInfo(),ok=r?await XQ.ping():false,eng=await XQ.engineCached();
+  if(!box.isConnected)return;
+  // 連不上的話，停在首頁時每 5 秒再試（最多 6 次），連上就自動變綠燈
+  if(r&&!ok&&(tries||0)<6)setTimeout(()=>{if(box.isConnected&&!document.hidden)homeStatus(box,(tries||0)+1)},5000);
   box.innerHTML=`<div class="row" style="justify-content:space-between"><span>${ok?"🟢 已連上電腦":r?"🟠 連不到電腦（離線使用中）":"⚪ 離線模式"}</span><button class="pill" id="cBtn">${ok?"連線資訊":"怎麼連線"}</button></div>
     <div class="row" style="justify-content:space-between;margin-top:8px"><span>${eng?"✅ Pikafish 已在手機裡，可離線下棋與分析":"⬇ Pikafish 引擎還沒下載（約 48 MB）"}</span>${eng?"":'<button class="pill" id="eBtn">下載</button>'}</div>`;
   box.querySelector("#cBtn").onclick=connectSheet;
   const e=box.querySelector("#eBtn");if(e)e.onclick=()=>{e.disabled=true;e.textContent="下載中…";XQEngine.load().then(()=>{toast("Pikafish 已下載，可以離線使用");homeStatus(box)}).catch(err=>{toast(err.message);e.disabled=false;e.textContent="下載"})}}
 
+// 從背景切回 App：首頁的連線燈號重新檢查（手機網路要一點時間恢復，所以等一下再測）
+if(OFF)document.addEventListener("visibilitychange",()=>{if(document.hidden)return;const h=document.querySelector("#hStatus");if(h)setTimeout(()=>{if(h.isConnected)homeStatus(h)},1200)});
 // ================= 我的名字、誰在線上 =================
 function nameSheet(first){sheet(first?"✅ 已連上電腦，取個名字吧":"我的名字",b=>{
   const sug="棋友"+Math.floor(1000+Math.random()*9000);
