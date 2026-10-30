@@ -7,8 +7,9 @@
 //   ROOT/g/<對局代號>/e   表情（不保留）
 "use strict";
 var XQNet=(function(){
-  const URLS=["wss://broker.emqx.io:8084/mqtt","wss://broker.hivemq.com:8884/mqtt"];
-  const ROOT="xqlab-r7k2q/v1",ALIVE=150000;
+  const URLS=["wss://broker.emqx.io:8084/mqtt"];
+  let ROOT="xqlab-r7k2q/v1";try{const r=JSON.parse(localStorage.getItem("xq_netRoot")||"null");if(r&&/^[\w-]{3,40}$/.test(r))ROOT="xqlab-test-"+r+"/v1"}catch(e){}
+  const ALIVE=150000;
 
   // ---------- 很小的 MQTT 3.1.1 用戶端（只用 QoS 0：發布、訂閱、保留訊息、遺囑、心跳） ----------
   function mqtt(url,o){
@@ -19,20 +20,24 @@ var XQNet=(function(){
     const me={up:false,onup:null,ondown:null,onmsg:null};let buf=new Uint8Array(0),pid=1,ping=null,ws;
     try{ws=new WebSocket(url,["mqtt"])}catch(e){setTimeout(()=>me.ondown&&me.ondown(false),0);return me}
     ws.binaryType="arraybuffer";
-    const send=p=>{try{if(ws.readyState===1)ws.send(p)}catch(e){}};
+    let lastRx=Date.now(),dog=null;
+    const send=p=>{try{if(ws.readyState===1){ws.send(p);return true}}catch(e){}return false};
     ws.onopen=()=>{const w=o.will;let fl=0x02;if(w)fl|=0x04|(w.retain?0x20:0);
       const body=[0,4,77,81,84,84,4,fl,o.keepalive>>8,o.keepalive&255,...str(o.clientId)];
       if(w){body.push(...str(w.topic));const p=te.encode(w.payload||"");body.push(p.length>>8,p.length&255,...p)}
       send(pkt(0x10,body))};
-    ws.onmessage=e=>{const d=new Uint8Array(e.data),nb=new Uint8Array(buf.length+d.length);nb.set(buf);nb.set(d,buf.length);buf=nb;
+    ws.onmessage=e=>{lastRx=Date.now();const d=new Uint8Array(e.data),nb=new Uint8Array(buf.length+d.length);nb.set(buf);nb.set(d,buf.length);buf=nb;
       for(;;){if(buf.length<2)return;let mul=1,n=0,i=1,c;do{if(i>=buf.length)return;c=buf[i++];n+=(c&127)*mul;mul*=128}while(c&128);
         if(buf.length<i+n)return;const t=buf[0],b=buf.slice(i,i+n);buf=buf.slice(i+n);
-        if(t>>4===2){if(b[1]===0){me.up=true;ping=setInterval(()=>send(new Uint8Array([0xC0,0])),o.keepalive*800);me.onup&&me.onup()}else ws.close()}
+        if(t>>4===2){if(b[1]===0){me.up=true;ping=setInterval(()=>send(new Uint8Array([0xC0,0])),o.keepalive*500);
+          dog=setInterval(()=>{if(Date.now()-lastRx>o.keepalive*1200){try{ws.close()}catch(e){}me.kill&&me.kill()}},3000);me.onup&&me.onup()}else ws.close()}
         else if(t>>4===3){const tl=(b[0]<<8)|b[1],topic=td.decode(b.subarray(2,2+tl));let p=2+tl;if((t>>1)&3)p+=2;
           try{me.onmsg&&me.onmsg(topic,td.decode(b.subarray(p)),!!(t&1))}catch(err){console.error(err)}}}};
     ws.onerror=()=>{};
-    ws.onclose=()=>{clearInterval(ping);const was=me.up;me.up=false;me.ondown&&me.ondown(was)};
-    me.pub=(topic,s,retain)=>send(pkt(0x30|(retain?1:0),[...str(topic),...te.encode(s)]));
+    // 手機網路切換時 WebSocket 可能卡住不觸發 close，看門狗直接判定斷線
+    let downed=false;const down=()=>{if(downed)return;downed=true;clearInterval(ping);clearInterval(dog);const was=me.up;me.up=false;me.ondown&&me.ondown(was)};
+    ws.onclose=down;me.kill=down;
+    me.pub=(topic,s,retain)=>me.up&&send(pkt(0x30|(retain?1:0),[...str(topic),...te.encode(s)]));
     me.sub=ts=>{send(pkt(0x82,[pid>>8,pid&255,...ts.flatMap(t=>[...str(t),0])]));pid=pid%60000+1};
     me.unsub=ts=>{send(pkt(0xA2,[pid>>8,pid&255,...ts.flatMap(t=>str(t))]));pid=pid%60000+1};
     me.end=()=>{me.ondown=null;send(new Uint8Array([0xE0,0]));try{ws.close()}catch(e){}};
@@ -41,7 +46,7 @@ var XQNet=(function(){
   // ---------- 大廳 ----------
   const ls={get(k,d){try{const v=localStorage.getItem("xq_"+k);return v==null?d:JSON.parse(v)}catch(e){return d}},set(k,v){try{localStorage.setItem("xq_"+k,JSON.stringify(v))}catch(e){}}};
   const me=()=>{const m=window.meInfo?meInfo():{id:"anon"+Math.random().toString(36).slice(2,8),name:""};return{id:m.id,name:m.name||("棋友"+m.id.slice(0,4))}};
-  let cli=null,want=false,urlI=0,everUp=false,hb=null,retryT=null,people={},pending=null,G=null,emos=[],emoN=0,seeking=0,pendT=null;
+  let cli=null,want=false,urlI=0,everUp=false,hb=null,retryT=null,people={},pending=null,G=null,emos=[],emoN=0,seeking=0,pendT=null,dirty=false,downAt=0;
   let cur=ls.get("net",null);   // 目前在哪一盤：{gid}；自己是紅、黑還是觀眾，看對局狀態裡的代號
   const L={};const on=(ev,f)=>{(L[ev]=L[ev]||[]).push(f);return()=>{L[ev]=L[ev].filter(x=>x!==f)}};const emit=(ev,d)=>(L[ev]||[]).forEach(f=>{try{f(d)}catch(e){console.error(e)}});
   const gt=gid=>[`${ROOT}/g/${gid}/s`,`${ROOT}/g/${gid}/e`];
@@ -56,13 +61,15 @@ var XQNet=(function(){
   function sendInvite(to,auto){const m=me(),gid=Math.random().toString(36).slice(2,10)+Date.now().toString(36);pending={gid,to:to.id,name:to.name,auto};
     cli&&cli.pub(`${ROOT}/i/${to.id}`,JSON.stringify({type:"invite",gid,auto:!!auto,from:{id:m.id,name:m.name},at:Date.now()}));
     clearTimeout(pendT);if(auto)pendT=setTimeout(()=>{if(pending&&pending.gid===gid){pending=null;tryMatch()}},8000);return gid}
-  function connect(){if(cli||!want||document.hidden)return;const m=me();
+  function connect(){if(cli||!want)return;const m=me();
     cli=mqtt(URLS[urlI],{clientId:"xq"+m.id.slice(0,12)+Math.random().toString(36).slice(2,8),keepalive:30,will:{topic:`${ROOT}/u/${m.id}`,payload:"",retain:true}});
-    cli.onup=()=>{everUp=true;cli.sub([`${ROOT}/u/+`,`${ROOT}/i/${m.id}`,...(cur?gt(cur.gid):[])]);presence();clearInterval(hb);hb=setInterval(presence,45000);emit("status")};
+    cli.onup=()=>{everUp=true;downAt=0;cli.sub([`${ROOT}/u/+`,`${ROOT}/i/${m.id}`,`${ROOT}/sys/ver`,...(cur?gt(cur.gid):[])]);presence();clearInterval(hb);hb=setInterval(presence,30000);
+      if(dirty&&G){dirty=false;setTimeout(()=>{if(G&&cli&&cli.up)pubGame()},600)}emit("status")};
     cli.onmsg=onMsg;
-    cli.ondown=was=>{cli=null;clearInterval(hb);if(!was&&!everUp)urlI=(urlI+1)%URLS.length;emit("status");
-      clearTimeout(retryT);if(want)retryT=setTimeout(connect,was?1500:4000)}}
+    cli.ondown=was=>{cli=null;clearInterval(hb);if(!downAt)downAt=Date.now();emit("status");
+      clearTimeout(retryT);if(want)retryT=setTimeout(connect,was?800:3000)}}
   function onMsg(topic,msg){const p=topic.slice(ROOT.length+1).split("/");
+    if(p[0]==="sys"&&p[1]==="ver"){try{emit("version",JSON.parse(msg))}catch(e){}return}
     if(p[0]==="u"){if(!msg)delete people[p[1]];else{try{const x=JSON.parse(msg);if(x&&x.id===p[1])people[p[1]]=x}catch(e){}}emit("people");tryMatch();return}
     if(p[0]==="i"){let x;try{x=JSON.parse(msg)}catch(e){return}if(!x||!x.from||Date.now()-(x.at||0)>120000)return;
       if(x.type==="invite"&&x.auto){   // 隨機配對來的：還在找就自動接受，不然婉拒
@@ -77,16 +84,21 @@ var XQNet=(function(){
       else if(x.type==="cancel")emit("cancel",x);
       return}
     if(p[0]==="g"&&cur&&p[1]===cur.gid){
-      if(p[2]==="s"){if(!msg)return;let x;try{x=JSON.parse(msg)}catch(e){return}if(!G||x.rev>G.rev||x.gid!==G.gid){const before=side();G=x;if(side()!==before)presence();emit("game")}}
+      if(p[2]==="s"){if(!msg)return;let x;try{x=JSON.parse(msg)}catch(e){return}if(!G||x.rev>G.rev||x.gid!==G.gid){const before=side();G=x;dirty=false;if(side()!==before)presence();emit("game")}
+        else if(dirty&&G&&x.rev<G.rev)pubGame()}
       else if(p[2]==="e"){try{const x=JSON.parse(msg);emos.push({id:++emoN,by:x.by,e:String(x.e||"").slice(0,12),at:Date.now()});emos=emos.slice(-20);emit("game")}catch(e){}}}}
   function enter(gid){if(cur&&cur.gid!==gid&&cli&&cli.up)cli.unsub(gt(cur.gid));cur={gid};ls.set("net",cur);emos=[];if(cli&&cli.up)cli.sub(gt(gid));presence()}
-  function pubGame(){if(cli&&cli.up&&G)cli.pub(`${ROOT}/g/${G.gid}/s`,JSON.stringify(G),true)}
+  function pubGame(){if(!G)return;if(!(cli&&cli.up&&cli.pub(`${ROOT}/g/${G.gid}/s`,JSON.stringify(G),true))){dirty=true;connect()}}
   // 手機切到背景時主動下線（iPhone 背景會斷線），回來再連上
-  document.addEventListener("visibilitychange",()=>{if(document.hidden){if(cli){const c=cli;cli=null;clearInterval(hb);if(c.up)c.pub(`${ROOT}/u/${me().id}`,"",true);setTimeout(()=>c.end(),150)}}else connect()});
+  const kick=()=>{if(!want)return;if(!cli){clearTimeout(retryT);connect()}else if(cli.up)presence()};
+  document.addEventListener("visibilitychange",()=>{if(!document.hidden)kick()});
+  window.addEventListener("online",()=>{if(cli&&cli.kill)cli.kill();setTimeout(kick,300)});
+  window.addEventListener("pageshow",kick);
 
   return{
     on,start(){want=true;connect()},refresh:()=>presence(),
     status:()=>cli&&cli.up?"up":want?"connecting":"off",
+    downFor:()=>cli&&cli.up||!downAt?0:Date.now()-downAt,pendingSend:()=>dirty,
     people:()=>{const now=Date.now(),i=me().id;return Object.values(people).filter(x=>x.id!==i&&now-x.at<ALIVE)},
     me,active:()=>!!cur,side,game:()=>G,gid:()=>cur&&cur.gid,
     invite(to){seeking=0;return sendInvite(to,false)},

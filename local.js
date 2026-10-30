@@ -105,11 +105,11 @@ var XQ=(function(){
     return NB}
   function netState(){const nb=netBuild(),sd=XQNet.side(),em=[];
     if(!nb)return{id:"wait",red:"等待中…",black:"等待中…",board:parseFen(START),turn:"r",moves:[],result:null,draw:null,tcKey:"none",clocks:null,running:false,legal:[],check:-1,eval:null,
-      engine:true,online:{r:false,b:false},who:{r:"",b:""},emotes:[],net:true,mySide:sd||"w",watchers:XQNet.watchers(),waiting:true};
+      engine:true,online:{r:false,b:false},who:{r:"",b:""},emotes:[],net:true,mySide:sd||"w",watchers:XQNet.watchers(),waiting:true,link:XQNet.status()};
     const{S,g}=nb;
     return{id:g.id,red:g.red.name,black:g.black.name,board:S.board,turn:S.turn,moves:S.moves.map(moveOut),result:g.result,draw:g.draw,tcKey:"none",clocks:null,running:false,
       legal:g.result?[]:legal(S.board,S.turn),check:!g.result&&inCheck(S.board,S.turn)?kingSq(S.board,S.turn):-1,eval:null,engine:true,
-      online:{r:XQNet.isOn(g.red.id),b:XQNet.isOn(g.black.id)},who:{r:g.red.name,b:g.black.name},emotes:XQNet.emotes(),net:true,mySide:sd||"w",watchers:XQNet.watchers()}}
+      online:{r:XQNet.isOn(g.red.id),b:XQNet.isOn(g.black.id)},who:{r:g.red.name,b:g.black.name},emotes:XQNet.emotes(),net:true,mySide:sd||"w",watchers:XQNet.watchers(),link:XQNet.status(),unsent:XQNet.pendingSend()}}
   async function netPvp(p,b){if(p==="/pvp/state")return netState();
     const sd=XQNet.side();if(!sd)throw new Error("你在觀戰，不能下棋");
     if(p==="/pvp/emote"){XQNet.emote(sd,b.e);return netState()}
@@ -209,7 +209,7 @@ var XQ=(function(){
   async function remote(u,b,opt){const r=remoteInfo();
     if(!r)throw new Error("這個功能要連上電腦：在電腦執行裁判程式（加 --tunnel），再用手機掃電腦上的 QR code");
     // 手機剛從背景切回來、或 4G 訊號不穩時，第一個請求常常直接失敗；讀取類的請求自動再試兩次
-    const go=()=>fetch(r.base+u,{method:b===undefined?"GET":"POST",headers:{"x-xq-key":r.key,"content-type":"application/json",...(window.XQ_ME?XQ_ME():{})},body:b===undefined?undefined:JSON.stringify(b),signal:opt&&opt.signal});
+    const go=()=>fetch(r.base+u,{method:b===undefined?"GET":"POST",headers:{"x-xq-key":r.key,"content-type":"application/json",...(window.XQ_ME?XQ_ME():{})},body:b===undefined?undefined:JSON.stringify(b),signal:opt&&opt.signal||(!(opt&&opt.raw)&&window.AbortSignal&&AbortSignal.timeout?AbortSignal.timeout(15000):undefined)});
     let res;for(let i=0;;i++){try{res=await go();break}
       catch(e){if(i>=2&&!(opt&&opt.retried)&&await discover())return remote(u,b,{...(opt||{}),retried:true});
         if(b!==undefined||i>=2||(opt&&opt.signal&&opt.signal.aborted))throw new Error(navigator.onLine===false?"手機沒有網路":"連不到電腦：電腦的程式可能關了，或網址已經換了（重開程式後要重新掃 QR code）");

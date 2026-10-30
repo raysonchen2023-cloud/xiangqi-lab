@@ -155,6 +155,15 @@ input,select{font:inherit;font-size:16px;color:inherit}
   <button data-go="#/watch"><span class="ic">📺</span>觀戰</button>
  </nav>
 </div>
+<script>
+// 安全網：打開 4 秒後畫面還是空的（更新到一半、程式出錯），顯示「修復」按鈕：清掉 App 快取重新下載（引擎、棋譜、戰績都不會刪）
+(function(){var err="";window.addEventListener("error",function(e){err=String(e.message||"")});
+  setTimeout(function(){var v=document.getElementById("view");if(!v||v.children.length)return;
+    v.innerHTML='<div style="padding:24px;text-align:center"><div style="font-size:44px">🔧</div><h2>畫面沒有載入成功</h2><p style="color:#888;font-size:13px">'+err.replace(/[<>&]/g,"")+'</p><button id="xqFix" style="font-size:17px;padding:12px 22px;border-radius:12px;background:#B5452B;color:#fff">修復並重新開啟</button></div>';
+    document.getElementById("xqFix").onclick=function(){var go=function(){location.replace(location.pathname+"#/");setTimeout(function(){location.reload()},50)};
+      if(!window.caches)return go();caches.keys().then(function(ks){return Promise.all(ks.filter(function(k){return k.indexOf("xqlab-app-")===0}).map(function(k){return caches.delete(k)}))})
+        .then(function(){return navigator.serviceWorker&&navigator.serviceWorker.getRegistration()}).then(function(r){return r&&r.update()}).catch(function(){}).then(go)}},4000)})();
+</script>
 <script>window.XQ_OFFLINE=true;</script>
 <script src="core.js"></script>
 <script src="engine.js"></script>
@@ -188,7 +197,9 @@ function setMyName(n){const m=meInfo();m.name=String(n||"").replace(/[\u0000-\u0
 const MY_KIND=/iPad/.test(navigator.userAgent)||/Macintosh/.test(navigator.userAgent)&&navigator.maxTouchPoints>1?"iPad":/iPhone/.test(navigator.userAgent)?"iPhone":/Android/.test(navigator.userAgent)?"Android":/Windows/.test(navigator.userAgent)?"Windows":/Mac/.test(navigator.userAgent)?"Mac":"";
 window.XQ_ME=()=>{const m=meInfo();return{"x-xq-dev":m.id+(MY_KIND?"-"+MY_KIND:""),"x-xq-name":encodeURIComponent(m.name||"")}};
 async function api(u,b){if(window.XQ)return XQ.api(u,b);   // 離線版：由手機裡的 local.js 處理
-  const r=await fetch(u,b===undefined?{headers:XQ_ME()}:{method:"POST",headers:{"content-type":"application/json",...XQ_ME()},body:JSON.stringify(b)});
+  const sig=window.AbortSignal&&AbortSignal.timeout?AbortSignal.timeout(20000):undefined;
+  let r;try{r=await fetch(u,b===undefined?{headers:XQ_ME(),signal:sig}:{method:"POST",headers:{"content-type":"application/json",...XQ_ME()},body:JSON.stringify(b),signal:sig})}
+  catch(e){throw new Error(e&&e.name==="TimeoutError"?"電腦太久沒回應，再試一次":"連不到電腦，再試一次")}
   const d=await r.json().catch(()=>({error:"伺服器回應有問題"}));if(d&&d.error)throw new Error(d.error);return d}
 let toastT=null;
 function toast(msg){let t=$("#toast");if(!t){t=document.createElement("div");t.id="toast";t.className="toast";document.body.append(t)}t.textContent=msg;t.hidden=false;clearTimeout(toastT);toastT=setTimeout(()=>t.hidden=true,2200)}
@@ -286,7 +297,7 @@ function poller(fn,ms){let on=true,t=null;const tick=async()=>{if(!on)return;try
 
 // ================= 離線版專用：連線、引擎下載 =================
 async function appVer(){try{const k=(await caches.keys()).filter(x=>x.startsWith("xqlab-app-")).pop();return k?k.slice(10):null}catch(e){return null}}
-async function netVer(){try{const t=await(await fetch("sw.js",{cache:"no-store"})).text();return(t.match(/VERSION="(\w+)"/)||[])[1]||null}catch(e){return null}}
+async function netVer(){try{const t=await(await fetch("sw.js",{cache:"no-store"})).text();return(t.match(/VERSION="([\w-]+)"/)||[])[1]||null}catch(e){return null}}
 const OFF=!!window.XQ_OFFLINE;
 // iPhone 從主畫面打開（全螢幕）時，頂部列要讓開狀態列（時間、電池）。
 // 有些 iOS 版本讀不到安全區（算成 0），標題就會跑到狀態列底下、被模糊效果蓋住；這時依螢幕高度補上狀態列高度。
@@ -308,11 +319,15 @@ if(OFF&&"serviceWorker" in navigator){
   setInterval(()=>{if(!document.hidden)chk(true)},5*60000);
   const inGame=()=>/^#\/(cpu|pvp|quiz|watch)(\/|$)/.test(location.hash);
   const fmtV=x=>!x?"":/^\d{8}-\d{4}$/.test(x)?`${x.slice(0,4)}/${x.slice(4,6)}/${x.slice(6,8)} ${x.slice(9,11)}:${x.slice(11,13)}`:x.slice(0,8);
-  const doUpdate=()=>{updating=true;location.reload()};
-  async function notifyNew(){if(shown)return;shown=true;const v=fmtV(await appVer());vibrate([20,40,20]);
+  async function doUpdate(){updating=true;const tt=document.createElement("div");tt.className="toast";tt.textContent="⬇ 正在更新…";document.body.append(tt);
+    try{const r=await navigator.serviceWorker.getRegistration();if(r){await r.update().catch(()=>{});
+      if(r.installing||r.waiting)await new Promise(ok=>{navigator.serviceWorker.addEventListener("controllerchange",ok,{once:true});setTimeout(ok,10000)})}}catch(e){}
+    location.reload()}
+  async function notifyNew(nv,note){if(shown)return;shown=true;const v=fmtV(nv||await appVer());vibrate([20,40,20]);
     if(inGame()){const t=document.createElement("button");t.className="toast";t.style.cssText="bottom:auto;top:calc(64px + var(--safeT));pointer-events:auto;z-index:300";
       t.textContent="🆕 有新版本"+(v?"（"+v+"）":"")+"，下完這盤點這裡更新";t.onclick=doUpdate;document.body.append(t);return}
-    modal(`<div class="em">🆕</div><h2>有新版本</h2><p class="muted">${v?"版本 "+esc(v)+"<br>":""}更新只要一秒，你的戰績、棋譜和設定都會保留。</p>`,[["立即更新",doUpdate],["稍後",()=>{shown=false},true]])}
+    modal(`<div class="em">🆕</div><h2>有新版本</h2>${note?`<p style="text-align:left;white-space:pre-wrap">${esc(note)}</p>`:""}<p class="muted">${v?"版本 "+esc(v)+"<br>":""}更新只要一秒，你的戰績、棋譜和設定都會保留。</p>`,[["立即更新",doUpdate],["稍後",()=>{shown=false},true]])}
+  window.XQ_notifyNew=notifyNew;
   window.XQ_checkUpdate=async()=>{chk(true);const[a,n]=await Promise.all([appVer(),netVer()]);return{a,n}};
   if(hadCtl)navigator.serviceWorker.addEventListener("controllerchange",()=>{if(updating)return;if(sessionStorage.getItem("xqReload")==="1"&&!self.crossOriginIsolated)return;notifyNew()})}
 if(OFF&&window.XQEngine){let bar=null;
@@ -393,7 +408,7 @@ function Lobby(v){setTop("線上大廳","#/",[["📤",shareSheet,"分享給朋�
   v.innerHTML='<div class="pad" id="lb"></div>';
   const ST={idle:"閒置中",playing:"對戰中",watching:"觀戰中",seeking:"🎲 正在找對手"};
   function paint(){const box=v.querySelector("#lb");if(!box)return;const ps=XQNet.people(),up=XQNet.status()==="up";
-    const games={};for(const p of ps)if(p.st==="playing"&&p.gid)(games[p.gid]=games[p.gid]||[]).push(p);
+    const games={};for(const p of ps)if(p.st==="playing"&&p.gid&&p.gid!==XQNet.gid())(games[p.gid]=games[p.gid]||[]).push(p);
     box.innerHTML=`<div class="card"><div class="row" style="justify-content:space-between"><span>我是 <b>${esc(XQNet.me().name)}</b></span><button class="pill" id="ed">✏ 改名字</button></div>
         <div class="muted" style="margin-top:6px">${up?"🟢 已進入大廳":"⏳ 連線到大廳中…"}</div></div>
       ${XQNet.active()?'<button class="btn" id="back" style="margin-top:10px">♟ 回到我進行中的對局</button>'
@@ -419,6 +434,7 @@ function Lobby(v){setTop("線上大廳","#/",[["📤",shareSheet,"分享給朋�
   return{stop:()=>{offs.forEach(f=>f());clearInterval(t);if(XQNet.seeking()&&!XQNet.active())XQNet.seek(false)}}}
 // 不管在哪個畫面都能收到邀請
 if(OFF&&window.XQNet){XQNet.start();
+  XQNet.on("version",async x=>{if(!x||!x.v)return;const a=await appVer();if(a&&x.v>a&&window.XQ_notifyNew)XQ_notifyNew(x.v,x.note||"")});
   const goGame=()=>{if(location.hash==="#/pvp")route();else location.hash="#/pvp"};
   XQNet.on("invite",x=>{vibrate([40,60,40]);
     modal(`<div class="em">⚔</div><h2>${esc(x.from.name)} 邀請你下一盤</h2><p class="muted">接受的話你執黑，對方先走。</p>`,
@@ -816,7 +832,7 @@ function PvpGame(v){
     else for(const x of ems)if(x.id>lastEmo){lastEmo=x.id;if(seat&&x.by!==seat)showEmote(x.e,false)}
     const fl=isFlip(),top=fl?"r":"b",bot=fl?"b":"r",nm=x=>x==="r"?st.red:st.black;
     // 連線對戰：自己標「這支手機」，對方標在不在線上
-    const sub=x=>!seat?PLAYER[x]:x===seat?PLAYER[x]+(NET?"・我":"・這支手機"):PLAYER[x]+((st.online||{})[x]?"・🟢 "+((st.who||{})[x]||"在線"):"・⚪ 對方還沒連上");
+    const sub=x=>!seat?PLAYER[x]:x===seat?PLAYER[x]+(NET?"・我":"・這支手機"):PLAYER[x]+((st.online||{})[x]?"・🟢 "+((st.who||{})[x]||"在線"):NET?"・⚪ 對方暫時離線":"・⚪ 對方還沒連上");
     const strip=(x)=>playerHTML(x,nm(x),sub(x),st.clocks?"":null).replace('<div class="clk">',`<div class="clk" id="ck_${x}">`);
     v.querySelector("#pTop").innerHTML=strip(top);v.querySelector("#pBot").innerHTML=strip(bot);
     v.querySelector("#pTop").classList.toggle("on",!st.result&&st.turn===top);v.querySelector("#pBot").classList.toggle("on",!st.result&&st.turn===bot);
@@ -826,6 +842,7 @@ function PvpGame(v){
     s2.textContent=st.waiting?"等對方進入對局…":st.result?st.result.why:seat==="w"?`觀戰中・輪到${PLAYER[st.turn]}（${nm(st.turn)}）`+(st.check>=0?"・被將軍！":""):seat?(st.turn===seat?"輪到你走":`等對方（${PLAYER[st.turn]}）走…`)+(st.check>=0&&st.turn===seat?"・你被將軍了！":"")+(st.draw===seat?"・已提和，等對方回應":"")+(st.eval?`・${evt(st.eval.v)}`:"")
       :`輪到${PLAYER[st.turn]}（${nm(st.turn)}）`+(st.check>=0?"・被將軍！":"")+(st.eval?`・${evt(st.eval.v)}`:"");
     if(NET&&st.watchers)s2.textContent+=`・👀 ${st.watchers} 人觀看`;
+    if(NET&&st.link!=="up"){s2.textContent="⚠ 網路不穩，重新連線中…"+(st.unsent?"（你的棋步連上後會自動送出）":"");s2.classList.add("hot")}
     renderStrip(v.querySelector("#strip"),st.moves,st.moves.length-1);
     acts.undo.disabled=!!st.result||!st.moves.length||(!!seat&&st.moves[st.moves.length-1].by!==seat);acts.draw.disabled=acts.resign.disabled=!!st.result;acts.new.disabled=false;
     if(seat==="w")acts.undo.disabled=acts.draw.disabled=acts.resign.disabled=acts.new.disabled=true;
