@@ -95,6 +95,38 @@ var XQ=(function(){
     else if(p==="/pvp/resign"){if(!V.result)pvpEnd(opp(side),PLAYER[side]+"認輸")}
     return pvpState()}
 
+  // ---------- 線上大廳的網路對局：畫面跟雙人對戰一樣，狀態放在 XQNet（公開 MQTT 伺服器）上同步 ----------
+  let NB=null;const netSaved=new Set(ls.get("netSaved",[]));
+  function netBuild(){const g=XQNet.game();if(!g)return null;if(NB&&NB.key===g.gid+"|"+g.rev)return NB;
+    const S={moves:g.moves.map(([f,t])=>({f,t}))};stateRebuild(S);NB={key:g.gid+"|"+g.rev,S,g};
+    // 下完的網路對局存到「真人對局」，之後可以看賽後報告
+    if(g.result&&!netSaved.has(g.id)&&XQNet.side()){netSaved.add(g.id);ls.set("netSaved",[...netSaved].slice(-200));
+      pushGame("pvp",{id:g.id,date:g.id.slice(0,10),red:g.red.name,black:g.black.name,tc:"none",result:g.result,moves:saveMoves(S.moves),net:true})}
+    return NB}
+  function netState(){const nb=netBuild(),sd=XQNet.side(),em=[];
+    if(!nb)return{id:"wait",red:"等待中…",black:"等待中…",board:parseFen(START),turn:"r",moves:[],result:null,draw:null,tcKey:"none",clocks:null,running:false,legal:[],check:-1,eval:null,
+      engine:true,online:{r:false,b:false},who:{r:"",b:""},emotes:[],net:true,mySide:sd||"w",watchers:XQNet.watchers(),waiting:true};
+    const{S,g}=nb;
+    return{id:g.id,red:g.red.name,black:g.black.name,board:S.board,turn:S.turn,moves:S.moves.map(moveOut),result:g.result,draw:g.draw,tcKey:"none",clocks:null,running:false,
+      legal:g.result?[]:legal(S.board,S.turn),check:!g.result&&inCheck(S.board,S.turn)?kingSq(S.board,S.turn):-1,eval:null,engine:true,
+      online:{r:XQNet.isOn(g.red.id),b:XQNet.isOn(g.black.id)},who:{r:g.red.name,b:g.black.name},emotes:XQNet.emotes(),net:true,mySide:sd||"w",watchers:XQNet.watchers()}}
+  async function netPvp(p,b){if(p==="/pvp/state")return netState();
+    const sd=XQNet.side();if(!sd)throw new Error("你在觀戰，不能下棋");
+    if(p==="/pvp/emote"){XQNet.emote(sd,b.e);return netState()}
+    const nb=netBuild();if(!nb)throw new Error("還在等對局資料，稍等一下");const{S,g}=nb;
+    if(p==="/pvp/move"){const f=+b.f,t=+b.t;if(g.result)throw new Error("這局已經結束");if(S.turn!==sd)throw new Error("還沒輪到你");
+      if(!legal(S.board,S.turn).some(([x,y])=>x===f&&y===t))throw new Error("這步不合法");
+      const T={moves:g.moves.map(([a,z])=>({f:a,t:z}))};stateRebuild(T);stateApply(T,f,t);const r=judgeState(T);
+      XQNet.update(n=>{n.moves.push([f,t]);n.draw=null;if(r)n.result=r})}
+    else if(p==="/pvp/undo"){if(g.result)throw new Error("這局已經結束，不能悔棋");const last=S.moves[S.moves.length-1];
+      if(!last||last.by!==sd)throw new Error("對方已經走了，不能悔棋");XQNet.update(n=>{n.moves.pop();n.draw=null})}
+    else if(p==="/pvp/draw"){if(g.result)throw new Error("這局已經結束");
+      XQNet.update(n=>{if(n.draw&&n.draw!==sd){n.result={w:null,why:"雙方同意和棋"};n.draw=null}else n.draw=n.draw===sd?null:sd})}
+    else if(p==="/pvp/resign"){if(!g.result)XQNet.update(n=>{n.result={w:opp(sd),why:PLAYER[sd]+"認輸"}})}
+    else if(p==="/pvp/new"){if(!g.result)throw new Error("這局還沒下完");   // 再來一局：交換紅黑
+      XQNet.update(n=>{const r=n.red;n.red=n.black;n.black=r;n.moves=[];n.result=null;n.draw=null;n.id=new Date().toISOString().replace(/[:.]/g,"-").slice(0,19)})}
+    return netState()}
+
   // ---------- 棋譜庫 ----------
   const bookCache={};let pubBooks=null;
   async function publicBooks(){if(!pubBooks)pubBooks=await(await fetch(BASE+"data/books.json")).json();return pubBooks}
@@ -210,7 +242,7 @@ var XQ=(function(){
   async function unsync(key){await idb.del("col:"+key);await idb.set("cols",(await syncedBooks()).filter(x=>x.key!==key));delete bookCache[key]}
 
   // ---------- 路由：同樣的網址，該在手機處理的就在手機處理 ----------
-  const REMOTE=new Set(["/state","/start","/pause","/new","/an/explain","/remote"]);
+  const REMOTE=new Set(["/state","/start","/pause","/new","/an/explain","/remote","/clients"]);
   async function api(u,b){
     const url=new URL(u,"http://x"),p=url.pathname,c=url.searchParams.get("c");
     if(REMOTE.has(p)||((p==="/db/items"||p==="/db/item")&&c==="ai"))return remote(u,b);
@@ -220,6 +252,8 @@ var XQ=(function(){
     if(p==="/quiz/data"||p==="/terms/data"){const r=await fetch("data/"+p.slice(1,-5)+".json");if(!r.ok)throw new Error("找不到題庫");return r.json()}
     if(p==="/play/state")return playState();
     if(p.startsWith("/play/"))return playPost(p,b||{});
+    // 線上大廳的網路對局（不用電腦）
+    if(p.startsWith("/pvp/")&&window.XQNet&&XQNet.active())return netPvp(p,b||{});
     // 兩支手機連線對戰：雙人對戰改走電腦（兩支手機看同一盤）
     if(p.startsWith("/pvp/")&&ls.get("pvpOnline",false))return remote(u,b);
     if(p==="/pvp/state")return pvpState();
