@@ -281,6 +281,8 @@ if(!window.XQ_OFFLINE&&!/^(localhost|127\.|\[::1\])/.test(location.hostname)&&!m
 function poller(fn,ms){let on=true,t=null;const tick=async()=>{if(!on)return;try{await fn()}catch(e){}if(on)t=setTimeout(tick,typeof ms==="function"?ms():ms)};tick();return()=>{on=false;clearTimeout(t)}}
 
 // ================= 離線版專用：連線、引擎下載 =================
+async function appVer(){try{const k=(await caches.keys()).filter(x=>x.startsWith("xqlab-app-")).pop();return k?k.slice(10):null}catch(e){return null}}
+async function netVer(){try{const t=await(await fetch("sw.js",{cache:"no-store"})).text();return(t.match(/VERSION="(\w+)"/)||[])[1]||null}catch(e){return null}}
 const OFF=!!window.XQ_OFFLINE;
 // iPhone 從主畫面打開（全螢幕）時，頂部列要讓開狀態列（時間、電池）。
 // 有些 iOS 版本讀不到安全區（算成 0），標題就會跑到狀態列底下、被模糊效果蓋住；這時依螢幕高度補上狀態列高度。
@@ -299,7 +301,11 @@ if(OFF&&"serviceWorker" in navigator){
   const hadCtl=!!navigator.serviceWorker.controller;let lastChk=0,shown=false;
   const chk=()=>{if(Date.now()-lastChk<30000)return;lastChk=Date.now();navigator.serviceWorker.getRegistration().then(r=>r&&r.update()).catch(()=>{})};
   document.addEventListener("visibilitychange",()=>{if(!document.hidden)chk()});setTimeout(chk,3000);
+  // 在首頁、棋譜列表、術語、戰績這些畫面直接換新版；下棋、測驗中只顯示提示，不打斷
+  const safeNow=()=>/^#?\/?$|^#\/(db|terms|stats)(\/|$)/.test(location.hash)&&!document.querySelector(".sheet.show");
+  window.XQ_checkUpdate=async()=>{lastChk=0;chk();const[a,n]=await Promise.all([appVer(),netVer()]);return{a,n}};
   if(hadCtl)navigator.serviceWorker.addEventListener("controllerchange",()=>{if(shown||sessionStorage.getItem("xqReload")==="1"&&!self.crossOriginIsolated)return;shown=true;
+    if(safeNow())return location.reload();
     const t=document.createElement("button");t.className="toast";t.style.cssText="bottom:auto;top:calc(64px + var(--safeT));pointer-events:auto;z-index:300";
     t.textContent="🆕 有新版本，點這裡更新";t.onclick=()=>location.reload();document.body.append(t)})}
 if(OFF&&window.XQEngine){let bar=null;
@@ -410,7 +416,14 @@ function Home(v){
    <div class="sec-t">棋譜庫 <button data-go="#/db">全部 ›</button></div><div class="chips" id="hBooks" style="padding:0 0 4px"></div>
    <div class="sec-t">挑戰進度 <button data-go="#/stats">我的戰績 ›</button></div><div class="card" id="hProg"><span class="muted">載入中…</span></div>
    <p class="muted" style="text-align:center;margin:22px 0 8px">提示：在瀏覽器選單點「加入主畫面」，就能像 App 一樣全螢幕使用。</p>
+   ${OFF?'<p class="muted" style="text-align:center;font-size:12px;margin:0 0 14px"><span id="hVer">版本讀取中…</span>　<button class="pill" id="hUpd">檢查更新</button></p>':""}
   </div>`;
+  if(OFF){appVer().then(x=>{const e=v.querySelector("#hVer");if(e)e.textContent="版本 "+(x?x.slice(0,8):"未知")});
+    v.querySelector("#hUpd").onclick=async e=>{const b=e.target;b.disabled=true;b.textContent="檢查中…";
+      const r=window.XQ_checkUpdate?await XQ_checkUpdate():{};
+      if(!r.n){b.textContent="沒有網路";b.disabled=false;return}
+      if(r.a===r.n){b.textContent="✓ 已是最新版";return}
+      b.textContent="下載新版中…";setTimeout(()=>location.reload(),6000)}}
   v.querySelectorAll("[data-go]").forEach(b=>b.onclick=()=>{vibrate(5);location.hash=b.dataset.go});
   if(OFF){homeStatus(v.querySelector("#hStatus"));if(window.XQ_justConnected){XQ_justConnected=false;setTimeout(()=>toast("已連上電腦！"),300)}}
   const qb=store.get("quizBest",null);if(qb)v.querySelector("#hQuiz").textContent="最好："+qb.rank;
