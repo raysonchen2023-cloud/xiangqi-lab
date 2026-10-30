@@ -109,18 +109,42 @@ var XQ=(function(){
   async function dbBooks(){const out=[];for(const b of await publicBooks())out.push({key:b.key,name:b.name,count:b.count});
     for(const b of await syncedBooks())out.push({key:b.key,name:b.name,count:b.count,synced:b.at});
     if(remoteInfo())out.push({key:"ai",name:"AI 對局",count:0});
-    out.push({key:"play",name:"人機對局",count:((await idb.get("games:play"))||[]).length},{key:"pvp",name:"真人對局",count:((await idb.get("games:pvp"))||[]).length});return out}
+    out.push({key:"play",name:"人機對局",count:((await idb.get("games:play"))||[]).length},{key:"pvp",name:"真人對局",count:((await idb.get("games:pvp"))||[]).length},
+      {key:"study",name:"我的研究",count:((await idb.get("games:study"))||[]).length});return out}
   async function dbItems(c){
+    if(c==="study")return{name:"我的研究",note:"推演變化後按「💾 存成棋譜」存在這支手機裡的研究",items:((await idb.get("games:study"))||[]).slice().reverse().map(g=>summary(studyItem(g)))};
     if(c==="play"||c==="pvp")return{name:c==="play"?"人機對局":"真人對局",note:"這支手機上下完的對局",items:(await gameItems(c)).map(summary)};
     const d=await loadBook(c);if(!d)throw new Error("手機裡沒有這個資料夾"+(remoteInfo()?"，可以按「從電腦同步」下載":""));
     return{name:d.name,book:d.book,source:d.source,players:d.players||null,items:d.items.map(summary)}}
   async function dbItem(c,id){
+    if(c==="study"){const g=((await idb.get("games:study"))||[]).find(x=>x.id===id);if(!g)throw new Error("找不到這份研究");return studyItem(g)}
     if(c==="play"||c==="pvp"){const it=(await gameItems(c)).find(x=>x.id===id);if(!it)throw new Error("找不到這一局");return it}
     const d=await loadBook(c);const it=d&&d.byId.get(id);if(!it)throw new Error("找不到這一局");return fullItem(it)}
 
   // ---------- 研究：合法著法、引擎分析、評等、快取查詢 ----------
   const checkBoard=(b,s)=>{if(!Array.isArray(b)||b.length!==90)throw new Error("棋盤資料不對");if(s!=="r"&&s!=="b")throw new Error("輪走方不對")};
-  function pvText(b,s,pv){const out=[];let bb=b.slice();for(const u of pv.slice(0,10)){const f=parseSq(u.slice(0,2)),t=parseSq(u.slice(2,4));
+  // 把一串著法逐步走出來，每步標出「吃子、將軍、捉子、將死」（跟電腦版 lineInfo 相同）
+  function lineInfo(b,s,ucis){const out=[];let bd=b.slice(),sd=s;
+    for(const u of(ucis||[]).slice(0,40)){const f=parseSq(String(u).slice(0,2)),t=parseSq(String(u).slice(2,4));
+      if(!bd[f]||C.sideOf(bd[f])!==sd||!legal(bd,sd).some(([x,y])=>x===f&&y===t))break;
+      const cn=notate(bd,f,t),cap=bd[t],before=C.chasePairs(bd,sd),nb=C.make(bd,f,t),tags=[],o=opp(sd);
+      if(cap)tags.push("吃"+C.NAMES[C.sideOf(cap)][cap.toUpperCase()]);
+      const ck=inCheck(nb,o);if(ck)tags.push("將軍");
+      const chased=[...new Set([...C.chasePairs(nb,sd)].filter(x=>!before.has(x)).map(x=>+x.split(">")[1]))].map(q=>C.NAMES[C.sideOf(nb[q])][nb[q].toUpperCase()]);
+      if(chased.length)tags.push("捉"+chased.join("、"));
+      if(!legal(nb,o).length)tags.push(ck?"將死":"困斃");
+      out.push({f,t,cn,by:sd,ck,tags});bd=nb;sd=o}
+    return out}
+  // 我的研究：推演過的變化存在手機裡
+  function studyItem(g){return fullItem({id:g.id,title:g.title,name:g.title,result:"研究",type:g.src||"",year:+String(g.id).slice(0,4)||null,
+    board:g.board.slice(),lines:[{id:0,parent:null,start:1,moves:g.moves.map(m=>m.slice())}],comments:g.comments||{}})}
+  async function studySave(b){const mv=(Array.isArray(b.moves)?b.moves:[]).slice(0,200).map(m=>[+m[0],+m[1]]);
+    let bd=b.board.slice(),sd=b.side;for(const[f,t]of mv){if(!legal(bd,sd).some(([x,y])=>x===f&&y===t))throw new Error("變化裡有不合法的著法");bd=C.make(bd,f,t);sd=opp(sd)}
+    if(!mv.length)throw new Error("沒有著法可以存");
+    const id=gameId()+"-"+Math.random().toString(36).slice(2,6),comments={};
+    for(const[k,v]of Object.entries(b.comments||{}))if(/^0_\d+$/.test(k))comments[k]=String(v).slice(0,500);
+    await pushGame("study",{id,title:String(b.title||"我的研究").slice(0,80),src:String(b.src||"").slice(0,120),board:b.board,moves:mv,comments});return{id}}
+  function pvText(b,s,pv){const out=[];let bb=b.slice();for(const u of pv.slice(0,30)){const f=parseSq(u.slice(0,2)),t=parseSq(u.slice(2,4));
     if(!bb[f]||!legal(bb,C.sideOf(bb[f])).some(([x,y])=>x===f&&y===t))break;out.push(notate(bb,f,t));bb=C.make(bb,f,t)}return out}
   async function anPost(p,b){
     if(p==="/an/lookup"){const ks=[].concat((b.grade||[]).map(k=>"g:"+k),(b.engine||[]).map(k=>"e:"+k)),got=await idb.many(ks),g={},e={};
@@ -132,8 +156,10 @@ var XQ=(function(){
     if(p==="/an/engine"){const ms=Math.max(200,Math.min(10000,+b.ms||1500)),n=Math.max(1,Math.min(5,+b.multipv||3)),k="e:"+fen(b.board,b.side);
       const c=await idb.get(k);if(c&&!b.fresh&&c.ms>=ms&&c.multipv>=n)return{...c,cached:true};
       const r=await window.evalPos(b.board,b.side,ms,n);if(r.dead)return{lines:[],dead:true};
-      const out={ms,multipv:n,at:new Date().toISOString(),lines:r.lines.map(l=>({mv:l.mv,vr:sg*l.v,mate:l.mate==null?null:sg*l.mate,depth:l.depth,cn:pvText(b.board,b.side,[l.mv])[0]||l.mv,pv:pvText(b.board,b.side,l.pv)}))};
+      const out={ms,multipv:n,at:new Date().toISOString(),lines:r.lines.map(l=>({mv:l.mv,vr:sg*l.v,mate:l.mate==null?null:sg*l.mate,depth:l.depth,cn:pvText(b.board,b.side,[l.mv])[0]||l.mv,pv:pvText(b.board,b.side,l.pv),pvm:l.pv.slice(0,30)}))};
       await idb.set(k,out);return out}
+    if(p==="/an/line")return{moves:lineInfo(b.board,b.side,b.moves)};
+    if(p==="/an/study-save")return studySave(b);
     if(p==="/an/classify"){const f=+b.f,t=+b.t;if(!legal(b.board,b.side).some(([x,y])=>x===f&&y===t))throw new Error("這步不合法");return(await classify(b.board,b.side,f,t))||{q:"—"}}
     throw new Error("不支援："+p)}
 
@@ -177,11 +203,13 @@ var XQ=(function(){
     if(p==="/db/item")return dbItem(c,url.searchParams.get("id"));
     if(p==="/play/state")return playState();
     if(p.startsWith("/play/"))return playPost(p,b||{});
+    // 兩支手機連線對戰：雙人對戰改走電腦（兩支手機看同一盤）
+    if(p.startsWith("/pvp/")&&ls.get("pvpOnline",false))return remote(u,b);
     if(p==="/pvp/state")return pvpState();
     if(p.startsWith("/pvp/"))return pvpPost(p,b||{});
     if(p.startsWith("/an/"))return anPost(p,b||{});
     throw new Error("離線版不支援："+p)}
-  return{api,remoteInfo,ping,sync,parseConnect,unsync,syncedBooks,disconnect(){localStorage.removeItem("xq_remote");lastPing={at:0,ok:false}},
+  return{api,remoteInfo,ping,sync,parseConnect,setPvpOnline(on){ls.set("pvpOnline",!!on)},unsync,syncedBooks,disconnect(){localStorage.removeItem("xq_remote");lastPing={at:0,ok:false}},
     engineCached:async()=>{try{const c=await caches.open("xqlab-engine");return!!(await c.match(BASE+"engine/pikafish.nnue"))}catch(e){return false}}};
 })();
 var XQ_justConnected=XQ_justConnected||false;

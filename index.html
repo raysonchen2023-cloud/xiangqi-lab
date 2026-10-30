@@ -375,13 +375,28 @@ function CpuGame(v){
 function PvpGame(v){
   setTabs(false);gameLayout(v);
   let st=null,sel=-1,flipMan=null,shownResult=null,busy=false,autoFlip=store.get("autoFlip",true),clockBase=null,drawAsked=null;
+  // seat：連線對戰時這支手機坐哪一方（"r"／"b"）；null＝同一支手機輪流下
+  let seat=store.get("pvpSeat",null);if(OFF&&seat&&!XQ.remoteInfo()){seat=null;store.set("pvpSeat",null);XQ.setPvpOnline(false)}
   const bd=Board(i=>tap(i));v.querySelector("#bbox").append(bd.svg);
-  setTop("雙人對戰","#/play",[["⚙",()=>newSheet(),"新局設定"]]);
+  const setTitle=()=>setTop(seat?`連線對戰・我執${seat==="r"?"紅":"黑"}`:"雙人對戰","#/play",[["👥",()=>seatSheet(),"連線對戰"],["⚙",()=>newSheet(),"新局設定"]]);setTitle();
+  const mySide=()=>seat||(st&&st.turn);
   const acts=actionBar(v.querySelector("#acts"),[["undo","↶","悔棋",()=>post("/pvp/undo")],["flip","⇅","翻轉",()=>{flipMan=!isFlip();autoFlip=false;store.set("autoFlip",false);draw();toast("已關閉自動轉向")}],
-    ["new","＋","新局",()=>newSheet(),true],["draw","🤝","提和",()=>{if(st)post("/pvp/draw",{side:st.turn})}],["resign","🏳","認輸",()=>{if(st)confirmBox(`${PLAYER[st.turn]}（${st.turn==="r"?st.red:st.black}）確定認輸？`,()=>post("/pvp/resign",{side:st.turn}),"認輸")}]]);
-  const isFlip=()=>flipMan!=null?flipMan:(autoFlip&&st&&!st.result?st.turn==="b":false);
-  async function post(u,b){if(busy)return;busy=true;try{render(await api(u,b||{}))}catch(e){toast(e.message)}finally{busy=false}}
+    ["new","＋","新局",()=>newSheet(),true],["draw","🤝","提和",()=>{if(st)post("/pvp/draw",{side:mySide()})}],
+    ["resign","🏳","認輸",()=>{if(st){const s=mySide();confirmBox(`${PLAYER[s]}（${s==="r"?st.red:st.black}）確定認輸？`,()=>post("/pvp/resign",{side:s}),"認輸")}}]]);
+  const isFlip=()=>flipMan!=null?flipMan:seat?seat==="b":(autoFlip&&st&&!st.result?st.turn==="b":false);
+  async function post(u,b){if(busy)return;busy=true;try{render(await api(u,{...(b||{}),seat}))}catch(e){toast(e.message)}finally{busy=false}}
+  // 連線對戰設定：兩支手機都掃電腦上同一個 QR code，再各選一方
+  function seatSheet(){
+    sheet("兩支手機連線對戰",b=>{const can=!OFF||XQ.remoteInfo();
+      b.innerHTML=`<p>兩個人都用手機掃<b>電腦上同一個 QR code</b>，進到「雙人對戰」，一個選「我執紅」、一個選「我執黑」，就能各用各的手機下。棋局透過電腦同步，所以電腦的程式要開著。</p>
+        ${can?"":'<p class="muted">⚠ 這支手機還沒連上電腦，先掃電腦上的 QR code。</p>'}
+        <div class="opt"><button data-s="" class="${!seat?"on":""}">同一支手機輪流下</button><button data-s="r" class="${seat==="r"?"on":""}" ${can?"":"disabled"}>我執紅（這支手機）</button><button data-s="b" class="${seat==="b"?"on":""}" ${can?"":"disabled"}>我執黑（這支手機）</button></div>
+        ${can?"":'<button class="btn ghost" id="hc">怎麼連上電腦</button>'}`;
+      const hc=b.querySelector("#hc");if(hc)hc.onclick=connectSheet;
+      b.querySelectorAll("[data-s]").forEach(x=>x.onclick=()=>{if(x.disabled)return;seat=x.dataset.s||null;store.set("pvpSeat",seat);if(OFF)XQ.setPvpOnline(!!seat);
+        flipMan=null;sel=-1;closeSheet();setTitle();toast(seat?`這支手機執${seat==="r"?"紅":"黑"}，請對方選另一邊`:"改成同一支手機輪流下");refresh()})})}
   function tap(i){if(!st||st.result)return;
+    if(seat&&st.turn!==seat){toast("還沒輪到你，等對方走");return}
     if(sel>=0&&st.legal.some(([f,t])=>f===sel&&t===i)){const f=sel;sel=-1;vibrate(15);flipMan=null;return post("/pvp/move",{f,t:i})}
     sel=st.legal.some(([f])=>f===i)?i:-1;if(sel>=0)vibrate(5);draw()}
   function draw(){if(!st)return;bd.draw(st.board,{flip:isFlip(),last:st.moves[st.moves.length-1],sel,targets:sel>=0?st.legal.filter(([f])=>f===sel).map(x=>x[1]):[],check:st.check})}
@@ -389,17 +404,20 @@ function PvpGame(v){
   const ckT=setInterval(clocks,250);
   function render(s){st=s;if(!st.legal.some(([f])=>f===sel))sel=-1;draw();
     const fl=isFlip(),top=fl?"r":"b",bot=fl?"b":"r",nm=x=>x==="r"?st.red:st.black;
-    const strip=(x)=>playerHTML(x,nm(x),PLAYER[x],st.clocks?"":null).replace('<div class="clk">',`<div class="clk" id="ck_${x}">`);
+    // 連線對戰：自己標「這支手機」，對方標在不在線上
+    const sub=x=>!seat?PLAYER[x]:x===seat?PLAYER[x]+"・這支手機":PLAYER[x]+((st.online||{})[x]?"・🟢 在線":"・⚪ 對方還沒連上");
+    const strip=(x)=>playerHTML(x,nm(x),sub(x),st.clocks?"":null).replace('<div class="clk">',`<div class="clk" id="ck_${x}">`);
     v.querySelector("#pTop").innerHTML=strip(top);v.querySelector("#pBot").innerHTML=strip(bot);
     v.querySelector("#pTop").classList.toggle("on",!st.result&&st.turn===top);v.querySelector("#pBot").classList.toggle("on",!st.result&&st.turn===bot);
     clockBase={at:Date.now(),c:st.clocks,turn:st.turn,run:st.running&&!st.result};clocks();
     v.querySelector("#evf").style.width=evPct(st.eval&&st.eval.v)+"%";
     const s2=v.querySelector("#stat");s2.classList.toggle("hot",st.check>=0&&!st.result);
-    s2.textContent=st.result?st.result.why:`輪到${PLAYER[st.turn]}（${nm(st.turn)}）`+(st.check>=0?"・被將軍！":"")+(st.eval?`・${evt(st.eval.v)}`:"");
+    s2.textContent=st.result?st.result.why:seat?(st.turn===seat?"輪到你走":`等對方（${PLAYER[st.turn]}）走…`)+(st.check>=0&&st.turn===seat?"・你被將軍了！":"")+(st.draw===seat?"・已提和，等對方回應":"")+(st.eval?`・${evt(st.eval.v)}`:"")
+      :`輪到${PLAYER[st.turn]}（${nm(st.turn)}）`+(st.check>=0?"・被將軍！":"")+(st.eval?`・${evt(st.eval.v)}`:"");
     renderStrip(v.querySelector("#strip"),st.moves,st.moves.length-1);
-    acts.undo.disabled=!!st.result||!st.moves.length;acts.draw.disabled=acts.resign.disabled=!!st.result;
-    // 對方提和：問輪到的人（或另一方）要不要同意
-    if(st.draw&&!st.result&&drawAsked!==st.draw+st.moves.length){drawAsked=st.draw+st.moves.length;const o=opp(st.draw);
+    acts.undo.disabled=!!st.result||!st.moves.length||(!!seat&&st.moves[st.moves.length-1].by!==seat);acts.draw.disabled=acts.resign.disabled=!!st.result;
+    // 對方提和：問輪到的人（或另一方）要不要同意；連線對戰時只問對方那支手機
+    if(st.draw&&!st.result&&(!seat||st.draw!==seat)&&drawAsked!==st.draw+st.moves.length){drawAsked=st.draw+st.moves.length;const o=opp(st.draw);
       modal(`<div class="em">🤝</div><h2>${PLAYER[st.draw]}提議和棋</h2><p class="muted">${esc(nm(o))}（${PLAYER[o]}）要同意嗎？</p>`,[["同意和棋",()=>post("/pvp/draw",{side:o})],["拒絕",()=>post("/pvp/draw",{side:st.draw}),true]])}
     if(!st.draw)drawAsked=null;
     if(st.result&&shownResult!==st.id){shownResult=st.id;vibrate([30,40,30]);
@@ -415,7 +433,8 @@ function PvpGame(v){
         b.querySelectorAll("[data-t]").forEach(x=>x.onclick=()=>{red=b.querySelector("#nR").value;black=b.querySelector("#nB").value;tc=x.dataset.t;paint()});
         b.querySelector("#af").onclick=()=>{red=b.querySelector("#nR").value;black=b.querySelector("#nB").value;autoFlip=!autoFlip;store.set("autoFlip",autoFlip);flipMan=null;paint();draw()};
         b.querySelector("#go").onclick=()=>{closeSheet();shownResult=null;sel=-1;flipMan=null;post("/pvp/new",{red:b.querySelector("#nR").value,black:b.querySelector("#nB").value,tc})}};paint()})}
-  const stop=poller(async()=>{if(!busy)render(await api("/pvp/state"))},1000);
+  const refresh=async()=>{try{if(!busy)render(await api("/pvp/state"+(seat?"?seat="+seat:"")))}catch(e){if(seat)v.querySelector("#stat").textContent="⚠ "+e.message}};
+  const stop=poller(refresh,1000);
   return{stop:()=>{stop();clearInterval(ckT)}}}
 
 // ================= 棋譜庫（清單） =================
@@ -503,50 +522,90 @@ function Viewer(v,c,id){
   const boardAt=(lid,p)=>{const b=it.board.slice();for(const m of seq(lid,p)){b[m.t]=b[m.f];b[m.f]=null}return b};
   const firstSide=()=>{const m=it.lines[0].moves[0];return m?sideOf(it.board[m.f]):"r"};
   const moverAt=p=>(p-1)%2===0?firstSide():opp(firstSide());
-  const curPos=()=>FREE?{board:FREE.board,side:FREE.side}:{board:boardAt(line,ply),side:ply%2===0?firstSide():opp(firstSide())};
+  // FREE：自由走棋或推演中的變化。start＝起點局面，all＝整條著法（含 Pikafish 推演的），cur＝目前走到第幾步
+  const freeAt=n=>{const b=FREE.start.board.slice();let s=FREE.start.side;for(const m of FREE.all.slice(0,n==null?FREE.cur:n)){b[m.t]=b[m.f];b[m.f]=null;s=opp(s)}return{board:b,side:s}};
+  const freeLast=()=>FREE&&FREE.cur>0?FREE.all[FREE.cur-1]:null;
+  const curPos=()=>FREE?freeAt():{board:boardAt(line,ply),side:ply%2===0?firstSide():opp(firstSide())};
   const posKey=p=>fenC(p.board,p.side);
   const gradeOf=p=>{const m=seq(line,p)[p-1];if(m&&m.q&&m.q!=="—")return m;return grades[owner(line,p)+"|"+p]||null};
   function alternatives(p){const key=ms=>ms.map(m=>m.f+"-"+m.t).join(","),pre=key(seq(line,p-1)),groups=new Map();
     for(const l of it.lines){if(endPly(l.id)<p)continue;const s=seq(l.id,p);if(s.length!==p||key(s.slice(0,p-1))!==pre)continue;
       const m=s[p-1],k=m.f+"-"+m.t;if(!groups.has(k))groups.set(k,{m,ids:[]});groups.get(k).ids.push(l.id)}return[...groups.values()]}
-  function go(p,lid){FREE=null;sel=-1;if(lid!=null)line=lid;ply=Math.max(0,Math.min(p,endPly(line)));show();remember()}
-  function step(d){if(!it)return;if(FREE){if(d<0)undoFree();return}vibrate(5);go(ply+d)}
+  function go(p,lid){if(FREE&&lid==null){FREE.cur=Math.max(0,Math.min(p,FREE.all.length));sel=-1;AN=null;show();return}
+    FREE=null;sel=-1;if(lid!=null)line=lid;ply=Math.max(0,Math.min(p,endPly(line)));show();remember()}
+  function step(d){if(!it)return;vibrate(5);if(FREE)return go(FREE.cur+d);go(ply+d)}
   function remember(){const r=store.get("recent",[]).filter(x=>!(x.c===c&&x.id===id));r.unshift({c,id,title:title(),book:bookName,ply});store.set("recent",r.slice(0,10))}
   const title=()=>it?(it.red||it.black?`${it.red||"？"} 對 ${it.black||"？"}`:it.no?`${it.part?it.part+"・":""}第 ${it.no} 局 ${it.title||""}`:it.name||it.title):"";
   async function tap(i){if(!it)return;const pos=curPos(),k=posKey(pos);
     try{if(!LEGAL||LEGAL.k!==k)LEGAL={k,list:(await api("/an/legal",pos)).legal}}catch(e){return toast(e.message)}
     if(sel>=0&&LEGAL.list.some(([f,t])=>f===sel&&t===i)){const f=sel;sel=-1;return freeMove(f,i)}
     sel=LEGAL.list.some(([f])=>f===i)?i:-1;if(sel>=0)vibrate(5);show()}
-  async function freeMove(f,t){const pos=curPos();if(!FREE)FREE={board:pos.board,side:pos.side,moves:[],base:ply};
-    const before={board:FREE.board.slice(),side:FREE.side};
-    try{const r=await api("/an/legal",{...before,f,t});vibrate(15);const m={f,t,cn:r.cn,by:before.side,before};FREE.moves.push(m);FREE.board=r.board;FREE.side=r.side;FREE.check=r.check;LEGAL={k:posKey(r),list:r.legal};AN=null;show();
-      api("/an/classify",{...before,f,t}).then(g=>{m.q=g.q;m.loss=g.loss;m.ev=g.ev;m.bc=g.bc;show()}).catch(()=>{})}catch(e){toast(e.message)}}
-  function undoFree(){if(!FREE)return;const m=FREE.moves.pop();if(!FREE.moves.length)FREE=null;else{FREE.board=m.before.board;FREE.side=m.before.side;FREE.check=-1}sel=-1;AN=null;show()}
+  // 自己點棋子走：從目前這一步分叉（後面原本的著法拿掉）
+  async function freeMove(f,t){const pos=curPos();if(!FREE)FREE={start:pos,all:[],cur:0,base:ply,src:""};
+    try{const r=await api("/an/line",{...pos,moves:[iccsC(f,t)]}),m=r.moves[0];if(!m)throw new Error("這步不合法");vibrate(15);
+      FREE.all=FREE.all.slice(0,FREE.cur);FREE.all.push(m);FREE.cur++;FREE.src=FREE.src&&FREE.src.startsWith("Pikafish")?FREE.src+"＋自己改走":FREE.src||"自由走棋";
+      LEGAL=null;AN=null;show();gradeFree()}catch(e){toast(e.message)}}
+  // 依序評等變化裡還沒評等的步
+  let gfBusy=false;
+  async function gradeFree(){if(gfBusy)return;gfBusy=true;
+    try{for(;;){if(!FREE||screen!==self)break;const F=FREE,i=F.all.findIndex(m=>!m.g);if(i<0)break;const m=F.all[i],p=freeAt(i);
+        try{m.g=await api("/an/classify",{...p,f:m.f,t:m.t})}catch(e){m.g={q:"—"}}if(FREE===F)show()}}finally{gfBusy=false}}
+  // ▶ 推演：把 Pikafish 的某一條變化接在目前局面後面
+  async function playLine(i){const l=AN&&AN.lines&&AN.lines[i];if(!l)return;const pos=curPos(),k=posKey(pos);
+    try{let pvm=l.pvm,src=l;
+      if(!pvm){const d=await api("/an/engine",{...pos,ms:1500,multipv:3,fresh:true});AN={k,...d};src=d.lines[i]||d.lines[0];pvm=src.pvm}
+      const r=await api("/an/line",{...pos,moves:pvm||[]});if(!r.moves.length)throw new Error("這條變化沒有可以推演的著法");
+      if(!FREE)FREE={start:pos,all:[],cur:0,base:ply,src:""};
+      const keep=FREE.cur;FREE.all=FREE.all.slice(0,keep).concat(r.moves);FREE.src=`Pikafish 第 ${i+1} 條變化（${evt(src.vr)}）`;
+      AN=null;sel=-1;show();if(r.moves.length<10)await extendLine(10-r.moves.length);FREE.cur=keep;show();gradeFree();toast("按 ▶ 或往左滑，一步一步看")}catch(e){toast(e.message)}}
+  // 從變化的最後一步請 Pikafish 接著算，接到至少多 want 步（Pikafish 有時只回很短的變化，就多算幾次）
+  async function extendLine(want){const F=FREE;let added=0;
+    for(let k=0;k<5&&added<want&&FREE===F;k++){const pos=freeAt(F.all.length);
+      const d=await api("/an/engine",{...pos,ms:1500,multipv:1,fresh:true});if(d.dead||!d.lines.length)break;
+      const r=await api("/an/line",{...pos,moves:d.lines[0].pvm||[]});if(!r.moves.length||FREE!==F)break;F.all=F.all.concat(r.moves);added+=r.moves.length;show()}
+    return added}
+  // ⏩ 繼續推演：從變化的最後一步，請 Pikafish 接著往下算（至少 10 步）
+  async function contLine(){if(!FREE)return;FREE.cur=FREE.all.length;AN=null;sel=-1;show();toast("Pikafish 接著往下算…");
+    try{const n=await extendLine(10);toast(n?`⏩ 多推演了 ${n} 步，按 ▶ 往下看`:"這條變化已經分出勝負了");gradeFree()}catch(e){toast(e.message)}}
+  // 💾 存成棋譜
+  function saveLine(){if(!FREE||!FREE.all.length)return;
+    const def=`${title()} 第${FREE.base}步後：${FREE.src||"自由走棋"}`.slice(0,80);
+    sheet("存成棋譜",b=>{b.innerHTML=`<p class="muted">存到「我的研究」資料夾，之後可以重看、評等。</p><div class="field"><label>名稱</label><input id="sn" maxlength="80"></div><button class="btn" id="sv">儲存</button>`;
+      b.querySelector("#sn").value=def;
+      b.querySelector("#sv").onclick=async()=>{const comments={"0_0":`來源：${title()}，第 ${FREE.base} 步之後的局面。`+(FREE.src?"\n"+FREE.src:"")};
+        FREE.all.forEach((m,i)=>{const t=[m.tags&&m.tags.length?m.tags.join("、"):"",m.g&&m.g.q&&m.g.q!=="—"?m.g.q+(m.g.ev!=null?"，"+evt(m.g.ev):""):""].filter(Boolean).join("；");if(t)comments["0_"+(i+1)]=t});
+        try{await api("/an/study-save",{board:FREE.start.board,side:FREE.start.side,moves:FREE.all.map(m=>[m.f,m.t]),title:b.querySelector("#sn").value,src:FREE.src,comments});
+          closeSheet();toast("💾 已存到「我的研究」")}catch(e){toast(e.message)}}})}
   function show(){if(!it)return;const s=seq(line,ply),pos=curPos();
-    const last=FREE?FREE.moves[FREE.moves.length-1]:s[s.length-1];
+    const last=FREE?freeLast():s[s.length-1];
     const hint=AN&&AN.k===posKey(pos)&&AN.lines&&AN.lines[0]?[sqI(AN.lines[0].mv.slice(0,2)),sqI(AN.lines[0].mv.slice(2,4))]:null;
-    bd.draw(pos.board,{last,sel,targets:sel>=0&&LEGAL?LEGAL.list.filter(([f])=>f===sel).map(x=>x[1]):[],hint,check:FREE?FREE.check:-1});
+    const ckSq=FREE&&last&&last.ck?pos.board.indexOf(pos.side==="r"?"K":"k"):-1;
+    bd.draw(pos.board,{last,sel,targets:sel>=0&&LEGAL?LEGAL.list.filter(([f])=>f===sel).map(x=>x[1]):[],hint,check:ckSq});
     // 優勢條：分析結果優先，其次是上一步的評等
     let ev=AN&&AN.k===posKey(pos)&&AN.lines&&AN.lines[0]?AN.lines[0].vr:null;
-    if(ev==null){const g=FREE?FREE.moves[FREE.moves.length-1]:ply>0&&gradeOf(ply);if(g&&g.ev!=null)ev=g.ev}
+    if(ev==null){const g=FREE?(last&&last.g):ply>0&&gradeOf(ply);if(g&&g.ev!=null)ev=g.ev}
     v.querySelector("#evf").style.width=evPct(ev)+"%";
     const st=v.querySelector("#stat");st.classList.toggle("hot",!!FREE);
-    if(FREE)st.textContent=`✏️ 自由走棋中（第 ${FREE.base} 步之後）・按 ◀ 退回`;
+    if(FREE)st.textContent=`🔭 ${FREE.src||"自由走棋"}・${FREE.cur}／${FREE.all.length}`+(ev!=null?"・"+evt(ev):"");
     else{const g=ply>0&&gradeOf(ply);st.textContent=ply===0?"開局局面・左右滑棋盤可換步":`第 ${ply} 步 ${s[ply-1].cn}`+(g?`【${g.q}】`:"")+(ev!=null?"・"+evt(ev):"")}
-    const moves=FREE?FREE.moves:seq(line,endPly(line)).map((m,i)=>{const g=gradeOf(i+1);return{...m,by:moverAt(i+1),q:g&&g.q}});
-    renderStrip(v.querySelector("#strip"),moves,FREE?FREE.moves.length-1:ply-1,FREE?null:i=>go(i+1));
-    // 變著
+    const moves=FREE?FREE.all.map(m=>({...m,q:m.g&&m.g.q})):seq(line,endPly(line)).map((m,i)=>{const g=gradeOf(i+1);return{...m,by:moverAt(i+1),q:g&&g.q}});
+    renderStrip(v.querySelector("#strip"),moves,FREE?FREE.cur-1:ply-1,FREE?i=>go(i+1):i=>go(i+1));
+    // 變著；推演中則改放推演用的按鈕
     const ab=v.querySelector("#alts");ab.innerHTML="";
+    if(FREE){for(const[t,fn]of[["⏩ 繼續推演",contLine],["💾 存成棋譜",saveLine],["✕ 回到棋譜",()=>{FREE=null;AN=null;sel=-1;show()}]]){const b=document.createElement("button");b.className="chip";b.style.fontFamily="var(--sans)";b.textContent=t;b.onclick=()=>{vibrate(5);fn()};ab.append(b)}}
     if(!FREE){const alts=alternatives(ply+1);if(alts.length>1){const lb=document.createElement("span");lb.className="muted";lb.style.cssText="flex:none;align-self:center;font-size:12px";lb.textContent="下一步變著：";ab.append(lb);
       for(const g of alts){const mine=g.ids.includes(line),b=document.createElement("button");b.className="chip var"+(mine?" on":"");b.textContent=g.m.cn;b.onclick=()=>go(ply+1,mine?line:g.ids[0]);ab.append(b)}}}
     ab.hidden=!ab.children.length;
     // 評註
     const note=v.querySelector("#note");
-    if(FREE){const g=FREE.moves[FREE.moves.length-1];note.textContent=g&&g.q?`${g.cn}：${g.q}`+(g.q!=="正手"&&g.q!=="妙手"?`，比最佳著法少 ${g.loss} 分，Pikafish 建議 ${g.bc}`:""):"點棋子可以繼續往下走，看看不同的變化。"}
+    if(FREE){const m=last,g=m&&m.g;
+      note.textContent=!m?`起點局面（第 ${FREE.base} 步之後）。按 ▶ 或往左滑，一步一步看${FREE.src&&FREE.src.startsWith("Pikafish")?" Pikafish 怎麼預判、在哪裡埋伏":""}；點棋子可以自己改走。`
+        :`${FREE.base+FREE.cur}. ${PLAYER[m.by]} ${m.cn}`+(m.tags&&m.tags.length?`【${m.tags.join("、")}】`:"")+(g&&g.q&&g.q!=="—"?`　${g.q}`:"")
+         +(g&&g.q&&g.q!=="正手"&&g.q!=="妙手"&&g.bc?`\nPikafish 認為更好的是：${g.bc}`:"")}
     else{const ck=owner(line,ply)+"_"+ply,g=ply>0&&gradeOf(ply);
       note.textContent=[ply===0?(it.comments["0_0"]||it.note||""):it.comments[ck]||"",g&&g.q&&g.q!=="正手"&&g.q!=="妙手"?`Pikafish：這步比最佳著法少 ${g.loss} 分，建議 ${g.bc}`:""].filter(Boolean).join("\n")||(ply===0?"點棋子可以自由走棋；按 🔍 看 Pikafish 分析。":"")}
-    acts.first.disabled=acts.prev.disabled=!FREE&&ply===0;acts.next.disabled=acts.last.disabled=!!FREE||ply>=endPly(line);
-    acts.prev.disabled=!FREE&&ply===0;
+    if(FREE){acts.first.disabled=acts.prev.disabled=FREE.cur===0;acts.next.disabled=acts.last.disabled=FREE.cur>=FREE.all.length}
+    else{acts.first.disabled=acts.prev.disabled=ply===0;acts.next.disabled=acts.last.disabled=ply>=endPly(line)}
     if(!(AN&&AN.k===posKey(pos)))lookupSoon()}
   let lt=null;function lookupSoon(){clearTimeout(lt);lt=setTimeout(async()=>{const pos=curPos(),k=posKey(pos);try{const d=await api("/an/lookup",{engine:[k]});const e=Object.values(d.engine)[0];if(e&&posKey(curPos())===k){AN={k,...e,cached:true};show()}}catch(e){}},150)}
   async function loadGrades(){const want=new Map();
@@ -555,16 +614,17 @@ function Viewer(v,c,id){
   function anSheet(){const pos=curPos(),k=posKey(pos);
     sheet("Pikafish 分析",b=>{
       const paint=()=>{const a=AN&&AN.k===k?AN:null;
-        b.innerHTML=a?(a.dead?`<p>${PLAYER[pos.side]}沒有合法著法（被將死或困斃）。</p>`:`${a.cached?'<p class="muted">📁 之前存的分析，不用重算</p>':""}<div class="anl">${a.lines.map((l,i)=>`<div class="ln"><b>${i+1}. ${esc(l.cn)}</b>　<span class="pill">${evt(l.vr)}</span><div class="pv">${esc(l.pv.join(" "))}</div><div class="muted" style="font-size:11px">往後算 ${l.depth||"?"} 步（約 ${Math.round((l.depth||0)/2)} 回合）</div></div>`).join("")}</div>`)
+        b.innerHTML=a?(a.dead?`<p>${PLAYER[pos.side]}沒有合法著法（被將死或困斃）。</p>`:`${a.cached?'<p class="muted">📁 之前存的分析，不用重算</p>':""}<div class="anl">${a.lines.map((l,i)=>`<div class="ln"><b>${i+1}. ${esc(l.cn)}</b>　<span class="pill">${evt(l.vr)}</span><div class="pv">${esc(l.pv.join(" "))}</div><div class="muted" style="font-size:11px">往後算 ${l.depth||"?"} 步（約 ${Math.round((l.depth||0)/2)} 回合）</div><button class="pill" data-play="${i}" style="margin-top:6px;border-color:var(--accent);color:var(--accent);font-weight:700;padding:5px 12px">▶ 推演這條變化（${l.pv.length} 步）</button></div>`).join("")}</div>`)
           :'<p class="muted" style="text-align:center;padding:20px">Pikafish 思考中…（約 1.5 秒）</p>';
         b.insertAdjacentHTML("beforeend",`<div class="opt" style="margin-top:12px"><button id="re">🔄 重新分析</button><button id="gr">📊 評等這條著法</button></div>
           <div class="opt"><button id="ec">💬 請 Claude 講解</button><button id="eg">💬 請 GPT 講解</button></div><div id="llm" style="white-space:pre-wrap;font-size:14px"></div>
           <p class="muted" style="font-size:12px">分數是紅方視角，1.0 約等於一個兵。講解會用到你的 Claude 或 ChatGPT 額度，分析和評等不會。</p>`);
+        b.querySelectorAll("[data-play]").forEach(x=>x.onclick=()=>{closeSheet();playLine(+x.dataset.play)});
         b.querySelector("#re").onclick=()=>run(true);b.querySelector("#gr").onclick=()=>{closeSheet();gradeLine()};
         b.querySelector("#ec").onclick=()=>explain("claude");b.querySelector("#eg").onclick=()=>explain("gpt")};
       const run=async fresh=>{if(fresh)AN=null;paint();try{const d=await api("/an/engine",{...pos,ms:1500,multipv:3,fresh:!!fresh});AN={k,...d};show();if($("#sheet"))paint()}catch(e){toast(e.message)}};
       const explain=async who=>{const box=b.querySelector("#llm");box.textContent=(who==="gpt"?"GPT":"Claude")+" 講解中…（大約半分鐘到幾分鐘）";
-        const hist=(FREE?seq(line,FREE.base).map(m=>m.cn).concat(FREE.moves.map(m=>m.cn)):seq(line,ply).map(m=>m.cn)).join(" ");
+        const hist=(FREE?seq(line,FREE.base).map(m=>m.cn).concat(FREE.all.slice(0,FREE.cur).map(m=>m.cn)):seq(line,ply).map(m=>m.cn)).join(" ");
         try{const d=await api("/an/explain",{...pos,who,lines:(AN&&AN.lines)||[],history:hist});box.textContent=d.text}catch(e){box.textContent="⚠ "+e.message}};
       if(AN&&AN.k===k)paint();else run(false)})}
   async function gradeLine(){const end=endPly(line);toast("開始評等，每步約 0.6 秒");
