@@ -136,7 +136,7 @@ async function classifyRaw(b,s,f,t,ms){
   if(best.mv===mv)q=gap>=150&&Math.abs(best.v)<1500?"妙手":"正手";
   else if(loss<10)q="正手";else if(loss<=40)q="優著";else if(loss<=100)q="良著";else if(loss<=300)q="錯著";else q="露著";
   const bf=parseSq(best.mv.slice(0,2)),bt=parseSq(best.mv.slice(2,4));
-  return{q,loss,ev:s==="r"?played:-played,bc:notate(b,bf,bt),bm:best.mv}}
+  return{q,loss,ev:s==="r"?played:-played,bc:notate(b,bf,bt),bm:best.mv,bp:(best.pv||[]).slice(0,3)}}   // bp：Pikafish 建議的前 3 步（賽後在棋盤上畫箭頭）
 return{START,NAMES,CN,VAL,sideOf,opp,parseFen,fen,legal,legalOk,inCheck,kingSq,make,iccs,parseSq,notate,chasePairs,hasAttackers,PLAYER,annotate,summary,fullItem,gameItem,LEVELS,stateApply,stateRebuild,judgeState,pickMove,ANALYZE_MS,clampV,classifyRaw};
 })();
 if(typeof module!=="undefined")module.exports=XQCore;
