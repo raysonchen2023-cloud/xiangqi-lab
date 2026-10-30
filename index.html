@@ -602,8 +602,26 @@ if(OFF&&window.XQNet){XQNet.start();
 
 // ================= 分享：讓別的手機也裝象棋研究室 =================
 const APP_HOME="https://raysonchen2023-cloud.github.io/xiangqi-lab/";
+// ================= 加到主畫面：用瀏覽器打開時問一次，玩家自己決定 =================
+// iPhone 不能用程式安裝，只能教步驟；Android 可以直接跳出系統的安裝視窗。LINE 內建瀏覽器不能加，要先改用手機的瀏覽器。
+let installEvt=null;addEventListener("beforeinstallprompt",e=>{e.preventDefault();installEvt=e});
+const isStandalone=()=>matchMedia("(display-mode: standalone)").matches||!!navigator.standalone;
+function installGuide(manual){if(isStandalone())return;const ua=navigator.userAgent,inLine=/ Line\/[0-9]/i.test(ua),ios=MY_KIND==="iPhone"||MY_KIND==="iPad";
+  const later=()=>store.set("instAsk",{at:Date.now()}),never=()=>store.set("instAsk",{no:true});
+  if(inLine)return modal(`<div class="em">📲</div><h2>用手機的瀏覽器打開</h2><p class="muted">在 LINE 裡沒辦法把象棋研究室加到主畫面。按下面的按鈕，會改用 ${ios?"Safari":"Chrome"} 打開，再照步驟加到主畫面。</p>`,
+    [["用瀏覽器打開",()=>{later();location.href=APP_HOME+"?openExternalBrowser=1"}],["不用了",never,true]]);
+  if(installEvt)return modal(`<div class="em">📲</div><h2>把象棋研究室加到主畫面？</h2><p class="muted">之後從主畫面點圖示就能打開，全螢幕、沒網路也能下棋。</p>`,
+    [["安裝",async()=>{const e=installEvt;installEvt=null;try{await e.prompt();const c=await e.userChoice;if(c&&c.outcome==="accepted")never();else later()}catch(x){later()}}],["稍後",later,true],["我已經裝了／不用了",never,true]]);
+  modal(`<div class="em">📲</div><h2>把象棋研究室加到主畫面？</h2><p class="muted" style="margin-bottom:8px">加了之後，從主畫面點圖示就能打開，全螢幕、沒網路也能下棋。</p>
+    <div style="text-align:left;line-height:2;font-size:15px">${ios?`1. 點 Safari 下方（或上方）的 <b>分享</b> 按鈕 <span style="font-size:18px">⬆️</span><br>2. 往下滑，點 <b>「加入主畫面」</b> ➕<br>3. 按右上角 <b>「加入」</b>`
+      :`1. 點瀏覽器右上角的 <b>⋮</b> 選單<br>2. 點 <b>「加到主畫面」</b>或<b>「安裝應用程式」</b><br>3. 按 <b>「新增」</b>`}</div>`,
+    [["好，我現在加",later],["我已經加過了",never,true],["不用了",never,true]])}
+// 用瀏覽器打開時自動問一次（手機才問；說過不用就不再問；按「稍後」7 天後再問）
+if(OFF&&!isStandalone()&&/iPhone|iPad|Android/.test(MY_KIND))setTimeout(()=>{const a=store.get("instAsk",null);if(a&&(a.no||Date.now()-a.at<7*864e5))return;if(document.querySelector(".modal"))return;installGuide(false)},2500);
+// 網址上的 ?openExternalBrowser=1 只是給 LINE 看的，打開後拿掉
+if(/[?&]openExternalBrowser=1/.test(location.search))try{history.replaceState(null,"",location.pathname+location.hash)}catch(e){}
 async function shareSheet(){
-  const app=OFF&&/^https:/.test(location.origin)?location.origin+location.pathname:APP_HOME;
+  const app=(OFF&&/^https:/.test(location.origin)?location.origin+location.pathname:APP_HOME)+"?openExternalBrowser=1";   // LINE 裡點開會改用手機的瀏覽器
   // 給一般玩家：只有 App 本身。連到電腦的 QR code 放在「🔗 連線到電腦」裡（只有連過電腦的裝置看得到）
   try{await loadScript("qrcode.min.js")}catch(e){return toast(e.message)}
   sheet("分享象棋研究室",b=>{
@@ -651,7 +669,7 @@ function Home(v){
    </div>
    <div id="hRecentBox" hidden><div class="sec-t">繼續研究 <button data-go="#/db">棋譜庫 ›</button></div><div class="items" id="hRecent" style="padding:0"></div></div>
    <div class="hfoot">
-    ${standalone?"":'<div style="flex-basis:100%">提示：瀏覽器選單點「加入主畫面」，就能全螢幕使用</div>'}
+    ${standalone?"":'<button class="lk" id="hInst" style="flex-basis:100%">📲 加到主畫面，像 App 一樣全螢幕使用</button>'}
     ${OFF?`<span id="hVer">版本讀取中…</span><button class="pill" id="hUpd">檢查更新</button>`:""}
     <button class="lk" id="hFb">💬 意見回饋</button>
    </div>
@@ -663,7 +681,7 @@ function Home(v){
       if(r.a===r.n){b.textContent="✓ 已是最新版";return}
       b.textContent="下載新版中…";setTimeout(()=>location.reload(),6000)};
     const hc=v.querySelector("#hConn");if(hc)hc.onclick=connectSheet}
-  v.querySelector("#hFb").onclick=()=>feedbackSheet();
+  v.querySelector("#hFb").onclick=()=>feedbackSheet();const hi=v.querySelector("#hInst");if(hi)hi.onclick=()=>installGuide(true);
   v.querySelectorAll("[data-go]").forEach(b=>b.onclick=()=>{vibrate(5);location.hash=b.dataset.go});
   standaloneOnlineWarn(v.firstElementChild||v);
   if(OFF){if(RI)homeStatus(v.querySelector("#hStatus"));if(window.XQ_justConnected){XQ_justConnected=false;setTimeout(()=>toast("已連上電腦！"),300)}}
