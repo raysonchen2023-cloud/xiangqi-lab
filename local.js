@@ -113,6 +113,7 @@ var XQ=(function(){
   async function netPvp(p,b){if(p==="/pvp/state")return netState();
     const sd=XQNet.side();if(!sd)throw new Error("你在觀戰，不能下棋");
     if(p==="/pvp/emote"){XQNet.emote(sd,b.e);return netState()}
+    if(p==="/pvp/chat"){XQNet.say(sd,b.text);return netState()}
     const nb=netBuild();if(!nb)throw new Error("還在等對局資料，稍等一下");const{S,g}=nb;
     if(p==="/pvp/move"){const f=+b.f,t=+b.t;if(g.result)throw new Error("這局已經結束");if(S.turn!==sd)throw new Error("還沒輪到你");
       if(!legal(S.board,S.turn).some(([x,y])=>x===f&&y===t))throw new Error("這步不合法");

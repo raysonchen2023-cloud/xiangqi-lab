@@ -51,10 +51,11 @@ var XQNet=(function(){
   const L={};const on=(ev,f)=>{(L[ev]=L[ev]||[]).push(f);return()=>{L[ev]=L[ev].filter(x=>x!==f)}};const emit=(ev,d)=>(L[ev]||[]).forEach(f=>{try{f(d)}catch(e){console.error(e)}});
   const gt=gid=>[`${ROOT}/g/${gid}/s`,`${ROOT}/g/${gid}/e`];
   const side=()=>{if(!G)return null;const i=me().id;return G.red.id===i?"r":G.black.id===i?"b":null};
+  const playing=()=>!!(cur&&G&&!G.result&&side());   // 真的在下一盤還沒結束的棋
   function presence(){if(!cli||!cli.up)return;const m=me(),sd=side();
-    cli.pub(`${ROOT}/u/${m.id}`,JSON.stringify({id:m.id,name:m.name,st:cur?(sd?"playing":"watching"):seeking?"seeking":"idle",gid:cur&&cur.gid||null,at:Date.now()}),true)}
+    cli.pub(`${ROOT}/u/${m.id}`,JSON.stringify({id:m.id,name:m.name,st:cur&&!(G&&G.result)?(sd?"playing":"watching"):seeking?"seeking":"idle",gid:cur&&cur.gid||null,at:Date.now()}),true)}
   // 隨機配對：大家都把狀態設成 seeking；代號最小的人去邀請下一位，被邀請的人自動接受（避免兩邊同時互邀）
-  function tryMatch(){if(!seeking||pending||cur||!cli||!cli.up)return;const i=me().id,now=Date.now();
+  function tryMatch(){if(!seeking||pending||playing()||!cli||!cli.up)return;const i=me().id,now=Date.now();
     const c=Object.values(people).filter(x=>x.st==="seeking"&&x.id!==i&&now-x.at<ALIVE).sort((a,b)=>a.id<b.id?-1:1);
     if(!c.length||c[0].id<i)return;   // 有人代號比我小：等他來邀請
     sendInvite(c[0],true)}
@@ -63,8 +64,8 @@ var XQNet=(function(){
     clearTimeout(pendT);if(auto)pendT=setTimeout(()=>{if(pending&&pending.gid===gid){pending=null;tryMatch()}},8000);return gid}
   function connect(){if(cli||!want)return;const m=me();
     cli=mqtt(URLS[urlI],{clientId:"xq"+m.id.slice(0,12)+Math.random().toString(36).slice(2,8),keepalive:30,will:{topic:`${ROOT}/u/${m.id}`,payload:"",retain:true}});
-    cli.onup=()=>{everUp=true;downAt=0;cli.sub([`${ROOT}/u/+`,`${ROOT}/i/${m.id}`,`${ROOT}/sys/ver`,...(cur?gt(cur.gid):[])]);presence();clearInterval(hb);hb=setInterval(presence,30000);
-      if(dirty&&G){dirty=false;setTimeout(()=>{if(G&&cli&&cli.up)pubGame()},600)}emit("status")};
+    cli.onup=()=>{everUp=true;downAt=0;cli.sub([`${ROOT}/u/+`,`${ROOT}/i/${m.id}`,`${ROOT}/sys/ver`,...(cur?gt(cur.gid):[])]);presence();clearInterval(hb);hb=setInterval(()=>{presence();staleCheck()},30000);
+      if(dirty&&G){dirty=false;setTimeout(()=>{if(G&&cli&&cli.up)pubGame()},600)}if(cur&&!G)waitGame(cur.gid,false);emit("status")};
     cli.onmsg=onMsg;
     cli.ondown=was=>{cli=null;clearInterval(hb);if(!downAt)downAt=Date.now();emit("status");
       clearTimeout(retryT);if(want)retryT=setTimeout(connect,was?800:3000)}}
@@ -73,8 +74,8 @@ var XQNet=(function(){
     if(p[0]==="u"){if(!msg)delete people[p[1]];else{try{const x=JSON.parse(msg);if(x&&x.id===p[1])people[p[1]]=x}catch(e){}}emit("people");tryMatch();return}
     if(p[0]==="i"){let x;try{x=JSON.parse(msg)}catch(e){return}if(!x||!x.from||Date.now()-(x.at||0)>120000)return;
       if(x.type==="invite"&&x.auto){   // 隨機配對來的：還在找就自動接受，不然婉拒
-        const m=me();const ok=!!seeking&&!cur&&!pending;cli&&cli.pub(`${ROOT}/i/${x.from.id}`,JSON.stringify({type:ok?"accept":"decline",gid:x.gid,from:{id:m.id,name:m.name},at:Date.now()}));
-        if(ok){seeking=0;G=null;enter(x.gid);emit("matched",{name:x.from.name})}}
+        const m=me();const ok=!!seeking&&!playing()&&!pending;cli&&cli.pub(`${ROOT}/i/${x.from.id}`,JSON.stringify({type:ok?"accept":"decline",gid:x.gid,from:{id:m.id,name:m.name},at:Date.now()}));
+        if(ok){seeking=0;G=null;enter(x.gid);waitGame(x.gid,true);emit("matched",{name:x.from.name})}}
       else if(x.type==="invite")emit("invite",x);
       else if(x.type==="accept"&&pending&&pending.gid===x.gid){const m=me(),auto=pending.auto;pending=null;clearTimeout(pendT);seeking=0;
         let red={id:m.id,name:m.name},black={id:x.from.id,name:x.from.name};if(auto&&Math.random()<.5)[red,black]=[black,red];   // 隨機配對：紅黑也隨機
@@ -84,10 +85,24 @@ var XQNet=(function(){
       else if(x.type==="cancel")emit("cancel",x);
       return}
     if(p[0]==="g"&&cur&&p[1]===cur.gid){
-      if(p[2]==="s"){if(!msg)return;let x;try{x=JSON.parse(msg)}catch(e){return}if(!G||x.rev>G.rev||x.gid!==G.gid){const before=side();G=x;dirty=false;if(side()!==before)presence();emit("game")}
+      if(p[2]==="s"){if(!msg)return;let x;try{x=JSON.parse(msg)}catch(e){return}if(!G||x.rev>G.rev||x.gid!==G.gid){const before=side(),wasEnd=!!(G&&G.result);G=x;dirty=false;if(side()!==before||!!G.result!==wasEnd)presence();emit("game")}
         else if(dirty&&G&&x.rev<G.rev)pubGame()}
-      else if(p[2]==="e"){try{const x=JSON.parse(msg);emos.push({id:++emoN,by:x.by,e:String(x.e||"").slice(0,12),at:Date.now()});emos=emos.slice(-20);emit("game")}catch(e){}}}}
+      else if(p[2]==="e"){try{const x=JSON.parse(msg);emos.push({id:++emoN,by:x.by,e:String(x.e||"").slice(0,12),text:String(x.text||"").slice(0,80),name:String(x.name||"").slice(0,16),at:Date.now()});
+        emos=emos.slice(-40);emit("game")}catch(e){}}}}
   function enter(gid){if(cur&&cur.gid!==gid&&cli&&cli.up)cli.unsub(gt(cur.gid));cur={gid};ls.set("net",cur);emos=[];if(cli&&cli.up)cli.sub(gt(gid));presence()}
+  const PL={r:"紅方",b:"黑方"},oppOf=s=>s==="r"?"b":"r";
+  // 對方「在這盤」＝在線上，而且他的狀態指著同一盤（已經跑去做別的事就不算）
+  const onl=id=>{const x=people[id];return id===me().id?!!(cli&&cli.up):!!(x&&Date.now()-x.at<ALIVE&&G&&x.gid===G.gid)};
+  function setResult(r){if(!G||G.result)return;const n=JSON.parse(JSON.stringify(G));n.result=r;n.draw=null;n.rev=G.rev+1;n.at=Date.now();G=n;pubGame();presence();emit("game")}
+  // 對方離線超過 10 分鐘、棋局也 10 分鐘沒動：自動中止，不再一直掛著「對戰中」
+  function staleCheck(){if(!playing()||!cli||!cli.up)return;const o=oppOf(side()),oid=o==="r"?G.red.id:G.black.id;
+    if(!onl(oid)&&Date.now()-(G.at||0)>10*60000)setResult({w:null,why:"對方離線太久，對局中止"})}
+  // 自己離開一盤還沒下完的棋：對方還在線上就算自己認輸；對方已經離線就直接中止
+  function endOnLeave(){if(!playing())return;const s=side(),o=oppOf(s),oid=o==="r"?G.red.id:G.black.id;
+    setResult(onl(oid)&&G.moves.length?{w:o,why:PL[s]+"離開對局"}:{w:null,why:onl(oid)?"對局取消":"對方離線，對局中止"})}
+  // 接受後 12 秒還沒收到對局（對方剛好關掉 App）：取消，隨機配對的話繼續找
+  function waitGame(gid,auto){setTimeout(()=>{if(!cur||cur.gid!==gid||G)return;if(cli&&cli.up)cli.unsub(gt(gid));cur=null;ls.set("net",null);
+    if(auto)seeking=Date.now();presence();emit("matchfail",{auto});tryMatch()},12000)}
   function pubGame(){if(!G)return;if(!(cli&&cli.up&&cli.pub(`${ROOT}/g/${G.gid}/s`,JSON.stringify(G),true))){dirty=true;connect()}}
   // 手機切到背景時主動下線（iPhone 背景會斷線），回來再連上
   const kick=()=>{if(!want)return;if(!cli){clearTimeout(retryT);connect()}else if(cli.up)presence()};
@@ -102,17 +117,21 @@ var XQNet=(function(){
     people:()=>{const now=Date.now(),i=me().id;return Object.values(people).filter(x=>x.id!==i&&now-x.at<ALIVE)},
     me,active:()=>!!cur,side,game:()=>G,gid:()=>cur&&cur.gid,
     invite(to){seeking=0;return sendInvite(to,false)},
-    seek(on){seeking=on?Date.now():0;if(!on&&pending&&pending.auto)pending=null;presence();tryMatch();emit("people")},
+    seek(on){if(on&&playing())endOnLeave();if(on&&cur&&!playing()){if(cli&&cli.up)cli.unsub(gt(cur.gid));cur=null;G=null;ls.set("net",null)}seeking=on?Date.now():0;if(!on&&pending&&pending.auto)pending=null;presence();tryMatch();emit("people")},
     seeking:()=>!!seeking,
     seekers(){const now=Date.now(),i=me().id;return Object.values(people).filter(x=>x.st==="seeking"&&x.id!==i&&now-x.at<ALIVE).length},
     cancelInvite(){if(!pending)return;const m=me();cli&&cli.pub(`${ROOT}/i/${pending.to}`,JSON.stringify({type:"cancel",gid:pending.gid,from:{id:m.id,name:m.name},at:Date.now()}));pending=null},
-    respond(x,ok){const m=me();cli&&cli.pub(`${ROOT}/i/${x.from.id}`,JSON.stringify({type:ok?"accept":"decline",gid:x.gid,from:{id:m.id,name:m.name},at:Date.now()}));
-      if(ok){G=null;enter(x.gid)}},
-    watch(gid){G=null;enter(gid)},
-    leave(){if(cur&&cli&&cli.up)cli.unsub(gt(cur.gid));cur=null;G=null;ls.set("net",null);presence()},
+    respond(x,ok){const m=me();if(ok)endOnLeave();cli&&cli.pub(`${ROOT}/i/${x.from.id}`,JSON.stringify({type:ok?"accept":"decline",gid:x.gid,from:{id:m.id,name:m.name},at:Date.now()}));
+      if(ok){G=null;enter(x.gid);waitGame(x.gid,false)}},
+    watch(gid){endOnLeave();G=null;enter(gid)},
+    oppOnline(){if(!G||!side())return false;const o=oppOf(side());return onl(o==="r"?G.red.id:G.black.id)},
+    leave(){endOnLeave();if(cur&&cli&&cli.up)cli.unsub(gt(cur.gid));cur=null;G=null;ls.set("net",null);presence()},
     // 對局有變化：發布新狀態（rev 越大越新）
-    update(fn){if(!G)throw new Error("還在等對局資料，稍等一下");const n=JSON.parse(JSON.stringify(G));fn(n);n.rev=G.rev+1;n.at=Date.now();G=n;pubGame();emit("game");return G},
+    update(fn){if(!G)throw new Error("還在等對局資料，稍等一下");const wasEnd=!!G.result,n=JSON.parse(JSON.stringify(G));fn(n);n.rev=G.rev+1;n.at=Date.now();G=n;pubGame();if(!!G.result!==wasEnd)presence();emit("game");return G},
+    playing,finished:()=>!!(cur&&G&&G.result),
     emote(by,e){if(cli&&cli.up&&cur)cli.pub(`${ROOT}/g/${cur.gid}/e`,JSON.stringify({by,e}))},
+    say(by,text){text=String(text||"").trim().slice(0,80);if(!text)return;if(!(cli&&cli.up&&cur))throw new Error("網路斷線中，等一下再傳");cli.pub(`${ROOT}/g/${cur.gid}/e`,JSON.stringify({by,text,name:me().name}))},
+    chatLog:()=>emos.filter(x=>x.text),
     emotes:()=>emos.filter(x=>Date.now()-x.at<60000),
     watchers(){if(!cur)return 0;const now=Date.now();return Object.values(people).filter(x=>x.gid===cur.gid&&x.st==="watching"&&now-x.at<ALIVE).length},
     isOn(id){const x=people[id];return id===me().id?!!(cli&&cli.up):!!(x&&Date.now()-x.at<ALIVE)}}})();

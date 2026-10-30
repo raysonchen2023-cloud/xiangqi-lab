@@ -277,6 +277,7 @@ function route(){
   const v=$("#view");v.className="view";v.innerHTML="";v.scrollTop=0;
   if(window.XQ&&XQ.parseConnect&&location.hash.startsWith("#connect=")){XQ.parseConnect();route();if(!myName())setTimeout(()=>nameSheet(true),500);return}   // 離線版：掃 QR code 帶來的連線資訊
   const h=location.hash.replace(/^#/,"")||"/",p=h.split("/").filter(Boolean).map(decodeURIComponent);
+  if(OFF&&window.XQNet&&XQNet.finished()&&p[0]!=="pvp")XQNet.leave();
   if(!p.length)return screen=Home(v);
   if(p[0]==="play")return screen=PlayHub(v);
   if(p[0]==="cpu")return screen=CpuGame(v);
@@ -301,11 +302,11 @@ async function netVer(){try{const t=await(await fetch("sw.js",{cache:"no-store"}
 const OFF=!!window.XQ_OFFLINE;
 // iPhone 從主畫面打開（全螢幕）時，頂部列要讓開狀態列（時間、電池）。
 // 有些 iOS 版本讀不到安全區（算成 0），標題就會跑到狀態列底下、被模糊效果蓋住；這時依螢幕高度補上狀態列高度。
-(function fixTop(){const sa=matchMedia("(display-mode: standalone)").matches||navigator.standalone;if(!sa)return;
+(function fixTop(){try{const sa=matchMedia("(display-mode: standalone)").matches||navigator.standalone;if(!sa)return;
   const pr=document.createElement("div");pr.style.cssText="position:fixed;top:0;height:env(safe-area-inset-top);visibility:hidden";document.body.append(pr);
   const got=pr.getBoundingClientRect().height;pr.remove();
-  const full=Math.abs(innerHeight-screen.height)<2;   // 內容從螢幕最頂端開始（在狀態列底下）
-  if(got<10&&full){const h=screen.height;document.documentElement.style.setProperty("--safeT",(h>=852?59:h>=812?47:20)+"px")}})();
+  const full=Math.abs(innerHeight-window.screen.height)<2;   // 內容從螢幕最頂端開始（在狀態列底下）
+  if(got<10&&full){const h=window.screen.height;document.documentElement.style.setProperty("--safeT",(h>=852?59:h>=812?47:20)+"px")}}catch(e){}})();
 if(OFF&&"serviceWorker" in navigator){
   // 註冊 service worker；第一次要重新整理一次，多執行緒（跨來源隔離）才會生效
   navigator.serviceWorker.register("sw.js").then(()=>{
@@ -411,7 +412,7 @@ function Lobby(v){setTop("線上大廳","#/",[["📤",shareSheet,"分享給朋�
     const games={};for(const p of ps)if(p.st==="playing"&&p.gid&&p.gid!==XQNet.gid())(games[p.gid]=games[p.gid]||[]).push(p);
     box.innerHTML=`<div class="card"><div class="row" style="justify-content:space-between"><span>我是 <b>${esc(XQNet.me().name)}</b></span><button class="pill" id="ed">✏ 改名字</button></div>
         <div class="muted" style="margin-top:6px">${up?"🟢 已進入大廳":"⏳ 連線到大廳中…"}</div></div>
-      ${XQNet.active()?'<button class="btn" id="back" style="margin-top:10px">♟ 回到我進行中的對局</button>'
+      ${XQNet.playing()?'<button class="btn" id="back" style="margin-top:10px">♟ 回到我進行中的對局</button>'
         :XQNet.seeking()?`<div class="card" style="margin-top:10px;text-align:center"><div style="font-size:30px">🎲</div><b>正在幫你找對手…</b><div class="muted">${XQNet.seekers()?`另外有 ${XQNet.seekers()} 人也在找，馬上配對`:"有人按「隨機配對」就會自動開始"}</div><button class="btn ghost" id="sk0" style="margin-top:8px">取消</button></div>`
         :'<button class="btn" id="sk1" style="margin-top:10px">🎲 隨機配對（自動找一位線上對手）</button>'}
       ${Object.keys(games).length?`<div class="sec-t">正在對戰</div>`+Object.entries(games).map(([g,l])=>`<div class="card row" style="justify-content:space-between;margin-bottom:8px"><span>⚔ ${l.map(p=>esc(p.name)).join(" 對 ")}</span><button class="pill" data-w="${esc(g)}">👀 觀看</button></div>`).join(""):""}
@@ -425,7 +426,7 @@ function Lobby(v){setTop("線上大廳","#/",[["📤",shareSheet,"分享給朋�
     const bk=box.querySelector("#back");if(bk)bk.onclick=()=>location.hash="#/pvp";
     box.querySelectorAll("[data-w]").forEach(b=>b.onclick=()=>{XQNet.watch(b.dataset.w);location.hash="#/pvp"});
     box.querySelectorAll("[data-i]").forEach(b=>b.onclick=()=>{const p=ps.find(x=>x.id===b.dataset.i);if(!p)return;
-      if(XQNet.active())return confirmBox("你有一盤進行中的對局，邀請新對局會離開它，確定？",()=>{XQNet.leave();invite(p)},"確定");invite(p)})}
+      if(XQNet.playing())return confirmBox("你有一盤進行中的對局，邀請新對局會離開它，確定？",()=>{XQNet.leave();invite(p)},"確定");invite(p)})}
   function invite(p){XQNet.invite(p);
     sheet("⚔ 已送出邀請",b=>{b.innerHTML=`<p style="text-align:center">等 <b>${esc(p.name)}</b> 回應…<br><span class="muted">對方接受後會自動開始，你執紅先走。</span></p><button class="btn ghost" id="cx">取消邀請</button>`;
       b.querySelector("#cx").onclick=()=>{XQNet.cancelInvite();closeSheet()}})}
@@ -441,6 +442,7 @@ if(OFF&&window.XQNet){XQNet.start();
       [["接受",()=>{const go=()=>{XQNet.respond(x,true);goGame()};if(XQNet.active()&&XQNet.game()&&!XQNet.game().result&&XQNet.side())XQNet.leave();go()}],["婉拒",()=>XQNet.respond(x,false),true]])});
   XQNet.on("cancel",x=>toast(`${x.from.name} 取消了邀請`));
   XQNet.on("start",()=>{closeSheet();toast("對方接受了！你執紅先走");goGame()});
+  XQNet.on("matchfail",x=>{toast(x.auto?"對方離開了，繼續幫你找對手…":"對方離開了，這盤沒有開始");location.hash="#/lobby"});
   XQNet.on("matched",x=>{vibrate([40,60,40]);closeSheet();toast(`🎲 配對成功：對手是 ${x.name}`);goGame()})}
 
 // ================= 分享：讓別的手機也裝象棋研究室 =================
@@ -505,7 +507,7 @@ function Home(v){
   if(OFF){homeStatus(v.querySelector("#hStatus"));if(window.XQ_justConnected){XQ_justConnected=false;setTimeout(()=>toast("已連上電腦！"),300)}}
   const qb=store.get("quizBest",null);if(qb)v.querySelector("#hQuiz").textContent="最好："+qb.rank;
   let offNet=null;if(OFF&&window.XQNet){const upd=()=>{const e=v.querySelector("#hNet");if(!e)return;const n=XQNet.people().length;
-      e.textContent=(XQNet.active()?"🔴 你有一盤進行中・":"")+(XQNet.status()!=="up"?"連線中…":n?`🟢 ${n} 位棋友在線上・點進去邀請對戰`:"目前只有你在線上・把 App 分享給朋友吧")};
+      e.textContent=(XQNet.playing()?"🔴 你有一盤進行中・":"")+(XQNet.status()!=="up"?"連線中…":n?`🟢 ${n} 位棋友在線上・點進去邀請對戰`:"目前只有你在線上・把 App 分享給朋友吧")};
     upd();offNet=[XQNet.on("people",upd),XQNet.on("status",upd)]}
   const recent=store.get("recent",[]);
   const hr=v.querySelector("#hRecent");
@@ -768,6 +770,11 @@ const EMOTES=[["smug","😏","就這？"],["slow","🐢","快一點啦"],["good"
 function showEmote(k,mine){const e=EMOTES.find(x=>x[0]===k);if(!e)return;const d=document.createElement("div");d.className="emo"+(mine?" mine":"");
   d.innerHTML=`<div class="big">${e[1]}</div><div class="t">${esc(e[2])}</div>`;document.body.append(d);d.getBoundingClientRect();d.classList.add("show");
   if(!mine)vibrate([20,40,20]);setTimeout(()=>{d.classList.remove("show");setTimeout(()=>d.remove(),300)},mine?1300:2600)}
+// 聊天泡泡：對方說的話在畫面中間停 4 秒；自己說的話小一點、短一點
+function showChat(text,mine,name){const d=document.createElement("div");d.className="emo"+(mine?" mine":"");
+  d.innerHTML=`<div class="t" style="font-size:12px;opacity:.7">${esc(mine?"我":name||"")}</div><div style="font-size:18px;font-weight:700;max-width:70vw;white-space:pre-wrap;word-break:break-word">💬 ${esc(text)}</div>`;
+  document.body.append(d);d.getBoundingClientRect();d.classList.add("show");if(!mine)vibrate([20,40,20]);
+  setTimeout(()=>{d.classList.remove("show");setTimeout(()=>d.remove(),300)},mine?1500:4000)}
 function loadScript(src){return new Promise((ok,no)=>{if(document.querySelector(`script[data-s="${src}"]`))return ok();const s=document.createElement("script");s.src=src;s.dataset.s=src;s.onload=ok;s.onerror=()=>no(new Error("載入 "+src+" 失敗"));document.head.append(s)})}
 // 產生「對手掃這個就能加入、自動坐另一邊」的網址
 async function joinLink(other){
@@ -787,12 +794,12 @@ function PvpGame(v){
   function netSheet(){sheet(seat==="w"?"觀戰中":"網路對戰",b=>{b.innerHTML=`<button class="btn" id="lb">🌐 回大廳（這盤會保留）</button><button class="btn ghost" id="lv">${seat==="w"?"不看了":"離開這盤"}</button>`;
     b.querySelector("#lb").onclick=()=>{closeSheet();location.hash="#/lobby"};
     b.querySelector("#lv").onclick=()=>{closeSheet();const go=()=>{XQNet.leave();location.hash="#/lobby"};
-      if(seat!=="w"&&st&&!st.result&&st.moves.length)confirmBox("離開會算你認輸，確定？",async()=>{try{await api("/pvp/resign",{side:seat})}catch(e){}go()},"認輸並離開");else go()}})}
+      if(seat!=="w"&&st&&!st.result)confirmBox(XQNet.oppOnline()&&st.moves.length?"對方還在線上，離開會算你認輸，確定？":"離開後這盤就結束，確定？",go,"離開");else go()}})}
   const mySide=()=>seat||(st&&st.turn);
   const acts=actionBar(v.querySelector("#acts"),[["undo","↶","悔棋",()=>post("/pvp/undo")],["flip","⇅","翻轉",()=>{if(seat&&seat!=="w")return emoteSheet();flipMan=!isFlip();autoFlip=false;store.set("autoFlip",false);draw();toast("已關閉自動轉向")}],
     ["new","＋","新局",()=>NET?(st&&st.result?post("/pvp/new"):toast("這盤下完才能再來一局")):newSheet(),true],["draw","🤝","提和",()=>{if(st)post("/pvp/draw",{side:mySide()})}],
     ["resign","🏳","認輸",()=>{if(st){const s=mySide();confirmBox(`${PLAYER[s]}（${s==="r"?st.red:st.black}）確定認輸？`,()=>post("/pvp/resign",{side:s}),"認輸")}}]]);
-  const flipBtn=()=>{acts.flip.innerHTML=seat&&seat!=="w"?'<span class="ic">😏</span>表情':'<span class="ic">⇅</span>翻轉'};flipBtn();
+  const flipBtn=()=>{acts.flip.innerHTML=seat&&seat!=="w"?(NET?'<span class="ic">💬</span>聊天':'<span class="ic">😏</span>表情'):'<span class="ic">⇅</span>翻轉'};flipBtn();
   const isFlip=()=>flipMan!=null?flipMan:seat?seat==="b":(autoFlip&&st&&!st.result?st.turn==="b":false);
   async function post(u,b){if(busy)return;busy=true;try{render(await api(u,{...(b||{}),seat}))}catch(e){toast(e.message)}finally{busy=false}}
   // 連線對戰設定：兩支手機都掃電腦上同一個 QR code，再各選一方
@@ -817,7 +824,11 @@ function PvpGame(v){
       b.querySelector("#cp").onclick=async()=>{try{await navigator.clipboard.writeText(link);toast("已複製連結")}catch(e){prompt("複製這個連結",link)}}})}
   // 表情：只在連線對戰時用
   let lastEmo=null;
-  function emoteSheet(){sheet("傳個表情給對手",b=>{b.innerHTML=`<div class="emogrid">${EMOTES.map(([k,i,t])=>`<button data-e="${k}"><span>${i}</span>${esc(t)}</button>`).join("")}</div>`;
+  function emoteSheet(){sheet(NET?"跟對手說話":"傳個表情給對手",b=>{b.innerHTML=(NET?`<div class="row" style="gap:6px;margin-bottom:10px"><input id="say" maxlength="80" placeholder="打字跟對方聊天…" enterkeyhint="send"
+      style="flex:1;min-width:0;padding:11px;border:1px solid var(--line);border-radius:12px;background:var(--card);color:inherit"><button class="pill" id="sayGo" style="background:var(--accent);color:#fff;border:none;padding:9px 14px">送出</button></div>
+      ${(window.XQNet?XQNet.chatLog():[]).slice(-8).map(x=>`<div class="muted" style="font-size:13px">${esc(x.name||PLAYER[x.by]||"")}：${esc(x.text)}</div>`).join("")}`:"")+`<div class="emogrid">${EMOTES.map(([k,i,t])=>`<button data-e="${k}"><span>${i}</span>${esc(t)}</button>`).join("")}</div>`;
+    const sy=b.querySelector("#say");if(sy){const go=async()=>{const t=sy.value.trim();if(!t)return;sy.value="";closeSheet();try{render(await api("/pvp/chat",{text:t}))}catch(e){toast(e.message)}};
+      b.querySelector("#sayGo").onclick=go;sy.onkeydown=e=>{if(e.key==="Enter"){e.preventDefault();go()}}}
     b.querySelectorAll("[data-e]").forEach(x=>x.onclick=async()=>{closeSheet();try{const s=await api("/pvp/emote",{seat,e:x.dataset.e});showEmote(x.dataset.e,true);lastEmo=Math.max(lastEmo||0,...(s.emotes||[]).map(m=>m.id));render(s)}catch(e){toast(e.message)}})})}
   function tap(i){if(!st||st.result)return;
     if(seat==="w"){toast("你在觀戰");return}
@@ -829,7 +840,7 @@ function PvpGame(v){
   const ckT=setInterval(clocks,250);
   function render(s){st=s;if(NET&&s.mySide&&s.mySide!==seat){seat=s.mySide;flipMan=null;setTitle();flipBtn()}if(!st.legal.some(([f])=>f===sel))sel=-1;draw();
     const ems=st.emotes||[];if(lastEmo==null)lastEmo=ems.reduce((m,x)=>Math.max(m,x.id),0);
-    else for(const x of ems)if(x.id>lastEmo){lastEmo=x.id;if(seat&&x.by!==seat)showEmote(x.e,false)}
+    else for(const x of ems)if(x.id>lastEmo){lastEmo=x.id;if(x.text)showChat(x.text,x.by===seat,x.name||PLAYER[x.by]);else if(seat&&x.by!==seat)showEmote(x.e,false)}
     const fl=isFlip(),top=fl?"r":"b",bot=fl?"b":"r",nm=x=>x==="r"?st.red:st.black;
     // 連線對戰：自己標「這支手機」，對方標在不在線上
     const sub=x=>!seat?PLAYER[x]:x===seat?PLAYER[x]+(NET?"・我":"・這支手機"):PLAYER[x]+((st.online||{})[x]?"・🟢 "+((st.who||{})[x]||"在線"):NET?"・⚪ 對方暫時離線":"・⚪ 對方還沒連上");
