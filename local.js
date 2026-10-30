@@ -176,7 +176,7 @@ var XQ=(function(){
   function remoteInfo(){return ls.get("remote",null)}
   async function remote(u,b,opt){const r=remoteInfo();
     if(!r)throw new Error("這個功能要連上電腦：在電腦執行裁判程式（加 --tunnel），再用手機掃電腦上的 QR code");
-    let res;try{res=await fetch(r.base+u,{method:b===undefined?"GET":"POST",headers:{"x-xq-key":r.key,"content-type":"application/json"},body:b===undefined?undefined:JSON.stringify(b),signal:opt&&opt.signal})}
+    let res;try{res=await fetch(r.base+u,{method:b===undefined?"GET":"POST",headers:{"x-xq-key":r.key,"content-type":"application/json",...(window.XQ_ME?XQ_ME():{})},body:b===undefined?undefined:JSON.stringify(b),signal:opt&&opt.signal})}
     catch(e){throw new Error("連不到電腦：電腦的程式可能關了，或網址已經換了（重開程式後要重新掃 QR code）")}
     if(res.status===403)throw new Error("存取碼不對或過期：電腦的程式重開後，要重新掃 QR code");
     if(opt&&opt.raw)return res;

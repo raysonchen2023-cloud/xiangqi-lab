@@ -178,8 +178,14 @@ const fmt=ms=>{if(ms==null)return"";ms=Math.max(0,ms);const t=Math.ceil(ms/1000)
 const esc=s=>String(s==null?"":s).replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
 const vibrate=n=>{try{navigator.vibrate&&navigator.vibrate(n||10)}catch(e){}};
 const store={get(k,d){try{const v=localStorage.getItem("m_"+k);return v==null?d:JSON.parse(v)}catch(e){return d}},set(k,v){try{localStorage.setItem("m_"+k,JSON.stringify(v))}catch(e){}}};
+// 我的名字與裝置代號：存在手機裡，連電腦時每個請求都帶上，電腦才知道是誰連進來
+function meInfo(){let m=null;try{m=JSON.parse(localStorage.getItem("xq_me")||"null")}catch(e){}
+  if(!m||!m.id){m={id:(crypto.randomUUID?crypto.randomUUID():Date.now().toString(36)+Math.random().toString(36).slice(2)).replace(/[^A-Za-z0-9]/g,"").slice(0,20),name:(m&&m.name)||""};try{localStorage.setItem("xq_me",JSON.stringify(m))}catch(e){}}return m}
+function myName(){return meInfo().name}
+function setMyName(n){const m=meInfo();m.name=String(n||"").replace(/[\u0000-\u001f<>]/g,"").trim().slice(0,16);try{localStorage.setItem("xq_me",JSON.stringify(m))}catch(e){}}
+window.XQ_ME=()=>{const m=meInfo();return{"x-xq-dev":m.id,"x-xq-name":encodeURIComponent(m.name||"")}};
 async function api(u,b){if(window.XQ)return XQ.api(u,b);   // 離線版：由手機裡的 local.js 處理
-  const r=await fetch(u,b===undefined?{}:{method:"POST",headers:{"content-type":"application/json"},body:JSON.stringify(b)});
+  const r=await fetch(u,b===undefined?{headers:XQ_ME()}:{method:"POST",headers:{"content-type":"application/json",...XQ_ME()},body:JSON.stringify(b)});
   const d=await r.json().catch(()=>({error:"伺服器回應有問題"}));if(d&&d.error)throw new Error(d.error);return d}
 let toastT=null;
 function toast(msg){let t=$("#toast");if(!t){t=document.createElement("div");t.id="toast";t.className="toast";document.body.append(t)}t.textContent=msg;t.hidden=false;clearTimeout(toastT);toastT=setTimeout(()=>t.hidden=true,2200)}
@@ -255,7 +261,7 @@ for(const b of $("#tabbar").children)b.onclick=()=>{vibrate(5);location.hash=b.d
 function route(){
   closeSheet();if(screen&&screen.stop)screen.stop();screen=null;
   const v=$("#view");v.className="view";v.innerHTML="";v.scrollTop=0;
-  if(window.XQ&&XQ.parseConnect&&location.hash.startsWith("#connect=")){XQ.parseConnect();return route()}   // 離線版：掃 QR code 帶來的連線資訊
+  if(window.XQ&&XQ.parseConnect&&location.hash.startsWith("#connect=")){XQ.parseConnect();route();if(!myName())setTimeout(()=>nameSheet(true),500);return}   // 離線版：掃 QR code 帶來的連線資訊
   const h=location.hash.replace(/^#/,"")||"/",p=h.split("/").filter(Boolean).map(decodeURIComponent);
   if(!p.length)return screen=Home(v);
   if(p[0]==="play")return screen=PlayHub(v);
@@ -270,6 +276,8 @@ function route(){
   if(p[0]==="db")return screen=Library(v,p[1]);
   screen=Home(v)}
 window.addEventListener("hashchange",route);
+// 線上版（手機用電腦給的網址打開）：第一次進來請取名字
+if(!window.XQ_OFFLINE&&!/^(localhost|127\.|\[::1\])/.test(location.hostname)&&!myName())setTimeout(()=>nameSheet(true),800);
 function poller(fn,ms){let on=true,t=null;const tick=async()=>{if(!on)return;try{await fn()}catch(e){}if(on)t=setTimeout(tick,typeof ms==="function"?ms():ms)};tick();return()=>{on=false;clearTimeout(t)}}
 
 // ================= 離線版專用：連線、引擎下載 =================
@@ -308,7 +316,8 @@ function connectSheet(){const r=OFF&&XQ.remoteInfo();
     ${r?'<button class="btn ghost" id="dc">取消連線設定</button>':""}`;
     b.querySelector("#scan").onclick=()=>scanQR(useLink);
     b.querySelector("#lkGo").onclick=()=>{if(!useLink(b.querySelector("#lk").value))toast("看不懂這個網址")};
-    if(r){XQ.ping().then(ok=>{const c=b.querySelector("#cs");if(c)c.innerHTML=ok?`✅ 已連上電腦<div class="muted" style="word-break:break-all">${esc(r.base)}</div>`:`⚠ 連不到電腦（電腦程式可能關了，或網址已換）<div class="muted" style="word-break:break-all">${esc(r.base)}</div>`});
+    if(r){XQ.ping().then(ok=>{const c=b.querySelector("#cs");if(c)c.innerHTML=ok?`✅ 已連上電腦（我是 <b>${esc(myName()||"未取名")}</b>）<div class="muted" style="word-break:break-all">${esc(r.base)}</div><div class="row" style="gap:6px;margin-top:8px"><button class="pill" id="who">👥 誰在線上</button><button class="pill" id="nmB">✏ 改名字</button></div>`:`⚠ 連不到電腦（電腦程式可能關了，或網址已換）<div class="muted" style="word-break:break-all">${esc(r.base)}</div>`;
+        const w=c&&c.querySelector("#who"),n=c&&c.querySelector("#nmB");if(w)w.onclick=whoSheet;if(n)n.onclick=()=>nameSheet(false)});
       b.querySelector("#dc").onclick=()=>{XQ.disconnect();closeSheet();toast("已取消連線設定");route()}}})}
 // 把掃到／貼上的網址變成連線設定。看得懂三種：離線版 App 的 #connect=…（可帶 &seat=）、電腦手機版的 …/m?k=…、雙人對戰的 …/m?k=…#/join/r
 function useLink(text){text=String(text||"").trim();let h=null;
@@ -341,6 +350,24 @@ async function homeStatus(box){
   box.querySelector("#cBtn").onclick=connectSheet;
   const e=box.querySelector("#eBtn");if(e)e.onclick=()=>{e.disabled=true;e.textContent="下載中…";XQEngine.load().then(()=>{toast("Pikafish 已下載，可以離線使用");homeStatus(box)}).catch(err=>{toast(err.message);e.disabled=false;e.textContent="下載"})}}
 
+// ================= 我的名字、誰在線上 =================
+function nameSheet(first){sheet(first?"✅ 已連上電腦，取個名字吧":"我的名字",b=>{
+  const sug="棋友"+Math.floor(1000+Math.random()*9000);
+  b.innerHTML=`<p class="muted">${first?"電腦和其他人會看到這個名字（例如連線對戰時對手看到的是你）。":"這個名字會顯示在電腦上和連線對戰裡。"}</p>
+    <input id="nm" maxlength="16" placeholder="${sug}" value="${esc(myName())}" style="width:100%;padding:12px;border:1px solid var(--line);border-radius:12px;background:var(--card);color:inherit;margin:4px 0 10px">
+    <button class="btn" id="ok">確定</button>${first?'<button class="btn ghost" id="sk">先不要，用「'+sug+'」</button>':""}`;
+  const save=n=>{setMyName(n);closeSheet();toast("你好，"+myName()+"！");api("/clients").catch(()=>{});route()};
+  b.querySelector("#ok").onclick=()=>{const n=b.querySelector("#nm").value.trim();save(n||sug)};
+  const sk=b.querySelector("#sk");if(sk)sk.onclick=()=>save(sug);
+  setTimeout(()=>{const i=b.querySelector("#nm");if(i&&!first)i.focus()},300)})}
+function whoSheet(){sheet("👥 誰在線上",async b=>{
+  b.innerHTML=`<div class="row" style="justify-content:space-between"><span>我的名字：<b>${esc(myName()||"（還沒取）")}</b></span><button class="pill" id="ed">✏ 改名字</button></div><div id="wl" class="muted" style="margin-top:10px">讀取中…</div>`;
+  b.querySelector("#ed").onclick=()=>nameSheet(false);
+  try{const d=await api("/clients"),l=d.list||[];
+    b.querySelector("#wl").innerHTML=l.length?`<p class="muted" style="margin:0 0 6px">最近 5 分鐘連到電腦的裝置：</p>`+l.map(c=>`<div class="card" style="padding:10px 12px;margin-bottom:6px"><b>${esc(c.name)}</b>${c.dev===d.me?' <span class="pill">我</span>':""}
+      <div class="muted">${esc(c.kind)}・IP ${esc(c.ip)}・${c.via==="通道"?"外網":esc(c.via)}・${c.ago<20?"🟢 在線":Math.round(c.ago/60)+" 分鐘前"}</div></div>`).join(""):"目前沒有裝置連線"}
+  catch(e){b.querySelector("#wl").textContent="⚠ "+e.message}})}
+
 // ================= 分享：讓別的手機也裝象棋研究室 =================
 const APP_HOME="https://raysonchen2023-cloud.github.io/xiangqi-lab/";
 async function shareSheet(){
@@ -365,7 +392,7 @@ async function shareSheet(){
 
 // ================= 首頁 =================
 function Home(v){
-  setTop("象棋研究室",false,OFF?[["📤",shareSheet,"分享給朋友"],["🔗",connectSheet,"連線到電腦"]]:[["📤",shareSheet,"分享給朋友"],["🖥",()=>location.href="/","電腦版"]]);setTabs(true,"#/");
+  setTop("象棋研究室",false,OFF?[["📤",shareSheet,"分享給朋友"],["🔗",connectSheet,"連線到電腦"]]:[["📤",shareSheet,"分享給朋友"],["👥",whoSheet,"誰在線上"],["🖥",()=>location.href="/","電腦版"]]);setTabs(true,"#/");
   v.innerHTML=`<div class="pad">
    ${OFF?'<div class="card" id="hStatus" style="margin-bottom:12px"><span class="muted">檢查中…</span></div>':""}
    <div class="hero">
@@ -704,7 +731,7 @@ function PvpGame(v){
     else for(const x of ems)if(x.id>lastEmo){lastEmo=x.id;if(seat&&x.by!==seat)showEmote(x.e,false)}
     const fl=isFlip(),top=fl?"r":"b",bot=fl?"b":"r",nm=x=>x==="r"?st.red:st.black;
     // 連線對戰：自己標「這支手機」，對方標在不在線上
-    const sub=x=>!seat?PLAYER[x]:x===seat?PLAYER[x]+"・這支手機":PLAYER[x]+((st.online||{})[x]?"・🟢 在線":"・⚪ 對方還沒連上");
+    const sub=x=>!seat?PLAYER[x]:x===seat?PLAYER[x]+"・這支手機":PLAYER[x]+((st.online||{})[x]?"・🟢 "+((st.who||{})[x]||"在線"):"・⚪ 對方還沒連上");
     const strip=(x)=>playerHTML(x,nm(x),sub(x),st.clocks?"":null).replace('<div class="clk">',`<div class="clk" id="ck_${x}">`);
     v.querySelector("#pTop").innerHTML=strip(top);v.querySelector("#pBot").innerHTML=strip(bot);
     v.querySelector("#pTop").classList.toggle("on",!st.result&&st.turn===top);v.querySelector("#pBot").classList.toggle("on",!st.result&&st.turn===bot);
