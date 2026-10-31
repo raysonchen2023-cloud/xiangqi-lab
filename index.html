@@ -442,6 +442,8 @@ function route(){
   if(p[0]==="play"){location.replace("#/");return}   // 舊的「對弈」頁已經併進首頁
   if(p[0]==="cpu")return screen=CpuGame(v);
   if(p[0]==="join"&&/^[rb]$/.test(p[1]||"")){store.set("pvpSeat",p[1]);if(OFF)XQ.setPvpOnline(true);location.replace("#/pvp");return}
+  // 同一支手機的雙人對戰已經拿掉：沒有在下網路對局時，改去線上大廳（開發者模式保留，給電腦連線對戰用）
+  if(p[0]==="pvp"&&OFF&&!DEVMODE()&&!(window.XQNet&&XQNet.active())){location.replace("#/lobby");return}
   if(p[0]==="pvp")return screen=PvpGame(v);
   if(p[0]==="lobby")return screen=Lobby(v);
   if(p[0]==="watch")return screen=p[1]==="ai"?Watch(v):WatchHub(v);
@@ -702,18 +704,18 @@ function Home(v){
   const T=(k,go,ic,t,id,s,x)=>`<button class="tile ${k}${x||""}" data-go="${go}"><span class="ic">${ic}</span><span class="t">${t}</span><span class="s"${id?` id="${id}"`:""}>${s}</span></button>`;
   v.innerHTML=`<div class="home">
    ${RI?'<div class="card hstat" id="hStatus"><span class="muted">檢查中…</span></div>':""}
-   <div class="hero c4">
-    ${T("k1","#/cpu","🤖","挑戰電腦","hCpu","Pikafish・八個難度")}
-    ${OFF?T("k2","#/lobby","🌐","線上對戰","hNet","看誰在線上・邀請對戰"):""}
-    ${T("k3","#/pvp","👥","雙人對戰","hPvp","同一支手機輪流下")}
-    ${OFF&&!RI?T("k4","#/db","📜","棋譜庫","","古譜・名局・我的對局"):T("k4","#/watch/ai","📺","AI 對戰","hAi","GPT 對 Claude")}
-    ${OFF?"":T("k2","#/db","📜","棋譜庫","","古譜・對局紀錄")}
+   <!-- 實戰（一排兩格）＋學習（2×2），六格同樣大小、同樣格式 -->
+   <div class="sec-t" style="margin-top:4px">實戰</div>
+   <div class="hero">
+    ${T("k1","#/cpu","🤖","挑戰電腦","hCpu","Pikafish・積分挑戰")}
+    ${OFF?T("k2","#/lobby","🌐","線上對戰","hNet","看誰在線上・邀請對戰"):T("k4","#/watch/ai","📺","AI 對戰","hAi","GPT 對 Claude")}
    </div>
    <div class="sec-t">學習</div>
-   <div class="hero c3">
-    ${T("k1 sm","#/quiz","🎯","棋力測驗","hQuiz","新手～專2")}
-    ${T("k2 sm","#/terms","📚","象棋術語","","殺法・開局")}
-    ${T("k3 sm","#/stats","🏅","我的戰績","","勝負・評級")}
+   <div class="hero">
+    ${T("k3","#/quiz","🎯","棋力測驗","hQuiz","新手～專2")}
+    ${T("k4","#/db","📜","棋譜庫","","古譜・名局・我的對局")}
+    ${T("k2","#/terms","📚","象棋術語","","殺法・開局・戰術")}
+    ${T("k1","#/stats","🏅","我的戰績","","勝負・段位・對局紀錄")}
    </div>
    <div id="hRecentBox" hidden><div class="sec-t">繼續研究 <button data-go="#/db">棋譜庫 ›</button></div><div class="items" id="hRecent" style="padding:0"></div></div>
    <div class="hfoot">
@@ -749,9 +751,8 @@ function Home(v){
     const bt=v.querySelector("#hRecentBox [data-go]");bt.onclick=()=>location.hash=bt.dataset.go}
   api("/play/state").then(st=>{
     const won=st.levels.filter(l=>(st.record[l.n]||{}).w>0).length;
-    v.querySelector("#hCpu").textContent=st.result||!st.moves.length?`已通關 ${won}／8 級`:`對局進行中・第 ${st.level} 級`}).catch(()=>{});
-  api("/pvp/state").then(st=>{if(st.moves.length&&!st.result)v.querySelector("#hPvp").textContent=`進行中・第 ${Math.ceil(st.moves.length/2)} 回合`}).catch(()=>{});
-  if(!(OFF&&!RI))api("/state").then(st=>{v.querySelector("#hAi").innerHTML=st.running?'<span class="live">直播中</span>':st.result?"上一盤："+(st.result.w?PLAYER[st.result.w]+"勝":"和局"):"按進去可以開始"}).catch(()=>{});
+    const e=v.querySelector("#hCpu");if(e)e.textContent=!st.result&&st.moves.length?(st.ranked?`對局進行中・積分挑戰`:`對局進行中・第 ${st.level} 級`):st.cpuRate?`🏅 電腦段位 ${st.cpuRate.rank}・${st.cpuRate.pts} 分`:`已通關 ${won}／8 級`}).catch(()=>{});
+  if(!OFF)api("/state").then(st=>{const e=v.querySelector("#hAi");if(e)e.innerHTML=st.running?'<span class="live">直播中</span>':st.result?"上一盤："+(st.result.w?PLAYER[st.result.w]+"勝":"和局"):"按進去可以開始"}).catch(()=>{});
   return{stop:()=>offNet.forEach(f=>f())}}
 
 // ================= 棋力測驗：11 個等級（業1～業9、專1、專2）各出 2 題，由淺到深 =================
@@ -1317,7 +1318,7 @@ function Library(v,c0){
     const tags=pn?[{r:"執紅",b:"執黑"}[libState.side],{w:"他贏的",l:"他輸的",d:"和局"}[libState.res]].filter(Boolean):[];
     v.querySelector("#cnt").textContent=(fil?`找到 ${shown.length} 局・共 ${data.items.length} 局`:`共 ${shown.length} 局`)+tags.map(t=>"・"+t).join("")+(data.note?"・"+data.note:"");
     const box=v.querySelector("#items");box.innerHTML="";if(top)toBar();
-    if(!shown.length){const go={pvp:["#/pvp","去雙人對戰下一盤"],play:["#/cpu","去挑戰電腦"],ai:["#/watch/ai","去看 AI 對戰"]}[libState.c];
+    if(!shown.length){const go={pvp:["#/lobby","去線上對戰下一盤"],play:["#/cpu","去挑戰電腦"],ai:["#/watch/ai","去看 AI 對戰"]}[libState.c];
       if(data.items.length)empty("🔍","沒有符合的棋局",["清除篩選",()=>v.querySelector("#clr").onclick()]);
       else empty("📭","這裡還沒有棋局",go&&[go[1],()=>location.hash=go[0]])}
     for(const it of shown.slice(0,libState.limit)){const b=document.createElement("button");b.className="item";
