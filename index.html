@@ -227,6 +227,13 @@ html[data-era=ming] .topbar,html[data-era=qing] .topbar{border-bottom-width:4px}
 .bio-card{display:block;width:100%;text-align:left;margin:0 0 10px;padding:12px 14px;border:1px solid var(--line);border-left:4px solid var(--accent);font:inherit;color:var(--ink)}
 .bio-card .bio-s{margin-top:6px;font-size:14px;line-height:1.6;display:-webkit-box;-webkit-line-clamp:3;-webkit-box-orient:vertical;overflow:hidden}
 .bio-card .bio-more{display:inline-block;margin-top:6px;font-size:13px;color:var(--accent);font-weight:600}
+.op-card{padding:6px 14px}.op-row{padding:10px 0;border-bottom:1px solid var(--line)}.op-row:last-child{border-bottom:0}
+.op-h{display:flex;justify-content:space-between;align-items:baseline;gap:8px}.op-h b{font-size:16px}
+.op-bar{height:6px;border-radius:3px;background:color-mix(in srgb,var(--line) 60%,transparent);margin:6px 0;overflow:hidden}.op-bar i{display:block;height:100%;background:var(--accent);border-radius:3px}
+.op-m{display:flex;flex-wrap:wrap;gap:4px 14px;font-size:13px;color:var(--muted)}.op-m b.w{color:var(--accent2)}.op-m b.l{color:var(--red)}
+.op-stack{display:flex;height:14px;border-radius:7px;overflow:hidden;background:var(--line)}.op-stack i{display:block;height:100%}
+.op-stack .g,.op-leg .g{background:var(--accent2)}.op-stack .o,.op-leg .o{background:var(--info)}.op-stack .b,.op-leg .b{background:var(--red)}
+.op-leg{display:flex;flex-direction:column;gap:4px;margin-top:10px;font-size:14px}.op-leg i{display:inline-block;width:10px;height:10px;border-radius:3px;margin-right:6px;vertical-align:0}
 .lib-r{flex:none;min-width:42px;text-align:center;font-size:12px;font-weight:700;line-height:20px;padding:0 8px;border-radius:999px}
 .lib-r.r{color:var(--red);background:var(--bg);background:color-mix(in srgb,var(--red) 12%,var(--card))}
 .lib-r.b{color:var(--ink);background:var(--bg);background:color-mix(in srgb,var(--ink) 10%,var(--card))}
@@ -263,6 +270,7 @@ html[data-era=ming] .topbar,html[data-era=qing] .topbar{border-bottom-width:4px}
 .st-mon{font-size:12px;font-weight:700;color:var(--muted);margin:14px 4px 6px}
 .st-list{background:var(--card);border:1px solid var(--line);border-radius:16px;overflow:hidden}
 .st-g{display:flex;align-items:center;gap:12px;width:100%;padding:10px 12px;text-align:left}.st-g+.st-g{border-top:1px solid var(--line)}.st-g:active{background:var(--bg)}
+.st-g .r.gl{min-width:26px;height:26px;line-height:26px;padding:0 6px;border-radius:13px;color:#fff;text-align:center;font-size:14px;font-weight:900}
 .st-g .dot{flex:none;width:28px;height:28px;border-radius:14px;display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:900;color:#fff;background:var(--muted)}
 .st-g .dot.w{background:var(--accent2)}.st-g .dot.l{background:var(--red)}
 .st-g .tx{flex:1;min-width:0}.st-g .tx b{display:block;font-family:var(--serif);font-size:15px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
@@ -605,6 +613,8 @@ function route(){
   if(p[0]==="lobby")return screen=Lobby(v);
   if(p[0]==="watch")return screen=p[1]==="ai"?Watch(v):WatchHub(v);
   if(p[0]==="stats")return screen=Stats(v);
+  if(p[0]==="redo")return screen=Redo(v);
+  if(p[0]==="openings")return screen=Openings(v);
   if(p[0]==="settings")return screen=Settings(v);
   if(p[0]==="fbadmin")return screen=FbAdmin(v);
   if(p[0]==="quiz")return screen=Quiz(v);
@@ -876,6 +886,8 @@ function Home(v){
     ${T("k4","#/db","📜","棋譜庫","","古譜・名局・我的對局")}
     ${T("k2","#/terms","📚","象棋術語","","殺法・開局・戰術")}
     ${T("k1","#/stats","🏅","我的戰績","","勝負・段位・對局紀錄")}
+    ${T("k2","#/redo","🔁","錯棋重練","","從下錯的地方再下一次")}
+    ${T("k3","#/openings","📊","我的開局","","常用開局・中局正招")}
    </div>
    <div id="hRecentBox" hidden><div class="sec-t">繼續研究 <button data-go="#/db">棋譜庫 ›</button></div><div class="items" id="hRecent" style="padding:0"></div></div>
    <div class="hfoot">
@@ -1016,6 +1028,100 @@ function Terms(v,pick){
     v.querySelector("#src").textContent=d.note;paint();if(pick){const t=d.items.find(x=>x.n===pick);if(t)open(t)}}).catch(e=>{v.querySelector("#list").innerHTML=`<div class="card muted">⚠ ${esc(e.message)}</div>`});
   return{}}
 
+// ================= 學習：錯棋重練、我的開局（都從自己下過的對局算） =================
+// 讀自己下過、Pikafish 評過等的對局（挑戰電腦＋線上對戰），每盤附上自己執哪一方
+async function myGames(maxPer){
+  const me=myName(),out=[];
+  for(const c of["play","pvp"]){let d;try{d=await api("/db/items?c="+c+"&limit="+(maxPer||120))}catch(e){continue}
+    for(const s of d.items.slice(0,maxPer||120)){const side=c==="play"?(s.red==="你"?"r":"b"):me&&s.red===me?"r":me&&s.black===me?"b":null;if(!side)continue;
+      let it;try{it=await api(`/db/item?c=${c}&id=${encodeURIComponent(s.id)}`)}catch(e){continue}
+      const L=it.lines&&it.lines[0];if(!L||!it.board||!L.moves.length)continue;
+      const moves=L.moves.map((m,i)=>({...m,by:m.by||(i%2?"b":"r")}));
+      out.push({c,id:s.id,side,it,moves,opp:side==="r"?s.black:s.red,res:resultFor(it.result,side)})}}
+  return out}
+// 跟「我的戰績」同一套判斷：「紅…勝」「黑…勝」，中途取消不算
+const resultFor=(r,side)=>{r=String(r||"");const w=/^紅/.test(r)&&/勝|胜/.test(r)?"r":/^黑/.test(r)&&/勝|胜/.test(r)?"b":null;
+  if(!w&&/中止|取消/.test(r))return"";return w?(w===side?"w":"l"):r?"d":""};
+const QGOOD=["妙手","正手"],QOK=["優著","良著"],QBAD=["錯著","露著"];
+const isStdStart=b=>b&&b.join()===XQ_START_BOARD().join();
+function XQ_START_BOARD(){if(!XQ_START_BOARD.b){const b=Array(90).fill(null),rows="rnbakabnr/9/1c5c1/p1p1p1p1p/9/9/P1P1P1P1P/1C5C1/9/RNBAKABNR".split("/");
+  rows.forEach((r,y)=>{let x=0;for(const ch of r){if(/\d/.test(ch))x+=+ch;else{b[y*9+x]=ch;x++}}});XQ_START_BOARD.b=b}return XQ_START_BOARD.b}
+
+// ---------- 🔁 錯棋重練 ----------
+// 從自己下過的錯著／露著那一步之前開始，跟第 7 級（職業頂尖）的 Pikafish 重下；不算戰績
+function Redo(v){
+  setTop("錯棋重練","#/");setTabs(false);
+  v.innerHTML=`<div class="home"><div class="card" style="line-height:1.7">找出你下過的<b style="color:var(--red)">錯著、露著</b>，從那一步之前的局面重新開始，跟最強的電腦（第 7 級・職業頂尖）再下一次。<br><span class="muted">想出比上次好的一步，就算練會了。練習的對局不算戰績。</span></div>
+    <div class="st-res" id="rf" style="margin:12px 0 4px"></div><div id="rl"><div class="muted" style="text-align:center;padding:20px">找你下過的錯棋中…</div></div></div>`;
+  let list=null,show="todo";const done=store.get("redoDone",{});
+  (async()=>{const gs=await myGames(120);list=[];
+    for(const g of gs){if(!isStdStart(g.it.board))continue;
+      g.moves.forEach((m,i)=>{if(m.by===g.side&&QBAD.includes(m.q))list.push({g,ply:i+1,m,key:g.c+"/"+g.id+"/"+(i+1)})})}
+    list.sort((a,b)=>String(b.g.id).localeCompare(String(a.g.id))||a.ply-b.ply);paint()})().catch(e=>{v.querySelector("#rl").innerHTML=`<div class="muted">⚠ ${esc(e.message)}</div>`});
+  function paint(){if(!v.isConnected||!list)return;
+    const n=k=>list.filter(x=>k==="all"||(k==="ok")===!!(done[x.key]&&done[x.key].ok)).length;
+    v.querySelector("#rf").innerHTML=[["todo","還沒練會"],["ok","✅ 練會了"],["all","全部"]].map(([k,l])=>`<button data-k="${k}" class="${show===k?"on":""}">${l} ${n(k)}</button>`).join("");
+    v.querySelectorAll("#rf [data-k]").forEach(b=>b.onclick=()=>{show=b.dataset.k;paint()});
+    const L=list.filter(x=>show==="all"||(show==="ok")===!!(done[x.key]&&done[x.key].ok)),box=v.querySelector("#rl");
+    if(!list.length){box.innerHTML='<div class="card muted" style="text-align:center;line-height:1.7">還沒有找到錯著或露著 👍<br>下完一盤挑戰電腦或線上對戰，等 Pikafish 評完等，下錯的步就會出現在這裡。</div>';return}
+    if(!L.length){box.innerHTML=`<div class="card muted" style="text-align:center">${show==="ok"?"還沒有練會的，挑一步試試看！":"全部都練會了 🎉"}</div>`;return}
+    box.innerHTML='<div class="st-list">'+L.slice(0,150).map((x,i)=>{const d=done[x.key],id=String(x.g.id);
+      return`<button class="st-g" data-i="${list.indexOf(x)}"><span class="dot ${x.m.q==="露著"?"l":""}" style="${x.m.q==="錯著"?"background:var(--warn)":""}">${x.m.q==="露著"?"露":"錯"}</span>
+        <span class="tx"><b>第 ${x.ply} 步「${esc(x.m.cn||"")}」</b><span>${id.slice(5,10).replace("-","/")}・${x.g.c==="play"?"🤖":"👥"} ${esc(x.g.opp||"")}・執${x.g.side==="r"?"紅":"黑"}・少 ${(x.m.loss/100).toFixed(1)} 兵</span></span>
+        <b class="r" style="font-size:13px;${d&&d.ok?"color:var(--accent2)":""}">${d?d.ok?"✅ 練會":"試過 "+d.n+" 次":"練習 ›"}</b></button>`}).join("")+'</div>'+(L.length>150?`<p class="muted" style="text-align:center">只列出最近 150 步</p>`:"");
+    box.querySelectorAll("[data-i]").forEach(b=>b.onclick=()=>start(list[+b.dataset.i]))}
+  async function start(x){vibrate(8);
+    const go=async()=>{try{const pre={moves:x.g.moves.slice(0,x.ply-1).map(m=>({f:m.f,t:m.t,q:m.q,loss:m.loss,ev:m.ev,bc:m.bc,bm:m.bm,bp:m.bp})),
+        info:{key:x.key,ply:x.ply,cn:x.m.cn,q:x.m.q,loss:x.m.loss,bc:x.m.bc||"",opp:x.g.opp||"",date:String(x.g.id).slice(0,10)}};
+      await api("/play/new",{human:x.g.side,level:7,pre});store.set("cpuRanked",false);location.hash="#/cpu"}catch(e){toast(e.message)}};
+    let s=null;try{s=await api("/play/state")}catch(e){}
+    if(s&&s.ranked&&!s.result&&s.moves.length>=2)confirmBox("積分挑戰還沒下完，開始練習會算輸，確定？",go,"開始練習");
+    else if(s&&!s.ranked&&!s.practice&&!s.result&&s.moves.length>=2)confirmBox("挑戰電腦還有一盤沒下完，開始練習會蓋掉它，確定？",go,"開始練習");else go()}
+  return{}}
+
+// ---------- 📊 我的開局 ----------
+// 紅方看第一步，黑方看怎麼應；再加上各開局的勝負、開局準確度，以及中局正招／次好／失誤的比例
+const NORM=s=>String(s||"").replace(/傌/g,"馬").replace(/俥/g,"車").replace(/砲/g,"炮").replace(/卒/g,"兵").replace(/象/g,"相").replace(/士/g,"仕").replace(/帥|將/g,"帥");
+function redOpening(cn){const m=NORM(cn);
+  if(/^炮[二八]平五/.test(m))return"中炮";if(/^兵[三七]進一/.test(m))return"仙人指路";if(/^相[三七]進五/.test(m))return"飛相局";
+  if(/^馬[二八]進[三七]/.test(m))return"起馬局";if(/^炮二平六|^炮八平四/.test(m))return"過宮炮";if(/^炮二平四|^炮八平六/.test(m))return"士角炮";
+  if(/^炮[二八]進/.test(m))return"巡河炮";if(/^兵[一九]進一/.test(m))return"邊兵局";if(/^炮[二八]平[三七]/.test(m))return"金鉤炮";return"其他開局"}
+function blackDefence(moves){const r1=NORM(moves[0]&&moves[0].cn),bs=[1,3,5].map(i=>NORM(moves[i]&&moves[i].cn)).filter(Boolean);const b1=bs[0]||"";
+  if(/^炮[28]平5/.test(b1)){if(/^炮二/.test(r1)&&/^炮8/.test(b1)||/^炮八/.test(r1)&&/^炮2/.test(b1))return"順炮";if(/^炮[二八]平五/.test(r1))return"列炮";return"還架中炮"}
+  if(bs.some(m=>/^炮[28]平5/.test(m))&&/^炮[二八]平五/.test(r1))return"半途列炮";
+  const h2=bs.filter(m=>/^馬[28]進[37]/.test(m)).length;
+  if(h2>=1&&bs.some(m=>/^炮8平6|^炮2平4/.test(m)))return"反宮馬";if(h2>=2)return"屏風馬";
+  if(/^炮[28]平[37]/.test(b1))return"卒底炮";if(/^相[37]進5/.test(b1))return"飛象";if(/^兵[37]進1/.test(b1))return"挺卒";
+  if(/^馬[28]進[37]/.test(b1))return"起馬應對";if(/^炮[28]平[46]/.test(b1))return"士角炮應對";return"其他應法"}
+function Openings(v){
+  setTop("我的開局","#/");setTabs(false);
+  v.innerHTML=`<div class="home"><div id="ob"><div class="muted" style="text-align:center;padding:20px">整理你下過的對局中…</div></div></div>`;
+  (async()=>{const gs=await myGames(150);if(!v.isConnected)return;const box=v.querySelector("#ob");
+    if(!gs.length){box.innerHTML='<div class="card muted" style="text-align:center;line-height:1.7">還沒有自己的對局。<br>下幾盤挑戰電腦或線上對戰，這裡就會統計你常用的開局。</div>';return}
+    const T={r:{},b:{}},mid={g:0,o:0,b:0},midBy={};
+    for(const g of gs){if(!isStdStart(g.it.board))continue;
+      const name=g.side==="r"?redOpening(g.moves[0].cn):blackDefence(g.moves)+(g.moves[0]?`（對${redOpening(g.moves[0].cn)}）`:"");
+      const R=gameReport(g.it.board,g.moves),me=R.sides[g.side]||{},row=T[g.side][name]||(T[g.side][name]={n:0,w:0,l:0,d:0,acc:[],first:g.moves[g.side==="r"?0:1]});
+      row.n++;if(g.res)row[g.res]++;if(me.phases&&me.phases.open)row.acc.push(me.phases.open.score);
+      for(const p of R.plies)if(p.by===g.side&&p.phase==="mid"&&p.q&&p.q!=="—"){const k=QGOOD.includes(p.q)?"g":QOK.includes(p.q)?"o":QBAD.includes(p.q)?"b":null;if(!k)continue;
+        mid[k]++;const mb=midBy[name]||(midBy[name]={g:0,o:0,b:0});mb[k]++}}
+    const pct=(a,n)=>n?Math.round(a*100/n):0,avg=a=>a.length?Math.round(a.reduce((x,y)=>x+y,0)/a.length):null;
+    const tbl=(sd,title)=>{const rows=Object.entries(T[sd]).sort((a,b)=>b[1].n-a[1].n);if(!rows.length)return"";const tot=rows.reduce((s,[,r])=>s+r.n,0);
+      return`<div class="sec-t">${title}<small>${tot} 盤</small></div><div class="card op-card">`+rows.map(([nm,r])=>{const a=avg(r.acc),mb=midBy[nm],mn=mb?mb.g+mb.o+mb.b:0;
+        return`<div class="op-row"><div class="op-h"><b>${esc(nm)}</b><span class="muted">${r.n} 盤・${pct(r.n,tot)}%</span></div>
+          <div class="op-bar"><i style="width:${pct(r.n,tot)}%"></i></div>
+          <div class="op-m"><span><b class="w">${r.w}</b> 勝 <b class="l">${r.l}</b> 負 <b>${r.d}</b> 和</span>${a!=null?`<span>開局準確度 <b style="color:${gradeFor(a)[2]}">${a}</b></span>`:""}${mn?`<span>中局正招 ${pct(mb.g,mn)}%</span>`:""}</div></div>`}).join("")+"</div>"};
+    const mn=mid.g+mid.o+mid.b,fav=Object.entries(T.r).sort((a,b)=>b[1].n-a[1].n)[0];
+    box.innerHTML=(fav?`<div class="card" style="line-height:1.7">你執紅最常下 <b>${esc(fav[0])}</b>（${fav[1].n} 盤）。${Object.keys(T.r).length<=1&&fav[1].n>=5?"可以試試其他開局，例如飛相局或仙人指路，讓對手比較難準備。":""}</div>`:"")+
+      tbl("r","執紅：我的開局")+tbl("b","執黑：我怎麼應")+
+      `<div class="sec-t">中局的著法<small>${mn} 步</small></div><div class="card">`+(mn?
+      `<div class="op-stack"><i class="g" style="width:${pct(mid.g,mn)}%"></i><i class="o" style="width:${pct(mid.o,mn)}%"></i><i class="b" style="width:${pct(mid.b,mn)}%"></i></div>
+       <div class="op-leg"><span><i class="g"></i>正招（妙手、正手）${pct(mid.g,mn)}%</span><span><i class="o"></i>次好（優著、良著）${pct(mid.o,mn)}%</span><span><i class="b"></i>失誤（錯著、露著）${pct(mid.b,mn)}%</span></div>
+       <p class="muted" style="margin:8px 0 0;line-height:1.6">中局＝第 11 回合以後、還沒進入殘局的部分。${pct(mid.b,mn)>=15?"失誤偏多，可以到「🔁 錯棋重練」把下錯的步再練一次。":pct(mid.g,mn)>=60?"大部分都跟 Pikafish 的首選一樣，很穩！":""}</p>`
+      :'<div class="muted">還沒有評過等的中局著法。</div>')+`</div>
+      <p class="muted" style="font-size:12px;line-height:1.6;margin-top:10px">開局名稱依第一、二回合的走法自動判斷，只是大致分類。統計最近 150 盤挑戰電腦和 150 盤線上對戰。</p>`})().catch(e=>{const b=v.querySelector("#ob");if(b)b.innerHTML=`<div class="muted">⚠ ${esc(e.message)}</div>`});
+  return{}}
+
 // ================= 我的戰績（跟電腦下的勝負和、賽後報告分數、棋力測驗） =================
 // 我的戰績：所有下過的棋（挑戰電腦＋對人），可以分類、篩勝負，依月份分組，點一下打開棋譜
 function histList(box,reps){let kind=store.get("histKind","all"),res="",limit=40,all=null;
@@ -1039,7 +1145,7 @@ function histList(box,reps){let kind=store.get("histKind","all"),res="",limit=40
       const r=resOf(x.it,x.side),R=x.c==="play"&&reps[x.it.id],nr=x.c==="pvp"&&nh.find(hh=>hh.rid===x.it.id);
       const lab=r==="w"?"勝":r==="l"?"負":r==="d"?"和":r==="x"?"✕":(r||"—").slice(0,1);
       const why=String(x.it.result||"").replace(/^.*?（/,"").replace(/）$/,"");
-      grp.push(`<button class="st-g" data-c="${x.c}" data-id="${esc(id)}"><span class="dot ${r==="w"||r==="l"?r:""}">${esc(lab)}</span><span class="tx"><b>${x.k==="cpu"?"🤖 ":"👥 "}${esc(x.opp||"")}</b><span>${id.slice(5,10).replace("-","/")}・${x.side?"執"+(x.side==="r"?"紅":"黑")+"・":""}${esc(why)}</span></span>${R?`<b class="r" style="color:${gradeFor(R.score)[2]}">${R.grade}</b>`:nr?`<b class="r ${nr.d>=0?"w":"l"}">${nr.d>=0?"+":""}${nr.d}</b>`:'<span class="r muted">›</span>'}</button>`)}
+      grp.push(`<button class="st-g" data-c="${x.c}" data-id="${esc(id)}"><span class="dot ${r==="w"||r==="l"?r:""}">${esc(lab)}</span><span class="tx"><b>${x.k==="cpu"?"🤖 ":"👥 "}${esc(x.opp||"")}</b><span>${id.slice(5,10).replace("-","/")}・${x.side?"執"+(x.side==="r"?"紅":"黑")+"・":""}${esc(why)}</span></span>${R?`<b class="r gl" style="background:${gradeFor(R.score)[2]}">${R.grade}</b>`:nr?`<b class="r ${nr.d>=0?"w":"l"}">${nr.d>=0?"+":""}${nr.d}</b>`:'<span class="r muted">›</span>'}</button>`)}
     flush();h+=out.join("");
     if(L.length>limit)h+=`<button class="btn ghost" id="more" style="margin-top:12px">再顯示 40 盤（還有 ${L.length-limit} 盤）</button>`;
     box.innerHTML=h;
@@ -1240,7 +1346,7 @@ function actionBar(box,items){box.innerHTML="";const out={};for(const[id,icon,la
 //   有露著最高 A（89）；錯著＋露著 ≥3 步或 ≥10% 最高 B（79）；≥6 步或 ≥20% 最高 C（69）。
 // 評級 S≥90、A≥80、B≥70、C≥60、D<60。
 // 階段：前 20 步（各走 10 回合）是開局；雙方車馬炮合計剩 6 個以下起算殘局；其他是中局。
-const GRADES=[["S",90,"#C27C0E","幾乎跟引擎同步，這盤下得非常漂亮"],["A",80,"#2F6B4F","下得很穩，只有少數不夠精確的地方"],["B",70,"#3A7BD5","整體不錯，但有幾步把優勢讓了出去"],
+const GRADES=[["S",90,"#7B3FBF","幾乎跟引擎同步，這盤下得非常漂亮"],["A",80,"#2F6B4F","下得很穩，只有少數不夠精確的地方"],["B",70,"#3A7BD5","整體不錯，但有幾步把優勢讓了出去"],
   ["C",60,"#D9822B","有明顯的失誤，算棋還要再仔細一點"],["D",0,"#C0392B","失誤偏多，建議多做殺法和殘局練習"]];
 const gradeFor=x=>GRADES.find(g=>x>=g[1]);
 const rnd=n=>Math.ceil(n/2);
@@ -1319,7 +1425,7 @@ function CpuGame(v){
     bd.draw(st.board,{flip:st.human==="b",last,sel,targets:sel>=0?st.legal.filter(([f])=>f===sel).map(x=>x[1]):[],hint:st.hint?[st.hint.f,st.hint.t]:null,check:st.check})}
   function render(s){st=s;if(!st.legal.some(([f])=>f===sel))sel=-1;draw();
     const lv=st.levels[st.level-1]||{},me=st.human,bot=opp(me);
-    const CR=st.cpuRate||{};paintSeg(st.ranked);if(!st.ranked&&st.level)store.set("cpuLevel",st.level);
+    const CR=st.cpuRate||{};paintSeg(st.ranked);if(!st.ranked&&st.level&&!st.practice)store.set("cpuLevel",st.level);
     // 對手列右邊：目前的段位／難度，點了開「開新局」選單（換難度、換紅黑）
     const top=playerHTML(bot,"Pikafish",st.ranked?"積分挑戰・強度跟著你的段位":lv.desc||"自選難度")+
       `<button class="cpu-chip${st.ranked?" rk":""}" aria-label="${st.ranked?"段位與開新局":"換難度"}"><span><b>${st.ranked?"🏅 "+esc(st.rkName||CR.rank||""):"第 "+st.level+" 級"}</b><small>${st.ranked?(CR.pts||0)+" 分":esc(lv.name||"")}</small></span><i>›</i></button>`;
@@ -1332,11 +1438,15 @@ function CpuGame(v){
     if(st.msg)s2.textContent=st.msg;else if(st.result)s2.textContent=st.result.why;
     else if(st.thinking)s2.textContent="Pikafish 思考中…";
     else{s2.textContent=st.check>=0?"⚠ 你被將軍了！":st.hint?"💡 提示："+st.hint.cn:"輪到你"+(st.eval?`・${evt(st.eval.v)}`:"");s2.classList.toggle("hot",st.check>=0||!!st.hint)}
+    if(st.practice&&!st.result&&!st.msg)practiceBar(s2);
     renderStrip(v.querySelector("#strip"),st.moves,st.moves.length-1);
     acts.undo.disabled=st.ranked||st.thinking||!st.moves.some(m=>m.by===st.human);
     acts.resign.hidden=!!st.result;acts.review.hidden=!st.result;
     if(st.result&&shownResult!==JSON.stringify(st.result)+st.moves.length){shownResult=JSON.stringify(st.result)+st.moves.length;
       const win=st.result.w===st.human,draw0=!st.result.w;vibrate([30,40,30]);
+      if(st.practice){const d=store.get("redoDone",{})[st.practice.key];
+        modal(`<div class="em">${win?"🏆":draw0?"🤝":"💪"}</div><h2>${win?"你贏了！":draw0?"和局":"這盤輸了"}</h2><p class="muted">${esc(st.result.why)}・錯棋重練（不算戰績）</p>${d&&d.ok?'<p>✅ 這步已經練會了</p>':""}`,
+          [["回到錯棋列表 ›",()=>location.hash="#/redo"],["關閉",null,true]]);return}
       if(st.ranked){const R=st.rate;
         modal(`<div class="em">${win?"🏆":draw0?"🤝":"💪"}</div><h2>${win?"你贏了！":draw0?"和局":"這盤輸了"}</h2><p class="muted">${esc(st.result.why)}・積分挑戰（${esc(st.rkName)}）</p>`+
           (R?`<p style="font-size:18px;font-weight:900">積分 ${R.d>0?"+"+R.d:R.d<0?R.d:"±0"} → ${R.pts} 分${R.rank!==R.was?`<br><span style="color:var(--accent2)">${R.d>0?"🎉 升為":"降為"} ${esc(R.rank)}</span>`:""}</p>`:'<p class="muted">雙方還沒各走一步，這盤不計分</p>'),
@@ -1344,6 +1454,18 @@ function CpuGame(v){
       modal(`<div class="em">${win?"🏆":draw0?"🤝":"💪"}</div><h2>${win?"你贏了！":draw0?"和局":"這盤輸了"}</h2><p class="muted">${esc(st.result.why)}・對手第 ${st.level} 級「${esc(lv.name||"")}」</p>`,
         [[win&&st.level<8?"挑戰下一級 ›":"再來一局",()=>api("/play/new",{human:st.human,level:win&&st.level<8?st.level+1:st.level}).then(render).catch(e=>toast(e.message))],["📊 賽後報告",()=>review(true)],["檢討這盤",()=>review(),true],["關閉",null,true]])}}
   function review(rep){api("/db/items?c=play").then(d=>{const it=d.items[0];if(!it)return toast("找不到存檔");if(rep)store.set("openReport","play/"+it.id);location.hash="#/db/play/"+encodeURIComponent(it.id)}).catch(e=>toast(e.message))}
+  // 錯棋重練：在狀態列提示上次走了什麼，評等出來後告訴你這次有沒有進步（評過的結果記在 redoDone）
+  function practiceBar(s2){const P0=st.practice,m=st.moves[P0.base];
+    if(st.moves.length>P0.base+2)return;   // 已經往下走了，回到一般狀態列
+    s2.classList.add("hot");
+    if(!m){s2.textContent=`🔁 第 ${P0.ply} 步：上次你走「${P0.cn}」是${P0.q}，這次呢？`;return}
+    if(!m.q){s2.textContent=`這次走「${m.cn}」，Pikafish 評分中…`;return}
+    const all=store.get("redoDone",{}),d=all[P0.key]||{n:0,ok:false},sig=st.moves.length>P0.base?m.f+"-"+m.t:"";
+    if(sig&&d.last!==sig){d.last=sig;d.n++;if(["妙手","正手","優著","良著"].includes(m.q))d.ok=true;all[P0.key]=d;store.set("redoDone",all)}
+    const good=["妙手","正手"].includes(m.q),ok=["優著","良著"].includes(m.q);
+    s2.textContent=good?`✅ 「${m.cn}」是${m.q}！比上次的${P0.q}進步了，繼續跟電腦下完吧`
+      :ok?`👍 「${m.cn}」是${m.q}，比上次好；按 ↶ 悔棋可以挑戰找出正手`
+      :`❌ 「${m.cn}」還是${m.q}，按 ↶ 悔棋再想一次`+(d.n>=2&&(m.bc||P0.bc)?`（Pikafish 建議：${m.bc||P0.bc}）`:"")}
   // 開新局。下到一半（雙方都走過）：積分挑戰會算輸，一定要確認；自選難度換成積分挑戰也問一下，免得誤觸把棋丟掉
   function startNew(o){const ranked=OFF&&!!o.ranked;
     const go=()=>{closeSheet();shownResult=null;sel=-1;if(OFF)store.set("cpuRanked",ranked);paintSeg(ranked);post("/play/new",{human:o.human,level:o.level,ranked})};

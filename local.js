@@ -46,15 +46,19 @@ var XQ=(function(){
     let d=res==="w"?cl(20+3*g,5,40):res==="l"?-cl(15-3*g,3,30):cl(3*g,-10,10);R.pts=Math.max(0,R.pts+d);d=R.pts-before;R[res]++;
     R.hist.unshift({id:P.id,res,d,pts:R.pts,rk:RANKS[P.rk][0],n:P.moves.length,why:P.result?P.result.why:"",at:Date.now()});R.hist=R.hist.slice(0,100);ls.set("cpuRate",R);
     P.rate={res,d,pts:R.pts,rank:RANKS[rankIdx(R.pts)][0],was:RANKS[rankIdx(before)][0]}}
-  const savePlay=()=>ls.set("play",{id:P.id,human:P.human,level:P.level,ranked:!!P.ranked,rk:P.rk,rate:P.rate||null,result:P.result,moves:saveMoves(P.moves)});
+  const savePlay=()=>ls.set("play",{id:P.id,human:P.human,level:P.level,ranked:!!P.ranked,rk:P.rk,rate:P.rate||null,result:P.result,practice:P.practice||null,moves:saveMoves(P.moves)});
   function ensureP(){if(P)return;const s=ls.get("play",null);if(s&&s.moves){P=s;P.hint=null;stateRebuild(P)}else playNew("r",3);setTimeout(playEngine,0)}
-  function playNew(human,level,ranked){
+  // pre：錯棋重練，先擺上舊對局到錯棋之前的著法（moves），info 記上次走了什麼
+  function playNew(human,level,ranked,pre){
     // 積分挑戰下到一半就開新局：算輸（不然輸棋前開新局就能躲掉扣分）
     if(P&&P.ranked&&!P.result&&P.moves.length>=2){P.result={w:opp(P.human),why:"中途離開，算輸"};cpuRateApply("l");pushGame("play",{id:P.id,date:P.id.slice(0,10),level:0,ranked:true,rk:P.rk,human:P.human,result:P.result,moves:saveMoves(P.moves)})}
-    P={id:gameId(),human,level:ranked?0:level,ranked:!!ranked,rk:ranked?rankIdx(cpuRate().pts):null,moves:[],result:null,hint:null};stateRebuild(P);savePlay()}
+    const pm=pre&&Array.isArray(pre.moves)?pre.moves.filter(m=>Number.isInteger(m.f)&&Number.isInteger(m.t)).slice(0,300):[];
+    P={id:gameId(),human,level:ranked?0:level,ranked:!!ranked,rk:ranked?rankIdx(cpuRate().pts):null,moves:pm,result:null,hint:null,practice:pre?{...(pre.info||{}),base:pm.length}:null};
+    stateRebuild(P);if(P.practice&&P.turn!==human)throw new Error("這步不是你走的");savePlay()}
   function playApply(f,t){stateApply(P,f,t);P.hint=null;const r=judgeState(P);if(r)playEnd(r.w,r.why);savePlay();setTimeout(analyzePlay,0);
     try{window.dispatchEvent(new Event("xq-play"))}catch(e){}}   // 通知畫面馬上更新，不用等下一次輪詢
   function playEnd(w,why){P.result={w,why};const res=!w?"d":w===P.human?"w":"l";
+    if(P.practice){savePlay();return}   // 錯棋重練：不算戰績、不存進對局紀錄
     if(P.ranked){if(P.moves.length>=2)cpuRateApply(res)}   // 雙方都還沒走就結束不計分
     else{const rec=ls.get("record",{}),L=rec[P.level]||(rec[P.level]={w:0,l:0,d:0});L[res]++;ls.set("record",rec)}
     pushGame("play",{id:P.id,date:P.id.slice(0,10),level:P.level,ranked:!!P.ranked,rk:P.rk,human:P.human,result:P.result,moves:saveMoves(P.moves)});savePlay()}
@@ -75,14 +79,15 @@ var XQ=(function(){
     return{board:P.board,turn:P.turn,human:P.human,level:P.level,ranked:!!P.ranked,rkName:P.ranked?RANKS[P.rk][0]:null,rate:P.rate||null,
       cpuRate:{pts:CR.pts,rank:RANKS[ci][0],w:CR.w,l:CR.l,d:CR.d,next:nx?nx[0]:null,toNext:nx?nx[1]-CR.pts:0,lo:RANKS[ci][1],hi:nx?nx[1]:null,hist:CR.hist},
       levels:LEVELS.map(l=>({n:l.n,name:l.name,desc:l.desc})),record:ls.get("record",{}),
-      moves:P.moves.map(moveOut),result:P.result,thinking:playBusy&&P.turn!==P.human,msg:playMsg,eval:lastEv(P.moves),hint:P.hint,
+      moves:P.moves.map(moveOut),result:P.result,practice:P.practice||null,thinking:playBusy&&P.turn!==P.human,msg:playMsg,eval:lastEv(P.moves),hint:P.hint,
       legal:!P.result&&P.turn===P.human?legal(P.board,P.turn):[],check:!P.result&&inCheck(P.board,P.turn)?kingSq(P.board,P.turn):-1,engine:true}}
   async function playPost(p,b){ensureP();
-    if(p==="/play/new"){playNew(b.human==="b"?"b":"r",Math.max(1,Math.min(LEVELS.length,Math.round(+b.level)||3)),!!b.ranked);playMsg="";setTimeout(playEngine,0)}
+    if(p==="/play/new"){playNew(b.human==="b"?"b":"r",Math.max(1,Math.min(LEVELS.length,Math.round(+b.level)||3)),!b.pre&&!!b.ranked,b.pre||null);playMsg="";setTimeout(playEngine,0)}
     else if(p==="/play/move"){const f=+b.f,t=+b.t;if(P.result)throw new Error("這局已經結束");if(P.turn!==P.human)throw new Error("還沒輪到你");
       if(!legal(P.board,P.turn).some(([x,y])=>x===f&&y===t))throw new Error("這步不合法");playApply(f,t);setTimeout(playEngine,0)}
     else if(p==="/play/undo"){if(P.ranked)throw new Error("積分挑戰不能悔棋");if(playBusy)throw new Error("引擎思考中，等它走完再悔棋");
-      while(P.moves.length){const m=P.moves.pop();if(m.by===P.human)break}P.result=null;P.hint=null;stateRebuild(P);savePlay();setTimeout(playEngine,0)}
+      const floor=P.practice?P.practice.base:0;if(P.moves.length<=floor)throw new Error("已經回到練習的起點");
+      while(P.moves.length>floor){const m=P.moves.pop();if(m.by===P.human)break}P.result=null;P.hint=null;stateRebuild(P);savePlay();setTimeout(playEngine,0)}
     else if(p==="/play/hint"){throw new Error("挑戰電腦不提供提示，要靠自己");if(P.result||P.turn!==P.human)throw new Error("現在不能提示");
       const r=await XQEngine.search({moves:ucis()},{movetime:1500},1),f=parseSq(r.best.slice(0,2)),t=parseSq(r.best.slice(2,4));P.hint={f,t,cn:notate(P.board,f,t)}}
     else if(p==="/play/resign"){if(!P.result)playEnd(opp(P.human),"你認輸")}
