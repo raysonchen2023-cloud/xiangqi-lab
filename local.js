@@ -83,7 +83,7 @@ var XQ=(function(){
       if(!legal(P.board,P.turn).some(([x,y])=>x===f&&y===t))throw new Error("這步不合法");playApply(f,t);setTimeout(playEngine,0)}
     else if(p==="/play/undo"){if(P.ranked)throw new Error("積分挑戰不能悔棋");if(playBusy)throw new Error("引擎思考中，等它走完再悔棋");
       while(P.moves.length){const m=P.moves.pop();if(m.by===P.human)break}P.result=null;P.hint=null;stateRebuild(P);savePlay();setTimeout(playEngine,0)}
-    else if(p==="/play/hint"){if(P.ranked)throw new Error("積分挑戰不能用提示");if(P.result||P.turn!==P.human)throw new Error("現在不能提示");
+    else if(p==="/play/hint"){throw new Error("挑戰電腦不提供提示，要靠自己");if(P.result||P.turn!==P.human)throw new Error("現在不能提示");
       const r=await XQEngine.search({moves:ucis()},{movetime:1500},1),f=parseSq(r.best.slice(0,2)),t=parseSq(r.best.slice(2,4));P.hint={f,t,cn:notate(P.board,f,t)}}
     else if(p==="/play/resign"){if(!P.result)playEnd(opp(P.human),"你認輸")}
     return playState()}

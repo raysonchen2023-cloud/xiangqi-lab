@@ -890,9 +890,38 @@ function histList(box,reps){let kind=store.get("histKind","all"),res="",limit=40
     box.querySelectorAll("[data-id]").forEach(b=>b.onclick=()=>{vibrate(5);if(b.dataset.c==="play"&&!reps[b.dataset.id])store.set("openReport","play/"+b.dataset.id);location.hash=`#/db/${b.dataset.c}/${encodeURIComponent(b.dataset.id)}`});
     const mo=box.querySelector("#more");if(mo)mo.onclick=()=>{limit+=40;paint()}}
   paint();load()}
+// ================= 棋力五邊形：把每一盤（挑戰電腦＋線上對戰）Pikafish 評過等的著法加總平均 =================
+// 開局／中局／殘局＝各階段的準確度（跟賽後報告同一套算法）；精準＝走出 Pikafish 首選（正手、妙手）的比例；穩定＝少犯錯著、露著（每 1% 失誤扣 3 分）
+async function skillPentagon(box){
+  const me=myName(),games=[];
+  for(const c of["play","pvp"]){let d;try{d=await api("/db/items?c="+c+"&limit=80")}catch(e){continue}
+    for(const it of d.items.slice(0,80)){const side=c==="play"?(it.red==="你"?"r":"b"):me&&it.red===me?"r":me&&it.black===me?"b":null;if(side)games.push({c,id:it.id,side})}}
+  const acc={open:[0,0],mid:[0,0],end:[0,0]},Q={};let moves=0,used=0;
+  for(const g of games){let it;try{it=await api(`/db/item?c=${g.c}&id=${encodeURIComponent(g.id)}`)}catch(e){continue}
+    const L=it.lines&&it.lines[0];if(!L||!it.board)continue;
+    const mv=L.moves.map((m,i)=>({...m,by:m.by||(i%2?"b":"r")}));if(!mv.some(m=>m.by===g.side&&m.q&&m.q!=="—"))continue;
+    const R=gameReport(it.board,mv).sides[g.side];if(!R||!R.graded)continue;used++;moves+=R.graded;
+    for(const k of["open","mid","end"])if(R.phases[k]){acc[k][0]+=R.phases[k].score*R.phases[k].n;acc[k][1]+=R.phases[k].n}
+    for(const q in R.cnt)Q[q]=(Q[q]||0)+R.cnt[q]}
+  if(!box.isConnected)return;
+  if(!moves){box.innerHTML='<div class="muted" style="text-align:center;padding:10px">還沒有評過等的對局。下完一盤挑戰電腦或線上對戰，Pikafish 評完等就會畫出你的棋力五邊形。</div>';return}
+  const av=k=>acc[k][1]?Math.round(acc[k][0]/acc[k][1]):null,best=(Q["正手"]||0)+(Q["妙手"]||0),bad=(Q["錯著"]||0)+(Q["露著"]||0);
+  const A=[["開局",av("open")],["中局",av("mid")],["殘局",av("end")],["精準",Math.round(best*100/moves)],["穩定",Math.max(0,Math.round(100-300*bad/moves))]];
+  const W=300,H=270,cx=150,cy=142,R0=92,pt=(i,v)=>{const a=-Math.PI/2+i*2*Math.PI/5,r=R0*(v||0)/100;return[cx+r*Math.cos(a),cy+r*Math.sin(a)]};
+  const ring=v=>A.map((_,i)=>pt(i,v).join(",")).join(" "),has=A.filter(x=>x[1]!=null);
+  const svg=`<svg viewBox="0 0 ${W} ${H}" style="width:100%;max-width:340px;display:block;margin:0 auto">
+    ${[20,40,60,80,100].map(v=>`<polygon points="${ring(v)}" fill="none" stroke="var(--line)" stroke-width="${v===100?1.5:1}"/>`).join("")}
+    ${A.map((_,i)=>{const[x,y]=pt(i,100);return`<line x1="${cx}" y1="${cy}" x2="${x}" y2="${y}" stroke="var(--line)"/>`}).join("")}
+    <polygon points="${A.map((x,i)=>pt(i,x[1]==null?0:x[1]).join(",")).join(" ")}" fill="var(--accent)" fill-opacity=".22" stroke="var(--accent)" stroke-width="2.5" stroke-linejoin="round"/>
+    ${A.map((x,i)=>{const[px,py]=pt(i,x[1]||0);return x[1]==null?"":`<circle cx="${px}" cy="${py}" r="4" fill="var(--accent)"/>`}).join("")}
+    ${A.map((x,i)=>{const[lx,ly]=pt(i,128);return`<text x="${lx}" y="${ly-4}" text-anchor="middle" font-size="14" font-weight="700" fill="var(--ink)" font-family="var(--sans)">${x[0]}</text><text x="${lx}" y="${ly+13}" text-anchor="middle" font-size="13" fill="var(--accent)" font-weight="900" font-family="var(--sans)">${x[1]==null?"—":x[1]}</text>`}).join("")}</svg>`;
+  const total=Math.round(has.reduce((s,x)=>s+x[1],0)/has.length),hi=has.slice().sort((a,b)=>b[1]-a[1])[0],lo=has.slice().sort((a,b)=>a[1]-b[1])[0];
+  box.innerHTML=svg+`<div class="row" style="justify-content:space-between;margin-top:4px"><span class="muted">根據 ${used} 盤、${moves} 步</span><b>綜合 ${total} 分（${gradeFor(total)[0]}）</b></div>
+    <p class="muted" style="margin:6px 0 0;line-height:1.6">最強：${hi[0]}；最需要加強：${lo[0]}。${lo[0]==="殘局"?"建議多看古典殘局譜、做象棋術語的殺法。":lo[0]==="開局"?"建議多看古典開局譜和象棋術語的開局。":lo[0]==="穩定"?"走之前多看一眼對方能不能吃你的子。":lo[0]==="精準"?"多用賽後報告看 Pikafish 的藍色箭頭建議。":"中局多算兩步，注意對方的威脅。"}</p>
+    <details style="margin-top:6px"><summary class="muted">五項怎麼算？</summary><p class="muted" style="line-height:1.7;margin:6px 0 0">開局、中局、殘局：該階段每步的準確度平均（跟賽後報告同一套）。精準：走出 Pikafish 首選（正手、妙手）的比例。穩定：錯著、露著越少越高。只算 Pikafish 評過等的著法；還沒評等的對局，打開賽後報告評等後就會算進來。</p></details>`}
 function Stats(v){
   setTop("我的戰績","#/");setTabs(false);
-  v.innerHTML=`<div class="pad">${OFF&&window.XQNet?'<div class="sec-t" style="margin-top:4px;margin-left:0">線上對戰</div><div class="card" id="sNet"></div>':""}
+  v.innerHTML=`<div class="pad"><div class="sec-t" style="margin-top:4px;margin-left:0">棋力五邊形</div><div class="card" id="sPent"><div class="muted" style="text-align:center">計算中…</div></div>${OFF&&window.XQNet?'<div class="sec-t" style="margin-left:0">線上對戰</div><div class="card" id="sNet"></div>':""}
     <div class="sec-t" style="margin-left:0${OFF&&window.XQNet?"":";margin-top:4px"}">挑戰電腦</div><div class="card" id="sTot"><span class="muted">載入中…</span></div>${OFF?'<div class="card" id="sCpu" style="margin-top:8px"></div>':""}
     <div class="sec-t" style="margin-left:0">對局紀錄</div><div id="sHist"></div>
     <div class="sec-t" style="margin-left:0">各難度</div><div class="card" id="sLv" style="padding:6px 10px"></div>
@@ -905,6 +934,7 @@ function Stats(v){
       ${[["勝",R.w,"var(--accent2)"],["負",R.l,"var(--red)"],["和",R.d,"var(--muted)"],["勝率",N?Math.round(R.w*100/N)+"%":"—",""]].map(([l,x,c])=>`<div><div style="font-size:22px;font-weight:900;color:${c}">${x}</div><div class="muted">${l}</div></div>`).join("")}</div>
       <details style="margin-top:10px"><summary class="muted">段位怎麼算？</summary><p class="muted" style="line-height:1.7;margin:6px 0 0">從 0 分（新手）開始。贏一盤約 +20、輸一盤約 −15、和棋 0；對手段位比你高，贏得更多、輸得更少，反過來也一樣。中途取消、對方斷線中止、雙方還沒各走一步就結束的對局不計分。<br>${XQNet.ranks().map(([n,p])=>`${esc(n)} ${p}`).join("・")}</p></details>`;
 }
+  skillPentagon(v.querySelector("#sPent")).catch(e=>{const b=v.querySelector("#sPent");if(b)b.innerHTML=`<span class="muted">⚠ ${esc(e.message)}</span>`});
   const reps=store.get("reports",{}),qz=store.get("quizBest",null);
   v.querySelector("#sQz").innerHTML=qz?`<div class="row" style="justify-content:space-between"><div><b style="font-size:22px">${esc(qz.rank)}</b><div class="muted">${new Date(qz.at).toLocaleDateString()}・答對 ${qz.ok}/${qz.n}</div></div><button class="btn ghost" style="width:auto" id="qz">再測一次</button></div>`
     :`<div class="row" style="justify-content:space-between"><span class="muted">還沒測過</span><button class="btn" style="width:auto" id="qz">開始測驗</button></div>`;
@@ -1100,7 +1130,7 @@ function CpuGame(v){
   let st=null,sel=-1,shownResult=null,busy=false;
   const bd=Board(i=>tap(i));v.querySelector("#bbox").append(bd.svg);
   setTop("挑戰電腦","#/",[["⚙",()=>newSheet(),"新局設定"]]);
-  const acts=actionBar(v.querySelector("#acts"),[["undo","↶","悔棋",()=>post("/play/undo")],["hint","💡","提示",()=>{toast("Pikafish 幫你想一步…");post("/play/hint")}],
+  const acts=actionBar(v.querySelector("#acts"),[["undo","↶","悔棋",()=>post("/play/undo")],
     ["new","＋","新局",()=>newSheet(),true],["resign","🏳","認輸",()=>confirmBox("確定認輸？",()=>post("/play/resign"),"認輸")],["review","📖","檢討",()=>review()]]);
   async function post(u,b){if(busy)return;busy=true;try{render(await api(u,b||{}))}catch(e){toast(e.message)}finally{busy=false}}
   function tap(i){if(!st||st.result||st.turn!==st.human||st.thinking)return;
@@ -1119,7 +1149,7 @@ function CpuGame(v){
     else if(st.thinking)s2.textContent="Pikafish 思考中…";
     else{s2.textContent=st.check>=0?"⚠ 你被將軍了！":st.hint?"💡 提示："+st.hint.cn:"輪到你"+(st.eval?`・${evt(st.eval.v)}`:"");s2.classList.toggle("hot",st.check>=0||!!st.hint)}
     renderStrip(v.querySelector("#strip"),st.moves,st.moves.length-1);
-    acts.undo.disabled=st.ranked||st.thinking||!st.moves.some(m=>m.by===st.human);acts.hint.disabled=st.ranked||!!st.result||st.thinking||st.turn!==st.human;
+    acts.undo.disabled=st.ranked||st.thinking||!st.moves.some(m=>m.by===st.human);
     acts.resign.hidden=!!st.result;acts.review.hidden=!st.result;
     if(st.result&&shownResult!==JSON.stringify(st.result)+st.moves.length){shownResult=JSON.stringify(st.result)+st.moves.length;
       const win=st.result.w===st.human,draw0=!st.result.w;vibrate([30,40,30]);
