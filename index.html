@@ -255,6 +255,30 @@ input,select{font:inherit;font-size:16px;color:inherit}
 .st-lv{width:100%;border-collapse:collapse;font-size:14px;color:var(--ink);font-variant-numeric:tabular-nums}
 .st-lv th{font-weight:500;font-size:12px;color:var(--muted);text-align:center;padding:4px 0}.st-lv th:first-child,.st-lv td:first-child{text-align:left}
 .st-lv td{text-align:center;padding:7px 0;border-top:1px solid var(--line)}.st-lv tr.tot td{font-weight:900}
+/* 挑戰電腦：頂部列的模式切換、對手列右邊的段位／難度按鈕、開新局選單 */
+.cpu-seg{display:flex;gap:2px;padding:3px;margin:0 auto;max-width:300px;border-radius:12px;background:#ffffff1f;font-family:var(--sans);letter-spacing:0}
+.cpu-seg button{flex:1;min-width:0;height:32px;border-radius:9px;font-size:14px;font-weight:500;color:var(--barink);opacity:.75;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;transition:background .15s,color .15s}
+.cpu-seg button.on{background:var(--barink);color:var(--bar);opacity:1;font-weight:700;box-shadow:0 1px 3px #0000004d}
+.cpu-seg button:not(.on):active{background:#ffffff14}
+.cpu-chip{--c:var(--accent2);flex:none;display:flex;align-items:center;gap:6px;max-width:52%;padding:5px 8px 5px 12px;border-radius:12px;text-align:right;
+  border:1px solid var(--line);border-color:color-mix(in srgb,var(--c) 45%,var(--line));background:var(--card);background:color-mix(in srgb,var(--c) 10%,var(--card));transition:transform .1s}
+.cpu-chip.rk{--c:var(--warn)}
+.cpu-chip:active{transform:scale(.96)}
+.cpu-chip>span{display:flex;flex-direction:column;min-width:0;line-height:1.25}
+.cpu-chip b{font-family:var(--serif);font-size:15px;font-weight:900;color:var(--ink);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.cpu-chip small{font-size:11px;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;font-variant-numeric:tabular-nums}
+.cpu-chip i{font-style:normal;font-size:20px;line-height:1;color:var(--c);margin-top:-2px}
+.cpu-rk{display:flex;flex-direction:column;gap:6px;padding:12px 14px;margin-bottom:12px;border-radius:14px;border:1px solid var(--line);background:var(--bg)}
+.cpu-rk .mid{display:flex;align-items:baseline;justify-content:space-between;gap:8px}
+.cpu-rk .rk{font-family:var(--serif);font-weight:900;font-size:24px;line-height:1.15}
+.cpu-rk .pt{font-size:13px;color:var(--muted);font-variant-numeric:tabular-nums}.cpu-rk .pt b{color:var(--ink);font-size:16px}
+.cpu-rk .st-bar{background:var(--card)}
+.cpu-rk p{margin:2px 0 0;font-size:12px;color:var(--muted);line-height:1.6}
+.cpu-lb{font-size:12px;font-weight:700;color:var(--muted);margin:2px 2px 0}
+.cpu-sheet .opt{display:grid;grid-template-columns:1fr 1fr;margin:6px 0 14px}
+.cpu-sheet .opt button{padding:10px 8px}
+.cpu-sheet .lvl{margin:6px 0 8px}
+.cpu-desc{font-size:13px;color:var(--muted);min-height:2.8em;line-height:1.5;padding:0 2px}
 </style></head><body>
 <div class="app">
  <div class="topbar" id="topbar"><button class="ib" id="back" hidden><b>‹</b>返回</button><h1 id="title">象棋研究室</h1><span id="topRight"></span></div>
@@ -1182,7 +1206,15 @@ function CpuGame(v){
   setTabs(false);gameLayout(v);
   let st=null,sel=-1,shownResult=null,busy=false;
   const bd=Board(i=>tap(i));v.querySelector("#bbox").append(bd.svg);
-  setTop("挑戰電腦","#/",[["⚙",()=>newSheet(),"新局設定"]]);
+  setTop("挑戰電腦","#/");
+  // 模式切換直接放在頂部列（取代標題）：積分挑戰／自選難度一眼就看得到，點一下就換（離線版才有積分挑戰）
+  const seg=OFF?document.createElement("div"):null;
+  if(seg){seg.className="cpu-seg";seg.setAttribute("role","tablist");
+    seg.innerHTML=`<button data-m="1" role="tab">🏅 積分挑戰</button><button data-m="0" role="tab">🎚 自選難度</button>`;
+    const t=$("#title");t.textContent="";t.append(seg);paintSeg(store.get("cpuRanked",true));
+    seg.querySelectorAll("button").forEach(b=>b.onclick=()=>{vibrate(8);switchMode(b.dataset.m==="1")})}
+  function paintSeg(r){if(seg)seg.querySelectorAll("button").forEach(b=>{const on=(b.dataset.m==="1")===!!r;b.classList.toggle("on",on);b.setAttribute("aria-selected",on)})}
+  v.querySelector("#pTop").onclick=e=>{if(e.target.closest(".cpu-chip")){vibrate(8);newSheet()}};
   const acts=actionBar(v.querySelector("#acts"),[["undo","↶","悔棋",()=>post("/play/undo")],
     ["new","＋","新局",()=>newSheet(),true],["resign","🏳","認輸",()=>confirmBox("確定認輸？",()=>post("/play/resign"),"認輸")],["review","📖","檢討",()=>review()]]);
   async function post(u,b){if(busy)return;busy=true;try{render(await api(u,b||{}))}catch(e){toast(e.message)}finally{busy=false}}
@@ -1193,8 +1225,13 @@ function CpuGame(v){
     bd.draw(st.board,{flip:st.human==="b",last,sel,targets:sel>=0?st.legal.filter(([f])=>f===sel).map(x=>x[1]):[],hint:st.hint?[st.hint.f,st.hint.t]:null,check:st.check})}
   function render(s){st=s;if(!st.legal.some(([f])=>f===sel))sel=-1;draw();
     const lv=st.levels[st.level-1]||{},me=st.human,bot=opp(me);
-    v.querySelector("#pTop").innerHTML=playerHTML(bot,"Pikafish",st.ranked?`🏅 積分挑戰・${st.rkName}`:`第 ${st.level} 級・${lv.name||""}`);
-    v.querySelector("#pBot").innerHTML=playerHTML(me,"你",PLAYER[me]);
+    const CR=st.cpuRate||{};paintSeg(st.ranked);if(!st.ranked&&st.level)store.set("cpuLevel",st.level);
+    // 對手列右邊：目前的段位／難度，點了開「開新局」選單（換難度、換紅黑）
+    const top=playerHTML(bot,"Pikafish",st.ranked?"積分挑戰・強度跟著你的段位":lv.desc||"自選難度")+
+      `<button class="cpu-chip${st.ranked?" rk":""}" aria-label="${st.ranked?"段位與開新局":"換難度"}"><span><b>${st.ranked?"🏅 "+esc(st.rkName||CR.rank||""):"第 "+st.level+" 級"}</b><small>${st.ranked?(CR.pts||0)+" 分":esc(lv.name||"")}</small></span><i>›</i></button>`;
+    const pT=v.querySelector("#pTop");if(pT.dataset.h!==top){pT.dataset.h=top;pT.innerHTML=top}
+    const bt=playerHTML(me,"你",PLAYER[me]+(st.ranked&&CR.next?`・再 ${CR.toNext} 分升 ${CR.next}`:""));
+    const pB=v.querySelector("#pBot");if(pB.dataset.h!==bt){pB.dataset.h=bt;pB.innerHTML=bt}
     v.querySelector("#pTop").classList.toggle("on",!st.result&&st.turn===bot);v.querySelector("#pBot").classList.toggle("on",!st.result&&st.turn===me);
     v.querySelector("#evf").style.width=evPct(st.eval&&st.eval.v)+"%";
     const s2=v.querySelector("#stat");s2.classList.remove("hot");
@@ -1213,23 +1250,35 @@ function CpuGame(v){
       modal(`<div class="em">${win?"🏆":draw0?"🤝":"💪"}</div><h2>${win?"你贏了！":draw0?"和局":"這盤輸了"}</h2><p class="muted">${esc(st.result.why)}・對手第 ${st.level} 級「${esc(lv.name||"")}」</p>`,
         [[win&&st.level<8?"挑戰下一級 ›":"再來一局",()=>api("/play/new",{human:st.human,level:win&&st.level<8?st.level+1:st.level}).then(render).catch(e=>toast(e.message))],["📊 賽後報告",()=>review(true)],["檢討這盤",()=>review(),true],["關閉",null,true]])}}
   function review(rep){api("/db/items?c=play").then(d=>{const it=d.items[0];if(!it)return toast("找不到存檔");if(rep)store.set("openReport","play/"+it.id);location.hash="#/db/play/"+encodeURIComponent(it.id)}).catch(e=>toast(e.message))}
-  function newSheet(){let side=st?st.human:"r",level=st&&st.level?st.level:3,ranked=OFF&&(st?!!st.ranked:store.get("cpuRanked",true));
-    sheet("開新局",b=>{const rec=st?st.record:{},CR=st&&st.cpuRate;
-      const paint=()=>{b.innerHTML=(OFF?`<div class="opt" style="margin-top:0"><button data-m="1" class="${ranked?"on":""}">🏅 積分挑戰</button><button data-m="0" class="${ranked?"":"on"}">🎚 自選難度</button></div>`:"")+
-        (ranked?`<div class="card" style="margin-bottom:10px"><div class="row" style="justify-content:space-between"><span class="muted">你的電腦段位</span><b style="font-size:20px;font-family:var(--serif)">${esc(CR?CR.rank:"新手")}・${CR?CR.pts:0} 分</b></div>
-          <p class="muted" style="margin:6px 0 0;line-height:1.6">電腦的強度跟著你的段位走，段位越高越難。跟線上對戰一樣：贏約 +20、輸約 −15，但分開記分。不能悔棋、不能提示，下到一半開新局算輸。</p></div>`:"")+
-        `<div class="muted">你執</div><div class="opt"><button data-s="r" class="${side==="r"?"on":""}">紅方（先走）</button><button data-s="b" class="${side==="b"?"on":""}">黑方（後走）</button></div>
-        ${ranked?"":`<div class="muted">難度</div><div class="lvl">${(st?st.levels:[]).map(l=>`<button data-l="${l.n}" class="${l.n===level?"on":""}"><b>${l.n}</b><span>${esc(l.name)}</span>${(rec[l.n]||{}).w?'<span class="ok">✔ 通關</span>':""}</button>`).join("")}</div>
-        <div class="muted" style="min-height:2.6em">${esc(((st?st.levels:[])[level-1]||{}).desc||"")}</div>`}<button class="btn" id="go">${ranked?"開始積分挑戰":"開始"}</button>`;
-        b.querySelectorAll("[data-m]").forEach(x=>x.onclick=()=>{ranked=x.dataset.m==="1";store.set("cpuRanked",ranked);paint()});
+  // 開新局。下到一半（雙方都走過）：積分挑戰會算輸，一定要確認；自選難度換成積分挑戰也問一下，免得誤觸把棋丟掉
+  function startNew(o){const ranked=OFF&&!!o.ranked;
+    const go=()=>{closeSheet();shownResult=null;sel=-1;if(OFF)store.set("cpuRanked",ranked);paintSeg(ranked);post("/play/new",{human:o.human,level:o.level,ranked})};
+    const live=st&&!st.result&&st.moves.length>=2;
+    if(live&&st.ranked)confirmBox("積分挑戰還沒下完，開新局會算輸，確定？",go,"確定");
+    else if(live&&ranked)confirmBox("這盤還沒下完，要換成積分挑戰開新局嗎？",go,"換成積分挑戰");else go()}
+  // 頂部模式切換：換到另一個模式＝用同樣的紅黑開一盤新局；點目前的模式＝打開開新局選單
+  function switchMode(r){if(!st)return;if(!!st.ranked===r)return newSheet();
+    startNew({human:st.human,level:st.level||store.get("cpuLevel",3),ranked:r})}
+  // 開新局選單：只管這個模式的設定（紅黑、難度），模式本身在頂部切換
+  function newSheet(){if(!st)return;let side=st.human,level=st.level||store.get("cpuLevel",3);const ranked=OFF&&!!st.ranked;
+    const sh=sheet(ranked?"🏅 積分挑戰・開新局":"🎚 自選難度・開新局",b=>{const rec=st.record||{},CR=st.cpuRate||{};
+      const paint=()=>{const span=CR.hi!=null?CR.hi-CR.lo:0,pct=span?Math.round(100*(CR.pts-CR.lo)/span):100;
+        b.innerHTML=(ranked?`<div class="cpu-rk"><div class="mid"><span class="muted">你的電腦段位</span><span class="pt"><b>${CR.pts||0}</b> 分</span></div>
+          <div class="rk">${esc(CR.rank||"新手")}</div><div class="st-bar"><i style="width:${pct}%"></i></div>
+          <div class="muted" style="font-size:12px">${CR.next?`再 ${CR.toNext} 分升「${esc(CR.next)}」`:"已經是最高段位"}・${CR.w||0} 勝 ${CR.l||0} 負 ${CR.d||0} 和</div>
+          <p>電腦的強度跟著你的段位走，段位越高越難。贏約 +20、輸約 −15，跟線上對戰分開記分。不能悔棋、不能提示，下到一半開新局算輸。</p></div>`:"")+
+        `<div class="cpu-lb">你執</div><div class="opt"><button data-s="r" class="${side==="r"?"on":""}">🔴 紅方（先走）</button><button data-s="b" class="${side==="b"?"on":""}">⚫ 黑方（後走）</button></div>`+
+        (ranked?"":`<div class="cpu-lb">難度</div><div class="lvl">${st.levels.map(l=>`<button data-l="${l.n}" class="${l.n===level?"on":""}"><b>${l.n}</b><span>${esc(l.name)}</span>${(rec[l.n]||{}).w?'<span class="ok">✔ 通關</span>':""}</button>`).join("")}</div>
+          <div class="cpu-desc">${esc((st.levels[level-1]||{}).desc||"")}</div>`)+
+        `<button class="btn" id="go">${ranked?"開始積分挑戰":`開始第 ${level} 級`}</button>`;
         b.querySelectorAll("[data-s]").forEach(x=>x.onclick=()=>{side=x.dataset.s;paint()});b.querySelectorAll("[data-l]").forEach(x=>x.onclick=()=>{level=+x.dataset.l;paint()});
-        b.querySelector("#go").onclick=()=>{const go=()=>{closeSheet();shownResult=null;sel=-1;post("/play/new",{human:side,level,ranked})};
-          if(st&&st.ranked&&!st.result&&st.moves.length>=2)confirmBox("積分挑戰還沒下完，開新局會算輸，確定？",go,"確定");else go()}};paint()})}
+        b.querySelector("#go").onclick=()=>startNew({human:side,level,ranked})};paint()});
+    sh.classList.add("cpu-sheet")}
   // 上一盤已經下完：一進來就直接開新局（同樣的難度和執子），不要讓人以為還沒下完
   let first=true;
   const stop=poller(async()=>{if(busy)return;const s=await api("/play/state");
-    if(first){first=false;if(s.result){shownResult=JSON.stringify(s.result)+s.moves.length;const rk=OFF&&!!store.get("cpuRanked",!!s.ranked);await post("/play/new",{human:s.human,level:s.level||3,ranked:rk});s.ranked=rk;
-      toast(s.ranked?`新的一局・積分挑戰（按右上角 ⚙ 換模式）`:`新的一局・第 ${s.level} 級（按右上角 ⚙ 換難度）`);return}}
+    if(first){first=false;if(s.result){shownResult=JSON.stringify(s.result)+s.moves.length;const rk=OFF&&!!store.get("cpuRanked",!!s.ranked);await post("/play/new",{human:s.human,level:s.level||store.get("cpuLevel",3),ranked:rk});s.ranked=rk;
+      toast(s.ranked?`新的一局・積分挑戰`:`新的一局・第 ${s.level} 級`);return}}
     render(s)},()=>st&&st.thinking?500:1500);
   // 電腦一走完就馬上畫出來（不等下一次輪詢）
   const onPlay=()=>{if(!busy)api("/play/state").then(s=>{if(!busy&&s)render(s)}).catch(()=>{})};window.addEventListener("xq-play",onPlay);
