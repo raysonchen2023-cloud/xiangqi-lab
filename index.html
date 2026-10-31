@@ -214,6 +214,47 @@ input,select{font:inherit;font-size:16px;color:inherit}
 .lib .more{margin:12px 12px 0}.lib .more:empty{display:none}
 @media (min-width:700px){.lib{padding-top:8px;padding-bottom:24px}.lib-bar{padding-top:10px}}
 .lesson{font-size:13px;margin:4px 0;padding-left:1em;text-indent:-1em}
+/* 我的戰績：五邊形以下（段位卡、對局紀錄、更多） */
+.st .sec-t{margin:20px 2px 8px}.st .sec-t:first-child{margin-top:4px}
+.st .sec-t small{font-family:var(--sans);font-weight:500;font-size:12px;color:var(--muted)}
+.st-ranks{display:grid;grid-template-columns:1fr 1fr;gap:8px}.st-ranks.one{grid-template-columns:1fr}
+.st-rk{background:var(--card);border:1px solid var(--line);border-radius:16px;padding:12px;box-shadow:0 1px 3px #0000001a;display:flex;flex-direction:column;gap:6px;min-width:0}
+.st-rk .hd{font-size:12px;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.st-rk .mid{display:flex;align-items:baseline;justify-content:space-between;gap:6px}
+.st-rk .rk{font-family:var(--serif);font-weight:900;font-size:24px;line-height:1.15;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.st-rk .pt{flex:none;font-size:13px;color:var(--muted);font-variant-numeric:tabular-nums}.st-rk .pt b{color:var(--ink);font-size:15px}
+.st-bar{height:6px;border-radius:3px;background:var(--bg);border:1px solid var(--line);overflow:hidden}.st-bar i{display:block;height:100%;background:var(--accent2);border-radius:3px}
+.st-rk .nx{font-size:12px;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;margin-top:-2px}
+.st-wld{display:grid;grid-template-columns:repeat(4,1fr);text-align:center;border-top:1px solid var(--line);padding-top:8px;margin-top:2px}
+.st-wld b{display:block;font-size:17px;font-weight:900;line-height:1.2;font-variant-numeric:tabular-nums}.st-wld span{font-size:11px;color:var(--muted)}
+.st .w{color:var(--accent2)}.st .l{color:var(--red)}.st .d{color:var(--muted)}
+.st-rk .go{margin-top:auto;padding:8px 0 0;font-size:13px;font-weight:700;color:var(--accent);text-align:left}
+.st-seg{display:flex;gap:3px;padding:3px;border-radius:12px;background:var(--line);background:color-mix(in srgb,var(--ink) 8%,var(--bg))}
+.st-seg button{flex:1;min-width:0;height:34px;border-radius:9px;font-size:14px;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.st-seg button.on{background:var(--card);color:var(--ink);font-weight:700;box-shadow:0 1px 3px #00000026}
+.st-seg button small{font-size:11px;font-variant-numeric:tabular-nums;margin-left:3px;opacity:.8}
+.st-res{display:flex;gap:6px;margin:8px 0 0}
+.st-res button{padding:4px 12px;border-radius:999px;font-size:13px;border:1px solid var(--line);background:var(--card);color:var(--muted)}
+.st-res button.on{border-color:var(--ink);color:var(--ink);font-weight:700}
+.st-mon{font-size:12px;font-weight:700;color:var(--muted);margin:14px 4px 6px}
+.st-list{background:var(--card);border:1px solid var(--line);border-radius:16px;overflow:hidden}
+.st-g{display:flex;align-items:center;gap:12px;width:100%;padding:10px 12px;text-align:left}.st-g+.st-g{border-top:1px solid var(--line)}.st-g:active{background:var(--bg)}
+.st-g .dot{flex:none;width:28px;height:28px;border-radius:14px;display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:900;color:#fff;background:var(--muted)}
+.st-g .dot.w{background:var(--accent2)}.st-g .dot.l{background:var(--red)}
+.st-g .tx{flex:1;min-width:0}.st-g .tx b{display:block;font-family:var(--serif);font-size:15px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.st-g .tx span{display:block;font-size:12px;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.st-g .r{flex:none;font-weight:900;font-size:15px;font-variant-numeric:tabular-nums;min-width:28px;text-align:right}
+.st-empty{text-align:center;padding:20px 12px;font-size:13px;color:var(--muted)}
+.st-more{padding:0}.st-more>*+*{border-top:1px solid var(--line)}
+.st-more .it{display:flex;align-items:center;gap:10px;padding:12px 14px;min-height:52px}
+.st-more .it .tx{flex:1;min-width:0}.st-more .it .tx b{display:block;font-size:15px}.st-more .it .tx span{display:block;font-size:12px;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.st-more summary{list-style:none;cursor:pointer}.st-more summary::-webkit-details-marker{display:none}
+.st-more summary:after{content:"›";flex:none;color:var(--muted);font-size:18px;transition:transform .15s}.st-more details[open] summary:after{transform:rotate(90deg)}
+.st-more .bd{padding:0 14px 12px;font-size:13px;color:var(--muted);line-height:1.7}
+.st-more .sbtn{flex:none;padding:6px 12px;border-radius:10px;font-size:13px;font-weight:700;background:var(--bg);border:1px solid var(--line)}.st-more .sbtn.pri{background:var(--accent);border-color:var(--accent);color:#fff}
+.st-lv{width:100%;border-collapse:collapse;font-size:14px;color:var(--ink);font-variant-numeric:tabular-nums}
+.st-lv th{font-weight:500;font-size:12px;color:var(--muted);text-align:center;padding:4px 0}.st-lv th:first-child,.st-lv td:first-child{text-align:left}
+.st-lv td{text-align:center;padding:7px 0;border-top:1px solid var(--line)}.st-lv tr.tot td{font-weight:900}
 </style></head><body>
 <div class="app">
  <div class="topbar" id="topbar"><button class="ib" id="back" hidden><b>‹</b>返回</button><h1 id="title">象棋研究室</h1><span id="topRight"></span></div>
@@ -869,21 +910,21 @@ function histList(box,reps){let kind=store.get("histKind","all"),res="",limit=40
     all=a.items.map(it=>({c:"play",it,side:it.red==="你"?"r":"b",opp:it.red==="你"?it.black:it.red,k:"cpu"}))
       .concat(b.items.map(it=>{const side=me&&it.red===me?"r":me&&it.black===me?"b":null;return{c:"pvp",it,side,opp:side?(side==="r"?it.black:it.red):`${it.red||"紅方"} 對 ${it.black||"黑方"}`,k:"pvp"}}))
       .filter(x=>x.it.result).sort((x,y)=>String(y.it.id).localeCompare(String(x.it.id)));paint()}
-  function paint(){if(!all){box.innerHTML='<div class="card muted">載入中…</div>';return}
+  function paint(){if(!all){box.innerHTML='<div class="st-list st-empty">載入中…</div>';return}
     const L=all.filter(x=>(kind==="all"||x.k===kind)&&(!res||resOf(x.it,x.side)===res));
     const cnt=k=>all.filter(x=>k==="all"||x.k===k).length;
-    let h=`<div class="opt" style="margin-top:0">${[["all","全部"],["cpu","🤖 挑戰電腦"],["pvp","👥 對人"]].map(([k,l])=>`<button data-k="${k}" class="${kind===k?"on":""}">${l} ${cnt(k)}</button>`).join("")}</div>
-      <div class="opt" style="margin-top:-4px">${[["","全部結果"],["w","勝"],["l","負"],["d","和"]].map(([k,l])=>`<button data-r="${k}" class="${res===k?"on":""}" style="padding:6px 12px">${l}</button>`).join("")}</div>`;
-    if(!L.length)h+=`<div class="card muted" style="text-align:center">${all.length?"沒有符合的對局":"還沒有下完的對局。去挑戰電腦或線上對戰下一盤吧！"}</div>`;
-    let mon="";const rows=[];
+    let h=`<div class="st-seg">${[["all","全部"],["cpu","🤖 電腦"],["pvp","👥 對人"]].map(([k,l])=>`<button data-k="${k}" class="${kind===k?"on":""}">${l}<small>${cnt(k)}</small></button>`).join("")}</div>
+      <div class="st-res">${[["","全部"],["w","勝"],["l","負"],["d","和"]].map(([k,l])=>`<button data-r="${k}" class="${res===k?"on":""}">${l}</button>`).join("")}</div>`;
+    if(!L.length)h+=`<div class="st-list st-empty" style="margin-top:12px">${all.length?"沒有符合的對局":"還沒有下完的對局。去挑戰電腦或線上對戰下一盤吧！"}</div>`;
+    let mon="",grp=[];const out=[],flush=()=>{if(grp.length)out.push(`<div class="st-list">${grp.join("")}</div>`);grp=[]};
     for(const x of L.slice(0,limit)){const id=String(x.it.id),m=id.slice(0,7);
-      if(m!==mon){mon=m;rows.push(`<div class="muted" style="margin:12px 4px 6px;font-weight:700">${m.slice(0,4)} 年 ${+m.slice(5,7)} 月</div>`)}
+      if(m!==mon){flush();mon=m;out.push(`<div class="st-mon">${m.slice(0,4)} 年 ${+m.slice(5,7)} 月</div>`)}
       const r=resOf(x.it,x.side),R=x.c==="play"&&reps[x.it.id],nr=x.c==="pvp"&&nh.find(hh=>hh.rid===x.it.id);
-      const lab=r==="w"?["勝","var(--accent2)"]:r==="l"?["負","var(--red)"]:r==="d"?["和","var(--muted)"]:[r||"—","var(--muted)"];
+      const lab=r==="w"?"勝":r==="l"?"負":r==="d"?"和":(r||"—").slice(0,1);
       const why=String(x.it.result||"").replace(/^.*?（/,"").replace(/）$/,"");
-      rows.push(`<button class="item" data-c="${x.c}" data-id="${esc(id)}"><span class="lb" style="background:${lab[1]};color:#fff">${esc(lab[0])}</span><span class="tx"><b>${x.k==="cpu"?"🤖 ":"👥 "}${esc(x.opp||"")}</b><span>${id.slice(5,10).replace("-","/")}・${x.side?"執"+(x.side==="r"?"紅":"黑")+"・":""}${esc(why)}</span></span>${R?`<b style="color:${gradeFor(R.score)[2]};font-size:18px">${R.grade}</b>`:nr?`<b style="color:${nr.d>=0?"var(--accent2)":"var(--red)"}">${nr.d>=0?"+":""}${nr.d}</b>`:'<span class="muted">›</span>'}</button>`)}
-    h+=`<div class="items" style="padding:0">${rows.join("")}</div>`;
-    if(L.length>limit)h+=`<button class="btn ghost" id="more">再顯示 40 盤（還有 ${L.length-limit} 盤）</button>`;
+      grp.push(`<button class="st-g" data-c="${x.c}" data-id="${esc(id)}"><span class="dot ${r==="w"||r==="l"?r:""}">${esc(lab)}</span><span class="tx"><b>${x.k==="cpu"?"🤖 ":"👥 "}${esc(x.opp||"")}</b><span>${id.slice(5,10).replace("-","/")}・${x.side?"執"+(x.side==="r"?"紅":"黑")+"・":""}${esc(why)}</span></span>${R?`<b class="r" style="color:${gradeFor(R.score)[2]}">${R.grade}</b>`:nr?`<b class="r ${nr.d>=0?"w":"l"}">${nr.d>=0?"+":""}${nr.d}</b>`:'<span class="r muted">›</span>'}</button>`)}
+    flush();h+=out.join("");
+    if(L.length>limit)h+=`<button class="btn ghost" id="more" style="margin-top:12px">再顯示 40 盤（還有 ${L.length-limit} 盤）</button>`;
     box.innerHTML=h;
     box.querySelectorAll("[data-k]").forEach(b=>b.onclick=()=>{kind=b.dataset.k;store.set("histKind",kind);limit=40;paint()});
     box.querySelectorAll("[data-r]").forEach(b=>b.onclick=()=>{res=b.dataset.r;limit=40;paint()});
@@ -921,41 +962,44 @@ async function skillPentagon(box){
     <details style="margin-top:6px"><summary class="muted">五項怎麼算？</summary><p class="muted" style="line-height:1.7;margin:6px 0 0">開局、中局、殘局：該階段每步的準確度平均（跟賽後報告同一套）。精準：走出 Pikafish 首選（正手、妙手）的比例。穩定：錯著、露著越少越高。只算 Pikafish 評過等的著法；還沒評等的對局，打開賽後報告評等後就會算進來。</p></details>`}
 function Stats(v){
   setTop("我的戰績","#/");setTabs(false);
-  v.innerHTML=`<div class="pad"><div class="sec-t" style="margin-top:4px;margin-left:0">棋力五邊形</div><div class="card" id="sPent"><div class="muted" style="text-align:center">計算中…</div></div>${OFF&&window.XQNet?'<div class="sec-t" style="margin-left:0">線上對戰</div><div class="card" id="sNet"></div>':""}
-    <div class="sec-t" style="margin-left:0${OFF&&window.XQNet?"":";margin-top:4px"}">挑戰電腦</div><div class="card" id="sTot"><span class="muted">載入中…</span></div>${OFF?'<div class="card" id="sCpu" style="margin-top:8px"></div>':""}
-    <div class="sec-t" style="margin-left:0">對局紀錄</div><div id="sHist"></div>
-    <div class="sec-t" style="margin-left:0">各難度</div><div class="card" id="sLv" style="padding:6px 10px"></div>
-    <div class="sec-t" style="margin-left:0">棋力測驗</div><div class="card" id="sQz"></div></div>`;
-  if(OFF&&window.XQNet){const R=XQNet.rating(),N=R.w+R.l+R.d,pc=R.hi?Math.round((R.pts-R.lo)*100/(R.hi-R.lo)):100;
-    v.querySelector("#sNet").innerHTML=`<div class="row" style="justify-content:space-between;align-items:flex-end"><div><div class="muted">我的段位</div><b style="font-size:30px;font-family:var(--serif)">${esc(R.rank)}</b></div>
-        <div style="text-align:right"><b style="font-size:22px">${R.pts}</b> <span class="muted">分</span><div class="muted">${R.next?`再 ${R.toNext} 分升 ${esc(R.next)}`:"最高段位"}</div></div></div>
-      <div style="height:8px;border-radius:4px;background:var(--bg);border:1px solid var(--line);margin:10px 0;overflow:hidden"><div style="height:100%;width:${pc}%;background:var(--accent2)"></div></div>
-      <div style="display:grid;grid-template-columns:repeat(4,1fr);text-align:center;gap:6px">
-      ${[["勝",R.w,"var(--accent2)"],["負",R.l,"var(--red)"],["和",R.d,"var(--muted)"],["勝率",N?Math.round(R.w*100/N)+"%":"—",""]].map(([l,x,c])=>`<div><div style="font-size:22px;font-weight:900;color:${c}">${x}</div><div class="muted">${l}</div></div>`).join("")}</div>
-      <details style="margin-top:10px"><summary class="muted">段位怎麼算？</summary><p class="muted" style="line-height:1.7;margin:6px 0 0">從 0 分（新手）開始。贏一盤約 +20、輸一盤約 −15、和棋 0；對手段位比你高，贏得更多、輸得更少，反過來也一樣。中途取消、對方斷線中止、雙方還沒各走一步就結束的對局不計分。<br>${XQNet.ranks().map(([n,p])=>`${esc(n)} ${p}`).join("・")}</p></details>`;
-}
-  skillPentagon(v.querySelector("#sPent")).catch(e=>{const b=v.querySelector("#sPent");if(b)b.innerHTML=`<span class="muted">⚠ ${esc(e.message)}</span>`});
+  // 版面：棋力五邊形 → 段位（線上／電腦兩張並排）→ 對局紀錄 → 更多（棋力測驗、各難度、段位怎麼算，摺起來）
+  const NET=!!(OFF&&window.XQNet),pct=(w,n)=>n?Math.round(w*100/n)+"%":"—";
   const reps=store.get("reports",{}),qz=store.get("quizBest",null);
-  v.querySelector("#sQz").innerHTML=qz?`<div class="row" style="justify-content:space-between"><div><b style="font-size:22px">${esc(qz.rank)}</b><div class="muted">${new Date(qz.at).toLocaleDateString()}・答對 ${qz.ok}/${qz.n}</div></div><button class="btn ghost" style="width:auto" id="qz">再測一次</button></div>`
-    :`<div class="row" style="justify-content:space-between"><span class="muted">還沒測過</span><button class="btn" style="width:auto" id="qz">開始測驗</button></div>`;
+  const sc=Object.values(reps).map(r=>r.score).filter(x=>x!=null),avg=sc.length?Math.round(sc.reduce((a,b)=>a+b,0)/sc.length):null;
+  // 段位卡內容（線上段位、電腦段位共用同一個樣子）
+  const rk=(hd,R,foot)=>{const N=R.w+R.l+R.d,pc=R.hi?Math.max(0,Math.min(100,Math.round((R.pts-R.lo)*100/(R.hi-R.lo)))):100;
+    return`<div class="hd">${hd}</div><div class="mid"><span class="rk">${esc(R.rank)}</span><span class="pt"><b>${R.pts}</b> 分</span></div>
+      <div class="st-bar"><i style="width:${pc}%"></i></div><div class="nx">${R.next?`再 ${R.toNext} 分升 ${esc(R.next)}`:"已是最高段位"}</div>
+      <div class="st-wld"><div><b class="w">${R.w}</b><span>勝</span></div><div><b class="l">${R.l}</b><span>負</span></div><div><b class="d">${R.d}</b><span>和</span></div><div><b>${pct(R.w,N)}</b><span>勝率</span></div></div>${foot}`};
+  const cpuFoot='<button class="go" id="cpuGo">開始積分挑戰 ›</button>';
+  v.innerHTML=`<div class="home st"><div class="sec-t">棋力五邊形</div><div class="card" id="sPent"><div class="muted" style="text-align:center">計算中…</div></div>
+    ${OFF?`<div class="sec-t">段位</div><div class="st-ranks${NET?"":" one"}">${NET?'<div class="st-rk" id="sNet"></div>':""}<div class="st-rk" id="sCpu"><div class="hd">🤖 電腦段位・積分挑戰</div><div class="muted">載入中…</div></div></div>`:""}
+    <div class="sec-t">對局紀錄${avg!=null?`<small>賽後報告平均 <b style="color:${gradeFor(avg)[2]}">${avg} 分（${gradeFor(avg)[0]}）</b>・${sc.length} 盤</small>`:""}</div><div id="sHist"></div>
+    <div class="sec-t">更多</div><div class="card st-more">
+      <div class="it" id="sQz"></div>
+      <details><summary class="it"><span class="tx"><b>🤖 挑戰電腦・各難度</b><span id="sTot">載入中…</span></span></summary><div class="bd" id="sLv"></div></details>
+      ${NET?`<details id="stHow"><summary class="it"><span class="tx"><b>❓ 段位怎麼算？</b><span>線上段位的加減分規則</span></span></summary><div class="bd">從 0 分（新手）開始。贏一盤約 +20、輸一盤約 −15、和棋 0；對手段位比你高，贏得更多、輸得更少，反過來也一樣。中途取消、對方斷線中止、雙方還沒各走一步就結束的對局不計分。<br>${XQNet.ranks().map(([n,p])=>`${esc(n)} ${p}`).join("・")}</div></details>`:""}
+    </div></div>`;
+  if(NET){const b=v.querySelector("#sNet");b.innerHTML=rk("🌐 線上段位",XQNet.rating(),'<button class="go" id="rkHow">段位怎麼算？</button>');
+    b.querySelector("#rkHow").onclick=()=>{const d=v.querySelector("#stHow");d.open=true;d.scrollIntoView({behavior:"smooth",block:"center"})}}
+  skillPentagon(v.querySelector("#sPent")).catch(e=>{const b=v.querySelector("#sPent");if(b)b.innerHTML=`<span class="muted">⚠ ${esc(e.message)}</span>`});
+  v.querySelector("#sQz").innerHTML=qz?`<span class="tx"><b>🧩 棋力測驗：${esc(qz.rank)}</b><span>${new Date(qz.at).toLocaleDateString()}・答對 ${qz.ok}/${qz.n}</span></span><button class="sbtn" id="qz">再測一次</button>`
+    :`<span class="tx"><b>🧩 棋力測驗</b><span>還沒測過</span></span><button class="sbtn pri" id="qz">開始測驗</button>`;
   v.querySelector("#qz").onclick=()=>location.hash="#/quiz";
   histList(v.querySelector("#sHist"),reps);
-  Promise.all([api("/play/state"),api("/db/items?c=play&limit=30").catch(()=>({items:[]}))]).then(([st,d])=>{
+  const goCpu=()=>{const g=v.querySelector("#cpuGo");if(g)g.onclick=()=>{store.set("cpuRanked",true);location.hash="#/cpu"}};
+  api("/play/state").then(st=>{
     let W=0,L=0,D=0;for(const r of Object.values(st.record||{})){W+=r.w||0;L+=r.l||0;D+=r.d||0}
-    const CR=st.cpuRate||{w:0,l:0,d:0};W+=CR.w;L+=CR.l;D+=CR.d;const N=W+L+D;   // 積分挑戰的勝負也算進挑戰電腦的總計
-    const sc=Object.values(reps).map(r=>r.score).filter(x=>x!=null),avg=sc.length?Math.round(sc.reduce((a,b)=>a+b,0)/sc.length):null;
-    // 電腦段位（積分挑戰）
-    const cb=v.querySelector("#sCpu");if(cb&&st.cpuRate){const R=st.cpuRate,N=R.w+R.l+R.d,pc=R.hi?Math.round((R.pts-R.lo)*100/(R.hi-R.lo)):100;
-      cb.innerHTML=`<div class="row" style="justify-content:space-between;align-items:flex-end"><div><div class="muted">🏅 電腦段位（積分挑戰）</div><b style="font-size:26px;font-family:var(--serif)">${esc(R.rank)}</b></div><div style="text-align:right"><b style="font-size:20px">${R.pts}</b> <span class="muted">分</span><div class="muted">${R.next?`再 ${R.toNext} 分升 ${esc(R.next)}`:"最高段位"}</div></div></div>
-        <div style="height:8px;border-radius:4px;background:var(--bg);border:1px solid var(--line);margin:10px 0;overflow:hidden"><div style="height:100%;width:${pc}%;background:var(--accent2)"></div></div>
-        <div class="muted">${R.w} 勝 ${R.l} 負 ${R.d} 和・勝率 ${N?Math.round(R.w*100/N)+"%":"—"}　<button class="pill" id="cpuGo">開始積分挑戰 ›</button></div>`;
-      cb.querySelector("#cpuGo").onclick=()=>{store.set("cpuRanked",true);location.hash="#/cpu"}}
-    v.querySelector("#sTot").innerHTML=`<div style="display:grid;grid-template-columns:repeat(4,1fr);text-align:center;gap:6px">
-      ${[["勝",W,"var(--accent2)"],["負",L,"var(--red)"],["和",D,"var(--muted)"],["勝率",N?Math.round(W*100/N)+"%":"—",""]].map(([l,x,c])=>`<div><div style="font-size:26px;font-weight:900;color:${c}">${x}</div><div class="muted">${l}</div></div>`).join("")}</div>
-      ${avg!=null?`<p class="muted" style="text-align:center;margin:10px 0 0">賽後報告平均 <b style="color:${gradeFor(avg)[2]}">${avg} 分（${gradeFor(avg)[0]}）</b>・共 ${sc.length} 盤</p>`:'<p class="muted" style="text-align:center;margin:10px 0 0">下完一盤按「📊 賽後報告」，分數會記在這裡</p>'}`;
-    v.querySelector("#sLv").innerHTML=`<table style="width:100%;border-collapse:collapse;font-size:14px"><tr class="muted"><td>難度</td><td>勝</td><td>負</td><td>和</td><td>勝率</td><td></td></tr>${st.levels.map(l=>{const r=st.record[l.n]||{w:0,l:0,d:0};
-      return`<tr style="border-top:1px solid var(--line)"><td style="padding:7px 0"><b>${l.n}</b> ${esc(l.name)}</td><td>${r.w||0}</td><td>${r.l||0}</td><td>${r.d||0}</td><td>${(r.w||0)+(r.l||0)+(r.d||0)?Math.round((r.w||0)*100/((r.w||0)+(r.l||0)+(r.d||0)))+"%":"—"}</td><td>${r.w?"✔":""}</td></tr>`}).join("")}${(()=>{const n=CR.w+CR.l+CR.d;return`<tr style="border-top:1px solid var(--line)"><td style="padding:7px 0"><b>🏅</b> 積分挑戰</td><td>${CR.w}</td><td>${CR.l}</td><td>${CR.d}</td><td>${n?Math.round(CR.w*100/n)+"%":"—"}</td><td></td></tr>`})()}</table>`;
-  }).catch(e=>{v.querySelector("#sTot").innerHTML=`<span class="muted">⚠ ${esc(e.message)}</span>`});
+    const CR=st.cpuRate||{w:0,l:0,d:0};W+=CR.w;L+=CR.l;D+=CR.d;   // 積分挑戰的勝負也算進挑戰電腦的總計
+    const cb=v.querySelector("#sCpu");
+    if(cb)cb.innerHTML=st.cpuRate?rk("🤖 電腦段位・積分挑戰",st.cpuRate,cpuFoot):`<div class="hd">🤖 電腦段位・積分挑戰</div><div class="muted">還沒有積分挑戰紀錄</div>${cpuFoot}`;goCpu();
+    v.querySelector("#sTot").textContent=`總計 ${W} 勝 ${L} 負 ${D} 和・勝率 ${pct(W,W+L+D)}`;
+    const tr=(r,ok)=>{const n=(r.w||0)+(r.l||0)+(r.d||0);return`<td>${r.w||0}</td><td>${r.l||0}</td><td>${r.d||0}</td><td>${pct(r.w||0,n)}</td><td>${ok}</td>`};
+    v.querySelector("#sLv").innerHTML=`<table class="st-lv"><tr><th>難度</th><th>勝</th><th>負</th><th>和</th><th>勝率</th><th>過關</th></tr>
+      ${st.levels.map(l=>{const r=st.record[l.n]||{};return`<tr><td><b>${l.n}</b> ${esc(l.name)}</td>${tr(r,r.w?'<span class="w">✔</span>':"")}</tr>`}).join("")}
+      <tr><td><b>🏅</b> 積分挑戰</td>${tr(CR,"")}</tr><tr class="tot"><td>合計</td>${tr({w:W,l:L,d:D},"")}</tr></table>
+      ${avg==null?'<div style="margin-top:8px">下完一盤按「📊 賽後報告」，平均分數會顯示在「對局紀錄」旁邊。</div>':""}`;
+  }).catch(e=>{v.querySelector("#sTot").textContent="⚠ "+e.message;const cb=v.querySelector("#sCpu");if(cb)cb.innerHTML=`<div class="hd">🤖 電腦段位・積分挑戰</div><div class="muted">⚠ ${esc(e.message)}</div>${cpuFoot}`;goCpu()});
   return{}}
 
 // ================= 設定：棋盤風格、棋子樣式、走棋顯示 =================
