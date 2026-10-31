@@ -1117,8 +1117,10 @@ function actionBar(box,items){box.innerHTML="";const out={};for(const[id,icon,la
 
 // ================= 賽後報告：準確度、開局／中局／殘局分數、S～D 評級、Pikafish 講解 =================
 // 每步準確度＝100×e^(−損失/200)（損失＝比引擎最佳著法少幾分，1 兵＝100 分）；
-// 已經大優或大劣（±12 兵以上）時小誤差不影響結果，損失最多算 30 分。
-// 總分＝平均準確度＋妙手加分（每個 +2，最多 +6）。評級 S≥90、A≥80、B≥70、C≥60、D<60。
+// 大優時的失誤也照算（不再打折），跟錯著／露著的標記一致。
+// 總分＝平均準確度＋妙手加分（每個 +2，最多 +6），再依錯著／露著設上限：
+//   有露著最高 A（89）；錯著＋露著 ≥3 步或 ≥10% 最高 B（79）；≥6 步或 ≥20% 最高 C（69）。
+// 評級 S≥90、A≥80、B≥70、C≥60、D<60。
 // 階段：前 20 步（各走 10 回合）是開局；雙方車馬炮合計剩 6 個以下起算殘局；其他是中局。
 const GRADES=[["S",90,"#C27C0E","幾乎跟引擎同步，這盤下得非常漂亮"],["A",80,"#2F6B4F","下得很穩，只有少數不夠精確的地方"],["B",70,"#3A7BD5","整體不錯，但有幾步把優勢讓了出去"],
   ["C",60,"#D9822B","有明顯的失誤，算棋還要再仔細一點"],["D",0,"#C0392B","失誤偏多，建議多做殺法和殘局練習"]];
@@ -1131,13 +1133,14 @@ function gameReport(board0,moves){
     plies.push({...m,ply:i+1,cap,phase:endFrom!=null?"end":i<20?"open":"mid"})});
   for(const s of["r","b"]){const mine=plies.filter(m=>m.by===s),graded=mine.filter(m=>m.loss!=null&&m.q&&m.q!=="—");
     const sg=s==="r"?1:-1,cnt={};for(const m of graded)cnt[m.q]=(cnt[m.q]||0)+1;
-    const acc=m=>{const after=sg*(m.ev||0),best=after+m.loss;let L=m.loss;if((best>=1200&&after>=1200)||(best<=-1200&&after<=-1200))L=Math.min(L,30);return 100*Math.exp(-L/200)};
+    const acc=m=>100*Math.exp(-m.loss/200);
     const avg=a=>a.length?a.reduce((x,m)=>x+acc(m),0)/a.length:null;
     const ph={};for(const k of["open","mid","end"]){const a=graded.filter(m=>m.phase===k);ph[k]=a.length?{score:Math.round(avg(a)),n:a.length}:null}
-    const base=avg(graded),bonus=Math.min(6,2*(cnt["妙手"]||0)),score=base==null?null:Math.min(100,Math.round(base+bonus));
+    const base=avg(graded),bonus=Math.min(6,2*(cnt["妙手"]||0)),blun=cnt["露著"]||0,bad=(cnt["錯著"]||0)+blun,br=graded.length?bad/graded.length:0,
+      cap=bad>=6||br>=.2?69:bad>=3||br>=.1?79:blun?89:100,score=base==null?null:Math.min(cap,Math.round(base+bonus));
     const checks=mine.filter(m=>m.ck).length,caps=mine.filter(m=>m.cap).length;
     const style=!mine.length?"":checks>=mine.length*.15||caps>=mine.length*.35?"🔥 攻殺型":(cnt["錯著"]||0)+(cnt["露著"]||0)===0&&(score||0)>=75?"🛡 穩健型":"⚖ 均衡型";
-    out[s]={score,grade:score==null?null:gradeFor(score),base,bonus,phases:ph,cnt,n:mine.length,graded:graded.length,style,talk:talk(s,plies,graded,ph,score)}}
+    out[s]={score,grade:score==null?null:gradeFor(score),base,bonus,cap,phases:ph,cnt,n:mine.length,graded:graded.length,style,talk:talk(s,plies,graded,ph,score)}}
   return{sides:out,plies,endFrom,complete:plies.every(m=>m.q)}}
 // 講解：只用 Pikafish 的評估數字整理出來，不是抄別人的講評
 function talk(s,plies,graded,ph,score){if(score==null)return[];const sg=s==="r"?1:-1,T=[];
@@ -1164,13 +1167,13 @@ function reportSheet(rep,opts){let s=opts.side||"r";
     b.innerHTML=`<div class="opt">${["r","b"].map(x=>`<button data-sd="${x}" class="${x===s?"on":""}">${x==="r"?"🔴":"⚫"} ${esc(nm[x])}</button>`).join("")}</div>`+
       (R.score==null?`<p class="muted">這一方還沒有評等過的著法。</p>`:`
       <div class="rp-top"><div class="rp-g" style="background:${R.grade[2]}">${R.grade[0]}</div><div><div class="rp-s">${R.score}<small> 分</small></div>
-        <div class="muted">準確度 ${R.base.toFixed(1)}${R.bonus?`＋妙手 ${R.bonus}`:""}・${R.style}</div></div></div>
+        <div class="muted">準確度 ${R.base.toFixed(1)}${R.bonus?`＋妙手 ${R.bonus}`:""}${R.cap<100&&R.base+R.bonus>R.cap?`・因錯著／露著最高 ${R.cap}`:""}・${R.style}</div></div></div>
       ${rep.complete?"":`<p class="muted">⚠ 還有 ${rep.plies.filter(m=>!m.q).length} 步沒評等，分數暫時不完整</p>`}
       <div class="rp-ph">${PN.map(([k,l])=>{const p=R.phases[k];return`<div><span>${l}</span><b>${p?p.score:"—"}</b><i style="width:${p?p.score:0}%;background:${p?gradeFor(p.score)[2]:"transparent"}"></i><small class="muted">${p?p.n+" 步・"+gradeFor(p.score)[0]:"沒走到"}</small></div>`}).join("")}</div>
       <div class="rp-q">${QS.map(q=>`<span style="color:${QC[q]}"><b>${R.cnt[q]||0}</b>${q}</span>`).join("")}</div>
       <div class="sec-t" style="margin-left:0">Pikafish 講解</div>
       ${R.talk.map(t=>`<div class="rp-t${t.bad?" bad":t.good?" good":""}"${t.ply?` data-p="${t.ply}"`:""}><b>${esc(t.t)}</b>${esc(t.x)}${t.ply&&opts.goto?'<span class="go">看這步 ›</span>':""}</div>`).join("")}
-      <p class="muted" style="font-size:12px;margin-top:12px">評級：S≥90、A≥80、B≥70、C≥60、D&lt;60。每步準確度依「比 Pikafish 最佳著法少幾分」換算，再加妙手分。開局＝前 10 回合；殘局＝雙方車馬炮合計剩 6 個以下。</p>`);
+      <p class="muted" style="font-size:12px;margin-top:12px">評級：S≥90、A≥80、B≥70、C≥60、D&lt;60。每步準確度依「比 Pikafish 最佳著法少幾分」換算（大優時的失誤也照算），再加妙手分。有露著最高 A；錯著＋露著 3 步以上（或 10%）最高 B；6 步以上（或 20%）最高 C。開局＝前 10 回合；殘局＝雙方車馬炮合計剩 6 個以下。</p>`);
     b.querySelectorAll("[data-sd]").forEach(x=>x.onclick=()=>{s=x.dataset.sd;paint()});
     if(opts.goto)b.querySelectorAll("[data-p]").forEach(x=>x.onclick=()=>{closeSheet();opts.goto(+x.dataset.p)})};paint()})}
 
