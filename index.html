@@ -117,6 +117,26 @@ input,select{font:inherit;font-size:16px;color:inherit}
 .sheet .sh-t{font-weight:900;font-family:var(--serif);font-size:17px;padding:6px 16px 8px}
 .sheet .sh-b{overflow:auto;padding:0 16px 16px;-webkit-user-select:text;user-select:text}
 .thgrid{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
+/* 朝代風格：頂部列紋樣、底紋、金邊 */
+html[data-era] .app{background-image:var(--motif-bg)}
+html[data-era] .topbar{background-image:var(--motif-bar);border-bottom:3px solid var(--trim)}
+html[data-era] .tabbar{border-top:2px solid var(--trim)}
+html[data-era] .card,html[data-era] .tile{border-color:color-mix(in srgb,var(--trim) 40%,var(--line))}
+html[data-era] .sec-t{border-left:4px solid var(--trim);padding-left:8px}
+html[data-era=qin] .card,html[data-era=qin] .tile{border-radius:6px}
+html[data-era=han] .card,html[data-era=han] .tile{border-top:3px solid var(--accent)}
+html[data-era=song] .card,html[data-era=song] .tile{border-radius:10px;box-shadow:none}
+html[data-era=tang] .card,html[data-era=tang] .tile,html[data-era=qing] .card,html[data-era=qing] .tile{box-shadow:inset 0 0 0 3px var(--card),inset 0 0 0 4px color-mix(in srgb,var(--trim) 60%,transparent),0 1px 3px #0000001a}
+html[data-era=ming] .topbar,html[data-era=qing] .topbar{border-bottom-width:4px}
+.eragrid{display:grid;grid-template-columns:repeat(2,1fr);gap:8px}
+.eragrid button{position:relative;display:flex;flex-direction:column;align-items:flex-start;text-align:left;padding:30px 10px 9px;border-radius:12px;min-height:84px;overflow:hidden;
+  background-color:var(--g,var(--card));color:var(--i,var(--ink));border:2px solid var(--t,var(--line))}
+.eragrid button i{position:absolute;left:0;right:0;top:0;height:22px;background-color:var(--b,var(--bar));border-bottom:2px solid var(--t,var(--line))}
+.eragrid button b{font-family:var(--serif);font-size:15px;font-weight:900;color:var(--a,var(--accent))}
+.eragrid button small{font-size:11px;line-height:1.35;opacity:.75}
+.eragrid button.on{outline:3px solid var(--accent);outline-offset:2px}
+.eragrid button.on b::after{content:" ✓"}
+@media (min-width:700px){.eragrid{grid-template-columns:repeat(4,1fr)}}
 .thgrid button{display:flex;flex-direction:column;align-items:center;gap:4px;padding:5px 5px 7px;border-radius:14px;background:var(--card);border:2px solid var(--line);font-size:13px}
 .thgrid button.on{border-color:var(--accent);font-weight:700;color:var(--accent)}.thgrid svg{width:100%;display:block;border-radius:9px}
 @media (min-width:700px){.thgrid{grid-template-columns:repeat(5,1fr)}}
@@ -361,7 +381,7 @@ function confirmBox(text,yes,label){modal(`<h2 style="font-size:19px">${esc(text
 // opts：flip, last{f,t}, sel, targets[], hint[f,t], check
 // 棋盤風格（設定頁可選）。auto＝跟著 App 的深淺色
 const BOARD_THEMES=[
-  ["auto","跟著深淺色",{bg:"var(--wood)",grid:"var(--grid)",piece:"var(--piece)",r:"var(--red)",b:"var(--blk)",mv:"var(--accent2)"}],
+  ["auto","跟著頁面風格",{bg:"var(--wood)",grid:"var(--grid)",piece:"var(--piece)",r:"var(--red)",b:"var(--blk)",mv:"var(--accent2)"}],
   ["wood3d","立體木紋",{bg:["#F0CD8E","#B9813F"],grid:"#4A2E12",piece:"#F8ECD4",r:"#B3261E",b:"#1B1F1C",mv:"#2F6B4F",bevel:1}],
   ["wood","經典木紋",{bg:["#EDCB91","#D3A05F"],grid:"#5B3B1C",piece:"#F8ECD4",r:"#B3261E",b:"#1B1F1C",mv:"#2F6B4F"}],
   ["maple","淺色楓木",{bg:["#F7E8CB","#E8CF9E"],grid:"#7A5530",piece:"#FFF8EA",r:"#B3261E",b:"#222222",mv:"#2F6B4F"}],
@@ -374,7 +394,71 @@ const BOARD_THEMES=[
   ["gold","黑金",{bg:["#26201A","#100D09"],grid:"#C9A65A",piece:"#F3E3BD",r:"#C0392B",b:"#1A1712",mv:"#E8C76A"}],
   ["night","夜間",{bg:["#2D2C36","#1C1B22"],grid:"#8F8CA0",piece:"#E8E1D0",r:"#D2453B",b:"#1B1B22",mv:"#6FBF95"}]];
 (()=>{const t=store.get("pageTheme","auto");if(t!=="auto")document.documentElement.dataset.theme=t})();
-const boardTheme=k=>{k=k||store.get("boardTheme","wood3d");return(BOARD_THEMES.find(t=>t[0]===k)||BOARD_THEMES[0])[2]};
+// ================= 朝代風格：秦～清，每個朝代一套配色＋傳統紋樣（頂部列、底紋、棋盤都跟著換） =================
+// c＝頁面顏色；b＝「跟著頁面風格」時的棋盤；m＝紋樣；dark＝深色系
+const ERA_MOTIF={
+  meander:[20,20,'<path d="M1 19V1h18v14H5V5h10v6H9" fill="none" stroke="C" stroke-width="1.6"/>'],
+  cloud:[36,24,'<path d="M3 19c0-8 11-8 11 0c0 4-6 4-6 0M20 9c0-7 10-7 10 0c0 3.5-5 3.5-5 0" fill="none" stroke="C" stroke-width="1.5" stroke-linecap="round"/>'],
+  bamboo:[30,44,'<path d="M8 0v44M22 0v44M5 14h6M19 32h6" stroke="C" stroke-width="1.6"/><path d="M8 14c6-6 12-6 14-4c-5 1-9 3-14 4z" fill="C"/>'],
+  lattice:[20,20,'<path d="M10 0L20 10L10 20L0 10Z" fill="none" stroke="C" stroke-width="1.3"/>'],
+  lotus:[40,40,'<g transform="translate(20 20)" fill="none" stroke="C" stroke-width="1.3"><circle r="3"/><path d="M0-4c4-5 4-10 0-14c-4 4-4 9 0 14M0 4c4 5 4 10 0 14c-4-4-4-9 0-14M-4 0c-5 4-10 4-14 0c4-4 9-4 14 0M4 0c5 4 10 4 14 0c-4-4-9-4-14 0"/></g>'],
+  waves:[40,20,'<path d="M0 20a10 10 0 0 1 20 0a10 10 0 0 1 20 0M5 20a5 5 0 0 1 10 0M25 20a5 5 0 0 1 10 0M-10 10a10 10 0 0 1 20 0a10 10 0 0 1 20 0a10 10 0 0 1 20 0" fill="none" stroke="C" stroke-width="1.2"/>'],
+  crackle:[90,90,'<path d="M0 22L18 30L34 12L52 20L70 6L90 22M18 30L22 52L8 66L0 70M22 52L46 58L52 20M46 58L62 72L90 64M62 72L58 90M70 6L76 0M74 40L90 46M52 20L74 40L62 72M8 66L12 90" fill="none" stroke="C" stroke-width=".9"/>'],
+  coin:[30,30,'<circle cx="15" cy="15" r="11" fill="none" stroke="C" stroke-width="1.4"/><rect x="11.5" y="11.5" width="7" height="7" fill="none" stroke="C" stroke-width="1.4"/>'],
+  wan:[24,24,'<path d="M12 12V3h7M12 12h9v7M12 12v9H5M12 12H3V5" fill="none" stroke="C" stroke-width="1.6"/>'],
+  scale:[24,14,'<path d="M0 14a6 6 0 0 1 12 0a6 6 0 0 1 12 0M-6 7a6 6 0 0 1 12 0a6 6 0 0 1 12 0a6 6 0 0 1 12 0" fill="none" stroke="C" stroke-width="1.2"/>']};
+const eraMotif=(m,col,op)=>{const[w,h,s]=ERA_MOTIF[m];return`url("data:image/svg+xml,${encodeURIComponent(`<svg xmlns="http://www.w3.org/2000/svg" width="${w}" height="${h}" opacity="${op}">${s.replace(/"C"/g,'"'+col+'"')}</svg>`)}")`};
+const E=(bg,card,ink,muted,line,accent,accent2,bar,barink,trim,extra)=>Object.assign({bg,card,ink,muted,line,accent,accent2,bar,barink,trim,
+  red:"#B3261E",blk:"#1B1F1C",hl:accent2+"55",warn:"#B76E00",info:"#3D6A9E"},extra||{});
+const ERAS=[
+  {k:"classic",n:"經典",s:"原本的樣式，可配淺色／深色"},
+  {k:"qin",n:"秦・玄黑",s:"秦尚黑：黑漆、青銅、回紋",m:"meander",dark:1,
+    c:E("#14110E","#1F1A15","#EADFCB","#A39276","#3A3026","#D2503A","#C9973F","#0A0807","#E2C48A","#8C6A35",{red:"#E0574B",blk:"#0F0D0B",warn:"#E3A34A",info:"#8FA9C8"}),
+    b:{bg:["#2E261F","#17130F"],grid:"#B98A45",piece:"#EAD9B8",r:"#C8382A",b:"#14110E",mv:"#E2B65A",bevel:1}},
+  {k:"han",n:"漢・漆朱",s:"漢代漆器：朱紅配黑、雲氣紋",m:"cloud",
+    c:E("#F3E7D7","#FCF6EC","#2A1410","#7E5E50","#E0CDB8","#A3271C","#3B5E46","#1A0F0C","#F0C9A0","#A3271C",{blk:"#1A1210"}),
+    b:{bg:["#9A2F20","#6A1B12"],grid:"#F1D7A3",piece:"#F7E9CF",r:"#B3261E",b:"#1A1210",mv:"#F6D58A",bevel:1}},
+  {k:"sanguo",n:"三國・烽火",s:"鐵甲、戰旗、赤壁之火",m:"scale",
+    c:E("#ECE6DC","#F8F4EC","#1E2124","#6B6F72","#D6CFC2","#B5381F","#2F5D7C","#2A2E33","#F0D7B0","#B5381F"),
+    b:{bg:["#D9C19A","#A98557"],grid:"#3B2C1C",piece:"#F6EBD5",r:"#B3261E",b:"#1E2124",mv:"#2F5D7C",bevel:1}},
+  {k:"weijin",n:"魏晉・竹林",s:"竹林七賢：竹青、淡墨",m:"bamboo",
+    c:E("#EBEEE6","#F7F8F3","#22291F","#6D7566","#D3D9CB","#4E6B3A","#8A5A2B","#2E3A2A","#DCE6CF","#6E8B57"),
+    b:{bg:["#DCE7CF","#B4CB9E"],grid:"#2E4A2A",piece:"#FBF7EA",r:"#B3261E",b:"#1F2A1F",mv:"#B5552E"}},
+  {k:"nanbei",n:"南北朝・石窟",s:"雲岡龍門：砂岩、蓮花、石青",m:"lotus",
+    c:E("#EFE3D0","#FAF3E6","#3A2618","#85694F","#DECBB0","#9E4A2A","#2F6F6A","#5A3A26","#F3DFC0","#C08A4A"),
+    b:{bg:["#E3C9A2","#C29E6E"],grid:"#5A3A20",piece:"#FBF2E2",r:"#A8321F",b:"#2A1C12",mv:"#2F6F6A",bevel:1}},
+  {k:"sui",n:"隋・運河",s:"大運河：水波、青灰",m:"waves",
+    c:E("#E8ECEE","#F7F9FA","#1D2A33","#627380","#CFD8DE","#2C5F7F","#A86A2A","#22394A","#DCE8EF","#5B8DAA"),
+    b:{bg:["#DDE7EC","#B2C6D2"],grid:"#22394A",piece:"#FAF8F2",r:"#B3261E",b:"#1A2430",mv:"#C27A2E"}},
+  {k:"tang",n:"唐・三彩",s:"盛唐：赭紅、金、三彩、寶相花",m:"lotus",
+    c:E("#F7EBD3","#FFF8EA","#3A1F0E","#87674A","#EAD3AE","#C2571A","#2E7D5B","#6E1F1A","#F7D88F","#D9A441"),
+    b:{bg:["#F2CC85","#C98F3E"],grid:"#5E3110",piece:"#FFF6E2",r:"#B3261E",b:"#2A160A",mv:"#2E7D5B",bevel:1}},
+  {k:"wudai",n:"五代・夜宴",s:"韓熙載夜宴圖：夜色、硃砂、石綠",m:"coin",dark:1,
+    c:E("#1A1613","#26201B","#EFE3CF","#A8977C","#3D342B","#D9603F","#5FA88A","#0F0C0A","#EBD3A8","#7A5A3A",{red:"#E0574B",blk:"#151210",warn:"#E3A34A",info:"#8FA9C8"}),
+    b:{bg:["#3A2E24","#231B15"],grid:"#CDA86A",piece:"#EAD9B8",r:"#C8382A",b:"#151210",mv:"#7CC9A6",bevel:1}},
+  {k:"song",n:"宋・汝窯",s:"雨過天青：素雅、冰裂紋",m:"crackle",
+    c:E("#E6EEEA","#F6FAF8","#22312D","#64776F","#CDDCD5","#3E7C76","#8B6A3E","#4B6B65","#EAF3EF","#9DBDB2"),
+    b:{bg:["#D6E5DE","#AFCAC0"],grid:"#2D4A44",piece:"#FBFBF6",r:"#B3261E",b:"#1C2A27",mv:"#B5652E"}},
+  {k:"yuan",n:"元・青花",s:"青花瓷：鈷藍、白釉、纏枝",m:"cloud",
+    c:E("#EEF2F8","#FFFFFF","#12204A","#5A6688","#D3DBEA","#1F3F8F","#2F6B4F","#14306E","#E8EEFA","#3B5BB0",{blk:"#12204A"}),
+    b:{bg:["#FAFBFD","#E1E7F2"],grid:"#1F3F8F",piece:"#FFFFFF",r:"#B3261E",b:"#12204A",mv:"#D9822B"}},
+  {k:"ming",n:"明・宮牆",s:"紫禁城：紅牆、黃琉璃、萬字紋",m:"wan",
+    c:E("#F4EADB","#FFF9EF","#2E1A12","#7D5F4E","#E5D2BB","#A3201A","#2F6B4F","#8E1C14","#F7D774","#D8A62E"),
+    b:{bg:["#E2B072","#B67A3C"],grid:"#4E260C",piece:"#FFF4DF",r:"#B3261E",b:"#24140A",mv:"#2F6B4F",bevel:1}},
+  {k:"qing",n:"清・琺瑯",s:"明黃、景泰藍、龍鱗紋",m:"scale",
+    c:E("#FBF3D6","#FFFBEA","#2A2410","#7C6E44","#EBDDAA","#1E5F74","#B5452B","#12485A","#F4D46A","#D4A72C"),
+    b:{bg:["#F6D77A","#D9A93A"],grid:"#5A3E08","piece":"#FFF8E2",r:"#B3261E",b:"#1E2A30",mv:"#1E5F74",bevel:1}}];
+const ERA_KEYS=["bg","card","ink","muted","line","accent","accent2","bar","barink","trim","red","blk","hl","warn","info","wood","grid","piece"];
+const curEra=()=>{const e=ERAS.find(x=>x.k===store.get("era","classic"));return e&&e.c?e:null};
+function applyEra(){const r=document.documentElement,e=curEra();
+  for(const p of ERA_KEYS)r.style.removeProperty("--"+p);r.style.removeProperty("--motif-bar");r.style.removeProperty("--motif-bg");r.style.colorScheme="";
+  if(e){r.dataset.era=e.k;for(const[k,v]of Object.entries(e.c))r.style.setProperty("--"+k,v);
+    r.style.setProperty("--wood",e.b.bg[1]);r.style.setProperty("--grid",e.b.grid);r.style.setProperty("--piece",e.b.piece);
+    r.style.setProperty("--motif-bar",eraMotif(e.m,e.c.barink,.2));r.style.setProperty("--motif-bg",eraMotif(e.m,e.c.ink,e.dark?.07:.05));r.style.colorScheme=e.dark?"dark":"light"}
+  else delete r.dataset.era;
+  const mt=document.querySelector('meta[name="theme-color"]');if(mt)mt.content=e?e.c.bar:"#3B2A1A"}
+applyEra();
+const boardTheme=k=>{k=k||store.get("boardTheme","wood3d");if(k==="auto"&&curEra())return curEra().b;return(BOARD_THEMES.find(t=>t[0]===k)||BOARD_THEMES[0])[2]};
 let boardN=0;
 // 走棋音效：用 WebAudio 合成木頭棋子的「叩」聲（吃子比較重），設定裡可以關
 let AC=null;
@@ -413,7 +497,7 @@ function Board(onTap,onSwipe){
   let lastKey="";
   function draw(board,o){o=o||{};
     // 跟上一次畫的完全一樣（盤面、選子、箭頭、風格都沒變）就不重畫：對戰畫面每秒更新，重畫整個棋盤在手機上會卡、會閃
-    const key=board.join(",")+"|"+JSON.stringify(o)+"|"+[store.get("boardTheme",""),store.get("pieceStyle",""),store.get("mvArrow",true),store.get("pageTheme","")].join(",");
+    const key=board.join(",")+"|"+JSON.stringify(o)+"|"+[store.get("boardTheme",""),store.get("pieceStyle",""),store.get("mvArrow",true),store.get("pageTheme",""),store.get("era","")].join(",");
     if(key===lastKey&&svg.firstChild)return;lastKey=key;
     flip=!!o.flip;svg.innerHTML="";
     const px=c=>X0+c*S,py=r=>Y0+r*S,T=boardTheme(o.theme),PS=o.pstyle||store.get("pieceStyle","3d");
@@ -1038,7 +1122,8 @@ function Settings(v){
   v.innerHTML=`<div class="pad home">
     <div class="card" style="padding:10px"><div id="pv" style="max-width:300px;margin:0 auto"></div>
       <div class="row" style="justify-content:space-between;margin-top:6px"><span class="muted">示範：紅方 炮二平五</span><button class="pill" id="replay">▶ 再走一次</button></div></div>
-    <div class="sec-t">頁面風格</div><div class="opt" id="pt"></div>
+    <div class="sec-t">朝代風格<span class="muted" style="font-size:12px;font-weight:400">每一頁都會換</span></div><div class="eragrid" id="era"></div>
+    <div class="sec-t">深淺色</div><div class="opt" id="pt"></div><p class="muted" id="ptN" style="font-size:12px;margin:4px 4px 0"></p>
     <div class="sec-t">棋盤風格</div><div class="thgrid" id="th"></div>
     <div class="sec-t">棋子樣式</div><div class="opt" id="ps"></div>
     <div class="sec-t">走棋顯示</div><div class="card" id="mv"></div>
@@ -1064,6 +1149,11 @@ function Settings(v){
     v.querySelectorAll("[data-p]").forEach(x=>x.onclick=()=>{store.set("pieceStyle",x.dataset.p);paint();show(false)});
     const pt=store.get("pageTheme","auto");v.querySelector("#pt").innerHTML=[["auto","跟著手機"],["light","☀ 淺色"],["dark","🌙 深色"]].map(([k,l])=>`<button data-m="${k}" class="${pt===k?"on":""}">${l}</button>`).join("");
     v.querySelectorAll("[data-m]").forEach(x=>x.onclick=()=>{const k=x.dataset.m;store.set("pageTheme",k);if(k==="auto")delete document.documentElement.dataset.theme;else document.documentElement.dataset.theme=k;paint()});
+    const ce=store.get("era","classic");v.querySelector("#ptN").textContent=curEra()?"朝代風格有自己的配色；選「經典」才會用到深淺色":"";
+    v.querySelector("#era").innerHTML=ERAS.map(e=>{const c=e.c,st=c?`--b:${c.bar};--bi:${c.barink};--g:${c.bg};--cd:${c.card};--t:${c.trim};--a:${c.accent};--i:${c.ink};background-image:${eraMotif(e.m,c.ink,e.dark?.09:.07)}`:"--b:#3B2A1A;--g:#F3EDE2;--t:#E2D6C3;--a:#B5452B;--i:#2A1F15";
+      return`<button data-e="${e.k}" class="${ce===e.k?"on":""}${c?"":" cl"}" style="${st}"><i style="${c?`background-image:${eraMotif(e.m,c.barink,.3)}`:""}"></i><b>${esc(e.n)}</b><small>${esc(e.s)}</small></button>`}).join("");
+    v.querySelectorAll("[data-e]").forEach(x=>x.onclick=()=>{const k=x.dataset.e;if(k===store.get("era","classic"))return;vibrate(5);store.set("era",k);applyEra();
+      if(k!=="classic"&&store.get("boardTheme","wood3d")!=="auto"){store.set("boardTheme","auto");toast("棋盤也換成這個朝代的配色（可在下面改回）")}paint();show(true)});
     const tg=(k,label,sub)=>`<label class="row" style="justify-content:space-between;padding:6px 0"><span><b>${label}</b><br><span class="muted">${sub}</span></span><input type="checkbox" class="sw" data-t="${k}" ${store.get(k,k!=="mvSound")?"checked":""}></label>`;
     v.querySelector("#mv").innerHTML=tg("mvArrow","箭頭","從原來位置畫箭頭指到新位置")+'<div style="border-top:1px solid var(--line)"></div>'+tg("mvAnim","動畫","棋子滑過去，被吃的棋子淡出")+'<div style="border-top:1px solid var(--line)"></div>'+tg("mvSound","音效","走棋時「叩」一聲，吃子比較重");
     v.querySelectorAll("[data-t]").forEach(x=>x.onchange=()=>{store.set(x.dataset.t,x.checked);show(true)});
