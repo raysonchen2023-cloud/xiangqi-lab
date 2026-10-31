@@ -941,7 +941,8 @@ function Stats(v){
   v.querySelector("#qz").onclick=()=>location.hash="#/quiz";
   histList(v.querySelector("#sHist"),reps);
   Promise.all([api("/play/state"),api("/db/items?c=play&limit=30").catch(()=>({items:[]}))]).then(([st,d])=>{
-    let W=0,L=0,D=0;for(const r of Object.values(st.record||{})){W+=r.w||0;L+=r.l||0;D+=r.d||0}const N=W+L+D;
+    let W=0,L=0,D=0;for(const r of Object.values(st.record||{})){W+=r.w||0;L+=r.l||0;D+=r.d||0}
+    const CR=st.cpuRate||{w:0,l:0,d:0};W+=CR.w;L+=CR.l;D+=CR.d;const N=W+L+D;   // 積分挑戰的勝負也算進挑戰電腦的總計
     const sc=Object.values(reps).map(r=>r.score).filter(x=>x!=null),avg=sc.length?Math.round(sc.reduce((a,b)=>a+b,0)/sc.length):null;
     // 電腦段位（積分挑戰）
     const cb=v.querySelector("#sCpu");if(cb&&st.cpuRate){const R=st.cpuRate,N=R.w+R.l+R.d,pc=R.hi?Math.round((R.pts-R.lo)*100/(R.hi-R.lo)):100;
@@ -953,7 +954,7 @@ function Stats(v){
       ${[["勝",W,"var(--accent2)"],["負",L,"var(--red)"],["和",D,"var(--muted)"],["勝率",N?Math.round(W*100/N)+"%":"—",""]].map(([l,x,c])=>`<div><div style="font-size:26px;font-weight:900;color:${c}">${x}</div><div class="muted">${l}</div></div>`).join("")}</div>
       ${avg!=null?`<p class="muted" style="text-align:center;margin:10px 0 0">賽後報告平均 <b style="color:${gradeFor(avg)[2]}">${avg} 分（${gradeFor(avg)[0]}）</b>・共 ${sc.length} 盤</p>`:'<p class="muted" style="text-align:center;margin:10px 0 0">下完一盤按「📊 賽後報告」，分數會記在這裡</p>'}`;
     v.querySelector("#sLv").innerHTML=`<table style="width:100%;border-collapse:collapse;font-size:14px"><tr class="muted"><td>難度</td><td>勝</td><td>負</td><td>和</td><td>勝率</td><td></td></tr>${st.levels.map(l=>{const r=st.record[l.n]||{w:0,l:0,d:0};
-      return`<tr style="border-top:1px solid var(--line)"><td style="padding:7px 0"><b>${l.n}</b> ${esc(l.name)}</td><td>${r.w||0}</td><td>${r.l||0}</td><td>${r.d||0}</td><td>${(r.w||0)+(r.l||0)+(r.d||0)?Math.round((r.w||0)*100/((r.w||0)+(r.l||0)+(r.d||0)))+"%":"—"}</td><td>${r.w?"✔":""}</td></tr>`}).join("")}</table>`;
+      return`<tr style="border-top:1px solid var(--line)"><td style="padding:7px 0"><b>${l.n}</b> ${esc(l.name)}</td><td>${r.w||0}</td><td>${r.l||0}</td><td>${r.d||0}</td><td>${(r.w||0)+(r.l||0)+(r.d||0)?Math.round((r.w||0)*100/((r.w||0)+(r.l||0)+(r.d||0)))+"%":"—"}</td><td>${r.w?"✔":""}</td></tr>`}).join("")}${(()=>{const n=CR.w+CR.l+CR.d;return`<tr style="border-top:1px solid var(--line)"><td style="padding:7px 0"><b>🏅</b> 積分挑戰</td><td>${CR.w}</td><td>${CR.l}</td><td>${CR.d}</td><td>${n?Math.round(CR.w*100/n)+"%":"—"}</td><td></td></tr>`})()}</table>`;
   }).catch(e=>{v.querySelector("#sTot").innerHTML=`<span class="muted">⚠ ${esc(e.message)}</span>`});
   return{}}
 
