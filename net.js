@@ -58,7 +58,7 @@ var XQNet=(function(){
   const rankOf=p=>RANKS[rankIdx(p)][0];
   const rec=()=>ls.get("rate",null)||{pts:0,w:0,l:0,d:0,hist:[]};
   const myPts=()=>rec().pts;
-  function record(){if(!G||!G.result||G.result.abort||G.moves.length<2)return;   // 雙方都還沒走就結束：不計分
+  function record(){if(!G||!G.result||G.result.abort||(G.moves.length<2&&!G.result.timeout))return;   // 超時判負一定計分   // 雙方都還沒走就結束：不計分
     const s=side();if(!s)return;const R=rec();if(R.hist.some(h=>h.gid===G.gid))return;
     const o=s==="r"?G.black:G.red,op=o.pts!=null?o.pts:(people[o.id]&&people[o.id].pts)||0;
     const g=rankIdx(op)-rankIdx(R.pts),cl=(x,a,b)=>Math.max(a,Math.min(b,x));
@@ -111,6 +111,12 @@ var XQNet=(function(){
   const onl=id=>{const x=people[id];return id===me().id?!!(cli&&cli.up):!!(x&&Date.now()-x.at<ALIVE&&G&&x.gid===G.gid)};
   function setResult(r){if(!G||G.result)return;const n=JSON.parse(JSON.stringify(G));n.result=r;n.draw=null;n.rev=G.rev+1;n.at=Date.now();G=n;pubGame();presence();record();emit("game")}
   // 對方離線超過 10 分鐘、棋局也 10 分鐘沒動：自動中止，不再一直掛著「對戰中」
+  // 每步限時：輪到的一方超過 3 分鐘沒走（離開、斷線、關掉 App），由等待的一方判他超時負，比賽自動結束並計分
+  const TURN_MS=3*60000;
+  const toMove=()=>G?(G.moves.length%2?"b":"r"):null;
+  function timeoutCheck(){if(!playing()||!cli||!cli.up)return;const t=toMove(),me=side();if(!t||t===me)return;
+    if(Date.now()-(G.at||0)>TURN_MS)setResult({w:me,timeout:true,why:PL[t]+"超過 3 分鐘沒走，超時判負"})}
+  setInterval(timeoutCheck,5000);
   function staleCheck(){if(!playing()||!cli||!cli.up)return;const o=oppOf(side()),oid=o==="r"?G.red.id:G.black.id;
     if(!onl(oid)&&Date.now()-(G.at||0)>10*60000)setResult({w:null,abort:true,why:"對方離線太久，對局中止"})}
   // 自己離開一盤還沒下完的棋：對方還在線上就算自己認輸；對方已經離線就直接中止
@@ -142,6 +148,7 @@ var XQNet=(function(){
     respond(x,ok){const m=me();if(ok)endOnLeave();cli&&cli.pub(`${ROOT}/i/${x.from.id}`,JSON.stringify({type:ok?"accept":"decline",gid:x.gid,from:{id:m.id,name:m.name,pts:myPts()},at:Date.now()}));
       if(ok){G=null;enter(x.gid);waitGame(x.gid,false)}},
     watch(gid){endOnLeave();G=null;enter(gid)},
+    turnLeft(){if(!G||G.result)return null;return Math.max(0,TURN_MS-(Date.now()-(G.at||0)))},
     oppOnline(){if(!G||!side())return false;const o=oppOf(side());return onl(o==="r"?G.red.id:G.black.id)},
     leave(){endOnLeave();if(cur&&cli&&cli.up)cli.unsub(gt(cur.gid));cur=null;G=null;ls.set("net",null);presence()},
     // 對局有變化：發布新狀態（rev 越大越新）
