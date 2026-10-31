@@ -1276,7 +1276,7 @@ function Library(v,c0){
     <div class="lib-bar"><div class="search"><label class="lib-q"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><circle cx="10.5" cy="10.5" r="6.5"/><path d="M15.5 15.5 20 20"/></svg><input id="q" type="search" placeholder="搜尋局名、棋手、賽事" enterkeyhint="search" autocomplete="off"></label><button id="pf" hidden>👤 棋手</button></div>
     <div class="lib-meta"><span id="cnt"></span><button id="clr" hidden>清除篩選</button></div></div>
     <div class="items" id="items"></div><div class="more" id="more"></div></div>`;
-  let books=[],data=null,shown=[],grp=null;
+  let books=[],data=null,shown=[],grp=null,big=[];   // big：可以從網站下載的大型棋譜（例如特級大師對局）
   // 書目分三類：古譜／大師對局／我的對局
   const MINE=["ai","play","pvp","study"],GRPS=[["old","古譜"],["gm","大師對局"],["me","我的對局"]];
   const grpOf=b=>MINE.includes(b.key)?"me":(b.synced||/^(xuyinchuan|gmgames)$/.test(b.key))?"gm":"old";
@@ -1299,6 +1299,7 @@ function Library(v,c0){
     box.innerHTML="";
     for(const b of books.filter(b=>grpOf(b)===grp)){const x=document.createElement("button");x.dataset.c=b.key;x.classList.toggle("on",b.key===libState.c);
       x.innerHTML=esc(b.name)+(b.count?`<span class="n">${b.count}</span>`:"");x.onclick=()=>{if(b.key!==libState.c)pick(b.key)};box.append(x)}
+    if(grp==="gm")for(const g of big.filter(g=>!books.some(b=>b.key===g.key))){const x=document.createElement("button");x.className="sync";x.textContent=`⬇ ${g.name}（${Math.round(g.size/1048576)} MB）`;x.onclick=()=>bigSheet(g);box.append(x)}
     if(DEVREMOTE()&&grp==="gm"){const x=document.createElement("button");x.className="sync";x.textContent="☁ 從電腦同步";x.onclick=()=>syncSheet();box.append(x)}
     const on=box.querySelector(".on"),x=on?on.offsetLeft-box.offsetLeft:0;box.scrollLeft=on&&x+on.offsetWidth>box.clientWidth-12?x-(box.clientWidth-on.offsetWidth)/2:0}
   function showNone(){v.querySelector("#pf").hidden=true;v.querySelector("#clr").hidden=true;v.querySelector("#cnt").textContent="";v.querySelector("#more").innerHTML="";
@@ -1339,6 +1340,13 @@ function Library(v,c0){
           for(const p of all){const x=document.createElement("button");x.innerHTML=`<span>${p.name?esc(p.name)+(p.revoked?" ＊":""):"全部棋手"}${p.name===libState.player?' <span class="badge">已選</span>':""}</span><span class="muted">${p.count} 局</span>`;
             x.onclick=()=>{libState.player=p.name;libState.limit=60;closeSheet();filter(true)};box.append(x)}};
         b.querySelector("#ps").oninput=list;list()};paint()})}
+  // 下載大型棋譜：存在手機裡，之後沒網路也能看
+  function bigSheet(g){sheet("下載"+g.name,b=>{b.innerHTML=`<p>${esc(g.name)}，約 ${Math.round(g.size/1048576)} MB。下載一次存在手機裡，之後沒網路也能看。建議用 Wi-Fi 下載。</p><p class="muted" id="bp"></p><button class="btn" id="bg">開始下載</button>`;
+    const bt=b.querySelector("#bg"),bp=b.querySelector("#bp");bt.onclick=async()=>{bt.disabled=true;bt.textContent="下載中…";
+      try{const n=await XQ.syncSite(g.key,g.name,(got,total)=>{bp.textContent=`已下載 ${(got/1048576).toFixed(1)}${total?" / "+(total/1048576).toFixed(1):""} MB`});
+        bp.textContent=`✅ 完成，共 ${n} 局`;toast("下載完成");setTimeout(()=>{closeSheet();libState.c=g.key;route()},700)}
+      catch(e){bp.textContent="⚠ "+e.message+"，請確認網路後再試";bt.disabled=false;bt.textContent="再試一次"}}})}
+  if(OFF&&window.XQ&&XQ.bigBooks)XQ.bigBooks().then(x=>{big=x||[];if(grp)paintCols()});
   api("/db/books").then(bs=>{books=bs;
     let c=c0||libState.c||store.get("libC",null);if(!c0&&!bs.some(b=>b.key===c))c=(bs[0]||{}).key;
     if(c)load(c);else{grp="gm";paintCols();showNone()}}).catch(e=>empty("⚠","連不到電腦上的程式："+esc(e.message)));

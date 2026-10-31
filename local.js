@@ -162,7 +162,7 @@ var XQ=(function(){
     return list.slice().reverse().map(g=>{if(kind==="play"){const lv=LEVELS[g.level-1]||{name:"?"},bot=g.ranked?"Pikafish 積分挑戰（"+(RANKS[g.rk]||["?"])[0]+"）":"Pikafish 第"+g.level+"級「"+lv.name+"」";g={...g,red:g.human==="r"?"你":bot,black:g.human==="b"?"你":bot}}
       return gameItem(g,false)})}
   async function dbBooks(){const out=[];for(const b of await publicBooks())out.push({key:b.key,name:b.name,count:b.count});
-    for(const b of await syncedBooks())out.push({key:b.key,name:b.name,count:b.count,synced:b.at});
+    for(const b of await syncedBooks())if(!out.some(x=>x.key===b.key))out.push({key:b.key,name:b.name,count:b.count,synced:b.at});   // 以前從電腦同步過、現在已內建的，不要出現兩份
     if(remoteInfo())out.push({key:"ai",name:"AI 對局",count:0});
     out.push({key:"play",name:"人機對局",count:((await idb.get("games:play"))||[]).length},{key:"pvp",name:"真人對局",count:((await idb.get("games:pvp"))||[]).length},
       {key:"study",name:"我的研究",count:((await idb.get("games:study"))||[]).length});return out}
@@ -258,6 +258,15 @@ var XQ=(function(){
       if(!base||base===r.base)return false;
       ls.set("remote",{...r,base,at:Date.now()});lastPing={at:0,ok:false};return true}catch(e){return false}}
   // 從電腦把棋譜同步到手機（之後離線也能看）
+  // 從網站下載大型棋譜（例如特級大師對局 33 MB），不用連電腦
+  async function bigBooks(){try{return await(await fetch(BASE+"data/big-books.json")).json()}catch(e){return[]}}
+  async function syncSite(key,name,onProgress){
+    const res=await fetch(BASE+"data/"+key+".json",{cache:"no-store"});if(!res.ok)throw new Error("下載失敗（"+res.status+"）");
+    const total=+res.headers.get("content-length")||0,reader=res.body.getReader(),chunks=[];let got=0;
+    for(;;){const{done,value}=await reader.read();if(done)break;chunks.push(value);got+=value.length;if(onProgress)onProgress(got,total)}
+    const text=await new Blob(chunks).text(),d=JSON.parse(text);
+    await idb.set("col:"+key,text);const cols=(await syncedBooks()).filter(x=>x.key!==key);cols.push({key,name:d.name||name,count:d.items.length,at:new Date().toISOString()});
+    await idb.set("cols",cols);delete bookCache[key];return d.items.length}
   async function sync(key,name,onProgress){
     const res=await remote("/db/raw?c="+encodeURIComponent(key),undefined,{raw:true});if(!res.ok)throw new Error("電腦上沒有這個資料夾");
     const total=+res.headers.get("content-length")||0,reader=res.body.getReader(),chunks=[];let got=0;
@@ -286,7 +295,7 @@ var XQ=(function(){
     if(p.startsWith("/pvp/"))return pvpPost(p,b||{});
     if(p.startsWith("/an/"))return anPost(p,b||{});
     throw new Error("離線版不支援："+p)}
-  return{api,remoteInfo,ping,sync,parseConnect,setPvpOnline(on){ls.set("pvpOnline",!!on)},unsync,syncedBooks,disconnect(){localStorage.removeItem("xq_remote");lastPing={at:0,ok:false}},
+  return{api,remoteInfo,ping,sync,syncSite,bigBooks,parseConnect,setPvpOnline(on){ls.set("pvpOnline",!!on)},unsync,syncedBooks,disconnect(){localStorage.removeItem("xq_remote");lastPing={at:0,ok:false}},
     engineCached:async()=>{try{const c=await caches.open("xqlab-engine");return!!(await c.match(BASE+"engine/pikafish.nnue"))}catch(e){return false}}};
 })();
 var XQ_justConnected=XQ_justConnected||false;
