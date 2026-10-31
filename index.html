@@ -223,6 +223,10 @@ html[data-era=ming] .topbar,html[data-era=qing] .topbar{border-bottom-width:4px}
 .lib .item .lb{width:40px;min-width:40px;font-size:12px}
 .lib .item .tx b{line-height:1.45}
 .lib .item .tx b .rn{display:inline;font-size:inherit;color:var(--red)}
+.bio-i{display:inline-block;width:22px;height:22px;line-height:22px;text-align:center;border-radius:50%;background:color-mix(in srgb,var(--accent) 14%,var(--card));color:var(--accent);font-weight:700;margin-right:4px}
+.bio-card{display:block;width:100%;text-align:left;margin:0 0 10px;padding:12px 14px;border:1px solid var(--line);border-left:4px solid var(--accent);font:inherit;color:var(--ink)}
+.bio-card .bio-s{margin-top:6px;font-size:14px;line-height:1.6;display:-webkit-box;-webkit-line-clamp:3;-webkit-box-orient:vertical;overflow:hidden}
+.bio-card .bio-more{display:inline-block;margin-top:6px;font-size:13px;color:var(--accent);font-weight:600}
 .lib-r{flex:none;min-width:42px;text-align:center;font-size:12px;font-weight:700;line-height:20px;padding:0 8px;border-radius:999px}
 .lib-r.r{color:var(--red);background:var(--bg);background:color-mix(in srgb,var(--red) 12%,var(--card))}
 .lib-r.b{color:var(--ink);background:var(--bg);background:color-mix(in srgb,var(--ink) 10%,var(--card))}
@@ -1525,6 +1529,7 @@ function Library(v,c0){
     for(const b of books.filter(b=>grpOf(b)===grp)){const x=document.createElement("button");x.dataset.c=b.key;x.classList.toggle("on",b.key===libState.c);
       x.innerHTML=esc(b.name)+(b.count?`<span class="n">${b.count}</span>`:"");x.onclick=()=>{if(b.key!==libState.c)pick(b.key)};box.append(x)}
     if(grp==="gm")for(const g of big.filter(g=>!books.some(b=>b.key===g.key))){const x=document.createElement("button");x.className="sync";x.textContent=`⬇ ${g.name}（${Math.round(g.size/1048576)} MB）`;x.onclick=()=>bigSheet(g);box.append(x)}
+    if(grp==="gm"&&big.length&&books.some(b=>b.synced&&big.some(g=>g.key===b.key))){const x=document.createElement("button");x.className="sync";x.textContent="🗑 管理下載";x.onclick=()=>dlSheet();box.append(x)}
     if(DEVREMOTE()&&grp==="gm"){const x=document.createElement("button");x.className="sync";x.textContent="☁ 從電腦同步";x.onclick=()=>syncSheet();box.append(x)}
     const on=box.querySelector(".on"),x=on?on.offsetLeft-box.offsetLeft:0;box.scrollLeft=on&&x+on.offsetWidth>box.clientWidth-12?x-(box.clientWidth-on.offsetWidth)/2:0}
   function showNone(){v.querySelector("#pf").hidden=true;v.querySelector("#clr").hidden=true;v.querySelector("#cnt").textContent="";v.querySelector("#more").innerHTML="";
@@ -1544,6 +1549,9 @@ function Library(v,c0){
     const tags=pn?[{r:"執紅",b:"執黑"}[libState.side],{w:"他贏的",l:"他輸的",d:"和局"}[libState.res]].filter(Boolean):[];
     v.querySelector("#cnt").textContent=(fil?`找到 ${shown.length} 局・共 ${data.items.length} 局`:`共 ${shown.length} 局`)+tags.map(t=>"・"+t).join("")+(data.note?"・"+data.note:"");
     const box=v.querySelector("#items");box.innerHTML="";if(top)toBar();
+    if(pn&&bios&&bios[pn]){const p=bios[pn],c=document.createElement("button");c.className="card bio-card";
+      c.innerHTML=`<b>${esc(p.zh||pn)}</b>${p.revoked?' <span class="muted">（稱號已撤銷）</span>':""}<div class="muted">${esc([p.born&&p.born.slice(0,4)+" 年生",p.from,p.gm&&p.gm+" 年特級大師"].filter(Boolean).join("・"))}</div><div class="bio-s">${esc(p.bio||"")}</div><span class="bio-more">看完整生平 ›</span>`;
+      c.onclick=()=>bioSheet(pn);box.append(c)}else if(pn&&!bios)getBios().then(()=>{if(bios[pn]&&libState.player===pn)filter()});
     if(!shown.length){const go={pvp:["#/lobby","去線上對戰下一盤"],play:["#/cpu","去挑戰電腦"],ai:["#/watch/ai","去看 AI 對戰"]}[libState.c];
       if(data.items.length)empty("🔍","沒有符合的棋局",["清除篩選",()=>v.querySelector("#clr").onclick()]);
       else empty("📭","這裡還沒有棋局",go&&[go[1],()=>location.hash=go[0]])}
@@ -1555,6 +1563,12 @@ function Library(v,c0){
       b.onclick=()=>{vibrate(5);location.hash=`#/db/${encodeURIComponent(libState.c)}/${encodeURIComponent(it.id)}`};box.append(b)}
     const more=v.querySelector("#more");more.innerHTML="";
     if(shown.length>libState.limit){const b=document.createElement("button");b.className="btn ghost";b.textContent=`再顯示 60 局（還有 ${shown.length-libState.limit} 局）`;b.onclick=()=>{libState.limit+=60;filter()};more.append(b)}}
+  // 特級大師生平（data/gmbios.json，第一次用到才讀）
+  let bios=null;const getBios=()=>bios?Promise.resolve(bios):XQ_BIOS().then(x=>bios=x).catch(()=>bios={});
+  function bioHtml(p){const L=[p.born&&("生於 "+p.born+(p.died?"，卒於 "+p.died:"")),p.from,p.gm&&(p.gm+" 年獲特級大師")].filter(Boolean).join("・");
+    return`<div class="muted" style="margin-bottom:6px">${esc(L)}</div>${p.titles&&p.titles.length?`<ul style="margin:0 0 6px;padding-left:20px">${p.titles.map(t=>`<li>${esc(t)}</li>`).join("")}</ul>`:""}${p.style?`<div><b>棋風：</b>${esc(p.style)}</div>`:""}<p style="margin:6px 0 0;line-height:1.7">${esc(p.bio||"")}</p>`}
+  function bioSheet(name){getBios().then(B=>{const p=B[name];if(!p)return toast("還沒有這位棋手的介紹");
+    sheet((p.zh||name)+"・生平",b=>{b.innerHTML=bioHtml(p)+`<p class="muted" style="font-size:12px;margin-top:10px">資料整理自公開網路資料，如有錯誤歡迎回饋。${(p.src||[]).length?"<br>參考："+p.src.map((u,i)=>`<a href="${esc(u)}" target="_blank" rel="noopener">${i+1}</a>`).join("、"):""}</p>`})})}
   function playerSheet(){const pl=data.players||Object.entries(data.items.reduce((m,it)=>{for(const n of[it.red,it.black])if(n)m[n]=(m[n]||0)+1;return m},{})).sort((a,b)=>b[1]-a[1]).map(([name,count])=>({name,count}));
     sheet("篩選棋手",b=>{const paint=()=>{b.innerHTML=`<div class="muted">執</div><div class="opt">${[["","紅黑都看"],["r","只看執紅"],["b","只看執黑"]].map(([k,l])=>`<button data-s="${k}" class="${libState.side===k?"on":""}">${l}</button>`).join("")}</div>
         <div class="muted">結果</div><div class="opt">${[["","全部"],["w","他贏的"],["l","他輸的"],["d","和局"]].map(([k,l])=>`<button data-r="${k}" class="${libState.res===k?"on":""}">${l}</button>`).join("")}</div>
@@ -1562,14 +1576,22 @@ function Library(v,c0){
         b.querySelectorAll("[data-s]").forEach(x=>x.onclick=()=>{libState.side=x.dataset.s;paint();filter(true)});b.querySelectorAll("[data-r]").forEach(x=>x.onclick=()=>{libState.res=x.dataset.r;paint();filter(true)});
         const list=()=>{const q=s2(b.querySelector("#ps").value.trim()),box=b.querySelector("#pl");box.innerHTML="";
           const all=[{name:"",count:data.items.length}].concat(pl).filter(p=>!q||s2(p.name).includes(q)).slice(0,120);
-          for(const p of all){const x=document.createElement("button");x.innerHTML=`<span>${p.name?esc(p.name)+(p.revoked?" ＊":""):"全部棋手"}${p.name===libState.player?' <span class="badge">已選</span>':""}</span><span class="muted">${p.count} 局</span>`;
-            x.onclick=()=>{libState.player=p.name;libState.limit=60;closeSheet();filter(true)};box.append(x)}};
+          for(const p of all){const x=document.createElement("button");const hb=p.name&&bios&&bios[p.name];
+            x.innerHTML=`<span>${p.name?esc(p.name)+(p.revoked?" ＊":""):"全部棋手"}${p.name===libState.player?' <span class="badge">已選</span>':""}</span><span class="muted">${hb?'<span class="bio-i" role="button" aria-label="生平">ⓘ</span> ':""}${p.count} 局</span>`;
+            x.onclick=e=>{if(e.target.closest(".bio-i"))return bioSheet(p.name);libState.player=p.name;libState.limit=60;closeSheet();filter(true)};box.append(x)}};
+        getBios().then(()=>{if(b.isConnected)list()});
         b.querySelector("#ps").oninput=list;list()};paint()})}
+  // 已下載的比賽對局：可以從手機刪掉，騰出空間
+  function dlSheet(){sheet("已下載的比賽對局",b=>{b.innerHTML='<p class="muted">存在這支手機裡，沒網路也能看。刪掉後要再看可以重新下載。</p><div id="dl"></div>';
+    for(const g of big){const h=books.find(x=>x.key===g.key&&x.synced);if(!h)continue;const row=document.createElement("div");row.className="card";row.style.marginBottom="8px";
+      row.innerHTML=`<b>${esc(g.name)}</b> <span class="muted">${h.count} 局・約 ${Math.round(g.size/1048576)} MB</span><div class="opt" style="margin:6px 0 0"><button>從手機刪除</button></div>`;
+      row.querySelector("button").onclick=()=>confirmBox(`從這支手機刪除「${g.name}」？`,async()=>{await XQ.unsync(g.key);closeSheet();toast("已刪除");if(libState.c===g.key)libState.c=null;route()},"刪除");
+      b.querySelector("#dl").append(row)}})}
   // 下載大型棋譜：存在手機裡，之後沒網路也能看
-  function bigSheet(g){sheet("下載"+g.name,b=>{b.innerHTML=`<p>${esc(g.name)}，約 ${Math.round(g.size/1048576)} MB。下載一次存在手機裡，之後沒網路也能看。建議用 Wi-Fi 下載。</p><p class="muted" id="bp"></p><button class="btn" id="bg">開始下載</button>`;
+  function bigSheet(g){sheet("下載"+g.name,b=>{b.innerHTML=`<p>${esc(g.name)}${g.count?`：${g.count.toLocaleString()} 局`:""}，約 ${Math.round(g.size/1048576)} MB。${/^tour-/.test(g.key)?"收這幾年全國賽、各地公開賽等比賽裡，「特級大師對局」沒收的對局。":""}下載一次存在手機裡，之後沒網路也能看。建議用 Wi-Fi 下載。</p><p class="muted" id="bp"></p><button class="btn" id="bg">開始下載</button>`;
     const bt=b.querySelector("#bg"),bp=b.querySelector("#bp");bt.onclick=async()=>{bt.disabled=true;bt.textContent="下載中…";
       try{const n=await XQ.syncSite(g.key,g.name,(got,total)=>{bp.textContent=`已下載 ${(got/1048576).toFixed(1)}${total?" / "+(total/1048576).toFixed(1):""} MB`});
-        bp.textContent=`✅ 完成，共 ${n} 局`;toast("下載完成");setTimeout(()=>{closeSheet();libState.c=g.key;route()},700)}
+        bp.textContent=`✅ 完成，共 ${n} 局`;toast("下載完成");setTimeout(()=>{closeSheet();libState.c=g.key;const h="#/db/"+encodeURIComponent(g.key);if(location.hash===h)route();else location.hash=h},700)}
       catch(e){bp.textContent="⚠ "+e.message+"，請確認網路後再試";bt.disabled=false;bt.textContent="再試一次"}}})}
   if(OFF&&window.XQ&&XQ.bigBooks)XQ.bigBooks().then(x=>{big=x||[];if(grp)paintCols()});
   api("/db/books").then(bs=>{books=bs;
@@ -1577,6 +1599,8 @@ function Library(v,c0){
     if(c)load(c);else{grp="gm";paintCols();showNone()}}).catch(e=>empty("⚠","連不到電腦上的程式："+esc(e.message)));
   return{}}
 
+// 特級大師生平：網站版放在 data/gmbios.json（約 60 KB，跟著 App 一起存）；電腦版沒有就不顯示
+function XQ_BIOS(){return fetch(OFF?"data/gmbios.json":"/m/gmbios.json").then(r=>r.ok?r.json():{})}
 // 離線版：把電腦上的對局集同步到手機（之後離線也能看）
 const SYNCABLE=[["xuyinchuan","許銀川對局","887 局，約 1 MB"],["gmgames","特級大師對局","31,531 局，約 32 MB"]];
 function syncSheet(){
