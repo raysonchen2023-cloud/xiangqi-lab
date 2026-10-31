@@ -162,7 +162,7 @@ var XQ=(function(){
     return list.slice().reverse().map(g=>{if(kind==="play"){const lv=LEVELS[g.level-1]||{name:"?"},bot=g.ranked?"Pikafish 積分挑戰（"+(RANKS[g.rk]||["?"])[0]+"）":"Pikafish 第"+g.level+"級「"+lv.name+"」";g={...g,red:g.human==="r"?"你":bot,black:g.human==="b"?"你":bot}}
       return gameItem(g,false)})}
   async function dbBooks(){const out=[];for(const b of await publicBooks())out.push({key:b.key,name:b.name,count:b.count});
-    for(const b of await syncedBooks())if(!out.some(x=>x.key===b.key))out.push({key:b.key,name:b.name,count:b.count,synced:b.at});   // 以前從電腦同步過、現在已內建的，不要出現兩份
+    for(const b of await syncedBooks())if(out.some(x=>x.key===b.key))unsync(b.key);else out.push({key:b.key,name:b.name,count:b.count,synced:b.at});   // 以前從電腦同步過、現在已內建的，不要出現兩份
     if(remoteInfo())out.push({key:"ai",name:"AI 對局",count:0});
     out.push({key:"play",name:"人機對局",count:((await idb.get("games:play"))||[]).length},{key:"pvp",name:"真人對局",count:((await idb.get("games:pvp"))||[]).length},
       {key:"study",name:"我的研究",count:((await idb.get("games:study"))||[]).length});return out}

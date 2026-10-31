@@ -550,6 +550,9 @@ async function homeStatus(box,tries){
   box.querySelector("#cBtn").onclick=connectSheet;
   const e=box.querySelector("#eBtn");if(e)e.onclick=()=>{e.disabled=true;e.textContent="下載中…";(XQEngine.prefetch||XQEngine.load)().then(()=>{toast("Pikafish 已下載，可以離線使用");homeStatus(box)}).catch(err=>{toast(err.message);e.disabled=false;e.textContent="下載"})}}
 
+// 特級大師對局（33 MB）自動下載：App 打開 20 秒後，沒下載過就在背景抓一次（存在手機裡，離線也能看）
+if(OFF)setTimeout(async()=>{try{if(!navigator.onLine||(navigator.connection&&navigator.connection.saveData))return;const c=await caches.open("xqlab-data");
+  if(await c.match(new URL("data/gmgames.json",location.href).href))return;await fetch("data/gmgames.json");}catch(e){}},20000);
 // Pikafish 引擎自動下載：App 打開 5 秒後，沒下載過就在背景下載（約 48 MB，只要一次；開了「省數據模式」就不自動下載）
 if(OFF&&window.XQEngine&&XQEngine.prefetch)setTimeout(async()=>{try{if(await XQ.engineCached()||!navigator.onLine||(navigator.connection&&navigator.connection.saveData))return;
   await XQEngine.prefetch();toast("✅ Pikafish 引擎已自動下載完成，離線也能下棋");const h=document.querySelector("#hStatus");if(h&&h.isConnected)homeStatus(h)}catch(e){}},5000);
