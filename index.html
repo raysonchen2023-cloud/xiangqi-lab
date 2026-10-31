@@ -430,14 +430,18 @@ function Board(onTap,onSwipe){
     if(L&&board[L.t]){const ring=el("circle",{cx:X(L.t),cy:Y(L.t),r:30.5,fill:"none",stroke:T.mv,"stroke-width":4,opacity:.95});svg.append(ring);
       if(anim){ring.style.opacity="0";requestAnimationFrame(()=>requestAnimationFrame(()=>{ring.style.transition="opacity .2s .25s";ring.style.opacity=".95"}))}}
     // Pikafish 建議的走法：藍色箭頭，不只一步時標上 1、2、3（跟上一步的綠色箭頭對照）
-    if(o.sugg&&o.sugg.length){const SG="#2F7FE0",many=o.sugg.length>1;
+    if(o.sugg&&o.sugg.length){const SG="#2F7FE0",many=o.sugg.length>1,arrows=el("g",{}),badges=el("g",{}),used={};
       o.sugg.forEach((m,k)=>{const x1=X(m.f),y1=Y(m.f),x2=X(m.t),y2=Y(m.t),len=Math.hypot(x2-x1,y2-y1)||1,ux=(x2-x1)/len,uy=(y2-y1)/len;
-        const ex=x2-ux*20,ey=y2-uy*20,hx=ex-ux*22,hy=ey-uy*22,nx=-uy*16,ny=ux*16,g=el("g",{opacity:k?.75:.9});
-        g.append(el("line",{x1:x1+ux*10,y1:y1+uy*10,x2:hx,y2:hy,stroke:SG,"stroke-width":k?7:9,"stroke-linecap":"round","stroke-dasharray":k?"14 8":""}));
-        g.append(el("polygon",{points:`${ex},${ey} ${hx+nx},${hy+ny} ${hx-nx},${hy-ny}`,fill:SG}));
-        if(many){const cx=x1+ux*Math.min(34,len/2),cy=y1+uy*Math.min(34,len/2);g.append(el("circle",{cx,cy,r:14,fill:"#fff",stroke:SG,"stroke-width":3}));
-          g.append(el("text",{x:cx,y:cy+6,"text-anchor":"middle","font-size":17,"font-weight":900,fill:SG,"font-family":"var(--sans)"},String(k+1)))}
-        svg.append(g)})}
+        // 跟綠色箭頭（實際走的）完全一樣的那一步：不再畫第二條，只標號碼，避免疊在一起
+        const same=L&&L.f===m.f&&L.t===m.t;
+        if(!same){const ex=x2-ux*20,ey=y2-uy*20,hx=ex-ux*22,hy=ey-uy*22,nx=-uy*16,ny=ux*16,g=el("g",{opacity:k?.75:.9});
+          g.append(el("line",{x1:x1+ux*10,y1:y1+uy*10,x2:hx,y2:hy,stroke:SG,"stroke-width":k?7:9,"stroke-linecap":"round","stroke-dasharray":k?"14 8":""}));
+          g.append(el("polygon",{points:`${ex},${ey} ${hx+nx},${hy+ny} ${hx-nx},${hy-ny}`,fill:SG}));arrows.append(g)}
+        // 號碼標在「要走的那顆棋子」左上角（同一顆棋子有兩個號碼就往右排），不會擠在箭頭上
+        if(many){const n=used[m.f]=(used[m.f]||0)+1,cx=x1-21+(n-1)*24,cy=y1-21;
+          badges.append(el("circle",{cx,cy,r:12,fill:"#fff",stroke:SG,"stroke-width":3}));
+          badges.append(el("text",{x:cx,y:cy+5.5,"text-anchor":"middle","font-size":15,"font-weight":900,fill:SG,"font-family":"var(--sans)"},String(k+1)))}});
+      svg.append(arrows,badges)}
     prevB=board.slice();
     for(const t of o.targets||[])svg.append(el("circle",{cx:X(t),cy:Y(t),r:board[t]?30:10,fill:board[t]?"none":"var(--accent2)",stroke:"var(--accent2)","stroke-width":4,opacity:.85}));
     if(o.check>=0)svg.append(el("circle",{cx:X(o.check),cy:Y(o.check),r:31,fill:"none",stroke:"var(--red)","stroke-width":4,"stroke-dasharray":"7 4"}));
@@ -1456,7 +1460,7 @@ function bcMove(b,s,cn){try{const C=window.XQCore;if(!C)return null;const m=C.le
 function gradeNote(g,b){if(!g||!g.q)return"這步還沒評等（按 📊 賽後報告，Pikafish 會補算，再顯示藍色建議箭頭）";
   if(g.q==="—")return"";if(g.q==="妙手")return"✨ 妙手：就是 Pikafish 的首選，而且是不容易找到的好棋，沒有更好的走法。";
   if(g.q==="正手")return"✅ 正手：跟 Pikafish 的首選一樣，沒有更好的走法（所以沒有藍色箭頭）。";
-  return`Pikafish：這步比最佳著法少 ${g.loss} 分。`+sugText(g,b)}
+  return`Pikafish：這步比最佳著法少 ${g.loss} 分。`+sugText(g,b)+(/錯著|露著/.test(g.q)?"\n想知道為什麼不好？按下面 🔍 分析，看對方最好怎麼應。":"")}
 function sugText(g,b){const L=(g.bp&&g.bp.length?g.bp:g.bm?[g.bm]:[]).slice(0,3);if(!L.length)return g.bc?`建議 ${g.bc}（藍色箭頭）`:"";
   const out=[];try{const C=window.XQCore;for(const u of L){const f=sqI(u.slice(0,2)),t=sqI(u.slice(2,4));if(!b[f]||!C)break;out.push(C.notate(b,f,t));b=b.slice();b[t]=b[f];b[f]=null}}catch(e){}
   if(!out.length)return`建議 ${g.bc||""}（藍色箭頭）`;return(out.length>1?"建議走法（藍色箭頭）："+out.map((x,i)=>`${i+1}. ${x}`).join("　"):`建議 ${out[0]}（藍色箭頭）`)+"\n綠色箭頭是實際走的"}
