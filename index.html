@@ -1683,13 +1683,49 @@ function Viewer(v,c,id){
       AN=null;sel=-1;show();if(r.moves.length<10)await extendLine(10-r.moves.length);FREE.cur=keep;show();gradeFree();toast("按 ▶ 或往左滑，一步一步看")}catch(e){toast(e.message)}}
   // 從變化的最後一步請 Pikafish 接著算，接到至少多 want 步（Pikafish 有時只回很短的變化，就多算幾次）
   async function extendLine(want){const F=FREE;let added=0;
-    for(let k=0;k<5&&added<want&&FREE===F;k++){const pos=freeAt(F.all.length);
+    for(let k=0;k<Math.max(5,Math.ceil(want/3))&&added<want&&FREE===F;k++){const pos=freeAt(F.all.length);
       const d=await api("/an/engine",{...pos,ms:1500,multipv:1,fresh:true});if(d.dead||!d.lines.length)break;
       const r=await api("/an/line",{...pos,moves:d.lines[0].pvm||[]});if(!r.moves.length||FREE!==F)break;F.all=F.all.concat(r.moves);added+=r.moves.length;show()}
     return added}
   // ⏩ 繼續推演：從變化的最後一步，請 Pikafish 接著往下算（至少 10 步）
   async function contLine(){if(!FREE)return;FREE.cur=FREE.all.length;AN=null;sel=-1;show();toast("Pikafish 接著往下算…");
     try{const n=await extendLine(10);toast(n?`⏩ 多推演了 ${n} 步，按 ▶ 往下看`:"這條變化已經分出勝負了");gradeFree()}catch(e){toast(e.message)}}
+  // 🤝 為什麼和棋／認輸：看最後局面的評分和子力，再讓 Pikafish 雙方接著下
+  const resKind=()=>{const r=String(it.result||"");return/和/.test(r)?"d":/[红紅黑].*[胜勝]|[胜勝]/.test(r)?"w":""};
+  function matText(b){const NM={r:{R:"俥",N:"傌",C:"炮",P:"兵",A:"仕",B:"相"},b:{R:"車",N:"馬",C:"砲",P:"卒",A:"士",B:"象"}},cnt={r:{},b:{}};let sc={r:0,b:0};
+    for(const x of b){if(!x||/[kK]/.test(x))continue;const sd=x===x.toUpperCase()?"r":"b",u=x.toUpperCase();cnt[sd][u]=(cnt[sd][u]||0)+1;sc[sd]+={R:9,C:4.5,N:4,B:2,A:2,P:1}[u]}
+    const one=sd=>["R","N","C","P","A","B"].filter(u=>cnt[sd][u]).map(u=>NM[sd][u]+(cnt[sd][u]>1?"×"+cnt[sd][u]:"")).join("、")||"只剩將帥";
+    const atk=sd=>(cnt[sd].R||0)+(cnt[sd].N||0)+(cnt[sd].C||0);
+    return{r:one("r"),b:one("b"),diff:sc.r-sc.b,atkR:atk("r"),atkB:atk("b")}}
+  function whySheet(){const pos=curPos(),kind=resKind(),T=kind==="d"?"為什麼和棋？":"為什麼結束？";
+    sheet(T,async b=>{b.innerHTML='<p class="muted">Pikafish 正在看最後這個局面…</p>';
+      let d;try{d=await api("/an/engine",{...pos,ms:3000,multipv:3})}catch(e){b.innerHTML='<p>⚠ '+esc(e.message)+'</p>';return}
+      if(!b.isConnected)return;const k=posKey(pos);AN={k,...d};show();
+      const L=d.lines||[],ev=L[0]?L[0].vr:0,a=Math.abs(ev),who=ev>0?"紅方":"黑方",m=matText(pos.board);
+      const spread=L.length>1?Math.max(...L.map(l=>Math.abs(l.vr))):a;
+      const why=[];
+      if(a>=20000)why.push(`Pikafish 算出 ${who}已經有殺棋，所以另一方認輸。`);
+      else if(kind==="d"){
+        if(a<40)why.push(`Pikafish 的評分幾乎是 0（${evt(ev)}）：局面平衡${L.length>1&&spread<60?"，連 Pikafish 想到的前幾種走法也都差不多":""}，誰都找不到能贏的突破點。`);
+        else if(a<150)why.push(`Pikafish 認為${who}稍好（${evt(ev)}），但優勢不到 1.5 個兵。高手防守很穩，這點優勢通常贏不下來，硬攻反而可能出錯。`);
+        else why.push(`Pikafish 認為${who}明顯較好（${evt(ev)}）。這盤選擇和棋可能另有原因，例如比賽名次（和棋就夠出線）、時間不夠，或${who}自己沒看出贏法。`);
+        if(!m.atkR&&!m.atkB)why.push("雙方都沒有車、馬、炮可以進攻，剩下的子力殺不了對方的將帥。");
+        else if(Math.abs(m.diff)<1.5)why.push("雙方子力幾乎一樣多，沒有誰多出能決勝的子。");
+        if(pos.board.filter(Boolean).length<=12)why.push("棋盤上的子已經不多，進入殘局後很多組合在理論上就是和棋。")}
+      else if(a<150)why.push(`Pikafish 評分 ${evt(ev)}，局面其實還沒分出明顯優劣；可能是時間不夠、或輸的一方看錯了才認輸。`);
+      else why.push(`Pikafish 認為${who}大優（${evt(ev)}），另一方再下去也很難守住，所以提早認輸。`);
+      b.innerHTML=`<div class="card" style="margin-bottom:10px"><div class="muted">最後局面（第 ${ply} 步後）・比賽結果：${esc(it.result||"")}</div>
+        <div style="margin-top:6px"><span class="rn">紅方</span>：${esc(m.r)}<br>黑方：${esc(m.b)}</div></div>
+        ${why.map(t=>`<p style="line-height:1.7;margin:0 0 8px">${esc(t)}</p>`).join("")}
+        <p class="muted" style="font-size:13px">想親眼看：讓 Pikafish 幫雙方接著下，看局面會不會有變化。</p>
+        <button class="btn" id="wgo">▶ 讓 Pikafish 雙方接著下 30 步</button>`;
+      b.querySelector("#wgo").onclick=async()=>{const bt=b.querySelector("#wgo");bt.disabled=true;bt.textContent="Pikafish 推演中…（約 20 秒）";
+        try{FREE={start:pos,all:[],cur:0,base:ply,src:"Pikafish 雙方接著下"};AN=null;sel=-1;
+          await extendLine(30);if(!FREE)return;FREE.all=FREE.all.slice(0,30);const n=FREE.all.length;FREE.cur=0;closeSheet();show();gradeFree();
+          let tail="";try{const e2=await api("/an/engine",{...freeAt(FREE.all.length),ms:1500,multipv:1});const v2=e2.lines&&e2.lines[0]?e2.lines[0].vr:null;
+            if(v2!=null)tail=`，最後評分「${evt(v2)}」${kind==="d"?Math.abs(v2)<80?"，還是和棋的局面":Math.abs(v2)<150?"，只有小優，多半還是和棋":"":""}`}catch(e){}
+          toast(n?`推演了 ${n} 步${tail}。按 ▶ 一步一步看`:"這個局面已經分出勝負，沒有可以再走的")}
+        catch(e){toast(e.message);bt.disabled=false;bt.textContent="▶ 再試一次"}}})}
   // 💾 存成棋譜
   function saveLine(){if(!FREE||!FREE.all.length)return;
     const def=`${title()} 第${FREE.base}步後：${FREE.src||"自由走棋"}`.slice(0,80);
@@ -1723,6 +1759,8 @@ function Viewer(v,c,id){
     if(FREE){for(const[t,fn]of[["⏩ 繼續推演",contLine],["💾 存成棋譜",saveLine],["✕ 回到棋譜",()=>{FREE=null;AN=null;sel=-1;show()}]]){const b=document.createElement("button");b.className="chip";b.style.fontFamily="var(--sans)";b.textContent=t;b.onclick=()=>{vibrate(5);fn()};ab.append(b)}}
     if(!FREE){const alts=alternatives(ply+1);if(alts.length>1){const lb=document.createElement("span");lb.className="muted";lb.style.cssText="flex:none;align-self:center;font-size:12px";lb.textContent="下一步變著：";ab.append(lb);
       for(const g of alts){const mine=g.ids.includes(line),b=document.createElement("button");b.className="chip var"+(mine?" on":"");b.textContent=g.m.cn;b.onclick=()=>go(ply+1,mine?line:g.ids[0]);ab.append(b)}}}
+    if(!FREE&&ply>0&&ply===endPly(line)&&resKind()){const b=document.createElement("button");b.className="chip";b.style.fontFamily="var(--sans)";
+      b.textContent=resKind()==="d"?"🤝 為什麼和棋？":"🏳 為什麼結束？";b.onclick=()=>{vibrate(5);whySheet()};ab.append(b)}
     ab.hidden=!ab.children.length;
     // 評註
     const note=v.querySelector("#note");
