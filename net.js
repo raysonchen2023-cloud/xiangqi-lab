@@ -68,7 +68,7 @@ var XQNet=(function(){
     R.hist.unshift({gid:G.gid,rid:G.id,opp:o.name,res,d,pts:R.pts,why:G.result.why||"",n:G.moves.length,at:Date.now()});R.hist=R.hist.slice(0,100);ls.set("rate",R);
     presence();emit("rated",{res,d,pts:R.pts,rank:rankOf(R.pts),was:rankOf(before)})}
   function presence(){if(!cli||!cli.up)return;const m=me(),sd=side();
-    cli.pub(`${ROOT}/u/${m.id}`,JSON.stringify({id:m.id,name:m.name,st:cur&&!(G&&G.result)?(sd?"playing":"watching"):seeking?"seeking":"idle",gid:cur&&cur.gid||null,pts:myPts(),at:Date.now()}),true)}
+    cli.pub(`${ROOT}/u/${m.id}`,JSON.stringify({id:m.id,name:m.name,st:cur&&!(G&&G.result)?(sd?"playing":"watching"):seeking?"seeking":"idle",gid:cur&&cur.gid||null,pts:myPts(),w:rec().w,l:rec().l,d:rec().d,kind:typeof MY_KIND!=="undefined"?MY_KIND:"",at:Date.now()}),true)}
   // 隨機配對：大家都把狀態設成 seeking；代號最小的人去邀請下一位，被邀請的人自動接受（避免兩邊同時互邀）
   function tryMatch(){if(!seeking||pending||playing()||!cli||!cli.up)return;const i=me().id,now=Date.now();
     const c=Object.values(people).filter(x=>x.st==="seeking"&&x.id!==i&&now-x.at<ALIVE).sort((a,b)=>a.id<b.id?-1:1);

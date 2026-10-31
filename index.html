@@ -433,6 +433,7 @@ function route(){
   if(p[0]==="watch")return screen=p[1]==="ai"?Watch(v):WatchHub(v);
   if(p[0]==="stats")return screen=Stats(v);
   if(p[0]==="settings")return screen=Settings(v);
+  if(p[0]==="fbadmin")return screen=FbAdmin(v);
   if(p[0]==="quiz")return screen=Quiz(v);
   if(p[0]==="terms")return screen=Terms(v,p[1]);
   if(p[0]==="db"&&p.length>=3)return screen=Viewer(v,p[1],p.slice(2).join("/"));
@@ -571,7 +572,7 @@ function Lobby(v){setTop("線上大廳",false,[["📤",shareSheet,"分享給朋�
         :'<button class="btn" id="sk1" style="margin-top:10px">🎲 隨機配對（自動找一位線上對手）</button>'}
       ${Object.keys(games).length?`<div class="sec-t">正在對戰</div>`+Object.entries(games).map(([g,l])=>`<div class="card row" style="justify-content:space-between;margin-bottom:8px"><span>⚔ ${l.map(p=>esc(p.name)).join(" 對 ")}</span><button class="pill" data-w="${esc(g)}">👀 觀看</button></div>`).join(""):""}
       <div class="sec-t">在線棋友（${ps.length}）</div>
-      ${ps.length?ps.map(p=>`<div class="card row" style="justify-content:space-between;margin-bottom:8px"><span><b>${esc(p.name)}</b> <span class="pill">${esc(XQNet.rankOf(p.pts))}</span><br><span class="muted">${ST[p.st]||""}</span></span>
+      ${ps.length?ps.map(p=>`<div class="card row" data-p="${esc(p.id)}" style="justify-content:space-between;margin-bottom:8px;cursor:pointer"><span><b>${esc(p.name)}</b> <span class="pill">${esc(XQNet.rankOf(p.pts))}</span> <span class="muted" style="font-size:12px">ⓘ</span><br><span class="muted">${ST[p.st]||""}</span></span>
         ${p.st==="idle"||p.st==="seeking"?`<button class="pill" data-i="${esc(p.id)}" style="background:var(--accent);color:#fff;border:none;padding:6px 12px">⚔ 邀請對戰</button>`:p.st==="playing"&&p.gid?`<button class="pill" data-w="${esc(p.gid)}">👀 觀看</button>`:""}</div>`).join("")
         :`<div class="card muted">${up?"目前只有你在線上。請朋友打開象棋研究室（按右上角 📤 分享），他們就會出現在這裡。":"連線中…"}</div>`}
       <p class="muted" style="font-size:12px;margin-top:14px">大廳透過免費的公開伺服器連線。只會傳名字和棋步，不要把名字取成個人資料。App 切到背景時會暫時離線。</p>`;
@@ -579,8 +580,23 @@ function Lobby(v){setTop("線上大廳",false,[["📤",shareSheet,"分享給朋�
     const s1=box.querySelector("#sk1"),s0=box.querySelector("#sk0");if(s1)s1.onclick=()=>{vibrate(10);XQNet.seek(true)};if(s0)s0.onclick=()=>XQNet.seek(false);
     const bk=box.querySelector("#back");if(bk)bk.onclick=()=>location.hash="#/pvp";
     box.querySelectorAll("[data-w]").forEach(b=>b.onclick=()=>{XQNet.watch(b.dataset.w);location.hash="#/pvp"});
+    // 點棋友（不是按鈕的地方）→ 看他的資料卡
+    box.querySelectorAll("[data-p]").forEach(c=>c.onclick=e=>{if(e.target.closest("button"))return;const p=ps.find(x=>x.id===c.dataset.p);if(p)playerCard(p)});
     box.querySelectorAll("[data-i]").forEach(b=>b.onclick=()=>{const p=ps.find(x=>x.id===b.dataset.i);if(!p)return;
       if(XQNet.playing())return confirmBox("你有一盤進行中的對局，邀請新對局會離開它，確定？",()=>{XQNet.leave();invite(p)},"確定");invite(p)})}
+  // 棋友資料卡：段位、積分、勝負和、狀態、裝置，還有你跟他下過的戰績
+  function playerCard(p){const R=XQNet.rating(),mine=(R.hist||[]).filter(h=>h.opp===p.name),mw=mine.filter(h=>h.res==="w").length,ml=mine.filter(h=>h.res==="l").length,md=mine.filter(h=>h.res==="d").length;
+    const N=(p.w||0)+(p.l||0)+(p.d||0),ago=Math.max(0,Math.round((Date.now()-(p.at||Date.now()))/60000));
+    sheet("棋友資料",b=>{b.innerHTML=`<div style="text-align:center"><div style="font-size:22px;font-weight:900;font-family:var(--serif)">${esc(p.name)}</div>
+        <div style="margin:6px 0"><span class="pill" style="font-size:15px;padding:4px 12px">🏅 ${esc(XQNet.rankOf(p.pts))}・${p.pts||0} 分</span></div>
+        <div class="muted">${ST[p.st]||""}${p.kind?"・"+esc(p.kind):""}・${ago?ago+" 分鐘前更新":"剛剛在線上"}</div></div>
+      <div class="card" style="margin-top:12px"><div class="muted" style="margin-bottom:6px">線上戰績</div>${p.w==null?'<div class="muted">對方的 App 還沒更新，看不到戰績</div>':`<div style="display:grid;grid-template-columns:repeat(4,1fr);text-align:center">
+        ${[["勝",p.w,"var(--accent2)"],["負",p.l,"var(--red)"],["和",p.d,"var(--muted)"],["勝率",N?Math.round(p.w*100/N)+"%":"—",""]].map(([l,x,c])=>`<div><div style="font-size:22px;font-weight:900;color:${c}">${x}</div><div class="muted">${l}</div></div>`).join("")}</div>`}</div>
+      <div class="card" style="margin-top:8px"><div class="muted" style="margin-bottom:4px">你跟他下過</div>${mine.length?`<b>${mw} 勝 ${ml} 負 ${md} 和</b><span class="muted">・最近一盤 ${new Date(mine[0].at).toLocaleDateString()}</span>`:'<span class="muted">還沒下過</span>'}</div>
+      ${p.st==="idle"||p.st==="seeking"?'<button class="btn" id="pi">⚔ 邀請對戰</button>':p.st==="playing"&&p.gid?'<button class="btn" id="pw">👀 觀看他的對局</button>':""}`;
+      const pi=b.querySelector("#pi"),pw=b.querySelector("#pw");
+      if(pi)pi.onclick=()=>{closeSheet();if(XQNet.playing())return confirmBox("你有一盤進行中的對局，邀請新對局會離開它，確定？",()=>{XQNet.leave();invite(p)},"確定");invite(p)};
+      if(pw)pw.onclick=()=>{closeSheet();XQNet.watch(p.gid);location.hash="#/pvp"}})}
   function invite(p){XQNet.invite(p);
     sheet("⚔ 已送出邀請",b=>{b.innerHTML=`<p style="text-align:center">等 <b>${esc(p.name)}</b> 回應…<br><span class="muted">對方接受後會自動開始，你執紅先走。</span></p><button class="btn ghost" id="cx">取消邀請</button>`;
       b.querySelector("#cx").onclick=()=>{XQNet.cancelInvite();closeSheet()}})}
@@ -604,7 +620,8 @@ if(OFF&&window.XQNet){XQNet.start();
 const APP_HOME="https://raysonchen2023-cloud.github.io/xiangqi-lab/";
 // 開發者模式：電腦網頁一律是；手機要在 設定→進階 自己打開。掃過電腦 QR code 的玩家也只是玩家，看不到「電腦」相關的字
 const DEVMODE=()=>!OFF||!!store.get("devMode",false);
-// 開發者登入：程式裡只放「帳號＋密碼」的雜湊值，不放明碼；輸入的帳密算出一樣的雜湊才放行
+// 開發者登入：在 App 裡檢查（只放「帳號＋密碼」的雜湊值，不放明碼）。這只是畫面開關；
+// 回饋資料放在 Google 的意見回饋管理頁，只有登入開發者 Google 帳號才打得開，那才是真正的保護。
 const DEV_HASH="4e72cb09c4ef78623b6da77400fb8f31c53bf87f847fd4659e8e1c4c4c1a48ed";
 async function devHash(u,p){const d=await crypto.subtle.digest("SHA-256",new TextEncoder().encode("xqlab-dev:"+u+":"+p));return[...new Uint8Array(d)].map(x=>x.toString(16).padStart(2,"0")).join("")}
 function devLogin(ok){sheet("🔒 開發者登入",b=>{const inp='width:100%;padding:12px;border:1px solid var(--line);border-radius:12px;background:var(--card);color:inherit;margin:4px 0 10px;-webkit-user-select:text;user-select:text';
@@ -615,6 +632,9 @@ function devLogin(ok){sheet("🔒 開發者登入",b=>{const inp='width:100%;pad
     let h="";try{h=await devHash(u,p)}catch(e){}
     if(h===DEV_HASH){closeSheet();ok()}else{b.querySelector("#de").textContent="帳號或密碼不對";b.querySelector("#dp").value="";vibrate([30,40,30])}};
   b.querySelector("#dg").onclick=go;b.querySelector("#dp").onkeydown=e=>{if(e.key==="Enter")go()};setTimeout(()=>b.querySelector("#du").focus(),300)})}
+// 意見回饋管理頁（Google Apps Script，存取權「只有我自己」）：用瀏覽器打開，要登入開發者的 Google 帳號
+const FB_ADMIN_URL="https://script.google.com/macros/s/AKfycbxlSyGWkr3Kmfp9fiTmrFyhg3x6D50gJBlo3cM0LwxAJikyN9oHTZBTkxBYJSvIx7RZVg/exec";
+function openFbAdmin(){const w=window.open(FB_ADMIN_URL,"_blank");if(!w)location.href=FB_ADMIN_URL}
 const DEVREMOTE=()=>OFF&&DEVMODE()&&!!(window.XQ&&XQ.remoteInfo&&XQ.remoteInfo());
 // ================= 加到主畫面：用瀏覽器打開時問一次，玩家自己決定 =================
 // iPhone 不能用程式安裝，只能教步驟；Android 可以直接跳出系統的安裝視窗。LINE 內建瀏覽器不能加，要先改用手機的瀏覽器。
@@ -664,7 +684,7 @@ function standaloneOnlineWarn(v){if(OFF||!(matchMedia("(display-mode: standalone
 function Home(v){
   const RI=DEVREMOTE()?XQ.remoteInfo():null;  // 這支手機連過主人的電腦嗎
   const standalone=matchMedia("(display-mode: standalone)").matches||navigator.standalone;
-  setTop("象棋研究室",false,OFF?[["📤",shareSheet,"分享給朋友"]].concat(RI?[["🔗",connectSheet,"連線到電腦"]]:[],[["⚙",()=>location.hash="#/settings","設定"]]):[["📤",shareSheet,"分享給朋友"],["👥",whoSheet,"誰在線上"],["⚙",()=>location.hash="#/settings","設定"]]);setTabs(true,"#/");
+  setTop("象棋研究室",false,OFF?[["📤",shareSheet,"分享給朋友"]].concat(RI?[["🔗",connectSheet,"連線到電腦"]]:[],(DEVMODE()?[["📋",openFbAdmin,"意見回饋管理"]]:[]),[["⚙",()=>location.hash="#/settings","設定"]]):[["📤",shareSheet,"分享給朋友"],["👥",whoSheet,"誰在線上"],["⚙",()=>location.hash="#/settings","設定"]]);setTabs(true,"#/");
   const T=(k,go,ic,t,id,s,x)=>`<button class="tile ${k}${x||""}" data-go="${go}"><span class="ic">${ic}</span><span class="t">${t}</span><span class="s"${id?` id="${id}"`:""}>${s}</span></button>`;
   v.innerHTML=`<div class="home">
    ${RI?'<div class="card hstat" id="hStatus"><span class="muted">檢查中…</span></div>':""}
@@ -899,7 +919,7 @@ function Settings(v){
       <button class="item" id="fb"><span class="lb">💬</span><span class="tx"><b>意見回饋</b><span>回報錯誤、想要的功能</span></span><span class="muted">›</span></button>
       <button class="item" id="sh"><span class="lb">📤</span><span class="tx"><b>分享給朋友</b><span>QR code・LINE</span></span><span class="muted">›</span></button></div>
     ${OFF?'<div class="sec-t">進階</div><div class="card"><label class="row" style="justify-content:space-between"><span><b>開發者模式</b><br><span class="muted">一般玩家不用打開。打開後才會顯示連線電腦、AI 對戰等開發者功能</span></span><input type="checkbox" class="sw" id="dm"></label></div>'
-      +(DEVMODE()?'<div class="items" style="padding:0;margin-top:8px"><button class="item" id="cn"><span class="lb">🖥</span><span class="tx"><b>連線到開發者的電腦</b><span>看 AI 對戰、同步大師棋譜</span></span><span class="muted">›</span></button></div>':""):""}</div>`;
+      +(DEVMODE()?'<div class="items" style="padding:0;margin-top:8px"><button class="item" id="fa"><span class="lb">📋</span><span class="tx"><b>意見回饋管理</b><span>看所有回饋和截圖，決定玩家的回饋要不要修</span></span><span class="muted">›</span></button><button class="item" id="cn"><span class="lb">🖥</span><span class="tx"><b>連線到開發者的電腦</b><span>看 AI 對戰、同步大師棋譜</span></span><span class="muted">›</span></button></div>':""):""}</div>`;
   // 打開開發者模式要登入（關閉不用）
   const dm=v.querySelector("#dm");if(dm){dm.checked=DEVMODE();dm.onchange=()=>{
     if(!dm.checked){store.set("devMode",false);toast("已關閉開發者模式");return route()}
@@ -920,13 +940,13 @@ function Settings(v){
     v.querySelector("#mv").innerHTML=tg("mvArrow","箭頭","從原來位置畫箭頭指到新位置")+'<div style="border-top:1px solid var(--line)"></div>'+tg("mvAnim","動畫","棋子滑過去，被吃的棋子淡出")+'<div style="border-top:1px solid var(--line)"></div>'+tg("mvSound","音效","走棋時「叩」一聲，吃子比較重");
     v.querySelectorAll("[data-t]").forEach(x=>x.onchange=()=>{store.set(x.dataset.t,x.checked);show(true)});
     v.querySelector("#nmS").textContent=myName()||"還沒取名字";show(false)};
-  v.querySelector("#nm").onclick=()=>nameSheet(false);v.querySelector("#fb").onclick=()=>feedbackSheet();v.querySelector("#sh").onclick=shareSheet;const cn=v.querySelector("#cn");if(cn)cn.onclick=connectSheet;
+  v.querySelector("#nm").onclick=()=>nameSheet(false);v.querySelector("#fb").onclick=()=>feedbackSheet();v.querySelector("#sh").onclick=shareSheet;const cn=v.querySelector("#cn");if(cn)cn.onclick=connectSheet;const fa=v.querySelector("#fa");if(fa)fa.onclick=()=>location.hash="#/fbadmin";
   paint();return{}}
 
 // ================= 意見回饋：存到 Google 表單（沒網路先存在手機，之後自動補送） =================
 // 表單的「formResponse」網址和每一題的 entry 代號；空的時候回饋先存在手機佇列裡
 const FEEDBACK_FORM={action:"https://docs.google.com/forms/d/e/1FAIpQLScxK1rQLe70m7lcNg1Ay-mWOhp-pgcRrlHB7KAXYShiLjqyfA/formResponse",
-  entries:{type:"entry.878459997",text:"entry.19788072",contact:"entry.1564431672",id:"entry.1681425457",name:"entry.1153998021",rank:"entry.1077510185",ver:"entry.1173886447",dev:"entry.1485904009",page:"entry.954611964",img:"entry.706229975"}};
+  entries:{type:"entry.878459997",text:"entry.19788072",contact:"entry.1564431672",id:"entry.1681425457",name:"entry.1153998021",rank:"entry.1077510185",ver:"entry.1173886447",dev:"entry.1485904009",page:"entry.954611964",img:"entry.706229975",role:"entry.478148566"}};
 // 截圖：縮小成 JPEG 文字（表單一格最多約 3 萬字），開發者看得清楚畫面就好
 function shrinkImage(file){return new Promise((ok,no)=>{const u=URL.createObjectURL(file),im=new Image();
   im.onload=()=>{URL.revokeObjectURL(u);const cv=document.createElement("canvas"),cx=cv.getContext("2d");
@@ -938,15 +958,15 @@ function shrinkImage(file){return new Promise((ok,no)=>{const u=URL.createObject
   im.onerror=()=>{URL.revokeObjectURL(u);no(new Error("讀不到這張圖片"))};im.src=u})}
 async function feedbackInfo(){const m=meInfo(),r=window.XQNet&&XQNet.rating?XQNet.rating():null;
   return{id:m.id||"",name:m.name||"",rank:r?`${r.rank} ${r.pts}分 (${r.w}勝${r.l}負${r.d}和)`:"",ver:(await appVer())||"",
-    dev:(MY_KIND||"其他")+((matchMedia("(display-mode: standalone)").matches||navigator.standalone)?"・主畫面App":"・瀏覽器")+`・${innerWidth}x${innerHeight}`,page:location.hash||"#/"}}
+    dev:(MY_KIND||"其他")+((matchMedia("(display-mode: standalone)").matches||navigator.standalone)?"・主畫面App":"・瀏覽器")+`・${innerWidth}x${innerHeight}`,page:location.hash||"#/",role:DEVMODE()?"開發者":"玩家"}}
 async function postForm(rec){const F=FEEDBACK_FORM;if(!F.action)throw new Error("表單還沒設定");
   const body=new URLSearchParams();for(const k in F.entries)if(F.entries[k]&&rec[k]!=null)body.append(F.entries[k],String(rec[k]).slice(0,k==="img"?31000:2000));
   // 用 sendBeacon「送出就好、不等回覆」：App 為了跑 Pikafish 開了嚴格的跨網域模式，fetch 讀不到 Google 的回覆會被當成失敗（其實已經送到），造成重複送出
   if(navigator.sendBeacon){if(navigator.sendBeacon(F.action,body))return;}
   try{await fetch(F.action,{method:"POST",mode:"no-cors",body})}catch(e){if(!navigator.onLine)throw e}}   // 有網路時，讀不到回覆不算失敗
 async function flushFeedback(){const q=store.get("fbQueue",[]);if(!q.length||!FEEDBACK_FORM.action||!navigator.onLine)return;const left=[];
-  for(const r of q){try{await postForm(r);if(r.type&&!/玩家/.test(r.type)&&window.XQNet&&XQNet.bell)XQNet.bell({type:r.type,img:!!r.img})}catch(e){left.push(r)}}store.set("fbQueue",left)}
-async function sendRecord(rec){try{await postForm(rec);if(rec.type&&!/玩家/.test(rec.type)&&window.XQNet&&XQNet.bell)XQNet.bell({type:rec.type,img:!!rec.img});return true}catch(e){const q=store.get("fbQueue",[]);q.push(rec);store.set("fbQueue",q.slice(-30));return false}}
+  for(const r of q){try{await postForm(r);if(r.type&&!/玩家/.test(r.type)&&window.XQNet&&XQNet.bell)XQNet.bell({type:r.type,img:!!r.img,role:r.role||""})}catch(e){left.push(r)}}store.set("fbQueue",left)}
+async function sendRecord(rec){try{await postForm(rec);if(rec.type&&!/玩家/.test(rec.type)&&window.XQNet&&XQNet.bell)XQNet.bell({type:rec.type,img:!!rec.img,role:rec.role||""});return true}catch(e){const q=store.get("fbQueue",[]);q.push(rec);store.set("fbQueue",q.slice(-30));return false}}
 function feedbackSheet(){let type="🐞 錯誤";
   sheet("💬 意見回饋",b=>{b.innerHTML=`<p class="muted" style="margin-top:0">遇到問題或想要新功能，都可以寫在這裡，開發者會看到。</p>
     <div class="opt" id="ty">${["🐞 錯誤","💡 建議","💬 其他"].map(t=>`<button data-y="${t}" class="${t===type?"on":""}">${t}</button>`).join("")}</div>
@@ -968,6 +988,14 @@ async function reportPlayer(){if(!OFF||!FEEDBACK_FORM.action)return;const i=awai
   if(last&&last.k===key&&Date.now()-last.at<7*864e5)return;
   if(await sendRecord(Object.assign(i,{type:"👤 玩家",text:"",contact:""})))store.set("playerRep",{k:key,at:Date.now()})}
 setTimeout(()=>{flushFeedback();reportPlayer()},8000);window.addEventListener("online",()=>setTimeout(flushFeedback,2000));
+
+// ================= 意見回饋管理（開發者）：打開 Google 上的管理頁 =================
+function FbAdmin(v){setTop("意見回饋管理","#/settings");setTabs(false);
+  v.innerHTML=`<div class="pad home"><div class="card" style="text-align:center;padding:22px 16px"><div style="font-size:44px">📋</div>
+    <h2 style="font-family:var(--serif);margin:6px 0">意見回饋管理</h2>
+    <p class="muted" style="line-height:1.7">在 Google 上打開管理頁，看所有回饋和截圖。<br>玩家寫的回饋按「✅ 核准修正」後 Claude 才會修；開發者寫的 Claude 會直接修。<br>第一次打開如果要求登入，請登入你的 Google 帳號（只有你的帳號打得開）。</p>
+    <button class="btn" id="go">打開意見回饋管理</button></div></div>`;
+  v.querySelector("#go").onclick=openFbAdmin;return{}}
 
 // 遊戲畫面共用：棋盤＋上下玩家條＋狀態＋著法條＋動作列
 function gameLayout(v){
