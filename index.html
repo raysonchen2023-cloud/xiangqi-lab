@@ -905,6 +905,7 @@ function Terms(v,pick){
 function histList(box,reps){let kind=store.get("histKind","all"),res="",limit=40,all=null;
   const me=myName(),nh=window.XQNet&&XQNet.rating?XQNet.rating().hist:[];
   const resOf=(it,mySide)=>{const r=String(it.result||""),w=/^紅/.test(r)&&/勝|胜/.test(r)?"r":/^黑/.test(r)&&/勝|胜/.test(r)?"b":null;
+    if(!w&&/中止|取消/.test(r))return"x";   // 中途取消、斷線中止：不是和棋，不計分
     if(!mySide)return w?(w==="r"?"紅勝":"黑勝"):r?"和":"";return w?(w===mySide?"w":"l"):r?"d":""};
   async function load(){const[a,b]=await Promise.all([api("/db/items?c=play&limit=500").catch(()=>({items:[]})),api("/db/items?c=pvp&limit=500").catch(()=>({items:[]}))]);
     all=a.items.map(it=>({c:"play",it,side:it.red==="你"?"r":"b",opp:it.red==="你"?it.black:it.red,k:"cpu"}))
@@ -920,7 +921,7 @@ function histList(box,reps){let kind=store.get("histKind","all"),res="",limit=40
     for(const x of L.slice(0,limit)){const id=String(x.it.id),m=id.slice(0,7);
       if(m!==mon){flush();mon=m;out.push(`<div class="st-mon">${m.slice(0,4)} 年 ${+m.slice(5,7)} 月</div>`)}
       const r=resOf(x.it,x.side),R=x.c==="play"&&reps[x.it.id],nr=x.c==="pvp"&&nh.find(hh=>hh.rid===x.it.id);
-      const lab=r==="w"?"勝":r==="l"?"負":r==="d"?"和":(r||"—").slice(0,1);
+      const lab=r==="w"?"勝":r==="l"?"負":r==="d"?"和":r==="x"?"✕":(r||"—").slice(0,1);
       const why=String(x.it.result||"").replace(/^.*?（/,"").replace(/）$/,"");
       grp.push(`<button class="st-g" data-c="${x.c}" data-id="${esc(id)}"><span class="dot ${r==="w"||r==="l"?r:""}">${esc(lab)}</span><span class="tx"><b>${x.k==="cpu"?"🤖 ":"👥 "}${esc(x.opp||"")}</b><span>${id.slice(5,10).replace("-","/")}・${x.side?"執"+(x.side==="r"?"紅":"黑")+"・":""}${esc(why)}</span></span>${R?`<b class="r" style="color:${gradeFor(R.score)[2]}">${R.grade}</b>`:nr?`<b class="r ${nr.d>=0?"w":"l"}">${nr.d>=0?"+":""}${nr.d}</b>`:'<span class="r muted">›</span>'}</button>`)}
     flush();h+=out.join("");
