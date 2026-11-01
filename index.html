@@ -538,9 +538,18 @@ const boardTheme=k=>{k=k||store.get("boardTheme","wood3d");if(k==="auto"&&curEra
 let boardN=0;
 // 走棋音效：用 WebAudio 合成木頭棋子的「叩」聲（吃子比較重），設定裡可以關
 let AC=null;
-const unlockAudio=()=>{try{if(!AC){const C=window.AudioContext||window.webkitAudioContext;if(C)AC=new C()}if(AC&&AC.state==="suspended")AC.resume()}catch(e){}};
-document.addEventListener("pointerdown",unlockAudio,{passive:true});
-function moveSound(cap){if(!(cap?store.get("capSound",true):store.get("mvSound",false))||!AC||AC.state!=="running")return;try{const t=AC.currentTime;
+// iPhone：要在點擊（touchend/click）裡叫醒聲音，並播一個無聲片段才算解鎖；audioSession 設成 playback，靜音鍵打開時也有聲音
+// 切到背景回來會變成 interrupted/suspended，要再叫醒一次
+const unlockAudio=()=>{try{if(navigator.audioSession&&navigator.audioSession.type!=="playback")navigator.audioSession.type="playback"}catch(e){}
+  try{if(!AC){const C=window.AudioContext||window.webkitAudioContext;if(C)AC=new C()}if(!AC)return;
+    if(AC.state!=="running"){const p=AC.resume();if(p&&p.catch)p.catch(()=>{})}
+    if(!AC._primed){const b=AC.createBuffer(1,1,22050),src=AC.createBufferSource();src.buffer=b;src.connect(AC.destination);src.start(0);AC._primed=1}}catch(e){}};
+for(const ev of["pointerdown","touchend","click","keydown"])document.addEventListener(ev,unlockAudio,{passive:true,capture:true});
+document.addEventListener("visibilitychange",()=>{if(!document.hidden&&AC&&AC.state!=="running"){AC._primed=0;const p=AC.resume();if(p&&p.catch)p.catch(()=>{})}});
+// 聲音還沒醒（例如電腦走棋、剛從背景回來）就先叫醒再播，不要直接丟掉
+function withAudio(play){if(!AC)return;if(AC.state==="running"){try{play()}catch(e){}return}try{AC.resume().then(()=>{if(AC.state==="running")try{play()}catch(e){}}).catch(()=>{})}catch(e){}}
+function moveSound(cap){if(!(cap?store.get("capSound",true):store.get("mvSound",false)))return;withAudio(()=>moveSound0(cap))}
+function moveSound0(cap){try{const t=AC.currentTime;
   const hit=(f,dur,vol,at)=>{const o=AC.createOscillator(),g=AC.createGain();o.type="triangle";o.frequency.setValueAtTime(f,t+at);o.frequency.exponentialRampToValueAtTime(f*.55,t+at+dur);
     g.gain.setValueAtTime(vol,t+at);g.gain.exponentialRampToValueAtTime(.001,t+at+dur);o.connect(g).connect(AC.destination);o.start(t+at);o.stop(t+at+dur+.02)};
   const n=AC.createBufferSource(),buf=AC.createBuffer(1,AC.sampleRate*.04|0,AC.sampleRate),d=buf.getChannelData(0);for(let i=0;i<d.length;i++)d[i]=(Math.random()*2-1)*Math.pow(1-i/d.length,3);
@@ -578,9 +587,9 @@ function checkFx(svg,label){if(!store.get("ckFx",true))return;const r=svg.getBou
   // 墨色筆刷一抹橫過楚河漢界，金色「將」「軍」兩字一左一右落下，棋盤四周泛一圈紅光
   const d=document.createElement("div");d.className="ckfx";d.style.cssText=`left:${r.left}px;top:${r.top}px;width:${r.width}px;height:${r.height}px;font-size:${Math.round(r.width*.15)}px`;
   d.innerHTML='<i class="glow"></i><div class="mid'+(label?' has':'')+'"><i class="ink"></i><b class="c1">將</b><b class="c2">軍</b>'+(label?`<em class="seal${label.length>3?" s4":""}">${esc(label)}</em>`:"")+'</div>';document.body.append(d);vibrate([25,30,25]);setTimeout(()=>d.remove(),1900);
-  if((store.get("capSound",true)||store.get("mvSound",false))&&AC&&AC.state==="running")try{const t=AC.currentTime;
+  if(store.get("capSound",true)||store.get("mvSound",false))withAudio(()=>{const t=AC.currentTime;
     for(const[f,at]of[[880,0],[1320,.09]]){const o=AC.createOscillator(),g=AC.createGain();o.type="square";o.frequency.setValueAtTime(f,t+at);
-      g.gain.setValueAtTime(.12,t+at);g.gain.exponentialRampToValueAtTime(.001,t+at+.35);o.connect(g).connect(AC.destination);o.start(t+at);o.stop(t+at+.4)}}catch(e){}}
+      g.gain.setValueAtTime(.12,t+at);g.gain.exponentialRampToValueAtTime(.001,t+at+.35);o.connect(g).connect(AC.destination);o.start(t+at);o.stop(t+at+.4)}})}
 function Board(onTap,onSwipe){
   const NS="http://www.w3.org/2000/svg",X0=40,Y0=40,S=60;
   const svg=document.createElementNS(NS,"svg");svg.setAttribute("viewBox","0 0 560 620");
@@ -1390,7 +1399,7 @@ function Settings(v){
       if(k!=="classic"&&store.get("boardTheme","wood3d")!=="auto"){store.set("boardTheme","auto");toast("棋盤也換成這個朝代的配色（可在下面改回）")}paint();show(true)});
     const tg=(k,label,sub)=>`<label class="row" style="justify-content:space-between;padding:6px 0"><span><b>${label}</b><br><span class="muted">${sub}</span></span><input type="checkbox" class="sw" data-t="${k}" ${store.get(k,k!=="mvSound")?"checked":""}></label>`;
     v.querySelector("#mv").innerHTML=tg("mvArrow","箭頭","從原來位置畫箭頭指到新位置")+'<div style="border-top:1px solid var(--line)"></div>'+tg("mvAnim","動畫","棋子滑過去，被吃的棋子淡出")+'<div style="border-top:1px solid var(--line)"></div>'+tg("mvSound","走棋音效","走棋時「叩」一聲")+'<div style="border-top:1px solid var(--line)"></div>'+tg("capSound","吃子音效","吃子時重重「啪」一聲、將軍時「鏘」一聲")+'<div style="border-top:1px solid var(--line)"></div>'+tg("ckFx","將軍特效","被將軍或將對方軍時，棋盤上蓋「將軍！」字樣")+'<div style="border-top:1px solid var(--line)"></div>'+tg("opFx","開局名稱動畫","走出中炮、仙人指路、屏風馬…時，棋盤上展開卷軸寫出開局名");
-    v.querySelectorAll("[data-t]").forEach(x=>x.onchange=()=>{store.set(x.dataset.t,x.checked);show(true)});
+    v.querySelectorAll("[data-t]").forEach(x=>x.onchange=()=>{store.set(x.dataset.t,x.checked);if(x.checked&&(x.dataset.t==="mvSound"||x.dataset.t==="capSound")){unlockAudio();moveSound(x.dataset.t==="capSound")}show(true)});
     v.querySelector("#nmS").textContent=myName()||"還沒取名字";show(false)};
   v.querySelector("#nm").onclick=()=>nameSheet(false);v.querySelector("#fb").onclick=()=>feedbackSheet();v.querySelector("#sh").onclick=shareSheet;const cn=v.querySelector("#cn");if(cn)cn.onclick=connectSheet;const fa=v.querySelector("#fa");if(fa)fa.onclick=()=>location.hash="#/fbadmin";
   paint();return{}}
