@@ -163,6 +163,9 @@ html[data-era=ming] .topbar,html[data-era=qing] .topbar{border-bottom-width:4px}
 .modal .box{background:var(--card);border-radius:22px;padding:24px 20px;width:100%;max-width:340px;text-align:center}
 .modal .em{font-size:56px;line-height:1}.modal h2{font-family:var(--serif);font-size:24px;margin:8px 0 4px}
 .emo{position:fixed;left:50%;top:38%;transform:translate(-50%,-50%) scale(.6);z-index:65;background:var(--card,#fff);color:var(--ink,#222);border-radius:22px;padding:14px 20px;box-shadow:0 10px 40px #0006;text-align:center;opacity:0;transition:.25s;pointer-events:none}.emo.show{opacity:1;transform:translate(-50%,-50%) scale(1)}.emo .big{font-size:64px;line-height:1.1}.emo .t{font-weight:700;font-size:18px}.emo.mine{top:auto;bottom:calc(120px + var(--safeB))}.emo.mine .big{font-size:40px}
+.ckfx{position:fixed;z-index:64;transform:translate(-50%,-50%);pointer-events:none;font-family:var(--serif);font-weight:900;white-space:nowrap}
+.ckfx span{display:block;color:#fff;background:#C8102E;padding:.08em .35em;border:.06em solid #fff;border-radius:.18em;box-shadow:0 0 0 .05em #C8102E,0 .12em .5em #0007;letter-spacing:.05em;animation:ckfx 1.7s cubic-bezier(.2,1.4,.4,1) forwards}
+@keyframes ckfx{0%{transform:scale(2.6) rotate(-14deg);opacity:0}14%{transform:scale(.92) rotate(-8deg);opacity:1}22%{transform:scale(1.04) rotate(-8deg)}30%,75%{transform:scale(1) rotate(-8deg);opacity:1}100%{transform:scale(1.15) rotate(-8deg);opacity:0}}
 .emogrid{display:grid;grid-template-columns:repeat(2,1fr);gap:8px}.emogrid button{padding:12px 8px;border-radius:14px;background:var(--bg);border:1px solid var(--line);font-size:16px;font-weight:600}.emogrid button span{font-size:26px;display:block}
 .scanov{position:fixed;inset:0;z-index:200;background:#000;display:flex;flex-direction:column;align-items:center;justify-content:center}
 .scanov video{position:absolute;inset:0;width:100%;height:100%;object-fit:cover}
@@ -476,12 +479,20 @@ let boardN=0;
 let AC=null;
 const unlockAudio=()=>{try{if(!AC){const C=window.AudioContext||window.webkitAudioContext;if(C)AC=new C()}if(AC&&AC.state==="suspended")AC.resume()}catch(e){}};
 document.addEventListener("pointerdown",unlockAudio,{passive:true});
-function moveSound(cap){if(!store.get("mvSound",false)||!AC||AC.state!=="running")return;try{const t=AC.currentTime;
+function moveSound(cap){if(!(cap?store.get("capSound",true):store.get("mvSound",false))||!AC||AC.state!=="running")return;try{const t=AC.currentTime;
   const hit=(f,dur,vol,at)=>{const o=AC.createOscillator(),g=AC.createGain();o.type="triangle";o.frequency.setValueAtTime(f,t+at);o.frequency.exponentialRampToValueAtTime(f*.55,t+at+dur);
     g.gain.setValueAtTime(vol,t+at);g.gain.exponentialRampToValueAtTime(.001,t+at+dur);o.connect(g).connect(AC.destination);o.start(t+at);o.stop(t+at+dur+.02)};
   const n=AC.createBufferSource(),buf=AC.createBuffer(1,AC.sampleRate*.04|0,AC.sampleRate),d=buf.getChannelData(0);for(let i=0;i<d.length;i++)d[i]=(Math.random()*2-1)*Math.pow(1-i/d.length,3);
   const ng=AC.createGain(),bp=AC.createBiquadFilter();bp.type="bandpass";bp.frequency.value=cap?900:1600;ng.gain.value=cap?.5:.35;n.buffer=buf;n.connect(bp).connect(ng).connect(AC.destination);n.start(t);
   hit(cap?260:420,cap?.18:.09,cap?.55:.4,0);if(cap)hit(180,.22,.35,.05)}catch(e){}}
+// 將軍特效：棋盤中間蓋一個「將軍！」印章動畫，有開音效的話再「鏘」一聲
+function checkFx(svg){if(!store.get("ckFx",true))return;const r=svg.getBoundingClientRect();if(!r.width)return;
+  document.querySelectorAll(".ckfx").forEach(x=>x.remove());
+  const d=document.createElement("div");d.className="ckfx";d.style.cssText=`left:${r.left+r.width/2}px;top:${r.top+r.height/2}px;font-size:${Math.round(r.width*.2)}px`;
+  d.innerHTML="<span>將軍！</span>";document.body.append(d);vibrate([25,30,25]);setTimeout(()=>d.remove(),1700);
+  if((store.get("capSound",true)||store.get("mvSound",false))&&AC&&AC.state==="running")try{const t=AC.currentTime;
+    for(const[f,at]of[[880,0],[1320,.09]]){const o=AC.createOscillator(),g=AC.createGain();o.type="square";o.frequency.setValueAtTime(f,t+at);
+      g.gain.setValueAtTime(.12,t+at);g.gain.exponentialRampToValueAtTime(.001,t+at+.35);o.connect(g).connect(AC.destination);o.start(t+at);o.stop(t+at+.4)}}catch(e){}}
 function Board(onTap,onSwipe){
   const NS="http://www.w3.org/2000/svg",X0=40,Y0=40,S=60;
   const svg=document.createElementNS(NS,"svg");svg.setAttribute("viewBox","0 0 560 620");
@@ -541,6 +552,7 @@ function Board(onTap,onSwipe){
     // 走棋動畫：跟上一次畫的盤面比，棋子從原位滑到新位置；被吃的棋子淡出
     const fresh=L&&prevB&&prevB[L.f]&&prevB[L.f]===board[L.t]&&!board[L.f]&&prevB[L.t]!==board[L.t];
     if(fresh&&o.anim!==false)moveSound(!!prevB[L.t]);
+    if(fresh&&o.fx&&o.check>=0)setTimeout(()=>checkFx(svg),200);   // 走完棋才蓋章
     const anim=fresh&&o.anim!==false&&store.get("mvAnim",true)&&!dropNoAnim;if(fresh)dropNoAnim=false;   // 拖過去放下的棋，不用再滑一次
     if(anim&&prevB[L.t]){const cg=piece(prevB[L.t],L.t,0,T,PS,false);svg.append(cg);requestAnimationFrame(()=>{cg.style.transition="opacity .45s";cg.style.opacity="0"})}
     lastBoard=board;lastO=o;pieceEls={};
@@ -1265,7 +1277,7 @@ function Settings(v){
     v.querySelectorAll("[data-e]").forEach(x=>x.onclick=()=>{const k=x.dataset.e;if(k===store.get("era","classic"))return;vibrate(5);store.set("era",k);applyEra();
       if(k!=="classic"&&store.get("boardTheme","wood3d")!=="auto"){store.set("boardTheme","auto");toast("棋盤也換成這個朝代的配色（可在下面改回）")}paint();show(true)});
     const tg=(k,label,sub)=>`<label class="row" style="justify-content:space-between;padding:6px 0"><span><b>${label}</b><br><span class="muted">${sub}</span></span><input type="checkbox" class="sw" data-t="${k}" ${store.get(k,k!=="mvSound")?"checked":""}></label>`;
-    v.querySelector("#mv").innerHTML=tg("mvArrow","箭頭","從原來位置畫箭頭指到新位置")+'<div style="border-top:1px solid var(--line)"></div>'+tg("mvAnim","動畫","棋子滑過去，被吃的棋子淡出")+'<div style="border-top:1px solid var(--line)"></div>'+tg("mvSound","音效","走棋時「叩」一聲，吃子比較重");
+    v.querySelector("#mv").innerHTML=tg("mvArrow","箭頭","從原來位置畫箭頭指到新位置")+'<div style="border-top:1px solid var(--line)"></div>'+tg("mvAnim","動畫","棋子滑過去，被吃的棋子淡出")+'<div style="border-top:1px solid var(--line)"></div>'+tg("mvSound","走棋音效","走棋時「叩」一聲")+'<div style="border-top:1px solid var(--line)"></div>'+tg("capSound","吃子音效","吃子時重重「啪」一聲、將軍時「鏘」一聲")+'<div style="border-top:1px solid var(--line)"></div>'+tg("ckFx","將軍特效","被將軍或將對方軍時，棋盤上蓋「將軍！」字樣");
     v.querySelectorAll("[data-t]").forEach(x=>x.onchange=()=>{store.set(x.dataset.t,x.checked);show(true)});
     v.querySelector("#nmS").textContent=myName()||"還沒取名字";show(false)};
   v.querySelector("#nm").onclick=()=>nameSheet(false);v.querySelector("#fb").onclick=()=>feedbackSheet();v.querySelector("#sh").onclick=shareSheet;const cn=v.querySelector("#cn");if(cn)cn.onclick=connectSheet;const fa=v.querySelector("#fa");if(fa)fa.onclick=()=>location.hash="#/fbadmin";
@@ -1422,7 +1434,7 @@ function CpuGame(v){
     if(sel>=0&&st.legal.some(([f,t])=>f===sel&&t===i)){const f=sel;sel=-1;vibrate(15);return post("/play/move",{f,t:i})}
     sel=st.legal.some(([f])=>f===i)?i:-1;if(sel>=0)vibrate(5);draw()}
   function draw(){if(!st)return;const last=st.moves[st.moves.length-1];
-    bd.draw(st.board,{flip:st.human==="b",last,sel,targets:sel>=0?st.legal.filter(([f])=>f===sel).map(x=>x[1]):[],hint:st.hint?[st.hint.f,st.hint.t]:null,check:st.check})}
+    bd.draw(st.board,{flip:st.human==="b",last,sel,targets:sel>=0?st.legal.filter(([f])=>f===sel).map(x=>x[1]):[],hint:st.hint?[st.hint.f,st.hint.t]:null,check:st.check,fx:true})}
   function render(s){st=s;if(!st.legal.some(([f])=>f===sel))sel=-1;draw();
     const lv=st.levels[st.level-1]||{},me=st.human,bot=opp(me);
     const CR=st.cpuRate||{};paintSeg(st.ranked);if(!st.ranked&&st.level&&!st.practice)store.set("cpuLevel",st.level);
@@ -1571,7 +1583,7 @@ function PvpGame(v){
     if(seat&&st.turn!==seat){toast("還沒輪到你，等對方走");return}
     if(sel>=0&&st.legal.some(([f,t])=>f===sel&&t===i)){const f=sel;sel=-1;vibrate(15);flipMan=null;return post("/pvp/move",{f,t:i})}
     sel=st.legal.some(([f])=>f===i)?i:-1;if(sel>=0)vibrate(5);draw()}
-  function draw(){if(!st)return;bd.draw(st.board,{flip:isFlip(),last:st.moves[st.moves.length-1],sel,targets:sel>=0?st.legal.filter(([f])=>f===sel).map(x=>x[1]):[],check:st.check})}
+  function draw(){if(!st)return;bd.draw(st.board,{flip:isFlip(),last:st.moves[st.moves.length-1],sel,targets:sel>=0?st.legal.filter(([f])=>f===sel).map(x=>x[1]):[],check:st.check,fx:true})}
   function clocks(){if(!st||!clockBase||!clockBase.c)return;const b=clockBase;for(const s of["r","b"]){const el=v.querySelector(`#ck_${s}`);if(el){const x=b.c[s]-(b.run&&b.turn===s?Date.now()-b.at:0);el.textContent=fmt(x);el.style.color=x<60000&&!(b.turn===s&&b.run)?"var(--red)":""}}}
   const ckT=setInterval(clocks,250);
   function render(s){st=s;if(NET&&s.mySide&&s.mySide!==seat){seat=s.mySide;flipMan=null;setTitle();flipBtn()}if(!st.legal.some(([f])=>f===sel))sel=-1;draw();
