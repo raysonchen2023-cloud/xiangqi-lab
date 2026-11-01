@@ -1245,7 +1245,8 @@ function Openings(v){
   setTop("我的開局","#/");setTabs(false);
   v.innerHTML=`<div class="home"><div id="ob"><div class="muted" style="text-align:center;padding:20px">整理你下過的對局中…</div></div></div>`;
   (async()=>{const gs=await myGames(150);if(!v.isConnected)return;const box=v.querySelector("#ob");
-    if(!gs.length){box.innerHTML='<div class="card muted" style="text-align:center;line-height:1.7">還沒有自己的對局。<br>下幾盤挑戰電腦或線上對戰，這裡就會統計你常用的開局。</div>';return}
+    if(!gs.length){box.innerHTML='<div class="card muted" style="text-align:center;line-height:1.7">還沒有自己的對局。<br>下幾盤挑戰電腦或線上對戰，這裡就會統計你常用的開局。</div>';
+      recommendGames(box,{r:{},b:{}},{g:0,o:0,b:0},{}).catch(()=>{});return}
     const T={r:{},b:{}},mid={g:0,o:0,b:0},midBy={};
     for(const g of gs){if(!isStdStart(g.it.board))continue;
       const name=g.side==="r"?redOpening(g.moves[0].cn):blackDefence(g.moves)+(g.moves[0]?`（對${redOpening(g.moves[0].cn)}）`:"");
@@ -1279,25 +1280,34 @@ const OPEN_KW={"中炮":["中炮"],"仙人指路":["仙人指路"],"飛相局":[
 async function recommendGames(box,T,mid,midBy){const avg=a=>a.length?a.reduce((x,y)=>x+y,0)/a.length:null,pct=(a,n)=>n?Math.round(a*100/n):0;
   const rows=[...Object.entries(T.r).map(([n,r])=>({n,sd:"r",r})),...Object.entries(T.b).map(([n,r])=>({n,sd:"b",r}))];
   const oa=avg(rows.flatMap(x=>x.r.acc)),mn=mid.g+mid.o+mid.b,mg=pct(mid.g,mn);
-  const OPEN_MIN=75,MID_MIN=55,wo=oa!=null&&oa<OPEN_MIN,wm=mn>=20&&mg<MID_MIN;if(!wo&&!wm)return;
-  const focus=wo&&wm?((OPEN_MIN-oa)/OPEN_MIN>=(MID_MIN-mg)/MID_MIN?"open":"mid"):wo?"open":"mid";
+  // 一定會推薦（意見回饋 133：新帳號沒資料或分數都及格時原本什麼都不顯示，看起來像功能不見）
+  // 低於門檻＝「加強」；都及格＝挑相對弱的那項「保持手感」；還沒有評過等的對局＝先看最常見的中炮
+  const OPEN_MIN=75,MID_MIN=55,hasO=oa!=null,hasM=mn>=20,wo=hasO&&oa<OPEN_MIN,wm=hasM&&mg<MID_MIN,mode=wo||wm?"weak":hasO||hasM?"ok":"none";
+  const gapO=hasO?(OPEN_MIN-oa)/OPEN_MIN:-9,gapM=hasM?(MID_MIN-mg)/MID_MIN:-9;
+  const focus=mode==="none"?"open":(mode==="weak"?(wo&&wm?(gapO>=gapM?"open":"mid"):wo?"open":"mid"):(gapO>=gapM?"open":"mid"));
   const base=nm=>nm.replace(/（對.*）$/,"");
   let tg;if(focus==="open")tg=rows.filter(x=>x.r.acc.length&&OPEN_KW[base(x.n)]).sort((a,b)=>avg(a.r.acc)-avg(b.r.acc))[0];
   else{const g=x=>{const m=midBy[x.n];return m&&m.g+m.o+m.b>=5?m.g/(m.g+m.o+m.b):1};tg=rows.filter(x=>OPEN_KW[base(x.n)]).sort((a,b)=>g(a)-g(b)||b.r.n-a.r.n)[0]}
-  if(!tg)return;
+  if(!tg)tg=rows.filter(x=>OPEN_KW[base(x.n)]).sort((a,b)=>b.r.n-a.r.n)[0]||{n:"中炮",sd:"r",r:{n:0,acc:[]}};
   const kw=OPEN_KW[base(tg.n)],vsRed=tg.sd==="b"&&(tg.n.match(/（對(.*)）$/)||[])[1],kw2=vsRed&&OPEN_KW[vsRed]?OPEN_KW[vsRed]:[],win=tg.sd==="r"?"紅勝":"黑勝";
   const seen=store.get("recShown",[]),pick=[];
   for(const c of["xuyinchuan","gmgames"]){if(pick.length>=3)break;let d;try{d=await api("/db/items?c="+c)}catch(e){continue}
-    const ok=it=>it.open&&kw.every(k=>it.open.includes(k))&&it.result===win&&!seen.includes(c+"/"+it.id)&&!pick.some(p=>p.it.id===it.id);
-    let L=d.items.filter(it=>ok(it)&&kw2.every(k=>it.open.includes(k)));if(L.length<3-pick.length)L=L.concat(d.items.filter(it=>ok(it)&&!L.includes(it)));
+    // 開局名稱像「中炮过河车…对屏风马…」：紅方開局看「对」前面那段的開頭，黑方應法看「对」後面那段（避免「仙人指路转左中炮」被當成中炮）
+    const parts=it=>{const nm=String(it.open||"").replace(/^[A-E]\d\d\s*/,""),i=nm.indexOf("对");return i<0?[nm,""]:[nm.slice(0,i),nm.slice(i+1)]};
+    const fit=(it,ks,sd)=>{const[rp,bp]=parts(it);return ks.every(k=>sd==="r"?rp.startsWith(k):bp.includes(k))};
+    const ok=it=>it.open&&fit(it,kw,tg.sd)&&it.result===win&&!seen.includes(c+"/"+it.id)&&!pick.some(p=>p.it.id===it.id);
+    let L=d.items.filter(it=>ok(it)&&fit(it,kw2,"r"));if(L.length<3-pick.length)L=L.concat(d.items.filter(it=>ok(it)&&!L.includes(it)));
     for(let i=L.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[L[i],L[j]]=[L[j],L[i]]}
     for(const it of L.slice(0,3-pick.length))pick.push({c,it})}
   if(!pick.length||!box.isConnected)return;
   store.set("recShown",pick.map(p=>p.c+"/"+p.it.id).concat(seen).slice(0,60));
-  const why=focus==="open"?`你的開局準確度平均 <b>${Math.round(oa)}</b>（低於 ${OPEN_MIN}），其中 <b>${esc(tg.n)}</b> 最弱。下面 3 盤是大師下這個開局、${tg.sd==="r"?"紅方":"黑方"}贏的對局，重點看<b>前 10 回合</b>怎麼出子、佔位。`
+  const side=tg.sd==="r"?"紅方":"黑方",look=focus==="open"?"重點看<b>前 10 回合</b>怎麼出子、佔位。":"重點看<b>第 11 回合以後</b>怎麼找攻擊點、怎麼兌子。";
+  const why=mode==="none"?`還沒有足夠評過等的對局可以判斷你的強弱（下完幾盤、Pikafish 評完等就會改成針對你的弱點推薦）。先看大師下最常見的 <b>中炮</b>，${look}`
+    :mode==="ok"?`你的${hasO?`開局準確度 <b>${Math.round(oa)}</b>`:""}${hasO&&hasM?"、":""}${hasM?`中局正招 <b>${mg}%</b>`:""}都不錯 👍 再加強相對弱的${focus==="open"?"開局":"中局"}：下面 3 盤是大師下 <b>${esc(tg.n)}</b>、${side}贏的對局，${look}`
+    :focus==="open"?`你的開局準確度平均 <b>${Math.round(oa)}</b>（低於 ${OPEN_MIN}），其中 <b>${esc(tg.n)}</b> 最弱。下面 3 盤是大師下這個開局、${tg.sd==="r"?"紅方":"黑方"}贏的對局，重點看<b>前 10 回合</b>怎麼出子、佔位。`
     :`你的中局正招只有 <b>${mg}%</b>（低於 ${MID_MIN}%），<b>${esc(tg.n)}</b> 進入中局後最容易失誤。下面 3 盤是大師下這個開局、${tg.sd==="r"?"紅方":"黑方"}贏的對局，重點看<b>第 11 回合以後</b>怎麼找攻擊點、怎麼兌子。`;
   const el=document.createElement("div");
-  el.innerHTML=`<div class="sec-t">推薦練習<small>${focus==="open"?"加強開局":"加強中局"}</small></div><div class="card"><p style="margin:0 0 8px;line-height:1.7">${why}</p>
+  el.innerHTML=`<div class="sec-t">推薦練習<small>${mode==="none"?"入門":mode==="ok"?"保持手感":focus==="open"?"加強開局":"加強中局"}</small></div><div class="card"><p style="margin:0 0 8px;line-height:1.7">${why}</p>
     <div class="st-list">${pick.map(({c,it})=>`<button class="st-g" data-c="${c}" data-id="${esc(it.id)}"><span class="dot w">${tg.sd==="r"?"紅":"黑"}</span><span class="tx"><b>${esc(it.red||"")} 對 ${esc(it.black||"")}</b><span>${esc(String(it.year||""))}・${esc(String(it.open||"").replace(/^[A-E]\d\d\s*/,""))}</span></span><span class="r muted">›</span></button>`).join("")}</div>
     <p class="muted" style="font-size:12px;margin:8px 0 0">每次打開這頁會換不同的 3 盤。也可以用棋盤上的「推演」自己試試看別的走法。</p></div>`;
   const ref=box.querySelector(".sec-t");box.insertBefore(el,ref||null);
