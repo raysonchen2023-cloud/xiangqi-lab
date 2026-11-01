@@ -781,6 +781,47 @@ REAL["honda-cr-v"]=c=>realCar(c,{L:4.69,W:1.865,H:1.68,tire:.37,tireW:.235,arch:
         x.strokeStyle="#ff2a3a";x.lineWidth=M.s(.011);x.lineJoin="round";x.beginPath();x.moveTo(M.x(s*.64),M.y(.955));x.lineTo(M.x(s*.86),M.y(.955));x.lineTo(M.x(s*.86),M.y(1.11));x.stroke()}
       drawHonda(x,M.x(0),M.y(.86),M.s(.12),"#8c929a");kit.text(x,M,"CR-V",-.5,.8,.04,"#8c929a",.02)},{metal:.35,rough:.25});
     proj("rear",-.95,.95,.85,1.15,(x,M)=>{for(const s of[-1,1]){x.strokeStyle="#ff4555";x.lineWidth=M.s(.007);x.lineJoin="round";x.beginPath();x.moveTo(M.x(s*.65),M.y(.955));x.lineTo(M.x(s*.86),M.y(.955));x.lineTo(M.x(s*.86),M.y(1.1));x.stroke()}},{glow:.8,layer:2})}});
+// Honda HR-V（第三代，台灣 2022）：4345×1790×1590、軸距 2610、225/50R18
+// 車身色細橫條水箱罩（H 標誌在中間）、細長頭燈、黑色下保桿＋銀色護板；斜背、黑色 C 柱藏後門把；車尾貫穿式燈條、HR-V 字樣
+REAL["honda-hr-v"]=c=>realCar(c,{L:4.345,W:1.79,H:1.59,tire:.341,tireW:.225,arch:.39,axles:[.82,3.43],
+  colors:["#EEEFEF","#A51C24","#B4B8BC","#5D6166","#17181A","#2C4467"],
+  rearD:.28,rearP:3,frontD:.5,frontP:2.7,shoulder:.12,cab:[.12,3.28],cabIn:.07,tumble:.8,
+  skirt:[[0,.42],[.55,.38],[1.2,.36],[3.0,.36],[3.7,.36],[4.345,.33]],
+  bottom:[[0,.36],[.15,.26],[.42,.19],[3.9,.19],[4.15,.24],[4.345,.34]],
+  top:[[0,.8],[.02,1.0],[.08,1.06],[.5,1.06],[1.4,1.04],[2.4,1.02],[3.0,1.0],[3.4,.97],[3.8,.92],[4.1,.87],[4.28,.8],[4.345,.62]],
+  roof:[[.12,1.08],[.3,1.34],[.6,1.5],[1.1,1.575],[1.8,1.59],[2.3,1.57],[2.65,1.45],[2.95,1.24],[3.28,1.02]],
+  wheel(wg,z,R,m){wheelTwoTone(wg,z,R,m,10,(x,cx,cy,w)=>drawHonda(x,cx,cy,w*.8),true)},
+  details({proj,rearSeam,kit,col}){
+    proj("front",-.92,.92,.12,.95,(x,M)=>{
+      rpoly(x,M,[[-.86,.13,.02],[.86,.13,.02],[.84,.38,.03],[-.84,.38,.03]],"#17181a");
+      rpoly(x,M,[[-.5,.15,.01],[.5,.15,.01],[.48,.2,.01],[-.48,.2,.01]],"#bdc2c8");
+      for(const s of[-1,1])rpoly(x,M,[[s*.62,.24,.02],[s*.82,.28,.02],[s*.84,.46,.02],[s*.7,.44,.02]],"#101113");
+      // 車身色細橫條水箱罩：外框黑縫＋一條條橫縫
+      const g=[[-.48,.44],[.48,.44],[.52,.74],[-.52,.74]];poly(x,M,g,col,"#151618",M.s(.008));
+      x.save();poly(x,M,g);x.clip();x.fillStyle="rgba(10,10,12,.75)";for(let v=.465;v<.74;v+=.024)x.fillRect(M.x(-.55),M.y(v),M.s(1.1),M.s(.007));x.restore();
+      drawHonda(x,M.x(0),M.y(.6),M.s(.12),"#8c929a")},{metal:.35,rough:.25});
+    for(const s of[-1,1]){
+      proj("front",-.92,.92,.6,.92,(x,M)=>rpoly(x,M,[[s*.53,.74,.01],[s*.55,.8,.02],[s*.86,.84,.03],[s*.9,.78,.03],[s*.8,.74,.02]],"#1d2229"),{metal:.4,rough:.08,layer:1});
+      proj("front",-.92,.92,.6,.92,(x,M)=>{x.strokeStyle="#fff";x.lineCap="round";x.lineWidth=M.s(.008);x.beginPath();x.moveTo(M.x(s*.56),M.y(.79));x.lineTo(M.x(s*.86),M.y(.825));x.lineTo(M.x(s*.89),M.y(.785));x.stroke();
+        x.fillStyle="#cfd8e6";for(const u of[.66,.76]){x.beginPath();x.ellipse(M.x(s*u),M.y(.775),M.s(.03),M.s(.016),0,0,7);x.fill()}},{glow:.9,layer:2})}
+    kit.cladding({arch:.065,drop:.16,sill:[1.22,3.05,.36],strip:[1.35,2.95,.31,.018,"#c6cbd0"]});
+    kit.doors([[[3.05,1.0],[3.08,.8],[3.04,.5],[3.0,.36]],[[2.05,1.02],[2.06,.6],[2.05,.36]],[[1.22,1.04],[1.23,.86],[1.3,.76],[1.3,.58],[1.26,.38]]]);
+    kit.handles({xs:[2.56],y:.95,w:.11});
+    kit.belt({x0:.7,x1:3.15,dy:.03});
+    kit.band(1.98,2.08,"black");kit.band(1.0,1.3,"black");kit.band(.12,.5,"body");
+    kit.mirror({x:3.1,y:1.08,z:.96,sx:.08,sy:.06,sz:.12,signal:true});
+    kit.hood(3.28,4.15,.73,.04);
+    for(const z of[-1,1])rearSeam([[1.0,z*.64],[.85,z*.66],[.65,z*.64],[.45,z*.6]]);rearSeam(Array.from({length:15},(_,i)=>[.43,.6-1.2*i/14]));
+    proj("rear",-.92,.92,.12,1.12,(x,M)=>{
+      rpoly(x,M,[[-.86,.13,.02],[.86,.13,.02],[.84,.44,.03],[-.84,.44,.03]],"#17181a");
+      rpoly(x,M,[[-.42,.17,.01],[.42,.17,.01],[.4,.22,.01],[-.4,.22,.01]],"#bdc2c8");
+      for(const s of[-1,1])rpoly(x,M,[[s*.66,.37,.01],[s*.8,.37,.01],[s*.8,.4,.01],[s*.66,.4,.01]],"#8a0c14");
+      rpoly(x,M,[[-.25,.52,.02],[.25,.52,.02],[.25,.68,.02],[-.25,.68,.02]],null,"#3a3c40",M.s(.006));
+      // 貫穿式燈條＋兩端尾燈
+      x.fillStyle="#3d080d";x.fillRect(M.x(-.88),M.y(.965),M.s(1.76),M.s(.022));
+      for(const s of[-1,1])rpoly(x,M,[[s*.55,.93,.01],[s*.55,.98,.01],[s*.86,1.0,.02],[s*.91,.94,.02]],"#4a0a10");
+      drawHonda(x,M.x(0),M.y(.88),M.s(.11),"#8c929a");kit.text(x,M,"HR-V",-.55,.84,.035,"#8c929a",.02)},{metal:.35,rough:.25});
+    proj("rear",-.92,.92,.85,1.05,(x,M)=>{x.fillStyle="#ff4555";x.fillRect(M.x(-.88),M.y(.958),M.s(1.76),M.s(.007))},{glow:.8,layer:2})}});
 // Tesla Model Y（2025 Juniper）：4790×1920×1624、軸距 2890、255/45R19
 // 沒有水箱罩：鼻頭一條貫穿式細燈條、頭燈縮在保險桿兩角、下巴黑色進氣口；斜背、全玻璃車頂、平貼門把；車尾貫穿式燈條＋兩端往下彎、TESLA 字樣、黑色下擾流
 REAL["tesla-model-y"]=c=>realCar(c,{L:4.79,W:1.92,H:1.624,tire:.356,tireW:.235,arch:.41,axles:[.94,3.83],
@@ -822,7 +863,7 @@ REAL["tesla-model-y"]=c=>realCar(c,{L:4.79,W:1.92,H:1.624,tire:.356,tireW:.235,a
       kit.text(x,M,"TESLA",0,.84,.04,"#c9ced4",.06)},{metal:.35,rough:.25});
     proj("rear",-.96,.96,.8,1.05,(x,M)=>{x.strokeStyle="#ff3545";x.lineCap="round";x.lineJoin="round";x.lineWidth=M.s(.009);x.beginPath();x.moveTo(M.x(-.89),M.y(.87));x.lineTo(M.x(-.89),M.y(.945));x.lineTo(M.x(.89),M.y(.945));x.lineTo(M.x(.89),M.y(.87));x.stroke()},{glow:.9,layer:2})}});
 // 已經上線的寫實車款（每完成 10 台加一批）
-const REAL_LIVE=new Set(["tesla-model-3","toyota-corolla-cross","toyota-rav4","toyota-corolla-altis","toyota-yaris-cross","toyota-camry","toyota-town-ace","toyota-crown-sport","tesla-model-y","honda-cr-v"]);
+const REAL_LIVE=new Set(["tesla-model-3","toyota-corolla-cross","toyota-rav4","toyota-corolla-altis","toyota-yaris-cross","toyota-camry","toyota-town-ace","toyota-crown-sport","tesla-model-y","honda-cr-v","honda-hr-v"]);
 
 function build(c){
   // 照真車一台一台做好、已經上線的車款用寫實版；還在做的只有開了預覽（localStorage xq_carReal）才看得到
