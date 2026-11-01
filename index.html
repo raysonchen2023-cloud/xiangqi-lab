@@ -1180,10 +1180,24 @@ function rulesPlay(box){const P=(t,h)=>`<div class="sec-t">${t}</div><div class=
     ["馬","先直走一格再斜走一格（走「日」字）。直走那一格有棋子擋住就不能走，叫<b>蹩馬腿</b>。"],
     ["車","直線、橫線走任意格，中間不能有棋子擋。威力最大。"],
     ["炮／砲","不吃子時跟車一樣走；<b>吃子時一定要隔一個棋子跳過去吃</b>（中間那顆叫「炮架」，紅黑都可以）。"],
-    ["兵／卒","只能往前走一格；<b>過河以後</b>也可以往左右走一格。永遠不能後退。"]].map(([n,d])=>`<div style="display:flex;gap:10px;padding:6px 0;border-bottom:1px solid var(--line)"><b style="min-width:58px">${n}</b><span>${d}</span></div>`).join(""))+
+    ["兵／卒","只能往前走一格；<b>過河以後</b>也可以往左右走一格。永遠不能後退。"]].map(([n,d],i)=>`<div style="display:flex;gap:10px;padding:8px 0;border-bottom:1px solid var(--line);align-items:flex-start"><b style="min-width:58px">${n}</b><span style="flex:1">${d}</span><button class="pill" data-pc="${i}" style="white-space:nowrap;font-size:13px">👀 看走法</button></div>`).join(""))+
   P("⚔ 吃子與將軍","走到對方棋子的位置就把它吃掉（拿下棋盤）。走完後可以直接吃到對方帥／將，就是<b>將軍</b>，對方下一步一定要解除：移開帥將、吃掉將軍的棋子、或擋在中間。解不了就是將死。")+
   P("🤝 和棋與禁止","雙方都無法將死對方（例如子力都太少）、或雙方同意，就是<b>和棋</b>。不能一直重複同樣的威脅：<b>長將</b>（一直將軍）和<b>長捉</b>（一直追捉同一顆子）都禁止，違反的一方要變著，不變就判負。")+
-  P("💡 新手小提醒","1. 開局先把馬、炮、車走出來，不要只動同一顆棋。<br>2. 每走一步前先看：對方剛剛那步在威脅我什麼？<br>3. 車最值錢（約 9 分），馬炮各約 4～5 分，仕相各約 2 分，兵過河前 1 分、過河後 2 分。<br>想知道某句術語是什麼意思，看「📚 術語」分頁。")}
+  P("💡 新手小提醒","1. 開局先把馬、炮、車走出來，不要只動同一顆棋。<br>2. 每走一步前先看：對方剛剛那步在威脅我什麼？<br>3. 車最值錢（約 9 分），馬炮各約 4～5 分，仕相各約 2 分，兵過河前 1 分、過河後 2 分。<br>想知道某句術語是什麼意思，看「📚 術語」分頁。");
+  // 範例（意見回饋 138）：棋盤上放這顆棋子，綠點／圈＝可以走到的位置，黃框＝擋路的棋子（蹩馬腿、塞象眼、炮架）
+  // 格子編號＝列×9＋行（列 0 是黑方底線）
+  const DEMO=[
+    {t:"帥／將",b:{76:"K",3:"k"},tg:[67,85,75,77],cap:"帥在九宮中間，可以上下左右走一格（綠點）。九宮外面不能去。"},
+    {t:"仕／士",b:{76:"A",85:"K",3:"k"},tg:[66,68,84,86],cap:"仕在九宮中心，可以往四個斜角走一格。"},
+    {t:"相／象",b:{67:"B",59:"P",85:"K",3:"k"},tg:[47,83,87],hl:[59],cap:"相走「田」字。右上那格「田」中間有兵擋住（黃框），叫塞象眼，不能走。相也不能過河。"},
+    {t:"馬",b:{49:"N",40:"P",85:"K",3:"k"},tg:[38,42,56,60,66,68],hl:[40],cap:"馬走「日」字，最多 8 個點。上面被兵擋住（黃框）＝蹩馬腿，往上跳的兩個點都不能去。"},
+    {t:"車",b:{49:"R",22:"P",52:"p",85:"K",3:"k"},tg:[45,46,47,48,50,51,52,40,31,58,67,76],cap:"車直線、橫線走任意格。右邊可以一路吃到黑卒（圈起來的）；上面被自己的兵擋住，過不去。"},
+    {t:"炮／砲",b:{49:"C",51:"P",53:"p",85:"K",3:"k"},tg:[45,46,47,48,50,40,31,22,13,4,58,67,76,53],hl:[51],cap:"不吃子時跟車一樣走。要吃子一定要隔一顆棋子（黃框＝炮架）跳過去吃，所以吃得到最右邊的黑卒。"},
+    {t:"兵／卒",b:{56:"P",42:"P",85:"K",3:"k"},tg:[47,33,41,43],cap:"左邊的兵還沒過河，只能往前一格；右邊的兵已經過河，可以往前或左右一格。兵永遠不能後退。"}];
+  box.querySelectorAll("[data-pc]").forEach(btn=>btn.onclick=()=>{vibrate(5);const D=DEMO[+btn.dataset.pc];
+    sheet(D.t+" 怎麼走",sb=>{const wrap=document.createElement("div");wrap.style.cssText="max-width:340px;margin:0 auto";const bd=Board(null);wrap.append(bd.svg);
+      const cap=document.createElement("p");cap.style.cssText="line-height:1.7;text-align:center";cap.textContent=D.cap;sb.append(wrap,cap);
+      const bb=Array(90).fill(null);for(const k in D.b)bb[+k]=D.b[k];bd.draw(bb,{anim:false,targets:D.tg,hint:D.hl||null})})})}
 // 記譜法：四個字的規則＋範例（點一下在棋盤上畫出來）
 function rulesNotation(box){
   // 格子編號＝列×9＋行（列 0 是黑方底線，行 0 是畫面最左邊）
