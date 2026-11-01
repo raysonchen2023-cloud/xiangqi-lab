@@ -732,8 +732,48 @@ const REAL_OLD={
       stick(pad(dark,.6,.035,.005),V(-3,.42,0),V(1,0,0),.003)}})
 };
 Object.assign(REAL,REAL_OLD);   // 兩批車款合在一起
+// Tesla Model Y（2025 Juniper）：4790×1920×1624、軸距 2890、255/45R19
+// 沒有水箱罩：鼻頭一條貫穿式細燈條、頭燈縮在保險桿兩角、下巴黑色進氣口；斜背、全玻璃車頂、平貼門把；車尾貫穿式燈條＋兩端往下彎、TESLA 字樣、黑色下擾流
+REAL["tesla-model-y"]=c=>realCar(c,{L:4.79,W:1.92,H:1.624,tire:.356,tireW:.235,arch:.41,axles:[.94,3.83],
+  colors:["#E9EAEC","#5A5D61","#17181A","#9F1B22","#2B4A7A","#A8ABAF"],
+  rearD:.34,rearP:2.6,frontD:.7,frontP:2.1,shoulder:.16,cab:[.38,3.72],cabIn:.08,tumble:.76,
+  bottom:[[0,.36],[.18,.25],[.5,.19],[4.35,.19],[4.62,.22],[4.79,.3]],
+  top:[[0,.78],[.03,1.0],[.12,1.08],[.35,1.1],[.6,1.09],[1.4,1.06],[2.6,1.04],[3.4,1.01],[3.8,.96],[4.2,.87],[4.5,.8],[4.7,.73],[4.79,.56]],
+  roof:[[.38,1.11],[.6,1.23],[.95,1.38],[1.45,1.54],[2.1,1.62],[2.6,1.6],[3.0,1.48],[3.4,1.24],[3.72,1.0]],
+  wheel(wg,z,R,m){wheelTwoTone(wg,z,R,m,10,(x,cx,cy,w)=>{x.save();x.translate(cx-w*.45,cy-w*.45);drawTee(x,w*.9,w*.9);x.restore()})},
+  details({proj,rearSeam,sideSeam,kit}){
+    proj("front",-.96,.96,.14,.9,(x,M)=>{
+      // 下巴黑色進氣口＋兩側小導流口
+      rpoly(x,M,[[-.56,.2,.03],[.56,.2,.03],[.5,.31,.03],[-.5,.31,.03]],"#101113");
+      for(const s of[-1,1])rpoly(x,M,[[s*.7,.24,.02],[s*.84,.28,.02],[s*.84,.34,.02],[s*.72,.31,.02]],"#121315");
+      // T 字標誌
+      x.save();x.translate(M.x(-.035),M.y(.69));drawTee(x,M.s(.07),M.s(.07),"#c9ced6");x.restore()},{metal:.35,rough:.25});
+    for(const s of[-1,1]){
+      // 縮在保險桿兩角的頭燈（煙燻燈殼）
+      proj("front",-.96,.96,.4,.75,(x,M)=>rpoly(x,M,[[s*.6,.5,.02],[s*.84,.53,.03],[s*.87,.6,.03],[s*.62,.58,.02]],"#1d2229"),{metal:.4,rough:.06,layer:1});
+      proj("front",-.96,.96,.4,.75,(x,M)=>{x.fillStyle="#d8e0ec";for(const u of[.67,.77]){x.beginPath();x.ellipse(M.x(s*u),M.y(.555),M.s(.03),M.s(.016),0,0,7);x.fill()}},{glow:.7,layer:2})}
+    // 鼻頭貫穿式燈條
+    proj("front",-.96,.96,.55,.85,(x,M)=>{x.strokeStyle="#fff";x.lineCap="round";x.lineWidth=M.s(.007);x.beginPath();x.moveTo(M.x(-.9),M.y(.66));x.quadraticCurveTo(M.x(0),M.y(.735),M.x(.9),M.y(.66));x.stroke()},{glow:1,layer:2});
+    kit.doors([[[3.44,.98],[3.47,.8],[3.44,.5],[3.38,.3]],[[2.45,1.0],[2.46,.6],[2.45,.3]],[[1.62,1.03],[1.6,.85],[1.52,.74],[1.5,.55],[1.52,.3]],Array.from({length:20},(_,i)=>[1.52+(3.38-1.52)*i/19,.3])]);
+    kit.handles({xs:[2.95,1.95],y:.9,w:.13});
+    kit.belt({x0:.8,x1:3.5,dy:.015});
+    kit.band(2.4,2.5,"black");
+    kit.mirror({x:3.5,y:1.05,z:1.03,sx:.078,sy:.058,sz:.12});
+    kit.hood(3.72,4.5,.78,.1);
+    // 充電口蓋（左後）
+    sideSeam(-1,[[.36,.86],[.48,.86],[.49,.88],[.49,.93],[.48,.95],[.36,.95],[.35,.93],[.35,.88],[.36,.86]],.0018);
+    for(const z of[-1,1])rearSeam([[1.0,z*.66],[.85,z*.7],[.6,z*.68],[.42,z*.64]]);rearSeam(Array.from({length:15},(_,i)=>[.4,.64-1.28*i/14]));
+    proj("rear",-.96,.96,.14,1.15,(x,M)=>{
+      rpoly(x,M,[[-.86,.2,.03],[.86,.2,.03],[.84,.42,.03],[-.84,.42,.03]],"#141517");
+      for(const s of[-1,1])rpoly(x,M,[[s*.62,.33,.01],[s*.76,.33,.01],[s*.76,.35,.01],[s*.62,.35,.01]],"#7a0a12");
+      rpoly(x,M,[[-.26,.48,.02],[.26,.48,.02],[.26,.64,.02],[-.26,.64,.02]],null,"#3a3c40",M.s(.006));
+      // 貫穿式燈條：煙燻底＋紅線，兩端往下彎
+      rpoly(x,M,[[-.9,.92,.01],[.9,.92,.01],[.88,.97,.01],[-.88,.97,.01]],"#2a0a0d");
+      for(const s of[-1,1])rpoly(x,M,[[s*.74,.86,.01],[s*.92,.86,.01],[s*.92,.97,.02],[s*.74,.97,.01]],"#3a0a0f");
+      kit.text(x,M,"TESLA",0,.84,.04,"#c9ced4",.06)},{metal:.35,rough:.25});
+    proj("rear",-.96,.96,.8,1.05,(x,M)=>{x.strokeStyle="#ff3545";x.lineCap="round";x.lineJoin="round";x.lineWidth=M.s(.009);x.beginPath();x.moveTo(M.x(-.89),M.y(.87));x.lineTo(M.x(-.89),M.y(.945));x.lineTo(M.x(.89),M.y(.945));x.lineTo(M.x(.89),M.y(.87));x.stroke()},{glow:.9,layer:2})}});
 // 已經上線的寫實車款（每完成 10 台加一批）
-const REAL_LIVE=new Set(["tesla-model-3","toyota-corolla-cross","toyota-rav4","toyota-corolla-altis","toyota-yaris-cross","toyota-camry","toyota-town-ace","toyota-crown-sport"]);
+const REAL_LIVE=new Set(["tesla-model-3","toyota-corolla-cross","toyota-rav4","toyota-corolla-altis","toyota-yaris-cross","toyota-camry","toyota-town-ace","toyota-crown-sport","tesla-model-y"]);
 
 function build(c){
   // 照真車一台一台做好、已經上線的車款用寫實版；還在做的只有開了預覽（localStorage xq_carReal）才看得到
