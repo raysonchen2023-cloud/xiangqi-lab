@@ -538,18 +538,25 @@ const boardTheme=k=>{k=k||store.get("boardTheme","wood3d");if(k==="auto"&&curEra
 let boardN=0;
 // 走棋音效：用 WebAudio 合成木頭棋子的「叩」聲（吃子比較重），設定裡可以關
 let AC=null;
-// iPhone：要在點擊（touchend/click）裡叫醒聲音，並播一個無聲片段才算解鎖；audioSession 設成 playback，靜音鍵打開時也有聲音
-// 切到背景回來會變成 interrupted/suspended，要再叫醒一次
+// iPhone 主畫面 App 的聲音（rootcause：切到背景／鎖螢幕回來後，AudioContext 常常顯示 running 但其實已經不出聲，resume 也救不回來）
+// 作法：1. 一進背景就把舊的 AudioContext 關掉丟掉，回來後下一次點擊重新建一個（一定要在點擊裡建才會被 iOS 允許出聲）
+//       2. 每次點擊檢查時間有沒有在走：顯示 running 但 currentTime 停住＝壞掉了，也重建
+//       3. 新建後播一個無聲片段解鎖；audioSession 設 playback，靜音鍵打開也有聲音
+const newAC=()=>{try{if(AC)AC.close()}catch(e){}AC=null;try{const C=window.AudioContext||window.webkitAudioContext;if(C){AC=new C();AC._t=performance.now();AC._ct=0}}catch(e){}};
 const unlockAudio=()=>{try{if(navigator.audioSession&&navigator.audioSession.type!=="playback")navigator.audioSession.type="playback"}catch(e){}
-  try{if(!AC){const C=window.AudioContext||window.webkitAudioContext;if(C)AC=new C()}if(!AC)return;
+  try{const now=performance.now();
+    if(!AC||AC.state==="closed")newAC();
+    else if(AC.state==="running"&&AC.currentTime===AC._ct&&now-AC._t>800)newAC();   // 時間停住了：殭屍狀態
+    if(!AC)return;AC._t=now;AC._ct=AC.currentTime;
     if(AC.state!=="running"){const p=AC.resume();if(p&&p.catch)p.catch(()=>{})}
     if(!AC._primed){const b=AC.createBuffer(1,1,22050),src=AC.createBufferSource();src.buffer=b;src.connect(AC.destination);src.start(0);AC._primed=1}}catch(e){}};
 for(const ev of["pointerdown","touchend","click","keydown"])document.addEventListener(ev,unlockAudio,{passive:true,capture:true});
-document.addEventListener("visibilitychange",()=>{if(!document.hidden&&AC&&AC.state!=="running"){AC._primed=0;const p=AC.resume();if(p&&p.catch)p.catch(()=>{})}});
-// 聲音還沒醒（例如電腦走棋、剛從背景回來）就先叫醒再播，不要直接丟掉
-function withAudio(play){if(!AC)return;if(AC.state==="running"){try{play()}catch(e){}return}try{AC.resume().then(()=>{if(AC.state==="running")try{play()}catch(e){}}).catch(()=>{})}catch(e){}}
+document.addEventListener("visibilitychange",()=>{if(document.hidden&&AC){try{AC.close()}catch(e){}AC=null}});
+window.addEventListener("pagehide",()=>{if(AC){try{AC.close()}catch(e){}AC=null}});
+// 聲音還沒醒（例如電腦走棋）就先叫醒再播，不要直接丟掉；排程往後留 20ms，剛醒來時開頭才不會被切掉
+function withAudio(play){if(!AC)return;if(AC.state==="running"){try{play()}catch(e){}return}try{AC.resume().then(()=>{if(AC&&AC.state==="running")try{play()}catch(e){}}).catch(()=>{})}catch(e){}}
 function moveSound(cap){if(!(cap?store.get("capSound",true):store.get("mvSound",false)))return;withAudio(()=>moveSound0(cap))}
-function moveSound0(cap){try{const t=AC.currentTime;
+function moveSound0(cap){try{const t=AC.currentTime+.02;
   const hit=(f,dur,vol,at)=>{const o=AC.createOscillator(),g=AC.createGain();o.type="triangle";o.frequency.setValueAtTime(f,t+at);o.frequency.exponentialRampToValueAtTime(f*.55,t+at+dur);
     g.gain.setValueAtTime(vol,t+at);g.gain.exponentialRampToValueAtTime(.001,t+at+dur);o.connect(g).connect(AC.destination);o.start(t+at);o.stop(t+at+dur+.02)};
   const n=AC.createBufferSource(),buf=AC.createBuffer(1,AC.sampleRate*.04|0,AC.sampleRate),d=buf.getChannelData(0);for(let i=0;i<d.length;i++)d[i]=(Math.random()*2-1)*Math.pow(1-i/d.length,3);
@@ -587,7 +594,7 @@ function checkFx(svg,label){if(!store.get("ckFx",true))return;const r=svg.getBou
   // 墨色筆刷一抹橫過楚河漢界，金色「將」「軍」兩字一左一右落下，棋盤四周泛一圈紅光
   const d=document.createElement("div");d.className="ckfx";d.style.cssText=`left:${r.left}px;top:${r.top}px;width:${r.width}px;height:${r.height}px;font-size:${Math.round(r.width*.15)}px`;
   d.innerHTML='<i class="glow"></i><div class="mid'+(label?' has':'')+'"><i class="ink"></i><b class="c1">將</b><b class="c2">軍</b>'+(label?`<em class="seal${label.length>3?" s4":""}">${esc(label)}</em>`:"")+'</div>';document.body.append(d);vibrate([25,30,25]);setTimeout(()=>d.remove(),1900);
-  if(store.get("capSound",true)||store.get("mvSound",false))withAudio(()=>{const t=AC.currentTime;
+  if(store.get("capSound",true)||store.get("mvSound",false))withAudio(()=>{const t=AC.currentTime+.02;
     for(const[f,at]of[[880,0],[1320,.09]]){const o=AC.createOscillator(),g=AC.createGain();o.type="square";o.frequency.setValueAtTime(f,t+at);
       g.gain.setValueAtTime(.12,t+at);g.gain.exponentialRampToValueAtTime(.001,t+at+.35);o.connect(g).connect(AC.destination);o.start(t+at);o.stop(t+at+.4)}})}
 function Board(onTap,onSwipe){
