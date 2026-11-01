@@ -55,6 +55,11 @@ var XQ=(function(){
   async function carRedeem(b){const d=await (await fetch("data/cars.json")).json(),c=d.cars.find(x=>x.id===b.id);if(!c)throw new Error("找不到這台車");
     const B=carBank();if(B.owned[c.id])throw new Error("這台已經換過了");if(B.pts<c.cost)throw new Error("點數不夠，還差 "+(c.cost-B.pts)+" 點");
     B.pts-=c.cost;B.owned[c.id]={at:Date.now(),cost:c.cost};ls.set("carBank",B);return carState()}
+  // 賣車：用現在 8891 的新車價（cars.json 裡的最低售價）打折舊——落地先折 15%，之後每個月再折 1%，最低剩 45%
+  const carValue=(c,at)=>{const mo=Math.max(0,(Date.now()-at)/(30*864e5)),k=Math.max(.45,.85*Math.pow(.99,mo));return{k,mo,v:Math.floor(c.lo*k)}};
+  async function carSell(b){const d=await (await fetch("data/cars.json")).json(),c=d.cars.find(x=>x.id===b.id);if(!c)throw new Error("找不到這台車");
+    const B=carBank(),own=B.owned[c.id];if(!own)throw new Error("你沒有這台車");const{v}=carValue(c,own.at);
+    delete B.owned[c.id];B.pts+=v;B.sold=(B.sold||0)+1;B.hist.unshift({sell:c.id,d:v,at:Date.now()});B.hist=B.hist.slice(0,100);ls.set("carBank",B);return{...carState(),gain:v}}
   const savePlay=()=>ls.set("play",{id:P.id,human:P.human,level:P.level,ranked:!!P.ranked,reward:!!P.reward,prize:P.prize||null,rk:P.rk,rate:P.rate||null,result:P.result,practice:P.practice||null,moves:saveMoves(P.moves)});
   function ensureP(){if(P)return;const s=ls.get("play",null);if(s&&s.moves){P=s;P.hint=null;stateRebuild(P)}else playNew("r",3);setTimeout(playEngine,0)}
   // pre：錯棋重練，先擺上舊對局到錯棋之前的著法（moves），info 記上次走了什麼
@@ -303,6 +308,7 @@ var XQ=(function(){
     if(p==="/play/state")return playState();
     if(p==="/car/state")return carState();
     if(p==="/car/redeem")return carRedeem(b||{});
+    if(p==="/car/sell")return carSell(b||{});
     if(p.startsWith("/play/"))return playPost(p,b||{});
     // 線上大廳的網路對局（不用電腦）
     if(p.startsWith("/pvp/")&&window.XQNet&&XQNet.active())return netPvp(p,b||{});

@@ -1,0 +1,271 @@
+// 車庫的 3D Q 版車子模型（用 three.js 現場組出來，不用外部模型檔）
+// 每台車先依車型（轎車、休旅、跑車…）決定車身比例，再依車款加上招牌特徵（圓燈、方正車身、青蛙眼、雙腎水箱罩…）
+// 不放任何廠牌標誌；只是「看得出是哪一台」的可愛示意模型
+// 用法：XQCar3D.thumb(car) → Promise<圖片網址>；XQCar3D.viewer(容器, car, {drive}) → {stop}
+"use strict";
+(function(){
+const T=window.THREE;if(!T)return;
+if(T.ColorManagement)T.ColorManagement.legacyMode=false;   // 顏色碼當成一般螢幕色（不然車色會被洗白）
+
+// ---------- 車型比例（Q 版：車身短、輪子大）。x 方向 0＝車尾、1＝車頭 ----------
+// L 車長、W 車寬、r 輪徑、ride 底盤、belt 腰線、roof 車頂、hood 引擎蓋、deck 車尾高
+// A 擋風玻璃底、At 擋風玻璃頂、Ct 車頂後端、Cb 後窗底、w 前後輪位置
+const SHAPE={
+  sedan:{L:3.5,W:1.75,r:.42,ride:.30,belt:.82,roof:1.32,hood:.80,deck:.86,A:.68,At:.53,Ct:.27,Cb:.13,w:[.19,.80]},
+  hatch:{L:3.1,W:1.7,r:.42,ride:.30,belt:.82,roof:1.38,hood:.78,deck:1.18,A:.70,At:.53,Ct:.12,Cb:.03,w:[.19,.80]},
+  suv:{L:3.4,W:1.85,r:.50,ride:.40,belt:1.02,roof:1.66,hood:1.00,deck:1.42,A:.72,At:.59,Ct:.09,Cb:.02,w:[.19,.80]},
+  mpv:{L:3.4,W:1.8,r:.44,ride:.34,belt:.98,roof:1.80,hood:.90,deck:1.62,A:.82,At:.69,Ct:.05,Cb:.01,w:[.17,.83]},
+  wagon:{L:3.6,W:1.75,r:.42,ride:.30,belt:.82,roof:1.32,hood:.78,deck:1.14,A:.69,At:.55,Ct:.07,Cb:.02,w:[.18,.81]},
+  sport:{L:3.6,W:1.85,r:.44,ride:.24,belt:.70,roof:1.2,hood:.62,deck:.76,A:.62,At:.47,Ct:.26,Cb:.07,w:[.19,.80]},
+  cabrio:{L:3.5,W:1.82,r:.44,ride:.24,belt:.72,roof:1.05,hood:.64,deck:.74,A:.62,At:.56,Ct:.40,Cb:.30,w:[.19,.80],open:1},
+  truck:{L:3.7,W:1.85,r:.50,ride:.42,belt:1.02,roof:1.68,hood:1.00,deck:1.02,A:.74,At:.64,Ct:.44,Cb:.43,w:[.18,.80]},
+  van:{L:3.4,W:1.8,r:.44,ride:.34,belt:1.00,roof:1.86,hood:.92,deck:1.80,A:.88,At:.80,Ct:.03,Cb:0,w:[.17,.83]}};
+
+// ---------- 招牌特徵（依車款 id 比對；排前面的優先） ----------
+// round 圓頭燈、frog 青蛙眼、boxy 方正、spare 車尾備胎、rack 車頂架、roof 車頂顏色、stripes 賽車條紋、wing 大尾翼、lip 小鴨尾、
+// long 長車頭、wedge 楔形、grille: none/kidney/frame/big/mesh/slots/thin、pixel 像素燈、thor 雷神之鎚燈、seat1 單座、camper 露營車頂、
+// cute 更短更圓、chrome 鍍鉻飾條、col 代表色（隨機挑一個）、type 改車型
+const SIG=[
+  [/^mini-/,{round:1,roof:"#F4F4F2",cute:1,col:["#0E4D3A","#B5121B","#F2F2EE","#2F5D8A","#E8C21A"]}],
+  [/^jeep-wrangler/,{boxy:1,round:1,spare:1,grille:"slots",col:["#5E6B3A","#E8B70F","#1F2328","#B5121B","#F2F2EE"]}],
+  [/g-class/,{boxy:1,round:1,spare:1,grille:"thin",chrome:1,col:["#1F2328","#B9BFC7","#5E6B3A","#F2F2EE"]}],
+  [/^land-rover-defender/,{boxy:1,spare:1,rack:1,roof:"#F4F4F2",col:["#3E5A48","#C9B48A","#1F2328","#8A949E"]}],
+  [/^ineos-grenadier/,{boxy:1,round:1,spare:1,rack:1,col:["#3E5A48","#1F4E8C","#C9B48A","#1F2328"]}],
+  [/^suzuki-jimny/,{boxy:1,round:1,spare:1,cute:1,grille:"slots",col:["#7C8C3A","#E8C21A","#F2F2EE","#1F2328"]}],
+  [/^toyota-land-cruiser/,{boxy:1,rack:1,col:["#F2F2EE","#1F2328","#8A949E","#5E6B3A"]}],
+  [/^land-rover-range-rover/,{boxy:1,roof:"#1F2328",grille:"mesh",col:["#F2F2EE","#3B4A55","#1F2328","#6E2B2B"]}],
+  [/^land-rover-discovery/,{boxy:1,roof:"#1F2328",col:["#F2F2EE","#3B4A55","#8A949E"]}],
+  [/^porsche-911-gt3/,{frog:1,wing:1,grille:"none",col:["#F2F2EE","#E8C21A","#2F8FB5","#1F2328"]}],
+  [/^porsche-911/,{frog:1,lip:1,grille:"none",col:["#F2F2EE","#E8C21A","#B9BFC7","#B5121B","#1F4E8C"]}],
+  [/^porsche-718/,{frog:1,grille:"none",col:["#E8C21A","#B5121B","#F2F2EE","#2F8FB5"]}],
+  [/^porsche-/,{frog:1,grille:"none",col:["#F2F2EE","#1F2328","#B9BFC7","#2F5D8A"]}],
+  [/^tesla-/,{grille:"none",col:["#F2F2EE","#B5121B","#1F4E8C","#1F2328","#8A949E"]}],
+  [/^ford-mustang/,{long:1,stripes:"#1F2328",col:["#E8C21A","#B5121B","#1F4E8C","#E36414"]}],
+  [/^ford-ranger-raptor/,{boxy:1,big:1,grille:"slots",col:["#E36414","#1F2328","#8A949E"]}],
+  [/^lamborghini-urus/,{wedge:1,grille:"none",col:["#7AB800","#E8C21A","#E36414","#1F2328"]}],
+  [/^lamborghini-/,{wedge:1,grille:"none",col:["#7AB800","#E36414","#E8C21A","#7B3FBF"]}],
+  [/^mclaren-/,{wedge:1,grille:"none",col:["#F28C28","#F28C28","#2F8FB5","#1F2328"]}],
+  [/^ferrari-12cilindri/,{long:1,grille:"mesh",col:["#C8102E","#C8102E","#E8C21A"]}],
+  [/^ferrari-/,{lip:1,grille:"mesh",col:["#C8102E","#C8102E","#C8102E","#E8C21A","#1F2328"]}],
+  [/^rolls-royce-/,{boxy:1,grille:"big",chrome:1,roof:"#1F2328",col:["#F2F2EE","#3B2A55","#6E2B2B","#B9BFC7"]}],
+  [/^bentley-/,{round:1,grille:"mesh",chrome:1,col:["#0E4D3A","#1F2328","#F2F2EE","#6E2B2B"]}],
+  [/^aston-martin-/,{long:1,grille:"mesh",col:["#0E4D3A","#B9BFC7","#1F2328"]}],
+  [/^volkswagen-id-buzz/,{roof:"#F4F4F2",band:1,cute:1,grille:"none",round:1,col:["#E8B70F","#E36414","#2F8FB5","#5BA36B"]}],
+  [/^volkswagen-(california|grand-california)|^crosscamp|^sunlight/,{camper:1,col:["#F2F2EE","#B9BFC7","#2F5D8A"]}],
+  [/^(toyota-alphard|lexus-lm|toyota-granvia)/,{boxy:1,grille:"big",chrome:1,col:["#1F2328","#F2F2EE"]}],
+  [/^bmw-ix$|^bmw-i7|^bmw-7-series|^bmw-x7/,{grille:"kidney",big:1,chrome:1}],
+  [/^bmw-m[2-5]/,{grille:"kidney",lip:1,col:["#2F8FB5","#E8C21A","#1F2328","#5BA36B"]}],
+  [/^bmw-/,{grille:"kidney"}],
+  [/^audi-rs/,{grille:"frame",lip:1,col:["#8A949E","#1F2328","#2F5D8A","#5BA36B"]}],
+  [/^audi-/,{grille:"frame"}],
+  [/^mercedes-benz-(maybach|s-class)/,{grille:"thin",chrome:1,roof:"#1F2328",col:["#F2F2EE","#B9BFC7","#3B2A55"]}],
+  [/^mercedes-benz-amg-gt$|^mercedes-benz-sl$/,{long:1,grille:"slots",col:["#B9BFC7","#E8C21A","#1F2328"]}],
+  [/^mercedes-benz-/,{grille:"thin"}],
+  [/^volvo-/,{thor:1,grille:"thin"}],
+  [/^mazda-mx-5/,{round:1,cute:1,col:["#B5121B","#B5121B","#F2F2EE","#1F4E8C"]}],
+  [/^(toyota-gr86|subaru-brz)/,{lip:1,col:["#F2F2EE","#B5121B","#2F8FB5","#1F2328"]}],
+  [/^toyota-gr-yaris/,{lip:1,col:["#F2F2EE","#B5121B","#1F2328"]}],
+  [/^caterham-seven/,{round:1,long:1,seat1:0,cycle:1,grille:"slots",col:["#0E4D3A","#E8C21A","#B5121B"]}],
+  [/^morgan-/,{round:1,long:1,cycle:1,grille:"slots",chrome:1,col:["#0E4D3A","#6E2B2B","#1F2328"]}],
+  [/^ac-cobra/,{round:1,long:1,stripes:"#F2F2EE",col:["#1F4E8C","#B5121B","#F2F2EE"]}],
+  [/^(ktm-x-bow|bac-mono)/,{seat1:1,wedge:1,grille:"none",type:"cabrio",col:["#E36414","#1F2328","#F2F2EE"]}],
+  [/^hyundai-ioniq-5/,{pixel:1,boxy:1,grille:"none",type:"hatch",col:["#8A949E","#2F8FB5","#F2F2EE"]}],
+  [/^hyundai-palisade/,{boxy:1,type:"suv"}],
+  [/^kia-ev9/,{boxy:1,grille:"none",pixel:1}],
+  [/^toyota-prius/,{wedge:1,grille:"none"}],
+  [/^(suzuki-carry|toyota-town-ace$|cmc-j-space貨卡|mitsubishi-delica貨車|dfsk-kingcab)/,{cute:1}],
+  [/^honda-prelude/,{lip:1,grille:"none",col:["#F2F2EE","#1F4E8C","#B5121B"]}],
+  [/^toyota-crown/,{roof:"#1F2328",col:["#C9B48A","#B5121B","#F2F2EE","#3B4A55"]}],
+  [/^maserati-/,{grille:"big",long:1,col:["#1F4E8C","#F2F2EE","#1F2328"]}],
+  [/^lotus-/,{wedge:1,col:["#E8C21A","#0E4D3A","#F2F2EE"]}],
+  [/^fiat-500/,{round:1,cute:1}],
+];
+const PAINT=["#F2F2EE","#1F2328","#B9BFC7","#6A727C","#B5121B","#1F4E8C","#2E6B4F","#D9822B","#E8C21A","#5B2A86","#7E5136","#2F8FB5","#8C1C3A","#C9B48A"];
+const hash=s=>{let x=2166136261;for(const ch of String(s))x=Math.imul(x^ch.charCodeAt(0),16777619);return x>>>0};
+function spec(c){
+  const f={};for(const[re,o]of SIG)if(re.test(c.id)){Object.assign(f,o);break}
+  const type=f.type||c.type,S={...(SHAPE[type]||SHAPE.sedan)},h=hash(c.id);
+  if(c.cost>=1000&&(type==="sport"||type==="cabrio")){S.ride-=.04;S.roof-=.08;S.hood-=.06;S.L+=.2}
+  else if(c.cost>=450&&type!=="truck"&&type!=="van")S.L+=.15;
+  // 用 8891 的真實長、高微調比例（Q 版只取一半的差距，免得太扁或太長）
+  if(c.dim){const TL={sedan:4750,hatch:4350,suv:4650,mpv:4900,wagon:4800,sport:4600,cabrio:4500,truck:5300,van:4900}[type]||4700,
+      TH={sedan:1450,hatch:1480,suv:1690,mpv:1820,wagon:1470,sport:1320,cabrio:1300,truck:1830,van:1980}[type]||1500,cl=(x,a,b)=>Math.max(a,Math.min(b,x));
+    const kl=cl(1+(c.dim[0]/TL-1)*.5,.86,1.14),kh=cl(1+(c.dim[2]/TH-1)*.6,.85,1.15);S.L*=kl;
+    for(const k of["belt","roof","hood","deck"])S[k]=S.ride+(S[k]-S.ride)*kh}
+  if(f.cute){S.L*=.88;S.r*=1.08}
+  if(f.long){S.A-=.06;S.At-=.06;S.Ct-=.05;S.L+=.15}
+  if(f.wedge){S.hood-=.08;S.roof-=.01;S.A-=.04;S.At-=.03}
+  if(f.big)S.r*=1.12;
+  const pick=f.col||(type==="sport"||type==="cabrio"?[PAINT[4],PAINT[8],PAINT[7],PAINT[5],PAINT[0],PAINT[11]]:c.cost>=800?[PAINT[1],PAINT[0],PAINT[2],PAINT[5],PAINT[13]]:PAINT);
+  return{S,f,type,h,col:pick[(h>>>4)%pick.length]}}
+
+// ---------- 材質（共用，不要每台都新建） ----------
+const M={};
+function mats(){if(M.glass)return M;
+  M.glass=new T.MeshPhysicalMaterial({color:0x1d2a36,metalness:.1,roughness:.08,clearcoat:1,clearcoatRoughness:.05});
+  M.tire=new T.MeshStandardMaterial({color:0x1b1c1f,roughness:.85});
+  M.rim=new T.MeshStandardMaterial({color:0xd5d9de,metalness:.85,roughness:.25});
+  M.rimDark=new T.MeshStandardMaterial({color:0x2b2e33,metalness:.6,roughness:.35});
+  M.chrome=new T.MeshStandardMaterial({color:0xeef1f4,metalness:1,roughness:.12});
+  M.black=new T.MeshStandardMaterial({color:0x151618,roughness:.5});
+  M.trim=new T.MeshStandardMaterial({color:0x2a2c30,roughness:.6});
+  M.head=new T.MeshStandardMaterial({color:0xfffbe8,emissive:0xfff2c0,emissiveIntensity:.6,roughness:.2});
+  M.tail=new T.MeshStandardMaterial({color:0xd0192b,emissive:0x900010,emissiveIntensity:.5,roughness:.3});
+  M.seat=new T.MeshStandardMaterial({color:0x3a2a22,roughness:.7});
+  return M}
+const paint=hex=>new T.MeshPhysicalMaterial({color:new T.Color(hex),metalness:.35,roughness:.32,clearcoat:1,clearcoatRoughness:.08});
+
+// 圓角側面輪廓 → 往兩側長出厚度（有倒角，看起來圓滾滾）
+function profile(pts){const s=new T.Shape(),N=pts.length;
+  for(let i=0;i<N;i++){const[p,q,r]=pts[i],a=pts[(i+N-1)%N],b=pts[(i+1)%N];
+    const la=Math.hypot(a[0]-p,a[1]-q)||1,lb=Math.hypot(b[0]-p,b[1]-q)||1,ra=Math.min(r||0,la/2),rb=Math.min(r||0,lb/2);
+    const x1=p+(a[0]-p)/la*ra,y1=q+(a[1]-q)/la*ra,x2=p+(b[0]-p)/lb*rb,y2=q+(b[1]-q)/lb*rb;
+    if(i)s.lineTo(x1,y1);else s.moveTo(x1,y1);s.quadraticCurveTo(p,q,x2,y2)}
+  s.closePath();return s}
+function slab(pts,depth,bevel,mat){const b=Math.min(bevel,depth/2-.01);
+  const g=new T.ExtrudeGeometry(profile(pts),{depth:depth-2*b,bevelEnabled:b>0,bevelThickness:b,bevelSize:b,bevelSegments:4,curveSegments:8});
+  g.translate(0,0,-(depth-2*b)/2);return new T.Mesh(g,mat)}
+const box=(w,h,d,mat,x,y,z)=>{const m=new T.Mesh(new T.BoxGeometry(w,h,d),mat);m.position.set(x,y,z);return m};
+const cyl=(r,len,mat,seg)=>new T.Mesh(new T.CylinderGeometry(r,r,len,seg||20),mat);
+
+function build(c){
+  const{S,f,type,h,col}=spec(c),m=mats(),G=new T.Group(),body=paint(col),roofMat=f.roof?paint(f.roof):body;
+  const L=S.L,W=S.W,X=t=>t*L-L/2,bv=f.boxy?.07:.16;
+  // 車身下半部
+  const lower=[[X(0)+.06,S.ride,.08],[X(0),f.boxy?S.deck:S.deck-.04,f.boxy?.1:.22]];
+  if(S.open||type==="truck")lower.push([X(S.Cb),S.deck,.06],[X(S.A),S.belt,.1]);
+  else lower.push([X(S.Cb+.02),Math.min(S.deck,S.belt+.06),.12],[X(S.A),S.belt+.02,.15]);
+  lower.push([X(1),S.hood-(f.boxy?.02:.1),f.boxy?.1:.3],[X(1)+(f.boxy?0:.02),S.ride+.1,.12],[X(1)-.08,S.ride,.06]);
+  G.add(slab(lower,W,bv,body));
+  // 掀背／休旅：車尾上半部（後窗以下）也是車身
+  // 車廂：玻璃＋車頂
+  if(!S.open){const by=S.belt-.02,ty=S.roof-.08,inset=f.boxy?.03:.08;
+    const cab=[[X(S.Cb)+.02,by,.04],[X(S.Ct)+inset,ty,f.boxy?.06:.18],[X(S.At)-inset*.5,ty,f.boxy?.06:.14],[X(S.A),by,.04]];
+    G.add(slab(cab,W*(f.boxy?.94:.86),f.boxy?.05:.09,m.glass));
+    const rf=[[X(S.Ct)+inset-.03,ty-.05,.05],[X(S.Ct)+inset+.03,S.roof,.14],[X(S.At)-inset*.5,S.roof,.12],[X(S.At)-inset*.5+.07,ty-.05,.05]];
+    G.add(slab(rf,W*(f.boxy?.96:.9),f.boxy?.05:.1,roofMat));
+    // B 柱、C 柱（車身色）
+    const pil=[(S.A+S.Ct)/2];if(type==="mpv"||type==="van"||type==="suv"||type==="wagon")pil.push(S.Ct+(S.A-S.Ct)*.2);
+    for(const t of pil){const pm=box(.1,ty-by,W*(f.boxy?.95:.87)+.02,f.band?roofMat:roofMat===body?body:roofMat,X(t),(by+ty)/2,0);G.add(pm)}
+    if(f.band)G.add(box(L*.98,.12,W+.02,roofMat,0,S.belt-.02,0));   // ID. Buzz：上白下彩的分界
+    if(f.rack){for(const z of[-1,1])G.add(box((S.At-S.Ct)*L*.9,.05,.05,m.black,X((S.At+S.Ct)/2),S.roof+.09,z*W*.38));
+      for(let i=0;i<4;i++)G.add(box(.04,.05,W*.78,m.black,X(S.Ct+(S.At-S.Ct)*(.1+i*.27)),S.roof+.09,0))}
+    if(f.camper)G.add(slab([[X(S.Ct)+.05,S.roof-.02,.04],[X(S.Ct)+.05,S.roof+.42,.12],[X(S.At)-.25,S.roof+.42,.12],[X(S.At)+.05,S.roof-.02,.04]],W*.9,.06,paint("#F4F4F2")))}
+  else{// 敞篷：擋風玻璃＋座椅
+    if(!f.seat1){const ws=box(.05,.34,W*.8,m.glass,X(S.A)-.08,S.belt+.15,0);ws.rotation.z=.55;G.add(ws)}
+    const seats=f.seat1?[0]:[-.22,.22];
+    for(const z of seats){G.add(box(.34,.08,.34,m.seat,X(S.Cb+.14),S.belt+.04,z*W));G.add(box(.08,.36,.32,m.seat,X(S.Cb+.04),S.belt+.2,z*W))}
+    if(f.seat1)G.add(box(.05,.2,.5,m.glass,X(S.Cb+.3),S.belt+.12,0))}
+  // 貨卡車斗
+  if(type==="truck")G.add(box(L*S.Cb-.15,.04,W*.8,m.trim,X(S.Cb/2)+.02,S.deck+.005,0));
+  // 輪子
+  const tw=.3,rr=S.r,wz=W/2-tw/2+.05,dark=type==="sport"&&(h>>>12)%2,sp=[5,6,10,7][(h>>>9)%4],wheels=[];
+  for(const t of S.w)for(const z of[-1,1]){const wg=new T.Group();
+    const tire=cyl(rr,tw,m.tire,28);tire.rotation.x=Math.PI/2;wg.add(tire);
+    const rim=cyl(rr*.62,tw+.02,dark?m.rimDark:m.rim,24);rim.rotation.x=Math.PI/2;wg.add(rim);
+    for(let k=0;k<sp;k++){const s=box(rr*.95,sp>7?.04:.07,.03,dark?m.rim:m.rimDark,0,0,z*(tw/2+.012));s.rotation.z=k/sp*Math.PI;wg.add(s)}
+    const hub=cyl(rr*.14,tw+.05,m.chrome,12);hub.rotation.x=Math.PI/2;wg.add(hub);
+    wg.position.set(X(t),rr,z*wz);G.add(wg);wheels.push(wg);
+    if(f.cycle){const fe=slab([[-rr-.05,0,.02],[-rr*.8,rr*.7,.2],[rr*.8,rr*.7,.2],[rr+.05,0,.02]],tw+.08,.03,body);fe.position.set(X(t),rr+.02,z*(wz+.02));G.add(fe)}}
+  // 車頭：燈、水箱罩
+  const ex=bv,fx=X(1)+ex+(f.boxy?.0:-.03);   // 倒角讓車身往外長了 ex，燈和水箱罩要貼在真正的表面上
+  for(const z of[-1,1]){
+    if(f.frog){const e=new T.Mesh(new T.SphereGeometry(.17,20,14),m.head);e.scale.set(1.1,.85,1);e.position.set(X(.9),S.hood-.1+ex,z*W*.32);G.add(e)}
+    else if(f.round){const l=cyl(.15,.08,m.head,24);l.rotation.z=Math.PI/2;l.position.set(fx+.01,S.hood-.16,z*W*.32);G.add(l);
+      const ring=new T.Mesh(new T.TorusGeometry(.15,.025,8,24),m.chrome);ring.rotation.y=Math.PI/2;ring.position.set(fx+.04,S.hood-.16,z*W*.32);G.add(ring)}
+    else if(f.pixel){for(let i=0;i<4;i++)G.add(box(.04,.06,.06,m.head,fx,S.hood-.14,z*(W*.24+i*.08)))}
+    else{const l=box(.06,.09,W*.24,m.head,fx,S.hood-.13,z*W*.3);G.add(l);if(f.thor)G.add(box(.07,.02,W*.2,m.chrome,fx+.01,S.hood-.13,z*W*.3))}
+    // 尾燈
+    G.add(box(.05,.1,W*.22,m.tail,X(0)-ex+.02,Math.max(S.belt,S.deck)-.18,z*W*.33))}
+  const g=f.grille||"",gy=S.hood-.3;
+  if(g==="kidney")for(const z of[-1,1])G.add(slab([[-.1,0,.04],[-.1,.26,.07],[.1,.26,.07],[.1,0,.04]],.03,0,m.trim).translateX(fx).translateY(gy-.02).translateZ(z*.13).rotateY(Math.PI/2));
+  else if(g==="frame")G.add(box(.05,.32,W*.42,m.trim,fx,gy,0));
+  else if(g==="big"){G.add(box(.06,.46,W*.46,m.chrome,fx,gy+.04,0));for(let i=0;i<7;i++)G.add(box(.07,.4,.02,m.trim,fx+.005,gy+.04,(i-3)*W*.06))}
+  else if(g==="mesh"){G.add(box(.05,.22,W*.5,m.trim,fx,gy,0));G.add(box(.055,.24,W*.52,m.chrome,fx-.005,gy,0))}
+  else if(g==="slots")for(let i=0;i<7;i++)G.add(box(.05,.26,.05,m.black,fx,gy+.02,(i-3)*.1));
+  else if(g==="thin")G.add(box(.05,.14,W*.5,m.trim,fx,gy+.06,0));
+  else if(g!=="none")G.add(box(.05,.12,W*.46,m.trim,fx,gy,0));
+  if(f.chrome)G.add(box(L*.8,.03,W+.01,m.chrome,0,S.ride+.2,0));
+  // 後照鏡
+  if(!S.open)for(const z of[-1,1])G.add(box(.14,.1,.12,body,X(S.A)-.05,S.belt+.1,z*(W/2+.04)));
+  // 備胎、尾翼、鴨尾、賽車條紋
+  if(f.spare){const sp2=cyl(.32,.18,m.tire,24);sp2.rotation.z=Math.PI/2;sp2.position.set(X(0)-ex-.08,(S.belt+S.ride)/2+.25,0);G.add(sp2);
+    const cv=cyl(.24,.2,body,24);cv.rotation.z=Math.PI/2;cv.position.copy(sp2.position).x-=.02;G.add(cv)}
+  if(f.wing){for(const z of[-1,1])G.add(box(.05,.26,.05,m.black,X(.05),S.deck+.12,z*W*.28));G.add(box(.34,.04,W*.92,m.black,X(.04),S.deck+.26,0))}
+  if(f.lip)G.add(box(.16,.05,W*.86,body,X(.02),S.deck+.02,0));
+  if(f.stripes){const sm=paint(f.stripes);for(const z of[-1,1]){
+    {const st=box(L*(1-S.A)+.1,.012,.14,sm,X((1+S.A)/2),(S.belt+.02+S.hood-.1)/2+ex+.01,z*.14);st.rotation.z=Math.atan2((S.hood-.1)-(S.belt+.02),L*(1-S.A));G.add(st)}
+    if(!S.open)G.add(box((S.At-S.Ct)*L,.012,.14,sm,X((S.At+S.Ct)/2),S.roof+.008,z*.14))}}
+  // 整台車置中、底部貼地
+  G.userData.wheels=wheels;G.userData.size={L,W,H:Math.max(S.roof,S.belt)+(f.camper?.42:0)};return G}
+
+// ---------- 場景：柔光＋反射環境、地面影子、展示轉盤 ----------
+const envs=new WeakMap();
+function env(renderer){if(envs.has(renderer))return envs.get(renderer);
+  const s=new T.Scene(),geo=new T.BoxGeometry(30,30,30);
+  const cols=[],pos=geo.attributes.position;for(let i=0;i<pos.count;i++){const y=pos.getY(i);const t=(y+15)/30;cols.push(.25+.75*t,.24+.74*t,.22+.72*t)}
+  geo.setAttribute("color",new T.Float32BufferAttribute(cols,3));
+  s.add(new T.Mesh(geo,new T.MeshBasicMaterial({vertexColors:true,side:T.BackSide})));
+  const panel=(x,y,z,w,hh)=>{const p=new T.Mesh(new T.PlaneGeometry(w,hh),new T.MeshBasicMaterial({color:0xffffff,side:T.DoubleSide}));p.position.set(x,y,z);p.lookAt(0,0,0);s.add(p)};
+  panel(0,14,0,14,14);panel(13,6,6,6,10);panel(-13,5,-6,6,8);
+  const pm=new T.PMREMGenerator(renderer),tex=pm.fromScene(s,.02).texture;pm.dispose();s.traverse(x=>{if(x.geometry)x.geometry.dispose();if(x.material)x.material.dispose()});envs.set(renderer,tex);return tex}
+let shadowTex=null;
+function shadow(L,W){if(!shadowTex){const cv=document.createElement("canvas");cv.width=cv.height=128;const x=cv.getContext("2d"),g=x.createRadialGradient(64,64,4,64,64,64);
+    g.addColorStop(0,"rgba(0,0,0,.55)");g.addColorStop(.6,"rgba(0,0,0,.22)");g.addColorStop(1,"rgba(0,0,0,0)");x.fillStyle=g;x.fillRect(0,0,128,128);shadowTex=new T.CanvasTexture(cv)}
+  const m=new T.Mesh(new T.PlaneGeometry(L*1.25,W*1.7),new T.MeshBasicMaterial({map:shadowTex,transparent:true,depthWrite:false}));m.rotation.x=-Math.PI/2;m.position.y=.005;return m}
+function stage(renderer,car,o){
+  const sc=new T.Scene();sc.environment=env(renderer);
+  sc.add(new T.HemisphereLight(0xffffff,0x9a8b78,.45));
+  const d=new T.DirectionalLight(0xffffff,1.1);d.position.set(4,7,5);sc.add(d);
+  const d2=new T.DirectionalLight(0xfff0e0,.35);d2.position.set(-5,3,-4);sc.add(d2);
+  const g=build(car),{L,W,H}=g.userData.size,turn=new T.Group();turn.add(g);turn.add(shadow(L,W));
+  if(o.disc){const disc=cyl(L*.6,.08,new T.MeshStandardMaterial({color:0xd9cdb8,roughness:.6,metalness:.1}),48);disc.position.y=-.045;turn.add(disc)}
+  sc.add(turn);
+  const cam=new T.PerspectiveCamera(o.fov||26,o.aspect||1.6,.1,100),D=Math.max(L,H*1.6)*(o.dist||1.9);
+  cam.position.set(D*.82,D*.42,D*.92);cam.lookAt(0,H*.42,0);
+  return{sc,cam,turn,car:g}}
+
+// ---------- 縮圖：共用一個隱藏的畫布，一台一台拍照 ----------
+let TR=null;const cache=new Map(),queue=[];let busy=false;
+function thumbRenderer(){if(TR)return TR;const cv=document.createElement("canvas");
+  TR=new T.WebGLRenderer({canvas:cv,antialias:true,alpha:true,preserveDrawingBuffer:true});TR.setPixelRatio(1);TR.setSize(400,250,false);
+  TR.outputEncoding=T.sRGBEncoding;TR.toneMapping=T.ACESFilmicToneMapping;TR.toneMappingExposure=.95;return TR}
+function dispose(o){o.traverse(x=>{if(x.geometry)x.geometry.dispose();if(x.material&&!Object.values(M).includes(x.material)){if(x.material.map&&x.material.map!==shadowTex)x.material.map.dispose();x.material.dispose()}})}
+function thumb(car){if(cache.has(car.id))return Promise.resolve(cache.get(car.id));
+  return new Promise((ok,no)=>{queue.push({car,ok,no});pump()})}
+function pump(){if(busy||!queue.length)return;busy=true;
+  const{car,ok,no}=queue.shift();
+  try{const r=thumbRenderer(),s=stage(r,car,{aspect:1.6,dist:1.75});s.turn.rotation.y=-.15;r.setClearColor(0,0);r.render(s.sc,s.cam);
+    const url=r.domElement.toDataURL("image/png");dispose(s.sc);cache.set(car.id,url);ok(url)}catch(e){no(e)}
+  busy=false;(window.requestIdleCallback||setTimeout)(pump,0)}
+
+// ---------- 可以用手指轉的展示台 ----------
+function viewer(box,car,o){o=o||{};
+  const cv=document.createElement("canvas");cv.className="car3d";box.innerHTML="";box.append(cv);
+  const r=new T.WebGLRenderer({canvas:cv,antialias:true,alpha:true});r.setPixelRatio(Math.min(2,window.devicePixelRatio||1));
+  r.outputEncoding=T.sRGBEncoding;r.toneMapping=T.ACESFilmicToneMapping;r.toneMappingExposure=.95;
+  const size=()=>{const w=box.clientWidth||320,h=Math.round(w/1.45);r.setSize(w,h,false);cv.style.width=w+"px";cv.style.height=h+"px";return w/h};
+  const s=stage(r,car,{aspect:size(),disc:true,dist:1.45});
+  let rot=-.5,vel=0,drag=null,drive=o.drive?1:0,t0=performance.now(),run=true,idle=0,elev=.42,zoom=1;
+  const{H}=s.car.userData.size,D0=s.cam.position.length(),aim=new T.Vector3(0,H*.36,0);
+  const place=()=>{const d=D0*zoom,ce=Math.cos(elev);s.cam.position.set(d*ce*.66,d*Math.sin(elev)+.05,d*ce*.75);s.cam.lookAt(aim)};place();
+  const pts=new Map();let pinch=null;
+  cv.addEventListener("pointerdown",e=>{pts.set(e.pointerId,{x:e.clientX,y:e.clientY});cv.setPointerCapture(e.pointerId);vel=0;idle=0;
+    if(pts.size===2){const[a,b]=[...pts.values()];pinch={d:Math.hypot(a.x-b.x,a.y-b.y),z:zoom};drag=null}else drag={x:e.clientX,y:e.clientY,r:rot,e:elev}});
+  cv.addEventListener("pointermove",e=>{if(!pts.has(e.pointerId))return;pts.set(e.pointerId,{x:e.clientX,y:e.clientY});idle=0;
+    if(pinch&&pts.size===2){const[a,b]=[...pts.values()];zoom=Math.max(.55,Math.min(1.6,pinch.z*pinch.d/Math.max(20,Math.hypot(a.x-b.x,a.y-b.y))));place();return}
+    if(!drag)return;const nr=drag.r+(e.clientX-drag.x)*.012;vel=nr-rot;rot=nr;elev=Math.max(.02,Math.min(1.45,drag.e+(e.clientY-drag.y)*.008));place()});
+  const up=e=>{pts.delete(e.pointerId);if(pts.size<2)pinch=null;if(!pts.size)drag=null};cv.addEventListener("pointerup",up);cv.addEventListener("pointercancel",up);
+  cv.addEventListener("wheel",e=>{e.preventDefault();zoom=Math.max(.55,Math.min(1.6,zoom*(e.deltaY>0?1.08:.93)));place()},{passive:false});
+  cv.style.touchAction="none";
+  function frame(now){if(!run)return;if(!cv.isConnected)return stop();
+    const dt=Math.min(.05,(now-t0)/1000);t0=now;
+    if(drive>0){drive=Math.max(0,drive-dt/1.3);const e=drive*drive;s.turn.position.x=-e*9;for(const w of s.car.userData.wheels)w.rotation.z-=dt*14*(.3+drive)}
+    if(!drag){idle+=dt;if(Math.abs(vel)>.0005){rot+=vel;vel*=.94}else if(idle>1.2)rot+=dt*.45}
+    s.turn.rotation.y=rot;r.render(s.sc,s.cam);requestAnimationFrame(frame)}
+  requestAnimationFrame(frame);
+  function stop(){if(!run)return;run=false;dispose(s.sc);const et=envs.get(r);if(et)et.dispose();r.dispose();try{r.forceContextLoss()}catch(e){}}
+  return{stop}}
+
+window.XQCar3D={thumb,viewer,build};
+})();
