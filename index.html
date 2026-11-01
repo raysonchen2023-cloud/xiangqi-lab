@@ -389,6 +389,7 @@ html[data-era=ming] .topbar,html[data-era=qing] .topbar{border-bottom-width:4px}
 .cpu-sheet .opt button{padding:10px 8px}
 .cpu-sheet .lvl{margin:6px 0 8px}
 .cpu-desc{font-size:13px;color:var(--muted);min-height:2.8em;line-height:1.5;padding:0 2px}
+.sgc>*+*{border-top:1px solid var(--line)}
 .rd-g{background:var(--card);border:1px solid var(--line);border-radius:14px;margin:10px 0;overflow:hidden}.rd-g>summary{list-style:none;display:flex;justify-content:space-between;align-items:center;gap:8px;padding:10px 12px;font-size:14px;cursor:pointer}.rd-g>summary::-webkit-details-marker{display:none}.rd-g>summary b{font-size:13px;color:var(--accent);white-space:nowrap}.rd-g>summary::after{content:"▸";color:var(--muted);transition:transform .2s}.rd-g[open]>summary::after{transform:rotate(90deg)}.rd-g .st-list{margin:0;border-radius:0;border:0;border-top:1px solid var(--line)}
 </style></head><body>
 <div class="app">
@@ -744,6 +745,10 @@ function Board(onTap,onSwipe){
     for(let r=0;r<10;r++)g.append(el("line",{x1:px(0),y1:py(r),x2:px(8),y2:py(r)}));
     for(let c=0;c<9;c++){if(c===0||c===8)g.append(el("line",{x1:px(c),y1:py(0),x2:px(c),y2:py(9)}));else{g.append(el("line",{x1:px(c),y1:py(0),x2:px(c),y2:py(4)}));g.append(el("line",{x1:px(c),y1:py(5),x2:px(c),y2:py(9)}))}}
     for(const r0 of[0,7]){g.append(el("line",{x1:px(3),y1:py(r0),x2:px(5),y2:py(r0+2)}));g.append(el("line",{x1:px(5),y1:py(r0),x2:px(3),y2:py(r0+2)}))}
+    // 炮、兵（卒）起始位置的角標（花點）：交叉點四周各畫一個小 L，靠棋盤邊的那一側不畫（意見回饋 141）
+    {const G=5,Ln=11,mk=(c,r)=>{for(const dx of[-1,1])for(const dy of[-1,1]){if(c===0&&dx<0||c===8&&dx>0)continue;const x=px(c)+dx*G,y=py(r)+dy*G;
+      g.append(el("path",{d:`M${x+dx*Ln} ${y}L${x} ${y}L${x} ${y+dy*Ln}`,"stroke-width":1.6}))}};
+     for(const r of[2,7])for(const c of[1,7])mk(c,r);for(const r of[3,6])for(const c of[0,2,4,6,8])mk(c,r)}
     svg.append(g);
     svg.append(el("text",{x:px(2),y:py(4.5)+10,"text-anchor":"middle","font-family":"var(--serif)","font-size":28,fill:T.grid,"font-weight":900},flip?"漢 界":"楚 河"));
     svg.append(el("text",{x:px(6),y:py(4.5)+10,"text-anchor":"middle","font-family":"var(--serif)","font-size":28,fill:T.grid,"font-weight":900},flip?"楚 河":"漢 界"));
@@ -1600,20 +1605,28 @@ function Stats(v){
 const SAMPLE_FEN0="rnbakabnr/9/1c5c1/p1p1p1p1p/9/9/P1P1P1P1P/1C5C1/9/RNBAKABNR",SAMPLE_FEN1="rnbakabnr/9/1c5c1/p1p1p1p1p/9/9/P1P1P1P1P/1C2C4/9/RNBAKABNR",SAMPLE_LAST={f:70,t:67};
 function Settings(v){
   setTop("設定","#/");setTabs(false);
+  // 設定分成四個分頁，一次只看一類（意見回饋 141）
+  let stab=store.get("setTab","look");
   v.innerHTML=`<div class="pad home">
+    <div class="st-tabs" id="sgTabs" style="position:static;margin:4px 0 10px">${[["look","🎨 外觀"],["play","♟ 走棋"],["sound","🔊 聲音"],["more","⋯ 其他"]].map(([k,l])=>`<button data-k="${k}">${l}</button>`).join("")}</div>
+    <div data-pane="look">
     <div class="card" style="padding:10px"><div id="pv" style="max-width:300px;margin:0 auto"></div>
       <div class="row" style="justify-content:space-between;margin-top:6px"><span class="muted">示範：紅方 炮二平五</span><button class="pill" id="replay">▶ 再走一次</button></div></div>
     <div class="sec-t">朝代風格<span class="muted" style="font-size:12px;font-weight:400">每一頁都會換</span></div><div class="eragrid" id="era"></div>
     <div class="sec-t">深淺色</div><div class="opt" id="pt"></div><p class="muted" id="ptN" style="font-size:12px;margin:4px 4px 0"></p>
     <div class="sec-t">棋盤風格</div><div class="thgrid" id="th"></div>
     <div class="sec-t">棋子樣式</div><div class="opt" id="ps"></div>
-    <div class="sec-t">走棋顯示</div><div class="card" id="mv"></div>
-    <div class="sec-t">其他</div><div class="items" style="padding:0">
+    </div>
+    <div data-pane="play"><div class="sec-t" style="margin-top:4px">走棋顯示與特效</div><div class="card sgc" id="mv"></div></div>
+    <div data-pane="sound"><div class="sec-t" style="margin-top:4px">聲音</div><div class="card sgc" id="snd"></div></div>
+    <div data-pane="more"><div class="sec-t" style="margin-top:4px">其他</div><div class="items" style="padding:0">
       <button class="item" id="nm"><span class="lb">✏</span><span class="tx"><b>我的名字</b><span id="nmS"></span></span><span class="muted">›</span></button>
       <button class="item" id="fb"><span class="lb">💬</span><span class="tx"><b>意見回饋</b><span>回報錯誤、想要的功能</span></span><span class="muted">›</span></button>
       <button class="item" id="sh"><span class="lb">📤</span><span class="tx"><b>分享給朋友</b><span>QR code・LINE</span></span><span class="muted">›</span></button></div>
     ${OFF?'<div class="sec-t">進階</div><div class="card"><label class="row" style="justify-content:space-between"><span><b>開發者模式</b><br><span class="muted">一般玩家不用打開。打開後才會顯示連線電腦、AI 對戰等開發者功能</span></span><input type="checkbox" class="sw" id="dm"></label></div>'
-      +(DEVMODE()?'<div class="items" style="padding:0;margin-top:8px"><button class="item" id="fa"><span class="lb">📋</span><span class="tx"><b>意見回饋管理</b><span>看所有回饋和截圖，決定玩家的回饋要不要修</span></span><span class="muted">›</span></button><button class="item" id="cn"><span class="lb">🖥</span><span class="tx"><b>連線到開發者的電腦</b><span>看 AI 對戰、同步大師棋譜</span></span><span class="muted">›</span></button></div>':""):""}</div>`;
+      +(DEVMODE()?'<div class="items" style="padding:0;margin-top:8px"><button class="item" id="fa"><span class="lb">📋</span><span class="tx"><b>意見回饋管理</b><span>看所有回饋和截圖，決定玩家的回饋要不要修</span></span><span class="muted">›</span></button><button class="item" id="cn"><span class="lb">🖥</span><span class="tx"><b>連線到開發者的電腦</b><span>看 AI 對戰、同步大師棋譜</span></span><span class="muted">›</span></button></div>':""):""}</div></div>`;
+  const showTab=()=>{v.querySelectorAll("#sgTabs button").forEach(b=>b.classList.toggle("on",b.dataset.k===stab));v.querySelectorAll("[data-pane]").forEach(x=>x.hidden=x.dataset.pane!==stab)};
+  v.querySelectorAll("#sgTabs button").forEach(b=>b.onclick=()=>{vibrate(5);stab=b.dataset.k;store.set("setTab",stab);showTab()});showTab();
   // 打開開發者模式要登入（關閉不用）
   const dm=v.querySelector("#dm");if(dm){dm.checked=DEVMODE();dm.onchange=()=>{
     if(!dm.checked){store.set("devMode",false);toast("已關閉開發者模式");return route()}
@@ -1637,6 +1650,9 @@ function Settings(v){
       if(k!=="classic"&&store.get("boardTheme","wood3d")!=="auto"){store.set("boardTheme","auto");toast("棋盤也換成這個朝代的配色（可在下面改回）")}paint();show(true)});
     const tg=(k,label,sub)=>`<label class="row" style="justify-content:space-between;padding:6px 0"><span><b>${label}</b><br><span class="muted">${sub}</span></span><input type="checkbox" class="sw" data-t="${k}" ${store.get(k,k!=="mvSound")?"checked":""}></label>`;
     v.querySelector("#mv").innerHTML=tg("mvArrow","箭頭","從原來位置畫箭頭指到新位置")+'<div style="border-top:1px solid var(--line)"></div>'+tg("mvAnim","動畫","棋子滑過去，被吃的棋子淡出")+'<div style="border-top:1px solid var(--line)"></div>'+tg("mvSound","走棋音效","走棋時「叩」一聲")+'<div style="border-top:1px solid var(--line)"></div>'+tg("capSound","吃子音效","吃子時重重「啪」一聲、將軍時「鏘」一聲")+'<div style="border-top:1px solid var(--line)"></div>'+tg("voiceCall","語音報「吃」「將軍」","吃子時唸「吃」、將軍時唸「將軍」（用手機內建語音）")+'<div style="border-top:1px solid var(--line)"></div><div style="padding:6px 0"><b>棋子聲音</b><br><span class="muted">實木＝厚棋子拍在木棋盤上的聲音；點一下可以試聽</span><div class="st-res" id="sndSt" style="margin:8px 0 0">'+[["wood","實木"],["soft","輕敲"]].map(([k,l])=>`<button data-snd="${k}" class="${(store.get("sndStyle","wood")==="soft"?"soft":"wood")===k?"on":""}">${l}</button>`).join("")+'</div></div>'+'<div style="border-top:1px solid var(--line)"></div>'+tg("ckFx","將軍特效","被將軍或將對方軍時，棋盤上蓋「將軍！」字樣")+'<div style="border-top:1px solid var(--line)"></div>'+tg("capFx","吃子特效","吃子時被吃的那格蓋一個水墨「吃」字")+'<div style="border-top:1px solid var(--line)"></div>'+tg("opFx","開局名稱動畫","走出中炮、仙人指路、屏風馬…時，棋盤上展開卷軸寫出開局名");
+    {const mvB=v.querySelector("#mv"),sdB=v.querySelector("#snd");mvB.querySelectorAll(":scope>div[style*='border-top']").forEach(x=>x.remove());
+      for(const k of["mvSound","capSound","voiceCall"]){const x=mvB.querySelector(`[data-t="${k}"]`);if(x)sdB.append(x.closest("label"))}
+      const st=mvB.querySelector("#sndSt");if(st)sdB.append(st.parentElement)}
     v.querySelectorAll("[data-snd]").forEach(x=>x.onclick=()=>{store.set("sndStyle",x.dataset.snd);v.querySelectorAll("[data-snd]").forEach(y=>y.classList.toggle("on",y===x));unlockAudio();withAudio(()=>moveSound0(false));setTimeout(()=>withAudio(()=>moveSound0(true)),550)});
     v.querySelectorAll("[data-t]").forEach(x=>x.onchange=()=>{store.set(x.dataset.t,x.checked);if(x.checked&&(x.dataset.t==="mvSound"||x.dataset.t==="capSound")){unlockAudio();moveSound(x.dataset.t==="capSound")}if(x.checked&&x.dataset.t==="voiceCall"){primeVoice();setTimeout(()=>sayCall("將軍"),150)}show(true)});
     v.querySelector("#nmS").textContent=myName()||"還沒取名字";show(false)};
