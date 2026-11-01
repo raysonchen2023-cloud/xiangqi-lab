@@ -1015,7 +1015,7 @@ function Home(v){
    <div class="hero">
     ${T("k3","#/quiz","🎯","棋力測驗","hQuiz","新手～專2")}
     ${T("k4","#/db","📜","棋譜庫","","古譜・名局・我的對局")}
-    ${T("k2","#/terms","📚","象棋術語","","殺法・開局・戰術")}
+    ${T("k2","#/terms","📚","象棋規則","","玩法・記譜法・術語")}
     ${T("k1","#/stats","🏅","我的戰績","","勝負・段位・對局紀錄")}
     ${T("k2","#/redo","🔁","錯棋重練","","從下錯的地方再下一次")}
     ${T("k3","#/openings","📊","我的開局","","常用開局・中局正招")}
@@ -1122,10 +1122,17 @@ function Quiz(v){
   intro();return{}}
 
 // ================= 象棋術語：殺法、開局、戰術、棋形、規則 =================
+// 象棋規則（意見回饋 137）：上方三個分頁「玩法／記譜法／術語」；術語＝原本的象棋術語
 function Terms(v,pick){
-  setTop("象棋術語","#/");setTabs(false);
-  v.innerHTML=`<div class="search"><input id="q" placeholder="搜尋術語，例如：馬後炮、屏風馬"></div><div class="chips" id="cats"></div><div class="items" id="list"></div>
-    <p class="muted" id="src" style="padding:4px 16px 20px;font-size:12px"></p>`;
+  setTop("象棋規則","#/");setTabs(false);
+  let tab=pick?"terms":store.get("rulesTab","play");
+  v.innerHTML=`<div class="st-tabs" id="rTabs" style="margin:10px 12px 4px;position:static">${[["play","🎮 玩法"],["note","✍ 記譜法"],["terms","📚 術語"]].map(([k,l])=>`<button data-k="${k}">${l}</button>`).join("")}</div>
+    <div id="rPlay" class="home" style="padding-top:4px"></div><div id="rNote" class="home" style="padding-top:4px"></div><div id="rTerms">`+`<div class="search"><input id="q" placeholder="搜尋術語，例如：馬後炮、屏風馬"></div><div class="chips" id="cats"></div><div class="items" id="list"></div>
+    <p class="muted" id="src" style="padding:4px 16px 20px;font-size:12px"></p></div>`;
+  const showTab=()=>{v.querySelectorAll("#rTabs button").forEach(b=>b.classList.toggle("on",b.dataset.k===tab));
+    v.querySelector("#rPlay").hidden=tab!=="play";v.querySelector("#rNote").hidden=tab!=="note";v.querySelector("#rTerms").hidden=tab!=="terms";
+    if(tab==="play"&&!v.querySelector("#rPlay").innerHTML)rulesPlay(v.querySelector("#rPlay"));if(tab==="note"&&!v.querySelector("#rNote").innerHTML)rulesNotation(v.querySelector("#rNote"))};
+  v.querySelectorAll("#rTabs button").forEach(b=>b.onclick=()=>{vibrate(5);tab=b.dataset.k;store.set("rulesTab",tab);showTab()});showTab();
   let D=null,cat="全部";
   const qi=v.querySelector("#q");qi.oninput=()=>paint();
   function paint(){const k=qi.value.trim(),box=v.querySelector("#list");box.innerHTML="";
@@ -1162,6 +1169,42 @@ function Terms(v,pick){
     v.querySelector("#src").textContent=d.note;paint();if(pick){const t=d.items.find(x=>x.n===pick);if(t)open(t)}}).catch(e=>{v.querySelector("#list").innerHTML=`<div class="card muted">⚠ ${esc(e.message)}</div>`});
   return{}}
 
+// 玩法：目標、棋盤、七種棋子、勝負和
+function rulesPlay(box){const P=(t,h)=>`<div class="sec-t">${t}</div><div class="card" style="line-height:1.8">${h}</div>`;
+  box.innerHTML=P("🎯 目標","兩人對下，<b style=\"color:var(--red)\">紅方先走</b>，之後輪流各走一步。把對方的<b>帥／將</b>「將死」（被將軍而且怎麼走都躲不掉）就贏了；讓對方<b>無棋可走</b>（困斃）也算贏。")+
+  P("🗺 棋盤","棋盤有 9 條直線、10 條橫線，棋子放在<b>交叉點</b>上，不是放在格子裡。中間空白的一條叫<b>河界</b>（楚河漢界），把棋盤分成紅黑兩邊。兩邊底部畫了斜線「米」字的 3×3 區域叫<b>九宮</b>，帥（將）和仕（士）只能待在裡面。")+
+  P("♟ 七種棋子怎麼走",[
+    ["帥／將","在九宮裡上下左右走一格。兩個將帥<b>不能在同一條直線上直接面對面</b>（中間沒有任何棋子）。"],
+    ["仕／士","在九宮裡斜走一格。"],
+    ["相／象","斜走兩格（走「田」字），<b>不能過河</b>。「田」字中間有棋子擋住就不能走，叫<b>塞象眼</b>。"],
+    ["馬","先直走一格再斜走一格（走「日」字）。直走那一格有棋子擋住就不能走，叫<b>蹩馬腿</b>。"],
+    ["車","直線、橫線走任意格，中間不能有棋子擋。威力最大。"],
+    ["炮／砲","不吃子時跟車一樣走；<b>吃子時一定要隔一個棋子跳過去吃</b>（中間那顆叫「炮架」，紅黑都可以）。"],
+    ["兵／卒","只能往前走一格；<b>過河以後</b>也可以往左右走一格。永遠不能後退。"]].map(([n,d])=>`<div style="display:flex;gap:10px;padding:6px 0;border-bottom:1px solid var(--line)"><b style="min-width:58px">${n}</b><span>${d}</span></div>`).join(""))+
+  P("⚔ 吃子與將軍","走到對方棋子的位置就把它吃掉（拿下棋盤）。走完後可以直接吃到對方帥／將，就是<b>將軍</b>，對方下一步一定要解除：移開帥將、吃掉將軍的棋子、或擋在中間。解不了就是將死。")+
+  P("🤝 和棋與禁止","雙方都無法將死對方（例如子力都太少）、或雙方同意，就是<b>和棋</b>。不能一直重複同樣的威脅：<b>長將</b>（一直將軍）和<b>長捉</b>（一直追捉同一顆子）都禁止，違反的一方要變著，不變就判負。")+
+  P("💡 新手小提醒","1. 開局先把馬、炮、車走出來，不要只動同一顆棋。<br>2. 每走一步前先看：對方剛剛那步在威脅我什麼？<br>3. 車最值錢（約 9 分），馬炮各約 4～5 分，仕相各約 2 分，兵過河前 1 分、過河後 2 分。<br>想知道某句術語是什麼意思，看「📚 術語」分頁。")}
+// 記譜法：四個字的規則＋範例（點一下在棋盤上畫出來）
+function rulesNotation(box){
+  // 格子編號＝列×9＋行（列 0 是黑方底線，行 0 是畫面最左邊）
+  const EX=[["炮二平五","紅方第二路的炮，橫走到第五路（這就是「中炮」）",[[70,67]]],["馬8進7","黑方第 8 路的馬，往前跳到第 7 路",[[7,24]]],["兵三進一","紅方第三路的兵，往前走一步",[[60,51]]],
+    ["車一進一","紅方第一路的車，往前走一步（直著走的棋子，最後一個字是步數）",[[89,80]]],["相三進五","紅方第三路的相，往前飛到第五路（斜著走的棋子，最後一個字是到達的路）",[[87,67]]],
+    ["卒7進1","黑方第 7 路的卒，往前走一步",[[33,42]]],["車9平1","黑方第 9 路的車，橫走到第 1 路（先走了「車9進1」把車開出來）",[[8,17],[17,9]]]];
+  box.innerHTML=`<div class="sec-t">一步棋怎麼寫</div><div class="card" style="line-height:1.85">每一步用<b>四個字</b>記：<br>
+    <b>①棋子</b>（例如 兵、車）＋<b>②現在在第幾路</b>＋<b>③怎麼走</b>（進、退、平）＋<b>④走到哪</b>。<br>
+    <div style="margin:8px 0;padding:8px 10px;background:var(--bg2,rgba(0,0,0,.04));border-radius:10px">例：<b>兵三進一</b>＝兵・在第三路・往前・走一步</div>
+    <b>第幾路</b>：棋盤 9 條直線，<b style="color:var(--red)">紅方</b>從<b>自己右手邊</b>數起用國字「一～九」，<b>黑方</b>也從<b>自己右手邊</b>數起，用數字「1～9」。所以同一條線，紅方叫「二」，黑方叫「8」。<br>
+    <b>進／退／平</b>：進＝往對方那邊走；退＝往自己那邊走；平＝橫著走。<br>
+    <b>最後一個字</b>：「平」寫到達的那一路；「進、退」時，<b>直著走的棋子</b>（車、炮、兵、帥）寫<b>走幾步</b>，<b>斜著走的棋子</b>（馬、相、仕）寫<b>到達的那一路</b>。<br>
+    <b>同一路有兩顆一樣的棋子</b>：用「前、後」分，例如「前炮進三」；三顆兵在同一路用「前、中、後」。</div>
+    <div class="sec-t">點一下看範例</div><div class="card"><div id="nb" style="max-width:340px;margin:0 auto"></div><p id="ncap" style="text-align:center;line-height:1.6;min-height:3.2em;margin:6px 0"></p>
+    <div class="opt" id="nex" style="justify-content:center;flex-wrap:wrap"></div></div>`;
+  const bd=Board(null);box.querySelector("#nb").append(bd.svg);const b0=parseFen(START);
+  const show=i=>{const[cn,d,mv]=EX[i],b=b0.slice();mv.slice(0,-1).forEach(([f,t])=>{b[t]=b[f];b[f]=null});const[f,t]=mv[mv.length-1];
+    bd.draw(b,{anim:false,arrow:false,sugg:[{f,t}]});box.querySelector("#ncap").innerHTML=`<b>${cn}</b>：${d}`;
+    box.querySelectorAll("#nex button").forEach((x,j)=>x.classList.toggle("on",j===i))};
+  box.querySelector("#nex").innerHTML=EX.map(([cn],i)=>`<button data-i="${i}">${cn}</button>`).join("");
+  box.querySelectorAll("#nex button").forEach(x=>x.onclick=()=>{vibrate(5);show(+x.dataset.i)});show(0)}
 // ================= 學習：錯棋重練、我的開局（都從自己下過的對局算） =================
 // 讀自己下過、Pikafish 評過等的對局（挑戰電腦＋線上對戰），每盤附上自己執哪一方
 async function myGames(maxPer){
@@ -1375,7 +1418,7 @@ async function skillPentagon(box){
     ${A.map((x,i)=>{const[lx,ly]=pt(i,128);return`<text x="${lx}" y="${ly-4}" text-anchor="middle" font-size="14" font-weight="700" fill="var(--ink)" font-family="var(--sans)">${x[0]}</text><text x="${lx}" y="${ly+13}" text-anchor="middle" font-size="13" fill="var(--accent)" font-weight="900" font-family="var(--sans)">${x[1]==null?"—":x[1]}</text>`}).join("")}</svg>`;
   const total=Math.round(has.reduce((s,x)=>s+x[1],0)/has.length),hi=has.slice().sort((a,b)=>b[1]-a[1])[0],lo=has.slice().sort((a,b)=>a[1]-b[1])[0];
   box.innerHTML=svg+`<div class="row" style="justify-content:space-between;margin-top:4px"><span class="muted">根據 ${used} 盤、${moves} 步</span><b>綜合 ${total} 分（${gradeFor(total)[0]}）</b></div>
-    <p class="muted" style="margin:6px 0 0;line-height:1.6">最強：${hi[0]}；最需要加強：${lo[0]}。${lo[0]==="殘局"?"建議多看古典殘局譜、做象棋術語的殺法。":lo[0]==="開局"?"建議多看古典開局譜和象棋術語的開局。":lo[0]==="穩定"?"走之前多看一眼對方能不能吃你的子。":lo[0]==="精準"?"多用賽後報告看 Pikafish 的藍色箭頭建議。":"中局多算兩步，注意對方的威脅。"}</p>
+    <p class="muted" style="margin:6px 0 0;line-height:1.6">最強：${hi[0]}；最需要加強：${lo[0]}。${lo[0]==="殘局"?"建議多看古典殘局譜、看象棋規則裡的殺法術語。":lo[0]==="開局"?"建議多看古典開局譜和象棋規則裡的開局術語。":lo[0]==="穩定"?"走之前多看一眼對方能不能吃你的子。":lo[0]==="精準"?"多用賽後報告看 Pikafish 的藍色箭頭建議。":"中局多算兩步，注意對方的威脅。"}</p>
     <details style="margin-top:6px"><summary class="muted">五項怎麼算？</summary><p class="muted" style="line-height:1.7;margin:6px 0 0">開局、中局、殘局：該階段每步的準確度平均（跟賽後報告同一套）。精準：走出 Pikafish 首選（正手、妙手）的比例。穩定：錯著、露著越少越高。只算 Pikafish 評過等的著法；還沒評等的對局，打開賽後報告評等後就會算進來。</p></details>`}
 function Stats(v){
   setTop("我的戰績","#/");setTabs(false);
