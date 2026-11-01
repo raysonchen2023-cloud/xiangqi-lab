@@ -90,6 +90,8 @@ input,select{font:inherit;font-size:16px;color:inherit}
 .player.on .clk{background:var(--accent2);color:#fff;border-color:var(--accent2)}
 .player.on .av{box-shadow:0 0 0 3px var(--accent2)}
 .status{flex:none;text-align:center;font-size:13px;color:var(--muted);padding:2px 12px;min-height:22px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.status.wrap{white-space:pre-line;line-height:1.45;padding:4px 14px}
+.pv-ctl{display:flex;justify-content:center;gap:8px;flex-wrap:wrap;margin:6px 0}
 .status.hot{color:var(--accent);font-weight:700}
 /* 著法條（橫向） */
 .strip{flex:none;display:flex;gap:6px;overflow-x:auto;padding:6px 10px;scrollbar-width:none;-webkit-overflow-scrolling:touch}
@@ -171,6 +173,16 @@ html[data-era=ming] .topbar,html[data-era=qing] .topbar{border-bottom-width:4px}
 .ckfx b{position:relative;line-height:1;background:linear-gradient(180deg,#fff6d8 0%,#f3cf73 45%,#c8902c 100%);-webkit-background-clip:text;background-clip:text;color:transparent;
   filter:drop-shadow(0 .03em 0 #6b0d12) drop-shadow(0 .06em .1em #000a);animation:ckch .5s cubic-bezier(.2,1.5,.4,1) both}
 .ckfx .c1{animation-delay:.16s;--dx:-.6em}.ckfx .c2{animation-delay:.28s;--dx:.6em}
+.ckfx .lab{position:absolute;left:50%;top:-.62em;transform:translateX(-50%);font-style:normal;font-size:.4em;font-weight:900;letter-spacing:.12em;padding:.12em .5em .12em .62em;color:#fff6e0;
+  background:#b3121f;border-radius:.2em;box-shadow:0 0 0 .07em #f3cf73,0 .1em .3em #0007;white-space:nowrap;animation:cklab .45s .45s cubic-bezier(.2,1.6,.4,1) both}
+@keyframes cklab{from{opacity:0;transform:translateX(-50%) scale(1.8) rotate(-6deg)}to{opacity:1;transform:translateX(-50%) rotate(-3deg)}}
+.opfx{position:fixed;z-index:63;transform:translate(-50%,-50%);pointer-events:none;font-family:var(--serif);animation:opout 2.6s ease forwards}
+.opfx .scroll{position:relative;display:flex;flex-direction:column;align-items:center;padding:.18em 1.1em .22em;border-radius:.12em;color:#3b2412;
+  background:linear-gradient(180deg,#f8edd2,#efdcb2 55%,#e6cd9a);box-shadow:0 .08em .35em #0006,inset 0 0 .3em #b98a4a55;transform-origin:center;animation:opunroll .55s cubic-bezier(.3,1,.3,1) both}
+.opfx .scroll b{font-size:1em;font-weight:900;letter-spacing:.18em;line-height:1.15;padding-left:.18em}.opfx .who{font-size:.36em;letter-spacing:.3em;color:#8a5a2b;font-weight:700;padding-left:.3em}
+.opfx .rod{position:absolute;top:-.1em;bottom:-.1em;width:.22em;border-radius:.11em;background:linear-gradient(90deg,#5a3418,#9a6332 45%,#4a2a12);box-shadow:0 .05em .15em #0006}.opfx .rod.l{left:-.12em}.opfx .rod.r{right:-.12em}
+@keyframes opunroll{from{transform:scaleX(.08);opacity:.6}to{transform:scaleX(1);opacity:1}}
+@keyframes opout{0%,80%{opacity:1}100%{opacity:0;transform:translate(-50%,-62%)}}
 @keyframes ckink{from{transform:scaleX(0);opacity:.4}to{transform:scaleX(1);opacity:1}}
 @keyframes ckch{from{opacity:0;transform:translateX(var(--dx)) scale(1.5)}to{opacity:1;transform:none}}
 @keyframes ckglow{0%,100%{opacity:.2}50%{opacity:1}}
@@ -261,6 +273,8 @@ html[data-era=ming] .topbar,html[data-era=qing] .topbar{border-bottom-width:4px}
 .rp-bar{position:fixed;left:12px;right:12px;bottom:calc(92px + var(--safeB,0px));z-index:62;display:flex;align-items:center;justify-content:space-between;gap:10px;padding:10px 12px;border-radius:14px;background:var(--card,#fff);border:1px solid var(--line);box-shadow:0 6px 24px #0003;font-size:14px}
 .rp-bar span{display:flex;flex-direction:column}.rp-bar em{font-style:normal}.rp-bar small{font-size:11.5px;color:var(--muted)}.rp-bar.done{border-color:var(--accent2)}.rp-bar.done span{font-weight:800;color:var(--accent2)}
 .gar-q{display:block;width:100%;margin:14px 0 0;padding:11px 14px;border-radius:12px;border:1px solid var(--line);background:var(--card,#fff);color:inherit;font-size:16px;font-family:var(--sans)}
+.st-tabs{display:flex;gap:4px;padding:4px;margin:4px 0 6px;border-radius:14px;background:color-mix(in srgb,var(--line) 55%,transparent);position:sticky;top:0;z-index:5}.st-tabs button{flex:1;padding:9px 4px;border-radius:10px;font-weight:700;font-size:14px;color:var(--muted);font-family:var(--sans)}.st-tabs button.on{background:var(--card,#fff);color:var(--ink,inherit);box-shadow:0 1px 4px #0002}
+.st-kpi{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin:6px 0 4px}.st-kpi>div{display:flex;flex-direction:column;align-items:center;padding:12px 6px;border-radius:14px;background:var(--card,#fff);border:1px solid var(--line);text-align:center}.st-kpi b{font-size:22px;font-weight:900;font-family:var(--sans);line-height:1.2}.st-kpi span{font-size:12.5px;margin-top:2px}.st-kpi small{font-size:11px;color:var(--muted);margin-top:2px}
 .car-spec{margin:0 0 12px;padding:10px 12px;border-radius:12px;background:var(--bg)}.car-spec-h{font-weight:800;font-size:15px;margin-bottom:6px;display:flex;align-items:baseline;gap:8px;flex-wrap:wrap}.car-spec-h small{font-weight:400;font-size:11.5px;color:var(--muted)}
 .car-spec dl{display:grid;grid-template-columns:auto 1fr;gap:5px 12px;margin:0;font-size:13.5px}.car-spec dt{color:var(--muted);white-space:nowrap}.car-spec dd{margin:0;font-weight:600;word-break:break-word}
 .car-spec details{margin-top:8px;font-size:13px}.car-spec summary{color:var(--accent);cursor:pointer}.car-spec details p{margin:6px 0 0;line-height:1.6}
@@ -515,12 +529,36 @@ function moveSound(cap){if(!(cap?store.get("capSound",true):store.get("mvSound",
   const n=AC.createBufferSource(),buf=AC.createBuffer(1,AC.sampleRate*.04|0,AC.sampleRate),d=buf.getChannelData(0);for(let i=0;i<d.length;i++)d[i]=(Math.random()*2-1)*Math.pow(1-i/d.length,3);
   const ng=AC.createGain(),bp=AC.createBiquadFilter();bp.type="bandpass";bp.frequency.value=cap?900:1600;ng.gain.value=cap?.5:.35;n.buffer=buf;n.connect(bp).connect(ng).connect(AC.destination);n.start(t);
   hit(cap?260:420,cap?.18:.09,cap?.55:.4,0);if(cap)hit(180,.22,.35,.05)}catch(e){}}
-// 將軍特效：棋盤中間蓋一個「將軍！」印章動畫，有開音效的話再「鏘」一聲
-function checkFx(svg){if(!store.get("ckFx",true))return;const r=svg.getBoundingClientRect();if(!r.width)return;
+// 認得出來的殺法（剛走的那顆棋將軍）：臥槽馬、掛角馬、馬後炮、重炮
+// 位置都換成「被將的那一方」的角度：row 0＝他的底線，col 4＝中路
+function matePattern(b,last,ksq){if(!last||ksq<0)return"";const p=b[last.t];if(!p)return"";const t=p.toLowerCase(),kr=Math.floor(ksq/9),kc=ksq%9,defB=b[ksq]==="k";
+  const rel=i=>defB?Math.floor(i/9):9-Math.floor(i/9),r=rel(last.t),c=last.t%9;
+  if(t==="n"){const dr=Math.abs(Math.floor(last.t/9)-kr),dc=Math.abs(c-kc);if(!(dr===1&&dc===2||dr===2&&dc===1))return"";
+    if(r===1&&(c===2||c===6))return"臥槽馬";if((r===2||r===0)&&(c===3||c===5))return"掛角馬";return""}
+  if(t==="c"){const pr=Math.floor(last.t/9);let between=[];
+    if(pr===kr){const a=Math.min(c,kc),z=Math.max(c,kc);for(let x=a+1;x<z;x++)if(b[kr*9+x])between.push(kr*9+x)}
+    else if(c===kc){const a=Math.min(pr,kr),z=Math.max(pr,kr);for(let y=a+1;y<z;y++)if(b[y*9+c])between.push(y*9+c)}else return"";
+    if(between.length!==1)return"";const sc=b[between[0]],mine=sideOf(sc)===sideOf(p);
+    if(mine&&sc.toLowerCase()==="c")return"重炮";
+    if(mine&&sc.toLowerCase()==="n"&&Math.abs(Math.floor(between[0]/9)-kr)+Math.abs(between[0]%9-kc)===1)return"馬後炮";return""}
+  return""}
+// 開局名稱動畫：棋盤上方展開一條米色卷軸，寫開局名（例如「中炮」），兩秒後收起
+function openFx(svg,name,who){if(!store.get("opFx",true)||!name)return;const r=svg.getBoundingClientRect();if(!r.width)return;
+  document.querySelectorAll(".opfx").forEach(x=>x.remove());
+  const d=document.createElement("div");d.className="opfx";d.style.cssText=`left:${r.left+r.width/2}px;top:${r.top+r.height*.27}px;font-size:${Math.round(r.width*.085)}px`;
+  d.innerHTML=`<div class="scroll"><i class="rod l"></i><span class="who">${esc(who)}</span><b>${esc(name)}</b><i class="rod r"></i></div>`;document.body.append(d);setTimeout(()=>d.remove(),2600)}
+// 依剛走完的步數判斷要不要秀開局名：紅方第 1 步；黑方第 1 步（順炮、卒底炮…）或第 2 步（屏風馬、反宮馬）
+function openingCue(moves){const n=moves.length;
+  if(n===1){const o=redOpening(moves[0].cn);return o&&o!=="其他開局"?["紅方開局",o]:null}
+  if(n===2){const d=blackDefence(moves);return["順炮","列炮","還架中炮","卒底炮","飛象","挺卒"].includes(d)?["黑方應對",d]:null}
+  if(n===4){const d=blackDefence(moves),d2=blackDefence(moves.slice(0,2));return["屏風馬","反宮馬","半途列炮"].includes(d)&&d!==d2?["黑方應對",d]:null}
+  return null}
+// 將軍特效：棋盤中間蓋一個「將軍！」印章動畫，有開音效的話再「鏘」一聲；認得出殺法時上面多一行小字（例如「臥槽馬」）
+function checkFx(svg,label){if(!store.get("ckFx",true))return;const r=svg.getBoundingClientRect();if(!r.width)return;
   document.querySelectorAll(".ckfx").forEach(x=>x.remove());
   // 墨色筆刷一抹橫過楚河漢界，金色「將」「軍」兩字一左一右落下，棋盤四周泛一圈紅光
   const d=document.createElement("div");d.className="ckfx";d.style.cssText=`left:${r.left}px;top:${r.top}px;width:${r.width}px;height:${r.height}px;font-size:${Math.round(r.width*.15)}px`;
-  d.innerHTML='<i class="glow"></i><div class="mid"><i class="ink"></i><b class="c1">將</b><b class="c2">軍</b></div>';document.body.append(d);vibrate([25,30,25]);setTimeout(()=>d.remove(),1900);
+  d.innerHTML='<i class="glow"></i><div class="mid"><i class="ink"></i>'+(label?`<em class="lab">${esc(label)}</em>`:"")+'<b class="c1">將</b><b class="c2">軍</b></div>';document.body.append(d);vibrate([25,30,25]);setTimeout(()=>d.remove(),1900);
   if((store.get("capSound",true)||store.get("mvSound",false))&&AC&&AC.state==="running")try{const t=AC.currentTime;
     for(const[f,at]of[[880,0],[1320,.09]]){const o=AC.createOscillator(),g=AC.createGain();o.type="square";o.frequency.setValueAtTime(f,t+at);
       g.gain.setValueAtTime(.12,t+at);g.gain.exponentialRampToValueAtTime(.001,t+at+.35);o.connect(g).connect(AC.destination);o.start(t+at);o.stop(t+at+.4)}}catch(e){}}
@@ -583,7 +621,7 @@ function Board(onTap,onSwipe){
     // 走棋動畫：跟上一次畫的盤面比，棋子從原位滑到新位置；被吃的棋子淡出
     const fresh=L&&prevB&&prevB[L.f]&&prevB[L.f]===board[L.t]&&!board[L.f]&&prevB[L.t]!==board[L.t];
     if(fresh&&o.anim!==false)moveSound(!!prevB[L.t]);
-    if(fresh&&o.fx&&o.check>=0)setTimeout(()=>checkFx(svg),200);   // 走完棋才蓋章
+    if(fresh&&o.fx&&o.check>=0){const lab=matePattern(board,L,o.check);setTimeout(()=>checkFx(svg,lab),200)}   // 走完棋才蓋章
     const anim=fresh&&o.anim!==false&&store.get("mvAnim",true)&&!dropNoAnim;if(fresh)dropNoAnim=false;   // 拖過去放下的棋，不用再滑一次
     if(anim&&prevB[L.t]){const cg=piece(prevB[L.t],L.t,0,T,PS,false);svg.append(cg);requestAnimationFrame(()=>{cg.style.transition="opacity .45s";cg.style.opacity="0"})}
     lastBoard=board;lastO=o;pieceEls={};
@@ -1237,45 +1275,60 @@ async function skillPentagon(box){
     <details style="margin-top:6px"><summary class="muted">五項怎麼算？</summary><p class="muted" style="line-height:1.7;margin:6px 0 0">開局、中局、殘局：該階段每步的準確度平均（跟賽後報告同一套）。精準：走出 Pikafish 首選（正手、妙手）的比例。穩定：錯著、露著越少越高。只算 Pikafish 評過等的著法；還沒評等的對局，打開賽後報告評等後就會算進來。</p></details>`}
 function Stats(v){
   setTop("我的戰績","#/");setTabs(false);
-  // 版面：棋力五邊形 → 段位（線上／電腦兩張並排）→ 對局紀錄 → 更多（棋力測驗、各難度、段位怎麼算，摺起來）
+  // 版面：上面一排「總覽／電腦／線上／獎勵」分頁，一次只看一類，不會越堆越長
+  // 總覽＝三個重點數字＋棋力五邊形＋各模式勝負對照表＋對局紀錄；其他分頁各自的段位卡和細表
   const NET=!!(OFF&&window.XQNet),pct=(w,n)=>n?Math.round(w*100/n)+"%":"—";
   const reps=store.get("reports",{}),qz=store.get("quizBest",null);
   const sc=Object.values(reps).map(r=>r.score).filter(x=>x!=null),avg=sc.length?Math.round(sc.reduce((a,b)=>a+b,0)/sc.length):null;
-  // 段位卡內容（線上段位、電腦段位共用同一個樣子）
   const rk=(hd,R,foot)=>{const N=R.w+R.l+R.d,pc=R.hi?Math.max(0,Math.min(100,Math.round((R.pts-R.lo)*100/(R.hi-R.lo)))):100;
     return`<div class="hd">${hd}</div><div class="mid"><span class="rk">${esc(R.rank)}</span><span class="pt"><b>${R.pts}</b> 分</span></div>
       <div class="st-bar"><i style="width:${pc}%"></i></div><div class="nx">${R.next?`再 ${R.toNext} 分升 ${esc(R.next)}`:"已是最高段位"}</div>
-      <div class="st-wld"><div><b class="w">${R.w}</b><span>勝</span></div><div><b class="l">${R.l}</b><span>負</span></div><div><b class="d">${R.d}</b><span>和</span></div><div><b>${pct(R.w,N)}</b><span>勝率</span></div></div>${foot}`};
-  const cpuFoot='<button class="go" id="cpuGo">開始積分挑戰 ›</button>';
-  v.innerHTML=`<div class="home st"><div class="sec-t">棋力五邊形</div><div class="card" id="sPent"><div class="muted" style="text-align:center">計算中…</div></div>
-    ${OFF?`<div class="sec-t">段位</div><div class="st-ranks${NET?"":" one"}">${NET?'<div class="st-rk" id="sNet"></div>':""}<div class="st-rk" id="sCpu"><div class="hd">🤖 電腦段位・積分挑戰</div><div class="muted">載入中…</div></div></div>`:""}
-    <div class="sec-t">對局紀錄${avg!=null?`<small>賽後報告平均 <b style="color:${gradeFor(avg)[2]}">${avg} 分（${gradeFor(avg)[0]}）</b>・${sc.length} 盤</small>`:""}</div><div id="sHist"></div>
-    <div class="sec-t">更多</div><div class="card st-more">
-      <div class="it" id="sQz"></div>
-      <details><summary class="it"><span class="tx"><b>🤖 挑戰電腦・各難度</b><span id="sTot">載入中…</span></span></summary><div class="bd" id="sLv"></div></details>
-      ${NET?`<details id="stHow"><summary class="it"><span class="tx"><b>❓ 段位怎麼算？</b><span>線上段位的加減分規則</span></span></summary><div class="bd">從 0 分（新手）開始。贏一盤約 +20、輸一盤約 −15、和棋 0；對手段位比你高，贏得更多、輸得更少，反過來也一樣。中途取消、對方斷線中止、雙方還沒各走一步就結束的對局不計分。<br>${XQNet.ranks().map(([n,p])=>`${esc(n)} ${p}`).join("・")}</div></details>`:""}
-    </div></div>`;
-  if(NET){const b=v.querySelector("#sNet");b.innerHTML=rk("🌐 線上段位",XQNet.rating(),'<button class="go" id="rkHow">段位怎麼算？</button>');
-    b.querySelector("#rkHow").onclick=()=>{const d=v.querySelector("#stHow");d.open=true;d.scrollIntoView({behavior:"smooth",block:"center"})}}
-  skillPentagon(v.querySelector("#sPent")).catch(e=>{const b=v.querySelector("#sPent");if(b)b.innerHTML=`<span class="muted">⚠ ${esc(e.message)}</span>`});
-  v.querySelector("#sQz").innerHTML=qz?`<span class="tx"><b>🧩 棋力測驗：${esc(qz.rank)}</b><span>${new Date(qz.at).toLocaleDateString()}・答對 ${qz.ok}/${qz.n}</span></span><button class="sbtn" id="qz">再測一次</button>`
-    :`<span class="tx"><b>🧩 棋力測驗</b><span>還沒測過</span></span><button class="sbtn pri" id="qz">開始測驗</button>`;
-  v.querySelector("#qz").onclick=()=>location.hash="#/quiz";
-  histList(v.querySelector("#sHist"),reps);
-  const goCpu=()=>{const g=v.querySelector("#cpuGo");if(g)g.onclick=()=>{store.set("cpuRanked",true);store.set("cpuCar",false);location.hash="#/cpu"}};
-  api("/play/state").then(st=>{
-    let W=0,L=0,D=0;for(const r of Object.values(st.record||{})){W+=r.w||0;L+=r.l||0;D+=r.d||0}
-    const CR=st.cpuRate||{w:0,l:0,d:0};W+=CR.w;L+=CR.l;D+=CR.d;   // 積分挑戰的勝負也算進挑戰電腦的總計
-    const cb=v.querySelector("#sCpu");
-    if(cb)cb.innerHTML=st.cpuRate?rk("🤖 電腦段位・積分挑戰",st.cpuRate,cpuFoot):`<div class="hd">🤖 電腦段位・積分挑戰</div><div class="muted">還沒有積分挑戰紀錄</div>${cpuFoot}`;goCpu();
-    v.querySelector("#sTot").textContent=`總計 ${W} 勝 ${L} 負 ${D} 和・勝率 ${pct(W,W+L+D)}`;
-    const tr=(r,ok)=>{const n=(r.w||0)+(r.l||0)+(r.d||0);return`<td>${r.w||0}</td><td>${r.l||0}</td><td>${r.d||0}</td><td>${pct(r.w||0,n)}</td><td>${ok}</td>`};
-    v.querySelector("#sLv").innerHTML=`<table class="st-lv"><tr><th>難度</th><th>勝</th><th>負</th><th>和</th><th>勝率</th><th>過關</th></tr>
-      ${st.levels.map(l=>{const r=st.record[l.n]||{};return`<tr><td><b>${l.n}</b> ${esc(l.name)}</td>${tr(r,r.w?'<span class="w">✔</span>':"")}</tr>`}).join("")}
-      <tr><td><b>🏅</b> 積分挑戰</td>${tr(CR,"")}</tr><tr class="tot"><td>合計</td>${tr({w:W,l:L,d:D},"")}</tr></table>
-      ${avg==null?'<div style="margin-top:8px">下完一盤按「📊 賽後報告」，平均分數會顯示在「對局紀錄」旁邊。</div>':""}`;
-  }).catch(e=>{v.querySelector("#sTot").textContent="⚠ "+e.message;const cb=v.querySelector("#sCpu");if(cb)cb.innerHTML=`<div class="hd">🤖 電腦段位・積分挑戰</div><div class="muted">⚠ ${esc(e.message)}</div>${cpuFoot}`;goCpu()});
-  return{}}
+      <div class="st-wld"><div><b class="w">${R.w}</b><span>勝</span></div><div><b class="l">${R.l}</b><span>負</span></div><div><b class="d">${R.d}</b><span>和</span></div><div><b>${pct(R.w,N)}</b><span>勝率</span></div></div>${foot||""}`};
+  const tabs=[["all","總覽"],["cpu","🤖 電腦"]].concat(NET?[["net","🌐 線上"]]:[],OFF?[["car","🚗 獎勵"]]:[]);
+  let tab=store.get("statsTab","all");if(!tabs.some(t=>t[0]===tab))tab="all";
+  v.innerHTML=`<div class="home st"><div class="st-tabs" id="sTabs">${tabs.map(([k,l])=>`<button data-k="${k}">${l}</button>`).join("")}</div><div id="sBody"></div></div>`;
+  let ST=null,CAR=null;const ld=Promise.all([api("/play/state").then(s=>ST=s).catch(()=>null),OFF?api("/car/state").then(c=>CAR=c).catch(()=>null):null]);
+  const sum=r=>({w:r.w||0,l:r.l||0,d:r.d||0});
+  function rows(){const out=[];if(NET){const R=XQNet.rating();out.push(["🌐 線上對戰",sum(R)])}
+    if(ST){let W=0,L=0,D=0;for(const r of Object.values(ST.record||{})){W+=r.w||0;L+=r.l||0;D+=r.d||0}
+      out.push(["🏅 積分挑戰",sum(ST.cpuRate||{})],["🎚 自選難度",{w:W,l:L,d:D}])}if(CAR)out.push(["🚗 獎勵模式",sum(CAR)])
+    return out}
+  const tbl=(head,list,extra)=>`<table class="st-lv"><tr><th>${head}</th><th>勝</th><th>負</th><th>和</th><th>勝率</th>${extra?`<th>${extra[0]}</th>`:""}</tr>
+    ${list.map(([n,r,x])=>{const N=r.w+r.l+r.d;return`<tr><td>${n}</td><td>${r.w}</td><td>${r.l}</td><td>${r.d}</td><td>${pct(r.w,N)}</td>${extra?`<td>${x==null?"":x}</td>`:""}</tr>`}).join("")}</table>`;
+  async function paint(){
+    v.querySelectorAll("#sTabs button").forEach(b=>b.classList.toggle("on",b.dataset.k===tab));
+    const box=v.querySelector("#sBody");
+    if(tab==="all"){await ld;if(!v.isConnected||tab!=="all")return;
+      const rs=rows(),T=rs.reduce((a,[,r])=>({w:a.w+r.w,l:a.l+r.l,d:a.d+r.d}),{w:0,l:0,d:0}),N=T.w+T.l+T.d;
+      box.innerHTML=`<div class="st-kpi"><div><b>${pct(T.w,N)}</b><span>總勝率</span><small>${N} 盤</small></div>
+          <div><b style="${avg!=null?`color:${gradeFor(avg)[2]}`:""}">${avg!=null?avg+" "+gradeFor(avg)[0]:"—"}</b><span>賽後報告平均</span><small>${sc.length} 盤</small></div>
+          <div><b>${qz?esc(qz.rank):"—"}</b><span>棋力測驗</span><small>${qz?`答對 ${qz.ok}/${qz.n}`:'<a href="#/quiz">去測驗 ›</a>'}</small></div></div>
+        <div class="sec-t">棋力五邊形</div><div class="card" id="sPent"><div class="muted" style="text-align:center">計算中…</div></div>
+        <div class="sec-t">各模式勝負</div><div class="card">${rs.length?tbl("模式",rs.concat([["<b>合計</b>",T]])):'<span class="muted">還沒有對局</span>'}</div>
+        <div class="sec-t">對局紀錄</div><div id="sHist"></div>`;
+      skillPentagon(box.querySelector("#sPent")).catch(e=>{const b=box.querySelector("#sPent");if(b)b.innerHTML=`<span class="muted">⚠ ${esc(e.message)}</span>`});
+      histList(box.querySelector("#sHist"),reps)}
+    else if(tab==="cpu"){await ld;if(!v.isConnected||tab!=="cpu")return;
+      if(!ST){box.innerHTML='<div class="card muted">載入失敗</div>';return}
+      const CR=ST.cpuRate;
+      box.innerHTML=`<div class="st-rk" style="margin-top:4px">${CR?rk("🏅 電腦段位・積分挑戰",CR):'<div class="hd">🏅 電腦段位・積分挑戰</div><div class="muted">還沒有積分挑戰紀錄</div>'}<button class="go" id="cpuGo">開始積分挑戰 ›</button></div>
+        <div class="sec-t">自選難度・各級</div><div class="card">${tbl("難度",ST.levels.map(l=>{const r=ST.record[l.n]||{};return[`<b>${l.n}</b> ${esc(l.name)}`,sum(r),r.w?'<span class="w">✔</span>':""]}),["過關"])}</div>`;
+      box.querySelector("#cpuGo").onclick=()=>{store.set("cpuRanked",true);store.set("cpuCar",false);location.hash="#/cpu"}}
+    else if(tab==="net"){const R=XQNet.rating();
+      box.innerHTML=`<div class="st-rk" style="margin-top:4px">${rk("🌐 線上段位",R)}<button class="go" id="lbGo">去線上大廳 ›</button></div>
+        <div class="sec-t">段位怎麼算</div><div class="card" style="font-size:14px;line-height:1.7">從 0 分（新手）開始。贏一盤約 +20、輸一盤約 −15、和棋 0；對手段位比你高，贏得更多、輸得更少，反過來也一樣。中途取消、對方斷線中止、雙方還沒各走一步就結束的對局不計分。<div class="muted" style="margin-top:6px">${XQNet.ranks().map(([n,p])=>`${esc(n)} ${p}`).join("・")}</div></div>`;
+      box.querySelector("#lbGo").onclick=()=>location.hash="#/lobby"}
+    else if(tab==="car"){await ld;if(!v.isConnected||tab!=="car")return;
+      const C=CAR;
+      if(!C){box.innerHTML='<div class="card muted">載入失敗</div>';return}
+      const N=C.w+C.l+C.d,own=Object.keys(C.owned||{}).length,by=C.byLv||{};
+      box.innerHTML=`<div class="st-kpi"><div><b style="color:var(--accent2)">${C.pts.toLocaleString()}</b><span>現有點數</span><small>累積 ${C.earned.toLocaleString()}</small></div>
+          <div><b>${own}</b><span>收藏台數</span><small>賣過 ${C.sold||0} 台</small></div><div><b>${pct(C.w,N)}</b><span>勝率</span><small>${C.w} 勝 ${C.l} 負 ${C.d} 和</small></div></div>
+        <div class="sec-t">各難度勝負與點數</div><div class="card">${tbl("難度",ST.levels.map(l=>{const r=by[l.n]||{};return[`<b>${l.n}</b> ${esc(l.name)}<br><small class="muted">贏 +${C.table[l.n-1]}</small>`,sum(r),r.pts?"+"+r.pts.toLocaleString():"0"]}),["拿到點數"])}</div>
+        <div class="row" style="gap:8px;margin-top:12px"><button class="btn" id="cg" style="flex:1">▶ 下一盤獎勵棋</button><button class="btn ghost" id="gg" style="flex:1">🚗 我的車庫</button></div>`;
+      box.querySelector("#cg").onclick=()=>{store.set("cpuRanked",false);store.set("cpuCar",true);location.hash="#/cpu"};box.querySelector("#gg").onclick=()=>location.hash="#/garage"}}
+  v.querySelectorAll("#sTabs button").forEach(b=>b.onclick=()=>{vibrate(5);tab=b.dataset.k;store.set("statsTab",tab);paint()});
+  paint();return{}}
 
 // ================= 設定：棋盤風格、棋子樣式、走棋顯示 =================
 const SAMPLE_FEN0="rnbakabnr/9/1c5c1/p1p1p1p1p/9/9/P1P1P1P1P/1C5C1/9/RNBAKABNR",SAMPLE_FEN1="rnbakabnr/9/1c5c1/p1p1p1p1p/9/9/P1P1P1P1P/1C2C4/9/RNBAKABNR",SAMPLE_LAST={f:70,t:67};
@@ -1317,7 +1370,7 @@ function Settings(v){
     v.querySelectorAll("[data-e]").forEach(x=>x.onclick=()=>{const k=x.dataset.e;if(k===store.get("era","classic"))return;vibrate(5);store.set("era",k);applyEra();
       if(k!=="classic"&&store.get("boardTheme","wood3d")!=="auto"){store.set("boardTheme","auto");toast("棋盤也換成這個朝代的配色（可在下面改回）")}paint();show(true)});
     const tg=(k,label,sub)=>`<label class="row" style="justify-content:space-between;padding:6px 0"><span><b>${label}</b><br><span class="muted">${sub}</span></span><input type="checkbox" class="sw" data-t="${k}" ${store.get(k,k!=="mvSound")?"checked":""}></label>`;
-    v.querySelector("#mv").innerHTML=tg("mvArrow","箭頭","從原來位置畫箭頭指到新位置")+'<div style="border-top:1px solid var(--line)"></div>'+tg("mvAnim","動畫","棋子滑過去，被吃的棋子淡出")+'<div style="border-top:1px solid var(--line)"></div>'+tg("mvSound","走棋音效","走棋時「叩」一聲")+'<div style="border-top:1px solid var(--line)"></div>'+tg("capSound","吃子音效","吃子時重重「啪」一聲、將軍時「鏘」一聲")+'<div style="border-top:1px solid var(--line)"></div>'+tg("ckFx","將軍特效","被將軍或將對方軍時，棋盤上蓋「將軍！」字樣");
+    v.querySelector("#mv").innerHTML=tg("mvArrow","箭頭","從原來位置畫箭頭指到新位置")+'<div style="border-top:1px solid var(--line)"></div>'+tg("mvAnim","動畫","棋子滑過去，被吃的棋子淡出")+'<div style="border-top:1px solid var(--line)"></div>'+tg("mvSound","走棋音效","走棋時「叩」一聲")+'<div style="border-top:1px solid var(--line)"></div>'+tg("capSound","吃子音效","吃子時重重「啪」一聲、將軍時「鏘」一聲")+'<div style="border-top:1px solid var(--line)"></div>'+tg("ckFx","將軍特效","被將軍或將對方軍時，棋盤上蓋「將軍！」字樣")+'<div style="border-top:1px solid var(--line)"></div>'+tg("opFx","開局名稱動畫","走出中炮、仙人指路、屏風馬…時，棋盤上展開卷軸寫出開局名");
     v.querySelectorAll("[data-t]").forEach(x=>x.onchange=()=>{store.set(x.dataset.t,x.checked);show(true)});
     v.querySelector("#nmS").textContent=myName()||"還沒取名字";show(false)};
   v.querySelector("#nm").onclick=()=>nameSheet(false);v.querySelector("#fb").onclick=()=>feedbackSheet();v.querySelector("#sh").onclick=shareSheet;const cn=v.querySelector("#cn");if(cn)cn.onclick=connectSheet;const fa=v.querySelector("#fa");if(fa)fa.onclick=()=>location.hash="#/fbadmin";
@@ -1602,7 +1655,7 @@ function Garage(v){
 
 function CpuGame(v){
   setTabs(false);gameLayout(v);
-  let st=null,sel=-1,shownResult=null,busy=false;
+  let st=null,sel=-1,shownResult=null,busy=false,pHint=null;   // pHint：錯棋重練時在棋盤上畫 Pikafish 的建議
   const bd=Board(i=>tap(i));v.querySelector("#bbox").append(bd.svg);
   setTop("挑戰電腦","#/");
   // 模式切換直接放在頂部列（取代標題）：積分挑戰／自選難度／獎勵一眼就看得到，點一下就換（離線版才有積分挑戰和獎勵）
@@ -1621,8 +1674,10 @@ function CpuGame(v){
     if(sel>=0&&st.legal.some(([f,t])=>f===sel&&t===i)){const f=sel;sel=-1;vibrate(15);return post("/play/move",{f,t:i})}
     sel=st.legal.some(([f])=>f===i)?i:-1;if(sel>=0)vibrate(5);draw()}
   function draw(){if(!st)return;const last=st.moves[st.moves.length-1];
-    bd.draw(st.board,{flip:st.human==="b",last,sel,targets:sel>=0?st.legal.filter(([f])=>f===sel).map(x=>x[1]):[],hint:st.hint?[st.hint.f,st.hint.t]:null,check:st.check,fx:true})}
-  function render(s){st=s;if(!st.legal.some(([f])=>f===sel))sel=-1;draw();
+    bd.draw(st.board,{flip:st.human==="b",last,sel,targets:sel>=0?st.legal.filter(([f])=>f===sel).map(x=>x[1]):[],hint:st.hint?[st.hint.f,st.hint.t]:pHint&&pHint.n===st.moves.length?[pHint.f,pHint.t]:null,check:st.check,fx:true})}
+  let lastN=null;   // 上一次畫的步數：步數剛好多一步才秀開局名（重新整理、開新局不秀）
+  function render(s){const n0=lastN;st=s;lastN=s.moves.length;if(!st.legal.some(([f])=>f===sel))sel=-1;draw();
+    if(n0!=null&&lastN===n0+1&&!st.practice){const cue=openingCue(st.moves);if(cue)setTimeout(()=>openFx(bd.svg,cue[1],cue[0]),350)}
     const lv=st.levels[st.level-1]||{},me=st.human,bot=opp(me);
     const CR=st.cpuRate||{},CB=st.car||{},cpts=st.reward?(CB.table||[])[st.level-1]||0:0;paintSeg(modeOf(st));if(!st.ranked&&st.level&&!st.practice)store.set("cpuLevel",st.level);
     // 對手列右邊：目前的段位／難度，點了開「開新局」選單（換難度、換紅黑）
@@ -1633,7 +1688,7 @@ function CpuGame(v){
     const pB=v.querySelector("#pBot");if(pB.dataset.h!==bt){pB.dataset.h=bt;pB.innerHTML=bt}
     v.querySelector("#pTop").classList.toggle("on",!st.result&&st.turn===bot);v.querySelector("#pBot").classList.toggle("on",!st.result&&st.turn===me);
     v.querySelector("#evf").style.width=evPct(st.eval&&st.eval.v)+"%";
-    const s2=v.querySelector("#stat");s2.classList.remove("hot");
+    const s2=v.querySelector("#stat");s2.classList.remove("hot","wrap");{const pa=v.querySelector("#pAct");if(pa&&!st.practice)pa.hidden=true}
     if(st.msg)s2.textContent=st.msg;else if(st.result)s2.textContent=st.result.why;
     else if(st.thinking)s2.textContent="Pikafish 思考中…";
     else{s2.textContent=st.check>=0?"⚠ 你被將軍了！":st.hint?"💡 提示："+st.hint.cn:"輪到你"+(st.eval?`・${evt(st.eval.v)}`:"");s2.classList.toggle("hot",st.check>=0||!!st.hint)}
@@ -1661,17 +1716,42 @@ function CpuGame(v){
         [[win&&st.level<8?"挑戰下一級 ›":"再來一局",()=>api("/play/new",{human:st.human,level:win&&st.level<8?st.level+1:st.level}).then(render).catch(e=>toast(e.message))],["📊 賽後報告",()=>review(true)],["檢討這盤",()=>review(),true],["關閉",null,true]])}}
   function review(rep){api("/db/items?c=play").then(d=>{const it=d.items[0];if(!it)return toast("找不到存檔");if(rep)store.set("openReport","play/"+it.id);location.hash="#/db/play/"+encodeURIComponent(it.id)}).catch(e=>toast(e.message))}
   // 錯棋重練：在狀態列提示上次走了什麼，評等出來後告訴你這次有沒有進步（評過的結果記在 redoDone）
+  // 錯棋重練：練習起點的盤面（重練開始前的著法擺好）
+  function practiceBoard(){const b=parseFen(START);for(const m of st.moves.slice(0,st.practice.base)){b[m.t]=b[m.f];b[m.f]=null}return b}
+  // Pikafish 推演：從練習起點往後算一條最佳變化，在小棋盤上一步一步播
+  function pvSheet(bc){const b0=practiceBoard(),flip=st.human==="b";
+    sheet("Pikafish 推演",b=>{b.innerHTML='<p class="muted" id="pvm" style="text-align:center;margin:0 0 6px">Pikafish 分析中…（約 3 秒）</p><div id="pvb"></div><div class="pv-ctl"><button class="pill" id="pvp">◀ 上一步</button><button class="pill" id="pvg">▶ 自動播放</button><button class="pill" id="pvn">下一步 ▶</button></div><p id="pvl" style="font-size:14px;line-height:1.7;margin:8px 0 0"></p>';
+      const mb=Board(()=>{});b.querySelector("#pvb").append(mb.svg);mb.draw(b0,{flip});
+      // 第一步一定是建議的那步（跟提示一致），之後一段一段往後算，接到大約 12 步
+      (async()=>{const C=window.XQCore,boards=[b0.slice()],lasts=[null],cns=[];let side=st.human,L=null;
+        const push=(f,t)=>{const bb=boards[boards.length-1],cn=C?C.notate(bb,f,t):"";const nb=bb.slice();nb[t]=nb[f];nb[f]=null;boards.push(nb);lasts.push({f,t});cns.push(cn);side=side==="r"?"b":"r"};
+        const first=bcMove(b0,st.human,bc||"");if(first)push(first.f,first.t);
+        for(let round=0;round<5&&cns.length<12;round++){const d=await api("/an/engine",{board:boards[boards.length-1],side,ms:round?900:2000,multipv:1});const l=(d.lines||[])[0];if(!l)break;if(!L)L=l;
+          const before=cns.length;for(const u of(l.pvm||[]).slice(0,12-cns.length)){const f=sqI(u.slice(0,2)),t=sqI(u.slice(2,4));if(!boards[boards.length-1][f])break;push(f,t)}if(cns.length===before)break}
+        return{L,boards,lasts,cns}})().then(({L,boards,lasts,cns})=>{if(!L&&cns.length<2){b.querySelector("#pvm").textContent="這個局面算不出來";return}
+        let k=0,tm=null;const ev=!L?"":"之後局面："+(L.mate!=null?(L.mate>0?"可以殺棋":"會被殺"):(L.vr>=0?"優勢 ":"劣勢 ")+(Math.abs(L.vr)/100).toFixed(1)+" 兵");
+        const show=()=>{mb.draw(boards[k],{flip,last:lasts[k]});b.querySelector("#pvm").textContent=k?"第 "+k+" 步："+cns[k-1]+(k===1?"（Pikafish 建議）":""):"練習起點・按「自動播放」看 Pikafish 怎麼下"+(ev?"・"+ev:"");
+          b.querySelector("#pvl").innerHTML=cns.slice(0,boards.length-1).map((c,i)=>'<span style="'+(i===k-1?"font-weight:900;color:var(--accent)":"")+'">'+(i+1)+". "+esc(c)+"</span>").join("　")};
+        b.querySelector("#pvp").onclick=()=>{clearInterval(tm);k=Math.max(0,k-1);show()};b.querySelector("#pvn").onclick=()=>{clearInterval(tm);k=Math.min(boards.length-1,k+1);show()};
+        b.querySelector("#pvg").onclick=()=>{clearInterval(tm);k=0;show();tm=setInterval(()=>{if(!b.isConnected||k>=boards.length-1)return clearInterval(tm);k++;show()},900)};show()}).catch(e=>{b.querySelector("#pvm").textContent="⚠ "+e.message})})}
   function practiceBar(s2){const P0=st.practice,m=st.moves[P0.base];
+    let pa=v.querySelector("#pAct");if(!pa){pa=document.createElement("div");pa.id="pAct";pa.className="pv-ctl";s2.after(pa)}pa.hidden=true;
     if(st.moves.length>P0.base+2)return;   // 已經往下走了，回到一般狀態列
-    s2.classList.add("hot");
+    s2.classList.add("hot","wrap");
     if(!m){s2.textContent=`🔁 第 ${P0.ply} 步：上次你走「${P0.cn}」是${P0.q}，這次呢？`;return}
     if(!m.q){s2.textContent=`這次走「${m.cn}」，Pikafish 評分中…`;return}
     const all=store.get("redoDone",{}),d=all[P0.key]||{n:0,ok:false},sig=st.moves.length>P0.base?m.f+"-"+m.t:"";
-    if(sig&&d.last!==sig){d.last=sig;d.n++;if(["妙手","正手","優著","良著"].includes(m.q))d.ok=true;all[P0.key]=d;store.set("redoDone",all)}
     const good=["妙手","正手"].includes(m.q),ok=["優著","良著"].includes(m.q);
-    s2.textContent=good?`✅ 「${m.cn}」是${m.q}！比上次的${P0.q}進步了，繼續跟電腦下完吧`
-      :ok?`👍 「${m.cn}」是${m.q}，比上次好；按 ↶ 悔棋可以挑戰找出正手`
-      :`❌ 「${m.cn}」還是${m.q}，按 ↶ 悔棋再想一次`+(d.n>=2&&(m.bc||P0.bc)?`（Pikafish 建議：${m.bc||P0.bc}）`:"")}
+    // 每走一個不同的著法算一次；不是正手、妙手的都算一次「沒找到」
+    if(sig&&d.last!==sig){d.last=sig;d.n++;if(!good)d.fail=(d.fail||0)+1;if(good||ok)d.ok=true;all[P0.key]=d;store.set("redoDone",all)}
+    const fail=d.fail||0,bc=m.bc||P0.bc;
+    if(good){s2.textContent=`✅ 「${m.cn}」是${m.q}！比上次的${P0.q}進步了，繼續跟電腦下完吧`;return}
+    s2.textContent=(ok?`👍 「${m.cn}」是${m.q}，比上次好；按 ↶ 悔棋再挑戰正手`:`❌ 「${m.cn}」還是${m.q}，按 ↶ 悔棋再想一次`)+`（第 ${fail} 次）`+
+      (fail>=5&&bc?`\n💡 試了 ${fail} 次，Pikafish 建議走「${bc}」`:fail<5?`・再 ${5-fail} 次沒找到正手就給提示`:"");
+    if(fail>=5&&bc){pa.hidden=false;pa.innerHTML='<button class="pill" id="pHn">💡 在棋盤上看建議</button><button class="pill" id="pPv">▶ 推演後面</button>';
+      pa.querySelector("#pHn").onclick=()=>{const mv=bcMove(practiceBoard(),st.human,bc);if(!mv)return toast("找不到這步");vibrate(5);
+        pHint={...mv,n:P0.base};if(st.moves.length>P0.base)toast("按 ↶ 悔棋回到起點，就看得到建議的那一步（黃框）");draw()};
+      pa.querySelector("#pPv").onclick=()=>{vibrate(5);pvSheet(bc)}}}
   // 開新局。下到一半（雙方都走過）：積分挑戰會算輸，一定要確認；自選難度換成積分挑戰也問一下，免得誤觸把棋丟掉
   function startNew(o){const ranked=OFF&&!!o.ranked,reward=OFF&&!ranked&&!!o.reward,m=ranked?"rank":reward?"car":"free";
     const go=()=>{closeSheet();shownResult=null;sel=-1;if(OFF){store.set("cpuRanked",ranked);store.set("cpuCar",reward)}paintSeg(m);post("/play/new",{human:o.human,level:o.level,ranked,reward})};
@@ -1779,10 +1859,26 @@ function PvpGame(v){
     if(seat&&st.turn!==seat){toast("還沒輪到你，等對方走");return}
     if(sel>=0&&st.legal.some(([f,t])=>f===sel&&t===i)){const f=sel;sel=-1;vibrate(15);flipMan=null;return post("/pvp/move",{f,t:i})}
     sel=st.legal.some(([f])=>f===i)?i:-1;if(sel>=0)vibrate(5);draw()}
-  function draw(){if(!st)return;bd.draw(st.board,{flip:isFlip(),last:st.moves[st.moves.length-1],sel,targets:sel>=0?st.legal.filter(([f])=>f===sel).map(x=>x[1]):[],check:st.check,fx:true})}
+  // 觀戰：可以往前往後看每一步（view＝看到第幾步，null＝最新）；這支手機的 Pikafish 幫每一步算局勢，紅黑條跟著動
+  let view=null,watchUI=false;const evc={};
+  const boardAtN=n=>{const b=parseFen(START);for(const m of st.moves.slice(0,n)){b[m.t]=b[m.f];b[m.f]=null}return b};
+  const curN=()=>view==null?st.moves.length:view;
+  function evalAt(n){if(evc[n]!=null||!OFF)return;evc[n]="…";
+    api("/an/engine",{board:boardAtN(n),side:n%2?"b":"r",ms:600,multipv:1}).then(d=>{const L=(d.lines||[])[0];evc[n]=L?(L.mate!=null?Math.sign(L.mate)*30000:L.vr):null;if(curN()===n)watchBar()}).catch(()=>{evc[n]=null})}
+  function watchBar(){const n=curN(),ev=n===st.moves.length&&st.eval?st.eval.v:typeof evc[n]==="number"?evc[n]:null;v.querySelector("#evf").style.width=evPct(ev)+"%";
+    if(view!=null){const s2=v.querySelector("#stat"),m=st.moves[n-1];s2.classList.remove("hot");s2.textContent=(n?`第 ${n} 步${m?"："+(m.cn||""):""}`:"開局")+(ev!=null?"・"+evt(ev):"・Pikafish 計算中…")+"・按 ⏭ 回到最新"}}
+  function watchStep(d){if(!st)return;const n=Math.max(0,Math.min(st.moves.length,curN()+d));view=n>=st.moves.length?null:n;vibrate(5);draw();watchBar();evalAt(n);renderStrip(v.querySelector("#strip"),st.moves,curN()-1,pickStep)}
+  const pickStep=i=>{view=i+1>=st.moves.length?null:i+1;draw();watchBar();evalAt(curN())};
+  function setupWatchUI(){if(watchUI)return;watchUI=true;
+    for(const[b,ic,l,fn]of[[acts.undo,"◀","上一步",()=>watchStep(-1)],[acts.draw,"▶","下一步",()=>watchStep(1)],[acts.resign,"⏭","最新",()=>{view=null;draw();watchBar();renderStrip(v.querySelector("#strip"),st.moves,st.moves.length-1,pickStep)}]]){
+      b.innerHTML=`<span class="ic">${ic}</span>${l}`;b.onclick=()=>fn()}}
+  function draw(){if(!st)return;if(seat==="w"&&view!=null){const n=view;bd.draw(boardAtN(n),{flip:isFlip(),last:st.moves[n-1]});return}
+    bd.draw(st.board,{flip:isFlip(),last:st.moves[st.moves.length-1],sel,targets:sel>=0?st.legal.filter(([f])=>f===sel).map(x=>x[1]):[],check:st.check,fx:true})}
   function clocks(){if(!st||!clockBase||!clockBase.c)return;const b=clockBase;for(const s of["r","b"]){const el=v.querySelector(`#ck_${s}`);if(el){const x=b.c[s]-(b.run&&b.turn===s?Date.now()-b.at:0);el.textContent=fmt(x);el.style.color=x<60000&&!(b.turn===s&&b.run)?"var(--red)":""}}}
   const ckT=setInterval(clocks,250);
-  function render(s){st=s;if(NET&&s.mySide&&s.mySide!==seat){seat=s.mySide;flipMan=null;setTitle();flipBtn()}if(!st.legal.some(([f])=>f===sel))sel=-1;draw();
+  let lastN=null;   // 步數剛好多一步才秀開局名
+  function render(s){const n0=lastN;st=s;lastN=s.moves.length;if(NET&&s.mySide&&s.mySide!==seat){seat=s.mySide;flipMan=null;setTitle();flipBtn()}if(!st.legal.some(([f])=>f===sel))sel=-1;draw();
+    if(n0!=null&&lastN===n0+1&&view==null){const cue=openingCue(st.moves);if(cue)setTimeout(()=>openFx(bd.svg,cue[1],cue[0]),350)}
     const ems=st.emotes||[];if(lastEmo==null)lastEmo=ems.reduce((m,x)=>Math.max(m,x.id),0);
     else for(const x of ems)if(x.id>lastEmo){lastEmo=x.id;if(x.text)showChat(x.text,x.by===seat,x.name||PLAYER[x.by]);else if(seat&&x.by!==seat)showEmote(x.e,false)}
     const fl=isFlip(),top=fl?"r":"b",bot=fl?"b":"r",nm=x=>x==="r"?st.red:st.black;
@@ -1800,9 +1896,9 @@ function PvpGame(v){
     // 每步限時 3 分鐘：剩 1 分鐘以內顯示倒數
     if(NET&&!st.result&&!st.waiting&&window.XQNet&&XQNet.turnLeft){const L=XQNet.turnLeft();if(L!=null&&L<60000){s2.textContent+=`・⏱ ${st.turn===seat?"你":"對方"}這步還剩 ${Math.ceil(L/1000)} 秒`;s2.classList.add("hot")}}
     if(NET&&st.link!=="up"){s2.textContent="⚠ 網路不穩，重新連線中…"+(st.unsent?"（你的棋步連上後會自動送出）":"");s2.classList.add("hot")}
-    renderStrip(v.querySelector("#strip"),st.moves,st.moves.length-1);
+    renderStrip(v.querySelector("#strip"),st.moves,(seat==="w"?curN():st.moves.length)-1,seat==="w"?pickStep:undefined);
     acts.undo.disabled=!!st.result||!st.moves.length||(!!seat&&st.moves[st.moves.length-1].by!==seat);acts.draw.disabled=acts.resign.disabled=!!st.result;acts.new.disabled=false;
-    if(seat==="w")acts.undo.disabled=acts.draw.disabled=acts.resign.disabled=acts.new.disabled=true;
+    if(seat==="w"){setupWatchUI();acts.new.disabled=true;acts.new.hidden=true;acts.undo.disabled=curN()<=0;acts.draw.disabled=view==null;acts.resign.disabled=view==null;evalAt(curN());watchBar()}
     // 對方提和：問輪到的人（或另一方）要不要同意；連線對戰時只問對方那支手機
     if(st.draw&&!st.result&&seat!=="w"&&(!seat||st.draw!==seat)&&drawAsked!==st.draw+st.moves.length){drawAsked=st.draw+st.moves.length;const o=opp(st.draw);
       modal(`<div class="em">🤝</div><h2>${PLAYER[st.draw]}提議和棋</h2><p class="muted">${esc(nm(o))}（${PLAYER[o]}）要同意嗎？</p>`,[["同意和棋",()=>post("/pvp/draw",{side:o})],["拒絕",()=>post("/pvp/draw",{side:st.draw}),true]])}

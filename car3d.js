@@ -136,14 +136,15 @@ function curve(pts){return x=>{if(x<=pts[0][0])return pts[0][1];const n=pts.leng
   const m1=(p2[1]-p0[1])/(p2[0]-p0[0]||1)*(p2[0]-p1[0]),m2=(p3[1]-p1[1])/(p3[0]-p1[0]||1)*(p2[0]-p1[0]),t2=t*t,t3=t2*t;   // Catmull-Rom
   return(2*t3-3*t2+1)*p1[1]+(t3-2*t2+t)*m1+(-2*t3+3*t2)*p2[1]+(t3-t2)*m2}}
 // 斷面：下面兩側直上，上緣是超橢圓的圓角；side(y)＝側面微微外凸
-function loft(N,x0,x1,fn,M){M=M||14;const pos=[],idx=[],cols=2*M+1;
+function loft(N,x0,x1,fn,M,opt){M=M||14;opt=opt||{};const K=opt.kmax!=null?opt.kmax:M,one=opt.side||0,grow=opt.grow||0,pos=[],idx=[],cols=one?K+1:2*K+1;
   for(let i=0;i<=N;i++){const x=x0+(x1-x0)*(1-Math.cos(Math.PI*i/N))/2,s=fn(x);   // 兩端排比較密，車頭車尾才收得圓順   // s={b,t,hwB,hwT,rc,n}
     const pts=[];const h=Math.max(0,s.t-s.b),rc=Math.min(s.rc,h*.95),ys=s.t-rc;
-    for(let k=0;k<=M;k++){const v=k/M;let y,z;
+    for(let k=0;k<=K;k++){const v=k/M;let y,z;
       if(k<=4){const f=k/4;y=s.b+(ys-s.b)*f;z=s.hwB+(s.hwT-s.hwB)*f;if(s.bulge){const m=(f-.5)*2;z*=1+s.bulge*(1-m*m)}}
       else{const a=(k-4)/(M-4)*Math.PI/2,c=Math.cos(a),sn=Math.sin(a),e=2/s.n;z=s.hwT*Math.pow(c,e);y=ys+rc*Math.pow(sn,e)}
-      pts.push([z,y])}
-    for(const[z,y]of pts)pos.push(x,y,-z);for(let k=pts.length-2;k>=0;k--)pos.push(x,pts[k][1],pts[k][0])}   // 正中間那一點只放一次，不然會有一條接縫
+      pts.push([z+grow,y])}
+    if(one)for(const[z,y]of pts)pos.push(x,y,one*z);
+    else{for(const[z,y]of pts)pos.push(x,y,-z);for(let k=pts.length-2;k>=0;k--)pos.push(x,pts[k][1],pts[k][0])}}   // 正中間那一點只放一次，不然會有一條接縫
   for(let i=0;i<N;i++)for(let j=0;j<cols-1;j++){const a=i*cols+j,b=a+cols;idx.push(a,b,a+1,a+1,b,b+1)}
   const g=new T.BufferGeometry();g.setAttribute("position",new T.Float32BufferAttribute(pos,3));g.setIndex(idx);g.computeVertexNormals();
   return g}
@@ -158,8 +159,11 @@ function realCar(c,P){const m=mats(),G=new T.Group();
   const lower=new T.Mesh(loft(520,0,L,x=>{const w=hw(x);return{b:bottom(x),t:top(x),hwB:w*.985,hwT:w,rc:P.shoulder,n:3.2,bulge:.012}},16),body);
   G.add(lower);
   // 車廂（玻璃），往上內縮
-  const cab=new T.Mesh(loft(360,P.cab[0],P.cab[1],x=>{const w=hw(x)-P.cabIn,bt=top(x)-.05,rt=Math.max(bt,roof(x));return{b:bt,t:rt,hwB:w,hwT:w*P.tumble,rc:.12,n:2.6}},14),P.glassMat?m[P.glassMat]:m.glass);
+  const cabFn=x=>{const w=hw(x)-P.cabIn,bt=top(x)-.05,rt=Math.max(bt,roof(x));return{b:bt,t:rt,hwB:w,hwT:w*P.tumble,rc:.12,n:2.6}};
+  const cab=new T.Mesh(loft(360,P.cab[0],P.cab[1],cabFn,14),P.glassMat?m[P.glassMat]:m.glass);
   cab.material=cab.material.clone();cab.material.side=T.DoubleSide;cab.userData.cab=true;G.add(cab);
+  if(P.skirt){const sk=curve(P.skirt),skm=new T.MeshStandardMaterial({color:P.skirtColor||0x17181a,roughness:.7,side:T.DoubleSide});
+    G.add(new T.Mesh(loft(520,0,L,x=>{const w=hw(x)*1.004+.0015,b=bottom(x)-.003,t=Math.max(b+.001,Math.min(top(x)-.03,sk(x)));return{b,t,hwB:w*.985,hwT:w,rc:.0005,n:3.2,bulge:.012}},16),skm))}
   // 輪拱內側（黑色）、底盤
   const hwMid=P.W/2;
   for(const ax of axles){const well=new T.Mesh(new T.CylinderGeometry(AR-.005,AR-.005,hwMid*2-.06,28,1,true,Math.PI/2,Math.PI),m.black);
@@ -211,7 +215,7 @@ function realCar(c,P){const m=mats(),G=new T.Group();
     const M={x:u=>(u-u0)/(u1-u0)*cw,y:v=>(1-(v-v0)/(v1-v0))*ch,s:d=>d/(u1-u0)*cw,W:cw,H:ch};draw(cx,M);
     const nu=o.nu||Math.max(24,Math.round((u1-u0)/.02)),nv=o.nv||Math.max(8,Math.round((v1-v0)/.02)),pos=[],uv=[],has=[],idx=[];
     const targets=o.on==="cab"?[cab]:o.on==="both"?[lower,cab]:[lower];
-    for(let j=0;j<=nv;j++)for(let i=0;i<=nu;i++){const u=u0+(u1-u0)*i/nu,v=v0+(v1-v0)*j/nv;let org,d;
+    for(let j=0;j<=nv;j++)for(let i=0;i<=nu;i++){const u=u0+(u1-u0)*i/nu+1.3e-4,v=v0+(v1-v0)*j/nv+.7e-4;let org,d;
       if(view==="front"){org=new T.Vector3(L+2,v,-u);d=new T.Vector3(-1,0,0)}else if(view==="rear"){org=new T.Vector3(-2,v,u);d=new T.Vector3(1,0,0)}
       else if(view==="side+"){org=new T.Vector3(u,v,3);d=new T.Vector3(0,0,-1)}else if(view==="side-"){org=new T.Vector3(u,v,-3);d=new T.Vector3(0,0,1)}
       else{org=new T.Vector3(u,3,v);d=new T.Vector3(0,-1,0)}
@@ -228,7 +232,7 @@ function realCar(c,P){const m=mats(),G=new T.Group();
     const mesh=new T.Mesh(g,mt);G.add(mesh);return mesh};
   G.updateMatrixWorld(true);
   // ---- 共用零件（兩側自動各做一個） ----
-  const V3=(x,y,z)=>new T.Vector3(x,y,z),piano=new T.MeshPhysicalMaterial({color:0x0b0c0e,metalness:.3,roughness:.08,clearcoat:1});
+  const V3=(x,y,z)=>new T.Vector3(x,y,z),piano=new T.MeshPhysicalMaterial({color:0x0b0c0e,metalness:.3,roughness:.08,clearcoat:1,side:T.DoubleSide});
   const kit={
     // 後照鏡：背面壓平、外端飽滿、往車身收窄；o={x,y,z(中心離中線),sx,sy,sz,cap(外殼顏色)}
     mirror(o){for(const z of[-1,1]){const mg=new T.SphereGeometry(1,28,16),pa=mg.attributes.position;
@@ -253,6 +257,8 @@ function realCar(c,P){const m=mats(),G=new T.Group();
     for(const z of[-1,1])proj(z>0?"side+":"side-",0,L,0,1.0,(x,M)=>{x.fillStyle=o.color||"#17181a";
       if(o.sill){const[a,b,y]=o.sill;x.fillRect(M.x(a),M.y(y),M.s(b-a),M.s(y))}
       if(o.strip){const[a,b,y,h,c]=o.strip;x.fillStyle=c;x.fillRect(M.x(a),M.y(y+h),M.s(b-a),M.s(h))}},{metal:.1,rough:.6,coat:.1,nu:Math.round(L/.008),nv:125,res:2048})},
+    // 車窗柱子（真的一片側面，不是貼圖）：x0～x1 之間把車廂側面蓋成 mat（"body"＝車身色、"black"＝鋼琴黑）；yTop(x) 可以限制上緣
+    band(x0,x1,mat,yTop){const mt=mat==="body"?body:mat==="black"?piano:mat;for(const sd of[-1,1])G.add(new T.Mesh(loft(Math.max(8,Math.round((x1-x0)/.01)),x0,x1,x=>{const f=cabFn(x);if(yTop)f.t=Math.min(f.t,yTop(x));return f},14,{kmax:10,side:sd,grow:.004}),mt))},
     // 車頂架：o={x0,x1,z,h,color}
     rails(o){for(const z of[-1,1]){const pts=[];for(let x=o.x0;x<=o.x1;x+=.08){const h=hitOn(V3(x,3,z*o.z),V3(0,-1,0),[cab]);if(h)pts.push(h.point.clone().add(V3(0,o.h||.03,0)))}
       if(pts.length<3)continue;G.add(new T.Mesh(new T.TubeGeometry(new T.CatmullRomCurve3(pts),60,.014,8,false),new T.MeshStandardMaterial({color:o.color||0xb8bdc3,metalness:.8,roughness:.3})));
@@ -263,7 +269,7 @@ function realCar(c,P){const m=mats(),G=new T.Group();
     hood(x0,x1,zz,bulge){const h=[];for(let x=x0;x<=x1;x+=.04)h.push([x,zz]);for(let i=0;i<=16;i++){const q=zz-2*zz*i/16;h.push([x1+.02+(bulge||.04)*(1-Math.pow(q/zz,2)),q])}for(let x=x1;x>=x0;x-=.04)h.push([x,-zz]);topSeam(h)},
     // 車尾文字
     text(x,M,str,u,v,size,color,spacing){x.fillStyle=color||"#c9ced4";x.font="700 "+Math.round(M.s(size))+"px Arial";x.textAlign="center";x.textBaseline="middle";if("letterSpacing" in x)x.letterSpacing=Math.round(M.s(spacing||size*.35))+"px";x.fillText(str,M.x(u),M.y(v))}};
-  P.details({G,m,body,stick,seam,sideSeam,topSeam,rearSeam,hitOn,proj,lower,cab,V:V3,T,L,hw,top,roof,col,kit,piano,R,AR,axles});
+  P.details({G,m,body,stick,seam,sideSeam,topSeam,rearSeam,hitOn,proj,lower,cab,cabFn,V:V3,T,L,hw,top,roof,col,kit,piano,R,AR,axles});
   G.children.forEach(o=>o.position.x-=L/2);
   G.userData.wheels=wheels;G.userData.size={L,W:P.W,H:P.H};return G}
 
@@ -294,7 +300,7 @@ function rpoly(x,M,pts,fill,stroke,lw){const N=pts.length;x.beginPath();
     if(i)x.lineTo(s1[0],s1[1]);else x.moveTo(s1[0],s1[1]);x.quadraticCurveTo(P[0],P[1],s2[0],s2[1])}
   x.closePath();if(fill){x.fillStyle=fill;x.fill()}if(stroke){x.strokeStyle=stroke;x.lineWidth=lw||2;x.stroke()}}
 // 兩色切削鋁圈（多數日系休旅）：深灰底＋亮面輻條＋中心蓋標誌
-function wheelTwoTone(wg,z,R,m,n,logo){const gm=new T.MeshStandardMaterial({color:0x2f3237,metalness:.7,roughness:.35}),sm=new T.MeshStandardMaterial({color:0xd3d7dc,metalness:.9,roughness:.18});
+function wheelTwoTone(wg,z,R,m,n,logo,dark){const gm=new T.MeshStandardMaterial({color:dark?0x1c1d20:0x2f3237,metalness:.7,roughness:.35}),sm=new T.MeshStandardMaterial({color:dark?0x55595f:0xd3d7dc,metalness:.9,roughness:dark?.3:.18});
   const rim=new T.Mesh(new T.CylinderGeometry(R*.68,R*.68,.22,40),m.rimDark);rim.rotation.x=Math.PI/2;wg.add(rim);
   const lip=new T.Mesh(new T.TorusGeometry(R*.665,.009,8,48),sm);lip.position.z=z*.112;wg.add(lip);
   const disc=new T.Mesh(new T.CylinderGeometry(R*.5,R*.5,.02,32),new T.MeshStandardMaterial({color:0x8d9196,metalness:.9,roughness:.45}));disc.rotation.x=Math.PI/2;disc.position.z=z*.05;wg.add(disc);
@@ -309,6 +315,7 @@ const REAL={
   "toyota-corolla-cross":c=>realCar(c,{L:4.46,W:1.825,H:1.62,tire:.353,tireW:.225,arch:.405,axles:[.89,3.53],
     colors:["#EEEFEF","#B8BDC2","#6C7177","#1C1D20","#24395C","#8E1520","#9A9C93"],
     rearD:.3,rearP:3,frontD:.55,frontP:2.6,shoulder:.12,cab:[.05,3.45],cabIn:.07,tumble:.8,
+    skirt:[[0,.42],[.6,.38],[1.3,.36],[3.1,.36],[4.0,.3],[4.46,.28]],
     bottom:[[0,.34],[.15,.25],[.45,.20],[4.0,.20],[4.3,.26],[4.46,.36]],
     top:[[0,.74],[.02,1.0],[.08,1.08],[.6,1.06],[1.5,1.04],[2.6,1.03],[3.2,1.02],[3.5,1.0],[3.9,.96],[4.25,.92],[4.4,.86],[4.46,.66]],
     roof:[[.05,1.1],[.22,1.3],[.5,1.46],[.9,1.57],[1.45,1.615],[2.2,1.61],[2.75,1.55],[3.05,1.42],[3.3,1.18],[3.45,1.02]],
@@ -333,7 +340,7 @@ const REAL={
       kit.doors([[[3.12,1.02],[3.15,.8],[3.1,.55],[3.05,.38]],[[2.1,1.03],[2.1,.6],[2.08,.38]],[[1.26,1.04],[1.27,.85],[1.33,.76],[1.33,.6],[1.3,.4]]]);
       kit.handles({xs:[2.62,1.62],y:.97,w:.11});
       kit.belt({x0:.75,x1:3.3,dy:.035,chrome:true});
-      kit.pillars([[[[2.06,1.0,.01],[2.16,1.0,.01],[2.16,1.66,.01],[2.06,1.66,.01]],"#0c0d0f"],[[[1.18,1.0,.01],[1.28,1.0,.01],[1.26,1.66,.01],[1.16,1.66,.01]],"#0c0d0f"],[[[3.3,.98,0],[3.5,.98,0],[3.5,1.66,0],[3.1,1.66,0]],"#0c0d0f"]]);
+      kit.band(2.06,2.16,"black");kit.band(1.18,1.28,"black");kit.band(.08,.56,"body");
       kit.rails({x0:.55,x1:2.7,z:.6,h:.03});
       kit.mirror({x:3.16,y:1.1,z:.97,signal:true});
       kit.hood(3.45,4.25,.74,.04);
@@ -351,6 +358,56 @@ const REAL={
       proj("rear",-.95,.95,.85,1.05,(x,M)=>{for(const s of[-1,1]){x.strokeStyle="#ff4050";x.lineWidth=M.s(.008);x.beginPath();x.moveTo(M.x(s*.34),M.y(.935));x.lineTo(M.x(s*.86),M.y(.955));x.stroke()}},{glow:.8,layer:2});
     }})
 };
+// Toyota RAV4（第六代，2026 台灣）：4600×1855×1680、軸距 2690、235/55R19
+// 方正車身、車頭「鎚頭」：一條車身色橫帶（中間 Toyota 標誌）、兩角細頭燈、下面大片橫柵黑色水箱罩；方形黑色輪拱、大尾翼、細尾燈、尾門 RAV4 字樣
+REAL["toyota-rav4"]=c=>realCar(c,{L:4.6,W:1.855,H:1.68,tire:.37,tireW:.235,arch:.42,axles:[.95,3.64],
+  colors:["#ECEDEC","#A9ADB1","#6B6E70","#1B1C1E","#4E5A4A","#3F5F7A","#8F1B23"],
+  rearD:.25,rearP:3.2,frontD:.42,frontP:3.4,shoulder:.1,cab:[.06,3.58],cabIn:.07,tumble:.83,
+  skirt:[[0,.48],[.6,.44],[1.4,.42],[3.2,.42],[4.0,.44],[4.6,.44]],
+  bottom:[[0,.36],[.15,.26],[.45,.21],[4.1,.21],[4.4,.27],[4.6,.38]],
+  top:[[0,.78],[.02,1.02],[.08,1.1],[.6,1.1],[1.6,1.08],[2.7,1.07],[3.35,1.06],[3.7,1.04],[4.2,1.01],[4.48,.98],[4.56,.92],[4.6,.72]],
+  roof:[[.06,1.12],[.18,1.42],[.4,1.62],[.9,1.68],[2.4,1.68],[2.95,1.64],[3.2,1.48],[3.42,1.24],[3.58,1.06]],
+  wheel(wg,z,R,m){wheelTwoTone(wg,z,R,m,10,(x,cx,cy,w)=>drawToyota(x,cx,cy,w),true)},
+  details({G,m,body,stick,rearSeam,hitOn,proj,cab,V,T,kit,col,piano}){
+    // ---- 車頭 ----
+    proj("front",-.96,.96,.12,1.02,(x,M)=>{
+      // 下保桿黑色＋銀色護板＋兩角直立進氣口
+      rpoly(x,M,[[-.92,.13,.02],[.92,.13,.02],[.9,.44,.03],[-.9,.44,.03]],"#18191b");
+      rpoly(x,M,[[-.48,.17,.01],[.48,.17,.01],[.46,.225,.01],[-.46,.225,.01]],"#b9bec4");
+      for(const s of[-1,1])rpoly(x,M,[[s*.66,.26,.02],[s*.86,.26,.02],[s*.88,.5,.02],[s*.68,.5,.02]],"#0d0e10");
+      // 大片橫柵水箱罩（亮黑外框＋5 條橫柵）
+      rpoly(x,M,[[-.66,.42,.04],[.66,.42,.04],[.66,.8,.04],[-.66,.8,.04]],"#0e0f11");
+      x.fillStyle="#2b2e33";for(let i=1;i<=5;i++){const v=.42+.38*i/6;x.fillRect(M.x(-.62),M.y(v+.008),M.s(1.24),M.s(.016))}
+      rpoly(x,M,[[-.66,.42,.04],[.66,.42,.04],[.66,.8,.04],[-.66,.8,.04]],null,"#3a3d42",M.s(.006));
+      // 鎚頭橫帶下緣的細縫＋標誌
+      x.fillStyle="#141517";x.fillRect(M.x(-.66),M.y(.825),M.s(1.32),M.s(.008));
+      drawToyota(x,M.x(0),M.y(.895),M.s(.17),"#dfe3e8")},{metal:.3,rough:.3});
+    for(const s of[-1,1]){
+      proj("front",-.96,.96,.78,1.0,(x,M)=>rpoly(x,M,[[s*.62,.84,.01],[s*.62,.9,.01],[s*.9,.93,.02],[s*.93,.86,.02]],"#1d2229"),{metal:.4,rough:.08,layer:1});
+      proj("front",-.96,.96,.78,1.0,(x,M)=>{x.strokeStyle="#fff";x.lineWidth=M.s(.01);x.lineCap="round";x.beginPath();x.moveTo(M.x(s*.64),M.y(.9));x.lineTo(M.x(s*.88),M.y(.915));x.lineTo(M.x(s*.9),M.y(.87));x.stroke();
+        x.fillStyle="#cfd8e6";x.beginPath();x.ellipse(M.x(s*.75),M.y(.87),M.s(.04),M.s(.018),0,0,7);x.fill()},{glow:.9,layer:2})}
+    // ---- 兩側 ----
+    kit.cladding({arch:.085,drop:.19,sill:[1.37,3.22,.42],strip:[1.5,3.1,.36,.02,"#2a2c30"]});
+    kit.doors([[[3.2,1.06],[3.24,.82],[3.2,.5],[3.18,.44]],[[2.18,1.07],[2.19,.6],[2.18,.44]],[[1.32,1.08],[1.33,.9],[1.42,.8],[1.42,.6],[1.38,.44]]]);
+    kit.handles({xs:[2.7,1.7],y:1.0,w:.12});
+    kit.belt({x0:.7,x1:3.42,dy:.03});
+    kit.band(2.13,2.24,"black");kit.band(1.25,1.37,"black");kit.band(.1,.66,"body");
+    kit.mirror({x:3.28,y:1.14,z:.99,sx:.085,sy:.065,sz:.13,cap:"#1b1c1e",signal:true});
+    kit.hood(3.58,4.42,.76,.03);
+    for(const z of[-1,1])rearSeam([[1.08,z*.68],[.95,z*.7],[.75,z*.68],[.52,z*.64]]);rearSeam(Array.from({length:15},(_,i)=>[.5,.64-1.28*i/14]));
+    // ---- 車尾 ----
+    proj("rear",-.96,.96,.12,1.18,(x,M)=>{
+      rpoly(x,M,[[-.92,.13,.02],[.92,.13,.02],[.9,.48,.03],[-.9,.48,.03]],"#18191b");
+      rpoly(x,M,[[-.46,.19,.01],[.46,.19,.01],[.44,.25,.01],[-.44,.25,.01]],"#b9bec4");
+      for(const s of[-1,1])rpoly(x,M,[[s*.7,.4,.01],[s*.84,.4,.01],[s*.84,.43,.01],[s*.7,.43,.01]],"#8a0c14");
+      rpoly(x,M,[[-.26,.56,.02],[.26,.56,.02],[.26,.74,.02],[-.26,.74,.02]],null,"#3a3c40",M.s(.006));
+      for(const s of[-1,1])rpoly(x,M,[[s*.48,1.0,.01],[s*.48,1.05,.01],[s*.9,1.07,.02],[s*.93,1.0,.02]],"#3d080d");
+      x.fillStyle="#ff2a3a";x.fillRect(M.x(-.9),M.y(1.04),M.s(1.8),M.s(.01));
+      drawToyota(x,M.x(0),M.y(.95),M.s(.13),"#dfe3e8");kit.text(x,M,"RAV4",0,.84,.07,"#d2d6dc",.035)},{metal:.35,rough:.25});
+    proj("rear",-.96,.96,.95,1.1,(x,M)=>{x.fillStyle="#ff4555";x.fillRect(M.x(-.9),M.y(1.038),M.s(1.8),M.s(.006))},{glow:.8,layer:2});
+    // 大尾翼（黑色，蓋在後擋上方）
+    const rh=hitOn(V(.25,3,0),V(0,-1,0),[cab]);if(rh){const sh=new T.Shape();sh.moveTo(0,0);sh.lineTo(.34,.02);sh.lineTo(.32,.05);sh.lineTo(-.02,.04);sh.closePath();
+      const g=new T.ExtrudeGeometry(sh,{depth:1.16,bevelEnabled:true,bevelThickness:.01,bevelSize:.01,bevelSegments:2});g.translate(0,0,-.58);const sp=new T.Mesh(g,piano);sp.position.set(-.04,rh.point.y-.025,0);G.add(sp)}}});
 const REAL_OLD={
   // Tesla Model 3（2024 Highland）：4720×1850×1441、軸距 2875；沒有水箱罩、低圓的車頭、細長頭燈、全黑玻璃車頂、短尾＋小鴨尾、C 形尾燈
   "tesla-model-3":c=>realCar(c,{L:4.72,W:1.85,H:1.441,tire:.335,tireW:.235,arch:.385,axles:[1.03,3.905],

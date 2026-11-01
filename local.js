@@ -50,8 +50,12 @@ var XQ=(function(){
   const CAR_PTS=[2,4,8,15,30,60,120,250];
   const carBank=()=>ls.get("carBank",null)||{pts:0,earned:0,w:0,l:0,d:0,owned:{},hist:[]};
   function carApply(res){const B=carBank(),full=CAR_PTS[P.level-1]||0,d=res==="w"?full:res==="d"?Math.round(full*.4):0;
-    B.pts+=d;B.earned+=d;B[res]++;B.hist.unshift({id:P.id,res,d,lv:P.level,at:Date.now()});B.hist=B.hist.slice(0,100);ls.set("carBank",B);P.prize={res,d,pts:B.pts}}
-  function carState(){const B=carBank();return{pts:B.pts,earned:B.earned,w:B.w,l:B.l,d:B.d,owned:B.owned,hist:B.hist.slice(0,20),table:CAR_PTS}}
+    B.pts+=d;B.earned+=d;B[res]++;const lv=(B.byLv=B.byLv||{})[P.level]||(B.byLv[P.level]={w:0,l:0,d:0,pts:0});lv[res]++;lv.pts+=d;   // 各難度的勝負和拿到的點數
+    B.hist.unshift({id:P.id,res,d,lv:P.level,at:Date.now()});B.hist=B.hist.slice(0,100);ls.set("carBank",B);P.prize={res,d,pts:B.pts}}
+  function carState(){const B=carBank();
+    // 舊紀錄沒有各難度統計：用最近 100 盤補算
+    let byLv=B.byLv;if(!byLv){byLv={};for(const h of B.hist){if(!h.lv||!h.res)continue;const x=byLv[h.lv]||(byLv[h.lv]={w:0,l:0,d:0,pts:0});x[h.res]++;x.pts+=h.d||0}}
+    return{pts:B.pts,earned:B.earned,w:B.w,l:B.l,d:B.d,owned:B.owned,hist:B.hist.slice(0,20),table:CAR_PTS,byLv,sold:B.sold||0}}
   async function carRedeem(b){const d=await (await fetch("data/cars.json")).json(),c=d.cars.find(x=>x.id===b.id);if(!c)throw new Error("找不到這台車");
     const B=carBank();if(B.owned[c.id])throw new Error("這台已經換過了");if(B.pts<c.cost)throw new Error("點數不夠，還差 "+(c.cost-B.pts)+" 點");
     B.pts-=c.cost;B.owned[c.id]={at:Date.now(),cost:c.cost};ls.set("carBank",B);return carState()}
