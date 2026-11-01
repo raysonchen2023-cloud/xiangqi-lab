@@ -53,9 +53,12 @@ var XQ=(function(){
     B.pts+=d;B.earned+=d;B[res]++;const lv=(B.byLv=B.byLv||{})[P.level]||(B.byLv[P.level]={w:0,l:0,d:0,pts:0});lv[res]++;lv.pts+=d;   // 各難度的勝負和拿到的點數
     B.hist.unshift({id:P.id,res,d,lv:P.level,at:Date.now()});B.hist=B.hist.slice(0,100);ls.set("carBank",B);P.prize={res,d,pts:B.pts}}
   function carState(){const B=carBank();
-    // 舊紀錄沒有各難度統計：用最近 100 盤補算
-    let byLv=B.byLv;if(!byLv){byLv={};for(const h of B.hist){if(!h.lv||!h.res)continue;const x=byLv[h.lv]||(byLv[h.lv]={w:0,l:0,d:0,pts:0});x[h.res]++;x.pts+=h.d||0}}
-    return{pts:B.pts,earned:B.earned,w:B.w,l:B.l,d:B.d,owned:B.owned,hist:B.hist.slice(0,20),table:CAR_PTS,byLv,sold:B.sold||0}}
+    // 各難度統計是後來才加的：第一次用對局紀錄（最近 100 盤）重算一次存起來，之前漏算的盤數補回來
+    if(B.byLvV!==2){const byLv={};for(const h of B.hist){if(!h.lv||!h.res)continue;const x=byLv[h.lv]||(byLv[h.lv]={w:0,l:0,d:0,pts:0});x[h.res]++;x.pts+=h.d||0}B.byLv=byLv;B.byLvV=2;ls.set("carBank",B)}
+    // 還是對不上的（很舊、沒記難度的盤）放進「難度未記錄」，讓上下的總數一致
+    const byLv=B.byLv,sum={w:0,l:0,d:0};for(const x of Object.values(byLv))for(const k of["w","l","d"])sum[k]+=x[k]||0;
+    const unk={w:Math.max(0,B.w-sum.w),l:Math.max(0,B.l-sum.l),d:Math.max(0,B.d-sum.d)};
+    return{pts:B.pts,earned:B.earned,w:B.w,l:B.l,d:B.d,owned:B.owned,hist:B.hist.slice(0,20),table:CAR_PTS,byLv,unk,sold:B.sold||0}}
   async function carRedeem(b){const d=await (await fetch("data/cars.json")).json(),c=d.cars.find(x=>x.id===b.id);if(!c)throw new Error("找不到這台車");
     const B=carBank();if(B.owned[c.id])throw new Error("這台已經換過了");if(B.pts<c.cost)throw new Error("點數不夠，還差 "+(c.cost-B.pts)+" 點");
     B.pts-=c.cost;B.owned[c.id]={at:Date.now(),cost:c.cost};ls.set("carBank",B);return carState()}
