@@ -596,6 +596,56 @@ REAL["toyota-town-ace"]=c=>realCar(c,{L:4.275,W:1.675,H:1.92,tire:.326,tireW:.18
         x.fillStyle="#ff9a20";x.fillRect(M.x(s>0?.69:-.81),M.y(.86),M.s(.12),M.s(.1));x.fillStyle="#e8e8e8";x.fillRect(M.x(s>0?.69:-.81),M.y(.75),M.s(.12),M.s(.07))}
       drawToyota(x,M.x(0),M.y(1.0),M.s(.12),"#dfe3e8");kit.text(x,M,"TOWN ACE",.45,.92,.035)},{metal:.35,rough:.25});
     proj("rear",-.86,.86,.6,1.05,(x,M)=>{x.fillStyle="#ff3040";for(const s of[-1,1])x.fillRect(M.x(s>0?.7:-.8),M.y(1.0),M.s(.1),M.s(.12))},{glow:.6,layer:2})}});
+// Crown 王冠標誌（簡化）：三個尖角＋底座
+function drawCrown(x,cx,cy,w,color){const h=w*.62;x.save();x.fillStyle=color||"#d6dbe1";x.beginPath();
+  x.moveTo(cx-w/2,cy+h*.2);x.lineTo(cx-w*.42,cy-h*.45);x.lineTo(cx-w*.2,cy-h*.05);x.lineTo(cx,cy-h*.5);x.lineTo(cx+w*.2,cy-h*.05);x.lineTo(cx+w*.42,cy-h*.45);x.lineTo(cx+w/2,cy+h*.2);x.closePath();x.fill();
+  x.fillRect(cx-w*.44,cy+h*.28,w*.88,h*.16);x.restore()}
+// Toyota Crown Sport（2024）：4720×1880×1565、軸距 2770、235/45R21
+// 跑旅車身、後輪拱外擴；車頭一條細長鎚頭燈＋王冠標誌、下面上窄下寬的大網格水箱罩、兩角黑色 C 形進氣口；黑色車頂＋柱子；貫穿式細尾燈、CROWN 字樣、黑色尾翼
+REAL["toyota-crown-sport"]=c=>realCar(c,{L:4.72,W:1.88,H:1.565,tire:.372,tireW:.235,arch:.425,axles:[.95,3.72],
+  colors:["#EDEEEE","#B0151F","#18191B","#5D6166","#C6B79A","#2C4A70"],
+  rearD:.3,rearP:2.8,frontD:.6,frontP:2.4,shoulder:.15,cab:[.2,3.6],cabIn:.08,tumble:.78,
+  skirt:[[0,.38],[.6,.33],[1.3,.32],[3.4,.32],[4.1,.3],[4.72,.28]],
+  bottom:[[0,.38],[.16,.27],[.45,.2],[4.25,.2],[4.55,.25],[4.72,.34]],
+  top:[[0,.78],[.03,.98],[.12,1.04],[.5,1.06],[1.2,1.03],[2.2,1.0],[3.0,.98],[3.6,.95],[4.0,.9],[4.35,.86],[4.58,.81],[4.68,.75],[4.72,.6]],
+  roof:[[.2,1.08],[.4,1.3],[.75,1.47],[1.3,1.555],[2.0,1.565],[2.55,1.52],[2.9,1.38],[3.25,1.17],[3.6,1.0]],
+  wheel(wg,z,R,m){wheelTwoTone(wg,z,R,m,14,(x,cx,cy,w)=>drawCrown(x,cx,cy,w*.9),true)},
+  details({G,proj,rearSeam,hitOn,cab,V,T,kit,piano}){
+    proj("front",-.95,.95,.14,.95,(x,M)=>{
+      // 上窄下寬的大網格水箱罩
+      rpoly(x,M,[[-.62,.2,.04],[.62,.2,.04],[.44,.5,.04],[-.44,.5,.04]],"#0c0d0f");
+      x.save();x.beginPath();[[-.59,.22],[.59,.22],[.42,.48],[-.42,.48]].forEach(([u,v],i)=>x[i?"lineTo":"moveTo"](M.x(u),M.y(v)));x.closePath();x.clip();
+      honeycomb(x,M.x(-.62),M.y(.5),M.x(.62),M.y(.2),M.s(.016),"#0f1012","#383b40");x.restore();
+      // 兩角黑色 C 形進氣口
+      for(const s of[-1,1]){rpoly(x,M,[[s*.66,.24,.02],[s*.86,.3,.03],[s*.88,.62,.03],[s*.74,.6,.02],[s*.8,.5,.01],[s*.72,.32,.01]],"#101113")}
+      // 鎚頭：頭燈之間一條細黑線＋王冠標誌
+      x.fillStyle="#0e0f11";x.fillRect(M.x(-.6),M.y(.708),M.s(1.2),M.s(.014));
+      drawCrown(x,M.x(0),M.y(.755),M.s(.1),"#e3e7ec")},{metal:.35,rough:.25});
+    for(const s of[-1,1]){
+      proj("front",-.95,.95,.6,.85,(x,M)=>rpoly(x,M,[[s*.58,.69,.005],[s*.6,.725,.01],[s*.88,.75,.02],[s*.93,.71,.02],[s*.86,.69,.01]],"#1d2229"),{metal:.4,rough:.08,layer:1});
+      proj("front",-.95,.95,.4,.85,(x,M)=>{x.strokeStyle="#fff";x.lineCap="round";x.lineWidth=M.s(.009);x.beginPath();x.moveTo(M.x(s*.6),M.y(.712));x.lineTo(M.x(s*.88),M.y(.735));x.lineTo(M.x(s*.92),M.y(.712));x.stroke();
+        // C 形進氣口裡的直立燈
+        x.lineWidth=M.s(.008);x.beginPath();x.moveTo(M.x(s*.82),M.y(.34));x.lineTo(M.x(s*.85),M.y(.56));x.stroke()},{glow:.9,layer:2})}
+    kit.cladding({arch:.05,drop:.13,sill:[1.38,3.28,.32]});
+    kit.doors([[[3.3,.98],[3.34,.75],[3.28,.45],[3.24,.32]],[[2.32,1.0],[2.33,.6],[2.32,.32]],[[1.45,1.02],[1.46,.85],[1.53,.74],[1.53,.55],[1.48,.32]]]);
+    kit.handles({xs:[2.84,1.88],y:.93,w:.11});
+    kit.belt({x0:.8,x1:3.4,dy:.03});
+    kit.band(2.27,2.38,"black");kit.band(1.38,1.48,"black");kit.band(.2,.7,"body");
+    kit.mirror({x:3.36,y:1.06,z:1.0,sx:.08,sy:.058,sz:.12,cap:"#18191b",signal:true});
+    kit.hood(3.6,4.45,.76,.05);
+    for(const z of[-1,1])rearSeam([[1.0,z*.66],[.85,z*.7],[.6,z*.68],[.45,z*.64]]);rearSeam(Array.from({length:15},(_,i)=>[.42,.64-1.28*i/14]));
+    proj("rear",-.95,.95,.14,1.12,(x,M)=>{
+      rpoly(x,M,[[-.9,.2,.02],[.9,.2,.02],[.88,.46,.03],[-.88,.46,.03]],"#16171a");
+      for(const s of[-1,1])rpoly(x,M,[[s*.62,.26,.01],[s*.8,.26,.01],[s*.8,.3,.01],[s*.62,.3,.01]],"#8a0c14");
+      rpoly(x,M,[[-.25,.52,.02],[.25,.52,.02],[.25,.68,.02],[-.25,.68,.02]],null,"#3a3c40",M.s(.006));
+      // 貫穿式細尾燈＋兩端加粗
+      x.fillStyle="#3d080d";x.fillRect(M.x(-.9),M.y(.975),M.s(1.8),M.s(.03));
+      for(const s of[-1,1])rpoly(x,M,[[s*.6,.94,.01],[s*.6,.985,.01],[s*.88,1.0,.02],[s*.92,.95,.02]],"#4a0a10");
+      x.fillStyle="#ff2a3a";x.fillRect(M.x(-.9),M.y(.963),M.s(1.8),M.s(.008));
+      kit.text(x,M,"CROWN",0,.86,.05,"#d2d6dc",.05)},{metal:.35,rough:.25});
+    proj("rear",-.95,.95,.85,1.05,(x,M)=>{x.fillStyle="#ff4555";x.fillRect(M.x(-.9),M.y(.962),M.s(1.8),M.s(.006))},{glow:.8,layer:2});
+    const rh=hitOn(V(.62,3,0),V(0,-1,0),[cab]);if(rh){const sh=new T.Shape();sh.moveTo(-.2,-.025);sh.lineTo(.05,0);sh.lineTo(.03,.032);sh.lineTo(-.21,.0);sh.closePath();
+      const g=new T.ExtrudeGeometry(sh,{depth:1.0,bevelEnabled:true,bevelThickness:.01,bevelSize:.01,bevelSegments:2});g.translate(0,0,-.5);const sp=new T.Mesh(g,piano);sp.position.set(.62,rh.point.y-.012,0);G.add(sp)}}});
 const REAL_OLD={
   // Tesla Model 3（2024 Highland）：4720×1850×1441、軸距 2875；沒有水箱罩、低圓的車頭、細長頭燈、全黑玻璃車頂、短尾＋小鴨尾、C 形尾燈
   "tesla-model-3":c=>realCar(c,{L:4.72,W:1.85,H:1.441,tire:.335,tireW:.235,arch:.385,axles:[1.03,3.905],
@@ -683,7 +733,7 @@ const REAL_OLD={
 };
 Object.assign(REAL,REAL_OLD);   // 兩批車款合在一起
 // 已經上線的寫實車款（每完成 10 台加一批）
-const REAL_LIVE=new Set(["tesla-model-3","toyota-corolla-cross","toyota-rav4","toyota-corolla-altis","toyota-yaris-cross","toyota-camry","toyota-town-ace"]);
+const REAL_LIVE=new Set(["tesla-model-3","toyota-corolla-cross","toyota-rav4","toyota-corolla-altis","toyota-yaris-cross","toyota-camry","toyota-town-ace","toyota-crown-sport"]);
 
 function build(c){
   // 照真車一台一台做好、已經上線的車款用寫實版；還在做的只有開了預覽（localStorage xq_carReal）才看得到
