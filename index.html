@@ -375,6 +375,7 @@ html[data-era=ming] .topbar,html[data-era=qing] .topbar{border-bottom-width:4px}
 .cpu-sheet .opt button{padding:10px 8px}
 .cpu-sheet .lvl{margin:6px 0 8px}
 .cpu-desc{font-size:13px;color:var(--muted);min-height:2.8em;line-height:1.5;padding:0 2px}
+.rd-g{background:var(--card);border:1px solid var(--line);border-radius:14px;margin:10px 0;overflow:hidden}.rd-g>summary{list-style:none;display:flex;justify-content:space-between;align-items:center;gap:8px;padding:10px 12px;font-size:14px;cursor:pointer}.rd-g>summary::-webkit-details-marker{display:none}.rd-g>summary b{font-size:13px;color:var(--accent);white-space:nowrap}.rd-g>summary::after{content:"▸";color:var(--muted);transition:transform .2s}.rd-g[open]>summary::after{transform:rotate(90deg)}.rd-g .st-list{margin:0;border-radius:0;border:0;border-top:1px solid var(--line)}
 </style></head><body>
 <div class="app">
  <div class="topbar" id="topbar"><button class="ib" id="back" hidden><b>‹</b>返回</button><h1 id="title">象棋研究室</h1><span id="topRight"></span></div>
@@ -1182,23 +1183,41 @@ function Redo(v){
   setTop("錯棋重練","#/");setTabs(false);
   v.innerHTML=`<div class="home"><div class="card" style="line-height:1.7">找出你下過的<b style="color:var(--red)">錯著、露著</b>，從那一步之前的局面重新開始，跟最強的電腦（第 7 級・職業頂尖）再下一次。<br><span class="muted">想出比上次好的一步，就算練會了。練習的對局不算戰績。</span></div>
     <div class="st-res" id="rf" style="margin:12px 0 4px"></div><div id="rl"><div class="muted" style="text-align:center;padding:20px">找你下過的錯棋中…</div></div></div>`;
-  let list=null,show="todo";const done=store.get("redoDone",{});
-  (async()=>{const gs=await myGames(120);list=[];
+  // 清單變長的整理（意見回饋 132）：
+  // 1. 同一盤裡連續的錯（相隔 2 步以內）合成一題：從第一個錯開始練，後面那幾步本來就會一起重下
+  // 2. 不同盤走到同一個局面、犯同一個錯（常見於同一個開局）合成一題，標「犯過 N 次」
+  // 3. 依對局分組，一盤一張卡；最近 3 盤展開，其他收合；一次列 10 盤
+  let list=null,show="todo",lim=10;const done=store.get("redoDone",{});
+  const isOk=x=>x.keys.some(k=>done[k]&&done[k].ok),tries=x=>x.keys.reduce((n,k)=>n+(done[k]?done[k].n||0:0),0);
+  (async()=>{const gs=await myGames(120),raw=[];
     for(const g of gs){if(!isStdStart(g.it.board))continue;
-      g.moves.forEach((m,i)=>{if(m.by===g.side&&QBAD.includes(m.q))list.push({g,ply:i+1,m,key:g.c+"/"+g.id+"/"+(i+1)})})}
-    list.sort((a,b)=>String(b.g.id).localeCompare(String(a.g.id))||a.ply-b.ply);paint()})().catch(e=>{v.querySelector("#rl").innerHTML=`<div class="muted">⚠ ${esc(e.message)}</div>`});
+      g.moves.forEach((m,i)=>{if(m.by===g.side&&QBAD.includes(m.q))raw.push({g,ply:i+1,m,key:g.c+"/"+g.id+"/"+(i+1)})})}
+    raw.sort((a,b)=>String(b.g.id).localeCompare(String(a.g.id))||a.ply-b.ply);
+    const cl=[];for(const x of raw){const last=cl[cl.length-1];
+      if(last&&last.g===x.g&&x.ply-last.end<=4){last.end=x.ply;last.n++;last.loss=Math.max(last.loss,x.m.loss||0);last.keys.push(x.key);if(x.m.q==="露著")last.m={...last.m,q:"露著"}}
+      else cl.push({g:x.g,ply:x.ply,end:x.ply,n:1,m:x.m,loss:x.m.loss||0,key:x.key,keys:[x.key],dup:0})}
+    const bySig=new Map();list=[];
+    for(const c of cl){const sig=c.g.side+"|"+c.g.moves.slice(0,c.ply).map(m=>m.cn).join(" "),rep=bySig.get(sig);
+      if(rep){rep.dup++;rep.keys.push(...c.keys);continue}bySig.set(sig,c);list.push(c)}
+    paint()})().catch(e=>{v.querySelector("#rl").innerHTML=`<div class="muted">⚠ ${esc(e.message)}</div>`});
   function paint(){if(!v.isConnected||!list)return;
-    const n=k=>list.filter(x=>k==="all"||(k==="ok")===!!(done[x.key]&&done[x.key].ok)).length;
+    const pass=x=>show==="all"||(show==="ok")===isOk(x),n=k=>list.filter(x=>k==="all"||(k==="ok")===isOk(x)).length;
     v.querySelector("#rf").innerHTML=[["todo","還沒練會"],["ok","✅ 練會了"],["all","全部"]].map(([k,l])=>`<button data-k="${k}" class="${show===k?"on":""}">${l} ${n(k)}</button>`).join("");
-    v.querySelectorAll("#rf [data-k]").forEach(b=>b.onclick=()=>{show=b.dataset.k;paint()});
-    const L=list.filter(x=>show==="all"||(show==="ok")===!!(done[x.key]&&done[x.key].ok)),box=v.querySelector("#rl");
+    v.querySelectorAll("#rf [data-k]").forEach(b=>b.onclick=()=>{show=b.dataset.k;lim=10;paint()});
+    const box=v.querySelector("#rl");
     if(!list.length){box.innerHTML='<div class="card muted" style="text-align:center;line-height:1.7">還沒有找到錯著或露著 👍<br>下完一盤挑戰電腦或線上對戰，等 Pikafish 評完等，下錯的步就會出現在這裡。</div>';return}
-    if(!L.length){box.innerHTML=`<div class="card muted" style="text-align:center">${show==="ok"?"還沒有練會的，挑一步試試看！":"全部都練會了 🎉"}</div>`;return}
-    box.innerHTML='<div class="st-list">'+L.slice(0,150).map((x,i)=>{const d=done[x.key],id=String(x.g.id);
-      return`<button class="st-g" data-i="${list.indexOf(x)}"><span class="dot ${x.m.q==="露著"?"l":""}" style="${x.m.q==="錯著"?"background:var(--warn)":""}">${x.m.q==="露著"?"露":"錯"}</span>
-        <span class="tx"><b>第 ${x.ply} 步「${esc(x.m.cn||"")}」</b><span>${id.slice(5,10).replace("-","/")}・${x.g.c==="play"?"🤖":"👥"} ${esc(x.g.opp||"")}・執${x.g.side==="r"?"紅":"黑"}・少 ${(x.m.loss/100).toFixed(1)} 兵</span></span>
-        <b class="r" style="font-size:13px;${d&&d.ok?"color:var(--accent2)":""}">${d?d.ok?"✅ 練會":"試過 "+d.n+" 次":"練習 ›"}</b></button>`}).join("")+'</div>'+(L.length>150?`<p class="muted" style="text-align:center">只列出最近 150 步</p>`:"");
-    box.querySelectorAll("[data-i]").forEach(b=>b.onclick=()=>start(list[+b.dataset.i]))}
+    const games=[];for(const x of list){if(!pass(x))continue;let G=games.find(y=>y.g===x.g);if(!G)games.push(G={g:x.g,xs:[]});G.xs.push(x)}
+    if(!games.length){box.innerHTML=`<div class="card muted" style="text-align:center">${show==="ok"?"還沒有練會的，挑一題試試看！":"全部都練會了 🎉"}</div>`;return}
+    const row=x=>{const ok=isOk(x),t=tries(x),q=x.m.q;
+      return`<button class="st-g" data-i="${list.indexOf(x)}"><span class="dot ${q==="露著"?"l":""}" style="${q==="錯著"?"background:var(--warn)":""}">${q==="露著"?"露":"錯"}</span>
+        <span class="tx"><b>${x.n>1?`第 ${x.ply}～${x.end} 步・連續 ${x.n} 處`:`第 ${x.ply} 步「${esc(x.m.cn||"")}」`}</b><span>少 ${(x.loss/100).toFixed(1)} 兵${x.dup?`・<b style="color:var(--red)">同一個錯犯過 ${x.dup+1} 次</b>`:""}</span></span>
+        <b class="r" style="font-size:13px;${ok?"color:var(--accent2)":""}">${ok?"✅ 練會":t?"試過 "+t+" 次":"練習 ›"}</b></button>`};
+    box.innerHTML=games.slice(0,lim).map((G,gi)=>{const id=String(G.g.id),okN=G.xs.filter(isOk).length;
+      return`<details class="rd-g" ${gi<3?"open":""}><summary><span>${id.slice(5,10).replace("-","/")}・${G.g.c==="play"?"🤖":"👥"} ${esc(G.g.opp||"")}・執${G.g.side==="r"?"紅":"黑"}${G.g.res?`・${G.g.res==="w"?"勝":G.g.res==="l"?"負":"和"}`:""}</span><b>${G.xs.length} 題${okN?`・${okN} 練會`:""}</b></summary>
+        <div class="st-list">${G.xs.map(row).join("")}</div></details>`}).join("")+
+      (games.length>lim?`<button class="btn ghost" id="rmore" style="margin-top:10px">再顯示 10 盤（還有 ${games.length-lim} 盤）</button>`:"");
+    box.querySelectorAll("[data-i]").forEach(b=>b.onclick=()=>start(list[+b.dataset.i]));
+    const mo=box.querySelector("#rmore");if(mo)mo.onclick=()=>{lim+=10;paint()}}
   async function start(x){vibrate(8);
     const go=async()=>{try{const pre={moves:x.g.moves.slice(0,x.ply-1).map(m=>({f:m.f,t:m.t,q:m.q,loss:m.loss,ev:m.ev,bc:m.bc,bm:m.bm,bp:m.bp})),
         info:{key:x.key,ply:x.ply,cn:x.m.cn,q:x.m.q,loss:x.m.loss,bc:x.m.bc||"",opp:x.g.opp||"",date:String(x.g.id).slice(0,10)}};
