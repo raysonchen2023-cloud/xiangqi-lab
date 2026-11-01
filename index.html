@@ -204,6 +204,20 @@ html[data-era=ming] .topbar,html[data-era=qing] .topbar{border-bottom-width:4px}
 @keyframes ckch{from{opacity:0;transform:translateX(var(--dx)) scale(1.4)}to{opacity:1;transform:none}}
 @keyframes ckglow{0%,100%{opacity:.2}50%{opacity:1}}
 @keyframes ckout{0%,78%{opacity:1}100%{opacity:0}}
+/* 吃子特效：被吃的那格蓋一個水墨圓相，中間金色書法「吃」字（筆畫用 SVG 筆刷畫成，不靠字型，離線版也一樣好看） */
+.cpfx{position:fixed;z-index:62;pointer-events:none;animation:cpout 1.2s ease forwards}
+.cpfx svg{position:absolute;left:0;top:0;width:100%;height:100%;overflow:visible}
+.cpfx .ws{animation:cpfade .3s ease-out both}
+.cpfx .gl{transform-origin:50% 52%;animation:cpch .48s .08s cubic-bezier(.2,1.2,.35,1) both}
+.cpfx .dp{transform-box:fill-box;transform-origin:center;animation:cpdrop .22s cubic-bezier(.2,1.5,.4,1) both}
+.cpfx .sh{animation:cpsheen .55s .5s ease-in-out both}
+.cpfx.rm{animation:cprm 1s ease forwards}.cpfx.rm *{animation:none!important}.cpfx.rm .sh{display:none}
+@keyframes cpout{0%,72%{opacity:1;transform:none}100%{opacity:0;transform:scale(1.05)}}
+@keyframes cpfade{from{opacity:0}to{opacity:1}}
+@keyframes cpch{0%{opacity:0;transform:scale(1.6) rotate(-5deg)}55%{opacity:1}100%{opacity:1;transform:none}}
+@keyframes cpdrop{from{opacity:0;transform:scale(0)}to{opacity:1;transform:none}}
+@keyframes cpsheen{from{transform:translateX(-40px)}to{transform:translateX(120px)}}
+@keyframes cprm{0%{opacity:0}15%,75%{opacity:1}100%{opacity:0}}
 .emogrid{display:grid;grid-template-columns:repeat(2,1fr);gap:8px}.emogrid button{padding:12px 8px;border-radius:14px;background:var(--bg);border:1px solid var(--line);font-size:16px;font-weight:600}.emogrid button span{font-size:26px;display:block}
 .scanov{position:fixed;inset:0;z-index:200;background:#000;display:flex;flex-direction:column;align-items:center;justify-content:center}
 .scanov video{position:absolute;inset:0;width:100%;height:100%;object-fit:cover}
@@ -567,19 +581,20 @@ function moveSound(cap){if(!(cap?store.get("capSound",true):store.get("mvSound",
 // 每種材質＝棋子本身的幾個共振頻率（倍數不是整數才像真的東西）＋碰到的瞬間一點雜音＋木棋盤低沉的「咚」
 // m：f0 基頻、modes [倍數, 音量, 衰減比例]、dur 餘音長度、click 碰撞雜音中心頻率、thump 棋盤聲比例
 const SND_MAT={
-  wood:{name:"實木",f0:620,dur:.07,modes:[[1,1,1],[2.21,.35,.55],[3.9,.12,.3]],click:1500,clickV:.45,thump:.55,cap:{f0:470,dur:.09,thump:.8}},
-  jade:{name:"玉石",f0:1750,dur:.22,modes:[[1,1,1],[2.72,.42,.6],[5.18,.18,.35],[8.4,.06,.2]],click:3200,clickV:.35,thump:.35,cap:{f0:1350,dur:.26,thump:.55}},
-  metal:{name:"金屬",f0:1320,dur:.55,modes:[[1,.8,1],[1.006,.35,.9],[2.76,.45,.7],[5.4,.2,.45],[8.93,.08,.3]],click:4200,clickV:.3,thump:.3,cap:{f0:1050,dur:.6,thump:.45}}};
+  // 實木：厚棋子拍在木棋盤上＝低沉的「叩」。棋子本身共鳴低、收得很快（不清脆）；碰撞雜音只留中低頻；棋盤面板的「咚」是主角
+  wood:{name:"實木",f0:380,dur:.06,modes:[[1,1,1],[1.93,.4,.6],[3.4,.12,.35]],click:900,clickV:.55,thump:1.1,board:[[180,.6,.13],[290,.35,.09]],cap:{f0:300,dur:.075,thump:1.4}}};
 function matSound(cap,M){const t=AC.currentTime+.02,out=AC.createDynamicsCompressor();out.threshold.value=-12;out.ratio.value=4;out.connect(AC.destination);
   const hit=(at,f0,vol,dur,thump)=>{
     for(const[r,a,d]of M.modes){const o=AC.createOscillator(),g=AC.createGain();o.type="sine";o.frequency.setValueAtTime(f0*r,t+at);
       g.gain.setValueAtTime(.0001,t+at);g.gain.linearRampToValueAtTime(vol*a*.5,t+at+.002);g.gain.exponentialRampToValueAtTime(.0001,t+at+dur*d);o.connect(g).connect(out);o.start(t+at);o.stop(t+at+dur*d+.03)}
     const n=AC.createBufferSource(),len=AC.sampleRate*.018|0,buf=AC.createBuffer(1,len,AC.sampleRate),d=buf.getChannelData(0);for(let i=0;i<len;i++)d[i]=(Math.random()*2-1)*Math.pow(1-i/len,3);
-    const bp=AC.createBiquadFilter(),ng=AC.createGain();bp.type="bandpass";bp.frequency.value=M.click;bp.Q.value=.9;ng.gain.value=vol*M.clickV;n.buffer=buf;n.connect(bp).connect(ng).connect(out);n.start(t+at);
+    const bp=AC.createBiquadFilter(),ng=AC.createGain();bp.type="lowpass";bp.frequency.value=M.click;bp.Q.value=.7;ng.gain.value=vol*M.clickV;n.buffer=buf;n.connect(bp).connect(ng).connect(out);n.start(t+at);
+    for(const[f,a,d]of M.board||[]){const o=AC.createOscillator(),g=AC.createGain();o.type="sine";o.frequency.setValueAtTime(f,t+at);o.frequency.exponentialRampToValueAtTime(f*.9,t+at+d);
+      g.gain.setValueAtTime(.0001,t+at);g.gain.linearRampToValueAtTime(vol*a*thump*.6,t+at+.004);g.gain.exponentialRampToValueAtTime(.0001,t+at+d);o.connect(g).connect(out);o.start(t+at);o.stop(t+at+d+.02)}
     const o=AC.createOscillator(),g=AC.createGain(),lp=AC.createBiquadFilter();lp.type="lowpass";lp.frequency.value=400;o.type="triangle";o.frequency.setValueAtTime(140,t+at);o.frequency.exponentialRampToValueAtTime(80,t+at+.1);
     g.gain.setValueAtTime(.0001,t+at);g.gain.linearRampToValueAtTime(vol*thump,t+at+.004);g.gain.exponentialRampToValueAtTime(.0001,t+at+.14);o.connect(lp).connect(g).connect(out);o.start(t+at);o.stop(t+at+.16)};
   if(cap){hit(0,M.f0*1.08,.2,M.dur*.5,M.thump*.4);hit(.05,M.cap.f0,.6,M.cap.dur,M.cap.thump)}else hit(0,M.f0,.5,M.dur,M.thump)}
-function moveSound0(cap){const M=SND_MAT[store.get("sndStyle","wood")];if(M){try{matSound(cap,M)}catch(e){}return}try{const t=AC.currentTime+.02;
+function moveSound0(cap){let k=store.get("sndStyle","wood");if(k!=="soft"&&!SND_MAT[k])k="wood";const M=SND_MAT[k];if(M){try{matSound(cap,M)}catch(e){}return}try{const t=AC.currentTime+.02;
   const hit=(f,dur,vol,at)=>{const o=AC.createOscillator(),g=AC.createGain();o.type="triangle";o.frequency.setValueAtTime(f,t+at);o.frequency.exponentialRampToValueAtTime(f*.55,t+at+dur);
     g.gain.setValueAtTime(vol,t+at);g.gain.exponentialRampToValueAtTime(.001,t+at+dur);o.connect(g).connect(AC.destination);o.start(t+at);o.stop(t+at+dur+.02)};
   const n=AC.createBufferSource(),buf=AC.createBuffer(1,AC.sampleRate*.04|0,AC.sampleRate),d=buf.getChannelData(0);for(let i=0;i<d.length;i++)d[i]=(Math.random()*2-1)*Math.pow(1-i/d.length,3);
@@ -620,6 +635,79 @@ function checkFx(svg,label){if(!store.get("ckFx",true))return;const r=svg.getBou
   if(store.get("capSound",true)||store.get("mvSound",false))withAudio(()=>{const t=AC.currentTime+.02;
     for(const[f,at]of[[880,0],[1320,.09]]){const o=AC.createOscillator(),g=AC.createGain();o.type="square";o.frequency.setValueAtTime(f,t+at);
       g.gain.setValueAtTime(.12,t+at);g.gain.exponentialRampToValueAtTime(.001,t+at+.35);o.connect(g).connect(AC.destination);o.start(t+at);o.stop(t+at+.4)}})}
+// 筆刷：沿著中心線控制點 [x,y,粗細] 畫出一條有粗細變化的毛筆筆畫（Catmull-Rom 平滑、頭尾圓收、邊緣微抖像紙上的毛邊）
+// 回傳 d（填色用的外框路徑）、S（平滑後的中心線點）、N（各點法向量），飛白和「一筆畫出」的遮罩都沿用同一條中心線
+function brushD(P,jit){const S=[],n0=P.length,f=v=>v.toFixed(2);
+  for(let i=0;i<n0-1;i++){const p0=P[Math.max(0,i-1)],p1=P[i],p2=P[i+1],p3=P[Math.min(n0-1,i+2)];
+    for(let k=0;k<6;k++){const t=k/6,t2=t*t,t3=t2*t,cr=j=>.5*(2*p1[j]+(p2[j]-p0[j])*t+(2*p0[j]-5*p1[j]+4*p2[j]-p3[j])*t2+(3*p1[j]-p0[j]-3*p2[j]+p3[j])*t3);
+      S.push([cr(0),cr(1),p1[2]+(p2[2]-p1[2])*t*t*(3-2*t)])}}
+  S.push(P[n0-1].slice());
+  const n=S.length,Lp=[],Rp=[],N=[];let tx=1,ty=0,sx=1,sy=0;
+  for(let i=0;i<n;i++){const a=S[Math.max(0,i-1)],b=S[Math.min(n-1,i+1)];let dx=b[0]-a[0],dy=b[1]-a[1];const l=Math.hypot(dx,dy)||1;dx/=l;dy/=l;
+    if(i===0){sx=dx;sy=dy}tx=dx;ty=dy;N.push([-dy,dx]);
+    const h=S[i][2]/2,j1=1+(Math.random()-.5)*jit,j2=1+(Math.random()-.5)*jit;
+    Lp.push([S[i][0]-dy*h*j1,S[i][1]+dx*h*j1]);Rp.push([S[i][0]+dy*h*j2,S[i][1]-dx*h*j2])}
+  // 收筆圓頭（向前）與起筆圓頭（向後）
+  const cap=(c,h,nx,ny,fx,fy)=>{const o=[];for(let k=1;k<6;k++){const a=k*Math.PI/6;o.push([c[0]+h*(Math.cos(a)*nx+Math.sin(a)*fx),c[1]+h*(Math.cos(a)*ny+Math.sin(a)*fy)])}return o};
+  const e=S[n-1],s=S[0],pts=[...Lp,...cap(e,e[2]/2,-ty,tx,tx,ty),...Rp.reverse(),...cap(s,s[2]/2,sy,-sx,-sx,-sy)];
+  return{d:"M"+pts.map(p=>f(p[0])+" "+f(p[1])).join("L")+"Z",S,N}}
+// 金色書法「吃」的六筆（100×100 座標）：口（豎、橫折、底橫）＋乞（撇、橫、橫折彎鉤）
+const CHI_STROKES=[
+  [[20,40.5,6],[19,48.5,6.8],[21,57,5]],
+  [[19.5,39,4.5],[26,37,6.5],[32,35.2,7],[35.5,36.5,9],[35,45,7.2],[32.5,54,5.5],[31.5,56.5,3]],
+  [[22,55.8,3.5],[27,55,5],[32,54.4,4]],
+  [[64,13,4],[62.5,15.5,8.5],[58,23,8],[51,31,5.5],[42,38.5,1.2]],
+  [[53,31.5,4.5],[60,30.5,6.5],[69,28.5,7],[74,28.5,6]],
+  [[46,45.5,5],[55,44.5,7],[65,42.5,7.5],[72,41.5,9],[75,44,9.5],[69,51.5,8],[61,59,7],[55,66,7.5],[54.5,74,8.5],[60,81,9.5],[70,84,9.5],[80,82.5,8],[86.5,78,5.5],[89,70,1.2]]];
+// 吃子特效：被吃的那格上方蓋一個水墨圓相＋金色「吃」字，約 1.2 秒後淡出（vx、vy 是棋盤 SVG 560×620 座標，Board 的 X()/Y() 已處理翻轉）
+let cpN=0;
+function capFx(svg,vx,vy){if(!store.get("capFx",true))return;const r=svg.getBoundingClientRect();if(!r.width)return;
+  document.querySelectorAll(".cpfx").forEach(x=>x.remove());
+  const rm=!!(window.matchMedia&&matchMedia("(prefers-reduced-motion: reduce)").matches),id="cp"+(++cpN);
+  // 大小約棋盤寬 34%，以被吃的格子為中心；靠邊時往內收，不超出棋盤
+  const D=r.width*.34,cl=(v,a,b)=>Math.min(Math.max(v,a),b);
+  const cx=cl(r.left+vx/560*r.width,r.left+D/2,r.right-D/2),cy=cl(r.top+vy/620*r.height,r.top+D/2,r.bottom-D/2);
+  // 圓相：從左上起筆順時針繞 340°，起筆壓重（墨飽）、中段粗細起伏、收筆漸細且半徑微微內收（像一口氣帶過去）
+  const th0=-2.6,sw=5.95,ph=Math.random()*6,RP=[];
+  for(let k=0;k<=26;k++){const t=k/26,th=th0+t*sw,rr=36.5+1.2*Math.sin(t*9+ph)+.9*Math.sin(t*3.3)-2.2*t;
+    let w=5.5+7*Math.sin(Math.PI*Math.min(1,Math.max(0,(t-.18)/.74)))+6*Math.exp(-Math.pow(t/.06,2))+.7*Math.sin(t*17+ph);if(t>.86)w*=1-(t-.86)/.14*.85;
+    RP.push([50+rr*Math.cos(th),50+rr*Math.sin(th),w])}
+  const ring=brushD(RP,.12),S=ring.S,N=ring.N,n=S.length;
+  // 飛白：在筆畫後半段沿著中心線畫幾條斷斷續續的細線，挖空成紙色（用遮罩，所以底下的棋盤會透出來，是真的「白」）
+  let dry="";for(let k=0;k<11;k++){const o=k<7?.2+Math.random()*.7:-(.2+Math.random()*.6),i0=Math.floor(n*(.5+Math.random()*.28)),seg=[];
+    for(let i=i0;i<n-2;i++){const h=S[i][2]/2*(o+.14*Math.sin(i*.35+k*2.1));seg.push((S[i][0]+N[i][0]*h).toFixed(2)+" "+(S[i][1]+N[i][1]*h).toFixed(2))}
+    const da=Array.from({length:6},(_,j)=>(j%2?2+Math.random()*9:4+Math.random()*22).toFixed(1)).join(" ");
+    dry+=`<path d="M${seg.join("L")}" stroke-width="${(.25+Math.random()*.35).toFixed(2)}" stroke-dasharray="${da}"/>`}
+  // 一筆畫出：遮罩裡沿中心線畫一條粗白線，用 dash 從頭推到尾（起點往回多延伸一點，蓋住起筆圓頭）
+  const ex=[S[0][0]-(S[1][0]-S[0][0])*4,S[0][1]-(S[1][1]-S[0][1])*4],rv=[ex,...S];let len=0;for(let i=1;i<rv.length;i++)len+=Math.hypot(rv[i][0]-rv[i-1][0],rv[i][1]-rv[i-1][1]);
+  const rvD="M"+rv.map(p=>p[0].toFixed(2)+" "+p[1].toFixed(2)).join("L");
+  // 墨滴：起筆處甩出兩點、收筆處一點，外加一顆小的
+  const at=(t,dr)=>{const i=Math.min(n-1,Math.round(t*(n-1)));return[S[i][0]+N[i][0]*0+(S[i][0]-50)/36*dr,S[i][1]+(S[i][1]-50)/36*dr]};
+  const drops=[[.02,9,2.1,.06],[.06,14,1.1,.1],[.55,8,1.5,.22],[.97,6,1.3,.36]].map(([t,dr,rr,dl])=>{const[x,y]=at(t,dr*(Math.random()*.4+.8));
+    return`<g class="dp" style="animation-delay:${dl}s"><circle cx="${x.toFixed(1)}" cy="${y.toFixed(1)}" r="${rr}"/><circle cx="${(x+rr*1.3).toFixed(1)}" cy="${(y-rr*.9).toFixed(1)}" r="${(rr*.38).toFixed(2)}"/></g>`}).join("");
+  const chi=CHI_STROKES.map(p=>brushD(p,.02).d).join("");
+  const d=document.createElement("div");d.className="cpfx"+(rm?" rm":"");d.style.cssText=`left:${cx-D/2}px;top:${cy-D/2}px;width:${D}px;height:${D}px`;
+  d.innerHTML=`<svg viewBox="0 0 100 100"><defs>
+<radialGradient id="${id}w"><stop offset="0" stop-color="#1a0f08" stop-opacity=".34"/><stop offset=".72" stop-color="#1a0f08" stop-opacity=".16"/><stop offset="1" stop-color="#1a0f08" stop-opacity="0"/></radialGradient>
+<filter id="${id}b" x="-10%" y="-10%" width="120%" height="120%"><feGaussianBlur stdDeviation=".9"/></filter>
+<mask id="${id}m" maskUnits="userSpaceOnUse" x="-10" y="-10" width="120" height="120"><path class="rv" d="${rvD}" fill="none" stroke="#fff" stroke-width="16" stroke-linecap="round" stroke-dasharray="${len.toFixed(1)} ${(len+20).toFixed(1)}" stroke-dashoffset="${rm?0:len.toFixed(1)}"/></mask>
+<mask id="${id}d" maskUnits="userSpaceOnUse" x="-10" y="-10" width="120" height="120"><rect x="-10" y="-10" width="120" height="120" fill="#fff"/><g fill="none" stroke="#000" stroke-linecap="round">${dry}</g></mask></defs>
+<circle class="ws" cx="50" cy="50" r="41" fill="url(#${id}w)"/>
+<g mask="url(#${id}m)"><path d="${ring.d}" fill="#120a06" opacity=".45" filter="url(#${id}b)"/><path d="${ring.d}" fill="#140c07" mask="url(#${id}d)"/></g>
+<g fill="#140c07">${drops}</g></svg>
+<svg class="gl" viewBox="0 0 100 100"><defs>
+<linearGradient id="${id}g" x1="0" y1="0" x2=".35" y2="1"><stop offset="0" stop-color="#fff3cc"/><stop offset=".26" stop-color="#f1c86a"/><stop offset=".5" stop-color="#c88a2e"/><stop offset=".66" stop-color="#f4d993"/><stop offset="1" stop-color="#93601f"/></linearGradient>
+<linearGradient id="${id}s" x1="0" x2="1"><stop offset="0" stop-color="#fff" stop-opacity="0"/><stop offset=".5" stop-color="#fff" stop-opacity=".75"/><stop offset="1" stop-color="#fff" stop-opacity="0"/></linearGradient>
+<filter id="${id}h" x="-20%" y="-20%" width="140%" height="140%"><feGaussianBlur stdDeviation="1.8"/></filter>
+<clipPath id="${id}c"><path d="${chi}"/></clipPath></defs>
+<path d="${chi}" fill="#0e0704" opacity=".7" filter="url(#${id}h)" transform="translate(1.2 2.6)"/>
+<path d="${chi}" fill="none" stroke="#1a0e06" stroke-width="3" stroke-linejoin="round"/>
+<path d="${chi}" fill="url(#${id}g)"/>
+<g clip-path="url(#${id}c)"><g transform="skewX(-22)"><rect class="sh" x="0" y="0" width="16" height="100" fill="url(#${id}s)"/></g></g></svg>`;
+  document.body.append(d);setTimeout(()=>d.remove(),rm?1000:1200);
+  // 用 JS 推遮罩的 dashoffset（Safari 對遮罩裡的 CSS 動畫常常不重畫，改屬性最穩）；約 0.35 秒畫完，先快後慢像真的運筆
+  if(!rm){const p=d.querySelector(".rv"),t0=performance.now();
+    const step=now=>{const t=Math.min(1,(now-t0)/350),e=1-Math.pow(1-t,2.2);p.setAttribute("stroke-dashoffset",(len*(1-e)).toFixed(2));if(t<1&&d.isConnected)requestAnimationFrame(step)};requestAnimationFrame(step)}}
 function Board(onTap,onSwipe){
   const NS="http://www.w3.org/2000/svg",X0=40,Y0=40,S=60;
   const svg=document.createElementNS(NS,"svg");svg.setAttribute("viewBox","0 0 560 620");
@@ -680,6 +768,7 @@ function Board(onTap,onSwipe){
     const fresh=L&&prevB&&prevB[L.f]&&prevB[L.f]===board[L.t]&&!board[L.f]&&prevB[L.t]!==board[L.t];
     if(fresh&&o.anim!==false){moveSound(!!prevB[L.t]);if(o.check>=0)setTimeout(()=>sayCall("將軍"),120);else if(prevB[L.t])setTimeout(()=>sayCall("吃"),120)}
     if(fresh&&o.fx&&o.check>=0){const lab=matePattern(board,L,o.check);setTimeout(()=>checkFx(svg,lab),200)}   // 走完棋才蓋章
+    else if(fresh&&o.fx&&prevB[L.t]){const cx=X(L.t),cy=Y(L.t);setTimeout(()=>capFx(svg,cx,cy),200)}   // 吃子（沒將軍時）：棋子落定再蓋水墨「吃」
     const anim=fresh&&o.anim!==false&&store.get("mvAnim",true)&&!dropNoAnim;if(fresh)dropNoAnim=false;   // 拖過去放下的棋，不用再滑一次
     if(anim&&prevB[L.t]){const cg=piece(prevB[L.t],L.t,0,T,PS,false);svg.append(cg);requestAnimationFrame(()=>{cg.style.transition="opacity .45s";cg.style.opacity="0"})}
     lastBoard=board;lastO=o;pieceEls={};
@@ -1553,7 +1642,7 @@ function Settings(v){
     v.querySelectorAll("[data-e]").forEach(x=>x.onclick=()=>{const k=x.dataset.e;if(k===store.get("era","classic"))return;vibrate(5);store.set("era",k);applyEra();
       if(k!=="classic"&&store.get("boardTheme","wood3d")!=="auto"){store.set("boardTheme","auto");toast("棋盤也換成這個朝代的配色（可在下面改回）")}paint();show(true)});
     const tg=(k,label,sub)=>`<label class="row" style="justify-content:space-between;padding:6px 0"><span><b>${label}</b><br><span class="muted">${sub}</span></span><input type="checkbox" class="sw" data-t="${k}" ${store.get(k,k!=="mvSound")?"checked":""}></label>`;
-    v.querySelector("#mv").innerHTML=tg("mvArrow","箭頭","從原來位置畫箭頭指到新位置")+'<div style="border-top:1px solid var(--line)"></div>'+tg("mvAnim","動畫","棋子滑過去，被吃的棋子淡出")+'<div style="border-top:1px solid var(--line)"></div>'+tg("mvSound","走棋音效","走棋時「叩」一聲")+'<div style="border-top:1px solid var(--line)"></div>'+tg("capSound","吃子音效","吃子時重重「啪」一聲、將軍時「鏘」一聲")+'<div style="border-top:1px solid var(--line)"></div>'+tg("voiceCall","語音報「吃」「將軍」","吃子時唸「吃」、將軍時唸「將軍」（用手機內建語音）")+'<div style="border-top:1px solid var(--line)"></div><div style="padding:6px 0"><b>棋子材質聲音</b><br><span class="muted">像真的棋子放在木棋盤上；點一下可以試聽</span><div class="st-res" id="sndSt" style="margin:8px 0 0">'+[["wood","實木"],["jade","玉石"],["metal","金屬"],["soft","輕敲"]].map(([k,l])=>`<button data-snd="${k}" class="${store.get("sndStyle","wood")===k?"on":""}">${l}</button>`).join("")+'</div></div>'+'<div style="border-top:1px solid var(--line)"></div>'+tg("ckFx","將軍特效","被將軍或將對方軍時，棋盤上蓋「將軍！」字樣")+'<div style="border-top:1px solid var(--line)"></div>'+tg("opFx","開局名稱動畫","走出中炮、仙人指路、屏風馬…時，棋盤上展開卷軸寫出開局名");
+    v.querySelector("#mv").innerHTML=tg("mvArrow","箭頭","從原來位置畫箭頭指到新位置")+'<div style="border-top:1px solid var(--line)"></div>'+tg("mvAnim","動畫","棋子滑過去，被吃的棋子淡出")+'<div style="border-top:1px solid var(--line)"></div>'+tg("mvSound","走棋音效","走棋時「叩」一聲")+'<div style="border-top:1px solid var(--line)"></div>'+tg("capSound","吃子音效","吃子時重重「啪」一聲、將軍時「鏘」一聲")+'<div style="border-top:1px solid var(--line)"></div>'+tg("voiceCall","語音報「吃」「將軍」","吃子時唸「吃」、將軍時唸「將軍」（用手機內建語音）")+'<div style="border-top:1px solid var(--line)"></div><div style="padding:6px 0"><b>棋子聲音</b><br><span class="muted">實木＝厚棋子拍在木棋盤上的聲音；點一下可以試聽</span><div class="st-res" id="sndSt" style="margin:8px 0 0">'+[["wood","實木"],["soft","輕敲"]].map(([k,l])=>`<button data-snd="${k}" class="${(store.get("sndStyle","wood")==="soft"?"soft":"wood")===k?"on":""}">${l}</button>`).join("")+'</div></div>'+'<div style="border-top:1px solid var(--line)"></div>'+tg("ckFx","將軍特效","被將軍或將對方軍時，棋盤上蓋「將軍！」字樣")+'<div style="border-top:1px solid var(--line)"></div>'+tg("capFx","吃子特效","吃子時被吃的那格蓋一個水墨「吃」字")+'<div style="border-top:1px solid var(--line)"></div>'+tg("opFx","開局名稱動畫","走出中炮、仙人指路、屏風馬…時，棋盤上展開卷軸寫出開局名");
     v.querySelectorAll("[data-snd]").forEach(x=>x.onclick=()=>{store.set("sndStyle",x.dataset.snd);v.querySelectorAll("[data-snd]").forEach(y=>y.classList.toggle("on",y===x));unlockAudio();withAudio(()=>moveSound0(false));setTimeout(()=>withAudio(()=>moveSound0(true)),550)});
     v.querySelectorAll("[data-t]").forEach(x=>x.onchange=()=>{store.set(x.dataset.t,x.checked);if(x.checked&&(x.dataset.t==="mvSound"||x.dataset.t==="capSound")){unlockAudio();moveSound(x.dataset.t==="capSound")}if(x.checked&&x.dataset.t==="voiceCall"){primeVoice();setTimeout(()=>sayCall("將軍"),150)}show(true)});
     v.querySelector("#nmS").textContent=myName()||"還沒取名字";show(false)};
