@@ -172,7 +172,8 @@ function realCar(c,P){const m=mats(),G=new T.Group();
     const side=new T.Mesh(new T.TorusGeometry(R*.82,R*.17,10,36),m.tire);side.position.z=z*P.tireW*.36;wg.add(side);
     P.wheel(wg,z,R,m);wg.position.set(ax,R,z*(P.W/2-P.tireW/2-.01));G.add(wg);wheels.push(wg)}
   // 貼在車身表面的零件（燈、後照鏡…）：從車外射一條線找到車身表面，再貼上去
-  const ray=new T.Raycaster(),hitOn=(o,d,meshes)=>{ray.set(o,d);const h=ray.intersectObjects(meshes||[lower,cab],false)[0];return h};
+  const ray=new T.Raycaster(),hitOn=(o,d,meshes)=>{ray.set(o,d);ray.far=3.6;   // 射線最多走 3.6 公尺：沒打到該打的面就算了，不要穿過車身黏到另一頭
+   const h=ray.intersectObjects(meshes||[lower,cab],false)[0];return h};
   const stick=(mesh,o,d,off,meshes)=>{const h=hitOn(o,d,meshes);if(!h)return null;const n=h.face.normal.clone().transformDirection(h.object.matrixWorld);if(n.dot(d)>0)n.negate();   // 法線一定朝外（朝著射線來的方向）
     mesh.position.copy(h.point).addScaledVector(n,off||.004);mesh.lookAt(h.point.clone().add(n));G.add(mesh);return mesh};
   // 車身縫線：沿著一串「從車外往車身打的射線」找到表面點，連成一條細細的深色管子（鈑件之間的縫）
@@ -203,9 +204,9 @@ const REAL={
   // Tesla Model 3（2024 Highland）：4720×1850×1441、軸距 2875；沒有水箱罩、低圓的車頭、細長頭燈、全黑玻璃車頂、短尾＋小鴨尾、C 形尾燈
   "tesla-model-3":c=>realCar(c,{L:4.72,W:1.85,H:1.441,tire:.335,tireW:.235,arch:.385,axles:[1.03,3.905],
     colors:["#E9EAEC","#9F1B22","#1F3B6E","#17181A","#5A5D61","#A8ABAF"],
-    rearD:.34,rearP:2.6,frontD:.62,frontP:2.1,shoulder:.16,cab:[.46,3.66],cabIn:.075,tumble:.74,
+    rearD:.34,rearP:2.6,frontD:.7,frontP:2.0,shoulder:.16,cab:[.46,3.66],cabIn:.075,tumble:.74,
     bottom:[[0,.36],[.18,.24],[.5,.165],[4.3,.165],[4.6,.17],[4.72,.24]],
-    top:[[0,.62],[.03,.86],[.11,.975],[.3,.995],[.55,.985],[1.4,.955],[2.6,.94],[3.4,.925],[3.75,.89],[4.15,.81],[4.45,.73],[4.62,.66],[4.72,.52]],
+    top:[[0,.62],[.03,.86],[.11,.975],[.3,.995],[.55,.985],[1.4,.955],[2.6,.94],[3.4,.925],[3.75,.89],[4.15,.80],[4.45,.71],[4.62,.63],[4.72,.48]],
     roof:[[.46,.98],[.75,1.11],[1.15,1.28],[1.65,1.40],[2.2,1.441],[2.7,1.43],[3.05,1.335],[3.35,1.16],[3.66,.92]],
     wheel(wg,z,R,m){// 18 吋 Photon 鋁圈：石墨灰底、五組雙輻、中心蓋 T 字；後面看得到碟盤和卡鉗
       const gm=new T.MeshStandardMaterial({color:0x2c2f34,metalness:.75,roughness:.32}),sm=new T.MeshStandardMaterial({color:0xa3a9b0,metalness:.85,roughness:.25});
@@ -220,7 +221,7 @@ const REAL={
       for(let k=0;k<5;k++){const a=k/5*Math.PI*2+.3,nut=new T.Mesh(new T.CylinderGeometry(.009,.009,.02,8),sm);nut.rotation.x=Math.PI/2;nut.position.set(Math.cos(a)*R*.125,Math.sin(a)*R*.125,z*.128);wg.add(nut)}
       const cap=decalMesh(R*.16,R*.16,(x,W,H)=>{x.fillStyle="#15171a";x.beginPath();x.arc(W/2,H/2,W/2,0,7);x.fill();x.save();x.translate(W*.22,H*.22);drawTee(x,W*.56,H*.56,"#c9ced6");x.restore()},{metal:.3});
       cap.position.z=z*.131;if(z<0)cap.rotation.y=Math.PI;wg.add(cap)},
-    details({G,m,body,stick,sideSeam,topSeam,rearSeam,hitOn,V,T,hw,top}){
+    details({G,m,body,stick,seam,sideSeam,topSeam,rearSeam,hitOn,V,T,hw,top}){
       const dark=new T.MeshStandardMaterial({color:0x101114,roughness:.3});
       const piano=new T.MeshPhysicalMaterial({color:0x0b0c0e,metalness:.3,roughness:.06,clearcoat:1});
       const lens=new T.MeshPhysicalMaterial({color:0x2b3038,metalness:.2,roughness:.08,clearcoat:1});
@@ -248,7 +249,6 @@ const REAL={
         stick(pad(drl,.185,.0075,.006),V(6,.676,z*.6),V(-1,-.15,0),.012);
         stick(pad(drl,.028,.02,.008),V(6,.656,z*.5),V(-1,-.15,0),.012);
         // 前保桿兩側的小進氣口
-        stick(pad(dark,.13,.022),V(6,.28,z*.45),V(-1,0,0),.003);
         // ---- C 形尾燈：煙燻燈殼裡一條橫的亮紅＋外側往下一段 ----
         stick(pad(smoke,.27,.04,.004),V(-3,.865,z*.56),V(1,0,0),.002);
         stick(pad(tail,.25,.016,.004),V(-3,.875,z*.55),V(1,0,0),.006);
@@ -257,9 +257,9 @@ const REAL={
         stick(pad(refl,.07,.012,.004),V(-3,.36,z*.62),V(1,0,0),.003);
         // ---- 水滴形後照鏡：外側圓、往車身收窄；背面是鏡片；下面黑色底座 ----
         const mg=new T.SphereGeometry(1,28,16),pa=mg.attributes.position;
-        for(let i=0;i<pa.count;i++){const lz=pa.getZ(i),k=lz<0?1+.5*lz:1;pa.setXYZ(i,pa.getX(i)*k,pa.getY(i)*k,lz)}mg.computeVertexNormals();
-        const mir=new T.Mesh(mg,body);mir.scale.set(.055,.05,.11);if(z<0)mir.rotation.y=Math.PI;mir.position.set(3.29,1.0,z*.985);G.add(mir);
-        const glass=new T.Mesh(new T.SphereGeometry(1,20,12),new T.MeshStandardMaterial({color:0x9fb0bf,metalness:1,roughness:.05}));glass.scale.set(.006,.038,.085);glass.position.set(3.237,1.0,z*1.0);G.add(glass);
+        for(let i=0;i<pa.count;i++){let lx=pa.getX(i),ly=pa.getY(i);const lz=pa.getZ(i),k=lz<0?1+.45*lz:1+.08*lz;if(lx<0)lx*=.32;if(ly>.55)ly=.55+(ly-.55)*.5;pa.setXYZ(i,lx*k,ly*k,lz)}mg.computeVertexNormals();
+        const mir=new T.Mesh(mg,body);mir.scale.set(.075,.055,.115);if(z<0)mir.rotation.y=Math.PI;mir.position.set(3.29,1.0,z*.985);G.add(mir);
+        const glass=new T.Mesh(new T.SphereGeometry(1,20,12),new T.MeshStandardMaterial({color:0x9fb0bf,metalness:1,roughness:.05}));glass.scale.set(.004,.042,.09);glass.position.set(3.268,1.0,z*1.0);G.add(glass);
         const base=new T.Mesh(new T.BoxGeometry(.09,.035,.07),piano);base.position.set(3.33,.975,z*.9);G.add(base);
         // 前葉子板的側邊攝影鏡頭（前輪後上方）
         stick(pad(piano,.026,.016,.006),V(3.6,.8,z*3),V(0,0,-z),.003);
@@ -268,24 +268,27 @@ const REAL={
           stick(pad(body,.127,.019,.004),V(x,.835,z*3),V(0,0,-z),.004);
           stick(pad(dark,.022,.014,.004),V(x+.088,.835,z*3),V(0,0,-z),.006)}
         // ---- 車窗：腰線黑色飾條、B 柱鋼琴黑 ----
-        const belt=[];for(let x=.55;x<=3.36;x+=.05){const w=hw(x)-.075;belt.push(new T.Vector3(x,top(x)-.012,z*(w+.004)))}
+        const belt=[];for(let x=.72;x<=3.36;x+=.05){const w=hw(x)-.075;belt.push(new T.Vector3(x,top(x)-.012,z*(w+.004)))}
         G.add(new T.Mesh(new T.TubeGeometry(new T.CatmullRomCurve3(belt),80,.007,6,false),piano));
         const cabM=G.children.find(o=>o.userData.cab),bp=[];for(let y=top(2.47)-.02;y<=1.38;y+=.04){const h=hitOn(V(2.47,y,z*3),V(0,0,-z),[cabM]);if(h)bp.push(h.point.clone().add(V(0,0,z*.004)))}
-        if(bp.length>1)G.add(new T.Mesh(new T.TubeGeometry(new T.CatmullRomCurve3(bp),24,.026,4,false),piano));   // B 柱：沿玻璃側面的一條鋼琴黑寬條
+        const L2=[],R2=[];for(let y=top(2.47)-.02;y<=1.38;y+=.03){const a=hitOn(V(2.435,y,z*3),V(0,0,-z),[cabM]),b=hitOn(V(2.515,y,z*3),V(0,0,-z),[cabM]);if(a&&b){L2.push(a.point.clone().add(V(0,0,z*.003)));R2.push(b.point.clone().add(V(0,0,z*.003)))}}
+        if(L2.length>1){const pos=[],idx=[];L2.forEach((p,i)=>{pos.push(p.x,p.y,p.z,R2[i].x,R2[i].y,R2[i].z);if(i){const q=(i-1)*2;idx.push(q,q+1,q+2,q+1,q+3,q+2)}});
+          const g=new T.BufferGeometry();g.setAttribute("position",new T.Float32BufferAttribute(pos,3));g.setIndex(idx);g.computeVertexNormals();const pm=piano.clone();pm.side=T.DoubleSide;G.add(new T.Mesh(g,pm))}   // B 柱：平的鋼琴黑飾板
       }
+      // 前保桿下方一條細長的進氣口（黑色）
+      seam(Array.from({length:21},(_,i)=>[V(6,.31,-.56+1.12*i/20),V(-1,0,0)]),.011);
       // 左後的充電口蓋（駕駛側後方、尾燈前面）
       sideSeam(-1,[[.30,.82],[.42,.82],[.43,.84],[.43,.89],[.42,.91],[.30,.91],[.29,.89],[.29,.84],[.30,.82]],.0018);
       // 車頭 T 字、車尾 TESLA 字樣
       stick(decalMesh(.075,.075,(x,W,H)=>drawTee(x,W,H)),V(6,.6,0),V(-1,0,0),.004);
       stick(decalMesh(.42,.045,(x,W,H)=>{x.fillStyle="#bfc4cc";x.font="700 "+Math.round(H*.95)+"px Arial";x.textAlign="center";x.textBaseline="middle";if("letterSpacing" in x)x.letterSpacing=Math.round(W*.04)+"px";x.fillText("TESLA",W/2,H*.55)}),V(-3,.78,0),V(1,0,0),.004);
       // 下巴細長黑飾板、車尾黑色下擾流
-      stick(pad(dark,.62,.05,.006),V(-3,.27,0),V(1,0,0),.003)}})
+      stick(pad(dark,.6,.035,.005),V(-3,.42,0),V(1,0,0),.003)}})
 };
 
 function build(c){
-  // 寫實版還在試做：只有開了預覽（localStorage xq_carReal）才用
-  let rv=false;try{rv=!!localStorage.getItem("xq_carReal")}catch(e){}
-  if(REAL[c.id]&&rv)return REAL[c.id](c);
+  // 照真車一台一台做好的車款，用寫實版
+  if(REAL[c.id])return REAL[c.id](c);
   const{S,f,type,h,col}=spec(c),m=mats(),G=new T.Group(),body=paint(col),roofMat=f.roof?paint(f.roof):body;
   const L=S.L,W=S.W,X=t=>t*L-L/2,bv=f.boxy?.07:.16;
   // 車身下半部
