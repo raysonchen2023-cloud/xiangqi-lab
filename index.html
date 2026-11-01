@@ -264,7 +264,8 @@ html[data-era=ming] .topbar,html[data-era=qing] .topbar{border-bottom-width:4px}
 .car-spec{margin:0 0 12px;padding:10px 12px;border-radius:12px;background:var(--bg)}.car-spec-h{font-weight:800;font-size:15px;margin-bottom:6px;display:flex;align-items:baseline;gap:8px;flex-wrap:wrap}.car-spec-h small{font-weight:400;font-size:11.5px;color:var(--muted)}
 .car-spec dl{display:grid;grid-template-columns:auto 1fr;gap:5px 12px;margin:0;font-size:13.5px}.car-spec dt{color:var(--muted);white-space:nowrap}.car-spec dd{margin:0;font-weight:600;word-break:break-word}
 .car-spec details{margin-top:8px;font-size:13px}.car-spec summary{color:var(--accent);cursor:pointer}.car-spec details p{margin:6px 0 0;line-height:1.6}
-.car-drive{overflow:hidden}.car-pic img{display:block;width:100%;height:auto;aspect-ratio:1.6}.car-big canvas{display:block;margin:0 auto;border-radius:16px}.car-tip{text-align:center;font-size:12px;color:var(--muted);margin:-4px 0 10px}.car-drive svg{animation:cardrive 1.3s cubic-bezier(.2,.8,.3,1) both}.car-drive .wh{transform-box:fill-box;transform-origin:center;animation:wspin .43s linear 3}
+.car-drive{overflow:hidden}.car-ph{aspect-ratio:1.6;border-radius:10px;background:linear-gradient(100deg,color-mix(in srgb,var(--line) 55%,transparent) 30%,color-mix(in srgb,var(--line) 20%,transparent) 50%,color-mix(in srgb,var(--line) 55%,transparent) 70%);background-size:300% 100%;animation:carph 1.4s linear infinite}.car-ph.big{aspect-ratio:1.45}@keyframes carph{from{background-position:100% 0}to{background-position:0 0}}
+.car-pic img{display:block;width:100%;height:auto;aspect-ratio:1.6}.car-big canvas{display:block;margin:0 auto;border-radius:16px}.car-tip{text-align:center;font-size:12px;color:var(--muted);margin:-4px 0 10px}.car-drive svg{animation:cardrive 1.3s cubic-bezier(.2,.8,.3,1) both}.car-drive .wh{transform-box:fill-box;transform-origin:center;animation:wspin .43s linear 3}
 @keyframes cardrive{from{transform:translateX(-115%)}to{transform:none}}@keyframes wspin{to{transform:rotate(360deg)}}
 .lib-r{flex:none;min-width:42px;text-align:center;font-size:12px;font-weight:700;line-height:20px;padding:0 8px;border-radius:999px}
 .lib-r.r{color:var(--red);background:var(--bg);background:color-mix(in srgb,var(--red) 12%,var(--card))}
@@ -1476,12 +1477,14 @@ const mixHex=(a,b,t)=>"#"+[1,3,5].map(i=>Math.round(parseInt(a.slice(i,i+2),16)*
 let C3D=null;
 const load3D=()=>C3D||(C3D=(async()=>{const c=document.createElement("canvas");if(!(c.getContext("webgl2")||c.getContext("webgl")))throw new Error("no webgl");
   await loadScript(OFF?"three.min.js":"/m/three.min.js");await loadScript(OFF?"car3d.js":"/m/car3d.js");if(!window.XQCar3D)throw new Error("3D 載入失敗");return window.XQCar3D})().catch(e=>{C3D=null;throw e}));
-// 車卡上的圖：先放平面圖，捲到畫面上才換成 3D 照片
+// 車卡上的圖：已經拍過的 3D 照片直接放；還沒拍的先放淡色載入框，捲到畫面上才拍；手機不支援 3D 才用平面圖
 let carIO=null;
-function lazy3D(root,cars){load3D().then(X=>{if(!carIO)carIO=new IntersectionObserver(es=>{for(const e of es){if(!e.isIntersecting)continue;const el=e.target;carIO.unobserve(el);
-      const c=el._car;if(c)X.thumb(c).then(u=>{if(el.isConnected)el.innerHTML='<img src="'+u+'" alt="">'}).catch(()=>{})}},{rootMargin:"300px"});
-    root.querySelectorAll(".car-pic[data-c]").forEach(el=>{el._car=cars.find(c=>c.id===el.dataset.c);carIO.observe(el)})}).catch(()=>{})}
-function show3D(el,c,o){load3D().then(X=>{if(el.isConnected){X.viewer(el,c,o);const tip=el.nextElementSibling;if(tip&&tip.classList.contains("car-tip"))tip.hidden=false}}).catch(()=>{})}
+const carPic=c=>{const u=window.XQCar3D&&XQCar3D.cached(c.id);return u?'<img src="'+u+'" alt="">':'<div class="car-ph"></div>'};
+function lazy3D(root,cars){const els=[...root.querySelectorAll(".car-pic[data-c]")].filter(el=>!el.querySelector("img"));els.forEach(el=>el._car=cars.find(c=>c.id===el.dataset.c));
+  load3D().then(X=>{if(!carIO)carIO=new IntersectionObserver(es=>{for(const e of es){if(!e.isIntersecting)continue;const el=e.target;carIO.unobserve(el);
+      const c=el._car;if(c)X.thumb(c).then(u=>{if(el.isConnected)el.innerHTML='<img src="'+u+'" alt="">'}).catch(()=>{if(el.isConnected)el.innerHTML=carSVG(c)})}},{rootMargin:"300px"});
+    els.forEach(el=>carIO.observe(el))}).catch(()=>els.forEach(el=>{if(el.isConnected&&el._car)el.innerHTML=carSVG(el._car)}))}
+function show3D(el,c,o){load3D().then(X=>{if(el.isConnected){X.viewer(el,c,o);const tip=el.nextElementSibling;if(tip&&tip.classList.contains("car-tip"))tip.hidden=false}}).catch(()=>{if(el.isConnected)el.innerHTML=carSVG(c)})}
 let carN=0;
 function carSVG(c){
   const h=carHash(c.id),S={...(CAR_SHAPE[c.type]||CAR_SHAPE.sedan)},n=++carN;
@@ -1552,7 +1555,7 @@ function Garage(v){
   v.querySelector("#gq").oninput=e=>{q=e.target.value.trim();paint()};
   Promise.all([CARS(),api("/car/state")]).then(([d,b])=>{D=d;B=b;paint()}).catch(e=>{v.querySelector("#gt").innerHTML=`⚠ ${esc(e.message)}`});
   const card=c=>{const own=B.owned[c.id],can=!own&&c.cost<=B.pts;
-    return`<button class="car${own?" own":can?" can":" lock"}" data-id="${esc(c.id)}"><div class="car-pic" data-c="${esc(c.id)}">${carSVG(c)}</div><b>${esc(c.model||c.name)}</b><span>${esc(c.brand)}${c.zh?" "+esc(c.zh):""}・${CAR_TYPE[c.type]||""}</span>
+    return`<button class="car${own?" own":can?" can":" lock"}" data-id="${esc(c.id)}"><div class="car-pic" data-c="${esc(c.id)}">${carPic(c)}</div><b>${esc(c.model||c.name)}</b><span>${esc(c.brand)}${c.zh?" "+esc(c.zh):""}・${CAR_TYPE[c.type]||""}</span>
       <span class="cost">${own?"✓ 已擁有":c.cost.toLocaleString()+" 點"}</span>${own?'<i class="own-b">我的</i>':""}</button>`};
   function paint(){if(!v.isConnected||!D||!B)return;
     const cars=D.cars,owned=cars.filter(c=>B.owned[c.id]),left=cars.filter(c=>!B.owned[c.id]),can=left.filter(c=>c.cost<=B.pts),next=left.find(c=>c.cost>B.pts);
@@ -1575,7 +1578,7 @@ function Garage(v){
     v.querySelectorAll("#gty [data-t]").forEach(b=>b.onclick=()=>{vibrate(5);ty=b.dataset.t;paint()});
     v.querySelectorAll(".car[data-id]").forEach(b=>b.onclick=()=>{vibrate(5);carSheet(cars.find(c=>c.id===b.dataset.id))});lazy3D(v,cars)}
   function carSheet(c){if(!c)return;const own=B.owned[c.id];
-    sheet(c.name,b=>{b.innerHTML=`<div class="car-big" id="c3">${carSVG(c)}</div><p class="car-tip" hidden>👆 左右拖轉一圈・上下拖看車頂和底盤・兩指縮放</p>
+    sheet(c.name,b=>{b.innerHTML=`<div class="car-big" id="c3"><div class="car-ph big"></div></div><p class="car-tip" hidden>👆 左右拖轉一圈・上下拖看車頂和底盤・兩指縮放</p>
       <div class="car-info"><div><span>品牌</span><b>${esc(c.brand)}${c.zh?" "+esc(c.zh):""}</b></div><div><span>車型</span><b>${CAR_TYPE[c.type]||esc(c.cls)}</b></div>
       <div><span>8891 新車價</span><b>${c.lo===c.hi?c.lo+" 萬":c.lo+"～"+c.hi+" 萬"}</b></div><div><span>兌換點數</span><b>${c.cost.toLocaleString()} 點</b></div></div>
       ${c.sp&&c.sp.length?`<div class="car-spec"><div class="car-spec-h">規格${c.trims&&c.trims.length>1?`<small>共 ${c.trims.length} 款車型，有範圍的是各車型不同</small>`:""}</div>
@@ -1586,7 +1589,7 @@ function Garage(v){
         :`<button class="btn" disabled>還差 ${(c.cost-B.pts).toLocaleString()} 點</button><p class="muted" style="text-align:center;font-size:13px">第 7 級贏一盤 +${B.table[6]} 點、第 8 級 +${B.table[7]} 點</p>`}`;
       show3D(b.querySelector("#c3"),c);const sl=b.querySelector("#sl");if(sl)sl.onclick=()=>confirmBox(`把 ${c.name} 賣掉？賣掉後要再換得重新花點數`,async()=>{try{const r=await api("/car/sell",{id:c.id});B=r;closeSheet();paint();vibrate([20,30,20]);toast(`💰 賣掉了，拿回 ${r.gain.toLocaleString()} 點`)}catch(e){toast(e.message)}},"賣掉");const rd=b.querySelector("#rd");if(rd)rd.onclick=()=>confirmBox(`用 ${c.cost.toLocaleString()} 點換 ${c.name}？`,async()=>{
         try{B=await api("/car/redeem",{id:c.id});closeSheet();paint();vibrate([30,40,60]);
-          const md=modal(`<div class="car-big car-drive" id="c3d">${carSVG(c)}</div><h2>🎉 換到了！</h2><p><b>${esc(c.name)}</b> 開進你的車庫了</p><p class="muted">剩下 ${B.pts.toLocaleString()} 點</p>`,[["好",null]]);show3D(md.querySelector("#c3d"),c,{drive:true})}
+          const md=modal(`<div class="car-big car-drive" id="c3d"><div class="car-ph big"></div></div><h2>🎉 換到了！</h2><p><b>${esc(c.name)}</b> 開進你的車庫了</p><p class="muted">剩下 ${B.pts.toLocaleString()} 點</p>`,[["好",null]]);show3D(md.querySelector("#c3d"),c,{drive:true})}
         catch(e){toast(e.message)}},"兌換")})}
   async function play(){vibrate(8);const level=store.get("cpuLevel",3);
     const go=async()=>{try{await api("/play/new",{human:"r",level,reward:true});store.set("cpuRanked",false);store.set("cpuCar",true);location.hash="#/cpu"}catch(e){toast(e.message)}};
