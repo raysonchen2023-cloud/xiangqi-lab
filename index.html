@@ -737,6 +737,10 @@ function route(){
   if(p[0]==="fbadmin")return screen=FbAdmin(v);
   if(p[0]==="quiz")return screen=Quiz(v);
   if(p[0]==="terms")return screen=Terms(v,p[1]);
+  // AI 對局在開發者的電腦上，要連上電腦才看得到；一般玩家（或連線已被清掉）從舊連結進來時說明清楚，不要卡在「載入中」（意見回饋 135）
+  if((p[0]==="db"&&p[1]==="ai"||p[0]==="watch"&&p[1]==="ai")&&OFF&&!DEVREMOTE()){setTop("AI 對局","#/");setTabs(false);
+    v.innerHTML='<div class="home"><div class="card" style="text-align:center;line-height:1.8"><div style="font-size:40px">📺</div><b>AI 對局只在開發者的電腦上</b><br><span class="muted">這部分要連上開發者的電腦才看得到，一般玩家不需要。其他棋譜都在「📚 棋譜」裡。</span><div class="row" style="gap:8px;margin-top:12px;justify-content:center"><button class="btn" id="g1">📚 去棋譜</button><button class="btn ghost" id="g2">回首頁</button></div></div></div>';
+    v.querySelector("#g1").onclick=()=>location.hash="#/db";v.querySelector("#g2").onclick=()=>location.hash="#/";return screen={}}
   if(p[0]==="db"&&p.length>=3)return screen=Viewer(v,p[1],p.slice(2).join("/"));
   if(p[0]==="db")return screen=Library(v,p[1]);
   screen=Home(v)}
@@ -1505,17 +1509,21 @@ function feedbackSheet(){let type="🐞 錯誤";
     <div class="opt" id="ty">${["🐞 錯誤","💡 建議","💬 其他"].map(t=>`<button data-y="${t}" class="${t===type?"on":""}">${t}</button>`).join("")}</div>
     <textarea id="fx" rows="5" maxlength="1500" placeholder="例如：在哪個畫面、按了什麼、發生什麼事；或是希望增加的功能" style="width:100%;padding:11px;border:1px solid var(--line);border-radius:12px;background:var(--card);color:inherit;font:inherit;font-size:16px;-webkit-user-select:text;user-select:text"></textarea>
     <input id="fc" maxlength="80" placeholder="聯絡方式（選填，例如 LINE ID）" style="width:100%;margin-top:8px;padding:11px;border:1px solid var(--line);border-radius:12px;background:var(--card);color:inherit">
-    <div class="row" style="margin-top:8px;gap:10px"><label class="pill" style="padding:9px 14px;cursor:pointer">📷 附上截圖（選填）<input type="file" id="fi" accept="image/*" hidden></label>
-      <img id="fp" alt="" style="display:none;max-height:72px;max-width:96px;border-radius:8px;border:1px solid var(--line)"><button class="pill" id="fr" hidden>✕ 移除</button></div>
+    <div class="row" style="margin-top:8px;gap:10px"><label class="pill" style="padding:9px 14px;cursor:pointer">📷 附上截圖（選填，最多 4 張）<input type="file" id="fi" accept="image/*" multiple hidden></label></div>
+      <div class="row" id="fps" style="gap:8px;flex-wrap:wrap;margin-top:6px"></div>
     <p class="muted" style="font-size:12px">會一起附上：你的線上 ID、名字、段位、App 版本、裝置類型和目前畫面，方便找問題。</p>
     <button class="btn" id="go">送出</button>`;
-    let img="";const fi=b.querySelector("#fi"),fp=b.querySelector("#fp"),fr=b.querySelector("#fr");
-    fi.onchange=async()=>{const f=fi.files&&fi.files[0];if(!f)return;try{img=await shrinkImage(f);fp.src=img;fp.style.display="block";fr.hidden=false}catch(e){toast(e.message)}fi.value=""};
-    fr.onclick=()=>{img="";fp.style.display="none";fr.hidden=true};
+    // 截圖可以一次選多張（最多 4 張）；表單一格只放得下一張，第 2 張起各送一筆「第 N 張截圖」接在後面
+    const MAXI=4;let imgs=[];const fi=b.querySelector("#fi"),fps=b.querySelector("#fps");
+    const paintI=()=>{fps.innerHTML=imgs.map((d,i)=>`<span style="position:relative;display:inline-block"><img src="${d}" alt="" style="height:72px;max-width:96px;border-radius:8px;border:1px solid var(--line);display:block"><button data-x="${i}" class="pill" style="position:absolute;top:-8px;right:-8px;padding:0 7px;line-height:22px">✕</button></span>`).join("");
+      fps.querySelectorAll("[data-x]").forEach(x=>x.onclick=()=>{imgs.splice(+x.dataset.x,1);paintI()})};
+    fi.onchange=async()=>{const fs=[...(fi.files||[])];fi.value="";if(!fs.length)return;if(imgs.length+fs.length>MAXI)toast(`最多 ${MAXI} 張，只取前面幾張`);
+      for(const f of fs.slice(0,MAXI-imgs.length)){try{imgs.push(await shrinkImage(f))}catch(e){toast(e.message)}}paintI()};
     b.querySelectorAll("[data-y]").forEach(x=>x.onclick=()=>{type=x.dataset.y;b.querySelectorAll("[data-y]").forEach(y=>y.classList.toggle("on",y===x))});
     b.querySelector("#go").onclick=async e=>{const t=b.querySelector("#fx").value.trim();if(t.length<2)return toast("請先寫下內容");e.target.disabled=true;e.target.textContent="送出中…";
-      const rec=Object.assign(await feedbackInfo(),{type,text:t,contact:b.querySelector("#fc").value.trim(),img});
-      const ok=await sendRecord(rec);closeSheet();toast(ok?"✅ 已送出，謝謝你的回饋！":"已存在手機裡，有網路時會自動送出")}})}
+      const info=await feedbackInfo(),contact=b.querySelector("#fc").value.trim(),N=imgs.length;
+      let ok=await sendRecord(Object.assign({},info,{type,text:t,contact,img:imgs[0]||""}));
+      for(let i=1;i<N;i++)ok=(await sendRecord(Object.assign({},info,{type,text:`（接上一則的第 ${i+1}/${N} 張截圖）${t.slice(0,60)}`,contact,img:imgs[i]})))&&ok;closeSheet();toast(ok?"✅ 已送出，謝謝你的回饋！":"已存在手機裡，有網路時會自動送出")}})}
 // 線上 ID 登記：名字或段位有變、或超過 7 天，就送一筆「玩家」紀錄到同一個表單
 async function reportPlayer(){if(!OFF||!FEEDBACK_FORM.action)return;const i=await feedbackInfo(),key=i.id+"|"+i.name+"|"+i.rank.split(" ")[0],last=store.get("playerRep",null);
   if(last&&last.k===key&&Date.now()-last.at<7*864e5)return;
@@ -2120,7 +2128,7 @@ function Library(v,c0){
         bp.textContent=`✅ 完成，共 ${n} 局`;toast("下載完成");setTimeout(()=>{closeSheet();libState.c=g.key;const h="#/db/"+encodeURIComponent(g.key);if(location.hash===h)route();else location.hash=h},700)}
       catch(e){bp.textContent="⚠ "+e.message+"，請確認網路後再試";bt.disabled=false;bt.textContent="再試一次"}}})}
   if(OFF&&window.XQ&&XQ.bigBooks)XQ.bigBooks().then(x=>{big=x||[];if(grp)paintCols()});
-  api("/db/books").then(bs=>{books=bs;
+  api("/db/books").then(bs=>{books=bs.filter(x=>x.key!=="ai"||!OFF||DEVREMOTE());
     let c=c0||libState.c||store.get("libC",null);if(!c0&&!bs.some(b=>b.key===c))c=(bs[0]||{}).key;
     if(c)load(c);else{grp="gm";paintCols();showNone()}}).catch(e=>empty("⚠","連不到電腦上的程式："+esc(e.message)));
   return{}}
