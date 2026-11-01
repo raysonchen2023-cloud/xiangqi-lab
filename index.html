@@ -775,11 +775,15 @@ if(OFF&&"serviceWorker" in navigator){
   async function doUpdate(){updating=true;const tt=document.createElement("div");tt.className="toast";tt.textContent="⬇ 正在更新…";document.body.append(tt);
     try{const r=await navigator.serviceWorker.getRegistration();if(r){await r.update().catch(()=>{});
       if(r.installing||r.waiting)await new Promise(ok=>{navigator.serviceWorker.addEventListener("controllerchange",ok,{once:true});setTimeout(ok,10000)})}}catch(e){}
-    location.reload()}
+    // 不馬上重新整理：新版已經在背景下載好，留在原本的畫面（意見回饋寫到一半也不會不見），等換到別的頁面時才套用
+    pending=true;tt.textContent="✓ 新版已準備好，換到別的頁面時自動套用";setTimeout(()=>tt.remove(),3500);
+    document.querySelectorAll(".toast.upd").forEach(x=>x.remove())}
+  let pending=false;const seg=h=>(String(h||"").split("#")[1]||"/").split("/")[1]||"";
+  addEventListener("hashchange",e=>{if(pending&&seg(e.newURL)!==seg(e.oldURL))location.reload()});
   async function notifyNew(nv,note){if(shown)return;shown=true;const v=fmtV(nv||await appVer());vibrate([20,40,20]);
-    if(inGame()){const t=document.createElement("button");t.className="toast";t.style.cssText="bottom:auto;top:calc(64px + var(--safeT));pointer-events:auto;z-index:300";
-      t.textContent="🆕 有新版本"+(v?"（"+v+"）":"")+"，下完這盤點這裡更新";t.onclick=doUpdate;document.body.append(t);return}
-    modal(`<div class="em">🆕</div><h2>有新版本</h2>${note?`<p style="text-align:left;white-space:pre-wrap">${esc(note)}</p>`:""}<p class="muted">${v?"版本 "+esc(v)+"<br>":""}更新只要一秒，你的戰績、棋譜和設定都會保留。</p>`,[["立即更新",doUpdate],["稍後",()=>{shown=false},true]])}
+    if(inGame()){const t=document.createElement("button");t.className="toast upd";t.style.cssText="bottom:auto;top:calc(64px + var(--safeT));pointer-events:auto;z-index:300";
+      t.textContent="🆕 有新版本"+(v?"（"+v+"）":"")+"，點這裡在背景更新，下完這盤換頁時套用";t.onclick=doUpdate;document.body.append(t);return}
+    modal(`<div class="em">🆕</div><h2>有新版本</h2>${note?`<p style="text-align:left;white-space:pre-wrap">${esc(note)}</p>`:""}<p class="muted">${v?"版本 "+esc(v)+"<br>":""}在背景更新，你可以留在這個畫面繼續做事，換到別的頁面時才套用新版。你的戰績、棋譜和設定都會保留。</p>`,[["背景更新",doUpdate],["稍後",()=>{shown=false},true]])}
   window.XQ_notifyNew=notifyNew;
   window.XQ_checkUpdate=async()=>{chk(true);const[a,n]=await Promise.all([appVer(),netVer()]);return{a,n}};
   if(hadCtl)navigator.serviceWorker.addEventListener("controllerchange",()=>{if(updating)return;if(sessionStorage.getItem("xqReload")==="1"&&!self.crossOriginIsolated)return;notifyNew()})}
@@ -1244,9 +1248,41 @@ function Openings(v){
        <div class="op-leg"><span><i class="g"></i>正招（妙手、正手）${pct(mid.g,mn)}%</span><span><i class="o"></i>次好（優著、良著）${pct(mid.o,mn)}%</span><span><i class="b"></i>失誤（錯著、露著）${pct(mid.b,mn)}%</span></div>
        <p class="muted" style="margin:8px 0 0;line-height:1.6">中局＝第 11 回合以後、還沒進入殘局的部分。${pct(mid.b,mn)>=15?"失誤偏多，可以到「🔁 錯棋重練」把下錯的步再練一次。":pct(mid.g,mn)>=60?"大部分都跟 Pikafish 的首選一樣，很穩！":""}</p>`
       :'<div class="muted">還沒有評過等的中局著法。</div>')+`</div>
-      <p class="muted" style="font-size:12px;line-height:1.6;margin-top:10px">開局名稱依第一、二回合的走法自動判斷，只是大致分類。統計最近 150 盤挑戰電腦和 150 盤線上對戰。</p>`})().catch(e=>{const b=v.querySelector("#ob");if(b)b.innerHTML=`<div class="muted">⚠ ${esc(e.message)}</div>`});
+      <p class="muted" style="font-size:12px;line-height:1.6;margin-top:10px">開局名稱依第一、二回合的走法自動判斷，只是大致分類。統計最近 150 盤挑戰電腦和 150 盤線上對戰。</p>`;
+    recommendGames(box,T,mid,midBy).catch(()=>{})})().catch(e=>{const b=v.querySelector("#ob");if(b)b.innerHTML=`<div class="muted">⚠ ${esc(e.message)}</div>`});
   return{}}
 
+// 開局準確度或中局正招比例偏低時，從棋譜庫挑 3 盤大師對局給玩家練：
+// 開局弱＝挑「準確度最低的那個開局」、同一方贏的大師對局（看開局怎麼下）；中局弱＝挑「中局正招最少的那個開局」、同一方贏的對局（看中局怎麼贏）
+// 先找許銀川對局（檔案小），不夠再找特級大師對局；每次換不同的 3 盤（記住最近推薦過的）
+const OPEN_KW={"中炮":["中炮"],"仙人指路":["仙人指路"],"飛相局":["飞相"],"起馬局":["起马"],"過宮炮":["过宫炮"],"士角炮":["士角炮"],"巡河炮":["巡河炮"],"邊兵局":["边兵"],"金鉤炮":["金钩炮"],
+  "順炮":["顺炮"],"列炮":["列炮"],"還架中炮":["列炮"],"半途列炮":["半途列炮"],"反宮馬":["反宫马"],"屏風馬":["屏风马"],"卒底炮":["卒底炮"],"飛象":["飞象"],"挺卒":["挺卒"],"起馬應對":["起马"],"士角炮應對":["士角炮"]};
+async function recommendGames(box,T,mid,midBy){const avg=a=>a.length?a.reduce((x,y)=>x+y,0)/a.length:null,pct=(a,n)=>n?Math.round(a*100/n):0;
+  const rows=[...Object.entries(T.r).map(([n,r])=>({n,sd:"r",r})),...Object.entries(T.b).map(([n,r])=>({n,sd:"b",r}))];
+  const oa=avg(rows.flatMap(x=>x.r.acc)),mn=mid.g+mid.o+mid.b,mg=pct(mid.g,mn);
+  const OPEN_MIN=75,MID_MIN=55,wo=oa!=null&&oa<OPEN_MIN,wm=mn>=20&&mg<MID_MIN;if(!wo&&!wm)return;
+  const focus=wo&&wm?((OPEN_MIN-oa)/OPEN_MIN>=(MID_MIN-mg)/MID_MIN?"open":"mid"):wo?"open":"mid";
+  const base=nm=>nm.replace(/（對.*）$/,"");
+  let tg;if(focus==="open")tg=rows.filter(x=>x.r.acc.length&&OPEN_KW[base(x.n)]).sort((a,b)=>avg(a.r.acc)-avg(b.r.acc))[0];
+  else{const g=x=>{const m=midBy[x.n];return m&&m.g+m.o+m.b>=5?m.g/(m.g+m.o+m.b):1};tg=rows.filter(x=>OPEN_KW[base(x.n)]).sort((a,b)=>g(a)-g(b)||b.r.n-a.r.n)[0]}
+  if(!tg)return;
+  const kw=OPEN_KW[base(tg.n)],vsRed=tg.sd==="b"&&(tg.n.match(/（對(.*)）$/)||[])[1],kw2=vsRed&&OPEN_KW[vsRed]?OPEN_KW[vsRed]:[],win=tg.sd==="r"?"紅勝":"黑勝";
+  const seen=store.get("recShown",[]),pick=[];
+  for(const c of["xuyinchuan","gmgames"]){if(pick.length>=3)break;let d;try{d=await api("/db/items?c="+c)}catch(e){continue}
+    const ok=it=>it.open&&kw.every(k=>it.open.includes(k))&&it.result===win&&!seen.includes(c+"/"+it.id)&&!pick.some(p=>p.it.id===it.id);
+    let L=d.items.filter(it=>ok(it)&&kw2.every(k=>it.open.includes(k)));if(L.length<3-pick.length)L=L.concat(d.items.filter(it=>ok(it)&&!L.includes(it)));
+    for(let i=L.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[L[i],L[j]]=[L[j],L[i]]}
+    for(const it of L.slice(0,3-pick.length))pick.push({c,it})}
+  if(!pick.length||!box.isConnected)return;
+  store.set("recShown",pick.map(p=>p.c+"/"+p.it.id).concat(seen).slice(0,60));
+  const why=focus==="open"?`你的開局準確度平均 <b>${Math.round(oa)}</b>（低於 ${OPEN_MIN}），其中 <b>${esc(tg.n)}</b> 最弱。下面 3 盤是大師下這個開局、${tg.sd==="r"?"紅方":"黑方"}贏的對局，重點看<b>前 10 回合</b>怎麼出子、佔位。`
+    :`你的中局正招只有 <b>${mg}%</b>（低於 ${MID_MIN}%），<b>${esc(tg.n)}</b> 進入中局後最容易失誤。下面 3 盤是大師下這個開局、${tg.sd==="r"?"紅方":"黑方"}贏的對局，重點看<b>第 11 回合以後</b>怎麼找攻擊點、怎麼兌子。`;
+  const el=document.createElement("div");
+  el.innerHTML=`<div class="sec-t">推薦練習<small>${focus==="open"?"加強開局":"加強中局"}</small></div><div class="card"><p style="margin:0 0 8px;line-height:1.7">${why}</p>
+    <div class="st-list">${pick.map(({c,it})=>`<button class="st-g" data-c="${c}" data-id="${esc(it.id)}"><span class="dot w">${tg.sd==="r"?"紅":"黑"}</span><span class="tx"><b>${esc(it.red||"")} 對 ${esc(it.black||"")}</b><span>${esc(String(it.year||""))}・${esc(String(it.open||"").replace(/^[A-E]\d\d\s*/,""))}</span></span><span class="r muted">›</span></button>`).join("")}</div>
+    <p class="muted" style="font-size:12px;margin:8px 0 0">每次打開這頁會換不同的 3 盤。也可以用棋盤上的「推演」自己試試看別的走法。</p></div>`;
+  const ref=box.querySelector(".sec-t");box.insertBefore(el,ref||null);
+  el.querySelectorAll("[data-id]").forEach(b=>b.onclick=()=>{vibrate(5);location.hash=`#/db/${b.dataset.c}/${encodeURIComponent(b.dataset.id)}`})}
 // ================= 我的戰績（跟電腦下的勝負和、賽後報告分數、棋力測驗） =================
 // 我的戰績：所有下過的棋（挑戰電腦＋對人），可以分類、篩勝負，依月份分組，點一下打開棋譜
 function histList(box,reps){let kind=store.get("histKind","all"),res="",limit=40,all=null;
