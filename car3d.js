@@ -495,7 +495,7 @@ const REAL_OLD={
 };
 Object.assign(REAL,REAL_OLD);   // 兩批車款合在一起
 // 已經上線的寫實車款（每完成 10 台加一批）
-const REAL_LIVE=new Set(["tesla-model-3"]);
+const REAL_LIVE=new Set(["tesla-model-3","toyota-corolla-cross","toyota-rav4"]);
 
 function build(c){
   // 照真車一台一台做好、已經上線的車款用寫實版；還在做的只有開了預覽（localStorage xq_carReal）才看得到
