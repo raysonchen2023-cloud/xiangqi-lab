@@ -258,6 +258,8 @@ html[data-era=ming] .topbar,html[data-era=qing] .topbar{border-bottom-width:4px}
 .car-big{margin:4px auto 8px;max-width:420px;border-radius:16px;background:radial-gradient(ellipse 70% 38% at 50% 86%,color-mix(in srgb,var(--accent) 22%,transparent),transparent)}.car-big svg{display:block;width:100%;height:auto}
 .car-info{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin:0 0 12px}.car-info div{display:flex;flex-direction:column;padding:8px 10px;border-radius:10px;background:var(--bg)}.car-info span{font-size:12px;color:var(--muted)}.car-info b{font-size:15px}
 .car-sell{display:grid;grid-template-columns:repeat(3,1fr);gap:6px;margin:6px 0 0}.car-sell div{display:flex;flex-direction:column;padding:8px;border-radius:10px;background:var(--bg);text-align:center}.car-sell span{font-size:11px;color:var(--muted)}.car-sell b{font-size:15px}
+.rp-bar{position:fixed;left:12px;right:12px;bottom:calc(92px + var(--safeB,0px));z-index:62;display:flex;align-items:center;justify-content:space-between;gap:10px;padding:10px 12px;border-radius:14px;background:var(--card,#fff);border:1px solid var(--line);box-shadow:0 6px 24px #0003;font-size:14px}
+.rp-bar span{display:flex;flex-direction:column}.rp-bar em{font-style:normal}.rp-bar small{font-size:11.5px;color:var(--muted)}.rp-bar.done{border-color:var(--accent2)}.rp-bar.done span{font-weight:800;color:var(--accent2)}
 .car-spec{margin:0 0 12px;padding:10px 12px;border-radius:12px;background:var(--bg)}.car-spec-h{font-weight:800;font-size:15px;margin-bottom:6px;display:flex;align-items:baseline;gap:8px;flex-wrap:wrap}.car-spec-h small{font-weight:400;font-size:11.5px;color:var(--muted)}
 .car-spec dl{display:grid;grid-template-columns:auto 1fr;gap:5px 12px;margin:0;font-size:13.5px}.car-spec dt{color:var(--muted);white-space:nowrap}.car-spec dd{margin:0;font-weight:600;word-break:break-word}
 .car-spec details{margin-top:8px;font-size:13px}.car-spec summary{color:var(--accent);cursor:pointer}.car-spec details p{margin:6px 0 0;line-height:1.6}
@@ -816,7 +818,7 @@ function Lobby(v){setTop("線上大廳",false,[["📤",shareSheet,"分享給朋�
     box.querySelectorAll("[data-i]").forEach(b=>b.onclick=()=>{const p=ps.find(x=>x.id===b.dataset.i);if(!p)return;
       if(XQNet.playing())return confirmBox("你有一盤進行中的對局，邀請新對局會離開它，確定？",()=>{XQNet.leave();invite(p)},"確定");invite(p)})}
   // 棋友資料卡：段位、積分、勝負和、狀態、裝置，還有你跟他下過的戰績
-  function playerCard(p){const R=XQNet.rating(),mine=(R.hist||[]).filter(h=>h.opp===p.name),mw=mine.filter(h=>h.res==="w").length,ml=mine.filter(h=>h.res==="l").length,md=mine.filter(h=>h.res==="d").length;
+  function playerCard(p){const R=XQNet.rating(),mine=(R.hist||[]).filter(h=>h.oid?h.oid===p.id:h.opp===p.name),mw=mine.filter(h=>h.res==="w").length,ml=mine.filter(h=>h.res==="l").length,md=mine.filter(h=>h.res==="d").length;
     const N=(p.w||0)+(p.l||0)+(p.d||0),ago=Math.max(0,Math.round((Date.now()-(p.at||Date.now()))/60000));
     sheet("棋友資料",b=>{b.innerHTML=`<div style="text-align:center"><div style="font-size:22px;font-weight:900;font-family:var(--serif)">${esc(p.name)}</div>
         <div style="margin:6px 0"><span class="pill" style="font-size:15px;padding:4px 12px">🏅 ${esc(XQNet.rankOf(p.pts))}・${p.pts||0} 分</span></div>
@@ -2121,10 +2123,21 @@ function Viewer(v,c,id){
   let rpBusy=false;
   async function report(){if(!it||rpBusy)return;FREE=null;const end=endPly(line);
     const miss=[];for(let p=1;p<=end;p++)if(!gradeOf(p))miss.push(p);
-    if(miss.length){rpBusy=true;const sh=sheet("賽後報告",b=>{b.innerHTML=`<p style="text-align:center;padding:16px 0">Pikafish 評等中… <b id="rpn">0</b> / ${miss.length} 步<br><span class="muted">每步約 0.6 秒，評過的會記住，下次直接看</span></p>`});
-      try{for(let k=0;k<miss.length;k++){if(screen!==self||!it||!document.body.contains(sh))return;const p=miss[k],m=seq(line,p)[p-1];
-        grades[owner(line,p)+"|"+p]=(await api("/an/classify",{board:boardAt(line,p-1),side:moverAt(p),f:m.f,t:m.t}))||{q:"—"};const n=sh.querySelector("#rpn");if(n)n.textContent=k+1}}
-      catch(e){toast(e.message);return}finally{rpBusy=false}show()}
+    // 還沒評等完：在背景評，下面一條進度列，評等時照樣可以看棋、上一步下一步；評好了進度列變成「看報告」
+    if(miss.length){if(rpBusy)return toast("賽後報告還在評等，好了會通知你");rpBusy=true;
+      document.querySelectorAll(".rp-bar").forEach(x=>x.remove());
+      const bar=document.createElement("div");bar.className="rp-bar";
+      bar.innerHTML=`<span><em>📊 Pikafish 評等中 <b class="rpn">0</b> / ${miss.length} 步</em><small>可以先看棋，評好了會通知你</small></span><button class="pill">取消</button>`;document.body.append(bar);
+      let stop=false,done=false;bar.querySelector("button").onclick=()=>{stop=true;bar.remove()};
+      try{for(let k=0;k<miss.length;k++){if(stop||screen!==self||!it)return;const p=miss[k],m=seq(line,p)[p-1];
+        grades[owner(line,p)+"|"+p]=(await api("/an/classify",{board:boardAt(line,p-1),side:moverAt(p),f:m.f,t:m.t}))||{q:"—"};
+        const n=bar.querySelector(".rpn");if(n)n.textContent=k+1;if(screen===self&&!FREE&&k%4===3)show()}
+        done=true}
+      catch(e){toast(e.message);return}finally{rpBusy=false;if(!done)bar.remove()}
+      if(screen!==self||!it){bar.remove();return}
+      show();vibrate([20,40,20]);
+      bar.classList.add("done");bar.innerHTML=`<span>📊 賽後報告評好了</span><button class="pill go">看報告 ›</button>`;
+      bar.querySelector(".go").onclick=()=>{bar.remove();report()};setTimeout(()=>bar.remove(),20000);return}
     const moves=seq(line,end).map((m,i)=>{const g=gradeOf(i+1)||{};return{f:m.f,t:m.t,cn:m.cn,by:moverAt(i+1),q:g.q,loss:g.loss,ev:g.ev,bc:g.bc,bm:g.bm,bp:g.bp,ck:m.ck}});
     const rep=gameReport(it.board,moves),names={r:it.red||"紅方",b:it.black||"黑方"},side=it.black==="你"?"b":"r";
     // 自己跟電腦下的對局：記下分數給「我的戰績」用

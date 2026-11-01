@@ -65,7 +65,7 @@ var XQNet=(function(){
     const res=G.result.w==null?"d":G.result.w===s?"w":"l";
     let d=res==="w"?cl(20+3*g,5,40):res==="l"?-cl(15-3*g,3,30):cl(3*g,-10,10);
     const before=R.pts;R.pts=Math.max(0,R.pts+d);d=R.pts-before;R[res]++;
-    R.hist.unshift({gid:G.gid,rid:G.id,opp:o.name,res,d,pts:R.pts,why:G.result.why||"",n:G.moves.length,at:Date.now()});R.hist=R.hist.slice(0,100);ls.set("rate",R);
+    R.hist.unshift({gid:G.gid,rid:G.id,opp:o.name,oid:o.id,res,d,pts:R.pts,why:G.result.why||"",n:G.moves.length,at:Date.now()});R.hist=R.hist.slice(0,100);ls.set("rate",R);
     presence();emit("rated",{res,d,pts:R.pts,rank:rankOf(R.pts),was:rankOf(before)})}
   function presence(){if(!cli||!cli.up)return;const m=me(),sd=side();
     cli.pub(`${ROOT}/u/${m.id}`,JSON.stringify({id:m.id,name:m.name,st:cur&&!(G&&G.result)?(sd?"playing":"watching"):seeking?"seeking":"idle",gid:cur&&cur.gid||null,pts:myPts(),w:rec().w,l:rec().l,d:rec().d,kind:typeof MY_KIND!=="undefined"?MY_KIND:"",at:Date.now()}),true)}
