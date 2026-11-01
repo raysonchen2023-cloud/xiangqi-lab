@@ -544,7 +544,7 @@ let AC=null;
 //       2. 每次點擊檢查時間有沒有在走：顯示 running 但 currentTime 停住＝壞掉了，也重建
 //       3. 新建後播一個無聲片段解鎖；audioSession 設 playback，靜音鍵打開也有聲音
 const newAC=()=>{try{if(AC)AC.close()}catch(e){}AC=null;try{const C=window.AudioContext||window.webkitAudioContext;if(C){AC=new C();AC._t=performance.now();AC._ct=0}}catch(e){}};
-const unlockAudio=()=>{try{if(navigator.audioSession&&navigator.audioSession.type!=="playback")navigator.audioSession.type="playback"}catch(e){}
+const unlockAudio=()=>{primeVoice();try{if(navigator.audioSession&&navigator.audioSession.type!=="playback")navigator.audioSession.type="playback"}catch(e){}
   try{const now=performance.now();
     if(!AC||AC.state==="closed")newAC();
     else if(AC.state==="running"&&AC.currentTime===AC._ct&&now-AC._t>800)newAC();   // 時間停住了：殭屍狀態
@@ -555,6 +555,12 @@ for(const ev of["pointerdown","touchend","click","keydown"])document.addEventLis
 document.addEventListener("visibilitychange",()=>{if(document.hidden&&AC){try{AC.close()}catch(e){}AC=null}});
 window.addEventListener("pagehide",()=>{if(AC){try{AC.close()}catch(e){}AC=null}});
 // 聲音還沒醒（例如電腦走棋）就先叫醒再播，不要直接丟掉；排程往後留 20ms，剛醒來時開頭才不會被切掉
+// 語音報「吃」「將軍」（意見回饋 139 補充）：用手機內建的中文語音朗讀，離線也能用；設定「語音報吃、將軍」可以關
+// iPhone 要在點擊裡先唸過一次（音量 0）才允許之後自動唸
+let VOICE=null;const pickVoice=()=>{try{const vs=speechSynthesis.getVoices();VOICE=vs.find(v=>/zh[-_]TW/i.test(v.lang))||vs.find(v=>/zh[-_]HK/i.test(v.lang))||vs.find(v=>/^zh/i.test(v.lang))||null}catch(e){}};
+if(window.speechSynthesis){pickVoice();speechSynthesis.onvoiceschanged=pickVoice}
+let voicePrimed=false;const primeVoice=()=>{if(voicePrimed||!window.speechSynthesis)return;voicePrimed=true;try{const u=new SpeechSynthesisUtterance(" ");u.volume=0;speechSynthesis.speak(u)}catch(e){}};
+function sayCall(text){if(!store.get("voiceCall",true)||!window.speechSynthesis)return;try{speechSynthesis.cancel();const u=new SpeechSynthesisUtterance(text);u.lang=VOICE?VOICE.lang:"zh-TW";if(VOICE)u.voice=VOICE;u.rate=1.05;u.pitch=text==="將軍"?.9:1;u.volume=1;speechSynthesis.speak(u)}catch(e){}}
 function withAudio(play){if(!AC)return;if(AC.state==="running"){try{play()}catch(e){}return}try{AC.resume().then(()=>{if(AC&&AC.state==="running")try{play()}catch(e){}}).catch(()=>{})}catch(e){}}
 function moveSound(cap){if(!(cap?store.get("capSound",true):store.get("mvSound",false)))return;withAudio(()=>moveSound0(cap))}
 // 棋子落在木棋盤上的聲音（意見回饋 139）：依棋子材質合成，設定裡可選
@@ -672,7 +678,7 @@ function Board(onTap,onSwipe){
     if(o.hint)for(const q of o.hint)svg.append(el("rect",{x:X(q)-29,y:Y(q)-29,width:58,height:58,rx:9,fill:"none",stroke:"#E39B0F","stroke-width":4,"stroke-dasharray":"7 5"}));
     // 走棋動畫：跟上一次畫的盤面比，棋子從原位滑到新位置；被吃的棋子淡出
     const fresh=L&&prevB&&prevB[L.f]&&prevB[L.f]===board[L.t]&&!board[L.f]&&prevB[L.t]!==board[L.t];
-    if(fresh&&o.anim!==false)moveSound(!!prevB[L.t]);
+    if(fresh&&o.anim!==false){moveSound(!!prevB[L.t]);if(o.check>=0)setTimeout(()=>sayCall("將軍"),120);else if(prevB[L.t])setTimeout(()=>sayCall("吃"),120)}
     if(fresh&&o.fx&&o.check>=0){const lab=matePattern(board,L,o.check);setTimeout(()=>checkFx(svg,lab),200)}   // 走完棋才蓋章
     const anim=fresh&&o.anim!==false&&store.get("mvAnim",true)&&!dropNoAnim;if(fresh)dropNoAnim=false;   // 拖過去放下的棋，不用再滑一次
     if(anim&&prevB[L.t]){const cg=piece(prevB[L.t],L.t,0,T,PS,false);svg.append(cg);requestAnimationFrame(()=>{cg.style.transition="opacity .45s";cg.style.opacity="0"})}
@@ -1547,9 +1553,9 @@ function Settings(v){
     v.querySelectorAll("[data-e]").forEach(x=>x.onclick=()=>{const k=x.dataset.e;if(k===store.get("era","classic"))return;vibrate(5);store.set("era",k);applyEra();
       if(k!=="classic"&&store.get("boardTheme","wood3d")!=="auto"){store.set("boardTheme","auto");toast("棋盤也換成這個朝代的配色（可在下面改回）")}paint();show(true)});
     const tg=(k,label,sub)=>`<label class="row" style="justify-content:space-between;padding:6px 0"><span><b>${label}</b><br><span class="muted">${sub}</span></span><input type="checkbox" class="sw" data-t="${k}" ${store.get(k,k!=="mvSound")?"checked":""}></label>`;
-    v.querySelector("#mv").innerHTML=tg("mvArrow","箭頭","從原來位置畫箭頭指到新位置")+'<div style="border-top:1px solid var(--line)"></div>'+tg("mvAnim","動畫","棋子滑過去，被吃的棋子淡出")+'<div style="border-top:1px solid var(--line)"></div>'+tg("mvSound","走棋音效","走棋時「叩」一聲")+'<div style="border-top:1px solid var(--line)"></div>'+tg("capSound","吃子音效","吃子時重重「啪」一聲、將軍時「鏘」一聲")+'<div style="border-top:1px solid var(--line)"></div><div style="padding:6px 0"><b>棋子材質聲音</b><br><span class="muted">像真的棋子放在木棋盤上；點一下可以試聽</span><div class="st-res" id="sndSt" style="margin:8px 0 0">'+[["wood","實木"],["jade","玉石"],["metal","金屬"],["soft","輕敲"]].map(([k,l])=>`<button data-snd="${k}" class="${store.get("sndStyle","wood")===k?"on":""}">${l}</button>`).join("")+'</div></div>'+'<div style="border-top:1px solid var(--line)"></div>'+tg("ckFx","將軍特效","被將軍或將對方軍時，棋盤上蓋「將軍！」字樣")+'<div style="border-top:1px solid var(--line)"></div>'+tg("opFx","開局名稱動畫","走出中炮、仙人指路、屏風馬…時，棋盤上展開卷軸寫出開局名");
+    v.querySelector("#mv").innerHTML=tg("mvArrow","箭頭","從原來位置畫箭頭指到新位置")+'<div style="border-top:1px solid var(--line)"></div>'+tg("mvAnim","動畫","棋子滑過去，被吃的棋子淡出")+'<div style="border-top:1px solid var(--line)"></div>'+tg("mvSound","走棋音效","走棋時「叩」一聲")+'<div style="border-top:1px solid var(--line)"></div>'+tg("capSound","吃子音效","吃子時重重「啪」一聲、將軍時「鏘」一聲")+'<div style="border-top:1px solid var(--line)"></div>'+tg("voiceCall","語音報「吃」「將軍」","吃子時唸「吃」、將軍時唸「將軍」（用手機內建語音）")+'<div style="border-top:1px solid var(--line)"></div><div style="padding:6px 0"><b>棋子材質聲音</b><br><span class="muted">像真的棋子放在木棋盤上；點一下可以試聽</span><div class="st-res" id="sndSt" style="margin:8px 0 0">'+[["wood","實木"],["jade","玉石"],["metal","金屬"],["soft","輕敲"]].map(([k,l])=>`<button data-snd="${k}" class="${store.get("sndStyle","wood")===k?"on":""}">${l}</button>`).join("")+'</div></div>'+'<div style="border-top:1px solid var(--line)"></div>'+tg("ckFx","將軍特效","被將軍或將對方軍時，棋盤上蓋「將軍！」字樣")+'<div style="border-top:1px solid var(--line)"></div>'+tg("opFx","開局名稱動畫","走出中炮、仙人指路、屏風馬…時，棋盤上展開卷軸寫出開局名");
     v.querySelectorAll("[data-snd]").forEach(x=>x.onclick=()=>{store.set("sndStyle",x.dataset.snd);v.querySelectorAll("[data-snd]").forEach(y=>y.classList.toggle("on",y===x));unlockAudio();withAudio(()=>moveSound0(false));setTimeout(()=>withAudio(()=>moveSound0(true)),550)});
-    v.querySelectorAll("[data-t]").forEach(x=>x.onchange=()=>{store.set(x.dataset.t,x.checked);if(x.checked&&(x.dataset.t==="mvSound"||x.dataset.t==="capSound")){unlockAudio();moveSound(x.dataset.t==="capSound")}show(true)});
+    v.querySelectorAll("[data-t]").forEach(x=>x.onchange=()=>{store.set(x.dataset.t,x.checked);if(x.checked&&(x.dataset.t==="mvSound"||x.dataset.t==="capSound")){unlockAudio();moveSound(x.dataset.t==="capSound")}if(x.checked&&x.dataset.t==="voiceCall"){primeVoice();setTimeout(()=>sayCall("將軍"),150)}show(true)});
     v.querySelector("#nmS").textContent=myName()||"還沒取名字";show(false)};
   v.querySelector("#nm").onclick=()=>nameSheet(false);v.querySelector("#fb").onclick=()=>feedbackSheet();v.querySelector("#sh").onclick=shareSheet;const cn=v.querySelector("#cn");if(cn)cn.onclick=connectSheet;const fa=v.querySelector("#fa");if(fa)fa.onclick=()=>location.hash="#/fbadmin";
   paint();return{}}
