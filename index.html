@@ -168,23 +168,40 @@ html[data-era=ming] .topbar,html[data-era=qing] .topbar{border-bottom-width:4px}
 .ckfx{position:fixed;z-index:64;pointer-events:none;font-family:var(--serif);font-weight:900;animation:ckout 1.9s ease forwards}
 .ckfx .glow{position:absolute;inset:0;border-radius:10px;box-shadow:inset 0 0 0 2px #e0303a99,inset 0 0 .5em .12em #c8102e88;animation:ckglow .9s ease-in-out 2}
 .ckfx .mid{position:absolute;left:0;right:0;top:50%;height:1.5em;transform:translateY(-50%);display:flex;align-items:center;justify-content:center;gap:.5em}
+.ckfx .mid.has{padding-right:.5em}
 .ckfx .ink{position:absolute;left:6%;right:6%;top:.2em;bottom:.2em;border-radius:50% 46% 52% 44%/60% 42% 58% 40%;
   background:linear-gradient(90deg,#0000,#140c0af2 12%,#1d1210fc 50%,#140c0af2 88%,#0000);box-shadow:0 .05em .4em #0006;transform-origin:left center;animation:ckink .38s cubic-bezier(.3,.9,.3,1) both}
+.ckfx .ink:after{content:"";position:absolute;inset:8% 4%;border-radius:inherit;background:repeating-linear-gradient(178deg,#0000 0 .045em,#ffffff0c .045em .06em,#0000 .06em .13em);
+  -webkit-mask:linear-gradient(90deg,#0000,#000 30%,#000 70%,#0000);mask:linear-gradient(90deg,#0000,#000 30%,#000 70%,#0000)}
 .ckfx b{position:relative;line-height:1;background:linear-gradient(180deg,#fff6d8 0%,#f3cf73 45%,#c8902c 100%);-webkit-background-clip:text;background-clip:text;color:transparent;
-  filter:drop-shadow(0 .03em 0 #6b0d12) drop-shadow(0 .06em .1em #000a);animation:ckch .5s cubic-bezier(.2,1.5,.4,1) both}
+  filter:drop-shadow(0 .03em 0 #6b0d12) drop-shadow(0 .06em .1em #000a);animation:ckch .46s cubic-bezier(.2,1.25,.4,1) both}
 .ckfx .c1{animation-delay:.16s;--dx:-.6em}.ckfx .c2{animation-delay:.28s;--dx:.6em}
-.ckfx .lab{position:absolute;left:50%;top:-.62em;transform:translateX(-50%);font-style:normal;font-size:.4em;font-weight:900;letter-spacing:.12em;padding:.12em .5em .12em .62em;color:#fff6e0;
-  background:#b3121f;border-radius:.2em;box-shadow:0 0 0 .07em #f3cf73,0 .1em .3em #0007;white-space:nowrap;animation:cklab .45s .45s cubic-bezier(.2,1.6,.4,1) both}
-@keyframes cklab{from{opacity:0;transform:translateX(-50%) scale(1.8) rotate(-6deg)}to{opacity:1;transform:translateX(-50%) rotate(-3deg)}}
-.opfx{position:fixed;z-index:63;transform:translate(-50%,-50%);pointer-events:none;font-family:var(--serif);animation:opout 2.6s ease forwards}
-.opfx .scroll{position:relative;display:flex;flex-direction:column;align-items:center;padding:.18em 1.1em .22em;border-radius:.12em;color:#3b2412;
-  background:linear-gradient(180deg,#f8edd2,#efdcb2 55%,#e6cd9a);box-shadow:0 .08em .35em #0006,inset 0 0 .3em #b98a4a55;transform-origin:center;animation:opunroll .55s cubic-bezier(.3,1,.3,1) both}
-.opfx .scroll b{font-size:1em;font-weight:900;letter-spacing:.18em;line-height:1.15;padding-left:.18em}.opfx .who{font-size:.36em;letter-spacing:.3em;color:#8a5a2b;font-weight:700;padding-left:.3em}
-.opfx .rod{position:absolute;top:-.1em;bottom:-.1em;width:.22em;border-radius:.11em;background:linear-gradient(90deg,#5a3418,#9a6332 45%,#4a2a12);box-shadow:0 .05em .15em #0006}.opfx .rod.l{left:-.12em}.opfx .rod.r{right:-.12em}
-@keyframes opunroll{from{transform:scaleX(.08);opacity:.6}to{transform:scaleX(1);opacity:1}}
-@keyframes opout{0%,80%{opacity:1}100%{opacity:0;transform:translate(-50%,-62%)}}
+.ckfx .seal{position:absolute;left:calc(50% + 4.4em);top:50%;white-space:nowrap;writing-mode:vertical-rl;text-orientation:upright;font-style:normal;font-weight:900;font-size:.27em;line-height:1;letter-spacing:.06em;
+  padding:.34em .26em .3em;color:#fbecd0;background:radial-gradient(circle at 30% 25%,#d0222c,#a90f1a 70%,#8e0c15);border-radius:.14em .1em .16em .12em;
+  box-shadow:inset 0 0 0 .1em #a90f1a,inset 0 0 0 .17em #fbecd0d0,0 .08em .25em #000a;transform:translateY(-50%) rotate(-4deg);animation:ckseal .34s .62s cubic-bezier(.25,.8,.3,1) both}
+.ckfx .seal.s4{font-size:.22em;left:calc(50% + 5.4em)}
+@keyframes ckseal{0%{opacity:0;transform:translateY(-50%) rotate(-4deg) scale(1.7)}55%{opacity:1}100%{opacity:1;transform:translateY(-50%) rotate(-4deg) scale(1)}}
+.opfx{position:fixed;z-index:63;transform:translate(-50%,-50%);pointer-events:none;font-family:var(--serif);animation:opout 2.2s ease forwards}
+.opfx .opc{position:relative;display:flex;align-items:center;gap:.34em;padding:.22em 1.15em .2em;white-space:nowrap}
+.opfx .bg{position:absolute;inset:0;background:linear-gradient(180deg,#fdf7e8fa,#f4e6c5f8);-webkit-mask:linear-gradient(90deg,#0000,#000 18%,#000 82%,#0000);mask:linear-gradient(90deg,#0000,#000 18%,#000 82%,#0000);
+  animation:opopen .55s cubic-bezier(.3,.8,.25,1) both}
+.opfx .bg:before,.opfx .bg:after{content:"";position:absolute;left:0;right:0;height:.035em;min-height:1px;background:linear-gradient(90deg,#0000,#b8873a 25%,#d9b062 50%,#b8873a 75%,#0000)}
+.opfx .bg:before{top:.07em}.opfx .bg:after{bottom:.07em}
+.opfx .txt,.opfx .seal{position:relative}.opfx .txt{display:flex;flex-direction:column;align-items:center}
+.opfx .who{display:flex;align-items:center;gap:.5em;font-size:.3em;font-weight:700;letter-spacing:.45em;padding-left:.45em;color:#8b6a3e;line-height:1.3;animation:opfade .4s .2s both}
+.opfx .who:before,.opfx .who:after{content:"";width:1.6em;height:1px;background:#b89260}
+.opfx b{font-size:1em;font-weight:900;letter-spacing:.14em;padding-left:.14em;line-height:1.12;color:#1e140d;text-shadow:0 .015em 0 #fff8,0 0 .04em #0002;animation:opink .6s .14s cubic-bezier(.2,.7,.3,1) both}
+.opfx .seal{writing-mode:vertical-rl;text-orientation:upright;white-space:nowrap;font-size:.36em;font-weight:900;line-height:1;letter-spacing:.06em;padding:.3em .24em .26em;color:#fbecd0;
+  background:radial-gradient(circle at 30% 25%,#cc232c,#a5121c 70%,#8c0d15);border-radius:.14em .1em .16em .12em;box-shadow:inset 0 0 0 .09em #a5121c,inset 0 0 0 .15em #fbecd0cc;
+  transform:rotate(-3deg);animation:opseal .3s .5s cubic-bezier(.25,.8,.3,1) both}
+.opfx .seal.blk{background:radial-gradient(circle at 30% 25%,#3d322a,#221a15 70%,#160f0b);box-shadow:inset 0 0 0 .09em #221a15,inset 0 0 0 .15em #f1e2c2cc}
+@keyframes opopen{from{transform:scaleX(.3);opacity:0}to{transform:none;opacity:1}}
+@keyframes opink{from{opacity:0;filter:blur(.06em);letter-spacing:.32em;padding-left:.32em}to{opacity:1;filter:blur(0);letter-spacing:.14em;padding-left:.14em}}
+@keyframes opfade{from{opacity:0}to{opacity:1}}
+@keyframes opseal{0%{opacity:0;transform:rotate(-3deg) scale(1.6)}55%{opacity:1}100%{opacity:1;transform:rotate(-3deg) scale(1)}}
+@keyframes opout{0%,80%{opacity:1}100%{opacity:0;transform:translate(-50%,-60%)}}
 @keyframes ckink{from{transform:scaleX(0);opacity:.4}to{transform:scaleX(1);opacity:1}}
-@keyframes ckch{from{opacity:0;transform:translateX(var(--dx)) scale(1.5)}to{opacity:1;transform:none}}
+@keyframes ckch{from{opacity:0;transform:translateX(var(--dx)) scale(1.4)}to{opacity:1;transform:none}}
 @keyframes ckglow{0%,100%{opacity:.2}50%{opacity:1}}
 @keyframes ckout{0%,78%{opacity:1}100%{opacity:0}}
 .emogrid{display:grid;grid-template-columns:repeat(2,1fr);gap:8px}.emogrid button{padding:12px 8px;border-radius:14px;background:var(--bg);border:1px solid var(--line);font-size:16px;font-weight:600}.emogrid button span{font-size:26px;display:block}
@@ -542,23 +559,25 @@ function matePattern(b,last,ksq){if(!last||ksq<0)return"";const p=b[last.t];if(!
     if(mine&&sc.toLowerCase()==="c")return"重炮";
     if(mine&&sc.toLowerCase()==="n"&&Math.abs(Math.floor(between[0]/9)-kr)+Math.abs(between[0]%9-kc)===1)return"馬後炮";return""}
   return""}
-// 開局名稱動畫：棋盤上方展開一條米色卷軸，寫開局名（例如「中炮」），兩秒後收起
+// 開局名稱動畫：棋盤上方展開一條宣紙橫條，寫開局名（例如「中炮」）並蓋紅方/黑方小印，約兩秒後淡出
 function openFx(svg,name,who){if(!store.get("opFx",true)||!name)return;const r=svg.getBoundingClientRect();if(!r.width)return;
   document.querySelectorAll(".opfx").forEach(x=>x.remove());
-  const d=document.createElement("div");d.className="opfx";d.style.cssText=`left:${r.left+r.width/2}px;top:${r.top+r.height*.27}px;font-size:${Math.round(r.width*.085)}px`;
-  d.innerHTML=`<div class="scroll"><i class="rod l"></i><span class="who">${esc(who)}</span><b>${esc(name)}</b><i class="rod r"></i></div>`;document.body.append(d);setTimeout(()=>d.remove(),2600)}
+  // 米白宣紙橫條從中間向兩側展開，墨色開局名由淡轉濃，旁邊蓋一方小印（紅方朱印、黑方墨印）
+  const w=String(who||""),side=w.length>=4?w.slice(0,2):"",cap=side?w.slice(2):w;
+  const d=document.createElement("div");d.className="opfx";d.style.cssText=`left:${r.left+r.width/2}px;top:${r.top+r.height*.25}px;font-size:${Math.round(r.width*.085)}px`;
+  d.innerHTML=`<div class="opc"><i class="bg"></i><div class="txt">${cap?`<span class="who">${esc(cap)}</span>`:""}<b>${esc(name)}</b></div>${side?`<i class="seal${side[0]==="黑"?" blk":""}">${esc(side)}</i>`:""}</div>`;document.body.append(d);setTimeout(()=>d.remove(),2200)}
 // 依剛走完的步數判斷要不要秀開局名：紅方第 1 步；黑方第 1 步（順炮、卒底炮…）或第 2 步（屏風馬、反宮馬）
 function openingCue(moves){const n=moves.length;
   if(n===1){const o=redOpening(moves[0].cn);return o&&o!=="其他開局"?["紅方開局",o]:null}
   if(n===2){const d=blackDefence(moves);return["順炮","列炮","還架中炮","卒底炮","飛象","挺卒"].includes(d)?["黑方應對",d]:null}
   if(n===4){const d=blackDefence(moves),d2=blackDefence(moves.slice(0,2));return["屏風馬","反宮馬","半途列炮"].includes(d)&&d!==d2?["黑方應對",d]:null}
   return null}
-// 將軍特效：棋盤中間蓋一個「將軍！」印章動畫，有開音效的話再「鏘」一聲；認得出殺法時上面多一行小字（例如「臥槽馬」）
+// 將軍特效：棋盤中間蓋一個「將軍！」印章動畫，有開音效的話再「鏘」一聲；認得出殺法時在「軍」字右邊補蓋一方朱印寫殺法名（例如「臥槽馬」）
 function checkFx(svg,label){if(!store.get("ckFx",true))return;const r=svg.getBoundingClientRect();if(!r.width)return;
   document.querySelectorAll(".ckfx").forEach(x=>x.remove());
   // 墨色筆刷一抹橫過楚河漢界，金色「將」「軍」兩字一左一右落下，棋盤四周泛一圈紅光
   const d=document.createElement("div");d.className="ckfx";d.style.cssText=`left:${r.left}px;top:${r.top}px;width:${r.width}px;height:${r.height}px;font-size:${Math.round(r.width*.15)}px`;
-  d.innerHTML='<i class="glow"></i><div class="mid"><i class="ink"></i>'+(label?`<em class="lab">${esc(label)}</em>`:"")+'<b class="c1">將</b><b class="c2">軍</b></div>';document.body.append(d);vibrate([25,30,25]);setTimeout(()=>d.remove(),1900);
+  d.innerHTML='<i class="glow"></i><div class="mid'+(label?' has':'')+'"><i class="ink"></i><b class="c1">將</b><b class="c2">軍</b>'+(label?`<em class="seal${label.length>3?" s4":""}">${esc(label)}</em>`:"")+'</div>';document.body.append(d);vibrate([25,30,25]);setTimeout(()=>d.remove(),1900);
   if((store.get("capSound",true)||store.get("mvSound",false))&&AC&&AC.state==="running")try{const t=AC.currentTime;
     for(const[f,at]of[[880,0],[1320,.09]]){const o=AC.createOscillator(),g=AC.createGain();o.type="square";o.frequency.setValueAtTime(f,t+at);
       g.gain.setValueAtTime(.12,t+at);g.gain.exponentialRampToValueAtTime(.001,t+at+.35);o.connect(g).connect(AC.destination);o.start(t+at);o.stop(t+at+.4)}}catch(e){}}
