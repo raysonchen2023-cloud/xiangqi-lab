@@ -246,6 +246,19 @@ html[data-era=ming] .topbar,html[data-era=qing] .topbar{border-bottom-width:4px}
 .op-stack{display:flex;height:14px;border-radius:7px;overflow:hidden;background:var(--line)}.op-stack i{display:block;height:100%}
 .op-stack .g,.op-leg .g{background:var(--accent2)}.op-stack .o,.op-leg .o{background:var(--info)}.op-stack .b,.op-leg .b{background:var(--red)}
 .op-leg{display:flex;flex-direction:column;gap:4px;margin-top:10px;font-size:14px}.op-leg i{display:inline-block;width:10px;height:10px;border-radius:3px;margin-right:6px;vertical-align:0}
+.gar-top{line-height:1.6}.gar-pts{display:flex;align-items:baseline;gap:6px;font-size:16px}.gar-pts b{font-size:34px;font-weight:900;color:var(--accent2);font-family:var(--sans)}
+.gar-how summary{cursor:pointer;color:var(--accent);font-size:14px;margin-top:8px}.gar-how p{font-size:13px;margin:6px 0 0}
+.gar-ty{display:flex;gap:6px;overflow-x:auto;padding:2px 0 10px;scrollbar-width:none}.gar-ty::-webkit-scrollbar{display:none}.gar-ty .chip{flex:none;font-family:var(--sans)}.gar-ty .chip.on{background:var(--accent);color:#fff;border-color:var(--accent)}
+.car-grid,.gar-own{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}.gar-own{display:flex;overflow-x:auto;scrollbar-width:none;padding-bottom:4px}.gar-own .car{flex:0 0 46%}
+.car{position:relative;min-width:0;display:flex;flex-direction:column;gap:1px;text-align:left;padding:6px 8px 9px;border-radius:14px;background:var(--card,#fff);border:1px solid var(--line);font-family:var(--sans)}
+.car-pic{border-radius:10px;background:radial-gradient(ellipse 70% 40% at 50% 88%,color-mix(in srgb,var(--accent) 16%,transparent),transparent)}.car svg{display:block;width:100%;height:auto}
+.car b{font-size:14px;line-height:1.25;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.car span{font-size:11.5px;color:var(--muted);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.car .cost{font-size:13px;font-weight:800;color:var(--ink,inherit)}.car.can .cost{color:var(--accent2)}.car.lock .car-pic svg{filter:saturate(.2) brightness(1.08);opacity:.72}
+.car.own{border-color:#D4A017;box-shadow:inset 0 0 0 1px #D4A017}.car.own .cost{color:#B8860B}.car .own-b{position:absolute;top:6px;right:6px;font-style:normal;font-size:11px;font-weight:800;color:#fff;background:#D4A017;border-radius:8px;padding:1px 7px}
+.car-big{margin:4px auto 8px;max-width:420px;border-radius:16px;background:radial-gradient(ellipse 70% 38% at 50% 86%,color-mix(in srgb,var(--accent) 22%,transparent),transparent)}.car-big svg{display:block;width:100%;height:auto}
+.car-info{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin:0 0 12px}.car-info div{display:flex;flex-direction:column;padding:8px 10px;border-radius:10px;background:var(--bg)}.car-info span{font-size:12px;color:var(--muted)}.car-info b{font-size:15px}
+.car-drive{overflow:hidden}.car-drive svg{animation:cardrive 1.3s cubic-bezier(.2,.8,.3,1) both}.car-drive .wh{transform-box:fill-box;transform-origin:center;animation:wspin .43s linear 3}
+@keyframes cardrive{from{transform:translateX(-115%)}to{transform:none}}@keyframes wspin{to{transform:rotate(360deg)}}
 .lib-r{flex:none;min-width:42px;text-align:center;font-size:12px;font-weight:700;line-height:20px;padding:0 8px;border-radius:999px}
 .lib-r.r{color:var(--red);background:var(--bg);background:color-mix(in srgb,var(--red) 12%,var(--card))}
 .lib-r.b{color:var(--ink);background:var(--bg);background:color-mix(in srgb,var(--ink) 10%,var(--card))}
@@ -637,6 +650,7 @@ function route(){
   if(p[0]==="stats")return screen=Stats(v);
   if(p[0]==="redo")return screen=Redo(v);
   if(p[0]==="openings")return screen=Openings(v);
+  if(p[0]==="garage")return screen=Garage(v);
   if(p[0]==="settings")return screen=Settings(v);
   if(p[0]==="fbadmin")return screen=FbAdmin(v);
   if(p[0]==="quiz")return screen=Quiz(v);
@@ -901,6 +915,7 @@ function Home(v){
    <div class="hero">
     ${T("k1","#/cpu","🤖","挑戰電腦","hCpu","Pikafish・積分挑戰")}
     ${OFF?T("k2","#/lobby","🌐","線上對戰","hNet","看誰在線上・邀請對戰"):T("k4","#/watch/ai","📺","AI 對戰","hAi","GPT 對 Claude")}
+    ${OFF?T("k3","#/garage","🚗","我的車庫","hCar",(()=>{try{const b=JSON.parse(localStorage.getItem("xq_carBank"));if(b)return`🚗 ${b.pts.toLocaleString()} 點・收藏 ${Object.keys(b.owned||{}).length} 台`}catch(e){}return"贏棋拿點數換車"})()):""}
    </div>
    <div class="sec-t">學習</div>
    <div class="hero">
@@ -1095,7 +1110,7 @@ function Redo(v){
   async function start(x){vibrate(8);
     const go=async()=>{try{const pre={moves:x.g.moves.slice(0,x.ply-1).map(m=>({f:m.f,t:m.t,q:m.q,loss:m.loss,ev:m.ev,bc:m.bc,bm:m.bm,bp:m.bp})),
         info:{key:x.key,ply:x.ply,cn:x.m.cn,q:x.m.q,loss:x.m.loss,bc:x.m.bc||"",opp:x.g.opp||"",date:String(x.g.id).slice(0,10)}};
-      await api("/play/new",{human:x.g.side,level:7,pre});store.set("cpuRanked",false);location.hash="#/cpu"}catch(e){toast(e.message)}};
+      await api("/play/new",{human:x.g.side,level:7,pre});store.set("cpuRanked",false);store.set("cpuCar",false);location.hash="#/cpu"}catch(e){toast(e.message)}};
     let s=null;try{s=await api("/play/state")}catch(e){}
     if(s&&s.ranked&&!s.result&&s.moves.length>=2)confirmBox("積分挑戰還沒下完，開始練習會算輸，確定？",go,"開始練習");
     else if(s&&!s.ranked&&!s.practice&&!s.result&&s.moves.length>=2)confirmBox("挑戰電腦還有一盤沒下完，開始練習會蓋掉它，確定？",go,"開始練習");else go()}
@@ -1232,7 +1247,7 @@ function Stats(v){
     :`<span class="tx"><b>🧩 棋力測驗</b><span>還沒測過</span></span><button class="sbtn pri" id="qz">開始測驗</button>`;
   v.querySelector("#qz").onclick=()=>location.hash="#/quiz";
   histList(v.querySelector("#sHist"),reps);
-  const goCpu=()=>{const g=v.querySelector("#cpuGo");if(g)g.onclick=()=>{store.set("cpuRanked",true);location.hash="#/cpu"}};
+  const goCpu=()=>{const g=v.querySelector("#cpuGo");if(g)g.onclick=()=>{store.set("cpuRanked",true);store.set("cpuCar",false);location.hash="#/cpu"}};
   api("/play/state").then(st=>{
     let W=0,L=0,D=0;for(const r of Object.values(st.record||{})){W+=r.w||0;L+=r.l||0;D+=r.d||0}
     const CR=st.cpuRate||{w:0,l:0,d:0};W+=CR.w;L+=CR.l;D+=CR.d;   // 積分挑戰的勝負也算進挑戰電腦的總計
@@ -1424,18 +1439,146 @@ function reportSheet(rep,opts){let s=opts.side||"r";
     if(opts.goto)b.querySelectorAll("[data-p]").forEach(x=>x.onclick=()=>{closeSheet();opts.goto(+x.dataset.p)})};paint()})}
 
 // ================= 挑戰電腦 =================
+// ================= 🚗 獎勵模式的車庫：贏棋拿點數（一點＝台幣一萬），換 8891 上的車款模型 =================
+let CARS_P=null;
+const CARS=()=>CARS_P||(CARS_P=fetch(OFF?"data/cars.json":"/m/cars.json").then(r=>{if(!r.ok)throw new Error("找不到車款資料");return r.json()}).catch(e=>{CARS_P=null;throw e}));
+const CAR_TYPE={suv:"SUV 休旅",sedan:"轎車",hatch:"掀背車",mpv:"MPV",wagon:"旅行車",sport:"跑車",cabrio:"敞篷車",truck:"貨卡",van:"廂型車"};
+// 車身外型（側面，車頭朝右）：L 車長、r 輪胎半徑、ride 底盤高、belt 腰線、roof 車頂、hood 引擎蓋、deck 車尾高；
+// A/At/Ct/Cb＝擋風玻璃底、擋風玻璃頂、車頂後端、後窗底的位置（0＝車尾、1＝車頭），w＝前後輪位置
+const CAR_SHAPE={
+  sedan:{L:272,r:21,ride:20,belt:60,roof:92,hood:58,deck:62,A:.67,At:.52,Ct:.29,Cb:.14,w:[.17,.8]},
+  hatch:{L:238,r:20,ride:20,belt:60,roof:96,hood:56,deck:86,A:.67,At:.5,Ct:.11,Cb:.02,w:[.16,.81]},
+  suv:{L:272,r:25,ride:28,belt:74,roof:114,hood:72,deck:104,A:.71,At:.58,Ct:.08,Cb:.02,w:[.16,.81]},
+  mpv:{L:272,r:22,ride:24,belt:72,roof:120,hood:64,deck:112,A:.8,At:.67,Ct:.04,Cb:.01,w:[.14,.84]},
+  wagon:{L:282,r:21,ride:20,belt:60,roof:92,hood:56,deck:84,A:.68,At:.54,Ct:.07,Cb:.02,w:[.16,.81]},
+  sport:{L:282,r:22,ride:16,belt:52,roof:80,hood:46,deck:56,A:.62,At:.47,Ct:.27,Cb:.07,w:[.17,.8]},
+  cabrio:{L:278,r:22,ride:16,belt:52,roof:74,hood:46,deck:54,A:.62,At:.55,Ct:.4,Cb:.3,w:[.17,.8],open:1},
+  truck:{L:292,r:25,ride:30,belt:74,roof:114,hood:72,deck:74,A:.73,At:.63,Ct:.43,Cb:.42,w:[.15,.8]},
+  van:{L:270,r:22,ride:24,belt:74,roof:122,hood:68,deck:118,A:.87,At:.79,Ct:.02,Cb:0,w:[.15,.84]}};
+const CAR_PAINT=["#EEF0F2","#1E2227","#B9BFC7","#6A727C","#B3202A","#1F4E8C","#2E6B4F","#D9822B","#E8C21A","#5B2A86","#7E5136","#2F8FB5","#8C1C3A","#C9B48A"];
+const carHash=s=>{let x=2166136261;for(const ch of String(s))x=Math.imul(x^ch.charCodeAt(0),16777619);return x>>>0};
+const mixHex=(a,b,t)=>"#"+[1,3,5].map(i=>Math.round(parseInt(a.slice(i,i+2),16)*(1-t)+parseInt(b.slice(i,i+2),16)*t).toString(16).padStart(2,"0")).join("");
+let carN=0;
+function carSVG(c){
+  const h=carHash(c.id),S={...(CAR_SHAPE[c.type]||CAR_SHAPE.sedan)},n=++carN;
+  if(c.cost>=1000&&(c.type==="sport"||c.type==="cabrio")){S.ride=12;S.roof-=6;S.belt-=3;S.hood-=4;S.L+=8}   // 超跑：更低更長
+  else if(c.cost>=500&&c.type!=="truck"&&c.type!=="van")S.L+=10;
+  S.L+=(h%9)-4;
+  // 車色：跑車偏紅黃橘藍，豪華車偏黑白銀，其他隨機
+  const pick=c.type==="sport"||c.type==="cabrio"?[4,8,7,5,0,1,11,2]:c.cost>=800?[1,0,2,5,13,12,3]:CAR_PAINT.map((_,i)=>i);
+  const col=CAR_PAINT[pick[(h>>>4)%pick.length]],lt=mixHex(col,"#ffffff",.35),dk=mixHex(col,"#000000",.4);
+  const G=136,x0=(320-S.L)/2,X=f=>x0+f*S.L,Y=v=>G-v;
+  // 圓角多邊形
+  const round=pts=>{let d="";const N=pts.length;
+    for(let i=0;i<N;i++){const[p,q,r]=pts[i],a=pts[(i+N-1)%N],b=pts[(i+1)%N];
+      const la=Math.hypot(a[0]-p,a[1]-q)||1,lb=Math.hypot(b[0]-p,b[1]-q)||1,ra=Math.min(r||0,la/2),rb=Math.min(r||0,lb/2);
+      const s1=[p+(a[0]-p)/la*ra,q+(a[1]-q)/la*ra],s2=[p+(b[0]-p)/lb*rb,q+(b[1]-q)/lb*rb];
+      d+=(i?"L":"M")+s1[0].toFixed(1)+" "+s1[1].toFixed(1)+"Q"+p.toFixed(1)+" "+q.toFixed(1)+" "+s2[0].toFixed(1)+" "+s2[1].toFixed(1)}
+    return d+"Z"};
+  const body=[[X(0)+6,Y(S.ride),6],[X(0),Y(S.deck),10]];
+  if(S.open)body.push([X(S.Cb),Y(S.deck+1),10],[X(S.A),Y(S.belt+1),6]);
+  else{if(S.Cb>.005)body.push([X(S.Cb),Y(S.deck+2),8]);body.push([X(S.Ct),Y(S.roof),14],[X(S.At),Y(S.roof),12],[X(S.A),Y(S.hood+6),10])}
+  body.push([X(1),Y(S.hood-4),12],[X(1)+2,Y(S.ride+5),6],[X(1)-6,Y(S.ride),4]);
+  const g=`cg${n}`,gl=`cw${n}`,rm=`cr${n}`;
+  let s=`<svg viewBox="0 0 320 150" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="${esc(c.name)}"><defs>
+    <linearGradient id="${g}" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="${lt}"/><stop offset=".45" stop-color="${col}"/><stop offset="1" stop-color="${dk}"/></linearGradient>
+    <linearGradient id="${gl}" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#5d7a8c"/><stop offset=".55" stop-color="#22323d"/><stop offset="1" stop-color="#101820"/></linearGradient>
+    <radialGradient id="${rm}"><stop offset="0" stop-color="#f4f6f8"/><stop offset=".7" stop-color="#a9b0b8"/><stop offset="1" stop-color="#5d646c"/></radialGradient></defs>
+    <ellipse cx="160" cy="${G+3}" rx="${S.L*.53}" ry="8" fill="#0000002e"/>`;
+  // 輪拱（車身下面先畫深色圓）
+  for(const f of S.w)s+=`<circle cx="${X(f)}" cy="${G-S.r}" r="${S.r+4}" fill="#121418"/>`;
+  s+=`<path d="${round(body)}" fill="url(#${g})" stroke="${dk}" stroke-width="1.2"/>`;
+  // 車窗
+  if(S.open){const bx=X(S.A)-4;
+    s+=`<path d="M${bx} ${Y(S.belt)}L${X(S.At)} ${Y(S.roof)}L${X(S.At)+5} ${Y(S.roof)}L${bx+8} ${Y(S.belt)}Z" fill="url(#${gl})" stroke="#222" stroke-width="1.5"/>`;
+    for(const f of[S.Cb+.1,S.Cb+.2])s+=`<rect x="${X(f)-6}" y="${Y(S.belt+15)}" width="12" height="16" rx="5" fill="#2a2a2e"/>`}
+  else{const xr=X(S.Cb+(S.Ct-S.Cb)*.4)+5,xf=X(S.A-(S.A-S.At)*.18)-7,ty=Y(S.roof-6),by=Y(S.belt+4);
+    s+=`<path d="${round([[xr,by,3],[X(S.Ct)+7,ty,6],[X(S.At)-4,ty,5],[xf,by,3]])}" fill="url(#${gl})"/>`;
+    const pil=[(S.A+S.Ct)/2];if(c.type==="mpv"||c.type==="van"||c.type==="suv"||c.type==="wagon")pil.push(S.Ct+(S.A-S.Ct)*.24);
+    for(const f of pil)s+=`<rect x="${X(f)-3}" y="${ty-1}" width="6" height="${by-ty+2}" fill="${dk}"/>`;
+    s+=`<path d="M${X(S.At)-14} ${ty+3}L${X(S.At)-30} ${by-2}" stroke="#ffffff40" stroke-width="5" stroke-linecap="round"/>`}
+  // 貨卡車斗
+  if(c.type==="truck")s+=`<path d="M${X(0)+3} ${Y(S.deck)+3}H${X(S.Cb)}" stroke="${dk}" stroke-width="3"/>`;
+  // 腰線反光、門縫、門把、後照鏡、車燈、底部飾條
+  s+=`<path d="M${X(.03)} ${Y(S.belt-4)}L${X(.95)} ${Y(S.hood-6)}" stroke="#ffffff59" stroke-width="2"/>`;
+  const dx=X((S.A+S.Ct)/2);
+  s+=`<path d="M${dx} ${Y(S.belt)}V${Y(S.ride+6)}" stroke="${dk}" stroke-width="1.2" opacity=".7"/>`;
+  if(c.type!=="sport"&&c.type!=="cabrio")s+=`<path d="M${X(Math.max(S.Ct,S.Cb)+.02)} ${Y(S.belt)}V${Y(S.ride+6)}" stroke="${dk}" stroke-width="1.2" opacity=".6"/>`;
+  for(const x of[dx+8,dx-S.L*.18])s+=`<rect x="${x}" y="${Y(S.belt-8)}" width="11" height="3" rx="1.5" fill="${dk}"/>`;
+  s+=`<path d="M${X(S.A)-4} ${Y(S.belt+2)}l-9 -7h7l6 7z" fill="${dk}"/>`;
+  s+=`<ellipse cx="${X(1)-10}" cy="${Y(S.hood-11)}" rx="9" ry="4" fill="#fffbe2" stroke="#00000033"/>`;
+  s+=`<rect x="${X(0)}" y="${Y(S.deck-6)}" width="7" height="10" rx="2" fill="#d0192b"/>`;
+  s+=`<rect x="${X(.06)}" y="${Y(S.ride+7)}" width="${S.L*.88}" height="5" rx="2.5" fill="#00000038"/>`;
+  // 輪子：輪胎＋輪框（輻條數依車款不同）
+  const sp=[5,6,10,7][(h>>>9)%4],rimDark=c.type==="sport"&&(h>>>12)%2;
+  for(const f of S.w){const cx=X(f),cy=G-S.r,r=S.r;
+    s+=`<g class="wh"><circle cx="${cx}" cy="${cy}" r="${r}" fill="#1c1e22"/><circle cx="${cx}" cy="${cy}" r="${r*.64}" fill="${rimDark?"#2c2f34":`url(#${rm})`}" stroke="#00000055"/>`;
+    for(let k=0;k<sp;k++){const a=k/sp*Math.PI*2+(h%7)/7;s+=`<line x1="${cx}" y1="${cy}" x2="${(cx+Math.cos(a)*r*.58).toFixed(1)}" y2="${(cy+Math.sin(a)*r*.58).toFixed(1)}" stroke="${rimDark?"#5a5f66":"#7d848c"}" stroke-width="${sp>7?2:3.4}" stroke-linecap="round"/>`}
+    s+=`<circle cx="${cx}" cy="${cy}" r="${r*.16}" fill="#3b3f45"/></g>`}
+  return s+"</svg>"}
+
+function Garage(v){
+  setTop("我的車庫","#/");setTabs(false);
+  v.innerHTML=`<div class="home"><div class="card gar-top" id="gt"><span class="muted">讀取中…</span></div><div id="gown"></div>
+    <div class="st-res" id="gf" style="margin:12px 0 6px"></div><div class="gar-ty" id="gty"></div><div id="gl"></div><p class="muted" id="gsrc" style="font-size:12px;text-align:center;margin:14px 0"></p></div>`;
+  let D=null,B=null,show="all",ty="";
+  Promise.all([CARS(),api("/car/state")]).then(([d,b])=>{D=d;B=b;paint()}).catch(e=>{v.querySelector("#gt").innerHTML=`⚠ ${esc(e.message)}`});
+  const card=c=>{const own=B.owned[c.id],can=!own&&c.cost<=B.pts;
+    return`<button class="car${own?" own":can?" can":" lock"}" data-id="${esc(c.id)}"><div class="car-pic">${carSVG(c)}</div><b>${esc(c.model||c.name)}</b><span>${esc(c.brand)}${c.zh?" "+esc(c.zh):""}・${CAR_TYPE[c.type]||""}</span>
+      <span class="cost">${own?"✓ 已擁有":c.cost.toLocaleString()+" 點"}</span>${own?'<i class="own-b">我的</i>':""}</button>`};
+  function paint(){if(!v.isConnected||!D||!B)return;
+    const cars=D.cars,owned=cars.filter(c=>B.owned[c.id]),left=cars.filter(c=>!B.owned[c.id]),can=left.filter(c=>c.cost<=B.pts),next=left.find(c=>c.cost>B.pts);
+    const pct=next?Math.min(100,Math.round(100*B.pts/next.cost)):100;
+    v.querySelector("#gt").innerHTML=`<div class="gar-pts"><span>🚗 你有</span><b>${B.pts.toLocaleString()}</b><span>點</span></div>
+      <div class="muted" style="font-size:13px">一點＝台幣一萬元・累積 ${B.earned.toLocaleString()} 點・獎勵模式 ${B.w} 勝 ${B.l} 負 ${B.d} 和・收藏 ${owned.length}／${cars.length} 台</div>
+      ${next?`<div class="st-bar" style="margin:10px 0 4px"><i style="width:${pct}%"></i></div><div style="font-size:14px">${can.length?`現在可以換 <b style="color:var(--accent2)">${can.length}</b> 台・`:""}再 <b>${(next.cost-B.pts).toLocaleString()}</b> 點可以換 ${esc(next.name)}</div>`:'<div style="font-size:14px;margin-top:8px">🎉 全部車款都換到了！</div>'}
+      <details class="gar-how"><summary>怎麼拿點數？</summary><p>到「挑戰電腦」選 <b>🚗 獎勵</b>，贏一盤拿：${B.table.map((p,i)=>`第 ${i+1} 級 +${p}`).join("、")} 點。和棋拿四成，輸了不扣點。獎勵模式不能悔棋，雙方各走一步以上才算。</p><p>每款車的兌換點數＝8891 新車最低售價（萬元）。</p></details>
+      <button class="btn" id="gplay" style="margin-top:10px">▶ 下一盤獎勵棋</button>`;
+    v.querySelector("#gplay").onclick=play;
+    v.querySelector("#gown").innerHTML=owned.length?`<div class="sec-t">我的收藏</div><div class="gar-own">${owned.sort((a,b)=>B.owned[b.id].at-B.owned[a.id].at).map(card).join("")}</div>`:"";
+    const L0=cars.filter(c=>show==="all"||(show==="can"?can.includes(c):show==="own"?B.owned[c.id]:0));
+    v.querySelector("#gf").innerHTML=[["all","全部",cars.length],["can","可以換",can.length],["own","已擁有",owned.length]].map(([k,l,n])=>`<button data-k="${k}" class="${show===k?"on":""}">${l} ${n}</button>`).join("");
+    const tys=[...new Set(cars.map(c=>c.type))];
+    v.querySelector("#gty").innerHTML=[["","全部車型"]].concat(tys.map(t=>[t,CAR_TYPE[t]])).map(([k,l])=>`<button class="chip${ty===k?" on":""}" data-t="${k}">${l}</button>`).join("");
+    const L=L0.filter(c=>!ty||c.type===ty);
+    v.querySelector("#gl").innerHTML=L.length?`<div class="car-grid">${L.map(card).join("")}</div>`:`<div class="card muted" style="text-align:center">${show==="can"?"點數還不夠換這類的車，再贏幾盤吧！":"還沒有換到車"}</div>`;
+    v.querySelector("#gsrc").textContent=`車款與價格：${D.src}，共 ${cars.length} 款在售車款。車子模型是依車型畫的示意圖，不是原廠外觀。`;
+    v.querySelectorAll("#gf [data-k]").forEach(b=>b.onclick=()=>{vibrate(5);show=b.dataset.k;paint()});
+    v.querySelectorAll("#gty [data-t]").forEach(b=>b.onclick=()=>{vibrate(5);ty=b.dataset.t;paint()});
+    v.querySelectorAll(".car[data-id]").forEach(b=>b.onclick=()=>{vibrate(5);carSheet(cars.find(c=>c.id===b.dataset.id))})}
+  function carSheet(c){if(!c)return;const own=B.owned[c.id];
+    sheet(c.name,b=>{b.innerHTML=`<div class="car-big">${carSVG(c)}</div>
+      <div class="car-info"><div><span>品牌</span><b>${esc(c.brand)}${c.zh?" "+esc(c.zh):""}</b></div><div><span>車型</span><b>${CAR_TYPE[c.type]||esc(c.cls)}</b></div>
+      <div><span>8891 新車價</span><b>${c.lo===c.hi?c.lo+" 萬":c.lo+"～"+c.hi+" 萬"}</b></div><div><span>兌換點數</span><b>${c.cost.toLocaleString()} 點</b></div></div>
+      ${own?`<p style="text-align:center;font-weight:800;color:#B8860B">✓ ${new Date(own.at).toLocaleDateString()} 換到的，已經停在你的車庫</p>`
+        :c.cost<=B.pts?`<button class="btn" id="rd">用 ${c.cost.toLocaleString()} 點換這台（剩 ${(B.pts-c.cost).toLocaleString()} 點）</button>`
+        :`<button class="btn" disabled>還差 ${(c.cost-B.pts).toLocaleString()} 點</button><p class="muted" style="text-align:center;font-size:13px">第 7 級贏一盤 +${B.table[6]} 點、第 8 級 +${B.table[7]} 點</p>`}`;
+      const rd=b.querySelector("#rd");if(rd)rd.onclick=()=>confirmBox(`用 ${c.cost.toLocaleString()} 點換 ${c.name}？`,async()=>{
+        try{B=await api("/car/redeem",{id:c.id});closeSheet();paint();vibrate([30,40,60]);
+          modal(`<div class="car-big car-drive">${carSVG(c)}</div><h2>🎉 換到了！</h2><p><b>${esc(c.name)}</b> 開進你的車庫了</p><p class="muted">剩下 ${B.pts.toLocaleString()} 點</p>`,[["好",null]])}
+        catch(e){toast(e.message)}},"兌換")})}
+  async function play(){vibrate(8);const level=store.get("cpuLevel",3);
+    const go=async()=>{try{await api("/play/new",{human:"r",level,reward:true});store.set("cpuRanked",false);store.set("cpuCar",true);location.hash="#/cpu"}catch(e){toast(e.message)}};
+    let s=null;try{s=await api("/play/state")}catch(e){}
+    const live=s&&!s.result&&s.moves.length>=2;
+    if(live&&s.reward){location.hash="#/cpu";return}
+    if(live&&s.ranked)confirmBox("積分挑戰還沒下完，開新局會算輸，確定？",go,"開始獎勵模式");
+    else if(live)confirmBox("挑戰電腦還有一盤沒下完，開始獎勵模式會蓋掉它，確定？",go,"開始獎勵模式");else go()}
+  return{}}
+
 function CpuGame(v){
   setTabs(false);gameLayout(v);
   let st=null,sel=-1,shownResult=null,busy=false;
   const bd=Board(i=>tap(i));v.querySelector("#bbox").append(bd.svg);
   setTop("挑戰電腦","#/");
-  // 模式切換直接放在頂部列（取代標題）：積分挑戰／自選難度一眼就看得到，點一下就換（離線版才有積分挑戰）
+  // 模式切換直接放在頂部列（取代標題）：積分挑戰／自選難度／獎勵一眼就看得到，點一下就換（離線版才有積分挑戰和獎勵）
+  const modeOf=s=>s.ranked?"rank":s.reward?"car":"free",prefMode=()=>store.get("cpuRanked",true)?"rank":store.get("cpuCar",false)?"car":"free";
   const seg=OFF?document.createElement("div"):null;
   if(seg){seg.className="cpu-seg";seg.setAttribute("role","tablist");
-    seg.innerHTML=`<button data-m="1" role="tab">🏅 積分挑戰</button><button data-m="0" role="tab">🎚 自選難度</button>`;
-    const t=$("#title");t.textContent="";t.append(seg);paintSeg(store.get("cpuRanked",true));
-    seg.querySelectorAll("button").forEach(b=>b.onclick=()=>{vibrate(8);switchMode(b.dataset.m==="1")})}
-  function paintSeg(r){if(seg)seg.querySelectorAll("button").forEach(b=>{const on=(b.dataset.m==="1")===!!r;b.classList.toggle("on",on);b.setAttribute("aria-selected",on)})}
+    seg.innerHTML=`<button data-m="rank" role="tab">🏅 積分</button><button data-m="free" role="tab">🎚 自選</button><button data-m="car" role="tab">🚗 獎勵</button>`;
+    const t=$("#title");t.textContent="";t.append(seg);paintSeg(prefMode());
+    seg.querySelectorAll("button").forEach(b=>b.onclick=()=>{vibrate(8);switchMode(b.dataset.m)})}
+  function paintSeg(m){if(seg)seg.querySelectorAll("button").forEach(b=>{const on=b.dataset.m===m;b.classList.toggle("on",on);b.setAttribute("aria-selected",on)})}
   v.querySelector("#pTop").onclick=e=>{if(e.target.closest(".cpu-chip")){vibrate(8);newSheet()}};
   const acts=actionBar(v.querySelector("#acts"),[["undo","↶","悔棋",()=>post("/play/undo")],
     ["new","＋","新局",()=>newSheet(),true],["resign","🏳","認輸",()=>confirmBox("確定認輸？",()=>post("/play/resign"),"認輸")],["review","📖","檢討",()=>review()]]);
@@ -1447,12 +1590,12 @@ function CpuGame(v){
     bd.draw(st.board,{flip:st.human==="b",last,sel,targets:sel>=0?st.legal.filter(([f])=>f===sel).map(x=>x[1]):[],hint:st.hint?[st.hint.f,st.hint.t]:null,check:st.check,fx:true})}
   function render(s){st=s;if(!st.legal.some(([f])=>f===sel))sel=-1;draw();
     const lv=st.levels[st.level-1]||{},me=st.human,bot=opp(me);
-    const CR=st.cpuRate||{};paintSeg(st.ranked);if(!st.ranked&&st.level&&!st.practice)store.set("cpuLevel",st.level);
+    const CR=st.cpuRate||{},CB=st.car||{},cpts=st.reward?(CB.table||[])[st.level-1]||0:0;paintSeg(modeOf(st));if(!st.ranked&&st.level&&!st.practice)store.set("cpuLevel",st.level);
     // 對手列右邊：目前的段位／難度，點了開「開新局」選單（換難度、換紅黑）
-    const top=playerHTML(bot,"Pikafish",st.ranked?"積分挑戰・強度跟著你的段位":lv.desc||"自選難度")+
-      `<button class="cpu-chip${st.ranked?" rk":""}" aria-label="${st.ranked?"段位與開新局":"換難度"}"><span><b>${st.ranked?"🏅 "+esc(st.rkName||CR.rank||""):"第 "+st.level+" 級"}</b><small>${st.ranked?(CR.pts||0)+" 分":esc(lv.name||"")}</small></span><i>›</i></button>`;
+    const top=playerHTML(bot,"Pikafish",st.ranked?"積分挑戰・強度跟著你的段位":st.reward?`🚗 獎勵模式・贏了 +${cpts} 點`:lv.desc||"自選難度")+
+      `<button class="cpu-chip${st.ranked?" rk":""}" aria-label="${st.ranked?"段位與開新局":"換難度"}"><span><b>${st.ranked?"🏅 "+esc(st.rkName||CR.rank||""):(st.reward?"🚗 ":"")+"第 "+st.level+" 級"}</b><small>${st.ranked?(CR.pts||0)+" 分":st.reward?(CB.pts||0).toLocaleString()+" 點":esc(lv.name||"")}</small></span><i>›</i></button>`;
     const pT=v.querySelector("#pTop");if(pT.dataset.h!==top){pT.dataset.h=top;pT.innerHTML=top}
-    const bt=playerHTML(me,"你",PLAYER[me]+(st.ranked&&CR.next?`・再 ${CR.toNext} 分升 ${CR.next}`:""));
+    const bt=playerHTML(me,"你",PLAYER[me]+(st.ranked&&CR.next?`・再 ${CR.toNext} 分升 ${CR.next}`:"")+(st.reward?`・🚗 ${(CB.pts||0).toLocaleString()} 點`:""));
     const pB=v.querySelector("#pBot");if(pB.dataset.h!==bt){pB.dataset.h=bt;pB.innerHTML=bt}
     v.querySelector("#pTop").classList.toggle("on",!st.result&&st.turn===bot);v.querySelector("#pBot").classList.toggle("on",!st.result&&st.turn===me);
     v.querySelector("#evf").style.width=evPct(st.eval&&st.eval.v)+"%";
@@ -1462,13 +1605,20 @@ function CpuGame(v){
     else{s2.textContent=st.check>=0?"⚠ 你被將軍了！":st.hint?"💡 提示："+st.hint.cn:"輪到你"+(st.eval?`・${evt(st.eval.v)}`:"");s2.classList.toggle("hot",st.check>=0||!!st.hint)}
     if(st.practice&&!st.result&&!st.msg)practiceBar(s2);
     renderStrip(v.querySelector("#strip"),st.moves,st.moves.length-1);
-    acts.undo.disabled=st.ranked||st.thinking||!st.moves.some(m=>m.by===st.human);
+    acts.undo.disabled=st.ranked||st.reward||st.thinking||!st.moves.some(m=>m.by===st.human);
     acts.resign.hidden=!!st.result;acts.review.hidden=!st.result;
     if(st.result&&shownResult!==JSON.stringify(st.result)+st.moves.length){shownResult=JSON.stringify(st.result)+st.moves.length;
       const win=st.result.w===st.human,draw0=!st.result.w;vibrate([30,40,30]);
       if(st.practice){const d=store.get("redoDone",{})[st.practice.key];
         modal(`<div class="em">${win?"🏆":draw0?"🤝":"💪"}</div><h2>${win?"你贏了！":draw0?"和局":"這盤輸了"}</h2><p class="muted">${esc(st.result.why)}・錯棋重練（不算戰績）</p>${d&&d.ok?'<p>✅ 這步已經練會了</p>':""}`,
           [["回到錯棋列表 ›",()=>location.hash="#/redo"],["關閉",null,true]]);return}
+      if(st.reward){const Z=st.prize;
+        modal(`<div class="em">${win?"🏆":draw0?"🤝":"💪"}</div><h2>${win?"你贏了！":draw0?"和局":"這盤輸了"}</h2><p class="muted">${esc(st.result.why)}・🚗 獎勵模式（第 ${st.level} 級）</p>`+
+          (Z?`<p style="font-size:18px;font-weight:900">${Z.d>0?`🚗 +${Z.d} 點`:"這盤沒有拿到點數"} → 共 ${Z.pts.toLocaleString()} 點</p><p class="muted" id="nxcar"></p>`:'<p class="muted">雙方還沒各走一步，這盤不算</p>'),
+          [["再來一局 ›",()=>api("/play/new",{human:st.human,level:st.level,reward:true}).then(render).catch(e=>toast(e.message))],["🚗 去車庫",()=>location.hash="#/garage"],["📊 賽後報告",()=>review(true),true],["關閉",null,true]]);
+        if(Z)CARS().then(d=>{const o=(st.car||{}).owned||{},left=d.cars.filter(c=>!o[c.id]),can=left.filter(c=>c.cost<=Z.pts).length,nx=left.find(c=>c.cost>Z.pts),el=$("#nxcar");
+          if(el)el.textContent=(can?`現在可以換 ${can} 台車！`:"")+(nx?`${can?"・":""}再 ${(nx.cost-Z.pts).toLocaleString()} 點可以換 ${nx.name}`:"")}).catch(()=>{});
+        return}
       if(st.ranked){const R=st.rate;
         modal(`<div class="em">${win?"🏆":draw0?"🤝":"💪"}</div><h2>${win?"你贏了！":draw0?"和局":"這盤輸了"}</h2><p class="muted">${esc(st.result.why)}・積分挑戰（${esc(st.rkName)}）</p>`+
           (R?`<p style="font-size:18px;font-weight:900">積分 ${R.d>0?"+"+R.d:R.d<0?R.d:"±0"} → ${R.pts} 分${R.rank!==R.was?`<br><span style="color:var(--accent2)">${R.d>0?"🎉 升為":"降為"} ${esc(R.rank)}</span>`:""}</p>`:'<p class="muted">雙方還沒各走一步，這盤不計分</p>'),
@@ -1489,34 +1639,36 @@ function CpuGame(v){
       :ok?`👍 「${m.cn}」是${m.q}，比上次好；按 ↶ 悔棋可以挑戰找出正手`
       :`❌ 「${m.cn}」還是${m.q}，按 ↶ 悔棋再想一次`+(d.n>=2&&(m.bc||P0.bc)?`（Pikafish 建議：${m.bc||P0.bc}）`:"")}
   // 開新局。下到一半（雙方都走過）：積分挑戰會算輸，一定要確認；自選難度換成積分挑戰也問一下，免得誤觸把棋丟掉
-  function startNew(o){const ranked=OFF&&!!o.ranked;
-    const go=()=>{closeSheet();shownResult=null;sel=-1;if(OFF)store.set("cpuRanked",ranked);paintSeg(ranked);post("/play/new",{human:o.human,level:o.level,ranked})};
+  function startNew(o){const ranked=OFF&&!!o.ranked,reward=OFF&&!ranked&&!!o.reward,m=ranked?"rank":reward?"car":"free";
+    const go=()=>{closeSheet();shownResult=null;sel=-1;if(OFF){store.set("cpuRanked",ranked);store.set("cpuCar",reward)}paintSeg(m);post("/play/new",{human:o.human,level:o.level,ranked,reward})};
     const live=st&&!st.result&&st.moves.length>=2;
     if(live&&st.ranked)confirmBox("積分挑戰還沒下完，開新局會算輸，確定？",go,"確定");
-    else if(live&&ranked)confirmBox("這盤還沒下完，要換成積分挑戰開新局嗎？",go,"換成積分挑戰");else go()}
+    else if(live&&m!=="free"&&m!==modeOf(st))confirmBox(`這盤還沒下完，要換成${ranked?"積分挑戰":"獎勵模式"}開新局嗎？`,go,ranked?"換成積分挑戰":"換成獎勵模式");else go()}
   // 頂部模式切換：換到另一個模式＝用同樣的紅黑開一盤新局；點目前的模式＝打開開新局選單
-  function switchMode(r){if(!st)return;if(!!st.ranked===r)return newSheet();
-    startNew({human:st.human,level:st.level||store.get("cpuLevel",3),ranked:r})}
+  function switchMode(m){if(!st)return;if(modeOf(st)===m)return newSheet();
+    startNew({human:st.human,level:st.level||store.get("cpuLevel",3),ranked:m==="rank",reward:m==="car"})}
   // 開新局選單：只管這個模式的設定（紅黑、難度），模式本身在頂部切換
-  function newSheet(){if(!st)return;let side=st.human,level=st.level||store.get("cpuLevel",3);const ranked=OFF&&!!st.ranked;
-    const sh=sheet(ranked?"🏅 積分挑戰・開新局":"🎚 自選難度・開新局",b=>{const rec=st.record||{},CR=st.cpuRate||{};
+  function newSheet(){if(!st)return;let side=st.human,level=st.level||store.get("cpuLevel",3);const ranked=OFF&&!!st.ranked,reward=OFF&&!!st.reward;
+    const sh=sheet(ranked?"🏅 積分挑戰・開新局":reward?"🚗 獎勵模式・開新局":"🎚 自選難度・開新局",b=>{const rec=st.record||{},CR=st.cpuRate||{},CB=st.car||{},tb=CB.table||[];
       const paint=()=>{const span=CR.hi!=null?CR.hi-CR.lo:0,pct=span?Math.round(100*(CR.pts-CR.lo)/span):100;
         b.innerHTML=(ranked?`<div class="cpu-rk"><div class="mid"><span class="muted">你的電腦段位</span><span class="pt"><b>${CR.pts||0}</b> 分</span></div>
           <div class="rk">${esc(CR.rank||"新手")}</div><div class="st-bar"><i style="width:${pct}%"></i></div>
           <div class="muted" style="font-size:12px">${CR.next?`再 ${CR.toNext} 分升「${esc(CR.next)}」`:"已經是最高段位"}・${CR.w||0} 勝 ${CR.l||0} 負 ${CR.d||0} 和</div>
           <p>電腦的強度跟著你的段位走，段位越高越難。贏約 +20、輸約 −15，跟線上對戰分開記分。不能悔棋、不能提示，下到一半開新局算輸。</p></div>`:"")+
+        (reward?`<div class="cpu-rk"><div class="mid"><span class="muted">你的點數</span><span class="pt"><b>${(CB.pts||0).toLocaleString()}</b> 點</span></div>
+          <p>贏棋拿點數（一點＝台幣一萬），存到車庫換 8891 上的車款模型。難度越高點數越多，和棋拿四成，輸了不扣點。不能悔棋。</p><button class="chip" id="gogar" style="font-family:var(--sans)">🚗 打開車庫 ›</button></div>`:"")+
         `<div class="cpu-lb">你執</div><div class="opt"><button data-s="r" class="${side==="r"?"on":""}">🔴 紅方（先走）</button><button data-s="b" class="${side==="b"?"on":""}">⚫ 黑方（後走）</button></div>`+
-        (ranked?"":`<div class="cpu-lb">難度</div><div class="lvl">${st.levels.map(l=>`<button data-l="${l.n}" class="${l.n===level?"on":""}"><b>${l.n}</b><span>${esc(l.name)}</span>${(rec[l.n]||{}).w?'<span class="ok">✔ 通關</span>':""}</button>`).join("")}</div>
+        (ranked?"":`<div class="cpu-lb">難度</div><div class="lvl">${st.levels.map(l=>`<button data-l="${l.n}" class="${l.n===level?"on":""}"><b>${l.n}</b><span>${esc(l.name)}</span>${reward?`<span class="ok">+${tb[l.n-1]||0} 點</span>`:(rec[l.n]||{}).w?'<span class="ok">✔ 通關</span>':""}</button>`).join("")}</div>
           <div class="cpu-desc">${esc((st.levels[level-1]||{}).desc||"")}</div>`)+
-        `<button class="btn" id="go">${ranked?"開始積分挑戰":`開始第 ${level} 級`}</button>`;
+        `<button class="btn" id="go">${ranked?"開始積分挑戰":reward?`開始第 ${level} 級（贏了 +${tb[level-1]||0} 點）`:`開始第 ${level} 級`}</button>`;
         b.querySelectorAll("[data-s]").forEach(x=>x.onclick=()=>{side=x.dataset.s;paint()});b.querySelectorAll("[data-l]").forEach(x=>x.onclick=()=>{level=+x.dataset.l;paint()});
-        b.querySelector("#go").onclick=()=>startNew({human:side,level,ranked})};paint()});
+        b.querySelector("#go").onclick=()=>startNew({human:side,level,ranked,reward});const gg=b.querySelector("#gogar");if(gg)gg.onclick=()=>{closeSheet();location.hash="#/garage"}};paint()});
     sh.classList.add("cpu-sheet")}
   // 上一盤已經下完：一進來就直接開新局（同樣的難度和執子），不要讓人以為還沒下完
   let first=true;
   const stop=poller(async()=>{if(busy)return;const s=await api("/play/state");
-    if(first){first=false;if(s.result){shownResult=JSON.stringify(s.result)+s.moves.length;const rk=OFF&&!!store.get("cpuRanked",!!s.ranked);await post("/play/new",{human:s.human,level:s.level||store.get("cpuLevel",3),ranked:rk});s.ranked=rk;
-      toast(s.ranked?`新的一局・積分挑戰`:`新的一局・第 ${s.level} 級`);return}}
+    if(first){first=false;if(s.result){shownResult=JSON.stringify(s.result)+s.moves.length;const rk=OFF&&!!store.get("cpuRanked",!!s.ranked),cr=OFF&&!rk&&!!store.get("cpuCar",!!s.reward);await post("/play/new",{human:s.human,level:s.level||store.get("cpuLevel",3),ranked:rk,reward:cr});s.ranked=rk;
+      toast(s.ranked?`新的一局・積分挑戰`:cr?`新的一局・🚗 獎勵第 ${s.level} 級`:`新的一局・第 ${s.level} 級`);return}}
     render(s)},()=>st&&st.thinking?500:1500);
   // 電腦一走完就馬上畫出來（不等下一次輪詢）
   const onPlay=()=>{if(!busy)api("/play/state").then(s=>{if(!busy&&s)render(s)}).catch(()=>{})};window.addEventListener("xq-play",onPlay);
