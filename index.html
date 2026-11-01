@@ -412,7 +412,7 @@ html[data-era=ming] .topbar,html[data-era=qing] .topbar{border-bottom-width:4px}
       if(!window.caches)return go();caches.keys().then(function(ks){return Promise.all(ks.filter(function(k){return k.indexOf("xqlab-app-")===0}).map(function(k){return caches.delete(k)}))})
         .then(function(){return navigator.serviceWorker&&navigator.serviceWorker.getRegistration()}).then(function(r){return r&&r.update()}).catch(function(){}).then(go)}},4000)})();
 </script>
-<script>window.XQ_OFFLINE=true;window.XQ_BUILD="20261102-0735";</script>
+<script>window.XQ_OFFLINE=true;window.XQ_BUILD="20261102-0736";</script>
 <script src="core.js"></script>
 <script src="engine.js"></script>
 <script src="local.js"></script>
@@ -1016,7 +1016,7 @@ function route(){
   if(p[0]==="stats")return screen=Stats(v);
   if(p[0]==="redo")return screen=Redo(v);
   if(p[0]==="openings")return screen=Openings(v);
-  if(p[0]==="garage")return screen=Garage(v);
+  if(p[0]==="garage"){if(!REWARD){location.replace("#/");return}return screen=Garage(v)}
   if(p[0]==="settings")return screen=Settings(v);
   if(p[0]==="fbadmin")return screen=FbAdmin(v);
   if(p[0]==="quiz")return screen=Quiz(v);
@@ -1037,6 +1037,8 @@ function poller(fn,ms){let on=true,t=null;const tick=async()=>{if(!on)return;try
 async function appVer(){try{const k=(await caches.keys()).filter(x=>x.startsWith("xqlab-app-")).pop();return k?k.slice(10):null}catch(e){return null}}
 async function netVer(){try{const t=await(await fetch("sw.js",{cache:"no-store"})).text();return(t.match(/VERSION="([\w-]+)"/)||[])[1]||null}catch(e){return null}}
 const OFF=!!window.XQ_OFFLINE;
+// 獎勵模式（贏棋換車）先關掉，專注在象棋本身（意見回饋 144）；程式和玩家存的點數、車子先留著，改成 true 就會回來
+const REWARD=false;if(!REWARD&&store.get("cpuCar",false))store.set("cpuCar",false);
 // iPhone 從主畫面打開（全螢幕）時，頂部列要讓開狀態列（時間、電池）。
 // 有些 iOS 版本讀不到安全區（算成 0），標題就會跑到狀態列底下、被模糊效果蓋住；這時依螢幕高度補上狀態列高度。
 (function fixTop(){try{const sa=matchMedia("(display-mode: standalone)").matches||navigator.standalone;if(!sa)return;
@@ -1304,7 +1306,7 @@ function Home(v){
     ${T("k2","#/redo","🔁","錯棋重練","","從下錯的地方再下一次")}
     ${T("k3","#/openings","📊","我的開局","","常用開局・中局正招")}
    </div>
-   ${OFF?`<div class="sec-t">收藏</div><div class="hero">
+   ${OFF&&REWARD?`<div class="sec-t">收藏</div><div class="hero">
     ${T("k3","#/garage","🚗","我的車庫","hCar",(()=>{try{const b=JSON.parse(localStorage.getItem("xq_carBank"));if(b)return`🚗 ${b.pts.toLocaleString()} 點・收藏 ${Object.keys(b.owned||{}).length} 台`}catch(e){}return"贏棋拿點數換車"})())}
    </div>`:""}
    <div id="hRecentBox" hidden><div class="sec-t">繼續研究 <button data-go="#/db">棋譜庫 ›</button></div><div class="items" id="hRecent" style="padding:0"></div></div>
@@ -1729,10 +1731,10 @@ function Stats(v){
     return`<div class="hd">${hd}</div><div class="mid"><span class="rk">${esc(R.rank)}</span><span class="pt"><b>${R.pts}</b> 分</span></div>
       <div class="st-bar"><i style="width:${pc}%"></i></div><div class="nx">${R.next?`再 ${R.toNext} 分升 ${esc(R.next)}`:"已是最高段位"}</div>
       <div class="st-wld"><div><b class="w">${R.w}</b><span>勝</span></div><div><b class="l">${R.l}</b><span>負</span></div><div><b class="d">${R.d}</b><span>和</span></div><div><b>${pct(R.w,N)}</b><span>勝率</span></div></div>${foot||""}`};
-  const tabs=[["all","總覽"],["cpu","🤖 電腦"]].concat(NET?[["net","🌐 線上"]]:[],OFF?[["car","🚗 獎勵"]]:[]);
+  const tabs=[["all","總覽"],["cpu","🤖 電腦"]].concat(NET?[["net","🌐 線上"]]:[],OFF&&REWARD?[["car","🚗 獎勵"]]:[]);
   let tab=store.get("statsTab","all");if(!tabs.some(t=>t[0]===tab))tab="all";
   v.innerHTML=`<div class="home st"><div class="st-tabs" id="sTabs">${tabs.map(([k,l])=>`<button data-k="${k}">${l}</button>`).join("")}</div><div id="sBody"></div></div>`;
-  let ST=null,CAR=null;const ld=Promise.all([api("/play/state").then(s=>ST=s).catch(()=>null),OFF?api("/car/state").then(c=>CAR=c).catch(()=>null):null]);
+  let ST=null,CAR=null;const ld=Promise.all([api("/play/state").then(s=>ST=s).catch(()=>null),OFF&&REWARD?api("/car/state").then(c=>CAR=c).catch(()=>null):null]);
   const sum=r=>({w:r.w||0,l:r.l||0,d:r.d||0});
   function rows(){const out=[];if(NET){const R=XQNet.rating();out.push(["🌐 線上對戰",sum(R)])}
     if(ST){let W=0,L=0,D=0;for(const r of Object.values(ST.record||{})){W+=r.w||0;L+=r.l||0;D+=r.d||0}
@@ -2134,10 +2136,10 @@ function CpuGame(v){
   const bd=Board(i=>tap(i));v.querySelector("#bbox").append(bd.svg);
   setTop("挑戰電腦","#/");
   // 模式切換直接放在頂部列（取代標題）：積分挑戰／自選難度／獎勵一眼就看得到，點一下就換（離線版才有積分挑戰和獎勵）
-  const modeOf=s=>s.ranked?"rank":s.reward?"car":"free",prefMode=()=>store.get("cpuRanked",true)?"rank":store.get("cpuCar",false)?"car":"free";
+  const modeOf=s=>s.ranked?"rank":s.reward?"car":"free",prefMode=()=>store.get("cpuRanked",true)?"rank":REWARD&&store.get("cpuCar",false)?"car":"free";
   const seg=OFF?document.createElement("div"):null;
   if(seg){seg.className="cpu-seg";seg.setAttribute("role","tablist");
-    seg.innerHTML=`<button data-m="rank" role="tab">🏅 積分</button><button data-m="free" role="tab">🎚 自選</button><button data-m="car" role="tab">🚗 獎勵</button>`;
+    seg.innerHTML=`<button data-m="rank" role="tab">🏅 積分</button><button data-m="free" role="tab">🎚 自選</button>${REWARD?'<button data-m="car" role="tab">🚗 獎勵</button>':""}`;
     const t=$("#title");t.textContent="";t.append(seg);paintSeg(prefMode());
     seg.querySelectorAll("button").forEach(b=>b.onclick=()=>{vibrate(8);switchMode(b.dataset.m)})}
   function paintSeg(m){if(seg)seg.querySelectorAll("button").forEach(b=>{const on=b.dataset.m===m;b.classList.toggle("on",on);b.setAttribute("aria-selected",on)})}
