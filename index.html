@@ -765,6 +765,8 @@ if(OFF)setTimeout(async()=>{try{if(!navigator.onLine||(navigator.connection&&nav
 if(OFF&&window.XQEngine&&XQEngine.prefetch)setTimeout(async()=>{try{if(await XQ.engineCached()||!navigator.onLine||(navigator.connection&&navigator.connection.saveData))return;
   await XQEngine.prefetch();toast("✅ Pikafish 引擎已自動下載完成，離線也能下棋");const h=document.querySelector("#hStatus");if(h&&h.isConnected)homeStatus(h)}catch(e){}},5000);
 // 從背景切回 App：首頁的連線燈號重新檢查（手機網路要一點時間恢復，所以等一下再測）
+// 一般玩家：只有「雙人對戰邀請」（帶 seat）的連線才留著；單純連電腦的連結（舊的分享網址）一律清掉，不會出現連不到電腦
+if(OFF)setTimeout(()=>{const r0=XQ.remoteInfo&&XQ.remoteInfo();if(r0&&!r0.seat&&!DEVMODE())XQ.disconnect()},0);
 if(OFF)setTimeout(()=>{const r=XQ.remoteInfo&&XQ.remoteInfo();if(!r||DEVMODE())return;
   XQ.ping().then(ok=>{if(!ok&&!(r.ok>Date.now()-3*864e5)&&Date.now()-(r.at||0)>864e5)XQ.disconnect()}).catch(()=>{})},8000);
 if(OFF)document.addEventListener("visibilitychange",()=>{if(document.hidden)return;const h=document.querySelector("#hStatus");if(h)setTimeout(()=>{if(h.isConnected)homeStatus(h)},1200)});

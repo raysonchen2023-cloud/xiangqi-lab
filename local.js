@@ -242,7 +242,7 @@ var XQ=(function(){
   // 網頁剛打開，或 App 已經開著時網址被換成 #connect=…，都要讀取
   function parseConnect(){const h=location.hash;if(!h.startsWith("#connect="))return false;
     const ps=new URLSearchParams(h.slice(1)),base=(ps.get("connect")||"").replace(/\/+$/,""),key=ps.get("k");
-    let ok=false;if(/^https:\/\//.test(base)&&key){ls.set("remote",{base,key,at:Date.now()});lastPing={at:0,ok:false};XQ_justConnected=true;ok=true}
+    const seat0=ps.get("seat");let ok=false;if(/^https:\/\//.test(base)&&key){ls.set("remote",{base,key,at:Date.now(),seat:/^[rb]$/.test(seat0||"")?seat0:null});lastPing={at:0,ok:false};XQ_justConnected=true;ok=true}
     // 對手在雙人對戰畫面給的 QR code 會多帶 seat=r／b：直接坐那一邊、進對局
     const seat=ps.get("seat");if(ok&&/^[rb]$/.test(seat||"")){try{localStorage.setItem("m_pvpSeat",JSON.stringify(seat))}catch(e){}ls.set("pvpOnline",true)}
     history.replaceState(null,"",location.pathname+location.search+(ok&&seat?"#/pvp":"#/"));return true}

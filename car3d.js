@@ -128,7 +128,101 @@ function slab(pts,depth,bevel,mat){const b=Math.min(bevel,depth/2-.01);
 const box=(w,h,d,mat,x,y,z)=>{const m=new T.Mesh(new T.BoxGeometry(w,h,d),mat);m.position.set(x,y,z);return m};
 const cyl=(r,len,mat,seg)=>new T.Mesh(new T.CylinderGeometry(r,r,len,seg||20),mat);
 
+// ================= 寫實車身（照真車外型一台一台調的車款） =================
+// 單位：公尺。x 從車尾 0 到車頭 L，y 往上（地面 0），z 往兩側。
+// 車身是「斷面」從車尾到車頭一段一段接起來：每一段是左右對稱、上緣圓角的曲線，輪拱的地方底部往上縮，留出真正的輪拱開口
+function curve(pts){return x=>{if(x<=pts[0][0])return pts[0][1];const n=pts.length;if(x>=pts[n-1][0])return pts[n-1][1];
+  let i=0;while(x>pts[i+1][0])i++;const p0=pts[Math.max(0,i-1)],p1=pts[i],p2=pts[i+1],p3=pts[Math.min(n-1,i+2)],t=(x-p1[0])/(p2[0]-p1[0]);
+  const m1=(p2[1]-p0[1])/(p2[0]-p0[0]||1)*(p2[0]-p1[0]),m2=(p3[1]-p1[1])/(p3[0]-p1[0]||1)*(p2[0]-p1[0]),t2=t*t,t3=t2*t;   // Catmull-Rom
+  return(2*t3-3*t2+1)*p1[1]+(t3-2*t2+t)*m1+(-2*t3+3*t2)*p2[1]+(t3-t2)*m2}}
+// 斷面：下面兩側直上，上緣是超橢圓的圓角；side(y)＝側面微微外凸
+function loft(N,x0,x1,fn,M){M=M||14;const pos=[],idx=[],cols=2*M+2;
+  for(let i=0;i<=N;i++){const x=x0+(x1-x0)*i/N,s=fn(x);   // s={b,t,hwB,hwT,rc,n}
+    const pts=[];const h=Math.max(0,s.t-s.b),rc=Math.min(s.rc,h*.95),ys=s.t-rc;
+    for(let k=0;k<=M;k++){const v=k/M;let y,z;
+      if(k<=4){const f=k/4;y=s.b+(ys-s.b)*f;z=s.hwB+(s.hwT-s.hwB)*f;if(s.bulge){const m=(f-.5)*2;z*=1+s.bulge*(1-m*m)}}
+      else{const a=(k-4)/(M-4)*Math.PI/2,c=Math.cos(a),sn=Math.sin(a),e=2/s.n;z=s.hwT*Math.pow(c,e);y=ys+rc*Math.pow(sn,e)}
+      pts.push([z,y])}
+    for(const[z,y]of pts)pos.push(x,y,-z);for(let k=pts.length-1;k>=0;k--)pos.push(x,pts[k][1],pts[k][0])}
+  for(let i=0;i<N;i++)for(let j=0;j<cols-1;j++){const a=i*cols+j,b=a+cols;idx.push(a,b,a+1,a+1,b,b+1)}
+  const g=new T.BufferGeometry();g.setAttribute("position",new T.Float32BufferAttribute(pos,3));g.setIndex(idx);g.computeVertexNormals();return g}
+function realCar(c,P){const m=mats(),G=new T.Group();
+  const cols=P.colors,col=cols[(hash(c.id)>>>4)%cols.length],body=paint(col);body.side=T.DoubleSide;
+  const L=P.L,R=P.tire,AR=P.arch,axles=P.axles,b0=curve(P.bottom),top=curve(P.top),roof=curve(P.roof);
+  // 俯視圖的寬度：中段最寬，車頭車尾用超橢圓收圓
+  const hw=x=>{const W=P.W/2;let k=1;if(x<P.rearD){const d=(P.rearD-x)/P.rearD;k=Math.pow(Math.max(0,1-Math.pow(d,P.rearP)),1/P.rearP)}
+    else if(x>L-P.frontD){const d=(x-(L-P.frontD))/P.frontD;k=Math.pow(Math.max(0,1-Math.pow(d,P.frontP)),1/P.frontP)}return Math.max(.002,W*k)};
+  // 輪拱：底線在輪子附近抬高成半圓
+  const bottom=x=>{let b=b0(x);for(const ax of axles){const d=Math.abs(x-ax);if(d<AR)b=Math.max(b,R+Math.sqrt(AR*AR-d*d))}return b};
+  const lower=new T.Mesh(loft(260,0,L,x=>{const w=hw(x);return{b:bottom(x),t:top(x),hwB:w*.985,hwT:w,rc:P.shoulder,n:3.2,bulge:.012}},16),body);
+  G.add(lower);
+  // 車廂（玻璃），往上內縮
+  const cab=new T.Mesh(loft(160,P.cab[0],P.cab[1],x=>{const w=hw(x)-P.cabIn,bt=top(x)-.05,rt=Math.max(bt,roof(x));return{b:bt,t:rt,hwB:w,hwT:w*P.tumble,rc:.12,n:2.6}},14),P.glassMat?m[P.glassMat]:m.glass);
+  cab.material=cab.material.clone();cab.material.side=T.DoubleSide;G.add(cab);
+  // 輪拱內側（黑色）、底盤
+  const hwMid=P.W/2;
+  for(const ax of axles){const well=new T.Mesh(new T.CylinderGeometry(AR-.005,AR-.005,hwMid*2-.06,28,1,true,-Math.PI/2,Math.PI),m.black);
+    well.material=m.black.clone();well.material.side=T.DoubleSide;well.rotation.x=Math.PI/2;well.position.set(ax,R,0);G.add(well)}
+  const ub=new T.Mesh(new T.PlaneGeometry(L*.9,P.W*.86),m.black);ub.rotation.x=Math.PI/2;ub.position.set(L/2,.2,0);G.add(ub);
+  // 輪子
+  const wheels=[];
+  for(const ax of axles)for(const z of[-1,1]){const wg=new T.Group();
+    const tire=new T.Mesh(new T.CylinderGeometry(R,R,P.tireW,36),m.tire);tire.rotation.x=Math.PI/2;wg.add(tire);
+    const side=new T.Mesh(new T.TorusGeometry(R*.82,R*.17,10,36),m.tire);side.position.z=z*P.tireW*.36;wg.add(side);
+    P.wheel(wg,z,R,m);wg.position.set(ax,R,z*(P.W/2-P.tireW/2-.01));G.add(wg);wheels.push(wg)}
+  // 貼在車身表面的零件（燈、後照鏡…）：從車外射一條線找到車身表面，再貼上去
+  const ray=new T.Raycaster(),hitOn=(o,d,meshes)=>{ray.set(o,d);const h=ray.intersectObjects(meshes||[lower,cab],false)[0];return h};
+  const stick=(mesh,o,d,off,meshes)=>{const h=hitOn(o,d,meshes);if(!h)return null;const n=h.face.normal.clone().transformDirection(h.object.matrixWorld);
+    mesh.position.copy(h.point).addScaledVector(n,off||.004);mesh.lookAt(h.point.clone().add(n));G.add(mesh);return mesh};
+  G.updateMatrixWorld(true);
+  P.details({G,m,body,stick,V:(x,y,z)=>new T.Vector3(x,y,z),T,L,hw,top,roof});
+  G.children.forEach(o=>o.position.x-=L/2);
+  G.userData.wheels=wheels;G.userData.size={L,W:P.W,H:P.H};return G}
+
+// 橢圓小片（燈、把手用）：薄的方向是自己的 z（貼上時朝外）
+const pad=(mat,sx,sy,sz)=>{const g=new T.SphereGeometry(1,24,12);const o=new T.Mesh(g,mat);o.scale.set(sx,sy,sz||.012);return o};
+const REAL={
+  // Tesla Model 3（2024 Highland）：4720×1850×1441、軸距 2875；沒有水箱罩、低圓的車頭、細長頭燈、全黑玻璃車頂、短尾＋小鴨尾、C 形尾燈
+  "tesla-model-3":c=>realCar(c,{L:4.72,W:1.85,H:1.441,tire:.335,tireW:.235,arch:.385,axles:[1.03,3.905],
+    colors:["#E9EAEC","#9F1B22","#1F3B6E","#17181A","#5A5D61","#A8ABAF"],
+    rearD:.34,rearP:2.6,frontD:.62,frontP:2.1,shoulder:.16,cab:[.46,3.66],cabIn:.075,tumble:.74,
+    bottom:[[0,.40],[.18,.25],[.5,.165],[4.25,.165],[4.55,.21],[4.72,.34]],
+    top:[[0,.66],[.03,.86],[.11,.975],[.3,.995],[.55,.985],[1.4,.955],[2.6,.94],[3.4,.925],[3.75,.89],[4.15,.81],[4.45,.73],[4.62,.66],[4.72,.52]],
+    roof:[[.46,.98],[.75,1.11],[1.15,1.28],[1.65,1.40],[2.2,1.441],[2.7,1.43],[3.05,1.335],[3.35,1.16],[3.66,.92]],
+    wheel(wg,z,R,m){// 19 吋運動鋁圈：深灰十幅
+      const rim=new T.Mesh(new T.CylinderGeometry(R*.66,R*.66,.24,36),m.rimDark);rim.rotation.x=Math.PI/2;wg.add(rim);
+      const face=new T.Mesh(new T.CircleGeometry(R*.64,36),new T.MeshStandardMaterial({color:0x3a3d42,metalness:.7,roughness:.35}));face.position.z=z*.122;if(z<0)face.rotation.y=Math.PI;wg.add(face);
+      for(let k=0;k<10;k++){const a=k/10*Math.PI*2;const s=new T.Mesh(new T.BoxGeometry(R*.5,.03,.012),new T.MeshStandardMaterial({color:0x8c9096,metalness:.8,roughness:.3}));
+        s.position.set(Math.cos(a)*R*.33,Math.sin(a)*R*.33,z*.13);s.rotation.z=a;wg.add(s)}
+      const hub=new T.Mesh(new T.CylinderGeometry(R*.13,R*.13,.25,20),m.chrome);hub.rotation.x=Math.PI/2;wg.add(hub)},
+    details({G,m,body,stick,V,T}){
+      const head=new T.MeshStandardMaterial({color:0xf4f7ff,emissive:0xcfe0ff,emissiveIntensity:.35,roughness:.15,metalness:.2});
+      const dark=new T.MeshStandardMaterial({color:0x101114,roughness:.3});
+      const tail=new T.MeshStandardMaterial({color:0xb0101e,emissive:0x8a0010,emissiveIntensity:.45,roughness:.25});
+      for(const z of[-1,1]){
+        // 細長、往後掠的頭燈（在車頭上緣兩角）
+        const h=stick(pad(dark,.2,.045),V(6,.67,z*.6),V(-1,-.12,0),.003);if(h){h.rotation.z+=z*.08}
+        stick(pad(head,.16,.022,.014),V(6,.675,z*.6),V(-1,-.12,0),.008);
+        // 前保桿下方的小進氣口
+        stick(pad(dark,.16,.03),V(6,.30,z*.42),V(-1,0,0),.003);
+        // C 形尾燈：橫的一條＋往下一小段
+        stick(pad(tail,.26,.045,.014),V(-3,.87,z*.55),V(1,0,0),.004);
+        stick(pad(tail,.05,.07,.014),V(-3,.80,z*.74),V(1,0,0),.004);
+        // 後照鏡（車身色，黑色底座）
+        const mir=new T.Mesh(new T.SphereGeometry(1,20,12),body);mir.scale.set(.13,.065,.05);mir.position.set(3.38,1.0,z*.97);G.add(mir);
+        const arm=new T.Mesh(new T.BoxGeometry(.08,.03,.1),dark);arm.position.set(3.4,.98,z*.9);G.add(arm);
+        // 隱藏式門把（細黑線）
+        for(const x of[2.0,3.0])stick(pad(dark,.09,.012,.006),V(x,.9,z*3),V(0,0,-z),.002);
+        // 門縫（淡淡的線）
+        for(const x of[1.62,2.55,3.45]){const ln=new T.Mesh(new T.BoxGeometry(.006,.52,.006),dark);ln.position.set(x,.62,z*.915);G.add(ln)}}
+      // 下巴的細長黑飾板
+      stick(pad(dark,.5,.02),V(6,.24,0),V(-1,0,0),.003)}})
+};
+
 function build(c){
+  // 寫實版還在試做：只有開了預覽（localStorage xq_carReal）才用
+  let rv=false;try{rv=!!localStorage.getItem("xq_carReal")}catch(e){}
+  if(REAL[c.id]&&rv)return REAL[c.id](c);
   const{S,f,type,h,col}=spec(c),m=mats(),G=new T.Group(),body=paint(col),roofMat=f.roof?paint(f.roof):body;
   const L=S.L,W=S.W,X=t=>t*L-L/2,bv=f.boxy?.07:.16;
   // 車身下半部
