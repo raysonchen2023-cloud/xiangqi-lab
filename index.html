@@ -260,6 +260,7 @@ html[data-era=ming] .topbar,html[data-era=qing] .topbar{border-bottom-width:4px}
 .car-sell{display:grid;grid-template-columns:repeat(3,1fr);gap:6px;margin:6px 0 0}.car-sell div{display:flex;flex-direction:column;padding:8px;border-radius:10px;background:var(--bg);text-align:center}.car-sell span{font-size:11px;color:var(--muted)}.car-sell b{font-size:15px}
 .rp-bar{position:fixed;left:12px;right:12px;bottom:calc(92px + var(--safeB,0px));z-index:62;display:flex;align-items:center;justify-content:space-between;gap:10px;padding:10px 12px;border-radius:14px;background:var(--card,#fff);border:1px solid var(--line);box-shadow:0 6px 24px #0003;font-size:14px}
 .rp-bar span{display:flex;flex-direction:column}.rp-bar em{font-style:normal}.rp-bar small{font-size:11.5px;color:var(--muted)}.rp-bar.done{border-color:var(--accent2)}.rp-bar.done span{font-weight:800;color:var(--accent2)}
+.gar-q{display:block;width:100%;margin:14px 0 0;padding:11px 14px;border-radius:12px;border:1px solid var(--line);background:var(--card,#fff);color:inherit;font-size:16px;font-family:var(--sans)}
 .car-spec{margin:0 0 12px;padding:10px 12px;border-radius:12px;background:var(--bg)}.car-spec-h{font-weight:800;font-size:15px;margin-bottom:6px;display:flex;align-items:baseline;gap:8px;flex-wrap:wrap}.car-spec-h small{font-weight:400;font-size:11.5px;color:var(--muted)}
 .car-spec dl{display:grid;grid-template-columns:auto 1fr;gap:5px 12px;margin:0;font-size:13.5px}.car-spec dt{color:var(--muted);white-space:nowrap}.car-spec dd{margin:0;font-weight:600;word-break:break-word}
 .car-spec details{margin-top:8px;font-size:13px}.car-spec summary{color:var(--accent);cursor:pointer}.car-spec details p{margin:6px 0 0;line-height:1.6}
@@ -1543,8 +1544,12 @@ function carSVG(c){
 function Garage(v){
   setTop("我的車庫","#/");setTabs(false);
   v.innerHTML=`<div class="home"><div class="card gar-top" id="gt"><span class="muted">讀取中…</span></div><div id="gown"></div>
-    <div class="st-res" id="gf" style="margin:12px 0 6px"></div><div class="gar-ty" id="gty"></div><div id="gl"></div><p class="muted" id="gsrc" style="font-size:12px;text-align:center;margin:14px 0"></p></div>`;
-  let D=null,B=null,show="all",ty="";
+    <input id="gq" class="gar-q" type="search" placeholder="🔍 搜尋車名、品牌（例如 RAV4、賓士、跑車）" autocomplete="off"><div class="st-res" id="gf" style="margin:8px 0 6px"></div><div class="gar-ty" id="gty"></div><div id="gl"></div><p class="muted" id="gsrc" style="font-size:12px;text-align:center;margin:14px 0"></p></div>`;
+  let D=null,B=null,show="all",ty="",q="";
+  // 搜尋：車名、品牌（英文／中文）、車型都比對，不分大小寫、忽略空白和連字號
+  const norm=x=>String(x||"").toLowerCase().replace(/[\s\-_.·]/g,"");
+  const hit=c=>{if(!q)return true;const k=norm(q);return [c.name,c.brand,c.zh,c.model,CAR_TYPE[c.type],c.cls].some(x=>norm(x).includes(k))};
+  v.querySelector("#gq").oninput=e=>{q=e.target.value.trim();paint()};
   Promise.all([CARS(),api("/car/state")]).then(([d,b])=>{D=d;B=b;paint()}).catch(e=>{v.querySelector("#gt").innerHTML=`⚠ ${esc(e.message)}`});
   const card=c=>{const own=B.owned[c.id],can=!own&&c.cost<=B.pts;
     return`<button class="car${own?" own":can?" can":" lock"}" data-id="${esc(c.id)}"><div class="car-pic" data-c="${esc(c.id)}">${carSVG(c)}</div><b>${esc(c.model||c.name)}</b><span>${esc(c.brand)}${c.zh?" "+esc(c.zh):""}・${CAR_TYPE[c.type]||""}</span>
@@ -1563,8 +1568,8 @@ function Garage(v){
     v.querySelector("#gf").innerHTML=[["all","全部",cars.length],["can","可以換",can.length],["own","已擁有",owned.length]].map(([k,l,n])=>`<button data-k="${k}" class="${show===k?"on":""}">${l} ${n}</button>`).join("");
     const tys=[...new Set(cars.map(c=>c.type))];
     v.querySelector("#gty").innerHTML=[["","全部車型"]].concat(tys.map(t=>[t,CAR_TYPE[t]])).map(([k,l])=>`<button class="chip${ty===k?" on":""}" data-t="${k}">${l}</button>`).join("");
-    const L=L0.filter(c=>!ty||c.type===ty);
-    v.querySelector("#gl").innerHTML=L.length?`<div class="car-grid">${L.map(card).join("")}</div>`:`<div class="card muted" style="text-align:center">${show==="can"?"點數還不夠換這類的車，再贏幾盤吧！":"還沒有換到車"}</div>`;
+    const L=L0.filter(c=>(!ty||c.type===ty)&&hit(c));
+    v.querySelector("#gl").innerHTML=L.length?`<div class="car-grid">${L.map(card).join("")}</div>`:`<div class="card muted" style="text-align:center">${q?`找不到「${esc(q)}」，換個關鍵字試試`:show==="can"?"點數還不夠換這類的車，再贏幾盤吧！":"還沒有換到車"}</div>`;
     v.querySelector("#gsrc").textContent=`車款與價格：${D.src}，共 ${cars.length} 款在售車款。車子模型是依車型畫的示意圖，不是原廠外觀。`;
     v.querySelectorAll("#gf [data-k]").forEach(b=>b.onclick=()=>{vibrate(5);show=b.dataset.k;paint()});
     v.querySelectorAll("#gty [data-t]").forEach(b=>b.onclick=()=>{vibrate(5);ty=b.dataset.t;paint()});
