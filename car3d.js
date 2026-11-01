@@ -509,6 +509,51 @@ REAL["toyota-yaris-cross"]=c=>realCar(c,{L:4.31,W:1.77,H:1.655,tire:.345,tireW:.
     // 黑色尾翼
     const rh=hitOn(V(.36,3,0),V(0,-1,0),[cab]);if(rh){const sh=new T.Shape();sh.moveTo(-.24,-.02);sh.lineTo(.06,.0);sh.lineTo(.04,.035);sh.lineTo(-.25,.012);sh.closePath();
       const g=new T.ExtrudeGeometry(sh,{depth:.96,bevelEnabled:true,bevelThickness:.01,bevelSize:.01,bevelSegments:2});g.translate(0,0,-.48);const sp=new T.Mesh(g,piano);sp.position.set(.36,rh.point.y-.015,0);G.add(sp)}}});
+// Toyota Camry（第九代 XV80）：4920×1840×1445、軸距 2825、235/45R18
+// 車頭「鎚頭」：細長尖頭燈＋上緣日行燈往外下彎、車身色鼻頭、頭燈間一條細縫、下面上寬下窄的大片黑色網格水箱罩，兩角黑色進氣口
+// 斜背式車頂、鍍鉻窗線、車身色 C 柱；尾燈細長 C 形、行李箱黑色小鴨尾、CAMRY 字樣
+REAL["toyota-camry"]=c=>realCar(c,{L:4.92,W:1.84,H:1.445,tire:.335,tireW:.235,arch:.385,axles:[1.095,3.92],
+  colors:["#EEEFEF","#B5B9BD","#5E6267","#18191B","#8E1A22","#2B466E","#6A6253"],
+  rearD:.36,rearP:2.6,frontD:.64,frontP:2.2,shoulder:.14,cab:[.68,3.95],cabIn:.07,tumble:.74,
+  skirt:[[0,.24],[2,.2],[4.92,.2]],
+  bottom:[[0,.38],[.2,.24],[.5,.165],[4.45,.165],[4.75,.2],[4.92,.3]],
+  top:[[0,.66],[.03,.9],[.12,.99],[.55,1.0],[1.0,.98],[2.0,.95],[3.0,.93],[3.7,.91],[4.1,.85],[4.5,.76],[4.8,.68],[4.92,.52]],
+  roof:[[.68,.99],[1.0,1.15],[1.4,1.33],[1.9,1.43],[2.5,1.445],[3.0,1.41],[3.4,1.26],[3.7,1.08],[3.95,.92]],
+  wheel(wg,z,R,m){wheelTwoTone(wg,z,R,m,10,(x,cx,cy,w)=>drawToyota(x,cx,cy,w))},
+  details({proj,rearSeam,kit}){
+    proj("front",-.94,.94,.14,.82,(x,M)=>{
+      // 大片黑色網格水箱罩（上寬下窄）＋兩角黑色進氣口
+      rpoly(x,M,[[-.5,.2,.04],[.5,.2,.04],[.68,.5,.04],[-.68,.5,.04]],"#0c0d0f");
+      x.save();x.beginPath();[[-.48,.22],[.48,.22],[.65,.48],[-.65,.48]].forEach(([u,v],i)=>x[i?"lineTo":"moveTo"](M.x(u),M.y(v)));x.closePath();x.clip();
+      honeycomb(x,M.x(-.7),M.y(.5),M.x(.7),M.y(.2),M.s(.014),"#0f1012","#34373c");x.restore();
+      for(const s of[-1,1])rpoly(x,M,[[s*.62,.22,.02],[s*.84,.28,.02],[s*.88,.46,.02],[s*.8,.42,.02]],"#101113");
+      // 頭燈之間的細縫＋標誌
+      rpoly(x,M,[[-.36,.575,.01],[.36,.575,.01],[.4,.6,.01],[-.4,.6,.01]],"#0e0f11");
+      drawToyota(x,M.x(0),M.y(.655),M.s(.15),"#e3e7ec")},{metal:.35,rough:.25});
+    for(const s of[-1,1]){
+      proj("front",-.94,.94,.5,.82,(x,M)=>rpoly(x,M,[[s*.41,.6,.005],[s*.46,.65,.01],[s*.84,.715,.02],[s*.92,.665,.02],[s*.8,.6,.01]],"#1e232a"),{metal:.4,rough:.08,layer:1});
+      proj("front",-.94,.94,.4,.82,(x,M)=>{x.strokeStyle="#fff";x.lineWidth=M.s(.008);x.lineCap="round";x.lineJoin="round";
+        x.beginPath();x.moveTo(M.x(s*.44),M.y(.64));x.lineTo(M.x(s*.84),M.y(.705));x.lineTo(M.x(s*.9),M.y(.665));x.lineTo(M.x(s*.88),M.y(.5));x.stroke();
+        x.fillStyle="#cfd8e6";for(const u of[.58,.7]){x.beginPath();x.ellipse(M.x(s*u),M.y(.645),M.s(.03),M.s(.015),0,0,7);x.fill()}},{glow:.9,layer:2})}
+    kit.doors([[[3.55,.92],[3.58,.7],[3.52,.45],[3.47,.24]],[[2.56,.95],[2.57,.5],[2.56,.24]],[[1.6,.98],[1.6,.8],[1.66,.7],[1.65,.45],[1.6,.24]],Array.from({length:12},(_,i)=>[1.6+(3.47-1.6)*i/11,.24])]);
+    kit.handles({xs:[3.07,2.08],y:.87,w:.11});
+    kit.belt({x0:1.0,x1:3.75,dy:.03,chrome:true});
+    kit.band(2.5,2.6,"black");kit.band(.68,1.12,"body");
+    kit.mirror({x:3.62,y:.99,z:.95,sx:.075,sy:.055,sz:.11,signal:true});
+    kit.hood(3.95,4.62,.72,.05);
+    for(const z of[-1,1])rearSeam([[1.0,z*.6],[.92,z*.67],[.82,z*.67]]);rearSeam(Array.from({length:13},(_,i)=>[.82,.67-1.34*i/12]));
+    proj("rear",-.94,.94,.14,1.02,(x,M)=>{
+      rpoly(x,M,[[-.8,.26,.03],[.8,.26,.03],[.8,.38,.03],[-.8,.38,.03]],"#18191b");
+      for(const s of[-1,1])rpoly(x,M,[[s*.5,.28,.01],[s*.62,.28,.01],[s*.62,.34,.01],[s*.5,.34,.01]],"#2a2c30");
+      for(const s of[-1,1])rpoly(x,M,[[s*.7,.42,.01],[s*.82,.42,.01],[s*.82,.44,.01],[s*.7,.44,.01]],"#8a0c14");
+      rpoly(x,M,[[-.26,.46,.02],[.26,.46,.02],[.26,.62,.02],[-.26,.62,.02]],null,"#3a3c40",M.s(.006));
+      // 尾燈：細長、外端往下彎成 C 形
+      for(const s of[-1,1]){rpoly(x,M,[[s*.34,.84,.005],[s*.34,.89,.01],[s*.86,.93,.02],[s*.92,.85,.02],[s*.86,.79,.02],[s*.8,.83,.01]],"#4a0a10");
+        x.strokeStyle="#ff2a3a";x.lineWidth=M.s(.01);x.lineJoin="round";x.beginPath();x.moveTo(M.x(s*.37),M.y(.865));x.lineTo(M.x(s*.86),M.y(.9));x.lineTo(M.x(s*.88),M.y(.82));x.stroke()}
+      // 行李箱黑色小鴨尾
+      rpoly(x,M,[[-.62,.955,.01],[.62,.955,.01],[.6,.98,.01],[-.6,.98,.01]],"#101113");
+      drawToyota(x,M.x(0),M.y(.86),M.s(.12),"#dfe3e8");kit.text(x,M,"CAMRY",0,.76,.04,"#d2d6dc",.03)},{metal:.35,rough:.25});
+    proj("rear",-.94,.94,.75,.97,(x,M)=>{for(const s of[-1,1]){x.strokeStyle="#ff4555";x.lineWidth=M.s(.007);x.lineJoin="round";x.beginPath();x.moveTo(M.x(s*.38),M.y(.865));x.lineTo(M.x(s*.86),M.y(.9));x.lineTo(M.x(s*.88),M.y(.82));x.stroke()}},{glow:.8,layer:2})}});
 const REAL_OLD={
   // Tesla Model 3（2024 Highland）：4720×1850×1441、軸距 2875；沒有水箱罩、低圓的車頭、細長頭燈、全黑玻璃車頂、短尾＋小鴨尾、C 形尾燈
   "tesla-model-3":c=>realCar(c,{L:4.72,W:1.85,H:1.441,tire:.335,tireW:.235,arch:.385,axles:[1.03,3.905],
@@ -596,7 +641,7 @@ const REAL_OLD={
 };
 Object.assign(REAL,REAL_OLD);   // 兩批車款合在一起
 // 已經上線的寫實車款（每完成 10 台加一批）
-const REAL_LIVE=new Set(["tesla-model-3","toyota-corolla-cross","toyota-rav4","toyota-corolla-altis","toyota-yaris-cross"]);
+const REAL_LIVE=new Set(["tesla-model-3","toyota-corolla-cross","toyota-rav4","toyota-corolla-altis","toyota-yaris-cross","toyota-camry"]);
 
 function build(c){
   // 照真車一台一台做好、已經上線的車款用寫實版；還在做的只有開了預覽（localStorage xq_carReal）才看得到
