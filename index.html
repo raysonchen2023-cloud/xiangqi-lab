@@ -412,7 +412,7 @@ html[data-era=ming] .topbar,html[data-era=qing] .topbar{border-bottom-width:4px}
       if(!window.caches)return go();caches.keys().then(function(ks){return Promise.all(ks.filter(function(k){return k.indexOf("xqlab-app-")===0}).map(function(k){return caches.delete(k)}))})
         .then(function(){return navigator.serviceWorker&&navigator.serviceWorker.getRegistration()}).then(function(r){return r&&r.update()}).catch(function(){}).then(go)}},4000)})();
 </script>
-<script>window.XQ_OFFLINE=true;window.XQ_BUILD="20261102-0736";</script>
+<script>window.XQ_OFFLINE=true;window.XQ_BUILD="20261102-0740";</script>
 <script src="core.js"></script>
 <script src="engine.js"></script>
 <script src="local.js"></script>
@@ -1804,14 +1804,17 @@ function Settings(v){
       <button class="item" id="sh"><span class="lb">📤</span><span class="tx"><b>分享給朋友</b><span>QR code・LINE</span></span><span class="muted">›</span></button></div>
     ${OFF?'<div class="sec-t">進階</div><div class="card"><label class="row" style="justify-content:space-between"><span><b>開發者模式</b><br><span class="muted">一般玩家不用打開。打開後才會顯示連線電腦、AI 對戰等開發者功能</span></span><input type="checkbox" class="sw" id="dm"></label></div>'
       +(DEVMODE()?'<div class="items" style="padding:0;margin-top:8px"><button class="item" id="fa"><span class="lb">📋</span><span class="tx"><b>意見回饋管理</b><span>看所有回饋和截圖，決定玩家的回饋要不要修</span></span><span class="muted">›</span></button><button class="item" id="cn"><span class="lb">🖥</span><span class="tx"><b>連線到開發者的電腦</b><span>看 AI 對戰、同步大師棋譜</span></span><span class="muted">›</span></button></div>':""):""}</div></div>`;
-  const showTab=()=>{v.querySelectorAll("#sgTabs button").forEach(b=>b.classList.toggle("on",b.dataset.k===stab));v.querySelectorAll("[data-pane]").forEach(x=>x.hidden=x.dataset.pane!==stab)};
+  let tbRefresh=()=>{};
+  const showTab=()=>{if(stab==="play")tbRefresh();v.querySelectorAll("#sgTabs button").forEach(b=>b.classList.toggle("on",b.dataset.k===stab));v.querySelectorAll("[data-pane]").forEach(x=>x.hidden=x.dataset.pane!==stab)};
   v.querySelectorAll("#sgTabs button").forEach(b=>b.onclick=()=>{vibrate(5);stab=b.dataset.k;store.set("setTab",stab);showTab()});showTab();
   // 測試特效與音效（意見回饋）：用真的走棋流程（Board.draw 的 fresh＋fx）播放，所以會照設定開關
-  {const tb=Board(null),box=v.querySelector("#tb");box.append(tb.svg);const S0=parseFen(START);tb.draw(S0,{anim:false});
+  {const tb=Board(null),box=v.querySelector("#tb");box.append(tb.svg);const S0=parseFen(START);let tbLast=S0;tb.draw(S0,{anim:false});
+    // 換了外觀（棋盤、棋子、朝代）後切回來，用目前外觀重畫最後的盤面（意見回饋 145）
+    tbRefresh=()=>tb.draw(tbLast,{anim:false});
     const mvb=(b,f,t)=>{const n=b.slice();n[t]=n[f];n[f]=null;return n};
     // 將軍用的簡單盤面：黑將、雙士；紅帥；紅俥從左邊橫走到中路將軍
     const CK=Array(90).fill(null);CK[4]="k";CK[3]="a";CK[5]="a";CK[85]="K";CK[72]="R";CK[33]="p";CK[60]="P";
-    const play=(pre,f,t,ck)=>{unlockAudio();tb.draw(pre,{anim:false});setTimeout(()=>tb.draw(mvb(pre,f,t),{last:{f,t},fx:true,check:ck==null?-1:ck}),80)};
+    const play=(pre,f,t,ck)=>{unlockAudio();tb.draw(pre,{anim:false});tbLast=mvb(pre,f,t);setTimeout(()=>tb.draw(tbLast,{last:{f,t},fx:true,check:ck==null?-1:ck}),80)};
     v.querySelectorAll("[data-tst]").forEach(x=>x.onclick=()=>{vibrate(5);const k=x.dataset.tst;
       if(k==="mv")play(S0,70,67);                          // 炮二平五
       else if(k==="cap")play(mvb(S0,70,67),67,31);         // 中炮打中卒（兵當炮架）
