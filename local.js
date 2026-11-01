@@ -263,7 +263,7 @@ var XQ=(function(){
   async function ping(){const r=remoteInfo();if(!r)return false;if(Date.now()-lastPing.at<8000)return lastPing.ok;
     const ac=new AbortController(),tm=setTimeout(()=>ac.abort(),12000);
     // 失敗只記 3 秒，下次很快會再試；成功記 8 秒
-    try{await remote("/remote",undefined,{signal:ac.signal});lastPing={at:Date.now(),ok:true}}catch(e){lastPing={at:Date.now()-5000,ok:false}}finally{clearTimeout(tm)}
+    try{await remote("/remote",undefined,{signal:ac.signal});lastPing={at:Date.now(),ok:true};const r2=remoteInfo();if(r2&&!(r2.ok>Date.now()-36e5))ls.set("remote",{...r2,ok:Date.now()})}catch(e){lastPing={at:Date.now()-5000,ok:false}}finally{clearTimeout(tm)}
     if(!lastPing.ok&&await discover())return ping();
     return lastPing.ok}
   // 電腦程式重開後通道網址會換：到 ntfy.sh 的秘密頻道（由存取碼算出來）查電腦公告的新網址，自動換過去

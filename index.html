@@ -752,9 +752,10 @@ async function homeStatus(box,tries){
   if(!box.isConnected)return;
   // 連不上的話，停在首頁時每 5 秒再試（最多 6 次），連上就自動變綠燈
   if(r&&!ok&&(tries||0)<6)setTimeout(()=>{if(box.isConnected&&!document.hidden)homeStatus(box,(tries||0)+1)},5000);
-  box.innerHTML=`<div class="row" style="justify-content:space-between"><span>${ok?"🟢 已連上電腦":r?"🟠 連不到電腦（離線使用中）":"⚪ 離線模式"}</span><button class="pill" id="cBtn">${ok?"連線資訊":"怎麼連線"}</button></div>
+  box.innerHTML=`<div class="row" style="justify-content:space-between"><span>${ok?"🟢 已連上電腦":r?"🟠 連不到電腦（離線使用中）":"⚪ 離線模式"}</span><span class="row" style="gap:6px">${r&&!ok?'<button class="pill" id="fBtn">忘記這台電腦</button>':""}<button class="pill" id="cBtn">${ok?"連線資訊":"怎麼連線"}</button></span></div>
     <div class="row" style="justify-content:space-between;margin-top:8px"><span>${eng?"✅ Pikafish 已在手機裡，可離線下棋與分析":"⬇ Pikafish 引擎還沒下載（約 48 MB）"}</span>${eng?"":'<button class="pill" id="eBtn">下載</button>'}</div>`;
   box.querySelector("#cBtn").onclick=connectSheet;
+  const fb=box.querySelector("#fBtn");if(fb)fb.onclick=()=>confirmBox("不再連這台電腦？（之後要連，重新掃電腦上的 QR code）",()=>{XQ.disconnect();box.remove();toast("已經忘記這台電腦")},"忘記");
   const e=box.querySelector("#eBtn");if(e)e.onclick=()=>{e.disabled=true;e.textContent="下載中…";(XQEngine.prefetch||XQEngine.load)().then(()=>{toast("Pikafish 已下載，可以離線使用");homeStatus(box)}).catch(err=>{toast(err.message);e.disabled=false;e.textContent="下載"})}}
 
 // 特級大師對局（33 MB）自動下載：App 打開 20 秒後，沒下載過就在背景抓一次（存在手機裡，離線也能看）
@@ -764,6 +765,8 @@ if(OFF)setTimeout(async()=>{try{if(!navigator.onLine||(navigator.connection&&nav
 if(OFF&&window.XQEngine&&XQEngine.prefetch)setTimeout(async()=>{try{if(await XQ.engineCached()||!navigator.onLine||(navigator.connection&&navigator.connection.saveData))return;
   await XQEngine.prefetch();toast("✅ Pikafish 引擎已自動下載完成，離線也能下棋");const h=document.querySelector("#hStatus");if(h&&h.isConnected)homeStatus(h)}catch(e){}},5000);
 // 從背景切回 App：首頁的連線燈號重新檢查（手機網路要一點時間恢復，所以等一下再測）
+if(OFF)setTimeout(()=>{const r=XQ.remoteInfo&&XQ.remoteInfo();if(!r||DEVMODE())return;
+  XQ.ping().then(ok=>{if(!ok&&!(r.ok>Date.now()-3*864e5)&&Date.now()-(r.at||0)>864e5)XQ.disconnect()}).catch(()=>{})},8000);
 if(OFF)document.addEventListener("visibilitychange",()=>{if(document.hidden)return;const h=document.querySelector("#hStatus");if(h)setTimeout(()=>{if(h.isConnected)homeStatus(h)},1200)});
 // ================= 我的名字、誰在線上 =================
 function nameSheet(first){sheet(first?"👋 歡迎！取個名字吧":"我的名字",b=>{
