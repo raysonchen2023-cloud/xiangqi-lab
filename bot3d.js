@@ -23,6 +23,23 @@
     yuan:{body:"#F4F6FA",rim:"#2456A6",ring:"#2456A6",ink:"#2456A6",hat:"fur",hc:"#2456A6",shoe:"#2456A6"},
     ming:{body:"#B3261E",rim:"#F2C14E",ring:"#B3261E",ink:"#B3261E",hat:"wusha",hc:"#151515",shoe:"#151515"},
     qing:{body:"#5A2E1A",tex:1,rim:"#F2D27A",ring:"#C8102E",ink:"#C8102E",hat:"qing",hc:"#2a1a12",shoe:"#2a1a12"}};
+  // 官階（意見回饋 171）：電腦段位（積分挑戰）新手～專2 → 九品～一品；各朝代官服顏色依史制，頂戴寶石、腰帶、補子、笏板依品級
+  const grade=()=>{let p=0;try{p=(JSON.parse(localStorage.getItem("xq_cpuRate")||"null")||{}).pts||0}catch(e){}
+    return p>=1500?1:p>=1150?2:p>=1000?3:p>=800?4:p>=600?5:p>=400?6:p>=200?7:p>=100?8:9};
+  const GN="〇一二三四五六七八九";
+  const C={zi:"#5B2A86",fei:"#A3211A",qfei:"#C8473B",lv:"#2E6B3F",qlv:"#5C9A5A",qing:"#1F4E8C",qqing:"#5B8FC7",hei:"#1E1A18",shiqing:"#1F2A44"};
+  const ROBE={   // 1~9 品的官服顏色
+    qin:g=>g<=3?"#3a2a4a":g<=6?"#1f3a3a":"#1E1A18",                       // 秦尚黑，高官綬帶偏紫、中級偏青
+    han:g=>g<=3?"#4a1f5a":g<=6?"#1f4a4a":"#2a1a14",                       // 漢：紫綬、青綬、黑綬
+    sanguo:g=>g<=3?"#C9A24A":g<=6?"#C0C6CC":"#5E6B73",                    // 三國：金甲、銀甲、鐵甲
+    weijin:g=>g<=3?C.zi:g<=5?C.fei:C.lv, nanbei:g=>g<=3?C.zi:g<=5?C.fei:C.lv, sui:g=>g<=5?C.zi:g<=7?C.fei:C.lv,
+    tang:g=>[C.zi,C.zi,C.zi,C.fei,C.qfei,C.lv,C.qlv,C.qing,C.qqing][g-1], wudai:g=>[C.zi,C.zi,C.zi,C.fei,C.qfei,C.lv,C.qlv,C.qing,C.qqing][g-1],
+    song:g=>g<=4?C.zi:g<=6?C.fei:C.lv, yuan:g=>g<=5?C.zi:g<=7?C.fei:C.lv, ming:g=>g<=4?C.fei:g<=7?C.qing:C.lv, qing:()=>C.shiqing};
+  const BEAD=["#D0021B","#E8573A","#1F5BD6","#2A3F8F","#E8F4FF","#F4F1E8","#E3B341","#C9A24A","#B8B8B8"];    // 清代頂戴：紅寶石、珊瑚、藍寶石、青金石、水晶、硨磲、素金、陰紋金、陽紋金
+  const BELT=["#E8EFE6","#8A5A3A","#E3B341","#D4A640","#D8DDE3","#B9C0C8","#B9C0C8","#2A2420","#2A2420"];    // 明代腰帶：玉、犀、金花、素金、銀花、素銀、烏角
+  const BUZI="鶴雞雀雁鷴鷺鶒鸝鶉";   // 明清文官補子：仙鶴、錦雞、孔雀、雲雁、白鷴、鷺鷥、鸂鶒、黃鸝、鵪鶉
+  const plaqueTex=(ch,bg,fg)=>cv(128,(g,n)=>{g.fillStyle=bg;g.fillRect(0,0,n,n);g.strokeStyle=fg;g.lineWidth=8;g.strokeRect(6,6,n-12,n-12);
+    g.fillStyle=fg;g.font='900 76px "Noto Serif TC","PMingLiU","Songti TC",serif';g.textAlign="center";g.textBaseline="middle";g.fillText(ch,n/2,n/2+5)});
   const eraK=()=>{const k=store.get("era","classic");return TH[k]?k:"classic"};
   const faceTex=(ch,th,k)=>cv(512,(g,n)=>{const h=n/2;
     let gr=g.createRadialGradient(h*.8,h*.7,10,h,h,h);gr.addColorStop(0,"#FFF8E6");gr.addColorStop(.75,"#F2DCAE");gr.addColorStop(1,"#D9B577");g.fillStyle=gr;g.beginPath();g.arc(h,h,h,0,TAU);g.fill();
@@ -35,13 +52,14 @@
   const woodTex=()=>cv(256,(g,n)=>{g.fillStyle="#B07740";g.fillRect(0,0,n,n);for(let i=0;i<70;i++){g.strokeStyle=`rgba(${60+Math.random()*40|0},${30+Math.random()*20|0},10,${.08+Math.random()*.15})`;g.lineWidth=1+Math.random()*3;
     g.beginPath();const y=Math.random()*n;g.moveTo(0,y);for(let x=0;x<=n;x+=16)g.lineTo(x,y+Math.sin(x/30+i)*4);g.stroke()}});
   // ---------- 造型 ----------
-  function build(k){const th=TH[k]||TH.classic;
+  function build(k,gr){const th=TH[k]||TH.classic;gr=gr||grade();const robe=ROBE[k]?ROBE[k](gr):null;
     const bot=new T.Group();
     const P=(c,o)=>new T.MeshPhysicalMaterial(Object.assign({color:c,roughness:.45,metalness:0,clearcoat:.6,clearcoatRoughness:.25},o||{}));
     const INK=new T.MeshBasicMaterial({color:0x3a2010,side:T.BackSide});
     const add=(parent,geo,mat,pos,o)=>{const m=new T.Mesh(geo,mat);if(pos)m.position.set(...pos);parent.add(m);
       if(!(o&&o.noLine)){const l=new T.Mesh(geo,INK);l.scale.setScalar(1+((o&&o.line)||.06));m.add(l)}return m};
-    const wood=P(th.body,Object.assign(th.tex?{map:woodTex()}:{},th.metal?{metalness:.55}:{},{roughness:th.metal?.35:.5,clearcoat:.9})),skin=P("#FBE9CC",{roughness:.6,clearcoat:.15,sheen:.5,sheenColor:new T.Color("#ffd9b0")}),
+    const metalRobe=k==="sanguo";
+    const wood=robe?P(robe,{metalness:metalRobe?.6:0,roughness:metalRobe?.3:.5,clearcoat:.9}):P(th.body,Object.assign(th.tex?{map:woodTex()}:{},th.metal?{metalness:.55}:{},{roughness:th.metal?.35:.5,clearcoat:.9})),skin=P("#FBE9CC",{roughness:.6,clearcoat:.15,sheen:.5,sheenColor:new T.Color("#ffd9b0")}),
       red=P(th.shoe,{clearcoat:1,roughness:.3}),hatM=P(th.hc,{clearcoat:1,roughness:.3}),gold=P(th.rim,{metalness:.75,roughness:.28}),bead=P("#E3B341",{metalness:.75,roughness:.28}),dark=P("#1E120C",{clearcoat:1,roughness:.15}),
       white=new T.MeshBasicMaterial({color:0xffffff}),pink=new T.MeshBasicMaterial({color:0xF59A9A,transparent:true,opacity:.75}),mouthM=P("#7A1A14",{roughness:.6});
     // 身體＝一顆厚棋子＋金邊＋正面「帥」
@@ -80,9 +98,20 @@
       case"wusha":Cy(.3,.33,.24,hatM,[0,.68,0]);Sp(.2,hatM,[0,.82,-.12]);for(const s of[-1,1])Sp(.25,hatM,[.52*s,.74,-.14],[1,.5,.12],{line:.08});break;
       case"qing":Cy(.42,.5,.08,hatM,[0,.58,0]);Cy(.08,.34,.2,redM,[0,.72,0]);Sp(.07,bead,[0,.86,0]);break;
       default:Cy(.25,.28,.14,hatM,[0,.66,0]);Sp(.07,bead,[0,.77,0])}
+    // 官階：帽前寶石（頂戴色）
+    {const gm=P(BEAD[gr-1],{metalness:gr>=7?.8:.1,roughness:.12,clearcoat:1,transmission:gr===5?.6:0,transparent:gr===5,opacity:gr===5?.85:1});
+      const set=add(head,new T.TorusGeometry(.085,.022,8,20),bead,[0,.6,.44],{noLine:1});set.rotation.x=-.25;add(head,new T.SphereGeometry(.07,16,12),gm,[0,.6,.47],{line:.12});
+      if(k==="qing"&&gr<=3){const f=add(head,new T.ConeGeometry(.09,.6,12),P("#2E7D6B",{clearcoat:1,roughness:.3}),[0,.85,-.32],{noLine:1});f.rotation.x=-1.0;f.scale.z=.35;
+        add(head,new T.SphereGeometry(.06,12,10),P("#1F5BD6",{clearcoat:1}),[0,1.05,-.55],{noLine:1})}}
+    // 官階：腰帶＋牌子（明清是補子鳥名，其他朝代寫品級）
+    {const bm=P(BELT[gr-1],{metalness:gr===3||gr===4?.7:.1,roughness:.3,clearcoat:1});const belt=add(torso,new T.BoxGeometry(1.42,.11,.06),bm,[0,-.46,.25],{line:.08});
+      const isBz=k==="ming"||k==="qing",pl=new T.Mesh(new T.PlaneGeometry(.3,.3),P("#fff",{map:plaqueTex(isBz?BUZI[gr-1]:GN[gr],isBz?"#24345a":"#7a1a14","#F2D27A"),roughness:.4,clearcoat:.6,toneMapped:false}));
+      pl.position.set(0,-.46,.29);torso.add(pl)}
     // 手
     const arms=[];for(const s of[-1,1]){const sh=new T.Group();sh.position.set(.82*s,.14,0);torso.add(sh);
-      add(sh,new T.CapsuleGeometry(.105,.32,8,16),skin,[0,-.27,0],{line:.12});add(sh,new T.SphereGeometry(.15,20,14),skin,[0,-.56,0],{line:.09});arms.push(sh)}
+      add(sh,new T.CapsuleGeometry(.105,.32,8,16),skin,[0,-.27,0],{line:.12});add(sh,new T.SphereGeometry(.15,20,14),skin,[0,-.56,0],{line:.09});
+      if(s===1){const hu=add(sh,new T.BoxGeometry(.09,.5,.025),P(gr<=5?"#F2EAD6":"#8A6A44",{roughness:.35,clearcoat:.8}),[0,-.62,.16],{line:.1});hu.rotation.x=-.35}   // 笏板：五品以上象牙、六品以下木
+      arms.push(sh)}
     // 腳
     const legs=[];for(const s of[-1,1]){const hp=new T.Group();hp.position.set(.3*s,.6,0);bot.add(hp);
       add(hp,new T.CapsuleGeometry(.12,.18,8,16),skin,[0,-.2,0],{line:.1});const f=add(hp,new T.SphereGeometry(.17,20,14),red,[0,-.43,.06],{line:.09});f.scale.set(1,.6,1.35);legs.push(hp)}
@@ -185,7 +214,7 @@
     const key=new T.DirectionalLight(0xfff0dc,1.5);key.position.set(2.5,4,5);sc.add(key);
     const fill=new T.DirectionalLight(0xbcd4ff,.7);fill.position.set(-4,1.5,3);sc.add(fill);
     const rim=new T.DirectionalLight(0xffffff,1.4);rim.position.set(-1,3,-5);sc.add(rim);
-    const P=build(curK),root=new T.Group();root.add(P.bot);sc.add(root);const B=Object.assign(P,{root,closed:0,face:"smile"});
+    const P=build(curK,grade()),root=new T.Group();root.add(P.bot);sc.add(root);const B=Object.assign(P,{root,closed:0,face:"smile"});
     const shd=new T.Mesh(new T.CircleGeometry(.8,32),new T.MeshBasicMaterial({color:0,transparent:true,opacity:.2}));shd.rotation.x=-PI/2;shd.position.y=.02;sc.add(shd);
     const bounds=()=>({x0:0,x1:innerWidth-W,y0:20,y1:innerHeight-H});
     const sp=store.get("botPos",null);let parked=!!sp,x=sp?sp.x*innerWidth:Math.max(4,innerWidth-W-16),y=sp?sp.y*innerHeight:Math.max(70,innerHeight-H-90);
@@ -251,8 +280,10 @@
       else if(!r&&boardMode){boardMode=false;boardDrag=false;if(parked){const p=store.get("botPos",null);if(p){tx=p.x*innerWidth;ty=p.y*innerHeight}}else wander()}
       if(boardMode&&!boardDrag&&!drag){const b=bounds();tx=b.x1-4;ty=Math.max(b.y0,innerHeight-H-72)}},700);
     // 換朝代：重做造型（字形還沒下載就先下載，好了再換一次）
-    const rebuild=()=>{curK=eraK();root.remove(P.bot);Object.assign(B,build(curK));root.add(B.bot)};
-    const eraT=setInterval(()=>{if(eraK()!==curK){rebuild();if(typeof needGly==="function")needGly(curK,()=>{if(!stopped)rebuild()})}},1500);
+    const rebuild=()=>{curK=eraK();root.remove(P.bot);Object.assign(B,build(curK,grade()));root.add(B.bot)};
+    let curG=grade();
+    const eraT=setInterval(()=>{const g=grade();if(g!==curG){const up=g<curG;curG=g;rebuild();doAct(up?"cheer":"shrug");say(up?`升官了！現在是${GN[g]}品官 🎉`:`降成${GN[g]}品了…再加油！`,3.2)}
+      if(eraK()!==curK){rebuild();if(typeof needGly==="function")needGly(curK,()=>{if(!stopped)rebuild()})}},1500);
     if(typeof needGly==="function"&&!(typeof GLY!=="undefined"&&GLY[curK]))needGly(curK,()=>{if(!stopped)rebuild()});
     const setScale=v=>{SC=Math.min(2,Math.max(.6,+v||1));W=W0*SC;H=H0*SC;box.style.width=W+"px";box.style.height=H+"px";rd.setSize(W,H);store.set("botSize",SC)};
     const onResize=()=>{const b=bounds();x=Math.min(x,b.x1);y=Math.min(y,b.y1);tx=Math.min(tx,b.x1);ty=Math.min(ty,b.y1)};window.addEventListener("resize",onResize);
