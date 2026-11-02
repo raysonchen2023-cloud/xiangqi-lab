@@ -412,7 +412,7 @@ html[data-era=ming] .topbar,html[data-era=qing] .topbar{border-bottom-width:4px}
       if(!window.caches)return go();caches.keys().then(function(ks){return Promise.all(ks.filter(function(k){return k.indexOf("xqlab-app-")===0}).map(function(k){return caches.delete(k)}))})
         .then(function(){return navigator.serviceWorker&&navigator.serviceWorker.getRegistration()}).then(function(r){return r&&r.update()}).catch(function(){}).then(go)}},4000)})();
 </script>
-<script>window.XQ_OFFLINE=true;window.XQ_BUILD="20261102-1440";</script>
+<script>window.XQ_OFFLINE=true;window.XQ_BUILD="20261102-1445";</script>
 <script src="core.js"></script>
 <script src="engine.js"></script>
 <script src="local.js"></script>
@@ -1332,7 +1332,7 @@ function Lobby(v){setTop("線上大廳",false,[["📤",shareSheet,"分享給朋�
     const bk=box.querySelector("#back");if(bk)bk.onclick=()=>location.hash="#/pvp";
     box.querySelectorAll("[data-w]").forEach(b=>b.onclick=()=>{XQNet.watch(b.dataset.w);location.hash="#/pvp"});
     // 點棋友（不是按鈕的地方）→ 看他的資料卡
-    box.querySelectorAll("[data-p]").forEach(c=>c.onclick=e=>{if(e.target.closest("button"))return;const p=ps.find(x=>x.id===c.dataset.p);if(p)playerCard(p)});
+    box.querySelectorAll("[data-p]").forEach(c=>c.onclick=e=>{if(e.target.closest("button"))return;const p=ps.find(x=>x.id===c.dataset.p);if(p)oppCard(p.id,p.name,{invite:q=>{if(XQNet.playing())return confirmBox("你有一盤進行中的對局，邀請新對局會離開它，確定？",()=>{XQNet.leave();invite(q)},"確定");invite(q)}})});
     box.querySelectorAll("[data-i]").forEach(b=>b.onclick=()=>{const p=ps.find(x=>x.id===b.dataset.i);if(!p)return;
       if(XQNet.playing())return confirmBox("你有一盤進行中的對局，邀請新對局會離開它，確定？",()=>{XQNet.leave();invite(p)},"確定");invite(p)})}
   // 棋友資料卡：段位、積分、勝負和、狀態、裝置，還有你跟他下過的戰績
@@ -1813,6 +1813,29 @@ async function recommendGames(box,T,mid,midBy){const avg=a=>a.length?a.reduce((x
   el.querySelectorAll("[data-id]").forEach(b=>b.onclick=()=>{vibrate(5);location.hash=`#/db/${b.dataset.c}/${encodeURIComponent(b.dataset.id)}`})}
 // ================= 我的戰績（跟電腦下的勝負和、賽後報告分數、棋力測驗） =================
 // 我的戰績：所有下過的棋（挑戰電腦＋對人），可以分類、篩勝負，依月份分組，點一下打開棋譜
+// ================= 棋友資料（意見回饋 182）：下過的棋友也能看完整資料 =================
+// 線上大廳收到下過棋的棋友狀態時，把他最新的資料存在手機（oppSnap），離線時也看得到「上次看到」的資料
+function oppHist(){try{return(window.XQNet&&XQNet.rating?XQNet.rating().hist:[])||[]}catch(e){return[]}}
+function oppSnapSave(ps){const ids=new Set(oppHist().map(h=>h.oid).filter(Boolean));if(!ids.size)return;const S=store.get("oppSnap",{});let ch=false;
+  for(const p of ps||[])if(p&&ids.has(p.id)){S[p.id]={id:p.id,name:p.name,pts:p.pts,w:p.w,l:p.l,d:p.d,city:p.city||"",kind:p.kind||"",at:p.at||Date.now()};ch=true}if(ch)store.set("oppSnap",S)}
+if(window.XQNet&&XQNet.on)setTimeout(()=>{try{XQNet.on("people",()=>oppSnapSave(XQNet.people()));oppSnapSave(XQNet.people())}catch(e){}},500);
+function oppCard(oid,name,opt){opt=opt||{};let live=null;try{live=window.XQNet&&XQNet.people?XQNet.people().find(x=>oid?x.id===oid:x.name===name):null}catch(e){}
+  if(live)oppSnapSave([live]);const snap=(store.get("oppSnap",{})||{})[oid]||null,p=live||snap||{name,id:oid};
+  const mine=oppHist().filter(h=>oid?h.oid===oid:h.opp===name),mw=mine.filter(h=>h.res==="w").length,ml=mine.filter(h=>h.res==="l").length,md=mine.filter(h=>h.res==="d").length;
+  const N=(p.w||0)+(p.l||0)+(p.d||0),ago=p.at?Math.max(0,Math.round((Date.now()-p.at)/60000)):null;
+  const agoTx=ago==null?"":ago<1?"剛剛":ago<60?ago+" 分鐘前":ago<1440?Math.round(ago/60)+" 小時前":Math.round(ago/1440)+" 天前";
+  const ST2={idle:"閒置中",seeking:"找對手中",playing:"對局中",watching:"觀戰中"};
+  sheet("棋友資料",b=>{b.innerHTML=`<div style="text-align:center"><div style="font-size:22px;font-weight:900;font-family:var(--serif)">${esc(p.name||name||"棋友")}</div>
+      <div style="margin:6px 0">${p.pts!=null&&window.XQNet?`<span class="pill" style="font-size:15px;padding:4px 12px">🏅 ${esc(XQNet.rankOf(p.pts))}・${p.pts||0} 分</span>`:""}</div>
+      <div class="muted">${live?"🟢 在線上・"+(ST2[live.st]||""):"⚪ 不在線上"+(agoTx?"・上次看到 "+agoTx:"")}${p.city?"・📍"+esc(p.city):""}${p.kind?"・"+esc(p.kind):""}</div></div>
+    <div class="card" style="margin-top:12px"><div class="muted" style="margin-bottom:6px">他的線上戰績${live?"":snap?"（上次看到的資料）":""}</div>${p.w==null?'<div class="muted">還沒有他的戰績資料（他上線時會更新）</div>':`<div style="display:grid;grid-template-columns:repeat(4,1fr);text-align:center">
+      ${[["勝",p.w,"var(--accent2)"],["負",p.l,"var(--red)"],["和",p.d,"var(--muted)"],["勝率",N?Math.round(p.w*100/N)+"%":"—",""]].map(([l,x,c])=>`<div><div style="font-size:22px;font-weight:900;color:${c}">${x}</div><div class="muted">${l}</div></div>`).join("")}</div>`}</div>
+    <div class="card" style="margin-top:8px"><div class="muted" style="margin-bottom:4px">你跟他下過</div>${mine.length?`<b style="font-size:17px">${mw} 勝 ${ml} 負 ${md} 和</b><span class="muted">・共 ${mine.length} 盤</span>
+      <div class="items" style="padding:0;margin-top:8px">${mine.slice(0,20).map(h=>`<button class="item" data-rid="${esc(h.rid||"")}"><span class="lb">${h.res==="w"?"🏆":h.res==="l"?"💪":"🤝"}</span><span class="tx"><b>${h.res==="w"?"勝":h.res==="l"?"負":"和"}${h.d?`（積分 ${h.d>0?"+":""}${h.d}）`:""}</b><span>${new Date(h.at).toLocaleDateString()}・${h.n||0} 步${h.why?"・"+esc(h.why):""}</span></span><span class="muted">${h.rid?"看棋譜 ›":""}</span></button>`).join("")}</div>`:'<span class="muted">還沒下過</span>'}</div>
+    ${live&&(live.st==="idle"||live.st==="seeking")&&opt.invite?'<button class="btn" id="pi">⚔ 邀請對戰</button>':live&&live.st==="playing"&&live.gid?'<button class="btn" id="pw">👀 觀看他的對局</button>':""}`;
+    b.querySelectorAll("[data-rid]").forEach(x=>x.onclick=()=>{if(!x.dataset.rid)return;closeSheet();location.hash="#/db/pvp/"+encodeURIComponent(x.dataset.rid)});
+    const pi=b.querySelector("#pi"),pw=b.querySelector("#pw");if(pi)pi.onclick=()=>{closeSheet();opt.invite(live)};
+    if(pw)pw.onclick=()=>{closeSheet();XQNet.watch(live.gid);location.hash="#/pvp"}})}
 function histList(box,reps){let kind=store.get("histKind","all"),res="",limit=40,all=null;
   const me=myName(),nh=window.XQNet&&XQNet.rating?XQNet.rating().hist:[];
   const resOf=(it,mySide)=>{const r=String(it.result||""),w=/^紅/.test(r)&&/勝|胜/.test(r)?"r":/^黑/.test(r)&&/勝|胜/.test(r)?"b":null;
@@ -1834,13 +1857,13 @@ function histList(box,reps){let kind=store.get("histKind","all"),res="",limit=40
       const r=resOf(x.it,x.side),R=x.c==="play"&&reps[x.it.id],nr=x.c==="pvp"&&nh.find(hh=>hh.rid===x.it.id);
       const lab=r==="w"?"勝":r==="l"?"負":r==="d"?"和":r==="x"?"✕":(r||"—").slice(0,1);
       const why=String(x.it.result||"").replace(/^.*?（/,"").replace(/）$/,"");
-      grp.push(`<button class="st-g" data-c="${x.c}" data-id="${esc(id)}"><span class="dot ${r==="w"||r==="l"?r:""}">${esc(lab)}</span><span class="tx"><b>${x.k==="cpu"?"🤖 ":"👥 "}${esc(x.opp||"")}</b><span>${id.slice(5,10).replace("-","/")}・${x.side?"執"+(x.side==="r"?"紅":"黑")+"・":""}${esc(why)}</span></span>${R?`<b class="r gl" style="background:${gradeFor(R.score)[2]}">${R.grade}</b>`:nr?`<b class="r ${nr.d>=0?"w":"l"}">${nr.d>=0?"+":""}${nr.d}</b>`:'<span class="r muted">›</span>'}</button>`)}
+      grp.push(`<button class="st-g" data-c="${x.c}" data-id="${esc(id)}"><span class="dot ${r==="w"||r==="l"?r:""}">${esc(lab)}</span><span class="tx"><b>${x.k==="cpu"?"🤖 ":"👥 "}${esc(x.opp||"")}${x.c==="pvp"&&x.side?` <i class="opp-i" data-oid="${esc(nr&&nr.oid||"")}" data-on="${esc(x.opp||"")}" style="font-style:normal;font-size:12px;color:var(--accent);border:1px solid var(--line);border-radius:10px;padding:0 6px;margin-left:4px">ⓘ 棋友</i>`:""}</b><span>${id.slice(5,10).replace("-","/")}・${x.side?"執"+(x.side==="r"?"紅":"黑")+"・":""}${esc(why)}</span></span>${R?`<b class="r gl" style="background:${gradeFor(R.score)[2]}">${R.grade}</b>`:nr?`<b class="r ${nr.d>=0?"w":"l"}">${nr.d>=0?"+":""}${nr.d}</b>`:'<span class="r muted">›</span>'}</button>`)}
     flush();h+=out.join("");
     if(L.length>limit)h+=`<button class="btn ghost" id="more" style="margin-top:12px">再顯示 40 盤（還有 ${L.length-limit} 盤）</button>`;
     box.innerHTML=h;
     box.querySelectorAll("[data-k]").forEach(b=>b.onclick=()=>{kind=b.dataset.k;store.set("histKind",kind);limit=40;paint()});
     box.querySelectorAll("[data-r]").forEach(b=>b.onclick=()=>{res=b.dataset.r;limit=40;paint()});
-    box.querySelectorAll("[data-id]").forEach(b=>b.onclick=()=>{vibrate(5);if(b.dataset.c==="play"&&!reps[b.dataset.id])store.set("openReport","play/"+b.dataset.id);location.hash=`#/db/${b.dataset.c}/${encodeURIComponent(b.dataset.id)}`});
+    box.querySelectorAll("[data-id]").forEach(b=>b.onclick=e=>{const oi=e.target.closest(".opp-i");if(oi){e.stopPropagation();return oppCard(oi.dataset.oid,oi.dataset.on)}vibrate(5);if(b.dataset.c==="play"&&!reps[b.dataset.id])store.set("openReport","play/"+b.dataset.id);location.hash=`#/db/${b.dataset.c}/${encodeURIComponent(b.dataset.id)}`});
     const mo=box.querySelector("#more");if(mo)mo.onclick=()=>{limit+=40;paint()}}
   paint();load()}
 // ================= 棋力五邊形：把每一盤（挑戰電腦＋線上對戰）Pikafish 評過等的著法加總平均 =================
