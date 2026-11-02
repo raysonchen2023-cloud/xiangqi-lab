@@ -4,32 +4,51 @@
 // - 外觀：深色輪廓線（反面外殼）、亮面烤漆、金邊、木紋、三點打光＋背光
 (function(){
   const T=window.THREE;if(!T)return;
-  const W=124,H=156,TAU=Math.PI*2,PI=Math.PI,ease=p=>p<.5?2*p*p:1-Math.pow(-2*p+2,2)/2,wv=(p,n)=>Math.sin(p*TAU*n),bell=p=>Math.sin(p*PI);
+  const W0=124,H0=156,TAU=Math.PI*2,PI=Math.PI,ease=p=>p<.5?2*p*p:1-Math.pow(-2*p+2,2)/2,wv=(p,n)=>Math.sin(p*TAU*n),bell=p=>Math.sin(p*PI);
   const store={get(k,d){try{const v=localStorage.getItem("m_"+k);return v==null?d:JSON.parse(v)}catch(e){return d}},set(k,v){try{localStorage.setItem("m_"+k,JSON.stringify(v))}catch(e){}}};
   // ---------- 貼圖 ----------
   function cv(n,f){const c=document.createElement("canvas");c.width=c.height=n;f(c.getContext("2d"),n);const t=new T.CanvasTexture(c);if(T.SRGBColorSpace)t.colorSpace=T.SRGBColorSpace;t.anisotropy=4;return t}
-  const faceTex=ch=>cv(512,(g,n)=>{const h=n/2;
+  // 朝代造型（意見回饋 163）：身體漆色、邊框、字色、帽子、鞋子；正面的「帥」用該朝代的字體（App 已下載的朝代字形）
+  const TH={
+    classic:{body:"#C08850",tex:1,rim:"#E3B341",ring:"#9E1B15",ink:"#B3141B",hat:"cap",hc:"#D02A1F",shoe:"#D02A1F"},
+    qin:{body:"#2B2420",rim:"#B98A45",ring:"#C42A22",ink:"#C42A22",hat:"mian",hc:"#151515",shoe:"#151515"},
+    han:{body:"#8E1F17",rim:"#1A1210",ring:"#1A1210",ink:"#9A2F20",hat:"jinxian",hc:"#1a1a1a",shoe:"#1a1210"},
+    sanguo:{body:"#5E6B73",metal:1,rim:"#C9973F",ring:"#2F5D7C",ink:"#B5381F",hat:"helmet",hc:"#6c747c",shoe:"#3a3f44"},
+    weijin:{body:"#7FA06A",rim:"#3E5A2E",ring:"#4E6B3A",ink:"#B3261E",hat:"scholar",hc:"#3c4a3a",shoe:"#3c4a3a"},
+    nanbei:{body:"#C9A877",rim:"#2F6F6A",ring:"#2F6F6A",ink:"#A8321F",hat:"lotus",hc:"#E3B341",shoe:"#7a4a2a"},
+    sui:{body:"#9DB3C2",rim:"#22394A",ring:"#22394A",ink:"#B3261E",hat:"sui",hc:"#1d2a33",shoe:"#22394A"},
+    tang:{body:"#D98E2E",tex:1,rim:"#2E7D5B",ring:"#2E7D5B",ink:"#8E1010",hat:"futou",hc:"#1a1a1a",shoe:"#2E7D5B"},
+    wudai:{body:"#23395B",rim:"#C9A24A",ring:"#C9A24A",ink:"#B3141B",hat:"wudai",hc:"#1b2740",shoe:"#C9A24A"},
+    song:{body:"#9CC5B3",rim:"#3E7F6E",ring:"#3E7F6E",ink:"#B3141B",hat:"zhanjiao",hc:"#1a1a1a",shoe:"#3E7F6E"},
+    yuan:{body:"#F4F6FA",rim:"#2456A6",ring:"#2456A6",ink:"#2456A6",hat:"fur",hc:"#2456A6",shoe:"#2456A6"},
+    ming:{body:"#B3261E",rim:"#F2C14E",ring:"#B3261E",ink:"#B3261E",hat:"wusha",hc:"#151515",shoe:"#151515"},
+    qing:{body:"#5A2E1A",tex:1,rim:"#F2D27A",ring:"#C8102E",ink:"#C8102E",hat:"qing",hc:"#2a1a12",shoe:"#2a1a12"}};
+  const eraK=()=>{const k=store.get("era","classic");return TH[k]?k:"classic"};
+  const faceTex=(ch,th,k)=>cv(512,(g,n)=>{const h=n/2;
     let gr=g.createRadialGradient(h*.8,h*.7,10,h,h,h);gr.addColorStop(0,"#FFF8E6");gr.addColorStop(.75,"#F2DCAE");gr.addColorStop(1,"#D9B577");g.fillStyle=gr;g.beginPath();g.arc(h,h,h,0,TAU);g.fill();
-    g.strokeStyle="#9E1B15";g.lineWidth=16;g.beginPath();g.arc(h,h,h*.8,0,TAU);g.stroke();g.lineWidth=4;g.beginPath();g.arc(h,h,h*.72,0,TAU);g.stroke();
+    g.strokeStyle=th.ring;g.lineWidth=16;g.beginPath();g.arc(h,h,h*.8,0,TAU);g.stroke();g.lineWidth=4;g.beginPath();g.arc(h,h,h*.72,0,TAU);g.stroke();
+    const gp=typeof GLY!=="undefined"&&GLY[k]&&GLY[k][ch];
+    if(gp&&window.Path2D){const P2=new Path2D(gp),sc=2.9;g.save();g.translate(h-50*sc+5,h-50*sc+8);g.scale(sc,sc);g.fillStyle="rgba(90,40,10,.35)";g.fill(P2);g.restore();
+      g.save();g.translate(h-50*sc,h-50*sc);g.scale(sc,sc);g.fillStyle=th.ink;g.fill(P2);g.strokeStyle=th.ink;g.lineWidth=1.8;g.lineJoin="round";g.stroke(P2);g.restore();return}
     g.font='900 250px "Noto Serif TC","PMingLiU","Songti TC","SimSun",serif';g.textAlign="center";g.textBaseline="middle";
-    g.fillStyle="rgba(90,40,10,.35)";g.fillText(ch,h+5,h+14);g.fillStyle="#B3141B";g.fillText(ch,h,h+8)});
+    g.fillStyle="rgba(90,40,10,.35)";g.fillText(ch,h+5,h+14);g.fillStyle=th.ink;g.fillText(ch,h,h+8)});
   const woodTex=()=>cv(256,(g,n)=>{g.fillStyle="#B07740";g.fillRect(0,0,n,n);for(let i=0;i<70;i++){g.strokeStyle=`rgba(${60+Math.random()*40|0},${30+Math.random()*20|0},10,${.08+Math.random()*.15})`;g.lineWidth=1+Math.random()*3;
     g.beginPath();const y=Math.random()*n;g.moveTo(0,y);for(let x=0;x<=n;x+=16)g.lineTo(x,y+Math.sin(x/30+i)*4);g.stroke()}});
   // ---------- 造型 ----------
-  function build(){
+  function build(k){const th=TH[k]||TH.classic;
     const bot=new T.Group();
     const P=(c,o)=>new T.MeshPhysicalMaterial(Object.assign({color:c,roughness:.45,metalness:0,clearcoat:.6,clearcoatRoughness:.25},o||{}));
     const INK=new T.MeshBasicMaterial({color:0x3a2010,side:T.BackSide});
     const add=(parent,geo,mat,pos,o)=>{const m=new T.Mesh(geo,mat);if(pos)m.position.set(...pos);parent.add(m);
       if(!(o&&o.noLine)){const l=new T.Mesh(geo,INK);l.scale.setScalar(1+((o&&o.line)||.06));m.add(l)}return m};
-    const wood=P("#C08850",{map:woodTex(),roughness:.5,clearcoat:.9}),skin=P("#FBE9CC",{roughness:.6,clearcoat:.15,sheen:.5,sheenColor:new T.Color("#ffd9b0")}),
-      red=P("#D02A1F",{clearcoat:1,roughness:.3}),gold=P("#E3B341",{metalness:.75,roughness:.28}),dark=P("#1E120C",{clearcoat:1,roughness:.15}),
+    const wood=P(th.body,Object.assign(th.tex?{map:woodTex()}:{},th.metal?{metalness:.55}:{},{roughness:th.metal?.35:.5,clearcoat:.9})),skin=P("#FBE9CC",{roughness:.6,clearcoat:.15,sheen:.5,sheenColor:new T.Color("#ffd9b0")}),
+      red=P(th.shoe,{clearcoat:1,roughness:.3}),hatM=P(th.hc,{clearcoat:1,roughness:.3}),gold=P(th.rim,{metalness:.75,roughness:.28}),bead=P("#E3B341",{metalness:.75,roughness:.28}),dark=P("#1E120C",{clearcoat:1,roughness:.15}),
       white=new T.MeshBasicMaterial({color:0xffffff}),pink=new T.MeshBasicMaterial({color:0xF59A9A,transparent:true,opacity:.75}),mouthM=P("#7A1A14",{roughness:.6});
     // 身體＝一顆厚棋子＋金邊＋正面「帥」
     const torso=new T.Group();torso.position.y=1.02;bot.add(torso);
     const body=add(torso,new T.CylinderGeometry(.8,.8,.46,64),wood,null,{line:.035});body.rotation.x=PI/2;
     for(const z of[.23,-.23]){const r=new T.Mesh(new T.TorusGeometry(.79,.035,12,64),gold);r.position.z=z;torso.add(r)}
-    const face=new T.Mesh(new T.CircleGeometry(.77,64),P("#fff",{map:faceTex("帥"),roughness:.4,clearcoat:.8,toneMapped:false}));face.position.z=.232;torso.add(face);
+    const face=new T.Mesh(new T.CircleGeometry(.64,64),P("#fff",{map:faceTex("帥",th,k),roughness:.4,clearcoat:.8,toneMapped:false}));face.position.z=.232;torso.add(face);
     // 頭
     const head=new T.Group();head.position.y=.8;torso.add(head);
     add(head,new T.SphereGeometry(.52,40,30),skin,[0,.14,0],{line:.05});
@@ -43,8 +62,24 @@
     const smile=new T.Mesh(new T.TorusGeometry(.085,.02,8,20,PI),dark);smile.rotation.z=PI;mouthG.add(smile);
     const open=new T.Mesh(new T.SphereGeometry(.07,16,12),mouthM);open.scale.set(1,.8,.4);open.visible=false;mouthG.add(open);
     const tear=new T.Mesh(new T.SphereGeometry(.045,12,10),new T.MeshPhysicalMaterial({color:0x7fc4ff,transparent:true,opacity:.85,clearcoat:1,roughness:.05}));tear.scale.set(.7,1,.6);tear.visible=false;head.add(tear);
-    // 帽子：小紅帽＋金頂
-    add(head,new T.CylinderGeometry(.25,.28,.14,40),red,[0,.66,0],{line:.08});add(head,new T.SphereGeometry(.07,16,12),gold,[0,.77,0]);
+    // 帽子：各朝代不同
+    const Cy=(rt,rb,h,m,pos,o)=>add(head,new T.CylinderGeometry(rt,rb,h,40),m,pos,o||{line:.08}),Sp=(r,m,pos,sc,o)=>{const x=add(head,new T.SphereGeometry(r,20,14),m,pos,o);if(sc)x.scale.set(...sc);return x},
+      Bx=(w,h,d,m,pos,o)=>add(head,new T.BoxGeometry(w,h,d),m,pos,o||{line:.04}),redM=P("#C8102E",{clearcoat:1,roughness:.3});
+    switch(th.hat){
+      case"mian":Cy(.2,.22,.16,hatM,[0,.68,0]);Bx(.95,.04,.5,hatM,[0,.78,0]);for(let x=-.36;x<=.37;x+=.18)for(const y of[.7,.63])Sp(.028,bead,[x,y,.26],null,{noLine:1});break;
+      case"jinxian":{Cy(.3,.33,.1,hatM,[0,.62,0]);const b=Bx(.14,.34,.44,hatM,[0,.8,-.02]);b.rotation.x=-.45;break}
+      case"helmet":{add(head,new T.SphereGeometry(.57,32,16,0,TAU,0,PI/2),P(th.hc,{metalness:.6,roughness:.35}),[0,.18,0],{line:.04});
+        add(head,new T.TorusGeometry(.56,.035,10,40),bead,[0,.2,0],{noLine:1}).rotation.x=PI/2;Cy(.02,.06,.22,bead,[0,.85,0]);Sp(.1,redM,[0,1,0],[1,1.3,1]);break}
+      case"scholar":Sp(.5,hatM,[0,.42,-.03],[1,.6,1.02],{line:.04});Sp(.14,hatM,[0,.78,-.05]);for(const s of[-1,1]){const r=Bx(.06,.4,.02,hatM,[.12*s,.45,-.5]);r.rotation.z=.15*s}break;
+      case"lotus":Cy(.22,.25,.08,bead,[0,.64,0]);for(let i=0;i<8;i++){const a=i/8*TAU,c=add(head,new T.ConeGeometry(.07,.22,10),bead,[Math.cos(a)*.17,.75,Math.sin(a)*.17],{noLine:1});c.rotation.z=-Math.cos(a)*.35;c.rotation.x=Math.sin(a)*.35}Sp(.06,redM,[0,.82,0]);break;
+      case"sui":Cy(.3,.3,.18,hatM,[0,.66,0]);add(head,new T.TorusGeometry(.3,.025,8,40),bead,[0,.62,0],{noLine:1}).rotation.x=PI/2;break;
+      case"futou":Sp(.42,hatM,[0,.56,-.02],[1,.62,1],{line:.04});Sp(.16,hatM,[0,.82,-.05]);for(const s of[-1,1]){const t=add(head,new T.CapsuleGeometry(.04,.36,4,8),hatM,[.14*s,.38,-.48]);t.rotation.x=.3}break;
+      case"wudai":Cy(.26,.3,.16,hatM,[0,.66,0]);Sp(.07,P("#ffffff",{clearcoat:1,roughness:.1}),[0,.78,0]);break;
+      case"zhanjiao":Cy(.3,.32,.22,hatM,[0,.68,0]);Bx(1.9,.03,.06,hatM,[0,.7,-.12]);break;
+      case"fur":add(head,new T.TorusGeometry(.38,.11,12,40),P("#7a5230",{roughness:.9,clearcoat:0}),[0,.58,0],{noLine:1}).rotation.x=PI/2;Cy(.28,.36,.22,hatM,[0,.72,0]);Sp(.07,redM,[0,.86,0]);break;
+      case"wusha":Cy(.3,.33,.24,hatM,[0,.68,0]);Sp(.2,hatM,[0,.82,-.12]);for(const s of[-1,1])Sp(.25,hatM,[.52*s,.74,-.14],[1,.5,.12],{line:.08});break;
+      case"qing":Cy(.42,.5,.08,hatM,[0,.58,0]);Cy(.08,.34,.2,redM,[0,.72,0]);Sp(.07,bead,[0,.86,0]);break;
+      default:Cy(.25,.28,.14,hatM,[0,.66,0]);Sp(.07,bead,[0,.77,0])}
     // 手
     const arms=[];for(const s of[-1,1]){const sh=new T.Group();sh.position.set(.82*s,.14,0);torso.add(sh);
       add(sh,new T.CapsuleGeometry(.105,.32,8,16),skin,[0,-.27,0],{line:.12});add(sh,new T.SphereGeometry(.15,20,14),skin,[0,-.56,0],{line:.09});arms.push(sh)}
@@ -54,6 +89,7 @@
     return{bot,torso,head,eyes,mouth:{smile,open},tear,arms,legs}}
 
   // ---------- 招牌動作 ----------
+  const lie=(p,B)=>{const L=p<.15?ease(p/.15):p>.85?ease((1-p)/.15):1;B.root.rotation.z=PI/2*L;B.root.position.x=1.2*L;B.root.position.y=.8*L};
   const R=(B,i,x,y,z)=>{const a=B.arms[i].rotation;if(x!=null)a.x=x;if(y!=null)a.y=y;if(z!=null)a.z=z};
   const ACTS={
     wave:{d:2.2,say:"嗨！",f:(p,B)=>{R(B,1,0,.4*wv(p,3),2.6);B.head.rotation.z=-.12}},
@@ -72,8 +108,15 @@
     win:{d:3.6,f:(p,B)=>{const h=Math.abs(wv(p,3));B.root.position.y=h*.5;R(B,0,0,.3*wv(p,6),-2.7);R(B,1,0,.3*wv(p,6),2.7);if(p>.4&&p<.75)B.root.rotation.y=ease((p-.4)/.35)*TAU;B.face="happy"}},
     lose:{d:3.8,f:(p,B)=>{B.head.rotation.x=.35;B.torso.rotation.x=.12;R(B,0,.15,0,-.08);R(B,1,.15,0,.08);B.root.rotation.z=.05*wv(p,1);B.face="sad"}},
     draw:{d:2.8,f:(p,B)=>{const k=bell(p);R(B,0,-.8*k,0,-1.1*k-.3);R(B,1,-1.2*k,0,.5);B.head.rotation.z=.15*k;B.face="flat"}},
+    // 躺著的動作（意見回饋 165）：側躺在地上，頭在左、腳在右；開頭和結尾慢慢躺下、起身
+    nap:{d:4.4,say:"躺一下…Zzz",f:(p,B)=>{lie(p,B);B.closed=1;B.torso.scale.y=1+.03*Math.sin(p*TAU*3)}},
+    kick:{d:3.6,say:"躺著翹腳好舒服～",f:(p,B)=>{lie(p,B);B.legs[0].rotation.x=.7*wv(p,5);B.legs[1].rotation.x=-.7*wv(p,5);B.face="happy"}},
+    roll:{d:3,say:"滾來滾去～",f:(p,B)=>{B.root.rotation.z=ease(p)*TAU;B.root.position.y=.85*bell(p);B.face="open"}},
+    prop:{d:4,say:"撐著頭想棋…",f:(p,B)=>{lie(p,B);R(B,1,0,0,2.6);R(B,0,.3,0,-.4);B.head.rotation.z=-.2}},
+    liewave:{d:3.4,say:"躺著跟你揮揮手",f:(p,B)=>{lie(p,B);R(B,0,0,.4*wv(p,3),-2.4)}},
+    laugh:{d:3.2,say:"哈哈哈哈！",f:(p,B)=>{lie(p,B);B.root.rotation.z+=.15*wv(p,6);B.legs[0].rotation.x=.5*wv(p,6);B.legs[1].rotation.x=-.5*wv(p,6);B.face="happy"}},
     carry:{d:99,f:(p,B,t)=>{R(B,0,0,0,-2.6);R(B,1,0,0,2.6);B.legs[0].rotation.x=.4*Math.sin(t*9);B.legs[1].rotation.x=-.4*Math.sin(t*9);B.face="open"}}};
-  const SIGNATURE=["wave","jump","cheer","dance","think","bow","spin","clap","point","sleep","shrug","flex"];
+  const SIGNATURE=["wave","jump","cheer","dance","think","bow","spin","clap","point","sleep","shrug","flex","nap","kick","roll","prop","liewave","laugh"];
 
   // ---------- 300 種組合動作：手部 × 身體 ----------
   const ARM=[
@@ -113,14 +156,24 @@
     "你今天的手氣不錯|贏了要謙虛喔|輸了要笑一笑|下完記得握手|謝謝你陪我|你是我最好的棋友|下次帶朋友來玩|分享給朋友吧|一起上線對戰！|線上大廳有人喔|"+
     "象棋是智慧的遊戲|動腦讓人年輕|專心的你最帥|你的眼神好認真|思考中的你閃閃發光|我也想學下棋|教教我嘛|我只會走一步|我最會的是賣萌|我會努力變可愛|"+
     "吃！|將軍！|跑掉了！|好險！|差一點！|中計了嗎？|這是陷阱！|反將一軍！|絕殺！|勝利在望！|兵卒過河頂半車|車馬炮配合最強|雙馬飲泉，好漂亮|馬炮爭雄|車炮抽將要小心|大刀剜心！|二鬼拍門|雙炮過河，壓力好大|海底撈月，殘局名招|送佛歸殿|高釣馬，殺著來了|側面虎，要防|拔簧馬，一跳成殺|老卒搜林|小鬼坐龍廷|夾車炮，左右開弓|雙將最難擋|一將一殺|圍魏救趙，好戰術|聲東擊西|先棄後取|捨車保帥|丟卒保車|兵臨城下！|步步為營|穩中求勝|以攻代守|調虎離山|關門打狗|引蛇出洞|窩心馬不太好|空頭炮很兇|當頭炮來囉|河頭馬很靈活|象田要顧好|雙士連環，守得穩|高車保馬|肋道是車的好位置|卒林線很重要|九宮是帥的家|我今天心情很好|陽光好溫暖|下雨天也適合下棋|週末來場大戰吧|你是棋盤上的英雄|輸贏都是好朋友|笑一個嘛|你看起來好專注|我幫你加油打氣|握握手～|想喝珍珠奶茶|來點小點心吧|下完棋去散步|聽點音樂放鬆|今天學了一招新殺法|明天再挑戰大師|我要變成將軍！|我其實很怕炮|車哥最可靠|馬兄跳好遠|小兵立大功|我想當一顆車|象兄守家最認真|士兄每天站崗|炮兄翻山越嶺|帥哥就是我|黑將是我的好兄弟|紅黑一家親|楚河漢界是我家|棋盤是我的遊樂場|讓我想想…|好難喔…|我算不過來了|你比我聰明|這步我不會|教練請指導|看懂了！|原來如此！|我懂了我懂了|再看一次！").split("|");
+  // 意見回饋 165：再加 500 句（棋諺、記譜、朝代、功能、閒聊＋App 裡的術語和特級大師資料自動產生），用「看過的不再出現」避免重複
+  const EXTRA="寧失一子，不失一先|三步不出車，棋已輸一半|馬跳窩心，不死也昏|馬踏八方，炮打隔山|車不立險地|有車殺無車|開局炮強，殘局馬強|殘局炮要歸家|先手不可輕易丟|搶先一步，天地寬|兵貴神速|謀定而後動|知己知彼，百戰百勝|退一步海闊天空|舉棋不定，不如不下|起手無回大丈夫|棋逢對手，將遇良才|旗鼓相當，好看！|運籌帷幄，決勝千里|調兵遣將中…|以退為進|欲擒故縱|圍點打援|投鼠忌器|臨危不亂|背水一戰！|破釜沉舟！|置之死地而後生|出其不意，攻其不備|兵不厭詐|一鼓作氣|勢如破竹|步步緊逼|穩紮穩打|後發制人|避實擊虛|以逸待勞|打草驚蛇可不好|順手牽羊也算一招|將計就計|炮二平五，中炮開局|馬八進七，跳馬護中兵|車一平二，車要早出|兵三進一，挺兵活馬|相三進五，飛相穩陣|仕四進五，補士固防|馬二進三，屏風馬架起來|炮八平六，過宮炮|車九進一，橫車快出|兵七進一，仙人指路|記譜要先說棋子再說位置|紅方用中文數字記譜|黑方用阿拉伯數字記譜|「進」是往前，「退」是往後|「平」是橫著走|同一條線兩個一樣的子，用前後區分|記住記譜，看古譜就不怕|複盤從第一步開始|每一步都有它的理由|好棋要記下來|楚河漢界的故事來自楚漢相爭|項羽和劉邦以鴻溝為界|所以棋盤中間叫楚河漢界|秦朝統一了文字和度量衡|漢朝的漆器紅黑配色很漂亮|三國時代英雄輩出|赤壁之戰，以少勝多|魏晉名士愛清談|竹林七賢很瀟灑|南北朝的石窟好壯觀|隋朝開鑿了大運河|唐朝已經有象棋的記載|盛唐的三彩好華麗|五代十國很亂|宋代象棋規則慢慢定型|宋朝的瓷器很雅致|元朝的青花瓷好有名|明朝出了《橘中秘》|《適情雅趣》也是明代古譜|清初的《梅花譜》講屏風馬|我現在穿這個朝代的衣服|換個朝代，我也換造型|你喜歡哪個朝代？|我最喜歡宋朝的展腳幞頭|明朝的烏紗帽帥不帥？|清朝的官帽有紅纓|秦朝的冕冠有珠簾|三國的戰盔好威風|唐朝的幞頭有兩條飄帶|元朝的皮帽好保暖|今天練一題殘局吧|棋力測驗可以看你現在的程度|錯棋重練幫你記住教訓|古譜裡有很多寶藏|大師對局可以學思路|觀戰也能學到東西|線上大廳可以找人下|設定裡可以換朝代棋盤|走棋音效有十種喔|語音可以選男聲女聲|你可以把我拖到角落|我可以調大小喔|設定裡可以關掉我|我會在你贏的時候跳舞|輸了我會陪你難過一下|和棋我就聳聳肩|吃子的時候我會歡呼|將軍的時候我會嚇一跳|點我一下我就表演|點兩下我就去散步|早點休息，明天再戰|下棋不要熬夜喔|起來走一走吧|喝水時間到！|今天也辛苦了|你笑起來真好看|有你陪我真開心|我們是最佳拍檔|一起加油！|今天比昨天更強了|我在偷看你的棋|我猜你下一步走車|讓我猜猜你的計畫|這盤我看好你|對方好像慌了|穩住，我們能贏|冷靜，先看全局|別急著吃子|先把子力出動|把車開出來吧|你的馬好靈活|你的炮架得真好|你的車好有氣勢|你的兵在衝鋒了|你的士象守得好|你的帥很安全|對方的將有點危險|對方的車被困住了|對方少了一個子|局面越來越好了|我是第一次當棋子小人|做棋子也是很辛苦的|站在棋盤上腳好痠|我想去河對面看看|小兵過河後好自由|我不能過河，因為我是帥|帥只能待在九宮|九宮就是我的小房間|出了九宮我會迷路|我和士是好朋友|象棋有紅黑兩方|紅方先走是規矩|紅方的字和黑方不一樣|帥對將，仕對士|相對象，俥對車|傌對馬，炮對砲|兵對卒|三十二顆子，各有各的本事|最弱的兵也能將死對方|每顆子都很重要|沒有不能輸的棋手|大師也會輸棋|輸棋的時候最能學到東西|贏棋也要檢討|好的對手是最好的老師|多和比你強的人下|也可以和電腦練習|每天一盤，進步一點|下棋讓腦袋更靈活|保持好奇心|這個開局我好像看過|這是書上的變化|這步有點冷門|這步很有創意|你走出新招了！|這步值得記下來|這是陷阱，小心！|看起來是送子，其實是妙手|有時候不走也是一種走法|等著，等對方犯錯|今天的運氣站在你這邊|手感不錯喔|有點累就休息|心靜才能下好棋|深呼吸，再下一步|別想太多，相信直覺|也別太衝動|三思而後行|眼觀四路，耳聽八方|顧好後方|你知道嗎？象棋盤有九十個交叉點|棋子都是走在交叉點上|河界上沒有格線|九宮裡有斜線|士和帥只能在九宮|象不能過河|馬會被蹩腳|象會被塞眼|炮翻山要剛好隔一個|車可以一口氣走到底|兵在自己這邊只能往前|過了河才能左右走|兵永遠不能後退|所以兵一去不回頭|帥和將不能面對面|中間有子擋著才可以|這叫做對面笑的規則|長將是不允許的|長捉也不行喔|不能一直重複同一招|哈囉～|在嗎？|我來了！|嘿，看這邊|想我了嗎？|我剛剛在睡覺|伸個懶腰再出發|今天也很有精神|我充飽電了|準備好了！|哇，好精彩|哎呀！|好可惜|差一點點|這樣也行！|原來還有這招|學到了學到了|太神了吧|我看傻眼了|給你一百分！|你是天才吧|你是怎麼想到的？|再來一次給我看|我要拜你為師|師父請受我一拜|徒兒記住了|大師風範！|這就是實力|穩穩的勝利|完美的一盤|我最怕對方的雙車|對方的炮好可怕|小心對方的馬|那個卒有點煩|黑方在偷偷佈局|紅方要主動出擊|攻守要平衡|有攻有守才厲害|只攻不守會被偷襲|只守不攻贏不了|一盤棋就像一場旅行|每一步都是新的風景|輸贏是結果，過程更重要|享受下棋的樂趣|棋盤上見真章|下棋看人品|勝不驕，敗不餒，再來！|今天的你比昨天更好|謝謝你陪我下棋|明天見，棋友！|開局三要：出子、佔位、顧中|子力要協調|別讓棋子擠在一起|車馬炮要互相照應|活子比死子重要|子力位置比數量重要|攻擊要集中力量|防守要先補弱點|弱點就是對方的目標|找到對方的弱點|中局是最精彩的時候|殘局要比耐心|算清楚再兌子|多兌子對多子的一方有利|少子就要想辦法搶攻|形勢不好就穩住|形勢好就簡化|別在優勢時大意|劣勢也有翻盤機會|堅持到最後一步|這步棋很有大局觀|你看得好遠|你是不是偷偷練過？|這招連我都沒想到|再一步就成殺了|小心對方反撲|守住這一波就贏了|現在要果斷|機會來了！|不要放過這個機會".split("|");
+  let ALL=LINES.concat(EXTRA);
+  const cut=(t,n)=>{t=String(t||"").split("。")[0];return t.length>n?t.slice(0,n-1)+"…":t};
+  (async()=>{try{const t=await fetch("data/terms.json").then(r=>r.json());for(const x of t.items||[])ALL.push(`術語小教室：「${x.n}」——${cut(x.d,40)}`)}catch(e){}
+    try{const b=await fetch("data/gmbios.json").then(r=>r.json());for(const x of Array.isArray(b)?b:Object.values(b)){if(!x||!x.zh||/撤銷/.test(x.bio||"")||x.revoked)continue;
+      if(x.gm)ALL.push(`你知道嗎？${x.zh}在 ${x.gm} 年獲授特級大師`);if(x.titles&&x.titles[0])ALL.push(`${x.zh}拿過「${cut(x.titles[0],26)}」`);
+      if(x.from)ALL.push(`${x.zh}：${cut(x.from,24)}`);if(x.style)ALL.push(`${x.zh}的棋風：${cut(x.style,26)}`)}}catch(e){}})();
+  const nextLine=()=>{let seen=new Set(store.get("botSeen",[]));let pool=[];for(let i=0;i<ALL.length;i++)if(!seen.has(i))pool.push(i);
+    if(!pool.length){seen=new Set();pool=ALL.map((_,i)=>i)}const i=pool[Math.random()*pool.length|0];seen.add(i);store.set("botSeen",[...seen]);return ALL[i]};
   const COMBO=[];for(let i=0;i<ARM.length&&COMBO.length<300;i++)for(let j=0;j<BODY.length&&COMBO.length<300;j++)COMBO.push([i,j]);
   const FACES=["smile","open","smile","wink","smile","open"];
-  const comboAct=n=>{const[i,j]=COMBO[n],a=ARM[i],b=BODY[j];return{d:2.4,name:a[0]+(b[0]?"＋"+b[0]:""),say:LINES[n%LINES.length],f:(p,B)=>{a[1](p,B);b[1](p,B);B.face=FACES[n%FACES.length]}}};
+  const comboAct=n=>{const[i,j]=COMBO[n],a=ARM[i],b=BODY[j];return{d:2.4,name:a[0]+(b[0]?"＋"+b[0]:""),get say(){return nextLine()},f:(p,B)=>{a[1](p,B);b[1](p,B);B.face=FACES[n%FACES.length]}}};
 
-  function start(){
+  function start(){let SC=Math.min(2,Math.max(.6,+store.get("botSize",1)||1)),W=W0*SC,H=H0*SC,curK=eraK();
     const box=document.createElement("div");box.className="xqbot";
     box.style.cssText=`position:fixed;left:0;top:0;width:${W}px;height:${H}px;z-index:900;pointer-events:none;will-change:transform`;
-    const hit=document.createElement("div");hit.style.cssText="position:absolute;left:24px;right:24px;top:16px;bottom:4px;pointer-events:auto;touch-action:none;cursor:grab;border-radius:40%";
+    const hit=document.createElement("div");hit.style.cssText="position:absolute;left:19%;right:19%;top:10%;bottom:3%;pointer-events:auto;touch-action:none;cursor:grab;border-radius:40%";
     const bub=document.createElement("div");bub.style.cssText="position:absolute;left:50%;top:-4px;transform:translate(-50%,-100%);max-width:200px;width:max-content;background:#fffdf7;color:#3a2618;border:2px solid #3a2618;border-radius:14px;padding:4px 10px;font:700 13px/1.35 sans-serif;text-align:center;box-shadow:0 2px 6px #0003;opacity:0;transition:opacity .25s;pointer-events:none";
     box.append(hit,bub);document.body.appendChild(box);
     let rd;try{rd=new T.WebGLRenderer({alpha:true,antialias:true})}catch(e){box.remove();return null}
@@ -131,17 +184,17 @@
     const key=new T.DirectionalLight(0xfff0dc,1.5);key.position.set(2.5,4,5);sc.add(key);
     const fill=new T.DirectionalLight(0xbcd4ff,.7);fill.position.set(-4,1.5,3);sc.add(fill);
     const rim=new T.DirectionalLight(0xffffff,1.4);rim.position.set(-1,3,-5);sc.add(rim);
-    const P=build(),root=new T.Group();root.add(P.bot);sc.add(root);const B=Object.assign(P,{root,closed:0,face:"smile"});
+    const P=build(curK),root=new T.Group();root.add(P.bot);sc.add(root);const B=Object.assign(P,{root,closed:0,face:"smile"});
     const shd=new T.Mesh(new T.CircleGeometry(.8,32),new T.MeshBasicMaterial({color:0,transparent:true,opacity:.2}));shd.rotation.x=-PI/2;shd.position.y=.02;sc.add(shd);
     const bounds=()=>({x0:0,x1:innerWidth-W,y0:20,y1:innerHeight-H});
     const sp=store.get("botPos",null);let parked=!!sp,x=sp?sp.x*innerWidth:Math.max(4,innerWidth-W-16),y=sp?sp.y*innerHeight:Math.max(70,innerHeight-H-90);
     let tx=x,ty=y,face=0,act=null,actT=0,next=1.5,bubT=0,stopped=false,last=performance.now(),acc=0,blinkT=2,talk=0,drag=null,lastTap=0,deck=[];
     const say=(s,d)=>{bub.textContent=s;bub.style.opacity=1;bubT=d||2;talk=Math.min(1.2,.25+s.length*.08)};
-    const doAct=a=>{if(typeof a==="string")a=ACTS[a];if(!a)return;act=a;actT=0;tx=x;ty=y;if(a.say)say(a.say,Math.max(1.8,Math.min(3,a.d+.3)))};
+    const doAct=a=>{if(typeof a==="string")a=ACTS[a];if(!a)return;act=a;actT=0;tx=x;ty=y;const w=a.say;if(w)say(w,Math.max(1.8,Math.min(6,w.length*.16+.6,a.d+3)))};
     // 抽牌：300 種組合＋招牌動作洗牌後輪流出，不會一直重複
     const randAct=()=>{if(!deck.length){deck=[...COMBO.keys(),...SIGNATURE];for(let i=deck.length-1;i>0;i--){const j=Math.random()*(i+1)|0;[deck[i],deck[j]]=[deck[j],deck[i]]}}const k=deck.pop();return typeof k==="number"?comboAct(k):ACTS[k]};
     const wander=()=>{if(parked)return;const b=bounds();tx=b.x0+Math.random()*Math.max(0,b.x1-b.x0);ty=Math.max(70,b.y0)+Math.random()*Math.max(0,b.y1-Math.max(70,b.y0))};
-    const reset=()=>{root.position.y=0;root.rotation.set(0,face,0);P.torso.position.y=1.02;P.torso.rotation.set(0,0,0);P.head.rotation.set(0,0,0);B.closed=0;B.face="smile";
+    const reset=()=>{root.position.y=0;root.position.x=0;P.torso.scale.y=1;root.rotation.set(0,face,0);P.torso.position.y=1.02;P.torso.rotation.set(0,0,0);P.head.rotation.set(0,0,0);B.closed=0;B.face="smile";
       R(B,0,0,0,-.3);R(B,1,0,0,.3);P.legs[0].rotation.set(0,0,0);P.legs[1].rotation.set(0,0,0)};
     function frame(now){if(stopped)return;requestAnimationFrame(frame);if(document.hidden){last=now;return}
       const dt=Math.min(.1,(now-last)/1000);last=now;acc+=dt;if(acc<1/30)return;const t=acc;acc=0;
@@ -182,8 +235,13 @@
       else if(r==="lose"){doAct("lose");say(pick(["嗚嗚…輸了","好可惜…","沒關係，再來一盤！","下次一定贏！","我陪你複盤吧"]),3.6)}
       else{doAct("draw");say(pick(["和棋～勢均力敵","握手言和！","平分秋色","不分勝負！"]),2.6)}},400)};
     window.addEventListener("xq-result",onResult);
+    // 換朝代：重做造型（字形還沒下載就先下載，好了再換一次）
+    const rebuild=()=>{curK=eraK();root.remove(P.bot);Object.assign(B,build(curK));root.add(B.bot)};
+    const eraT=setInterval(()=>{if(eraK()!==curK){rebuild();if(typeof needGly==="function")needGly(curK,()=>{if(!stopped)rebuild()})}},1500);
+    if(typeof needGly==="function"&&!(typeof GLY!=="undefined"&&GLY[curK]))needGly(curK,()=>{if(!stopped)rebuild()});
+    const setScale=v=>{SC=Math.min(2,Math.max(.6,+v||1));W=W0*SC;H=H0*SC;box.style.width=W+"px";box.style.height=H+"px";rd.setSize(W,H);store.set("botSize",SC)};
     const onResize=()=>{const b=bounds();x=Math.min(x,b.x1);y=Math.min(y,b.y1);tx=Math.min(tx,b.x1);ty=Math.min(ty,b.y1)};window.addEventListener("resize",onResize);
-    return{act:k=>doAct(typeof k==="number"?comboAct(k):k),say,count:COMBO.length,lines:LINES.length,
-      stop(){stopped=true;window.removeEventListener("xq-call",onCall);window.removeEventListener("xq-result",onResult);window.removeEventListener("resize",onResize);try{rd.dispose()}catch(e){}box.remove()}}}
+    return{act:k=>doAct(typeof k==="number"?comboAct(k):k),say,setScale,rebuild,count:COMBO.length,lines:LINES.length,
+      stop(){stopped=true;clearInterval(eraT);window.removeEventListener("xq-call",onCall);window.removeEventListener("xq-result",onResult);window.removeEventListener("resize",onResize);try{rd.dispose()}catch(e){}box.remove()}}}
   window.XQBot3D={start,acts:Object.keys(ACTS),combos:COMBO.length,lines:LINES.length};
 })();
