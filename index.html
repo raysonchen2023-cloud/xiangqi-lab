@@ -413,7 +413,7 @@ html[data-era=ming] .topbar,html[data-era=qing] .topbar{border-bottom-width:4px}
       if(!window.caches)return go();caches.keys().then(function(ks){return Promise.all(ks.filter(function(k){return k.indexOf("xqlab-app-")===0}).map(function(k){return caches.delete(k)}))})
         .then(function(){return navigator.serviceWorker&&navigator.serviceWorker.getRegistration()}).then(function(r){return r&&r.update()}).catch(function(){}).then(go)}},4000)})();
 </script>
-<script>window.XQ_OFFLINE=true;window.XQ_BUILD="20261102-1926";</script>
+<script>window.XQ_OFFLINE=true;window.XQ_BUILD="20261102-1931";</script>
 <script src="core.js"></script>
 <script src="engine.js"></script>
 <script src="local.js"></script>
@@ -2874,8 +2874,16 @@ function askSheet(){sheet("🤖 問"+BOTN(),b=>{
   const sug=[...BOT_SAID.slice(0,3),"五七炮是什麼","馬後炮","胡榮華 對 呂欽","今天天氣如何","背一首詩","黑洞是什麼"];
   b.innerHTML=`<p class="muted" style="margin-top:0">問我象棋術語、開局、殺法、特級大師、比賽棋譜（例如「胡榮華 對 呂欽」「1990 五羊盃」「屏風馬破當頭炮」），或 App 怎麼用；象棋以外的也可以問，例如「台北天氣」「背一首詩」「黑洞是什麼」「35×12」。能示範的，我會直接帶你到棋盤上看。<br>之後隨時<b>長按小人</b>就能問我。</p>
     <div class="row" style="gap:8px"><input id="aq" placeholder="例如：五七炮是什麼？" style="flex:1;padding:10px 12px;border:1px solid var(--line);border-radius:10px;font-size:16px;background:var(--card);color:var(--ink)"><button class="btn" id="ag" style="width:auto;padding:10px 16px">問</button></div>
-    <div class="chips" id="asug" style="margin-top:8px;flex-wrap:wrap">${sug.map(x=>`<button class="chip" data-q="${esc(x)}">${esc(x.length>14?x.slice(0,13)+"…":x)}</button>`).join("")}</div><div id="aa" style="margin-top:12px"></div>`;
+    <div class="chips" id="asug" style="margin-top:8px;flex-wrap:wrap">${sug.map(x=>`<button class="chip" data-q="${esc(x)}">${esc(x.length>14?x.slice(0,13)+"…":x)}</button>`).join("")}</div><div id="aa" style="margin-top:12px"></div>
+    <div id="aiB" hidden style="margin-top:10px"><div class="muted" style="font-size:12px;margin-bottom:6px">想聽 AI 怎麼說？用你手機的網路直接問 Google（免費）：</div>
+      <div class="row" style="gap:8px"><button class="btn ghost" id="aiG" style="flex:1;padding:11px 6px">🔎 Google AI 回答</button><button class="btn ghost" id="aiM" style="flex:1;padding:11px 6px">✨ 問 Gemini</button></div></div>`;
   const qi=b.querySelector("#aq"),aa=b.querySelector("#aa");
+  // 意見回饋 207、208：用玩家自己手機的網路問 Google 的免費 AI（不用金鑰）；Google 不讓 App 直接拿答案，所以開在 Google／Gemini 的畫面
+  {const aiB=b.querySelector("#aiB"),cur=()=>qi.value.trim(),open=u=>{const w=window.open(u,"_blank","noopener");if(!w)location.href=u};
+    b.querySelector("#aiG").onclick=()=>{const q=cur();if(q)open("https://www.google.com/search?udm=50&hl=zh-TW&q="+encodeURIComponent(q))};
+    b.querySelector("#aiM").onclick=async()=>{const q=cur();if(!q)return;let ok=false;try{await navigator.clipboard.writeText(q);ok=true}catch(e){}
+      toast(ok?"問題已複製，到 Gemini 長按輸入框貼上就能問":"打開 Gemini 後，把問題貼上去問");open("https://gemini.google.com/app")};
+    qi.addEventListener("keydown",e=>{if(e.key==="Enter")aiB.hidden=false});b.querySelector("#ag").addEventListener("click",()=>aiB.hidden=false);b.addEventListener("click",e=>{if(e.target.closest("[data-q]"))aiB.hidden=false})}
   const say2=t=>{if(typeof BOT!=="undefined"&&BOT)BOT.say(t,2)};
   const ask=async q=>{q=String(q||"").trim();if(!q)return;qi.value=q;
     {const wk=worldIntent(q);if(wk){aa.innerHTML='<div class="muted">查一下…</div>';const a=await worldAsk(wk,q);if(a){aa.innerHTML=worldCard(a);say2(wk==="wx"?"天氣查到了！":wk==="poem"?"我來吟一首～":"我知道！");return}}}
