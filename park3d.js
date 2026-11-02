@@ -888,6 +888,8 @@
     const setOpp=look=>{const k=JSON.stringify(look||null);if(k===oppKey)return;oppKey=k;killSpr();if(!look){opp.g.clear();opp.B=null;return}buildActor(opp,look);if(look.sprite&&look.spriteMeta)makeSpr(look)};
     buildActor(mate,{});try{mate.g.updateMatrixWorld(true);const b=new T.Box3().setFromObject(mate.g);mate.g.position.y-=b.min.y-.02}catch(e){}   // 坐在桌面上（桌面 y=0）
     const say=(t,d)=>mate.say(t,d);
+    // 意見回饋 248：分出勝負時兩邊都有 5 秒的勝負動畫（endT 倒數；oppRes／mateRes＝win、lose、draw）
+    let endT=0,oppRes=null,mateRes=null;const END=5;
     let reach=0,reachT=0,thinking=false,mood=null,glanceT=3,glance=0,mySide="r",oppName="";
     // ---------- 棋子 ----------
     const pieceGeo=(()=>{const pts=[];const R=.485,H=.27,r=.06;   // 意見回饋：棋子加大（格距 1，半徑 .485，鄰子之間還留 .03 的縫）
@@ -950,11 +952,12 @@
       if(typeof o.check==="number"&&o.check>=0&&board[o.check])checkRing=ring(o.check,0xFF2A2A,.62,.12,.9);
       if(ex.hint&&ex.hint.length===2){ring(ex.hint[0],0xF2B233,.5,.07,.9);ring(ex.hint[1],0xF2B233,.5,.07,.9)}
       thinking=!!ex.thinking;setOpp(ex.opp||null);setWatchers(ex.watchers);mySide=ex.botSide?(ex.botSide==="r"?"b":"r"):"r";
-      if(ex.result&&ex.result!==mood){mood=ex.result;const b=ex.botSide;
+      if(ex.result&&ex.result!==mood){mood=ex.result;const b=ex.botSide;endT=END;
+        oppRes=mood==="draw"||!b?"draw":mood===b?"win":"lose";mateRes=oppRes==="win"?"lose":oppRes==="lose"?"win":"draw";
         if(mood==="draw"){opp.setFace("flat",99);mate.setFace("flat",99);mate.say("和棋，不錯喔！",3)}
         else if(b&&mood===b){opp.setFace("happy",99);opp.say(ex.oppWin||"我贏了！再來一盤？",3);mate.setFace("sad",99);setTimeout(()=>mate.say("下次一定贏！",2.6),1800)}
         else if(b){opp.setFace("sad",99);opp.say(ex.oppLose||"你好厲害…",3);mate.setFace("happy",99);setTimeout(()=>mate.say("你贏了！太強了！",2.6),1500)}}
-      if(!ex.result&&mood){mood=null;opp.setFace("smile");mate.setFace("smile")}}
+      if(!ex.result&&mood){mood=null;endT=0;opp.setFace("smile");mate.setFace("smile")}}
     // ---------- 鏡頭與互動 ----------
     let yaw=0,pitch=0,tyaw=0,tpitch=0,zoom=1,tzoom=1,W=1,H=1;   // zoom＝鏡頭到棋盤中心的距離倍數（兩指捏合）
     // 鏡頭（iPhone 可讀性）：坐在桌前、比較俯視的角度，讓棋盤幾乎撐滿整個寬度；上方留一段看到對面的對手
@@ -1020,13 +1023,25 @@
       Object.entries(pieces).forEach(([i,g])=>{if(+i!==selI&&!anims.length&&g.position.y!==TOP)g.position.y+=(TOP-g.position.y)*Math.min(1,t*12)});
       if(checkRing)checkRing.material.opacity=.55+.4*Math.sin(now/140);
       falling.forEach(l=>{const u=l.userData;u.y-=t*1.6*u.s;if(u.y<-2){u.y=28;u.x=(Math.random()-.5)*50}l.position.set(u.x+Math.sin(now/900+u.ph)*2.5,GY+u.y,u.z);l.rotation.set(now/700*u.s+u.ph,now/500,now/800)});
+      if(endT>0)endT=Math.max(0,endT-t);const EP=1-endT/END,ON=endT>0;   // 勝負動畫的進度 0→1
+      // 3D 人物（線上對手的小帥、我的小帥）的勝負動畫：贏＝跳起來、中段轉一圈、雙手歡呼；輸＝垂頭、搖頭、雙手下垂；和＝拱手點頭
+      const endPose=(A,res,B,base)=>{const g=A.g,y0=g.userData.y0==null?(g.userData.y0=g.position.y):g.userData.y0,r0=g.userData.r0==null?(g.userData.r0=g.rotation.y):g.userData.r0;
+        if(!ON||!res){g.position.y=y0;g.rotation.y=r0;return null}
+        const sp=EP>.35&&EP<.6?((EP-.35)/.25)*TAU:0;
+        if(res==="win"){g.position.y=y0+base*Math.abs(Math.sin(EP*END*5.5));g.rotation.y=r0+sp;R(B,0,0,.3*Math.sin(EP*40),-2.7);R(B,1,0,.3*Math.sin(EP*40),2.7);A.face="happy";return[-.3,0]}
+        if(res==="lose"){g.position.y=y0;g.rotation.y=r0;R(B,0,.25,0,-.05);R(B,1,.25,0,.05);A.face="sad";return[.55,.35*Math.sin(EP*END*6)*(EP<.8?1:0)]}
+        g.position.y=y0;g.rotation.y=r0;const k=Math.sin(Math.min(1,EP*2)*PI);R(B,0,-1.3,.5,-.35);R(B,1,-1.3,-.5,.35);A.face="smile";return[.35*k,0]};
       const s=now/1000,lerp=(o,k,v)=>{o[k]+=(v-o[k])*Math.min(1,t*5)},tick=A=>{A.blinkT-=t;const bl=A.blinkT<0;if(A.blinkT<-.12)A.blinkT=2+Math.random()*3;
           if(A.faceT>0&&A.faceT<90){A.faceT-=t;if(A.faceT<=0&&!mood)A.face="smile"}if(A.bubT>0){A.bubT-=t;if(A.bubT<=0)A.bub.visible=false}
           try{XQBot3D.faceApply(A.B,A.face,bl,A.bubT>0&&Math.sin(now/70)>0)}catch(e){}};
       if(oppSpr){const S2=oppSpr;if(reach){reachT+=t;if(reachT>=1.1)reach=0}
         const ps=mood&&opp.face==="happy"?"happy":mood&&opp.face==="sad"?"sad":reach?"move":opp.faceT>0&&opp.face==="open"?"surprise":opp.faceT>0&&opp.face==="happy"?"happy":thinking?"think":"idle";
         if(ps!==S2.pose){S2.pose=ps;S2.sp.material.map=S2.tex[ps];S2.sp.material.needsUpdate=true}
-        const amp=ps==="happy"?.35*Math.abs(Math.sin(s*7)):.07*Math.sin(s*2.1);S2.sp.position.y=S2.y0+amp;tick(opp)}
+        let amp=ps==="happy"?.35*Math.abs(Math.sin(s*7)):.07*Math.sin(s*2.1),rz=0,sc2=1;
+        if(ON&&oppRes==="win"){amp=1.4*Math.abs(Math.sin(EP*END*5.5));rz=.12*Math.sin(EP*END*7);sc2=1+.05*Math.sin(EP*END*11)}   // 贏：大跳、左右搖擺
+        else if(ON&&oppRes==="lose"){amp=-.5*Math.min(1,EP*4);rz=EP<.8?.07*Math.sin(EP*END*6):0}                                   // 輸：往下垮、搖頭
+        else if(ON&&oppRes==="draw"){amp=-.25*Math.sin(Math.min(1,EP*2)*PI)}                                                   // 和：點頭致意
+        S2.sp.position.y=S2.y0+amp;S2.sp.rotation.z=rz;S2.sp.scale.setScalar(sc2);tick(opp)}
       else if(opp.B){const B=opp.B;B.torso.position.y=B.torso.userData.y0==null?(B.torso.userData.y0=B.torso.position.y):B.torso.userData.y0+.018*Math.sin(s*2.1);
         glanceT-=t;if(glanceT<0){glance=glance?0:1;glanceT=glance?1.6:4+Math.random()*5}
         let hx=glance?-.05:.2,hy=glance?0:.08*Math.sin(s*.4),hz=0;
@@ -1035,6 +1050,7 @@
         if(thinking&&!reach){R(B,1,-2.25,-.45,.75);hx=.18;hz=-.12+.04*Math.sin(s*1.3);if(opp.faceT<=0)opp.face="flat"}
         if(reach){reachT+=t;const p=Math.min(1,reachT/1.1),k=Math.sin(p*PI);R(B,1,-.9-1.15*k,-.25+.2*k,.25-.1*k);hx=.32+.1*k;if(p>=1)reach=0}
         if(mood&&opp.face==="happy"){R(B,0,-.2,0,-2.6+.3*Math.sin(s*9));R(B,1,-.2,0,2.6-.3*Math.sin(s*9));hx=-.1}else if(mood&&opp.face==="sad")hx=.45;
+        {const e=endPose(opp,oppRes,B,1.0);if(e){hx=e[0];hy=e[1]}}
         lerp(B.head.rotation,"x",hx);lerp(B.head.rotation,"y",hy);lerp(B.head.rotation,"z",hz);tick(opp)}
       watchers.forEach(W=>{const B=W.B,ph=W.ph;if(B.torso.userData.y0==null)B.torso.userData.y0=B.torso.position.y;B.torso.position.y=B.torso.userData.y0+.015*Math.sin(s*1.7+ph);
         B.bot.rotation.z=.03*Math.sin(s*.6+ph);R(B,0,.35,0,-.15);R(B,1,.35,0,.15);if(W.chin)R(B,1,-2.2,-.45,.7);
@@ -1046,6 +1062,7 @@
         const look=(s%8)<1.8;let hx=look?.05:-.28+.04*Math.sin(s*.9),hy=look?.95:.12*Math.sin(s*.7);R(B,0,-.7,.2,-.35);R(B,1,-.7,-.2,.35);
         if(mate.face==="happy"&&(mate.faceT>0||mood)){R(B,0,-.2,0,-2.6+.3*Math.sin(s*10));R(B,1,-.2,0,2.6-.3*Math.sin(s*10));hx=-.35;hy=0}
         else if(mate.face==="open"&&mate.faceT>0){R(B,0,-.4,0,-1.2);R(B,1,-.4,0,1.2);hx=-.2;hy=0}
+        {const e=endPose(mate,mateRes,B,.5);if(e){hx=e[0];hy=e[1]}}
         B.legs[0].rotation.x=-1.35+.25*Math.sin(s*2.2);B.legs[1].rotation.x=-1.35-.25*Math.sin(s*2.2);
         lerp(B.head.rotation,"x",hx);lerp(B.head.rotation,"y",hy);tick(mate)}
       furn.tick(s);rd.render(sc,cam)}

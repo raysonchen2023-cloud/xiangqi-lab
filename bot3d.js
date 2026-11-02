@@ -139,9 +139,10 @@
     shrug:{d:1.8,say:"？",f:(p,B)=>{const k=bell(p);R(B,0,-.8*k,0,-1.1*k-.3);R(B,1,-.8*k,0,1.1*k+.3);B.head.rotation.z=.2*k}},
     flex:{d:2.2,say:"看我的！",f:(p,B)=>{R(B,0,-.3+.25*wv(p,3),0,-1.6);R(B,1,-.3+.25*wv(p,3),0,1.6);B.torso.rotation.x=-.1}},
     shock:{d:1.6,say:"將軍！",f:(p,B)=>{const k=Math.min(1,p*4);B.root.position.y=.5*Math.sin(Math.min(1,p*2)*PI);R(B,0,0,0,-2.9*k);R(B,1,0,0,2.9*k);B.root.rotation.z=.08*wv(p,8)*(1-p);B.face="open"}},
-    win:{d:3.6,f:(p,B)=>{const h=Math.abs(wv(p,3));B.root.position.y=h*.5;R(B,0,0,.3*wv(p,6),-2.7);R(B,1,0,.3*wv(p,6),2.7);if(p>.4&&p<.75)B.root.rotation.y=ease((p-.4)/.35)*TAU;B.face="happy"}},
-    lose:{d:3.8,f:(p,B)=>{B.head.rotation.x=.35;B.torso.rotation.x=.12;R(B,0,.15,0,-.08);R(B,1,.15,0,.08);B.root.rotation.z=.05*wv(p,1);B.face="sad"}},
-    draw:{d:2.8,f:(p,B)=>{const k=bell(p);R(B,0,-.8*k,0,-1.1*k-.3);R(B,1,-1.2*k,0,.5);B.head.rotation.z=.15*k;B.face="flat"}},
+    // 意見回饋 248：勝負動畫各 5 秒。贏＝連跳、中段轉一圈、雙手歡呼；輸＝垂頭、搖頭、雙手下垂、掉淚；和＝拱手點頭
+    win:{d:5,f:(p,B)=>{const h=Math.abs(wv(p,4.5));B.root.position.y=h*.5;R(B,0,0,.3*wv(p,9),-2.7);R(B,1,0,.3*wv(p,9),2.7);if(p>.4&&p<.65)B.root.rotation.y=ease((p-.4)/.25)*TAU;B.face="happy"}},
+    lose:{d:5,f:(p,B)=>{B.head.rotation.x=.35;B.head.rotation.y=p<.75?.32*wv(p,4):0;B.torso.rotation.x=.12;R(B,0,.15,0,-.08);R(B,1,.15,0,.08);B.root.rotation.z=.05*wv(p,1.5);B.face="sad"}},
+    draw:{d:5,f:(p,B)=>{const k=bell(Math.min(1,p*1.6)),n=p>.6?Math.max(0,wv(p,3)):0;R(B,0,-1.3*k,.5*k,-.35-.3*k);R(B,1,-1.3*k,-.5*k,.35+.3*k);B.head.rotation.x=.3*k+.15*n;B.torso.rotation.x=.15*k;B.face="smile"}},
     // 躺著的動作（意見回饋 165）：側躺在地上，頭在左、腳在右；開頭和結尾慢慢躺下、起身
     nap:{d:4.4,say:"躺一下…Zzz",f:(p,B)=>{lie(p,B);B.closed=1;B.torso.scale.y=1+.03*Math.sin(p*TAU*3)}},
     kick:{d:3.6,say:"躺著翹腳好舒服～",f:(p,B)=>{lie(p,B);B.legs[0].rotation.x=.7*wv(p,5);B.legs[1].rotation.x=-.7*wv(p,5);B.face="happy"}},
@@ -312,9 +313,9 @@
     window.addEventListener("xq-call",onCall);
     // 勝負：贏了開心跳、輸了難過掉眼淚、和棋聳聳肩
     const pick=a=>a[Math.random()*a.length|0];
-    const onResult=e=>{const r=e.detail;setTimeout(()=>{if(r==="win"){doAct("win");say(pick(["我們贏了！🏆","太厲害了！","勝利！耶～","你是冠軍！","贏啦贏啦！"]),3.4)}
-      else if(r==="lose"){doAct("lose");say(pick(["嗚嗚…輸了","好可惜…","沒關係，再來一盤！","下次一定贏！","我陪你複盤吧"]),3.6)}
-      else{doAct("draw");say(pick(["和棋～勢均力敵","握手言和！","平分秋色","不分勝負！"]),2.6)}},400)};
+    const onResult=e=>{const r=e.detail;setTimeout(()=>{if(r==="win"){doAct("win");say(pick(["我們贏了！🏆","太厲害了！","勝利！耶～","你是冠軍！","贏啦贏啦！"]),5)}
+      else if(r==="lose"){doAct("lose");say(pick(["嗚嗚…輸了","好可惜…","沒關係，再來一盤！","下次一定贏！","我陪你複盤吧"]),5)}
+      else{doAct("draw");say(pick(["和棋～勢均力敵","握手言和！","平分秋色","不分勝負！"]),5)}},400)};
     window.addEventListener("xq-result",onResult);
     // 有棋盤的畫面（看棋譜、對戰、練習）：自動走到右下角，不擋棋盤（意見回饋 168）；在這個畫面拖過就照使用者放的位置
     const bigBoard=()=>{let best=null;for(const e of document.querySelectorAll('svg[viewBox="0 0 560 620"]')){if(e.closest(".xqbot"))continue;const r=e.getBoundingClientRect();
@@ -349,7 +350,7 @@
       document.body.append(ov);const vis=box.style.visibility,ps={x,y,parked},op=box.style.opacity;box.style.visibility="visible";box.style.opacity="";hit.style.pointerEvents="none";
       shrink=2;applySize();tx=Math.max(0,(innerWidth-W)/2);ty=Math.max(20,innerHeight*.56-H/2);act=null;
       try{navigator.vibrate&&navigator.vibrate([60,40,60,40,120])}catch(e){}
-      setTimeout(()=>{doAct("cheer");say(`升官了！我現在是${GN[g]}品官！`,4.2)},350);setTimeout(()=>doAct("jump"),2300);setTimeout(()=>doAct("win"),3400);
+      setTimeout(()=>{doAct("cheer");say(`升官了！我現在是${GN[g]}品官！`,4.2)},350);setTimeout(()=>doAct("jump"),2300);setTimeout(()=>doAct("cheer"),3400);   // 勝利動作改成 5 秒後太長，升官慶祝（約 5 秒）最後一段改用歡呼
       setTimeout(()=>{ov.classList.add("out");setTimeout(()=>ov.remove(),520);shrink=boardMode?.6:1;applySize();celeb=0;box.style.visibility=vis;box.style.opacity=op;hit.style.pointerEvents="auto";
         if(ps.parked){tx=ps.x;ty=ps.y}else wander()},5200)};
     let curG=grade();
