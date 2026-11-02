@@ -412,7 +412,7 @@ html[data-era=ming] .topbar,html[data-era=qing] .topbar{border-bottom-width:4px}
       if(!window.caches)return go();caches.keys().then(function(ks){return Promise.all(ks.filter(function(k){return k.indexOf("xqlab-app-")===0}).map(function(k){return caches.delete(k)}))})
         .then(function(){return navigator.serviceWorker&&navigator.serviceWorker.getRegistration()}).then(function(r){return r&&r.update()}).catch(function(){}).then(go)}},4000)})();
 </script>
-<script>window.XQ_OFFLINE=true;window.XQ_BUILD="20261102-1419";</script>
+<script>window.XQ_OFFLINE=true;window.XQ_BUILD="20261102-1424";</script>
 <script src="core.js"></script>
 <script src="engine.js"></script>
 <script src="local.js"></script>
@@ -2440,6 +2440,26 @@ const BOT_FAQ=[
  [["離線","沒網路","網路"],"加到手機主畫面後，大部分功能（棋譜、和電腦下棋）離線也能用；線上對戰需要網路。"],
  [["安裝","主畫面","App"],"iPhone 用 Safari 打開，按「分享 → 加入主畫面」，就能像 App 一樣全螢幕使用。"],
  [["更新","版本","新版"],"App 會自動更新，有新版時會提示；版本號在「設定 → ⋯ 其他 → 關於」。","#/settings","打開設定"],
+ [["高車保馬"],"把車升高一兩格守住自己的馬，讓馬不怕被對方攻擊，是佈局時常見的穩健下法。"],
+ [["巡河車"],"車走到自己這邊河口的那一排，可以左右巡守、支援兩翼。"],
+ [["騎河車"],"車走到對方的河口（騎在河界上），壓制對方的兵和馬。"],
+ [["窩心馬"],"馬跳到自己九宮的正中心（帥的正前方），會堵住帥的活動空間，通常不是好形。"],
+ [["空頭炮"],"中路的炮和對方將帥之間沒有任何棋子，對方的士象被牽制，威脅很大。"],
+ [["河頭馬","河口馬"],"馬跳到河界附近，位置靈活，可以進攻也能回防。"],
+ [["雙士連環","士連環"],"兩個士互相保護，防守比較穩固。"],
+ [["肋道"],"九宮兩側的直線（四路和六路），車佔肋道常能直接威脅對方的將帥。"],
+ [["卒林線","兵林線"],"雙方兵卒原本所在的那一排，控制它就能壓制對方的兵卒。"],
+ [["炮架"],"炮吃子時中間要隔的那一個子，就叫炮架；沒有炮架，炮就吃不到子。"],
+ [["蹩馬腿","別馬腿"],"馬走日字時，緊貼著它的那一格有子擋著，馬就跳不過去。"],
+ [["塞象眼"],"象走田字時，田字中心有子擋著，象就飛不過去。"],
+ [["長將"],"連續不停地將軍。規則上不能一直長將，不變著就判負。"],
+ [["長捉"],"連續不停地捉對方同一個子，規則上也不允許。"],
+ [["先手"],"主動權。搶到先手，就能讓對方跟著你的節奏應對。"],
+ [["棄子"],"故意讓對方吃掉自己的子，換取攻勢或先手。"],
+ [["兌子"],"雙方互相吃掉一個價值差不多的子。"],
+ [["一車十子寒"],"車的威力極大，一隻車就能讓對方十個子都感到威脅。"],
+ [["五八炮"],"一炮在中路（五路）、另一炮留在八路，兩炮配合的開局。"],
+ [["龜背炮"],"一門炮退到自己帥的背後防守，形狀像烏龜背殼。"],
  [["開局有哪些","開局"],"我會的開局：中炮、屏風馬、反宮馬、順炮、列炮、飛相局、仙人指路、起馬局、過宮炮、士角炮、五七炮、五六炮、單提馬、半途列炮。問我名字，我就在棋盤上示範！"],
  [["殺法有哪些","殺法"],"殺法很多，例如馬後炮、臥槽馬、雙車錯、鐵門栓、悶宮殺、白臉將、大刀剜心……問我名字，我示範給你看！","#/terms","看所有術語"]];
 let ASK_KB=null;
@@ -2475,9 +2495,20 @@ function askGamesFind(G,q){const qs=toS(q).replace(/[？?！!。，,、\s「」�
   const out=[];for(const it of G.items){if(pls.length&&!pls.every(p=>it.red===p||it.black===p))continue;if(yr&&String(it.year||"")!==yr&&!String(it.date||"").startsWith(yr))continue;
     let sc=pls.length*10+(yr?5:0);
     if(grams.length){const hay=[it.event,it.title,it.open,it.name,it.part].join("|");let h=0;for(const g of grams)if(hay.includes(g))h++;
-      if(!pls.length&&!yr&&h<Math.min(2,grams.length))continue;if((pls.length||yr)&&grams.length>=2&&h===0)sc-=4;sc+=h*3}
+      if(!pls.length&&!yr&&(rest.length<2||!hay.includes(rest)))continue;if((pls.length||yr)&&grams.length>=2&&h===0)sc-=4;sc+=h*3}
     if(sc>0)out.push([sc,it])}
   out.sort((a,b)=>b[0]-a[0]||(+b[1].year||0)-(+a[1].year||0));return{pls,yr,list:out.slice(0,8).map(x=>x[1]),total:out.length}}
+// 從問題找出這盤棋要從第幾步開始看（意見回饋 175）：註解提到 → 那一步；問的是開局 → 開局走完的局面；開局分類相符 → 第 12 步左右
+async function askStartPly(c,id,q,kb){const it=await api(`/db/item?c=${encodeURIComponent(c)}&id=${encodeURIComponent(id)}`);const l0=(it.lines||[])[0];if(!l0)return null;
+  const mv=l0.moves||[],n=mv.length,qs=toS(q).replace(/[？?！!。，,、\s「」《》]/g,"").replace(ASK_STOP,"");
+  if(qs.length>=2)for(const[k,v]of Object.entries(it.comments||{})){const[li,pl]=k.split("_").map(Number);if(li===0&&pl>0&&String(v).includes(qs))return{ply:pl,why:"註解提到「"+q+"」"}}
+  const op=(kb||[]).find(x=>x.tag==="開局"&&x.keys.some(k=>askNorm(q).includes(askNorm(k))));
+  const opLen=op?Math.max(...op.keys.filter(k=>askNorm(q).includes(askNorm(k))).map(k=>askNorm(k).length)):0,openHit=qs.length>=2&&(it.open||"").includes(qs);
+  if(openHit&&qs.length>opLen)return{ply:Math.min(12,n),why:"開局「"+it.open.replace(/^[A-E][0-9]+ /,"")+"」"};   
+  if(op){const t=(await api("/terms/data")).items.find(x=>x.n===op.title);if(t&&t.op){const tgt=parseFen(START);for(const[f,to]of t.op.moves){tgt[to]=tgt[f];tgt[f]=null}const key=tgt.join(",");
+    const b=parseFen(START);for(let i=0;i<Math.min(n,40);i++){const m=mv[i];b[m.t]=b[m.f];b[m.f]=null;if(b.join(",")===key)return{ply:i+1,why:"「"+op.title+"」的局面"}}}}
+  if(qs.length>=2&&(it.open||"").includes(qs))return{ply:Math.min(12,n),why:"開局「"+it.open.replace(/^[A-E][0-9]+ /,"")+"」"};
+  return null}
 function askGameRow(G,it){const who=it.red&&it.black?`${esc(it.red)} 對 ${esc(it.black)}`:esc(it.title||it.name||"");
   const sub=[it.year||"",it.event||"",it.result||"",!it.red?G.books[it.c]||"":""].filter(Boolean).join("・");
   return`<button class="item" data-g="${esc(it.c)}|${esc(it.id)}" style="width:100%;text-align:left"><span class="tx"><b>${who}</b><span>${esc(sub)}</span></span><span class="muted">›</span></button>`}
@@ -2493,7 +2524,9 @@ function askSheet(){sheet("🤖 問小帥",b=>{
     if(gl&&!gl.pls.length)r=askFind(kb,q,4);   // 沒有棋手、有找到棋譜：只留明確命中的說明
     if(gl&&gl.pls.length){const pk=kb.filter(x=>x.player&&gl.pls.includes(x.player));if(pk.length)r=[...pk,...r.filter(x=>!pk.includes(x))]}
     const gHTML=gl?`<div class="muted" style="margin:12px 0 6px">📚 相關棋譜（共 ${gl.total} 盤${gl.total>gl.list.length?"，先列 "+gl.list.length+" 盤":""}）：</div><div class="items" style="padding:0">${gl.list.map(it=>askGameRow(G,it)).join("")}</div>`:"";
-    const bindG=()=>aa.querySelectorAll("[data-g]").forEach(x=>x.onclick=()=>{const[c,id]=x.dataset.g.split("|");try{document.activeElement.blur()}catch(e){}closeSheet();location.hash="#/db/"+encodeURIComponent(c)+"/"+encodeURIComponent(id)});
+    const bindG=()=>aa.querySelectorAll("[data-g]").forEach(x=>x.onclick=async()=>{const[c,id]=x.dataset.g.split("|");try{document.activeElement.blur()}catch(e){}
+      try{const at=await askStartPly(c,id,q,kb);store.set("openAt",at?{c,id,ply:at.ply,why:at.why}:null)}catch(e){store.set("openAt",null)}
+      closeSheet();location.hash="#/db/"+encodeURIComponent(c)+"/"+encodeURIComponent(id)});
     if(!r.length&&gl){if(typeof BOT!=="undefined"&&BOT)BOT.say("我幫你找到棋譜了！",2);aa.innerHTML=`<div class="card"><b>找到 ${gl.total} 盤相關棋譜</b>${gHTML}</div>`;bindG();return}
     if(!r.length){aa.innerHTML=`<div class="card">這個我還不太懂 😅<br><span class="muted">可以換個說法，或到「象棋規則 → 術語」找找看；也可以用「意見回饋」問開發者。</span></div>`;if(typeof BOT!=="undefined"&&BOT)BOT.say("這題考倒我了…",2);return}
     const top=r[0];if(typeof BOT!=="undefined"&&BOT)BOT.say(top.go&&top.goLabel?"我來示範給你看！":"我知道！",2);
@@ -2969,6 +3002,7 @@ function Viewer(v,c,id){
     it=d;L=new Map(it.lines.map(l=>[l.id,l]));bookName=(bs.find(b=>b.key===c)||{}).name||"";
     setTop(title(),"#/db/"+encodeURIComponent(c),[["📊",()=>report(),"賽後報告"],["ℹ",()=>info(),"棋局資訊"]]);
     const r=store.get("recent",[]).find(x=>x.c===c&&x.id===id);ply=r&&r.ply?Math.min(r.ply,endPly(0)):0;
+    const oa=store.get("openAt",null);if(oa&&oa.c===c&&oa.id===id){store.set("openAt",null);ply=Math.min(oa.ply,endPly(0));setTimeout(()=>toast(`從第 ${ply} 步開始：${oa.why}（可以往前看）`),400)}
     show();remember();loadGrades().then(()=>{if(store.get("openReport")===c+"/"+id){store.set("openReport",null);report()}})}).catch(e=>{v.querySelector("#note").textContent="⚠ "+e.message});
   return self}
 
