@@ -412,7 +412,7 @@ html[data-era=ming] .topbar,html[data-era=qing] .topbar{border-bottom-width:4px}
       if(!window.caches)return go();caches.keys().then(function(ks){return Promise.all(ks.filter(function(k){return k.indexOf("xqlab-app-")===0}).map(function(k){return caches.delete(k)}))})
         .then(function(){return navigator.serviceWorker&&navigator.serviceWorker.getRegistration()}).then(function(r){return r&&r.update()}).catch(function(){}).then(go)}},4000)})();
 </script>
-<script>window.XQ_OFFLINE=true;window.XQ_BUILD="20261102-1452";</script>
+<script>window.XQ_OFFLINE=true;window.XQ_BUILD="20261102-1455";</script>
 <script src="core.js"></script>
 <script src="engine.js"></script>
 <script src="local.js"></script>
@@ -2727,6 +2727,8 @@ function PvpGame(v){
     const sub=x=>!seat?PLAYER[x]:x===seat?PLAYER[x]+(NET?"・我":"・這支手機"):PLAYER[x]+((st.online||{})[x]?"・🟢 "+((st.who||{})[x]||"在線"):NET?"・⚪ 對方暫時離線":"・⚪ 對方還沒連上");
     const strip=(x)=>playerHTML(x,nm(x),sub(x),st.clocks?"":null).replace('<div class="clk">',`<div class="clk" id="ck_${x}">`);
     v.querySelector("#pTop").innerHTML=strip(top);v.querySelector("#pBot").innerHTML=strip(bot);
+    for(const[el,x]of[[v.querySelector("#pTop"),top],[v.querySelector("#pBot"),bot]]){el.style.cursor="pointer";el.onclick=e=>{if(e.target.closest(".clk"))return;
+      const G=window.XQNet&&XQNet.game&&XQNet.game(),o=G&&(x==="r"?G.red:G.black);if(o&&o.id&&o.id!==meInfo().id)oppCard(o.id,o.name)}}
     v.querySelector("#pTop").classList.toggle("on",!st.result&&st.turn===top);v.querySelector("#pBot").classList.toggle("on",!st.result&&st.turn===bot);
     clockBase={at:Date.now(),c:st.clocks,turn:st.turn,run:st.running&&!st.result};clocks();
     v.querySelector("#evf").style.width=evPct(st.eval&&st.eval.v)+"%";
@@ -3102,7 +3104,8 @@ function Viewer(v,c,id){
   const self={stop(){clearTimeout(lt)}};
   Promise.all([api(`/db/item?c=${encodeURIComponent(c)}&id=${encodeURIComponent(id)}`),api("/db/books").catch(()=>[])]).then(([d,bs])=>{
     it=d;L=new Map(it.lines.map(l=>[l.id,l]));bookName=(bs.find(b=>b.key===c)||{}).name||"";
-    setTop(title(),"#/db/"+encodeURIComponent(c),[["📊",()=>report(),"賽後報告"],["ℹ",()=>info(),"棋局資訊"]]);
+    {const oh=c==="pvp"?oppHist().find(h=>h.rid===id):null;
+    setTop(title(),"#/db/"+encodeURIComponent(c),[...(oh?[["👤",()=>oppCard(oh.oid,oh.opp),"對手資料"]]:[]),["📊",()=>report(),"賽後報告"],["ℹ",()=>info(),"棋局資訊"]])}
     const r=store.get("recent",[]).find(x=>x.c===c&&x.id===id);ply=r&&r.ply?Math.min(r.ply,endPly(0)):0;
     const oa=store.get("openAt",null);if(oa&&oa.c===c&&oa.id===id){store.set("openAt",null);ply=Math.min(oa.ply,endPly(0));setTimeout(()=>toast(`從第 ${ply} 步開始：${oa.why}（可以往前看）`),400)}
     show();remember();loadGrades().then(()=>{if(store.get("openReport")===c+"/"+id){store.set("openReport",null);report()}})}).catch(e=>{v.querySelector("#note").textContent="⚠ "+e.message});
@@ -3127,8 +3130,9 @@ function WatchHub(v){setTop("觀戰",false);setTabs(true,"#/watch");const RI=!OF
       <div class="muted" style="margin:4px 0 10px">${up?`線上 ${ps.length} 位棋友・有人開始下棋就會出現在這裡`:"稍等一下"}</div><button class="btn ghost" id="go">去線上大廳找人下棋</button></div>`;
       box.querySelector("#go").onclick=()=>location.hash="#/lobby";return}
     box.innerHTML=list.map(([g,l])=>{const w=ps.filter(x=>x.gid===g&&x.st==="watching").length;
-      return`<div class="card row" style="justify-content:space-between;margin-bottom:8px"><span style="min-width:0"><b>${l.map(p=>esc(p.name)+` <span class="pill">${esc(XQNet.rankOf(p.pts))}</span>`).join(" 對 ")}</b><br>
+      return`<div class="card row" style="justify-content:space-between;margin-bottom:8px"><span style="min-width:0"><b>${l.map(p=>`<span data-pid="${esc(p.id)}" data-pn="${esc(p.name)}" style="text-decoration:underline dotted;cursor:pointer">${esc(p.name)}</span> <span class="pill">${esc(XQNet.rankOf(p.pts))}</span>`).join(" 對 ")}</b><br>
         <span class="muted"><span class="live">對戰中</span>${w?`・${w} 人觀戰`:""}</span></span><button class="pill" data-w="${esc(g)}" style="background:var(--accent);color:#fff;border:none;padding:8px 14px;flex:none">👀 觀看</button></div>`}).join("");
+    box.querySelectorAll("[data-pid]").forEach(x=>x.onclick=e=>{e.stopPropagation();oppCard(x.dataset.pid,x.dataset.pn)});
     box.querySelectorAll("[data-w]").forEach(b=>b.onclick=()=>{const go=()=>{XQNet.watch(b.dataset.w);location.hash="#/pvp"};
       if(XQNet.playing())confirmBox("你有一盤進行中的對局，去觀戰會離開它，確定？",go,"確定");else go()})}
   let offs=[];if(OFF&&window.XQNet){XQNet.start();offs=[XQNet.on("people",paint),XQNet.on("status",paint)]}
