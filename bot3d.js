@@ -38,10 +38,11 @@
       const sc=new T.Mesh(new T.SphereGeometry(.1,20,14),white);sc.scale.set(1,1.15,.5);eg.add(sc);
       const pu=new T.Mesh(new T.SphereGeometry(.072,20,14),dark);pu.position.set(0,-.005,.04);pu.scale.set(1,1.1,.6);eg.add(pu);
       const hl=new T.Mesh(new T.SphereGeometry(.024,8,8),white);hl.position.set(.025,.035,.085);eg.add(hl);
-      const br=new T.Mesh(new T.CapsuleGeometry(.018,.09,4,8),dark);br.rotation.z=PI/2-.2*s;br.position.set(0,.15,.02);eg.add(br);eyes.push({g:eg,brow:br});
+      const br=new T.Mesh(new T.CapsuleGeometry(.018,.09,4,8),dark);br.rotation.z=PI/2;br.position.set(0,.15,.02);eg.add(br);eyes.push({g:eg,brow:br,s});
       const ck=new T.Mesh(new T.CircleGeometry(.075,20),pink);ck.position.set(.31*s,.04,.445);ck.rotation.y=.55*s;head.add(ck)}
     const smile=new T.Mesh(new T.TorusGeometry(.085,.02,8,20,PI),dark);smile.rotation.z=PI;mouthG.add(smile);
     const open=new T.Mesh(new T.SphereGeometry(.07,16,12),mouthM);open.scale.set(1,.8,.4);open.visible=false;mouthG.add(open);
+    const tear=new T.Mesh(new T.SphereGeometry(.045,12,10),new T.MeshPhysicalMaterial({color:0x7fc4ff,transparent:true,opacity:.85,clearcoat:1,roughness:.05}));tear.scale.set(.7,1,.6);tear.visible=false;head.add(tear);
     // 帽子：小紅帽＋金頂
     add(head,new T.CylinderGeometry(.25,.28,.14,40),red,[0,.66,0],{line:.08});add(head,new T.SphereGeometry(.07,16,12),gold,[0,.77,0]);
     // 手
@@ -50,7 +51,7 @@
     // 腳
     const legs=[];for(const s of[-1,1]){const hp=new T.Group();hp.position.set(.3*s,.6,0);bot.add(hp);
       add(hp,new T.CapsuleGeometry(.12,.18,8,16),skin,[0,-.2,0],{line:.1});const f=add(hp,new T.SphereGeometry(.17,20,14),red,[0,-.43,.06],{line:.09});f.scale.set(1,.6,1.35);legs.push(hp)}
-    return{bot,torso,head,eyes,mouth:{smile,open},arms,legs}}
+    return{bot,torso,head,eyes,mouth:{smile,open},tear,arms,legs}}
 
   // ---------- 招牌動作 ----------
   const R=(B,i,x,y,z)=>{const a=B.arms[i].rotation;if(x!=null)a.x=x;if(y!=null)a.y=y;if(z!=null)a.z=z};
@@ -68,6 +69,9 @@
     shrug:{d:1.8,say:"？",f:(p,B)=>{const k=bell(p);R(B,0,-.8*k,0,-1.1*k-.3);R(B,1,-.8*k,0,1.1*k+.3);B.head.rotation.z=.2*k}},
     flex:{d:2.2,say:"看我的！",f:(p,B)=>{R(B,0,-.3+.25*wv(p,3),0,-1.6);R(B,1,-.3+.25*wv(p,3),0,1.6);B.torso.rotation.x=-.1}},
     shock:{d:1.6,say:"將軍！",f:(p,B)=>{const k=Math.min(1,p*4);B.root.position.y=.5*Math.sin(Math.min(1,p*2)*PI);R(B,0,0,0,-2.9*k);R(B,1,0,0,2.9*k);B.root.rotation.z=.08*wv(p,8)*(1-p);B.face="open"}},
+    win:{d:3.6,f:(p,B)=>{const h=Math.abs(wv(p,3));B.root.position.y=h*.5;R(B,0,0,.3*wv(p,6),-2.7);R(B,1,0,.3*wv(p,6),2.7);if(p>.4&&p<.75)B.root.rotation.y=ease((p-.4)/.35)*TAU;B.face="happy"}},
+    lose:{d:3.8,f:(p,B)=>{B.head.rotation.x=.35;B.torso.rotation.x=.12;R(B,0,.15,0,-.08);R(B,1,.15,0,.08);B.root.rotation.z=.05*wv(p,1);B.face="sad"}},
+    draw:{d:2.8,f:(p,B)=>{const k=bell(p);R(B,0,-.8*k,0,-1.1*k-.3);R(B,1,-1.2*k,0,.5);B.head.rotation.z=.15*k;B.face="flat"}},
     carry:{d:99,f:(p,B,t)=>{R(B,0,0,0,-2.6);R(B,1,0,0,2.6);B.legs[0].rotation.x=.4*Math.sin(t*9);B.legs[1].rotation.x=-.4*Math.sin(t*9);B.face="open"}}};
   const SIGNATURE=["wave","jump","cheer","dance","think","bow","spin","clap","point","sleep","shrug","flex"];
 
@@ -151,8 +155,11 @@
         next-=t;if(next<=0){if(!parked&&Math.random()<.4){wander();next=1}else doAct(randAct())}}
       // 表情：眨眼、閉眼、眨單眼、講話時嘴巴開合
       blinkT-=t;const bl=blinkT<0;if(blinkT<-.12)blinkT=2+Math.random()*3;
-      P.eyes.forEach((e,i)=>{e.g.scale.y=B.closed||(B.face==="wink"&&i===1)?.12:bl?.1:1;e.brow.position.y=.15+(B.face==="open"?.03:0)});
-      if(talk>0)talk-=t;const mOpen=B.face==="open"||(talk>0&&Math.sin(now/70)>0);P.mouth.open.visible=mOpen;P.mouth.smile.visible=!mOpen;
+      const F=B.face;P.eyes.forEach((e,i)=>{e.g.scale.y=B.closed||F==="happy"||(F==="wink"&&i===1)?.12:bl?.1:1;e.brow.position.y=.15+(F==="open"||F==="happy"?.03:0);
+        e.brow.rotation.z=PI/2+(F==="sad"?-.45*e.s:0)});
+      if(talk>0)talk-=t;const mOpen=F==="open"||F==="happy"||(F!=="sad"&&F!=="flat"&&talk>0&&Math.sin(now/70)>0);P.mouth.open.visible=mOpen;P.mouth.smile.visible=!mOpen;
+      P.mouth.smile.rotation.z=F==="sad"?0:PI;P.mouth.smile.scale.y=F==="flat"?.2:1;P.mouth.smile.position.y=F==="sad"?-.06:0;
+      P.tear.visible=F==="sad";if(F==="sad"){const k=(now/1400)%1;P.tear.position.set(-.2,.1-.32*k,.47);P.tear.material.opacity=.85*(1-k*.6)}
       if(bubT>0){bubT-=t;if(bubT<=0)bub.style.opacity=0}
       if(!drag){const b=bounds();x=Math.min(Math.max(x,b.x0),Math.max(b.x0,b.x1));y=Math.min(Math.max(y,b.y0),Math.max(b.y0,b.y1))}
       box.style.transform=`translate(${x|0}px,${y|0}px)`;rd.render(sc,cam)}
@@ -169,8 +176,14 @@
     for(const ev of["click","dblclick","touchstart","touchend","mousedown","mouseup","contextmenu"])hit.addEventListener(ev,stop,{passive:false});
     const onCall=e=>{const s=e.detail;if(s==="將軍")doAct("shock");else if(s==="吃"){doAct("cheer");say("吃！",1.4)}};
     window.addEventListener("xq-call",onCall);
+    // 勝負：贏了開心跳、輸了難過掉眼淚、和棋聳聳肩
+    const pick=a=>a[Math.random()*a.length|0];
+    const onResult=e=>{const r=e.detail;setTimeout(()=>{if(r==="win"){doAct("win");say(pick(["我們贏了！🏆","太厲害了！","勝利！耶～","你是冠軍！","贏啦贏啦！"]),3.4)}
+      else if(r==="lose"){doAct("lose");say(pick(["嗚嗚…輸了","好可惜…","沒關係，再來一盤！","下次一定贏！","我陪你複盤吧"]),3.6)}
+      else{doAct("draw");say(pick(["和棋～勢均力敵","握手言和！","平分秋色","不分勝負！"]),2.6)}},400)};
+    window.addEventListener("xq-result",onResult);
     const onResize=()=>{const b=bounds();x=Math.min(x,b.x1);y=Math.min(y,b.y1);tx=Math.min(tx,b.x1);ty=Math.min(ty,b.y1)};window.addEventListener("resize",onResize);
     return{act:k=>doAct(typeof k==="number"?comboAct(k):k),say,count:COMBO.length,lines:LINES.length,
-      stop(){stopped=true;window.removeEventListener("xq-call",onCall);window.removeEventListener("resize",onResize);try{rd.dispose()}catch(e){}box.remove()}}}
+      stop(){stopped=true;window.removeEventListener("xq-call",onCall);window.removeEventListener("xq-result",onResult);window.removeEventListener("resize",onResize);try{rd.dispose()}catch(e){}box.remove()}}}
   window.XQBot3D={start,acts:Object.keys(ACTS),combos:COMBO.length,lines:LINES.length};
 })();

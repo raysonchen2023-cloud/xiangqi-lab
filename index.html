@@ -412,7 +412,7 @@ html[data-era=ming] .topbar,html[data-era=qing] .topbar{border-bottom-width:4px}
       if(!window.caches)return go();caches.keys().then(function(ks){return Promise.all(ks.filter(function(k){return k.indexOf("xqlab-app-")===0}).map(function(k){return caches.delete(k)}))})
         .then(function(){return navigator.serviceWorker&&navigator.serviceWorker.getRegistration()}).then(function(r){return r&&r.update()}).catch(function(){}).then(go)}},4000)})();
 </script>
-<script>window.XQ_OFFLINE=true;window.XQ_BUILD="20261102-1309";</script>
+<script>window.XQ_OFFLINE=true;window.XQ_BUILD="20261102-1311";</script>
 <script src="core.js"></script>
 <script src="engine.js"></script>
 <script src="local.js"></script>
@@ -1312,6 +1312,7 @@ if(OFF&&window.XQNet){XQNet.start();
     modal(`<div class="em">⚔</div><h2>${esc(x.from.name)} 邀請你下一盤</h2><p class="muted">接受的話你執黑，對方先走。</p>`,
       [["接受",()=>{const go=()=>{XQNet.respond(x,true);goGame()};if(XQNet.active()&&XQNet.game()&&!XQNet.game().result&&XQNet.side())XQNet.leave();go()}],["婉拒",()=>XQNet.respond(x,false),true]])});
   XQNet.on("cancel",x=>toast(`${x.from.name} 取消了邀請`));
+  XQNet.on("rated",x=>{try{window.dispatchEvent(new CustomEvent("xq-result",{detail:x.res==="w"?"win":x.res==="l"?"lose":"draw"}))}catch(e){}});
   XQNet.on("rated",x=>setTimeout(()=>toast(`${x.res==="w"?"🏆 贏了":x.res==="l"?"輸了":"和棋"}　積分 ${x.d>0?"+"+x.d:x.d<0?x.d:"±0"}　→ ${x.pts} 分`+(x.rank!==x.was?`（${x.d>0?"升":"降"}為 ${x.rank}）`:"")),1200));
   XQNet.on("start",()=>{closeSheet();toast("對方接受了！你執紅先走");goGame()});
   XQNet.on("matchfail",x=>{toast(x.auto?"對方離開了，繼續幫你找對手…":"對方離開了，這盤沒有開始");location.hash="#/lobby"});
@@ -2288,7 +2289,7 @@ function CpuGame(v){
     acts.undo.disabled=st.ranked||st.reward||st.thinking||!st.moves.some(m=>m.by===st.human);
     acts.resign.hidden=!!st.result;acts.review.hidden=!st.result;
     if(st.result&&shownResult!==JSON.stringify(st.result)+st.moves.length){shownResult=JSON.stringify(st.result)+st.moves.length;
-      const win=st.result.w===st.human,draw0=!st.result.w;vibrate([30,40,30]);
+      const win=st.result.w===st.human,draw0=!st.result.w;vibrate([30,40,30]);try{window.dispatchEvent(new CustomEvent("xq-result",{detail:win?"win":draw0?"draw":"lose"}))}catch(e){}
       if(st.practice){const d=store.get("redoDone",{})[st.practice.key];
         modal(`<div class="em">${win?"🏆":draw0?"🤝":"💪"}</div><h2>${win?"你贏了！":draw0?"和局":"這盤輸了"}</h2><p class="muted">${esc(st.result.why)}・錯棋重練（不算戰績）</p>${d&&d.ok?'<p>✅ 這步已經練會了</p>':""}`,
           [["回到錯棋列表 ›",()=>location.hash="#/redo"],["關閉",null,true]]);return}
