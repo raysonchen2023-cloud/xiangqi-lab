@@ -392,6 +392,7 @@ html[data-era=ming] .topbar,html[data-era=qing] .topbar{border-bottom-width:4px}
 .cpu-desc{font-size:13px;color:var(--muted);min-height:2.8em;line-height:1.5;padding:0 2px}
 .sgc>*+*{border-top:1px solid var(--line)}
 .rd-g{background:var(--card);border:1px solid var(--line);border-radius:14px;margin:10px 0;overflow:hidden}.rd-g>summary{list-style:none;display:flex;justify-content:space-between;align-items:center;gap:8px;padding:10px 12px;font-size:14px;cursor:pointer}.rd-g>summary::-webkit-details-marker{display:none}.rd-g>summary b{font-size:13px;color:var(--accent);white-space:nowrap}.rd-g>summary::after{content:"▸";color:var(--muted);transition:transform .2s}.rd-g[open]>summary::after{transform:rotate(90deg)}.rd-g .st-list{margin:0;border-radius:0;border:0;border-top:1px solid var(--line)}
+.vc-tip{position:fixed;left:50%;bottom:calc(110px + var(--safeB,0px));transform:translateX(-50%);z-index:1200;display:flex;flex-direction:column;align-items:center;gap:2px;padding:14px 22px;border-radius:18px;background:rgba(30,20,12,.9);color:#fff;font-size:13px;box-shadow:0 8px 30px rgba(0,0,0,.3);animation:vcP 1.2s ease-in-out infinite}.vc-tip b{font-size:17px}@keyframes vcP{50%{box-shadow:0 0 0 10px rgba(181,69,43,.25),0 8px 30px rgba(0,0,0,.3)}}
 </style></head><body>
 <div class="app">
  <div class="topbar" id="topbar"><button class="ib" id="back" hidden><b>‹</b>返回</button><h1 id="title">象棋研究室</h1><span id="topRight"></span></div>
@@ -412,7 +413,7 @@ html[data-era=ming] .topbar,html[data-era=qing] .topbar{border-bottom-width:4px}
       if(!window.caches)return go();caches.keys().then(function(ks){return Promise.all(ks.filter(function(k){return k.indexOf("xqlab-app-")===0}).map(function(k){return caches.delete(k)}))})
         .then(function(){return navigator.serviceWorker&&navigator.serviceWorker.getRegistration()}).then(function(r){return r&&r.update()}).catch(function(){}).then(go)}},4000)})();
 </script>
-<script>window.XQ_OFFLINE=true;window.XQ_BUILD="20261102-1842";</script>
+<script>window.XQ_OFFLINE=true;window.XQ_BUILD="20261102-1848";</script>
 <script src="core.js"></script>
 <script src="engine.js"></script>
 <script src="local.js"></script>
@@ -2106,7 +2107,7 @@ function Settings(v){
     v.querySelectorAll("[data-e]").forEach(x=>x.onclick=()=>{const k=x.dataset.e;if(k===store.get("era","classic"))return;vibrate(5);store.set("era",k);applyEra();
       if(k!=="classic"&&store.get("boardTheme","wood3d")!=="auto"){store.set("boardTheme","auto");toast("棋盤也換成這個朝代的配色（可在下面改回）")}paint();show(true)});
     const tg=(k,label,sub)=>`<label class="row" style="justify-content:space-between;padding:6px 0"><span><b>${label}</b><br><span class="muted">${sub}</span></span><input type="checkbox" class="sw" data-t="${k}" ${store.get(k,k!=="mvSound")?"checked":""}></label>`;
-    v.querySelector("#mv").innerHTML=tg("mvArrow","箭頭","從原來位置畫箭頭指到新位置")+'<div style="border-top:1px solid var(--line)"></div>'+tg("mvAnim","動畫","棋子滑過去，被吃的棋子淡出")+'<div style="border-top:1px solid var(--line)"></div>'+tg("capSound","吃子音效","吃子時重重「啪」一聲、將軍時「鏘」一聲")+'<div style="border-top:1px solid var(--line)"></div>'+`<div style="padding:6px 0" id="vcRow"><b>語音報「吃」「將軍」</b><br><span class="muted">吃子喊「吃！」、將軍喊「將軍！」；點一下可以試聽；可調語速</span><div class="st-res" style="margin:8px 0 0">${[["off","關"],["m","男聲"],["f","女聲"]].map(([k,l])=>`<button data-vc="${k}" class="${(store.get("voiceCall",true)?store.get("voiceSex","m"):"off")===k?"on":""}">${l}</button>`).join("")}</div><div class="st-res" style="margin:8px 0 0;align-items:center"><span class="muted" style="font-size:13px">語速</span>${[["s","慢"],["n","中"],["f","快"]].map(([k,l])=>`<button data-vr="${k}" class="${store.get("voiceRate","n")===k?"on":""}">${l}</button>`).join("")}</div></div>`+'<div style="border-top:1px solid var(--line)"></div>'+sndPicker()+'<div style="border-top:1px solid var(--line)"></div>'+tg("ckFx","將軍特效","被將軍或將對方軍時，棋盤上蓋「將軍！」字樣")+'<div style="border-top:1px solid var(--line)"></div>'+tg("capFx","吃子特效","吃子時被吃的那格蓋一個水墨「吃」字")+'<div style="border-top:1px solid var(--line)"></div>'+tg("opFx","開局名稱動畫","走出中炮、仙人指路、屏風馬…時，棋盤上展開卷軸寫出開局名");
+    v.querySelector("#mv").innerHTML=tg("mvArrow","箭頭","從原來位置畫箭頭指到新位置")+'<div style="border-top:1px solid var(--line)"></div>'+tg("mvAnim","動畫","棋子滑過去，被吃的棋子淡出")+'<div style="border-top:1px solid var(--line)"></div>'+tg("capSound","吃子音效","吃子時重重「啪」一聲、將軍時「鏘」一聲")+'<div style="border-top:1px solid var(--line)"></div>'+`<div style="padding:6px 0" id="vcRow"><b>語音報「吃」「將軍」</b><br><span class="muted">吃子喊「吃！」、將軍喊「將軍！」；點一下可以試聽；可調語速</span><div class="st-res" style="margin:8px 0 0">${[["off","關"],["m","男聲"],["f","女聲"]].map(([k,l])=>`<button data-vc="${k}" class="${(store.get("voiceCall",true)?store.get("voiceSex","m"):"off")===k?"on":""}">${l}</button>`).join("")}</div><div class="st-res" style="margin:8px 0 0;align-items:center"><span class="muted" style="font-size:13px">語速</span>${[["s","慢"],["n","中"],["f","快"]].map(([k,l])=>`<button data-vr="${k}" class="${store.get("voiceRate","n")===k?"on":""}">${l}</button>`).join("")}</div></div>`+'<div style="border-top:1px solid var(--line)"></div>'+sndPicker()+'<div style="border-top:1px solid var(--line)"></div>'+tg("ckFx","將軍特效","被將軍或將對方軍時，棋盤上蓋「將軍！」字樣")+'<div style="border-top:1px solid var(--line)"></div>'+tg("capFx","吃子特效","吃子時被吃的那格蓋一個水墨「吃」字")+'<div style="border-top:1px solid var(--line)"></div>'+'<div style="border-top:1px solid var(--line)"></div>'+tg("voiceMove","🎤 聲控走棋","下棋時右上角多一個 🎤，按下去說「馬八進七」「炮二平五」就會走"+(vcOK()?"":"（這個瀏覽器不支援語音辨識）"))+'<div style="border-top:1px solid var(--line)"></div>'+tg("opFx","開局名稱動畫","走出中炮、仙人指路、屏風馬…時，棋盤上展開卷軸寫出開局名");
     {const mvB=v.querySelector("#mv"),sdB=v.querySelector("#snd");sdB.innerHTML="";mvB.querySelectorAll(":scope>div[style*='border-top']").forEach(x=>x.remove());
       const st=mvB.querySelector("#sndSt");if(st)sdB.append(st.parentElement);
       for(const k of["capSound"]){const x=mvB.querySelector(`[data-t="${k}"]`);if(x)sdB.append(x.closest("label"))}
@@ -2447,11 +2448,40 @@ function Garage(v){
     else if(live)confirmBox("挑戰電腦還有一盤沒下完，開始獎勵模式會蓋掉它，確定？",go,"開始獎勵模式");else go()}
   return{}}
 
+// 聲控走棋（意見回饋 193）：按 🎤 說「馬八進七」「炮二平五」「車1進1」；把所有合法走法轉成記譜，跟聽到的字比對（同音字也算，例如「嗎」＝馬、「近」＝進）
+const VC_SETS=(()=>{const M={},add=(tok,chs)=>{for(const c of chs)(M[c]=M[c]||[]).push(tok)};
+  add("車","車俥车居駒拘鞠局");add("馬","馬傌马嗎媽碼瑪麻罵吗妈码");add("炮","炮砲跑泡袍刨包抱豹報");add("兵","兵卒冰族足祖組阻賓彬並病");
+  add("相","相象像向項想箱香鄉祥詳");add("士","士仕是事市室式試視示世勢師使史四");add("將","將帥将帅江醬獎講蔣姜摔率衰");
+  add("進","進进近盡金今晉勁浸緊斤津禁");add("退","退腿推褪");add("平","平瓶評萍憑蘋屏坪品拼頻");add("前","前錢欠潛牽鉗千");add("後","後后候厚");add("中","中鐘終忠種眾宗");
+  ["一1１衣醫依伊壹么腰","二2２兩两而兒耳爾貳","三3３山傘散參","四4４是絲斯寺似死司","五5５午舞武屋吳無伍物務","六6６溜柳留劉陸樓流","七7７期妻其起氣漆齊騎奇","八8８吧巴把爸拔疤","九9９酒久就舊救韭玖"].forEach((x,i)=>add(String(i+1),x));return M})();
+const vcTok=s=>{const D={俥:"車",傌:"馬",砲:"炮",卒:"兵",象:"相",仕:"士",帥:"將"},Z="一二三四五六七八九";return[...s].map(c=>D[c]||(Z.includes(c)?String(Z.indexOf(c)+1):c))};
+function vcMatch(alts,board,legal){const C=window.XQCore;if(!C)return[];const cands=legal.map(([f,t])=>({f,t,cn:C.notate(board,f,t)})),hits=new Map();
+  for(const a of alts){const sp=[...String(a)].map(c=>VC_SETS[c]).filter(Boolean);
+    for(const c of cands){const tk=vcTok(c.cn);for(let i=0;i+tk.length<=sp.length;i++)if(tk.every((x,j)=>sp[i+j].includes(x))){hits.set(c.cn,c);break}}
+    if(hits.size)break}
+  return[...hits.values()]}
+const vcOK=()=>!!(window.SpeechRecognition||window.webkitSpeechRecognition);let VC_REC=null;
+// ctx()：回傳 {board,legal,play(f,t)}，或 {why:"還沒輪到你"}
+function voiceMove(ctx){const R=window.SpeechRecognition||window.webkitSpeechRecognition;if(!R)return toast("這個瀏覽器不支援語音辨識（iPhone 請用 Safari 或主畫面 App，並在設定開啟 Siri 與聽寫）");
+  const c0=ctx();if(!c0||c0.why)return toast(c0&&c0.why||"現在不能走棋");
+  if(VC_REC){try{VC_REC.abort()}catch(e){}VC_REC=null}
+  const r=new R();VC_REC=r;r.lang="zh-TW";r.interimResults=false;r.maxAlternatives=5;r.continuous=false;let got=false;
+  const tip=document.createElement("div");tip.className="vc-tip";tip.innerHTML='<b>🎤 請說棋步</b><span>例如「馬八進七」「炮二平五」</span>';document.body.append(tip);tip.onclick=()=>{try{r.abort()}catch(e){}};
+  const end=()=>{tip.remove();if(VC_REC===r)VC_REC=null};
+  r.onresult=e=>{got=true;const res=e.results[0],alts=[...res].map(x=>x.transcript);const c=ctx();if(!c||c.why){end();return toast(c&&c.why||"現在不能走棋")}
+    const hit=vcMatch(alts,c.board,c.legal);end();
+    if(hit.length===1){vibrate(15);toast("🎤 "+hit[0].cn);c.play(hit[0].f,hit[0].t)}
+    else if(hit.length>1)modal(`<div class="em">🎤</div><h2>是哪一步？</h2><p class="muted">聽到「${esc(alts[0]||"")}」</p>`,hit.slice(0,4).map(h=>[h.cn,()=>c.play(h.f,h.t)]).concat([["取消",null,true]]));
+    else toast(`聽到「${alts[0]||""}」，找不到這一步，再說一次`)};
+  r.onerror=e=>{end();if(e.error==="not-allowed"||e.error==="service-not-allowed")toast("要允許使用麥克風才能聲控走棋");else if(e.error==="no-speech")toast("沒聽到聲音，再按一次 🎤");else if(e.error!=="aborted")toast("語音辨識失敗："+e.error)};
+  r.onend=()=>{if(!got)end()};
+  try{r.start();vibrate(8)}catch(e){end();toast("無法開始錄音")}}
+const vcOn=()=>store.get("voiceMove",true);
 function CpuGame(v){
   setTabs(false);gameLayout(v);
   let st=null,sel=-1,shownResult=null,busy=false,pHint=null;   // pHint：錯棋重練時在棋盤上畫 Pikafish 的建議
   const bd=Board(i=>tap(i));v.querySelector("#bbox").append(bd.svg);
-  setTop("挑戰電腦","#/");
+  setTop("挑戰電腦","#/",vcOn()?[["🎤",()=>voiceMove(()=>!st||st.result?{why:"這盤已經結束"}:st.turn!==st.human||st.thinking?{why:"還沒輪到你"}:{board:st.board,legal:st.legal,play:(f,t)=>{sel=-1;post("/play/move",{f,t})}}),"聲控走棋"]]:[]);
   // 模式切換直接放在頂部列（取代標題）：積分挑戰／自選難度／獎勵一眼就看得到，點一下就換（離線版才有積分挑戰和獎勵）
   const modeOf=s=>s.ranked?"rank":s.reward?"car":"free",prefMode=()=>store.get("cpuRanked",true)?"rank":REWARD&&store.get("cpuCar",false)?"car":"free";
   const seg=OFF?document.createElement("div"):null;
@@ -2795,8 +2825,8 @@ function PvpGame(v){
   const NET=OFF&&!!window.XQNet&&XQNet.active();
   let seat=NET?(XQNet.side()||"w"):store.get("pvpSeat",null);if(!NET&&OFF&&seat&&!XQ.remoteInfo()){seat=null;store.set("pvpSeat",null);XQ.setPvpOnline(false)}
   const bd=Board(i=>tap(i));v.querySelector("#bbox").append(bd.svg);
-  const setTitle=()=>NET?setTop(seat==="w"?"👀 觀戰中":`網路對戰・我執${seat==="r"?"紅":"黑"}`,"#/lobby",[["🌐",()=>netSheet(),"大廳"]])
-    :setTop(seat?`連線對戰・我執${seat==="r"?"紅":"黑"}`:"雙人對戰","#/",(DEVMODE()?[["👥",()=>seatSheet(),"連線對戰"]]:[]).concat([["⚙",()=>newSheet(),"新局設定"]]));setTitle();   // 透過電腦的連線對戰只給開發者；玩家用「線上對戰」
+  const setTitle=()=>NET?setTop(seat==="w"?"👀 觀戰中":`網路對戰・我執${seat==="r"?"紅":"黑"}`,"#/lobby",[...(vcOn()?[["🎤",()=>voiceMove(()=>!st||st.result?{why:"這盤已經結束"}:seat==="w"?{why:"你在觀戰"}:seat&&st.turn!==seat?{why:"還沒輪到你"}:{board:st.board,legal:st.legal,play:(f,t)=>{sel=-1;flipMan=null;post("/pvp/move",{f,t})}}),"聲控走棋"]]:[]),["🌐",()=>netSheet(),"大廳"]])
+    :setTop(seat?`連線對戰・我執${seat==="r"?"紅":"黑"}`:"雙人對戰","#/",(DEVMODE()?[["👥",()=>seatSheet(),"連線對戰"]]:[]).concat([...(vcOn()?[["🎤",()=>voiceMove(()=>!st||st.result?{why:"這盤已經結束"}:seat==="w"?{why:"你在觀戰"}:seat&&st.turn!==seat?{why:"還沒輪到你"}:{board:st.board,legal:st.legal,play:(f,t)=>{sel=-1;flipMan=null;post("/pvp/move",{f,t})}}),"聲控走棋"]]:[]),["⚙",()=>newSheet(),"新局設定"]]));setTitle();   // 透過電腦的連線對戰只給開發者；玩家用「線上對戰」
   function netSheet(){sheet(seat==="w"?"觀戰中":"網路對戰",b=>{b.innerHTML=`<button class="btn" id="lb">🌐 回大廳（這盤會保留）</button><button class="btn ghost" id="lv">${seat==="w"?"不看了":"離開這盤"}</button>`;
     b.querySelector("#lb").onclick=()=>{closeSheet();location.hash="#/lobby"};
     b.querySelector("#lv").onclick=()=>{closeSheet();const go=()=>{XQNet.leave();location.hash="#/lobby"};
