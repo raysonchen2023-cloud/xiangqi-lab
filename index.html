@@ -412,7 +412,7 @@ html[data-era=ming] .topbar,html[data-era=qing] .topbar{border-bottom-width:4px}
       if(!window.caches)return go();caches.keys().then(function(ks){return Promise.all(ks.filter(function(k){return k.indexOf("xqlab-app-")===0}).map(function(k){return caches.delete(k)}))})
         .then(function(){return navigator.serviceWorker&&navigator.serviceWorker.getRegistration()}).then(function(r){return r&&r.update()}).catch(function(){}).then(go)}},4000)})();
 </script>
-<script>window.XQ_OFFLINE=true;window.XQ_BUILD="20261102-1508";</script>
+<script>window.XQ_OFFLINE=true;window.XQ_BUILD="20261102-1513";</script>
 <script src="core.js"></script>
 <script src="engine.js"></script>
 <script src="local.js"></script>
@@ -2953,10 +2953,19 @@ function sugText(g,b){const L=(g.bp&&g.bp.length?g.bp:g.bm?[g.bm]:[]).slice(0,3)
   if(!out.length)return`建議 ${g.bc||""}（藍色箭頭）`;return(out.length>1?"建議走法（藍色箭頭）："+out.map((x,i)=>`${i+1}. ${x}`).join("　"):`建議 ${out[0]}（藍色箭頭）`)+"\n綠色箭頭是實際走的"}
 function Viewer(v,c,id){
   setTabs(false);v.className="view fixed";
-  v.innerHTML=`<div class="evline" style="margin-top:6px"><div id="evf"></div></div><div class="boardbox" id="bbox"></div>
-    <div class="status" id="stat"></div><div class="strip" id="strip"></div><div class="strip" id="alts" style="padding-top:0"></div>
+  v.innerHTML=`<div class="player vpl" id="vTop" style="padding:3px 12px"></div><div class="evline"><div id="evf"></div></div><div class="boardbox" id="bbox"></div>
+    <div class="player vpl" id="vBot" style="padding:3px 12px"></div><div class="status" id="stat"></div><div class="strip" id="strip"></div><div class="strip" id="alts" style="padding-top:0"></div>
     <div class="note" id="note"></div><div class="actions" id="acts"></div>`;
-  let it=null,L=new Map(),line=0,ply=0,FREE=null,sel=-1,LEGAL=null,AN=null,grades={},bookName="";
+  let it=null,L=new Map(),line=0,ply=0,FREE=null,sel=-1,LEGAL=null,AN=null,grades={},bookName="",vFlip=null;
+  // 紅方／黑方名字條＋翻轉（意見回饋 187）：下面是「靠近你的那一方」，翻轉後上下對調
+  function players(){if(!it)return;const me=myName(),oh=c==="pvp"?oppHist().find(h=>h.rid===id):null;
+    if(vFlip==null)vFlip=(c==="pvp"&&me&&it.black===me)||(c==="play"&&it.black==="你");
+    const res=String(it.result||""),rw=/^紅/.test(res)&&/勝|胜/.test(res),bw=/^黑/.test(res)&&/勝|胜/.test(res),dr=/和/.test(res);
+    const nm=x=>(x==="r"?it.red:it.black)||(x==="r"?"紅方":"黑方"),team=x=>x==="r"?it.redteam:it.blackteam;
+    const sub=x=>[PLAYER[x],team(x)||"",(x==="r"?rw:bw)?"🏆 勝":dr&&res?"和":res&&(rw||bw)?"負":""].filter(Boolean).join("・");
+    const top=vFlip?"r":"b",bot=vFlip?"b":"r";
+    for(const[el,x]of[[v.querySelector("#vTop"),top],[v.querySelector("#vBot"),bot]]){el.innerHTML=playerHTML(x,nm(x),sub(x));
+      const isOpp=oh&&nm(x)===oh.opp;el.style.cursor=isOpp?"pointer":"";el.onclick=isOpp?()=>oppCard(oh.oid,oh.opp):null}}
   const bd=Board(i=>tap(i),d=>step(d));v.querySelector("#bbox").append(bd.svg);
   setTop("載入中…","#/db/"+encodeURIComponent(c),[["ℹ",()=>info(),"棋局資訊"]]);
   const acts=actionBar(v.querySelector("#acts"),[["first","⏮","開局",()=>go(0)],["prev","◀","上一步",()=>step(-1)],["an","🔍","分析",()=>anSheet(),true],["next","▶","下一步",()=>step(1)],["last","⏭","最後",()=>go(1e9)]]);
@@ -3070,7 +3079,7 @@ function Viewer(v,c,id){
       const g=gradeOf(ply);if(g&&g.q&&!["正手","妙手","—"].includes(g.q)&&(g.bp&&g.bp.length||g.bm))
       sugg=(g.bp&&g.bp.length?g.bp:[g.bm]).slice(0,3).map(u=>({f:sqI(u.slice(0,2)),t:sqI(u.slice(2,4))}))
       else if(g&&g.bc&&g.q&&!["正手","妙手","—"].includes(g.q)){const m=bcMove(boardAt(line,ply-1),moverAt(ply),g.bc);if(m)sugg=[m]}}
-    bd.draw(pos.board,{last,sel,targets:sel>=0&&LEGAL?LEGAL.list.filter(([f])=>f===sel).map(x=>x[1]):[],hint,check:ckSq,sugg,fx:stepFwd||!!FREE});
+    players();bd.draw(pos.board,{flip:!!vFlip,last,sel,targets:sel>=0&&LEGAL?LEGAL.list.filter(([f])=>f===sel).map(x=>x[1]):[],hint,check:ckSq,sugg,fx:stepFwd||!!FREE});
     // 優勢條：分析結果優先，其次是上一步的評等
     let ev=AN&&AN.k===posKey(pos)&&AN.lines&&AN.lines[0]?AN.lines[0].vr:null;
     if(ev==null){const g=FREE?(last&&last.g):ply>0&&gradeOf(ply);if(g&&g.ev!=null)ev=g.ev}
@@ -3157,7 +3166,7 @@ function Viewer(v,c,id){
   Promise.all([api(`/db/item?c=${encodeURIComponent(c)}&id=${encodeURIComponent(id)}`),api("/db/books").catch(()=>[])]).then(([d,bs])=>{
     it=d;L=new Map(it.lines.map(l=>[l.id,l]));bookName=(bs.find(b=>b.key===c)||{}).name||"";
     {const oh=c==="pvp"?oppHist().find(h=>h.rid===id):null;
-    setTop(title(),"#/db/"+encodeURIComponent(c),[...(oh?[["👤",()=>oppCard(oh.oid,oh.opp),"對手資料"]]:[]),["📊",()=>report(),"賽後報告"],["ℹ",()=>info(),"棋局資訊"]])}
+    setTop(title(),"#/db/"+encodeURIComponent(c),[["🔄",()=>{vFlip=!vFlip;vibrate(5);show()},"翻轉棋盤"],...(oh?[["👤",()=>oppCard(oh.oid,oh.opp),"對手資料"]]:[]),["📊",()=>report(),"賽後報告"],["ℹ",()=>info(),"棋局資訊"]])}
     const r=store.get("recent",[]).find(x=>x.c===c&&x.id===id);ply=r&&r.ply?Math.min(r.ply,endPly(0)):0;
     const oa=store.get("openAt",null);if(oa&&oa.c===c&&oa.id===id){store.set("openAt",null);ply=Math.min(oa.ply,endPly(0));setTimeout(()=>toast(`從第 ${ply} 步開始：${oa.why}（可以往前看）`),400)}
     show();remember();loadGrades().then(()=>{if(store.get("openReport")===c+"/"+id){store.set("openReport",null);report()}})}).catch(e=>{v.querySelector("#note").textContent="⚠ "+e.message});
