@@ -413,7 +413,7 @@ html[data-era=ming] .topbar,html[data-era=qing] .topbar{border-bottom-width:4px}
       if(!window.caches)return go();caches.keys().then(function(ks){return Promise.all(ks.filter(function(k){return k.indexOf("xqlab-app-")===0}).map(function(k){return caches.delete(k)}))})
         .then(function(){return navigator.serviceWorker&&navigator.serviceWorker.getRegistration()}).then(function(r){return r&&r.update()}).catch(function(){}).then(go)}},4000)})();
 </script>
-<script>window.XQ_OFFLINE=true;window.XQ_BUILD="20261102-1920";</script>
+<script>window.XQ_OFFLINE=true;window.XQ_BUILD="20261102-1926";</script>
 <script src="core.js"></script>
 <script src="engine.js"></script>
 <script src="local.js"></script>
@@ -2828,7 +2828,7 @@ const POEM_AU=["李白","杜甫","白居易","蘇軾","王維","孟浩然","杜�
 function worldIntent(q){const t=q.replace(/\s/g,"");
   if(/天氣|氣溫|溫度|下雨|會不會冷|會不會熱|颱風|穿什麼/.test(t))return"wx";
   if(/幾點|現在時間|幾號|日期|星期幾|禮拜幾|今天是|今年是/.test(t)&&!/棋/.test(t))return"time";
-  {const e=t.replace(/等於多少|是多少|多少|等於|[=＝？?]/g,"");if(/^[\d.+\-*/×÷xX()（）^]+$/.test(e)&&/\d[+\-*/×÷xX^]\d|\d[+\-*/×÷xX^][(（]/.test(e))return"calc"}
+  {const e=calcExpr(t);if(e&&/[+\-*/]|\*\*|sqrt/.test(e.replace(/^-/,"")))return"calc"}
   if(/詩|詞|下一句|上一句|背一首|唐詩|宋詞/.test(t)||POEM_AU.some(a=>t.includes(a))||POEMS.some(p=>t.includes(p[0])&&p[0].length>=2&&!CHESSY.test(p[0]))||POEMS.some(p=>p[2].split(/[，。？]/).some(l=>l.length>=4&&t.includes(l))))return"poem";
   return""}
 async function worldWeather(q){const t=q.replace(/[？?！!。，,\s]/g,"");let place=(t.match(/^(?:請問|我想知道|幫我查)?(.{2,10}?)(?:的)?(?:今天|明天|現在|這週|這幾天|最近)?(?:的)?(?:天氣|氣溫|溫度|會不會下雨|下雨|會不會冷|會不會熱)/)||[])[1]||"";
@@ -2843,10 +2843,18 @@ async function worldWeather(q){const t=q.replace(/[？?！!。，,\s]/g,"");let 
   return{title:`${name}的天氣`,text:`現在 ${Math.round(c.temperature_2m)}°C（體感 ${Math.round(c.apparent_temperature)}°C），${WXC[c.weather_code]||""}，濕度 ${c.relative_humidity_2m}%，風速 ${Math.round(c.wind_speed_10m)} 公里／小時。\n\n${[0,1,2].map(day).join("\n")}\n\n${tip}`,src:"資料來源：Open-Meteo"}}
 function worldTime(){const n=new Date(),W="日一二三四五六",y=n.getFullYear();
   return{title:"現在時間",text:`現在是 ${y} 年（民國 ${y-1911} 年）${n.getMonth()+1} 月 ${n.getDate()} 日，星期${W[n.getDay()]}，${n.getHours()<12?"上午":"下午"} ${(n.getHours()%12)||12} 點 ${String(n.getMinutes()).padStart(2,"0")} 分。`}}
-function worldCalc(q){const e=q.replace(/等於多少|是多少|多少|等於|[=＝？?\s]/g,"").replace(/[×xX]/g,"*").replace(/÷/g,"/").replace(/（/g,"(").replace(/）/g,")").replace(/\^/g,"**");
-  if(!/^[\d.+\-*/()]+$/.test(e))return null;let v;try{v=Function(`"use strict";return(${e})`)()}catch(err){return null}
+// 算數（意見回饋 207）：認得「加減乘除」「乘以／除以」「平方／立方／根號」「百分之」和中文數字（一百二十三、兩千）
+function cnNum(x){const D={零:0,〇:0,一:1,二:2,兩:2,三:3,四:4,五:5,六:6,七:7,八:8,九:9},U={十:10,百:100,千:1000};let tot=0,sec=0,n=0;
+  for(const c of x){if(c in D)n=D[c];else if(c in U){sec+=(n||1)*U[c];n=0}else if(c==="萬"||c==="億"){tot+=(sec+n)*(c==="萬"?1e4:1e8);sec=0;n=0}}return tot+sec+n}
+function calcExpr(t){let e=String(t).replace(/\s/g,"").replace(/^(請問|幫我算|算一下|算算|計算)/,"").replace(/(等於多少|等於幾|是多少|是幾|多少|等於|答案是|[=＝？?。！!])+$/g,"");
+  e=e.replace(/百分之/g,"%P").replace(/[零〇一二兩三四五六七八九十百千萬億]+/g,m=>String(cnNum(m))).replace(/%P([\d.]+)/g,"($1/100)").replace(/([\d.]+)%/g,"($1/100)");
+  e=e.replace(/(?:開)?根號([\d.]+)/g,"sqrt($1)").replace(/([\d.)]+)的平方/g,"($1)**2").replace(/([\d.)]+)的立方/g,"($1)**3").replace(/([\d.)]+)的([\d.]+)次方/g,"($1)**$2");
+  e=e.replace(/加上|加/g,"+").replace(/減去|減掉|減/g,"-").replace(/乘以|乘上|乘|[×xX]/g,"*").replace(/除以|除|÷/g,"/").replace(/（/g,"(").replace(/）/g,")").replace(/\^/g,"**");
+  return/^[\d.+\-*/()sqrt]+$/.test(e)&&/\d/.test(e)?e:null}
+function worldCalc(q){const e=calcExpr(q);if(!e)return null;let v;try{v=Function("sqrt",`"use strict";return(${e})`)(Math.sqrt)}catch(err){return null}
   if(typeof v!=="number"||!isFinite(v))return{title:"算不出來",text:"這題我算不出來（可能除以 0 了）🤔"};
-  return{title:"計算",text:`${q.replace(/等於多少|是多少|多少|等於|[=＝？?]/g,"").trim()} ＝ ${+v.toFixed(10)}`}}
+  const show=e.replace(/\*\*/g,"^").replace(/\*/g,"×").replace(/\//g,"÷").replace(/sqrt/g,"√");
+  return{title:"計算",text:`${show} ＝ ${+v.toFixed(10)}`}}
 function worldPoem(q){const t=q.replace(/\s/g,""),P=POEMS,full=p=>p[2].replace(/([。？！])/g,"$1\n").trim(),show=p=>({title:`〈${p[0]}〉${p[1]}`,text:full(p)});
   for(const p of P){const ls=p[2].split(/(?<=[，。？])/);for(let i=0;i<ls.length;i++){const l=ls[i].replace(/[，。？]/g,"");if(l.length>=4&&t.includes(l)){
     if(/下一句|後一句|接下來|下句/.test(t)&&ls[i+1])return{title:`〈${p[0]}〉${p[1]}`,text:`「${l}」的下一句是：\n「${ls[i+1].replace(/[，。？]$/,"")}」\n\n全文：\n${full(p)}`};
