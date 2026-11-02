@@ -428,7 +428,7 @@ html[data-era=ming] .topbar,html[data-era=qing] .topbar{border-bottom-width:4px}
       if(!window.caches)return go();caches.keys().then(function(ks){return Promise.all(ks.filter(function(k){return k.indexOf("xqlab-app-")===0}).map(function(k){return caches.delete(k)}))})
         .then(function(){return navigator.serviceWorker&&navigator.serviceWorker.getRegistration()}).then(function(r){return r&&r.update()}).catch(function(){}).then(go)}},4000)})();
 </script>
-<script>window.XQ_OFFLINE=true;window.XQ_BUILD="20261103-0700";</script>
+<script>window.XQ_OFFLINE=true;window.XQ_BUILD="20261103-0740";</script>
 <script src="core.js"></script>
 <script src="engine.js"></script>
 <script src="local.js"></script>
@@ -1906,6 +1906,12 @@ async function recommendGames(box,T,mid,midBy){const avg=a=>a.length?a.reduce((x
 function oppHist(){try{return(window.XQNet&&XQNet.rating?XQNet.rating().hist:[])||[]}catch(e){return[]}}
 function oppSnapSave(ps){const ids=new Set(oppHist().map(h=>h.oid).filter(Boolean));if(!ids.size)return;const S=store.get("oppSnap",{});let ch=false;
   for(const p of ps||[])if(p&&ids.has(p.id)){S[p.id]={id:p.id,name:p.name,pts:p.pts,w:p.w,l:p.l,d:p.d,city:p.city||"",kind:p.kind||"",at:p.at||Date.now()};ch=true}if(ch)store.set("oppSnap",S)}
+/* 漏存的網路對局（斷線、不在對局畫面時結束）：從伺服器保留的最後狀態補回棋譜（意見回饋 280） */
+async function netRecover(h){if(!h||!h.gid||!h.rid||!window.XQNet||!XQNet.fetchGame||!window.XQ_saveNetGame)return false;
+  try{const g=await XQNet.fetchGame(h.gid,6000);if(!g||g.id!==h.rid||!g.result)return false;return await XQ_saveNetGame(g)}catch(e){return false}}
+if(OFF&&window.XQNet)setTimeout(async()=>{try{const tried=store.get("netRecTried",[]),r=await api("/db/items?c=pvp&limit=500"),ids=new Set((r.items||[]).map(it=>it.id));
+  const miss=oppHist().filter(h=>h.rid&&h.gid&&!ids.has(h.rid)&&!tried.includes(h.rid)).slice(0,8);
+  for(const h of miss){await netRecover(h);tried.push(h.rid)}if(miss.length)store.set("netRecTried",tried.slice(-100))}catch(e){}},15000);
 if(window.XQNet&&XQNet.on)setTimeout(()=>{try{XQNet.on("people",()=>oppSnapSave(XQNet.people()));oppSnapSave(XQNet.people())}catch(e){}},500);
 function oppCard(oid,name,opt){opt=opt||{};let live=null;try{live=window.XQNet&&XQNet.people?XQNet.people().find(x=>oid?x.id===oid:x.name===name):null}catch(e){}
   if(live)oppSnapSave([live]);const snap=(store.get("oppSnap",{})||{})[oid]||null,p=live||snap||{name,id:oid};
@@ -1922,7 +1928,8 @@ function oppCard(oid,name,opt){opt=opt||{};let live=null;try{live=window.XQNet&&
       <div class="items" style="padding:0;margin-top:8px">${mine.slice(0,20).map(h=>`<button class="item" data-rid="${esc(h.rid||"")}"><span class="lb">${h.res==="w"?"🏆":h.res==="l"?"💪":"🤝"}</span><span class="tx"><b>${h.res==="w"?"勝":h.res==="l"?"負":"和"}${h.d?`（積分 ${h.d>0?"+":""}${h.d}）`:""}</b><span>${new Date(h.at).toLocaleDateString()}・${h.n||0} 步${h.why?"・"+esc(h.why):""}</span></span><span class="muted">${h.rid?"看棋譜 ›":""}</span></button>`).join("")}</div>`:'<span class="muted">還沒下過</span>'}</div>
     ${live&&(live.st==="idle"||live.st==="seeking")&&opt.invite?'<button class="btn" id="pi">⚔ 邀請對戰</button>':live&&live.st==="playing"&&live.gid?'<button class="btn" id="pw">👀 觀看他的對局</button>':""}`;
     b.querySelectorAll("[data-rid]").forEach(x=>x.onclick=()=>{if(!x.dataset.rid)return;closeSheet();location.hash="#/db/pvp/"+encodeURIComponent(x.dataset.rid)});
-    if(mine.length)api("/db/items?c=pvp&limit=500").then(r=>{const ids=new Set((r.items||[]).map(it=>it.id));b.querySelectorAll("[data-rid]").forEach(x=>{if(x.dataset.rid&&!ids.has(x.dataset.rid)){x.dataset.rid="";const m=x.querySelector(".muted");if(m)m.textContent="沒存到棋譜"}})}).catch(()=>{});
+    if(mine.length)api("/db/items?c=pvp&limit=500").then(r=>{const ids=new Set((r.items||[]).map(it=>it.id));b.querySelectorAll("[data-rid]").forEach(x=>{const rid=x.dataset.rid;if(rid&&!ids.has(rid)){x.dataset.rid="";const m=x.querySelector(".muted");if(m)m.textContent="找棋譜中…";
+      const h=mine.find(q=>q.rid===rid);netRecover(h).then(ok=>{if(ok){x.dataset.rid=rid;if(m)m.textContent="看棋譜 ›"}else if(m)m.textContent="沒存到棋譜"})}})}).catch(()=>{});
     const pi=b.querySelector("#pi"),pw=b.querySelector("#pw");if(pi)pi.onclick=()=>{closeSheet();opt.invite(live)};
     if(pw)pw.onclick=()=>{closeSheet();XQNet.watch(live.gid);location.hash="#/pvp"}})}
 function histList(box,reps){let kind=store.get("histKind","all"),res="",limit=40,all=null;
@@ -2552,12 +2559,13 @@ function parkInfo(k){const era=store.get("era","classic"),E=PARK_INFO[era]||PARK
   // 網路對戰／觀戰時點到人：跳出那位棋友的資料卡（意見回饋 261）
   {const ex=PARK&&PARK.last&&PARK.last.ex||{},pid=k.startsWith("p:")?k.slice(2):k==="opp"?ex.oppId:k==="mate"?ex.mateId:null;
    if(pid){let nm="";try{const x=XQNet.people().find(p=>p.id===pid);nm=x?x.name:""}catch(e){}oppCard(pid,nm,{});return}
-   if(k.startsWith("p:")||k==="mate")return}
+   if(k.startsWith("p:"))return}
   let t,x;if(k==="opp"){const op=PARK&&PARK.last&&PARK.last.ex&&PARK.last.ex.opp;
     if(op&&op.sprite){t="Pikafish";x="你的對手 Pikafish 是開源的象棋 AI 引擎（從西洋棋引擎 Stockfish 改編來的），棋力比人類特級大師還強。它會思考、會走棋，輸了也會沮喪喔！"}
     else{t="對手";x="坐在對面的是你的對手。每個玩家都有自己專屬的小帥造型。"}}
+  else if(k==="mate"){t="小帥（你）";x="坐在這一側的就是你的小帥！他的官帽和官服會跟著你的電腦段位升官；你走出好棋他會開心，贏了會跳起來慶祝。點他旁邊的桌子、茶杯、椅子、樹，都有各自的介紹。"}
   else if(E[k]){[t,x]=E[k]}else return;
-  sheet(`${k==="bg"?"🏞":k==="opp"?"🤖":"🔎"} ${t}`,b=>{b.innerHTML=`<div class="muted" style="margin:-4px 0 8px">${esc(en)}${yr?`・${esc(yr)}`:""}${k==="bg"?"・遠方的風景":""}</div><p style="line-height:1.8;margin:0;font-size:16px">${esc(x)}</p>`})}
+  sheet(`${k==="bg"?"🏞":k==="opp"?"🤖":k==="mate"?"🙂":"🔎"} ${t}`,b=>{b.innerHTML=`<div class="muted" style="margin:-4px 0 8px">${esc(en)}${yr?`・${esc(yr)}`:""}${k==="bg"?"・遠方的風景":""}</div><p style="line-height:1.8;margin:0;font-size:16px">${esc(x)}</p>`})}
 function parkDraw(host,bd,board,o,ex){
   // 關掉公園：同一個棋盤的公園只藏起來（意見回饋 244：來回切換不用每次重建 3D 場景，比較順）
   if(!parkOn()){if(PARK&&PARK.host===host){if(PARK.v.hide)PARK.v.hide();else{PARK.v.destroy();PARK=null}}bd.svg.style.display="";botVis(true);return}
@@ -3227,8 +3235,11 @@ function PvpGame(v){
     else for(const x of ems)if(x.id>lastEmo){lastEmo=x.id;if(x.text)showChat(x.text,x.by===seat,x.name||PLAYER[x.by]);else if(seat&&x.by!==seat)showEmote(x.e,false)}
     const fl=isFlip(),top=fl?"r":"b",bot=fl?"b":"r",nm=x=>x==="r"?st.red:st.black;
     // 連線對戰：自己標「這支手機」，對方標在不在線上
-    const sub=x=>!seat?PLAYER[x]:x===seat?PLAYER[x]+(NET?"・我":"・這支手機"):PLAYER[x]+((st.online||{})[x]?"・🟢 "+((st.who||{})[x]||"在線"):NET?"・⚪ 對方暫時離線":"・⚪ 對方還沒連上");
-    const strip=(x)=>playerHTML(x,nm(x),sub(x),st.clocks?"":null).replace('<div class="clk">',`<div class="clk" id="ck_${x}">`);
+    const sub=x=>!seat?PLAYER[x]:x===seat?PLAYER[x]+(NET?"・我":"・這支手機"):PLAYER[x]+((st.online||{})[x]?"・🟢 "+(NET?"在線":((st.who||{})[x]||"在線")):NET?"・⚪ 對方暫時離線":"・⚪ 對方還沒連上");
+    /* 意見回饋 278：線上對戰標出雙方的線上段位（自己用自己的積分，對方用他在大廳最新的積分） */
+    const rk=x=>{if(!NET||!window.XQNet||!XQNet.rankOf)return"";try{const G=XQNet.game(),o=G&&(x==="r"?G.red:G.black);if(!o)return"";
+      const lp=o.id===meInfo().id?XQNet.rating().pts:(XQNet.people().find(q=>q.id===o.id)||{}).pts,pt=lp!=null?lp:o.pts;return pt==null?"":"・🏅 "+XQNet.rankOf(pt)+" "+pt+" 分"}catch(e){return""}};
+    const strip=(x)=>playerHTML(x,nm(x),sub(x)+rk(x),st.clocks?"":null).replace('<div class="clk">',`<div class="clk" id="ck_${x}">`);
     v.querySelector("#pTop").innerHTML=strip(top);v.querySelector("#pBot").innerHTML=strip(bot);
     for(const[el,x]of[[v.querySelector("#pTop"),top],[v.querySelector("#pBot"),bot]]){el.style.cursor="pointer";el.onclick=e=>{if(e.target.closest(".clk"))return;
       const G=window.XQNet&&XQNet.game&&XQNet.game(),o=G&&(x==="r"?G.red:G.black);if(o&&o.id&&o.id!==meInfo().id)oppCard(o.id,o.name)}}

@@ -1022,19 +1022,22 @@
       if(!ray.ray.intersectPlane(plane,hitP))return -1;let c=Math.round(hitP.x+4),r2=Math.round(hitP.z+4.5);if(Math.abs(hitP.x+4-c)>.48||Math.abs(hitP.z+4.5-r2)>.48)return -1;
       if(c<0||c>8||r2<0||r2>9)return -1;if(flip){c=8-c;r2=9-r2}return r2*9+c};
     // 意見回饋 240：點到物件（樹、桌子、茶杯、長椅、凳子、燈籠、對手、遠方背景）就回報是什麼，App 跳出說明
-    const AC=new Map(),alphaAt=(im,u,v)=>{let a=AC.get(im);if(!a){const w=64,h=64,c=document.createElement("canvas");c.width=w;c.height=h;const g=c.getContext("2d");
-        try{g.drawImage(im,0,0,w,h);a={d:g.getImageData(0,0,w,h).data}}catch(e){a={d:null}}AC.set(im,a)}
-      if(!a.d)return 255;const x=clamp(Math.floor(u*64),0,63),y=clamp(Math.floor((1-v)*64),0,63);return a.d[(y*64+x)*4+3]};
+    /* 意見回饋 277：用 128 格的透明度圖，看點的位置附近 r 格內最不透明的值（手指不用剛好點在細細的椅背、樹枝上） */
+    const AC=new Map(),AS=128,alphaAt=(im,u,v,r)=>{let a=AC.get(im);if(!a){const c=document.createElement("canvas");c.width=AS;c.height=AS;const g=c.getContext("2d");
+        try{g.drawImage(im,0,0,AS,AS);a={d:g.getImageData(0,0,AS,AS).data}}catch(e){a={d:null}}AC.set(im,a)}
+      if(!a.d)return 255;const x0=clamp(Math.floor(u*AS),0,AS-1),y0=clamp(Math.floor((1-v)*AS),0,AS-1);let m=0;r=r||0;
+      for(let y=Math.max(0,y0-r);y<=Math.min(AS-1,y0+r);y++)for(let x=Math.max(0,x0-r);x<=Math.min(AS-1,x0+r);x++){const al=a.d[(y*AS+x)*4+3];if(al>m)m=al}return m};
     const infoPick=()=>{   // 用 pick() 剛設好的那條射線
       if(ray.ray.intersectPlane(plane,hitP)&&Math.abs(hitP.x)<BW/2&&Math.abs(hitP.z)<BH/2)return null;   // 點在棋盤（含邊框）上不算
       // 人：觀戰者、近端的小帥、對面的 3D 小帥（點了看棋友資料）
       for(const h of ray.intersectObjects([watchG,mate.g,...(oppSpr?[]:[opp.g])],true)){let o=h.object;while(o&&o!==watchG&&o!==mate.g&&o!==opp.g&&!(o.userData&&o.userData.pid))o=o.parent;
         if(!o)continue;if(o===mate.g)return"mate";if(o===opp.g)return"opp";if(o.userData&&o.userData.pid)return"p:"+o.userData.pid}
-      const cand=infos.slice();if(oppSpr)cand.push(oppSpr.sp);
-      for(const h of ray.intersectObjects(cand,false)){const o=h.object;
-        if(oppSpr&&o===oppSpr.sp){if(h.uv&&alphaAt(o.material.map.image,h.uv.x,h.uv.y)<60)continue;return"opp"}
-        if(o.userData.img&&h.uv&&alphaAt(o.userData.img,h.uv.x,h.uv.y)<60)continue;return o.userData.info}
+      const cand=infos.slice();if(oppSpr)cand.push(oppSpr.sp);let near=null;
+      for(const h of ray.intersectObjects(cand,false)){const o=h.object,isOpp=oppSpr&&o===oppSpr.sp,k=isOpp?"opp":o.userData.info,im=isOpp?o.material.map.image:o.userData.img;
+        if(im&&h.uv&&alphaAt(im,h.uv.x,h.uv.y,3)<60){if(!near&&alphaAt(im,h.uv.x,h.uv.y,12)>=60)near=k;continue}return k}
       if(!oppSpr&&opp.g.visible&&ray.intersectObject(opp.g,true).length)return"opp";
+      if(near)return near;   /* 點在鏤空的椅背、樹葉縫裡：算點到那個物件，不要穿過去變成遠方風景 */
+      {const q=new T.Vector3(),onT=y=>ray.ray.intersectPlane(new T.Plane(new T.Vector3(0,1,0),-y),q)&&Math.hypot(q.x,q.z)<8.4;for(let y=0;y>=-2.6;y-=.2)if(onT(y))return"table"}   /* 桌子的側邊 */
       // 都沒點到：射線碰到平台地面（離桌子 24 以內）就不算；越過平台的就是遠方背景
       const gp=new T.Plane(new T.Vector3(0,1,0),-GY),gh=new T.Vector3();if(ray.ray.intersectPlane(gp,gh)&&Math.hypot(gh.x,gh.z)<24)return null;
       return"bg"};
