@@ -19,8 +19,11 @@
   // 棋盤：較深的蜂蜜色木紋＋深褐粗線，在灰色石桌上一眼就看得出來；貼圖解析度提高，iPhone 上線條不糊
   // 朝代造型（意見回饋 216）：App 傳來目前朝代的棋盤底圖、格線色、棋子底圖、字色、字形；跟平面棋盤同一套
   let LOOK=null;const imgCache={};
+  // inflight＝還在下載的圖片（意見回饋 249：全部載好才顯示公園，不先閃一下舊款的程式畫面）
+  const inflight=new Set();
   const loadImg=(src,cb)=>{if(!src)return null;const c=imgCache[src];if(c){if(c.complete&&c.naturalWidth)return c;c.addEventListener("load",()=>cb&&cb(),{once:true});return null}
-    const im=new Image();im.decoding="async";im.src=src;imgCache[src]=im;im.addEventListener("load",()=>cb&&cb(),{once:true});return null};
+    const im=new Image();im.decoding="async";inflight.add(im);const off=()=>inflight.delete(im);im.addEventListener("load",off,{once:true});im.addEventListener("error",off,{once:true});
+    im.src=src;imgCache[src]=im;im.addEventListener("load",()=>cb&&cb(),{once:true});return null};
   const boardTex=onReady=>{const t=cv(1560,1710,(g,w,h)=>drawBoard(g,w,h,onReady));return t};
   function drawBoard(g,w,h,onReady){const u=w/BW;const L=LOOK,im=L&&L.img?loadImg(L.img,onReady):null;
     if(im&&L.rect){// 平面棋盤座標：格線原點 (40,40)、格距 60；這裡格線原點在 1.2 格處
@@ -794,6 +797,8 @@
     rd.toneMapping=T.ACESFilmicToneMapping;rd.toneMappingExposure=.98;try{ANI=rd.capabilities.getMaxAnisotropy()||8}catch(e){}
     rd.domElement.style.cssText="display:block;width:100%;height:100%";el.append(rd.domElement);
     const hint=document.createElement("div");hint.style.cssText="position:absolute;left:50%;bottom:8px;transform:translateX(-50%);font:600 11px sans-serif;color:#fff;background:rgba(30,20,10,.45);padding:3px 10px;border-radius:99px;white-space:nowrap;pointer-events:none;transition:opacity .6s";
+    const veil=document.createElement("div");veil.style.cssText="position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font:600 14px sans-serif;color:#6b5a44;pointer-events:none;transition:opacity .35s";
+    veil.textContent="🌳 公園準備中…";el.append(veil);
     hint.textContent="點棋子走棋・點物件看介紹・拖曳轉頭・兩指縮放";el.append(hint);setTimeout(()=>hint.style.opacity=0,4500);
     const EK=eraKey(),E=ERA[EK];
     el.style.background=E.mist;
@@ -885,7 +890,7 @@
         const geo=new T.PlaneGeometry(H*meta.w/meta.h,H);geo.translate(0,H/2,0);const sp=new T.Mesh(geo,mat);sp.renderOrder=2;
         const y0=SPR_Y;sp.position.set(0,y0,SPR_Z);sp.rotation.x=SPR_TILT;sc.add(sp);oppSpr={sp,tex,pose:"idle",y0};opp.g.visible=false};
       for(const ps of POSES){const src=base+ps+".webp",im=loadImg(src,()=>{ims[ps]=imgCache[src];done()});if(im){ims[ps]=im;done()}}};
-    const setOpp=look=>{const k=JSON.stringify(look||null);if(k===oppKey)return;oppKey=k;killSpr();if(!look){opp.g.clear();opp.B=null;return}buildActor(opp,look);if(look.sprite&&look.spriteMeta)makeSpr(look)};
+    const setOpp=look=>{const k=JSON.stringify(look||null);if(k===oppKey)return;oppKey=k;killSpr();if(!look){opp.g.clear();opp.B=null;return}buildActor(opp,look);if(look.sprite&&look.spriteMeta||look.thin){opp.g.visible=false;setTimeout(()=>{if(oppKey===k&&!oppSpr)opp.g.visible=true},6000)}if(look.sprite&&look.spriteMeta)makeSpr(look)};
     buildActor(mate,{});try{mate.g.updateMatrixWorld(true);const b=new T.Box3().setFromObject(mate.g);mate.g.position.y-=b.min.y-.02}catch(e){}   // 坐在桌面上（桌面 y=0）
     const say=(t,d)=>mate.say(t,d);
     // 意見回饋 248：分出勝負時兩邊都有 5 秒的勝負動畫（endT 倒數；oppRes／mateRes＝win、lose、draw）
@@ -927,7 +932,7 @@
       try{const c=btex.image.getContext("2d");drawBoard(c,btex.image.width,btex.image.height,null);btex.needsUpdate=true}catch(e){}if(prevB)sync(prevB)};
     // Noto Serif TC 網路字型晚到：載入後重畫字面（不然會先用系統字型，字又細又糊）
     try{document.fonts&&document.fonts.load(`900 64px ${SERIF}`,"帥仕相傌俥炮兵將士象馬車砲卒").then(()=>{if(!stopped)refreshLook()})}catch(e){}
-    function draw(board,o,ex){o=o||{};ex=ex||{};const nf=!!o.flip;
+    function draw(board,o,ex){o=o||{};ex=ex||{};drawn=true;const nf=!!o.flip;
       {const lk=JSON.stringify(ex.look?[ex.look.k,ex.look.img,!!ex.look.gly]:null);if(lk!==lookKey){lookKey=lk;LOOK=ex.look||null;
         if(LOOK){let n=0;const done=()=>{if(++n>=3&&LOOK===ex.look)refreshLook()};[LOOK.img,LOOK.pieces&&LOOK.pieces.r,LOOK.pieces&&LOOK.pieces.b].forEach(src=>{if(!src||loadImg(src,done))done()})}
         refreshLook()}}
@@ -1066,7 +1071,11 @@
         B.legs[0].rotation.x=-1.35+.25*Math.sin(s*2.2);B.legs[1].rotation.x=-1.35-.25*Math.sin(s*2.2);
         lerp(B.head.rotation,"x",hx);lerp(B.head.rotation,"y",hy);tick(mate)}
       furn.tick(s);rd.render(sc,cam)}
-    fit();placeCam();requestAnimationFrame(frame);
+    // 第一次 draw 之後，等所有圖片（背景、道具、棋盤、棋子、Pikafish）都載好才淡入；最多等 6 秒
+    let drawn=false,shown=false;const t0=performance.now();rd.domElement.style.opacity=0;rd.domElement.style.transition="opacity .35s";
+    const reveal=()=>{if(shown)return;shown=true;rd.domElement.style.opacity=1;veil.style.opacity=0;setTimeout(()=>veil.remove(),400)};
+    const waitShow=()=>{if(stopped||shown)return;if((drawn&&!inflight.size)||performance.now()-t0>6000){requestAnimationFrame(()=>requestAnimationFrame(reveal));return}setTimeout(waitShow,80)};
+    fit();placeCam();requestAnimationFrame(frame);setTimeout(waitShow,80);
     const onRs=()=>{if(el.style.display!=="none")fit()};window.addEventListener("resize",onRs);
     function destroy(){if(stopped)return;stopped=true;window.removeEventListener("resize",onRs);try{rd.dispose();rd.forceContextLoss()}catch(e){}el.remove();opt.onDestroy&&opt.onDestroy()}
     // 意見回饋 244：切回平面棋盤時只藏起來、暫停繪製（不拆掉 3D 場景），再切回公園就直接顯示，不用重新載入

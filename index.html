@@ -417,7 +417,7 @@ html[data-era=ming] .topbar,html[data-era=qing] .topbar{border-bottom-width:4px}
       if(!window.caches)return go();caches.keys().then(function(ks){return Promise.all(ks.filter(function(k){return k.indexOf("xqlab-app-")===0}).map(function(k){return caches.delete(k)}))})
         .then(function(){return navigator.serviceWorker&&navigator.serviceWorker.getRegistration()}).then(function(r){return r&&r.update()}).catch(function(){}).then(go)}},4000)})();
 </script>
-<script>window.XQ_OFFLINE=true;window.XQ_BUILD="20261103-0423";</script>
+<script>window.XQ_OFFLINE=true;window.XQ_BUILD="20261103-0435";</script>
 <script src="core.js"></script>
 <script src="engine.js"></script>
 <script src="local.js"></script>
@@ -2516,7 +2516,9 @@ const vcOn=()=>store.get("voiceMove",true);
 window.XQ_BOTLOOK=()=>{let p=0;try{p=(JSON.parse(localStorage.getItem("xq_cpuRate")||"null")||{}).pts||0}catch(e){}
   return{p:botPc(),e:store.get("era","classic"),g:p>=1500?1:p>=1150?2:p>=1000?3:p>=800?4:p>=600?5:p>=400?6:p>=200?7:p>=100?8:9}};
 // 電腦對手 Pikafish：瘦長版的棋子人、戴眼鏡，執哪一方身上就是帥或將；帽子、官服跟著目前朝代（意見回饋 228）
-let PIKA_META=null;fetch("data/pika/pika.json").then(r=>r.json()).then(j=>PIKA_META=j).catch(()=>{});
+// 意見回饋 249：Pikafish 設定檔比公園晚到時，到了馬上換成手繪版（公園那邊會先藏著，不先顯示舊的 3D 版）
+let PIKA_META=null;fetch("data/pika/pika.json").then(r=>r.json()).then(j=>{PIKA_META=j;try{const a=typeof PARK!=="undefined"&&PARK&&PARK.last;
+  if(a&&a.ex.opp&&a.ex.opp.thin&&!a.ex.opp.sprite){a.ex.opp=PIKA_LOOK(a.ex.opp.p==="帥"?"r":"b");PARK.v.draw(a.board,a.o,a.ex)}}catch(e){}}).catch(()=>{});
 const PIKA_LOOK=side=>({p:side==="r"?"帥":"將",e:store.get("era","classic"),g:1,thin:true,sprite:PIKA_META?"data/pika/":null,spriteMeta:PIKA_META});
 // 公園棋盤的朝代造型（意見回饋 216）：跟平面棋盤同一套底圖、格線色、棋子底圖、字色、字形
 function parkLook(){const k=store.get("era","classic"),e=curEra(),T=boardTheme(e?"auto":"wood3d"),bk=BOARD_IMG[k]?k:null;

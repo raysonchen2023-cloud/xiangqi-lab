@@ -183,7 +183,7 @@
     d_cancan:{d:3.4,say:"♪ 康康舞",f:(p,B)=>{const s=wv(p,4);B.legs[0].rotation.x=-1.2*Math.max(0,s);B.legs[1].rotation.x=-1.2*Math.max(0,-s);R(B,0,0,0,-1.6);R(B,1,0,0,1.6);B.root.position.y+=.1*Math.abs(s);B.face="happy"}},
     d_penguin:{d:3.4,say:"♪ 企鵝舞",f:(p,B)=>{const s=wv(p,6);B.root.rotation.z=.15*s;R(B,0,0,0,-.45-.25*Math.max(0,s));R(B,1,0,0,.45+.25*Math.max(0,-s));B.legs[0].rotation.z=-.15;B.legs[1].rotation.z=.15}},
     d_clapdance:{d:3.4,say:"♪ 拍手舞",f:(p,B)=>{const q=(p*4)%1;if(q<.5){const k=(Math.sin(q*TAU*4)+1)/2;R(B,0,0,.4,-(2.6-.4*k));R(B,1,0,-.4,2.6-.4*k)}else{R(B,0,-.4,0,-.25);R(B,1,-.4,0,.25);B.root.position.y-=.12}}},
-    d_freeze:{d:3.4,say:"♪ 街舞定格",f:(p,B)=>{const q=Math.floor(p*4);const P=[[-2.6,.3,.4],[-.3,1.6,-.3],[-1.6,2.6,.3],[-.8,.8,0]][q];R(B,0,0,0,P[0]);R(B,1,0,0,P[1]);B.root.rotation.z=P[2]*.3;B.face=q%2?"open":"happy"}},
+    d_freeze:{d:3.4,say:"♪ 街舞定格",f:(p,B)=>{const q=Math.min(3,Math.floor(p*4));const P=[[-2.6,.3,.4],[-.3,1.6,-.3],[-1.6,2.6,.3],[-.8,.8,0]][q];R(B,0,0,0,P[0]);R(B,1,0,0,P[1]);B.root.rotation.z=P[2]*.3;B.face=q%2?"open":"happy"}},
     d_top:{d:3.4,say:"♪ 陀螺轉",f:(p,B)=>{B.root.rotation.y=ease(p)*TAU*3;R(B,0,0,0,-1.5);R(B,1,0,0,1.5);B.root.position.y+=.1*bell(p);B.face="open"}},
     d_jacks:{d:3.4,say:"♪ 開合跳",f:(p,B)=>{const s=Math.abs(wv(p,4));R(B,0,0,0,-.3-2.4*s);R(B,1,0,0,.3+2.4*s);B.legs[0].rotation.z=-.35*s;B.legs[1].rotation.z=.35*s;B.root.position.y+=.25*s}},
     carry:{d:99,f:(p,B,t)=>{R(B,0,0,0,-2.6);R(B,1,0,0,2.6);B.legs[0].rotation.x=.4*Math.sin(t*9);B.legs[1].rotation.x=-.4*Math.sin(t*9);B.face="open"}}};
