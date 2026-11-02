@@ -412,7 +412,7 @@ html[data-era=ming] .topbar,html[data-era=qing] .topbar{border-bottom-width:4px}
       if(!window.caches)return go();caches.keys().then(function(ks){return Promise.all(ks.filter(function(k){return k.indexOf("xqlab-app-")===0}).map(function(k){return caches.delete(k)}))})
         .then(function(){return navigator.serviceWorker&&navigator.serviceWorker.getRegistration()}).then(function(r){return r&&r.update()}).catch(function(){}).then(go)}},4000)})();
 </script>
-<script>window.XQ_OFFLINE=true;window.XQ_BUILD="20261102-1320";</script>
+<script>window.XQ_OFFLINE=true;window.XQ_BUILD="20261102-1334";</script>
 <script src="core.js"></script>
 <script src="engine.js"></script>
 <script src="local.js"></script>
@@ -2759,16 +2759,21 @@ function Viewer(v,c,id){
         FREE.all.forEach((m,i)=>{const t=[m.tags&&m.tags.length?m.tags.join("、"):"",m.g&&m.g.q&&m.g.q!=="—"?m.g.q+(m.g.ev!=null?"，"+evt(m.g.ev):""):""].filter(Boolean).join("；");if(t)comments["0_"+(i+1)]=t});
         try{await api("/an/study-save",{board:FREE.start.board,side:FREE.start.side,moves:FREE.all.map(m=>[m.f,m.t]),title:b.querySelector("#sn").value,src:FREE.src,comments});
           closeSheet();toast("💾 已存到「我的研究」")}catch(e){toast(e.message)}}})}
+  let vwPly=null,vwLine=null;const maxPly=lid=>{const l=L.get(lid);return l?l.start+l.moves.length-1:0};
   function show(){if(!it)return;const s=seq(line,ply),pos=curPos();
     const last=FREE?freeLast():s[s.length-1];
     const hint=AN&&AN.k===posKey(pos)&&AN.lines&&AN.lines[0]?[sqI(AN.lines[0].mv.slice(0,2)),sqI(AN.lines[0].mv.slice(2,4))]:null;
-    const ckSq=FREE&&last&&last.ck?pos.board.indexOf(pos.side==="r"?"K":"k"):-1;
+    // 棋譜也有將軍／吃子／開局動畫和音效，小人也會反應（意見回饋 166）：只在「往前一步」時觸發，跳步或倒退不放
+    const ckSq=FREE?(last&&last.ck?pos.board.indexOf(pos.side==="r"?"K":"k"):-1):(window.XQCore&&XQCore.inCheck&&XQCore.inCheck(pos.board,pos.side)?pos.board.indexOf(pos.side==="r"?"K":"k"):-1);
+    const stepFwd=!FREE&&vwPly!=null&&ply===vwPly+1&&vwLine===line;vwPly=ply;vwLine=line;
+    if(stepFwd&&s.length&&s.every(m=>m&&m.cn)){const cue=openingCue(s);if(cue)setTimeout(()=>openFx(bd.svg,cue[1],cue[0]),350)}
+    if(stepFwd&&typeof BOT!=="undefined"&&BOT&&ply===maxPly(line)&&ply>10)setTimeout(()=>{BOT.act("clap");BOT.say("精彩的一盤！",2.4)},900);
     // 這步不是好棋：把 Pikafish 建議的走法（最多 3 步）畫成藍色箭頭
     let sugg=null;if(!FREE&&ply>0){   // 開著 🔍 分析（橘色虛線框）時也要畫建議箭頭
       const g=gradeOf(ply);if(g&&g.q&&!["正手","妙手","—"].includes(g.q)&&(g.bp&&g.bp.length||g.bm))
       sugg=(g.bp&&g.bp.length?g.bp:[g.bm]).slice(0,3).map(u=>({f:sqI(u.slice(0,2)),t:sqI(u.slice(2,4))}))
       else if(g&&g.bc&&g.q&&!["正手","妙手","—"].includes(g.q)){const m=bcMove(boardAt(line,ply-1),moverAt(ply),g.bc);if(m)sugg=[m]}}
-    bd.draw(pos.board,{last,sel,targets:sel>=0&&LEGAL?LEGAL.list.filter(([f])=>f===sel).map(x=>x[1]):[],hint,check:ckSq,sugg});
+    bd.draw(pos.board,{last,sel,targets:sel>=0&&LEGAL?LEGAL.list.filter(([f])=>f===sel).map(x=>x[1]):[],hint,check:ckSq,sugg,fx:stepFwd||!!FREE});
     // 優勢條：分析結果優先，其次是上一步的評等
     let ev=AN&&AN.k===posKey(pos)&&AN.lines&&AN.lines[0]?AN.lines[0].vr:null;
     if(ev==null){const g=FREE?(last&&last.g):ply>0&&gradeOf(ply);if(g&&g.ev!=null)ev=g.ev}
