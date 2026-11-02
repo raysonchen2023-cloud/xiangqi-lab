@@ -192,6 +192,27 @@
       const hx=q.createLinearGradient(0,0,mw,0);hx.addColorStop(0,"rgba(0,0,0,0)");hx.addColorStop(.5,"rgba(0,0,0,.7)");hx.addColorStop(1,"rgba(0,0,0,0)");q.fillStyle=hx;q.fillRect(0,0,mw,dhc);
       const vy=q.createLinearGradient(0,0,0,dhc);vy.addColorStop(0,"rgba(0,0,0,.35)");vy.addColorStop(.45,"rgba(0,0,0,.75)");vy.addColorStop(.8,"#000");vy.addColorStop(1,"#000");q.fillStyle=vy;q.fillRect(0,0,mw,dhc);
       for(const j of joints)put(mc,Math.round(X(((j+180)%360+360)%360-180)-mw/2))}
+    // 意見回饋 233：兩段主景之間（還有原圖本來就留白的地方）不能是一大片空白：補上淡淡的層層遠山、雲霧、墨點小樹，墨色取自原圖；
+    // 只畫在「空白」處（透明、或接近該列紙色的地方，低解析度遮罩再模糊），不會蓋到原圖的山水
+    {let s=17;const rnd=()=>(s=(s*16807)%2147483647)/2147483647;
+      const ic=(()=>{const c=document.createElement("canvas");c.width=64;c.height=32;const q=c.getContext("2d");q.drawImage(P.A,0,0,64,32);const d=q.getImageData(0,0,64,32).data,a=[];
+        for(let i=0;i<d.length;i+=4)a.push([d[i]*.3+d[i+1]*.59+d[i+2]*.11,d[i],d[i+1],d[i+2]]);a.sort((x,y)=>x[0]-y[0]);const n=Math.max(1,a.length*.08|0);let r=0,gg=0,b=0;for(let i=0;i<n;i++){r+=a[i][1];gg+=a[i][2];b+=a[i][3]}
+        return"#"+[r,gg,b].map(v=>clamp(v/n|0,0,255).toString(16).padStart(2,"0")).join("")})();
+      const sw=W>>3,shh=Math.max(8,dhc>>3),id=o.getImageData(0,0,W,dhc).data;let E0=new Float32Array(sw*shh);
+      for(let y=0;y<shh;y++){const yy=Math.min(dhc-1,y*8+4),ry=clamp(Math.round(yy/dh*ih),0,ih-1),pr=P.row[ry*3],pg=P.row[ry*3+1],pb=P.row[ry*3+2];
+        for(let x=0;x<sw;x++){let e=0;for(let k=0;k<4;k++){const i=(yy*W+x*8+k*2)*4,a=id[i+3]/255,dd=Math.abs(id[i]-pr)+Math.abs(id[i+1]-pg)+Math.abs(id[i+2]-pb);e+=(1-a)+a*clamp(1-(dd-10)/45,0,1)}E0[y*sw+x]=e/4}}
+      for(let pass=0;pass<3;pass++){const E1=new Float32Array(sw*shh);for(let y=0;y<shh;y++)for(let x=0;x<sw;x++){let t=0,n=0;for(let dy=-2;dy<=2;dy++)for(let dx=-2;dx<=2;dx++){const yy=y+dy;if(yy<0||yy>=shh)continue;t+=E0[yy*sw+((x+dx+sw)%sw)];n++}
+        const v=t/n;E1[y*sw+x]=Math.min(v,E0[y*sw+x]*.5+v*.5)}E0=E1}
+      const mk=document.createElement("canvas");mk.width=sw;mk.height=shh;const mg=mk.getContext("2d"),md=mg.createImageData(sw,shh);for(let i=0;i<sw*shh;i++){md.data[i*4+3]=clamp((E0[i]-.25)/.6,0,1)*255|0}mg.putImageData(md,0,0);
+      const R=document.createElement("canvas");R.width=W;R.height=dhc;const rg=R.getContext("2d");
+      // 三層遠山（越遠越淡、越高），每層稜線下面淡出成雲霧；稜線用週期性的正弦和，整圈接得起來
+      for(const[base,amp,a,k1,k2]of[[.5,.2,.12,5,13],[.6,.17,.2,7,17],[.72,.13,.3,9,23]]){const ph=[rnd()*9,rnd()*9,rnd()*9],pts=[];let top=dhc;
+        for(let x=0;x<=W;x+=8){const t=x/W,v=Math.sin(t*TAU*k1+ph[0])*.55+Math.sin(t*TAU*k2+ph[1])*.3+Math.sin(t*TAU*k2*2+ph[2])*.15,y=dhc*(base-amp*Math.pow(clamp(v*.5+.5,0,1),1.5));pts.push([x,y]);top=Math.min(top,y)}
+        const gr=rg.createLinearGradient(0,top,0,dhc*(base+.12));gr.addColorStop(0,hexA(ic,a));gr.addColorStop(.55,hexA(ic,a*.45));gr.addColorStop(1,hexA(ic,0));rg.fillStyle=gr;
+        rg.beginPath();rg.moveTo(0,dhc);pts.forEach(p=>rg.lineTo(p[0],p[1]));rg.lineTo(W,dhc);rg.closePath();rg.fill();
+        rg.strokeStyle=hexA(ic,a*1.1);rg.lineWidth=1.6;rg.beginPath();pts.forEach((p,i)=>i?rg.lineTo(p[0],p[1]):rg.moveTo(p[0],p[1]));rg.stroke();
+        if(a>.25)for(let i=0;i<90;i++){const p=pts[rnd()*pts.length|0],h=6+rnd()*9;rg.fillStyle=hexA(ic,.45);rg.fillRect(p[0]-.8,p[1]-h,1.6,h+2);for(let j=0;j<4;j++){rg.beginPath();rg.ellipse(p[0]+(rnd()-.5)*8,p[1]-h-rnd()*7,4,2.4,0,0,TAU);rg.fill()}}}
+      rg.globalCompositeOperation="destination-in";rg.imageSmoothingEnabled=true;rg.imageSmoothingQuality="high";rg.drawImage(mk,0,0,W,dhc);o.drawImage(R,0,0)}
     // 整片上下羽化進紙色：上 16%、下 26%
     o.globalCompositeOperation="destination-in";const fy=o.createLinearGradient(0,0,0,dhc);fy.addColorStop(0,"rgba(0,0,0,0)");fy.addColorStop(.16,"#000");fy.addColorStop(.74,"#000");fy.addColorStop(1,"rgba(0,0,0,0)");o.fillStyle=fy;o.fillRect(0,0,W,dhc);
     g.drawImage(off,0,y0);noise(g,W,H,6000,"120,100,70",.035);
@@ -265,61 +286,412 @@
       // 宣紙紋
       noise(g,W,H,9000,"120,100,70",.05)})}
 
-  // ---------- 平台上的樹：水墨畫（意見回饋：之前的低面數樹冠太醜）----------
-  // 一棵樹＝一張畫在畫布上的水墨（透明底），貼在一片永遠轉向座位的平面上（鏡頭只會在原地轉頭、沿視線拉近拉遠，所以看起來一直是正面的畫）
-  // 松：乾筆皴擦的彎曲樹幹＋鱗紋、橫出的枝、扁平層疊的松針團（淡墨渲染打底，濃墨車輪狀松針疊上）
-  // 柳：粗短老幹、拱起的枝條垂下細長柳絲，絲上點綴斜點柳葉；竹：幾竿竹（一節一節、節上一小橫），頂端寫意竹葉（个字、介字組）
-  function inkTreeTex(E,kind,seed){let s=seed;const rnd=()=>(s=(s*16807)%2147483647)/2147483647,R=(a,b)=>a+(b-a)*rnd();
-    return cv(768,1024,(g,W,H)=>{const ink=E.ink,mixC=(a,b,t)=>"#"+new T.Color(a).lerp(new T.Color(b),t).getHexString(),A=hexA;
-      const leaf=kind==="willow"?mixC(ink,"#5F7E3A",.75):kind==="bamboo"?mixC(ink,"#2F5236",.55):mixC(ink,"#33492F",.5);
-      // 乾筆：主筆一道，再沿筆路疊幾道細的斷續筆（濃淡不一）＝飛白、皴擦的質感
-      const brush=(pts,w0,w1,col,a)=>{const n=pts.length;for(let i=1;i<n;i++){const t=i/(n-1);g.strokeStyle=A(col,a);g.lineCap="round";g.lineWidth=w0+(w1-w0)*t;g.beginPath();g.moveTo(pts[i-1][0],pts[i-1][1]);g.lineTo(pts[i][0],pts[i][1]);g.stroke()}
-        for(let k=0;k<7;k++){const o=R(-.45,.45);g.setLineDash([R(6,30),R(3,14)]);g.strokeStyle=A(k%3?ink:"#FFFFFF",k%3?R(.25,.55)*a:R(.15,.3));g.lineWidth=R(1,2.6);g.beginPath();
-          for(let i=0;i<n;i++){const t=i/(n-1),w=w0+(w1-w0)*t,p=pts[i],q=pts[Math.min(n-1,i+1)],p0=pts[Math.max(0,i-1)],dx=q[0]-p0[0],dy=q[1]-p0[1],l=Math.hypot(dx,dy)||1;
-            const x=p[0]-dy/l*w*o,y=p[1]+dx/l*w*o;i?g.lineTo(x,y):g.moveTo(x,y)}g.stroke()}g.setLineDash([])};
-      const path=(x0,y0,x1,y1,bend,n)=>{const pts=[];n=n||14;const mx=(x0+x1)/2+bend,my=(y0+y1)/2;for(let i=0;i<=n;i++){const t=i/n,u=1-t;pts.push([u*u*x0+2*u*t*mx+t*t*x1+R(-1.5,1.5),u*u*y0+2*u*t*my+t*t*y1+R(-1.5,1.5)])}return pts};
-      const wash=(x,y,rx,ry,col,a)=>{g.save();g.translate(x,y);g.scale(1,ry/rx);const gr=g.createRadialGradient(0,0,0,0,0,rx);gr.addColorStop(0,A(col,a));gr.addColorStop(.6,A(col,a*.6));gr.addColorStop(1,A(col,0));g.fillStyle=gr;g.beginPath();g.arc(0,0,rx,0,TAU);g.fill();g.restore()};
-      const cx=W/2,base=H-10;
-      if(kind==="bamboo"){
-        for(let c=0;c<6;c++){const x=cx+R(-170,170),h=R(.62,.95)*H,lean=R(-60,60),w=R(9,16),front=c%2===0,col=front?leaf:mixC(leaf,"#C9C4B0",.45),a=front?.92:.6;
-          let y=base,segs=Math.round(h/R(70,95));const top=base-h;
-          for(let i=0;i<segs;i++){const y1=Math.max(top,y-h/segs+4),t0=(base-y)/h,t1=(base-y1)/h,x0=x+lean*t0*t0,x1=x+lean*t1*t1;
-            brush([[x0,y-2],[(x0+x1)/2,(y+y1)/2],[x1,y1]],w*(1-t0*.35),w*(1-t1*.35),col,a);g.strokeStyle=A(ink,a*.9);g.lineWidth=2.4;g.beginPath();g.moveTo(x1-w*.7,y1);g.quadraticCurveTo(x1,y1+3,x1+w*.7,y1);g.stroke();y=y1-5}
-          // 頂端的竹葉：以竿頂和上面幾節為中心，三五片一組的尖葉
-          for(let k=0;k<(front?5:3);k++){const ty=top+R(0,h*.45),tx=x+lean*Math.pow((base-ty)/h,2);const n=Math.round(R(3,5)),dir=rnd()<.5?-1:1;
-            for(let j=0;j<n;j++){const ang=(dir<0?PI:0)+dir*R(.15,.9)+R(-.2,.2)+(j-n/2)*.32*dir,L=R(60,110),lw=R(7,12);g.fillStyle=A(front?ink:leaf,front?R(.7,.92):R(.4,.6));
-              g.save();g.translate(tx,ty);g.rotate(ang);g.beginPath();g.moveTo(0,0);g.quadraticCurveTo(L*.35,-lw,L,0);g.quadraticCurveTo(L*.35,lw*.55,0,0);g.fill();g.restore()}}}
-        return}
-      // 樹幹（松、柳共用）：S 形彎曲；先用淡墨填出幹身，再用乾筆勾兩側輪廓、疊鱗紋（松）／疤節（柳）
-      const willow=kind==="willow",th=willow?H*.5:H*.6,sw=R(60,110)*(rnd()<.5?-1:1),tw=willow?78:64,bx=cx-sw*.3;
-      const trunk=[];for(let i=0;i<=24;i++){const t=i/24;trunk.push([bx+Math.sin(t*PI*1.15)*sw+t*t*sw*.3+R(-2,2),base-t*th])}
-      const wAt=t=>tw*(1-t*.55)*(1+.25*Math.max(0,1-t*6));   // 根部外張
-      const side=sd=>trunk.map((p,i)=>{const t=i/24,q=trunk[Math.min(24,i+1)],o=trunk[Math.max(0,i-1)],dx=q[0]-o[0],dy=q[1]-o[1],l=Math.hypot(dx,dy)||1,w=wAt(t)/2*sd+R(-2,2);return[p[0]-dy/l*w,p[1]+dx/l*w]});
-      const Ls=side(1),Rs=side(-1);
-      wash(cx,base-4,200,26,ink,.22);   // 樹根的地面淡墨
-      g.fillStyle=A(mixC(ink,"#7A6650",.3),.78);g.beginPath();Ls.forEach((p,i)=>i?g.lineTo(p[0],p[1]):g.moveTo(p[0],p[1]));Rs.slice().reverse().forEach(p=>g.lineTo(p[0],p[1]));g.closePath();g.fill();
-      g.save();g.clip();for(let i=0;i<7;i++){const o=R(-.4,.4);brush(trunk.map((p,j)=>[p[0]+o*wAt(j/24),p[1]]),R(4,12),R(2,5),i%3?ink:"#F2EAD8",i%3?R(.2,.4):R(.12,.22))}g.restore();   // 幹身裡的皴擦
-      brush(Ls,R(5,7),3,ink,.9);brush(Rs,R(4,6),2.5,ink,.75);
-      for(let i=0;i<(willow?8:26);i++){const j=1+(rnd()*21|0),t=j/24,p=trunk[j],w=wAt(t)*.38;g.strokeStyle=A(ink,R(.45,.8));g.lineWidth=R(2,3.5);g.beginPath();g.ellipse(p[0]+R(-w,w),p[1],R(7,13),R(4,7),R(-.3,.3),R(.1,.6),R(2.4,3.0));g.stroke()}
-      const top=trunk[24],inX=x=>clamp(x,40,W-40);
-      if(willow){// 柳：幾條拱起的枝，從枝上垂下細長柳絲
-        for(let b=0;b<8;b++){const sx=top[0]+R(-20,20),sy=top[1]+R(0,70),dir=b%2?1:-1,ex=inX(sx+dir*R(120,330)),ey=Math.max(90,sy-R(30,170)),mx=(sx+ex)/2,my=Math.max(50,Math.min(sy,ey)-R(50,120)),br=[];
-          for(let i=0;i<=12;i++){const t=i/12,u=1-t;br.push([u*u*sx+2*u*t*mx+t*t*ex,u*u*sy+2*u*t*my+t*t*ey])}brush(br,R(12,20),4,ink,.85);   // 枝條先往上拱、再往外垂
-          for(let i=1;i<br.length;i++){if(rnd()<.15)continue;const p=br[i],L=R(260,560)*Math.min(1,(base-30-p[1])/560+.3),swy=R(-36,36);g.strokeStyle=A(leaf,R(.45,.8));g.lineWidth=R(1.4,2.4);g.beginPath();g.moveTo(p[0],p[1]);g.bezierCurveTo(p[0]+swy*.3,p[1]+L*.3,p[0]+swy,p[1]+L*.7,p[0]+swy*.9,p[1]+L);g.stroke();
-            g.fillStyle=A(leaf,R(.5,.85));for(let j=0;j<14;j++){const t=R(.05,1),x=p[0]+swy*t*.95,y=p[1]+L*t;g.save();g.translate(x,y);g.rotate(R(.3,.9)*(rnd()<.5?-1:1));g.beginPath();g.ellipse(0,0,R(2.4,4),R(8,14),0,0,TAU);g.fill();g.restore()}}}
-        wash(top[0],top[1]+160,330,190,leaf,.16);return}
-      // 松：橫出的枝（往左右伸、略往上翹，有小分枝），枝端與樹頂是扁平層疊的松針團
-      const pads=[[inX(top[0]),top[1]-20,R(150,180)]];
-      for(let b=0;b<5;b++){const i=7+(b*3.2|0),p=trunk[Math.min(23,i)],sd=(b%2?1:-1)*(sw>0?1:-1),L=R(170,290),ex=clamp(p[0]+sd*L,150,W-150),ey=p[1]-R(30,110);
-        const br=path(p[0],p[1],ex,ey,R(-40,40),10);brush(br,R(18,26),6,ink,.9);const m=br[6];brush(path(m[0],m[1],m[0]+sd*R(40,90),m[1]-R(40,80),10,6),8,3,ink,.8);
-        pads.push([ex,ey-10,R(115,160)])}
-      const pad=(x,y,r)=>{x=clamp(x,r*.9,W-r*.9);wash(x,y,r*1.2,r*.5,leaf,.6);wash(x+R(-12,12),y-r*.05,r*.95,r*.34,ink,.42);   // 淡墨、濃墨兩層打底
-        // 車輪狀松針：一個個小扇面，從中心往上半圈放射；先淡後濃兩層
-        for(const layer of[0,1]){const n=Math.round(r/(layer?7:9));for(let k=0;k<n;k++){const fx=x+R(-.9,.9)*r,fy=y+R(-.28,.14)*r*(1-Math.abs(fx-x)/r*.5),len=R(.15,.24)*r,m=Math.round(R(11,17));
-          g.strokeStyle=A(layer?ink:leaf,layer?R(.7,.95):R(.5,.75));g.lineWidth=layer?R(2,3):R(2.4,3.4);
-          for(let j=0;j<m;j++){const a=PI*1.05+(j/(m-1))*PI*.9+R(-.06,.06);g.beginPath();g.moveTo(fx,fy);g.lineTo(fx+Math.cos(a)*len,fy+Math.sin(a)*len*.8);g.stroke()}}}
-        g.strokeStyle=A(ink,.6);g.lineWidth=4;g.beginPath();g.moveTo(x-r*.95,y+r*.1);g.quadraticCurveTo(x,y+r*.28,x+r*.95,y+r*.1);g.stroke()};   // 團底一道濃墨
-      pads.sort((a,b)=>a[1]-b[1]).forEach(p=>pad(p[0],p[1],p[2]))})}
+  // ---------- 朝代家具（桌、對手的長椅、兩側凳子、長椅兩旁的燈）：每個朝代各自的造型與材質 ----------
+  // Kit：同一個材質的零件併成一個 mesh（iPhone 上 draw call 少）；tri＝方塊投影 UV（每 tri 單位一張貼圖），木紋自動順著零件的長邊
+  function Kit(){const B=new Map(),base=new T.Matrix4(),o3=new T.Object3D();
+    this.at=(x,y,z,ry)=>{o3.position.set(x||0,y||0,z||0);o3.rotation.set(0,ry||0,0);o3.scale.set(1,1,1);o3.updateMatrix();base.copy(o3.matrix);return this};
+    this.add=(geo,mat,p,r,s,tri)=>{const g=geo.index?geo.toNonIndexed():geo.clone();if(s!=null){if(typeof s==="number")g.scale(s,s,s);else g.scale(s[0],s[1],s[2])}
+      if(tri){g.computeBoundingBox();const bb=g.boundingBox,sz=[bb.max.x-bb.min.x,bb.max.y-bb.min.y,bb.max.z-bb.min.z],P=g.attributes.position,N=g.attributes.normal,uv=new Float32Array(P.count*2);
+        for(let i=0;i<P.count;i++){const nx=Math.abs(N.getX(i)),ny=Math.abs(N.getY(i)),nz=Math.abs(N.getZ(i)),d=nx>ny&&nx>nz?0:ny>nz?1:2,ax=[0,1,2].filter(a=>a!==d);if(sz[ax[1]]>sz[ax[0]])ax.reverse();
+          const v=[P.getX(i),P.getY(i),P.getZ(i)];uv[i*2]=v[ax[0]]/tri;uv[i*2+1]=v[ax[1]]/tri+(d*.37)}g.setAttribute("uv",new T.BufferAttribute(uv,2))}
+      o3.position.set(...(p||[0,0,0]));o3.rotation.set(...(r||[0,0,0]));o3.scale.set(1,1,1);o3.updateMatrix();g.applyMatrix4(new T.Matrix4().multiplyMatrices(base,o3.matrix));
+      if(!B.has(mat))B.set(mat,[]);B.get(mat).push(g);return this};
+    this.build=(parent,noCast)=>{for(const[mat,gs]of B){const cat=(k,n)=>{let L=0;gs.forEach(g=>L+=g.attributes.position.count*n);const a=new Float32Array(L);let o=0;
+        gs.forEach(g=>{const at=g.attributes[k];if(at)a.set(at.array,o);o+=g.attributes.position.count*n});return a};
+      const G=new T.BufferGeometry();G.setAttribute("position",new T.BufferAttribute(cat("position",3),3));G.setAttribute("normal",new T.BufferAttribute(cat("normal",3),3));G.setAttribute("uv",new T.BufferAttribute(cat("uv",2),2));G.computeBoundingSphere();
+      const m=new T.Mesh(G,mat);m.castShadow=!noCast;m.receiveShadow=true;parent.add(m);gs.forEach(g=>g.dispose())}B.clear()}}
+  // ---- 家具貼圖 ----
+  const TX=(w,h,f,rx,ry)=>{const t=cv(w,h,f);t.wrapS=t.wrapT=T.RepeatWrapping;t.repeat.set(rx||1,ry||rx||1);return t};
+  const rr=(a,b)=>a+Math.random()*(b-a);
+  // 木紋（可接縫）：底色＋順著橫向的細紋；fig＝黃花梨的鬼臉旋紋；plank＝木板縫
+  const grain=(g,w,h,c0,c1,o)=>{o=o||{};g.fillStyle=c0;g.fillRect(0,0,w,h);
+    for(let i=0;i<(o.n||130);i++){const y=Math.random()*h,a=.05+Math.random()*(o.a||.22),ph=Math.random()*TAU,k1=1+(Math.random()*2|0),k2=5+(Math.random()*4|0),amp=2+Math.random()*(o.wav||6);
+      g.strokeStyle=hexA(c1,a);g.lineWidth=.6+Math.random()*(o.lw||2.4);for(const oy of[0,-h,h]){g.beginPath();for(let x=0;x<=w;x+=8){const yy=oy+y+Math.sin(x/w*TAU*k1+ph)*amp+Math.sin(x/w*TAU*k2+ph*2)*amp*.25;x?g.lineTo(x,yy):g.moveTo(x,yy)}g.stroke()}}
+    if(o.fig)for(let k=0;k<o.fig;k++){const cx=rr(60,w-60),cy=rr(30,h-30);for(let r=3;r<o.figR;r+=2.5+Math.random()*3){g.strokeStyle=hexA(c1,.1+Math.random()*.18);g.lineWidth=.8+Math.random()*1.6;g.beginPath();g.ellipse(cx,cy,r*2.4,r*.62,rr(-.1,.1),0,TAU);g.stroke()}}
+    if(o.plank)for(let y=0;y<h;y+=h/o.plank){g.fillStyle="rgba(0,0,0,.45)";g.fillRect(0,y,w,3);g.fillStyle="rgba(255,255,255,.08)";g.fillRect(0,y+3,w,2)}
+    noise(g,w,h,3000,"0,0,0",.07)};
+  const woodT=(c0,c1,o,rep)=>TX(512,512,(g,w,h)=>grain(g,w,h,c0,c1,o),rep||1);
+  const lacqT=(c0,c1)=>TX(256,256,(g,w,h)=>{g.fillStyle=c0;g.fillRect(0,0,w,h);for(let i=0;i<50;i++){g.fillStyle=hexA(c1,.025+Math.random()*.04);g.fillRect(0,Math.random()*h,w,1+Math.random()*3)}noise(g,w,h,1500,"0,0,0",.05)});
+  const stT=(c,rep)=>stoneTex(c,rep||1);
+  // 紋樣（以 0,0 為中心、大小 s）
+  const MO={
+    cloud(g,s,c){g.strokeStyle=c;g.fillStyle=c;g.lineCap="round";g.lineWidth=s*.11;g.beginPath();for(let a=0;a<TAU*1.4;a+=.2){const r=s*.05+a*s*.05,x=Math.cos(a)*r,y=Math.sin(a)*r;a?g.lineTo(x,y):g.moveTo(x,y)}g.stroke();
+      g.beginPath();g.moveTo(s*.3,0);g.bezierCurveTo(s*.6,-s*.5,s*1.1,s*.4,s*1.5,-s*.15);g.stroke();g.lineWidth=s*.06;g.beginPath();g.moveTo(s*.9,s*.05);g.quadraticCurveTo(s*1.05,-s*.4,s*1.25,-s*.35);g.stroke();
+      g.beginPath();g.moveTo(-s*.3,s*.1);g.quadraticCurveTo(-s*.7,s*.5,-s*1.2,s*.2);g.stroke()},
+    rosette(g,s,c1,c2,c3){for(const[n,r,col,w]of[[8,s,c1,.42],[8,s*.62,c2,.4],[6,s*.32,c3||c1,.5]]){g.fillStyle=col;for(let i=0;i<n;i++){g.save();g.rotate(i/n*TAU+(r<s?PI/n:0));g.beginPath();g.ellipse(0,-r*.55,r*w,r*.5,0,0,TAU);g.fill();g.restore()}}g.fillStyle=c2;g.beginPath();g.arc(0,0,s*.14,0,TAU);g.fill()},
+    lotus(g,s,c,lt,dk){const gr=g.createLinearGradient(-s*.5,0,s*.5,0);gr.addColorStop(0,lt);gr.addColorStop(.5,c);gr.addColorStop(1,dk);g.fillStyle=gr;g.beginPath();g.moveTo(0,-s);g.bezierCurveTo(s*.55,-s*.6,s*.55,s*.4,0,s*.5);g.bezierCurveTo(-s*.55,s*.4,-s*.55,-s*.6,0,-s);g.fill();
+      g.strokeStyle=dk;g.lineWidth=s*.06;g.stroke();g.beginPath();g.moveTo(0,-s*.75);g.bezierCurveTo(s*.3,-s*.4,s*.3,s*.2,0,s*.3);g.bezierCurveTo(-s*.3,s*.2,-s*.3,-s*.4,0,-s*.75);g.strokeStyle=hexA("#000000",.25);g.stroke()},
+    fret(g,s,c){g.strokeStyle=c;g.lineWidth=s*.13;g.lineCap="square";g.beginPath();g.moveTo(-s,s*.8);g.lineTo(-s,-s*.8);g.lineTo(s*.6,-s*.8);g.lineTo(s*.6,s*.4);g.lineTo(-s*.4,s*.4);g.lineTo(-s*.4,-s*.3);g.lineTo(s*.1,-s*.3);g.stroke();g.beginPath();g.moveTo(-s,s*.8);g.lineTo(s,s*.8);g.stroke()},
+    lozenge(g,s,c){g.strokeStyle=c;g.lineWidth=s*.1;for(const k of[1,.62]){g.beginPath();g.moveTo(-s*k*1.4,0);g.lineTo(0,-s*k*.7);g.lineTo(s*k*1.4,0);g.lineTo(0,s*k*.7);g.closePath();g.stroke()}g.fillStyle=c;g.fillRect(-s*.18,-s*.09,s*.36,s*.18)},
+    peony(g,s,c){g.fillStyle=c;g.strokeStyle=c;for(let i=0;i<9;i++){g.save();g.rotate(i/9*TAU);g.beginPath();g.ellipse(0,-s*.55,s*.28,s*.42,0,0,TAU);g.fill();g.restore()}
+      g.fillStyle="#F6F7FA";g.beginPath();g.arc(0,0,s*.36,0,TAU);g.fill();g.fillStyle=c;g.beginPath();g.arc(0,0,s*.22,0,TAU);g.fill();g.lineWidth=s*.07;
+      for(const sd of[-1,1]){g.beginPath();g.moveTo(sd*s*.9,0);g.bezierCurveTo(sd*s*1.3,-s*.6,sd*s*1.8,s*.5,sd*s*2.2,0);g.stroke();g.beginPath();g.ellipse(sd*s*1.5,-s*.25,s*.28,s*.12,sd*.6,0,TAU);g.fill()}},
+    flower(g,s,c,ci){g.fillStyle=c;for(let i=0;i<5;i++){g.save();g.rotate(i/5*TAU);g.beginPath();g.ellipse(0,-s*.5,s*.3,s*.48,0,0,TAU);g.fill();g.restore()}g.fillStyle=ci;g.beginPath();g.arc(0,0,s*.25,0,TAU);g.fill()}};
+  // 橫條紋樣貼圖（桌邊、裙板、凳身、屏風框）：底（fn）＋上下細線＋一排紋樣
+  const bandT=(fill,o)=>TX(1024,o.h||128,(g,w,h)=>{fill(g,w,h);if(o.lines){g.fillStyle=o.lines;for(const y of o.ly||[.08,.88])g.fillRect(0,h*y,w,h*.05)}
+    const n=o.n||12;for(let i=0;i<n;i++){g.save();g.translate((i+.5)*w/n,h*(o.y||.5));if(o.flip&&i%2)g.scale(-1,1);o.m(g,h*(o.s||.3),i);g.restore()}if(o.post)o.post(g,w,h)},o.rx||1,1);
+  // 桌面貼圖：中間是 field，外圈一環（圓桌）或一圈（方桌）紋樣
+  const topT=(fill,o)=>cv(1024,1024,(g,w,h)=>{fill(g,w,h);const c=w/2;
+    if(o.round){if(o.ring)for(const[r,lw,col]of o.ring){g.strokeStyle=col;g.lineWidth=lw;g.beginPath();g.arc(c,c,r*c,0,TAU);g.stroke()}
+      if(o.m){const n=o.n||24;for(let i=0;i<n;i++){const a=i/n*TAU;g.save();g.translate(c+Math.cos(a)*c*o.mr,c+Math.sin(a)*c*o.mr);g.rotate(a+PI/2);o.m(g,c*(o.s||.05),i);g.restore()}}}
+    else{if(o.ring)for(const[r,lw,col]of o.ring){g.strokeStyle=col;g.lineWidth=lw;g.strokeRect(c-r*c,c-r*c,2*r*c,2*r*c)}
+      if(o.m){const n=o.n||9;for(const sd of[0,1,2,3])for(let i=0;i<n;i++){const t=(i+.5)/n*2-1;g.save();g.translate(c,c);g.rotate(sd*PI/2);g.translate(t*c*o.mr*.92,c*o.mr);o.m(g,c*(o.s||.04),i);g.restore()}}}
+    if(o.post)o.post(g,w,h)});
+  const radial=(c0,c1)=>cv(64,64,(g,w,h)=>{const gr=g.createRadialGradient(32,32,0,32,32,32);gr.addColorStop(0,c0);gr.addColorStop(.35,c1);gr.addColorStop(1,"rgba(0,0,0,0)");g.fillStyle=gr;g.fillRect(0,0,64,64)});
+  const fillC=c=>(g,w,h)=>{g.fillStyle=c;g.fillRect(0,0,w,h);noise(g,w,h,1500,"0,0,0",.05)};
+  // 燈罩貼圖（球、圓筒的 UV：u 繞一圈、v 由下往上）：上下緣較深、竹骨直線、正反兩面各畫一次 draw
+  const lanT=(base,o)=>cv(512,256,(g,w,h)=>{const gr=g.createLinearGradient(0,0,0,h);gr.addColorStop(0,o.edge||base);gr.addColorStop(.22,base);gr.addColorStop(.78,base);gr.addColorStop(1,o.edge||base);g.fillStyle=gr;g.fillRect(0,0,w,h);
+    if(o.ribs){g.strokeStyle=o.rc;g.lineWidth=o.rw||3;g.globalAlpha=o.ra||.5;for(let i=0;i<o.ribs;i++){const x=(i+.5)*w/o.ribs;g.beginPath();g.moveTo(x,0);g.lineTo(x,h);g.stroke()}g.globalAlpha=1}
+    if(o.bands)for(const[y,hh,c]of o.bands){g.fillStyle=c;g.fillRect(0,y*h,w,hh*h)}
+    if(o.draw)for(const u of[.25,.75]){g.save();g.translate(u*w,h/2);o.draw(g,h);g.restore()}noise(g,w,h,1500,"0,0,0",.04)});
+  const chT=(c,col,s)=>(g,h)=>{g.font=`900 ${h*s|0}px ${SERIF}`;g.textAlign="center";g.textBaseline="middle";g.fillStyle=col;g.fillText(c,0,h*.02)};
+
+  // ---------- 平台上的樹（意見回饋 233：之前是一張平平的畫卡，幾筆粗黑墨，很醜）----------
+  // 現在：立體的樹幹、樹枝（由粗到細、有樹皮紋、會受光、會投影）＋一叢叢水墨葉叢卡片（淡墨渲染打底、細筆松針／柳絲／竹葉、邊緣柔和）
+  // 鏡頭只在座位上轉頭（位置不動），所以葉叢卡片建立時就轉向座位、由遠到近排好，合併成一個 mesh；卡片前後錯開，看起來有厚度
+  const mixH=(a,b,t)=>"#"+new T.Color(a).lerp(new T.Color(b),t).getHexString();
+  // 有粗細的彎管（樹幹、樹枝、竹竿）：沿 Catmull-Rom 曲線一圈一圈長出來
+  function taperGeo(pts,r0,r1,rad){const c=new T.CatmullRomCurve3(pts),N=Math.max(6,pts.length*4),fr=c.computeFrenetFrames(N,false),L=c.getLength(),P=[],U=[],I=[];
+    for(let i=0;i<=N;i++){const t=i/N,p=c.getPointAt(t),r=r0+(r1-r0)*Math.pow(t,.8),n=fr.normals[i],b=fr.binormals[i];
+      for(let j=0;j<=rad;j++){const a=j/rad*TAU,cs=Math.cos(a),sn=Math.sin(a);P.push(p.x+r*(cs*n.x+sn*b.x),p.y+r*(cs*n.y+sn*b.y),p.z+r*(cs*n.z+sn*b.z));U.push(j/rad,t*L/7)}}
+    for(let i=0;i<N;i++)for(let j=0;j<rad;j++){const a=i*(rad+1)+j,b=a+rad+1;I.push(a,a+1,b,b,a+1,b+1)}
+    const g=new T.BufferGeometry();g.setAttribute("position",new T.Float32BufferAttribute(P,3));g.setAttribute("uv",new T.Float32BufferAttribute(U,2));g.setIndex(I);g.computeVertexNormals();return g}
+  // 樹皮：淡墨底＋乾筆直皴（斷斷續續）＋松樹的鱗紋；竹：青綠、竹節
+  const barkTex=(E,kind)=>TX(256,512,(g,w,h)=>{const ink=E.ink;
+    if(kind==="bamboo"){const gr=g.createLinearGradient(0,0,w,0);gr.addColorStop(0,"#56683E");gr.addColorStop(.45,"#8E9C5E");gr.addColorStop(1,"#4E5E38");g.fillStyle=gr;g.fillRect(0,0,w,h);
+      for(const y of[90,346]){g.fillStyle=hexA(ink,.7);g.fillRect(0,y,w,5);g.fillStyle="rgba(240,240,200,.35)";g.fillRect(0,y+5,w,3)}noise(g,w,h,1500,"30,40,20",.1);return}
+    g.fillStyle=mixH(ink,"#8E8070",.5);g.fillRect(0,0,w,h);
+    for(let i=0;i<70;i++){const x=Math.random()*w;g.strokeStyle=hexA(ink,.12+Math.random()*.35);g.lineWidth=1+Math.random()*3;g.setLineDash([10+Math.random()*50,6+Math.random()*24]);g.beginPath();g.moveTo(x,0);g.bezierCurveTo(x+rr(-8,8),h*.3,x+rr(-8,8),h*.7,x+rr(-4,4),h);g.stroke()}g.setLineDash([]);
+    if(kind==="pine")for(let i=0;i<60;i++){g.strokeStyle=hexA(ink,.25+Math.random()*.35);g.lineWidth=1.5+Math.random()*1.5;g.beginPath();g.ellipse(Math.random()*w,Math.random()*h,8+Math.random()*12,5+Math.random()*6,rr(-.3,.3),.2,2.9);g.stroke()}
+    noise(g,w,h,3000,"255,250,240",.06)});
+  // 葉叢圖集（2×2 格）：松＝扁平的松針團；柳＝下垂的柳絲；竹＝个字竹葉
+  function foliageTex(E,kind,seed){let s=seed;const rnd=()=>(s=(s*16807)%2147483647)/2147483647,R=(a,b)=>a+(b-a)*rnd();
+    return cv(1024,1024,(g,W,H)=>{const ink=E.ink,leaf=kind==="willow"?mixH(ink,"#6F8E44",.72):kind==="bamboo"?mixH(ink,"#3E6A40",.6):mixH(ink,"#41583A",.55);
+      const wash=(x,y,rx,ry,col,a)=>{g.save();g.translate(x,y);g.scale(1,ry/rx);const gr=g.createRadialGradient(0,0,0,0,0,rx);gr.addColorStop(0,hexA(col,a));gr.addColorStop(.55,hexA(col,a*.55));gr.addColorStop(1,hexA(col,0));g.fillStyle=gr;g.beginPath();g.arc(0,0,rx,0,TAU);g.fill();g.restore()};
+      for(let c=0;c<4;c++){const x0=(c%2)*512,y0=(c>>1)*512;g.save();g.beginPath();g.rect(x0,y0,512,512);g.clip();
+        if(kind==="willow"){wash(x0+256,y0+120,230,90,leaf,.18);for(let k=0;k<26;k++){const sx=x0+R(40,472),sy=y0+R(10,70),L=R(300,470),sw=R(-40,40);g.strokeStyle=hexA(k%3?leaf:ink,R(.35,.7));g.lineWidth=R(1,2);
+            g.beginPath();g.moveTo(sx,sy);g.bezierCurveTo(sx+sw*.2,sy+L*.35,sx+sw,sy+L*.7,sx+sw*.9,sy+L);g.stroke();
+            for(let j=0;j<12;j++){const t=R(.05,1),x=sx+sw*t*.92,y=sy+L*t;g.fillStyle=hexA(leaf,R(.35,.75));g.save();g.translate(x,y);g.rotate(R(.3,.9)*(rnd()<.5?-1:1));g.beginPath();g.ellipse(0,0,R(2,3.5),R(7,12),0,0,TAU);g.fill();g.restore()}}}
+        else if(kind==="bamboo"){wash(x0+256,y0+256,220,160,leaf,.16);for(let k=0;k<7;k++){const cx=x0+R(110,400),cy=y0+R(140,380),n=Math.round(R(3,5)),dir=rnd()<.5?-1:1;
+            for(let j=0;j<n;j++){const a=(dir<0?PI:0)+dir*R(.2,.9)+(j-n/2)*.34*dir+R(-.15,.15),L=R(70,120),lw=R(8,13);g.fillStyle=hexA(j%2?ink:leaf,R(.55,.88));g.save();g.translate(cx,cy);g.rotate(a);g.beginPath();g.moveTo(0,0);g.quadraticCurveTo(L*.35,-lw,L,0);g.quadraticCurveTo(L*.35,lw*.5,0,0);g.fill();g.restore()}}}
+        else{// 松針團：淡墨、淡綠兩層渲染打底，上面一個個細的車輪狀小扇面（先淡後濃），底緣一道柔和的深色
+          // 一團＝三到五小簇疊成的雲朵形，比較厚、邊緣柔和
+          const nc=3+(rnd()*3|0),cl=[];for(let k=0;k<nc;k++)cl.push([x0+256+R(-140,140)*(k?1:.2),y0+290+R(-70,40)*(k?1:.2),R(85,130)]);cl.sort((p,q)=>p[1]-q[1]);
+          for(const[cx,cy,r]of cl){wash(cx,cy,r*1.25,r*.62,leaf,.38);wash(cx+R(-10,10),cy+r*.12,r,r*.42,ink,.16)}
+          for(const layer of[0,1,2])for(const[cx,cy,r]of cl){const n=layer===2?14:24;for(let k=0;k<n;k++){const u=R(-1,1),fx=cx+u*r,fy=cy+R(-.55,.25)*r*(1-Math.abs(u)*.45),len=R(.2,.34)*r,m=Math.round(R(12,18));
+            g.strokeStyle=hexA(layer===2?ink:leaf,layer===0?R(.25,.45):layer===1?R(.45,.7):R(.6,.85));g.lineWidth=layer===2?R(1.1,1.7):R(1.3,2.1);
+            for(let j=0;j<m;j++){const a=PI*1.04+(j/(m-1))*PI*.92+R(-.05,.05);g.beginPath();g.moveTo(fx,fy);g.lineTo(fx+Math.cos(a)*len,fy+Math.sin(a)*len*.8);g.stroke()}}}
+          for(const[cx,cy,r]of cl){const gr=g.createLinearGradient(0,cy,0,cy+r*.5);gr.addColorStop(0,hexA(ink,0));gr.addColorStop(.6,hexA(ink,.18));gr.addColorStop(1,hexA(ink,0));g.fillStyle=gr;g.beginPath();g.ellipse(cx,cy+r*.25,r*.9,r*.2,0,0,TAU);g.fill()}}
+        g.restore()}})}
+  // 一棵樹：回傳一個 Group（樹幹 mesh＋葉叢 mesh）；base＝樹根位置，seat＝座位（卡片都轉向這裡）
+  function inkTree3D(E,kind,seed,base,seat,sc0,barkM,folM){let s=seed;const rnd=()=>(s=(s*16807)%2147483647)/2147483647,R=(a,b)=>a+(b-a)*rnd();
+    const K=new Kit(),f=new T.Vector3(seat.x-base.x,0,seat.z-base.z).normalize(),sd=new T.Vector3(f.z,0,-f.x),V=(a,y,d)=>base.clone().addScaledVector(sd,a*sc0).add(new T.Vector3(0,y*sc0,0)).addScaledVector(f,d*sc0);
+    const cards=[],card=(p,w,h,cell,top)=>{const q=p.clone();if(top)q.y-=h/2;cards.push({p:q,w,h,cell,d:q.distanceTo(seat)})};
+    const tube=(pts,r0,r1,rad)=>K.add(taperGeo(pts,r0*sc0,r1*sc0,rad||7),barkM);
+    const lean=rnd()<.5?-1:1;
+    if(kind==="bamboo"){for(let c=0;c<6;c++){const a0=R(-3,3),d0=R(-2.5,1.5),h=R(15,22),lx=R(-3,3)+lean*1.5,pts=[V(a0,0,d0),V(a0+lx*.2,h*.35,d0),V(a0+lx*.55,h*.7,d0+R(-.5,.5)),V(a0+lx,h,d0)];tube(pts,R(.28,.36),.12,6);
+        for(let k=0;k<4;k++){const t=R(.5,1),p=new T.CatmullRomCurve3(pts).getPointAt(t);card(p.add(new T.Vector3(0,R(-.5,.5)*sc0,0)),R(5,7)*sc0,R(5,7)*sc0,(rnd()*4)|0)}}}
+    else{const willow=kind==="willow",H=willow?11:15.5,tr=[V(0,0,0),V(lean*R(.4,1),H*.3,R(-.4,.4)),V(-lean*R(.2,.8),H*.6,R(-.4,.4)),V(lean*R(1,2),H*.85,0),V(lean*R(2,3.2),H,R(-.5,.5))];
+      tube(tr,willow?1.5:1.35,willow?.55:.35,9);const tc=new T.CatmullRomCurve3(tr);
+      const nb=willow?6:5;for(let b=0;b<nb;b++){const t=willow?R(.75,.98):.42+b*.13,p=tc.getPointAt(Math.min(.97,t)),side=b%2?1:-1,len=willow?R(4,6):R(4.5,7.5),
+          e=p.clone().addScaledVector(sd,side*len*sc0).add(new T.Vector3(0,(willow?R(1.5,3.5):R(.4,2.2))*sc0,0)).addScaledVector(f,R(-2.5,2.5)*sc0),m=p.clone().lerp(e,.5).add(new T.Vector3(0,(willow?1.6:R(-.4,.8))*sc0,0));
+        tube([p,m,e],willow?.5:.48,.12,6);
+        if(willow){for(let k=0;k<4;k++){const q=p.clone().lerp(e,.35+k*.2).add(new T.Vector3(R(-.4,.4),0,R(-.4,.4)).multiplyScalar(sc0));card(q,R(3.5,5)*sc0,R(8,11)*sc0,(rnd()*4)|0,true)}}
+        else{const w=R(6.5,8.5)*sc0;card(e.clone().add(new T.Vector3(0,.5*sc0,0)),w,w,(rnd()*4)|0);const w2=R(4.5,6)*sc0;card(p.clone().lerp(e,.55).add(new T.Vector3(0,.8*sc0,0)).addScaledVector(f,-.8*sc0),w2,w2,(rnd()*4)|0)}}
+      const top=tc.getPointAt(1);if(willow){for(let k=0;k<4;k++)card(top.clone().add(new T.Vector3(R(-3,3),R(-.5,.8),R(-2,2)).multiplyScalar(sc0)),R(3.5,5)*sc0,R(8,10)*sc0,(rnd()*4)|0,true)}
+      else{card(top.clone().add(new T.Vector3(0,.8*sc0,0)),9*sc0,9*sc0,(rnd()*4)|0);card(top.clone().add(new T.Vector3(0,-.6*sc0,0)).addScaledVector(sd,R(-2,2)*sc0).addScaledVector(f,1.2*sc0),6.5*sc0,6.5*sc0,(rnd()*4)|0)}}
+    // 卡片：由遠到近、轉向座位；一張卡＝圖集的一格
+    const o3=new T.Object3D();cards.sort((a,b)=>b.d-a.d).forEach(c=>{const g=new T.PlaneGeometry(1,1),uv=g.attributes.uv;for(let i=0;i<uv.count;i++)uv.setXY(i,(c.cell%2)*.5+uv.getX(i)*.5,.5-(c.cell>>1)*.5+uv.getY(i)*.5);
+      o3.position.copy(c.p);o3.lookAt(seat);K.add(g,folM,c.p.toArray(),[o3.rotation.x,o3.rotation.y,o3.rotation.z,o3.rotation.order],[c.w,c.h,1])});
+    const grp=new T.Group();K.build(grp);grp.traverse(m=>{if(m.isMesh&&m.material===folM){m.castShadow=false;m.renderOrder=1}});return grp}
+
+  // 家具本體：EK＝朝代；X＝場景裡共用的東西（sc、M、地面高度、長椅位置、石材、鐵）
+  function buildFurn(EK,E,X){const{sc,M,GY,SY,BZ,BL}=X,K=new Kit(),root=new T.Group();sc.add(root);const YS=SY+.22,flames=[];let OX=0,OZ=0;
+    const mm=(map,o)=>M(0xffffff,Object.assign({map},o||{}));
+    const BXG=new T.BoxGeometry(1,1,1),CYC={},cyG=n=>CYC[n]||(CYC[n]=new T.CylinderGeometry(1,1,1,n)),SPG=new T.SphereGeometry(1,16,12);
+    const bx=(m,x,y,z,sx,sy,sz,r,tri)=>K.add(BXG,m,[x,y,z],r,[sx,sy,sz],tri);
+    const cy=(m,x,y,z,rad,h,n,r,tri)=>K.add(cyG(n||16),m,[x,y,z],r,[rad,h,rad],tri);
+    const ct=(m,x,y,z,r1,r2,h,n,r,open)=>K.add(new T.CylinderGeometry(r1,r2,h,n||16,1,!!open),m,[x,y,z],r);
+    const sp=(m,x,y,z,sx,sy,sz,r)=>K.add(SPG,m,[x,y,z],r,[sx,sy==null?sx:sy,sz==null?sx:sz]);
+    const la=(m,pts,n,x,z)=>K.add(new T.LatheGeometry(pts.map(p=>new T.Vector2(p[0],p[1])),n||32),m,[x||0,0,z||0]);
+    const tor=(m,x,y,z,R,r,arc,rot,n)=>K.add(new T.TorusGeometry(R,r,6,n||32,arc||TAU),m,[x,y,z],rot||[PI/2,0,0]);
+    const UP=new T.Vector3(0,1,0),qq=new T.Quaternion(),eu=new T.Euler();
+    // 兩點之間的一根料（方料或圓料）
+    const beam=(m,a,b,w,d,round,tri)=>{const A=new T.Vector3(...a),B=new T.Vector3(...b),dir=B.clone().sub(A),L=dir.length();qq.setFromUnitVectors(UP,dir.normalize());eu.setFromQuaternion(qq);
+      const r=[eu.x,eu.y,eu.z,eu.order],p=A.add(B).multiplyScalar(.5).toArray();if(round)K.add(cyG(round===true?10:round),m,p,r,[w,L,w],tri);else K.add(BXG,m,p,r,[w,L,d||w],tri)};
+    const roundTop=(R,th,tm,sm,bm)=>{K.add(new T.CircleGeometry(R,72),tm,[0,0,0],[-PI/2,0,0]);K.add(new T.CylinderGeometry(R,R,th,72,1,true),sm,[0,-th/2,0]);K.add(new T.CircleGeometry(R,48),bm||sm,[0,-th,0],[PI/2,0,0])};
+    const sqTop=(H,th,tm,sm,tri)=>{K.add(new T.PlaneGeometry(2*H,2*H),tm,[0,0,0],[-PI/2,0,0]);bx(sm,0,-th/2-.004,0,2*H,th,2*H,null,tri)};
+    const legs=(m,h,w,y0,y1,round,tri)=>{for(const a of[-1,1])for(const b of[-1,1])round?cy(m,a*h,(y0+y1)/2,b*h,w,y1-y0,round===true?12:round,null,tri):bx(m,a*h,(y0+y1)/2,b*h,w,y1-y0,w,null,tri)};
+    const lit=(t,k,o)=>M(0xffffff,Object.assign({map:t,emissive:0xffffff,emissiveMap:t,emissiveIntensity:k||.55,roughness:.8},o||{}));
+    const gold=()=>M(0xE2B65C,{metalness:.45,roughness:.32});
+    const bronze=()=>mm(TX(256,256,(g,w,h)=>{g.fillStyle="#9A7646";g.fillRect(0,0,w,h);noise(g,w,h,3000,"40,25,10",.25);
+      for(let i=0;i<36;i++){g.fillStyle=`rgba(70,${120+Math.random()*40|0},100,${.12+Math.random()*.22})`;g.beginPath();g.arc(rr(0,w),rr(0,h),rr(3,14),0,TAU);g.fill()}}),{metalness:.45,roughness:.42});
+    // 火焰／燈光：幾個疊在一起的錐體（加色混合）＋一團柔光；tick 裡跳動
+    const fo=new T.MeshBasicMaterial({color:0xFF7A22,transparent:true,opacity:.85,depthWrite:false,toneMapped:false,blending:T.AdditiveBlending}),fi=new T.MeshBasicMaterial({color:0xFFE08A,toneMapped:false});
+    let glowTex=null;const glow=(x,y,z,s,op,kind)=>{glowTex=glowTex||radial("rgba(255,226,160,1)","rgba(255,160,70,.35)");
+      const g=new T.Sprite(new T.SpriteMaterial({map:glowTex,transparent:true,opacity:op||.6,depthWrite:false,blending:T.AdditiveBlending,toneMapped:false,fog:false}));g.position.set(OX+x,y,OZ+z);g.scale.setScalar(s);root.add(g);flames.push({o:g,s,ph:Math.random()*9,k:kind||0});return g};
+    const fire=(x,y,z,s)=>{const G=new T.Group();G.position.set(OX+x,y,OZ+z);root.add(G);const cone=new T.ConeGeometry(1,1,10);
+      [[0,0,0,.42,1.5,fi],[.25,0,.1,.45,1.2,fo],[-.25,0,-.12,.42,1.35,fo],[0,0,.25,.5,1.0,fo],[.05,0,-.3,.4,1.1,fo]].forEach(([dx,dy,dz,r,h,m],i)=>{const c=new T.Mesh(cone,m);c.position.set(dx*s,(dy+h/2)*s,dz*s);c.scale.set(r*s,h*s,r*s);c.renderOrder=2;G.add(c);flames.push({o:c,s:h*s,y0:c.position.y,ph:i*1.7,k:2})});
+      glow(x,y+s*.7,z,s*5,.75,1)};
+    const F={};
+    // ---- 經典：灰色花崗岩圓桌、石凳；公園木條長椅；紅紙燈籠 ----
+    F.classic=()=>{const st=X.stone,s2=X.stone2,ir=X.iron,pl=mm(woodT("#8E5326","#4A2410",{n:90},1),{roughness:.65}),
+      red=lit(lanT("#C8221C",{edge:"#7A100C",ribs:14,rc:"#6A0E0A",draw:chT("福","#F2C14E",.5)}),.6,{roughness:.6}),gd=gold();
+      return{frame:0x5C3418,
+        table(){roundTop(8.2,.9,st,st);tor(st,0,-.04,0,8.1,.18,TAU,null,96);ct(s2,0,GY+9-.9,0,2.3,3.2,18,40);ct(s2,0,GY+.6,0,4.2,4.6,1.2,40);tor(s2,0,-1.9,0,2.36,.22,TAU,null,40);tor(s2,0,GY+1.35,0,3.2,.25,TAU,null,40)},
+        bench(){for(let i=0;i<4;i++)bx(pl,0,SY,BZ+1.8-i*1.2,BL,.45,1.1,null,6);
+          for(let i=0;i<3;i++)bx(pl,0,SY+3.6+i*1.4,BZ-2.6-i*.25,BL,.45,1.0,[-.18,0,0],6);
+          for(const x of[-BL/2+1,BL/2-1]){bx(ir,x,(SY+GY)/2,BZ+1.8,.6,SY-GY,.6);bx(ir,x,(SY+GY+5.2)/2,BZ-2.6,.6,SY-GY+5.2,.6);bx(ir,x,SY-.4,BZ-.4,.5,.5,5);
+            bx(ir,x,SY+3.2,BZ,.5,.5,4.4,[.05,0,0]);tor(ir,x,SY+2.5,BZ+2.0,.65,.13,PI*1.5,[0,PI/2,0],16);tor(ir,x,GY+.4,BZ-.4,2.2,.16,PI,[0,PI/2,0],16)}},
+        stool(){ct(st,0,GY+13.3,0,2.4,2.2,1.4,36);ct(s2,0,GY+6.3,0,1.5,2.3,12.6,36);tor(s2,0,GY+12.5,0,1.62,.15,TAU,null,32)},
+        lamp(sx){const px=sx*1.9,Y=-4.6;cy(ir,px,(GY+Y+2.6)/2,0,.25,Y+2.6-GY,8);ct(ir,px,GY+.4,0,.5,.8,.8,8);sp(gd,px,Y+2.75,0,.32);bx(ir,px/2,Y+2.0,0,2.4,.22,.22);tor(ir,px*.62,Y+1.4,0,.5,.07,PI*1.5,[0,0,sx>0?0:PI],12);
+          cy(ir,0,Y+1.5,0,.05,.6,6);sp(red,0,Y,0,1.05,1.24,1.05);for(const y of[Y+1.3,Y-1.3])cy(gd,0,y,0,.5,.24,14);cy(red,0,Y-2.2,0,.1,1.5,6);sp(gd,0,Y-1.45,0,.17);glow(0,Y,0,4.6,.45)}}};
+    // ---- 秦：黑漆朱邊、青銅飾件；青銅豆形燈 ----
+    F.qin=()=>{const RD="#A8281C",bk=mm(lacqT("#15110F","#3A2A22"),{roughness:.28}),bz=bronze(),
+      top=mm(topT(g=>{g.fillStyle="#15110F";g.fillRect(0,0,1024,1024);noise(g,1024,1024,3000,"60,40,30",.08)},{ring:[[.965,16,RD],[.9,5,RD]],m:(g,s)=>MO.lozenge(g,s,RD),n:9,mr:.932,s:.026}),{roughness:.25}),
+      side=mm(bandT(fillC("#15110F"),{lines:RD,m:(g,s)=>MO.lozenge(g,s,RD),n:14,s:.28}),{roughness:.3}),
+      scr=mm(cv(512,512,(g,w,h)=>{g.fillStyle="#15110F";g.fillRect(0,0,w,h);g.strokeStyle=RD;g.lineWidth=14;g.strokeRect(14,14,w-28,h-28);g.lineWidth=4;g.strokeRect(36,36,w-72,h-72);
+        for(let y=0;y<5;y++)for(let x=0;x<4;x++){g.save();g.translate(90+x*111,92+y*82);MO.lozenge(g,26,y%2?"#C8A050":RD);g.restore()}noise(g,w,h,2000,"0,0,0",.06)}),{roughness:.3});
+      return{frame:0x7A2216,
+        table(){sqTop(7.9,1.0,top,side);bx(side,0,-1.6,0,15.2,1.2,15.2);
+          for(const a of[-1,1])for(const b of[-1,1]){bx(bk,a*7,(GY+.9-2.2)/2,b*7,1.1,-2.2-GY-.9,1.1,null,4);ct(bz,a*7,GY+.5,b*7,.62,.85,1.0,12);cy(bz,a*7,-6,b*7,.7,.35,12);bx(bz,a*7.86,-.5,b*7.86,.5,1.12,.5)}
+          for(const s of[-1,1]){bx(bk,0,GY+4,s*7,13,.6,.6,null,4);bx(bk,s*7,GY+4,0,.6,.6,13,null,4)}},
+        bench(){bx(bk,0,YS-.6,BZ,13.4,1.2,5.0,null,4);bx(side,0,YS-1.65,BZ+2.35,13.0,.9,.3);bx(side,0,YS-1.65,BZ-2.35,13.0,.9,.3);
+          for(const a of[-1,1])for(const b of[-1,1]){bx(bk,a*6.1,(GY+YS-1.2)/2,BZ+b*2.0,.9,YS-1.2-GY,.9,null,4);ct(bz,a*6.1,GY+.45,BZ+b*2.0,.55,.75,.9,12);bx(bz,a*6.7,YS-.3,BZ+b*2.5,.4,.66,.4)}
+          bx(bk,0,YS+3.7,BZ-2.7,12.4,7.4,.45,null,4);bx(scr,0,YS+3.7,BZ-2.45,11.4,6.6,.06);bx(bz,0,YS+7.5,BZ-2.7,12.6,.25,.6);
+          for(const a of[-1,1]){bx(bz,a*6.2,YS+.3,BZ-2.7,.6,.6,.7);bx(bz,a*6.2,YS+7.2,BZ-2.7,.6,.6,.7)}},
+        stool(){bx(bk,0,(GY-5.6)/2,0,3.0,13.4,3.0,null,4);bx(side,0,-6.5,0,3.12,1.0,3.12);bx(side,0,GY+1.0,0,3.12,1.0,3.12);bx(bk,0,-5.3,0,3.6,.6,3.6,null,4);
+          for(const a of[-1,1])for(const b of[-1,1])bx(bz,a*1.72,-5.3,b*1.72,.36,.7,.36)},
+        lamp(){const d=1.8;la(bz,[[0,GY],[2.0,GY],[1.9,GY+.4],[1.1,GY+1.2],[.45,GY+2.4],[.32,GY+3],[0,GY+3]],24);cy(bz,0,(GY+3-7.6+d)/2,0,.26,-7.6+d-GY-3,10);
+          for(const y of[GY+6,GY+10,-8.1+d])cy(bz,0,y,0,.45,.28,12);
+          la(bz,[[0,-7.7],[.7,-7.7],[.35,-7.35],[.3,-6.9],[1.5,-6.55],[1.6,-6.2],[1.35,-6.22],[0,-6.4]].map(([r,y])=>[r,y+d]),24);fire(0,-6.35+d,0,.75)}}};
+    // ---- 漢：朱黑漆、雲氣紋；長信宮燈 ----
+    F.han=()=>{const V="#B0301E",BK="#1A1210",bk=mm(lacqT(BK,"#4A2A20"),{roughness:.28}),ver=mm(lacqT(V,"#E06040"),{roughness:.3}),gd=gold(),
+      cl=c=>(g,s,i)=>{g.scale(i%2?-1:1,1);MO.cloud(g,s,c)},
+      side=mm(bandT(fillC(V),{lines:BK,m:cl(BK),n:10,s:.24}),{roughness:.3}),sideB=mm(bandT(fillC(BK),{lines:V,m:cl(V),n:10,s:.24}),{roughness:.3}),
+      top=mm(topT(fillC(BK),{round:1,ring:[[.912,46,V],[.86,4,V],[.968,4,"#C9A050"]],m:cl(BK),n:20,mr:.912,s:.026}),{roughness:.25}),
+      pan=mm(cv(512,512,(g,w,h)=>{fillC(BK)(g,w,h);g.strokeStyle=V;g.lineWidth=16;g.strokeRect(10,10,w-20,h-20);for(let y=0;y<4;y++)for(let x=0;x<3;x++){g.save();g.translate(110+x*150+(y%2)*40,80+y*115);g.scale(y%2?-1:1,1);MO.cloud(g,46,V);g.restore()}}),{roughness:.3}),
+      mat=mm(TX(256,256,(g,w,h)=>{g.fillStyle="#C9AE7A";g.fillRect(0,0,w,h);for(let y=0;y<h;y+=8)for(let x=(y/8%2)*8;x<w;x+=16){g.fillStyle="rgba(90,60,30,.35)";g.fillRect(x,y,8,7)}},6),{roughness:.9});
+      return{frame:0x1E1210,
+        table(){roundTop(8.2,.9,top,sideB,bk);la(bk,[[0,GY+1.1],[3.6,GY+1.1],[3.6,GY+1.9],[3.2,GY+2.2],[1.6,GY+3.2],[1.3,GY+6],[1.25,GY+12],[1.5,GY+15.5],[2.6,GY+17.3],[3.2,GY+18.1],[0,GY+18.1]],40);
+          for(const y of[GY+2.0,GY+3.4,GY+15.6,GY+17.5])tor(ver,0,y,0,y<GY+3?3.45:y<GY+4?1.6:y<GY+16?1.55:2.9,.12,TAU,null,40);
+          for(let i=0;i<3;i++){const a=i/3*TAU+PI/6,x=Math.sin(a)*3.1,z=Math.cos(a)*3.1;sp(gd,x,GY+.55,z,.8,.6,.8);sp(gd,x*1.12,GY+1.0,z*1.12,.42)}},
+        bench(){bx(bk,0,YS-.7,BZ,13.4,1.4,5.0,null,4);bx(side,0,YS-.75,BZ+2.52,13.4,1.1,.06);bx(mat,0,YS+.07,BZ+.15,12.6,.14,4.4);bx(ver,0,YS+.02,BZ+2.45,13.5,.14,.2);
+          for(const a of[-1,1])for(const b of[-1,1]){bx(bk,a*6.0,(GY+YS-1.4)/2,BZ+b*1.9,.9,YS-1.4-GY,.9,null,4);sp(gd,a*6.0,GY+.4,BZ+b*1.9,.7,.45,.7)}
+          bx(bk,0,YS+3.7,BZ-2.65,12.8,7.4,.4,null,4);bx(pan,0,YS+3.7,BZ-2.42,11.8,6.6,.06);},
+        stool(){ct(bk,0,GY+6.7,0,1.9,2.2,13.4,28);K.add(new T.CylinderGeometry(1.99,1.99,1.4,32,1,true),side,[0,-7.0,0]);K.add(new T.CylinderGeometry(2.17,2.17,1.0,32,1,true),side,[0,GY+1.2,0]);ct(ver,0,-5.3,0,2.25,2.05,.6,32);tor(gd,0,-5.62,0,2.08,.07,TAU,null,32)},
+        lamp(sx){const lx=-sx*1.0,d=3.6;bx(bk,0,(GY+d-10)/2,0,2.6,-10+d-GY+.2,2.6,null,4);bx(sideB,0,-10.8+d,0,2.7,.9,2.7);
+          cy(gd,0,(-9.85+d),0,1.15,.3,20);la(gd,[[0,(-9.7+d)],[1.25,(-9.7+d)],[1.15,(-8.9+d)],[.85,(-8.0+d)],[.55,(-7.2+d)],[.46,(-6.9+d)],[0,(-6.9+d)]],20);sp(gd,0,(-6.35+d),0,.52,.6,.52);sp(gd,0,(-5.85+d),-.25,.26);
+          cy(gd,lx,(-7.9+d),.35,.8,1.2,16);ct(gd,lx,(-7.15+d),.35,.38,.82,.35,16);beam(gd,[-lx*.25,(-7.1+d),0],[lx,(-6.95+d),.35],.18,0,10);beam(gd,[sx*.2,(-7.9+d),.15],[lx*.6,(-8.4+d),.35],.16,0,10);
+          bx(lit(cv(16,16,g=>{g.fillStyle="#FFC874";g.fillRect(0,0,16,16)}),1.4),lx,(-7.9+d),1.12,.75,.62,.06);glow(lx,(-7.9+d),.6,3.4,.6)}}};
+    // ---- 三國：行軍帳的粗木、鐵箍、皮革；火盆 ----
+    F.sanguo=()=>{const dw=mm(woodT("#3A2A1E","#120A06",{n:120,a:.3,lw:3}),{roughness:.85}),ir=X.iron,
+      pk=mm(topT(g=>grain(g,1024,1024,"#45311F","#140C07",{n:220,a:.3,plank:7,wav:4}),{round:1,ring:[[.985,20,"#1C1A18"]]}),{roughness:.85}),
+      le=mm(TX(256,256,(g,w,h)=>{g.fillStyle="#6B4428";g.fillRect(0,0,w,h);noise(g,w,h,5000,"30,15,5",.2);noise(g,w,h,2000,"255,220,180",.06);for(let i=0;i<20;i++){g.strokeStyle="rgba(40,20,8,.25)";g.lineWidth=1;g.beginPath();g.moveTo(rr(0,w),rr(0,h));g.quadraticCurveTo(rr(0,w),rr(0,h),rr(0,w),rr(0,h));g.stroke()}},2),{roughness:.7}),
+      coal=M(0x3A1408,{emissive:0xFF4A10,emissiveIntensity:.9,roughness:.9});
+      return{frame:0x3A2A1E,
+        table(){roundTop(8.2,.9,pk,dw);for(const y of[-.16,-.74])tor(ir,0,y,0,8.23,.08,TAU,null,96);for(let i=0;i<24;i++){const a=i/24*TAU;sp(ir,Math.sin(a)*8.27,-.45,Math.cos(a)*8.27,.13)}
+          cy(ir,0,-1.5,0,1.3,.9,12);bx(dw,0,-1.35,0,9,.8,1.0,[0,PI/4,0],4);bx(dw,0,-1.35,0,9,.8,1.0,[0,-PI/4,0],4);
+          const P=[];for(let i=0;i<4;i++){const a=PI/4+i*PI/2,t=[Math.sin(a)*2.6,-1.6,Math.cos(a)*2.6],b=[Math.sin(a)*6.2,GY,Math.cos(a)*6.2];beam(dw,t,b,.55,0,8,4);P.push([Math.sin(a)*4.6,-11,Math.cos(a)*4.6]);tor(ir,Math.sin(a)*3.0,-3.4,Math.cos(a)*3.0,.6,.08,TAU,[PI/2,0,0],12)}
+          for(let i=0;i<4;i++)beam(dw,P[i],P[(i+1)%4],.3,0,8,4)},
+        bench(){bx(dw,0,YS-.45,BZ,13.2,.9,4.6,null,5);for(const x of[-5,5]){beam(dw,[x,GY,BZ-2.1],[x,YS-.9,BZ+1.9],.45,0,8,4);beam(dw,[x,GY,BZ+2.1],[x,YS-.9,BZ-1.9],.45,0,8,4);cy(ir,x,(GY+YS-.9)/2,BZ,.3,.9,8,[0,0,PI/2])}
+          bx(le,0,YS+.04,BZ+.3,11,.1,4.2);bx(le,0,YS-.75,BZ+2.36,11,1.5,.08);
+          for(const x of[-6.1,6.1]){beam(dw,[x,GY,BZ-2.5],[x,YS+6.6,BZ-3.0],.5,0,8,4);sp(ir,x,YS+6.7,BZ-3.0,.32)}for(const y of[YS+1.4,YS+6.0])cy(dw,0,y,BZ-2.85,.28,12.4,8,[0,0,PI/2],4);
+          bx(le,0,YS+3.7,BZ-2.75,11,4.2,.1,[-.06,0,0]);for(let i=0;i<9;i++){const x=-5+i*1.25;cy(ir,x,YS+5.85,BZ-2.6,.06,.5,4);cy(ir,x,YS+1.55,BZ-2.6,.06,.5,4)}},
+        stool(){for(const x of[-1.6,1.6]){beam(dw,[x,GY,-1.8],[x,-5.4,1.8],.26,0,8);beam(dw,[x,GY,1.8],[x,-5.4,-1.8],.26,0,8);cy(ir,x,(GY-5.4)/2,0,.22,.5,8,[0,0,PI/2])}
+          for(const z of[-1.8,1.8]){cy(dw,0,-5.4,z,.2,3.6,8,[0,0,PI/2]);cy(dw,0,GY+.2,z,.18,3.6,8,[0,0,PI/2])}bx(le,0,-5.5,0,3.3,.08,3.4)},
+        lamp(){for(let i=0;i<3;i++){const a=i/3*TAU+.3;beam(ir,[Math.sin(a)*2.3,GY,Math.cos(a)*2.3],[Math.sin(a)*1.0,(-8.3+2),Math.cos(a)*1.0],.15,0,6)}tor(ir,0,GY+6,0,1.75,.08,TAU,null,20);
+          la(ir,[[0,(-8.7+2)],[.6,(-8.7+2)],[1.35,(-8.2+2)],[1.75,(-7.3+2)],[1.9,(-7.15+2)],[1.7,(-7.15+2)],[0,(-7.6+2)]],20);for(let i=0;i<8;i++){const a=i/8*TAU;sp(ir,Math.sin(a)*1.84,(-7.3+2),Math.cos(a)*1.84,.12)}
+          cy(coal,0,(-7.35+2),0,1.55,.22,14);fire(0,(-7.3+2),0,1.25)}}};
+    // ---- 魏晉：竹榻、竹凳、竹桌；畫著水墨竹的紙燈籠 ----
+    F.weijin=()=>{const bam=mm(TX(256,256,(g,w,h)=>{const gr=g.createLinearGradient(0,0,0,h);gr.addColorStop(0,"#AFA65A");gr.addColorStop(.5,"#CFC47C");gr.addColorStop(1,"#A39850");g.fillStyle=gr;g.fillRect(0,0,w,h);
+        for(let i=0;i<60;i++){g.fillStyle=`rgba(90,80,30,${rr(.05,.15)})`;g.fillRect(0,rr(0,h),w,1)}for(const x of[60,188]){g.fillStyle="rgba(70,60,20,.6)";g.fillRect(x,0,6,h);g.fillStyle="rgba(255,250,210,.4)";g.fillRect(x+6,0,3,h)}noise(g,w,h,1200,"60,50,10",.08)}),{roughness:.5}),
+      slat=mm(topT((g,w,h)=>{for(let y=0;y<h;y+=34){g.fillStyle=(y/34)%2?"#C2B56C":"#B5A85E";g.fillRect(0,y,w,34);g.fillStyle="rgba(60,50,15,.5)";g.fillRect(0,y,w,3);for(let k=0;k<3;k++){g.fillStyle="rgba(80,70,20,.45)";g.fillRect(rr(0,w),y+3,5,31)}}noise(g,w,h,6000,"60,50,10",.08)},{round:1,ring:[[.985,22,"#6E5A2C"],[.955,6,"#6E5A2C"]]}),{roughness:.55}),
+      rat=mm(bandT(fillC("#9C8448"),{n:1,m:()=>{},post:(g,w,h)=>{g.strokeStyle="rgba(60,45,15,.6)";g.lineWidth=3;for(let x=-h;x<w;x+=10){g.beginPath();g.moveTo(x,0);g.lineTo(x+h,h);g.stroke()}}}),{roughness:.7}),
+      paper=lit(lanT("#F3E0B8",{edge:"#C9AE78",draw:(g,h)=>{g.strokeStyle="rgba(30,40,28,.85)";g.fillStyle="rgba(30,40,28,.8)";g.lineCap="round";
+        for(const[x,lw]of[[-30,7],[18,5]]){g.lineWidth=lw;for(let y=h*.9;y>h*.1;y-=34){g.beginPath();g.moveTo(x,y-h/2);g.lineTo(x+2,y-30-h/2);g.stroke()}}
+        for(let k=0;k<11;k++){g.save();g.translate(rr(-50,60),rr(-h*.4,h*.1));g.rotate(rr(-1.2,1.2)+(k%2?PI:0));g.beginPath();g.moveTo(0,0);g.quadraticCurveTo(18,-6,44,0);g.quadraticCurveTo(18,5,0,0);g.fill();g.restore()}}}),.6),dk=M(0x5A4A26,{roughness:.6});
+      const tube=(x0,y0,z0,x1,y1,z1,r)=>beam(bam,[x0,y0,z0],[x1,y1,z1],r,0,10,6);
+      return{frame:0x6E5A2C,
+        table(){roundTop(8.2,.7,slat,rat);tor(bam,0,-1.0,0,7.3,.36,TAU,null,48);tor(bam,0,GY+5,0,5.95,.3,TAU,null,40);
+          for(const a of[-1,1])for(const b of[-1,1]){tube(a*4.2,GY,b*4.2,a*4.2,-.7,b*4.2,.55);tube(a*5.0,GY,b*3.3,a*5.0,-.7,b*3.3,.3);tube(a*4.2,-1.0,b*4.2,a*5.15,-1.0,b*5.15,.25)}},
+        bench(){for(const z of[BZ+2.2,BZ-2.2])tube(-6.6,YS-.35,z,6.6,YS-.35,z,.4);for(const x of[-6.4,6.4])tube(x,YS-.35,BZ-2.4,x,YS-.35,BZ+2.4,.36);
+          for(let i=0;i<9;i++)bx(bam,0,YS-.06,BZ-2+i*.5,13,.16,.42,null,6);
+          for(const x of[-6.4,0,6.4])for(const z of[BZ+2.1,BZ-2.1])tube(x,GY,z,x,YS-.3,z,.42);for(const z of[BZ+2.1,BZ-2.1])tube(-6.4,GY+3,z,6.4,GY+3,z,.26);
+          for(const x of[-6.4,6.4]){tube(x,YS,BZ-2.4,x,YS+6.8,BZ-2.9,.4);tube(x,YS+2.8,BZ-2.3,x,YS+2.8,BZ+2.2,.3);tube(x,YS-.3,BZ+2.1,x,YS+2.9,BZ+2.1,.3)}
+          for(const y of[YS+6.4,YS+4.0,YS+1.5])tube(-6.8,y,BZ-2.4-(y-YS)*.07,6.8,y,BZ-2.4-(y-YS)*.07,y>YS+6?.36:.26);
+          for(let i=-5;i<=5;i++)tube(i*1.1,YS+1.5,BZ-2.5,i*1.1,YS+4.0,BZ-2.68,.13)},
+        stool(){for(let i=0;i<9;i++){const a=i/9*TAU;tube(Math.sin(a)*1.7,GY,Math.cos(a)*1.7,Math.sin(a)*1.7,-5.5,Math.cos(a)*1.7,.36)}tor(bam,0,-6.2,0,1.78,.18,TAU,null,24);tor(bam,0,GY+.8,0,1.78,.18,TAU,null,24);
+          K.add(new T.CircleGeometry(2.25,32),slat,[0,-5.0,0],[-PI/2,0,0]);ct(rat,0,-5.25,0,2.25,2.2,.5,32,null,true)},
+        lamp(sx){const px=sx*2.0,Y=-3.6;tube(px,GY,0,px,Y+3.6,0,.34);tube(px,Y+3.2,0,0,Y+3.0,0,.22);cy(dk,0,Y+2.2,0,.04,1.6,4);
+          cy(paper,0,Y,0,1.15,2.8,16);for(const y of[Y+1.43,Y-1.43])cy(dk,0,y,0,1.21,.16,16);cy(dk,0,Y+1.7,0,.42,.42,12);cy(dk,0,Y-2.2,0,.08,1.2,4);glow(0,Y,0,4.6,.55)}}};
+    // ---- 南北朝：佛教石刻，蓮瓣石桌、蓮座石凳；石燈幢 ----
+    F.nanbei=()=>{const SS="#A89276",st=mm(stT(SS,1),{roughness:.85}),s2=mm(stT("#8E7A62",1),{roughness:.9}),
+      lo=(g,s)=>MO.lotus(g,s,"#B39C7E","#D8C6A8","#6E5A44"),
+      top=mm(topT(g=>{g.fillStyle=SS;g.fillRect(0,0,1024,1024);noise(g,1024,1024,14000,"255,255,255",.1);noise(g,1024,1024,14000,"0,0,0",.12)},{round:1,ring:[[.985,10,"#6E5A44"],[.83,6,"#6E5A44"]],m:lo,n:28,mr:.905,s:.065}),{roughness:.85}),
+      band=mm(bandT(g=>{g.fillStyle=SS;g.fillRect(0,0,1024,128);noise(g,1024,128,4000,"0,0,0",.12)},{lines:"#6E5A44",ly:[.0,.92],m:lo,n:16,s:.38,y:.55}),{roughness:.85}),
+      wins=(g,w,h,c)=>{g.fillStyle=c;for(let k=0;k<4;k++){const x=(k*2+.5)/8*w;g.beginPath();g.moveTo(x-10,h*.85);g.lineTo(x-10,h*.4);g.quadraticCurveTo(x,h*.12,x+10,h*.4);g.lineTo(x+10,h*.85);g.fill()}},
+      win=cv(256,128,(g,w,h)=>{g.fillStyle=SS;g.fillRect(0,0,w,h);noise(g,w,h,3000,"0,0,0",.15);wins(g,w,h,"#FFD27A")}),mask=cv(256,128,(g,w,h)=>{g.fillStyle="#000";g.fillRect(0,0,w,h);wins(g,w,h,"#FFE0A0")}),
+      chamber=M(0xffffff,{map:win,emissive:0xffffff,emissiveMap:mask,emissiveIntensity:1.3,roughness:.85});
+      const petals=(m,n,R,y,w,h,t,tilt)=>{for(let i=0;i<n;i++){const a=(i+.5)/n*TAU;sp(m,Math.sin(a)*R,y,Math.cos(a)*R,w,h,t,[tilt,a,0,"YXZ"])}};
+      return{frame:0x6B4A2E,
+        table(){roundTop(8.2,1.0,top,band,s2);la(s2,[[0,GY],[4.4,GY],[4.4,GY+1.2],[3.6,GY+1.4],[3.0,GY+2.4],[1.9,GY+3.4],[1.6,GY+9],[1.6,GY+13],[2.2,GY+15.5],[3.0,GY+16.8],[3.4,GY+18],[0,GY+18]],8);
+          petals(st,16,2.75,-2.9,.8,1.6,.38,.55);petals(st,16,3.1,GY+2.4,.85,1.5,.38,-.85);tor(st,0,GY+9.5,0,1.7,.22,TAU,null,24);tor(st,0,GY+12.5,0,1.7,.22,TAU,null,24)},
+        bench(){bx(st,0,YS-.5,BZ,13.4,1.0,4.9,null,8);for(const x of[-4.8,4.8]){bx(s2,x,(GY+YS-1)/2,BZ,2.4,YS-1-GY,4.0,null,8);bx(band,x,YS-2.3,BZ,2.5,1.4,4.1);bx(band,x,GY+1.0,BZ,2.7,1.6,4.3)}
+          bx(st,0,YS+2.9,BZ-2.35,12.6,5.8,.8,[-.06,0,0],8);bx(band,0,YS+5.2,BZ-1.98,12.6,1.3,.08,[-.06,0,0]);tor(st,0,YS+5.9,BZ-2.4,2.5,.38,PI,[0,0,0],24);sp(st,0,YS+8.6,BZ-2.4,.45,.7,.45);petals(st,8,.5,YS+8.1,.28,.5,.15,.6)},
+        stool(){ct(s2,0,GY+6.5,0,1.6,2.1,13,24);petals(st,12,1.75,-6.1,.62,1.15,.3,.6);petals(st,12,2.1,GY+1.2,.65,1.1,.3,-.85);ct(st,0,-5.3,0,2.15,1.95,.6,24)},
+        lamp(){const Y=-4.4;la(s2,[[0,GY],[2.3,GY],[2.3,GY+1.0],[1.7,GY+1.3],[0,GY+1.3]],8);petals(st,8,1.35,GY+1.7,.55,.9,.3,-.85);cy(st,0,(GY+1.6+Y-2.3)/2,0,.5,Y-2.3-GY-1.6,8);
+          tor(st,0,GY+7,0,.55,.12,TAU,null,8);la(st,[[0,Y-2.4],[.6,Y-2.4],[1.5,Y-1.6],[1.65,Y-1.3],[0,Y-1.3]],8);petals(st,8,1.25,Y-1.9,.5,.8,.25,.6);
+          K.add(new T.CylinderGeometry(1.05,1.05,2.3,8),chamber,[0,Y,0]);ct(st,0,Y+1.25,0,1.6,1.7,.25,8);ct(st,0,Y+1.85,0,.25,2.25,1.0,8);ct(st,0,Y+1.35,0,2.25,2.3,.18,8);
+          for(let i=0;i<5;i++)cy(st,0,Y+2.55+i*.36,0,.48-.07*i,.2,8);sp(st,0,Y+4.5,0,.32,.42,.32);glow(0,Y,0,3.6,.5)}}};
+    // ---- 隋：實用的上漆木作；運河船燈 ----
+    F.sui=()=>{const LAC="#46201A",BLK="#1A120E",lac=mm(lacqT(LAC,"#6A3424"),{roughness:.38}),blk=mm(lacqT(BLK,"#3A2A20"),{roughness:.3}),br=M(0xB89050,{metalness:.4,roughness:.4}),
+      top=mm(topT(fillC(LAC),{ring:[[.975,22,BLK],[.93,4,"#C9A050"]]}),{roughness:.3}),wd=mm(woodT("#3A281C","#120A06",{n:90}),{roughness:.7}),
+      paper=lit(lanT("#EBD9A8",{edge:"#B8925A",ribs:18,rc:"#8A6A3A",bands:[[.14,.06,"#A8281C"],[.8,.06,"#A8281C"]],draw:chT("隋","#2A1A10",.36)}),.6),red=M(0xA8281C,{roughness:.8,side:T.DoubleSide});
+      return{frame:0x4A1C12,
+        table(){sqTop(7.8,.8,top,blk);bx(lac,0,-1.4,0,14.8,1.1,14.8,null,4);legs(lac,7.0,1.0,GY,-.8,false,4);for(const s of[-1,1]){bx(blk,0,GY+3,s*7,14,.5,.5,null,4);bx(blk,s*7,GY+3,0,.5,.5,14,null,4)}
+          for(const a of[-1,1])for(const b of[-1,1])bx(br,a*7.4,-1.3,b*7.4,.5,1.0,.5)},
+        bench(){for(let i=0;i<3;i++)bx(lac,0,YS-.25,BZ+1.55-i*1.55,13.2,.5,1.45,null,6);for(const z of[BZ+2.2,BZ-2.2])bx(blk,0,YS-.8,z,13,.6,.4,null,4);
+          for(const x of[-6.2,0,6.2])for(const z of[BZ+1.9,BZ-1.9])bx(lac,x,(GY+YS-.5)/2,z,.8,YS-.5-GY,.8,null,4);for(const z of[BZ+1.9,BZ-1.9])bx(blk,0,GY+3,z,12.4,.4,.4,null,4);
+          for(const x of[-6.2,6.2])bx(lac,x,YS+3.2,BZ-2.3,.7,6.4,.7,null,4);bx(blk,0,YS+6.4,BZ-2.3,13.6,.6,.8,null,4);bx(blk,0,YS+2.0,BZ-2.3,12.4,.4,.5,null,4);
+          for(let i=-5;i<=5;i++)bx(lac,i*1.05,YS+4.2,BZ-2.3,.3,4.2,.3,null,4)},
+        stool(){bx(lac,0,-5.35,0,3.6,.5,3.6,null,4);legs(lac,1.4,.5,GY,-5.6,false,4);for(const s of[-1,1]){bx(blk,0,GY+3,s*1.4,2.8,.3,.3);bx(blk,s*1.4,GY+3,0,.3,.3,2.8)}},
+        lamp(sx){const px=sx*2.0,Y=-4.4;cy(wd,px,(GY+Y+4.2)/2,0,.3,Y+4.2-GY,8,null,4);beam(wd,[px,Y+3.4,0],[-sx*.3,Y+2.9,0],.22,0,8,4);beam(wd,[px,Y+1.6,0],[px*.45,Y+3.1,0],.15,0,6,4);
+          sp(br,px,Y+4.35,0,.3);bx(red,px-sx*.9,Y+3.95,0,1.5,.8,.04);cy(blk,0,Y+2.1,0,.04,1.4,4);sp(paper,0,Y,0,1.0,1.3,1.0);for(const y of[Y+1.22,Y-1.22])cy(blk,0,y,0,.42,.22,12);cy(red,0,Y-1.9,0,.09,1.2,6);glow(0,Y,0,4.0,.45)}}};
+    // ---- 唐：朱漆描金寶相花、豐腴的造型、三彩；華麗宮燈 ----
+    F.tang=()=>{const R="#9E1E1A",GD="#D9A441",GR="#2E7D5B",AM="#D98E2E",CR="#F1E3C2",red=mm(lacqT(R,"#C84030"),{roughness:.3}),gd=gold(),
+      ros=(g,s,i)=>MO.rosette(g,s,GD,i%2?GR:AM,CR),
+      top=mm(topT(fillC(R),{round:1,ring:[[.975,8,GD],[.84,5,GD]],m:ros,n:16,mr:.908,s:.052}),{roughness:.28}),side=mm(bandT(fillC(R),{lines:GD,m:ros,n:12,s:.3}),{roughness:.3}),
+      kun=(n,h)=>mm(bandT(fillC(R),{h,lines:GD,ly:[.03,.93],n,s:.36,y:.52,m:(g,s)=>{g.fillStyle="#2A0E0A";g.beginPath();g.moveTo(-s,s*1.1);g.lineTo(-s,0);g.bezierCurveTo(-s,-s*.55,-s*.45,-s*.45,-s*.22,-s*.7);g.quadraticCurveTo(0,-s*1.05,s*.22,-s*.7);
+        g.bezierCurveTo(s*.45,-s*.45,s,-s*.55,s,0);g.lineTo(s,s*1.1);g.closePath();g.fill();g.strokeStyle=GD;g.lineWidth=s*.07;g.stroke()}}),{roughness:.3}),
+      sanc=mm(TX(512,256,(g,w,h)=>{g.fillStyle=CR;g.fillRect(0,0,w,h);for(let i=0;i<46;i++){const x=rr(0,w),c=[GR,AM,AM,"#7A4A1E"][i%4],ww=rr(10,36),l=rr(.4,1)*h,gr=g.createLinearGradient(0,0,0,l);gr.addColorStop(0,hexA(c,.95));gr.addColorStop(.8,hexA(c,.7));gr.addColorStop(1,hexA(c,0));
+        g.fillStyle=gr;g.beginPath();g.moveTo(x-ww/2,0);g.lineTo(x+ww/2,0);g.quadraticCurveTo(x+ww/2,l*.9,x,l);g.quadraticCurveTo(x-ww/2,l*.9,x-ww/2,0);g.fill()}noise(g,w,h,2000,"255,255,255",.1)}),{roughness:.22}),
+      silk=lit(lanT("#C32A1C",{edge:"#6A0E0A",ribs:12,rc:GD,ra:.9,rw:4,draw:(g,h)=>MO.rosette(g,h*.22,GD,GR,CR)}),.6,{roughness:.55}),gm=M(0x2E7D5B,{roughness:.5}),am=M(0xD98E2E,{roughness:.5});
+      return{frame:0x6E1612,
+        table(){roundTop(8.2,1.1,top,side,red);la(red,[[0,GY+2.2],[2.2,GY+2.2],[2.6,GY+3],[2.8,GY+4.5],[2.2,GY+6.5],[1.3,GY+8],[1.15,GY+10],[1.6,GY+12],[2.3,GY+13.5],[2.3,GY+15],[1.6,GY+16],[2.8,GY+17.3],[3.4,GY+17.9],[0,GY+17.9]],32);
+          for(const[y,r]of[[GY+4.5,2.82],[GY+13.5,2.33],[GY+17.3,2.82],[GY+8,1.33]])tor(gd,0,y,0,r,.12,TAU,null,40);K.add(new T.CylinderGeometry(4.6,4.8,2.2,40,1,true),kun(8,128),[0,GY+1.1,0]);ct(red,0,GY+2.3,0,4.75,4.75,.2,40);tor(gd,0,GY+2.4,0,4.75,.1,TAU,null,48)},
+        bench(){const kb=kun(3,1024);bx(kb,0,(GY+YS-.9)/2,BZ,13.2,YS-.9-GY,4.6);bx(red,0,YS-.45,BZ,13.6,.9,5.0,null,4);bx(sanc,0,YS+.2,BZ+.1,12.6,.5,4.4);
+          bx(red,0,YS+3.4,BZ-2.5,13.0,6.4,.5,null,4);bx(side,0,YS+5.3,BZ-2.22,12.6,1.5,.06);cy(gd,0,YS+6.7,BZ-2.5,.34,13.6,12,[0,0,PI/2]);for(const x of[-6.9,6.9])sp(gd,x,YS+6.7,BZ-2.5,.45);
+          for(const x of[-5.7,5.7]){cy(sanc,x,YS+1.0,BZ+.2,.75,4.2,16,[PI/2,0,0]);for(const z of[-2.12,2.12])cy(gd,x,YS+1.0,BZ+.2+z,.78,.12,16,[PI/2,0,0])}},
+        stool(){la(sanc,[[0,GY],[1.6,GY],[2.1,GY+3],[2.4,GY+7],[2.1,GY+11],[1.8,GY+13.4],[2.15,GY+13.7],[2.1,GY+14],[0,GY+14]],28);tor(gd,0,GY+13.6,0,2.1,.1,TAU,null,28)},
+        lamp(sx){const px=sx*2.1,Y=-4.2;cy(red,px,(GY+Y+3.6)/2,0,.32,Y+3.6-GY,10);ct(gd,px,GY+.5,0,.6,.9,1.0,10);sp(gd,px,Y+3.8,0,.42);bx(gd,px/2,Y+3.0,0,2.6,.22,.22);tor(gd,px*.55,Y+2.4,0,.55,.09,PI*1.5,[0,0,sx>0?0:PI],12);
+          cy(gd,0,Y+2.0,0,.05,1.2,4);sp(silk,0,Y,0,1.45,1.25,1.45);ct(gd,0,Y+1.3,0,.5,1.0,.4,16);sp(gd,0,Y+1.65,0,.28);ct(gd,0,Y-1.3,0,1.0,.5,.35,16);
+          for(let i=0;i<8;i++){const a=i/8*TAU,x=Math.sin(a)*.55,z=Math.cos(a)*.55;cy(i%2?gm:am,x,Y-2.35,z,.07,1.8,4);sp(gd,x,Y-3.3,z,.12)}glow(0,Y,0,5,.5)}}};
+    // ---- 五代：深色木、墨色、收斂；水墨山水屏風；素紙座燈 ----
+    F.wudai=()=>{const dw=mm(woodT("#2B211B","#0E0A08",{n:110,a:.25}),{roughness:.5}),
+      top=mm(topT(g=>grain(g,1024,1024,"#2E241D","#0E0A08",{n:200,a:.2}),{ring:[[.985,12,"#0E0A08"]]}),{roughness:.45}),
+      ink=mm(cv(1024,512,(g,w,h)=>{g.fillStyle="#E4DAC2";g.fillRect(0,0,w,h);const ic=E.ink;let s=7;const rnd=()=>(s=(s*16807)%2147483647)/2147483647;
+        for(const[base,amp,a]of[[.5,.35,.22],[.62,.3,.38],[.78,.22,.65]]){g.fillStyle=hexA(ic,a);g.beginPath();g.moveTo(0,h);const ph=rnd()*9;for(let x=0;x<=w;x+=8){const t=x/w;g.lineTo(x,h*(base-amp*Math.pow(Math.max(0,Math.sin(t*PI*2.2+ph)*.6+Math.sin(t*PI*5.3+ph*2)*.3+.3),1.4)))}g.lineTo(w,h);g.fill();
+          const gr=g.createLinearGradient(0,h*base,0,h*(base+.18));gr.addColorStop(0,"rgba(228,218,194,0)");gr.addColorStop(1,"rgba(228,218,194,.95)");g.fillStyle=gr;g.fillRect(0,h*(base-.02),w,h*.2)}
+        g.strokeStyle=hexA(ic,.8);g.lineWidth=2;for(let i=0;i<40;i++){const x=rnd()*w,y=h*(.55+rnd()*.3);g.beginPath();g.moveTo(x,y);g.lineTo(x,y-10-rnd()*14);g.stroke();g.beginPath();g.ellipse(x,y-16,5,3,0,0,TAU);g.stroke()}
+        g.fillStyle="#A8281C";g.fillRect(w*.86,h*.12,26,26);noise(g,w,h,6000,"120,100,70",.05)}),{roughness:.8}),
+      paper=lit(cv(256,256,(g,w,h)=>{g.fillStyle="#F0E8D4";g.fillRect(0,0,w,h);g.strokeStyle="rgba(40,30,20,.5)";g.lineWidth=3;g.strokeRect(16,16,w-32,h-32);noise(g,w,h,3000,"120,100,70",.06)}),.7);
+      return{frame:0x231A15,
+        table(){sqTop(7.7,.6,top,dw,4);bx(dw,0,-1.0,0,14.6,.8,14.6,null,4);legs(dw,6.9,.8,GY,-.6,false,4);for(const s of[-1,1]){bx(dw,0,-2.4,s*6.9,13.2,.35,.35,null,4);bx(dw,s*6.9,-2.4,0,.35,.35,13.2,null,4);bx(dw,0,GY+2.5,s*6.9,13.2,.4,.4,null,4)}},
+        bench(){bx(dw,0,YS-.35,BZ,13.2,.7,4.6,null,4);bx(dw,0,YS-1.2,BZ+2.1,12.6,.9,.3,null,4);for(const x of[-6.2,6.2])for(const z of[BZ+1.9,BZ-1.9])bx(dw,x,(GY+YS-.7)/2,z,.7,YS-.7-GY,.7,null,4);
+          bx(dw,0,YS+4.0,BZ-2.9,13.0,6.8,.4,null,4);bx(ink,0,YS+4.0,BZ-2.68,12.2,6.0,.05);for(const x of[-5.8,5.8])bx(dw,x,YS+.35,BZ-2.9,.8,.7,2.4,null,4)},
+        stool(){bx(dw,0,-5.3,0,3.4,.5,3.4,null,4);legs(dw,1.35,.45,GY,-5.55,false,4);for(const s of[-1,1]){bx(dw,0,GY+2.5,s*1.35,2.7,.3,.3);bx(dw,s*1.35,GY+2.5,0,.3,.3,2.7)}},
+        lamp(){const Y=-4.4;bx(dw,0,GY+.3,0,3.2,.6,.6,null,4);bx(dw,0,GY+.3,0,.6,.6,3.2,null,4);cy(dw,0,(GY+Y-1.4)/2,0,.22,Y-1.4-GY,8,null,4);
+          bx(dw,0,Y-1.35,0,2.0,.15,2.0);bx(paper,0,Y,0,1.62,2.4,1.62);for(const a of[-1,1])for(const b of[-1,1])bx(dw,a*.85,Y,b*.85,.14,2.6,.14);bx(dw,0,Y+1.35,0,2.1,.18,2.1);ct(dw,0,Y+1.7,0,.15,1.45,.55,4,[0,PI/4,0]);glow(0,Y,0,3.6,.4)}}};
+    // ---- 宋：素雅淺色木、細長的腳、青瓷繡墩；紗燈 ----
+    F.song=()=>{const lw=mm(woodT("#C8A576","#8A6440",{n:110,a:.18,lw:1.6}),{roughness:.5}),
+      top=mm(topT(g=>grain(g,1024,1024,"#CDAB7C","#8A6440",{n:220,a:.16,lw:1.6}),{ring:[[.99,8,"#9C7A4E"]]}),{roughness:.45}),
+      cel=mm(TX(512,256,(g,w,h)=>{const gr=g.createLinearGradient(0,0,0,h);gr.addColorStop(0,"#A9C6AE");gr.addColorStop(.5,"#94B49C");gr.addColorStop(1,"#86A88F");g.fillStyle=gr;g.fillRect(0,0,w,h);
+        for(let i=0;i<70;i++){g.strokeStyle=`rgba(50,70,58,${rr(.12,.3)})`;g.lineWidth=rr(.6,1.4);g.beginPath();let x=rr(0,w),y=rr(0,h);g.moveTo(x,y);for(let k=0;k<5;k++){x+=rr(-30,30);y+=rr(-30,30);g.lineTo(x,y)}g.stroke()}noise(g,w,h,1500,"255,255,255",.08)}),{roughness:.2}),
+      gauze=lit(lanT("#F1EADA",{edge:"#DCCFB4",draw:(g,h)=>{g.strokeStyle="rgba(50,40,30,.8)";g.lineCap="round";g.lineWidth=4;g.beginPath();g.moveTo(-50,h*.35);g.bezierCurveTo(-20,h*.1,0,0,40,-h*.3);g.stroke();g.lineWidth=2.5;g.beginPath();g.moveTo(-12,h*.08);g.quadraticCurveTo(10,h*.1,28,h*.2);g.stroke();
+        for(let k=0;k<9;k++){g.fillStyle=k%3?"rgba(200,70,80,.75)":"rgba(240,240,235,.9)";g.beginPath();g.arc(rr(-40,40),rr(-h*.3,h*.25),rr(5,8),0,TAU);g.fill()}}}),.55);
+      return{frame:0x9C7A4E,
+        table(){sqTop(7.7,.6,top,lw,4);bx(lw,0,-.95,0,13.9,.7,13.9,null,4);for(const a of[-1,1])for(const b of[-1,1])beam(lw,[a*6.95,-.6,b*6.95],[a*7.25,GY,b*7.25],.38,0,12,4);
+          for(const s of[-1,1]){cy(lw,0,GY+4,s*7.12,.17,14.2,8,[0,0,PI/2],4);cy(lw,s*7.12,GY+4,0,.17,14.2,8,[PI/2,0,0],4)}},
+        bench(){bx(lw,0,YS-.3,BZ,13.0,.6,4.4,null,4);for(const a of[-1,1])for(const b of[-1,1])beam(lw,[a*6.1,YS-.6,BZ+b*1.9],[a*6.3,GY,BZ+b*2.1],.32,0,10,4);
+          for(const b of[-1,1])cy(lw,0,GY+3.5,BZ+b*2.0,.15,12.4,8,[0,0,PI/2],4);for(const a of[-1,1]){cy(lw,a*6.2,GY+3.5,BZ,.15,4.0,8,[PI/2,0,0],4);beam(lw,[a*6.1,YS,BZ-2.0],[a*6.1,YS+6.4,BZ-2.6],.3,0,10,4)}
+          cy(lw,0,YS+6.5,BZ-2.62,.27,13.6,10,[0,0,PI/2],4);for(const a of[-1,1])sp(lw,a*6.85,YS+6.58,BZ-2.62,.3);cy(lw,0,YS+.9,BZ-2.15,.16,12.2,8,[0,0,PI/2],4);
+          for(const x of[-3.4,0,3.4])bx(lw,x,YS+3.7,BZ-2.38,1.1,5.6,.16,[-.1,0,0],4)},
+        stool(){la(cel,[[0,GY],[1.5,GY],[1.55,GY+.4],[2.0,GY+2.5],[2.25,GY+7],[2.0,GY+11.5],[1.6,GY+13.4],[1.85,GY+13.6],[1.85,GY+14],[0,GY+14]],32);
+          for(const[y,r]of[[GY+2.5,2.02],[GY+11.5,2.02]])tor(cel,0,y,0,r,.1,TAU,null,32);for(let i=0;i<14;i++){const a=i/14*TAU;sp(cel,Math.sin(a)*2.1,GY+3.2,Math.cos(a)*2.1,.13);sp(cel,Math.sin(a)*2.1,GY+10.8,Math.cos(a)*2.1,.13)}},
+        lamp(sx){const px=sx*1.8,Y=-4.4;la(cel,[[0,GY],[1.3,GY],[1.2,GY+.6],[.5,GY+1.2],[0,GY+1.2]],20);cy(lw,px*0,(GY+1.2+Y-1.7)/2,0,.2,Y-1.7-GY-1.2,8,null,4);
+          bx(lw,0,Y-1.75,0,1.2,.12,1.2);for(const a of[-1,1])beam(lw,[0,Y-1.7,0],[a*.85,Y-1.25,0],.08,0,6);ct(gauze,0,Y,0,.85,.95,2.4,16);for(const y of[Y+1.22,Y-1.22])tor(lw,0,y,0,y>Y?.86:.96,.06,TAU,null,16);
+          ct(lw,0,Y+1.45,0,.2,.6,.35,12);sp(lw,0,Y+1.75,0,.12);glow(0,Y,0,3.8,.45)}}};
+    // ---- 元：青花瓷鼓桌、瓷墩；毛氈；圓燈 ----
+    F.yuan=()=>{const BL="#22489A",WH="#F3F5F6",por=M(0xF3F5F6,{roughness:.16}),blue=M(0x22489A,{roughness:.3}),dw=mm(woodT("#3E2A1E","#140C07",{n:90}),{roughness:.6}),
+      waves=(g,w,y0,y1)=>{g.strokeStyle=BL;g.lineWidth=3;for(let x=0;x<w;x+=44){g.beginPath();g.arc(x,y1,(y1-y0)*.8,PI,PI*1.75);g.stroke();g.beginPath();g.arc(x+22,y1,(y1-y0)*.45,PI,PI*1.8);g.stroke()}},
+      body=mm(TX(1024,512,(g,w,h)=>{g.fillStyle=WH;g.fillRect(0,0,w,h);g.fillStyle=BL;for(const y of[.13,.24,.71,.86])g.fillRect(0,h*y,w,5);
+        for(let i=0;i<16;i++){g.save();g.translate((i+.5)*w/16,h*.185);g.scale(1,.9);MO.lotus(g,h*.045,WH,WH,BL);g.restore()}
+        for(let i=0;i<5;i++){g.save();g.translate((i+.5)*w/5,h*.47);MO.peony(g,h*.08,BL);g.restore()}waves(g,w,h*.74,h*.85);
+        for(let i=0;i<12;i++){g.save();g.translate((i+.5)*w/12,h*.82);g.rotate(PI);g.restore()}noise(g,w,h,2000,"30,60,140",.05)}),{roughness:.16}),
+      top=mm(topT(g=>{g.fillStyle=WH;g.fillRect(0,0,1024,1024)},{round:1,ring:[[.98,10,BL],[.83,5,BL],[.8,2,BL]],m:(g,s)=>MO.peony(g,s,BL),n:12,mr:.905,s:.032}),{roughness:.16}),
+      side=mm(bandT(g=>{g.fillStyle=WH;g.fillRect(0,0,1024,128)},{lines:BL,n:1,m:()=>{},post:(g,w,h)=>waves(g,w,h*.25,h*.82)}),{roughness:.16}),
+      felt=mm(cv(512,256,(g,w,h)=>{g.fillStyle="#9C2A22";g.fillRect(0,0,w,h);noise(g,w,h,8000,"60,10,5",.25);g.strokeStyle="#EADFC6";g.lineWidth=10;g.strokeRect(14,14,w-28,h-28);g.strokeStyle=BL;g.lineWidth=6;g.strokeRect(30,30,w-60,h-60);
+        for(let i=0;i<6;i++){g.save();g.translate(70+i*74,h/2);g.fillStyle="#EADFC6";g.beginPath();g.moveTo(0,-26);g.lineTo(20,0);g.lineTo(0,26);g.lineTo(-20,0);g.fill();g.fillStyle=BL;g.fillRect(-6,-6,12,12);g.restore()}}),{roughness:.95}),
+      paper=lit(lanT(WH,{edge:"#C9D3E0",bands:[[.08,.05,BL],[.87,.05,BL]],draw:(g,h)=>{g.strokeStyle=BL;g.lineWidth=5;g.fillStyle=hexA(BL,.85);g.beginPath();g.moveTo(-90,-h*.35);g.quadraticCurveTo(-60,0,0,h*.05);g.quadraticCurveTo(60,0,90,-h*.35);g.stroke();MO.peony(g,h*.09,BL)}}),.55);
+      const drum=(R,top0)=>{la(body,[[0,0],[.64,0],[.77,.082],[.94,.273],[1,.49],[.94,.71],[.77,.9],[.64,1],[0,1]].map(([r,y])=>[r*R,GY+y*top0]),32);
+        for(const y of[GY+2.4,GY+top0-2.0]){const r=R*.82;for(let i=0;i<18;i++){const a=i/18*TAU;sp(por,Math.sin(a)*r,y,Math.cos(a)*r,.16)}}};
+      return{frame:0x3E2A1E,
+        table(){roundTop(8.2,.7,top,side,por);drum(4.7,18.3)},
+        bench(){bx(dw,0,YS-.7,BZ,13.4,.8,4.9,null,4);for(const a of[-1,1])for(const b of[-1,1])bx(dw,a*6.2,(GY+YS-1.1)/2,BZ+b*2.0,.8,YS-1.1-GY,.8,null,4);for(const b of[-1,1])bx(dw,0,GY+2.5,BZ+b*2.0,12.4,.4,.4);
+          bx(felt,0,YS+.0,BZ+.1,13.0,.5,4.6);bx(felt,0,YS-1.0,BZ+2.42,13.0,1.8,.08);for(const x of[-6.3,6.3])bx(dw,x,YS+3.1,BZ-2.45,.6,6.2,.6,null,4);bx(dw,0,YS+6.1,BZ-2.45,13.2,.5,.6,null,4);
+          bx(felt,0,YS+3.4,BZ-2.42,12.0,4.8,.25);cy(felt,0,YS+1.0,BZ-1.75,.75,12.0,16,[0,0,PI/2]);for(const x of[-6.05,6.05])cy(blue,x,YS+1.0,BZ-1.75,.78,.12,16,[0,0,PI/2])},
+        stool(){drum(2.45,14);K.add(new T.CircleGeometry(2.45*.64,24),top,[0,-4.99,0],[-PI/2,0,0])},
+        lamp(sx){const px=sx*1.9,Y=-4.4;cy(dw,px,(GY+Y+3.4)/2,0,.28,Y+3.4-GY,8,null,4);ct(blue,px,GY+.5,0,.55,.85,1.0,10);bx(dw,px/2,Y+3.0,0,2.4,.24,.24,null,4);cy(dw,0,Y+2.0,0,.04,1.6,4);
+          sp(paper,0,Y,0,1.25,1.18,1.25);for(const y of[Y+1.15,Y-1.15])cy(blue,0,y,0,.5,.22,14);cy(blue,0,Y-1.9,0,.1,1.2,6);sp(blue,0,Y-1.35,0,.16);glow(0,Y,0,4.4,.45)}}};
+    // ---- 明：黃花梨、明式線條；官帽椅式的長椅背；六角宮燈 ----
+    F.ming=()=>{const hh=mm(woodT("#9C6634","#5A2E12",{n:120,a:.28,fig:4,figR:36}),{roughness:.42}),dk=mm(woodT("#7A4A22","#3A1C0A",{n:80}),{roughness:.45}),rw=mm(woodT("#3A1C14","#120604",{n:90}),{roughness:.4}),
+      top=mm(topT(g=>grain(g,1024,1024,"#9A6332","#5A2E12",{n:240,a:.25,fig:6,figR:60}),{ring:[[.99,12,"#7A4418"],[.91,5,"#8A5020"]]}),{roughness:.38}),
+      cane=mm(TX(256,256,(g,w,h)=>{g.fillStyle="#C9A86A";g.fillRect(0,0,w,h);for(const d of[1,-1])for(let k=-h;k<w+h;k+=12){g.strokeStyle=d>0?"rgba(255,240,200,.35)":"rgba(90,60,20,.35)";g.lineWidth=4;g.beginPath();g.moveTo(k,0);g.lineTo(k+d*h,h);g.stroke()}
+        for(let y=6;y<h;y+=12)for(let x=6;x<w;x+=12){g.fillStyle="rgba(60,40,15,.5)";g.beginPath();g.arc(x,y,2.2,0,TAU);g.fill()}},3),{roughness:.7}),
+      dun=mm(TX(1024,512,(g,w,h)=>{grain(g,w,h,"#9C6634","#5A2E12",{n:90,a:.25});for(let k=0;k<5;k++){const x=(k+.5)/5*w,ww=w*.11,y0=h*.3,y1=h*.7;g.fillStyle="#24120A";g.beginPath();g.ellipse(x,(y0+y1)/2,ww/2,(y1-y0)/2,0,0,TAU);g.fill();g.strokeStyle="rgba(255,220,160,.35)";g.lineWidth=4;g.stroke()}}),{roughness:.42}),
+      silk=lit(lanT("#B8261C",{edge:"#6A100A",bands:[[.04,.06,"#E2B65C"],[.9,.06,"#E2B65C"]],draw:(g,h)=>{MO.flower(g,h*.13,"#F4D9A0","#E2B65C");g.strokeStyle="#F4D9A0";g.lineWidth=3;g.beginPath();g.moveTo(-40,h*.3);g.quadraticCurveTo(0,h*.1,10,h*.05);g.stroke()}}),.6),
+      gd=gold(),tas=M(0xC8102E,{roughness:.8});
+      const chain=(m,x,y,z,segs)=>{for(const[L,th]of segs){const y1=y+L*Math.cos(th),z1=z-L*Math.sin(th);bx(m,x,(y+y1)/2,(z+z1)/2,1.25,L,.22,[-th,0,0],4);y=y1;z=z1}return[y,z]};
+      return{frame:0x8A5A2B,
+        table(){sqTop(7.9,.75,top,hh,4);bx(hh,0,-.95,0,15.3,.3,15.3,null,4);bx(dk,0,-1.25,0,14.9,.32,14.9,null,4);bx(hh,0,-1.95,0,15.4,1.1,15.4,null,4);
+          for(const a of[-1,1])for(const b of[-1,1]){bx(hh,a*7.2,(GY+.9-2.5)/2,b*7.2,1.0,-2.5-GY-.9,1.0,null,4);bx(hh,a*7.05,GY+.45,b*7.05,1.15,.9,1.15,null,4)}
+          for(const s of[-1,1])for(const ax of[0,1]){const P=(u,y)=>ax?[s*7.2,y,u]:[u,y,s*7.2];beam(hh,P(-7.0,-4.4),P(-4.2,-3.3),.36,.36,0,4);beam(hh,P(-4.2,-3.3),P(4.2,-3.3),.36,.36,0,4);beam(hh,P(4.2,-3.3),P(7.0,-4.4),.36,.36,0,4);
+            for(const u of[-2.2,2.2])beam(hh,P(u,-3.3),P(u,-2.5),.28,.28,0,4)}},
+        bench(){bx(hh,0,YS-.35,BZ,13.2,.7,4.6,null,4);bx(cane,0,YS+.01,BZ,12.4,.02,3.8);bx(hh,0,YS-1.15,BZ+2.15,12.6,.9,.25,null,4);
+          for(const a of[-1,1])for(const b of[-1,1])cy(hh,a*6.3,(GY+YS-.7)/2,BZ+b*2.0,.38,YS-.7-GY,12,null,4);bx(hh,0,GY+1.4,BZ+2.05,12.6,.45,.6,null,4);for(const a of[-1,1])cy(hh,a*6.3,GY+3.2,BZ,.2,4.0,8,[PI/2,0,0],4);cy(hh,0,GY+4.2,BZ-2.0,.2,12.6,8,[0,0,PI/2],4);
+          for(const a of[-1,1]){beam(hh,[a*6.3,YS,BZ-2.0],[a*6.3,YS+6.6,BZ-2.5],.34,0,12,4);cy(hh,a*6.3,YS+3.0,BZ,.22,4.6,8,[PI/2,0,0],4);cy(hh,a*6.3,YS+1.5,BZ+2.05,.22,3.0,8,null,4);beam(hh,[a*6.3,YS,BZ+.7],[a*6.3,YS+3,BZ+.5],.12,0,6)}
+          cy(hh,0,YS+6.75,BZ-2.55,.32,14.0,12,[0,0,PI/2],4);for(const a of[-1,1])sp(hh,a*7.0,YS+6.85,BZ-2.55,.36,.34,.36);
+          for(const x of[-3.6,0,3.6]){chain(hh,x,YS,BZ-2.0,[[2.4,-.22],[2.2,-.02],[2.1,.08]]);cy(dk,x,YS+3.6,BZ-2.38,.42,.06,20,[PI/2-.02,0,0])}},
+        stool(){la(dun,[[0,GY],[1.6,GY],[1.7,GY+.6],[2.3,GY+4],[2.45,GY+7],[2.3,GY+10],[1.7,GY+13.4],[1.6,GY+14],[0,GY+14]],28);for(const y of[GY+.7,GY+13.3])tor(dk,0,y,0,1.72,.12,TAU,null,28);
+          for(let i=0;i<12;i++){const a=i/12*TAU;sp(gd,Math.sin(a)*1.78,GY+1.1,Math.cos(a)*1.78,.1);sp(gd,Math.sin(a)*1.78,GY+12.9,Math.cos(a)*1.78,.1)}},
+        lamp(sx){const px=sx*2.1,Y=-4.3;cy(rw,px,(GY+Y+3.8)/2,0,.3,Y+3.8-GY,8,null,4);ct(rw,px,GY+.6,0,.6,.9,1.2,8);sp(gd,px,Y+4.0,0,.35);bx(rw,px/2,Y+3.3,0,2.8,.24,.24,null,4);tor(rw,px*.6,Y+2.7,0,.5,.08,PI*1.5,[0,0,sx>0?0:PI],12);cy(gd,0,Y+2.6,0,.05,1.0,4);
+          K.add(new T.CylinderGeometry(1.0,1.0,2.4,6,1,true),silk,[0,Y,0]);for(let i=0;i<6;i++){const a=i/6*TAU,c=Math.sin(a),s=Math.cos(a);bx(rw,c*1.02,Y,s*1.02,.14,2.6,.14,[0,a,0]);beam(gd,[c*1.15,Y+1.45,s*1.15],[c*1.85,Y+1.95,s*1.85],.09,0,6);cy(tas,c*1.9,Y+1.05,s*1.9,.07,1.6,4);sp(gd,c*1.9,Y+1.95,s*1.9,.14)}
+          ct(rw,0,Y+1.38,0,1.22,1.22,.25,6);ct(rw,0,Y-1.38,0,1.18,1.18,.25,6);ct(rw,0,Y+1.85,0,.45,1.1,.6,6);sp(gd,0,Y+2.25,0,.22);ct(rw,0,Y-1.75,0,.9,.4,.5,6);cy(tas,0,Y-2.9,0,.18,1.9,6);sp(gd,0,Y-1.95,0,.2);glow(0,Y,0,4.6,.45)}}};
+    // ---- 清：紫檀／紅木，繁複雕刻、掐絲琺瑯、螺鈿；宮燈加流蘇 ----
+    F.qing=()=>{const ZT="#2E1714",zt=mm(woodT(ZT,"#0E0605",{n:160,a:.3,lw:1.4}),{roughness:.36}),gd=gold(),tas=M(0xC8102E,{roughness:.8}),redl=mm(lacqT("#8E1A14","#C84030"),{roughness:.3}),
+      mop=(g,s)=>{const gr=g.createLinearGradient(-s,-s,s,s);gr.addColorStop(0,"#F6FAF6");gr.addColorStop(.5,"#D6E6F2");gr.addColorStop(1,"#F2DCE6");MO.flower(g,s,gr,"#E8D9A8");g.fillStyle=gr;for(const sd of[-1,1]){g.beginPath();g.ellipse(sd*s*1.3,s*.4,s*.45,s*.18,sd*.5,0,TAU);g.fill()}},
+      top=mm(topT(g=>grain(g,1024,1024,"#311915","#0E0605",{n:240,a:.28,lw:1.4}),{round:1,ring:[[.985,8,"#C9A050"],[.855,4,"#C9A050"]],m:mop,n:20,mr:.92,s:.036,post:(g,w)=>{g.strokeStyle="rgba(230,235,240,.55)";g.lineWidth=3;g.beginPath();for(let a=0;a<=TAU+.01;a+=.02){const r=w/2*(.89+.012*Math.sin(a*40));const x=w/2+Math.cos(a)*r,y=w/2+Math.sin(a)*r;a?g.lineTo(x,y):g.moveTo(x,y)}g.stroke()}}),{roughness:.32}),
+      relief=f=>(g,s,i)=>{g.save();g.translate(-s*.06,-s*.06);f(g,s,"rgba(255,200,160,.28)",i);g.restore();f(g,s,"#120807",i)},
+      fretB=mm(bandT(fillC("#2A1412"),{lines:"#5A3020",m:relief((g,s,c)=>MO.fret(g,s,c)),n:18,s:.28}),{roughness:.35}),
+      carve=mm(bandT(fillC("#2A1412"),{lines:"#C9A050",ly:[.02,.9],m:relief((g,s,c,i)=>{g.scale(i%2?-1:1,1);MO.cloud(g,s,c)}),n:12,s:.3,post:(g,w,h)=>{for(let i=0;i<6;i++){g.save();g.translate((i+.5)*w/6,h*.5);g.fillStyle="#2BA6A0";g.beginPath();g.arc(0,0,h*.2,0,TAU);g.fill();g.strokeStyle="#D9B04C";g.lineWidth=4;g.stroke();MO.flower(g,h*.1,"#C8102E","#F2C14E");g.restore()}}}),{roughness:.35}),
+      cloiF=(g,w,h,n)=>{g.fillStyle="#2BA6A0";g.fillRect(0,0,w,h);g.strokeStyle="#D9B04C";g.lineWidth=2.5;for(let i=0;i<n*3;i++){const x=rr(0,w),y=rr(0,h);g.beginPath();for(let a=0;a<TAU*1.3;a+=.25){const r=4+a*5;a?g.lineTo(x+Math.cos(a)*r,y+Math.sin(a)*r):g.moveTo(x,y)}g.stroke()}
+        for(let i=0;i<n;i++){g.save();g.translate(rr(30,w-30),rr(30,h-30));const s=rr(16,30);MO.flower(g,s,["#C8102E","#F2C14E","#E86A9A","#F4F4F4","#1F5FA8"][i%5],"#F2C14E");g.strokeStyle="#D9B04C";g.lineWidth=2;g.beginPath();g.arc(0,0,s*.8,0,TAU);g.stroke();g.restore()}},
+      cloiB=mm(bandT((g,w,h)=>cloiF(g,w,h,14),{lines:"#D9B04C",ly:[.0,.92],n:1,m:()=>{}}),{roughness:.25}),
+      cloiP=mm(cv(512,512,(g,w,h)=>{cloiF(g,w,h,22);g.strokeStyle="#D9B04C";g.lineWidth=10;g.strokeRect(5,5,w-10,h-10)}),{roughness:.25}),
+      cloiD=mm(TX(1024,512,(g,w,h)=>{cloiF(g,w,h,40);g.fillStyle="#D9B04C";for(const y of[.14,.84])g.fillRect(0,h*y,w,8)}),{roughness:.25}),
+      broc=mm(TX(256,256,(g,w,h)=>{g.fillStyle="#E2B03A";g.fillRect(0,0,w,h);for(let y=0;y<2;y++)for(let x=0;x<2;x++){g.save();g.translate(64+x*128+(y%2)*0,64+y*128);MO.rosette(g,34,"#C07818","#B3261E","#F4D47A");g.restore()}noise(g,w,h,3000,"120,80,10",.1)},2),{roughness:.6}),
+      glass=lit(lanT("#F0E2C0",{edge:"#8E1A14",bands:[[.0,.1,"#8E1A14"],[.9,.1,"#8E1A14"],[.1,.025,"#E2B65C"],[.875,.025,"#E2B65C"]],draw:(g,h)=>{MO.rosette(g,h*.16,"#C8102E","#2BA6A0","#F2C14E")}}),.6);
+      return{frame:0x2A1412,
+        table(){roundTop(8.2,.9,top,fretB,zt);K.add(new T.CylinderGeometry(7.85,7.85,1.6,64,1,true),carve,[0,-1.7,0]);tor(zt,0,-2.5,0,7.85,.13,TAU,null,64);
+          la(zt,[[0,GY+1.2],[3.4,GY+1.2],[3.4,GY+1.8],[2.0,GY+2.8],[1.4,GY+5],[2.2,GY+8],[2.3,GY+9.5],[1.3,GY+12],[1.25,GY+14.5],[2.4,GY+16.5],[3.4,GY+17.5],[0,GY+17.5]],32);
+          K.add(new T.CylinderGeometry(2.32,2.28,1.5,32,1,true),cloiB,[0,GY+8.85,0]);for(const y of[GY+8.1,GY+9.6])tor(gd,0,y,0,2.3,.08,TAU,null,32);
+          for(let k=0;k<4;k++){const a=k*PI/2+PI/4,c=Math.sin(a),s=Math.cos(a);beam(zt,[c*2.6,GY+1.5,s*2.6],[c*4.7,GY+.5,s*4.7],.6,.6,0,4);sp(zt,c*4.9,GY+.45,s*4.9,.65,.45,.65);sp(gd,c*4.9,GY+.9,s*4.9,.18)}},
+        bench(){bx(zt,0,GY+.4,BZ,13.8,.8,5.2,null,4);for(const a of[-1,1])for(const b of[-1,1])bx(zt,a*6.4,(GY+.8+YS-3.4)/2,BZ+b*2.1,.95,YS-3.4-GY-.8,.95,null,4);
+          bx(carve,0,YS-2.9,BZ+2.3,12.8,1.0,.15);bx(zt,0,YS-2.9,BZ,12.9,1.0,4.4,null,4);bx(cloiB,0,YS-1.95,BZ,12.7,.9,4.3);bx(zt,0,YS-.75,BZ,13.4,1.5,5.0,null,4);
+          bx(broc,0,YS+.25,BZ+.1,12.4,.5,4.4);bx(zt,0,YS+3.6,BZ-2.55,8.4,7.2,.5,null,4);bx(cloiP,0,YS+3.4,BZ-2.28,7.2,5.6,.06);
+          const sh=new T.Shape();sh.moveTo(-4.4,0);sh.lineTo(-4.4,.5);sh.bezierCurveTo(-3.4,.6,-2.6,.9,-1.8,1.5);sh.bezierCurveTo(-1.2,2.1,-.6,2.2,0,2.4);sh.bezierCurveTo(.6,2.2,1.2,2.1,1.8,1.5);sh.bezierCurveTo(2.6,.9,3.4,.6,4.4,.5);sh.lineTo(4.4,0);
+          K.add(new T.ExtrudeGeometry(sh,{depth:.5,bevelEnabled:false,curveSegments:10}),zt,[0,YS+7.15,BZ-2.8]);sp(gd,0,YS+9.6,BZ-2.55,.3);
+          for(const a of[-1,1]){bx(zt,a*5.4,YS+2.7,BZ-2.55,2.4,5.4,.45,null,4);bx(cloiP,a*5.4,YS+2.6,BZ-2.3,1.7,4.0,.06);bx(zt,a*6.55,YS+1.5,BZ-.2,.45,3.0,4.4,null,4);bx(cloiP,a*6.3,YS+1.5,BZ-.2,.05,2.0,3.4);sp(gd,a*6.55,YS+3.1,BZ+1.9,.22)}},
+        stool(){la(cloiD,[[0,GY+.6],[1.75,GY+.6],[2.0,GY+2],[2.4,GY+7],[2.0,GY+12],[1.75,GY+13.4],[0,GY+13.4]],28);ct(zt,0,GY+.3,0,1.85,1.85,.6,28);ct(zt,0,-5.3,0,2.0,1.85,.6,28);for(const y of[GY+.62,GY+13.4])tor(gd,0,y,0,1.8,.08,TAU,null,28)},
+        lamp(sx){const px=sx*2.3,Y=-4.0;cy(redl,px,(GY+Y+4.0)/2,0,.34,Y+4.0-GY,10);ct(zt,px,GY+.7,0,.7,1.0,1.4,8);sp(gd,px,Y+4.3,0,.42);beam(gd,[px,Y+3.5,0],[-sx*.2,Y+3.3,0],.2,0,8);tor(gd,px*.55,Y+2.9,0,.55,.1,PI*1.5,[0,0,sx>0?0:PI],12);cy(gd,0,Y+2.8,0,.05,1.0,4);
+          K.add(new T.CylinderGeometry(1.18,1.18,2.4,6,1,true),glass,[0,Y,0]);for(let i=0;i<6;i++){const a=i/6*TAU,c=Math.sin(a),s=Math.cos(a);bx(zt,c*1.2,Y,s*1.2,.16,2.6,.16,[0,a,0]);beam(gd,[c*1.35,Y+1.5,s*1.35],[c*2.25,Y+2.1,s*2.25],.11,0,6);sp(gd,c*2.32,Y+2.15,s*2.32,.2);sp(gd,c*2.32,Y+1.85,s*2.32,.14);cy(tas,c*2.32,Y+.55,s*2.32,.08,2.5,4)}
+          ct(gd,0,Y+1.4,0,1.45,1.35,.25,6);ct(zt,0,Y+1.95,0,.75,1.3,.85,6);sp(gd,0,Y+2.55,0,.3);ct(gd,0,Y-1.4,0,1.35,1.45,.22,6);ct(zt,0,Y-1.75,0,.95,1.3,.5,6);ct(gd,0,Y-2.2,0,.4,.85,.5,6);sp(gd,0,Y-2.55,0,.25);cy(tas,0,Y-3.6,0,.32,1.9,8);glow(0,Y,0,5,.45)}}};
+    const f=(F[EK]||F.classic)();
+    f.table();f.bench();for(const[x,z]of[[-14.5,1.5],[14.5,-1.5]]){K.at(x,0,z);OX=x;OZ=z;f.stool()}
+    for(const sx of[-1,1]){OX=sx*8.1;OZ=-17.5;K.at(OX,0,OZ);f.lamp(sx)}K.at();K.build(root);
+    return{frame:f.frame||0x5C3418,tick(s){for(const F of flames){const n=Math.sin(s*11+F.ph)*.5+Math.sin(s*17.3+F.ph*2)*.3+Math.sin(s*5.1+F.ph)*.2;
+      if(F.k===2){F.o.scale.y=F.s*(1+.18*n);F.o.position.y=F.y0*(1+.09*n);F.o.rotation.y=s*.7+F.ph}else F.o.scale.setScalar(F.s*(1+(F.k?.07:.03)*n))}}}}
 
   function create(host,opt){opt=opt||{};
     const el=document.createElement("div");el.className="park3d";el.style.cssText="position:relative;width:100%;border-radius:14px;overflow:hidden;touch-action:none;-webkit-user-select:none;user-select:none;background:#A9CBE8";
@@ -364,38 +736,21 @@
     {const rail=new T.Mesh(new T.TorusGeometry(TR-.4,.35,6,96),stone);rail.rotation.x=PI/2;rail.position.y=GY+3.4;sc.add(rail);
       const lowW=new T.Mesh(new T.CylinderGeometry(TR-.2,TR-.2,1.2,64,1,true),stone2);lowW.material.side=T.DoubleSide;lowW.position.y=GY+.6;sc.add(lowW);
       const pg=new T.BoxGeometry(.8,3.6,.8);for(let i=0;i<36;i++){const a=i/36*TAU;const p=new T.Mesh(pg,stone);p.position.set(Math.sin(a)*(TR-.4),GY+1.8,Math.cos(a)*(TR-.4));p.rotation.y=a;sc.add(p)}}
-    // 石桌（圓桌面＋鼓形桌腳）
-    mesh(new T.CylinderGeometry(8.2,8.0,.9,72),stone,[0,-.45,0]);
-    mesh(new T.TorusGeometry(8.1,.18,10,96),stone,[0,-.04,0]).rotation.x=PI/2;
-    mesh(new T.CylinderGeometry(2.3,3.2,18,40),stone2,[0,GY+9-.9,0]);mesh(new T.CylinderGeometry(4.2,4.6,1.2,40),stone2,[0,GY+.6,0]);
+    // 朝代家具（桌、長椅、凳子、燈）：見 buildFurn；桌面頂面 y=0，長椅座面高度 SY
+    const BZ=-12.6,SY=-3.9,BL=13,iron=M(0x2A2620,{roughness:.45,metalness:.6});
+    const furn=buildFurn(EK,E,{sc,M,GY,SY,BZ,BL,stone,stone2,iron});
     // 木棋盤嵌在桌上：深色實木框，和灰色石桌對比清楚
-    const wood=M(0x5C3418,{roughness:.55});mesh(new T.BoxGeometry(BW+.5,.6,BH+.5),wood,[0,.24,0]);mesh(new T.BoxGeometry(BW+.62,.08,BH+.62),wood,[0,-.0,0]);   // 厚木棋盤＋底座線腳（意見回饋 215）
+    const wood=M(furn.frame,{roughness:.55});mesh(new T.BoxGeometry(BW+.5,.6,BH+.5),wood,[0,.24,0]);mesh(new T.BoxGeometry(BW+.62,.08,BH+.62),wood,[0,-.0,0]);   // 厚木棋盤＋底座線腳（意見回饋 215）
     const btex=boardTex(()=>{try{btex.image.getContext("2d").clearRect(0,0,1,1);drawBoard(btex.image.getContext("2d"),btex.image.width,btex.image.height,null);btex.needsUpdate=true}catch(e){}});const bplane=new T.Mesh(new T.PlaneGeometry(BW,BH),new T.MeshStandardMaterial({map:btex,roughness:.6}));bplane.rotation.x=-PI/2;bplane.position.y=TOP-.02+.03;bplane.receiveShadow=true;sc.add(bplane);
-    // 石凳（左右各一個空的）
-    const stool=(x,z)=>{mesh(new T.CylinderGeometry(2.4,2.2,1.4,36),stone,[x,GY+13.3,z]);mesh(new T.CylinderGeometry(1.5,2.3,12.6,36),stone2,[x,GY+6.3,z])};
-    stool(-14.5,1.5);stool(14.5,-1.5);
-    // 長椅（對手坐的）：縮短一點，讓兩側上角看得到山水
-    const plank=M(0x8E5326,{roughness:.7}),iron=M(0x2A2620,{roughness:.45,metalness:.6});const BZ=-12.6,SY=-3.9,BL=13;
-    for(let i=0;i<4;i++)mesh(new T.BoxGeometry(BL,.45,1.1),plank,[0,SY,BZ+1.8-i*1.2]);
-    for(let i=0;i<3;i++){const b=mesh(new T.BoxGeometry(BL,.45,1.0),plank,[0,SY+3.6+i*1.4,BZ-2.6-i*.25]);b.rotation.x=-.18}
-    for(const x of[-BL/2+1,BL/2-1]){mesh(new T.BoxGeometry(.6,SY-GY,.6),iron,[x,(SY+GY)/2,BZ+1.8]);mesh(new T.BoxGeometry(.6,SY-GY+5.2,.6),iron,[x,(SY+GY+5.2)/2,BZ-2.6]);mesh(new T.BoxGeometry(.5,.5,5),iron,[x,SY-.4,BZ-.4]);
-      const arm=mesh(new T.BoxGeometry(.5,.5,4.4),iron,[x,SY+3.2,BZ]);arm.rotation.x=.05}
     // 茶杯：Pikafish（對面）一杯、我一杯（意見回饋 215）
     const teaCup=(x,z)=>{const cup=new T.Group();cup.position.set(x,0,z);sc.add(cup);const por=M(0xF4F1EA,{roughness:.25}),blue=M(0x2D5DA8,{roughness:.3});const a=new T.Mesh(new T.CylinderGeometry(.75,.75,.08,32),por);a.position.y=.04;cup.add(a);
       const b=new T.Mesh(new T.CylinderGeometry(.5,.36,.7,32,1,true),por);b.position.y=.43;b.material.side=T.DoubleSide;cup.add(b);const band=new T.Mesh(new T.CylinderGeometry(.505,.47,.12,32,1,true),blue);band.position.y=.6;cup.add(band);
       const tea=new T.Mesh(new T.CircleGeometry(.47,32),M(0x9C6B1E,{roughness:.1}));tea.rotation.x=-PI/2;tea.position.y=.66;cup.add(tea);cup.traverse(o=>{if(o.isMesh){o.castShadow=true;o.receiveShadow=true}});return cup};
     teaCup(0,-6.85);teaCup(.4,7.0);   // 意見回饋 219：Pikafish 的茶在它面前正中間、我的茶在我面前正中間
     // 平台上的樹（依朝代：松、柳、竹）：水墨畫的看板（兩種筆法輪流），放在兩側，轉頭時當前景框；不投影（畫是平的，影子會穿幫）
-    const treeTex=[inkTreeTex(E,E.tree,EK.length*131+7),inkTreeTex(E,E.tree,EK.length*131+911)];let treeN=0;
-    const tree=(x,z,s)=>{const m=new T.Mesh(new T.PlaneGeometry(20,26.7),new T.MeshBasicMaterial({map:treeTex[treeN++%2],transparent:true,alphaTest:.02,depthWrite:false,side:T.DoubleSide,toneMapped:false}));
-      m.scale.setScalar(s);m.position.set(x,GY+26.7*s/2-.4,z);m.rotation.y=Math.atan2(0-x,9.2-z);m.renderOrder=1;sc.add(m)};
-    tree(-18,-8,.95);tree(18.5,-5,.9);tree(-13,-16.5,.8);
-    // 欄杆上的燈籠（朝代色）
-    const lanterns=[];{const lm=M(new T.Color(E.acc).getHex(),{emissive:new T.Color(E.acc).getHex(),emissiveIntensity:.45,roughness:.5}),gm=M(0xE3B341,{metalness:.6,roughness:.35});
-      for(const x of[-9.5,9.5]){const g=new T.Group();g.position.set(x,GY,-17.5);sc.add(g);const p=new T.Mesh(new T.CylinderGeometry(.25,.3,15,8),iron);p.position.y=7.5;g.add(p);
-        const arm=new T.Mesh(new T.BoxGeometry(2.4,.22,.22),iron);arm.position.set(x<0?1:-1,14.6,0);g.add(arm);
-        const l=new T.Group();l.position.set(x<0?1.9:-1.9,13.2,0);g.add(l);const b=new T.Mesh(new T.SphereGeometry(.85,14,10),lm);b.scale.y=1.2;l.add(b);
-        for(const y of[-1.05,1.05]){const c=new T.Mesh(new T.CylinderGeometry(.45,.45,.2,12),gm);c.position.y=y;l.add(c)}lanterns.push(l)}}
+    {const seat=new T.Vector3(0,16,9.2),barkM=M(0xffffff,{map:barkTex(E,E.tree),roughness:.95}),folM=new T.MeshBasicMaterial({map:foliageTex(E,E.tree,EK.length*131+7),transparent:true,alphaTest:.02,depthWrite:false,side:T.DoubleSide,toneMapped:false});
+      // 位置（意見回饋 233）：放在平台邊、斜後方，當轉頭時畫面的框，不再一棵大樹擋住整個側面
+      [[-14.8,-13.2,.95,11],[17.8,-8.2,.9,29],[-19.2,3.2,.72,53]].forEach(([x,z,k,sd])=>sc.add(inkTree3D(E,E.tree,EK.length*97+sd,new T.Vector3(x,GY,z),seat,k,barkM,folM)))}
     // 落葉（朝代色系的花瓣／葉子），在畫面外圍飄
     const falling=[];{const lg=new T.PlaneGeometry(.5,.34),cols=[E.acc2,0xD9A548,0xC98A3A];for(let i=0;i<8;i++){const l=new T.Mesh(lg,new T.MeshStandardMaterial({color:new T.Color(cols[i%3]),side:T.DoubleSide,roughness:1}));
       l.userData={x:(Math.random()-.5)*40,z:-12-Math.random()*20,y:Math.random()*30,s:.6+Math.random()*.8,ph:Math.random()*TAU};sc.add(l);falling.push(l)}}
@@ -449,10 +804,10 @@
     let selI=-1,checkRing=null;
     function layoutCaptured(board){captured.forEach(g=>sc.remove(g));captured=[];const cnt={r:{},b:{}};board.forEach(p=>{if(p){const s=sideOf(p),k=p.toUpperCase();cnt[s][k]=(cnt[s][k]||0)+1}});
       for(const s of["r","b"]){const lost=[];for(const k of"RCNBAP")for(let n=(START[s][k]||0)-(cnt[s][k]||0);n>0;n--)lost.push(s==="r"?k:k.toLowerCase());
-        const mine=(s==="r")!==flip;   // 我這邊（靠近鏡頭）輸掉的棋子排在我右手邊；對方的排在對面
+        const mine=(s==="r")===flip;   // 意見回饋 232：被吃的棋子放在吃子那一方的桌邊（我吃掉的對方棋子排在我這側）
         // 鏡頭變俯視後，靠近我的桌邊看不到了：我輸掉的棋子直排在棋盤右側，對方輸掉的排在棋盤後方（縮小一點，不搶棋盤的戲）
         lost.forEach((p,j)=>{const g=makePiece(p);g.scale.setScalar(.8);let x,z;
-          if(mine){if(j<10){x=6.2;z=-4.6+j*.8}else{x=7.0;z=-3.6+(j-10)*.8}}else{const sd=j%2?-1:1,k=j>>1;if(k<4){x=sd*(1.35+k*.95);z=-6.55}else{x=sd*(1.35+(k-4)*.95);z=-7.35}}   // 對方輸掉的棋子分排在茶杯左右兩邊
+          if(mine){if(j<10){x=6.2;z=-4.6+j*.8}else{x=7.0;z=-3.6+(j-10)*.8}}else{const sd=j%2?-1:1,k=j>>1;if(k<4){x=sd*(1.35+k*.95);z=-6.55}else{x=sd*(1.35+(k-4)*.78);z=-7.25}}   // 對方輸掉的棋子分排在茶杯左右兩邊
           g.position.set(x,0,z);g.rotation.y=(Math.random()-.5)*.6;captured.push(g)})}}
     function sync(board){Object.values(pieces).forEach(g=>sc.remove(g));pieces={};board.forEach((p,i)=>{if(p){const g=makePiece(p);at(g,i);pieces[i]=g}});layoutCaptured(board)}
     // 朝代造型換了（或圖剛載入）：重畫棋盤、清掉棋子貼圖、整盤重排
@@ -564,7 +919,7 @@
         else if(mate.face==="open"&&mate.faceT>0){R(B,0,-.4,0,-1.2);R(B,1,-.4,0,1.2);hx=-.2;hy=0}
         B.legs[0].rotation.x=-1.35+.25*Math.sin(s*2.2);B.legs[1].rotation.x=-1.35-.25*Math.sin(s*2.2);
         lerp(B.head.rotation,"x",hx);lerp(B.head.rotation,"y",hy);tick(mate)}
-      rd.render(sc,cam)}
+      furn.tick(s);rd.render(sc,cam)}
     fit();placeCam();requestAnimationFrame(frame);
     const onRs=()=>fit();window.addEventListener("resize",onRs);
     function destroy(){if(stopped)return;stopped=true;window.removeEventListener("resize",onRs);try{rd.dispose();rd.forceContextLoss()}catch(e){}el.remove();opt.onDestroy&&opt.onDestroy()}

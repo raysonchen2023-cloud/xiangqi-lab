@@ -272,7 +272,7 @@
       reset();const dx=tx-x,dy=ty-y,dist=Math.hypot(dx,dy);
       if(drag){ACTS.carry.f(0,B,now/1000)}
       else if(act){actT+=t;const p=Math.min(1,actT/act.d);act.f(p,B,now/1000);if(p>=1){act=null;next=2+Math.random()*4}}
-      else if(dist>2&&(!parked||boardMode||sheetMode)){const s=(sheetMode?480:70)*t,k=Math.min(1,s/dist);x+=dx*k;y+=dy*k;
+      else if(dist>2&&(!parked||boardMode||sheetMode||celeb)){const s=(celeb?900:sheetMode?480:70)*t,k=Math.min(1,s/dist);x+=dx*k;y+=dy*k;
         const want=Math.abs(dx)>4?(dx>0?.9:-.9):0;face+=(want-face)*Math.min(1,t*6);root.rotation.y=face;
         const w=Math.sin(now/110);P.legs[0].rotation.x=.6*w;P.legs[1].rotation.x=-.6*w;R(B,0,-.5*w);R(B,1,.5*w);root.position.y=Math.abs(Math.cos(now/110))*.08}
       else{face+=(0-face)*Math.min(1,t*4);root.rotation.y=face;P.torso.position.y=1.02+.015*Math.sin(now/500);
@@ -320,7 +320,7 @@
       if(r.width>220&&r.bottom>40&&r.top<innerHeight-40&&(!best||r.width>best.width))best=r}return best};
     // 有對話框（意見回饋、問小帥…）打開時：閃到對話框上方；上面空間不夠就先躲起來（意見回饋 177）
     const sheetRect=()=>{const e=document.querySelector("#sheet,.modal .box");if(!e)return null;const r=e.getBoundingClientRect();return r.height&&r.top<innerHeight-30?r:null};
-    const boardT=setInterval(()=>{const sr=sheetRect();
+    const boardT=setInterval(()=>{if(celeb)return;const sr=sheetRect();
       if(sr){sheetMode=true;act=null;if(sr.top-6<H*.7){box.style.opacity="0";hit.style.pointerEvents="none"}else{box.style.opacity="";hit.style.pointerEvents="auto";if(!drag){tx=bounds().x1-4;ty=Math.max(0,sr.top-H)}}return}
       if(sheetMode){sheetMode=false;box.style.opacity="";hit.style.pointerEvents="auto";if(!boardMode){if(parked){const p=store.get("botPos",null);if(p){tx=p.x*innerWidth;ty=p.y*innerHeight}}else wander()}}
       const r=bigBoard();
@@ -330,8 +330,29 @@
       if(boardMode&&!sheetMode)box.style.opacity=(act||drag||bubT>0)?"":".45"},250);
     // 換朝代：重做造型（字形還沒下載就先下載，好了再換一次）
     const rebuild=()=>{curK=eraK();curP=BP();root.remove(P.bot);Object.assign(B,build(curK,grade()));root.add(B.bot)};
+    // 升官慶祝（意見回饋 236）：小帥放大走到畫面正中央，金光、彩帶、「升官」字樣，約 5 秒後回原位
+    let celeb=0;
+    const celebrate=(g,from)=>{if(celeb)return;celeb=1;
+      if(!document.getElementById("xqcelebcss")){const st=document.createElement("style");st.id="xqcelebcss";st.textContent=`
+.xqc{position:fixed;inset:0;z-index:899;pointer-events:none;display:flex;flex-direction:column;align-items:center;justify-content:flex-start;padding-top:12vh;background:radial-gradient(circle at 50% 55%,rgba(255,236,170,.55),rgba(40,20,5,.35) 70%);animation:xqcIn .4s ease-out both}
+.xqc.out{animation:xqcOut .5s ease-in forwards}@keyframes xqcIn{from{opacity:0}}@keyframes xqcOut{to{opacity:0}}
+.xqc .rays{position:absolute;left:50%;top:55%;width:160vmax;height:160vmax;margin:-80vmax 0 0 -80vmax;background:repeating-conic-gradient(rgba(255,214,90,.28) 0 7deg,transparent 7deg 18deg);animation:xqcSpin 9s linear infinite;mask:radial-gradient(circle,#000 10%,transparent 60%);-webkit-mask:radial-gradient(circle,#000 10%,transparent 60%)}
+@keyframes xqcSpin{to{transform:rotate(360deg)}}
+.xqc .ttl{position:relative;font:900 clamp(40px,13vw,72px)/1.1 "Noto Serif TC","PMingLiU",serif;color:#FFE38A;letter-spacing:.12em;text-shadow:0 2px 0 #8a4b00,0 0 18px rgba(255,180,40,.9),0 6px 18px rgba(0,0,0,.45);animation:xqcPop .7s cubic-bezier(.2,1.6,.4,1) both}
+.xqc .sub{position:relative;margin-top:10px;font:700 clamp(17px,5vw,24px)/1.4 "Noto Sans TC",sans-serif;color:#fff;text-shadow:0 2px 8px rgba(0,0,0,.6);animation:xqcPop .7s .25s cubic-bezier(.2,1.6,.4,1) both}
+.xqc .sub b{color:#FFE38A;font-size:1.25em}@keyframes xqcPop{from{opacity:0;transform:scale(.3)}}
+.xqc i{position:absolute;top:-4vh;width:9px;height:15px;border-radius:2px;animation:xqcFall linear forwards}
+@keyframes xqcFall{to{transform:translate(var(--dx),112vh) rotate(var(--r))}}`;document.head.append(st)}
+      const ov=document.createElement("div");ov.className="xqc";ov.innerHTML=`<div class="rays"></div><div class="ttl">升　官</div><div class="sub">${GN[from]}品 → <b>${GN[g]}品官</b></div>`;
+      const cols=["#E8B923","#D7263D","#2F9E5A","#2D6CDF","#F28C28","#fff"];for(let i=0;i<70;i++){const c=document.createElement("i");c.style.cssText=`left:${Math.random()*100}vw;background:${cols[i%6]};--dx:${(Math.random()-.5)*30}vw;--r:${(Math.random()-.5)*1440}deg;animation-duration:${2.6+Math.random()*2.2}s;animation-delay:${Math.random()*1.6}s`;ov.append(c)}
+      document.body.append(ov);const vis=box.style.visibility,ps={x,y,parked},op=box.style.opacity;box.style.visibility="visible";box.style.opacity="";hit.style.pointerEvents="none";
+      shrink=2;applySize();tx=Math.max(0,(innerWidth-W)/2);ty=Math.max(20,innerHeight*.56-H/2);act=null;
+      try{navigator.vibrate&&navigator.vibrate([60,40,60,40,120])}catch(e){}
+      setTimeout(()=>{doAct("cheer");say(`升官了！我現在是${GN[g]}品官！`,4.2)},350);setTimeout(()=>doAct("jump"),2300);setTimeout(()=>doAct("win"),3400);
+      setTimeout(()=>{ov.classList.add("out");setTimeout(()=>ov.remove(),520);shrink=boardMode?.6:1;applySize();celeb=0;box.style.visibility=vis;box.style.opacity=op;hit.style.pointerEvents="auto";
+        if(ps.parked){tx=ps.x;ty=ps.y}else wander()},5200)};
     let curG=grade();
-    const eraT=setInterval(()=>{const g=grade();if(g!==curG){const up=g<curG;curG=g;rebuild();doAct(up?"cheer":"shrug");say(up?`升官了！現在是${GN[g]}品官 🎉`:`降成${GN[g]}品了…再加油！`,3.2)}
+    const eraT=setInterval(()=>{const g=grade();if(g!==curG){const up=g<curG,from=curG;curG=g;rebuild();if(up)celebrate(g,from);else{doAct("shrug");say(`降成${GN[g]}品了…再加油！`,3.2)}}
       if(eraK()!==curK||BP()!==curP){rebuild();if(typeof needGly==="function")needGly(curK,()=>{if(!stopped)rebuild()})}},1500);
     if(typeof needGly==="function"&&!(typeof GLY!=="undefined"&&GLY[curK]))needGly(curK,()=>{if(!stopped)rebuild()});
     let shrink=1;const applySize=()=>{const k=SC*shrink;W=W0*k;H=H0*k;box.style.width=W+"px";box.style.height=H+"px";rd.setSize(W,H)};

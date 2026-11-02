@@ -413,7 +413,7 @@ html[data-era=ming] .topbar,html[data-era=qing] .topbar{border-bottom-width:4px}
       if(!window.caches)return go();caches.keys().then(function(ks){return Promise.all(ks.filter(function(k){return k.indexOf("xqlab-app-")===0}).map(function(k){return caches.delete(k)}))})
         .then(function(){return navigator.serviceWorker&&navigator.serviceWorker.getRegistration()}).then(function(r){return r&&r.update()}).catch(function(){}).then(go)}},4000)})();
 </script>
-<script>window.XQ_OFFLINE=true;window.XQ_BUILD="20261102-2254";</script>
+<script>window.XQ_OFFLINE=true;window.XQ_BUILD="20261102-2357";</script>
 <script src="core.js"></script>
 <script src="engine.js"></script>
 <script src="local.js"></script>
@@ -470,7 +470,9 @@ let MODAL_HOLD=0,LAST_KFX=0;
 let KILL_GLY=null,KILL_P=null;
 const loadKillGly=()=>KILL_P||(KILL_P=fetch("data/glyphs/kill.json").then(r=>r.json()).then(j=>KILL_GLY=j).catch(()=>{KILL_P=null}));
 setTimeout(loadKillGly,2500);
-function killFx(svg,win,why,kIdx,flip,o){const r=svg.getBoundingClientRect();if(!r.width)return;o=o||{};LAST_KFX=Date.now();loadKillGly();
+// 公園 3D 棋盤時平面棋盤是藏起來的：特效改蓋在 3D 畫面上（意見回饋 234）
+const fxHost=svg=>{if(svg&&!svg.getBoundingClientRect().width&&svg.parentElement){const p=svg.parentElement.querySelector(".park3d");if(p)return p}return svg};
+function killFx(svg,win,why,kIdx,flip,o){svg=fxHost(svg);const r=svg.getBoundingClientRect();if(!r.width)return;o=o||{};LAST_KFX=Date.now();loadKillGly();
   if(!document.getElementById("kfx3css")){document.querySelectorAll("#kfx2css").forEach(x=>x.remove());const st=document.createElement("style");st.id="kfx3css";st.textContent=`
 .kx-flash{position:fixed;inset:0;z-index:67;pointer-events:none;background:#fff;animation:kxflash .35s ease-out forwards}
 @keyframes kxflash{0%{opacity:.85}100%{opacity:0}}
@@ -779,7 +781,7 @@ function openingCue(moves){const n=moves.length;
 function jjGlyphs(){const i=Math.floor(Math.random()*JJ_PATHS.jiang.length),id="jj"+Math.random().toString(36).slice(2,7);
   const g=(d,k)=>`<svg viewBox="0 0 100 100"><defs><linearGradient id="${id}${k}" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#fff6d8"/><stop offset=".45" stop-color="#f3cf73"/><stop offset="1" stop-color="#c8902c"/></linearGradient></defs><path d="${d}" fill-rule="evenodd" fill="url(#${id}${k})" stroke="#3a1a06" stroke-width=".8" paint-order="stroke"/></svg>`;
   return`<b class="c1 gl">${g(JJ_PATHS.jiang[i],"a")}</b><b class="c2 gl">${g(JJ_PATHS.jun[i],"b")}</b>`}
-function checkFx(svg,label){if(!store.get("ckFx",true))return;const r=svg.getBoundingClientRect();if(!r.width)return;
+function checkFx(svg,label){if(!store.get("ckFx",true))return;svg=fxHost(svg);const r=svg.getBoundingClientRect();if(!r.width)return;
   document.querySelectorAll(".ckfx").forEach(x=>x.remove());
   // 墨色筆刷一抹橫過楚河漢界，金色「將」「軍」兩字一左一右落下，棋盤四周泛一圈紅光
   const d=document.createElement("div");d.className="ckfx";d.style.cssText=`left:${r.left}px;top:${r.top}px;width:${r.width}px;height:${r.height}px;font-size:${Math.round(r.width*.15)}px`;
@@ -2543,7 +2545,7 @@ function CpuGame(v){
   function paintSeg(m){if(seg)seg.querySelectorAll("button").forEach(b=>{const on=b.dataset.m===m;b.classList.toggle("on",on);b.setAttribute("aria-selected",on)})}
   v.querySelector("#pTop").onclick=e=>{if(e.target.closest(".cpu-chip")){vibrate(8);newSheet()}};
   const acts=actionBar(v.querySelector("#acts"),[["undo","↶","悔棋",()=>post("/play/undo")],
-    ["new","＋","新局",()=>newSheet(),true],["resign","🏳","認輸",()=>confirmBox("確定認輸？",()=>post("/play/resign"),"認輸")],["review","📖","檢討",()=>review()]]);
+    ["new","＋","新局",()=>newSheet(),true],["resign","🏳","認輸",()=>confirmBox("確定認輸？",()=>post("/play/resign"),"認輸")],["review","📖","檢討",()=>review(false,st&&st.id)]]);
   async function post(u,b){if(busy)return;busy=true;try{render(await api(u,b||{}))}catch(e){toast(e.message)}finally{busy=false}}
   function tap(i){if(!st||st.result||st.turn!==st.human||st.thinking)return;
     if(sel>=0&&st.legal.some(([f,t])=>f===sel&&t===i)){const f=sel;sel=-1;vibrate(15);return post("/play/move",{f,t:i})}
@@ -2578,24 +2580,26 @@ function CpuGame(v){
       if(st.result.w&&/將死|困斃/.test(st.result.why||"")){const loser=st.result.w==="r"?"b":"r",k=st.board.indexOf(loser==="r"?"K":"k");if(k>=0){MODAL_HOLD=Date.now()+2700;killFx(bd.svg,win,st.result.why,k,st.human==="b",{side:st.result.w})}}try{window.dispatchEvent(new CustomEvent("xq-result",{detail:win?"win":draw0?"draw":"lose"}))}catch(e){}
       if(st.practice&&st.practice.drill){const P0=st.practice;
         modal(`<div class="em">${win?"🎯":draw0?"🤝":"💪"}</div><h2>${win?"練習成功！":draw0?"和局":"這題沒下贏"}</h2><p class="muted">${esc(P0.title)}（局面取自 ${esc(P0.date||"")} ${esc(P0.opp||"")}）・不算戰績</p>`,
-          [["再練一題 ›",()=>startDrill(P0.kind,P0.lv)],["📊 賽後報告",()=>review(true)],["關閉",null,true]]);return}
+          [["再練一題 ›",()=>startDrill(P0.kind,P0.lv)],["📊 賽後報告",()=>review(true,st&&st.id)],["關閉",null,true]]);return}
       if(st.practice){const d=store.get("redoDone",{})[st.practice.key];
         modal(`<div class="em">${win?"🏆":draw0?"🤝":"💪"}</div><h2>${win?"你贏了！":draw0?"和局":"這盤輸了"}</h2><p class="muted">${esc(st.result.why)}・錯棋重練（不算戰績）</p>${d&&d.ok?'<p>✅ 這步已經練會了</p>':""}`,
           [["回到錯棋列表 ›",()=>location.hash="#/redo"],["關閉",null,true]]);return}
       if(st.reward){const Z=st.prize;
         modal(`<div class="em">${win?"🏆":draw0?"🤝":"💪"}</div><h2>${win?"你贏了！":draw0?"和局":"這盤輸了"}</h2><p class="muted">${esc(st.result.why)}・🚗 獎勵模式（第 ${st.level} 級）</p>`+
           (Z?`<p style="font-size:18px;font-weight:900">${Z.d>0?`🚗 +${Z.d} 點`:"這盤沒有拿到點數"} → 共 ${Z.pts.toLocaleString()} 點</p><p class="muted" id="nxcar"></p>`:'<p class="muted">雙方還沒各走一步，這盤不算</p>'),
-          [["再來一局 ›",()=>api("/play/new",{human:st.human,level:st.level,reward:true}).then(render).catch(e=>toast(e.message))],["🚗 去車庫",()=>location.hash="#/garage"],["📊 賽後報告",()=>review(true),true],["關閉",null,true]]);
+          [["再來一局 ›",()=>api("/play/new",{human:st.human,level:st.level,reward:true}).then(render).catch(e=>toast(e.message))],["🚗 去車庫",()=>location.hash="#/garage"],["📊 賽後報告",()=>review(true,st&&st.id),true],["關閉",null,true]]);
         if(Z)CARS().then(d=>{const o=(st.car||{}).owned||{},left=d.cars.filter(c=>!o[c.id]),can=left.filter(c=>c.cost<=Z.pts).length,nx=left.find(c=>c.cost>Z.pts),el=$("#nxcar");
           if(el)el.textContent=(can?`現在可以換 ${can} 台車！`:"")+(nx?`${can?"・":""}再 ${(nx.cost-Z.pts).toLocaleString()} 點可以換 ${nx.name}`:"")}).catch(()=>{});
         return}
       if(st.ranked){const R=st.rate;
         modal(`<div class="em">${win?"🏆":draw0?"🤝":"💪"}</div><h2>${win?"你贏了！":draw0?"和局":"這盤輸了"}</h2><p class="muted">${esc(st.result.why)}・積分挑戰（${esc(st.rkName)}）</p>`+
           (R?`<p style="font-size:18px;font-weight:900">積分 ${R.d>0?"+"+R.d:R.d<0?R.d:"±0"} → ${R.pts} 分${R.rank!==R.was?`<br><span style="color:var(--accent2)">${R.d>0?"🎉 升為":"降為"} ${esc(R.rank)}</span>`:""}</p>`:'<p class="muted">雙方還沒各走一步，這盤不計分</p>'),
-          [["再挑戰一盤 ›",()=>api("/play/new",{human:st.human,ranked:true}).then(render).catch(e=>toast(e.message))],["📊 賽後報告",()=>review(true)],["檢討這盤",()=>review(),true],["關閉",null,true]]);return}
+          [["再挑戰一盤 ›",()=>api("/play/new",{human:st.human,ranked:true}).then(render).catch(e=>toast(e.message))],["📊 賽後報告",()=>review(true,st&&st.id)],["檢討這盤",()=>review(false,st&&st.id),true],["關閉",null,true]]);return}
       modal(`<div class="em">${win?"🏆":draw0?"🤝":"💪"}</div><h2>${win?"你贏了！":draw0?"和局":"這盤輸了"}</h2><p class="muted">${esc(st.result.why)}・對手第 ${st.level} 級「${esc(lv.name||"")}」</p>`,
-        [[win&&st.level<8?"挑戰下一級 ›":"再來一局",()=>api("/play/new",{human:st.human,level:win&&st.level<8?st.level+1:st.level}).then(render).catch(e=>toast(e.message))],["📊 賽後報告",()=>review(true)],["檢討這盤",()=>review(),true],["關閉",null,true]])}}
-  function review(rep){api("/db/items?c=play").then(d=>{const it=d.items[0];if(!it)return toast("找不到存檔");if(rep)store.set("openReport","play/"+it.id);location.hash="#/db/play/"+encodeURIComponent(it.id)}).catch(e=>toast(e.message))}
+        [[win&&st.level<8?"挑戰下一級 ›":"再來一局",()=>api("/play/new",{human:st.human,level:win&&st.level<8?st.level+1:st.level}).then(render).catch(e=>toast(e.message))],["📊 賽後報告",()=>review(true,st&&st.id)],["檢討這盤",()=>review(false,st&&st.id),true],["關閉",null,true]])}}
+  // 賽後報告：用這一盤自己的編號打開（意見回饋 234：以前拿存檔清單第一筆，存檔還沒寫完或順序不同時會開到別盤）
+async function review(rep,id){let it=null;for(let k=0;k<12&&!it;k++){try{const d=await api("/db/items?c=play");it=id?d.items.find(x=>x.id===id):d.items[0]}catch(e){}if(!it)await new Promise(r=>setTimeout(r,250))}
+  if(!it)return toast("找不到這盤的存檔");if(rep)store.set("openReport","play/"+it.id);location.hash="#/db/play/"+encodeURIComponent(it.id)}
   // 錯棋重練：在狀態列提示上次走了什麼，評等出來後告訴你這次有沒有進步（評過的結果記在 redoDone）
   // 錯棋重練：練習起點的盤面（重練開始前的著法擺好）
   function practiceBoard(){const b=parseFen(START);for(const m of st.moves.slice(0,st.practice.base)){b[m.t]=b[m.f];b[m.f]=null}return b}
@@ -2763,7 +2767,7 @@ let ASK_KB=null;
 async function askKB(){if(ASK_KB)return ASK_KB;const kb=[];
   for(const[keys,title,text,go,goLabel,drill]of askGuides())kb.push({keys,title,text,tag:"學習指南",go:go&&go.trim()?go:"",goLabel:goLabel&&goLabel.trim()?goLabel:"",drill});
   // 自動產生的上萬筆問答（棋手、交手、開局、賽事、古譜）；第一次問才下載，存在手機裡
-  try{const Q=await fetch("data/qa/qa.json?h=5d6a7a71").then(r=>r.json());for(const[keys,w,title,text,act]of Q){const it={keys,w,title,text,tag:"棋譜資料庫"};
+  try{const Q=await fetch("data/qa/qa.json?h=e187375f").then(r=>r.json());for(const[keys,w,title,text,act]of Q){const it={keys,w,title,text,tag:"棋譜資料庫"};
     if(act.startsWith("g:")){it.go="#/db/"+act.slice(2).split("/").map(encodeURIComponent).join("/");it.goLabel="▶ 看這盤棋"}else if(act.startsWith("p:"))it.player=act.slice(2);else if(act.startsWith("s:"))it.sq=act.slice(2);kb.push(it)}}catch(e){}
   try{const d=await api("/terms/data");for(const t of d.items||[]){const keys=[t.n,...t.n.split(/[（）()、]/).filter(x=>x.length>=2)];
     kb.push({keys,title:t.n,text:t.d,tag:t.k,go:"#/terms/"+encodeURIComponent(t.n),goLabel:t.op?"▶ 在棋盤上示範這個開局":"▶ 在棋盤上看例局"})}}catch(e){}
