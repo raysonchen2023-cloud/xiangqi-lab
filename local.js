@@ -165,7 +165,7 @@ var XQ=(function(){
     if(!nb)return{id:"wait",red:"等待中…",black:"等待中…",board:parseFen(START),turn:"r",moves:[],result:null,draw:null,tcKey:"none",clocks:null,running:false,legal:[],check:-1,eval:null,
       engine:true,online:{r:false,b:false},who:{r:"",b:""},emotes:[],net:true,mySide:sd||"w",watchers:XQNet.watchers(),waiting:true,link:XQNet.status()};
     const{S,g}=nb;
-    return{id:g.id,red:g.red.name,black:g.black.name,board:S.board,turn:S.turn,moves:S.moves.map(moveOut),result:g.result,draw:g.draw,tcKey:"none",clocks:null,running:false,
+    return{id:g.id,red:g.red.name,black:g.black.name,board:S.board,turn:S.turn,moves:S.moves.map(moveOut),result:g.result,draw:g.draw,tcKey:g.tc?"net"+g.tc:"none",tc:g.tc||null,clocks:XQNet.clocks?XQNet.clocks():null,running:!!g.clk&&!g.result,
       legal:g.result?[]:legal(S.board,S.turn),check:!g.result&&inCheck(S.board,S.turn)?kingSq(S.board,S.turn):-1,eval:null,engine:true,
       online:{r:XQNet.isOn(g.red.id),b:XQNet.isOn(g.black.id)},who:{r:g.red.name,b:g.black.name},emotes:XQNet.emotes(),net:true,mySide:sd||"w",watchers:XQNet.watchers(),link:XQNet.status(),unsent:XQNet.pendingSend()}}
   async function netPvp(p,b){if(p==="/pvp/state")return netState();
@@ -176,7 +176,7 @@ var XQ=(function(){
     if(p==="/pvp/move"){const f=+b.f,t=+b.t;if(g.result)throw new Error("這局已經結束");if(S.turn!==sd)throw new Error("還沒輪到你");
       if(!legal(S.board,S.turn).some(([x,y])=>x===f&&y===t))throw new Error("這步不合法");
       const T={moves:g.moves.map(([a,z])=>({f:a,t:z}))};stateRebuild(T);stateApply(T,f,t);const r=judgeState(T);
-      XQNet.update(n=>{n.moves.push([f,t]);n.draw=null;if(r)n.result=r})}
+      XQNet.update(n=>{if(XQNet.tickMove)XQNet.tickMove(n,sd);n.moves.push([f,t]);n.draw=null;if(r)n.result=r})}
     else if(p==="/pvp/undo"){if(g.result)throw new Error("這局已經結束，不能悔棋");const last=S.moves[S.moves.length-1];
       if(!last||last.by!==sd)throw new Error("對方已經走了，不能悔棋");XQNet.update(n=>{n.moves.pop();n.draw=null})}
     else if(p==="/pvp/draw"){if(g.result)throw new Error("這局已經結束");

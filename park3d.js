@@ -948,18 +948,19 @@
       const f=new T.Mesh(faceGeo,fMat(ch,s==="r"));f.rotation.x=-PI/2;f.position.y=.272;g.add(f);g.userData={p};sc.add(g);return g};
     let flip=false;const pos=i=>{const c=i%9,r=i/9|0;return flip?[4-c,4.5-r]:[c-4,r-4.5]};
     const at=(g,i,lift)=>{const[x,z]=pos(i);g.position.set(x,TOP+(lift||0),z)};
-    let pieces={},prevB=null,prevLast=null,anims=[],captured=[];
+    let pieces={},prevB=null,prevLast=null,anims=[],captured=[],capNear=true,lastCapB=null;
     // 提示記號
     const markG=new T.Group();sc.add(markG);
     const disc=(i,col,r,op)=>{const m=new T.Mesh(new T.CircleGeometry(r,32),new T.MeshBasicMaterial({color:col,transparent:true,opacity:op,depthWrite:false}));m.rotation.x=-PI/2;const[x,z]=pos(i);m.position.set(x,TOP+.012,z);markG.add(m);return m};
     const ring=(i,col,r,w,op)=>{const m=new T.Mesh(new T.RingGeometry(r-w,r,40),new T.MeshBasicMaterial({color:col,transparent:true,opacity:op,depthWrite:false}));m.rotation.x=-PI/2;const[x,z]=pos(i);m.position.set(x,TOP+.014,z);markG.add(m);return m};
     let selI=-1,checkRing=null;
-    function layoutCaptured(board){captured.forEach(g=>sc.remove(g));captured=[];const cnt={r:{},b:{}};board.forEach(p=>{if(p){const s=sideOf(p),k=p.toUpperCase();cnt[s][k]=(cnt[s][k]||0)+1}});
+    function layoutCaptured(board){lastCapB=board;captured.forEach(g=>sc.remove(g));captured=[];const cnt={r:{},b:{}};board.forEach(p=>{if(p){const s=sideOf(p),k=p.toUpperCase();cnt[s][k]=(cnt[s][k]||0)+1}});
       for(const s of["r","b"]){const lost=[];for(const k of"RCNBAP")for(let n=(START[s][k]||0)-(cnt[s][k]||0);n>0;n--)lost.push(s==="r"?k:k.toLowerCase());
         const mine=(s==="r")===flip;   // 意見回饋 232：被吃的棋子放在吃子那一方的桌邊（我吃掉的對方棋子排在我這側）
-        // 鏡頭變俯視後，靠近我的桌邊看不到了：我輸掉的棋子直排在棋盤右側，對方輸掉的排在棋盤後方（縮小一點，不搶棋盤的戲）
+        /* 縮小一點不搶棋盤的戲：對方吃到的排在棋盤後方茶杯兩邊，我吃到的排在我這側桌邊 */
         lost.forEach((p,j)=>{const g=makePiece(p);g.scale.setScalar(.8);let x,z;
-          if(mine){if(j<10){x=6.2;z=-4.6+j*.8}else{x=7.0;z=-3.6+(j-10)*.8}}else{const sd=j%2?-1:1,k=j>>1;if(k<4){x=sd*(1.35+k*.95);z=-6.55}else{x=sd*(1.35+(k-4)*.78);z=-7.25}}   // 對方輸掉的棋子分排在茶杯左右兩邊
+          if(mine&&!capNear){if(j<10){x=6.2;z=-4.6+j*.8}else{x=7.0;z=-3.6+(j-10)*.8}}   /* 畫面太矮、看不到我這側桌邊時：排在棋盤右邊 */
+          else if(mine){const SL=[[1,6.3,5],[1,7.0,4],[-1,6.3,3],[-1,7.0,3]];let q=j,r=0;while(r<3&&q>=SL[r][2]){q-=SL[r][2];r++}x=SL[r][0]*(1.35+q*.9);z=SL[r][1]}else{   /* 意見回饋 281：我吃到的棋子排在我這側的桌邊（茶杯右邊，滿了再排左邊） */const sd=j%2?-1:1,k=j>>1;if(k<4){x=sd*(1.35+k*.95);z=-6.55}else{x=sd*(1.35+(k-4)*.78);z=-7.25}}   // 對方輸掉的棋子分排在茶杯左右兩邊
           g.position.set(x,0,z);g.rotation.y=(Math.random()-.5)*.6;captured.push(g)})}}
     function sync(board){Object.values(pieces).forEach(g=>sc.remove(g));pieces={};board.forEach((p,i)=>{if(p){const g=makePiece(p);at(g,i);pieces[i]=g}});layoutCaptured(board)}
     // 朝代造型換了（或圖剛載入）：重畫棋盤、清掉棋子貼圖、整盤重排
@@ -1010,7 +1011,8 @@
     const fit=()=>{W=el.clientWidth||300;CAMV.hr=clamp((VH0-300)/W,1.14,1.32);const rm=room();if(W*CAMV.hr>rm)CAMV.hr=Math.max(.85,rm/W);
       // 畫面被壓矮（比 1.14 扁）時：上下視角維持 1.14 的範圍、左右看得更廣，不會把對面和近端的小帥切掉（意見回饋：5:49 截圖）
       const vr=Math.max(CAMV.hr,1.14);CAMV.dp=Math.atan(CAMV.ht*1.14)-Math.atan(CAMV.ht*vr);H=Math.round(W*CAMV.hr);el.style.height=H+"px";rd.setSize(W,H,false);cam.aspect=W/H;
-      cam.fov=clamp(2*Math.atan(CAMV.ht*vr)*180/PI,38,62);cam.updateProjectionMatrix()};
+      cam.fov=clamp(2*Math.atan(CAMV.ht*vr)*180/PI,38,62);cam.updateProjectionMatrix();
+      {const nn=CAMV.hr>=1.24;if(nn!==capNear){capNear=nn;if(lastCapB)layoutCaptured(lastCapB)}}};
     const camBase=new T.Vector3(0,16,9.2),look=new T.Vector3(0,-.3,-2.6);
     // 拉近拉遠＝鏡頭沿著「棋盤中心→座位」這條線前後移動，看的方向不變
     const placeCam=()=>{const d=look.clone().sub(camBase),r=d.length()*zoom,a0=Math.atan2(d.x,-d.z)+yaw,p0=Math.asin(d.y/d.length())+pitch+CAMV.dp,c=cam.position.copy(look).addScaledVector(d,-zoom);
