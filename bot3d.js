@@ -40,6 +40,9 @@
   const BUZI="鶴雞雀雁鷴鷺鶒鸝鶉";   // 明清文官補子：仙鶴、錦雞、孔雀、雲雁、白鷴、鷺鷥、鸂鶒、黃鸝、鵪鶉
   const plaqueTex=(ch,bg,fg)=>cv(128,(g,n)=>{g.fillStyle=bg;g.fillRect(0,0,n,n);g.strokeStyle=fg;g.lineWidth=8;g.strokeRect(6,6,n-12,n-12);
     g.fillStyle=fg;g.font='900 76px "Noto Serif TC","PMingLiU","Songti TC",serif';g.textAlign="center";g.textBaseline="middle";g.fillText(ch,n/2,n/2+5)});
+  // 小人的身體可以換成其他棋子（意見回饋 193）：紅方 帥仕相俥傌炮兵、黑方 將士象車馬砲卒；名字跟著變成「小X」
+  const BP=()=>{const c=store.get("botPiece","帥");return typeof c==="string"&&c.length===1&&"帥仕相俥傌炮兵將士象車馬砲卒".includes(c)?c:"帥"};
+  const BLACK=c=>"將士象車馬砲卒".includes(c),BNAME=()=>"小"+({俥:"車",傌:"馬",砲:"炮"}[BP()]||BP());
   const eraK=()=>{const k=store.get("era","classic");return TH[k]?k:"classic"};
   const faceTex=(ch,th,k)=>cv(512,(g,n)=>{const h=n/2;
     let gr=g.createRadialGradient(h*.8,h*.7,10,h,h,h);gr.addColorStop(0,"#FFF8E6");gr.addColorStop(.75,"#F2DCAE");gr.addColorStop(1,"#D9B577");g.fillStyle=gr;g.beginPath();g.arc(h,h,h,0,TAU);g.fill();
@@ -66,7 +69,7 @@
     const torso=new T.Group();torso.position.y=1.02;bot.add(torso);
     const body=add(torso,new T.CylinderGeometry(.8,.8,.46,64),wood,null,{line:.035});body.rotation.x=PI/2;
     for(const z of[.23,-.23]){const r=new T.Mesh(new T.TorusGeometry(.79,.035,12,64),gold);r.position.z=z;torso.add(r)}
-    const face=new T.Mesh(new T.CircleGeometry(.64,64),P("#fff",{map:faceTex("帥",th,k),roughness:.4,clearcoat:.8,toneMapped:false}));face.position.z=.232;torso.add(face);
+    const face=new T.Mesh(new T.CircleGeometry(.64,64),P("#fff",{map:faceTex(BP(),BLACK(BP())?Object.assign({},th,{ink:"#1A1410"}):th,k),roughness:.4,clearcoat:.8,toneMapped:false}));face.position.z=.232;torso.add(face);
     // 頭
     const head=new T.Group();head.position.y=.8;torso.add(head);
     add(head,new T.SphereGeometry(.52,40,30),skin,[0,.14,0],{line:.05});
@@ -237,7 +240,7 @@
   const FACES=["smile","open","smile","wink","smile","open"];
   const comboAct=n=>{const[i,j]=COMBO[n],a=ARM[i],b=BODY[j];return{d:2.4,name:a[0]+(b[0]?"＋"+b[0]:""),get say(){return ++hintN%9===0?HINTS[(hintN/9|0)%HINTS.length]:nextLine()},f:(p,B)=>{a[1](p,B);b[1](p,B);B.face=FACES[n%FACES.length]}}};
 
-  function start(){let SC=Math.min(2,Math.max(.6,+store.get("botSize",.7)||1)),W=W0*SC,H=H0*SC,curK=eraK();
+  function start(){let SC=Math.min(2,Math.max(.6,+store.get("botSize",.7)||1)),W=W0*SC,H=H0*SC,curK=eraK(),curP=BP();
     const box=document.createElement("div");box.className="xqbot";
     box.style.cssText=`position:fixed;left:0;top:0;width:${W}px;height:${H}px;z-index:900;pointer-events:none;will-change:transform;transition:opacity .2s`;
     const hit=document.createElement("div");hit.style.cssText="position:absolute;left:19%;right:19%;top:10%;bottom:3%;pointer-events:auto;touch-action:none;cursor:grab;border-radius:40%;-webkit-touch-callout:none;-webkit-user-select:none;user-select:none";
@@ -256,7 +259,7 @@
     const bounds=()=>({x0:0,x1:innerWidth-W,y0:20,y1:innerHeight-H});
     const sp=store.get("botPos",null);let parked=!!sp,x=sp?sp.x*innerWidth:Math.max(4,innerWidth-W-16),y=sp?sp.y*innerHeight:Math.max(70,innerHeight-H-90);
     let tx=x,ty=y,face=0,act=null,actT=0,next=1.5,bubT=0,stopped=false,last=performance.now(),acc=0,blinkT=2,talk=0,drag=null,taps=0,tapT=0,deck=[],boardMode=false,boardDrag=false,sheetMode=false;
-    const say=(s,d)=>{bub.textContent=s;bub.style.opacity=1;bubT=d||2;talk=Math.min(1.2,.25+s.length*.08);try{window.dispatchEvent(new CustomEvent("xq-bot-said",{detail:s}))}catch(e){}};
+    const say=(s,d)=>{s=String(s).replace(/小帥/g,BNAME()).replace("身體是一顆帥","身體是一顆"+BP());bub.textContent=s;bub.style.opacity=1;bubT=d||2;talk=Math.min(1.2,.25+s.length*.08);try{window.dispatchEvent(new CustomEvent("xq-bot-said",{detail:s}))}catch(e){}};
     const doAct=a=>{if(typeof a==="string")a=ACTS[a];if(!a)return;act=a;actT=0;tx=x;ty=y;const w=a.say;if(w)say(w,Math.max(1.8,Math.min(6,w.length*.16+.6,a.d+3)))};
     // 抽牌：300 種組合＋招牌動作洗牌後輪流出，不會一直重複
     const randAct=()=>{if(!deck.length){deck=[...COMBO.keys(),...SIGNATURE];for(let i=deck.length-1;i>0;i--){const j=Math.random()*(i+1)|0;[deck[i],deck[j]]=[deck[j],deck[i]]}}const k=deck.pop();return typeof k==="number"?comboAct(k):ACTS[k]};
@@ -325,10 +328,10 @@
       if(boardMode&&!boardDrag&&!drag){const b=bounds();tx=b.x1-2;ty=Math.max(b.y0,innerHeight-H-64)}
       if(boardMode&&!sheetMode)box.style.opacity=(act||drag||bubT>0)?"":".45"},250);
     // 換朝代：重做造型（字形還沒下載就先下載，好了再換一次）
-    const rebuild=()=>{curK=eraK();root.remove(P.bot);Object.assign(B,build(curK,grade()));root.add(B.bot)};
+    const rebuild=()=>{curK=eraK();curP=BP();root.remove(P.bot);Object.assign(B,build(curK,grade()));root.add(B.bot)};
     let curG=grade();
     const eraT=setInterval(()=>{const g=grade();if(g!==curG){const up=g<curG;curG=g;rebuild();doAct(up?"cheer":"shrug");say(up?`升官了！現在是${GN[g]}品官 🎉`:`降成${GN[g]}品了…再加油！`,3.2)}
-      if(eraK()!==curK){rebuild();if(typeof needGly==="function")needGly(curK,()=>{if(!stopped)rebuild()})}},1500);
+      if(eraK()!==curK||BP()!==curP){rebuild();if(typeof needGly==="function")needGly(curK,()=>{if(!stopped)rebuild()})}},1500);
     if(typeof needGly==="function"&&!(typeof GLY!=="undefined"&&GLY[curK]))needGly(curK,()=>{if(!stopped)rebuild()});
     let shrink=1;const applySize=()=>{const k=SC*shrink;W=W0*k;H=H0*k;box.style.width=W+"px";box.style.height=H+"px";rd.setSize(W,H)};
     const setScale=v=>{SC=Math.min(2,Math.max(.6,+v||1));store.set("botSize",SC);applySize()};
