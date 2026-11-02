@@ -903,7 +903,7 @@
     const setWatchers=list=>{list=(list||[]).slice(0,8);const k=JSON.stringify(list);if(k===watchKey)return;watchKey=k;watchG.clear();watchers=[];
       list.forEach((w,i)=>{const a=SPOTS[i],r=19,x=Math.sin(a)*r,z=-Math.cos(a)*r,FY=-6.2;
         const pl=new T.Mesh(new T.CylinderGeometry(2.4,2.8,FY-GY,20),plinthM);pl.position.set(x,(FY+GY)/2,z);pl.receiveShadow=true;watchG.add(pl);
-        const g=new T.Group();g.position.set(x,FY,z);g.rotation.y=Math.atan2(-x,-z);g.scale.setScalar(3.1);watchG.add(g);
+        const g=new T.Group();g.position.set(x,FY,z);g.rotation.y=Math.atan2(-x,-z);g.scale.setScalar(3.1);g.userData.pid=w&&w.id;watchG.add(g);
         try{const B=XQBot3D.figure((w&&w.bot)||{});g.add(B.bot);B.bot.traverse(o=>{if(o.isMesh)o.castShadow=true});watchers.push({B,ph:Math.random()*TAU,blinkT:1+Math.random()*3,chin:i%3===1})}catch(e){}})};
     const buildActor=(A,look)=>{A.g.clear();A.B=null;try{if(window.XQBot3D&&XQBot3D.figure){A.B=XQBot3D.figure(look||{});A.g.add(A.B.bot);A.B.bot.traverse(o=>{if(o.isMesh)o.castShadow=true});seat(A.B)}}catch(e){A.B=null}};
     // 電腦對手用手繪 Pikafish（開發者用 Gemini 畫的 6 個姿勢，data/pika/）：圖載好之前先用 3D 版，載好就換成手繪版
@@ -1004,7 +1004,11 @@
     const VH0=window.innerHeight||800;   // 只在建立時量一次螢幕高度（iPhone 捲動時網址列伸縮不會讓畫面跳）
     const CAMV={hr:1.14,ht:.40,dp:0};   // 畫面高寬比、水平視角的 tan(半角)（固定水平視野，窄螢幕不會切掉棋盤兩邊）
     // 意見回饋 218：螢幕夠高時畫面拉高一點（最多 1.32），多出來的都給下方（上緣維持原本的位置），露出棋盤前方的桌面讓小帥坐
-    const fit=()=>{W=el.clientWidth||300;CAMV.hr=clamp((VH0-300)/W,1.14,1.32);CAMV.dp=Math.atan(CAMV.ht*1.14)-Math.atan(CAMV.ht*CAMV.hr);H=Math.round(W*CAMV.hr);el.style.height=H+"px";rd.setSize(W,H,false);cam.aspect=W/H;
+    // 意見回饋 260：固定高度的對局頁（iPhone 主畫面 App 可用高度少、觀戰多一行狀態）不能比版面留給它的空間高，不然會壓到下面的玩家列
+    const room=()=>{const box=el.parentElement,view=box&&box.parentElement;if(!view||getComputedStyle(view).overflow!=="hidden")return 1e9;
+      let used=0;for(const c of view.children)if(c!==box)used+=c.offsetHeight;const cs=getComputedStyle(box);return view.clientHeight-used-parseFloat(cs.paddingTop)-parseFloat(cs.paddingBottom)};
+    const fit=()=>{W=el.clientWidth||300;CAMV.hr=clamp((VH0-300)/W,1.14,1.32);const rm=room();if(W*CAMV.hr>rm)CAMV.hr=Math.max(.85,rm/W);
+      CAMV.dp=Math.atan(CAMV.ht*1.14)-Math.atan(CAMV.ht*CAMV.hr);H=Math.round(W*CAMV.hr);el.style.height=H+"px";rd.setSize(W,H,false);cam.aspect=W/H;
       cam.fov=clamp(2*Math.atan(CAMV.ht/cam.aspect)*180/PI,38,62);cam.updateProjectionMatrix()};
     const camBase=new T.Vector3(0,16,9.2),look=new T.Vector3(0,-.3,-2.6);
     // 拉近拉遠＝鏡頭沿著「棋盤中心→座位」這條線前後移動，看的方向不變
@@ -1022,6 +1026,9 @@
       if(!a.d)return 255;const x=clamp(Math.floor(u*64),0,63),y=clamp(Math.floor((1-v)*64),0,63);return a.d[(y*64+x)*4+3]};
     const infoPick=()=>{   // 用 pick() 剛設好的那條射線
       if(ray.ray.intersectPlane(plane,hitP)&&Math.abs(hitP.x)<BW/2&&Math.abs(hitP.z)<BH/2)return null;   // 點在棋盤（含邊框）上不算
+      // 人：觀戰者、近端的小帥、對面的 3D 小帥（點了看棋友資料）
+      for(const h of ray.intersectObjects([watchG,mate.g,...(oppSpr?[]:[opp.g])],true)){let o=h.object;while(o&&o!==watchG&&o!==mate.g&&o!==opp.g&&!(o.userData&&o.userData.pid))o=o.parent;
+        if(!o)continue;if(o===mate.g)return"mate";if(o===opp.g)return"opp";if(o.userData&&o.userData.pid)return"p:"+o.userData.pid}
       const cand=infos.slice();if(oppSpr)cand.push(oppSpr.sp);
       for(const h of ray.intersectObjects(cand,false)){const o=h.object;
         if(oppSpr&&o===oppSpr.sp){if(h.uv&&alphaAt(o.material.map.image,h.uv.x,h.uv.y)<60)continue;return"opp"}
@@ -1052,11 +1059,12 @@
     cvs.addEventListener("wheel",e=>{if(!e.ctrlKey)return;e.preventDefault();tzoom=clamp(tzoom*Math.exp(e.deltaY*.01),ZMIN,ZMAX)},{passive:false});
     for(const ev of["gesturestart","gesturechange"])el.addEventListener(ev,e=>e.preventDefault(),{passive:false});
     // ---------- 動畫迴圈 ----------
-    let stopped=false,last=performance.now();
+    let stopped=false,last=performance.now(),roomN=0;
     const R=(B,i,x,y,z)=>{B.arms[i].rotation.set(x,y,z)};
     function frame(now){if(stopped)return;if(!document.body.contains(el)){destroy();return}requestAnimationFrame(frame);
       if(document.hidden||el.style.display==="none"){last=now;return}const t=Math.min(.05,(now-last)/1000);last=now;
       if(el.clientWidth&&Math.abs(el.clientWidth-W)>1)fit();
+      else if((++roomN%60)===0){const rm=room(),want=Math.round(el.clientWidth*clamp((VH0-300)/(el.clientWidth||300),1.14,1.32));if(Math.abs(Math.min(want,Math.max(.85*W,rm))-H)>3)fit()}   // 版面多一行、少一行時重新量
       yaw+=(tyaw-yaw)*Math.min(1,t*8);pitch+=(tpitch-pitch)*Math.min(1,t*8);zoom+=(tzoom-zoom)*Math.min(1,t*10);placeCam();
       anims=anims.filter(a=>{a.t+=t;const p=Math.min(1,a.t/a.d);a.f(p);if(p>=1){a.end&&a.end();return false}return true});
       if(selI>=0&&pieces[selI]){const g=pieces[selI];g.position.y=TOP+.32+Math.sin(now/180)*.06}
