@@ -413,7 +413,7 @@ html[data-era=ming] .topbar,html[data-era=qing] .topbar{border-bottom-width:4px}
       if(!window.caches)return go();caches.keys().then(function(ks){return Promise.all(ks.filter(function(k){return k.indexOf("xqlab-app-")===0}).map(function(k){return caches.delete(k)}))})
         .then(function(){return navigator.serviceWorker&&navigator.serviceWorker.getRegistration()}).then(function(r){return r&&r.update()}).catch(function(){}).then(go)}},4000)})();
 </script>
-<script>window.XQ_OFFLINE=true;window.XQ_BUILD="20261102-2124";</script>
+<script>window.XQ_OFFLINE=true;window.XQ_BUILD="20261102-2151";</script>
 <script src="core.js"></script>
 <script src="engine.js"></script>
 <script src="local.js"></script>
@@ -2512,9 +2512,10 @@ window.XQ_BOTLOOK=()=>{let p=0;try{p=(JSON.parse(localStorage.getItem("xq_cpuRat
 const PIKA_LOOK=side=>({p:side==="r"?"帥":"將",e:"wudai",g:1,thin:true});
 // 公園棋盤的朝代造型（意見回饋 216）：跟平面棋盤同一套底圖、格線色、棋子底圖、字色、字形
 function parkLook(){const k=store.get("era","classic"),e=curEra(),T=boardTheme(e?"auto":"wood3d"),bk=BOARD_IMG[k]?k:null;
-  if(GLY_ERAS.has(k)&&!GLY[k])needGly(k,()=>{if(PARK)try{const st0=PARK.v;st0&&st0.el&&0}catch(e){}});
+  // 字形晚到（第一次切到這個朝代）：拿上一次的參數重畫公園棋盤，棋子字面才會換成朝代字形（之前這裡什麼都沒做，要等走下一步才換）
+  if(GLY_ERAS.has(k)&&!GLY[k])needGly(k,()=>{try{const a=PARK&&PARK.last;if(a&&GLY[k]&&store.get("era","classic")===k){a.ex.look=parkLook();PARK.v.draw(a.board,a.o,a.ex)}}catch(e){}});
   return{k,img:bk?`data/boards/${BOARD_IMG_FILE[bk]||bk}.webp`:null,rect:bk?BOARD_IMG[bk]:null,grid:T&&T.grid||"#3A1D0A",
-    pieces:PIECE_INK[k]?{r:`data/pieces/${k}-r.webp`,b:`data/pieces/${k}-b.webp`}:null,ink:PIECE_INK[k]||null,gly:GLY[k]||null}}
+    pieces:PIECE_INK[k]?{r:`data/pieces/${k}-r.webp`,b:`data/pieces/${k}-b.webp`}:null,ink:PIECE_INK[k]||null,gly:GLY[k]||null,bold:GLY_BOLD[k]||0}}
 let PARK=null,PARK_LOADING=null;const parkOn=()=>store.get("park3d",false);
 const botVis=on=>document.querySelectorAll(".xqbot").forEach(x=>x.style.visibility=on?"":"hidden");
 function parkLoad(){const v="?v="+encodeURIComponent(window.XQ_BUILD||"");return PARK_LOADING||(PARK_LOADING=(async()=>{await loadScript(OFF?"three.min.js":"/m/three.min.js");
@@ -2525,7 +2526,7 @@ function parkDraw(host,bd,board,o,ex){
   if(!PARK||PARK.host!==host||!document.body.contains(PARK.v.el)){if(PARK)PARK.v.destroy();
     const pv=XQPark3D.create(host,{onTap:i=>ex.tap(i),onDestroy:()=>{if(PARK&&PARK.v===pv){PARK=null;botVis(true)}}});
     if(!pv){toast("這台裝置沒辦法顯示 3D，先用平面棋盤");store.set("park3d",false);return}PARK={host,v:pv};setTimeout(()=>{try{pv.say(`我是${BOTN()}，幫你加油！`,2.6);if(ex.oppHello)setTimeout(()=>pv.oppSay(ex.oppHello,2.6),1400)}catch(e){}},700)}
-  bd.svg.style.display="none";botVis(false);ex.look=parkLook();PARK.v.draw(board,o,ex)}
+  bd.svg.style.display="none";botVis(false);ex.look=parkLook();PARK.last={board,o,ex};PARK.v.draw(board,o,ex)}
 const parkBtn=redraw=>["🌳",()=>{store.set("park3d",!parkOn());vibrate(8);toast(parkOn()?`🌳 公園 3D 棋盤：${BOTN()}坐在對面跟你下（拖曳可以看四周）`:"回到平面棋盤");redraw()},"公園 3D 棋盤"];
 function CpuGame(v){
   setTabs(false);gameLayout(v);

@@ -10,7 +10,10 @@
   const sideOf=p=>p===p.toUpperCase()?"r":"b";
   const START={r:{K:1,A:2,B:2,N:2,R:2,C:2,P:5},b:{K:1,A:2,B:2,N:2,R:2,C:2,P:5}};
   const BW=10.4,BH=11.4,TOP=.56;    // 棋盤（含邊）大小、棋盤面高度；格距 1
-  function cv(w,h,f){const c=document.createElement("canvas");c.width=w;c.height=h;f(c.getContext("2d"),w,h);const t=new T.CanvasTexture(c);if(T.SRGBColorSpace)t.colorSpace=T.SRGBColorSpace;t.anisotropy=8;return t}
+  // 色彩管理（意見回饋 218）：這版 three（r149）用 encoding，不認 colorSpace；貼圖標成 sRGB、輸出也是 sRGB，顏色才不會被洗白
+  let ANI=8;
+  const srgb=t=>{if(T.sRGBEncoding!=null)t.encoding=T.sRGBEncoding;if(T.SRGBColorSpace)t.colorSpace=T.SRGBColorSpace;return t};
+  function cv(w,h,f){const c=document.createElement("canvas");c.width=w;c.height=h;f(c.getContext("2d"),w,h);const t=srgb(new T.CanvasTexture(c));t.anisotropy=ANI;return t}
   const noise=(g,w,h,n,a,b)=>{for(let i=0;i<n;i++){g.fillStyle=`rgba(${a},${Math.random()*b})`;const s=1+Math.random()*3;g.fillRect(Math.random()*w,Math.random()*h,s,s)}};
   // ---------- 貼圖 ----------
   // 棋盤：較深的蜂蜜色木紋＋深褐粗線，在灰色石桌上一眼就看得出來；貼圖解析度提高，iPhone 上線條不糊
@@ -41,21 +44,39 @@
     const ry=(Y(4)+Y(5))/2;g.fillText("楚",X(1.2),ry);g.fillText("河",X(2.6),ry);g.fillText("漢",X(5.4),ry);g.fillText("界",X(6.8),ry);
     noise(g,w,h,5000,"80,40,15",.07)}
   // 棋子面：象牙色底、粗深色刻字（大字、帶一點浮雕的亮邊與陰影），遠處的黑子也看得清楚
-  const faceCache={};
+  // 朝代棋子（意見回饋 218）：1024 高解析字面，底圖原尺寸鋪滿（不裁邊），字用朝代字形＋朝代字色，外圈只描一道細反差邊；
+  // 棋身側面的顏色取自底圖最外圈（漆器、青銅、青花…各朝代自己的顏色），不再一律米色
+  const faceCache={},rimCache={},FN=1024,SERIF='"Noto Serif TC","PMingLiU","Songti TC","SimSun",serif';
+  const lum=hex=>{const c=parseInt(hex.slice(1,7),16);return((c>>16)*.3+((c>>8)&255)*.59+(c&255)*.11)/255};
+  const bgCache={};
+  const bgOf=im=>{const k=im.src;if(bgCache[k]!=null)return bgCache[k];let v=.75;   // 底圖中間（字所在處）的平均亮度
+    try{const c=document.createElement("canvas");c.width=c.height=32;const g=c.getContext("2d");g.drawImage(im,0,0,32,32);const d=g.getImageData(8,8,16,16).data;let t=0;for(let i=0;i<d.length;i+=4)t+=(d[i]*.3+d[i+1]*.59+d[i+2]*.11)/255;v=t/(d.length/4)}catch(e){}
+    return bgCache[k]=v};
+  const rimOf=im=>{const k=im.src;if(rimCache[k])return rimCache[k];let out="#E9D2A2";
+    try{const c=document.createElement("canvas");c.width=c.height=64;const g=c.getContext("2d");g.drawImage(im,0,0,64,64);const d=g.getImageData(0,0,64,64).data;let r=0,gg=0,b=0,n=0;
+      for(let y=0;y<64;y++)for(let x=0;x<64;x++){const q=Math.hypot(x+.5-32,y+.5-32)/32,i=(y*64+x)*4;if(q>.88&&q<.97&&d[i+3]>220){r+=d[i];gg+=d[i+1];b+=d[i+2];n++}}
+      if(n)out="#"+[r,gg,b].map(v=>(v/n|0).toString(16).padStart(2,"0")).join("")}catch(e){}
+    return rimCache[k]=out};
+  // 字面的漆光：左上一點柔亮、外緣一圈淡淡的暗邊（像斜角），看起來是有厚度的上漆棋子
+  const gloss=(g,n)=>{const h=n/2;let gr=g.createRadialGradient(h*.62,h*.55,0,h*.62,h*.55,h*1.05);gr.addColorStop(0,"rgba(255,255,255,.16)");gr.addColorStop(.55,"rgba(255,255,255,.04)");gr.addColorStop(1,"rgba(255,255,255,0)");g.fillStyle=gr;g.fillRect(0,0,n,n);
+    gr=g.createRadialGradient(h,h,h*.9,h,h,h);gr.addColorStop(0,"rgba(0,0,0,0)");gr.addColorStop(1,"rgba(0,0,0,.28)");g.fillStyle=gr;g.fillRect(0,0,n,n)};
+  // 字：先描反差邊（細）、再填字色；字形太細的朝代（GLY_BOLD）再用字色加粗一點
+  // 反差邊只在需要的時候描：字色跟底色（底圖中間的平均亮度）差很多就幾乎不描，差不多才描明顯一點（不會一律白邊，紅字變粉紅）
+  const glyph=(g,n,ch,ink,gly,bold,bg)=>{const h=n/2,li=lum(ink),need=clamp(1-(Math.abs(li-(bg==null?.75:bg))-.15)/.4,.15,1),halo=li>.5?`rgba(0,0,0,${.8*need})`:`rgba(255,255,255,${.85*need})`;g.lineJoin="round";g.lineCap="round";
+    if(gly&&window.Path2D){const P2=new Path2D(gly),k=n*.6/100;g.save();g.translate(h-50*k,h-50*k);g.scale(k,k);
+      g.strokeStyle=halo;g.lineWidth=(3+2.4*need)+bold/.31;g.stroke(P2);g.fillStyle=ink;g.fill(P2);if(bold){g.strokeStyle=ink;g.lineWidth=bold/.31;g.stroke(P2)}g.restore();return}
+    g.font=`900 ${n*.6|0}px ${SERIF}`;g.textAlign="center";g.textBaseline="middle";const y=h+n*.03;
+    g.strokeStyle=halo;g.lineWidth=n*(.016+.014*need);g.strokeText(ch,h,y);g.fillStyle=ink;g.fillText(ch,h,y);g.strokeStyle=ink;g.lineWidth=n*.008;g.strokeText(ch,h,y)};
   const faceTex=(ch,red,onReady)=>{const L=LOOK,s=red?"r":"b",im=L&&L.pieces?loadImg(L.pieces[s],onReady):null,key=ch+(im?"|"+L.k:"");if(faceCache[key])return faceCache[key];
     if(L&&L.pieces&&!im)return plainFace(ch,red);
-    if(im)return faceCache[key]=cv(512,512,(g,n)=>{const h=n/2;g.fillStyle="#d9b98a";g.fillRect(0,0,n,n);g.drawImage(im,-n*.04,-n*.04,n*1.08,n*1.08);
-      const ink=(L.ink&&L.ink[s])||(red?"#A3000C":"#121010"),lt=(()=>{const c=parseInt(ink.slice(1,7),16);return((c>>16)*.3+((c>>8)&255)*.59+(c&255)*.11)/255>.5})(),halo=lt?"rgba(0,0,0,.7)":"rgba(255,255,255,.75)";
-      const gp=L.gly&&L.gly[ch];
-      if(gp&&window.Path2D){const P2=new Path2D(gp),k=3.3;g.save();g.translate(h-50*k,h-50*k);g.scale(k,k);g.lineJoin="round";g.strokeStyle=halo;g.lineWidth=7/k*3;g.stroke(P2);g.fillStyle=ink;g.fill(P2);g.restore();return}
-      g.font='900 330px "Noto Serif TC","PMingLiU","Songti TC","SimSun",serif';g.textAlign="center";g.textBaseline="middle";g.lineJoin="round";g.strokeStyle=halo;g.lineWidth=16;g.strokeText(ch,h,h+14);g.fillStyle=ink;g.fillText(ch,h,h+14)});
+    if(im)return faceCache[key]=cv(FN,FN,(g,n)=>{g.fillStyle=rimOf(im);g.fillRect(0,0,n,n);g.imageSmoothingQuality="high";g.drawImage(im,-n*.01,-n*.01,n*1.02,n*1.02);gloss(g,n);
+      glyph(g,n,ch,(L.ink&&L.ink[s])||(red?"#B3141B":"#141414"),L.gly&&L.gly[ch],L.bold||0,bgOf(im))});
     return plainFace(ch,red)};
-  const plainFace=(ch,red)=>faceCache[ch]||(faceCache[ch]=cv(512,512,(g,n)=>{const h=n/2;
-    let gr=g.createRadialGradient(h*.75,h*.7,20,h,h,h);gr.addColorStop(0,"#FFF6DE");gr.addColorStop(.75,"#F5E0B4");gr.addColorStop(1,"#E2BE80");g.fillStyle=gr;g.fillRect(0,0,n,n);
-    const ink=red?"#A3000C":"#121010";g.strokeStyle=ink;g.lineWidth=13;g.beginPath();g.arc(h,h,h*.86,0,TAU);g.stroke();
-    g.font='900 368px "Noto Serif TC","PMingLiU","Songti TC","SimSun",serif';g.textAlign="center";g.textBaseline="middle";
-    g.fillStyle="rgba(255,255,255,.8)";g.fillText(ch,h+4,h+20);g.fillStyle="rgba(70,35,8,.45)";g.fillText(ch,h-3,h+12);
-    g.fillStyle=ink;g.fillText(ch,h,h+15);g.strokeStyle=ink;g.lineWidth=5;g.lineJoin="round";g.strokeText(ch,h,h+15)}));
+  // 沒有朝代底圖時的木棋：象牙色、紅黑字、內圈細線
+  const plainFace=(ch,red)=>faceCache[ch]||(faceCache[ch]=cv(FN,FN,(g,n)=>{const h=n/2;
+    let gr=g.createRadialGradient(h*.75,h*.7,40,h,h,h);gr.addColorStop(0,"#FFF4D8");gr.addColorStop(.75,"#F2DCAA");gr.addColorStop(1,"#D9B272");g.fillStyle=gr;g.fillRect(0,0,n,n);
+    const ink=red?"#B3141B":"#141414";g.strokeStyle=ink;g.lineWidth=n*.022;g.beginPath();g.arc(h,h,h*.84,0,TAU);g.stroke();gloss(g,n);
+    glyph(g,n,ch,ink,null,0,.85)}));
   const stoneTex=(base,rep)=>{const t=cv(512,512,(g,w,h)=>{g.fillStyle=base;g.fillRect(0,0,w,h);noise(g,w,h,9000,"255,255,255",.12);noise(g,w,h,9000,"0,0,0",.14);
     for(let i=0;i<40;i++){g.fillStyle=`rgba(${Math.random()<.5?"40,40,40":"235,230,220"},${.05+Math.random()*.08})`;g.beginPath();g.arc(Math.random()*w,Math.random()*h,4+Math.random()*16,0,TAU);g.fill()}});
     t.wrapS=t.wrapT=T.RepeatWrapping;t.repeat.set(rep,rep);return t};
@@ -160,7 +181,9 @@
     host.append(el);
     let rd;try{rd=new T.WebGLRenderer({antialias:true,powerPreference:"high-performance"})}catch(e){el.remove();return null}
     rd.setPixelRatio(Math.min(2,window.devicePixelRatio||1));rd.shadowMap.enabled=true;rd.shadowMap.type=T.PCFSoftShadowMap;
-    if(T.SRGBColorSpace)rd.outputColorSpace=T.SRGBColorSpace;rd.toneMapping=T.ACESFilmicToneMapping;rd.toneMappingExposure=.98;
+    // 正確的色彩管理：顏色碼當螢幕色（跟 car3d 一樣）、輸出 sRGB；之前整個場景在 gamma 空間打光＋ACES，顏色被洗白
+    if(T.ColorManagement)T.ColorManagement.legacyMode=false;if(T.sRGBEncoding!=null)rd.outputEncoding=T.sRGBEncoding;if(T.SRGBColorSpace)rd.outputColorSpace=T.SRGBColorSpace;
+    rd.toneMapping=T.ACESFilmicToneMapping;rd.toneMappingExposure=.98;try{ANI=rd.capabilities.getMaxAnisotropy()||8}catch(e){}
     rd.domElement.style.cssText="display:block;width:100%;height:100%";el.append(rd.domElement);
     const hint=document.createElement("div");hint.style.cssText="position:absolute;left:50%;bottom:8px;transform:translateX(-50%);font:600 11px sans-serif;color:#fff;background:rgba(30,20,10,.45);padding:3px 10px;border-radius:99px;white-space:nowrap;pointer-events:none;transition:opacity .6s";
     hint.textContent="點棋子走棋・拖曳轉頭看看四周・點兩下回正";el.append(hint);setTimeout(()=>hint.style.opacity=0,4500);
@@ -209,7 +232,7 @@
     const teaCup=(x,z)=>{const cup=new T.Group();cup.position.set(x,0,z);sc.add(cup);const por=M(0xF4F1EA,{roughness:.25}),blue=M(0x2D5DA8,{roughness:.3});const a=new T.Mesh(new T.CylinderGeometry(.75,.75,.08,32),por);a.position.y=.04;cup.add(a);
       const b=new T.Mesh(new T.CylinderGeometry(.5,.36,.7,32,1,true),por);b.position.y=.43;b.material.side=T.DoubleSide;cup.add(b);const band=new T.Mesh(new T.CylinderGeometry(.505,.47,.12,32,1,true),blue);band.position.y=.6;cup.add(band);
       const tea=new T.Mesh(new T.CircleGeometry(.47,32),M(0x9C6B1E,{roughness:.1}));tea.rotation.x=-PI/2;tea.position.y=.66;cup.add(tea);cup.traverse(o=>{if(o.isMesh){o.castShadow=true;o.receiveShadow=true}});return cup};
-    teaCup(4.6,-6.5);teaCup(-6.45,2.3);
+    teaCup(4.6,-6.5);teaCup(-6.7,-1.6);
     // 平台上的樹（依朝代：松、柳、竹），水墨感的深色樹冠；放在兩側，轉頭時當前景框
     const bark=M(0x4A3626,{roughness:.95}),leafM=M(new T.Color(E.ink).lerp(new T.Color(0x2F4A2A),.7).getHex(),{roughness:.95}),leafG=M(new T.Color(0x6E8A3E).getHex(),{roughness:.95});
     const tree=(x,z,s)=>{const g=new T.Group();g.position.set(x,GY,z);g.scale.setScalar(s);sc.add(g);
@@ -242,7 +265,9 @@
       setFace(f,d){this.face=f;this.faceT=d||0},say(t,d){const m=this.bub.material;m.map&&m.map.dispose();m.map=bubbleTex(t);m.needsUpdate=true;this.bub.visible=true;this.bubT=d||2.2}});
     const seat=B=>{B.legs.forEach(l=>{l.rotation.x=-1.35});B.bot.position.y=-.35};
     const opp=actor(new T.Group(),mkBub(4.4,3.2,-9.2,6.2));opp.g.position.set(0,SY-.9,BZ+1.0);opp.g.scale.setScalar(4.1);sc.add(opp.g);
-    const mate=actor(new T.Group(),mkBub(-4.6,3.9,-5.6,4.2));mate.g.position.set(-6.65,.02,-4.1);mate.g.rotation.y=.66;mate.g.scale.setScalar(1.3);sc.add(mate.g);
+    // 意見回饋 218：小帥坐在我這一側、棋盤左前角外的桌面上，面向我、身體往後仰一點（鏡頭在上方，這樣看得到臉）；
+    // 之前 sc.add 被寫進註解裡，小帥根本沒出現。位置在棋盤框外，不會擋到棋子
+    const mate=actor(new T.Group(),mkBub(-.8,2.3,6.9,3.4));mate.g.position.set(-3.6,0,7.05);mate.g.rotation.set(-.6,.25,0,"YXZ");mate.g.scale.setScalar(1.1);sc.add(mate.g);
     let oppKey="",watchKey="",watchers=[];const watchG=new T.Group();sc.add(watchG);
     const SPOTS=[-31,31,-47,47,-66,66,-90,90].map(d=>d*PI/180),plinthM=M(0x8F8A80,{roughness:.9});
     const setWatchers=list=>{list=(list||[]).slice(0,8);const k=JSON.stringify(list);if(k===watchKey)return;watchKey=k;watchG.clear();watchers=[];
@@ -252,16 +277,24 @@
         try{const B=XQBot3D.figure((w&&w.bot)||{});g.add(B.bot);B.bot.traverse(o=>{if(o.isMesh)o.castShadow=true});watchers.push({B,ph:Math.random()*TAU,blinkT:1+Math.random()*3,chin:i%3===1})}catch(e){}})};
     const buildActor=(A,look)=>{A.g.clear();A.B=null;try{if(window.XQBot3D&&XQBot3D.figure){A.B=XQBot3D.figure(look||{});A.g.add(A.B.bot);A.B.bot.traverse(o=>{if(o.isMesh)o.castShadow=true});seat(A.B)}}catch(e){A.B=null}};
     const setOpp=look=>{const k=JSON.stringify(look||null);if(k===oppKey)return;oppKey=k;if(!look){opp.g.clear();opp.B=null;return}buildActor(opp,look)};
-    buildActor(mate,{});
+    buildActor(mate,{});try{mate.g.updateMatrixWorld(true);const b=new T.Box3().setFromObject(mate.g);mate.g.position.y-=b.min.y-.02}catch(e){}   // 坐在桌面上（桌面 y=0）
     const say=(t,d)=>mate.say(t,d);
     let reach=0,reachT=0,thinking=false,mood=null,glanceT=3,glance=0,mySide="r",oppName="";
     // ---------- 棋子 ----------
     const pieceGeo=(()=>{const pts=[];const R=.46,H=.27,r=.06;pts.push(new T.Vector2(0,0));pts.push(new T.Vector2(R-r,0));for(let i=0;i<=6;i++){const a=-PI/2+i/6*PI/2;pts.push(new T.Vector2(R-r+Math.cos(a)*r,r+Math.sin(a)*r))}
-      for(let i=0;i<=6;i++){const a=i/6*PI/2;pts.push(new T.Vector2(R-r+Math.cos(a)*r,H-r+Math.sin(a)*r))}pts.push(new T.Vector2(0,H));return new T.LatheGeometry(pts,40)})();
-    // 棋子：淺色木身比棋盤亮，字面稍微自發光（陰影裡的字也清楚）
-    const pieceMat=new T.MeshStandardMaterial({color:0xF0D6A2,roughness:.45}),faceGeo=new T.CircleGeometry(.41,48),faceMat={};
-    const fMat=(ch,red)=>faceMat[ch+red]||(faceMat[ch+red]=(()=>{const tx=faceTex(ch,red);return new T.MeshStandardMaterial({map:tx,emissiveMap:tx,emissive:0xffffff,emissiveIntensity:.22,roughness:.38})})());
-    const makePiece=p=>{const s=sideOf(p),ch=NAMES[s][p.toUpperCase()],g=new T.Group();const body=new T.Mesh(pieceGeo,pieceMat);body.castShadow=true;body.receiveShadow=true;g.add(body);
+      for(let i=0;i<=6;i++){const a=i/6*PI/2;pts.push(new T.Vector2(R-r+Math.cos(a)*r,H-r+Math.sin(a)*r))}pts.push(new T.Vector2(0,H));return new T.LatheGeometry(pts,72)})();
+    // 棋子（意見回饋 218）：不再用自發光（會把顏色洗白）；改成不經過 ACES 色調映射，並用「光色的倒數」把桌面上的暖光抵銷，
+    // 陽光照到的字面＝底圖原本的顏色（飽和、字黑），陰影裡照樣變暗，看起來還是真的在光裡
+    const NEUT=(()=>{const up=new T.Vector3(0,1,0),L=new T.Color(0,0,0);
+      sc.traverse(o=>{if(o.isHemisphereLight)L.add(o.color.clone().multiplyScalar(o.intensity));else if(o.isDirectionalLight){const d=o.position.clone().normalize().dot(up);if(d>0)L.add(o.color.clone().multiplyScalar(o.intensity*d))}});
+      const tg=[.97,.95,.92];return new T.Color(tg[0]/Math.max(.2,L.r),tg[1]/Math.max(.2,L.g),tg[2]/Math.max(.2,L.b))})();
+    // 鏡面反光調弱：對面那排棋子是斜斜地看，補光的大片反光會把字面刷成灰色（遠處的黑子看起來髒），只留一點點漆光
+    const pMat=o=>{try{return new T.MeshPhysicalMaterial(Object.assign({metalness:0,specularIntensity:.22,toneMapped:false},o))}catch(e){return new T.MeshStandardMaterial(Object.assign({metalness:0,toneMapped:false},o))}};
+    const faceGeo=new T.CircleGeometry(.41,64),faceMat={},bodyMat={};
+    const bMat=red=>{const s=red?"r":"b";if(bodyMat[s])return bodyMat[s];const L=LOOK,im=L&&L.pieces?loadImg(L.pieces[s]):null;
+      const c=new T.Color(im?rimOf(im):"#E9D2A2").multiply(NEUT);return bodyMat[s]=pMat({color:c,roughness:.42})};
+    const fMat=(ch,red)=>faceMat[ch+red]||(faceMat[ch+red]=(()=>{const tx=faceTex(ch,red);return pMat({map:tx,color:NEUT,roughness:.5})})());
+    const makePiece=p=>{const s=sideOf(p),ch=NAMES[s][p.toUpperCase()],g=new T.Group();const body=new T.Mesh(pieceGeo,bMat(s==="r"));body.castShadow=true;body.receiveShadow=true;g.add(body);
       const f=new T.Mesh(faceGeo,fMat(ch,s==="r"));f.rotation.x=-PI/2;f.position.y=.272;g.add(f);g.userData={p};sc.add(g);return g};
     let flip=false;const pos=i=>{const c=i%9,r=i/9|0;return flip?[4-c,4.5-r]:[c-4,r-4.5]};
     const at=(g,i,lift)=>{const[x,z]=pos(i);g.position.set(x,TOP+(lift||0),z)};
@@ -280,8 +313,10 @@
           g.position.set(x,0,z);g.rotation.y=(Math.random()-.5)*.6;captured.push(g)})}}
     function sync(board){Object.values(pieces).forEach(g=>sc.remove(g));pieces={};board.forEach((p,i)=>{if(p){const g=makePiece(p);at(g,i);pieces[i]=g}});layoutCaptured(board)}
     // 朝代造型換了（或圖剛載入）：重畫棋盤、清掉棋子貼圖、整盤重排
-    let lookKey="";const refreshLook=()=>{for(const k in faceCache)delete faceCache[k];for(const k in faceMat)delete faceMat[k];
+    let lookKey="";const refreshLook=()=>{for(const k in faceCache){try{faceCache[k].dispose()}catch(e){}delete faceCache[k]}for(const k in faceMat){try{faceMat[k].dispose()}catch(e){}delete faceMat[k]}for(const k in bodyMat){try{bodyMat[k].dispose()}catch(e){}delete bodyMat[k]}
       try{const c=btex.image.getContext("2d");drawBoard(c,btex.image.width,btex.image.height,null);btex.needsUpdate=true}catch(e){}if(prevB)sync(prevB)};
+    // Noto Serif TC 網路字型晚到：載入後重畫字面（不然會先用系統字型，字又細又糊）
+    try{document.fonts&&document.fonts.load(`900 64px ${SERIF}`,"帥仕相傌俥炮兵將士象馬車砲卒").then(()=>{if(!stopped)refreshLook()})}catch(e){}
     function draw(board,o,ex){o=o||{};ex=ex||{};const nf=!!o.flip;
       {const lk=JSON.stringify(ex.look?[ex.look.k,ex.look.img,!!ex.look.gly]:null);if(lk!==lookKey){lookKey=lk;LOOK=ex.look||null;
         if(LOOK){let n=0;const done=()=>{if(++n>=3&&LOOK===ex.look)refreshLook()};[LOOK.img,LOOK.pieces&&LOOK.pieces.r,LOOK.pieces&&LOOK.pieces.b].forEach(src=>{if(!src||loadImg(src,done))done()})}
@@ -315,11 +350,13 @@
     // ---------- 鏡頭與互動 ----------
     let yaw=0,pitch=0,tyaw=0,tpitch=0,W=1,H=1;
     // 鏡頭（iPhone 可讀性）：坐在桌前、比較俯視的角度，讓棋盤幾乎撐滿整個寬度；上方留一段看到對面的對手
-    const CAMV={hr:1.14,ht:.40};   // 畫面高寬比、水平視角的 tan(半角)（固定水平視野，窄螢幕不會切掉棋盤兩邊）
-    const fit=()=>{W=el.clientWidth||300;H=Math.round(W*CAMV.hr);el.style.height=H+"px";rd.setSize(W,H,false);cam.aspect=W/H;
+    const VH0=window.innerHeight||800;   // 只在建立時量一次螢幕高度（iPhone 捲動時網址列伸縮不會讓畫面跳）
+    const CAMV={hr:1.14,ht:.40,dp:0};   // 畫面高寬比、水平視角的 tan(半角)（固定水平視野，窄螢幕不會切掉棋盤兩邊）
+    // 意見回饋 218：螢幕夠高時畫面拉高一點（最多 1.32），多出來的都給下方（上緣維持原本的位置），露出棋盤前方的桌面讓小帥坐
+    const fit=()=>{W=el.clientWidth||300;CAMV.hr=clamp((VH0-300)/W,1.14,1.32);CAMV.dp=Math.atan(CAMV.ht*1.14)-Math.atan(CAMV.ht*CAMV.hr);H=Math.round(W*CAMV.hr);el.style.height=H+"px";rd.setSize(W,H,false);cam.aspect=W/H;
       cam.fov=clamp(2*Math.atan(CAMV.ht/cam.aspect)*180/PI,38,62);cam.updateProjectionMatrix()};
     const camBase=new T.Vector3(0,16,9.2),look=new T.Vector3(0,-.3,-2.6);
-    const placeCam=()=>{cam.position.copy(camBase);const d=look.clone().sub(camBase),r=d.length(),a0=Math.atan2(d.x,-d.z)+yaw,p0=Math.asin(d.y/r)+pitch;
+    const placeCam=()=>{cam.position.copy(camBase);const d=look.clone().sub(camBase),r=d.length(),a0=Math.atan2(d.x,-d.z)+yaw,p0=Math.asin(d.y/r)+pitch+CAMV.dp;
       cam.lookAt(camBase.x+Math.sin(a0)*Math.cos(p0)*r,camBase.y+Math.sin(p0)*r,camBase.z-Math.cos(a0)*Math.cos(p0)*r)};
     const ray=new T.Raycaster(),ndc=new T.Vector2(),plane=new T.Plane(new T.Vector3(0,1,0),-TOP),hitP=new T.Vector3();
     const pick=(cx,cy)=>{const r=rd.domElement.getBoundingClientRect();ndc.set((cx-r.left)/r.width*2-1,-((cy-r.top)/r.height)*2+1);ray.setFromCamera(ndc,cam);
@@ -364,9 +401,10 @@
         W.blinkT-=t;const bl=W.blinkT<0;if(W.blinkT<-.12)W.blinkT=2+Math.random()*3;try{XQBot3D.faceApply(B,W.chin?"flat":"smile",bl,false)}catch(e){}});
       if(mate.B){const B=mate.B;B.torso.position.y=B.torso.userData.y0==null?(B.torso.userData.y0=B.torso.position.y):B.torso.userData.y0+.02*Math.sin(s*2.4+1);
         // 小帥坐在桌角：看棋盤、偶爾轉頭看你；你吃子或贏棋時舉手歡呼
-        const look=(s%9)<1.4;let hx=look?-.05:.28,hy=look?-.5:.15+.1*Math.sin(s*.7);R(B,0,-.7,.2,-.35);R(B,1,-.7,-.2,.35);
-        if(mate.face==="happy"&&(mate.faceT>0||mood)){R(B,0,-.2,0,-2.6+.3*Math.sin(s*10));R(B,1,-.2,0,2.6-.3*Math.sin(s*10));hx=-.15;hy=-.3}
-        else if(mate.face==="open"&&mate.faceT>0){R(B,0,-.4,0,-1.2);R(B,1,-.4,0,1.2);hx=0}
+        // 小帥面向我：平常抬頭看我，偶爾回頭看一下棋盤
+        const look=(s%8)<1.8;let hx=look?.05:-.28+.04*Math.sin(s*.9),hy=look?.95:.12*Math.sin(s*.7);R(B,0,-.7,.2,-.35);R(B,1,-.7,-.2,.35);
+        if(mate.face==="happy"&&(mate.faceT>0||mood)){R(B,0,-.2,0,-2.6+.3*Math.sin(s*10));R(B,1,-.2,0,2.6-.3*Math.sin(s*10));hx=-.35;hy=0}
+        else if(mate.face==="open"&&mate.faceT>0){R(B,0,-.4,0,-1.2);R(B,1,-.4,0,1.2);hx=-.2;hy=0}
         B.legs[0].rotation.x=-1.35+.25*Math.sin(s*2.2);B.legs[1].rotation.x=-1.35-.25*Math.sin(s*2.2);
         lerp(B.head.rotation,"x",hx);lerp(B.head.rotation,"y",hy);tick(mate)}
       rd.render(sc,cam)}
