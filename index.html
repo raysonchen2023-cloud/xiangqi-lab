@@ -413,7 +413,7 @@ html[data-era=ming] .topbar,html[data-era=qing] .topbar{border-bottom-width:4px}
       if(!window.caches)return go();caches.keys().then(function(ks){return Promise.all(ks.filter(function(k){return k.indexOf("xqlab-app-")===0}).map(function(k){return caches.delete(k)}))})
         .then(function(){return navigator.serviceWorker&&navigator.serviceWorker.getRegistration()}).then(function(r){return r&&r.update()}).catch(function(){}).then(go)}},4000)})();
 </script>
-<script>window.XQ_OFFLINE=true;window.XQ_BUILD="20261102-1934";</script>
+<script>window.XQ_OFFLINE=true;window.XQ_BUILD="20261102-1946";</script>
 <script src="core.js"></script>
 <script src="engine.js"></script>
 <script src="local.js"></script>
@@ -2869,13 +2869,37 @@ async function worldWiki(q){const t=q.replace(/[？?！!。，,]/g," ").replace(
   if(!pg||!pg.extract)return null;return{title:pg.title,text:pg.extract.replace(/\n+/g,"\n\n").slice(0,600),src:"資料來源：維基百科",link:"https://zh.wikipedia.org/zh-tw/"+encodeURIComponent(pg.title)}}
 async function worldAsk(kind,q){try{if(kind==="wx")return await worldWeather(q);if(kind==="time")return worldTime();if(kind==="calc")return worldCalc(q);if(kind==="poem")return worldPoem(q)||await worldWiki(q);if(kind==="wiki")return await worldWiki(q)}
   catch(e){return{title:"要連網路",text:"這題要上網查，可是現在連不上 😢 等有網路再問我一次。"}}return null}
-function worldCard(a){return`<div class="card"><div class="muted" style="font-size:12px">🌏 萬事通</div><b style="font-size:17px">${esc(a.title)}</b><p style="white-space:pre-line;margin:6px 0 6px">${esc(a.text)}</p>${a.src?`<div class="muted" style="font-size:11px">${esc(a.src)}${a.link?`・<a href="${esc(a.link)}" target="_blank" rel="noopener">看全文</a>`:""}</div>`:""}</div>`}
+function worldCard(a){return`<div class="card"><div class="muted" style="font-size:12px">${a.go==="#/terms"?"♟ 棋子":"🌏 萬事通"}</div><b style="font-size:17px">${esc(a.title)}</b><p style="white-space:pre-line;margin:6px 0 6px">${esc(a.text)}</p>${a.go?`<button class="btn" data-wgo="${esc(a.go)}" style="margin:4px 0 8px">${esc(a.goLabel||"打開")}</button>`:""}${a.src?`<div class="muted" style="font-size:11px">${esc(a.src)}${a.link?`・<a href="${esc(a.link)}" target="_blank" rel="noopener">看全文</a>`:""}</div>`:""}</div>`}
+// 七種棋子的規則與用途（意見回饋 209）：走法依「象棋規則」頁（標準競賽規則），用途是一般公認的棋理；小帥說到棋子時也能解釋
+const PIECE_KB=[
+  {n:"帥／將",ch:"帥將",nick:"帥哥|將軍|老帥|老將",move:"在九宮裡上下左右走一格，不能出九宮。兩個將帥不能在同一條直線上直接面對面（中間沒有棋子）——這叫「對面笑」或「王不見王」。",
+    use:"整盤棋的核心，被將死就輸了。殘局時帥將也能出來幫忙控制線路（例如利用「王不見王」牽制對方將帥）。"},
+  {n:"仕／士",ch:"仕士",nick:"仕哥|士兄",move:"在九宮裡斜走一格，只能停在九宮的 5 個點上。",
+    use:"貼身保護帥將的防守棋子，價值約 2 分。雙仕健全時對方的車馬炮比較難攻進九宮；仕被吃光，帥將就容易被將死。"},
+  {n:"相／象",ch:"相象",nick:"象兄|相哥|象哥|相爺",move:"斜走兩格（走「田」字），不能過河。「田」字中間有棋子擋住就不能走，叫「塞象眼」。",
+    use:"守家的防守棋子，價值約 2 分。一方最多只能走到己方 7 個點，專門保護河界以內、九宮附近，所以常說相象「守家最認真」。雙相連在一起（相連環）防守最穩。"},
+  {n:"馬",ch:"馬傌",nick:"馬兒|小馬",move:"先直走一格再斜走一格（走「日」字）。直走那一格有棋子擋住就不能走，叫「蹩馬腿」。",
+    use:"價值約 4～5 分。走法靈活、能跨越棋子，殘局特別強（「殘局馬勝炮」）；開局要盡快跳出來，馬被困在邊上就少了作用。"},
+  {n:"車",ch:"車俥",nick:"車哥|大車",move:"直線、橫線走任意格，中間不能有棋子擋。",
+    use:"威力最大的棋子，價值約 9 分。「三步不出車，棋已輸一半」——開局要早點把車調到通暢的線路上。"},
+  {n:"炮／砲",ch:"炮砲",nick:"炮哥|大炮",move:"不吃子時跟車一樣走；吃子時一定要隔一個棋子（炮架）跳過去吃。",
+    use:"價值約 4～5 分。開局很強（「開局炮強」），中炮能直接威脅對方中路；子越少炮架越少，所以殘局通常比馬弱。"},
+  {n:"兵／卒",ch:"兵卒",nick:"小兵|卒子|兵兵",move:"只能往前走一格；過河以後也可以左右走一格。永遠不能後退。",
+    use:"沒過河時約 1 分，過河後約 2 分。「兵卒過河頂半車」——過河的兵靠近九宮時很有威脅，殘局一兵常能決定勝負，但兵走到底線就只能左右走了（老兵）。"}];
+function pieceHit(q){const t=String(q);const hits=PIECE_KB.filter(p=>[...p.ch].some(c=>t.includes(c))||p.nick.split("|").some(x=>t.includes(x)));return hits.length===1?hits[0]:null}
+function pieceCard(p){return{title:p.n,text:`【走法】${p.move}\n\n【用途】${p.use}`,src:"走法：象棋競賽規則（App「象棋規則」頁有圖解）；用途：一般公認的棋理",go:"#/terms",goLabel:"📖 看象棋規則圖解"}}
+// 象棋問題在 App 資料裡查不到時：查維基百科的象棋條目（只收內容確實在講象棋的）
+async function chessWiki(q){const t=q.replace(/[？?！!。，,]/g," ").replace(/(請問|告訴我|是什麼意思|是什麼|是誰|什麼是|怎麼|嗎|呢)/g," ").trim();if(!t)return null;
+  const A="https://zh.wikipedia.org/w/api.php?format=json&origin=*&",sr=await fetch(A+"action=query&list=search&srlimit=5&srsearch="+encodeURIComponent("象棋 "+t)).then(r=>r.json());
+  for(const h of((sr.query||{}).search||[])){const ex=await fetch(A+"action=query&prop=extracts&exintro=1&explaintext=1&exsentences=5&redirects=1&variant=zh-tw&titles="+encodeURIComponent(h.title)).then(r=>r.json());
+    const pg=Object.values((ex.query||{}).pages||{})[0];if(pg&&pg.extract&&/象棋/.test(pg.extract)&&!/國際象棋|西洋棋|日本將棋/.test(pg.title))return{title:pg.title,text:pg.extract.replace(/\n+/g,"\n\n").slice(0,600),src:"資料來源：維基百科（附參考文獻的百科，僅供參考）",link:"https://zh.wikipedia.org/zh-tw/"+encodeURIComponent(pg.title)}}
+  return null}
 function askSheet(){sheet("🤖 問"+BOTN(),b=>{
   const sug=[...BOT_SAID.slice(0,3),"五七炮是什麼","馬後炮","胡榮華 對 呂欽","今天天氣如何","背一首詩","黑洞是什麼"];
   b.innerHTML=`<p class="muted" style="margin-top:0">問我象棋術語、開局、殺法、特級大師、比賽棋譜（例如「胡榮華 對 呂欽」「1990 五羊盃」「屏風馬破當頭炮」），或 App 怎麼用；象棋以外的也可以問，例如「台北天氣」「背一首詩」「黑洞是什麼」「35×12」。能示範的，我會直接帶你到棋盤上看。<br>之後隨時<b>長按小人</b>就能問我。</p>
     <div class="row" style="gap:8px"><input id="aq" placeholder="例如：五七炮是什麼？" style="flex:1;padding:10px 12px;border:1px solid var(--line);border-radius:10px;font-size:16px;background:var(--card);color:var(--ink)"><button class="btn" id="ag" style="width:auto;padding:10px 16px">問</button></div>
     <div class="chips" id="asug" style="margin-top:8px;flex-wrap:wrap">${sug.map(x=>`<button class="chip" data-q="${esc(x)}">${esc(x.length>14?x.slice(0,13)+"…":x)}</button>`).join("")}</div><div id="aa" style="margin-top:12px"></div>
-    <div id="aiB" style="margin-top:10px"><div class="muted" style="font-size:12px;margin-bottom:6px">想聽 AI 怎麼說？用你手機的網路直接問 Google（免費）：</div>
+    <div id="aiB" style="margin-top:10px"><div class="muted" style="font-size:12px;margin-bottom:6px">想聽 AI 怎麼說？用你手機的網路直接問 Google（免費）。AI 有時會答錯，以上面有標出處的資料為準：</div>
       <div class="row" style="gap:8px"><button class="btn ghost" id="aiG" style="flex:1;padding:11px 6px">🔎 Google AI 回答</button><button class="btn ghost" id="aiM" style="flex:1;padding:11px 6px">✨ 問 Gemini</button></div></div>`;
   const qi=b.querySelector("#aq"),aa=b.querySelector("#aa");
   // 意見回饋 207、208：用玩家自己手機的網路問 Google 的免費 AI（不用金鑰）；Google 不讓 App 直接拿答案，所以開在 Google／Gemini 的畫面
@@ -2900,6 +2924,10 @@ function askSheet(){sheet("🤖 問"+BOTN(),b=>{
     if(!r.length&&gl){if(typeof BOT!=="undefined"&&BOT)BOT.say("我幫你找到棋譜了！",2);aa.innerHTML=`<div class="card"><b>找到 ${gl.total} 盤相關棋譜</b>${gHTML}</div>`;bindG();return}
     // 只有片段字湊到的（分數低）：不要亂答，改成列出「你是不是想問」讓玩家點（意見回饋 186）
     if(!gl&&(!r.length||(ASK_SC.get(r[0])||0)<4)&&!CHESSY.test(q)){aa.innerHTML='<div class="muted">這不是象棋問題，我上網查一下…</div>';const a=await worldAsk("wiki",q);if(a){aa.innerHTML=worldCard(a);say2("我查到了！");return}}
+    const showW=(a,msg)=>{aa.innerHTML=worldCard(a);say2(msg);aa.querySelectorAll("[data-wgo]").forEach(x=>x.onclick=()=>{try{document.activeElement.blur()}catch(e){}closeSheet();if(x.dataset.wgo==="#/terms")store.set("rulesTab","play");if(location.hash===x.dataset.wgo)route();else location.hash=x.dataset.wgo})};
+    if(!gl&&(!r.length||(ASK_SC.get(r[0])||0)<4)){const pc=pieceHit(q);if(pc){showW(pieceCard(pc),"這是我的好朋友！");return}
+      aa.innerHTML='<div class="muted">App 裡沒有現成的答案，我查一下百科的象棋條目…</div>';let a=null;try{a=await chessWiki(q)}catch(e){}if(a&&!r.length){showW(a,"我查到了！");return}
+      if(a){const sg=r.slice(0,4);showW(a,"我查到了！");aa.insertAdjacentHTML("beforeend",`<div class="muted" style="margin:10px 0 6px">也可能想問：</div><div class="chips" style="flex-wrap:wrap">${sg.map(x=>`<button class="chip" data-q="${esc(x.keys[0])}">${esc(x.title)}</button>`).join("")}</div>`);aa.querySelectorAll("[data-q]").forEach(x=>x.onclick=()=>ask(x.dataset.q));return}}
     if(r.length&&!gl&&(ASK_SC.get(r[0])||0)<4){const sg=r.slice(0,5);if(typeof BOT!=="undefined"&&BOT)BOT.say("你是想問這些嗎？",2);
       aa.innerHTML=`<div class="card"><b>我不太確定你問的是哪個 🤔</b><div class="muted" style="margin:6px 0">你是不是想問：</div><div class="chips" style="flex-wrap:wrap">${sg.map(x=>`<button class="chip" data-q="${esc(x.keys[0])}">${esc(x.title)}</button>`).join("")}</div><div class="muted" style="font-size:12px;margin-top:8px">也可以問：「怎麼提升實力」「胡榮華」「五七炮」「怎麼換朝代」</div></div>`;
       aa.querySelectorAll("[data-q]").forEach(x=>x.onclick=()=>ask(x.dataset.q));return}
