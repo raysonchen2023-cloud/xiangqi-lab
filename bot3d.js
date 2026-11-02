@@ -43,6 +43,7 @@
   // 小人的身體可以換成其他棋子（意見回饋 193）：紅方 帥仕相俥傌炮兵、黑方 將士象車馬砲卒；名字跟著變成「小X」
   const BP=()=>{const c=store.get("botPiece","帥");return typeof c==="string"&&c.length===1&&"帥仕相俥傌炮兵將士象車馬砲卒".includes(c)?c:"帥"};
   const BLACK=c=>"將士象車馬砲卒".includes(c),BNAME=()=>"小"+({俥:"車",傌:"馬",砲:"炮"}[BP()]||BP());
+  let PCO=null;const PC=()=>PCO||BP();
   const eraK=()=>{const k=store.get("era","classic");return TH[k]?k:"classic"};
   const faceTex=(ch,th,k)=>cv(512,(g,n)=>{const h=n/2;
     let gr=g.createRadialGradient(h*.8,h*.7,10,h,h,h);gr.addColorStop(0,"#FFF8E6");gr.addColorStop(.75,"#F2DCAE");gr.addColorStop(1,"#D9B577");g.fillStyle=gr;g.beginPath();g.arc(h,h,h,0,TAU);g.fill();
@@ -69,7 +70,7 @@
     const torso=new T.Group();torso.position.y=1.02;bot.add(torso);
     const body=add(torso,new T.CylinderGeometry(.8,.8,.46,64),wood,null,{line:.035});body.rotation.x=PI/2;
     for(const z of[.23,-.23]){const r=new T.Mesh(new T.TorusGeometry(.79,.035,12,64),gold);r.position.z=z;torso.add(r)}
-    const face=new T.Mesh(new T.CircleGeometry(.64,64),P("#fff",{map:faceTex(BP(),BLACK(BP())?Object.assign({},th,{ink:"#1A1410"}):th,k),roughness:.4,clearcoat:.8,toneMapped:false}));face.position.z=.232;torso.add(face);
+    const face=new T.Mesh(new T.CircleGeometry(.64,64),P("#fff",{map:faceTex(PC(),BLACK(PC())?Object.assign({},th,{ink:"#1A1410"}):th,k),roughness:.4,clearcoat:.8,toneMapped:false}));face.position.z=.232;torso.add(face);
     // 頭
     const head=new T.Group();head.position.y=.8;torso.add(head);
     add(head,new T.SphereGeometry(.52,40,30),skin,[0,.14,0],{line:.05});
@@ -338,5 +339,15 @@
     const onResize=()=>{const b=bounds();x=Math.min(x,b.x1);y=Math.min(y,b.y1);tx=Math.min(tx,b.x1);ty=Math.min(ty,b.y1)};window.addEventListener("resize",onResize);
     return{act:k=>doAct(typeof k==="number"?comboAct(k):k),say,setScale,rebuild,count:COMBO.length,lines:LINES.length,
       stop(){stopped=true;clearInterval(eraT);clearInterval(boardT);window.removeEventListener("xq-call",onCall);window.removeEventListener("xq-result",onResult);window.removeEventListener("resize",onResize);try{rd.dispose()}catch(e){}box.remove()}}}
-  window.XQBot3D={start,acts:Object.keys(ACTS),combos:COMBO.length,lines:LINES.length};
+  // 瘦長版（公園 3D 棋盤的 Pikafish）：身體窄、高，手腳往內收，戴圓眼鏡
+  function thinify(B){const tz=B.torso;tz.children.forEach(o=>{if(o===B.head||B.arms.includes(o))return;o.scale.x*=.6;o.scale.y*=1.18;o.position.y*=1.18});
+    B.arms.forEach(a=>{a.position.x*=.62;a.scale.set(.85,1.1,.85)});B.legs.forEach(l=>{l.position.x*=.7;l.scale.set(.8,1.25,.8)});B.head.scale.set(.88,1.02,.9);B.head.position.y+=.08;tz.position.y+=.1;
+    const fr=new T.MeshPhysicalMaterial({color:0x1A1A1A,metalness:.6,roughness:.25,clearcoat:1}),gl=new T.MeshPhysicalMaterial({color:0xBFE3FF,transparent:true,opacity:.28,roughness:.05,clearcoat:1});
+    for(const s of[-1,1]){const r=new T.Mesh(new T.TorusGeometry(.14,.022,10,28),fr);r.position.set(.19*s,.13,.5);B.head.add(r);const g=new T.Mesh(new T.CircleGeometry(.13,24),gl);g.position.set(.19*s,.13,.505);B.head.add(g)}
+    const br=new T.Mesh(new T.CylinderGeometry(.015,.015,.12,8),fr);br.rotation.z=PI/2;br.position.set(0,.14,.51);B.head.add(br)}
+  // 公園 3D 棋盤（意見回饋 212）要讓小帥坐在對面：給一個獨立的小帥模型和表情設定
+  const faceApply=(P,F,blink,mOpen)=>{P.eyes.forEach((e,i)=>{e.g.scale.y=F==="happy"||(F==="wink"&&i===1)?.12:blink?.1:1;e.brow.position.y=.15+(F==="open"||F==="happy"?.03:0);e.brow.rotation.z=PI/2+(F==="sad"?-.45*e.s:0)});
+    const o=mOpen||F==="open"||F==="happy";P.mouth.open.visible=o;P.mouth.smile.visible=!o;P.mouth.smile.rotation.z=F==="sad"?0:PI;P.mouth.smile.scale.y=F==="flat"?.2:1;P.mouth.smile.position.y=F==="sad"?-.06:0;P.tear.visible=F==="sad"};
+  window.XQBot3D={start,acts:Object.keys(ACTS),combos:COMBO.length,lines:LINES.length,figure:o=>{o=o||{};PCO=typeof o.p==="string"&&o.p.length===1&&"帥仕相俥傌炮兵將士象車馬砲卒".includes(o.p)?o.p:null;
+    try{const B=build(TH[o.e]?o.e:eraK(),o.g>=1&&o.g<=9?o.g:grade());if(o.thin)thinify(B);return B}finally{PCO=null}},faceApply,name:()=>BNAME()};
 })();

@@ -413,7 +413,7 @@ html[data-era=ming] .topbar,html[data-era=qing] .topbar{border-bottom-width:4px}
       if(!window.caches)return go();caches.keys().then(function(ks){return Promise.all(ks.filter(function(k){return k.indexOf("xqlab-app-")===0}).map(function(k){return caches.delete(k)}))})
         .then(function(){return navigator.serviceWorker&&navigator.serviceWorker.getRegistration()}).then(function(r){return r&&r.update()}).catch(function(){}).then(go)}},4000)})();
 </script>
-<script>window.XQ_OFFLINE=true;window.XQ_BUILD="20261102-1953";</script>
+<script>window.XQ_OFFLINE=true;window.XQ_BUILD="20261102-2032";</script>
 <script src="core.js"></script>
 <script src="engine.js"></script>
 <script src="local.js"></script>
@@ -2504,11 +2504,29 @@ function voiceMove(ctx){const R=window.SpeechRecognition||window.webkitSpeechRec
   r.onend=()=>{if(!got)end()};
   try{r.start();vibrate(8)}catch(e){end();toast("無法開始錄音")}}
 const vcOn=()=>store.get("voiceMove",true);
+// 公園 3D 棋盤（意見回饋 212）：第一人稱坐在公園石桌前下棋，小帥坐在對面長椅上；右上角 🌳 切換，選擇會記住
+// 我的小帥造型（棋子、朝代、官階）：線上大廳會廣播，對手在公園 3D 棋盤上看到的就是你的小帥
+window.XQ_BOTLOOK=()=>{let p=0;try{p=(JSON.parse(localStorage.getItem("xq_cpuRate")||"null")||{}).pts||0}catch(e){}
+  return{p:botPc(),e:store.get("era","classic"),g:p>=1500?1:p>=1150?2:p>=1000?3:p>=800?4:p>=600?5:p>=400?6:p>=200?7:p>=100?8:9}};
+// 電腦對手 Pikafish：瘦長版的棋子人、戴眼鏡，執哪一方身上就是帥或將
+const PIKA_LOOK=side=>({p:side==="r"?"帥":"將",e:"wudai",g:1,thin:true});
+let PARK=null,PARK_LOADING=null;const parkOn=()=>store.get("park3d",false);
+const botVis=on=>document.querySelectorAll(".xqbot").forEach(x=>x.style.visibility=on?"":"hidden");
+function parkLoad(){const v="?v="+encodeURIComponent(window.XQ_BUILD||"");return PARK_LOADING||(PARK_LOADING=(async()=>{await loadScript(OFF?"three.min.js":"/m/three.min.js");
+  await loadScript((OFF?"bot3d.js":"/m/bot3d.js")+v);await loadScript((OFF?"park3d.js":"/m/park3d.js")+v)})().catch(e=>{PARK_LOADING=null;throw e}))}
+function parkDraw(host,bd,board,o,ex){
+  if(!parkOn()){if(PARK&&PARK.host===host){PARK.v.destroy();PARK=null}bd.svg.style.display="";botVis(true);return}
+  if(!window.XQPark3D){bd.svg.style.display="";parkLoad().then(()=>{if(document.body.contains(host))parkDraw(host,bd,board,o,ex)}).catch(()=>{toast("公園 3D 棋盤載入失敗，先用平面棋盤");store.set("park3d",false)});return}
+  if(!PARK||PARK.host!==host||!document.body.contains(PARK.v.el)){if(PARK)PARK.v.destroy();
+    const pv=XQPark3D.create(host,{onTap:i=>ex.tap(i),onDestroy:()=>{if(PARK&&PARK.v===pv){PARK=null;botVis(true)}}});
+    if(!pv){toast("這台裝置沒辦法顯示 3D，先用平面棋盤");store.set("park3d",false);return}PARK={host,v:pv};setTimeout(()=>{try{pv.say(`我是${BOTN()}，幫你加油！`,2.6);if(ex.oppHello)setTimeout(()=>pv.oppSay(ex.oppHello,2.6),1400)}catch(e){}},700)}
+  bd.svg.style.display="none";botVis(false);PARK.v.draw(board,o,ex)}
+const parkBtn=redraw=>["🌳",()=>{store.set("park3d",!parkOn());vibrate(8);toast(parkOn()?`🌳 公園 3D 棋盤：${BOTN()}坐在對面跟你下（拖曳可以看四周）`:"回到平面棋盤");redraw()},"公園 3D 棋盤"];
 function CpuGame(v){
   setTabs(false);gameLayout(v);
   let st=null,sel=-1,shownResult=null,busy=false,pHint=null;   // pHint：錯棋重練時在棋盤上畫 Pikafish 的建議
   const bd=Board(i=>tap(i));v.querySelector("#bbox").append(bd.svg);
-  setTop("挑戰電腦","#/",vcOn()?[["🎤",()=>voiceMove(()=>!st||st.result?{why:"這盤已經結束"}:st.turn!==st.human||st.thinking?{why:"還沒輪到你"}:{board:st.board,legal:st.legal,play:(f,t)=>{sel=-1;post("/play/move",{f,t})}}),"聲控走棋"]]:[]);
+  setTop("挑戰電腦","#/",[parkBtn(()=>draw())].concat(vcOn()?[["🎤",()=>voiceMove(()=>!st||st.result?{why:"這盤已經結束"}:st.turn!==st.human||st.thinking?{why:"還沒輪到你"}:{board:st.board,legal:st.legal,play:(f,t)=>{sel=-1;post("/play/move",{f,t})}}),"聲控走棋"]]:[]));
   // 模式切換直接放在頂部列（取代標題）：積分挑戰／自選難度／獎勵一眼就看得到，點一下就換（離線版才有積分挑戰和獎勵）
   const modeOf=s=>s.ranked?"rank":s.reward?"car":"free",prefMode=()=>store.get("cpuRanked",true)?"rank":REWARD&&store.get("cpuCar",false)?"car":"free";
   const seg=OFF?document.createElement("div"):null;
@@ -2525,7 +2543,9 @@ function CpuGame(v){
     if(sel>=0&&st.legal.some(([f,t])=>f===sel&&t===i)){const f=sel;sel=-1;vibrate(15);return post("/play/move",{f,t:i})}
     sel=st.legal.some(([f])=>f===i)?i:-1;if(sel>=0)vibrate(5);draw()}
   function draw(){if(!st)return;const last=st.moves[st.moves.length-1];
-    bd.draw(st.board,{flip:st.human==="b",last,sel,targets:sel>=0?st.legal.filter(([f])=>f===sel).map(x=>x[1]):[],hint:st.hint?[st.hint.f,st.hint.t]:pHint&&pHint.n===st.moves.length?[pHint.f,pHint.t]:null,check:st.check,fx:true})}
+    const o={flip:st.human==="b",last,sel,targets:sel>=0?st.legal.filter(([f])=>f===sel).map(x=>x[1]):[],hint:st.hint?[st.hint.f,st.hint.t]:pHint&&pHint.n===st.moves.length?[pHint.f,pHint.t]:null,check:st.check,fx:true};bd.draw(st.board,o);
+    parkDraw(v.querySelector("#bbox"),bd,st.board,o,{tap,thinking:!!st.thinking||(!st.result&&st.turn!==st.human),botSide:st.human==="r"?"b":"r",result:st.result?(st.result.w||"draw"):null,hint:o.hint,
+      opp:PIKA_LOOK(st.human==="r"?"b":"r"),oppHello:"我是 Pikafish，請多指教。",oppWin:"將死了，再接再厲。",oppLose:"你贏了，佩服佩服！"})}
   let lastN=null;   // 上一次畫的步數：步數剛好多一步才秀開局名（重新整理、開新局不秀）
   function render(s){const n0=lastN;st=s;lastN=s.moves.length;if(!st.legal.some(([f])=>f===sel))sel=-1;draw();
     if(n0!=null&&lastN===n0+1&&!st.practice){const cue=openingCue(st.moves);if(cue)setTimeout(()=>openFx(bd.svg,cue[1],cue[0]),350)}
@@ -2943,7 +2963,8 @@ function askSheet(){sheet("🤖 問"+BOTN(),b=>{
     bindG();aa.querySelectorAll("[data-q]").forEach(x=>x.onclick=()=>ask(x.dataset.q))};
   b.querySelector("#ag").onclick=()=>ask(qi.value);qi.onkeydown=e=>{if(e.key==="Enter")ask(qi.value)};
   b.querySelectorAll("#asug [data-q]").forEach(x=>x.onclick=()=>ask(x.dataset.q));setTimeout(()=>qi.focus(),200)})}
-function loadScript(src){return new Promise((ok,no)=>{if(document.querySelector(`script[data-s="${src}"]`))return ok();const s=document.createElement("script");s.src=src;s.dataset.s=src;s.onload=ok;s.onerror=()=>no(new Error("載入 "+src+" 失敗"));document.head.append(s)})}
+// 同一個檔案同時被要求載入兩次時，第二次要等第一次載完（不然 three.js 還沒好，小人／公園 3D 就先跑了）
+const LOADING={};function loadScript(src){return LOADING[src]||(LOADING[src]=new Promise((ok,no)=>{const s=document.createElement("script");s.src=src;s.dataset.s=src;s.onload=ok;s.onerror=()=>{delete LOADING[src];s.remove();no(new Error("載入 "+src+" 失敗"))};document.head.append(s)}))}
 // 產生「對手掃這個就能加入、自動坐另一邊」的網址
 async function joinLink(other){
   if(OFF){const r=XQ.remoteInfo();if(!r)return null;return location.origin+location.pathname+`#connect=${encodeURIComponent(r.base)}&k=${encodeURIComponent(r.key)}&seat=${other}`}
@@ -2957,8 +2978,8 @@ function PvpGame(v){
   const NET=OFF&&!!window.XQNet&&XQNet.active();
   let seat=NET?(XQNet.side()||"w"):store.get("pvpSeat",null);if(!NET&&OFF&&seat&&!XQ.remoteInfo()){seat=null;store.set("pvpSeat",null);XQ.setPvpOnline(false)}
   const bd=Board(i=>tap(i));v.querySelector("#bbox").append(bd.svg);
-  const setTitle=()=>NET?setTop(seat==="w"?"👀 觀戰中":`網路對戰・我執${seat==="r"?"紅":"黑"}`,"#/lobby",[...(vcOn()?[["🎤",()=>voiceMove(()=>!st||st.result?{why:"這盤已經結束"}:seat==="w"?{why:"你在觀戰"}:seat&&st.turn!==seat?{why:"還沒輪到你"}:{board:st.board,legal:st.legal,play:(f,t)=>{sel=-1;flipMan=null;post("/pvp/move",{f,t})}}),"聲控走棋"]]:[]),["🌐",()=>netSheet(),"大廳"]])
-    :setTop(seat?`連線對戰・我執${seat==="r"?"紅":"黑"}`:"雙人對戰","#/",(DEVMODE()?[["👥",()=>seatSheet(),"連線對戰"]]:[]).concat([...(vcOn()?[["🎤",()=>voiceMove(()=>!st||st.result?{why:"這盤已經結束"}:seat==="w"?{why:"你在觀戰"}:seat&&st.turn!==seat?{why:"還沒輪到你"}:{board:st.board,legal:st.legal,play:(f,t)=>{sel=-1;flipMan=null;post("/pvp/move",{f,t})}}),"聲控走棋"]]:[]),["⚙",()=>newSheet(),"新局設定"]]));setTitle();   // 透過電腦的連線對戰只給開發者；玩家用「線上對戰」
+  const setTitle=()=>NET?setTop(seat==="w"?"👀 觀戰中":`網路對戰・我執${seat==="r"?"紅":"黑"}`,"#/lobby",[parkBtn(()=>draw()),...(vcOn()?[["🎤",()=>voiceMove(()=>!st||st.result?{why:"這盤已經結束"}:seat==="w"?{why:"你在觀戰"}:seat&&st.turn!==seat?{why:"還沒輪到你"}:{board:st.board,legal:st.legal,play:(f,t)=>{sel=-1;flipMan=null;post("/pvp/move",{f,t})}}),"聲控走棋"]]:[]),["🌐",()=>netSheet(),"大廳"]])
+    :setTop(seat?`連線對戰・我執${seat==="r"?"紅":"黑"}`:"雙人對戰","#/",(DEVMODE()?[["👥",()=>seatSheet(),"連線對戰"]]:[]).concat([parkBtn(()=>draw()),...(vcOn()?[["🎤",()=>voiceMove(()=>!st||st.result?{why:"這盤已經結束"}:seat==="w"?{why:"你在觀戰"}:seat&&st.turn!==seat?{why:"還沒輪到你"}:{board:st.board,legal:st.legal,play:(f,t)=>{sel=-1;flipMan=null;post("/pvp/move",{f,t})}}),"聲控走棋"]]:[]),["⚙",()=>newSheet(),"新局設定"]]));setTitle();   // 透過電腦的連線對戰只給開發者；玩家用「線上對戰」
   function netSheet(){sheet(seat==="w"?"觀戰中":"網路對戰",b=>{b.innerHTML=`<button class="btn" id="lb">🌐 回大廳（這盤會保留）</button><button class="btn ghost" id="lv">${seat==="w"?"不看了":"離開這盤"}</button>`;
     b.querySelector("#lb").onclick=()=>{closeSheet();location.hash="#/lobby"};
     b.querySelector("#lv").onclick=()=>{closeSheet();const go=()=>{XQNet.leave();location.hash="#/lobby"};
@@ -3017,7 +3038,9 @@ function PvpGame(v){
     for(const[b,ic,l,fn]of[[acts.undo,"◀","上一步",()=>watchStep(-1)],[acts.draw,"▶","下一步",()=>watchStep(1)],[acts.resign,"⏭","最新",()=>{view=null;draw();watchBar();renderStrip(v.querySelector("#strip"),st.moves,st.moves.length-1,pickStep)}]]){
       b.innerHTML=`<span class="ic">${ic}</span>${l}`;b.onclick=()=>fn()}}
   function draw(){if(!st)return;if(seat==="w"&&view!=null){const n=view;bd.draw(boardAtN(n),{flip:isFlip(),last:st.moves[n-1]});return}
-    bd.draw(st.board,{flip:isFlip(),last:st.moves[st.moves.length-1],sel,targets:sel>=0?st.legal.filter(([f])=>f===sel).map(x=>x[1]):[],check:st.check,fx:true})}
+    const o={flip:isFlip(),last:st.moves[st.moves.length-1],sel,targets:sel>=0?st.legal.filter(([f])=>f===sel).map(x=>x[1]):[],check:st.check,fx:true};bd.draw(st.board,o);
+    parkDraw(v.querySelector("#bbox"),bd,st.board,o,{tap,botSide:NET&&seat&&seat!=="w"?(seat==="r"?"b":"r"):null,result:st.result?(st.result.w||"draw"):null,
+      opp:NET&&seat&&seat!=="w"?(window.XQNet&&XQNet.oppBot&&XQNet.oppBot()||{p:seat==="r"?"將":"帥"}):null,oppWin:"我贏了！再來一盤？",oppLose:"你好厲害…"})}
   function clocks(){if(!st||!clockBase||!clockBase.c)return;const b=clockBase;for(const s of["r","b"]){const el=v.querySelector(`#ck_${s}`);if(el){const x=b.c[s]-(b.run&&b.turn===s?Date.now()-b.at:0);el.textContent=fmt(x);el.style.color=x<60000&&!(b.turn===s&&b.run)?"var(--red)":""}}}
   const ckT=setInterval(clocks,250);
   let lastN=null;   // 步數剛好多一步才秀開局名
