@@ -417,7 +417,7 @@ html[data-era=ming] .topbar,html[data-era=qing] .topbar{border-bottom-width:4px}
       if(!window.caches)return go();caches.keys().then(function(ks){return Promise.all(ks.filter(function(k){return k.indexOf("xqlab-app-")===0}).map(function(k){return caches.delete(k)}))})
         .then(function(){return navigator.serviceWorker&&navigator.serviceWorker.getRegistration()}).then(function(r){return r&&r.update()}).catch(function(){}).then(go)}},4000)})();
 </script>
-<script>window.XQ_OFFLINE=true;window.XQ_BUILD="20261103-0536";</script>
+<script>window.XQ_OFFLINE=true;window.XQ_BUILD="20261103-0549";</script>
 <script src="core.js"></script>
 <script src="engine.js"></script>
 <script src="local.js"></script>
@@ -3063,7 +3063,8 @@ function PvpGame(v){
   const acts=actionBar(v.querySelector("#acts"),[["undo","↶","悔棋",()=>post("/pvp/undo")],["flip","⇅","翻轉",()=>{if(seat&&seat!=="w")return emoteSheet();flipMan=!isFlip();autoFlip=false;store.set("autoFlip",false);draw();toast("已關閉自動轉向")}],
     ["new","＋","新局",()=>NET?(st&&st.result?post("/pvp/new"):toast("這盤下完才能再來一局")):newSheet(),true],["draw","🤝","提和",()=>{if(st)post("/pvp/draw",{side:mySide()})}],
     ["resign","🏳","認輸",()=>{if(st){const s=mySide();confirmBox(`${PLAYER[s]}（${s==="r"?st.red:st.black}）確定認輸？`,()=>post("/pvp/resign",{side:s}),"認輸")}}],
-    ["setup","🧪","擺盤",()=>st&&setupSheet(st.board,st.turn,isFlip(),!NET&&!seat)]]);
+    // 擺盤：觀戰時從正在看的那一步開始，也能請 Pikafish 分析（觀眾不影響比賽，意見回饋 263）；自己下棋時網路對戰不開放 Pikafish
+    ["setup","🧪","擺盤",()=>{if(!st)return;if(seat==="w"&&view!=null)setupSheet(boardAtN(view),view%2?"b":"r",isFlip(),true);else setupSheet(st.board,st.turn,isFlip(),seat==="w"||!NET&&!seat)}]]);
   const flipBtn=()=>{acts.flip.innerHTML=seat&&seat!=="w"?(NET?'<span class="ic">💬</span>聊天':'<span class="ic">😏</span>表情'):'<span class="ic">⇅</span>翻轉'};flipBtn();
   const isFlip=()=>flipMan!=null?flipMan:seat?seat==="b":(autoFlip&&st&&!st.result?st.turn==="b":false);
   async function post(u,b){if(busy)return;busy=true;try{render(await api(u,{...(b||{}),seat}))}catch(e){toast(e.message)}finally{busy=false}}
