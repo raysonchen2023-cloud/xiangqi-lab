@@ -236,7 +236,11 @@
     try{const b=await fetch("data/gmbios.json").then(r=>r.json());for(const x of Array.isArray(b)?b:Object.values(b)){if(!x||!x.zh||/撤銷/.test(x.bio||"")||x.revoked)continue;
       if(x.gm)ALL.push(`你知道嗎？${x.zh}在 ${x.gm} 年獲授特級大師`);if(x.titles&&x.titles[0])ALL.push(`${x.zh}拿過「${cut(x.titles[0],26)}」`);
       if(x.from)ALL.push(`${x.zh}：${cut(x.from,24)}`);if(x.style)ALL.push(`${x.zh}的棋風：${cut(x.style,26)}`)}}catch(e){}})();
-  const nextLine=()=>{let seen=new Set(store.get("botSeen",[]));let pool=[];for(let i=0;i<ALL.length;i++)if(!seen.has(i))pool.push(i);
+  // 意見回饋 252：公園阿伯下棋的有趣故事（1001 則，data/qa/park-tales.txt，一行一則）：平常講話大約每 3 句穿插 1 則，講過的記住，全部講完才重來
+  let TALES=[];fetch("data/qa/park-tales.txt").then(r=>r.ok?r.text():"").then(t=>{TALES=t.split(String.fromCharCode(10)).map(x=>x.trim()).filter(Boolean)}).catch(()=>{});
+  const nextTale=()=>{let seen=new Set(store.get("botTaleSeen",[]));let pool=[];for(let i=0;i<TALES.length;i++)if(!seen.has(i))pool.push(i);
+    if(!pool.length){seen=new Set();pool=TALES.map((_,i)=>i)}const i=pool[Math.random()*pool.length|0];seen.add(i);store.set("botTaleSeen",[...seen]);return TALES[i]};
+  const nextLine=()=>{if(TALES.length&&Math.random()<1/3)return nextTale();let seen=new Set(store.get("botSeen",[]));let pool=[];for(let i=0;i<ALL.length;i++)if(!seen.has(i))pool.push(i);
     if(!pool.length){seen=new Set();pool=ALL.map((_,i)=>i)}const i=pool[Math.random()*pool.length|0];seen.add(i);store.set("botSeen",[...seen]);return ALL[i]};
   let hintN=0;const HINTS=["長按我，可以問我象棋問題喔！","有問題嗎？長按我就好～","長按我：開局、殺法、棋手、棋譜都可以問"];
   const COMBO=[];for(let i=0;i<ARM.length&&COMBO.length<300;i++)for(let j=0;j<BODY.length&&COMBO.length<300;j++)COMBO.push([i,j]);
@@ -247,7 +251,7 @@
     const box=document.createElement("div");box.className="xqbot";
     box.style.cssText=`position:fixed;left:0;top:0;width:${W}px;height:${H}px;z-index:900;pointer-events:none;will-change:transform;transition:opacity .2s`;
     const hit=document.createElement("div");hit.style.cssText="position:absolute;left:19%;right:19%;top:10%;bottom:3%;pointer-events:auto;touch-action:none;cursor:grab;border-radius:40%;-webkit-touch-callout:none;-webkit-user-select:none;user-select:none";
-    const bub=document.createElement("div");bub.style.cssText="position:absolute;left:50%;top:-4px;transform:translate(-50%,-100%);max-width:200px;width:max-content;background:#fffdf7;color:#3a2618;border:2px solid #3a2618;border-radius:14px;padding:4px 10px;font:700 13px/1.35 sans-serif;text-align:center;box-shadow:0 2px 6px #0003;opacity:0;transition:opacity .25s;pointer-events:none";
+    const bub=document.createElement("div");bub.style.cssText="position:absolute;left:50%;top:-4px;transform:translate(-50%,-100%);max-width:230px;width:max-content;background:#fffdf7;color:#3a2618;border:2px solid #3a2618;border-radius:14px;padding:4px 10px;font:700 13px/1.35 sans-serif;text-align:center;box-shadow:0 2px 6px #0003;opacity:0;transition:opacity .25s;pointer-events:none";
     box.append(hit,bub);document.body.appendChild(box);
     let rd;try{rd=new T.WebGLRenderer({alpha:true,antialias:true})}catch(e){box.remove();return null}
     rd.setPixelRatio(Math.min(3,window.devicePixelRatio||1));rd.setSize(W,H);rd.domElement.style.cssText="display:block;width:100%;height:100%;pointer-events:none";box.insertBefore(rd.domElement,hit);
@@ -262,8 +266,11 @@
     const bounds=()=>({x0:0,x1:innerWidth-W,y0:20,y1:innerHeight-H});
     const sp=store.get("botPos",null);let parked=!!sp,x=sp?sp.x*innerWidth:Math.max(4,innerWidth-W-16),y=sp?sp.y*innerHeight:Math.max(70,innerHeight-H-90);
     let tx=x,ty=y,face=0,act=null,actT=0,next=1.5,bubT=0,stopped=false,last=performance.now(),acc=0,blinkT=2,talk=0,drag=null,taps=0,tapT=0,deck=[],boardMode=false,boardDrag=false,sheetMode=false;
-    const say=(s,d)=>{s=String(s).replace(/小帥/g,BNAME()).replace("身體是一顆帥","身體是一顆"+BP());bub.textContent=s;bub.style.opacity=1;bubT=d||2;talk=Math.min(1.2,.25+s.length*.08);try{window.dispatchEvent(new CustomEvent("xq-bot-said",{detail:s}))}catch(e){}};
-    const doAct=a=>{if(typeof a==="string")a=ACTS[a];if(!a)return;act=a;actT=0;tx=x;ty=y;const w=a.say;if(w)say(w,Math.max(1.8,Math.min(6,w.length*.16+.6,a.d+3)))};
+    // 泡泡不超出畫面左右（小帥站在邊邊時往內移）；小帥會走動，所以泡泡顯示期間每幾格重新算
+    let bubDx=0,fitN=0;const fitBub=()=>{try{const r=bub.getBoundingClientRect(),W=window.innerWidth,cur=r.left-bubDx,w=r.width,dx=Math.min(0,W-6-(cur+w))+Math.max(0,6-cur);
+      if(Math.abs(dx-bubDx)>.5){bubDx=dx;bub.style.transform=`translate(calc(-50% + ${Math.round(dx)}px),-100%)`}}catch(e){}};
+    const say=(s,d)=>{s=String(s).replace(/小帥/g,BNAME()).replace("身體是一顆帥","身體是一顆"+BP());bub.textContent=s;bub.style.opacity=1;fitBub();bubT=d||2;talk=Math.min(1.2,.25+s.length*.08);try{window.dispatchEvent(new CustomEvent("xq-bot-said",{detail:s}))}catch(e){}};
+    const doAct=a=>{if(typeof a==="string")a=ACTS[a];if(!a)return;act=a;actT=0;tx=x;ty=y;const w=a.say;if(w)say(w,w.length>26?Math.min(10,w.length*.17+.8):Math.max(1.8,Math.min(6,w.length*.16+.6,a.d+3)))};
     // 抽牌：300 種組合＋招牌動作洗牌後輪流出，不會一直重複
     const randAct=()=>{if(!deck.length){deck=[...COMBO.keys(),...SIGNATURE];for(let i=deck.length-1;i>0;i--){const j=Math.random()*(i+1)|0;[deck[i],deck[j]]=[deck[j],deck[i]]}}const k=deck.pop();return typeof k==="number"?comboAct(k):ACTS[k]};
     const wander=()=>{if(parked||boardMode||sheetMode)return;const b=bounds();tx=b.x0+Math.random()*Math.max(0,b.x1-b.x0);ty=Math.max(70,b.y0)+Math.random()*Math.max(0,b.y1-Math.max(70,b.y0))};
@@ -286,7 +293,7 @@
       if(talk>0)talk-=t;const mOpen=F==="open"||F==="happy"||(F!=="sad"&&F!=="flat"&&talk>0&&Math.sin(now/70)>0);P.mouth.open.visible=mOpen;P.mouth.smile.visible=!mOpen;
       P.mouth.smile.rotation.z=F==="sad"?0:PI;P.mouth.smile.scale.y=F==="flat"?.2:1;P.mouth.smile.position.y=F==="sad"?-.06:0;
       P.tear.visible=F==="sad";if(F==="sad"){const k=(now/1400)%1;P.tear.position.set(-.2,.1-.32*k,.47);P.tear.material.opacity=.85*(1-k*.6)}
-      if(bubT>0){bubT-=t;if(bubT<=0)bub.style.opacity=0}
+      if(bubT>0){bubT-=t;if(bubT<=0)bub.style.opacity=0;else if((++fitN&7)===0)fitBub()}
       if(!drag){const b=bounds();x=Math.min(Math.max(x,b.x0),Math.max(b.x0,b.x1));y=Math.min(Math.max(y,b.y0),Math.max(b.y0,b.y1))}
       box.style.transform=`translate(${x|0}px,${y|0}px)`;rd.render(sc,cam)}
     requestAnimationFrame(frame);
