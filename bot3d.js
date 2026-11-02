@@ -188,12 +188,12 @@
     const shd=new T.Mesh(new T.CircleGeometry(.8,32),new T.MeshBasicMaterial({color:0,transparent:true,opacity:.2}));shd.rotation.x=-PI/2;shd.position.y=.02;sc.add(shd);
     const bounds=()=>({x0:0,x1:innerWidth-W,y0:20,y1:innerHeight-H});
     const sp=store.get("botPos",null);let parked=!!sp,x=sp?sp.x*innerWidth:Math.max(4,innerWidth-W-16),y=sp?sp.y*innerHeight:Math.max(70,innerHeight-H-90);
-    let tx=x,ty=y,face=0,act=null,actT=0,next=1.5,bubT=0,stopped=false,last=performance.now(),acc=0,blinkT=2,talk=0,drag=null,taps=0,tapT=0,deck=[];
+    let tx=x,ty=y,face=0,act=null,actT=0,next=1.5,bubT=0,stopped=false,last=performance.now(),acc=0,blinkT=2,talk=0,drag=null,taps=0,tapT=0,deck=[],boardMode=false,boardDrag=false;
     const say=(s,d)=>{bub.textContent=s;bub.style.opacity=1;bubT=d||2;talk=Math.min(1.2,.25+s.length*.08);try{window.dispatchEvent(new CustomEvent("xq-bot-said",{detail:s}))}catch(e){}};
     const doAct=a=>{if(typeof a==="string")a=ACTS[a];if(!a)return;act=a;actT=0;tx=x;ty=y;const w=a.say;if(w)say(w,Math.max(1.8,Math.min(6,w.length*.16+.6,a.d+3)))};
     // 抽牌：300 種組合＋招牌動作洗牌後輪流出，不會一直重複
     const randAct=()=>{if(!deck.length){deck=[...COMBO.keys(),...SIGNATURE];for(let i=deck.length-1;i>0;i--){const j=Math.random()*(i+1)|0;[deck[i],deck[j]]=[deck[j],deck[i]]}}const k=deck.pop();return typeof k==="number"?comboAct(k):ACTS[k]};
-    const wander=()=>{if(parked)return;const b=bounds();tx=b.x0+Math.random()*Math.max(0,b.x1-b.x0);ty=Math.max(70,b.y0)+Math.random()*Math.max(0,b.y1-Math.max(70,b.y0))};
+    const wander=()=>{if(parked||boardMode)return;const b=bounds();tx=b.x0+Math.random()*Math.max(0,b.x1-b.x0);ty=Math.max(70,b.y0)+Math.random()*Math.max(0,b.y1-Math.max(70,b.y0))};
     const reset=()=>{root.position.y=0;root.position.x=0;P.torso.scale.y=1;root.rotation.set(0,face,0);P.torso.position.y=1.02;P.torso.rotation.set(0,0,0);P.head.rotation.set(0,0,0);B.closed=0;B.face="smile";
       R(B,0,0,0,-.3);R(B,1,0,0,.3);P.legs[0].rotation.set(0,0,0);P.legs[1].rotation.set(0,0,0)};
     function frame(now){if(stopped)return;requestAnimationFrame(frame);if(document.hidden){last=now;return}
@@ -201,7 +201,7 @@
       reset();const dx=tx-x,dy=ty-y,dist=Math.hypot(dx,dy);
       if(drag){ACTS.carry.f(0,B,now/1000)}
       else if(act){actT+=t;const p=Math.min(1,actT/act.d);act.f(p,B,now/1000);if(p>=1){act=null;next=2+Math.random()*4}}
-      else if(dist>2&&!parked){const s=70*t,k=Math.min(1,s/dist);x+=dx*k;y+=dy*k;
+      else if(dist>2&&(!parked||boardMode)){const s=70*t,k=Math.min(1,s/dist);x+=dx*k;y+=dy*k;
         const want=Math.abs(dx)>4?(dx>0?.9:-.9):0;face+=(want-face)*Math.min(1,t*6);root.rotation.y=face;
         const w=Math.sin(now/110);P.legs[0].rotation.x=.6*w;P.legs[1].rotation.x=-.6*w;R(B,0,-.5*w);R(B,1,.5*w);root.position.y=Math.abs(Math.cos(now/110))*.08}
       else{face+=(0-face)*Math.min(1,t*4);root.rotation.y=face;P.torso.position.y=1.02+.015*Math.sin(now/500);
@@ -223,6 +223,7 @@
     hit.addEventListener("pointermove",e=>{if(!drag)return;stop(e);const dx=e.clientX-drag.sx,dy=e.clientY-drag.sy;if(!drag.moved&&Math.hypot(dx,dy)<6)return;
       if(!drag.moved){drag.moved=true;hit.style.cursor="grabbing";say("哇～飛起來了！",1.5)}x=drag.ox+dx;y=drag.oy+dy;tx=x;ty=y});
     const up=e=>{if(!drag)return;stop(e);const d=drag;drag=null;hit.style.cursor="grab";
+      if(d.moved&&boardMode){const b=bounds();x=Math.min(Math.max(x,b.x0),b.x1);y=Math.min(Math.max(y,b.y0),b.y1);tx=x;ty=y;boardDrag=true;say("好，我待在這裡看",1.8);next=4;return}
       if(d.moved){const b=bounds();x=Math.min(Math.max(x,b.x0),b.x1);y=Math.min(Math.max(y,b.y0),b.y1);tx=x;ty=y;parked=true;store.set("botPos",{x:x/innerWidth,y:y/innerHeight});say("我在這裡等你（點兩下我會去散步）",2.6);next=4;return}
       // 點一下＝表演、點兩下＝去散步（停放時）、點三下＝問問題（意見回饋 167）
       taps++;clearTimeout(tapT);tapT=setTimeout(()=>{const n=taps;taps=0;
@@ -239,6 +240,13 @@
       else if(r==="lose"){doAct("lose");say(pick(["嗚嗚…輸了","好可惜…","沒關係，再來一盤！","下次一定贏！","我陪你複盤吧"]),3.6)}
       else{doAct("draw");say(pick(["和棋～勢均力敵","握手言和！","平分秋色","不分勝負！"]),2.6)}},400)};
     window.addEventListener("xq-result",onResult);
+    // 有棋盤的畫面（看棋譜、對戰、練習）：自動走到右下角，不擋棋盤（意見回饋 168）；在這個畫面拖過就照使用者放的位置
+    const bigBoard=()=>{let best=null;for(const e of document.querySelectorAll('svg[viewBox="0 0 560 620"]')){if(e.closest(".xqbot"))continue;const r=e.getBoundingClientRect();
+      if(r.width>220&&r.bottom>40&&r.top<innerHeight-40&&(!best||r.width>best.width))best=r}return best};
+    const boardT=setInterval(()=>{const r=bigBoard();
+      if(r&&!boardMode){boardMode=true;boardDrag=false;act=null}
+      else if(!r&&boardMode){boardMode=false;boardDrag=false;if(parked){const p=store.get("botPos",null);if(p){tx=p.x*innerWidth;ty=p.y*innerHeight}}else wander()}
+      if(boardMode&&!boardDrag&&!drag){const b=bounds();tx=b.x1-4;ty=Math.max(b.y0,innerHeight-H-72)}},700);
     // 換朝代：重做造型（字形還沒下載就先下載，好了再換一次）
     const rebuild=()=>{curK=eraK();root.remove(P.bot);Object.assign(B,build(curK));root.add(B.bot)};
     const eraT=setInterval(()=>{if(eraK()!==curK){rebuild();if(typeof needGly==="function")needGly(curK,()=>{if(!stopped)rebuild()})}},1500);
@@ -246,6 +254,6 @@
     const setScale=v=>{SC=Math.min(2,Math.max(.6,+v||1));W=W0*SC;H=H0*SC;box.style.width=W+"px";box.style.height=H+"px";rd.setSize(W,H);store.set("botSize",SC)};
     const onResize=()=>{const b=bounds();x=Math.min(x,b.x1);y=Math.min(y,b.y1);tx=Math.min(tx,b.x1);ty=Math.min(ty,b.y1)};window.addEventListener("resize",onResize);
     return{act:k=>doAct(typeof k==="number"?comboAct(k):k),say,setScale,rebuild,count:COMBO.length,lines:LINES.length,
-      stop(){stopped=true;clearInterval(eraT);window.removeEventListener("xq-call",onCall);window.removeEventListener("xq-result",onResult);window.removeEventListener("resize",onResize);try{rd.dispose()}catch(e){}box.remove()}}}
+      stop(){stopped=true;clearInterval(eraT);clearInterval(boardT);window.removeEventListener("xq-call",onCall);window.removeEventListener("xq-result",onResult);window.removeEventListener("resize",onResize);try{rd.dispose()}catch(e){}box.remove()}}}
   window.XQBot3D={start,acts:Object.keys(ACTS),combos:COMBO.length,lines:LINES.length};
 })();
