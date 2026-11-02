@@ -412,7 +412,7 @@ html[data-era=ming] .topbar,html[data-era=qing] .topbar{border-bottom-width:4px}
       if(!window.caches)return go();caches.keys().then(function(ks){return Promise.all(ks.filter(function(k){return k.indexOf("xqlab-app-")===0}).map(function(k){return caches.delete(k)}))})
         .then(function(){return navigator.serviceWorker&&navigator.serviceWorker.getRegistration()}).then(function(r){return r&&r.update()}).catch(function(){}).then(go)}},4000)})();
 </script>
-<script>window.XQ_OFFLINE=true;window.XQ_BUILD="20261102-1839";</script>
+<script>window.XQ_OFFLINE=true;window.XQ_BUILD="20261102-1842";</script>
 <script src="core.js"></script>
 <script src="engine.js"></script>
 <script src="local.js"></script>
@@ -2149,10 +2149,10 @@ async function postForm(rec){const F=FEEDBACK_FORM;if(!F.action)throw new Error(
 async function flushFeedback(){const q=store.get("fbQueue",[]);if(!q.length||!FEEDBACK_FORM.action||!navigator.onLine)return;const left=[];
   for(const r of q){try{await postForm(r);if(r.type&&!/玩家/.test(r.type)&&window.XQNet&&XQNet.bell)XQNet.bell({type:r.type,img:!!r.img,role:r.role||""})}catch(e){left.push(r)}}store.set("fbQueue",left)}
 async function sendRecord(rec){try{await postForm(rec);if(rec.type&&!/玩家/.test(rec.type)&&window.XQNet&&XQNet.bell)XQNet.bell({type:rec.type,img:!!rec.img,role:rec.role||""});return true}catch(e){const q=store.get("fbQueue",[]);q.push(rec);store.set("fbQueue",q.slice(-30));return false}}
-// 走棋音效選單（意見回饋 198、199）：開關＋分組卡片；開發者模式顯示編號，方便對照 Gemini 腳本
-function sndPicker(){const on=store.get("mvSound",false),cur=store.get("sndStyle","wood"),dev=DEVMODE();
+// 走棋音效選單（意見回饋 199、200）：開關＋分組卡片
+function sndPicker(){const on=store.get("mvSound",false),cur=store.get("sndStyle","wood");
   const G=[["合成",[["wood","實木"],["soft","輕敲"]]],["經典 01–10",SFX_SET.slice(0,10)],["公園風格 11–20",SFX_SET.slice(10)]];
-  const card=([k,l])=>`<button data-snd="${k}" class="sp-c${on&&cur===k?" on":""}">${dev&&/^s\d\d$/.test(k)?`<em>#${k.slice(1)}</em>`:""}<span>${l}</span><i>▶</i></button>`;
+  const card=([k,l])=>`<button data-snd="${k}" class="sp-c${on&&cur===k?" on":""}"><span>${l}</span><i>▶</i></button>`;
   return`<style>.sp-h{display:flex;justify-content:space-between;align-items:center;gap:10px}.sp-g{font-size:12px;font-weight:700;opacity:.6;margin:12px 0 6px}
     .sp-l{display:grid;grid-template-columns:1fr 1fr;gap:6px}.sp-off .sp-l{opacity:.45}
     .sp-c{display:flex;align-items:center;gap:6px;padding:9px 10px;border:1.5px solid var(--line);border-radius:12px;background:var(--card);color:inherit;font:inherit;font-size:14px;text-align:left;min-width:0}
