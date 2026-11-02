@@ -412,7 +412,7 @@ html[data-era=ming] .topbar,html[data-era=qing] .topbar{border-bottom-width:4px}
       if(!window.caches)return go();caches.keys().then(function(ks){return Promise.all(ks.filter(function(k){return k.indexOf("xqlab-app-")===0}).map(function(k){return caches.delete(k)}))})
         .then(function(){return navigator.serviceWorker&&navigator.serviceWorker.getRegistration()}).then(function(r){return r&&r.update()}).catch(function(){}).then(go)}},4000)})();
 </script>
-<script>window.XQ_OFFLINE=true;window.XQ_BUILD="20261102-1334";</script>
+<script>window.XQ_OFFLINE=true;window.XQ_BUILD="20261102-1340";</script>
 <script src="core.js"></script>
 <script src="engine.js"></script>
 <script src="local.js"></script>
@@ -1901,7 +1901,7 @@ function Settings(v){
       <button class="item" id="nm"><span class="lb">✏</span><span class="tx"><b>我的名字</b><span id="nmS"></span></span><span class="muted">›</span></button>
       <button class="item" id="fb"><span class="lb">💬</span><span class="tx"><b>意見回饋</b><span>回報錯誤、想要的功能</span></span><span class="muted">›</span></button>
       <button class="item" id="sh"><span class="lb">📤</span><span class="tx"><b>分享給朋友</b><span>QR code・LINE</span></span><span class="muted">›</span></button></div>
-    <div class="card" style="margin-top:8px"><label class="row" style="justify-content:space-between"><span><b>3D 象棋小人</b><br><span class="muted">圓滾滾的棋子小人在畫面上走來走去、做動作；點它會表演，吃子、將軍時也有反應</span></span><input type="checkbox" class="sw" id="botT" ${botOn()?"checked":""}></label>
+    <div class="card" style="margin-top:8px"><label class="row" style="justify-content:space-between"><span><b>3D 象棋小人</b><br><span class="muted">圓滾滾的棋子小人在畫面上走來走去、做動作；點一下表演、點兩下散步、點三下問問題</span></span><input type="checkbox" class="sw" id="botT" ${botOn()?"checked":""}></label>
       <div class="row" style="gap:10px;margin-top:6px"><span class="muted" style="font-size:13px;white-space:nowrap">大小</span><input type="range" id="botSz" min="0.6" max="2" step="0.05" value="${store.get("botSize",1)}" style="flex:1"><b id="botSzV" style="width:46px;text-align:right">${Math.round(store.get("botSize",1)*100)}%</b></div></div>
     ${OFF?`<div class="card" style="margin-top:8px"><label class="row" style="justify-content:space-between"><span><b>在線上大廳顯示我的城市</b><br><span class="muted">由網路位置推估（例如台北、台中），只顯示城市，不會顯示地址；用行動網路時可能不準</span></span><input type="checkbox" class="sw" id="cityT" ${store.get("showCity",true)?"checked":""}></label></div>`:""}
     <div class="sec-t">關於</div><div class="card" id="about" style="line-height:1.9">
@@ -2393,10 +2393,69 @@ function showChat(text,mine,name){const d=document.createElement("div");d.classN
   document.body.append(d);d.getBoundingClientRect();d.classList.add("show");if(!mine)vibrate([20,40,20]);
   setTimeout(()=>{d.classList.remove("show");setTimeout(()=>d.remove(),300)},mine?1500:4000)}
 // 3D 象棋小人（意見回饋 159）：在畫面上自由走動、做手勢；開發者預設開、玩家預設關，設定「其他」可以切換
-let BOT=null,botBusy=false;const botOn=()=>store.get("bot3d",DEVMODE());
+let BOT=null,botBusy=false;const botOn=()=>store.get("bot3d",true);   // 意見回饋 167：預設打開
 async function syncBot(){if(botBusy)return;botBusy=true;try{if(botOn()&&!BOT){await loadScript(OFF?"three.min.js":"/m/three.min.js");await loadScript(OFF?"bot3d.js":"/m/bot3d.js");if(botOn()&&window.XQBot3D)BOT=window.XQBot3D.start()}
   else if(!botOn()&&BOT){BOT.stop();BOT=null}}catch(e){}botBusy=false}
 setTimeout(syncBot,0);   // 意見回饋 164：一打開就載入，不要等
+// ================= 問小帥（意見回饋 167）：點小人三下發問；用 App 裡的術語、開局、特級大師資料和常見問題回答，能示範的直接帶去棋盤 =================
+const BOT_SAID=[];window.addEventListener("xq-bot-said",e=>{const s=e.detail;if(s&&!BOT_SAID.includes(s)){BOT_SAID.unshift(s);BOT_SAID.length=Math.min(BOT_SAID.length,6)}});
+window.addEventListener("xq-bot-ask",()=>askSheet());
+const BOT_FAQ=[
+ [["朝代","換朝代","外觀","棋盤樣式","風格","背景"],"到「設定 → 🎨 外觀」選朝代：棋盤、棋子、字體、箭頭和我的造型都會一起換。","#/settings","打開設定"],
+ [["引擎","Pikafish","下載","電腦下棋"],"App 打開後會自動在背景下載 Pikafish 引擎（約 48 MB），下載完離線也能和電腦下棋、分析棋局。"],
+ [["線上","對戰","大廳","配對","找人下"],"按下方「🌐 線上」進大廳，可以隨機配對，或點棋友邀請對戰。","#/lobby","去線上大廳"],
+ [["觀戰"],"按下方「📺 觀戰」可以看別人正在下的棋。"],
+ [["音效","聲音","語音","男聲","女聲","語速"],"到「設定 → 🔊 聲音」：走棋音效有十幾種可以選，還有吃子音效、男聲／女聲報「吃」「將軍」，語速可以調慢中快。","#/settings","打開設定"],
+ [["小人","機器人","小帥","你是誰","大小","拖"],"我是小帥！點我一下會表演、點兩下去散步、點三下可以問我問題；按住可以把我拖到旁邊。到「設定 → ⋯ 其他」可以關掉我或調大小。"],
+ [["悔棋"],"挑戰電腦的一般模式可以悔棋；積分挑戰和線上對戰不能悔棋。"],
+ [["錯棋重練","錯棋","重練"],"和電腦下完，App 會把你走錯的局面收進「錯棋重練」，之後可以回到那個局面重新練，直到走對為止。"],
+ [["棋力測驗","測驗","程度"],"首頁的「🎯 棋力測驗」會出一系列題目，估計你目前的程度。","#/","回首頁"],
+ [["積分","段位","排名","升級"],"積分挑戰和線上對戰會計分，從新手開始，贏棋加分、輸棋扣分，分數夠就升段。"],
+ [["古譜","橘中秘","梅花譜","適情雅趣","殘局譜"],"棋譜庫有《橘中秘》《梅花譜》《適情雅趣》和古典開局、殘局譜，每一局都可以一步一步看。","#/db","打開棋譜庫"],
+ [["大師對局","特級大師對局","比賽"],"棋譜庫的「大師對局」有三萬多局特級大師對局，可以用 👤 棋手篩選。","#/db/gmgames","看大師對局"],
+ [["分析","評等","賽後報告","好棋","壞棋"],"看棋譜時按「🔍 分析」或右上角「📊 賽後報告」，Pikafish 會評每一步，並用藍色箭頭畫出建議走法。"],
+ [["記譜","記譜法","怎麼看棋譜","進退平"],"記譜是「棋子＋所在直線＋進退平＋數字」，例如「炮二平五」。紅方用中文數字、黑方用阿拉伯數字。詳細看「象棋規則 → 記譜法」。","#/terms","打開象棋規則"],
+ [["規則","怎麼下","玩法","怎麼走","新手"],"「象棋規則 → 玩法」有每種棋子怎麼走，還有棋盤示範。","#/terms","打開象棋規則"],
+ [["意見回饋","回報","bug","錯誤","建議"],"到「設定 → ⋯ 其他 → 意見回饋」可以回報問題或提建議，也能附截圖。","#/settings","打開設定"],
+ [["名字","改名"],"到「設定 → ⋯ 其他 → 我的名字」可以改名字，線上對戰時對手會看到。","#/settings","打開設定"],
+ [["城市","位置","IP"],"線上大廳會顯示大概的城市（用網路位置推估），不想顯示可以到「設定 → ⋯ 其他」關掉。"],
+ [["離線","沒網路","網路"],"加到手機主畫面後，大部分功能（棋譜、和電腦下棋）離線也能用；線上對戰需要網路。"],
+ [["安裝","主畫面","App"],"iPhone 用 Safari 打開，按「分享 → 加入主畫面」，就能像 App 一樣全螢幕使用。"],
+ [["更新","版本","新版"],"App 會自動更新，有新版時會提示；版本號在「設定 → ⋯ 其他 → 關於」。","#/settings","打開設定"],
+ [["開局有哪些","開局"],"我會的開局：中炮、屏風馬、反宮馬、順炮、列炮、飛相局、仙人指路、起馬局、過宮炮、士角炮、五七炮、五六炮、單提馬、半途列炮。問我名字，我就在棋盤上示範！"],
+ [["殺法有哪些","殺法"],"殺法很多，例如馬後炮、臥槽馬、雙車錯、鐵門栓、悶宮殺、白臉將、大刀剜心……問我名字，我示範給你看！","#/terms","看所有術語"]];
+let ASK_KB=null;
+async function askKB(){if(ASK_KB)return ASK_KB;const kb=[];
+  try{const d=await api("/terms/data");for(const t of d.items||[]){const keys=[t.n,...t.n.split(/[（）()、]/).filter(x=>x.length>=2)];
+    kb.push({keys,title:t.n,text:t.d,tag:t.k,go:"#/terms/"+encodeURIComponent(t.n),goLabel:t.op?"▶ 在棋盤上示範這個開局":"▶ 在棋盤上看例局"})}}catch(e){}
+  try{const B=await XQ_BIOS();for(const k in B){const p=B[k];if(!p||!p.zh)continue;const rv=/撤銷/.test(p.bio||"");
+    kb.push({keys:[p.zh,k],title:p.zh+(p.gm?`（${p.gm} 年特級大師）`:""),text:(p.bio||"")+(p.titles&&p.titles.length?"\n主要成績："+p.titles.slice(0,3).join("、"):"")+(rv?"\n（此棋手的稱號已被撤銷）":""),tag:"棋手",player:k})}}catch(e){}
+  for(const[keys,text,go,goLabel]of BOT_FAQ)kb.push({keys,title:keys[0],text,tag:"App 使用",go,goLabel});
+  return ASK_KB=kb}
+const ZHN="〇一二三四五六七八九";
+function askNorm(q){return String(q||"").replace(/[0-9]/g,d=>ZHN[d]).replace(/砲/g,"炮").replace(/[俥]/g,"車").replace(/[傌]/g,"馬").replace(/[？?！!。，,、\s「」]/g,"")}
+function askFind(kb,q){const n=askNorm(q);if(!n)return[];const out=[];
+  for(const it of kb){let sc=0;for(const k0 of it.keys){const k=askNorm(k0);if(!k)continue;if(n.includes(k))sc=Math.max(sc,k.length*3);else if(k.includes(n)&&n.length>=2)sc=Math.max(sc,n.length*2)}
+    if(!sc&&n.length>=2){let hit=0;for(let i=0;i<n.length-1;i++)if(askNorm(it.title).includes(n.slice(i,i+2)))hit++;if(hit)sc=hit}
+    if(sc)out.push([sc,it])}
+  return out.sort((a,b)=>b[0]-a[0]).slice(0,4).map(x=>x[1])}
+function askSheet(){sheet("🤖 問小帥",b=>{
+  const sug=[...BOT_SAID.slice(0,3),"五七炮是什麼","馬後炮","胡榮華","怎麼換朝代"];
+  b.innerHTML=`<p class="muted" style="margin-top:0">問我象棋術語、開局、殺法、特級大師，或 App 怎麼用。能示範的，我會直接帶你到棋盤上看。</p>
+    <div class="row" style="gap:8px"><input id="aq" placeholder="例如：五七炮是什麼？" style="flex:1;padding:10px 12px;border:1px solid var(--line);border-radius:10px;font-size:15px;background:var(--card);color:var(--ink)"><button class="btn" id="ag" style="width:auto;padding:10px 16px">問</button></div>
+    <div class="chips" id="asug" style="margin-top:8px;flex-wrap:wrap">${sug.map(x=>`<button class="chip" data-q="${esc(x)}">${esc(x.length>14?x.slice(0,13)+"…":x)}</button>`).join("")}</div><div id="aa" style="margin-top:12px"></div>`;
+  const qi=b.querySelector("#aq"),aa=b.querySelector("#aa");
+  const ask=async q=>{q=String(q||"").trim();if(!q)return;qi.value=q;aa.innerHTML='<div class="muted">想一想…</div>';const kb=await askKB(),r=askFind(kb,q);
+    if(!r.length){aa.innerHTML=`<div class="card">這個我還不太懂 😅<br><span class="muted">可以換個說法，或到「象棋規則 → 術語」找找看；也可以用「意見回饋」問開發者。</span></div>`;if(typeof BOT!=="undefined"&&BOT)BOT.say("這題考倒我了…",2);return}
+    const top=r[0];if(typeof BOT!=="undefined"&&BOT)BOT.say(top.go&&top.goLabel?"我來示範給你看！":"我知道！",2);
+    aa.innerHTML=`<div class="card"><div class="muted" style="font-size:12px">${esc(top.tag)}</div><b style="font-size:17px">${esc(top.title)}</b><p style="white-space:pre-line;margin:6px 0 10px">${esc(top.text)}</p>
+      ${top.go&&top.goLabel?`<button class="btn" id="ago">${esc(top.goLabel)}</button>`:""}${top.player?`<button class="btn" id="apl">📚 看${esc(top.title.split("（")[0])}的對局</button>`:""}</div>
+      ${r.length>1?`<div class="muted" style="margin:10px 0 6px">你是不是也想問：</div><div class="chips" style="flex-wrap:wrap">${r.slice(1).map(x=>`<button class="chip" data-q="${esc(x.keys[0])}">${esc(x.title.split("（")[0])}</button>`).join("")}</div>`:""}`;
+    const g=aa.querySelector("#ago");if(g)g.onclick=()=>{closeSheet();if(location.hash===top.go)route();else location.hash=top.go};
+    const pl=aa.querySelector("#apl");if(pl)pl.onclick=()=>{closeSheet();libState.c="gmgames";libState.player=top.player;libState.q="";libState.limit=60;const h="#/db/gmgames";if(location.hash===h)route();else location.hash=h};
+    aa.querySelectorAll("[data-q]").forEach(x=>x.onclick=()=>ask(x.dataset.q))};
+  b.querySelector("#ag").onclick=()=>ask(qi.value);qi.onkeydown=e=>{if(e.key==="Enter")ask(qi.value)};
+  b.querySelectorAll("#asug [data-q]").forEach(x=>x.onclick=()=>ask(x.dataset.q));setTimeout(()=>qi.focus(),200)})}
 function loadScript(src){return new Promise((ok,no)=>{if(document.querySelector(`script[data-s="${src}"]`))return ok();const s=document.createElement("script");s.src=src;s.dataset.s=src;s.onload=ok;s.onerror=()=>no(new Error("載入 "+src+" 失敗"));document.head.append(s)})}
 // 產生「對手掃這個就能加入、自動坐另一邊」的網址
 async function joinLink(other){

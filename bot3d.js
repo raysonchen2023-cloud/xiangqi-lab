@@ -188,8 +188,8 @@
     const shd=new T.Mesh(new T.CircleGeometry(.8,32),new T.MeshBasicMaterial({color:0,transparent:true,opacity:.2}));shd.rotation.x=-PI/2;shd.position.y=.02;sc.add(shd);
     const bounds=()=>({x0:0,x1:innerWidth-W,y0:20,y1:innerHeight-H});
     const sp=store.get("botPos",null);let parked=!!sp,x=sp?sp.x*innerWidth:Math.max(4,innerWidth-W-16),y=sp?sp.y*innerHeight:Math.max(70,innerHeight-H-90);
-    let tx=x,ty=y,face=0,act=null,actT=0,next=1.5,bubT=0,stopped=false,last=performance.now(),acc=0,blinkT=2,talk=0,drag=null,lastTap=0,deck=[];
-    const say=(s,d)=>{bub.textContent=s;bub.style.opacity=1;bubT=d||2;talk=Math.min(1.2,.25+s.length*.08)};
+    let tx=x,ty=y,face=0,act=null,actT=0,next=1.5,bubT=0,stopped=false,last=performance.now(),acc=0,blinkT=2,talk=0,drag=null,taps=0,tapT=0,deck=[];
+    const say=(s,d)=>{bub.textContent=s;bub.style.opacity=1;bubT=d||2;talk=Math.min(1.2,.25+s.length*.08);try{window.dispatchEvent(new CustomEvent("xq-bot-said",{detail:s}))}catch(e){}};
     const doAct=a=>{if(typeof a==="string")a=ACTS[a];if(!a)return;act=a;actT=0;tx=x;ty=y;const w=a.say;if(w)say(w,Math.max(1.8,Math.min(6,w.length*.16+.6,a.d+3)))};
     // 抽牌：300 種組合＋招牌動作洗牌後輪流出，不會一直重複
     const randAct=()=>{if(!deck.length){deck=[...COMBO.keys(),...SIGNATURE];for(let i=deck.length-1;i>0;i--){const j=Math.random()*(i+1)|0;[deck[i],deck[j]]=[deck[j],deck[i]]}}const k=deck.pop();return typeof k==="number"?comboAct(k):ACTS[k]};
@@ -224,7 +224,11 @@
       if(!drag.moved){drag.moved=true;hit.style.cursor="grabbing";say("哇～飛起來了！",1.5)}x=drag.ox+dx;y=drag.oy+dy;tx=x;ty=y});
     const up=e=>{if(!drag)return;stop(e);const d=drag;drag=null;hit.style.cursor="grab";
       if(d.moved){const b=bounds();x=Math.min(Math.max(x,b.x0),b.x1);y=Math.min(Math.max(y,b.y0),b.y1);tx=x;ty=y;parked=true;store.set("botPos",{x:x/innerWidth,y:y/innerHeight});say("我在這裡等你（點兩下我會去散步）",2.6);next=4;return}
-      const now=performance.now();if(now-lastTap<350&&parked){parked=false;store.set("botPos",null);say("出去走走～",1.6);wander();lastTap=0;return}lastTap=now;doAct(randAct())};
+      // 點一下＝表演、點兩下＝去散步（停放時）、點三下＝問問題（意見回饋 167）
+      taps++;clearTimeout(tapT);tapT=setTimeout(()=>{const n=taps;taps=0;
+        if(n>=3){doAct("think");say("你想問什麼？",2);try{window.dispatchEvent(new CustomEvent("xq-bot-ask"))}catch(e){}}
+        else if(n===2&&parked){parked=false;store.set("botPos",null);say("出去走走～",1.6);wander()}
+        else doAct(randAct())},380)};
     hit.addEventListener("pointerup",up);hit.addEventListener("pointercancel",up);
     for(const ev of["click","dblclick","touchstart","touchend","mousedown","mouseup","contextmenu"])hit.addEventListener(ev,stop,{passive:false});
     const onCall=e=>{const s=e.detail;if(s==="將軍")doAct("shock");else if(s==="吃"){doAct("cheer");say("吃！",1.4)}};
