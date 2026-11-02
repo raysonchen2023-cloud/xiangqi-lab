@@ -110,7 +110,7 @@
   const skyTex=E=>cv(16,512,(g,w,h)=>{const gr=g.createLinearGradient(0,0,0,h);gr.addColorStop(0,E.sky[0]);gr.addColorStop(.4,E.sky[1]);gr.addColorStop(.5,E.sky[2]);gr.addColorStop(.56,E.mist);gr.addColorStop(1,E.mist);g.fillStyle=gr;g.fillRect(0,0,w,h)});
   // 開發者用 Gemini 畫的朝代長卷（data/park/<朝代>.webp）：貼在背景正面（約左右各 47 度），四邊羽化融進程式畫的水墨背景
   // L、R＝圖上左右兩個主景的範圍（0～1）；分別放到畫面左上角、右上角看得到的位置，中間雲霧（會被對手擋住）壓窄
-  const BG_IMG={qin:{src:"data/park/qin.webp",L:[.02,.175],R:[.175,.33]},han:{src:"data/park/han.webp",L:[.08,.35],R:[.65,.92]},classic:{src:"data/park/classic.webp",L:[.06,.36],R:[.64,.94]}};
+  const BG_IMG={qin:{src:"data/park/qin.webp",L:[.02,.175],R:[.175,.33]}};   // 漢 han L[.08,.35] R[.65,.92]、經典 classic L[.06,.36] R[.64,.94]：收到圖檔再加
   function drawUserPan(g,W,H,im,cfg){const iw=im.naturalWidth,ih=im.naturalHeight,dh=H*(cfg.h||.4),s=dh/ih,y0=H*.3-dh*.58;   // 圖的地平線（約 58%）對齊場景地平線
     const xL=W*(19/216+.5-19/108),xR=W*(.5+19/216);   // ±19 度＝預設視角左右上角
     const cL=(cfg.L[0]+cfg.L[1])/2,cR=(cfg.R[0]+cfg.R[1])/2,off=document.createElement("canvas");off.width=W;off.height=Math.ceil(dh);const o=off.getContext("2d");
@@ -249,7 +249,7 @@
     const teaCup=(x,z)=>{const cup=new T.Group();cup.position.set(x,0,z);sc.add(cup);const por=M(0xF4F1EA,{roughness:.25}),blue=M(0x2D5DA8,{roughness:.3});const a=new T.Mesh(new T.CylinderGeometry(.75,.75,.08,32),por);a.position.y=.04;cup.add(a);
       const b=new T.Mesh(new T.CylinderGeometry(.5,.36,.7,32,1,true),por);b.position.y=.43;b.material.side=T.DoubleSide;cup.add(b);const band=new T.Mesh(new T.CylinderGeometry(.505,.47,.12,32,1,true),blue);band.position.y=.6;cup.add(band);
       const tea=new T.Mesh(new T.CircleGeometry(.47,32),M(0x9C6B1E,{roughness:.1}));tea.rotation.x=-PI/2;tea.position.y=.66;cup.add(tea);cup.traverse(o=>{if(o.isMesh){o.castShadow=true;o.receiveShadow=true}});return cup};
-    teaCup(4.6,-6.5);teaCup(-6.7,-1.6);
+    teaCup(0,-6.85);teaCup(.4,7.0);   // 意見回饋 219：Pikafish 的茶在它面前正中間、我的茶在我面前正中間
     // 平台上的樹（依朝代：松、柳、竹），水墨感的深色樹冠；放在兩側，轉頭時當前景框
     const bark=M(0x4A3626,{roughness:.95}),leafM=M(new T.Color(E.ink).lerp(new T.Color(0x2F4A2A),.7).getHex(),{roughness:.95}),leafG=M(new T.Color(0x6E8A3E).getHex(),{roughness:.95});
     const tree=(x,z,s)=>{const g=new T.Group();g.position.set(x,GY,z);g.scale.setScalar(s);sc.add(g);
@@ -326,7 +326,7 @@
         const mine=(s==="r")!==flip;   // 我這邊（靠近鏡頭）輸掉的棋子排在我右手邊；對方的排在對面
         // 鏡頭變俯視後，靠近我的桌邊看不到了：我輸掉的棋子直排在棋盤右側，對方輸掉的排在棋盤後方（縮小一點，不搶棋盤的戲）
         lost.forEach((p,j)=>{const g=makePiece(p);g.scale.setScalar(.8);let x,z;
-          if(mine){if(j<10){x=6.2;z=-4.6+j*.8}else{x=7.0;z=-3.6+(j-10)*.8}}else{if(j<9){x=-5+j*.95;z=-6.55}else{x=-3.3+(j-9)*.95;z=-7.35}}
+          if(mine){if(j<10){x=6.2;z=-4.6+j*.8}else{x=7.0;z=-3.6+(j-10)*.8}}else{const sd=j%2?-1:1,k=j>>1;if(k<4){x=sd*(1.35+k*.95);z=-6.55}else{x=sd*(1.35+(k-4)*.95);z=-7.35}}   // 對方輸掉的棋子分排在茶杯左右兩邊
           g.position.set(x,0,z);g.rotation.y=(Math.random()-.5)*.6;captured.push(g)})}}
     function sync(board){Object.values(pieces).forEach(g=>sc.remove(g));pieces={};board.forEach((p,i)=>{if(p){const g=makePiece(p);at(g,i);pieces[i]=g}});layoutCaptured(board)}
     // 朝代造型換了（或圖剛載入）：重畫棋盤、清掉棋子貼圖、整盤重排
