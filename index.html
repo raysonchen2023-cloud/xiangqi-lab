@@ -79,6 +79,10 @@ input,select{font:inherit;font-size:16px;color:inherit}
 /* 對局畫面：螢幕不夠高時棋盤自動縮小，底部按鈕列不會被擠出畫面 */
 .view.fixed .boardbox{flex:0 1 auto;min-height:120px}
 .view.fixed .boardbox svg{max-height:100%}
+/* 棋譜檢視（意見回饋 237）：iPhone 主畫面 App 扣掉瀏海和底部後高度不夠時，棋盤自動縮小，讓下面的分析文字不會被工具列蓋住 */
+.view.fixed.vw .boardbox{flex:1 1 0;min-height:140px;overflow:hidden}
+.view.fixed.vw .boardbox svg{height:100%;width:auto;max-width:100%}
+.view.fixed.vw .note{flex:0 1 auto;min-height:1.6em;max-height:24vh}
 .evline{flex:none;height:6px;margin:0 10px;border-radius:3px;background:var(--blk);overflow:hidden;display:flex}
 .evline div{background:var(--red);height:100%;width:50%;transition:width .5s}
 .player{flex:none;display:flex;align-items:center;gap:10px;padding:6px 12px}
@@ -413,7 +417,7 @@ html[data-era=ming] .topbar,html[data-era=qing] .topbar{border-bottom-width:4px}
       if(!window.caches)return go();caches.keys().then(function(ks){return Promise.all(ks.filter(function(k){return k.indexOf("xqlab-app-")===0}).map(function(k){return caches.delete(k)}))})
         .then(function(){return navigator.serviceWorker&&navigator.serviceWorker.getRegistration()}).then(function(r){return r&&r.update()}).catch(function(){}).then(go)}},4000)})();
 </script>
-<script>window.XQ_OFFLINE=true;window.XQ_BUILD="20261102-2357";</script>
+<script>window.XQ_OFFLINE=true;window.XQ_BUILD="20261103-0001";</script>
 <script src="core.js"></script>
 <script src="engine.js"></script>
 <script src="local.js"></script>
@@ -3237,7 +3241,7 @@ function sugText(g,b){const L=(g.bp&&g.bp.length?g.bp:g.bm?[g.bm]:[]).slice(0,3)
   const out=[];try{const C=window.XQCore;for(const u of L){const f=sqI(u.slice(0,2)),t=sqI(u.slice(2,4));if(!b[f]||!C)break;out.push(C.notate(b,f,t));b=b.slice();b[t]=b[f];b[f]=null}}catch(e){}
   if(!out.length)return`建議 ${g.bc||""}（藍色箭頭）`;return(out.length>1?"建議走法（藍色箭頭）："+out.map((x,i)=>`${i+1}. ${x}`).join("　"):`建議 ${out[0]}（藍色箭頭）`)+"\n綠色箭頭是實際走的"}
 function Viewer(v,c,id){
-  setTabs(false);v.className="view fixed";
+  setTabs(false);v.className="view fixed vw";
   v.innerHTML=`<div class="player vpl" id="vTop" style="padding:3px 12px"></div><div class="evline"><div id="evf"></div></div><div class="boardbox" id="bbox"></div>
     <div class="player vpl" id="vBot" style="padding:3px 12px"></div><div class="status" id="stat"></div><div class="strip" id="strip"></div><div class="strip" id="alts" style="padding-top:0"></div>
     <div class="note" id="note"></div><div class="actions" id="acts"></div>`;
