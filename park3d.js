@@ -108,6 +108,21 @@
   // 背景長卷的幾何（世界座標）：半徑、弧度、上下高度；畫的時候用 PX(角度)、PY(高度) 換算成貼圖像素
   const PAN={r:170,arc:PI*1.2,yb:-170,yt:90,w:3072,h:1024};
   const skyTex=E=>cv(16,512,(g,w,h)=>{const gr=g.createLinearGradient(0,0,0,h);gr.addColorStop(0,E.sky[0]);gr.addColorStop(.4,E.sky[1]);gr.addColorStop(.5,E.sky[2]);gr.addColorStop(.56,E.mist);gr.addColorStop(1,E.mist);g.fillStyle=gr;g.fillRect(0,0,w,h)});
+  // 開發者用 Gemini 畫的朝代長卷（data/park/<朝代>.webp）：貼在背景正面（約左右各 47 度），四邊羽化融進程式畫的水墨背景
+  // L、R＝圖上左右兩個主景的範圍（0～1）；分別放到畫面左上角、右上角看得到的位置，中間雲霧（會被對手擋住）壓窄
+  const BG_IMG={qin:{src:"data/park/qin.webp",L:[.02,.175],R:[.175,.33]},han:{src:"data/park/han.webp",L:[.08,.35],R:[.65,.92]},classic:{src:"data/park/classic.webp",L:[.06,.36],R:[.64,.94]}};
+  function drawUserPan(g,W,H,im,cfg){const iw=im.naturalWidth,ih=im.naturalHeight,dh=H*(cfg.h||.4),s=dh/ih,y0=H*.3-dh*.58;   // 圖的地平線（約 58%）對齊場景地平線
+    const xL=W*(19/216+.5-19/108),xR=W*(.5+19/216);   // ±19 度＝預設視角左右上角
+    const cL=(cfg.L[0]+cfg.L[1])/2,cR=(cfg.R[0]+cfg.R[1])/2,off=document.createElement("canvas");off.width=W;off.height=Math.ceil(dh);const o=off.getContext("2d");
+    const lx0=xL-cL*iw*s,lx1=xL+(cfg.L[1]-cL)*iw*s,rx0=xR-(cfg.R[0]-cR)*iw*s*-1-(cR-cfg.R[0])*iw*s*2+(cR-cfg.R[0])*iw*s,rx1=xR+(1-cR)*iw*s;
+    const rStart=xR-(cR-cfg.R[0])*iw*s;
+    o.drawImage(im,0,0,cfg.L[1]*iw,ih,lx0,0,lx1-lx0,dh);                                  // 左半（含左主景）
+    o.drawImage(im,cfg.R[0]*iw,0,(1-cfg.R[0])*iw,ih,rStart,0,rx1-rStart,dh);             // 右半（含右主景）
+    if(rStart>lx1&&cfg.R[0]>cfg.L[1])o.drawImage(im,cfg.L[1]*iw,0,(cfg.R[0]-cfg.L[1])*iw,ih,lx1,0,rStart-lx1,dh);   // 中間雲霧壓縮到剩下的寬度
+    o.globalCompositeOperation="destination-in";const a0=Math.max(0,lx0)/W,a1=Math.min(W,rx1)/W,fw=.035;
+    const fx=o.createLinearGradient(0,0,W,0);fx.addColorStop(0,"rgba(0,0,0,0)");fx.addColorStop(Math.min(.49,a0),"rgba(0,0,0,0)");fx.addColorStop(Math.min(.49,a0+fw),"#000");fx.addColorStop(Math.max(.51,a1-fw),"#000");fx.addColorStop(Math.max(.51,a1),"rgba(0,0,0,0)");fx.addColorStop(1,"rgba(0,0,0,0)");
+    o.fillStyle=fx;o.fillRect(0,0,W,off.height);const fy=o.createLinearGradient(0,0,0,off.height);fy.addColorStop(0,"rgba(0,0,0,0)");fy.addColorStop(.16,"#000");fy.addColorStop(.74,"#000");fy.addColorStop(1,"rgba(0,0,0,0)");o.fillStyle=fy;o.fillRect(0,0,W,off.height);
+    g.drawImage(off,0,y0)}
   function panTex(E,seed){let s=seed||7;const rnd=()=>(s=(s*16807)%2147483647)/2147483647;
     return cv(PAN.w,PAN.h,(g,W,H)=>{const PX=d=>(d/(PAN.arc*180/PI)+.5)*W,PY=y=>(PAN.yt-y)/(PAN.yt-PAN.yb)*H,ink=E.ink;
       // 水墨山：一條起伏的稜線往下填墨，上緣濃、往下漸淡入雲霧
@@ -200,7 +215,9 @@
     const sky=new T.Mesh(new T.SphereGeometry(400,32,16),new T.MeshBasicMaterial({map:skyTex(E),side:T.BackSide,fog:false,depthWrite:false,toneMapped:false}));sc.add(sky);
     {const pt=panTex(E,EK.length*977+13);pt.wrapS=T.RepeatWrapping;pt.repeat.x=-1;   // 從圓柱內側看，貼圖要左右翻回來
       const pan=new T.Mesh(new T.CylinderGeometry(PAN.r,PAN.r,PAN.yt-PAN.yb,64,1,true,PI-PAN.arc/2,PAN.arc),new T.MeshBasicMaterial({map:pt,side:T.BackSide,transparent:true,fog:false,depthWrite:false,toneMapped:false}));
-      pan.position.y=(PAN.yt+PAN.yb)/2;pan.renderOrder=-1;sc.add(pan)}
+      pan.position.y=(PAN.yt+PAN.yb)/2;pan.renderOrder=-1;sc.add(pan);
+      const BI=BG_IMG[EK];if(BI){const put=()=>{const im=imgCache[BI.src];if(!im||!im.naturalWidth||!el.isConnected)return;try{drawUserPan(pt.image.getContext("2d"),pt.image.width,pt.image.height,im,BI);pt.needsUpdate=true}catch(e){}};
+        if(loadImg(BI.src,put))setTimeout(put,0)}}
     const M=(c,o)=>new T.MeshStandardMaterial(Object.assign({color:c,roughness:.8,metalness:0},o||{}));
     const mesh=(geo,mat,pos,o)=>{const m=new T.Mesh(geo,mat);if(pos)m.position.set(...pos);m.castShadow=!(o&&o.noCast);m.receiveShadow=true;sc.add(m);return m};
     const GY=-19;   // 地面高度（桌面＝0）
