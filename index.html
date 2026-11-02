@@ -412,7 +412,7 @@ html[data-era=ming] .topbar,html[data-era=qing] .topbar{border-bottom-width:4px}
       if(!window.caches)return go();caches.keys().then(function(ks){return Promise.all(ks.filter(function(k){return k.indexOf("xqlab-app-")===0}).map(function(k){return caches.delete(k)}))})
         .then(function(){return navigator.serviceWorker&&navigator.serviceWorker.getRegistration()}).then(function(r){return r&&r.update()}).catch(function(){}).then(go)}},4000)})();
 </script>
-<script>window.XQ_OFFLINE=true;window.XQ_BUILD="20261102-1358";</script>
+<script>window.XQ_OFFLINE=true;window.XQ_BUILD="20261102-1400";</script>
 <script src="core.js"></script>
 <script src="engine.js"></script>
 <script src="local.js"></script>
@@ -2397,7 +2397,7 @@ function showChat(text,mine,name){const d=document.createElement("div");d.classN
   setTimeout(()=>{d.classList.remove("show");setTimeout(()=>d.remove(),300)},mine?1500:4000)}
 // 3D 象棋小人（意見回饋 159）：在畫面上自由走動、做手勢；開發者預設開、玩家預設關，設定「其他」可以切換
 let BOT=null,botBusy=false;const botOn=()=>store.get("bot3d",true);   // 意見回饋 167：預設打開
-async function syncBot(){if(botBusy)return;botBusy=true;try{if(botOn()&&!BOT){await loadScript(OFF?"three.min.js":"/m/three.min.js");await loadScript(OFF?"bot3d.js":"/m/bot3d.js");if(botOn()&&window.XQBot3D)BOT=window.XQBot3D.start()}
+async function syncBot(){if(botBusy)return;botBusy=true;try{if(botOn()&&!BOT){await loadScript(OFF?"three.min.js":"/m/three.min.js");await loadScript((OFF?"bot3d.js":"/m/bot3d.js")+"?v="+encodeURIComponent(window.XQ_BUILD||""));if(botOn()&&window.XQBot3D)BOT=window.XQBot3D.start()}
   else if(!botOn()&&BOT){BOT.stop();BOT=null}}catch(e){}botBusy=false}
 setTimeout(syncBot,0);   // 意見回饋 164：一打開就載入，不要等
 // ================= 問小帥（意見回饋 167）：點小人三下發問；用 App 裡的術語、開局、特級大師資料和常見問題回答，能示範的直接帶去棋盤 =================

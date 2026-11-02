@@ -203,7 +203,7 @@
   function start(){let SC=Math.min(2,Math.max(.6,+store.get("botSize",1)||1)),W=W0*SC,H=H0*SC,curK=eraK();
     const box=document.createElement("div");box.className="xqbot";
     box.style.cssText=`position:fixed;left:0;top:0;width:${W}px;height:${H}px;z-index:900;pointer-events:none;will-change:transform`;
-    const hit=document.createElement("div");hit.style.cssText="position:absolute;left:19%;right:19%;top:10%;bottom:3%;pointer-events:auto;touch-action:none;cursor:grab;border-radius:40%";
+    const hit=document.createElement("div");hit.style.cssText="position:absolute;left:19%;right:19%;top:10%;bottom:3%;pointer-events:auto;touch-action:none;cursor:grab;border-radius:40%;-webkit-touch-callout:none;-webkit-user-select:none;user-select:none";
     const bub=document.createElement("div");bub.style.cssText="position:absolute;left:50%;top:-4px;transform:translate(-50%,-100%);max-width:200px;width:max-content;background:#fffdf7;color:#3a2618;border:2px solid #3a2618;border-radius:14px;padding:4px 10px;font:700 13px/1.35 sans-serif;text-align:center;box-shadow:0 2px 6px #0003;opacity:0;transition:opacity .25s;pointer-events:none";
     box.append(hit,bub);document.body.appendChild(box);
     let rd;try{rd=new T.WebGLRenderer({alpha:true,antialias:true})}catch(e){box.remove();return null}
