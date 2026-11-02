@@ -128,11 +128,17 @@
   const BG_IMG={qin:{src:"data/park/qin.webp",crop:[0,.34],L:[.02,.165],R:[.2,.33],gap:0},han:{src:"data/park/han.webp",L:[.08,.35],R:[.65,.92]},classic:{src:"data/park/classic.webp",L:[.06,.36],R:[.64,.94]},sanguo:{src:"data/park/sanguo.webp",L:[.05,.35],R:[.62,.94]},
     // 新做法（開發者用 Gemini 畫前、右、後、左 4 張，tools/stitch_pano.py 接成一整圈）：pano＝整圈長圖，直接貼滿 360 度
     // hz＝原圖地平線的高度（由上往下 0～1）；hor＝地平線放在鏡頭的仰角幾度（負＝往下看；平台在山上，往外看是俯瞰山谷）；rot＝整圈再轉幾度（正＝往右）
-    tang:{src:"data/park/tang_360.webp",pano:true,hz:.58,hor:-42,rot:0}};   // 開發者用 Gemini 畫的 13 朝代長卷全部到齊
+    tang:{src:"data/park/tang_360.webp",pano:true,hz:.58,hor:-42,rot:0}};
+  // 其他 12 個朝代也換成 Gemini 畫的整圈背景（同一套規格）
+  for(const k of["classic","qin","han","sanguo","weijin","nanbei","sui","wudai","song","yuan","ming","qing"])BG_IMG[k]={src:"data/park/"+k+"_360.webp",pano:true,hz:.58,hor:-42,rot:0};   // 開發者用 Gemini 畫的 13 朝代長卷全部到齊
   // 開發者用 Gemini 畫的朝代道具（data/park3d/<朝代>/：tree1、tree2、bench、stool、lantern、cup、tabletop 去背 webp，下緣＝落地／落桌的地方）
   // 有列在這裡的朝代：樹、長椅、凳子、燈籠、茶杯都換成手繪立牌，桌面換成手繪桌面；其他朝代照舊用程式做的 3D 家具。新增朝代＝放圖＋這裡加一行
   // top＝桌面圖上圓桌面的圓心 x、y、半徑（像素，1024 的圖）
-  const PROP_IMG={tang:{top:[511,510,489]}};
+  // lamp＝燈籠怎麼擺：stand＝自己有燈座，立在地上（h＝高度）；hang＝吊著的燈籠，另外做一根立柱和橫桿吊起來；glow＝燭光在圖上的高度（由下往上 0～1）
+  const PROP_IMG={tang:{top:[511,510,489]},
+    classic:{lamp:{hang:1,h:7.5,glow:.45}},qin:{lamp:{h:8,glow:.85}},han:{lamp:{h:7.5,glow:.62}},sanguo:{lamp:{h:10,glow:.6}},
+    weijin:{lamp:{h:7,glow:.5}},nanbei:{lamp:{h:8,glow:.55}},sui:{lamp:{hang:1,h:8,glow:.5}},wudai:{lamp:{hang:1,h:8,glow:.5}},
+    song:{lamp:{h:11,glow:.7}},yuan:{lamp:{h:11,glow:.7}},ming:{lamp:{h:9,glow:.7}},qing:{lamp:{h:10,glow:.72}}};
   // 原圖前處理（每張圖只做一次）：每一列的宣紙色、墨色加深一點、找出太陽並另做一份「沒有太陽」的（正面以外的段落用，一圈才不會有好幾個太陽）
   const panPrep={};
   function prepPan(im){const k=im.src;if(panPrep[k])return panPrep[k];
@@ -743,11 +749,24 @@
         t.repeat.set(2*r/iw,2*r/ih);t.offset.set((cx-r)/iw,1-(cy+r)/ih);
         const m=new T.Mesh(new T.CircleGeometry(8.2,96),new T.MeshStandardMaterial({map:t,color:neutOf(X.sc),roughness:.5,toneMapped:false}));m.rotation.x=-PI/2;m.position.y=.006;m.receiveShadow=true;root.add(m)});
       // 長榻：放在台座上、Pikafish 後面
-      use("bench",im=>{card(im,{x:0,y:DT,z:BZ-.4,w:14,tilt:.25})});
+      // 橫的長榻／長椅：寬 14；直的單人椅（明、清的圈椅、太師椅）：高 12
+      use("bench",im=>{card(im,im.naturalHeight>im.naturalWidth*.9?{x:0,y:DT,z:BZ-.4,h:12,tilt:.25}:{x:0,y:DT,z:BZ-.4,w:14,tilt:.25})});
       // 兩側的三彩鼓凳：站在地上
       use("stool",im=>{for(const[x,z]of STOOLS){const c=card(im,{x,y:GY,z,h:9.5,tilt:.3});blob(x,GY+.03,z,c.w*.5,c.w*.3,.4,c.ry)}});
       // 宮燈：掛在立柱的彎鉤上；立柱用 3D 圓柱接到地面（右邊那盞左右翻過來，立柱都在外側）；燭光一團加色柔光，會跳動
-      use("lantern",im=>{const h=11,w=h*im.naturalWidth/im.naturalHeight,LY=-3.2,PX=.259,CX=.53,CY=.39,postM=new T.MeshBasicMaterial({color:0x2E2721,toneMapped:false}),gm=gold();
+      if(EK!=="tang"&&PP.lamp)use("lantern",im=>{const L=PP.lamp,postM=new T.MeshBasicMaterial({color:0x2E2721,toneMapped:false});
+        for(const[sx,x,z]of LAMPS){
+          if(!L.hang){const c=card(im,{x,y:GY,z,h:L.h,tilt:.3});blob(x,GY+.03,z,c.w*.4,c.w*.3,.35,c.ry);
+            const nx=Math.sin(c.ry),nz=Math.cos(c.ry);glow(x+nx*.4,GY+L.h*L.glow,z+nz*.4,3.6,.45);continue}
+          // 吊掛：燈籠上緣吊在橫桿下，立柱在外側（左邊那盞柱子在左、右邊那盞在右）
+          const top=GY+L.h+7.5,c=card(im,{x,y:top,z,h:L.h,ay:1}),ux=Math.cos(c.ry),uz=-Math.sin(c.ry),nx=Math.sin(c.ry),nz=Math.cos(c.ry),off=sx*(c.w*.5+1.2);
+          const px=x+ux*off-nx*.15,pz=z+uz*off-nz*.15,r=.2,H=top+1.2-GY;
+          const post=new T.Mesh(new T.CylinderGeometry(r,r*1.2,H,10),postM);post.position.set(px,GY+H/2,pz);root.add(post);
+          const arm=new T.Mesh(new T.CylinderGeometry(.12,.12,Math.abs(off)+.3,8),postM);arm.rotation.order="YXZ";arm.rotation.set(0,c.ry,PI/2);arm.position.set(x+ux*off/2-nx*.15,top+.9,z+uz*off/2-nz*.15);root.add(arm);
+          const cord=new T.Mesh(new T.CylinderGeometry(.04,.04,.9,6),postM);cord.position.set(x-nx*.05,top+.45,z-nz*.05);root.add(cord);
+          const ft=new T.Mesh(new T.CylinderGeometry(r*2.4,r*3.2,.8,12),postM);ft.position.set(px,GY+.4,pz);root.add(ft);blob(px,GY+.03,pz,1.4,1.4,.35);
+          glow(x+nx*.4,top-L.h*(1-L.glow),z+nz*.4,3.6,.45)}});
+      if(EK==="tang")use("lantern",im=>{const h=11,w=h*im.naturalWidth/im.naturalHeight,LY=-3.2,PX=.259,CX=.53,CY=.39,postM=new T.MeshBasicMaterial({color:0x2E2721,toneMapped:false}),gm=gold();
         for(const[sx,x,z]of LAMPS){const c=card(im,{x,y:LY,z,h,ax:CX,ay:CY,mirror:sx>0}),ux=Math.cos(c.ry),uz=-Math.sin(c.ry),nx=Math.sin(c.ry),nz=Math.cos(c.ry),off=(PX-CX)*w*(sx>0?-1:1);
           const px=x+ux*off-nx*.12,pz=z+uz*off-nz*.12,top=LY+(1-CY)*h,r=w*15/349/2;
           // 立柱分兩段：圖上彎鉤那段往上延伸、燈籠下緣以下接到地面；燈籠擋住的那段不做（不然從上往下看，柱子像是穿過燈籠）
