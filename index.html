@@ -428,7 +428,7 @@ html[data-era=ming] .topbar,html[data-era=qing] .topbar{border-bottom-width:4px}
       if(!window.caches)return go();caches.keys().then(function(ks){return Promise.all(ks.filter(function(k){return k.indexOf("xqlab-app-")===0}).map(function(k){return caches.delete(k)}))})
         .then(function(){return navigator.serviceWorker&&navigator.serviceWorker.getRegistration()}).then(function(r){return r&&r.update()}).catch(function(){}).then(go)}},4000)})();
 </script>
-<script>window.XQ_OFFLINE=true;window.XQ_BUILD="20261103-0601";</script>
+<script>window.XQ_OFFLINE=true;window.XQ_BUILD="20261103-0616";</script>
 <script src="core.js"></script>
 <script src="engine.js"></script>
 <script src="local.js"></script>
@@ -1405,7 +1405,9 @@ function Lobby(v){setTop("線上大廳",false,[["📤",shareSheet,"分享給朋�
       ${XQNet.playing()?'<button class="btn" id="back" style="margin-top:10px">♟ 回到我進行中的對局</button>'
         :XQNet.seeking()?`<div class="card" style="margin-top:10px;text-align:center"><div style="font-size:30px">🎲</div><b>正在幫你找對手…</b><div class="muted">${XQNet.seekers()?`另外有 ${XQNet.seekers()} 人也在找，馬上配對`:"有人按「隨機配對」就會自動開始"}</div><button class="btn ghost" id="sk0" style="margin-top:8px">取消</button></div>`
         :'<button class="btn" id="sk1" style="margin-top:10px">🎲 隨機配對（自動找一位線上對手）</button>'}
-      ${Object.keys(games).length?`<div class="sec-t">正在對戰</div>`+Object.entries(games).map(([g,l])=>`<div class="card row" style="justify-content:space-between;margin-bottom:8px"><span>⚔ ${l.map(p=>esc(p.name)).join(" 對 ")}</span><button class="pill" data-w="${esc(g)}">👀 觀看</button></div>`).join(""):""}
+      ${(()=>{const G=XQNet.playing()&&XQNet.game(),mine=G?`<div class="card row" id="myg" style="justify-content:space-between;margin-bottom:8px;cursor:pointer;border:2px solid var(--accent);background:color-mix(in srgb,var(--accent) 12%,var(--card))"><span><b style="color:var(--accent)">🔥 我的對局</b>　${esc(G.red.name)} 對 ${esc(G.black.name)}</span><button class="pill" style="background:var(--accent);color:#fff;border:none;padding:6px 12px">⚔ 回到戰場</button></div>`:"",
+        rest=Object.entries(games).filter(([g])=>!G||g!==G.gid);   // 意見回饋 267：自己的對局也列在「正在對戰」最上面、用特別顏色標出來，點了回到戰場
+        return mine||rest.length?`<div class="sec-t">正在對戰</div>`+mine+rest.map(([g,l])=>`<div class="card row" style="justify-content:space-between;margin-bottom:8px"><span>⚔ ${l.map(p=>esc(p.name)).join(" 對 ")}</span><button class="pill" data-w="${esc(g)}">👀 觀看</button></div>`).join(""):""})()}
       <div class="sec-t">在線棋友（${ps.length}）</div>
       ${ps.length?ps.map(p=>`<div class="card row" data-p="${esc(p.id)}" style="justify-content:space-between;margin-bottom:8px;cursor:pointer"><span><b>${esc(p.name)}</b> <span class="pill">${esc(XQNet.rankOf(p.pts))}</span> <span class="muted" style="font-size:12px">ⓘ</span><br><span class="muted">${ST[p.st]||""}${p.city?"・📍"+esc(p.city):""}</span></span>
         ${p.st==="idle"||p.st==="seeking"?`<button class="pill" data-i="${esc(p.id)}" style="background:var(--accent);color:#fff;border:none;padding:6px 12px">⚔ 邀請對戰</button>`:p.st==="playing"&&p.gid?`<button class="pill" data-w="${esc(p.gid)}" title="點一下觀戰">⚔ 對戰中</button>`:p.st==="watching"&&p.gid?`<button class="pill" data-w="${esc(p.gid)}">👀 觀戰中</button>`:""}</div>`).join("")
@@ -1413,7 +1415,7 @@ function Lobby(v){setTop("線上大廳",false,[["📤",shareSheet,"分享給朋�
       <p class="muted" style="font-size:12px;margin-top:14px">對戰每步限時 3 分鐘，超時判負（離開或斷線太久也算）。大廳透過免費的公開伺服器連線。只會傳名字、大概的城市（由網路位置推估，可在設定關掉）和棋步，不要把名字取成個人資料。App 切到背景時會暫時離線。</p>`;
     box.querySelector("#ed").onclick=()=>nameSheet(false);box.querySelector("#rk").onclick=()=>location.hash="#/stats";
     const s1=box.querySelector("#sk1"),s0=box.querySelector("#sk0");if(s1)s1.onclick=()=>{vibrate(10);XQNet.seek(true)};if(s0)s0.onclick=()=>XQNet.seek(false);
-    const bk=box.querySelector("#back");if(bk)bk.onclick=()=>location.hash="#/pvp";
+    const bk=box.querySelector("#back");if(bk)bk.onclick=()=>location.hash="#/pvp";const mg=box.querySelector("#myg");if(mg)mg.onclick=()=>location.hash="#/pvp";
     box.querySelectorAll("[data-w]").forEach(b=>b.onclick=()=>{XQNet.watch(b.dataset.w);location.hash="#/pvp"});
     // 點棋友（不是按鈕的地方）→ 看他的資料卡
     box.querySelectorAll("[data-p]").forEach(c=>c.onclick=e=>{if(e.target.closest("button"))return;const p=ps.find(x=>x.id===c.dataset.p);if(p)oppCard(p.id,p.name,{invite:q=>{if(XQNet.playing())return confirmBox("你有一盤進行中的對局，邀請新對局會離開它，確定？",()=>{XQNet.leave();invite(q)},"確定");invite(q)}})});
@@ -2566,6 +2568,31 @@ function parkDraw(host,bd,board,o,ex){
 const parkIcon=()=>parkOn()?"▦":"🌳",parkLabel=()=>parkOn()?"回平面棋盤":"去公園下棋（3D）";
 const parkBtn=redraw=>[parkIcon(),e=>{store.set("park3d",!parkOn());vibrate(8);toast(parkOn()?`🌳 公園 3D 棋盤：${BOTN()}坐在對面跟你下（拖曳可以看四周）`:"回到平面棋盤");
   const b=e&&e.currentTarget;if(b){b.textContent=parkIcon();b.title=parkLabel()}redraw()},parkLabel()];
+// ================= 🧪 擺盤推演（意見回饋 250）：對局中跳到另一張棋盤，從當下局面紅黑兩邊都自己走，試各種變化；不影響正在下的那盤 =================
+// eng＝能不能請 Pikafish 分析（積分挑戰、網路對戰中不行，免得變成作弊）
+function setupSheet(board0,side0,flip0,eng){if(!board0)return;const H=[{board:board0.slice(),side:side0,last:null,cn:"",check:-1}];let sel=-1,legal=null,flip=!!flip0,hint=null;
+  sheet("🧪 擺盤推演",b=>{b.innerHTML=`<p class="muted" style="margin:0 0 6px;font-size:13px;line-height:1.6">從這盤現在的局面開始，紅黑兩邊都由你走，試試看各種變化。<b>不會影響正在下的這盤</b>，關掉就回去。${eng?"":"<br>（積分挑戰和網路對戰中不能用 Pikafish 分析）"}</p>
+    <div id="suS" style="font-weight:700;margin:2px 0 6px"></div><div id="suB"></div><div id="suM" class="muted" style="font-size:13px;line-height:1.7;margin:6px 0;min-height:1.7em"></div>
+    <div class="row" style="gap:6px;flex-wrap:wrap"><button class="pill" id="suU">↶ 退一步</button><button class="pill" id="suR">⟲ 回到對局局面</button><button class="pill" id="suF">⇅ 翻轉</button>${eng?'<button class="pill" id="suE">💡 Pikafish 看法</button>':""}</div><div id="suA" style="margin-top:8px;line-height:1.7"></div>`;
+    const bd=Board(i=>tap(i));b.querySelector("#suB").append(bd.svg);const cur=()=>H[H.length-1],A=b.querySelector("#suA");
+    const need=async()=>{if(!legal)legal=(await api("/an/legal",{board:cur().board,side:cur().side})).legal;return legal};
+    async function tap(i){try{await need()}catch(e){return toast(e.message)}
+      if(sel>=0&&legal.some(([f,t])=>f===sel&&t===i)){const f=sel;sel=-1;
+        try{const r=await api("/an/legal",{board:cur().board,side:cur().side,f,t:i});H.push({board:r.board,side:r.side,last:{f,t:i},cn:r.cn,check:r.check});legal=r.legal;hint=null;A.innerHTML="";vibrate(12)}catch(e){toast(e.message)}draw();return}
+      sel=legal.some(([f])=>f===i)?i:-1;if(sel>=0)vibrate(5);draw()}
+    function draw(){const c=cur();bd.draw(c.board,{flip,last:c.last,sel,targets:sel>=0&&legal?legal.filter(([f])=>f===sel).map(x=>x[1]):[],check:c.check,hint});
+      const end=legal&&!legal.length;b.querySelector("#suS").textContent=end?`${PLAYER[c.side]}沒有棋可走了（${c.check>=0?"被將死":"困斃"}）`:`輪到${PLAYER[c.side]}・推演第 ${H.length-1} 步${c.check>=0?"・將軍！":""}`;
+      b.querySelector("#suM").textContent=H.length>1?H.slice(1).map((h,i)=>`${i+1}.${h.cn}`).join("　"):"點棋子走走看（兩邊都可以走）"}
+    b.querySelector("#suU").onclick=()=>{if(H.length>1){H.pop();legal=null;sel=-1;hint=null;A.innerHTML="";need().then(draw,draw)}};
+    b.querySelector("#suR").onclick=()=>{H.length=1;legal=null;sel=-1;hint=null;A.innerHTML="";need().then(draw,draw)};
+    b.querySelector("#suF").onclick=()=>{flip=!flip;draw()};
+    if(eng)b.querySelector("#suE").onclick=async()=>{const c=cur();A.innerHTML='<span class="muted">Pikafish 想一想…（約 2 秒）</span>';
+      try{const r=await api("/an/engine",{board:c.board,side:c.side,ms:1800,multipv:1});const l=r.lines&&r.lines[0];
+        if(!l){A.innerHTML='<span class="muted">這個局面已經分出勝負了</span>';return}
+        const m=String(l.mv||""),ix=(ch,d)=>(9-(+d))*9+(ch.charCodeAt(0)-97);hint=m.length>=4?[ix(m[0],m[1]),ix(m[2],m[3])]:null;draw();
+        A.innerHTML=`<b>Pikafish 建議：${esc(l.cn)}</b>（${esc(l.mate!=null?(l.mate>0?"紅方":"黑方")+"有殺":evt(l.vr))}）<br><span class="muted" style="font-size:13px">後續：${esc((l.pv||[]).slice(0,8).join("　"))}</span>`}
+      catch(e){A.innerHTML=`<span class="muted">⚠ ${esc(e.message)}</span>`}};
+    need().then(draw,draw)})}
 // ================= 🏯 朝代擂台＋集章（意見回饋 255：吸引玩家到公園下棋）=================
 // 每個朝代的公園有一位擂主（由 Pikafish 扮演），難度跟著你的電腦段位；打贏蓋該朝代的朱印，集 3／7／13 枚得到稱號（大廳的棋友資料卡看得到）
 const ARENA={
@@ -2687,31 +2714,6 @@ function CpuGame(v){
       modal(`<div class="em">${win?"🏆":draw0?"🤝":"💪"}</div><h2>${win?"你贏了！":draw0?"和局":"這盤輸了"}</h2><p class="muted">${esc(st.result.why)}・對手第 ${st.level} 級「${esc(lv.name||"")}」</p>`,
         [[win&&st.level<8?"挑戰下一級 ›":"再來一局",()=>api("/play/new",{human:st.human,level:win&&st.level<8?st.level+1:st.level}).then(render).catch(e=>toast(e.message))],["📊 賽後報告",()=>review(true,st&&st.id)],["檢討這盤",()=>review(false,st&&st.id),true],["關閉",null,true]])}}
   // 賽後報告：用這一盤自己的編號打開（意見回饋 234：以前拿存檔清單第一筆，存檔還沒寫完或順序不同時會開到別盤）
-// ================= 🧪 擺盤推演（意見回饋 250）：對局中跳到另一張棋盤，從當下局面紅黑兩邊都自己走，試各種變化；不影響正在下的那盤 =================
-// eng＝能不能請 Pikafish 分析（積分挑戰、網路對戰中不行，免得變成作弊）
-function setupSheet(board0,side0,flip0,eng){if(!board0)return;const H=[{board:board0.slice(),side:side0,last:null,cn:"",check:-1}];let sel=-1,legal=null,flip=!!flip0,hint=null;
-  sheet("🧪 擺盤推演",b=>{b.innerHTML=`<p class="muted" style="margin:0 0 6px;font-size:13px;line-height:1.6">從這盤現在的局面開始，紅黑兩邊都由你走，試試看各種變化。<b>不會影響正在下的這盤</b>，關掉就回去。${eng?"":"<br>（積分挑戰和網路對戰中不能用 Pikafish 分析）"}</p>
-    <div id="suS" style="font-weight:700;margin:2px 0 6px"></div><div id="suB"></div><div id="suM" class="muted" style="font-size:13px;line-height:1.7;margin:6px 0;min-height:1.7em"></div>
-    <div class="row" style="gap:6px;flex-wrap:wrap"><button class="pill" id="suU">↶ 退一步</button><button class="pill" id="suR">⟲ 回到對局局面</button><button class="pill" id="suF">⇅ 翻轉</button>${eng?'<button class="pill" id="suE">💡 Pikafish 看法</button>':""}</div><div id="suA" style="margin-top:8px;line-height:1.7"></div>`;
-    const bd=Board(i=>tap(i));b.querySelector("#suB").append(bd.svg);const cur=()=>H[H.length-1],A=b.querySelector("#suA");
-    const need=async()=>{if(!legal)legal=(await api("/an/legal",{board:cur().board,side:cur().side})).legal;return legal};
-    async function tap(i){try{await need()}catch(e){return toast(e.message)}
-      if(sel>=0&&legal.some(([f,t])=>f===sel&&t===i)){const f=sel;sel=-1;
-        try{const r=await api("/an/legal",{board:cur().board,side:cur().side,f,t:i});H.push({board:r.board,side:r.side,last:{f,t:i},cn:r.cn,check:r.check});legal=r.legal;hint=null;A.innerHTML="";vibrate(12)}catch(e){toast(e.message)}draw();return}
-      sel=legal.some(([f])=>f===i)?i:-1;if(sel>=0)vibrate(5);draw()}
-    function draw(){const c=cur();bd.draw(c.board,{flip,last:c.last,sel,targets:sel>=0&&legal?legal.filter(([f])=>f===sel).map(x=>x[1]):[],check:c.check,hint});
-      const end=legal&&!legal.length;b.querySelector("#suS").textContent=end?`${PLAYER[c.side]}沒有棋可走了（${c.check>=0?"被將死":"困斃"}）`:`輪到${PLAYER[c.side]}・推演第 ${H.length-1} 步${c.check>=0?"・將軍！":""}`;
-      b.querySelector("#suM").textContent=H.length>1?H.slice(1).map((h,i)=>`${i+1}.${h.cn}`).join("　"):"點棋子走走看（兩邊都可以走）"}
-    b.querySelector("#suU").onclick=()=>{if(H.length>1){H.pop();legal=null;sel=-1;hint=null;A.innerHTML="";need().then(draw,draw)}};
-    b.querySelector("#suR").onclick=()=>{H.length=1;legal=null;sel=-1;hint=null;A.innerHTML="";need().then(draw,draw)};
-    b.querySelector("#suF").onclick=()=>{flip=!flip;draw()};
-    if(eng)b.querySelector("#suE").onclick=async()=>{const c=cur();A.innerHTML='<span class="muted">Pikafish 想一想…（約 2 秒）</span>';
-      try{const r=await api("/an/engine",{board:c.board,side:c.side,ms:1800,multipv:1});const l=r.lines&&r.lines[0];
-        if(!l){A.innerHTML='<span class="muted">這個局面已經分出勝負了</span>';return}
-        const m=String(l.mv||""),ix=(ch,d)=>(9-(+d))*9+(ch.charCodeAt(0)-97);hint=m.length>=4?[ix(m[0],m[1]),ix(m[2],m[3])]:null;draw();
-        A.innerHTML=`<b>Pikafish 建議：${esc(l.cn)}</b>（${esc(l.mate!=null?(l.mate>0?"紅方":"黑方")+"有殺":evt(l.vr))}）<br><span class="muted" style="font-size:13px">後續：${esc((l.pv||[]).slice(0,8).join("　"))}</span>`}
-      catch(e){A.innerHTML=`<span class="muted">⚠ ${esc(e.message)}</span>`}};
-    need().then(draw,draw)})}
 async function review(rep,id){let it=null;for(let k=0;k<12&&!it;k++){try{const d=await api("/db/items?c=play");it=id?d.items.find(x=>x.id===id):d.items[0]}catch(e){}if(!it)await new Promise(r=>setTimeout(r,250))}
   if(!it)return toast("找不到這盤的存檔");if(rep)store.set("openReport","play/"+it.id);location.hash="#/db/play/"+encodeURIComponent(it.id)}
   // 錯棋重練：在狀態列提示上次走了什麼，評等出來後告訴你這次有沒有進步（評過的結果記在 redoDone）
@@ -3220,6 +3222,7 @@ function PvpGame(v){
     if(NET&&st.link!=="up"){s2.textContent="⚠ 網路不穩，重新連線中…"+(st.unsent?"（你的棋步連上後會自動送出）":"");s2.classList.add("hot")}
     renderStrip(v.querySelector("#strip"),st.moves,(seat==="w"?curN():st.moves.length)-1,seat==="w"?pickStep:undefined);
     acts.undo.disabled=!!st.result||!st.moves.length||(!!seat&&st.moves[st.moves.length-1].by!==seat);acts.draw.disabled=acts.resign.disabled=!!st.result;acts.new.disabled=false;
+    if(watchUI&&seat!=="w"&&NET&&XQNet.side()){route();return}   // 從觀戰變成自己下棋（例如在觀戰時接受了邀請）：重新進入對戰頁，按鈕換回悔棋、聊天、提和、認輸
     if(seat==="w"){setupWatchUI();acts.new.disabled=true;acts.new.hidden=true;acts.undo.disabled=curN()<=0;acts.draw.disabled=view==null;acts.resign.disabled=view==null;evalAt(curN());watchBar()}
     // 對方提和：問輪到的人（或另一方）要不要同意；連線對戰時只問對方那支手機
     if(st.draw&&!st.result&&seat!=="w"&&(!seat||st.draw!==seat)&&drawAsked!==st.draw+st.moves.length){drawAsked=st.draw+st.moves.length;const o=opp(st.draw);

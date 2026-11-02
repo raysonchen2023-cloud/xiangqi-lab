@@ -1006,10 +1006,11 @@
     // 意見回饋 218：螢幕夠高時畫面拉高一點（最多 1.32），多出來的都給下方（上緣維持原本的位置），露出棋盤前方的桌面讓小帥坐
     // 意見回饋 260：固定高度的對局頁（iPhone 主畫面 App 可用高度少、觀戰多一行狀態）不能比版面留給它的空間高，不然會壓到下面的玩家列
     const room=()=>{const box=el.parentElement,view=box&&box.parentElement;if(!view||getComputedStyle(view).overflow!=="hidden")return 1e9;
-      let used=0;for(const c of view.children)if(c!==box)used+=c.offsetHeight;const cs=getComputedStyle(box);return view.clientHeight-used-parseFloat(cs.paddingTop)-parseFloat(cs.paddingBottom)};
+      let used=0;for(const c of view.children)if(c!==box&&!(parseFloat(getComputedStyle(c).flexGrow)>0))used+=c.offsetHeight;   // 撐開空白的那格（flex:1）不算const cs=getComputedStyle(box);return view.clientHeight-used-parseFloat(cs.paddingTop)-parseFloat(cs.paddingBottom)};
     const fit=()=>{W=el.clientWidth||300;CAMV.hr=clamp((VH0-300)/W,1.14,1.32);const rm=room();if(W*CAMV.hr>rm)CAMV.hr=Math.max(.85,rm/W);
-      CAMV.dp=Math.atan(CAMV.ht*1.14)-Math.atan(CAMV.ht*CAMV.hr);H=Math.round(W*CAMV.hr);el.style.height=H+"px";rd.setSize(W,H,false);cam.aspect=W/H;
-      cam.fov=clamp(2*Math.atan(CAMV.ht/cam.aspect)*180/PI,38,62);cam.updateProjectionMatrix()};
+      // 畫面被壓矮（比 1.14 扁）時：上下視角維持 1.14 的範圍、左右看得更廣，不會把對面和近端的小帥切掉（意見回饋：5:49 截圖）
+      const vr=Math.max(CAMV.hr,1.14);CAMV.dp=Math.atan(CAMV.ht*1.14)-Math.atan(CAMV.ht*vr);H=Math.round(W*CAMV.hr);el.style.height=H+"px";rd.setSize(W,H,false);cam.aspect=W/H;
+      cam.fov=clamp(2*Math.atan(CAMV.ht*vr)*180/PI,38,62);cam.updateProjectionMatrix()};
     const camBase=new T.Vector3(0,16,9.2),look=new T.Vector3(0,-.3,-2.6);
     // 拉近拉遠＝鏡頭沿著「棋盤中心→座位」這條線前後移動，看的方向不變
     const placeCam=()=>{const d=look.clone().sub(camBase),r=d.length()*zoom,a0=Math.atan2(d.x,-d.z)+yaw,p0=Math.asin(d.y/d.length())+pitch+CAMV.dp,c=cam.position.copy(look).addScaledVector(d,-zoom);
