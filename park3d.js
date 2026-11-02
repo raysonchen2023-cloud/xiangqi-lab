@@ -923,7 +923,10 @@
         const y0=SPR_Y;sp.position.set(0,y0,SPR_Z);sp.rotation.x=SPR_TILT;sc.add(sp);oppSpr={sp,tex,pose:"idle",y0};opp.g.visible=false};
       for(const ps of POSES){const src=base+ps+".webp",im=loadImg(src,()=>{ims[ps]=imgCache[src];done()});if(im){ims[ps]=im;done()}}};
     const setOpp=look=>{const k=JSON.stringify(look||null);if(k===oppKey)return;oppKey=k;killSpr();if(!look){opp.g.clear();opp.B=null;return}buildActor(opp,look);if(look.sprite&&look.spriteMeta||look.thin){opp.g.visible=false;setTimeout(()=>{if(oppKey===k&&!oppSpr)opp.g.visible=true},6000)}if(look.sprite&&look.spriteMeta)makeSpr(look)};
-    buildActor(mate,{});try{mate.g.updateMatrixWorld(true);const b=new T.Box3().setFromObject(mate.g);mate.g.position.y-=b.min.y-.02}catch(e){}   // 坐在桌面上（桌面 y=0）
+    // 我這一側的小帥：平常是自己的；觀戰時換成棋盤近端那一方玩家的小帥（意見回饋 259）
+    let mateKey=null;const setMate=look=>{const k=JSON.stringify(look||null);if(k===mateKey)return;mateKey=k;mate.g.position.y=0;mate.g.userData.y0=null;
+      buildActor(mate,look||{});try{mate.g.updateMatrixWorld(true);const b=new T.Box3().setFromObject(mate.g);mate.g.position.y-=b.min.y-.02}catch(e){}};   // 坐在桌面上（桌面 y=0）
+    setMate(null);
     const say=(t,d)=>mate.say(t,d);
     // 意見回饋 248：分出勝負時兩邊都有 5 秒的勝負動畫（endT 倒數；oppRes／mateRes＝win、lose、draw）
     let endT=0,oppRes=null,mateRes=null;const END=5;
@@ -988,7 +991,7 @@
       (o.targets||[]).forEach(i=>{if(board[i])ring(i,0xD7263D,.56,.09,.95);else disc(i,0x2F9E5A,.19,.9)});
       if(typeof o.check==="number"&&o.check>=0&&board[o.check])checkRing=ring(o.check,0xFF2A2A,.62,.12,.9);
       if(ex.hint&&ex.hint.length===2){ring(ex.hint[0],0xF2B233,.5,.07,.9);ring(ex.hint[1],0xF2B233,.5,.07,.9)}
-      thinking=!!ex.thinking;setOpp(ex.opp||null);setWatchers(ex.watchers);mySide=ex.botSide?(ex.botSide==="r"?"b":"r"):"r";
+      thinking=!!ex.thinking;setOpp(ex.opp||null);setMate(ex.mateLook||null);setWatchers(ex.watchers);mySide=ex.botSide?(ex.botSide==="r"?"b":"r"):"r";
       if(ex.result&&ex.result!==mood){mood=ex.result;const b=ex.botSide;endT=END;
         oppRes=mood==="draw"||!b?"draw":mood===b?"win":"lose";mateRes=oppRes==="win"?"lose":oppRes==="lose"?"win":"draw";
         if(mood==="draw"){opp.setFace("flat",99);mate.setFace("flat",99);mate.say("和棋，不錯喔！",3)}

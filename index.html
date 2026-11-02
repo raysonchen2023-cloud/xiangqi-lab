@@ -417,7 +417,7 @@ html[data-era=ming] .topbar,html[data-era=qing] .topbar{border-bottom-width:4px}
       if(!window.caches)return go();caches.keys().then(function(ks){return Promise.all(ks.filter(function(k){return k.indexOf("xqlab-app-")===0}).map(function(k){return caches.delete(k)}))})
         .then(function(){return navigator.serviceWorker&&navigator.serviceWorker.getRegistration()}).then(function(r){return r&&r.update()}).catch(function(){}).then(go)}},4000)})();
 </script>
-<script>window.XQ_OFFLINE=true;window.XQ_BUILD="20261103-0520";</script>
+<script>window.XQ_OFFLINE=true;window.XQ_BUILD="20261103-0527";</script>
 <script src="core.js"></script>
 <script src="engine.js"></script>
 <script src="local.js"></script>
@@ -3112,9 +3112,10 @@ function PvpGame(v){
   function draw(){if(!st)return;if(seat==="w"&&view!=null){const n=view;bd.draw(boardAtN(n),{flip:isFlip(),last:st.moves[n-1]});return}
     const o={flip:isFlip(),last:st.moves[st.moves.length-1],sel,targets:sel>=0?st.legal.filter(([f])=>f===sel).map(x=>x[1]):[],check:st.check,fx:true};bd.draw(st.board,o);
     // 觀戰（seat="w"）：對面坐的是棋盤遠端那一方玩家的小帥（意見回饋 258）
-    const far=isFlip()?"r":"b",watchOpp=NET&&seat==="w"?(window.XQNet&&XQNet.playerBot&&XQNet.playerBot(far)||{p:far==="r"?"帥":"將"}):null;
+    const far=isFlip()?"r":"b",near=far==="r"?"b":"r",watchOpp=NET&&seat==="w"?(window.XQNet&&XQNet.playerBot&&XQNet.playerBot(far)||{p:far==="r"?"帥":"將"}):null,
+      watchMe=NET&&seat==="w"?(window.XQNet&&XQNet.playerBot&&XQNet.playerBot(near)||{p:near==="r"?"帥":"將"}):null;   // 意見回饋 259：觀戰時近端坐近端那一方玩家的小帥
     parkDraw(v.querySelector("#bbox"),bd,st.board,o,{tap,botSide:NET&&seat&&seat!=="w"?(seat==="r"?"b":"r"):NET&&seat==="w"?far:null,result:st.result?(st.result.w||"draw"):null,
-      opp:NET&&seat&&seat!=="w"?(window.XQNet&&XQNet.oppBot&&XQNet.oppBot()||{p:seat==="r"?"將":"帥"}):watchOpp,oppWin:"我贏了！再來一盤？",oppLose:"你好厲害…",
+      opp:NET&&seat&&seat!=="w"?(window.XQNet&&XQNet.oppBot&&XQNet.oppBot()||{p:seat==="r"?"將":"帥"}):watchOpp,mateLook:watchMe,oppWin:"我贏了！再來一盤？",oppLose:"你好厲害…",
       watchers:NET&&window.XQNet&&XQNet.watcherBots?XQNet.watcherBots():[]})}
   function clocks(){if(!st||!clockBase||!clockBase.c)return;const b=clockBase;for(const s of["r","b"]){const el=v.querySelector(`#ck_${s}`);if(el){const x=b.c[s]-(b.run&&b.turn===s?Date.now()-b.at:0);el.textContent=fmt(x);el.style.color=x<60000&&!(b.turn===s&&b.run)?"var(--red)":""}}}
   const ckT=setInterval(clocks,250);
