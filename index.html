@@ -428,7 +428,7 @@ html[data-era=ming] .topbar,html[data-era=qing] .topbar{border-bottom-width:4px}
       if(!window.caches)return go();caches.keys().then(function(ks){return Promise.all(ks.filter(function(k){return k.indexOf("xqlab-app-")===0}).map(function(k){return caches.delete(k)}))})
         .then(function(){return navigator.serviceWorker&&navigator.serviceWorker.getRegistration()}).then(function(r){return r&&r.update()}).catch(function(){}).then(go)}},4000)})();
 </script>
-<script>window.XQ_OFFLINE=true;window.XQ_BUILD="20261103-0616";</script>
+<script>window.XQ_OFFLINE=true;window.XQ_BUILD="20261103-0632";</script>
 <script src="core.js"></script>
 <script src="engine.js"></script>
 <script src="local.js"></script>
@@ -2558,7 +2558,8 @@ function parkInfo(k){const era=store.get("era","classic"),E=PARK_INFO[era]||PARK
 function parkDraw(host,bd,board,o,ex){
   // 關掉公園：同一個棋盤的公園只藏起來（意見回饋 244：來回切換不用每次重建 3D 場景，比較順）
   if(!parkOn()){if(PARK&&PARK.host===host){if(PARK.v.hide)PARK.v.hide();else{PARK.v.destroy();PARK=null}}bd.svg.style.display="";botVis(true);return}
-  if(!window.XQPark3D){bd.svg.style.display="";parkLoad().then(()=>{if(document.body.contains(host))parkDraw(host,bd,board,o,ex)}).catch(()=>{toast("公園 3D 棋盤載入失敗，先用平面棋盤");store.set("park3d",false)});return}
+  // 意見回饋 270：載入完還是沒有 XQPark3D（例如程式出錯）就停下來改用平面棋盤，不能一直重試（之前會無限循環、整個 App 卡死）
+  if(!window.XQPark3D){bd.svg.style.display="";parkLoad().then(()=>{if(!window.XQPark3D)throw new Error("park3d 沒有載入成功");if(document.body.contains(host))parkDraw(host,bd,board,o,ex)}).catch(()=>{toast("公園 3D 棋盤載入失敗，先用平面棋盤");store.set("park3d",false)});return}
   if(PARK&&PARK.era!==store.get("era","classic")){PARK.v.destroy();PARK=null}   // 換了朝代（例如從集章簿換過去）：公園重建
   if(!PARK||PARK.host!==host||!document.body.contains(PARK.v.el)){if(PARK)PARK.v.destroy();
     const pv=XQPark3D.create(host,{onTap:i=>ex.tap(i),onInfo:k=>parkInfo(k),onDestroy:()=>{if(PARK&&PARK.v===pv){PARK=null;botVis(true)}}});
