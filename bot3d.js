@@ -250,12 +250,13 @@
     if(!store.get("botHint",false)){store.set("botHint",true);setTimeout(()=>{if(!stopped){doAct("wave");say("嗨！我是小帥。長按我，可以問我任何象棋問題！",5)}},1800)}
     // 點／拖小人：事件只給小人，不會穿到後面的按鈕
     const stop=e=>{e.stopPropagation();if(e.cancelable)e.preventDefault()};
-    hit.addEventListener("pointerdown",e=>{stop(e);try{hit.setPointerCapture(e.pointerId)}catch(_){}drag={sx:e.clientX,sy:e.clientY,ox:x,oy:y,moved:false};act=null;
+    hit.addEventListener("pointerdown",e=>{stop(e);try{hit.setPointerCapture(e.pointerId)}catch(_){}drag={sx:e.clientX,sy:e.clientY,ox:x,oy:y,moved:false,touch:e.pointerType==="touch"};act=null;
       // 長按＝問問題（意見回饋 169）
-      const d0=drag;d0.lp=setTimeout(()=>{if(drag===d0&&!d0.moved){d0.long=true;doAct("think");say("你想問什麼？",2);try{window.dispatchEvent(new CustomEvent("xq-bot-ask"))}catch(_){}}},550)});
-    hit.addEventListener("pointermove",e=>{if(!drag)return;stop(e);const dx=e.clientX-drag.sx,dy=e.clientY-drag.sy;if(!drag.moved&&Math.hypot(dx,dy)<6)return;
+      const d0=drag;d0.lp=setTimeout(()=>{if(drag===d0&&!d0.moved){d0.long=true;doAct("think");say("你想問什麼？",2);try{navigator.vibrate&&navigator.vibrate(15)}catch(_){}try{window.dispatchEvent(new CustomEvent("xq-bot-ask"))}catch(_){}}},500)});
+    hit.addEventListener("pointermove",e=>{if(!drag)return;stop(e);const dx=e.clientX-drag.sx,dy=e.clientY-drag.sy;if(!drag.moved&&Math.hypot(dx,dy)<(drag.touch?10:6))return;
       if(!drag.moved){drag.moved=true;clearTimeout(drag.lp);hit.style.cursor="grabbing";say("哇～飛起來了！",1.5)}x=drag.ox+dx;y=drag.oy+dy;tx=x;ty=y});
-    const up=e=>{if(!drag)return;stop(e);const d=drag;drag=null;hit.style.cursor="grab";clearTimeout(d.lp);if(d.long)return;
+    // iPhone 長按時系統會先送 pointercancel（意見回饋 173）：還沒拖動就不當成放開，等手指真的離開（touchend）
+    const up=e=>{if(!drag)return;if(e.type==="pointercancel"&&!drag.moved)return;stop(e);const d=drag;drag=null;hit.style.cursor="grab";clearTimeout(d.lp);if(d.long)return;
       if(d.moved&&boardMode){const b=bounds();x=Math.min(Math.max(x,b.x0),b.x1);y=Math.min(Math.max(y,b.y0),b.y1);tx=x;ty=y;boardDrag=true;say("好，我待在這裡看",1.8);next=4;return}
       if(d.moved){const b=bounds();x=Math.min(Math.max(x,b.x0),b.x1);y=Math.min(Math.max(y,b.y0),b.y1);tx=x;ty=y;parked=true;store.set("botPos",{x:x/innerWidth,y:y/innerHeight});say("我在這裡等你（點兩下我會去散步）",2.6);next=4;return}
       // 點一下＝表演、點兩下＝去散步（停放時）；長按＝問問題
@@ -263,7 +264,8 @@
         if(n>=2&&parked){parked=false;store.set("botPos",null);say("出去走走～",1.6);wander()}
         else doAct(randAct())},380)};
     hit.addEventListener("pointerup",up);hit.addEventListener("pointercancel",up);
-    for(const ev of["click","dblclick","touchstart","touchend","mousedown","mouseup","contextmenu"])hit.addEventListener(ev,stop,{passive:false});
+    for(const ev of["click","dblclick","touchstart","mousedown","mouseup","contextmenu","selectstart"])hit.addEventListener(ev,stop,{passive:false});
+    hit.addEventListener("touchend",e=>{stop(e);if(drag)up(e)},{passive:false});hit.addEventListener("touchcancel",e=>{if(drag&&!drag.moved&&!drag.long){clearTimeout(drag.lp);drag=null}},{passive:true});
     const onCall=e=>{const s=e.detail;if(s==="將軍")doAct("shock");else if(s==="吃"){doAct("cheer");say("吃！",1.4)}};
     window.addEventListener("xq-call",onCall);
     // 勝負：贏了開心跳、輸了難過掉眼淚、和棋聳聳肩
