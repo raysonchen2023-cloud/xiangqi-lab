@@ -412,7 +412,7 @@ html[data-era=ming] .topbar,html[data-era=qing] .topbar{border-bottom-width:4px}
       if(!window.caches)return go();caches.keys().then(function(ks){return Promise.all(ks.filter(function(k){return k.indexOf("xqlab-app-")===0}).map(function(k){return caches.delete(k)}))})
         .then(function(){return navigator.serviceWorker&&navigator.serviceWorker.getRegistration()}).then(function(r){return r&&r.update()}).catch(function(){}).then(go)}},4000)})();
 </script>
-<script>window.XQ_OFFLINE=true;window.XQ_BUILD="20261102-0923";</script>
+<script>window.XQ_OFFLINE=true;window.XQ_BUILD="20261102-0949";</script>
 <script src="core.js"></script>
 <script src="engine.js"></script>
 <script src="local.js"></script>
@@ -817,6 +817,14 @@ function riverGlyphs(eraK,col,flip,dark,gs,cap){const f=RIVER_ERA[eraK];if(!f)re
 const PIECE_INK={classic:{r:"#B3141B",b:"#141414"},qin:{r:"#C42A22",b:"#111111"},han:{r:"#F5D27A",b:"#111111"},sanguo:{r:"#F0533F",b:"#ECE6DA"},
   weijin:{r:"#B3141B",b:"#141414"},nanbei:{r:"#8E1414",b:"#0c0c0c"},sui:{r:"#B3141B",b:"#141414"},tang:{r:"#8E1010",b:"#141414"},
   wudai:{r:"#F0533F",b:"#ECE6DA"},song:{r:"#B3141B",b:"#141414"},yuan:{r:"#B3141B",b:"#141414"},ming:{r:"#F2C14E",b:"#ECE6DA"},qing:{r:"#FF6B5A",b:"#F2D27A"}};
+// 朝代棋子字形（開放授權 OFL 字型轉成的向量，100x100）：data/glyphs/<朝代>.json，切到該朝代才下載
+const GLY={},GLY_P={},GLY_ERAS=new Set("qin han sanguo weijin nanbei sui tang wudai song yuan ming qing".split(" "));
+const GLY_BOLD={song:2.2,weijin:1.6,wudai:1.2,yuan:.8};   // 筆畫細的字型加粗一點
+function needGly(k,redraw){if(!k||GLY[k]||!GLY_ERAS.has(k))return;(GLY_P[k]=GLY_P[k]||fetch(`data/glyphs/${k}.json`).then(r=>r.json()).then(j=>{GLY[k]=j}).catch(()=>{GLY_P[k]=null})).then(redraw)}
+// 朝代箭頭：spear＝矛（秦漢三國）、brush＝毛筆（魏晉南北朝、五代、宋）、ribbon＝雙線金帶（唐元）、dots＝連珠（隋明清）
+const ERA_ARROW={qin:{k:"spear",c:"#1E1E1E"},han:{k:"spear",c:"#B3241B"},sanguo:{k:"spear",c:"#2F6E5E"},weijin:{k:"brush",c:"#2A2A2A"},
+  nanbei:{k:"brush",c:"#7A3B16"},sui:{k:"dots",c:"#6B2D8F"},tang:{k:"ribbon",c:"#D9A515"},wudai:{k:"brush",c:"#23395B"},song:{k:"brush",c:"#3E8E7E"},
+  yuan:{k:"ribbon",c:"#2456A6"},ming:{k:"dots",c:"#C8102E"},qing:{k:"dots",c:"#E8B400"}};
 const BOARD_IMG={"classic": [-17.3, -40.6, 594.6, 701.9], "qin": [-24.9, -33.3, 609.8, 687.2], "han": [-38.6, -44.5, 637.2, 709.6], "sanguo": [-29.7, -46.2, 619.4, 713.4], "weijin": [-24.5, -42.7, 609.1, 705.7], "nanbei": [-25.7, -44.5, 611.4, 709.6], "sui": [-20.9, -36.6, 601.8, 694.5], "tang": [-46.2, -60.6, 652.4, 741.8], "wudai": [-36.3, -44.5, 632.5, 709.6], "song": [-34.0, -19.4, 627.9, 659.4], "yuan": [-25.5, -40.6, 611.0, 701.9], "qing": [-27.1, -49.5, 614.2, 721.3]};BOARD_IMG.ming=BOARD_IMG.yuan;const BOARD_IMG_FILE={ming:"yuan"};
 function boardBG(T,eR,eD,u,flip,imgK){
   const X0=40,Y0=40,S=60,px=c=>X0+c*S,py=r=>Y0+r*S,G=T.grid,arr=Array.isArray(T.bg),dark=arr?lum(T.bg[0])<.42:false;
@@ -905,6 +913,24 @@ function Board(onTap,onSwipe){
   // 每顆棋子都是「厚圓餅」：桌面上的柔和落影（徑向漸層橢圓，不用 filter）→ 側邊（往下錯開、較深的一圈＝厚度）→ 頂面（中間微隆的漸層）→ 倒角亮邊 → 刻字
   // 拿起來（選中）時整顆往上抬、影子變大變遠
   let curPK=null;
+  // 朝代箭頭：(sx,sy) 起點、(ex,ey) 箭尖、(ux,uy) 方向；每種都先描一圈反差邊，任何棋盤上都看得到
+  function eraArrow(A,sx,sy,ex,ey,ux,uy){const c=A.c,hl=lum(c)>.55?"#000000a0":"#ffffffb0",g=el("g",{opacity:.9}),nx=-uy,ny=ux,P=(a,b)=>`${(a).toFixed(1)},${(b).toFixed(1)}`,
+      pg=(pts,w)=>{g.append(el("polygon",{points:pts,fill:c,stroke:hl,"stroke-width":w||2.5,"stroke-linejoin":"round","paint-order":"stroke"}))},
+      ln=(ax,ay,bx,by,w)=>{g.append(el("line",{x1:ax,y1:ay,x2:bx,y2:by,stroke:hl,"stroke-width":w+4,"stroke-linecap":"round"}));g.append(el("line",{x1:ax,y1:ay,x2:bx,y2:by,stroke:c,"stroke-width":w,"stroke-linecap":"round"}))};
+    if(A.k==="spear"){const L=34,W=10,bx=ex-ux*L,by=ey-uy*L,mx=ex-ux*L*.42,my=ey-uy*L*.42;
+      ln(sx,sy,bx,by,5);ln(bx+nx*11,by+ny*11,bx-nx*11,by-ny*11,5);
+      pg([P(ex,ey),P(mx+nx*W,my+ny*W),P(bx,by),P(mx-nx*W,my-ny*W)].join(" "));
+      g.append(el("circle",{cx:sx,cy:sy,r:6,fill:c,stroke:hl,"stroke-width":2.5,"paint-order":"stroke"}))}
+    else if(A.k==="brush"){const L=26,bx=ex-ux*L,by=ey-uy*L;
+      pg([P(sx+nx*1.5,sy+ny*1.5),P(bx+nx*7,by+ny*7),P(bx+nx*17-ux*4,by+ny*17-uy*4),P(ex,ey),P(bx-nx*17-ux*4,by-ny*17-uy*4),P(bx-nx*7,by-ny*7),P(sx-nx*1.5,sy-ny*1.5)].join(" "),3)}
+    else if(A.k==="ribbon"){const L=26,bx=ex-ux*L,by=ey-uy*L;
+      ln(sx+nx*5,sy+ny*5,bx+nx*5,by+ny*5,4);ln(sx-nx*5,sy-ny*5,bx-nx*5,by-ny*5,4);
+      pg([P(ex,ey),P(bx+nx*18,by+ny*18),P(bx+ux*7,by+uy*7),P(bx-nx*18,by-ny*18)].join(" "))}
+    else{const L=24,bx=ex-ux*L,by=ey-uy*L,d=Math.hypot(bx-sx,by-sy),n=Math.max(2,Math.round(d/15));
+      for(let i=0;i<n;i++){const t=i/n;g.append(el("circle",{cx:sx+(bx-sx)*t,cy:sy+(by-sy)*t,r:3.5+3*t,fill:c,stroke:hl,"stroke-width":2.5,"paint-order":"stroke"}))}
+      pg([P(ex,ey),P(bx+nx*16,by+ny*16),P(bx-nx*16,by-ny*16)].join(" "))}
+    return g}
+  const reGly=()=>{if(lastBoard){lastKey="";draw(lastBoard,Object.assign({},lastO,{anim:false}))}};
   function piece(p,i,dy,T,PS,up){const s=sideOf(p),col=s==="r"?T.r:T.b,g=el("g",{}),x=X(i),y=Y(i),yt=y+dy,ch=NAMES[s][p.toUpperCase()];
     const txt=(c,o,a)=>el("text",Object.assign({x,y:yt+10+o,"text-anchor":"middle","font-family":"var(--serif)","font-weight":900,"font-size":28,fill:c},a||{}),ch);
     g.append(el("ellipse",up?{cx:x+5,cy:y+13,rx:34,ry:31,fill:`url(#psh${uid})`}:{cx:x+2,cy:y+7,rx:31,ry:29.5,fill:`url(#psh${uid})`}));
@@ -912,7 +938,12 @@ function Board(onTap,onSwipe){
     if(PS==="3d"&&curPK&&PIECE_INK[curPK]){const ink=PIECE_INK[curPK][s],lt=lum(ink)>.5;
       g.append(el("image",{href:`data/pieces/${curPK}-${s}.webp`,x:x-28.5,y:yt-28.5,width:57,height:57}));
       if(up)g.append(el("circle",{cx:x,cy:yt,r:28,fill:"none",stroke:T.mv,"stroke-width":4}));
-      g.append(txt(ink,0,{stroke:lt?"#000000b0":"#ffffffc0","stroke-width":3,"paint-order":"stroke","stroke-linejoin":"round"}));return g}
+      const gp=GLY[curPK]&&GLY[curPK][ch],halo=lt?"#000000b0":"#ffffffc0";
+      if(gp){const k=.31,gb=GLY_BOLD[curPK]||0,tf=`translate(${x-50*k},${yt-50*k}) scale(${k})`;
+        g.append(el("path",{d:gp,transform:tf,fill:ink,stroke:halo,"stroke-width":(3+gb)/k,"stroke-linejoin":"round"}));
+        g.append(el("path",{d:gp,transform:tf,fill:ink,stroke:gb?ink:"none","stroke-width":gb/k,"stroke-linejoin":"round"}));return g}
+      needGly(curPK,reGly);
+      g.append(txt(ink,0,{stroke:halo,"stroke-width":3,"paint-order":"stroke","stroke-linejoin":"round"}));return g}
     if(PS==="3d"){   // 立體：實木厚棋子
       const H=7;
       g.append(el("circle",{cx:x,cy:yt+H,r:27,fill:`url(#pside${uid})`,stroke:"#3E2309","stroke-width":1}));
@@ -956,9 +987,10 @@ function Board(onTap,onSwipe){
     if(L){svg.append(el("circle",{cx:X(L.f),cy:Y(L.f),r:12,fill:T.mv,opacity:.35}));
       svg.append(el("circle",{cx:X(L.f),cy:Y(L.f),r:24,fill:"none",stroke:T.mv,"stroke-width":3,"stroke-dasharray":"6 5",opacity:.9}));
       if(o.arrow!==false&&store.get("mvArrow",true)){const x1=X(L.f),y1=Y(L.f),x2=X(L.t),y2=Y(L.t),len=Math.hypot(x2-x1,y2-y1),ux=(x2-x1)/len,uy=(y2-y1)/len;
-        const ex=x2-ux*31,ey=y2-uy*31,hx=ex-ux*22,hy=ey-uy*22,nx=-uy*17,ny=ux*17,ar=el("g",{opacity:.85});
+        const ex=x2-ux*31,ey=y2-uy*31,hx=ex-ux*22,hy=ey-uy*22,nx=-uy*17,ny=ux*17,ar=el("g",{opacity:.85}),EA=eR&&ERA_ARROW[eR.k];
+        if(EA)svg.append(eraArrow(EA,x1+ux*14,y1+uy*14,ex,ey,ux,uy));else{
         ar.append(el("line",{x1:x1+ux*14,y1:y1+uy*14,x2:hx,y2:hy,stroke:T.mv,"stroke-width":11,"stroke-linecap":"round"}));
-        ar.append(el("polygon",{points:`${ex},${ey} ${hx+nx},${hy+ny} ${hx-nx},${hy-ny}`,fill:T.mv}));svg.append(ar)}}
+        ar.append(el("polygon",{points:`${ex},${ey} ${hx+nx},${hy+ny} ${hx-nx},${hy-ny}`,fill:T.mv}));svg.append(ar)}}}
     if(o.hint)for(const q of o.hint)svg.append(el("rect",{x:X(q)-29,y:Y(q)-29,width:58,height:58,rx:9,fill:"none",stroke:"#E39B0F","stroke-width":4,"stroke-dasharray":"7 5"}));
     // 走棋動畫：跟上一次畫的盤面比，棋子從原位滑到新位置；被吃的棋子淡出
     const fresh=L&&prevB&&prevB[L.f]&&prevB[L.f]===board[L.t]&&!board[L.f]&&prevB[L.t]!==board[L.t];
