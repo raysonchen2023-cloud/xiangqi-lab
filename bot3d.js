@@ -237,7 +237,7 @@
   const FACES=["smile","open","smile","wink","smile","open"];
   const comboAct=n=>{const[i,j]=COMBO[n],a=ARM[i],b=BODY[j];return{d:2.4,name:a[0]+(b[0]?"＋"+b[0]:""),get say(){return ++hintN%9===0?HINTS[(hintN/9|0)%HINTS.length]:nextLine()},f:(p,B)=>{a[1](p,B);b[1](p,B);B.face=FACES[n%FACES.length]}}};
 
-  function start(){let SC=Math.min(2,Math.max(.6,+store.get("botSize",1)||1)),W=W0*SC,H=H0*SC,curK=eraK();
+  function start(){let SC=Math.min(2,Math.max(.6,+store.get("botSize",.7)||1)),W=W0*SC,H=H0*SC,curK=eraK();
     const box=document.createElement("div");box.className="xqbot";
     box.style.cssText=`position:fixed;left:0;top:0;width:${W}px;height:${H}px;z-index:900;pointer-events:none;will-change:transform;transition:opacity .2s`;
     const hit=document.createElement("div");hit.style.cssText="position:absolute;left:19%;right:19%;top:10%;bottom:3%;pointer-events:auto;touch-action:none;cursor:grab;border-radius:40%;-webkit-touch-callout:none;-webkit-user-select:none;user-select:none";
@@ -320,16 +320,18 @@
       if(sr){sheetMode=true;act=null;if(sr.top-6<H*.7){box.style.opacity="0";hit.style.pointerEvents="none"}else{box.style.opacity="";hit.style.pointerEvents="auto";if(!drag){tx=bounds().x1-4;ty=Math.max(0,sr.top-H)}}return}
       if(sheetMode){sheetMode=false;box.style.opacity="";hit.style.pointerEvents="auto";if(!boardMode){if(parked){const p=store.get("botPos",null);if(p){tx=p.x*innerWidth;ty=p.y*innerHeight}}else wander()}}
       const r=bigBoard();
-      if(r&&!boardMode){boardMode=true;boardDrag=false;act=null}
-      else if(!r&&boardMode){boardMode=false;boardDrag=false;if(parked){const p=store.get("botPos",null);if(p){tx=p.x*innerWidth;ty=p.y*innerHeight}}else wander()}
-      if(boardMode&&!boardDrag&&!drag){const b=bounds();tx=b.x1-4;ty=Math.max(b.y0,innerHeight-H-72)}},250);
+      if(r&&!boardMode){boardMode=true;boardDrag=false;act=null;shrink=.6;applySize()}
+      else if(!r&&boardMode){boardMode=false;boardDrag=false;shrink=1;applySize();box.style.opacity="";if(parked){const p=store.get("botPos",null);if(p){tx=p.x*innerWidth;ty=p.y*innerHeight}}else wander()}
+      if(boardMode&&!boardDrag&&!drag){const b=bounds();tx=b.x1-2;ty=Math.max(b.y0,innerHeight-H-64)}
+      if(boardMode&&!sheetMode)box.style.opacity=(act||drag||bubT>0)?"":".45"},250);
     // 換朝代：重做造型（字形還沒下載就先下載，好了再換一次）
     const rebuild=()=>{curK=eraK();root.remove(P.bot);Object.assign(B,build(curK,grade()));root.add(B.bot)};
     let curG=grade();
     const eraT=setInterval(()=>{const g=grade();if(g!==curG){const up=g<curG;curG=g;rebuild();doAct(up?"cheer":"shrug");say(up?`升官了！現在是${GN[g]}品官 🎉`:`降成${GN[g]}品了…再加油！`,3.2)}
       if(eraK()!==curK){rebuild();if(typeof needGly==="function")needGly(curK,()=>{if(!stopped)rebuild()})}},1500);
     if(typeof needGly==="function"&&!(typeof GLY!=="undefined"&&GLY[curK]))needGly(curK,()=>{if(!stopped)rebuild()});
-    const setScale=v=>{SC=Math.min(2,Math.max(.6,+v||1));W=W0*SC;H=H0*SC;box.style.width=W+"px";box.style.height=H+"px";rd.setSize(W,H);store.set("botSize",SC)};
+    let shrink=1;const applySize=()=>{const k=SC*shrink;W=W0*k;H=H0*k;box.style.width=W+"px";box.style.height=H+"px";rd.setSize(W,H)};
+    const setScale=v=>{SC=Math.min(2,Math.max(.6,+v||1));store.set("botSize",SC);applySize()};
     const onResize=()=>{const b=bounds();x=Math.min(x,b.x1);y=Math.min(y,b.y1);tx=Math.min(tx,b.x1);ty=Math.min(ty,b.y1)};window.addEventListener("resize",onResize);
     return{act:k=>doAct(typeof k==="number"?comboAct(k):k),say,setScale,rebuild,count:COMBO.length,lines:LINES.length,
       stop(){stopped=true;clearInterval(eraT);clearInterval(boardT);window.removeEventListener("xq-call",onCall);window.removeEventListener("xq-result",onResult);window.removeEventListener("resize",onResize);try{rd.dispose()}catch(e){}box.remove()}}}

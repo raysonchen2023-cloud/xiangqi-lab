@@ -412,7 +412,7 @@ html[data-era=ming] .topbar,html[data-era=qing] .topbar{border-bottom-width:4px}
       if(!window.caches)return go();caches.keys().then(function(ks){return Promise.all(ks.filter(function(k){return k.indexOf("xqlab-app-")===0}).map(function(k){return caches.delete(k)}))})
         .then(function(){return navigator.serviceWorker&&navigator.serviceWorker.getRegistration()}).then(function(r){return r&&r.update()}).catch(function(){}).then(go)}},4000)})();
 </script>
-<script>window.XQ_OFFLINE=true;window.XQ_BUILD="20261102-1513";</script>
+<script>window.XQ_OFFLINE=true;window.XQ_BUILD="20261102-1808";</script>
 <script src="core.js"></script>
 <script src="engine.js"></script>
 <script src="local.js"></script>
@@ -470,7 +470,7 @@ let KILL_GLY=null,KILL_P=null;
 const loadKillGly=()=>KILL_P||(KILL_P=fetch("data/glyphs/kill.json").then(r=>r.json()).then(j=>KILL_GLY=j).catch(()=>{KILL_P=null}));
 setTimeout(loadKillGly,2500);
 function killFx(svg,win,why,kIdx,flip,o){const r=svg.getBoundingClientRect();if(!r.width)return;o=o||{};LAST_KFX=Date.now();loadKillGly();
-  if(!document.getElementById("kfx2css")){const st=document.createElement("style");st.id="kfx2css";st.textContent=`
+  if(!document.getElementById("kfx3css")){document.querySelectorAll("#kfx2css").forEach(x=>x.remove());const st=document.createElement("style");st.id="kfx3css";st.textContent=`
 .kx-flash{position:fixed;inset:0;z-index:67;pointer-events:none;background:#fff;animation:kxflash .35s ease-out forwards}
 @keyframes kxflash{0%{opacity:.85}100%{opacity:0}}
 .kx-bar{position:fixed;left:0;right:0;height:9vh;background:#050302;z-index:67;pointer-events:none;animation:kxbar 3.2s cubic-bezier(.3,.8,.3,1) forwards}
@@ -505,13 +505,28 @@ function killFx(svg,win,why,kIdx,flip,o){const r=svg.getBoundingClientRect();if(
   background:#b3141b;border-radius:.1em;box-shadow:0 0 0 .05em #b3141b,inset 0 0 0 .07em #fff4ea,0 .06em .2em rgba(0,0,0,.5);opacity:0;transform:translate(var(--sx),var(--sy)) rotate(-14deg) scale(2.4);animation:kxseal .28s cubic-bezier(.3,0,.5,1) 1.45s forwards}
 .kx .seal span{font-size:.42em;vertical-align:top}
 @keyframes kxseal{to{opacity:.95;transform:translate(var(--sx),var(--sy)) rotate(-14deg) scale(1)}}
+.kx .rays{position:absolute;left:50%;top:44%;width:1.6em;height:1.6em;margin:-.8em 0 0 -.8em;border-radius:50%;opacity:0;
+  background:repeating-conic-gradient(from 0deg,rgba(255,220,120,.55) 0 6deg,transparent 6deg 18deg);-webkit-mask:radial-gradient(circle,#000 18%,transparent 68%);mask:radial-gradient(circle,#000 18%,transparent 68%);
+  animation:kxrays 2.4s linear .6s forwards}
+@keyframes kxrays{0%{opacity:0;transform:rotate(0) scale(.6)}15%{opacity:1}80%{opacity:.8}100%{opacity:0;transform:rotate(70deg) scale(1.1)}}
+.kx .conf{position:absolute;top:-4%;width:.018em;height:.03em;opacity:0;animation:kxconf 1.8s cubic-bezier(.3,.4,.6,1) forwards}
+@keyframes kxconf{0%{opacity:1;transform:translate(0,0) rotate(0)}100%{opacity:0;transform:translate(var(--dx),1.1em) rotate(var(--r))}}
+.kx.lose .spark,.kx.lose .rays,.kx.lose .conf{display:none}
+.kx.lose .word{filter:drop-shadow(0 .05em .08em rgba(0,0,0,.85)) drop-shadow(0 0 .2em rgba(90,140,200,.25))}
+.kx.lose .ww{animation:kxwrite .5s cubic-bezier(.5,0,.2,1) .55s both,kxland .5s cubic-bezier(.2,1.6,.4,1) .55s both,kxsink 1.4s ease-in 1.3s forwards}
+@keyframes kxsink{to{transform:translateY(.05em) scale(.98);filter:saturate(.3) brightness(.85)}}
+.kx .drip{position:absolute;top:50%;width:.012em;height:0;border-radius:0 0 .01em .01em;background:linear-gradient(#1a1d22,#0b0c0e);animation:kxdrip 1.3s ease-in forwards}
+@keyframes kxdrip{to{height:var(--h)}}
+.kx-dim.lose{background:radial-gradient(ellipse at center,rgba(10,18,32,.25) 25%,rgba(4,8,16,.86) 100%)}
+.kx-board.lose{animation-name:kxboardL}
+@keyframes kxboardL{0%{filter:none;transform:none}3%{transform:scale(1.035) translate(-5px,3px)}6%{transform:translate(5px,-3px)}9%{transform:translate(-3px,2px)}12%{transform:none;filter:grayscale(1) brightness(.5) contrast(1.15)}84%{filter:grayscale(1) brightness(.5) contrast(1.15)}100%{filter:none}}
 .kx .cap{position:absolute;left:0;right:0;top:80%;text-align:center;font-size:.075em;font-weight:900;color:#fff;letter-spacing:.1em;text-shadow:0 1px 4px #000;opacity:0;animation:kxcap .4s ease 1.6s forwards}
 @keyframes kxcap{to{opacity:1}}`;document.head.append(st)}
-  document.querySelectorAll(".kx,.kx-dim,.kx-bar,.kx-flash,.kfx,.kfx-dim,.ckfx,.cpfx").forEach(x=>x.remove());
+  document.querySelectorAll(".kx,.kx-dim,.kx-bar,.kx-flash,.kfx,.kfx-dim,.ckfx,.cpfx").forEach(x=>x.remove());const lose=!win;
   const els=[];const mk=(cls,html)=>{const e=document.createElement("div");e.className=cls;if(html)e.innerHTML=html;document.body.append(e);els.push(e);return e};
-  mk("kx-dim");mk("kx-bar t");mk("kx-bar b");mk("kx-flash");
-  svg.classList.remove("kx-board");void svg.getBoundingClientRect();svg.classList.add("kx-board");
-  const W=r.width,H=r.height,d=mk("kx");d.style.cssText=`left:${r.left}px;top:${r.top}px;width:${W}px;height:${H}px;font-size:${W}px`;
+  mk("kx-dim"+(lose?" lose":""));mk("kx-bar t");mk("kx-bar b");mk("kx-flash");
+  svg.classList.remove("kx-board","lose");void svg.getBoundingClientRect();svg.classList.add("kx-board");if(lose)svg.classList.add("lose");
+  const W=r.width,H=r.height,d=mk("kx "+(lose?"lose":"win"));d.style.cssText=`left:${r.left}px;top:${r.top}px;width:${W}px;height:${H}px;font-size:${W}px`;
   let col=kIdx%9,row=kIdx/9|0;if(flip){col=8-col;row=9-row}const kx=40+col*60,ky=40+row*60;
   let cr="";for(let i=0;i<8;i++){const a=i/8*Math.PI*2+Math.random()*.4,L=80+Math.random()*100;let p=`M${kx} ${ky}`;for(let k=1;k<=3;k++){const x=kx+Math.cos(a+(Math.random()-.5)*.6)*L*k/3,y=ky+Math.sin(a+(Math.random()-.5)*.6)*L*k/3;p+=`L${x.toFixed(1)} ${y.toFixed(1)}`}
     cr+=`<path class="crack" d="${p}" stroke-width="${(4-i%3).toFixed(1)}"/>`}
@@ -524,11 +539,11 @@ function killFx(svg,win,why,kIdx,flip,o){const r=svg.getBoundingClientRect();if(
   const pick=a=>a&&a.length?a[Math.random()*a.length|0]:null,G=KILL_GLY,word=/困斃/.test(why||"")?"困斃":"絕殺";
   const kg=word==="絕殺"&&G?pick(G.kill):null,winSide=o.side||(o.seal==="紅"?"r":o.seal==="黑"?"b":null),sg=G&&winSide?pick(winSide==="r"?G.hong:G.hei):null;
   const gid="kxg"+Math.random().toString(36).slice(2,7);
-  const defs=`<defs><linearGradient id="${gid}" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#fff7d6"/><stop offset=".45" stop-color="#f4cf6e"/><stop offset=".8" stop-color="#c88a26"/><stop offset="1" stop-color="#8a5414"/></linearGradient></defs>`;
+  const defs=`<defs><linearGradient id="${gid}" x1="0" y1="0" x2="0" y2="1">${lose?'<stop offset="0" stop-color="#f2f5f8"/><stop offset=".45" stop-color="#aab3bd"/><stop offset=".8" stop-color="#5e6670"/><stop offset="1" stop-color="#2c3238"/>':'<stop offset="0" stop-color="#fff7d6"/><stop offset=".45" stop-color="#f4cf6e"/><stop offset=".8" stop-color="#c88a26"/><stop offset="1" stop-color="#8a5414"/>'}</linearGradient></defs>`;
   // 主字：金色填色＋深色外框（Gemini 書法向量），沒下載到字形時退回系統字
   const wW=.86,wd=d.appendChild(document.createElement("div"));wd.className="word";
   if(kg){const [p,w,h]=kg,ww=W*wW,wh=ww*h/w;wd.style.cssText=`width:${ww}px;height:${wh}px`;
-    wd.innerHTML=`<div class="ww" style="width:100%;height:100%;position:relative"><svg viewBox="-3 -3 ${w+6} ${h+6}">${defs}<path d="${p}" fill="url(#${gid})" stroke="#2a1206" stroke-width="2.2" stroke-linejoin="round" paint-order="stroke"/></svg><div class="gleam"></div></div>`}
+    wd.innerHTML=`<div class="ww" style="width:100%;height:100%;position:relative"><svg viewBox="-3 -3 ${w+6} ${h+6}">${defs}<path d="${p}" fill="url(#${gid})" stroke="${lose?"#07090c":"#2a1206"}" stroke-width="2.2" stroke-linejoin="round" paint-order="stroke"/></svg><div class="gleam"></div></div>`}
   else{wd.innerHTML=`<div class="ww" style="font-family:var(--serif);font-weight:900;font-size:${W*.3}px;line-height:1;white-space:nowrap;background:linear-gradient(180deg,#fff6d8,#f3cf73 45%,#b77a1f);-webkit-background-clip:text;background-clip:text;color:transparent;-webkit-text-stroke:2px #3a1606">${word}</div>`}
   // 勝方：紅方用朱紅、黑方用墨黑，都描金邊
   if(sg){const [p,w,h]=sg,sw=W*.4,sh=sw*h/w,sd=d.appendChild(document.createElement("div"));sd.className="kxs";sd.style.cssText=`width:${sw}px;height:${sh}px`;
@@ -536,6 +551,9 @@ function killFx(svg,win,why,kIdx,flip,o){const r=svg.getBoundingClientRect();if(
   // 墨點、金星
   let sp="";for(let i=0;i<18;i++){const a=Math.random()*Math.PI*2,R=.25+Math.random()*.3,z=(.008+Math.random()*.022).toFixed(3);sp+=`<i class="dot" style="width:${z}em;height:${z}em;--dx:${(Math.cos(a)*R).toFixed(3)}em;--dy:${(Math.sin(a)*R*.55).toFixed(3)}em"></i>`}
   for(let i=0;i<14;i++){const a=Math.random()*Math.PI*2,R=.2+Math.random()*.32,z=(.012+Math.random()*.02).toFixed(3);sp+=`<i class="spark" style="width:${z}em;height:${z}em;--o:0;--dx:${(Math.cos(a)*R).toFixed(3)}em;--dy:${(Math.sin(a)*R*.6).toFixed(3)}em"></i>`}
+  if(!lose){sp='<i class="rays"></i>'+sp;for(let i=0;i<26;i++){const x=(Math.random()*100).toFixed(1),c=["#f3c64a","#d0201a","#fff2b0","#e8932a"][i%4];
+      sp+=`<i class="conf" style="left:${x}%;background:${c};--dx:${((Math.random()-.5)*.3).toFixed(3)}em;--r:${(Math.random()*720-360)|0}deg;animation-delay:${(.75+Math.random()*.6).toFixed(2)}s"></i>`}}
+  else{for(let i=0;i<7;i++){const x=(28+Math.random()*44).toFixed(1);sp+=`<i class="drip" style="left:${x}%;--h:${(.06+Math.random()*.14).toFixed(3)}em;animation-delay:${(1.05+Math.random()*.5).toFixed(2)}s"></i>`}}
   d.insertAdjacentHTML("beforeend",sp+`<i class="seal" style="--sx:${(W*.36).toFixed(0)}px;--sy:${(W*.13).toFixed(0)}px;font-size:${W*.1}px">${win?"勝":"敗"}</i><div class="cap">${o.cap||(win?"你贏了！":word==="困斃"?"無路可走…":"這盤輸了…再接再厲")}</div>`);
   vibrate([70,50,140]);setTimeout(()=>{els.forEach(e=>e.remove());svg.classList.remove("kx-board")},3250);
   if(store.get("capSound",true)||store.get("mvSound",false))withAudio(()=>{const t=AC.currentTime+.02,out=AC.destination;
@@ -546,7 +564,9 @@ function killFx(svg,win,why,kIdx,flip,o){const r=svg.getBoundingClientRect();if(
     {const s=noise(.4,1.2),bp=AC.createBiquadFilter(),g=AC.createGain();bp.type="bandpass";bp.Q.value=1.2;bp.frequency.setValueAtTime(400,t+.35);bp.frequency.exponentialRampToValueAtTime(3200,t+.72);g.gain.value=.5;s.connect(bp).connect(g).connect(out);s.start(t+.35)}
     // 字落下：大鼓＋銅鑼
     {const t2=t+.55,o1=AC.createOscillator(),g=AC.createGain();o1.frequency.setValueAtTime(85,t2);o1.frequency.exponentialRampToValueAtTime(40,t2+.5);g.gain.setValueAtTime(.0001,t2);g.gain.linearRampToValueAtTime(1,t2+.008);g.gain.exponentialRampToValueAtTime(.001,t2+.9);o1.connect(g).connect(out);o1.start(t2);o1.stop(t2+1)
-      for(const[f,a]of[[147,.3],[220,.22],[331,.14],[495,.07],[740,.04]]){const oo=AC.createOscillator(),gg=AC.createGain();oo.frequency.value=f*(1+(Math.random()-.5)*.01);gg.gain.setValueAtTime(.0001,t2);gg.gain.linearRampToValueAtTime(a,t2+.012);gg.gain.exponentialRampToValueAtTime(.001,t2+2.4);oo.connect(gg).connect(out);oo.start(t2);oo.stop(t2+2.5)}}
+      if(lose){for(const[f,dt]of[[220,0],[196,.45],[165,.9],[131,1.35]]){const oo=AC.createOscillator(),gg=AC.createGain(),t4=t2+dt;oo.type="triangle";oo.frequency.value=f;gg.gain.setValueAtTime(.0001,t4);gg.gain.linearRampToValueAtTime(.18,t4+.03);gg.gain.exponentialRampToValueAtTime(.001,t4+.9);oo.connect(gg).connect(out);oo.start(t4);oo.stop(t4+1)}}
+      else for(const[f,dt]of[[523,.9],[659,1.02],[784,1.14],[1047,1.26]]){const oo=AC.createOscillator(),gg=AC.createGain(),t4=t2+dt;oo.type="sine";oo.frequency.value=f;gg.gain.setValueAtTime(.0001,t4);gg.gain.linearRampToValueAtTime(.1,t4+.01);gg.gain.exponentialRampToValueAtTime(.001,t4+.8);oo.connect(gg).connect(out);oo.start(t4);oo.stop(t4+.9)}
+      if(!lose)for(const[f,a]of[[147,.3],[220,.22],[331,.14],[495,.07],[740,.04]]){const oo=AC.createOscillator(),gg=AC.createGain();oo.frequency.value=f*(1+(Math.random()-.5)*.01);gg.gain.setValueAtTime(.0001,t2);gg.gain.linearRampToValueAtTime(a,t2+.012);gg.gain.exponentialRampToValueAtTime(.001,t2+2.4);oo.connect(gg).connect(out);oo.start(t2);oo.stop(t2+2.5)}}
     // 蓋印：短促的悶響
     {const t3=t+1.45,s=noise(.12,3),lp=AC.createBiquadFilter(),g=AC.createGain();lp.type="lowpass";lp.frequency.value=500;g.gain.value=.9;s.connect(lp).connect(g).connect(out);s.start(t3)}})}
 function sheet(title,build){
@@ -1261,9 +1281,9 @@ if(OFF&&"serviceWorker" in navigator){
   window.XQ_checkUpdate=async()=>{chk(true);const[a,n]=await Promise.all([appVer(),netVer()]);return{a,n}};
   if(hadCtl)navigator.serviceWorker.addEventListener("controllerchange",()=>{if(updating)return;if(sessionStorage.getItem("xqReload")==="1"&&!self.crossOriginIsolated)return;notifyNew()})}
 if(OFF&&window.XQEngine){let bar=null;
-  XQEngine.onProgress((got,total)=>{if(!bar){bar=document.createElement("div");bar.className="toast";bar.style.bottom="auto";bar.style.top="calc(70px + var(--safeT))";document.body.append(bar)}
+  XQEngine.onProgress((got,total)=>{if(!bar){bar=document.createElement("div");bar.className="toast";bar.style.bottom="auto";bar.style.top="calc(70px + var(--safeT))";document.body.append(bar);setTimeout(()=>{if(bar)bar.style.display="none"},1200)}
     const p=Math.round(got/total*100);bar.textContent=`第一次使用：下載 Pikafish 引擎 ${p}%（${(got/1048576).toFixed(0)}／${(total/1048576).toFixed(0)} MB）`;
-    if(got>=total)setTimeout(()=>{bar&&bar.remove();bar=null},800)})}
+    if(got>=total){bar&&bar.remove();bar=null;toast("✅ Pikafish 引擎下載完成")}})}
 function connectSheet(){const r=OFF&&XQ.remoteInfo();
   sheet("連線到電腦",b=>{b.innerHTML=`<p>連上電腦後可以：看 AI 對戰、請 Claude/GPT 講解、把特級大師與許銀川對局同步到手機。挑戰電腦、雙人對戰、古譜研究不需要連線。</p>
     <p class="muted">怎麼連：在電腦執行 <b>node xiangqi-referee.js --tunnel</b>，按下面「📷 掃描」對準電腦頁面上「📱 手機」的 QR code。只要掃過一次就好：電腦程式重開後網址雖然會換，App 會自己找到新網址。</p>
@@ -1392,7 +1412,7 @@ function Lobby(v){setTop("線上大廳",false,[["📤",shareSheet,"分享給朋�
       if(pi)pi.onclick=()=>{closeSheet();if(XQNet.playing())return confirmBox("你有一盤進行中的對局，邀請新對局會離開它，確定？",()=>{XQNet.leave();invite(p)},"確定");invite(p)};
       if(pw)pw.onclick=()=>{closeSheet();XQNet.watch(p.gid);location.hash="#/pvp"}})}
   function invite(p){XQNet.invite(p);
-    sheet("⚔ 已送出邀請",b=>{b.innerHTML=`<p style="text-align:center">等 <b>${esc(p.name)}</b> 回應…<br><span class="muted">對方接受後會自動開始，你執紅先走。</span></p><button class="btn ghost" id="cx">取消邀請</button>`;
+    sheet("⚔ 已送出邀請",b=>{b.innerHTML=`<p style="text-align:center">等 <b>${esc(p.name)}</b> 回應…<br><span class="muted">對方接受後會自動開始，紅黑隨機決定。</span></p><button class="btn ghost" id="cx">取消邀請</button>`;
       b.querySelector("#cx").onclick=()=>{XQNet.cancelInvite();closeSheet()}})}
   const offs=[XQNet.on("people",paint),XQNet.on("status",paint),XQNet.on("reply",r=>{closeSheet();toast(`${r.name} 婉拒了邀請`)})];
   paint();const t=setInterval(paint,15000);
@@ -1402,12 +1422,12 @@ if(OFF&&window.XQNet){XQNet.start();
   XQNet.on("version",async x=>{if(!x||!x.v)return;const a=await appVer();if(a&&x.v>a&&window.XQ_notifyNew)XQ_notifyNew(x.v,x.note||"")});
   const goGame=()=>{if(location.hash==="#/pvp")route();else location.hash="#/pvp"};
   XQNet.on("invite",x=>{vibrate([40,60,40]);
-    modal(`<div class="em">⚔</div><h2>${esc(x.from.name)} 邀請你下一盤</h2><p class="muted">接受的話你執黑，對方先走。</p>`,
+    modal(`<div class="em">⚔</div><h2>${esc(x.from.name)} 邀請你下一盤</h2><p class="muted">接受後紅黑隨機決定，紅方先走。</p>`,
       [["接受",()=>{const go=()=>{XQNet.respond(x,true);goGame()};if(XQNet.active()&&XQNet.game()&&!XQNet.game().result&&XQNet.side())XQNet.leave();go()}],["婉拒",()=>XQNet.respond(x,false),true]])});
   XQNet.on("cancel",x=>toast(`${x.from.name} 取消了邀請`));
   XQNet.on("rated",x=>{try{window.dispatchEvent(new CustomEvent("xq-result",{detail:x.res==="w"?"win":x.res==="l"?"lose":"draw"}))}catch(e){}});
   XQNet.on("rated",x=>setTimeout(()=>toast(`${x.res==="w"?"🏆 贏了":x.res==="l"?"輸了":"和棋"}　積分 ${x.d>0?"+"+x.d:x.d<0?x.d:"±0"}　→ ${x.pts} 分`+(x.rank!==x.was?`（${x.d>0?"升":"降"}為 ${x.rank}）`:"")),1200));
-  XQNet.on("start",()=>{closeSheet();toast("對方接受了！你執紅先走");goGame()});
+  XQNet.on("start",()=>{closeSheet();toast("對方接受了！"+(XQNet.side()==="b"?"你執黑，對方先走":"你執紅先走"));goGame()});
   XQNet.on("matchfail",x=>{toast(x.auto?"對方離開了，繼續幫你找對手…":"對方離開了，這盤沒有開始");location.hash="#/lobby"});
   XQNet.on("matched",x=>{vibrate([40,60,40]);closeSheet();toast(`🎲 配對成功：對手是 ${x.name}`);goGame()})}
 
@@ -2025,7 +2045,7 @@ function Settings(v){
       <div class="sec-t">顯示</div><div class="card">
         <label class="row" style="justify-content:space-between"><span><b>顯示 3D 象棋小人</b><br><span class="muted">圓滾滾的棋子小人，跟著朝代換造型</span></span><input type="checkbox" class="sw" id="botT" ${botOn()?"checked":""}></label>
         <div style="border-top:1px solid var(--line);margin:8px 0"></div>
-        <div class="row" style="gap:10px"><b style="white-space:nowrap">大小</b><input type="range" id="botSz" min="0.6" max="2" step="0.05" value="${store.get("botSize",1)}" style="flex:1"><b id="botSzV" style="width:46px;text-align:right">${Math.round(store.get("botSize",1)*100)}%</b></div></div>
+        <div class="row" style="gap:10px"><b style="white-space:nowrap">大小</b><input type="range" id="botSz" min="0.6" max="2" step="0.05" value="${store.get("botSize",.7)}" style="flex:1"><b id="botSzV" style="width:46px;text-align:right">${Math.round(store.get("botSize",.7)*100)}%</b></div></div>
       <div class="sec-t">怎麼跟小帥互動</div><div class="card" style="line-height:2">
         <div class="row" style="justify-content:space-between"><span>👆 點一下</span><span class="muted">表演一個動作</span></div>
         <div class="row" style="justify-content:space-between"><span>✌ 點兩下</span><span class="muted">出去散步（停放時）</span></div>
