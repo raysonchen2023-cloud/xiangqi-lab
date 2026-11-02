@@ -110,18 +110,24 @@
   const skyTex=E=>cv(16,512,(g,w,h)=>{const gr=g.createLinearGradient(0,0,0,h);gr.addColorStop(0,E.sky[0]);gr.addColorStop(.4,E.sky[1]);gr.addColorStop(.5,E.sky[2]);gr.addColorStop(.56,E.mist);gr.addColorStop(1,E.mist);g.fillStyle=gr;g.fillRect(0,0,w,h)});
   // 開發者用 Gemini 畫的朝代長卷（data/park/<朝代>.webp）：貼在背景正面（約左右各 47 度），四邊羽化融進程式畫的水墨背景
   // L、R＝圖上左右兩個主景的範圍（0～1）；分別放到畫面左上角、右上角看得到的位置，中間雲霧（會被對手擋住）壓窄
-  const BG_IMG={qin:{src:"data/park/qin.webp",L:[.02,.175],R:[.175,.33]}};   // 漢 han L[.08,.35] R[.65,.92]、經典 classic L[.06,.36] R[.64,.94]：收到圖檔再加
-  function drawUserPan(g,W,H,im,cfg){const iw=im.naturalWidth,ih=im.naturalHeight,dh=H*(cfg.h||.4),s=dh/ih,y0=H*.3-dh*.58;   // 圖的地平線（約 58%）對齊場景地平線
-    const xL=W*(19/216+.5-19/108),xR=W*(.5+19/216);   // ±19 度＝預設視角左右上角
-    const cL=(cfg.L[0]+cfg.L[1])/2,cR=(cfg.R[0]+cfg.R[1])/2,off=document.createElement("canvas");off.width=W;off.height=Math.ceil(dh);const o=off.getContext("2d");
-    const lx0=xL-cL*iw*s,lx1=xL+(cfg.L[1]-cL)*iw*s,rx0=xR-(cfg.R[0]-cR)*iw*s*-1-(cR-cfg.R[0])*iw*s*2+(cR-cfg.R[0])*iw*s,rx1=xR+(1-cR)*iw*s;
-    const rStart=xR-(cR-cfg.R[0])*iw*s;
-    o.drawImage(im,0,0,cfg.L[1]*iw,ih,lx0,0,lx1-lx0,dh);                                  // 左半（含左主景）
-    o.drawImage(im,cfg.R[0]*iw,0,(1-cfg.R[0])*iw,ih,rStart,0,rx1-rStart,dh);             // 右半（含右主景）
-    if(rStart>lx1&&cfg.R[0]>cfg.L[1])o.drawImage(im,cfg.L[1]*iw,0,(cfg.R[0]-cfg.L[1])*iw,ih,lx1,0,rStart-lx1,dh);   // 中間雲霧壓縮到剩下的寬度
+  const BG_IMG={qin:{src:"data/park/qin.webp",L:[.02,.165],R:[.2,.33]},han:{src:"data/park/han.webp",L:[.08,.35],R:[.65,.92]},classic:{src:"data/park/classic.webp",L:[.06,.36],R:[.64,.94]},sanguo:{src:"data/park/sanguo.webp",L:[.05,.35],R:[.62,.94]}};
+  function drawUserPan(g,W,H,im,cfg){const iw=im.naturalWidth,ih=im.naturalHeight,dh=H*(cfg.h||.5),s=dh/ih,y0=H*(cfg.hy||.6)-dh*.6;
+    const DEG=14,xL=W*(.5-DEG/216),xR=W*(.5+DEG/216);   // 兩個主景放在 ±14 度：抬頭就看得到，預設視角的上角也露一點
+    const cL=(cfg.L[0]+cfg.L[1])/2,cR=(cfg.R[0]+cfg.R[1])/2,sx=v=>v*iw;
+    // 左段＝圖的 [0, L1]，右段＝圖的 [R0, 1]，各以主景中心對準 xL／xR；兩段重疊就交叉淡化，有空隙就用圖上 [L1, R0] 那段補滿
+    const lx0=xL-sx(cL)*s,lx1=xL+sx(cfg.L[1]-cL)*s,rx0=xR-sx(cR-cfg.R[0])*s,rx1=xR+sx(1-cR)*s,dhc=Math.ceil(dh);
+    const part=(a0,a1,x0,x1,fadeL,fadeR)=>{const w=Math.max(1,Math.ceil(x1-x0)),c=document.createElement("canvas");c.width=w;c.height=dhc;const q=c.getContext("2d");
+      q.drawImage(im,sx(a0),0,Math.max(1,sx(a1-a0)),ih,0,0,w,dh);q.globalCompositeOperation="destination-in";const gr=q.createLinearGradient(0,0,w,0);
+      gr.addColorStop(0,fadeL?"rgba(0,0,0,0)":"#000");gr.addColorStop(Math.min(.5,fadeL/w),"#000");gr.addColorStop(Math.max(.5,1-fadeR/w),"#000");gr.addColorStop(1,fadeR?"rgba(0,0,0,0)":"#000");
+      q.fillStyle=gr;q.fillRect(0,0,w,dhc);return[c,x0]};
+    const ov=lx1-rx0,parts=[];
+    if(ov>0){parts.push(part(0,cfg.L[1],lx0,lx1,0,ov),part(cfg.R[0],1,rx0,rx1,ov,0))}
+    else{const m0=cfg.L[1],m1=Math.max(cfg.R[0],m0+.01),bl=40;parts.push(part(0,m0,lx0,lx1+bl,0,bl),part(m0,m1,lx1-bl,rx0+bl,bl,bl),part(cfg.R[0],1,rx0-bl,rx1,bl,0))}
+    const off=document.createElement("canvas");off.width=W;off.height=dhc;const o=off.getContext("2d");for(const[c,x]of parts)o.drawImage(c,x,0);
+    // 整片的外緣羽化：左右 3.5%、上 16%、下 26%
     o.globalCompositeOperation="destination-in";const a0=Math.max(0,lx0)/W,a1=Math.min(W,rx1)/W,fw=.035;
     const fx=o.createLinearGradient(0,0,W,0);fx.addColorStop(0,"rgba(0,0,0,0)");fx.addColorStop(Math.min(.49,a0),"rgba(0,0,0,0)");fx.addColorStop(Math.min(.49,a0+fw),"#000");fx.addColorStop(Math.max(.51,a1-fw),"#000");fx.addColorStop(Math.max(.51,a1),"rgba(0,0,0,0)");fx.addColorStop(1,"rgba(0,0,0,0)");
-    o.fillStyle=fx;o.fillRect(0,0,W,off.height);const fy=o.createLinearGradient(0,0,0,off.height);fy.addColorStop(0,"rgba(0,0,0,0)");fy.addColorStop(.16,"#000");fy.addColorStop(.74,"#000");fy.addColorStop(1,"rgba(0,0,0,0)");o.fillStyle=fy;o.fillRect(0,0,W,off.height);
+    o.fillStyle=fx;o.fillRect(0,0,W,dhc);const fy=o.createLinearGradient(0,0,0,dhc);fy.addColorStop(0,"rgba(0,0,0,0)");fy.addColorStop(.16,"#000");fy.addColorStop(.74,"#000");fy.addColorStop(1,"rgba(0,0,0,0)");o.fillStyle=fy;o.fillRect(0,0,W,dhc);
     g.drawImage(off,0,y0)}
   function panTex(E,seed){let s=seed||7;const rnd=()=>(s=(s*16807)%2147483647)/2147483647;
     return cv(PAN.w,PAN.h,(g,W,H)=>{const PX=d=>(d/(PAN.arc*180/PI)+.5)*W,PY=y=>(PAN.yt-y)/(PAN.yt-PAN.yb)*H,ink=E.ink;
@@ -145,7 +151,7 @@
       const dotTree=(x,y,k)=>{g.fillStyle=hexA(ink,.7);g.fillRect(x-1,y-10*k,2,10*k);for(let j=0;j<5;j++){g.beginPath();g.ellipse(x+(rnd()-.5)*10*k,y-10*k-rnd()*10*k,5*k,3*k,0,0,TAU);g.fill()}};
       for(let i=0;i<70;i++){const x=rnd()*W;dotTree(x,ridgeY(x)+4,.8+rnd()*.8)}
       // ---------- 地標：放在左右兩側（預設視角的兩個上角看得到），中間留給對手 ----------
-      const L=E.lm,spots=[PX(-19),PX(19),PX(-60),PX(60),PX(95),PX(-95)];
+      const L=E.userBg?[]:E.lm,spots=[PX(-19),PX(19),PX(-60),PX(60),PX(95),PX(-95)];
       const roof=(cx,y,w,hh,col)=>{g.fillStyle=col;g.beginPath();g.moveTo(cx-w*.62,y-hh*.25);g.quadraticCurveTo(cx-w*.35,y,cx-w*.28,y-hh*.35);g.lineTo(cx-w*.12,y-hh);g.lineTo(cx+w*.12,y-hh);g.lineTo(cx+w*.28,y-hh*.35);g.quadraticCurveTo(cx+w*.35,y,cx+w*.62,y-hh*.25);g.lineTo(cx+w*.42,y-hh*.1);g.lineTo(cx-w*.42,y-hh*.1);g.closePath();g.fill()};
       const D={
         pavilion(x,y){const k=1.2,c=hexA(ink,.92);g.fillStyle=c;g.fillRect(x-30*k,y-6*k,60*k,6*k);for(const dx of[-22,-8,8,22])g.fillRect(x+dx*k-1.5*k,y-34*k,3*k,28*k);roof(x,y-32*k,70*k,26*k,c);g.fillRect(x-1.5*k,y-66*k,3*k,10*k)},
@@ -213,7 +219,7 @@
     const fill=new T.DirectionalLight(0xC8DCFF,.28);fill.position.set(20,12,-18);sc.add(fill);
     // 天空球（含下半部的雲海色）＋水墨長卷
     const sky=new T.Mesh(new T.SphereGeometry(400,32,16),new T.MeshBasicMaterial({map:skyTex(E),side:T.BackSide,fog:false,depthWrite:false,toneMapped:false}));sc.add(sky);
-    {const pt=panTex(E,EK.length*977+13);pt.wrapS=T.RepeatWrapping;pt.repeat.x=-1;   // 從圓柱內側看，貼圖要左右翻回來
+    {const pt=panTex(Object.assign({},E,{userBg:!!BG_IMG[EK]}),EK.length*977+13);pt.wrapS=T.RepeatWrapping;pt.repeat.x=-1;   // 從圓柱內側看，貼圖要左右翻回來
       const pan=new T.Mesh(new T.CylinderGeometry(PAN.r,PAN.r,PAN.yt-PAN.yb,64,1,true,PI-PAN.arc/2,PAN.arc),new T.MeshBasicMaterial({map:pt,side:T.BackSide,transparent:true,fog:false,depthWrite:false,toneMapped:false}));
       pan.position.y=(PAN.yt+PAN.yb)/2;pan.renderOrder=-1;sc.add(pan);
       const BI=BG_IMG[EK];if(BI){const put=()=>{const im=imgCache[BI.src];if(!im||!im.naturalWidth||!el.isConnected)return;try{drawUserPan(pt.image.getContext("2d"),pt.image.width,pt.image.height,im,BI);pt.needsUpdate=true}catch(e){}};
