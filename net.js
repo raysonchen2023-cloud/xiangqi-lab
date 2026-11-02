@@ -164,5 +164,7 @@ var XQNet=(function(){
     say(by,text){text=String(text||"").trim().slice(0,80);if(!text)return;if(!(cli&&cli.up&&cur))throw new Error("網路斷線中，等一下再傳");cli.pub(`${ROOT}/g/${cur.gid}/e`,JSON.stringify({by,text,name:me().name}))},
     chatLog:()=>emos.filter(x=>x.text),
     emotes:()=>emos.filter(x=>Date.now()-x.at<60000),
+    // 公園 3D 棋盤：正在觀戰這盤棋的人（最多 8 位）和他們的小帥造型
+    watcherBots(){if(!cur)return[];const now=Date.now(),i=me().id;return Object.values(people).filter(x=>x.id!==i&&x.gid===cur.gid&&x.st==="watching"&&now-x.at<ALIVE).slice(0,8).map(x=>({id:x.id,bot:x.bot||null}))},
     watchers(){if(!cur)return 0;const now=Date.now();return Object.values(people).filter(x=>x.gid===cur.gid&&x.st==="watching"&&now-x.at<ALIVE).length},
     isOn(id){const x=people[id];return id===me().id?!!(cli&&cli.up):!!(x&&Date.now()-x.at<ALIVE)}}})();

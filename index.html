@@ -413,7 +413,7 @@ html[data-era=ming] .topbar,html[data-era=qing] .topbar{border-bottom-width:4px}
       if(!window.caches)return go();caches.keys().then(function(ks){return Promise.all(ks.filter(function(k){return k.indexOf("xqlab-app-")===0}).map(function(k){return caches.delete(k)}))})
         .then(function(){return navigator.serviceWorker&&navigator.serviceWorker.getRegistration()}).then(function(r){return r&&r.update()}).catch(function(){}).then(go)}},4000)})();
 </script>
-<script>window.XQ_OFFLINE=true;window.XQ_BUILD="20261102-2116";</script>
+<script>window.XQ_OFFLINE=true;window.XQ_BUILD="20261102-2124";</script>
 <script src="core.js"></script>
 <script src="engine.js"></script>
 <script src="local.js"></script>
@@ -2510,6 +2510,11 @@ window.XQ_BOTLOOK=()=>{let p=0;try{p=(JSON.parse(localStorage.getItem("xq_cpuRat
   return{p:botPc(),e:store.get("era","classic"),g:p>=1500?1:p>=1150?2:p>=1000?3:p>=800?4:p>=600?5:p>=400?6:p>=200?7:p>=100?8:9}};
 // 電腦對手 Pikafish：瘦長版的棋子人、戴眼鏡，執哪一方身上就是帥或將
 const PIKA_LOOK=side=>({p:side==="r"?"帥":"將",e:"wudai",g:1,thin:true});
+// 公園棋盤的朝代造型（意見回饋 216）：跟平面棋盤同一套底圖、格線色、棋子底圖、字色、字形
+function parkLook(){const k=store.get("era","classic"),e=curEra(),T=boardTheme(e?"auto":"wood3d"),bk=BOARD_IMG[k]?k:null;
+  if(GLY_ERAS.has(k)&&!GLY[k])needGly(k,()=>{if(PARK)try{const st0=PARK.v;st0&&st0.el&&0}catch(e){}});
+  return{k,img:bk?`data/boards/${BOARD_IMG_FILE[bk]||bk}.webp`:null,rect:bk?BOARD_IMG[bk]:null,grid:T&&T.grid||"#3A1D0A",
+    pieces:PIECE_INK[k]?{r:`data/pieces/${k}-r.webp`,b:`data/pieces/${k}-b.webp`}:null,ink:PIECE_INK[k]||null,gly:GLY[k]||null}}
 let PARK=null,PARK_LOADING=null;const parkOn=()=>store.get("park3d",false);
 const botVis=on=>document.querySelectorAll(".xqbot").forEach(x=>x.style.visibility=on?"":"hidden");
 function parkLoad(){const v="?v="+encodeURIComponent(window.XQ_BUILD||"");return PARK_LOADING||(PARK_LOADING=(async()=>{await loadScript(OFF?"three.min.js":"/m/three.min.js");
@@ -2520,7 +2525,7 @@ function parkDraw(host,bd,board,o,ex){
   if(!PARK||PARK.host!==host||!document.body.contains(PARK.v.el)){if(PARK)PARK.v.destroy();
     const pv=XQPark3D.create(host,{onTap:i=>ex.tap(i),onDestroy:()=>{if(PARK&&PARK.v===pv){PARK=null;botVis(true)}}});
     if(!pv){toast("這台裝置沒辦法顯示 3D，先用平面棋盤");store.set("park3d",false);return}PARK={host,v:pv};setTimeout(()=>{try{pv.say(`我是${BOTN()}，幫你加油！`,2.6);if(ex.oppHello)setTimeout(()=>pv.oppSay(ex.oppHello,2.6),1400)}catch(e){}},700)}
-  bd.svg.style.display="none";botVis(false);PARK.v.draw(board,o,ex)}
+  bd.svg.style.display="none";botVis(false);ex.look=parkLook();PARK.v.draw(board,o,ex)}
 const parkBtn=redraw=>["🌳",()=>{store.set("park3d",!parkOn());vibrate(8);toast(parkOn()?`🌳 公園 3D 棋盤：${BOTN()}坐在對面跟你下（拖曳可以看四周）`:"回到平面棋盤");redraw()},"公園 3D 棋盤"];
 function CpuGame(v){
   setTabs(false);gameLayout(v);
@@ -3040,7 +3045,8 @@ function PvpGame(v){
   function draw(){if(!st)return;if(seat==="w"&&view!=null){const n=view;bd.draw(boardAtN(n),{flip:isFlip(),last:st.moves[n-1]});return}
     const o={flip:isFlip(),last:st.moves[st.moves.length-1],sel,targets:sel>=0?st.legal.filter(([f])=>f===sel).map(x=>x[1]):[],check:st.check,fx:true};bd.draw(st.board,o);
     parkDraw(v.querySelector("#bbox"),bd,st.board,o,{tap,botSide:NET&&seat&&seat!=="w"?(seat==="r"?"b":"r"):null,result:st.result?(st.result.w||"draw"):null,
-      opp:NET&&seat&&seat!=="w"?(window.XQNet&&XQNet.oppBot&&XQNet.oppBot()||{p:seat==="r"?"將":"帥"}):null,oppWin:"我贏了！再來一盤？",oppLose:"你好厲害…"})}
+      opp:NET&&seat&&seat!=="w"?(window.XQNet&&XQNet.oppBot&&XQNet.oppBot()||{p:seat==="r"?"將":"帥"}):null,oppWin:"我贏了！再來一盤？",oppLose:"你好厲害…",
+      watchers:NET&&window.XQNet&&XQNet.watcherBots?XQNet.watcherBots():[]})}
   function clocks(){if(!st||!clockBase||!clockBase.c)return;const b=clockBase;for(const s of["r","b"]){const el=v.querySelector(`#ck_${s}`);if(el){const x=b.c[s]-(b.run&&b.turn===s?Date.now()-b.at:0);el.textContent=fmt(x);el.style.color=x<60000&&!(b.turn===s&&b.run)?"var(--red)":""}}}
   const ckT=setInterval(clocks,250);
   let lastN=null;   // 步數剛好多一步才秀開局名

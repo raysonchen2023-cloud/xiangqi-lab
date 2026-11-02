@@ -9,12 +9,24 @@
   const NAMES={r:{K:"帥",A:"仕",B:"相",N:"傌",R:"俥",C:"炮",P:"兵"},b:{K:"將",A:"士",B:"象",N:"馬",R:"車",C:"砲",P:"卒"}};
   const sideOf=p=>p===p.toUpperCase()?"r":"b";
   const START={r:{K:1,A:2,B:2,N:2,R:2,C:2,P:5},b:{K:1,A:2,B:2,N:2,R:2,C:2,P:5}};
-  const BW=10.4,BH=11.4,TOP=.12;    // 棋盤（含邊）大小、棋盤面高度；格距 1
+  const BW=10.4,BH=11.4,TOP=.56;    // 棋盤（含邊）大小、棋盤面高度；格距 1
   function cv(w,h,f){const c=document.createElement("canvas");c.width=w;c.height=h;f(c.getContext("2d"),w,h);const t=new T.CanvasTexture(c);if(T.SRGBColorSpace)t.colorSpace=T.SRGBColorSpace;t.anisotropy=8;return t}
   const noise=(g,w,h,n,a,b)=>{for(let i=0;i<n;i++){g.fillStyle=`rgba(${a},${Math.random()*b})`;const s=1+Math.random()*3;g.fillRect(Math.random()*w,Math.random()*h,s,s)}};
   // ---------- 貼圖 ----------
   // 棋盤：較深的蜂蜜色木紋＋深褐粗線，在灰色石桌上一眼就看得出來；貼圖解析度提高，iPhone 上線條不糊
-  const boardTex=()=>cv(1560,1710,(g,w,h)=>{const u=w/BW;
+  // 朝代造型（意見回饋 216）：App 傳來目前朝代的棋盤底圖、格線色、棋子底圖、字色、字形；跟平面棋盤同一套
+  let LOOK=null;const imgCache={};
+  const loadImg=(src,cb)=>{if(!src)return null;const c=imgCache[src];if(c){if(c.complete&&c.naturalWidth)return c;c.addEventListener("load",()=>cb&&cb(),{once:true});return null}
+    const im=new Image();im.decoding="async";im.src=src;imgCache[src]=im;im.addEventListener("load",()=>cb&&cb(),{once:true});return null};
+  const boardTex=onReady=>{const t=cv(1560,1710,(g,w,h)=>drawBoard(g,w,h,onReady));return t};
+  function drawBoard(g,w,h,onReady){const u=w/BW;const L=LOOK,im=L&&L.img?loadImg(L.img,onReady):null;
+    if(im&&L.rect){// 平面棋盤座標：格線原點 (40,40)、格距 60；這裡格線原點在 1.2 格處
+      const P=v=>((v-40)/60+1.2)*u,[x,y,ww,hh]=L.rect;g.fillStyle="#2a1a10";g.fillRect(0,0,w,h);g.drawImage(im,P(x),P(y),ww/60*u,hh/60*u);
+      const X=c=>(c+1.2)*u,Y=r=>(r+1.2)*u,G=L.grid||"#3A1D0A";g.strokeStyle=G;g.lineCap="round";g.lineWidth=6;g.strokeRect(X(0)-.13*u,Y(0)-.13*u,8.26*u,9.26*u);g.lineWidth=4.5;
+      for(let r=0;r<10;r++){g.beginPath();g.moveTo(X(0),Y(r));g.lineTo(X(8),Y(r));g.stroke()}
+      for(let c=0;c<9;c++){g.beginPath();if(c===0||c===8){g.moveTo(X(c),Y(0));g.lineTo(X(c),Y(9))}else{g.moveTo(X(c),Y(0));g.lineTo(X(c),Y(4));g.moveTo(X(c),Y(5));g.lineTo(X(c),Y(9))}g.stroke()}
+      for(const r0 of[0,7]){g.beginPath();g.moveTo(X(3),Y(r0));g.lineTo(X(5),Y(r0+2));g.moveTo(X(5),Y(r0));g.lineTo(X(3),Y(r0+2));g.stroke()}
+      return}
     let gr=g.createLinearGradient(0,0,w,h);gr.addColorStop(0,"#E2B271");gr.addColorStop(.5,"#D6A361");gr.addColorStop(1,"#C99252");g.fillStyle=gr;g.fillRect(0,0,w,h);
     for(let i=0;i<220;i++){g.strokeStyle=`rgba(${110+Math.random()*40|0},${60+Math.random()*30|0},18,${.05+Math.random()*.09})`;g.lineWidth=1+Math.random()*4;g.beginPath();const y=Math.random()*h;g.moveTo(0,y);
       for(let x=0;x<=w;x+=40)g.lineTo(x,y+Math.sin(x/120+i)*8+Math.random()*2);g.stroke()}
@@ -27,10 +39,18 @@
     g.lineWidth=4;for(const r of[2,7])for(const c of[1,7])mark(c,r);for(const r of[3,6])for(const c of[0,2,4,6,8])mark(c,r);
     g.fillStyle="#3A1D0A";g.font=`900 ${.62*u}px "Noto Serif TC","PMingLiU","Songti TC","SimSun",serif`;g.textAlign="center";g.textBaseline="middle";
     const ry=(Y(4)+Y(5))/2;g.fillText("楚",X(1.2),ry);g.fillText("河",X(2.6),ry);g.fillText("漢",X(5.4),ry);g.fillText("界",X(6.8),ry);
-    noise(g,w,h,5000,"80,40,15",.07)});
+    noise(g,w,h,5000,"80,40,15",.07)}
   // 棋子面：象牙色底、粗深色刻字（大字、帶一點浮雕的亮邊與陰影），遠處的黑子也看得清楚
   const faceCache={};
-  const faceTex=(ch,red)=>faceCache[ch]||(faceCache[ch]=cv(512,512,(g,n)=>{const h=n/2;
+  const faceTex=(ch,red,onReady)=>{const L=LOOK,s=red?"r":"b",im=L&&L.pieces?loadImg(L.pieces[s],onReady):null,key=ch+(im?"|"+L.k:"");if(faceCache[key])return faceCache[key];
+    if(L&&L.pieces&&!im)return plainFace(ch,red);
+    if(im)return faceCache[key]=cv(512,512,(g,n)=>{const h=n/2;g.fillStyle="#d9b98a";g.fillRect(0,0,n,n);g.drawImage(im,-n*.04,-n*.04,n*1.08,n*1.08);
+      const ink=(L.ink&&L.ink[s])||(red?"#A3000C":"#121010"),lt=(()=>{const c=parseInt(ink.slice(1,7),16);return((c>>16)*.3+((c>>8)&255)*.59+(c&255)*.11)/255>.5})(),halo=lt?"rgba(0,0,0,.7)":"rgba(255,255,255,.75)";
+      const gp=L.gly&&L.gly[ch];
+      if(gp&&window.Path2D){const P2=new Path2D(gp),k=3.3;g.save();g.translate(h-50*k,h-50*k);g.scale(k,k);g.lineJoin="round";g.strokeStyle=halo;g.lineWidth=7/k*3;g.stroke(P2);g.fillStyle=ink;g.fill(P2);g.restore();return}
+      g.font='900 330px "Noto Serif TC","PMingLiU","Songti TC","SimSun",serif';g.textAlign="center";g.textBaseline="middle";g.lineJoin="round";g.strokeStyle=halo;g.lineWidth=16;g.strokeText(ch,h,h+14);g.fillStyle=ink;g.fillText(ch,h,h+14)});
+    return plainFace(ch,red)};
+  const plainFace=(ch,red)=>faceCache[ch]||(faceCache[ch]=cv(512,512,(g,n)=>{const h=n/2;
     let gr=g.createRadialGradient(h*.75,h*.7,20,h,h,h);gr.addColorStop(0,"#FFF6DE");gr.addColorStop(.75,"#F5E0B4");gr.addColorStop(1,"#E2BE80");g.fillStyle=gr;g.fillRect(0,0,n,n);
     const ink=red?"#A3000C":"#121010";g.strokeStyle=ink;g.lineWidth=13;g.beginPath();g.arc(h,h,h*.86,0,TAU);g.stroke();
     g.font='900 368px "Noto Serif TC","PMingLiU","Songti TC","SimSun",serif';g.textAlign="center";g.textBaseline="middle";
@@ -174,8 +194,8 @@
     mesh(new T.TorusGeometry(8.1,.18,10,96),stone,[0,-.04,0]).rotation.x=PI/2;
     mesh(new T.CylinderGeometry(2.3,3.2,18,40),stone2,[0,GY+9-.9,0]);mesh(new T.CylinderGeometry(4.2,4.6,1.2,40),stone2,[0,GY+.6,0]);
     // 木棋盤嵌在桌上：深色實木框，和灰色石桌對比清楚
-    const wood=M(0x5C3418,{roughness:.55});mesh(new T.BoxGeometry(BW+.5,.16,BH+.5),wood,[0,.03,0]);
-    const btex=boardTex();const bplane=new T.Mesh(new T.PlaneGeometry(BW,BH),new T.MeshStandardMaterial({map:btex,roughness:.6}));bplane.rotation.x=-PI/2;bplane.position.y=TOP-.02+.03;bplane.receiveShadow=true;sc.add(bplane);
+    const wood=M(0x5C3418,{roughness:.55});mesh(new T.BoxGeometry(BW+.5,.6,BH+.5),wood,[0,.24,0]);mesh(new T.BoxGeometry(BW+.62,.08,BH+.62),wood,[0,-.0,0]);   // 厚木棋盤＋底座線腳（意見回饋 215）
+    const btex=boardTex(()=>{try{btex.image.getContext("2d").clearRect(0,0,1,1);drawBoard(btex.image.getContext("2d"),btex.image.width,btex.image.height,null);btex.needsUpdate=true}catch(e){}});const bplane=new T.Mesh(new T.PlaneGeometry(BW,BH),new T.MeshStandardMaterial({map:btex,roughness:.6}));bplane.rotation.x=-PI/2;bplane.position.y=TOP-.02+.03;bplane.receiveShadow=true;sc.add(bplane);
     // 石凳（左右各一個空的）
     const stool=(x,z)=>{mesh(new T.CylinderGeometry(2.4,2.2,1.4,36),stone,[x,GY+13.3,z]);mesh(new T.CylinderGeometry(1.5,2.3,12.6,36),stone2,[x,GY+6.3,z])};
     stool(-14.5,1.5);stool(14.5,-1.5);
@@ -185,11 +205,11 @@
     for(let i=0;i<3;i++){const b=mesh(new T.BoxGeometry(BL,.45,1.0),plank,[0,SY+3.6+i*1.4,BZ-2.6-i*.25]);b.rotation.x=-.18}
     for(const x of[-BL/2+1,BL/2-1]){mesh(new T.BoxGeometry(.6,SY-GY,.6),iron,[x,(SY+GY)/2,BZ+1.8]);mesh(new T.BoxGeometry(.6,SY-GY+5.2,.6),iron,[x,(SY+GY+5.2)/2,BZ-2.6]);mesh(new T.BoxGeometry(.5,.5,5),iron,[x,SY-.4,BZ-.4]);
       const arm=mesh(new T.BoxGeometry(.5,.5,4.4),iron,[x,SY+3.2,BZ]);arm.rotation.x=.05}
-    // 茶杯（放在棋盤後方右邊的桌面空位）
-    const cup=new T.Group();cup.position.set(4.6,.0,-6.5);sc.add(cup);
-    {const por=M(0xF4F1EA,{roughness:.25}),blue=M(0x2D5DA8,{roughness:.3});const a=new T.Mesh(new T.CylinderGeometry(.75,.75,.08,32),por);a.position.y=.04;cup.add(a);
+    // 茶杯：Pikafish（對面）一杯、我一杯（意見回饋 215）
+    const teaCup=(x,z)=>{const cup=new T.Group();cup.position.set(x,0,z);sc.add(cup);const por=M(0xF4F1EA,{roughness:.25}),blue=M(0x2D5DA8,{roughness:.3});const a=new T.Mesh(new T.CylinderGeometry(.75,.75,.08,32),por);a.position.y=.04;cup.add(a);
       const b=new T.Mesh(new T.CylinderGeometry(.5,.36,.7,32,1,true),por);b.position.y=.43;b.material.side=T.DoubleSide;cup.add(b);const band=new T.Mesh(new T.CylinderGeometry(.505,.47,.12,32,1,true),blue);band.position.y=.6;cup.add(band);
-      const tea=new T.Mesh(new T.CircleGeometry(.47,32),M(0x9C6B1E,{roughness:.1}));tea.rotation.x=-PI/2;tea.position.y=.66;cup.add(tea);cup.traverse(o=>{if(o.isMesh){o.castShadow=true;o.receiveShadow=true}})}
+      const tea=new T.Mesh(new T.CircleGeometry(.47,32),M(0x9C6B1E,{roughness:.1}));tea.rotation.x=-PI/2;tea.position.y=.66;cup.add(tea);cup.traverse(o=>{if(o.isMesh){o.castShadow=true;o.receiveShadow=true}});return cup};
+    teaCup(4.6,-6.5);teaCup(-6.45,2.3);
     // 平台上的樹（依朝代：松、柳、竹），水墨感的深色樹冠；放在兩側，轉頭時當前景框
     const bark=M(0x4A3626,{roughness:.95}),leafM=M(new T.Color(E.ink).lerp(new T.Color(0x2F4A2A),.7).getHex(),{roughness:.95}),leafG=M(new T.Color(0x6E8A3E).getHex(),{roughness:.95});
     const tree=(x,z,s)=>{const g=new T.Group();g.position.set(x,GY,z);g.scale.setScalar(s);sc.add(g);
@@ -223,7 +243,13 @@
     const seat=B=>{B.legs.forEach(l=>{l.rotation.x=-1.35});B.bot.position.y=-.35};
     const opp=actor(new T.Group(),mkBub(4.4,3.2,-9.2,6.2));opp.g.position.set(0,SY-.9,BZ+1.0);opp.g.scale.setScalar(4.1);sc.add(opp.g);
     const mate=actor(new T.Group(),mkBub(-4.6,3.9,-5.6,4.2));mate.g.position.set(-6.65,.02,-4.1);mate.g.rotation.y=.66;mate.g.scale.setScalar(1.3);sc.add(mate.g);
-    let oppKey="";
+    let oppKey="",watchKey="",watchers=[];const watchG=new T.Group();sc.add(watchG);
+    const SPOTS=[-31,31,-47,47,-66,66,-90,90].map(d=>d*PI/180),plinthM=M(0x8F8A80,{roughness:.9});
+    const setWatchers=list=>{list=(list||[]).slice(0,8);const k=JSON.stringify(list);if(k===watchKey)return;watchKey=k;watchG.clear();watchers=[];
+      list.forEach((w,i)=>{const a=SPOTS[i],r=19,x=Math.sin(a)*r,z=-Math.cos(a)*r,FY=-6.2;
+        const pl=new T.Mesh(new T.CylinderGeometry(2.4,2.8,FY-GY,20),plinthM);pl.position.set(x,(FY+GY)/2,z);pl.receiveShadow=true;watchG.add(pl);
+        const g=new T.Group();g.position.set(x,FY,z);g.rotation.y=Math.atan2(-x,-z);g.scale.setScalar(3.1);watchG.add(g);
+        try{const B=XQBot3D.figure((w&&w.bot)||{});g.add(B.bot);B.bot.traverse(o=>{if(o.isMesh)o.castShadow=true});watchers.push({B,ph:Math.random()*TAU,blinkT:1+Math.random()*3,chin:i%3===1})}catch(e){}})};
     const buildActor=(A,look)=>{A.g.clear();A.B=null;try{if(window.XQBot3D&&XQBot3D.figure){A.B=XQBot3D.figure(look||{});A.g.add(A.B.bot);A.B.bot.traverse(o=>{if(o.isMesh)o.castShadow=true});seat(A.B)}}catch(e){A.B=null}};
     const setOpp=look=>{const k=JSON.stringify(look||null);if(k===oppKey)return;oppKey=k;if(!look){opp.g.clear();opp.B=null;return}buildActor(opp,look)};
     buildActor(mate,{});
@@ -234,7 +260,7 @@
       for(let i=0;i<=6;i++){const a=i/6*PI/2;pts.push(new T.Vector2(R-r+Math.cos(a)*r,H-r+Math.sin(a)*r))}pts.push(new T.Vector2(0,H));return new T.LatheGeometry(pts,40)})();
     // 棋子：淺色木身比棋盤亮，字面稍微自發光（陰影裡的字也清楚）
     const pieceMat=new T.MeshStandardMaterial({color:0xF0D6A2,roughness:.45}),faceGeo=new T.CircleGeometry(.41,48),faceMat={};
-    const fMat=(ch,red)=>faceMat[ch]||(faceMat[ch]=(()=>{const tx=faceTex(ch,red);return new T.MeshStandardMaterial({map:tx,emissiveMap:tx,emissive:0xffffff,emissiveIntensity:.22,roughness:.38})})());
+    const fMat=(ch,red)=>faceMat[ch+red]||(faceMat[ch+red]=(()=>{const tx=faceTex(ch,red);return new T.MeshStandardMaterial({map:tx,emissiveMap:tx,emissive:0xffffff,emissiveIntensity:.22,roughness:.38})})());
     const makePiece=p=>{const s=sideOf(p),ch=NAMES[s][p.toUpperCase()],g=new T.Group();const body=new T.Mesh(pieceGeo,pieceMat);body.castShadow=true;body.receiveShadow=true;g.add(body);
       const f=new T.Mesh(faceGeo,fMat(ch,s==="r"));f.rotation.x=-PI/2;f.position.y=.272;g.add(f);g.userData={p};sc.add(g);return g};
     let flip=false;const pos=i=>{const c=i%9,r=i/9|0;return flip?[4-c,4.5-r]:[c-4,r-4.5]};
@@ -253,7 +279,13 @@
           if(mine){if(j<10){x=6.2;z=-4.6+j*.8}else{x=7.0;z=-3.6+(j-10)*.8}}else{if(j<9){x=-5+j*.95;z=-6.55}else{x=-3.3+(j-9)*.95;z=-7.35}}
           g.position.set(x,0,z);g.rotation.y=(Math.random()-.5)*.6;captured.push(g)})}}
     function sync(board){Object.values(pieces).forEach(g=>sc.remove(g));pieces={};board.forEach((p,i)=>{if(p){const g=makePiece(p);at(g,i);pieces[i]=g}});layoutCaptured(board)}
+    // 朝代造型換了（或圖剛載入）：重畫棋盤、清掉棋子貼圖、整盤重排
+    let lookKey="";const refreshLook=()=>{for(const k in faceCache)delete faceCache[k];for(const k in faceMat)delete faceMat[k];
+      try{const c=btex.image.getContext("2d");drawBoard(c,btex.image.width,btex.image.height,null);btex.needsUpdate=true}catch(e){}if(prevB)sync(prevB)};
     function draw(board,o,ex){o=o||{};ex=ex||{};const nf=!!o.flip;
+      {const lk=JSON.stringify(ex.look?[ex.look.k,ex.look.img,!!ex.look.gly]:null);if(lk!==lookKey){lookKey=lk;LOOK=ex.look||null;
+        if(LOOK){let n=0;const done=()=>{if(++n>=3&&LOOK===ex.look)refreshLook()};[LOOK.img,LOOK.pieces&&LOOK.pieces.r,LOOK.pieces&&LOOK.pieces.b].forEach(src=>{if(!src||loadImg(src,done))done()})}
+        refreshLook()}}
       if(nf!==flip){flip=nf;prevB=null}
       const L=o.last&&o.last.f!=null&&o.last.t!=null?o.last:null,lk=L?L.f+"-"+L.t:"";
       const moved=prevB&&L&&lk!==prevLast&&board[L.t]&&board[L.t]===prevB[L.f]&&!board[L.f]&&pieces[L.f]&&board.filter(Boolean).length>=prevB.filter(Boolean).length-1;
@@ -274,7 +306,7 @@
       (o.targets||[]).forEach(i=>{if(board[i])ring(i,0xD7263D,.52,.08,.95);else disc(i,0x2F9E5A,.19,.9)});
       if(typeof o.check==="number"&&o.check>=0&&board[o.check])checkRing=ring(o.check,0xFF2A2A,.62,.12,.9);
       if(ex.hint&&ex.hint.length===2){ring(ex.hint[0],0xF2B233,.5,.07,.9);ring(ex.hint[1],0xF2B233,.5,.07,.9)}
-      thinking=!!ex.thinking;setOpp(ex.opp||null);mySide=ex.botSide?(ex.botSide==="r"?"b":"r"):"r";
+      thinking=!!ex.thinking;setOpp(ex.opp||null);setWatchers(ex.watchers);mySide=ex.botSide?(ex.botSide==="r"?"b":"r"):"r";
       if(ex.result&&ex.result!==mood){mood=ex.result;const b=ex.botSide;
         if(mood==="draw"){opp.setFace("flat",99);mate.setFace("flat",99);mate.say("和棋，不錯喔！",3)}
         else if(b&&mood===b){opp.setFace("happy",99);opp.say(ex.oppWin||"我贏了！再來一盤？",3);mate.setFace("sad",99);setTimeout(()=>mate.say("下次一定贏！",2.6),1800)}
@@ -326,6 +358,10 @@
         if(reach){reachT+=t;const p=Math.min(1,reachT/1.1),k=Math.sin(p*PI);R(B,1,-.9-1.15*k,-.25+.2*k,.25-.1*k);hx=.32+.1*k;if(p>=1)reach=0}
         if(mood&&opp.face==="happy"){R(B,0,-.2,0,-2.6+.3*Math.sin(s*9));R(B,1,-.2,0,2.6-.3*Math.sin(s*9));hx=-.1}else if(mood&&opp.face==="sad")hx=.45;
         lerp(B.head.rotation,"x",hx);lerp(B.head.rotation,"y",hy);lerp(B.head.rotation,"z",hz);tick(opp)}
+      watchers.forEach(W=>{const B=W.B,ph=W.ph;if(B.torso.userData.y0==null)B.torso.userData.y0=B.torso.position.y;B.torso.position.y=B.torso.userData.y0+.015*Math.sin(s*1.7+ph);
+        B.bot.rotation.z=.03*Math.sin(s*.6+ph);R(B,0,.35,0,-.15);R(B,1,.35,0,.15);if(W.chin)R(B,1,-2.2,-.45,.7);
+        lerp(B.head.rotation,"x",.42+.06*Math.sin(s*.5+ph));lerp(B.head.rotation,"y",.15*Math.sin(s*.3+ph));
+        W.blinkT-=t;const bl=W.blinkT<0;if(W.blinkT<-.12)W.blinkT=2+Math.random()*3;try{XQBot3D.faceApply(B,W.chin?"flat":"smile",bl,false)}catch(e){}});
       if(mate.B){const B=mate.B;B.torso.position.y=B.torso.userData.y0==null?(B.torso.userData.y0=B.torso.position.y):B.torso.userData.y0+.02*Math.sin(s*2.4+1);
         // 小帥坐在桌角：看棋盤、偶爾轉頭看你；你吃子或贏棋時舉手歡呼
         const look=(s%9)<1.4;let hx=look?-.05:.28,hy=look?-.5:.15+.1*Math.sin(s*.7);R(B,0,-.7,.2,-.35);R(B,1,-.7,-.2,.35);
