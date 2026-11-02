@@ -428,7 +428,7 @@ html[data-era=ming] .topbar,html[data-era=qing] .topbar{border-bottom-width:4px}
       if(!window.caches)return go();caches.keys().then(function(ks){return Promise.all(ks.filter(function(k){return k.indexOf("xqlab-app-")===0}).map(function(k){return caches.delete(k)}))})
         .then(function(){return navigator.serviceWorker&&navigator.serviceWorker.getRegistration()}).then(function(r){return r&&r.update()}).catch(function(){}).then(go)}},4000)})();
 </script>
-<script>window.XQ_OFFLINE=true;window.XQ_BUILD="20261103-0650";</script>
+<script>window.XQ_OFFLINE=true;window.XQ_BUILD="20261103-0659";</script>
 <script src="core.js"></script>
 <script src="engine.js"></script>
 <script src="local.js"></script>
@@ -1532,6 +1532,7 @@ function Home(v){
     ${T("k1","#/cpu","🤖","挑戰電腦","hCpu","Pikafish・積分挑戰")}
     ${OFF?T("k2","#/lobby","🌐","線上對戰","hNet","看誰在線上・邀請對戰"):T("k4","#/watch/ai","📺","AI 對戰","hAi","GPT 對 Claude")}
    </div>
+   ${OFF?(()=>{const n=Object.keys(arenaStamps()).length,t=arenaTitle();return`<button class="card" id="hArena" style="display:flex;align-items:center;gap:12px;width:100%;margin:10px 0 0;padding:10px 14px;text-align:left;font:inherit;color:inherit;cursor:pointer;border-color:color-mix(in srgb,#C8102E 45%,var(--line))"><span style="font-size:30px">🏯</span><span style="flex:1;min-width:0"><b style="font-size:16px;font-family:var(--serif)">朝代擂台</b><span class="muted" style="display:block;font-size:12.5px">${n?`集章 ${n}/13${t?"・"+esc(t):""}・下一位擂主等你`:"公園裡 13 位朝代擂主，打贏蓋一枚印章"}</span></span><b style="color:#C8102E">挑戰 ›</b></button>`})():""}
    <div class="sec-t">學習</div>
    <div class="hero">
     ${T("k3","#/quiz","🎯","棋力測驗","hQuiz","新手～專2")}
@@ -1560,6 +1561,7 @@ function Home(v){
     const hc=v.querySelector("#hConn");if(hc)hc.onclick=connectSheet}
   v.querySelector("#hFb").onclick=()=>feedbackSheet();const hi=v.querySelector("#hInst");if(hi)hi.onclick=()=>installGuide(true);
   v.querySelectorAll("[data-go]").forEach(b=>b.onclick=()=>{vibrate(5);location.hash=b.dataset.go});
+  {const ha=v.querySelector("#hArena");if(ha)ha.onclick=()=>{vibrate(5);store.set("openArena",Date.now());location.hash="#/cpu"}}
   standaloneOnlineWarn(v.firstElementChild||v);
   if(OFF){if(RI)homeStatus(v.querySelector("#hStatus"));if(window.XQ_justConnected){XQ_justConnected=false;if(DEVMODE())setTimeout(()=>toast("已連上電腦！"),300)}}
   const qb=store.get("quizBest",null);if(qb)v.querySelector("#hQuiz").textContent="最好："+qb.rank;
@@ -1920,6 +1922,7 @@ function oppCard(oid,name,opt){opt=opt||{};let live=null;try{live=window.XQNet&&
       <div class="items" style="padding:0;margin-top:8px">${mine.slice(0,20).map(h=>`<button class="item" data-rid="${esc(h.rid||"")}"><span class="lb">${h.res==="w"?"🏆":h.res==="l"?"💪":"🤝"}</span><span class="tx"><b>${h.res==="w"?"勝":h.res==="l"?"負":"和"}${h.d?`（積分 ${h.d>0?"+":""}${h.d}）`:""}</b><span>${new Date(h.at).toLocaleDateString()}・${h.n||0} 步${h.why?"・"+esc(h.why):""}</span></span><span class="muted">${h.rid?"看棋譜 ›":""}</span></button>`).join("")}</div>`:'<span class="muted">還沒下過</span>'}</div>
     ${live&&(live.st==="idle"||live.st==="seeking")&&opt.invite?'<button class="btn" id="pi">⚔ 邀請對戰</button>':live&&live.st==="playing"&&live.gid?'<button class="btn" id="pw">👀 觀看他的對局</button>':""}`;
     b.querySelectorAll("[data-rid]").forEach(x=>x.onclick=()=>{if(!x.dataset.rid)return;closeSheet();location.hash="#/db/pvp/"+encodeURIComponent(x.dataset.rid)});
+    if(mine.length)api("/db/items?c=pvp&limit=500").then(r=>{const ids=new Set((r.items||[]).map(it=>it.id));b.querySelectorAll("[data-rid]").forEach(x=>{if(x.dataset.rid&&!ids.has(x.dataset.rid)){x.dataset.rid="";const m=x.querySelector(".muted");if(m)m.textContent="沒存到棋譜"}})}).catch(()=>{});
     const pi=b.querySelector("#pi"),pw=b.querySelector("#pw");if(pi)pi.onclick=()=>{closeSheet();opt.invite(live)};
     if(pw)pw.onclick=()=>{closeSheet();XQNet.watch(live.gid);location.hash="#/pvp"}})}
 function histList(box,reps){let kind=store.get("histKind","all"),res="",limit=40,all=null;
@@ -2649,6 +2652,8 @@ function CpuGame(v){
     setTop("挑戰電腦","#/",[...(parkOn()?[arenaBtn]:[]),...(lk?[]:[parkBtn(()=>{draw();topBar()})])].concat(vcOn()?[["🎤",()=>voiceMove(()=>!st||st.result?{why:"這盤已經結束"}:st.turn!==st.human||st.thinking?{why:"還沒輪到你"}:{board:st.board,legal:st.legal,play:(f,t)=>{sel=-1;post("/play/move",{f,t})}}),"聲控走棋"]]:[]));
     try{if(seg){const t=$("#title");t.textContent="";t.append(seg)}}catch(e){}};   /* 第一次呼叫時 seg 還沒建立 */
   topBar();
+  /* 首頁「🏯 朝代擂台」帶過來的：直接打開擂台（意見回饋 276） */
+  {const oa=store.get("openArena",0);if(oa){store.set("openArena",0);if(Date.now()-oa<15000)setTimeout(()=>{try{arenaBtn[1]()}catch(e){}},700)}}
   // 模式切換直接放在頂部列（取代標題）：積分挑戰／自選難度／獎勵一眼就看得到，點一下就換（離線版才有積分挑戰和獎勵）
   const modeOf=s=>s.ranked?"rank":s.reward?"car":"free",prefMode=()=>store.get("cpuRanked",true)?"rank":REWARD&&store.get("cpuCar",false)?"car":"free";
   const seg=OFF?document.createElement("div"):null;
@@ -2784,9 +2789,10 @@ async function review(rep,id){let it=null;for(let k=0;k<12&&!it;k++){try{const d
         `<div class="cpu-lb">你執</div><div class="opt"><button data-s="r" class="${side==="r"?"on":""}">🔴 紅方（先走）</button><button data-s="b" class="${side==="b"?"on":""}">⚫ 黑方（後走）</button></div>`+
         (ranked?"":`<div class="cpu-lb">難度</div><div class="lvl">${st.levels.map(l=>`<button data-l="${l.n}" class="${l.n===level?"on":""}"><b>${l.n}</b><span>${esc(l.name)}</span>${reward?`<span class="ok">+${tb[l.n-1]||0} 點</span>`:(rec[l.n]||{}).w?'<span class="ok">✔ 通關</span>':""}</button>`).join("")}</div>
           <div class="cpu-desc">${esc((st.levels[level-1]||{}).desc||"")}</div>`)+
-        `<button class="btn" id="go">${ranked?"開始積分挑戰":reward?`開始第 ${level} 級（贏了 +${tb[level-1]||0} 點）`:`開始第 ${level} 級`}</button>`;
+        `<button class="btn" id="go">${ranked?"開始積分挑戰":reward?`開始第 ${level} 級（贏了 +${tb[level-1]||0} 點）`:`開始第 ${level} 級`}</button>`+
+        (OFF?`<button class="btn ghost" id="goArena" style="margin-top:8px">🏯 改打朝代擂台（集章 ${Object.keys(arenaStamps()).length}/13）</button>`:"");
         b.querySelectorAll("[data-s]").forEach(x=>x.onclick=()=>{side=x.dataset.s;paint()});b.querySelectorAll("[data-l]").forEach(x=>x.onclick=()=>{level=+x.dataset.l;paint()});
-        b.querySelector("#go").onclick=()=>startNew({human:side,level,ranked,reward});const gg=b.querySelector("#gogar");if(gg)gg.onclick=()=>{closeSheet();location.hash="#/garage"}};paint()});
+        b.querySelector("#go").onclick=()=>startNew({human:side,level,ranked,reward});{const ga=b.querySelector("#goArena");if(ga)ga.onclick=()=>{closeSheet();setTimeout(()=>arenaBtn[1](),250)}}const gg=b.querySelector("#gogar");if(gg)gg.onclick=()=>{closeSheet();location.hash="#/garage"}};paint()});
     sh.classList.add("cpu-sheet")}
   // 上一盤已經下完：一進來就直接開新局（同樣的難度和執子），不要讓人以為還沒下完
   let first=true;
@@ -2820,8 +2826,8 @@ const BOT_SAID=[];window.addEventListener("xq-bot-said",e=>{const s=e.detail;if(
 window.addEventListener("xq-bot-ask",()=>askSheet());
 const BOT_FAQ=[
  // 意見回饋 272：今天新加的功能，小帥也要知道
- [["擂台","擂臺","擂主","打擂台","朝代擂台","公園擂台"],"公園裡每個朝代都有一位擂主（例如唐朝「長安棋王」、宋朝「汴京茶棋客」）。到「挑戰電腦」按右上角 🏯 就能挑戰，難度跟著你的電腦段位；打贏就在集章簿蓋上那個朝代的朱印。","#/cpu","去挑戰擂主"],
- [["集章","集章簿","印章","蓋章","朱印"],"集章簿有 13 個朝代的印章：打贏該朝代的擂主就蓋一枚。在「挑戰電腦 → 🏯 → 📜 集章簿」可以看，點還沒蓋的朝代就能換過去挑戰。","#/cpu","去挑戰電腦"],
+ [["擂台","擂臺","擂主","打擂台","朝代擂台","公園擂台"],"公園裡每個朝代都有一位擂主（例如唐朝「長安棋王」、宋朝「汴京茶棋客」）。首頁「🏯 朝代擂台」一點就能挑戰（挑戰電腦的開新局視窗、公園右上角 🏯 也可以），難度跟著你的電腦段位；打贏就在集章簿蓋上那個朝代的朱印。","#/cpu","去挑戰擂主"],
+ [["集章","集章簿","印章","蓋章","朱印"],"集章簿有 13 個朝代的印章：打贏該朝代的擂主就蓋一枚。在首頁「🏯 朝代擂台 → 📜 集章簿」可以看，點還沒蓋的朝代就能換過去挑戰。","#/cpu","去挑戰電腦"],
  [["稱號","擂台新秀","七朝豪傑","十三朝棋王"],"集章簿蓋到 3 枚得到「擂台新秀」、7 枚「七朝豪傑」、13 枚「十三朝棋王」。稱號會顯示在線上大廳的棋友資料卡，大家點你都看得到。"],
  [["公園","公園模式","3D","公園下棋"],"挑戰電腦或線上對戰時按右上角 🌳 就到公園 3D 棋盤，有 13 個朝代的風景可以 360 度轉頭看；在公園裡點樹、桌子、茶杯、燈籠會跳出介紹，還能打朝代擂台。按 ▦ 回平面棋盤。","#/cpu","去公園下棋"],
  [["擺盤","推演","試走","變化"],"對局中按下方「🧪 擺盤」會開一張新棋盤，從當下局面紅黑兩邊都由你走，試各種變化，不影響正在下的那盤；觀戰時也可以用。"],
