@@ -413,7 +413,7 @@ html[data-era=ming] .topbar,html[data-era=qing] .topbar{border-bottom-width:4px}
       if(!window.caches)return go();caches.keys().then(function(ks){return Promise.all(ks.filter(function(k){return k.indexOf("xqlab-app-")===0}).map(function(k){return caches.delete(k)}))})
         .then(function(){return navigator.serviceWorker&&navigator.serviceWorker.getRegistration()}).then(function(r){return r&&r.update()}).catch(function(){}).then(go)}},4000)})();
 </script>
-<script>window.XQ_OFFLINE=true;window.XQ_BUILD="20261102-2220";</script>
+<script>window.XQ_OFFLINE=true;window.XQ_BUILD="20261102-2223";</script>
 <script src="core.js"></script>
 <script src="engine.js"></script>
 <script src="local.js"></script>
@@ -2547,7 +2547,7 @@ function CpuGame(v){
   async function post(u,b){if(busy)return;busy=true;try{render(await api(u,b||{}))}catch(e){toast(e.message)}finally{busy=false}}
   function tap(i){if(!st||st.result||st.turn!==st.human||st.thinking)return;
     if(sel>=0&&st.legal.some(([f,t])=>f===sel&&t===i)){const f=sel;sel=-1;vibrate(15);return post("/play/move",{f,t:i})}
-    sel=st.legal.some(([f])=>f===i)?i:-1;if(sel>=0)vibrate(5);draw()}
+    sel=i===sel?-1:st.legal.some(([f])=>f===i)?i:-1;if(sel>=0)vibrate(5);draw()}
   function draw(){if(!st)return;const last=st.moves[st.moves.length-1];
     const o={flip:st.human==="b",last,sel,targets:sel>=0?st.legal.filter(([f])=>f===sel).map(x=>x[1]):[],hint:st.hint?[st.hint.f,st.hint.t]:pHint&&pHint.n===st.moves.length?[pHint.f,pHint.t]:null,check:st.check,fx:true};bd.draw(st.board,o);
     parkDraw(v.querySelector("#bbox"),bd,st.board,o,{tap,thinking:!!st.thinking||(!st.result&&st.turn!==st.human),botSide:st.human==="r"?"b":"r",result:st.result?(st.result.w||"draw"):null,hint:o.hint,
@@ -3029,7 +3029,7 @@ function PvpGame(v){
     if(seat==="w"){toast("你在觀戰");return}
     if(seat&&st.turn!==seat){toast("還沒輪到你，等對方走");return}
     if(sel>=0&&st.legal.some(([f,t])=>f===sel&&t===i)){const f=sel;sel=-1;vibrate(15);flipMan=null;return post("/pvp/move",{f,t:i})}
-    sel=st.legal.some(([f])=>f===i)?i:-1;if(sel>=0)vibrate(5);draw()}
+    sel=i===sel?-1:st.legal.some(([f])=>f===i)?i:-1;if(sel>=0)vibrate(5);draw()}
   // 觀戰：可以往前往後看每一步（view＝看到第幾步，null＝最新）；這支手機的 Pikafish 幫每一步算局勢，紅黑條跟著動
   let view=null,watchUI=false;const evc={};
   const boardAtN=n=>{const b=parseFen(START);for(const m of st.moves.slice(0,n)){b[m.t]=b[m.f];b[m.f]=null}return b};
