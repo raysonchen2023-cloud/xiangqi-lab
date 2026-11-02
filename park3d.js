@@ -125,7 +125,16 @@
   // 開發者用 Gemini 畫的朝代長卷（data/park/<朝代>.webp）：繞成 360 度一整圈（意見回饋：轉頭看旁邊、後面，圖不能斷、不能突然變成程式畫的山、不能有空白）
   // L、R＝圖上左右兩個主景的範圍（0～1）；crop＝只用圖上這一段（秦的原圖是「歷代一條長卷」，只取最左邊秦的長城、烽火台、紅旗、松亭，轉頭才不會看到別朝代的地標）
   // gap＝主景之間多留幾度雲霧（主景段很窄的時候用，不然一圈會擠太多份）
-  const BG_IMG={qin:{src:"data/park/qin.webp",crop:[0,.34],L:[.02,.165],R:[.2,.33],gap:0},han:{src:"data/park/han.webp",L:[.08,.35],R:[.65,.92]},classic:{src:"data/park/classic.webp",L:[.06,.36],R:[.64,.94]},sanguo:{src:"data/park/sanguo.webp",L:[.05,.35],R:[.62,.94]}};
+  const BG_IMG={qin:{src:"data/park/qin.webp",crop:[0,.34],L:[.02,.165],R:[.2,.33],gap:0},han:{src:"data/park/han.webp",L:[.08,.35],R:[.65,.92]},classic:{src:"data/park/classic.webp",L:[.06,.36],R:[.64,.94]},sanguo:{src:"data/park/sanguo.webp",L:[.05,.35],R:[.62,.94]},
+    weijin:{src:"data/park/weijin.webp",L:[0.05,0.42],R:[0.6,0.93]},
+    nanbei:{src:"data/park/nanbei.webp",L:[0.07,0.37],R:[0.58,0.92]},
+    sui:{src:"data/park/sui.webp",L:[0.05,0.4],R:[0.6,0.94]},
+    tang:{src:"data/park/tang.webp",L:[0.07,0.33],R:[0.6,0.92]},
+    wudai:{src:"data/park/wudai.webp",L:[0.07,0.38],R:[0.62,0.92]},
+    song:{src:"data/park/song.webp",L:[0.05,0.4],R:[0.62,0.95]},
+    yuan:{src:"data/park/yuan.webp",L:[0.05,0.45],R:[0.62,0.95]},
+    ming:{src:"data/park/ming.webp",L:[0.05,0.42],R:[0.6,0.94]},
+    qing:{src:"data/park/qing.webp",L:[0.07,0.38],R:[0.62,0.93]}};   // 開發者用 Gemini 畫的 13 朝代長卷全部到齊
   // 原圖前處理（每張圖只做一次）：每一列的宣紙色、墨色加深一點、找出太陽並另做一份「沒有太陽」的（正面以外的段落用，一圈才不會有好幾個太陽）
   const panPrep={};
   function prepPan(im){const k=im.src;if(panPrep[k])return panPrep[k];
