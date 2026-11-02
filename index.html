@@ -412,7 +412,7 @@ html[data-era=ming] .topbar,html[data-era=qing] .topbar{border-bottom-width:4px}
       if(!window.caches)return go();caches.keys().then(function(ks){return Promise.all(ks.filter(function(k){return k.indexOf("xqlab-app-")===0}).map(function(k){return caches.delete(k)}))})
         .then(function(){return navigator.serviceWorker&&navigator.serviceWorker.getRegistration()}).then(function(r){return r&&r.update()}).catch(function(){}).then(go)}},4000)})();
 </script>
-<script>window.XQ_OFFLINE=true;window.XQ_BUILD="20261102-1242";</script>
+<script>window.XQ_OFFLINE=true;window.XQ_BUILD="20261102-1255";</script>
 <script src="core.js"></script>
 <script src="engine.js"></script>
 <script src="local.js"></script>
@@ -443,6 +443,13 @@ function myName(){return meInfo().name}
 function setMyName(n){const m=meInfo();m.name=String(n||"").replace(/[\u0000-\u001f<>]/g,"").trim().slice(0,16);try{localStorage.setItem("xq_me",JSON.stringify(m))}catch(e){}}
 // iPad 的瀏覽器自稱 Mac，用觸控點數分辨
 const MY_KIND=/iPad/.test(navigator.userAgent)||/Macintosh/.test(navigator.userAgent)&&navigator.maxTouchPoints>1?"iPad":/iPhone/.test(navigator.userAgent)?"iPhone":/Android/.test(navigator.userAgent)?"Android":/Windows/.test(navigator.userAgent)?"Windows":/Mac/.test(navigator.userAgent)?"Mac":"";
+// 線上大廳顯示大概的城市（意見回饋 159）：App 打開後用免費的 IP 定位服務（geojs.io）查一次，只留城市名、不存 IP，一天更新一次；設定「其他」可以關
+let MY_CITY="";
+const CITY_ZH=[["New Taipei","新北"],["Taipei","台北"],["Taoyuan","桃園"],["Hsinchu","新竹"],["Miaoli","苗栗"],["Taichung","台中"],["Changhua","彰化"],["Nantou","南投"],["Yunlin","雲林"],["Chiayi","嘉義"],["Tainan","台南"],["Kaohsiung","高雄"],["Pingtung","屏東"],["Yilan","宜蘭"],["Hualien","花蓮"],["Taitung","台東"],["Keelung","基隆"],["Penghu","澎湖"],["Kinmen","金門"],["Lienchiang","馬祖"],["Hong Kong","香港"],["Macau","澳門"]];
+function fetchCity(force){if(!OFF||!store.get("showCity",true)){MY_CITY="";return}const c=store.get("cityCache",null);if(!force&&c&&Date.now()-c.at<864e5){MY_CITY=c.n;return}
+  fetch("https://get.geojs.io/v1/ip/geo.json").then(r=>r.json()).then(j=>{const t=(j.city||"")+" "+(j.region||""),hit=CITY_ZH.find(([k])=>t.includes(k));
+    const n=hit?hit[1]:(j.city||j.region||j.country||"");store.set("cityCache",{n,at:Date.now()});MY_CITY=store.get("showCity",true)?n:"";if(window.XQNet&&XQNet.refresh)XQNet.refresh()}).catch(()=>{})}
+setTimeout(()=>fetchCity(false),3000);
 window.XQ_ME=()=>{const m=meInfo();return{"x-xq-dev":m.id+(MY_KIND?"-"+MY_KIND:""),"x-xq-name":encodeURIComponent(m.name||"")}};
 async function api(u,b){if(window.XQ)return XQ.api(u,b);   // 離線版：由手機裡的 local.js 處理
   const sig=window.AbortSignal&&AbortSignal.timeout?AbortSignal.timeout(20000):undefined;
@@ -589,7 +596,7 @@ function loadVc(){return Promise.all(["chi","jj"].map(w=>{const k=vcKey(w);if(VC
 function playVc(k){if(!AC||!VC_RAW[k])return false;if(VC_DEC.ctx!==AC)VC_DEC={ctx:AC};const ctx=AC;
   const p=VC_DEC[k]||(VC_DEC[k]=new Promise((ok,no)=>ctx.decodeAudioData(VC_RAW[k].slice(0),ok,no)).catch(()=>null));
   p.then(b=>{if(!b||!AC)return;const s=AC.createBufferSource();s.buffer=b;s.connect(AC.destination);s.start(AC.currentTime+.005)});return true}
-function sayCall(text){if(!store.get("voiceCall",true))return;const jj=text==="將軍",k=vcKey(jj?"jj":"chi");
+function sayCall(text){try{window.dispatchEvent(new CustomEvent("xq-call",{detail:text}))}catch(e){}if(!store.get("voiceCall",true))return;const jj=text==="將軍",k=vcKey(jj?"jj":"chi");
   if(AC&&VC_RAW[k]){withAudio(()=>playVc(k));return}loadVc();
   if(!window.speechSynthesis)return;try{speechSynthesis.cancel();const sex=store.get("voiceSex","m"),rt={s:1,n:1.2,f:1.5}[store.get("voiceRate","n")]||1.2;
   const u=new SpeechSynthesisUtterance(text+"！");u.lang=VOICE?VOICE.lang:"zh-TW";if(VOICE)u.voice=VOICE;u.rate=rt;
@@ -1266,10 +1273,10 @@ function Lobby(v){setTop("線上大廳",false,[["📤",shareSheet,"分享給朋�
         :'<button class="btn" id="sk1" style="margin-top:10px">🎲 隨機配對（自動找一位線上對手）</button>'}
       ${Object.keys(games).length?`<div class="sec-t">正在對戰</div>`+Object.entries(games).map(([g,l])=>`<div class="card row" style="justify-content:space-between;margin-bottom:8px"><span>⚔ ${l.map(p=>esc(p.name)).join(" 對 ")}</span><button class="pill" data-w="${esc(g)}">👀 觀看</button></div>`).join(""):""}
       <div class="sec-t">在線棋友（${ps.length}）</div>
-      ${ps.length?ps.map(p=>`<div class="card row" data-p="${esc(p.id)}" style="justify-content:space-between;margin-bottom:8px;cursor:pointer"><span><b>${esc(p.name)}</b> <span class="pill">${esc(XQNet.rankOf(p.pts))}</span> <span class="muted" style="font-size:12px">ⓘ</span><br><span class="muted">${ST[p.st]||""}</span></span>
+      ${ps.length?ps.map(p=>`<div class="card row" data-p="${esc(p.id)}" style="justify-content:space-between;margin-bottom:8px;cursor:pointer"><span><b>${esc(p.name)}</b> <span class="pill">${esc(XQNet.rankOf(p.pts))}</span> <span class="muted" style="font-size:12px">ⓘ</span><br><span class="muted">${ST[p.st]||""}${p.city?"・📍"+esc(p.city):""}</span></span>
         ${p.st==="idle"||p.st==="seeking"?`<button class="pill" data-i="${esc(p.id)}" style="background:var(--accent);color:#fff;border:none;padding:6px 12px">⚔ 邀請對戰</button>`:p.st==="playing"&&p.gid?`<button class="pill" data-w="${esc(p.gid)}">👀 觀看</button>`:""}</div>`).join("")
         :`<div class="card muted">${up?"目前只有你在線上。請朋友打開象棋研究室（按右上角 📤 分享），他們就會出現在這裡。":"連線中…"}</div>`}
-      <p class="muted" style="font-size:12px;margin-top:14px">對戰每步限時 3 分鐘，超時判負（離開或斷線太久也算）。大廳透過免費的公開伺服器連線。只會傳名字和棋步，不要把名字取成個人資料。App 切到背景時會暫時離線。</p>`;
+      <p class="muted" style="font-size:12px;margin-top:14px">對戰每步限時 3 分鐘，超時判負（離開或斷線太久也算）。大廳透過免費的公開伺服器連線。只會傳名字、大概的城市（由網路位置推估，可在設定關掉）和棋步，不要把名字取成個人資料。App 切到背景時會暫時離線。</p>`;
     box.querySelector("#ed").onclick=()=>nameSheet(false);box.querySelector("#rk").onclick=()=>location.hash="#/stats";
     const s1=box.querySelector("#sk1"),s0=box.querySelector("#sk0");if(s1)s1.onclick=()=>{vibrate(10);XQNet.seek(true)};if(s0)s0.onclick=()=>XQNet.seek(false);
     const bk=box.querySelector("#back");if(bk)bk.onclick=()=>location.hash="#/pvp";
@@ -1283,7 +1290,7 @@ function Lobby(v){setTop("線上大廳",false,[["📤",shareSheet,"分享給朋�
     const N=(p.w||0)+(p.l||0)+(p.d||0),ago=Math.max(0,Math.round((Date.now()-(p.at||Date.now()))/60000));
     sheet("棋友資料",b=>{b.innerHTML=`<div style="text-align:center"><div style="font-size:22px;font-weight:900;font-family:var(--serif)">${esc(p.name)}</div>
         <div style="margin:6px 0"><span class="pill" style="font-size:15px;padding:4px 12px">🏅 ${esc(XQNet.rankOf(p.pts))}・${p.pts||0} 分</span></div>
-        <div class="muted">${ST[p.st]||""}${p.kind?"・"+esc(p.kind):""}・${ago?ago+" 分鐘前更新":"剛剛在線上"}</div></div>
+        <div class="muted">${ST[p.st]||""}${p.city?"・📍"+esc(p.city):""}${p.kind?"・"+esc(p.kind):""}・${ago?ago+" 分鐘前更新":"剛剛在線上"}</div></div>
       <div class="card" style="margin-top:12px"><div class="muted" style="margin-bottom:6px">線上戰績</div>${p.w==null?'<div class="muted">對方的 App 還沒更新，看不到戰績</div>':`<div style="display:grid;grid-template-columns:repeat(4,1fr);text-align:center">
         ${[["勝",p.w,"var(--accent2)"],["負",p.l,"var(--red)"],["和",p.d,"var(--muted)"],["勝率",N?Math.round(p.w*100/N)+"%":"—",""]].map(([l,x,c])=>`<div><div style="font-size:22px;font-weight:900;color:${c}">${x}</div><div class="muted">${l}</div></div>`).join("")}</div>`}</div>
       <div class="card" style="margin-top:8px"><div class="muted" style="margin-bottom:4px">你跟他下過</div>${mine.length?`<b>${mw} 勝 ${ml} 負 ${md} 和</b><span class="muted">・最近一盤 ${new Date(mine[0].at).toLocaleDateString()}</span>`:'<span class="muted">還沒下過</span>'}</div>
@@ -1893,6 +1900,8 @@ function Settings(v){
       <button class="item" id="nm"><span class="lb">✏</span><span class="tx"><b>我的名字</b><span id="nmS"></span></span><span class="muted">›</span></button>
       <button class="item" id="fb"><span class="lb">💬</span><span class="tx"><b>意見回饋</b><span>回報錯誤、想要的功能</span></span><span class="muted">›</span></button>
       <button class="item" id="sh"><span class="lb">📤</span><span class="tx"><b>分享給朋友</b><span>QR code・LINE</span></span><span class="muted">›</span></button></div>
+    <div class="card" style="margin-top:8px"><label class="row" style="justify-content:space-between"><span><b>3D 象棋小人</b><br><span class="muted">圓滾滾的棋子小人在畫面上走來走去、做動作；點它會表演，吃子、將軍時也有反應</span></span><input type="checkbox" class="sw" id="botT" ${botOn()?"checked":""}></label></div>
+    ${OFF?`<div class="card" style="margin-top:8px"><label class="row" style="justify-content:space-between"><span><b>在線上大廳顯示我的城市</b><br><span class="muted">由網路位置推估（例如台北、台中），只顯示城市，不會顯示地址；用行動網路時可能不準</span></span><input type="checkbox" class="sw" id="cityT" ${store.get("showCity",true)?"checked":""}></label></div>`:""}
     <div class="sec-t">關於</div><div class="card" id="about" style="line-height:1.9">
       <div class="row" style="justify-content:space-between"><span class="muted">App</span><b>象棋研究室</b></div>
       <div class="row" style="justify-content:space-between"><span class="muted">開發者</span><b>hungshengc</b></div>
@@ -1951,7 +1960,7 @@ function Settings(v){
     v.querySelectorAll("[data-snd]").forEach(x=>x.onclick=()=>{const k=x.dataset.snd;store.set("mvSound",k!=="off");if(k==="off"){v.querySelectorAll("[data-snd]").forEach(y=>y.classList.toggle("on",y===x));return}store.set("sndStyle",k);v.querySelectorAll("[data-snd]").forEach(y=>y.classList.toggle("on",y===x));unlockAudio();(/^s\d\d$/.test(k)?loadSfx(k):Promise.resolve()).then(()=>{withAudio(()=>moveSound0(false));setTimeout(()=>withAudio(()=>moveSound0(true)),550)})});
     v.querySelectorAll("[data-t]").forEach(x=>x.onchange=()=>{store.set(x.dataset.t,x.checked);if(x.checked&&(x.dataset.t==="mvSound"||x.dataset.t==="capSound")){unlockAudio();moveSound(x.dataset.t==="capSound")}if(x.checked&&x.dataset.t==="voiceCall"){primeVoice();setTimeout(()=>sayCall("將軍"),150)}show(true)});
     v.querySelector("#nmS").textContent=myName()||"還沒取名字";show(false)};
-  v.querySelector("#nm").onclick=()=>nameSheet(false);v.querySelector("#fb").onclick=()=>feedbackSheet();v.querySelector("#sh").onclick=shareSheet;const cn=v.querySelector("#cn");if(cn)cn.onclick=connectSheet;const fa=v.querySelector("#fa");if(fa)fa.onclick=()=>location.hash="#/fbadmin";
+  {const bt=v.querySelector("#botT");if(bt)bt.onchange=()=>{store.set("bot3d",bt.checked);syncBot();if(bt.checked)toast("小人出來了！點它會表演")}}{const ct=v.querySelector("#cityT");if(ct)ct.onchange=()=>{store.set("showCity",ct.checked);if(ct.checked)fetchCity(true);else{MY_CITY="";if(window.XQNet&&XQNet.refresh)XQNet.refresh()}}}v.querySelector("#nm").onclick=()=>nameSheet(false);v.querySelector("#fb").onclick=()=>feedbackSheet();v.querySelector("#sh").onclick=shareSheet;const cn=v.querySelector("#cn");if(cn)cn.onclick=connectSheet;const fa=v.querySelector("#fa");if(fa)fa.onclick=()=>location.hash="#/fbadmin";
   paint();return{}}
 
 // ================= 意見回饋：存到 Google 表單（沒網路先存在手機，之後自動補送） =================
@@ -2381,6 +2390,11 @@ function showChat(text,mine,name){const d=document.createElement("div");d.classN
   d.innerHTML=`<div class="t" style="font-size:12px;opacity:.7">${esc(mine?"我":name||"")}</div><div style="font-size:18px;font-weight:700;max-width:70vw;white-space:pre-wrap;word-break:break-word">💬 ${esc(text)}</div>`;
   document.body.append(d);d.getBoundingClientRect();d.classList.add("show");if(!mine)vibrate([20,40,20]);
   setTimeout(()=>{d.classList.remove("show");setTimeout(()=>d.remove(),300)},mine?1500:4000)}
+// 3D 象棋小人（意見回饋 159）：在畫面上自由走動、做手勢；開發者預設開、玩家預設關，設定「其他」可以切換
+let BOT=null,botBusy=false;const botOn=()=>store.get("bot3d",DEVMODE());
+async function syncBot(){if(botBusy)return;botBusy=true;try{if(botOn()&&!BOT){await loadScript(OFF?"three.min.js":"/m/three.min.js");await loadScript(OFF?"bot3d.js":"/m/bot3d.js");if(botOn()&&window.XQBot3D)BOT=window.XQBot3D.start()}
+  else if(!botOn()&&BOT){BOT.stop();BOT=null}}catch(e){}botBusy=false}
+setTimeout(syncBot,4000);
 function loadScript(src){return new Promise((ok,no)=>{if(document.querySelector(`script[data-s="${src}"]`))return ok();const s=document.createElement("script");s.src=src;s.dataset.s=src;s.onload=ok;s.onerror=()=>no(new Error("載入 "+src+" 失敗"));document.head.append(s)})}
 // 產生「對手掃這個就能加入、自動坐另一邊」的網址
 async function joinLink(other){
