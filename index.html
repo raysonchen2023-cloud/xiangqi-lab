@@ -412,7 +412,7 @@ html[data-era=ming] .topbar,html[data-era=qing] .topbar{border-bottom-width:4px}
       if(!window.caches)return go();caches.keys().then(function(ks){return Promise.all(ks.filter(function(k){return k.indexOf("xqlab-app-")===0}).map(function(k){return caches.delete(k)}))})
         .then(function(){return navigator.serviceWorker&&navigator.serviceWorker.getRegistration()}).then(function(r){return r&&r.update()}).catch(function(){}).then(go)}},4000)})();
 </script>
-<script>window.XQ_OFFLINE=true;window.XQ_BUILD="20261102-1827";</script>
+<script>window.XQ_OFFLINE=true;window.XQ_BUILD="20261102-1832";</script>
 <script src="core.js"></script>
 <script src="engine.js"></script>
 <script src="local.js"></script>
@@ -732,7 +732,7 @@ function matSound(cap,M){const t=AC.currentTime+.02,out=AC.createDynamicsCompres
     g.gain.setValueAtTime(.0001,t+at);g.gain.linearRampToValueAtTime(vol*thump,t+at+.004);g.gain.exponentialRampToValueAtTime(.0001,t+at+.14);o.connect(lp).connect(g).connect(out);o.start(t+at);o.stop(t+at+.16)};
   if(cap){hit(0,M.f0*1.08,.2,M.dur*.5,M.thump*.4);hit(.05,M.cap.f0,.6,M.cap.dur,M.cap.thump)}else hit(0,M.f0,.5,M.dur,M.thump)}
 // 錄好的走棋音效（10 種，data/sfx/sNN-m/c/v.wav：走子／吃子／走子變化）；選了才下載，解碼後跟著目前的 AudioContext 快取
-const SFX_SET=[["s01","實木厚棋"],["s02","紅木重拍"],["s03","竹棋盤"],["s04","石桌"],["s05","皮革棋墊"],["s06","紙棋盤"],["s07","玉石"],["s08","瓷棋"],["s09","古琴桌"],["s10","極簡"]];
+const SFX_SET=[["s01","實木厚棋"],["s02","紅木重拍"],["s03","竹棋盤"],["s04","石桌"],["s05","皮革棋墊"],["s06","紙棋盤"],["s07","玉石"],["s08","瓷棋"],["s09","古琴桌"],["s10","極簡"],["s11","公園石桌重拍"],["s12","指關節壓拍"],["s13","水泥棋桌"],["s14","鐵皮折疊桌"],["s15","滑步釘死"],["s16","老舊木板桌"],["s17","壓克力棋盤"],["s18","磁吸鐵皮盤"],["s19","手腕重扣"],["s20","雙子相撞"]];
 const SFX_RAW={},SFX_P={};let SFX_DEC={ctx:null};
 function loadSfx(k){if(SFX_RAW[k])return Promise.resolve();if(SFX_P[k])return SFX_P[k];
   return SFX_P[k]=Promise.all(["m","c","v"].map(x=>fetch(`data/sfx/${k}-${x}.wav`).then(r=>{if(!r.ok)throw 0;return r.arrayBuffer()}))).then(a=>{SFX_RAW[k]=a}).catch(()=>{SFX_P[k]=null})}
