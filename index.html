@@ -412,7 +412,7 @@ html[data-era=ming] .topbar,html[data-era=qing] .topbar{border-bottom-width:4px}
       if(!window.caches)return go();caches.keys().then(function(ks){return Promise.all(ks.filter(function(k){return k.indexOf("xqlab-app-")===0}).map(function(k){return caches.delete(k)}))})
         .then(function(){return navigator.serviceWorker&&navigator.serviceWorker.getRegistration()}).then(function(r){return r&&r.update()}).catch(function(){}).then(go)}},4000)})();
 </script>
-<script>window.XQ_OFFLINE=true;window.XQ_BUILD="20261102-1808";</script>
+<script>window.XQ_OFFLINE=true;window.XQ_BUILD="20261102-1816";</script>
 <script src="core.js"></script>
 <script src="engine.js"></script>
 <script src="local.js"></script>
@@ -2148,12 +2148,19 @@ function feedbackSheet(){let type="🐞 錯誤";
     <div class="opt" id="ty">${["🐞 錯誤","💡 建議","💬 其他"].map(t=>`<button data-y="${t}" class="${t===type?"on":""}">${t}</button>`).join("")}</div>
     <textarea id="fx" rows="5" maxlength="1500" placeholder="例如：在哪個畫面、按了什麼、發生什麼事；或是希望增加的功能" style="width:100%;padding:11px;border:1px solid var(--line);border-radius:12px;background:var(--card);color:inherit;font:inherit;font-size:16px;-webkit-user-select:text;user-select:text"></textarea>
     <input id="fc" maxlength="80" placeholder="聯絡方式（選填，例如 LINE ID）" style="width:100%;margin-top:8px;padding:11px;border:1px solid var(--line);border-radius:12px;background:var(--card);color:inherit">
-    <div class="row" style="margin-top:8px;gap:10px"><label class="pill" style="padding:9px 14px;cursor:pointer">📷 附上截圖（選填，最多 4 張）<input type="file" id="fi" accept="image/*" multiple hidden></label></div>
+    <div class="row" style="margin-top:8px;gap:10px"><label class="pill" style="padding:9px 14px;cursor:pointer">📷 附上截圖（選填，最多 4 張）<input type="file" id="fi" accept="image/*" multiple hidden></label>
+      <label class="pill" style="padding:9px 14px;cursor:pointer">📎 附加檔案（程式碼、文字檔）<input type="file" id="ff" accept=".txt,.js,.mjs,.ts,.py,.json,.md,.csv,.html,.htm,.css,.log,.xml,.yml,.yaml,.sh,.pgn,.fen,text/*" multiple hidden></label></div>
+    <div id="ffl" class="muted" style="font-size:12px;margin-top:4px"></div>
       <div class="row" id="fps" style="gap:8px;flex-wrap:wrap;margin-top:6px"></div>
     <p class="muted" style="font-size:12px">會一起附上：你的線上 ID、名字、段位、App 版本、裝置類型和目前畫面，方便找問題。</p>
     <button class="btn" id="go">送出</button>`;
     // 截圖可以一次選多張（最多 4 張）；表單一格只放得下一張，第 2 張起各送一筆「第 N 張截圖」接在後面
     const MAXI=4;let imgs=[];const fi=b.querySelector("#fi"),fps=b.querySelector("#fps");
+    // 附加檔案（意見回饋 195）：文字類檔案最多 3 個、每個 200KB；送出時每 4 萬字切一段，當作額外的回饋列送出
+    let atts=[];const ff=b.querySelector("#ff"),ffl=b.querySelector("#ffl");
+    const paintF=()=>{ffl.innerHTML=atts.map((a,i)=>`📎 ${esc(a.name)}（${(a.text.length/1000).toFixed(1)}k 字）<a href="#" data-fx="${i}">移除</a>`).join("<br>");ffl.querySelectorAll("[data-fx]").forEach(x=>x.onclick=e=>{e.preventDefault();atts.splice(+x.dataset.fx,1);paintF()})};
+    ff.onchange=async()=>{const fs=[...(ff.files||[])];ff.value="";for(const f of fs){if(atts.length>=3){toast("最多 3 個檔案");break}if(f.size>200*1024){toast(`${f.name} 超過 200KB`);continue}
+      try{atts.push({name:f.name,text:await f.text()})}catch(e){toast("讀不到 "+f.name)}}paintF()};
     const paintI=()=>{fps.innerHTML=imgs.map((d,i)=>`<span style="position:relative;display:inline-block"><img src="${d}" alt="" style="height:72px;max-width:96px;border-radius:8px;border:1px solid var(--line);display:block"><button data-x="${i}" class="pill" style="position:absolute;top:-8px;right:-8px;padding:0 7px;line-height:22px">✕</button></span>`).join("");
       fps.querySelectorAll("[data-x]").forEach(x=>x.onclick=()=>{imgs.splice(+x.dataset.x,1);paintI()})};
     fi.onchange=async()=>{const fs=[...(fi.files||[])];fi.value="";if(!fs.length)return;if(imgs.length+fs.length>MAXI)toast(`最多 ${MAXI} 張，只取前面幾張`);
@@ -2162,7 +2169,9 @@ function feedbackSheet(){let type="🐞 錯誤";
     b.querySelector("#go").onclick=async e=>{const t=b.querySelector("#fx").value.trim();if(t.length<2)return toast("請先寫下內容");e.target.disabled=true;e.target.textContent="送出中…";
       const info=await feedbackInfo(),contact=b.querySelector("#fc").value.trim(),N=imgs.length;
       let ok=await sendRecord(Object.assign({},info,{type,text:t,contact,img:imgs[0]||""}));
-      for(let i=1;i<N;i++)ok=(await sendRecord(Object.assign({},info,{type,text:`（接上一則的第 ${i+1}/${N} 張截圖）${t.slice(0,60)}`,contact,img:imgs[i]})))&&ok;closeSheet();toast(ok?"✅ 已送出，謝謝你的回饋！":"已存在手機裡，有網路時會自動送出")}})}
+      for(let i=1;i<N;i++)ok=(await sendRecord(Object.assign({},info,{type,text:`（接上一則的第 ${i+1}/${N} 張截圖）${t.slice(0,60)}`,contact,img:imgs[i]})))&&ok;
+      for(const a of atts){const CH=40000,n=Math.max(1,Math.ceil(a.text.length/CH));for(let k=0;k<n;k++)ok=(await sendRecord(Object.assign({},info,{type,text:`📎 附件 ${a.name}${n>1?`（第 ${k+1}/${n} 段）`:""}（接上一則：${t.slice(0,40)}）
+`+a.text.slice(k*CH,(k+1)*CH),contact,img:""})))&&ok}closeSheet();toast(ok?"✅ 已送出，謝謝你的回饋！":"已存在手機裡，有網路時會自動送出")}})}
 // 線上 ID 登記：名字或段位有變、或超過 7 天，就送一筆「玩家」紀錄到同一個表單
 async function reportPlayer(){if(!OFF||!FEEDBACK_FORM.action)return;const i=await feedbackInfo(),key=i.id+"|"+i.name+"|"+i.rank.split(" ")[0],last=store.get("playerRep",null);
   if(last&&last.k===key&&Date.now()-last.at<7*864e5)return;
@@ -2446,6 +2455,9 @@ function CpuGame(v){
     if(st.result&&shownResult!==JSON.stringify(st.result)+st.moves.length){shownResult=JSON.stringify(st.result)+st.moves.length;
       const win=st.result.w===st.human,draw0=!st.result.w;vibrate([30,40,30]);
       if(st.result.w&&/將死|困斃/.test(st.result.why||"")){const loser=st.result.w==="r"?"b":"r",k=st.board.indexOf(loser==="r"?"K":"k");if(k>=0){MODAL_HOLD=Date.now()+2700;killFx(bd.svg,win,st.result.why,k,st.human==="b",{side:st.result.w})}}try{window.dispatchEvent(new CustomEvent("xq-result",{detail:win?"win":draw0?"draw":"lose"}))}catch(e){}
+      if(st.practice&&st.practice.drill){const P0=st.practice;
+        modal(`<div class="em">${win?"🎯":draw0?"🤝":"💪"}</div><h2>${win?"練習成功！":draw0?"和局":"這題沒下贏"}</h2><p class="muted">${esc(P0.title)}（局面取自 ${esc(P0.date||"")} ${esc(P0.opp||"")}）・不算戰績</p>`,
+          [["再練一題 ›",()=>startDrill(P0.kind,P0.lv)],["📊 賽後報告",()=>review(true)],["關閉",null,true]]);return}
       if(st.practice){const d=store.get("redoDone",{})[st.practice.key];
         modal(`<div class="em">${win?"🏆":draw0?"🤝":"💪"}</div><h2>${win?"你贏了！":draw0?"和局":"這盤輸了"}</h2><p class="muted">${esc(st.result.why)}・錯棋重練（不算戰績）</p>${d&&d.ok?'<p>✅ 這步已經練會了</p>':""}`,
           [["回到錯棋列表 ›",()=>location.hash="#/redo"],["關閉",null,true]]);return}
@@ -2483,6 +2495,7 @@ function CpuGame(v){
         b.querySelector("#pvp").onclick=()=>{clearInterval(tm);k=Math.max(0,k-1);show()};b.querySelector("#pvn").onclick=()=>{clearInterval(tm);k=Math.min(boards.length-1,k+1);show()};
         b.querySelector("#pvg").onclick=()=>{clearInterval(tm);k=0;show();tm=setInterval(()=>{if(!b.isConnected||k>=boards.length-1)return clearInterval(tm);k++;show()},900)};show()}).catch(e=>{b.querySelector("#pvm").textContent="⚠ "+e.message})})}
   function practiceBar(s2){const P0=st.practice,m=st.moves[P0.base];
+    if(P0.drill){if(st.moves.length>P0.base+1)return;s2.classList.add("hot","wrap");s2.textContent=`🎯 ${P0.title}：輪到你（${PLAYER[st.human]}），想辦法下贏電腦！`;return}
     let pa=v.querySelector("#pAct");if(!pa){pa=document.createElement("div");pa.id="pAct";pa.className="pv-ctl";s2.after(pa)}pa.hidden=true;
     if(st.moves.length>P0.base+2)return;   // 已經往下走了，回到一般狀態列
     s2.classList.add("hot","wrap");
@@ -2611,22 +2624,22 @@ function askGuides(){let p=0;try{p=(JSON.parse(localStorage.getItem("xq_cpuRate"
   const now=p<100?"你現在最該做的是 ②③④：先摸清自己的程度，跟電腦從低級開始下，每盤看賽後報告。":p<600?"你已經有基礎了，接下來重點是 ⑤⑥⑦：把錯步練對、背熟殺法、練殘局。":"你的程度不錯！建議主攻 ⑧⑨⑩：深入開局、衝積分升段、找真人對戰。";
   const plan=`① 學規則：「象棋規則」看每種棋子怎麼走、怎麼記譜。\n② 做「棋力測驗」：了解自己現在的程度。\n③ 挑戰電腦：從第 1 級開始，贏了再升一級。\n④ 每盤都看「📊 賽後報告」：找出錯著、露著，看藍色箭頭的正確走法。\n⑤ 「錯棋重練」：把走錯的局面重新練到對。\n⑥ 背熟基本殺法：術語裡的馬後炮、臥槽馬、雙車錯、鐵門栓…（可以問我）。\n⑦ 練殘局：棋譜庫的《適情雅趣》、古典殘局譜，一步一步看。\n⑧ 學開局：中炮對屏風馬、仙人指路、飛相局…看大師對局怎麼下。\n⑨ 積分挑戰：升段，小帥也會跟著升官（你現在 ${p} 分，${ZH[g]}品官）。\n⑩ 線上大廳找真人下，或去觀戰看別人怎麼下。\n\n👉 ${now}`;
   return[
-   [["提升實力","變強","進步","怎麼練","學棋","練棋","計畫","學習","提升","強一點","變厲害","新手怎麼"],"怎麼在象棋研究室提升實力",plan,"#/cpu","開始挑戰電腦"],
+   [["提升實力","變強","進步","怎麼練","學棋","練棋","計畫","學習","提升","強一點","變厲害","新手怎麼"],"怎麼在象棋研究室提升實力",plan,"#/cpu","開始挑戰電腦","mid"],
    [["開局怎麼學","學開局","開局原則","開局要注意"],"開局怎麼學","開局三原則：快出大子（車馬炮）、搶佔中路、不要同一個子連走好幾步。\n建議：先學「中炮」和「屏風馬」兩個最常見的開局（問我就能在棋盤上示範），再到棋譜庫「大師對局」看高手怎麼接著下，最後挑戰電腦時練習同一個開局。","#/terms","看開局術語"],
-   [["中局","怎麼算","算棋","計算","思考"],"中局怎麼下","中局要先看全局：①對方剛走那步想幹嘛？②我哪個子沒人保護？③有沒有能將軍、捉子、兌子的好機會？\n看棋譜時按「🔍 分析」，Pikafish 會告訴你這個局面最好的幾步，對照自己的想法最能進步。"],
-   [["殘局怎麼練","練殘局","殘局技巧"],"殘局怎麼練","殘局重在算步數和配合：兵卒在殘局很值錢，帥也要出來幫忙。\n建議：棋譜庫的「古典殘局譜」從簡單的開始看，先自己想再按下一步；術語裡的殺法也要背熟。","#/db/canju","打開殘局譜"],
+   [["中局","怎麼算","算棋","計算","思考"],"中局怎麼下","中局要先看全局：①對方剛走那步想幹嘛？②我哪個子沒人保護？③有沒有能將軍、捉子、兌子的好機會？\n看棋譜時按「🔍 分析」，Pikafish 會告訴你這個局面最好的幾步，對照自己的想法最能進步。\n\n👇 直接從大師對局的中局局面練習，選一個難度："," "," ","mid"],
+   [["殘局怎麼練","練殘局","殘局技巧"],"殘局怎麼練","殘局重在算步數和配合：兵卒在殘局很值錢，帥也要出來幫忙。\n建議：棋譜庫的「古典殘局譜」從簡單的開始看，先自己想再按下一步；術語裡的殺法也要背熟。\n\n👇 直接從大師對局的殘局練習（你執最後贏的一方），選一個難度：","#/db/canju","打開殘局譜","end"],
    [["漏著","送子","被吃","失誤","粗心","大意","看漏"],"怎麼避免漏著、送子","每走一步前花三秒檢查：①對方剛剛那步威脅什麼？②我要走的這個子離開後，原本保護的子還安全嗎？③走完後我的帥會不會被將？\n下完到「錯棋重練」把露著練對，同樣的錯就不會再犯。","#/redo","打開錯棋重練"],
    [["贏電腦","打敗電腦","電腦太強","贏不了"],"怎麼贏電腦","先從比較低的級數開始，連贏幾盤再升級；每盤輸了就看賽後報告，找出是哪一步開始變差。積分挑戰的對手會跟著你的段位調整，最適合穩定進步。","#/cpu","挑戰電腦"],
    [["賽後報告","評等","妙手","正手","優著","良著","錯著","露著","評分"],"賽後報告的評等","Pikafish 會評每一步：妙手（找到唯一好棋）、正手（最佳或幾乎最佳）、優著（只差一點）、良著（小失誤）、錯著（明顯變差）、露著（大失誤，常是送子或漏殺）。\n藍色箭頭是 Pikafish 建議的走法。先改掉露著和錯著，進步最快。"],
-   [["防守","怎麼守","被攻擊","擋"],"防守的訣竅","防守先顧帥的安全：士象不要隨便亂動，車要能回防；對方攻勢猛時，可以用兌子減少攻擊子力，或用反擊逼對方回防（以攻代守）。"],
-   [["進攻","怎麼攻","攻擊","殺棋"],"進攻的訣竅","進攻要集中子力：車馬炮至少兩個配合才容易成殺；先找對方的弱點（沒保護的子、空著的肋道、被塞的象眼），再用將軍逼對方應對，搶到先手就不要放。背熟殺法圖形最有幫助。"],
+   [["防守","怎麼守","被攻擊","擋"],"防守的訣竅","防守先顧帥的安全：士象不要隨便亂動，車要能回防；對方攻勢猛時，可以用兌子減少攻擊子力，或用反擊逼對方回防（以攻代守）。\n\n👇 從中局局面練習攻防："," "," ","mid"],
+   [["進攻","怎麼攻","攻擊","殺棋"],"進攻的訣竅","進攻要集中子力：車馬炮至少兩個配合才容易成殺；先找對方的弱點（沒保護的子、空著的肋道、被塞的象眼），再用將軍逼對方應對，搶到先手就不要放。背熟殺法圖形最有幫助。\n\n👇 練習把優勢下贏（殘局）："," "," ","end"],
    [["段位","升段","積分怎麼算","升官"],"段位怎麼升",`積分挑戰贏棋加分、輸棋扣分，分數夠就升段：新手→入門→業 1～9→專 1、專 2。你現在 ${p} 分（${ZH[g]}品官），小帥的官階也會跟著升。`,"#/cpu","去積分挑戰"],
    [["心態","緊張","輸棋難過","一直輸"],"下棋的心態","輸棋很正常，大師也會輸！重要的是每盤都學到一點：看賽後報告、練錯棋。連輸的時候先休息一下，或把電腦級數降一級找回手感。"],
    [["多久","每天練","練多久","時間"],"每天怎麼練","每天 20～30 分鐘就很有效：10 分鐘做錯棋重練或殘局，下一盤電腦，再花 5 分鐘看賽後報告。持續比一次練很久更重要。"],
    [["看棋譜","怎麼看棋譜","打譜"],"怎麼看棋譜（打譜）","打譜時先別急著按下一步：每一步先自己想「如果是我會怎麼走」，再看大師怎麼下；想不通的地方按「🔍 分析」。從《橘中秘》《梅花譜》這些古譜開始最好入門。","#/db","打開棋譜庫"]]}
 let ASK_KB=null;
 async function askKB(){if(ASK_KB)return ASK_KB;const kb=[];
-  for(const[keys,title,text,go,goLabel]of askGuides())kb.push({keys,title,text,tag:"學習指南",go,goLabel});
+  for(const[keys,title,text,go,goLabel,drill]of askGuides())kb.push({keys,title,text,tag:"學習指南",go:go&&go.trim()?go:"",goLabel:goLabel&&goLabel.trim()?goLabel:"",drill});
   // 自動產生的上萬筆問答（棋手、交手、開局、賽事、古譜）；第一次問才下載，存在手機裡
   try{const Q=await fetch("data/qa/qa.json?h=5d6a7a71").then(r=>r.json());for(const[keys,w,title,text,act]of Q){const it={keys,w,title,text,tag:"棋譜資料庫"};
     if(act.startsWith("g:")){it.go="#/db/"+act.slice(2).split("/").map(encodeURIComponent).join("/");it.goLabel="▶ 看這盤棋"}else if(act.startsWith("p:"))it.player=act.slice(2);else if(act.startsWith("s:"))it.sq=act.slice(2);kb.push(it)}}catch(e){}
@@ -2680,6 +2693,22 @@ async function askStartPly(c,id,q,kb){const it=await api(`/db/item?c=${encodeURI
 function askGameRow(G,it){const who=it.red&&it.black?`${esc(it.red)} 對 ${esc(it.black)}`:esc(it.title||it.name||"");
   const sub=[it.year||"",it.event||"",it.result||"",!it.red?G.books[it.c]||"":""].filter(Boolean).join("・");
   return`<button class="item" data-g="${esc(it.c)}|${esc(it.id)}" style="width:100%;text-align:left"><span class="tx"><b>${who}</b><span>${esc(sub)}</span></span><span class="muted">›</span></button>`}
+// 練習題（意見回饋 188）：從大師真實對局挑局面，和電腦下。中局＝第 24～34 步、盤上 24 子以上；殘局＝分出勝負的對局、離終局 6／12／20 回合、盤上 14 子以下（你執最後贏的那一方）
+const DRILL_LV={1:["入門",3,12],2:["進階",5,24],3:["高手",7,40]};
+async function startDrill(kind,lv){toast("🎯 挑題目中…");let d;
+  try{d=await api("/db/items?c=gmgames")}catch(e){return toast("要先下載「大師對局」才有題目")}
+  const pool=(d.items||[]).filter(x=>/勝|胜/.test(x.result||""));if(!pool.length)return toast("找不到題目");
+  for(let tries=0;tries<25;tries++){const sm=pool[Math.random()*pool.length|0];let it;try{it=await api(`/db/item?c=gmgames&id=${encodeURIComponent(sm.id)}`)}catch(e){continue}
+    const mv=(it.lines&&it.lines[0]&&it.lines[0].moves)||[];if(mv.length<44)continue;
+    const win=/^紅/.test(it.result||"")?"r":"b";let ply;
+    if(kind==="mid")ply=24+(Math.random()*10|0);else{ply=mv.length-DRILL_LV[lv][2];if(ply<30)continue;if((ply%2===0?"r":"b")!==win)ply--}
+    const b=parseFen(START);for(let i=0;i<ply;i++){const m=mv[i];b[m.t]=b[m.f];b[m.f]=null}const cnt=b.filter(Boolean).length;
+    if(kind==="end"&&cnt>14)continue;if(kind==="mid"&&cnt<24)continue;
+    const side=ply%2===0?"r":"b",title=(kind==="mid"?"中局練習":"殘局練習")+"・"+DRILL_LV[lv][0];
+    const pre={moves:mv.slice(0,ply).map(m=>({f:m.f,t:m.t})),info:{drill:true,kind,lv,title,key:"drill",ply,cn:"",q:"",opp:`${it.red||""} 對 ${it.black||""}`,date:String(it.year||"")}};
+    try{await api("/play/new",{human:side,level:DRILL_LV[lv][1],pre});store.set("cpuRanked",false);store.set("cpuCar",false);closeSheet();
+      toast(`🎯 ${title}：你執${side==="r"?"紅":"黑"}，局面取自 ${it.year||""} ${it.red||""} 對 ${it.black||""}`);if(location.hash==="#/cpu")route();else location.hash="#/cpu";return}catch(e){continue}}
+  toast("這次沒挑到合適的題目，再按一次")}
 function askSheet(){sheet("🤖 問小帥",b=>{
   const sug=[...BOT_SAID.slice(0,3),"五七炮是什麼","馬後炮","胡榮華 對 呂欽","1990 五羊盃","怎麼換朝代"];
   b.innerHTML=`<p class="muted" style="margin-top:0">問我象棋術語、開局、殺法、特級大師、比賽棋譜（例如「胡榮華 對 呂欽」「1990 五羊盃」「屏風馬破當頭炮」），或 App 怎麼用。能示範的，我會直接帶你到棋盤上看。<br>之後隨時<b>長按小人</b>就能問我。</p>
@@ -2705,10 +2734,11 @@ function askSheet(){sheet("🤖 問小帥",b=>{
     const top=r[0];if(top.sq&&G&&!gl){const g2=askGamesFind(G,top.sq);if(g2&&g2.list.length){gl2=g2}}
     if(typeof BOT!=="undefined"&&BOT)BOT.say(top.go&&top.goLabel?"我來示範給你看！":"我知道！",2);
     aa.innerHTML=`<div class="card"><div class="muted" style="font-size:12px">${esc(top.tag)}</div><b style="font-size:17px">${esc(top.title)}</b><p style="white-space:pre-line;margin:6px 0 10px">${esc(top.text)}</p>
-      ${top.go&&top.goLabel?`<button class="btn" id="ago">${esc(top.goLabel)}</button>`:""}${top.player?`<button class="btn" id="apl">📚 看${esc(top.title.split("（")[0].replace(/ 的.*$/,""))}的對局</button>`:""}</div>
+      ${top.go&&top.goLabel?`<button class="btn" id="ago">${esc(top.goLabel)}</button>`:""}${top.drill?`<div class="row" style="gap:6px;margin-bottom:8px">${[1,2,3].map(l=>`<button class="btn${l>1?" ghost":""}" data-drill="${l}" style="flex:1;padding:10px 4px">🎯 ${DRILL_LV[l][0]}</button>`).join("")}</div>`:""}${top.player?`<button class="btn" id="apl">📚 看${esc(top.title.split("（")[0].replace(/ 的.*$/,""))}的對局</button>`:""}</div>
       ${gHTML||(gl2?`<div class="muted" style="margin:12px 0 6px">📚 相關棋譜（共 ${gl2.total} 盤）：</div><div class="items" style="padding:0">${gl2.list.map(it=>askGameRow(G,it)).join("")}</div>`:"")}${r.length>1?`<div class="muted" style="margin:10px 0 6px">你是不是也想問：</div><div class="chips" style="flex-wrap:wrap">${r.slice(1).map(x=>`<button class="chip" data-q="${esc(x.keys[0])}">${esc(x.title.split("（")[0])}</button>`).join("")}</div>`:""}`;
     const g=aa.querySelector("#ago");if(g)g.onclick=()=>{try{document.activeElement.blur()}catch(e){}closeSheet();if(location.hash===top.go)route();else location.hash=top.go};
     const pl=aa.querySelector("#apl");if(pl)pl.onclick=()=>{try{document.activeElement.blur()}catch(e){}closeSheet();libState.c="gmgames";libState.player=top.player;libState.q="";libState.limit=60;const h="#/db/gmgames";if(location.hash===h)route();else location.hash=h};
+    aa.querySelectorAll("[data-drill]").forEach(x=>x.onclick=()=>{try{document.activeElement.blur()}catch(e){}startDrill(top.drill,+x.dataset.drill)});
     bindG();aa.querySelectorAll("[data-q]").forEach(x=>x.onclick=()=>ask(x.dataset.q))};
   b.querySelector("#ag").onclick=()=>ask(qi.value);qi.onkeydown=e=>{if(e.key==="Enter")ask(qi.value)};
   b.querySelectorAll("#asug [data-q]").forEach(x=>x.onclick=()=>ask(x.dataset.q));setTimeout(()=>qi.focus(),200)})}
