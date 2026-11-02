@@ -412,7 +412,7 @@ html[data-era=ming] .topbar,html[data-era=qing] .topbar{border-bottom-width:4px}
       if(!window.caches)return go();caches.keys().then(function(ks){return Promise.all(ks.filter(function(k){return k.indexOf("xqlab-app-")===0}).map(function(k){return caches.delete(k)}))})
         .then(function(){return navigator.serviceWorker&&navigator.serviceWorker.getRegistration()}).then(function(r){return r&&r.update()}).catch(function(){}).then(go)}},4000)})();
 </script>
-<script>window.XQ_OFFLINE=true;window.XQ_BUILD="20261102-1222";</script>
+<script>window.XQ_OFFLINE=true;window.XQ_BUILD="20261102-1233";</script>
 <script src="core.js"></script>
 <script src="engine.js"></script>
 <script src="local.js"></script>
@@ -580,10 +580,21 @@ let VOICE=null,VOICE_FIT=false;const pickVoice=()=>{try{const sex=store.get("voi
   const fit=zh.find(v=>re.test(v.name)&&!(sex==="m"&&V_FEMALE.test(v.name)));VOICE=fit||zh[0]||null;VOICE_FIT=!!fit}catch(e){}};
 if(window.speechSynthesis){pickVoice();speechSynthesis.onvoiceschanged=pickVoice}
 let voicePrimed=false;const primeVoice=()=>{if(voicePrimed||!window.speechSynthesis)return;voicePrimed=true;try{const u=new SpeechSynthesisUtterance(" ");u.volume=0;speechSynthesis.speak(u)}catch(e){}};
-// 語氣要兇、要急：講快一點、字後面加驚嘆號；男聲壓低、女聲拉高（沒有對的性別語音時壓／拉更多）
-function sayCall(text){if(!store.get("voiceCall",true)||!window.speechSynthesis)return;try{speechSynthesis.cancel();const sex=store.get("voiceSex","m"),jj=text==="將軍";
-  const u=new SpeechSynthesisUtterance(text+"！");u.lang=VOICE?VOICE.lang:"zh-TW";if(VOICE)u.voice=VOICE;u.rate=jj?1.45:1.6;
+// 「吃！」「將軍！」改用錄好的音檔（意見回饋 155：iPhone 內建中文語音只有女聲，壓低音高還是女聲）
+// data/voice/<m|f>-<chi|jj>-<s|n|f>.wav：男聲＝志偉、女聲＝雅婷（Windows 語音合成），慢／中／快三種速度；檔案還沒到就先用手機內建語音
+const VC_RAW={},VC_P={};let VC_DEC={ctx:null};
+const vcKey=w=>`${store.get("voiceSex","m")==="f"?"f":"m"}-${w}-${{s:"s",f:"f"}[store.get("voiceRate","n")]||"n"}`;
+function loadVc(){return Promise.all(["chi","jj"].map(w=>{const k=vcKey(w);if(VC_RAW[k])return;
+  return VC_P[k]||(VC_P[k]=fetch(`data/voice/${k}.wav`).then(r=>{if(!r.ok)throw 0;return r.arrayBuffer()}).then(b=>{VC_RAW[k]=b}).catch(()=>{VC_P[k]=null}))}))}
+function playVc(k){if(!AC||!VC_RAW[k])return false;if(VC_DEC.ctx!==AC)VC_DEC={ctx:AC};const ctx=AC;
+  const p=VC_DEC[k]||(VC_DEC[k]=new Promise((ok,no)=>ctx.decodeAudioData(VC_RAW[k].slice(0),ok,no)).catch(()=>null));
+  p.then(b=>{if(!b||!AC)return;const s=AC.createBufferSource();s.buffer=b;s.connect(AC.destination);s.start(AC.currentTime+.005)});return true}
+function sayCall(text){if(!store.get("voiceCall",true))return;const jj=text==="將軍",k=vcKey(jj?"jj":"chi");
+  if(AC&&VC_RAW[k]){withAudio(()=>playVc(k));return}loadVc();
+  if(!window.speechSynthesis)return;try{speechSynthesis.cancel();const sex=store.get("voiceSex","m"),rt={s:1,n:1.2,f:1.5}[store.get("voiceRate","n")]||1.2;
+  const u=new SpeechSynthesisUtterance(text+"！");u.lang=VOICE?VOICE.lang:"zh-TW";if(VOICE)u.voice=VOICE;u.rate=rt;
   u.pitch=sex==="f"?(VOICE_FIT?1.15:1.5):(VOICE_FIT?.8:.45);u.volume=1;speechSynthesis.speak(u)}catch(e){}}
+setTimeout(()=>{if(store.get("voiceCall",true))loadVc()},1500);
 function withAudio(play){if(!AC)return;if(AC.state==="running"){try{play()}catch(e){}return}try{AC.resume().then(()=>{if(AC&&AC.state==="running")try{play()}catch(e){}}).catch(()=>{})}catch(e){}}
 function moveSound(cap){if(!(cap?store.get("capSound",true):store.get("mvSound",false)))return;withAudio(()=>moveSound0(cap))}
 // 棋子落在木棋盤上的聲音（意見回饋 139）：依棋子材質合成，設定裡可選
@@ -1922,14 +1933,16 @@ function Settings(v){
     v.querySelectorAll("[data-e]").forEach(x=>x.onclick=()=>{const k=x.dataset.e;if(k===store.get("era","classic"))return;vibrate(5);store.set("era",k);applyEra();
       if(k!=="classic"&&store.get("boardTheme","wood3d")!=="auto"){store.set("boardTheme","auto");toast("棋盤也換成這個朝代的配色（可在下面改回）")}paint();show(true)});
     const tg=(k,label,sub)=>`<label class="row" style="justify-content:space-between;padding:6px 0"><span><b>${label}</b><br><span class="muted">${sub}</span></span><input type="checkbox" class="sw" data-t="${k}" ${store.get(k,k!=="mvSound")?"checked":""}></label>`;
-    v.querySelector("#mv").innerHTML=tg("mvArrow","箭頭","從原來位置畫箭頭指到新位置")+'<div style="border-top:1px solid var(--line)"></div>'+tg("mvAnim","動畫","棋子滑過去，被吃的棋子淡出")+'<div style="border-top:1px solid var(--line)"></div>'+tg("capSound","吃子音效","吃子時重重「啪」一聲、將軍時「鏘」一聲")+'<div style="border-top:1px solid var(--line)"></div>'+`<div style="padding:6px 0" id="vcRow"><b>語音報「吃」「將軍」</b><br><span class="muted">吃子喊「吃！」、將軍喊「將軍！」；點一下可以試聽（用手機內建語音）</span><div class="st-res" style="margin:8px 0 0">${[["off","關"],["m","男聲"],["f","女聲"]].map(([k,l])=>`<button data-vc="${k}" class="${(store.get("voiceCall",true)?store.get("voiceSex","m"):"off")===k?"on":""}">${l}</button>`).join("")}</div></div>`+'<div style="border-top:1px solid var(--line)"></div><div style="padding:6px 0"><b>走棋音效</b><br><span class="muted">走棋時棋子落下的聲音；實木＝厚棋子拍在木棋盤上；點一下可以試聽</span><div class="st-res" id="sndSt" style="margin:8px 0 0;flex-wrap:wrap">'+[["off","關"],["wood","實木（合成）"],["soft","輕敲"],...SFX_SET].map(([k,l])=>`<button data-snd="${k}" class="${(store.get("mvSound",false)?store.get("sndStyle","wood"):"off")===k?"on":""}">${l}</button>`).join("")+'</div></div>'+'<div style="border-top:1px solid var(--line)"></div>'+tg("ckFx","將軍特效","被將軍或將對方軍時，棋盤上蓋「將軍！」字樣")+'<div style="border-top:1px solid var(--line)"></div>'+tg("capFx","吃子特效","吃子時被吃的那格蓋一個水墨「吃」字")+'<div style="border-top:1px solid var(--line)"></div>'+tg("opFx","開局名稱動畫","走出中炮、仙人指路、屏風馬…時，棋盤上展開卷軸寫出開局名");
+    v.querySelector("#mv").innerHTML=tg("mvArrow","箭頭","從原來位置畫箭頭指到新位置")+'<div style="border-top:1px solid var(--line)"></div>'+tg("mvAnim","動畫","棋子滑過去，被吃的棋子淡出")+'<div style="border-top:1px solid var(--line)"></div>'+tg("capSound","吃子音效","吃子時重重「啪」一聲、將軍時「鏘」一聲")+'<div style="border-top:1px solid var(--line)"></div>'+`<div style="padding:6px 0" id="vcRow"><b>語音報「吃」「將軍」</b><br><span class="muted">吃子喊「吃！」、將軍喊「將軍！」；點一下可以試聽；可調語速</span><div class="st-res" style="margin:8px 0 0">${[["off","關"],["m","男聲"],["f","女聲"]].map(([k,l])=>`<button data-vc="${k}" class="${(store.get("voiceCall",true)?store.get("voiceSex","m"):"off")===k?"on":""}">${l}</button>`).join("")}</div><div class="st-res" style="margin:8px 0 0;align-items:center"><span class="muted" style="font-size:13px">語速</span>${[["s","慢"],["n","中"],["f","快"]].map(([k,l])=>`<button data-vr="${k}" class="${store.get("voiceRate","n")===k?"on":""}">${l}</button>`).join("")}</div></div>`+'<div style="border-top:1px solid var(--line)"></div><div style="padding:6px 0"><b>走棋音效</b><br><span class="muted">走棋時棋子落下的聲音；實木＝厚棋子拍在木棋盤上；點一下可以試聽</span><div class="st-res" id="sndSt" style="margin:8px 0 0;flex-wrap:wrap">'+[["off","關"],["wood","實木（合成）"],["soft","輕敲"],...SFX_SET].map(([k,l])=>`<button data-snd="${k}" class="${(store.get("mvSound",false)?store.get("sndStyle","wood"):"off")===k?"on":""}">${l}</button>`).join("")+'</div></div>'+'<div style="border-top:1px solid var(--line)"></div>'+tg("ckFx","將軍特效","被將軍或將對方軍時，棋盤上蓋「將軍！」字樣")+'<div style="border-top:1px solid var(--line)"></div>'+tg("capFx","吃子特效","吃子時被吃的那格蓋一個水墨「吃」字")+'<div style="border-top:1px solid var(--line)"></div>'+tg("opFx","開局名稱動畫","走出中炮、仙人指路、屏風馬…時，棋盤上展開卷軸寫出開局名");
     {const mvB=v.querySelector("#mv"),sdB=v.querySelector("#snd");sdB.innerHTML="";mvB.querySelectorAll(":scope>div[style*='border-top']").forEach(x=>x.remove());
       const st=mvB.querySelector("#sndSt");if(st)sdB.append(st.parentElement);
       for(const k of["capSound"]){const x=mvB.querySelector(`[data-t="${k}"]`);if(x)sdB.append(x.closest("label"))}
       const vr=mvB.querySelector("#vcRow");if(vr)sdB.append(vr);
       [...sdB.children].slice(1).forEach(x=>x.style.borderTop="1px solid var(--line)")}
     v.querySelectorAll("[data-vc]").forEach(x=>x.onclick=()=>{const k=x.dataset.vc;v.querySelectorAll("[data-vc]").forEach(y=>y.classList.toggle("on",y===x));
-      store.set("voiceCall",k!=="off");if(k!=="off"){store.set("voiceSex",k);pickVoice();primeVoice();setTimeout(()=>sayCall("將軍"),150);setTimeout(()=>sayCall("吃"),1400)}});
+      store.set("voiceCall",k!=="off");if(k!=="off"){store.set("voiceSex",k);pickVoice();primeVoice();unlockAudio();loadVc().then(()=>{sayCall("將軍");setTimeout(()=>sayCall("吃"),1100)})}});
+    v.querySelectorAll("[data-vr]").forEach(x=>x.onclick=()=>{store.set("voiceRate",x.dataset.vr);v.querySelectorAll("[data-vr]").forEach(y=>y.classList.toggle("on",y===x));
+      if(!store.get("voiceCall",true))return;primeVoice();unlockAudio();loadVc().then(()=>{sayCall("將軍");setTimeout(()=>sayCall("吃"),1100)})});
     v.querySelectorAll("[data-snd]").forEach(x=>x.onclick=()=>{const k=x.dataset.snd;store.set("mvSound",k!=="off");if(k==="off"){v.querySelectorAll("[data-snd]").forEach(y=>y.classList.toggle("on",y===x));return}store.set("sndStyle",k);v.querySelectorAll("[data-snd]").forEach(y=>y.classList.toggle("on",y===x));unlockAudio();(/^s\d\d$/.test(k)?loadSfx(k):Promise.resolve()).then(()=>{withAudio(()=>moveSound0(false));setTimeout(()=>withAudio(()=>moveSound0(true)),550)})});
     v.querySelectorAll("[data-t]").forEach(x=>x.onchange=()=>{store.set(x.dataset.t,x.checked);if(x.checked&&(x.dataset.t==="mvSound"||x.dataset.t==="capSound")){unlockAudio();moveSound(x.dataset.t==="capSound")}if(x.checked&&x.dataset.t==="voiceCall"){primeVoice();setTimeout(()=>sayCall("將軍"),150)}show(true)});
     v.querySelector("#nmS").textContent=myName()||"還沒取名字";show(false)};
