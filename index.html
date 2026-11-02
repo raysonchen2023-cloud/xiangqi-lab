@@ -413,7 +413,7 @@ html[data-era=ming] .topbar,html[data-era=qing] .topbar{border-bottom-width:4px}
       if(!window.caches)return go();caches.keys().then(function(ks){return Promise.all(ks.filter(function(k){return k.indexOf("xqlab-app-")===0}).map(function(k){return caches.delete(k)}))})
         .then(function(){return navigator.serviceWorker&&navigator.serviceWorker.getRegistration()}).then(function(r){return r&&r.update()}).catch(function(){}).then(go)}},4000)})();
 </script>
-<script>window.XQ_OFFLINE=true;window.XQ_BUILD="20261102-1946";</script>
+<script>window.XQ_OFFLINE=true;window.XQ_BUILD="20261102-1953";</script>
 <script src="core.js"></script>
 <script src="engine.js"></script>
 <script src="local.js"></script>
@@ -2174,13 +2174,13 @@ function fixList(items,dev){const fmtV=v=>v?v.replace(/^(\d{4})(\d\d)(\d\d)-(\d\
     ${x.q?`<div class="muted" style="font-size:13px;margin:4px 0;white-space:pre-wrap;max-height:4.5em;overflow:hidden">「${esc(x.q)}」</div>`:""}
     <div style="font-size:14px;margin-top:6px;white-space:pre-wrap;word-break:break-word">✅ ${esc(x.n||"已修正")}</div>${x.v?`<div class="muted" style="font-size:11px;margin-top:4px">版本 ${esc(fmtV(x.v))}</div>`:""}</div>`).join(""):'<div class="card muted" style="text-align:center">還沒有修正紀錄</div>'}
 async function fixHistory(){const F=await myFixes();if(!F)return toast("讀不到修正紀錄");sheet(F.dev?"🛠 修正紀錄（全部）":"🛠 我回報的問題",b=>{b.innerHTML=`<p class="muted" style="margin-top:0">${F.dev?"每一次修正的回報，最新的在最上面。":"你透過「意見回饋」回報、已經修好的問題。"}</p>`+fixList(F.items,F.dev)})}
-async function checkFixes(){if(document.querySelector(".modal,#sheet"))return setTimeout(checkFixes,5000);const F=await myFixes();if(!F||!F.items.length)return;
+let FIX_P=null;async function checkFixes(){FIX_P=FIX_P||myFixes();const F=await FIX_P;if(document.querySelector(".modal,#sheet"))return setTimeout(checkFixes,1500);FIX_P=null;if(!F||!F.items.length)return;
   let seen=store.get("fixSeen",null);
   if(seen===null){if(F.dev){const top=F.items.map(x=>x.v).sort().pop();seen=F.items.filter(x=>x.v!==top).map(x=>x.r)}else seen=[]}
   const S=new Set(seen),news=F.items.filter(x=>!S.has(x.r));store.set("fixSeen",F.items.map(x=>x.r));if(!news.length)return;
   modal(`<div class="em">🛠</div><h2>${F.dev?`有 ${news.length} 項新的修正`:news.length>1?`你回報的 ${news.length} 個問題修好了`:"你回報的問題修好了"}</h2>
     <div style="text-align:left;max-height:46vh;overflow:auto;margin:8px 0">${fixList(news.slice(0,30),F.dev)}</div>${F.dev?"":'<p class="muted" style="font-size:12px">謝謝你的回饋！</p>'}`,[["知道了",null],["全部修正紀錄",()=>fixHistory(),true]])}
-setTimeout(()=>{if(OFF)checkFixes()},4500);
+setTimeout(()=>{if(OFF)checkFixes()},800);   // 意見回饋 211：更新完一打開就跳，不要等
 function feedbackSheet(){let type="🐞 錯誤";
   sheet("💬 意見回饋",b=>{b.innerHTML=`<style>
     .fbw{display:flex;flex-direction:column;gap:14px}.fbw .lead{margin:0;font-size:13px}
