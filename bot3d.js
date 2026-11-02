@@ -166,9 +166,10 @@
       if(x.from)ALL.push(`${x.zh}：${cut(x.from,24)}`);if(x.style)ALL.push(`${x.zh}的棋風：${cut(x.style,26)}`)}}catch(e){}})();
   const nextLine=()=>{let seen=new Set(store.get("botSeen",[]));let pool=[];for(let i=0;i<ALL.length;i++)if(!seen.has(i))pool.push(i);
     if(!pool.length){seen=new Set();pool=ALL.map((_,i)=>i)}const i=pool[Math.random()*pool.length|0];seen.add(i);store.set("botSeen",[...seen]);return ALL[i]};
+  let hintN=0;const HINTS=["長按我，可以問我象棋問題喔！","有問題嗎？長按我就好～","長按我：開局、殺法、棋手、棋譜都可以問"];
   const COMBO=[];for(let i=0;i<ARM.length&&COMBO.length<300;i++)for(let j=0;j<BODY.length&&COMBO.length<300;j++)COMBO.push([i,j]);
   const FACES=["smile","open","smile","wink","smile","open"];
-  const comboAct=n=>{const[i,j]=COMBO[n],a=ARM[i],b=BODY[j];return{d:2.4,name:a[0]+(b[0]?"＋"+b[0]:""),get say(){return nextLine()},f:(p,B)=>{a[1](p,B);b[1](p,B);B.face=FACES[n%FACES.length]}}};
+  const comboAct=n=>{const[i,j]=COMBO[n],a=ARM[i],b=BODY[j];return{d:2.4,name:a[0]+(b[0]?"＋"+b[0]:""),get say(){return ++hintN%9===0?HINTS[(hintN/9|0)%HINTS.length]:nextLine()},f:(p,B)=>{a[1](p,B);b[1](p,B);B.face=FACES[n%FACES.length]}}};
 
   function start(){let SC=Math.min(2,Math.max(.6,+store.get("botSize",1)||1)),W=W0*SC,H=H0*SC,curK=eraK();
     const box=document.createElement("div");box.className="xqbot";
@@ -217,18 +218,20 @@
       if(!drag){const b=bounds();x=Math.min(Math.max(x,b.x0),Math.max(b.x0,b.x1));y=Math.min(Math.max(y,b.y0),Math.max(b.y0,b.y1))}
       box.style.transform=`translate(${x|0}px,${y|0}px)`;rd.render(sc,cam)}
     requestAnimationFrame(frame);
+    if(!store.get("botHint",false)){store.set("botHint",true);setTimeout(()=>{if(!stopped){doAct("wave");say("嗨！我是小帥。長按我，可以問我任何象棋問題！",5)}},1800)}
     // 點／拖小人：事件只給小人，不會穿到後面的按鈕
     const stop=e=>{e.stopPropagation();if(e.cancelable)e.preventDefault()};
-    hit.addEventListener("pointerdown",e=>{stop(e);try{hit.setPointerCapture(e.pointerId)}catch(_){}drag={sx:e.clientX,sy:e.clientY,ox:x,oy:y,moved:false};act=null});
+    hit.addEventListener("pointerdown",e=>{stop(e);try{hit.setPointerCapture(e.pointerId)}catch(_){}drag={sx:e.clientX,sy:e.clientY,ox:x,oy:y,moved:false};act=null;
+      // 長按＝問問題（意見回饋 169）
+      const d0=drag;d0.lp=setTimeout(()=>{if(drag===d0&&!d0.moved){d0.long=true;doAct("think");say("你想問什麼？",2);try{window.dispatchEvent(new CustomEvent("xq-bot-ask"))}catch(_){}}},550)});
     hit.addEventListener("pointermove",e=>{if(!drag)return;stop(e);const dx=e.clientX-drag.sx,dy=e.clientY-drag.sy;if(!drag.moved&&Math.hypot(dx,dy)<6)return;
-      if(!drag.moved){drag.moved=true;hit.style.cursor="grabbing";say("哇～飛起來了！",1.5)}x=drag.ox+dx;y=drag.oy+dy;tx=x;ty=y});
-    const up=e=>{if(!drag)return;stop(e);const d=drag;drag=null;hit.style.cursor="grab";
+      if(!drag.moved){drag.moved=true;clearTimeout(drag.lp);hit.style.cursor="grabbing";say("哇～飛起來了！",1.5)}x=drag.ox+dx;y=drag.oy+dy;tx=x;ty=y});
+    const up=e=>{if(!drag)return;stop(e);const d=drag;drag=null;hit.style.cursor="grab";clearTimeout(d.lp);if(d.long)return;
       if(d.moved&&boardMode){const b=bounds();x=Math.min(Math.max(x,b.x0),b.x1);y=Math.min(Math.max(y,b.y0),b.y1);tx=x;ty=y;boardDrag=true;say("好，我待在這裡看",1.8);next=4;return}
       if(d.moved){const b=bounds();x=Math.min(Math.max(x,b.x0),b.x1);y=Math.min(Math.max(y,b.y0),b.y1);tx=x;ty=y;parked=true;store.set("botPos",{x:x/innerWidth,y:y/innerHeight});say("我在這裡等你（點兩下我會去散步）",2.6);next=4;return}
-      // 點一下＝表演、點兩下＝去散步（停放時）、點三下＝問問題（意見回饋 167）
+      // 點一下＝表演、點兩下＝去散步（停放時）；長按＝問問題
       taps++;clearTimeout(tapT);tapT=setTimeout(()=>{const n=taps;taps=0;
-        if(n>=3){doAct("think");say("你想問什麼？",2);try{window.dispatchEvent(new CustomEvent("xq-bot-ask"))}catch(e){}}
-        else if(n===2&&parked){parked=false;store.set("botPos",null);say("出去走走～",1.6);wander()}
+        if(n>=2&&parked){parked=false;store.set("botPos",null);say("出去走走～",1.6);wander()}
         else doAct(randAct())},380)};
     hit.addEventListener("pointerup",up);hit.addEventListener("pointercancel",up);
     for(const ev of["click","dblclick","touchstart","touchend","mousedown","mouseup","contextmenu"])hit.addEventListener(ev,stop,{passive:false});
