@@ -67,14 +67,15 @@ var XQ=(function(){
   async function carSell(b){const d=await (await fetch("data/cars.json")).json(),c=d.cars.find(x=>x.id===b.id);if(!c)throw new Error("找不到這台車");
     const B=carBank(),own=B.owned[c.id];if(!own)throw new Error("你沒有這台車");const{v}=carValue(c,own.at);
     delete B.owned[c.id];B.pts+=v;B.sold=(B.sold||0)+1;B.hist.unshift({sell:c.id,d:v,at:Date.now()});B.hist=B.hist.slice(0,100);ls.set("carBank",B);return{...carState(),gain:v}}
-  const savePlay=()=>ls.set("play",{id:P.id,human:P.human,level:P.level,ranked:!!P.ranked,reward:!!P.reward,prize:P.prize||null,rk:P.rk,rate:P.rate||null,result:P.result,practice:P.practice||null,moves:saveMoves(P.moves)});
+  const savePlay=()=>ls.set("play",{id:P.id,human:P.human,level:P.level,ranked:!!P.ranked,reward:!!P.reward,arena:P.arena||null,stamp:P.stamp||null,prize:P.prize||null,rk:P.rk,rate:P.rate||null,result:P.result,practice:P.practice||null,moves:saveMoves(P.moves)});
   function ensureP(){if(P)return;const s=ls.get("play",null);if(s&&s.moves){P=s;P.hint=null;stateRebuild(P)}else playNew("r",3);setTimeout(playEngine,0)}
   // pre：錯棋重練，先擺上舊對局到錯棋之前的著法（moves），info 記上次走了什麼
-  function playNew(human,level,ranked,pre,reward){
+  // arena：公園朝代擂台（意見回饋 255）＝這盤是挑戰哪個朝代的擂主；贏了蓋那個朝代的章
+  function playNew(human,level,ranked,pre,reward,arena){
     // 積分挑戰下到一半就開新局：算輸（不然輸棋前開新局就能躲掉扣分）
     if(P&&P.ranked&&!P.result&&P.moves.length>=2){P.result={w:opp(P.human),why:"中途離開，算輸"};cpuRateApply("l");pushGame("play",{id:P.id,date:P.id.slice(0,10),level:0,ranked:true,rk:P.rk,human:P.human,result:P.result,moves:saveMoves(P.moves)})}
     const pm=pre&&Array.isArray(pre.moves)?pre.moves.filter(m=>Number.isInteger(m.f)&&Number.isInteger(m.t)).slice(0,300):[];
-    P={id:gameId(),human,level:ranked?0:level,ranked:!!ranked,rk:ranked?rankIdx(cpuRate().pts):null,moves:pm,result:null,hint:null,practice:pre?{...(pre.info||{}),base:pm.length}:null,reward:!ranked&&!pre&&!!reward};
+    P={id:gameId(),human,level:ranked?0:level,ranked:!!ranked,rk:ranked?rankIdx(cpuRate().pts):null,moves:pm,result:null,hint:null,practice:pre?{...(pre.info||{}),base:pm.length}:null,reward:!ranked&&!pre&&!!reward,arena:!ranked&&!pre&&!reward&&arena||null};
     stateRebuild(P);if(P.practice&&P.turn!==human)throw new Error("這步不是你走的");savePlay()}
   function playApply(f,t){stateApply(P,f,t);P.hint=null;const r=judgeState(P);if(r)playEnd(r.w,r.why);savePlay();setTimeout(analyzePlay,0);
     try{window.dispatchEvent(new Event("xq-play"))}catch(e){}}   // 通知畫面馬上更新，不用等下一次輪詢
@@ -82,6 +83,8 @@ var XQ=(function(){
     if(P.practice){savePlay();return}   // 錯棋重練：不算戰績、不存進對局紀錄
     if(P.ranked){if(P.moves.length>=2)cpuRateApply(res)}   // 雙方都還沒走就結束不計分
     else if(P.reward){if(P.moves.length>=2)carApply(res)}
+    if(P.arena&&res==="w"&&P.moves.length>=2){const S=ls.get("arenaStamps",{}),first=!S[P.arena];if(first)S[P.arena]={at:new Date().toISOString(),lv:P.level,n:P.moves.length};ls.set("arenaStamps",S);
+      P.stamp={era:P.arena,first,total:Object.keys(S).length}}
     else{const rec=ls.get("record",{}),L=rec[P.level]||(rec[P.level]={w:0,l:0,d:0});L[res]++;ls.set("record",rec)}
     pushGame("play",{id:P.id,date:P.id.slice(0,10),level:P.level,ranked:!!P.ranked,reward:!!P.reward,rk:P.rk,human:P.human,result:P.result,moves:saveMoves(P.moves)});savePlay()}
   async function analyzePlay(){if(paBusy||!P)return;paBusy=true;try{await analyzeList(P,savePlay,()=>!!P&&!P.result&&P.turn!==P.human)}finally{paBusy=false}}
@@ -98,13 +101,13 @@ var XQ=(function(){
     finally{playBusy=false;setTimeout(playEngine,0)}}
   function playState(){ensureP();
     const CR=cpuRate(),ci=rankIdx(CR.pts),nx=RANKS[ci+1];
-    return{id:P.id,board:P.board,turn:P.turn,human:P.human,level:P.level,ranked:!!P.ranked,reward:!!P.reward,prize:P.prize||null,car:P.reward?carState():null,rkName:P.ranked?RANKS[P.rk][0]:null,rate:P.rate||null,
+    return{id:P.id,board:P.board,turn:P.turn,human:P.human,level:P.level,ranked:!!P.ranked,reward:!!P.reward,arena:P.arena||null,stamp:P.stamp||null,prize:P.prize||null,car:P.reward?carState():null,rkName:P.ranked?RANKS[P.rk][0]:null,rate:P.rate||null,
       cpuRate:{pts:CR.pts,rank:RANKS[ci][0],w:CR.w,l:CR.l,d:CR.d,next:nx?nx[0]:null,toNext:nx?nx[1]-CR.pts:0,lo:RANKS[ci][1],hi:nx?nx[1]:null,hist:CR.hist},
       levels:LEVELS.map(l=>({n:l.n,name:l.name,desc:l.desc})),record:ls.get("record",{}),
       moves:P.moves.map(moveOut),result:P.result,practice:P.practice||null,thinking:playBusy&&P.turn!==P.human,msg:playMsg,eval:lastEv(P.moves),hint:P.hint,
       legal:!P.result&&P.turn===P.human?legal(P.board,P.turn):[],check:!P.result&&inCheck(P.board,P.turn)?kingSq(P.board,P.turn):-1,engine:true}}
   async function playPost(p,b){ensureP();
-    if(p==="/play/new"){playNew(b.human==="b"?"b":"r",Math.max(1,Math.min(LEVELS.length,Math.round(+b.level)||3)),!b.pre&&!!b.ranked,b.pre||null,!!b.reward);playMsg="";setTimeout(playEngine,0)}
+    if(p==="/play/new"){playNew(b.human==="b"?"b":"r",Math.max(1,Math.min(LEVELS.length,Math.round(+b.level)||3)),!b.pre&&!!b.ranked,b.pre||null,!!b.reward,typeof b.arena==="string"&&/^[a-z]{2,8}$/.test(b.arena)?b.arena:null);playMsg="";setTimeout(playEngine,0)}
     else if(p==="/play/move"){const f=+b.f,t=+b.t;if(P.result)throw new Error("這局已經結束");if(P.turn!==P.human)throw new Error("還沒輪到你");
       if(!legal(P.board,P.turn).some(([x,y])=>x===f&&y===t))throw new Error("這步不合法");playApply(f,t);setTimeout(playEngine,0)}
     else if(p==="/play/undo"){if(P.ranked)throw new Error("積分挑戰不能悔棋");if(P.reward)throw new Error("獎勵模式不能悔棋");if(playBusy)throw new Error("引擎思考中，等它走完再悔棋");
