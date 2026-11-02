@@ -412,7 +412,7 @@ html[data-era=ming] .topbar,html[data-era=qing] .topbar{border-bottom-width:4px}
       if(!window.caches)return go();caches.keys().then(function(ks){return Promise.all(ks.filter(function(k){return k.indexOf("xqlab-app-")===0}).map(function(k){return caches.delete(k)}))})
         .then(function(){return navigator.serviceWorker&&navigator.serviceWorker.getRegistration()}).then(function(r){return r&&r.update()}).catch(function(){}).then(go)}},4000)})();
 </script>
-<script>window.XQ_OFFLINE=true;window.XQ_BUILD="20261102-1455";</script>
+<script>window.XQ_OFFLINE=true;window.XQ_BUILD="20261102-1459";</script>
 <script src="core.js"></script>
 <script src="engine.js"></script>
 <script src="local.js"></script>
@@ -2516,6 +2516,12 @@ const BOT_FAQ=[
  [["離線","沒網路","網路"],"加到手機主畫面後，大部分功能（棋譜、和電腦下棋）離線也能用；線上對戰需要網路。"],
  [["安裝","主畫面","App"],"iPhone 用 Safari 打開，按「分享 → 加入主畫面」，就能像 App 一樣全螢幕使用。"],
  [["更新","版本","新版"],"App 會自動更新，有新版時會提示；版本號在「設定 → ⋯ 其他 → 關於」。","#/settings","打開設定"],
+ [["你好","嗨","哈囉","hello","Hi","hi"],"你好！我是小帥 👋 可以問我象棋術語、開局、殺法、特級大師、比賽棋譜，或「怎麼提升實力」。"],
+ [["謝謝","感謝","3Q"],"不客氣！有問題隨時長按我 😊"],
+ [["早安","午安","晚安"],"你好呀～今天也來下一盤吧！"],
+ [["你會什麼","你能做什麼","可以問什麼","能問什麼"],"我可以回答：象棋規則和術語、開局和殺法（還能在棋盤上示範）、2,500 多位棋手的戰績和交手紀錄、各比賽和古譜棋譜，還有 App 怎麼用、怎麼提升實力。"],
+ [["幾歲","你多大"],"我是 2026 年 11 月出生的棋子小人，還很年輕！"],
+ [["天氣","吃飯","無聊"],"我只懂象棋啦 😅 要不要來一盤？問我「怎麼提升實力」也可以！","#/cpu","挑戰電腦"],
  [["高車保馬"],"把車升高一兩格守住自己的馬，讓馬不怕被對方攻擊，是佈局時常見的穩健下法。"],
  [["巡河車"],"車走到自己這邊河口的那一排，可以左右巡守、支援兩翼。"],
  [["騎河車"],"車走到對方的河口（騎在河界上），壓制對方的兵和馬。"],
@@ -2570,12 +2576,13 @@ async function askKB(){if(ASK_KB)return ASK_KB;const kb=[];
   for(const[keys,text,go,goLabel]of BOT_FAQ)kb.push({keys,title:keys[0],text,tag:"App 使用",go,goLabel});
   return ASK_KB=kb}
 const ZHN="〇一二三四五六七八九";
-function askNorm(q){return String(q||"").replace(/[0-9]/g,d=>ZHN[d]).replace(/砲/g,"炮").replace(/[俥]/g,"車").replace(/[傌]/g,"馬").replace(/[？?！!。，,、\s「」]/g,"")}
+const ASK_SC=new WeakMap();
+function askNorm(q){return String(q||"").replace(/棋力/g,"實力").replace(/如何|要怎樣|怎樣|怎麽/g,"怎麼").replace(/變厲害|進步|變更強|強起來/g,"變強").replace(/[0-9]/g,d=>ZHN[d]).replace(/砲/g,"炮").replace(/[俥]/g,"車").replace(/[傌]/g,"馬").replace(/[？?！!。，,、\s「」]/g,"")}
 function askFind(kb,q,min){const n=askNorm(q);if(!n)return[];const out=[];
   for(const it of kb){let sc=0,hit=[];for(const k0 of it.keys){const k=askNorm(k0);if(!k)continue;if(n.includes(k)){if(!hit.some(h=>h.includes(k)||k.includes(h))){hit.push(k);sc+=k.length*3}}else if(k.includes(n)&&n.length>=2)sc=Math.max(sc,n.length*2)}
     if(sc&&it.w){let wh=0;for(const w of it.w)if(n.includes(askNorm(w)))wh++;sc+=wh?wh*6:(it.w.length?-3:0)}
     if(!sc&&n.length>=2){let hit=0;for(let i=0;i<n.length-1;i++)if(askNorm(it.title).includes(n.slice(i,i+2)))hit++;if(hit)sc=hit}
-    if(sc&&sc>=(min||1))out.push([sc,it])}
+    if(sc&&sc>=(min||1)){ASK_SC.set(it,sc);out.push([sc,it])}}
   return out.sort((a,b)=>b[0]-a[0]).slice(0,4).map(x=>x[1])}
 // 問小帥也能找棋譜（意見回饋 169）：古譜、許銀川、特級大師對局全部可搜；資料是簡體，問題先轉簡體再比對（只收資料裡會用到的字）
 const TS_MAP=(()=>{const s="並并亂乱亞亚佔占來来侖仑俁俣俠侠倉仓個个倫伦偉伟傑杰備备傳传傷伤傾倾僕仆儀仪億亿儉俭優优兌兑兒儿內内兩两凱凯別别則则剛刚創创劃划劉刘劌刿劍剑勁劲動动務务勝胜勞劳勢势勱劢勳勋勵励勸劝勻匀匯汇區区協协厲厉參参叄叁叢丛吳吴呂吕員员問问啓启喫吃喬乔單单嘗尝嚴严嚶嘤國国圍围園园圓圆圖图團团堅坚堯尧報报場场塗涂塢坞塵尘墊垫墜坠壇坛壓压壘垒壠垅壩坝壯壮壺壶壽寿夢梦夾夹奧奥奪夺婁娄嫺娴嬋婵孫孙學学宮宫實实寧宁寬宽寶宝將将專专尋寻對对導导屆届層层岡冈峯峰島岛峽峡崍崃崗岗崢峥嵐岚嶸嵘嶺岭嶼屿嶽岳巋岿巒峦巔巅巖岩帥帅師师帳帐帶带幟帜幣币幹干幾几廄厩廈厦廚厨廠厂廣广廩廪廬庐弒弑張张強强彈弹彌弥彎弯彥彦後后徑径從从復复徵征恆恒悅悦悶闷惲恽愛爱愷恺慄栗慟恸慶庆憐怜憑凭應应懶懒懷怀懸悬戀恋戰战戲戏戶户挾挟掃扫掛挂採采揚扬換换損损搖摇搗捣搶抢摯挚撈捞撥拨撫抚撲扑擁拥擊击擋挡擔担據据擺摆攔拦攢攒攪搅敗败敵敌數数斂敛斃毙斬斩斷断於于時时晉晋晝昼暉晖暘旸暢畅曄晔曇昙曉晓書书會会東东梘枧條条梟枭棄弃棗枣棟栋棧栈楊杨楓枫業业極极榮荣構构槍枪槓杠樂乐樓楼標标樞枢樸朴樹树樺桦橋桥機机橫横檻槛櫃柜櫝椟權权欒栾欽钦歐欧歡欢歲岁歷历歸归殘残殞殒殲歼殺杀殼壳毀毁氣气決决沒没涼凉淚泪淨净淵渊淺浅減减湧涌湯汤溝沟溫温滄沧滅灭滎荥滬沪滾滚滿满漁渔漢汉漸渐潁颍潔洁潛潜潤润潯浔澗涧澤泽濟济濤涛濰潍濱滨瀟潇瀨濑灘滩灝灏灣湾灤滦災灾烏乌烴烃無无煉炼煒炜煙烟煢茕煥焕熱热熾炽燁烨燈灯燒烧營营燦灿爐炉爭争爲为爾尔牀床牆墙牽牵犢犊狹狭獅狮獎奖獨独獲获獵猎獸兽獻献現现瑋玮瑤瑶瑩莹瑪玛璣玑環环璽玺瓏珑甕瓮產产畝亩畢毕畫画異异當当疊叠發发盜盗盡尽監监盤盘盧卢硯砚碩硕礙碍礦矿祕秘祿禄禍祸禎祯禕祎禪禅禮礼稅税種种稱称積积穎颖窩窝窮穷窺窥竇窦竈灶競竞節节範范築筑篤笃簡简簫箫簾帘籌筹籬篱粵粤糧粮紀纪約约紅红紋纹納纳紐纽純纯級级紛纷紡纺細细終终組组絆绊結结絕绝絡络統统絲丝絳绛綏绥經经綠绿維维綱纲網网綺绮綿绵緒绪線线編编緩缓緬缅練练縛缚縣县縮缩縱纵總总績绩織织繞绕繡绣繭茧繮缰繼继纏缠纘缵罷罢羅罗羣群羨羡義义聖圣聞闻聯联聰聪聲声聶聂職职聽听肅肃脫脱腦脑腫肿腸肠膠胶膽胆臘腊臥卧臨临臺台與与興兴舉举舊旧荊荆莊庄華华萊莱萬万葉叶葦苇蒼苍蓀荪蓋盖蓮莲蔣蒋蔭荫蕩荡蕪芜蕭萧薦荐藍蓝藝艺藥药藺蔺蘆芦蘇苏蘋苹蘭兰處处虛虚虜虏蝕蚀蝦虾螢萤蟄蛰蟬蝉蟲虫蠅蝇蠆虿蠻蛮衆众衛卫衝冲裏里補补裝装襲袭見见規规覓觅視视親亲覺觉觀观觸触計计訊讯討讨訓训託托記记訪访設设許许詐诈評评詖诐詩诗詭诡話话誅诛誑诳誘诱誠诚誤误誦诵誼谊調调諄谆談谈請请論论諧谐諫谏諸诸諾诺謀谋謁谒謙谦謝谢謹谨識识譚谭譜谱議议護护變变讓让豐丰豔艳貓猫貝贝負负財财貢贡貪贪貫贯責责貴贵貼贴貿贸賀贺資资賈贾賊贼賓宾賢贤賦赋質质賴赖賺赚購购賽赛贈赠贊赞贏赢趕赶趙赵跡迹踐践蹤踪躍跃躡蹑軀躯車车軋轧軌轨軍军軒轩軟软軫轸軸轴軻轲軼轶載载輔辅輕轻輛辆輜辎輝辉輪轮輯辑輸输輿舆轄辖轅辕轆辘轉转轍辙轔辚轟轰轡辔轤轳農农連连進进遊游運运過过達达遙遥遜逊遠远適适遲迟遷迁選选遺遗遼辽邁迈還还邇迩邊边郵邮鄉乡鄒邹鄔邬鄧邓鄭郑鄲郸鄺邝酈郦醜丑釋释釗钊針针釣钓鈞钧鈴铃鈺钰鈿钿鉅钜鉉铉鉑铂鉗钳鉤钩鉭钽銀银銅铜銘铭銜衔銳锐銷销鋒锋鋪铺鋼钢錄录錐锥錘锤錢钱錦锦錫锡錯错鍇锴鍔锷鍾钟鎖锁鎮镇鎵镓鏗铿鏡镜鐳镭鐵铁鐸铎鑽钻鑿凿長长門门閃闪閆闫閉闭開开閏闰閒闲間间閔闵閘闸閣阁閩闽閭闾閻阎閼阏闌阑闕阙關关闢辟闥闼陝陕陣阵陰阴陳陈陸陆陽阳隊队階阶際际隨随險险隱隐隸隶雋隽雙双雛雏雞鸡離离難难雲云電电霧雾霽霁靂雳靈灵靜静鞏巩韋韦韓韩韜韬韞韫韻韵響响頂顶項项順顺須须頌颂預预頓顿領领頤颐頭头頷颔頸颈頻频題题顏颜顛颠類类顧顾顯显風风飄飘飛飞飢饥飯饭飲饮飼饲飾饰餅饼養养餌饵餒馁餘余餞饯館馆饋馈饌馔饒饶馬马馮冯馱驮馳驰駐驻駑驽駒驹駕驾駛驶駟驷駭骇駿骏騎骑騫骞騮骝騰腾驂骖驅驱驊骅驍骁驗验驚惊驟骤驢驴驥骥驪骊體体鬥斗鬧闹魚鱼魯鲁鮁鲅鮑鲍鮮鲜鯀鲧鯉鲤鯨鲸鰲鳌鱔鳝鳥鸟鳧凫鳩鸠鳳凤鳴鸣鳶鸢鴉鸦鴛鸳鴞鸮鴦鸯鴻鸿鵝鹅鵬鹏鵲鹊鶯莺鶴鹤鶻鹘鷗鸥鷲鹫鷸鹬鷹鹰鷺鹭鸝鹂鸞鸾鹹咸鹽盐麗丽麥麦麼么黃黄點点黨党黽黾齊齐齋斋齡龄龍龙龐庞龔龚龜龟",m={};for(let i=0;i<s.length;i+=2)m[s[i]]=s[i+1];m["盃"]="杯";return m})();
@@ -2629,6 +2636,10 @@ function askSheet(){sheet("🤖 問小帥",b=>{
       try{const at=await askStartPly(c,id,q,kb);store.set("openAt",at?{c,id,ply:at.ply,why:at.why}:null)}catch(e){store.set("openAt",null)}
       closeSheet();location.hash="#/db/"+encodeURIComponent(c)+"/"+encodeURIComponent(id)});
     if(!r.length&&gl){if(typeof BOT!=="undefined"&&BOT)BOT.say("我幫你找到棋譜了！",2);aa.innerHTML=`<div class="card"><b>找到 ${gl.total} 盤相關棋譜</b>${gHTML}</div>`;bindG();return}
+    // 只有片段字湊到的（分數低）：不要亂答，改成列出「你是不是想問」讓玩家點（意見回饋 186）
+    if(r.length&&!gl&&(ASK_SC.get(r[0])||0)<4){const sg=r.slice(0,5);if(typeof BOT!=="undefined"&&BOT)BOT.say("你是想問這些嗎？",2);
+      aa.innerHTML=`<div class="card"><b>我不太確定你問的是哪個 🤔</b><div class="muted" style="margin:6px 0">你是不是想問：</div><div class="chips" style="flex-wrap:wrap">${sg.map(x=>`<button class="chip" data-q="${esc(x.keys[0])}">${esc(x.title)}</button>`).join("")}</div><div class="muted" style="font-size:12px;margin-top:8px">也可以問：「怎麼提升實力」「胡榮華」「五七炮」「怎麼換朝代」</div></div>`;
+      aa.querySelectorAll("[data-q]").forEach(x=>x.onclick=()=>ask(x.dataset.q));return}
     if(!r.length){aa.innerHTML=`<div class="card">這個我還不太懂 😅<br><span class="muted">可以換個說法，或到「象棋規則 → 術語」找找看；也可以用「意見回饋」問開發者。</span></div>`;if(typeof BOT!=="undefined"&&BOT)BOT.say("這題考倒我了…",2);return}
     const top=r[0];if(top.sq&&G&&!gl){const g2=askGamesFind(G,top.sq);if(g2&&g2.list.length){gl2=g2}}
     if(typeof BOT!=="undefined"&&BOT)BOT.say(top.go&&top.goLabel?"我來示範給你看！":"我知道！",2);
