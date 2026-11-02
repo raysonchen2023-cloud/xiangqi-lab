@@ -428,7 +428,7 @@ html[data-era=ming] .topbar,html[data-era=qing] .topbar{border-bottom-width:4px}
       if(!window.caches)return go();caches.keys().then(function(ks){return Promise.all(ks.filter(function(k){return k.indexOf("xqlab-app-")===0}).map(function(k){return caches.delete(k)}))})
         .then(function(){return navigator.serviceWorker&&navigator.serviceWorker.getRegistration()}).then(function(r){return r&&r.update()}).catch(function(){}).then(go)}},4000)})();
 </script>
-<script>window.XQ_OFFLINE=true;window.XQ_BUILD="20261103-0641";</script>
+<script>window.XQ_OFFLINE=true;window.XQ_BUILD="20261103-0650";</script>
 <script src="core.js"></script>
 <script src="engine.js"></script>
 <script src="local.js"></script>
@@ -1217,7 +1217,7 @@ let screen=null;   // 目前畫面：{stop()}
 function setTop(title,back,right){$("#title").textContent=title;$("#back").hidden=!back;$("#back").onclick=()=>{if(back===true)history.back();else location.hash=back};
   const tr=$("#topRight");tr.innerHTML="";if(right)for(const[icon,fn,label]of right){const b=document.createElement("button");b.className="ib";b.textContent=icon;b.title=label||"";b.onclick=fn;tr.append(b)}
   // 全螢幕畫面（沒有底部導覽列）一律加「回首頁」，加入主畫面的 App 模式沒有瀏覽器上一頁也能回去
-  if(back){const h=document.createElement("button");h.className="ib";h.textContent="🏠";h.title="回首頁";h.onclick=()=>{location.hash="#/"};tr.append(h)}}
+  if(back&&back!=="#/"&&!(right&&right.length>=2)){const h=document.createElement("button");h.className="ib";h.textContent="🏠";h.title="回首頁";h.onclick=()=>{location.hash="#/"};tr.append(h)}}
 function setTabs(show,on){$("#tabbar").hidden=!show;for(const b of $("#tabbar").children)b.classList.toggle("on",b.dataset.go===on)}
 for(const b of $("#tabbar").children)b.onclick=()=>{vibrate(5);location.hash=b.dataset.go};
 function route(){
@@ -2641,10 +2641,14 @@ function CpuGame(v){
   let st=null,sel=-1,shownResult=null,busy=false,pHint=null;   // pHint：錯棋重練時在棋盤上畫 Pikafish 的建議
   const bd=Board(i=>tap(i));v.querySelector("#bbox").append(bd.svg);
   // 🏯 朝代擂台：擂台在公園裡，沒開公園時先帶你去公園
-  const arenaStart=(era,lv)=>{if(!parkOn())store.set("park3d",true);if(PARK&&PARK.era!==era){try{PARK.v.destroy()}catch(e){}PARK=null}
+  const arenaStart=(era,lv)=>{if(!parkOn()){store.set("park3d",true);setTimeout(topBar,0)}if(PARK&&PARK.era!==era){try{PARK.v.destroy()}catch(e){}PARK=null}
     store.set("cpuRanked",false);store.set("cpuCar",false);shownResult=null;sel=-1;post("/play/new",{human:"r",level:lv,arena:era}).then(()=>{toast(`🏯 ${ARENA[era].name}：${ARENA[era].hi}`)})};
-  const arenaBtn=["🏯",()=>{const go=()=>arenaSheet(store.get("era","classic"),arenaStart);if(!parkOn()){store.set("park3d",true);toast("🌳 擂台在公園裡，帶你過去");draw();setTimeout(go,400)}else go()},"朝代擂台"];
-  setTop("挑戰電腦","#/",[arenaBtn,parkBtn(()=>draw())].concat(vcOn()?[["🎤",()=>voiceMove(()=>!st||st.result?{why:"這盤已經結束"}:st.turn!==st.human||st.thinking?{why:"還沒輪到你"}:{board:st.board,legal:st.legal,play:(f,t)=>{sel=-1;post("/play/move",{f,t})}}),"聲控走棋"]]:[]));
+  const arenaBtn=["🏯",()=>{const go=()=>arenaSheet(store.get("era","classic"),arenaStart);if(!parkOn()){store.set("park3d",true);toast("🌳 擂台在公園裡，帶你過去");draw();topBar();setTimeout(go,400)}else go()},"朝代擂台"];
+  // 意見回饋 273：上方列精簡——🏯 只在公園裡出現（擂台本來就在公園），返回鍵已經是回首頁所以不放 🏠；切公園時整列重畫
+  const topBar=()=>{const lk=!!(typeof st!=="undefined"&&st&&st.arena&&!st.result);
+    setTop("挑戰電腦","#/",[...(parkOn()?[arenaBtn]:[]),...(lk?[]:[parkBtn(()=>{draw();topBar()})])].concat(vcOn()?[["🎤",()=>voiceMove(()=>!st||st.result?{why:"這盤已經結束"}:st.turn!==st.human||st.thinking?{why:"還沒輪到你"}:{board:st.board,legal:st.legal,play:(f,t)=>{sel=-1;post("/play/move",{f,t})}}),"聲控走棋"]]:[]));
+    try{if(seg){const t=$("#title");t.textContent="";t.append(seg)}}catch(e){}};   /* 第一次呼叫時 seg 還沒建立 */
+  topBar();
   // 模式切換直接放在頂部列（取代標題）：積分挑戰／自選難度／獎勵一眼就看得到，點一下就換（離線版才有積分挑戰和獎勵）
   const modeOf=s=>s.ranked?"rank":s.reward?"car":"free",prefMode=()=>store.get("cpuRanked",true)?"rank":REWARD&&store.get("cpuCar",false)?"car":"free";
   const seg=OFF?document.createElement("div"):null;
@@ -2665,7 +2669,10 @@ function CpuGame(v){
     parkDraw(v.querySelector("#bbox"),bd,st.board,o,{tap,thinking:!!st.thinking||(!st.result&&st.turn!==st.human),botSide:st.human==="r"?"b":"r",result:st.result?(st.result.w||"draw"):null,hint:o.hint,
       opp:PIKA_LOOK(st.human==="r"?"b":"r"),oppHello:st.arena&&ARENA[st.arena]?ARENA[st.arena].hi:"我是 Pikafish，請多指教。",oppWin:st.arena&&ARENA[st.arena]?ARENA[st.arena].win:"將死了，再接再厲。",oppLose:st.arena&&ARENA[st.arena]?ARENA[st.arena].lose:"你贏了，佩服佩服！"})}
   let lastN=null;   // 上一次畫的步數：步數剛好多一步才秀開局名（重新整理、開新局不秀）
-  function render(s){const n0=lastN;st=s;lastN=s.moves.length;if(!st.legal.some(([f])=>f===sel))sel=-1;draw();
+  // 意見回饋 274：擂台賽下到結束前只能在公園裡（不能切回平面棋盤）；結束後按鈕恢復
+  let arenaLock=null;
+  function render(s){const n0=lastN;st=s;lastN=s.moves.length;if(!st.legal.some(([f])=>f===sel))sel=-1;
+    const lk=!!(st.arena&&!st.result);if(lk&&!parkOn())store.set("park3d",true);if(lk!==arenaLock){arenaLock=lk;topBar()}draw();
     if(n0!=null&&lastN===n0+1&&!st.practice){const cue=openingCue(st.moves);if(cue)setTimeout(()=>openFx(bd.svg,cue[1],cue[0]),350)}
     const lv=st.levels[st.level-1]||{},me=st.human,bot=opp(me);
     const CR=st.cpuRate||{},CB=st.car||{},cpts=st.reward?(CB.table||[])[st.level-1]||0:0;paintSeg(modeOf(st));if(!st.ranked&&st.level&&!st.practice)store.set("cpuLevel",st.level);
