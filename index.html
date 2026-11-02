@@ -412,7 +412,7 @@ html[data-era=ming] .topbar,html[data-era=qing] .topbar{border-bottom-width:4px}
       if(!window.caches)return go();caches.keys().then(function(ks){return Promise.all(ks.filter(function(k){return k.indexOf("xqlab-app-")===0}).map(function(k){return caches.delete(k)}))})
         .then(function(){return navigator.serviceWorker&&navigator.serviceWorker.getRegistration()}).then(function(r){return r&&r.update()}).catch(function(){}).then(go)}},4000)})();
 </script>
-<script>window.XQ_OFFLINE=true;window.XQ_BUILD="20261102-1816";</script>
+<script>window.XQ_OFFLINE=true;window.XQ_BUILD="20261102-1827";</script>
 <script src="core.js"></script>
 <script src="engine.js"></script>
 <script src="local.js"></script>
@@ -2136,7 +2136,7 @@ async function feedbackInfo(){const m=meInfo(),r=window.XQNet&&XQNet.rating?XQNe
   return{id:m.id||"",name:m.name||"",rank:r?`${r.rank} ${r.pts}分 (${r.w}勝${r.l}負${r.d}和)`:"",ver:(A=>{const run=window.XQ_BUILD&&!/__/.test(XQ_BUILD)?XQ_BUILD:"";return run&&A&&A!==run?`${run}（已下載 ${A}，換頁後套用）`:(A||run)})(await appVer())||"",
     dev:(MY_KIND||"其他")+((matchMedia("(display-mode: standalone)").matches||navigator.standalone)?"・主畫面App":"・瀏覽器")+`・${innerWidth}x${innerHeight}`,page:location.hash||"#/",role:DEVMODE()?"開發者":"玩家"}}
 async function postForm(rec){const F=FEEDBACK_FORM;if(!F.action)throw new Error("表單還沒設定");
-  const body=new URLSearchParams();for(const k in F.entries)if(F.entries[k]&&rec[k]!=null)body.append(F.entries[k],String(rec[k]).slice(0,k==="img"?31000:2000));
+  const body=new URLSearchParams();for(const k in F.entries)if(F.entries[k]&&rec[k]!=null)body.append(F.entries[k],String(rec[k]).slice(0,k==="img"?31000:k==="text"?45000:2000));
   // 用 sendBeacon「送出就好、不等回覆」：App 為了跑 Pikafish 開了嚴格的跨網域模式，fetch 讀不到 Google 的回覆會被當成失敗（其實已經送到），造成重複送出
   if(navigator.sendBeacon){if(navigator.sendBeacon(F.action,body))return;}
   try{await fetch(F.action,{method:"POST",mode:"no-cors",body})}catch(e){if(!navigator.onLine)throw e}}   // 有網路時，讀不到回覆不算失敗
@@ -2144,21 +2144,41 @@ async function flushFeedback(){const q=store.get("fbQueue",[]);if(!q.length||!FE
   for(const r of q){try{await postForm(r);if(r.type&&!/玩家/.test(r.type)&&window.XQNet&&XQNet.bell)XQNet.bell({type:r.type,img:!!r.img,role:r.role||""})}catch(e){left.push(r)}}store.set("fbQueue",left)}
 async function sendRecord(rec){try{await postForm(rec);if(rec.type&&!/玩家/.test(rec.type)&&window.XQNet&&XQNet.bell)XQNet.bell({type:rec.type,img:!!rec.img,role:rec.role||""});return true}catch(e){const q=store.get("fbQueue",[]);q.push(rec);store.set("fbQueue",q.slice(-30));return false}}
 function feedbackSheet(){let type="🐞 錯誤";
-  sheet("💬 意見回饋",b=>{b.innerHTML=`<p class="muted" style="margin-top:0">遇到問題或想要新功能，都可以寫在這裡，開發者會看到。</p>
-    <div class="opt" id="ty">${["🐞 錯誤","💡 建議","💬 其他"].map(t=>`<button data-y="${t}" class="${t===type?"on":""}">${t}</button>`).join("")}</div>
-    <textarea id="fx" rows="5" maxlength="1500" placeholder="例如：在哪個畫面、按了什麼、發生什麼事；或是希望增加的功能" style="width:100%;padding:11px;border:1px solid var(--line);border-radius:12px;background:var(--card);color:inherit;font:inherit;font-size:16px;-webkit-user-select:text;user-select:text"></textarea>
-    <input id="fc" maxlength="80" placeholder="聯絡方式（選填，例如 LINE ID）" style="width:100%;margin-top:8px;padding:11px;border:1px solid var(--line);border-radius:12px;background:var(--card);color:inherit">
-    <div class="row" style="margin-top:8px;gap:10px"><label class="pill" style="padding:9px 14px;cursor:pointer">📷 附上截圖（選填，最多 4 張）<input type="file" id="fi" accept="image/*" multiple hidden></label>
-      <label class="pill" style="padding:9px 14px;cursor:pointer">📎 附加檔案（程式碼、文字檔）<input type="file" id="ff" accept=".txt,.js,.mjs,.ts,.py,.json,.md,.csv,.html,.htm,.css,.log,.xml,.yml,.yaml,.sh,.pgn,.fen,text/*" multiple hidden></label></div>
-    <div id="ffl" class="muted" style="font-size:12px;margin-top:4px"></div>
-      <div class="row" id="fps" style="gap:8px;flex-wrap:wrap;margin-top:6px"></div>
-    <p class="muted" style="font-size:12px">會一起附上：你的線上 ID、名字、段位、App 版本、裝置類型和目前畫面，方便找問題。</p>
-    <button class="btn" id="go">送出</button>`;
+  sheet("💬 意見回饋",b=>{b.innerHTML=`<style>
+    .fbw{display:flex;flex-direction:column;gap:14px}.fbw .lead{margin:0;font-size:13px}
+    .fbt{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
+    .fbt button{display:flex;flex-direction:column;align-items:center;gap:2px;padding:10px 4px;border:1.5px solid var(--line);border-radius:14px;background:var(--card);color:inherit;font:inherit}
+    .fbt button b{font-size:15px}.fbt button small{font-size:11px;opacity:.65}.fbt button i{font-style:normal;font-size:22px;line-height:1.1}
+    .fbt button.on{border-color:var(--accent,#2e6b4a);background:color-mix(in srgb,var(--accent,#2e6b4a) 12%,var(--card));box-shadow:0 0 0 2px color-mix(in srgb,var(--accent,#2e6b4a) 25%,transparent)}
+    .fbbox{position:relative}.fbbox textarea{width:100%;min-height:128px;padding:12px 12px 24px;border:1px solid var(--line);border-radius:14px;background:var(--card);color:inherit;font:inherit;font-size:16px;resize:vertical;-webkit-user-select:text;user-select:text}
+    .fbbox .cnt{position:absolute;right:12px;bottom:8px;font-size:11px;opacity:.5}
+    .fbl{font-size:12px;font-weight:700;opacity:.7;margin:0 0 6px 2px}
+    .fba{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+    .fba label{display:flex;align-items:center;gap:10px;padding:10px 12px;border:1.5px dashed var(--line);border-radius:14px;cursor:pointer;background:var(--card)}
+    .fba label i{font-style:normal;font-size:22px}.fba label span{display:flex;flex-direction:column;line-height:1.25;min-width:0}.fba label small{font-size:11px;opacity:.6}
+    .fbc{display:flex;flex-wrap:wrap;gap:8px}.fbc:empty{display:none}
+    .fbc .fch{display:inline-flex;align-items:center;gap:6px;max-width:100%;padding:6px 6px 6px 10px;border:1px solid var(--line);border-radius:999px;font-size:12px;background:var(--card)}
+    .fbc .fch em{font-style:normal;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:170px}
+    .fbc .fch a,.fbc button{border:0;background:var(--line);color:inherit;border-radius:50%;width:22px;height:22px;line-height:22px;text-align:center;padding:0;text-decoration:none;flex:none}
+    .fbw input#fc{width:100%;padding:11px 12px;border:1px solid var(--line);border-radius:14px;background:var(--card);color:inherit;font-size:16px}
+    .fbn{font-size:11px;opacity:.6;margin:0;line-height:1.5}.fbw #go{width:100%;padding:13px;font-size:16px}
+    </style><div class="fbw">
+    <p class="muted lead">遇到問題或想要新功能，都可以寫在這裡，開發者會看到。</p>
+    <div><div class="fbl">類型</div><div class="fbt" id="ty">${[["🐞 錯誤","🐞","錯誤","東西壞了"],["💡 建議","💡","建議","想要新功能"],["💬 其他","💬","其他","想說的話"]].map(([t,ic,n,h])=>`<button data-y="${t}" class="${t===type?"on":""}"><i>${ic}</i><b>${n}</b><small>${h}</small></button>`).join("")}</div></div>
+    <div><div class="fbl">內容</div><div class="fbbox"><textarea id="fx" maxlength="1500" placeholder="例如：在哪個畫面、按了什麼、發生什麼事；或是希望增加的功能"></textarea><span class="cnt" id="fxn">0／1500</span></div></div>
+    <div><div class="fbl">附件（選填）</div><div class="fba">
+      <label><i>📷</i><span><b>截圖</b><small>最多 4 張</small></span><input type="file" id="fi" accept="image/*" multiple hidden></label>
+      <label><i>📎</i><span><b>檔案</b><small>程式碼、文字檔</small></span><input type="file" id="ff" accept=".txt,.js,.mjs,.ts,.py,.json,.md,.csv,.html,.htm,.css,.log,.xml,.yml,.yaml,.sh,.pgn,.fen,text/*" multiple hidden></label></div>
+      <div class="fbc" id="fps" style="margin-top:8px"></div><div class="fbc" id="ffl" style="margin-top:8px"></div></div>
+    <div><div class="fbl">聯絡方式（選填）</div><input id="fc" maxlength="80" placeholder="例如 LINE ID，方便回覆你"></div>
+    <button class="btn" id="go">送出</button>
+    <p class="fbn">會一起附上：你的線上 ID、名字、段位、App 版本、裝置類型和目前畫面，方便找問題。</p></div>`;
+    {const fx=b.querySelector("#fx"),fxn=b.querySelector("#fxn");fx.addEventListener("input",()=>fxn.textContent=fx.value.length+"／1500")}
     // 截圖可以一次選多張（最多 4 張）；表單一格只放得下一張，第 2 張起各送一筆「第 N 張截圖」接在後面
     const MAXI=4;let imgs=[];const fi=b.querySelector("#fi"),fps=b.querySelector("#fps");
     // 附加檔案（意見回饋 195）：文字類檔案最多 3 個、每個 200KB；送出時每 4 萬字切一段，當作額外的回饋列送出
     let atts=[];const ff=b.querySelector("#ff"),ffl=b.querySelector("#ffl");
-    const paintF=()=>{ffl.innerHTML=atts.map((a,i)=>`📎 ${esc(a.name)}（${(a.text.length/1000).toFixed(1)}k 字）<a href="#" data-fx="${i}">移除</a>`).join("<br>");ffl.querySelectorAll("[data-fx]").forEach(x=>x.onclick=e=>{e.preventDefault();atts.splice(+x.dataset.fx,1);paintF()})};
+    const paintF=()=>{ffl.innerHTML=atts.map((a,i)=>`<span class="fch">📎 <em>${esc(a.name)}</em><span class="muted">${(a.text.length/1000).toFixed(1)}k 字</span><a href="#" data-fx="${i}" aria-label="移除">✕</a></span>`).join("");ffl.querySelectorAll("[data-fx]").forEach(x=>x.onclick=e=>{e.preventDefault();atts.splice(+x.dataset.fx,1);paintF()})};
     ff.onchange=async()=>{const fs=[...(ff.files||[])];ff.value="";for(const f of fs){if(atts.length>=3){toast("最多 3 個檔案");break}if(f.size>200*1024){toast(`${f.name} 超過 200KB`);continue}
       try{atts.push({name:f.name,text:await f.text()})}catch(e){toast("讀不到 "+f.name)}}paintF()};
     const paintI=()=>{fps.innerHTML=imgs.map((d,i)=>`<span style="position:relative;display:inline-block"><img src="${d}" alt="" style="height:72px;max-width:96px;border-radius:8px;border:1px solid var(--line);display:block"><button data-x="${i}" class="pill" style="position:absolute;top:-8px;right:-8px;padding:0 7px;line-height:22px">✕</button></span>`).join("");
