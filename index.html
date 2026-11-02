@@ -413,7 +413,7 @@ html[data-era=ming] .topbar,html[data-era=qing] .topbar{border-bottom-width:4px}
       if(!window.caches)return go();caches.keys().then(function(ks){return Promise.all(ks.filter(function(k){return k.indexOf("xqlab-app-")===0}).map(function(k){return caches.delete(k)}))})
         .then(function(){return navigator.serviceWorker&&navigator.serviceWorker.getRegistration()}).then(function(r){return r&&r.update()}).catch(function(){}).then(go)}},4000)})();
 </script>
-<script>window.XQ_OFFLINE=true;window.XQ_BUILD="20261102-1853";</script>
+<script>window.XQ_OFFLINE=true;window.XQ_BUILD="20261102-1907";</script>
 <script src="core.js"></script>
 <script src="engine.js"></script>
 <script src="local.js"></script>
@@ -733,7 +733,9 @@ function matSound(cap,M){const t=AC.currentTime+.02,out=AC.createDynamicsCompres
     g.gain.setValueAtTime(.0001,t+at);g.gain.linearRampToValueAtTime(vol*thump,t+at+.004);g.gain.exponentialRampToValueAtTime(.0001,t+at+.14);o.connect(lp).connect(g).connect(out);o.start(t+at);o.stop(t+at+.16)};
   if(cap){hit(0,M.f0*1.08,.2,M.dur*.5,M.thump*.4);hit(.05,M.cap.f0,.6,M.cap.dur,M.cap.thump)}else hit(0,M.f0,.5,M.dur,M.thump)}
 // 錄好的走棋音效（10 種，data/sfx/sNN-m/c/v.wav：走子／吃子／走子變化）；選了才下載，解碼後跟著目前的 AudioContext 快取
-const SFX_SET=[["s01","實木厚棋"],["s02","紅木重拍"],["s03","竹棋盤"],["s04","石桌"],["s05","皮革棋墊"],["s06","紙棋盤"],["s07","玉石"],["s08","瓷棋"],["s09","古琴桌"],["s10","極簡"],["s11","公園石桌重拍"],["s12","指關節壓拍"],["s13","水泥棋桌"],["s14","鐵皮折疊桌"],["s15","滑步釘死"],["s16","老舊木板桌"],["s17","壓克力棋盤"],["s18","磁吸鐵皮盤"],["s19","手腕重扣"],["s20","雙子相撞"]];
+const SFX_SET=[["s01","實木厚棋"],["s02","紅木重拍"],["s03","竹棋盤"],["s04","石桌"],["s05","皮革棋墊"],["s06","紙棋盤"],["s07","玉石"],["s08","瓷棋"],["s09","古琴桌"],["s10","極簡"],["s21","老榕樹磨石桌"],["s22","茶館紅花梨"],["s23","街頭折疊木盒"],["s24","密胺麻將感"],["s25","廟口長板凳"],["s26","黃楊木大棋"],["s27","不鏽鋼圓桌"],["s28","裂紋老木棋"],["s29","塑膠布水泥桌"],["s30","絕殺推滑拍"]];
+// 意見回饋 203：舊的公園風格 s11–s20 太電子音，已拿掉；選過的人改成對應的新音效
+{const k=store.get("sndStyle","wood");if(/^s(1[1-9]|20)$/.test(k))store.set("sndStyle","s"+(+k.slice(1)+10))}
 const SFX_RAW={},SFX_P={};let SFX_DEC={ctx:null};
 function loadSfx(k){if(SFX_RAW[k])return Promise.resolve();if(SFX_P[k])return SFX_P[k];
   return SFX_P[k]=Promise.all(["m","c","v"].map(x=>fetch(`data/sfx/${k}-${x}.wav`).then(r=>{if(!r.ok)throw 0;return r.arrayBuffer()}))).then(a=>{SFX_RAW[k]=a}).catch(()=>{SFX_P[k]=null})}
@@ -2060,7 +2062,7 @@ function Settings(v){
       <button class="item" id="nm"><span class="lb">✏</span><span class="tx"><b>我的名字</b><span id="nmS"></span></span><span class="muted">›</span></button></div>
     ${OFF?`<div class="card" style="margin-top:8px"><label class="row" style="justify-content:space-between"><span><b>線上大廳顯示我的城市</b><br><span class="muted">由網路位置推估，只顯示城市</span></span><input type="checkbox" class="sw" id="cityT" ${store.get("showCity",true)?"checked":""}></label></div>`:""}
     <div class="sec-t">支援</div><div class="items" style="padding:0">
-      <button class="item" id="fb"><span class="lb">💬</span><span class="tx"><b>意見回饋</b><span>回報錯誤、想要的功能</span></span><span class="muted">›</span></button>
+      <button class="item" id="fb"><span class="lb">💬</span><span class="tx"><b>意見回饋</b><span>回報錯誤、想要的功能</span></span><span class="muted">›</span></button><button class="item" id="fxh"><span class="lb">🛠</span><span class="tx"><b>修正紀錄</b><span>你回報、已經修好的問題</span></span><span class="muted">›</span></button>
       <button class="item" id="sh"><span class="lb">📤</span><span class="tx"><b>分享給朋友</b><span>QR code・LINE</span></span><span class="muted">›</span></button></div>
     <div class="sec-t">關於</div><div class="card" id="about" style="line-height:1.9">
       <div class="row" style="justify-content:space-between"><span class="muted">App</span><b>象棋研究室</b></div>
@@ -2123,7 +2125,7 @@ function Settings(v){
     v.querySelector("#nmS").textContent=myName()||"還沒取名字";show(false)};
   v.querySelectorAll("[data-bp]").forEach(x=>x.onclick=()=>{store.set("botPiece",x.dataset.bp);v.querySelectorAll("[data-bp]").forEach(y=>y.classList.toggle("on",y===x));vibrate(5);
     if(BOT&&BOT.rebuild){BOT.rebuild();setTimeout(()=>{if(BOT&&BOT.say)BOT.say(`我現在是${BOTN()}了！`,3)},200)}toast(`小人換成「${x.dataset.bp}」，名字叫${BOTN()}`);v.querySelectorAll(".botN").forEach(y=>y.textContent=BOTN())});
-  {const ab=v.querySelector("#askB");if(ab)ab.onclick=()=>askSheet();const bh=v.querySelector("#botHome");if(bh)bh.onclick=()=>{store.set("botPos",null);if(BOT){BOT.stop();BOT=null}syncBot();toast("小帥回到預設位置了")}}{const bt=v.querySelector("#botT");if(bt)bt.onchange=()=>{store.set("bot3d",bt.checked);syncBot();if(bt.checked)toast("小人出來了！點它會表演")};const sz=v.querySelector("#botSz"),szv=v.querySelector("#botSzV");if(sz)sz.oninput=()=>{store.set("botSize",+sz.value);szv.textContent=Math.round(sz.value*100)+"%";if(BOT&&BOT.setScale)BOT.setScale(+sz.value)}}{const ct=v.querySelector("#cityT");if(ct)ct.onchange=()=>{store.set("showCity",ct.checked);if(ct.checked)fetchCity(true);else{MY_CITY="";if(window.XQNet&&XQNet.refresh)XQNet.refresh()}}}v.querySelector("#nm").onclick=()=>nameSheet(false);v.querySelector("#fb").onclick=()=>feedbackSheet();v.querySelector("#sh").onclick=shareSheet;const cn=v.querySelector("#cn");if(cn)cn.onclick=connectSheet;const fa=v.querySelector("#fa");if(fa)fa.onclick=()=>location.hash="#/fbadmin";
+  {const ab=v.querySelector("#askB");if(ab)ab.onclick=()=>askSheet();const bh=v.querySelector("#botHome");if(bh)bh.onclick=()=>{store.set("botPos",null);if(BOT){BOT.stop();BOT=null}syncBot();toast("小帥回到預設位置了")}}{const bt=v.querySelector("#botT");if(bt)bt.onchange=()=>{store.set("bot3d",bt.checked);syncBot();if(bt.checked)toast("小人出來了！點它會表演")};const sz=v.querySelector("#botSz"),szv=v.querySelector("#botSzV");if(sz)sz.oninput=()=>{store.set("botSize",+sz.value);szv.textContent=Math.round(sz.value*100)+"%";if(BOT&&BOT.setScale)BOT.setScale(+sz.value)}}{const ct=v.querySelector("#cityT");if(ct)ct.onchange=()=>{store.set("showCity",ct.checked);if(ct.checked)fetchCity(true);else{MY_CITY="";if(window.XQNet&&XQNet.refresh)XQNet.refresh()}}}v.querySelector("#nm").onclick=()=>nameSheet(false);v.querySelector("#fb").onclick=()=>feedbackSheet();{const fx=v.querySelector("#fxh");if(fx)fx.onclick=()=>fixHistory()}v.querySelector("#sh").onclick=shareSheet;const cn=v.querySelector("#cn");if(cn)cn.onclick=connectSheet;const fa=v.querySelector("#fa");if(fa)fa.onclick=()=>location.hash="#/fbadmin";
   paint();return{}}
 
 // ================= 意見回饋：存到 Google 表單（沒網路先存在手機，之後自動補送） =================
@@ -2152,7 +2154,7 @@ async function flushFeedback(){const q=store.get("fbQueue",[]);if(!q.length||!FE
 async function sendRecord(rec){try{await postForm(rec);if(rec.type&&!/玩家/.test(rec.type)&&window.XQNet&&XQNet.bell)XQNet.bell({type:rec.type,img:!!rec.img,role:rec.role||""});return true}catch(e){const q=store.get("fbQueue",[]);q.push(rec);store.set("fbQueue",q.slice(-30));return false}}
 // 走棋音效選單（意見回饋 199、200）：開關＋分組卡片
 function sndPicker(){const on=store.get("mvSound",false),cur=store.get("sndStyle","wood");
-  const G=[["合成",[["wood","實木"],["soft","輕敲"]]],["經典 01–10",SFX_SET.slice(0,10)],["公園風格 11–20",SFX_SET.slice(10)]];
+  const G=[["合成",[["wood","實木"],["soft","輕敲"]]],["經典 01–10",SFX_SET.slice(0,10)],["公園擬音",SFX_SET.slice(10)]];
   const card=([k,l])=>`<button data-snd="${k}" class="sp-c${on&&cur===k?" on":""}"><span>${l}</span><i>▶</i></button>`;
   return`<style>.sp-h{display:flex;justify-content:space-between;align-items:center;gap:10px}.sp-g{font-size:12px;font-weight:700;opacity:.6;margin:12px 0 6px}
     .sp-l{display:grid;grid-template-columns:1fr 1fr;gap:6px}.sp-off .sp-l{opacity:.45}
@@ -2162,6 +2164,23 @@ function sndPicker(){const on=store.get("mvSound",false),cur=store.get("sndStyle
     .sp-c.on{border-color:var(--accent);background:color-mix(in srgb,var(--accent) 12%,var(--card));font-weight:700}.sp-c.on i{opacity:1;color:var(--accent)}</style>
     <div style="padding:6px 0" class="${on?"":"sp-off"}" id="sndBox"><label class="sp-h"><span><b>走棋音效</b><br><span class="muted">棋子落下的聲音，點一下選用並試聽（先走子、再吃子）</span></span><input type="checkbox" class="sw" id="sndOn" ${on?"checked":""}></label>
     <div id="sndSt">${G.map(([t,L])=>`<div class="sp-g">${t}</div><div class="sp-l">${L.map(card).join("")}</div>`).join("")}</div></div>`}
+// 修正通知（意見回饋 203）：data/fixes.json 列出已修好的回饋（只放線上 ID 的雜湊，不放玩家原文）；
+// 玩家打開 App 會看到自己回報、已修好的問題；開發者看到每一次的修正回報。設定 → 其他 →「修正紀錄」可以再看
+async function fixHash(id){const d=await crypto.subtle.digest("SHA-256",new TextEncoder().encode("xqfix:"+id));return[...new Uint8Array(d)].map(x=>x.toString(16).padStart(2,"0")).join("").slice(0,12)}
+async function myFixes(){let d;try{d=await fetch("data/fixes.json?v="+encodeURIComponent(window.XQ_BUILD||"")).then(r=>r.json())}catch(e){return null}
+  const dev=DEVMODE(),id=meInfo().id||"",h=id?await fixHash(id):"";return{dev,items:(d.items||[]).filter(x=>dev||(h&&x.h===h)).sort((a,b)=>b.r-a.r)}}
+function fixList(items,dev){const fmtV=v=>v?v.replace(/^(\d{4})(\d\d)(\d\d)-(\d\d)(\d\d)$/,"$2/$3 $4:$5"):"";
+  return items.length?items.map(x=>`<div class="card" style="margin-bottom:8px"><div class="row" style="justify-content:space-between;gap:6px;flex-wrap:wrap"><b>${esc(x.ty||"")}${dev?`<span class="muted" style="font-weight:400;font-size:12px">　第 ${x.r} 列</span>`:""}</b><span class="muted" style="font-size:12px">${esc(x.at||"")} 回報</span></div>
+    ${x.q?`<div class="muted" style="font-size:13px;margin:4px 0;white-space:pre-wrap;max-height:4.5em;overflow:hidden">「${esc(x.q)}」</div>`:""}
+    <div style="font-size:14px;margin-top:6px;white-space:pre-wrap;word-break:break-word">✅ ${esc(x.n||"已修正")}</div>${x.v?`<div class="muted" style="font-size:11px;margin-top:4px">版本 ${esc(fmtV(x.v))}</div>`:""}</div>`).join(""):'<div class="card muted" style="text-align:center">還沒有修正紀錄</div>'}
+async function fixHistory(){const F=await myFixes();if(!F)return toast("讀不到修正紀錄");sheet(F.dev?"🛠 修正紀錄（全部）":"🛠 我回報的問題",b=>{b.innerHTML=`<p class="muted" style="margin-top:0">${F.dev?"每一次修正的回報，最新的在最上面。":"你透過「意見回饋」回報、已經修好的問題。"}</p>`+fixList(F.items,F.dev)})}
+async function checkFixes(){if(document.querySelector(".modal,#sheet"))return setTimeout(checkFixes,5000);const F=await myFixes();if(!F||!F.items.length)return;
+  let seen=store.get("fixSeen",null);
+  if(seen===null){if(F.dev){const top=F.items.map(x=>x.v).sort().pop();seen=F.items.filter(x=>x.v!==top).map(x=>x.r)}else seen=[]}
+  const S=new Set(seen),news=F.items.filter(x=>!S.has(x.r));store.set("fixSeen",F.items.map(x=>x.r));if(!news.length)return;
+  modal(`<div class="em">🛠</div><h2>${F.dev?`有 ${news.length} 項新的修正`:news.length>1?`你回報的 ${news.length} 個問題修好了`:"你回報的問題修好了"}</h2>
+    <div style="text-align:left;max-height:46vh;overflow:auto;margin:8px 0">${fixList(news.slice(0,30),F.dev)}</div>${F.dev?"":'<p class="muted" style="font-size:12px">謝謝你的回饋！</p>'}`,[["知道了",null],["全部修正紀錄",()=>fixHistory(),true]])}
+setTimeout(()=>{if(OFF)checkFixes()},4500);
 function feedbackSheet(){let type="🐞 錯誤";
   sheet("💬 意見回饋",b=>{b.innerHTML=`<style>
     .fbw{display:flex;flex-direction:column;gap:14px}.fbw .lead{margin:0;font-size:13px}
@@ -2207,10 +2226,15 @@ function feedbackSheet(){let type="🐞 錯誤";
     b.querySelectorAll("[data-y]").forEach(x=>x.onclick=()=>{type=x.dataset.y;b.querySelectorAll("[data-y]").forEach(y=>y.classList.toggle("on",y===x))});
     b.querySelector("#go").onclick=async e=>{const t=b.querySelector("#fx").value.trim();if(t.length<2)return toast("請先寫下內容");e.target.disabled=true;e.target.textContent="送出中…";
       const info=await feedbackInfo(),contact=b.querySelector("#fc").value.trim(),N=imgs.length;
-      let ok=await sendRecord(Object.assign({},info,{type,text:t,contact,img:imgs[0]||""}));
+      // 意見回饋 205：附件直接接在同一列的內容後面；超過一格放得下的（約 4.4 萬字）才分到下一列
+      const full=t+atts.map(a=>`
+
+📎 附件 ${a.name}
+`+a.text).join(""),CAP=44000,more=[];for(let k=CAP;k<full.length;k+=40000)more.push(full.slice(k,k+40000));
+      let ok=await sendRecord(Object.assign({},info,{type,text:full.slice(0,CAP),contact,img:imgs[0]||""}));
       for(let i=1;i<N;i++)ok=(await sendRecord(Object.assign({},info,{type,text:`（接上一則的第 ${i+1}/${N} 張截圖）${t.slice(0,60)}`,contact,img:imgs[i]})))&&ok;
-      for(const a of atts){const CH=40000,n=Math.max(1,Math.ceil(a.text.length/CH));for(let k=0;k<n;k++)ok=(await sendRecord(Object.assign({},info,{type,text:`📎 附件 ${a.name}${n>1?`（第 ${k+1}/${n} 段）`:""}（接上一則：${t.slice(0,40)}）
-`+a.text.slice(k*CH,(k+1)*CH),contact,img:""})))&&ok}closeSheet();toast(ok?"✅ 已送出，謝謝你的回饋！":"已存在手機裡，有網路時會自動送出")}})}
+      for(let k=0;k<more.length;k++)ok=(await sendRecord(Object.assign({},info,{type,text:`📎 附件續（第 ${k+2}/${more.length+1} 段，接上一則：${t.slice(0,40)}）
+`+more[k],contact,img:""})))&&ok;closeSheet();toast(ok?"✅ 已送出，謝謝你的回饋！":"已存在手機裡，有網路時會自動送出")}})}
 // 線上 ID 登記：名字或段位有變、或超過 7 天，就送一筆「玩家」紀錄到同一個表單
 async function reportPlayer(){if(!OFF||!FEEDBACK_FORM.action)return;const i=await feedbackInfo(),key=i.id+"|"+i.name+"|"+i.rank.split(" ")[0],last=store.get("playerRep",null);
   if(last&&last.k===key&&Date.now()-last.at<7*864e5)return;
