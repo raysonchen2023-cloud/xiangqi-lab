@@ -413,7 +413,7 @@ html[data-era=ming] .topbar,html[data-era=qing] .topbar{border-bottom-width:4px}
       if(!window.caches)return go();caches.keys().then(function(ks){return Promise.all(ks.filter(function(k){return k.indexOf("xqlab-app-")===0}).map(function(k){return caches.delete(k)}))})
         .then(function(){return navigator.serviceWorker&&navigator.serviceWorker.getRegistration()}).then(function(r){return r&&r.update()}).catch(function(){}).then(go)}},4000)})();
 </script>
-<script>window.XQ_OFFLINE=true;window.XQ_BUILD="20261102-1907";</script>
+<script>window.XQ_OFFLINE=true;window.XQ_BUILD="20261102-1920";</script>
 <script src="core.js"></script>
 <script src="engine.js"></script>
 <script src="local.js"></script>
@@ -447,9 +447,9 @@ const MY_KIND=/iPad/.test(navigator.userAgent)||/Macintosh/.test(navigator.userA
 // 線上大廳顯示大概的城市（意見回饋 159）：App 打開後用免費的 IP 定位服務（geojs.io）查一次，只留城市名、不存 IP，一天更新一次；設定「其他」可以關
 let MY_CITY="";
 const CITY_ZH=[["New Taipei","新北"],["Taipei","台北"],["Taoyuan","桃園"],["Hsinchu","新竹"],["Miaoli","苗栗"],["Taichung","台中"],["Changhua","彰化"],["Nantou","南投"],["Yunlin","雲林"],["Chiayi","嘉義"],["Tainan","台南"],["Kaohsiung","高雄"],["Pingtung","屏東"],["Yilan","宜蘭"],["Hualien","花蓮"],["Taitung","台東"],["Keelung","基隆"],["Penghu","澎湖"],["Kinmen","金門"],["Lienchiang","馬祖"],["Hong Kong","香港"],["Macau","澳門"]];
-function fetchCity(force){if(!OFF||!store.get("showCity",true)){MY_CITY="";return}const c=store.get("cityCache",null);if(!force&&c&&Date.now()-c.at<864e5){MY_CITY=c.n;return}
+function fetchCity(force){if(!OFF||!store.get("showCity",false)){MY_CITY="";return}const c=store.get("cityCache",null);if(!force&&c&&Date.now()-c.at<864e5){MY_CITY=c.n;return}
   fetch("https://get.geojs.io/v1/ip/geo.json").then(r=>r.json()).then(j=>{const t=(j.city||"")+" "+(j.region||""),hit=CITY_ZH.find(([k])=>t.includes(k));
-    const n=hit?hit[1]:(j.city||j.region||j.country||"");store.set("cityCache",{n,at:Date.now()});MY_CITY=store.get("showCity",true)?n:"";if(window.XQNet&&XQNet.refresh)XQNet.refresh()}).catch(()=>{})}
+    const n=hit?hit[1]:(j.city||j.region||j.country||"");store.set("cityCache",{n,at:Date.now()});MY_CITY=store.get("showCity",false)?n:"";if(window.XQNet&&XQNet.refresh)XQNet.refresh()}).catch(()=>{})}
 setTimeout(()=>fetchCity(false),3000);
 window.XQ_ME=()=>{const m=meInfo();return{"x-xq-dev":m.id+(MY_KIND?"-"+MY_KIND:""),"x-xq-name":encodeURIComponent(m.name||"")}};
 async function api(u,b){if(window.XQ)return XQ.api(u,b);   // 離線版：由手機裡的 local.js 處理
@@ -2060,7 +2060,7 @@ function Settings(v){
       <div class="row" style="gap:8px;margin-top:10px"><button class="btn" id="askB" style="flex:1">💬 問<span class="botN">${BOTN()}</span></button><button class="btn ghost" id="botHome" style="flex:1">↩ 回到預設位置</button></div></div>
     <div data-pane="more"><div class="sec-t" style="margin-top:4px">我的資料</div><div class="items" style="padding:0">
       <button class="item" id="nm"><span class="lb">✏</span><span class="tx"><b>我的名字</b><span id="nmS"></span></span><span class="muted">›</span></button></div>
-    ${OFF?`<div class="card" style="margin-top:8px"><label class="row" style="justify-content:space-between"><span><b>線上大廳顯示我的城市</b><br><span class="muted">由網路位置推估，只顯示城市</span></span><input type="checkbox" class="sw" id="cityT" ${store.get("showCity",true)?"checked":""}></label></div>`:""}
+    ${OFF?`<div class="card" style="margin-top:8px"><label class="row" style="justify-content:space-between"><span><b>線上大廳顯示我的城市</b><br><span class="muted">由網路位置推估，只顯示城市</span></span><input type="checkbox" class="sw" id="cityT" ${store.get("showCity",false)?"checked":""}></label></div>`:""}
     <div class="sec-t">支援</div><div class="items" style="padding:0">
       <button class="item" id="fb"><span class="lb">💬</span><span class="tx"><b>意見回饋</b><span>回報錯誤、想要的功能</span></span><span class="muted">›</span></button><button class="item" id="fxh"><span class="lb">🛠</span><span class="tx"><b>修正紀錄</b><span>你回報、已經修好的問題</span></span><span class="muted">›</span></button>
       <button class="item" id="sh"><span class="lb">📤</span><span class="tx"><b>分享給朋友</b><span>QR code・LINE</span></span><span class="muted">›</span></button></div>
@@ -2805,13 +2805,73 @@ async function startDrill(kind,lv){toast("🎯 挑題目中…");let d;
     try{await api("/play/new",{human:side,level:DRILL_LV[lv][1],pre});store.set("cpuRanked",false);store.set("cpuCar",false);closeSheet();
       toast(`🎯 ${title}：你執${side==="r"?"紅":"黑"}，局面取自 ${it.year||""} ${it.red||""} 對 ${it.black||""}`);if(location.hash==="#/cpu")route();else location.hash="#/cpu";return}catch(e){continue}}
   toast("這次沒挑到合適的題目，再按一次")}
+// 問小帥也能聊象棋以外的事（意見回饋 206）：天氣（open-meteo）、時間日期、算數、唐詩宋詞（內建）、百科知識（中文維基百科摘要）
+// 只在問題不是象棋時才查網路；不存位置，天氣用問題裡的城市，沒說城市才用 IP 查大概位置
+const POEMS=[["靜夜思","李白","床前明月光，疑是地上霜。舉頭望明月，低頭思故鄉。"],["春曉","孟浩然","春眠不覺曉，處處聞啼鳥。夜來風雨聲，花落知多少。"],["登鸛雀樓","王之渙","白日依山盡，黃河入海流。欲窮千里目，更上一層樓。"],
+  ["相思","王維","紅豆生南國，春來發幾枝。願君多採擷，此物最相思。"],["鹿柴","王維","空山不見人，但聞人語響。返景入深林，復照青苔上。"],["江雪","柳宗元","千山鳥飛絕，萬徑人蹤滅。孤舟蓑笠翁，獨釣寒江雪。"],
+  ["憫農","李紳","鋤禾日當午，汗滴禾下土。誰知盤中飧，粒粒皆辛苦。"],["登樂遊原","李商隱","向晚意不適，驅車登古原。夕陽無限好，只是近黃昏。"],["尋隱者不遇","賈島","松下問童子，言師採藥去。只在此山中，雲深不知處。"],
+  ["遊子吟","孟郊","慈母手中線，遊子身上衣。臨行密密縫，意恐遲遲歸。誰言寸草心，報得三春暉。"],["早發白帝城","李白","朝辭白帝彩雲間，千里江陵一日還。兩岸猿聲啼不住，輕舟已過萬重山。"],
+  ["望廬山瀑布","李白","日照香爐生紫煙，遙看瀑布掛前川。飛流直下三千尺，疑是銀河落九天。"],["黃鶴樓送孟浩然之廣陵","李白","故人西辭黃鶴樓，煙花三月下揚州。孤帆遠影碧空盡，唯見長江天際流。"],
+  ["贈汪倫","李白","李白乘舟將欲行，忽聞岸上踏歌聲。桃花潭水深千尺，不及汪倫送我情。"],["涼州詞","王翰","葡萄美酒夜光杯，欲飲琵琶馬上催。醉臥沙場君莫笑，古來征戰幾人回。"],
+  ["出塞","王昌齡","秦時明月漢時關，萬里長征人未還。但使龍城飛將在，不教胡馬度陰山。"],["九月九日憶山東兄弟","王維","獨在異鄉為異客，每逢佳節倍思親。遙知兄弟登高處，遍插茱萸少一人。"],
+  ["送元二使安西","王維","渭城朝雨浥輕塵，客舍青青柳色新。勸君更盡一杯酒，西出陽關無故人。"],["清明","杜牧","清明時節雨紛紛，路上行人欲斷魂。借問酒家何處有，牧童遙指杏花村。"],
+  ["山行","杜牧","遠上寒山石徑斜，白雲生處有人家。停車坐愛楓林晚，霜葉紅於二月花。"],["楓橋夜泊","張繼","月落烏啼霜滿天，江楓漁火對愁眠。姑蘇城外寒山寺，夜半鐘聲到客船。"],
+  ["回鄉偶書","賀知章","少小離家老大回，鄉音無改鬢毛衰。兒童相見不相識，笑問客從何處來。"],["詠柳","賀知章","碧玉妝成一樹高，萬條垂下綠絲絛。不知細葉誰裁出，二月春風似剪刀。"],
+  ["春望","杜甫","國破山河在，城春草木深。感時花濺淚，恨別鳥驚心。烽火連三月，家書抵萬金。白頭搔更短，渾欲不勝簪。"],["絕句","杜甫","兩個黃鸝鳴翠柳，一行白鷺上青天。窗含西嶺千秋雪，門泊東吳萬里船。"],
+  ["八陣圖","杜甫","功蓋三分國，名成八陣圖。江流石不轉，遺恨失吞吳。"],["賦得古原草送別","白居易","離離原上草，一歲一枯榮。野火燒不盡，春風吹又生。遠芳侵古道，晴翠接荒城。又送王孫去，萋萋滿別情。"],
+  ["約客","趙師秀","黃梅時節家家雨，青草池塘處處蛙。有約不來過夜半，閒敲棋子落燈花。"],["觀書有感","朱熹","半畝方塘一鑑開，天光雲影共徘徊。問渠那得清如許，為有源頭活水來。"],
+  ["題西林壁","蘇軾","橫看成嶺側成峰，遠近高低各不同。不識廬山真面目，只緣身在此山中。"],["飲湖上初晴後雨","蘇軾","水光瀲灩晴方好，山色空濛雨亦奇。欲把西湖比西子，淡妝濃抹總相宜。"],
+  ["水調歌頭","蘇軾","明月幾時有？把酒問青天。不知天上宮闕，今夕是何年。我欲乘風歸去，又恐瓊樓玉宇，高處不勝寒。起舞弄清影，何似在人間。轉朱閣，低綺戶，照無眠。不應有恨，何事長向別時圓？人有悲歡離合，月有陰晴圓缺，此事古難全。但願人長久，千里共嬋娟。"]];
+const WXC={0:"晴朗",1:"大致晴朗",2:"多雲",3:"陰天",45:"有霧",48:"有霧",51:"毛毛雨",53:"毛毛雨",55:"毛毛雨",56:"凍毛毛雨",57:"凍毛毛雨",61:"小雨",63:"下雨",65:"大雨",66:"凍雨",67:"凍雨",71:"小雪",73:"下雪",75:"大雪",77:"霰",80:"陣雨",81:"陣雨",82:"大陣雨",85:"陣雪",86:"陣雪",95:"雷雨",96:"雷雨夾冰雹",99:"雷雨夾冰雹"};
+const CHESSY=/棋|炮|砲|馬|傌|車|俥|將|帥|兵|卒|士|仕|象|相|殺|開局|殘局|中局|五羊|特級|大師|對局|段位|朝代|小帥|小人|App|設定|音效|聲控/;
+const POEM_AU=["李白","杜甫","白居易","蘇軾","王維","孟浩然","杜牧","賀知章","王昌齡","柳宗元","李商隱","朱熹","王之渙","孟郊","賈島","張繼","李紳","王翰","趙師秀"];
+function worldIntent(q){const t=q.replace(/\s/g,"");
+  if(/天氣|氣溫|溫度|下雨|會不會冷|會不會熱|颱風|穿什麼/.test(t))return"wx";
+  if(/幾點|現在時間|幾號|日期|星期幾|禮拜幾|今天是|今年是/.test(t)&&!/棋/.test(t))return"time";
+  {const e=t.replace(/等於多少|是多少|多少|等於|[=＝？?]/g,"");if(/^[\d.+\-*/×÷xX()（）^]+$/.test(e)&&/\d[+\-*/×÷xX^]\d|\d[+\-*/×÷xX^][(（]/.test(e))return"calc"}
+  if(/詩|詞|下一句|上一句|背一首|唐詩|宋詞/.test(t)||POEM_AU.some(a=>t.includes(a))||POEMS.some(p=>t.includes(p[0])&&p[0].length>=2&&!CHESSY.test(p[0]))||POEMS.some(p=>p[2].split(/[，。？]/).some(l=>l.length>=4&&t.includes(l))))return"poem";
+  return""}
+async function worldWeather(q){const t=q.replace(/[？?！!。，,\s]/g,"");let place=(t.match(/^(?:請問|我想知道|幫我查)?(.{2,10}?)(?:的)?(?:今天|明天|現在|這週|這幾天|最近)?(?:的)?(?:天氣|氣溫|溫度|會不會下雨|下雨|會不會冷|會不會熱)/)||[])[1]||"";
+  if(/^(今天|明天|現在|外面|這裡|我這|我們這|這邊|最近|這週|那裡)$/.test(place))place="";let lat,lon,name;
+  if(place){const z=place.replace(/[市縣]$/,"").replace(/^臺/,"台"),en=(CITY_ZH.find(([e,zz])=>zz===z)||[])[0];
+    try{const g=await fetch(`https://geocoding-api.open-meteo.com/v1/search?name=${encodeURIComponent(en||place)}&count=1&language=zh`).then(r=>r.json());const h=(g.results||[])[0];if(h){lat=h.latitude;lon=h.longitude;name=place}}catch(e){}
+    if(lat==null)return{title:"找不到這個地方",text:`我找不到「${place}」在哪裡 😅 換個說法試試，例如「台北天氣」。`}}
+  if(lat==null){try{const j=await fetch("https://get.geojs.io/v1/ip/geo.json").then(r=>r.json());lat=+j.latitude;lon=+j.longitude;const t2=(j.city||"")+" "+(j.region||""),hit=CITY_ZH.find(([k])=>t2.includes(k));name=hit?hit[1]:(j.city||"你那裡")}catch(e){return null}}
+  const w=await fetch(`https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&current=temperature_2m,apparent_temperature,relative_humidity_2m,weather_code,wind_speed_10m&daily=weather_code,temperature_2m_max,temperature_2m_min,precipitation_probability_max&timezone=auto&forecast_days=3`).then(r=>r.json());
+  const c=w.current||{},d=w.daily||{},day=i=>`${["今天","明天","後天"][i]}${WXC[d.weather_code[i]]||""}，${Math.round(d.temperature_2m_min[i])}～${Math.round(d.temperature_2m_max[i])}°C，降雨機率 ${d.precipitation_probability_max[i]==null?"？":d.precipitation_probability_max[i]}%`;
+  const tip=c.temperature_2m<16?"有點冷，記得多穿一件 🧥":c.temperature_2m>30?"很熱，記得多喝水 🥤":(d.precipitation_probability_max||[])[0]>=50?"可能會下雨，出門帶把傘 ☂":"天氣不錯，適合下盤棋 😊";
+  return{title:`${name}的天氣`,text:`現在 ${Math.round(c.temperature_2m)}°C（體感 ${Math.round(c.apparent_temperature)}°C），${WXC[c.weather_code]||""}，濕度 ${c.relative_humidity_2m}%，風速 ${Math.round(c.wind_speed_10m)} 公里／小時。\n\n${[0,1,2].map(day).join("\n")}\n\n${tip}`,src:"資料來源：Open-Meteo"}}
+function worldTime(){const n=new Date(),W="日一二三四五六",y=n.getFullYear();
+  return{title:"現在時間",text:`現在是 ${y} 年（民國 ${y-1911} 年）${n.getMonth()+1} 月 ${n.getDate()} 日，星期${W[n.getDay()]}，${n.getHours()<12?"上午":"下午"} ${(n.getHours()%12)||12} 點 ${String(n.getMinutes()).padStart(2,"0")} 分。`}}
+function worldCalc(q){const e=q.replace(/等於多少|是多少|多少|等於|[=＝？?\s]/g,"").replace(/[×xX]/g,"*").replace(/÷/g,"/").replace(/（/g,"(").replace(/）/g,")").replace(/\^/g,"**");
+  if(!/^[\d.+\-*/()]+$/.test(e))return null;let v;try{v=Function(`"use strict";return(${e})`)()}catch(err){return null}
+  if(typeof v!=="number"||!isFinite(v))return{title:"算不出來",text:"這題我算不出來（可能除以 0 了）🤔"};
+  return{title:"計算",text:`${q.replace(/等於多少|是多少|多少|等於|[=＝？?]/g,"").trim()} ＝ ${+v.toFixed(10)}`}}
+function worldPoem(q){const t=q.replace(/\s/g,""),P=POEMS,full=p=>p[2].replace(/([。？！])/g,"$1\n").trim(),show=p=>({title:`〈${p[0]}〉${p[1]}`,text:full(p)});
+  for(const p of P){const ls=p[2].split(/(?<=[，。？])/);for(let i=0;i<ls.length;i++){const l=ls[i].replace(/[，。？]/g,"");if(l.length>=4&&t.includes(l)){
+    if(/下一句|後一句|接下來|下句/.test(t)&&ls[i+1])return{title:`〈${p[0]}〉${p[1]}`,text:`「${l}」的下一句是：\n「${ls[i+1].replace(/[，。？]$/,"")}」\n\n全文：\n${full(p)}`};
+    if(/上一句|前一句|上句/.test(t)&&i>0)return{title:`〈${p[0]}〉${p[1]}`,text:`「${l}」的上一句是：\n「${ls[i-1].replace(/[，。？]$/,"")}」\n\n全文：\n${full(p)}`};
+    return show(p)}}}
+  const byT=P.find(p=>t.includes(p[0]));if(byT)return show(byT);
+  const au=POEM_AU.find(a=>t.includes(a)),pool=au?P.filter(p=>p[1]===au):/詞/.test(t)&&!/詩/.test(t)?P.filter(p=>p[0]==="水調歌頭"):/棋/.test(t)?P.filter(p=>/棋|陣/.test(p[2])):/詩|背一首|唐詩/.test(t)?P:[];
+  if(pool.length){const p=pool[Math.random()*pool.length|0],r=show(p);if(pool.length>1)r.text+="\n\n再問一次會換一首喔！";return r}return null}
+async function worldWiki(q){const t=q.replace(/[？?！!。，,]/g," ").replace(/(請問|告訴我|幫我查|介紹一下|介紹|你知道|是什麼意思|是什麼|是誰|是啥|什麼是|誰是|在哪裡|在哪|有哪些|的意思|嗎|呢|啊)/g," ").trim();if(!t)return null;
+  const A="https://zh.wikipedia.org/w/api.php?format=json&origin=*&",sr=await fetch(A+"action=query&list=search&srlimit=1&srsearch="+encodeURIComponent(t)).then(r=>r.json());const hit=((sr.query||{}).search||[])[0];if(!hit)return null;
+  const ex=await fetch(A+"action=query&prop=extracts&exintro=1&explaintext=1&exsentences=4&redirects=1&variant=zh-tw&titles="+encodeURIComponent(hit.title)).then(r=>r.json());const pg=Object.values((ex.query||{}).pages||{})[0];
+  if(!pg||!pg.extract)return null;return{title:pg.title,text:pg.extract.replace(/\n+/g,"\n\n").slice(0,600),src:"資料來源：維基百科",link:"https://zh.wikipedia.org/zh-tw/"+encodeURIComponent(pg.title)}}
+async function worldAsk(kind,q){try{if(kind==="wx")return await worldWeather(q);if(kind==="time")return worldTime();if(kind==="calc")return worldCalc(q);if(kind==="poem")return worldPoem(q)||await worldWiki(q);if(kind==="wiki")return await worldWiki(q)}
+  catch(e){return{title:"要連網路",text:"這題要上網查，可是現在連不上 😢 等有網路再問我一次。"}}return null}
+function worldCard(a){return`<div class="card"><div class="muted" style="font-size:12px">🌏 萬事通</div><b style="font-size:17px">${esc(a.title)}</b><p style="white-space:pre-line;margin:6px 0 6px">${esc(a.text)}</p>${a.src?`<div class="muted" style="font-size:11px">${esc(a.src)}${a.link?`・<a href="${esc(a.link)}" target="_blank" rel="noopener">看全文</a>`:""}</div>`:""}</div>`}
 function askSheet(){sheet("🤖 問"+BOTN(),b=>{
-  const sug=[...BOT_SAID.slice(0,3),"五七炮是什麼","馬後炮","胡榮華 對 呂欽","1990 五羊盃","怎麼換朝代"];
-  b.innerHTML=`<p class="muted" style="margin-top:0">問我象棋術語、開局、殺法、特級大師、比賽棋譜（例如「胡榮華 對 呂欽」「1990 五羊盃」「屏風馬破當頭炮」），或 App 怎麼用。能示範的，我會直接帶你到棋盤上看。<br>之後隨時<b>長按小人</b>就能問我。</p>
+  const sug=[...BOT_SAID.slice(0,3),"五七炮是什麼","馬後炮","胡榮華 對 呂欽","今天天氣如何","背一首詩","黑洞是什麼"];
+  b.innerHTML=`<p class="muted" style="margin-top:0">問我象棋術語、開局、殺法、特級大師、比賽棋譜（例如「胡榮華 對 呂欽」「1990 五羊盃」「屏風馬破當頭炮」），或 App 怎麼用；象棋以外的也可以問，例如「台北天氣」「背一首詩」「黑洞是什麼」「35×12」。能示範的，我會直接帶你到棋盤上看。<br>之後隨時<b>長按小人</b>就能問我。</p>
     <div class="row" style="gap:8px"><input id="aq" placeholder="例如：五七炮是什麼？" style="flex:1;padding:10px 12px;border:1px solid var(--line);border-radius:10px;font-size:16px;background:var(--card);color:var(--ink)"><button class="btn" id="ag" style="width:auto;padding:10px 16px">問</button></div>
     <div class="chips" id="asug" style="margin-top:8px;flex-wrap:wrap">${sug.map(x=>`<button class="chip" data-q="${esc(x)}">${esc(x.length>14?x.slice(0,13)+"…":x)}</button>`).join("")}</div><div id="aa" style="margin-top:12px"></div>`;
   const qi=b.querySelector("#aq"),aa=b.querySelector("#aa");
-  const ask=async q=>{q=String(q||"").trim();if(!q)return;qi.value=q;aa.innerHTML='<div class="muted">想一想…（第一次會翻一下棋譜）</div>';const kb=await askKB();let r=askFind(kb,q);
+  const say2=t=>{if(typeof BOT!=="undefined"&&BOT)BOT.say(t,2)};
+  const ask=async q=>{q=String(q||"").trim();if(!q)return;qi.value=q;
+    {const wk=worldIntent(q);if(wk){aa.innerHTML='<div class="muted">查一下…</div>';const a=await worldAsk(wk,q);if(a){aa.innerHTML=worldCard(a);say2(wk==="wx"?"天氣查到了！":wk==="poem"?"我來吟一首～":"我知道！");return}}}
+    aa.innerHTML='<div class="muted">想一想…（第一次會翻一下棋譜）</div>';const kb=await askKB();let r=askFind(kb,q);
     const G=await askGames().catch(()=>null),gr=G?askGamesFind(G,q):null;let gl=gr&&gr.list.length?gr:null,gl2=null;
     // 有找到棋手：把他的介紹排第一
     if(gl&&!gl.pls.length)r=askFind(kb,q,4);   // 沒有棋手、有找到棋譜：只留明確命中的說明
@@ -2823,6 +2883,7 @@ function askSheet(){sheet("🤖 問"+BOTN(),b=>{
       closeSheet();location.hash="#/db/"+encodeURIComponent(c)+"/"+encodeURIComponent(id)});
     if(!r.length&&gl){if(typeof BOT!=="undefined"&&BOT)BOT.say("我幫你找到棋譜了！",2);aa.innerHTML=`<div class="card"><b>找到 ${gl.total} 盤相關棋譜</b>${gHTML}</div>`;bindG();return}
     // 只有片段字湊到的（分數低）：不要亂答，改成列出「你是不是想問」讓玩家點（意見回饋 186）
+    if(!gl&&(!r.length||(ASK_SC.get(r[0])||0)<4)&&!CHESSY.test(q)){aa.innerHTML='<div class="muted">這不是象棋問題，我上網查一下…</div>';const a=await worldAsk("wiki",q);if(a){aa.innerHTML=worldCard(a);say2("我查到了！");return}}
     if(r.length&&!gl&&(ASK_SC.get(r[0])||0)<4){const sg=r.slice(0,5);if(typeof BOT!=="undefined"&&BOT)BOT.say("你是想問這些嗎？",2);
       aa.innerHTML=`<div class="card"><b>我不太確定你問的是哪個 🤔</b><div class="muted" style="margin:6px 0">你是不是想問：</div><div class="chips" style="flex-wrap:wrap">${sg.map(x=>`<button class="chip" data-q="${esc(x.keys[0])}">${esc(x.title)}</button>`).join("")}</div><div class="muted" style="font-size:12px;margin-top:8px">也可以問：「怎麼提升實力」「胡榮華」「五七炮」「怎麼換朝代」</div></div>`;
       aa.querySelectorAll("[data-q]").forEach(x=>x.onclick=()=>ask(x.dataset.q));return}
