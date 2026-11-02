@@ -412,7 +412,7 @@ html[data-era=ming] .topbar,html[data-era=qing] .topbar{border-bottom-width:4px}
       if(!window.caches)return go();caches.keys().then(function(ks){return Promise.all(ks.filter(function(k){return k.indexOf("xqlab-app-")===0}).map(function(k){return caches.delete(k)}))})
         .then(function(){return navigator.serviceWorker&&navigator.serviceWorker.getRegistration()}).then(function(r){return r&&r.update()}).catch(function(){}).then(go)}},4000)})();
 </script>
-<script>window.XQ_OFFLINE=true;window.XQ_BUILD="20261102-0847";</script>
+<script>window.XQ_OFFLINE=true;window.XQ_BUILD="20261102-0923";</script>
 <script src="core.js"></script>
 <script src="engine.js"></script>
 <script src="local.js"></script>
@@ -813,6 +813,10 @@ function riverGlyphs(eraK,col,flip,dark,gs,cap){const f=RIVER_ERA[eraK];if(!f)re
 // 整張棋盤的底（只在換風格／朝代／翻轉時重做一次，之後走棋直接沿用這個 <g>）：板身厚度、倒角、外框飾帶、四角花飾、內凹的格線區、材質、格線、楚河漢界、座標
 // 朝代棋盤底圖（使用者用 Gemini 做的，data/boards/*.webp）：[x,y,寬,高]＝圖放在棋盤座標的位置，讓圖上的河界對準第 4～5 線、內框貼著最外側直線
 // 明朝沒有底圖，先借元朝的青花（青花瓷正是明代代表）
+// 朝代棋子：紅方、黑方字的顏色（淺色底用深字、深色底用淺字）；明朝沿用自己的，沒有圖的朝代用原本畫的棋子
+const PIECE_INK={classic:{r:"#B3141B",b:"#141414"},qin:{r:"#C42A22",b:"#111111"},han:{r:"#F5D27A",b:"#111111"},sanguo:{r:"#F0533F",b:"#ECE6DA"},
+  weijin:{r:"#B3141B",b:"#141414"},nanbei:{r:"#8E1414",b:"#0c0c0c"},sui:{r:"#B3141B",b:"#141414"},tang:{r:"#8E1010",b:"#141414"},
+  wudai:{r:"#F0533F",b:"#ECE6DA"},song:{r:"#B3141B",b:"#141414"},yuan:{r:"#B3141B",b:"#141414"},ming:{r:"#F2C14E",b:"#ECE6DA"},qing:{r:"#FF6B5A",b:"#F2D27A"}};
 const BOARD_IMG={"classic": [-17.3, -40.6, 594.6, 701.9], "qin": [-24.9, -33.3, 609.8, 687.2], "han": [-38.6, -44.5, 637.2, 709.6], "sanguo": [-29.7, -46.2, 619.4, 713.4], "weijin": [-24.5, -42.7, 609.1, 705.7], "nanbei": [-25.7, -44.5, 611.4, 709.6], "sui": [-20.9, -36.6, 601.8, 694.5], "tang": [-46.2, -60.6, 652.4, 741.8], "wudai": [-36.3, -44.5, 632.5, 709.6], "song": [-34.0, -19.4, 627.9, 659.4], "yuan": [-25.5, -40.6, 611.0, 701.9], "qing": [-27.1, -49.5, 614.2, 721.3]};BOARD_IMG.ming=BOARD_IMG.yuan;const BOARD_IMG_FILE={ming:"yuan"};
 function boardBG(T,eR,eD,u,flip,imgK){
   const X0=40,Y0=40,S=60,px=c=>X0+c*S,py=r=>Y0+r*S,G=T.grid,arr=Array.isArray(T.bg),dark=arr?lum(T.bg[0])<.42:false;
@@ -900,9 +904,15 @@ function Board(onTap,onSwipe){
   // 一顆棋子（傳統：米色棋子＋紅黑字；實心：紅黑棋子＋白字）
   // 每顆棋子都是「厚圓餅」：桌面上的柔和落影（徑向漸層橢圓，不用 filter）→ 側邊（往下錯開、較深的一圈＝厚度）→ 頂面（中間微隆的漸層）→ 倒角亮邊 → 刻字
   // 拿起來（選中）時整顆往上抬、影子變大變遠
+  let curPK=null;
   function piece(p,i,dy,T,PS,up){const s=sideOf(p),col=s==="r"?T.r:T.b,g=el("g",{}),x=X(i),y=Y(i),yt=y+dy,ch=NAMES[s][p.toUpperCase()];
     const txt=(c,o,a)=>el("text",Object.assign({x,y:yt+10+o,"text-anchor":"middle","font-family":"var(--serif)","font-weight":900,"font-size":28,fill:c},a||{}),ch);
     g.append(el("ellipse",up?{cx:x+5,cy:y+13,rx:34,ry:31,fill:`url(#psh${uid})`}:{cx:x+2,cy:y+7,rx:31,ry:29.5,fill:`url(#psh${uid})`}));
+    // 朝代棋子底圖（使用者用 Gemini 做的，data/pieces/<朝代>-r/b.webp）：立體樣式才用；字的顏色依底色，再描一圈反差邊
+    if(PS==="3d"&&curPK&&PIECE_INK[curPK]){const ink=PIECE_INK[curPK][s],lt=lum(ink)>.5;
+      g.append(el("image",{href:`data/pieces/${curPK}-${s}.webp`,x:x-28.5,y:yt-28.5,width:57,height:57}));
+      if(up)g.append(el("circle",{cx:x,cy:yt,r:28,fill:"none",stroke:T.mv,"stroke-width":4}));
+      g.append(txt(ink,0,{stroke:lt?"#000000b0":"#ffffffc0","stroke-width":3,"paint-order":"stroke","stroke-linejoin":"round"}));return g}
     if(PS==="3d"){   // 立體：實木厚棋子
       const H=7;
       g.append(el("circle",{cx:x,cy:yt+H,r:27,fill:`url(#pside${uid})`,stroke:"#3E2309","stroke-width":1}));
@@ -938,6 +948,7 @@ function Board(onTap,onSwipe){
     // 朝代：楚河漢界的字體跟著目前朝代；邊框紋飾只有棋盤用「跟著頁面風格」（＝朝代配色）時才加
     const eR=curEra(),eD=(o.theme||store.get("boardTheme","wood3d"))==="auto"?eR:null,bk=JSON.stringify(T)+"|"+(eR?eR.k:"")+"|"+(eD?1:0)+"|"+flip;
     const tk=o.theme||store.get("boardTheme","wood3d"),imgK=eD?eD.k:(!eR&&tk==="wood3d"?"classic":null);
+    curPK=eR?eR.k:(tk==="wood3d"?"classic":null);
     if(bk!==bgKey||!bgG){bgKey=bk;bgG=el("g",{});bgG.innerHTML=boardBG(T,eR,eD,uid,flip,imgK)}
     svg.append(bgG);
     // 上一步：原來的位置畫虛線圈、箭頭指到新位置、新位置的棋子外圈加亮（新手一眼看出誰走到哪）
