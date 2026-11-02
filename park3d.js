@@ -29,6 +29,10 @@
       for(let r=0;r<10;r++){g.beginPath();g.moveTo(X(0),Y(r));g.lineTo(X(8),Y(r));g.stroke()}
       for(let c=0;c<9;c++){g.beginPath();if(c===0||c===8){g.moveTo(X(c),Y(0));g.lineTo(X(c),Y(9))}else{g.moveTo(X(c),Y(0));g.lineTo(X(c),Y(4));g.moveTo(X(c),Y(5));g.lineTo(X(c),Y(9))}g.stroke()}
       for(const r0 of[0,7]){g.beginPath();g.moveTo(X(3),Y(r0));g.lineTo(X(5),Y(r0+2));g.moveTo(X(5),Y(r0));g.lineTo(X(3),Y(r0+2));g.stroke()}
+      // 楚河漢界（意見回饋：朝代棋盤上不見了）：用格線色、粗明體；外圈一道淡淡的反差邊，深色的朝代棋盤上也讀得出來
+      {const ry=(Y(4)+Y(5))/2,dark=lum(G.length>=7?G:"#3A1D0A")<.5;g.font=`900 ${.62*u}px ${SERIF}`;g.textAlign="center";g.textBaseline="middle";g.lineJoin="round";
+        g.strokeStyle=dark?"rgba(255,246,225,.55)":"rgba(20,10,5,.55)";g.lineWidth=.06*u;g.fillStyle=G;
+        for(const[t,c]of[["楚",1.2],["河",2.6],["漢",5.4],["界",6.8]]){g.strokeText(t,X(c),ry);g.fillText(t,X(c),ry)}}
       return}
     let gr=g.createLinearGradient(0,0,w,h);gr.addColorStop(0,"#E2B271");gr.addColorStop(.5,"#D6A361");gr.addColorStop(1,"#C99252");g.fillStyle=gr;g.fillRect(0,0,w,h);
     for(let i=0;i<220;i++){g.strokeStyle=`rgba(${110+Math.random()*40|0},${60+Math.random()*30|0},18,${.05+Math.random()*.09})`;g.lineWidth=1+Math.random()*4;g.beginPath();const y=Math.random()*h;g.moveTo(0,y);
@@ -57,8 +61,18 @@
       for(let y=0;y<64;y++)for(let x=0;x<64;x++){const q=Math.hypot(x+.5-32,y+.5-32)/32,i=(y*64+x)*4;if(q>.88&&q<.97&&d[i+3]>220){r+=d[i];gg+=d[i+1];b+=d[i+2];n++}}
       if(n)out="#"+[r,gg,b].map(v=>(v/n|0).toString(16).padStart(2,"0")).join("")}catch(e){}
     return rimCache[k]=out};
+  // 意見回饋：iPhone 上棋子還是太淡 → 棋子底圖、棋身顏色飽和度 ×1.3、對比 ×1.12（以中間調為準），字色再壓深一點；各朝代的色相不變
+  const RS=1.3,RC=1.12,rich1=(v,l)=>clamp((l+(v-l)*RS-128)*RC+128,0,255);
+  const hex2=a=>"#"+a.map(v=>(v|0).toString(16).padStart(2,"0")).join("");
+  const richHex=h=>{const n=parseInt(h.slice(1,7),16),r=n>>16&255,g=n>>8&255,b=n&255,l=r*.3+g*.59+b*.11;return hex2([rich1(r,l),rich1(g,l),rich1(b,l)])};
+  const deepInk=h=>{const n=parseInt(h.slice(1,7),16),r=n>>16&255,g=n>>8&255,b=n&255,l=r*.3+g*.59+b*.11;
+    if(l>150)return h;const k=l<60?.72:.84;return hex2([r,g,b].map(v=>clamp((l+(v-l)*1.2)*k,0,255)))};   // 很亮的字色（金字、白字）不動
+  const richCache={};
+  const richImg=im=>{const k=im.src;if(richCache[k])return richCache[k];const c=document.createElement("canvas");c.width=c.height=FN;const g=c.getContext("2d");g.imageSmoothingQuality="high";g.drawImage(im,0,0,FN,FN);
+    try{const id=g.getImageData(0,0,FN,FN),d=id.data;for(let i=0;i<d.length;i+=4){const l=d[i]*.3+d[i+1]*.59+d[i+2]*.11;d[i]=rich1(d[i],l);d[i+1]=rich1(d[i+1],l);d[i+2]=rich1(d[i+2],l)}g.putImageData(id,0,0)}catch(e){return im}
+    return richCache[k]=c};
   // 字面的漆光：左上一點柔亮、外緣一圈淡淡的暗邊（像斜角），看起來是有厚度的上漆棋子
-  const gloss=(g,n)=>{const h=n/2;let gr=g.createRadialGradient(h*.62,h*.55,0,h*.62,h*.55,h*1.05);gr.addColorStop(0,"rgba(255,255,255,.16)");gr.addColorStop(.55,"rgba(255,255,255,.04)");gr.addColorStop(1,"rgba(255,255,255,0)");g.fillStyle=gr;g.fillRect(0,0,n,n);
+  const gloss=(g,n)=>{const h=n/2;let gr=g.createRadialGradient(h*.62,h*.55,0,h*.62,h*.55,h*1.05);gr.addColorStop(0,"rgba(255,255,255,.1)");gr.addColorStop(.55,"rgba(255,255,255,.025)");gr.addColorStop(1,"rgba(255,255,255,0)");g.fillStyle=gr;g.fillRect(0,0,n,n);
     gr=g.createRadialGradient(h,h,h*.9,h,h,h);gr.addColorStop(0,"rgba(0,0,0,0)");gr.addColorStop(1,"rgba(0,0,0,.28)");g.fillStyle=gr;g.fillRect(0,0,n,n)};
   // 字：先描反差邊（細）、再填字色；字形太細的朝代（GLY_BOLD）再用字色加粗一點
   // 反差邊只在需要的時候描：字色跟底色（底圖中間的平均亮度）差很多就幾乎不描，差不多才描明顯一點（不會一律白邊，紅字變粉紅）
@@ -69,13 +83,13 @@
     g.strokeStyle=halo;g.lineWidth=n*(.016+.014*need);g.strokeText(ch,h,y);g.fillStyle=ink;g.fillText(ch,h,y);g.strokeStyle=ink;g.lineWidth=n*.008;g.strokeText(ch,h,y)};
   const faceTex=(ch,red,onReady)=>{const L=LOOK,s=red?"r":"b",im=L&&L.pieces?loadImg(L.pieces[s],onReady):null,key=ch+(im?"|"+L.k:"");if(faceCache[key])return faceCache[key];
     if(L&&L.pieces&&!im)return plainFace(ch,red);
-    if(im)return faceCache[key]=cv(FN,FN,(g,n)=>{g.fillStyle=rimOf(im);g.fillRect(0,0,n,n);g.imageSmoothingQuality="high";g.drawImage(im,-n*.01,-n*.01,n*1.02,n*1.02);gloss(g,n);
-      glyph(g,n,ch,(L.ink&&L.ink[s])||(red?"#B3141B":"#141414"),L.gly&&L.gly[ch],L.bold||0,bgOf(im))});
+    if(im)return faceCache[key]=cv(FN,FN,(g,n)=>{g.fillStyle=rimOf(im);g.fillRect(0,0,n,n);g.imageSmoothingQuality="high";g.drawImage(richImg(im),-n*.01,-n*.01,n*1.02,n*1.02);gloss(g,n);
+      glyph(g,n,ch,deepInk((L.ink&&L.ink[s])||(red?"#B3141B":"#141414")),L.gly&&L.gly[ch],L.bold||0,bgOf(im))});
     return plainFace(ch,red)};
   // 沒有朝代底圖時的木棋：象牙色、紅黑字、內圈細線
   const plainFace=(ch,red)=>faceCache[ch]||(faceCache[ch]=cv(FN,FN,(g,n)=>{const h=n/2;
-    let gr=g.createRadialGradient(h*.75,h*.7,40,h,h,h);gr.addColorStop(0,"#FFF4D8");gr.addColorStop(.75,"#F2DCAA");gr.addColorStop(1,"#D9B272");g.fillStyle=gr;g.fillRect(0,0,n,n);
-    const ink=red?"#B3141B":"#141414";g.strokeStyle=ink;g.lineWidth=n*.022;g.beginPath();g.arc(h,h,h*.84,0,TAU);g.stroke();gloss(g,n);
+    let gr=g.createRadialGradient(h*.75,h*.7,40,h,h,h);gr.addColorStop(0,"#FCEFCB");gr.addColorStop(.75,"#EED19A");gr.addColorStop(1,"#D2A35C");g.fillStyle=gr;g.fillRect(0,0,n,n);
+    const ink=red?"#9A0A12":"#0E0E0E";g.strokeStyle=ink;g.lineWidth=n*.022;g.beginPath();g.arc(h,h,h*.84,0,TAU);g.stroke();gloss(g,n);
     glyph(g,n,ch,ink,null,0,.85)}));
   const stoneTex=(base,rep)=>{const t=cv(512,512,(g,w,h)=>{g.fillStyle=base;g.fillRect(0,0,w,h);noise(g,w,h,9000,"255,255,255",.12);noise(g,w,h,9000,"0,0,0",.14);
     for(let i=0;i<40;i++){g.fillStyle=`rgba(${Math.random()<.5?"40,40,40":"235,230,220"},${.05+Math.random()*.08})`;g.beginPath();g.arc(Math.random()*w,Math.random()*h,4+Math.random()*16,0,TAU);g.fill()}});
@@ -108,29 +122,83 @@
   // 背景長卷的幾何（世界座標）：半徑、弧度、上下高度；畫的時候用 PX(角度)、PY(高度) 換算成貼圖像素
   const PAN={r:170,arc:PI*1.2,yb:-170,yt:90,w:3072,h:1024};
   const skyTex=E=>cv(16,512,(g,w,h)=>{const gr=g.createLinearGradient(0,0,0,h);gr.addColorStop(0,E.sky[0]);gr.addColorStop(.4,E.sky[1]);gr.addColorStop(.5,E.sky[2]);gr.addColorStop(.56,E.mist);gr.addColorStop(1,E.mist);g.fillStyle=gr;g.fillRect(0,0,w,h)});
-  // 開發者用 Gemini 畫的朝代長卷（data/park/<朝代>.webp）：貼在背景正面（約左右各 47 度），四邊羽化融進程式畫的水墨背景
-  // L、R＝圖上左右兩個主景的範圍（0～1）；分別放到畫面左上角、右上角看得到的位置，中間雲霧（會被對手擋住）壓窄
-  const BG_IMG={qin:{src:"data/park/qin.webp",L:[.02,.165],R:[.2,.33]},han:{src:"data/park/han.webp",L:[.08,.35],R:[.65,.92]},classic:{src:"data/park/classic.webp",L:[.06,.36],R:[.64,.94]},sanguo:{src:"data/park/sanguo.webp",L:[.05,.35],R:[.62,.94]}};
-  function drawUserPan(g,W,H,im,cfg){const iw=im.naturalWidth,ih=im.naturalHeight,dh=H*(cfg.h||.5),s=dh/ih,y0=H*(cfg.hy||.6)-dh*.6;
-    const DEG=14,xL=W*(.5-DEG/216),xR=W*(.5+DEG/216);   // 兩個主景放在 ±14 度：抬頭就看得到，預設視角的上角也露一點
-    const cL=(cfg.L[0]+cfg.L[1])/2,cR=(cfg.R[0]+cfg.R[1])/2,sx=v=>v*iw;
-    // 左段＝圖的 [0, L1]，右段＝圖的 [R0, 1]，各以主景中心對準 xL／xR；兩段重疊就交叉淡化，有空隙就用圖上 [L1, R0] 那段補滿
-    const lx0=xL-sx(cL)*s,lx1=xL+sx(cfg.L[1]-cL)*s,rx0=xR-sx(cR-cfg.R[0])*s,rx1=xR+sx(1-cR)*s,dhc=Math.ceil(dh);
-    const part=(a0,a1,x0,x1,fadeL,fadeR)=>{const w=Math.max(1,Math.ceil(x1-x0)),c=document.createElement("canvas");c.width=w;c.height=dhc;const q=c.getContext("2d");
-      q.drawImage(im,sx(a0),0,Math.max(1,sx(a1-a0)),ih,0,0,w,dh);q.globalCompositeOperation="destination-in";const gr=q.createLinearGradient(0,0,w,0);
-      gr.addColorStop(0,fadeL?"rgba(0,0,0,0)":"#000");gr.addColorStop(Math.min(.5,fadeL/w),"#000");gr.addColorStop(Math.max(.5,1-fadeR/w),"#000");gr.addColorStop(1,fadeR?"rgba(0,0,0,0)":"#000");
-      q.fillStyle=gr;q.fillRect(0,0,w,dhc);return[c,x0]};
-    const ov=lx1-rx0,parts=[];
-    if(ov>0){parts.push(part(0,cfg.L[1],lx0,lx1,0,ov),part(cfg.R[0],1,rx0,rx1,ov,0))}
-    else{const m0=cfg.L[1],m1=Math.max(cfg.R[0],m0+.01),bl=40;parts.push(part(0,m0,lx0,lx1+bl,0,bl),part(m0,m1,lx1-bl,rx0+bl,bl,bl),part(cfg.R[0],1,rx0-bl,rx1,bl,0))}
-    const off=document.createElement("canvas");off.width=W;off.height=dhc;const o=off.getContext("2d");for(const[c,x]of parts)o.drawImage(c,x,0);
-    // 整片的外緣羽化：左右 3.5%、上 16%、下 26%
-    o.globalCompositeOperation="destination-in";const a0=Math.max(0,lx0)/W,a1=Math.min(W,rx1)/W,fw=.035;
-    const fx=o.createLinearGradient(0,0,W,0);fx.addColorStop(0,"rgba(0,0,0,0)");fx.addColorStop(Math.min(.49,a0),"rgba(0,0,0,0)");fx.addColorStop(Math.min(.49,a0+fw),"#000");fx.addColorStop(Math.max(.51,a1-fw),"#000");fx.addColorStop(Math.max(.51,a1),"rgba(0,0,0,0)");fx.addColorStop(1,"rgba(0,0,0,0)");
-    o.fillStyle=fx;o.fillRect(0,0,W,dhc);const fy=o.createLinearGradient(0,0,0,dhc);fy.addColorStop(0,"rgba(0,0,0,0)");fy.addColorStop(.16,"#000");fy.addColorStop(.74,"#000");fy.addColorStop(1,"rgba(0,0,0,0)");o.fillStyle=fy;o.fillRect(0,0,W,dhc);
-    g.drawImage(off,0,y0)}
-  function panTex(E,seed){let s=seed||7;const rnd=()=>(s=(s*16807)%2147483647)/2147483647;
-    return cv(PAN.w,PAN.h,(g,W,H)=>{const PX=d=>(d/(PAN.arc*180/PI)+.5)*W,PY=y=>(PAN.yt-y)/(PAN.yt-PAN.yb)*H,ink=E.ink;
+  // 開發者用 Gemini 畫的朝代長卷（data/park/<朝代>.webp）：繞成 360 度一整圈（意見回饋：轉頭看旁邊、後面，圖不能斷、不能突然變成程式畫的山、不能有空白）
+  // L、R＝圖上左右兩個主景的範圍（0～1）；crop＝只用圖上這一段（秦的原圖是「歷代一條長卷」，只取最左邊秦的長城、烽火台、紅旗、松亭，轉頭才不會看到別朝代的地標）
+  // gap＝主景之間多留幾度雲霧（主景段很窄的時候用，不然一圈會擠太多份）
+  const BG_IMG={qin:{src:"data/park/qin.webp",crop:[0,.34],L:[.02,.165],R:[.2,.33],gap:0},han:{src:"data/park/han.webp",L:[.08,.35],R:[.65,.92]},classic:{src:"data/park/classic.webp",L:[.06,.36],R:[.64,.94]},sanguo:{src:"data/park/sanguo.webp",L:[.05,.35],R:[.62,.94]}};
+  // 原圖前處理（每張圖只做一次）：每一列的宣紙色、墨色加深一點、找出太陽並另做一份「沒有太陽」的（正面以外的段落用，一圈才不會有好幾個太陽）
+  const panPrep={};
+  function prepPan(im){const k=im.src;if(panPrep[k])return panPrep[k];
+    const iw=im.naturalWidth,ih=im.naturalHeight,mk=()=>{const c=document.createElement("canvas");c.width=iw;c.height=ih;return c},c=mk(),g=c.getContext("2d");g.drawImage(im,0,0);
+    const id=g.getImageData(0,0,iw,ih),d=id.data,lumA=new Float32Array(iw*ih);for(let i=0;i<iw*ih;i++)lumA[i]=d[i*4]*.3+d[i*4+1]*.59+d[i*4+2]*.11;
+    // 每一列的紙色：該列亮度第 80～97 百分位的像素平均（避開墨色、也避開最亮的日光），再上下平滑；滿版都是山的列（秦）不能當紙色，拉回圖頂的紙色
+    let row=new Float32Array(ih*3);const rowL=new Float32Array(ih);
+    for(let y=0;y<ih;y++){const ls=lumA.subarray(y*iw,y*iw+iw),srt=Float32Array.from(ls).sort(),lo=srt[iw*.8|0],hi=srt[iw*.97|0];let r=0,gg=0,b=0,n=0;
+      for(let x=0;x<iw;x++)if(ls[x]>=lo&&ls[x]<=hi){const i=(y*iw+x)*4;r+=d[i];gg+=d[i+1];b+=d[i+2];n++}n=n||1;row[y*3]=r/n;row[y*3+1]=gg/n;row[y*3+2]=b/n}
+    {const sm=new Float32Array(ih*3);for(let y=0;y<ih;y++)for(let q=0;q<3;q++){let t=0,n=0;for(let j=-16;j<=16;j++){const yy=y+j;if(yy>=0&&yy<ih){t+=row[yy*3+q];n++}}sm[y*3+q]=t/n}row=sm}
+    {const n0=Math.max(2,ih*.04|0),G=[0,0,0];for(let y=0;y<n0;y++)for(let q=0;q<3;q++)G[q]+=row[y*3+q]/n0;const GL=G[0]*.3+G[1]*.59+G[2]*.11;
+      for(let y=0;y<ih;y++){const l=row[y*3]*.3+row[y*3+1]*.59+row[y*3+2]*.11,w=clamp((GL-6-l)/14,0,1);for(let q=0;q<3;q++)row[y*3+q]+=(G[q]-row[y*3+q])*w}}
+    for(let y=0;y<ih;y++)rowL[y]=row[y*3]*.3+row[y*3+1]*.59+row[y*3+2]*.11;
+    // 天空的大片暖色暈（漢、經典的圖頂中間比較深）：用很模糊的版本找出「比紙色暗、但不是墨」的低頻色偏，從上半部扣掉；
+    // 不然一圈重複好幾份，每份頂上都有一塊深色暈，邊緣還看得出是一段一段的
+    {const bw=Math.max(4,iw/16|0),bh=Math.max(4,ih/16|0),sm=document.createElement("canvas");sm.width=bw;sm.height=bh;const sg=sm.getContext("2d");sg.imageSmoothingQuality="high";sg.drawImage(c,0,0,bw,bh);
+      const up=mk(),ug=up.getContext("2d");ug.imageSmoothingEnabled=true;ug.imageSmoothingQuality="high";ug.drawImage(sm,0,0,iw,ih);const B=ug.getImageData(0,0,iw,ih).data,y1=ih*.5,y0=ih*.3;
+      for(let y=0;y<y1;y++){const wr=y<y0?1:(y1-y)/(y1-y0);for(let x=0;x<iw;x++){const i=(y*iw+x)*4,dr=B[i]-row[y*3],dg=B[i+1]-row[y*3+1],db=B[i+2]-row[y*3+2],dl=dr*.3+dg*.59+db*.11;
+        if(dl>=0)continue;const k=wr*clamp((34+dl)/20,0,1);if(k>0){d[i]-=dr*k;d[i+1]-=dg*k;d[i+2]-=db*k}}}}
+    // 墨色加深一點（只拉開跟紙色的差距、紙色不變）：放大 1.5 倍後不會灰灰糊糊的
+    for(let y=0;y<ih;y++)for(let x=0;x<iw;x++){const i=(y*iw+x)*4;for(let q=0;q<3;q++){const p=row[y*3+q],v=d[i+q];d[i+q]=v<p?p+(v-p)*1.12:v}}
+    g.putImageData(id,0,0);
+    // 太陽：上半部（前 45% 列）比該列紙色亮最多的一團（8×8 格平均，避開最左右 5%）
+    const C=8,gw=iw/C|0,gh=(ih*.45)/C|0,ex=new Float32Array(gw*gh);let best=0,bx=0,by=0;
+    for(let j=0;j<gh;j++)for(let i=0;i<gw;i++){let t=0;for(let y=j*C;y<j*C+C;y++)for(let x=i*C;x<i*C+C;x++)t+=lumA[y*iw+x]-rowL[y];t/=C*C;ex[j*gw+i]=t;if(i>gw*.05&&i<gw*.95&&t>best){best=t;bx=i;by=j}}
+    const N=mk();N.getContext("2d").drawImage(c,0,0);
+    if(best>4){let rr=1;while(bx+rr<gw&&ex[by*gw+bx+rr]>best*.3)rr++;const sx=(bx+.5)*C,sy=(by+.5)*C,R0=Math.max(14,rr*C+4)*1.15,R1=R0*2.3;
+      const q=N.getContext("2d"),nd=q.getImageData(0,0,iw,ih),dd=nd.data;
+      for(let y=Math.max(0,sy-R1|0);y<Math.min(ih,sy+R1);y++)for(let x=Math.max(0,sx-R1|0);x<Math.min(iw,sx+R1);x++){const r=Math.hypot(x-sx,y-sy);if(r>=R1)continue;
+        const w=r<=R0?1:1-(r-R0)/(R1-R0),i=(y*iw+x)*4,l=dd[i]*.3+dd[i+1]*.59+dd[i+2]*.11,e=clamp((l-rowL[y])/5,0,1)*w*w*(3-2*w);
+        if(e>0)for(let k2=0;k2<3;k2++)dd[i+k2]+=(row[y*3+k2]-dd[i+k2])*e}
+      q.putImageData(nd,0,0)}
+    return panPrep[k]={A:c,N,row,ih,iw}};
+  const rgbS=(a,i)=>`rgb(${a[i*3]|0},${a[i*3+1]|0},${a[i*3+2]|0})`;
+  // 畫整圈長卷（貼圖寬＝360 度）：圖切成「左主景段」A＝[起點, m]、「右主景段」B＝[m, 終點]（m＝兩主景之間的雲霧），保持原圖長寬比、不拉伸，
+  // 沿圓周輪流擺 A、B、A′、B′、A、B…（′＝左右鏡像；同一個主景不會緊挨著自己）；正面 A 在 -18 度、B 在 +18 度（預設視角的兩個上角）。
+  // 每段左右邊緣寬幅淡化，接縫再蓋一團同色雲霧；圖的上下鋪滿從圖上取的宣紙色（天空球也換成同色），整圈看起來是同一張長卷
+  function drawUserPan(g,W,H,im,cfg){const P=prepPan(im),iw=P.iw,ih=P.ih,dh=H*(cfg.h||.56),y0=Math.round(H*(cfg.hy||.743)-dh*.6),dhc=Math.ceil(dh);
+    // 高度：預設視角（往下看棋盤）畫面最上緣大約是仰角 -28 度，所以把圖往下放、放大一點，讓主景的屋頂、樹梢落在長椅兩側上角看得到的地方
+    const pxD=W/360,ADEG=iw/ih*(dh/H*(PAN.yt-PAN.yb))/PAN.r*180/PI,X=d=>(d/360+.5)*W,DEG=18;   // ADEG＝整張原圖在圓柱上的寬度（度）
+    const cr=cfg.crop||[0,1],m=(cfg.L[1]+cfg.R[0])/2,cL=(cfg.L[0]+cfg.L[1])/2,cR=(cfg.R[0]+cfg.R[1])/2;
+    const SEG=[{a0:cr[0],a1:m,c:cL},{a0:m,a1:cr[1],c:cR}],nat=(cR-cL)*ADEG+(cfg.gap||0),n=Math.max(4,2*Math.ceil(((360-2*DEG)/nat+1)/2-.25)),S=(360-2*DEG)/(n-1);
+    // 底：每一列的紙色（圖外延伸頂列、底列的顏色）；最上緣淡出到天空球（同色，看不出邊）
+    const col=document.createElement("canvas");col.width=1;col.height=H;const cg=col.getContext("2d");
+    for(let y=0;y<H;y++){const yy=clamp(Math.round((y-y0)/dh*ih),0,ih-1);cg.fillStyle=rgbS(P.row,yy);cg.globalAlpha=Math.min(1,y/(H*.1));cg.fillRect(0,y,1,1)}
+    g.clearRect(0,0,W,H);g.imageSmoothingEnabled=true;g.drawImage(col,0,0,1,H,0,0,W,H);
+    const off=document.createElement("canvas");off.width=W;off.height=dhc;const o=off.getContext("2d");o.imageSmoothingEnabled=true;o.imageSmoothingQuality="high";
+    const put=(c,x)=>{o.drawImage(c,x,0);if(x<0)o.drawImage(c,x+W,0);if(x+c.width>W)o.drawImage(c,x-W,0)};
+    const joints=[];
+    for(let k=0;k<n;k++){const sg=SEG[k%2],mir=(k>>1)%2===1,p=k===0?-DEG:k===1?DEG:DEG+(k-1)*S,src=k<2?P.A:P.N;
+      const wd=(sg.a1-sg.a0)*ADEG,w=Math.max(2,Math.round(wd*pxD)),fw=Math.min(12,wd*.24)*pxD,x0=Math.round(X(p)-(mir?sg.a1-sg.c:sg.c-sg.a0)*ADEG*pxD);
+      const c=document.createElement("canvas");c.width=w;c.height=dhc;const q=c.getContext("2d");q.imageSmoothingEnabled=true;q.imageSmoothingQuality="high";
+      if(mir){q.translate(w,0);q.scale(-1,1)}q.drawImage(src,sg.a0*iw,0,(sg.a1-sg.a0)*iw,ih,0,0,w,dh);q.setTransform(1,0,0,1,0,0);
+      // 左右淡出的邊不是一條直線：每一小段高度的淡出位置跟寬度都跟著起伏（像雲霧的邊），看不出「切一刀」的直邊
+      // （遮罩先畫在另一張畫布上再一次套用：destination-in 會把沒畫到的地方全部清掉）
+      const mk2=document.createElement("canvas");mk2.width=w;mk2.height=dhc;const mq=mk2.getContext("2d"),ph=k*2.1+.7,BH=4;
+      for(let y=0;y<dhc;y+=BH){const t=y/dhc*TAU,wl=(.5*Math.sin(t*1.3+ph)+.3*Math.sin(t*3.7+ph*2))*fw*.45,wr=(.5*Math.sin(t*1.1+ph*1.7)+.3*Math.sin(t*3.3+ph*.6))*fw*.45,
+          a0=clamp(fw*.5+wl-fw*.5,0,w*.45),a1=clamp(fw*1.1+wl,a0+4,w*.48),b1=clamp(w-fw*.5+wr-fw*.5,w*.55,w),b0=clamp(w-fw*1.1+wr,w*.52,b1-4),gr=q.createLinearGradient(0,0,w,0);
+        gr.addColorStop(0,"rgba(0,0,0,0)");gr.addColorStop(a0/w,"rgba(0,0,0,0)");gr.addColorStop(a1/w,"#000");gr.addColorStop(b0/w,"#000");gr.addColorStop(b1/w,"rgba(0,0,0,0)");gr.addColorStop(1,"rgba(0,0,0,0)");
+        mq.fillStyle=gr;mq.fillRect(0,y,w,BH)}
+      q.globalCompositeOperation="destination-in";q.drawImage(mk2,0,0);put(c,x0);if(k>=1)joints.push(p+S/2)}
+    // 接縫的雲霧：同一列的紙色，水平方向中間濃、兩邊淡，下半部濃一點（像山谷升起的霧）
+    {const mc=document.createElement("canvas"),mw=Math.round(26*pxD);mc.width=mw;mc.height=dhc;const q=mc.getContext("2d");q.drawImage(col,0,y0,1,dhc,0,0,mw,dhc);q.globalCompositeOperation="destination-in";
+      const hx=q.createLinearGradient(0,0,mw,0);hx.addColorStop(0,"rgba(0,0,0,0)");hx.addColorStop(.5,"rgba(0,0,0,.7)");hx.addColorStop(1,"rgba(0,0,0,0)");q.fillStyle=hx;q.fillRect(0,0,mw,dhc);
+      const vy=q.createLinearGradient(0,0,0,dhc);vy.addColorStop(0,"rgba(0,0,0,.35)");vy.addColorStop(.45,"rgba(0,0,0,.75)");vy.addColorStop(.8,"#000");vy.addColorStop(1,"#000");q.fillStyle=vy;q.fillRect(0,0,mw,dhc);
+      for(const j of joints)put(mc,Math.round(X(((j+180)%360+360)%360-180)-mw/2))}
+    // 整片上下羽化進紙色：上 16%、下 26%
+    o.globalCompositeOperation="destination-in";const fy=o.createLinearGradient(0,0,0,dhc);fy.addColorStop(0,"rgba(0,0,0,0)");fy.addColorStop(.16,"#000");fy.addColorStop(.74,"#000");fy.addColorStop(1,"rgba(0,0,0,0)");o.fillStyle=fy;o.fillRect(0,0,W,dhc);
+    g.drawImage(off,0,y0);noise(g,W,H,6000,"120,100,70",.035);
+    return{top:rgbS(P.row,0),bot:rgbS(P.row,ih-1)}}
+  // 有朝代長卷的：貼圖改成一整圈（360 度、4096 寬）；圖還沒載入前先用程式畫的山頂著
+  function panTex(E,seed){let s=seed||7;const rnd=()=>(s=(s*16807)%2147483647)/2147483647,ARC=E.userBg?TAU:PAN.arc;
+    return cv(E.userBg?4096:PAN.w,PAN.h,(g,W,H)=>{const PX=d=>(d/(ARC*180/PI)+.5)*W,PY=y=>(PAN.yt-y)/(PAN.yt-PAN.yb)*H,ink=E.ink;
       // 水墨山：一條起伏的稜線往下填墨，上緣濃、往下漸淡入雲霧
       const ridge=(yTop,amp,freq,a,soft)=>{const pts=[],ph=[rnd()*9,rnd()*9,rnd()*9];let top=H;
         for(let x=0;x<=W;x+=8){const t=x/W;let y=Math.sin(t*freq*TAU+ph[0])*.5+Math.sin(t*freq*2.3*TAU+ph[1])*.3+Math.sin(t*freq*5.1*TAU+ph[2])*.12;y=Math.pow(Math.max(0,y*.5+.5),E.flat?1:1.6);
@@ -197,6 +265,62 @@
       // 宣紙紋
       noise(g,W,H,9000,"120,100,70",.05)})}
 
+  // ---------- 平台上的樹：水墨畫（意見回饋：之前的低面數樹冠太醜）----------
+  // 一棵樹＝一張畫在畫布上的水墨（透明底），貼在一片永遠轉向座位的平面上（鏡頭只會在原地轉頭、沿視線拉近拉遠，所以看起來一直是正面的畫）
+  // 松：乾筆皴擦的彎曲樹幹＋鱗紋、橫出的枝、扁平層疊的松針團（淡墨渲染打底，濃墨車輪狀松針疊上）
+  // 柳：粗短老幹、拱起的枝條垂下細長柳絲，絲上點綴斜點柳葉；竹：幾竿竹（一節一節、節上一小橫），頂端寫意竹葉（个字、介字組）
+  function inkTreeTex(E,kind,seed){let s=seed;const rnd=()=>(s=(s*16807)%2147483647)/2147483647,R=(a,b)=>a+(b-a)*rnd();
+    return cv(768,1024,(g,W,H)=>{const ink=E.ink,mixC=(a,b,t)=>"#"+new T.Color(a).lerp(new T.Color(b),t).getHexString(),A=hexA;
+      const leaf=kind==="willow"?mixC(ink,"#5F7E3A",.75):kind==="bamboo"?mixC(ink,"#2F5236",.55):mixC(ink,"#33492F",.5);
+      // 乾筆：主筆一道，再沿筆路疊幾道細的斷續筆（濃淡不一）＝飛白、皴擦的質感
+      const brush=(pts,w0,w1,col,a)=>{const n=pts.length;for(let i=1;i<n;i++){const t=i/(n-1);g.strokeStyle=A(col,a);g.lineCap="round";g.lineWidth=w0+(w1-w0)*t;g.beginPath();g.moveTo(pts[i-1][0],pts[i-1][1]);g.lineTo(pts[i][0],pts[i][1]);g.stroke()}
+        for(let k=0;k<7;k++){const o=R(-.45,.45);g.setLineDash([R(6,30),R(3,14)]);g.strokeStyle=A(k%3?ink:"#FFFFFF",k%3?R(.25,.55)*a:R(.15,.3));g.lineWidth=R(1,2.6);g.beginPath();
+          for(let i=0;i<n;i++){const t=i/(n-1),w=w0+(w1-w0)*t,p=pts[i],q=pts[Math.min(n-1,i+1)],p0=pts[Math.max(0,i-1)],dx=q[0]-p0[0],dy=q[1]-p0[1],l=Math.hypot(dx,dy)||1;
+            const x=p[0]-dy/l*w*o,y=p[1]+dx/l*w*o;i?g.lineTo(x,y):g.moveTo(x,y)}g.stroke()}g.setLineDash([])};
+      const path=(x0,y0,x1,y1,bend,n)=>{const pts=[];n=n||14;const mx=(x0+x1)/2+bend,my=(y0+y1)/2;for(let i=0;i<=n;i++){const t=i/n,u=1-t;pts.push([u*u*x0+2*u*t*mx+t*t*x1+R(-1.5,1.5),u*u*y0+2*u*t*my+t*t*y1+R(-1.5,1.5)])}return pts};
+      const wash=(x,y,rx,ry,col,a)=>{g.save();g.translate(x,y);g.scale(1,ry/rx);const gr=g.createRadialGradient(0,0,0,0,0,rx);gr.addColorStop(0,A(col,a));gr.addColorStop(.6,A(col,a*.6));gr.addColorStop(1,A(col,0));g.fillStyle=gr;g.beginPath();g.arc(0,0,rx,0,TAU);g.fill();g.restore()};
+      const cx=W/2,base=H-10;
+      if(kind==="bamboo"){
+        for(let c=0;c<6;c++){const x=cx+R(-170,170),h=R(.62,.95)*H,lean=R(-60,60),w=R(9,16),front=c%2===0,col=front?leaf:mixC(leaf,"#C9C4B0",.45),a=front?.92:.6;
+          let y=base,segs=Math.round(h/R(70,95));const top=base-h;
+          for(let i=0;i<segs;i++){const y1=Math.max(top,y-h/segs+4),t0=(base-y)/h,t1=(base-y1)/h,x0=x+lean*t0*t0,x1=x+lean*t1*t1;
+            brush([[x0,y-2],[(x0+x1)/2,(y+y1)/2],[x1,y1]],w*(1-t0*.35),w*(1-t1*.35),col,a);g.strokeStyle=A(ink,a*.9);g.lineWidth=2.4;g.beginPath();g.moveTo(x1-w*.7,y1);g.quadraticCurveTo(x1,y1+3,x1+w*.7,y1);g.stroke();y=y1-5}
+          // 頂端的竹葉：以竿頂和上面幾節為中心，三五片一組的尖葉
+          for(let k=0;k<(front?5:3);k++){const ty=top+R(0,h*.45),tx=x+lean*Math.pow((base-ty)/h,2);const n=Math.round(R(3,5)),dir=rnd()<.5?-1:1;
+            for(let j=0;j<n;j++){const ang=(dir<0?PI:0)+dir*R(.15,.9)+R(-.2,.2)+(j-n/2)*.32*dir,L=R(60,110),lw=R(7,12);g.fillStyle=A(front?ink:leaf,front?R(.7,.92):R(.4,.6));
+              g.save();g.translate(tx,ty);g.rotate(ang);g.beginPath();g.moveTo(0,0);g.quadraticCurveTo(L*.35,-lw,L,0);g.quadraticCurveTo(L*.35,lw*.55,0,0);g.fill();g.restore()}}}
+        return}
+      // 樹幹（松、柳共用）：S 形彎曲；先用淡墨填出幹身，再用乾筆勾兩側輪廓、疊鱗紋（松）／疤節（柳）
+      const willow=kind==="willow",th=willow?H*.5:H*.6,sw=R(60,110)*(rnd()<.5?-1:1),tw=willow?78:64,bx=cx-sw*.3;
+      const trunk=[];for(let i=0;i<=24;i++){const t=i/24;trunk.push([bx+Math.sin(t*PI*1.15)*sw+t*t*sw*.3+R(-2,2),base-t*th])}
+      const wAt=t=>tw*(1-t*.55)*(1+.25*Math.max(0,1-t*6));   // 根部外張
+      const side=sd=>trunk.map((p,i)=>{const t=i/24,q=trunk[Math.min(24,i+1)],o=trunk[Math.max(0,i-1)],dx=q[0]-o[0],dy=q[1]-o[1],l=Math.hypot(dx,dy)||1,w=wAt(t)/2*sd+R(-2,2);return[p[0]-dy/l*w,p[1]+dx/l*w]});
+      const Ls=side(1),Rs=side(-1);
+      wash(cx,base-4,200,26,ink,.22);   // 樹根的地面淡墨
+      g.fillStyle=A(mixC(ink,"#7A6650",.3),.78);g.beginPath();Ls.forEach((p,i)=>i?g.lineTo(p[0],p[1]):g.moveTo(p[0],p[1]));Rs.slice().reverse().forEach(p=>g.lineTo(p[0],p[1]));g.closePath();g.fill();
+      g.save();g.clip();for(let i=0;i<7;i++){const o=R(-.4,.4);brush(trunk.map((p,j)=>[p[0]+o*wAt(j/24),p[1]]),R(4,12),R(2,5),i%3?ink:"#F2EAD8",i%3?R(.2,.4):R(.12,.22))}g.restore();   // 幹身裡的皴擦
+      brush(Ls,R(5,7),3,ink,.9);brush(Rs,R(4,6),2.5,ink,.75);
+      for(let i=0;i<(willow?8:26);i++){const j=1+(rnd()*21|0),t=j/24,p=trunk[j],w=wAt(t)*.38;g.strokeStyle=A(ink,R(.45,.8));g.lineWidth=R(2,3.5);g.beginPath();g.ellipse(p[0]+R(-w,w),p[1],R(7,13),R(4,7),R(-.3,.3),R(.1,.6),R(2.4,3.0));g.stroke()}
+      const top=trunk[24],inX=x=>clamp(x,40,W-40);
+      if(willow){// 柳：幾條拱起的枝，從枝上垂下細長柳絲
+        for(let b=0;b<8;b++){const sx=top[0]+R(-20,20),sy=top[1]+R(0,70),dir=b%2?1:-1,ex=inX(sx+dir*R(120,330)),ey=Math.max(90,sy-R(30,170)),mx=(sx+ex)/2,my=Math.max(50,Math.min(sy,ey)-R(50,120)),br=[];
+          for(let i=0;i<=12;i++){const t=i/12,u=1-t;br.push([u*u*sx+2*u*t*mx+t*t*ex,u*u*sy+2*u*t*my+t*t*ey])}brush(br,R(12,20),4,ink,.85);   // 枝條先往上拱、再往外垂
+          for(let i=1;i<br.length;i++){if(rnd()<.15)continue;const p=br[i],L=R(260,560)*Math.min(1,(base-30-p[1])/560+.3),swy=R(-36,36);g.strokeStyle=A(leaf,R(.45,.8));g.lineWidth=R(1.4,2.4);g.beginPath();g.moveTo(p[0],p[1]);g.bezierCurveTo(p[0]+swy*.3,p[1]+L*.3,p[0]+swy,p[1]+L*.7,p[0]+swy*.9,p[1]+L);g.stroke();
+            g.fillStyle=A(leaf,R(.5,.85));for(let j=0;j<14;j++){const t=R(.05,1),x=p[0]+swy*t*.95,y=p[1]+L*t;g.save();g.translate(x,y);g.rotate(R(.3,.9)*(rnd()<.5?-1:1));g.beginPath();g.ellipse(0,0,R(2.4,4),R(8,14),0,0,TAU);g.fill();g.restore()}}}
+        wash(top[0],top[1]+160,330,190,leaf,.16);return}
+      // 松：橫出的枝（往左右伸、略往上翹，有小分枝），枝端與樹頂是扁平層疊的松針團
+      const pads=[[inX(top[0]),top[1]-20,R(150,180)]];
+      for(let b=0;b<5;b++){const i=7+(b*3.2|0),p=trunk[Math.min(23,i)],sd=(b%2?1:-1)*(sw>0?1:-1),L=R(170,290),ex=clamp(p[0]+sd*L,150,W-150),ey=p[1]-R(30,110);
+        const br=path(p[0],p[1],ex,ey,R(-40,40),10);brush(br,R(18,26),6,ink,.9);const m=br[6];brush(path(m[0],m[1],m[0]+sd*R(40,90),m[1]-R(40,80),10,6),8,3,ink,.8);
+        pads.push([ex,ey-10,R(115,160)])}
+      const pad=(x,y,r)=>{x=clamp(x,r*.9,W-r*.9);wash(x,y,r*1.2,r*.5,leaf,.6);wash(x+R(-12,12),y-r*.05,r*.95,r*.34,ink,.42);   // 淡墨、濃墨兩層打底
+        // 車輪狀松針：一個個小扇面，從中心往上半圈放射；先淡後濃兩層
+        for(const layer of[0,1]){const n=Math.round(r/(layer?7:9));for(let k=0;k<n;k++){const fx=x+R(-.9,.9)*r,fy=y+R(-.28,.14)*r*(1-Math.abs(fx-x)/r*.5),len=R(.15,.24)*r,m=Math.round(R(11,17));
+          g.strokeStyle=A(layer?ink:leaf,layer?R(.7,.95):R(.5,.75));g.lineWidth=layer?R(2,3):R(2.4,3.4);
+          for(let j=0;j<m;j++){const a=PI*1.05+(j/(m-1))*PI*.9+R(-.06,.06);g.beginPath();g.moveTo(fx,fy);g.lineTo(fx+Math.cos(a)*len,fy+Math.sin(a)*len*.8);g.stroke()}}}
+        g.strokeStyle=A(ink,.6);g.lineWidth=4;g.beginPath();g.moveTo(x-r*.95,y+r*.1);g.quadraticCurveTo(x,y+r*.28,x+r*.95,y+r*.1);g.stroke()};   // 團底一道濃墨
+      pads.sort((a,b)=>a[1]-b[1]).forEach(p=>pad(p[0],p[1],p[2]))})}
+
   function create(host,opt){opt=opt||{};
     const el=document.createElement("div");el.className="park3d";el.style.cssText="position:relative;width:100%;border-radius:14px;overflow:hidden;touch-action:none;-webkit-user-select:none;user-select:none;background:#A9CBE8";
     host.append(el);
@@ -207,7 +331,7 @@
     rd.toneMapping=T.ACESFilmicToneMapping;rd.toneMappingExposure=.98;try{ANI=rd.capabilities.getMaxAnisotropy()||8}catch(e){}
     rd.domElement.style.cssText="display:block;width:100%;height:100%";el.append(rd.domElement);
     const hint=document.createElement("div");hint.style.cssText="position:absolute;left:50%;bottom:8px;transform:translateX(-50%);font:600 11px sans-serif;color:#fff;background:rgba(30,20,10,.45);padding:3px 10px;border-radius:99px;white-space:nowrap;pointer-events:none;transition:opacity .6s";
-    hint.textContent="點棋子走棋・拖曳轉頭看看四周・點兩下回正";el.append(hint);setTimeout(()=>hint.style.opacity=0,4500);
+    hint.textContent="點棋子走棋・拖曳轉頭・兩指縮放・點兩下回正";el.append(hint);setTimeout(()=>hint.style.opacity=0,4500);
     const EK=eraKey(),E=ERA[EK];
     el.style.background=E.mist;
     const sc=new T.Scene();sc.fog=new T.Fog(new T.Color(E.mist),70,320);
@@ -219,10 +343,15 @@
     const fill=new T.DirectionalLight(0xC8DCFF,.28);fill.position.set(20,12,-18);sc.add(fill);
     // 天空球（含下半部的雲海色）＋水墨長卷
     const sky=new T.Mesh(new T.SphereGeometry(400,32,16),new T.MeshBasicMaterial({map:skyTex(E),side:T.BackSide,fog:false,depthWrite:false,toneMapped:false}));sc.add(sky);
-    {const pt=panTex(Object.assign({},E,{userBg:!!BG_IMG[EK]}),EK.length*977+13);pt.wrapS=T.RepeatWrapping;pt.repeat.x=-1;   // 從圓柱內側看，貼圖要左右翻回來
-      const pan=new T.Mesh(new T.CylinderGeometry(PAN.r,PAN.r,PAN.yt-PAN.yb,64,1,true,PI-PAN.arc/2,PAN.arc),new T.MeshBasicMaterial({map:pt,side:T.BackSide,transparent:true,fog:false,depthWrite:false,toneMapped:false}));
+    const BI=BG_IMG[EK],FULL=!!BI;   // FULL：有朝代長卷，背景是完整一圈，可以整個轉身看
+    {const pt=panTex(Object.assign({},E,{userBg:FULL}),EK.length*977+13);pt.wrapS=T.RepeatWrapping;pt.repeat.x=-1;   // 從圓柱內側看，貼圖要左右翻回來
+      const arc=FULL?TAU:PAN.arc,pan=new T.Mesh(new T.CylinderGeometry(PAN.r,PAN.r,PAN.yt-PAN.yb,FULL?128:64,1,true,PI-arc/2,arc),new T.MeshBasicMaterial({map:pt,side:T.BackSide,transparent:true,fog:false,depthWrite:false,toneMapped:false}));
       pan.position.y=(PAN.yt+PAN.yb)/2;pan.renderOrder=-1;sc.add(pan);
-      const BI=BG_IMG[EK];if(BI){const put=()=>{const im=imgCache[BI.src];if(!im||!im.naturalWidth||!el.isConnected)return;try{drawUserPan(pt.image.getContext("2d"),pt.image.width,pt.image.height,im,BI);pt.needsUpdate=true}catch(e){}};
+      if(BI){const put=()=>{const im=imgCache[BI.src];if(!im||!im.naturalWidth||!el.isConnected)return;try{const pc=drawUserPan(pt.image.getContext("2d"),pt.image.width,pt.image.height,im,BI);pt.needsUpdate=true;
+          // 天空球、霧、底色都換成圖上的宣紙色：長卷上下淡出的地方看不出色帶
+          const sk=sky.material.map,sg=sk.image.getContext("2d"),gr=sg.createLinearGradient(0,0,0,sk.image.height),top=new T.Color(pc.top);
+          gr.addColorStop(0,"#"+top.clone().lerp(new T.Color(1,1,1),.12).getHexString());gr.addColorStop(.36,pc.top);gr.addColorStop(.5,pc.top);gr.addColorStop(.58,pc.bot);gr.addColorStop(1,pc.bot);
+          sg.fillStyle=gr;sg.fillRect(0,0,sk.image.width,sk.image.height);sk.needsUpdate=true;sc.fog.color.set(pc.bot);el.style.background=pc.bot}catch(e){console.warn(e)}};
         if(loadImg(BI.src,put))setTimeout(put,0)}}
     const M=(c,o)=>new T.MeshStandardMaterial(Object.assign({color:c,roughness:.8,metalness:0},o||{}));
     const mesh=(geo,mat,pos,o)=>{const m=new T.Mesh(geo,mat);if(pos)m.position.set(...pos);m.castShadow=!(o&&o.noCast);m.receiveShadow=true;sc.add(m);return m};
@@ -256,20 +385,10 @@
       const b=new T.Mesh(new T.CylinderGeometry(.5,.36,.7,32,1,true),por);b.position.y=.43;b.material.side=T.DoubleSide;cup.add(b);const band=new T.Mesh(new T.CylinderGeometry(.505,.47,.12,32,1,true),blue);band.position.y=.6;cup.add(band);
       const tea=new T.Mesh(new T.CircleGeometry(.47,32),M(0x9C6B1E,{roughness:.1}));tea.rotation.x=-PI/2;tea.position.y=.66;cup.add(tea);cup.traverse(o=>{if(o.isMesh){o.castShadow=true;o.receiveShadow=true}});return cup};
     teaCup(0,-6.85);teaCup(.4,7.0);   // 意見回饋 219：Pikafish 的茶在它面前正中間、我的茶在我面前正中間
-    // 平台上的樹（依朝代：松、柳、竹），水墨感的深色樹冠；放在兩側，轉頭時當前景框
-    const bark=M(0x4A3626,{roughness:.95}),leafM=M(new T.Color(E.ink).lerp(new T.Color(0x2F4A2A),.7).getHex(),{roughness:.95}),leafG=M(new T.Color(0x6E8A3E).getHex(),{roughness:.95});
-    const tree=(x,z,s)=>{const g=new T.Group();g.position.set(x,GY,z);g.scale.setScalar(s);sc.add(g);
-      if(E.tree==="bamboo"){for(let i=0;i<9;i++){const c=new T.Mesh(new T.CylinderGeometry(.18,.22,26+Math.random()*8,6),M(0x6E8B57,{roughness:.7}));c.position.set((Math.random()-.5)*5,13,(Math.random()-.5)*5);c.rotation.z=(Math.random()-.5)*.12;g.add(c);
-        const lf=new T.Mesh(new T.IcosahedronGeometry(2.4,0),leafG);lf.scale.set(1,.5,1);lf.position.set(c.position.x,24+Math.random()*6,c.position.z);g.add(lf)}return}
-      const tr=new T.Mesh(new T.CylinderGeometry(.6,1.1,16,8),bark);tr.position.y=8;tr.rotation.z=.08;g.add(tr);
-      if(E.tree==="willow"){const wm=M(0x6F8E40,{roughness:.9}),cg=new T.SphereGeometry(1,10,6),sg=new T.CylinderGeometry(.07,.04,1,4);
-        for(const[x,y,z,r]of[[0,17,0,4.2],[2.6,16,1.4,3],[-2.6,16.2,-1,3.2],[.6,19,-.6,2.8]]){const c=new T.Mesh(cg,wm);c.scale.set(r,r*.55,r);c.position.set(x,y,z);g.add(c)}
-        for(let i=0;i<46;i++){const a=Math.random()*TAU,d=2+Math.random()*3.4,l=4+Math.random()*6,st=new T.Mesh(sg,wm);st.scale.y=l;st.position.set(Math.sin(a)*d,16-l/2,Math.cos(a)*d);st.rotation.z=(Math.random()-.5)*.12;g.add(st)}return}
-      // 松：枝幹往兩側伸，末端是扁平的深色松針團（國畫松樹的樣子）
-      const pad=new T.SphereGeometry(1,10,6);
-      for(const[y,a,l]of[[10,.3,6],[12.5,2.6,5.5],[14.5,4.4,5],[16.5,1.2,4.2],[18,3.6,3.4],[19.5,5.4,2.6]]){const br=new T.Mesh(new T.CylinderGeometry(.18,.32,l,5),bark);br.position.set(Math.cos(a)*l/2,y,Math.sin(a)*l/2);br.rotation.set(0,-a,PI/2-.35);g.add(br);
-        for(let j=0;j<3;j++){const c=new T.Mesh(pad,leafM);c.scale.set(2.2-j*.4,.55,1.8-j*.3);c.position.set(Math.cos(a)*(l-.6+j*.4)+(Math.random()-.5),y+1.2+j*.45,Math.sin(a)*(l-.6+j*.4)+(Math.random()-.5));g.add(c)}}
-      const cr=new T.Mesh(pad,leafM);cr.scale.set(2.4,.7,2.2);cr.position.y=21.2;g.add(cr)};
+    // 平台上的樹（依朝代：松、柳、竹）：水墨畫的看板（兩種筆法輪流），放在兩側，轉頭時當前景框；不投影（畫是平的，影子會穿幫）
+    const treeTex=[inkTreeTex(E,E.tree,EK.length*131+7),inkTreeTex(E,E.tree,EK.length*131+911)];let treeN=0;
+    const tree=(x,z,s)=>{const m=new T.Mesh(new T.PlaneGeometry(20,26.7),new T.MeshBasicMaterial({map:treeTex[treeN++%2],transparent:true,alphaTest:.02,depthWrite:false,side:T.DoubleSide,toneMapped:false}));
+      m.scale.setScalar(s);m.position.set(x,GY+26.7*s/2-.4,z);m.rotation.y=Math.atan2(0-x,9.2-z);m.renderOrder=1;sc.add(m)};
     tree(-18,-8,.95);tree(18.5,-5,.9);tree(-13,-16.5,.8);
     // 欄杆上的燈籠（朝代色）
     const lanterns=[];{const lm=M(new T.Color(E.acc).getHex(),{emissive:new T.Color(E.acc).getHex(),emissiveIntensity:.45,roughness:.5}),gm=M(0xE3B341,{metalness:.6,roughness:.35});
@@ -304,7 +423,8 @@
     const say=(t,d)=>mate.say(t,d);
     let reach=0,reachT=0,thinking=false,mood=null,glanceT=3,glance=0,mySide="r",oppName="";
     // ---------- 棋子 ----------
-    const pieceGeo=(()=>{const pts=[];const R=.46,H=.27,r=.06;pts.push(new T.Vector2(0,0));pts.push(new T.Vector2(R-r,0));for(let i=0;i<=6;i++){const a=-PI/2+i/6*PI/2;pts.push(new T.Vector2(R-r+Math.cos(a)*r,r+Math.sin(a)*r))}
+    const pieceGeo=(()=>{const pts=[];const R=.485,H=.27,r=.06;   // 意見回饋：棋子加大（格距 1，半徑 .485，鄰子之間還留 .03 的縫）
+     pts.push(new T.Vector2(0,0));pts.push(new T.Vector2(R-r,0));for(let i=0;i<=6;i++){const a=-PI/2+i/6*PI/2;pts.push(new T.Vector2(R-r+Math.cos(a)*r,r+Math.sin(a)*r))}
       for(let i=0;i<=6;i++){const a=i/6*PI/2;pts.push(new T.Vector2(R-r+Math.cos(a)*r,H-r+Math.sin(a)*r))}pts.push(new T.Vector2(0,H));return new T.LatheGeometry(pts,72)})();
     // 棋子（意見回饋 218）：不再用自發光（會把顏色洗白）；改成不經過 ACES 色調映射，並用「光色的倒數」把桌面上的暖光抵銷，
     // 陽光照到的字面＝底圖原本的顏色（飽和、字黑），陰影裡照樣變暗，看起來還是真的在光裡
@@ -313,9 +433,9 @@
       const tg=[.97,.95,.92];return new T.Color(tg[0]/Math.max(.2,L.r),tg[1]/Math.max(.2,L.g),tg[2]/Math.max(.2,L.b))})();
     // 鏡面反光調弱：對面那排棋子是斜斜地看，補光的大片反光會把字面刷成灰色（遠處的黑子看起來髒），只留一點點漆光
     const pMat=o=>{try{return new T.MeshPhysicalMaterial(Object.assign({metalness:0,specularIntensity:.22,toneMapped:false},o))}catch(e){return new T.MeshStandardMaterial(Object.assign({metalness:0,toneMapped:false},o))}};
-    const faceGeo=new T.CircleGeometry(.41,64),faceMat={},bodyMat={};
+    const faceGeo=new T.CircleGeometry(.435,64),faceMat={},bodyMat={};
     const bMat=red=>{const s=red?"r":"b";if(bodyMat[s])return bodyMat[s];const L=LOOK,im=L&&L.pieces?loadImg(L.pieces[s]):null;
-      const c=new T.Color(im?rimOf(im):"#E9D2A2").multiply(NEUT);return bodyMat[s]=pMat({color:c,roughness:.42})};
+      const c=new T.Color(richHex(im?rimOf(im):"#E2C48C")).multiply(NEUT);return bodyMat[s]=pMat({color:c,roughness:.42})};
     const fMat=(ch,red)=>faceMat[ch+red]||(faceMat[ch+red]=(()=>{const tx=faceTex(ch,red);return pMat({map:tx,color:NEUT,roughness:.5})})());
     const makePiece=p=>{const s=sideOf(p),ch=NAMES[s][p.toUpperCase()],g=new T.Group();const body=new T.Mesh(pieceGeo,bMat(s==="r"));body.castShadow=true;body.receiveShadow=true;g.add(body);
       const f=new T.Mesh(faceGeo,fMat(ch,s==="r"));f.rotation.x=-PI/2;f.position.y=.272;g.add(f);g.userData={p};sc.add(g);return g};
@@ -359,9 +479,9 @@
       prevB=board.slice();prevLast=lk;
       // 提示：上一步、選子、可走點、將軍
       markG.clear();checkRing=null;
-      if(L&&L.f!==L.t){ring(L.f,0x2E86DE,.36,.06,.85);disc(L.f,0x2E86DE,.12,.5);ring(L.t,0x2E86DE,.52,.06,.9)}
+      if(L&&L.f!==L.t){ring(L.f,0x2E86DE,.36,.06,.85);disc(L.f,0x2E86DE,.12,.5);ring(L.t,0x2E86DE,.56,.07,.9)}
       selI=o.sel!=null&&o.sel>=0?o.sel:-1;
-      (o.targets||[]).forEach(i=>{if(board[i])ring(i,0xD7263D,.52,.08,.95);else disc(i,0x2F9E5A,.19,.9)});
+      (o.targets||[]).forEach(i=>{if(board[i])ring(i,0xD7263D,.56,.09,.95);else disc(i,0x2F9E5A,.19,.9)});
       if(typeof o.check==="number"&&o.check>=0&&board[o.check])checkRing=ring(o.check,0xFF2A2A,.62,.12,.9);
       if(ex.hint&&ex.hint.length===2){ring(ex.hint[0],0xF2B233,.5,.07,.9);ring(ex.hint[1],0xF2B233,.5,.07,.9)}
       thinking=!!ex.thinking;setOpp(ex.opp||null);setWatchers(ex.watchers);mySide=ex.botSide?(ex.botSide==="r"?"b":"r"):"r";
@@ -371,7 +491,7 @@
         else if(b){opp.setFace("sad",99);opp.say(ex.oppLose||"你好厲害…",3);mate.setFace("happy",99);setTimeout(()=>mate.say("你贏了！太強了！",2.6),1500)}}
       if(!ex.result&&mood){mood=null;opp.setFace("smile");mate.setFace("smile")}}
     // ---------- 鏡頭與互動 ----------
-    let yaw=0,pitch=0,tyaw=0,tpitch=0,W=1,H=1;
+    let yaw=0,pitch=0,tyaw=0,tpitch=0,zoom=1,tzoom=1,W=1,H=1;   // zoom＝鏡頭到棋盤中心的距離倍數（兩指捏合）
     // 鏡頭（iPhone 可讀性）：坐在桌前、比較俯視的角度，讓棋盤幾乎撐滿整個寬度；上方留一段看到對面的對手
     const VH0=window.innerHeight||800;   // 只在建立時量一次螢幕高度（iPhone 捲動時網址列伸縮不會讓畫面跳）
     const CAMV={hr:1.14,ht:.40,dp:0};   // 畫面高寬比、水平視角的 tan(半角)（固定水平視野，窄螢幕不會切掉棋盤兩邊）
@@ -379,28 +499,42 @@
     const fit=()=>{W=el.clientWidth||300;CAMV.hr=clamp((VH0-300)/W,1.14,1.32);CAMV.dp=Math.atan(CAMV.ht*1.14)-Math.atan(CAMV.ht*CAMV.hr);H=Math.round(W*CAMV.hr);el.style.height=H+"px";rd.setSize(W,H,false);cam.aspect=W/H;
       cam.fov=clamp(2*Math.atan(CAMV.ht/cam.aspect)*180/PI,38,62);cam.updateProjectionMatrix()};
     const camBase=new T.Vector3(0,16,9.2),look=new T.Vector3(0,-.3,-2.6);
-    const placeCam=()=>{cam.position.copy(camBase);const d=look.clone().sub(camBase),r=d.length(),a0=Math.atan2(d.x,-d.z)+yaw,p0=Math.asin(d.y/r)+pitch+CAMV.dp;
-      cam.lookAt(camBase.x+Math.sin(a0)*Math.cos(p0)*r,camBase.y+Math.sin(p0)*r,camBase.z-Math.cos(a0)*Math.cos(p0)*r)};
+    // 拉近拉遠＝鏡頭沿著「棋盤中心→座位」這條線前後移動，看的方向不變
+    const placeCam=()=>{const d=look.clone().sub(camBase),r=d.length()*zoom,a0=Math.atan2(d.x,-d.z)+yaw,p0=Math.asin(d.y/d.length())+pitch+CAMV.dp,c=cam.position.copy(look).addScaledVector(d,-zoom);
+      cam.lookAt(c.x+Math.sin(a0)*Math.cos(p0)*r,c.y+Math.sin(p0)*r,c.z-Math.cos(a0)*Math.cos(p0)*r)};
     const ray=new T.Raycaster(),ndc=new T.Vector2(),plane=new T.Plane(new T.Vector3(0,1,0),-TOP),hitP=new T.Vector3();
     const pick=(cx,cy)=>{const r=rd.domElement.getBoundingClientRect();ndc.set((cx-r.left)/r.width*2-1,-((cy-r.top)/r.height)*2+1);ray.setFromCamera(ndc,cam);
       // 先看有沒有點到棋子（棋子比較高，從斜上方點比較準）
       const hits=ray.intersectObjects(Object.values(pieces),true);if(hits.length){let o=hits[0].object;while(o.parent&&!o.userData.p)o=o.parent;const i=+Object.keys(pieces).find(k=>pieces[k]===o);if(i>=0)return i}
       if(!ray.ray.intersectPlane(plane,hitP))return -1;let c=Math.round(hitP.x+4),r2=Math.round(hitP.z+4.5);if(Math.abs(hitP.x+4-c)>.48||Math.abs(hitP.z+4.5-r2)>.48)return -1;
       if(c<0||c>8||r2<0||r2>9)return -1;if(flip){c=8-c;r2=9-r2}return r2*9+c};
-    let down=null,lastTap=0;
-    rd.domElement.addEventListener("pointerdown",e=>{down={x:e.clientX,y:e.clientY,t:performance.now(),y0:tyaw,p0:tpitch,moved:false};try{rd.domElement.setPointerCapture(e.pointerId)}catch(_){}});
-    rd.domElement.addEventListener("pointermove",e=>{if(!down)return;const dx=e.clientX-down.x,dy=e.clientY-down.y;if(Math.hypot(dx,dy)>9)down.moved=true;
-      if(down.moved){tyaw=clamp(down.y0-dx/W*1.6,-1.2,1.2);tpitch=clamp(down.p0-dy/H*1.0,-.35,.45)}});
-    const up=e=>{if(!down)return;const d=down;down=null;if(d.moved)return;const now=performance.now();
-      if(now-lastTap<320&&(tyaw||tpitch)){tyaw=0;tpitch=0;lastTap=0;return}lastTap=now;const i=pick(e.clientX,e.clientY);if(i>=0&&opt.onTap)opt.onTap(i)};
-    rd.domElement.addEventListener("pointerup",up);rd.domElement.addEventListener("pointercancel",()=>{down=null});
+    // 觸控：一指拖曳轉頭（有朝代長卷的可以整圈轉身，其他左右各約 69 度）、兩指捏合拉近拉遠（0.6～1.25 倍）、點一下選子、點兩下回正（含縮放）
+    const ZMIN=.6,ZMAX=1.25,cvs=rd.domElement,ptrs=new Map();let down=null,lastTap=0,pinch=null;
+    const reset=()=>{yaw-=Math.round(yaw/TAU)*TAU;tyaw=0;tpitch=0;tzoom=1};   // 轉了好幾圈也走最近的路回正
+    const spread=()=>{const a=[...ptrs.values()];return Math.max(20,Math.hypot(a[0].x-a[1].x,a[0].y-a[1].y))};
+    cvs.addEventListener("pointerdown",e=>{ptrs.set(e.pointerId,{x:e.clientX,y:e.clientY});try{cvs.setPointerCapture(e.pointerId)}catch(_){}
+      if(ptrs.size>=2){if(!pinch)pinch={d:spread(),z:tzoom};down=null;lastTap=0;return}
+      down={x:e.clientX,y:e.clientY,t:performance.now(),y0:tyaw,p0:tpitch,moved:false}});
+    cvs.addEventListener("pointermove",e=>{const pt=ptrs.get(e.pointerId);if(pt){pt.x=e.clientX;pt.y=e.clientY}
+      if(pinch){if(ptrs.size>=2)tzoom=clamp(pinch.z*pinch.d/spread(),ZMIN,ZMAX);return}
+      if(!down)return;const dx=e.clientX-down.x,dy=e.clientY-down.y;if(Math.hypot(dx,dy)>9)down.moved=true;
+      if(down.moved){const y=down.y0-dx/W*1.6;tyaw=FULL?y:clamp(y,-1.2,1.2);tpitch=clamp(down.p0-dy/H*1.0,-.35,.45)}});
+    const up=e=>{ptrs.delete(e.pointerId);
+      // 捏合結束：剩下那根手指接著拖曳轉頭（從現在的位置開始算，不會跳），放開也不算點擊
+      if(pinch){if(ptrs.size<2){pinch=null;const p=[...ptrs.values()][0];down=p?{x:p.x,y:p.y,t:performance.now(),y0:tyaw,p0:tpitch,moved:true}:null}return}
+      if(!down)return;const d=down;down=null;if(d.moved)return;const now=performance.now();
+      if(now-lastTap<320&&(tyaw||tpitch||tzoom!==1)){reset();lastTap=0;return}lastTap=now;const i=pick(e.clientX,e.clientY);if(i>=0&&opt.onTap)opt.onTap(i)};
+    cvs.addEventListener("pointerup",up);cvs.addEventListener("pointercancel",e=>{ptrs.delete(e.pointerId);if(ptrs.size<2)pinch=null;down=null});
+    // 觸控板捏合（瀏覽器送 ctrl＋滾輪）也能縮放；iOS Safari 的 gesture 事件擋掉，免得整頁被放大
+    cvs.addEventListener("wheel",e=>{if(!e.ctrlKey)return;e.preventDefault();tzoom=clamp(tzoom*Math.exp(e.deltaY*.01),ZMIN,ZMAX)},{passive:false});
+    for(const ev of["gesturestart","gesturechange"])el.addEventListener(ev,e=>e.preventDefault(),{passive:false});
     // ---------- 動畫迴圈 ----------
     let stopped=false,last=performance.now();
     const R=(B,i,x,y,z)=>{B.arms[i].rotation.set(x,y,z)};
     function frame(now){if(stopped)return;if(!document.body.contains(el)){destroy();return}requestAnimationFrame(frame);
       if(document.hidden)return;const t=Math.min(.05,(now-last)/1000);last=now;
       if(el.clientWidth&&Math.abs(el.clientWidth-W)>1)fit();
-      yaw+=(tyaw-yaw)*Math.min(1,t*8);pitch+=(tpitch-pitch)*Math.min(1,t*8);placeCam();
+      yaw+=(tyaw-yaw)*Math.min(1,t*8);pitch+=(tpitch-pitch)*Math.min(1,t*8);zoom+=(tzoom-zoom)*Math.min(1,t*10);placeCam();
       anims=anims.filter(a=>{a.t+=t;const p=Math.min(1,a.t/a.d);a.f(p);if(p>=1){a.end&&a.end();return false}return true});
       if(selI>=0&&pieces[selI]){const g=pieces[selI];g.position.y=TOP+.32+Math.sin(now/180)*.06}
       Object.entries(pieces).forEach(([i,g])=>{if(+i!==selI&&!anims.length&&g.position.y!==TOP)g.position.y+=(TOP-g.position.y)*Math.min(1,t*12)});
@@ -434,6 +568,6 @@
     fit();placeCam();requestAnimationFrame(frame);
     const onRs=()=>fit();window.addEventListener("resize",onRs);
     function destroy(){if(stopped)return;stopped=true;window.removeEventListener("resize",onRs);try{rd.dispose();rd.forceContextLoss()}catch(e){}el.remove();opt.onDestroy&&opt.onDestroy()}
-    return{el,draw,destroy,say,oppSay:(t,d)=>opp.say(t,d),resetView(){tyaw=0;tpitch=0}}}
+    return{el,draw,destroy,say,oppSay:(t,d)=>opp.say(t,d),resetView(){reset()}}}
   window.XQPark3D={create};
 })();
