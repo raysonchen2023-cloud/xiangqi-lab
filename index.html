@@ -392,7 +392,7 @@ html[data-era=ming] .topbar,html[data-era=qing] .topbar{border-bottom-width:4px}
 .cpu-desc{font-size:13px;color:var(--muted);min-height:2.8em;line-height:1.5;padding:0 2px}
 .sgc>*+*{border-top:1px solid var(--line)}
 .rd-g{background:var(--card);border:1px solid var(--line);border-radius:14px;margin:10px 0;overflow:hidden}.rd-g>summary{list-style:none;display:flex;justify-content:space-between;align-items:center;gap:8px;padding:10px 12px;font-size:14px;cursor:pointer}.rd-g>summary::-webkit-details-marker{display:none}.rd-g>summary b{font-size:13px;color:var(--accent);white-space:nowrap}.rd-g>summary::after{content:"▸";color:var(--muted);transition:transform .2s}.rd-g[open]>summary::after{transform:rotate(90deg)}.rd-g .st-list{margin:0;border-radius:0;border:0;border-top:1px solid var(--line)}
-.vc-tip{position:fixed;left:50%;bottom:calc(110px + var(--safeB,0px));transform:translateX(-50%);z-index:1200;display:flex;flex-direction:column;align-items:center;gap:2px;padding:14px 22px;border-radius:18px;background:rgba(30,20,12,.9);color:#fff;font-size:13px;box-shadow:0 8px 30px rgba(0,0,0,.3);animation:vcP 1.2s ease-in-out infinite}.vc-tip b{font-size:17px}@keyframes vcP{50%{box-shadow:0 0 0 10px rgba(181,69,43,.25),0 8px 30px rgba(0,0,0,.3)}}
+.vc-tip{position:fixed;left:50%;bottom:calc(110px + var(--safeB,0px));transform:translateX(-50%);z-index:1200;display:flex;flex-direction:column;align-items:center;gap:2px;padding:14px 22px;border-radius:18px;background:rgba(30,20,12,.9);color:#fff;font-size:13px;box-shadow:0 8px 30px rgba(0,0,0,.3);animation:vcP 1.2s ease-in-out infinite}.vc-tip b{font-size:17px}.vc-tip button{margin-top:8px;padding:8px 16px;border-radius:999px;border:1px solid rgba(255,255,255,.5);background:rgba(255,255,255,.12);color:#fff;font:inherit;font-weight:700}@keyframes vcP{50%{box-shadow:0 0 0 10px rgba(181,69,43,.25),0 8px 30px rgba(0,0,0,.3)}}
 </style></head><body>
 <div class="app">
  <div class="topbar" id="topbar"><button class="ib" id="back" hidden><b>‹</b>返回</button><h1 id="title">象棋研究室</h1><span id="topRight"></span></div>
@@ -413,7 +413,7 @@ html[data-era=ming] .topbar,html[data-era=qing] .topbar{border-bottom-width:4px}
       if(!window.caches)return go();caches.keys().then(function(ks){return Promise.all(ks.filter(function(k){return k.indexOf("xqlab-app-")===0}).map(function(k){return caches.delete(k)}))})
         .then(function(){return navigator.serviceWorker&&navigator.serviceWorker.getRegistration()}).then(function(r){return r&&r.update()}).catch(function(){}).then(go)}},4000)})();
 </script>
-<script>window.XQ_OFFLINE=true;window.XQ_BUILD="20261102-1848";</script>
+<script>window.XQ_OFFLINE=true;window.XQ_BUILD="20261102-1853";</script>
 <script src="core.js"></script>
 <script src="engine.js"></script>
 <script src="local.js"></script>
@@ -2460,20 +2460,23 @@ function vcMatch(alts,board,legal){const C=window.XQCore;if(!C)return[];const ca
     for(const c of cands){const tk=vcTok(c.cn);for(let i=0;i+tk.length<=sp.length;i++)if(tk.every((x,j)=>sp[i+j].includes(x))){hits.set(c.cn,c);break}}
     if(hits.size)break}
   return[...hits.values()]}
-const vcOK=()=>!!(window.SpeechRecognition||window.webkitSpeechRecognition);let VC_REC=null;
+const vcOK=()=>!!(window.SpeechRecognition||window.webkitSpeechRecognition);let VC_REC=null,VC_END=null;const vcCancel=()=>{const f=VC_END;VC_REC=null;VC_END=null;if(f)f()};
 // ctx()：回傳 {board,legal,play(f,t)}，或 {why:"還沒輪到你"}
 function voiceMove(ctx){const R=window.SpeechRecognition||window.webkitSpeechRecognition;if(!R)return toast("這個瀏覽器不支援語音辨識（iPhone 請用 Safari 或主畫面 App，並在設定開啟 Siri 與聽寫）");
   const c0=ctx();if(!c0||c0.why)return toast(c0&&c0.why||"現在不能走棋");
-  if(VC_REC){try{VC_REC.abort()}catch(e){}VC_REC=null}
+  if(VC_REC){vcCancel();return}   // 意見回饋 202：聆聽中再按一次 🎤 就取消
   const r=new R();VC_REC=r;r.lang="zh-TW";r.interimResults=false;r.maxAlternatives=5;r.continuous=false;let got=false;
-  const tip=document.createElement("div");tip.className="vc-tip";tip.innerHTML='<b>🎤 請說棋步</b><span>例如「馬八進七」「炮二平五」</span>';document.body.append(tip);tip.onclick=()=>{try{r.abort()}catch(e){}};
-  const end=()=>{tip.remove();if(VC_REC===r)VC_REC=null};
-  r.onresult=e=>{got=true;const res=e.results[0],alts=[...res].map(x=>x.transcript);const c=ctx();if(!c||c.why){end();return toast(c&&c.why||"現在不能走棋")}
+  const tip=document.createElement("div");tip.className="vc-tip";tip.innerHTML='<b>🎤 請說棋步</b><span>例如「馬八進七」「炮二平五」</span><button type="button">✕ 取消，改用手下</button>';document.body.append(tip);
+  let tm=0;const end=()=>{clearTimeout(tm);tip.remove();document.removeEventListener("pointerdown",outside,true);window.removeEventListener("hashchange",end);if(VC_REC===r){VC_REC=null;VC_END=null}};
+  const outside=e=>{if(!tip.contains(e.target)&&!(e.target.closest&&e.target.closest('[title="聲控走棋"],[aria-label="聲控走棋"]')))vcCancel()};
+  VC_END=()=>{try{r.abort()}catch(e){}end()};tip.querySelector("button").onclick=e=>{e.stopPropagation();vcCancel();toast("已取消聲控，可以直接點棋盤下棋")};
+  setTimeout(()=>document.addEventListener("pointerdown",outside,true),50);window.addEventListener("hashchange",end);tm=setTimeout(()=>{if(VC_REC===r&&!got){vcCancel();toast("沒聽到棋步，已取消聲控")}},8000);
+  r.onresult=e=>{if(VC_REC!==r)return;got=true;const res=e.results[0],alts=[...res].map(x=>x.transcript);const c=ctx();if(!c||c.why){end();return toast(c&&c.why||"現在不能走棋")}
     const hit=vcMatch(alts,c.board,c.legal);end();
     if(hit.length===1){vibrate(15);toast("🎤 "+hit[0].cn);c.play(hit[0].f,hit[0].t)}
     else if(hit.length>1)modal(`<div class="em">🎤</div><h2>是哪一步？</h2><p class="muted">聽到「${esc(alts[0]||"")}」</p>`,hit.slice(0,4).map(h=>[h.cn,()=>c.play(h.f,h.t)]).concat([["取消",null,true]]));
     else toast(`聽到「${alts[0]||""}」，找不到這一步，再說一次`)};
-  r.onerror=e=>{end();if(e.error==="not-allowed"||e.error==="service-not-allowed")toast("要允許使用麥克風才能聲控走棋");else if(e.error==="no-speech")toast("沒聽到聲音，再按一次 🎤");else if(e.error!=="aborted")toast("語音辨識失敗："+e.error)};
+  r.onerror=e=>{if(VC_REC!==r)return end();end();if(e.error==="not-allowed"||e.error==="service-not-allowed")toast("要允許使用麥克風才能聲控走棋");else if(e.error==="no-speech")toast("沒聽到聲音，再按一次 🎤");else if(e.error!=="aborted")toast("語音辨識失敗："+e.error)};
   r.onend=()=>{if(!got)end()};
   try{r.start();vibrate(8)}catch(e){end();toast("無法開始錄音")}}
 const vcOn=()=>store.get("voiceMove",true);
