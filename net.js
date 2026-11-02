@@ -151,6 +151,8 @@ var XQNet=(function(){
     turnLeft(){if(!G||G.result)return null;return Math.max(0,TURN_MS-(Date.now()-(G.at||0)))},
     // 公園 3D 棋盤：對手的小帥造型（棋子、朝代、官階），對手在大廳廣播的
     oppBot(){if(!G||!side())return null;const o=oppOf(side()),x=people[o==="r"?G.red.id:G.black.id];return x&&x.bot||null},
+    // 觀戰時：某一方玩家的小帥造型（公園裡對面坐的是遠端那一方，意見回饋 258）
+    playerBot(sd){if(!G)return null;const x=people[sd==="r"?G.red.id:G.black.id];return x&&x.bot||null},
     oppOnline(){if(!G||!side())return false;const o=oppOf(side());return onl(o==="r"?G.red.id:G.black.id)},
     leave(){endOnLeave();if(cur&&cli&&cli.up)cli.unsub(gt(cur.gid));cur=null;G=null;ls.set("net",null);presence()},
     // 對局有變化：發布新狀態（rev 越大越新）
