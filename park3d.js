@@ -740,26 +740,27 @@
         const geo=new T.PlaneGeometry(w,h);geo.translate(w*(.5-ax),h*(.5-ay),0);
         const m=new T.Mesh(geo,new T.MeshBasicMaterial({map:texOf(im),transparent:true,alphaTest:.05,toneMapped:false,side:T.DoubleSide}));
         const dx=CAMP.x-o.x,dz=CAMP.z-o.z,el=Math.atan2(CAMP.y-o.y,Math.hypot(dx,dz)),ry=Math.atan2(dx,dz);
-        m.rotation.order="YXZ";m.rotation.set(-(o.tilt||0)*el,ry,0);if(o.mirror)m.scale.x=-1;m.position.set(o.x,o.y,o.z);if(o.ro!=null)m.renderOrder=o.ro;root.add(m);return{m,w,h,ry}};
+        m.rotation.order="YXZ";m.rotation.set(-(o.tilt||0)*el,ry,0);if(o.mirror)m.scale.x=-1;m.position.set(o.x,o.y,o.z);if(o.ro!=null)m.renderOrder=o.ro;root.add(m);
+        if(o.info&&X.infos){m.userData.info=o.info;m.userData.img=im;X.infos.push(m)}return{m,w,h,ry}};
       let blobT=null;const blob=(x,y,z,rx,rz,op,ry)=>{blobT=blobT||cv(64,64,g=>{const gr=g.createRadialGradient(32,32,0,32,32,32);gr.addColorStop(0,"rgba(0,0,0,1)");gr.addColorStop(.45,"rgba(0,0,0,.55)");gr.addColorStop(1,"rgba(0,0,0,0)");g.fillStyle=gr;g.fillRect(0,0,64,64)});
         const m=new T.Mesh(new T.PlaneGeometry(rx*2,rz*2),new T.MeshBasicMaterial({map:blobT,transparent:true,opacity:op||.35,depthWrite:false,toneMapped:false,polygonOffset:true,polygonOffsetFactor:-2,polygonOffsetUnits:-2}));
         m.rotation.set(-PI/2,0,ry||0);m.position.set(x,y,z);root.add(m)};
       // 桌面：手繪的圓桌面鋪在桌頂（棋盤底下），受光、收得到棋盤與棋子的影子
       use("tabletop",im=>{const t=texOf(im,1),[cx,cy,r]=PP.top||[im.naturalWidth/2,im.naturalHeight/2,im.naturalWidth/2],iw=im.naturalWidth,ih=im.naturalHeight;
         t.repeat.set(2*r/iw,2*r/ih);t.offset.set((cx-r)/iw,1-(cy+r)/ih);
-        const m=new T.Mesh(new T.CircleGeometry(8.2,96),new T.MeshStandardMaterial({map:t,color:neutOf(X.sc),roughness:.5,toneMapped:false}));m.rotation.x=-PI/2;m.position.y=.006;m.receiveShadow=true;root.add(m)});
+        const m=new T.Mesh(new T.CircleGeometry(8.2,96),new T.MeshStandardMaterial({map:t,color:neutOf(X.sc),roughness:.5,toneMapped:false}));m.rotation.x=-PI/2;m.position.y=.006;m.receiveShadow=true;root.add(m);if(X.infos){m.userData.info="table";X.infos.push(m)}});
       // 長榻：放在台座上、Pikafish 後面
       // 橫的長榻／長椅：寬 14；直的單人椅（明、清的圈椅、太師椅）：高 12
-      use("bench",im=>{card(im,im.naturalHeight>im.naturalWidth*.9?{x:0,y:DT,z:BZ-.4,h:12,tilt:.25}:{x:0,y:DT,z:BZ-.4,w:14,tilt:.25})});
+      use("bench",im=>{card(im,Object.assign(im.naturalHeight>im.naturalWidth*.9?{x:0,y:DT,z:BZ-.4,h:12,tilt:.25}:{x:0,y:DT,z:BZ-.4,w:14,tilt:.25},{info:"bench"}))});
       // 兩側的三彩鼓凳：站在地上
-      use("stool",im=>{for(const[x,z]of STOOLS){const c=card(im,{x,y:GY,z,h:9.5,tilt:.3});blob(x,GY+.03,z,c.w*.5,c.w*.3,.4,c.ry)}});
+      use("stool",im=>{for(const[x,z]of STOOLS){const c=card(im,{x,y:GY,z,h:9.5,tilt:.3,info:"stool"});blob(x,GY+.03,z,c.w*.5,c.w*.3,.4,c.ry)}});
       // 宮燈：掛在立柱的彎鉤上；立柱用 3D 圓柱接到地面（右邊那盞左右翻過來，立柱都在外側）；燭光一團加色柔光，會跳動
       if(EK!=="tang"&&PP.lamp)use("lantern",im=>{const L=PP.lamp,postM=new T.MeshBasicMaterial({color:0x2E2721,toneMapped:false});
         for(const[sx,x,z]of LAMPS){
-          if(!L.hang){const c=card(im,{x,y:GY,z,h:L.h,tilt:.3});blob(x,GY+.03,z,c.w*.4,c.w*.3,.35,c.ry);
+          if(!L.hang){const c=card(im,{x,y:GY,z,h:L.h,tilt:.3,info:"lantern"});blob(x,GY+.03,z,c.w*.4,c.w*.3,.35,c.ry);
             const nx=Math.sin(c.ry),nz=Math.cos(c.ry);glow(x+nx*.4,GY+L.h*L.glow,z+nz*.4,3.6,.45);continue}
           // 吊掛：燈籠上緣吊在橫桿下，立柱在外側（左邊那盞柱子在左、右邊那盞在右）
-          const top=GY+L.h+7.5,c=card(im,{x,y:top,z,h:L.h,ay:1}),ux=Math.cos(c.ry),uz=-Math.sin(c.ry),nx=Math.sin(c.ry),nz=Math.cos(c.ry),off=sx*(c.w*.5+1.2);
+          const top=GY+L.h+7.5,c=card(im,{x,y:top,z,h:L.h,ay:1,info:"lantern"}),ux=Math.cos(c.ry),uz=-Math.sin(c.ry),nx=Math.sin(c.ry),nz=Math.cos(c.ry),off=sx*(c.w*.5+1.2);
           const px=x+ux*off-nx*.15,pz=z+uz*off-nz*.15,r=.2,H=top+1.2-GY;
           const post=new T.Mesh(new T.CylinderGeometry(r,r*1.2,H,10),postM);post.position.set(px,GY+H/2,pz);root.add(post);
           const arm=new T.Mesh(new T.CylinderGeometry(.12,.12,Math.abs(off)+.3,8),postM);arm.rotation.order="YXZ";arm.rotation.set(0,c.ry,PI/2);arm.position.set(x+ux*off/2-nx*.15,top+.9,z+uz*off/2-nz*.15);root.add(arm);
@@ -767,7 +768,7 @@
           const ft=new T.Mesh(new T.CylinderGeometry(r*2.4,r*3.2,.8,12),postM);ft.position.set(px,GY+.4,pz);root.add(ft);blob(px,GY+.03,pz,1.4,1.4,.35);
           glow(x+nx*.4,top-L.h*(1-L.glow),z+nz*.4,3.6,.45)}});
       if(EK==="tang")use("lantern",im=>{const h=11,w=h*im.naturalWidth/im.naturalHeight,LY=-3.2,PX=.259,CX=.53,CY=.39,postM=new T.MeshBasicMaterial({color:0x2E2721,toneMapped:false}),gm=gold();
-        for(const[sx,x,z]of LAMPS){const c=card(im,{x,y:LY,z,h,ax:CX,ay:CY,mirror:sx>0}),ux=Math.cos(c.ry),uz=-Math.sin(c.ry),nx=Math.sin(c.ry),nz=Math.cos(c.ry),off=(PX-CX)*w*(sx>0?-1:1);
+        for(const[sx,x,z]of LAMPS){const c=card(im,{x,y:LY,z,h,ax:CX,ay:CY,mirror:sx>0,info:"lantern"}),ux=Math.cos(c.ry),uz=-Math.sin(c.ry),nx=Math.sin(c.ry),nz=Math.cos(c.ry),off=(PX-CX)*w*(sx>0?-1:1);
           const px=x+ux*off-nx*.12,pz=z+uz*off-nz*.12,top=LY+(1-CY)*h,r=w*15/349/2;
           // 立柱分兩段：圖上彎鉤那段往上延伸、燈籠下緣以下接到地面；燈籠擋住的那段不做（不然從上往下看，柱子像是穿過燈籠）
           const seg=(y0,y1,r0,r1)=>{const p=new T.Mesh(new T.CylinderGeometry(r0,r1,y1-y0,10),postM);p.position.set(px,(y0+y1)/2,pz);root.add(p)},yb=top-h*470/640;
@@ -776,10 +777,10 @@
           const ft=new T.Mesh(new T.CylinderGeometry(r*2.4,r*3.2,.8,12),postM);ft.position.set(px,GY+.4,pz);root.add(ft);blob(px,GY+.03,pz,1.4,1.4,.35);
           glow(x+nx*.4,LY,z+nz*.4,4.6,.5)}});
       // 樹：牡丹樹、松樹輪流，站在平台邊上，轉頭時當畫面的框
-      [[-14.8,-13.2,"tree2",17],[17.8,-8.2,"tree1",14.5],[-18.2,3.4,"tree1",12.5]].forEach(([x,z,n,h])=>use(n,im=>{const c=card(im,{x,y:GY,z,h,tilt:.3});blob(x,GY+.03,z,c.w*.32,c.w*.2,.35,c.ry)}));
+      [[-14.8,-13.2,"tree2",17],[17.8,-8.2,"tree1",14.5],[-18.2,3.4,"tree1",12.5]].forEach(([x,z,n,h])=>use(n,im=>{const c=card(im,{x,y:GY,z,h,tilt:.3,info:n});blob(x,GY+.03,z,c.w*.32,c.w*.2,.35,c.ry)}));
       // 茶杯：從斜上方看的手繪茶碗，立牌整張正對鏡頭、下緣貼著杯托前緣（Pikafish 一杯、我一杯，位置跟原本一樣）
       use("cup",im=>{for(const[x,z]of[[0,-6.85],[.4,7.0]]){const w=1.8,dx=CAMP.x-x,dz=CAMP.z-z,d=Math.hypot(dx,dz)||1,k=w*.32;
-        blob(x,.02,z,w*.5,w*.42,.3,Math.atan2(dx,dz));card(im,{x:x+dx/d*k,y:.015,z:z+dz/d*k,w,tilt:1})}});}
+        blob(x,.02,z,w*.5,w*.42,.3,Math.atan2(dx,dz));card(im,{x:x+dx/d*k,y:.015,z:z+dz/d*k,w,tilt:1,info:"cup"})}});}
     return{frame:f.frame||0x5C3418,tick(s){for(const F of flames){const n=Math.sin(s*11+F.ph)*.5+Math.sin(s*17.3+F.ph*2)*.3+Math.sin(s*5.1+F.ph)*.2;
       if(F.k===2){F.o.scale.y=F.s*(1+.18*n);F.o.position.y=F.y0*(1+.09*n);F.o.rotation.y=s*.7+F.ph}else F.o.scale.setScalar(F.s*(1+(F.k?.07:.03)*n))}}}}
 
@@ -793,7 +794,7 @@
     rd.toneMapping=T.ACESFilmicToneMapping;rd.toneMappingExposure=.98;try{ANI=rd.capabilities.getMaxAnisotropy()||8}catch(e){}
     rd.domElement.style.cssText="display:block;width:100%;height:100%";el.append(rd.domElement);
     const hint=document.createElement("div");hint.style.cssText="position:absolute;left:50%;bottom:8px;transform:translateX(-50%);font:600 11px sans-serif;color:#fff;background:rgba(30,20,10,.45);padding:3px 10px;border-radius:99px;white-space:nowrap;pointer-events:none;transition:opacity .6s";
-    hint.textContent="點棋子走棋・拖曳轉頭・兩指縮放・點兩下回正";el.append(hint);setTimeout(()=>hint.style.opacity=0,4500);
+    hint.textContent="點棋子走棋・點物件看介紹・拖曳轉頭・兩指縮放";el.append(hint);setTimeout(()=>hint.style.opacity=0,4500);
     const EK=eraKey(),E=ERA[EK];
     el.style.background=E.mist;
     const sc=new T.Scene();sc.fog=new T.Fog(new T.Color(E.mist),70,320);
@@ -832,7 +833,8 @@
       const pg=new T.BoxGeometry(.8,3.6,.8);for(let i=0;i<36;i++){const a=i/36*TAU;const p=new T.Mesh(pg,stone);p.position.set(Math.sin(a)*(TR-.4),GY+1.8,Math.cos(a)*(TR-.4));p.rotation.y=a;sc.add(p)}}
     // 朝代家具（桌、長椅、凳子、燈）：見 buildFurn；桌面頂面 y=0，長椅座面高度 SY
     const BZ=-12.6,SY=-3.9,BL=13,iron=M(0x2A2620,{roughness:.45,metalness:.6});
-    const furn=buildFurn(EK,E,{sc,M,GY,SY,BZ,BL,stone,stone2,iron});
+    const infos=[];   // 意見回饋 240：點得到、會跳說明的物件
+    const furn=buildFurn(EK,E,{sc,M,GY,SY,BZ,BL,stone,stone2,iron,infos});
     // 木棋盤嵌在桌上：深色實木框，和灰色石桌對比清楚
     const wood=M(furn.frame,{roughness:.55});mesh(new T.BoxGeometry(BW+.5,.6,BH+.5),wood,[0,.24,0]);mesh(new T.BoxGeometry(BW+.62,.08,BH+.62),wood,[0,-.0,0]);   // 厚木棋盤＋底座線腳（意見回饋 215）
     const btex=boardTex(()=>{try{btex.image.getContext("2d").clearRect(0,0,1,1);drawBoard(btex.image.getContext("2d"),btex.image.width,btex.image.height,null);btex.needsUpdate=true}catch(e){}});const bplane=new T.Mesh(new T.PlaneGeometry(BW,BH),new T.MeshStandardMaterial({map:btex,roughness:.6}));bplane.rotation.x=-PI/2;bplane.position.y=TOP-.02+.03;bplane.receiveShadow=true;sc.add(bplane);
@@ -971,6 +973,20 @@
       const hits=ray.intersectObjects(Object.values(pieces),true);if(hits.length){let o=hits[0].object;while(o.parent&&!o.userData.p)o=o.parent;const i=+Object.keys(pieces).find(k=>pieces[k]===o);if(i>=0)return i}
       if(!ray.ray.intersectPlane(plane,hitP))return -1;let c=Math.round(hitP.x+4),r2=Math.round(hitP.z+4.5);if(Math.abs(hitP.x+4-c)>.48||Math.abs(hitP.z+4.5-r2)>.48)return -1;
       if(c<0||c>8||r2<0||r2>9)return -1;if(flip){c=8-c;r2=9-r2}return r2*9+c};
+    // 意見回饋 240：點到物件（樹、桌子、茶杯、長椅、凳子、燈籠、對手、遠方背景）就回報是什麼，App 跳出說明
+    const AC=new Map(),alphaAt=(im,u,v)=>{let a=AC.get(im);if(!a){const w=64,h=64,c=document.createElement("canvas");c.width=w;c.height=h;const g=c.getContext("2d");
+        try{g.drawImage(im,0,0,w,h);a={d:g.getImageData(0,0,w,h).data}}catch(e){a={d:null}}AC.set(im,a)}
+      if(!a.d)return 255;const x=clamp(Math.floor(u*64),0,63),y=clamp(Math.floor((1-v)*64),0,63);return a.d[(y*64+x)*4+3]};
+    const infoPick=()=>{   // 用 pick() 剛設好的那條射線
+      if(ray.ray.intersectPlane(plane,hitP)&&Math.abs(hitP.x)<BW/2&&Math.abs(hitP.z)<BH/2)return null;   // 點在棋盤（含邊框）上不算
+      const cand=infos.slice();if(oppSpr)cand.push(oppSpr.sp);
+      for(const h of ray.intersectObjects(cand,false)){const o=h.object;
+        if(oppSpr&&o===oppSpr.sp){if(h.uv&&alphaAt(o.material.map.image,h.uv.x,h.uv.y)<60)continue;return"opp"}
+        if(o.userData.img&&h.uv&&alphaAt(o.userData.img,h.uv.x,h.uv.y)<60)continue;return o.userData.info}
+      if(!oppSpr&&opp.g.visible&&ray.intersectObject(opp.g,true).length)return"opp";
+      // 都沒點到：射線碰到平台地面（離桌子 24 以內）就不算；越過平台的就是遠方背景
+      const gp=new T.Plane(new T.Vector3(0,1,0),-GY),gh=new T.Vector3();if(ray.ray.intersectPlane(gp,gh)&&Math.hypot(gh.x,gh.z)<24)return null;
+      return"bg"};
     // 觸控：一指拖曳轉頭（有朝代長卷的可以整圈轉身，其他左右各約 69 度）、兩指捏合拉近拉遠（0.6～1.25 倍）、點一下選子、點兩下回正（含縮放）
     const ZMIN=.6,ZMAX=1.25,cvs=rd.domElement,ptrs=new Map();let down=null,lastTap=0,pinch=null;
     const reset=()=>{yaw-=Math.round(yaw/TAU)*TAU;tyaw=0;tpitch=0;tzoom=1};   // 轉了好幾圈也走最近的路回正
@@ -986,7 +1002,8 @@
       // 捏合結束：剩下那根手指接著拖曳轉頭（從現在的位置開始算，不會跳），放開也不算點擊
       if(pinch){if(ptrs.size<2){pinch=null;const p=[...ptrs.values()][0];down=p?{x:p.x,y:p.y,t:performance.now(),y0:tyaw,p0:tpitch,moved:true}:null}return}
       if(!down)return;const d=down;down=null;if(d.moved)return;const now=performance.now();
-      if(now-lastTap<320&&(tyaw||tpitch||tzoom!==1)){reset();lastTap=0;return}lastTap=now;const i=pick(e.clientX,e.clientY);if(i>=0&&opt.onTap)opt.onTap(i)};
+      if(now-lastTap<320&&(tyaw||tpitch||tzoom!==1)){reset();lastTap=0;return}lastTap=now;const i=pick(e.clientX,e.clientY);if(i>=0){if(opt.onTap)opt.onTap(i);return}
+      if(opt.onInfo){const k=infoPick();if(k)opt.onInfo(k)}};
     cvs.addEventListener("pointerup",up);cvs.addEventListener("pointercancel",e=>{ptrs.delete(e.pointerId);if(ptrs.size<2)pinch=null;down=null});
     // 觸控板捏合（瀏覽器送 ctrl＋滾輪）也能縮放；iOS Safari 的 gesture 事件擋掉，免得整頁被放大
     cvs.addEventListener("wheel",e=>{if(!e.ctrlKey)return;e.preventDefault();tzoom=clamp(tzoom*Math.exp(e.deltaY*.01),ZMIN,ZMAX)},{passive:false});
@@ -995,7 +1012,7 @@
     let stopped=false,last=performance.now();
     const R=(B,i,x,y,z)=>{B.arms[i].rotation.set(x,y,z)};
     function frame(now){if(stopped)return;if(!document.body.contains(el)){destroy();return}requestAnimationFrame(frame);
-      if(document.hidden)return;const t=Math.min(.05,(now-last)/1000);last=now;
+      if(document.hidden||el.style.display==="none"){last=now;return}const t=Math.min(.05,(now-last)/1000);last=now;
       if(el.clientWidth&&Math.abs(el.clientWidth-W)>1)fit();
       yaw+=(tyaw-yaw)*Math.min(1,t*8);pitch+=(tpitch-pitch)*Math.min(1,t*8);zoom+=(tzoom-zoom)*Math.min(1,t*10);placeCam();
       anims=anims.filter(a=>{a.t+=t;const p=Math.min(1,a.t/a.d);a.f(p);if(p>=1){a.end&&a.end();return false}return true});
@@ -1033,8 +1050,9 @@
         lerp(B.head.rotation,"x",hx);lerp(B.head.rotation,"y",hy);tick(mate)}
       furn.tick(s);rd.render(sc,cam)}
     fit();placeCam();requestAnimationFrame(frame);
-    const onRs=()=>fit();window.addEventListener("resize",onRs);
+    const onRs=()=>{if(el.style.display!=="none")fit()};window.addEventListener("resize",onRs);
     function destroy(){if(stopped)return;stopped=true;window.removeEventListener("resize",onRs);try{rd.dispose();rd.forceContextLoss()}catch(e){}el.remove();opt.onDestroy&&opt.onDestroy()}
-    return{el,draw,destroy,say,oppSay:(t,d)=>opp.say(t,d),resetView(){reset()}}}
+    // 意見回饋 244：切回平面棋盤時只藏起來、暫停繪製（不拆掉 3D 場景），再切回公園就直接顯示，不用重新載入
+    return{el,draw,destroy,say,oppSay:(t,d)=>opp.say(t,d),resetView(){reset()},hide(){el.style.display="none"},show(){if(el.style.display==="none"){el.style.display="";fit()}}}}
   window.XQPark3D={create};
 })();
