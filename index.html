@@ -412,7 +412,7 @@ html[data-era=ming] .topbar,html[data-era=qing] .topbar{border-bottom-width:4px}
       if(!window.caches)return go();caches.keys().then(function(ks){return Promise.all(ks.filter(function(k){return k.indexOf("xqlab-app-")===0}).map(function(k){return caches.delete(k)}))})
         .then(function(){return navigator.serviceWorker&&navigator.serviceWorker.getRegistration()}).then(function(r){return r&&r.update()}).catch(function(){}).then(go)}},4000)})();
 </script>
-<script>window.XQ_OFFLINE=true;window.XQ_BUILD="20261102-0825";</script>
+<script>window.XQ_OFFLINE=true;window.XQ_BUILD="20261102-0847";</script>
 <script src="core.js"></script>
 <script src="engine.js"></script>
 <script src="local.js"></script>
@@ -811,7 +811,10 @@ function riverGlyphs(eraK,col,flip,dark,gs,cap){const f=RIVER_ERA[eraK];if(!f)re
     out+=one(k,x,Y,col)});
   return out}
 // 整張棋盤的底（只在換風格／朝代／翻轉時重做一次，之後走棋直接沿用這個 <g>）：板身厚度、倒角、外框飾帶、四角花飾、內凹的格線區、材質、格線、楚河漢界、座標
-function boardBG(T,eR,eD,u,flip){
+// 朝代棋盤底圖（使用者用 Gemini 做的，data/boards/*.webp）：[x,y,寬,高]＝圖放在棋盤座標的位置，讓圖上的河界對準第 4～5 線、內框貼著最外側直線
+// 明朝沒有底圖，先借元朝的青花（青花瓷正是明代代表）
+const BOARD_IMG={"classic": [-17.3, -40.6, 594.6, 701.9], "qin": [-24.9, -33.3, 609.8, 687.2], "han": [-38.6, -44.5, 637.2, 709.6], "sanguo": [-29.7, -46.2, 619.4, 713.4], "weijin": [-24.5, -42.7, 609.1, 705.7], "nanbei": [-25.7, -44.5, 611.4, 709.6], "sui": [-20.9, -36.6, 601.8, 694.5], "tang": [-46.2, -60.6, 652.4, 741.8], "wudai": [-36.3, -44.5, 632.5, 709.6], "song": [-34.0, -19.4, 627.9, 659.4], "yuan": [-25.5, -40.6, 611.0, 701.9], "qing": [-27.1, -49.5, 614.2, 721.3]};BOARD_IMG.ming=BOARD_IMG.yuan;const BOARD_IMG_FILE={ming:"yuan"};
+function boardBG(T,eR,eD,u,flip,imgK){
   const X0=40,Y0=40,S=60,px=c=>X0+c*S,py=r=>Y0+r*S,G=T.grid,arr=Array.isArray(T.bg),dark=arr?lum(T.bg[0])<.42:false;
   const D=eD?ERA_DECO[eD.k]:null,C=eD?{G,A:eD.c.accent,B:eD.c.accent2,T:eD.c.trim,P:T.piece,K:eD.c.bar}:{G},sub=s=>s.replace(/"([GABTPK])"/g,(m,k)=>`"${C[k]||G}"`);
   const bgF=arr?`url(#bbg${u})`:T.bg,H=615;
@@ -863,6 +866,9 @@ function boardBG(T,eR,eD,u,flip){
   s+=`<rect x="${px(0)}" y="${py(4)}" width="${8*S}" height="${S}" fill="${G}" opacity=".06"/>`;
   if(D&&D.band)s+=`<rect x="${px(0)+2}" y="${py(4)+3}" width="${8*S-4}" height="9" fill="url(#bd${u})" opacity=".45" transform="translate(0 0)"/><rect x="${px(0)+2}" y="${py(5)-12}" width="${8*S-4}" height="9" fill="url(#bd${u})" opacity=".45"/>`;
   if(D&&D.em)s+=`<g transform="translate(280 310) scale(1.12)" opacity=".92">${sub(D.em)}</g>`;
+  // 有朝代底圖：前面 1～6（板身、外框紋飾、角花、河界底色）整個換成底圖
+  const BI=imgK&&BOARD_IMG[imgK];
+  if(BI)s=d+`<clipPath id="bic${u}"><rect width="560" height="620" rx="14"/></clipPath><rect width="560" height="620" rx="14" fill="#000" opacity=".4"/><image href="data/boards/${BOARD_IMG_FILE[imgK]||imgK}.webp" x="${BI[0]}" y="${BI[1]}" width="${BI[2]}" height="${BI[3]}" preserveAspectRatio="none" clip-path="url(#bic${u})"/>`;
   // 7. 格線：先畫一道錯開的亮線（刻線的反光），再畫本線
   let L=`<rect x="${X0-8}" y="${Y0-8}" width="${8*S+16}" height="${9*S+16}" stroke-width="3"/>`;
   for(let r=0;r<10;r++)L+=`<path d="M${px(0)} ${py(r)}H${px(8)}"/>`;
@@ -931,7 +937,8 @@ function Board(onTap,onSwipe){
     const T=boardTheme(o.theme),PS=o.pstyle||store.get("pieceStyle","3d");
     // 朝代：楚河漢界的字體跟著目前朝代；邊框紋飾只有棋盤用「跟著頁面風格」（＝朝代配色）時才加
     const eR=curEra(),eD=(o.theme||store.get("boardTheme","wood3d"))==="auto"?eR:null,bk=JSON.stringify(T)+"|"+(eR?eR.k:"")+"|"+(eD?1:0)+"|"+flip;
-    if(bk!==bgKey||!bgG){bgKey=bk;bgG=el("g",{});bgG.innerHTML=boardBG(T,eR,eD,uid,flip)}
+    const tk=o.theme||store.get("boardTheme","wood3d"),imgK=eD?eD.k:(!eR&&tk==="wood3d"?"classic":null);
+    if(bk!==bgKey||!bgG){bgKey=bk;bgG=el("g",{});bgG.innerHTML=boardBG(T,eR,eD,uid,flip,imgK)}
     svg.append(bgG);
     // 上一步：原來的位置畫虛線圈、箭頭指到新位置、新位置的棋子外圈加亮（新手一眼看出誰走到哪）
     const L=o.last&&o.last.f!=null&&o.last.t!=null&&o.last.f!==o.last.t?o.last:null;
