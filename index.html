@@ -92,6 +92,7 @@ input,select{font:inherit;font-size:16px;color:inherit}
 .player .nm span{font-size:12px;color:var(--muted)}
 .player .clk{font-variant-numeric:tabular-nums;font-weight:700;font-size:18px;padding:3px 10px;border-radius:10px;background:var(--card);border:1px solid var(--line)}
 .player.on .clk{background:var(--accent2);color:#fff;border-color:var(--accent2)}
+.clkw{display:flex;flex-direction:column;align-items:flex-end;gap:2px}.clk2{font-size:12px;font-variant-numeric:tabular-nums;color:var(--muted);white-space:nowrap}.clk2.hot{color:var(--red);font-weight:700}
 .player.on .av{box-shadow:0 0 0 3px var(--accent2)}
 .status{flex:none;text-align:center;font-size:13px;color:var(--muted);padding:2px 12px;min-height:22px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .status.wrap{white-space:pre-line;line-height:1.45;padding:4px 14px}
@@ -428,7 +429,7 @@ html[data-era=ming] .topbar,html[data-era=qing] .topbar{border-bottom-width:4px}
       if(!window.caches)return go();caches.keys().then(function(ks){return Promise.all(ks.filter(function(k){return k.indexOf("xqlab-app-")===0}).map(function(k){return caches.delete(k)}))})
         .then(function(){return navigator.serviceWorker&&navigator.serviceWorker.getRegistration()}).then(function(r){return r&&r.update()}).catch(function(){}).then(go)}},4000)})();
 </script>
-<script>window.XQ_OFFLINE=true;window.XQ_BUILD="20261103-0750";</script>
+<script>window.XQ_OFFLINE=true;window.XQ_BUILD="20261103-0756";</script>
 <script src="core.js"></script>
 <script src="engine.js"></script>
 <script src="local.js"></script>
@@ -3229,7 +3230,9 @@ function PvpGame(v){
       // 點公園裡的人看棋友資料（意見回饋 261）：對面、近端（觀戰時）、觀戰者各是誰
       oppId:NET?(seat==="w"?idOf(far):seat?idOf(seat==="r"?"b":"r"):null):null,mateId:NET&&seat==="w"?idOf(near):null,
       watchers:NET&&window.XQNet&&XQNet.watcherBots?XQNet.watcherBots():[]}}
-  function clocks(){if(!st||!clockBase||!clockBase.c)return;const b=clockBase;for(const s of["r","b"]){const el=v.querySelector(`#ck_${s}`);if(el){const x=b.c[s]-(b.run&&b.turn===s?Date.now()-b.at:0);el.textContent=fmt(x);el.style.color=x<60000&&!(b.turn===s&&b.run)?"var(--red)":""}}}
+  function clocks(){if(!st||!clockBase||!clockBase.c)return;const b=clockBase;
+    if(NET&&window.XQNet&&XQNet.turnLeft){const L=XQNet.turnLeft();for(const s of["r","b"]){const el=v.querySelector(`#mk_${s}`);if(!el)continue;const on=b.run&&b.turn===s&&L!=null,x=on?L:180000;el.textContent="每步 "+fmt(x);el.classList.toggle("hot",on&&x<30000)}}
+    for(const s of["r","b"]){const el=v.querySelector(`#ck_${s}`);if(el){const x=b.c[s]-(b.run&&b.turn===s?Date.now()-b.at:0);el.textContent=fmt(x);el.style.color=x<60000&&!(b.turn===s&&b.run)?"var(--red)":""}}}
   const ckT=setInterval(clocks,250);
   let lastN=null;   // 步數剛好多一步才秀開局名
   function render(s){const n0=lastN;st=s;lastN=s.moves.length;if(NET&&s.mySide&&s.mySide!==seat){seat=s.mySide;flipMan=null;setTitle();flipBtn()}if(!st.legal.some(([f])=>f===sel))sel=-1;draw();
@@ -3242,7 +3245,8 @@ function PvpGame(v){
     /* 意見回饋 278：線上對戰標出雙方的線上段位（自己用自己的積分，對方用他在大廳最新的積分） */
     const rk=x=>{if(!NET||!window.XQNet||!XQNet.rankOf)return"";try{const G=XQNet.game(),o=G&&(x==="r"?G.red:G.black);if(!o)return"";
       const lp=o.id===meInfo().id?XQNet.rating().pts:(XQNet.people().find(q=>q.id===o.id)||{}).pts,pt=lp!=null?lp:o.pts;return pt==null?"":"・🏅 "+XQNet.rankOf(pt)+" "+pt+" 分"}catch(e){return""}};
-    const strip=(x)=>playerHTML(x,nm(x),sub(x)+rk(x),st.clocks?"":null).replace('<div class="clk">',`<div class="clk" id="ck_${x}">`);
+    /* 意見回饋 285：線上對戰每人兩個時鐘：上面是總時間，下面是這一步還能想多久（每步 3 分鐘） */
+    const strip=(x)=>{const h=playerHTML(x,nm(x),sub(x)+rk(x),st.clocks?"":null);return NET&&st.clocks?h.replace('<div class="clk"></div>',`<div class="clkw"><div class="clk" id="ck_${x}"></div><div class="clk2" id="mk_${x}">每步 3:00</div></div>`):h.replace('<div class="clk">',`<div class="clk" id="ck_${x}">`)};
     v.querySelector("#pTop").innerHTML=strip(top);v.querySelector("#pBot").innerHTML=strip(bot);
     for(const[el,x]of[[v.querySelector("#pTop"),top],[v.querySelector("#pBot"),bot]]){el.style.cursor="pointer";el.onclick=e=>{if(e.target.closest(".clk"))return;
       const G=window.XQNet&&XQNet.game&&XQNet.game(),o=G&&(x==="r"?G.red:G.black);if(o&&o.id&&o.id!==meInfo().id)oppCard(o.id,o.name)}}
@@ -3500,7 +3504,13 @@ function Viewer(v,c,id){
       const L=d.lines||[],ev=L[0]?L[0].vr:0,a=Math.abs(ev),who=ev>0?"紅方":"黑方",m=matText(pos.board);
       const spread=L.length>1?Math.max(...L.map(l=>Math.abs(l.vr))):a;
       const why=[];
-      if(a>=20000)why.push(`Pikafish 算出 ${who}已經有殺棋，所以另一方認輸。`);
+      /* 意見回饋 284：先看棋局是怎麼結束的（超時、斷線、離開、認輸…），再用當時局面補充，不要硬說成認輸 */
+      const R=String(it.result||""),wS=/^紅/.test(R)?"紅方":/^黑/.test(R)?"黑方":null,lS=wS==="紅方"?"黑方":wS==="黑方"?"紅方":null,rs=(R.match(/（(.*)）/)||[])[1]||"";
+      const evNote=cz=>a>=20000?`當時 Pikafish 算出${who}已經有殺棋。`:a<80?`當時局面還算平衡（${evt(ev)}），勝負是規則決定的，不是棋下輸了。`:who===wS?`當時局面 Pikafish 也認為${wS}較好（${evt(ev)}）。`:`其實當時 Pikafish 認為${lS}還佔上風（${evt(ev)}），可惜${cz}，還是算輸。`;
+      if(kind!=="d"&&wS&&/超時|時間用完|沒走/.test(rs)){why.push(`${lS}${/時間用完/.test(rs)?"的總時間用完了":"超過 3 分鐘沒有走下一步"}（可能是想太久、斷線或離開了 App），依照比賽規則判${lS}負、${wS}勝。`);why.push(evNote("沒在時間內走棋"))}
+      else if(kind!=="d"&&wS&&/離開|斷線|離線/.test(rs)){why.push(`${lS}在對局中離開了（關掉對局畫面、離開 App 或斷線太久），依照規則算${lS}輸。`);why.push(evNote("中途離開"))}
+      else if(/中止|取消/.test(R)){why.push("這盤在雙方還沒分出勝負前就中止了（例如對方離線太久），不計勝負、也不計分。")}
+      else if(a>=20000)why.push(`Pikafish 算出 ${who}已經有殺棋，所以另一方認輸。`);
       else if(kind==="d"){
         if(a<40)why.push(`Pikafish 的評分幾乎是 0（${evt(ev)}）：局面平衡${L.length>1&&spread<60?"，連 Pikafish 想到的前幾種走法也都差不多":""}，誰都找不到能贏的突破點。`);
         else if(a<150)why.push(`Pikafish 認為${who}稍好（${evt(ev)}），但優勢不到 1.5 個兵。高手防守很穩，這點優勢通常贏不下來，硬攻反而可能出錯。`);
@@ -3509,7 +3519,8 @@ function Viewer(v,c,id){
         else if(Math.abs(m.diff)<1.5)why.push("雙方子力幾乎一樣多，沒有誰多出能決勝的子。");
         if(pos.board.filter(Boolean).length<=12)why.push("棋盤上的子已經不多，進入殘局後很多組合在理論上就是和棋。")}
       else if(a<150)why.push(`Pikafish 評分 ${evt(ev)}，局面其實還沒分出明顯優劣；可能是時間不夠、或輸的一方看錯了才認輸。`);
-      else why.push(`Pikafish 認為${who}大優（${evt(ev)}），另一方再下去也很難守住，所以提早認輸。`);
+      else if(wS&&who!==wS)why.push(`Pikafish 其實認為${who}佔優（${evt(ev)}），結果卻是${wS}勝；可能是${who}看錯局面、時間不夠而認輸。`);
+      else why.push(`Pikafish 認為${who}大優（${evt(ev)}），${lS||"另一方"}再下去也很難守住，所以提早認輸。`);
       b.innerHTML=`<div class="card" style="margin-bottom:10px"><div class="muted">最後局面（第 ${ply} 步後）・比賽結果：${esc(it.result||"")}</div>
         <div style="margin-top:6px"><span class="rn">紅方</span>：${esc(m.r)}<br>黑方：${esc(m.b)}</div></div>
         ${why.map(t=>`<p style="line-height:1.7;margin:0 0 8px">${esc(t)}</p>`).join("")}
