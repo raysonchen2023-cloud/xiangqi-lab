@@ -412,7 +412,7 @@ html[data-era=ming] .topbar,html[data-era=qing] .topbar{border-bottom-width:4px}
       if(!window.caches)return go();caches.keys().then(function(ks){return Promise.all(ks.filter(function(k){return k.indexOf("xqlab-app-")===0}).map(function(k){return caches.delete(k)}))})
         .then(function(){return navigator.serviceWorker&&navigator.serviceWorker.getRegistration()}).then(function(r){return r&&r.update()}).catch(function(){}).then(go)}},4000)})();
 </script>
-<script>window.XQ_OFFLINE=true;window.XQ_BUILD="20261102-0949";</script>
+<script>window.XQ_OFFLINE=true;window.XQ_BUILD="20261102-1202";</script>
 <script src="core.js"></script>
 <script src="engine.js"></script>
 <script src="local.js"></script>
@@ -1185,6 +1185,14 @@ async function homeStatus(box,tries){
   const fb=box.querySelector("#fBtn");if(fb)fb.onclick=()=>confirmBox("不再連這台電腦？（之後要連，重新掃電腦上的 QR code）",()=>{XQ.disconnect();box.remove();toast("已經忘記這台電腦")},"忘記");
   const e=box.querySelector("#eBtn");if(e)e.onclick=()=>{e.disabled=true;e.textContent="下載中…";(XQEngine.prefetch||XQEngine.load)().then(()=>{toast("Pikafish 已下載，可以離線使用");homeStatus(box)}).catch(err=>{toast(err.message);e.disabled=false;e.textContent="下載"})}}
 
+// 外觀自動下載：App 打開 3 秒後，把所有朝代的棋盤、棋子圖和字形抓下來並先解碼（約 2.8 MB，存在手機裡），第一次切換外觀才不會卡
+const LOOK_IMGS=[];
+setTimeout(()=>{if(navigator.connection&&navigator.connection.saveData)return;
+  const boards=[...new Set(Object.keys(BOARD_IMG).map(k=>BOARD_IMG_FILE[k]||k))],urls=[];
+  for(const k of boards)urls.push(`data/boards/${k}.webp`);for(const k in PIECE_INK)for(const s of"rb")urls.push(`data/pieces/${k}-${s}.webp`);
+  let i=0;const next=()=>{if(i>=urls.length){for(const k of GLY_ERAS)needGly(k,()=>{});return}
+    const im=new Image();im.src=urls[i++];LOOK_IMGS.push(im);(im.decode?im.decode():Promise.resolve()).catch(()=>{}).then(next)};
+  next();next()},3000);
 // 特級大師對局（33 MB）自動下載：App 打開 20 秒後，沒下載過就在背景抓一次（存在手機裡，離線也能看）
 if(OFF)setTimeout(async()=>{try{if(!navigator.onLine||(navigator.connection&&navigator.connection.saveData))return;const c=await caches.open("xqlab-data");
   if(await c.match(new URL("data/gmgames.json",location.href).href))return;await fetch("data/gmgames.json");}catch(e){}},20000);
