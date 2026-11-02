@@ -797,8 +797,40 @@
     rd.toneMapping=T.ACESFilmicToneMapping;rd.toneMappingExposure=.98;try{ANI=rd.capabilities.getMaxAnisotropy()||8}catch(e){}
     rd.domElement.style.cssText="display:block;width:100%;height:100%";el.append(rd.domElement);
     const hint=document.createElement("div");hint.style.cssText="position:absolute;left:50%;bottom:8px;transform:translateX(-50%);font:600 11px sans-serif;color:#fff;background:rgba(30,20,10,.45);padding:3px 10px;border-radius:99px;white-space:nowrap;pointer-events:none;transition:opacity .6s";
-    const veil=document.createElement("div");veil.style.cssText="position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font:600 14px sans-serif;color:#6b5a44;pointer-events:none;transition:opacity .35s";
-    veil.textContent="🌳 公園準備中…";el.append(veil);
+    // 意見回饋 251：載入時不是一行字，而是小帥原地走路去公園（樹和遠山往後退，看起來像在走），全部載好就淡出
+    const veil=document.createElement("div");veil.style.cssText="position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:8px;font:600 14px sans-serif;color:#6b5a44;pointer-events:none;transition:opacity .35s;overflow:hidden;background:linear-gradient(#EAF1F6,#F4ECDC 70%)";
+    {let ch="帥";try{const L=window.XQ_BOTLOOK&&window.XQ_BOTLOOK();if(L&&L.p)ch=L.p}catch(e){}
+     const tree=x=>`<g transform="translate(${x},0)"><rect x="-3" y="92" width="6" height="22" fill="#7a5a3a"/><circle cx="0" cy="84" r="14" fill="#6f8f5f"/><circle cx="-9" cy="92" r="9" fill="#7fa06a"/><circle cx="9" cy="91" r="10" fill="#5f7f50"/></g>`;
+     veil.innerHTML=`<style>
+      @keyframes xwScroll{from{transform:translateX(0)}to{transform:translateX(-160px)}}@keyframes xwFar{from{transform:translateX(0)}to{transform:translateX(-80px)}}
+      @keyframes xwBob{0%,100%{transform:translateY(0)}50%{transform:translateY(-3px)}}
+      @keyframes xwLegA{0%,100%{transform:rotate(22deg)}50%{transform:rotate(-22deg)}}@keyframes xwLegB{0%,100%{transform:rotate(-22deg)}50%{transform:rotate(22deg)}}
+      @keyframes xwArmA{0%,100%{transform:rotate(-28deg)}50%{transform:rotate(28deg)}}@keyframes xwArmB{0%,100%{transform:rotate(28deg)}50%{transform:rotate(-28deg)}}
+      @keyframes xwDots{0%{content:""}33%{content:"．"}66%{content:"．．"}100%{content:"．．．"}}
+      .xw-far{animation:xwFar 6s linear infinite}.xw-near{animation:xwScroll 2.4s linear infinite}.xw-bob{animation:xwBob .5s ease-in-out infinite}
+      .xw-la{transform-origin:72px 118px;animation:xwLegA .5s ease-in-out infinite}.xw-lb{transform-origin:88px 118px;animation:xwLegB .5s ease-in-out infinite}
+      .xw-aa{transform-origin:58px 98px;animation:xwArmA .5s ease-in-out infinite}.xw-ab{transform-origin:102px 98px;animation:xwArmB .5s ease-in-out infinite}
+      .xw-t::after{content:"";animation:xwDots 1.2s steps(1) infinite}</style>
+      <svg viewBox="0 0 160 150" width="200" height="188" style="overflow:hidden">
+        <g class="xw-far" opacity=".55">${[0,80,160].map(x=>`<path d="M${x-10} 110 L${x+20} 70 L${x+45} 95 L${x+60} 78 L${x+90} 110Z" fill="#B9C6CF"/>`).join("")}</g>
+        <g class="xw-near">${[10,90,170,250].map(tree).join("")}</g>
+        <rect x="0" y="134" width="160" height="16" fill="#D9C7A3"/><g class="xw-near">${[0,40,80,120,160,200,240,280].map(x=>`<rect x="${x}" y="140" width="18" height="3" rx="1.5" fill="#C4AF86"/>`).join("")}</g>
+        <ellipse cx="80" cy="136" rx="20" ry="4" fill="rgba(0,0,0,.15)"/>
+        <g class="xw-la"><rect x="69" y="112" width="6" height="16" rx="3" fill="#F6EEE0"/><ellipse cx="72" cy="130" rx="8" ry="4.5" fill="#D02A1F"/></g>
+        <g class="xw-lb"><rect x="85" y="112" width="6" height="16" rx="3" fill="#F6EEE0"/><ellipse cx="88" cy="130" rx="8" ry="4.5" fill="#D02A1F"/></g>
+        <g class="xw-bob">
+          <g class="xw-aa"><ellipse cx="54" cy="104" rx="6" ry="9" fill="#FFFDF8" stroke="#5a3a20" stroke-width="1"/></g>
+          <g class="xw-ab"><ellipse cx="106" cy="104" rx="6" ry="9" fill="#FFFDF8" stroke="#5a3a20" stroke-width="1"/></g>
+          <circle cx="80" cy="98" r="24" fill="#C98A4E" stroke="#E3B341" stroke-width="3"/><circle cx="80" cy="98" r="17" fill="#FFF6E2" stroke="#D02A1F" stroke-width="1.6"/>
+          <text x="80" y="105" text-anchor="middle" font-size="19" font-weight="900" fill="#C8102E" font-family="'Noto Serif TC','PMingLiU',serif">${ch}</text>
+          <rect x="57" y="110" width="46" height="4" rx="1" fill="#3a2a20"/>
+          <circle cx="80" cy="56" r="21" fill="#FFFDF8" stroke="#5a3a20" stroke-width="1"/>
+          <circle cx="73" cy="56" r="2.6" fill="#2a1a10"/><circle cx="87" cy="56" r="2.6" fill="#2a1a10"/><circle cx="80" cy="62" r="2.4" fill="#D02A1F"/>
+          <circle cx="68" cy="63" r="3.6" fill="#F7B6B6" opacity=".8"/><circle cx="92" cy="63" r="3.6" fill="#F7B6B6" opacity=".8"/>
+          <path d="M76 68 Q80 71 84 68" stroke="#2a1a10" stroke-width="1.4" fill="none" stroke-linecap="round"/>
+          <rect x="66" y="31" width="28" height="9" rx="2" fill="#D02A1F"/><circle cx="80" cy="29" r="3.4" fill="#E3B341"/><circle cx="72" cy="36" r="2.4" fill="#222"/>
+        </g></svg><div class="xw-t">小帥走去公園</div>`}
+    el.append(veil);
     hint.textContent="點棋子走棋・點物件看介紹・拖曳轉頭・兩指縮放";el.append(hint);setTimeout(()=>hint.style.opacity=0,4500);
     const EK=eraKey(),E=ERA[EK];
     el.style.background=E.mist;
@@ -1074,7 +1106,7 @@
     // 第一次 draw 之後，等所有圖片（背景、道具、棋盤、棋子、Pikafish）都載好才淡入；最多等 6 秒
     let drawn=false,shown=false;const t0=performance.now();rd.domElement.style.opacity=0;rd.domElement.style.transition="opacity .35s";
     const reveal=()=>{if(shown)return;shown=true;rd.domElement.style.opacity=1;veil.style.opacity=0;setTimeout(()=>veil.remove(),400)};
-    const waitShow=()=>{if(stopped||shown)return;if((drawn&&!inflight.size)||performance.now()-t0>6000){requestAnimationFrame(()=>requestAnimationFrame(reveal));return}setTimeout(waitShow,80)};
+    const waitShow=()=>{if(stopped||shown)return;if((drawn&&!inflight.size&&performance.now()-t0>1200)||performance.now()-t0>6000){requestAnimationFrame(()=>requestAnimationFrame(reveal));return}setTimeout(waitShow,80)};
     fit();placeCam();requestAnimationFrame(frame);setTimeout(waitShow,80);
     const onRs=()=>{if(el.style.display!=="none")fit()};window.addEventListener("resize",onRs);
     function destroy(){if(stopped)return;stopped=true;window.removeEventListener("resize",onRs);try{rd.dispose();rd.forceContextLoss()}catch(e){}el.remove();opt.onDestroy&&opt.onDestroy()}

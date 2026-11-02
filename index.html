@@ -417,7 +417,7 @@ html[data-era=ming] .topbar,html[data-era=qing] .topbar{border-bottom-width:4px}
       if(!window.caches)return go();caches.keys().then(function(ks){return Promise.all(ks.filter(function(k){return k.indexOf("xqlab-app-")===0}).map(function(k){return caches.delete(k)}))})
         .then(function(){return navigator.serviceWorker&&navigator.serviceWorker.getRegistration()}).then(function(r){return r&&r.update()}).catch(function(){}).then(go)}},4000)})();
 </script>
-<script>window.XQ_OFFLINE=true;window.XQ_BUILD="20261103-0435";</script>
+<script>window.XQ_OFFLINE=true;window.XQ_BUILD="20261103-0440";</script>
 <script src="core.js"></script>
 <script src="engine.js"></script>
 <script src="local.js"></script>
@@ -2565,7 +2565,7 @@ function CpuGame(v){
   function paintSeg(m){if(seg)seg.querySelectorAll("button").forEach(b=>{const on=b.dataset.m===m;b.classList.toggle("on",on);b.setAttribute("aria-selected",on)})}
   v.querySelector("#pTop").onclick=e=>{if(e.target.closest(".cpu-chip")){vibrate(8);newSheet()}};
   const acts=actionBar(v.querySelector("#acts"),[["undo","↶","悔棋",()=>post("/play/undo")],
-    ["new","＋","新局",()=>newSheet(),true],["resign","🏳","認輸",()=>confirmBox("確定認輸？",()=>post("/play/resign"),"認輸")],["review","📖","檢討",()=>review(false,st&&st.id)]]);
+    ["new","＋","新局",()=>newSheet(),true],["resign","🏳","認輸",()=>confirmBox("確定認輸？",()=>post("/play/resign"),"認輸")],["review","📖","檢討",()=>review(false,st&&st.id)],["setup","🧪","擺盤",()=>st&&setupSheet(st.board,st.turn,st.human==="b",!st.ranked)]]);
   async function post(u,b){if(busy)return;busy=true;try{render(await api(u,b||{}))}catch(e){toast(e.message)}finally{busy=false}}
   function tap(i){if(!st||st.result||st.turn!==st.human||st.thinking)return;
     if(sel>=0&&st.legal.some(([f,t])=>f===sel&&t===i)){const f=sel;sel=-1;vibrate(15);return post("/play/move",{f,t:i})}
@@ -2618,6 +2618,31 @@ function CpuGame(v){
       modal(`<div class="em">${win?"🏆":draw0?"🤝":"💪"}</div><h2>${win?"你贏了！":draw0?"和局":"這盤輸了"}</h2><p class="muted">${esc(st.result.why)}・對手第 ${st.level} 級「${esc(lv.name||"")}」</p>`,
         [[win&&st.level<8?"挑戰下一級 ›":"再來一局",()=>api("/play/new",{human:st.human,level:win&&st.level<8?st.level+1:st.level}).then(render).catch(e=>toast(e.message))],["📊 賽後報告",()=>review(true,st&&st.id)],["檢討這盤",()=>review(false,st&&st.id),true],["關閉",null,true]])}}
   // 賽後報告：用這一盤自己的編號打開（意見回饋 234：以前拿存檔清單第一筆，存檔還沒寫完或順序不同時會開到別盤）
+// ================= 🧪 擺盤推演（意見回饋 250）：對局中跳到另一張棋盤，從當下局面紅黑兩邊都自己走，試各種變化；不影響正在下的那盤 =================
+// eng＝能不能請 Pikafish 分析（積分挑戰、網路對戰中不行，免得變成作弊）
+function setupSheet(board0,side0,flip0,eng){if(!board0)return;const H=[{board:board0.slice(),side:side0,last:null,cn:"",check:-1}];let sel=-1,legal=null,flip=!!flip0,hint=null;
+  sheet("🧪 擺盤推演",b=>{b.innerHTML=`<p class="muted" style="margin:0 0 6px;font-size:13px;line-height:1.6">從這盤現在的局面開始，紅黑兩邊都由你走，試試看各種變化。<b>不會影響正在下的這盤</b>，關掉就回去。${eng?"":"<br>（積分挑戰和網路對戰中不能用 Pikafish 分析）"}</p>
+    <div id="suS" style="font-weight:700;margin:2px 0 6px"></div><div id="suB"></div><div id="suM" class="muted" style="font-size:13px;line-height:1.7;margin:6px 0;min-height:1.7em"></div>
+    <div class="row" style="gap:6px;flex-wrap:wrap"><button class="pill" id="suU">↶ 退一步</button><button class="pill" id="suR">⟲ 回到對局局面</button><button class="pill" id="suF">⇅ 翻轉</button>${eng?'<button class="pill" id="suE">💡 Pikafish 看法</button>':""}</div><div id="suA" style="margin-top:8px;line-height:1.7"></div>`;
+    const bd=Board(i=>tap(i));b.querySelector("#suB").append(bd.svg);const cur=()=>H[H.length-1],A=b.querySelector("#suA");
+    const need=async()=>{if(!legal)legal=(await api("/an/legal",{board:cur().board,side:cur().side})).legal;return legal};
+    async function tap(i){try{await need()}catch(e){return toast(e.message)}
+      if(sel>=0&&legal.some(([f,t])=>f===sel&&t===i)){const f=sel;sel=-1;
+        try{const r=await api("/an/legal",{board:cur().board,side:cur().side,f,t:i});H.push({board:r.board,side:r.side,last:{f,t:i},cn:r.cn,check:r.check});legal=r.legal;hint=null;A.innerHTML="";vibrate(12)}catch(e){toast(e.message)}draw();return}
+      sel=legal.some(([f])=>f===i)?i:-1;if(sel>=0)vibrate(5);draw()}
+    function draw(){const c=cur();bd.draw(c.board,{flip,last:c.last,sel,targets:sel>=0&&legal?legal.filter(([f])=>f===sel).map(x=>x[1]):[],check:c.check,hint});
+      const end=legal&&!legal.length;b.querySelector("#suS").textContent=end?`${PLAYER[c.side]}沒有棋可走了（${c.check>=0?"被將死":"困斃"}）`:`輪到${PLAYER[c.side]}・推演第 ${H.length-1} 步${c.check>=0?"・將軍！":""}`;
+      b.querySelector("#suM").textContent=H.length>1?H.slice(1).map((h,i)=>`${i+1}.${h.cn}`).join("　"):"點棋子走走看（兩邊都可以走）"}
+    b.querySelector("#suU").onclick=()=>{if(H.length>1){H.pop();legal=null;sel=-1;hint=null;A.innerHTML="";need().then(draw,draw)}};
+    b.querySelector("#suR").onclick=()=>{H.length=1;legal=null;sel=-1;hint=null;A.innerHTML="";need().then(draw,draw)};
+    b.querySelector("#suF").onclick=()=>{flip=!flip;draw()};
+    if(eng)b.querySelector("#suE").onclick=async()=>{const c=cur();A.innerHTML='<span class="muted">Pikafish 想一想…（約 2 秒）</span>';
+      try{const r=await api("/an/engine",{board:c.board,side:c.side,ms:1800,multipv:1});const l=r.lines&&r.lines[0];
+        if(!l){A.innerHTML='<span class="muted">這個局面已經分出勝負了</span>';return}
+        const m=String(l.mv||""),ix=(ch,d)=>(9-(+d))*9+(ch.charCodeAt(0)-97);hint=m.length>=4?[ix(m[0],m[1]),ix(m[2],m[3])]:null;draw();
+        A.innerHTML=`<b>Pikafish 建議：${esc(l.cn)}</b>（${esc(l.mate!=null?(l.mate>0?"紅方":"黑方")+"有殺":evt(l.vr))}）<br><span class="muted" style="font-size:13px">後續：${esc((l.pv||[]).slice(0,8).join("　"))}</span>`}
+      catch(e){A.innerHTML=`<span class="muted">⚠ ${esc(e.message)}</span>`}};
+    need().then(draw,draw)})}
 async function review(rep,id){let it=null;for(let k=0;k<12&&!it;k++){try{const d=await api("/db/items?c=play");it=id?d.items.find(x=>x.id===id):d.items[0]}catch(e){}if(!it)await new Promise(r=>setTimeout(r,250))}
   if(!it)return toast("找不到這盤的存檔");if(rep)store.set("openReport","play/"+it.id);location.hash="#/db/play/"+encodeURIComponent(it.id)}
   // 錯棋重練：在狀態列提示上次走了什麼，評等出來後告訴你這次有沒有進步（評過的結果記在 redoDone）
@@ -3033,7 +3058,8 @@ function PvpGame(v){
   const mySide=()=>seat||(st&&st.turn);
   const acts=actionBar(v.querySelector("#acts"),[["undo","↶","悔棋",()=>post("/pvp/undo")],["flip","⇅","翻轉",()=>{if(seat&&seat!=="w")return emoteSheet();flipMan=!isFlip();autoFlip=false;store.set("autoFlip",false);draw();toast("已關閉自動轉向")}],
     ["new","＋","新局",()=>NET?(st&&st.result?post("/pvp/new"):toast("這盤下完才能再來一局")):newSheet(),true],["draw","🤝","提和",()=>{if(st)post("/pvp/draw",{side:mySide()})}],
-    ["resign","🏳","認輸",()=>{if(st){const s=mySide();confirmBox(`${PLAYER[s]}（${s==="r"?st.red:st.black}）確定認輸？`,()=>post("/pvp/resign",{side:s}),"認輸")}}]]);
+    ["resign","🏳","認輸",()=>{if(st){const s=mySide();confirmBox(`${PLAYER[s]}（${s==="r"?st.red:st.black}）確定認輸？`,()=>post("/pvp/resign",{side:s}),"認輸")}}],
+    ["setup","🧪","擺盤",()=>st&&setupSheet(st.board,st.turn,isFlip(),!NET&&!seat)]]);
   const flipBtn=()=>{acts.flip.innerHTML=seat&&seat!=="w"?(NET?'<span class="ic">💬</span>聊天':'<span class="ic">😏</span>表情'):'<span class="ic">⇅</span>翻轉'};flipBtn();
   const isFlip=()=>flipMan!=null?flipMan:seat?seat==="b":(autoFlip&&st&&!st.result?st.turn==="b":false);
   async function post(u,b){if(busy)return;busy=true;try{render(await api(u,{...(b||{}),seat}))}catch(e){toast(e.message)}finally{busy=false}}
