@@ -832,7 +832,15 @@
           <circle cx="68" cy="63" r="3.6" fill="#F7B6B6" opacity=".8"/><circle cx="92" cy="63" r="3.6" fill="#F7B6B6" opacity=".8"/>
           <path d="M76 68 Q80 71 84 68" stroke="#2a1a10" stroke-width="1.4" fill="none" stroke-linecap="round"/>
           <rect x="66" y="31" width="28" height="9" rx="2" fill="#D02A1F"/><circle cx="80" cy="29" r="3.4" fill="#E3B341"/><circle cx="72" cy="36" r="2.4" fill="#222"/>
-        </g></svg><div class="xw-t">小帥走去公園</div>`}
+        </g></svg><div class="xw-t">小帥走去公園</div>`;
+     /* 意見回饋 392：「小帥走去公園」換成 Gemini 手繪的走路圖（data/xs/walk_1～8 輪流換），身上貼玩家選的棋子字；圖還沒到之前先用原本畫的 */
+     fetch("data/xs/xs.json").then(r=>r.ok?r.json():null).then(m=>{if(!m||!veil.isConnected)return;const fr=[1,2,3,4,5,6,7,8].map(i=>{const im=new Image();im.src="data/xs/walk_"+i+".webp";return im});
+       return Promise.all(fr.map(im=>im.decode())).then(()=>{const svg=veil.querySelector("svg");if(!svg||!veil.isConnected)return;const g=svg.querySelector(".xw-bob");if(g)g.style.display="none";
+         const box=document.createElement("div");box.style.cssText="position:relative;width:200px;height:188px";svg.replaceWith(box);box.append(svg);
+         const Hh=120,Ww=Hh*m.w/m.h,f=m.poses.walk_1||m.poses.xs_idle,R=f.r*Ww*.82,red="帥仕相俥傌炮兵".includes(ch);
+         const w=document.createElement("div");w.className="xw-bob";w.style.cssText=`position:absolute;left:${100-Ww/2}px;bottom:36px;width:${Ww}px;height:${Hh}px`;
+         w.innerHTML=`<img alt="" src="${fr[0].src}" style="display:block;width:100%;height:100%"><b style="position:absolute;left:${f.cx*Ww-R}px;top:${f.cy*Hh-R}px;width:${2*R}px;height:${2*R}px;display:flex;align-items:center;justify-content:center;border-radius:50%;background:#F7EFDD;font:900 ${R*1.25}px/1 'Noto Serif TC','PMingLiU',serif;color:${red?"#C8102E":"#1E1A16"}">${ch}</b>`;
+         box.append(w);const pic=w.querySelector("img");let i=0;const iv=setInterval(()=>{if(!veil.isConnected||veil.style.opacity==="0")return clearInterval(iv);i=(i+1)%8;pic.src=fr[i].src},110)})}).catch(()=>{})}
     el.append(veil);
     hint.textContent="點棋子走棋・點物件看介紹・拖曳轉頭・兩指縮放";el.append(hint);setTimeout(()=>hint.style.opacity=0,4500);
     const EK=eraKey(),E=ERA[EK];
@@ -918,7 +926,12 @@
         const SO=window.__SEAT||{},H=SO.h||SEAT_H,W=H*im.naturalWidth/im.naturalHeight,AT=SO.at||SEAT_AT,BK=SO.back!=null?SO.back:SEAT_BACK,t=srgb(new T.Texture(im));t.anisotropy=ANI;t.needsUpdate=true;
         // 正對鏡頭的去背圖，椅面（圖高 AT 的地方）對齊小帥的屁股；每一格都轉向鏡頭、放在小帥「背後」（從鏡頭看過去），繞到前面看時椅子也不會蓋住小帥
         const geo=new T.PlaneGeometry(W,H);geo.translate(0,H/2,0);const card=new T.Mesh(geo,new T.MeshBasicMaterial({map:t,alphaTest:.3,toneMapped:false,side:T.DoubleSide}));card.rotation.order="YXZ";card.renderOrder=5;sc.add(card);
-        bills.push({m:card,y:FL,tilt:SO.tilt!=null?SO.tilt:SEAT_TILT,anchor:[MX,MZ],back:BK});   /* 意見回饋 386：轉軸在椅腳（地面上），往鏡頭仰的時候椅腳也一直貼著地 */
+        /* 意見回饋 391：貼圖沒有影子，椅腳下空空的看起來像浮著——座椅照太陽投出剪影影子，腳下再鋪一塊柔和的接觸陰影 */
+        card.castShadow=true;card.customDepthMaterial=new T.MeshDepthMaterial({depthPacking:T.RGBADepthPacking,map:t,alphaTest:.3});
+        {const c=document.createElement("canvas");c.width=c.height=64;const g=c.getContext("2d"),gr=g.createRadialGradient(32,32,0,32,32,32);gr.addColorStop(0,"rgba(0,0,0,.85)");gr.addColorStop(.5,"rgba(0,0,0,.45)");gr.addColorStop(1,"rgba(0,0,0,0)");g.fillStyle=gr;g.fillRect(0,0,64,64);
+          const sh=new T.Mesh(new T.PlaneGeometry(W*.95,W*.7),new T.MeshBasicMaterial({map:new T.CanvasTexture(c),transparent:true,opacity:.55,depthWrite:false,toneMapped:false,polygonOffset:true,polygonOffsetFactor:-2,polygonOffsetUnits:-2}));
+          sh.rotation.x=-PI/2;sh.position.set(MX,FL+.03,MZ-.2);sc.add(sh)}
+        if(window.__PDBG)window.__PDBG={sc,cam,card,FL,MSEAT,H,AT,W};bills.push({m:card,y:FL,tilt:SO.tilt!=null?SO.tilt:SEAT_TILT,anchor:[MX,MZ],back:BK});   /* 意見回饋 386：轉軸在椅腳（地面上），往鏡頭仰的時候椅腳也一直貼著地 */
         /* 椅子直接放在地上（意見回饋 381：不要石台座） */
         ch.visible=false};
       if(loadImg(src,put))setTimeout(put,0)}

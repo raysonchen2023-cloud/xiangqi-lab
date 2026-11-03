@@ -95,6 +95,13 @@ input,select{font:inherit;font-size:16px;color:inherit}
 .thero{margin-top:4px}.tstats{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px}.tstat{display:flex;flex-direction:column;align-items:center;text-align:center;padding:10px 4px;border-radius:12px;background:color-mix(in srgb,var(--accent) 8%,var(--card));min-width:0}
 .tstat small{font-size:12px;color:var(--muted)}.tstat b{font:900 32px/1.1 var(--serif);color:var(--accent);margin:2px 0}.tstat b i{font:600 12px var(--sans,inherit);font-style:normal;color:var(--muted);margin-left:2px}.tstat span{font-size:11.5px;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:100%}
 .tsum{margin:12px 2px 10px;line-height:1.7;font-size:14.5px}
+.ecover{position:fixed;inset:0;z-index:9990;display:flex;align-items:center;justify-content:center;background:#1c140d;opacity:0;transition:opacity .45s ease}.ecover.on{opacity:1}
+.ecover i{position:absolute;inset:0;background-size:cover;background-position:center;filter:saturate(1.05);transform:scale(1.08);transition:transform 2.4s ease-out}.ecover.on i{transform:scale(1)}
+.ecover>div{position:relative;text-align:center;color:#fff;font-family:var(--serif);text-shadow:0 2px 12px rgba(0,0,0,.7);background:rgba(20,12,6,.38);padding:18px 26px;border-radius:16px}
+.ecover b{display:block;font-size:40px;letter-spacing:.2em;font-weight:900}.ecover small{display:block;font-size:14px;opacity:.9;margin-top:4px;font-family:var(--sans)}
+.ecover .es{display:inline-flex;align-items:center;justify-content:center;min-width:54px;height:54px;padding:0 6px;border:3px solid #e0303a;color:#e0303a;border-radius:8px;font-size:30px;font-weight:900;background:rgba(255,248,236,.92);margin-bottom:8px;text-shadow:none}
+.era-c.stone img.sflip{animation:sflip .9s cubic-bezier(.45,.05,.3,1) forwards}
+@keyframes sflip{0%{transform:perspective(500px) rotateY(0) scale(1)}60%{transform:perspective(500px) rotateY(400deg) scale(1.25)}100%{transform:perspective(500px) rotateY(540deg) scale(1.15)}}
 .xpres{margin:10px auto 4px;max-width:260px;padding:10px 12px;border:1px solid var(--line);border-radius:12px;background:var(--bg);font-size:16px;text-align:center}.xpres b{font-size:20px;color:var(--accent)}.xpres small{display:block;color:var(--muted);font-size:12.5px;margin:2px 0 6px}
 .tdet{margin-top:12px}.tdet>summary{cursor:pointer;list-style:none;padding:12px 14px;border:1px solid var(--line);border-radius:12px;background:var(--card);font-weight:700;font-size:14px}.tdet>summary::-webkit-details-marker{display:none}.tdet>summary::after{content:" ▾";color:var(--muted)}.tdet[open]>summary::after{content:" ▴"}
 .stbl{border-radius:18px;padding:14px 8px 16px;background:#6b6a63 url(data/stonetable/top.webp) center/cover;box-shadow:inset 0 0 40px rgba(0,0,0,.45),0 3px 10px rgba(0,0,0,.25)}.stbl-t{margin:0 0 4px;text-align:center;color:#fff;font:700 15px var(--serif);text-shadow:0 1px 4px #000}
@@ -497,7 +504,7 @@ html[data-era=ming] .topbar,html[data-era=qing] .topbar{border-bottom-width:4px}
       if(!window.caches)return go();caches.keys().then(function(ks){return Promise.all(ks.filter(function(k){return k.indexOf("xqlab-app-")===0}).map(function(k){return caches.delete(k)}))})
         .then(function(){return navigator.serviceWorker&&navigator.serviceWorker.getRegistration()}).then(function(r){return r&&r.update()}).catch(function(){}).then(go)}},4000)})();
 </script>
-<script>window.XQ_OFFLINE=true;window.XQ_BUILD="20261104-0442";</script>
+<script>window.XQ_OFFLINE=true;window.XQ_BUILD="20261104-0457";</script>
 <script src="core.js"></script>
 <script src="engine.js"></script>
 <script src="local.js"></script>
@@ -3171,6 +3178,8 @@ function arenaSheet(era,start){era=ARENA[era]?era:"classic";const A=ARENA[era],S
    公園的隱藏角色：石桌棋仙沈石川六十年前的宿敵柳寒舟。在公園下挑戰電腦時，偶爾（約兩成的對局、走到第 6 步以後）
    他會撐著傘站到石台上看你下棋。點他一次解開一章（一盤棋最多一章），12 章都解開後，在他看棋的時候贏一盤，就解開尾聲。
    故事在 data/park-legend.json（虛構）；解開的章節在 集章簿 → 石桌往事 可以重讀，開發者模式全部看得到 */
+/* 意見回饋 388：人物與年表每位人物都有畫像（Gemini 照石桌往事的人物設定畫，data/people/） */
+const PIMG={"柳寒舟":"data/legend/liu_watch.webp","沈石川":"data/people/shen.webp","阿古拉":"data/people/agula.webp","周文淵":"data/people/zhou.webp","柳老篙":"data/people/liulaogao.webp","秦小禾":"data/people/qinxiaohe.webp","朱元璋":"data/people/zhu.webp"};
 let LEGEND_P=null;const legendData=()=>LEGEND_P||(LEGEND_P=fetch("data/park-legend.json").then(r=>{if(!r.ok)throw 0;return r.json()}).catch(()=>{LEGEND_P=null;return null}));
 const LEGEND_AT=[2,4,6,9,12,15,18,21,24,27,29];
 const legendState=()=>{const L={n:0,epi:false,used:{},...store.get("legend",{})};try{const S=jStars(),pass=jStages().filter(x=>S[x.id]).length;
@@ -3188,7 +3197,7 @@ function legendCheck(st){return;if(!OFF||!st||!st.result||store.get("legendGame"
   if(L.n>=12&&!L.epi&&st.result.w===st.human){L.epi=true;store.set("legend",L);setTimeout(()=>{toast("🪨 你贏了。身後傳來很慢、很輕的腳步聲，走向石桌……",5000);setTimeout(()=>legendRead(13),2500)},1200)}}
 async function legendSheet(){const D=await legendData();if(!D)return toast("故事還在載入，等一下再點");const L=legendState(),g=store.get("legendGame",null);
   if(g&&!L.used[g]&&L.n<D.chapters.length){L.used[g]=1;L.n=Math.max(1,L.n)+1;store.set("legend",L)}   /* 第一章本來就能讀，第一次遇到就講第二章 */
-  legendRead(Math.max(1,L.n),L.n>=D.chapters.length&&!L.epi?"他說：「你再下一盤吧，我在旁邊看。你贏了，我就過去。」——打贏雲河棋路最後一關的石桌棋仙，就能看到尾聲。":"")}
+  legendRead(Math.max(1,L.n),L.n>=D.chapters.length&&!L.epi?"他說：「你再下一盤吧，我在旁邊看。你贏了，我就過去。」——走到雲河棋路的盡頭，在石桌與棋仙對坐一局，就能看到尾聲。":"")}
 let LEGEND_PREVIEW=false;
 async function legendRead(i,tip){const D=await legendData();if(!D)return;const L=legendState(),all=LEGEND_PREVIEW&&DEVMODE(),ch=i===0?D.prologue:i>D.chapters.length?D.epilogue:D.chapters[i-1];if(!ch)return;   /* i＝0：楔子（意見回饋 319） */
   sheet("🪨 "+ch.title,b=>{b.innerHTML=`<div style="line-height:1.95;font-size:15.5px;white-space:pre-wrap">${esc(ch.body)}</div>${tip?`<p class="muted" style="margin-top:10px">${esc(tip)}</p>`:""}
@@ -3198,7 +3207,7 @@ async function legendRead(i,tip){const D=await legendData();if(!D)return;const L
     b.querySelector("#lgL").onclick=()=>legendBook();const nx=b.querySelector("#lgN");if(nx)nx.onclick=()=>legendRead(i+1)})}
 /* 意見回饋 314：人物（出生年、六十年前和重逢時幾歲）與元末明初大事年表（真實歷史＋故事） */
 async function legendTimeline(){const D=await legendData();if(!D)return;const P=D.people||[],T=D.timeline||[];
-  sheet("📅 人物與年表",b=>{b.innerHTML=`<div class="sec-t" style="margin-top:0">人物</div>${P.map(x=>`<div class="ppl"${x.name==="柳寒舟"?' style="flex-direction:row;gap:10px;align-items:center"':""}>${x.name==="柳寒舟"?'<img src="data/legend/liu_watch.webp" alt="" onerror="this.remove()" style="flex:none;width:48px;height:64px;object-fit:contain">':""}<div class="pn" style="flex:1;min-width:0"><b>${esc(x.name)}</b>（${x.born}${x.died?"–"+x.died:""}）<small>${esc(x.note||"")}</small></div></div>`).join("")}
+  sheet("📅 人物與年表",b=>{b.innerHTML=`<div class="sec-t" style="margin-top:0">人物</div>${P.map(x=>{const im=PIMG[x.name];return`<div class="ppl"${im?' style="flex-direction:row;gap:10px;align-items:center"':""}>${im?`<img src="${im}" alt="" onerror="this.remove()" style="flex:none;width:52px;height:70px;object-fit:contain">`:""}<div class="pn" style="flex:1;min-width:0"><b>${esc(x.name)}</b>（${x.born}${x.died?"–"+x.died:""}）<small>${esc(x.note||"")}</small>${x.verse?`<small style="font-family:var(--serif);font-style:italic;margin-top:2px">${esc(String(x.verse).split(/[。\n]/).filter(Boolean).slice(0,2).join("，"))}</small>`:""}</div></div>`}).join("")}
     <div class="sec-t">大事年表</div>${T.map(x=>`<div class="tlr"><div class="ty"><b>${x.y}</b><small>${esc(x.era||"")}</small></div><div class="tt">${x.h?"📜":"🪨"} ${esc(x.t)}</div></div>`).join("")}
     <p class="muted" style="font-size:12px;line-height:1.7;margin-top:8px">📜 是真實的歷史；🪨 是石桌往事的故事（虛構）。沈石川、柳寒舟、阿古拉、周文淵和雲河鎮都是編的。</p>`})}
 function legendBook(){closeSheet();LEGEND_PREVIEW=false;location.hash="#/adventure"}
@@ -3219,7 +3228,7 @@ function Adventure(v){LEGEND_PREVIEW=false;setTop("🪨 石桌往事","#/");setT
         <button data-go="#/profile"><span>🎒</span><b>棋童資料</b><small>棋盤・棋譜・棋友</small></button>
         <button id="aTl"><span>📅</span><b>人物與年表</b><small>元末明初</small></button></div>
       <div class="sec-t">故事（${L.n}／${D.chapters.length} 章${L.epi?"＋尾聲":""}）</div>
-      <p class="muted" style="margin:0 2px 8px;line-height:1.7;font-size:13.5px">${esc(D.blurb||"")}<br>先聽說書人的楔子；沿著雲河棋路闖關，每過兩三關解開下一回，打贏最後一關的石桌棋仙，就能聽到尾聲。</p>
+      <p class="muted" style="margin:0 2px 8px;line-height:1.7;font-size:13.5px">${esc(D.blurb||"")}<br>先聽說書人的楔子；沿著雲河棋路闖關，每過兩三關解開下一回，走到雲河棋路的盡頭、在石桌與棋仙對坐一局，就能聽到尾聲。</p>
       <div class="items" style="padding:0">${(D.prologue?[[0,D.prologue.title]]:[]).concat(list).map(([k,t])=>`<button class="item" data-k="${k}" ${open(k)?"":"disabled"}><span class="lb">${open(k)?"📖":"🔒"}</span><span class="tx"><b style="white-space:normal;line-height:1.5">${open(k)?esc(t):"？？？"}</b>${open(k)&&sc(k).length?`<span>🕰 回到當年：${sc(k).map(x=>esc(x.title)+((store.get("sceneDone",{})[x.key])?" ✓":"")).join("、")}</span>`:""}</span><span class="muted">${open(k)?"›":""}</span></button>`).join("")}</div>
       <p class="muted" style="font-size:12px;margin-top:8px">故事是虛構的；年表裡標 📜 的是真實歷史。</p>${DEVMODE()?'<button class="lk" id="aDev" style="margin-top:4px">👁 開發者預覽全文（玩家看不到這個按鈕）</button>':""}</div>`;
     v.querySelector("#aMe").onclick=()=>location.hash="#/profile";{const dv=v.querySelector("#aDev");if(dv)dv.onclick=()=>{LEGEND_PREVIEW=true;legendRead(0)}}v.querySelector("#aTl").onclick=()=>legendTimeline();
@@ -3396,7 +3405,13 @@ function ParkGate(v){setTop("🌳 公園","#/adventure");setTabs(false);v.classN
     try{const st=await api("/play/state"),mine=st.journey&&!st.result&&st.moves&&st.moves.length;
       if(!mine){if((st.others||[]).some(z=>z.kind==="journey"))await api("/play/switch",{kind:"journey"});
         else{store.set("cpuRanked",false);store.set("cpuCar",false);await api("/play/new",{human:"r",level:parkLv(),journey:"park"})}}}catch(e){toast(e.message);b.disabled=false;return}
-    location.hash="#/cpu";setTimeout(()=>toast(`🌳 ${eraLabel(k)}的公園到了`),600)})}
+    await stoneCover(b,k);location.hash="#/cpu";setTimeout(()=>toast(`🌳 ${eraLabel(k)}的公園到了`),600)})}
+/* 意見回饋 389：點朝代石頭——石頭先慢慢翻轉，再出現那個朝代的封面（驛站場景圖＋朝代名＋印），然後才進公園下棋；點封面可以跳過 */
+function stoneCover(b,k){return new Promise(res=>{const im=b.querySelector("img")||b;im.classList.add("sflip");vibrate(8);
+  const info=(PARK_INFO[k]||PARK_INFO.classic)._||[eraLabel(k),""],seal=(ARENA[k]&&ARENA[k].seal)||"";let done=false;
+  setTimeout(()=>{const c=document.createElement("div");c.className="ecover";c.innerHTML=`<i style="background-image:url(data/inn/${k}.webp)"></i><div><span class="es">${esc(seal)}</span><b>${esc(eraLabel(k))}</b><small>${esc(info[1]||"")}</small></div>`;
+    document.body.append(c);requestAnimationFrame(()=>c.classList.add("on"));
+    const fin=()=>{if(done)return;done=true;res();setTimeout(()=>{c.classList.remove("on");setTimeout(()=>c.remove(),600)},700)};c.onclick=fin;setTimeout(fin,1700)},900)})}
 function jStages(){const out=[];JR.forEach((R,ri)=>{const id=i=>`${R.k}-${i}`;
   out.push({id:id(1),r:ri,t:"puz",name:"解題・一",lo:R.tiers[0],hi:R.tiers[1]},{id:id(2),r:ri,t:"puz",name:"解題・二",lo:R.tiers[0],hi:R.tiers[1],cats:["殺法","戰術"]},
     {id:id(3),r:ri,t:"scene",name:"回到當年",scene:R.scene},{id:id(4),r:ri,t:"ai",name:`對弈・第 ${R.ai[0]} 級`,lv:R.ai[0]},
@@ -3771,7 +3786,7 @@ const BOT_FAQ=[
  [["驛站","練等","等級不夠"],"等級不夠進下一站時，去「雲河棋路 → 🏮 驛站」找路過的旅人下棋練等（賣茶的老婦、趕考的書生、走鏢的鏢師……），下幾次都可以，贏了多給修為。","#/journey/inn","去驛站"],
  [["闖關","雲河棋路","關卡","星星"],"首頁「🗺 雲河棋路」是闖關：沿著石桌往事裡的雲河，從渡口走到石桌，5 站、每站 6 關（解題、回到當年、對弈、守關擂主），每關最多 3 顆星，過關才會開下一關。","#/journey","去闖關"],
  [["等級","修為","經驗","升級","Lv","提示棋","提示"],"首頁「冒險」裡的「🀄 我的修為」就是「棋道修行」等級：下棋、測驗、猜著法、闖關都會累積修為，每 10 級換一個稱號（棋童到棋仙）。等級看練了多少、段位看實力，分開算。Lv 5 起每天有提示棋，Lv 20 起提示會連落點一起指出，只能在雲河棋路用。","#/journey","去闖關"],
- [["撐傘","灰衣老人","柳寒舟","石桌往事","沈石川","棋仙的故事","隱藏角色"],"首頁「冒險」裡的「🪨 石桌往事」就是冒險的入口：元末明初，石桌棋仙沈石川和宿敵柳寒舟的故事（12 章＋尾聲，第一章先讀）。裡面有雲河棋路（闖關，每過兩三關解開下一章，打贏最後的石桌棋仙解開尾聲）、驛站（練等）、我的修為、人物與年表；有「🕰 回到當年」的章節可以站在旁邊看當年那盤棋、猜關鍵一步加段位積分。","#/","去首頁的冒險"],
+ [["撐傘","灰衣老人","柳寒舟","石桌往事","沈石川","棋仙的故事","隱藏角色"],"首頁「冒險」裡的「🪨 石桌往事」就是冒險的入口：元末明初，石桌棋仙沈石川和宿敵柳寒舟的故事（12 章＋尾聲，第一章先讀）。裡面有雲河棋路（闖關，每過兩三關解開下一章，走到盡頭與石桌棋仙對坐一局解開尾聲）、驛站（練等）、我的修為、人物與年表；有「🕰 回到當年」的章節可以站在旁邊看當年那盤棋、猜關鍵一步加段位積分。","#/","去首頁的冒險"],
  [["妙棋","妙手","妙棋精選","冷門","棄子","反敗為勝"],"棋譜庫的「妙棋精選」是從特級大師對局和全國比賽裡挑出來的少見妙棋：很少人走的好棋、主動棄子、要算很多步才看得出來的好棋、看似落後其實反敗為勝的一步。每一步都經過 Pikafish 驗證，打開就停在那一步，註解寫出妙在哪裡。","#/db/brilliant","看妙棋精選"],
  [["大師對局","特級大師對局","比賽"],"棋譜庫的「大師對局」有三萬多局特級大師對局，可以用 👤 棋手篩選。","#/db/gmgames","看大師對局"],
  [["分析","評等","賽後報告","好棋","壞棋"],"看棋譜時按「🔍 分析」或右上角「📊 賽後報告」，Pikafish 會評每一步，並用藍色箭頭畫出建議走法。"],
