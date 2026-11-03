@@ -119,7 +119,7 @@ input,select{font:inherit;font-size:16px;color:inherit}
 .travel .front.img{bottom:0;height:19%;background-size:auto 100%}.travel:has(.front.img) .walker{bottom:21%}
 @keyframes tvScroll{from{transform:translateX(0)}to{transform:translateX(-33.34%)}}@keyframes tvScrollFast{from{transform:translateX(0)}to{transform:translateX(-66%)}}
 .travel.back .tl{transform:scaleX(-1)}.travel.back .far,.travel.back .mid{animation-name:tvScrollB}.travel.back .front{animation-name:tvScrollFastB}
-@keyframes tvScrollB{from{transform:scaleX(-1) translateX(0)}to{transform:scaleX(-1) translateX(-33.34%)}}@keyframes tvScrollFastB{from{transform:scaleX(-1) translateX(0)}to{transform:scaleX(-1) translateX(-66%)}}
+/* 意見回饋 405：往回走（公園 → 驛站）時圖層翻面後要從 +33% 捲回 0，不然左邊會露出一塊空白 */@keyframes tvScrollB{from{transform:scaleX(-1) translateX(33.34%)}to{transform:scaleX(-1) translateX(0)}}@keyframes tvScrollFastB{from{transform:scaleX(-1) translateX(66%)}to{transform:scaleX(-1) translateX(0)}}
 .travel .walker{position:absolute;left:50%;bottom:24%;transform:translateX(-50%);z-index:2}.travel .walker .av{width:54px;height:54px;font-size:26px;border-radius:50%;display:flex;align-items:center;justify-content:center;background:radial-gradient(circle at 40% 35%,#fff8ec,#f1dcb8);border:3px solid #b23a2a;color:#b23a2a;font-family:var(--serif);font-weight:900;animation:tvHop .42s ease-in-out infinite alternate;box-shadow:0 6px 10px rgba(0,0,0,.35)}
 @keyframes tvHop{from{transform:translateY(0) rotate(-6deg)}to{transform:translateY(-14px) rotate(6deg)}}
 .travel .xsw{position:relative;animation:tvBob .22s ease-in-out infinite alternate;filter:drop-shadow(0 6px 6px rgba(0,0,0,.35))}.travel .xsw img{display:block;width:100%;height:100%}
@@ -505,7 +505,7 @@ html[data-era=ming] .topbar,html[data-era=qing] .topbar{border-bottom-width:4px}
       if(!window.caches)return go();caches.keys().then(function(ks){return Promise.all(ks.filter(function(k){return k.indexOf("xqlab-app-")===0}).map(function(k){return caches.delete(k)}))})
         .then(function(){return navigator.serviceWorker&&navigator.serviceWorker.getRegistration()}).then(function(r){return r&&r.update()}).catch(function(){}).then(go)}},4000)})();
 </script>
-<script>window.XQ_OFFLINE=true;window.XQ_BUILD="20261104-0555";</script>
+<script>window.XQ_OFFLINE=true;window.XQ_BUILD="20261104-0635";</script>
 <script src="core.js"></script>
 <script src="engine.js"></script>
 <script src="local.js"></script>
@@ -3215,8 +3215,11 @@ async function legendSheet(){const D=await legendData();if(!D)return toast("故�
   if(g&&!L.used[g]&&L.n<D.chapters.length){L.used[g]=1;L.n=Math.max(1,L.n)+1;store.set("legend",L)}   /* 第一章本來就能讀，第一次遇到就講第二章 */
   legendRead(Math.max(1,L.n),L.n>=D.chapters.length&&!L.epi?"他說：「你再下一盤吧，我在旁邊看。你贏了，我就過去。」——走到雲河棋路的盡頭，在石桌與棋仙對坐一局，就能看到尾聲。":"")}
 let LEGEND_PREVIEW=false;
+/* 意見回饋 394：每一回的章節插畫（Gemini 畫的 art/levels/cg*）；0＝楔子、13＝尾聲 */
+const LEG_CG={1:["cg01_grey_umbrella"],2:["cg02a_tingtao_heyday","cg02b_tiles_winter"],3:["cg03_dukou_arrival"],4:["cg04_dawn_return"],5:["cg05a_chongyang_qihui","cg05b_cellar_milk_tea"],6:["lv06_three_incense_sacrifice"],7:["cg07a_gong_night","cg07b_ferry_night"],8:["cg08_rumor_pole"],9:["cg09a_dig_rubble","cg09b_boat_letter"],10:["cg10_warehouse_chess"],12:["lv11_rain_reasoning"],13:["lv12_draw_final"]};
 async function legendRead(i,tip){const D=await legendData();if(!D)return;const L=legendState(),all=LEGEND_PREVIEW&&DEVMODE(),ch=i===0?D.prologue:i>D.chapters.length?D.epilogue:D.chapters[i-1];if(!ch)return;   /* i＝0：楔子（意見回饋 319） */
-  sheet("🪨 "+ch.title,b=>{b.innerHTML=`<div style="line-height:1.95;font-size:15.5px;white-space:pre-wrap">${esc(ch.body)}</div>${tip?`<p class="muted" style="margin-top:10px">${esc(tip)}</p>`:""}
+  const cg=LEG_CG[i]||[],cgi=f=>`<img src="data/levels/${f}.webp" alt="" loading="lazy" onerror="this.remove()" style="width:100%;height:auto;border-radius:12px;display:block;margin:4px 0 12px">`;
+  sheet("🪨 "+ch.title,b=>{b.innerHTML=`${cg[0]?cgi(cg[0]):""}<div style="line-height:1.95;font-size:15.5px;white-space:pre-wrap">${esc(ch.body)}</div>${cg[1]?cgi(cg[1]):""}${tip?`<p class="muted" style="margin-top:10px">${esc(tip)}</p>`:""}
     ${(D.scenes||[]).filter(x=>x.ch===i).map(x=>`<button class="btn" data-sc="${esc(x.key)}" style="width:100%;margin-top:10px">🕰 回到當年：${esc(x.title)}${(store.get("sceneDone",{})[x.key])?"（已過關）":`（答對 +${SCENE_PTS[0][1]}～${SCENE_PTS[2][1]} 段位積分）`}</button>`).join("")}
     <div class="row" style="gap:8px;margin-top:12px"><button class="btn ghost" id="lgL" style="flex:1">📜 全部章節</button>${i<=D.chapters.length&&(i<L.n||all||(i===D.chapters.length&&L.epi))?`<button class="btn" id="lgN" style="flex:1">下一章 ›</button>`:""}</div>`;
     b.querySelectorAll("[data-sc]").forEach(x=>x.onclick=()=>{closeSheet();location.hash="#/legend/"+x.dataset.sc});
@@ -3464,10 +3467,25 @@ function Journey(v,sid){
       const lvNo=I.L<R.lv;
       return`<div class="sec-t">${ri+1}. ${esc(R.name)} <span class="muted" style="font-size:12px">★ ${got}/18${R.lv>1?`・Lv ${R.lv} 才能進`:""}</span></div>${lvNo?`<div class="muted" style="font-size:13px;margin:-2px 2px 6px">🔒 等級還差 ${R.lv-I.L} 級——先去 🏮 驛站找人下棋練等</div>`:""}<div class="card" style="padding:10px 12px${open?"":";opacity:.55"}"><p class="muted" style="margin:0 0 6px;font-size:13px">${esc(R.sub)}</p>
         <div class="jpath">${st.map((s,k)=>{const i=L.indexOf(s),ok=jOpen(L,i),n=S[s.id]||0;return`<button class="jnode${ok?"":" lock"}${n?" done":""}" data-s="${s.id}" style="margin-left:${[2,18,34,18,2,14][k]}%"><span class="ji">${ok?jIcon[s.t]:"🔒"}</span><span class="jt"><b>${esc(s.name)}</b><small>${n?"★".repeat(n)+"☆".repeat(3-n):ok?"還沒過關":!jLvOk(s)?`要 Lv ${JR[s.r].lv}`:"先過前一關"}</small></span></button>`}).join("")}</div></div>`}).join("")}</div>`;
-  {const jm=v.querySelector("#jmap");if(jm)jm.onclick=()=>sheet("🗺 雲河棋路",b=>{b.innerHTML='<img src="data/map/yunhe_map.webp" alt="雲河棋路地圖" style="width:100%;border-radius:12px;display:block">'})}
+  {const jm=v.querySelector("#jmap");if(jm)jm.onclick=()=>jMap3d(L,S)}
   v.querySelector("#jxp").onclick=xpSheet;v.querySelector("#jinn").onclick=()=>travel("inn",()=>{location.hash="#/journey/inn"});
   v.querySelectorAll(".jnode").forEach(b=>b.onclick=()=>{const i=L.findIndex(x=>x.id===b.dataset.s);if(!jOpen(L,i))return toast(!jLvOk(L[i])?`等級不夠：「${JR[L[i].r].name}」要 Lv ${JR[L[i].r].lv}，先去 🏮 驛站找人下棋練等`:"先過前一關");jSheet(L[i])});
   return{}}
+/* 意見回饋 394：雲河棋路 3D 沙盤（map3d.js）——一指轉、兩指縮放；點站看進度，按「出發」開那一站下一個還沒過的關。3D 載入失敗就顯示平面地圖 */
+function jMap3d(L,S){sheet("🗺 雲河棋路",async b=>{
+  b.innerHTML='<div id="m3dh" style="position:relative;aspect-ratio:3/4;max-height:72vh;margin:0 auto;border-radius:12px;overflow:hidden;background:#cfd8d4"></div><p class="muted" style="font-size:12.5px;margin:8px 2px 0">一指拖曳轉動、兩指縮放；點站名看進度，點兩下回到原本的角度。</p>';
+  const host=b.querySelector("#m3dh"),I=xpInfo();
+  const flat=()=>{host.innerHTML='<img src="data/map/yunhe_map.webp" alt="雲河棋路地圖" style="width:100%;height:100%;object-fit:cover;display:block">'};
+  const stations=JR.map((R,ri)=>{const st=L.filter(s=>s.r===ri),i0=L.indexOf(st[0]);
+    return{id:R.k,name:R.name,sub:R.sub,total:st.length,pass:st.filter(s=>S[s.id]).length,stars:st.reduce((a,s)=>a+(S[s.id]||0),0),locked:!(i0>=0&&jOpen(L,i0))||I.L<R.lv}});
+  try{const v="?v="+encodeURIComponent(window.XQ_BUILD||"");await loadScript(OFF?"three.min.js":"/m/three.min.js");await loadScript((OFF?"map3d.js":"/m/map3d.js")+v);if(!window.XQMap3D)throw new Error("3D 地圖載入失敗")}
+  catch(e){flat();return}
+  if(!host.isConnected)return;
+  let m;try{m=window.XQMap3D.create(host,{stations,heightMode:"color",debug:DEVMODE(),onPick:(st,act)=>{if(act!=="enter")return;
+    const ri=JR.findIndex(R=>R.k===st.id),list=L.filter(s=>s.r===ri),nx=list.find(s=>!S[s.id]&&jOpen(L,L.indexOf(s)))||list.find(s=>jOpen(L,L.indexOf(s)));
+    if(!nx)return toast(I.L<JR[ri].lv?`「${JR[ri].name}」要 Lv ${JR[ri].lv}，先去 🏮 驛站找人下棋練等`:"先過前一站的關卡");closeSheet();setTimeout(()=>jSheet(nx),260)}})}
+  catch(e){flat();return}
+  const t=setInterval(()=>{if(!host.isConnected){clearInterval(t);try{m.destroy()}catch(e){}}},800)})}
 function jSheet(s){const n=jStars()[s.id]||0,R=JR[s.r];
   const how={puz:"從題庫出 5 題，答對 3 題過關：3 題 ★、4 題 ★★、5 題全對 ★★★。",scene:"回到六十年前，站在旁邊看那盤棋；下到關鍵一步時換你想：跟當年一樣 ★★★、Pikafish 也說是好棋 ★★、看答案 ★。",
     ai:`跟第 ${s.lv} 級的電腦下一盤，贏了就過關：30 回合內贏 ★★★、50 回合內 ★★、其他 ★。`,boss:`守關的擂主是「${s.era?ARENA[s.era].name:""}」（第 ${s.lv} 級的實力）。贏了就過關，星星照回合數算，跟對弈一樣；還會順便蓋上擂台的章。`}[s.t];
@@ -3587,7 +3605,7 @@ function CpuGame(v,practicePage){
   const topBar=()=>{const lk=!!(typeof st!=="undefined"&&st&&st.arena&&!st.result),pr=!!(st&&st.practice);
     /* 意見回饋 335：錯棋重練是自己的頁面——標題寫「錯棋重練」，上面沒有積分／自選／擂台／公園，返回回到錯棋清單 */
     /* 意見回饋 349：朝代擂台（和石桌往事）的上方不放積分／自選，只寫是哪裡 */
-    setTop(pr?(st.practice.drill?"🎯 "+(st.practice.title||"練習"):"🔁 錯棋重練"):st&&st.journey?"🪨 石桌往事":st&&st.arena?"🏯 朝代擂台":"挑戰電腦",pr?(st.practice.drill?"#/":"#/redo"):st&&st.journey?jBack(st.journey):"#/",pr?[]:[/* 意見回饋 346：挑戰電腦看不到擂台、驛站的入口——🏯 只在擂台那盤出現（換擂主）、🏮 只在石桌往事的公園出現 */...(st&&st.arena?[arenaBtn]:[]),...(OFF&&parkOn()&&!lk&&st&&st.journey==="park"?[["🏮",()=>travel("inn",()=>location.hash="#/journey/inn"),"走荒野小徑去驛站"]]:[]),...(lk?[]:[parkBtn(()=>{draw();topBar()})])].concat(vcOn()?[["🎤",()=>voiceMove(()=>!st||st.result?{why:"這盤已經結束"}:st.turn!==st.human||st.thinking?{why:"還沒輪到你"}:{board:st.board,legal:st.legal,play:(f,t)=>{sel=-1;post("/play/move",{f,t})}}),"聲控走棋"]]:[]));
+    setTop(pr?(st.practice.drill?"🎯 "+(st.practice.title||"練習"):"🔁 錯棋重練"):st&&st.arena?"🏯 朝代擂台":st&&st.journey?"🪨 石桌往事":"挑戰電腦",pr?(st.practice.drill?"#/":"#/redo"):st&&st.journey?jBack(st.journey):"#/",pr?[]:[/* 意見回饋 346：挑戰電腦看不到擂台、驛站的入口——🏯 只在擂台那盤出現（換擂主）、🏮 只在石桌往事的公園出現 */...(st&&st.arena?[arenaBtn]:[]),...(OFF&&parkOn()&&!lk&&st&&st.journey==="park"&&!st.arena?[["🏮",()=>travel("inn",()=>location.hash="#/journey/inn"),"走荒野小徑去驛站"]]:[]),...(lk?[]:[parkBtn(()=>{draw();topBar()})])].concat(vcOn()?[["🎤",()=>voiceMove(()=>!st||st.result?{why:"這盤已經結束"}:st.turn!==st.human||st.thinking?{why:"還沒輪到你"}:{board:st.board,legal:st.legal,play:(f,t)=>{sel=-1;post("/play/move",{f,t})}}),"聲控走棋"]]:[]));
     try{if(seg&&!pr&&!(st&&(st.journey||st.arena))){const t=$("#title");t.textContent="";t.append(seg)}}catch(e){}};   /* 第一次呼叫時 seg 還沒建立 */
   topBar();
   /* 首頁「🏯 朝代擂台」帶過來的：直接打開擂台（意見回饋 276） */

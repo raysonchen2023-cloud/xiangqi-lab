@@ -896,7 +896,8 @@
       const lowW=new T.Mesh(new T.CylinderGeometry(TR-.2,TR-.2,1.2,64,1,true),stone2);lowW.material.side=T.DoubleSide;lowW.position.y=FL+.6;sc.add(lowW);
       const pg=new T.BoxGeometry(.8,3.6,.8);for(let i=0;i<36;i++){const a=i/36*TAU;const p=new T.Mesh(pg,stone);p.position.set(Math.sin(a)*(TR-.4),FL+1.8,Math.cos(a)*(TR-.4));p.rotation.y=a;sc.add(p)}}
     // 朝代家具（桌、長椅、凳子、燈）：見 buildFurn；桌面頂面 y=0，長椅座面高度 SY
-    const BZ=-12.6,SY=-3.9,BL=13,iron=M(0x2A2620,{roughness:.45,metalness:.6});
+    /* 意見回饋 406：椅面抬高到桌面下約 30 公分（真實的桌椅落差），人坐著露出比較多身體，桌子看起來才矮 */
+    const BZ=-12.6,SY=(window.__SY||-2.7),BL=13,iron=M(0x2A2620,{roughness:.45,metalness:.6});
     const infos=[];   // 意見回饋 240：點得到、會跳說明的物件
     const bills=[];   // 意見回饋 375：鏡頭可以繞著桌子轉，貼圖（道具、座椅）每一格都轉向鏡頭
     const furn=buildFurn(EK,E,{sc,M,GY,FL,SY,BZ,BL,stone,stone2,iron,infos,bills});
@@ -1064,7 +1065,7 @@
       const vr=Math.max(CAMV.hr,1.14);CAMV.dp=Math.atan(CAMV.ht*1.14)-Math.atan(CAMV.ht*vr);H=Math.round(W*CAMV.hr);el.style.height=H+"px";rd.setSize(W,H,false);cam.aspect=W/H;
       cam.fov=clamp(2*Math.atan(CAMV.ht*vr)*180/PI,38,62);cam.updateProjectionMatrix();
       {const nn=CAMV.hr>=1.24;if(nn!==capNear){capNear=nn;if(lastCapB)layoutCaptured(lastCapB)}}};
-    const CO=window.__CAM||{},camBase=new T.Vector3(...(CO.b||[0,22,25])),look=new T.Vector3(...(CO.l||[0,-.3,.6])),PIV=new T.Vector3(0,-.3,0);   /* 意見回饋 374：小帥坐到正對面，鏡頭往後、往上一點，從他背後看過去 */
+    const CO=window.__CAM||{},camBase=new T.Vector3(...(CO.b||[0,27,26])),look=new T.Vector3(...(CO.l||[0,-.3,-.4])),PIV=new T.Vector3(0,-.3,0);   /* 意見回饋 374：小帥坐到正對面，鏡頭往後、往上一點，從他背後看過去；406：座位抬高後鏡頭再拉高，小帥才不會擋到最下排 */
     // 拉近拉遠＝鏡頭沿著「棋盤中心→座位」這條線前後移動，看的方向不變
     /* 意見回饋 375：左右拖曳＝鏡頭繞著棋桌轉（轉到對面就看得到小帥的臉、背景一樣是一整圈），上下拖曳＝俯視的高低；不動的時候跟原本的畫面一樣 */
     const placeCam=()=>{const off=camBase.clone().sub(PIV),lk=look.clone().sub(PIV),el0=Math.atan2(off.y,Math.hypot(off.x,off.z)),el=clamp(el0+pitch,.06,1.5),R=off.length()*zoom,az=Math.atan2(off.x,off.z)+yaw;
