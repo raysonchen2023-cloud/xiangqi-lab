@@ -74,6 +74,11 @@ input,select{font:inherit;font-size:16px;color:inherit}
 .jnode .ji{font-size:22px;flex:none}.jnode .jt{display:flex;flex-direction:column;min-width:0}.jnode small{color:var(--accent);font-size:12px}.jnode.lock{opacity:.5}.jnode.done{border-color:var(--accent)}
 .lgv{position:absolute;left:6px;top:6px;z-index:5;display:flex;align-items:center;gap:4px;border:1px solid var(--line);background:var(--card);border-radius:999px;padding:4px 10px 4px 6px;font-size:20px;box-shadow:0 2px 8px rgba(0,0,0,.18);cursor:pointer}.lgv small{font-size:12px;color:var(--muted)}
 .pmode{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-top:8px;padding:8px 14px}.pmode .seg{display:flex;border:1px solid var(--line);border-radius:999px;overflow:hidden}.pmode .seg button{border:0;background:none;padding:6px 14px;font:inherit;color:inherit;cursor:pointer}.pmode .seg button.on{background:var(--accent);color:#fff}
+.advme{display:flex;align-items:center;gap:12px;width:100%;padding:10px 14px;text-align:left;font:inherit;color:inherit;cursor:pointer}.advme .xl{font:900 20px var(--serif);color:var(--accent);flex:none}.advme .xt{flex:1;min-width:0;display:flex;flex-direction:column;gap:3px}.advme small{color:var(--muted);font-size:12px}
+.advgrid{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:10px}.advgrid button{display:flex;flex-direction:column;align-items:flex-start;gap:2px;border:1px solid var(--line);background:var(--card);border-radius:14px;padding:10px 12px;font:inherit;color:inherit;text-align:left;cursor:pointer}.advgrid span{font-size:24px}.advgrid small{color:var(--muted);font-size:12px}
+.prof .pl{display:flex;gap:14px;align-items:center}.prof .lv{flex:none;width:68px;height:68px;border-radius:50%;display:flex;align-items:center;justify-content:center;font:900 19px var(--serif);color:#fff;background:radial-gradient(circle at 35% 30%,#d9774f,var(--accent));box-shadow:0 0 0 4px color-mix(in srgb,var(--accent) 25%,transparent)}.prof .pl>div:last-child{flex:1;min-width:0}
+.chips{display:flex;flex-wrap:wrap;gap:6px;margin-top:10px}.chips span{font-size:12.5px;border:1px solid var(--line);border-radius:999px;padding:3px 10px;background:var(--bg)}
+.bgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:8px}.bcard{border:1px solid var(--line);background:var(--card);border-radius:14px;padding:10px;display:flex;flex-direction:column;gap:3px;min-width:0}.bcard .bic{font-size:30px}.bcard.rare{border:2px solid #C9962B;box-shadow:0 0 0 3px rgba(201,150,43,.18);background:linear-gradient(160deg,color-mix(in srgb,#C9962B 12%,var(--card)),var(--card))}.bcard.broken{opacity:.75;filter:grayscale(.5)}.bcard .pill{margin-top:4px;align-self:flex-start}
 #xpchip{position:fixed;left:50%;top:calc(env(safe-area-inset-top,0px) + 56px);transform:translateX(-50%);z-index:9999;background:var(--accent);color:#fff;padding:6px 14px;border-radius:999px;font-weight:700;font-size:14px;pointer-events:none;opacity:0;transition:opacity .4s;box-shadow:0 4px 14px rgba(0,0,0,.2);white-space:nowrap}#xpchip.big{font-size:16px;padding:10px 18px}
 .tile.strip .rsm{display:block;margin-top:2px;font-weight:700;color:var(--accent)}.tile.strip.resume{border:2px solid var(--accent);animation:rsPulse 2.4s ease-in-out 2}@keyframes rsPulse{50%{box-shadow:0 0 0 5px color-mix(in srgb,var(--accent) 25%,transparent)}}
 .tile.strip .ic{margin:0;flex:none}.tile.strip .tx{flex:1;min-width:0;display:flex;flex-direction:column}.tile.strip .s{font-size:12.5px}
@@ -442,7 +447,7 @@ html[data-era=ming] .topbar,html[data-era=qing] .topbar{border-bottom-width:4px}
       if(!window.caches)return go();caches.keys().then(function(ks){return Promise.all(ks.filter(function(k){return k.indexOf("xqlab-app-")===0}).map(function(k){return caches.delete(k)}))})
         .then(function(){return navigator.serviceWorker&&navigator.serviceWorker.getRegistration()}).then(function(r){return r&&r.update()}).catch(function(){}).then(go)}},4000)})();
 </script>
-<script>window.XQ_OFFLINE=true;window.XQ_BUILD="20261103-1430";</script>
+<script>window.XQ_OFFLINE=true;window.XQ_BUILD="20261103-1450";</script>
 <script src="core.js"></script>
 <script src="engine.js"></script>
 <script src="local.js"></script>
@@ -601,7 +606,11 @@ function killFx(svg,win,why,kIdx,flip,o){svg=fxHost(svg);const r=svg.getBounding
       if(!lose)for(const[f,a]of[[147,.3],[220,.22],[331,.14],[495,.07],[740,.04]]){const oo=AC.createOscillator(),gg=AC.createGain();oo.frequency.value=f*(1+(Math.random()-.5)*.01);gg.gain.setValueAtTime(.0001,t2);gg.gain.linearRampToValueAtTime(a,t2+.012);gg.gain.exponentialRampToValueAtTime(.001,t2+2.4);oo.connect(gg).connect(out);oo.start(t2);oo.stop(t2+2.5)}}
     // 蓋印：短促的悶響
     {const t3=t+1.45,s=noise(.12,3),lp=AC.createBiquadFilter(),g=AC.createGain();lp.type="lowpass";lp.frequency.value=500;g.gain.value=.9;s.connect(lp).connect(g).connect(out);s.start(t3)}})}
+/* 意見回饋 317：卡片打開時先記一筆「同一頁」的上一頁紀錄，iPhone 往右滑（上一頁）只會關掉卡片、留在原本的畫面；
+   用按鈕關掉卡片留下的那筆紀錄，下次往右滑時自動跳過，不用多滑一次 */
+let SHEET_MARK=null,SHEET_STALE=false;
 function sheet(title,build){
+  try{if(!(history.state&&history.state.xqSheet)){history.pushState({xqSheet:1},"",location.href);SHEET_MARK=location.href}SHEET_STALE=false}catch(e){}
   document.querySelectorAll("#scrim,#sheet").forEach(e=>e.remove());const sc=document.createElement("div");sc.className="scrim";sc.id="scrim";
   const sh=document.createElement("div");sh.className="sheet";sh.id="sheet";
   sh.innerHTML=`<div class="grab"></div><div class="sh-t">${esc(title)}</div><div class="sh-b"></div>`;
@@ -612,7 +621,9 @@ function sheet(title,build){
   let y0=null;sh.querySelector(".grab").parentElement.addEventListener("touchstart",e=>{if(e.target.closest(".sh-b"))return;y0=e.touches[0].clientY},{passive:true});
   sh.addEventListener("touchend",e=>{if(y0!=null&&e.changedTouches[0].clientY-y0>60)closeSheet();y0=null});
   return sh}
-function closeSheet(){const a=$("#scrim"),b=$("#sheet");if(b){b.classList.remove("show");a&&a.classList.remove("show");setTimeout(()=>{a&&a.remove();b.remove()},220)}}
+function closeSheet(fromPop){const a=$("#scrim"),b=$("#sheet");if(b){b.classList.remove("show");a&&a.classList.remove("show");setTimeout(()=>{a&&a.remove();b.remove()},220);if(fromPop!==true&&SHEET_MARK)SHEET_STALE=true}}
+addEventListener("popstate",()=>{const b=$("#sheet");if(b&&b.classList.contains("show")){closeSheet(true);SHEET_MARK=null;SHEET_STALE=false;return}
+  if(SHEET_STALE&&SHEET_MARK===location.href){SHEET_STALE=false;SHEET_MARK=null;history.back()}});
 function modal(html,buttons){if(Date.now()<MODAL_HOLD){setTimeout(()=>modal(html,buttons),MODAL_HOLD-Date.now()+30);return null}
   const m=document.createElement("div");m.className="modal";m.innerHTML=`<div class="box">${html}<div class="mb"></div></div>`;
   for(const[label,fn,ghost]of buttons){const b=document.createElement("button");b.className="btn"+(ghost?" ghost":"");b.textContent=label;b.onclick=()=>{m.remove();fn&&fn()};m.querySelector(".mb").append(b)}
@@ -1259,6 +1270,8 @@ function route(){
   if(p[0]==="guess")return screen=Guess(v);
   if(p[0]==="legend")return screen=LegendScene(v,decodeURIComponent(p[1]||""));
   if(p[0]==="journey")return screen=Journey(v,p[1]?decodeURIComponent(p[1]):null);
+  if(p[0]==="adventure"){store.set("dbReturn",null);return screen=Adventure(v)}
+  if(p[0]==="profile")return screen=Profile(v);
   if(p[0]==="terms")return screen=Terms(v,p[1]);
   // AI 對局在開發者的電腦上，要連上電腦才看得到；一般玩家（或連線已被清掉）從舊連結進來時說明清楚，不要卡在「載入中」（意見回饋 135）
   if((p[0]==="db"&&p[1]==="ai"||p[0]==="watch"&&p[1]==="ai")&&OFF&&!DEVREMOTE()){setTop("AI 對局","#/");setTabs(false);
@@ -1574,7 +1587,7 @@ function Home(v){
    </div>
    ${OFF?(()=>{const L=legendState(),J=jStages(),S=jStars(),i=J.findIndex(x=>!S[x.id]),cur=J[i<0?J.length-1:i],I=xpInfo(),pk=parkOn();
      return`<div class="sec-t">冒險</div><div class="hero strips">
-    ${T("k3","#/","🪨","石桌往事","hLegend",`Lv ${I.L} ${I.title}・故事 ${L.n}／12 章${L.epi?"＋尾聲":""}・雲河棋路 ${L.pass||0}／${J.length} 關`,"","冒險 ›")}
+    ${T("k3","#/adventure","🪨","石桌往事","hLegend",`Lv ${I.L} ${I.title}・故事 ${L.n}／12 章${L.epi?"＋尾聲":""}・雲河棋路 ${L.pass||0}／${J.length} 關`,"","冒險 ›")}
    </div>`})():""}
    ${OFF&&REWARD?`<div class="sec-t">收藏</div><div class="hero strips">
     ${T("k3","#/garage","🚗","我的車庫","hCar",(()=>{try{const b=JSON.parse(localStorage.getItem("xq_carBank"));if(b)return`🚗 ${b.pts.toLocaleString()} 點・收藏 ${Object.keys(b.owned||{}).length} 台`}catch(e){}return"贏棋拿點數換車"})())}
@@ -1595,7 +1608,7 @@ function Home(v){
     const hc=v.querySelector("#hConn");if(hc)hc.onclick=connectSheet}
   v.querySelector("#hFb").onclick=()=>feedbackSheet();const hi=v.querySelector("#hInst");if(hi)hi.onclick=()=>installGuide(true);
   v.querySelectorAll("[data-go]").forEach(b=>b.onclick=()=>{vibrate(5);location.hash=b.dataset.go});
-  {const hl=v.querySelector("#hLegend");if(hl){const t=hl.closest(".tile");if(t)t.onclick=()=>{vibrate(5);legendBook()}}}
+  {const hl=v.querySelector("#hLegend");if(hl){const t=hl.closest(".tile");if(t)t.onclick=()=>{vibrate(5);location.hash="#/adventure"}}}
   {const hx=v.querySelector("#hXP");if(hx){const t=hx.closest(".tile");if(t)t.onclick=()=>{vibrate(5);xpSheet()}}}
   {const ha=v.querySelector("#hArena");if(ha)ha.onclick=()=>{vibrate(5);store.set("openArena",Date.now());location.hash="#/cpu"}}
   standaloneOnlineWarn(v.firstElementChild||v);
@@ -3037,17 +3050,53 @@ async function legendTimeline(){const D=await legendData();if(!D)return;const P=
   sheet("📅 人物與年表",b=>{b.innerHTML=`<div class="sec-t" style="margin-top:0">人物</div><table class="st-lv" style="font-size:14px"><tr><th>人物</th><th>出生</th><th>1352 年</th><th>1412 年</th></tr>${P.map(x=>`<tr><td><b>${esc(x.name)}</b><div class="muted" style="font-size:12px">${esc(x.note||"")}</div></td><td>${x.born}</td><td>${1352-x.born} 歲</td><td>${x.died&&x.died<1412?`（${x.died} 年過世）`:`${1412-x.born} 歲`}</td></tr>`).join("")}</table>
     <div class="sec-t">大事年表</div><table class="st-lv" style="font-size:14px">${T.map(x=>`<tr><td style="white-space:nowrap;vertical-align:top"><b>${x.y}</b><div class="muted" style="font-size:11.5px">${esc(x.era||"")}</div></td><td>${x.h?"📜 ":"🪨 "}${esc(x.t)}</td></tr>`).join("")}</table>
     <p class="muted" style="font-size:12px;line-height:1.7;margin-top:8px">📜 是真實的歷史；🪨 是石桌往事的故事（虛構）。沈石川、柳寒舟、阿古拉、周文淵和雲河鎮都是編的。</p>`})}
-async function legendBook(){const D=await legendData();if(!D)return toast("故事還在載入，等一下再試");const L=legendState(),all=DEVMODE(),open=k=>all||k===1||k<=L.n||(k===D.chapters.length+1&&L.epi);
-  const list=D.chapters.map((c,k)=>[k+1,c.title]).concat([[D.chapters.length+1,D.epilogue.title]]);
-  sheet("🪨 石桌往事",b=>{const I=xpInfo(),Sx=jSecrets();b.innerHTML=`<div class="items" style="padding:0;margin-bottom:10px">
-      <button class="item" id="lgJ"><span class="lb">🗺</span><span class="tx"><b>雲河棋路（闖關）</b><span>過了 ${L.pass||0}／${jStages().length} 關${L.nextAt?`・再過 ${L.nextAt-(L.pass||0)} 關解開下一章`:L.epi?"・故事全部解開了":"・打贏最後的石桌棋仙解開尾聲"}</span></span><span class="muted">›</span></button>
-      <button class="item" id="lgI"><span class="lb">🏮</span><span class="tx"><b>驛站</b><span>等級不夠時找人下棋練等・秘境棋友 ${Object.keys(Sx).length}／${SECRETS.length}</span></span><span class="muted">›</span></button></div>
-    <p class="muted" style="margin:0 0 8px;line-height:1.7">已解開 ${L.n}／${D.chapters.length} 章${L.epi?"，還有尾聲":""}。<b>怎麼玩：</b>沿著雲河棋路闖關，每過兩三關就解開下一章（第一章可以先讀）；打贏最後一關的石桌棋仙，就能看到尾聲。有「🕰 回到當年」的章節，可以站在旁邊看當年那盤棋、猜關鍵一步加段位積分。${all?"<br>（開發者模式：全部章節都打得開）":""}</p>
-    <div class="items" style="padding:0">${list.map(([k,t])=>`<button class="item" data-k="${k}" ${open(k)?"":"disabled"}><span class="lb">${open(k)?"📖":"🔒"}</span><span class="tx"><b>${open(k)?esc(t):"？？？"}</b></span><span class="muted">${open(k)?"›":""}</span></button>`).join("")}</div>
-    <div class="row" style="gap:8px;margin-top:10px"><button class="btn ghost" id="lgXP" style="flex:1">🀄 我的修為</button><button class="btn ghost" id="lgT" style="flex:1">📅 人物與年表</button></div>
-    <p class="muted" style="font-size:12px;margin-top:8px">故事是虛構的，人名、地名、事件都是編的。</p>`;
-    b.querySelectorAll("[data-k]").forEach(x=>x.onclick=()=>{const k=+x.dataset.k;if(open(k))legendRead(k)});b.querySelector("#lgXP").onclick=()=>xpSheet();b.querySelector("#lgT").onclick=()=>legendTimeline();
-    b.querySelector("#lgJ").onclick=()=>{closeSheet();location.hash="#/journey"};b.querySelector("#lgI").onclick=()=>{closeSheet();location.hash="#/journey/inn"}})}
+function legendBook(){closeSheet();location.hash="#/adventure"}
+/* 意見回饋 316：石桌往事改成一整頁——上面是你的棋童小卡，中間是雲河棋路、驛站、棋童資料、人物年表，下面是章節 */
+function Adventure(v){setTop("🪨 石桌往事","#/");setTabs(false);v.className="view";v.innerHTML='<div class="pad muted">載入中…</div>';
+  legendData().then(D=>{if(!D){v.innerHTML='<div class="pad"><div class="card muted">故事載入失敗，等一下再試</div></div>';return}
+    const L=legendState(),all=DEVMODE(),open=k=>all||k===1||k<=L.n||(k===D.chapters.length+1&&L.epi),I=xpInfo(),H=hintInfo(),B=bag(),Sx=jSecrets(),Js=jStages(),S=jStars();
+    const list=D.chapters.map((c,k)=>[k+1,c.title]).concat([[D.chapters.length+1,D.epilogue.title]]),sc=k=>(D.scenes||[]).filter(x=>x.ch===k);
+    v.innerHTML=`<div class="pad">
+      <button class="card advme" id="aMe"><span class="xl">Lv ${I.L}</span><span class="xt"><b>🀄 ${I.title}</b><span class="st-bar"><i style="width:${I.need?Math.round(I.rest*100/I.need):100}%"></i></span><small>${I.need?`再 ${I.need-I.rest} 修為升級`:"已到最高等級"}・💡 提示棋 ${H.left+H.bonus}・🎁 ${B.boards.length}・📜 ${B.records.length}</small></span><span class="muted">棋童資料 ›</span></button>
+      <div class="advgrid">
+        <button data-go="#/journey"><span>🗺</span><b>雲河棋路</b><small>${L.pass||0}／${Js.length} 關${L.nextAt?`・再 ${L.nextAt-(L.pass||0)} 關開新章`:""}</small></button>
+        <button data-go="#/journey/inn"><span>🏮</span><b>驛站</b><small>練等・常去逛逛</small></button>
+        <button data-go="#/profile"><span>🎒</span><b>棋童資料</b><small>棋盤・棋譜・棋友</small></button>
+        <button id="aTl"><span>📅</span><b>人物與年表</b><small>元末明初</small></button></div>
+      <div class="sec-t">故事（${L.n}／${D.chapters.length} 章${L.epi?"＋尾聲":""}）</div>
+      <p class="muted" style="margin:0 2px 8px;line-height:1.7;font-size:13.5px">元末明初，石桌棋仙沈石川和宿敵柳寒舟的六十年。沿著雲河棋路闖關，每過兩三關解開下一章；打贏最後一關的石桌棋仙，就能看到尾聲。${all?"（開發者模式：全部章節都打得開）":""}</p>
+      <div class="items" style="padding:0">${list.map(([k,t])=>`<button class="item" data-k="${k}" ${open(k)?"":"disabled"}><span class="lb">${open(k)?"📖":"🔒"}</span><span class="tx"><b>${open(k)?esc(t):"？？？"}</b>${open(k)&&sc(k).length?`<span>🕰 回到當年：${sc(k).map(x=>esc(x.title)+((store.get("sceneDone",{})[x.key])?" ✓":"")).join("、")}</span>`:""}</span><span class="muted">${open(k)?"›":""}</span></button>`).join("")}</div>
+      <p class="muted" style="font-size:12px;margin-top:8px">故事是虛構的；年表裡標 📜 的是真實歷史。</p></div>`;
+    v.querySelector("#aMe").onclick=()=>location.hash="#/profile";v.querySelector("#aTl").onclick=()=>legendTimeline();
+    v.querySelectorAll(".advgrid [data-go]").forEach(b=>b.onclick=()=>{vibrate(5);location.hash=b.dataset.go});
+    v.querySelectorAll("[data-k]").forEach(x=>x.onclick=()=>{const k=+x.dataset.k;if(open(k))legendRead(k)})});
+  return{}}
+/* ---------- 🎒 棋童資料：等級、修為、提示棋、棋盤收藏、棋譜、秘境棋友 ---------- */
+const bag=()=>({boards:[],records:[],...store.get("bag",{})}),bagSave=B=>store.set("bag",B);
+const RAR={rare:["稀有","#C9962B"],normal:["一般","#3A7BD5"],broken:["損壞","#8E8E8E"]};
+function Profile(v){setTop("🎒 棋童資料","#/adventure");setTabs(false);v.className="view";const I=xpInfo(),H=hintInfo(),B=bag(),Sx=jSecrets(),S=jStars(),Js=jStages(),L=legendState(),star=Js.reduce((a,x)=>a+(S[x.id]||0),0);
+  const card=x=>`<div class="bcard ${x.rarity}"><div class="bic">${x.rarity==="broken"?"🧩":x.rarity==="rare"?"📜":"♟"}</div><b>${esc(x.name)}</b><small style="color:${RAR[x.rarity][1]}">${RAR[x.rarity][0]}</small><small class="muted">${esc(x.from)}・${new Date(x.at).toLocaleDateString()}</small>
+    ${x.rarity==="rare"&&!x.used?`<button class="pill" data-ex="${x.uid}">🪨 拿去石桌給兩位老人</button>`:x.used?'<small class="muted">已經跟兩位老人換過獎勵</small>':""}</div>`;
+  v.innerHTML=`<div class="pad"><div class="card prof"><div class="pl"><div class="lv">Lv ${I.L}</div><div><b style="font-size:20px">🀄 ${I.title}</b><div class="st-bar" style="margin:6px 0 2px"><i style="width:${I.need?Math.round(I.rest*100/I.need):100}%"></i></div><small class="muted">${I.need?`${I.rest}／${I.need} 修為・累積 ${I.total}`:`累積 ${I.total} 修為・已到最高等級`}</small></div></div>
+      <div class="chips"><span>💡 提示棋 今天 ${H.left}${H.bonus?`＋庫存 ${H.bonus}`:""}</span><span>⭐ 雲河棋路 ${star}／${Js.length*3}</span><span>📖 故事 ${L.n}／12${L.epi?"＋尾聲":""}</span><span>🤝 秘境棋友 ${Object.keys(Sx).length}／${SECRETS.length}</span></div>
+      <button class="lk" id="pXP" style="margin-top:6px">等級和提示棋怎麼來的？</button></div>
+    <div class="sec-t">🎁 棋盤收藏（${B.boards.length}）</div>${B.boards.length?`<div class="bgrid">${B.boards.slice().reverse().map(card).join("")}</div>`:`<div class="card muted" style="font-size:13.5px;line-height:1.7">還沒有棋盤。在驛站跟秘境棋友下棋，下到賽後評等 S（幾乎跟引擎同步），他會送你一張棋盤：有一般、損壞，運氣好會拿到整個故事只有一件的稀有棋盤。</div>`}
+    <div class="sec-t">📜 棋譜（${B.records.length}）</div>${B.records.length?`<div class="items" style="padding:0">${B.records.slice().reverse().map(x=>`<button class="item" data-rc="${x.uid}"><span class="lb">📜</span><span class="tx"><b>${esc(x.name)}</b><span>${esc(x.from)}・${new Date(x.at).toLocaleDateString()}</span></span><span class="muted">讀 ›</span></button>`).join("")}</div>`:`<div class="card muted" style="font-size:13.5px;line-height:1.7">還沒有棋譜。常去驛站逛逛，路過的旅人偶爾會留下比賽的棋譜；用稀有棋盤跟兩位老人換，也能拿到故事要用的棋譜。</div>`}
+    <div class="sec-t">🤝 秘境棋友（${Object.keys(Sx).length}／${SECRETS.length}）</div><div class="items" style="padding:0">${SECRETS.map(x=>Sx[x.id]?`<div class="item"><span class="lb" style="font-size:22px">${x.ic}</span><span class="tx"><b>${esc(x.name)}</b><span>${esc(x.who)}・贏過 ${(store.get("secretWins",{})[x.id]||0)} 盤</span></span></div>`:`<div class="item" style="opacity:.55"><span class="lb">❔</span><span class="tx"><b>還沒找到</b><span>${esc(secretHint(x))}</span></span></div>`).join("")}</div></div>`;
+  v.querySelector("#pXP").onclick=xpSheet;
+  v.querySelectorAll("[data-rc]").forEach(b=>b.onclick=()=>{const x=bag().records.find(z=>z.uid===b.dataset.rc);if(!x)return;store.set("dbReturn",{c:x.c,to:"#/adventure",at:Date.now()});location.hash=`#/db/${x.c}/${encodeURIComponent(x.id)}`});
+  v.querySelectorAll("[data-ex]").forEach(b=>b.onclick=()=>rareExchange(b.dataset.ex,()=>Profile(v)));
+  return{}}
+/* 稀有棋盤（整個故事只有一件）拿去石桌給兩位老人：換 5 顆提示棋＋3 份「回到當年」要用的棋譜（先研讀再解主線） */
+async function rareExchange(uid,done){const B=bag(),x=B.boards.find(z=>z.uid===uid);if(!x||x.rarity!=="rare"||x.used)return;const D=await legendData();
+  sheet("🪨 石桌",b=>{b.innerHTML=`<p style="line-height:1.9;font-size:16px">石桌旁，兩位老人正在下棋，一個撐著舊油紙傘。你把那張泛黃的拓本攤在桌上。
+
+沈石川看了一眼，手停在半空中：「這是……雲河鎮那張石桌的拓本？」柳寒舟湊過來，看了很久，輕聲說：「第四十二步。是那一盤。」</p>
+    <p style="line-height:1.8">兩位老人想送你：<b>💡 5 顆提示棋</b>（放在庫存，不會過期），和 <b>📜 3 份當年的棋譜</b>——是「回到當年」要用的對局，先研讀，主線會好解很多。</p><button class="btn" id="exOk" style="width:100%">把拓本送給他們</button>`.replace(/\n/g,"<br>");
+    b.querySelector("#exOk").onclick=()=>{const B2=bag(),y=B2.boards.find(z=>z.uid===uid);if(!y||y.used)return;y.used=Date.now();
+      store.set("hintBonus",(store.get("hintBonus",0)||0)+5);const done0=store.get("sceneDone",{}),sc=(D&&D.scenes||[]).filter(z=>!done0[z.key]).concat((D&&D.scenes||[]).filter(z=>done0[z.key])).slice(0,3);
+      for(const z of sc)B2.records.push({uid:"r"+Date.now().toString(36)+Math.random().toString(36).slice(2,6),c:z.c,id:z.id,name:`回到當年・${z.title}（研讀用）`,from:"沈石川、柳寒舟送的",at:Date.now()});
+      bagSave(B2);closeSheet();vibrate([20,40,60]);toast("🎁 得到 💡 5 顆提示棋、📜 3 份當年的棋譜");if(done)done()}})}
 /* ================= 🀄 棋道修行（等級）＋ 🗺 雲河棋路（闖關）（意見回饋 314） =================
    修為（經驗值）：下完一盤 15（贏了 40）、測驗每題 2～5、猜著法每步 2～5、回到當年 30、闖關每顆星 20；每天第一次練習多 20。
    每升一級要的修為越來越多（60＋20×等級）；每 10 級換一個稱號：棋童、棋徒、棋友、棋客、棋士、棋師、棋豪、棋王、棋聖、棋仙（Lv 100）。
@@ -3072,10 +3121,11 @@ function xpSheet(){const I=xpInfo();sheet("🀄 棋道修行",b=>{b.innerHTML=`<
 
 /* 提示棋：等級換來的本事（意見回饋 314）。Lv 5 起每天有提示棋（Lv 5～9 每天 1 次，之後每 10 級多 1 次）；
    Lv 5～19 只指出「該動哪顆子」，Lv 20 起連「走到哪」一起指出。只能在雲河棋路用；用了那一關最多 ★★ */
-function hintInfo(){const L=xpInfo().L,day=new Date().toISOString().slice(0,10),u=store.get("hintUse",{}),per=L<5?0:1+Math.floor(L/10);return{L,per,left:Math.max(0,per-(u.d===day?u.n:0)),full:L>=20,day,u}}
-function useHint(){const H=hintInfo();if(!H.per){toast("Lv 5 起才有提示棋，先多練習累積修為");return null}if(H.left<=0){toast("今天的提示棋用完了，明天再來（等級越高，每天越多）");return null}
-  store.set("hintUse",{d:H.day,n:(H.u.d===H.day?H.u.n:0)+1});return H}
-const hintLabel=()=>{const H=hintInfo();return H.per?`提示（剩 ${H.left}）`:"提示（Lv 5）"};
+function hintInfo(){const L=xpInfo().L,day=new Date().toISOString().slice(0,10),u=store.get("hintUse",{}),per=L<5?0:1+Math.floor(L/10);return{L,per,left:Math.max(0,per-(u.d===day?u.n:0)),bonus:store.get("hintBonus",0)||0,full:L>=20,day,u}}
+function useHint(){const H=hintInfo();if(H.left>0){store.set("hintUse",{d:H.day,n:(H.u.d===H.day?H.u.n:0)+1});return H}
+  if(H.bonus>0){store.set("hintBonus",H.bonus-1);return H}   /* 庫存的提示棋（兩位老人送的）：任何等級都能用 */
+  if(!H.per){toast("Lv 5 起才有提示棋，先多練習累積修為");return null}toast("今天的提示棋用完了，明天再來（等級越高，每天越多）");return null}
+const hintLabel=()=>{const H=hintInfo();return H.per||H.bonus?`提示（剩 ${H.left+H.bonus}）`:"提示（Lv 5）"};
 const JR=[
   {k:"dukou",name:"渡口",sub:"柳寒舟的渡船在這裡靠岸。先從吃子、保護子開始。",tiers:[0,3],ai:[1,2],scene:"s4",boss:null,lv:1},
   {k:"chaguan",name:"聽濤樓茶館",sub:"沈石川在這裡掃地、磨瓦片棋。練殺法和戰術。",tiers:[3,6],ai:[3],scene:"s5a",boss:"song",bl:3,lv:5},
@@ -3086,9 +3136,14 @@ const JR=[
    🗝 秘境棋友：藏在某些朝代公園的樹、茶杯、燈籠後面，要自己在公園 3D 裡點到才會發現；找到後也會出現在驛站，比較強、修為也多 */
 const INN=[{id:"tea",name:"賣茶的老婦",ic:"🍵",lv:1,xp:20,say:"「喝口茶，陪老身下一盤，不急不急。」"},{id:"scholar",name:"趕考的書生",ic:"📜",lv:2,xp:25,say:"「小生進京趕考，路上棋癮犯了，請賜教。」"},
   {id:"guard",name:"走鏢的鏢師",ic:"🗡",lv:3,xp:30,say:"「鏢車在外面歇著，咱們速戰速決！」"},{id:"monk",name:"行腳僧",ic:"📿",lv:4,xp:40,say:"「阿彌陀佛，棋盤上也能修行。」"},{id:"teller",name:"說書人",ic:"🪭",lv:5,xp:50,say:"「欲知勝負如何，且看下回分解！」"}];
-const SECRETS=[{id:"blind",name:"盲棋翁",ic:"🌲",lv:6,xp:90,say:"「老夫眼睛看不見，棋盤在心裡。來吧。」",found:"{spot}旁邊，坐著一位閉著眼睛的老人，手指輕輕敲著——他在跟自己下盲棋。"},
-  {id:"teadoc",name:"茶博士",ic:"🫖",lv:5,xp:80,say:"「點茶要三沸，下棋要三思。客官請。」",found:"你在{spot}旁邊停了一下，一位提著茶壺的茶博士笑著走過來：「客官也懂棋？後面有張空桌。」"},
-  {id:"nightstall",name:"夜市棋攤",ic:"🏮",lv:7,xp:120,say:"「擺攤三十年，贏我一盤，這攤子的燈籠送你！」",found:"{spot}後面，藏著一個擺了三十年的夜市棋攤，攤主把殘局擺好，衝你眨了眨眼。"}];
+/* 意見回饋 316：秘境棋友是元末明初的歷史人物（棋藝是故事的想像）；難度照你的等級配，不會太難 */
+const SECRETS=[{id:"liuji",name:"劉伯溫",who:"元末明初的謀士，幫朱元璋打天下",ic:"🪶",off:1,say:"「運籌帷幄，一盤棋也是。」",found:"{spot}旁邊，一位書生模樣的中年人正在推演什麼。他抬頭一笑：「在下劉基，字伯溫。閒來無事，下一盤？」",gift:"青田石棋盤"},
+  {id:"zhangsanfeng",name:"張三丰",who:"傳說中武當山的道人",ic:"☯",off:1,say:"「以柔克剛，棋盤上也是這個道理。」",found:"{spot}後面，一位白鬚道人閉著眼睛打坐，忽然開口：「貧道張三丰，你的棋，有點意思。」",gift:"武當松木棋盤"},
+  {id:"shinaian",name:"施耐庵",who:"傳說《水滸傳》的作者",ic:"📖",off:0,say:"「一百零八條好漢，都在這盤棋裡。」",found:"你在{spot}旁邊撿到一疊手稿，一位老先生追過來：「那是我的書稿！……你也下棋？」",gift:"梁山泊竹棋盤"},
+  {id:"shenwansan",name:"沈萬三",who:"元末明初江南的大富商",ic:"💰",off:0,say:"「做生意跟下棋一樣，捨得才有得。」",found:"{spot}旁邊停著一頂華麗的轎子，轎裡的富商探出頭：「在下沈萬三，賭一盤？不賭錢，賭棋盤。」",gift:"聚寶盆金漆棋盤"},
+  {id:"changyuchun",name:"常遇春",who:"明初的猛將，人稱「常十萬」",ic:"⚔",off:-1,say:"「下棋？我只會往前衝！」",found:"{spot}旁邊一個大嗓門的將軍正在找人下棋：「本將軍常遇春，打仗一流，下棋……也還行！」",gift:"軍中牛皮棋盤"},
+  {id:"wangmian",name:"王冕",who:"元末畫墨梅的畫家",ic:"🌸",off:-1,say:"「我只畫梅花，棋……陪你玩玩。」",found:"{spot}旁邊有人在畫梅花，墨跡還沒乾。他放下筆：「王冕。不太會下棋，你別笑我。」",gift:"墨梅紙棋盤"}];
+const secretLv=x=>Math.max(1,Math.min(5,Math.min(4,1+Math.floor(xpInfo().L/8))+(x.off||0))),secretXP=x=>40+20*secretLv(x);
 /* 意見回饋 315：秘境的位置每個玩家都不一樣——第一次用到時，隨機把每位秘境棋友分到不同朝代公園的不同物件上 */
 const SPOT_OBJ={tree1:"樹",tree2:"老樹",cup:"茶杯",bench:"長凳",stool:"石凳",lantern:"燈籠",table:"石桌"};
 function secretSpots(){let m=store.get("secretSpots",null);if(m&&SECRETS.every(x=>m[x.id]))return m;m=m||{};const ks=Object.keys(SPOT_OBJ),used=new Set(Object.values(m).map(z=>z.era+z.k));
@@ -3097,16 +3152,31 @@ function secretSpots(){let m=store.get("secretSpots",null);if(m&&SECRETS.every(x
 const secretHint=x=>{const z=secretSpots()[x.id];return`聽說${eraLabel(z.era)}的公園裡，${SPOT_OBJ[z.k]}附近常有人在等……`};
 const jSecrets=()=>store.get("secrets",{});
 function secretFind(era,k){const M=secretSpots(),x=SECRETS.find(z=>M[z.id]&&M[z.id].era===era&&M[z.id].k===k);if(!x||jSecrets()[x.id])return false;const S=jSecrets();S[x.id]=Date.now();store.set("secrets",S);vibrate([20,40,60]);
-  sheet(`🗝 發現秘境棋友：${x.name}`,b=>{b.innerHTML=`<p style="line-height:1.9;font-size:16px">${esc(x.found.replace("{spot}",SPOT_OBJ[k]))}</p><p class="muted">${esc(x.say)}</p><p>${esc(x.name)}以後會在「雲河棋路 → 🏮 驛站」等你（第 ${x.lv} 級的實力，贏了 +${x.xp} 修為）。</p><button class="btn" id="sgo" style="width:100%">去驛站找他</button>`;b.querySelector("#sgo").onclick=()=>{closeSheet();location.hash="#/journey/inn"}});return true}
-function innSheet(v){setTop("🏮 驛站","#/journey");const I=xpInfo(),Sx=jSecrets(),nx=JR.find(R=>R.lv>I.L);v.className="view";
-  const row=(x,locked)=>`<button class="item" data-inn="${x.id}" ${locked?"disabled":""}><span class="lb" style="font-size:24px">${locked?"❔":x.ic}</span><span class="tx"><b>${locked?"？？？（還沒找到）":esc(x.name)}</b><span>${locked?esc(secretHint(x)):`第 ${x.lv} 級的實力・贏了 +${x.xp} 修為（另加對局修為）`}</span></span><span class="muted">${locked?"":"›"}</span></button>`;
+  sheet(`🗝 發現秘境棋友：${x.name}`,b=>{b.innerHTML=`<p style="line-height:1.9;font-size:16px">${esc(x.found.replace("{spot}",SPOT_OBJ[k]))}</p><p class="muted">${esc(x.say)}</p><p>${esc(x.name)}（${esc(x.who)}）以後會在「🏮 驛站」等你。難度照你的等級配（現在是第 ${secretLv(x)} 級的實力），贏了 +${secretXP(x)} 修為；下到賽後評等 S，他會送你一張棋盤。</p><button class="btn" id="sgo" style="width:100%">去驛站找他</button>`;b.querySelector("#sgo").onclick=()=>{closeSheet();location.hash="#/journey/inn"}});return true}
+/* 秘境棋友送棋盤：這盤賽後評等 S 才送；稀有 12%（整個故事只有一件：雲河鎮石桌殘局的拓本）、一般 58%、損壞 30% */
+async function secretGift(x,gid){const K=store.get("giftGames",{});if(K[gid])return;let st=null;try{st=await api("/play/state")}catch(e){return}if(!st||st.id!==gid)return;
+  let R=null;try{R=gameReport(window.XQCore.parseFen(window.XQCore.START),st.moves).sides[st.human]}catch(e){}
+  if(!R||!R.graded||R.score==null)return;if(R.score<90){setTimeout(()=>toast(`${x.ic} ${x.name}：「這盤評等 ${gradeFor(R.score)[0]}，下到 S，我就送你一樣東西。」`),300);return}
+  K[gid]=1;store.set("giftGames",K);const B=bag(),rareGot=B.boards.some(z=>z.rarity==="rare"),r=Math.random(),rar=!rareGot&&r<.12?"rare":r<.70?"normal":"broken";
+  const it={uid:"b"+Date.now().toString(36),rarity:rar,from:x.name+"送的",at:Date.now(),name:rar==="rare"?"雲河鎮石桌殘局拓本":x.gift+(rar==="broken"?"（缺了一角）":"")};B.boards.push(it);bagSave(B);vibrate([20,40,60]);
+  sheet(`🎁 ${x.name}送你一張棋盤`,b=>{b.innerHTML=`<p style="line-height:1.9;font-size:16px">${rar==="rare"?`${esc(x.name)}從懷裡拿出一張泛黃的紙：「這是我年輕時路過雲河鎮，從一張石桌上拓下來的殘局。聽說刻棋的人等了一輩子……送你吧。」`:rar==="broken"?`${esc(x.name)}翻了翻行囊：「這張${esc(x.gift)}跟著我走南闖北，缺了一角，你別嫌棄。」`:`${esc(x.name)}笑著說：「這盤下得漂亮！這張${esc(x.gift)}送你。」`}</p>
+    <div class="bgrid" style="grid-template-columns:1fr"><div class="bcard ${rar}"><div class="bic">${rar==="broken"?"🧩":rar==="rare"?"📜":"♟"}</div><b>${esc(it.name)}</b><small style="color:${RAR[rar][1]}">${RAR[rar][0]}${rar==="rare"?"・整個故事只有一件":""}</small></div></div>
+    ${rar==="rare"?'<p class="muted" style="line-height:1.7">稀有的拓本可以拿去石桌給兩位老人，換 💡 5 顆提示棋和 📜 3 份當年的棋譜。</p>':""}<button class="btn" id="gb" style="width:100%">看我的棋童資料</button>`;b.querySelector("#gb").onclick=()=>{closeSheet();location.hash="#/profile"}})}
+/* 驛站偶爾掉比賽棋譜：每次逛有兩成機率，每天最多 2 份（從妙棋精選的實戰裡挑） */
+async function innDrop(){const day=new Date().toISOString().slice(0,10),d=store.get("innDrop",{});if(d.d===day&&d.n>=2)return;if(Math.random()>=.2)return;
+  let L=null;try{L=(await api("/db/items?c=brilliant&limit=600")).items}catch(e){return}if(!L||!L.length)return;const it=L[Math.floor(Math.random()*L.length)],who=INN[Math.floor(Math.random()*INN.length)];
+  const B=bag();if(B.records.some(z=>z.id===it.id))return;B.records.push({uid:"r"+Date.now().toString(36),c:"brilliant",id:it.id,name:toT(it.name||(it.red+" 對 "+it.black)),from:`驛站・${who.name}留下的`,at:Date.now()});bagSave(B);store.set("innDrop",{d:day,n:(d.d===day?d.n:0)+1});
+  vibrate([15,30,15]);sheet(`📜 ${who.name}留下一份棋譜`,b=>{b.innerHTML=`<p style="line-height:1.9;font-size:16px">${who.ic} ${esc(who.name)}起身要走，從行囊裡掉出一份棋譜：「這是我路上抄的比賽棋譜，送你吧，好好研讀。」</p><p class="muted">${esc(toT(it.name||""))}</p><p class="muted" style="font-size:13px">放在「🎒 棋童資料 → 📜 棋譜」，讀完按返回會回到石桌往事。</p><button class="btn" id="dr" style="width:100%">收下</button>`;b.querySelector("#dr").onclick=()=>closeSheet()})}
+function innSheet(v){setTimeout(innDrop,1200);setTop("🏮 驛站","#/journey");const I=xpInfo(),Sx=jSecrets(),nx=JR.find(R=>R.lv>I.L);v.className="view";
+  const row=(x,locked)=>`<button class="item" data-inn="${x.id}" ${locked?"disabled":""}><span class="lb" style="font-size:24px">${locked?"❔":x.ic}</span><span class="tx"><b>${locked?"？？？（還沒找到）":esc(x.name)}</b><span>${locked?esc(secretHint(x)):x.who?`${esc(x.who)}・第 ${secretLv(x)} 級的實力・贏了 +${secretXP(x)} 修為・評等 S 送棋盤`:`第 ${x.lv} 級的實力・贏了 +${x.xp} 修為（另加對局修為）`}</span></span><span class="muted">${locked?"":"›"}</span></button>`;
   v.innerHTML=`<div class="pad"><div class="card" style="line-height:1.8">🀄 <b>Lv ${I.L} ${I.title}</b>${nx?`・下一站「${nx.name}」要 Lv ${nx.lv}，還差 ${nx.lv-I.L} 級`:"・每一站都能進了"}<br><span class="muted" style="font-size:13px">驛站裡都是路過的旅人，找誰下都可以、下幾次都可以；輸了也有對局修為。</span></div>
     <div class="sec-t">🏮 路過的旅人</div><div class="items" style="padding:0">${INN.map(x=>row(x)).join("")}</div>
-    <div class="sec-t">🗝 秘境棋友（${Object.keys(Sx).length}/${SECRETS.length}）</div><div class="items" style="padding:0">${SECRETS.map(x=>row(x,!Sx[x.id])).join("")}</div>
-    <p class="muted" style="font-size:12.5px;margin:8px 2px">秘境要自己去找，而且每個人的位置都不一樣：挑戰電腦 → 右上角 🌳 開公園，換到線索說的朝代（集章簿可以換朝代），點點看那個東西。</p></div>`;
+    <div class="sec-t">🗝 秘境棋友（${Object.keys(Sx).length}/${SECRETS.length}）・元末明初的人物</div><div class="items" style="padding:0">${SECRETS.map(x=>row(x,!Sx[x.id])).join("")}</div>
+    <p class="muted" style="font-size:12.5px;margin:8px 2px">秘境棋友是元末明初的歷史人物（棋藝是故事的想像）。要自己去找，而且每個人的位置都不一樣：挑戰電腦 → 右上角 🌳 開公園，換到線索說的朝代（集章簿可以換朝代），點點看那個東西。</p></div>`;
   v.querySelectorAll("[data-inn]").forEach(b=>b.onclick=()=>{const x=INN.concat(SECRETS).find(z=>z.id===b.dataset.inn);if(!x||(SECRETS.includes(x)&&!Sx[x.id]))return;
-    sheet(`${x.ic} ${x.name}`,c=>{c.innerHTML=`<p style="font-size:16px;line-height:1.8">${esc(x.say)}</p><p class="muted">第 ${x.lv} 級的實力。贏了 +${x.xp} 修為（另加對局修為），輸了也有對局修為。</p><button class="btn" id="ig" style="width:100%">⚔ 下一盤</button>`;
-      c.querySelector("#ig").onclick=async()=>{closeSheet();try{store.set("cpuRanked",false);store.set("cpuCar",false);await api("/play/new",{human:"r",level:x.lv});const st=await api("/play/state");store.set("jPending",{id:"inn:"+x.id,game:st.id});location.hash="#/cpu";setTimeout(()=>toast(`${x.ic} ${x.name}：${x.say}`),500)}catch(e){toast(e.message)}}})});
+    const lv=x.who?secretLv(x):x.lv,xp=x.who?secretXP(x):x.xp;
+    sheet(`${x.ic} ${x.name}`,c=>{c.innerHTML=`<p style="font-size:16px;line-height:1.8">${esc(x.say)}</p><p class="muted">${x.who?esc(x.who)+"。":""}第 ${lv} 級的實力。贏了 +${xp} 修為（另加對局修為），輸了也有對局修為。${x.who?"下到賽後評等 S（幾乎跟引擎同步），他會送你一張棋盤。":""}</p><button class="btn" id="ig" style="width:100%">⚔ 下一盤</button>`;
+      c.querySelector("#ig").onclick=async()=>{closeSheet();try{store.set("cpuRanked",false);store.set("cpuCar",false);await api("/play/new",{human:"r",level:lv});const st=await api("/play/state");store.set("jPending",{id:"inn:"+x.id,game:st.id});location.hash="#/cpu";setTimeout(()=>toast(`${x.ic} ${x.name}：${x.say}`),500)}catch(e){toast(e.message)}}})});
   return{}}
 function jStages(){const out=[];JR.forEach((R,ri)=>{const id=i=>`${R.k}-${i}`;
   out.push({id:id(1),r:ri,t:"puz",name:"解題・一",lo:R.tiers[0],hi:R.tiers[1]},{id:id(2),r:ri,t:"puz",name:"解題・二",lo:R.tiers[0],hi:R.tiers[1],cats:["殺法","戰術"]},
@@ -3124,7 +3194,10 @@ async function jPlay(s){try{store.set("cpuRanked",false);store.set("cpuCar",fals
 function journeyGameEnd(st){if(!st||!st.result)return;
   if(!st.practice)addXP(st.result.w===st.human?40:15,"對局","g:"+st.id);
   const P=store.get("jPending",null);if(!P||P.game!==st.id)return;store.set("jPending",null);
-  if(String(P.id).startsWith("inn:")){const x=INN.concat(SECRETS).find(z=>"inn:"+z.id===P.id);if(x&&st.result.w===st.human){addXP(x.xp,"驛站","inn:"+st.id);setTimeout(()=>toast(`${x.ic} ${x.name}：「好棋！佩服。」（+${x.xp} 修為）`),1500)}else if(x)setTimeout(()=>toast(`${x.ic} ${x.name}：「承讓了，下次再來！」`),1500);return}
+  if(String(P.id).startsWith("inn:")){const x=INN.concat(SECRETS).find(z=>"inn:"+z.id===P.id);if(!x)return;
+    if(st.result.w===st.human){const xp=x.who?secretXP(x):x.xp;addXP(xp,"驛站","inn:"+st.id);setTimeout(()=>toast(`${x.ic} ${x.name}：「好棋！佩服。」（+${xp} 修為）`),1500);
+      if(x.who){const W=store.get("secretWins",{});W[x.id]=(W[x.id]||0)+1;store.set("secretWins",W);setTimeout(()=>secretGift(x,st.id),7000)}}
+    else setTimeout(()=>toast(`${x.ic} ${x.name}：「承讓了，下次再來！」`),1500);return}
   const s=jStages().find(x=>x.id===P.id);if(!s)return;
   if(st.result.w===st.human){const n=st.moves.length,stars=Math.min(P.hint?2:3,n<=60?3:n<=100?2:1);jSet(s.id,stars,"闖關");setTimeout(()=>toast(`🗺 雲河棋路「${JR[s.r].name}・${s.name}」過關！${"★".repeat(stars)}${"☆".repeat(3-stars)}（${Math.ceil(n/2)} 回合內贏）`),1500)}
   else setTimeout(()=>toast(`🗺 「${s.name}」還沒過關，回雲河棋路再挑戰一次`),1500)}
@@ -4048,7 +4121,9 @@ function Viewer(v,c,id){
     for(const[el,x]of[[v.querySelector("#vTop"),top],[v.querySelector("#vBot"),bot]]){el.innerHTML=playerHTML(x,nm(x),sub(x));
       const isOpp=oh&&nm(x)===oh.opp;el.style.cursor=isOpp?"pointer":"";el.onclick=isOpp?()=>oppCard(oh.oid,oh.opp):null}}
   const bd=Board(i=>tap(i),d=>step(d));v.querySelector("#bbox").append(bd.svg);
-  setTop("載入中…","#/db/"+encodeURIComponent(c),[["ℹ",()=>info(),"棋局資訊"]]);
+  /* 意見回饋 316：從棋童資料打開的棋譜，返回時回到石桌往事 */
+  const dbBack=(()=>{const r=store.get("dbReturn",null);return r&&r.c===c&&Date.now()-r.at<6*36e5?r.to:"#/db/"+encodeURIComponent(c)})();
+  setTop("載入中…",dbBack,[["ℹ",()=>info(),"棋局資訊"]]);
   const acts=actionBar(v.querySelector("#acts"),[["first","⏮","開局",()=>go(0)],["prev","◀","上一步",()=>step(-1)],["an","🔍","分析",()=>anSheet(),true],["next","▶","下一步",()=>step(1)],["last","⏭","最後",()=>go(1e9)]]);
   const seq=(lid,p)=>{const l=L.get(lid);if(!l)return[];if(p<l.start)return l.parent==null?[]:seq(l.parent,p);return(l.parent==null?[]:seq(l.parent,l.start-1)).concat(l.moves.slice(0,p-l.start+1))};
   const endPly=lid=>{const l=L.get(lid);return l.start+l.moves.length-1};
@@ -4254,7 +4329,7 @@ function Viewer(v,c,id){
   Promise.all([api(`/db/item?c=${encodeURIComponent(c)}&id=${encodeURIComponent(id)}`),api("/db/books").catch(()=>[])]).then(([d,bs])=>{
     it=d;L=new Map(it.lines.map(l=>[l.id,l]));bookName=(bs.find(b=>b.key===c)||{}).name||"";
     {const oh=c==="pvp"?oppHist().find(h=>h.rid===id):null;
-    setTop(title(),"#/db/"+encodeURIComponent(c),[["🔄",()=>{vFlip=!vFlip;vibrate(5);show()},"翻轉棋盤"],...(oh?[["👤",()=>oppCard(oh.oid,oh.opp),"對手資料"]]:[]),["📊",()=>report(),"賽後報告"],["ℹ",()=>info(),"棋局資訊"]])}
+    setTop(title(),dbBack,[["🔄",()=>{vFlip=!vFlip;vibrate(5);show()},"翻轉棋盤"],...(oh?[["👤",()=>oppCard(oh.oid,oh.opp),"對手資料"]]:[]),["📊",()=>report(),"賽後報告"],["ℹ",()=>info(),"棋局資訊"]])}
     const r=store.get("recent",[]).find(x=>x.c===c&&x.id===id);ply=r&&r.ply?Math.min(r.ply,endPly(0)):it.jump?Math.min(+it.jump||0,endPly(0)):0;   /* 意見回饋 310：妙棋精選第一次打開就停在妙棋那一步 */
     const oa=store.get("openAt",null);if(oa&&oa.c===c&&oa.id===id){store.set("openAt",null);ply=Math.min(oa.ply,endPly(0));setTimeout(()=>toast(`從第 ${ply} 步開始：${oa.why}（可以往前看）`),400)}
     show();remember();loadGrades().then(()=>{if(store.get("openReport")===c+"/"+id){store.set("openReport",null);report()}})}).catch(e=>{v.querySelector("#note").textContent="⚠ "+e.message});
