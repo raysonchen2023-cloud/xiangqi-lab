@@ -881,7 +881,7 @@
     // 茶杯：Pikafish（對面）一杯、我一杯（意見回饋 215）
     const teaCup=(x,z)=>{const cup=new T.Group();cup.position.set(x,0,z);sc.add(cup);const por=M(0xF4F1EA,{roughness:.25}),blue=M(0x2D5DA8,{roughness:.3});const a=new T.Mesh(new T.CylinderGeometry(.75,.75,.08,32),por);a.position.y=.04;cup.add(a);
       const b=new T.Mesh(new T.CylinderGeometry(.5,.36,.7,32,1,true),por);b.position.y=.43;b.material.side=T.DoubleSide;cup.add(b);const band=new T.Mesh(new T.CylinderGeometry(.505,.47,.12,32,1,true),blue);band.position.y=.6;cup.add(band);
-      const tea=new T.Mesh(new T.CircleGeometry(.47,32),M(0x9C6B1E,{roughness:.1}));tea.rotation.x=-PI/2;tea.position.y=.66;cup.add(tea);cup.traverse(o=>{if(o.isMesh){o.castShadow=true;o.receiveShadow=true}});return cup};
+      const tea=new T.Mesh(new T.CircleGeometry(.47,32),M(0x9C6B1E,{roughness:.1}));tea.rotation.x=-PI/2;tea.position.y=.66;cup.add(tea);cup.traverse(o=>{if(o.isMesh){o.castShadow=true;o.receiveShadow=true;o.userData.info="cup";infos.push(o)}});return cup};   /* 意見回饋 348：3D 茶杯也點得到 */
     if(!PROP_IMG[EK]){teaCup(0,-6.85);teaCup(.4,7.0)}   // 意見回饋 219：Pikafish 的茶在它面前正中間、我的茶在我面前正中間
     // 平台上的樹（依朝代：松、柳、竹）：水墨畫的看板（兩種筆法輪流），放在兩側，轉頭時當前景框；不投影（畫是平的，影子會穿幫）
     if(!PROP_IMG[EK]){const seat=new T.Vector3(0,16,9.2),barkM=M(0xffffff,{map:barkTex(E,E.tree),roughness:.95}),folM=new T.MeshBasicMaterial({map:foliageTex(E,E.tree,EK.length*131+7),transparent:true,alphaTest:.02,depthWrite:false,side:T.DoubleSide,toneMapped:false});
