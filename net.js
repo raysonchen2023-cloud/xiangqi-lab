@@ -50,6 +50,8 @@ var XQNet=(function(){
   /* 意見回饋 282：時制（每方幾分鐘）。自己選的存在手機裡，沒選＝15 分；雙方不同取比較短的 */
   /* 意見回饋 328：預設每方 30 分鐘；兩個真人的時制要一樣才能開局（大廳的角色會配合對方） */
   const TCS=[5,10,15,20,30],tcPref=()=>{const v=+ls.get("tc",30);return TCS.includes(v)?v:30};
+  /* 意見回饋 336：大廳拿掉時制選單，以前自己選過的一律回到預設 30 分鐘（之後只在邀請時講好再改） */
+  try{if(+ls.get("tcV",0)<2){ls.set("tc",30);ls.set("tcV",2)}}catch(e){}
   const isBot=id=>!!(people[id]&&people[id].bot),tcOf=f=>TCS.includes(+(f&&f.tc))?+f.tc:null,tcOk=f=>isBot(f.id)||tcOf(f)===tcPref();
   let tcWaitAt=0;
   /* 輪到的一方從什麼時候開始算時間：走棋的人會寫 tk；舊版或沒寫的話，用這支手機收到那一步的時間 */
