@@ -505,7 +505,7 @@ html[data-era=ming] .topbar,html[data-era=qing] .topbar{border-bottom-width:4px}
       if(!window.caches)return go();caches.keys().then(function(ks){return Promise.all(ks.filter(function(k){return k.indexOf("xqlab-app-")===0}).map(function(k){return caches.delete(k)}))})
         .then(function(){return navigator.serviceWorker&&navigator.serviceWorker.getRegistration()}).then(function(r){return r&&r.update()}).catch(function(){}).then(go)}},4000)})();
 </script>
-<script>window.XQ_OFFLINE=true;window.XQ_BUILD="20261104-0510";</script>
+<script>window.XQ_OFFLINE=true;window.XQ_BUILD="20261104-0535";</script>
 <script src="core.js"></script>
 <script src="engine.js"></script>
 <script src="local.js"></script>
@@ -3091,7 +3091,7 @@ function parkLook(){const k=store.get("era","classic"),e=curEra(),T=boardTheme(e
   return{k,img:bk?`data/boards/${BOARD_IMG_FILE[bk]||bk}.webp`:null,rect:bk?BOARD_IMG[bk]:null,grid:T&&T.grid||"#3A1D0A",
     pieces:PIECE_INK[k]?{r:`data/pieces/${k}-r.webp`,b:`data/pieces/${k}-b.webp`}:null,ink:PIECE_INK[k]||null,gly:GLY[k]||null,bold:GLY_BOLD[k]||0}}
 /* 意見回饋 334：錯棋重練一律用棋盤模式（PARK_OFF），不改玩家原本的公園設定 */
-let PARK=null,PARK_LOADING=null,PARK_OFF=false,PARK_J=null;const parkOn=()=>!PARK_OFF&&store.get("park3d",false);
+let PARK=null,PARK_LOADING=null,PARK_OFF=false,PARK_J=null;const parkOn=()=>!PARK_OFF&&store.get("park3d",true);   /* 意見回饋 247：13 個朝代都上線了，挑戰電腦、真人對戰預設在公園下（玩家自己切回棋盤模式會記住） */
 const botVis=on=>document.querySelectorAll(".xqbot").forEach(x=>x.style.visibility=on?"":"hidden");
 function parkLoad(){const v="?v="+encodeURIComponent(window.XQ_BUILD||"");return PARK_LOADING||(PARK_LOADING=(async()=>{await loadScript(OFF?"three.min.js":"/m/three.min.js");
   await loadScript((OFF?"bot3d.js":"/m/bot3d.js")+v);await loadScript((OFF?"park3d.js":"/m/park3d.js")+v)})().catch(e=>{PARK_LOADING=null;throw e}))}
@@ -3119,7 +3119,7 @@ function parkDraw(host,bd,board,o,ex){
   if(!window.XQPark3D){bd.svg.style.display="";parkLoad().then(()=>{if(!window.XQPark3D)throw new Error("park3d 沒有載入成功");if(document.body.contains(host))parkDraw(host,bd,board,o,ex)}).catch(()=>{toast("公園 3D 棋盤載入失敗，先用棋盤模式");store.set("park3d",false)});return}
   if(PARK&&PARK.era!==store.get("era","classic")){PARK.v.destroy();PARK=null}   // 換了朝代（例如從集章簿換過去）：公園重建
   if(!PARK||PARK.host!==host||!document.body.contains(PARK.v.el)){if(PARK)PARK.v.destroy();
-    const pv=XQPark3D.create(host,{onTap:i=>ex.tap(i),onInfo:k=>parkInfo(k),onDestroy:()=>{if(PARK&&PARK.v===pv){PARK=null;botVis(true)}}});
+    const pv=XQPark3D.create(host,{arena:ex.arena||null,onTap:i=>ex.tap(i),onInfo:k=>parkInfo(k),onDestroy:()=>{if(PARK&&PARK.v===pv){PARK=null;botVis(true)}}});
     if(!pv){toast("這台裝置沒辦法顯示 3D，先用棋盤模式");store.set("park3d",false);return}PARK={host,v:pv,era:store.get("era","classic")};setTimeout(()=>{try{pv.say(`我是${BOTN()}，幫你加油！`,2.6);if(ex.oppHello)setTimeout(()=>pv.oppSay(ex.oppHello,2.6),1400)}catch(e){}},700)}
   if(PARK.v.show)PARK.v.show();bd.svg.style.display="none";botVis(false);ex.look=parkLook();PARK.last={board,o,ex};PARK.v.draw(board,o,ex)}
 // 意見回饋 241：在公園裡按鈕換成「▦」（回棋盤模式），在棋盤模式是「🌳」（去公園）
@@ -3605,7 +3605,7 @@ function CpuGame(v,practicePage){
   function draw(){if(!st)return;const last=st.moves[st.moves.length-1];
     const o={flip:st.human==="b",last,sel,targets:sel>=0?st.legal.filter(([f])=>f===sel).map(x=>x[1]):[],hint:st.hint?[st.hint.f,st.hint.t]:pHint&&pHint.n===st.moves.length?[pHint.f,pHint.t]:null,check:st.check,fx:true};bd.draw(st.board,o);
     legendCheck(st);legendBadge(v.querySelector("#bbox"),!parkOn()&&legendVisit(st).length>0);
-    parkDraw(v.querySelector("#bbox"),bd,st.board,o,{tap,watchers:legendVisit(st),thinking:!!st.thinking||(!st.result&&st.turn!==st.human),botSide:st.human==="r"?"b":"r",result:st.result?(st.result.w||"draw"):null,hint:o.hint,
+    parkDraw(v.querySelector("#bbox"),bd,st.board,o,{tap,arena:st.arena||null,watchers:legendVisit(st),thinking:!!st.thinking||(!st.result&&st.turn!==st.human),botSide:st.human==="r"?"b":"r",result:st.result?(st.result.w||"draw"):null,hint:o.hint,
       opp:(st.arena&&CHAMP_LOOK(st.arena,st.human==="r"?"b":"r"))||PIKA_LOOK(st.human==="r"?"b":"r"),oppHello:st.arena&&ARENA[st.arena]?ARENA[st.arena].hi:"我是 Pikafish，請多指教。",oppWin:st.arena&&ARENA[st.arena]?ARENA[st.arena].win:"將死了，再接再厲。",oppLose:st.arena&&ARENA[st.arena]?ARENA[st.arena].lose:"你贏了，佩服佩服！"})}
   let lastN=null;   // 上一次畫的步數：步數剛好多一步才秀開局名（重新整理、開新局不秀）
   // 意見回饋 274：擂台賽下到結束前只能在公園裡（不能切回棋盤模式）；結束後按鈕恢復
@@ -3723,7 +3723,8 @@ async function review(rep,id){let it=null;for(let k=0;k<12&&!it;k++){try{const d
   function switchMode(m){if(!st)return;if(modeOf(st)===m)return newSheet();
     startNew({human:st.human,level:st.level||store.get("cpuLevel",3),ranked:m==="rank",reward:m==="car"})}
   // 開新局選單：只管這個模式的設定（紅黑、難度），模式本身在頂部切換
-  function newSheet(){if(!st)return;let side=st.human,level=st.level||store.get("cpuLevel",3);const ranked=OFF&&!!st.ranked,reward=OFF&&!!st.reward;
+  function newSheet(){if(!st)return;if(st.arena&&ARENA[st.arena])return arenaSheet(st.arena,arenaStart);   /* 意見回饋 396：擂台裡按「新局」只出現挑戰擂台（再挑戰擂主、集章簿），不出現自選難度 */
+    let side=st.human,level=st.level||store.get("cpuLevel",3);const ranked=OFF&&!!st.ranked,reward=OFF&&!!st.reward;
     const sh=sheet(ranked?"🏅 積分挑戰・開新局":reward?"🚗 獎勵模式・開新局":"🎚 自選難度・開新局",b=>{const rec=st.record||{},CR=st.cpuRate||{},CB=st.car||{},tb=CB.table||[];
       const paint=()=>{const span=CR.hi!=null?CR.hi-CR.lo:0,pct=span?Math.round(100*(CR.pts-CR.lo)/span):100;
         b.innerHTML=(ranked?`<div class="cpu-rk"><div class="mid"><span class="muted">你的電腦段位</span><span class="pt"><b>${CR.pts||0}</b> 分</span></div>

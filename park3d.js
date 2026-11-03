@@ -841,6 +841,13 @@
          const w=document.createElement("div");w.className="xw-bob";w.style.cssText=`position:absolute;left:${100-Ww/2}px;bottom:36px;width:${Ww}px;height:${Hh}px`;
          w.innerHTML=`<img alt="" src="${fr[0].src}" style="display:block;width:100%;height:100%"><b style="position:absolute;left:${f.cx*Ww-R}px;top:${f.cy*Hh-R}px;width:${2*R}px;height:${2*R}px;display:flex;align-items:center;justify-content:center;border-radius:50%;background:#F7EFDD;font:900 ${R*1.25}px/1 'Noto Serif TC','PMingLiU',serif;color:${red?"#C8102E":"#1E1A16"}">${ch}</b>`;
          box.append(w);const pic=w.querySelector("img");let i=0;const iv=setInterval(()=>{if(!veil.isConnected||veil.style.opacity==="0")return clearInterval(iv);i=(i+1)%8;pic.src=fr[i].src},110)})}).catch(()=>{})}
+    /* 意見回饋 396：從朝代擂台進來時，載入畫面換成那個朝代的「擂台入口」（Gemini 畫的 data/arenagate/<朝代>.webp），鼓點節奏的「擂台開擂」，不是小帥走路 */
+    if(opt.arena&&/^[a-z]+$/.test(opt.arena)){veil.style.background="#2a1a10";veil.style.color="#fff";
+      veil.innerHTML=`<style>@keyframes agDrum{0%,100%{transform:scale(1)}10%{transform:scale(1.14)}22%{transform:scale(1)}34%{transform:scale(1.08)}46%{transform:scale(1)}}@keyframes agZoom{from{transform:scale(1.12)}to{transform:scale(1)}}@keyframes agDots{0%{content:""}33%{content:"．"}66%{content:"．．"}100%{content:"．．．"}}.ag-t::after{content:"";animation:agDots 1.2s steps(1) infinite}</style>
+        <div style="position:absolute;inset:0;background:url(data/arenagate/${opt.arena}.webp) center/cover;animation:agZoom 3s ease-out forwards"></div>
+        <div style="position:absolute;inset:0;background:linear-gradient(rgba(20,10,4,.55),rgba(20,10,4,.05) 45%,rgba(20,10,4,.35))"></div>
+        <div style="position:relative;margin-bottom:40%;text-align:center;text-shadow:0 2px 10px rgba(0,0,0,.85)"><div style="font-size:46px;animation:agDrum 1.1s ease-in-out infinite">🥁</div>
+        <div style="font:900 26px 'Noto Serif TC','PMingLiU',serif;letter-spacing:.2em;margin-top:4px">擂台開擂</div><div class="ag-t" style="font:600 14px sans-serif;margin-top:4px">擂主登台中</div></div>`}
     el.append(veil);
     hint.textContent="點棋子走棋・點物件看介紹・拖曳轉頭・兩指縮放";el.append(hint);setTimeout(()=>hint.style.opacity=0,4500);
     const EK=eraKey(),E=ERA[EK];
