@@ -475,7 +475,7 @@ html[data-era=ming] .topbar,html[data-era=qing] .topbar{border-bottom-width:4px}
       if(!window.caches)return go();caches.keys().then(function(ks){return Promise.all(ks.filter(function(k){return k.indexOf("xqlab-app-")===0}).map(function(k){return caches.delete(k)}))})
         .then(function(){return navigator.serviceWorker&&navigator.serviceWorker.getRegistration()}).then(function(r){return r&&r.update()}).catch(function(){}).then(go)}},4000)})();
 </script>
-<script>window.XQ_OFFLINE=true;window.XQ_BUILD="20261103-1844";</script>
+<script>window.XQ_OFFLINE=true;window.XQ_BUILD="20261103-1848";</script>
 <script src="core.js"></script>
 <script src="engine.js"></script>
 <script src="local.js"></script>
@@ -2405,7 +2405,12 @@ async function talentReport(box){
       <div><b>${lab}</b>・你進步的速度，比 ${M.N<5?"?":M.rPct}% 的學棋者快</div>
       <div class="muted" style="font-size:13px;line-height:1.7;margin-top:2px">${/* 意見回饋 352：白話說明 */""}照目前的資料估：你有 <b>${pc(M.top25)}</b> 的機會是「進步很快」的人（每 4 個人裡最快的那 1 個）；有 <b>${pc(M.top5)}</b> 的機會是「頂尖」（每 20 個人裡最快的那 1 個）。</div>`:`<div style="margin:8px 0">再下 3 盤評過等的對局就能估</div>`}
       <div class="muted" style="font-size:12.5px;margin-top:4px">根據 ${G.length} 盤對局、${QL.length} 次測驗、${GL0.length} 局猜著法（練習量約 ${f1(P)} 盤${practiceTotal()>=1?`・練習時間 ${practiceTotal()>=60?(practiceTotal()/60).toFixed(1)+" 小時":Math.round(practiceTotal())+" 分鐘"}`:""}）${M&&M.N<20?"・下得還不多，先參考一般棋友的樣子，下越多越準":""}</div></div>
-    ${KF?`<div class="sec-t">現在的棋力</div><div class="card" style="line-height:1.7">每步走得好不好，現在大約 <b>${f0(KF.th)}</b> 分（大概在 ${f0(KF.th-1.28*KF.sd)}～${f0(KF.th+1.28*KF.sd)} 分之間）。跟下了一樣多盤的一般棋友（約 ${f0(popNow)} 分）比，你${KF.th>=popNow?"多":"少"} <b>${f0(Math.abs(KF.th-popNow))}</b> 分。${SR?`<br>同段位（${esc(NR)}）的棋友：大約 ${SR.now} 分，長棋速度中間值 ${(SR.r*100).toFixed(1)}%（${SR.n} 人）。`:""}${GL?`<br>跟電腦對下的勝負推算，棋力約等級分 <b>${f0(GL.r)}</b>（還可能差 ±${f0(GL.RD)}，${GL.n} 盤）`:""}</div>`:""}
+    ${KF?`<div class="sec-t">現在的棋力</div><div class="card" style="line-height:1.6">${/* 意見回饋 353：改成表格＋一句說明 */""}<div class="muted" style="font-size:13px;margin-bottom:6px">每步品質＝每一步跟 Pikafish 的最好走法比，0～100 分，越高越好。</div>
+      <table class="st-lv" style="font-size:14px"><tr><th>項目</th><th>分數</th><th>說明</th></tr>
+      <tr><td>你</td><td><b>${f0(KF.th)}</b></td><td>80% 機率在 ${f0(KF.th-1.28*KF.sd)}～${f0(KF.th+1.28*KF.sd)}</td></tr>
+      <tr><td>一般棋友</td><td>${f0(popNow)}</td><td>下了一樣多盤的人・你${KF.th>=popNow?"多":"少"} <b>${f0(Math.abs(KF.th-popNow))}</b></td></tr>
+      ${SR?`<tr><td>同段位</td><td>${SR.now}</td><td>${esc(NR)}・${SR.n} 人・進步速度中間值 ${(SR.r*100).toFixed(1)}%</td></tr>`:""}
+      ${GL?`<tr><td>等級分</td><td><b>${f0(GL.r)}</b></td><td>從跟電腦下的 ${GL.n} 盤推算・誤差 ±${f0(GL.RD)}</td></tr>`:""}</table></div>`:""}
     ${tau?`<div class="sec-t">你的棋路底子</div><div class="card">${tau}</div>`:""}
     ${chart?`<div class="sec-t">成長軌跡與預測</div><div class="card">${chart}<p class="muted" style="margin:4px 0 0;font-size:13px;line-height:1.6">灰點是每一盤走得好不好；線是照你的進步速度畫出來的成長路線，淺色帶是大概的範圍。${ms?(ms.med==null||ms.pNever>=.5?`照目前的練法，平均準確度有 ${pc(ms.pNever)} 的機率到不了 ${ms.goal} 分（天花板估計約 ${f0(M.A.m)} 分）。想再往上，要換個練法，例如先補下面的弱項。`:`平均準確度要到 <b>${ms.goal}</b> 分，大約還要練 <b>${f0(ms.med)}</b> 盤（80% 區間 ${f0(ms.lo)}～${f0(ms.hi)} 盤）${ms.pNever>.1?`；不過也有 ${pc(ms.pNever)} 的機率照目前的練法到不了`:""}。`):""}</p></div>`:""}
     ${prof.length?`<div class="sec-t">各項功夫</div><div class="card">${prof.map(bar).join("")}${IR.all?"":'<p class="muted" style="font-size:12.5px;margin:6px 0 0">做一次<a href="#/quiz">棋力測驗</a>，就會加上「殺法、戰術、局面判斷、殘局題」四項。</p>'}</div>`:""}
