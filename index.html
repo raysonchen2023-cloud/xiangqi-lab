@@ -436,7 +436,7 @@ html[data-era=ming] .topbar,html[data-era=qing] .topbar{border-bottom-width:4px}
       if(!window.caches)return go();caches.keys().then(function(ks){return Promise.all(ks.filter(function(k){return k.indexOf("xqlab-app-")===0}).map(function(k){return caches.delete(k)}))})
         .then(function(){return navigator.serviceWorker&&navigator.serviceWorker.getRegistration()}).then(function(r){return r&&r.update()}).catch(function(){}).then(go)}},4000)})();
 </script>
-<script>window.XQ_OFFLINE=true;window.XQ_BUILD="20261103-1125";</script>
+<script>window.XQ_OFFLINE=true;window.XQ_BUILD="20261103-1135";</script>
 <script src="core.js"></script>
 <script src="engine.js"></script>
 <script src="local.js"></script>
@@ -1604,10 +1604,19 @@ function Home(v){
     const won=st.levels.filter(l=>(st.record[l.n]||{}).w>0).length;
     /* 意見回饋 299：一定寫出電腦段位和積分；有下到一半的對局再接在後面 */
     const e=v.querySelector("#hCpu");if(e){const rk=st.cpuRate?`🏅 ${st.cpuRate.rank}・${st.cpuRate.pts} 分`:`已通關 ${won}／8 級`,on=st.cpuRate&&st.cpuRate.next?`・再 ${st.cpuRate.toNext} 分升 ${st.cpuRate.next}`:"";e.textContent=rk+on}
-    /* 意見回饋 304、306：下到一半的棋就在「挑戰電腦」這一條裡提醒（第二行寫模式、回合、輪到誰，右邊改成「繼續下」，外框加亮），不另開一條 */
-    if(e&&!st.result&&st.moves&&st.moves.length){const tile=e.closest(".tile"),mode=st.arena&&typeof ARENA!=="undefined"&&ARENA[st.arena]?`🏯 ${ARENA[st.arena].name}`:st.ranked?"積分挑戰":st.reward?"獎勵賽":`第 ${st.level} 級`;
-      e.innerHTML=`${esc(e.textContent)}<span class="rsm">⏳ ${esc(mode)}下到第 ${Math.ceil(st.moves.length/2)} 回合・${st.turn===st.human?"輪到你走":"輪到電腦"}</span>`;
-      if(tile){tile.classList.add("resume");const g=tile.querySelector(".go");if(g)g.textContent="繼續下 ›"}}}).catch(()=>{});
+    /* 意見回饋 304、306、308：下到一半的棋就在自己那一條裡提醒（第二行寫模式、回合、輪到誰，右邊改成「繼續下」，外框加亮）：
+       挑戰電腦的寫在「挑戰電腦」、擂台的寫在「朝代擂台」；兩種各留一盤，可以同時都還沒下完，點哪一條就接著下哪一盤 */
+    const cur=!st.result&&st.moves&&st.moves.length?{kind:st.arena?"arena":"cpu",arena:st.arena,ranked:st.ranked,reward:st.reward,level:st.level,practice:st.practice,n:st.moves.length,me:st.turn===st.human}:null,
+      o=st.other?{...st.other,me:(st.other.n%2?"b":"r")===st.other.human}:null,
+      G={cpu:cur&&cur.kind==="cpu"?cur:o&&o.kind==="cpu"?o:null,arena:cur&&cur.kind==="arena"?cur:o&&o.kind==="arena"?o:null},
+      line=g=>`⏳ ${g.kind==="arena"?(typeof ARENA!=="undefined"&&ARENA[g.arena]?ARENA[g.arena].name:"擂台"):g.practice?"錯棋重練":g.ranked?"積分挑戰":g.reward?"獎勵賽":`第 ${g.level} 級`}下到第 ${Math.ceil(g.n/2)} 回合・${g.me?"輪到你走":"輪到電腦"}`,
+      go=async kind=>{vibrate(5);if((cur&&cur.kind)!==kind&&G[kind])try{await api("/play/switch",{kind})}catch(e){}location.hash="#/cpu"};
+    if(e&&G.cpu){const tile=e.closest(".tile");e.innerHTML=`${esc(e.textContent)}<span class="rsm">${esc(line(G.cpu))}</span>`;
+      if(tile){tile.classList.add("resume");const g=tile.querySelector(".go");if(g)g.textContent="繼續下 ›";tile.onclick=()=>go("cpu")}}
+    else if(e&&G.arena&&cur&&cur.kind==="arena"){const tile=e.closest(".tile");   /* 擂台在桌上、挑戰電腦沒有收著的：點「挑戰電腦」開一盤新的，擂台那盤先收起來 */
+      if(tile)tile.onclick=async()=>{vibrate(5);try{await api("/play/switch",{kind:"cpu",ranked:OFF&&store.get("cpuRanked",true),reward:false,level:store.get("cpuLevel",3),human:"r"})}catch(e){}location.hash="#/cpu"}}
+    const ha=v.querySelector("#hArena");if(ha&&G.arena){const sub=ha.querySelector(".muted"),cta=ha.querySelector(":scope>b");if(sub)sub.textContent=line(G.arena);if(cta)cta.textContent="繼續下 ›";
+      ha.style.borderWidth="2px";ha.style.borderColor="#C8102E";ha.onclick=()=>go("arena")}}).catch(()=>{});
   if(!OFF)api("/state").then(st=>{const e=v.querySelector("#hAi");if(e)e.innerHTML=st.running?'<span class="live">直播中</span>':st.result?"上一盤："+(st.result.w?PLAYER[st.result.w]+"勝":"和局"):"按進去可以開始"}).catch(()=>{});
   return{stop:()=>offNet.forEach(f=>f())}}
 
