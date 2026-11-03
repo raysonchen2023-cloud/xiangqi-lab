@@ -87,7 +87,10 @@
   const faceTex=(ch,red,onReady)=>{const L=LOOK,s=red?"r":"b",im=L&&L.pieces?loadImg(L.pieces[s],onReady):null,key=ch+(im?"|"+L.k:"");if(faceCache[key])return faceCache[key];
     if(L&&L.pieces&&!im)return plainFace(ch,red);
     if(im)return faceCache[key]=cv(FN,FN,(g,n)=>{g.fillStyle=rimOf(im);g.fillRect(0,0,n,n);g.imageSmoothingQuality="high";g.drawImage(richImg(im),-n*.01,-n*.01,n*1.02,n*1.02);gloss(g,n);
-      glyph(g,n,ch,deepInk((L.ink&&L.ink[s])||(red?"#B3141B":"#141414")),L.gly&&L.gly[ch],L.bold||0,bgOf(im))});
+      /* 意見回饋 345：公園裡紅黑要一眼分得出來——深色字一律換成鮮紅／純黑，外圈再加一道同色的圈（亮色字的朝代照原本的字色） */
+      const ink0=(L.ink&&L.ink[s])||(red?"#B3141B":"#141414"),bright=lum(ink0)>.55,ink=bright?ink0:red?"#D3121A":"#0A0A0A";
+      g.strokeStyle=ink;g.lineWidth=n*.04;g.beginPath();g.arc(n/2,n/2,n*.43,0,TAU);g.stroke();
+      glyph(g,n,ch,ink,L.gly&&L.gly[ch],L.bold||0,bgOf(im))});
     return plainFace(ch,red)};
   // 沒有朝代底圖時的木棋：象牙色、紅黑字、內圈細線
   const plainFace=(ch,red)=>faceCache[ch]||(faceCache[ch]=cv(FN,FN,(g,n)=>{const h=n/2;
