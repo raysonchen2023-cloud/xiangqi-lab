@@ -212,6 +212,8 @@ html[data-era=ming] .topbar,html[data-era=qing] .topbar{border-bottom-width:4px}
 .modal .box{background:var(--card);border-radius:22px;padding:24px 20px;width:100%;max-width:340px;text-align:center}
 .modal .em{font-size:56px;line-height:1}.modal h2{font-family:var(--serif);font-size:24px;margin:8px 0 4px}
 .emo{position:fixed;left:50%;top:38%;transform:translate(-50%,-50%) scale(.6);z-index:65;background:var(--card,#fff);color:var(--ink,#222);border-radius:22px;padding:14px 20px;box-shadow:0 10px 40px #0006;text-align:center;opacity:0;transition:.25s;pointer-events:none}.emo.show{opacity:1;transform:translate(-50%,-50%) scale(1)}.emo .big{font-size:64px;line-height:1.1}.emo .t{font-weight:700;font-size:18px}.emo.mine{top:auto;bottom:calc(120px + var(--safeB))}.emo.mine .big{font-size:40px}
+.emo.at{left:var(--x);top:var(--y);bottom:auto;transform:scale(.6);transform-origin:12px 0;text-align:left;padding:10px 14px;border-radius:16px}.emo.at.show{transform:scale(1)}.emo.at.up{top:auto;bottom:var(--y);transform-origin:12px 100%}
+.emo.at::before{content:"";position:absolute;left:14px;top:-7px;border:7px solid transparent;border-top:0;border-bottom-color:var(--card,#fff)}.emo.at.up::before{top:auto;bottom:-7px;border-bottom:0;border-top:7px solid var(--card,#fff)}
 .ckfx{position:fixed;z-index:64;pointer-events:none;font-family:var(--serif);font-weight:900;animation:ckout 1.9s ease forwards}
 .ckfx .glow{position:absolute;inset:0;border-radius:10px;box-shadow:inset 0 0 0 2px #e0303a99,inset 0 0 .5em .12em #c8102e88;animation:ckglow .9s ease-in-out 2}
 .ckfx .mid{position:absolute;left:0;right:0;top:50%;height:1.5em;transform:translateY(-50%);display:flex;align-items:center;justify-content:center;gap:.5em}
@@ -473,7 +475,7 @@ html[data-era=ming] .topbar,html[data-era=qing] .topbar{border-bottom-width:4px}
       if(!window.caches)return go();caches.keys().then(function(ks){return Promise.all(ks.filter(function(k){return k.indexOf("xqlab-app-")===0}).map(function(k){return caches.delete(k)}))})
         .then(function(){return navigator.serviceWorker&&navigator.serviceWorker.getRegistration()}).then(function(r){return r&&r.update()}).catch(function(){}).then(go)}},4000)})();
 </script>
-<script>window.XQ_OFFLINE=true;window.XQ_BUILD="20261103-1814";</script>
+<script>window.XQ_OFFLINE=true;window.XQ_BUILD="20261103-1820";</script>
 <script src="core.js"></script>
 <script src="engine.js"></script>
 <script src="local.js"></script>
@@ -1486,7 +1488,7 @@ function Lobby(v){setTop("線上對戰・觀戰",false,[["📤",shareSheet,"分�
             ${p.st==="idle"||p.st==="seeking"?`<button class="pill" data-i="${esc(p.id)}" style="background:var(--accent);color:#fff;border:none;padding:6px 12px">⚔ 邀請對戰</button>`:""}</div>`).join("")
           :`<div class="card muted">${up?(rest.length?"大家都在對戰或觀戰中，可以先去看一盤，或按上面「隨機配對」等人。":"目前只有你在線上。請朋友打開象棋研究室（按右上角 📤 分享），他們就會出現在這裡。"):"連線中…"}</div>`)})()}
       ${!OFF||DEVREMOTE()?`<div class="sec-t">📺 AI 對戰</div><button class="item card" id="aiw" style="width:100%;display:flex;gap:12px;align-items:center;text-align:left"><span style="font-size:28px">📺</span><span style="flex:1;min-width:0"><b>GPT 對 Claude</b><br><span class="muted">電腦上的兩個 AI 在下棋</span></span><span class="muted">›</span></button>`:""}
-      <p class="muted" style="font-size:12px;margin-top:14px">觀戰時可以看雙方走棋、聊天，不會影響對局。對局預設每方 30 分鐘；兩邊要用不同時間，邀請時會跳出來讓你們講好，時間用完判負；另外每步最多 3 分鐘，超過也判負（離開或斷線太久也算）。大廳透過免費的公開伺服器連線。只會傳名字、大概的城市（由網路位置推估，可在設定關掉）和棋步，不要把名字取成個人資料。App 切到背景時會暫時離線。</p>`;
+      <!-- 意見回饋 347：大廳下面那段說明拿掉 -->`;
     box.querySelector("#ed").onclick=()=>nameSheet(false);
     {const tp=box.querySelector("#tcp");if(tp)tp.onclick=()=>sheet("⏱ 對局時制",b=>{b.innerHTML=`<p class="muted" style="margin:0 0 10px">每一方的總思考時間。開局時跟對手比，雙方選的不同就用比較短的；沒選就是 15 分鐘。另外每一步最多 3 分鐘。</p><div class="items" style="padding:0">${[[5,"快棋"],[10,"快棋"],[15,"預設・常見比賽"],[20,"慢一點"],[30,"慢棋"]].map(([m,l])=>`<button class="item" data-tc="${m}"><span class="lb">${XQNet.tc()===m?"✅":"⏱"}</span><span class="tx"><b>每方 ${m} 分鐘</b><span>${l}</span></span></button>`).join("")}</div>`;
       b.querySelectorAll("[data-tc]").forEach(x=>x.onclick=()=>{XQNet.setTc(+x.dataset.tc);vibrate(5);closeSheet();toast(`⏱ 時制改成每方 ${x.dataset.tc} 分鐘`);paint()})})}box.querySelector("#rk").onclick=()=>location.hash="#/stats";
@@ -3628,7 +3630,9 @@ function showEmote(k,mine){const e=EMOTES.find(x=>x[0]===k);if(!e)return;const d
   d.innerHTML=`<div class="big">${e[1]}</div><div class="t">${esc(e[2])}</div>`;document.body.append(d);d.getBoundingClientRect();d.classList.add("show");
   if(!mine)vibrate([20,40,20]);setTimeout(()=>{d.classList.remove("show");setTimeout(()=>d.remove(),300)},mine?1300:2600)}
 // 聊天泡泡：對方說的話在畫面中間停 4 秒；自己說的話小一點、短一點
-function showChat(text,mine,name){const d=document.createElement("div");d.className="emo"+(mine?" mine":"");
+/* 意見回饋 347：線上對戰的聊天泡泡靠在說話的人旁邊——at＝那個人的玩家列（上面的人泡泡在名字下面、下面的人泡泡在名字上面） */
+function showChat(text,mine,name,at){const d=document.createElement("div");d.className="emo"+(at?" at":mine?" mine":"");
+  if(at){const r=at.getBoundingClientRect(),up=r.top>innerHeight/2;d.classList.toggle("up",up);d.style.setProperty("--x",Math.round(Math.max(8,Math.min(r.left+40,innerWidth-200)))+"px");d.style.setProperty("--y",Math.round(up?innerHeight-r.top+6:r.bottom+6)+"px")}
   d.innerHTML=`<div class="t" style="font-size:12px;opacity:.7">${esc(mine?"我":name||"")}</div><div style="font-size:18px;font-weight:700;max-width:70vw;white-space:pre-wrap;word-break:break-word">💬 ${esc(text)}</div>`;
   document.body.append(d);d.getBoundingClientRect();d.classList.add("show");if(!mine)vibrate([20,40,20]);
   setTimeout(()=>{d.classList.remove("show");setTimeout(()=>d.remove(),300)},mine?1500:4000)}
@@ -4061,7 +4065,8 @@ function PvpGame(v){
   function render(s){const n0=lastN;st=s;lastN=s.moves.length;if(NET&&s.mySide&&s.mySide!==seat){seat=s.mySide;flipMan=null;setTitle();flipBtn()}if(!st.legal.some(([f])=>f===sel))sel=-1;draw();
     if(n0!=null&&lastN===n0+1&&view==null){const cue=openingCue(st.moves);if(cue)setTimeout(()=>openFx(bd.svg,cue[1],cue[0]),350)}
     const ems=st.emotes||[];if(lastEmo==null)lastEmo=ems.reduce((m,x)=>Math.max(m,x.id),0);
-    else for(const x of ems)if(x.id>lastEmo){lastEmo=x.id;if(x.text)showChat(x.text,x.by===seat,x.name||PLAYER[x.by]);else if(seat&&x.by!==seat)showEmote(x.e,false)}
+    else for(const x of ems)if(x.id>lastEmo){lastEmo=x.id;if(x.text){const fl0=isFlip(),tp=fl0?"r":"b",pk=parkOn()&&PARK&&PARK.host===v.querySelector("#bbox");
+        let said=false;if(pk){try{x.by===tp?PARK.v.oppSay(x.text,4):PARK.v.say(x.text,4);said=true}catch(e){}}if(!said)showChat(x.text,x.by===seat,x.name||PLAYER[x.by],v.querySelector(x.by===tp?"#pTop":"#pBot"))}else if(seat&&x.by!==seat)showEmote(x.e,false)}
     const fl=isFlip(),top=fl?"r":"b",bot=fl?"b":"r",nm=x=>x==="r"?st.red:st.black;
     // 連線對戰：自己標「這支手機」，對方標在不在線上
     const sub=x=>!seat?PLAYER[x]:x===seat?PLAYER[x]+(NET?"・我":"・這支手機"):PLAYER[x]+((st.online||{})[x]?"・🟢 "+(NET?"在線":((st.who||{})[x]||"在線")):NET?"・⚪ 對方暫時離線":"・⚪ 對方還沒連上");
