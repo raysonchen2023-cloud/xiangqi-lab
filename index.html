@@ -471,7 +471,7 @@ html[data-era=ming] .topbar,html[data-era=qing] .topbar{border-bottom-width:4px}
       if(!window.caches)return go();caches.keys().then(function(ks){return Promise.all(ks.filter(function(k){return k.indexOf("xqlab-app-")===0}).map(function(k){return caches.delete(k)}))})
         .then(function(){return navigator.serviceWorker&&navigator.serviceWorker.getRegistration()}).then(function(r){return r&&r.update()}).catch(function(){}).then(go)}},4000)})();
 </script>
-<script>window.XQ_OFFLINE=true;window.XQ_BUILD="20261103-1706";</script>
+<script>window.XQ_OFFLINE=true;window.XQ_BUILD="20261103-1723";</script>
 <script src="core.js"></script>
 <script src="engine.js"></script>
 <script src="local.js"></script>
@@ -4425,23 +4425,24 @@ function Viewer(v,c,id){
     toast("評等完成")}
   // 📊 賽後報告：主線每步都要評等過；還沒評等的先請 Pikafish 補算
   let rpBusy=false;
-  async function report(){if(!it||rpBusy)return;FREE=null;const end=endPly(line);
+  async function report(direct){if(!it||rpBusy)return;FREE=null;const end=endPly(line);
     const miss=[];for(let p=1;p<=end;p++)if(!gradeOf(p))miss.push(p);
     // 還沒評等完：在背景評，下面一條進度列，評等時照樣可以看棋、上一步下一步；評好了進度列變成「看報告」
     if(miss.length){if(rpBusy)return toast("賽後報告還在評等，好了會通知你");rpBusy=true;
       document.querySelectorAll(".rp-bar").forEach(x=>x.remove());
       const bar=document.createElement("div");bar.className="rp-bar";
       bar.innerHTML=`<span><em>📊 評等中 <b class="rpn">0</b>/${miss.length}</em></span><button class="pill" aria-label="取消評等">✕</button>`;toast("📊 Pikafish 在背景評等，可以先看棋，評好會通知你");document.body.append(bar);
-      let stop=false,done=false;bar.querySelector("button").onclick=()=>{stop=true;bar.remove()};
-      try{for(let k=0;k<miss.length;k++){if(stop||screen!==self||!it)return;const p=miss[k],m=seq(line,p)[p-1];
+      /* 意見回饋 337：換到別的頁面也繼續評（評好的存在手機裡），不用回來再按一次；評好了點「看報告」會帶你回這盤 */
+      const home=location.hash;let stop=false,done=false;bar.querySelector("button").onclick=()=>{stop=true;bar.remove()};
+      try{for(let k=0;k<miss.length;k++){if(stop||!it)return;const p=miss[k],m=seq(line,p)[p-1];
         grades[owner(line,p)+"|"+p]=(await api("/an/classify",{board:boardAt(line,p-1),side:moverAt(p),f:m.f,t:m.t}))||{q:"—"};
         const n=bar.querySelector(".rpn");if(n)n.textContent=k+1;if(screen===self&&!FREE&&k%4===3)show()}
         done=true}
       catch(e){toast(e.message);return}finally{rpBusy=false;if(!done)bar.remove()}
-      if(screen!==self||!it){bar.remove();return}
-      show();vibrate([20,40,20]);
+      if(!it){bar.remove();return}
+      const here=screen===self;if(here&&direct){bar.remove();return report()}if(here)show();vibrate([20,40,20]);
       bar.classList.add("done");bar.innerHTML=`<span>📊 評好了</span><button class="pill go">看報告 ›</button>`;
-      bar.querySelector(".go").onclick=()=>{bar.remove();report()};setTimeout(()=>bar.remove(),20000);return}
+      bar.querySelector(".go").onclick=()=>{bar.remove();if(screen===self)report();else{store.set("openReport",c+"/"+id);location.hash=home}};setTimeout(()=>bar.remove(),here?20000:60000);return}
     const moves=seq(line,end).map((m,i)=>{const g=gradeOf(i+1)||{};return{f:m.f,t:m.t,cn:m.cn,by:moverAt(i+1),q:g.q,loss:g.loss,ev:g.ev,bc:g.bc,bm:g.bm,bp:g.bp,ck:m.ck}});
     const rep=gameReport(it.board,moves),names={r:it.red||"紅方",b:it.black||"黑方"},side=it.black==="你"?"b":"r";
     // 自己跟電腦下的對局：記下分數給「我的戰績」用
@@ -4460,7 +4461,7 @@ function Viewer(v,c,id){
     setTop(title(),dbBack,[["🔄",()=>{vFlip=!vFlip;vibrate(5);show()},"翻轉棋盤"],...(oh?[["👤",()=>oppCard(oh.oid,oh.opp),"對手資料"]]:[]),["📊",()=>report(),"賽後報告"],["ℹ",()=>info(),"棋局資訊"]])}
     const r=store.get("recent",[]).find(x=>x.c===c&&x.id===id);ply=r&&r.ply?Math.min(r.ply,endPly(0)):it.jump?Math.min(+it.jump||0,endPly(0)):0;   /* 意見回饋 310：妙棋精選第一次打開就停在妙棋那一步 */
     const oa=store.get("openAt",null);if(oa&&oa.c===c&&oa.id===id){store.set("openAt",null);ply=Math.min(oa.ply,endPly(0));setTimeout(()=>toast(`從第 ${ply} 步開始：${oa.why}（可以往前看）`),400)}
-    show();remember();loadGrades().then(()=>{if(store.get("openReport")===c+"/"+id){store.set("openReport",null);report()}})}).catch(e=>{v.querySelector("#note").textContent="⚠ "+e.message});
+    show();remember();loadGrades().then(()=>{if(store.get("openReport")===c+"/"+id){store.set("openReport",null);report(true)}})}).catch(e=>{v.querySelector("#note").textContent="⚠ "+e.message});
   return self}
 
 // ================= AI 對戰直播 =================
