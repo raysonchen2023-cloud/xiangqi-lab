@@ -436,7 +436,7 @@ html[data-era=ming] .topbar,html[data-era=qing] .topbar{border-bottom-width:4px}
       if(!window.caches)return go();caches.keys().then(function(ks){return Promise.all(ks.filter(function(k){return k.indexOf("xqlab-app-")===0}).map(function(k){return caches.delete(k)}))})
         .then(function(){return navigator.serviceWorker&&navigator.serviceWorker.getRegistration()}).then(function(r){return r&&r.update()}).catch(function(){}).then(go)}},4000)})();
 </script>
-<script>window.XQ_OFFLINE=true;window.XQ_BUILD="20261103-1355";</script>
+<script>window.XQ_OFFLINE=true;window.XQ_BUILD="20261103-1400";</script>
 <script src="core.js"></script>
 <script src="engine.js"></script>
 <script src="local.js"></script>
@@ -1251,6 +1251,7 @@ function route(){
   if(p[0]==="fbadmin")return screen=FbAdmin(v);
   if(p[0]==="quiz")return screen=Quiz(v);
   if(p[0]==="guess")return screen=Guess(v);
+  if(p[0]==="legend")return screen=LegendScene(v,decodeURIComponent(p[1]||""));
   if(p[0]==="terms")return screen=Terms(v,p[1]);
   // AI 對局在開發者的電腦上，要連上電腦才看得到；一般玩家（或連線已被清掉）從舊連結進來時說明清楚，不要卡在「載入中」（意見回饋 135）
   if((p[0]==="db"&&p[1]==="ai"||p[0]==="watch"&&p[1]==="ai")&&OFF&&!DEVREMOTE()){setTop("AI 對局","#/");setTabs(false);
@@ -3007,7 +3008,9 @@ async function legendSheet(){const D=await legendData();if(!D)return toast("故�
   legendRead(Math.max(1,L.n),!L.n?null:L.n>=D.chapters.length&&!L.epi?"他說：「你再下一盤吧，我在旁邊看。你贏了，我就過去。」——在他看棋的時候贏一盤，就能看到尾聲。":L.used[g]?"這盤棋他已經講過一段了。下次再遇到他，他會接著講。":"")}
 async function legendRead(i,tip){const D=await legendData();if(!D)return;const L=legendState(),all=DEVMODE(),ch=i>D.chapters.length?D.epilogue:D.chapters[i-1];if(!ch)return;
   sheet("🌂 "+ch.title,b=>{b.innerHTML=`<div style="line-height:1.95;font-size:15.5px;white-space:pre-wrap">${esc(ch.body)}</div>${tip?`<p class="muted" style="margin-top:10px">${esc(tip)}</p>`:""}
+    ${(D.scenes||[]).filter(x=>x.ch===i).map(x=>`<button class="btn" data-sc="${esc(x.key)}" style="width:100%;margin-top:10px">🕰 回到當年：${esc(x.title)}${(store.get("sceneDone",{})[x.key])?"（已過關）":`（答對 +${SCENE_PTS[0][1]}～${SCENE_PTS[2][1]} 段位積分）`}</button>`).join("")}
     <div class="row" style="gap:8px;margin-top:12px"><button class="btn ghost" id="lgL" style="flex:1">📜 全部章節</button>${i<=D.chapters.length&&(i<L.n||all||(i===D.chapters.length&&L.epi))?`<button class="btn" id="lgN" style="flex:1">下一章 ›</button>`:""}</div>`;
+    b.querySelectorAll("[data-sc]").forEach(x=>x.onclick=()=>{closeSheet();location.hash="#/legend/"+x.dataset.sc});
     b.querySelector("#lgL").onclick=()=>legendBook();const nx=b.querySelector("#lgN");if(nx)nx.onclick=()=>legendRead(i+1)})}
 async function legendBook(){const D=await legendData();if(!D)return toast("故事還在載入，等一下再試");const L=legendState(),all=DEVMODE(),open=k=>all||k<=L.n||(k===D.chapters.length+1&&L.epi);
   const list=D.chapters.map((c,k)=>[k+1,c.title]).concat([[D.chapters.length+1,D.epilogue.title]]);
@@ -3015,6 +3018,61 @@ async function legendBook(){const D=await legendData();if(!D)return toast("故�
     <div class="items" style="padding:0">${list.map(([k,t])=>`<button class="item" data-k="${k}" ${open(k)?"":"disabled"}><span class="lb">${open(k)?"📖":"🔒"}</span><span class="tx"><b>${open(k)?esc(t):"？？？"}</b></span><span class="muted">${open(k)?"›":""}</span></button>`).join("")}</div>
     <p class="muted" style="font-size:12px;margin-top:8px">故事是虛構的，人名、地名、事件都是編的。</p>`;
     b.querySelectorAll("[data-k]").forEach(x=>x.onclick=()=>{const k=+x.dataset.k;if(open(k))legendRead(k)})})}
+/* ================= 🕰 回到當年（意見回饋 313）=================
+   石桌往事裡的對局，用「妙棋精選」裡 Pikafish 驗證過的特級大師實戰來演：你站在旁邊看，不能插手；
+   棋自動一步一步下，下到那一步妙棋之前停下來——換作是你，會怎麼走？
+   跟實戰（也是 Pikafish 唯一好棋）一樣：照難度加積分挑戰的段位積分（易 5、中 10、難 15）；Pikafish 評為好棋的給一半；每個轉折只能領一次 */
+const SCENE_PTS=[["易",5],["中",10],["難",15]],sceneLevel=it=>{const s=+it.score||0;return s>=14?2:s>=9?1:0};
+function LegendScene(v,key){
+  setTop("回到當年","#/");setTabs(false);
+  let S=null,it=null,mv=[],ply=0,stop=ply,board=null,hero="r",LEGAL=[],sel=-1,phase="intro",timer=null,busy=false;
+  const C=window.XQCore,bd=Board(x=>tap(x)),nm=s=>s===hero?S.hero:S.other;
+  const cn=(b,m)=>{try{return C.notate(b,m.f,m.t)}catch(e){return""}},apply=(b,m)=>{const n=b.slice();n[m.t]=n[m.f];n[m.f]=null;return n};
+  (async()=>{const D=await legendData();S=D&&(D.scenes||[]).find(x=>x.key===key);
+    if(!S){v.innerHTML='<div class="pad"><div class="card muted">找不到這段往事。</div></div>';return}
+    try{it=await api(`/db/item?c=${S.c}&id=${encodeURIComponent(S.id)}`)}catch(e){v.innerHTML=`<div class="pad"><div class="card muted">棋譜載入失敗：${esc(e.message)}</div></div>`;return}
+    mv=it.lines[0].moves.map(m=>Array.isArray(m)?{f:m[0],t:m[1]}:m);stop=(+it.jump||1)-1;hero=stop%2?"b":"r";
+    ply=Math.max(0,stop-(S.lead||14));board=it.board?it.board.slice():C.parseFen(C.START);for(let i=0;i<ply;i++)board=apply(board,mv[i]);
+    intro()})();
+  function intro(){v.className="view";const L=SCENE_PTS[sceneLevel(it)],done=!!(store.get("sceneDone",{})[key]);
+    v.innerHTML=`<div class="pad"><div class="card" style="line-height:1.9">
+      <div class="muted" style="font-size:13px">🕰 ${esc(S.when)}・${esc(S.where)}</div>
+      <h2 style="margin:4px 0 10px;font-family:var(--serif)">${esc(S.title)}</h2>
+      <div style="white-space:pre-wrap;font-size:15.5px">${esc(S.intro)}</div>
+      <p class="muted" style="font-size:13px;margin-top:10px">你站在人群裡，不能插手。棋會一步一步下，下到關鍵的時候會停下來——換作是你，會怎麼走？跟他當年走的一樣，就加 <b>${L[1]}</b> 分段位積分（難度：${L[0]}）${done?"・這一段你已經領過了":""}。</p>
+      <button class="btn" id="go">▶ 擠進人群去看</button></div></div>`;
+    v.querySelector("#go").onclick=start}
+  function start(){gameLayout(v);v.querySelector("#strip").insertAdjacentHTML("beforebegin",'<div class="note" id="note" style="white-space:pre-wrap;padding:4px 12px;line-height:1.7"></div>');
+    v.querySelector("#bbox").append(bd.svg);head();draw(null);phase="watch";say(S.open||"棋局正膠著，四周安靜得只剩下落子的聲音。");acts();next()}
+  function head(){v.querySelector("#pTop").innerHTML=playerHTML(hero==="r"?"b":"r",nm(hero==="r"?"b":"r"),S.otherSub||"",null);
+    v.querySelector("#pBot").innerHTML=playerHTML(hero,nm(hero),S.heroSub||"",null)}
+  function draw(last,o){bd.draw(board,{flip:hero==="b",last,sel,targets:sel>=0?LEGAL.filter(([f])=>f===sel).map(x=>x[1]):[],...(o||{})})}
+  const say=t=>{const n=v.querySelector("#note");if(n)n.textContent=t},stat=t=>{const n=v.querySelector("#stat");if(n)n.textContent=t};
+  function acts(){actionBar(v.querySelector("#acts"),phase==="ask"?[["skip","👀","看他怎麼走",()=>judge(-1,-1)]]:phase==="end"?[["again","↺","再看一次",()=>{location.hash="#/x";location.hash="#/legend/"+key}],["book","📜","石桌往事",()=>legendBook()]]:[["fast","⏩","快轉到關鍵",()=>{clearTimeout(timer);while(ply<stop){board=apply(board,mv[ply]);ply++}draw(mv[stop-1]);ask()}]])}
+  function next(){clearTimeout(timer);if(phase!=="watch")return;if(ply>=stop)return ask();
+    timer=setTimeout(()=>{const m=mv[ply],s=ply%2?"b":"r",t=cn(board,m);board=apply(board,m);ply++;draw(m);stat(`${nm(s)}：${t}`);vibrate(4);next()},ply===Math.max(0,stop-(S.lead||14))?900:1500)}
+  async function ask(){phase="ask";acts();head();stat(`輪到${nm(hero)}。`);say(S.ask||`${nm(hero)}捏著一顆棋子，想了很久很久。圍觀的人都屏住了氣。\n換作是你，這一步會怎麼走？（點棋子，再點要去的位置）`);
+    try{LEGAL=(await api("/an/legal",{board,side:hero})).legal}catch(e){LEGAL=[]}draw(mv[stop-1])}
+  function tap(x){if(phase!=="ask"||busy||!LEGAL.length)return;if(sel>=0&&LEGAL.some(([f,t])=>f===sel&&t===x)){const f=sel;sel=-1;return judge(f,x)}sel=LEGAL.some(([f])=>f===x)?x:-1;if(sel>=0)vibrate(5);draw(mv[stop-1])}
+  async function judge(f,t){if(busy)return;busy=true;const m=mv[stop],hit=f===m.f&&t===m.t,real=cn(board,m),L=SCENE_PTS[sceneLevel(it)];let msg="",pts=0;
+    if(f<0)msg=`${nm(hero)}走了 ${real}。`;
+    else if(hit){pts=L[1];msg=`✔ 你想的跟他一模一樣：${real}！`}
+    else{let c=null;try{c=await api("/an/classify",{board,side:hero,f,t})}catch(e){}const mine=cn(board,{f,t});
+      if(c&&c.loss!=null&&c.loss<=40){pts=Math.ceil(L[1]/2);msg=`你想走 ${mine}，也是好棋（Pikafish 評為「${c.q||"好棋"}」）；不過${nm(hero)}走的是 ${real}。`}
+      else msg=`你想走 ${mine}${c&&c.q?`（Pikafish 評為「${c.q}」）`:""}；${nm(hero)}走的是 ${real}。`}
+    let got="";if(pts){try{const r=await api("/play/bonus",{key:"scene:"+key,pts,why:"回到當年・"+S.title});got=r.already?"（這一段之前領過了，不重複加分）":`段位積分 +${r.d}（${r.pts} 分・${r.rank}）${r.rank!==r.was?` 🎉 升上 ${r.rank}！`:""}`;
+      if(!r.already){const D=store.get("sceneDone",{});D[key]=Date.now();store.set("sceneDone",D)}}catch(e){got=""}}
+    board=apply(board,m);ply=stop+1;draw(m);vibrate(hit?[15,30,15]:8);stat(msg);
+    const why=String((it.comments||{})["0_"+(stop+1)]||"").replace(/^💎 妙棋：[^。]*。/,"");
+    say((got?got+"\n":"")+(why?"這一步妙在："+why:""));phase="after";busy=false;
+    actionBar(v.querySelector("#acts"),[["go","›","繼續看",()=>{phase="tail";tail(S.after||6)},true]])}
+  function tail(n){clearTimeout(timer);if(n<=0||ply>=mv.length)return end();
+    timer=setTimeout(()=>{const m=mv[ply],s=ply%2?"b":"r",t=cn(board,m);board=apply(board,m);ply++;draw(m);stat(`${nm(s)}：${t}`);tail(n-1)},1300)}
+  function end(){phase="end";acts();say(S.outro||"");stat("");
+    const src=`這盤棋取材自 ${it.year||""} ${it.red||""} 對 ${it.black||""} 的實戰（${it.event||"比賽"}），妙棋那一步經 Pikafish 驗證。`;
+    v.querySelector("#note").insertAdjacentHTML("beforeend",`<div class="muted" style="font-size:12px;margin-top:6px">${esc(src)}</div>`)}
+  return{stop:()=>clearTimeout(timer)}}
+
 // 集章簿：13 個朝代的印章，蓋過的是朱紅色；點沒蓋過的朝代就換過去挑戰
 function stampBook(start){const S=arenaStamps(),n=Object.keys(S).length,t=arenaTitle(),nx=ARENA_TITLES.slice().reverse().find(([k])=>n<k);
   sheet("📜 集章簿",b=>{b.innerHTML=`<p style="margin:0 0 8px">已蓋 <b>${n}</b> / 13 枚${t?`・稱號 <b style="color:var(--accent)">「${esc(t)}」</b>`:""}${nx?`<br><span class="muted" style="font-size:13px">再蓋 ${nx[0]-n} 枚得到稱號「${esc(nx[1])}」</span>`:""}</p>
