@@ -48,7 +48,10 @@ var XQNet=(function(){
   const me=()=>{const m=window.meInfo?meInfo():{id:"anon"+Math.random().toString(36).slice(2,8),name:""};return{id:m.id,name:m.name||("棋友"+m.id.slice(0,4))}};
   let cli=null,want=false,urlI=0,everUp=false,hb=null,retryT=null,people={},pending=null,G=null,emos=[],emoN=0,seeking=0,pendT=null,dirty=false,downAt=0,arr={n:-1,t:0};
   /* 意見回饋 282：時制（每方幾分鐘）。自己選的存在手機裡，沒選＝15 分；雙方不同取比較短的 */
-  const TCS=[5,10,15,20,30],tcPref=()=>{const v=+ls.get("tc",15);return TCS.includes(v)?v:15};
+  /* 意見回饋 328：預設每方 30 分鐘；兩個真人的時制要一樣才能開局（大廳的角色會配合對方） */
+  const TCS=[5,10,15,20,30],tcPref=()=>{const v=+ls.get("tc",30);return TCS.includes(v)?v:30};
+  const isBot=id=>!!(people[id]&&people[id].bot),tcOf=f=>TCS.includes(+(f&&f.tc))?+f.tc:null,tcOk=f=>isBot(f.id)||tcOf(f)===tcPref();
+  let tcWaitAt=0;
   /* 輪到的一方從什麼時候開始算時間：走棋的人會寫 tk；舊版或沒寫的話，用這支手機收到那一步的時間 */
   const effTk=g=>g.tk&&g.tkN===g.moves.length?g.tk:arr.n===g.moves.length?arr.t:(g.at||Date.now());
   const clockLeft=(g,s)=>!g||!g.clk?null:g.clk[s]-(!g.result&&(g.moves.length%2?"b":"r")===s?Date.now()-effTk(g):0);
@@ -81,7 +84,8 @@ var XQNet=(function(){
     cli.pub(`${ROOT}/u/${m.id}`,JSON.stringify({id:m.id,name:m.name,st:cur&&!(G&&G.result)?(sd?"playing":"watching"):seeking?"seeking":"idle",gid:cur&&cur.gid||null,pts:myPts(),tc:tcPref(),w:rec().w,l:rec().l,d:rec().d,kind:typeof MY_KIND!=="undefined"?MY_KIND:"",city:typeof MY_CITY!=="undefined"?MY_CITY:"",bot:typeof window.XQ_BOTLOOK==="function"?window.XQ_BOTLOOK():null,title:typeof window.XQ_TITLE==="function"?window.XQ_TITLE():"",at:Date.now()}),true)}
   // 隨機配對：大家都把狀態設成 seeking；代號最小的人去邀請下一位，被邀請的人自動接受（避免兩邊同時互邀）
   function tryMatch(){if(!seeking||pending||playing()||!cli||!cli.up)return;const i=me().id,now=Date.now();
-    const c=Object.values(people).filter(x=>x.st==="seeking"&&x.id!==i&&now-x.at<ALIVE).sort((a,b)=>a.id<b.id?-1:1);
+    const all=Object.values(people).filter(x=>x.st==="seeking"&&x.id!==i&&now-x.at<ALIVE),c=all.filter(x=>tcOk(x)).sort((a,b)=>a.id<b.id?-1:1);
+    if(!c.length&&all.length&&now-tcWaitAt>60000){tcWaitAt=now;emit("tcwait",{list:all.map(x=>({name:x.name,tc:tcOf(x)})),tc:tcPref()})}
     if(!c.length||c[0].id<i)return;   // 有人代號比我小：等他來邀請
     sendInvite(c[0],true)}
   function sendInvite(to,auto){const m=me(),gid=Math.random().toString(36).slice(2,10)+Date.now().toString(36);pending={gid,to:to.id,name:to.name,auto};
@@ -100,12 +104,12 @@ var XQNet=(function(){
     if(p[0]==="u"){if(!msg)delete people[p[1]];else{try{const x=JSON.parse(msg);if(x&&x.id===p[1])people[p[1]]=x}catch(e){}}emit("people");tryMatch();return}
     if(p[0]==="i"){let x;try{x=JSON.parse(msg)}catch(e){return}if(!x||!x.from||Date.now()-(x.at||0)>120000)return;
       if(x.type==="invite"&&x.auto){   // 隨機配對來的：還在找就自動接受，不然婉拒
-        const m=me();const ok=!!seeking&&!playing()&&!pending;cli&&cli.pub(`${ROOT}/i/${x.from.id}`,JSON.stringify({type:ok?"accept":"decline",gid:x.gid,from:{id:m.id,name:m.name,pts:myPts(),tc:tcPref()},at:Date.now()}));
+        const m=me();const ok=!!seeking&&!playing()&&!pending&&tcOk(x.from);cli&&cli.pub(`${ROOT}/i/${x.from.id}`,JSON.stringify({type:ok?"accept":"decline",gid:x.gid,from:{id:m.id,name:m.name,pts:myPts(),tc:tcPref()},at:Date.now()}));
         if(ok){seeking=0;G=null;enter(x.gid);waitGame(x.gid,true);emit("matched",{name:x.from.name})}}
       else if(x.type==="invite")emit("invite",x);
       else if(x.type==="accept"&&pending&&pending.gid===x.gid){const m=me(),auto=pending.auto;pending=null;clearTimeout(pendT);seeking=0;
         let red={id:m.id,name:m.name,pts:myPts()},black={id:x.from.id,name:x.from.name,pts:+x.from.pts||0};if(Math.random()<.5)[red,black]=[black,red];   // 紅黑一律隨機（意見回饋 191）
-        const tc=Math.min(tcPref(),TCS.includes(+x.from.tc)?+x.from.tc:15),now=Date.now();
+        const tc=tcPref(),now=Date.now();
         G={gid:x.gid,id:new Date().toISOString().replace(/[:.]/g,"-").slice(0,19),rev:1,red,black,moves:[],result:null,draw:null,at:now,tc,clk:{r:tc*60000,b:tc*60000},tk:now,tkN:0};
         enter(x.gid);pubGame();emit(auto?"matched":"start",{gid:x.gid,name:x.from.name})}
       else if(x.type==="decline"&&pending&&pending.gid===x.gid){const auto=pending.auto;pending=null;clearTimeout(pendT);if(auto)tryMatch();else emit("reply",{ok:false,name:x.from.name})}
@@ -169,7 +173,7 @@ var XQNet=(function(){
     respond(x,ok){const m=me();if(ok)endOnLeave();cli&&cli.pub(`${ROOT}/i/${x.from.id}`,JSON.stringify({type:ok?"accept":"decline",gid:x.gid,from:{id:m.id,name:m.name,pts:myPts(),tc:tcPref()},at:Date.now()}));
       if(ok){G=null;enter(x.gid);waitGame(x.gid,false)}},
     watch(gid){endOnLeave();G=null;enter(gid)},
-    tc:()=>tcPref(),tcs:TCS,setTc(v){if(TCS.includes(+v)){ls.set("tc",+v);presence();emit("people")}},
+    tc:()=>tcPref(),tcs:TCS,tcOf,isBot,tcOk:f=>tcOk(f),setTc(v){if(TCS.includes(+v)){ls.set("tc",+v);presence();emit("people")}},
     clocks(){return G&&G.clk?{r:clockLeft(G,"r"),b:clockLeft(G,"b")}:null},
     /* 走棋前呼叫：扣掉走的人這步用的時間，從現在開始算對方的 */
     tickMove(n,sd){if(!n||!n.clk)return;const now=Date.now();n.clk[sd]=Math.max(0,n.clk[sd]-(now-effTk(n)));n.tk=now;n.tkN=n.moves.length+1},
