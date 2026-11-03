@@ -435,7 +435,7 @@ html[data-era=ming] .topbar,html[data-era=qing] .topbar{border-bottom-width:4px}
       if(!window.caches)return go();caches.keys().then(function(ks){return Promise.all(ks.filter(function(k){return k.indexOf("xqlab-app-")===0}).map(function(k){return caches.delete(k)}))})
         .then(function(){return navigator.serviceWorker&&navigator.serviceWorker.getRegistration()}).then(function(r){return r&&r.update()}).catch(function(){}).then(go)}},4000)})();
 </script>
-<script>window.XQ_OFFLINE=true;window.XQ_BUILD="20261103-0920";</script>
+<script>window.XQ_OFFLINE=true;window.XQ_BUILD="20261103-0923";</script>
 <script src="core.js"></script>
 <script src="engine.js"></script>
 <script src="local.js"></script>
@@ -1554,12 +1554,12 @@ function Home(v){
    ${OFF?(()=>{const n=Object.keys(arenaStamps()).length,t=arenaTitle();return`<button class="card" id="hArena" style="display:flex;align-items:center;gap:12px;width:100%;margin:10px 0 0;padding:10px 14px;text-align:left;font:inherit;color:inherit;cursor:pointer;border-color:color-mix(in srgb,#C8102E 45%,var(--line))"><span style="font-size:30px">🏯</span><span style="flex:1;min-width:0"><b style="font-size:16px;font-family:var(--serif)">朝代擂台</b><span class="muted" style="display:block;font-size:12.5px">${n?`集章 ${n}/13${t?"・"+esc(t):""}・下一位擂主等你`:"公園裡 13 位朝代擂主，打贏蓋一枚印章"}</span></span><b style="color:#C8102E">挑戰 ›</b></button>`})():""}
    <div class="sec-t">學習</div>
    <div class="hero strips">
+    ${T("k1","#/stats","🏅","我的戰績","","勝負・段位・🧬 天賦分析")}
+    ${T("k3","#/openings","📊","我的開局","","你常用的開局・勝率・中局正招")}
+    ${T("k2","#/redo","🔁","錯棋重練","","從下錯的那一步再下一次，練到對")}
     ${T("k3","#/quiz","🎯","棋力測驗","hQuiz","每級 2 題・估出你的段位（新手～專2）")}
     ${T("k4","#/db","📜","棋譜庫","","古譜・特級大師名局・我的對局")}
     ${T("k2","#/terms","📚","象棋規則","","玩法・記譜法・術語・殺法")}
-    ${T("k1","#/stats","🏅","我的戰績","","勝負・段位・🧬 天賦分析")}
-    ${T("k2","#/redo","🔁","錯棋重練","","從下錯的那一步再下一次，練到對")}
-    ${T("k3","#/openings","📊","我的開局","","你常用的開局・勝率・中局正招")}
    </div>
    ${OFF&&REWARD?`<div class="sec-t">收藏</div><div class="hero strips">
     ${T("k3","#/garage","🚗","我的車庫","hCar",(()=>{try{const b=JSON.parse(localStorage.getItem("xq_carBank"));if(b)return`🚗 ${b.pts.toLocaleString()} 點・收藏 ${Object.keys(b.owned||{}).length} 台`}catch(e){}return"贏棋拿點數換車"})())}
@@ -1599,7 +1599,8 @@ function Home(v){
     const bt=v.querySelector("#hRecentBox [data-go]");bt.onclick=()=>location.hash=bt.dataset.go}
   api("/play/state").then(st=>{
     const won=st.levels.filter(l=>(st.record[l.n]||{}).w>0).length;
-    const e=v.querySelector("#hCpu");if(e)e.textContent=!st.result&&st.moves.length?(st.ranked?`對局進行中・積分挑戰`:`對局進行中・第 ${st.level} 級`):st.cpuRate?`🏅 電腦段位 ${st.cpuRate.rank}・${st.cpuRate.pts} 分`:`已通關 ${won}／8 級`}).catch(()=>{});
+    /* 意見回饋 299：一定寫出電腦段位和積分；有下到一半的對局再接在後面 */
+    const e=v.querySelector("#hCpu");if(e){const rk=st.cpuRate?`🏅 ${st.cpuRate.rank}・${st.cpuRate.pts} 分`:`已通關 ${won}／8 級`,on=!st.result&&st.moves.length?(st.ranked?"・積分挑戰下到一半":`・第 ${st.level} 級下到一半`):(st.cpuRate&&st.cpuRate.next?`・再 ${st.cpuRate.toNext} 分升 ${st.cpuRate.next}`:"");e.textContent=rk+on}}).catch(()=>{});
   if(!OFF)api("/state").then(st=>{const e=v.querySelector("#hAi");if(e)e.innerHTML=st.running?'<span class="live">直播中</span>':st.result?"上一盤："+(st.result.w?PLAYER[st.result.w]+"勝":"和局"):"按進去可以開始"}).catch(()=>{});
   return{stop:()=>offNet.forEach(f=>f())}}
 
