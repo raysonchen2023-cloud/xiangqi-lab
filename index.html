@@ -475,7 +475,7 @@ html[data-era=ming] .topbar,html[data-era=qing] .topbar{border-bottom-width:4px}
       if(!window.caches)return go();caches.keys().then(function(ks){return Promise.all(ks.filter(function(k){return k.indexOf("xqlab-app-")===0}).map(function(k){return caches.delete(k)}))})
         .then(function(){return navigator.serviceWorker&&navigator.serviceWorker.getRegistration()}).then(function(r){return r&&r.update()}).catch(function(){}).then(go)}},4000)})();
 </script>
-<script>window.XQ_OFFLINE=true;window.XQ_BUILD="20261103-1902";</script>
+<script>window.XQ_OFFLINE=true;window.XQ_BUILD="20261103-2027";</script>
 <script src="core.js"></script>
 <script src="engine.js"></script>
 <script src="local.js"></script>
@@ -2416,11 +2416,13 @@ async function talentReport(box){
   /* 意見回饋 307：成長曲線（只有練習量和準確度，加上段位；沒有名字和代號）每兩天匿名送一次到後台，跟大家的資料一起校正「一般棋友」 */
   if(Y.length>=5&&window.XQNet&&XQNet.shareIRT&&Date.now()-store.get("talShareAt",0)>2*864e5){store.set("talShareAt",Date.now());let aid=store.get("anonId",null);if(!aid){aid=Math.random().toString(36).slice(2,10);store.set("anonId",aid)}
     api("/play/state").then(st=>st&&st.cpuRate&&st.cpuRate.rank).catch(()=>null).then(crk=>{try{XQNet.shareIRT({t:"tal",aid,rk:NR,crk:crk||null,pts:Y.map((y,j)=>[+PP[j].toFixed(1),Math.round(y)]).slice(-80)})}catch(e){}})}
-  box.innerHTML=`<div class="card" style="margin-top:4px;text-align:center"><div class="muted">長棋速度（下得越多，進步得多快）</div>
-      ${M?`<div style="font-size:42px;font-weight:900;font-family:var(--serif);color:var(--accent)">${M.N<5?"?":M.rPct}<span style="font-size:17px"> 分</span></div>
-      <div><b>${lab}</b>・你進步的速度，比 ${M.N<5?"?":M.rPct}% 的學棋者快</div>
-      <div class="muted" style="font-size:13px;line-height:1.7;margin-top:2px">${/* 意見回饋 352：白話說明 */""}照目前的資料估：你有 <b>${pc(M.top25)}</b> 的機會是「進步很快」的人（每 4 個人裡最快的那 1 個）；有 <b>${pc(M.top5)}</b> 的機會是「頂尖」（每 20 個人裡最快的那 1 個）。</div>`:`<div style="margin:8px 0">再下 3 盤評過等的對局就能估</div>`}
-      <div class="muted" style="font-size:12.5px;margin-top:4px">根據 ${G.length} 盤對局、${QL.length} 次測驗、${GL0.length} 局猜著法（練習量約 ${f1(P)} 盤${practiceTotal()>=1?`・練習時間 ${practiceTotal()>=60?(practiceTotal()/60).toFixed(1)+" 小時":Math.round(practiceTotal())+" 分鐘"}`:""}）${M&&M.N<20?"・下得還不多，先參考一般棋友的樣子，下越多越準":""}</div></div>
+  box.innerHTML=`<div class="card" style="margin-top:4px;line-height:1.6">${/* 意見回饋 354：第一段也改成表格 */""}<div class="muted" style="font-size:13px;margin-bottom:6px">進步速度＝同樣多的練習，你的每步品質漲得多快，0～100 分。</div>
+      ${M?`<table class="st-lv" style="font-size:14px"><tr><th>項目</th><th>數值</th><th>說明</th></tr>
+      <tr><td>進步速度</td><td><b style="font-size:18px;color:var(--accent)">${M.N<5?"?":M.rPct}</b> 分</td><td>${esc(lab)}・比 ${M.N<5?"?":M.rPct}% 的學棋者快</td></tr>
+      <tr><td>進步很快</td><td><b>${pc(M.top25)}</b></td><td>機會是每 4 人裡最快的 1 個</td></tr>
+      <tr><td>頂尖</td><td><b>${pc(M.top5)}</b></td><td>機會是每 20 人裡最快的 1 個</td></tr>
+      <tr><td>根據</td><td>${G.length} 盤</td><td>測驗 ${QL.length} 次・猜著法 ${GL0.length} 局・練習量約 ${f1(P)} 盤${practiceTotal()>=1?`・練習 ${practiceTotal()>=60?(practiceTotal()/60).toFixed(1)+" 小時":Math.round(practiceTotal())+" 分鐘"}`:""}</td></tr></table>
+      ${M.N<20?'<div class="muted" style="font-size:12.5px;margin-top:4px">下得還不多，先參考一般棋友的樣子，下越多越準</div>':""}`:`<div style="margin:8px 0">再下 3 盤評過等的對局就能估</div>`}</div>
     ${KF?`<div class="sec-t">現在的棋力</div><div class="card" style="line-height:1.6">${/* 意見回饋 353：改成表格＋一句說明 */""}<div class="muted" style="font-size:13px;margin-bottom:6px">每步品質＝每一步跟 Pikafish 的最好走法比，0～100 分，越高越好。</div>
       <table class="st-lv" style="font-size:14px"><tr><th>項目</th><th>分數</th><th>說明</th></tr>
       <tr><td>你</td><td><b>${f0(KF.th)}</b></td><td>80% 機率在 ${f0(KF.th-1.28*KF.sd)}～${f0(KF.th+1.28*KF.sd)}</td></tr>
