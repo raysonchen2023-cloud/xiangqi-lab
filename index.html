@@ -87,6 +87,11 @@ input,select{font:inherit;font-size:16px;color:inherit}
 .hero{position:relative;border-radius:14px;overflow:hidden;background:#3a2a1c center/cover no-repeat;box-shadow:0 2px 8px #0002}.hero::after{content:"";position:absolute;inset:0;background:linear-gradient(180deg,transparent 45%,rgba(0,0,0,.55))}
 .hero .hc{position:absolute;left:12px;right:12px;bottom:10px;z-index:1;color:#fff;text-shadow:0 1px 4px #000a}.hero .hc b{font:900 20px var(--serif);display:block}.hero .hc small{font-size:12.5px;opacity:.92}
 .ti{width:100%;height:100%;object-fit:contain}.lb .ti{width:30px;height:30px}.bcard .bic .ti{width:64px;height:64px}.circles button .ti{width:46px;height:46px}
+/* 天賦頁重點卡 */
+.thero{margin-top:4px}.tstats{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px}.tstat{display:flex;flex-direction:column;align-items:center;text-align:center;padding:10px 4px;border-radius:12px;background:color-mix(in srgb,var(--accent) 8%,var(--card));min-width:0}
+.tstat small{font-size:12px;color:var(--muted)}.tstat b{font:900 32px/1.1 var(--serif);color:var(--accent);margin:2px 0}.tstat b i{font:600 12px var(--sans,inherit);font-style:normal;color:var(--muted);margin-left:2px}.tstat span{font-size:11.5px;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:100%}
+.tsum{margin:12px 2px 10px;line-height:1.7;font-size:14.5px}
+.tdet{margin-top:12px}.tdet>summary{cursor:pointer;list-style:none;padding:12px 14px;border:1px solid var(--line);border-radius:12px;background:var(--card);font-weight:700;font-size:14px}.tdet>summary::-webkit-details-marker{display:none}.tdet>summary::after{content:" ▾";color:var(--muted)}.tdet[open]>summary::after{content:" ▴"}
 .eras{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:16px 6px;margin-top:10px}.era-c{display:flex;flex-direction:column;align-items:center;gap:6px;background:none;border:0;padding:0;font:inherit;color:inherit;cursor:pointer;min-width:0}.era-c span{width:78px;height:78px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-family:var(--serif);font-size:30px;font-weight:900;background:radial-gradient(circle at 35% 30%,var(--card),color-mix(in srgb,var(--accent) 14%,var(--card)));border:2px solid color-mix(in srgb,var(--accent) 45%,var(--line));box-shadow:0 2px 6px rgba(0,0,0,.12)}.era-c span.two{font-size:22px}.era-c.on span{border-color:var(--red);color:var(--red);border-width:3px}.era-c b{font-size:13.5px}
 .doors{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px;margin-top:12px}.door{display:flex;flex-direction:column;align-items:center;gap:2px;padding:14px 4px 8px;border:2px solid color-mix(in srgb,var(--accent) 45%,var(--line));border-bottom-width:4px;border-radius:999px 999px 10px 10px;background:linear-gradient(180deg,color-mix(in srgb,var(--accent) 10%,var(--card)),var(--card));font:inherit;color:inherit;cursor:pointer;min-width:0}.door .dic{font-size:26px}.door b{font-size:14px}.door small{font-size:11px;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:100%}
 .travel{position:fixed;inset:0;z-index:9998;overflow:hidden;background:linear-gradient(180deg,#3a1d14 0%,#8a3b1f 38%,#d98a3a 52%,#6b5434 53%,#4a3a26 100%);animation:tvIn .35s ease both}.travel.out{animation:tvOut .35s ease both}
@@ -482,7 +487,7 @@ html[data-era=ming] .topbar,html[data-era=qing] .topbar{border-bottom-width:4px}
       if(!window.caches)return go();caches.keys().then(function(ks){return Promise.all(ks.filter(function(k){return k.indexOf("xqlab-app-")===0}).map(function(k){return caches.delete(k)}))})
         .then(function(){return navigator.serviceWorker&&navigator.serviceWorker.getRegistration()}).then(function(r){return r&&r.update()}).catch(function(){}).then(go)}},4000)})();
 </script>
-<script>window.XQ_OFFLINE=true;window.XQ_BUILD="20261103-2130";</script>
+<script>window.XQ_OFFLINE=true;window.XQ_BUILD="20261103-2137";</script>
 <script src="core.js"></script>
 <script src="engine.js"></script>
 <script src="local.js"></script>
@@ -2424,7 +2429,19 @@ async function talentReport(box){
   /* 意見回饋 307：成長曲線（只有練習量和準確度，加上段位；沒有名字和代號）每兩天匿名送一次到後台，跟大家的資料一起校正「一般棋友」 */
   if(Y.length>=5&&window.XQNet&&XQNet.shareIRT&&Date.now()-store.get("talShareAt",0)>2*864e5){store.set("talShareAt",Date.now());let aid=store.get("anonId",null);if(!aid){aid=Math.random().toString(36).slice(2,10);store.set("anonId",aid)}
     api("/play/state").then(st=>st&&st.cpuRate&&st.cpuRate.rank).catch(()=>null).then(crk=>{try{XQNet.shareIRT({t:"tal",aid,rk:NR,crk:crk||null,pts:Y.map((y,j)=>[+PP[j].toFixed(1),Math.round(y)]).slice(-80)})}catch(e){}})}
-  box.innerHTML=`<div class="sec-t" style="margin-top:4px">進步速度</div><div class="card" style="line-height:1.6">${/* 意見回饋 354、357：表格；進步速度和進步很快合併成一列 */""}<div class="muted" style="font-size:13px;margin-bottom:6px">同樣多的練習，你的每步品質漲得多快，0～100 分。</div>
+  /* 意見回饋 358：天賦頁重新排版——最上面一張重點卡（三個大數字＋一句總結＋建議先練），圖和各項功夫在下面，詳細表格收進「詳細數字」 */
+  const RP=redoPower(),dPop=KF?Math.round(KF.th-popNow):null;
+  const tile=(lab,v,unit,sub)=>`<div class="tstat"><small>${lab}</small><b>${v}<i>${unit}</i></b><span>${sub}</span></div>`;
+  const sumTxt=[M&&M.N>=5?`你比 <b>${M.rPct}%</b> 的學棋者進步得快`:"資料還不多，進步速度先參考一般棋友",KF?`每步品質比同樣練習量的人${dPop>=0?"多":"少"} <b>${Math.abs(dPop)}</b> 分`:"",weak?`目前最弱的是 <b>${weak.k}</b>`:""].filter(Boolean).join("；")+"。";
+  box.innerHTML=`<div class="card thero">
+      <div class="tstats">${tile("進步速度",M&&M.N>=5?M.rPct:"?","分",esc(lab||"還在觀察"))}${tile("每步品質",KF?f0(KF.th):"—","分",KF?`一般棋友 ${f0(popNow)}`:"再下幾盤")}${tile("改錯力",RP?RP.score:"—","分",RP?`練過 ${RP.q} 題`:"還沒練")}</div>
+      <p class="tsum">${sumTxt}</p>
+      ${weak?`<button class="btn" id="tgo" style="width:100%">🎯 建議先練：${esc(weak.k)}（${GO[weak.k][1]}）›</button>`:""}
+      <div class="muted" style="font-size:12px;margin-top:8px;text-align:center">根據 ${G.length} 盤對局・${QL.length} 次測驗・${GL0.length} 局猜著法${M&&M.N<20?"・下得還不多，下越多越準":""}</div></div>
+    ${chart?`<div class="sec-t">成長軌跡與預測</div><div class="card">${chart}<p class="muted" style="margin:4px 0 0;font-size:13px;line-height:1.6">灰點是每一盤走得好不好；線是照你的進步速度畫出來的成長路線，淺色帶是大概的範圍。${ms?(ms.med==null||ms.pNever>=.5?`照目前的練法，平均準確度有 ${pc(ms.pNever)} 的機率到不了 ${ms.goal} 分（天花板估計約 ${f0(M.A.m)} 分）。想再往上，要換個練法，例如先補下面的弱項。`:`平均準確度要到 <b>${ms.goal}</b> 分，大約還要練 <b>${f0(ms.med)}</b> 盤（80% 區間 ${f0(ms.lo)}～${f0(ms.hi)} 盤）${ms.pNever>.1?`；不過也有 ${pc(ms.pNever)} 的機率照目前的練法到不了`:""}。`):""}</p></div>`:""}
+    ${prof.length?`<div class="sec-t">各項功夫</div><div class="card">${prof.map(bar).join("")}${IR.all?"":'<p class="muted" style="font-size:12.5px;margin:6px 0 0">做一次<a href="#/quiz">棋力測驗</a>，就會加上「殺法、戰術、局面判斷、殘局題」四項。</p>'}</div>`:""}
+    <details class="tdet"><summary>📊 詳細數字<small class="muted" style="font-weight:400;font-size:12px;display:block;margin-top:2px">進步速度、棋力、改錯力、棋路底子、殘局功夫</small></summary>
+    <div class="sec-t" style="margin-top:4px">進步速度</div><div class="card" style="line-height:1.6">${/* 意見回饋 354、357：表格；進步速度和進步很快合併成一列 */""}<div class="muted" style="font-size:13px;margin-bottom:6px">同樣多的練習，你的每步品質漲得多快，0～100 分。</div>
       ${M?`<table class="ttab"><tr><th>項目</th><th>數值</th><th>說明</th></tr>
       <tr><td>進步速度</td><td><span class="big">${M.N<5?"?":M.rPct}</span> 分</td><td>${esc(lab)}・比 ${M.N<5?"?":M.rPct}% 的學棋者快；有 ${pc(M.top25)} 機會是「進步很快」的人（每 4 人最快的 1 個）</td></tr>
       <tr><td>頂尖</td><td>${pc(M.top5)}</td><td>機會是每 20 人裡最快的 1 個</td></tr>
@@ -2438,10 +2455,8 @@ async function talentReport(box){
       ${GL?`<tr><td>等級分</td><td>${f0(GL.r)}</td><td>從跟電腦下的 ${GL.n} 盤推算・誤差 ±${f0(GL.RD)}</td></tr>`:""}</table></div>`:""}
     ${redoPowerHTML()}
     ${tau?`<div class="sec-t">你的棋路底子</div><div class="card">${tau}</div>`:""}
-    ${chart?`<div class="sec-t">成長軌跡與預測</div><div class="card">${chart}<p class="muted" style="margin:4px 0 0;font-size:13px;line-height:1.6">灰點是每一盤走得好不好；線是照你的進步速度畫出來的成長路線，淺色帶是大概的範圍。${ms?(ms.med==null||ms.pNever>=.5?`照目前的練法，平均準確度有 ${pc(ms.pNever)} 的機率到不了 ${ms.goal} 分（天花板估計約 ${f0(M.A.m)} 分）。想再往上，要換個練法，例如先補下面的弱項。`:`平均準確度要到 <b>${ms.goal}</b> 分，大約還要練 <b>${f0(ms.med)}</b> 盤（80% 區間 ${f0(ms.lo)}～${f0(ms.hi)} 盤）${ms.pNever>.1?`；不過也有 ${pc(ms.pNever)} 的機率照目前的練法到不了`:""}。`):""}</p></div>`:""}
-    ${prof.length?`<div class="sec-t">各項功夫</div><div class="card">${prof.map(bar).join("")}${IR.all?"":'<p class="muted" style="font-size:12.5px;margin:6px 0 0">做一次<a href="#/quiz">棋力測驗</a>，就會加上「殺法、戰術、局面判斷、殘局題」四項。</p>'}</div>`:""}
     ${TK.length?`<div class="sec-t">殘局功夫</div><div class="card">${TK.slice(0,6).map(t=>{const x=lossOf(EKL[t.k]||[]);return bar(x&&x.n>=5?{k:t.k,v:accScore(x.acpl),t:`實戰平均每步少 ${Math.round(x.acpl)} 分（約等級分 ${accElo(x.acpl)}，${x.n} 步）・最近走出好棋 ${pc(t.b.recent)}`}:{k:t.k,v:Math.round(Math.min(60,t.b.recent*60)),t:`最近走出好棋 ${pc(t.b.recent)}（${t.n} 步／題；實戰步數還少，先粗估）`})}).join("")}<p class="muted" style="font-size:12.5px;margin:6px 0 0">照進攻方剩下的大子分類（例如「車兵對士象全」）；算的是實戰進入殘局後的每一步，加上測驗的殘局題。</p></div>`:""}
-    ${weak?`<div class="sec-t">建議先練</div><div class="card row" style="justify-content:space-between;gap:10px"><span>目前最弱的是<b>${weak.k}</b>（${weak.v}）。這些分數是用來找該練什麼的，不是給人貼標籤。</span><button class="pill" id="tgo" style="flex:none">${GO[weak.k][1]} ›</button></div>`:""}
+    </details>
     <details class="card" style="margin-top:8px"><summary><b>這些數字怎麼算的？</b></summary><div class="muted" style="font-size:13px;line-height:1.75;margin-top:6px">
       <p><b>天賦不是現在多強，是進步得多快。</b>同樣下 50 盤，有人進步很多、有人進步一點點，差別就在「長棋速度」。所以這裡看的是你的進步曲線，而不是現在的段位。</p>
       <p><b>每一步走得好不好：</b>Pikafish 幫每一盤的每一步評等，算出這盤平均幾分（100 分＝步步都是電腦首選）。把一盤一盤的分數照順序排起來，就是你的成長曲線。</p>
