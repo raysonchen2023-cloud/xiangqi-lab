@@ -907,7 +907,7 @@
     // 意見回饋 218：小帥坐在我這一側、棋盤左前角外的桌面上，面向我、身體往後仰一點（鏡頭在上方，這樣看得到臉）；
     // 之前 sc.add 被寫進註解裡，小帥根本沒出現。位置在棋盤框外，不會擋到棋子
     /* 意見回饋 362、365：小帥坐在自己的椅子上（桌子外緣、棋盤左前角旁），面向對手；椅背在他身後（靠鏡頭那側、很矮） */
-    const MP=window.__MATE||{},MX=MP.x!=null?MP.x:0,MZ=MP.z!=null?MP.z:11.6,MS=MP.s||4.1,MSEAT=MP.y!=null?MP.y:SY,SEAT_AT=MP.at||.55,SEAT_H=(MSEAT-FL)/SEAT_AT,SEAT_BACK=.6,SEAT_TILT=1;   /* 座椅圖：高度、椅面在圖上的高度比例、往對手那邊退多少（讓小帥畫在椅子前面）、面向鏡頭的程度 */
+    const MP=window.__MATE||{},MX=MP.x!=null?MP.x:0,MZ=MP.z!=null?MP.z:11.6,MS=MP.s||4.1,MSEAT=MP.y!=null?MP.y:SY,SEAT_AT=MP.at||.55,SEAT_H=(MSEAT-FL)/SEAT_AT,SEAT_BACK=.6,SEAT_TILT=.3;   /* 座椅圖：高度、椅面在圖上的高度比例、往對手那邊退多少（讓小帥畫在椅子前面）、面向鏡頭的程度 */
     {const wood=M(0x7A4A25,{roughness:.6}),dark=M(0x4E2E16,{roughness:.6}),ch=new T.Group();
       const box=(w,h,d,x,y,z,m)=>{const b=new T.Mesh(new T.BoxGeometry(w,h,d),m);b.position.set(x,y,z);b.castShadow=true;b.receiveShadow=true;ch.add(b)};
       box(2.7,.32,2.5,0,MSEAT-.16,0,wood);for(const[x,z]of[[-1.15,-1.05],[1.15,-1.05],[-1.15,1.05],[1.15,1.05]])box(.28,MSEAT-FL,.28,x,(MSEAT+FL)/2,z,dark);
@@ -917,8 +917,8 @@
       const src="data/seat/"+EK+".webp",put=()=>{const im=imgCache[src];if(!im||!im.naturalWidth||!el.isConnected||ch.userData.done)return;ch.userData.done=1;
         const SO=window.__SEAT||{},H=SO.h||SEAT_H,W=H*im.naturalWidth/im.naturalHeight,AT=SO.at||SEAT_AT,BK=SO.back!=null?SO.back:SEAT_BACK,t=srgb(new T.Texture(im));t.anisotropy=ANI;t.needsUpdate=true;
         // 正對鏡頭的去背圖，椅面（圖高 AT 的地方）對齊小帥的屁股；每一格都轉向鏡頭、放在小帥「背後」（從鏡頭看過去），繞到前面看時椅子也不會蓋住小帥
-        const geo=new T.PlaneGeometry(W,H);geo.translate(0,H*(.5-AT),0);const card=new T.Mesh(geo,new T.MeshBasicMaterial({map:t,alphaTest:.3,toneMapped:false,side:T.DoubleSide}));card.rotation.order="YXZ";card.renderOrder=5;sc.add(card);
-        bills.push({m:card,y:MSEAT,tilt:SO.tilt!=null?SO.tilt:SEAT_TILT,anchor:[MX,MZ],back:BK});
+        const geo=new T.PlaneGeometry(W,H);geo.translate(0,H/2,0);const card=new T.Mesh(geo,new T.MeshBasicMaterial({map:t,alphaTest:.3,toneMapped:false,side:T.DoubleSide}));card.rotation.order="YXZ";card.renderOrder=5;sc.add(card);
+        bills.push({m:card,y:FL,tilt:SO.tilt!=null?SO.tilt:SEAT_TILT,anchor:[MX,MZ],back:BK});   /* 意見回饋 386：轉軸在椅腳（地面上），往鏡頭仰的時候椅腳也一直貼著地 */
         /* 椅子直接放在地上（意見回饋 381：不要石台座） */
         ch.visible=false};
       if(loadImg(src,put))setTimeout(put,0)}
