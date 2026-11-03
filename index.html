@@ -39,7 +39,7 @@ input,select{font:inherit;font-size:16px;color:inherit}
 .view{flex:1;min-height:0;overflow:auto;-webkit-overflow-scrolling:touch}
 .view.fixed{overflow:hidden;display:flex;flex-direction:column}
 /* 底部導覽列 */
-.tabbar{flex:none;display:flex;background:var(--card);border-top:1px solid var(--line);padding-bottom:var(--safeB)}
+.tabbar{flex:none;display:flex;background:var(--card);border-top:1px solid var(--line);padding-bottom:var(--safeB);position:relative;z-index:3;transform:translateZ(0)}
 .tabbar button{flex:1;display:flex;flex-direction:column;align-items:center;gap:1px;padding:7px 0 6px;font-size:11px;color:var(--muted)}
 .tabbar button .ic{font-size:22px;line-height:1.1;filter:grayscale(1);opacity:.7}
 .tabbar button.on{color:var(--accent);font-weight:700}.tabbar button.on .ic{filter:none;opacity:1}
@@ -95,7 +95,7 @@ input,select{font:inherit;font-size:16px;color:inherit}
 .thero{margin-top:4px}.tstats{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px}.tstat{display:flex;flex-direction:column;align-items:center;text-align:center;padding:10px 4px;border-radius:12px;background:color-mix(in srgb,var(--accent) 8%,var(--card));min-width:0}
 .tstat small{font-size:12px;color:var(--muted)}.tstat b{font:900 32px/1.1 var(--serif);color:var(--accent);margin:2px 0}.tstat b i{font:600 12px var(--sans,inherit);font-style:normal;color:var(--muted);margin-left:2px}.tstat span{font-size:11.5px;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:100%}
 .tsum{margin:12px 2px 10px;line-height:1.7;font-size:14.5px}
-.eic{width:1.4em;height:1.4em;object-fit:contain;display:inline-block;vertical-align:middle;filter:drop-shadow(0 1px 1px rgba(0,0,0,.18))}#topRight .ib .eic{width:26px;height:26px;padding:2px;border-radius:50%;background:rgba(255,248,236,.92)}.tabbar .ic .eic{width:26px;height:26px}
+.eic{width:1.4em;height:1.4em;object-fit:contain;display:inline-block;vertical-align:middle;filter:drop-shadow(0 1px 1px rgba(0,0,0,.18))}#topRight .ib .eic{width:26px;height:26px;padding:2px;border-radius:50%;background:rgba(255,248,236,.92)}.tabbar .ic .eic{width:26px;height:26px;filter:none}.tabbar button .ic:has(.eic){filter:none;opacity:.55}.tabbar button.on .ic:has(.eic){opacity:1}
 .ecover{position:fixed;inset:0;z-index:9990;display:flex;align-items:center;justify-content:center;background:#1c140d;opacity:0;transition:opacity .45s ease}.ecover.on{opacity:1}
 .ecover i{position:absolute;inset:0;background-size:cover;background-position:center;filter:saturate(1.05);transform:scale(1.08);transition:transform 2.4s ease-out}.ecover.on i{transform:scale(1)}
 .ecover>div{position:relative;text-align:center;color:#fff;font-family:var(--serif);text-shadow:0 2px 12px rgba(0,0,0,.7);background:rgba(20,12,6,.38);padding:18px 26px;border-radius:16px}
@@ -505,7 +505,7 @@ html[data-era=ming] .topbar,html[data-era=qing] .topbar{border-bottom-width:4px}
       if(!window.caches)return go();caches.keys().then(function(ks){return Promise.all(ks.filter(function(k){return k.indexOf("xqlab-app-")===0}).map(function(k){return caches.delete(k)}))})
         .then(function(){return navigator.serviceWorker&&navigator.serviceWorker.getRegistration()}).then(function(r){return r&&r.update()}).catch(function(){}).then(go)}},4000)})();
 </script>
-<script>window.XQ_OFFLINE=true;window.XQ_BUILD="20261104-0635";</script>
+<script>window.XQ_OFFLINE=true;window.XQ_BUILD="20261104-0645";</script>
 <script src="core.js"></script>
 <script src="engine.js"></script>
 <script src="local.js"></script>
@@ -664,15 +664,17 @@ function killFx(svg,win,why,kIdx,flip,o){svg=fxHost(svg);const r=svg.getBounding
       if(!lose)for(const[f,a]of[[147,.3],[220,.22],[331,.14],[495,.07],[740,.04]]){const oo=AC.createOscillator(),gg=AC.createGain();oo.frequency.value=f*(1+(Math.random()-.5)*.01);gg.gain.setValueAtTime(.0001,t2);gg.gain.linearRampToValueAtTime(a,t2+.012);gg.gain.exponentialRampToValueAtTime(.001,t2+2.4);oo.connect(gg).connect(out);oo.start(t2);oo.stop(t2+2.5)}}
     // 蓋印：短促的悶響
     {const t3=t+1.45,s=noise(.12,3),lp=AC.createBiquadFilter(),g=AC.createGain();lp.type="lowpass";lp.frequency.value=500;g.gain.value=.9;s.connect(lp).connect(g).connect(out);s.start(t3)}})}
-/* 意見回饋 317：卡片打開時先記一筆「同一頁」的上一頁紀錄，iPhone 往右滑（上一頁）只會關掉卡片、留在原本的畫面；
-   用按鈕關掉卡片留下的那筆紀錄，下次往右滑時自動跳過，不用多滑一次 */
-let SHEET_MARK=null,SHEET_STALE=false;
+/* 意見回饋 317：卡片打開時先記一筆「同一頁」的上一頁紀錄，iPhone 往右滑（上一頁）只會關掉卡片、留在原本的畫面。
+   意見回饋 405：每一筆 App 內的歷史紀錄都蓋上深度 d（第一筆 0，往前一頁 +1，replace 不變）；左上「返回」跟往右滑走同一條路：
+   後面還有 App 自己的上一頁就 history.back()，沒有（剛打開 App）才 replace 到預設的上一層，不再往前推一筆 */
+let NAV_D=0,NAV_REPL=false,NAV_HOME=false;
+try{const s0=history.state;if(s0&&typeof s0.d==="number")NAV_D=s0.d;else history.replaceState(Object.assign({},s0,{d:0}),"")}catch(e){}
 /* 意見回饋 371：清單分頁，每頁 10 個（上一頁／下一頁），換頁捲回最上面 */
 function pageList(b,list,render,bind,per){per=per||10;let p=0;const N=Math.ceil(list.length/per);
   const go=()=>{b.innerHTML=render(list.slice(p*per,p*per+per))+(N>1?`<div class="row" style="justify-content:space-between;align-items:center;margin-top:12px"><button class="pill" data-pg="-1"${p?"":" disabled"}>‹ 上一頁</button><span class="muted">第 ${p+1}／${N} 頁</span><button class="pill" data-pg="1"${p<N-1?"":" disabled"}>下一頁 ›</button></div>`:"");
     b.querySelectorAll("[data-pg]").forEach(x=>x.onclick=()=>{p=Math.min(N-1,Math.max(0,p+ +x.dataset.pg));vibrate(5);go();b.scrollTop=0});if(bind)bind(b)};go()}
 function sheet(title,build){
-  try{if(!(history.state&&history.state.xqSheet)){history.pushState({xqSheet:1},"",location.href);SHEET_MARK=location.href}SHEET_STALE=false}catch(e){}
+  try{if(!(history.state&&history.state.xqSheet)){const d=NAV_D+1;history.pushState({xqSheet:1,d},"",location.href);NAV_D=d}}catch(e){}
   document.querySelectorAll("#scrim,#sheet").forEach(e=>e.remove());const sc=document.createElement("div");sc.className="scrim";sc.id="scrim";
   const sh=document.createElement("div");sh.className="sheet";sh.id="sheet";
   sh.innerHTML=`<div class="grab"></div><div class="sh-t">${esc(title)}</div><div class="sh-b"></div>`;
@@ -683,9 +685,15 @@ function sheet(title,build){
   let y0=null;sh.querySelector(".grab").parentElement.addEventListener("touchstart",e=>{if(e.target.closest(".sh-b"))return;y0=e.touches[0].clientY},{passive:true});
   sh.addEventListener("touchend",e=>{if(y0!=null&&e.changedTouches[0].clientY-y0>60)closeSheet();y0=null});
   return sh}
-function closeSheet(fromPop){const a=$("#scrim"),b=$("#sheet");if(b){b.classList.remove("show");a&&a.classList.remove("show");setTimeout(()=>{a&&a.remove();b.remove()},220);if(fromPop!==true&&SHEET_MARK)SHEET_STALE=true}}
-addEventListener("popstate",()=>{const b=$("#sheet");if(b&&b.classList.contains("show")){closeSheet(true);SHEET_MARK=null;SHEET_STALE=false;return}
-  if(SHEET_STALE&&SHEET_MARK===location.href){SHEET_STALE=false;SHEET_MARK=null;history.back()}});
+function closeSheet(fromPop){const a=$("#scrim"),b=$("#sheet");if(!b||b.dataset.closing)return;b.dataset.closing=1;b.classList.remove("show");a&&a.classList.remove("show");setTimeout(()=>{a&&a.remove();b.remove()},220);
+  if(fromPop===true)return;const href=location.href;
+  /* 用按鈕、點背景、往下拉關掉：把開卡片時推進去的那筆退掉；緊接著換頁或又開了一張卡片就不退 */
+  setTimeout(()=>{const s1=history.state,cur=$("#sheet");if(s1&&s1.xqSheet&&location.href===href&&(!cur||cur===b))history.back()},0)}
+addEventListener("popstate",()=>{const s1=history.state||{},d0=NAV_D;if(typeof s1.d==="number")NAV_D=s1.d;
+  if(NAV_HOME){NAV_HOME=false;if(navKey(location.hash)!=="/")setTimeout(()=>navReplace("#/"),0);return}
+  const b=$("#sheet");if(b&&b.classList.contains("show")&&!b.dataset.closing){closeSheet(true);return}
+  /* 落在一筆卡片已經不在的卡片紀錄上（開著卡片直接換頁留下的）：順著方向再走一格，這一滑才不會白滑 */
+  if(s1.xqSheet){if(typeof s1.d==="number"&&s1.d>d0)history.forward();else history.back()}});
 function modal(html,buttons){if(Date.now()<MODAL_HOLD){setTimeout(()=>modal(html,buttons),MODAL_HOLD-Date.now()+30);return null}
   const m=document.createElement("div");m.className="modal";m.innerHTML=`<div class="box">${html}<div class="mb"></div></div>`;
   for(const[label,fn,ghost]of buttons){const b=document.createElement("button");b.className="btn"+(ghost?" ghost":"");b.textContent=label;b.onclick=()=>{m.remove();fn&&fn()};m.querySelector(".mb").append(b)}
@@ -1309,7 +1317,9 @@ function Board(onTap,onSwipe){
 
 // ================= 版面骨架與路由 =================
 let screen=null;   // 目前畫面：{stop()}
-let NAV_PREV=null,NAV_CUR=location.hash;addEventListener("hashchange",()=>{NAV_PREV=NAV_CUR;NAV_CUR=location.hash});
+addEventListener("hashchange",()=>{try{const s1=history.state;if(s1&&typeof s1.d==="number"){NAV_D=s1.d;return}const d=NAV_REPL?NAV_D:NAV_D+1;NAV_REPL=false;history.replaceState({d},"");NAV_D=d}catch(e){}});
+function navReplace(h){if(navKey(h)===navKey(location.hash))return;NAV_REPL=true;location.replace(h)}
+function goBack(fb){if(NAV_D>0){history.back();return}if(fb&&fb!==true)navReplace(fb)}
 const navKey=h=>(h||"").replace(/^#/,"")||"/";
 /* 意見回饋 393：App 的圖示換成 Gemini 畫的古風圖示，跟著目前朝代換風格（data/icons/<朝代>/<名稱>.webp，tools/icons_slice.py 切的）；
    首頁功能、底部分頁、冒險入口用「要去哪一頁」對應，右上角按鈕用原本的 emoji 對應；圖還沒到或缺圖時維持原本的 emoji */
@@ -1321,7 +1331,7 @@ function iconize(){document.querySelectorAll("[data-go] > .ic,[data-go] > .dic")
   document.querySelectorAll("#topRight .ib").forEach(b=>{if(b.querySelector("img"))return;const n=ICO_EMO[b.textContent.trim()];if(n)icoImg(b,n)})}
 function icoEra(){document.querySelectorAll("img.eic").forEach(im=>{im.src=icoSrc(im.dataset.ico)})}
 {let icoT=0;new MutationObserver(()=>{if(icoT)return;icoT=requestAnimationFrame(()=>{icoT=0;try{iconize()}catch(e){}})}).observe(document.body,{childList:true,subtree:true})}
-function setTop(title,back,right){$("#title").textContent=title;$("#back").hidden=!back;$("#back").onclick=()=>{if(back===true)history.back();else if(NAV_PREV!=null&&navKey(NAV_PREV)===navKey(back))history.back();else location.hash=back};
+function setTop(title,back,right){$("#title").textContent=title;$("#back").hidden=!back;$("#back").onclick=()=>goBack(back);
   const tr=$("#topRight");tr.innerHTML="";if(right)for(const[icon,fn,label]of right){const b=document.createElement("button");b.className="ib";b.textContent=icon;b.title=label||"";b.onclick=fn;tr.append(b)}
   // 全螢幕畫面（沒有底部導覽列）一律加「回首頁」，加入主畫面的 App 模式沒有瀏覽器上一頁也能回去
   if(back&&back!=="#/"&&!(right&&right.length>=2)){const h=document.createElement("button");h.className="ib";h.textContent="🏠";h.title="回首頁";h.onclick=()=>{location.hash="#/"};tr.append(h)}}
@@ -1334,19 +1344,19 @@ function route(){
   const h=location.hash.replace(/^#/,"")||"/",p=h.split("/").filter(Boolean).map(decodeURIComponent);
   if(OFF&&window.XQNet&&XQNet.finished()&&p[0]!=="pvp")XQNet.leave();
   if(!p.length)return screen=Home(v);
-  if(p[0]==="play"){location.replace("#/");return}   // 舊的「對弈」頁已經併進首頁
+  if(p[0]==="play"){navReplace("#/");return}   // 舊的「對弈」頁已經併進首頁
   if(p[0]==="cpu")return screen=CpuGame(v);
-  if(p[0]==="join"&&/^[rb]$/.test(p[1]||"")){store.set("pvpSeat",p[1]);if(OFF)XQ.setPvpOnline(true);location.replace("#/pvp");return}
+  if(p[0]==="join"&&/^[rb]$/.test(p[1]||"")){store.set("pvpSeat",p[1]);if(OFF)XQ.setPvpOnline(true);navReplace("#/pvp");return}
   // 同一支手機的雙人對戰已經拿掉：沒有在下網路對局時，改去線上大廳（開發者模式保留，給電腦連線對戰用）
-  if(p[0]==="pvp"&&OFF&&!DEVMODE()&&!(window.XQNet&&XQNet.active())){location.replace("#/lobby");return}
+  if(p[0]==="pvp"&&OFF&&!DEVMODE()&&!(window.XQNet&&XQNet.active())){navReplace("#/lobby");return}
   if(p[0]==="pvp")return screen=PvpGame(v);
   if(p[0]==="lobby")return screen=Lobby(v);
-  if(p[0]==="watch"){if(p[1]==="ai")return screen=Watch(v);location.replace("#/lobby");return}   /* 意見回饋 290：觀戰併進線上大廳 */
+  if(p[0]==="watch"){if(p[1]==="ai")return screen=Watch(v);navReplace("#/lobby");return}   /* 意見回饋 290：觀戰併進線上大廳 */
   if(p[0]==="stats")return screen=Stats(v);
   if(p[0]==="redo"&&p[1]==="play")return screen=CpuGame(v,true);
   if(p[0]==="redo")return screen=Redo(v);
   if(p[0]==="openings")return screen=Openings(v);
-  if(p[0]==="garage"){if(!REWARD){location.replace("#/");return}return screen=Garage(v)}
+  if(p[0]==="garage"){if(!REWARD){navReplace("#/");return}return screen=Garage(v)}
   if(p[0]==="settings")return screen=Settings(v);
   if(p[0]==="fbadmin")return screen=FbAdmin(v);
   if(p[0]==="quiz")return screen=Quiz(v);
@@ -1632,7 +1642,7 @@ function installGuide(manual){if(isStandalone())return;const ua=navigator.userAg
 // 用瀏覽器打開時自動問一次（手機才問；說過不用就不再問；按「稍後」7 天後再問）
 if(OFF&&!isStandalone()&&/iPhone|iPad|Android/.test(MY_KIND))setTimeout(()=>{const a=store.get("instAsk",null);if(a&&(a.no||Date.now()-a.at<7*864e5))return;if(document.querySelector(".modal"))return;installGuide(false)},2500);
 // 網址上的 ?openExternalBrowser=1 只是給 LINE 看的，打開後拿掉
-if(/[?&]openExternalBrowser=1/.test(location.search))try{history.replaceState(null,"",location.pathname+location.hash)}catch(e){}
+if(/[?&]openExternalBrowser=1/.test(location.search))try{history.replaceState(history.state,"",location.pathname+location.hash)}catch(e){}
 async function shareSheet(){
   const app=(OFF&&/^https:/.test(location.origin)?location.origin+location.pathname:APP_HOME)+"?openExternalBrowser=1";   // LINE 裡點開會改用手機的瀏覽器
   // 給一般玩家：只有 App 本身。連到電腦的 QR code 放在「🔗 連線到電腦」裡（只有連過電腦的裝置看得到）
@@ -3389,7 +3399,7 @@ function travel(to,done){if(document.querySelector(".travel"))return;const back=
       w.innerHTML=`<div class="xsw" style="width:${W}px;height:${H}px"><img alt="" src="${fr[0].src}"><b style="left:${f.cx*W-R}px;top:${f.cy*H-R}px;width:${2*R}px;height:${2*R}px;font-size:${R*1.25}px;color:${"帥仕相俥傌炮兵".includes(ch)?"#C8102E":"#1E1A16"}">${esc(ch)}</b></div><i class="dust"></i>`;
       const pic=w.querySelector("img");let i=0;const iv=setInterval(()=>{if(!ov.isConnected)return clearInterval(iv);i=(i+1)%8;pic.src=fr[i].src},110)})}).catch(()=>{});
   let k=0;const tl=setInterval(()=>{k=(k+1)%LINES.length;const e=ov.querySelector("#tline");if(e)e.textContent=LINES[k]},1600);
-  const h0=location.hash;let ended=false;const end=()=>{if(ended)return;ended=true;clearInterval(tl);clearTimeout(tm);ov.classList.add("out");setTimeout(()=>ov.remove(),350);if(done&&location.hash===h0)done()};
+  const h0=location.hash;let ended=false;const end=()=>{if(ended)return;ended=true;removeEventListener("hashchange",end);clearInterval(tl);clearTimeout(tm);ov.classList.add("out");setTimeout(()=>ov.remove(),350);if(done&&location.hash===h0)done()};addEventListener("hashchange",end);
   const tm=setTimeout(end,5000);ov.querySelector(".tskip").onclick=e=>{e.stopPropagation();end()}}
 function innSheet(v){setTimeout(innDrop,1200);setTop("🏮 驛站","#/journey");const I=xpInfo(),Sx=jSecrets(),nx=JR.find(R=>R.lv>I.L);v.className="view";
   const row=(x,locked)=>`<button class="item" data-inn="${x.id}" ${locked?"disabled":""}><span class="lb" style="font-size:24px">${locked?"❔":x.ic}</span><span class="tx"><b>${locked?"？？？（還沒找到）":esc(x.name)}</b><span>${locked?"":x.who?`${esc(x.who)}・第 ${secretLv(x)} 級的實力・贏了 +${secretXP(x)} 修為`:`第 ${x.lv} 級的實力・贏了 +${x.xp} 修為（另加對局修為）`}</span></span><span class="muted">${locked?"":"›"}</span></button>`;
@@ -3458,7 +3468,7 @@ function Journey(v,sid){
   setTop("雲河棋路","#/");setTabs(false);const L=jStages(),S=jStars();
   if(sid==="inn")return innSheet(v);
   if(sid==="park")return ParkGate(v);
-  if(sid){const i=L.findIndex(x=>x.id===sid);if(i<0||!jOpen(L,i)){location.hash="#/journey";return{}}return jPuzzle(v,L[i])}
+  if(sid){const i=L.findIndex(x=>x.id===sid);if(i<0||!jOpen(L,i)){navReplace("#/journey");return{}}return jPuzzle(v,L[i])}
   const I=xpInfo(),tot=L.reduce((a,s)=>a+(S[s.id]||0),0);v.className="view";
   v.innerHTML=`<div class="pad"><div class="abn" id="jmap" style="height:170px;background-image:url(data/map/yunhe_map.webp);background-position:center 60%;margin-bottom:10px;cursor:pointer"><div class="hc"><b>🗺 雲河棋路</b><small>從渡口一路走到石桌・點一下看整張地圖</small></div></div><div class="card row" id="jxp" style="justify-content:space-between;cursor:pointer"><span>🀄 <b>Lv ${I.L} ${I.title}</b><br><span class="muted" style="font-size:12.5px">${I.need?`再 ${I.need-I.rest} 修為升級`:"已到最高等級"}・雲河棋路 ★ ${tot} / ${L.length*3}</span></span><span class="muted">›</span></div>
     <p class="muted" style="font-size:13px;line-height:1.7;margin:8px 2px">沿著石桌往事裡的雲河，從渡口一路走到石桌。每關最多 3 顆星，過關才會開下一關；每一站有等級門檻，等級不夠就先去驛站練棋。</p>
@@ -3523,7 +3533,7 @@ function jPuzzle(v,s){setTop("雲河棋路・"+s.name,"#/journey");let D=null,Q=
     v.innerHTML=`<div class="pad"><div class="card" style="text-align:center"><div style="font-size:44px">${stars?"🎉":"💪"}</div><h2 style="margin:4px 0">${stars?"過關！":"差一點"}</h2>
       <div style="font-size:30px;color:var(--accent)">${"★".repeat(stars)}${"☆".repeat(3-stars)}</div><p>答對 <b>${ok}</b> / ${Q.length} 題${stars?"":"（答對 3 題才過關）"}${usedHint&&ok>=5?"（用了提示，最多 ★★）":""}</p>${best>stars?`<p class="muted">這關最好成績 ${"★".repeat(best)}</p>`:""}
       <button class="btn" id="back">回雲河棋路</button><button class="btn ghost" id="again">再挑戰一次</button></div></div>`;
-    v.querySelector("#back").onclick=()=>location.hash="#/journey";v.querySelector("#again").onclick=()=>{k=0;ok=0;v.innerHTML="";location.hash="#/journey";setTimeout(()=>location.hash="#/journey/"+s.id,50)}}
+    v.querySelector("#back").onclick=()=>goBack("#/journey");v.querySelector("#again").onclick=()=>{k=0;ok=0;v.innerHTML="";route()}}
   return{}}
 
 /* ================= 🕰 回到當年（意見回饋 313）=================
@@ -3639,7 +3649,7 @@ function CpuGame(v,practicePage){
   function render(s){
     if(!practicePage&&s.practice&&!renderSwitched){renderSwitched=true;api("/play/switch",{kind:"cpu",ranked:OFF&&store.get("cpuRanked",true),reward:REWARD&&store.get("cpuCar",false),level:store.get("cpuLevel",3),human:"r"}).then(render).catch(e=>toast(e.message));return}
     if(practicePage&&!s.practice){if(!renderSwitched&&(s.others||[]).some(o=>o.kind==="practice")){renderSwitched=true;api("/play/switch",{kind:"practice"}).then(render).catch(e=>toast(e.message));return}
-      location.replace("#/cpu");return}   /* 在練習頁按了「新局」：開的是挑戰電腦，換到挑戰電腦頁 */
+      navReplace("#/cpu");return}   /* 在練習頁按了「新局」：開的是挑戰電腦，換到挑戰電腦頁 */
     /* 意見回饋 342：擂台的棋，公園一定是那個擂主的朝代（例如選過別的朝代公園，回來下擂台也會換回來） */
     if(s.arena&&ARENA[s.arena]&&store.get("era","classic")!==s.arena){store.set("era",s.arena);try{applyEra()}catch(e){}}
     const n0=lastN;st=s;lastN=s.moves.length;if(s.arena&&!s.result&&!parkOn()){store.set("park3d",true);setTimeout(()=>{draw();topBar()},0)}/* 意見回饋 319：朝代擂台的棋一律在公園 3D 裡 */if(!st.legal.some(([f])=>f===sel))sel=-1;
