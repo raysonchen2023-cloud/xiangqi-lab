@@ -473,7 +473,7 @@ html[data-era=ming] .topbar,html[data-era=qing] .topbar{border-bottom-width:4px}
       if(!window.caches)return go();caches.keys().then(function(ks){return Promise.all(ks.filter(function(k){return k.indexOf("xqlab-app-")===0}).map(function(k){return caches.delete(k)}))})
         .then(function(){return navigator.serviceWorker&&navigator.serviceWorker.getRegistration()}).then(function(r){return r&&r.update()}).catch(function(){}).then(go)}},4000)})();
 </script>
-<script>window.XQ_OFFLINE=true;window.XQ_BUILD="20261103-1737";</script>
+<script>window.XQ_OFFLINE=true;window.XQ_BUILD="20261103-1741";</script>
 <script src="core.js"></script>
 <script src="engine.js"></script>
 <script src="local.js"></script>
@@ -3487,6 +3487,8 @@ function CpuGame(v,practicePage){
     if(!practicePage&&s.practice&&!renderSwitched){renderSwitched=true;api("/play/switch",{kind:"cpu",ranked:OFF&&store.get("cpuRanked",true),reward:REWARD&&store.get("cpuCar",false),level:store.get("cpuLevel",3),human:"r"}).then(render).catch(e=>toast(e.message));return}
     if(practicePage&&!s.practice){if(!renderSwitched&&(s.others||[]).some(o=>o.kind==="practice")){renderSwitched=true;api("/play/switch",{kind:"practice"}).then(render).catch(e=>toast(e.message));return}
       location.replace("#/cpu");return}   /* 在練習頁按了「新局」：開的是挑戰電腦，換到挑戰電腦頁 */
+    /* 意見回饋 342：擂台的棋，公園一定是那個擂主的朝代（例如選過別的朝代公園，回來下擂台也會換回來） */
+    if(s.arena&&ARENA[s.arena]&&store.get("era","classic")!==s.arena){store.set("era",s.arena);try{applyEra()}catch(e){}}
     const n0=lastN;st=s;lastN=s.moves.length;if(s.arena&&!s.result&&!parkOn()){store.set("park3d",true);setTimeout(()=>{draw();topBar()},0)}/* 意見回饋 319：朝代擂台的棋一律在公園 3D 裡 */if(!st.legal.some(([f])=>f===sel))sel=-1;
     const lk=!!(st.arena&&!st.result);if(lk&&!parkOn())store.set("park3d",true);const pr=!!st.practice;if(pr!==PARK_OFF){PARK_OFF=pr;arenaLock=null}
     if(lk!==arenaLock||(st.journey||null)!==jKey){arenaLock=lk;jKey=st.journey||null;topBar()}draw();
