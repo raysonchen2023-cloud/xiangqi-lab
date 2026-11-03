@@ -312,11 +312,13 @@ html[data-era=ming] .topbar,html[data-era=qing] .topbar{border-bottom-width:4px}
 .lib-seg{display:flex;gap:3px;margin:12px 12px 0;padding:3px;border-radius:12px;background:var(--line);background:color-mix(in srgb,var(--ink) 8%,var(--bg))}
 .lib-seg button{flex:1;min-width:0;height:34px;border-radius:9px;font-size:14px;color:var(--muted);white-space:nowrap}
 .lib-seg button.on{background:var(--card);color:var(--ink);font-weight:700;box-shadow:0 1px 3px #00000026,inset 0 0 0 1px var(--line)}
-.lib .chips{gap:6px;padding:10px 12px 2px}
-.lib .chips button{display:inline-flex;align-items:center;gap:6px;height:34px;padding:0 12px;font-size:14px}
-.lib .chips button .n{font-size:11px;line-height:18px;padding:0 6px;border-radius:999px;background:var(--bg);color:var(--muted);font-variant-numeric:tabular-nums}
-.lib .chips button.on{background:var(--card);background:color-mix(in srgb,var(--accent) 12%,var(--card));color:var(--accent);border-color:var(--accent);font-weight:700}
-.lib .chips button.on .n{background:var(--accent);color:#fff;font-weight:700}
+/* 意見回饋 341：書目改成一排可以左右滑的小卡片（書名＋局數），不再擠成兩行 */
+.lib .chips{flex-wrap:nowrap;gap:8px;padding:12px 12px 4px;scroll-padding-inline:12px;scroll-snap-type:x proximity;-webkit-mask-image:linear-gradient(90deg,#000 88%,transparent);mask-image:linear-gradient(90deg,#000 88%,transparent)}
+.lib .chips button{flex:none;scroll-snap-align:start;display:flex;flex-direction:column;align-items:flex-start;justify-content:center;gap:1px;min-width:84px;height:52px;padding:0 14px;border-radius:14px;border:1px solid var(--line);background:var(--card);font-size:14px;line-height:1.25;box-shadow:0 1px 2px #0000000f}
+.lib .chips button b{font-weight:700;white-space:nowrap}.lib .chips button small{font-size:11.5px;color:var(--muted);font-variant-numeric:tabular-nums}
+.lib .chips button.on{background:color-mix(in srgb,var(--accent) 14%,var(--card));border-color:var(--accent);color:var(--accent)}.lib .chips button.on small{color:var(--accent);opacity:.8}
+.lib .chips button.sync{flex-direction:row;align-items:center;font-size:13px;color:var(--muted);border-style:dashed;white-space:nowrap}
+.lib .chips button:last-child{margin-right:24px}
 .lib .chips button.sync{border-style:dashed;color:var(--muted)}
 .lib-bar{position:sticky;top:0;z-index:5;background:var(--bg);padding:8px 12px 4px}
 .lib-bar .search{padding:0}
@@ -471,7 +473,7 @@ html[data-era=ming] .topbar,html[data-era=qing] .topbar{border-bottom-width:4px}
       if(!window.caches)return go();caches.keys().then(function(ks){return Promise.all(ks.filter(function(k){return k.indexOf("xqlab-app-")===0}).map(function(k){return caches.delete(k)}))})
         .then(function(){return navigator.serviceWorker&&navigator.serviceWorker.getRegistration()}).then(function(r){return r&&r.update()}).catch(function(){}).then(go)}},4000)})();
 </script>
-<script>window.XQ_OFFLINE=true;window.XQ_BUILD="20261103-1730";</script>
+<script>window.XQ_OFFLINE=true;window.XQ_BUILD="20261103-1737";</script>
 <script src="core.js"></script>
 <script src="engine.js"></script>
 <script src="local.js"></script>
@@ -1636,7 +1638,7 @@ ${OFF?(()=>{const n=Object.keys(arenaStamps()).length,t=arenaTitle();return`<but
    ${OFF&&REWARD?`<div class="sec-t">收藏</div><div class="hero strips">
     ${T("k3","#/garage","🚗","我的車庫","hCar",(()=>{try{const b=JSON.parse(localStorage.getItem("xq_carBank"));if(b)return`🚗 ${b.pts.toLocaleString()} 點・收藏 ${Object.keys(b.owned||{}).length} 台`}catch(e){}return"贏棋拿點數換車"})())}
    </div>`:""}
-   <div id="hRecentBox" hidden><div class="sec-t">繼續研究 <button data-go="#/db">棋譜庫 ›</button></div><div class="items" id="hRecent" style="padding:0"></div></div>
+
    <div class="hfoot">
     ${standalone?"":'<button class="lk" id="hInst" style="flex-basis:100%">📲 加到主畫面，像 App 一樣全螢幕使用</button>'}
     ${OFF?`<span id="hVer">版本讀取中…</span><button class="pill" id="hUpd">檢查更新</button>`:""}
@@ -1665,12 +1667,7 @@ ${OFF?(()=>{const n=Object.keys(arenaStamps()).length,t=arenaTitle();return`<but
       const tile=e.closest(".tile");let bd=tile.querySelector(".bd");
       if(rt&&rt.rank){if(!bd){bd=document.createElement("span");bd.className="bd";const tt=tile.querySelector(".t");(tt||tile).append(bd)}bd.textContent=rt.rank;bd.title=`我的段位 ${rt.rank}・${rt.pts} 分`}else if(bd)bd.remove()};
     upd();offNet=[XQNet.on("people",upd),XQNet.on("status",upd)]}
-  const recent=store.get("recent",[]);
-  if(recent.length){const hr=v.querySelector("#hRecent");v.querySelector("#hRecentBox").hidden=false;
-    for(const r of recent.slice(0,3)){const b=document.createElement("button");b.className="item";
-      b.innerHTML=`<span class="lb">📖</span><span class="tx"><b>${esc(r.title)}</b><span>${esc(r.book)}${r.ply?"・看到第 "+r.ply+" 步":""}</span></span><span class="muted">›</span>`;
-      b.onclick=()=>location.hash=`#/db/${encodeURIComponent(r.c)}/${encodeURIComponent(r.id)}`;hr.append(b)}
-    const bt=v.querySelector("#hRecentBox [data-go]");bt.onclick=()=>location.hash=bt.dataset.go}
+  /* 意見回饋 340：「繼續研究」搬到棋譜庫那一頁 */
   api("/play/state").then(st=>{
     const won=st.levels.filter(l=>(st.record[l.n]||{}).w>0).length;
     /* 意見回饋 299：一定寫出電腦段位和積分；有下到一半的對局再接在後面 */
@@ -4113,10 +4110,14 @@ function PvpGame(v){
 const libState={c:null,q:"",player:"",side:"",res:"",limit:60};
 function Library(v,c0){
   setTop("棋譜庫",false);setTabs(true,"#/db");
-  v.innerHTML=`<div class="lib"><div class="lib-seg" id="grp" hidden></div><div class="chips" id="cols"></div>
+  v.innerHTML=`<div class="lib"><div id="libRecent"></div><div class="lib-seg" id="grp" hidden></div><div class="chips" id="cols"></div>
     <div class="lib-bar"><div class="search"><label class="lib-q"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><circle cx="10.5" cy="10.5" r="6.5"/><path d="M15.5 15.5 20 20"/></svg><input id="q" type="search" placeholder="搜尋局名、棋手、賽事" enterkeyhint="search" autocomplete="off"></label><button id="pf" hidden>👤 棋手</button></div>
     <div class="lib-meta"><span id="cnt"></span><button id="clr" hidden>清除篩選</button></div></div>
     <div class="items" id="items"></div><div class="more" id="more"></div></div>`;
+  /* 意見回饋 340：棋譜庫最上面寫「繼續研究」——最近在看哪幾盤、看到第幾步，點了接著看 */
+  {const r=store.get("recent",[])[0],box=v.querySelector("#libRecent");if(r&&box){
+    box.innerHTML=`<button class="card row" id="lrGo" style="width:calc(100% - 24px);margin:10px 12px 0;padding:10px 12px;gap:10px;justify-content:space-between;font:inherit;color:inherit;text-align:left"><span style="font-size:22px">📖</span><span style="flex:1;min-width:0"><small class="muted">繼續研究</small><br><b style="display:block;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${esc(r.title)}</b><small class="muted">${esc(r.book)}${r.ply?"・看到第 "+r.ply+" 步":""}</small></span><span class="muted">›</span></button>`;
+    box.querySelector("#lrGo").onclick=()=>location.hash=`#/db/${encodeURIComponent(r.c)}/${encodeURIComponent(r.id)}`}}
   let books=[],data=null,shown=[],grp=null,big=[];   // big：可以從網站下載的大型棋譜（例如特級大師對局）
   // 書目分三類：古譜／大師對局／我的對局
   const MINE=["ai","play","pvp","study"],GRPS=[["old","古譜"],["gm","大師對局"],["me","我的對局"]];
@@ -4139,7 +4140,7 @@ function Library(v,c0){
       x.onclick=()=>{if(g===grp)return;grp=g;const f=books.find(b=>grpOf(b)===g);if(f)pick(f.key);else{paintCols();libState.c=null;data=null;showNone()}};seg.append(x)}
     box.innerHTML="";
     for(const b of books.filter(b=>grpOf(b)===grp)){const x=document.createElement("button");x.dataset.c=b.key;x.classList.toggle("on",b.key===libState.c);
-      x.innerHTML=esc(b.name)+(b.count?`<span class="n">${b.count}</span>`:"");x.onclick=()=>{if(b.key!==libState.c)pick(b.key)};box.append(x)}
+      x.innerHTML=`<b>${esc(b.name)}</b>${b.count?`<small>${b.count.toLocaleString()} 局</small>`:""}`;x.onclick=()=>{if(b.key!==libState.c)pick(b.key)};box.append(x)}
     if(grp==="gm")for(const g of big.filter(g=>!books.some(b=>b.key===g.key))){const x=document.createElement("button");x.className="sync";x.textContent=`⬇ ${g.name}（${Math.round(g.size/1048576)} MB）`;x.onclick=()=>bigSheet(g);box.append(x)}
     if(grp==="gm"&&big.length&&books.some(b=>b.synced&&big.some(g=>g.key===b.key))){const x=document.createElement("button");x.className="sync";x.textContent="🗑 管理下載";x.onclick=()=>dlSheet();box.append(x)}
     if(DEVREMOTE()&&grp==="gm"){const x=document.createElement("button");x.className="sync";x.textContent="☁ 從電腦同步";x.onclick=()=>syncSheet();box.append(x)}
