@@ -473,7 +473,7 @@ html[data-era=ming] .topbar,html[data-era=qing] .topbar{border-bottom-width:4px}
       if(!window.caches)return go();caches.keys().then(function(ks){return Promise.all(ks.filter(function(k){return k.indexOf("xqlab-app-")===0}).map(function(k){return caches.delete(k)}))})
         .then(function(){return navigator.serviceWorker&&navigator.serviceWorker.getRegistration()}).then(function(r){return r&&r.update()}).catch(function(){}).then(go)}},4000)})();
 </script>
-<script>window.XQ_OFFLINE=true;window.XQ_BUILD="20261103-1752";</script>
+<script>window.XQ_OFFLINE=true;window.XQ_BUILD="20261103-1801";</script>
 <script src="core.js"></script>
 <script src="engine.js"></script>
 <script src="local.js"></script>
@@ -4017,16 +4017,26 @@ function PvpGame(v){
     sel=i===sel?-1:st.legal.some(([f])=>f===i)?i:-1;if(sel>=0)vibrate(5);draw()}
   // 觀戰：可以往前往後看每一步（view＝看到第幾步，null＝最新）；這支手機的 Pikafish 幫每一步算局勢，紅黑條跟著動
   let view=null,watchUI=false;const evc={};
+  /* 意見回饋 344：觀戰時每一步都請 Pikafish 評等（妙手、正手、錯著…），標在下面的著法列和狀態列；評過的存在手機裡 */
+  const gq={};let gqBusy=false;
+  async function gradeWatch(){if(gqBusy||seat!=="w"||!OFF||!st)return;gqBusy=true;
+    try{for(let i=0;i<st.moves.length;i++){if(seat!=="w"||!v.isConnected)break;if(gq[i])continue;const m=st.moves[i];
+      try{gq[i]=(await api("/an/classify",{board:boardAtN(i),side:m.by||(i%2?"b":"r"),f:m.f,t:m.t}))||{q:"—"}}catch(e){gq[i]={q:"—"}}
+      stripW();if(view==null||curN()===i+1)watchBar()}}finally{gqBusy=false}
+    if(seat==="w"&&st&&st.moves.some((m,i)=>!gq[i]))setTimeout(gradeWatch,500)}
+  const wMoves=()=>st.moves.map((m,i)=>gq[i]&&gq[i].q&&gq[i].q!=="—"?{...m,q:gq[i].q}:m);
+  const stripW=()=>{const el=v.querySelector("#strip");if(el&&st)renderStrip(el,wMoves(),curN()-1,pickStep)};
+  const qTag=i=>{const g=gq[i];return g&&g.q&&g.q!=="—"?`「${g.q}」`:""};
   const boardAtN=n=>{const b=parseFen(START);for(const m of st.moves.slice(0,n)){b[m.t]=b[m.f];b[m.f]=null}return b};
   const curN=()=>view==null?st.moves.length:view;
   function evalAt(n){if(evc[n]!=null||!OFF)return;evc[n]="…";
     api("/an/engine",{board:boardAtN(n),side:n%2?"b":"r",ms:600,multipv:1}).then(d=>{const L=(d.lines||[])[0];evc[n]=L?(L.mate!=null?Math.sign(L.mate)*30000:L.vr):null;if(curN()===n)watchBar()}).catch(()=>{evc[n]=null})}
   function watchBar(){const n=curN(),ev=n===st.moves.length&&st.eval?st.eval.v:typeof evc[n]==="number"?evc[n]:null;v.querySelector("#evf").style.width=evPct(ev)+"%";
-    if(view!=null){const s2=v.querySelector("#stat"),m=st.moves[n-1];s2.classList.remove("hot");s2.textContent=(n?`第 ${n} 步${m?"："+(m.cn||""):""}`:"開局")+(ev!=null?"・"+evt(ev):"・Pikafish 計算中…")+"・按 ⏭ 回到最新"}}
-  function watchStep(d){if(!st)return;const n=Math.max(0,Math.min(st.moves.length,curN()+d));view=n>=st.moves.length?null:n;vibrate(5);draw();watchBar();evalAt(n);renderStrip(v.querySelector("#strip"),st.moves,curN()-1,pickStep)}
+    if(view!=null){const s2=v.querySelector("#stat"),m=st.moves[n-1];s2.classList.remove("hot");s2.textContent=(n?`第 ${n} 步${m?"："+(m.cn||"")+qTag(n-1):""}`:"開局")+(ev!=null?"・"+evt(ev):"・Pikafish 計算中…")+"・按 ⏭ 回到最新"}}
+  function watchStep(d){if(!st)return;const n=Math.max(0,Math.min(st.moves.length,curN()+d));view=n>=st.moves.length?null:n;vibrate(5);draw();watchBar();evalAt(n);stripW()}
   const pickStep=i=>{view=i+1>=st.moves.length?null:i+1;draw();watchBar();evalAt(curN())};
   function setupWatchUI(){if(watchUI)return;watchUI=true;
-    for(const[b,ic,l,fn]of[[acts.undo,"◀","上一步",()=>watchStep(-1)],[acts.draw,"▶","下一步",()=>watchStep(1)],[acts.resign,"⏭","最新",()=>{view=null;draw();watchBar();renderStrip(v.querySelector("#strip"),st.moves,st.moves.length-1,pickStep)}]]){
+    for(const[b,ic,l,fn]of[[acts.undo,"◀","上一步",()=>watchStep(-1)],[acts.draw,"▶","下一步",()=>watchStep(1)],[acts.resign,"⏭","最新",()=>{view=null;draw();watchBar();stripW()}]]){
       b.innerHTML=`<span class="ic">${ic}</span>${l}`;b.onclick=()=>fn()}}
   function draw(){if(!st)return;
     // 觀戰時往回看（上一步／下一步）：棋盤模式和公園都畫那一步的局面（意見回饋 261）
@@ -4069,13 +4079,13 @@ function PvpGame(v){
     const hideEv=seat&&seat!=="w"&&!st.result;v.querySelector(".evline").style.visibility=hideEv?"hidden":"";
     v.querySelector("#evf").style.width=evPct(hideEv?null:st.eval&&st.eval.v)+"%";
     const s2=v.querySelector("#stat");s2.classList.toggle("hot",st.check>=0&&!st.result);
-    s2.textContent=st.waiting?"等對方進入對局…":st.result?st.result.why:seat==="w"?`觀戰中・輪到${PLAYER[st.turn]}（${nm(st.turn)}）`+(st.check>=0?"・被將軍！":""):seat?(st.turn===seat?"輪到你走":`等對方（${PLAYER[st.turn]}）走…`)+(st.check>=0&&st.turn===seat?"・你被將軍了！":"")+(st.draw===seat?"・已提和，等對方回應":"")
+    s2.textContent=st.waiting?"等對方進入對局…":st.result?st.result.why:seat==="w"?`觀戰中・輪到${PLAYER[st.turn]}（${nm(st.turn)}）`+(st.check>=0?"・被將軍！":"")+(st.moves.length&&qTag(st.moves.length-1)?`・上一步${qTag(st.moves.length-1)}`:""):seat?(st.turn===seat?"輪到你走":`等對方（${PLAYER[st.turn]}）走…`)+(st.check>=0&&st.turn===seat?"・你被將軍了！":"")+(st.draw===seat?"・已提和，等對方回應":"")
       :`輪到${PLAYER[st.turn]}（${nm(st.turn)}）`+(st.check>=0?"・被將軍！":"")+(st.eval?`・${evt(st.eval.v)}`:"");
     if(NET&&st.watchers)s2.textContent+=`・👀 ${st.watchers} 人觀看`;
     // 每步限時 3 分鐘：剩 1 分鐘以內顯示倒數
     if(NET&&!st.result&&!st.waiting&&window.XQNet&&XQNet.turnLeft){const L=XQNet.turnLeft();if(L!=null&&L<60000){s2.textContent+=`・⏱ ${st.turn===seat?"你":"對方"}這步還剩 ${Math.ceil(L/1000)} 秒`;s2.classList.add("hot")}}
     if(NET&&st.link!=="up"){s2.textContent="⚠ 網路不穩，重新連線中…"+(st.unsent?"（你的棋步連上後會自動送出）":"");s2.classList.add("hot")}
-    renderStrip(v.querySelector("#strip"),st.moves,(seat==="w"?curN():st.moves.length)-1,seat==="w"?pickStep:undefined);
+    if(seat==="w"){stripW();gradeWatch()}else renderStrip(v.querySelector("#strip"),st.moves,st.moves.length-1);
     acts.undo.disabled=!!st.result||!st.moves.length||(!!seat&&st.moves[st.moves.length-1].by!==seat);acts.draw.disabled=acts.resign.disabled=!!st.result;acts.new.disabled=false;
     if(watchUI&&seat!=="w"&&NET&&XQNet.side()){route();return}   // 從觀戰變成自己下棋（例如在觀戰時接受了邀請）：重新進入對戰頁，按鈕換回悔棋、聊天、提和、認輸
     if(seat==="w"){setupWatchUI();acts.new.disabled=true;acts.new.hidden=true;acts.undo.disabled=curN()<=0;acts.draw.disabled=view==null;acts.resign.disabled=view==null;evalAt(curN());watchBar()}
