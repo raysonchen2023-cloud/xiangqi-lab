@@ -101,9 +101,6 @@ input,select{font:inherit;font-size:16px;color:inherit}
 .ppl{display:flex;flex-direction:column;gap:6px;padding:10px 2px;border-bottom:1px solid var(--line)}.ppl .pn b{font-size:16px}.ppl .pn small{display:block;color:var(--muted);font-size:12.5px;line-height:1.5}.ppl .pa{display:flex;flex-wrap:wrap;gap:6px}.ppl .pa span{font-size:12.5px;border:1px solid var(--line);border-radius:999px;padding:2px 9px;background:var(--bg);white-space:nowrap}
 .tlr{display:flex;gap:10px;padding:8px 2px;border-bottom:1px solid var(--line);text-align:left}.tlr .ty{flex:none;width:72px}.tlr .ty b{display:block}.tlr .ty small{color:var(--muted);font-size:11.5px}.tlr .tt{flex:1;min-width:0;line-height:1.6;font-size:14px}
 .circles{display:flex;justify-content:space-around;gap:10px;margin-top:18px}.circles button{width:96px;height:96px;border-radius:50%;border:2px solid color-mix(in srgb,var(--accent) 45%,var(--line));background:radial-gradient(circle at 35% 30%,var(--card),color-mix(in srgb,var(--accent) 10%,var(--card)));display:flex;flex-direction:column;align-items:center;justify-content:center;gap:1px;font:inherit;color:inherit;cursor:pointer;box-shadow:0 3px 10px rgba(0,0,0,.08)}.circles span{font-size:28px}.circles b{font-size:13.5px}.circles small{font-size:12px;color:var(--accent);font-weight:700}
-.rfx{position:fixed;inset:0;z-index:250;display:flex;align-items:center;justify-content:center;pointer-events:none;background:radial-gradient(ellipse at center,rgba(0,0,0,.15),rgba(0,0,0,.6));animation:tvIn .25s ease both}.rfx.out{animation:tvOut .4s ease both}
-.rfx .rb{display:flex;flex-direction:column;align-items:center;gap:6px;animation:rfxIn .55s cubic-bezier(.2,1.6,.4,1) both}.rfx b{font:900 130px/1 var(--serif);text-shadow:0 6px 18px rgba(0,0,0,.55)}.rfx.win b{color:#f4cf6e;-webkit-text-stroke:3px #7a4a10}.rfx.lose b{color:#c9d0d6;-webkit-text-stroke:3px #3a4048}.rfx span{color:#fff;font-size:17px;font-weight:700;text-shadow:0 2px 6px #000}
-@keyframes rfxIn{from{transform:scale(2.4) rotate(-8deg);opacity:0}to{transform:none;opacity:1}}
 #xpchip{position:fixed;left:50%;top:calc(env(safe-area-inset-top,0px) + 56px);transform:translateX(-50%);z-index:9999;background:var(--accent);color:#fff;padding:6px 14px;border-radius:999px;font-weight:700;font-size:14px;pointer-events:none;opacity:0;transition:opacity .4s;box-shadow:0 4px 14px rgba(0,0,0,.2);white-space:nowrap}#xpchip.big{font-size:16px;padding:10px 18px}
 .tile.strip .rsm{display:block;margin-top:2px;font-weight:700;color:var(--accent)}.tile.strip.resume{border:2px solid var(--accent);animation:rsPulse 2.4s ease-in-out 2}@keyframes rsPulse{50%{box-shadow:0 0 0 5px color-mix(in srgb,var(--accent) 25%,transparent)}}
 .tile.strip .ic{margin:0;flex:none}.tile.strip .tx{flex:1;min-width:0;display:flex;flex-direction:column}.tile.strip .s{font-size:12.5px}
@@ -472,7 +469,7 @@ html[data-era=ming] .topbar,html[data-era=qing] .topbar{border-bottom-width:4px}
       if(!window.caches)return go();caches.keys().then(function(ks){return Promise.all(ks.filter(function(k){return k.indexOf("xqlab-app-")===0}).map(function(k){return caches.delete(k)}))})
         .then(function(){return navigator.serviceWorker&&navigator.serviceWorker.getRegistration()}).then(function(r){return r&&r.update()}).catch(function(){}).then(go)}},4000)})();
 </script>
-<script>window.XQ_OFFLINE=true;window.XQ_BUILD="20261103-1610";</script>
+<script>window.XQ_OFFLINE=true;window.XQ_BUILD="20261103-1619";</script>
 <script src="core.js"></script>
 <script src="engine.js"></script>
 <script src="local.js"></script>
@@ -531,9 +528,6 @@ const loadKillGly=()=>KILL_P||(KILL_P=fetch("data/glyphs/kill.json").then(r=>r.j
 setTimeout(loadKillGly,2500);
 // 公園 3D 棋盤時棋盤模式是藏起來的：特效改蓋在 3D 畫面上（意見回饋 234）
 const fxHost=svg=>{if(svg&&!svg.getBoundingClientRect().width&&svg.parentElement){const p=svg.parentElement.querySelector(".park3d");if(p)return p}return svg};
-/* 意見回饋 323：認輸、超時、離線這類（不是將死）的勝負特效：大大的「勝／負」蓋章字＋一行原因 */
-function resultFx(win,why){document.querySelectorAll(".rfx").forEach(x=>x.remove());const d=document.createElement("div");d.className="rfx "+(win?"win":"lose");
-  d.innerHTML=`<div class="rb"><b>${win?"勝":"負"}</b><span>${esc(why||"")}</span></div>`;document.body.append(d);vibrate(win?[20,40,60]:[60]);setTimeout(()=>{d.classList.add("out");setTimeout(()=>d.remove(),400)},2000)}
 function killFx(svg,win,why,kIdx,flip,o){svg=fxHost(svg);const r=svg.getBoundingClientRect();if(!r.width)return;o=o||{};LAST_KFX=Date.now();loadKillGly();
   if(!document.getElementById("kfx3css")){document.querySelectorAll("#kfx2css").forEach(x=>x.remove());const st=document.createElement("style");st.id="kfx3css";st.textContent=`
 .kx-flash{position:fixed;inset:0;z-index:67;pointer-events:none;background:#fff;animation:kxflash .35s ease-out forwards}
@@ -2299,25 +2293,40 @@ function tlMilestone(M,goal,Pnow){let never=0;const need=[],w=[];M.G.forEach((g,
   return{goal,pNever:never/M.T,med:need.length?wq(need,w,.5):null,lo:need.length?wq(need,w,.1):null,hi:need.length?wq(need,w,.9):null}}
 /* Kalman：每盤更新一次目前能力（狀態方程照成長模型、觀測雜訊＝σ²） */
 function tlKalman(Y,P,M){let th=M.S0.m,v=144;for(let j=0;j<Y.length;j++){const dP=j?P[j]-P[j-1]:P[0];th+=M.r.m*(M.A.m-th)*dP;v+=4*dP+1;const K=v/(v+M.sg*M.sg);th+=K*(Y[j]-th);v*=1-K}return{th,sd:Math.sqrt(v)}}
+/* 用手機裡存過的評等補上還沒評的步，回傳我這邊還缺幾步 */
+async function fillGrades(b0,mv,side){const C=window.XQCore;if(!C)return 0;let b=b0.slice();const keys=[],idx=[];
+  for(let i=0;i<mv.length;i++){const m=mv[i];if(!(m.q&&m.q!=="—")){try{keys.push(C.fen(b,m.by)+"|"+C.iccs(m.f,m.t));idx.push(i)}catch(e){}}try{b=C.make(b,m.f,m.t)}catch(e){break}}
+  if(keys.length){let r={};try{r=(await api("/an/lookup",{grade:keys})).grade||{}}catch(e){}keys.forEach((k,j)=>{const g=r[k];if(g&&g.q)Object.assign(mv[idx[j]],g)})}
+  return mv.filter(m=>m.by===side&&!(m.q&&m.q!=="—")).length}
+let TALENT_BG=false;
+async function talentBackfill(box,pend){if(TALENT_BG||!pend.length)return;TALENT_BG=true;const C=window.XQCore;const todo=pend.sort((a,b)=>b.t-a.t).slice(0,3);
+  const total=todo.reduce((a,x)=>a+x.mv.filter(m=>m.by===x.side&&!(m.q&&m.q!=="—")).length,0);let n=0;
+  const bar=document.createElement("div");bar.className="card muted";bar.style.cssText="margin-top:4px;font-size:13px";const up=()=>{bar.textContent=`🧬 正在幫最近 ${todo.length} 盤棋評等（${n}／${total} 步），評好會自動更新天賦`};up();if(box.isConnected)box.prepend(bar);
+  try{for(const x of todo){let b=x.b0.slice();for(const m of x.mv){if(!box.isConnected)return;if(m.by===x.side&&!(m.q&&m.q!=="—")){try{const g=await api("/an/classify",{board:b,side:m.by,f:m.f,t:m.t});if(g)Object.assign(m,g)}catch(e){}n++;up()}b=C.make(b,m.f,m.t)}}}
+  finally{TALENT_BG=false;bar.remove()}
+  if(box.isConnected)talentReport(box)}
 async function talentReport(box){
   const me=myName(),games=[],CAL=store.get("calib",null),CT=CAL&&CAL.tal&&CAL.tal.people>=10?CAL.tal:null;
   if(CT&&Array.isArray(CT.S0)&&Array.isArray(CT.A)&&Array.isArray(CT.lr)){TL.S0=CT.S0;TL.A=CT.A;TL.lr=CT.lr}   /* 意見回饋 307：大家的資料夠多了，就用校正過的「一般棋友」 */
   for(const c of["play","pvp"]){let d;try{d=await api("/db/items?c="+c+"&limit=200")}catch(e){continue}
     for(const it of d.items){const side=c==="play"?(it.red==="你"?"r":"b"):me&&it.red===me?"r":me&&it.black===me?"b":null;if(side)games.push({c,id:it.id,side,res:String(it.result||""),opp:side==="r"?it.black:it.red})}}
   games.sort((a,b)=>String(a.id).localeCompare(String(b.id)));
-  const cache=store.get("talentCache4",{}),G=[];let ch=false;
+  /* 意見回饋 325：下完棋馬上算進天賦——先補手機裡已經評過的步（賽後報告、對局中評過的都存在手機裡），
+     只有我這邊每一步都評好才存快取；還沒評完的最近幾盤，畫完之後在背景請 Pikafish 補算，算好自動重新整理 */
+  const cache=store.get("talentCache5",{}),G=[],pend=[];let ch=false;
   for(const g of games.slice(-150)){const key=g.c+"/"+g.id;let row=cache[key];
     if(!row){let it;try{it=await api(`/db/item?c=${g.c}&id=${encodeURIComponent(g.id)}`)}catch(e){continue}
       const L=it.lines&&it.lines[0];if(!L||!it.board)continue;const mv=L.moves.map((m,i)=>({...m,by:m.by||(i%2?"b":"r")}));
-      if(!mv.some(m=>m.by===g.side&&m.q&&m.q!=="—"))continue;const rep=gameReport(it.board,mv),R=rep.sides[g.side];if(!R||!R.graded||R.score==null){cache[key]={skip:1};ch=true;continue}
+      const miss=await fillGrades(it.board,mv,g.side);if(miss)pend.push({b0:it.board,mv,side:g.side,t:tlTime(g.id)});
+      if(!mv.some(m=>m.by===g.side&&m.q&&m.q!=="—"))continue;const rep=gameReport(it.board,mv),R=rep.sides[g.side];if(!R||!R.graded||R.score==null)continue;
       const mine=rep.plies.filter(m=>m.by===g.side&&m.loss!=null&&m.q&&m.q!=="—"),ok=m=>QGOOD.includes(m.q)?1:0;
       const w=/^紅/.test(g.res)&&/勝|胜/.test(g.res)?"r":/^黑/.test(g.res)&&/勝|胜/.test(g.res)?"b":null,res=/中止|取消/.test(g.res)?null:w?(w===g.side?"w":"l"):g.res?"d":null;
       row={score:R.score,n:R.graded,bad:(R.cnt["錯著"]||0)+(R.cnt["露著"]||0),t:tlTime(g.id),res,opp:g.c==="play"?tlOppElo(g.opp):null,
         pl:Object.fromEntries(["open","mid","end"].map(k=>{const a=mine.filter(m=>m.phase===k);return[k,[a.reduce((x,m)=>x+Math.min(1000,Math.max(0,m.loss)),0),a.length]]})),ph:{open:mine.filter(m=>m.phase==="open").map(ok).join(""),mid:mine.filter(m=>m.phase==="mid").map(ok).join(""),end:mine.filter(m=>m.phase==="end").map(ok).join("")},L:mine.map(m=>Math.round(m.loss)),
         ek:rep.endFrom!=null?(()=>{let bb=it.board.slice();for(let i=0;i<rep.endFrom&&i<mv.length;i++){bb[mv[i].t]=bb[mv[i].f];bb[mv[i].f]=null}return endTech(bb,g.side)})():""};
-      cache[key]=row;ch=true}
+      if(!miss){cache[key]=row;ch=true}}
     if(!row.skip&&row.n>=8)G.push(row)}
-  if(ch)store.set("talentCache4",cache);
+  if(ch)store.set("talentCache5",cache);
   if(!box.isConnected)return;
   const QL=store.get("quizLog",[]),GL0=store.get("guessLog",[]);
   /* 累積練習量 P：每盤對局 1、做完一次測驗 0.5、猜完一盤 0.5；沒做完的照做了幾題按比例算（意見回饋 309，測驗 8 題、猜著法 15 步算一整次） */
@@ -2336,7 +2345,7 @@ async function talentReport(box){
   const M=tlGrowth(Y,PP),IR=tlIRT(QL),GL=tlGlicko(G),RG=tlRegan(G.flatMap(g=>g.L||[]).concat(GL0.flatMap(x=>x.d||[]))),BK={};for(const k of["open","mid","end"])BK[k]=tlBKT(G.map(g=>g.ph&&g.ph[k]||"").join("").split("").map(Number));
   if(!M&&!IR.all){box.innerHTML=`<div class="card" style="margin-top:4px;line-height:1.7"><b>資料還不夠</b><p class="muted" style="margin:6px 0 0">天賦系統要從你的練習歷程推估：至少要有 3 盤 Pikafish 評過等、各下了 8 步以上的對局（挑戰電腦或線上對戰），或做一次棋力測驗。目前有 ${G.length} 盤、測驗 ${QL.length} 次。</p>
       <div class="row" style="gap:8px;margin-top:10px"><button class="btn" id="tg1" style="flex:1">挑戰電腦</button><button class="btn ghost" id="tg2" style="flex:1">棋力測驗</button></div></div>`;
-    box.querySelector("#tg1").onclick=()=>location.hash="#/cpu";box.querySelector("#tg2").onclick=()=>location.hash="#/quiz";return}
+    box.querySelector("#tg1").onclick=()=>location.hash="#/cpu";box.querySelector("#tg2").onclick=()=>location.hash="#/quiz";if(pend.length)setTimeout(()=>talentBackfill(box,pend),300);return}
   const f1=x=>x==null?"—":x.toFixed(1),f0=x=>x==null?"—":Math.round(x),pc=x=>Math.round(x*100)+"%";
   const KF=M?tlKalman(Y,PP,M):null,popNow=TL.A[0]-(TL.A[0]-TL.S0[0])*Math.exp(-Math.exp(TL.lr[0])*P);
   const lab=!M?"":M.N<10?"還在觀察中":M.rPct>=90?"學得飛快":M.rPct>=70?"學習速度快":M.rPct>=35?"穩定成長":"慢熱型";
@@ -2389,7 +2398,8 @@ async function talentReport(box){
       <p><b>資料從哪裡來：</b>對局、棋力測驗、猜著法、錯棋重練，沒做完的也算。大家的答題結果（只有題號和對錯）和成長曲線（只有練習量、準確度和段位）會匿名送到後台，每天校正一次題目難度和「一般棋友」的樣子，不含名字和代號。</p>
       <p><b>要注意：</b>剛開始特別好或特別差，之後常會回到平常的樣子，所以下得少時估計會比較保守；「能長到多高」在還沒碰到瓶頸前很難看準。這些數字適合拿來決定先練什麼，不適合拿來給人貼標籤。</p>
       <details style="margin-top:4px"><summary>給喜歡數學的人</summary><p>成長模型 S(P)＝A−(A−S₀)·e^(−r·P)，P＝累積練習量（對局 1、測驗和猜著法各 0.5，沒做完按比例），階層貝氏網格求後驗；現在的棋力用 Kalman 濾波追蹤；開局／中局／殘局和殘局技巧用 BKT（貝氏知識追蹤）；測驗用 3PL 試題反應理論（c＝0.05）；著法品質用 Regan 模型 P(δ)∝exp(−(δ/s)^c)；對電腦的勝負用 Glicko。群體先驗 S₀、A、ln r 由後台用大家的匿名成長曲線每天校正（人數少時多半還是原本的假設 S₀≈55±12、A≈82±8、r≈6%）。</p></details></div></details>`;
-  const tg=box.querySelector("#tgo");if(tg&&weak)tg.onclick=()=>location.hash=GO[weak.k][0]}
+  const tg=box.querySelector("#tgo");if(tg&&weak)tg.onclick=()=>location.hash=GO[weak.k][0];
+  if(pend.length)setTimeout(()=>talentBackfill(box,pend),300)}
 function Stats(v){
   setTop("我的戰績","#/");setTabs(false);
   // 版面：上面一排「總覽／電腦／線上／獎勵」分頁，一次只看一類，不會越堆越長
@@ -4016,12 +4026,11 @@ function PvpGame(v){
     if(!st.draw)drawAsked=null;
     if(st.result&&shownResult!==st.id&&seat==="w"){shownResult=st.id;modal(`<div class="em">${st.result.w?"🏆":"🤝"}</div><h2>${st.result.w?`${PLAYER[st.result.w]}（${esc(nm(st.result.w))}）勝`:"和局"}</h2><p class="muted">${esc(st.result.why)}</p>`,[["回大廳",()=>{XQNet.leave();location.hash="#/lobby"}],["留在這裡",null,true]])}
     if(st.result&&shownResult!==st.id){shownResult=st.id;vibrate([30,40,30]);
-      /* 意見回饋 323：線上對戰也有勝負特效（跟挑戰電腦一樣的大字），結果視窗等特效播完再出來；也通知小帥、公園一起反應 */
-      {const w=st.result.w,mine=seat==="r"||seat==="b"?seat:null,win=w?(mine?w===mine:true):false,d0=!w;
+      /* 意見回饋 323：線上對戰也用原本的勝負動畫（挑戰電腦同一個 killFx），將死以外（認輸、超時、離線）就在說明那行寫原因；結果視窗等動畫播完再出來 */
+      {const w=st.result.w,mine=seat==="r"||seat==="b"?seat:null,win=w?(mine?w===mine:true):false;
         if(w&&!st.result.abort&&st.moves.length>=2){const loser=w==="r"?"b":"r",k=st.board.indexOf(loser==="r"?"K":"k");
-          if(/將死|困斃/.test(st.result.why||"")&&k>=0){MODAL_HOLD=Date.now()+2700;try{killFx(bd.svg,win,st.result.why,k,isFlip(),{side:w})}catch(e){}}
-          else{MODAL_HOLD=Date.now()+2300;resultFx(win,mine?(win?"對方":"你")+String(st.result.why||"").replace(/^(紅方|黑方)/,"").slice(0,16):st.result.why)}}
-        try{window.dispatchEvent(new CustomEvent("xq-result",{detail:d0?"draw":win?"win":"lose"}))}catch(e){}}
+          if(k>=0){MODAL_HOLD=Date.now()+2700;const mate=/將死|困斃/.test(st.result.why||""),cz=mine?(win?"對方":"你")+String(st.result.why||"").replace(/^(紅方|黑方)/,"").replace(/[，,].*$/,"").slice(0,12):String(st.result.why||"");
+            try{killFx(bd.svg,win,st.result.why,k,isFlip(),{side:w,...(mate?{}:{cap:cz+(win?"・你贏了！":"")})})}catch(e){}}}}
       modal(`<div class="em">${st.result.w?"🏆":"🤝"}</div><h2>${st.result.w?`${PLAYER[st.result.w]}（${esc(nm(st.result.w))}）勝`:"和局"}</h2><p class="muted">${esc(st.result.why)}</p>`,
         [["再來一局",()=>post("/pvp/new",{red:st.red,black:st.black,tc:st.tcKey})],["📊 賽後報告",()=>{store.set("openReport","pvp/"+st.id);location.hash="#/db/pvp/"+encodeURIComponent(st.id)}],["檢討這盤",()=>location.hash="#/db/pvp/"+encodeURIComponent(st.id),true],["關閉",null,true]])}}
   function newSheet(){let tc=st?st.tcKey:"none",red=st&&st.red!=="紅方"?st.red:"",black=st&&st.black!=="黑方"?st.black:"";
