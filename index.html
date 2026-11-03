@@ -429,7 +429,7 @@ html[data-era=ming] .topbar,html[data-era=qing] .topbar{border-bottom-width:4px}
       if(!window.caches)return go();caches.keys().then(function(ks){return Promise.all(ks.filter(function(k){return k.indexOf("xqlab-app-")===0}).map(function(k){return caches.delete(k)}))})
         .then(function(){return navigator.serviceWorker&&navigator.serviceWorker.getRegistration()}).then(function(r){return r&&r.update()}).catch(function(){}).then(go)}},4000)})();
 </script>
-<script>window.XQ_OFFLINE=true;window.XQ_BUILD="20261103-0809";</script>
+<script>window.XQ_OFFLINE=true;window.XQ_BUILD="20261103-0813";</script>
 <script src="core.js"></script>
 <script src="engine.js"></script>
 <script src="local.js"></script>
@@ -2664,15 +2664,15 @@ const ARENA={
   song:{seal:"宋",name:"汴京茶棋客",intro:"汴京茶坊的常客，邊點茶邊下棋，鬥茶鬥棋都沒輸過。",hi:"茶已點好，請。",win:"茶沫未散，勝負已分。",lose:"這杯茶，敬你。"},
   yuan:{seal:"元",name:"草原馬棋汗",intro:"草原上騎馬長大的棋手，最愛橫衝直撞的車和馬。",hi:"草原上的風，吹到棋盤上了！",win:"馬蹄聲響，勝負已定。",lose:"好漢子！這碗奶茶請你。"},
   ming:{seal:"明",name:"紫禁棋閣老",intro:"紫禁城裡的老閣老，下棋像辦公事，一絲不苟、滴水不漏。",hi:"本閣老今日得閒，請。",win:"此局，准奏。",lose:"老臣……心服口服。"},
-  qing:{seal:"清",name:"園林棋格格",intro:"住在江南園林的格格，琴棋書畫樣樣精通，是最後一位、也是最難纏的擂主。",hi:"園子裡梅花開了，陪本格格下一盤吧。",win:"嘻嘻，本格格又贏了。",lose:"哼，算你厲害……這章給你。"}};
+  qing:{seal:"清",name:"園林棋格格",intro:"住在江南園林的格格，琴棋書畫樣樣精通，是最後一位擂主。",hi:"園子裡梅花開了，陪本格格下一盤吧。",win:"嘻嘻，本格格又贏了。",lose:"哼，算你厲害……這章給你。"}};
 const ARENA_ORDER=["classic","qin","han","sanguo","weijin","nanbei","sui","tang","wudai","song","yuan","ming","qing"];
 const ARENA_TITLES=[[13,"十三朝棋王"],[7,"七朝豪傑"],[3,"擂台新秀"]];
 const arenaStamps=()=>{try{return JSON.parse(localStorage.getItem("xq_arenaStamps")||"{}")||{}}catch(e){return{}}};
 const arenaTitle=()=>{const n=Object.keys(arenaStamps()).length;const t=ARENA_TITLES.find(([k])=>n>=k);return t?t[1]:""};
 window.XQ_TITLE=arenaTitle;   // 大廳廣播：別人點你的資料卡看得到
-// 擂主強度跟著你的電腦段位（新手大約「入門」棋力，越高段擂主越強，最後一位清朝格格再強一級）
+/* 擂主強度跟著你的電腦段位（新手大約「入門」棋力，越高段擂主越強）；意見回饋 288：最強的是經典公園的擂主，再強一級（不在 App 裡說破，讓玩家自己摸索） */
 function arenaLevel(era){let p=0;try{p=(JSON.parse(localStorage.getItem("xq_cpuRate")||"null")||{}).pts||0}catch(e){}
-  const base=p>=1150?7:p>=900?6:p>=600?5:p>=300?4:p>=100?3:2;return Math.min(8,base+(era==="qing"?1:0))}
+  const base=p>=1150?7:p>=900?6:p>=600?5:p>=300?4:p>=100?3:2;return Math.min(8,base+(era==="classic"?1:0))}
 const eraLabel=k=>({classic:"經典公園",qin:"秦朝",han:"漢朝",sanguo:"三國",weijin:"魏晉",nanbei:"南北朝",sui:"隋朝",tang:"唐朝",wudai:"五代",song:"宋朝",yuan:"元朝",ming:"明朝",qing:"清朝"})[k]||k;
 const sealHTML=(era,on,big)=>{const A=ARENA[era],s=A?A.seal:"?";return`<span class="seal-st${on?" on":""}${big?" big":""}${s.length>1?" two":""}">${esc(s)}</span>`};
 // 擂台面板：這個朝代的擂主介紹、難度、有沒有蓋過章；按「挑戰」開打
