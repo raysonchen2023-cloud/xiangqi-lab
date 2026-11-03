@@ -273,7 +273,7 @@
       w.append(im,gl);box.insertBefore(w,hit);XS.wrap=w;XS.img=im;XS.gly=gl;
       fetch("data/xs/xs.json").then(r=>r.ok?r.json():null).then(m=>{if(!m||stopped)return;let n=0;const names=Object.keys(m.poses);
         for(const k of names){const i=new Image();i.decoding="async";i.onload=()=>{if(++n===names.length){XS.meta=m;xsMode()}};i.onerror=()=>{};i.src="data/xs/"+k+".webp";XS.ims[k]=i}}).catch(()=>{})}
-    const xsMode=()=>{const on=!!XS.meta&&eraK()==="classic";XS.on=on;XS.wrap.style.display=on?"":"none";rd.domElement.style.visibility=on?"hidden":"";XS.cur=""};
+    const xsMode=()=>{const on=!!XS.meta;   /* 意見回饋 384：每個朝代都用手繪版（各朝代的手繪服裝畫好以前，先穿經典的） */XS.on=on;XS.wrap.style.display=on?"":"none";rd.domElement.style.visibility=on?"hidden":"";XS.cur=""};
     const xsDraw=(pose,bob,flip)=>{const m=XS.meta;if(!m.poses[pose])pose="xs_idle";if(pose!==XS.cur){XS.cur=pose;XS.img.src=XS.ims[pose].src;
         const f=m.poses[pose],ih=box.clientHeight*.96,iw=ih*m.w/m.h,left=(box.clientWidth-iw)/2,top=box.clientHeight*.98-ih,R=f.r*iw*.82,ch=BP();
         Object.assign(XS.gly.style,{left:(left+f.cx*iw-R)+"px",top:(top+f.cy*ih-R)+"px",width:2*R+"px",height:2*R+"px",fontSize:(R*1.25)+"px",color:"帥仕相俥傌炮兵".includes(ch)?"#C8102E":"#1E1A16"});XS.gly.textContent=ch}
@@ -337,6 +337,16 @@
         if(n>=2&&parked){parked=false;store.set("botPos",null);say("出去走走～",1.6);wander()}
         else doAct(randAct())},380)};
     hit.addEventListener("pointerup",up);hit.addEventListener("pointercancel",up);
+    /* 意見回饋 383：兩指捏合放大縮小小帥——一指按住小帥，另一指放在畫面任何地方，張開／捏合（0.6～2 倍，會記住） */
+    const pts=new Map();let pinch=null;
+    hit.addEventListener("pointerdown",e=>{pts.set(e.pointerId,{x:e.clientX,y:e.clientY})});
+    const pDown=e=>{if(!pts.size||pts.has(e.pointerId))return;pts.set(e.pointerId,{x:e.clientX,y:e.clientY});if(pts.size===2&&!pinch){const[a,b]=[...pts.values()];
+        pinch={d:Math.max(20,Math.hypot(a.x-b.x,a.y-b.y)),s:SC};if(drag){clearTimeout(drag.lp);drag=null}e.preventDefault()}};
+    const pMove=e=>{const q=pts.get(e.pointerId);if(!q)return;q.x=e.clientX;q.y=e.clientY;if(!pinch||pts.size<2)return;e.preventDefault();const[a,b]=[...pts.values()];
+        const v=Math.min(2,Math.max(.6,pinch.s*Math.max(20,Math.hypot(a.x-b.x,a.y-b.y))/pinch.d));if(Math.abs(v-SC)>.02){setScale(v)}};
+    const pUp=e=>{if(!pts.delete(e.pointerId))return;if(pinch&&pts.size<2){pinch=null;pts.clear();say("這樣大小剛好！",1.4)}};
+    window.addEventListener("pointerdown",pDown,{capture:true,passive:false});window.addEventListener("pointermove",pMove,{capture:true,passive:false});
+    window.addEventListener("pointerup",pUp,true);window.addEventListener("pointercancel",pUp,true);
     for(const ev of["click","dblclick","touchstart","mousedown","mouseup","contextmenu","selectstart"])hit.addEventListener(ev,stop,{passive:false});
     hit.addEventListener("touchend",e=>{stop(e);if(drag)up(e)},{passive:false});hit.addEventListener("touchcancel",e=>{if(drag&&!drag.moved&&!drag.long){clearTimeout(drag.lp);drag=null}},{passive:true});
     const onCall=e=>{const s=e.detail;if(s==="將軍")doAct("shock");else if(s==="吃"){doAct("cheer");say("吃！",1.4)}};
@@ -391,7 +401,7 @@
     const setScale=v=>{SC=Math.min(2,Math.max(.6,+v||1));store.set("botSize",SC);applySize();XS.cur=""};
     const onResize=()=>{const b=bounds();x=Math.min(x,b.x1);y=Math.min(y,b.y1);tx=Math.min(tx,b.x1);ty=Math.min(ty,b.y1)};window.addEventListener("resize",onResize);
     return{act:k=>doAct(typeof k==="number"?comboAct(k):k),say,setScale,rebuild,count:COMBO.length,lines:LINES.length,
-      stop(){stopped=true;clearInterval(eraT);clearInterval(boardT);window.removeEventListener("xq-call",onCall);window.removeEventListener("xq-result",onResult);window.removeEventListener("resize",onResize);try{rd.dispose()}catch(e){}box.remove()}}}
+      stop(){stopped=true;window.removeEventListener("pointerdown",pDown,true);window.removeEventListener("pointermove",pMove,true);window.removeEventListener("pointerup",pUp,true);window.removeEventListener("pointercancel",pUp,true);clearInterval(eraT);clearInterval(boardT);window.removeEventListener("xq-call",onCall);window.removeEventListener("xq-result",onResult);window.removeEventListener("resize",onResize);try{rd.dispose()}catch(e){}box.remove()}}}
   // 瘦長版（公園 3D 棋盤的 Pikafish）：身體窄、高，手腳往內收，戴圓眼鏡
   function thinify(B){const tz=B.torso;tz.children.forEach(o=>{if(o===B.head||B.arms.includes(o))return;o.scale.x*=.6;o.scale.y*=1.18;o.position.y*=1.18});
     B.arms.forEach(a=>{a.position.x*=.62;a.scale.set(.85,1.1,.85)});B.legs.forEach(l=>{l.position.x*=.7;l.scale.set(.8,1.25,.8)});B.head.scale.set(.88,1.02,.9);B.head.position.y+=.08;tz.position.y+=.1;

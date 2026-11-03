@@ -497,7 +497,7 @@ html[data-era=ming] .topbar,html[data-era=qing] .topbar{border-bottom-width:4px}
       if(!window.caches)return go();caches.keys().then(function(ks){return Promise.all(ks.filter(function(k){return k.indexOf("xqlab-app-")===0}).map(function(k){return caches.delete(k)}))})
         .then(function(){return navigator.serviceWorker&&navigator.serviceWorker.getRegistration()}).then(function(r){return r&&r.update()}).catch(function(){}).then(go)}},4000)})();
 </script>
-<script>window.XQ_OFFLINE=true;window.XQ_BUILD="20261104-0421";</script>
+<script>window.XQ_OFFLINE=true;window.XQ_BUILD="20261104-0434";</script>
 <script src="core.js"></script>
 <script src="engine.js"></script>
 <script src="local.js"></script>
@@ -3223,7 +3223,7 @@ function Adventure(v){LEGEND_PREVIEW=false;setTop("🪨 石桌往事","#/");setT
       <div class="items" style="padding:0">${(D.prologue?[[0,D.prologue.title]]:[]).concat(list).map(([k,t])=>`<button class="item" data-k="${k}" ${open(k)?"":"disabled"}><span class="lb">${open(k)?"📖":"🔒"}</span><span class="tx"><b style="white-space:normal;line-height:1.5">${open(k)?esc(t):"？？？"}</b>${open(k)&&sc(k).length?`<span>🕰 回到當年：${sc(k).map(x=>esc(x.title)+((store.get("sceneDone",{})[x.key])?" ✓":"")).join("、")}</span>`:""}</span><span class="muted">${open(k)?"›":""}</span></button>`).join("")}</div>
       <p class="muted" style="font-size:12px;margin-top:8px">故事是虛構的；年表裡標 📜 的是真實歷史。</p>${DEVMODE()?'<button class="lk" id="aDev" style="margin-top:4px">👁 開發者預覽全文（玩家看不到這個按鈕）</button>':""}</div>`;
     v.querySelector("#aMe").onclick=()=>location.hash="#/profile";{const dv=v.querySelector("#aDev");if(dv)dv.onclick=()=>{LEGEND_PREVIEW=true;legendRead(0)}}v.querySelector("#aTl").onclick=()=>legendTimeline();
-    v.querySelectorAll(".advgrid [data-go],.doors [data-go]").forEach(b=>b.onclick=()=>{vibrate(5);location.hash=b.dataset.go});
+    v.querySelectorAll(".advgrid [data-go],.doors [data-go]").forEach(b=>b.onclick=()=>{vibrate(5);const g=b.dataset.go;if(g==="#/journey/inn")travel("inn",()=>{location.hash=g});else location.hash=g});   /* 意見回饋 385：去驛站也走一段荒野小徑 */
     /* 意見回饋 318、319：公園的小門——開公園 3D 進挑戰電腦（朝代擂台就在公園裡，不另外開入口） */
     jResume(v.querySelector("#aRes"));
     v.querySelectorAll("[data-k]").forEach(x=>x.onclick=()=>{const k=+x.dataset.k;if(open(k))legendRead(k)})});
@@ -3313,7 +3313,7 @@ function secretBio(x){const B=SECRET_BIO[x.id];if(!B)return"";
   return`<div class="sbio"><div class="muted" style="font-size:13px">${esc(x.name)}・${esc(B.y)}・${esc(B.from)}</div><div style="font-size:13.5px;margin-top:2px">${esc(x.who)}</div>
     <div class="sbio-r"><span>喜好</span><b>${esc(B.like)}</b></div><div class="sbio-r"><span>開局</span><b>${esc(B.op)}</b></div><div class="sbio-r"><span>中局</span><b>${esc(B.mid)}</b></div>
     <details style="margin-top:6px"><summary>📜 他的故事</summary><p style="line-height:1.8;margin:6px 0 0">${esc(B.story)}</p></details></div>`}
-const secretSheet=x=>sheet(`${x.ic} ${x.name}`,b=>{b.innerHTML=secretBio(x)+`<p class="muted" style="margin-top:8px">${esc(x.say)}</p><button class="btn" id="sgi" style="width:100%">🏮 去驛站找他下棋</button>`;b.querySelector("#sgi").onclick=()=>{closeSheet();location.hash="#/journey/inn"}});
+const secretSheet=x=>sheet(`${x.ic} ${x.name}`,b=>{b.innerHTML=secretBio(x)+`<p class="muted" style="margin-top:8px">${esc(x.say)}</p><button class="btn" id="sgi" style="width:100%">🏮 去驛站找他下棋</button>`;b.querySelector("#sgi").onclick=()=>{closeSheet();travel("inn",()=>{location.hash="#/journey/inn"})}});
 const secretLv=x=>Math.max(1,Math.min(5,Math.min(4,1+Math.floor(xpInfo().L/8))+(x.off||0))),secretXP=x=>40+20*secretLv(x);
 /* 意見回饋 315：秘境的位置每個玩家都不一樣——第一次用到時，隨機把每位秘境棋友分到不同朝代公園的不同物件上 */
 const SPOT_OBJ={tree1:"樹",tree2:"老樹",cup:"茶杯",bench:"長凳",stool:"石凳",lantern:"燈籠",table:"石桌"};
@@ -3434,7 +3434,7 @@ function Journey(v,sid){
       return`<div class="sec-t">${ri+1}. ${esc(R.name)} <span class="muted" style="font-size:12px">★ ${got}/18${R.lv>1?`・Lv ${R.lv} 才能進`:""}</span></div>${lvNo?`<div class="muted" style="font-size:13px;margin:-2px 2px 6px">🔒 等級還差 ${R.lv-I.L} 級——先去 🏮 驛站找人下棋練等</div>`:""}<div class="card" style="padding:10px 12px${open?"":";opacity:.55"}"><p class="muted" style="margin:0 0 6px;font-size:13px">${esc(R.sub)}</p>
         <div class="jpath">${st.map((s,k)=>{const i=L.indexOf(s),ok=jOpen(L,i),n=S[s.id]||0;return`<button class="jnode${ok?"":" lock"}${n?" done":""}" data-s="${s.id}" style="margin-left:${[2,18,34,18,2,14][k]}%"><span class="ji">${ok?jIcon[s.t]:"🔒"}</span><span class="jt"><b>${esc(s.name)}</b><small>${n?"★".repeat(n)+"☆".repeat(3-n):ok?"還沒過關":!jLvOk(s)?`要 Lv ${JR[s.r].lv}`:"先過前一關"}</small></span></button>`}).join("")}</div></div>`}).join("")}</div>`;
   {const jm=v.querySelector("#jmap");if(jm)jm.onclick=()=>sheet("🗺 雲河棋路",b=>{b.innerHTML='<img src="data/map/yunhe_map.webp" alt="雲河棋路地圖" style="width:100%;border-radius:12px;display:block">'})}
-  v.querySelector("#jxp").onclick=xpSheet;v.querySelector("#jinn").onclick=()=>location.hash="#/journey/inn";
+  v.querySelector("#jxp").onclick=xpSheet;v.querySelector("#jinn").onclick=()=>travel("inn",()=>{location.hash="#/journey/inn"});
   v.querySelectorAll(".jnode").forEach(b=>b.onclick=()=>{const i=L.findIndex(x=>x.id===b.dataset.s);if(!jOpen(L,i))return toast(!jLvOk(L[i])?`等級不夠：「${JR[L[i].r].name}」要 Lv ${JR[L[i].r].lv}，先去 🏮 驛站找人下棋練等`:"先過前一關");jSheet(L[i])});
   return{}}
 function jSheet(s){const n=jStars()[s.id]||0,R=JR[s.r];
@@ -3610,7 +3610,7 @@ function CpuGame(v,practicePage){
     else{s2.textContent=st.check>=0?"⚠ 你被將軍了！":st.hint?"💡 提示："+st.hint.cn:"輪到你"+(st.eval?`・${evt(st.eval.v)}`:"");s2.classList.toggle("hot",st.check>=0||!!st.hint)}
     if(st.practice&&!st.result&&!st.msg)practiceBar(s2);
     renderStrip(v.querySelector("#strip"),st.moves,st.moves.length-1);
-    acts.undo.disabled=st.ranked||st.reward||!st.moves.some(m=>m.by===st.human);   /* 意見回饋 380：電腦還在想也能悔棋 */
+    acts.undo.disabled=st.ranked||st.reward||!!st.arena||!st.moves.some(m=>m.by===st.human);   /* 意見回饋 380：電腦還在想也能悔棋；382：朝代擂台不能悔棋 */
     acts.resign.hidden=!!st.result;acts.review.hidden=!st.result;
     if(st.result&&shownResult!==JSON.stringify(st.result)+st.moves.length){shownResult=JSON.stringify(st.result)+st.moves.length;const xp0=store.get("xp",0);try{journeyGameEnd(st)}catch(e){}
       /* 意見回饋 376：結果視窗寫出這盤的修為變化（石桌往事、驛站、擂台、挑戰電腦都一樣），不再只靠一閃而過的小提示 */
