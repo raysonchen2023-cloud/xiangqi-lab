@@ -435,7 +435,7 @@ html[data-era=ming] .topbar,html[data-era=qing] .topbar{border-bottom-width:4px}
       if(!window.caches)return go();caches.keys().then(function(ks){return Promise.all(ks.filter(function(k){return k.indexOf("xqlab-app-")===0}).map(function(k){return caches.delete(k)}))})
         .then(function(){return navigator.serviceWorker&&navigator.serviceWorker.getRegistration()}).then(function(r){return r&&r.update()}).catch(function(){}).then(go)}},4000)})();
 </script>
-<script>window.XQ_OFFLINE=true;window.XQ_BUILD="20261103-0941";</script>
+<script>window.XQ_OFFLINE=true;window.XQ_BUILD="20261103-1000";</script>
 <script src="core.js"></script>
 <script src="engine.js"></script>
 <script src="local.js"></script>
@@ -1626,7 +1626,7 @@ const endTech=(b,side)=>{const up=side==="r",c={R:0,N:0,C:0};for(const p of b)if
 const qzTier=(th,n)=>Math.max(0,Math.min(n-1,Math.round(th/QZ.S+QZ.MID)));
 function Quiz(v){
   setTop("棋力測驗","#/");setTabs(false);
-  let D=null,ans=[],sel=-1,LEGAL=[],q=null,board=null,answered=false,mu=0,est={th:0,se:1},asked=new Set(),t0=0,share=store.get("irtShare",true);
+  let D=null,ans=[],sel=-1,LEGAL=[],q=null,board=null,answered=false,mu=0,est={th:0,se:1},asked=new Set(),t0=0,share=true;   /* 意見回饋 302：不再顯示匿名分享的勾選框 */
   const bd=Board(x=>tap(x));
   function intro(){v.className="view";const best=store.get("quizBest",null),last=store.get("quizTheta",null);
     v.innerHTML=`<div class="pad"><div class="card" style="line-height:1.8"><div style="font-size:40px;text-align:center">🎯</div>
@@ -1635,10 +1635,8 @@ function Quiz(v){
       <p>每題輪到一方走，找出<b>最好的一步</b>：點棋子，再點要去的位置。不會的話按「不會，看答案」也沒關係，一樣能估得準。</p>
       <p class="muted">題目來自《適情雅趣》、《橘中秘》、《梅花譜》、古典殘局譜，以及特級大師和全國比賽的實戰局面；答案由 Pikafish 深度計算。結果是估計值，不是正式段位。</p>
       ${best?`<p>目前最好成績：<b>${esc(best.rank)}</b>（${new Date(best.at).toLocaleDateString()}）</p>`:""}
-      <label class="row" style="gap:8px;font-size:13px;align-items:flex-start;margin:6px 0 10px"><input type="checkbox" id="share" ${share?"checked":""} style="margin-top:4px"><span class="muted">匿名分享答題結果（只有題號、對錯、秒數，不含名字和代號），幫忙校正題目難度</span></label>
       ${last?`<button class="btn" id="go3">從上次的程度開始（約 ${esc(D0rank(last.th))}）</button>`:""}
       <button class="btn${last?" ghost":""}" id="go">我是新手</button><button class="btn ghost" id="go2">我會下棋</button></div></div>`;
-    const sh=v.querySelector("#share");sh.onchange=()=>{share=sh.checked;store.set("irtShare",share)};
     v.querySelector("#go").onclick=()=>start(-3);v.querySelector("#go2").onclick=()=>start(-1.2);const g3=v.querySelector("#go3");if(g3)g3.onclick=()=>start(last.th)}
   const RK=["新手","入門1","入門2","入門3","業1","業2","業3","業4","業5","業6","業7","業8","業9","專1","專2"],D0rank=th=>RK[qzTier(th,RK.length)];
   async function start(m0){try{D=D||await api("/quiz/data")}catch(e){return toast(e.message)}
@@ -1686,7 +1684,7 @@ function Quiz(v){
       <div style="font-size:42px;font-weight:900;font-family:var(--serif)">${esc(rank)}</div>
       <p class="muted" style="margin:2px 0">80% 的把握在 <b>${esc(lo)}～${esc(hi)}</b> 之間・答對 ${ok} / ${ans.length} 題・平均每題 ${avgS} 秒${better&&best?"・🎉 新紀錄！":""}</p>
       <div style="display:grid;grid-template-columns:repeat(${byC.length},1fr);gap:8px;margin:12px 0">${byC.map(([k,o,m])=>`<div class="card" style="padding:8px"><div class="muted" style="font-size:12px">${k}</div><b style="font-size:18px">${o}/${m}</b></div>`).join("")}</div>
-      <p class="muted" style="font-size:12px;text-align:left;line-height:1.7">判定方式：試題反應理論（3PL）。每題的難度和鑑別度由 Pikafish 分析估出來，系統每答一題就更新一次你的能力值 θ（目前 ${est.th.toFixed(2)} ± ${est.se.toFixed(2)}），誤差夠小就停。四類題目的對錯會進到「我的戰績 → 🧬 天賦」的能力剖面。結果只是估計，不是正式段位。</p>
+      <p class="muted" style="font-size:12px;text-align:left;line-height:1.7">判定方式：試題反應理論（3PL）。每題的難度和鑑別度由 Pikafish 分析估出來，系統每答一題就更新一次你的能力值 θ（目前 ${est.th.toFixed(2)} ± ${est.se.toFixed(2)}），誤差夠小就停。四類題目的對錯會進到「我的戰績 → 🧬 天賦」的能力剖面；題目難度會用大家的答題結果（只有題號和對錯，不含名字）定期校正。結果只是估計，不是正式段位。</p>
       <button class="btn" id="again">再測一次（換新題目）</button><button class="btn ghost" id="st">看天賦分析</button></div></div>`;
     v.querySelector("#again").onclick=()=>start(est.th);v.querySelector("#st").onclick=()=>{store.set("statsTab","talent");location.hash="#/stats"}}
   intro();return{}}
