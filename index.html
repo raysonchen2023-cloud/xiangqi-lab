@@ -66,6 +66,12 @@ input,select{font:inherit;font-size:16px;color:inherit}
 .hfoot{display:flex;flex-wrap:wrap;justify-content:center;align-items:center;gap:6px 10px;margin:24px 0 8px;font-size:12px;color:var(--muted);text-align:center}
 .hfoot .lk{color:var(--muted);font-size:12px;padding:6px 4px;text-decoration:underline;text-underline-offset:3px}
 @media (min-width:700px){.home{padding:20px 16px}.hero{gap:12px}.hero.c4{grid-template-columns:repeat(4,1fr)}.tile{height:136px;padding:14px}.tile.sm{height:112px}}
+/* 意見回饋 298：首頁改成一長條（跟「朝代擂台」同一個樣式）：左邊圖示、中間標題＋一行重點、右邊箭頭 */
+.hero.strips{grid-template-columns:1fr;gap:8px}
+.tile.strip{flex-direction:row;align-items:center;gap:12px;height:auto;min-height:66px;padding:10px 14px;border-color:color-mix(in srgb,var(--c) 40%,var(--line))}
+.tile.strip .ic{margin:0;flex:none}.tile.strip .tx{flex:1;min-width:0;display:flex;flex-direction:column}.tile.strip .s{font-size:12.5px}
+.tile.strip .go{flex:none;color:var(--c);font-size:15px;font-weight:900;white-space:nowrap}
+.tile.strip .bd{position:static;display:inline-block;margin-left:8px;padding:0 7px;font-size:11px;vertical-align:2px;font-family:var(--sans)}
 .sec-t{font-weight:900;font-family:var(--serif);font-size:16px;margin:18px 4px 8px;display:flex;justify-content:space-between;align-items:baseline}
 .sec-t a,.sec-t button{font-size:13px;color:var(--accent);font-family:var(--sans);font-weight:500}
 .row{display:flex;align-items:center;gap:10px}
@@ -429,7 +435,7 @@ html[data-era=ming] .topbar,html[data-era=qing] .topbar{border-bottom-width:4px}
       if(!window.caches)return go();caches.keys().then(function(ks){return Promise.all(ks.filter(function(k){return k.indexOf("xqlab-app-")===0}).map(function(k){return caches.delete(k)}))})
         .then(function(){return navigator.serviceWorker&&navigator.serviceWorker.getRegistration()}).then(function(r){return r&&r.update()}).catch(function(){}).then(go)}},4000)})();
 </script>
-<script>window.XQ_OFFLINE=true;window.XQ_BUILD="20261103-0910";</script>
+<script>window.XQ_OFFLINE=true;window.XQ_BUILD="20261103-0920";</script>
 <script src="core.js"></script>
 <script src="engine.js"></script>
 <script src="local.js"></script>
@@ -1536,26 +1542,26 @@ function Home(v){
   const RI=DEVREMOTE()?XQ.remoteInfo():null;  // 這支手機連過主人的電腦嗎
   const standalone=matchMedia("(display-mode: standalone)").matches||navigator.standalone;
   setTop("象棋研究室",false,OFF?[["📤",shareSheet,"分享給朋友"]].concat(RI?[["🔗",connectSheet,"連線到電腦"]]:[],(DEVMODE()?[["📋",openFbAdmin,"意見回饋管理"]]:[])):[["📤",shareSheet,"分享給朋友"],["👥",whoSheet,"誰在線上"]]);setTabs(true,"#/");
-  const T=(k,go,ic,t,id,s,x)=>`<button class="tile ${k}${x||""}" data-go="${go}"><span class="ic">${ic}</span><span class="t">${t}</span><span class="s"${id?` id="${id}"`:""}>${s}</span></button>`;
+  const T=(k,go,ic,t,id,s,x,cta)=>`<button class="tile strip ${k}${x||""}" data-go="${go}"><span class="ic">${ic}</span><span class="tx"><span class="t">${t}</span><span class="s"${id?` id="${id}"`:""}>${s}</span></span><b class="go">${cta||"›"}</b></button>`;
   v.innerHTML=`<div class="home">
    ${RI?'<div class="card hstat" id="hStatus"><span class="muted">檢查中…</span></div>':""}
-   <!-- 實戰（一排兩格）＋學習（2×2），六格同樣大小、同樣格式 -->
+   <!-- 實戰、學習、收藏：每項一長條（左圖示、標題＋重點、右箭頭），跟朝代擂台同一個樣式 -->
    <div class="sec-t" style="margin-top:4px">實戰</div>
-   <div class="hero">
-    ${T("k1","#/cpu","🤖","挑戰電腦","hCpu","Pikafish・積分挑戰")}
-    ${OFF?T("k2","#/lobby","🌐","線上對戰","hNet","看誰在線上・邀請對戰"):T("k4","#/watch/ai","📺","AI 對戰","hAi","GPT 對 Claude")}
+   <div class="hero strips">
+    ${T("k1","#/cpu","🤖","挑戰電腦","hCpu","Pikafish・積分挑戰","","下棋 ›")}
+    ${OFF?T("k2","#/lobby","🌐","線上對戰・觀戰","hNet","看誰在線上・邀請對戰・觀看別人下棋","","進大廳 ›"):T("k4","#/watch/ai","📺","AI 對戰","hAi","GPT 對 Claude")}
    </div>
    ${OFF?(()=>{const n=Object.keys(arenaStamps()).length,t=arenaTitle();return`<button class="card" id="hArena" style="display:flex;align-items:center;gap:12px;width:100%;margin:10px 0 0;padding:10px 14px;text-align:left;font:inherit;color:inherit;cursor:pointer;border-color:color-mix(in srgb,#C8102E 45%,var(--line))"><span style="font-size:30px">🏯</span><span style="flex:1;min-width:0"><b style="font-size:16px;font-family:var(--serif)">朝代擂台</b><span class="muted" style="display:block;font-size:12.5px">${n?`集章 ${n}/13${t?"・"+esc(t):""}・下一位擂主等你`:"公園裡 13 位朝代擂主，打贏蓋一枚印章"}</span></span><b style="color:#C8102E">挑戰 ›</b></button>`})():""}
    <div class="sec-t">學習</div>
-   <div class="hero">
-    ${T("k3","#/quiz","🎯","棋力測驗","hQuiz","新手～專2")}
-    ${T("k4","#/db","📜","棋譜庫","","古譜・名局・我的對局")}
-    ${T("k2","#/terms","📚","象棋規則","","玩法・記譜法・術語")}
-    ${T("k1","#/stats","🏅","我的戰績","","勝負・段位・對局紀錄")}
-    ${T("k2","#/redo","🔁","錯棋重練","","從下錯的地方再下一次")}
-    ${T("k3","#/openings","📊","我的開局","","常用開局・中局正招")}
+   <div class="hero strips">
+    ${T("k3","#/quiz","🎯","棋力測驗","hQuiz","每級 2 題・估出你的段位（新手～專2）")}
+    ${T("k4","#/db","📜","棋譜庫","","古譜・特級大師名局・我的對局")}
+    ${T("k2","#/terms","📚","象棋規則","","玩法・記譜法・術語・殺法")}
+    ${T("k1","#/stats","🏅","我的戰績","","勝負・段位・🧬 天賦分析")}
+    ${T("k2","#/redo","🔁","錯棋重練","","從下錯的那一步再下一次，練到對")}
+    ${T("k3","#/openings","📊","我的開局","","你常用的開局・勝率・中局正招")}
    </div>
-   ${OFF&&REWARD?`<div class="sec-t">收藏</div><div class="hero">
+   ${OFF&&REWARD?`<div class="sec-t">收藏</div><div class="hero strips">
     ${T("k3","#/garage","🚗","我的車庫","hCar",(()=>{try{const b=JSON.parse(localStorage.getItem("xq_carBank"));if(b)return`🚗 ${b.pts.toLocaleString()} 點・收藏 ${Object.keys(b.owned||{}).length} 台`}catch(e){}return"贏棋拿點數換車"})())}
    </div>`:""}
    <div id="hRecentBox" hidden><div class="sec-t">繼續研究 <button data-go="#/db">棋譜庫 ›</button></div><div class="items" id="hRecent" style="padding:0"></div></div>
@@ -1583,7 +1589,7 @@ function Home(v){
       // 線上段位（XQNet.rating() 回傳 {pts,rank,w,l,d}）
       let rt=null;try{rt=XQNet.rating?XQNet.rating():null}catch(x){}
       const tile=e.closest(".tile");let bd=tile.querySelector(".bd");
-      if(rt&&rt.rank){if(!bd){bd=document.createElement("span");bd.className="bd";tile.append(bd)}bd.textContent=rt.rank;bd.title=`我的段位 ${rt.rank}・${rt.pts} 分`}else if(bd)bd.remove()};
+      if(rt&&rt.rank){if(!bd){bd=document.createElement("span");bd.className="bd";const tt=tile.querySelector(".t");(tt||tile).append(bd)}bd.textContent=rt.rank;bd.title=`我的段位 ${rt.rank}・${rt.pts} 分`}else if(bd)bd.remove()};
     upd();offNet=[XQNet.on("people",upd),XQNet.on("status",upd)]}
   const recent=store.get("recent",[]);
   if(recent.length){const hr=v.querySelector("#hRecent");v.querySelector("#hRecentBox").hidden=false;
