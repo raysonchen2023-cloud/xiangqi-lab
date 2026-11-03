@@ -470,7 +470,7 @@ html[data-era=ming] .topbar,html[data-era=qing] .topbar{border-bottom-width:4px}
       if(!window.caches)return go();caches.keys().then(function(ks){return Promise.all(ks.filter(function(k){return k.indexOf("xqlab-app-")===0}).map(function(k){return caches.delete(k)}))})
         .then(function(){return navigator.serviceWorker&&navigator.serviceWorker.getRegistration()}).then(function(r){return r&&r.update()}).catch(function(){}).then(go)}},4000)})();
 </script>
-<script>window.XQ_OFFLINE=true;window.XQ_BUILD="20261103-1641";</script>
+<script>window.XQ_OFFLINE=true;window.XQ_BUILD="20261103-1652";</script>
 <script src="core.js"></script>
 <script src="engine.js"></script>
 <script src="local.js"></script>
@@ -3218,7 +3218,7 @@ function secretSpots(){let m=store.get("secretSpots",null);if(m&&SECRETS.every(x
 const secretHint=x=>{const z=secretSpots()[x.id];return`聽說${eraLabel(z.era)}的公園裡，${SPOT_OBJ[z.k]}附近常有人在等……`};
 const jSecrets=()=>store.get("secrets",{});
 function secretFind(era,k){const M=secretSpots(),x=SECRETS.find(z=>M[z.id]&&M[z.id].era===era&&M[z.id].k===k);if(!x||jSecrets()[x.id])return false;const S=jSecrets();S[x.id]=Date.now();store.set("secrets",S);vibrate([20,40,60]);
-  sheet(`🗝 發現秘境棋友：${x.name}`,b=>{b.innerHTML=`<p style="line-height:1.9;font-size:16px">${esc(x.found.replace("{spot}",SPOT_OBJ[k]))}</p><p class="muted">${esc(x.say)}</p><p>${esc(x.name)}（${esc(x.who)}）以後會在「🏮 驛站」等你。難度照你的等級配（現在是第 ${secretLv(x)} 級的實力），贏了 +${secretXP(x)} 修為；下到賽後評等 S，他會送你一張棋盤。</p><button class="btn" id="sgo" style="width:100%">去驛站找他</button>`;b.querySelector("#sgo").onclick=()=>{closeSheet();location.hash="#/journey/inn"}});return true}
+  sheet(`🗝 發現秘境棋友：${x.name}`,b=>{b.innerHTML=`<p style="line-height:1.9;font-size:16px">${esc(x.found.replace("{spot}",SPOT_OBJ[k]))}</p><p class="muted">${esc(x.say)}</p><p class="muted" style="font-size:13px">${esc(x.name)}：${esc(x.who)}</p><button class="btn" id="sgo" style="width:100%">去驛站找他</button>`;b.querySelector("#sgo").onclick=()=>{closeSheet();location.hash="#/journey/inn"}});return true}
 /* 秘境棋友送棋盤：這盤賽後評等 S 才送；稀有 12%（整個故事只有一件：雲河鎮石桌殘局的拓本）、一般 58%、損壞 30% */
 async function secretGift(x,gid){const K=store.get("giftGames",{});if(K[gid])return;let st=null;try{st=await api("/play/state")}catch(e){return}if(!st||st.id!==gid)return;
   let R=null;try{R=gameReport(window.XQCore.parseFen(window.XQCore.START),st.moves).sides[st.human]}catch(e){}
@@ -3250,7 +3250,7 @@ function travel(to,done){if(document.querySelector(".travel"))return;const back=
   const h0=location.hash;let ended=false;const end=()=>{if(ended)return;ended=true;clearInterval(tl);clearTimeout(tm);ov.classList.add("out");setTimeout(()=>ov.remove(),350);if(done&&location.hash===h0)done()};
   const tm=setTimeout(end,5000);ov.querySelector(".tskip").onclick=e=>{e.stopPropagation();end()}}
 function innSheet(v){setTimeout(innDrop,1200);setTop("🏮 驛站","#/journey");const I=xpInfo(),Sx=jSecrets(),nx=JR.find(R=>R.lv>I.L);v.className="view";
-  const row=(x,locked)=>`<button class="item" data-inn="${x.id}" ${locked?"disabled":""}><span class="lb" style="font-size:24px">${locked?"❔":x.ic}</span><span class="tx"><b>${locked?"？？？（還沒找到）":esc(x.name)}</b><span>${locked?"":x.who?`${esc(x.who)}・第 ${secretLv(x)} 級的實力・贏了 +${secretXP(x)} 修為・評等 S 送棋盤`:`第 ${x.lv} 級的實力・贏了 +${x.xp} 修為（另加對局修為）`}</span></span><span class="muted">${locked?"":"›"}</span></button>`;
+  const row=(x,locked)=>`<button class="item" data-inn="${x.id}" ${locked?"disabled":""}><span class="lb" style="font-size:24px">${locked?"❔":x.ic}</span><span class="tx"><b>${locked?"？？？（還沒找到）":esc(x.name)}</b><span>${locked?"":x.who?`${esc(x.who)}・第 ${secretLv(x)} 級的實力・贏了 +${secretXP(x)} 修為`:`第 ${x.lv} 級的實力・贏了 +${x.xp} 修為（另加對局修為）`}</span></span><span class="muted">${locked?"":"›"}</span></button>`;
   v.innerHTML=`<div class="pad"><div class="card" style="line-height:1.8">🀄 <b>Lv ${I.L} ${I.title}</b>${nx?`・下一站「${nx.name}」要 Lv ${nx.lv}，還差 ${nx.lv-I.L} 級`:"・每一站都能進了"}<br><span class="muted" style="font-size:13px">驛站裡都是路過的旅人，找誰下都可以、下幾次都可以；輸了也有對局修為。</span></div>
     <button class="btn ghost" id="toPark" style="width:100%;margin-top:8px">🌳 走荒野小徑去公園（約 5 秒）</button>
     <div class="sec-t">🏮 路過的旅人</div><div class="items" style="padding:0">${INN.map(x=>row(x)).join("")}</div>
@@ -3259,7 +3259,7 @@ function innSheet(v){setTimeout(innDrop,1200);setTop("🏮 驛站","#/journey");
   v.querySelector("#toPark").onclick=()=>travel("park",()=>{location.hash="#/journey/park"});
   v.querySelectorAll("[data-inn]").forEach(b=>b.onclick=()=>{const x=INN.concat(SECRETS).find(z=>z.id===b.dataset.inn);if(!x||(SECRETS.includes(x)&&!Sx[x.id]))return;
     const lv=x.who?secretLv(x):x.lv,xp=x.who?secretXP(x):x.xp;
-    sheet(`${x.ic} ${x.name}`,c=>{c.innerHTML=`<p style="font-size:16px;line-height:1.8">${esc(x.say)}</p><p class="muted">${x.who?esc(x.who)+"。":""}第 ${lv} 級的實力。贏了 +${xp} 修為（另加對局修為），輸了也有對局修為。${x.who?"下到賽後評等 S（幾乎跟引擎同步），他會送你一張棋盤。":""}</p><button class="btn" id="ig" style="width:100%">⚔ 下一盤</button>`;
+    sheet(`${x.ic} ${x.name}`,c=>{c.innerHTML=`<p style="font-size:16px;line-height:1.8">${esc(x.say)}</p><p class="muted">${x.who?esc(x.who)+"。":""}第 ${lv} 級的實力。贏了 +${xp} 修為（另加對局修為），輸了也有對局修為。</p><button class="btn" id="ig" style="width:100%">⚔ 下一盤</button>`;
       c.querySelector("#ig").onclick=async()=>{closeSheet();try{store.set("cpuRanked",false);store.set("cpuCar",false);await api("/play/new",{human:"r",level:lv,journey:"inn:"+x.id});const st=await api("/play/state");store.set("jPending",{id:"inn:"+x.id,game:st.id});location.hash="#/cpu";setTimeout(()=>toast(`${x.ic} ${x.name}：${x.say}`),500)}catch(e){toast(e.message)}}})});
   return{}}
 /* 意見回饋 327：石桌往事的棋（雲河棋路、驛站、公園）自己留一盤，跟朝代擂台、挑戰電腦互不干擾 */
