@@ -327,7 +327,10 @@ var XQ=(function(){
     if(p==="/db/books")return dbBooks();
     if(p==="/db/items")return dbItems(c);
     if(p==="/db/item")return dbItem(c,url.searchParams.get("id"));
-    if(p==="/quiz/data"||p==="/terms/data"){const r=await fetch("data/"+p.slice(1,-5)+".json");if(!r.ok)throw new Error("找不到題庫");return r.json()}
+    if(p==="/quiz/data"||p==="/terms/data"){const r=await fetch("data/"+p.slice(1,-5)+".json");if(!r.ok)throw new Error("找不到題庫");const d=await r.json();
+      /* 意見回饋 301：有校正檔就把每題校正過的鑑別度 a、難度 b 加上去 */
+      if(p==="/quiz/data")try{const c=await (await fetch("data/quiz-calib.json")).json();for(const it of d.items){const k=c.items&&c.items[it.id];if(k){it.ca=k.a;it.cb=k.b}}}catch(e){}
+      return d}
     if(p==="/play/state")return playState();
     if(p==="/car/state")return carState();
     if(p==="/car/redeem")return carRedeem(b||{});
