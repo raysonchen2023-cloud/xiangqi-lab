@@ -359,7 +359,7 @@ html[data-era=ming] .topbar,html[data-era=qing] .topbar{border-bottom-width:4px}
 .car-big{margin:4px auto 8px;max-width:420px;border-radius:16px;background:radial-gradient(ellipse 70% 38% at 50% 86%,color-mix(in srgb,var(--accent) 22%,transparent),transparent)}.car-big svg{display:block;width:100%;height:auto}
 .car-info{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin:0 0 12px}.car-info div{display:flex;flex-direction:column;padding:8px 10px;border-radius:10px;background:var(--bg)}.car-info span{font-size:12px;color:var(--muted)}.car-info b{font-size:15px}
 .car-sell{display:grid;grid-template-columns:repeat(3,1fr);gap:6px;margin:6px 0 0}.car-sell div{display:flex;flex-direction:column;padding:8px;border-radius:10px;background:var(--bg);text-align:center}.car-sell span{font-size:11px;color:var(--muted)}.car-sell b{font-size:15px}
-.rp-bar{position:fixed;left:12px;right:12px;bottom:calc(92px + var(--safeB,0px));z-index:62;display:flex;align-items:center;justify-content:space-between;gap:10px;padding:10px 12px;border-radius:14px;background:var(--card,#fff);border:1px solid var(--line);box-shadow:0 6px 24px #0003;font-size:14px}
+.rp-bar{position:fixed;right:8px;top:calc(env(safe-area-inset-top,0px) + 56px);z-index:62;display:flex;align-items:center;gap:6px;max-width:72vw;padding:4px 6px 4px 10px;border-radius:999px;background:var(--card,#fff);border:1px solid var(--line);box-shadow:0 2px 10px #0002;font-size:12px;opacity:.94}.rp-bar .pill{padding:2px 8px;font-size:11.5px}
 .rp-bar span{display:flex;flex-direction:column}.rp-bar em{font-style:normal}.rp-bar small{font-size:11.5px;color:var(--muted)}.rp-bar.done{border-color:var(--accent2)}.rp-bar.done span{font-weight:800;color:var(--accent2)}
 .gar-q{display:block;width:100%;margin:14px 0 0;padding:11px 14px;border-radius:12px;border:1px solid var(--line);background:var(--card,#fff);color:inherit;font-size:16px;font-family:var(--sans)}
 .st-tabs{display:flex;gap:4px;padding:4px;margin:4px 0 6px;border-radius:14px;background:color-mix(in srgb,var(--line) 55%,transparent);position:sticky;top:0;z-index:5}.st-tabs button{flex:1;padding:9px 4px;border-radius:10px;font-weight:700;font-size:14px;color:var(--muted);font-family:var(--sans)}.st-tabs button.on{background:var(--card,#fff);color:var(--ink,inherit);box-shadow:0 1px 4px #0002}
@@ -470,7 +470,7 @@ html[data-era=ming] .topbar,html[data-era=qing] .topbar{border-bottom-width:4px}
       if(!window.caches)return go();caches.keys().then(function(ks){return Promise.all(ks.filter(function(k){return k.indexOf("xqlab-app-")===0}).map(function(k){return caches.delete(k)}))})
         .then(function(){return navigator.serviceWorker&&navigator.serviceWorker.getRegistration()}).then(function(r){return r&&r.update()}).catch(function(){}).then(go)}},4000)})();
 </script>
-<script>window.XQ_OFFLINE=true;window.XQ_BUILD="20261103-1632";</script>
+<script>window.XQ_OFFLINE=true;window.XQ_BUILD="20261103-1641";</script>
 <script src="core.js"></script>
 <script src="engine.js"></script>
 <script src="local.js"></script>
@@ -4040,9 +4040,11 @@ function PvpGame(v){
       const G=window.XQNet&&XQNet.game&&XQNet.game(),o=G&&(x==="r"?G.red:G.black);if(o&&o.id&&o.id!==meInfo().id)oppCard(o.id,o.name)}}
     v.querySelector("#pTop").classList.toggle("on",!st.result&&st.turn===top);v.querySelector("#pBot").classList.toggle("on",!st.result&&st.turn===bot);
     clockBase={at:Date.now(),c:st.clocks,turn:st.turn,run:st.running&&!st.result};clocks();
-    v.querySelector("#evf").style.width=evPct(st.eval&&st.eval.v)+"%";
+    /* 意見回饋 330：下棋的兩個人看不到紅黑條（形勢），只有觀戰的人看得到；下完再顯示 */
+    const hideEv=seat&&seat!=="w"&&!st.result;v.querySelector(".evline").style.visibility=hideEv?"hidden":"";
+    v.querySelector("#evf").style.width=evPct(hideEv?null:st.eval&&st.eval.v)+"%";
     const s2=v.querySelector("#stat");s2.classList.toggle("hot",st.check>=0&&!st.result);
-    s2.textContent=st.waiting?"等對方進入對局…":st.result?st.result.why:seat==="w"?`觀戰中・輪到${PLAYER[st.turn]}（${nm(st.turn)}）`+(st.check>=0?"・被將軍！":""):seat?(st.turn===seat?"輪到你走":`等對方（${PLAYER[st.turn]}）走…`)+(st.check>=0&&st.turn===seat?"・你被將軍了！":"")+(st.draw===seat?"・已提和，等對方回應":"")+(st.eval?`・${evt(st.eval.v)}`:"")
+    s2.textContent=st.waiting?"等對方進入對局…":st.result?st.result.why:seat==="w"?`觀戰中・輪到${PLAYER[st.turn]}（${nm(st.turn)}）`+(st.check>=0?"・被將軍！":""):seat?(st.turn===seat?"輪到你走":`等對方（${PLAYER[st.turn]}）走…`)+(st.check>=0&&st.turn===seat?"・你被將軍了！":"")+(st.draw===seat?"・已提和，等對方回應":"")
       :`輪到${PLAYER[st.turn]}（${nm(st.turn)}）`+(st.check>=0?"・被將軍！":"")+(st.eval?`・${evt(st.eval.v)}`:"");
     if(NET&&st.watchers)s2.textContent+=`・👀 ${st.watchers} 人觀看`;
     // 每步限時 3 分鐘：剩 1 分鐘以內顯示倒數
@@ -4412,7 +4414,7 @@ function Viewer(v,c,id){
     if(miss.length){if(rpBusy)return toast("賽後報告還在評等，好了會通知你");rpBusy=true;
       document.querySelectorAll(".rp-bar").forEach(x=>x.remove());
       const bar=document.createElement("div");bar.className="rp-bar";
-      bar.innerHTML=`<span><em>📊 Pikafish 評等中 <b class="rpn">0</b> / ${miss.length} 步</em><small>可以先看棋，評好了會通知你</small></span><button class="pill">取消</button>`;document.body.append(bar);
+      bar.innerHTML=`<span><em>📊 評等中 <b class="rpn">0</b>/${miss.length}</em></span><button class="pill" aria-label="取消評等">✕</button>`;toast("📊 Pikafish 在背景評等，可以先看棋，評好會通知你");document.body.append(bar);
       let stop=false,done=false;bar.querySelector("button").onclick=()=>{stop=true;bar.remove()};
       try{for(let k=0;k<miss.length;k++){if(stop||screen!==self||!it)return;const p=miss[k],m=seq(line,p)[p-1];
         grades[owner(line,p)+"|"+p]=(await api("/an/classify",{board:boardAt(line,p-1),side:moverAt(p),f:m.f,t:m.t}))||{q:"—"};
@@ -4421,7 +4423,7 @@ function Viewer(v,c,id){
       catch(e){toast(e.message);return}finally{rpBusy=false;if(!done)bar.remove()}
       if(screen!==self||!it){bar.remove();return}
       show();vibrate([20,40,20]);
-      bar.classList.add("done");bar.innerHTML=`<span>📊 賽後報告評好了</span><button class="pill go">看報告 ›</button>`;
+      bar.classList.add("done");bar.innerHTML=`<span>📊 評好了</span><button class="pill go">看報告 ›</button>`;
       bar.querySelector(".go").onclick=()=>{bar.remove();report()};setTimeout(()=>bar.remove(),20000);return}
     const moves=seq(line,end).map((m,i)=>{const g=gradeOf(i+1)||{};return{f:m.f,t:m.t,cn:m.cn,by:moverAt(i+1),q:g.q,loss:g.loss,ev:g.ev,bc:g.bc,bm:g.bm,bp:g.bp,ck:m.ck}});
     const rep=gameReport(it.board,moves),names={r:it.red||"紅方",b:it.black||"黑方"},side=it.black==="你"?"b":"r";
