@@ -435,7 +435,7 @@ html[data-era=ming] .topbar,html[data-era=qing] .topbar{border-bottom-width:4px}
       if(!window.caches)return go();caches.keys().then(function(ks){return Promise.all(ks.filter(function(k){return k.indexOf("xqlab-app-")===0}).map(function(k){return caches.delete(k)}))})
         .then(function(){return navigator.serviceWorker&&navigator.serviceWorker.getRegistration()}).then(function(r){return r&&r.update()}).catch(function(){}).then(go)}},4000)})();
 </script>
-<script>window.XQ_OFFLINE=true;window.XQ_BUILD="20261103-1000";</script>
+<script>window.XQ_OFFLINE=true;window.XQ_BUILD="20261103-1100";</script>
 <script src="core.js"></script>
 <script src="engine.js"></script>
 <script src="local.js"></script>
@@ -1671,7 +1671,7 @@ function Quiz(v){
     draw({board:nb,last:{f:q.f,t:q.t},sel:-1,targets:[]});
     const s=v.querySelector("#stat");s.classList.remove("hot");s.textContent=ok?"✔ 答對了！":f<0?"正解如下":"✘ 不是這步";
     const rv=q.side==="r"?q.v:-q.v;
-    v.querySelector("#note").textContent=`正解：${q.cn}`+(q.mate?`，${q.mate} 步內殺棋`:`，走完${evt(rv)}`)+`\nPikafish 的後續：${q.pv.join(" ")}`+(q.src?`\n出處：${q.src}${q.title?"・"+q.title:""}`:"");
+    v.querySelector("#note").textContent=`正解：${q.cn}`+(q.mate?`，${q.mate} 步內殺棋`:`，走完${evt(rv)}`)+`\nPikafish 的後續：${q.pv.join(" ")}`+(q.src?`\n出處：${q.src}${q.title?"・"+toT(q.title):""}`:"");
     actionBar(v.querySelector("#acts"),[["next",done()?"🏁":"›",done()?"看結果":"下一題",()=>{if(done())result();else next()},true]])}
   function result(){const n=D.ranks.length,ti=qzTier(est.th,n),rank=D.ranks[ti],ok=ans.filter(x=>x.ok).length;v.className="view";
     const best=store.get("quizBest",null),better=!best||ti>D.ranks.indexOf(best.rank);
