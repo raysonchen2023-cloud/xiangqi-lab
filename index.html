@@ -100,6 +100,7 @@ input,select{font:inherit;font-size:16px;color:inherit}
 .travel .tskip{position:absolute;right:14px;bottom:calc(env(safe-area-inset-bottom,0px) + 14px);z-index:3;border:1px solid rgba(255,255,255,.5);background:rgba(0,0,0,.35);color:#fff;border-radius:999px;padding:6px 14px;font:inherit}
 .ppl{display:flex;flex-direction:column;gap:6px;padding:10px 2px;border-bottom:1px solid var(--line)}.ppl .pn b{font-size:16px}.ppl .pn small{display:block;color:var(--muted);font-size:12.5px;line-height:1.5}.ppl .pa{display:flex;flex-wrap:wrap;gap:6px}.ppl .pa span{font-size:12.5px;border:1px solid var(--line);border-radius:999px;padding:2px 9px;background:var(--bg);white-space:nowrap}
 .tlr{display:flex;gap:10px;padding:8px 2px;border-bottom:1px solid var(--line);text-align:left}.tlr .ty{flex:none;width:72px}.tlr .ty b{display:block}.tlr .ty small{color:var(--muted);font-size:11.5px}.tlr .tt{flex:1;min-width:0;line-height:1.6;font-size:14px}
+.circles{display:flex;justify-content:space-around;gap:10px;margin-top:18px}.circles button{width:96px;height:96px;border-radius:50%;border:2px solid color-mix(in srgb,var(--accent) 45%,var(--line));background:radial-gradient(circle at 35% 30%,var(--card),color-mix(in srgb,var(--accent) 10%,var(--card)));display:flex;flex-direction:column;align-items:center;justify-content:center;gap:1px;font:inherit;color:inherit;cursor:pointer;box-shadow:0 3px 10px rgba(0,0,0,.08)}.circles span{font-size:28px}.circles b{font-size:13.5px}.circles small{font-size:12px;color:var(--accent);font-weight:700}
 #xpchip{position:fixed;left:50%;top:calc(env(safe-area-inset-top,0px) + 56px);transform:translateX(-50%);z-index:9999;background:var(--accent);color:#fff;padding:6px 14px;border-radius:999px;font-weight:700;font-size:14px;pointer-events:none;opacity:0;transition:opacity .4s;box-shadow:0 4px 14px rgba(0,0,0,.2);white-space:nowrap}#xpchip.big{font-size:16px;padding:10px 18px}
 .tile.strip .rsm{display:block;margin-top:2px;font-weight:700;color:var(--accent)}.tile.strip.resume{border:2px solid var(--accent);animation:rsPulse 2.4s ease-in-out 2}@keyframes rsPulse{50%{box-shadow:0 0 0 5px color-mix(in srgb,var(--accent) 25%,transparent)}}
 .tile.strip .ic{margin:0;flex:none}.tile.strip .tx{flex:1;min-width:0;display:flex;flex-direction:column}.tile.strip .s{font-size:12.5px}
@@ -468,7 +469,7 @@ html[data-era=ming] .topbar,html[data-era=qing] .topbar{border-bottom-width:4px}
       if(!window.caches)return go();caches.keys().then(function(ks){return Promise.all(ks.filter(function(k){return k.indexOf("xqlab-app-")===0}).map(function(k){return caches.delete(k)}))})
         .then(function(){return navigator.serviceWorker&&navigator.serviceWorker.getRegistration()}).then(function(r){return r&&r.update()}).catch(function(){}).then(go)}},4000)})();
 </script>
-<script>window.XQ_OFFLINE=true;window.XQ_BUILD="20261103-1540";</script>
+<script>window.XQ_OFFLINE=true;window.XQ_BUILD="20261103-1545";</script>
 <script src="core.js"></script>
 <script src="engine.js"></script>
 <script src="local.js"></script>
@@ -3075,8 +3076,7 @@ async function legendRead(i,tip){const D=await legendData();if(!D)return;const L
     b.querySelector("#lgL").onclick=()=>legendBook();const nx=b.querySelector("#lgN");if(nx)nx.onclick=()=>legendRead(i+1)})}
 /* 意見回饋 314：人物（出生年、六十年前和重逢時幾歲）與元末明初大事年表（真實歷史＋故事） */
 async function legendTimeline(){const D=await legendData();if(!D)return;const P=D.people||[],T=D.timeline||[];
-  sheet("📅 人物與年表",b=>{b.innerHTML=`<div class="sec-t" style="margin-top:0">人物</div>${P.map(x=>`<div class="ppl"><div class="pn"><b>${esc(x.name)}</b><small>${esc(x.note||"")}</small></div>
-      <div class="pa"><span>${x.born} 年生</span><span>1352 年：${1352-x.born} 歲</span><span>${x.died&&x.died<1412?`${x.died} 年過世`:`1412 年：${1412-x.born} 歲`}</span></div></div>`).join("")}
+  sheet("📅 人物與年表",b=>{b.innerHTML=`<div class="sec-t" style="margin-top:0">人物</div>${P.map(x=>`<div class="ppl"><div class="pn"><b>${esc(x.name)}</b>（${x.born}${x.died?"–"+x.died:""}）<small>${esc(x.note||"")}</small></div></div>`).join("")}
     <div class="sec-t">大事年表</div>${T.map(x=>`<div class="tlr"><div class="ty"><b>${x.y}</b><small>${esc(x.era||"")}</small></div><div class="tt">${x.h?"📜":"🪨"} ${esc(x.t)}</div></div>`).join("")}
     <p class="muted" style="font-size:12px;line-height:1.7;margin-top:8px">📜 是真實的歷史；🪨 是石桌往事的故事（虛構）。沈石川、柳寒舟、阿古拉、周文淵和雲河鎮都是編的。</p>`})}
 function legendBook(){closeSheet();location.hash="#/adventure"}
@@ -3113,12 +3113,16 @@ function Profile(v){setTop("🎒 棋童資料","#/adventure");setTabs(false);v.c
   v.innerHTML=`<div class="pad"><div class="card prof"><div class="pl"><div class="lv">Lv ${I.L}</div><div><b style="font-size:20px">🀄 ${I.title}</b><div class="st-bar" style="margin:6px 0 2px"><i style="width:${I.need?Math.round(I.rest*100/I.need):100}%"></i></div><small class="muted">${I.need?`${I.rest}／${I.need} 修為・累積 ${I.total}`:`累積 ${I.total} 修為・已到最高等級`}</small></div></div>
       <div class="chips"><span>💡 提示棋 今天 ${H.left}${H.bonus?`＋庫存 ${H.bonus}`:""}</span><span>⭐ 雲河棋路 ${star}／${Js.length*3}</span><span>📖 故事 ${L.n}／12${L.epi?"＋尾聲":""}</span><span>🤝 秘境棋友 ${Object.keys(Sx).length}／${SECRETS.length}</span></div>
       <button class="lk" id="pXP" style="margin-top:6px">等級和提示棋怎麼來的？</button></div>
-    <div class="sec-t">🎁 棋盤收藏（${B.boards.length}）</div>${B.boards.length?`<div class="bgrid">${B.boards.slice().reverse().map(card).join("")}</div>`:`<div class="card muted" style="font-size:13.5px;line-height:1.7">還沒有棋盤。在驛站跟秘境棋友下棋，下到賽後評等 S（幾乎跟引擎同步），他會送你一張棋盤：有一般、損壞，運氣好會拿到整個故事只有一件的稀有棋盤。</div>`}
-    <div class="sec-t">📜 棋譜（${B.records.length}）</div>${B.records.length?`<div class="items" style="padding:0">${B.records.slice().reverse().map(x=>`<button class="item" data-rc="${x.uid}"><span class="lb">📜</span><span class="tx"><b>${esc(x.name)}</b><span>${esc(x.from)}・${new Date(x.at).toLocaleDateString()}</span></span><span class="muted">讀 ›</span></button>`).join("")}</div>`:`<div class="card muted" style="font-size:13.5px;line-height:1.7">還沒有棋譜。常去驛站逛逛，路過的旅人偶爾會留下比賽的棋譜；用稀有棋盤跟兩位老人換，也能拿到故事要用的棋譜。</div>`}
-    <div class="sec-t">🤝 秘境棋友（${Object.keys(Sx).length}／${SECRETS.length}）</div><div class="items" style="padding:0">${SECRETS.map(x=>Sx[x.id]?`<div class="item"><span class="lb" style="font-size:22px">${x.ic}</span><span class="tx"><b>${esc(x.name)}</b><span>${esc(x.who)}・贏過 ${(store.get("secretWins",{})[x.id]||0)} 盤</span></span></div>`:`<div class="item" style="opacity:.55"><span class="lb">❔</span><span class="tx"><b>還沒找到</b><span>${esc(secretHint(x))}</span></span></div>`).join("")}</div></div>`;
+    <div class="circles"><button data-c="b"><span>🎁</span><b>棋盤</b><small>${B.boards.length}</small></button><button data-c="r"><span>📜</span><b>棋譜</b><small>${B.records.length}</small></button><button data-c="s"><span>🤝</span><b>秘境棋友</b><small>${Object.keys(Sx).length}／${SECRETS.length}</small></button></div></div>`;
+  /* 意見回饋 322：只放三個圓圈，點了才打開清單，不放說明文字 */
+  const openC=k=>{const B2=bag(),S2=jSecrets();
+    if(k==="b")sheet(`🎁 棋盤（${B2.boards.length}）`,b=>{b.innerHTML=B2.boards.length?`<div class="bgrid">${B2.boards.slice().reverse().map(card).join("")}</div>`:'<p class="muted" style="text-align:center">還沒有</p>';
+      b.querySelectorAll("[data-ex]").forEach(x=>x.onclick=()=>rareExchange(x.dataset.ex,()=>Profile(v)))});
+    else if(k==="r")sheet(`📜 棋譜（${B2.records.length}）`,b=>{b.innerHTML=B2.records.length?`<div class="items" style="padding:0">${B2.records.slice().reverse().map(x=>`<button class="item" data-rc="${x.uid}"><span class="lb">📜</span><span class="tx"><b>${esc(x.name)}</b><span>${esc(x.from)}</span></span><span class="muted">›</span></button>`).join("")}</div>`:'<p class="muted" style="text-align:center">還沒有</p>';
+      b.querySelectorAll("[data-rc]").forEach(y=>y.onclick=()=>{const x=bag().records.find(z=>z.uid===y.dataset.rc);if(!x)return;closeSheet();store.set("dbReturn",{c:x.c,to:"#/adventure",at:Date.now()});location.hash=`#/db/${x.c}/${encodeURIComponent(x.id)}`})});
+    else sheet(`🤝 秘境棋友（${Object.keys(S2).length}／${SECRETS.length}）`,b=>{b.innerHTML=`<div class="items" style="padding:0">${SECRETS.map(x=>S2[x.id]?`<div class="item"><span class="lb" style="font-size:22px">${x.ic}</span><span class="tx"><b>${esc(x.name)}</b><span>贏過 ${(store.get("secretWins",{})[x.id]||0)} 盤</span></span></div>`:`<div class="item" style="opacity:.5"><span class="lb">❔</span><span class="tx"><b>？？？</b></span></div>`).join("")}</div>`})};
+  v.querySelectorAll(".circles [data-c]").forEach(b=>b.onclick=()=>{vibrate(5);openC(b.dataset.c)});
   v.querySelector("#pXP").onclick=xpSheet;
-  v.querySelectorAll("[data-rc]").forEach(b=>b.onclick=()=>{const x=bag().records.find(z=>z.uid===b.dataset.rc);if(!x)return;store.set("dbReturn",{c:x.c,to:"#/adventure",at:Date.now()});location.hash=`#/db/${x.c}/${encodeURIComponent(x.id)}`});
-  v.querySelectorAll("[data-ex]").forEach(b=>b.onclick=()=>rareExchange(b.dataset.ex,()=>Profile(v)));
   return{}}
 /* 稀有棋盤（整個故事只有一件）拿去石桌給兩位老人：換 5 顆提示棋＋3 份「回到當年」要用的棋譜（先研讀再解主線） */
 async function rareExchange(uid,done){const B=bag(),x=B.boards.find(z=>z.uid===uid);if(!x||x.rarity!=="rare"||x.used)return;const D=await legendData();
