@@ -475,7 +475,7 @@ html[data-era=ming] .topbar,html[data-era=qing] .topbar{border-bottom-width:4px}
       if(!window.caches)return go();caches.keys().then(function(ks){return Promise.all(ks.filter(function(k){return k.indexOf("xqlab-app-")===0}).map(function(k){return caches.delete(k)}))})
         .then(function(){return navigator.serviceWorker&&navigator.serviceWorker.getRegistration()}).then(function(r){return r&&r.update()}).catch(function(){}).then(go)}},4000)})();
 </script>
-<script>window.XQ_OFFLINE=true;window.XQ_BUILD="20261103-1848";</script>
+<script>window.XQ_OFFLINE=true;window.XQ_BUILD="20261103-1902";</script>
 <script src="core.js"></script>
 <script src="engine.js"></script>
 <script src="local.js"></script>
@@ -2325,6 +2325,22 @@ async function talentBackfill(box,pend){if(TALENT_BG||!pend.length)return;TALENT
   try{for(const x of todo){let b=x.b0.slice();for(const m of x.mv){if(!box.isConnected)return;if(m.by===x.side&&!(m.q&&m.q!=="—")){try{const g=await api("/an/classify",{board:b,side:m.by,f:m.f,t:m.t});if(g)Object.assign(m,g)}catch(e){}n++;up()}b=C.make(b,m.f,m.t)}}}
   finally{TALENT_BG=false;bar.remove()}
   if(box.isConnected)talentReport(box)}
+/* 意見回饋 339：天賦加一項「改錯力」——錯棋重練時找到 Pikafish 最好那步（正手、妙手）的比例；
+   題數少的時候往中間值（50）拉一點，不會練一題就 0 分或 100 分 */
+function redoPower(){const D=Object.values(store.get("redoDone",{})).filter(d=>d&&d.n>0);if(!D.length)return null;
+  const tries=D.reduce((a,d)=>a+d.n,0),good=D.reduce((a,d)=>a+Math.max(0,d.n-(d.fail||0)),0),first=D.filter(d=>d.n>=1&&!(d.fail>0&&d.n===d.fail)).length,
+    fixed=D.filter(d=>d.ok).length,kept=D.filter(d=>(d.box||0)>=3).length,score=Math.round((good+2)/(tries+4)*100);
+  return{q:D.length,tries,good,fixed,kept,score,rate:Math.round(good*100/tries)}}
+function redoPowerHTML(){const R=redoPower();
+  if(!R)return`<div class="sec-t">改錯力</div><div class="card" style="line-height:1.7">還沒練過錯棋。去「🔁 錯棋重練」從下錯的那一步重下幾題，這裡就會算出你改錯的能力。<button class="btn ghost" style="width:100%;margin-top:8px" onclick="location.hash='#/redo'">去錯棋重練</button></div>`;
+  const lab=R.score>=80?"很會改錯":R.score>=60?"改得不錯":R.score>=40?"還在摸索":"常常還是走錯";
+  return`<div class="sec-t">改錯力</div><div class="card" style="line-height:1.6"><div style="display:flex;align-items:baseline;gap:10px"><span style="font-size:36px;font-weight:900;font-family:var(--serif);color:var(--accent)">${R.score}</span><span>分・<b>${lab}</b></span></div>
+    <div class="muted" style="font-size:13px;margin:2px 0 6px">改錯力＝在錯棋重練裡，回到你下錯的局面，這次找到 Pikafish 最好那一步（正手、妙手）的比例。</div>
+    <table class="st-lv" style="font-size:14px"><tr><th>項目</th><th>數字</th><th>說明</th></tr>
+    <tr><td>練過的錯棋</td><td>${R.q} 題</td><td>從你下過的對局挑出來的錯著、露著</td></tr>
+    <tr><td>重下的次數</td><td>${R.tries} 次</td><td>找到最好那步 ${R.good} 次（${R.rate}%）</td></tr>
+    <tr><td>改對了</td><td>${R.fixed} 題</td><td>至少有一次走出好棋（優著以上）</td></tr>
+    <tr><td>記熟了</td><td>${R.kept} 題</td><td>隔幾天複習，連續 3 次都走對</td></tr></table></div>`}
 async function talentReport(box){
   const me=myName(),games=[],CAL=store.get("calib",null),CT=CAL&&CAL.tal&&CAL.tal.people>=10?CAL.tal:null;
   if(CT&&Array.isArray(CT.S0)&&Array.isArray(CT.A)&&Array.isArray(CT.lr)){TL.S0=CT.S0;TL.A=CT.A;TL.lr=CT.lr}   /* 意見回饋 307：大家的資料夠多了，就用校正過的「一般棋友」 */
@@ -2411,6 +2427,7 @@ async function talentReport(box){
       <tr><td>一般棋友</td><td>${f0(popNow)}</td><td>下了一樣多盤的人・你${KF.th>=popNow?"多":"少"} <b>${f0(Math.abs(KF.th-popNow))}</b></td></tr>
       ${SR?`<tr><td>同段位</td><td>${SR.now}</td><td>${esc(NR)}・${SR.n} 人・進步速度中間值 ${(SR.r*100).toFixed(1)}%</td></tr>`:""}
       ${GL?`<tr><td>等級分</td><td><b>${f0(GL.r)}</b></td><td>從跟電腦下的 ${GL.n} 盤推算・誤差 ±${f0(GL.RD)}</td></tr>`:""}</table></div>`:""}
+    ${redoPowerHTML()}
     ${tau?`<div class="sec-t">你的棋路底子</div><div class="card">${tau}</div>`:""}
     ${chart?`<div class="sec-t">成長軌跡與預測</div><div class="card">${chart}<p class="muted" style="margin:4px 0 0;font-size:13px;line-height:1.6">灰點是每一盤走得好不好；線是照你的進步速度畫出來的成長路線，淺色帶是大概的範圍。${ms?(ms.med==null||ms.pNever>=.5?`照目前的練法，平均準確度有 ${pc(ms.pNever)} 的機率到不了 ${ms.goal} 分（天花板估計約 ${f0(M.A.m)} 分）。想再往上，要換個練法，例如先補下面的弱項。`:`平均準確度要到 <b>${ms.goal}</b> 分，大約還要練 <b>${f0(ms.med)}</b> 盤（80% 區間 ${f0(ms.lo)}～${f0(ms.hi)} 盤）${ms.pNever>.1?`；不過也有 ${pc(ms.pNever)} 的機率照目前的練法到不了`:""}。`):""}</p></div>`:""}
     ${prof.length?`<div class="sec-t">各項功夫</div><div class="card">${prof.map(bar).join("")}${IR.all?"":'<p class="muted" style="font-size:12.5px;margin:6px 0 0">做一次<a href="#/quiz">棋力測驗</a>，就會加上「殺法、戰術、局面判斷、殘局題」四項。</p>'}</div>`:""}
