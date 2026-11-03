@@ -436,7 +436,7 @@ html[data-era=ming] .topbar,html[data-era=qing] .topbar{border-bottom-width:4px}
       if(!window.caches)return go();caches.keys().then(function(ks){return Promise.all(ks.filter(function(k){return k.indexOf("xqlab-app-")===0}).map(function(k){return caches.delete(k)}))})
         .then(function(){return navigator.serviceWorker&&navigator.serviceWorker.getRegistration()}).then(function(r){return r&&r.update()}).catch(function(){}).then(go)}},4000)})();
 </script>
-<script>window.XQ_OFFLINE=true;window.XQ_BUILD="20261103-1150";</script>
+<script>window.XQ_OFFLINE=true;window.XQ_BUILD="20261103-1240";</script>
 <script src="core.js"></script>
 <script src="engine.js"></script>
 <script src="local.js"></script>
@@ -3200,6 +3200,7 @@ const BOT_FAQ=[
  [["棋力測驗","測驗","程度"],"首頁的「🎯 棋力測驗」會出一系列題目，估計你目前的程度。","#/","回首頁"],
  [["積分","段位","排名","升級"],"積分挑戰和線上對戰會計分，從新手開始，贏棋加分、輸棋扣分，分數夠就升段。"],
  [["古譜","橘中秘","梅花譜","適情雅趣","殘局譜"],"棋譜庫有《橘中秘》《梅花譜》《適情雅趣》和古典開局、殘局譜，每一局都可以一步一步看。","#/db","打開棋譜庫"],
+ [["妙棋","妙手","妙棋精選","冷門","棄子","反敗為勝"],"棋譜庫的「妙棋精選」是從特級大師對局和全國比賽裡挑出來的少見妙棋：很少人走的好棋、主動棄子、要算很多步才看得出來的好棋、看似落後其實反敗為勝的一步。每一步都經過 Pikafish 驗證，打開就停在那一步，註解寫出妙在哪裡。","#/db/brilliant","看妙棋精選"],
  [["大師對局","特級大師對局","比賽"],"棋譜庫的「大師對局」有三萬多局特級大師對局，可以用 👤 棋手篩選。","#/db/gmgames","看大師對局"],
  [["分析","評等","賽後報告","好棋","壞棋"],"看棋譜時按「🔍 分析」或右上角「📊 賽後報告」，Pikafish 會評每一步，並用藍色箭頭畫出建議走法。"],
  [["記譜","記譜法","怎麼看棋譜","進退平"],"記譜是「棋子＋所在直線＋進退平＋數字」，例如「炮二平五」。紅方用中文數字、黑方用阿拉伯數字。詳細看「象棋規則 → 記譜法」。","#/terms","打開象棋規則"],
@@ -3644,7 +3645,7 @@ function Library(v,c0){
   let books=[],data=null,shown=[],grp=null,big=[];   // big：可以從網站下載的大型棋譜（例如特級大師對局）
   // 書目分三類：古譜／大師對局／我的對局
   const MINE=["ai","play","pvp","study"],GRPS=[["old","古譜"],["gm","大師對局"],["me","我的對局"]];
-  const grpOf=b=>MINE.includes(b.key)?"me":(b.synced||/^(xuyinchuan|gmgames)$/.test(b.key))?"gm":"old";
+  const grpOf=b=>MINE.includes(b.key)?"me":(b.synced||/^(xuyinchuan|gmgames|brilliant)$/.test(b.key))?"gm":"old";
   const empty=(e,t,btn)=>{const box=v.querySelector("#items");box.innerHTML=`<div class="lib-empty"><span class="e">${e}</span>${t}</div>`;
     if(btn){const b=document.createElement("button");b.className="btn";b.textContent=btn[0];b.onclick=btn[1];box.firstChild.append(b)}};
   const toBar=()=>{const t=v.querySelector("#cols").getBoundingClientRect().bottom-v.getBoundingClientRect().top+v.scrollTop;if(v.scrollTop>t)v.scrollTop=t};
@@ -3989,7 +3990,7 @@ function Viewer(v,c,id){
     it=d;L=new Map(it.lines.map(l=>[l.id,l]));bookName=(bs.find(b=>b.key===c)||{}).name||"";
     {const oh=c==="pvp"?oppHist().find(h=>h.rid===id):null;
     setTop(title(),"#/db/"+encodeURIComponent(c),[["🔄",()=>{vFlip=!vFlip;vibrate(5);show()},"翻轉棋盤"],...(oh?[["👤",()=>oppCard(oh.oid,oh.opp),"對手資料"]]:[]),["📊",()=>report(),"賽後報告"],["ℹ",()=>info(),"棋局資訊"]])}
-    const r=store.get("recent",[]).find(x=>x.c===c&&x.id===id);ply=r&&r.ply?Math.min(r.ply,endPly(0)):0;
+    const r=store.get("recent",[]).find(x=>x.c===c&&x.id===id);ply=r&&r.ply?Math.min(r.ply,endPly(0)):it.jump?Math.min(+it.jump||0,endPly(0)):0;   /* 意見回饋 310：妙棋精選第一次打開就停在妙棋那一步 */
     const oa=store.get("openAt",null);if(oa&&oa.c===c&&oa.id===id){store.set("openAt",null);ply=Math.min(oa.ply,endPly(0));setTimeout(()=>toast(`從第 ${ply} 步開始：${oa.why}（可以往前看）`),400)}
     show();remember();loadGrades().then(()=>{if(store.get("openReport")===c+"/"+id){store.set("openReport",null);report()}})}).catch(e=>{v.querySelector("#note").textContent="⚠ "+e.message});
   return self}
