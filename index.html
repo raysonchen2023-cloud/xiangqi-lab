@@ -441,7 +441,7 @@ html[data-era=ming] .topbar,html[data-era=qing] .topbar{border-bottom-width:4px}
       if(!window.caches)return go();caches.keys().then(function(ks){return Promise.all(ks.filter(function(k){return k.indexOf("xqlab-app-")===0}).map(function(k){return caches.delete(k)}))})
         .then(function(){return navigator.serviceWorker&&navigator.serviceWorker.getRegistration()}).then(function(r){return r&&r.update()}).catch(function(){}).then(go)}},4000)})();
 </script>
-<script>window.XQ_OFFLINE=true;window.XQ_BUILD="20261103-1410";</script>
+<script>window.XQ_OFFLINE=true;window.XQ_BUILD="20261103-1415";</script>
 <script src="core.js"></script>
 <script src="engine.js"></script>
 <script src="local.js"></script>
@@ -2917,6 +2917,7 @@ function parkLoad(){const v="?v="+encodeURIComponent(window.XQ_BUILD||"");return
 // 意見回饋 240：公園裡點物件，跳出這個朝代的說明（哪個朝代、特色、典故）
 const PARK_INFO={"classic":{"_":["經典古風","不限朝代"],"bg":["山水亭橋","亭子、古松、石拱橋和層層遠山，是中國山水畫最常見的題材，不特定哪個朝代，看了就覺得安靜悠閒。"],"tree1":["松樹","松樹四季常青、不怕冷，和竹、梅並稱「歲寒三友」，常用來比喻堅貞不屈的品格。"],"tree2":["柏樹","柏樹壽命很長、木頭堅硬又有香氣，古代常種在宮殿、廟宇和陵墓旁邊，象徵長壽。"],"table":["花崗岩石桌","公園和庭院最常見的石桌。花崗岩堅硬、不怕風吹雨打，放在戶外幾十年都不壞，很多老人家就在這種石桌上下象棋。"],"cup":["青花蓋碗・烏龍茶","蓋碗有蓋、碗、托三件，又叫「三才碗」（天、人、地）。喝的時候用蓋子撥開茶葉，泡烏龍茶很方便。"],"bench":["公園長椅","公園裡下棋，旁邊常圍著一圈看棋的人。「觀棋不語真君子」——看棋的人不要出聲指點喔！"],"stool":["石鼓凳","做成鼓形的石凳，庭院、園林裡很常見。鼓形看起來穩重，也有吉祥熱鬧的意思。"],"lantern":["紅燈籠","紅燈籠代表喜慶和團圓，過年、元宵和各種節慶都會掛起來。上面的「福」字是祝福大家有福氣。"]},"qin":{"_":["秦朝","前 221～前 207 年"],"bg":["長城與烽火台","秦始皇統一六國後，把原本秦、趙、燕等國的長城連起來，防禦北方的匈奴。烽火台白天放煙、晚上點火，一站接一站傳遞軍情。"],"tree1":["松樹・五大夫松","《史記》記載秦始皇登泰山時遇到大風雨，在一棵樹下避雨，就封這棵樹為「五大夫」，後人稱它「五大夫松」。"],"tree2":["槐樹","周代朝廷前種三棵槐樹，三公（最高的三個官）面對槐樹站立，所以「三槐」代表三公，槐樹也象徵官運亨通。"],"table":["黑漆朱紋桌","秦朝認為自己是「水德」，水的顏色是黑，所以崇尚黑色。漆器常用黑底配朱紅花紋，邊角用青銅包起來保護。"],"cup":["青銅耳杯","耳杯是橢圓形、兩側有「耳朵」的杯子，戰國到漢代很流行，多半用來喝酒或喝湯。那時候還沒什麼人喝茶，這裡是想像秦朝人也來泡一杯。"],"bench":["黑漆坐榻","秦漢人習慣跪坐在席子或矮榻上。榻比地面高一點，是有身分的人坐的。"],"stool":["黑漆方凳","其實秦朝人多半跪坐，還沒有坐凳子的習慣；這張方凳是配合公園下棋設計的，用的是秦朝的黑漆風格。"],"lantern":["青銅燈","秦朝用青銅燈，燈盞裡放油脂和燈芯點火。秦始皇陵出土了大量精緻的青銅器，可見當時的鑄銅技術非常高。"]},"han":{"_":["漢朝","前 202～220 年"],"bg":["漢闕與樓台","「闕」是立在宮殿、陵墓大門兩側的高台建築，漢代非常流行，是身分地位的象徵；漢代人也喜歡蓋好幾層高的樓閣。"],"tree1":["柏樹","陝西黃帝陵有一棵「黃帝手植柏」，相傳是黃帝親手種的，被認為是中國最老的柏樹之一。漢代也常在祠廟、陵墓旁種柏樹。"],"tree2":["梧桐","古人相信鳳凰「非梧桐不棲」，所以梧桐象徵高潔和吉祥；梧桐木也是做古琴的好木料。"],"table":["雲氣紋漆案","漢代漆器非常發達，常用黑底配朱紅的雲氣紋，線條像流動的雲，代表對升仙的嚮往。「案」是放食物的矮桌，成語「舉案齊眉」說的就是它。"],"cup":["漆耳杯","漢代最常見的杯子之一，木頭做胎、外面上漆，又輕又耐用。湖南馬王堆漢墓出土了很多，有的還寫著「君幸酒」（請您喝酒）。"],"bench":["漆榻配屏風","漢代貴族坐在榻上，旁邊或後面立一扇小屏風，可以擋風，也顯示主人的身分。"],"stool":["漆鼓凳","漢代人主要還是跪坐，鼓形坐墩是後來才流行的；這張凳子用漢代的朱黑漆色，配合公園下棋設計。"],"lantern":["漢代銅燈","漢代的燈具很有名，例如「長信宮燈」：鎏金銅做的宮女跪坐持燈，燈煙會從袖子進到身體裡，不會弄髒屋子，是兩千多年前的環保設計。"]},"sanguo":{"_":["三國","220～280 年"],"bg":["軍營、關隘與戰船","三國時代戰爭不斷。赤壁之戰（208 年）孫權、劉備聯軍用火攻大破曹操的水軍，奠定了魏、蜀、吳三分天下。"],"tree1":["老松","經歷風霜還挺立不倒的老松，就像三國時代的英雄人物。"],"tree2":["枯樹","戰亂的年代，荒野上常見枯樹。曹操的詩〈蒿里行〉寫「白骨露於野，千里無雞鳴」，描寫當時的荒涼。"],"table":["軍營木桌","行軍打仗的桌子要耐用、好搬，所以用厚木板做，再用鐵箍加固。"],"cup":["粗陶碗","軍中用的是樸素耐用的陶碗。《三國志》記載吳國的孫皓讓不會喝酒的韋曜「以茶代酒」，是很早的喝茶紀錄。"],"bench":["軍營長凳","營帳裡將領議事、休息坐的長凳，簡單結實。"],"stool":["胡床（摺疊凳）","胡床就是可以摺疊的凳子，東漢時從西域傳進來，行軍時帶著很方便。《三國志》記載曹操渡河時被敵軍突襲，還坐在胡床上不動。"],"lantern":["火盆","軍營夜裡靠火盆、火把照明和取暖，也能防止野獸靠近。"]},"weijin":{"_":["魏晉","220～420 年"],"bg":["竹林與茅屋","魏晉名士嚮往自然、不愛做官。「竹林七賢」常聚在竹林下喝酒、彈琴、談論哲理（清談）。"],"tree1":["竹子","竹子中空有節，象徵虛心和氣節。東晉王徽之愛竹，說「何可一日無此君」，從此「此君」就成了竹子的代稱。"],"tree2":["柳樹","陶淵明在〈五柳先生傳〉裡說自己「宅邊有五柳樹」，就自號「五柳先生」。柳樹也就和隱士的田園生活連在一起。"],"table":["竹編桌","竹子輕、有韌性、到處都有。魏晉崇尚簡樸自然，竹製家具很合名士的品味。"],"cup":["青瓷盞","魏晉時南方的越窯青瓷已經很成熟，顏色青綠如玉，是當時文人喜愛的器物。"],"bench":["竹榻","名士喜歡在竹榻上躺著讀書、和朋友清談，非常隨性。"],"stool":["竹凳","用竹子做的凳子，輕巧涼爽，帶有山林的趣味。"],"lantern":["墨竹燈籠","紙經過東漢蔡倫改良後漸漸普及。燈籠上畫墨竹，很有文人的味道。"]},"nanbei":{"_":["南北朝","420～589 年"],"bg":["石窟大佛","南北朝佛教大興。北魏開鑿了雲岡石窟、龍門石窟，留下巨大的佛像；杜牧也寫「南朝四百八十寺」，南方到處都是寺廟。"],"tree1":["菩提樹","相傳佛陀在菩提樹下悟道。佛教傳入中國以後，菩提樹也成了寺廟裡常見的樹。"],"tree2":["松樹","寺廟、山林常見的松樹，四季常青，象徵長壽和堅定。"],"table":["蓮花紋石桌","蓮花「出淤泥而不染」，是佛教最重要的圖案之一。南北朝的石刻、器物上到處都是蓮花紋。"],"cup":["青瓷蓮瓣碗","南北朝的青瓷碗常刻上一層層蓮花瓣，是受到佛教影響的流行樣式。"],"bench":["蓮花石凳","刻著蓮花的石凳，寺院和石窟附近常見，莊重樸實。"],"stool":["蓮座石凳","做成蓮花座的形狀——佛像就是坐在蓮花座上的。"],"lantern":["佛前燈","在佛前點燈供養叫「燃燈」，寺廟裡日夜不熄的燈叫「長明燈」，象徵智慧照亮黑暗。"]},"sui":{"_":["隋朝","581～618 年"],"bg":["大運河","隋煬帝開鑿大運河，北到涿郡（今天北京一帶）、南到餘杭（杭州），把南北連成一線，運糧、運貨的船來來往往，部分河段到今天還在使用。"],"tree1":["柳樹","相傳隋煬帝在運河兩岸種柳，還賜柳樹姓「楊」（隋朝皇帝姓楊），所以柳樹又叫「楊柳」。"],"tree2":["楊樹","楊樹長得快、又高又直，北方很常見，常種在河岸和路邊。"],"table":["栗色漆桌","隋唐時期家具愈來愈高，人們漸漸從跪坐改成垂下腳坐在椅凳上。"],"cup":["白瓷碗","隋朝的白瓷燒得愈來愈白，為唐朝「南青北白」（南方越窯青瓷、北方邢窯白瓷）打下基礎。"],"bench":["靠背長凳","有靠背的長凳，可以垂腳坐，是家具從「席地而坐」走向「高坐」的過渡。"],"stool":["素面方凳","簡單樸素的方凳，隋朝建築和器物都偏向簡潔大方。"],"lantern":["運河船燈","夜裡在運河上航行的船要掛燈，照亮水面，也讓其他船看得到自己。"]},"tang":{"_":["唐朝","618～907 年"],"bg":["寶塔與宮殿","唐朝的長安是當時世界上最大的城市之一。大雁塔是玄奘法師為了收藏從印度帶回來的佛經而建的。"],"tree1":["牡丹","唐朝人最愛牡丹。劉禹錫寫「唯有牡丹真國色，花開時節動京城」，花開的時候整個長安城的人都出門賞花。"],"tree2":["松樹","松樹四季常青，唐代宮苑和寺院裡常種，象徵長壽。"],"table":["寶相花紅漆圓桌","寶相花是唐朝最流行的花紋，把蓮花、牡丹等花朵組合成對稱的圖案，華麗又莊重。"],"cup":["唐三彩杯・抹茶色茶湯","唐三彩是黃、綠、白等多種顏色釉的陶器。唐朝陸羽寫了世界上第一本茶書《茶經》，當時流行把茶餅碾成粉末來煮。"],"bench":["軟榻與三彩靠墊","唐代貴族在軟榻上休息、待客，靠墊用華麗的織錦和三彩配色。"],"stool":["三彩坐墩","唐代仕女畫裡常看到這種鼓形坐墩，上面鋪著華麗的繡墊。"],"lantern":["紅綢宮燈","唐朝元宵節長安城取消宵禁，滿城張燈結綵。蘇味道寫「火樹銀花合，星橋鐵鎖開」，說的就是這種熱鬧。"]},"wudai":{"_":["五代","907～960 年"],"bg":["奇峰與瀑布","五代是中國山水畫成熟的關鍵時期：荊浩、關仝畫北方雄偉的大山，董源、巨然畫江南平淡的山水。"],"tree1":["奇松","荊浩在太行山寫生松樹，畫了好幾萬棵才畫得像，還寫了《筆法記》講畫山水的方法。"],"tree2":["老梅","老梅樹幹蒼勁、冬天開花，象徵不怕困境。"],"table":["深色木桌","五代的名畫〈韓熙載夜宴圖〉裡可以看到當時的高桌、椅子和屏風，家具已經很接近後來的樣子。"],"cup":["黑釉盞","深色的黑釉盞最能襯出白色的茶沫，到了宋朝更是大流行。"],"bench":["長榻與山水屏風","〈韓熙載夜宴圖〉裡就有床榻和畫著山水的大屏風，屏風也常用來分隔空間。"],"stool":["深色木凳","結實的深色木凳，五代家具開始走向簡潔的高坐家具。"],"lantern":["素紙方燈","樸素的方形紙燈，柔和的光很適合夜裡讀書、下棋。"]},"song":{"_":["宋朝","960～1279 年"],"bg":["江南水鄉","石拱橋、垂柳和小舟。宋朝商業繁榮，張擇端的〈清明上河圖〉畫出了汴京熱鬧的街市和虹橋。"],"tree1":["梅花","林逋隱居在西湖孤山，種梅養鶴，被稱為「梅妻鶴子」；他寫的「疏影橫斜水清淺」是詠梅的名句。"],"tree2":["柳樹","江南水邊到處是垂柳，柳枝隨風飄動，是宋詞裡常見的景物。"],"table":["淡色木桌","宋代家具線條簡潔、細腳、不太雕花，風格清雅，影響了後來的明式家具。"],"cup":["汝窯天青盞・點茶","汝窯是宋代五大名窯之一，顏色像「雨過天青」。宋人流行「點茶」：把茶粉用茶筅打出白色泡沫，還會比賽誰的泡沫最白、最持久，叫「鬥茶」。"],"bench":["淡色木長椅","宋代人已經習慣坐椅子，家具樸素典雅。"],"stool":["青瓷繡墩","瓷做的坐墩，夏天坐起來很涼爽；外形模仿上面鋪了繡墊的鼓，所以叫「繡墩」。"],"lantern":["梅花紗燈","宋代元宵燈會非常熱鬧，辛棄疾寫「東風夜放花千樹」，形容滿城花燈像一夜之間開滿的花。"]},"yuan":{"_":["元朝","1271～1368 年"],"bg":["草原與蒙古包","元朝由蒙古人建立。草原上的牧民住在可以拆下來搬家的蒙古包（氈帳）裡，跟著水和草移動。"],"tree1":["胡楊","生長在西北沙漠邊緣的樹，傳說「生而千年不死，死而千年不倒，倒而千年不朽」。"],"tree2":["柳樹","北方水邊常見的柳樹，耐寒又好種。"],"table":["青花瓷桌","元朝景德鎮把青花瓷燒得非常成熟，用西亞來的鈷料畫出鮮豔的藍色花紋，還外銷到中東。"],"cup":["青花高足杯・奶茶","高足杯有高高的杯腳，據說騎在馬上也方便拿。蒙古人很愛喝加了奶的茶。"],"bench":["鋪氈墊的長凳","氈是用羊毛壓製成的，保暖又防潮，是草原生活的必需品。"],"stool":["青花瓷墩","用青花瓷做的坐墩，涼爽耐用，花紋是元代流行的藍白配色。"],"lantern":["白燈籠","圓圓的白燈籠配藍邊，跟青花瓷一樣是藍白配色。"]},"ming":{"_":["明朝","1368～1644 年"],"bg":["紫禁城與長城","明成祖遷都北京，蓋了紫禁城（今天的故宮）。我們今天看到的磚石長城，大部分是明朝修建的。"],"tree1":["松樹","紫禁城御花園和皇家園林裡有很多古松，象徵江山長久。"],"tree2":["竹子","明代文人愛竹，常在書房外種竹，也愛畫竹。"],"table":["黃花梨桌","明式家具用黃花梨、紫檀等硬木，造型簡潔、榫卯精巧，不用一根釘子，被認為是中國家具的巔峰。"],"cup":["鬥彩杯・綠茶","鬥彩是先用青花畫輪廓、燒好後再填上彩色再燒一次。明成化年間的「雞缸杯」就是鬥彩名品。明朝開始流行用沸水沖泡散茶，就是今天泡茶的方式。"],"bench":["黃花梨長椅","官帽椅的椅背最上面那根橫木兩端翹起，像古代官員的帽子，所以叫官帽椅。"],"stool":["黃花梨鼓凳","鼓形的坐凳，四周有弧形的腳，線條圓潤，是明式家具的經典款。"],"lantern":["六角紅紗宮燈","宮燈是宮廷用的燈，用木頭做六角或八角的框，鑲上紗或玻璃、畫上圖案，下面垂著流蘇。"]},"qing":{"_":["清朝","1644～1912 年"],"bg":["江南園林","月洞門、迴廊、太湖石和池塘，是蘇州拙政園、留園這些江南私家園林的代表元素。乾隆皇帝也很喜歡模仿江南園林。"],"tree1":["梅花與太湖石","太湖石是太湖產的石灰岩，被水侵蝕出很多孔洞，講究「瘦、皺、漏、透」，是園林裡最重要的石頭。"],"tree2":["竹子","清代的鄭板橋最愛畫竹，他的詩〈竹石〉寫「咬定青山不放鬆」，稱讚竹子的堅毅。"],"table":["紫檀螺鈿桌","紫檀是非常珍貴的硬木；螺鈿是把貝殼磨成薄片嵌在木頭上，會閃閃發亮。清朝宮廷家具講究華麗繁複。"],"cup":["粉彩蓋碗・紅茶","粉彩是清朝流行的彩瓷，顏色柔和有層次。清朝時中國的紅茶大量外銷到英國等地。"],"bench":["紫檀寶座","寶座是皇帝、貴族坐的大椅子，用紫檀雕刻，鋪著錦墊，非常氣派。"],"stool":["景泰藍繡墩","景泰藍是在銅胎上用銅絲掐出花紋，再填上彩色琺瑯燒製，因為明朝景泰年間的最有名而得名。"],"lantern":["多層六角宮燈","清宮的宮燈做得非常精緻，常有好幾層，掛著紅色流蘇，元宵節時宮裡宮外一片燈海。"]}};
 function parkInfo(k){const era=store.get("era","classic"),E=PARK_INFO[era]||PARK_INFO.classic,[en,yr]=E._;vibrate(5);
+  if(OFF&&typeof secretFind==="function"&&secretFind(era,k))return;   /* 意見回饋 315：秘境棋友 */
   // 網路對戰／觀戰時點到人：跳出那位棋友的資料卡（意見回饋 261）
   if(k==="p:legend")return legendSheet();
   {const ex=PARK&&PARK.last&&PARK.last.ex||{},pid=k.startsWith("p:")?k.slice(2):k==="opp"?ex.oppId:k==="mate"?ex.mateId:null;
@@ -3063,18 +3064,45 @@ function useHint(){const H=hintInfo();if(!H.per){toast("Lv 5 起才有提示棋�
   store.set("hintUse",{d:H.day,n:(H.u.d===H.day?H.u.n:0)+1});return H}
 const hintLabel=()=>{const H=hintInfo();return H.per?`提示（剩 ${H.left}）`:"提示（Lv 5）"};
 const JR=[
-  {k:"dukou",name:"渡口",sub:"柳寒舟的渡船在這裡靠岸。先從吃子、保護子開始。",tiers:[0,3],ai:[1,2],scene:"s4",boss:null},
-  {k:"chaguan",name:"聽濤樓茶館",sub:"沈石川在這裡掃地、磨瓦片棋。練殺法和戰術。",tiers:[3,6],ai:[3],scene:"s5a",boss:"song",bl:3},
-  {k:"qihui",name:"雲河棋會",sub:"十六位棋手，三天的比賽。",tiers:[6,9],ai:[4],scene:"s5b",boss:"yuan",bl:4},
-  {k:"juesai",name:"決賽",sub:"三局兩勝，贏的人把名字刻在石桌邊上。",tiers:[9,12],ai:[5],scene:"s6b",boss:"ming",bl:5},
-  {k:"shizhuo",name:"石桌",sub:"那盤沒下完的棋。",tiers:[12,14],ai:[6],scene:"s7",boss:"classic",bl:6}];
+  {k:"dukou",name:"渡口",sub:"柳寒舟的渡船在這裡靠岸。先從吃子、保護子開始。",tiers:[0,3],ai:[1,2],scene:"s4",boss:null,lv:1},
+  {k:"chaguan",name:"聽濤樓茶館",sub:"沈石川在這裡掃地、磨瓦片棋。練殺法和戰術。",tiers:[3,6],ai:[3],scene:"s5a",boss:"song",bl:3,lv:5},
+  {k:"qihui",name:"雲河棋會",sub:"十六位棋手，三天的比賽。",tiers:[6,9],ai:[4],scene:"s5b",boss:"yuan",bl:4,lv:12},
+  {k:"juesai",name:"決賽",sub:"三局兩勝，贏的人把名字刻在石桌邊上。",tiers:[9,12],ai:[5],scene:"s6b",boss:"ming",bl:5,lv:20},
+  {k:"shizhuo",name:"石桌",sub:"那盤沒下完的棋。",tiers:[12,14],ai:[6],scene:"s7",boss:"classic",bl:6,lv:30}];
+/* 🏮 驛站（意見回饋 315）：等級不夠進下一站時，來這裡找路過的旅人下棋練等，下幾次都可以；贏了多給修為。
+   🗝 秘境棋友：藏在某些朝代公園的樹、茶杯、燈籠後面，要自己在公園 3D 裡點到才會發現；找到後也會出現在驛站，比較強、修為也多 */
+const INN=[{id:"tea",name:"賣茶的老婦",ic:"🍵",lv:1,xp:20,say:"「喝口茶，陪老身下一盤，不急不急。」"},{id:"scholar",name:"趕考的書生",ic:"📜",lv:2,xp:25,say:"「小生進京趕考，路上棋癮犯了，請賜教。」"},
+  {id:"guard",name:"走鏢的鏢師",ic:"🗡",lv:3,xp:30,say:"「鏢車在外面歇著，咱們速戰速決！」"},{id:"monk",name:"行腳僧",ic:"📿",lv:4,xp:40,say:"「阿彌陀佛，棋盤上也能修行。」"},{id:"teller",name:"說書人",ic:"🪭",lv:5,xp:50,say:"「欲知勝負如何，且看下回分解！」"}];
+const SECRETS=[{id:"blind",name:"盲棋翁",ic:"🌲",lv:6,xp:90,say:"「老夫眼睛看不見，棋盤在心裡。來吧。」",found:"{spot}旁邊，坐著一位閉著眼睛的老人，手指輕輕敲著——他在跟自己下盲棋。"},
+  {id:"teadoc",name:"茶博士",ic:"🫖",lv:5,xp:80,say:"「點茶要三沸，下棋要三思。客官請。」",found:"你在{spot}旁邊停了一下，一位提著茶壺的茶博士笑著走過來：「客官也懂棋？後面有張空桌。」"},
+  {id:"nightstall",name:"夜市棋攤",ic:"🏮",lv:7,xp:120,say:"「擺攤三十年，贏我一盤，這攤子的燈籠送你！」",found:"{spot}後面，藏著一個擺了三十年的夜市棋攤，攤主把殘局擺好，衝你眨了眨眼。"}];
+/* 意見回饋 315：秘境的位置每個玩家都不一樣——第一次用到時，隨機把每位秘境棋友分到不同朝代公園的不同物件上 */
+const SPOT_OBJ={tree1:"樹",tree2:"老樹",cup:"茶杯",bench:"長凳",stool:"石凳",lantern:"燈籠",table:"石桌"};
+function secretSpots(){let m=store.get("secretSpots",null);if(m&&SECRETS.every(x=>m[x.id]))return m;m=m||{};const ks=Object.keys(SPOT_OBJ),used=new Set(Object.values(m).map(z=>z.era+z.k));
+  for(const x of SECRETS){if(m[x.id])continue;let e,k,g=0;do{e=ARENA_ORDER[Math.floor(Math.random()*ARENA_ORDER.length)];k=ks[Math.floor(Math.random()*ks.length)];g++}while(used.has(e+k)&&g<200);used.add(e+k);m[x.id]={era:e,k}}
+  store.set("secretSpots",m);return m}
+const secretHint=x=>{const z=secretSpots()[x.id];return`聽說${eraLabel(z.era)}的公園裡，${SPOT_OBJ[z.k]}附近常有人在等……`};
+const jSecrets=()=>store.get("secrets",{});
+function secretFind(era,k){const M=secretSpots(),x=SECRETS.find(z=>M[z.id]&&M[z.id].era===era&&M[z.id].k===k);if(!x||jSecrets()[x.id])return false;const S=jSecrets();S[x.id]=Date.now();store.set("secrets",S);vibrate([20,40,60]);
+  sheet(`🗝 發現秘境棋友：${x.name}`,b=>{b.innerHTML=`<p style="line-height:1.9;font-size:16px">${esc(x.found.replace("{spot}",SPOT_OBJ[k]))}</p><p class="muted">${esc(x.say)}</p><p>${esc(x.name)}以後會在「雲河棋路 → 🏮 驛站」等你（第 ${x.lv} 級的實力，贏了 +${x.xp} 修為）。</p><button class="btn" id="sgo" style="width:100%">去驛站找他</button>`;b.querySelector("#sgo").onclick=()=>{closeSheet();location.hash="#/journey/inn"}});return true}
+function innSheet(v){setTop("🏮 驛站","#/journey");const I=xpInfo(),Sx=jSecrets(),nx=JR.find(R=>R.lv>I.L);v.className="view";
+  const row=(x,locked)=>`<button class="item" data-inn="${x.id}" ${locked?"disabled":""}><span class="lb" style="font-size:24px">${locked?"❔":x.ic}</span><span class="tx"><b>${locked?"？？？（還沒找到）":esc(x.name)}</b><span>${locked?esc(secretHint(x)):`第 ${x.lv} 級的實力・贏了 +${x.xp} 修為（另加對局修為）`}</span></span><span class="muted">${locked?"":"›"}</span></button>`;
+  v.innerHTML=`<div class="pad"><div class="card" style="line-height:1.8">🀄 <b>Lv ${I.L} ${I.title}</b>${nx?`・下一站「${nx.name}」要 Lv ${nx.lv}，還差 ${nx.lv-I.L} 級`:"・每一站都能進了"}<br><span class="muted" style="font-size:13px">驛站裡都是路過的旅人，找誰下都可以、下幾次都可以；輸了也有對局修為。</span></div>
+    <div class="sec-t">🏮 路過的旅人</div><div class="items" style="padding:0">${INN.map(x=>row(x)).join("")}</div>
+    <div class="sec-t">🗝 秘境棋友（${Object.keys(Sx).length}/${SECRETS.length}）</div><div class="items" style="padding:0">${SECRETS.map(x=>row(x,!Sx[x.id])).join("")}</div>
+    <p class="muted" style="font-size:12.5px;margin:8px 2px">秘境要自己去找，而且每個人的位置都不一樣：挑戰電腦 → 右上角 🌳 開公園，換到線索說的朝代（集章簿可以換朝代），點點看那個東西。</p></div>`;
+  v.querySelectorAll("[data-inn]").forEach(b=>b.onclick=()=>{const x=INN.concat(SECRETS).find(z=>z.id===b.dataset.inn);if(!x||(SECRETS.includes(x)&&!Sx[x.id]))return;
+    sheet(`${x.ic} ${x.name}`,c=>{c.innerHTML=`<p style="font-size:16px;line-height:1.8">${esc(x.say)}</p><p class="muted">第 ${x.lv} 級的實力。贏了 +${x.xp} 修為（另加對局修為），輸了也有對局修為。</p><button class="btn" id="ig" style="width:100%">⚔ 下一盤</button>`;
+      c.querySelector("#ig").onclick=async()=>{closeSheet();try{store.set("cpuRanked",false);store.set("cpuCar",false);await api("/play/new",{human:"r",level:x.lv});const st=await api("/play/state");store.set("jPending",{id:"inn:"+x.id,game:st.id});location.hash="#/cpu";setTimeout(()=>toast(`${x.ic} ${x.name}：${x.say}`),500)}catch(e){toast(e.message)}}})});
+  return{}}
 function jStages(){const out=[];JR.forEach((R,ri)=>{const id=i=>`${R.k}-${i}`;
   out.push({id:id(1),r:ri,t:"puz",name:"解題・一",lo:R.tiers[0],hi:R.tiers[1]},{id:id(2),r:ri,t:"puz",name:"解題・二",lo:R.tiers[0],hi:R.tiers[1],cats:["殺法","戰術"]},
     {id:id(3),r:ri,t:"scene",name:"回到當年",scene:R.scene},{id:id(4),r:ri,t:"ai",name:`對弈・第 ${R.ai[0]} 級`,lv:R.ai[0]},
     {id:id(5),r:ri,t:"puz",name:"解題・殘局",lo:R.tiers[0],hi:R.tiers[1],cats:["殘局","殺法"]},
     R.boss?{id:id(6),r:ri,t:"boss",name:`守關：${ARENA[R.boss].name}`,era:R.boss,lv:R.bl}:{id:id(6),r:ri,t:"ai",name:`守關・第 ${R.ai[1]} 級`,lv:R.ai[1]})});return out}
 const jStars=()=>store.get("jStars",{}),jSet=(id,n,why)=>{const S=jStars(),old=S[id]||0;if(n>old){S[id]=n;store.set("jStars",S);for(let k=old+1;k<=n;k++)addXP(20,why||"闖關",`j:${id}:${k}`)}return Math.max(n,old)};
-function jOpen(list,i){return i===0||!!jStars()[list[i-1].id]}
+function jLvOk(s){return xpInfo().L>=(JR[s.r].lv||1)}
+function jOpen(list,i){return(i===0||!!jStars()[list[i-1].id])&&jLvOk(list[i])}
 const jIcon={puz:"🧩",scene:"🕰",ai:"⚔",boss:"🏯"};
 /* 對弈、守關：開一盤挑戰電腦，記下是哪一關；那盤結束時在 CpuGame 裡判定（journeyGameEnd） */
 async function jPlay(s){try{store.set("cpuRanked",false);store.set("cpuCar",false);
@@ -3082,20 +3110,25 @@ async function jPlay(s){try{store.set("cpuRanked",false);store.set("cpuCar",fals
   if(s.t==="boss"&&!parkOn()){store.set("park3d",true)}location.hash="#/cpu";setTimeout(()=>toast(s.t==="boss"?`🏯 ${ARENA[s.era].name}：${ARENA[s.era].hi}`:`⚔ 雲河棋路・${s.name}：贏了就過關`),500)}catch(e){toast(e.message)}}
 function journeyGameEnd(st){if(!st||!st.result)return;
   if(!st.practice)addXP(st.result.w===st.human?40:15,"對局","g:"+st.id);
-  const P=store.get("jPending",null);if(!P||P.game!==st.id)return;store.set("jPending",null);const s=jStages().find(x=>x.id===P.id);if(!s)return;
+  const P=store.get("jPending",null);if(!P||P.game!==st.id)return;store.set("jPending",null);
+  if(String(P.id).startsWith("inn:")){const x=INN.concat(SECRETS).find(z=>"inn:"+z.id===P.id);if(x&&st.result.w===st.human){addXP(x.xp,"驛站","inn:"+st.id);setTimeout(()=>toast(`${x.ic} ${x.name}：「好棋！佩服。」（+${x.xp} 修為）`),1500)}else if(x)setTimeout(()=>toast(`${x.ic} ${x.name}：「承讓了，下次再來！」`),1500);return}
+  const s=jStages().find(x=>x.id===P.id);if(!s)return;
   if(st.result.w===st.human){const n=st.moves.length,stars=Math.min(P.hint?2:3,n<=60?3:n<=100?2:1);jSet(s.id,stars,"闖關");setTimeout(()=>toast(`🗺 雲河棋路「${JR[s.r].name}・${s.name}」過關！${"★".repeat(stars)}${"☆".repeat(3-stars)}（${Math.ceil(n/2)} 回合內贏）`),1500)}
   else setTimeout(()=>toast(`🗺 「${s.name}」還沒過關，回雲河棋路再挑戰一次`),1500)}
 function Journey(v,sid){
   setTop("雲河棋路","#/");setTabs(false);const L=jStages(),S=jStars();
+  if(sid==="inn")return innSheet(v);
   if(sid){const i=L.findIndex(x=>x.id===sid);if(i<0||!jOpen(L,i)){location.hash="#/journey";return{}}return jPuzzle(v,L[i])}
   const I=xpInfo(),tot=L.reduce((a,s)=>a+(S[s.id]||0),0);v.className="view";
   v.innerHTML=`<div class="pad"><div class="card row" id="jxp" style="justify-content:space-between;cursor:pointer"><span>🀄 <b>Lv ${I.L} ${I.title}</b><br><span class="muted" style="font-size:12.5px">${I.need?`再 ${I.need-I.rest} 修為升級`:"已到最高等級"}・雲河棋路 ★ ${tot} / ${L.length*3}</span></span><span class="muted">›</span></div>
-    <p class="muted" style="font-size:13px;line-height:1.7;margin:8px 2px">沿著石桌往事裡的雲河，從渡口一路走到石桌。每關最多 3 顆星，過關才會開下一關。</p>
+    <p class="muted" style="font-size:13px;line-height:1.7;margin:8px 2px">沿著石桌往事裡的雲河，從渡口一路走到石桌。每關最多 3 顆星，過關才會開下一關；每一站有等級門檻，等級不夠就先去驛站練棋。</p>
+    <button class="card row" id="jinn" style="width:100%;justify-content:space-between;font:inherit;color:inherit;text-align:left;cursor:pointer"><span>🏮 <b>驛站</b><br><span class="muted" style="font-size:12.5px">找路過的旅人下棋練等・秘境棋友 ${Object.keys(jSecrets()).length}/${SECRETS.length}</span></span><span class="muted">›</span></button>
     ${JR.map((R,ri)=>{const st=L.filter(s=>s.r===ri),got=st.reduce((a,s)=>a+(S[s.id]||0),0),open=jOpen(L,L.indexOf(st[0]));
-      return`<div class="sec-t">${ri+1}. ${esc(R.name)} <span class="muted" style="font-size:12px">★ ${got}/18</span></div><div class="card" style="padding:10px 12px${open?"":";opacity:.55"}"><p class="muted" style="margin:0 0 6px;font-size:13px">${esc(R.sub)}</p>
-        <div class="jpath">${st.map((s,k)=>{const i=L.indexOf(s),ok=jOpen(L,i),n=S[s.id]||0;return`<button class="jnode${ok?"":" lock"}${n?" done":""}" data-s="${s.id}" style="margin-left:${[2,18,34,18,2,14][k]}%"><span class="ji">${ok?jIcon[s.t]:"🔒"}</span><span class="jt"><b>${esc(s.name)}</b><small>${n?"★".repeat(n)+"☆".repeat(3-n):ok?"還沒過關":"先過前一關"}</small></span></button>`}).join("")}</div></div>`}).join("")}</div>`;
-  v.querySelector("#jxp").onclick=xpSheet;
-  v.querySelectorAll(".jnode").forEach(b=>b.onclick=()=>{const i=L.findIndex(x=>x.id===b.dataset.s);if(!jOpen(L,i))return toast("先過前一關");jSheet(L[i])});
+      const lvNo=I.L<R.lv;
+      return`<div class="sec-t">${ri+1}. ${esc(R.name)} <span class="muted" style="font-size:12px">★ ${got}/18${R.lv>1?`・Lv ${R.lv} 才能進`:""}</span></div>${lvNo?`<div class="muted" style="font-size:13px;margin:-2px 2px 6px">🔒 等級還差 ${R.lv-I.L} 級——先去 🏮 驛站找人下棋練等</div>`:""}<div class="card" style="padding:10px 12px${open?"":";opacity:.55"}"><p class="muted" style="margin:0 0 6px;font-size:13px">${esc(R.sub)}</p>
+        <div class="jpath">${st.map((s,k)=>{const i=L.indexOf(s),ok=jOpen(L,i),n=S[s.id]||0;return`<button class="jnode${ok?"":" lock"}${n?" done":""}" data-s="${s.id}" style="margin-left:${[2,18,34,18,2,14][k]}%"><span class="ji">${ok?jIcon[s.t]:"🔒"}</span><span class="jt"><b>${esc(s.name)}</b><small>${n?"★".repeat(n)+"☆".repeat(3-n):ok?"還沒過關":!jLvOk(s)?`要 Lv ${JR[s.r].lv}`:"先過前一關"}</small></span></button>`}).join("")}</div></div>`}).join("")}</div>`;
+  v.querySelector("#jxp").onclick=xpSheet;v.querySelector("#jinn").onclick=()=>location.hash="#/journey/inn";
+  v.querySelectorAll(".jnode").forEach(b=>b.onclick=()=>{const i=L.findIndex(x=>x.id===b.dataset.s);if(!jOpen(L,i))return toast(!jLvOk(L[i])?`等級不夠：「${JR[L[i].r].name}」要 Lv ${JR[L[i].r].lv}，先去 🏮 驛站找人下棋練等`:"先過前一關");jSheet(L[i])});
   return{}}
 function jSheet(s){const n=jStars()[s.id]||0,R=JR[s.r];
   const how={puz:"從題庫出 5 題，答對 3 題過關：3 題 ★、4 題 ★★、5 題全對 ★★★。",scene:"回到六十年前，站在旁邊看那盤棋；下到關鍵一步時換你想：跟當年一樣 ★★★、Pikafish 也說是好棋 ★★、看答案 ★。",
@@ -3415,6 +3448,7 @@ const BOT_FAQ=[
  [["棋力測驗","測驗","程度"],"首頁的「🎯 棋力測驗」會出一系列題目，估計你目前的程度。","#/","回首頁"],
  [["積分","段位","排名","升級"],"積分挑戰和線上對戰會計分，從新手開始，贏棋加分、輸棋扣分，分數夠就升段。"],
  [["古譜","橘中秘","梅花譜","適情雅趣","殘局譜"],"棋譜庫有《橘中秘》《梅花譜》《適情雅趣》和古典開局、殘局譜，每一局都可以一步一步看。","#/db","打開棋譜庫"],
+ [["驛站","練等","等級不夠","秘境","隱藏棋友"],"等級不夠進下一站時，去「雲河棋路 → 🏮 驛站」找路過的旅人下棋練等（賣茶的老婦、趕考的書生、走鏢的鏢師……），下幾次都可以，贏了多給修為。還有三位秘境棋友藏在某些朝代公園的東西後面（每個人的位置都不一樣），驛站裡有線索，要自己在公園 3D 裡點點看才找得到。","#/journey/inn","去驛站"],
  [["闖關","雲河棋路","關卡","星星"],"首頁「🗺 雲河棋路」是闖關：沿著石桌往事裡的雲河，從渡口走到石桌，5 站、每站 6 關（解題、回到當年、對弈、守關擂主），每關最多 3 顆星，過關才會開下一關。","#/journey","去闖關"],
  [["等級","修為","經驗","升級","Lv","提示棋","提示"],"首頁最上面的 Lv 是「棋道修行」等級：下棋、測驗、猜著法、闖關都會累積修為，每 10 級換一個稱號（棋童到棋仙）。等級看練了多少、段位看實力，分開算。Lv 5 起每天有提示棋，Lv 20 起提示會連落點一起指出，只能在雲河棋路用。","#/journey","去闖關"],
  [["撐傘","灰衣老人","柳寒舟","石桌往事","沈石川","棋仙的故事","隱藏角色"],"首頁「學習」裡的「🌂 石桌往事」就是入口，第一章可以先讀。接著去挑戰電腦下棋，走到第 6 步左右，一位撐傘的灰衣老人會走過來看（第一次一定會遇到，之後約兩成的對局）；點他（公園 3D 裡點石台上的人，平面棋盤點左上角的 🌂），他會講一段六十年前石桌棋仙和他的往事（共 12 章，一盤棋講一章）；全部聽完後，在他看棋的時候贏一盤，就能看到尾聲。聽過的章節在 集章簿 → 🌂 石桌往事 可以重讀。","#/cpu","去公園下棋"],
