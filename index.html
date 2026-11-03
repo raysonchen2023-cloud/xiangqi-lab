@@ -79,6 +79,7 @@ input,select{font:inherit;font-size:16px;color:inherit}
 .prof .pl{display:flex;gap:14px;align-items:center}.prof .lv{flex:none;width:68px;height:68px;border-radius:50%;display:flex;align-items:center;justify-content:center;font:900 19px var(--serif);color:#fff;background:radial-gradient(circle at 35% 30%,#d9774f,var(--accent));box-shadow:0 0 0 4px color-mix(in srgb,var(--accent) 25%,transparent)}.prof .pl>div:last-child{flex:1;min-width:0}
 .chips{display:flex;flex-wrap:wrap;gap:6px;margin-top:10px}.chips span{font-size:12.5px;border:1px solid var(--line);border-radius:999px;padding:3px 10px;background:var(--bg)}
 .bgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:8px}.bcard{border:1px solid var(--line);background:var(--card);border-radius:14px;padding:10px;display:flex;flex-direction:column;gap:3px;min-width:0}.bcard .bic{font-size:30px}.bcard.rare{border:2px solid #C9962B;box-shadow:0 0 0 3px rgba(201,150,43,.18);background:linear-gradient(160deg,color-mix(in srgb,#C9962B 12%,var(--card)),var(--card))}.bcard.broken{opacity:.75;filter:grayscale(.5)}.bcard .pill{margin-top:4px;align-self:flex-start}
+.doors{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-top:12px}.door{display:flex;flex-direction:column;align-items:center;gap:2px;padding:14px 4px 8px;border:2px solid color-mix(in srgb,var(--accent) 45%,var(--line));border-bottom-width:4px;border-radius:999px 999px 10px 10px;background:linear-gradient(180deg,color-mix(in srgb,var(--accent) 10%,var(--card)),var(--card));font:inherit;color:inherit;cursor:pointer;min-width:0}.door .dic{font-size:26px}.door b{font-size:14px}.door small{font-size:11px;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:100%}
 #xpchip{position:fixed;left:50%;top:calc(env(safe-area-inset-top,0px) + 56px);transform:translateX(-50%);z-index:9999;background:var(--accent);color:#fff;padding:6px 14px;border-radius:999px;font-weight:700;font-size:14px;pointer-events:none;opacity:0;transition:opacity .4s;box-shadow:0 4px 14px rgba(0,0,0,.2);white-space:nowrap}#xpchip.big{font-size:16px;padding:10px 18px}
 .tile.strip .rsm{display:block;margin-top:2px;font-weight:700;color:var(--accent)}.tile.strip.resume{border:2px solid var(--accent);animation:rsPulse 2.4s ease-in-out 2}@keyframes rsPulse{50%{box-shadow:0 0 0 5px color-mix(in srgb,var(--accent) 25%,transparent)}}
 .tile.strip .ic{margin:0;flex:none}.tile.strip .tx{flex:1;min-width:0;display:flex;flex-direction:column}.tile.strip .s{font-size:12.5px}
@@ -447,7 +448,7 @@ html[data-era=ming] .topbar,html[data-era=qing] .topbar{border-bottom-width:4px}
       if(!window.caches)return go();caches.keys().then(function(ks){return Promise.all(ks.filter(function(k){return k.indexOf("xqlab-app-")===0}).map(function(k){return caches.delete(k)}))})
         .then(function(){return navigator.serviceWorker&&navigator.serviceWorker.getRegistration()}).then(function(r){return r&&r.update()}).catch(function(){}).then(go)}},4000)})();
 </script>
-<script>window.XQ_OFFLINE=true;window.XQ_BUILD="20261103-1450";</script>
+<script>window.XQ_OFFLINE=true;window.XQ_BUILD="20261103-1500";</script>
 <script src="core.js"></script>
 <script src="engine.js"></script>
 <script src="local.js"></script>
@@ -1574,7 +1575,6 @@ function Home(v){
     ${T("k1","#/cpu","🤖","挑戰電腦","hCpu","Pikafish・積分挑戰","","下棋 ›")}
     ${OFF?T("k2","#/lobby","🌐","線上對戰・觀戰","hNet","看誰在線上・邀請對戰・觀看別人下棋","","進大廳 ›"):T("k4","#/watch/ai","📺","AI 對戰","hAi","GPT 對 Claude")}
    </div>
-   ${OFF?(()=>{const n=Object.keys(arenaStamps()).length,t=arenaTitle();return`<button class="card" id="hArena" style="display:flex;align-items:center;gap:12px;width:100%;margin:10px 0 0;padding:10px 14px;text-align:left;font:inherit;color:inherit;cursor:pointer;border-color:color-mix(in srgb,#C8102E 45%,var(--line))"><span style="font-size:30px">🏯</span><span style="flex:1;min-width:0"><b style="font-size:16px;font-family:var(--serif)">朝代擂台</b><span class="muted" style="display:block;font-size:12.5px">${n?`集章 ${n}/13${t?"・"+esc(t):""}・下一位擂主等你`:"公園裡 13 位朝代擂主，打贏蓋一枚印章"}</span></span><b style="color:#C8102E">挑戰 ›</b></button>`})():""}
    <div class="sec-t">學習</div>
    <div class="hero strips">
     ${T("k1","#/stats","🏅","我的戰績","","勝負・段位・🧬 天賦分析")}
@@ -1586,7 +1586,9 @@ function Home(v){
     ${T("k2","#/terms","📚","象棋規則","","玩法・記譜法・術語・殺法")}
    </div>
    ${OFF?(()=>{const L=legendState(),J=jStages(),S=jStars(),i=J.findIndex(x=>!S[x.id]),cur=J[i<0?J.length-1:i],I=xpInfo(),pk=parkOn();
-     return`<div class="sec-t">冒險</div><div class="hero strips">
+     return`<div class="sec-t">冒險</div>
+${OFF?(()=>{const n=Object.keys(arenaStamps()).length,t=arenaTitle();return`<button class="card" id="hArena" style="display:flex;align-items:center;gap:12px;width:100%;margin:0 0 8px;padding:10px 14px;text-align:left;font:inherit;color:inherit;cursor:pointer;border-color:color-mix(in srgb,#C8102E 45%,var(--line))"><span style="font-size:30px">🏯</span><span style="flex:1;min-width:0"><b style="font-size:16px;font-family:var(--serif)">朝代擂台</b><span class="muted" style="display:block;font-size:12.5px">${n?`集章 ${n}/13${t?"・"+esc(t):""}・下一位擂主等你`:"公園裡 13 位朝代擂主，打贏蓋一枚印章"}</span></span><b style="color:#C8102E">挑戰 ›</b></button>`})():""}
+   <div class="hero strips">
     ${T("k3","#/adventure","🪨","石桌往事","hLegend",`Lv ${I.L} ${I.title}・故事 ${L.n}／12 章${L.epi?"＋尾聲":""}・雲河棋路 ${L.pass||0}／${J.length} 關`,"","冒險 ›")}
    </div>`})():""}
    ${OFF&&REWARD?`<div class="sec-t">收藏</div><div class="hero strips">
@@ -3058,9 +3060,12 @@ function Adventure(v){setTop("🪨 石桌往事","#/");setTabs(false);v.classNam
     const list=D.chapters.map((c,k)=>[k+1,c.title]).concat([[D.chapters.length+1,D.epilogue.title]]),sc=k=>(D.scenes||[]).filter(x=>x.ch===k);
     v.innerHTML=`<div class="pad">
       <button class="card advme" id="aMe"><span class="xl">Lv ${I.L}</span><span class="xt"><b>🀄 ${I.title}</b><span class="st-bar"><i style="width:${I.need?Math.round(I.rest*100/I.need):100}%"></i></span><small>${I.need?`再 ${I.need-I.rest} 修為升級`:"已到最高等級"}・💡 提示棋 ${H.left+H.bonus}・🎁 ${B.boards.length}・📜 ${B.records.length}</small></span><span class="muted">棋童資料 ›</span></button>
+      <div class="doors">
+        <button class="door" data-go="#/journey"><span class="dic">🗺</span><b>雲河棋路</b><small>${L.pass||0}／${Js.length} 關</small></button>
+        <button class="door" data-go="#/journey/inn"><span class="dic">🏮</span><b>驛站</b><small>練等・掉棋譜</small></button>
+        <button class="door" id="dPark"><span class="dic">🌳</span><b>公園</b><small>找秘境棋友</small></button>
+        <button class="door" id="dArena"><span class="dic">🏯</span><b>擂台</b><small>集章 ${Object.keys(arenaStamps()).length}/13</small></button></div>
       <div class="advgrid">
-        <button data-go="#/journey"><span>🗺</span><b>雲河棋路</b><small>${L.pass||0}／${Js.length} 關${L.nextAt?`・再 ${L.nextAt-(L.pass||0)} 關開新章`:""}</small></button>
-        <button data-go="#/journey/inn"><span>🏮</span><b>驛站</b><small>練等・常去逛逛</small></button>
         <button data-go="#/profile"><span>🎒</span><b>棋童資料</b><small>棋盤・棋譜・棋友</small></button>
         <button id="aTl"><span>📅</span><b>人物與年表</b><small>元末明初</small></button></div>
       <div class="sec-t">故事（${L.n}／${D.chapters.length} 章${L.epi?"＋尾聲":""}）</div>
@@ -3068,7 +3073,10 @@ function Adventure(v){setTop("🪨 石桌往事","#/");setTabs(false);v.classNam
       <div class="items" style="padding:0">${list.map(([k,t])=>`<button class="item" data-k="${k}" ${open(k)?"":"disabled"}><span class="lb">${open(k)?"📖":"🔒"}</span><span class="tx"><b>${open(k)?esc(t):"？？？"}</b>${open(k)&&sc(k).length?`<span>🕰 回到當年：${sc(k).map(x=>esc(x.title)+((store.get("sceneDone",{})[x.key])?" ✓":"")).join("、")}</span>`:""}</span><span class="muted">${open(k)?"›":""}</span></button>`).join("")}</div>
       <p class="muted" style="font-size:12px;margin-top:8px">故事是虛構的；年表裡標 📜 的是真實歷史。</p></div>`;
     v.querySelector("#aMe").onclick=()=>location.hash="#/profile";v.querySelector("#aTl").onclick=()=>legendTimeline();
-    v.querySelectorAll(".advgrid [data-go]").forEach(b=>b.onclick=()=>{vibrate(5);location.hash=b.dataset.go});
+    v.querySelectorAll(".advgrid [data-go],.doors [data-go]").forEach(b=>b.onclick=()=>{vibrate(5);location.hash=b.dataset.go});
+    /* 意見回饋 318：公園、擂台的小門——開公園 3D 進挑戰電腦；擂台直接打開擂台面板 */
+    v.querySelector("#dPark").onclick=()=>{vibrate(5);store.set("park3d",true);location.hash="#/cpu";setTimeout(()=>toast("🌳 公園到了：右上角 🏯 是擂台；點樹、茶杯、燈籠，說不定會遇到秘境棋友"),700)};
+    v.querySelector("#dArena").onclick=()=>{vibrate(5);store.set("openArena",Date.now());store.set("park3d",true);location.hash="#/cpu"};
     v.querySelectorAll("[data-k]").forEach(x=>x.onclick=()=>{const k=+x.dataset.k;if(open(k))legendRead(k)})});
   return{}}
 /* ---------- 🎒 棋童資料：等級、修為、提示棋、棋盤收藏、棋譜、秘境棋友 ---------- */
