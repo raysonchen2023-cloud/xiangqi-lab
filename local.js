@@ -73,14 +73,15 @@ var XQ=(function(){
   // arena：公園朝代擂台（意見回饋 255）＝這盤是挑戰哪個朝代的擂主；贏了蓋那個朝代的章
   /* 意見回饋 308：挑戰電腦和朝代擂台各留一盤——開另一種棋時，下到一半的這盤先收到 play2，之後可以換回來接著下 */
   /* 意見回饋 327：石桌往事（雲河棋路、驛站、公園）的棋也自己留一盤，跟挑戰電腦、朝代擂台互不干擾——三種各留一盤 */
-  const kindOf=G=>G&&G.journey?"journey":G&&G.arena?"arena":"cpu",unfinished=G=>!!(G&&!G.result&&G.moves&&G.moves.length&&!G.practice);
+  /* 意見回饋 338：錯棋重練（和小帥的中殘局練習）也是自己的一盤，開它不會動到挑戰電腦那盤 */
+  const kindOf=G=>G&&G.practice?"practice":G&&G.journey?"journey":G&&G.arena?"arena":"cpu",unfinished=G=>!!(G&&!G.result&&G.moves&&G.moves.length);
   // 積分挑戰下到一半就丟掉（開同一種的新局）：算輸，不然輸棋前開新局就能躲掉扣分
   function forfeit(G){if(!G||!G.ranked||G.result||G.moves.length<2)return;const keep=P;P=G;
     P.result={w:opp(P.human),why:"中途離開，算輸"};cpuRateApply("l");pushGame("play",{id:P.id,date:P.id.slice(0,10),level:0,ranked:true,rk:P.rk,human:P.human,result:P.result,moves:saveMoves(P.moves)});P=keep}
-  const stashOut=G=>({id:G.id,human:G.human,level:G.level,ranked:!!G.ranked,reward:!!G.reward,arena:G.arena||null,journey:G.journey||null,rk:G.rk,result:null,practice:null,moves:saveMoves(G.moves)});
+  const stashOut=G=>({id:G.id,human:G.human,level:G.level,ranked:!!G.ranked,reward:!!G.reward,arena:G.arena||null,journey:G.journey||null,rk:G.rk,result:null,practice:G.practice||null,moves:saveMoves(G.moves)});
   // play2：收起來的棋，每一種一盤 {cpu,arena,journey}（舊版只存一盤，讀的時候換成新格式）
   function stashAll(){let s=ls.get("play2",null);if(s&&s.moves)s={[kindOf(s)]:s};const o={};
-    for(const k of["cpu","arena","journey"]){const g=s&&s[k];if(g&&g.moves&&g.moves.length&&!g.result)o[k]=g}return o}
+    for(const k of["cpu","arena","journey","practice"]){const g=s&&s[k];if(g&&g.moves&&g.moves.length&&!g.result)o[k]=g}return o}
   const stashGet=k=>stashAll()[k]||null,stashSet=(k,g)=>{const o=stashAll();if(g)o[k]=g;else delete o[k];ls.set("play2",Object.keys(o).length?o:null)};
   const jid=x=>typeof x==="string"&&x?x.slice(0,40):null;
   function playSwitch(kind,b){ensureP();if(kindOf(P)===kind)return;const s=stashGet(kind);
@@ -89,9 +90,9 @@ var XQ=(function(){
     else if(kind==="cpu")playNew(b.human==="b"?"b":"r",Math.max(1,Math.min(LEVELS.length,Math.round(+b.level)||3)),!!b.ranked,null,!!b.reward,null,true)
     else if(kind==="journey"&&jid(b.journey))playNew("r",Math.max(1,Math.min(LEVELS.length,Math.round(+b.level)||1)),false,null,false,null,true,jid(b.journey))}
   function playNew(human,level,ranked,pre,reward,arena,noStash,journey){
-    const plain=!ranked&&!pre&&!reward,nk=plain&&journey?"journey":plain&&arena?"arena":"cpu";
+    const plain=!ranked&&!pre&&!reward,nk=pre?"practice":plain&&journey?"journey":plain&&arena?"arena":"cpu";
     if(!noStash&&P){
-      if(unfinished(P)&&kindOf(P)!==nk&&!P.practice){const o=stashGet(kindOf(P));if(o)forfeit(o);stashSet(kindOf(P),stashOut(P));P=null}   // 換另一種：這盤收起來
+      if(unfinished(P)&&kindOf(P)!==nk){const o=stashGet(kindOf(P));if(o)forfeit(o);stashSet(kindOf(P),stashOut(P));P=null}   // 換另一種：這盤收起來
       const s=stashGet(nk);if(s){forfeit(s);stashSet(nk,null)}}                                                                           // 收著的同一種被新局取代
     // 積分挑戰下到一半就開新局：算輸
     forfeit(P);
@@ -136,7 +137,7 @@ var XQ=(function(){
       if(K[key])return{already:true,pts:R.pts,rank:RANKS[rankIdx(R.pts)][0]};
       const before=R.pts;R.pts+=pts;R.hist.unshift({id:"bonus-"+key,res:"bonus",d:pts,pts:R.pts,rk:RANKS[rankIdx(R.pts)][0],why:String(b.why||"").slice(0,40),at:Date.now()});R.hist=R.hist.slice(0,100);
       ls.set("cpuRate",R);K[key]=Date.now();ls.set("bonusKeys",K);return{ok:true,d:pts,pts:R.pts,rank:RANKS[rankIdx(R.pts)][0],was:RANKS[rankIdx(before)][0]}}
-    else if(p==="/play/switch"){playSwitch(b.kind==="arena"||b.kind==="journey"?b.kind:"cpu",b);playMsg="";setTimeout(playEngine,0)}
+    else if(p==="/play/switch"){playSwitch(["arena","journey","practice"].includes(b.kind)?b.kind:"cpu",b);playMsg="";setTimeout(playEngine,0)}
     else if(p==="/play/move"){const f=+b.f,t=+b.t;if(P.result)throw new Error("這局已經結束");if(P.turn!==P.human)throw new Error("還沒輪到你");
       if(!legal(P.board,P.turn).some(([x,y])=>x===f&&y===t))throw new Error("這步不合法");playApply(f,t);setTimeout(playEngine,0)}
     else if(p==="/play/undo"){if(P.ranked)throw new Error("積分挑戰不能悔棋");if(P.reward)throw new Error("獎勵模式不能悔棋");if(playBusy)throw new Error("引擎思考中，等它走完再悔棋");

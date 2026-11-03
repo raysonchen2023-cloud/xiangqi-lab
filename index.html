@@ -471,7 +471,7 @@ html[data-era=ming] .topbar,html[data-era=qing] .topbar{border-bottom-width:4px}
       if(!window.caches)return go();caches.keys().then(function(ks){return Promise.all(ks.filter(function(k){return k.indexOf("xqlab-app-")===0}).map(function(k){return caches.delete(k)}))})
         .then(function(){return navigator.serviceWorker&&navigator.serviceWorker.getRegistration()}).then(function(r){return r&&r.update()}).catch(function(){}).then(go)}},4000)})();
 </script>
-<script>window.XQ_OFFLINE=true;window.XQ_BUILD="20261103-1723";</script>
+<script>window.XQ_OFFLINE=true;window.XQ_BUILD="20261103-1730";</script>
 <script src="core.js"></script>
 <script src="engine.js"></script>
 <script src="local.js"></script>
@@ -1287,6 +1287,7 @@ function route(){
   if(p[0]==="lobby")return screen=Lobby(v);
   if(p[0]==="watch"){if(p[1]==="ai")return screen=Watch(v);location.replace("#/lobby");return}   /* 意見回饋 290：觀戰併進線上大廳 */
   if(p[0]==="stats")return screen=Stats(v);
+  if(p[0]==="redo"&&p[1]==="play")return screen=CpuGame(v,true);
   if(p[0]==="redo")return screen=Redo(v);
   if(p[0]==="openings")return screen=Openings(v);
   if(p[0]==="garage"){if(!REWARD){location.replace("#/");return}return screen=Garage(v)}
@@ -1676,7 +1677,7 @@ ${OFF?(()=>{const n=Object.keys(arenaStamps()).length,t=arenaTitle();return`<but
     const e=v.querySelector("#hCpu");if(e){const rk=st.cpuRate?`🏅 ${st.cpuRate.rank}・${st.cpuRate.pts} 分`:`已通關 ${won}／8 級`,on=st.cpuRate&&st.cpuRate.next?`・再 ${st.cpuRate.toNext} 分升 ${st.cpuRate.next}`:"";e.textContent=rk+on}
     /* 意見回饋 304、306、308：下到一半的棋就在自己那一條裡提醒（第二行寫模式、回合、輪到誰，右邊改成「繼續下」，外框加亮）：
        挑戰電腦的寫在「挑戰電腦」、擂台的寫在「朝代擂台」；兩種各留一盤，可以同時都還沒下完，點哪一條就接著下哪一盤 */
-    const cur=!st.result&&st.moves&&st.moves.length?{kind:st.journey?"journey":st.arena?"arena":"cpu",journey:st.journey,arena:st.arena,ranked:st.ranked,reward:st.reward,level:st.level,practice:st.practice,n:st.moves.length,me:st.turn===st.human}:null,
+    const cur=!st.result&&st.moves&&st.moves.length?{kind:st.practice?"practice":st.journey?"journey":st.arena?"arena":"cpu",journey:st.journey,arena:st.arena,ranked:st.ranked,reward:st.reward,level:st.level,practice:st.practice,n:st.moves.length,me:st.turn===st.human}:null,
       O=(st.others||(st.other?[st.other]:[])).map(z=>({...z,me:(z.n%2?"b":"r")===z.human})),pick=k=>cur&&cur.kind===k?cur:O.find(z=>z.kind===k)||null,
       G={cpu:pick("cpu"),arena:pick("arena"),journey:pick("journey")},
       line=g=>`⏳ ${g.kind==="arena"?(typeof ARENA!=="undefined"&&ARENA[g.arena]?ARENA[g.arena].name:"擂台"):g.practice?"錯棋重練":g.ranked?"積分挑戰":g.reward?"獎勵賽":`第 ${g.level} 級`}下到第 ${Math.ceil(g.n/2)} 回合・${g.me?"輪到你走":"輪到電腦"}`,
@@ -1968,8 +1969,12 @@ function XQ_START_BOARD(){if(!XQ_START_BOARD.b){const b=Array(90).fill(null),row
 // 從自己下過的錯著／露著那一步之前開始，跟第 7 級（職業頂尖）的 Pikafish 重下；不算戰績
 function Redo(v){
   setTop("錯棋重練","#/");setTabs(false);
+  /* 意見回饋 338：錯棋重練自己留一盤——有沒下完的就提醒，點了接著下 */
+  api("/play/state").then(st=>{const box=v.querySelector("#rRes");if(!box)return;const cur=st.practice&&!st.result?{n:st.moves.length-(st.practice.base||0)}:null,o=(st.others||[]).find(z=>z.kind==="practice");if(!cur&&!o)return;
+    box.innerHTML=`<button class="card row" style="width:100%;margin-top:10px;justify-content:space-between;border:2px solid var(--red);font:inherit;color:inherit;text-align:left"><span>⏳ <b>還有一題錯棋重練沒下完</b></span><b>繼續下 ›</b></button>`;
+    box.querySelector("button").onclick=()=>{vibrate(5);location.hash="#/redo/play"}}).catch(()=>{});
   v.innerHTML=`<div class="home"><div class="card" style="line-height:1.7">找出你下過的<b style="color:var(--red)">錯著、露著</b>，從那一步之前的局面重新開始，跟最強的電腦（第 7 級・職業頂尖）再下一次。<br><span class="muted">想出比上次好的一步，就算練會了；練會的題目會在 1、3、7、14、30 天後再出現讓你複習（間隔重複），練錯就縮短間隔。練習的對局不算戰績。</span></div>
-    <div class="st-res" id="rf" style="margin:12px 0 4px"></div><div id="rl"><div class="muted" style="text-align:center;padding:20px">找你下過的錯棋中…</div></div></div>`;
+    <div id="rRes"></div><div class="st-res" id="rf" style="margin:12px 0 4px"></div><div id="rl"><div class="muted" style="text-align:center;padding:20px">找你下過的錯棋中…</div></div></div>`;
   // 清單變長的整理（意見回饋 132）：
   // 1. 同一盤裡連續的錯（相隔 2 步以內）合成一題：從第一個錯開始練，後面那幾步本來就會一起重下
   // 2. 不同盤走到同一個局面、犯同一個錯（常見於同一個開局）合成一題，標「犯過 N 次」
@@ -2011,7 +2016,7 @@ function Redo(v){
   async function start(x){vibrate(8);
     const go=async()=>{try{const pre={moves:x.g.moves.slice(0,x.ply-1).map(m=>({f:m.f,t:m.t,q:m.q,loss:m.loss,ev:m.ev,bc:m.bc,bm:m.bm,bp:m.bp})),
         info:{key:x.key,ply:x.ply,cn:x.m.cn,q:x.m.q,loss:x.m.loss,bc:x.m.bc||"",opp:x.g.opp||"",date:String(x.g.id).slice(0,10)}};
-      await api("/play/new",{human:x.g.side,level:7,pre});store.set("cpuRanked",false);store.set("cpuCar",false);location.hash="#/cpu"}catch(e){toast(e.message)}};
+      await api("/play/new",{human:x.g.side,level:7,pre});location.hash="#/redo/play"}catch(e){toast(e.message)}};
     let s=null;try{s=await api("/play/state")}catch(e){}
     if(s&&s.ranked&&!s.result&&s.moves.length>=2)confirmBox("積分挑戰還沒下完，開始練習會算輸，確定？",go,"開始練習");
     else if(s&&!s.ranked&&!s.practice&&!s.result&&s.moves.length>=2)confirmBox("挑戰電腦還有一盤沒下完，開始練習會蓋掉它，確定？",go,"開始練習");else go()}
@@ -3442,7 +3447,7 @@ function stampBook(start){const S=arenaStamps(),n=Object.keys(S).length,t=arenaT
     b.querySelectorAll(".stamp-cell").forEach(c=>c.onclick=()=>{const k=c.dataset.e;store.set("era",k);try{applyEra&&applyEra()}catch(e){}arenaSheet(k,start)})})}
 // 蓋章動畫：畫面中間一方朱印「蓋」下去
 function stampFx(era){const A=ARENA[era];if(!A)return;const d=document.createElement("div");d.className="stampfx";d.innerHTML=sealHTML(era,true,true);document.body.append(d);vibrate([20,60,40]);setTimeout(()=>d.remove(),2600)}
-function CpuGame(v){
+function CpuGame(v,practicePage){
   setTabs(false);gameLayout(v);
   let st=null,sel=-1,shownResult=null,busy=false,pHint=null;   // pHint：錯棋重練時在棋盤上畫 Pikafish 的建議
   const bd=Board(i=>tap(i));v.querySelector("#bbox").append(bd.svg);
@@ -3453,7 +3458,7 @@ function CpuGame(v){
   // 意見回饋 273：上方列精簡——🏯 只在公園裡出現（擂台本來就在公園），返回鍵已經是回首頁所以不放 🏠；切公園時整列重畫
   const topBar=()=>{const lk=!!(typeof st!=="undefined"&&st&&st.arena&&!st.result),pr=!!(st&&st.practice);
     /* 意見回饋 335：錯棋重練是自己的頁面——標題寫「錯棋重練」，上面沒有積分／自選／擂台／公園，返回回到錯棋清單 */
-    setTop(pr?"🔁 錯棋重練":"挑戰電腦",pr?"#/redo":st&&st.journey?jBack(st.journey):"#/",pr?[]:[arenaBtn,...(OFF&&parkOn()&&!lk?[["🏮",()=>travel("inn",()=>location.hash="#/journey/inn"),"走荒野小徑去驛站"]]:[]),...(lk?[]:[parkBtn(()=>{draw();topBar()})])].concat(vcOn()?[["🎤",()=>voiceMove(()=>!st||st.result?{why:"這盤已經結束"}:st.turn!==st.human||st.thinking?{why:"還沒輪到你"}:{board:st.board,legal:st.legal,play:(f,t)=>{sel=-1;post("/play/move",{f,t})}}),"聲控走棋"]]:[]));
+    setTop(pr?(st.practice.drill?"🎯 "+(st.practice.title||"練習"):"🔁 錯棋重練"):"挑戰電腦",pr?(st.practice.drill?"#/":"#/redo"):st&&st.journey?jBack(st.journey):"#/",pr?[]:[arenaBtn,...(OFF&&parkOn()&&!lk?[["🏮",()=>travel("inn",()=>location.hash="#/journey/inn"),"走荒野小徑去驛站"]]:[]),...(lk?[]:[parkBtn(()=>{draw();topBar()})])].concat(vcOn()?[["🎤",()=>voiceMove(()=>!st||st.result?{why:"這盤已經結束"}:st.turn!==st.human||st.thinking?{why:"還沒輪到你"}:{board:st.board,legal:st.legal,play:(f,t)=>{sel=-1;post("/play/move",{f,t})}}),"聲控走棋"]]:[]));
     try{if(seg&&!pr){const t=$("#title");t.textContent="";t.append(seg)}}catch(e){}};   /* 第一次呼叫時 seg 還沒建立 */
   topBar();
   /* 首頁「🏯 朝代擂台」帶過來的：直接打開擂台（意見回饋 276） */
@@ -3480,8 +3485,12 @@ function CpuGame(v){
       opp:PIKA_LOOK(st.human==="r"?"b":"r"),oppHello:st.arena&&ARENA[st.arena]?ARENA[st.arena].hi:"我是 Pikafish，請多指教。",oppWin:st.arena&&ARENA[st.arena]?ARENA[st.arena].win:"將死了，再接再厲。",oppLose:st.arena&&ARENA[st.arena]?ARENA[st.arena].lose:"你贏了，佩服佩服！"})}
   let lastN=null;   // 上一次畫的步數：步數剛好多一步才秀開局名（重新整理、開新局不秀）
   // 意見回饋 274：擂台賽下到結束前只能在公園裡（不能切回棋盤模式）；結束後按鈕恢復
-  let arenaLock=null,jKey=null;
-  function render(s){const n0=lastN;st=s;lastN=s.moves.length;if(s.arena&&!s.result&&!parkOn()){store.set("park3d",true);setTimeout(()=>{draw();topBar()},0)}/* 意見回饋 319：朝代擂台的棋一律在公園 3D 裡 */if(!st.legal.some(([f])=>f===sel))sel=-1;
+  let arenaLock=null,jKey=null,renderSwitched=false;
+  function render(s){
+    if(!practicePage&&s.practice&&!renderSwitched){renderSwitched=true;api("/play/switch",{kind:"cpu",ranked:OFF&&store.get("cpuRanked",true),reward:REWARD&&store.get("cpuCar",false),level:store.get("cpuLevel",3),human:"r"}).then(render).catch(e=>toast(e.message));return}
+    if(practicePage&&!s.practice){if(!renderSwitched&&(s.others||[]).some(o=>o.kind==="practice")){renderSwitched=true;api("/play/switch",{kind:"practice"}).then(render).catch(e=>toast(e.message));return}
+      location.replace("#/cpu");return}   /* 在練習頁按了「新局」：開的是挑戰電腦，換到挑戰電腦頁 */
+    const n0=lastN;st=s;lastN=s.moves.length;if(s.arena&&!s.result&&!parkOn()){store.set("park3d",true);setTimeout(()=>{draw();topBar()},0)}/* 意見回饋 319：朝代擂台的棋一律在公園 3D 裡 */if(!st.legal.some(([f])=>f===sel))sel=-1;
     const lk=!!(st.arena&&!st.result);if(lk&&!parkOn())store.set("park3d",true);const pr=!!st.practice;if(pr!==PARK_OFF){PARK_OFF=pr;arenaLock=null}
     if(lk!==arenaLock||(st.journey||null)!==jKey){arenaLock=lk;jKey=st.journey||null;topBar()}draw();
     if(n0!=null&&lastN===n0+1&&!st.practice){const cue=openingCue(st.moves);if(cue)setTimeout(()=>openFx(bd.svg,cue[1],cue[0]),350)}
@@ -3787,8 +3796,8 @@ async function startDrill(kind,lv){toast("🎯 挑題目中…");let d;
     if(kind==="end"&&cnt>14)continue;if(kind==="mid"&&cnt<24)continue;
     const side=ply%2===0?"r":"b",title=(kind==="mid"?"中局練習":"殘局練習")+"・"+DRILL_LV[lv][0];
     const pre={moves:mv.slice(0,ply).map(m=>({f:m.f,t:m.t})),info:{drill:true,kind,lv,title,key:"drill",ply,cn:"",q:"",opp:`${it.red||""} 對 ${it.black||""}`,date:String(it.year||"")}};
-    try{await api("/play/new",{human:side,level:DRILL_LV[lv][1],pre});store.set("cpuRanked",false);store.set("cpuCar",false);closeSheet();
-      toast(`🎯 ${title}：你執${side==="r"?"紅":"黑"}，局面取自 ${it.year||""} ${it.red||""} 對 ${it.black||""}`);if(location.hash==="#/cpu")route();else location.hash="#/cpu";return}catch(e){continue}}
+    try{await api("/play/new",{human:side,level:DRILL_LV[lv][1],pre});closeSheet();
+      toast(`🎯 ${title}：你執${side==="r"?"紅":"黑"}，局面取自 ${it.year||""} ${it.red||""} 對 ${it.black||""}`);if(location.hash==="#/redo/play")route();else location.hash="#/redo/play";return}catch(e){continue}}
   toast("這次沒挑到合適的題目，再按一次")}
 // 問小帥也能聊象棋以外的事（意見回饋 206）：天氣（open-meteo）、時間日期、算數、唐詩宋詞（內建）、百科知識（中文維基百科摘要）
 // 只在問題不是象棋時才查網路；不存位置，天氣用問題裡的城市，沒說城市才用 IP 查大概位置
