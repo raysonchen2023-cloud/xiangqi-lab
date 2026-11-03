@@ -159,6 +159,12 @@ var XQ=(function(){
   window.XQ_saveNetGame=async g=>{if(!g||!g.result||!g.id||!Array.isArray(g.moves))return false;const list=(await idb.get("games:pvp"))||[];if(list.some(x=>x.id===g.id))return true;
     const S={moves:g.moves.map(([f,t])=>({f,t}))};stateRebuild(S);netSaved.add(g.id);ls.set("netSaved",[...netSaved].slice(-200));
     await pushGame("pvp",{id:g.id,date:g.id.slice(0,10),red:g.red.name,black:g.black.name,tc:"none",result:g.result,moves:saveMoves(S.moves),net:true});return true};
+  /* 棋友資料卡打開別人的線上對局：存到「棋友的對局」（最多 50 盤），不混進自己的真人對局 */
+  window.XQ_savePeek=async g=>{if(!g||!g.id||!Array.isArray(g.moves))return false;let list=(await idb.get("games:peek"))||[];list=list.filter(x=>x.id!==g.id);
+    const S={moves:g.moves.map(([f,t])=>({f,t}))};stateRebuild(S);list.push({id:g.id,date:g.id.slice(0,10),red:g.red.name,black:g.black.name,tc:"none",result:g.result,moves:saveMoves(S.moves),net:true});
+    await idb.set("games:peek",list.slice(-50));return true};
+  /* 線上對局前幾步的中文記譜（給戰績分析看開局用） */
+  window.XQ_netMovesCn=(g,n)=>{try{const S={moves:g.moves.slice(0,n||6).map(([f,t])=>({f,t}))};stateRebuild(S);return S.moves.map(m=>m.cn)}catch(e){return[]}};
   /* 對局結束時就算不在對局畫面（切到別頁、對方認輸、離開）也要存棋譜（意見回饋 275） */
   setTimeout(function hookNet(){if(window.XQNet&&XQNet.on)XQNet.on("game",()=>{try{netBuild()}catch(e){}});else setTimeout(hookNet,500)},0);
   function netState(){const nb=netBuild(),sd=XQNet.side(),em=[];
@@ -205,11 +211,12 @@ var XQ=(function(){
   async function dbItems(c){
     if(c==="study")return{name:"我的研究",note:"推演變化後按「💾 存成棋譜」存在這支手機裡的研究",items:((await idb.get("games:study"))||[]).slice().reverse().map(g=>summary(studyItem(g)))};
     if(c==="play"||c==="pvp")return{name:c==="play"?"人機對局":"真人對局",note:"這支手機上下完的對局",items:(await gameItems(c)).map(summary)};
+    if(c==="peek")return{name:"棋友的對局",note:"從棋友資料卡打開過的線上對局",items:(await gameItems(c)).map(summary)};
     const d=await loadBook(c);if(!d)throw new Error("手機裡沒有這個資料夾"+(remoteInfo()?"，可以按「從電腦同步」下載":""));
     return{name:d.name,book:d.book,source:d.source,players:d.players||null,items:d.items.map(summary)}}
   async function dbItem(c,id){
     if(c==="study"){const g=((await idb.get("games:study"))||[]).find(x=>x.id===id);if(!g)throw new Error("找不到這份研究");return studyItem(g)}
-    if(c==="play"||c==="pvp"){const it=(await gameItems(c)).find(x=>x.id===id);if(!it)throw new Error("找不到這一局");return it}
+    if(c==="play"||c==="pvp"||c==="peek"){const it=(await gameItems(c)).find(x=>x.id===id);if(!it)throw new Error("找不到這一局");return it}
     const d=await loadBook(c);const it=d&&d.byId.get(id);if(!it)throw new Error("找不到這一局");return fullItem(it)}
 
   // ---------- 研究：合法著法、引擎分析、評等、快取查詢 ----------
