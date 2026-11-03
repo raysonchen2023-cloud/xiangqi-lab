@@ -436,7 +436,7 @@ html[data-era=ming] .topbar,html[data-era=qing] .topbar{border-bottom-width:4px}
       if(!window.caches)return go();caches.keys().then(function(ks){return Promise.all(ks.filter(function(k){return k.indexOf("xqlab-app-")===0}).map(function(k){return caches.delete(k)}))})
         .then(function(){return navigator.serviceWorker&&navigator.serviceWorker.getRegistration()}).then(function(r){return r&&r.update()}).catch(function(){}).then(go)}},4000)})();
 </script>
-<script>window.XQ_OFFLINE=true;window.XQ_BUILD="20261103-1135";</script>
+<script>window.XQ_OFFLINE=true;window.XQ_BUILD="20261103-1140";</script>
 <script src="core.js"></script>
 <script src="engine.js"></script>
 <script src="local.js"></script>
@@ -1640,7 +1640,12 @@ const endTech=(b,side)=>{const up=side==="r",c={R:0,N:0,C:0};for(const p of b)if
 const qzTier=(th,n)=>Math.max(0,Math.min(n-1,Math.round(th/QZ.S+QZ.MID)));
 function Quiz(v){
   setTop("棋力測驗","#/");setTabs(false);
-  let D=null,ans=[],sel=-1,LEGAL=[],q=null,board=null,answered=false,mu=0,est={th:0,se:1},asked=new Set(),t0=0,share=true;   /* 意見回饋 302：不再顯示匿名分享的勾選框 */
+  let D=null,ans=[],sel=-1,LEGAL=[],q=null,board=null,answered=false,mu=0,est={th:0,se:1},asked=new Set(),t0=0,share=true,sid=0;   /* 意見回饋 302：不再顯示匿名分享的勾選框 */
+  /* 意見回饋 309：每答一題就記進 quizLog（part＝還沒做完），中途離開也算數；做完才估段位、更新最好成績。
+     沒做完的那幾題，下次打開測驗時再匿名送去校正題目難度 */
+  function saveLog(final){if(!ans.length)return;const lg=store.get("quizLog",[]),i=lg.findIndex(x=>x.at===sid),e={at:sid,n:(D&&D.ranks.length)||15,mode:"cat",th:est.th,se:est.se,part:final?0:1,sh:final?1:0,a:ans.map(x=>[x.tier,x.ok?1:0,x.mate,x.ms,x.cat,x.id,x.tech||""])};
+    if(i>=0)lg[i]=e;else lg.push(e);store.set("quizLog",lg.slice(-40))}
+  {const lg=store.get("quizLog",[]);let ch=false;for(const e of lg)if(e.part&&!e.sh&&e.a&&e.a.length){e.sh=1;ch=true;if(window.XQNet&&XQNet.shareIRT)try{XQNet.shareIRT({v:1,th:+(+e.th||0).toFixed(2),r:e.a.map(x=>[x[5],x[1],Math.round(x[3]/100)/10])})}catch(err){}}if(ch)store.set("quizLog",lg)}
   const bd=Board(x=>tap(x));
   function intro(){v.className="view";const best=store.get("quizBest",null),last=store.get("quizTheta",null);
     v.innerHTML=`<div class="pad"><div class="card" style="line-height:1.8"><div style="font-size:40px;text-align:center">🎯</div>
@@ -1654,7 +1659,7 @@ function Quiz(v){
     v.querySelector("#go").onclick=()=>start(-3);v.querySelector("#go2").onclick=()=>start(-1.2);const g3=v.querySelector("#go3");if(g3)g3.onclick=()=>start(last.th)}
   const RK=["新手","入門1","入門2","入門3","業1","業2","業3","業4","業5","業6","業7","業8","業9","專1","專2"],D0rank=th=>RK[qzTier(th,RK.length)];
   async function start(m0){try{D=D||await api("/quiz/data")}catch(e){return toast(e.message)}
-    mu=m0;ans=[];asked=new Set();est={th:m0,se:1};layout();next()}
+    mu=m0;ans=[];asked=new Set();est={th:m0,se:1};sid=Date.now();layout();next()}
   function pick(){const seen=new Set(store.get("quizSeen",[])),n=D.ranks.length;
     const cc={};for(const x of ans)cc[x.cat]=(cc[x.cat]||0)+1;
     let cand=D.items.filter(x=>!asked.has(x.id)).map(x=>({x,p:qzPar(x),cat:qzCat(x)}));
@@ -1671,7 +1676,7 @@ function Quiz(v){
     v.querySelector("#qh").innerHTML=`<b>第 ${ans.length+1} 題</b>・${esc(q._cat)}　<span class="muted">目前估計 ${esc(lo===hi?lo:lo+"～"+hi)}</span>`;
     v.querySelector("#stat").textContent=`${PLAYER[q.side]}走，找出最好的一步`+(q.mate&&!/^(新手|入門1)$/.test(q.rank)?"（有殺棋）":"");v.querySelector("#stat").classList.add("hot");
     v.querySelector("#note").textContent="";
-    actionBar(v.querySelector("#acts"),[["skip","⏭","不會，看答案",()=>judge(-1,-1)],["quit","✕","結束",()=>confirmBox(ans.length>=5?"現在結束，用已經答的題目估計？":"結束測驗？這次不計成績",()=>ans.length>=5?result():intro(),"結束")]]);
+    actionBar(v.querySelector("#acts"),[["skip","⏭","不會，看答案",()=>judge(-1,-1)],["quit","✕","結束",()=>confirmBox(ans.length>=5?"現在結束，用已經答的題目估計？":ans.length?"結束測驗？答過的題目會記進天賦分析，只是題數太少，不估段位":"結束測驗？",()=>ans.length>=5?result():intro(),"結束")]]);
     draw();t0=Date.now();try{LEGAL=(await api("/an/legal",{board,side:q.side})).legal}catch(e){toast(e.message)}}
   function draw(o){bd.draw(o&&o.board||board,{flip:q.side==="b",sel,targets:sel>=0?LEGAL.filter(([f])=>f===sel).map(x=>x[1]):[],...(o||{})})}
   function tap(x){if(!q||answered)return;
@@ -1679,7 +1684,7 @@ function Quiz(v){
     sel=LEGAL.some(([f])=>f===x)?x:-1;if(sel>=0)vibrate(5);draw()}
   const done=()=>ans.length>=20||(ans.length>=8&&est.se<=.35);
   function judge(f,t){answered=true;const ok=f===q.f&&t===q.t,ms=Date.now()-t0;
-    ans.push({id:q.id,tier:q.tier,ok,mate:q.mate?1:0,cat:q._cat,ms,p:q._p,tech:q._cat==="殘局"?endTech(board,q.side):""});est=qzEAP(ans,mu);vibrate(ok?15:[20,40,20]);
+    ans.push({id:q.id,tier:q.tier,ok,mate:q.mate?1:0,cat:q._cat,ms,p:q._p,tech:q._cat==="殘局"?endTech(board,q.side):""});est=qzEAP(ans,mu);saveLog(false);vibrate(ok?15:[20,40,20]);
     store.set("quizSeen",[...new Set([...store.get("quizSeen",[]),q.id])].slice(-600));
     const nb=board.slice();nb[q.t]=nb[q.f];nb[q.f]=null;
     draw({board:nb,last:{f:q.f,t:q.t},sel:-1,targets:[]});
@@ -1690,7 +1695,7 @@ function Quiz(v){
   function result(){const n=D.ranks.length,ti=qzTier(est.th,n),rank=D.ranks[ti],ok=ans.filter(x=>x.ok).length;v.className="view";
     const best=store.get("quizBest",null),better=!best||ti>D.ranks.indexOf(best.rank);
     if(better)store.set("quizBest",{rank,ti,ok,n:ans.length,at:Date.now()});store.set("quizTheta",{th:est.th,se:est.se,at:Date.now()});
-    {const lg=store.get("quizLog",[]);lg.push({at:Date.now(),n,mode:"cat",th:est.th,se:est.se,a:ans.map(x=>[x.tier,x.ok?1:0,x.mate,x.ms,x.cat,x.id,x.tech||""])});store.set("quizLog",lg.slice(-40))}
+    saveLog(true);
     if(share&&window.XQNet&&XQNet.shareIRT)try{XQNet.shareIRT({v:1,th:+est.th.toFixed(2),r:ans.map(x=>[x.id,x.ok?1:0,Math.round(x.ms/100)/10])})}catch(e){}
     const lo=D.ranks[qzTier(est.th-1.28*est.se,n)],hi=D.ranks[qzTier(est.th+1.28*est.se,n)],avgS=Math.round(ans.reduce((a,x)=>a+x.ms,0)/ans.length/1000);
     const byC=QZ.CATS.map(k=>{const a=ans.filter(x=>x.cat===k);return[k,a.filter(x=>x.ok).length,a.length]}).filter(x=>x[2]);
@@ -1709,7 +1714,10 @@ function Quiz(v){
 function Guess(v){
   setTop("猜著法","#/");setTabs(false);
   const SRC=[["xuyinchuan","許銀川對局"],["gmgames","特級大師對局"]],LEN=15;
-  let src=store.get("guessSrc","xuyinchuan"),it=null,mv=[],ply=0,me="r",board=null,LEGAL=[],sel=-1,busy=false,res=[],startPly=0;
+  let src=store.get("guessSrc","xuyinchuan"),it=null,mv=[],ply=0,me="r",board=null,LEGAL=[],sel=-1,busy=false,res=[],startPly=0,gsid=0;
+  /* 意見回饋 309：每猜一步就記進 guessLog（part＝這盤還沒猜完），中途離開也會算進天賦分析 */
+  const saveG=final=>{if(!res.length||!it)return;const lg=store.get("guessLog",[]),D=res.filter(x=>x.d!=null).map(x=>x.d),e={at:gsid,title:toT(`${it.red||""} 對 ${it.black||""}`)+(it.year?"（"+it.year+"）":""),src,n:res.length,m:res.filter(x=>x.hit).length,pts:Math.round(res.reduce((a,x)=>a+x.pts,0)),d:D,part:final?0:1},i=lg.findIndex(x=>x.at===gsid);
+    if(i>=0)lg[i]=e;else lg.push(e);store.set("guessLog",lg.slice(-60))};
   const bd=Board(x=>tap(x));
   function intro(){v.className="view";const lg=store.get("guessLog",[]),last=lg[lg.length-1];
     v.innerHTML=`<div class="pad"><div class="card" style="line-height:1.8"><div style="font-size:40px;text-align:center">🎓</div>
@@ -1727,7 +1735,7 @@ function Guess(v){
     for(let k=0;k<8;k++){const s=pool[Math.floor(Math.random()*pool.length)];try{const full=await api(`/db/item?c=${src}&id=${encodeURIComponent(s.id)}`);const L=full.lines&&full.lines[0];if(L&&L.moves.length>=36){it=full;break}}catch(e){}}
     if(!it){toast("載入對局失敗，再試一次");return intro()}
     mv=it.lines[0].moves.map(m=>Array.isArray(m)?{f:m[0],t:m[1]}:m);const r=String(it.result||"");me=/^黑/.test(r)?"b":"r";
-    board=it.board.slice();ply=0;res=[];startPly=12+(me==="b"?1:0);
+    board=it.board.slice();ply=0;res=[];gsid=Date.now();startPly=12+(me==="b"?1:0);
     while(ply<startPly){board=applyMv(board,mv[ply]);ply++}
     gameLayout(v);v.querySelector("#bbox").append(bd.svg);v.querySelector("#strip").insertAdjacentHTML("beforebegin",'<div class="note" id="note" style="white-space:pre-wrap"></div>');turn()}
   const applyMv=(b,m)=>{const n=b.slice();n[m.t]=n[m.f];n[m.f]=null;return n};
@@ -1745,7 +1753,7 @@ function Guess(v){
   async function judge(f,t){if(busy)return;busy=true;   /* 意見回饋 305：連按「看大師怎麼走」會重複判同一步、往前跳好幾步，盤面跟棋譜對不上（棋子消失） */const gm=mv[ply],hit=f===gm.f&&t===gm.t;const st=v.querySelector("#stat");st.classList.remove("hot");st.textContent="Pikafish 評分中…";
     let mine=null,his=null;try{his=await api("/an/classify",{board,side:me,f:gm.f,t:gm.t});if(f>=0)mine=hit?his:await api("/an/classify",{board,side:me,f,t})}catch(e){toast(e.message)}
     const d=f<0?null:Math.max(0,Math.round(mine&&mine.loss!=null?mine.loss:300)),pts=f<0?0:hit?10:10*Math.exp(-d/150);
-    res.push({hit,d,pts,skip:f<0});vibrate(hit?15:f<0?5:[20,40,20]);
+    res.push({hit,d,pts,skip:f<0});saveG(false);vibrate(hit?15:f<0?5:[20,40,20]);
     const cnGM=gm.cn||"",nb=applyMv(board,gm);draw({board:nb,last:{f:gm.f,t:gm.t},sel:-1,targets:[]});
     st.textContent=f<0?`大師走：${cnGM}`:hit?`✔ 猜中！大師也走 ${cnGM}（+10）`:`大師走的是 ${cnGM}；你那步${mine&&mine.q?"是「"+mine.q+"」":""}，比最佳少 ${d} 分（+${pts.toFixed(1)}）`;
     v.querySelector("#note").textContent=his&&his.q?`大師這步 Pikafish 評為「${his.q}」${his.bc&&his.q!=="正手"&&his.q!=="妙手"?`，它覺得更好的是 ${his.bc}`:""}`:"";
@@ -1755,7 +1763,7 @@ function Guess(v){
   function finish(){v.className="view";const n=res.filter(x=>!x.skip).length,m=res.filter(x=>x.hit).length,pts=Math.round(res.reduce((a,x)=>a+x.pts,0)),D=res.filter(x=>x.d!=null).map(x=>x.d);
     const acpl=D.length?D.reduce((a,b)=>a+b,0)/D.length:null,elo=acpl==null?null:Math.round(Math.max(600,Math.min(3000,3100-23*acpl)));
     const title=toT(`${it.red||""} 對 ${it.black||""}`)+(it.year?"（"+it.year+"）":"");
-    if(res.length){const lg=store.get("guessLog",[]);lg.push({at:Date.now(),title,src,n:res.length,m,pts,d:D});store.set("guessLog",lg.slice(-60))}
+    saveG(true);
     v.innerHTML=`<div class="pad"><div class="card" style="text-align:center"><div style="font-size:44px">🎓</div><div class="muted">${esc(title)}</div>
       <div style="font-size:40px;font-weight:900;font-family:var(--serif)">${pts}<span style="font-size:16px"> / ${res.length*10} 分</span></div>
       <p>猜中大師 <b>${m}</b> / ${res.length} 步${acpl!=null?`・平均每步少 ${Math.round(acpl)} 分・這局著法品質約等級分 ${elo}`:""}</p>
@@ -2233,9 +2241,9 @@ async function talentReport(box){
   if(ch)store.set("talentCache3",cache);
   if(!box.isConnected)return;
   const QL=store.get("quizLog",[]),GL0=store.get("guessLog",[]);
-  /* 累積練習量 P：每盤對局 1、每次測驗 0.5、每局猜著法 0.5（依時間先後交錯） */
-  const ev=G.map(g=>({t:g.t,k:"g",g})).concat(QL.map(q=>({t:q.at,k:"q"})),GL0.map(q=>({t:q.at,k:"q"}))).sort((a,b)=>a.t-b.t);let P=0;const Y=[],PP=[];
-  for(const e of ev){if(e.k==="g"){Y.push(e.g.score);PP.push(P);P+=1}else P+=.5}
+  /* 累積練習量 P：每盤對局 1、做完一次測驗 0.5、猜完一盤 0.5；沒做完的照做了幾題按比例算（意見回饋 309，測驗 8 題、猜著法 15 步算一整次） */
+  const ev=G.map(g=>({t:g.t,k:"g",g})).concat(QL.map(q=>({t:q.at,k:"q",w:.5*Math.min(1,(q.a||[]).length/8)})),GL0.map(q=>({t:q.at,k:"q",w:.5*Math.min(1,(q.n||15)/15)}))).sort((a,b)=>a.t-b.t);let P=0;const Y=[],PP=[];
+  for(const e of ev){if(e.k==="g"){Y.push(e.g.score);PP.push(P);P+=1}else P+=e.w}
   /* 殘局技巧：實戰殘局的每一步＋測驗殘局題，依技巧分組做 BKT */
   const TQ={};for(const g of G)if(g.ek&&g.ph&&g.ph.end)(TQ[g.ek]=TQ[g.ek]||[]).push(...g.ph.end.split("").map(Number));
   for(const s0 of QL)for(const x of s0.a)if(x[6])(TQ[x[6]]=TQ[x[6]]||[]).push(x[1]);
