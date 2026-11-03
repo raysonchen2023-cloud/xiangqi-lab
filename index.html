@@ -80,6 +80,9 @@ input,select{font:inherit;font-size:16px;color:inherit}
 .chips{display:flex;flex-wrap:wrap;gap:6px;margin-top:10px}.chips span{font-size:12.5px;border:1px solid var(--line);border-radius:999px;padding:3px 10px;background:var(--bg)}
 .bgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:8px}.bcard{border:1px solid var(--line);background:var(--card);border-radius:14px;padding:10px;display:flex;flex-direction:column;gap:3px;min-width:0}.bcard .bic{font-size:30px}.bcard.rare{border:2px solid #C9962B;box-shadow:0 0 0 3px rgba(201,150,43,.18);background:linear-gradient(160deg,color-mix(in srgb,#C9962B 12%,var(--card)),var(--card))}.bcard.broken{opacity:.75;filter:grayscale(.5)}.bcard .pill{margin-top:4px;align-self:flex-start}
 .sbio{background:color-mix(in srgb,var(--accent) 6%,var(--card));border:1px solid var(--line);border-radius:12px;padding:10px 12px}.sbio-r{display:flex;gap:8px;margin-top:6px;font-size:13.5px;line-height:1.6}.sbio-r span{flex:none;color:var(--muted);width:2.6em}.sbio-r b{font-weight:600}.sbio summary{cursor:pointer;font-weight:700}
+/* 意見回饋 356、357：天賦頁的表格統一格式——項目、數值不換行，說明自動換行 */
+.tt{width:100%;border-collapse:collapse;font-size:14px}.tt th{font-size:12px;color:var(--muted);font-weight:600;text-align:left;padding:4px 6px;border-bottom:1px solid var(--line)}
+.tt td{padding:7px 6px;border-bottom:1px solid var(--line);vertical-align:top;line-height:1.5}.tt td:first-child{white-space:nowrap;color:var(--muted)}.tt td:nth-child(2){white-space:nowrap;font-weight:800}.tt tr:last-child td{border-bottom:0}.tt .big{font-size:20px;color:var(--accent);font-family:var(--serif)}
 .eras{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:16px 6px;margin-top:10px}.era-c{display:flex;flex-direction:column;align-items:center;gap:6px;background:none;border:0;padding:0;font:inherit;color:inherit;cursor:pointer;min-width:0}.era-c span{width:78px;height:78px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-family:var(--serif);font-size:30px;font-weight:900;background:radial-gradient(circle at 35% 30%,var(--card),color-mix(in srgb,var(--accent) 14%,var(--card)));border:2px solid color-mix(in srgb,var(--accent) 45%,var(--line));box-shadow:0 2px 6px rgba(0,0,0,.12)}.era-c span.two{font-size:22px}.era-c.on span{border-color:var(--red);color:var(--red);border-width:3px}.era-c b{font-size:13.5px}
 .doors{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px;margin-top:12px}.door{display:flex;flex-direction:column;align-items:center;gap:2px;padding:14px 4px 8px;border:2px solid color-mix(in srgb,var(--accent) 45%,var(--line));border-bottom-width:4px;border-radius:999px 999px 10px 10px;background:linear-gradient(180deg,color-mix(in srgb,var(--accent) 10%,var(--card)),var(--card));font:inherit;color:inherit;cursor:pointer;min-width:0}.door .dic{font-size:26px}.door b{font-size:14px}.door small{font-size:11px;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:100%}
 .travel{position:fixed;inset:0;z-index:9998;overflow:hidden;background:linear-gradient(180deg,#3a1d14 0%,#8a3b1f 38%,#d98a3a 52%,#6b5434 53%,#4a3a26 100%);animation:tvIn .35s ease both}.travel.out{animation:tvOut .35s ease both}
@@ -475,7 +478,7 @@ html[data-era=ming] .topbar,html[data-era=qing] .topbar{border-bottom-width:4px}
       if(!window.caches)return go();caches.keys().then(function(ks){return Promise.all(ks.filter(function(k){return k.indexOf("xqlab-app-")===0}).map(function(k){return caches.delete(k)}))})
         .then(function(){return navigator.serviceWorker&&navigator.serviceWorker.getRegistration()}).then(function(r){return r&&r.update()}).catch(function(){}).then(go)}},4000)})();
 </script>
-<script>window.XQ_OFFLINE=true;window.XQ_BUILD="20261103-2102";</script>
+<script>window.XQ_OFFLINE=true;window.XQ_BUILD="20261103-2110";</script>
 <script src="core.js"></script>
 <script src="engine.js"></script>
 <script src="local.js"></script>
@@ -2334,9 +2337,9 @@ function redoPower(){const D=Object.values(store.get("redoDone",{})).filter(d=>d
 function redoPowerHTML(){const R=redoPower();
   if(!R)return`<div class="sec-t">改錯力</div><div class="card" style="line-height:1.7">還沒練過錯棋。去「🔁 錯棋重練」從下錯的那一步重下幾題，這裡就會算出你改錯的能力。<button class="btn ghost" style="width:100%;margin-top:8px" onclick="location.hash='#/redo'">去錯棋重練</button></div>`;
   const lab=R.score>=80?"很會改錯":R.score>=60?"改得不錯":R.score>=40?"還在摸索":"常常還是走錯";
-  return`<div class="sec-t">改錯力</div><div class="card" style="line-height:1.6"><div style="display:flex;align-items:baseline;gap:10px"><span style="font-size:36px;font-weight:900;font-family:var(--serif);color:var(--accent)">${R.score}</span><span>分・<b>${lab}</b></span></div>
-    <div class="muted" style="font-size:13px;margin:2px 0 6px">改錯力＝在錯棋重練裡，回到你下錯的局面，這次找到 Pikafish 最好那一步（正手、妙手）的比例。</div>
-    <table class="st-lv" style="font-size:14px"><tr><th>項目</th><th>數字</th><th>說明</th></tr>
+  return`<div class="sec-t">改錯力</div><div class="card" style="line-height:1.6"><div class="muted" style="font-size:13px;margin-bottom:6px">回到你下錯的局面重下，找到 Pikafish 最好那一步（正手、妙手）的比例，0～100 分。</div>
+    <table class="tt"><tr><th>項目</th><th>數值</th><th>說明</th></tr>
+    <tr><td>改錯力</td><td><span class="big">${R.score}</span> 分</td><td>${lab}</td></tr>
     <tr><td>練過的錯棋</td><td>${R.q} 題</td><td>從你下過的對局挑出來的錯著、露著</td></tr>
     <tr><td>重下的次數</td><td>${R.tries} 次</td><td>找到最好那步 ${R.good} 次（${R.rate}%）</td></tr>
     <tr><td>改對了</td><td>${R.fixed} 題</td><td>至少有一次走出好棋（優著以上）</td></tr>
@@ -2387,8 +2390,9 @@ async function talentReport(box){
   const lab=!M?"":M.N<10?"還在觀察中":M.rPct>=90?"學得飛快":M.rPct>=70?"學習速度快":M.rPct>=35?"穩定成長":"慢熱型";
   const NR=window.XQNet&&XQNet.rating?XQNet.rating().rank:null,SR=CT&&CT.byRank&&NR&&CT.byRank[NR]&&CT.byRank[NR].n>=5?CT.byRank[NR]:null;
   /* τ 表：每一項都附 80% 區間 */
-  const row=(k,v,iv,note)=>`<tr><td><b>${k}</b></td><td style="text-align:right;font-variant-numeric:tabular-nums">${v}</td><td class="muted" style="font-size:12px;font-variant-numeric:tabular-nums">${iv}</td></tr>${note?`<tr><td colspan="3" class="muted" style="font-size:12px;padding-top:0">${note}</td></tr>`:""}`;
-  const tau=M?`<table class="st-lv" style="font-size:14px"><tr><th>棋路底子</th><th style="text-align:right">估計</th><th>大概範圍</th></tr>
+  /* 意見回饋 357：棋路底子也用同一種表格（項目／數值／說明），範圍併進說明 */
+  const row=(k,v,iv,note)=>`<tr><td>${k}</td><td>${v}</td><td>${[iv?"大概 "+iv:"",note||""].filter(Boolean).join("・")}</td></tr>`;
+  const tau=M?`<table class="tt"><tr><th>項目</th><th>數值</th><th>說明</th></tr>
       ${row("剛學時的底子",f0(M.S0.m)+" 分",`${f0(M.S0.lo)}～${f0(M.S0.hi)}`,"剛開始下棋時，每步走得好不好（100 分＝步步都是電腦首選）")}
       ${row("長棋速度",(M.r.m*100).toFixed(1)+"%",`${(M.r.lo*100).toFixed(1)}～${(M.r.hi*100).toFixed(1)}%`,`每多下一盤，離自己的極限又近了幾成；比 ${M.rPct}% 的學棋者長得快`)}
       ${row("能長到多高",f0(M.A.m)+" 分",`${f0(M.A.lo)}～${f0(M.A.hi)}`,M.A.hi-M.A.lo>18?"還沒碰到瓶頸，這一項現在還看不準（正常）":"")}
@@ -2416,19 +2420,18 @@ async function talentReport(box){
   /* 意見回饋 307：成長曲線（只有練習量和準確度，加上段位；沒有名字和代號）每兩天匿名送一次到後台，跟大家的資料一起校正「一般棋友」 */
   if(Y.length>=5&&window.XQNet&&XQNet.shareIRT&&Date.now()-store.get("talShareAt",0)>2*864e5){store.set("talShareAt",Date.now());let aid=store.get("anonId",null);if(!aid){aid=Math.random().toString(36).slice(2,10);store.set("anonId",aid)}
     api("/play/state").then(st=>st&&st.cpuRate&&st.cpuRate.rank).catch(()=>null).then(crk=>{try{XQNet.shareIRT({t:"tal",aid,rk:NR,crk:crk||null,pts:Y.map((y,j)=>[+PP[j].toFixed(1),Math.round(y)]).slice(-80)})}catch(e){}})}
-  box.innerHTML=`<div class="card" style="margin-top:4px;line-height:1.6">${/* 意見回饋 354：第一段也改成表格 */""}<div class="muted" style="font-size:13px;margin-bottom:6px">進步速度＝同樣多的練習，你的每步品質漲得多快，0～100 分。</div>
-      ${M?`<table class="st-lv" style="font-size:14px"><tr><th>項目</th><th>數值</th><th>說明</th></tr>
-      <tr><td>進步速度</td><td><b style="font-size:18px;color:var(--accent)">${M.N<5?"?":M.rPct}</b> 分</td><td>${esc(lab)}・比 ${M.N<5?"?":M.rPct}% 的學棋者快</td></tr>
-      <tr><td>進步很快</td><td><b>${pc(M.top25)}</b></td><td>機會是每 4 人裡最快的 1 個</td></tr>
-      <tr><td>頂尖</td><td><b>${pc(M.top5)}</b></td><td>機會是每 20 人裡最快的 1 個</td></tr>
+  box.innerHTML=`<div class="sec-t" style="margin-top:4px">進步速度</div><div class="card" style="line-height:1.6">${/* 意見回饋 354、357：表格；進步速度和進步很快合併成一列 */""}<div class="muted" style="font-size:13px;margin-bottom:6px">同樣多的練習，你的每步品質漲得多快，0～100 分。</div>
+      ${M?`<table class="tt"><tr><th>項目</th><th>數值</th><th>說明</th></tr>
+      <tr><td>進步速度</td><td><span class="big">${M.N<5?"?":M.rPct}</span> 分</td><td>${esc(lab)}・比 ${M.N<5?"?":M.rPct}% 的學棋者快；有 ${pc(M.top25)} 機會是「進步很快」的人（每 4 人最快的 1 個）</td></tr>
+      <tr><td>頂尖</td><td>${pc(M.top5)}</td><td>機會是每 20 人裡最快的 1 個</td></tr>
       <tr><td>根據</td><td>${G.length} 盤</td><td>測驗 ${QL.length} 次・猜著法 ${GL0.length} 局・練習量約 ${f1(P)} 盤${practiceTotal()>=1?`・練習 ${practiceTotal()>=60?(practiceTotal()/60).toFixed(1)+" 小時":Math.round(practiceTotal())+" 分鐘"}`:""}</td></tr></table>
       ${M.N<20?'<div class="muted" style="font-size:12.5px;margin-top:4px">下得還不多，先參考一般棋友的樣子，下越多越準</div>':""}`:`<div style="margin:8px 0">再下 3 盤評過等的對局就能估</div>`}</div>
-    ${KF?`<div class="sec-t">現在的棋力</div><div class="card" style="line-height:1.6">${/* 意見回饋 353：改成表格＋一句說明 */""}<div class="muted" style="font-size:13px;margin-bottom:6px">每步品質＝每一步跟 Pikafish 的最好走法比，0～100 分，越高越好。</div>
-      <table class="st-lv" style="font-size:14px"><tr><th>項目</th><th>分數</th><th>說明</th></tr>
-      <tr><td>你</td><td><b>${f0(KF.th)}</b></td><td>80% 機率在 ${f0(KF.th-1.28*KF.sd)}～${f0(KF.th+1.28*KF.sd)}</td></tr>
-      <tr><td>一般棋友</td><td>${f0(popNow)}</td><td>下了一樣多盤的人・你${KF.th>=popNow?"多":"少"} <b>${f0(Math.abs(KF.th-popNow))}</b></td></tr>
-      ${SR?`<tr><td>同段位</td><td>${SR.now}</td><td>${esc(NR)}・${SR.n} 人・進步速度中間值 ${(SR.r*100).toFixed(1)}%</td></tr>`:""}
-      ${GL?`<tr><td>等級分</td><td><b>${f0(GL.r)}</b></td><td>從跟電腦下的 ${GL.n} 盤推算・誤差 ±${f0(GL.RD)}</td></tr>`:""}</table></div>`:""}
+    ${KF?`<div class="sec-t">現在的棋力</div><div class="card" style="line-height:1.6">${/* 意見回饋 353：改成表格＋一句說明 */""}<div class="muted" style="font-size:13px;margin-bottom:6px">每一步跟 Pikafish 的最好走法比，0～100 分，越高越好。</div>
+      <table class="tt"><tr><th>項目</th><th>數值</th><th>說明</th></tr>
+      <tr><td>每步品質</td><td><span class="big">${f0(KF.th)}</span> 分</td><td>80% 機率在 ${f0(KF.th-1.28*KF.sd)}～${f0(KF.th+1.28*KF.sd)}</td></tr>
+      <tr><td>一般棋友</td><td>${f0(popNow)} 分</td><td>下了一樣多盤的人・你${KF.th>=popNow?"多":"少"} <b>${f0(Math.abs(KF.th-popNow))}</b></td></tr>
+      ${SR?`<tr><td>同段位</td><td>${SR.now} 分</td><td>${esc(NR)}・${SR.n} 人・進步速度中間值 ${(SR.r*100).toFixed(1)}%</td></tr>`:""}
+      ${GL?`<tr><td>等級分</td><td>${f0(GL.r)}</td><td>從跟電腦下的 ${GL.n} 盤推算・誤差 ±${f0(GL.RD)}</td></tr>`:""}</table></div>`:""}
     ${redoPowerHTML()}
     ${tau?`<div class="sec-t">你的棋路底子</div><div class="card">${tau}</div>`:""}
     ${chart?`<div class="sec-t">成長軌跡與預測</div><div class="card">${chart}<p class="muted" style="margin:4px 0 0;font-size:13px;line-height:1.6">灰點是每一盤走得好不好；線是照你的進步速度畫出來的成長路線，淺色帶是大概的範圍。${ms?(ms.med==null||ms.pNever>=.5?`照目前的練法，平均準確度有 ${pc(ms.pNever)} 的機率到不了 ${ms.goal} 分（天花板估計約 ${f0(M.A.m)} 分）。想再往上，要換個練法，例如先補下面的弱項。`:`平均準確度要到 <b>${ms.goal}</b> 分，大約還要練 <b>${f0(ms.med)}</b> 盤（80% 區間 ${f0(ms.lo)}～${f0(ms.hi)} 盤）${ms.pNever>.1?`；不過也有 ${pc(ms.pNever)} 的機率照目前的練法到不了`:""}。`):""}</p></div>`:""}
