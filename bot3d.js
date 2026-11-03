@@ -245,8 +245,18 @@
   let hintN=0;const HINTS=["長按我，可以問我象棋問題喔！","有問題嗎？長按我就好～","長按我：開局、殺法、棋手、棋譜都可以問"];
   const COMBO=[];for(let i=0;i<ARM.length&&COMBO.length<300;i++)for(let j=0;j<BODY.length&&COMBO.length<300;j++)COMBO.push([i,j]);
   const FACES=["smile","open","smile","wink","smile","open"];
-  const comboAct=n=>{const[i,j]=COMBO[n],a=ARM[i],b=BODY[j];return{d:2.4,name:a[0]+(b[0]?"＋"+b[0]:""),get say(){return ++hintN%9===0?HINTS[(hintN/9|0)%HINTS.length]:nextLine()},f:(p,B)=>{a[1](p,B);b[1](p,B);B.face=FACES[n%FACES.length]}}};
+  const comboAct=n=>{const[i,j]=COMBO[n],a=ARM[i],b=BODY[j];return{d:2.4,k:"c"+n,name:a[0]+(b[0]?"＋"+b[0]:""),get say(){return ++hintN%9===0?HINTS[(hintN/9|0)%HINTS.length]:nextLine()},f:(p,B)=>{a[1](p,B);b[1](p,B);B.face=FACES[n%FACES.length]}}};
 
+  /* 意見回饋 367、369：經典朝代的小帥換成 Gemini 手繪版（data/xs/：24 個姿勢＋8 張走路圖，xs.json 記每張身體圓面的位置，貼玩家選的棋子字）；
+     其他朝代的手繪服裝還沒畫，先用 3D 版。每個 3D 動作對到最接近的手繪姿勢，跳舞類的兩張輪流換 */
+  for(const k in ACTS)ACTS[k].k=k;
+  const XS_MAP={wave:"wave",jump:"jump",cheer:"cheer",think:"think",bow:"bow",clap:"clap",point:"point",sleep:"sleep",shrug:"shrug",flex:"flex",shock:"surprise",lose:"sad",draw:"gongshou",nap:"sleep",
+    roll:"jump",prop:"point",liewave:"wave",laugh:"laugh",hattip:"hattip",gongshou:"gongshou",heart:"heart",kiss:"heart",lookout:"think",scratch:"think",belly:"laugh",knock:"point",stretch:"cheer",
+    thumbs2:"thumbs",headstand:"jump",pushup:"flex",carry:"surprise"};
+  const XS_DUO={dance:["dance1","dance2"],spin:["dance1","dance2"],kick:["dance1","jump"],taichi:["dance2","gongshou"],win:["cheer","jump"]};
+  const XS_COMBO=["wave","clap","point","thumbs","heart","hattip","gongshou","fan_open","fan_closed","tea","laugh","flex","dance1","dance2","cheer","think","bow","thumbs"];
+  const xsPose=(a,now)=>{if(!a||!a.k)return"xs_idle";const k=a.k;if(k[0]==="c"&&/^c\d+$/.test(k))return"xs_"+XS_COMBO[+k.slice(1)%XS_COMBO.length];
+    const duo=XS_DUO[k]||(/^d_/.test(k)?["dance1","dance2"]:null);if(duo)return"xs_"+duo[Math.floor(now/380)%2];return"xs_"+(XS_MAP[k]||"idle")};
   function start(){let SC=Math.min(2,Math.max(.6,+store.get("botSize",.7)||1)),W=W0*SC,H=H0*SC,curK=eraK(),curP=BP();
     const box=document.createElement("div");box.className="xqbot";
     box.style.cssText=`position:fixed;left:0;top:0;width:${W}px;height:${H}px;z-index:900;pointer-events:none;will-change:transform;transition:opacity .2s`;
@@ -256,6 +266,18 @@
     let rd;try{rd=new T.WebGLRenderer({alpha:true,antialias:true})}catch(e){box.remove();return null}
     rd.setPixelRatio(Math.min(3,window.devicePixelRatio||1));rd.setSize(W,H);rd.domElement.style.cssText="display:block;width:100%;height:100%;pointer-events:none";box.insertBefore(rd.domElement,hit);
     if(T.SRGBColorSpace)rd.outputColorSpace=T.SRGBColorSpace;
+    const XS={meta:null,ims:{},on:false,cur:"",wrap:null,img:null,gly:null};
+    {const w=document.createElement("div");w.style.cssText="position:absolute;inset:0;display:none;pointer-events:none";const im=document.createElement("img");im.alt="";im.draggable=false;
+      im.style.cssText="position:absolute;left:50%;bottom:2%;height:96%;transform:translateX(-50%);transform-origin:50% 100%;pointer-events:none;-webkit-user-select:none;user-select:none";
+      const gl=document.createElement("div");gl.style.cssText="position:absolute;display:flex;align-items:center;justify-content:center;border-radius:50%;background:#F7EFDD;font-family:'Noto Serif TC','Songti TC',serif;font-weight:900;pointer-events:none;line-height:1";
+      w.append(im,gl);box.insertBefore(w,hit);XS.wrap=w;XS.img=im;XS.gly=gl;
+      fetch("data/xs/xs.json").then(r=>r.ok?r.json():null).then(m=>{if(!m||stopped)return;let n=0;const names=Object.keys(m.poses);
+        for(const k of names){const i=new Image();i.decoding="async";i.onload=()=>{if(++n===names.length){XS.meta=m;xsMode()}};i.onerror=()=>{};i.src="data/xs/"+k+".webp";XS.ims[k]=i}}).catch(()=>{})}
+    const xsMode=()=>{const on=!!XS.meta&&eraK()==="classic";XS.on=on;XS.wrap.style.display=on?"":"none";rd.domElement.style.visibility=on?"hidden":"";XS.cur=""};
+    const xsDraw=(pose,bob,flip)=>{const m=XS.meta;if(!m.poses[pose])pose="xs_idle";if(pose!==XS.cur){XS.cur=pose;XS.img.src=XS.ims[pose].src;
+        const f=m.poses[pose],ih=box.clientHeight*.96,iw=ih*m.w/m.h,left=(box.clientWidth-iw)/2,top=box.clientHeight*.98-ih,R=f.r*iw*.82,ch=BP();
+        Object.assign(XS.gly.style,{left:(left+f.cx*iw-R)+"px",top:(top+f.cy*ih-R)+"px",width:2*R+"px",height:2*R+"px",fontSize:(R*1.25)+"px",color:"帥仕相俥傌炮兵".includes(ch)?"#C8102E":"#1E1A16"});XS.gly.textContent=ch}
+      const tf=`translateY(${(-bob).toFixed(1)}px)`;XS.img.style.transform="translateX(-50%) "+tf+(flip?" scaleX(-1)":"");XS.gly.style.transform=tf};
     const sc=new T.Scene(),cam=new T.PerspectiveCamera(30,W/H,.1,50);cam.position.set(0,1.5,7.3);cam.lookAt(0,1.18,0);
     sc.add(new T.HemisphereLight(0xfff3e0,0x5a3a22,1.1));
     const key=new T.DirectionalLight(0xfff0dc,1.5);key.position.set(2.5,4,5);sc.add(key);
@@ -278,10 +300,10 @@
       R(B,0,0,0,-.3);R(B,1,0,0,.3);P.legs[0].rotation.set(0,0,0);P.legs[1].rotation.set(0,0,0)};
     function frame(now){if(stopped)return;requestAnimationFrame(frame);if(document.hidden){last=now;return}
       const dt=Math.min(.1,(now-last)/1000);last=now;acc+=dt;if(acc<1/30)return;const t=acc;acc=0;
-      reset();const dx=tx-x,dy=ty-y,dist=Math.hypot(dx,dy);
+      reset();const dx=tx-x,dy=ty-y,dist=Math.hypot(dx,dy);let walking=false;
       if(drag){ACTS.carry.f(0,B,now/1000)}
       else if(act){actT+=t;const p=Math.min(1,actT/act.d);act.f(p,B,now/1000);if(p>=1){act=null;next=2+Math.random()*4}}
-      else if(dist>2&&(!parked||boardMode||sheetMode||celeb)){const s=(celeb?900:sheetMode?480:70)*t,k=Math.min(1,s/dist);x+=dx*k;y+=dy*k;
+      else if(dist>2&&(!parked||boardMode||sheetMode||celeb)){walking=true;const s=(celeb?900:sheetMode?480:70)*t,k=Math.min(1,s/dist);x+=dx*k;y+=dy*k;
         const want=Math.abs(dx)>4?(dx>0?.9:-.9):0;face+=(want-face)*Math.min(1,t*6);root.rotation.y=face;
         const w=Math.sin(now/110);P.legs[0].rotation.x=.6*w;P.legs[1].rotation.x=-.6*w;R(B,0,-.5*w);R(B,1,.5*w);root.position.y=Math.abs(Math.cos(now/110))*.08}
       else{face+=(0-face)*Math.min(1,t*4);root.rotation.y=face;P.torso.position.y=1.02+.015*Math.sin(now/500);
@@ -295,7 +317,8 @@
       P.tear.visible=F==="sad";if(F==="sad"){const k=(now/1400)%1;P.tear.position.set(-.2,.1-.32*k,.47);P.tear.material.opacity=.85*(1-k*.6)}
       if(bubT>0){bubT-=t;if(bubT<=0)bub.style.opacity=0;else if((++fitN&7)===0)fitBub()}
       if(!drag){const b=bounds();x=Math.min(Math.max(x,b.x0),Math.max(b.x0,b.x1));y=Math.min(Math.max(y,b.y0),Math.max(b.y0,b.y1))}
-      box.style.transform=`translate(${x|0}px,${y|0}px)`;rd.render(sc,cam)}
+      box.style.transform=`translate(${x|0}px,${y|0}px)`;
+      if(XS.on){const pose=drag?"xs_surprise":act?xsPose(act,now):walking?"walk_"+(1+Math.floor(now/120)%8):"xs_idle",bob=act?Math.abs(Math.sin(actT*7))*H*.03:walking?0:Math.sin(now/500)*H*.006;xsDraw(pose,bob,false)}else rd.render(sc,cam)}
     requestAnimationFrame(frame);
     if(!store.get("botHint",false)){store.set("botHint",true);setTimeout(()=>{if(!stopped){doAct("wave");say("嗨！我是小帥。長按我，可以問我任何象棋問題！",5)}},1800)}
     // 點／拖小人：事件只給小人，不會穿到後面的按鈕
@@ -338,7 +361,7 @@
       if(boardMode&&!boardDrag&&!drag){const b=bounds();tx=b.x1-2;ty=Math.max(b.y0,innerHeight-H-64)}
       if(boardMode&&!sheetMode)box.style.opacity=(act||drag||bubT>0)?"":".45"},250);
     // 換朝代：重做造型（字形還沒下載就先下載，好了再換一次）
-    const rebuild=()=>{curK=eraK();curP=BP();root.remove(P.bot);Object.assign(B,build(curK,grade()));root.add(B.bot)};
+    const rebuild=()=>{curK=eraK();curP=BP();root.remove(P.bot);Object.assign(B,build(curK,grade()));root.add(B.bot);try{xsMode()}catch(e){}};
     // 升官慶祝（意見回饋 236）：小帥放大走到畫面正中央，金光、彩帶、「升官」字樣，約 5 秒後回原位
     let celeb=0;
     const celebrate=(g,from)=>{if(celeb)return;celeb=1;
@@ -365,7 +388,7 @@
       if(eraK()!==curK||BP()!==curP){rebuild();if(typeof needGly==="function")needGly(curK,()=>{if(!stopped)rebuild()})}},1500);
     if(typeof needGly==="function"&&!(typeof GLY!=="undefined"&&GLY[curK]))needGly(curK,()=>{if(!stopped)rebuild()});
     let shrink=1;const applySize=()=>{const k=SC*shrink;W=W0*k;H=H0*k;box.style.width=W+"px";box.style.height=H+"px";rd.setSize(W,H)};
-    const setScale=v=>{SC=Math.min(2,Math.max(.6,+v||1));store.set("botSize",SC);applySize()};
+    const setScale=v=>{SC=Math.min(2,Math.max(.6,+v||1));store.set("botSize",SC);applySize();XS.cur=""};
     const onResize=()=>{const b=bounds();x=Math.min(x,b.x1);y=Math.min(y,b.y1);tx=Math.min(tx,b.x1);ty=Math.min(ty,b.y1)};window.addEventListener("resize",onResize);
     return{act:k=>doAct(typeof k==="number"?comboAct(k):k),say,setScale,rebuild,count:COMBO.length,lines:LINES.length,
       stop(){stopped=true;clearInterval(eraT);clearInterval(boardT);window.removeEventListener("xq-call",onCall);window.removeEventListener("xq-result",onResult);window.removeEventListener("resize",onResize);try{rd.dispose()}catch(e){}box.remove()}}}
