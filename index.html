@@ -429,7 +429,7 @@ html[data-era=ming] .topbar,html[data-era=qing] .topbar{border-bottom-width:4px}
       if(!window.caches)return go();caches.keys().then(function(ks){return Promise.all(ks.filter(function(k){return k.indexOf("xqlab-app-")===0}).map(function(k){return caches.delete(k)}))})
         .then(function(){return navigator.serviceWorker&&navigator.serviceWorker.getRegistration()}).then(function(r){return r&&r.update()}).catch(function(){}).then(go)}},4000)})();
 </script>
-<script>window.XQ_OFFLINE=true;window.XQ_BUILD="20261103-0830";</script>
+<script>window.XQ_OFFLINE=true;window.XQ_BUILD="20261103-0850";</script>
 <script src="core.js"></script>
 <script src="engine.js"></script>
 <script src="local.js"></script>
@@ -1648,6 +1648,7 @@ function Quiz(v){
   function result(){const r=quizRank(ans,D.ranks,from),ok=ans.filter(x=>x.ok).length;v.className="view";
     const best=store.get("quizBest",null),better=!best||r.ti>D.ranks.indexOf(best.rank);
     if(better)store.set("quizBest",{rank:r.rank,ti:r.ti,ok,n:ans.length,at:Date.now()});
+    {const lg=store.get("quizLog",[]);lg.push({at:Date.now(),n:D.ranks.length,a:ans.map(x=>[x.tier,x.ok?1:0])});store.set("quizLog",lg.slice(-30))}   /* 意見回饋 296：天賦分析的試題反應理論要用 */
     v.innerHTML=`<div class="pad"><div class="card" style="text-align:center"><div style="font-size:44px">🏅</div><div class="muted">估計棋力</div>
       <div style="font-size:42px;font-weight:900;font-family:var(--serif)">${esc(r.rank)}</div><p class="muted">答對 ${ok} / ${ans.length} 題${better&&best?"・🎉 新紀錄！":""}</p>
       <div style="display:grid;grid-template-columns:repeat(8,1fr);gap:6px 3px;margin:12px 0">${D.ranks.map((rk,t)=>{const a=ans.filter(x=>x.tier===t),n=a.filter(x=>x.ok).length;
@@ -2044,6 +2045,87 @@ async function skillPentagon(box){
   box.innerHTML=svg+`<div class="row" style="justify-content:space-between;margin-top:4px"><span class="muted">根據 ${used} 盤、${moves} 步</span><b>綜合 ${total} 分（${gradeFor(total)[0]}）</b></div>
     <p class="muted" style="margin:6px 0 0;line-height:1.6">最強：${hi[0]}；最需要加強：${lo[0]}。${lo[0]==="殘局"?"建議多看古典殘局譜、看象棋規則裡的殺法術語。":lo[0]==="開局"?"建議多看古典開局譜和象棋規則裡的開局術語。":lo[0]==="穩定"?"走之前多看一眼對方能不能吃你的子。":lo[0]==="精準"?"多用賽後報告看 Pikafish 的藍色箭頭建議。":"中局多算兩步，注意對方的威脅。"}</p>
     <details style="margin-top:6px"><summary class="muted">五項怎麼算？</summary><p class="muted" style="line-height:1.7;margin:6px 0 0">開局、中局、殘局：該階段每步的準確度平均（跟賽後報告同一套）。精準：走出 Pikafish 首選（正手、妙手）的比例。穩定：錯著、露著越少越高。只算 Pikafish 評過等的著法；還沒評等的對局，打開賽後報告評等後就會算進來。</p></details>`}
+/* ================= 🧬 天賦分析（意見回饋 296） =================
+   用五個數學模型，從這支手機裡的對局和棋力測驗推估「學習象棋的天賦」：
+   1. 學習曲線（冪次練習定律）：第 n 盤的準確度 ≈ a + k·ln n，k＝學習速度；用它推估再下幾盤會到下一級
+   2. 貝氏失誤率（Beta–二項）：失誤（錯著＋露著）次數 x、評過的步數 m，先驗 Beta(3,27)（平均 10%）→ 後驗平均與 90% 區間
+   3. 穩定度：最近 15 盤準確度的標準差
+   4. 試題反應理論（Rasch 模型）：P(答對)＝1/(1+e^-(θ-b))，題目難度 b 依段位等距；用牛頓法求 θ 的最大後驗估計（先驗 N(0,1)）
+   5. 天賦指數：各項換成 z 分數加權平均，再用常態分布換算百分位；「經驗效率」＝目前水準比同樣盤數的一般人高多少
+   常數（一般人的平均學習速度、失誤率等）是模型假設，資料越多推估越準 */
+const PHI=z=>{const t=1/(1+.2316419*Math.abs(z)),d=.3989423*Math.exp(-z*z/2),q=d*t*(.3193815+t*(-.3565638+t*(1.781478+t*(-1.821256+t*1.330274))));return z>0?1-q:q};
+function talentModel(G,QL){const out={n:G.length};const sc=G.map(g=>g.score);
+  /* 1. 學習曲線：最小平方法擬合 s = a + k ln n */
+  if(G.length>=4){const X=G.map((_,i)=>Math.log(i+1)),mx=X.reduce((a,b)=>a+b,0)/X.length,my=sc.reduce((a,b)=>a+b,0)/sc.length;
+    let sxx=0,sxy=0,syy=0;X.forEach((x,i)=>{sxx+=(x-mx)**2;sxy+=(x-mx)*(sc[i]-my);syy+=(sc[i]-my)**2});
+    const k=sxx?sxy/sxx:0,a=my-k*mx,r2=syy?(sxy*sxy)/(sxx*syy):0;out.curve={a,k,r2}}
+  /* 目前水準：指數加權移動平均（越近的盤數權重越大） */
+  if(sc.length){let e=sc[0];for(const x of sc.slice(1))e=.7*e+.3*x;out.now=e}
+  /* 2. 貝氏失誤率 */
+  const x=G.reduce((s,g)=>s+g.bad,0),m=G.reduce((s,g)=>s+g.n,0);
+  if(m){const A=3+x,B=27+m-x,mean=A/(A+B),sd=Math.sqrt(A*B/((A+B)**2*(A+B+1)));out.err={x,m,mean,lo:Math.max(0,mean-1.645*sd),hi:Math.min(1,mean+1.645*sd)}}
+  /* 3. 穩定度 */
+  const r=sc.slice(-15);if(r.length>=3){const mu=r.reduce((a,b)=>a+b,0)/r.length;out.sd=Math.sqrt(r.reduce((s,v)=>s+(v-mu)**2,0)/(r.length-1))}
+  /* 4. Rasch：θ 的最大後驗估計 */
+  const ans=[];for(const s0 of QL)for(const[t,ok]of s0.a)ans.push({b:(t-(s0.n-1)/2)*.8,ok});
+  if(ans.length>=4){let th=0,info=1;for(let it=0;it<30;it++){let g=-th,h=-1;for(const q of ans){const P=1/(1+Math.exp(-(th-q.b)));g+=q.ok-P;h-=P*(1-P)}const st=g/h;th-=st;info=-h;if(Math.abs(st)<1e-4)break}
+    out.irt={th,se:1/Math.sqrt(info),n:ans.length,tier:Math.max(0,Math.min(QL[0].n-1,Math.round(th/.8+(QL[0].n-1)/2)))}}
+  /* 5. 天賦：各項 z 分數（模型假設的一般人平均、標準差） */
+  const Z=[];
+  if(out.curve&&G.length>=6)Z.push(["學習速度",(out.curve.k-2)/3,.35,"每多下一倍的盤數，準確度提升 "+out.curve.k.toFixed(1)+" 分"]);
+  if(out.now!=null){const exp=55+4*Math.log(1+G.length);Z.push(["經驗效率",(out.now-exp)/10,.3,"目前水準 "+Math.round(out.now)+" 分，同樣盤數的一般人約 "+Math.round(exp)+" 分"])}
+  if(out.irt)Z.push(["棋感",out.irt.th,.2,"測驗能力值 θ＝"+out.irt.th.toFixed(2)+"（±"+out.irt.se.toFixed(2)+"）"]);
+  if(out.err&&m>=40)Z.push(["計算力",(.10-out.err.mean)/.05,.15,"失誤率約 "+(out.err.mean*100).toFixed(1)+"%（90% 區間 "+(out.err.lo*100).toFixed(1)+"～"+(out.err.hi*100).toFixed(1)+"%）"]);
+  if(out.sd!=null)Z.push(["穩定度",(12-out.sd)/6,.1,"最近 "+r.length+" 盤的標準差 "+out.sd.toFixed(1)+" 分"]);
+  out.parts=Z.map(([k,z,w,t])=>({k,z:Math.max(-3,Math.min(3,z)),w,t}));
+  if(out.parts.length){const W=out.parts.reduce((s,q)=>s+q.w,0);out.z=out.parts.reduce((s,q)=>s+q.z*q.w,0)/W;out.pct=Math.round(PHI(out.z)*100);
+    /* 資料少時往平均縮（樣本越少越不確定） */
+    const shrink=Math.min(1,(G.length+(out.irt?out.irt.n/4:0))/20);out.z*=shrink;out.pct=Math.round(PHI(out.z)*100);out.shrink=shrink}
+  /* 推估：照學習曲線，再下幾盤平均可到下一級（每 10 分一級） */
+  if(out.curve&&out.curve.k>.3&&out.now!=null){const tgt=Math.min(95,Math.floor(out.now/10)*10+10),need=Math.exp((tgt-out.curve.a)/out.curve.k)-G.length;
+    if(isFinite(need))out.next={tgt,need:Math.max(1,Math.ceil(need))}}
+  return out}
+async function talentReport(box){
+  const me=myName(),games=[];
+  for(const c of["play","pvp"]){let d;try{d=await api("/db/items?c="+c+"&limit=150")}catch(e){continue}
+    for(const it of d.items){const side=c==="play"?(it.red==="你"?"r":"b"):me&&it.red===me?"r":me&&it.black===me?"b":null;if(side)games.push({c,id:it.id,side})}}
+  games.sort((a,b)=>String(a.id).localeCompare(String(b.id)));
+  const cache=store.get("talentCache",{}),G=[];let ch=false;
+  for(const g of games.slice(-120)){const key=g.c+"/"+g.id;let row=cache[key];
+    if(!row){let it;try{it=await api(`/db/item?c=${g.c}&id=${encodeURIComponent(g.id)}`)}catch(e){continue}
+      const L=it.lines&&it.lines[0];if(!L||!it.board)continue;const mv=L.moves.map((m,i)=>({...m,by:m.by||(i%2?"b":"r")}));
+      if(!mv.some(m=>m.by===g.side&&m.q&&m.q!=="—"))continue;const R=gameReport(it.board,mv).sides[g.side];if(!R||!R.graded||R.score==null)continue;
+      row={score:R.score,n:R.graded,bad:(R.cnt["錯著"]||0)+(R.cnt["露著"]||0)};cache[key]=row;ch=true}
+    if(row.n>=8)G.push(row)}   /* 太短的對局（不到 8 步）不算，免得扭曲學習曲線 */
+  if(ch)store.set("talentCache",cache);
+  if(!box.isConnected)return;
+  const QL=store.get("quizLog",[]),M=talentModel(G,QL);
+  if(G.length<3&&!M.irt){box.innerHTML=`<div class="card" style="margin-top:4px;line-height:1.7"><b>資料還不夠</b><p class="muted" style="margin:6px 0 0">天賦分析要從你的對局和測驗推估：至少要有 3 盤 Pikafish 評過等、各下了 8 步以上的對局（挑戰電腦或線上對戰），或做一次棋力測驗。目前有 ${G.length} 盤、測驗 ${QL.length} 次。</p>
+      <div class="row" style="gap:8px;margin-top:10px"><button class="btn" id="tg1" style="flex:1">挑戰電腦</button><button class="btn ghost" id="tg2" style="flex:1">棋力測驗</button></div></div>`;
+    box.querySelector("#tg1").onclick=()=>location.hash="#/cpu";box.querySelector("#tg2").onclick=()=>location.hash="#/quiz";return}
+  const lab=M.pct==null?"—":M.pct>=90?"天才型":M.pct>=70?"潛力新星":M.pct>=40?"穩健成長型":M.pct>=20?"大器晚成型":"需要多練習";
+  const bar=q=>{const v=Math.round(PHI(q.z)*100);return`<div style="margin:8px 0"><div class="row" style="justify-content:space-between"><b>${q.k}</b><span style="font-variant-numeric:tabular-nums">${v}</span></div>
+    <div class="st-bar"><i style="width:${v}%"></i></div><div class="muted" style="font-size:12.5px">${esc(q.t)}</div></div>`};
+  /* 學習曲線小圖：每盤準確度的點＋擬合曲線 */
+  let chart="";if(G.length>=4&&M.curve){const W=320,H=150,P=26,N=G.length,xs=i=>P+(W-P-8)*(N>1?i/(N-1):0),ys=v=>H-P-(H-P-10)*Math.max(0,Math.min(100,v))/100;
+    const pts=G.map((g,i)=>`<circle cx="${xs(i).toFixed(1)}" cy="${ys(g.score).toFixed(1)}" r="3" fill="var(--muted)" fill-opacity=".55"/>`).join("");
+    const line=G.map((_,i)=>`${xs(i).toFixed(1)},${ys(M.curve.a+M.curve.k*Math.log(i+1)).toFixed(1)}`).join(" ");
+    chart=`<svg viewBox="0 0 ${W} ${H}" style="width:100%;display:block;margin-top:6px">${[0,50,100].map(v=>`<line x1="${P}" x2="${W-8}" y1="${ys(v)}" y2="${ys(v)}" stroke="var(--line)"/><text x="${P-4}" y="${ys(v)+4}" text-anchor="end" font-size="10" fill="var(--muted)">${v}</text>`).join("")}
+      ${pts}<polyline points="${line}" fill="none" stroke="var(--accent)" stroke-width="2.5" stroke-linecap="round"/><text x="${W-8}" y="${H-6}" text-anchor="end" font-size="10" fill="var(--muted)">第 ${N} 盤</text></svg>`}
+  box.innerHTML=`<div class="card" style="margin-top:4px;text-align:center"><div class="muted">天賦指數（模型推估）</div>
+      <div style="font-size:44px;font-weight:900;font-family:var(--serif);color:var(--accent)">${M.pct==null?"—":M.pct}<span style="font-size:18px"> 百分位</span></div>
+      <div><b>${lab}</b>${M.pct!=null?`・大約勝過 ${M.pct}% 的學棋者`:""}</div>
+      <div class="muted" style="font-size:12.5px;margin-top:4px">根據 ${G.length} 盤評過等的對局${M.irt?`、測驗 ${M.irt.n} 題`:""}${M.shrink<1?"・資料還少，結果先往平均靠攏":""}</div></div>
+    <div class="sec-t">五項天賦</div><div class="card">${M.parts.map(bar).join("")||'<span class="muted">再多下幾盤就會出現</span>'}${M.irt?"":'<p class="muted" style="font-size:12.5px;margin:6px 0 0">做一次<a href="#/quiz">棋力測驗</a>，就會加上「棋感」這一項。</p>'}</div>
+    ${chart?`<div class="sec-t">學習曲線</div><div class="card">${chart}<p class="muted" style="margin:4px 0 0;font-size:13px;line-height:1.6">點是每盤的準確度，線是擬合的學習曲線（第 n 盤 ≈ ${M.curve.a.toFixed(0)} + ${M.curve.k.toFixed(1)}·ln n）。${M.next?`照這個速度，大約再下 <b>${M.next.need}</b> 盤，平均準確度會到 ${M.next.tgt} 分。`:"曲線還很平，多下幾盤、每盤看賽後報告，會開始往上。"}</p></div>`:""}
+    <details class="card" style="margin-top:8px"><summary><b>這些數字怎麼算的？</b></summary><div class="muted" style="font-size:13px;line-height:1.75;margin-top:6px">
+      <p><b>學習速度：</b>冪次練習定律。把每盤的準確度對「第幾盤」做對數迴歸：準確度 ≈ a + k·ln(盤數)，k 越大學得越快（一般人假設 k≈2）。</p>
+      <p><b>經驗效率：</b>你現在的水準（最近幾盤加權平均）比「下了同樣盤數的一般人」高多少。</p>
+      <p><b>棋感：</b>試題反應理論的 Rasch 模型。每題答對機率＝1/(1+e^-(θ−難度))，從棋力測驗每一題的對錯求能力值 θ（0＝平均）。</p>
+      <p><b>計算力：</b>貝氏估計失誤率。錯著＋露著的次數配上 Beta(3,27) 先驗（假設一般人約 10%），算出最可能的失誤率和 90% 區間；步數越多區間越窄。</p>
+      <p><b>穩定度：</b>最近 15 盤準確度的標準差，越小越穩。</p>
+      <p><b>天賦指數：</b>每項換成 z 分數，依權重（學習速度 35%、經驗效率 30%、棋感 20%、計算力 15%、穩定度 10%）平均，再用常態分布換成百分位。資料少於 20 盤時會往平均靠攏，避免幾盤運氣就下定論。</p>
+      <p>這是根據你在這支手機上的資料做的模型推估，不是測驗定論；多下棋、多做測驗，結果會越來越準。</p></div></details>`}
 function Stats(v){
   setTop("我的戰績","#/");setTabs(false);
   // 版面：上面一排「總覽／電腦／線上／獎勵」分頁，一次只看一類，不會越堆越長
@@ -2055,7 +2137,7 @@ function Stats(v){
     return`<div class="hd">${hd}</div><div class="mid"><span class="rk">${esc(R.rank)}</span><span class="pt"><b>${R.pts}</b> 分</span></div>
       <div class="st-bar"><i style="width:${pc}%"></i></div><div class="nx">${R.next?`再 ${R.toNext} 分升 ${esc(R.next)}`:"已是最高段位"}</div>
       <div class="st-wld"><div><b class="w">${R.w}</b><span>勝</span></div><div><b class="l">${R.l}</b><span>負</span></div><div><b class="d">${R.d}</b><span>和</span></div><div><b>${pct(R.w,N)}</b><span>勝率</span></div></div>${foot||""}`};
-  const tabs=[["all","總覽"],["cpu","🤖 電腦"]].concat(NET?[["net","🌐 線上"]]:[],OFF&&REWARD?[["car","🚗 獎勵"]]:[]);
+  const tabs=[["all","總覽"],["talent","🧬 天賦"],["cpu","🤖 電腦"]].concat(NET?[["net","🌐 線上"]]:[],OFF&&REWARD?[["car","🚗 獎勵"]]:[]);
   let tab=store.get("statsTab","all");if(!tabs.some(t=>t[0]===tab))tab="all";
   v.innerHTML=`<div class="home st"><div class="st-tabs" id="sTabs">${tabs.map(([k,l])=>`<button data-k="${k}">${l}</button>`).join("")}</div><div id="sBody"></div></div>`;
   let ST=null,CAR=null;const ld=Promise.all([api("/play/state").then(s=>ST=s).catch(()=>null),OFF&&REWARD?api("/car/state").then(c=>CAR=c).catch(()=>null):null]);
@@ -2079,6 +2161,8 @@ function Stats(v){
         <div class="sec-t">對局紀錄</div><div id="sHist"></div>`;
       skillPentagon(box.querySelector("#sPent")).catch(e=>{const b=box.querySelector("#sPent");if(b)b.innerHTML=`<span class="muted">⚠ ${esc(e.message)}</span>`});
       histList(box.querySelector("#sHist"),reps)}
+    else if(tab==="talent"){box.innerHTML='<div class="card muted" style="text-align:center;margin-top:4px">Pikafish 正在看你的每一盤棋…</div>';
+      talentReport(box).catch(e=>{if(box.isConnected&&tab==="talent")box.innerHTML=`<div class="card muted">⚠ ${esc(e.message)}</div>`})}
     else if(tab==="cpu"){await ld;if(!v.isConnected||tab!=="cpu")return;
       if(!ST){box.innerHTML='<div class="card muted">載入失敗</div>';return}
       const CR=ST.cpuRate;
