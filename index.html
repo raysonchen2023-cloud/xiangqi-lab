@@ -260,6 +260,20 @@ html[data-era=ming] .topbar,html[data-era=qing] .topbar{border-bottom-width:4px}
   padding:.34em .26em .3em;color:#fbecd0;background:radial-gradient(circle at 30% 25%,#d0222c,#a90f1a 70%,#8e0c15);border-radius:.14em .1em .16em .12em;
   box-shadow:inset 0 0 0 .1em #a90f1a,inset 0 0 0 .17em #fbecd0d0,0 .08em .25em #000a;transform:translateY(-50%) rotate(-4deg);animation:ckseal .34s .62s cubic-bezier(.25,.8,.3,1) both}
 .ckfx .seal.s4{font-size:.22em;left:calc(50% + 5.4em)}
+/* 意見回饋 416：開局特效——墨帶一抹、金色書法「開局」由左到右像毛筆寫出來，右邊蓋一方「紅先／黑先」朱印 */
+.pkname{position:absolute;top:8px;left:50%;transform:translateX(-50%);z-index:6;pointer-events:none;padding:3px 14px;border-radius:99px;background:rgba(28,18,10,.62);color:#fbeed4;font:800 14px/1.5 var(--serif);letter-spacing:.14em;white-space:nowrap;box-shadow:0 2px 6px rgba(0,0,0,.25)}
+.kjfx{position:fixed;z-index:64;pointer-events:none;font-family:var(--serif);font-weight:900;animation:kjout 2.4s ease forwards}
+.kjfx .band{position:absolute;left:-4%;right:-4%;top:50%;height:1.9em;transform:translateY(-50%) scaleX(0);transform-origin:left center;border-radius:50% 46% 52% 44%/60% 42% 58% 40%;
+  background:radial-gradient(ellipse at 50% 50%,#140c06f2 0 55%,#140c06c0 72%,#140c0600 100%);animation:kjband .45s cubic-bezier(.3,.8,.3,1) forwards}
+.kjfx .gw{position:absolute;left:50%;top:50%;width:3.4em;height:1.7em;transform:translate(-50%,-50%);clip-path:inset(0 100% 0 0);animation:kjwipe .8s .25s cubic-bezier(.5,.1,.3,1) forwards}
+.kjfx .gw svg{display:block;width:100%;height:100%;overflow:visible;filter:drop-shadow(0 .04em .05em #000a)}
+.kjfx .gw b{display:flex;align-items:center;justify-content:center;width:100%;height:100%;font-size:1.25em;letter-spacing:.12em;background:linear-gradient(180deg,#fff6d8 0%,#f3cf73 45%,#c8902c 100%);-webkit-background-clip:text;background-clip:text;color:transparent}
+.kjfx .seal{position:absolute;left:calc(50% + 1.85em);top:50%;transform:translateY(-50%) scale(1.8) rotate(-8deg);opacity:0;writing-mode:vertical-rl;text-orientation:upright;font-style:normal;font-size:.26em;line-height:1;padding:.22em .16em;border-radius:.12em;
+  color:#fff3e0;background:#b8141c;box-shadow:0 0 0 .08em #fff3e0 inset,0 .1em .3em #0008;animation:kjseal .3s 1s ease-out forwards}
+.kjfx .seal.b{background:#1e1a16}
+@keyframes kjband{to{transform:translateY(-50%) scaleX(1)}}@keyframes kjwipe{to{clip-path:inset(0 0 0 0)}}
+@keyframes kjseal{to{opacity:1;transform:translateY(-50%) scale(1) rotate(-8deg)}}@keyframes kjout{0%,78%{opacity:1}100%{opacity:0}}
+@media (prefers-reduced-motion:reduce){.kjfx .band,.kjfx .gw,.kjfx .seal{animation-duration:.01s}}
 @keyframes ckseal{0%{opacity:0;transform:translateY(-50%) rotate(-4deg) scale(1.7)}55%{opacity:1}100%{opacity:1;transform:translateY(-50%) rotate(-4deg) scale(1)}}
 /* 🏯 擂台印章（意見回饋 255） */
 .seal-st{display:inline-flex;align-items:center;justify-content:center;width:46px;height:46px;flex:none;border:3px solid #bdb4a6;border-radius:6px;color:#bdb4a6;font:900 24px/1 var(--serif);background:transparent;transform:rotate(-4deg)}
@@ -505,7 +519,7 @@ html[data-era=ming] .topbar,html[data-era=qing] .topbar{border-bottom-width:4px}
       if(!window.caches)return go();caches.keys().then(function(ks){return Promise.all(ks.filter(function(k){return k.indexOf("xqlab-app-")===0}).map(function(k){return caches.delete(k)}))})
         .then(function(){return navigator.serviceWorker&&navigator.serviceWorker.getRegistration()}).then(function(r){return r&&r.update()}).catch(function(){}).then(go)}},4000)})();
 </script>
-<script>window.XQ_OFFLINE=true;window.XQ_BUILD="20261104-0705";</script>
+<script>window.XQ_OFFLINE=true;window.XQ_BUILD="20261104-0715";</script>
 <script src="core.js"></script>
 <script src="engine.js"></script>
 <script src="local.js"></script>
@@ -900,6 +914,24 @@ function checkFx(svg,label){if(!store.get("ckFx",true))return;svg=fxHost(svg);co
   if(store.get("capSound",true)||store.get("mvSound",false))withAudio(()=>{const t=AC.currentTime+.02;
     for(const[f,at]of[[880,0],[1320,.09]]){const o=AC.createOscillator(),g=AC.createGain();o.type="square";o.frequency.setValueAtTime(f,t+at);
       g.gain.setValueAtTime(.12,t+at);g.gain.exponentialRampToValueAtTime(.001,t+at+.35);o.connect(g).connect(AC.destination);o.start(t+at);o.stop(t+at+.4)}})}
+/* 意見回饋 416：每一盤開始時的「開局」特效——Gemini 寫的書法字（data/glyphs/kaiju.json，5 版隨機一版，tools/kaiju_vec.py 描成向量）；
+   還沒有那個檔就先用宋體字。音效：三聲大鼓＋一聲鑼（跟走子音效同一個開關） */
+let KJ_P=null,KJ_GLY=null,KJ_LAST=null;const loadKaiju=()=>KJ_P||(KJ_P=fetch("data/glyphs/kaiju.json").then(r=>r.ok?r.json():null).then(j=>KJ_GLY=j).catch(()=>{KJ_P=null}));
+function kaijuFx(svg,side){if(!store.get("opFx",true))return;svg=fxHost(svg);const r=svg.getBoundingClientRect();if(!r.width)return;loadKaiju();
+  document.querySelectorAll(".kjfx").forEach(x=>x.remove());const P=KJ_GLY&&KJ_GLY.kaiju&&KJ_GLY.kaiju.length?KJ_GLY.kaiju:null,id="kj"+Math.random().toString(36).slice(2,7);
+  const g=P?`<svg viewBox="0 0 ${(KJ_GLY.vb||[200,100]).join(" ")}"><defs><linearGradient id="${id}" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#fff6d8"/><stop offset=".45" stop-color="#f3cf73"/><stop offset="1" stop-color="#c8902c"/></linearGradient></defs><path d="${P[Math.floor(Math.random()*P.length)]}" fill-rule="evenodd" fill="url(#${id})" stroke="#3a1a06" stroke-width=".9" paint-order="stroke"/></svg>`:"<b>開局</b>";
+  const d=document.createElement("div");d.className="kjfx";d.style.cssText=`left:${r.left}px;top:${r.top}px;width:${r.width}px;height:${r.height}px;font-size:${Math.round(r.width*.2)}px`;
+  d.innerHTML='<i class="band"></i><div class="gw">'+g+'</div><em class="seal'+(side==="b"?" b":"")+'">'+(side==="b"?"黑先":"紅先")+'</em>';
+  document.body.append(d);vibrate([20,60,20,60,40]);setTimeout(()=>d.remove(),2500);
+  if(store.get("capSound",true)||store.get("mvSound",false))withAudio(()=>{const t=AC.currentTime+.03,out=AC.createGain();out.gain.value=.9;out.connect(AC.destination);
+    /* 大鼓：低頻正弦往下滑＋一點噪音的鼓皮聲，咚、咚、咚 */
+    for(const at of[0,.24,.48]){const o=AC.createOscillator(),gg=AC.createGain();o.type="sine";o.frequency.setValueAtTime(110,t+at);o.frequency.exponentialRampToValueAtTime(48,t+at+.25);
+      gg.gain.setValueAtTime(.0001,t+at);gg.gain.exponentialRampToValueAtTime(.8,t+at+.008);gg.gain.exponentialRampToValueAtTime(.001,t+at+.42);o.connect(gg).connect(out);o.start(t+at);o.stop(t+at+.45);
+      const n=AC.createBufferSource(),b=AC.createBuffer(1,Math.floor(AC.sampleRate*.08),AC.sampleRate),c=b.getChannelData(0);for(let i=0;i<c.length;i++)c[i]=(Math.random()*2-1)*Math.pow(1-i/c.length,3);
+      const lp=AC.createBiquadFilter(),ng=AC.createGain();lp.type="lowpass";lp.frequency.value=900;ng.gain.value=.35;n.buffer=b;n.connect(lp).connect(ng).connect(out);n.start(t+at)}
+    /* 鑼：幾個不成倍數的泛音一起響、慢慢散掉，音高微微往下飄 */
+    const t2=t+.78;for(const[f,a,dec]of[[220,.22,2.2],[331,.14,1.8],[467,.1,1.4],[603,.07,1.1],[861,.05,.8]]){const o=AC.createOscillator(),gg=AC.createGain();o.type="sine";o.frequency.setValueAtTime(f*1.02,t2);o.frequency.exponentialRampToValueAtTime(f,t2+.6);
+      gg.gain.setValueAtTime(.0001,t2);gg.gain.linearRampToValueAtTime(a,t2+.015);gg.gain.exponentialRampToValueAtTime(.001,t2+dec);o.connect(gg).connect(out);o.start(t2);o.stop(t2+dec+.05)}})}
 // 筆刷：沿著中心線控制點 [x,y,粗細] 畫出一條有粗細變化的毛筆筆畫（Catmull-Rom 平滑、頭尾圓收、邊緣微抖像紙上的毛邊）
 // 回傳 d（填色用的外框路徑）、S（平滑後的中心線點）、N（各點法向量），飛白和「一筆畫出」的遮罩都沿用同一條中心線
 function brushD(P,jit){const S=[],n0=P.length,f=v=>v.toFixed(2);
@@ -3128,6 +3160,7 @@ function parkInfo(k){const era=store.get("era","classic"),E=PARK_INFO[era]||PARK
   sheet(`${k==="bg"?"🏞":k==="opp"?"🤖":k==="mate"?"🙂":"🔎"} ${t}`,b=>{b.innerHTML=`<div class="muted" style="margin:-4px 0 8px">${esc(en)}${yr?`・${esc(yr)}`:""}${k==="bg"?"・遠方的風景":""}</div><p style="line-height:1.8;margin:0;font-size:16px">${esc(x)}</p>`})}
 function parkDraw(host,bd,board,o,ex){
   // 關掉公園：同一個棋盤的公園只藏起來（意見回饋 244：來回切換不用每次重建 3D 場景，比較順）
+  {const tg=host.querySelector(".pkname");if(tg)tg.hidden=!parkOn()}
   if(!parkOn()){if(PARK&&PARK.host===host){if(PARK.v.hide)PARK.v.hide();else{PARK.v.destroy();PARK=null}}bd.svg.style.display="";botVis(true);return}
   // 意見回饋 270：載入完還是沒有 XQPark3D（例如程式出錯）就停下來改用棋盤模式，不能一直重試（之前會無限循環、整個 App 卡死）
   if(!window.XQPark3D){bd.svg.style.display="";parkLoad().then(()=>{if(!window.XQPark3D)throw new Error("park3d 沒有載入成功");if(document.body.contains(host))parkDraw(host,bd,board,o,ex)}).catch(()=>{toast("園子 3D 棋盤載入失敗，先用棋盤模式");store.set("park3d",false)});return}
@@ -3135,6 +3168,8 @@ function parkDraw(host,bd,board,o,ex){
   if(!PARK||PARK.host!==host||!document.body.contains(PARK.v.el)){if(PARK)PARK.v.destroy();
     const pv=XQPark3D.create(host,{arena:ex.arena||null,gate:ex.gate||null,onTap:i=>ex.tap(i),onInfo:k=>parkInfo(k),onDestroy:()=>{if(PARK&&PARK.v===pv){PARK=null;botVis(true)}}});
     if(!pv){toast("這台裝置沒辦法顯示 3D，先用棋盤模式");store.set("park3d",false);return}PARK={host,v:pv,era:store.get("era","classic")};setTimeout(()=>{try{pv.say(`我是${BOTN()}，幫你加油！`,2.6);if(ex.oppHello)setTimeout(()=>pv.oppSay(ex.oppHello,2.6),1400)}catch(e){}},700)}
+  /* 意見回饋 417：園子上方標出朝代和那個朝代對園子的叫法（例如「唐朝・園林」「漢朝・苑囿」） */
+  {let tg=host.querySelector(".pkname");if(!tg){tg=document.createElement("div");tg.className="pkname";if(getComputedStyle(host).position==="static")host.style.position="relative";host.append(tg)}const k=store.get("era","classic");tg.textContent=(k==="classic"?"經典":eraLabel(k))+"・"+(PW[k]||"園子");tg.hidden=false}
   if(PARK.v.show)PARK.v.show();bd.svg.style.display="none";botVis(false);ex.look=parkLook();PARK.last={board,o,ex};PARK.v.draw(board,o,ex)}
 // 意見回饋 241：在公園裡按鈕換成「▦」（回棋盤模式），在棋盤模式是「🌳」（去公園）
 const parkIcon=()=>parkOn()?"▦":"🌳",parkLabel=()=>parkOn()?"回棋盤模式":"去園子下棋（3D）";
@@ -3667,6 +3702,7 @@ function CpuGame(v,practicePage){
     const n0=lastN;st=s;lastN=s.moves.length;if(s.arena&&!s.result&&!parkOn()){store.set("park3d",true);setTimeout(()=>{draw();topBar()},0)}/* 意見回饋 319：朝代擂台的棋一律在公園 3D 裡 */if(!st.legal.some(([f])=>f===sel))sel=-1;
     const lk=!!(st.arena&&!st.result);if(lk&&!parkOn())store.set("park3d",true);PARK_J=st.journey||null;const pr=!!st.practice;if(pr!==PARK_OFF){PARK_OFF=pr;arenaLock=null}
     if(lk!==arenaLock||(st.journey||null)!==jKey){arenaLock=lk;jKey=st.journey||null;topBar()}draw();
+    if(!st.result&&!st.practice&&st.id&&st.moves.length<=(st.human==="b"?1:0)&&KJ_LAST!==st.id){KJ_LAST=st.id;loadKaiju();setTimeout(()=>kaijuFx(bd.svg,"r"),parkOn()?1600:350)}   /* 意見回饋 416：開局特效 */
     if(n0!=null&&lastN===n0+1&&!st.practice){const cue=openingCue(st.moves);if(cue)setTimeout(()=>openFx(bd.svg,cue[1],cue[0]),350)}
     const lv=st.levels[st.level-1]||{},me=st.human,bot=opp(me);
     const CR=st.cpuRate||{},CB=st.car||{},cpts=st.reward?(CB.table||[])[st.level-1]||0:0;paintSeg(modeOf(st));if(!st.ranked&&st.level&&!st.practice)store.set("cpuLevel",st.level);
@@ -4243,6 +4279,7 @@ function PvpGame(v){
   let lastN=null;   // 步數剛好多一步才秀開局名
   function render(s){const n0=lastN;st=s;lastN=s.moves.length;if(NET&&s.mySide&&s.mySide!==seat){seat=s.mySide;flipMan=null;setTitle();flipBtn()}if(!st.legal.some(([f])=>f===sel))sel=-1;draw();
     if(n0!=null&&lastN===n0+1&&view==null){const cue=openingCue(st.moves);if(cue)setTimeout(()=>openFx(bd.svg,cue[1],cue[0]),350)}
+    {const gk=NET&&window.XQNet&&XQNet.gid?XQNet.gid():null;if(NET&&gk&&!st.result&&!st.moves.length&&seat!=="w"&&KJ_LAST!==gk){KJ_LAST=gk;loadKaiju();setTimeout(()=>kaijuFx(bd.svg,"r"),parkOn()?1600:350)}}   /* 意見回饋 416：線上對戰也有開局特效（觀戰的人不播） */
     const ems=st.emotes||[];if(lastEmo==null)lastEmo=ems.reduce((m,x)=>Math.max(m,x.id),0);
     else for(const x of ems)if(x.id>lastEmo){lastEmo=x.id;if(x.text){const fl0=isFlip(),tp=fl0?"r":"b",pk=parkOn()&&PARK&&PARK.host===v.querySelector("#bbox");
         let said=false;if(pk){try{x.by===tp?PARK.v.oppSay(x.text,4):PARK.v.say(x.text,4);said=true}catch(e){}}if(!said)showChat(x.text,x.by===seat,x.name||PLAYER[x.by],v.querySelector(x.by===tp?"#pTop":"#pBot"))}else if(seat&&x.by!==seat)showEmote(x.e,false)}
