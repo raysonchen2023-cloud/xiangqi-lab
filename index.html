@@ -505,7 +505,7 @@ html[data-era=ming] .topbar,html[data-era=qing] .topbar{border-bottom-width:4px}
       if(!window.caches)return go();caches.keys().then(function(ks){return Promise.all(ks.filter(function(k){return k.indexOf("xqlab-app-")===0}).map(function(k){return caches.delete(k)}))})
         .then(function(){return navigator.serviceWorker&&navigator.serviceWorker.getRegistration()}).then(function(r){return r&&r.update()}).catch(function(){}).then(go)}},4000)})();
 </script>
-<script>window.XQ_OFFLINE=true;window.XQ_BUILD="20261104-0535";</script>
+<script>window.XQ_OFFLINE=true;window.XQ_BUILD="20261104-0555";</script>
 <script src="core.js"></script>
 <script src="engine.js"></script>
 <script src="local.js"></script>
@@ -1080,6 +1080,9 @@ function needGly(k,redraw){if(!k||GLY[k]||!GLY_ERAS.has(k))return;(GLY_P[k]=GLY_
 const ERA_ARROW={qin:{k:"spear",c:"#1E1E1E"},han:{k:"spear",c:"#B3241B"},sanguo:{k:"spear",c:"#2F6E5E"},weijin:{k:"brush",c:"#2A2A2A"},
   nanbei:{k:"brush",c:"#7A3B16"},sui:{k:"dots",c:"#6B2D8F"},tang:{k:"ribbon",c:"#D9A515"},wudai:{k:"brush",c:"#23395B"},song:{k:"brush",c:"#3E8E7E"},
   yuan:{k:"ribbon",c:"#2456A6"},ming:{k:"dots",c:"#C8102E"},qing:{k:"dots",c:"#E8B400"}};
+/* 意見回饋 361、399：Gemini 畫的朝代整套棋子＋棋盤底板（data/pset/<朝代>/，tools/pieces_slice.py 切的）；有的朝代就用，平面棋盤和公園 3D 都用 */
+let PSET=new Set();fetch("data/pset/eras.json").then(r=>r.ok?r.json():[]).then(a=>{PSET=new Set(a||[])}).catch(()=>{});
+const PSET_RECT=[-45,-52.5,650,725];
 const BOARD_IMG={"classic": [-17.3, -40.6, 594.6, 701.9], "qin": [-24.9, -33.3, 609.8, 687.2], "han": [-38.6, -44.5, 637.2, 709.6], "sanguo": [-29.7, -46.2, 619.4, 713.4], "weijin": [-24.5, -42.7, 609.1, 705.7], "nanbei": [-25.7, -44.5, 611.4, 709.6], "sui": [-20.9, -36.6, 601.8, 694.5], "tang": [-46.2, -60.6, 652.4, 741.8], "wudai": [-36.3, -44.5, 632.5, 709.6], "song": [-34.0, -19.4, 627.9, 659.4], "yuan": [-25.5, -40.6, 611.0, 701.9], "qing": [-27.1, -49.5, 614.2, 721.3]};BOARD_IMG.ming=BOARD_IMG.yuan;const BOARD_IMG_FILE={ming:"yuan"};
 function boardBG(T,eR,eD,u,flip,imgK){
   const X0=40,Y0=40,S=60,px=c=>X0+c*S,py=r=>Y0+r*S,G=T.grid,arr=Array.isArray(T.bg),dark=arr?lum(T.bg[0])<.42:false;
@@ -1134,8 +1137,8 @@ function boardBG(T,eR,eD,u,flip,imgK){
   if(D&&D.band)s+=`<rect x="${px(0)+2}" y="${py(4)+3}" width="${8*S-4}" height="9" fill="url(#bd${u})" opacity=".45" transform="translate(0 0)"/><rect x="${px(0)+2}" y="${py(5)-12}" width="${8*S-4}" height="9" fill="url(#bd${u})" opacity=".45"/>`;
   if(D&&D.em)s+=`<g transform="translate(280 310) scale(1.12)" opacity=".92">${sub(D.em)}</g>`;
   // 有朝代底圖：前面 1～6（板身、外框紋飾、角花、河界底色）整個換成底圖
-  const BI=imgK&&BOARD_IMG[imgK];
-  if(BI)s=d+`<clipPath id="bic${u}"><rect width="560" height="620" rx="14"/></clipPath><rect width="560" height="620" rx="14" fill="#000" opacity=".4"/><image href="data/boards/${BOARD_IMG_FILE[imgK]||imgK}.webp" x="${BI[0]}" y="${BI[1]}" width="${BI[2]}" height="${BI[3]}" preserveAspectRatio="none" clip-path="url(#bic${u})"/>`;
+  const PB=imgK&&PSET.has(imgK),BI=imgK&&(PB?PSET_RECT:BOARD_IMG[imgK]);
+  if(BI)s=d+`<clipPath id="bic${u}"><rect width="560" height="620" rx="14"/></clipPath><rect width="560" height="620" rx="14" fill="#000" opacity=".4"/><image href="${PB?`data/pset/${imgK}/board.webp`:`data/boards/${BOARD_IMG_FILE[imgK]||imgK}.webp`}" x="${BI[0]}" y="${BI[1]}" width="${BI[2]}" height="${BI[3]}" preserveAspectRatio="none" clip-path="url(#bic${u})"/>`;
   // 7. 格線：先畫一道錯開的亮線（刻線的反光），再畫本線
   let L=`<rect x="${X0-8}" y="${Y0-8}" width="${8*S+16}" height="${9*S+16}" stroke-width="3"/>`;
   for(let r=0;r<10;r++)L+=`<path d="M${px(0)} ${py(r)}H${px(8)}"/>`;
@@ -1189,6 +1192,8 @@ function Board(onTap,onSwipe){
   function piece(p,i,dy,T,PS,up){const s=sideOf(p),col=s==="r"?T.r:T.b,g=el("g",{}),x=X(i),y=Y(i),yt=y+dy,ch=NAMES[s][p.toUpperCase()];
     const txt=(c,o,a)=>el("text",Object.assign({x,y:yt+10+o,"text-anchor":"middle","font-family":"var(--serif)","font-weight":900,"font-size":28,fill:c},a||{}),ch);
     g.append(el("ellipse",up?{cx:x+5,cy:y+13,rx:34,ry:31,fill:`url(#psh${uid})`}:{cx:x+2,cy:y+7,rx:31,ry:29.5,fill:`url(#psh${uid})`}));
+    if(curPK&&PSET.has(curPK)){g.append(el("image",{href:`data/pset/${curPK}/${s}${p.toUpperCase()}.webp`,x:x-30,y:yt-30,width:60,height:60}));   /* 意見回饋 399：整顆棋子（字已經畫在上面）的朝代圖 */
+      if(up)g.append(el("circle",{cx:x,cy:yt,r:29,fill:"none",stroke:T.mv,"stroke-width":4}));return g}
     // 朝代棋子底圖（使用者用 Gemini 做的，data/pieces/<朝代>-r/b.webp）：立體樣式才用；字的顏色依底色，再描一圈反差邊
     if(PS==="3d"&&curPK&&PIECE_INK[curPK]){const ink=PIECE_INK[curPK][s],lt=lum(ink)>.5;
       g.append(el("image",{href:`data/pieces/${curPK}-${s}.webp`,x:x-28.5,y:yt-28.5,width:57,height:57}));
@@ -3088,7 +3093,7 @@ const PIKA_LOOK=side=>({p:side==="r"?"帥":"將",e:store.get("era","classic"),g:
 function parkLook(){const k=store.get("era","classic"),e=curEra(),T=boardTheme(e?"auto":"wood3d"),bk=BOARD_IMG[k]?k:null;
   // 字形晚到（第一次切到這個朝代）：拿上一次的參數重畫公園棋盤，棋子字面才會換成朝代字形（之前這裡什麼都沒做，要等走下一步才換）
   if(GLY_ERAS.has(k)&&!GLY[k])needGly(k,()=>{try{const a=PARK&&PARK.last;if(a&&GLY[k]&&store.get("era","classic")===k){a.ex.look=parkLook();PARK.v.draw(a.board,a.o,a.ex)}}catch(e){}});
-  return{k,img:bk?`data/boards/${BOARD_IMG_FILE[bk]||bk}.webp`:null,rect:bk?BOARD_IMG[bk]:null,grid:T&&T.grid||"#3A1D0A",
+  const ps=PSET.has(k);return{k,pset:ps?`data/pset/${k}/`:null,img:ps?`data/pset/${k}/board.webp`:bk?`data/boards/${BOARD_IMG_FILE[bk]||bk}.webp`:null,rect:ps?PSET_RECT:bk?BOARD_IMG[bk]:null,grid:T&&T.grid||"#3A1D0A",
     pieces:PIECE_INK[k]?{r:`data/pieces/${k}-r.webp`,b:`data/pieces/${k}-b.webp`}:null,ink:PIECE_INK[k]||null,gly:GLY[k]||null,bold:GLY_BOLD[k]||0}}
 /* 意見回饋 334：錯棋重練一律用棋盤模式（PARK_OFF），不改玩家原本的公園設定 */
 let PARK=null,PARK_LOADING=null,PARK_OFF=false,PARK_J=null;const parkOn=()=>!PARK_OFF&&store.get("park3d",true);   /* 意見回饋 247：13 個朝代都上線了，挑戰電腦、真人對戰預設在公園下（玩家自己切回棋盤模式會記住） */
@@ -3586,7 +3591,10 @@ function CpuGame(v,practicePage){
     try{if(seg&&!pr&&!(st&&(st.journey||st.arena))){const t=$("#title");t.textContent="";t.append(seg)}}catch(e){}};   /* 第一次呼叫時 seg 還沒建立 */
   topBar();
   /* 首頁「🏯 朝代擂台」帶過來的：直接打開擂台（意見回饋 276） */
-  {const oa=store.get("openArena",0);if(oa){store.set("openArena",0);if(Date.now()-oa<15000)setTimeout(()=>{try{arenaBtn[1]()}catch(e){}},700)}}
+  {const oa=store.get("openArena",0);if(oa){store.set("openArena",0);if(Date.now()-oa<15000)setTimeout(async()=>{try{
+      /* 意見回饋 403：先換到擂台那一盤（沒有就開一盤目前朝代的擂台），標題才會是「朝代擂台」、按新局才只出現擂台的選項；之前背後還是石桌往事那盤 */
+      if(!(st&&st.arena)){const o=(st&&st.others||[]).find(z=>z.kind==="arena");if(o)await post("/play/switch",{kind:"arena"});else{const e=store.get("era","classic"),k=ARENA[e]?e:"classic";store.set("cpuRanked",false);store.set("cpuCar",false);await post("/play/new",{human:"r",level:arenaLevel(k),arena:k})}}
+      arenaBtn[1]()}catch(e){}},700)}}
   // 模式切換直接放在頂部列（取代標題）：積分挑戰／自選難度／獎勵一眼就看得到，點一下就換（離線版才有積分挑戰和獎勵）
   const modeOf=s=>s.ranked?"rank":s.reward?"car":"free",prefMode=()=>store.get("cpuRanked",true)?"rank":REWARD&&store.get("cpuCar",false)?"car":"free";
   const seg=OFF?document.createElement("div"):null;
@@ -3766,7 +3774,8 @@ function showChat(text,mine,name,at){const d=document.createElement("div");d.cla
   setTimeout(()=>{d.classList.remove("show");setTimeout(()=>d.remove(),300)},mine?1500:4000)}
 // 3D 象棋小人（意見回饋 159）：在畫面上自由走動、做手勢；開發者預設開、玩家預設關，設定「其他」可以切換
 const botPc=()=>{const c=store.get("botPiece","帥");return typeof c==="string"&&c.length===1&&"帥仕相俥傌炮兵將士象車馬砲卒".includes(c)?c:"帥"},BOTN=()=>"小"+({俥:"車",傌:"馬",砲:"炮"}[botPc()]||botPc());
-let BOT=null,botBusy=false;const botOn=()=>store.get("bot3d",true);   // 意見回饋 167：預設打開
+let BOT=null,botBusy=false;const botOn=()=>store.get("bot3d",true);
+window.addEventListener("xq-bot-hide",()=>{store.set("bot3d",false);syncBot();toast("小帥先休息了。到「設定 → 🤖 小人」打開「顯示象棋小人」就會回來")});   // 意見回饋 167：預設打開
 async function syncBot(){if(botBusy)return;botBusy=true;try{if(botOn()&&!BOT){await loadScript(OFF?"three.min.js":"/m/three.min.js");await loadScript((OFF?"bot3d.js":"/m/bot3d.js")+"?v="+encodeURIComponent(window.XQ_BUILD||""));if(botOn()&&window.XQBot3D)BOT=window.XQBot3D.start()}
   else if(!botOn()&&BOT){BOT.stop();BOT=null}}catch(e){}botBusy=false}
 setTimeout(syncBot,0);   // 意見回饋 164：一打開就載入，不要等
@@ -4298,7 +4307,7 @@ function Library(v,c0){
     try{data=await api("/db/items?c="+encodeURIComponent(c))}catch(e){data=null;empty("⚠",esc(e.message));return}
     if(libState.c!==c)return;
     const hasP=data.items.some(x=>x.red||x.black);v.querySelector("#pf").hidden=!hasP;if(!hasP)libState.player="";filter()}
-  function filter(top){if(!data)return;const q=s2(libState.q.trim()),pn=libState.player;
+  function filter(top){if(!data)return;if(top)libState.pg=0;const q=s2(libState.q.trim()),pn=libState.player;
     shown=data.items.filter(it=>{
       if(pn){const r=(it.red||"").includes(pn),b=(it.black||"").includes(pn);if(libState.side==="r"?!r:libState.side==="b"?!b:!(r||b))return false;
         if(libState.res){const me=r?"r":"b",w0=resOf(it),w=w0==="r"||w0==="b"?w0:null;if(libState.res==="d"?w0!=="d":libState.res==="w"?w!==me:!(w&&w!==me))return false}}
@@ -4314,14 +4323,18 @@ function Library(v,c0){
     if(!shown.length){const go={pvp:["#/lobby","去線上對戰下一盤"],play:["#/cpu","去挑戰電腦"],ai:["#/watch/ai","去看 AI 對戰"]}[libState.c];
       if(data.items.length)empty("🔍","沒有符合的棋局",["清除篩選",()=>v.querySelector("#clr").onclick()]);
       else empty("📭","這裡還沒有棋局",go&&[go[1],()=>location.hash=go[0]])}
-    for(const it of shown.slice(0,libState.limit)){const b=document.createElement("button");b.className="item";
+    /* 意見回饋 404：我的對局（人機、真人、研究）每頁 10 局、上一頁／下一頁；古譜和大師對局照舊「再顯示 60 局」 */
+    const PER=MINE.includes(libState.c)?10:0,NP=PER?Math.max(1,Math.ceil(shown.length/PER)):1;if(PER)libState.pg=Math.min(Math.max(0,libState.pg||0),NP-1);
+    for(const it of PER?shown.slice(libState.pg*PER,libState.pg*PER+PER):shown.slice(0,libState.limit)){const b=document.createElement("button");b.className="item";
       const isG=it.red||it.black,R={r:["紅勝","r"],b:["黑勝","b"],d:["和","d"]}[resOf(it)];
       const tail=R?`<span class="lib-r ${R[1]}">${R[0]}</span>`:'<span class="lib-go">›</span>';
       b.innerHTML=isG?`<span class="lb">${esc(it.year||"")}</span><span class="tx"><b><span class="rn">${esc(it.red||"？")}</span> 對 ${esc(it.black||"？")}</b><span>${esc(it.event||it.open||it.date||(it.title&&it.name?it.name.replace(it.title,"").trim():"")||it.name||"")}</span></span>${tail}`
         :`<span class="lb">${esc(it.label||it.no||"")}</span><span class="tx"><b>${esc(it.title||it.name)}</b><span>${esc([it.part,R?"":it.result,it.type].filter(Boolean).join("・"))}</span></span>${tail}`;
       b.onclick=()=>{vibrate(5);location.hash=`#/db/${encodeURIComponent(libState.c)}/${encodeURIComponent(it.id)}`};box.append(b)}
     const more=v.querySelector("#more");more.innerHTML="";
-    if(shown.length>libState.limit){const b=document.createElement("button");b.className="btn ghost";b.textContent=`再顯示 60 局（還有 ${shown.length-libState.limit} 局）`;b.onclick=()=>{libState.limit+=60;filter()};more.append(b)}}
+    if(PER){if(NP>1){more.innerHTML=`<div class="row" style="justify-content:space-between;align-items:center"><button class="pill" data-pg="-1"${libState.pg?"":" disabled"}>‹ 上一頁</button><span class="muted">第 ${libState.pg+1}／${NP} 頁・共 ${shown.length} 局</span><button class="pill" data-pg="1"${libState.pg<NP-1?"":" disabled"}>下一頁 ›</button></div>`;
+      more.querySelectorAll("[data-pg]").forEach(x=>x.onclick=()=>{libState.pg+= +x.dataset.pg;vibrate(5);filter();try{v.querySelector("#items").scrollIntoView({block:"start"})}catch(e){}})}}
+    else if(shown.length>libState.limit){const b=document.createElement("button");b.className="btn ghost";b.textContent=`再顯示 60 局（還有 ${shown.length-libState.limit} 局）`;b.onclick=()=>{libState.limit+=60;filter()};more.append(b)}}
   // 特級大師生平（data/gmbios.json，第一次用到才讀）
   let bios=null;const getBios=()=>bios?Promise.resolve(bios):XQ_BIOS().then(x=>bios=x).catch(()=>bios={});
   function bioHtml(p){const L=[p.born&&("生於 "+p.born+(p.died?"，卒於 "+p.died:"")),p.from,p.gm&&(p.gm+" 年獲特級大師")].filter(Boolean).join("・");

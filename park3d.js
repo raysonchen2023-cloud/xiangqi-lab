@@ -84,7 +84,11 @@
       g.strokeStyle=halo;g.lineWidth=(3+2.4*need)+bold/.31;g.stroke(P2);g.fillStyle=ink;g.fill(P2);if(bold){g.strokeStyle=ink;g.lineWidth=bold/.31;g.stroke(P2)}g.restore();return}
     g.font=`900 ${n*.6|0}px ${SERIF}`;g.textAlign="center";g.textBaseline="middle";const y=h+n*.03;
     g.strokeStyle=halo;g.lineWidth=n*(.016+.014*need);g.strokeText(ch,h,y);g.fillStyle=ink;g.fillText(ch,h,y);g.strokeStyle=ink;g.lineWidth=n*.008;g.strokeText(ch,h,y)};
+  /* 意見回饋 399：這個朝代有 Gemini 整套棋子（LOOK.pset），棋面直接貼那一顆的圖（字已經畫在上面） */
+  const PSRC=b=>["r","b"].flatMap(s=>"KABRNCP".split("").map(k=>b+s+k+".webp"));
   const faceTex=(ch,red,onReady)=>{const L=LOOK,s=red?"r":"b",im=L&&L.pieces?loadImg(L.pieces[s],onReady):null,key=ch+(im?"|"+L.k:"");if(faceCache[key])return faceCache[key];
+    if(L&&L.pset){const lt=Object.keys(NAMES[s]).find(k=>NAMES[s][k]===ch),src=L.pset+s+lt+".webp",pim=loadImg(src,onReady),pk="ps|"+src;if(faceCache[pk])return faceCache[pk];
+      if(pim)return faceCache[pk]=cv(FN,FN,(g,n)=>{g.fillStyle=rimOf(pim);g.fillRect(0,0,n,n);g.imageSmoothingQuality="high";g.drawImage(pim,-n*.03,-n*.03,n*1.06,n*1.06)})}
     if(L&&L.pieces&&!im)return plainFace(ch,red);
     if(im)return faceCache[key]=cv(FN,FN,(g,n)=>{g.fillStyle=rimOf(im);g.fillRect(0,0,n,n);g.imageSmoothingQuality="high";g.drawImage(richImg(im),-n*.01,-n*.01,n*1.02,n*1.02);gloss(g,n);
       /* 意見回饋 345：公園裡紅黑要一眼分得出來——深色字一律換成鮮紅／純黑，外圈再加一道同色的圈（亮色字的朝代照原本的字色） */
@@ -739,7 +743,7 @@
     if(PP)paint();
     // ---- 手繪道具立牌：一張去背圖貼在平面上，轉向座位（鏡頭只在座位上轉頭，不會走動，所以永遠看到正面）；
     // tilt＝往後仰多少（0＝直立、1＝整張正對鏡頭），下緣貼地／貼桌；不投影（平的，影子會穿幫），腳下改放一團柔和的接觸陰影
-    function paint(){const base="data/park3d/"+EK+"/",CAMP=new T.Vector3(0,16,9.2),GY=X.FL!=null?X.FL:X.GY;   /* 道具都站在（抬高後的）地面上 */
+    function paint(){const base="data/park3d/"+EK+"/",CAMP=new T.Vector3(0,16,9.2),GY=X.FL!=null?X.FL:X.GY,BS=X.FL!=null?Math.max(.4,(SY-X.FL)/(SY-DT)):1;   /* BS＝地面抬高後凳子、長榻跟著縮小的比例（坐的高度不變） */   /* 道具都站在（抬高後的）地面上 */
       const use=(n,fn)=>{const src=base+n+".webp",go=()=>{const im=imgCache[src];if(im&&im.naturalWidth)fn(im)};if(loadImg(src,go))go()};
       const TXC=new Map(),texOf=(im,own)=>{if(!own&&TXC.has(im))return TXC.get(im);const t=srgb(new T.Texture(im));t.anisotropy=ANI;t.needsUpdate=true;if(!own)TXC.set(im,t);return t};
       const card=(im,o)=>{const h=o.h||o.w*im.naturalHeight/im.naturalWidth,w=o.w||o.h*im.naturalWidth/im.naturalHeight,ax=o.ax==null?.5:o.ax,ay=o.ay||0;
@@ -757,9 +761,9 @@
         const m=new T.Mesh(new T.CircleGeometry(8.2,96),new T.MeshStandardMaterial({map:t,color:neutOf(X.sc),roughness:.5,toneMapped:false}));m.rotation.x=-PI/2;m.position.y=.006;m.receiveShadow=true;root.add(m);if(X.infos){m.userData.info="table";X.infos.push(m)}});
       // 長榻：放在台座上、Pikafish 後面
       // 橫的長榻／長椅：寬 14；直的單人椅（明、清的圈椅、太師椅）：高 12
-      use("bench",im=>{card(im,Object.assign(im.naturalHeight>im.naturalWidth*.9?{x:0,y:DT,z:BZ-.4,h:12,tilt:.12}:{x:0,y:DT,z:BZ-.4,w:14,tilt:.12},{info:"bench"}))});
+      use("bench",im=>{card(im,Object.assign(im.naturalHeight>im.naturalWidth*.9?{x:0,y:X.FL!=null?X.FL:DT,z:BZ-.4,h:12*BS,tilt:.12}:{x:0,y:X.FL!=null?X.FL:DT,z:BZ-.4,w:14*BS,tilt:.12},{info:"bench"}))});
       // 兩側的三彩鼓凳：站在地上
-      use("stool",im=>{for(const[x,z]of STOOLS){const c=card(im,{x,y:GY,z,h:X.FL!=null?6.2:9.5,tilt:.12,info:"stool"});blob(x,GY+.03,z,c.w*.5,c.w*.3,.4,c.ry)}});
+      use("stool",im=>{for(const[x,z]of STOOLS){const c=card(im,{x,y:GY,z,h:X.FL!=null?6.2*BS:9.5,tilt:.12,info:"stool"});blob(x,GY+.03,z,c.w*.5,c.w*.3,.4,c.ry)}});
       // 宮燈：掛在立柱的彎鉤上；立柱用 3D 圓柱接到地面（右邊那盞左右翻過來，立柱都在外側）；燭光一團加色柔光，會跳動
       if(EK!=="tang"&&PP.lamp)use("lantern",im=>{const L=PP.lamp,postM=new T.MeshBasicMaterial({color:0x2E2721,toneMapped:false});
         for(const[sx,x,z]of LAMPS){
@@ -877,7 +881,7 @@
         if(loadImg(BI.src,put))setTimeout(put,0)}}
     const M=(c,o)=>new T.MeshStandardMaterial(Object.assign({color:c,roughness:.8,metalness:0},o||{}));
     const mesh=(geo,mat,pos,o)=>{const m=new T.Mesh(geo,mat);if(pos)m.position.set(...pos);m.castShadow=!(o&&o.noCast);m.receiveShadow=true;sc.add(m);return m};
-    const GY=-19,FL=-9.35;   /* 意見回饋 377、381：平台地面抬到 FL（跟真的一樣：桌高、凳子和長榻直接放在地上，不再墊高台座）；GY 只剩程式畫的家具還在用，地面以下看不到 */   // 地面高度（桌面＝0）
+    const GY=-19,FL=(window.__FL||-6.6);   /* 意見回饋 398：桌子再矮一點（真實的桌高），坐的高度不變、凳子跟著變矮 */   /* 意見回饋 377、381：平台地面抬到 FL（跟真的一樣：桌高、凳子和長榻直接放在地上，不再墊高台座）；GY 只剩程式畫的家具還在用，地面以下看不到 */   // 地面高度（桌面＝0）
     // 山上平台：石板地＋石欄杆，平台外是山谷雲海
     const TR=21;
     const stone=M(0xffffff,{map:stoneTex("#8C8478",2),roughness:.85}),stone2=M(0xffffff,{map:stoneTex("#776F64",2),roughness:.9});
@@ -930,16 +934,17 @@
       ch.position.set(MX,0,MZ);ch.rotation.y=-.3;sc.add(ch);
       /* 意見回饋 365：換成 Gemini 畫的朝代座椅（data/seat/<朝代>.webp，從斜後上方看的去背圖）。椅子放在石台座上、台座接到地面；圖載好就把木椅收起來 */
       const src="data/seat/"+EK+".webp",put=()=>{const im=imgCache[src];if(!im||!im.naturalWidth||!el.isConnected||ch.userData.done)return;ch.userData.done=1;
-        const SO=window.__SEAT||{},H=SO.h||SEAT_H,W=H*im.naturalWidth/im.naturalHeight,AT=SO.at||SEAT_AT,BK=SO.back!=null?SO.back:SEAT_BACK,t=srgb(new T.Texture(im));t.anisotropy=ANI;t.needsUpdate=true;
-        // 正對鏡頭的去背圖，椅面（圖高 AT 的地方）對齊小帥的屁股；每一格都轉向鏡頭、放在小帥「背後」（從鏡頭看過去），繞到前面看時椅子也不會蓋住小帥
-        const geo=new T.PlaneGeometry(W,H);geo.translate(0,H/2,0);const card=new T.Mesh(geo,new T.MeshBasicMaterial({map:t,alphaTest:.3,toneMapped:false,side:T.DoubleSide}));card.rotation.order="YXZ";card.renderOrder=5;sc.add(card);
-        /* 意見回饋 391：貼圖沒有影子，椅腳下空空的看起來像浮著——座椅照太陽投出剪影影子，腳下再鋪一塊柔和的接觸陰影 */
-        card.castShadow=true;card.customDepthMaterial=new T.MeshDepthMaterial({depthPacking:T.RGBADepthPacking,map:t,alphaTest:.3});
-        {const c=document.createElement("canvas");c.width=c.height=64;const g=c.getContext("2d"),gr=g.createRadialGradient(32,32,0,32,32,32);gr.addColorStop(0,"rgba(0,0,0,.85)");gr.addColorStop(.5,"rgba(0,0,0,.45)");gr.addColorStop(1,"rgba(0,0,0,0)");g.fillStyle=gr;g.fillRect(0,0,64,64);
-          const sh=new T.Mesh(new T.PlaneGeometry(W*.95,W*.7),new T.MeshBasicMaterial({map:new T.CanvasTexture(c),transparent:true,opacity:.55,depthWrite:false,toneMapped:false,polygonOffset:true,polygonOffsetFactor:-2,polygonOffsetUnits:-2}));
-          sh.rotation.x=-PI/2;sh.position.set(MX,FL+.03,MZ-.2);sc.add(sh)}
-        if(window.__PDBG)window.__PDBG={sc,cam,card,FL,MSEAT,H,AT,W};bills.push({m:card,y:FL,tilt:SO.tilt!=null?SO.tilt:SEAT_TILT,anchor:[MX,MZ],back:BK});   /* 意見回饋 386：轉軸在椅腳（地面上），往鏡頭仰的時候椅腳也一直貼著地 */
-        /* 椅子直接放在地上（意見回饋 381：不要石台座） */
+        /* 意見回饋 402：貼圖座椅從某些角度看還是像浮著——改成真正的 3D 鼓凳：從地面一路接到椅面，表面用那個朝代座椅圖的花紋，坐墊用圖上的主色 */
+        const Hs=MSEAT-FL,R=1.75*MS/4.1,c=document.createElement("canvas");c.width=512;c.height=256;const g=c.getContext("2d"),iw=im.naturalWidth,ih=im.naturalHeight;
+        g.fillStyle="#6b4a2e";g.fillRect(0,0,512,256);for(const x of[0,256])g.drawImage(im,iw*.18,ih*.45,iw*.64,ih*.5,x,0,256,256);
+        const q=document.createElement("canvas");q.width=q.height=8;const qg=q.getContext("2d");qg.drawImage(im,iw*.3,ih*.15,iw*.4,ih*.3,0,0,8,8);let cr=0,cg=0,cb=0,cn=0;
+        try{const d=qg.getImageData(0,0,8,8).data;for(let i=0;i<d.length;i+=4)if(d[i+3]>200){cr+=d[i];cg+=d[i+1];cb+=d[i+2];cn++}}catch(e){}
+        const top=cn?new T.Color(`rgb(${cr/cn|0},${cg/cn|0},${cb/cn|0})`):new T.Color(0x3a5a8a),st=srgb(new T.CanvasTexture(c));st.wrapS=T.RepeatWrapping;st.anisotropy=ANI;
+        const body=new T.Mesh(new T.CylinderGeometry(R*.9,R*.82,Hs-.5,40,1,false),[new T.MeshStandardMaterial({map:st,roughness:.65}),new T.MeshStandardMaterial({color:top,roughness:.8}),new T.MeshStandardMaterial({color:0x3a2a1c,roughness:.9})]);
+        body.position.set(MX,FL+(Hs-.5)/2,MZ);body.castShadow=true;body.receiveShadow=true;sc.add(body);
+        const pad=new T.Mesh(new T.CylinderGeometry(R*.95,R*.92,.5,40),new T.MeshStandardMaterial({color:top,roughness:.85}));pad.position.set(MX,MSEAT-.25,MZ);pad.castShadow=true;pad.receiveShadow=true;sc.add(pad);
+        const foot=new T.Mesh(new T.CylinderGeometry(R*.86,R*.92,.3,40),new T.MeshStandardMaterial({color:0x2e2218,roughness:.9}));foot.position.set(MX,FL+.15,MZ);foot.receiveShadow=true;sc.add(foot);
+        if(window.__PDBG)window.__PDBG={sc,cam,body,FL,MSEAT};
         ch.visible=false};
       if(loadImg(src,put))setTimeout(put,0)}
     const mate=actor(new T.Group(),mkBub(MX+1.2,MSEAT+MS*2.6,MZ-.8,3.4));mate.g.position.set(MX,MSEAT,MZ);mate.g.rotation.set(.04,PI,0,"YXZ");   /* 意見回饋 374：坐在對手正對面、背對鏡頭 */   /* 意見回饋 365：轉身面向對手、背對鏡頭，像跟對方對弈 */mate.g.scale.setScalar(MS);sc.add(mate.g);
@@ -1016,7 +1021,7 @@
     try{document.fonts&&document.fonts.load(`900 64px ${SERIF}`,"帥仕相傌俥炮兵將士象馬車砲卒").then(()=>{if(!stopped)refreshLook()})}catch(e){}
     function draw(board,o,ex){o=o||{};ex=ex||{};drawn=true;const nf=!!o.flip;
       {const lk=JSON.stringify(ex.look?[ex.look.k,ex.look.img,!!ex.look.gly]:null);if(lk!==lookKey){lookKey=lk;LOOK=ex.look||null;
-        if(LOOK){let n=0;const done=()=>{if(++n>=3&&LOOK===ex.look)refreshLook()};[LOOK.img,LOOK.pieces&&LOOK.pieces.r,LOOK.pieces&&LOOK.pieces.b].forEach(src=>{if(!src||loadImg(src,done))done()})}
+        if(LOOK){let n=0;const L0=[LOOK.img,LOOK.pieces&&LOOK.pieces.r,LOOK.pieces&&LOOK.pieces.b,...(LOOK.pset?PSRC(LOOK.pset):[])],done=()=>{if(++n>=L0.length&&LOOK===ex.look)refreshLook()};L0.forEach(src=>{if(!src||loadImg(src,done))done()})}
         refreshLook()}}
       if(nf!==flip){flip=nf;prevB=null}
       const L=o.last&&o.last.f!=null&&o.last.t!=null?o.last:null,lk=L?L.f+"-"+L.t:"";
@@ -1059,7 +1064,7 @@
       const vr=Math.max(CAMV.hr,1.14);CAMV.dp=Math.atan(CAMV.ht*1.14)-Math.atan(CAMV.ht*vr);H=Math.round(W*CAMV.hr);el.style.height=H+"px";rd.setSize(W,H,false);cam.aspect=W/H;
       cam.fov=clamp(2*Math.atan(CAMV.ht*vr)*180/PI,38,62);cam.updateProjectionMatrix();
       {const nn=CAMV.hr>=1.24;if(nn!==capNear){capNear=nn;if(lastCapB)layoutCaptured(lastCapB)}}};
-    const CO=window.__CAM||{},camBase=new T.Vector3(...(CO.b||[0,25,24])),look=new T.Vector3(...(CO.l||[0,-.3,.6])),PIV=new T.Vector3(0,-.3,0);   /* 意見回饋 374：小帥坐到正對面，鏡頭往後、往上一點，從他背後看過去 */
+    const CO=window.__CAM||{},camBase=new T.Vector3(...(CO.b||[0,22,25])),look=new T.Vector3(...(CO.l||[0,-.3,.6])),PIV=new T.Vector3(0,-.3,0);   /* 意見回饋 374：小帥坐到正對面，鏡頭往後、往上一點，從他背後看過去 */
     // 拉近拉遠＝鏡頭沿著「棋盤中心→座位」這條線前後移動，看的方向不變
     /* 意見回饋 375：左右拖曳＝鏡頭繞著棋桌轉（轉到對面就看得到小帥的臉、背景一樣是一整圈），上下拖曳＝俯視的高低；不動的時候跟原本的畫面一樣 */
     const placeCam=()=>{const off=camBase.clone().sub(PIV),lk=look.clone().sub(PIV),el0=Math.atan2(off.y,Math.hypot(off.x,off.z)),el=clamp(el0+pitch,.06,1.5),R=off.length()*zoom,az=Math.atan2(off.x,off.z)+yaw;

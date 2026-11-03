@@ -334,6 +334,7 @@
       if(d.moved){const b=bounds();x=Math.min(Math.max(x,b.x0),b.x1);y=Math.min(Math.max(y,b.y0),b.y1);tx=x;ty=y;parked=true;store.set("botPos",{x:x/innerWidth,y:y/innerHeight});say("我在這裡等你（點兩下我會去散步）",2.6);next=4;return}
       // 點一下＝表演、點兩下＝去散步（停放時）；長按＝問問題
       taps++;clearTimeout(tapT);tapT=setTimeout(()=>{const n=taps;taps=0;
+        if(n>=3){doAct("bow");say("我先去休息囉～",1.4);setTimeout(()=>{try{window.dispatchEvent(new CustomEvent("xq-bot-hide"))}catch(e){}},900);return}   /* 意見回饋 401：點三下隱藏小帥 */
         if(n>=2&&parked){parked=false;store.set("botPos",null);say("出去走走～",1.6);wander()}
         else doAct(randAct())},380)};
     hit.addEventListener("pointerup",up);hit.addEventListener("pointercancel",up);
