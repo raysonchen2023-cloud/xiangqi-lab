@@ -475,7 +475,7 @@ html[data-era=ming] .topbar,html[data-era=qing] .topbar{border-bottom-width:4px}
       if(!window.caches)return go();caches.keys().then(function(ks){return Promise.all(ks.filter(function(k){return k.indexOf("xqlab-app-")===0}).map(function(k){return caches.delete(k)}))})
         .then(function(){return navigator.serviceWorker&&navigator.serviceWorker.getRegistration()}).then(function(r){return r&&r.update()}).catch(function(){}).then(go)}},4000)})();
 </script>
-<script>window.XQ_OFFLINE=true;window.XQ_BUILD="20261103-1826";</script>
+<script>window.XQ_OFFLINE=true;window.XQ_BUILD="20261103-1844";</script>
 <script src="core.js"></script>
 <script src="engine.js"></script>
 <script src="local.js"></script>
@@ -2202,13 +2202,14 @@ function histList(box,reps){let kind=store.get("histKind","all"),res="",limit=40
     let h=`<div class="st-seg">${[["all","全部"],["cpu","🤖 電腦"],["pvp","👥 對人"]].map(([k,l])=>`<button data-k="${k}" class="${kind===k?"on":""}">${l}<small>${cnt(k)}</small></button>`).join("")}</div>
       <div class="st-res">${[["","全部"],["w","勝"],["l","負"],["d","和"]].map(([k,l])=>`<button data-r="${k}" class="${res===k?"on":""}">${l}</button>`).join("")}</div>`;
     if(!L.length)h+=`<div class="st-list st-empty" style="margin-top:12px">${all.length?"沒有符合的對局":"還沒有下完的對局。去挑戰電腦或線上對戰下一盤吧！"}</div>`;
-    let mon="",grp=[];const out=[],flush=()=>{if(grp.length)out.push(`<div class="st-list">${grp.join("")}</div>`);grp=[]};
+    const TC5=store.get("talentCache5",{});let mon="",grp=[];const out=[],flush=()=>{if(grp.length)out.push(`<div class="st-list">${grp.join("")}</div>`);grp=[]};
     for(const x of L.slice(0,limit)){const id=String(x.it.id),m=id.slice(0,7);
       if(m!==mon){flush();mon=m;out.push(`<div class="st-mon">${m.slice(0,4)} 年 ${+m.slice(5,7)} 月</div>`)}
-      const r=resOf(x.it,x.side),R=x.c==="play"&&reps[x.it.id],nr=x.c==="pvp"&&nh.find(hh=>hh.rid===x.it.id);
+      /* 意見回饋 351：人機、真人每一盤都標出我這盤的評等（S／A／B…）：賽後報告算過的、或天賦頁評好的都用 */
+      const r=resOf(x.it,x.side),tc=TC5[x.c+"/"+x.it.id],R=reps[x.it.id]||(tc&&tc.score!=null?{score:tc.score,grade:gradeFor(tc.score)[0]}:null),nr=x.c==="pvp"&&nh.find(hh=>hh.rid===x.it.id);
       const lab=r==="w"?"勝":r==="l"?"負":r==="d"?"和":r==="x"?"✕":(r||"—").slice(0,1);
       const why=String(x.it.result||"").replace(/^.*?（/,"").replace(/）$/,"");
-      grp.push(`<button class="st-g" data-c="${x.c}" data-id="${esc(id)}"><span class="dot ${r==="w"||r==="l"?r:""}">${esc(lab)}</span><span class="tx"><b>${x.k==="cpu"?"🤖 ":"👥 "}${esc(x.opp||"")}${x.c==="pvp"&&x.side?` <i class="opp-i" data-oid="${esc(nr&&nr.oid||"")}" data-on="${esc(x.opp||"")}" style="font-style:normal;font-size:12px;color:var(--accent);border:1px solid var(--line);border-radius:10px;padding:0 6px;margin-left:4px">ⓘ 棋友</i>`:""}</b><span>${id.slice(5,10).replace("-","/")}・${x.side?"執"+(x.side==="r"?"紅":"黑")+"・":""}${esc(why)}</span></span>${R?`<b class="r gl" style="background:${gradeFor(R.score)[2]}">${R.grade}</b>`:nr?`<b class="r ${nr.d>=0?"w":"l"}">${nr.d>=0?"+":""}${nr.d}</b>`:'<span class="r muted">›</span>'}</button>`)}
+      grp.push(`<button class="st-g" data-c="${x.c}" data-id="${esc(id)}"><span class="dot ${r==="w"||r==="l"?r:""}">${esc(lab)}</span><span class="tx"><b>${x.k==="cpu"?"🤖 ":"👥 "}${esc(x.opp||"")}${x.c==="pvp"&&x.side?` <i class="opp-i" data-oid="${esc(nr&&nr.oid||"")}" data-on="${esc(x.opp||"")}" style="font-style:normal;font-size:12px;color:var(--accent);border:1px solid var(--line);border-radius:10px;padding:0 6px;margin-left:4px">ⓘ 棋友</i>`:""}</b><span>${id.slice(5,10).replace("-","/")}・${x.side?"執"+(x.side==="r"?"紅":"黑")+"・":""}${esc(why)}${R&&nr?`・積分 ${nr.d>=0?"+":""}${nr.d}`:""}</span></span>${R?`<b class="r gl" style="background:${gradeFor(R.score)[2]}">${R.grade}</b>`:nr?`<b class="r ${nr.d>=0?"w":"l"}">${nr.d>=0?"+":""}${nr.d}</b>`:'<span class="r muted">›</span>'}</button>`)}
     flush();h+=out.join("");
     if(L.length>limit)h+=`<button class="btn ghost" id="more" style="margin-top:12px">再顯示 40 盤（還有 ${L.length-limit} 盤）</button>`;
     box.innerHTML=h;
@@ -2401,7 +2402,8 @@ async function talentReport(box){
     api("/play/state").then(st=>st&&st.cpuRate&&st.cpuRate.rank).catch(()=>null).then(crk=>{try{XQNet.shareIRT({t:"tal",aid,rk:NR,crk:crk||null,pts:Y.map((y,j)=>[+PP[j].toFixed(1),Math.round(y)]).slice(-80)})}catch(e){}})}
   box.innerHTML=`<div class="card" style="margin-top:4px;text-align:center"><div class="muted">長棋速度（下得越多，進步得多快）</div>
       ${M?`<div style="font-size:42px;font-weight:900;font-family:var(--serif);color:var(--accent)">${M.N<5?"?":M.rPct}<span style="font-size:17px"> 分</span></div>
-      <div><b>${lab}</b>・比 ${M.N<5?"?":M.rPct}% 的學棋者長得快；是快手（前 25%）的把握 <b>${pc(M.top25)}</b>、頂尖（前 5%）的把握 <b>${pc(M.top5)}</b></div>`:`<div style="margin:8px 0">再下 3 盤評過等的對局就能估</div>`}
+      <div><b>${lab}</b>・你進步的速度，比 ${M.N<5?"?":M.rPct}% 的學棋者快</div>
+      <div class="muted" style="font-size:13px;line-height:1.7;margin-top:2px">${/* 意見回饋 352：白話說明 */""}照目前的資料估：你有 <b>${pc(M.top25)}</b> 的機會是「進步很快」的人（每 4 個人裡最快的那 1 個）；有 <b>${pc(M.top5)}</b> 的機會是「頂尖」（每 20 個人裡最快的那 1 個）。</div>`:`<div style="margin:8px 0">再下 3 盤評過等的對局就能估</div>`}
       <div class="muted" style="font-size:12.5px;margin-top:4px">根據 ${G.length} 盤對局、${QL.length} 次測驗、${GL0.length} 局猜著法（練習量約 ${f1(P)} 盤${practiceTotal()>=1?`・練習時間 ${practiceTotal()>=60?(practiceTotal()/60).toFixed(1)+" 小時":Math.round(practiceTotal())+" 分鐘"}`:""}）${M&&M.N<20?"・下得還不多，先參考一般棋友的樣子，下越多越準":""}</div></div>
     ${KF?`<div class="sec-t">現在的棋力</div><div class="card" style="line-height:1.7">每步走得好不好，現在大約 <b>${f0(KF.th)}</b> 分（大概在 ${f0(KF.th-1.28*KF.sd)}～${f0(KF.th+1.28*KF.sd)} 分之間）。跟下了一樣多盤的一般棋友（約 ${f0(popNow)} 分）比，你${KF.th>=popNow?"多":"少"} <b>${f0(Math.abs(KF.th-popNow))}</b> 分。${SR?`<br>同段位（${esc(NR)}）的棋友：大約 ${SR.now} 分，長棋速度中間值 ${(SR.r*100).toFixed(1)}%（${SR.n} 人）。`:""}${GL?`<br>跟電腦對下的勝負推算，棋力約等級分 <b>${f0(GL.r)}</b>（還可能差 ±${f0(GL.RD)}，${GL.n} 盤）`:""}</div>`:""}
     ${tau?`<div class="sec-t">你的棋路底子</div><div class="card">${tau}</div>`:""}
@@ -4480,7 +4482,7 @@ function Viewer(v,c,id){
     const moves=seq(line,end).map((m,i)=>{const g=gradeOf(i+1)||{};return{f:m.f,t:m.t,cn:m.cn,by:moverAt(i+1),q:g.q,loss:g.loss,ev:g.ev,bc:g.bc,bm:g.bm,bp:g.bp,ck:m.ck}});
     const rep=gameReport(it.board,moves),names={r:it.red||"紅方",b:it.black||"黑方"},side=it.black==="你"?"b":"r";
     // 自己跟電腦下的對局：記下分數給「我的戰績」用
-    if(c==="play"&&rep.sides[side].score!=null){const all=store.get("reports",{}),R=rep.sides[side];
+    if((c==="play"||c==="pvp")&&rep.sides[side]&&rep.sides[side].score!=null){const all=store.get("reports",{}),R=rep.sides[side];
       all[id]={score:R.score,grade:R.grade[0],ph:{open:R.phases.open&&R.phases.open.score,mid:R.phases.mid&&R.phases.mid.score,end:R.phases.end&&R.phases.end.score},at:Date.now()};store.set("reports",all)}
     reportSheet(rep,{title:"賽後報告・"+title(),side,names,goto:p=>go(p)})}
   function info(){if(!it)return;sheet(title(),b=>{
