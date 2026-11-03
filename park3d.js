@@ -852,6 +852,23 @@
         <div style="position:absolute;inset:0;background:linear-gradient(rgba(20,10,4,.55),rgba(20,10,4,.05) 45%,rgba(20,10,4,.35))"></div>
         <div style="position:relative;margin-bottom:40%;text-align:center;text-shadow:0 2px 10px rgba(0,0,0,.85)"><div style="font-size:46px;animation:agDrum 1.1s ease-in-out infinite">🥁</div>
         <div style="font:900 26px 'Noto Serif TC','PMingLiU',serif;letter-spacing:.2em;margin-top:4px">擂台開擂</div><div class="ag-t" style="font:600 14px sans-serif;margin-top:4px">擂主登台中</div></div>`}
+    /* 意見回饋 410：石桌往事選完朝代、線上對戰進公園時，過場也換成畫好的入口圖（跟朝代擂台一樣），不再是小帥走路。
+       opt.gate＝{img:[依序試的圖], icon, title, sub, duel（線上：帥和將從兩邊衝過來碰一下）, bg} */
+    else if(opt.gate&&opt.gate.title){const G=opt.gate,imgs=(G.img||[]).filter(u=>typeof u==="string"&&/^data\/[\w\/.-]+$/.test(u));
+      veil.style.background=/^#[0-9a-f]{3,8}$/i.test(G.bg||"")?G.bg:"#22201c";veil.style.color="#fff";
+      veil.innerHTML=`<style>@keyframes gtZoom{from{transform:scale(1.12)}to{transform:scale(1)}}@keyframes gtDots{0%{content:""}33%{content:"．"}66%{content:"．．"}100%{content:"．．．"}}.gt-s::after{content:"";animation:gtDots 1.2s steps(1) infinite}
+        @keyframes gtBob{0%,100%{transform:translateY(0)}50%{transform:translateY(-6px)}}
+        @keyframes gtL{0%{transform:translateX(-120px) rotate(-30deg)}45%,55%{transform:translateX(-26px) rotate(0)}100%{transform:translateX(-120px) rotate(-30deg)}}
+        @keyframes gtR{0%{transform:translateX(120px) rotate(30deg)}45%,55%{transform:translateX(26px) rotate(0)}100%{transform:translateX(120px) rotate(30deg)}}
+        @keyframes gtSpark{0%,40%{opacity:0;transform:scale(.3)}50%{opacity:1;transform:scale(1.25)}62%,100%{opacity:0;transform:scale(1.6)}}
+        .gt-c{position:absolute;left:50%;top:0;width:52px;height:52px;margin-left:-26px;border-radius:50%;display:flex;align-items:center;justify-content:center;font:900 26px 'Noto Serif TC','PMingLiU',serif;background:radial-gradient(circle at 40% 35%,#fff8ec,#efd9b2);box-shadow:0 6px 12px rgba(0,0,0,.45)}</style>
+        <div class="gt-bg" style="position:absolute;inset:0;background:center/cover no-repeat;animation:gtZoom 3s ease-out forwards"></div>
+        <div style="position:absolute;inset:0;background:linear-gradient(rgba(10,8,6,.55),rgba(10,8,6,.05) 45%,rgba(10,8,6,.4))"></div>
+        <div style="position:relative;margin-bottom:40%;text-align:center;text-shadow:0 2px 10px rgba(0,0,0,.85)"><div class="gt-i" style="font-size:44px;animation:gtBob 1.4s ease-in-out infinite"></div>
+        <div class="gt-t" style="font:900 26px 'Noto Serif TC','PMingLiU',serif;letter-spacing:.2em;margin-top:4px"></div><div class="gt-s" style="font:600 14px sans-serif;margin-top:4px"></div>
+        ${G.duel?'<div style="position:relative;height:60px;margin-top:18px"><div class="gt-c" style="color:#C8102E;border:3px solid #C8102E;animation:gtL 1.6s ease-in-out infinite">帥</div><div class="gt-c" style="color:#1E1A16;border:3px solid #1E1A16;animation:gtR 1.6s ease-in-out infinite">將</div><div style="position:absolute;left:50%;top:4px;margin-left:-22px;font-size:40px;animation:gtSpark 1.6s ease-out infinite">✨</div></div>':""}</div>`;
+      veil.querySelector(".gt-i").textContent=G.icon||"";veil.querySelector(".gt-t").textContent=G.title;veil.querySelector(".gt-s").textContent=G.sub||"";
+      const bg=veil.querySelector(".gt-bg");(function tryI(i){if(i>=imgs.length)return;const im=new Image();im.onload=()=>{bg.style.backgroundImage="url("+imgs[i]+")"};im.onerror=()=>tryI(i+1);im.src=imgs[i]})(0)}
     el.append(veil);
     hint.textContent="點棋子走棋・點物件看介紹・拖曳轉頭・兩指縮放";el.append(hint);setTimeout(()=>hint.style.opacity=0,4500);
     const EK=eraKey(),E=ERA[EK];
