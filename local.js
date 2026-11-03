@@ -124,6 +124,12 @@ var XQ=(function(){
       legal:!P.result&&P.turn===P.human?legal(P.board,P.turn):[],check:!P.result&&inCheck(P.board,P.turn)?kingSq(P.board,P.turn):-1,engine:true}}
   async function playPost(p,b){ensureP();
     if(p==="/play/new"){playNew(b.human==="b"?"b":"r",Math.max(1,Math.min(LEVELS.length,Math.round(+b.level)||3)),!b.pre&&!!b.ranked,b.pre||null,!!b.reward,typeof b.arena==="string"&&/^[a-z]{2,8}$/.test(b.arena)?b.arena:null);playMsg="";setTimeout(playEngine,0)}
+    else if(p==="/play/bonus"){   /* 意見回饋 313：石桌往事「回到當年」答對轉折加段位積分；每個轉折只能領一次 */
+      const key=String(b.key||"").slice(0,80),pts=Math.max(1,Math.min(20,Math.round(+b.pts)||0)),K=ls.get("bonusKeys",{});
+      if(!key)throw new Error("缺少題目代號");const R=cpuRate();
+      if(K[key])return{already:true,pts:R.pts,rank:RANKS[rankIdx(R.pts)][0]};
+      const before=R.pts;R.pts+=pts;R.hist.unshift({id:"bonus-"+key,res:"bonus",d:pts,pts:R.pts,rk:RANKS[rankIdx(R.pts)][0],why:String(b.why||"").slice(0,40),at:Date.now()});R.hist=R.hist.slice(0,100);
+      ls.set("cpuRate",R);K[key]=Date.now();ls.set("bonusKeys",K);return{ok:true,d:pts,pts:R.pts,rank:RANKS[rankIdx(R.pts)][0],was:RANKS[rankIdx(before)][0]}}
     else if(p==="/play/switch"){playSwitch(b.kind==="arena"?"arena":"cpu",b);playMsg="";setTimeout(playEngine,0)}
     else if(p==="/play/move"){const f=+b.f,t=+b.t;if(P.result)throw new Error("這局已經結束");if(P.turn!==P.human)throw new Error("還沒輪到你");
       if(!legal(P.board,P.turn).some(([x,y])=>x===f&&y===t))throw new Error("這步不合法");playApply(f,t);setTimeout(playEngine,0)}
