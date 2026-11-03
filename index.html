@@ -79,6 +79,7 @@ input,select{font:inherit;font-size:16px;color:inherit}
 .prof .pl{display:flex;gap:14px;align-items:center}.prof .lv{flex:none;width:68px;height:68px;border-radius:50%;display:flex;align-items:center;justify-content:center;font:900 19px var(--serif);color:#fff;background:radial-gradient(circle at 35% 30%,#d9774f,var(--accent));box-shadow:0 0 0 4px color-mix(in srgb,var(--accent) 25%,transparent)}.prof .pl>div:last-child{flex:1;min-width:0}
 .chips{display:flex;flex-wrap:wrap;gap:6px;margin-top:10px}.chips span{font-size:12.5px;border:1px solid var(--line);border-radius:999px;padding:3px 10px;background:var(--bg)}
 .bgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:8px}.bcard{border:1px solid var(--line);background:var(--card);border-radius:14px;padding:10px;display:flex;flex-direction:column;gap:3px;min-width:0}.bcard .bic{font-size:30px}.bcard.rare{border:2px solid #C9962B;box-shadow:0 0 0 3px rgba(201,150,43,.18);background:linear-gradient(160deg,color-mix(in srgb,#C9962B 12%,var(--card)),var(--card))}.bcard.broken{opacity:.75;filter:grayscale(.5)}.bcard .pill{margin-top:4px;align-self:flex-start}
+.sbio{background:color-mix(in srgb,var(--accent) 6%,var(--card));border:1px solid var(--line);border-radius:12px;padding:10px 12px}.sbio-r{display:flex;gap:8px;margin-top:6px;font-size:13.5px;line-height:1.6}.sbio-r span{flex:none;color:var(--muted);width:2.6em}.sbio-r b{font-weight:600}.sbio summary{cursor:pointer;font-weight:700}
 .eras{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:16px 6px;margin-top:10px}.era-c{display:flex;flex-direction:column;align-items:center;gap:6px;background:none;border:0;padding:0;font:inherit;color:inherit;cursor:pointer;min-width:0}.era-c span{width:78px;height:78px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-family:var(--serif);font-size:30px;font-weight:900;background:radial-gradient(circle at 35% 30%,var(--card),color-mix(in srgb,var(--accent) 14%,var(--card)));border:2px solid color-mix(in srgb,var(--accent) 45%,var(--line));box-shadow:0 2px 6px rgba(0,0,0,.12)}.era-c span.two{font-size:22px}.era-c.on span{border-color:var(--red);color:var(--red);border-width:3px}.era-c b{font-size:13.5px}
 .doors{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px;margin-top:12px}.door{display:flex;flex-direction:column;align-items:center;gap:2px;padding:14px 4px 8px;border:2px solid color-mix(in srgb,var(--accent) 45%,var(--line));border-bottom-width:4px;border-radius:999px 999px 10px 10px;background:linear-gradient(180deg,color-mix(in srgb,var(--accent) 10%,var(--card)),var(--card));font:inherit;color:inherit;cursor:pointer;min-width:0}.door .dic{font-size:26px}.door b{font-size:14px}.door small{font-size:11px;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:100%}
 .travel{position:fixed;inset:0;z-index:9998;overflow:hidden;background:linear-gradient(180deg,#3a1d14 0%,#8a3b1f 38%,#d98a3a 52%,#6b5434 53%,#4a3a26 100%);animation:tvIn .35s ease both}.travel.out{animation:tvOut .35s ease both}
@@ -470,7 +471,7 @@ html[data-era=ming] .topbar,html[data-era=qing] .topbar{border-bottom-width:4px}
       if(!window.caches)return go();caches.keys().then(function(ks){return Promise.all(ks.filter(function(k){return k.indexOf("xqlab-app-")===0}).map(function(k){return caches.delete(k)}))})
         .then(function(){return navigator.serviceWorker&&navigator.serviceWorker.getRegistration()}).then(function(r){return r&&r.update()}).catch(function(){}).then(go)}},4000)})();
 </script>
-<script>window.XQ_OFFLINE=true;window.XQ_BUILD="20261103-1652";</script>
+<script>window.XQ_OFFLINE=true;window.XQ_BUILD="20261103-1658";</script>
 <script src="core.js"></script>
 <script src="engine.js"></script>
 <script src="local.js"></script>
@@ -3152,7 +3153,7 @@ function Profile(v){setTop("🎒 棋童資料","#/adventure");setTabs(false);v.c
       b.querySelectorAll("[data-ex]").forEach(x=>x.onclick=()=>rareExchange(x.dataset.ex,()=>Profile(v)))});
     else if(k==="r")sheet(`📜 棋譜（${B2.records.length}）`,b=>{b.innerHTML=B2.records.length?`<div class="items" style="padding:0">${B2.records.slice().reverse().map(x=>`<button class="item" data-rc="${x.uid}"><span class="lb">📜</span><span class="tx"><b>${esc(x.name)}</b><span>${esc(x.from)}</span></span><span class="muted">›</span></button>`).join("")}</div>`:'<p class="muted" style="text-align:center">還沒有</p>';
       b.querySelectorAll("[data-rc]").forEach(y=>y.onclick=()=>{const x=bag().records.find(z=>z.uid===y.dataset.rc);if(!x)return;closeSheet();store.set("dbReturn",{c:x.c,to:"#/adventure",at:Date.now()});location.hash=`#/db/${x.c}/${encodeURIComponent(x.id)}`})});
-    else sheet(`🤝 秘境棋友（${Object.keys(S2).length}／${SECRETS.length}）`,b=>{b.innerHTML=`<div class="items" style="padding:0">${SECRETS.map(x=>S2[x.id]?`<div class="item"><span class="lb" style="font-size:22px">${x.ic}</span><span class="tx"><b>${esc(x.name)}</b><span>贏過 ${(store.get("secretWins",{})[x.id]||0)} 盤</span></span></div>`:`<div class="item" style="opacity:.5"><span class="lb">❔</span><span class="tx"><b>？？？</b></span></div>`).join("")}</div>`})};
+    else sheet(`🤝 秘境棋友（${Object.keys(S2).length}／${SECRETS.length}）`,b=>{b.innerHTML=`<div class="items" style="padding:0">${SECRETS.map(x=>S2[x.id]?`<button class="item" data-sb="${x.id}"><span class="lb" style="font-size:22px">${x.ic}</span><span class="tx"><b>${esc(x.name)}</b><span>${esc((SECRET_BIO[x.id]||{}).y||"")}・贏過 ${(store.get("secretWins",{})[x.id]||0)} 盤</span></span><span class="muted">›</span></button>`:`<div class="item" style="opacity:.5"><span class="lb">❔</span><span class="tx"><b>？？？</b></span></div>`).join("")}</div>`;b.querySelectorAll("[data-sb]").forEach(y=>y.onclick=()=>{const x=SECRETS.find(z=>z.id===y.dataset.sb);if(x)secretSheet(x)})})};
   v.querySelectorAll(".circles [data-c]").forEach(b=>b.onclick=()=>{vibrate(5);openC(b.dataset.c)});
   v.querySelector("#pXP").onclick=xpSheet;
   return{}}
@@ -3209,6 +3210,19 @@ const SECRETS=[{id:"liuji",name:"劉伯溫",who:"元末明初的謀士，幫朱�
   {id:"shenwansan",name:"沈萬三",who:"元末明初江南的大富商",ic:"💰",off:0,say:"「做生意跟下棋一樣，捨得才有得。」",found:"{spot}旁邊停著一頂華麗的轎子，轎裡的富商探出頭：「在下沈萬三，賭一盤？不賭錢，賭棋盤。」",gift:"聚寶盆金漆棋盤"},
   {id:"changyuchun",name:"常遇春",who:"明初的猛將，人稱「常十萬」",ic:"⚔",off:-1,say:"「下棋？我只會往前衝！」",found:"{spot}旁邊一個大嗓門的將軍正在找人下棋：「本將軍常遇春，打仗一流，下棋……也還行！」",gift:"軍中牛皮棋盤"},
   {id:"wangmian",name:"王冕",who:"元末畫墨梅的畫家",ic:"🌸",off:-1,say:"「我只畫梅花，棋……陪你玩玩。」",found:"{spot}旁邊有人在畫梅花，墨跡還沒乾。他放下筆：「王冕。不太會下棋，你別笑我。」",gift:"墨梅紙棋盤"}];
+/* 意見回饋 333：秘境棋友的小傳——生卒年照一般的史書說法，喜好、棋風和支線故事是遊戲裡的想像 */
+const SECRET_BIO={
+  liuji:{y:"1311–1375",from:"浙江青田",like:"夜裡觀星、讀兵書",op:"中炮——先把陣勢擺穩，再找機會出手",mid:"算得很深，愛在後面埋伏兵，一步棋藏著三步後手",story:"他說年輕時在青田的石門洞讀書，跟洞裡一位老道下了三年棋，一盤都沒贏過。老道只留下一句話：「棋要先算退路。」後來替朱元璋出謀劃策，他說用的都是那三年輸棋學來的東西。"},
+  zhangsanfeng:{y:"生卒成謎（傳說）",from:"遼東（一說）",like:"打坐、看雲、練太極",op:"屏風馬——不急著進攻，先站穩",mid:"以柔克剛：讓你先打，借你的力反擊，常常棄子換勢",story:"傳說他看見蛇和鶴打架，鶴怎麼啄都啄不到蛇，悟出了太極。他下棋也像推手：你越用力，輸得越快。他自稱一百多歲，問他到底幾歲，他只笑不答。"},
+  shinaian:{y:"約 1296–1370",from:"江蘇興化（一說錢塘）",like:"聽說書、蒐集江湖故事",op:"仙人指路——變化多，像說故事先留伏筆",mid:"愛車馬衝殺、對攻熱鬧，寧可輸得精彩也不和得無聊",story:"他說每一盤棋都是一回故事：哪顆兵是林沖、哪隻馬是武松，下完都記在稿子上。據說那疊被你撿到的手稿，就是後來《水滸傳》的草稿——不過這只是他自己說的。"},
+  shenwansan:{y:"生卒不詳（元末明初）",from:"江南周莊",like:"算帳、收藏寶物",op:"飛相局——先求穩，絕不吃虧",mid:"精打細算，喜歡兌子換實利，到殘局再慢慢贏",story:"傳說他有一個聚寶盆，放一個銅錢進去會變出滿盆。他出錢幫南京修過城牆，後來卻因為太有錢被朝廷流放。他說棋盤上的道理一樣：贏得太多，別人就不想跟你下了。"},
+  changyuchun:{y:"1330–1369",from:"安徽懷遠",like:"騎馬、喝酒、搶當先鋒",op:"順炮——開局就衝，先搶先贏",mid:"猛攻不守，車馬炮一起壓上，輸贏都很快",story:"他是明初的猛將，傳說自稱帶十萬兵就能橫行天下，所以人稱「常十萬」。三十九歲那年在北伐回師的路上病逝。他說下棋跟打仗一樣，猶豫就輸了——所以他下棋從來不想超過十秒。"},
+  wangmian:{y:"1287–1359",from:"浙江諸暨",like:"畫墨梅、寫詩、放牛時讀書",op:"過宮炮——不照常理出牌",mid:"下得慢、愛想，常走出別人想不到的閒著",story:"小時候家裡窮，替人放牛，偷偷跑到佛寺裡，坐在佛像膝上就著長明燈讀書。他畫的墨梅只用淡墨，題詩說不要人家誇顏色好，「只留清氣滿乾坤」。他說下棋也一樣，不求贏得漂亮，只求每一步都乾淨。"}};
+function secretBio(x){const B=SECRET_BIO[x.id];if(!B)return"";
+  return`<div class="sbio"><div class="muted" style="font-size:13px">${esc(x.name)}・${esc(B.y)}・${esc(B.from)}</div><div style="font-size:13.5px;margin-top:2px">${esc(x.who)}</div>
+    <div class="sbio-r"><span>喜好</span><b>${esc(B.like)}</b></div><div class="sbio-r"><span>開局</span><b>${esc(B.op)}</b></div><div class="sbio-r"><span>中局</span><b>${esc(B.mid)}</b></div>
+    <details style="margin-top:6px"><summary>📜 他的故事</summary><p style="line-height:1.8;margin:6px 0 0">${esc(B.story)}</p></details></div>`}
+const secretSheet=x=>sheet(`${x.ic} ${x.name}`,b=>{b.innerHTML=secretBio(x)+`<p class="muted" style="margin-top:8px">${esc(x.say)}</p><button class="btn" id="sgi" style="width:100%">🏮 去驛站找他下棋</button>`;b.querySelector("#sgi").onclick=()=>{closeSheet();location.hash="#/journey/inn"}});
 const secretLv=x=>Math.max(1,Math.min(5,Math.min(4,1+Math.floor(xpInfo().L/8))+(x.off||0))),secretXP=x=>40+20*secretLv(x);
 /* 意見回饋 315：秘境的位置每個玩家都不一樣——第一次用到時，隨機把每位秘境棋友分到不同朝代公園的不同物件上 */
 const SPOT_OBJ={tree1:"樹",tree2:"老樹",cup:"茶杯",bench:"長凳",stool:"石凳",lantern:"燈籠",table:"石桌"};
@@ -3259,7 +3273,7 @@ function innSheet(v){setTimeout(innDrop,1200);setTop("🏮 驛站","#/journey");
   v.querySelector("#toPark").onclick=()=>travel("park",()=>{location.hash="#/journey/park"});
   v.querySelectorAll("[data-inn]").forEach(b=>b.onclick=()=>{const x=INN.concat(SECRETS).find(z=>z.id===b.dataset.inn);if(!x||(SECRETS.includes(x)&&!Sx[x.id]))return;
     const lv=x.who?secretLv(x):x.lv,xp=x.who?secretXP(x):x.xp;
-    sheet(`${x.ic} ${x.name}`,c=>{c.innerHTML=`<p style="font-size:16px;line-height:1.8">${esc(x.say)}</p><p class="muted">${x.who?esc(x.who)+"。":""}第 ${lv} 級的實力。贏了 +${xp} 修為（另加對局修為），輸了也有對局修為。</p><button class="btn" id="ig" style="width:100%">⚔ 下一盤</button>`;
+    sheet(`${x.ic} ${x.name}`,c=>{c.innerHTML=`${x.who?secretBio(x):""}<p style="font-size:16px;line-height:1.8">${esc(x.say)}</p><p class="muted">第 ${lv} 級的實力。贏了 +${xp} 修為（另加對局修為），輸了也有對局修為。</p><button class="btn" id="ig" style="width:100%">⚔ 下一盤</button>`;
       c.querySelector("#ig").onclick=async()=>{closeSheet();try{store.set("cpuRanked",false);store.set("cpuCar",false);await api("/play/new",{human:"r",level:lv,journey:"inn:"+x.id});const st=await api("/play/state");store.set("jPending",{id:"inn:"+x.id,game:st.id});location.hash="#/cpu";setTimeout(()=>toast(`${x.ic} ${x.name}：${x.say}`),500)}catch(e){toast(e.message)}}})});
   return{}}
 /* 意見回饋 327：石桌往事的棋（雲河棋路、驛站、公園）自己留一盤，跟朝代擂台、挑戰電腦互不干擾 */
