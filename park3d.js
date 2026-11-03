@@ -900,7 +900,14 @@
     const opp=actor(new T.Group(),mkBub(4.4,3.2,-9.2,6.2));opp.g.position.set(0,SY-.9,BZ+1.0);opp.g.scale.setScalar(4.1);sc.add(opp.g);
     // 意見回饋 218：小帥坐在我這一側、棋盤左前角外的桌面上，面向我、身體往後仰一點（鏡頭在上方，這樣看得到臉）；
     // 之前 sc.add 被寫進註解裡，小帥根本沒出現。位置在棋盤框外，不會擋到棋子
-    const mate=actor(new T.Group(),mkBub(-.8,2.3,6.9,3.4));mate.g.position.set(-3.6,0,7.05);mate.g.rotation.set(-.6,.25,0,"YXZ");mate.g.scale.setScalar(1.1);sc.add(mate.g);
+    /* 意見回饋 362：小帥改坐在自己的木椅上（桌子外緣、棋盤左前角旁），不再坐在桌面上；椅背在他身後（靠桌子那側），座面比桌面低一點 */
+    const MSEAT=-.35,MX=-3.7,MZ=7.6;
+    {const wood=M(0x7A4A25,{roughness:.6}),dark=M(0x4E2E16,{roughness:.6}),ch=new T.Group();
+      const box=(w,h,d,x,y,z,m)=>{const b=new T.Mesh(new T.BoxGeometry(w,h,d),m);b.position.set(x,y,z);b.castShadow=true;b.receiveShadow=true;ch.add(b)};
+      box(2.7,.32,2.5,0,MSEAT-.16,0,wood);for(const[x,z]of[[-1.15,-1.05],[1.15,-1.05],[-1.15,1.05],[1.15,1.05]])box(.28,MSEAT-GY,.28,x,(MSEAT+GY)/2,z,dark);
+      box(2.7,1.3,.26,0,MSEAT+.65,-1.12,wood);box(2.9,.22,.34,0,MSEAT+1.33,-1.12,dark);
+      ch.position.set(MX,0,MZ);ch.rotation.y=.25;sc.add(ch)}
+    const mate=actor(new T.Group(),mkBub(-.8,2.3,6.9,3.4));mate.g.position.set(MX,MSEAT,MZ);mate.g.rotation.set(-.35,.25,0,"YXZ");mate.g.scale.setScalar(1.1);sc.add(mate.g);
     let oppKey="",watchKey="",watchers=[];const watchG=new T.Group();sc.add(watchG);
     const SPOTS=[-31,31,-47,47,-66,66,-90,90].map(d=>d*PI/180),plinthM=M(0x8F8A80,{roughness:.9});
     const setWatchers=list=>{list=(list||[]).slice(0,8);const k=JSON.stringify(list);if(k===watchKey)return;watchKey=k;watchG.clear();watchers=[];
@@ -927,8 +934,8 @@
       for(const ps of POSES){const src=base+((look.spriteMap&&look.spriteMap[ps])||ps)+".webp",   /* 擂主只有 idle、think、move、win、lose：用 spriteMap 對到 Pikafish 的六種姿勢 */im=loadImg(src,()=>{ims[ps]=imgCache[src];done()});if(im){ims[ps]=im;done()}}};
     const setOpp=look=>{const k=JSON.stringify(look||null);if(k===oppKey)return;oppKey=k;killSpr();if(!look){opp.g.clear();opp.B=null;return}buildActor(opp,look);if(look.sprite&&look.spriteMeta||look.thin){opp.g.visible=false;setTimeout(()=>{if(oppKey===k&&!oppSpr)opp.g.visible=true},6000)}if(look.sprite&&look.spriteMeta)makeSpr(look)};
     // 我這一側的小帥：平常是自己的；觀戰時換成棋盤近端那一方玩家的小帥（意見回饋 259）
-    let mateKey=null;const setMate=look=>{const k=JSON.stringify(look||null);if(k===mateKey)return;mateKey=k;mate.g.position.y=0;mate.g.userData.y0=null;
-      buildActor(mate,look||{});try{mate.g.updateMatrixWorld(true);const b=new T.Box3().setFromObject(mate.g);mate.g.position.y-=b.min.y-.02}catch(e){}};   // 坐在桌面上（桌面 y=0）
+    let mateKey=null;const setMate=look=>{const k=JSON.stringify(look||null);if(k===mateKey)return;mateKey=k;mate.g.position.y=MSEAT;mate.g.userData.y0=null;
+      buildActor(mate,look||{});try{mate.g.updateMatrixWorld(true);const b=new T.Box3().setFromObject(mate.g);mate.g.position.y-=b.min.y-(MSEAT+.02)}catch(e){}};   // 坐在自己的椅子上（座面 y=MSEAT）
     setMate(null);
     const say=(t,d)=>mate.say(t,d);
     // 意見回饋 248：分出勝負時兩邊都有 5 秒的勝負動畫（endT 倒數；oppRes／mateRes＝win、lose、draw）

@@ -111,8 +111,21 @@ var XQ=(function(){
     pushGame("play",{id:P.id,date:P.id.slice(0,10),level:P.level,ranked:!!P.ranked,reward:!!P.reward,rk:P.rk,human:P.human,result:P.result,moves:saveMoves(P.moves)});savePlay()}
   async function analyzePlay(){if(paBusy||!P)return;paBusy=true;try{await analyzeList(P,savePlay,()=>!!P&&!P.result&&P.turn!==P.human)}finally{paBusy=false}}
   const ucis=()=>P.moves.map(m=>iccs(m.f,m.t));
+  /* 意見回饋 363：秘境棋友的開局喜好是真的——跟他下時，這盤有 90% 機率照他愛下的開局走前一兩步（紅方、黑方各一套），之後才交給 Pikafish */
+  const STYLE={
+    liuji:{r:[["h2e2","b2e2"]],b:[["h7e7","b7e7"]]},                               // 劉伯溫：中炮（後手就還中炮）
+    zhangsanfeng:{r:[["b0c2","h0g2"],["h0g2","b0c2"]],b:[["b9c7","h9g7"],["h9g7","b9c7"]]},   // 張三丰：屏風馬（起馬局）
+    shinaian:{r:[["c3c4","g3g4"]],b:[["g6g5","c6c5"]]},                           // 施耐庵：仙人指路（進七兵／卒）
+    shenwansan:{r:[["g0e2","c0e2"]],b:[["c9e7","g9e7"]]},                         // 沈萬三：飛相局
+    changyuchun:{r:[["h2e2"],["h0g2"]],b:[["h7e7"],["h9g7"]]},                     // 常遇春：順炮直衝
+    wangmian:{r:[["h2d2","b2f2"]],b:[["b7f7","h7d7"]]}};                          // 王冕：過宮炮
+  function styleMove(){if(!P.journey||!String(P.journey).startsWith("inn:")||P.practice)return null;const S=STYLE[String(P.journey).slice(4)];if(!S)return null;
+    if(P.styleOn==null)P.styleOn=Math.random()<.9;if(!P.styleOn)return null;
+    const list=(S[P.turn]||[])[Math.floor(P.moves.length/2)];if(!list)return null;const L=legal(P.board,P.turn);
+    for(const u of list){const f=parseSq(u.slice(0,2)),t=parseSq(u.slice(2,4));if(L.some(([a,b])=>a===f&&b===t))return[f,t]}return null}
   async function playEngine(){
     if(!P||P.result||P.turn===P.human||playBusy)return;
+    {const sm=styleMove();if(sm){playBusy=true;setTimeout(()=>{try{if(P&&!P.result&&P.turn!==P.human)playApply(sm[0],sm[1])}finally{playBusy=false;setTimeout(playEngine,0)}},700);return}}
     playBusy=true;const id=P.id,n=P.moves.length,lv=P.ranked?RLV[P.rk]||RLV[0]:LEVELS[P.level-1]||LEVELS[2];
     try{const r=await XQEngine.search({moves:ucis()},lv.movetime?{movetime:lv.movetime}:{depth:lv.depth},lv.multipv||1);
       if(!P||P.id!==id||P.moves.length!==n||P.result)return;
