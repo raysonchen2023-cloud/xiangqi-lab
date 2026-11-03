@@ -473,7 +473,7 @@ html[data-era=ming] .topbar,html[data-era=qing] .topbar{border-bottom-width:4px}
       if(!window.caches)return go();caches.keys().then(function(ks){return Promise.all(ks.filter(function(k){return k.indexOf("xqlab-app-")===0}).map(function(k){return caches.delete(k)}))})
         .then(function(){return navigator.serviceWorker&&navigator.serviceWorker.getRegistration()}).then(function(r){return r&&r.update()}).catch(function(){}).then(go)}},4000)})();
 </script>
-<script>window.XQ_OFFLINE=true;window.XQ_BUILD="20261103-1810";</script>
+<script>window.XQ_OFFLINE=true;window.XQ_BUILD="20261103-1814";</script>
 <script src="core.js"></script>
 <script src="engine.js"></script>
 <script src="local.js"></script>
@@ -3455,7 +3455,7 @@ function CpuGame(v,practicePage){
   // 意見回饋 273：上方列精簡——🏯 只在公園裡出現（擂台本來就在公園），返回鍵已經是回首頁所以不放 🏠；切公園時整列重畫
   const topBar=()=>{const lk=!!(typeof st!=="undefined"&&st&&st.arena&&!st.result),pr=!!(st&&st.practice);
     /* 意見回饋 335：錯棋重練是自己的頁面——標題寫「錯棋重練」，上面沒有積分／自選／擂台／公園，返回回到錯棋清單 */
-    setTop(pr?(st.practice.drill?"🎯 "+(st.practice.title||"練習"):"🔁 錯棋重練"):"挑戰電腦",pr?(st.practice.drill?"#/":"#/redo"):st&&st.journey?jBack(st.journey):"#/",pr?[]:[arenaBtn,...(OFF&&parkOn()&&!lk?[["🏮",()=>travel("inn",()=>location.hash="#/journey/inn"),"走荒野小徑去驛站"]]:[]),...(lk?[]:[parkBtn(()=>{draw();topBar()})])].concat(vcOn()?[["🎤",()=>voiceMove(()=>!st||st.result?{why:"這盤已經結束"}:st.turn!==st.human||st.thinking?{why:"還沒輪到你"}:{board:st.board,legal:st.legal,play:(f,t)=>{sel=-1;post("/play/move",{f,t})}}),"聲控走棋"]]:[]));
+    setTop(pr?(st.practice.drill?"🎯 "+(st.practice.title||"練習"):"🔁 錯棋重練"):"挑戰電腦",pr?(st.practice.drill?"#/":"#/redo"):st&&st.journey?jBack(st.journey):"#/",pr?[]:[/* 意見回饋 346：挑戰電腦看不到擂台、驛站的入口——🏯 只在擂台那盤出現（換擂主）、🏮 只在石桌往事的公園出現 */...(st&&st.arena?[arenaBtn]:[]),...(OFF&&parkOn()&&!lk&&st&&st.journey==="park"?[["🏮",()=>travel("inn",()=>location.hash="#/journey/inn"),"走荒野小徑去驛站"]]:[]),...(lk?[]:[parkBtn(()=>{draw();topBar()})])].concat(vcOn()?[["🎤",()=>voiceMove(()=>!st||st.result?{why:"這盤已經結束"}:st.turn!==st.human||st.thinking?{why:"還沒輪到你"}:{board:st.board,legal:st.legal,play:(f,t)=>{sel=-1;post("/play/move",{f,t})}}),"聲控走棋"]]:[]));
     try{if(seg&&!pr){const t=$("#title");t.textContent="";t.append(seg)}}catch(e){}};   /* 第一次呼叫時 seg 還沒建立 */
   topBar();
   /* 首頁「🏯 朝代擂台」帶過來的：直接打開擂台（意見回饋 276） */
