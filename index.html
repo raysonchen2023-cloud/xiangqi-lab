@@ -475,7 +475,7 @@ html[data-era=ming] .topbar,html[data-era=qing] .topbar{border-bottom-width:4px}
       if(!window.caches)return go();caches.keys().then(function(ks){return Promise.all(ks.filter(function(k){return k.indexOf("xqlab-app-")===0}).map(function(k){return caches.delete(k)}))})
         .then(function(){return navigator.serviceWorker&&navigator.serviceWorker.getRegistration()}).then(function(r){return r&&r.update()}).catch(function(){}).then(go)}},4000)})();
 </script>
-<script>window.XQ_OFFLINE=true;window.XQ_BUILD="20261103-2027";</script>
+<script>window.XQ_OFFLINE=true;window.XQ_BUILD="20261103-2102";</script>
 <script src="core.js"></script>
 <script src="engine.js"></script>
 <script src="local.js"></script>
@@ -2554,7 +2554,18 @@ function Settings(v){
       <div class="row" style="justify-content:space-between"><span class="muted">App</span><b>象棋研究室</b></div>
       <div class="row" style="justify-content:space-between"><span class="muted">開發者</span><b>hungshengc</b></div>
       <div class="row" style="justify-content:space-between"><span class="muted">開始開發</span><b>2026 年 10 月 29 日</b></div>
-      <div class="row" style="justify-content:space-between"><span class="muted">版本</span><b>${esc(window.XQ_BUILD&&!/__BUILD__/.test(window.XQ_BUILD)?window.XQ_BUILD:"開發中")}</b></div></div>
+      <div class="row" style="justify-content:space-between"><span class="muted">版本</span><b>${esc(window.XQ_BUILD&&!/__BUILD__/.test(window.XQ_BUILD)?window.XQ_BUILD:"開發中")}</b></div>
+      ${DEVMODE()?`<details style="margin-top:4px"><summary class="muted">${/* 意見回饋 355：開發者模式才看得到 */""}🛠 用了哪些語言寫的（開發者）</summary>
+        <table class="st-lv" style="font-size:13px;margin-top:6px"><tr><th>語言</th><th>用在哪裡</th></tr>
+        <tr><td>JavaScript</td><td>App 主程式、離線的對局和棋譜資料庫、線上大廳、3D 公園（three.js）</td></tr>
+        <tr><td>HTML／CSS</td><td>所有畫面的版面、顏色、動畫</td></tr>
+        <tr><td>C++ → WebAssembly</td><td>Pikafish 象棋引擎，編成 WebAssembly 在手機的瀏覽器裡跑</td></tr>
+        <tr><td>Node.js（JavaScript）</td><td>建置網站、大廳 20 位常駐角色、出題、妙棋搜尋、難度校正</td></tr>
+        <tr><td>Python</td><td>Gemini 出圖、棋譜資料整理</td></tr>
+        <tr><td>PowerShell</td><td>Windows 上的啟動和出圖腳本</td></tr>
+        <tr><td>Google Apps Script</td><td>意見回饋管理頁（接 Google 表單和試算表）</td></tr>
+        <tr><td>JSON</td><td>棋譜、題庫、故事、朝代資料</td></tr></table>
+        <div class="muted" style="font-size:12px;margin-top:4px">線上大廳用 MQTT 通訊協定連線；Pikafish 的神經網路權重另外下載。</div></details>`:""}</div>
     ${OFF?'<div class="sec-t">進階</div><div class="card"><label class="row" style="justify-content:space-between"><span><b>開發者模式</b><br><span class="muted">一般玩家不用打開。打開後才會顯示連線電腦、AI 對戰等開發者功能</span></span><input type="checkbox" class="sw" id="dm"></label></div>'
       +(DEVMODE()?'<div class="items" style="padding:0;margin-top:8px"><button class="item" id="fa"><span class="lb">📋</span><span class="tx"><b>意見回饋管理</b><span>看所有回饋和截圖，決定玩家的回饋要不要修</span></span><span class="muted">›</span></button><button class="item" id="cn"><span class="lb">🖥</span><span class="tx"><b>連線到開發者的電腦</b><span>看 AI 對戰、同步大師棋譜</span></span><span class="muted">›</span></button><button class="item" id="rb"><span class="lb">🔄</span><span class="tx"><b>重置虛擬玩家</b><span>20 位棋友的積分、戰績、練習紀錄歸零；舊資料留在電腦上</span></span><span class="muted">›</span></button></div>':""):""}</div></div>`;
   let tbRefresh=()=>{};
