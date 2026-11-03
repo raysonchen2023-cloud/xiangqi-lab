@@ -471,7 +471,7 @@ html[data-era=ming] .topbar,html[data-era=qing] .topbar{border-bottom-width:4px}
       if(!window.caches)return go();caches.keys().then(function(ks){return Promise.all(ks.filter(function(k){return k.indexOf("xqlab-app-")===0}).map(function(k){return caches.delete(k)}))})
         .then(function(){return navigator.serviceWorker&&navigator.serviceWorker.getRegistration()}).then(function(r){return r&&r.update()}).catch(function(){}).then(go)}},4000)})();
 </script>
-<script>window.XQ_OFFLINE=true;window.XQ_BUILD="20261103-1658";</script>
+<script>window.XQ_OFFLINE=true;window.XQ_BUILD="20261103-1702";</script>
 <script src="core.js"></script>
 <script src="engine.js"></script>
 <script src="local.js"></script>
@@ -1272,7 +1272,7 @@ function setTop(title,back,right){$("#title").textContent=title;$("#back").hidde
 function setTabs(show,on){$("#tabbar").hidden=!show;for(const b of $("#tabbar").children)b.classList.toggle("on",b.dataset.go===on)}
 for(const b of $("#tabbar").children)b.onclick=()=>{vibrate(5);location.hash=b.dataset.go};
 function route(){
-  closeSheet();if(screen&&screen.stop)screen.stop();screen=null;
+  closeSheet();if(screen&&screen.stop)screen.stop();screen=null;PARK_OFF=false;
   const v=$("#view");v.className="view";v.innerHTML="";v.scrollTop=0;
   if(window.XQ&&XQ.parseConnect&&location.hash.startsWith("#connect=")){XQ.parseConnect();route();if(!myName())setTimeout(()=>nameSheet(true),500);return}   // 離線版：掃 QR code 帶來的連線資訊
   const h=location.hash.replace(/^#/,"")||"/",p=h.split("/").filter(Boolean).map(decodeURIComponent);
@@ -2985,7 +2985,8 @@ function parkLook(){const k=store.get("era","classic"),e=curEra(),T=boardTheme(e
   if(GLY_ERAS.has(k)&&!GLY[k])needGly(k,()=>{try{const a=PARK&&PARK.last;if(a&&GLY[k]&&store.get("era","classic")===k){a.ex.look=parkLook();PARK.v.draw(a.board,a.o,a.ex)}}catch(e){}});
   return{k,img:bk?`data/boards/${BOARD_IMG_FILE[bk]||bk}.webp`:null,rect:bk?BOARD_IMG[bk]:null,grid:T&&T.grid||"#3A1D0A",
     pieces:PIECE_INK[k]?{r:`data/pieces/${k}-r.webp`,b:`data/pieces/${k}-b.webp`}:null,ink:PIECE_INK[k]||null,gly:GLY[k]||null,bold:GLY_BOLD[k]||0}}
-let PARK=null,PARK_LOADING=null;const parkOn=()=>store.get("park3d",false);
+/* 意見回饋 334：錯棋重練一律用棋盤模式（PARK_OFF），不改玩家原本的公園設定 */
+let PARK=null,PARK_LOADING=null,PARK_OFF=false;const parkOn=()=>!PARK_OFF&&store.get("park3d",false);
 const botVis=on=>document.querySelectorAll(".xqbot").forEach(x=>x.style.visibility=on?"":"hidden");
 function parkLoad(){const v="?v="+encodeURIComponent(window.XQ_BUILD||"");return PARK_LOADING||(PARK_LOADING=(async()=>{await loadScript(OFF?"three.min.js":"/m/three.min.js");
   await loadScript((OFF?"bot3d.js":"/m/bot3d.js")+v);await loadScript((OFF?"park3d.js":"/m/park3d.js")+v)})().catch(e=>{PARK_LOADING=null;throw e}))}
@@ -3450,9 +3451,10 @@ function CpuGame(v){
     store.set("cpuRanked",false);store.set("cpuCar",false);shownResult=null;sel=-1;post("/play/new",{human:"r",level:lv,arena:era}).then(()=>{toast(`🏯 ${ARENA[era].name}：${ARENA[era].hi}`)})};
   const arenaBtn=["🏯",()=>{const go=()=>arenaSheet(store.get("era","classic"),arenaStart);if(!parkOn()){store.set("park3d",true);toast("🌳 朝代擂台在公園裡，帶你過去");draw();topBar();setTimeout(go,400)}else go()},"朝代擂台"];
   // 意見回饋 273：上方列精簡——🏯 只在公園裡出現（擂台本來就在公園），返回鍵已經是回首頁所以不放 🏠；切公園時整列重畫
-  const topBar=()=>{const lk=!!(typeof st!=="undefined"&&st&&st.arena&&!st.result);
-    setTop("挑戰電腦",st&&st.journey?jBack(st.journey):"#/",[arenaBtn,...(OFF&&parkOn()&&!lk?[["🏮",()=>travel("inn",()=>location.hash="#/journey/inn"),"走荒野小徑去驛站"]]:[]),...(lk?[]:[parkBtn(()=>{draw();topBar()})])].concat(vcOn()?[["🎤",()=>voiceMove(()=>!st||st.result?{why:"這盤已經結束"}:st.turn!==st.human||st.thinking?{why:"還沒輪到你"}:{board:st.board,legal:st.legal,play:(f,t)=>{sel=-1;post("/play/move",{f,t})}}),"聲控走棋"]]:[]));
-    try{if(seg){const t=$("#title");t.textContent="";t.append(seg)}}catch(e){}};   /* 第一次呼叫時 seg 還沒建立 */
+  const topBar=()=>{const lk=!!(typeof st!=="undefined"&&st&&st.arena&&!st.result),pr=!!(st&&st.practice);
+    /* 意見回饋 335：錯棋重練是自己的頁面——標題寫「錯棋重練」，上面沒有積分／自選／擂台／公園，返回回到錯棋清單 */
+    setTop(pr?"🔁 錯棋重練":"挑戰電腦",pr?"#/redo":st&&st.journey?jBack(st.journey):"#/",pr?[]:[arenaBtn,...(OFF&&parkOn()&&!lk?[["🏮",()=>travel("inn",()=>location.hash="#/journey/inn"),"走荒野小徑去驛站"]]:[]),...(lk?[]:[parkBtn(()=>{draw();topBar()})])].concat(vcOn()?[["🎤",()=>voiceMove(()=>!st||st.result?{why:"這盤已經結束"}:st.turn!==st.human||st.thinking?{why:"還沒輪到你"}:{board:st.board,legal:st.legal,play:(f,t)=>{sel=-1;post("/play/move",{f,t})}}),"聲控走棋"]]:[]));
+    try{if(seg&&!pr){const t=$("#title");t.textContent="";t.append(seg)}}catch(e){}};   /* 第一次呼叫時 seg 還沒建立 */
   topBar();
   /* 首頁「🏯 朝代擂台」帶過來的：直接打開擂台（意見回饋 276） */
   {const oa=store.get("openArena",0);if(oa){store.set("openArena",0);if(Date.now()-oa<15000)setTimeout(()=>{try{arenaBtn[1]()}catch(e){}},700)}}
@@ -3480,7 +3482,8 @@ function CpuGame(v){
   // 意見回饋 274：擂台賽下到結束前只能在公園裡（不能切回棋盤模式）；結束後按鈕恢復
   let arenaLock=null,jKey=null;
   function render(s){const n0=lastN;st=s;lastN=s.moves.length;if(s.arena&&!s.result&&!parkOn()){store.set("park3d",true);setTimeout(()=>{draw();topBar()},0)}/* 意見回饋 319：朝代擂台的棋一律在公園 3D 裡 */if(!st.legal.some(([f])=>f===sel))sel=-1;
-    const lk=!!(st.arena&&!st.result);if(lk&&!parkOn())store.set("park3d",true);if(lk!==arenaLock||(st.journey||null)!==jKey){arenaLock=lk;jKey=st.journey||null;topBar()}draw();
+    const lk=!!(st.arena&&!st.result);if(lk&&!parkOn())store.set("park3d",true);const pr=!!st.practice;if(pr!==PARK_OFF){PARK_OFF=pr;arenaLock=null}
+    if(lk!==arenaLock||(st.journey||null)!==jKey){arenaLock=lk;jKey=st.journey||null;topBar()}draw();
     if(n0!=null&&lastN===n0+1&&!st.practice){const cue=openingCue(st.moves);if(cue)setTimeout(()=>openFx(bd.svg,cue[1],cue[0]),350)}
     const lv=st.levels[st.level-1]||{},me=st.human,bot=opp(me);
     const CR=st.cpuRate||{},CB=st.car||{},cpts=st.reward?(CB.table||[])[st.level-1]||0:0;paintSeg(modeOf(st));if(!st.ranked&&st.level&&!st.practice)store.set("cpuLevel",st.level);
