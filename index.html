@@ -429,7 +429,7 @@ html[data-era=ming] .topbar,html[data-era=qing] .topbar{border-bottom-width:4px}
       if(!window.caches)return go();caches.keys().then(function(ks){return Promise.all(ks.filter(function(k){return k.indexOf("xqlab-app-")===0}).map(function(k){return caches.delete(k)}))})
         .then(function(){return navigator.serviceWorker&&navigator.serviceWorker.getRegistration()}).then(function(r){return r&&r.update()}).catch(function(){}).then(go)}},4000)})();
 </script>
-<script>window.XQ_OFFLINE=true;window.XQ_BUILD="20261103-0756";</script>
+<script>window.XQ_OFFLINE=true;window.XQ_BUILD="20261103-0801";</script>
 <script src="core.js"></script>
 <script src="engine.js"></script>
 <script src="local.js"></script>
@@ -1400,20 +1400,27 @@ function Lobby(v){setTop("線上大廳",false,[["📤",shareSheet,"分享給朋�
   v.innerHTML='<div class="pad" id="lb"></div>';
   const ST={idle:"閒置中",playing:"對戰中",watching:"觀戰中",seeking:"🎲 正在找對手"};
   function paint(){const box=v.querySelector("#lb");if(!box)return;const ps=XQNet.people(),up=XQNet.status()==="up";
-    const games={};for(const p of ps)if(p.st==="playing"&&p.gid&&p.gid!==XQNet.gid())(games[p.gid]=games[p.gid]||[]).push(p);
+    /* 意見回饋 286：按「對局」分組——每盤列出雙方和誰在觀戰；閒著的棋友另外一區。觀戰過的對局不會再被藏起來 */
+    const games={},watchers={};for(const p of ps)if(p.st==="playing"&&p.gid)(games[p.gid]=games[p.gid]||[]).push(p);
+    for(const p of ps)if(p.st==="watching"&&p.gid)(watchers[p.gid]=watchers[p.gid]||[]).push(p);
+    const free=ps.filter(p=>p.st!=="playing"&&!(p.st==="watching"&&p.gid&&games[p.gid]));
     box.innerHTML=`<div class="card"><div class="row" style="justify-content:space-between"><span>我是 <b>${esc(XQNet.me().name)}</b></span><button class="pill" id="ed">✏ 改名字</button></div>
         <div class="row" style="justify-content:space-between;margin-top:6px"><span class="muted">${up?"🟢 已進入大廳":"⏳ 連線到大廳中…"}</span><button class="pill" id="rk">🏅 ${esc(XQNet.rating().rank)}・${XQNet.rating().pts} 分</button></div>
         ${XQNet.tc?`<div class="row" style="justify-content:space-between;margin-top:6px"><span class="muted">對局時制（雙方不同取較短的）</span><button class="pill" id="tcp">⏱ 每方 ${XQNet.tc()} 分鐘</button></div>`:""}</div>
       ${XQNet.playing()?'<button class="btn" id="back" style="margin-top:10px">♟ 回到我進行中的對局</button>'
         :XQNet.seeking()?`<div class="card" style="margin-top:10px;text-align:center"><div style="font-size:30px">🎲</div><b>正在幫你找對手…</b><div class="muted">${XQNet.seekers()?`另外有 ${XQNet.seekers()} 人也在找，馬上配對`:"有人按「隨機配對」就會自動開始"}</div><button class="btn ghost" id="sk0" style="margin-top:8px">取消</button></div>`
         :'<button class="btn" id="sk1" style="margin-top:10px">🎲 隨機配對（自動找一位線上對手）</button>'}
-      ${(()=>{const G=XQNet.playing()&&XQNet.game(),mine=G?`<div class="card row" id="myg" style="justify-content:space-between;margin-bottom:8px;cursor:pointer;border:2px solid var(--accent);background:color-mix(in srgb,var(--accent) 12%,var(--card))"><span><b style="color:var(--accent)">🔥 我的對局</b>　${esc(G.red.name)} 對 ${esc(G.black.name)}</span><button class="pill" style="background:var(--accent);color:#fff;border:none;padding:6px 12px">⚔ 回到戰場</button></div>`:"",
-        rest=Object.entries(games).filter(([g])=>!G||g!==G.gid);   // 意見回饋 267：自己的對局也列在「正在對戰」最上面、用特別顏色標出來，點了回到戰場
-        return mine||rest.length?`<div class="sec-t">正在對戰</div>`+mine+rest.map(([g,l])=>`<div class="card row" style="justify-content:space-between;margin-bottom:8px"><span>⚔ ${l.map(p=>esc(p.name)).join(" 對 ")}</span><button class="pill" data-w="${esc(g)}">👀 觀看</button></div>`).join(""):""})()}
-      <div class="sec-t">在線棋友（${ps.length}）</div>
-      ${ps.length?ps.map(p=>`<div class="card row" data-p="${esc(p.id)}" style="justify-content:space-between;margin-bottom:8px;cursor:pointer"><span><b>${esc(p.name)}</b> <span class="pill">${esc(XQNet.rankOf(p.pts))}</span>${p.tc?` <span class="muted" style="font-size:12px">⏱${+p.tc}分</span>`:""} <span class="muted" style="font-size:12px">ⓘ</span><br><span class="muted">${ST[p.st]||""}${p.city?"・📍"+esc(p.city):""}</span></span>
-        ${p.st==="idle"||p.st==="seeking"?`<button class="pill" data-i="${esc(p.id)}" style="background:var(--accent);color:#fff;border:none;padding:6px 12px">⚔ 邀請對戰</button>`:p.st==="playing"&&p.gid?`<button class="pill" data-w="${esc(p.gid)}" title="點一下觀戰">⚔ 對戰中</button>`:p.st==="watching"&&p.gid?`<button class="pill" data-w="${esc(p.gid)}">👀 觀戰中</button>`:""}</div>`).join("")
-        :`<div class="card muted">${up?"目前只有你在線上。請朋友打開象棋研究室（按右上角 📤 分享），他們就會出現在這裡。":"連線中…"}</div>`}
+      ${(()=>{const G=XQNet.playing()&&XQNet.game(),pn=p=>`<span data-p="${esc(p.id)}" style="cursor:pointer"><b>${esc(p.name)}</b> <span class="pill" style="font-size:11px;padding:0 6px">${esc(XQNet.rankOf(p.pts))}</span></span>`;
+        const mine=G?`<div class="card" id="myg" style="margin-bottom:8px;cursor:pointer;border:2px solid var(--accent);background:color-mix(in srgb,var(--accent) 12%,var(--card))"><div class="row" style="justify-content:space-between"><b style="color:var(--accent)">🔥 我的對局</b><button class="pill" style="background:var(--accent);color:#fff;border:none;padding:6px 12px">⚔ 回到戰場</button></div><div style="margin-top:4px">${esc(G.red.name)} 對 ${esc(G.black.name)}</div></div>`:"";
+        const rest=Object.entries(games).filter(([g])=>!G||g!==G.gid);
+        const card=([g,l])=>{const w=watchers[g]||[],watching=XQNet.gid&&XQNet.gid()===g&&!G;
+          return `<div class="card" style="margin-bottom:8px${watching?";border:2px solid var(--accent2)":""}"><div class="row" style="justify-content:space-between;gap:8px"><span style="min-width:0">⚔ ${l.map(pn).join(" 對 ")}${l.length<2?' <span class="muted">對 （對手暫時不在大廳）</span>':""}</span><button class="pill" data-w="${esc(g)}" style="flex:none">👀 ${watching?"回去看":"觀看"}</button></div>
+            ${w.length?`<div class="muted" style="font-size:12.5px;margin-top:4px">👀 ${w.length} 人在看：${w.map(p=>`<span data-p="${esc(p.id)}" style="cursor:pointer;text-decoration:underline dotted">${esc(p.name)}</span>`).join("、")}</div>`:""}</div>`};
+        return (mine||rest.length?`<div class="sec-t">⚔ 正在對戰（${rest.length+(G?1:0)} 盤）</div>`+mine+rest.map(card).join(""):"")+
+          `<div class="sec-t">🟢 可以邀請的棋友（${free.filter(p=>p.st==="idle"||p.st==="seeking").length}）</div>`+
+          (free.length?free.map(p=>`<div class="card row" data-p="${esc(p.id)}" style="justify-content:space-between;margin-bottom:8px;cursor:pointer"><span><b>${esc(p.name)}</b> <span class="pill">${esc(XQNet.rankOf(p.pts))}</span>${p.tc?` <span class="muted" style="font-size:12px">⏱${+p.tc}分</span>`:""} <span class="muted" style="font-size:12px">ⓘ</span><br><span class="muted">${ST[p.st]||""}${p.city?"・📍"+esc(p.city):""}</span></span>
+            ${p.st==="idle"||p.st==="seeking"?`<button class="pill" data-i="${esc(p.id)}" style="background:var(--accent);color:#fff;border:none;padding:6px 12px">⚔ 邀請對戰</button>`:""}</div>`).join("")
+          :`<div class="card muted">${up?(rest.length?"大家都在對戰或觀戰中，可以先去看一盤，或按上面「隨機配對」等人。":"目前只有你在線上。請朋友打開象棋研究室（按右上角 📤 分享），他們就會出現在這裡。"):"連線中…"}</div>`)})()}
       <p class="muted" style="font-size:12px;margin-top:14px">對局時制可在上面選（預設每方 15 分鐘，雙方選的不同就用比較短的），時間用完判負；另外每步最多 3 分鐘，超過也判負（離開或斷線太久也算）。大廳透過免費的公開伺服器連線。只會傳名字、大概的城市（由網路位置推估，可在設定關掉）和棋步，不要把名字取成個人資料。App 切到背景時會暫時離線。</p>`;
     box.querySelector("#ed").onclick=()=>nameSheet(false);
     {const tp=box.querySelector("#tcp");if(tp)tp.onclick=()=>sheet("⏱ 對局時制",b=>{b.innerHTML=`<p class="muted" style="margin:0 0 10px">每一方的總思考時間。開局時跟對手比，雙方選的不同就用比較短的；沒選就是 15 分鐘。另外每一步最多 3 分鐘。</p><div class="items" style="padding:0">${[[5,"快棋"],[10,"快棋"],[15,"預設・常見比賽"],[20,"慢一點"],[30,"慢棋"]].map(([m,l])=>`<button class="item" data-tc="${m}"><span class="lb">${XQNet.tc()===m?"✅":"⏱"}</span><span class="tx"><b>每方 ${m} 分鐘</b><span>${l}</span></span></button>`).join("")}</div>`;
