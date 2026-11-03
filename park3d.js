@@ -959,7 +959,7 @@
         const mine=(s==="r")===flip;   // 意見回饋 232：被吃的棋子放在吃子那一方的桌邊（我吃掉的對方棋子排在我這側）
         /* 縮小一點不搶棋盤的戲：對方吃到的排在棋盤後方茶杯兩邊，我吃到的排在我這側桌邊 */
         lost.forEach((p,j)=>{const g=makePiece(p);g.scale.setScalar(.8);let x,z;
-          if(mine&&!capNear){if(j<10){x=6.2;z=-4.6+j*.8}else{x=7.0;z=-3.6+(j-10)*.8}}   /* 畫面太矮、看不到我這側桌邊時：排在棋盤右邊 */
+          if(mine&&!capNear){if(j<7){x=6.2;z=4.4-j*.75}else{x=7.0;z=4.4-(j-7)*.75}}   /* 畫面太矮、看不到我這側桌邊時：排在棋盤右邊，從我這一端往中間排（意見回饋 343：以前從對方那一端排起，看起來像放在對方那邊） */
           else if(mine){const SL=[[1,6.3,5],[1,7.0,4],[-1,6.3,3],[-1,7.0,3]];let q=j,r=0;while(r<3&&q>=SL[r][2]){q-=SL[r][2];r++}x=SL[r][0]*(1.35+q*.9);z=SL[r][1]}else{   /* 意見回饋 281：我吃到的棋子排在我這側的桌邊（茶杯右邊，滿了再排左邊） */const sd=j%2?-1:1,k=j>>1;if(k<4){x=sd*(1.35+k*.95);z=-6.55}else{x=sd*(1.35+(k-4)*.78);z=-7.25}}   // 對方輸掉的棋子分排在茶杯左右兩邊
           g.position.set(x,0,z);g.rotation.y=(Math.random()-.5)*.6;captured.push(g)})}}
     function sync(board){Object.values(pieces).forEach(g=>sc.remove(g));pieces={};board.forEach((p,i)=>{if(p){const g=makePiece(p);at(g,i);pieces[i]=g}});layoutCaptured(board)}
