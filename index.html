@@ -429,7 +429,7 @@ html[data-era=ming] .topbar,html[data-era=qing] .topbar{border-bottom-width:4px}
       if(!window.caches)return go();caches.keys().then(function(ks){return Promise.all(ks.filter(function(k){return k.indexOf("xqlab-app-")===0}).map(function(k){return caches.delete(k)}))})
         .then(function(){return navigator.serviceWorker&&navigator.serviceWorker.getRegistration()}).then(function(r){return r&&r.update()}).catch(function(){}).then(go)}},4000)})();
 </script>
-<script>window.XQ_OFFLINE=true;window.XQ_BUILD="20261103-0813";</script>
+<script>window.XQ_OFFLINE=true;window.XQ_BUILD="20261103-0821";</script>
 <script src="core.js"></script>
 <script src="engine.js"></script>
 <script src="local.js"></script>
@@ -1948,8 +1948,11 @@ function oppCard(oid,name,opt){opt=opt||{};let live=null;try{live=window.XQNet&&
 /* 意見回饋 283：棋友（含虛擬玩家）公開的最近 30 盤：勝負、執紅執黑、怎麼輸的、常用開局，整理出弱點；點一盤就打開棋譜 */
 function playerGames(oid,name){sheet(`📜 ${name||"棋友"} 的線上棋譜`,async b=>{b.innerHTML='<p class="muted">從大廳讀取他的對局…</p>';
   const H=await XQNet.fetchHist(oid,5000).catch(()=>null);if(!b.isConnected)return;
-  if(!H||!H.list.length){b.innerHTML='<p class="muted" style="line-height:1.7">他還沒有公開的線上棋譜。對方更新到新版 App、再下完一盤，這裡就會出現他最近的對局。</p>';return}
-  const L=H.list,N=L.length,cnt=(a,f)=>a.filter(f).length,pc=(a,b)=>b?Math.round(a*100/b):0;
+  /* 意見回饋 289：他還沒公開（舊版 App、虛擬玩家剛更新還沒下完新的一盤）：先用你跟他下過的對局（換成他的角度）來看 */
+  const mineL=oppHist().filter(h=>h.oid===oid&&h.rid).map(h=>({gid:h.gid,id:h.rid,opp:"你",oid:"",res:h.res==="w"?"l":h.res==="l"?"w":"d",why:h.why||"",n:h.n||0,at:h.at,sd:h.sd?(h.sd==="r"?"b":"r"):null,local:1}));
+  const pub=H&&H.list.length?H.list:[],L0=pub.length?pub:mineL;
+  if(!L0.length){b.innerHTML='<p class="muted" style="line-height:1.7">他還沒有公開的線上棋譜，你也還沒跟他下過。等他下完下一盤（對方要用新版 App），這裡就會出現他最近的對局。</p>';return}
+  const L=L0,N=L.length,cnt=(a,f)=>a.filter(f).length,pc=(a,b)=>b?Math.round(a*100/b):0;
   const W=cnt(L,x=>x.res==="w"),Ls=L.filter(x=>x.res==="l"),D=cnt(L,x=>x.res==="d");
   const R=L.filter(x=>x.sd==="r"),B=L.filter(x=>x.sd==="b"),wr=a=>pc(cnt(a,x=>x.res==="w"),a.length);
   const kind=x=>/超時|時間用完|沒走/.test(x.why)?"t":/離開|離線/.test(x.why)?"x":/認輸/.test(x.why)?"r":"m";
@@ -1966,9 +1969,13 @@ function playerGames(oid,name){sheet(`📜 ${name||"棋友"} 的線上棋譜`,as
   const rl=x=>x.res==="w"?"勝":x.res==="l"?"負":"和";
   b.innerHTML=`<div class="card"><div style="display:grid;grid-template-columns:repeat(4,1fr);text-align:center">${[["勝",W,"var(--accent2)"],["負",Ls.length,"var(--red)"],["和",D,"var(--muted)"],["勝率",pc(W,N)+"%",""]].map(([l,x,c])=>`<div><div style="font-size:20px;font-weight:900;color:${c}">${x}</div><div class="muted">${l}</div></div>`).join("")}</div>
       <div class="muted" style="font-size:12.5px;margin-top:6px;text-align:center">最近 ${N} 盤${R.length||B.length?`・執紅 ${R.length} 盤勝率 ${wr(R)}%・執黑 ${B.length} 盤勝率 ${wr(B)}%`:""}</div></div>
+    ${pub.length?"":`<p class="muted" style="font-size:12.5px;margin:8px 2px 0">他還沒公開自己的對局（等他下完下一盤就會有），下面先用你跟他下過的 ${N} 盤來分析。</p>`}
     <div class="card" style="margin-top:8px"><b>🔎 弱點分析</b>${tips.map(t=>`<p style="margin:6px 0 0;line-height:1.6">・${esc(t)}</p>`).join("")}<p id="pgop" class="muted" style="margin:6px 0 0;font-size:13px">讀取開局習慣中…</p></div>
     <div class="sec-t">對局（點一盤看棋譜）</div><div class="items" style="padding:0">${L.map(x=>`<button class="item" data-g="${esc(x.gid)}" data-id="${esc(x.id)}"><span class="lb">${x.res==="w"?"🏆":x.res==="l"?"💪":"🤝"}</span><span class="tx"><b>${rl(x)}・對 ${esc(x.opp||"")}</b><span>${new Date(x.at).toLocaleDateString()}・${x.sd?"執"+(x.sd==="r"?"紅":"黑")+"・":""}${x.n||0} 步${x.why?"・"+esc(x.why):""}</span></span><span class="muted">›</span></button>`).join("")}</div>`;
-  b.querySelectorAll("[data-g]").forEach(x=>x.onclick=async()=>{vibrate(5);toast("讀取棋譜…");const g=await XQNet.fetchGame(x.dataset.g,6000).catch(()=>null);
+  b.querySelectorAll("[data-g]").forEach(x=>x.onclick=async()=>{vibrate(5);
+    if(!pub.length){const id=x.dataset.id,has=(await api("/db/items?c=pvp&limit=500").catch(()=>({items:[]}))).items.some(i=>i.id===id)||await netRecover({gid:x.dataset.g,rid:id});
+      if(has){closeSheet();location.hash="#/db/pvp/"+encodeURIComponent(id)}else toast("這盤沒存到棋譜，伺服器上也找不到了");return}
+    toast("讀取棋譜…");const g=await XQNet.fetchGame(x.dataset.g,6000).catch(()=>null);
     if(!g||g.id!==x.dataset.id){toast("伺服器上找不到這盤了（可能太久以前）");return}await XQ_savePeek(g);closeSheet();location.hash="#/db/peek/"+encodeURIComponent(g.id)});
   /* 開局習慣：抓最近 8 盤的前幾步 */
   const gs=(await Promise.all(L.slice(0,8).map(x=>XQNet.fetchGame(x.gid,4000).then(g=>g&&g.id===x.id?{g,x}:null).catch(()=>null)))).filter(Boolean);if(!b.isConnected)return;
