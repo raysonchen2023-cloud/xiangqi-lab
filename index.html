@@ -436,7 +436,7 @@ html[data-era=ming] .topbar,html[data-era=qing] .topbar{border-bottom-width:4px}
       if(!window.caches)return go();caches.keys().then(function(ks){return Promise.all(ks.filter(function(k){return k.indexOf("xqlab-app-")===0}).map(function(k){return caches.delete(k)}))})
         .then(function(){return navigator.serviceWorker&&navigator.serviceWorker.getRegistration()}).then(function(r){return r&&r.update()}).catch(function(){}).then(go)}},4000)})();
 </script>
-<script>window.XQ_OFFLINE=true;window.XQ_BUILD="20261103-1110";</script>
+<script>window.XQ_OFFLINE=true;window.XQ_BUILD="20261103-1120";</script>
 <script src="core.js"></script>
 <script src="engine.js"></script>
 <script src="local.js"></script>
@@ -1736,14 +1736,14 @@ function Guess(v){
   function tap(x){if(busy||!LEGAL.length)return;
     if(sel>=0&&LEGAL.some(([f,t])=>f===sel&&t===x)){const f=sel;sel=-1;return judge(f,x)}
     sel=LEGAL.some(([f])=>f===x)?x:-1;if(sel>=0)vibrate(5);draw()}
-  async function judge(f,t){busy=true;const gm=mv[ply],hit=f===gm.f&&t===gm.t;const st=v.querySelector("#stat");st.classList.remove("hot");st.textContent="Pikafish 評分中…";
+  async function judge(f,t){if(busy)return;busy=true;   /* 意見回饋 305：連按「看大師怎麼走」會重複判同一步、往前跳好幾步，盤面跟棋譜對不上（棋子消失） */const gm=mv[ply],hit=f===gm.f&&t===gm.t;const st=v.querySelector("#stat");st.classList.remove("hot");st.textContent="Pikafish 評分中…";
     let mine=null,his=null;try{his=await api("/an/classify",{board,side:me,f:gm.f,t:gm.t});if(f>=0)mine=hit?his:await api("/an/classify",{board,side:me,f,t})}catch(e){toast(e.message)}
     const d=f<0?null:Math.max(0,Math.round(mine&&mine.loss!=null?mine.loss:300)),pts=f<0?0:hit?10:10*Math.exp(-d/150);
     res.push({hit,d,pts,skip:f<0});vibrate(hit?15:f<0?5:[20,40,20]);
     const cnGM=gm.cn||"",nb=applyMv(board,gm);draw({board:nb,last:{f:gm.f,t:gm.t},sel:-1,targets:[]});
     st.textContent=f<0?`大師走：${cnGM}`:hit?`✔ 猜中！大師也走 ${cnGM}（+10）`:`大師走的是 ${cnGM}；你那步${mine&&mine.q?"是「"+mine.q+"」":""}，比最佳少 ${d} 分（+${pts.toFixed(1)}）`;
     v.querySelector("#note").textContent=his&&his.q?`大師這步 Pikafish 評為「${his.q}」${his.bc&&his.q!=="正手"&&his.q!=="妙手"?`，它覺得更好的是 ${his.bc}`:""}`:"";
-    head();actionBar(v.querySelector("#acts"),[["next","›","繼續",async()=>{board=nb;ply++;
+    let went=false;head();actionBar(v.querySelector("#acts"),[["next","›","繼續",async()=>{if(went)return;went=true;board=nb;ply++;
       if(ply<mv.length){await new Promise(r=>setTimeout(r,250));board=applyMv(board,mv[ply]);draw({last:{f:mv[ply].f,t:mv[ply].t}});ply++}
       v.querySelector("#note").textContent="";turn()},true]])}
   function finish(){v.className="view";const n=res.filter(x=>!x.skip).length,m=res.filter(x=>x.hit).length,pts=Math.round(res.reduce((a,x)=>a+x.pts,0)),D=res.filter(x=>x.d!=null).map(x=>x.d);
