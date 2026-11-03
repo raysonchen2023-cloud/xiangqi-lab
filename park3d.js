@@ -1047,7 +1047,14 @@
       const gp=new T.Plane(new T.Vector3(0,1,0),-GY),gh=new T.Vector3();if(ray.ray.intersectPlane(gp,gh)&&Math.hypot(gh.x,gh.z)<24)return null;
       return"bg"};
     // 觸控：一指拖曳轉頭（有朝代長卷的可以整圈轉身，其他左右各約 69 度）、兩指捏合拉近拉遠（0.6～1.25 倍）、點一下選子、點兩下回正（含縮放）
-    const ZMIN=.6,ZMAX=1.25,cvs=rd.domElement,ptrs=new Map();let down=null,lastTap=0,pinch=null;
+    /* 意見回饋 360：公園的棋盤可以放得更大、縮得更小（兩指捏合的範圍放寬），右下角加 ＋／－ 按鈕 */
+    const ZMIN=.35,ZMAX=1.9,cvs=rd.domElement,ptrs=new Map();let down=null,lastTap=0,pinch=null;
+    {const zb=document.createElement("div");zb.className="pzoom";zb.style.cssText="position:absolute;right:8px;bottom:8px;z-index:3;display:flex;flex-direction:column;gap:6px";
+      for(const[t,f,l]of[["＋",.8,"放大"],["－",1.25,"縮小"]]){const b=document.createElement("button");b.type="button";b.textContent=t;b.setAttribute("aria-label",l);
+        b.style.cssText="width:34px;height:34px;border-radius:50%;border:1px solid rgba(0,0,0,.18);background:rgba(255,255,255,.82);color:#3a2a1c;font:700 20px/1 system-ui;box-shadow:0 1px 4px rgba(0,0,0,.2);padding:0;cursor:pointer";
+        b.addEventListener("pointerdown",e=>e.stopPropagation());b.addEventListener("pointerup",e=>e.stopPropagation());
+        b.onclick=e=>{e.stopPropagation();tzoom=clamp(tzoom*f,ZMIN,ZMAX)};zb.append(b)}
+      el.append(zb)}
     const reset=()=>{yaw-=Math.round(yaw/TAU)*TAU;tyaw=0;tpitch=0;tzoom=1};   // 轉了好幾圈也走最近的路回正
     const spread=()=>{const a=[...ptrs.values()];return Math.max(20,Math.hypot(a[0].x-a[1].x,a[0].y-a[1].y))};
     cvs.addEventListener("pointerdown",e=>{ptrs.set(e.pointerId,{x:e.clientX,y:e.clientY});try{cvs.setPointerCapture(e.pointerId)}catch(_){}
