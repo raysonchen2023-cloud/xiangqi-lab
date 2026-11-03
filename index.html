@@ -95,6 +95,7 @@ input,select{font:inherit;font-size:16px;color:inherit}
 .thero{margin-top:4px}.tstats{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px}.tstat{display:flex;flex-direction:column;align-items:center;text-align:center;padding:10px 4px;border-radius:12px;background:color-mix(in srgb,var(--accent) 8%,var(--card));min-width:0}
 .tstat small{font-size:12px;color:var(--muted)}.tstat b{font:900 32px/1.1 var(--serif);color:var(--accent);margin:2px 0}.tstat b i{font:600 12px var(--sans,inherit);font-style:normal;color:var(--muted);margin-left:2px}.tstat span{font-size:11.5px;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:100%}
 .tsum{margin:12px 2px 10px;line-height:1.7;font-size:14.5px}
+.eic{width:1.4em;height:1.4em;object-fit:contain;display:inline-block;vertical-align:middle;filter:drop-shadow(0 1px 1px rgba(0,0,0,.18))}#topRight .ib .eic{width:26px;height:26px;padding:2px;border-radius:50%;background:rgba(255,248,236,.92)}.tabbar .ic .eic{width:26px;height:26px}
 .ecover{position:fixed;inset:0;z-index:9990;display:flex;align-items:center;justify-content:center;background:#1c140d;opacity:0;transition:opacity .45s ease}.ecover.on{opacity:1}
 .ecover i{position:absolute;inset:0;background-size:cover;background-position:center;filter:saturate(1.05);transform:scale(1.08);transition:transform 2.4s ease-out}.ecover.on i{transform:scale(1)}
 .ecover>div{position:relative;text-align:center;color:#fff;font-family:var(--serif);text-shadow:0 2px 12px rgba(0,0,0,.7);background:rgba(20,12,6,.38);padding:18px 26px;border-radius:16px}
@@ -504,7 +505,7 @@ html[data-era=ming] .topbar,html[data-era=qing] .topbar{border-bottom-width:4px}
       if(!window.caches)return go();caches.keys().then(function(ks){return Promise.all(ks.filter(function(k){return k.indexOf("xqlab-app-")===0}).map(function(k){return caches.delete(k)}))})
         .then(function(){return navigator.serviceWorker&&navigator.serviceWorker.getRegistration()}).then(function(r){return r&&r.update()}).catch(function(){}).then(go)}},4000)})();
 </script>
-<script>window.XQ_OFFLINE=true;window.XQ_BUILD="20261104-0457";</script>
+<script>window.XQ_OFFLINE=true;window.XQ_BUILD="20261104-0510";</script>
 <script src="core.js"></script>
 <script src="engine.js"></script>
 <script src="local.js"></script>
@@ -764,7 +765,7 @@ const ERAS=[
     b:{bg:["#F6D77A","#D9A93A"],grid:"#5A3E08","piece":"#FFF8E2",r:"#B3261E",b:"#1E2A30",mv:"#1E5F74",bevel:1}}];
 const ERA_KEYS=["bg","card","ink","muted","line","accent","accent2","bar","barink","trim","red","blk","hl","warn","info","wood","grid","piece"];
 const curEra=()=>{const e=ERAS.find(x=>x.k===store.get("era","classic"));return e&&e.c?e:null};
-function applyEra(){const r=document.documentElement,e=curEra();
+function applyEra(){try{icoEra()}catch(e){}const r=document.documentElement,e=curEra();
   for(const p of ERA_KEYS)r.style.removeProperty("--"+p);r.style.removeProperty("--motif-bar");r.style.removeProperty("--motif-bg");r.style.colorScheme="";
   if(e){r.dataset.era=e.k;for(const[k,v]of Object.entries(e.c))r.style.setProperty("--"+k,v);
     r.style.setProperty("--wood",e.b.bg[1]);r.style.setProperty("--grid",e.b.grid);r.style.setProperty("--piece",e.b.piece);
@@ -1305,6 +1306,16 @@ function Board(onTap,onSwipe){
 let screen=null;   // 目前畫面：{stop()}
 let NAV_PREV=null,NAV_CUR=location.hash;addEventListener("hashchange",()=>{NAV_PREV=NAV_CUR;NAV_CUR=location.hash});
 const navKey=h=>(h||"").replace(/^#/,"")||"/";
+/* 意見回饋 393：App 的圖示換成 Gemini 畫的古風圖示，跟著目前朝代換風格（data/icons/<朝代>/<名稱>.webp，tools/icons_slice.py 切的）；
+   首頁功能、底部分頁、冒險入口用「要去哪一頁」對應，右上角按鈕用原本的 emoji 對應；圖還沒到或缺圖時維持原本的 emoji */
+const ICO_GO={"#/cpu":"cpu","#/lobby":"online","#/stats":"stats","#/openings":"openings","#/redo":"redo","#/quiz":"quiz","#/guess":"guess","#/db":"db","#/terms":"rules","#/adventure":"adventure","#/garage":"garage","#/":"home","#/settings":"settings","#/journey":"journey","#/journey/inn":"inn","#/journey/park":"park"},
+  ICO_EMO={"📤":"share","👥":"friends","🏠":"home","🏯":"arena","⚙️":"settings","💬":"feedback"};
+const icoSrc=n=>`data/icons/${store.get("era","classic")}/${n}.webp`;
+function icoImg(el,n){const em=el.textContent;const im=document.createElement("img");im.className="eic";im.alt="";im.dataset.ico=n;im.onerror=()=>{im.replaceWith(document.createTextNode(em))};im.src=icoSrc(n);el.textContent="";el.append(im)}
+function iconize(){document.querySelectorAll("[data-go] > .ic,[data-go] > .dic").forEach(x=>{if(x.querySelector("img"))return;const n=ICO_GO[x.parentElement.dataset.go];if(n)icoImg(x,n)});
+  document.querySelectorAll("#topRight .ib").forEach(b=>{if(b.querySelector("img"))return;const n=ICO_EMO[b.textContent.trim()];if(n)icoImg(b,n)})}
+function icoEra(){document.querySelectorAll("img.eic").forEach(im=>{im.src=icoSrc(im.dataset.ico)})}
+{let icoT=0;new MutationObserver(()=>{if(icoT)return;icoT=requestAnimationFrame(()=>{icoT=0;try{iconize()}catch(e){}})}).observe(document.body,{childList:true,subtree:true})}
 function setTop(title,back,right){$("#title").textContent=title;$("#back").hidden=!back;$("#back").onclick=()=>{if(back===true)history.back();else if(NAV_PREV!=null&&navKey(NAV_PREV)===navKey(back))history.back();else location.hash=back};
   const tr=$("#topRight");tr.innerHTML="";if(right)for(const[icon,fn,label]of right){const b=document.createElement("button");b.className="ib";b.textContent=icon;b.title=label||"";b.onclick=fn;tr.append(b)}
   // 全螢幕畫面（沒有底部導覽列）一律加「回首頁」，加入主畫面的 App 模式沒有瀏覽器上一頁也能回去
