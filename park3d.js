@@ -836,7 +836,7 @@
           <circle cx="68" cy="63" r="3.6" fill="#F7B6B6" opacity=".8"/><circle cx="92" cy="63" r="3.6" fill="#F7B6B6" opacity=".8"/>
           <path d="M76 68 Q80 71 84 68" stroke="#2a1a10" stroke-width="1.4" fill="none" stroke-linecap="round"/>
           <rect x="66" y="31" width="28" height="9" rx="2" fill="#D02A1F"/><circle cx="80" cy="29" r="3.4" fill="#E3B341"/><circle cx="72" cy="36" r="2.4" fill="#222"/>
-        </g></svg><div class="xw-t">小帥走去公園</div>`;
+        </g></svg><div class="xw-t">小帥走去園子</div>`;
      /* 意見回饋 392：「小帥走去公園」換成 Gemini 手繪的走路圖（data/xs/walk_1～8 輪流換），身上貼玩家選的棋子字；圖還沒到之前先用原本畫的 */
      fetch("data/xs/xs.json").then(r=>r.ok?r.json():null).then(m=>{if(!m||!veil.isConnected)return;const fr=[1,2,3,4,5,6,7,8].map(i=>{const im=new Image();im.src="data/xs/walk_"+i+".webp";return im});
        return Promise.all(fr.map(im=>im.decode())).then(()=>{const svg=veil.querySelector("svg");if(!svg||!veil.isConnected)return;const g=svg.querySelector(".xw-bob");if(g)g.style.display="none";
