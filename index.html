@@ -497,7 +497,7 @@ html[data-era=ming] .topbar,html[data-era=qing] .topbar{border-bottom-width:4px}
       if(!window.caches)return go();caches.keys().then(function(ks){return Promise.all(ks.filter(function(k){return k.indexOf("xqlab-app-")===0}).map(function(k){return caches.delete(k)}))})
         .then(function(){return navigator.serviceWorker&&navigator.serviceWorker.getRegistration()}).then(function(r){return r&&r.update()}).catch(function(){}).then(go)}},4000)})();
 </script>
-<script>window.XQ_OFFLINE=true;window.XQ_BUILD="20261104-0406";</script>
+<script>window.XQ_OFFLINE=true;window.XQ_BUILD="20261104-0421";</script>
 <script src="core.js"></script>
 <script src="engine.js"></script>
 <script src="local.js"></script>
@@ -2430,7 +2430,7 @@ async function talentReport(box){
   if(RG)prof.push({k:"著法品質",v:Math.round(Math.max(0,Math.min(100,(RG.elo-600)/24))),s:`約等級分 ${RG.elo}`,t:`平均每步比電腦最好的著法少 ${Math.round(RG.acpl)} 分，下棋功力約等級分 ${RG.elo}（看了 ${RG.n} 步，含猜著法）`});
   const bar=q=>`<div style="margin:8px 0"><div class="row" style="justify-content:space-between"><b>${q.k}</b><span style="font-variant-numeric:tabular-nums">${q.v}</span></div><div class="st-bar"><i style="width:${q.v}%"></i></div><div class="muted" style="font-size:12.5px">${esc(q.t)}</div></div>`;
   /* 意見回饋 372：各項功夫只寫重點（名稱、分數、一個短標籤），每項怎麼算的長說明搬到「詳細數字」 */
-  const bar2=(q,wk)=>`<div style="margin:9px 0"><div class="row" style="justify-content:space-between;align-items:baseline"><b>${wk?"🎯 ":""}${q.k}</b><span><small class="muted" style="font-size:12px">${esc(q.s||"")}</small>　<b style="font-variant-numeric:tabular-nums">${q.v}</b></span></div><div class="st-bar"><i style="width:${q.v}%"></i></div></div>`;
+  const bar2=(q,wk)=>`<div style="margin:9px 0"><div class="row" style="justify-content:space-between;align-items:baseline"><b>${q.k}</b><span><small class="muted" style="font-size:12px">${esc(q.s||"")}</small>　<b style="font-variant-numeric:tabular-nums">${q.v}</b></span></div><div class="st-bar"><i style="width:${q.v}%"></i></div></div>`;
   /* 弱項→該練什麼 */
   const weak=prof.slice().sort((a,b)=>a.v-b.v)[0],GO={開局:["#/openings","看我的開局"],中局:["#/redo","錯棋重練"],殘局:["#/db","古典殘局譜"],殘局題:["#/db","古典殘局譜"],殺法:["#/quiz","棋力測驗"],戰術:["#/quiz","棋力測驗"],局面判斷:["#/guess","猜著法"],著法品質:["#/guess","猜著法"]};
   /* 成長軌跡圖：點＝每盤準確度，線＝後驗平均，色帶＝80% 區間，往後延伸一半的練習量 */
@@ -3610,7 +3610,7 @@ function CpuGame(v,practicePage){
     else{s2.textContent=st.check>=0?"⚠ 你被將軍了！":st.hint?"💡 提示："+st.hint.cn:"輪到你"+(st.eval?`・${evt(st.eval.v)}`:"");s2.classList.toggle("hot",st.check>=0||!!st.hint)}
     if(st.practice&&!st.result&&!st.msg)practiceBar(s2);
     renderStrip(v.querySelector("#strip"),st.moves,st.moves.length-1);
-    acts.undo.disabled=st.ranked||st.reward||st.thinking||!st.moves.some(m=>m.by===st.human);
+    acts.undo.disabled=st.ranked||st.reward||!st.moves.some(m=>m.by===st.human);   /* 意見回饋 380：電腦還在想也能悔棋 */
     acts.resign.hidden=!!st.result;acts.review.hidden=!st.result;
     if(st.result&&shownResult!==JSON.stringify(st.result)+st.moves.length){shownResult=JSON.stringify(st.result)+st.moves.length;const xp0=store.get("xp",0);try{journeyGameEnd(st)}catch(e){}
       /* 意見回饋 376：結果視窗寫出這盤的修為變化（石桌往事、驛站、擂台、挑戰電腦都一樣），不再只靠一閃而過的小提示 */
