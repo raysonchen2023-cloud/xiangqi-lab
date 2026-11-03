@@ -80,6 +80,24 @@ input,select{font:inherit;font-size:16px;color:inherit}
 .chips{display:flex;flex-wrap:wrap;gap:6px;margin-top:10px}.chips span{font-size:12.5px;border:1px solid var(--line);border-radius:999px;padding:3px 10px;background:var(--bg)}
 .bgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:8px}.bcard{border:1px solid var(--line);background:var(--card);border-radius:14px;padding:10px;display:flex;flex-direction:column;gap:3px;min-width:0}.bcard .bic{font-size:30px}.bcard.rare{border:2px solid #C9962B;box-shadow:0 0 0 3px rgba(201,150,43,.18);background:linear-gradient(160deg,color-mix(in srgb,#C9962B 12%,var(--card)),var(--card))}.bcard.broken{opacity:.75;filter:grayscale(.5)}.bcard .pill{margin-top:4px;align-self:flex-start}
 .doors{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-top:12px}.door{display:flex;flex-direction:column;align-items:center;gap:2px;padding:14px 4px 8px;border:2px solid color-mix(in srgb,var(--accent) 45%,var(--line));border-bottom-width:4px;border-radius:999px 999px 10px 10px;background:linear-gradient(180deg,color-mix(in srgb,var(--accent) 10%,var(--card)),var(--card));font:inherit;color:inherit;cursor:pointer;min-width:0}.door .dic{font-size:26px}.door b{font-size:14px}.door small{font-size:11px;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:100%}
+.travel{position:fixed;inset:0;z-index:9998;overflow:hidden;background:linear-gradient(180deg,#3a1d14 0%,#8a3b1f 38%,#d98a3a 52%,#6b5434 53%,#4a3a26 100%);animation:tvIn .35s ease both}.travel.out{animation:tvOut .35s ease both}
+@keyframes tvIn{from{opacity:0}to{opacity:1}}@keyframes tvOut{to{opacity:0}}
+.travel .tl{position:absolute;left:0;width:300%;background-repeat:repeat-x;background-size:auto 100%}
+.travel .far{top:0;height:62%;background-image:radial-gradient(ellipse 18% 30% at 20% 100%,#4b2a1e 98%,transparent 100%),radial-gradient(ellipse 25% 40% at 55% 100%,#5a3324 98%,transparent 100%),radial-gradient(ellipse 15% 25% at 85% 100%,#4b2a1e 98%,transparent 100%),radial-gradient(circle at 70% 35%,rgba(255,170,60,.55),transparent 18%);background-size:33.34% 100%;animation:tvScroll 5s linear both;opacity:.95}
+.travel .mid{top:50%;height:50%;background-image:linear-gradient(180deg,transparent 0 30%,#9c7a4a 30% 46%,#6e5532 46% 100%),radial-gradient(circle at 15% 25%,#2e2116 3%,transparent 4%),radial-gradient(circle at 62% 22%,#2e2116 2%,transparent 3%);background-size:33.34% 100%;animation:tvScroll 5s linear both}
+.travel .far.img,.travel .mid.img{background-size:auto 100%}.travel .mid.img{top:28%;height:72%}
+.travel .front{bottom:2%;height:22%;display:flex;align-items:flex-end;gap:0;font-size:38px;white-space:nowrap;animation:tvScrollFast 5s linear both;filter:drop-shadow(0 3px 2px rgba(0,0,0,.45))}.travel .front span{display:inline-block;padding-right:40px;letter-spacing:18px}
+.travel .front.img{height:45%;background-size:auto 100%}
+@keyframes tvScroll{from{transform:translateX(0)}to{transform:translateX(-33.34%)}}@keyframes tvScrollFast{from{transform:translateX(0)}to{transform:translateX(-66%)}}
+.travel.back .tl{transform:scaleX(-1)}.travel.back .far,.travel.back .mid{animation-name:tvScrollB}.travel.back .front{animation-name:tvScrollFastB}
+@keyframes tvScrollB{from{transform:scaleX(-1) translateX(0)}to{transform:scaleX(-1) translateX(-33.34%)}}@keyframes tvScrollFastB{from{transform:scaleX(-1) translateX(0)}to{transform:scaleX(-1) translateX(-66%)}}
+.travel .walker{position:absolute;left:50%;bottom:24%;transform:translateX(-50%);z-index:2}.travel .walker .av{width:54px;height:54px;font-size:26px;border-radius:50%;display:flex;align-items:center;justify-content:center;background:radial-gradient(circle at 40% 35%,#fff8ec,#f1dcb8);border:3px solid #b23a2a;color:#b23a2a;font-family:var(--serif);font-weight:900;animation:tvHop .42s ease-in-out infinite alternate;box-shadow:0 6px 10px rgba(0,0,0,.35)}
+@keyframes tvHop{from{transform:translateY(0) rotate(-6deg)}to{transform:translateY(-14px) rotate(6deg)}}
+.travel .dust{position:absolute;left:-18px;bottom:-4px;width:30px;height:12px;border-radius:50%;background:rgba(210,180,130,.55);filter:blur(3px);animation:tvDust .42s ease-out infinite}.travel.back .dust{left:auto;right:-18px}
+@keyframes tvDust{from{opacity:.8;transform:scale(.6)}to{opacity:0;transform:scale(1.6) translateX(-10px)}}
+.travel .tcap{position:absolute;left:16px;right:16px;top:calc(env(safe-area-inset-top,0px) + 24px);color:#fff;text-shadow:0 2px 6px rgba(0,0,0,.6);text-align:center;z-index:3}.travel .tcap b{display:block;font:900 24px var(--serif)}.travel .tcap span{font-size:14px;opacity:.9}.travel .tcap p{margin:10px 0 0;font-size:15px;min-height:2.6em}
+.travel .tbar{height:4px;border-radius:2px;background:rgba(255,255,255,.25);margin:8px auto 0;max-width:260px;overflow:hidden}.travel .tbar i{display:block;height:100%;background:#ffd28a;animation:tvBar 5s linear both}@keyframes tvBar{from{width:0}to{width:100%}}
+.travel .tskip{position:absolute;right:14px;bottom:calc(env(safe-area-inset-bottom,0px) + 14px);z-index:3;border:1px solid rgba(255,255,255,.5);background:rgba(0,0,0,.35);color:#fff;border-radius:999px;padding:6px 14px;font:inherit}
 #xpchip{position:fixed;left:50%;top:calc(env(safe-area-inset-top,0px) + 56px);transform:translateX(-50%);z-index:9999;background:var(--accent);color:#fff;padding:6px 14px;border-radius:999px;font-weight:700;font-size:14px;pointer-events:none;opacity:0;transition:opacity .4s;box-shadow:0 4px 14px rgba(0,0,0,.2);white-space:nowrap}#xpchip.big{font-size:16px;padding:10px 18px}
 .tile.strip .rsm{display:block;margin-top:2px;font-weight:700;color:var(--accent)}.tile.strip.resume{border:2px solid var(--accent);animation:rsPulse 2.4s ease-in-out 2}@keyframes rsPulse{50%{box-shadow:0 0 0 5px color-mix(in srgb,var(--accent) 25%,transparent)}}
 .tile.strip .ic{margin:0;flex:none}.tile.strip .tx{flex:1;min-width:0;display:flex;flex-direction:column}.tile.strip .s{font-size:12.5px}
@@ -448,7 +466,7 @@ html[data-era=ming] .topbar,html[data-era=qing] .topbar{border-bottom-width:4px}
       if(!window.caches)return go();caches.keys().then(function(ks){return Promise.all(ks.filter(function(k){return k.indexOf("xqlab-app-")===0}).map(function(k){return caches.delete(k)}))})
         .then(function(){return navigator.serviceWorker&&navigator.serviceWorker.getRegistration()}).then(function(r){return r&&r.update()}).catch(function(){}).then(go)}},4000)})();
 </script>
-<script>window.XQ_OFFLINE=true;window.XQ_BUILD="20261103-1525";</script>
+<script>window.XQ_OFFLINE=true;window.XQ_BUILD="20261103-1532";</script>
 <script src="core.js"></script>
 <script src="engine.js"></script>
 <script src="local.js"></script>
@@ -1321,11 +1339,17 @@ if(OFF&&"serviceWorker" in navigator){
     try{const r=await navigator.serviceWorker.getRegistration();if(r){await r.update().catch(()=>{});
       if(r.installing||r.waiting)await new Promise(ok=>{navigator.serviceWorker.addEventListener("controllerchange",ok,{once:true});setTimeout(ok,10000)})}}catch(e){}
     // 不馬上重新整理：新版已經在背景下載好，留在原本的畫面（意見回饋寫到一半也不會不見），等換到別的頁面時才套用
-    pending=true;tt.textContent="✓ 新版已準備好，換到別的頁面時自動套用";setTimeout(()=>tt.remove(),3500);
+    pending=true;
+    /* 意見回饋 320：沒在下棋、測驗、打字、開卡片時，下載好就馬上套用；不然才等換頁 */
+    const busyNow=()=>inGame()||!!document.querySelector("#sheet.show,.travel")||/^(INPUT|TEXTAREA)$/.test((document.activeElement||{}).tagName||"");
+    if(!busyNow()){tt.textContent="✓ 新版已準備好，馬上套用…";setTimeout(()=>location.reload(),900);return}
+    tt.textContent="✓ 新版已準備好，換到別的頁面時自動套用";setTimeout(()=>tt.remove(),3500);
     document.querySelectorAll(".toast.upd").forEach(x=>x.remove())}
   let pending=false;const seg=h=>(String(h||"").split("#")[1]||"/").split("/")[1]||"";
   addEventListener("hashchange",e=>{if(pending&&seg(e.newURL)!==seg(e.oldURL))location.reload()});
-  async function notifyNew(nv,note){if(shown)return;shown=true;const v=fmtV(nv||await appVer());vibrate([20,40,20]);
+  let shownV="";
+  async function notifyNew(nv,note){if(shown&&(!nv||nv<=shownV))return;shown=true;shownV=nv||shownV;
+    if(pending||updating){updating=false;return doUpdate()}const v=fmtV(nv||await appVer());vibrate([20,40,20]);
     if(inGame()){const t=document.createElement("button");t.className="toast upd";t.style.cssText="bottom:auto;top:calc(64px + var(--safeT));pointer-events:auto;z-index:300";
       t.textContent="🆕 有新版本"+(v?"（"+v+"）":"")+"，點這裡在背景更新，下完這盤換頁時套用";t.onclick=doUpdate;document.body.append(t);return}
     modal(`<div class="em">🆕</div><h2>有新版本</h2>${note?`<p style="text-align:left;white-space:pre-wrap">${esc(note)}</p>`:""}<p class="muted">${v?"版本 "+esc(v)+"<br>":""}在背景更新，你可以留在這個畫面繼續做事，換到別的頁面時才套用新版。你的戰績、棋譜和設定都會保留。</p>`,[["背景更新",doUpdate],["稍後",()=>{shown=false},true]])}
@@ -3173,12 +3197,30 @@ async function innDrop(){const day=new Date().toISOString().slice(0,10),d=store.
   let L=null;try{L=(await api("/db/items?c=brilliant&limit=600")).items}catch(e){return}if(!L||!L.length)return;const it=L[Math.floor(Math.random()*L.length)],who=INN[Math.floor(Math.random()*INN.length)];
   const B=bag();if(B.records.some(z=>z.id===it.id))return;B.records.push({uid:"r"+Date.now().toString(36),c:"brilliant",id:it.id,name:toT(it.name||(it.red+" 對 "+it.black)),from:`驛站・${who.name}留下的`,at:Date.now()});bagSave(B);store.set("innDrop",{d:day,n:(d.d===day?d.n:0)+1});
   vibrate([15,30,15]);sheet(`📜 ${who.name}留下一份棋譜`,b=>{b.innerHTML=`<p style="line-height:1.9;font-size:16px">${who.ic} ${esc(who.name)}起身要走，從行囊裡掉出一份棋譜：「這是我路上抄的比賽棋譜，送你吧，好好研讀。」</p><p class="muted">${esc(toT(it.name||""))}</p><p class="muted" style="font-size:13px">放在「🎒 棋童資料 → 📜 棋譜」，讀完按返回會回到石桌往事。</p><button class="btn" id="dr" style="width:100%">收下</button>`;b.querySelector("#dr").onclick=()=>closeSheet()})}
+/* ================= 🚶 荒野小徑過場（意見回饋 320）=================
+   驛站和公園之間走約 5 秒：遠景、中景、前景（逃難的人群）三層用不同速度捲動（視差），帥棋子在中間一跳一跳地走。
+   Gemini 畫好 data/path/far、mid1、mid2、front 之後自動換成正式的圖；還沒畫好前用漸層和小圖示代替 */
+function travel(to,done){if(document.querySelector(".travel"))return;const back=to==="inn",ov=document.createElement("div");ov.className="travel"+(back?" back":"");
+  const LINES=["城頭的鑼又響了，一隊逃難的人從身邊跑過……","路邊翻倒的板車上，還掛著半個包袱。","遠處冒著煙，誰家的屋子又燒了。","有人往南逃，有人往北跑，只有你往石桌走。","風裡夾著沙，路標歪了一半。"];
+  const crowd="🏃‍♂️ 🧺 🏃‍♀️ 🫏 🧓 🏃 👨‍👧 🛒 🏃‍♂️ 🚩 🏃‍♀️ 🧺 🏃 🫏 🧓 👨‍👧 🛒 🏃‍♂️ 🚩 🏃‍♀️";
+  ov.innerHTML=`<div class="tl far"></div><div class="tl mid"></div><div class="walker"><div class="av r">帥</div><i class="dust"></i></div><div class="tl front"><span>${crowd}</span><span>${crowd}</span></div>
+    <div class="tcap"><b>🚶 荒野小徑</b><span>${back?"公園 → 驛站":"驛站 → 公園"}</span><p id="tline">${LINES[0]}</p><div class="tbar"><i></i></div></div><button class="tskip">跳過 ›</button>`;
+  document.body.append(ov);vibrate(8);
+  /* 有 Gemini 的圖就換上 */
+  const img=(cls,src,bg)=>{const im=new Image();im.onload=()=>{const el=ov.querySelector(cls);if(el){el.style.backgroundImage=bg(src);el.classList.add("img")}};im.src=src};
+  img(".far","data/path/far.webp",u=>`url(${u})`);img(".mid","data/path/mid1.webp",u=>`url(${u}),url(data/path/mid2.webp)`);
+  {const im=new Image();im.onload=()=>{const f=ov.querySelector(".front");if(f){f.innerHTML="";f.style.backgroundImage=`url(${im.src})`;f.classList.add("img")}};im.src="data/path/front.webp"}
+  let k=0;const tl=setInterval(()=>{k=(k+1)%LINES.length;const e=ov.querySelector("#tline");if(e)e.textContent=LINES[k]},1600);
+  let ended=false;const end=()=>{if(ended)return;ended=true;clearInterval(tl);clearTimeout(tm);ov.classList.add("out");setTimeout(()=>ov.remove(),350);if(done)done()};
+  const tm=setTimeout(end,5000);ov.querySelector(".tskip").onclick=e=>{e.stopPropagation();end()}}
 function innSheet(v){setTimeout(innDrop,1200);setTop("🏮 驛站","#/journey");const I=xpInfo(),Sx=jSecrets(),nx=JR.find(R=>R.lv>I.L);v.className="view";
   const row=(x,locked)=>`<button class="item" data-inn="${x.id}" ${locked?"disabled":""}><span class="lb" style="font-size:24px">${locked?"❔":x.ic}</span><span class="tx"><b>${locked?"？？？（還沒找到）":esc(x.name)}</b><span>${locked?esc(secretHint(x)):x.who?`${esc(x.who)}・第 ${secretLv(x)} 級的實力・贏了 +${secretXP(x)} 修為・評等 S 送棋盤`:`第 ${x.lv} 級的實力・贏了 +${x.xp} 修為（另加對局修為）`}</span></span><span class="muted">${locked?"":"›"}</span></button>`;
   v.innerHTML=`<div class="pad"><div class="card" style="line-height:1.8">🀄 <b>Lv ${I.L} ${I.title}</b>${nx?`・下一站「${nx.name}」要 Lv ${nx.lv}，還差 ${nx.lv-I.L} 級`:"・每一站都能進了"}<br><span class="muted" style="font-size:13px">驛站裡都是路過的旅人，找誰下都可以、下幾次都可以；輸了也有對局修為。</span></div>
+    <button class="btn ghost" id="toPark" style="width:100%;margin-top:8px">🌳 走荒野小徑去公園（約 5 秒）</button>
     <div class="sec-t">🏮 路過的旅人</div><div class="items" style="padding:0">${INN.map(x=>row(x)).join("")}</div>
     <div class="sec-t">🗝 秘境棋友（${Object.keys(Sx).length}/${SECRETS.length}）・元末明初的人物</div><div class="items" style="padding:0">${SECRETS.map(x=>row(x,!Sx[x.id])).join("")}</div>
     <p class="muted" style="font-size:12.5px;margin:8px 2px">秘境棋友是元末明初的歷史人物（棋藝是故事的想像）。要自己去找，而且每個人的位置都不一樣：挑戰電腦 → 右上角 🌳 開公園，換到線索說的朝代（集章簿可以換朝代），點點看那個東西。</p></div>`;
+  v.querySelector("#toPark").onclick=()=>travel("park",()=>{store.set("park3d",true);location.hash="#/cpu"});
   v.querySelectorAll("[data-inn]").forEach(b=>b.onclick=()=>{const x=INN.concat(SECRETS).find(z=>z.id===b.dataset.inn);if(!x||(SECRETS.includes(x)&&!Sx[x.id]))return;
     const lv=x.who?secretLv(x):x.lv,xp=x.who?secretXP(x):x.xp;
     sheet(`${x.ic} ${x.name}`,c=>{c.innerHTML=`<p style="font-size:16px;line-height:1.8">${esc(x.say)}</p><p class="muted">${x.who?esc(x.who)+"。":""}第 ${lv} 級的實力。贏了 +${xp} 修為（另加對局修為），輸了也有對局修為。${x.who?"下到賽後評等 S（幾乎跟引擎同步），他會送你一張棋盤。":""}</p><button class="btn" id="ig" style="width:100%">⚔ 下一盤</button>`;
@@ -3339,7 +3381,7 @@ function CpuGame(v){
   const arenaBtn=["🏯",()=>{const go=()=>arenaSheet(store.get("era","classic"),arenaStart);if(!parkOn()){store.set("park3d",true);toast("🌳 朝代擂台在公園裡，帶你過去");draw();topBar();setTimeout(go,400)}else go()},"朝代擂台"];
   // 意見回饋 273：上方列精簡——🏯 只在公園裡出現（擂台本來就在公園），返回鍵已經是回首頁所以不放 🏠；切公園時整列重畫
   const topBar=()=>{const lk=!!(typeof st!=="undefined"&&st&&st.arena&&!st.result);
-    setTop("挑戰電腦","#/",[arenaBtn,...(lk?[]:[parkBtn(()=>{draw();topBar()})])].concat(vcOn()?[["🎤",()=>voiceMove(()=>!st||st.result?{why:"這盤已經結束"}:st.turn!==st.human||st.thinking?{why:"還沒輪到你"}:{board:st.board,legal:st.legal,play:(f,t)=>{sel=-1;post("/play/move",{f,t})}}),"聲控走棋"]]:[]));
+    setTop("挑戰電腦","#/",[arenaBtn,...(OFF&&parkOn()&&!lk?[["🏮",()=>travel("inn",()=>location.hash="#/journey/inn"),"走荒野小徑去驛站"]]:[]),...(lk?[]:[parkBtn(()=>{draw();topBar()})])].concat(vcOn()?[["🎤",()=>voiceMove(()=>!st||st.result?{why:"這盤已經結束"}:st.turn!==st.human||st.thinking?{why:"還沒輪到你"}:{board:st.board,legal:st.legal,play:(f,t)=>{sel=-1;post("/play/move",{f,t})}}),"聲控走棋"]]:[]));
     try{if(seg){const t=$("#title");t.textContent="";t.append(seg)}}catch(e){}};   /* 第一次呼叫時 seg 還沒建立 */
   topBar();
   /* 首頁「🏯 朝代擂台」帶過來的：直接打開擂台（意見回饋 276） */
