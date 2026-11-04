@@ -104,7 +104,11 @@ var XQ=(function(){
     if(k==="arena")playNew("r",lv(3),false,null,false,era||"classic",true);
     else if(k==="journey")playNew("r",lv(1),false,null,false,era,true,jid(b.journey));
     else playNew(b.human==="b"?"b":"r",lv(3),!!b.ranked,null,!!b.reward,null,true)}
-  function playNew(human,level,ranked,pre,reward,arena,noStash,journey){
+  /* 石桌往事的特製關卡（levels.json 的 play 步驟）：從指定局面開始、讓子（拿掉幾顆）、關掉長將判負。棋盤 90 格要合法、兩邊都有將帥才接受 */
+  function lvStart(lv){if(!lv||typeof lv!=="object")return null;let b;try{b=parseFen(typeof lv.fen==="string"&&lv.fen?lv.fen:START)}catch(e){return null}
+    if(!Array.isArray(b)||b.length!==90)return null;for(const q of Array.isArray(lv.remove)?lv.remove.slice(0,16):[]){const i=parseSq(String(q));if(Number.isInteger(i)&&i>=0&&i<90&&b[i]&&!/[kK]/.test(b[i]))b[i]=null}
+    if(!b.includes("k")||!b.includes("K"))return null;return{start:fen(b,"r").split(" ")[0],startTurn:lv.turn==="b"?"b":"r",noPerp:!!lv.noPerpetual}}
+  function playNew(human,level,ranked,pre,reward,arena,noStash,journey,lv){
     const plain=!ranked&&!pre&&!reward,nk=pre?"practice":plain&&journey?"journey":plain&&arena?"arena":"cpu";
     if(!noStash&&P){
       if(unfinished(P)&&kindOf(P)!==nk){const o=stashGet(kindOf(P));if(o)forfeit(o);stashSet(kindOf(P),stashOut(P));P=null}   // 換另一種：這盤收起來
@@ -113,8 +117,9 @@ var XQ=(function(){
     forfeit(P);
     const pm=pre&&Array.isArray(pre.moves)?pre.moves.filter(m=>Number.isInteger(m.f)&&Number.isInteger(m.t)).slice(0,300):[];
     P={id:gameId(),human,level:ranked?0:level,ranked:!!ranked,rk:ranked?rankIdx(cpuRate().pts):null,moves:pm,result:null,hint:null,practice:pre?{...(pre.info||{}),base:pm.length}:null,reward:!ranked&&!pre&&!!reward,arena:!ranked&&!pre&&!reward&&arena||null,journey:nk==="journey"?journey:null};
+    {const L=nk==="journey"?lvStart(lv):null;if(L){P.start=L.start;P.startTurn=L.startTurn;if(L.noPerp)P.noPerp=true}}
     stateRebuild(P);if(P.practice&&P.turn!==human)throw new Error("這步不是你走的");savePlay()}
-  function playApply(f,t){stateApply(P,f,t);P.hint=null;const r=judgeState(P);if(r)playEnd(r.w,r.why);savePlay();setTimeout(analyzePlay,0);
+  function playApply(f,t){stateApply(P,f,t);P.hint=null;let r=judgeState(P);if(r&&P.noPerp&&/長將|長捉|長打/.test(r.why))r=null;if(r)playEnd(r.w,r.why);savePlay();setTimeout(analyzePlay,0);
     try{window.dispatchEvent(new Event("xq-play"))}catch(e){}}   // 通知畫面馬上更新，不用等下一次輪詢
   function playEnd(w,why){P.result={w,why};const res=!w?"d":w===P.human?"w":"l";
     if(P.practice){savePlay();return}   // 錯棋重練：不算戰績、不存進對局紀錄
@@ -123,7 +128,7 @@ var XQ=(function(){
     if(P.arena&&!P.journey&&res==="w"&&P.moves.length>=2){const S=ls.get("arenaStamps",{}),first=!S[P.arena];if(first)S[P.arena]={at:new Date().toISOString(),lv:P.level,n:P.moves.length};ls.set("arenaStamps",S);
       P.stamp={era:P.arena,first,total:Object.keys(S).length}}
     else if(kindOf(P)==="cpu"){const rec=ls.get("record",{}),L=rec[P.level]||(rec[P.level]={w:0,l:0,d:0});L[res]++;ls.set("record",rec)}
-    pushGame("play",{id:P.id,date:P.id.slice(0,10),level:P.level,ranked:!!P.ranked,reward:!!P.reward,rk:P.rk,human:P.human,result:P.result,...assist(P),moves:saveMoves(P.moves)});savePlay()}
+    if(!P.start)pushGame("play",{id:P.id,date:P.id.slice(0,10),level:P.level,ranked:!!P.ranked,reward:!!P.reward,rk:P.rk,human:P.human,result:P.result,...assist(P),moves:saveMoves(P.moves)});savePlay()}
   async function analyzePlay(){if(paBusy||!P)return;paBusy=true;try{await analyzeList(P,savePlay,()=>!!P&&!P.result&&P.turn!==P.human)}finally{paBusy=false}}
   const ucis=()=>P.moves.map(m=>iccs(m.f,m.t));
   /* 意見回饋 363：秘境棋友的開局喜好是真的——跟他下時，這盤有 90% 機率照他愛下的開局走前一兩步（紅方、黑方各一套），之後才交給 Pikafish */
@@ -152,13 +157,13 @@ var XQ=(function(){
   function playState(){ensureP();
     const CR=cpuRate(),ci=rankIdx(CR.pts),nx=RANKS[ci+1];
     const SA=stashAll(),others=Object.values(SA).filter(g=>kindOf(g)!==kindOf(P)).map(g=>({kind:kindOf(g),arena:g.arena||null,journey:g.journey||null,ranked:!!g.ranked,reward:!!g.reward,level:g.level,n:g.moves.length,human:g.human}));
-    return{kind:kindOf(P),others,other:others[0]||null,journey:P.journey||null,id:P.id,board:P.board,turn:P.turn,human:P.human,level:P.level,ranked:!!P.ranked,reward:!!P.reward,arena:P.arena||null,stamp:P.stamp||null,prize:P.prize||null,car:P.reward?carState():null,rkName:P.ranked?RANKS[P.rk][0]:null,rate:P.rate||null,
+    return{kind:kindOf(P),others,other:others[0]||null,journey:P.journey||null,start:P.start||null,startTurn:P.startTurn||"r",id:P.id,board:P.board,turn:P.turn,human:P.human,level:P.level,ranked:!!P.ranked,reward:!!P.reward,arena:P.arena||null,stamp:P.stamp||null,prize:P.prize||null,car:P.reward?carState():null,rkName:P.ranked?RANKS[P.rk][0]:null,rate:P.rate||null,
       cpuRate:{pts:CR.pts,rank:RANKS[ci][0],w:CR.w,l:CR.l,d:CR.d,next:nx?nx[0]:null,toNext:nx?nx[1]-CR.pts:0,lo:RANKS[ci][1],hi:nx?nx[1]:null,hist:CR.hist},
       levels:LEVELS.map(l=>({n:l.n,name:l.name,desc:l.desc})),record:ls.get("record",{}),
       moves:P.moves.map(moveOut),result:P.result,practice:P.practice||null,thinking:playBusy&&P.turn!==P.human,msg:playMsg,eval:lastEv(P.moves),hint:P.hint,
       legal:!P.result&&P.turn===P.human?legal(P.board,P.turn):[],check:!P.result&&inCheck(P.board,P.turn)?kingSq(P.board,P.turn):-1,engine:true}}
   async function playPost(p,b){ensureP();
-    if(p==="/play/new"){playNew(b.human==="b"?"b":"r",Math.max(1,Math.min(LEVELS.length,Math.round(+b.level)||3)),!b.pre&&!!b.ranked,b.pre||null,!!b.reward,typeof b.arena==="string"&&/^[a-z]{2,8}$/.test(b.arena)?b.arena:null,false,jid(b.journey));playMsg="";setTimeout(playEngine,0)}
+    if(p==="/play/new"){playNew(b.human==="b"?"b":"r",Math.max(1,Math.min(LEVELS.length,Math.round(+b.level)||3)),!b.pre&&!!b.ranked,b.pre||null,!!b.reward,typeof b.arena==="string"&&/^[a-z]{2,8}$/.test(b.arena)?b.arena:null,false,jid(b.journey),b.lv);playMsg="";setTimeout(playEngine,0)}
     else if(p==="/play/bonus"){   /* 意見回饋 313：石桌往事「回到當年」答對轉折加段位積分；每個轉折只能領一次 */
       const key=String(b.key||"").slice(0,80),pts=Math.max(1,Math.min(20,Math.round(+b.pts)||0)),K=ls.get("bonusKeys",{});
       if(!key)throw new Error("缺少題目代號");const R=cpuRate();

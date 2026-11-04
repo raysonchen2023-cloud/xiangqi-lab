@@ -269,6 +269,11 @@ html[data-era=ming] .topbar,html[data-era=qing] .topbar{border-bottom-width:4px}
 /* 意見回饋 416：開局特效——墨帶一抹、金色書法「開局」由左到右像毛筆寫出來，右邊蓋一方「紅先／黑先」朱印 */
 .pkname{position:absolute;top:8px;left:50%;transform:translateX(-50%);z-index:6;pointer-events:none;padding:3px 14px;border-radius:99px;background:rgba(28,18,10,.62);color:#fbeed4;font:800 14px/1.5 var(--serif);letter-spacing:.14em;white-space:nowrap;box-shadow:0 2px 6px rgba(0,0,0,.25)}
 #preov{position:fixed;inset:0;z-index:9999;display:flex;align-items:flex-end;justify-content:center;background:#F3ECDD;padding:24px max(24px,env(safe-area-inset-left,0px)) max(28px,env(safe-area-inset-bottom,0px));transition:opacity .4s;overflow:hidden}#preov.out{opacity:0}
+.lvh{display:flex;justify-content:space-between;align-items:baseline;gap:8px;flex-wrap:wrap;margin:2px 2px 8px}.lvh b{font-family:var(--serif);font-size:17px}.lvh span{color:var(--muted);font-size:12.5px;font-variant-numeric:tabular-nums}
+.lvsay{line-height:1.85;white-space:pre-wrap;font-size:15px}.lvno{border-color:color-mix(in srgb,var(--red,#B5452B) 45%,transparent)}
+.lvch{display:grid;gap:8px;margin-top:10px}.lvch .btn{white-space:normal;text-align:left;width:100%}
+.lvinc{position:relative;height:26px;border-radius:99px;background:color-mix(in srgb,var(--accent,#9E1B15) 12%,transparent);overflow:hidden;margin:4px 0 8px}.lvinc i{position:absolute;left:0;top:0;bottom:0;background:linear-gradient(90deg,#8B5A2B,#E0A050);border-radius:inherit}.lvinc span{position:relative;display:block;text-align:center;font-size:13px;line-height:26px;font-weight:700;font-variant-numeric:tabular-nums}.lvinc.out{opacity:.5}.lvhost{padding:0 12px}
+.lvblind{position:relative;border-radius:12px;background:#1b1f24 url(data/blind/bg_mind_board.webp) center/cover}.lvblind>svg{filter:brightness(.5) sepia(.35) contrast(1.15)}.lvblind::after{content:"🙈 盲棋";position:absolute;left:10px;top:8px;font-size:12px;font-weight:700;color:#F6E7CF;background:rgba(0,0,0,.45);padding:2px 8px;border-radius:99px;pointer-events:none}
 .ld-img{position:absolute;inset:0}.ld-img img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;object-position:center 30%;opacity:0;transition:opacity 1.2s ease;transform:scale(1.04)}.ld-img img.on{opacity:1;animation:ldzoom 7s ease-out forwards}
 @keyframes ldzoom{from{transform:scale(1.04)}to{transform:scale(1)}}
 .ld-img::after{content:"";position:absolute;inset:0;background:linear-gradient(to bottom,rgba(243,236,221,.72) 0%,rgba(243,236,221,0) 30%,rgba(243,236,221,0) 58%,rgba(243,236,221,.93) 80%,#F3ECDD 100%)}
@@ -536,7 +541,7 @@ html[data-era=ming] .topbar,html[data-era=qing] .topbar{border-bottom-width:4px}
       if(!window.caches)return go();caches.keys().then(function(ks){return Promise.all(ks.filter(function(k){return k.indexOf("xqlab-app-")===0}).map(function(k){return caches.delete(k)}))})
         .then(function(){return navigator.serviceWorker&&navigator.serviceWorker.getRegistration()}).then(function(r){return r&&r.update()}).catch(function(){}).then(go)}},4000)})();
 </script>
-<script>window.XQ_OFFLINE=true;window.XQ_BUILD="20261104-1130";</script>
+<script>window.XQ_OFFLINE=true;window.XQ_BUILD="20261104-1210";</script>
 <script src="core.js"></script>
 <script src="engine.js"></script>
 <script src="local.js"></script>
@@ -1595,7 +1600,8 @@ function Lobby(v){setTop("線上對戰・觀戰",false,[["📤",shareSheet,"分�
         const card=([g,l])=>{const w=watchers[g]||[],watching=XQNet.gid&&XQNet.gid()===g&&!G;
           return `<div class="card" style="margin-bottom:8px${watching?";border:2px solid var(--accent2)":""}"><div class="row" style="justify-content:space-between;gap:8px"><span style="min-width:0">⚔ ${l.map(pn).join(" 對 ")}${l.length<2?' <span class="muted">對 （對手暫時不在大廳）</span>':""}</span><button class="pill" data-w="${esc(g)}" style="flex:none">👀 ${watching?"回去看":"觀看"}</button></div>
             ${w.length?`<div class="muted" style="font-size:12.5px;margin-top:4px">👀 ${w.length} 人在看：${w.map(p=>`<span data-p="${esc(p.id)}" style="cursor:pointer;text-decoration:underline dotted">${esc(p.name)}</span>`).join("、")}</div>`:""}</div>`};
-        return `<div class="sec-t">⚔ 正在對戰（${rest.length+(G?1:0)} 盤）・點「觀看」就能觀戰</div>`+(mine||rest.length?mine+rest.map(card).join(""):`<div class="card muted" style="margin-bottom:8px">${up?"目前沒有人在對戰，有人開始下棋就會出現在這裡。":"連線中…"}</div>`)+
+        const VS=lobbyVisitors(),vis=VS.length?`<div class="sec-t">🪨 路過的石桌往事人物</div>${VS.map(k=>`<button class="card row" data-jc="${k}" style="width:100%;gap:10px;margin-bottom:8px;font:inherit;color:inherit;text-align:left;cursor:pointer"><img src="data/journey/char_${k}_idle.webp" alt="" style="width:46px;height:62px;object-fit:contain;flex:none" onerror="this.remove()"><span style="flex:1;min-width:0"><b>${esc(JCHAR[k].name)}</b><br><span class="muted" style="font-size:12.5px">「${esc(JCHAR[k].hi)}」</span></span><span class="muted">›</span></button>`).join("")}`:"";
+        return vis+`<div class="sec-t">⚔ 正在對戰（${rest.length+(G?1:0)} 盤）・點「觀看」就能觀戰</div>`+(mine||rest.length?mine+rest.map(card).join(""):`<div class="card muted" style="margin-bottom:8px">${up?"目前沒有人在對戰，有人開始下棋就會出現在這裡。":"連線中…"}</div>`)+
           `<div class="sec-t">🟢 可以邀請的棋友（${free.filter(p=>p.st==="idle"||p.st==="seeking").length}）</div>`+
           (free.length?free.map(p=>`<div class="card row" data-p="${esc(p.id)}" style="justify-content:space-between;margin-bottom:8px;cursor:pointer"><span><b>${esc(p.name)}</b> <span class="pill">${esc(XQNet.rankOf(p.pts))}</span>${p.tc?` <span class="muted" style="font-size:12px">⏱${+p.tc}分</span>`:""} <span class="muted" style="font-size:12px">ⓘ</span><br><span class="muted">${p.st==="idle"&&p.doing?"📖 "+esc(String(p.doing).slice(0,10))+"中":ST[p.st]||""}${p.city?"・📍"+esc(p.city):""}</span></span>
             ${p.st==="idle"||p.st==="seeking"?`<button class="pill" data-i="${esc(p.id)}" style="background:var(--accent);color:#fff;border:none;padding:6px 12px">⚔ 邀請對戰</button>`:""}</div>`).join("")
@@ -1610,6 +1616,7 @@ function Lobby(v){setTop("線上對戰・觀戰",false,[["📤",shareSheet,"分�
     box.querySelectorAll("[data-w]").forEach(b=>b.onclick=()=>{const go=()=>{XQNet.watch(b.dataset.w);location.hash="#/pvp"};if(XQNet.playing())confirmBox("你有一盤進行中的對局，去觀戰會離開它，確定？",go,"確定");else go()});
     {const aw=box.querySelector("#aiw");if(aw)aw.onclick=()=>location.hash="#/watch/ai"}
     // 點棋友（不是按鈕的地方）→ 看他的資料卡
+    box.querySelectorAll("[data-jc]").forEach(c=>c.onclick=()=>{vibrate(5);jcharSheet(c.dataset.jc)});
     box.querySelectorAll("[data-p]").forEach(c=>c.onclick=e=>{if(e.target.closest("button"))return;const p=ps.find(x=>x.id===c.dataset.p);if(p)oppCard(p.id,p.name,{invite:q=>{if(XQNet.playing())return confirmBox("你有一盤進行中的對局，邀請新對局會離開它，確定？",()=>{XQNet.leave();invite(q)},"確定");invite(q)}})});
     box.querySelectorAll("[data-i]").forEach(b=>b.onclick=()=>{const p=ps.find(x=>x.id===b.dataset.i);if(!p)return;
       if(XQNet.playing())return confirmBox("你有一盤進行中的對局，邀請新對局會離開它，確定？",()=>{XQNet.leave();invite(p)},"確定");invite(p)})}
@@ -3181,6 +3188,44 @@ let PIKA_META=null,PIKA_META_DIR=null;function loadPikaMeta(){const dir=PIKA_DIR
 const TIMG=(src,emo)=>`<img class="ti" src="${src}" alt="" onerror="this.replaceWith(document.createTextNode('${emo}'))">`;
 /* 擂台的對手換成那位擂主的圖（Gemini 畫的 idle／think／move／win／lose；開心＝贏、難過＝輸、驚訝＝思考） */
 let CHAMP_META=null;fetch("data/champ/champ.json").then(r=>r.ok?r.json():null).then(j=>{CHAMP_META=j}).catch(()=>{});
+/* 意見回饋 362：石桌往事的故事角色當對手（data/journey/char_<角色>_<姿勢>.webp，跟擂主同尺寸，所以共用 CHAMP_META） */
+const JCHAR={liu_young:{name:"少年柳寒舟",pc:"砲",hat:"hair",hc:"#1E1A16",band:"#2F5D8A",robe:"#5C6E7A",hi:"炮先上，急什麼？我就是急！",win:"將！這盤我的。",lose:"……再來一盤。"},
+  shen_young:{name:"少年沈石川",pc:"馬",hat:"hair",hc:"#1E1A16",robe:"#6B7C6A",hi:"急什麼，棋又不會跑。",win:"你太急了。",lose:"好棋。我記住了。"},
+  agula_young:{name:"少年阿古拉",pc:"車",hat:"fur",hc:"#F0EDE6",robe:"#3E6FA8",hi:"草原上的人，下棋也騎馬！",win:"哈！馬跑得比你快。",lose:"欠你一盤，記著。"},
+  boatman:{name:"渡口老艄公",pc:"卒",hat:"cap",hc:"#C9A86A",robe:"#7A6A50",hi:"上了船，就別亂動。",win:"水急，棋也急。",lose:"老了，看不清嘍。"},
+  scholar:{name:"江南書生",pc:"士",hat:"fangjin",hc:"#151515",robe:"#3A4A6A",hi:"在棋盤上，論理不論勢。",win:"承讓，承讓。",lose:"小生佩服。"},
+  liu_old:{name:"柳寒舟",pc:"砲",hat:"bun",hc:"#D8D6D0",robe:"#8A8A86",hi:"你走那步車，讓我想起一個人。",win:"還是太急了。",lose:"好……好棋。"}};
+/* 3D 園子的對手一律是立體小人（意見回饋 377），所以故事角色跟路人一樣用帽子、髮色、衣服顏色來分；畫好的立繪（data/journey/char_*）留給對話和人物頁用 */
+const JCHAR_LOOK=(k,side)=>JCHAR[k]?NPC_LOOK({...JCHAR[k],say:JCHAR[k].hi},side):null;
+/* 意見回饋 400：點人物看大幅完整的 3D 小人，左右拖曳可以轉；3D 載入失敗就顯示畫像 */
+async function figView(look,title,html,btns,img){sheet(title,async b=>{
+  b.innerHTML=`<div id="fv" style="position:relative;aspect-ratio:1;max-height:56vh;margin:0 auto;border-radius:14px;overflow:hidden;touch-action:none;background:radial-gradient(circle at 50% 38%,#F6EEDF,#CDBB9C)"></div><p class="muted" style="text-align:center;font-size:12.5px;margin:6px 0 10px">左右拖曳可以轉動</p>${html||""}<div class="lvch" id="fvb"></div>`;
+  const bb=b.querySelector("#fvb");for(const[l,fn,gh]of btns||[]){const x=document.createElement("button");x.className="btn"+(gh?" ghost":"");x.textContent=l;x.onclick=fn;bb.append(x)}
+  const host=b.querySelector("#fv"),flat=()=>{host.innerHTML=img?`<img src="${img}" alt="" style="width:100%;height:100%;object-fit:contain">`:"";const p=b.querySelector("p.muted");if(p)p.remove()};
+  if(!look)return flat();
+  try{await loadScript(OFF?"three.min.js":"/m/three.min.js");await loadScript((OFF?"bot3d.js":"/m/bot3d.js")+"?v="+encodeURIComponent(window.XQ_BUILD||""));if(!window.THREE||!window.XQBot3D||!XQBot3D.figure)throw 0}catch(e){return flat()}
+  if(!host.isConnected)return;const T=window.THREE,W=host.clientWidth,H=host.clientHeight||W;let r;try{r=new T.WebGLRenderer({antialias:true,alpha:true})}catch(e){return flat()}
+  r.setPixelRatio(Math.min(2,devicePixelRatio||1));r.setSize(W,H);host.append(r.domElement);
+  const sc=new T.Scene();sc.add(new T.HemisphereLight(0xFFF6E8,0x6A5A48,1.15));const d=new T.DirectionalLight(0xFFFFFF,.85);d.position.set(3,6,5);sc.add(d);
+  let B;try{B=XQBot3D.figure(look||{})}catch(e){r.dispose();return flat()}const root=new T.Group();root.add(B.bot);sc.add(root);root.updateMatrixWorld(true);
+  const box=new T.Box3().setFromObject(B.bot),c=box.getCenter(new T.Vector3()),sz=box.getSize(new T.Vector3());B.bot.position.sub(c);const by=B.bot.position.y;
+  const cam=new T.PerspectiveCamera(30,W/H,.1,200);cam.position.set(0,sz.y*.06,Math.max(sz.y,sz.x)*2.6);cam.lookAt(0,0,0);
+  let ry=-.35,v=.004,drag=null,t0=performance.now();
+  host.addEventListener("pointerdown",e=>{drag={x:e.clientX,ry};host.setPointerCapture(e.pointerId)});
+  host.addEventListener("pointermove",e=>{if(drag){ry=drag.ry+(e.clientX-drag.x)*.012}});
+  const up=()=>{drag=null};host.addEventListener("pointerup",up);host.addEventListener("pointercancel",up);
+  const loop=()=>{if(!host.isConnected){try{r.dispose()}catch(e){}return}const t=(performance.now()-t0)/1000;if(!drag)ry+=v;root.rotation.y=ry;B.bot.position.y=by+Math.sin(t*1.6)*sz.y*.012;
+    try{if(XQBot3D.faceApply)XQBot3D.faceApply(B,"open",(t%4)<.12,false)}catch(e){}r.render(sc,cam);requestAnimationFrame(loop)};loop()})}
+/* 意見回饋 400：石桌往事的人物偶爾路過線上大廳（每 15 分鐘換一批，大約六成的時候會有 1～2 位），點他看人物、可以跟他下一盤；難度照故事裡的設定 */
+const JCHAR_LV={liu_young:3,shen_young:4,agula_young:3,boatman:2,scholar:4,liu_old:6};
+function lobbyVisitors(){const slot=Math.floor(Date.now()/9e5);let h=slot*2654435761>>>0;const rnd=()=>{h=(h*1103515245+12345)>>>0;return h/4294967296};
+  if(rnd()>.6)return[];const ks=Object.keys(JCHAR),out=[];const n=rnd()<.35?2:1;while(out.length<n){const k=ks[Math.floor(rnd()*ks.length)];if(!out.includes(k))out.push(k)}return out}
+function jcharSheet(k){const c=JCHAR[k];if(!c)return;const lv=JCHAR_LV[k]||3;
+  figView(JCHAR_LOOK(k,"b"),"🪨 "+c.name,`<p style="font-size:16px;line-height:1.8;margin:0 0 6px">「${esc(c.hi)}」</p><p class="muted" style="font-size:13px;margin:0 0 4px">石桌往事裡的人物・第 ${lv} 級的實力（照故事裡的棋力）</p>`,
+    [["♟ 跟他下一盤",()=>{closeSheet();jStart("char:"+k,{human:"r",level:lv,journey:"char:"+k},()=>{location.hash="#/journey/play";setTimeout(()=>toast(`🪨 ${c.name}：${c.hi}`),500)})}],["關閉",()=>closeSheet(),true]],`data/journey/char_${k}_idle.webp`)}
+/* 人物與年表：點人物看 3D 小人（照人物設定配的帽子、衣服） */
+const PEOPLE_LOOK={"沈石川":{pc:"馬",hat:"bun",hc:"#E8E6E0",robe:"#5E6B5C"},"柳寒舟":{pc:"砲",hat:"bun",hc:"#D8D6D0",robe:"#8A8A86"},"阿古拉":{pc:"車",hat:"fur",hc:"#F0EDE6",robe:"#3E6FA8"},"周文淵":{pc:"士",hat:"fangjin",hc:"#151515",robe:"#7A2E2A"},
+  "柳老篙":{pc:"卒",hat:"cap",hc:"#C9A86A",robe:"#7A6A50"},"秦小禾":{pc:"象",hat:"buns",hc:"#2A1D16",robe:"#C76B6B"},"朱元璋":{pc:"將",hat:"fangjin",hc:"#2A1D16",robe:"#B8862E"},"錢小滿":{pc:"兵",hat:"hair",hc:"#2A1D16",robe:"#8A6A3A"}};
 const CHAMP_LOOK=(era,side)=>CHAMP_META&&ARENA[era]?{p:side==="r"?"帥":"將",e:era,g:1,thin:true,sprite:`data/champ/${era}_`,spriteMeta:CHAMP_META,spriteMap:{happy:"win",sad:"lose",surprise:"think"}}:null;
 /* 意見回饋 425：石桌往事的園子（第一集、第二集以後共用）每次開一盤，隨機遇到一位路人棋友（不會連續兩次同一位），難度以玩家等級為中心上下浮動一級。
    立繪 data/npc/<id>.webp（Gemini 畫的，還沒有就只顯示名字）；3D 用 bot3d.js 的路人造型（hat 帽子／頭髮、hc 顏色、robe 衣服、band 頭帶、acc 髮簪／花），不受「Pikafish 造型」設定影響；pc 是身上那顆棋子（黑方的字） */
@@ -3246,12 +3291,12 @@ function parkDraw(host,bd,board,o,ex){
   if(!parkOn()){if(PARK&&PARK.host===host){if(PARK.v.hide)PARK.v.hide();else{PARK.v.destroy();PARK=null}}bd.svg.style.display="";botVis(true);return}
   // 意見回饋 270：載入完還是沒有 XQPark3D（例如程式出錯）就停下來改用棋盤模式，不能一直重試（之前會無限循環、整個 App 卡死）
   if(!window.XQPark3D){bd.svg.style.display="";parkLoad().then(()=>{if(!window.XQPark3D)throw new Error("park3d 沒有載入成功");if(document.body.contains(host))parkDraw(host,bd,board,o,ex)}).catch(()=>{toast("園子 3D 棋盤載入失敗，先用棋盤模式");store.set("park3d",false)});return}
-  if(PARK&&PARK.era!==store.get("era","classic")){PARK.v.destroy();PARK=null}   // 換了朝代（例如從集章簿換過去）：公園重建
+  if(PARK&&(PARK.era!==store.get("era","classic")||(PARK.bg||null)!==(ex.bg||null))){PARK.v.destroy();PARK=null}   // 換了朝代（例如從集章簿換過去）：公園重建
   if(!PARK||PARK.host!==host||!document.body.contains(PARK.v.el)){if(PARK)PARK.v.destroy();
-    const pv=XQPark3D.create(host,{arena:ex.arena||null,gate:ex.gate||null,onTap:i=>ex.tap(i),onInfo:k=>parkInfo(k),onDestroy:()=>{if(PARK&&PARK.v===pv){PARK=null;botVis(true)}}});
-    if(!pv){toast("這台裝置沒辦法顯示 3D，先用棋盤模式");store.set("park3d",false);return}PARK={host,v:pv,era:store.get("era","classic")};setTimeout(()=>{try{pv.say(`我是${BOTN()}，幫你加油！`,2.6);if(ex.oppHello)setTimeout(()=>pv.oppSay(ex.oppHello,2.6),1400)}catch(e){}},700)}
+    const pv=XQPark3D.create(host,{arena:ex.arena||null,gate:ex.gate||null,bg:ex.bg||null,onTap:i=>ex.tap(i),onInfo:k=>parkInfo(k),onDestroy:()=>{if(PARK&&PARK.v===pv){PARK=null;botVis(true)}}});
+    if(!pv){toast("這台裝置沒辦法顯示 3D，先用棋盤模式");store.set("park3d",false);return}PARK={host,v:pv,era:store.get("era","classic"),bg:ex.bg||null};setTimeout(()=>{try{pv.say(`我是${BOTN()}，幫你加油！`,2.6);if(ex.oppHello)setTimeout(()=>pv.oppSay(ex.oppHello,2.6),1400)}catch(e){}},700)}
   /* 意見回饋 417：園子上方標出朝代和那個朝代對園子的叫法（例如「唐朝・園林」「漢朝・苑囿」） */
-  {let tg=host.querySelector(".pkname");if(!tg){tg=document.createElement("div");tg.className="pkname";if(getComputedStyle(host).position==="static")host.style.position="relative";host.append(tg)}const k=store.get("era","classic");tg.textContent=(k==="classic"?"經典":eraLabel(k))+"・"+(PW[k]||"園子");tg.hidden=false}
+  {let tg=host.querySelector(".pkname");if(!tg){tg=document.createElement("div");tg.className="pkname";if(getComputedStyle(host).position==="static")host.style.position="relative";host.append(tg)}const k=store.get("era","classic");tg.textContent=ex.bgName||((k==="classic"?"經典":eraLabel(k))+"・"+(PW[k]||"園子"));tg.hidden=false}
   if(PARK.v.show)PARK.v.show();bd.svg.style.display="none";botVis(false);ex.look=parkLook();PARK.last={board,o,ex};PARK.v.draw(board,o,ex)}
 // 意見回饋 241：在公園裡按鈕換成「▦」（回棋盤模式），在棋盤模式是「🌳」（去公園）
 const parkIcon=()=>parkOn()?"▦":"🌳",parkLabel=()=>parkOn()?"回棋盤模式":"去園子下棋（3D）";
@@ -3403,7 +3448,7 @@ function arenaSheet(era,start){era=ARENA[era]?era:"classic";const A=ARENA[era],S
    他會撐著傘站到石台上看你下棋。點他一次解開一章（一盤棋最多一章），12 章都解開後，在他看棋的時候贏一盤，就解開尾聲。
    故事在 data/park-legend.json（虛構）；解開的章節在 集章簿 → 石桌往事 可以重讀，開發者模式全部看得到 */
 /* 意見回饋 388：人物與年表每位人物都有畫像（Gemini 照石桌往事的人物設定畫，data/people/） */
-const PIMG={"柳寒舟":"data/legend/liu_watch.webp","沈石川":"data/people/shen.webp","阿古拉":"data/people/agula.webp","周文淵":"data/people/zhou.webp","柳老篙":"data/people/liulaogao.webp","秦小禾":"data/people/qinxiaohe.webp","朱元璋":"data/people/zhu.webp"};
+const PIMG={"錢小滿":"data/people/b1p_qianxiaoman.webp","沈石川":"data/people/shen.webp","柳寒舟":"data/legend/liu_watch.webp","王伯":"data/people/b1p_wangbo.webp","陳伯":"data/people/b1p_chenbo.webp","阿古拉":"data/people/agula.webp","周文淵":"data/people/zhou.webp","秦小禾":"data/people/qinxiaohe.webp","柳老篙":"data/people/liulaogao.webp","錢萬斗":"data/people/b1p_qianwandou.webp","趙守田":"data/people/b1p_zhaoshoutian.webp","賈半步":"data/people/b1p_jiabanbu.webp","芋頭婆":"data/people/b1p_yutoupo.webp","老韓":"data/people/b1p_laohan.webp","秦長庚":"data/people/b1p_qinchanggeng.webp","巴特爾":"data/people/b1p_bateer.webp","靜因師太":"data/people/b1p_jingyin.webp","阿磯":"data/people/b1p_aji.webp","葛鼓兒":"data/people/b1p_gegu.webp","牽小馬的孩子":"data/people/b1p_wulan.webp","賈一著":"data/people/b1p_jiayizhuo.webp","賣豆花的小販":"data/npc/douhua.webp","方聽濤":"data/people/b1p_fangtingtao.webp","朱元璋":"data/people/zhu.webp","王冕":"data/people/b1p_wangmian.webp","常遇春":"data/people/b1p_changyuchun.webp","劉伯溫":"data/people/b1p_liubowen.webp","施耐庵":"data/people/b1p_shinaian.webp","沈萬三":"data/people/b1p_shenwansan.webp","張三丰":"data/people/b1p_lata_daoren.webp"};
 let LEGEND_P=null;const legendData=()=>LEGEND_P||(LEGEND_P=fetch("data/park-legend.json").then(r=>{if(!r.ok)throw 0;return r.json()}).catch(()=>{LEGEND_P=null;return null}));
 const legendState=()=>{const L={n:1,epi:false,used:{}};try{const S=jStars(),J=jStages(),pass=J.filter(x=>S[x.id]).length;let k=0;while(k<J.length&&S[J[k].id])k++;
   L.n=Math.min(J.length,k+1);L.pass=pass}catch(e){}return L};
@@ -3429,7 +3474,8 @@ async function novelRead(i){const N=await novelData();if(!N||!N.chapters[i])retu
     <div class="row" style="gap:8px;margin-top:14px">${i>0?'<button class="btn ghost" id="nvP" style="flex:1">‹ 上一回</button>':""}${i<N.chapters.length-1?'<button class="btn" id="nvN" style="flex:1">下一回 ›</button>':""}</div>`;
     const p=b.querySelector("#nvP"),n=b.querySelector("#nvN");if(p)p.onclick=()=>novelRead(i-1);if(n)n.onclick=()=>novelRead(i+1);b.scrollTop=0})}
 /* 意見回饋 394：每一回的章節插畫（Gemini 畫的 art/levels/cg*）；0＝楔子、13＝尾聲 */
-const LEG_CG={1:["cg01_grey_umbrella"],2:["cg02a_tingtao_heyday","cg02b_tiles_winter"],3:["cg03_dukou_arrival"],5:["cg04_dawn_return"],7:["cg05a_chongyang_qihui","cg05b_cellar_milk_tea"],9:["lv06_three_incense_sacrifice"],10:["cg07a_gong_night","cg07b_ferry_night"],11:["cg08_rumor_pole"],12:["cg09a_dig_rubble"],15:["cg09b_boat_letter"],25:["cg10_warehouse_chess"],35:["lv11_rain_reasoning"],36:["lv12_draw_final"]};
+/* 第一集新版 36 回的章節插畫（story/book1/art_plan.md：舊圖沿用的掛到內容對得上的回，新圖 b1cg_* 由 Gemini 第 29 批畫；還沒畫好的 onerror 自動略過） */
+const LEG_CG={1:["cg01_grey_umbrella","b1cg01_send_chariot"],2:["cg02a_tingtao_heyday","cg02b_tiles_winter"],3:["b1cg03_fishline_board","lv04_cannon_over_hill"],4:["cg03_dukou_arrival","b1cg04_stones_on_tiles"],5:["lv01_candle_out","cg04_dawn_return"],6:["b1cg06_notice_ricestore"],7:["cg05a_chongyang_qihui","cg05b_cellar_milk_tea"],8:["lv02_one_incense","b1cg08_short_incense"],9:["lv05_mountain_still","lv06_three_incense_sacrifice"],10:["cg07a_gong_night","cg07b_ferry_night"],11:["b1cg11_yamen_confess","b1cg11_carried_home"],12:["cg09a_dig_rubble","b1cg12_carving_moves"],13:["b1cg13_reed_rescue"],14:["b1cg14_plum_ink"],15:["lv08_letter_chess","cg08_rumor_pole"],16:["b1cg16_hidden_letter"],17:["b1cg17_girl_with_stone","lv10_orphan_lesson"],18:["b1cg18_general_game"],19:["b1cg19_patting_hull"],20:["b1cg20_yingchang_tent"],21:["lv09_craftsman_table","b1cg21_sedan_curtain"],22:["b1cg22_rice_wager"],23:["b1cg23_rice_measure"],24:["b1cg24_blank_plaque"],25:["b1cg25_blind_boy"],26:["b1cg26_yangzhou_ferry"],27:["b1cg27_two_horses","b1cg27_dawn_lesson"],28:["b1cg28_taoist_north"],29:["cg09b_boat_letter","b1cg29_plank_to_xingmu"],30:["b1cg30_huaian_beggar","b1cg30_first_sight"],31:["b1cg31_archive_lamp","b1cg31_old_and_little_horse"],32:["b1cg32_umbrella_points"],33:["b1cg33_stone_bag","cg10_warehouse_chess"],34:["b1cg34_wooden_box"],35:["b1cg35_rain_reckoning","b1cg35_sedan_gate"],36:["lv12_draw_final","b1cg36_bone_pawn"]};
 async function legendRead(i,tip){const D=await legendData();if(!D)return;const L=legendState(),all=LEGEND_PREVIEW&&DEVMODE(),ch=D.chapters[i-1];if(!ch)return;const js=jStages()[i-1],jsOpen=js&&jOpen(jStages(),i-1),jn=js?(jStars()[js.id]||0):0;
   const cg=LEG_CG[i]||[],cgi=f=>`<img src="data/levels/${f}.webp" alt="" loading="lazy" onerror="this.remove()" style="width:100%;height:auto;border-radius:12px;display:block;margin:4px 0 12px">`;
   sheet("🪨 "+ch.title,b=>{b.innerHTML=`${cg[0]?cgi(cg[0]):""}<div style="line-height:1.95;font-size:15.5px;white-space:pre-wrap">${esc(ch.body)}</div>${cg[1]?cgi(cg[1]):""}${tip?`<p class="muted" style="margin-top:10px">${esc(tip)}</p>`:""}
@@ -3442,9 +3488,10 @@ async function legendRead(i,tip){const D=await legendData();if(!D)return;const L
     b.querySelector("#lgL").onclick=()=>legendBook();const nx=b.querySelector("#lgN");if(nx)nx.onclick=()=>legendRead(i+1)})}
 /* 意見回饋 314：人物（出生年、六十年前和重逢時幾歲）與元末明初大事年表（真實歷史＋故事） */
 async function legendTimeline(){const D=await legendData();if(!D)return;const P=D.people||[],T=D.timeline||[];
-  sheet("📅 人物與年表",b=>{b.innerHTML=`<div class="sec-t" style="margin-top:0">人物</div>${P.map(x=>{const im=PIMG[x.name];return`<div class="ppl"${im?' style="flex-direction:row;gap:10px;align-items:center"':""}>${im?`<img src="${im}" alt="" onerror="this.remove()" style="flex:none;width:52px;height:70px;object-fit:contain">`:""}<div class="pn" style="flex:1;min-width:0"><b>${esc(x.name)}</b>（${x.born}${x.died?"–"+x.died:""}）<small>${esc(x.note||"")}</small>${x.verse?`<small style="font-family:var(--serif);font-style:italic;margin-top:2px">${esc(String(x.verse).split(/[。\n]/).filter(Boolean).slice(0,2).join("，"))}</small>`:""}</div></div>`}).join("")}
+  sheet("📅 人物與年表",b=>{b.innerHTML=`<div class="sec-t" style="margin-top:0">人物</div>${P.map(x=>{const im=PIMG[x.name];return`<div class="ppl" data-pp="${esc(x.name)}" style="cursor:pointer;${im?"":""}"${im?' style="flex-direction:row;gap:10px;align-items:center"':""}>${im?`<img src="${im}" alt="" onerror="this.remove()" style="flex:none;width:52px;height:70px;object-fit:contain">`:""}<div class="pn" style="flex:1;min-width:0"><b>${esc(x.name)}</b>（${x.born}${x.died?"–"+x.died:""}）<small>${esc(x.note||"")}</small>${x.verse?`<small style="font-family:var(--serif);font-style:italic;margin-top:2px">${esc(String(x.verse).split(/[。\n]/).filter(Boolean).slice(0,2).join("，"))}</small>`:""}</div></div>`}).join("")}
     <div class="sec-t">大事年表</div>${T.map(x=>`<div class="tlr"><div class="ty"><b>${x.y}</b><small>${esc(x.era||"")}</small></div><div class="tt">${x.h?"📜":"🪨"} ${esc(x.t)}</div></div>`).join("")}
-    <p class="muted" style="font-size:12px;line-height:1.7;margin-top:8px">📜 是真實的歷史；🪨 是石桌往事的故事（虛構）。沈石川、柳寒舟、阿古拉、周文淵和雲河鎮都是編的。</p>`})}
+    <p class="muted" style="font-size:12px;line-height:1.7;margin-top:8px">📜 是真實的歷史；🪨 是石桌往事的故事（虛構）。沈石川、柳寒舟、阿古拉、周文淵和雲河鎮都是編的。</p>`;
+    b.querySelectorAll("[data-pp]").forEach(x=>x.onclick=()=>{const n=x.dataset.pp,p=P.find(z=>z.name===n),L=PEOPLE_LOOK[n];if(!L&&!PIMG[n])return;vibrate(5);figView(L?{p:L.pc,e:"classic",g:9,npc:n,hat:L.hat,hc:L.hc,robe:L.robe}:null,"🪨 "+n,`<p class="muted" style="font-size:13.5px;line-height:1.7;margin:0">${esc(p&&p.note||"")}</p>`,[["關閉",()=>closeSheet(),true]],PIMG[n]||null)})})}
 function legendBook(){closeSheet();LEGEND_PREVIEW=false;location.hash="#/adventure"}
 /* 意見回饋 316：石桌往事改成一整頁——上面是你的棋童小卡，中間是雲河棋路、驛站、棋童資料、人物年表，下面是章節 */
 function Adventure(v){LEGEND_PREVIEW=false;setTop("🪨 石桌往事","#/");setTabs(false);v.className="view";v.innerHTML='<div class="pad muted">載入中…</div>';
@@ -3538,7 +3585,7 @@ const JR=[
   {k:"shizhuo",name:"石桌",sub:"第三十～卅六回：架閣庫的舊字、白頭的阿古拉，和那盤沒下完的棋。",tiers:[12,14],ch:[30,36],lv:30}];
 /* 開發者決定：石桌往事換成 36 回，每回一關（名稱、玩法類型、電腦等級；tools/legend_export.js 會照大綱自動更新這一行）。
    特製玩法（猜著法、盲棋、對話選項、香條計時、讓子、殘局起手…）要等引擎驗過局面才做；在那之前：有電腦等級的先下一盤對弈，其他先用題庫解題 */
-const JL=[["送車","讓子＋殘局起手＋猜著法",1],["桌子底下","盲棋＋記盤",0],["小卒過河","殘局起手",2],["當場拆穿","對話選項＋殘局起手",2],["蠟燭燒完了","對話選項＋盲棋＋猜著法",0],["他撕一張，我們寫一張","收集＋香條計時",0],["最後一支香","記盤＋對話選項＋香條計時對局",2],["背後那門砲","香條計時＋殘局起手＋猜著法",3],["三炷香","殘局起手＋香條計時",3],["第四十二步","猜著法＋對話選項",0],["州衙三問","對話選項",0],["每晚擺一遍","記盤＋猜著法",0],["草席下的棋","盲棋＋限步對局",3],["秘境棋友・王冕","限步對局",2],["書信棋","猜著法",0],["柳老篙的手","對話選項",0],["指導棋","限步對局＋猜著法",1],["炮八平五是哪一路兵馬","對話選項＋限步對局",2],["孤城","殘局起手",3],["雙馬飲泉","殘局起手 ×3",0],["撐到轎子來","限步對局＋香條計時",3],["秘境棋友・沈萬三","限步對局",4],["棋仙讓車","讓子對局",4],["拼匾","收集＋殘局題 ×5",0],["盲棋","盲棋＋猜著法",0],["只敢問一句","對話選項＋香條計時對局",3],["讓雙馬","讓子對局",3],["秘境棋友・邋遢道人","限步對局",5],["拆船","收集＋殘局題 ×3",0],["賈半步的殘局","殘局起手",4],["架閣庫","收集＋對話選項＋香條計時",0],["石桌刻痕","殘局題",0],["過宮炮","讓子對局",4],["不怕的棋","對話選項＋限步對局",4],["雨中推演","猜著法＋記盤",0],["炮八平四","殘局起手",6]];/*JL*/
+const JL=[["送車","讓子＋殘局起手＋猜著法",1,0],["桌子底下","盲棋＋記盤",0,0],["小卒過河","殘局起手",2,0],["當場拆穿","對話選項＋殘局起手",2,0],["蠟燭燒完了","對話選項＋盲棋＋猜著法",0,0],["他撕一張，我們寫一張","收集＋香條計時",0,0],["最後一支香","記盤＋對話選項＋香條計時對局",2,0],["背後那門砲","香條計時＋殘局起手＋猜著法",3,0],["三炷香","殘局起手＋香條計時",3,0],["第四十二步","猜著法＋對話選項",0,0],["州衙三問","對話選項",0,0],["每晚擺一遍","記盤＋猜著法",0,0],["草席下的棋","盲棋＋限步對局",3,0],["秘境棋友・王冕","限步對局",2,0],["書信棋","猜著法",0,0],["柳老篙的手","對話選項",0,0],["指導棋","限步對局＋猜著法",1,0],["炮八平五是哪一路兵馬","對話選項＋限步對局",2,0],["孤城","殘局起手",3,0],["雙馬飲泉","殘局起手 ×3",0,0],["撐到轎子來","限步對局＋香條計時",3,0],["秘境棋友・沈萬三","限步對局",4,0],["棋仙讓車","讓子對局",4,0],["拼匾","收集＋殘局題 ×5",0,0],["盲棋","盲棋＋猜著法",0,0],["只敢問一句","對話選項＋香條計時對局",3,0],["讓雙馬","讓子對局",3,0],["秘境棋友・邋遢道人","限步對局",5,0],["拆船","收集＋殘局題 ×3",0,0],["賈半步的殘局","殘局起手",4,0],["架閣庫","收集＋對話選項＋香條計時",0,0],["石桌刻痕","殘局題",0,0],["過宮炮","讓子對局",4,0],["不怕的棋","對話選項＋限步對局",4,0],["雨中推演","猜著法＋記盤",0,0],["炮八平四","殘局起手",6,0]];/*JL*/
 /* 🏮 驛站（意見回饋 315）：等級不夠進下一站時，來這裡找路過的旅人下棋練等，下幾次都可以；贏了多給修為。
    🗝 秘境棋友：藏在某些朝代公園的樹、茶杯、燈籠後面，要自己在公園 3D 裡點到才會發現；找到後也會出現在驛站，比較強、修為也多 */
 const INN=[{id:"tea",name:"賣茶的老婦",ic:"🍵",lv:1,xp:20,say:"「喝口茶，陪老身下一盤，不急不急。」"},{id:"scholar",name:"趕考的書生",ic:"📜",lv:2,xp:25,say:"「小生進京趕考，路上棋癮犯了，請賜教。」"},
@@ -3553,7 +3600,7 @@ const SECRETS=[{id:"liuji",name:"劉伯溫",who:"元末明初的謀士，幫朱�
 /* 意見回饋 333：秘境棋友的小傳——生卒年照一般的史書說法，喜好、棋風和支線故事是遊戲裡的想像 */
 const SECRET_BIO={
   liuji:{y:"1311–1375",from:"浙江青田",like:"夜裡觀星、讀兵書",op:"中炮——先把陣勢擺穩，再找機會出手",mid:"算得很深，愛在後面埋伏兵，一步棋藏著三步後手",story:"他說年輕時在青田的石門洞讀書，跟洞裡一位老道下了三年棋，一盤都沒贏過。老道只留下一句話：「棋要先算退路。」後來替朱元璋出謀劃策，他說用的都是那三年輸棋學來的東西。"},
-  zhangsanfeng:{y:"生卒成謎（傳說）",from:"遼東（一說）",like:"打坐、看雲、練太極",op:"屏風馬——不急著進攻，先站穩",mid:"以柔克剛：讓你先打，借你的力反擊，常常棄子換勢",story:"傳說他看見蛇和鶴打架，鶴怎麼啄都啄不到蛇，悟出了太極。他下棋也像推手：你越用力，輸得越快。他自稱一百多歲，問他到底幾歲，他只笑不答。"},
+  zhangsanfeng:{y:"生卒成謎（傳說）",from:"遼東（一說）",like:"打坐、看雲、在山裡走路",op:"屏風馬——不急著進攻，先站穩",mid:"以柔克剛：讓你先打，借你的力反擊，常常棄子換勢",story:"傳說他看見蛇和鶴打架，鶴怎麼啄都啄不到蛇，悟出了以柔克剛的道理。他下棋也是這樣：你越用力，輸得越快。他自稱一百多歲，問他到底幾歲，他只笑不答。"},
   shinaian:{y:"約 1296–1370",from:"江蘇興化（一說錢塘）",like:"聽說書、蒐集江湖故事",op:"仙人指路——變化多，像說故事先留伏筆",mid:"愛車馬衝殺、對攻熱鬧，寧可輸得精彩也不和得無聊",story:"他說每一盤棋都是一回故事：哪顆兵是林沖、哪隻馬是武松，下完都記在稿子上。據說那疊被你撿到的手稿，就是後來《水滸傳》的草稿——不過這只是他自己說的。"},
   shenwansan:{y:"生卒不詳（元末明初）",from:"江南周莊",like:"算帳、收藏寶物",op:"飛相局——先求穩，絕不吃虧",mid:"精打細算，喜歡兌子換實利，到殘局再慢慢贏",story:"傳說他有一個聚寶盆，放一個銅錢進去會變出滿盆。他出錢幫南京修過城牆，後來卻因為太有錢被朝廷流放。他說棋盤上的道理一樣：贏得太多，別人就不想跟你下了。"},
   changyuchun:{y:"1330–1369",from:"安徽懷遠",like:"騎馬、喝酒、搶當先鋒",op:"順炮——開局就衝，先搶先贏",mid:"猛攻不守，車馬炮一起壓上，輸贏都很快",story:"他是明初的猛將，傳說自稱帶十萬兵就能橫行天下，所以人稱「常十萬」。三十九歲那年在北伐回師的路上病逝。他說下棋跟打仗一樣，猶豫就輸了——所以他下棋從來不想超過十秒。"},
@@ -3628,10 +3675,10 @@ function innSheet(v){setTimeout(innDrop,1200);setTop("🏮 驛站","#/adventure"
   return{}}
 /* 意見回饋 327：石桌往事的棋（雲河棋路、驛站、公園）自己留一盤，跟朝代擂台、挑戰電腦互不干擾 */
 const parkLv=()=>Math.max(1,Math.min(6,1+Math.floor(xpInfo().L/8)));
-function jName(j){if(!j)return"石桌往事";if(j==="park")return"園子";if(String(j).startsWith("inn:")){const x=INN.concat(SECRETS).find(z=>"inn:"+z.id===j);return x?"驛站・"+x.name:"驛站"}
+function jName(j){if(!j)return"石桌往事";if(j==="park")return"園子";if(String(j).startsWith("char:")){const c=JCHAR[String(j).slice(5)];return c?"大廳・"+c.name:"大廳"}if(String(j).startsWith("inn:")){const x=INN.concat(SECRETS).find(z=>"inn:"+z.id===j);return x?"驛站・"+x.name:"驛站"}
   const s=jStages().find(z=>z.id===j);return s?"雲河棋路・"+s.name:"雲河棋路"}
-const jBack=j=>j==="park"?"#/journey/park":String(j||"").startsWith("inn:")?"#/journey/inn":"#/journey";
-const jPlace=j=>j==="park"?"園子":String(j||"").startsWith("inn:")?"驛站":"雲河棋路";
+const jBack=j=>String(j||"").startsWith("char:")?"#/lobby":j==="park"?"#/journey/park":String(j||"").startsWith("inn:")?"#/journey/inn":(()=>{const R=jRunGet(j);return R&&!R.done?"#/journey/"+j:"#/journey"})();
+const jPlace=j=>j==="park"?"園子":String(j||"").startsWith("inn:")?"驛站":String(j||"").startsWith("char:")?"大廳":"雲河棋路";
 /* 意見回饋 413：石桌往事只留一盤（雲河棋路、驛站、園子、守關共用一格）。要開的跟手上那盤不是同一個對手時先問，不會悄悄蓋掉；同一個對手就接著下；force＝重下這一盤 */
 async function jStart(id,b,go,force){let st;try{st=await api("/play/state")}catch(e){toast(e.message);return}
   const cur=st.journey&&!st.result&&st.moves&&st.moves.length?{journey:st.journey,n:st.moves.length}:null,o=(st.others||[]).find(z=>z.kind==="journey"),g=cur||(o?{journey:o.journey,n:o.n}:null);
@@ -3664,9 +3711,9 @@ function stoneCover(b,k){return new Promise(res=>{const im=b.querySelector("img"
     const fin=()=>{if(done)return;done=true;res();setTimeout(()=>{c.classList.remove("on");setTimeout(()=>c.remove(),600)},700)};c.onclick=fin;setTimeout(fin,1700)},900)})}
 const CNUM=n=>{const c="零一二三四五六七八九";return n<=10?(n===10?"十":c[n]):n<20?"十"+c[n-10]:c[Math.floor(n/10)]+"十"+(n%10?c[n%10]:"")};
 let JS_CACHE=null;
-function jStages(){if(JS_CACHE)return JS_CACHE;const out=[];JL.forEach(([nm,ty,ai],k)=>{const n=k+1,ri=Math.max(0,JR.findIndex(R=>n>=R.ch[0]&&n<=R.ch[1])),R=JR[ri],id="h"+String(n).padStart(2,"0");
+function jStages(){if(JS_CACHE)return JS_CACHE;const out=[];JL.forEach(([nm,ty,ai,has],k)=>{const n=k+1,ri=Math.max(0,JR.findIndex(R=>n>=R.ch[0]&&n<=R.ch[1])),R=JR[ri],id="h"+String(n).padStart(2,"0");
   const base={id,n,r:ri,name:`第${CNUM(n)}回・${nm}`,lvName:nm,spec:ty,lo:R.tiers[0],hi:R.tiers[1]};
-  out.push(ai>0?{...base,t:"ai",lv:Math.min(8,ai)}:{...base,t:"puz",cats:/殘局/.test(ty)?["殘局","殺法"]:null})});return JS_CACHE=out}
+  out.push(has?{...base,t:"lv"}:ai>0?{...base,t:"ai",lv:Math.min(8,ai)}:{...base,t:"puz",cats:/殘局/.test(ty)?["殘局","殺法"]:null})});return JS_CACHE=out}
 /* 換成 36 回之前的進度（30 關）照比例搬過來：過了幾關就換算成新的前幾關、星星照原本那關；修為本來就另外記，不受影響 */
 (function jMigrate36(){try{if(store.get("jMig36",false))return;const S=store.get("jStars",{}),old=[];["dukou","chaguan","qihui","juesai","shizhuo"].forEach(k=>{for(let i=1;i<=6;i++)old.push(S[k+"-"+i]||0)});
   const P=old.filter(x=>x>0).length,np=Math.min(36,Math.round(P*36/30));for(let j=0;j<np;j++){const id="h"+String(j+1).padStart(2,"0");if(!S[id])S[id]=old[Math.min(29,Math.floor(j*30/36))]||1}
@@ -3674,7 +3721,7 @@ function jStages(){if(JS_CACHE)return JS_CACHE;const out=[];JL.forEach(([nm,ty,a
 const jStars=()=>store.get("jStars",{}),jSet=(id,n,why)=>{const S=jStars(),old=S[id]||0;if(n>old){S[id]=n;store.set("jStars",S);for(let k=old+1;k<=n;k++)addXP(20,why||"闖關",`j:${id}:${k}`)}return Math.max(n,old)};
 function jLvOk(s){return xpInfo().L>=(JR[s.r].lv||1)}
 function jOpen(list,i){return(i===0||!!jStars()[list[i-1].id])&&jLvOk(list[i])}
-const jIcon={puz:"🧩",scene:"🕰",ai:"⚔",boss:"🏯"};
+const jIcon={puz:"🧩",scene:"🕰",ai:"⚔",boss:"🏯",lv:"🎴"};
 /* 對弈、守關：開一盤挑戰電腦，記下是哪一關；那盤結束時在 CpuGame 裡判定（journeyGameEnd） */
 function jPlay(s,force){const b=s.t==="boss"?{human:"r",level:s.lv,arena:s.era,journey:s.id}:{human:"r",level:s.lv,journey:s.id};   /* 守關帶 arena 只是借擂主的外觀和台詞；這盤算石桌往事（local.js kindOf：journey 優先） */
   return jStart(s.id,b,()=>{if(s.t==="boss"&&!parkOn())store.set("park3d",true);location.hash="#/journey/play";setTimeout(()=>toast(s.t==="boss"?`🏯 ${ARENA[s.era].name}：${ARENA[s.era].hi}`:`⚔ 雲河棋路・${s.name}：贏了就過關`),500)},force)}
@@ -3685,6 +3732,11 @@ function journeyGameEnd(st){if(!st||!st.result)return;
     if(st.result.w===st.human){const xp=x.who?secretXP(x):x.xp;addXP(xp,"驛站","inn:"+st.id);setTimeout(()=>toast(`${x.ic} ${x.name}：「好棋！佩服。」（+${xp} 修為）`),1500);
       if(x.who){const W=store.get("secretWins",{});W[x.id]=(W[x.id]||0)+1;store.set("secretWins",W);setTimeout(()=>secretGift(x,st.id),7000)}}
     else setTimeout(()=>toast(`${x.ic} ${x.name}：「承讓了，下次再來！」`),1500);return}
+  if(P.lvp){const R=jRunGet(P.id),L=P.lvp,me=st.human,won=st.result.w===me,lost=!!st.result.w&&st.result.w!==me,n=st.moves.filter(m=>m.by===me).length;
+    const ok=L.goal==="survive"||L.goal==="draw"?!lost:won,over=ok&&L.limit&&L.goal!=="survive"&&n>L.limit;
+    if(R){if(P.hint)R.hint=true;if(over)R.miss++;if(ok)R.k++;else R.lose=(R.lose||0)+1;R.ret=true;jRunSet(R)}
+    setTimeout(()=>toast(ok?`🎴 這一步過了${over?`（超過 ${L.limit} 步，算一次失誤）`:""}，回到關卡繼續`:"🎴 這一步沒過，回到關卡再試一次"),1500);
+    return}
   const s=jStages().find(x=>x.id===P.id);if(!s)return;
   if(st.result.w===st.human){const n=st.moves.length,stars=Math.min(P.hint?2:3,n<=60?3:n<=100?2:1);jSet(s.id,stars,"闖關");setTimeout(()=>toast(`🗺 雲河棋路「${JR[s.r].name}・${s.name}」過關！${"★".repeat(stars)}${"☆".repeat(3-stars)}（${Math.ceil(n/2)} 回合內贏）`),1500)}
   else setTimeout(()=>toast(`🗺 「${s.name}」還沒過關，回雲河棋路再挑戰一次`),1500)}
@@ -3692,7 +3744,7 @@ function Journey(v,sid){
   setTop("雲河棋路","#/adventure");setTabs(false);const L=jStages(),S=jStars();
   if(sid==="inn")return innSheet(v);
   if(sid==="park")return ParkGate(v);
-  if(sid){const i=L.findIndex(x=>x.id===sid);if(i<0||!jOpen(L,i)){navReplace("#/journey");return{}}return jPuzzle(v,L[i])}
+  if(sid){const i=L.findIndex(x=>x.id===sid);if(i<0||!jOpen(L,i)){navReplace("#/journey");return{}}return L[i].t==="lv"?jLevel(v,L[i]):jPuzzle(v,L[i])}
   const I=xpInfo(),tot=L.reduce((a,s)=>a+(S[s.id]||0),0);v.className="view";
   v.innerHTML=`<div class="pad"><div class="abn" id="jmap" style="height:170px;background-image:url(data/map/yunhe_map.webp);background-position:center 60%;margin-bottom:10px;cursor:pointer"><div class="hc"><b>🗺 雲河棋路</b><small>從渡口一路走到石桌・點一下看整張地圖</small></div></div><div class="card row" id="jxp" style="justify-content:space-between;cursor:pointer"><span>🀄 <b>Lv ${I.L} ${I.title}</b><br><span class="muted" style="font-size:12.5px">${I.need?`再 ${I.need-I.rest} 修為升級`:"已到最高等級"}・雲河棋路 ★ ${tot} / ${L.length*3}</span></span><span class="muted">›</span></div>
     <p class="muted" style="font-size:13px;line-height:1.7;margin:8px 2px">沿著石桌往事裡的雲河，從渡口一路走到石桌。每關最多 3 顆星，過關才會開下一關；每一站有等級門檻，等級不夠就先去驛站練棋。</p>
@@ -3723,6 +3775,9 @@ function jMap3d(L,S){sheet("🗺 雲河棋路",async b=>{
 function jSheet(s){const n=jStars()[s.id]||0,R=JR[s.r];legendData().then(D=>{const c=D&&D.chapters[s.n-1],lv=c&&c.lv;
   const how={puz:"從題庫出 5 題，答對 3 題過關：3 題 ★、4 題 ★★、5 題全對 ★★★。",scene:"回到六十年前，站在旁邊看那盤棋；下到關鍵一步時換你想：跟當年一樣 ★★★、Pikafish 也說是好棋 ★★、看答案 ★。",
     ai:`跟第 ${s.lv} 級的電腦下一盤，贏了就過關：30 回合內贏 ★★★、50 回合內 ★★、其他 ★。`,boss:`守關的擂主是「${s.era?ARENA[s.era].name:""}」（第 ${s.lv} 級的實力）。贏了就過關，星星照回合數算，跟對弈一樣；還會順便蓋上擂台的章。`}[s.t];
+  if(s.t==="lv"&&c&&c.game){const G=c.game,Rr=jRunGet(s.id),mid=Rr&&!Rr.done&&Rr.k>0;
+    return sheet(`🎴 ${s.name}`,b=>{b.innerHTML=`<p class="muted" style="margin:0 0 6px;font-size:13px">📖 ${esc(c.title)}</p><div class="card" style="line-height:1.75;font-size:14px;margin-bottom:10px"><b>「${esc(G.name||lv.name)}」</b>（${esc(lv.type)}）<br>${esc(lv.play)}</div><p style="line-height:1.8;font-size:14px"><b>過關</b>：${esc(G.pass||"")}<br><b>三星</b>：${esc(G.star3||"")}</p>${n?`<p>目前：${"★".repeat(n)}${"☆".repeat(3-n)}</p>`:""}${mid?`<button class="btn" id="jct" style="width:100%">繼續（第 ${Rr.k+1}／${G.steps.length} 步）</button>`:""}<button class="btn${mid?" ghost":""}" id="jgo" style="width:100%;margin-top:6px">${mid?"從頭開始":n?"再挑戰一次":"開始"}</button><button class="btn ghost" id="jrd" style="width:100%;margin-top:6px">📖 讀第${CNUM(s.n)}回</button>`;
+      const ct=b.querySelector("#jct");if(ct)ct.onclick=()=>{closeSheet();location.hash="#/journey/"+s.id};b.querySelector("#jgo").onclick=()=>{closeSheet();jRunSet(null);location.hash="#/journey/"+s.id};b.querySelector("#jrd").onclick=()=>{closeSheet();setTimeout(()=>legendRead(s.n),260)}})}
   sheet(`${jIcon[s.t]} ${s.name}`,b=>{b.innerHTML=`${c?`<p class="muted" style="margin:0 0 6px;font-size:13px">📖 ${esc(c.title)}</p>`:""}${lv&&lv.play?`<div class="card" style="line-height:1.75;font-size:14px;margin-bottom:10px"><b>「${esc(lv.name)}」</b>（${esc(lv.type)}）<br>${esc(lv.play)}</div><p class="muted" style="font-size:12.5px;line-height:1.7;margin:0 2px 10px">這一關的特製玩法還在做（要先請引擎驗過局面）。做好之前先這樣過關，現在拿到的星星會保留：</p>`:""}<p style="line-height:1.8">${how}</p>${n?`<p>目前：${"★".repeat(n)}${"☆".repeat(3-n)}</p>`:""}<button class="btn" id="jgo" style="width:100%">${n?"再挑戰一次":"開始"}</button><button class="btn ghost" id="jrd" style="width:100%;margin-top:6px">📖 讀第${CNUM(s.n)}回</button>`;
     b.querySelector("#jgo").onclick=()=>{closeSheet();if(s.t==="puz")location.hash="#/journey/"+s.id;else jPlay(s)};b.querySelector("#jrd").onclick=()=>{closeSheet();setTimeout(()=>legendRead(s.n),260)}})})}
 /* 雲河棋路的對弈、守關：用提示棋請 Pikafish 指一步（Lv 20 前只指出要動的子） */
@@ -3762,6 +3817,129 @@ function jPuzzle(v,s){setTop("雲河棋路・"+s.name,"#/journey");let D=null,Q=
       <button class="btn" id="back">回雲河棋路</button><button class="btn ghost" id="again">再挑戰一次</button></div></div>`;
     v.querySelector("#back").onclick=()=>goBack("#/journey");v.querySelector("#again").onclick=()=>{k=0;ok=0;v.innerHTML="";route()}}
   return{}}
+
+/* ================= 🎴 石桌往事的特製關卡（開發者：36 回每回一關，照劇情設計玩法）=================
+   資料在 park-legend.json 每一回的 game（來源 story/book1/levels.json，格式見 story/book1/levels_schema.md）。
+   一關由幾個步驟組成：talk 對話選項、guess 猜著法、memory 記盤、puzzle 殘局題、collect 收集、play 對局（用挑戰電腦的畫面下，結束後回來接下一步）。
+   進度存在 jRun（中途離開回來可以接著做）；星星照失誤數和有沒有用提示算 */
+const jRunGet=id=>{const R=store.get("jRun",null);return R&&R.id===id?R:null},jRunSet=R=>store.set("jRun",R);
+function lvBoard(start,moves){const C=window.XQCore;let b=C.parseFen(start&&start.fen||C.START),turn=start&&start.turn==="b"?"b":"r";
+  for(const u of moves||[]){const f=C.parseSq(u.slice(0,2)),t=C.parseSq(u.slice(2,4));b=C.make(b,f,t);turn=turn==="r"?"b":"r"}return{b,turn}}
+const lvSq=u=>[window.XQCore.parseSq(u.slice(0,2)),window.XQCore.parseSq(u.slice(2,4))];
+/* 香條：一條會燒短的香，燒完呼叫 done（點別的地方或換題時要 stop） */
+function lvIncense(host,sec,done){if(!host||!sec)return{stop(){}};const el=document.createElement("div");el.className="lvinc";el.innerHTML='<i></i><span>🪔 '+sec+' 秒</span>';host.prepend(el);
+  const t0=Date.now(),bar=el.querySelector("i"),tx=el.querySelector("span");let on=true;
+  const tick=()=>{if(!on||!el.isConnected)return;const left=Math.max(0,sec-(Date.now()-t0)/1000);bar.style.width=(left*100/sec)+"%";tx.textContent="🪔 "+Math.ceil(left)+" 秒";
+    if(left<=0){on=false;el.classList.add("out");done&&done();return}requestAnimationFrame(tick)};tick();
+  return{stop(){on=false;el.remove()}}}
+function jLevel(v,s){setTop("🎴 "+s.name,"#/journey");setTabs(false);v.className="view";v.innerHTML='<div class="pad muted">載入中…</div>';
+  legendData().then(D=>{const ch=D&&D.chapters[s.n-1],G=ch&&ch.game;if(!G||!(G.steps||[]).length){v.innerHTML='<div class="pad"><div class="card muted">這一關的資料還沒準備好</div></div>';return}
+  let R=jRunGet(s.id);if(!R||R.done){R={id:s.id,k:0,miss:0,hint:false};jRunSet(R)}
+  const N=G.steps.length,save=()=>jRunSet(R),bd=Board(x=>onTap&&onTap(x));let onTap=null,inc=null;
+  const hdr=()=>`<div class="lvh"><b>${esc(G.name||s.lvName)}</b><span>第 ${Math.min(R.k+1,N)}／${N} 步・失誤 ${R.miss}${R.hint?"・用過提示":""}</span></div>`;
+  const stop=()=>{if(inc){inc.stop();inc=null}onTap=null};
+  const next=()=>{stop();R.k++;save();run()};
+  const miss=why=>{R.miss++;save();vibrate([20,40,20]);if(why)toast(why);const h=v.querySelector(".lvh span");if(h)h.textContent=`第 ${Math.min(R.k+1,N)}／${N} 步・失誤 ${R.miss}${R.hint?"・用過提示":""}`};
+  const failCard=msg=>{stop();v.className="view";v.innerHTML=`<div class="pad">${hdr()}<div class="card" style="text-align:center;line-height:1.8"><div style="font-size:40px">💪</div><p>${esc(msg)}</p><button class="btn" id="lvR" style="width:100%">再試這一步</button><button class="btn ghost" id="lvB" style="width:100%;margin-top:6px">回雲河棋路</button></div></div>`;
+    v.querySelector("#lvR").onclick=run;v.querySelector("#lvB").onclick=()=>goBack("#/journey")};
+  const sayBox=t=>t?`<div class="card lvsay">${esc(t)}</div>`:"";
+  const blank=b=>b.map(()=>null);
+  if(R.k===0&&!R.intro){v.innerHTML=`<div class="pad">${hdr()}${ch.title?`<p class="muted" style="font-size:13px;margin:0 2px 8px">📖 ${esc(ch.title)}</p>`:""}${sayBox(G.intro||"")}
+    <div class="card" style="font-size:14px;line-height:1.8"><b>過關</b>：${esc(G.pass||"")}<br><b>三星</b>：${esc(G.star3||"")}</div><button class="btn" id="lvGo" style="width:100%;margin-top:10px">開始</button></div>`;
+    v.querySelector("#lvGo").onclick=()=>{R.intro=1;save();run()};return}
+  run();
+  function run(){stop();const st=G.steps[R.k];if(!st)return finish();
+    ({talk,guess,memory,play,puzzle,collect:puzzle}[st.t]||next)(st)}
+  /* ---- 對話選項 ---- */
+  function talk(st){v.className="view";v.innerHTML=`<div class="pad">${hdr()}<div id="lvT"></div>${sayBox(st.say)}<div class="lvch">${(st.choices||[]).map((x,i)=>`<button class="btn ghost" data-i="${i}">${esc(x.label)}</button>`).join("")}</div><div id="lvRp"></div></div>`;
+    const arm=()=>{if(st.timer){if(inc)inc.stop();inc=lvIncense(v.querySelector("#lvT"),st.timer,()=>{miss("🪔 香燒完了，算一次失誤");arm()})}};arm();
+    v.querySelectorAll("[data-i]").forEach(b=>b.onclick=()=>{const x=st.choices[+b.dataset.i];
+      if(!x.ok){b.disabled=true;miss();v.querySelector("#lvRp").innerHTML=`<div class="card lvsay lvno">${esc(x.reply||"不對，再想想。")}</div>`;return}
+      stop();vibrate(15);v.querySelectorAll("[data-i]").forEach(z=>z.disabled=true);b.classList.remove("ghost");
+      v.querySelector("#lvRp").innerHTML=`${x.reply?`<div class="card lvsay">${esc(x.reply)}</div>`:""}<button class="btn" id="lvN" style="width:100%">繼續</button>`;v.querySelector("#lvN").onclick=next})}
+  /* ---- 棋盤頁（猜著法、記盤、殘局題共用） ---- */
+  function boardPage(st){v.className="view fixed";v.innerHTML=`<div class="pad" style="padding-bottom:0">${hdr()}</div><div id="lvT" style="padding:0 12px"></div><div class="boardbox" id="bbox"></div><div class="status" id="stat"></div><div class="note" id="note" style="white-space:pre-wrap"></div><div id="lvO" class="lvch" style="padding:0 12px"></div><div style="flex:1"></div><div class="actions" id="acts"></div>`;
+    v.querySelector("#bbox").append(bd.svg);if(st.say)v.querySelector("#note").textContent=st.say}
+  /* ---- 猜著法：先自動走 auto，每題選一步（選完照正解落子），blind 時只看格線和文字棋譜 ---- */
+  function guess(st){const C=window.XQCore;let {b,turn}=lvBoard(st.start,st.auto),i=0,ok=0,last=null;const hist=[],flip=(st.start&&st.start.turn)==="b";
+    boardPage(st);ask();
+    function draw(){v.querySelector("#bbox").classList.toggle("lvblind",!!st.blind);bd.draw(st.blind?blank(b):b,{flip,last})}
+    function play(u){const [f,t]=lvSq(u);hist.push(C.notate(b,f,t));b=C.make(b,f,t);turn=turn==="r"?"b":"r";last={f,t}}
+    function ask(){stop();const it=st.items[i];if(!it){return ok>=(st.pass||st.items.length)?next():failCard(`答對 ${ok} 題，要答對 ${st.pass||st.items.length} 題才過這一步。`)}
+      for(const u of it.before||[])play(u);draw();
+      v.querySelector("#stat").textContent=`第 ${i+1}／${st.items.length} 題・${C.PLAYER[turn]}走`;
+      v.querySelector("#note").textContent=(i===0&&st.say?st.say+"\n":"")+(it.ask||"這一步該怎麼走？")+(st.blind&&hist.length?"\n棋譜："+hist.slice(-8).join("　"):"");
+      const opts=(it.options||[]).map(u=>{const [f,t]=lvSq(u);return{u,cn:C.notate(b,f,t)}});
+      v.querySelector("#lvO").innerHTML=opts.map((o,k)=>`<button class="btn ghost" data-k="${k}">${esc(o.cn)}</button>`).join("");
+      if(st.timer)inc=lvIncense(v.querySelector("#lvT"),st.timer,()=>pick(-1));
+      v.querySelectorAll("#lvO [data-k]").forEach(x=>x.onclick=()=>pick(+x.dataset.k));
+      actionBar(v.querySelector("#acts"),[]);
+      function pick(k){stop();const o=opts[k],hit=!!o&&o.u===it.answer,ans=opts.find(z=>z.u===it.answer);if(hit){ok++;vibrate(15)}else miss(k<0?"🪔 香燒完了":"");
+        v.querySelectorAll("#lvO [data-k]").forEach(x=>{x.disabled=true;const z=opts[+x.dataset.k];if(z.u===it.answer)x.classList.remove("ghost")});
+        play(it.answer);draw();
+        v.querySelector("#stat").textContent=hit?"✔ 對了！":"✘ 正解是「"+(ans?ans.cn:it.answer)+"」";
+        v.querySelector("#note").textContent=(it.note||"")+(st.blind&&hist.length?"\n棋譜："+hist.slice(-8).join("　"):"");
+        actionBar(v.querySelector("#acts"),[["next","›",i+1<st.items.length?"下一題":"繼續",()=>{i++;ask()},true]])}}}
+  /* ---- 記盤：亮出局面幾秒，蓋起來問問題 ---- */
+  function memory(st){let {b}=lvBoard(st.start,st.auto),i=0,ok=0;const flip=(st.start&&st.start.turn)==="b";boardPage(st);bd.draw(b,{flip});
+    let left=st.show||8;v.querySelector("#stat").textContent=`記住這個局面：${left} 秒`;actionBar(v.querySelector("#acts"),[["go","›","記好了",()=>{clearInterval(tm);hide()},true]]);
+    const tm=setInterval(()=>{left--;if(!v.isConnected)return clearInterval(tm);if(left<=0){clearInterval(tm);hide()}else{const e=v.querySelector("#stat");if(e)e.textContent=`記住這個局面：${left} 秒`}},1000);
+    function hide(){bd.draw(blank(b),{flip});ask()}
+    function ask(){const q=(st.questions||[])[i];if(!q)return ok>=(st.pass||(st.questions||[]).length)?next():failCard(`答對 ${ok} 題，要答對 ${st.pass||st.questions.length} 題才過這一步。`);
+      v.querySelector("#stat").textContent=`第 ${i+1}／${st.questions.length} 題`;v.querySelector("#note").textContent=q.ask||"";
+      v.querySelector("#lvO").innerHTML=(q.options||[]).map((o,k)=>`<button class="btn ghost" data-k="${k}">${esc(o)}</button>`).join("");actionBar(v.querySelector("#acts"),[]);
+      v.querySelectorAll("#lvO [data-k]").forEach(x=>x.onclick=()=>{const hit=+x.dataset.k===q.answer;if(hit){ok++;vibrate(15)}else miss();
+        v.querySelectorAll("#lvO [data-k]").forEach(z=>{z.disabled=true;if(+z.dataset.k===q.answer)z.classList.remove("ghost")});
+        v.querySelector("#stat").textContent=hit?"✔ 記對了":"✘ 不對";bd.draw(b,{flip});
+        actionBar(v.querySelector("#acts"),[["next","›",i+1<st.questions.length?"下一題":"繼續",()=>{i++;bd.draw(blank(b),{flip});ask()},true]])})}}
+  /* ---- 殘局題／收集：玩家照 line 走自己那一方，對方自動應；走錯算失誤、可以重來；collect 每解一題拿一樣東西 ---- */
+  function puzzle(st){const C=window.XQCore,items=st.t==="collect"?(st.from||[]):(st.items||[]),got=[];let i=0,solved=0;boardPage(st);ask();
+    function ask(){stop();const it=items[i];if(!it){return solved>=(st.pass||items.length)?next():failCard(`解出 ${solved} 題，要解出 ${st.pass||items.length} 題才過這一步。`)}
+      let {b,turn}=lvBoard(it.start,it.auto),j=0,sel=-1,last=null,peek=false,hk=null;const me=turn,flip=me==="b";
+      const coll=st.t==="collect"?`\n收集：${(st.items||[]).map((x,k)=>k<got.length?"✔"+x:"□"+x).join("　")}`:"";
+      const draw=()=>bd.draw(b,{flip,sel,last,targets:sel>=0?C.legal(b,turn).filter(([f])=>f===sel).map(x=>x[1]):[],...(hk?{hint:hk}:{})});
+      const say=()=>{v.querySelector("#stat").textContent=`第 ${i+1}／${items.length} 題・${C.PLAYER[me]}走`;v.querySelector("#note").textContent=(i===0&&st.say?st.say+"\n":"")+(it.ask||"找出最好的著法")+coll};
+      say();draw();
+      const bar=()=>actionBar(v.querySelector("#acts"),[["hint","💡",hintLabel(),()=>{const H=useHint();if(!H)return;R.hint=true;save();const [f,t]=lvSq(it.line[j]);hk=H.full?[f,t]:[f];draw()}],["skip","👁","看答案",()=>{peek=true;miss();go(it.line[j])}]]);bar();
+      function go(u){const [f,t]=lvSq(u);b=C.make(b,f,t);last={f,t};turn=turn==="r"?"b":"r";j++;sel=-1;hk=null;draw();
+        if(j>=it.line.length)return done();
+        onTap=null;setTimeout(()=>{if(!v.isConnected)return;const [f2,t2]=lvSq(it.line[j]);b=C.make(b,f2,t2);last={f:f2,t:t2};turn=turn==="r"?"b":"r";j++;draw();if(j>=it.line.length)return done();onTap=tap},450)}
+      function tap(x){const L=C.legal(b,turn);if(sel>=0&&L.some(([f,t])=>f===sel&&t===x)){const u=C.iccs(sel,x);if(u===it.line[j]){vibrate(15);return go(u)}miss("不是這步，再想想");sel=-1;draw();return}
+        sel=L.some(([f])=>f===x)?x:-1;if(sel>=0)vibrate(5);draw()}
+      onTap=tap;
+      function done(){onTap=null;if(!peek)solved++;if(st.t==="collect"&&!peek)got.push(1);
+        v.querySelector("#stat").textContent=peek?"看過答案了":"✔ 解出來了！";v.querySelector("#note").textContent=(it.note||"")+(st.t==="collect"?`\n收集：${(st.items||[]).map((x,k)=>k<got.length?"✔"+x:"□"+x).join("　")}`:"");
+        actionBar(v.querySelector("#acts"),[["next","›",i+1<items.length?"下一題":"繼續",()=>{i++;ask()},true]])}}}
+  /* ---- 對局：用挑戰電腦的畫面下（盲棋、香條在那邊處理），結束時 journeyGameEnd 判定，再回到這裡 ---- */
+  function play(st){v.className="view";const gl={win:"贏這一盤",survive:`撐過 ${st.limit||30} 步不輸`,draw:"至少下和"}[st.goal||"win"];
+    v.innerHTML=`<div class="pad">${hdr()}${sayBox(st.say)}<div class="card" style="font-size:14px;line-height:1.85">⚔ 對手：第 ${st.ai||3} 級的電腦・你執${st.human==="b"?"黑":"紅"}<br>🎯 ${gl}${st.limit&&st.goal!=="survive"?`（${st.limit} 步內）`:""}${st.remove&&st.remove.length?`<br>🎁 讓子：先拿掉 ${st.remove.length} 顆`:""}${st.start?"<br>♟ 從指定局面開始":""}${st.timer?`<br>🪔 每步一炷香（${st.timer} 秒），燒完算一次失誤`:""}${st.blind?"<br>🙈 盲棋：棋盤上看不到棋子":""}</div>
+      ${R.lose?`<p class="muted" style="font-size:13px">這一步已經試了 ${R.lose} 次，加油！</p>`:""}<button class="btn" id="lvP" style="width:100%">開始對局</button></div>`;
+    v.querySelector("#lvP").onclick=()=>{if(st.blind){if(R.p3===undefined){R.p3=parkOn();save()}store.set("park3d",false)}
+      jStart(s.id,{human:st.human==="b"?"b":"r",level:Math.max(1,Math.min(8,st.ai||3)),journey:s.id,lv:{fen:st.start&&st.start.fen||"",turn:st.start&&st.start.turn||"r",remove:st.remove||[],noPerpetual:!!st.noPerpetual}},()=>{
+        const P=store.get("jPending",null);if(P){P.lvp={goal:st.goal||"win",limit:st.limit||0,timer:st.timer||0,blind:!!st.blind,opp:st.opp||null,step:R.k};store.set("jPending",P)}
+        location.hash="#/journey/play"},true)}}
+  function finish(){stop();const r=G.rules||{},m3=r.maxMistakes3!=null?r.maxMistakes3:0,m2=r.maxMistakes2!=null?r.maxMistakes2:2;
+    const stars=R.miss<=m3&&!R.hint?3:R.miss<=m2?2:1,best=jSet(s.id,stars,"闖關");if(R.p3!==undefined)store.set("park3d",R.p3);R.done=true;save();
+    const Ls=jStages(),nx=Ls[s.n],more=s.n<Ls.length;v.className="view";
+    v.innerHTML=`<div class="pad"><div class="card" style="text-align:center"><div style="font-size:44px">🎉</div><h2 style="margin:4px 0">過關！</h2><div style="font-size:30px;color:var(--accent)">${"★".repeat(stars)}${"☆".repeat(3-stars)}</div>
+      <p class="muted">失誤 ${R.miss} 次${R.hint?"・用了提示（最多 ★★）":""}${best>stars?`・這關最好成績 ${"★".repeat(best)}`:""}</p>${G.outro?`<p style="line-height:1.8;text-align:left">${esc(G.outro)}</p>`:""}${G.reward?`<p class="muted" style="font-size:13px">🎁 ${esc(G.reward)}</p>`:""}
+      ${more?`<button class="btn" id="lvNx">📖 讀第${CNUM(s.n+1)}回</button>`:""}<button class="btn ghost" id="lvBk" style="margin-top:6px">回雲河棋路</button><button class="btn ghost" id="lvAg" style="margin-top:6px">再挑戰一次</button></div></div>`;
+    const nb=v.querySelector("#lvNx");if(nb)nb.onclick=()=>{location.hash="#/adventure";setTimeout(()=>legendRead(s.n+1),400)};
+    v.querySelector("#lvBk").onclick=()=>goBack("#/journey");v.querySelector("#lvAg").onclick=()=>{jRunSet(null);route()}}
+  })}
+/* 對局步驟在挑戰電腦畫面裡：盲棋（看不到棋子）、香條計時、「撐過幾步」到了就算過 */
+function lvPlayOf(st){const P=store.get("jPending",null);return P&&st&&P.game===st.id&&P.lvp?P:null}
+let LV_INC=null,LV_KEY=null;
+function lvWatch(st,v){const P=lvPlayOf(st);
+  if(!P||st.result){if(LV_INC){LV_INC.stop();LV_INC=null}LV_KEY=null;return}
+  const L=P.lvp,me=st.human,n=st.moves.filter(m=>m.by===me).length;
+  if(L.goal==="survive"&&L.limit&&n>=L.limit){const R=jRunGet(P.id);if(R){R.k++;R.ret=true;jRunSet(R)}store.set("jPending",null);if(LV_INC){LV_INC.stop();LV_INC=null}
+    toast(`🎉 撐過 ${L.limit} 步了！回到關卡繼續`);setTimeout(()=>{location.hash="#/journey/"+P.id},1600);return}
+  if(!L.timer)return;const mine=st.turn===me&&!st.thinking,key=st.id+":"+st.moves.length;
+  if(!mine){if(LV_INC){LV_INC.stop();LV_INC=null}LV_KEY=null;return}
+  if(LV_KEY===key&&LV_INC)return;if(LV_INC)LV_INC.stop();LV_KEY=key;
+  const host=v.querySelector(".lvhost")||(()=>{const d=document.createElement("div");d.className="lvhost";const bb=v.querySelector("#bbox");bb.parentNode.insertBefore(d,bb);return d})();
+  LV_INC=lvIncense(host,L.timer,()=>{const R=jRunGet(P.id);if(R){R.miss++;jRunSet(R)}toast("🪔 香燒完了，算一次失誤（可以繼續下）");LV_INC=null})}
 
 /* ================= 🕰 回到當年（意見回饋 313）=================
    石桌往事裡的對局，用「妙棋精選」裡 Pikafish 驗證過的特級大師實戰來演：你站在旁邊看，不能插手；
@@ -3867,10 +4045,11 @@ function CpuGame(v,practicePage,mode){
     if(sel>=0&&st.legal.some(([f,t])=>f===sel&&t===i)){const f=sel;sel=-1;vibrate(15);return post("/play/move",{f,t:i})}
     sel=i===sel?-1:st.legal.some(([f])=>f===i)?i:-1;if(sel>=0)vibrate(5);draw()}
   function draw(){if(!st)return;const last=st.moves[st.moves.length-1],N=parkNpcOf(st),hb=v.querySelector("#bbox"),pk0=!!(PARK&&PARK.host===hb&&document.body.contains(PARK.v.el));
-    const o={flip:st.human==="b",last,sel,targets:sel>=0?st.legal.filter(([f])=>f===sel).map(x=>x[1]):[],hint:st.hint?[st.hint.f,st.hint.t]:pHint&&pHint.n===st.moves.length?[pHint.f,pHint.t]:null,check:st.check,fx:true};bd.draw(st.board,o);
+    const o={flip:st.human==="b",last,sel,targets:sel>=0?st.legal.filter(([f])=>f===sel).map(x=>x[1]):[],hint:st.hint?[st.hint.f,st.hint.t]:pHint&&pHint.n===st.moves.length?[pHint.f,pHint.t]:null,check:st.check,fx:true};const LVB=lvPlayOf(st);hb.classList.toggle("lvblind",!!(LVB&&LVB.lvp.blind&&!st.result));if(LVB&&LVB.lvp.blind&&!st.result){bd.draw(st.board.map(()=>null),o);return}bd.draw(st.board,o);
     legendCheck(st);legendBadge(v.querySelector("#bbox"),!parkOn()&&legendVisit(st).length>0);
-    parkDraw(v.querySelector("#bbox"),bd,st.board,o,{tap,arena:st.arena||null,gate:st.journey&&!st.arena?(k=>({img:["data/parkgate/"+k+".webp","data/park/"+k+"_360.webp"],icon:"🍃",title:"走進"+parkName(k),sub:"石桌就在前面",bg:"#2b2a22",quote:parkQuote(k)}))(store.get("era","classic")):null,watchers:legendVisit(st),thinking:!!st.thinking||(!st.result&&st.turn!==st.human),botSide:st.human==="r"?"b":"r",result:st.result?(st.result.w||"draw"):null,hint:o.hint,
-      opp:(st.arena&&CHAMP_LOOK(st.arena,st.human==="r"?"b":"r"))||(N?NPC_LOOK(N,st.human==="r"?"b":"r"):PIKA_LOOK(st.human==="r"?"b":"r")),oppHello:st.arena&&ARENA[st.arena]?ARENA[st.arena].hi:N?N.say:"我是 Pikafish，請多指教。",oppWin:st.arena&&ARENA[st.arena]?ARENA[st.arena].win:N?N.win:"將死了，再接再厲。",oppLose:st.arena&&ARENA[st.arena]?ARENA[st.arena].lose:N?N.lose:"你贏了，佩服佩服！"});
+    const JS0=st.journey&&/^h\d\d$/.test(st.journey)?jStages().find(x=>x.id===st.journey):null,JOPP=LVB&&LVB.lvp.opp&&JCHAR[LVB.lvp.opp]?LVB.lvp.opp:String(st.journey||"").startsWith("char:")&&JCHAR[st.journey.slice(5)]?st.journey.slice(5):null;
+    parkDraw(v.querySelector("#bbox"),bd,st.board,o,{tap,bg:JS0?`data/park/j${JR[JS0.r].k}_360.webp`:null,bgName:JS0?"雲河鎮・"+JR[JS0.r].name:null,arena:st.arena||null,gate:st.journey&&!st.arena?(k=>({img:["data/parkgate/"+k+".webp","data/park/"+k+"_360.webp"],icon:"🍃",title:"走進"+parkName(k),sub:"石桌就在前面",bg:"#2b2a22",quote:parkQuote(k)}))(store.get("era","classic")):null,watchers:legendVisit(st),thinking:!!st.thinking||(!st.result&&st.turn!==st.human),botSide:st.human==="r"?"b":"r",result:st.result?(st.result.w||"draw"):null,hint:o.hint,
+      opp:(JOPP&&JCHAR_LOOK(JOPP,st.human==="r"?"b":"r"))||(st.arena&&CHAMP_LOOK(st.arena,st.human==="r"?"b":"r"))||(N?NPC_LOOK(N,st.human==="r"?"b":"r"):PIKA_LOOK(st.human==="r"?"b":"r")),oppHello:JOPP?JCHAR[JOPP].hi:st.arena&&ARENA[st.arena]?ARENA[st.arena].hi:N?N.say:"我是 Pikafish，請多指教。",oppWin:JOPP?JCHAR[JOPP].win:st.arena&&ARENA[st.arena]?ARENA[st.arena].win:N?N.win:"將死了，再接再厲。",oppLose:JOPP?JCHAR[JOPP].lose:st.arena&&ARENA[st.arena]?ARENA[st.arena].lose:N?N.lose:"你贏了，佩服佩服！"});
     if(N&&NPC_HI!==st.id){NPC_HI=st.id;if(pk0&&!st.moves.length)setTimeout(()=>{try{if(PARK&&PARK.host===hb)PARK.v.oppSay(N.say,2.6)}catch(e){}},900)}}
   let lastN=null;   // 上一次畫的步數：步數剛好多一步才秀開局名（重新整理、開新局不秀）
   // 意見回饋 274：擂台賽下到結束前只能在公園裡（不能切回棋盤模式）；結束後按鈕恢復
@@ -3885,13 +4064,13 @@ function CpuGame(v,practicePage,mode){
     if(s.arena&&ARENA[s.arena]&&store.get("era","classic")!==s.arena){store.set("era",s.arena);try{applyEra()}catch(e){}}
     const n0=lastN;st=s;lastN=s.moves.length;if(s.arena&&!s.result&&!parkOn()){store.set("park3d",true);setTimeout(()=>{draw();topBar()},0)}/* 意見回饋 319：朝代擂台的棋一律在公園 3D 裡 */if(!st.legal.some(([f])=>f===sel))sel=-1;
     const lk=!!(st.arena&&!st.result);if(lk&&!parkOn())store.set("park3d",true);PARK_J=st.journey||null;const pr=!!st.practice;if(pr!==PARK_OFF){PARK_OFF=pr;arenaLock=null}
-    if(lk!==arenaLock||(st.journey||null)!==jKey){arenaLock=lk;jKey=st.journey||null;topBar()}draw();
+    if(lk!==arenaLock||(st.journey||null)!==jKey){arenaLock=lk;jKey=st.journey||null;topBar()}draw();try{lvWatch(st,v)}catch(e){}
     if(!st.result&&!st.practice&&st.id&&st.moves.length<=(st.human==="b"?1:0)&&KJ_LAST!==st.id){KJ_LAST=st.id;loadKaiju();const kj=()=>kaijuFx(bd.svg,"r");if(parkOn())kjWait(kj);else setTimeout(kj,350)}   /* 意見回饋 416：開局特效 */
     if(n0!=null&&lastN===n0+1&&!st.practice){const cue=openingCue(st.moves);if(cue)setTimeout(()=>openFx(bd.svg,cue[1],cue[0]),350)}
     const lv=st.levels[st.level-1]||{},me=st.human,bot=opp(me);
     const CR=st.cpuRate||{},CB=st.car||{},cpts=st.reward?(CB.table||[])[st.level-1]||0:0;paintSeg(modeOf(st));if(!st.ranked&&st.level&&!st.practice)store.set("cpuLevel",st.level);
     // 對手列右邊：目前的段位／難度，點了開「開新局」選單（換難度、換紅黑）
-    const NP=parkNpcOf(st),top=(NP?npcHTML(bot,NP,"園子裡的路人棋友・"+(lv.desc||"")):playerHTML(bot,st.arena&&ARENA[st.arena]?`🏯 ${ARENA[st.arena].name}`:"Pikafish",st.arena&&ARENA[st.arena]?`${eraLabel(st.arena)}擂主・${st.arena==="classic"?"職業頂尖（全力的前一級）":"強度跟著你的段位"}`:st.ranked?"積分挑戰・強度跟著你的段位":st.reward?`🚗 獎勵模式・贏了 +${cpts} 點`:lv.desc||"自選難度"))+
+    const JP=(()=>{const L=lvPlayOf(st),k=(L&&L.lvp.opp)||(String(st.journey||"").startsWith("char:")?st.journey.slice(5):null);return k&&JCHAR[k]?{...JCHAR[k],say:JCHAR[k].hi}:null})(),NP=parkNpcOf(st)||JP,top=(NP?npcHTML(bot,NP,(JP&&NP===JP?"石桌往事・":"園子裡的路人棋友・")+(lv.desc||"")):playerHTML(bot,st.arena&&ARENA[st.arena]?`🏯 ${ARENA[st.arena].name}`:"Pikafish",st.arena&&ARENA[st.arena]?`${eraLabel(st.arena)}擂主・${st.arena==="classic"?"職業頂尖（全力的前一級）":"強度跟著你的段位"}`:st.ranked?"積分挑戰・強度跟著你的段位":st.reward?`🚗 獎勵模式・贏了 +${cpts} 點`:lv.desc||"自選難度"))+
       `<button class="cpu-chip${st.ranked?" rk":""}" aria-label="${st.ranked?"段位與開新局":"換難度"}"><span><b>${st.ranked?"🏅 "+esc(st.rkName||CR.rank||""):(st.reward?"🚗 ":"")+"第 "+st.level+" 級"}</b><small>${st.ranked?(CR.pts||0)+" 分":st.reward?(CB.pts||0).toLocaleString()+" 點":esc(lv.name||"")}</small></span><i>›</i></button>`;
     const pT=v.querySelector("#pTop");if(pT.dataset.h!==top){pT.dataset.h=top;pT.innerHTML=top}
     const bt=playerHTML(me,"你",PLAYER[me]+(st.ranked&&CR.next?`・再 ${CR.toNext} 分升 ${CR.next}`:"")+(st.reward?`・🚗 ${(CB.pts||0).toLocaleString()} 點`:""));
@@ -3939,7 +4118,7 @@ function CpuGame(v,practicePage,mode){
       if(MODE==="journey"){const j=st.journey,s0=jStages().find(x=>x.id===j);
         const NR=parkNpcOf(st);
         modal(`<div class="em">${win?"🏆":draw0?"🤝":"💪"}</div><h2>${win?"你贏了！":draw0?"和局":"這盤輸了"}</h2><p class="muted">${esc(st.result.why)}・🪨 ${esc(jName(j))}${NR?"・"+esc(NR.name)+"（第 "+st.level+" 級）":""}</p>`+(NR?`<p style="font-style:italic">${esc(NR.name)}：「${esc(win?NR.lose:draw0?"和了，改天再下一盤！":NR.win)}」</p>`:"")+XPR,
-          [...(win&&s0?[]:[[s0?"再挑戰這一關 ›":"再下一盤 ›",()=>{shownResult=null;sel=-1;if(s0)jPlay(s0,true);else jAgain(st).then(render).catch(e=>toast(e.message))}]]),["‹ 回"+jPlace(j),()=>goBack(jBack(j))],["📊 賽後報告",()=>review(true,st&&st.id),true],["關閉",null,true]]);return}
+          [...(s0&&s0.t==="lv"?[["🎴 回到關卡 ›",()=>{location.hash="#/journey/"+j}]]:win&&s0?[]:[[s0?"再挑戰這一關 ›":"再下一盤 ›",()=>{shownResult=null;sel=-1;if(s0)jPlay(s0,true);else jAgain(st).then(render).catch(e=>toast(e.message))}]]),["‹ 回"+jPlace(j),()=>goBack(jBack(j))],["📊 賽後報告",()=>review(true,st&&st.id),true],["關閉",null,true]]);return}
       modal(`<div class="em">${win?"🏆":draw0?"🤝":"💪"}</div><h2>${win?"你贏了！":draw0?"和局":"這盤輸了"}</h2><p class="muted">${esc(st.result.why)}・${st.journey?`🪨 ${esc(jName(st.journey))}`:`對手第 ${st.level} 級「${esc(lv.name||"")}」`}</p>`+XPR,
         [[win&&st.level<8?"挑戰下一級 ›":"再來一局",()=>api("/play/new",{human:st.human,level:win&&st.level<8?st.level+1:st.level}).then(render).catch(e=>toast(e.message))],["📊 賽後報告",()=>review(true,st&&st.id)],["檢討這盤",()=>review(false,st&&st.id),true],["關閉",null,true]])}}
   // 賽後報告：用這一盤自己的編號打開（意見回饋 234：以前拿存檔清單第一筆，存檔還沒寫完或順序不同時會開到別盤）

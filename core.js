@@ -101,7 +101,7 @@ function stateApply(S,f,t){
   S.board=make(S.board,f,t);S.turn=opp(S.turn);S.pos.push(fen(S.board,S.turn));m.ck=inCheck(S.board,S.turn);
   m.ch=[...chasePairs(S.board,mover)].some(x=>!chB.has(x));
   S.moves.push(m);return m}
-function stateRebuild(S){const old=S.moves||[];S.moves=[];S.board=parseFen(START);S.turn="r";S.pos=[fen(S.board,"r")];
+function stateRebuild(S){const old=S.moves||[];S.moves=[];S.board=parseFen(S.start||START);S.turn=S.startTurn||"r";S.pos=[fen(S.board,S.turn)];
   for(const o of old){const m=stateApply(S,o.f,o.t);for(const k of["q","loss","ev","bc","bm","bp"])if(o[k]!==undefined)m[k]=o[k]}}
 function judgeState(S){
   const n=S.moves.length,mover=S.moves[n-1].by,other=opp(mover);

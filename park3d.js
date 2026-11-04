@@ -910,7 +910,7 @@
     const fill=new T.DirectionalLight(0xC8DCFF,.28);fill.position.set(20,12,-18);sc.add(fill);
     // 天空球（含下半部的雲海色）＋水墨長卷
     const sky=new T.Mesh(new T.SphereGeometry(400,32,16),new T.MeshBasicMaterial({map:skyTex(E),side:T.BackSide,fog:false,depthWrite:false,toneMapped:false}));sc.add(sky);
-    const BI=BG_IMG[EK],FULL=!!BI;   // FULL：有朝代長卷，背景是完整一圈，可以整個轉身看
+    const BI=opt.bg?{src:opt.bg,pano:true,hz:.58,hor:PANO_HOR,rot:0}:BG_IMG[EK],FULL=!!BI;   /* 意見回饋 362：石桌往事的關卡在那一站的地點環景裡下（渡口、聽濤樓茶館、雲河棋會、決賽、石桌） */   // FULL：有朝代長卷，背景是完整一圈，可以整個轉身看
     {const pt=panTex(Object.assign({},E,{userBg:FULL}),EK.length*977+13);pt.wrapS=T.RepeatWrapping;pt.repeat.x=-1;   // 從圓柱內側看，貼圖要左右翻回來
       const arc=FULL?TAU:PAN.arc,pan=new T.Mesh(new T.CylinderGeometry(PAN.r,PAN.r,PAN.yt-PAN.yb,FULL?128:64,1,true,PI-arc/2,arc),new T.MeshBasicMaterial({map:pt,side:T.BackSide,transparent:true,fog:false,depthWrite:false,toneMapped:false}));
       pan.position.y=(PAN.yt+PAN.yb)/2;pan.renderOrder=-1;sc.add(pan);
