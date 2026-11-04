@@ -262,6 +262,7 @@ html[data-era=ming] .topbar,html[data-era=qing] .topbar{border-bottom-width:4px}
   filter:drop-shadow(0 .03em 0 #6b0d12) drop-shadow(0 .06em .1em #000a);animation:ckch .46s cubic-bezier(.2,1.25,.4,1) both}
 .ckfx .c1{animation-delay:.16s;--dx:-.6em}.ckfx .c2{animation-delay:.28s;--dx:.6em}
 .ckfx b.gl{background:none;width:1.25em;height:1.25em}.ckfx b.gl svg{display:block;width:100%;height:100%;overflow:visible}
+#lvO .btn.on{background:var(--accent);color:#fff;border-color:var(--accent)}
 .gst>div{display:grid;grid-template-columns:2em 4.2em 1fr;align-items:center;gap:6px;padding:7px 0;border-bottom:1px solid var(--line)}.gst>div:last-of-type{border-bottom:0}.gst i{font-style:normal;font-size:1.25em;text-align:center}.gst b{white-space:nowrap}.gst span{color:var(--muted,#7a6a58)}.gst p{margin:6px 0 0;font-size:12.5px}
 .ckfx .seal{position:absolute;left:calc(50% + 4.4em);top:50%;white-space:nowrap;writing-mode:vertical-rl;text-orientation:upright;font-style:normal;font-weight:900;font-size:.27em;line-height:1;letter-spacing:.06em;
   padding:.34em .26em .3em;color:#fbecd0;background:radial-gradient(circle at 30% 25%,#d0222c,#a90f1a 70%,#8e0c15);border-radius:.14em .1em .16em .12em;
@@ -579,7 +580,7 @@ html[data-era=ming] .topbar,html[data-era=qing] .topbar{border-bottom-width:4px}
       if(!window.caches)return go();caches.keys().then(function(ks){return Promise.all(ks.filter(function(k){return k.indexOf("xqlab-app-")===0}).map(function(k){return caches.delete(k)}))})
         .then(function(){return navigator.serviceWorker&&navigator.serviceWorker.getRegistration()}).then(function(r){return r&&r.update()}).catch(function(){}).then(go)}};setTimeout(chk,4000)})();
 </script>
-<script>window.XQ_OFFLINE=true;window.XQ_BUILD="20261104-1615";</script>
+<script>window.XQ_OFFLINE=true;window.XQ_BUILD="20261104-1619";</script>
 <script src="core.js"></script>
 <script src="engine.js"></script>
 <script src="local.js"></script>
@@ -4017,9 +4018,13 @@ function jLevel(v,s,src){setTop((src&&src.icon||"🎴")+" "+s.name,src?src.back:
       const opts=(it.options||[]).map(u=>{const [f,t]=lvSq(u);return{u,cn:C.notate(b,f,t)}});
       v.querySelector("#lvO").innerHTML=opts.map((o,k)=>`<button class="btn ghost" data-k="${k}">${esc(o.cn)}</button>`).join("");
       if(st.timer)inc=lvIncense(v.querySelector("#lvT"),st.timer,()=>pick(-1));
-      v.querySelectorAll("#lvO [data-k]").forEach(x=>x.onclick=()=>pick(+x.dataset.k));
+      let cur=-1;const prev=k=>{cur=k;const [f,t]=lvSq(opts[k].u);v.querySelectorAll("#lvO [data-k]").forEach(x=>x.classList.toggle("on",+x.dataset.k===k));
+        bd.draw(st.blind?blank(b):b,{flip,last:{f,t},sel:f,targets:[t],arrow:true});vibrate(5);
+        actionBar(v.querySelector("#acts"),[["ok","✔","確認送出",()=>{if(cur>=0)pick(cur)},true]]);const n=v.querySelector("#lvHint");if(n)n.textContent="棋盤上的箭頭就是這一步；可以換別的選項比較，確定了再按「確認送出」"};
+      v.querySelectorAll("#lvO [data-k]").forEach(x=>x.onclick=()=>prev(+x.dataset.k));
+      {let n=v.querySelector("#lvHint");if(!n){n=document.createElement("p");n.id="lvHint";n.className="muted";n.style.cssText="font-size:12.5px;margin:6px 14px 0";v.querySelector("#lvO").after(n)}n.textContent="先點一個選項，棋盤上會畫出那一步"}
       actionBar(v.querySelector("#acts"),[]);
-      function pick(k){stop();const o=opts[k],hit=!!o&&o.u===it.answer,ans=opts.find(z=>z.u===it.answer);if(hit){ok++;vibrate(15)}else miss(k<0?"🪔 香燒完了":"");
+      function pick(k){stop();{const n=v.querySelector("#lvHint");if(n)n.textContent=""}actionBar(v.querySelector("#acts"),[]);const o=opts[k],hit=!!o&&o.u===it.answer,ans=opts.find(z=>z.u===it.answer);if(hit){ok++;vibrate(15)}else miss(k<0?"🪔 香燒完了":"");
         v.querySelectorAll("#lvO [data-k]").forEach(x=>{x.disabled=true;const z=opts[+x.dataset.k];if(z.u===it.answer)x.classList.remove("ghost")});
         play(it.answer);draw();
         v.querySelector("#stat").textContent=hit?"✔ 對了！":"✘ 正解是「"+(ans?ans.cn:it.answer)+"」";
