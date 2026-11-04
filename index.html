@@ -581,7 +581,7 @@ html[data-era=ming] .topbar,html[data-era=qing] .topbar{border-bottom-width:4px}
       if(!window.caches)return go();caches.keys().then(function(ks){return Promise.all(ks.filter(function(k){return k.indexOf("xqlab-app-")===0}).map(function(k){return caches.delete(k)}))})
         .then(function(){return navigator.serviceWorker&&navigator.serviceWorker.getRegistration()}).then(function(r){return r&&r.update()}).catch(function(){}).then(go)}};setTimeout(chk,4000)})();
 </script>
-<script>window.XQ_OFFLINE=true;window.XQ_BUILD="20261104-1956";</script>
+<script>window.XQ_OFFLINE=true;window.XQ_BUILD="20261104-2003";</script>
 <script src="core.js"></script>
 <script src="engine.js"></script>
 <script src="local.js"></script>
@@ -2846,7 +2846,10 @@ function Settings(v){
     <div class="sec-t">棋盤風格</div>
     <label class="row" style="justify-content:space-between;padding:4px 2px 10px"><span><b>🌳 3D 園子棋盤</b><br><span class="muted">下棋時坐在 3D 園子的石桌前；關掉就用平面棋盤</span></span><input type="checkbox" class="sw" id="p3d"></label>   <!-- 意見回饋 488 -->
     <div class="thgrid" id="th"></div>
-    <div class="sec-t">我的角色</div><button class="btn ghost" id="obAgain" style="width:100%;margin-bottom:6px">🎎 重新選角色（男生／女生、Q 版／真實版、名字）</button><button class="btn ghost" id="nmLook" style="width:100%;margin-bottom:6px">✏ 改名字（目前：${esc(myName()||"還沒取")}）</button>
+    <div class="sec-t">我的角色</div><div class="card row" style="gap:10px;align-items:center;margin-bottom:6px">   <!-- 意見回饋 506：精簡成一張小卡 -->
+      <img src="data/xs/prev_${myStyle()==="real"?"real":"q"}_${mySex()==="f"?"girl":"boy"}.webp" alt="" style="width:46px;height:58px;object-fit:contain;flex:none" onerror="this.remove()">
+      <div style="flex:1;min-width:0"><b>${mySex()==="f"?"小帥妹":"小帥"}・${myStyle()==="real"?"真實版":"Q 版"}</b><br><span class="muted" style="font-size:13px">${esc(myName()||"還沒取名字")}</span></div>
+      <button class="pill" id="obAgain">換角色</button><button class="pill" id="nmLook">改名</button></div>
     <div class="sec-t">對手形象<span class="muted" style="font-size:12px;font-weight:400">下棋時對面坐的人</span></div><div class="opt" id="ol"></div>
     <div class="sec-t">棋子樣式</div><div class="opt" id="ps"></div>
     <label class="row" style="justify-content:space-between;padding:8px 2px"><span><b>高對比棋子</b><br><span class="muted">白底大字、紅黑字，看不清楚朝代棋子時打開</span></span><input type="checkbox" class="sw" id="hiCon"></label>
@@ -3079,7 +3082,7 @@ function feedbackSheet(){let type="🐞 錯誤";
       for(let k=0;k<more.length;k++)ok=(await sendRecord(Object.assign({},info,{type,text:`📎 附件續（第 ${k+2}/${more.length+1} 段，接上一則：${t.slice(0,40)}）
 `+more[k],contact,img:""})))&&ok;closeSheet();toast(ok?"✅ 已送出，謝謝你的回饋！":"已存在手機裡，有網路時會自動送出")}})}
 // 線上 ID 登記：名字或段位有變、或超過 7 天，就送一筆「玩家」紀錄到同一個表單
-async function reportPlayer(){if(!OFF||!FEEDBACK_FORM.action)return;const i=await feedbackInfo(),key=i.id+"|"+i.name+"|"+i.rank.split(" ")[0],last=store.get("playerRep",null);
+async function reportPlayer(){if(!OFF||!FEEDBACK_FORM.action)return;if(/^(localhost|127\.|\[::1\])/.test(location.hostname))return;   /* 電腦本機測試不送玩家紀錄（第 502、504 列是測試時誤送的） */const i=await feedbackInfo(),key=i.id+"|"+i.name+"|"+i.rank.split(" ")[0],last=store.get("playerRep",null);
   if(last&&last.k===key&&Date.now()-last.at<7*864e5)return;
   if(await sendRecord(Object.assign(i,{type:"👤 玩家",text:"",contact:""})))store.set("playerRep",{k:key,at:Date.now()})}
 setTimeout(()=>{flushFeedback();reportPlayer()},8000);window.addEventListener("online",()=>setTimeout(flushFeedback,2000));
@@ -3381,7 +3384,9 @@ async function figView(look,title,html,btns,img){sheet(title,async b=>{
   if(!host.isConnected)return;const T=window.THREE,W=host.clientWidth,H=host.clientHeight||W;let r;try{r=new T.WebGLRenderer({antialias:true,alpha:true})}catch(e){return flat()}
   r.setPixelRatio(Math.min(2,devicePixelRatio||1));r.setSize(W,H);if(look&&look.glb&&T.sRGBEncoding!=null)r.outputEncoding=T.sRGBEncoding;host.append(r.domElement);
   const sc=new T.Scene();sc.add(new T.HemisphereLight(0xFFF6E8,0x6A5A48,1.15));const d=new T.DirectionalLight(0xFFFFFF,.85);d.position.set(3,6,5);sc.add(d);
-  let B;try{B=XQBot3D.figure(look||{})}catch(e){r.dispose();return flat()}const root=new T.Group();root.add(B.bot);sc.add(root);root.updateMatrixWorld(true);
+  let B;try{B=XQBot3D.figure(look||{})}catch(e){r.dispose();return flat()}
+  if(look&&look.glb&&B.glbP){const tip=document.createElement("div");tip.style.cssText="position:absolute;left:0;right:0;bottom:8px;text-align:center;font-size:12.5px;color:#5a4630";tip.textContent="🗿 真實 3D 載入中…";host.append(tip);   /* 意見回饋 505：看得出是還在載、還是載不到 */
+    B.glbP.then(()=>tip.remove()).catch(e=>{tip.textContent="真實 3D 模型載不到（"+(navigator.onLine?"網路慢或檔案有問題":"沒有網路")+"），先顯示 Q 版"})}const root=new T.Group();root.add(B.bot);sc.add(root);root.updateMatrixWorld(true);
   const box=new T.Box3().setFromObject(B.bot),c=box.getCenter(new T.Vector3()),sz=box.getSize(new T.Vector3());B.bot.position.sub(c);const by=B.bot.position.y;
   const cam=new T.PerspectiveCamera(30,W/H,.1,200);cam.position.set(0,sz.y*.06,Math.max(sz.y,sz.x)*2.6);cam.lookAt(0,0,0);
   let ry=-.35,v=.004,drag=null,t0=performance.now();
@@ -3841,6 +3846,7 @@ const JR=[
 /* 開發者決定：石桌往事換成 36 回，每回一關（名稱、玩法類型、電腦等級；tools/legend_export.js 會照大綱自動更新這一行）。
    特製玩法（猜著法、盲棋、對話選項、香條計時、讓子、殘局起手…）要等引擎驗過局面才做；在那之前：有電腦等級的先下一盤對弈，其他先用題庫解題 */
 const JL=[["送車","讓子＋殘局起手＋猜著法",1,1],["桌子底下","盲棋＋記盤",0,1],["小卒過河","殘局起手",2,1],["當場拆穿","對話選項＋殘局起手",2,1],["蠟燭燒完了","對話選項＋盲棋＋猜著法",0,1],["他撕一張，我們寫一張","收集＋香條計時",0,1],["最後一支香","記盤＋對話選項＋香條計時對局",2,1],["背後那門砲","香條計時＋殘局起手＋猜著法",3,1],["三炷香","殘局起手＋香條計時",3,1],["第四十二步","猜著法＋對話選項",0,1],["州衙三問","對話選項",0,1],["每晚擺一遍","記盤＋猜著法",0,1],["草席下的棋","盲棋＋限步對局",3,1],["秘境棋友・王冕","限步對局",2,1],["書信棋","猜著法",0,1],["柳老篙的手","對話選項",0,1],["指導棋","限步對局＋猜著法",1,1],["炮八平五是哪一路兵馬","對話選項＋限步對局",2,1],["孤城","殘局起手",3,1],["雙馬飲泉","殘局起手 ×3",0,1],["撐到轎子來","限步對局＋香條計時",3,1],["秘境棋友・沈萬三","限步對局",4,1],["棋仙讓車","讓子對局",4,1],["拼匾","收集＋殘局題 ×5",0,1],["盲棋","盲棋＋猜著法",0,1],["只敢問一句","對話選項＋香條計時對局",3,1],["讓雙馬","讓子對局",3,1],["秘境棋友・邋遢道人","限步對局",5,1],["拆船","收集＋殘局題 ×3",0,1],["賈半步的殘局","殘局起手",4,1],["架閣庫","收集＋對話選項＋香條計時",0,1],["石桌刻痕","殘局題",0,1],["過宮炮","讓子對局",4,1],["不怕的棋","對話選項＋限步對局",4,1],["雨中推演","猜著法＋記盤",0,1],["炮八平四","殘局起手",6,1]];/*JL*/
+const JL2=[["晨掃石枰","記盤＋限步對局",1,1,1],["南邊來的客人","限步對局",2,1,1],["帳背上的關門","殘局起手 ×3＋猜著法",2,1,1],["堤上無燈","盲棋＋香條計時",3,1,1],["重陽擂台","讓先擂台（新）＋限步對局",3,1,1],["雲河石桌真譜","譜裡找錯（新）",0,1,1],["兩手一方","雙人搭檔棋（新）＋讓先擂台",3,1,1],["徵局","徵局出題＋殘局起手",4,1,1],["和，也是解","殘局起手＋古譜對照",4,1,1],["馬市棋攤","讓先擂台＋限步對局",3,1,2],["廟市雙杰","雙人搭檔棋＋香條計時",4,1,2],["一人四盤","蒙眼車輪戰（記憶小遊戲）",3,1,2],["不吃的那隻車","殘局起手＋對話選項",4,1,2],["三張紙","長信書信棋（小玩法）＋猜著法",0,1,2],["虎丘四盤","蒙眼車輪戰（只下一盤＋記憶小遊戲）",4,1,2],["京華棋話","譜裡找錯",0,1,2],["三條路","殘局起手＋猜著法",4,1,2],["鹽商大擂","讓先擂台＋限步對局",5,1,2],["掃地","對話選項＋收集",0,1,2],["接香","殘局接力（新）",4,1,3],["一步家書","長信書信棋＋記盤",0,1,3],["水漲棋盤","水漲棋盤（小玩法）＋限步對局",4,1,3],["讓雙馬","讓子對局",3,1,3],["反刻一版","刻版記盤（小玩法）＋譜裡找錯",0,1,3],["中炮三衝","限步對局＋香條計時",5,1,3],["關好了的門","限步對局",5,1,3],["白頭車輪","蒙眼車輪戰",4,1,3],["揚州再擂","讓先擂台＋限步對局",5,1,3],["老兵的卒","限步對局",4,1,3],["祖孫接香","殘局接力",5,1,4],["替譜校錯","譜裡找錯",0,1,4],["兩紙相拼","盲棋＋記盤",0,1,4],["白首聯枰","雙人搭檔棋＋古譜對照",6,1,4],["最後兩行","對話選項＋收集",0,1,4],["第一百盤","盲棋＋限步對局",6,1,4],["刻名","收集＋殘局題",0,1,4]];/*JL2*/
 /* 🏮 驛站（意見回饋 315）：等級不夠進下一站時，來這裡找路過的旅人下棋練等，下幾次都可以；贏了多給修為。
    🗝 秘境棋友：藏在某些朝代公園的樹、茶杯、燈籠後面，要自己在公園 3D 裡點到才會發現；找到後也會出現在驛站，比較強、修為也多 */
 const INN=[{id:"tea",name:"賣茶的老婦",ic:"🍵",lv:1,xp:20,say:"「喝口茶，陪老身下一盤，不急不急。」"},{id:"scholar",name:"趕考的書生",ic:"📜",lv:2,xp:25,say:"「小生進京趕考，路上棋癮犯了，請賜教。」"},
@@ -4871,7 +4877,16 @@ function ldShow(ov){const im=ov.querySelectorAll(".ld-img img"),tt=ov.querySelec
     a.onload=on;a.onerror=()=>{i++;setTimeout(go,400)};a.src="data/loading/"+id+".webp"};go()}
 async function preloadAll(){if(!OFF||!("caches" in window))return;
   let M;try{M=await (await fetch("data/preload.json",{cache:"no-cache"})).json()}catch(e){return}
-  const done=store.get(PRE_KEY,null)===M.v;let c;try{c=await caches.open("xqlab-look")}catch(e){return}
+  /* 開發者 11/4：更新後常常沒有把所有東西都搬進手機——改成每次開 App 都先蓋載入畫面、檢查全部檔案，缺的、換過的都下載完才進首頁（20 秒後可以先進去逛） */
+  const done=false;let c;try{c=await caches.open("xqlab-look")}catch(e){return}
+  const MOBP=(()=>{try{return matchMedia("(pointer:coarse)").matches||innerWidth<820}catch(e){return false}})(),wantReal=store.get("pStyle","q")==="real"||store.get("oppLook","3d")==="real";
+  M.items=M.items.filter(([u])=>/^data\/tripo_app\//.test(u)?wantReal:/^data\/eramap\//.test(u)?(/_m\.webp$/.test(u)===MOBP):true);   /* 真實 3D 模型只在選了真實版時下載；朝代地圖手機只抓手機版 */
+  let ov=null,bar=null,txt=null;const ovMake=()=>{ov=document.createElement("div");ov.id="preov";
+    ov.innerHTML=`<div class="ld-img"><img alt=""><img alt=""></div><div class="ld-q"><div class="ld-tt"></div><div class="ld-qt"></div><div class="ld-src"></div></div>
+      <div class="pre-in"><div class="pre-t">象棋研究室</div><div class="pre-s">檢查手機裡的棋盤、園子和故事…</div>
+      <div class="pre-bar"><i></i></div><div class="pre-n">檢查中…</div><div class="pre-h">缺的、換過的會先下載，好了才進首頁。</div><button class="pre-skip" type="button" hidden>先進去逛（背景繼續下載）</button></div>`;
+    document.body.append(ov);bar=ov.querySelector(".pre-bar i");txt=ov.querySelector(".pre-n");ldShow(ov);
+    setTimeout(()=>{const k=ov&&ov.querySelector(".pre-skip");if(k){k.hidden=false;k.onclick=()=>{ov.remove();ov=null}}},20000)};ovMake();
   const base=new URL(".",location.href).href,abs=u=>new URL(u,base).href;
   const PH=store.get("preH",{}),NH={},miss=[];   /* 換過的圖（檔名一樣、內容不同）也要重新下載：秦、漢黑棋換新圖後手機一直是舊的 */
   await Promise.all(M.items.map(async([u,sz,h])=>{NH[u]=h;try{const r=await c.match(abs(u));if(!r)return miss.push([u,sz,h]);
@@ -4884,8 +4899,10 @@ async function preloadAll(){if(!OFF||!("caches" in window))return;
   const CORE_DIR=/^data\/(sfx|voice|glyphs|pieces|boards|icons|xs|pika|pika2|loading|stones|park|park3d|pano|pset|seat|champ|npc|parkgate|arenagate|inn)\//;
   const isCore=u=>{if(!CORE_DIR.test(u)||/^data\/park\/j/.test(u))return false;const e=eraOf(u);return !e||e===E0};
   const coreMiss=miss.filter(x=>isCore(x[0]));
-  const total=coreMiss.reduce((t,x)=>t+x[1],0);let got=0,ov=null,bar=null,txt=null,fail=[];
-  if(coreMiss.length&&!done){ov=document.createElement("div");ov.id="preov";
+  const total=miss.reduce((t,x)=>t+x[1],0);let got=0,fail=[];
+  if(ov){const ps=ov.querySelector(".pre-s");if(ps)ps.textContent=miss.length?`有 ${miss.length} 個檔案要搬進手機（${(total/1048576).toFixed(1)} MB）…`:"都在手機裡了"}
+  if(!miss.length&&ov){const o=ov;ov=null;txt.textContent="都在手機裡了";setTimeout(()=>{o.classList.add("out");setTimeout(()=>o.remove(),400)},350)}
+  if(false){ov=document.createElement("div");ov.id="preov";
     ov.innerHTML=`<div class="ld-img"><img alt=""><img alt=""></div><div class="ld-q"><div class="ld-tt"></div><div class="ld-qt"></div><div class="ld-src"></div></div>
       <div class="pre-in"><div class="pre-t">象棋研究室</div><div class="pre-s">${store.get(PRE_KEY,null)?"有新的圖和故事，正在搬進手機…":"第一次開啟，正在把棋盤、園子和故事都搬進手機…"}</div>
       <div class="pre-bar"><i></i></div><div class="pre-n">準備中…</div><div class="pre-h">先把常用的載好就進去；其他朝代和故事的圖在背景繼續下載。</div><button class="pre-skip" type="button" hidden>先進去逛（背景繼續下載）</button></div>`;
@@ -4894,7 +4911,7 @@ async function preloadAll(){if(!OFF||!("caches" in window))return;
   const show=()=>{if(!ov)return;if(total&&got>=total){txt.textContent="載好了";const o=ov;ov=null;setTimeout(()=>{o.classList.add("out");setTimeout(()=>o.remove(),400)},250);return}const p=total?Math.min(100,Math.floor(got*100/total)):100;bar.style.width=p+"%";txt.textContent=`${p}%　${(got/1048576).toFixed(1)} ／ ${(total/1048576).toFixed(1)} MB`};show();
   const rank=x=>x[0].indexOf("data/loading/")===0?0:isCore(x[0])?1:2,q=miss.slice().sort((a,b)=>rank(a)-rank(b));let run=0;   /* 載入畫面的水墨畫先下載，接著核心，其他在背景 */
   await new Promise(ok=>{if(!q.length)return ok();const next=()=>{if(!q.length&&!run)return ok();while(run<6&&q.length){const [u,sz,h,fr]=q.shift();run++;
-    fetch(abs(u)+(fr?"?fresh="+h:""),fr?{cache:"no-store"}:void 0).then(r=>{if(!r.ok)throw new Error(r.status);return c.put(abs(u),r)}).then(()=>{if(isCore(u))got+=sz}).catch(()=>{fail.push([u,sz,h,fr]);if(isCore(u))got+=sz}).finally(()=>{run--;show();next()})}};next()});
+    fetch(abs(u)+(fr?"?fresh="+h:""),fr?{cache:"no-store"}:void 0).then(r=>{if(!r.ok)throw new Error(r.status);return c.put(abs(u),r)}).then(()=>{got+=sz}).catch(()=>{fail.push([u,sz,h,fr]);got+=sz}).finally(()=>{run--;show();next()})}};next()});
   if(!fail.length)store.set(PRE_KEY,M.v);okH();
   if(ov){txt.textContent="載好了";setTimeout(()=>{if(ov){ov.classList.add("out");setTimeout(()=>ov&&ov.remove(),400)}},250)}
   /* 失敗的在背景再試三次 */

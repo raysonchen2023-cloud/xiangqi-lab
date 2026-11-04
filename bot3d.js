@@ -245,7 +245,7 @@
      立繪身上寫字的白色圓，Tripo 做成一個洞，這裡在同一個位置補一塊寫著擅長棋子的圓牌（用 Q 版身上那塊的貼圖） */
   function attachGLB(B,o){if(!window.XQGLB)return;const box0=new T.Box3().setFromObject(B.bot),h0=box0.max.y-box0.min.y,y0=box0.min.y;
     const face=B.torso.children.find(m=>m.isMesh&&m.geometry&&m.geometry.type==="CircleGeometry");
-    window.XQGLB(o.glb).then(sc=>{if(!sc)return;const g=sc.clone(true);g.rotation.y=-Math.PI/2;g.updateMatrixWorld(true);   /* 意見回饋 503：Tripo 的模型臉朝 +X（側面），轉 90 度讓臉朝前；之前圓牌朝前、模型朝側面，看起來圓牌浮在身體旁邊 */
+    B.glbP=window.XQGLB(o.glb).catch(()=>window.XQGLB(o.glb)).then(sc=>{if(!sc)throw new Error("empty");   /* 意見回饋 505：失敗自動重試一次；結果交給畫面顯示「載入中／失敗」 */const g=sc.clone(true);g.rotation.y=-Math.PI/2;g.updateMatrixWorld(true);   /* 意見回饋 503：Tripo 的模型臉朝 +X（側面），轉 90 度讓臉朝前；之前圓牌朝前、模型朝側面，看起來圓牌浮在身體旁邊 */
       const bb=new T.Box3().setFromObject(g),sz=bb.getSize(new T.Vector3()),c=bb.getCenter(new T.Vector3());if(!(sz.y>0))return;
       const hold=new T.Group();hold.name="glb";g.position.set(-c.x,-bb.min.y,-c.z);hold.add(g);hold.scale.setScalar(h0/sz.y);hold.position.y=y0;
       g.traverse(m=>{if(m.isMesh){m.castShadow=true;m.receiveShadow=true}});
@@ -255,7 +255,7 @@
         /* 圓牌貼在模型表面：從正前方打一條射線，碰到的地方再往前一點（不浮在空中、也不埋進身體） */
         let pz=bb.max.z;try{const hit=new T.Raycaster(new T.Vector3(px,py,bb.max.z+sz.z+1),new T.Vector3(0,0,-1)).intersectObject(g,true)[0];if(hit)pz=hit.point.z}catch(e){}
         d.position.set(px-c.x,py-bb.min.y,pz-c.z+sz.y*.004);hold.add(d)}
-      for(const ch of B.bot.children)ch.visible=false;B.bot.add(hold);B.glb=hold}).catch(()=>{})}
+      for(const ch of B.bot.children)ch.visible=false;B.bot.add(hold);B.glb=hold;return true});B.glbP.catch(()=>{})}
 
   // ---------- 招牌動作 ----------
   const lie=(p,B)=>{const L=p<.15?ease(p/.15):p>.85?ease((1-p)/.15):1;B.root.rotation.z=PI/2*L;B.root.position.x=1.2*L;B.root.position.y=.8*L};
