@@ -55,7 +55,10 @@ var XQNet=(function(){
   const isBot=id=>!!(people[id]&&people[id].bot),tcOf=f=>TCS.includes(+(f&&f.tc))?+f.tc:null,tcOk=f=>isBot(f.id)||tcOf(f)===tcPref();
   let tcWaitAt=0;
   /* 輪到的一方從什麼時候開始算時間：走棋的人會寫 tk；舊版或沒寫的話，用這支手機收到那一步的時間 */
-  const effTk=g=>g.tk&&g.tkN===g.moves.length?g.tk:arr.n===g.moves.length?arr.t:(g.at||Date.now());
+  /* QA P1-2：兩支手機的時鐘可能差很多，所以計時一律用「這支手機收到（或自己走出）這一步的時間」，不用對方手機寫的時間 */
+  const effTk=g=>arr.n===g.moves.length?arr.t:g.tk&&g.tkN===g.moves.length?g.tk:(g.at||Date.now());
+  const turnAt=g=>arr.n===g.moves.length?arr.t:Date.now();
+  let seenAt=Date.now();
   const clockLeft=(g,s)=>!g||!g.clk?null:g.clk[s]-(!g.result&&(g.moves.length%2?"b":"r")===s?Date.now()-effTk(g):0);
   let cur=ls.get("net",null);   // 目前在哪一盤：{gid}；自己是紅、黑還是觀眾，看對局狀態裡的代號
   const L={};const on=(ev,f)=>{(L[ev]=L[ev]||[]).push(f);return()=>{L[ev]=L[ev].filter(x=>x!==f)}};const emit=(ev,d)=>(L[ev]||[]).forEach(f=>{try{f(d)}catch(e){console.error(e)}});
@@ -119,25 +122,43 @@ var XQNet=(function(){
       else if(x.type==="cancel")emit("cancel",x);
       return}
     if(p[0]==="g"&&cur&&p[1]===cur.gid){
-      if(p[2]==="s"){if(!msg)return;let x;try{x=JSON.parse(msg)}catch(e){return}if(!G||x.rev>G.rev||x.gid!==G.gid){const before=side(),wasEnd=!!(G&&G.result);if(!G||x.gid!==G.gid||x.moves.length!==G.moves.length)arr={n:x.moves.length,t:Date.now()};G=x;dirty=false;if(side()!==before||!!G.result!==wasEnd)presence();record();emit("game")}
+      if(p[2]==="s"){if(!msg)return;let x;try{x=JSON.parse(msg)}catch(e){return}if(!x||x.gid!==p[1]||!Array.isArray(x.moves)||!x.red||!x.black)return;if(!G||x.rev>G.rev||x.gid!==G.gid){if(G&&x.gid===G.gid&&side()&&!okNext(G,x))return;seenAt=Date.now();const before=side(),wasEnd=!!(G&&G.result);if(!G||x.gid!==G.gid||x.moves.length!==G.moves.length)arr={n:x.moves.length,t:Date.now()};G=x;dirty=false;if(side()!==before||!!G.result!==wasEnd)presence();record();emit("game")}
         else if(dirty&&G&&x.rev<G.rev)pubGame()}
       else if(p[2]==="e"){try{const x=JSON.parse(msg);emos.push({id:++emoN,by:x.by,e:String(x.e||"").slice(0,12),text:String(x.text||"").slice(0,80),name:String(x.name||"").slice(0,16),at:Date.now()});
         emos=emos.slice(-40);emit("game")}catch(e){}}}}
+  /* QA P1-1：公開伺服器上誰都能發對局狀態。自己在下這盤時，只接受合理的下一步：紅黑雙方不變；只多出對方的一步（或對方悔掉他自己的一步），而且整盤棋步都合法；
+     判對方贏的結果要站得住（將死等規則判得出來，或自己真的超時）；判和要自己先提和、或規則判和 */
+  const tmOf=g=>g.moves.length%2?"b":"r";
+  function okNext(a,b){const me=side();try{
+    if(a.result&&!b.result)return b.red.id===a.black.id&&b.black.id===a.red.id&&!b.moves.length;
+    if(b.red.id!==a.red.id||b.black.id!==a.black.id||a.result)return false;
+    const o=oppOf(me),A=a.moves,B=b.moves,n=Math.min(A.length,B.length);
+    for(let i=0;i<n;i++)if(!B[i]||A[i][0]!==B[i][0]||A[i][1]!==B[i][1])return false;
+    if(B.length===A.length+1){if(tmOf(a)!==o)return false}
+    else if(B.length===A.length-1){if((A.length-1)%2?o!=="b":o!=="r")return false}
+    else if(B.length!==A.length)return false;
+    const v=window.XQ_netCheck?window.XQ_netCheck(B):{ok:true,res:null};if(!v||!v.ok)return false;
+    if(!b.result)return true;const w=b.result.w;
+    if(w===me||b.result.abort)return true;
+    if(v.res&&v.res.w===w)return true;
+    if(w===null)return a.draw===me;
+    if(b.result.timeout&&tmOf(a)===me){const c=a.clk?clockLeft(a,me):Infinity;return Math.min(c,TURN_MS-(Date.now()-turnAt(a)))<5000}
+    return false}catch(e){return false}}
   function enter(gid){if(cur&&cur.gid!==gid&&cli&&cli.up)cli.unsub(gt(cur.gid));cur={gid};ls.set("net",cur);emos=[];if(cli&&cli.up)cli.sub(gt(gid));presence()}
   const PL={r:"紅方",b:"黑方"},oppOf=s=>s==="r"?"b":"r";
   // 對方「在這盤」＝在線上，而且他的狀態指著同一盤（已經跑去做別的事就不算）
   const onl=id=>{const x=people[id];return id===me().id?!!(cli&&cli.up):!!(x&&Date.now()-x.at<ALIVE&&G&&x.gid===G.gid)};
-  function setResult(r){if(!G||G.result)return;const n=JSON.parse(JSON.stringify(G));n.result=r;n.draw=null;n.rev=G.rev+1;n.at=Date.now();G=n;pubGame();presence();record();emit("game")}
+  function setResult(r){if(!G||G.result)return;const n=JSON.parse(JSON.stringify(G));n.result=r;n.draw=null;n.rev=G.rev+1;n.at=Date.now();seenAt=n.at;G=n;pubGame();presence();record();emit("game")}
   // 對方離線超過 10 分鐘、棋局也 10 分鐘沒動：自動中止，不再一直掛著「對戰中」
   // 每步限時：輪到的一方超過 3 分鐘沒走（離開、斷線、關掉 App），由等待的一方判他超時負，比賽自動結束並計分
   const TURN_MS=3*60000;
   const toMove=()=>G?(G.moves.length%2?"b":"r"):null;
   function timeoutCheck(){if(!playing()||!cli||!cli.up)return;const t=toMove(),me=side();if(!t||t===me)return;
     if(G.clk&&clockLeft(G,t)<=0)return setResult({w:me,timeout:true,why:PL[t]+"時間用完，超時判負"});
-    if(Date.now()-(G.at||0)>TURN_MS)setResult({w:me,timeout:true,why:PL[t]+"超過 3 分鐘沒走，超時判負"})}
+    if(Date.now()-turnAt(G)>TURN_MS)setResult({w:me,timeout:true,why:PL[t]+"超過 3 分鐘沒走，超時判負"})}
   setInterval(timeoutCheck,2000);
   function staleCheck(){if(!playing()||!cli||!cli.up)return;const o=oppOf(side()),oid=o==="r"?G.red.id:G.black.id;
-    if(!onl(oid)&&Date.now()-(G.at||0)>10*60000)setResult({w:null,abort:true,why:"對方離線太久，對局中止"})}
+    if(!onl(oid)&&Date.now()-seenAt>10*60000)setResult({w:null,abort:true,why:"對方離線太久，對局中止"})}
   // 自己離開一盤還沒下完的棋：對方還在線上就算自己認輸；對方已經離線就直接中止
   function endOnLeave(){if(!playing())return;const s=side(),o=oppOf(s),oid=o==="r"?G.red.id:G.black.id;
     setResult(onl(oid)&&G.moves.length?{w:o,why:PL[s]+"離開對局"}:{w:null,abort:true,why:onl(oid)?"對局取消":"對方離線，對局中止"})}
@@ -182,7 +203,7 @@ var XQNet=(function(){
     clocks(){return G&&G.clk?{r:clockLeft(G,"r"),b:clockLeft(G,"b")}:null},
     /* 走棋前呼叫：扣掉走的人這步用的時間，從現在開始算對方的 */
     tickMove(n,sd){if(!n||!n.clk)return;const now=Date.now();n.clk[sd]=Math.max(0,n.clk[sd]-(now-effTk(n)));n.tk=now;n.tkN=n.moves.length+1},
-    turnLeft(){if(!G||G.result)return null;return Math.max(0,TURN_MS-(Date.now()-(G.at||0)))},
+    turnLeft(){if(!G||G.result)return null;return Math.max(0,TURN_MS-(Date.now()-turnAt(G)))},
     // 公園 3D 棋盤：對手的小帥造型（棋子、朝代、官階），對手在大廳廣播的
     oppBot(){if(!G||!side())return null;const o=oppOf(side()),x=people[o==="r"?G.red.id:G.black.id];return x&&x.bot||null},
     // 觀戰時：某一方玩家的小帥造型（公園裡對面坐的是遠端那一方，意見回饋 258）
@@ -190,7 +211,7 @@ var XQNet=(function(){
     oppOnline(){if(!G||!side())return false;const o=oppOf(side());return onl(o==="r"?G.red.id:G.black.id)},
     leave(){endOnLeave();if(cur&&cli&&cli.up)cli.unsub(gt(cur.gid));cur=null;G=null;ls.set("net",null);presence()},
     // 對局有變化：發布新狀態（rev 越大越新）
-    update(fn){if(!G)throw new Error("還在等對局資料，稍等一下");const wasEnd=!!G.result,n=JSON.parse(JSON.stringify(G));fn(n);n.rev=G.rev+1;n.at=Date.now();G=n;pubGame();if(!!G.result!==wasEnd)presence();record();emit("game");return G},
+    update(fn){if(!G)throw new Error("還在等對局資料，稍等一下");const wasEnd=!!G.result,n=JSON.parse(JSON.stringify(G));fn(n);n.rev=G.rev+1;n.at=Date.now();if(n.moves.length!==G.moves.length||n.gid!==G.gid)arr={n:n.moves.length,t:n.at};seenAt=n.at;G=n;pubGame();if(!!G.result!==wasEnd)presence();record();emit("game");return G},
     rating(){const R=rec(),i=rankIdx(R.pts),nx=RANKS[i+1];return{pts:R.pts,rank:RANKS[i][0],w:R.w,l:R.l,d:R.d,next:nx?nx[0]:null,toNext:nx?nx[1]-R.pts:0,lo:RANKS[i][1],hi:nx?nx[1]:null,hist:R.hist}},
     rankOf,ranks:()=>RANKS.slice(),
     playing,finished:()=>!!(cur&&G&&G.result),

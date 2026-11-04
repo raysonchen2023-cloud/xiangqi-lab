@@ -229,6 +229,8 @@ var XQ=(function(){
     await idb.set("games:peek",list.slice(-50));return true};
   /* 線上對局前幾步的中文記譜（給戰績分析看開局用） */
   window.XQ_netMovesCn=(g,n)=>{try{const S={moves:g.moves.slice(0,n||6).map(([f,t])=>({f,t}))};stateRebuild(S);return S.moves.map(m=>m.cn)}catch(e){return[]}};
+  /* QA P1-1：收到別人發的對局狀態時，從頭重走一遍檢查每步都合法，順便用規則判這盤是不是已經分出勝負（給 net.js 的 okNext 用） */
+  window.XQ_netCheck=mv=>{try{const S={moves:[]};stateRebuild(S);for(const[f,t]of mv){if(!legal(S.board,S.turn).some(([x,y])=>x===f&&y===t))return{ok:false};stateApply(S,f,t)}return{ok:true,res:judgeState(S)}}catch(e){return{ok:false}}};
   /* 對局結束時就算不在對局畫面（切到別頁、對方認輸、離開）也要存棋譜（意見回饋 275） */
   setTimeout(function hookNet(){if(window.XQNet&&XQNet.on)XQNet.on("game",()=>{try{netBuild()}catch(e){}});else setTimeout(hookNet,500)},0);
   function netState(){const nb=netBuild(),sd=XQNet.side(),em=[];

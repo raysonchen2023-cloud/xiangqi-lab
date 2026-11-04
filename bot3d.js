@@ -90,7 +90,12 @@
     const Cy=(rt,rb,h,m,pos,o)=>add(hatG,new T.CylinderGeometry(rt,rb,h,40),m,pos,o||{line:.08}),Sp=(r,m,pos,sc,o)=>{const x=add(hatG,new T.SphereGeometry(r,20,14),m,pos,o);if(sc)x.scale.set(...sc);return x},
       Bx=(w,h,d,m,pos,o)=>add(hatG,new T.BoxGeometry(w,h,d),m,pos,o||{line:.04}),redM=P("#C8102E",{clearcoat:1,roughness:.3});
     switch(th.hat){
-      case"mian":Cy(.2,.22,.16,hatM,[0,.68,0]);Bx(.95,.04,.5,hatM,[0,.78,0]);for(let x=-.36;x<=.37;x+=.18)for(const y of[.7,.63])Sp(.028,bead,[x,y,.26],null,{noLine:1});break;
+      case"mian":{   /* QA P3-4：冕冠原本只是一片平的黑板，從後上方看像破面。改成有厚度的綖板（上黑下紅、金邊、前低後高），前後各垂一排旒珠，加一根橫穿的金笄 */
+        Cy(.2,.22,.16,hatM,[0,.68,0]);const pl=new T.Group();pl.position.set(0,.8,0);pl.rotation.x=.12;hatG.add(pl);
+        const top=add(pl,new T.BoxGeometry(.95,.05,.52),hatM,[0,.025,0],{line:.04}),und=add(pl,new T.BoxGeometry(.93,.03,.5),redM,[0,-.015,0],{noLine:1});
+        for(const z of[.265,-.265])add(pl,new T.BoxGeometry(.97,.03,.025),gold,[0,.035,z],{noLine:1});for(const x of[.485,-.485])add(pl,new T.BoxGeometry(.025,.03,.55),gold,[x,.035,0],{noLine:1});
+        for(const z of[.25,-.25])for(let x=-.4;x<=.41;x+=.1){const n=z>0?4:3;for(let k=0;k<n;k++)add(pl,new T.SphereGeometry(.026,12,10),bead,[x,-.06-k*.06,z],{noLine:1})}
+        const pin=add(hatG,new T.CylinderGeometry(.018,.018,.62,12),gold,[0,.67,0],{noLine:1});pin.rotation.z=PI/2;break}
       case"jinxian":{Cy(.3,.33,.1,hatM,[0,.62,0]);const b=Bx(.14,.34,.44,hatM,[0,.8,-.02]);b.rotation.x=-.45;break}
       case"helmet":{add(hatG,new T.SphereGeometry(.57,32,16,0,TAU,0,PI/2),P(th.hc,{metalness:.6,roughness:.35}),[0,.18,0],{line:.04});
         add(hatG,new T.TorusGeometry(.56,.035,10,40),bead,[0,.2,0],{noLine:1}).rotation.x=PI/2;Cy(.02,.06,.22,bead,[0,.85,0]);Sp(.1,redM,[0,1,0],[1,1.3,1]);break}
@@ -236,7 +241,7 @@
     "古譜《橘中秘》很經典|《梅花譜》講屏風馬|《適情雅趣》有很多殺法|多看古譜會開竅|胡榮華是傳奇大師|許銀川也很厲害|大師也是一步步練出來的|記譜可以複盤|複盤是進步的秘訣|輸棋最該複盤|"+
     "要不要喝杯茶？|下棋配茶最棒了|今天天氣真好|晚安，明天見|早安！|午安～|吃飽了嗎？|記得伸懶腰|眼睛休息一下|我會一直陪你|"+
     "將軍要先想退路|防守也是進攻|守住中兵很重要|別讓車被困住|車不要走到炮口|馬跳河口很活躍|炮架是關鍵|一子之差也很大|算三步再走|對方剛剛那步有陷阱嗎？|"+
-    "殘局要算步數|單車難破士象全|馬兵殘局很微妙|炮兵殘局要耐心|車兵對車很難贏|殘局帥也要出來幫忙|帥走出來也是戰力|和棋也不錯|逼和也算本事|長將不能一直將|"+
+    "殘局要算步數|單車難破士象全|馬兵殘局很微妙|炮兵殘局要耐心|車兵對車很難贏|殘局帥也要出來幫忙|帥走出來也是戰力|長將不能一直將|"+
     "看我轉圈！|看我跳高！|看我鞠躬！|看我拍手！|看我秀肌肉！|我會划船喔|打鼓咚咚咚|擦擦汗|伸個懶腰～|招招手～|"+
     "你的對手正在想|換你走囉|慢慢想，不急|時間還很多|這盤很精彩|勢均力敵！|紅方有優勢嗎？|黑方要反擊了！|局面複雜喔|關鍵時刻！|"+
     "你今天的手氣不錯|贏了要謙虛喔|輸了要笑一笑|下完記得握手|謝謝你陪我|你是我最好的棋友|下次帶朋友來玩|分享給朋友吧|一起上線對戰！|線上大廳有人喔|"+
@@ -301,7 +306,7 @@
     const shd=new T.Mesh(new T.CircleGeometry(.8,32),new T.MeshBasicMaterial({color:0,transparent:true,opacity:.2}));shd.rotation.x=-PI/2;shd.position.y=.02;sc.add(shd);
     const bounds=()=>({x0:0,x1:innerWidth-W,y0:20,y1:innerHeight-H});
     const sp=store.get("botPos",null);let parked=!!sp,x=sp?sp.x*innerWidth:Math.max(4,innerWidth-W-16),y=sp?sp.y*innerHeight:Math.max(70,innerHeight-H-90);
-    let tx=x,ty=y,face=0,act=null,actT=0,next=1.5,bubT=0,stopped=false,last=performance.now(),acc=0,blinkT=2,talk=0,drag=null,taps=0,tapT=0,deck=[],boardMode=false,boardDrag=false,sheetMode=false;
+    let quietT=0,tx=x,ty=y,face=0,act=null,actT=0,next=1.5,bubT=0,stopped=false,last=performance.now(),acc=0,blinkT=2,talk=0,drag=null,taps=0,tapT=0,deck=[],boardMode=false,boardDrag=false,sheetMode=false;
     // 泡泡不超出畫面左右（小帥站在邊邊時往內移）；小帥會走動，所以泡泡顯示期間每幾格重新算
     let bubDx=0,fitN=0;const fitBub=()=>{try{const r=bub.getBoundingClientRect(),W=window.innerWidth,cur=r.left-bubDx,w=r.width,dx=Math.min(0,W-6-(cur+w))+Math.max(0,6-cur);
       if(Math.abs(dx-bubDx)>.5){bubDx=dx;bub.style.transform=`translate(calc(-50% + ${Math.round(dx)}px),-100%)`}}catch(e){}};
@@ -321,7 +326,7 @@
         const want=Math.abs(dx)>4?(dx>0?.9:-.9):0;face+=(want-face)*Math.min(1,t*6);root.rotation.y=face;
         const w=Math.sin(now/110);P.legs[0].rotation.x=.6*w;P.legs[1].rotation.x=-.6*w;R(B,0,-.5*w);R(B,1,.5*w);root.position.y=Math.abs(Math.cos(now/110))*.08}
       else{face+=(0-face)*Math.min(1,t*4);root.rotation.y=face;P.torso.position.y=1.02+.015*Math.sin(now/500);
-        next-=t;if(next<=0){if(!parked&&Math.random()<.4){wander();next=1}else doAct(randAct())}}
+        next-=t;if(next<=0){if(!parked&&Math.random()<.4){wander();next=1}else if(now<quietT)next=2;else doAct(randAct())}}
       // 表情：眨眼、閉眼、眨單眼、講話時嘴巴開合
       blinkT-=t;const bl=blinkT<0;if(blinkT<-.12)blinkT=2+Math.random()*3;
       const F=B.face;P.eyes.forEach((e,i)=>{e.g.scale.y=B.closed||F==="happy"||(F==="wink"&&i===1)?.12:bl?.1:1;e.brow.position.y=.15+(F==="open"||F==="happy"?.03:0);
@@ -368,7 +373,7 @@
     window.addEventListener("xq-call",onCall);
     // 勝負：贏了開心跳、輸了難過掉眼淚、和棋聳聳肩
     const pick=a=>a[Math.random()*a.length|0];
-    const onResult=e=>{const r=e.detail;setTimeout(()=>{if(r==="win"){doAct("win");say(pick(["我們贏了！🏆","太厲害了！","勝利！耶～","你是冠軍！","贏啦贏啦！"]),5)}
+    const onResult=e=>{const r=e.detail;quietT=performance.now()+20000;setTimeout(()=>{if(r==="win"){doAct("win");say(pick(["我們贏了！🏆","太厲害了！","勝利！耶～","你是冠軍！","贏啦贏啦！"]),5)}
       else if(r==="lose"){doAct("lose");say(pick(["嗚嗚…輸了","好可惜…","沒關係，再來一盤！","下次一定贏！","我陪你複盤吧"]),5)}
       else{doAct("draw");say(pick(["和棋～勢均力敵","握手言和！","平分秋色","不分勝負！"]),5)}},400)};
     window.addEventListener("xq-result",onResult);
@@ -377,14 +382,25 @@
       if(r.width>220&&r.bottom>40&&r.top<innerHeight-40&&(!best||r.width>best.width))best=r}return best};
     // 有對話框（意見回饋、問小帥…）打開時：閃到對話框上方；上面空間不夠就先躲起來（意見回饋 177）
     const sheetRect=()=>{const e=document.querySelector("#sheet,.modal .box");if(!e)return null;const r=e.getBoundingClientRect();return r.height&&r.top<innerHeight-30?r:null};
+    /* QA P2-2：小帥常蓋住按鈕、棋盤、對話框。檢查小帥身上幾個點底下是不是按鈕、連結、棋盤、棋步；是的話換個空地方站，找不到空位就變淡、讓點擊穿過去 */
+    const HOT='button,a,input,select,textarea,label,summary,.chip,.btn,[role=button],[onclick],svg[viewBox="0 0 560 620"],h1,h2,h3';
+    const busyAt=(px,py)=>{if(px<0||py<0||px>innerWidth||py>innerHeight)return false;for(const e of document.elementsFromPoint(px,py)){if(e.closest(".xqbot"))continue;return!!e.closest(HOT)}return false};
+    const covers=(bx,by)=>[[.5,.45],[.3,.22],[.7,.22],[.3,.85],[.7,.85]].some(([u,v])=>busyAt(bx+u*W,by+v*H));
+    const freeSpot=()=>{const b=bounds();for(let i=0;i<30;i++){const px=b.x0+Math.random()*Math.max(0,b.x1-b.x0),py=Math.max(70,b.y0)+Math.random()*Math.max(0,b.y1-Math.max(70,b.y0));if(!covers(px,py))return[px,py]}return null};
+    let dodgeN=0,dim=false,boardSpot=null;
+    const setDim=on=>{if(on===dim)return;dim=on;hit.style.pointerEvents=on?"none":"auto";if(!on&&!boardMode)box.style.opacity=""};
+    const isModal=()=>!!document.querySelector(".modal .box");
     const boardT=setInterval(()=>{if(celeb)return;const sr=sheetRect();
-      if(sr){sheetMode=true;act=null;if(sr.top-6<H*.7){box.style.opacity="0";hit.style.pointerEvents="none"}else{box.style.opacity="";hit.style.pointerEvents="auto";if(!drag){tx=bounds().x1-4;ty=Math.max(0,sr.top-H)}}return}
+      if(sr){sheetMode=true;act=null;if(isModal()||sr.top-6<H+40){box.style.opacity="0";hit.style.pointerEvents="none"}else{box.style.opacity="";hit.style.pointerEvents="auto";if(!drag){tx=bounds().x1-4;ty=Math.max(0,sr.top-H)}}return}
       if(sheetMode){sheetMode=false;box.style.opacity="";hit.style.pointerEvents="auto";if(!boardMode){if(parked){const p=store.get("botPos",null);if(p){tx=p.x*innerWidth;ty=p.y*innerHeight}}else wander()}}
       const r=bigBoard();
-      if(r&&!boardMode){boardMode=true;boardDrag=false;act=null;shrink=.6;applySize()}
+      if(r&&!boardMode){boardMode=true;boardDrag=false;boardSpot=null;act=null;shrink=.6;applySize()}
       else if(!r&&boardMode){boardMode=false;boardDrag=false;shrink=1;applySize();box.style.opacity="";if(parked){const p=store.get("botPos",null);if(p){tx=p.x*innerWidth;ty=p.y*innerHeight}}else wander()}
-      if(boardMode&&!boardDrag&&!drag){const b=bounds();tx=b.x1-2;ty=Math.max(b.y0,innerHeight-H-64)}
-      if(boardMode&&!sheetMode)box.style.opacity=(act||drag||bubT>0)?"":".45"},250);
+      if(boardMode&&!boardDrag&&!drag){const b=bounds(),hx=b.x1-2,hy=Math.max(b.y0,innerHeight-H-64);
+        if(!boardSpot||(dodgeN&3)===0&&covers(boardSpot[0],boardSpot[1])){boardSpot=!covers(hx,hy)?[hx,hy]:(freeSpot()||[hx,hy])}tx=boardSpot[0];ty=boardSpot[1]}
+      if(!drag&&!sheetMode&&(++dodgeN&3)===0&&Math.hypot(tx-x,ty-y)<3){
+        if(covers(x,y)){const f=(parked&&!boardMode)||boardDrag?null:freeSpot();if(f){if(boardMode)boardSpot=f;tx=f[0];ty=f[1];setDim(false)}else setDim(true)}else setDim(false)}
+      if(boardMode&&!sheetMode)box.style.opacity=dim?".2":(act||drag||bubT>0)?"":".45";else if(dim&&!sheetMode)box.style.opacity=".25"},250);
     // 換朝代：重做造型（字形還沒下載就先下載，好了再換一次）
     const rebuild=()=>{curK=eraK();curP=BP();root.remove(P.bot);Object.assign(B,build(curK,grade()));root.add(B.bot);try{xsMode()}catch(e){}};
     // 升官慶祝（意見回饋 236）：小帥放大走到畫面正中央，金光、彩帶、「升官」字樣，約 5 秒後回原位
