@@ -262,6 +262,7 @@ html[data-era=ming] .topbar,html[data-era=qing] .topbar{border-bottom-width:4px}
   filter:drop-shadow(0 .03em 0 #6b0d12) drop-shadow(0 .06em .1em #000a);animation:ckch .46s cubic-bezier(.2,1.25,.4,1) both}
 .ckfx .c1{animation-delay:.16s;--dx:-.6em}.ckfx .c2{animation-delay:.28s;--dx:.6em}
 .ckfx b.gl{background:none;width:1.25em;height:1.25em}.ckfx b.gl svg{display:block;width:100%;height:100%;overflow:visible}
+.gst>div{display:grid;grid-template-columns:2em 4.2em 1fr;align-items:center;gap:6px;padding:7px 0;border-bottom:1px solid var(--line)}.gst>div:last-of-type{border-bottom:0}.gst i{font-style:normal;font-size:1.25em;text-align:center}.gst b{white-space:nowrap}.gst span{color:var(--muted,#7a6a58)}.gst p{margin:6px 0 0;font-size:12.5px}
 .ckfx .seal{position:absolute;left:calc(50% + 4.4em);top:50%;white-space:nowrap;writing-mode:vertical-rl;text-orientation:upright;font-style:normal;font-weight:900;font-size:.27em;line-height:1;letter-spacing:.06em;
   padding:.34em .26em .3em;color:#fbecd0;background:radial-gradient(circle at 30% 25%,#d0222c,#a90f1a 70%,#8e0c15);border-radius:.14em .1em .16em .12em;
   box-shadow:inset 0 0 0 .1em #a90f1a,inset 0 0 0 .17em #fbecd0d0,0 .08em .25em #000a;transform:translateY(-50%) rotate(-4deg);animation:ckseal .34s .62s cubic-bezier(.25,.8,.3,1) both}
@@ -577,7 +578,7 @@ html[data-era=ming] .topbar,html[data-era=qing] .topbar{border-bottom-width:4px}
       if(!window.caches)return go();caches.keys().then(function(ks){return Promise.all(ks.filter(function(k){return k.indexOf("xqlab-app-")===0}).map(function(k){return caches.delete(k)}))})
         .then(function(){return navigator.serviceWorker&&navigator.serviceWorker.getRegistration()}).then(function(r){return r&&r.update()}).catch(function(){}).then(go)}};setTimeout(chk,4000)})();
 </script>
-<script>window.XQ_OFFLINE=true;window.XQ_BUILD="20261104-1420";</script>
+<script>window.XQ_OFFLINE=true;window.XQ_BUILD="20261104-1501";</script>
 <script src="core.js"></script>
 <script src="engine.js"></script>
 <script src="local.js"></script>
@@ -2793,15 +2794,9 @@ function Settings(v){
         <label class="row" style="justify-content:space-between"><span><b>顯示 3D 象棋小人</b><br><span class="muted">圓滾滾的棋子小人，跟著朝代換造型</span></span><input type="checkbox" class="sw" id="botT" ${botOn()?"checked":""}></label>
         <div style="border-top:1px solid var(--line);margin:8px 0"></div>
         <div class="row" style="gap:10px"><b style="white-space:nowrap">大小</b><input type="range" id="botSz" min="0.6" max="2" step="0.05" value="${store.get("botSize",.7)}" style="flex:1"><b id="botSzV" style="width:46px;text-align:right">${Math.round(store.get("botSize",.7)*100)}%</b></div></div>
-      <div class="sec-t"><span>怎麼跟<span class="botN">${BOTN()}</span>互動</span></div><div class="card" style="line-height:2">
-        <div class="row" style="justify-content:space-between"><span>👆 點一下</span><span class="muted">表演一個動作</span></div>
-        <div class="row" style="justify-content:space-between"><span>✌ 點兩下</span><span class="muted">出去散步（停放時）</span></div>
-        <div class="row" style="justify-content:space-between"><span>✋ 長按</span><span class="muted">問<span class="botN">${BOTN()}</span>問題</span></div>
-        <div class="row" style="justify-content:space-between"><span>🤏 拖動</span><span class="muted">放到任何地方</span></div>
-        <div class="row" style="justify-content:space-between;gap:10px"><span style="white-space:nowrap">👆👆👆 點三下</span><span class="muted" style="text-align:right">鞠躬去休息、隱藏起來；想叫他回來，打開上面的「顯示 3D 象棋小人」</span></div></div>
+      <div class="sec-t"><span>怎麼跟<span class="botN">${BOTN()}</span>互動</span></div><div class="card gst"><div><i>👆</i><b>點一下</b><span>表演一個動作</span></div><div><i>✌️</i><b>點兩下</b><span>出去散步（停放時）</span></div><div><i>✋</i><b>長按</b><span>問<span class="botN">${BOTN()}</span>問題</span></div><div><i>🤏</i><b>拖動</b><span>放到任何地方</span></div><div><i>👆</i><b>點三下</b><span>鞠躬，先藏起來</span></div><p class="muted">藏起來之後，打開上面的「顯示 3D 象棋小人」就會回來</p></div>
       <div class="row" style="gap:8px;margin-top:10px"><button class="btn" id="askB" style="flex:1">💬 問<span class="botN">${BOTN()}</span></button><button class="btn ghost" id="botHome" style="flex:1">↩ 回到預設位置</button></div></div>
-    <div data-pane="more"><div class="sec-t" style="margin-top:4px">📱 換手機</div><div class="card" style="line-height:1.75;font-size:14px">把這支手機的修為、等級、戰績、集章、解鎖、設定和沒下完的棋，整份搬到新手機。<div class="row" style="gap:8px;margin-top:10px;flex-wrap:wrap"><button class="btn" id="xfOut" style="flex:1;min-width:140px">產生轉移碼（舊手機）</button><button class="btn ghost" id="xfIn" style="flex:1;min-width:140px">輸入轉移碼（新手機）</button></div><p class="muted" style="font-size:12.5px;margin:8px 0 0">資料用轉移碼加密後才傳出去，30 分鐘內有效，新手機收到後就刪掉，同一組碼不能再用。</p></div>
-    <div class="sec-t">我的資料</div><div class="items" style="padding:0">
+    <div data-pane="more"><div class="sec-t" style="margin-top:4px">我的資料</div><div class="items" style="padding:0">
       <button class="item" id="nm"><span class="lb">✏</span><span class="tx"><b>我的名字</b><span id="nmS"></span></span><span class="muted">›</span></button></div>
     ${OFF?`<div class="card" style="margin-top:8px"><label class="row" style="justify-content:space-between"><span><b>線上大廳顯示我的城市</b><br><span class="muted">由網路位置推估，只顯示城市</span></span><input type="checkbox" class="sw" id="cityT" ${store.get("showCity",false)?"checked":""}></label></div>`:""}
     <div class="sec-t">支援</div><div class="items" style="padding:0">
@@ -2824,7 +2819,7 @@ function Settings(v){
         <tr><td>JSON</td><td>棋譜、題庫、故事、朝代資料</td></tr></table>
         <div class="muted" style="font-size:12px;margin-top:4px">線上大廳用 MQTT 通訊協定連線；Pikafish 的神經網路權重另外下載。</div></details>`:""}</div>
     ${OFF?'<div class="sec-t">進階</div><div class="card"><label class="row" style="justify-content:space-between"><span><b>開發者模式</b><br><span class="muted">一般玩家不用打開。打開後才會顯示連線電腦、AI 對戰等開發者功能</span></span><input type="checkbox" class="sw" id="dm"></label></div>'
-      +(DEVMODE()?'<div class="items" style="padding:0;margin-top:8px"><button class="item" id="fa"><span class="lb">📋</span><span class="tx"><b>意見回饋管理</b><span>看所有回饋和截圖，決定玩家的回饋要不要修</span></span><span class="muted">›</span></button><button class="item" id="cn"><span class="lb">🖥</span><span class="tx"><b>連線到開發者的電腦</b><span>看 AI 對戰、同步大師棋譜</span></span><span class="muted">›</span></button><button class="item" id="rb"><span class="lb">🔄</span><span class="tx"><b>重置虛擬玩家</b><span>20 位棋友的積分、戰績、練習紀錄歸零；舊資料留在電腦上</span></span><span class="muted">›</span></button></div>':""):""}</div></div>`;
+      +(DEVMODE()?'<div class="items" style="padding:0;margin-top:8px"><button class="item" id="fa"><span class="lb">📋</span><span class="tx"><b>意見回饋管理</b><span>看所有回饋和截圖，決定玩家的回饋要不要修</span></span><span class="muted">›</span></button><button class="item" id="cn"><span class="lb">🖥</span><span class="tx"><b>連線到開發者的電腦</b><span>看 AI 對戰、同步大師棋譜</span></span><span class="muted">›</span></button><button class="item" id="rb"><span class="lb">🔄</span><span class="tx"><b>重置虛擬玩家</b><span>20 位棋友的積分、戰績、練習紀錄歸零；舊資料留在電腦上</span></span><span class="muted">›</span></button></div>':""):""}${OFF?'<div class="sec-t">📱 換手機</div><div class="card"><div class="row" style="gap:8px;flex-wrap:wrap"><button class="btn" id="xfOut" style="flex:1;min-width:140px">產生轉移碼（舊手機）</button><button class="btn ghost" id="xfIn" style="flex:1;min-width:140px">輸入轉移碼（新手機）</button></div></div>':""}</div></div>`;
   let tbRefresh=()=>{};
   const showTab=()=>{if(stab==="play")tbRefresh();v.querySelectorAll("#sgTabs button").forEach(b=>b.classList.toggle("on",b.dataset.k===stab));v.querySelectorAll("[data-pane]").forEach(x=>x.hidden=x.dataset.pane!==stab)};
   v.querySelectorAll("#sgTabs button").forEach(b=>b.onclick=()=>{vibrate(5);stab=b.dataset.k;store.set("setTab",stab);showTab()});showTab();

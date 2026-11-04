@@ -1219,6 +1219,8 @@
       if(oppSpr){const S2=oppSpr;if(reach){reachT+=t;if(reachT>=1.1)reach=0}
         const ps=mood&&opp.face==="happy"?"happy":mood&&opp.face==="sad"?"sad":reach?"move":opp.faceT>0&&opp.face==="open"?"surprise":opp.faceT>0&&opp.face==="happy"?"happy":thinking?"think":"idle";
         if(ps!==S2.pose){S2.pose=ps;S2.sp.material.map=S2.tex[ps];S2.sp.material.needsUpdate=true}
+        /* 意見回饋 456：立繪是一張平面，轉頭從側面看會變成一條細線（破圖）——讓它永遠轉向鏡頭（只轉水平方向，前傾角度不變） */
+        S2.sp.rotation.order="YXZ";S2.sp.rotation.y=Math.atan2(cam.position.x-S2.sp.position.x,cam.position.z-S2.sp.position.z);
         let amp=ps==="happy"?.35*Math.abs(Math.sin(s*7)):.07*Math.sin(s*2.1),rz=0,sc2=1;
         if(ON&&oppRes==="win"){amp=1.4*Math.abs(Math.sin(EP*END*5.5));rz=.12*Math.sin(EP*END*7);sc2=1+.05*Math.sin(EP*END*11)}   // 贏：大跳、左右搖擺
         else if(ON&&oppRes==="lose"){amp=-.5*Math.min(1,EP*4);rz=EP<.8?.07*Math.sin(EP*END*6):0}                                   // 輸：往下垮、搖頭
