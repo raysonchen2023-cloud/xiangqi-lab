@@ -581,7 +581,7 @@ html[data-era=ming] .topbar,html[data-era=qing] .topbar{border-bottom-width:4px}
       if(!window.caches)return go();caches.keys().then(function(ks){return Promise.all(ks.filter(function(k){return k.indexOf("xqlab-app-")===0}).map(function(k){return caches.delete(k)}))})
         .then(function(){return navigator.serviceWorker&&navigator.serviceWorker.getRegistration()}).then(function(r){return r&&r.update()}).catch(function(){}).then(go)}};setTimeout(chk,4000)})();
 </script>
-<script>window.XQ_OFFLINE=true;window.XQ_BUILD="20261104-2037";</script>
+<script>window.XQ_OFFLINE=true;window.XQ_BUILD="20261104-2105";</script>
 <script src="core.js"></script>
 <script src="engine.js"></script>
 <script src="local.js"></script>
@@ -4012,6 +4012,8 @@ const jIcon={puz:"🧩",scene:"🕰",ai:"⚔",boss:"🏯",lv:"🎴"};
 function jPlay(s,force){const b=s.t==="boss"?{human:"r",level:s.lv,arena:s.era,journey:s.id}:{human:"r",level:s.lv,journey:s.id};   /* 守關帶 arena 只是借擂主的外觀和台詞；這盤算石桌往事（local.js kindOf：journey 優先） */
   return jStart(s.id,b,()=>{if(s.t==="boss"&&!parkOn())store.set("park3d",true);location.hash="#/journey/play";setTimeout(()=>toast(s.t==="boss"?`🏯 ${ARENA[s.era].name}：${ARENA[s.era].hi}`:`⚔ 雲河棋路・${s.name}：贏了就過關`),500)},force)}
 /* 第二集 play 的 rule（starOnly 版本：不擋、只記失誤）：noCross 前幾步車過河、finishWith 最後一將不是指定的子 */
+/* 贏棋時最後一將是哪一顆子（FEN 字母；第二集三星 finishWith 用） */
+function lvLastPiece(st){const C=window.XQCore;let b;try{b=C.parseFen(st.start||C.START)}catch(e){return null}const mv=st.moves||[];let p=null;for(const m of mv){p=b[m.f]||null;b=C.make(b,m.f,m.t)}return p}
 function lvRuleMiss(st,rule,me){const C=window.XQCore;let b,miss=0,n=0,crossed=false;try{b=C.parseFen(st.start||C.START)}catch(e){return 0}const mv=st.moves||[];
   for(let i=0;i<mv.length;i++){const m=mv[i],p=String(b[m.f]||"");if(m.by===me){n++;const nc=rule.noCross;
       if(nc&&!crossed&&n<=(nc.until||12)&&p.toUpperCase()===String(nc.piece||"R").toUpperCase()){const row=Math.floor(m.t/9);if(me==="r"?row<=4:row>=5){crossed=true;miss++}}
@@ -4026,7 +4028,7 @@ function journeyGameEnd(st){if(!st||!st.result)return;
     else setTimeout(()=>toast(`${x.ic} ${x.name}：「承讓了，下次再來！」`),1500);return}
   if(P.lvp){const R=jRunGet(P.id),L=P.lvp,me=st.human,won=st.result.w===me,lost=!!st.result.w&&st.result.w!==me,n=st.moves.filter(m=>m.by===me).length;
     const ok=L.goal==="survive"||L.goal==="draw"?!lost:won,over=ok&&L.limit&&L.goal!=="survive"&&n>L.limit;
-    if(R){if(P.hint)R.hint=true;if(over)R.miss++;R.f={...(R.f||{}),win:won,draw:!st.result.w,plies:st.moves.length};if(L.rule)R.miss+=lvRuleMiss(st,L.rule,me);if(ok)R.k++;else R.lose=(R.lose||0)+1;R.ret=true;jRunSet(R)}
+    if(R){if(P.hint)R.hint=true;if(over)R.miss++;R.f={...(R.f||{}),win:won,draw:!st.result.w,plies:st.moves.length};{const k0=L.step!=null?L.step:R.k;R.fs=R.fs||{};const o=R.fs[k0]||{};R.fs[k0]={...o,win:won,draw:!st.result.w,survived:ok&&!won&&!st.result.w,mine:n,lastPiece:won?lvLastPiece(st):null,retried:o.retried||!ok}}if(L.rule)R.miss+=lvRuleMiss(st,L.rule,me);if(ok)R.k++;else R.lose=(R.lose||0)+1;R.ret=true;jRunSet(R)}
     setTimeout(()=>toast(ok?`🎴 這一步過了${over?`（超過 ${L.limit} 步，算一次失誤）`:""}，回到關卡繼續`:"🎴 這一步沒過，回到關卡再試一次"),1500);
     return}
   const s=jStages().find(x=>x.id===P.id);if(!s)return;
@@ -4266,13 +4268,21 @@ function jStepsB2(X){const C=window.XQCore,{v,bd}=X,$=q=>v.querySelector(q);
         let intent=plan&&plan.pv&&plan.pv[2];if(!intent){try{const r=await XQEngine.search({fen:C.fen(pos.b,pos.turn)},{depth:6},1);intent=r.best}catch(e){}}
         const same=intent&&(intent===u||C.parseSq(intent.slice(0,2))===from);mv(from,x);ours++;mine++;if(same){sync++;vibrate([10,30,10]);toast("💡 同一個意思")}lamp();plan=null;return loop()}
       sel=L.some(([f])=>f===x)?x:-1;draw(sel>=0?{sel,targets:L.filter(([f])=>f===sel).map(z=>z[1])}:null)}
-    function fin(r){X.stop();X.flag("sync",sync);if(r==="win"){X.flag("win",true);stat("✔ 贏了！");note(`默契 ${sync} 次`);return acts([["next","›","繼續",X.next,true]])}
+    function fin(r){X.stop();X.flag("sync",sync);X.sflag(r==="win"?{sync,win:true,mine}:{retried:true});if(r==="win"){X.flag("win",true);stat("✔ 贏了！");note(`默契 ${sync} 次`);return acts([["next","›","繼續",X.next,true]])}
       X.failCard(r==="slow"?"太慢了，這盤判負。":r==="limit"?`${st.limit} 步內沒有贏，再試一次。`:"這盤輸了，再跟搭檔試一次。")}}
   return{judge,audit,simul,arrange,relay,duet}}
 /* 三星的機器判定（story/book2/levels_schema_b2.md 的 stars／star）：條件不滿足最多兩顆星；不認得的條件當作過 */
-function b2StarOk(G,R){const F=R.f||{},list=[].concat(G.stars||[]);for(const c of list){const k=c.k||c.key;
-    if(k==="win"&&!F.win)return false;if(k==="orDraw"&&!(F.win||F.draw))return false;if(k==="winWithin"&&!(F.win&&F.plies&&Math.ceil(F.plies/2)<=c.n))return false;
-    if(k==="duetSync"&&!((F.sync||0)>=(c.n||0)))return false;if(k==="offer"&&!((F.offer||0)>=(c.n||0)))return false;if(k==="noRelisten"&&F.relisten)return false}return true}
+function b2StarOk(G,R){const FS=R.fs||{},F=R.f||{},at=c=>c.step!=null?(FS[c.step]||{}):F,FO=R.fo||{};
+  const fromStep=(G.steps||[]).flatMap((st,i)=>{const z=st&&st.star;if(!z||typeof z!=="object")return[];const o=[];if(z.win)o.push({k:"win",step:i});if(z.orDraw)o.push({k:"winOrDraw",step:i});if(z.winWithin)o.push({k:"winWithin",step:i,n:z.winWithin});return o});   /* 第 19～36 回把三星條件寫在對局步驟的 star 裡 */
+  for(const c of [].concat(G.stars||[],fromStep)){const k=c.k||c.key,x=at(c);
+    if(k==="win"&&!x.win)return false;if(k==="draw"&&!x.draw)return false;
+    if((k==="winOrDraw"||k==="orDraw")&&!(x.win||x.draw||x.survived))return false;
+    if(k==="winWithin"&&!(x.win&&(x.mine||0)<=(c.n||999)))return false;
+    if(k==="offer"&&!((c.step!=null?(FO[c.step]||0):Object.values(FO).reduce((a,b)=>a+b,0))>=(c.n||0)))return false;
+    if(k==="duetSync"&&!((x.sync||0)>=(c.n||0)))return false;
+    if(k==="noRetry"&&x.retried)return false;if(k==="noHint"&&R.hint)return false;
+    if(k==="finishWith"&&!(x.win&&x.lastPiece===String(c.piece||"P")))return false;
+    if(k==="noRelisten"&&F.relisten)return false}return true}
 
 /* ================= 🎴 石桌往事的特製關卡（開發者：36 回每回一關，照劇情設計玩法）=================
    資料在 park-legend.json 每一回的 game（來源 story/book1/levels.json，格式見 story/book1/levels_schema.md）。
@@ -4300,7 +4310,7 @@ function jLevel(v,s,src){const BKP=s.book===2?"#/adventure":"#/journey";setTop((
     v.querySelector("#lvR").onclick=run;v.querySelector("#lvB").onclick=()=>goBack(src?src.back:BKP)};
   const sayBox=t=>t?`<div class="card lvsay">${esc(t)}</div>`:"";
   const blank=b=>b.map(()=>null);
-  const B2=jStepsB2({v,bd,boardPage,stop,next,miss,failCard,setTap:f=>{onTap=f},setInc:i=>{inc=i},useHint:()=>{R.hint=true;save()},flag:(k,x)=>{R.f=R.f||{};R.f[k]=x;save()}});
+  const B2=jStepsB2({v,bd,boardPage,stop,next,miss,failCard,setTap:f=>{onTap=f},setInc:i=>{inc=i},useHint:()=>{R.hint=true;save()},flag:(k,x)=>{R.f=R.f||{};R.f[k]=x;save()},sflag:o=>{R.fs=R.fs||{};R.fs[R.k]={...(R.fs[R.k]||{}),...o};save()}});
   if(R.k===0&&!R.intro){v.innerHTML=`<div class="pad">${hdr()}${ch.title?`<p class="muted" style="font-size:13px;margin:0 2px 8px">📖 ${esc(ch.title)}</p>`:""}${sayBox(G.intro||"")}
     <div class="card" style="font-size:14px;line-height:1.8">${G.skill?`<b>練什麼</b>：${esc(G.skill)}<br>`:""}<b>過關</b>：${esc(G.pass||"")}<br><b>三星</b>：${esc(G.star3||"")}</div><button class="btn" id="lvGo" style="width:100%;margin-top:10px">開始</button></div>`;
     v.querySelector("#lvGo").onclick=()=>{R.intro=1;save();run()};return}
@@ -4380,7 +4390,7 @@ function jLevel(v,s,src){const BKP=s.book===2?"#/adventure":"#/journey";setTop((
     /* 第二集 offer：讓先擂台——開打前選一個（讓幾關記在 R.f.offer，三星用） */
     if(Array.isArray(st.offer)&&st.offer.length){R.op=R.op||{};const pk=R.op[R.k];
       if(pk==null){v.innerHTML=`<div class="pad">${hdr()}${sayBox(st.say)}<div class="card"><b>這一盤要怎麼下？</b></div><div class="lvch">${st.offer.map((o,i)=>`<button class="btn ghost" data-o="${i}">${esc(o.label||("選項 "+(i+1)))}</button>`).join("")}</div></div>`;
-        v.querySelectorAll("[data-o]").forEach(b=>b.onclick=()=>{const i=+b.dataset.o;R.op[R.k]=i;R.f=R.f||{};R.f.offer=(R.f.offer||0)+(+st.offer[i].star||0);save();play(st)});return}
+        v.querySelectorAll("[data-o]").forEach(b=>b.onclick=()=>{const i=+b.dataset.o;R.op[R.k]=i;R.f=R.f||{};R.f.offer=(R.f.offer||0)+(+st.offer[i].star||0);R.fo=R.fo||{};R.fo[R.k]=+st.offer[i].star||0;save();play(st)});return}
       const o=st.offer[pk]||{};st={...st,...(o.human?{human:o.human}:{}),...(o.remove?{remove:o.remove}:{}),...(o.start?{start:o.start}:{})}}
     if(st.start&&Array.isArray(st.start.moves)&&st.start.moves.length){const p=lvBoard(st.start);st={...st,start:{fen:window.XQCore.fen(p.b,p.turn).split(" ")[0],turn:p.turn}}}
     const gl={win:"贏這一盤",survive:`撐過 ${st.limit||30} 步不輸`,draw:"至少下和"}[st.goal||"win"];
