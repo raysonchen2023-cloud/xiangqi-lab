@@ -138,6 +138,7 @@
   const eraKey=()=>{let k="classic";try{const v=JSON.parse(localStorage.getItem("m_era")||"null");if(typeof v==="string"&&ERA[v])k=v}catch(e){}return k};
   const hexA=(h,a)=>{const n=parseInt(h.slice(1),16);return`rgba(${n>>16&255},${n>>8&255},${n&255},${a})`};
   // 背景長卷的幾何（世界座標）：半徑、弧度、上下高度；畫的時候用 PX(角度)、PY(高度) 換算成貼圖像素
+  const ERAMAP_R=118;   /* 朝代大地圖的半徑（全景長卷 170 以內） */
   const PAN={r:170,arc:PI*1.2,yb:-170,yt:90,w:3072,h:1024};
   const skyTex=E=>cv(16,512,(g,w,h)=>{const gr=g.createLinearGradient(0,0,0,h);gr.addColorStop(0,E.sky[0]);gr.addColorStop(.4,E.sky[1]);gr.addColorStop(.5,E.sky[2]);gr.addColorStop(.56,E.mist);gr.addColorStop(1,E.mist);g.fillStyle=gr;g.fillRect(0,0,w,h)});
   // 開發者用 Gemini 畫的朝代長卷（data/park/<朝代>.webp）：繞成 360 度一整圈（意見回饋：轉頭看旁邊、後面，圖不能斷、不能突然變成程式畫的山、不能有空白）
@@ -949,7 +950,14 @@
     /* 意見回饋 490（開發者：石台邊像懸崖，希望像雲河棋路那樣是山坡上的大石台）：石台外圍加一圈往外慢慢往下的山坡（草地、碎石），遠的地方淡進霧裡，把石台側面那圈牆蓋住 */
     {const pts=[[TR-.2,FL-.06],[TR+4,FL-.9],[TR+12,FL-3.6],[TR+26,FL-9],[TR+46,FL-18],[TR+76,FL-32],[TR+120,FL-52]].map(([r,y])=>new T.Vector2(r,y));
       const hg=new T.LatheGeometry(pts,96),hm=M(0xffffff,{map:(()=>{const t=stoneTex(EK==="yuan"?"#7E8C62":"#7A8466",10);return t})(),roughness:.95});hm.color=new T.Color(E.mist).lerp(new T.Color("#7C8A68"),.55);
-      const hill=new T.Mesh(hg,hm);hill.material.side=T.DoubleSide;hill.receiveShadow=true;sc.add(hill)}
+      const hill=new T.Mesh(hg,hm);hill.material.side=T.DoubleSide;hill.receiveShadow=true;sc.add(hill);
+      /* 開發者 11/4：石台底下鋪一張「當朝代的中國大地圖」（Gemini 水墨古地圖，有疆界和地名），畫面拉遠就看得到；地圖載好就換掉山坡，載不到就留著山坡 */
+      const ms="data/eramap/"+EK+(MOB?"_m":"")+".webp",mp=()=>{const im=imgCache[ms];if(!im||!im.naturalWidth||!el.isConnected)return;
+        const t=srgb(new T.Texture(im));t.anisotropy=4;t.needsUpdate=true;
+        const map=new T.Mesh(new T.CircleGeometry(ERAMAP_R,96),new T.MeshStandardMaterial({map:t,transparent:true,roughness:1,metalness:0,depthWrite:false}));
+        map.rotation.x=-PI/2;map.position.y=FL-.08;map.receiveShadow=true;map.renderOrder=-.2;sc.add(map);
+        hill.visible=false};
+      if(loadImg(ms,mp))setTimeout(mp,0)}
     {/* 意見回饋 406：平台邊的石欄杆跟著地面抬高後幾乎跟桌面一樣高，降成約 20 公分的矮欄；421：矮欄＋36 根望柱從桌邊看過去還是一整圈牆（像一座高石台的邊、又剛好擋在山水前面），
        改成貼地的一圈石砌收邊（約 7 公分），只留平台的邊線，不擋遠景 */
       const curb=new T.Mesh(new T.CylinderGeometry(TR-.15,TR-.15,.45,96,1,true),stone2);curb.material.side=T.DoubleSide;curb.position.y=FL+.22;sc.add(curb);
@@ -1177,7 +1185,8 @@
       return"bg"};
     // 觸控：一指拖曳轉頭（有朝代長卷的可以整圈轉身，其他左右各約 69 度）、兩指捏合拉近拉遠（0.6～1.25 倍）、點一下選子、點兩下回正（含縮放）
     /* 意見回饋 360：公園的棋盤可以放得更大、縮得更小（兩指捏合的範圍放寬），右下角加 ＋／－ 按鈕 */
-    const ZMIN=.35,ZMAX=1.9,cvs=rd.domElement,ptrs=new Map();let down=null,lastTap=0,pinch=null;
+    const ZMIN=.35,ZMAX=2.8,   /* 開發者 11/4：拉得更遠，看得到石台底下整張朝代地圖（鏡頭距離另外不超過長卷半徑的 62%） */
+    cvs=rd.domElement,ptrs=new Map();let down=null,lastTap=0,pinch=null;
     {const zb=document.createElement("div");zb.className="pzoom";zb.style.cssText="position:absolute;right:8px;bottom:8px;z-index:3;display:flex;flex-direction:column;gap:6px";
       for(const[t,f,l]of[["＋",.8,"放大"],["－",1.25,"縮小"]]){const b=document.createElement("button");b.type="button";b.textContent=t;b.setAttribute("aria-label",l);
         b.style.cssText="width:34px;height:34px;border-radius:50%;border:1px solid rgba(0,0,0,.18);background:rgba(255,255,255,.82);color:#3a2a1c;font:700 20px/1 system-ui;box-shadow:0 1px 4px rgba(0,0,0,.2);padding:0;cursor:pointer";

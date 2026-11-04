@@ -580,7 +580,7 @@ html[data-era=ming] .topbar,html[data-era=qing] .topbar{border-bottom-width:4px}
       if(!window.caches)return go();caches.keys().then(function(ks){return Promise.all(ks.filter(function(k){return k.indexOf("xqlab-app-")===0}).map(function(k){return caches.delete(k)}))})
         .then(function(){return navigator.serviceWorker&&navigator.serviceWorker.getRegistration()}).then(function(r){return r&&r.update()}).catch(function(){}).then(go)}};setTimeout(chk,4000)})();
 </script>
-<script>window.XQ_OFFLINE=true;window.XQ_BUILD="20261104-1806";</script>
+<script>window.XQ_OFFLINE=true;window.XQ_BUILD="20261104-1849";</script>
 <script src="core.js"></script>
 <script src="engine.js"></script>
 <script src="local.js"></script>
@@ -2333,6 +2333,9 @@ function oppCard(oid,name,opt){opt=opt||{};let live=null;try{live=window.XQNet&&
     {const pg=b.querySelector("#pg");if(pg)pg.onclick=()=>{closeSheet();setTimeout(()=>playerGames(p.id||oid,p.name||name),250)}}
     const pi=b.querySelector("#pi"),pw=b.querySelector("#pw");if(pi)pi.onclick=()=>{closeSheet();opt.invite(live)};
     if(pw)pw.onclick=()=>{closeSheet();XQNet.watch(live.gid);location.hash="#/pvp"}})}
+/* 意見回饋 494（開發者：「這個叫做愈練愈穩？」）：「越練越穩」原本是給進步最慢那一群的委婉說法（舊名「慢熱型」），跟「比 4% 的學棋者長得快」放在一起互相矛盾。
+   改成照長棋速度的排名直接說：前 10% 學得飛快、前 30% 學習速度快、中間穩定成長、15～35% 進步偏慢、最後 15% 還沒明顯進步 */
+const speedLab=p=>p==null||!isFinite(p)?"還在觀察中":p>=90?"學得飛快":p>=70?"學習速度快":p>=35?"穩定成長":p>=15?"進步偏慢":"還沒明顯進步";
 /* 意見回饋 283：棋友（含虛擬玩家）公開的最近 30 盤：勝負、執紅執黑、怎麼輸的、常用開局，整理出弱點；點一盤就打開棋譜 */
 function playerGames(oid,name){sheet(`📜 ${name||"棋友"} 的線上棋譜`,async b=>{b.innerHTML='<p class="muted">從大廳讀取他的對局…</p>';
   const H=await XQNet.fetchHist(oid,5000).catch(()=>null);if(!b.isConnected)return;
@@ -2343,7 +2346,7 @@ function playerGames(oid,name){sheet(`📜 ${name||"棋友"} 的線上棋譜`,as
   const PS=i=>PF&&Array.isArray(PF.penS)&&isFinite(PF.penS[i])?Math.max(0,Math.round(+PF.penS[i])):null,hasPen=PF&&Array.isArray(PF.pen)&&PF.pen.some(x=>num(x)!=null);
   const pfCard=PF&&(hasPen||PF.tal)?`<div class="card" style="margin-top:8px"><b>⚔ 棋力</b>${hasPen?penSVG(PK.map((k,i)=>[k,num(PF.pen[i]),PL(i)]),260):""}
       ${hasPen&&PK.some((_,i)=>PS(i)!=null)?`<p class="muted" style="font-size:12px;margin:4px 0 0;text-align:center">${PK.map((k,i)=>PS(i)==null?"":`${k} ${PS(i)} ${k==="殺法"?"題":"步"}`).filter(Boolean).join("・")}${PK.some((_,i)=>PL(i))?"<br>虛線、淡色＝樣本還少":""}</p>`:""}
-      ${PF.tal?`<p style="margin:6px 0 0">📈 進步速度：<b>${esc(String(PF.tal.lab||"還在觀察中").replace("慢熱型","越練越穩").slice(0,8))}</b>${num(PF.tal.rPct)!=null?`（比 ${num(PF.tal.rPct)}% 的學棋者長得快）`:""}</p>`:""}
+      ${PF.tal?`<p style="margin:6px 0 0">📈 進步速度：<b>${esc(num(PF.tal.rPct)!=null&&PF.tal.lab!=="還在觀察中"?speedLab(num(PF.tal.rPct)):String(PF.tal.lab||"還在觀察中").replace(/慢熱型|越練越穩/,"進步偏慢").slice(0,8))}</b>${num(PF.tal.rPct)!=null?`（比 ${num(PF.tal.rPct)}% 的學棋者長得快）`:""}</p>`:""}
       <p class="muted" style="font-size:12px;margin:6px 0 0">他自己的 App 算出來公開的${PF.at?`（${new Date(+PF.at).toLocaleDateString()}）`:""}</p></div>`:`<p class="muted" style="font-size:12.5px;margin:8px 2px 0">他還沒公開棋力五邊形（對方用新版 App 打開「我的戰績」後就會公開）。</p>`;
   /* 意見回饋 289：他還沒公開（舊版 App、虛擬玩家剛更新還沒下完新的一盤）：先用你跟他下過的對局（換成他的角度）來看 */
   const mineL=oppHist().filter(h=>h.oid===oid&&h.rid).map(h=>({gid:h.gid,id:h.rid,opp:"你",oid:"",res:h.res==="w"?"l":h.res==="l"?"w":"d",why:h.why||"",n:h.n||0,at:h.at,sd:h.sd?(h.sd==="r"?"b":"r"):null,local:1}));
@@ -2609,7 +2612,7 @@ async function talentReport(box){
     box.querySelector("#tg1").onclick=()=>location.hash="#/cpu";box.querySelector("#tg2").onclick=()=>location.hash="#/quiz";if(pend.length)setTimeout(()=>talentBackfill(box,pend),300);return}
   const f1=x=>x==null?"—":x.toFixed(1),f0=x=>x==null?"—":Math.round(x),pc=x=>Math.round(x*100)+"%";
   const KF=M?tlKalman(Y,PP,M):null,popNow=TL.A[0]-(TL.A[0]-TL.S0[0])*Math.exp(-Math.exp(TL.lr[0])*P);
-  const lab=!M?"":M.N<10?"還在觀察中":M.rPct>=90?"學得飛快":M.rPct>=70?"學習速度快":M.rPct>=35?"穩定成長":"越練越穩";
+  const lab=!M?"":M.N<10?"還在觀察中":speedLab(M.rPct);
   const NR=window.XQNet&&XQNet.rating?XQNet.rating().rank:null,SR=CT&&CT.byRank&&NR&&CT.byRank[NR]&&CT.byRank[NR].n>=5?CT.byRank[NR]:null;
   /* τ 表：每一項都附 80% 區間 */
   /* 意見回饋 357：棋路底子也用同一種表格（項目／數值／說明），範圍併進說明 */
@@ -2819,10 +2822,10 @@ function Settings(v){
     <div data-pane="sound"><div class="sec-t" style="margin-top:4px">聲音</div><div class="card sgc" id="snd"></div></div>
     <div data-pane="bot">${(()=>{let p=0;try{p=(JSON.parse(localStorage.getItem("xq_cpuRate")||"null")||{}).pts||0}catch(e){}
       const TH=[1500,1150,1000,800,600,400,200,100,0],g=TH.findIndex(t=>p>=t)+1,lo=TH[g-1],hi=g>1?TH[g-2]:null,pc=hi?Math.round((p-lo)/(hi-lo)*100):100,ZH="〇一二三四五六七八九";
-      return`<div class="card" style="margin-top:4px;text-align:center"><div style="font-size:13px" class="muted"><span class="botN">${BOTN()}</span>目前的官階</div><div style="font-size:26px;font-weight:900;margin:2px 0">🏛 ${ZH[g]}品官</div>
-        <div class="muted" style="font-size:13px">電腦段位積分 ${p} 分${hi?`・再 ${hi-p} 分升${ZH[g-1]}品`:"・已經是最高的一品"}</div>
+      return`<div class="card" style="margin-top:4px;text-align:center"><div style="font-size:13px" class="muted"><span class="botN">${BOTN()}</span>目前的官階</div><div style="font-size:26px;font-weight:900;margin:2px 0">🏛 ${RANKT(store.get("era","classic"),g)}</div>
+        <div class="muted" style="font-size:13px">電腦段位積分 ${p} 分${hi?`・再 ${hi-p} 分升${RANKT(store.get("era","classic"),g-1)}`:`・已經是最高的${RANKT(store.get("era","classic"),1)}`}</div>
         <div style="height:8px;border-radius:5px;background:var(--line);margin:10px 4px 4px;overflow:hidden"><div style="height:100%;width:${pc}%;background:var(--accent,#B3261E)"></div></div>
-        <div class="muted" style="font-size:12px">到「挑戰電腦 → 🏅 積分挑戰」贏棋升段，<span class="botN">${BOTN()}</span>就跟著升官（九品 → 一品），官服、頂戴、腰帶都會換</div></div>`})()}
+        <div class="muted" style="font-size:12px">到「挑戰電腦 → 🏅 積分挑戰」贏棋升段，<span class="botN">${BOTN()}</span>就跟著升官（${RANKT(store.get("era","classic"),9)} → ${RANKT(store.get("era","classic"),1)}），官服、頂戴、腰帶都會換${RANK_NOTE[store.get("era","classic")]?`<br>${RANK_NOTE[store.get("era","classic")]}`:""}</div></div>`})()}
       <div class="sec-t">換一顆棋子</div><div class="card"><div class="muted" style="font-size:13px;margin-bottom:8px">小人的身體可以換成任何一顆棋子，名字也會跟著變（例如選「兵」就叫小兵）</div>
         ${[["紅方","帥仕相俥傌炮兵"],["黑方","將士象車馬砲卒"]].map(([t,cs])=>`<div class="row" style="gap:6px;margin:6px 0;align-items:center"><span class="muted" style="font-size:12px;width:34px">${t}</span>${[...cs].map(c=>`<button data-bp="${c}" class="bpc${botPc()===c?" on":""}" style="color:${t==="紅方"?"#B3261E":"#1A1410"}">${c}</button>`).join("")}</div>`).join("")}
         <style>.bpc{flex:1;aspect-ratio:1;max-width:44px;border-radius:50%;border:2px solid var(--line);background:radial-gradient(circle at 40% 35%,#FFF8E6,#EBD3A0);font:900 19px/1 "Noto Serif TC",serif;padding:0}.bpc.on{border-color:var(--accent);box-shadow:0 0 0 3px color-mix(in srgb,var(--accent) 30%,transparent)}</style></div>
@@ -3355,7 +3358,7 @@ function lobbyVisitors(){const slot=Math.floor(Date.now()/9e5);let h=slot*265443
   /* 意見回饋 480（開發者）：剛跟他下過一盤（不管輸贏、中途離開）就先離開大廳，隨機過 5～20 分鐘才可能再遇到 */
   const gone=store.get("visitGone",{}),now=Date.now();return out.filter(k=>!(gone[k]>now))}
 function jcharSheet(k){const c=JCHAR[k];if(!c)return;const lv=JCHAR_LV[k]||3;
-  figView(oppArt()?null:oppFig(JCHAR_LOOK(k,"b")),"🪨 "+c.name,`<p style="font-size:16px;line-height:1.8;margin:0 0 6px">「${esc(c.hi)}」</p><p class="muted" style="font-size:13px;margin:0 0 4px">石桌往事裡的人物・第 ${lv} 級的實力（照故事裡的棋力）</p>`,
+  figView(oppArt()?null:oppFig(JCHAR_LOOK(k,"b")),"🪨 "+c.name,`<p style="font-size:16px;line-height:1.8;margin:0 0 6px">「${esc(c.hi)}」</p>${ageLine(AGE["j:"+k])}<p class="muted" style="font-size:13px;margin:0 0 4px">石桌往事裡的人物・第 ${lv} 級的實力（照故事裡的棋力）</p>`,
     [["♟ 跟他下一盤",()=>{closeSheet();{const g=store.get("visitGone",{}),now=Date.now();for(const x in g)if(g[x]<now)delete g[x];g[k]=now+(5+Math.random()*15)*60000;store.set("visitGone",g)}jStart("char:"+k,{human:"r",level:lv,journey:"char:"+k},()=>{location.hash="#/journey/play";setTimeout(()=>toast(`🪨 ${c.name}：${c.hi}`),500)})}],["關閉",()=>closeSheet(),true]],`data/journey/char_${k}_idle.webp`)}
 /* 人物與年表：點人物看 3D 小人（照人物設定配的帽子、衣服） */
 const PEOPLE_LOOK={"沈石川":{pc:"馬",hat:"bun",hc:"#E8E6E0",robe:"#5E6B5C"},"柳寒舟":{pc:"砲",hat:"bun",hc:"#D8D6D0",robe:"#8A8A86"},"阿古拉":{pc:"車",hat:"fur",hc:"#F0EDE6",robe:"#3E6FA8"},"周文淵":{pc:"士",hat:"fangjin",hc:"#151515",robe:"#7A2E2A"},
@@ -3363,6 +3366,19 @@ const PEOPLE_LOOK={"沈石川":{pc:"馬",hat:"bun",hc:"#E8E6E0",robe:"#5E6B5C"},
 const CHAMP_LOOK=(era,side)=>CHAMP_META&&ARENA[era]?{p:side==="r"?"帥":"將",e:era,g:1,cus:"c:"+era,flat:true,sprite:`data/champ/${era}_`,spriteMeta:CHAMP_META,spriteMap:{happy:"win",sad:"lose",surprise:"think"}}:null;
 /* 意見回饋 425：石桌往事的園子（第一集、第二集以後共用）每次開一盤，隨機遇到一位路人棋友（不會連續兩次同一位），難度以玩家等級為中心上下浮動一級。
    立繪 data/npc/<id>.webp（Gemini 畫的，還沒有就只顯示名字）；3D 用 bot3d.js 的路人造型（hat 帽子／頭髮、hc 顏色、robe 衣服、band 頭帶、acc 髮簪／花），不受「Pikafish 造型」設定影響；pc 是身上那顆棋子（黑方的字） */
+/* 意見回饋 493（開發者）：人物資訊欄標年齡。故事人物照故事的「現在」永樂十年（1412 年，錢小滿十歲那年）算，故事開始前就過世的寫享年；
+   真實歷史人物照史書慣用的虛歲寫享年；公園、驛站、秘境的棋友照畫出來的樣子給年齡 */
+/* 意見回饋 495（開發者）：小人的官階照朝代換稱號——九品官制是曹魏以後才有的：
+   秦朝用軍功爵（公士→徹侯）、漢朝用俸祿秩石（百石→萬石），三國以後才是九品（九品→一品）；經典（不限朝代）照舊用九品 */
+const RANK_T={qin:["徹侯","關內侯","大庶長","左庶長","五大夫","公大夫","大夫","上造","公士"],han:["萬石","中二千石","二千石","比二千石","千石","六百石","四百石","二百石","百石"]};
+const RANK_NOTE={qin:"秦朝還沒有九品官制，用的是軍功爵位：打勝仗就升一級爵",han:"漢朝還沒有九品官制，官的大小看一年的俸祿有多少「石」米"};
+window.RANKT=(era,g)=>{g=Math.max(1,Math.min(9,g|0||9));const T=RANK_T[era];return T?T[g-1]+(era==="han"?"官":""):"〇一二三四五六七八九"[g]+"品官"};
+const STORY_Y=1412;
+const AGE={"n:w01_tang_lady":"22 歲","n:w02_song_tea":"19 歲","n:w03_yuan_rider":"18 歲","n:w04_ming_scholar":"20 歲","n:w05_qing_gege":"16 歲","n:w06_swordswoman":"21 歲","n:w07_fisher_girl":"17 歲","n:w08_embroider":"20 歲","n:w09_qin_player":"23 歲","n:w10_general":"19 歲","n:w11_yuan_falconer":"16 歲","n:w12_yuan_merchant":"18 歲","n:w13_yuan_singer":"20 歲","n:w14_yuan_porcelain":"19 歲","n:w15_yuan_archer":"18 歲","n:w16_ming_poet":"20 歲","n:w17_ming_pipa":"21 歲","n:w18_ming_doctor":"24 歲","n:w19_ming_teahouse":"19 歲","n:w20_ming_guard":"22 歲","n:niao":"68 歲","n:duanjin":"58 歲","n:douhua":"22 歲","n:fengzheng":"8 歲","n:mujiang":"42 歲","n:amah":"66 歲","n:daishu":"45 歲","n:tiaoshui":"15 歲","n:genggu":"62 歲","n:maihua":"16 歲","n:legend":"74 歲","n:tea":"65 歲","n:scholar":"24 歲","n:guard":"38 歲","n:monk":"55 歲","n:teller":"35 歲","n:liuji":"享年 65 歲","n:changyuchun":"享年 40 歲","n:wangmian":"享年 73 歲","n:shinaian":"享年約 75 歲","n:shenwansan":"生卒不詳","n:zhangsanfeng":"生卒不詳","c:classic":"74 歲","c:qin":"45 歲","c:han":"50 歲","c:sanguo":"45 歲","c:weijin":"35 歲","c:nanbei":"50 歲","c:sui":"55 歲","c:tang":"45 歲","c:wudai":"65 歲","c:song":"30 歲","c:yuan":"76 歲","c:ming":"82 歲","c:qing":"18 歲","j:liu_young":"14 歲","j:shen_young":"14 歲","j:agula_young":"18 歲","j:boatman":"60 歲","j:scholar":"25 歲","j:liu_old":"74 歲"};
+const ageOfP=p=>{if(!p)return"";if(p.age)return p.age;   /* people.json 可以直接寫 age 蓋過算出來的 */
+  const num=v=>v==null?null:parseInt(String(v).replace(/[^0-9]/g,""))||null,b=num(p.born),d=num(p.died),hist=/^📜/.test(p.note||""),about=/約/.test(String(p.born)+String(p.died||""));
+  if(!b)return"";if(hist)return d?"享年"+(about?"約 ":" ")+(d-b+1)+" 歲":"";if(d&&d<=STORY_Y)return"享年 "+(d-b)+" 歲";return b>STORY_Y?"":"故事裡（永樂十年）"+(STORY_Y-b)+" 歲"};
+const ageLine=t=>t?`<p class="muted" style="font-size:13px;margin:0 0 4px">🎂 ${esc(t)}</p>`:"";
 const PARK_NPC=[
   /* 開發者（11/4）：20 位年輕女性棋手（唐宋元明清各種身分，元朝、明朝各多 5 位），立繪 npc/w*.webp */
   {"id":"w01_tang_lady","name":"長安的牡丹娘子","pc":"士","say":"從長安帶來的棋，你接得住嗎？","win":"牡丹開得正好，這盤也是。","lose":"好棋！這一盤，我記在團扇上了。","hat":"topknot","hc":"#1E1A16","robe":"#C8322A"},
@@ -3678,11 +3694,11 @@ async function legendRead(i,tip){const D=await legendData();if(!D)return;const L
 /* 意見回饋 474（開發者）：看完人物資訊要能回到人物列表，而且停在剛才捲到的位置 */
 async function legendTimeline(keep){const D=await legendData();if(!D)return;const P=D.people||[],T=D.timeline||[];
   if(keep)setTimeout(()=>{const s=document.getElementById("sheet");if(!s)return;s.scrollTop=keep[0];const sb=s.querySelector(".sh-b");if(sb)sb.scrollTop=keep[1]},40);
-  sheet("📅 人物與年表",b=>{b.innerHTML=`<div class="sec-t" style="margin-top:0">人物</div>${P.map(x=>{const im=PIMG[x.name];return`<div class="ppl" data-pp="${esc(x.name)}" style="cursor:pointer;${im?"":""}"${im?' style="flex-direction:row;gap:10px;align-items:center"':""}>${im?`<img src="${im}" alt="" onerror="this.remove()" style="flex:none;width:52px;height:70px;object-fit:contain">`:""}<div class="pn" style="flex:1;min-width:0"><b>${esc(x.name)}</b>（${x.born}${x.died?"–"+x.died:""}）<small>${esc(x.note||"")}</small>${x.verse?`<small style="font-family:var(--serif);font-style:italic;margin-top:2px">${esc(String(x.verse).split(/[。\n]/).filter(Boolean).slice(0,2).join("，"))}</small>`:""}</div></div>`}).join("")}
+  sheet("📅 人物與年表",b=>{b.innerHTML=`<div class="sec-t" style="margin-top:0">人物</div>${P.map(x=>{const im=PIMG[x.name];return`<div class="ppl" data-pp="${esc(x.name)}" style="cursor:pointer;${im?"":""}"${im?' style="flex-direction:row;gap:10px;align-items:center"':""}>${im?`<img src="${im}" alt="" onerror="this.remove()" style="flex:none;width:52px;height:70px;object-fit:contain">`:""}<div class="pn" style="flex:1;min-width:0"><b>${esc(x.name)}</b>（${x.born}${x.died?"–"+x.died:""}）${ageOfP(x)?`<span class="muted" style="font-size:12.5px">${esc(ageOfP(x))}</span>`:""}<small>${esc(x.note||"")}</small>${x.verse?`<small style="font-family:var(--serif);font-style:italic;margin-top:2px">${esc(String(x.verse).split(/[。\n]/).filter(Boolean).slice(0,2).join("，"))}</small>`:""}</div></div>`}).join("")}
     <div class="sec-t">大事年表</div>${T.map(x=>`<div class="tlr"><div class="ty"><b>${x.y}</b><small>${esc(x.era||"")}</small></div><div class="tt">${x.h?"📜":"🪨"} ${esc(x.t)}</div></div>`).join("")}
     <p class="muted" style="font-size:12px;line-height:1.7;margin-top:8px">📜 是真實的歷史；🪨 是石桌往事的故事（虛構）。沈石川、柳寒舟、阿古拉、周文淵和雲河鎮都是編的。</p>`;
     b.querySelectorAll("[data-pp]").forEach(x=>x.onclick=()=>{const n=x.dataset.pp,p=P.find(z=>z.name===n),L=PEOPLE_LOOK[n];if(!L&&!PIMG[n])return;vibrate(5);const sh=document.getElementById("sheet"),keep=[sh?sh.scrollTop:0,sh&&sh.querySelector(".sh-b")?sh.querySelector(".sh-b").scrollTop:0];const pid=(m=>m?"p:"+m[1]:/legend\/liu|journey\/char_liu_old/.test(PIMG[n]||"")?"j:liu_old":null)(String(PIMG[n]||"").match(/people\/(\w+)\.webp/));
-      figView(L||pid?oppFig({p:L?L.pc:"將",e:"classic",g:9,npc:n,hat:L&&L.hat,hc:L&&L.hc,robe:L&&L.robe,cus:pid}):null,"🪨 "+n,`<p class="muted" style="font-size:13.5px;line-height:1.7;margin:0">${esc(p&&p.note||"")}</p>`,[["← 回人物列表",()=>legendTimeline(keep)],["關閉",()=>closeSheet(),true]],PIMG[n]||null)})})}
+      figView(L||pid?oppFig({p:L?L.pc:"將",e:"classic",g:9,npc:n,hat:L&&L.hat,hc:L&&L.hc,robe:L&&L.robe,cus:pid}):null,"🪨 "+n,`${ageLine(ageOfP(p))}<p class="muted" style="font-size:13.5px;line-height:1.7;margin:0">${esc(p&&p.note||"")}</p>`,[["← 回人物列表",()=>legendTimeline(keep)],["關閉",()=>closeSheet(),true]],PIMG[n]||null)})})}
 function legendBook(){closeSheet();LEGEND_PREVIEW=false;location.hash="#/adventure"}
 /* 意見回饋 316：石桌往事改成一整頁——上面是你的棋童小卡，中間是雲河棋路、驛站、棋童資料、人物年表，下面是章節 */
 function Adventure(v){LEGEND_PREVIEW=false;setTop("🪨 石桌往事","#/");setTabs(true,"#/");v.className="view";v.innerHTML='<div class="pad muted">載入中…</div>';
@@ -4271,13 +4287,13 @@ function CpuGame(v,practicePage,mode){
   function paintSeg(m){if(seg)seg.querySelectorAll("button").forEach(b=>{const on=b.dataset.m===m;b.classList.toggle("on",on);b.setAttribute("aria-selected",on)})}
   /* 意見回饋 431：點對手頭像看他的 3D 人物（拖曳可以轉） */
   const oppInfo=()=>{if(!st)return null;const bot=st.human==="r"?"b":"r",N=parkNpcOf(st),L0=lvPlayOf(st),jk=(L0&&L0.lvp.opp)||(String(st.journey||"").startsWith("char:")?st.journey.slice(5):null);
-    if(jk&&JCHAR[jk])return{look:JCHAR_LOOK(jk,bot),name:JCHAR[jk].name,img:`data/journey/char_${jk}_idle.webp`,say:JCHAR[jk].hi};
-    {const ia=innActor(st.journey);if(ia)return{look:ACTOR_LOOK(ia.id,bot),name:ia.name,img:ia.img,say:ia.say.replace(/^「|」$/g,"")}}
-    if(st.arena&&ARENA[st.arena])return{look:CHAMP_LOOK(st.arena,bot)||{p:bot==="r"?"帥":"將",e:st.arena,g:9},name:ARENA[st.arena].name,img:`data/champ/${st.arena}_idle.webp`,say:ARENA[st.arena].hi};
-    if(N)return{look:NPC_LOOK(N,bot),name:N.name,img:`data/npc/${N.id}.webp`,say:N.say};
+    if(jk&&JCHAR[jk])return{look:JCHAR_LOOK(jk,bot),name:JCHAR[jk].name,img:`data/journey/char_${jk}_idle.webp`,say:JCHAR[jk].hi,age:AGE["j:"+jk]};
+    {const ia=innActor(st.journey);if(ia)return{look:ACTOR_LOOK(ia.id,bot),name:ia.name,img:ia.img,say:ia.say.replace(/^「|」$/g,""),age:AGE["n:"+ia.id]}}
+    if(st.arena&&ARENA[st.arena])return{look:CHAMP_LOOK(st.arena,bot)||{p:bot==="r"?"帥":"將",e:st.arena,g:9},name:ARENA[st.arena].name,img:`data/champ/${st.arena}_idle.webp`,say:ARENA[st.arena].hi,age:AGE["c:"+st.arena]};
+    if(N)return{look:NPC_LOOK(N,bot),name:N.name,img:`data/npc/${N.id}.webp`,say:N.say,age:AGE["n:"+N.id]};
     return{look:PIKA_LOOK(bot),name:"Pikafish",img:null,say:"我是 Pikafish，請多指教。"}};
   v.querySelector("#pTop").onclick=e=>{if(e.target.closest(".cpu-chip")){vibrate(8);newSheet();return}
-    if(e.target.closest(".av")){const o=oppInfo();if(!o)return;vibrate(5);figView(oppArt()&&o.img?null:oppFig(o.look),"👤 "+o.name,`<p style="font-size:16px;line-height:1.8;margin:0">「${esc(o.say)}」</p>`,[["關閉",()=>closeSheet(),true]],o.img)}};   /* 意見回饋 445：跟坐在位子上的同一個形象（立繪就看立繪、3D 就看 3D） */
+    if(e.target.closest(".av")){const o=oppInfo();if(!o)return;vibrate(5);figView(oppArt()&&o.img?null:oppFig(o.look),"👤 "+o.name,`<p style="font-size:16px;line-height:1.8;margin:0 0 4px">「${esc(o.say)}」</p>${ageLine(o.age)}`,[["關閉",()=>closeSheet(),true]],o.img)}};   /* 意見回饋 445：跟坐在位子上的同一個形象（立繪就看立繪、3D 就看 3D） */
   const acts=actionBar(v.querySelector("#acts"),[...(MODE==="journey"&&store.get("jPending",null)?[["jhint","💡","提示",()=>jBattleHint(st,h=>{pHint=h;draw()})]]:[]),["undo","↶","悔棋",()=>post("/play/undo")],
     ["new","＋","新局",()=>newSheet(),true],["resign","🏳","認輸",()=>confirmBox("確定認輸？",()=>post("/play/resign"),"認輸")],["review","📖","檢討",()=>review(false,st&&st.id)],["setup","🧪","擺盤",()=>st&&setupSheet(st.board,st.turn,st.human==="b",!st.ranked)]]);
   async function post(u,b){if(busy)return;busy=true;try{render(await api(u,b||{}))}catch(e){toast(e.message)}finally{busy=false}}
@@ -4473,7 +4489,7 @@ function showChat(text,mine,name,at){const d=document.createElement("div");d.cla
   document.body.append(d);d.getBoundingClientRect();d.classList.add("show");if(!mine)vibrate([20,40,20]);
   setTimeout(()=>{d.classList.remove("show");setTimeout(()=>d.remove(),300)},mine?1500:4000)}
 // 3D 象棋小人（意見回饋 159）：在畫面上自由走動、做手勢；開發者預設開、玩家預設關，設定「其他」可以切換
-const botPc=()=>{const c=store.get("botPiece","帥");return typeof c==="string"&&c.length===1&&"帥仕相俥傌炮兵將士象車馬砲卒".includes(c)?c:"帥"},BOTN=()=>"小"+({俥:"車",傌:"馬",砲:"炮"}[botPc()]||botPc());
+const botPc=()=>{const c=store.get("botPiece","帥");return typeof c==="string"&&c.length===1&&"帥仕相俥傌炮兵將士象車馬砲卒".includes(c)?c:"帥"},BOTN=()=>"小"+({俥:"車",傌:"馬",砲:"炮"}[botPc()]||botPc())+(store.get("pSex","m")==="f"?"妹":"");   /* 意見回饋 492：女生版叫小帥妹 */
 let BOT=null,botBusy=false;const botOn=()=>store.get("bot3d",true);
 window.addEventListener("xq-bot-hide",()=>{store.set("bot3d",false);syncBot();toast("小帥先休息了。到「設定」打開「顯示 3D 象棋小人」就會回來")});   // 意見回饋 167：預設打開
 async function syncBot(){if(botBusy)return;botBusy=true;try{if(botOn()&&!BOT){await loadScript(OFF?"three.min.js":"/m/three.min.js");await loadScript((OFF?"bot3d.js":"/m/bot3d.js")+"?v="+encodeURIComponent(window.XQ_BUILD||""));if(botOn()&&window.XQBot3D)BOT=window.XQBot3D.start()}
@@ -4551,7 +4567,7 @@ const BOT_FAQ=[
 function askGuides(){let p=0;try{p=(JSON.parse(localStorage.getItem("xq_cpuRate")||"null")||{}).pts||0}catch(e){}
   const g=p>=1500?1:p>=1150?2:p>=1000?3:p>=800?4:p>=600?5:p>=400?6:p>=200?7:p>=100?8:9,ZH="〇一二三四五六七八九";
   const now=p<100?"你現在最該做的是 ②③④：先摸清自己的程度，跟電腦從低級開始下，每盤看賽後報告。":p<600?"你已經有基礎了，接下來重點是 ⑤⑥⑦：把錯步練對、背熟殺法、練殘局。":"你的程度不錯！建議主攻 ⑧⑨⑩：深入開局、衝積分升段、找真人對戰。";
-  const plan=`① 學規則：「象棋規則」看每種棋子怎麼走、怎麼記譜。\n② 做「棋力測驗」：了解自己現在的程度。\n③ 挑戰電腦：從第 1 級開始，贏了再升一級。\n④ 每盤都看「📊 賽後報告」：找出錯著、露著，看藍色箭頭的正確走法。\n⑤ 「錯棋重練」：把走錯的局面重新練到對。\n⑥ 背熟基本殺法：術語裡的馬後炮、臥槽馬、雙車錯、鐵門栓…（可以問我）。\n⑦ 練殘局：棋譜庫的《適情雅趣》、古典殘局譜，一步一步看。\n⑧ 學開局：中炮對屏風馬、仙人指路、飛相局…看大師對局怎麼下。\n⑨ 積分挑戰：升段，小帥也會跟著升官（你現在 ${p} 分，${ZH[g]}品官）。\n⑩ 線上大廳找真人下，或去觀戰看別人怎麼下。\n\n👉 ${now}`;
+  const plan=`① 學規則：「象棋規則」看每種棋子怎麼走、怎麼記譜。\n② 做「棋力測驗」：了解自己現在的程度。\n③ 挑戰電腦：從第 1 級開始，贏了再升一級。\n④ 每盤都看「📊 賽後報告」：找出錯著、露著，看藍色箭頭的正確走法。\n⑤ 「錯棋重練」：把走錯的局面重新練到對。\n⑥ 背熟基本殺法：術語裡的馬後炮、臥槽馬、雙車錯、鐵門栓…（可以問我）。\n⑦ 練殘局：棋譜庫的《適情雅趣》、古典殘局譜，一步一步看。\n⑧ 學開局：中炮對屏風馬、仙人指路、飛相局…看大師對局怎麼下。\n⑨ 積分挑戰：升段，小帥也會跟著升官（你現在 ${p} 分，${RANKT(store.get("era","classic"),g)}）。\n⑩ 線上大廳找真人下，或去觀戰看別人怎麼下。\n\n👉 ${now}`;
   return[
    [["提升實力","變強","進步","怎麼練","學棋","練棋","計畫","學習","提升","強一點","變厲害","新手怎麼"],"怎麼在象棋研究室提升實力",plan,"#/cpu","開始挑戰電腦","mid"],
    [["開局怎麼學","學開局","開局原則","開局要注意"],"開局怎麼學","開局三原則：快出大子（車馬炮）、搶佔中路、不要同一個子連走好幾步。\n建議：先學「中炮」和「屏風馬」兩個最常見的開局（問我就能在棋盤上示範），再到棋譜庫「大師對局」看高手怎麼接著下，最後挑戰電腦時練習同一個開局。","#/terms","看開局術語"],
@@ -4562,7 +4578,7 @@ function askGuides(){let p=0;try{p=(JSON.parse(localStorage.getItem("xq_cpuRate"
    [["賽後報告","評等","妙手","正手","優著","良著","錯著","露著","評分"],"賽後報告的評等","Pikafish 會評每一步：妙手（找到唯一好棋）、正手（最佳或幾乎最佳）、優著（只差一點）、良著（小失誤）、錯著（明顯變差）、露著（大失誤，常是送子或漏殺）。\n藍色箭頭是 Pikafish 建議的走法。先改掉露著和錯著，進步最快。"],
    [["防守","怎麼守","被攻擊","擋"],"防守的訣竅","防守先顧帥的安全：士象不要隨便亂動，車要能回防；對方攻勢猛時，可以用兌子減少攻擊子力，或用反擊逼對方回防（以攻代守）。\n\n👇 從中局局面練習攻防："," "," ","mid"],
    [["進攻","怎麼攻","攻擊","殺棋"],"進攻的訣竅","進攻要集中子力：車馬炮至少兩個配合才容易成殺；先找對方的弱點（沒保護的子、空著的肋道、被塞的象眼），再用將軍逼對方應對，搶到先手就不要放。背熟殺法圖形最有幫助。\n\n👇 練習把優勢下贏（殘局）："," "," ","end"],
-   [["段位","升段","積分怎麼算","升官"],"段位怎麼升",`積分挑戰和線上對戰都用等級分的算法：贏比自己強的人加得多、輸給比自己弱的人扣得多，跟實力差不多的人下，贏約 +16、輸約 −16；前 15 盤調整幅度大一點，比較快找到你的段位。段位會停在你真實能贏一半的地方，不會因為下得多就一直往上漲。分數夠就升段：新手→入門→業 1～9→專 1、專 2。你現在 ${p} 分（${ZH[g]}品官），小帥的官階也會跟著升。`,"#/cpu","去積分挑戰"],
+   [["段位","升段","積分怎麼算","升官"],"段位怎麼升",`積分挑戰和線上對戰都用等級分的算法：贏比自己強的人加得多、輸給比自己弱的人扣得多，跟實力差不多的人下，贏約 +16、輸約 −16；前 15 盤調整幅度大一點，比較快找到你的段位。段位會停在你真實能贏一半的地方，不會因為下得多就一直往上漲。分數夠就升段：新手→入門→業 1～9→專 1、專 2。你現在 ${p} 分（${RANKT(store.get("era","classic"),g)}），小帥的官階也會跟著升。`,"#/cpu","去積分挑戰"],
    [["心態","緊張","輸棋難過","一直輸"],"下棋的心態","輸棋很正常，大師也會輸！重要的是每盤都學到一點：看賽後報告、練錯棋。連輸的時候先休息一下，或把電腦級數降一級找回手感。"],
    [["多久","每天練","練多久","時間"],"每天怎麼練","每天 20～30 分鐘就很有效：10 分鐘做錯棋重練或殘局，下一盤電腦，再花 5 分鐘看賽後報告。持續比一次練很久更重要。"],
    [["看棋譜","怎麼看棋譜","打譜"],"怎麼看棋譜（打譜）","打譜時先別急著按下一步：每一步先自己想「如果是我會怎麼走」，再看大師怎麼下；想不通的地方按「🔍 分析」。從《橘中秘》《梅花譜》這些古譜開始最好入門。","#/db","打開棋譜庫"]]}

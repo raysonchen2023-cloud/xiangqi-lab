@@ -27,6 +27,7 @@
   const grade=()=>{let p=0;try{p=(JSON.parse(localStorage.getItem("xq_cpuRate")||"null")||{}).pts||0}catch(e){}
     return p>=1500?1:p>=1150?2:p>=1000?3:p>=800?4:p>=600?5:p>=400?6:p>=200?7:p>=100?8:9};
   const GN="〇一二三四五六七八九";
+  const RK=g=>window.RANKT?window.RANKT(eraK(),g):GN[g]+"品官";   /* 意見回饋 495：官階照朝代換稱號（秦軍功爵、漢秩石、三國以後九品） */
   const C={zi:"#5B2A86",fei:"#A3211A",qfei:"#C8473B",lv:"#2E6B3F",qlv:"#5C9A5A",qing:"#1F4E8C",qqing:"#5B8FC7",hei:"#1E1A18",shiqing:"#1F2A44"};
   const ROBE={   // 1~9 品的官服顏色
     qin:g=>g<=3?"#3a2a4a":g<=6?"#1f3a3a":"#1E1A18",                       // 秦尚黑，高官綬帶偏紫、中級偏青
@@ -42,7 +43,7 @@
     g.fillStyle=fg;g.font='900 76px "Noto Serif TC","PMingLiU","Songti TC",serif';g.textAlign="center";g.textBaseline="middle";g.fillText(ch,n/2,n/2+5)});
   // 小人的身體可以換成其他棋子（意見回饋 193）：紅方 帥仕相俥傌炮兵、黑方 將士象車馬砲卒；名字跟著變成「小X」
   const BP=()=>{const c=store.get("botPiece","帥");return typeof c==="string"&&c.length===1&&"帥仕相俥傌炮兵將士象車馬砲卒".includes(c)?c:"帥"};
-  const BLACK=c=>"將士象車馬砲卒".includes(c),BNAME=()=>"小"+({俥:"車",傌:"馬",砲:"炮"}[BP()]||BP());
+  const BLACK=c=>"將士象車馬砲卒".includes(c),BNAME=()=>"小"+({俥:"車",傌:"馬",砲:"炮"}[BP()]||BP())+(store.get("pSex","m")==="f"?"妹":"");
   let PCO=null;const PC=()=>PCO||BP();
   const eraK=()=>{const k=store.get("era","classic");return TH[k]?k:"classic"};
   const faceTex=(ch,th,k)=>cv(512,(g,n)=>{const h=n/2;
@@ -386,6 +387,12 @@
   const XS_COMBO=["wave","clap","point","thumbs","heart","hattip","gongshou","fan_open","fan_closed","tea","laugh","flex","dance1","dance2","cheer","think","bow","thumbs"];
   const xsPose=(a,now)=>{if(!a||!a.k)return"xs_idle";const k=a.k;if(k[0]==="c"&&/^c\d+$/.test(k))return"xs_"+XS_COMBO[+k.slice(1)%XS_COMBO.length];
     const duo=XS_DUO[k]||(/^d_/.test(k)?["dance1","dance2"]:null);if(duo)return"xs_"+duo[Math.floor(now/380)%2];return"xs_"+(XS_MAP[k]||"idle")};
+  /* 意見回饋 492（開發者）：畫面上的小人要跟玩家在「選你的角色」選的一樣——男生＝小帥、女生＝小帥妹；Q 版用手繪動作圖，真實版用 Tripo 做的 3D 模型 */
+  const meSex=()=>store.get("pSex","m")==="f"?"f":"m",meReal=()=>store.get("pStyle","q")==="real";
+  let TRIPO_META=null;const tripoMeta=()=>TRIPO_META||(TRIPO_META=fetch("data/tripo_app/tripo.json").then(r=>r.ok?r.json():{}).catch(()=>({})));
+  const girlNV=()=>{const C=CUS["me:girl"]||{};return{hat:C.hat,hc:C.hc,robe:C.ring,band:C.band,shoe:C.shoe,belt:C.belt,skin:C.skin,top:C.top,pin:C.pin,band2:C.band2,cus:C}};
+  const buildMe=(k,gr)=>{const B=build(k,gr,meSex()==="f"?girlNV():null);
+    if(meReal()){const id=meSex()==="f"?"me_girl":"me_boy";tripoMeta().then(M=>{if(M&&M[id])attachGLB(B,{glb:"data/tripo_app/"+id+".glb",ring:M[id]})})}return B};
   function start(){let SC=Math.min(2,Math.max(.6,+store.get("botSize",.7)||1)),W=W0*SC,H=H0*SC,curK=eraK(),curP=BP();
     const box=document.createElement("div");box.className="xqbot";
     box.style.cssText=`position:fixed;left:0;top:0;width:${W}px;height:${H}px;z-index:900;pointer-events:none;will-change:transform;transition:opacity .2s`;
@@ -395,15 +402,18 @@
     let rd;try{rd=new T.WebGLRenderer({alpha:true,antialias:true})}catch(e){box.remove();return null}
     rd.setPixelRatio(Math.min(3,window.devicePixelRatio||1));rd.setSize(W,H);rd.domElement.style.cssText="display:block;width:100%;height:100%;pointer-events:none";box.insertBefore(rd.domElement,hit);
     if(T.SRGBColorSpace)rd.outputColorSpace=T.SRGBColorSpace;
-    const XS={meta:null,ims:{},on:false,cur:"",wrap:null,img:null,gly:null};
+    const XS={meta:null,ims:{},on:false,cur:"",wrap:null,img:null,gly:null,sex:null,sets:{}};
     {const w=document.createElement("div");w.style.cssText="position:absolute;inset:0;display:none;pointer-events:none";const im=document.createElement("img");im.alt="";im.draggable=false;
       im.style.cssText="position:absolute;left:50%;bottom:2%;height:96%;transform:translateX(-50%);transform-origin:50% 100%;pointer-events:none;-webkit-user-select:none;user-select:none";
       const gl=document.createElement("div");gl.style.cssText="position:absolute;display:flex;align-items:center;justify-content:center;border-radius:50%;background:#F7EFDD;font-family:'Noto Serif TC','Songti TC',serif;font-weight:900;pointer-events:none;line-height:1";
       w.append(im,gl);box.insertBefore(w,hit);XS.wrap=w;XS.img=im;XS.gly=gl;
-      fetch("data/xs/xs.json").then(r=>r.ok?r.json():null).then(m=>{if(!m||stopped)return;let n=0;const names=Object.keys(m.poses);
-        for(const k of names){const i=new Image();i.decoding="async";i.onload=()=>{if(++n===names.length){XS.meta=m;xsMode()}};i.onerror=()=>{};i.src="data/xs/"+k+".webp";XS.ims[k]=i}}).catch(()=>{})}
-    const xsMode=()=>{const on=!!XS.meta;   /* 意見回饋 384：每個朝代都用手繪版（各朝代的手繪服裝畫好以前，先穿經典的） */XS.on=on;XS.wrap.style.display=on?"":"none";rd.domElement.style.visibility=on?"hidden":"";XS.cur=""};
-    const xsDraw=(pose,bob,flip)=>{const m=XS.meta;if(!m.poses[pose])pose="xs_idle";if(pose!==XS.cur){XS.cur=pose;XS.img.src=XS.ims[pose].src;
+}
+    const xsLoad=()=>{const sx=meSex();if(XS.sex===sx)return;XS.sex=sx;const set=XS.sets[sx];if(set&&set.meta){XS.meta=set.meta;XS.ims=set.ims;xsMode();return}
+      XS.meta=null;XS.ims={};xsMode();if(set)return;const S=XS.sets[sx]={meta:null,ims:{}},dir=sx==="f"?"data/xs/girl/":"data/xs/";
+      fetch(dir+"xs.json").then(r=>r.ok?r.json():null).then(m=>{if(!m||stopped)return;let n=0;const names=Object.keys(m.poses);
+        for(const k of names){const i=new Image();i.decoding="async";i.onload=()=>{if(++n===names.length){S.meta=m;if(XS.sex===sx){XS.meta=m;XS.ims=S.ims;xsMode()}}};i.onerror=()=>{};i.src=dir+k+".webp";S.ims[k]=i}}).catch(()=>{})};
+    const xsMode=()=>{const on=!!XS.meta&&!meReal();   /* 意見回饋 384：每個朝代都用手繪版（各朝代的手繪服裝畫好以前，先穿經典的） */XS.on=on;XS.wrap.style.display=on?"":"none";rd.domElement.style.visibility=on?"hidden":"";XS.cur=""};
+    const xsDraw=(pose,bob,flip)=>{const m=XS.meta;if(!m.poses[pose]||!XS.ims[pose])pose="xs_idle";if(pose!==XS.cur){XS.cur=pose;XS.img.src=XS.ims[pose].src;
         const f=m.poses[pose],ih=box.clientHeight*.96,iw=ih*m.w/m.h,left=(box.clientWidth-iw)/2,top=box.clientHeight*.98-ih,R=f.r*iw*.82,ch=BP();
         Object.assign(XS.gly.style,{left:(left+f.cx*iw-R)+"px",top:(top+f.cy*ih-R)+"px",width:2*R+"px",height:2*R+"px",fontSize:(R*1.25)+"px",color:"帥仕相俥傌炮兵".includes(ch)?"#C8102E":"#1E1A16"});XS.gly.textContent=ch}
       const tf=`translateY(${(-bob).toFixed(1)}px)`;XS.img.style.transform="translateX(-50%) "+tf+(flip?" scaleX(-1)":"");XS.gly.style.transform=tf};
@@ -412,7 +422,7 @@
     const key=new T.DirectionalLight(0xfff0dc,1.5);key.position.set(2.5,4,5);sc.add(key);
     const fill=new T.DirectionalLight(0xbcd4ff,.7);fill.position.set(-4,1.5,3);sc.add(fill);
     const rim=new T.DirectionalLight(0xffffff,1.4);rim.position.set(-1,3,-5);sc.add(rim);
-    const P=build(curK,grade()),root=new T.Group();root.add(P.bot);sc.add(root);const B=Object.assign(P,{root,closed:0,face:"smile"});
+    const P=buildMe(curK,grade()),root=new T.Group();root.add(P.bot);sc.add(root);const B=Object.assign(P,{root,closed:0,face:"smile"});
     const shd=new T.Mesh(new T.CircleGeometry(.8,32),new T.MeshBasicMaterial({color:0,transparent:true,opacity:.2}));shd.rotation.x=-PI/2;shd.position.y=.02;sc.add(shd);
     const bounds=()=>({x0:0,x1:innerWidth-W,y0:20,y1:innerHeight-H});
     const sp=store.get("botPos",null);let parked=!!sp,x=sp?sp.x*innerWidth:Math.max(4,innerWidth-W-16),y=sp?sp.y*innerHeight:Math.max(70,innerHeight-H-90);
@@ -512,7 +522,7 @@
         if(covers(x,y)){const f=(parked&&!boardMode)||boardDrag?null:freeSpot();if(f){if(boardMode)boardSpot=f;tx=f[0];ty=f[1];setDim(false)}else setDim(true)}else setDim(false)}
       if(boardMode&&!sheetMode)box.style.opacity=dim?".2":(act||drag||bubT>0)?"":".45";else if(dim&&!sheetMode)box.style.opacity=".25"},250);
     // 換朝代：重做造型（字形還沒下載就先下載，好了再換一次）
-    const rebuild=()=>{curK=eraK();curP=BP();root.remove(P.bot);Object.assign(B,build(curK,grade()));root.add(B.bot);try{xsMode()}catch(e){}};
+    const rebuild=()=>{curK=eraK();curP=BP();root.remove(B.bot);Object.assign(B,buildMe(curK,grade()),{glb:null});root.add(B.bot);try{xsLoad();xsMode()}catch(e){}};
     // 升官慶祝（意見回饋 236）：小帥放大走到畫面正中央，金光、彩帶、「升官」字樣，約 5 秒後回原位
     let celeb=0;
     const celebrate=(g,from)=>{if(celeb)return;celeb=1;
@@ -526,16 +536,17 @@
 .xqc .sub b{color:#FFE38A;font-size:1.25em}@keyframes xqcPop{from{opacity:0;transform:scale(.3)}}
 .xqc i{position:absolute;top:-4vh;width:9px;height:15px;border-radius:2px;animation:xqcFall linear forwards}
 @keyframes xqcFall{to{transform:translate(var(--dx),112vh) rotate(var(--r))}}`;document.head.append(st)}
-      const ov=document.createElement("div");ov.className="xqc";ov.innerHTML=`<div class="rays"></div><div class="ttl">升　官</div><div class="sub">${GN[from]}品 → <b>${GN[g]}品官</b></div>`;
+      const ov=document.createElement("div");ov.className="xqc";ov.innerHTML=`<div class="rays"></div><div class="ttl">升　官</div><div class="sub">${RK(from)} → <b>${RK(g)}</b></div>`;
       const cols=["#E8B923","#D7263D","#2F9E5A","#2D6CDF","#F28C28","#fff"];for(let i=0;i<70;i++){const c=document.createElement("i");c.style.cssText=`left:${Math.random()*100}vw;background:${cols[i%6]};--dx:${(Math.random()-.5)*30}vw;--r:${(Math.random()-.5)*1440}deg;animation-duration:${2.6+Math.random()*2.2}s;animation-delay:${Math.random()*1.6}s`;ov.append(c)}
       document.body.append(ov);const vis=box.style.visibility,ps={x,y,parked},op=box.style.opacity;box.style.visibility="visible";box.style.opacity="";hit.style.pointerEvents="none";
       shrink=2;applySize();tx=Math.max(0,(innerWidth-W)/2);ty=Math.max(20,innerHeight*.56-H/2);act=null;
       try{navigator.vibrate&&navigator.vibrate([60,40,60,40,120])}catch(e){}
-      setTimeout(()=>{doAct("cheer");say(`升官了！我現在是${GN[g]}品官！`,4.2)},350);setTimeout(()=>doAct("jump"),2300);setTimeout(()=>doAct("cheer"),3400);   // 勝利動作改成 5 秒後太長，升官慶祝（約 5 秒）最後一段改用歡呼
+      setTimeout(()=>{doAct("cheer");say(`升官了！我現在是${RK(g)}！`,4.2)},350);setTimeout(()=>doAct("jump"),2300);setTimeout(()=>doAct("cheer"),3400);   // 勝利動作改成 5 秒後太長，升官慶祝（約 5 秒）最後一段改用歡呼
       setTimeout(()=>{ov.classList.add("out");setTimeout(()=>ov.remove(),520);shrink=boardMode?.6:1;applySize();celeb=0;box.style.visibility=vis;box.style.opacity=op;hit.style.pointerEvents="auto";
         if(ps.parked){tx=ps.x;ty=ps.y}else wander()},5200)};
-    let curG=grade();
-    const eraT=setInterval(()=>{const g=grade();if(g!==curG){const up=g<curG,from=curG;curG=g;rebuild();if(up)celebrate(g,from);else{doAct("shrug");say(`降成${GN[g]}品了…再加油！`,3.2)}}
+    let curG=grade(),curL=meSex()+meReal();xsLoad();
+    const eraT=setInterval(()=>{const g=grade();if(g!==curG){const up=g<curG,from=curG;curG=g;rebuild();if(up)celebrate(g,from);else{doAct("shrug");say(`降成${RK(g)}了…再加油！`,3.2)}}
+      if(meSex()+meReal()!==curL){curL=meSex()+meReal();XS.cur="";rebuild()}
       if(eraK()!==curK||BP()!==curP){rebuild();if(typeof needGly==="function")needGly(curK,()=>{if(!stopped)rebuild()})}},1500);
     if(typeof needGly==="function"&&!(typeof GLY!=="undefined"&&GLY[curK]))needGly(curK,()=>{if(!stopped)rebuild()});
     let shrink=1;const applySize=()=>{const k=SC*shrink;W=W0*k;H=H0*k;box.style.width=W+"px";box.style.height=H+"px";rd.setSize(W,H)};
