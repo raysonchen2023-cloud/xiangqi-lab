@@ -1012,10 +1012,16 @@
     const SPR_H=11.2,SPR_Y=SY-2.5,SPR_Z=BZ+2.6,SPR_TILT=-.18;
     let oppSpr=null;const POSES=["idle","think","move","happy","sad","surprise"];
     const killSpr=()=>{if(oppSpr){sc.remove(oppSpr.sp);oppSpr.sp.material.dispose();oppSpr=null}opp.g.visible=true};
-    const makeSpr=look=>{const base=look.sprite,meta=look.spriteMeta,ch=look.p||"將",red=ch==="帥",ims={};let n=0;
+    const makeSpr=look=>{const base=look.sprite,meta=look.spriteMeta,ch=look.p||"將",red="帥仕相俥傌炮兵".includes(ch),ims={};let n=0;
       const done=()=>{if(++n<POSES.length||oppKey!==JSON.stringify(look))return;
-        const f=meta.face,tex={};for(const ps of POSES){const im=ims[ps];
-          tex[ps]=cv(meta.w,meta.h,(g,w,h)=>{g.clearRect(0,0,w,h);g.drawImage(im,0,0,w,h);if(!f)return;   /* 擂主（Gemini 畫的人物）沒有字圈，不寫字 */
+        const tex={};for(const ps of POSES){const im=ims[ps],f=(meta.faceOf&&meta.faceOf[ps])||meta.face;
+          tex[ps]=cv(meta.w,meta.h,(g,w,h)=>{g.clearRect(0,0,w,h);g.drawImage(im,0,0,w,h);if(!f)return;
+            if(meta.mask){try{const cx=f.cx*w,cy=f.cy*h,r=f.r*w,o=document.createElement("canvas");o.width=w;o.height=h;const og=o.getContext("2d");
+              og.fillStyle=red?"#B3141B":"#1A1410";og.font=`900 ${r*1.15}px "Noto Serif TC","PMingLiU","Songti TC","SimSun",serif`;og.textAlign="center";og.textBaseline="middle";og.fillText(ch,cx,cy+r*.04);
+              const base=g.getImageData(0,0,w,h).data,od=og.getImageData(0,0,w,h),t=od.data;
+              for(let i=0;i<t.length;i+=4){if(!t[i+3])continue;const mn=Math.min(base[i],base[i+1],base[i+2]),sat=Math.max(base[i],base[i+1],base[i+2])-mn;
+                const k=base[i+3]<200?0:Math.min(1,Math.max(0,(mn-215)/25))*Math.min(1,Math.max(0,(30-sat)/15));t[i+3]=t[i+3]*k}
+              og.putImageData(od,0,0);g.drawImage(o,0,0)}catch(e){}return}   /* 開發者：字只寫在身上留白的圓，不能蓋到臉、手、道具 */   /* 擂主（Gemini 畫的人物）沒有字圈，不寫字 */
             const cx=f.cx*w,cy=(f.cy+.01)*h,r=f.r*w*.86,ink=red?"#B3141B":"#1A1410";g.strokeStyle=ink;g.lineWidth=r*.07;g.beginPath();g.arc(cx,cy,r*.9,0,TAU);g.stroke();
             g.fillStyle=ink;g.font=`900 ${r*1.25}px "Noto Serif TC","PMingLiU","Songti TC","SimSun",serif`;g.textAlign="center";g.textBaseline="middle";g.fillText(ch,cx,cy+r*.06)})}
         // 直立的面板（不是永遠正對鏡頭的那種）：鏡頭從上往下看時才不會往後倒、插進靠背裡
@@ -1023,7 +1029,7 @@
         const geo=new T.PlaneGeometry(H*meta.w/meta.h,H);geo.translate(0,H/2,0);const sp=new T.Mesh(geo,mat);sp.renderOrder=2;
         const y0=SPR_Y;sp.position.set(0,y0,SPR_Z);sp.rotation.x=SPR_TILT;sc.add(sp);oppSpr={sp,tex,pose:"idle",y0};opp.g.visible=false};
       for(const ps of POSES){const src=base+((look.spriteMap&&look.spriteMap[ps])||ps)+".webp",   /* 擂主只有 idle、think、move、win、lose：用 spriteMap 對到 Pikafish 的六種姿勢 */im=loadImg(src,()=>{ims[ps]=imgCache[src];done()});if(im){ims[ps]=im;done()}}};
-    const setOpp=look=>{const k=JSON.stringify(look||null);if(k===oppKey)return;oppKey=k;killSpr();if(!look){opp.g.clear();opp.B=null;return}buildActor(opp,look);opp.g.visible=true};   /* 意見回饋 377：對手（Pikafish、擂主）一律用 3D 立體的，繞著桌子轉也是立體的 */
+    const setOpp=look=>{const k=JSON.stringify(look||null);if(k===oppKey)return;oppKey=k;killSpr();if(!look){opp.g.clear();opp.B=null;return}if(look.flat&&look.sprite&&look.spriteMeta){opp.g.clear();opp.B=null;makeSpr(look);return}buildActor(opp,look);opp.g.visible=true};   /* 開發者：園子的路人棋友、故事人物用 Gemini 畫好的形象（平面立牌） */   /* 意見回饋 377：對手（Pikafish、擂主）一律用 3D 立體的，繞著桌子轉也是立體的 */
     // 我這一側的小帥：平常是自己的；觀戰時換成棋盤近端那一方玩家的小帥（意見回饋 259）
     let mateKey=null;const setMate=look=>{const k=JSON.stringify(look||null);if(k===mateKey)return;mateKey=k;mate.g.position.y=MSEAT;mate.g.userData.y0=null;
       buildActor(mate,look||{});mateTop();try{mate.g.updateMatrixWorld(true);const b=new T.Box3().setFromObject(mate.g);mate.g.position.y-=b.min.y-(MSEAT+.02)}catch(e){}};   // 坐在自己的椅子上（座面 y=MSEAT）
@@ -1252,6 +1258,6 @@
     // 意見回饋 244：切回平面棋盤時只藏起來、暫停繪製（不拆掉 3D 場景），再切回公園就直接顯示，不用重新載入
     /* 意見回饋 370：棋盤格 → 螢幕座標（App 的吃子水墨圈畫在公園棋盤的那一格上） */
     const screenOf=i=>{try{const[x,z]=pos(i),v=new T.Vector3(x,TOP,z).project(cam),r=el.getBoundingClientRect();if(!r.width)return null;return{x:r.left+(v.x+1)/2*r.width,y:r.top+(1-v.y)/2*r.height}}catch(e){return null}};
-    return{el,draw,destroy,say,screenOf,whenShown(f){if(shown)f();else shownCb.push(f)},oppSay:(t,d)=>opp.say(t,d),resetView(){reset()},setView(m){tyaw=0;tpitch=m==="top"?.5:m==="flat"?-.85:0;tzoom=1},hide(){el.style.display="none"},show(){if(el.style.display==="none"){el.style.display="";fit()}}}}
+    return{el,draw,destroy,say,screenOf,whenShown(f){if(shown)f();else shownCb.push(f)},oppSay:(t,d)=>opp.say(t,d),resetView(){reset()},setView(m){tyaw=0;tpitch=typeof m==="number"?m:m==="top"?.5:m==="flat"?-.3:0;tzoom=1;mate.g.visible=m!=="flat"},   /* 平視＝從小帥的眼睛看出去（小帥先藏起來，不會擋住棋盤） */   /* 意見回饋 430：平視原本 -.85，鏡頭跑到小帥背後被擋住，改成 -.22 */hide(){el.style.display="none"},show(){if(el.style.display==="none"){el.style.display="";fit()}}}}
   window.XQPark3D={create};
 })();
