@@ -907,7 +907,7 @@
       if(G.quote&&G.quote.q){const Q=G.quote;veil.querySelector(".gt-qt").textContent="「"+Q.q+"」";veil.querySelector(".gt-qw").textContent="── "+(Q.who||"")+(Q.src?"　"+Q.src:"");veil.querySelector(".gt-qn").textContent=Q.n||"";
         veil._qmin=Math.min(9000,Math.max(4800,3200+String(Q.q).length*120));veil.style.pointerEvents="auto";veil.addEventListener("pointerdown",()=>{veil._qskip=true},{once:true})}
       const bg=veil.querySelector(".gt-bg");(function tryI(i){if(i>=imgs.length)return;const im=new Image();im.onload=()=>{bg.style.backgroundImage="url("+imgs[i]+")"};im.onerror=()=>tryI(i+1);im.src=imgs[i]})(0)}
-    el.append(veil);
+    el.append(veil);try{if(veil.querySelector(".gt-t,.ag-t")&&window.XQ_DRUM)window.XQ_DRUM(eraKey(),opt.arena?"arena":"gate")}catch(e){}   /* 意見回饋 499：過場敲一段朝代的鼓和鑼 */
     hint.textContent="點棋子走棋・點物件看介紹・拖曳轉頭・兩指縮放";el.append(hint);if(veil._qmin)hint.style.opacity=0;else setTimeout(()=>hint.style.opacity=0,4500);   /* 有名言的過場：操作提示等過場收掉才出現 */
     const EK=eraKey(),E=ERA[EK];
     el.style.background=E.mist;

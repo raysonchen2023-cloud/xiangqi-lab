@@ -245,11 +245,16 @@
      立繪身上寫字的白色圓，Tripo 做成一個洞，這裡在同一個位置補一塊寫著擅長棋子的圓牌（用 Q 版身上那塊的貼圖） */
   function attachGLB(B,o){if(!window.XQGLB)return;const box0=new T.Box3().setFromObject(B.bot),h0=box0.max.y-box0.min.y,y0=box0.min.y;
     const face=B.torso.children.find(m=>m.isMesh&&m.geometry&&m.geometry.type==="CircleGeometry");
-    window.XQGLB(o.glb).then(sc=>{if(!sc)return;const g=sc.clone(true),bb=new T.Box3().setFromObject(g),sz=bb.getSize(new T.Vector3()),c=bb.getCenter(new T.Vector3());if(!(sz.y>0))return;
+    window.XQGLB(o.glb).then(sc=>{if(!sc)return;const g=sc.clone(true);g.rotation.y=-Math.PI/2;g.updateMatrixWorld(true);   /* 意見回饋 503：Tripo 的模型臉朝 +X（側面），轉 90 度讓臉朝前；之前圓牌朝前、模型朝側面，看起來圓牌浮在身體旁邊 */
+      const bb=new T.Box3().setFromObject(g),sz=bb.getSize(new T.Vector3()),c=bb.getCenter(new T.Vector3());if(!(sz.y>0))return;
       const hold=new T.Group();hold.name="glb";g.position.set(-c.x,-bb.min.y,-c.z);hold.add(g);hold.scale.setScalar(h0/sz.y);hold.position.y=y0;
       g.traverse(m=>{if(m.isMesh){m.castShadow=true;m.receiveShadow=true}});
-      if(o.ring&&o.ring.r&&face){const R=o.ring,rad=R.r*sz.x*.95,m=face.material.clone();m.side=T.DoubleSide;
-        const d=new T.Mesh(new T.CircleGeometry(rad,48),m);d.position.set(bb.min.x+R.u*sz.x-c.x,bb.max.y-R.v*sz.y-bb.min.y,0);hold.add(d)}
+      /* 意見回饋 503：圓牌的位置是從 2D 立繪換算的，套在 Tripo 模型上會偏（蓋到臉、浮在身體前面），真實版就不另外貼圓牌，看模型本身 */
+      if(false&&o.ring&&o.ring.r&&face){const R=o.ring,rad=R.r*sz.x*.95,m=face.material.clone();m.side=T.DoubleSide;
+        const d=new T.Mesh(new T.CircleGeometry(rad,48),m),px=bb.min.x+R.u*sz.x,py=bb.max.y-R.v*sz.y;
+        /* 圓牌貼在模型表面：從正前方打一條射線，碰到的地方再往前一點（不浮在空中、也不埋進身體） */
+        let pz=bb.max.z;try{const hit=new T.Raycaster(new T.Vector3(px,py,bb.max.z+sz.z+1),new T.Vector3(0,0,-1)).intersectObject(g,true)[0];if(hit)pz=hit.point.z}catch(e){}
+        d.position.set(px-c.x,py-bb.min.y,pz-c.z+sz.y*.004);hold.add(d)}
       for(const ch of B.bot.children)ch.visible=false;B.bot.add(hold);B.glb=hold}).catch(()=>{})}
 
   // ---------- 招牌動作 ----------
@@ -411,7 +416,7 @@
     const xsLoad=()=>{const sx=meSex();if(XS.sex===sx)return;XS.sex=sx;const set=XS.sets[sx];if(set&&set.meta){XS.meta=set.meta;XS.ims=set.ims;xsMode();return}
       XS.meta=null;XS.ims={};xsMode();if(set)return;const S=XS.sets[sx]={meta:null,ims:{}},dir=sx==="f"?"data/xs/girl/":"data/xs/";
       fetch(dir+"xs.json").then(r=>r.ok?r.json():null).then(m=>{if(!m||stopped)return;let n=0;const names=Object.keys(m.poses);
-        for(const k of names){const i=new Image();i.decoding="async";i.onload=()=>{if(++n===names.length){S.meta=m;if(XS.sex===sx){XS.meta=m;XS.ims=S.ims;xsMode()}}};i.onerror=()=>{};i.src=dir+k+".webp";S.ims[k]=i}}).catch(()=>{})};
+        for(const k of names){const i=new Image();i.decoding="async";i.onload=()=>{if(++n===names.length){S.meta=m;if(XS.sex===sx){XS.meta=m;XS.ims=S.ims;xsMode()}}};i.onerror=()=>{delete XS.sets[sx]};i.src=dir+k+".webp";S.ims[k]=i}}).catch(()=>{delete XS.sets[sx];if(XS.sex===sx)XS.sex=null})};   /* 意見回饋 497：抓不到就下次再抓，不要卡在舊的樣子 */
     const xsMode=()=>{const on=!!XS.meta&&!meReal();   /* 意見回饋 384：每個朝代都用手繪版（各朝代的手繪服裝畫好以前，先穿經典的） */XS.on=on;XS.wrap.style.display=on?"":"none";rd.domElement.style.visibility=on?"hidden":"";XS.cur=""};
     const xsDraw=(pose,bob,flip)=>{const m=XS.meta;if(!m.poses[pose]||!XS.ims[pose])pose="xs_idle";if(pose!==XS.cur){XS.cur=pose;XS.img.src=XS.ims[pose].src;
         const f=m.poses[pose],ih=box.clientHeight*.96,iw=ih*m.w/m.h,left=(box.clientWidth-iw)/2,top=box.clientHeight*.98-ih,R=f.r*iw*.82,ch=BP();
@@ -545,6 +550,7 @@
       setTimeout(()=>{ov.classList.add("out");setTimeout(()=>ov.remove(),520);shrink=boardMode?.6:1;applySize();celeb=0;box.style.visibility=vis;box.style.opacity=op;hit.style.pointerEvents="auto";
         if(ps.parked){tx=ps.x;ty=ps.y}else wander()},5200)};
     let curG=grade(),curL=meSex()+meReal();xsLoad();
+    const onLook=()=>{if(meSex()+meReal()!==curL){curL=meSex()+meReal();XS.cur="";rebuild()}else{XS.sex=null;xsLoad()}};window.addEventListener("xq-look",onLook);   /* 意見回饋 497：選完角色馬上換，不等計時器 */
     const eraT=setInterval(()=>{const g=grade();if(g!==curG){const up=g<curG,from=curG;curG=g;rebuild();if(up)celebrate(g,from);else{doAct("shrug");say(`降成${RK(g)}了…再加油！`,3.2)}}
       if(meSex()+meReal()!==curL){curL=meSex()+meReal();XS.cur="";rebuild()}
       if(eraK()!==curK||BP()!==curP){rebuild();if(typeof needGly==="function")needGly(curK,()=>{if(!stopped)rebuild()})}},1500);
@@ -553,7 +559,7 @@
     const setScale=v=>{SC=Math.min(2,Math.max(.6,+v||1));store.set("botSize",SC);applySize();XS.cur=""};
     const onResize=()=>{const b=bounds();x=Math.min(x,b.x1);y=Math.min(y,b.y1);tx=Math.min(tx,b.x1);ty=Math.min(ty,b.y1)};window.addEventListener("resize",onResize);
     return{act:k=>doAct(typeof k==="number"?comboAct(k):k),say,setScale,rebuild,count:COMBO.length,lines:LINES.length,
-      stop(){stopped=true;window.removeEventListener("pointerdown",pDown,true);window.removeEventListener("pointermove",pMove,true);window.removeEventListener("pointerup",pUp,true);window.removeEventListener("pointercancel",pUp,true);clearInterval(eraT);clearInterval(boardT);window.removeEventListener("xq-call",onCall);window.removeEventListener("xq-result",onResult);window.removeEventListener("resize",onResize);try{rd.dispose()}catch(e){}box.remove()}}}
+      stop(){stopped=true;window.removeEventListener("pointerdown",pDown,true);window.removeEventListener("pointermove",pMove,true);window.removeEventListener("pointerup",pUp,true);window.removeEventListener("pointercancel",pUp,true);clearInterval(eraT);clearInterval(boardT);window.removeEventListener("xq-look",onLook);window.removeEventListener("xq-call",onCall);window.removeEventListener("xq-result",onResult);window.removeEventListener("resize",onResize);try{rd.dispose()}catch(e){}box.remove()}}}
   // 瘦長版（公園 3D 棋盤的 Pikafish）：身體窄、高，手腳往內收，戴圓眼鏡
   function thinify(B,noGlass){const tz=B.torso;tz.children.forEach(o=>{if(o===B.head||B.arms.includes(o))return;o.scale.x*=.6;o.scale.y*=1.18;o.position.y*=1.18});
     B.arms.forEach(a=>{a.position.x*=.62;a.scale.set(.85,1.1,.85)});B.legs.forEach(l=>{l.position.x*=.7;l.scale.set(.8,1.25,.8)});B.head.scale.set(.88,1.02,.9);B.head.position.y+=.08;tz.position.y+=.1;
