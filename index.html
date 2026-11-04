@@ -223,6 +223,9 @@ html[data-era=ming] .topbar,html[data-era=qing] .topbar{border-bottom-width:4px}
 .eragrid button.on{outline:3px solid var(--accent);outline-offset:2px}
 .eragrid button.on b::after{content:" ✓"}
 @media (min-width:700px){.eragrid{grid-template-columns:repeat(4,1fr)}}
+/* 意見回饋 535：設定的朝代棋盤改成左右滑動的一疊卡片，停在中間的那張就套用，上面的棋盤預覽馬上換 */
+.eragrid.erasw{position:relative;display:flex;overflow-x:auto;scroll-snap-type:x mandatory;gap:10px;padding:6px 19% 12px;scrollbar-width:none;-webkit-overflow-scrolling:touch}.eragrid.erasw::-webkit-scrollbar{display:none}
+.eragrid.erasw button{flex:0 0 62%;scroll-snap-align:center;min-height:100px;transition:transform .2s,opacity .2s;transform:scale(.9);opacity:.72}.eragrid.erasw button.on{transform:none;opacity:1}
 .thgrid button{display:flex;flex-direction:column;align-items:center;gap:4px;padding:5px 5px 7px;border-radius:14px;background:var(--card);border:2px solid var(--line);font-size:13px}
 .thgrid button.on{border-color:var(--accent);font-weight:700;color:var(--accent)}.thgrid svg{width:100%;display:block;border-radius:9px}
 @media (min-width:700px){.thgrid{grid-template-columns:repeat(5,1fr)}}
@@ -581,7 +584,7 @@ html[data-era=ming] .topbar,html[data-era=qing] .topbar{border-bottom-width:4px}
       if(!window.caches)return go();caches.keys().then(function(ks){return Promise.all(ks.filter(function(k){return k.indexOf("xqlab-app-")===0}).map(function(k){return caches.delete(k)}))})
         .then(function(){return navigator.serviceWorker&&navigator.serviceWorker.getRegistration()}).then(function(r){return r&&r.update()}).catch(function(){}).then(go)}};setTimeout(chk,4000)})();
 </script>
-<script>window.XQ_OFFLINE=true;window.XQ_BUILD="20261104-2255";</script>
+<script>window.XQ_OFFLINE=true;window.XQ_BUILD="20261104-2316";</script>
 <script src="core.js"></script>
 <script src="engine.js"></script>
 <script src="local.js"></script>
@@ -1834,7 +1837,7 @@ function standaloneOnlineWarn(v){if(OFF||!(matchMedia("(display-mode: standalone
 function Home(v,hub){   /* hub：沒有＝首頁三張大卡；"battle"＝對戰頁；"learn"＝學習頁（開發者看 Gemini UI／UX 審閱後決定） */
   const RI=DEVREMOTE()?XQ.remoteInfo():null;  // 這支手機連過主人的電腦嗎
   const standalone=matchMedia("(display-mode: standalone)").matches||navigator.standalone;
-  setTop("象棋研究室",false,OFF?[["📤",shareSheet,"分享給朋友"]].concat(RI?[["🔗",connectSheet,"連線到電腦"]]:[],(DEVMODE()?[["📋",openFbAdmin,"意見回饋管理"]]:[]),[["💬",()=>feedbackSheet(),"意見回饋"]]):[["📤",shareSheet,"分享給朋友"],["👥",whoSheet,"誰在線上"],["💬",()=>feedbackSheet(),"意見回饋"]]);setTabs(true,"#/");   /* 意見回饋 409：意見回饋按鈕放在首頁最右上角 */
+  setTop("象棋研究室",false,OFF?[].concat(RI?[["🔗",connectSheet,"連線到電腦"]]:[],(DEVMODE()?[["📋",openFbAdmin,"意見回饋管理"]]:[])):[["👥",whoSheet,"誰在線上"]]);   /* 意見回饋 531：首頁右上角的「分享給朋友」「意見回饋」拿掉（都在 設定 → 系統） */setTabs(true,"#/");   /* 意見回饋 409：意見回饋按鈕放在首頁最右上角 */
   if(hub){setTop(hub==="battle"?"⚔ 對戰":"📚 學習","#/");setTabs(true,"#/")}
   const T=(k,go,ic,t,id,s,x,cta)=>`<button class="tile strip ${k}${x||""}" data-go="${go}"><span class="ic">${ic}</span><span class="tx"><span class="t">${t}</span><span class="s"${id?` id="${id}"`:""}>${s}</span></span><b class="go">${cta||"›"}</b></button>`;
   v.innerHTML=`<div class="home">
@@ -1871,15 +1874,9 @@ ${OFF?(()=>{const n=Object.keys(arenaStamps()).length,t=arenaTitle();return`<but
    </div>`:""}
    <div class="hfoot">
     ${standalone?"":'<button class="lk" id="hInst" style="flex-basis:100%">📲 加到主畫面，像 App 一樣全螢幕使用</button>'}
-    ${OFF?`<span id="hVer">版本讀取中…</span><button class="pill" id="hUpd">檢查更新</button>`:""}
    </div>
   </div>`;
   if(OFF){appVer().then(x=>{const e=v.querySelector("#hVer");if(e)e.textContent="版本 "+(!x?"未知":/^\d{8}-\d{4}$/.test(x)?`${x.slice(0,4)}/${x.slice(4,6)}/${x.slice(6,8)} ${x.slice(9,11)}:${x.slice(11,13)}`:x.slice(0,8))});
-    (v.querySelector("#hUpd")||{}).onclick=async e=>{const b=e.target;b.disabled=true;b.textContent="檢查中…";
-      const r=window.XQ_checkUpdate?await XQ_checkUpdate():{};
-      if(!r.n){b.textContent="沒有網路";b.disabled=false;return}
-      if(r.a===r.n){b.textContent="✓ 已是最新版";return}
-      b.textContent="下載新版中…";setTimeout(()=>location.reload(),6000)};
     const hc=v.querySelector("#hConn");if(hc)hc.onclick=connectSheet}
   const hi=v.querySelector("#hInst");if(hi)hi.onclick=()=>installGuide(true);{const h2=v.querySelector("#hInst2");if(h2)h2.onclick=()=>{vibrate(5);installGuide(true)}}
   v.querySelectorAll("[data-go]").forEach(b=>b.onclick=()=>{vibrate(5);location.hash=b.dataset.go});
@@ -2831,17 +2828,19 @@ setTimeout(()=>{try{if(!/#\/(play|journey\/play|cpu)/.test(location.hash))onboar
 
 // ================= 設定：棋盤風格、棋子樣式、走棋顯示 =================
 const SAMPLE_FEN0="rnbakabnr/9/1c5c1/p1p1p1p1p/9/9/P1P1P1P1P/1C5C1/9/RNBAKABNR",SAMPLE_FEN1="rnbakabnr/9/1c5c1/p1p1p1p1p/9/9/P1P1P1P1P/1C2C4/9/RNBAKABNR",SAMPLE_LAST={f:70,t:67};
+/* 意見回饋 531：檢查更新（設定 → 系統 → 關於） */
+async function updCheck(b){b.disabled=true;b.textContent="檢查中…";const r=window.XQ_checkUpdate?await XQ_checkUpdate():{};
+  if(!r.n){b.textContent="沒有網路";b.disabled=false;return}if(r.a===r.n){b.textContent="✓ 已是最新版";return}b.textContent="下載新版中…";setTimeout(()=>location.reload(),6000)}
 function Settings(v){
   setTop("設定",false);setTabs(true,"#/settings");
   // 設定分成四個分頁，一次只看一類（意見回饋 141）
   let stab=store.get("setTab","look");if(stab==="play")stab="look";   /* 意見回饋 526：分頁改成 角色／棋盤／聲音／系統，原本的「走棋」併進「棋盤」 */
   v.innerHTML=`<div class="pad home">
-    <button class="item" id="fbTop" style="width:100%;margin:2px 0 10px;border-radius:14px;border:1.5px solid color-mix(in srgb,var(--accent) 45%,var(--line));background:color-mix(in srgb,var(--accent) 7%,var(--card,#fff))"><span class="lb">${ETIMG("feedback","","💬")}</span><span class="tx"><b>意見回饋</b><span>遇到問題、想要新功能，直接告訴開發者（可附截圖）</span></span><span class="muted">›</span></button>   <!-- 意見回饋 523：意見回饋放在設定最上面，哪個分頁都看得到 -->
     <div class="st-tabs" id="sgTabs" style="position:static;margin:4px 0 10px">${[["bot","🙂","角色"],["look","♟","棋盤"],["sound","🔊","聲音"],["more","⚙","系統"]].map(([k,e,l])=>`<button data-k="${k}"><i class="tic" data-ic="t_${k}">${e}</i> ${l}</button>`).join("")}</div>
     <div data-pane="look">
     <div class="card" style="padding:10px"><div id="pv" style="max-width:300px;margin:0 auto"></div>
       <div class="row" style="justify-content:space-between;margin-top:6px"><span class="muted">示範：紅方 炮二平五</span><button class="pill" id="replay">▶ 再走一次</button></div></div>
-    <div class="sec-t">朝代風格<span class="muted" style="font-size:12px;font-weight:400">每一頁都會換</span></div><div class="eragrid" id="era"></div>
+    <div class="sec-t">朝代風格<span class="muted" style="font-size:12px;font-weight:400">← 左右滑動挑朝代 →</span></div><div class="eragrid erasw" id="era"></div>
     <div class="sec-t">深淺色</div><div class="opt" id="pt"></div><p class="muted" id="ptN" style="font-size:12px;margin:4px 4px 0"></p>
     <div class="sec-t">文字<span class="muted" style="font-size:12px;font-weight:400">棋譜、棋手名字、賽事名稱也跟著換</span></div><div class="opt" id="zhO" data-nocc>${[["tw","繁體中文"],["cn","简体中文"]].map(([k,l])=>`<button data-zh="${k}"${((window.XQ_ZH&&XQ_ZH.mode())||"tw")===k?' class="on"':""}>${l}</button>`).join("")}</div>   <!-- 意見回饋 518：繁簡切換（zh.js） -->
     <div class="sec-t">棋盤風格</div>
@@ -2858,7 +2857,7 @@ function Settings(v){
     <div data-pane="sound"><div class="sec-t" style="margin-top:4px">聲音</div><div class="card sgc" id="snd"></div></div>
     <div data-pane="bot">
     <div class="sec-t" style="margin-top:4px">我的角色</div><div class="card row" style="gap:10px;align-items:center;margin-bottom:6px">   <!-- 意見回饋 506：精簡成一張小卡；522：跟官階、棋子、顯示放在同一個「角色」分頁 -->
-      <img src="data/xs/prev_${myStyle()==="real"?"real":"q"}_${mySex()==="f"?"girl":"boy"}.webp" alt="" style="width:46px;height:58px;object-fit:contain;flex:none" onerror="this.remove()">
+      <img id="meFig" role="button" aria-label="看我的 3D 角色" src="data/xs/prev_${myStyle()==="real"?"real":"q"}_${mySex()==="f"?"girl":"boy"}.webp" alt="" style="width:46px;height:58px;object-fit:contain;flex:none;cursor:pointer" onerror="this.remove()">
       <div style="flex:1;min-width:0"><b>${mySex()==="f"?"小帥妹":"小帥"}${myStyle()==="real"?"":"Q版"}</b>   <!-- 開發者 11/4：只寫「小帥Q版」或「小帥」，不寫「真實版」 --><br><span class="muted" style="font-size:13px">${esc(myName()||"還沒取名字")}</span></div>
       <button class="pill" id="obAgain">換角色</button><button class="pill" id="nmLook">改名</button></div>
     ${(()=>{let p=0;try{p=(JSON.parse(localStorage.getItem("xq_cpuRate")||"null")||{}).pts||0}catch(e){}
@@ -2884,7 +2883,7 @@ function Settings(v){
       <div class="row" style="justify-content:space-between"><span class="muted">App</span><b>象棋研究室</b></div>
       <div class="row" style="justify-content:space-between"><span class="muted">開發者</span><b>hungshengc</b></div>
       <div class="row" style="justify-content:space-between"><span class="muted">開始開發</span><b>2026 年 10 月 29 日</b></div>
-      <div class="row" style="justify-content:space-between"><span class="muted">版本</span><b>${esc(window.XQ_BUILD&&!/__BUILD__/.test(window.XQ_BUILD)?window.XQ_BUILD:"開發中")}</b></div>
+      <div class="row" style="justify-content:space-between;align-items:center"><span class="muted">版本</span><span class="row" style="gap:8px;align-items:center"><b>${esc(window.XQ_BUILD&&!/__BUILD__/.test(window.XQ_BUILD)?window.XQ_BUILD:"開發中")}</b>${OFF?'<button class="pill" id="aUpd">檢查更新</button>':""}</span></div>   <!-- 意見回饋 531：系統更新從首頁搬到這裡 -->
       ${DEVMODE()?`<details style="margin-top:4px"><summary class="muted">${/* 意見回饋 355：開發者模式才看得到 */""}🛠 用了哪些語言寫的（開發者）</summary>
         <table class="st-lv" style="font-size:13px;margin-top:6px"><tr><th>語言</th><th>用在哪裡</th></tr>
         <tr><td>JavaScript</td><td>App 主程式、離線的對局和棋譜資料庫、線上大廳、3D 園子（three.js）</td></tr>
@@ -2933,6 +2932,7 @@ function Settings(v){
       ol.querySelectorAll("[data-ol]").forEach(x=>x.onclick=()=>{vibrate(5);store.set("oppLook",x.dataset.ol);paint()})}}
     {const oa=v.querySelector("#obAgain");if(oa)oa.onclick=()=>{vibrate(5);onboard(true)}}
     {v.querySelectorAll("[data-zh]").forEach(b=>b.onclick=()=>{vibrate(5);if(!window.XQ_ZH){toast("這個版本還不能切換");return}if(XQ_ZH.mode()===b.dataset.zh)return;toast(b.dataset.zh==="cn"?"切换成简体中文…":"切換成繁體中文…");setTimeout(()=>XQ_ZH.set(b.dataset.zh),300)})}
+    {const mf=v.querySelector("#meFig");if(mf)mf.onclick=()=>{vibrate(5);const nm=mySex()==="f"?"小帥妹":"小帥";figView(myLook()||{p:botPc(),e:store.get("era","classic"),g:9},"🙂 "+nm+(myStyle()==="real"?"":"Q版"),`<p class="muted" style="font-size:13.5px;margin:0">${esc(myName()||"還沒取名字")}・園子裡的你、線上對手看到的你都是這個樣子</p>`,[["關閉",()=>closeSheet(),true]],mf.src)}}   /* 意見回饋 534：點角色小卡上的小帥／小帥妹，跳出 3D 模型 */
     {const nl=v.querySelector("#nmLook");if(nl)nl.onclick=()=>{vibrate(5);nameSheet(false)};
      /* 意見回饋 519／520：從線上大廳按「改名」過來，直接捲到改名字的地方、亮一下，再打開改名視窗 */
      if(store.get("setFocus","")==="name"&&nl){store.set("setFocus","");setTimeout(()=>{const c=nl.closest(".card");c.scrollIntoView({block:"center",behavior:"smooth"});c.style.transition="box-shadow .3s";c.style.boxShadow="0 0 0 3px var(--accent,#B3261E)";setTimeout(()=>{c.style.boxShadow="";nameSheet(false)},700)},120)}}   /* 意見回饋 498：改名字只放在外觀這裡 */
@@ -2947,6 +2947,9 @@ function Settings(v){
       return`<button data-e="${e.k}" class="${ce===e.k?"on":""}${c?"":" cl"}" style="${st}"><i style="${c?`background-image:${eraMotif(e.m,c.barink,.3)}`:""}"></i><b>${esc(e.n)}</b><small>${esc(e.s)}</small></button>`}).join("");
     v.querySelectorAll("[data-e]").forEach(x=>x.onclick=()=>{const k=x.dataset.e;if(k===store.get("era","classic"))return;vibrate(5);store.set("era",k);applyEra();
       if(k!=="classic"&&store.get("boardTheme","wood3d")!=="auto"){store.set("boardTheme","auto");toast("棋盤也換成這個朝代的配色（可在下面改回）")}paint();show(true)});
+    /* 意見回饋 535：滑到中間停住的那張就套用；畫面重畫後把選中的那張捲回中間 */
+    {const ew=v.querySelector("#era"),on=ew&&ew.querySelector(".on");if(ew){ew._quiet=true;if(on)ew.scrollLeft=on.offsetLeft-(ew.clientWidth-on.offsetWidth)/2;setTimeout(()=>{ew._quiet=false},250);
+      ew.onscroll=()=>{if(ew._quiet)return;clearTimeout(ew._t);ew._t=setTimeout(()=>{const mid=ew.scrollLeft+ew.clientWidth/2;let best=null,bd=1e9;for(const x of ew.querySelectorAll("[data-e]")){const d=Math.abs(x.offsetLeft+x.offsetWidth/2-mid);if(d<bd){bd=d;best=x}}if(best&&best.dataset.e!==store.get("era","classic"))best.click()},170)}}}
     const tg=(k,label,sub)=>`<label class="row" style="justify-content:space-between;padding:6px 0"><span><b>${label}</b><br><span class="muted">${sub}</span></span><input type="checkbox" class="sw" data-t="${k}" ${store.get(k,k!=="mvSound")?"checked":""}></label>`;
     v.querySelector("#mv").innerHTML=tg("mvArrow","箭頭","從原來位置畫箭頭指到新位置")+'<div style="border-top:1px solid var(--line)"></div>'+tg("mvAnim","動畫","棋子滑過去，被吃的棋子淡出")+'<div style="border-top:1px solid var(--line)"></div>'+tg("capSound","吃子音效","吃子時重重「啪」一聲、將軍時「鏘」一聲")+'<div style="border-top:1px solid var(--line)"></div>'+tg("gateDrum","🥁 過場鼓聲","進園子、上擂台、走荒野小徑時，敲一段那個朝代戰場上的鼓和鑼")+'<div style="border-top:1px solid var(--line)"></div>'+`<div style="padding:6px 0" id="vcRow"><b>語音報「吃」「將軍」</b><br><span class="muted">吃子喊「吃！」、將軍喊「將軍！」；點一下可以試聽；可調語速</span><div class="st-res" style="margin:8px 0 0">${[["off","關"],["m","男聲"],["f","女聲"]].map(([k,l])=>`<button data-vc="${k}" class="${(store.get("voiceCall",true)?store.get("voiceSex","m"):"off")===k?"on":""}">${l}</button>`).join("")}</div><div class="st-res" style="margin:8px 0 0;align-items:center"><span class="muted" style="font-size:13px">語速</span>${[["s","慢"],["n","中"],["f","快"]].map(([k,l])=>`<button data-vr="${k}" class="${store.get("voiceRate","n")===k?"on":""}">${l}</button>`).join("")}</div></div>`+'<div style="border-top:1px solid var(--line)"></div>'+sndPicker()+'<div style="border-top:1px solid var(--line)"></div>'+tg("ckFx","將軍特效","被將軍或將對方軍時，棋盤上蓋「將軍！」字樣")+'<div style="border-top:1px solid var(--line)"></div>'+tg("capFx","吃子特效","吃子時被吃的那格蓋一個水墨「吃」字")+'<div style="border-top:1px solid var(--line)"></div>'+'<div style="border-top:1px solid var(--line)"></div>'+tg("voiceMove","🎤 聲控走棋","下棋時右上角多一個 🎤，按下去說「馬八進七」「炮二平五」就會走"+(vcOK()?"":"（這個瀏覽器不支援語音辨識）"))+'<div style="border-top:1px solid var(--line)"></div>'+tg("opFx","開局名稱動畫","走出中炮、仙人指路、屏風馬…時，棋盤上展開卷軸寫出開局名");
     {const mvB=v.querySelector("#mv"),sdB=v.querySelector("#snd");sdB.innerHTML="";mvB.querySelectorAll(":scope>div[style*='border-top']").forEach(x=>x.remove());
@@ -2974,7 +2977,7 @@ function Settings(v){
       for(let i=0;i<8;i++){await new Promise(z=>setTimeout(z,2000));let x=null;try{x=JSON.parse(await XQNet.ctlAck(3000))}catch(e){}
         if(x&&x.n===n){toast(x.ok?`✅ 已重置 ${x.bots} 位虛擬玩家（舊資料存在電腦：${x.arch}）`:"❌ "+x.why,5000);return}}
       toast("電腦沒有回覆：虛擬玩家的程式可能沒在跑")}catch(e){toast(e.message)}},"重置")}
-  {const ab=v.querySelector("#askB");if(ab)ab.onclick=()=>askSheet();const bh=v.querySelector("#botHome");if(bh)bh.onclick=()=>{store.set("botPos",null);if(BOT){BOT.stop();BOT=null}syncBot();toast("小帥回到預設位置了")}}{const bt=v.querySelector("#botT");if(bt)bt.onchange=()=>{store.set("bot3d",bt.checked);syncBot();if(bt.checked)toast("小人出來了！點它會表演")};const sz=v.querySelector("#botSz"),szv=v.querySelector("#botSzV");if(sz)sz.oninput=()=>{store.set("botSize",+sz.value);szv.textContent=Math.round(sz.value*100)+"%";if(BOT&&BOT.setScale)BOT.setScale(+sz.value)}}{const ct=v.querySelector("#cityT");if(ct)ct.onchange=()=>{store.set("showCity",ct.checked);if(ct.checked)fetchCity(true);else{MY_CITY="";if(window.XQNet&&XQNet.refresh)XQNet.refresh()}}}(v.querySelector("#nm")||{}).onclick=()=>{vibrate(5);stab="look";store.set("setTab","look");showTab();setTimeout(()=>{const x=v.querySelector("#nmLook");if(x)x.scrollIntoView({block:"center",behavior:"smooth"})},60)};   /* 意見回饋 498：名字只在「外觀 → 我的角色」改 */(v.querySelector("#fb")||{}).onclick=()=>feedbackSheet();{const ft=v.querySelector("#fbTop");if(ft)ft.onclick=()=>{vibrate(5);feedbackSheet()}}{const fx=v.querySelector("#fxh");if(fx)fx.onclick=()=>fixHistory()}(v.querySelector("#sh")||{}).onclick=shareSheet;const cn=v.querySelector("#cn");if(cn)cn.onclick=connectSheet;const fa=v.querySelector("#fa");if(fa)fa.onclick=()=>location.hash="#/fbadmin";
+  {const ab=v.querySelector("#askB");if(ab)ab.onclick=()=>askSheet();const bh=v.querySelector("#botHome");if(bh)bh.onclick=()=>{store.set("botPos",null);if(BOT){BOT.stop();BOT=null}syncBot();toast("小帥回到預設位置了")}}{const bt=v.querySelector("#botT");if(bt)bt.onchange=()=>{store.set("bot3d",bt.checked);syncBot();if(bt.checked)toast("小人出來了！點它會表演")};const sz=v.querySelector("#botSz"),szv=v.querySelector("#botSzV");if(sz)sz.oninput=()=>{store.set("botSize",+sz.value);szv.textContent=Math.round(sz.value*100)+"%";if(BOT&&BOT.setScale)BOT.setScale(+sz.value)}}{const ct=v.querySelector("#cityT");if(ct)ct.onchange=()=>{store.set("showCity",ct.checked);if(ct.checked)fetchCity(true);else{MY_CITY="";if(window.XQNet&&XQNet.refresh)XQNet.refresh()}}}(v.querySelector("#nm")||{}).onclick=()=>{vibrate(5);stab="look";store.set("setTab","look");showTab();setTimeout(()=>{const x=v.querySelector("#nmLook");if(x)x.scrollIntoView({block:"center",behavior:"smooth"})},60)};   /* 意見回饋 498：名字只在「外觀 → 我的角色」改 */(v.querySelector("#fb")||{}).onclick=()=>feedbackSheet();{const au=v.querySelector("#aUpd");if(au)au.onclick=()=>{vibrate(5);updCheck(au)}}{const ft=v.querySelector("#fbTop");if(ft)ft.onclick=()=>{vibrate(5);feedbackSheet()}}{const fx=v.querySelector("#fxh");if(fx)fx.onclick=()=>fixHistory()}(v.querySelector("#sh")||{}).onclick=shareSheet;const cn=v.querySelector("#cn");if(cn)cn.onclick=connectSheet;const fa=v.querySelector("#fa");if(fa)fa.onclick=()=>location.hash="#/fbadmin";
   paint();return{}}
 
 // ================= 意見回饋：存到 Google 表單（沒網路先存在手機，之後自動補送） =================
@@ -3379,7 +3382,7 @@ const JCHAR={liu_young:{name:"少年柳寒舟",pc:"砲",hat:"hair",hc:"#1E1A16",
 const JCHAR_LOOK=(k,side)=>JCHAR[k]?{...NPC_LOOK({...JCHAR[k],cus:"j:"+k,say:JCHAR[k].hi},side),...(CHAMP_META?{flat:true,sprite:`data/journey/char_${k}_`,spriteMeta:{...CHAMP_META,mask:true,faceOf:faceOf("journey",{idle:`char_${k}_idle`,think:`char_${k}_think`,move:`char_${k}_move`,happy:`char_${k}_win`,sad:`char_${k}_lose`,surprise:`char_${k}_think`},`char_${k}_idle`)},spriteMap:{happy:"win",sad:"lose",surprise:"think"}}:{})}:null;   /* 故事人物也用畫好的形象（5 個姿勢） */
 /* 意見回饋 400：點人物看大幅完整的 3D 小人，左右拖曳可以轉；3D 載入失敗就顯示畫像 */
 async function figView(look,title,html,btns,img){sheet(title,async b=>{
-  b.innerHTML=`<div id="fv" style="position:relative;aspect-ratio:1;max-height:56vh;margin:0 auto;border-radius:14px;overflow:hidden;touch-action:none;background:radial-gradient(circle at 50% 38%,#F6EEDF,#CDBB9C)"></div><p class="muted" style="text-align:center;font-size:12.5px;margin:6px 0 10px">左右拖曳可以轉動</p>${html||""}<div class="lvch" id="fvb"></div>`;
+  b.innerHTML=`<div id="fv" style="position:relative;aspect-ratio:1;max-height:56vh;margin:0 auto;border-radius:14px;overflow:hidden;touch-action:none;background:radial-gradient(circle at 50% 38%,#F6EEDF,#CDBB9C)"></div><p class="muted" style="text-align:center;font-size:12.5px;margin:6px 0 10px">左右拖曳可以轉動・兩指捏合或按 ＋／－ 放大縮小</p>${html||""}<div class="lvch" id="fvb"></div>`;
   const bb=b.querySelector("#fvb");for(const[l,fn,gh]of btns||[]){const x=document.createElement("button");x.className="btn"+(gh?" ghost":"");x.textContent=l;x.onclick=fn;bb.append(x)}
   const host=b.querySelector("#fv"),flat=()=>{host.innerHTML=img?`<img src="${img}" alt="" style="width:100%;height:100%;object-fit:contain">`:"";const p=b.querySelector("p.muted");if(p)p.remove()};
   if(!look)return flat();
@@ -3392,10 +3395,18 @@ async function figView(look,title,html,btns,img){sheet(title,async b=>{
     B.glbP.then(()=>tip.remove()).catch(e=>{tip.textContent="真實 3D 模型載不到（"+(navigator.onLine?"網路慢或檔案有問題":"沒有網路")+"），先顯示 Q 版"})}const root=new T.Group();root.add(B.bot);sc.add(root);root.updateMatrixWorld(true);
   const box=new T.Box3().setFromObject(B.bot),c=box.getCenter(new T.Vector3()),sz=box.getSize(new T.Vector3());B.bot.position.sub(c);const by=B.bot.position.y;
   const cam=new T.PerspectiveCamera(30,W/H,.1,200);cam.position.set(0,sz.y*.06,Math.max(sz.y,sz.x)*2.6);cam.lookAt(0,0,0);
-  let ry=-.35,v=.004,drag=null,t0=performance.now();
-  host.addEventListener("pointerdown",e=>{drag={x:e.clientX,ry};host.setPointerCapture(e.pointerId)});
-  host.addEventListener("pointermove",e=>{if(drag){ry=drag.ry+(e.clientX-drag.x)*.012}});
-  const up=()=>{drag=null};host.addEventListener("pointerup",up);host.addEventListener("pointercancel",up);
+  /* 意見回饋 534（開發者）：3D 人物除了轉動，也能放大縮小（兩指捏合、滑鼠滾輪、＋／－ 按鈕） */
+  let ry=-.35,v=.004,drag=null,t0=performance.now(),zf=1,pin=null;const D0=Math.max(sz.y,sz.x)*2.6,ptrs=new Map();
+  const setZ=z=>{zf=Math.max(.6,Math.min(3.2,z));cam.position.set(0,sz.y*.06,D0/zf);cam.lookAt(0,sz.y*.08*(zf-1)/2.2,0)};
+  host.addEventListener("pointerdown",e=>{ptrs.set(e.pointerId,{x:e.clientX,y:e.clientY});try{host.setPointerCapture(e.pointerId)}catch(_){}
+    if(ptrs.size===2){const[a,c2]=[...ptrs.values()];pin={d:Math.hypot(a.x-c2.x,a.y-c2.y)||1,z:zf};drag=null}else if(ptrs.size===1)drag={x:e.clientX,ry}});
+  host.addEventListener("pointermove",e=>{if(ptrs.has(e.pointerId))ptrs.set(e.pointerId,{x:e.clientX,y:e.clientY});
+    if(pin&&ptrs.size>=2){const[a,c2]=[...ptrs.values()];setZ(pin.z*Math.hypot(a.x-c2.x,a.y-c2.y)/pin.d)}else if(drag){ry=drag.ry+(e.clientX-drag.x)*.012}});
+  const up=e=>{ptrs.delete(e.pointerId);if(ptrs.size<2)pin=null;if(!ptrs.size)drag=null};host.addEventListener("pointerup",up);host.addEventListener("pointercancel",up);
+  host.addEventListener("wheel",e=>{e.preventDefault();setZ(zf*Math.exp(-e.deltaY*.0015))},{passive:false});
+  {const zb=document.createElement("div");zb.style.cssText="position:absolute;right:8px;bottom:8px;display:flex;flex-direction:column;gap:6px;z-index:2";
+    for(const[l,f]of[["＋",1.25],["－",.8]]){const x=document.createElement("button");x.type="button";x.textContent=l;x.setAttribute("aria-label",f>1?"放大":"縮小");x.style.cssText="width:34px;height:34px;border-radius:50%;border:1px solid rgba(0,0,0,.15);background:rgba(255,250,240,.92);font:700 18px/1 sans-serif;color:#5a4630";
+      x.addEventListener("pointerdown",e=>e.stopPropagation());x.onclick=e=>{e.stopPropagation();vibrate(5);setZ(zf*f)};zb.append(x)}host.append(zb)}
   const loop=()=>{if(!host.isConnected){try{r.dispose()}catch(e){}return}const t=(performance.now()-t0)/1000;if(!drag)ry+=v;root.rotation.y=ry;B.bot.position.y=by+Math.sin(t*1.6)*sz.y*.012;
     try{if(XQBot3D.faceApply)XQBot3D.faceApply(B,"open",(t%4)<.12,false)}catch(e){}r.render(sc,cam);requestAnimationFrame(loop)};loop()})}
 /* 意見回饋 400：石桌往事的人物偶爾路過線上大廳（每 15 分鐘換一批，大約六成的時候會有 1～2 位），點他看人物、可以跟他下一盤；難度照故事裡的設定 */
@@ -4577,7 +4588,7 @@ function CpuGame(v,practicePage,mode){
     const o={flip:st.human==="b",last,sel,targets:sel>=0?st.legal.filter(([f])=>f===sel).map(x=>x[1]):[],hint:st.hint?[st.hint.f,st.hint.t]:pHint&&pHint.n===st.moves.length?(pHint.t==null?[pHint.f]:[pHint.f,pHint.t]):null,check:st.check,fx:true};const LVB=lvPlayOf(st);hb.classList.toggle("lvblind",!!(LVB&&LVB.lvp.blind&&!st.result));if(LVB&&LVB.lvp.blind&&!st.result){bd.draw(st.board.map(()=>null),o);return}bd.draw(st.board,o);
     legendCheck(st);legendBadge(v.querySelector("#bbox"),!parkOn()&&legendVisit(st).length>0);
     const JS0=st.journey&&/^(b2)?h\d\d$/.test(st.journey)?jFindStage(st.journey):null,JOPP=LVB&&LVB.lvp.opp&&JCHAR[LVB.lvp.opp]?LVB.lvp.opp:String(st.journey||"").startsWith("char:")&&JCHAR[st.journey.slice(5)]?st.journey.slice(5):null;
-    parkDraw(v.querySelector("#bbox"),bd,st.board,o,{tap,bg:JS0?`data/park/j${JR[JS0.r].k}_360.webp`:null,bgName:JS0?"雲河鎮・"+JR[JS0.r].name:null,arena:st.arena||null,gate:st.journey&&!st.arena?(k=>({img:["data/parkgate/"+k+".webp","data/park/"+k+"_360.webp"],icon:"🍃",title:"走進"+parkName(k),sub:"石桌就在前面",bg:"#2b2a22",qk:k}))(store.get("era","classic")):(!st.journey&&!st.arena&&!st.practice&&!st.net?{img:["data/parkgate/cpu.webp","data/parkgate/"+store.get("era","classic")+".webp"],icon:"🪶",title:"茅廬對弈",sub:"臥龍先生擺好棋盤了",bg:"#1f2a22"}:null),watchers:legendVisit(st),thinking:!!st.thinking||(!st.result&&st.turn!==st.human),botSide:st.human==="r"?"b":"r",result:st.result?(st.result.w||"draw"):null,hint:o.hint,
+    parkDraw(v.querySelector("#bbox"),bd,st.board,o,{tap,bg:JS0?`data/park/j${JR[JS0.r].k}_360.webp`:null,bgName:JS0?"雲河鎮・"+JR[JS0.r].name:innActor(st.journey)?"🏮 雲河驛站":null,   /* 意見回饋 530：在驛站下棋，標籤寫驛站，不是朝代園林 */arena:st.arena||null,gate:st.journey&&!st.arena?(k=>({img:["data/parkgate/"+k+".webp","data/park/"+k+"_360.webp"],icon:"🍃",title:"走進"+parkName(k),sub:"石桌就在前面",bg:"#2b2a22",qk:k}))(store.get("era","classic")):(!st.journey&&!st.arena&&!st.practice&&!st.net?{img:["data/parkgate/cpu.webp","data/parkgate/"+store.get("era","classic")+".webp"],icon:"🪶",title:"茅廬對弈",sub:"臥龍先生擺好棋盤了",bg:"#1f2a22"}:null),watchers:legendVisit(st),thinking:!!st.thinking||(!st.result&&st.turn!==st.human),botSide:st.human==="r"?"b":"r",result:st.result?(st.result.w||"draw"):null,hint:o.hint,
       opp:(JOPP&&JCHAR_LOOK(JOPP,st.human==="r"?"b":"r"))||(innActor(st.journey)?ACTOR_LOOK(innActor(st.journey).id,st.human==="r"?"b":"r"):null)||(st.arena&&CHAMP_LOOK(st.arena,st.human==="r"?"b":"r"))||(N?NPC_LOOK(N,st.human==="r"?"b":"r"):PIKA_LOOK(st.human==="r"?"b":"r")),oppHello:JOPP?JCHAR[JOPP].hi:st.arena&&ARENA[st.arena]?ARENA[st.arena].hi:N?N.say:"我是 Pikafish，請多指教。",oppWin:JOPP?JCHAR[JOPP].win:st.arena&&ARENA[st.arena]?ARENA[st.arena].win:N?N.win:"將死了，再接再厲。",oppLose:JOPP?JCHAR[JOPP].lose:st.arena&&ARENA[st.arena]?ARENA[st.arena].lose:N?N.lose:"你贏了，佩服佩服！"});
     if(N&&NPC_HI!==st.id){NPC_HI=st.id;if(pk0&&!st.moves.length)setTimeout(()=>{try{if(PARK&&PARK.host===hb)PARK.v.oppSay(N.say,2.6)}catch(e){}},900)}}
   let lastN=null;   // 上一次畫的步數：步數剛好多一步才秀開局名（重新整理、開新局不秀）
@@ -4599,7 +4610,7 @@ function CpuGame(v,practicePage,mode){
     const lv=st.levels[st.level-1]||{},me=st.human,bot=opp(me);
     const CR=st.cpuRate||{},CB=st.car||{},cpts=st.reward?(CB.table||[])[st.level-1]||0:0;paintSeg(modeOf(st));if(!st.ranked&&st.level&&!st.practice)store.set("cpuLevel",st.level);
     // 對手列右邊：目前的段位／難度，點了開「開新局」選單（換難度、換紅黑）
-    const JP=(()=>{const L=lvPlayOf(st),k=(L&&L.lvp.opp)||(String(st.journey||"").startsWith("char:")?st.journey.slice(5):null);return k&&JCHAR[k]?{...JCHAR[k],say:JCHAR[k].hi,img:`data/journey/char_${k}_idle.webp`}:innActor(st.journey)})(),NP=parkNpcOf(st)||JP,top=(NP?npcHTML(bot,NP,(JP&&NP===JP?"石桌往事・":"園子裡的路人棋友・")+(lv.desc||"")):playerHTML(bot,st.arena&&ARENA[st.arena]?`🏯 ${ARENA[st.arena].name}`:"Pikafish",st.arena&&ARENA[st.arena]?`${eraLabel(st.arena)}擂主・${st.arena==="classic"?"職業頂尖（全力的前一級）":"強度跟著你的段位"}`:st.ranked?"積分挑戰・強度跟著你的段位":st.reward?`🚗 獎勵模式・贏了 +${cpts} 點`:lv.desc||"自選難度"))+
+    const JP=(()=>{const L=lvPlayOf(st),k=(L&&L.lvp.opp)||(String(st.journey||"").startsWith("char:")?st.journey.slice(5):null);return k&&JCHAR[k]?{...JCHAR[k],say:JCHAR[k].hi,img:`data/journey/char_${k}_idle.webp`}:innActor(st.journey)})(),NP=parkNpcOf(st)||JP,top=(NP?npcHTML(bot,NP,(JP&&NP===JP?(NP.name&&NP.name===(innActor(st.journey)||{}).name?"驛站的棋友・":"石桌往事・"):"園子裡的路人棋友・")+(lv.desc||""))   /* 意見回饋 530：驛站的對手不是「石桌往事」 */:playerHTML(bot,st.arena&&ARENA[st.arena]?`🏯 ${ARENA[st.arena].name}`:"Pikafish",st.arena&&ARENA[st.arena]?`${eraLabel(st.arena)}擂主・${st.arena==="classic"?"職業頂尖（全力的前一級）":"強度跟著你的段位"}`:st.ranked?"積分挑戰・強度跟著你的段位":st.reward?`🚗 獎勵模式・贏了 +${cpts} 點`:lv.desc||"自選難度"))+
       `<button class="cpu-chip${st.ranked?" rk":""}" aria-label="${st.ranked?"段位與開新局":"換難度"}"><span><b>${st.ranked?"🏅 "+esc(st.rkName||CR.rank||""):(st.reward?"🚗 ":"")+"第 "+st.level+" 級"}</b><small>${st.ranked?(CR.pts||0)+" 分":st.reward?(CB.pts||0).toLocaleString()+" 點":esc(lv.name||"")}</small></span><i>›</i></button>`;
     const pT=v.querySelector("#pTop");if(pT.dataset.h!==top){pT.dataset.h=top;pT.innerHTML=top}
     const bt=playerHTML(me,"你",PLAYER[me]+(st.ranked&&CR.next?`・再 ${CR.toNext} 分升 ${CR.next}`:"")+(st.reward?`・🚗 ${(CB.pts||0).toLocaleString()} 點`:""));
