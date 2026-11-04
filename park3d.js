@@ -898,7 +898,7 @@
         veil._qmin=Math.min(9000,Math.max(4800,3200+String(Q.q).length*120));veil.style.pointerEvents="auto";veil.addEventListener("pointerdown",()=>{veil._qskip=true},{once:true})}
       const bg=veil.querySelector(".gt-bg");(function tryI(i){if(i>=imgs.length)return;const im=new Image();im.onload=()=>{bg.style.backgroundImage="url("+imgs[i]+")"};im.onerror=()=>tryI(i+1);im.src=imgs[i]})(0)}
     el.append(veil);
-    hint.textContent="點棋子走棋・點物件看介紹・拖曳轉頭・兩指縮放";el.append(hint);setTimeout(()=>hint.style.opacity=0,4500);
+    hint.textContent="點棋子走棋・點物件看介紹・拖曳轉頭・兩指縮放";el.append(hint);if(veil._qmin)hint.style.opacity=0;else setTimeout(()=>hint.style.opacity=0,4500);   /* 有名言的過場：操作提示等過場收掉才出現 */
     const EK=eraKey(),E=ERA[EK];
     el.style.background=E.mist;
     const sc=new T.Scene();sc.fog=new T.Fog(new T.Color(E.mist),70,320);
@@ -1242,7 +1242,7 @@
       furn.tick(s);rd.render(sc,cam)}
     // 第一次 draw 之後，等所有圖片（背景、道具、棋盤、棋子、Pikafish）都載好才淡入；最多等 6 秒
     let drawn=false,shown=false;const t0=performance.now();rd.domElement.style.opacity=0;rd.domElement.style.transition="opacity .35s";
-    const shownCb=[];const reveal=()=>{if(shown)return;shown=true;rd.domElement.style.opacity=1;veil.style.opacity=0;setTimeout(()=>veil.remove(),400);shownCb.splice(0).forEach(f=>{try{f()}catch(e){}})};
+    const shownCb=[];const reveal=()=>{if(shown)return;shown=true;rd.domElement.style.opacity=1;veil.style.opacity=0;setTimeout(()=>veil.remove(),400);if(veil._qmin){hint.style.opacity=1;setTimeout(()=>hint.style.opacity=0,4500)}shownCb.splice(0).forEach(f=>{try{f()}catch(e){}})};
     const waitShow=()=>{if(stopped||shown)return;const mn=veil._qskip?1200:Math.max(1200,veil._qmin||0),dt=performance.now()-t0;if((drawn&&!inflight.size&&dt>mn)||dt>Math.max(6000,veil._qskip?0:mn+2000)){requestAnimationFrame(()=>requestAnimationFrame(reveal));return}setTimeout(waitShow,80)};
     fit();placeCam();requestAnimationFrame(frame);setTimeout(waitShow,80);
     const onRs=()=>{if(el.style.display!=="none")fit()};window.addEventListener("resize",onRs);
