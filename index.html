@@ -240,6 +240,12 @@ html[data-era=qin] .me-win{--oct:inset(0 round 8px)}html[data-era=song] .me-win{
 .me-name b{font:900 24px/1.05 var(--serif);letter-spacing:.08em;color:var(--ink)}.me-name small{font-size:12.5px;color:var(--muted);max-height:150px;overflow:hidden}
 .me-seal{position:absolute;right:18px;top:20px;z-index:3;width:60px;height:60px;padding:3px;border-radius:8px;display:flex;align-items:center;justify-content:center;writing-mode:vertical-rl;font:900 16px/1.05 var(--serif);color:var(--accent);background:color-mix(in srgb,var(--accent) 8%,var(--card));border:3px solid var(--accent);box-shadow:inset 0 0 0 2px var(--card),inset 0 0 0 3.5px var(--accent);transform:rotate(-4deg);animation:meStamp .45s cubic-bezier(.3,1.4,.5,1) .35s both;cursor:pointer}
 .me-seal.q{font-size:20px}
+/* 意見回饋 568：①花窗碰到屋簷 ②官階（官印＋九層塔）放一起 ③名字匾額改成橫匾，掛在月洞門正上方 */
+.me-name{left:50%;top:10px;transform:translateX(-50%);writing-mode:horizontal-tb;flex-direction:row;align-items:baseline;gap:8px;max-height:none;max-width:78%;min-width:0;padding:8px 22px;white-space:nowrap}
+.me-name b{font-size:21px;letter-spacing:.12em}.me-name small{font-size:12px;max-height:none;overflow:hidden;text-overflow:ellipsis}
+.me-name:active{transform:translateX(-50%) scale(.95)}
+.rkx{display:flex;align-items:center;gap:10px}.mr .me-seal{position:static;flex:none;animation:none;transform:rotate(-4deg)}
+.mws{align-items:end}.mw{justify-content:flex-end}
 .me-act{position:absolute;bottom:18px;z-index:3;width:56px;height:56px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;border-radius:12px;border:2px solid color-mix(in srgb,var(--trim,var(--accent)) 70%,var(--line));background:color-mix(in srgb,var(--card) 88%,transparent);font:11px var(--sans);color:var(--ink);box-shadow:0 2px 6px color-mix(in srgb,var(--bar) 18%,transparent);transition:transform .12s;cursor:pointer}
 .me-act.l{left:18px}.me-act.r{right:18px}.me-act:active,.me-name:active,.me-seal:active{transform:scale(.92)}
 .me-act em{font:900 18px/1 var(--serif);font-style:normal;color:var(--accent)}
@@ -287,7 +293,7 @@ html[data-era=song] .me-stage{background:url(data/me_song/stage_bg.webp) center 
 html[data-era=song] .me-stage .me-halo,html[data-era=song] .me-stage .me-win{display:none}
 html[data-era=song] .me-ped{height:58px;width:250px;bottom:18px;clip-path:none;background:url(data/me_song/pedestal.webp) center bottom/contain no-repeat}
 html[data-era=song] .me-ped::before{display:none}
-html[data-era=song] .me-name{clip-path:none;background:url(data/me_song/name_plaque.webp) center/100% 100% no-repeat;padding:22px 12px;min-width:56px}
+html[data-era=song] .me-name{clip-path:none;background:url(data/me_song/name_plaque_h.webp) center/100% 100% no-repeat;padding:10px 30px 11px}
 html[data-era=song] .me-name::before{display:none}
 html[data-era=song] .me-name b{color:#2A2118}html[data-era=song] .me-name small{color:#6B5A48}
 html[data-era=song] .me-seal{border:0;box-shadow:none;background:url(data/me_song/seal.webp) center/100% 100% no-repeat;color:#B3261E;width:64px;height:64px;padding:8px}
@@ -302,7 +308,7 @@ html[data-era=song] .ta::before{filter:grayscale(1);opacity:.35}
 html[data-era=song] .ta::after{clip-path:inset(calc(100% - var(--lit,11%)) 0 0 0);transition:clip-path .9s ease-out}
 html[data-era=song] .hx{clip-path:none;background:url(data/me_song/hex_badge.webp) center/100% 100% no-repeat}
 html[data-era=song] .hx::before{display:none}
-html[data-era=song] .mwall{background:url(data/me_song/wall.webp) center top/cover no-repeat;border:0;padding-top:44px}
+html[data-era=song] .mwall{background:url(data/me_song/wall.webp) center top/cover no-repeat;border:0;padding-top:66px}
 html[data-era=song] .mwall::before{display:none}
 /* 意見回饋 565（美術總監＋RPG 專家）：窗裡不放圖示，改放「窗後的一小景」（Gemini 畫的 view_*），用窗形遮罩（mask_*，比窗洞外擴 3%）裁切，窗框蓋在最上層、影子落進窗洞上緣做出深度；
    空的收藏格窗內起霧，秘境棋友、珍品照收集進度散霧（--mist） */
@@ -693,7 +699,7 @@ html[data-era=ming] .topbar,html[data-era=qing] .topbar{border-bottom-width:4px}
       if(!window.caches)return go();caches.keys().then(function(ks){return Promise.all(ks.filter(function(k){return k.indexOf("xqlab-app-")===0}).map(function(k){return caches.delete(k)}))})
         .then(function(){return navigator.serviceWorker&&navigator.serviceWorker.getRegistration()}).then(function(r){return r&&r.update()}).catch(function(){}).then(go)}};setTimeout(chk,4000)})();
 </script>
-<script>window.XQ_OFFLINE=true;window.XQ_BUILD="20261105-0452";</script>
+<script>window.XQ_OFFLINE=true;window.XQ_BUILD="20261105-0505";</script>
 <script src="core.js"></script>
 <script src="engine.js"></script>
 <script src="local.js"></script>
@@ -4017,10 +4023,9 @@ function Me(v){Profile(v);setTop("🙂 我的角色","#/");setTabs(true,"#/");co
   d.innerHTML=`<section class="me-stage" id="meSt"><div class="me-halo"></div><div class="me-win"></div><div class="me-glow"></div><div class="me-ped"></div>
       <button class="me-fig" id="meFig2" aria-label="看我的 3D 角色"><img src="${meImg()}" ${meImgTag(myStyle(),mySex())} alt="" onerror="this.remove()"></button>
       <button class="me-name" id="meNm" aria-label="改名"><b>${meName()}</b><small>${esc(myName()||"")}</small></button>
-      <button class="me-seal${[...R.name].length===4?" q":""}" id="meSeal" aria-label="官階 ${esc(R.name)}">${esc(R.name)}</button>
       <button class="me-act l" id="meOb"><em>⇄</em>換角色</button>
       <button class="me-act r" id="mePc"><span class="pc ${red?"r":"b"}">${esc(pc)}</span>換棋子</button></section>
-    <section class="mr"><button id="meRk" aria-label="官階 ${esc(R.name)}"><span class="ta" style="--lit:${Math.round(((10-R.g)+(R.g>1?R.pc/100:0))/9*100)}%">${[1,2,3,4,5,6,7,8,9].map(t=>`<i${t===R.g?' class="on"':""} style="--n:${t-1};--f:${t>=R.g?100:t===R.g-1?R.pc:0}%"></i>`).join("")}</span><b>官階</b></button>
+    <section class="mr"><button id="meRk" aria-label="官階 ${esc(R.name)}"><span class="rkx"><span class="me-seal${[...R.name].length===4?" q":""}">${esc(R.name)}</span><span class="ta" style="--lit:${Math.round(((10-R.g)+(R.g>1?R.pc/100:0))/9*100)}%">${[1,2,3,4,5,6,7,8,9].map(t=>`<i${t===R.g?' class="on"':""} style="--n:${t-1};--f:${t>=R.g?100:t===R.g-1?R.pc:0}%"></i>`).join("")}</span></span><b>官階</b></button>
       <button id="meXp" aria-label="修為 Lv ${I.L} ${esc(I.title)}"><span class="jr"><span class="jp" style="--pp:${xp}%"></span><span class="jh"><b>Lv ${I.L}</b><small>${esc(I.title)}</small></span></span><b>修為</b></button></section>
     <section class="mx"><div class="hx"><span>${ETIMG("f_idea","","💡")}</span><b>${H.left+(H.bonus||0)}<small>提示棋</small></b></div>
       <div class="hx"><span>⭐</span><b>${star}<small>雲河棋路</small></b></div>
@@ -4030,7 +4035,7 @@ function Me(v){Profile(v);setTop("🙂 我的角色","#/");setTabs(true,"#/");co
   const on=(id,fn)=>{const e=v.querySelector(id);if(e)e.onclick=()=>{vibrate(5);fn(e)}};
   on("#meFig2",f=>{const st=v.querySelector("#meSt");if(st){st.classList.remove("tap");void st.offsetWidth;st.classList.add("tap")}const im=f.querySelector("img");setTimeout(()=>meFigOpen(im&&im.src),220)});
   on("#meNm",()=>nameSheet(false));on("#meOb",()=>onboard(true));on("#mePc",()=>{store.set("setTab","bot");location.hash="#/settings"});
-  on("#meSeal",rankSheet);on("#meRk",rankSheet);on("#meXp",xpSheet);
+  on("#meRk",rankSheet);on("#meXp",xpSheet);
   v.querySelectorAll(".mw[data-c]").forEach(b=>b.onclick=()=>{const o=circ&&circ.querySelector(`[data-c="${b.dataset.c}"]`);if(o)o.click()})}
 function Profile(v){setTop("🎒 棋童資料","#/adventure");setTabs(true,"#/");v.className="view";const I=xpInfo(),H=hintInfo(),B=bag(),Sx=jSecrets(),S=jStars(),Js=jStages(),L=legendState(),star=Js.reduce((a,x)=>a+(S[x.id]||0),0);
   const card=x=>`<div class="bcard ${x.rarity}"><div class="bic">${TIMG(`data/treasure/board_${x.rarity==="broken"?"broken":x.rarity==="rare"?"rare":"normal"}.webp`,x.rarity==="broken"?"🧩":x.rarity==="rare"?"📜":"♟")}</div><b>${esc(x.name)}</b><small style="color:${RAR[x.rarity][1]}">${RAR[x.rarity][0]}</small><small class="muted">${esc(x.from)}・${new Date(x.at).toLocaleDateString()}</small>
