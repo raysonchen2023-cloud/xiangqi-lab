@@ -268,6 +268,10 @@ html[data-era=ming] .topbar,html[data-era=qing] .topbar{border-bottom-width:4px}
 .ckfx .seal.s4{font-size:.22em;left:calc(50% + 5.4em)}
 /* 意見回饋 416：開局特效——墨帶一抹、金色書法「開局」由左到右像毛筆寫出來，右邊蓋一方「紅先／黑先」朱印 */
 .pkname{position:absolute;top:8px;left:50%;transform:translateX(-50%);z-index:6;pointer-events:none;padding:3px 14px;border-radius:99px;background:rgba(28,18,10,.62);color:#fbeed4;font:800 14px/1.5 var(--serif);letter-spacing:.14em;white-space:nowrap;box-shadow:0 2px 6px rgba(0,0,0,.25)}
+#preov{position:fixed;inset:0;z-index:9999;display:flex;align-items:center;justify-content:center;background:var(--bg,#F6EFE2);padding:24px max(24px,env(safe-area-inset-left,0px));transition:opacity .4s}#preov.out{opacity:0}
+.pre-in{width:100%;max-width:340px;text-align:center}.pre-t{font:900 30px var(--serif);letter-spacing:.18em;color:var(--accent,#9E1B15)}.pre-s{margin:10px 0 18px;font-size:14px;line-height:1.7;color:var(--muted,#7a6a58)}
+.pre-bar{height:10px;border-radius:99px;background:color-mix(in srgb,var(--accent,#9E1B15) 15%,transparent);overflow:hidden}.pre-bar i{display:block;height:100%;width:0;border-radius:inherit;background:var(--accent,#9E1B15);transition:width .2s}
+.pre-n{margin-top:10px;font:600 15px/1.4 ui-monospace,monospace;color:var(--text,#2a2018)}.pre-h{margin-top:14px;font-size:12.5px;line-height:1.6;color:var(--muted,#7a6a58)}.pre-skip{margin-top:18px;border:1px solid var(--line,#d8c8b0);background:none;border-radius:99px;padding:8px 16px;font:inherit;font-size:13px;color:var(--muted,#7a6a58)}
 .kjfx{position:fixed;z-index:64;pointer-events:none;font-family:var(--serif);font-weight:900;animation:kjout 2.4s ease forwards}
 .kjfx .band{position:absolute;left:-4%;right:-4%;top:50%;height:1.9em;transform:translateY(-50%) scaleX(0);transform-origin:left center;border-radius:50% 46% 52% 44%/60% 42% 58% 40%;
   background:radial-gradient(ellipse at 50% 50%,#140c06f2 0 55%,#140c06c0 72%,#140c0600 100%);animation:kjband .45s cubic-bezier(.3,.8,.3,1) forwards}
@@ -525,7 +529,7 @@ html[data-era=ming] .topbar,html[data-era=qing] .topbar{border-bottom-width:4px}
       if(!window.caches)return go();caches.keys().then(function(ks){return Promise.all(ks.filter(function(k){return k.indexOf("xqlab-app-")===0}).map(function(k){return caches.delete(k)}))})
         .then(function(){return navigator.serviceWorker&&navigator.serviceWorker.getRegistration()}).then(function(r){return r&&r.update()}).catch(function(){}).then(go)}},4000)})();
 </script>
-<script>window.XQ_OFFLINE=true;window.XQ_BUILD="20261104-1000";</script>
+<script>window.XQ_OFFLINE=true;window.XQ_BUILD="20261104-1015";</script>
 <script src="core.js"></script>
 <script src="engine.js"></script>
 <script src="local.js"></script>
@@ -2683,12 +2687,12 @@ function Settings(v){
         <label class="row" style="justify-content:space-between"><span><b>顯示 3D 象棋小人</b><br><span class="muted">圓滾滾的棋子小人，跟著朝代換造型</span></span><input type="checkbox" class="sw" id="botT" ${botOn()?"checked":""}></label>
         <div style="border-top:1px solid var(--line);margin:8px 0"></div>
         <div class="row" style="gap:10px"><b style="white-space:nowrap">大小</b><input type="range" id="botSz" min="0.6" max="2" step="0.05" value="${store.get("botSize",.7)}" style="flex:1"><b id="botSzV" style="width:46px;text-align:right">${Math.round(store.get("botSize",.7)*100)}%</b></div></div>
-      <div class="sec-t">對手 Pikafish 的造型</div><div class="card"><div class="row" style="gap:8px">${[["","🤓 原本","戴眼鏡的文官"],["wolong","♟ 冷面國手","諸葛孔明為底的青年棋手"]].map(([k,t,d])=>`<button class="btn ${store.get("pikaLook","")===k?"":"ghost "}pkl" data-v="${k}" style="flex:1;line-height:1.35"><b>${t}</b><br><small>${d}</small></button>`).join("")}</div><p class="muted" style="margin:8px 0 0;font-size:12.5px">挑戰電腦、在園子裡下棋時坐在對面的那一位。</p></div>
       <div class="sec-t"><span>怎麼跟<span class="botN">${BOTN()}</span>互動</span></div><div class="card" style="line-height:2">
         <div class="row" style="justify-content:space-between"><span>👆 點一下</span><span class="muted">表演一個動作</span></div>
         <div class="row" style="justify-content:space-between"><span>✌ 點兩下</span><span class="muted">出去散步（停放時）</span></div>
         <div class="row" style="justify-content:space-between"><span>✋ 長按</span><span class="muted">問<span class="botN">${BOTN()}</span>問題</span></div>
-        <div class="row" style="justify-content:space-between"><span>🤏 拖動</span><span class="muted">放到任何地方</span></div></div>
+        <div class="row" style="justify-content:space-between"><span>🤏 拖動</span><span class="muted">放到任何地方</span></div>
+        <div class="row" style="justify-content:space-between;gap:10px"><span style="white-space:nowrap">👆👆👆 點三下</span><span class="muted" style="text-align:right">鞠躬去休息、隱藏起來；想叫他回來，打開上面的「顯示 3D 象棋小人」</span></div></div>
       <div class="row" style="gap:8px;margin-top:10px"><button class="btn" id="askB" style="flex:1">💬 問<span class="botN">${BOTN()}</span></button><button class="btn ghost" id="botHome" style="flex:1">↩ 回到預設位置</button></div></div>
     <div data-pane="more"><div class="sec-t" style="margin-top:4px">我的資料</div><div class="items" style="padding:0">
       <button class="item" id="nm"><span class="lb">✏</span><span class="tx"><b>我的名字</b><span id="nmS"></span></span><span class="muted">›</span></button></div>
@@ -2778,8 +2782,6 @@ function Settings(v){
       for(let i=0;i<8;i++){await new Promise(z=>setTimeout(z,2000));let x=null;try{x=JSON.parse(await XQNet.ctlAck(3000))}catch(e){}
         if(x&&x.n===n){toast(x.ok?`✅ 已重置 ${x.bots} 位虛擬玩家（舊資料存在電腦：${x.arch}）`:"❌ "+x.why,5000);return}}
       toast("電腦沒有回覆：虛擬玩家的程式可能沒在跑")}catch(e){toast(e.message)}},"重置")}
-  v.querySelectorAll(".pkl").forEach(b=>b.onclick=()=>{store.set("pikaLook",b.dataset.v);v.querySelectorAll(".pkl").forEach(x=>x.classList.toggle("ghost",x!==b));
-    try{if(typeof PARK!=="undefined"&&PARK){PARK.v.destroy();PARK=null}}catch(e){}PIKA_META=null;loadPikaMeta();toast(b.dataset.v?"♟ 對手換成冷面國手了":"🤓 對手換回原本的造型")});   /* 意見回饋 418 */
   {const ab=v.querySelector("#askB");if(ab)ab.onclick=()=>askSheet();const bh=v.querySelector("#botHome");if(bh)bh.onclick=()=>{store.set("botPos",null);if(BOT){BOT.stop();BOT=null}syncBot();toast("小帥回到預設位置了")}}{const bt=v.querySelector("#botT");if(bt)bt.onchange=()=>{store.set("bot3d",bt.checked);syncBot();if(bt.checked)toast("小人出來了！點它會表演")};const sz=v.querySelector("#botSz"),szv=v.querySelector("#botSzV");if(sz)sz.oninput=()=>{store.set("botSize",+sz.value);szv.textContent=Math.round(sz.value*100)+"%";if(BOT&&BOT.setScale)BOT.setScale(+sz.value)}}{const ct=v.querySelector("#cityT");if(ct)ct.onchange=()=>{store.set("showCity",ct.checked);if(ct.checked)fetchCity(true);else{MY_CITY="";if(window.XQNet&&XQNet.refresh)XQNet.refresh()}}}v.querySelector("#nm").onclick=()=>nameSheet(false);v.querySelector("#fb").onclick=()=>feedbackSheet();{const fx=v.querySelector("#fxh");if(fx)fx.onclick=()=>fixHistory()}v.querySelector("#sh").onclick=shareSheet;const cn=v.querySelector("#cn");if(cn)cn.onclick=connectSheet;const fa=v.querySelector("#fa");if(fa)fa.onclick=()=>location.hash="#/fbadmin";
   paint();return{}}
 
@@ -3166,7 +3168,7 @@ window.XQ_BOTLOOK=()=>{let p=0;try{p=(JSON.parse(localStorage.getItem("xq_cpuRat
 // 電腦對手 Pikafish：瘦長版的棋子人、戴眼鏡，執哪一方身上就是帥或將；帽子、官服跟著目前朝代（意見回饋 228）
 // 意見回饋 249：Pikafish 設定檔比公園晚到時，到了馬上換成手繪版（公園那邊會先藏著，不先顯示舊的 3D 版）
 /* 意見回饋 418：Pikafish 有兩款造型——原本的文官（data/pika/）、臥龍（data/pika2/，綸巾鶴氅羽扇）；設定裡選 */
-const PIKA_DIR=()=>store.get("pikaLook","")==="wolong"?"data/pika2/":"data/pika/";
+const PIKA_DIR=()=>"data/pika2/";   /* 意見回饋 418：開發者說「Pikafish＝冷面國手」，挑戰電腦的 Pikafish 一律是冷面國手，不再有切換 */
 let PIKA_META=null,PIKA_META_DIR=null;function loadPikaMeta(){const dir=PIKA_DIR();return fetch(dir+"pika.json").then(r=>r.json()).then(j=>{PIKA_META=j;PIKA_META_DIR=dir;try{const a=typeof PARK!=="undefined"&&PARK&&PARK.last;
   if(a&&a.ex.opp&&a.ex.opp.thin&&!a.ex.opp.sprite){a.ex.opp=PIKA_LOOK(a.ex.opp.p==="帥"?"r":"b");PARK.v.draw(a.board,a.o,a.ex)}}catch(e){}}).catch(()=>{})}loadPikaMeta();
 const TIMG=(src,emo)=>`<img class="ti" src="${src}" alt="" onerror="this.replaceWith(document.createTextNode('${emo}'))">`;
@@ -3198,7 +3200,7 @@ function parkNpcOf(st){if(!st||st.journey!=="park"||st.arena)return null;const r
   let h=0;for(const c of String(st.id||""))h=(h*31+c.charCodeAt(0))>>>0;return PARK_NPC[h%PARK_NPC.length]}
 const npcHTML=(side,n,sub)=>`<div class="av ${side} npc">${esc(npcPc(n,side))}<img src="data/npc/${n.id}.webp" alt="" onerror="this.remove()"></div><div class="nm"><b>${esc(n.name)}</b><span>${esc(sub||"")}</span></div>`;
 let NPC_HI=null;   /* 已經打過招呼的那盤園子（同一個 3D 園子裡再下一盤時，新的對手開口打招呼） */
-const PIKA_LOOK=side=>({p:side==="r"?"帥":"將",e:store.get("era","classic"),g:1,thin:true,wl:store.get("pikaLook","")==="wolong",sprite:PIKA_META?PIKA_META_DIR:null,spriteMeta:PIKA_META});
+const PIKA_LOOK=side=>({p:side==="r"?"帥":"將",e:store.get("era","classic"),g:1,thin:true,wl:true,sprite:PIKA_META?PIKA_META_DIR:null,spriteMeta:PIKA_META});
 // 公園棋盤的朝代造型（意見回饋 216）：跟棋盤模式同一套底圖、格線色、棋子底圖、字色、字形
 function parkLook(){const k=store.get("era","classic"),e=curEra(),T=boardTheme(e?"auto":"wood3d"),bk=BOARD_IMG[k]?k:null;
   // 字形晚到（第一次切到這個朝代）：拿上一次的參數重畫公園棋盤，棋子字面才會換成朝代字形（之前這裡什麼都沒做，要等走下一步才換）
@@ -3952,7 +3954,7 @@ function showChat(text,mine,name,at){const d=document.createElement("div");d.cla
 // 3D 象棋小人（意見回饋 159）：在畫面上自由走動、做手勢；開發者預設開、玩家預設關，設定「其他」可以切換
 const botPc=()=>{const c=store.get("botPiece","帥");return typeof c==="string"&&c.length===1&&"帥仕相俥傌炮兵將士象車馬砲卒".includes(c)?c:"帥"},BOTN=()=>"小"+({俥:"車",傌:"馬",砲:"炮"}[botPc()]||botPc());
 let BOT=null,botBusy=false;const botOn=()=>store.get("bot3d",true);
-window.addEventListener("xq-bot-hide",()=>{store.set("bot3d",false);syncBot();toast("小帥先休息了。到「設定 → 🤖 小人」打開「顯示象棋小人」就會回來")});   // 意見回饋 167：預設打開
+window.addEventListener("xq-bot-hide",()=>{store.set("bot3d",false);syncBot();toast("小帥先休息了。到「設定」打開「顯示 3D 象棋小人」就會回來")});   // 意見回饋 167：預設打開
 async function syncBot(){if(botBusy)return;botBusy=true;try{if(botOn()&&!BOT){await loadScript(OFF?"three.min.js":"/m/three.min.js");await loadScript((OFF?"bot3d.js":"/m/bot3d.js")+"?v="+encodeURIComponent(window.XQ_BUILD||""));if(botOn()&&window.XQBot3D)BOT=window.XQBot3D.start()}
   else if(!botOn()&&BOT){BOT.stop();BOT=null}}catch(e){}botBusy=false}
 setTimeout(syncBot,0);   // 意見回饋 164：一打開就載入，不要等
@@ -4273,23 +4275,36 @@ function askSheet(){sheet("🤖 問"+BOTN(),b=>{
   b.querySelectorAll("#asug [data-q]").forEach(x=>x.onclick=()=>ask(x.dataset.q));setTimeout(()=>qi.focus(),200)})}
 // 同一個檔案同時被要求載入兩次時，第二次要等第一次載完（不然 three.js 還沒好，小人／公園 3D 就先跑了）
 const LOADING={};function loadScript(src){return LOADING[src]||(LOADING[src]=new Promise((ok,no)=>{const s=document.createElement("script");s.src=src;s.dataset.s=src;s.onload=ok;s.onerror=()=>{delete LOADING[src];s.remove();no(new Error("載入 "+src+" 失敗"))};document.head.append(s)}))}
-/* 意見回饋 422：第一次打開就先把常用的內容載好——App 閒下來 4 秒後，在背景把 3D 程式、你目前朝代的園子（環景、天空、地面、家具、座椅、棋子）、
-   圖示、入口圖、小帥和 Pikafish 的圖、書法字、故事文字一個一個抓進手機的快取（service worker 會存起來），之後點進去不用再等網路。
-   一次最多抓 3 個、低優先、錯了就跳過；換朝代時會再抓那個朝代的。只抓圖和程式，不會執行 */
-let WARM_ERA=null;function warmUp(){const e=store.get("era","classic");if(WARM_ERA===e)return;WARM_ERA=e;
-  const v="?v="+encodeURIComponent(window.XQ_BUILD||""),J=f=>(OFF?f:"/m/"+f),u=new Set();
-  [J("three.min.js"),J("park3d.js")+v,J("bot3d.js")+v,J("map3d.js")+v].forEach(x=>u.add(x));
-  [`data/park/${e}_360.webp`,`data/pano/${e}_sky.webp`,`data/pano/${e}_ground.webp`,`data/seat/${e}.webp`,`data/parkgate/${e}.webp`,"data/parkgate/online.webp",`data/arenagate/${e}.webp`,`data/inn/${e}.webp`,
-    "data/xs/xs.json","data/pika/pika.json","data/pika2/pika.json","data/glyphs/kill.json","data/glyphs/kaiju.json","data/park-legend.json","data/park-novel.json","data/map/yunhe_map.webp","data/stonetable/scene.webp",
-    `data/park3d/${e}/props.json`].forEach(x=>u.add(x));
-  for(let k=1;k<=8;k++)u.add("data/xs/walk_"+k+".webp");
-  for(const p of["idle","think","move","happy","sad","surprise"]){u.add("data/pika/"+p+".webp");if(store.get("pikaLook","")==="wolong")u.add("data/pika2/"+p+".webp")}
-  for(const n of new Set(Object.values(ICO_GO).concat(Object.values(ICO_EMO))))u.add(icoSrc(n));
-  if(PSET.has(e)){for(const sd of"rb")for(const k of"KABRNCP")u.add(`data/pset/${e}/${sd}${k}.webp`);u.add(`data/pset/${e}/board.webp`)}
-  const q=[...u];let run=0;const next=()=>{while(run<3&&q.length){const x=q.shift();run++;
-    fetch(x,{priority:"low"}).then(r=>{if(r.ok&&/props\.json$/.test(x))return r.json().then(j=>{Object.keys(j||{}).forEach(f=>{if(/^[a-z0-9_]+$/i.test(f))q.push(`data/park3d/${e}/${f}.webp`)})}).catch(()=>{})}).catch(()=>{}).finally(()=>{run--;next()})}};
-  next()}
-setTimeout(()=>{try{warmUp()}catch(e){}},4000);addEventListener("hashchange",()=>{if(WARM_ERA&&WARM_ERA!==store.get("era","classic"))setTimeout(()=>{try{warmUp()}catch(e){}},1500)});
+/* 意見回饋 422（開發者更正）：「所有東西載好，寧可一開始打開的時候顯示 LOADING，也不要在遊戲過程中卡頓」。
+   App 一開就讀 data/preload.json（建置時產生的清單：13 個朝代的園子、棋子、圖示、入口圖、擂主、路人、小帥、Pikafish、書法字、音效、關卡圖、3D 地圖…），
+   手機快取（xqlab-look，跟 service worker 同一個）裡還沒有的才下載，有缺的時候蓋一層全螢幕載入畫面（進度條＋百分比＋MB），全部好了才進首頁。
+   清單版本存在 localStorage：同一版已經全部載好就不再蓋畫面，只在背景補缺的。下載失敗的不卡住，記下來在背景重試。
+   載完之後：目前朝代的大圖先解碼（img.decode），3D 程式（three、bot3d、park3d、map3d）先載入，進園子就不用再等 */
+const PRE_KEY="preloadDone";
+async function preloadAll(){if(!OFF||!("caches" in window))return;
+  let M;try{M=await (await fetch("data/preload.json",{cache:"no-cache"})).json()}catch(e){return}
+  const done=store.get(PRE_KEY,null)===M.v;let c;try{c=await caches.open("xqlab-look")}catch(e){return}
+  const base=new URL(".",location.href).href,abs=u=>new URL(u,base).href;
+  const miss=[];await Promise.all(M.items.map(async([u,sz])=>{try{if(!(await c.match(abs(u))))miss.push([u,sz])}catch(e){miss.push([u,sz])}}));
+  const total=miss.reduce((t,x)=>t+x[1],0);let got=0,ov=null,bar=null,txt=null,fail=[];
+  if(miss.length&&!done){ov=document.createElement("div");ov.id="preov";
+    ov.innerHTML=`<div class="pre-in"><div class="pre-t">象棋研究室</div><div class="pre-s">${store.get(PRE_KEY,null)?"有新的圖和故事，正在搬進手機…":"第一次開啟，正在把棋盤、園子和故事都搬進手機…"}</div>
+      <div class="pre-bar"><i></i></div><div class="pre-n">準備中…</div><div class="pre-h">只有第一次和改版後需要等，之後打開就直接進去，下棋時不會再卡。</div><button class="pre-skip" type="button" hidden>先進去逛（背景繼續下載）</button></div>`;
+    document.body.append(ov);bar=ov.querySelector(".pre-bar i");txt=ov.querySelector(".pre-n");
+    setTimeout(()=>{const k=ov&&ov.querySelector(".pre-skip");if(k){k.hidden=false;k.onclick=()=>{ov.remove();ov=null}}},20000)}
+  const show=()=>{if(!ov)return;const p=total?Math.min(100,Math.floor(got*100/total)):100;bar.style.width=p+"%";txt.textContent=`${p}%　${(got/1048576).toFixed(1)} ／ ${(total/1048576).toFixed(1)} MB`};show();
+  const q=miss.slice();let run=0;
+  await new Promise(ok=>{if(!q.length)return ok();const next=()=>{if(!q.length&&!run)return ok();while(run<6&&q.length){const [u,sz]=q.shift();run++;
+    fetch(abs(u)).then(r=>{if(!r.ok)throw new Error(r.status);return c.put(abs(u),r)}).then(()=>{got+=sz}).catch(()=>{fail.push([u,sz]);got+=sz}).finally(()=>{run--;show();next()})}};next()});
+  if(!fail.length)store.set(PRE_KEY,M.v);
+  if(ov){txt.textContent="載好了";setTimeout(()=>{if(ov){ov.classList.add("out");setTimeout(()=>ov&&ov.remove(),400)}},250)}
+  /* 失敗的在背景再試三次 */
+  if(fail.length){let tries=0;const retry=async()=>{tries++;const left=[];for(const[u,sz]of fail){try{const r=await fetch(abs(u));if(!r.ok)throw 0;await c.put(abs(u),r)}catch(e){left.push([u,sz])}}
+    fail=left;if(!fail.length)store.set(PRE_KEY,M.v);else if(tries<3)setTimeout(retry,30000)};setTimeout(retry,15000)}
+  /* 目前朝代的大圖先解碼、3D 程式先載入 */
+  const e=store.get("era","classic");for(const u of[`data/park/${e}_360.webp`,`data/pano/${e}_sky.webp`,`data/pano/${e}_ground.webp`,`data/pset/${e}/board.webp`]){try{const im=new Image();im.src=u;im.decode().catch(()=>{})}catch(x){}}
+  setTimeout(()=>{try{parkLoad().catch(()=>{});loadScript("map3d.js?v="+encodeURIComponent(window.XQ_BUILD||"")).catch(()=>{})}catch(x){}},300)}
+setTimeout(()=>{try{preloadAll()}catch(e){}},0);
 // 產生「對手掃這個就能加入、自動坐另一邊」的網址
 async function joinLink(other){
   if(OFF){const r=XQ.remoteInfo();if(!r)return null;return location.origin+location.pathname+`#connect=${encodeURIComponent(r.base)}&k=${encodeURIComponent(r.key)}&seat=${other}`}
