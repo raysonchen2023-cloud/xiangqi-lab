@@ -248,9 +248,14 @@
   const ME_RING={me_boy:{u:.5,v:.625,r:.2},me_girl:{u:.497,v:.62,r:.2}};
   /* 意見回饋 555：其他角色的圓牌位置（正面圖上自動找、人工看過的 69 個模型，data/tripo_app/ring3d.json），表上沒有的模型不寫字 */
   let R3=null;try{fetch("data/tripo_app/ring3d.json").then(r=>r.ok?r.json():null).then(j=>{R3=j}).catch(()=>{})}catch(e){}
-  const glyTex=(ch,k)=>cv(512,(g,n)=>{const h=n/2,ink="帥仕相俥傌炮兵".includes(ch)?"#C8102E":"#1E1A16",gp=typeof GLY!=="undefined"&&GLY[k]&&GLY[k][ch];
-    if(gp&&window.Path2D){const P2=new Path2D(gp),sc=3.3;g.save();g.translate(h-50*sc,h-50*sc);g.scale(sc,sc);g.fillStyle=ink;g.fill(P2);g.strokeStyle=ink;g.lineWidth=1.8;g.lineJoin="round";g.stroke(P2);g.restore();return}
-    g.font='900 300px "Noto Serif TC","PMingLiU","Songti TC","SimSun",serif';g.textAlign="center";g.textBaseline="middle";g.fillStyle=ink;g.fillText(ch,h,h+12)});
+  /* 意見回饋 577（開發者：身上的帥字好醜，顏色、字體都重新規劃）：之前是紅字直接貼在模型深褐色的圓牌上（對比差、看起來偏粉）。
+     改成一整面棋子：米白象牙底＋外圈深紅粗環、內圈細環，字用傳統棋子的字形（經典那套）、深紅色，下面一層淡淡的刻痕影子，像真的刻出來的棋子 */
+  const glyTex=(ch,k)=>cv(512,(g,n)=>{const h=n/2,red="帥仕相俥傌炮兵".includes(ch),ink=red?"#A3140E":"#1E1A16",sh=red?"rgba(110,20,10,.28)":"rgba(0,0,0,.25)",gp=typeof GLY!=="undefined"&&((GLY.classic&&GLY.classic[ch])||(GLY[k]&&GLY[k][ch]));
+    let gr=g.createRadialGradient(h*.8,h*.72,n*.02,h,h,h);gr.addColorStop(0,"#FFF9EC");gr.addColorStop(.72,"#F4E3C1");gr.addColorStop(1,"#DDBE86");g.fillStyle=gr;g.beginPath();g.arc(h,h,h*.99,0,Math.PI*2);g.fill();
+    g.strokeStyle="rgba(120,80,30,.55)";g.lineWidth=n*.012;g.beginPath();g.arc(h,h,h*.975,0,Math.PI*2);g.stroke();
+    g.strokeStyle=ink;g.lineWidth=n*.034;g.beginPath();g.arc(h,h,h*.83,0,Math.PI*2);g.stroke();g.lineWidth=n*.009;g.beginPath();g.arc(h,h,h*.745,0,Math.PI*2);g.stroke();
+    if(gp&&window.Path2D){const P2=new Path2D(gp),sc=2.75;for(const[dx,dy,c]of[[3,5,sh],[0,0,ink]]){g.save();g.translate(h-50*sc+dx,h-50*sc+dy);g.scale(sc,sc);g.fillStyle=c;g.fill(P2);if(c===ink){g.strokeStyle=ink;g.lineWidth=1.2;g.lineJoin="round";g.stroke(P2)}g.restore()}return}
+    g.font='900 236px "Noto Serif TC","Songti TC","PMingLiU","SimSun",serif';g.textAlign="center";g.textBaseline="middle";g.fillStyle=sh;g.fillText(ch,h+3,h+14);g.fillStyle=ink;g.fillText(ch,h,h+9)});
   function attachGLB(B,o){if(!window.XQGLB)return;const meId=(String(o.glb||"").match(/\/(\w+)\.glb/)||[])[1],meCh=PC(),meK=eraK();const box0=new T.Box3().setFromObject(B.bot),h0=box0.max.y-box0.min.y,y0=box0.min.y;
     const face=B.torso.children.find(m=>m.isMesh&&m.geometry&&m.geometry.type==="CircleGeometry");
     B.glbP=window.XQGLB(o.glb).catch(()=>window.XQGLB(o.glb)).then(sc=>{if(!sc)throw new Error("empty");   /* 意見回饋 505：失敗自動重試一次；結果交給畫面顯示「載入中／失敗」 */const g=sc.clone(true);g.rotation.y=-Math.PI/2;g.updateMatrixWorld(true);   /* 意見回饋 503：Tripo 的模型臉朝 +X（側面），轉 90 度讓臉朝前；之前圓牌朝前、模型朝側面，看起來圓牌浮在身體旁邊 */
@@ -267,7 +272,7 @@
       if(meId&&(ME_RING[meId]||R3e)){try{const R=ME_RING[meId]||R3e,rad=R.r*sz.x*.9,px=bb.min.x+R.u*sz.x,py=bb.max.y-R.v*sz.y;
         /* 意見回饋 564：有些圓牌是凹下去的碟形（明朝擂主），只量圓心的深度會被邊緣擋住、字看起來殘缺；在圓牌上量九個點，取最靠前的深度 */
         let pz=-1e9;const rc=new T.Raycaster();for(const[dx,dy]of[[0,0],[.75,0],[-.75,0],[0,.75],[0,-.75],[.53,.53],[-.53,.53],[.53,-.53],[-.53,-.53]]){rc.set(new T.Vector3(px+dx*rad,py+dy*rad,bb.max.z+sz.z+1),new T.Vector3(0,0,-1));const hit=rc.intersectObject(g,true)[0];if(hit&&hit.point.z>pz)pz=hit.point.z}if(pz<-1e8)pz=bb.max.z;
-        const d=new T.Mesh(new T.CircleGeometry(rad,48),new T.MeshBasicMaterial({map:glyTex(meCh,meK),transparent:true,depthWrite:false,toneMapped:false}));d.name="meGly";
+        const d=new T.Mesh(new T.CircleGeometry(rad,48),new T.MeshBasicMaterial({map:glyTex(meCh,meK),color:0xEDE6D8,transparent:true,depthWrite:false,toneMapped:false}));d.name="meGly";   /* 577：整面棋子、不受燈光影響（背光時不會變成深褐），顏色稍微壓暗一點才不會比身體亮太多 */
         d.position.set(px-c.x,py-bb.min.y,pz-c.z+sz.y*.006);hold.add(d)}catch(e){}}
       for(const ch of B.bot.children)ch.visible=false;B.bot.add(hold);B.glb=hold;return true});B.glbP.catch(()=>{})}
 

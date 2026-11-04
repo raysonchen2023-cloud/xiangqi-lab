@@ -247,7 +247,7 @@ html[data-era=qin] .me-win{--oct:inset(0 round 8px)}html[data-era=song] .me-win{
 .rkx{display:flex;align-items:center;gap:10px}.mr .me-seal{position:static;flex:none;animation:none;transform:rotate(-4deg)}
 .mws{align-items:end}.mw{justify-content:flex-end}
 .me-act{position:absolute;bottom:18px;z-index:3;width:56px;height:56px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;border-radius:12px;border:2px solid color-mix(in srgb,var(--trim,var(--accent)) 70%,var(--line));background:color-mix(in srgb,var(--card) 88%,transparent);font:11px var(--sans);color:var(--ink);box-shadow:0 2px 6px color-mix(in srgb,var(--bar) 18%,transparent);transition:transform .12s;cursor:pointer}
-.me-act.l{left:18px}.me-act.r{right:18px}.me-act:active,.me-name:active,.me-seal:active{transform:scale(.92)}
+.me-act.l{left:18px}.me-act.r{right:18px}.me-act:active,.me-seal:active{transform:scale(.92)}.me-name:active{transform:translateX(-50%) scale(.95)}.me-name{-webkit-touch-callout:none;-webkit-user-select:none;user-select:none}   /* 意見回饋 578：長按名字橫匾不能把置中的 translateX 蓋掉（不然整塊往右跑），也不要跳出 iOS 選字選單 */
 .me-act em{font:900 18px/1 var(--serif);font-style:normal;color:var(--accent)}
 .me-act .pc{width:26px;height:26px;border-radius:50%;display:grid;place-items:center;font:900 15px/1 var(--serif);background:var(--piece);border:1.5px solid currentColor;box-shadow:inset 0 0 0 2px var(--piece),inset 0 0 0 3px currentColor}
 .me-act .pc.r{color:var(--red)}.me-act .pc.b{color:var(--blk)}
@@ -699,7 +699,7 @@ html[data-era=ming] .topbar,html[data-era=qing] .topbar{border-bottom-width:4px}
       if(!window.caches)return go();caches.keys().then(function(ks){return Promise.all(ks.filter(function(k){return k.indexOf("xqlab-app-")===0}).map(function(k){return caches.delete(k)}))})
         .then(function(){return navigator.serviceWorker&&navigator.serviceWorker.getRegistration()}).then(function(r){return r&&r.update()}).catch(function(){}).then(go)}};setTimeout(chk,4000)})();
 </script>
-<script>window.XQ_OFFLINE=true;window.XQ_BUILD="20261105-0657";</script>
+<script>window.XQ_OFFLINE=true;window.XQ_BUILD="20261105-0711";</script>
 <script src="core.js"></script>
 <script src="engine.js"></script>
 <script src="local.js"></script>
@@ -1939,9 +1939,23 @@ function installGuide(manual){if(isStandalone())return;const ua=navigator.userAg
   if(installEvt)return modal(`<div class="em">📲</div><h2>把象棋研究室加到主畫面？</h2><p class="muted">之後從主畫面點圖示就能打開，全螢幕、沒網路也能下棋。</p>`,
     [["安裝",async()=>{const e=installEvt;installEvt=null;try{await e.prompt();const c=await e.userChoice;if(c&&c.outcome==="accepted")never();else later()}catch(x){later()}}],["稍後",later,true],["我已經裝了／不用了",never,true]]);
   modal(`<div class="em">📲</div><h2>把象棋研究室加到主畫面？</h2><p class="muted" style="margin-bottom:8px">加了之後，從主畫面點圖示就能打開，全螢幕、沒網路也能下棋。</p>
-    <div style="text-align:left;line-height:2;font-size:15px">${ios?`1. 點 Safari 下方（或上方）的 <b>分享</b> 按鈕 <span style="font-size:18px">⬆️</span><br>2. 往下滑，點 <b>「加入主畫面」</b> ➕<br>3. 按右上角 <b>「加入」</b>`
+    <div style="text-align:left;line-height:2;font-size:15px">${ios?a2hsSteps(ua)
       :`1. 點瀏覽器右上角的 <b>⋮</b> 選單<br>2. 點 <b>「加到主畫面」</b>或<b>「安裝應用程式」</b><br>3. 按 <b>「新增」</b>`}</div>`,
-    [["好，我現在加",later],["我已經加過了",never,true],["不用了",never,true]])}
+    [["好，我現在加",()=>{later();a2hsArrow(ua)}],...(ios&&!/Safari/.test(ua.replace(/CriOS|FxiOS|EdgiOS|Ddg/g,"X"))||/CriOS|FxiOS|EdgiOS|Ddg/.test(ua)?[["複製網址（改用 Safari 開）",()=>{later();try{navigator.clipboard.writeText(APP_HOME);toast("已複製網址：打開 Safari 貼到網址列")}catch(e){toast(APP_HOME)}}]]:[]),["我已經加過了",never,true],["不用了",never,true]])}
+/* 意見回饋 581：iPhone 不能用程式自動加到主畫面（蘋果不開放），只能教步驟。iOS 26 起 Safari 的分享按鈕收進網址列旁的「⋯」裡，舊的寫法照著做找不到 */
+const iosVer=ua=>{const m=String(ua).match(/OS (\d+)_/);return m?+m[1]:0};
+function a2hsSteps(ua){const v=iosVer(ua);
+  if(/CriOS/.test(ua))return`1. 點網址列右邊的 <b>分享</b> 按鈕 <span style="font-size:18px">⬆️</span><br>2. 點 <b>「加入主畫面」</b> ➕<br>3. 按 <b>「加入」</b><br><span class="muted" style="font-size:13px">找不到的話，按下面的「複製網址」，改用 Safari 打開再加</span>`;
+  if(/FxiOS|EdgiOS|Ddg/.test(ua))return`1. 點瀏覽器的 <b>選單</b>，找到 <b>分享</b> ⬆️<br>2. 點 <b>「加入主畫面」</b> ➕<br><span class="muted" style="font-size:13px">這個瀏覽器不一定有這個選項；找不到就按下面的「複製網址」，改用 Safari 打開再加</span>`;
+  if(v>=26)return`1. 點畫面最下面、網址列右邊的 <b>⋯</b>（三個點）<br>2. 點 <b>「分享」</b> ⬆️<br>3. 往下滑，點 <b>「加入主畫面」</b> ➕<br>4. 「打開為網頁 App」保持打開，按右上角 <b>「加入」</b>`;
+  return`1. 點 Safari 下方（或上方）的 <b>分享</b> 按鈕 <span style="font-size:18px">⬆️</span><br>2. 往下滑，點 <b>「加入主畫面」</b> ➕<br>3. 按右上角 <b>「加入」</b>`}
+/* 跳動的箭頭指著那顆按鈕：iOS 26 Safari 在右下角（⋯）、舊版 Safari 在下方中間（分享）、Chrome 在右上角；15 秒或點一下就消失 */
+function a2hsArrow(ua){if(!/iPhone|iPad/.test(MY_KIND)||/FxiOS|EdgiOS|Ddg/.test(ua))return;const top=/CriOS/.test(ua),right=top||iosVer(ua)>=26;document.getElementById("a2hA")?.remove();
+  const a=document.createElement("div");a.id="a2hA";a.innerHTML=`<b>${top?"⬆":"⬇"}</b><small>${top?"點這裡的分享":iosVer(ua)>=26?"點這裡的 ⋯":"點這裡的分享"}</small>`;
+  a.style.cssText=`position:fixed;z-index:9999;${top?"top:6px":"bottom:6px"};${right?"right:14px":"left:50%;margin-left:-60px"};width:120px;text-align:center;pointer-events:auto;color:#fff;font-weight:900;text-shadow:0 2px 6px #000;animation:a2hb .8s ease-in-out infinite alternate`;
+  a.querySelector("b").style.cssText="display:block;font-size:44px;line-height:1";a.querySelector("small").style.cssText="display:inline-block;margin-top:2px;padding:3px 8px;border-radius:8px;background:rgba(179,38,30,.92);font-size:13px";
+  if(!document.getElementById("a2hK")){const k=document.createElement("style");k.id="a2hK";k.textContent=`@keyframes a2hb{from{transform:translateY(0)}to{transform:translateY(${top?"-":""}10px)}}`;document.head.append(k)}
+  a.onclick=()=>a.remove();document.body.append(a);setTimeout(()=>a.remove(),15000)}
 // 用瀏覽器打開時自動問一次（手機才問；說過不用就不再問；按「稍後」7 天後再問）
 if(OFF&&!isStandalone()&&/iPhone|iPad|Android/.test(MY_KIND))setTimeout(()=>{const a=store.get("instAsk",null);if(a&&(a.no||Date.now()-a.at<7*864e5))return;if(document.querySelector(".modal"))return;installGuide(false)},2500);
 // 網址上的 ?openExternalBrowser=1 只是給 LINE 看的，打開後拿掉
@@ -3016,7 +3030,7 @@ function Settings(v){
       <div class="row" style="gap:8px;margin-top:10px"><button class="btn" id="askB" style="flex:1">💬 問<span class="botN">${BOTN()}</span></button><button class="btn ghost" id="botHome" style="flex:1">↩ 回到預設位置</button></div></div>
     <div data-pane="more">   <!-- 意見回饋 523：「我的名字」「顯示我的城市」拿掉（名字在角色分頁改，城市一律照網路位置自動顯示）；「其他」改名「系統」 -->
     <div class="sec-t" style="margin-top:4px">支援</div><div class="items" style="padding:0">
-      <button class="item" id="fb"><span class="lb">${ETIMG("feedback","","💬")}</span><span class="tx"><b>意見回饋</b><span>回報錯誤、想要的功能</span></span><span class="muted">›</span></button><button class="item" id="fxh"><span class="lb">${ETIMG("o_fixes","","🛠")}</span><span class="tx"><b>修正紀錄</b><span>你回報、已經修好的問題</span></span><span class="muted">›</span></button>
+      <button class="item" id="fb"><span class="lb">${ETIMG("feedback","","💬")}</span><span class="tx"><b>意見回饋</b><span>回報錯誤、想要的功能</span></span><span class="muted">›</span></button><button class="item" id="fxh"><span class="lb">${ETIMG("o_fixes","","🛠")}</span><span class="tx"><b>修正紀錄</b><span>你回報、已經修好的問題</span></span><span class="muted">›</span></button>${OFF&&!isStandalone()?`<button class="item" id="a2h"><span class="lb">📲</span><span class="tx"><b>加到主畫面</b><span>從主畫面點圖示打開：全螢幕、沒網路也能下棋</span></span><span class="muted">›</span></button>`:""}
       <button class="item" id="sh"><span class="lb">${ETIMG("share","","📤")}</span><span class="tx"><b>分享給朋友</b><span>QR code・LINE</span></span><span class="muted">›</span></button></div>
     <div class="sec-t">關於</div><div class="card" id="about" style="line-height:1.9">
       <div class="row" style="justify-content:space-between"><span class="muted">App</span><b>象棋研究室</b></div>
@@ -3125,7 +3139,7 @@ function Settings(v){
       for(let i=0;i<8;i++){await new Promise(z=>setTimeout(z,2000));let x=null;try{x=JSON.parse(await XQNet.ctlAck(3000))}catch(e){}
         if(x&&x.n===n){toast(x.ok?`✅ 已重置 ${x.bots} 位虛擬玩家（舊資料存在電腦：${x.arch}）`:"❌ "+x.why,5000);return}}
       toast("電腦沒有回覆：虛擬玩家的程式可能沒在跑")}catch(e){toast(e.message)}},"重置")}
-  {const ab=v.querySelector("#askB");if(ab)ab.onclick=()=>askSheet();const bh=v.querySelector("#botHome");if(bh)bh.onclick=()=>{store.set("botPos",null);if(BOT){BOT.stop();BOT=null}syncBot();toast("小帥回到預設位置了")}}{const bt=v.querySelector("#botT");if(bt)bt.onchange=()=>{store.set("bot3d",bt.checked);syncBot();if(bt.checked)toast("小人出來了！點它會表演")};const sz=v.querySelector("#botSz"),szv=v.querySelector("#botSzV");if(sz)sz.oninput=()=>{store.set("botSize",+sz.value);szv.textContent=Math.round(sz.value*100)+"%";if(BOT&&BOT.setScale)BOT.setScale(+sz.value)}}{const ct=v.querySelector("#cityT");if(ct)ct.onchange=()=>{store.set("showCity",ct.checked);if(ct.checked)fetchCity(true);else{MY_CITY="";if(window.XQNet&&XQNet.refresh)XQNet.refresh()}}}(v.querySelector("#nm")||{}).onclick=()=>{vibrate(5);stab="look";store.set("setTab","look");showTab();setTimeout(()=>{const x=v.querySelector("#nmLook");if(x)x.scrollIntoView({block:"center",behavior:"smooth"})},60)};   /* 意見回饋 498：名字只在「外觀 → 我的角色」改 */(v.querySelector("#fb")||{}).onclick=()=>feedbackSheet();{const au=v.querySelector("#aUpd");if(au)au.onclick=()=>{vibrate(5);updCheck(au)}}{const ft=v.querySelector("#fbTop");if(ft)ft.onclick=()=>{vibrate(5);feedbackSheet()}}{const fx=v.querySelector("#fxh");if(fx)fx.onclick=()=>fixHistory()}(v.querySelector("#sh")||{}).onclick=shareSheet;const cn=v.querySelector("#cn");if(cn)cn.onclick=connectSheet;const fa=v.querySelector("#fa");if(fa)fa.onclick=()=>location.hash="#/fbadmin";
+  {const ab=v.querySelector("#askB");if(ab)ab.onclick=()=>askSheet();const bh=v.querySelector("#botHome");if(bh)bh.onclick=()=>{store.set("botPos",null);if(BOT){BOT.stop();BOT=null}syncBot();toast("小帥回到預設位置了")}}{const bt=v.querySelector("#botT");if(bt)bt.onchange=()=>{store.set("bot3d",bt.checked);syncBot();if(bt.checked)toast("小人出來了！點它會表演")};const sz=v.querySelector("#botSz"),szv=v.querySelector("#botSzV");if(sz)sz.oninput=()=>{store.set("botSize",+sz.value);szv.textContent=Math.round(sz.value*100)+"%";if(BOT&&BOT.setScale)BOT.setScale(+sz.value)}}{const ct=v.querySelector("#cityT");if(ct)ct.onchange=()=>{store.set("showCity",ct.checked);if(ct.checked)fetchCity(true);else{MY_CITY="";if(window.XQNet&&XQNet.refresh)XQNet.refresh()}}}(v.querySelector("#nm")||{}).onclick=()=>{vibrate(5);stab="look";store.set("setTab","look");showTab();setTimeout(()=>{const x=v.querySelector("#nmLook");if(x)x.scrollIntoView({block:"center",behavior:"smooth"})},60)};   /* 意見回饋 498：名字只在「外觀 → 我的角色」改 */(v.querySelector("#fb")||{}).onclick=()=>feedbackSheet();{const au=v.querySelector("#aUpd");if(au)au.onclick=()=>{vibrate(5);updCheck(au)}}{const ft=v.querySelector("#fbTop");if(ft)ft.onclick=()=>{vibrate(5);feedbackSheet()}}{const fx=v.querySelector("#fxh");if(fx)fx.onclick=()=>fixHistory()}{const a2=v.querySelector("#a2h");if(a2)a2.onclick=()=>{vibrate(5);installGuide(true)}}(v.querySelector("#sh")||{}).onclick=shareSheet;const cn=v.querySelector("#cn");if(cn)cn.onclick=connectSheet;const fa=v.querySelector("#fa");if(fa)fa.onclick=()=>location.hash="#/fbadmin";
   paint();return{}}
 
 // ================= 意見回饋：存到 Google 表單（沒網路先存在手機，之後自動補送） =================

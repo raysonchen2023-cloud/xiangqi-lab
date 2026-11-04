@@ -1059,7 +1059,9 @@
         const geo=new T.PlaneGeometry(H*meta.w/meta.h,H);geo.translate(0,H/2,0);const sp=new T.Mesh(geo,mat);sp.renderOrder=2;
         const y0=SPR_Y;sp.position.set(0,y0,SPR_Z);sp.rotation.x=SPR_TILT;sc.add(sp);oppSpr={sp,tex,pose:"idle",y0};opp.g.visible=false};
       for(const ps of POSES){const src=base+((look.spriteMap&&look.spriteMap[ps])||ps)+".webp",   /* 擂主只有 idle、think、move、win、lose：用 spriteMap 對到 Pikafish 的六種姿勢 */im=loadImg(src,()=>{ims[ps]=imgCache[src];done()});if(im){ims[ps]=im;done()}}};
-    const setOpp=look=>{const k=JSON.stringify(look||null);if(k===oppKey)return;oppKey=k;killSpr();if(!look){opp.g.clear();opp.B=null;return}if(look.flat&&look.sprite&&look.spriteMeta){opp.g.clear();opp.B=null;makeSpr(look);return}buildActor(opp,look);opp.g.visible=true};   /* 開發者：園子的路人棋友、故事人物用 Gemini 畫好的形象（平面立牌） */   /* 意見回饋 377：對手（Pikafish、擂主）一律用 3D 立體的，繞著桌子轉也是立體的 */
+    const setOpp=look=>{const k=JSON.stringify(look||null);if(k===oppKey)return;oppKey=k;killSpr();if(!look){opp.g.clear();opp.B=null;return}if(look.flat&&look.sprite&&look.spriteMeta){opp.g.clear();opp.B=null;makeSpr(look);return}buildActor(opp,look);opp.g.visible=true;opp.g.position.y=SY-.9;opp.g.userData.y0=null;
+      /* 意見回饋 577：對手用真實 3D（站姿模型）時一樣改成坐著：臀部落在長榻的座面（SY），腿沉進座位裡 */
+      if(opp.B&&opp.B.glbP)opp.B.glbP.then(ok=>{if(!ok||oppKey!==k||!opp.B||!opp.B.glb)return;try{opp.g.updateMatrixWorld(true);const b=new T.Box3().setFromObject(opp.B.glb),H=b.max.y-b.min.y;opp.g.position.y-=b.min.y-(SY-H*.27);opp.g.userData.y0=null}catch(e){}}).catch(()=>{})};   /* 開發者：園子的路人棋友、故事人物用 Gemini 畫好的形象（平面立牌） */   /* 意見回饋 377：對手（Pikafish、擂主）一律用 3D 立體的，繞著桌子轉也是立體的 */
     // 我這一側的小帥：平常是自己的；觀戰時換成棋盤近端那一方玩家的小帥（意見回饋 259）
     /* 意見回饋 551：小帥坐在鼓凳上，可是腿往正前方伸、被圓牌身體整個擋住，從背後的鏡頭看像站在凳子上。
        改成兩腿往左右張開、伸出圓牌外（髖部也往外挪），身體稍微往後靠，從背後看得到兩隻腳掛在凳子邊 */
@@ -1068,7 +1070,9 @@
       const th=l.children.find(m=>m.isMesh&&m.geometry&&m.geometry.type==="CapsuleGeometry"),ft=l.children.find(m=>m.isMesh&&m.geometry&&m.geometry.type==="SphereGeometry");
       if(th&&ft&&!l.userData.knee){l.userData.knee=1;const sh=new T.Mesh(th.geometry,th.material);sh.rotation.x=PI/2;sh.position.set(0,-.4,-.17);sh.castShadow=true;l.add(sh);ft.position.set(0,-.46,-.38);ft.scale.set(1,1.35,.6)}});if(B.torso)B.torso.rotation.x=-.1};
     let mateKey=null;const setMate=look=>{const k=JSON.stringify(look||null);if(k===mateKey)return;mateKey=k;mate.g.position.y=MSEAT;mate.g.userData.y0=null;
-      buildActor(mate,look||{});mateSit(mate.B);mateTop();try{mate.g.updateMatrixWorld(true);const b=new T.Box3().setFromObject(mate.B&&mate.B.torso&&!mate.B.glb?mate.B.torso:mate.g);   /* 551：用身體底部對齊座面，小腿垂在凳子旁邊 */mate.g.position.y-=b.min.y-(MSEAT+.02)}catch(e){}};   // 坐在自己的椅子上（座面 y=MSEAT）
+      buildActor(mate,look||{});mateSit(mate.B);mateTop();try{mate.g.updateMatrixWorld(true);const b=new T.Box3().setFromObject(mate.B&&mate.B.torso&&!mate.B.glb?mate.B.torso:mate.g);   /* 551：用身體底部對齊座面，小腿垂在凳子旁邊 */mate.g.position.y-=b.min.y-(MSEAT+.02)}catch(e){}
+      /* 意見回饋 577：真實 3D 的小帥是站姿模型、腿彎不了，照上面對齊會變成腳踩在凳面上（站在凳子上）。模型載好後改成臀部落在凳面、腿沉進鼓凳裡，從哪個角度看都是坐著 */
+      if(mate.B&&mate.B.glbP)mate.B.glbP.then(ok=>{if(!ok||mateKey!==k||!mate.B||!mate.B.glb)return;try{mate.g.updateMatrixWorld(true);const b=new T.Box3().setFromObject(mate.B.glb),H=b.max.y-b.min.y;mate.g.position.y-=b.min.y-(MSEAT-H*.27);mate.g.userData.y0=null}catch(e){}}).catch(()=>{})};   // 坐在自己的椅子上（座面 y=MSEAT）
     setMate(null);
     const say=(t,d)=>mate.say(t,d);
     // 意見回饋 248：分出勝負時兩邊都有 5 秒的勝負動畫（endT 倒數；oppRes／mateRes＝win、lose、draw）
