@@ -224,6 +224,8 @@ html[data-era=ming] .topbar,html[data-era=qing] .topbar{border-bottom-width:4px}
 .eragrid button.on b::after{content:" ✓"}
 @media (min-width:700px){.eragrid{grid-template-columns:repeat(4,1fr)}}
 /* 意見回饋 535：設定的朝代棋盤改成左右滑動的一疊卡片，停在中間的那張就套用，上面的棋盤預覽馬上換 */
+#meChip{display:flex;align-items:center;gap:6px;flex:none;border:0;border-radius:999px;padding:2px 10px 2px 2px;margin-right:8px;background:rgba(255,248,236,.16);color:inherit;font:inherit;cursor:pointer}#meChip img{width:30px;height:36px;object-fit:contain}#meChip small{font-size:11px;line-height:1.25;text-align:left;font-weight:700;opacity:.95;white-space:nowrap}
+.thgrid.thsw{position:relative;display:flex!important;overflow-x:auto;scroll-snap-type:x mandatory;gap:10px;padding:4px 22% 10px;scrollbar-width:none}.thgrid.thsw::-webkit-scrollbar{display:none}.thgrid.thsw>button{flex:0 0 56%;scroll-snap-align:center;transform:scale(.88);opacity:.7;transition:transform .2s,opacity .2s}.thgrid.thsw>button.on{transform:none;opacity:1}
 .eragrid.erasw{position:relative;display:flex;overflow-x:auto;scroll-snap-type:x mandatory;gap:10px;padding:6px 19% 12px;scrollbar-width:none;-webkit-overflow-scrolling:touch}.eragrid.erasw::-webkit-scrollbar{display:none}
 .eragrid.erasw button{flex:0 0 62%;scroll-snap-align:center;min-height:100px;transition:transform .2s,opacity .2s;transform:scale(.9);opacity:.72}.eragrid.erasw button.on{transform:none;opacity:1}
 .thgrid button{display:flex;flex-direction:column;align-items:center;gap:4px;padding:5px 5px 7px;border-radius:14px;background:var(--card);border:2px solid var(--line);font-size:13px}
@@ -584,7 +586,7 @@ html[data-era=ming] .topbar,html[data-era=qing] .topbar{border-bottom-width:4px}
       if(!window.caches)return go();caches.keys().then(function(ks){return Promise.all(ks.filter(function(k){return k.indexOf("xqlab-app-")===0}).map(function(k){return caches.delete(k)}))})
         .then(function(){return navigator.serviceWorker&&navigator.serviceWorker.getRegistration()}).then(function(r){return r&&r.update()}).catch(function(){}).then(go)}};setTimeout(chk,4000)})();
 </script>
-<script>window.XQ_OFFLINE=true;window.XQ_BUILD="20261104-2316";</script>
+<script>window.XQ_OFFLINE=true;window.XQ_BUILD="20261104-2332";</script>
 <script src="core.js"></script>
 <script src="engine.js"></script>
 <script src="local.js"></script>
@@ -1482,7 +1484,7 @@ function iconize(){document.querySelectorAll("[data-go] > .ic,[data-go] > .dic")
   document.querySelectorAll("#topRight .ib").forEach(b=>{if(b.querySelector("img"))return;const n=ICO_EMO[b.textContent.trim()];if(n)icoImg(b,n)})}
 function icoEra(){document.querySelectorAll("img.eic").forEach(im=>{im.src=icoSrc(im.dataset.ico)})}
 {let icoT=0;new MutationObserver(()=>{if(icoT)return;icoT=requestAnimationFrame(()=>{icoT=0;try{iconize()}catch(e){}})}).observe(document.body,{childList:true,subtree:true})}
-function setTop(title,back,right){$("#title").textContent=title;$("#back").hidden=!back;$("#back").onclick=()=>goBack(back);
+function setTop(title,back,right){{const mc=document.getElementById("meChip");if(mc)mc.remove()}$("#title").textContent=title;$("#back").hidden=!back;$("#back").onclick=()=>goBack(back);
   const tr=$("#topRight");tr.innerHTML="";if(right)for(const[icon,fn,label]of right){const b=document.createElement("button");b.className="ib";b.textContent=icon;b.title=label||"";b.onclick=fn;tr.append(b)}
   // 全螢幕畫面（沒有底部導覽列）一律加「回首頁」，加入主畫面的 App 模式沒有瀏覽器上一頁也能回去
   if(back&&back!=="#/"&&!(right&&right.length>=2)){const h=document.createElement("button");h.className="ib";h.textContent="🏠";h.title="回首頁";h.onclick=()=>{location.hash="#/"};tr.append(h)}}
@@ -1520,7 +1522,7 @@ function route(){
   if(p[0]==="journey"&&p[1]==="play")return screen=CpuGame(v,false,"journey");   /* 意見回饋 413：石桌往事（雲河棋路、驛站、園子、守關）的對局頁 */
   if(p[0]==="journey")return screen=Journey(v,p[1]?decodeURIComponent(p[1]):null);
   if(p[0]==="adventure"){store.set("dbReturn",null);return screen=Adventure(v)}
-  if(p[0]==="profile")return screen=Profile(v);
+  if(p[0]==="profile"||p[0]==="me")return screen=Me(v);   /* 意見回饋 536：棋童資料併進「我的角色」 */
   if(p[0]==="terms")return screen=Terms(v,p[1]);
   // AI 對局在開發者的電腦上，要連上電腦才看得到；一般玩家（或連線已被清掉）從舊連結進來時說明清楚，不要卡在「載入中」（意見回饋 135）
   if((p[0]==="db"&&p[1]==="ai"||p[0]==="watch"&&p[1]==="ai")&&OFF&&!DEVREMOTE()){setTop("AI 對局","#/");setTabs(false);
@@ -1837,7 +1839,7 @@ function standaloneOnlineWarn(v){if(OFF||!(matchMedia("(display-mode: standalone
 function Home(v,hub){   /* hub：沒有＝首頁三張大卡；"battle"＝對戰頁；"learn"＝學習頁（開發者看 Gemini UI／UX 審閱後決定） */
   const RI=DEVREMOTE()?XQ.remoteInfo():null;  // 這支手機連過主人的電腦嗎
   const standalone=matchMedia("(display-mode: standalone)").matches||navigator.standalone;
-  setTop("象棋研究室",false,OFF?[].concat(RI?[["🔗",connectSheet,"連線到電腦"]]:[],(DEVMODE()?[["📋",openFbAdmin,"意見回饋管理"]]:[])):[["👥",whoSheet,"誰在線上"]]);   /* 意見回饋 531：首頁右上角的「分享給朋友」「意見回饋」拿掉（都在 設定 → 系統） */setTabs(true,"#/");   /* 意見回饋 409：意見回饋按鈕放在首頁最右上角 */
+  setTop("象棋研究室",false,OFF?[].concat(RI?[["🔗",connectSheet,"連線到電腦"]]:[],(DEVMODE()?[["📋",openFbAdmin,"意見回饋管理"]]:[]))  :[["👥",whoSheet,"誰在線上"]]);meChip();   /* 意見回饋 536：首頁左上角的頭像，點了進「我的角色」；531：首頁右上角的「分享給朋友」「意見回饋」拿掉（都在 設定 → 系統） */setTabs(true,"#/");   /* 意見回饋 409：意見回饋按鈕放在首頁最右上角 */
   if(hub){setTop(hub==="battle"?"⚔ 對戰":"📚 學習","#/");setTabs(true,"#/")}
   const T=(k,go,ic,t,id,s,x,cta)=>`<button class="tile strip ${k}${x||""}" data-go="${go}"><span class="ic">${ic}</span><span class="tx"><span class="t">${t}</span><span class="s"${id?` id="${id}"`:""}>${s}</span></span><b class="go">${cta||"›"}</b></button>`;
   v.innerHTML=`<div class="home">
@@ -2839,21 +2841,19 @@ function Settings(v){
     <div class="st-tabs" id="sgTabs" style="position:static;margin:4px 0 10px">${[["bot","🙂","角色"],["look","♟","棋盤"],["sound","🔊","聲音"],["more","⚙","系統"]].map(([k,e,l])=>`<button data-k="${k}"><i class="tic" data-ic="t_${k}">${e}</i> ${l}</button>`).join("")}</div>
     <div data-pane="look">
     <div class="card" style="padding:10px"><div id="pv" style="max-width:300px;margin:0 auto"></div>
-      <div class="row" style="justify-content:space-between;margin-top:6px"><span class="muted">示範：紅方 炮二平五</span><button class="pill" id="replay">▶ 再走一次</button></div></div>
+      <div class="opt" id="tbb" style="justify-content:center;flex-wrap:wrap;margin-top:8px"><button class="pill" id="replay">▶ 示範一步</button>${[["mv","♟ 走一步"],["cap","💥 吃子"],["ck","⚔ 將軍"],["op","🚩 開局動畫"]].map(([k,l])=>`<button data-tst="${k}">${l}</button>`).join("")}</div>
+      <p class="muted" style="font-size:12px;margin:6px 0 0;text-align:center">換朝代、棋盤、棋子馬上在這裡看到；測試按鈕會照「更多設定」裡的特效、聲音開關播放</p></div>   <!-- 意見回饋 537：預覽和測試併成一個棋盤 -->
     <div class="sec-t">朝代風格<span class="muted" style="font-size:12px;font-weight:400">← 左右滑動挑朝代 →</span></div><div class="eragrid erasw" id="era"></div>
-    <div class="sec-t">深淺色</div><div class="opt" id="pt"></div><p class="muted" id="ptN" style="font-size:12px;margin:4px 4px 0"></p>
-    <div class="sec-t">文字<span class="muted" style="font-size:12px;font-weight:400">棋譜、棋手名字、賽事名稱也跟著換</span></div><div class="opt" id="zhO" data-nocc>${[["tw","繁體中文"],["cn","简体中文"]].map(([k,l])=>`<button data-zh="${k}"${((window.XQ_ZH&&XQ_ZH.mode())||"tw")===k?' class="on"':""}>${l}</button>`).join("")}</div>   <!-- 意見回饋 518：繁簡切換（zh.js） -->
-    <div class="sec-t">棋盤風格</div>
+    <div class="sec-t">棋盤風格<span class="muted" style="font-size:12px;font-weight:400">← 左右滑動挑棋盤 →</span></div>
     <label class="row" style="justify-content:space-between;padding:4px 2px 10px"><span><b>🌳 3D 園子棋盤</b><br><span class="muted">下棋時坐在 3D 園子的石桌前；關掉就用平面棋盤</span></span><input type="checkbox" class="sw" id="p3d"></label>   <!-- 意見回饋 488 -->
-    <div class="thgrid" id="th"></div>
+    <div class="thgrid thsw" id="th"></div>
     <div class="sec-t">對手形象<span class="muted" style="font-size:12px;font-weight:400">下棋時對面坐的人</span></div><div class="opt" id="ol"></div>
     <div class="sec-t">棋子樣式</div><div class="opt" id="ps"></div>
+    <details class="card" style="padding:10px 12px;margin-top:14px"><summary style="font-weight:700;cursor:pointer">⚙ 更多設定（深淺色、文字、高對比、走棋顯示與特效）</summary>   <!-- 意見回饋 537：不常改的收在這裡 -->
+    <div class="sec-t">深淺色</div><div class="opt" id="pt"></div><p class="muted" id="ptN" style="font-size:12px;margin:4px 4px 0"></p>
+    <div class="sec-t">文字<span class="muted" style="font-size:12px;font-weight:400">棋譜、棋手名字、賽事名稱也跟著換</span></div><div class="opt" id="zhO" data-nocc>${[["tw","繁體中文"],["cn","简体中文"]].map(([k,l])=>`<button data-zh="${k}"${((window.XQ_ZH&&XQ_ZH.mode())||"tw")===k?' class="on"':""}>${l}</button>`).join("")}</div>   <!-- 意見回饋 518：繁簡切換（zh.js） -->
     <label class="row" style="justify-content:space-between;padding:8px 2px"><span><b>高對比棋子</b><br><span class="muted">白底大字、紅黑字，看不清楚朝代棋子時打開</span></span><input type="checkbox" class="sw" id="hiCon"></label>
-    </div>
-    <div data-pane="look"><div class="sec-t">測試特效與音效</div><div class="card"><div id="tb" style="max-width:300px;margin:0 auto"></div>
-      <div class="opt" id="tbb" style="justify-content:center;flex-wrap:wrap;margin-top:8px">${[["mv","♟ 走一步"],["cap","💥 吃子"],["ck","⚔ 將軍"],["op","🚩 開局動畫"]].map(([k,l])=>`<button data-tst="${k}">${l}</button>`).join("")}</div>
-      <p class="muted" style="font-size:12px;margin:6px 0 0;text-align:center">照目前的設定播放：下面關掉的特效、聲音，這裡也不會出現</p></div>
-      <div class="sec-t">走棋顯示與特效</div><div class="card sgc" id="mv"></div></div>
+    <div class="sec-t">走棋顯示與特效</div><div class="card sgc" id="mv"></div></details></div>
     <div data-pane="sound"><div class="sec-t" style="margin-top:4px">聲音</div><div class="card sgc" id="snd"></div></div>
     <div data-pane="bot">
     <div class="sec-t" style="margin-top:4px">我的角色</div><div class="card row" style="gap:10px;align-items:center;margin-bottom:6px">   <!-- 意見回饋 506：精簡成一張小卡；522：跟官階、棋子、顯示放在同一個「角色」分頁 -->
@@ -2902,9 +2902,10 @@ function Settings(v){
   const showTab=()=>{if(stab==="look")tbRefresh();v.querySelectorAll("#sgTabs button").forEach(b=>b.classList.toggle("on",b.dataset.k===stab));v.querySelectorAll("[data-pane]").forEach(x=>x.hidden=x.dataset.pane!==stab)};
   v.querySelectorAll("#sgTabs button").forEach(b=>b.onclick=()=>{vibrate(5);stab=b.dataset.k;store.set("setTab",stab);showTab()});showTab();
   // 測試特效與音效（意見回饋）：用真的走棋流程（Board.draw 的 fresh＋fx）播放，所以會照設定開關
-  {const tb=Board(null),box=v.querySelector("#tb");box.append(tb.svg);const S0=parseFen(START);let tbLast=S0;tb.draw(S0,{anim:false});
+  const b0=parseFen(SAMPLE_FEN0),b1=parseFen(SAMPLE_FEN1),pv=Board(null);v.querySelector("#pv").append(pv.svg);   /* 意見回饋 537：預覽和測試特效用同一個棋盤 */
+  {const tb=pv,S0=parseFen(START);let tbLast=b1;
     // 換了外觀（棋盤、棋子、朝代）後切回來，用目前外觀重畫最後的盤面（意見回饋 145）
-    tbRefresh=()=>tb.draw(tbLast,{anim:false});
+    tbRefresh=()=>tb.draw(tbLast,{anim:false,last:tbLast===b1?SAMPLE_LAST:null});
     const mvb=(b,f,t)=>{const n=b.slice();n[t]=n[f];n[f]=null;return n};
     // 將軍用的簡單盤面：黑將、雙士；紅帥；紅俥從左邊橫走到中路將軍
     const CK=Array(90).fill(null);CK[4]="k";CK[3]="a";CK[5]="a";CK[85]="K";CK[72]="R";CK[33]="p";CK[60]="P";
@@ -2918,7 +2919,6 @@ function Settings(v){
   const dm=v.querySelector("#dm");if(dm){dm.checked=DEVMODE();dm.onchange=()=>{
     if(!dm.checked){store.set("devMode",false);toast("已關閉開發者模式");return route()}
     dm.checked=false;devLogin(()=>{store.set("devMode",true);toast("已打開開發者模式");route()})}}
-  const b0=parseFen(SAMPLE_FEN0),b1=parseFen(SAMPLE_FEN1),pv=Board(null);v.querySelector("#pv").append(pv.svg);
   const show=animate=>{if(animate){pv.draw(b0,{anim:false});setTimeout(()=>pv.draw(b1,{last:SAMPLE_LAST}),250)}else pv.draw(b1,{last:SAMPLE_LAST,anim:false})};
   (v.querySelector("#replay")||{}).onclick=()=>show(true);
   const th=v.querySelector("#th");
@@ -2926,6 +2926,9 @@ function Settings(v){
     for(const[k,name]of BOARD_THEMES){const b=document.createElement("button");b.className=k===cur?"on":"";const bd=Board(null);bd.draw(b1,{last:SAMPLE_LAST,theme:k,anim:false,arrow:false});
       b.append(bd.svg);const s=document.createElement("span");s.textContent=name;b.append(s);
       b.onclick=()=>{vibrate(5);store.set("boardTheme",k);paint();show(true)};th.append(b)}
+    /* 意見回饋 537：棋盤風格也左右滑動，停在中間的那張就套用 */
+    {const on=th.querySelector(".on");th._quiet=true;if(on)th.scrollLeft=on.offsetLeft-(th.clientWidth-on.offsetWidth)/2;setTimeout(()=>{th._quiet=false},250);
+      th.onscroll=()=>{if(th._quiet)return;clearTimeout(th._t);th._t=setTimeout(()=>{const mid=th.scrollLeft+th.clientWidth/2;let best=null,bd=1e9,i=0;const ks=BOARD_THEMES.map(x=>x[0]);for(const x of th.children){const d=Math.abs(x.offsetLeft+x.offsetWidth/2-mid);if(d<bd){bd=d;best=i}i++}if(best!=null&&ks[best]!==store.get("boardTheme","wood3d"))th.children[best].click()},170)}}
     {const xo=v.querySelector("#xfOut"),xi=v.querySelector("#xfIn");if(xo)xo.onclick=()=>{vibrate(5);xfSend()};if(xi)xi.onclick=()=>{vibrate(5);xfRecv()}}
     /* 意見回饋 442、456（開發者）：對手形象可以選——3D 立體小人（跟小帥一樣是立體的，每個人帽子、衣服不同）或畫好的立繪 */
     {const ol=v.querySelector("#ol");if(ol){const cur=store.get("oppLook","3d");ol.innerHTML=[["3d","🧸 Q 版 3D"],["real","🗿 真實 3D"],["art","🖼 畫好的立繪"]].map(([k,l])=>`<button data-ol="${k}" class="${cur===k?"on":""}">${l}</button>`).join("");
@@ -2962,6 +2965,9 @@ function Settings(v){
     v.querySelectorAll("[data-vr]").forEach(x=>x.onclick=()=>{store.set("voiceRate",x.dataset.vr);v.querySelectorAll("[data-vr]").forEach(y=>y.classList.toggle("on",y===x));
       if(!store.get("voiceCall",true))return;primeVoice();unlockAudio();loadVc().then(()=>{sayCall("將軍");setTimeout(()=>sayCall("吃"),1100)})});
     {const so=v.querySelector("#sndOn");if(so)so.onchange=()=>{store.set("mvSound",so.checked);v.querySelector("#sndBox").classList.toggle("sp-off",!so.checked);const k=store.get("sndStyle","wood");v.querySelectorAll("[data-snd]").forEach(y=>y.classList.toggle("on",so.checked&&y.dataset.snd===k));if(so.checked){unlockAudio();(/^s\d\d$/.test(k)?loadSfx(k):Promise.resolve()).then(()=>withAudio(()=>moveSound0(false)))}}}
+    {const ss=v.querySelector("#sndSel"),st=v.querySelector("#sndTry"),tryS=k=>{unlockAudio();(/^sdd$/.test(k)?loadSfx(k):Promise.resolve()).then(()=>{withAudio(()=>moveSound0(false));setTimeout(()=>withAudio(()=>moveSound0(true)),550)})};
+      if(ss)ss.onchange=()=>{const k=ss.value;store.set("mvSound",true);store.set("sndStyle",k);{const so=v.querySelector("#sndOn");if(so)so.checked=true;const bx=v.querySelector("#sndBox");if(bx)bx.classList.remove("sp-off")}tryS(k)};
+      if(st)st.onclick=()=>{vibrate(5);tryS(ss?ss.value:store.get("sndStyle","wood"))}}
     v.querySelectorAll("[data-snd]").forEach(x=>x.onclick=()=>{const k=x.dataset.snd;store.set("mvSound",k!=="off");{const so=v.querySelector("#sndOn");if(so)so.checked=true;const bx=v.querySelector("#sndBox");if(bx)bx.classList.remove("sp-off")}if(k==="off"){v.querySelectorAll("[data-snd]").forEach(y=>y.classList.toggle("on",y===x));return}store.set("sndStyle",k);v.querySelectorAll("[data-snd]").forEach(y=>y.classList.toggle("on",y===x));unlockAudio();(/^s\d\d$/.test(k)?loadSfx(k):Promise.resolve()).then(()=>{withAudio(()=>moveSound0(false));setTimeout(()=>withAudio(()=>moveSound0(true)),550)})});
     v.querySelectorAll("[data-t]").forEach(x=>x.onchange=()=>{store.set(x.dataset.t,x.checked);if(x.checked&&(x.dataset.t==="mvSound"||x.dataset.t==="capSound")){unlockAudio();moveSound(x.dataset.t==="capSound")}if(x.checked&&x.dataset.t==="voiceCall"){primeVoice();setTimeout(()=>sayCall("將軍"),150)}show(true)});
     {const ns=v.querySelector("#nmS");if(ns)ns.textContent=myName()||"還沒取名字"}show(false)};
@@ -3014,8 +3020,8 @@ function sndPicker(){const on=store.get("mvSound",false),cur=store.get("sndStyle
     .sp-c span{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.sp-c i{font-style:normal;font-size:10px;opacity:.4}
     .sp-c em{font-style:normal;font-size:11px;font-weight:700;padding:1px 5px;border-radius:6px;background:var(--line);font-variant-numeric:tabular-nums}
     .sp-c.on{border-color:var(--accent);background:color-mix(in srgb,var(--accent) 12%,var(--card));font-weight:700}.sp-c.on i{opacity:1;color:var(--accent)}</style>
-    <div style="padding:6px 0" class="${on?"":"sp-off"}" id="sndBox"><label class="sp-h"><span><b>走棋音效</b><br><span class="muted">棋子落下的聲音，點一下選用並試聽（先走子、再吃子）</span></span><input type="checkbox" class="sw" id="sndOn" ${on?"checked":""}></label>
-    <div id="sndSt">${G.map(([t,L])=>`<div class="sp-g">${t}</div><div class="sp-l">${L.map(card).join("")}</div>`).join("")}</div></div>`}
+    <div style="padding:6px 0" class="${on?"":"sp-off"}" id="sndBox"><label class="sp-h"><span><b>走棋音效</b><br><span class="muted">棋子落下的聲音，從下面的選單挑一種，選了會先試聽（先走子、再吃子）</span></span><input type="checkbox" class="sw" id="sndOn" ${on?"checked":""}></label>
+    <div class="row" id="sndSt" style="gap:8px;margin-top:10px;align-items:center"><select id="sndSel" aria-label="走棋音效" style="flex:1;min-width:0;font:inherit;font-size:15px;padding:10px;border-radius:12px;border:1.5px solid var(--line);background:var(--card);color:inherit">${G.map(([t,L])=>`<optgroup label="${t}">${L.map(([k,l])=>`<option value="${k}"${cur===k?" selected":""}>${String(l).replace(/<[^>]+>/g," ").replace(/s+/g," ").trim()}</option>`).join("")}</optgroup>`).join("")}</select><button class="pill" id="sndTry">▶ 試聽</button></div></div>`}   /* 意見回饋 538：走棋音效改成下拉選單 */
 // 修正通知（意見回饋 203）：data/fixes.json 列出已修好的回饋（只放線上 ID 的雜湊，不放玩家原文）；
 // 玩家打開 App 會看到自己回報、已修好的問題；開發者看到每一次的修正回報。設定 → 其他 →「修正紀錄」可以再看
 async function fixHash(id){const d=await crypto.subtle.digest("SHA-256",new TextEncoder().encode("xqfix:"+id));return[...new Uint8Array(d)].map(x=>x.toString(16).padStart(2,"0")).join("").slice(0,12)}
@@ -3537,6 +3543,7 @@ function parkInfo(k){const era=store.get("era","classic"),E=PARK_INFO[era]||PARK
    if(k.startsWith("p:"))return}
   /* 意見回饋 517：拉遠看朝代地圖時點到地名，跳出那個地方在這個朝代的介紹（data/eramap/places.json） */
   /* 意見回饋 525：點到遠方長卷上的地標（山、城、塔、蒙古包……），跳出那個地標的名字和介紹（data/pano/spots.json） */
+  if((k==="bg"||k.startsWith("pano:"))&&!parkInfo.skipRelic){relicDrop(era).then(got=>{if(!got){parkInfo.skipRelic=true;try{parkInfo(k)}finally{parkInfo.skipRelic=false}}});return}   /* 意見回饋 536：點長卷有機會撿到珍品 */
   if(k.startsWith("pano:")){const nm=k.slice(5);(parkInfo.S||(parkInfo.S=fetch("data/pano/spots.json").then(r=>r.ok?r.json():{}).catch(()=>({})))).then(J=>{const p=(J[era]||[]).find(x=>x.name===nm);
       sheet("🏞 "+nm,b=>{b.innerHTML=`<div class="muted" style="margin:-4px 0 8px">${esc(en)}${yr?`・${esc(yr)}`:""}・遠方的風景</div><p style="line-height:1.8;margin:0;font-size:16px">${esc(p&&p.desc||(E.bg||[])[1]||"")}</p>`})});return}
   if(k.startsWith("map:")){const nm=k.slice(4);(parkInfo.P||(parkInfo.P=fetch("data/eramap/places.json").then(r=>r.ok?r.json():{}).catch(()=>({})))).then(P=>{const d=(P[era]||{})[nm]||(P.classic||{})[nm]||"";
@@ -3828,17 +3835,34 @@ function Adventure(v){if(store.get("legBook",1)===2&&DEVMODE())return Adventure2
 /* ---------- 🎒 棋童資料：等級、修為、提示棋、棋盤收藏、棋譜、秘境棋友 ---------- */
 const bag=()=>({boards:[],records:[],...store.get("bag",{})}),bagSave=B=>store.set("bag",B);
 const RAR={rare:["稀有","#C9962B"],normal:["一般","#3A7BD5"],broken:["損壞","#8E8E8E"]};
+/* 意見回饋 536（開發者）：「我的角色／棋童／棋童資料／官階」整合成一頁「🙂 我的角色」，入口在首頁左上角的頭像。
+   最上面是角色卡（點頭像看 3D、換角色、改名、換棋子）和官階，下面接原本棋童資料的修為、寶物、珍品、秘境棋友 */
+function rankInfo(){let p=0;try{p=(JSON.parse(localStorage.getItem("xq_cpuRate")||"null")||{}).pts||0}catch(e){}const TH=[1500,1150,1000,800,600,400,200,100,0],g=TH.findIndex(t=>p>=t)+1,lo=TH[g-1],hi=g>1?TH[g-2]:null,era=store.get("era","classic");
+  return{p,g,hi,pc:hi?Math.round((p-lo)/(hi-lo)*100):100,name:RANKT(era,g),next:g>1?RANKT(era,g-1):""}}
+const meName=()=>(mySex()==="f"?"小帥妹":"小帥")+(myStyle()==="real"?"":"Q版"),meImg=()=>`data/xs/prev_${myStyle()==="real"?"real":"q"}_${mySex()==="f"?"girl":"boy"}.webp`;
+function meFigOpen(src){vibrate(5);figView(myLook()||{p:botPc(),e:store.get("era","classic"),g:9},"🙂 "+meName(),`<p class="muted" style="font-size:13.5px;margin:0">${esc(myName()||"還沒取名字")}・園子裡的你、線上對手看到的你都是這個樣子</p>`,[["關閉",()=>closeSheet(),true]],src||meImg())}
+function meChip(){const tb=$("#topbar");if(!tb)return;{const o=document.getElementById("meChip");if(o)o.remove()}const R=rankInfo(),I=xpInfo(),b=document.createElement("button");b.id="meChip";b.type="button";b.setAttribute("aria-label","我的角色");
+  b.innerHTML=`<img src="${meImg()}" alt="" onerror="this.replaceWith(document.createTextNode('🙂'))"><small>${esc(R.name)}<br>修為 Lv ${I.L}</small>`;b.onclick=()=>{vibrate(5);location.hash="#/me"};tb.insertBefore(b,$("#title"))}
+function Me(v){Profile(v);setTop("🙂 我的角色","#/");setTabs(true,"#/");const pad=v.querySelector(".pad");if(!pad)return;const R=rankInfo(),d=document.createElement("div");
+  d.innerHTML=`<div class="card row" style="gap:12px;align-items:center;margin-bottom:8px"><img id="meFig2" role="button" aria-label="看我的 3D 角色" src="${meImg()}" alt="" style="width:72px;height:90px;object-fit:contain;flex:none;cursor:pointer" onerror="this.remove()">
+    <div style="flex:1;min-width:0"><b style="font-size:19px">${meName()}</b><br><span class="muted" style="font-size:13.5px">${esc(myName()||"還沒取名字")}・點頭像看 3D</span>
+    <div class="row" style="gap:6px;margin-top:8px;flex-wrap:wrap"><button class="pill" id="meOb">換角色</button><button class="pill" id="meNm">改名</button><button class="pill" id="mePc">換棋子</button></div></div></div>
+    <div class="card" style="margin-bottom:8px"><div class="row" style="justify-content:space-between;align-items:baseline"><b style="font-size:17px">🏛 官階：${esc(R.name)}</b><span class="muted" style="font-size:13px">電腦段位 ${R.p} 分</span></div>
+    <div class="st-bar" style="margin:6px 0 2px"><i style="width:${R.pc}%"></i></div><small class="muted">${R.hi?`再 ${R.hi-R.p} 分升${esc(R.next)}・到「挑戰電腦 → 🏅 積分挑戰」贏棋升官`:"已經是最高的官階"}</small></div>`;
+  pad.prepend(...d.children);
+  {const f=v.querySelector("#meFig2");if(f)f.onclick=()=>meFigOpen(f.src)}{const o=v.querySelector("#meOb");if(o)o.onclick=()=>{vibrate(5);onboard(true)}}{const n=v.querySelector("#meNm");if(n)n.onclick=()=>{vibrate(5);nameSheet(false)}}
+  {const pc=v.querySelector("#mePc");if(pc)pc.onclick=()=>{vibrate(5);store.set("setTab","bot");location.hash="#/settings"}}}
 function Profile(v){setTop("🎒 棋童資料","#/adventure");setTabs(true,"#/");v.className="view";const I=xpInfo(),H=hintInfo(),B=bag(),Sx=jSecrets(),S=jStars(),Js=jStages(),L=legendState(),star=Js.reduce((a,x)=>a+(S[x.id]||0),0);
   const card=x=>`<div class="bcard ${x.rarity}"><div class="bic">${TIMG(`data/treasure/board_${x.rarity==="broken"?"broken":x.rarity==="rare"?"rare":"normal"}.webp`,x.rarity==="broken"?"🧩":x.rarity==="rare"?"📜":"♟")}</div><b>${esc(x.name)}</b><small style="color:${RAR[x.rarity][1]}">${RAR[x.rarity][0]}</small><small class="muted">${esc(x.from)}・${new Date(x.at).toLocaleDateString()}</small>
     ${x.rarity==="rare"&&!x.used?`<button class="pill" data-ex="${x.uid}">🪨 拿去石桌給兩位老人</button>`:x.used?'<small class="muted">已經跟兩位老人換過獎勵</small>':""}</div>`;
   v.innerHTML=`<div class="pad"><div class="card prof"><div class="pl"><div class="lv">Lv ${I.L}</div><div><b style="font-size:20px">🀄 ${I.title}</b><div class="st-bar" style="margin:6px 0 2px"><i style="width:${I.need?Math.round(I.rest*100/I.need):100}%"></i></div><small class="muted">${I.need?`${I.rest}／${I.need} 修為・累積 ${I.total}`:`累積 ${I.total} 修為・已到最高等級`}</small></div></div>
       <div class="chips"><span>💡 提示棋 今天 ${H.left}${H.bonus?`＋庫存 ${H.bonus}`:""}</span><span>⭐ 雲河棋路 ${star}／${Js.length*3}</span><span>📖 故事 ${L.n}／36 回</span><span>🤝 秘境棋友 ${Object.keys(Sx).length}／${SECRETS.length}</span></div>
       <button class="lk" id="pXP" style="margin-top:6px">等級和提示棋怎麼來的？</button></div>
-    <div class="circles"><button data-c="b"><span>${ETIMG("p_board","data/treasure/board_normal.webp","🎁")}</span><b>棋盤</b><small>${B.boards.length}</small></button><button data-c="r"><span>${ETIMG("p_kifu","data/treasure/record_normal.webp","📜")}</span><b>棋譜</b><small>${B.records.length}</small></button><button data-c="s"><span>${ETIMG("p_secret","","🤝")}</span><b>秘境棋友</b><small>${Object.keys(Sx).length}／${SECRETS.length}</small></button></div></div>`;
+    <div class="circles"><button data-c="b"><span>${ETIMG("p_board","data/treasure/board_normal.webp","🎁")}</span><b>棋盤</b><small>${B.boards.length}</small></button><button data-c="r"><span>${ETIMG("p_kifu","data/treasure/record_normal.webp","📜")}</span><b>棋譜</b><small>${B.records.length}</small></button><button data-c="s"><span>${ETIMG("p_secret","","🤝")}</span><b>秘境棋友</b><small>${Object.keys(Sx).length}／${SECRETS.length}</small></button><button data-c="z"><span>🏺</span><b>珍品</b><small>${Object.values(relicsMine()).reduce((a,x)=>a+x.length,0)}／130</small></button></div></div>`;
   /* 意見回饋 322：只放三個圓圈，點了才打開清單，不放說明文字 */
-  const openC=k=>{const B2=bag(),S2=jSecrets();
+  const openC=k=>{const B2=bag(),S2=jSecrets();if(k==="z")return relicBook();
     if(k==="b")sheet(`🎁 棋盤（${B2.boards.length}）`,b=>{if(!B2.boards.length){b.innerHTML='<p class="muted" style="text-align:center">還沒有</p>';return}
-      pageList(b,B2.boards.slice().reverse(),sl=>`<div class="bgrid">${sl.map(card).join("")}</div>`,b=>b.querySelectorAll("[data-ex]").forEach(x=>x.onclick=()=>rareExchange(x.dataset.ex,()=>Profile(v))))});
+      pageList(b,B2.boards.slice().reverse(),sl=>`<div class="bgrid">${sl.map(card).join("")}</div>`,b=>b.querySelectorAll("[data-ex]").forEach(x=>x.onclick=()=>rareExchange(x.dataset.ex,()=>Me(v))))});
     else if(k==="r")sheet(`📜 棋譜（${B2.records.length}）`,b=>{if(!B2.records.length){b.innerHTML='<p class="muted" style="text-align:center">還沒有</p>';return}
       pageList(b,B2.records.slice().reverse(),sl=>`<div class="items" style="padding:0">${sl.map(x=>`<button class="item" data-rc="${x.uid}"><span class="lb">${TIMG(`data/treasure/record_${x.rare?"rare":"normal"}.webp`,"📜")}</span><span class="tx"><b>${esc(x.name)}</b><span>${esc(x.from)}</span></span><span class="muted">›</span></button>`).join("")}</div>`,b=>{b.querySelectorAll("[data-rc]").forEach(y=>y.onclick=()=>{const x=bag().records.find(z=>z.uid===y.dataset.rc);if(!x)return;closeSheet();store.set("dbReturn",{c:x.c,to:"#/adventure",at:Date.now()});location.hash=`#/db/${x.c}/${encodeURIComponent(x.id)}`})})});
     else sheet(`🤝 秘境棋友（${Object.keys(S2).length}／${SECRETS.length}）`,b=>{b.innerHTML=`<div class="items" style="padding:0">${SECRETS.map(x=>S2[x.id]?`<button class="item" data-sb="${x.id}"><span class="lb" style="font-size:22px">${x.ic}</span><span class="tx"><b>${esc(x.name)}</b><span>${esc((SECRET_BIO[x.id]||{}).y||"")}・贏過 ${(store.get("secretWins",{})[x.id]||0)} 盤</span></span><span class="muted">›</span></button>`:`<div class="item" style="opacity:.5"><span class="lb">❔</span><span class="tx"><b>？？？</b></span></div>`).join("")}</div>`;b.querySelectorAll("[data-sb]").forEach(y=>y.onclick=()=>{const x=SECRETS.find(z=>z.id===y.dataset.sb);if(x)secretSheet(x)})})};
@@ -3937,6 +3961,24 @@ async function secretGift(x,gid){const K=store.get("giftGames",{});if(K[gid])ret
     <div class="bgrid" style="grid-template-columns:1fr"><div class="bcard ${rar}"><div class="bic">${rar==="broken"?"🧩":rar==="rare"?"📜":"♟"}</div><b>${esc(it.name)}</b><small style="color:${RAR[rar][1]}">${RAR[rar][0]}${rar==="rare"?"・整個故事只有一件":""}</small></div></div>
     ${rar==="rare"?'<p class="muted" style="line-height:1.7">稀有的拓本可以拿去石桌給兩位老人，換 💡 5 顆提示棋和 📜 3 份當年的棋譜。</p>':""}<button class="btn" id="gb" style="width:100%">看我的棋童資料</button>`;b.querySelector("#gb").onclick=()=>{closeSheet();location.hash="#/profile"}})}
 /* 驛站偶爾掉比賽棋譜：每次逛有兩成機率，每天最多 2 份（從妙棋精選的實戰裡挑） */
+/* 意見回饋 536（開發者）：點公園的環景長卷，有 20% 機率掉落那個朝代的珍品（每個朝代 10 樣：普通 6、稀有 3、傳說 1；Gemini 畫的 data/relics/<朝代>__<id>.webp）。
+   兩次掉落至少隔 2 分鐘，免得一直點就全部拿完；收進「棋童資料 → 🏺 珍品」 */
+let RELICS_P=null;const relicsData=()=>RELICS_P||(RELICS_P=fetch("data/relics/relics.json").then(r=>r.ok?r.json():{}).catch(()=>({})));
+const relicsMine=()=>store.get("relics",{}),RELIC_RK={common:["普通","#8A7A66"],rare:["稀有","#2F6FB5"],legend:["傳說","#C8962E"]};
+const relicImg=(era,id,ic)=>`<img src="data/relics/${era}__${id}.webp" alt="" style="width:100%;height:100%;object-fit:contain" onerror="this.replaceWith(document.createTextNode('${ic||"🏺"}'))">`;
+async function relicDrop(era){const R=await relicsData(),L=R[era];if(!Array.isArray(L)||!L.length)return false;const mine=relicsMine(),have=mine[era]||[];
+  if(Date.now()-(store.get("relicAt",0)||0)<12e4||Math.random()>=.2)return false;const left=L.filter(x=>!have.includes(x.id));if(!left.length)return false;
+  const W={common:70,rare:25,legend:5},tot=left.reduce((a,x)=>a+(W[x.rarity]||10),0);let r=Math.random()*tot,it=left[0];for(const x of left){r-=W[x.rarity]||10;if(r<=0){it=x;break}}
+  mine[era]=have.concat(it.id);store.set("relics",mine);store.set("relicAt",Date.now());vibrate([15,30,15,30,40]);const[rk,rc]=RELIC_RK[it.rarity]||RELIC_RK.common;
+  sheet("🏺 撿到一件"+parkName(era)+"的珍品！",b=>{b.innerHTML=`<div style="text-align:center"><div style="width:180px;height:180px;margin:0 auto 6px;display:flex;align-items:center;justify-content:center;font-size:90px">${relicImg(era,it.id)}</div>
+    <div style="display:inline-block;padding:2px 10px;border-radius:999px;color:#fff;background:${rc};font-size:12px;font-weight:700">${rk}</div><h3 style="margin:6px 0 4px;font-family:var(--serif)">${esc(it.name)}</h3></div>
+    <p style="line-height:1.8;margin:0 0 8px;font-size:15.5px">${esc(it.desc||"")}</p><p class="muted" style="font-size:13px;text-align:center">${esc(parkName(era))}的珍品：${mine[era].length}／${L.length}・放在「🎒 棋童資料 → 🏺 珍品」</p><button class="btn" id="rlOk" style="width:100%">收下</button>`;
+    b.querySelector("#rlOk").onclick=()=>closeSheet()});return true}
+async function relicBook(){const R=await relicsData(),mine=relicsMine(),eras=Object.keys(R);
+  sheet(`🏺 朝代珍品（${eras.reduce((a,e)=>a+(mine[e]||[]).length,0)}／${eras.reduce((a,e)=>a+R[e].length,0)}）`,b=>{b.innerHTML='<p class="muted" style="margin:0 0 8px;font-size:13px">在 3D 園子裡點遠方的長卷，偶爾會撿到那個朝代的珍品。灰色的是還沒找到的。</p>'+eras.map(e=>{const h=mine[e]||[];return`<div class="sec-t">${esc(parkName(e))}<span class="muted" style="font-size:12px;font-weight:400">${h.length}／${R[e].length}</span></div>
+      <div style="display:grid;grid-template-columns:repeat(5,1fr);gap:6px">${R[e].map(x=>{const got=h.includes(x.id),rc=(RELIC_RK[x.rarity]||RELIC_RK.common)[1];return`<button data-rl="${e}|${x.id}" style="aspect-ratio:1;border-radius:12px;border:2px solid ${got?rc:"var(--line)"};background:var(--card);padding:3px;display:flex;align-items:center;justify-content:center;font-size:26px;${got?"":"filter:grayscale(1) brightness(.35);opacity:.55"}">${got?relicImg(e,x.id):"？"}</button>`}).join("")}</div>`}).join("");
+    b.querySelectorAll("[data-rl]").forEach(y=>y.onclick=()=>{const[e,id]=y.dataset.rl.split("|"),x=(R[e]||[]).find(z=>z.id===id);if(!x||!(mine[e]||[]).includes(id)){toast("還沒找到這件珍品");return}const[rk,rc]=RELIC_RK[x.rarity]||RELIC_RK.common;
+      sheet("🏺 "+x.name,bb=>{bb.innerHTML=`<div style="text-align:center"><div style="width:180px;height:180px;margin:0 auto 6px;display:flex;align-items:center;justify-content:center;font-size:90px">${relicImg(e,x.id)}</div><div style="display:inline-block;padding:2px 10px;border-radius:999px;color:#fff;background:${rc};font-size:12px;font-weight:700">${rk}・${esc(parkName(e))}</div></div><p style="line-height:1.8;font-size:15.5px">${esc(x.desc||"")}</p><button class="btn ghost" id="rlBk" style="width:100%">← 回珍品冊</button>`;bb.querySelector("#rlBk").onclick=()=>relicBook()})})})}
 async function cupDrop(){const day=localDay(),d=store.get("cupDrop",{});if(d.d===day&&d.n>=2)return false;if(Math.random()>=.3)return false;
   let L=null;try{L=(await api("/db/items?c=brilliant&limit=600")).items}catch(e){return false}if(!L||!L.length)return false;const it=L[Math.floor(Math.random()*L.length)];
   const B=bag();if(B.records.some(z=>z.id===it.id))return false;B.records.push({uid:"r"+Date.now().toString(36),c:"brilliant",id:it.id,name:toT(it.name||(it.red+" 對 "+it.black)),from:`${parkName(store.get("era","classic"))}・茶杯底下`,at:Date.now()});bagSave(B);store.set("cupDrop",{d:day,n:(d.d===day?d.n:0)+1});
