@@ -815,7 +815,8 @@
               if(n)done.push([i,r/n,gg/n,b/n]);else next.push(i)}
             for(const[i,r,gg,b]of done){d[i*4]=r;d[i*4+1]=gg;d[i*4+2]=b;d[i*4+3]=255}if(!done.length)break;hole=next}
           g.putImageData(id,0,0);c.naturalWidth=w;c.naturalHeight=h;return c}catch(e){return im}};
-      use("cup",im0=>{const im=fixCup(im0),ay=cupAY(im);for(const[x,z]of[[0,-6.85],[.4,7.0]]){const w=1.8,h=w*im.naturalHeight/im.naturalWidth;
+      /* 意見回饋 456、479（開發者：杯子還是沒有正確放在桌上）：手繪的平面茶杯從側面、低角度看會浮起來；改成每個朝代都用立體的 3D 茶杯（create 裡的 teaCup），從哪個角度看都平放在桌上 */
+      if(false)use("cup",im0=>{const im=fixCup(im0),ay=cupAY(im);for(const[x,z]of[[0,-6.85],[.4,7.0]]){const w=1.8,h=w*im.naturalHeight/im.naturalWidth;
         blob(x,.02,z,w*.47,w*.44,.3,0);const c=card(im,{x,y:.015,z,w,ax:.5,ay,tilt:1,info:"cup"});c.m.renderOrder=1;
         const b=X.bills&&X.bills[X.bills.length-1];if(b&&b.m===c.m)Object.assign(b,{cup:[x,z],hb:ay*h})}});}
     return{frame:f.frame||0x5C3418,tick(s){for(const F of flames){const n=Math.sin(s*11+F.ph)*.5+Math.sin(s*17.3+F.ph*2)*.3+Math.sin(s*5.1+F.ph)*.2;
@@ -957,7 +958,7 @@
     const teaCup=(x,z)=>{const cup=new T.Group();cup.position.set(x,0,z);sc.add(cup);const por=M(0xF4F1EA,{roughness:.25}),blue=M(0x2D5DA8,{roughness:.3});const a=new T.Mesh(new T.CylinderGeometry(.75,.75,.08,32),por);a.position.y=.04;cup.add(a);
       const b=new T.Mesh(new T.CylinderGeometry(.5,.36,.7,32,1,true),por);b.position.y=.43;b.material.side=T.DoubleSide;cup.add(b);const band=new T.Mesh(new T.CylinderGeometry(.505,.47,.12,32,1,true),blue);band.position.y=.6;cup.add(band);
       const tea=new T.Mesh(new T.CircleGeometry(.47,32),M(0x9C6B1E,{roughness:.1}));tea.rotation.x=-PI/2;tea.position.y=.66;cup.add(tea);cup.traverse(o=>{if(o.isMesh){o.castShadow=true;o.receiveShadow=true;o.userData.info="cup";infos.push(o)}});return cup};   /* 意見回饋 348：3D 茶杯也點得到 */
-    if(!PROP_IMG[EK]){teaCup(0,-6.85);teaCup(.4,7.0)}   // 意見回饋 219：Pikafish 的茶在它面前正中間、我的茶在我面前正中間
+    teaCup(0,-6.85);teaCup(.4,7.0);   // 意見回饋 219：Pikafish 的茶在它面前正中間、我的茶在我面前正中間
     // 平台上的樹（依朝代：松、柳、竹）：水墨畫的看板（兩種筆法輪流），放在兩側，轉頭時當前景框；不投影（畫是平的，影子會穿幫）
     if(!PROP_IMG[EK]){const seat=new T.Vector3(0,16,9.2),barkM=M(0xffffff,{map:barkTex(E,E.tree),roughness:.95}),folM=new T.MeshBasicMaterial({map:foliageTex(E,E.tree,EK.length*131+7),transparent:true,alphaTest:.02,depthWrite:false,side:T.DoubleSide,toneMapped:false});
       // 位置（意見回饋 233）：放在平台邊、斜後方，當轉頭時畫面的框，不再一棵大樹擋住整個側面
