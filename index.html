@@ -272,7 +272,7 @@ html[data-era=qin] .me-win{--oct:inset(0 round 8px)}html[data-era=song] .me-win{
 .mw svg{position:absolute;inset:0;width:100%;height:100%;overflow:visible;filter:drop-shadow(0 2px 3px color-mix(in srgb,var(--ink) 22%,transparent))}
 .mw .o{fill:color-mix(in srgb,var(--accent) 8%,var(--card));stroke:var(--trim,var(--accent));stroke-width:4;stroke-linejoin:round;transition:fill .15s}
 .mw .i{fill:none;stroke:color-mix(in srgb,var(--trim,var(--accent)) 45%,var(--line));stroke-width:1.5;transform:scale(.84);transform-box:fill-box;transform-origin:center}
-.mw .ic{position:absolute;left:50%;top:var(--iy,50%);transform:translate(-50%,-50%);width:58px;height:58px;display:flex;align-items:center;justify-content:center;font-size:40px;transition:transform .15s}.mw .ic .ti{width:58px;height:58px}
+.mw .wv{display:none}html[data-era=song] .mw .wv{display:block}.mw .ic{position:absolute;left:50%;top:var(--iy,50%);transform:translate(-50%,-50%);width:58px;height:58px;display:flex;align-items:center;justify-content:center;font-size:40px;transition:transform .15s}.mw .ic .ti{width:58px;height:58px}
 .mw[data-c=r]{--iy:42%}.mw[data-c=z]{--iy:63%}.mw[data-c=z] .ic{width:52px;height:52px;font-size:34px}
 .mw>b{font:900 16px var(--serif);letter-spacing:.1em;color:var(--ink)}.mw>b small{margin-left:6px;font:800 14px var(--serif);letter-spacing:0;color:var(--accent);font-variant-numeric:tabular-nums}
 .mw:active .ic{transform:translate(-50%,-50%) scale(.9)}.mw:active .o{fill:color-mix(in srgb,var(--accent) 18%,var(--card))}
@@ -304,13 +304,20 @@ html[data-era=song] .hx{clip-path:none;background:url(data/me_song/hex_badge.web
 html[data-era=song] .hx::before{display:none}
 html[data-era=song] .mwall{background:url(data/me_song/wall.webp) center top/cover no-repeat;border:0;padding-top:44px}
 html[data-era=song] .mwall::before{display:none}
-html[data-era=song] .mw svg{display:none}
-html[data-era=song] .mw .wf{background:center/contain no-repeat}
-html[data-era=song] .mw[data-c=b] .wf{background-image:url(data/me_song/win_b.webp)}
-html[data-era=song] .mw[data-c=r] .wf{background-image:url(data/me_song/win_r.webp)}
-html[data-era=song] .mw[data-c=s] .wf{background-image:url(data/me_song/win_s.webp)}
-html[data-era=song] .mw[data-c=z] .wf{background-image:url(data/me_song/win_z.webp)}
-html[data-era=song] .mw[data-c=r]{--iy:40%}html[data-era=song] .mw[data-c=z]{--iy:60%}
+/* 意見回饋 565（美術總監＋RPG 專家）：窗裡不放圖示，改放「窗後的一小景」（Gemini 畫的 view_*），用窗形遮罩（mask_*，比窗洞外擴 3%）裁切，窗框蓋在最上層、影子落進窗洞上緣做出深度；
+   空的收藏格窗內起霧，秘境棋友、珍品照收集進度散霧（--mist） */
+html[data-era=song] .mw svg,html[data-era=song] .mw .ic{display:none}
+html[data-era=song] .mw .wf{background:none;aspect-ratio:var(--ar,1)}
+html[data-era=song] .mw .wv{position:absolute;inset:0;background:linear-gradient(to bottom,rgba(38,58,60,.28),rgba(38,58,60,0) 30%),var(--view) var(--vx,50%) var(--vy,50%)/var(--vs,92%) no-repeat;-webkit-mask:var(--mask) center/contain no-repeat;mask:var(--mask) center/contain no-repeat;transition:filter .6s,background-size .25s}
+html[data-era=song] .mw .wv::after{content:"";position:absolute;inset:0;background:radial-gradient(circle at 50% 55%,rgba(238,242,240,calc(var(--mist,0)*.85)),rgba(238,242,240,var(--mist,0)));transition:background .9s}
+html[data-era=song] .mw .wf::after{content:"";position:absolute;inset:0;pointer-events:none;background:var(--frame) center/contain no-repeat;filter:drop-shadow(0 3px 2px rgba(30,50,52,.38)) drop-shadow(0 1px 0 rgba(255,255,255,.5))}
+html[data-era=song] .mw.empty .wv{filter:grayscale(.85) contrast(.6) brightness(1.12)}
+html[data-era=song] .mw:active .wv{--vs:98%}
+html[data-era=song] .mw[data-c=b]{--frame:url(data/me_song/win_b.webp);--mask:url(data/me_song/mask_b.png);--view:url(data/me_song/view_b.webp);--vy:70%;--vs:110%}html[data-era=song] .mw[data-c=b] .wf{width:132px}
+html[data-era=song] .mw[data-c=r]{--frame:url(data/me_song/win_r.webp);--mask:url(data/me_song/mask_r.png);--view:url(data/me_song/view_r.webp);--ar:347/214;--vs:100% auto;--vy:52%}html[data-era=song] .mw[data-c=r] .wf{width:158px}
+html[data-era=song] .mw[data-c=s]{--frame:url(data/me_song/win_s.webp);--mask:url(data/me_song/mask_s.png);--view:url(data/me_song/view_s.webp);--ar:348/347;--vy:60%;--vs:105%}html[data-era=song] .mw[data-c=s] .wf{width:132px}
+html[data-era=song] .mw[data-c=z]{--frame:url(data/me_song/win_z.webp);--mask:url(data/me_song/mask_z.png);--view:url(data/me_song/view_z.webp);--ar:239/347;--vs:auto 104%}html[data-era=song] .mw[data-c=z] .wf{width:auto;height:156px}
+html[data-era=song] .mw>b small{color:#9A6A45}html[data-era=song] .mw.empty>b small{color:#9AA5A3}
 html[data-era=song] .mw>b{color:#2E3B3A}   /* 554：聲音頁也不放說明小字 */   /* 意見回饋 547：棋盤設定頁不放說明小字 */
 html[data-era=tang] .card,html[data-era=tang] .tile,html[data-era=qing] .card,html[data-era=qing] .tile{box-shadow:inset 0 0 0 3px var(--card),inset 0 0 0 4px color-mix(in srgb,var(--trim) 60%,transparent),0 1px 3px #0000001a}
 html[data-era=ming] .topbar,html[data-era=qing] .topbar{border-bottom-width:4px}
@@ -686,7 +693,7 @@ html[data-era=ming] .topbar,html[data-era=qing] .topbar{border-bottom-width:4px}
       if(!window.caches)return go();caches.keys().then(function(ks){return Promise.all(ks.filter(function(k){return k.indexOf("xqlab-app-")===0}).map(function(k){return caches.delete(k)}))})
         .then(function(){return navigator.serviceWorker&&navigator.serviceWorker.getRegistration()}).then(function(r){return r&&r.update()}).catch(function(){}).then(go)}};setTimeout(chk,4000)})();
 </script>
-<script>window.XQ_OFFLINE=true;window.XQ_BUILD="20261105-0438";</script>
+<script>window.XQ_OFFLINE=true;window.XQ_BUILD="20261105-0452";</script>
 <script src="core.js"></script>
 <script src="engine.js"></script>
 <script src="local.js"></script>
@@ -3930,7 +3937,7 @@ function Adventure2(v){setTop("📜 紙譜新局","#/");setTabs(true,"#/");v.cla
     const acts=[...new Set(D.chapters.map(c=>c.actName||""))];
     v.innerHTML=`<div class="pad">${bookTabs(2)}
       <div class="abn" style="height:150px;background-image:url(data/levels/${((D.chapters[0]||{}).cg||[])[0]||"b2cg01_dawn_sweep"}.webp);background-position:center 60%;margin-bottom:10px"><div class="hc"><b>📜 紙譜新局</b><small>明朝隆慶年間，一顆借來的骨卒</small></div></div>
-      <p class="muted" style="margin:0 2px 8px;line-height:1.7;font-size:13.5px">${esc(D.blurb||"")}<br>每一回後面都有一關：讀完一回、過了那一關，就能讀下一回。・★ ${tot}／${L.length*3}${dev?"<br>👁 開發者預覽：36 回全部打開":b1?"":"<br>🔒 讀完第一集、36 關都過了才會打開"}</p>
+      <p class="muted" style="margin:0 2px 8px;line-height:1.7;font-size:13.5px">${esc(D.blurb||"")}<br>每一回後面都有一關：讀完一回、過了那一關，就能讀下一回。<span style="white-space:nowrap">・★ ${tot}／${L.length*3}</span>${dev?"<br>👁 開發者預覽：36 回全部打開":b1?"":"<br>🔒 讀完第一集、36 關都過了才會打開"}</p>
       ${acts.map(a=>`<div class="sec-t">${esc(a)}</div><div class="items" style="padding:0">${D.chapters.filter(c=>(c.actName||"")===a).map(c=>{const k=c.n,sx=L[k-1],st=sx?S[sx.id]||0:0;
         return`<button class="item" data-k="${k}" ${open(k)?"":"disabled"}><span class="lb">${open(k)?(st?"⭐":"📖"):"🔒"}</span><span class="tx"><b style="white-space:normal;line-height:1.5">${open(k)?esc(c.title):"？？？"}</b>${open(k)?`<span>🎴 ${esc((c.lv||{}).name||"")}${st?"・"+"★".repeat(st):""}</span>`:""}</span><span class="muted">${open(k)?"›":""}</span></button>`}).join("")}</div>`).join("")}
       <p class="muted" style="font-size:12px;margin-top:8px">故事是虛構的。</p>${DEVMODE()?'<button class="lk" id="a2Dev" style="margin-top:4px">👁 開發者預覽全文（玩家看不到這個按鈕）</button>':""}</div>`;
@@ -4001,7 +4008,7 @@ function meChip(){const tb=$("#topbar");if(!tb)return;{const o=document.getEleme
 const ME_WIN={b:"M36 2H84L118 36V72L84 106H36L2 72V36Z",r:"M2 17A136 136 0 0 1 118 17L81 95A50 50 0 0 0 39 95Z",
   s:"M26 20A44 44 0 0 1 94 20A36 36 0 0 1 94 88A44 44 0 0 1 26 88A36 36 0 0 1 26 20Z",
   z:"M44 4H76V10C76 16 68 18 68 26C68 32 112 40 112 68C112 92 92 104 60 104C28 104 8 92 8 68C8 40 52 32 52 26C52 18 44 16 44 10Z"};
-const meWin=(k,ic,lb,n,cnt)=>`<button class="mw${cnt?"":" empty"}" data-c="${k}" aria-label="${lb} ${n}"><span class="wf"><svg viewBox="0 0 120 108" aria-hidden="true"><path class="o" d="${ME_WIN[k]}"/><path class="i" d="${ME_WIN[k]}"/></svg><span class="ic">${ic}</span></span><b>${lb}<small>${n}</small></b></button>`;
+const meWin=(k,ic,lb,n,cnt,mist)=>`<button class="mw${cnt?"":" empty"}" data-c="${k}" aria-label="${lb} ${n}" style="--mist:${cnt?(mist||0).toFixed(2):.6}"><span class="wf"><span class="wv"></span><svg viewBox="0 0 120 108" aria-hidden="true"><path class="o" d="${ME_WIN[k]}"/><path class="i" d="${ME_WIN[k]}"/></svg><span class="ic">${ic}</span></span><b>${lb}<small>${n}</small></b></button>`;
 function rankSheet(){const R=rankInfo(),era=store.get("era","classic");sheet("🏛 官階",b=>{b.innerHTML=`<div class="items" style="padding:0">${[1,2,3,4,5,6,7,8,9].map(g=>`<div class="item"${g===R.g?' style="box-shadow:inset 0 0 0 2px var(--accent)"':g<R.g?' style="opacity:.5"':""}><span class="lb">${g===R.g?"🏛":g<R.g?"🔒":"✓"}</span><span class="tx"><b>${esc(RANKT(era,g))}</b></span></div>`).join("")}</div>`})}
 function Me(v){Profile(v);setTop("🙂 我的角色","#/");setTabs(true,"#/");const pad=v.querySelector(".pad");if(!pad)return;
   const R=rankInfo(),I=xpInfo(),H=hintInfo(),B=bag(),Sx=jSecrets(),S=jStars(),Js=jStages(),L=legendState(),star=Js.reduce((a,x)=>a+(S[x.id]||0),0),
@@ -4018,7 +4025,7 @@ function Me(v){Profile(v);setTop("🙂 我的角色","#/");setTabs(true,"#/");co
     <section class="mx"><div class="hx"><span>${ETIMG("f_idea","","💡")}</span><b>${H.left+(H.bonus||0)}<small>提示棋</small></b></div>
       <div class="hx"><span>⭐</span><b>${star}<small>雲河棋路</small></b></div>
       <div class="hx"><span>${ETIMG("p_story","","📖")}</span><b>${L.n}／36<small>故事</small></b></div></section>
-    <section class="mwall"><div class="mws">${meWin("b",ETIMG("p_board","data/treasure/board_normal.webp","🎁"),"棋盤",B.boards.length,B.boards.length)}${meWin("r",ETIMG("p_kifu","data/treasure/record_normal.webp","📜"),"棋譜",B.records.length,B.records.length)}${meWin("s",ETIMG("p_secret","","🤝"),"秘境棋友",`${nS}／${SECRETS.length}`,nS)}${meWin("z","🏺","珍品",`${nZ}／130`,nZ)}</div></section>`;
+    <section class="mwall"><div class="mws">${meWin("b",ETIMG("p_board","data/treasure/board_normal.webp","🎁"),"棋盤",B.boards.length,B.boards.length)}${meWin("r",ETIMG("p_kifu","data/treasure/record_normal.webp","📜"),"棋譜",B.records.length,B.records.length)}${meWin("s",ETIMG("p_secret","","🤝"),"秘境棋友",`${nS}／${SECRETS.length}`,nS,.5*(1-nS/SECRETS.length))}${meWin("z","🏺","珍品",`${nZ}／130`,nZ,.5*(1-Math.sqrt(nZ/130)))}</div></section>`;
   const circ=pad.querySelector(".circles");pad.replaceChildren(d);if(circ){circ.style.display="none";pad.append(circ)}
   const on=(id,fn)=>{const e=v.querySelector(id);if(e)e.onclick=()=>{vibrate(5);fn(e)}};
   on("#meFig2",f=>{const st=v.querySelector("#meSt");if(st){st.classList.remove("tap");void st.offsetWidth;st.classList.add("tap")}const im=f.querySelector("img");setTimeout(()=>meFigOpen(im&&im.src),220)});
