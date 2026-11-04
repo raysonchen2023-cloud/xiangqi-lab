@@ -144,6 +144,7 @@ input,select{font:inherit;font-size:16px;color:inherit}
 .tile.strip .go{flex:none;color:var(--c);font-size:15px;font-weight:900;white-space:nowrap}
 .tile.strip .bd{position:static;display:inline-block;margin-left:8px;padding:0 7px;font-size:11px;vertical-align:2px;font-family:var(--sans)}
 .sec-t{font-weight:900;font-family:var(--serif);font-size:16px;margin:18px 4px 8px;display:flex;justify-content:space-between;align-items:baseline}
+.sec-t:has(>.eic:first-child){justify-content:flex-start;align-items:center;gap:6px}.sec-t:has(>.eic:first-child)>a:last-child,.sec-t:has(>.eic:first-child)>button:last-child{margin-left:auto}   /* 意見回饋 496：標題前面加了朝代圖示後，左右兩端對齊會把圖示和字拆到兩邊 */
 .sec-t a,.sec-t button{font-size:13px;color:var(--accent);font-family:var(--sans);font-weight:500}
 .row{display:flex;align-items:center;gap:10px}
 .muted{color:var(--muted);font-size:13px}
@@ -580,7 +581,7 @@ html[data-era=ming] .topbar,html[data-era=qing] .topbar{border-bottom-width:4px}
       if(!window.caches)return go();caches.keys().then(function(ks){return Promise.all(ks.filter(function(k){return k.indexOf("xqlab-app-")===0}).map(function(k){return caches.delete(k)}))})
         .then(function(){return navigator.serviceWorker&&navigator.serviceWorker.getRegistration()}).then(function(r){return r&&r.update()}).catch(function(){}).then(go)}};setTimeout(chk,4000)})();
 </script>
-<script>window.XQ_OFFLINE=true;window.XQ_BUILD="20261104-1849";</script>
+<script>window.XQ_OFFLINE=true;window.XQ_BUILD="20261104-1853";</script>
 <script src="core.js"></script>
 <script src="engine.js"></script>
 <script src="local.js"></script>
