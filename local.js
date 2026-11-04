@@ -92,11 +92,14 @@ var XQ=(function(){
   /* 意見回饋 413：對局頁打開時說「我要哪一種」——挑戰電腦 cpu、朝代擂台 arena、石桌往事 journey（雲河棋路、驛站、園子、守關共用）、練習 practice 各一盤。
      桌上就是那一種：不動（下完的也不動，畫面自己決定）。不是：下到一半的先收進 play2 自己那格，再拿出那一種收著的；都沒有才開新的（石桌往事要給 journey 才開，練習不開——不開就連收都不收，不會多出一份重複的）。
      收起來以後先把 P 清掉再開新局，playNew 最後的 forfeit(P) 才不會把剛收起來的積分局算成中途離開 */
-  function playOpen(b){ensureP();const k=["arena","journey","practice"].includes(b.kind)?b.kind:"cpu";if(kindOf(P)===k)return;
+  function playOpen(b){ensureP();const k=["arena","journey","practice"].includes(b.kind)?b.kind:"cpu";
     const s=stashGet(k),era=typeof b.arena==="string"&&/^[a-z]{2,8}$/.test(b.arena)?b.arena:null,lv=d=>Math.max(1,Math.min(LEVELS.length,Math.round(+b.level)||d));
+    /* 意見回饋 428：擂台接回沒下完的那盤時，強度換成現在的規則（例如石桌棋仙固定第 7 級），不沿用開局當時存的等級 */
+    const relv=g=>{if(k==="arena"&&g&&b.level&&!g.result&&g.level!==lv(3)){g.level=lv(3);return true}return false};
+    if(kindOf(P)===k){if(relv(P)){stateRebuild(P);savePlay()}return}
     if(!s&&(k==="practice"||(k==="journey"&&!jid(b.journey))))return;
     if(unfinished(P))stashSet(kindOf(P),stashOut(P));
-    if(s){stashSet(k,null);P=s;P.hint=null;stateRebuild(P);savePlay();return}
+    if(s){stashSet(k,null);P=s;P.hint=null;relv(P);stateRebuild(P);savePlay();return}
     P=null;
     if(k==="arena")playNew("r",lv(3),false,null,false,era||"classic",true);
     else if(k==="journey")playNew("r",lv(1),false,null,false,era,true,jid(b.journey));
