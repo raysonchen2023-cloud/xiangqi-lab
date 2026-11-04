@@ -586,7 +586,7 @@ html[data-era=ming] .topbar,html[data-era=qing] .topbar{border-bottom-width:4px}
       if(!window.caches)return go();caches.keys().then(function(ks){return Promise.all(ks.filter(function(k){return k.indexOf("xqlab-app-")===0}).map(function(k){return caches.delete(k)}))})
         .then(function(){return navigator.serviceWorker&&navigator.serviceWorker.getRegistration()}).then(function(r){return r&&r.update()}).catch(function(){}).then(go)}};setTimeout(chk,4000)})();
 </script>
-<script>window.XQ_OFFLINE=true;window.XQ_BUILD="20261104-2353";</script>
+<script>window.XQ_OFFLINE=true;window.XQ_BUILD="20261105-0017";</script>
 <script src="core.js"></script>
 <script src="engine.js"></script>
 <script src="local.js"></script>
@@ -3972,22 +3972,22 @@ async function secretGift(x,gid){const K=store.get("giftGames",{});if(K[gid])ret
 /* 驛站偶爾掉比賽棋譜：每次逛有兩成機率，每天最多 2 份（從妙棋精選的實戰裡挑） */
 /* 意見回饋 536（開發者）：點公園的環景長卷，有 20% 機率掉落那個朝代的珍品（每個朝代 10 樣：普通 6、稀有 3、傳說 1；Gemini 畫的 data/relics/<朝代>__<id>.webp）。
    兩次掉落至少隔 2 分鐘，免得一直點就全部拿完；收進「棋童資料 → 🏺 珍品」 */
-let RELICS_P=null;const relicsData=()=>RELICS_P||(RELICS_P=fetch("data/relics/relics.json").then(r=>r.ok?r.json():{}).catch(()=>({})));
+const relicEra=e=>e==="classic"?"古風":eraLabel(e);let RELICS_P=null;const relicsData=()=>RELICS_P||(RELICS_P=fetch("data/relics/relics.json").then(r=>r.ok?r.json():{}).catch(()=>({})));
 const relicsMine=()=>store.get("relics",{}),RELIC_RK={common:["普通","#8A7A66"],rare:["稀有","#2F6FB5"],legend:["傳說","#C8962E"]};
 const relicImg=(era,id,ic)=>`<img src="data/relics/${era}__${id}.webp" alt="" style="width:100%;height:100%;object-fit:contain" onerror="this.replaceWith(document.createTextNode('${ic||"🏺"}'))">`;
 async function relicDrop(era){const R=await relicsData(),L=R[era];if(!Array.isArray(L)||!L.length)return false;const mine=relicsMine(),have=mine[era]||[];
   if(Date.now()-(store.get("relicAt",0)||0)<12e4||Math.random()>=.2)return false;const left=L.filter(x=>!have.includes(x.id));if(!left.length)return false;
   const W={common:70,rare:25,legend:5},tot=left.reduce((a,x)=>a+(W[x.rarity]||10),0);let r=Math.random()*tot,it=left[0];for(const x of left){r-=W[x.rarity]||10;if(r<=0){it=x;break}}
   mine[era]=have.concat(it.id);store.set("relics",mine);store.set("relicAt",Date.now());vibrate([15,30,15,30,40]);const[rk,rc]=RELIC_RK[it.rarity]||RELIC_RK.common;
-  sheet("🏺 撿到一件"+parkName(era)+"的珍品！",b=>{b.innerHTML=`<div style="text-align:center"><div style="width:180px;height:180px;margin:0 auto 6px;display:flex;align-items:center;justify-content:center;font-size:90px">${relicImg(era,it.id)}</div>
+  sheet("🏺 撿到一件"+relicEra(era)+"的珍品！",b=>{b.innerHTML=`<div style="text-align:center"><div style="width:180px;height:180px;margin:0 auto 6px;display:flex;align-items:center;justify-content:center;font-size:90px">${relicImg(era,it.id)}</div>
     <div style="display:inline-block;padding:2px 10px;border-radius:999px;color:#fff;background:${rc};font-size:12px;font-weight:700">${rk}</div><h3 style="margin:6px 0 4px;font-family:var(--serif)">${esc(it.name)}</h3></div>
-    <p style="line-height:1.8;margin:0 0 8px;font-size:15.5px">${esc(it.desc||"")}</p><p class="muted" style="font-size:13px;text-align:center">${esc(parkName(era))}的珍品：${mine[era].length}／${L.length}・放在「🎒 棋童資料 → 🏺 珍品」</p><button class="btn" id="rlOk" style="width:100%">收下</button>`;
+    <p style="line-height:1.8;margin:0 0 8px;font-size:15.5px">${esc(it.desc||"")}</p><p class="muted" style="font-size:13px;text-align:center">${esc(relicEra(era))}的珍品：${mine[era].length}／${L.length}・放在「🎒 棋童資料 → 🏺 珍品」</p><button class="btn" id="rlOk" style="width:100%">收下</button>`;
     b.querySelector("#rlOk").onclick=()=>closeSheet()});return true}
 async function relicBook(){const R=await relicsData(),mine=relicsMine(),eras=Object.keys(R);
-  sheet(`🏺 朝代珍品（${eras.reduce((a,e)=>a+(mine[e]||[]).length,0)}／${eras.reduce((a,e)=>a+R[e].length,0)}）`,b=>{b.innerHTML='<p class="muted" style="margin:0 0 8px;font-size:13px">在 3D 園子裡點遠方的長卷，偶爾會撿到那個朝代的珍品。灰色的是還沒找到的。</p>'+eras.map(e=>{const h=mine[e]||[];return`<div class="sec-t">${esc(parkName(e))}<span class="muted" style="font-size:12px;font-weight:400">${h.length}／${R[e].length}</span></div>
+  sheet(`🏺 朝代珍品（${eras.reduce((a,e)=>a+(mine[e]||[]).length,0)}／${eras.reduce((a,e)=>a+R[e].length,0)}）`,b=>{b.innerHTML='<p class="muted" style="margin:0 0 8px;font-size:13px">在 3D 園子裡點遠方的長卷，偶爾會撿到那個朝代的珍品。灰色的是還沒找到的。</p>'+eras.map(e=>{const h=mine[e]||[];return`<div class="sec-t">${esc(relicEra(e))}<span class="muted" style="font-size:12px;font-weight:400">${h.length}／${R[e].length}</span></div>
       <div style="display:grid;grid-template-columns:repeat(5,1fr);gap:6px">${R[e].map(x=>{const got=h.includes(x.id),rc=(RELIC_RK[x.rarity]||RELIC_RK.common)[1];return`<button data-rl="${e}|${x.id}" style="aspect-ratio:1;border-radius:12px;border:2px solid ${got?rc:"var(--line)"};background:var(--card);padding:3px;display:flex;align-items:center;justify-content:center;font-size:26px;${got?"":"filter:grayscale(1) brightness(.35);opacity:.55"}">${got?relicImg(e,x.id):"？"}</button>`}).join("")}</div>`}).join("");
     b.querySelectorAll("[data-rl]").forEach(y=>y.onclick=()=>{const[e,id]=y.dataset.rl.split("|"),x=(R[e]||[]).find(z=>z.id===id);if(!x||!(mine[e]||[]).includes(id)){toast("還沒找到這件珍品");return}const[rk,rc]=RELIC_RK[x.rarity]||RELIC_RK.common;
-      sheet("🏺 "+x.name,bb=>{bb.innerHTML=`<div style="text-align:center"><div style="width:180px;height:180px;margin:0 auto 6px;display:flex;align-items:center;justify-content:center;font-size:90px">${relicImg(e,x.id)}</div><div style="display:inline-block;padding:2px 10px;border-radius:999px;color:#fff;background:${rc};font-size:12px;font-weight:700">${rk}・${esc(parkName(e))}</div></div><p style="line-height:1.8;font-size:15.5px">${esc(x.desc||"")}</p><button class="btn ghost" id="rlBk" style="width:100%">← 回珍品冊</button>`;bb.querySelector("#rlBk").onclick=()=>relicBook()})})})}
+      sheet("🏺 "+x.name,bb=>{bb.innerHTML=`<div style="text-align:center"><div style="width:180px;height:180px;margin:0 auto 6px;display:flex;align-items:center;justify-content:center;font-size:90px">${relicImg(e,x.id)}</div><div style="display:inline-block;padding:2px 10px;border-radius:999px;color:#fff;background:${rc};font-size:12px;font-weight:700">${rk}・${esc(relicEra(e))}</div></div><p style="line-height:1.8;font-size:15.5px">${esc(x.desc||"")}</p><button class="btn ghost" id="rlBk" style="width:100%">← 回珍品冊</button>`;bb.querySelector("#rlBk").onclick=()=>relicBook()})})})}
 async function cupDrop(){const day=localDay(),d=store.get("cupDrop",{});if(d.d===day&&d.n>=2)return false;if(Math.random()>=.3)return false;
   let L=null;try{L=(await api("/db/items?c=brilliant&limit=600")).items}catch(e){return false}if(!L||!L.length)return false;const it=L[Math.floor(Math.random()*L.length)];
   const B=bag();if(B.records.some(z=>z.id===it.id))return false;B.records.push({uid:"r"+Date.now().toString(36),c:"brilliant",id:it.id,name:toT(it.name||(it.red+" 對 "+it.black)),from:`${parkName(store.get("era","classic"))}・茶杯底下`,at:Date.now()});bagSave(B);store.set("cupDrop",{d:day,n:(d.d===day?d.n:0)+1});
