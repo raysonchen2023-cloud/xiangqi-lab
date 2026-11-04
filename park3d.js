@@ -1076,7 +1076,7 @@
     // Noto Serif TC 網路字型晚到：載入後重畫字面（不然會先用系統字型，字又細又糊）
     try{document.fonts&&document.fonts.load(`900 64px ${SERIF}`,"帥仕相傌俥炮兵將士象馬車砲卒").then(()=>{if(!stopped)refreshLook()})}catch(e){}
     function draw(board,o,ex){o=o||{};ex=ex||{};drawn=true;const nf=!!o.flip;
-      {const lk=JSON.stringify(ex.look?[ex.look.k,ex.look.img,!!ex.look.gly]:null);if(lk!==lookKey){lookKey=lk;LOOK=ex.look||null;
+      {const lk=JSON.stringify(ex.look?[ex.look.k,ex.look.img,!!ex.look.gly,ex.look.pset,ex.look.pieces&&ex.look.pieces.r,ex.look.grid]:null);if(lk!==lookKey){lookKey=lk;LOOK=ex.look||null;
         if(LOOK){let n=0;const L0=[LOOK.img,LOOK.pieces&&LOOK.pieces.r,LOOK.pieces&&LOOK.pieces.b,...(LOOK.pset?PSRC(LOOK.pset):[])],done=()=>{if(++n>=L0.length&&LOOK===ex.look)refreshLook()};L0.forEach(src=>{if(!src||loadImg(src,done))done()})}
         refreshLook()}}
       if(nf!==flip){flip=nf;prevB=null}

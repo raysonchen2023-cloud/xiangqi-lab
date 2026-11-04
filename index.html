@@ -577,7 +577,7 @@ html[data-era=ming] .topbar,html[data-era=qing] .topbar{border-bottom-width:4px}
       if(!window.caches)return go();caches.keys().then(function(ks){return Promise.all(ks.filter(function(k){return k.indexOf("xqlab-app-")===0}).map(function(k){return caches.delete(k)}))})
         .then(function(){return navigator.serviceWorker&&navigator.serviceWorker.getRegistration()}).then(function(r){return r&&r.update()}).catch(function(){}).then(go)}};setTimeout(chk,4000)})();
 </script>
-<script>window.XQ_OFFLINE=true;window.XQ_BUILD="20261104-1359";</script>
+<script>window.XQ_OFFLINE=true;window.XQ_BUILD="20261104-1420";</script>
 <script src="core.js"></script>
 <script src="engine.js"></script>
 <script src="local.js"></script>
@@ -1183,7 +1183,8 @@ const ERA_ARROW={qin:{k:"spear",c:"#1E1E1E"},han:{k:"spear",c:"#B3241B"},sanguo:
   nanbei:{k:"brush",c:"#7A3B16"},sui:{k:"dots",c:"#6B2D8F"},tang:{k:"ribbon",c:"#D9A515"},wudai:{k:"brush",c:"#23395B"},song:{k:"brush",c:"#3E8E7E"},
   yuan:{k:"ribbon",c:"#2456A6"},ming:{k:"dots",c:"#C8102E"},qing:{k:"dots",c:"#E8B400"}};
 /* 意見回饋 361、399：Gemini 畫的朝代整套棋子＋棋盤底板（data/pset/<朝代>/，tools/pieces_slice.py 切的）；有的朝代就用，平面棋盤和公園 3D 都用 */
-let PSET=new Set();fetch("data/pset/eras.json").then(r=>r.ok?r.json():[]).then(a=>{PSET=new Set(a||[])}).catch(()=>{});
+/* 意見回饋 438、439：清單先內建（跟 data/pset/eras.json 一樣），一打開就知道哪些朝代有整套圖；之前要等 eras.json 下載完，第一次畫的平面棋盤會先用程式畫的棋盤和棋子，之後也不會換 */
+let PSET=new Set(["classic","han","ming","nanbei","qin","qing","sanguo","song","sui","tang","weijin","wudai","yuan"]);fetch("data/pset/eras.json").then(r=>r.ok?r.json():null).then(a=>{if(Array.isArray(a)&&a.length)PSET=new Set(a)}).catch(()=>{});
 const PSET_RECT=[-45,-52.5,650,725];
 const BOARD_IMG={"classic": [-17.3, -40.6, 594.6, 701.9], "qin": [-24.9, -33.3, 609.8, 687.2], "han": [-38.6, -44.5, 637.2, 709.6], "sanguo": [-29.7, -46.2, 619.4, 713.4], "weijin": [-24.5, -42.7, 609.1, 705.7], "nanbei": [-25.7, -44.5, 611.4, 709.6], "sui": [-20.9, -36.6, 601.8, 694.5], "tang": [-46.2, -60.6, 652.4, 741.8], "wudai": [-36.3, -44.5, 632.5, 709.6], "song": [-34.0, -19.4, 627.9, 659.4], "yuan": [-25.5, -40.6, 611.0, 701.9], "qing": [-27.1, -49.5, 614.2, 721.3]};BOARD_IMG.ming=BOARD_IMG.yuan;const BOARD_IMG_FILE={ming:"yuan"};
 function boardBG(T,eR,eD,u,flip,imgK){
@@ -1336,12 +1337,12 @@ function Board(onTap,onSwipe){
   let lastKey="";
   function draw(board,o){o=o||{};
     // 跟上一次畫的完全一樣（盤面、選子、箭頭、風格都沒變）就不重畫：對戰畫面每秒更新，重畫整個棋盤在手機上會卡、會閃
-    const key=board.join(",")+"|"+JSON.stringify(o)+"|"+[store.get("boardTheme",""),store.get("pieceStyle",""),store.get("mvArrow",true),store.get("pageTheme",""),store.get("era",""),store.get("hiCon",false)].join(",");
+    const key=board.join(",")+"|"+JSON.stringify(o)+"|"+[store.get("boardTheme",""),store.get("pieceStyle",""),store.get("mvArrow",true),store.get("pageTheme",""),store.get("era",""),store.get("hiCon",false),PSET.size].join(",");
     if(key===lastKey&&svg.firstChild)return;lastKey=key;
     flip=!!o.flip;svg.innerHTML="";
     const T=boardTheme(o.theme),PS=o.pstyle||store.get("pieceStyle","3d");
     // 朝代：楚河漢界的字體跟著目前朝代；邊框紋飾只有棋盤用「跟著頁面風格」（＝朝代配色）時才加
-    const eR=curEra(),eD=(o.theme||store.get("boardTheme","wood3d"))==="auto"?eR:null,bk=JSON.stringify(T)+"|"+(eR?eR.k:"")+"|"+(eD?1:0)+"|"+flip;
+    const eR=curEra(),eD=(o.theme||store.get("boardTheme","wood3d"))==="auto"?eR:null,bk=JSON.stringify(T)+"|"+(eR?eR.k:"")+"|"+(eD?1:0)+"|"+flip+"|"+[...PSET].join("");
     const tk=o.theme||store.get("boardTheme","wood3d"),imgK=eD?eD.k:(!eR&&tk==="wood3d"?"classic":null);
     curPK=eR?eR.k:(tk==="wood3d"?"classic":null);
     if(bk!==bgKey||!bgG){bgKey=bk;bgG=el("g",{});bgG.innerHTML=boardBG(T,eR,eD,uid,flip,imgK)}
@@ -3356,11 +3357,14 @@ const PIKA_LOOK=side=>({p:side==="r"?"帥":"將",e:store.get("era","classic"),g:
 const ACTOR_LOOK=(id,side)=>({p:npcPc({pc:ACTOR_PC[id]||"將"},side),e:store.get("era","classic"),g:9,flat:true,sprite:"data/actors/",spriteMeta:{w:380,h:512,mask:true,faceOf:faceOf("actors",{idle:id,think:id,move:id,happy:id,sad:id,surprise:id},id)},spriteMap:{idle:id,think:id,move:id,happy:id,sad:id,surprise:id}});
 const innActor=j=>{if(!String(j||"").startsWith("inn:"))return null;const x=INN.concat(SECRETS).find(z=>"inn:"+z.id===j);return x?{...x,pc:ACTOR_PC[x.id]||"將",img:`data/actors/${x.id}.webp`,win:"承讓了，下次再來！",lose:"好棋！佩服。"}:null};
 // 公園棋盤的朝代造型（意見回饋 216）：跟棋盤模式同一套底圖、格線色、棋子底圖、字色、字形
-function parkLook(){const k=store.get("era","classic"),e=curEra(),T=boardTheme(e?"auto":"wood3d"),bk=BOARD_IMG[k]?k:null;
+/* 意見回饋 438、439（開發者：同一個朝代，平面和 3D 的棋盤、棋子不能不一樣）：這裡的判斷跟平面棋盤（Board 的 draw）一模一樣——
+   棋盤：設定選「跟著朝代」才用朝代棋盤圖，經典＋木紋用經典圖，其他風格用那個風格的格線色；棋子：整套圖 → 朝代底圖（立體樣式才用）→ 程式畫的 */
+function parkLook(){const k=store.get("era","classic"),e=curEra(),tk=store.get("boardTheme","wood3d"),PS=store.get("pieceStyle","3d"),T=boardTheme(tk),
+    imgK=tk==="auto"&&e?e.k:(!e&&tk==="wood3d"?"classic":null),pk=e?e.k:(tk==="wood3d"?"classic":null),bk=imgK&&BOARD_IMG[imgK]?imgK:null;
   // 字形晚到（第一次切到這個朝代）：拿上一次的參數重畫公園棋盤，棋子字面才會換成朝代字形（之前這裡什麼都沒做，要等走下一步才換）
   if(GLY_ERAS.has(k)&&!GLY[k])needGly(k,()=>{try{const a=PARK&&PARK.last;if(a&&GLY[k]&&store.get("era","classic")===k){a.ex.look=parkLook();PARK.v.draw(a.board,a.o,a.ex)}}catch(e){}});
-  const ps=PSET.has(k)&&!store.get("hiCon",false);return{k,hc:!!store.get("hiCon",false),pset:ps?`data/pset/${k}/`:null,img:ps?`data/pset/${k}/board.webp`:bk?`data/boards/${BOARD_IMG_FILE[bk]||bk}.webp`:null,rect:ps?PSET_RECT:bk?BOARD_IMG[bk]:null,grid:T&&T.grid||"#3A1D0A",
-    pieces:PIECE_INK[k]?{r:`data/pieces/${k}-r.webp`,b:`data/pieces/${k}-b.webp`}:null,ink:PIECE_INK[k]||null,gly:GLY[k]||null,bold:GLY_BOLD[k]||0}}
+  const hc=!!store.get("hiCon",false),ps=!!pk&&PSET.has(pk)&&!hc,pb=!!imgK&&PSET.has(imgK);return{k,hc,pset:ps?`data/pset/${pk}/`:null,img:pb?`data/pset/${imgK}/board.webp`:bk?`data/boards/${BOARD_IMG_FILE[bk]||bk}.webp`:null,rect:pb?PSET_RECT:bk?BOARD_IMG[bk]:null,grid:T&&T.grid||"#3A1D0A",
+    pieces:PS==="3d"&&pk&&PIECE_INK[pk]?{r:`data/pieces/${pk}-r.webp`,b:`data/pieces/${pk}-b.webp`}:null,ink:pk&&PIECE_INK[pk]||null,gly:GLY[k]||null,bold:GLY_BOLD[k]||0}}
 /* 意見回饋 334：錯棋重練一律用棋盤模式（PARK_OFF），不改玩家原本的公園設定 */
 let PARK=null,PARK_LOADING=null,PARK_OFF=false,PARK_J=null;
 /* 進園子時「開局」特效等過場（入口圖＋名言）收掉才播；公園還沒建好就先等，最多 12 秒 */
