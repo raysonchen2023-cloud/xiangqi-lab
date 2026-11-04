@@ -100,7 +100,7 @@ input,select{font:inherit;font-size:16px;color:inherit}
 .thero{margin-top:4px}.tstats{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px}.tstat{display:flex;flex-direction:column;align-items:center;text-align:center;padding:10px 4px;border-radius:12px;background:color-mix(in srgb,var(--accent) 8%,var(--card));min-width:0}
 .tstat small{font-size:12px;color:var(--muted)}.tstat b{font:900 32px/1.1 var(--serif);color:var(--accent);margin:2px 0}.tstat b i{font:600 12px var(--sans,inherit);font-style:normal;color:var(--muted);margin-left:2px}.tstat span{font-size:11.5px;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:100%}
 .tsum{margin:12px 2px 10px;line-height:1.7;font-size:14.5px}
-.eic{width:1.4em;height:1.4em;object-fit:contain;display:inline-block;vertical-align:middle;filter:drop-shadow(0 1px 1px rgba(0,0,0,.18))}#topRight .ib .eic{width:26px;height:26px;padding:2px;border-radius:50%;background:rgba(255,248,236,.92)}.tabbar .ic .eic{width:26px;height:26px;filter:none}#sgTabs .tic{font-style:normal}.item .lb .eic{width:28px;height:28px}.sec-t .eic{width:24px;height:24px;vertical-align:-6px;margin-right:2px}#sgTabs .tic .eic{width:22px;height:22px;vertical-align:-5px}.circles button .ti.eic{width:52px;height:52px}.tabbar button .ic:has(.eic){filter:none;opacity:.55}.tabbar button.on .ic:has(.eic){opacity:1}
+.eic{width:1.4em;height:1.4em;object-fit:contain;display:inline-block;vertical-align:middle;filter:drop-shadow(0 1px 1px rgba(0,0,0,.18))}#topRight .ib .eic{width:26px;height:26px;padding:2px;border-radius:50%;background:rgba(255,248,236,.92)}.tabbar .ic .eic{width:26px;height:26px;filter:none}#sgTabs .tic{font-style:normal}#sTabs .eic{width:20px;height:20px;vertical-align:-5px}.st-rk .hd .eic{width:22px;height:22px;vertical-align:-6px}.item .lb .eic{width:28px;height:28px}.sec-t .eic{width:24px;height:24px;vertical-align:-6px;margin-right:2px}#sgTabs .tic .eic{width:22px;height:22px;vertical-align:-5px}.circles button .ti.eic{width:52px;height:52px}.tabbar button .ic:has(.eic){filter:none;opacity:.55}.tabbar button.on .ic:has(.eic){opacity:1}
 .ecover{position:fixed;inset:0;z-index:9990;display:flex;align-items:center;justify-content:center;background:#1c140d;opacity:0;transition:opacity .45s ease}.ecover.on{opacity:1}
 .ecover i{position:absolute;inset:0;background-size:cover;background-position:center;filter:saturate(1.05);transform:scale(1.08);transition:transform 2.4s ease-out}.ecover.on i{transform:scale(1)}
 .ecover>div{position:relative;text-align:center;color:#fff;font-family:var(--serif);text-shadow:0 2px 12px rgba(0,0,0,.7);background:rgba(20,12,6,.38);padding:18px 26px;border-radius:16px}
@@ -580,7 +580,7 @@ html[data-era=ming] .topbar,html[data-era=qing] .topbar{border-bottom-width:4px}
       if(!window.caches)return go();caches.keys().then(function(ks){return Promise.all(ks.filter(function(k){return k.indexOf("xqlab-app-")===0}).map(function(k){return caches.delete(k)}))})
         .then(function(){return navigator.serviceWorker&&navigator.serviceWorker.getRegistration()}).then(function(r){return r&&r.update()}).catch(function(){}).then(go)}};setTimeout(chk,4000)})();
 </script>
-<script>window.XQ_OFFLINE=true;window.XQ_BUILD="20261104-1628";</script>
+<script>window.XQ_OFFLINE=true;window.XQ_BUILD="20261104-1640";</script>
 <script src="core.js"></script>
 <script src="engine.js"></script>
 <script src="local.js"></script>
@@ -2691,9 +2691,9 @@ function Stats(v){
     return`<div class="hd">${hd}</div><div class="mid"><span class="rk">${esc(R.rank)}</span><span class="pt"><b>${R.pts}</b> 分</span></div>
       <div class="st-bar"><i style="width:${pc}%"></i></div><div class="nx">${R.next?`再 ${R.toNext} 分升 ${esc(R.next)}`:"已是最高段位"}</div>
       <div class="st-wld"><div><b class="w">${R.w}</b><span>勝</span></div><div><b class="l">${R.l}</b><span>負</span></div><div><b class="d">${R.d}</b><span>和</span></div><div><b>${pct(R.w,N)}</b><span>勝率</span></div></div>${foot||""}`};
-  const tabs=[["all","總覽"],["talent","📈 我的成長"],["cpu","🤖 電腦"]].concat(NET?[["net","🌐 線上"]]:[],OFF&&REWARD?[["car","🚗 獎勵"]]:[]);
+  const tabs=[["all","總覽","s_overview","📋"],["talent","我的成長","s_growth","📈"],["cpu","電腦","cpu","🤖"]].concat(NET?[["net","線上","online","🌐"]]:[],OFF&&REWARD?[["car","獎勵",null,"🚗"]]:[]);
   let tab=store.get("statsTab","all");if(!tabs.some(t=>t[0]===tab))tab="all";
-  v.innerHTML=`<div class="home st"><div class="st-tabs" id="sTabs">${tabs.map(([k,l])=>`<button data-k="${k}">${l}</button>`).join("")}</div><div id="sBody"></div></div>`;
+  v.innerHTML=`<div class="home st"><div class="st-tabs" id="sTabs">${tabs.map(([k,l,ic,em])=>`<button data-k="${k}">${ic?ETIMG(ic,"",em):em} ${l}</button>`).join("")}</div><div id="sBody"></div></div>`;
   let ST=null,CAR=null;const ld=Promise.all([api("/play/state").then(s=>ST=s).catch(()=>null),OFF&&REWARD?api("/car/state").then(c=>CAR=c).catch(()=>null):null]);
   const sum=r=>({w:r.w||0,l:r.l||0,d:r.d||0});
   function rows(){const out=[];if(NET){const R=XQNet.rating();out.push(["🌐 線上對戰",sum(R)])}
@@ -2720,11 +2720,11 @@ function Stats(v){
     else if(tab==="cpu"){await ld;if(!v.isConnected||tab!=="cpu")return;
       if(!ST){box.innerHTML='<div class="card muted">載入失敗</div>';return}
       const CR=ST.cpuRate;
-      box.innerHTML=`<div class="st-rk" style="margin-top:4px">${CR?rk("🏅 電腦段位・積分挑戰",CR):'<div class="hd">🏅 電腦段位・積分挑戰</div><div class="muted">還沒有積分挑戰紀錄</div>'}<button class="go" id="cpuGo">開始積分挑戰 ›</button></div>
+      box.innerHTML=`<div class="st-rk" style="margin-top:4px">${CR?rk(`${ETIMG("s_rank","","🏅")} 電腦段位・積分挑戰`,CR):`<div class="hd">${ETIMG("s_rank","","🏅")} 電腦段位・積分挑戰</div><div class="muted">還沒有積分挑戰紀錄</div>`}<button class="go" id="cpuGo">開始積分挑戰 ›</button></div>
         <div class="sec-t">自選難度・各級</div><div class="card">${tbl("難度",ST.levels.map(l=>{const r=ST.record[l.n]||{};return[`<b>${l.n}</b> ${esc(l.name)}`,sum(r),r.w?'<span class="w">✔</span>':""]}),["過關"])}</div>`;
       box.querySelector("#cpuGo").onclick=()=>{store.set("cpuRanked",true);store.set("cpuCar",false);store.set("cpuWant","rank");location.hash="#/cpu"}}
     else if(tab==="net"){const R=XQNet.rating();
-      box.innerHTML=`<div class="st-rk" style="margin-top:4px">${rk("🌐 線上段位",R)}<button class="go" id="lbGo">去線上大廳 ›</button></div>
+      box.innerHTML=`<div class="st-rk" style="margin-top:4px">${rk(`${ETIMG("online","","🌐")} 線上段位`,R)}<button class="go" id="lbGo">去線上大廳 ›</button></div>
         <div class="sec-t">段位怎麼算</div><div class="card" style="font-size:14px;line-height:1.7">從 0 分（新手）開始。贏一盤約 +20、輸一盤約 −15、和棋 0；對手段位比你高，贏得更多、輸得更少，反過來也一樣。中途取消、對方斷線中止、雙方還沒各走一步就結束的對局不計分。<div class="muted" style="margin-top:6px">${XQNet.ranks().map(([n,p])=>`${esc(n)} ${p}`).join("・")}</div></div>`;
       box.querySelector("#lbGo").onclick=()=>location.hash="#/lobby"}
     else if(tab==="car"){await ld;if(!v.isConnected||tab!=="car")return;
