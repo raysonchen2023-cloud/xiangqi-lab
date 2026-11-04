@@ -42,8 +42,10 @@ var XQ=(function(){
     {depth:8,multipv:3,margin:50},{depth:9,multipv:3,margin:35},{depth:10,multipv:3,margin:25},{depth:12,multipv:2,margin:15},
     {movetime:300},{movetime:500},{movetime:1200},{movetime:3000}];
   const cpuRate=()=>ls.get("cpuRate",null)||{pts:0,w:0,l:0,d:0,hist:[]};
-  function cpuRateApply(res){const R=cpuRate(),before=R.pts,g=P.rk-rankIdx(R.pts),cl=(x,a,b)=>Math.max(a,Math.min(b,x));
-    let d=res==="w"?cl(20+3*g,5,40):res==="l"?-cl(15-3*g,3,30):cl(3*g,-10,10);R.pts=Math.max(0,R.pts+d);d=R.pts-before;R[res]++;
+  /* 意見回饋 段位失準：跟線上一樣改成等級分的期望勝率（對手＝開局時那一段的電腦，強度取那一階的中間），不再固定贏 +20、輸 −15 */
+  function cpuRateApply(res){const R=cpuRate(),before=R.pts,lo=RANKS[P.rk][1],hi=RANKS[P.rk+1]?RANKS[P.rk+1][1]:lo+200,op=(lo+hi)/2;
+    const E=1/(1+Math.pow(10,(op-R.pts)/400)),K=((R.w||0)+(R.l||0)+(R.d||0))<15?48:32;
+    let d=Math.round(K*((res==="w"?1:res==="d"?.5:0)-E));if(res==="w"&&d<1)d=1;if(res==="l"&&d>-1)d=-1;R.pts=Math.max(0,R.pts+d);d=R.pts-before;R[res]++;
     R.hist.unshift({id:P.id,res,d,pts:R.pts,rk:RANKS[P.rk][0],n:P.moves.length,why:P.result?P.result.why:"",at:Date.now()});R.hist=R.hist.slice(0,100);ls.set("cpuRate",R);
     P.rate={res,d,pts:R.pts,rank:RANKS[rankIdx(R.pts)][0],was:RANKS[rankIdx(before)][0]}}
   // 獎勵模式：贏棋拿點數（一點＝台幣一萬），存起來到車庫換車款模型；和棋拿四成，輸了 0 點
@@ -84,11 +86,18 @@ var XQ=(function(){
     for(const k of["cpu","arena","journey","practice"]){const g=s&&s[k];if(g&&g.moves&&g.moves.length&&!g.result)o[k]=g}return o}
   const stashGet=k=>stashAll()[k]||null,stashSet=(k,g)=>{const o=stashAll();if(g)o[k]=g;else delete o[k];ls.set("play2",Object.keys(o).length?o:null)};
   const jid=x=>typeof x==="string"&&x?x.slice(0,40):null;
-  function playSwitch(kind,b){ensureP();if(kindOf(P)===kind)return;const s=stashGet(kind);
+  /* 意見回饋 413：對局頁打開時說「我要哪一種」——挑戰電腦 cpu、朝代擂台 arena、石桌往事 journey（雲河棋路、驛站、園子、守關共用）、練習 practice 各一盤。
+     桌上就是那一種：不動（下完的也不動，畫面自己決定）。不是：下到一半的先收進 play2 自己那格，再拿出那一種收著的；都沒有才開新的（石桌往事要給 journey 才開，練習不開——不開就連收都不收，不會多出一份重複的）。
+     收起來以後先把 P 清掉再開新局，playNew 最後的 forfeit(P) 才不會把剛收起來的積分局算成中途離開 */
+  function playOpen(b){ensureP();const k=["arena","journey","practice"].includes(b.kind)?b.kind:"cpu";if(kindOf(P)===k)return;
+    const s=stashGet(k),era=typeof b.arena==="string"&&/^[a-z]{2,8}$/.test(b.arena)?b.arena:null,lv=d=>Math.max(1,Math.min(LEVELS.length,Math.round(+b.level)||d));
+    if(!s&&(k==="practice"||(k==="journey"&&!jid(b.journey))))return;
     if(unfinished(P))stashSet(kindOf(P),stashOut(P));
-    if(s){stashSet(kind,null);P=s;P.hint=null;stateRebuild(P);savePlay()}
-    else if(kind==="cpu")playNew(b.human==="b"?"b":"r",Math.max(1,Math.min(LEVELS.length,Math.round(+b.level)||3)),!!b.ranked,null,!!b.reward,null,true)
-    else if(kind==="journey"&&jid(b.journey))playNew("r",Math.max(1,Math.min(LEVELS.length,Math.round(+b.level)||1)),false,null,false,null,true,jid(b.journey))}
+    if(s){stashSet(k,null);P=s;P.hint=null;stateRebuild(P);savePlay();return}
+    P=null;
+    if(k==="arena")playNew("r",lv(3),false,null,false,era||"classic",true);
+    else if(k==="journey")playNew("r",lv(1),false,null,false,era,true,jid(b.journey));
+    else playNew(b.human==="b"?"b":"r",lv(3),!!b.ranked,null,!!b.reward,null,true)}
   function playNew(human,level,ranked,pre,reward,arena,noStash,journey){
     const plain=!ranked&&!pre&&!reward,nk=pre?"practice":plain&&journey?"journey":plain&&arena?"arena":"cpu";
     if(!noStash&&P){
@@ -105,9 +114,9 @@ var XQ=(function(){
     if(P.practice){savePlay();return}   // 錯棋重練：不算戰績、不存進對局紀錄
     if(P.ranked){if(P.moves.length>=2)cpuRateApply(res)}   // 雙方都還沒走就結束不計分
     else if(P.reward){if(P.moves.length>=2)carApply(res)}
-    if(P.arena&&res==="w"&&P.moves.length>=2){const S=ls.get("arenaStamps",{}),first=!S[P.arena];if(first)S[P.arena]={at:new Date().toISOString(),lv:P.level,n:P.moves.length};ls.set("arenaStamps",S);
+    if(P.arena&&!P.journey&&res==="w"&&P.moves.length>=2){const S=ls.get("arenaStamps",{}),first=!S[P.arena];if(first)S[P.arena]={at:new Date().toISOString(),lv:P.level,n:P.moves.length};ls.set("arenaStamps",S);
       P.stamp={era:P.arena,first,total:Object.keys(S).length}}
-    else{const rec=ls.get("record",{}),L=rec[P.level]||(rec[P.level]={w:0,l:0,d:0});L[res]++;ls.set("record",rec)}
+    else if(kindOf(P)==="cpu"){const rec=ls.get("record",{}),L=rec[P.level]||(rec[P.level]={w:0,l:0,d:0});L[res]++;ls.set("record",rec)}
     pushGame("play",{id:P.id,date:P.id.slice(0,10),level:P.level,ranked:!!P.ranked,reward:!!P.reward,rk:P.rk,human:P.human,result:P.result,moves:saveMoves(P.moves)});savePlay()}
   async function analyzePlay(){if(paBusy||!P)return;paBusy=true;try{await analyzeList(P,savePlay,()=>!!P&&!P.result&&P.turn!==P.human)}finally{paBusy=false}}
   const ucis=()=>P.moves.map(m=>iccs(m.f,m.t));
@@ -137,7 +146,7 @@ var XQ=(function(){
   function playState(){ensureP();
     const CR=cpuRate(),ci=rankIdx(CR.pts),nx=RANKS[ci+1];
     const SA=stashAll(),others=Object.values(SA).filter(g=>kindOf(g)!==kindOf(P)).map(g=>({kind:kindOf(g),arena:g.arena||null,journey:g.journey||null,ranked:!!g.ranked,reward:!!g.reward,level:g.level,n:g.moves.length,human:g.human}));
-    return{others,other:others[0]||null,journey:P.journey||null,id:P.id,board:P.board,turn:P.turn,human:P.human,level:P.level,ranked:!!P.ranked,reward:!!P.reward,arena:P.arena||null,stamp:P.stamp||null,prize:P.prize||null,car:P.reward?carState():null,rkName:P.ranked?RANKS[P.rk][0]:null,rate:P.rate||null,
+    return{kind:kindOf(P),others,other:others[0]||null,journey:P.journey||null,id:P.id,board:P.board,turn:P.turn,human:P.human,level:P.level,ranked:!!P.ranked,reward:!!P.reward,arena:P.arena||null,stamp:P.stamp||null,prize:P.prize||null,car:P.reward?carState():null,rkName:P.ranked?RANKS[P.rk][0]:null,rate:P.rate||null,
       cpuRate:{pts:CR.pts,rank:RANKS[ci][0],w:CR.w,l:CR.l,d:CR.d,next:nx?nx[0]:null,toNext:nx?nx[1]-CR.pts:0,lo:RANKS[ci][1],hi:nx?nx[1]:null,hist:CR.hist},
       levels:LEVELS.map(l=>({n:l.n,name:l.name,desc:l.desc})),record:ls.get("record",{}),
       moves:P.moves.map(moveOut),result:P.result,practice:P.practice||null,thinking:playBusy&&P.turn!==P.human,msg:playMsg,eval:lastEv(P.moves),hint:P.hint,
@@ -150,7 +159,7 @@ var XQ=(function(){
       if(K[key])return{already:true,pts:R.pts,rank:RANKS[rankIdx(R.pts)][0]};
       const before=R.pts;R.pts+=pts;R.hist.unshift({id:"bonus-"+key,res:"bonus",d:pts,pts:R.pts,rk:RANKS[rankIdx(R.pts)][0],why:String(b.why||"").slice(0,40),at:Date.now()});R.hist=R.hist.slice(0,100);
       ls.set("cpuRate",R);K[key]=Date.now();ls.set("bonusKeys",K);return{ok:true,d:pts,pts:R.pts,rank:RANKS[rankIdx(R.pts)][0],was:RANKS[rankIdx(before)][0]}}
-    else if(p==="/play/switch"){playSwitch(["arena","journey","practice"].includes(b.kind)?b.kind:"cpu",b);playMsg="";setTimeout(playEngine,0)}
+    else if(p==="/play/switch"||p==="/play/open"){playOpen(b);playMsg="";setTimeout(playEngine,0)}
     else if(p==="/play/move"){const f=+b.f,t=+b.t;if(P.result)throw new Error("這局已經結束");if(P.turn!==P.human)throw new Error("還沒輪到你");
       if(!legal(P.board,P.turn).some(([x,y])=>x===f&&y===t))throw new Error("這步不合法");playApply(f,t);setTimeout(playEngine,0)}
     else if(p==="/play/undo"){if(P.ranked)throw new Error("積分挑戰不能悔棋");if(P.reward)throw new Error("獎勵模式不能悔棋");if(P.arena)throw new Error("朝代擂台不能悔棋");   /* 意見回饋 382 *//* 意見回饋 380：電腦（擂主）還在想的時候也能悔棋——引擎算完會發現步數變了、自動丟掉那步 */

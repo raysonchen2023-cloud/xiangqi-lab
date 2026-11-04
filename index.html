@@ -519,7 +519,7 @@ html[data-era=ming] .topbar,html[data-era=qing] .topbar{border-bottom-width:4px}
       if(!window.caches)return go();caches.keys().then(function(ks){return Promise.all(ks.filter(function(k){return k.indexOf("xqlab-app-")===0}).map(function(k){return caches.delete(k)}))})
         .then(function(){return navigator.serviceWorker&&navigator.serviceWorker.getRegistration()}).then(function(r){return r&&r.update()}).catch(function(){}).then(go)}},4000)})();
 </script>
-<script>window.XQ_OFFLINE=true;window.XQ_BUILD="20261104-0715";</script>
+<script>window.XQ_OFFLINE=true;window.XQ_BUILD="20261104-0810";</script>
 <script src="core.js"></script>
 <script src="engine.js"></script>
 <script src="local.js"></script>
@@ -1377,7 +1377,8 @@ function route(){
   if(OFF&&window.XQNet&&XQNet.finished()&&p[0]!=="pvp")XQNet.leave();
   if(!p.length)return screen=Home(v);
   if(p[0]==="play"){navReplace("#/");return}   // 舊的「對弈」頁已經併進首頁
-  if(p[0]==="cpu")return screen=CpuGame(v);
+  if(p[0]==="cpu")return screen=CpuGame(v,false,"cpu");
+  if(p[0]==="arena")return screen=CpuGame(v,false,"arena");   /* 意見回饋 413：朝代擂台自己一個網址 */
   if(p[0]==="join"&&/^[rb]$/.test(p[1]||"")){store.set("pvpSeat",p[1]);if(OFF)XQ.setPvpOnline(true);navReplace("#/pvp");return}
   // 同一支手機的雙人對戰已經拿掉：沒有在下網路對局時，改去線上大廳（開發者模式保留，給電腦連線對戰用）
   if(p[0]==="pvp"&&OFF&&!DEVMODE()&&!(window.XQNet&&XQNet.active())){navReplace("#/lobby");return}
@@ -1394,6 +1395,7 @@ function route(){
   if(p[0]==="quiz")return screen=Quiz(v);
   if(p[0]==="guess")return screen=Guess(v);
   if(p[0]==="legend")return screen=LegendScene(v,decodeURIComponent(p[1]||""));
+  if(p[0]==="journey"&&p[1]==="play")return screen=CpuGame(v,false,"journey");   /* 意見回饋 413：石桌往事（雲河棋路、驛站、園子、守關）的對局頁 */
   if(p[0]==="journey")return screen=Journey(v,p[1]?decodeURIComponent(p[1]):null);
   if(p[0]==="adventure"){store.set("dbReturn",null);return screen=Adventure(v)}
   if(p[0]==="profile")return screen=Profile(v);
@@ -1439,7 +1441,7 @@ if(OFF&&"serviceWorker" in navigator){
   const chk=force=>{if(!force&&Date.now()-lastChk<30000)return;lastChk=Date.now();navigator.serviceWorker.getRegistration().then(r=>r&&r.update()).catch(()=>{})};
   document.addEventListener("visibilitychange",()=>{if(!document.hidden)chk()});setTimeout(()=>chk(true),3000);
   setInterval(()=>{if(!document.hidden)chk(true)},5*60000);
-  const inGame=()=>/^#\/(cpu|pvp|quiz|watch)(\/|$)/.test(location.hash);
+  const inGame=()=>/^#\/(cpu|arena|pvp|quiz|watch|journey\/play|redo\/play)(\/|$)/.test(location.hash);
   const fmtV=x=>!x?"":/^\d{8}-\d{4}$/.test(x)?`${x.slice(0,4)}/${x.slice(4,6)}/${x.slice(6,8)} ${x.slice(9,11)}:${x.slice(11,13)}`:x.slice(0,8);
   async function doUpdate(){updating=true;const tt=document.createElement("div");tt.className="toast";tt.textContent="⬇ 正在更新…";document.body.append(tt);
     try{const r=await navigator.serviceWorker.getRegistration();if(r){await r.update().catch(()=>{});
@@ -1751,7 +1753,7 @@ ${OFF?(()=>{const n=Object.keys(arenaStamps()).length,t=arenaTitle();return`<but
   v.querySelectorAll("[data-go]").forEach(b=>b.onclick=()=>{vibrate(5);location.hash=b.dataset.go});
   {const hl=v.querySelector("#hLegend");if(hl){const t=hl.closest(".tile");if(t)t.onclick=()=>{vibrate(5);location.hash="#/adventure"}}}
   {const hx=v.querySelector("#hXP");if(hx){const t=hx.closest(".tile");if(t)t.onclick=()=>{vibrate(5);xpSheet()}}}
-  {const ha=v.querySelector("#hArena");if(ha)ha.onclick=()=>{vibrate(5);store.set("park3d",true);store.set("openArena",Date.now());location.hash="#/cpu"}}
+  {const ha=v.querySelector("#hArena");if(ha)ha.onclick=()=>{vibrate(5);store.set("park3d",true);location.hash="#/arena"}}
   standaloneOnlineWarn(v.firstElementChild||v);
   if(OFF){if(RI)homeStatus(v.querySelector("#hStatus"));if(window.XQ_justConnected){XQ_justConnected=false;if(DEVMODE())setTimeout(()=>toast("已連上電腦！"),300)}}
   const qb=store.get("quizBest",null);if(qb)v.querySelector("#hQuiz").textContent="最好："+qb.rank;
@@ -1773,11 +1775,11 @@ ${OFF?(()=>{const n=Object.keys(arenaStamps()).length,t=arenaTitle();return`<but
       O=(st.others||(st.other?[st.other]:[])).map(z=>({...z,me:(z.n%2?"b":"r")===z.human})),pick=k=>cur&&cur.kind===k?cur:O.find(z=>z.kind===k)||null,
       G={cpu:pick("cpu"),arena:pick("arena"),journey:pick("journey")},
       line=g=>`⏳ ${g.kind==="arena"?(typeof ARENA!=="undefined"&&ARENA[g.arena]?ARENA[g.arena].name:"擂台"):g.practice?"錯棋重練":g.ranked?"積分挑戰":g.reward?"獎勵賽":`第 ${g.level} 級`}下到第 ${Math.ceil(g.n/2)} 回合・${g.me?"輪到你走":"輪到電腦"}`,
-      go=async kind=>{vibrate(5);if(kind==="arena")store.set("park3d",true);if((cur&&cur.kind)!==kind&&G[kind])try{await api("/play/switch",{kind})}catch(e){}location.hash="#/cpu"};   /* 意見回饋 319：朝代擂台在公園 3D 裡 */
+      go=kind=>{vibrate(5);if(kind==="arena")store.set("park3d",true);location.hash=kind==="arena"?"#/arena":"#/cpu"};   /* 意見回饋 319：朝代擂台在公園 3D 裡 */
     if(e&&G.cpu){const tile=e.closest(".tile");e.innerHTML=`${esc(e.textContent)}<span class="rsm">${esc(line(G.cpu))}</span>`;
       if(tile){tile.classList.add("resume");const g=tile.querySelector(".go");if(g)g.textContent="繼續下 ›";tile.onclick=()=>go("cpu")}}
     else if(e&&cur&&cur.kind!=="cpu"){const tile=e.closest(".tile");   /* 擂台在桌上、挑戰電腦沒有收著的：點「挑戰電腦」開一盤新的，擂台那盤先收起來 */
-      if(tile)tile.onclick=async()=>{vibrate(5);try{await api("/play/switch",{kind:"cpu",ranked:OFF&&store.get("cpuRanked",true),reward:false,level:store.get("cpuLevel",3),human:"r"})}catch(e){}location.hash="#/cpu"}}
+      if(tile)tile.onclick=()=>{vibrate(5);location.hash="#/cpu"}}
     const ha=v.querySelector("#hArena");if(ha&&G.arena){const sub=ha.querySelector(".muted"),cta=ha.querySelector(":scope>b");if(sub)sub.textContent=line(G.arena);if(cta)cta.textContent="繼續下 ›";
       ha.style.borderWidth="2px";ha.style.borderColor="#C8102E";ha.onclick=()=>go("arena")}
     const hl=v.querySelector("#hLegend");if(hl&&G.journey)hl.textContent=`⏳ ${jName(G.journey.journey)}下到第 ${Math.ceil(G.journey.n/2)} 回合・${G.journey.me?"輪到你走":"輪到電腦"}`}).catch(()=>{});
@@ -2593,7 +2595,7 @@ function Stats(v){
       const CR=ST.cpuRate;
       box.innerHTML=`<div class="st-rk" style="margin-top:4px">${CR?rk("🏅 電腦段位・積分挑戰",CR):'<div class="hd">🏅 電腦段位・積分挑戰</div><div class="muted">還沒有積分挑戰紀錄</div>'}<button class="go" id="cpuGo">開始積分挑戰 ›</button></div>
         <div class="sec-t">自選難度・各級</div><div class="card">${tbl("難度",ST.levels.map(l=>{const r=ST.record[l.n]||{};return[`<b>${l.n}</b> ${esc(l.name)}`,sum(r),r.w?'<span class="w">✔</span>':""]}),["過關"])}</div>`;
-      box.querySelector("#cpuGo").onclick=()=>{store.set("cpuRanked",true);store.set("cpuCar",false);location.hash="#/cpu"}}
+      box.querySelector("#cpuGo").onclick=()=>{store.set("cpuRanked",true);store.set("cpuCar",false);store.set("cpuWant","rank");location.hash="#/cpu"}}
     else if(tab==="net"){const R=XQNet.rating();
       box.innerHTML=`<div class="st-rk" style="margin-top:4px">${rk("🌐 線上段位",R)}<button class="go" id="lbGo">去線上大廳 ›</button></div>
         <div class="sec-t">段位怎麼算</div><div class="card" style="font-size:14px;line-height:1.7">從 0 分（新手）開始。贏一盤約 +20、輸一盤約 −15、和棋 0；對手段位比你高，贏得更多、輸得更少，反過來也一樣。中途取消、對方斷線中止、雙方還沒各走一步就結束的對局不計分。<div class="muted" style="margin-top:6px">${XQNet.ranks().map(([n,p])=>`${esc(n)} ${p}`).join("・")}</div></div>`;
@@ -2606,7 +2608,7 @@ function Stats(v){
           <div><b>${own}</b><span>收藏台數</span><small>賣過 ${C.sold||0} 台</small></div><div><b>${pct(C.w,N)}</b><span>勝率</span><small>${C.w} 勝 ${C.l} 負 ${C.d} 和</small></div></div>
         <div class="sec-t">各難度勝負與點數</div><div class="card">${tbl("難度",ST.levels.map(l=>{const r=by[l.n]||{};return[`<b>${l.n}</b> ${esc(l.name)}<br><small class="muted">贏 +${C.table[l.n-1]}</small>`,sum(r),r.pts?"+"+r.pts.toLocaleString():"0"]}).concat(C.unk&&(C.unk.w+C.unk.l+C.unk.d)?[['<span class="muted">難度未記錄</span><br><small class="muted">較早的對局</small>',sum(C.unk),""]]:[]),["拿到點數"])}</div>
         <div class="row" style="gap:8px;margin-top:12px"><button class="btn" id="cg" style="flex:1">▶ 下一盤獎勵棋</button><button class="btn ghost" id="gg" style="flex:1">🚗 我的車庫</button></div>`;
-      box.querySelector("#cg").onclick=()=>{store.set("cpuRanked",false);store.set("cpuCar",true);location.hash="#/cpu"};box.querySelector("#gg").onclick=()=>location.hash="#/garage"}}
+      box.querySelector("#cg").onclick=()=>{store.set("cpuRanked",false);store.set("cpuCar",true);store.set("cpuWant","car");location.hash="#/cpu"};box.querySelector("#gg").onclick=()=>location.hash="#/garage"}}
   v.querySelectorAll("#sTabs button").forEach(b=>b.onclick=()=>{vibrate(5);tab=b.dataset.k;store.set("statsTab",tab);paint()});
   paint();return{}}
 
@@ -3144,7 +3146,7 @@ function parkLoad(){const v="?v="+encodeURIComponent(window.XQ_BUILD||"");return
 // 意見回饋 240：公園裡點物件，跳出這個朝代的說明（哪個朝代、特色、典故）
 const PARK_INFO={"classic":{"_":["經典古風","不限朝代"],"bg":["山水亭橋","亭子、古松、石拱橋和層層遠山，是中國山水畫最常見的題材，不特定哪個朝代，看了就覺得安靜悠閒。"],"tree1":["松樹","松樹四季常青、不怕冷，和竹、梅並稱「歲寒三友」，常用來比喻堅貞不屈的品格。"],"tree2":["柏樹","柏樹壽命很長、木頭堅硬又有香氣，古代常種在宮殿、廟宇和陵墓旁邊，象徵長壽。"],"table":["花崗岩石桌","園林和庭院最常見的石桌。花崗岩堅硬、不怕風吹雨打，放在戶外幾十年都不壞，很多老人家就在這種石桌上下象棋。"],"cup":["青花蓋碗・烏龍茶","蓋碗有蓋、碗、托三件，又叫「三才碗」（天、人、地）。喝的時候用蓋子撥開茶葉，泡烏龍茶很方便。"],"bench":["園中長椅","在園子裡下棋，旁邊常圍著一圈看棋的人。「觀棋不語真君子」——看棋的人不要出聲指點喔！"],"stool":["石鼓凳","做成鼓形的石凳，庭院、園林裡很常見。鼓形看起來穩重，也有吉祥熱鬧的意思。"],"lantern":["紅燈籠","紅燈籠代表喜慶和團圓，過年、元宵和各種節慶都會掛起來。上面的「福」字是祝福大家有福氣。"]},"qin":{"_":["秦朝","前 221～前 207 年"],"bg":["長城與烽火台","秦始皇統一六國後，把原本秦、趙、燕等國的長城連起來，防禦北方的匈奴。烽火台白天放煙、晚上點火，一站接一站傳遞軍情。"],"tree1":["松樹・五大夫松","《史記》記載秦始皇登泰山時遇到大風雨，在一棵樹下避雨，就封這棵樹為「五大夫」，後人稱它「五大夫松」。"],"tree2":["槐樹","周代朝廷前種三棵槐樹，三公（最高的三個官）面對槐樹站立，所以「三槐」代表三公，槐樹也象徵官運亨通。"],"table":["黑漆朱紋桌","秦朝認為自己是「水德」，水的顏色是黑，所以崇尚黑色。漆器常用黑底配朱紅花紋，邊角用青銅包起來保護。"],"cup":["青銅耳杯","耳杯是橢圓形、兩側有「耳朵」的杯子，戰國到漢代很流行，多半用來喝酒或喝湯。那時候還沒什麼人喝茶，這裡是想像秦朝人也來泡一杯。"],"bench":["黑漆坐榻","秦漢人習慣跪坐在席子或矮榻上。榻比地面高一點，是有身分的人坐的。"],"stool":["黑漆方凳","其實秦朝人多半跪坐，還沒有坐凳子的習慣；這張方凳是配合園中下棋設計的，用的是秦朝的黑漆風格。"],"lantern":["青銅燈","秦朝用青銅燈，燈盞裡放油脂和燈芯點火。秦始皇陵出土了大量精緻的青銅器，可見當時的鑄銅技術非常高。"]},"han":{"_":["漢朝","前 202～220 年"],"bg":["漢闕與樓台","「闕」是立在宮殿、陵墓大門兩側的高台建築，漢代非常流行，是身分地位的象徵；漢代人也喜歡蓋好幾層高的樓閣。"],"tree1":["柏樹","陝西黃帝陵有一棵「黃帝手植柏」，相傳是黃帝親手種的，被認為是中國最老的柏樹之一。漢代也常在祠廟、陵墓旁種柏樹。"],"tree2":["梧桐","古人相信鳳凰「非梧桐不棲」，所以梧桐象徵高潔和吉祥；梧桐木也是做古琴的好木料。"],"table":["雲氣紋漆案","漢代漆器非常發達，常用黑底配朱紅的雲氣紋，線條像流動的雲，代表對升仙的嚮往。「案」是放食物的矮桌，成語「舉案齊眉」說的就是它。"],"cup":["漆耳杯","漢代最常見的杯子之一，木頭做胎、外面上漆，又輕又耐用。湖南馬王堆漢墓出土了很多，有的還寫著「君幸酒」（請您喝酒）。"],"bench":["漆榻配屏風","漢代貴族坐在榻上，旁邊或後面立一扇小屏風，可以擋風，也顯示主人的身分。"],"stool":["漆鼓凳","漢代人主要還是跪坐，鼓形坐墩是後來才流行的；這張凳子用漢代的朱黑漆色，配合園中下棋設計。"],"lantern":["漢代銅燈","漢代的燈具很有名，例如「長信宮燈」：鎏金銅做的宮女跪坐持燈，燈煙會從袖子進到身體裡，不會弄髒屋子，是兩千多年前的環保設計。"]},"sanguo":{"_":["三國","220～280 年"],"bg":["軍營、關隘與戰船","三國時代戰爭不斷。赤壁之戰（208 年）孫權、劉備聯軍用火攻大破曹操的水軍，奠定了魏、蜀、吳三分天下。"],"tree1":["老松","經歷風霜還挺立不倒的老松，就像三國時代的英雄人物。"],"tree2":["枯樹","戰亂的年代，荒野上常見枯樹。曹操的詩〈蒿里行〉寫「白骨露於野，千里無雞鳴」，描寫當時的荒涼。"],"table":["軍營木桌","行軍打仗的桌子要耐用、好搬，所以用厚木板做，再用鐵箍加固。"],"cup":["粗陶碗","軍中用的是樸素耐用的陶碗。《三國志》記載吳國的孫皓讓不會喝酒的韋曜「以茶代酒」，是很早的喝茶紀錄。"],"bench":["軍營長凳","營帳裡將領議事、休息坐的長凳，簡單結實。"],"stool":["胡床（摺疊凳）","胡床就是可以摺疊的凳子，東漢時從西域傳進來，行軍時帶著很方便。《三國志》記載曹操渡河時被敵軍突襲，還坐在胡床上不動。"],"lantern":["火盆","軍營夜裡靠火盆、火把照明和取暖，也能防止野獸靠近。"]},"weijin":{"_":["魏晉","220～420 年"],"bg":["竹林與茅屋","魏晉名士嚮往自然、不愛做官。「竹林七賢」常聚在竹林下喝酒、彈琴、談論哲理（清談）。"],"tree1":["竹子","竹子中空有節，象徵虛心和氣節。東晉王徽之愛竹，說「何可一日無此君」，從此「此君」就成了竹子的代稱。"],"tree2":["柳樹","陶淵明在〈五柳先生傳〉裡說自己「宅邊有五柳樹」，就自號「五柳先生」。柳樹也就和隱士的田園生活連在一起。"],"table":["竹編桌","竹子輕、有韌性、到處都有。魏晉崇尚簡樸自然，竹製家具很合名士的品味。"],"cup":["青瓷盞","魏晉時南方的越窯青瓷已經很成熟，顏色青綠如玉，是當時文人喜愛的器物。"],"bench":["竹榻","名士喜歡在竹榻上躺著讀書、和朋友清談，非常隨性。"],"stool":["竹凳","用竹子做的凳子，輕巧涼爽，帶有山林的趣味。"],"lantern":["墨竹燈籠","紙經過東漢蔡倫改良後漸漸普及。燈籠上畫墨竹，很有文人的味道。"]},"nanbei":{"_":["南北朝","420～589 年"],"bg":["石窟大佛","南北朝佛教大興。北魏開鑿了雲岡石窟、龍門石窟，留下巨大的佛像；杜牧也寫「南朝四百八十寺」，南方到處都是寺廟。"],"tree1":["菩提樹","相傳佛陀在菩提樹下悟道。佛教傳入中國以後，菩提樹也成了寺廟裡常見的樹。"],"tree2":["松樹","寺廟、山林常見的松樹，四季常青，象徵長壽和堅定。"],"table":["蓮花紋石桌","蓮花「出淤泥而不染」，是佛教最重要的圖案之一。南北朝的石刻、器物上到處都是蓮花紋。"],"cup":["青瓷蓮瓣碗","南北朝的青瓷碗常刻上一層層蓮花瓣，是受到佛教影響的流行樣式。"],"bench":["蓮花石凳","刻著蓮花的石凳，寺院和石窟附近常見，莊重樸實。"],"stool":["蓮座石凳","做成蓮花座的形狀——佛像就是坐在蓮花座上的。"],"lantern":["佛前燈","在佛前點燈供養叫「燃燈」，寺廟裡日夜不熄的燈叫「長明燈」，象徵智慧照亮黑暗。"]},"sui":{"_":["隋朝","581～618 年"],"bg":["大運河","隋煬帝開鑿大運河，北到涿郡（今天北京一帶）、南到餘杭（杭州），把南北連成一線，運糧、運貨的船來來往往，部分河段到今天還在使用。"],"tree1":["柳樹","相傳隋煬帝在運河兩岸種柳，還賜柳樹姓「楊」（隋朝皇帝姓楊），所以柳樹又叫「楊柳」。"],"tree2":["楊樹","楊樹長得快、又高又直，北方很常見，常種在河岸和路邊。"],"table":["栗色漆桌","隋唐時期家具愈來愈高，人們漸漸從跪坐改成垂下腳坐在椅凳上。"],"cup":["白瓷碗","隋朝的白瓷燒得愈來愈白，為唐朝「南青北白」（南方越窯青瓷、北方邢窯白瓷）打下基礎。"],"bench":["靠背長凳","有靠背的長凳，可以垂腳坐，是家具從「席地而坐」走向「高坐」的過渡。"],"stool":["素面方凳","簡單樸素的方凳，隋朝建築和器物都偏向簡潔大方。"],"lantern":["運河船燈","夜裡在運河上航行的船要掛燈，照亮水面，也讓其他船看得到自己。"]},"tang":{"_":["唐朝","618～907 年"],"bg":["寶塔與宮殿","唐朝的長安是當時世界上最大的城市之一。大雁塔是玄奘法師為了收藏從印度帶回來的佛經而建的。"],"tree1":["牡丹","唐朝人最愛牡丹。劉禹錫寫「唯有牡丹真國色，花開時節動京城」，花開的時候整個長安城的人都出門賞花。"],"tree2":["松樹","松樹四季常青，唐代宮苑和寺院裡常種，象徵長壽。"],"table":["寶相花紅漆圓桌","寶相花是唐朝最流行的花紋，把蓮花、牡丹等花朵組合成對稱的圖案，華麗又莊重。"],"cup":["唐三彩杯・抹茶色茶湯","唐三彩是黃、綠、白等多種顏色釉的陶器。唐朝陸羽寫了世界上第一本茶書《茶經》，當時流行把茶餅碾成粉末來煮。"],"bench":["軟榻與三彩靠墊","唐代貴族在軟榻上休息、待客，靠墊用華麗的織錦和三彩配色。"],"stool":["三彩坐墩","唐代仕女畫裡常看到這種鼓形坐墩，上面鋪著華麗的繡墊。"],"lantern":["紅綢宮燈","唐朝元宵節長安城取消宵禁，滿城張燈結綵。蘇味道寫「火樹銀花合，星橋鐵鎖開」，說的就是這種熱鬧。"]},"wudai":{"_":["五代","907～960 年"],"bg":["奇峰與瀑布","五代是中國山水畫成熟的關鍵時期：荊浩、關仝畫北方雄偉的大山，董源、巨然畫江南平淡的山水。"],"tree1":["奇松","荊浩在太行山寫生松樹，畫了好幾萬棵才畫得像，還寫了《筆法記》講畫山水的方法。"],"tree2":["老梅","老梅樹幹蒼勁、冬天開花，象徵不怕困境。"],"table":["深色木桌","五代的名畫〈韓熙載夜宴圖〉裡可以看到當時的高桌、椅子和屏風，家具已經很接近後來的樣子。"],"cup":["黑釉盞","深色的黑釉盞最能襯出白色的茶沫，到了宋朝更是大流行。"],"bench":["長榻與山水屏風","〈韓熙載夜宴圖〉裡就有床榻和畫著山水的大屏風，屏風也常用來分隔空間。"],"stool":["深色木凳","結實的深色木凳，五代家具開始走向簡潔的高坐家具。"],"lantern":["素紙方燈","樸素的方形紙燈，柔和的光很適合夜裡讀書、下棋。"]},"song":{"_":["宋朝","960～1279 年"],"bg":["江南水鄉","石拱橋、垂柳和小舟。宋朝商業繁榮，張擇端的〈清明上河圖〉畫出了汴京熱鬧的街市和虹橋。"],"tree1":["梅花","林逋隱居在西湖孤山，種梅養鶴，被稱為「梅妻鶴子」；他寫的「疏影橫斜水清淺」是詠梅的名句。"],"tree2":["柳樹","江南水邊到處是垂柳，柳枝隨風飄動，是宋詞裡常見的景物。"],"table":["淡色木桌","宋代家具線條簡潔、細腳、不太雕花，風格清雅，影響了後來的明式家具。"],"cup":["汝窯天青盞・點茶","汝窯是宋代五大名窯之一，顏色像「雨過天青」。宋人流行「點茶」：把茶粉用茶筅打出白色泡沫，還會比賽誰的泡沫最白、最持久，叫「鬥茶」。"],"bench":["淡色木長椅","宋代人已經習慣坐椅子，家具樸素典雅。"],"stool":["青瓷繡墩","瓷做的坐墩，夏天坐起來很涼爽；外形模仿上面鋪了繡墊的鼓，所以叫「繡墩」。"],"lantern":["梅花紗燈","宋代元宵燈會非常熱鬧，辛棄疾寫「東風夜放花千樹」，形容滿城花燈像一夜之間開滿的花。"]},"yuan":{"_":["元朝","1271～1368 年"],"bg":["草原與蒙古包","元朝由蒙古人建立。草原上的牧民住在可以拆下來搬家的蒙古包（氈帳）裡，跟著水和草移動。"],"tree1":["胡楊","生長在西北沙漠邊緣的樹，傳說「生而千年不死，死而千年不倒，倒而千年不朽」。"],"tree2":["柳樹","北方水邊常見的柳樹，耐寒又好種。"],"table":["青花瓷桌","元朝景德鎮把青花瓷燒得非常成熟，用西亞來的鈷料畫出鮮豔的藍色花紋，還外銷到中東。"],"cup":["青花高足杯・奶茶","高足杯有高高的杯腳，據說騎在馬上也方便拿。蒙古人很愛喝加了奶的茶。"],"bench":["鋪氈墊的長凳","氈是用羊毛壓製成的，保暖又防潮，是草原生活的必需品。"],"stool":["青花瓷墩","用青花瓷做的坐墩，涼爽耐用，花紋是元代流行的藍白配色。"],"lantern":["白燈籠","圓圓的白燈籠配藍邊，跟青花瓷一樣是藍白配色。"]},"ming":{"_":["明朝","1368～1644 年"],"bg":["紫禁城與長城","明成祖遷都北京，蓋了紫禁城（今天的故宮）。我們今天看到的磚石長城，大部分是明朝修建的。"],"tree1":["松樹","紫禁城御花園和皇家園林裡有很多古松，象徵江山長久。"],"tree2":["竹子","明代文人愛竹，常在書房外種竹，也愛畫竹。"],"table":["黃花梨桌","明式家具用黃花梨、紫檀等硬木，造型簡潔、榫卯精巧，不用一根釘子，被認為是中國家具的巔峰。"],"cup":["鬥彩杯・綠茶","鬥彩是先用青花畫輪廓、燒好後再填上彩色再燒一次。明成化年間的「雞缸杯」就是鬥彩名品。明朝開始流行用沸水沖泡散茶，就是今天泡茶的方式。"],"bench":["黃花梨長椅","官帽椅的椅背最上面那根橫木兩端翹起，像古代官員的帽子，所以叫官帽椅。"],"stool":["黃花梨鼓凳","鼓形的坐凳，四周有弧形的腳，線條圓潤，是明式家具的經典款。"],"lantern":["六角紅紗宮燈","宮燈是宮廷用的燈，用木頭做六角或八角的框，鑲上紗或玻璃、畫上圖案，下面垂著流蘇。"]},"qing":{"_":["清朝","1644～1912 年"],"bg":["江南園林","月洞門、迴廊、太湖石和池塘，是蘇州拙政園、留園這些江南私家園林的代表元素。乾隆皇帝也很喜歡模仿江南園林。"],"tree1":["梅花與太湖石","太湖石是太湖產的石灰岩，被水侵蝕出很多孔洞，講究「瘦、皺、漏、透」，是園林裡最重要的石頭。"],"tree2":["竹子","清代的鄭板橋最愛畫竹，他的詩〈竹石〉寫「咬定青山不放鬆」，稱讚竹子的堅毅。"],"table":["紫檀螺鈿桌","紫檀是非常珍貴的硬木；螺鈿是把貝殼磨成薄片嵌在木頭上，會閃閃發亮。清朝宮廷家具講究華麗繁複。"],"cup":["粉彩蓋碗・紅茶","粉彩是清朝流行的彩瓷，顏色柔和有層次。清朝時中國的紅茶大量外銷到英國等地。"],"bench":["紫檀寶座","寶座是皇帝、貴族坐的大椅子，用紫檀雕刻，鋪著錦墊，非常氣派。"],"stool":["景泰藍繡墩","景泰藍是在銅胎上用銅絲掐出花紋，再填上彩色琺瑯燒製，因為明朝景泰年間的最有名而得名。"],"lantern":["多層六角宮燈","清宮的宮燈做得非常精緻，常有好幾層，掛著紅色流蘇，元宵節時宮裡宮外一片燈海。"]}};
 function parkInfo(k){const era=store.get("era","classic"),E=PARK_INFO[era]||PARK_INFO.classic,[en,yr]=E._;vibrate(5);
-  if(OFF&&typeof secretFind==="function"&&secretFind(era,k))return;   /* 意見回饋 315：秘境棋友 */
+  if(OFF&&PARK_J==="park"&&typeof secretFind==="function"&&secretFind(era,k))return;   /* 意見回饋 315：秘境棋友 */
   /* 意見回饋 348：石桌往事的公園裡，掀開茶杯有機會找到一份棋譜（寶物）；沒找到才跳茶杯的介紹 */
   if(k==="cup"&&PARK_J==="park"&&!parkInfo.skip){cupDrop().then(ok=>{if(!ok){parkInfo.skip=true;try{parkInfo(k)}finally{parkInfo.skip=false}}});return}
   // 網路對戰／觀戰時點到人：跳出那位棋友的資料卡（意見回饋 261）
@@ -3448,7 +3450,7 @@ function travel(to,done){if(document.querySelector(".travel"))return;const back=
   let k=0;const tl=setInterval(()=>{k=(k+1)%LINES.length;const e=ov.querySelector("#tline");if(e)e.textContent=LINES[k]},1600);
   const h0=location.hash;let ended=false;const end=()=>{if(ended)return;ended=true;removeEventListener("hashchange",end);clearInterval(tl);clearTimeout(tm);ov.classList.add("out");setTimeout(()=>ov.remove(),350);if(done&&location.hash===h0)done()};addEventListener("hashchange",end);
   const tm=setTimeout(end,5000);ov.querySelector(".tskip").onclick=e=>{e.stopPropagation();end()}}
-function innSheet(v){setTimeout(innDrop,1200);setTop("🏮 驛站","#/journey");const I=xpInfo(),Sx=jSecrets(),nx=JR.find(R=>R.lv>I.L);v.className="view";
+function innSheet(v){setTimeout(innDrop,1200);setTop("🏮 驛站","#/adventure");const I=xpInfo(),Sx=jSecrets(),nx=JR.find(R=>R.lv>I.L);v.className="view";
   const row=(x,locked)=>`<button class="item" data-inn="${x.id}" ${locked?"disabled":""}><span class="lb" style="font-size:24px">${locked?"❔":x.ic}</span><span class="tx"><b>${locked?"？？？（還沒找到）":esc(x.name)}</b><span>${locked?"":x.who?`${esc(x.who)}・第 ${secretLv(x)} 級的實力・贏了 +${secretXP(x)} 修為`:`第 ${x.lv} 級的實力・贏了 +${x.xp} 修為（另加對局修為）`}</span></span><span class="muted">${locked?"":"›"}</span></button>`;
   const IE=store.get("era","classic");
   v.innerHTML=`<div class="pad"><div class="abn" style="height:160px;background-image:url(data/inn/${IE}.webp);margin-bottom:10px"><div class="hc"><b>🏮 ${esc(eraLabel(IE))}的驛站</b><small>路過的旅人都在這裡歇腳下棋</small></div></div><div class="card" style="line-height:1.8">🀄 <b>Lv ${I.L} ${I.title}</b>${nx?`・下一站「${nx.name}」要 Lv ${nx.lv}，還差 ${nx.lv-I.L} 級`:"・每一站都能進了"}<br><span class="muted" style="font-size:13px">驛站裡都是路過的旅人，找誰下都可以、下幾次都可以；輸了也有對局修為。</span></div>
@@ -3460,28 +3462,37 @@ function innSheet(v){setTimeout(innDrop,1200);setTop("🏮 驛站","#/journey");
   v.querySelectorAll("[data-inn]").forEach(b=>b.onclick=()=>{const x=INN.concat(SECRETS).find(z=>z.id===b.dataset.inn);if(!x||(SECRETS.includes(x)&&!Sx[x.id]))return;
     const lv=x.who?secretLv(x):x.lv,xp=x.who?secretXP(x):x.xp;
     sheet(`${x.ic} ${x.name}`,c=>{c.innerHTML=`${x.who?secretBio(x):""}<p style="font-size:16px;line-height:1.8">${esc(x.say)}</p><p class="muted">第 ${lv} 級的實力。贏了 +${xp} 修為（另加對局修為），輸了也有對局修為。</p><button class="btn" id="ig" style="width:100%">⚔ 下一盤</button>`;
-      c.querySelector("#ig").onclick=async()=>{closeSheet();try{store.set("cpuRanked",false);store.set("cpuCar",false);await api("/play/new",{human:"r",level:lv,journey:"inn:"+x.id});const st=await api("/play/state");store.set("jPending",{id:"inn:"+x.id,game:st.id});location.hash="#/cpu";setTimeout(()=>toast(`${x.ic} ${x.name}：${x.say}`),500)}catch(e){toast(e.message)}}})});
+      c.querySelector("#ig").onclick=()=>{closeSheet();jStart("inn:"+x.id,{human:"r",level:lv,journey:"inn:"+x.id},()=>{location.hash="#/journey/play";setTimeout(()=>toast(`${x.ic} ${x.name}：${x.say}`),500)})}})});
   return{}}
 /* 意見回饋 327：石桌往事的棋（雲河棋路、驛站、公園）自己留一盤，跟朝代擂台、挑戰電腦互不干擾 */
 const parkLv=()=>Math.max(1,Math.min(6,1+Math.floor(xpInfo().L/8)));
 function jName(j){if(!j)return"石桌往事";if(j==="park")return"園子";if(String(j).startsWith("inn:")){const x=INN.concat(SECRETS).find(z=>"inn:"+z.id===j);return x?"驛站・"+x.name:"驛站"}
   const s=jStages().find(z=>z.id===j);return s?"雲河棋路・"+s.name:"雲河棋路"}
 const jBack=j=>j==="park"?"#/journey/park":String(j||"").startsWith("inn:")?"#/journey/inn":"#/journey";
+const jPlace=j=>j==="park"?"園子":String(j||"").startsWith("inn:")?"驛站":"雲河棋路";
+/* 意見回饋 413：石桌往事只留一盤（雲河棋路、驛站、園子、守關共用一格）。要開的跟手上那盤不是同一個對手時先問，不會悄悄蓋掉；同一個對手就接著下；force＝重下這一盤 */
+async function jStart(id,b,go,force){let st;try{st=await api("/play/state")}catch(e){toast(e.message);return}
+  const cur=st.journey&&!st.result&&st.moves&&st.moves.length?{journey:st.journey,n:st.moves.length}:null,o=(st.others||[]).find(z=>z.kind==="journey"),g=cur||(o?{journey:o.journey,n:o.n}:null);
+  const fresh=async()=>{try{store.set("cpuRanked",false);store.set("cpuCar",false);const s=await api("/play/new",b);store.set("jPending",id==="park"?null:{id,game:s.id});go(true)}catch(e){toast(e.message)}};
+  if(force||!g)return fresh();
+  if(g.journey===id)return go(false);
+  modal(`<div class="em">🪨</div><h2>石桌往事還有一盤沒下完</h2><p class="muted">「${esc(jName(g.journey))}」下到第 ${Math.ceil(g.n/2)} 回合。石桌往事一次只留一盤，開新的，那一盤就不留了。</p>`,
+    [["⏳ 繼續那一盤",()=>{location.hash="#/journey/play"}],["放棄，開新的",fresh],["取消",null,true]])}
+/* 結果視窗、新局：跟同一位對手（園子、驛站）再下一盤 */
+function jAgain(st){const j=st.journey;return api("/play/new",{human:"r",level:j==="park"?parkLv():st.level,journey:j}).then(s=>{store.set("jPending",j==="park"?null:{id:j,game:s.id});return s})}
 async function jResume(box){if(!box)return;let st;try{st=await api("/play/state")}catch(e){return}
   const cur=st.journey&&!st.result&&st.moves&&st.moves.length?{journey:st.journey,n:st.moves.length,me:st.turn===st.human}:null,
     o=(st.others||[]).find(z=>z.kind==="journey"),g=cur||(o?{journey:o.journey,n:o.n,me:(o.n%2?"b":"r")===o.human}:null);
   if(!g||!box.isConnected)return;
   box.innerHTML=`<button class="card row" style="width:100%;margin-top:10px;justify-content:space-between;border:2px solid var(--red);font:inherit;color:inherit;text-align:left"><span>⏳ <b>${esc(jName(g.journey))}</b><br><span class="muted" style="font-size:12.5px">下到第 ${Math.ceil(g.n/2)} 回合・${g.me?"輪到你走":"輪到電腦"}</span></span><b>繼續下 ›</b></button>`;
-  box.querySelector("button").onclick=async()=>{vibrate(5);if(!cur)try{await api("/play/switch",{kind:"journey"})}catch(e){}if(g.journey==="park")store.set("park3d",true);location.hash="#/cpu"}}
+  box.querySelector("button").onclick=async()=>{vibrate(5);if(!cur)try{await api("/play/switch",{kind:"journey"})}catch(e){}if(g.journey==="park")store.set("park3d",true);location.hash="#/journey/play"}}
 function ParkGate(v){setTop("🌳 園子","#/adventure");setTabs(false);v.className="view";const cur=store.get("era","classic");
   /* 意見回饋 360：石桌上擺著 13 顆朝代石頭（Gemini 畫的，刻著那個朝代書法的字），點一顆就進那個朝代的公園；石頭圖還沒到的先用圓圈 */
   v.innerHTML=`<div class="pad"><div class="stbl"><p class="stbl-t">擇石一枚，步入彼朝之園</p><div class="eras">${ARENA_ORDER.map(k=>{const sl=ARENA[k].seal||"";return`<button class="era-c stone${k===cur?" on":""}" data-e="${k}"><img src="data/stones/${k}.webp" alt="" onerror="this.parentElement.classList.remove('stone');this.remove()"><span${sl.length>1?' class="two"':""}>${esc(sl)}</span><b>${esc(eraLabel(k))}</b></button>`}).join("")}</div></div><div id="pRes"></div></div>`;
   jResume(v.querySelector("#pRes"));
   v.querySelectorAll("[data-e]").forEach(b=>b.onclick=async()=>{if(b.disabled)return;b.disabled=true;vibrate(5);const k=b.dataset.e;store.set("era",k);try{applyEra()}catch(e){}store.set("park3d",true);
-    try{const st=await api("/play/state"),mine=st.journey&&!st.result&&st.moves&&st.moves.length;
-      if(!mine){if((st.others||[]).some(z=>z.kind==="journey"))await api("/play/switch",{kind:"journey"});
-        else{store.set("cpuRanked",false);store.set("cpuCar",false);await api("/play/new",{human:"r",level:parkLv(),journey:"park"})}}}catch(e){toast(e.message);b.disabled=false;return}
-    await stoneCover(b,k);location.hash="#/cpu";setTimeout(()=>toast(`🌳 ${parkName(k)}到了`),600)})}
+    setTimeout(()=>{b.disabled=false},1500);
+    jStart("park",{human:"r",level:parkLv(),journey:"park"},async()=>{await stoneCover(b,k);location.hash="#/journey/play";setTimeout(()=>toast(`🌳 ${parkName(k)}到了`),600)})})}
 /* 意見回饋 389：點朝代石頭——石頭先慢慢翻轉，再出現那個朝代的封面（驛站場景圖＋朝代名＋印），然後才進公園下棋；點封面可以跳過 */
 function stoneCover(b,k){return new Promise(res=>{const im=b.querySelector("img")||b;im.classList.add("sflip");vibrate(8);
   const info=(PARK_INFO[k]||PARK_INFO.classic)._||[eraLabel(k),""],seal=(ARENA[k]&&ARENA[k].seal)||"";let done=false;
@@ -3498,9 +3509,8 @@ function jLvOk(s){return xpInfo().L>=(JR[s.r].lv||1)}
 function jOpen(list,i){return(i===0||!!jStars()[list[i-1].id])&&jLvOk(list[i])}
 const jIcon={puz:"🧩",scene:"🕰",ai:"⚔",boss:"🏯"};
 /* 對弈、守關：開一盤挑戰電腦，記下是哪一關；那盤結束時在 CpuGame 裡判定（journeyGameEnd） */
-async function jPlay(s){try{store.set("cpuRanked",false);store.set("cpuCar",false);
-  await api("/play/new",s.t==="boss"?{human:"r",level:s.lv,arena:s.era,journey:s.id}:{human:"r",level:s.lv,journey:s.id});const st=await api("/play/state");store.set("jPending",{id:s.id,game:st.id});
-  if(s.t==="boss"&&!parkOn()){store.set("park3d",true)}location.hash="#/cpu";setTimeout(()=>toast(s.t==="boss"?`🏯 ${ARENA[s.era].name}：${ARENA[s.era].hi}`:`⚔ 雲河棋路・${s.name}：贏了就過關`),500)}catch(e){toast(e.message)}}
+function jPlay(s,force){const b=s.t==="boss"?{human:"r",level:s.lv,arena:s.era,journey:s.id}:{human:"r",level:s.lv,journey:s.id};   /* 守關帶 arena 只是借擂主的外觀和台詞；這盤算石桌往事（local.js kindOf：journey 優先） */
+  return jStart(s.id,b,()=>{if(s.t==="boss"&&!parkOn())store.set("park3d",true);location.hash="#/journey/play";setTimeout(()=>toast(s.t==="boss"?`🏯 ${ARENA[s.era].name}：${ARENA[s.era].hi}`:`⚔ 雲河棋路・${s.name}：贏了就過關`),500)},force)}
 function journeyGameEnd(st){if(!st||!st.result)return;
   if(!st.practice)addXP(st.result.w===st.human?40:15,"對局","g:"+st.id);
   const P=store.get("jPending",null);if(!P||P.game!==st.id)return;store.set("jPending",null);
@@ -3512,7 +3522,7 @@ function journeyGameEnd(st){if(!st||!st.result)return;
   if(st.result.w===st.human){const n=st.moves.length,stars=Math.min(P.hint?2:3,n<=60?3:n<=100?2:1);jSet(s.id,stars,"闖關");setTimeout(()=>toast(`🗺 雲河棋路「${JR[s.r].name}・${s.name}」過關！${"★".repeat(stars)}${"☆".repeat(3-stars)}（${Math.ceil(n/2)} 回合內贏）`),1500)}
   else setTimeout(()=>toast(`🗺 「${s.name}」還沒過關，回雲河棋路再挑戰一次`),1500)}
 function Journey(v,sid){
-  setTop("雲河棋路","#/");setTabs(false);const L=jStages(),S=jStars();
+  setTop("雲河棋路","#/adventure");setTabs(false);const L=jStages(),S=jStars();
   if(sid==="inn")return innSheet(v);
   if(sid==="park")return ParkGate(v);
   if(sid){const i=L.findIndex(x=>x.id===sid);if(i<0||!jOpen(L,i)){navReplace("#/journey");return{}}return jPuzzle(v,L[i])}
@@ -3650,7 +3660,12 @@ function stampBook(start){const S=arenaStamps(),n=Object.keys(S).length,t=arenaT
     b.querySelectorAll(".stamp-cell").forEach(c=>c.onclick=()=>{const k=c.dataset.e;store.set("era",k);try{applyEra&&applyEra()}catch(e){}arenaSheet(k,start)})})}
 // 蓋章動畫：畫面中間一方朱印「蓋」下去
 function stampFx(era){const A=ARENA[era];if(!A)return;const d=document.createElement("div");d.className="stampfx";d.innerHTML=sealHTML(era,true,true);document.body.append(d);vibrate([20,60,40]);setTimeout(()=>d.remove(),2600)}
-function CpuGame(v,practicePage){
+function CpuGame(v,practicePage,mode){
+  /* 意見回饋 413：這一頁是哪個模式由網址決定（#/cpu 挑戰電腦、#/arena 朝代擂台、#/journey/play 石桌往事、#/redo/play 練習）；標題、返回、上面的按鈕、新局、結果視窗都只看 MODE。守關算石桌往事（KIND 跟 local.js 的 kindOf 一樣：journey 優先） */
+  const MODE=practicePage?"practice":mode||"cpu",KIND=s=>s.kind||(s.practice?"practice":s.journey?"journey":s.arena?"arena":"cpu"),MODE_URL={cpu:"#/cpu",arena:"#/arena",journey:"#/journey/play",practice:"#/redo/play"};let opened=false;
+  const openArgs=()=>{if(MODE==="arena"){const e=store.get("era","classic"),k=ARENA[e]?e:"classic";return{kind:"arena",arena:k,level:arenaLevel(k)}}
+    if(MODE==="journey"||MODE==="practice")return{kind:MODE};
+    return{kind:"cpu",ranked:OFF&&store.get("cpuRanked",true),reward:REWARD&&store.get("cpuCar",false),level:store.get("cpuLevel",3),human:"r"}};
   setTabs(false);gameLayout(v);
   let st=null,sel=-1,shownResult=null,busy=false,pHint=null;   // pHint：錯棋重練時在棋盤上畫 Pikafish 的建議
   const bd=Board(i=>tap(i));v.querySelector("#bbox").append(bd.svg);
@@ -3662,24 +3677,20 @@ function CpuGame(v,practicePage){
   const topBar=()=>{const lk=!!(typeof st!=="undefined"&&st&&st.arena&&!st.result),pr=!!(st&&st.practice);
     /* 意見回饋 335：錯棋重練是自己的頁面——標題寫「錯棋重練」，上面沒有積分／自選／擂台／公園，返回回到錯棋清單 */
     /* 意見回饋 349：朝代擂台（和石桌往事）的上方不放積分／自選，只寫是哪裡 */
-    setTop(pr?(st.practice.drill?"🎯 "+(st.practice.title||"練習"):"🔁 錯棋重練"):st&&st.arena?"🏯 朝代擂台":st&&st.journey?"🪨 石桌往事":"挑戰電腦",pr?(st.practice.drill?"#/":"#/redo"):st&&st.journey?jBack(st.journey):"#/",pr?[]:[/* 意見回饋 346：挑戰電腦看不到擂台、驛站的入口——🏯 只在擂台那盤出現（換擂主）、🏮 只在石桌往事的公園出現 */...(st&&st.arena?[arenaBtn]:[]),...(OFF&&parkOn()&&!lk&&st&&st.journey==="park"&&!st.arena?[["🏮",()=>travel("inn",()=>location.hash="#/journey/inn"),"走荒野小徑去驛站"]]:[]),...(lk?[]:[parkBtn(()=>{draw();topBar()})])].concat(vcOn()?[["🎤",()=>voiceMove(()=>!st||st.result?{why:"這盤已經結束"}:st.turn!==st.human||st.thinking?{why:"還沒輪到你"}:{board:st.board,legal:st.legal,play:(f,t)=>{sel=-1;post("/play/move",{f,t})}}),"聲控走棋"]]:[]));
-    try{if(seg&&!pr&&!(st&&(st.journey||st.arena))){const t=$("#title");t.textContent="";t.append(seg)}}catch(e){}};   /* 第一次呼叫時 seg 還沒建立 */
+    setTop(pr?(st.practice.drill?"🎯 "+(st.practice.title||"練習"):"🔁 錯棋重練"):MODE==="arena"?"🏯 朝代擂台":MODE==="journey"?"🪨 "+jName(st&&st.journey):"挑戰電腦",pr?(st.practice.drill?"#/":"#/redo"):MODE==="journey"?(st&&st.journey?jBack(st.journey):"#/adventure"):"#/",pr?[]:[/* 意見回饋 346：挑戰電腦看不到擂台、驛站的入口——🏯 只在擂台那盤出現（換擂主）、🏮 只在石桌往事的公園出現 */...(MODE==="arena"?[arenaBtn]:[]),...(MODE==="journey"&&OFF&&parkOn()&&st&&st.journey==="park"?[["🏮",()=>travel("inn",()=>location.hash="#/journey/inn"),"走荒野小徑去驛站"]]:[]),...(lk?[]:[parkBtn(()=>{draw();topBar()})])].concat(vcOn()?[["🎤",()=>voiceMove(()=>!st||st.result?{why:"這盤已經結束"}:st.turn!==st.human||st.thinking?{why:"還沒輪到你"}:{board:st.board,legal:st.legal,play:(f,t)=>{sel=-1;post("/play/move",{f,t})}}),"聲控走棋"]]:[]));
+    try{if(seg&&MODE==="cpu"){const t=$("#title");t.textContent="";t.append(seg)}}catch(e){}};   /* 第一次呼叫時 seg 還沒建立 */
   topBar();
-  /* 首頁「🏯 朝代擂台」帶過來的：直接打開擂台（意見回饋 276） */
-  {const oa=store.get("openArena",0);if(oa){store.set("openArena",0);if(Date.now()-oa<15000)setTimeout(async()=>{try{
-      /* 意見回饋 403：先換到擂台那一盤（沒有就開一盤目前朝代的擂台），標題才會是「朝代擂台」、按新局才只出現擂台的選項；之前背後還是石桌往事那盤 */
-      if(!(st&&st.arena)){const o=(st&&st.others||[]).find(z=>z.kind==="arena");if(o)await post("/play/switch",{kind:"arena"});else{const e=store.get("era","classic"),k=ARENA[e]?e:"classic";store.set("cpuRanked",false);store.set("cpuCar",false);await post("/play/new",{human:"r",level:arenaLevel(k),arena:k})}}
-      arenaBtn[1]()}catch(e){}},700)}}
+  /* 意見回饋 276、403、413：首頁「🏯 朝代擂台」改走 #/arena，進頁時 /play/open 先換到擂台那一盤（沒有就開目前朝代的），還沒開始才打開擂主卡；不再用 openArena 計時 */
   // 模式切換直接放在頂部列（取代標題）：積分挑戰／自選難度／獎勵一眼就看得到，點一下就換（離線版才有積分挑戰和獎勵）
   const modeOf=s=>s.ranked?"rank":s.reward?"car":"free",prefMode=()=>store.get("cpuRanked",true)?"rank":REWARD&&store.get("cpuCar",false)?"car":"free";
-  const seg=OFF?document.createElement("div"):null;
+  const seg=OFF&&MODE==="cpu"?document.createElement("div"):null;
   if(seg){seg.className="cpu-seg";seg.setAttribute("role","tablist");
     seg.innerHTML=`<button data-m="rank" role="tab">🏅 積分</button><button data-m="free" role="tab">🎚 自選</button>${REWARD?'<button data-m="car" role="tab">🚗 獎勵</button>':""}`;
     const t=$("#title");t.textContent="";t.append(seg);paintSeg(prefMode());
     seg.querySelectorAll("button").forEach(b=>b.onclick=()=>{vibrate(8);switchMode(b.dataset.m)})}
   function paintSeg(m){if(seg)seg.querySelectorAll("button").forEach(b=>{const on=b.dataset.m===m;b.classList.toggle("on",on);b.setAttribute("aria-selected",on)})}
   v.querySelector("#pTop").onclick=e=>{if(e.target.closest(".cpu-chip")){vibrate(8);newSheet()}};
-  const acts=actionBar(v.querySelector("#acts"),[...(store.get("jPending",null)?[["jhint","💡","提示",()=>jBattleHint(st,h=>{pHint=h;draw()})]]:[]),["undo","↶","悔棋",()=>post("/play/undo")],
+  const acts=actionBar(v.querySelector("#acts"),[...(MODE==="journey"&&store.get("jPending",null)?[["jhint","💡","提示",()=>jBattleHint(st,h=>{pHint=h;draw()})]]:[]),["undo","↶","悔棋",()=>post("/play/undo")],
     ["new","＋","新局",()=>newSheet(),true],["resign","🏳","認輸",()=>confirmBox("確定認輸？",()=>post("/play/resign"),"認輸")],["review","📖","檢討",()=>review(false,st&&st.id)],["setup","🧪","擺盤",()=>st&&setupSheet(st.board,st.turn,st.human==="b",!st.ranked)]]);
   async function post(u,b){if(busy)return;busy=true;try{render(await api(u,b||{}))}catch(e){toast(e.message)}finally{busy=false}}
   function tap(i){if(!st||st.result||st.turn!==st.human||st.thinking)return;
@@ -3694,9 +3705,11 @@ function CpuGame(v,practicePage){
   // 意見回饋 274：擂台賽下到結束前只能在公園裡（不能切回棋盤模式）；結束後按鈕恢復
   let arenaLock=null,jKey=null,renderSwitched=false;
   function render(s){
-    if(!practicePage&&s.practice&&!renderSwitched){renderSwitched=true;api("/play/switch",{kind:"cpu",ranked:OFF&&store.get("cpuRanked",true),reward:REWARD&&store.get("cpuCar",false),level:store.get("cpuLevel",3),human:"r"}).then(render).catch(e=>toast(e.message));return}
+    if(!practicePage&&s.practice&&!renderSwitched){renderSwitched=true;api("/play/open",openArgs()).then(render).catch(e=>toast(e.message));return}
     if(practicePage&&!s.practice){if(!renderSwitched&&(s.others||[]).some(o=>o.kind==="practice")){renderSwitched=true;api("/play/switch",{kind:"practice"}).then(render).catch(e=>toast(e.message));return}
       navReplace("#/cpu");return}   /* 在練習頁按了「新局」：開的是挑戰電腦，換到挑戰電腦頁 */
+    /* 意見回饋 413：在這頁開出了別的模式的棋（例如舊的按鈕），換到那個模式的網址，不在這一頁畫 */
+    if(opened&&!practicePage&&KIND(s)!==MODE){navReplace(MODE_URL[KIND(s)]||"#/cpu");return}
     /* 意見回饋 342：擂台的棋，公園一定是那個擂主的朝代（例如選過別的朝代公園，回來下擂台也會換回來） */
     if(s.arena&&ARENA[s.arena]&&store.get("era","classic")!==s.arena){store.set("era",s.arena);try{applyEra()}catch(e){}}
     const n0=lastN;st=s;lastN=s.moves.length;if(s.arena&&!s.result&&!parkOn()){store.set("park3d",true);setTimeout(()=>{draw();topBar()},0)}/* 意見回饋 319：朝代擂台的棋一律在公園 3D 裡 */if(!st.legal.some(([f])=>f===sel))sel=-1;
@@ -3744,13 +3757,17 @@ function CpuGame(v,practicePage){
         modal(`<div class="em">${win?"🏆":draw0?"🤝":"💪"}</div><h2>${win?"你贏了！":draw0?"和局":"這盤輸了"}</h2><p class="muted">${esc(st.result.why)}・積分挑戰（${esc(st.rkName)}）</p>`+
           (R?`<p style="font-size:18px;font-weight:900">積分 ${R.d>0?"+"+R.d:R.d<0?R.d:"±0"} → ${R.pts} 分${R.rank!==R.was?`<br><span style="color:var(--accent2)">${R.d>0?"🎉 升為":"降為"} ${esc(R.rank)}</span>`:""}</p>`:'<p class="muted">雙方還沒各走一步，這盤不計分</p>'),
           [["再挑戰一盤 ›",()=>api("/play/new",{human:st.human,ranked:true}).then(render).catch(e=>toast(e.message))],["📊 賽後報告",()=>review(true,st&&st.id)],["檢討這盤",()=>review(false,st&&st.id),true],["關閉",null,true]]);return}
-      if(st.arena&&ARENA[st.arena]){const A=ARENA[st.arena],Z=st.stamp;
+      if(MODE==="arena"&&ARENA[st.arena]){const A=ARENA[st.arena],Z=st.stamp;
         if(win&&Z&&Z.first)setTimeout(()=>stampFx(st.arena),MODAL_HOLD>Date.now()?MODAL_HOLD-Date.now():300);
         const t=arenaTitle(),newT=win&&Z&&Z.first&&ARENA_TITLES.some(([k])=>k===Z.total);
         modal(`<div class="em">${win?"🏯":draw0?"🤝":"💪"}</div><h2>${win?`擊敗${esc(A.name)}！`:draw0?"和局":"擂主守住了擂台"}</h2><p class="muted">${esc(st.result.why)}・${esc(eraLabel(st.arena))}擂台</p>`+
           `<p style="font-style:italic">「${esc(win?A.lose:A.win)}」</p>`+
           (win?(Z&&Z.first?`<p style="font-size:17px;font-weight:900">${sealHTML(st.arena,true)} 蓋章！集章簿 ${Z.total} / 13</p>${newT?`<p style="color:var(--accent);font-weight:900">🎉 得到稱號「${esc(t)}」</p>`:""}`:'<p class="muted">這個朝代已經蓋過章了，這盤當作練功。</p>'):'<p class="muted">和局、輸棋都不會蓋章，再挑戰一次吧！</p>')+XPR,
           [[win?"📜 看集章簿":"再挑戰一次 ›",()=>win?stampBook(arenaStart):arenaStart(st.arena,st.level)],["📊 賽後報告",()=>review(true,st&&st.id)],["關閉",null,true]]);return}
+      /* 意見回饋 413：石桌往事（含守關）的結果：再挑戰同一關／同一位對手，或回雲河棋路、驛站、園子；不會變成挑戰電腦，也不是擂台 */
+      if(MODE==="journey"){const j=st.journey,s0=jStages().find(x=>x.id===j);
+        modal(`<div class="em">${win?"🏆":draw0?"🤝":"💪"}</div><h2>${win?"你贏了！":draw0?"和局":"這盤輸了"}</h2><p class="muted">${esc(st.result.why)}・🪨 ${esc(jName(j))}</p>`+XPR,
+          [...(win&&s0?[]:[[s0?"再挑戰這一關 ›":"再下一盤 ›",()=>{shownResult=null;sel=-1;if(s0)jPlay(s0,true);else jAgain(st).then(render).catch(e=>toast(e.message))}]]),["‹ 回"+jPlace(j),()=>goBack(jBack(j))],["📊 賽後報告",()=>review(true,st&&st.id),true],["關閉",null,true]]);return}
       modal(`<div class="em">${win?"🏆":draw0?"🤝":"💪"}</div><h2>${win?"你贏了！":draw0?"和局":"這盤輸了"}</h2><p class="muted">${esc(st.result.why)}・${st.journey?`🪨 ${esc(jName(st.journey))}`:`對手第 ${st.level} 級「${esc(lv.name||"")}」`}</p>`+XPR,
         [[win&&st.level<8?"挑戰下一級 ›":"再來一局",()=>api("/play/new",{human:st.human,level:win&&st.level<8?st.level+1:st.level}).then(render).catch(e=>toast(e.message))],["📊 賽後報告",()=>review(true,st&&st.id)],["檢討這盤",()=>review(false,st&&st.id),true],["關閉",null,true]])}}
   // 賽後報告：用這一盤自己的編號打開（意見回饋 234：以前拿存檔清單第一筆，存檔還沒寫完或順序不同時會開到別盤）
@@ -3807,7 +3824,11 @@ async function review(rep,id){let it=null;for(let k=0;k<12&&!it;k++){try{const d
   function switchMode(m){if(!st)return;if(modeOf(st)===m)return newSheet();
     startNew({human:st.human,level:st.level||store.get("cpuLevel",3),ranked:m==="rank",reward:m==="car"})}
   // 開新局選單：只管這個模式的設定（紅黑、難度），模式本身在頂部切換
-  function newSheet(){if(!st)return;if(st.arena&&ARENA[st.arena])return arenaSheet(st.arena,arenaStart);   /* 意見回饋 396：擂台裡按「新局」只出現挑戰擂台（再挑戰擂主、集章簿），不出現自選難度 */
+  /* 意見回饋 413：石桌往事的「新局」只有重下這一盤、回雲河棋路（驛站、園子），沒有挑戰電腦的難度選單 */
+  function jNewSheet(){const j=st.journey,s0=jStages().find(x=>x.id===j),live=!st.result&&st.moves.length>=2;
+    modal(`<div class="em">🪨</div><h2>${esc(jName(j))}</h2><p class="muted">${live?"這盤還沒下完，重下就會放棄這一盤。":"跟同一位對手再下一盤，或回去換一位。"}</p>`,
+      [["⚔ 重下這一盤",()=>{shownResult=null;sel=-1;if(s0)jPlay(s0,true);else jAgain(st).then(render).catch(e=>toast(e.message))}],["‹ 回"+jPlace(j),()=>goBack(jBack(j))],["取消",null,true]])}
+  function newSheet(){if(!st)return;if(MODE==="arena")return arenaSheet(ARENA[st.arena]?st.arena:store.get("era","classic"),arenaStart);if(MODE==="journey")return jNewSheet();   /* 意見回饋 396：擂台裡按「新局」只出現挑戰擂台（再挑戰擂主、集章簿），不出現自選難度 */
     let side=st.human,level=st.level||store.get("cpuLevel",3);const ranked=OFF&&!!st.ranked,reward=OFF&&!!st.reward;
     const sh=sheet(ranked?"🏅 積分挑戰・開新局":reward?"🚗 獎勵模式・開新局":"🎚 自選難度・開新局",b=>{const rec=st.record||{},CR=st.cpuRate||{},CB=st.car||{},tb=CB.table||[];
       const paint=()=>{const span=CR.hi!=null?CR.hi-CR.lo:0,pct=span?Math.round(100*(CR.pts-CR.lo)/span):100;
@@ -3821,18 +3842,26 @@ async function review(rep,id){let it=null;for(let k=0;k<12&&!it;k++){try{const d
         (ranked?"":`<div class="cpu-lb">難度</div><div class="lvl">${st.levels.map(l=>`<button data-l="${l.n}" class="${l.n===level?"on":""}"><b>${l.n}</b><span>${esc(l.name)}</span>${reward?`<span class="ok">+${tb[l.n-1]||0} 點</span>`:(rec[l.n]||{}).w?'<span class="ok">✔ 通關</span>':""}</button>`).join("")}</div>
           <div class="cpu-desc">${esc((st.levels[level-1]||{}).desc||"")}</div>`)+
         `<button class="btn" id="go">${ranked?"開始積分挑戰":reward?`開始第 ${level} 級（贏了 +${tb[level-1]||0} 點）`:`開始第 ${level} 級`}</button>`+
-        (OFF?`<button class="btn ghost" id="goArena" style="margin-top:8px">🏯 改打朝代擂台（集章 ${Object.keys(arenaStamps()).length}/13）</button>`:"");
+        "";   /* 意見回饋 413：挑戰電腦裡不放朝代擂台入口，擂台從首頁 #/arena 進 */
         b.querySelectorAll("[data-s]").forEach(x=>x.onclick=()=>{side=x.dataset.s;paint()});b.querySelectorAll("[data-l]").forEach(x=>x.onclick=()=>{level=+x.dataset.l;paint()});
         b.querySelector("#go").onclick=()=>startNew({human:side,level,ranked,reward});{const ga=b.querySelector("#goArena");if(ga)ga.onclick=()=>{closeSheet();setTimeout(()=>arenaBtn[1](),250)}}const gg=b.querySelector("#gogar");if(gg)gg.onclick=()=>{closeSheet();location.hash="#/garage"}};paint()});
     sh.classList.add("cpu-sheet")}
   // 上一盤已經下完：一進來就直接開新局（同樣的難度和執子），不要讓人以為還沒下完
   let first=true;
-  const stop=poller(async()=>{if(busy)return;const s=await api("/play/state");
-    if(first){first=false;if(s.result){shownResult=JSON.stringify(s.result)+s.moves.length;const rk=OFF&&!!store.get("cpuRanked",!!s.ranked),cr=OFF&&!rk&&!!store.get("cpuCar",!!s.reward);await post("/play/new",{human:s.human,level:s.level||store.get("cpuLevel",3),ranked:rk,reward:cr});s.ranked=rk;
+  const stop=poller(async()=>{if(busy)return;let s;
+    if(first&&!practicePage){try{s=await api("/play/open",openArgs())}catch(e){s=await api("/play/state")}}else s=await api("/play/state");
+    if(first){first=false;opened=true;
+      /* 意見回饋 413：石桌往事頁沒有石桌往事那盤（或那盤已經下完）就回去選，不畫別的模式的棋 */
+      if(MODE==="journey"&&(KIND(s)!=="journey"||s.result)){navReplace(KIND(s)==="journey"&&s.journey?jBack(s.journey):"#/adventure");return}
+      /* 朝代擂台：還沒開始、或上一盤已經下完，先出擂主卡（選朝代、看集章簿） */
+      if(MODE==="arena"&&(s.result||!s.moves.length)){if(s.result)shownResult=JSON.stringify(s.result)+s.moves.length;render(s);setTimeout(()=>arenaBtn[1](),300);return}
+      /* 戰績頁「開始積分挑戰」「下一盤獎勵棋」：這盤的模式不同就換（下到一半會先問） */
+      if(MODE==="cpu"){const w=store.get("cpuWant",null);if(w){store.set("cpuWant",null);setTimeout(()=>{if(st&&modeOf(st)!==w)switchMode(w)},400)}}
+      if(s.result){shownResult=JSON.stringify(s.result)+s.moves.length;const rk=OFF&&!!store.get("cpuRanked",!!s.ranked),cr=OFF&&!rk&&!!store.get("cpuCar",!!s.reward);await post("/play/new",{human:s.human,level:s.level||store.get("cpuLevel",3),ranked:rk,reward:cr});s.ranked=rk;
       toast(s.ranked?`新的一局・積分挑戰`:cr?`新的一局・🚗 獎勵第 ${s.level} 級`:`新的一局・第 ${s.level} 級`);return}}
     render(s)},()=>st&&st.thinking?500:1500);
   // 電腦一走完就馬上畫出來（不等下一次輪詢）
-  const onPlay=()=>{if(!busy)api("/play/state").then(s=>{if(!busy&&s)render(s)}).catch(()=>{})};window.addEventListener("xq-play",onPlay);
+  const onPlay=()=>{if(!busy&&opened)api("/play/state").then(s=>{if(!busy&&s)render(s)}).catch(()=>{})};window.addEventListener("xq-play",onPlay);
   return{stop:()=>{stop();window.removeEventListener("xq-play",onPlay)}}}
 
 // ================= 雙人對戰 =================
@@ -3860,10 +3889,10 @@ const BOT_SAID=[];window.addEventListener("xq-bot-said",e=>{const s=e.detail;if(
 window.addEventListener("xq-bot-ask",()=>askSheet());
 const BOT_FAQ=[
  // 意見回饋 272：今天新加的功能，小帥也要知道
- [["擂台","擂臺","擂主","打擂台","朝代擂台","公園擂台","園子擂台"],"園子裡每個朝代都有一位擂主（例如唐朝「長安棋王」、宋朝「汴京茶棋客」）。首頁「🏯 朝代擂台」一點就能挑戰（挑戰電腦右上角的 🏯 也可以），難度跟著你的電腦段位；打贏就在集章簿蓋上那個朝代的朱印。","#/cpu","去挑戰擂主"],
+ [["擂台","擂臺","擂主","打擂台","朝代擂台","公園擂台","園子擂台"],"園子裡每個朝代都有一位擂主（例如唐朝「長安棋王」、宋朝「汴京茶棋客」）。首頁「🏯 朝代擂台」一點就能挑戰，難度跟著你的電腦段位；打贏就在集章簿蓋上那個朝代的朱印。","#/arena","去挑戰擂主"],
  [["猜著法","猜棋","名局練習","猜大師"],"首頁「學習 → 🎓 猜著法」：跟著大師名局（許銀川對局或特級大師對局）一步步猜下一手，Pikafish 算你猜的那步比最好的少幾分，跟大師一樣得 10 分。資料會進到天賦分析的著法品質。","#/guess","去猜著法"],
  [["自適應","測驗怎麼算","棋力測驗"],"棋力測驗是自適應的：答對就出難一點、答錯就簡單一點，每題挑最能分辨你程度的題目，大約 8～20 題就能估出段位，還會告訴你 80% 把握的範圍。","#/quiz","去做測驗"],
- [["集章","集章簿","印章","蓋章","朱印"],"集章簿有 13 個朝代的印章：打贏該朝代的擂主就蓋一枚。在首頁「🏯 朝代擂台 → 📜 集章簿」可以看，點還沒蓋的朝代就能換過去挑戰。","#/cpu","去挑戰電腦"],
+ [["集章","集章簿","印章","蓋章","朱印"],"集章簿有 13 個朝代的印章：打贏該朝代的擂主就蓋一枚。在首頁「🏯 朝代擂台 → 📜 集章簿」可以看，點還沒蓋的朝代就能換過去挑戰。","#/arena","去朝代擂台"],
  [["稱號","擂台新秀","七朝豪傑","十三朝棋王"],"集章簿蓋到 3 枚得到「擂台新秀」、7 枚「七朝豪傑」、13 枚「十三朝棋王」。稱號會顯示在線上大廳的棋友資料卡，大家點你都看得到。"],
  [["公園","公園模式","3D","公園下棋","園子","園林","苑囿"],"挑戰電腦或線上對戰時按右上角 🌳 就到園子 3D 棋盤，有 13 個朝代的風景可以 360 度轉頭看（各朝代的叫法不同：秦漢叫苑囿、魏晉以後叫園林、清代叫園子）；在園子裡點樹、桌子、茶杯、燈籠會跳出介紹，還能打朝代擂台。按 ▦ 回棋盤模式。","#/cpu","去園子下棋"],
  [["擺盤","推演","試走","變化"],"對局中按下方「🧪 擺盤」會開一張新棋盤，從當下局面紅黑兩邊都由你走，試各種變化，不影響正在下的那盤；觀戰時也可以用。"],
@@ -3938,7 +3967,7 @@ function askGuides(){let p=0;try{p=(JSON.parse(localStorage.getItem("xq_cpuRate"
    [["賽後報告","評等","妙手","正手","優著","良著","錯著","露著","評分"],"賽後報告的評等","Pikafish 會評每一步：妙手（找到唯一好棋）、正手（最佳或幾乎最佳）、優著（只差一點）、良著（小失誤）、錯著（明顯變差）、露著（大失誤，常是送子或漏殺）。\n藍色箭頭是 Pikafish 建議的走法。先改掉露著和錯著，進步最快。"],
    [["防守","怎麼守","被攻擊","擋"],"防守的訣竅","防守先顧帥的安全：士象不要隨便亂動，車要能回防；對方攻勢猛時，可以用兌子減少攻擊子力，或用反擊逼對方回防（以攻代守）。\n\n👇 從中局局面練習攻防："," "," ","mid"],
    [["進攻","怎麼攻","攻擊","殺棋"],"進攻的訣竅","進攻要集中子力：車馬炮至少兩個配合才容易成殺；先找對方的弱點（沒保護的子、空著的肋道、被塞的象眼），再用將軍逼對方應對，搶到先手就不要放。背熟殺法圖形最有幫助。\n\n👇 練習把優勢下贏（殘局）："," "," ","end"],
-   [["段位","升段","積分怎麼算","升官"],"段位怎麼升",`積分挑戰贏棋加分、輸棋扣分，分數夠就升段：新手→入門→業 1～9→專 1、專 2。你現在 ${p} 分（${ZH[g]}品官），小帥的官階也會跟著升。`,"#/cpu","去積分挑戰"],
+   [["段位","升段","積分怎麼算","升官"],"段位怎麼升",`積分挑戰和線上對戰都用等級分的算法：贏比自己強的人加得多、輸給比自己弱的人扣得多，跟實力差不多的人下，贏約 +16、輸約 −16；前 15 盤調整幅度大一點，比較快找到你的段位。段位會停在你真實能贏一半的地方，不會因為下得多就一直往上漲。分數夠就升段：新手→入門→業 1～9→專 1、專 2。你現在 ${p} 分（${ZH[g]}品官），小帥的官階也會跟著升。`,"#/cpu","去積分挑戰"],
    [["心態","緊張","輸棋難過","一直輸"],"下棋的心態","輸棋很正常，大師也會輸！重要的是每盤都學到一點：看賽後報告、練錯棋。連輸的時候先休息一下，或把電腦級數降一級找回手感。"],
    [["多久","每天練","練多久","時間"],"每天怎麼練","每天 20～30 分鐘就很有效：10 分鐘做錯棋重練或殘局，下一盤電腦，再花 5 分鐘看賽後報告。持續比一次練很久更重要。"],
    [["看棋譜","怎麼看棋譜","打譜"],"怎麼看棋譜（打譜）","打譜時先別急著按下一步：每一步先自己想「如果是我會怎麼走」，再看大師怎麼下；想不通的地方按「🔍 分析」。從《橘中秘》《梅花譜》這些古譜開始最好入門。","#/db","打開棋譜庫"]]}
