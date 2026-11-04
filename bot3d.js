@@ -239,6 +239,18 @@
       case"plum":cyl(.015,.5,dark,[0,.2,.05],0,.4);for(let i=0;i<5;i++)add(g,new T.SphereGeometry(.035,8,6),M("#F7C6D6"),[-.05+i*.04,.25+i*.05,.06],{noLine:1});break;
       case"cup":add(g,new T.CylinderGeometry(.08,.06,.1,14),M("#F5F3EE"),[0,.05,.1],{line:.08});break}}
 
+  /* 意見回饋 471（開發者：Q 版／真實 3D 讓玩家切換）：真實 3D＝Tripo 照立繪做的模型（data/tripo_app/*.glb）。
+     先照常做 Q 版（模型還沒下載好之前看得到人），模型到了就把 Q 版藏起來、換成模型：跟 Q 版一樣高、腳踩在同一個地方；
+     立繪身上寫字的白色圓，Tripo 做成一個洞，這裡在同一個位置補一塊寫著擅長棋子的圓牌（用 Q 版身上那塊的貼圖） */
+  function attachGLB(B,o){if(!window.XQGLB)return;const box0=new T.Box3().setFromObject(B.bot),h0=box0.max.y-box0.min.y,y0=box0.min.y;
+    const face=B.torso.children.find(m=>m.isMesh&&m.geometry&&m.geometry.type==="CircleGeometry");
+    window.XQGLB(o.glb).then(sc=>{if(!sc)return;const g=sc.clone(true),bb=new T.Box3().setFromObject(g),sz=bb.getSize(new T.Vector3()),c=bb.getCenter(new T.Vector3());if(!(sz.y>0))return;
+      const hold=new T.Group();hold.name="glb";g.position.set(-c.x,-bb.min.y,-c.z);hold.add(g);hold.scale.setScalar(h0/sz.y);hold.position.y=y0;
+      g.traverse(m=>{if(m.isMesh){m.castShadow=true;m.receiveShadow=true}});
+      if(o.ring&&o.ring.r&&face){const R=o.ring,rad=R.r*sz.x*.95,m=face.material.clone();m.side=T.DoubleSide;
+        const d=new T.Mesh(new T.CircleGeometry(rad,48),m);d.position.set(bb.min.x+R.u*sz.x-c.x,bb.max.y-R.v*sz.y-bb.min.y,0);hold.add(d)}
+      for(const ch of B.bot.children)ch.visible=false;B.bot.add(hold);B.glb=hold}).catch(()=>{})}
+
   // ---------- 招牌動作 ----------
   const lie=(p,B)=>{const L=p<.15?ease(p/.15):p>.85?ease((1-p)/.15):1;B.root.rotation.z=PI/2*L;B.root.position.x=1.2*L;B.root.position.y=.8*L};
   const R=(B,i,x,y,z)=>{const a=B.arms[i].rotation;if(x!=null)a.x=x;if(y!=null)a.y=y;if(z!=null)a.z=z};
@@ -563,5 +575,5 @@
   const faceApply=(P,F,blink,mOpen)=>{P.eyes.forEach((e,i)=>{e.g.scale.y=(P.stern&&F==="happy")?.7:F==="happy"||(F==="wink"&&i===1)?.12:blink?.1:1;e.brow.position.y=.15+(F==="open"||F==="happy"?.03:0);e.brow.rotation.z=PI/2+(F==="sad"?-.45*e.s:0)+(P.stern&&F!=="sad"?.28*e.s:0)});
     const o=P.stern?F==="open"&&!mOpen?false:!!mOpen:(mOpen||F==="open"||F==="happy");P.mouth.open.visible=o;P.mouth.smile.visible=!o;P.mouth.smile.rotation.z=F==="sad"?0:PI;P.mouth.smile.scale.y=F==="flat"||(P.stern&&F!=="happy")?.2:P.stern?.45:1;P.mouth.smile.position.y=F==="sad"?-.06:0;P.tear.visible=F==="sad"};
   window.XQBot3D={start,acts:Object.keys(ACTS),combos:COMBO.length,lines:LINES.length,figure:o=>{o=o||{};PCO=typeof o.p==="string"&&o.p.length===1&&"帥仕相俥傌炮兵將士象車馬砲卒".includes(o.p)?o.p:null;
-    try{const B=build(TH[o.e]?o.e:eraK(),o.g>=1&&o.g<=9?o.g:grade(),(C=>o.npc||C?{hat:C&&C.hat||o.hat,hc:C&&C.hc||o.hc,robe:C&&C.ring||o.robe,band:C&&C.band||o.band,acc:o.acc,shoe:C&&C.shoe||o.shoe,belt:C&&C.belt||o.belt,skin:C&&C.skin,top:C&&C.top,pin:C&&C.pin,band2:C&&C.band2,cus:C}:null)(typeof o.cus==="string"?CUS[o.cus]:o.cus));if(o.thin)thinify(B,!!o.wl);if(o.wl)wolongify(B);return B}finally{PCO=null}},faceApply,name:()=>BNAME()};
+    try{const B=build(TH[o.e]?o.e:eraK(),o.g>=1&&o.g<=9?o.g:grade(),(C=>o.npc||C?{hat:C&&C.hat||o.hat,hc:C&&C.hc||o.hc,robe:C&&C.ring||o.robe,band:C&&C.band||o.band,acc:o.acc,shoe:C&&C.shoe||o.shoe,belt:C&&C.belt||o.belt,skin:C&&C.skin,top:C&&C.top,pin:C&&C.pin,band2:C&&C.band2,cus:C}:null)(typeof o.cus==="string"?CUS[o.cus]:o.cus));if(o.thin)thinify(B,!!o.wl);if(o.wl)wolongify(B);if(o.glb)attachGLB(B,o);return B}finally{PCO=null}},faceApply,name:()=>BNAME()};
 })();

@@ -24,7 +24,7 @@
   const loadImg=(src,cb)=>{if(!src)return null;const c=imgCache[src];if(c){if(c.complete&&c.naturalWidth)return c;c.addEventListener("load",()=>cb&&cb(),{once:true});return null}
     const im=new Image();im.decoding="async";inflight.add(im);const off=()=>inflight.delete(im);im.addEventListener("load",off,{once:true});im.addEventListener("error",off,{once:true});
     im.src=src;imgCache[src]=im;im.addEventListener("load",()=>cb&&cb(),{once:true});return null};
-  const boardTex=onReady=>{const t=cv(1560,1710,(g,w,h)=>drawBoard(g,w,h,onReady));return t};
+  const boardTex=onReady=>{const t=MOB?cv(1040,1140,(g,w,h)=>drawBoard(g,w,h,onReady)):cv(1560,1710,(g,w,h)=>drawBoard(g,w,h,onReady));return t};
   function drawBoard(g,w,h,onReady){const u=w/BW;const L=LOOK,im=L&&L.img?loadImg(L.img,onReady):null;
     if(im&&L.rect){// 平面棋盤座標：格線原點 (40,40)、格距 60；這裡格線原點在 1.2 格處
       const P=v=>((v-40)/60+1.2)*u,[x,y,ww,hh]=L.rect;g.fillStyle="#2a1a10";g.fillRect(0,0,w,h);g.drawImage(im,P(x),P(y),ww/60*u,hh/60*u);
@@ -53,7 +53,9 @@
   // 棋子面：象牙色底、粗深色刻字（大字、帶一點浮雕的亮邊與陰影），遠處的黑子也看得清楚
   // 朝代棋子（意見回饋 218）：1024 高解析字面，底圖原尺寸鋪滿（不裁邊），字用朝代字形＋朝代字色，外圈只描一道細反差邊；
   // 棋身側面的顏色取自底圖最外圈（漆器、青銅、青花…各朝代自己的顏色），不再一律米色
-  const faceCache={},rimCache={},FN=1024,SERIF='"Noto Serif TC","PMingLiU","Songti TC","SimSun",serif';
+  const MOB=(()=>{try{return matchMedia("(pointer:coarse)").matches||innerWidth<820}catch(e){return false}})();
+  const freeTex=t=>{try{const im=t&&t.image;if(im&&im.getContext){im.width=1;im.height=1}t&&t.dispose&&t.dispose()}catch(e){}};
+  const faceCache={},rimCache={},FN=MOB?512:1024,SERIF='"Noto Serif TC","PMingLiU","Songti TC","SimSun",serif';
   const lum=hex=>{const c=parseInt(hex.slice(1,7),16);return((c>>16)*.3+((c>>8)&255)*.59+(c&255)*.11)/255};
   const bgCache={};
   const bgOf=im=>{const k=im.src;if(bgCache[k]!=null)return bgCache[k];let v=.75;   // 底圖中間（字所在處）的平均亮度
@@ -247,7 +249,7 @@
     return{top:rgbS(P.row,0),bot:rgbS(P.row,ih-1)}}
   // 新做法的整圈長圖（pano）：整張圖原樣繞圓柱一圈（不切段、不鏡像、不拉伸），左右兩端本來就接得起來；
   // 圖寬＝貼圖寬（360 度），圖高照原圖比例；圖的上方、下方用圖最上一列、最下一列的顏色往外延伸，再漸變成整列的平均色（天空球、霧也換成這個色）
-  const PANO={W:4096,H:1024,mt:64};   // 貼圖大小、圖上方留給天空的像素
+  const PANO=MOB?{W:2048,H:512,mt:32}:{W:4096,H:1024,mt:64};   // 貼圖大小、圖上方留給天空的像素
   const panoGeo=(cfg,iw,ih)=>{const ppu=PANO.W/(TAU*PAN.r),Hc=PANO.H/ppu,dhW=PANO.W*ih/iw/ppu,   // ppu＝每單位幾像素（水平、垂直一樣，圖不變形）
     top=16+PAN.r*Math.tan((cfg.hor==null?-38:cfg.hor)*PI/180)+(cfg.hz==null?.58:cfg.hz)*dhW;   // 16＝鏡頭高度；地平線放在指定的仰角
     return{Hc,cy:top+PANO.mt/ppu-Hc/2}};
@@ -904,7 +906,7 @@
     hint.textContent="點棋子走棋・點物件看介紹・拖曳轉頭・兩指縮放";el.append(hint);if(veil._qmin)hint.style.opacity=0;else setTimeout(()=>hint.style.opacity=0,4500);   /* 有名言的過場：操作提示等過場收掉才出現 */
     const EK=eraKey(),E=ERA[EK];
     el.style.background=E.mist;
-    const sc=new T.Scene();sc.fog=new T.Fog(new T.Color(E.mist),70,320);
+    const sc=new T.Scene();sc.fog=new T.Fog(new T.Color(E.mist),70,320);sc.background=new T.Color(E.mist);   /* 意見回饋 486：環景沒畫到的地方顯示朝代的霧色，不會一片黑 */
     const cam=new T.PerspectiveCamera(50,1,.5,700);
     // 光：午後斜陽（唯一投影光，陰影範圍只包住石桌，陰影比較銳利）＋暖色天光＋冷色補光；整體對比拉高，不再灰白
     sc.add(new T.HemisphereLight(0xFFF1DA,0x5A4A36,.42));
@@ -1072,7 +1074,7 @@
           g.position.set(x,0,z);g.rotation.y=(Math.random()-.5)*.6;captured.push(g)})}}
     function sync(board){Object.values(pieces).forEach(g=>sc.remove(g));pieces={};board.forEach((p,i)=>{if(p){const g=makePiece(p);at(g,i);pieces[i]=g}});layoutCaptured(board)}
     // 朝代造型換了（或圖剛載入）：重畫棋盤、清掉棋子貼圖、整盤重排
-    let lookKey="";const refreshLook=()=>{for(const k in faceCache){try{faceCache[k].dispose()}catch(e){}delete faceCache[k]}for(const k in faceMat){try{faceMat[k].dispose()}catch(e){}delete faceMat[k]}for(const k in bodyMat){try{bodyMat[k].dispose()}catch(e){}delete bodyMat[k]}
+    let lookKey="";const refreshLook=()=>{for(const k in faceCache){freeTex(faceCache[k]);delete faceCache[k]}for(const k in faceMat){try{faceMat[k].dispose()}catch(e){}delete faceMat[k]}for(const k in bodyMat){try{bodyMat[k].dispose()}catch(e){}delete bodyMat[k]}
       try{const c=btex.image.getContext("2d");drawBoard(c,btex.image.width,btex.image.height,null);btex.needsUpdate=true}catch(e){}if(prevB)sync(prevB)};
     // Noto Serif TC 網路字型晚到：載入後重畫字面（不然會先用系統字型，字又細又糊）
     try{document.fonts&&document.fonts.load(`900 64px ${SERIF}`,"帥仕相傌俥炮兵將士象馬車砲卒").then(()=>{if(!stopped)refreshLook()})}catch(e){}
@@ -1128,7 +1130,7 @@
        往上拖（壓低鏡頭）也一樣把視線抬到地平線附近，越過小帥的頭看出去 */
     const smooth=(a,b,x)=>{const t=clamp((x-a)/(b-a),0,1);return t*t*(3-2*t)},FADEV=new T.Vector3();
     const placeCam=()=>{const wy=Math.abs(Math.atan2(Math.sin(yaw),Math.cos(yaw))),orb=smooth(.2,1.1,wy),low=clamp(-pitch/.7,0,1);
-      const off=camBase.clone().sub(PIV),lk=look.clone().sub(PIV),el0=Math.atan2(off.y,Math.hypot(off.x,off.z)),el=clamp(el0+pitch-.26*orb,.1,1.5),R=off.length()*zoom,az=Math.atan2(off.x,off.z)+yaw;
+      const off=camBase.clone().sub(PIV),lk=look.clone().sub(PIV),el0=Math.atan2(off.y,Math.hypot(off.x,off.z)),el=clamp(el0+pitch-.26*orb,.1,1.5),R=Math.min(off.length()*zoom,PAN.r*.62),az=Math.atan2(off.x,off.z)+yaw;
       lk.y+=4*orb*(1-low)+4.5*low;
       cam.position.set(PIV.x+Math.sin(az)*Math.cos(el)*R,PIV.y+Math.sin(el)*R,PIV.z+Math.cos(az)*Math.cos(el)*R);
       const c=Math.cos(yaw),s2=Math.sin(yaw);cam.lookAt(PIV.x+lk.x*c+lk.z*s2,PIV.y+lk.y,PIV.z-lk.x*s2+lk.z*c);cam.rotateX(CAMV.dp);
@@ -1257,7 +1259,9 @@
     const waitShow=()=>{if(stopped||shown)return;const mn=veil._qskip?1200:Math.max(1200,veil._qmin||0),dt=performance.now()-t0;if((drawn&&!inflight.size&&dt>mn)||dt>Math.max(6000,veil._qskip?0:mn+2000)){requestAnimationFrame(()=>requestAnimationFrame(reveal));return}setTimeout(waitShow,80)};
     fit();placeCam();requestAnimationFrame(frame);setTimeout(waitShow,80);
     const onRs=()=>{if(el.style.display!=="none")fit()};window.addEventListener("resize",onRs);
-    function destroy(){if(stopped)return;stopped=true;window.removeEventListener("resize",onRs);try{rd.dispose();rd.forceContextLoss()}catch(e){}el.remove();opt.onDestroy&&opt.onDestroy()}
+    function destroy(){if(stopped)return;stopped=true;window.removeEventListener("resize",onRs);
+      try{sc.traverse(o=>{const ms=o.material?(Array.isArray(o.material)?o.material:[o.material]):[];for(const m of ms){if(m&&m.map)freeTex(m.map);m&&m.dispose&&m.dispose()}if(o.geometry)o.geometry.dispose()});for(const k in faceCache){freeTex(faceCache[k]);delete faceCache[k]}}catch(e){}
+      try{rd.dispose();rd.forceContextLoss()}catch(e){}el.remove();opt.onDestroy&&opt.onDestroy()}
     // 意見回饋 244：切回平面棋盤時只藏起來、暫停繪製（不拆掉 3D 場景），再切回公園就直接顯示，不用重新載入
     /* 意見回饋 370：棋盤格 → 螢幕座標（App 的吃子水墨圈畫在公園棋盤的那一格上） */
     const screenOf=i=>{try{const[x,z]=pos(i),v=new T.Vector3(x,TOP,z).project(cam),r=el.getBoundingClientRect();if(!r.width)return null;return{x:r.left+(v.x+1)/2*r.width,y:r.top+(1-v.y)/2*r.height}}catch(e){return null}};

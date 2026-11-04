@@ -100,7 +100,7 @@ input,select{font:inherit;font-size:16px;color:inherit}
 .thero{margin-top:4px}.tstats{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px}.tstat{display:flex;flex-direction:column;align-items:center;text-align:center;padding:10px 4px;border-radius:12px;background:color-mix(in srgb,var(--accent) 8%,var(--card));min-width:0}
 .tstat small{font-size:12px;color:var(--muted)}.tstat b{font:900 32px/1.1 var(--serif);color:var(--accent);margin:2px 0}.tstat b i{font:600 12px var(--sans,inherit);font-style:normal;color:var(--muted);margin-left:2px}.tstat span{font-size:11.5px;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:100%}
 .tsum{margin:12px 2px 10px;line-height:1.7;font-size:14.5px}
-.eic{width:1.4em;height:1.4em;object-fit:contain;display:inline-block;vertical-align:middle;filter:drop-shadow(0 1px 1px rgba(0,0,0,.18))}#topRight .ib .eic{width:26px;height:26px;padding:2px;border-radius:50%;background:rgba(255,248,236,.92)}.tabbar .ic .eic{width:26px;height:26px;filter:none}#sgTabs .tic{font-style:normal}#sTabs .eic{width:20px;height:20px;vertical-align:-5px}.st-rk .hd .eic{width:22px;height:22px;vertical-align:-6px}.item .lb .eic{width:28px;height:28px}.sec-t .eic{width:24px;height:24px;vertical-align:-6px;margin-right:2px}#sgTabs .tic .eic{width:22px;height:22px;vertical-align:-5px}.circles button .ti.eic{width:52px;height:52px}.tabbar button .ic:has(.eic){filter:none;opacity:.55}.tabbar button.on .ic:has(.eic){opacity:1}
+.eic{width:1.4em;height:1.4em;object-fit:contain;display:inline-block;vertical-align:middle;filter:drop-shadow(0 1px 1px rgba(0,0,0,.18))}#topRight .ib .eic{width:26px;height:26px;padding:2px;border-radius:50%;background:rgba(255,248,236,.92)}.tabbar .ic .eic{width:26px;height:26px;filter:none}#sgTabs .tic{font-style:normal}.fbt i .eic{width:34px;height:34px}.fba i .eic{width:28px;height:28px}#go .eic{width:24px;height:24px;vertical-align:-6px}#sTabs .eic{width:20px;height:20px;vertical-align:-5px}.st-rk .hd .eic{width:22px;height:22px;vertical-align:-6px}.item .lb .eic{width:28px;height:28px}.sec-t .eic{width:24px;height:24px;vertical-align:-6px;margin-right:2px}#sgTabs .tic .eic{width:22px;height:22px;vertical-align:-5px}.circles button .ti.eic{width:52px;height:52px}.tabbar button .ic:has(.eic){filter:none;opacity:.55}.tabbar button.on .ic:has(.eic){opacity:1}
 .ecover{position:fixed;inset:0;z-index:9990;display:flex;align-items:center;justify-content:center;background:#1c140d;opacity:0;transition:opacity .45s ease}.ecover.on{opacity:1}
 .ecover i{position:absolute;inset:0;background-size:cover;background-position:center;filter:saturate(1.05);transform:scale(1.08);transition:transform 2.4s ease-out}.ecover.on i{transform:scale(1)}
 .ecover>div{position:relative;text-align:center;color:#fff;font-family:var(--serif);text-shadow:0 2px 12px rgba(0,0,0,.7);background:rgba(20,12,6,.38);padding:18px 26px;border-radius:16px}
@@ -580,7 +580,7 @@ html[data-era=ming] .topbar,html[data-era=qing] .topbar{border-bottom-width:4px}
       if(!window.caches)return go();caches.keys().then(function(ks){return Promise.all(ks.filter(function(k){return k.indexOf("xqlab-app-")===0}).map(function(k){return caches.delete(k)}))})
         .then(function(){return navigator.serviceWorker&&navigator.serviceWorker.getRegistration()}).then(function(r){return r&&r.update()}).catch(function(){}).then(go)}};setTimeout(chk,4000)})();
 </script>
-<script>window.XQ_OFFLINE=true;window.XQ_BUILD="20261104-1640";</script>
+<script>window.XQ_OFFLINE=true;window.XQ_BUILD="20261104-1704";</script>
 <script src="core.js"></script>
 <script src="engine.js"></script>
 <script src="local.js"></script>
@@ -1359,7 +1359,8 @@ function Board(onTap,onSwipe){
     const L=o.last&&o.last.f!=null&&o.last.t!=null&&o.last.f!==o.last.t?o.last:null;
     if(L){svg.append(el("circle",{cx:X(L.f),cy:Y(L.f),r:12,fill:T.mv,opacity:.35}));
       svg.append(el("circle",{cx:X(L.f),cy:Y(L.f),r:24,fill:"none",stroke:T.mv,"stroke-width":3,"stroke-dasharray":"6 5",opacity:.9}));
-      if(o.arrow!==false&&store.get("mvArrow",true)){const x1=X(L.f),y1=Y(L.f),x2=X(L.t),y2=Y(L.t),len=Math.hypot(x2-x1,y2-y1),ux=(x2-x1)/len,uy=(y2-y1)/len;
+      if(o.forceArrow||(o.arrow!==false&&store.get("mvArrow",true))){   /* 意見回饋 484：猜著法的預覽一定畫箭頭（不管設定有沒有關掉走棋箭頭） */
+        const x1=X(L.f),y1=Y(L.f),x2=X(L.t),y2=Y(L.t),len=Math.hypot(x2-x1,y2-y1),ux=(x2-x1)/len,uy=(y2-y1)/len;
         const ex=x2-ux*31,ey=y2-uy*31,hx=ex-ux*22,hy=ey-uy*22,nx=-uy*17,ny=ux*17,ar=el("g",{opacity:.85}),EA=eR&&ERA_ARROW[eR.k];
         if(EA)svg.append(eraArrow(EA,x1+ux*14,y1+uy*14,ex,ey,ux,uy));else{
         ar.append(el("line",{x1:x1+ux*14,y1:y1+uy*14,x2:hx,y2:hy,stroke:T.mv,"stroke-width":11,"stroke-linecap":"round"}));
@@ -2867,7 +2868,7 @@ function Settings(v){
       b.onclick=()=>{vibrate(5);store.set("boardTheme",k);paint();show(true)};th.append(b)}
     {const xo=v.querySelector("#xfOut"),xi=v.querySelector("#xfIn");if(xo)xo.onclick=()=>{vibrate(5);xfSend()};if(xi)xi.onclick=()=>{vibrate(5);xfRecv()}}
     /* 意見回饋 442、456（開發者）：對手形象可以選——3D 立體小人（跟小帥一樣是立體的，每個人帽子、衣服不同）或畫好的立繪 */
-    {const ol=v.querySelector("#ol");if(ol){const cur=store.get("oppLook","3d");ol.innerHTML=[["3d","🧸 Q 版 3D"],["art","🖼 畫好的立繪"]].map(([k,l])=>`<button data-ol="${k}" class="${cur===k?"on":""}">${l}</button>`).join("");
+    {const ol=v.querySelector("#ol");if(ol){const cur=store.get("oppLook","3d");ol.innerHTML=[["3d","🧸 Q 版 3D"],["real","🗿 真實 3D"],["art","🖼 畫好的立繪"]].map(([k,l])=>`<button data-ol="${k}" class="${cur===k?"on":""}">${l}</button>`).join("");
       ol.querySelectorAll("[data-ol]").forEach(x=>x.onclick=()=>{vibrate(5);store.set("oppLook",x.dataset.ol);paint()})}}
     {const hcI=v.querySelector("#hiCon");if(hcI){hcI.checked=!!store.get("hiCon",false);hcI.onchange=()=>{store.set("hiCon",hcI.checked);vibrate(5);try{if(PARK){PARK.v.destroy();PARK=null}}catch(e){}show(true)}}}
     v.querySelector("#ps").innerHTML=[["classic","傳統"],["solid","實心"],["3d","🎲 立體"]].map(([k,l])=>`<button data-p="${k}" class="${ps===k?"on":""}">${l}</button>`).join("");
@@ -2983,14 +2984,14 @@ function feedbackSheet(){let type="🐞 錯誤";
     .fbn{font-size:11px;opacity:.6;margin:0;line-height:1.5}.fbw #go{width:100%;padding:13px;font-size:16px}
     </style><div class="fbw">
     <p class="muted lead">遇到問題或想要新功能，都可以寫在這裡，開發者會看到。</p>
-    <div><div class="fbl">類型</div><div class="fbt" id="ty">${[["🐞 錯誤","🐞","錯誤","東西壞了"],["💡 建議","💡","建議","想要新功能"],["💬 其他","💬","其他","想說的話"]].map(([t,ic,n,h])=>`<button data-y="${t}" class="${t===type?"on":""}"><i>${ic}</i><b>${n}</b><small>${h}</small></button>`).join("")}</div></div>
+    <div><div class="fbl">類型</div><div class="fbt" id="ty">${[["🐞 錯誤","🐞","錯誤","東西壞了","f_bug"],["💡 建議","💡","建議","想要新功能","f_idea"],["💬 其他","💬","其他","想說的話","f_other"]].map(([t,ic,n,h,ik])=>`<button data-y="${t}" class="${t===type?"on":""}"><i>${ETIMG(ik,"",ic)}</i><b>${n}</b><small>${h}</small></button>`).join("")}</div></div>
     <div><div class="fbl">內容</div><div class="fbbox"><textarea id="fx" maxlength="1500" placeholder="例如：在哪個畫面、按了什麼、發生什麼事；或是希望增加的功能"></textarea><span class="cnt" id="fxn">0／1500</span></div></div>
     <div><div class="fbl">附件（選填）</div><div class="fba">
-      <label><i>📷</i><span><b>截圖</b><small>最多 4 張</small></span><input type="file" id="fi" accept="image/*" multiple hidden></label>
-      <label><i>📎</i><span><b>檔案</b><small>程式碼、文字檔</small></span><input type="file" id="ff" accept=".txt,.js,.mjs,.ts,.py,.json,.md,.csv,.html,.htm,.css,.log,.xml,.yml,.yaml,.sh,.pgn,.fen,text/*" multiple hidden></label></div>
+      <label><i>${ETIMG("f_shot","","📷")}</i><span><b>截圖</b><small>最多 4 張</small></span><input type="file" id="fi" accept="image/*" multiple hidden></label>
+      <label><i>${ETIMG("f_file","","📎")}</i><span><b>檔案</b><small>程式碼、文字檔</small></span><input type="file" id="ff" accept=".txt,.js,.mjs,.ts,.py,.json,.md,.csv,.html,.htm,.css,.log,.xml,.yml,.yaml,.sh,.pgn,.fen,text/*" multiple hidden></label></div>
       <div class="fbc" id="fps" style="margin-top:8px"></div><div class="fbc" id="ffl" style="margin-top:8px"></div></div>
     <div><div class="fbl">聯絡方式（選填）</div><input id="fc" maxlength="80" placeholder="例如 LINE ID，方便回覆你"></div>
-    <button class="btn" id="go">送出</button>
+    <button class="btn" id="go">${ETIMG("f_send","","")} 送出</button>
     <p class="fbn">會一起附上：你的線上 ID、名字、段位、App 版本、裝置類型和目前畫面，方便找問題。</p></div>`;
     {const fx=b.querySelector("#fx"),fxn=b.querySelector("#fxn");fx.addEventListener("input",()=>fxn.textContent=fx.value.length+"／1500")}
     // 截圖可以一次選多張（最多 4 張）；表單一格只放得下一張，第 2 張起各送一筆「第 N 張截圖」接在後面
@@ -3315,7 +3316,7 @@ async function figView(look,title,html,btns,img){sheet(title,async b=>{
   if(!look)return flat();
   try{await loadScript(OFF?"three.min.js":"/m/three.min.js");await loadScript((OFF?"bot3d.js":"/m/bot3d.js")+"?v="+encodeURIComponent(window.XQ_BUILD||""));if(!window.THREE||!window.XQBot3D||!XQBot3D.figure)throw 0}catch(e){return flat()}
   if(!host.isConnected)return;const T=window.THREE,W=host.clientWidth,H=host.clientHeight||W;let r;try{r=new T.WebGLRenderer({antialias:true,alpha:true})}catch(e){return flat()}
-  r.setPixelRatio(Math.min(2,devicePixelRatio||1));r.setSize(W,H);host.append(r.domElement);
+  r.setPixelRatio(Math.min(2,devicePixelRatio||1));r.setSize(W,H);if(look&&look.glb&&T.sRGBEncoding!=null)r.outputEncoding=T.sRGBEncoding;host.append(r.domElement);
   const sc=new T.Scene();sc.add(new T.HemisphereLight(0xFFF6E8,0x6A5A48,1.15));const d=new T.DirectionalLight(0xFFFFFF,.85);d.position.set(3,6,5);sc.add(d);
   let B;try{B=XQBot3D.figure(look||{})}catch(e){r.dispose();return flat()}const root=new T.Group();root.add(B.bot);sc.add(root);root.updateMatrixWorld(true);
   const box=new T.Box3().setFromObject(B.bot),c=box.getCenter(new T.Vector3()),sz=box.getSize(new T.Vector3());B.bot.position.sub(c);const by=B.bot.position.y;
@@ -3333,7 +3334,7 @@ function lobbyVisitors(){const slot=Math.floor(Date.now()/9e5);let h=slot*265443
   /* 意見回饋 480（開發者）：剛跟他下過一盤（不管輸贏、中途離開）就先離開大廳，隨機過 5～20 分鐘才可能再遇到 */
   const gone=store.get("visitGone",{}),now=Date.now();return out.filter(k=>!(gone[k]>now))}
 function jcharSheet(k){const c=JCHAR[k];if(!c)return;const lv=JCHAR_LV[k]||3;
-  figView(JCHAR_LOOK(k,"b"),"🪨 "+c.name,`<p style="font-size:16px;line-height:1.8;margin:0 0 6px">「${esc(c.hi)}」</p><p class="muted" style="font-size:13px;margin:0 0 4px">石桌往事裡的人物・第 ${lv} 級的實力（照故事裡的棋力）</p>`,
+  figView(oppArt()?null:oppFig(JCHAR_LOOK(k,"b")),"🪨 "+c.name,`<p style="font-size:16px;line-height:1.8;margin:0 0 6px">「${esc(c.hi)}」</p><p class="muted" style="font-size:13px;margin:0 0 4px">石桌往事裡的人物・第 ${lv} 級的實力（照故事裡的棋力）</p>`,
     [["♟ 跟他下一盤",()=>{closeSheet();{const g=store.get("visitGone",{}),now=Date.now();for(const x in g)if(g[x]<now)delete g[x];g[k]=now+(5+Math.random()*15)*60000;store.set("visitGone",g)}jStart("char:"+k,{human:"r",level:lv,journey:"char:"+k},()=>{location.hash="#/journey/play";setTimeout(()=>toast(`🪨 ${c.name}：${c.hi}`),500)})}],["關閉",()=>closeSheet(),true]],`data/journey/char_${k}_idle.webp`)}
 /* 人物與年表：點人物看 3D 小人（照人物設定配的帽子、衣服） */
 const PEOPLE_LOOK={"沈石川":{pc:"馬",hat:"bun",hc:"#E8E6E0",robe:"#5E6B5C"},"柳寒舟":{pc:"砲",hat:"bun",hc:"#D8D6D0",robe:"#8A8A86"},"阿古拉":{pc:"車",hat:"fur",hc:"#F0EDE6",robe:"#3E6FA8"},"周文淵":{pc:"士",hat:"fangjin",hc:"#151515",robe:"#7A2E2A"},
@@ -3375,8 +3376,12 @@ const PIKA_LOOK=side=>({p:side==="r"?"帥":"將",e:store.get("era","classic"),g:
 const ACTOR_FIG={liuji:["fangjin","#151515","#2F4A6B"],zhangsanfeng:["bun","#E8E6E0","#5E6B5C"],shinaian:["scholar","#1E1A16","#6A4E3A"],shenwansan:["futou","#3a2a1e","#8A5A2B"],changyuchun:["helmet","#6B6B6B","#8E2A22"],wangmian:["bun","#1E1A16","#4E6B3A"],
   tea:["bun","#D8D6D0","#7A6A50"],scholar:["fangjin","#151515","#3E6FA8"],guard:["helmet","#5A5A5A","#5A2420"],monk:["hair","#E2C29A","#C98A2E"],teller:["wusha","#1E1A16","#6B3A5A"]};
 const oppArt=()=>store.get("oppLook","3d")==="art";
+/* 意見回饋 471：真實 3D（Tripo 模型）。TRIPO＝有模型的角色和身上圓牌的位置（tools/tripo_slim.py 產生）；XQGLB 載入 .glb（three.js 官方 GLTFLoader，用 App 的 three） */
+let TRIPO={};fetch("data/tripo_app/tripo.json").then(r=>r.ok?r.json():{}).then(j=>{TRIPO=j||{}}).catch(()=>{});
+let GLTF_P=null;const GLBC={};window.XQGLB=url=>GLBC[url]||(GLBC[url]=(GLTF_P=GLTF_P||import(new URL(OFF?"GLTFLoader.mjs":"/m/GLTFLoader.mjs",location.href).href)).then(m=>new Promise((res,rej)=>new m.GLTFLoader().load(url,g=>res(g.scene),undefined,rej))).catch(e=>{delete GLBC[url];throw e}));
 const oppFig=L=>{if(!L||oppArt())return L;const o={...L};delete o.flat;delete o.sprite;delete o.spriteMeta;delete o.spriteMap;
-  if(o.actor&&ACTOR_FIG[o.actor]&&!o.npc){const[h,hc,rb]=ACTOR_FIG[o.actor];Object.assign(o,{npc:o.actor,hat:h,hc,robe:rb})}return o};
+  if(o.actor&&ACTOR_FIG[o.actor]&&!o.npc){const[h,hc,rb]=ACTOR_FIG[o.actor];Object.assign(o,{npc:o.actor,hat:h,hc,robe:rb})}
+  if(store.get("oppLook","3d")==="real"&&typeof o.cus==="string"){const id=o.cus.replace(":","_");if(TRIPO[id]){o.glb=`data/tripo_app/${id}.glb`;o.ring=TRIPO[id]}}return o};
 const ACTOR_LOOK=(id,side)=>({p:npcPc({pc:ACTOR_PC[id]||"將"},side),e:store.get("era","classic"),g:9,actor:id,cus:"a:"+id,flat:true,sprite:"data/actors/",spriteMeta:{w:380,h:512,mask:true,faceOf:faceOf("actors",{idle:id,think:id,move:id,happy:id,sad:id,surprise:id},id)},spriteMap:{idle:id,think:id,move:id,happy:id,sad:id,surprise:id}});
 const innActor=j=>{if(!String(j||"").startsWith("inn:"))return null;const x=INN.concat(SECRETS).find(z=>"inn:"+z.id===j);return x?{...x,pc:ACTOR_PC[x.id]||"將",img:`data/actors/${x.id}.webp`,win:"承讓了，下次再來！",lose:"好棋！佩服。"}:null};
 // 公園棋盤的朝代造型（意見回饋 216）：跟棋盤模式同一套底圖、格線色、棋子底圖、字色、字形
@@ -3631,7 +3636,7 @@ async function legendTimeline(keep){const D=await legendData();if(!D)return;cons
     <div class="sec-t">大事年表</div>${T.map(x=>`<div class="tlr"><div class="ty"><b>${x.y}</b><small>${esc(x.era||"")}</small></div><div class="tt">${x.h?"📜":"🪨"} ${esc(x.t)}</div></div>`).join("")}
     <p class="muted" style="font-size:12px;line-height:1.7;margin-top:8px">📜 是真實的歷史；🪨 是石桌往事的故事（虛構）。沈石川、柳寒舟、阿古拉、周文淵和雲河鎮都是編的。</p>`;
     b.querySelectorAll("[data-pp]").forEach(x=>x.onclick=()=>{const n=x.dataset.pp,p=P.find(z=>z.name===n),L=PEOPLE_LOOK[n];if(!L&&!PIMG[n])return;vibrate(5);const sh=document.getElementById("sheet"),keep=[sh?sh.scrollTop:0,sh&&sh.querySelector(".sh-b")?sh.querySelector(".sh-b").scrollTop:0];const pid=(m=>m?"p:"+m[1]:/legend\/liu|journey\/char_liu_old/.test(PIMG[n]||"")?"j:liu_old":null)(String(PIMG[n]||"").match(/people\/(\w+)\.webp/));
-      figView(L||pid?{p:L?L.pc:"將",e:"classic",g:9,npc:n,hat:L&&L.hat,hc:L&&L.hc,robe:L&&L.robe,cus:pid}:null,"🪨 "+n,`<p class="muted" style="font-size:13.5px;line-height:1.7;margin:0">${esc(p&&p.note||"")}</p>`,[["← 回人物列表",()=>legendTimeline(keep)],["關閉",()=>closeSheet(),true]],PIMG[n]||null)})})}
+      figView(L||pid?oppFig({p:L?L.pc:"將",e:"classic",g:9,npc:n,hat:L&&L.hat,hc:L&&L.hc,robe:L&&L.robe,cus:pid}):null,"🪨 "+n,`<p class="muted" style="font-size:13.5px;line-height:1.7;margin:0">${esc(p&&p.note||"")}</p>`,[["← 回人物列表",()=>legendTimeline(keep)],["關閉",()=>closeSheet(),true]],PIMG[n]||null)})})}
 function legendBook(){closeSheet();LEGEND_PREVIEW=false;location.hash="#/adventure"}
 /* 意見回饋 316：石桌往事改成一整頁——上面是你的棋童小卡，中間是雲河棋路、驛站、棋童資料、人物年表，下面是章節 */
 function Adventure(v){LEGEND_PREVIEW=false;setTop("🪨 石桌往事","#/");setTabs(true,"#/");v.className="view";v.innerHTML='<div class="pad muted">載入中…</div>';
@@ -4021,7 +4026,7 @@ function jLevel(v,s,src){setTop((src&&src.icon||"🎴")+" "+s.name,src?src.back:
       v.querySelector("#lvO").innerHTML=opts.map((o,k)=>`<button class="btn ghost" data-k="${k}">${esc(o.cn)}</button>`).join("");
       if(st.timer)inc=lvIncense(v.querySelector("#lvT"),st.timer,()=>pick(-1));
       let cur=-1;const prev=k=>{cur=k;const [f,t]=lvSq(opts[k].u);v.querySelectorAll("#lvO [data-k]").forEach(x=>x.classList.toggle("on",+x.dataset.k===k));
-        bd.draw(st.blind?blank(b):b,{flip,last:{f,t},sel:f,targets:[t],arrow:true});vibrate(5);
+        bd.draw(st.blind?blank(b):b,{flip,last:{f,t},sel:f,targets:[t],arrow:true,forceArrow:true});vibrate(5);
         actionBar(v.querySelector("#acts"),[["ok","✔","確認送出",()=>{if(cur>=0)pick(cur)},true]]);const n=v.querySelector("#lvHint");if(n)n.textContent="棋盤上的箭頭就是這一步；可以換別的選項比較，確定了再按「確認送出」"};
       v.querySelectorAll("#lvO [data-k]").forEach(x=>x.onclick=()=>prev(+x.dataset.k));
       {let n=v.querySelector("#lvHint");if(!n){n=document.createElement("p");n.id="lvHint";n.className="muted";n.style.cssText="font-size:12.5px;margin:6px 14px 0";v.querySelector("#lvO").after(n)}n.textContent="先點一個選項，棋盤上會畫出那一步"}
