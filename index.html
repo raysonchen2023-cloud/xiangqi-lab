@@ -536,7 +536,7 @@ html[data-era=ming] .topbar,html[data-era=qing] .topbar{border-bottom-width:4px}
       if(!window.caches)return go();caches.keys().then(function(ks){return Promise.all(ks.filter(function(k){return k.indexOf("xqlab-app-")===0}).map(function(k){return caches.delete(k)}))})
         .then(function(){return navigator.serviceWorker&&navigator.serviceWorker.getRegistration()}).then(function(r){return r&&r.update()}).catch(function(){}).then(go)}},4000)})();
 </script>
-<script>window.XQ_OFFLINE=true;window.XQ_BUILD="20261104-1050";</script>
+<script>window.XQ_OFFLINE=true;window.XQ_BUILD="20261104-1110";</script>
 <script src="core.js"></script>
 <script src="engine.js"></script>
 <script src="local.js"></script>
@@ -3215,7 +3215,10 @@ function parkLook(){const k=store.get("era","classic"),e=curEra(),T=boardTheme(e
   const ps=PSET.has(k);return{k,pset:ps?`data/pset/${k}/`:null,img:ps?`data/pset/${k}/board.webp`:bk?`data/boards/${BOARD_IMG_FILE[bk]||bk}.webp`:null,rect:ps?PSET_RECT:bk?BOARD_IMG[bk]:null,grid:T&&T.grid||"#3A1D0A",
     pieces:PIECE_INK[k]?{r:`data/pieces/${k}-r.webp`,b:`data/pieces/${k}-b.webp`}:null,ink:PIECE_INK[k]||null,gly:GLY[k]||null,bold:GLY_BOLD[k]||0}}
 /* 意見回饋 334：錯棋重練一律用棋盤模式（PARK_OFF），不改玩家原本的公園設定 */
-let PARK=null,PARK_LOADING=null,PARK_OFF=false,PARK_J=null;const parkOn=()=>!PARK_OFF&&store.get("park3d",true);   /* 意見回饋 247：13 個朝代都上線了，挑戰電腦、真人對戰預設在公園下（玩家自己切回棋盤模式會記住） */
+let PARK=null,PARK_LOADING=null,PARK_OFF=false,PARK_J=null;
+/* 進園子時「開局」特效等過場（入口圖＋名言）收掉才播；公園還沒建好就先等，最多 12 秒 */
+const kjWait=(f,t0=Date.now())=>{if(PARK&&PARK.v&&PARK.v.whenShown)return PARK.v.whenShown(()=>setTimeout(f,600));if(Date.now()-t0>12000)return f();setTimeout(()=>kjWait(f,t0),150)};
+const parkOn=()=>!PARK_OFF&&store.get("park3d",true);   /* 意見回饋 247：13 個朝代都上線了，挑戰電腦、真人對戰預設在公園下（玩家自己切回棋盤模式會記住） */
 const botVis=on=>document.querySelectorAll(".xqbot").forEach(x=>x.style.visibility=on?"":"hidden");
 function parkLoad(){const v="?v="+encodeURIComponent(window.XQ_BUILD||"");return PARK_LOADING||(PARK_LOADING=(async()=>{await loadScript(OFF?"three.min.js":"/m/three.min.js");
   await loadScript((OFF?"bot3d.js":"/m/bot3d.js")+v);await loadScript((OFF?"park3d.js":"/m/park3d.js")+v)})().catch(e=>{PARK_LOADING=null;throw e}))}
@@ -3308,6 +3311,84 @@ const eraLabel=k=>({classic:"經典園子",qin:"秦朝",han:"漢朝",sanguo:"三
    魏晉以後文人的「園林」（金谷園、華林園）、隋煬帝的「西苑」→「林苑」、宋代的「園圃」、元代的「園亭」、清代口語的「園子」 */
 const PW={classic:"園子",qin:"苑囿",han:"苑囿",sanguo:"園囿",weijin:"園林",nanbei:"園林",sui:"林苑",tang:"園林",wudai:"園林",song:"園圃",yuan:"園亭",ming:"園林",qing:"園子"};
 const parkName=k=>k==="classic"||!PW[k]?"經典園子":eraLabel(k)+"的"+PW[k];
+/* 開發者要求：進園子的過場，配一句那個朝代棋手（或談棋名人）說過的話，每次隨機、不跟上一次重複。
+   每句都對過原典（維基文庫的《弈人傳》、正史、《古今圖書集成・藝術典》、《佩文齋詠物詩選》卷二〇八等）；[句子, 誰, 出處, 小注]。宋代以前多半說的是圍棋或六博，小注會講明 */
+const PARK_Q={
+  classic:[["觀棋不語真君子，起手無回大丈夫。","民間棋諺","代代口耳相傳","下棋的老規矩，說不出是誰先講的"],
+    ["寧輸數子，弗失一先。","古《棋經》語","徐鉉〈圍棋義例詮釋〉引",""],
+    ["當局稱迷，傍觀見審。","元行沖","《舊唐書・元行沖傳》","「當局者迷，旁觀者清」的出處"],
+    ["一著不慎，滿盤皆輸。","俗諺","",""]],
+  qin:[["菎蔽象棋，有六簙些。分曹並進，遒相迫些。","戰國楚辭","《楚辭・招魂》","「象棋」兩字最早出現在這裡，當時指六博一類的棋戲"],
+    ["弈秋，通國之善弈者也。","孟子","《孟子・告子上》","弈秋是史書上第一位留下名字的棋手（下的是圍棋）"],
+    ["今夫弈之為數，小數也；不專心致志，則不得也。","孟子","《孟子・告子上》",""],
+    ["飽食終日，無所用心，難矣哉！不有博弈者乎？為之，猶賢乎已！","孔子","《論語・陽貨》",""],
+    ["弈者舉棋不定，不勝其耦。","太叔文子（春秋衛國大夫）","《左傳・襄公二十五年》","「舉棋不定」的出處"]],
+  han:[["精其理者，足以大裨聖教。","杜夫子（西漢杜陵人，號稱天下第一）","《西京雜記》卷二","有人笑他下棋浪費時間，他這樣回答"],
+    ["上者張置疏遠，多得道而為勝；中者務相摭絕，要以爭便求利；下者守邊趨作罫，自生於小地。","桓譚","《新論》","把下棋的人分成上、中、下三等"],
+    ["局必方正，象地則也；道必正直，神明德也；棋有黑白，陰陽分也。","班固","〈弈旨〉",""],
+    ["三尺之局兮，為戰鬥場。","馬融","〈圍棋賦〉",""],
+    ["當食不食兮，反受其殃。","馬融","〈圍棋賦〉","該吃的子不吃，反而會吃虧"]],
+  sanguo:[["觀人圍棋，局壞，粲為覆之。","王粲（建安七子）","《三國志・魏書・王粲傳》","棋盤被打亂，他憑記憶把整盤棋擺回去，一路都沒錯"],
+    ["君信可人，必能辦賊者也。","來敏稱讚費禕","《三國志・蜀書・費禕傳》","大軍出發前，費禕還從容陪他下完一盤棋"],
+    ["當其臨局交爭，雌雄未決，專精銳意，神迷體倦。","韋曜（東吳）","〈博弈論〉",""],
+    ["然其所志不出一枰之上，所務不過方罫之間。","韋曜（東吳）","〈博弈論〉",""],
+    ["長驅馳逐，見利忘害，輕敵寡備，所喪彌大。","應瑒（建安七子）","〈弈勢〉",""],
+    ["方催人種葑豆，與諸將弈棋射戲如常。","陸遜","《三國志・吳書・陸遜傳》","軍情緊急，他照常和將領下棋，穩住軍心"]],
+  weijin:[["小兒輩遂已破賊。","謝安","《晉書・謝安傳》","淝水之戰的捷報送到時，他正在下棋，看完信照樣下"],
+    ["我亦忘憂耳。","祖納","《晉書・祖納傳》","有人勸他別下棋浪費光陰，他這樣回答"],
+    ["禹惜寸陰，不聞數棋。","王隱勸祖納","《晉書・祖納傳》",""],
+    ["王中郎以圍棋是坐隱，支公以棋為手談。","裴啟《語林》","《藝文類聚》卷七十四引","王坦之叫圍棋「坐隱」，高僧支遁叫它「手談」"],
+    ["圍棋，堯舜以教愚子；博，殷紂所造。諸君並國器，何以此為？","陶侃","《晉中興書》（《藝文類聚》卷七十四引）","他把部下的棋具丟進江裡，是反對下棋的一派"]],
+  nanbei:[["弈之時義大矣哉！體希微之趣，含奇正之情，靜則合道，動必適變。","沈約","〈棋品序〉",""],
+    ["圍奩象天，方局法地。","梁武帝蕭衍（棋登逸品）","〈圍棋賦〉",""],
+    ["今一棋之出手，思九事而為防。","梁武帝蕭衍","〈圍棋賦〉",""],
+    ["皇帝飛棋，臣抗不能斷。","王抗（南齊第一品棋手）","《南齊書・虞願傳》","齊明帝棋下得差，王抗故意讓他，還這樣捧他"],
+    ["臣伏讀聖製《象經》，並觀象戲，私心踴躍，不勝忭舞。","庾信","〈進象經賦表〉","北周武帝寫成《象經》（569 年），庾信上表稱賀"],
+    ["不聽奏事，實在朕躬，樹何罪，置之。","北魏太武帝","《魏書・古弼傳》","他下棋誤了政事，大臣古弼揪打陪下的人，皇帝這樣認錯"]],
+  sui:[["我無庭訓，養於外氏，不能克躬勵己，何以成立。","皇甫績","《隋書・皇甫績傳》","小時候貪玩博弈，外祖父沒罰他；他自己叫人打了三十杖，從此發憤讀書"],
+    ["若叩洪鐘，如懸明鏡。","庾信","〈象戲賦〉","寫北周武帝的象戲；庾信由北周入隋，隋開皇元年（581）去世"],
+    ["於是綠簡既開，丹局直正，理洞研機，原窮作聖。","庾信","〈象戲賦〉",""]],
+  tang:[["天馬斜飛度三止，上將橫行擊四方。輜車直入無回翔，六甲次第不乖行。","牛僧孺","《玄怪錄・岑順》（《全唐詩》卷八六七）","岑順夢見兩軍在棋盤上開戰，是唐代象棋的珍貴記載"],
+    ["方若棋局，圓若棋子，動若棋生，靜若棋死。","張說","《舊唐書・李泌傳》","唐玄宗面前，張說拿棋出題考七歲的李泌"],
+    ["方若行義，圓若用智，動若騁材，靜若得意。","七歲的李泌","《舊唐書・李泌傳》","李泌當場對出來，玄宗大喜"],
+    ["此但爭先耳。","僧一行","《酉陽雜俎》","他看國手王積薪下一局，就能跟王積薪對下"],
+    ["老妻畫紙為棋局，稚子敲針作釣鉤。","杜甫","〈江村〉",""],
+    ["玉子紋楸一路饒，最宜簷雨竹蕭蕭。","杜牧送國手王逢","〈送國棋王逢〉",""],
+    ["勝不讓負，負不讓勝，爭也。","皮日休","〈原弈〉",""]],
+  wudai:[["竹林二君子，盡日竟沉吟。相對終無語，爭先各有心。","李從謙（南唐後主李煜之子，當時才幾歲）","《天中記》","後主下棋，叫他當場作觀棋詩"],
+    ["恃強斯有失，守分固無侵。","李從謙","《天中記》",""],
+    ["本圖忘物我，何必計輸贏。","徐鉉（南唐入宋）","〈賭棋賦詩輸劉起居奐〉",""],
+    ["不如相視笑，高詠兩三聲。","徐鉉（南唐入宋）","〈賭棋賦詩輸劉起居奐〉",""],
+    ["臣非魏徵，則陛下亦非唐太宗矣。","蕭儼","《南唐書・蕭儼傳》","後主李煜整天跟寵臣下棋，蕭儼把棋盤掀到地上這樣勸他"]],
+  song:[["大都博弈皆戲劇，象戲翻能學用兵。","程顥","〈象戲〉",""],
+    ["中軍八面將軍重，河外尖斜步卒輕。","程顥","〈象戲〉","寫的已經是有九宮、有河界的象棋"],
+    ["余為兒時，無他弄，見設局布棋為此戲者，縱橫出奇，愕然莫測，以為小道可喜也。","晁補之","〈廣象戲圖序〉（1079）","他小時候看人下象棋，驚嘆不已"],
+    ["象戲，戲兵也。","晁補之","〈廣象戲圖序〉",""],
+    ["小藝無難精，上智有未解。君看橘中戲，妙不出局外。","劉克莊","〈象奕一首呈葉潛仲〉",""],
+    ["遠砲勿虛發，冗卒要精汰。","劉克莊","〈象奕一首呈葉潛仲〉","南宋的象棋已經有砲和卒"],
+    ["一子貴千金，一路重千里。","范仲淹","〈贈棋者〉",""],
+    ["勝固欣然，敗亦可喜。","蘇軾","〈觀棋〉",""],
+    ["本圖適性忘慮，反苦思勞神，不如且已。","王安石","《山堂肆考》","他下棋從不苦想，快輸了就收手說這句話"]],
+  yuan:[["古今豪傑輩，謀略正類棋。局終一大笑，驚起山雲飛。","葉顒","〈圍棋〉",""],
+    ["緩著應知心路遠，急圍不放耳根閑。","黃庚","〈棋聲〉",""],
+    ["古者，君子之學，必有遊息之藝。","晏天章（《玄玄棋經》編者）","〈玄玄棋經序〉",""],
+    ["斧柯竟化作塵土，世間甲子真須臾。","成廷珪","〈題劉商觀弈圖〉","寫王質看仙人下棋、斧頭木柄都爛了的故事"]],
+  ming:[["可讓處則讓，不可讓者不敢讓也。","劉璟（劉伯溫之子）","《明史・劉璟傳》","跟還是燕王的朱棣下棋，朱棣問他怎麼不讓一點"],
+    ["善著象棋，精手談，天下無敵。","地方志記明代象棋高手秦科","《蘭陽縣志》（《古今圖書集成・藝術典》卷七九九引）",""],
+    ["弈棋雖細事，可以觀小德。","李東陽","〈題邵翁棋墅卷〉",""],
+    ["此間元有樂，何用橘中尋。","高啟","〈圍棋〉","「橘中」是下棋的典故，明末的象棋譜《橘中秘》也用這個名字"],
+    ["豪鷹欲擊形還匿，怒蟻初交陣已成。","吳寬","〈觀奕〉",""],
+    ["睡不安，思聖上弈棋耳。","劉基","王文祿《龍興慈記》","野史說劉伯溫半夜敲宮門找朱元璋下棋"]],
+  qing:[["肯舍原非弱，多爭易受傷。中間有餘地，何必戀邊旁。","袁枚","〈觀弈〉",""],
+    ["不關我事眉常皺，閱盡人心眼更寬。","袁枚","〈觀弈〉",""],
+    ["西屏之於弈，可謂聖矣。","袁枚寫國手范西屏","〈范西屏墓誌銘〉","范西屏和施襄夏是清代最有名的兩位國手"],
+    ["余不能棋，而好觀棋，又好觀國手之棋。","錢謙益","《弈人傳》卷十四引",""],
+    ["當局休論下子遲，爭先一著有人知。","錢謙益","〈觀棋絕句〉",""],
+    ["喜彈不若喜聽，善弈不如善觀。","李漁","《閒情偶寄・頤養部》",""]]};
+/* 隨機挑一句，不跟這個朝代上一次的重複 */
+function parkQuote(k){const L=PARK_Q[k]||PARK_Q.classic;let last=-1;try{const v=sessionStorage.getItem("pq_"+k);if(v!==null)last=+v}catch(e){}
+  let i=Math.floor(Math.random()*L.length);if(L.length>1&&i===last)i=(i+1+Math.floor(Math.random()*(L.length-1)))%L.length;
+  try{sessionStorage.setItem("pq_"+k,String(i))}catch(e){}const[q,who,src,n]=L[i];return{q,who,src,n}}
 const sealHTML=(era,on,big)=>{const A=ARENA[era],s=A?A.seal:"?";return`<span class="seal-st${on?" on":""}${big?" big":""}${s.length>1?" two":""}">${esc(s)}</span>`};
 // 擂台面板：這個朝代的擂主介紹、難度、有沒有蓋過章；按「挑戰」開打
 function arenaSheet(era,start){era=ARENA[era]?era:"classic";const A=ARENA[era],S=arenaStamps()[era],lv=arenaLevel(era),LV=["入門","新手","業餘初段","業餘高段","棋協大師","特級大師","職業頂尖","全力"][lv-1];
@@ -3778,7 +3859,7 @@ function CpuGame(v,practicePage,mode){
   function draw(){if(!st)return;const last=st.moves[st.moves.length-1],N=parkNpcOf(st),hb=v.querySelector("#bbox"),pk0=!!(PARK&&PARK.host===hb&&document.body.contains(PARK.v.el));
     const o={flip:st.human==="b",last,sel,targets:sel>=0?st.legal.filter(([f])=>f===sel).map(x=>x[1]):[],hint:st.hint?[st.hint.f,st.hint.t]:pHint&&pHint.n===st.moves.length?[pHint.f,pHint.t]:null,check:st.check,fx:true};bd.draw(st.board,o);
     legendCheck(st);legendBadge(v.querySelector("#bbox"),!parkOn()&&legendVisit(st).length>0);
-    parkDraw(v.querySelector("#bbox"),bd,st.board,o,{tap,arena:st.arena||null,gate:st.journey&&!st.arena?(k=>({img:["data/parkgate/"+k+".webp","data/park/"+k+"_360.webp"],icon:"🍃",title:"走進"+parkName(k),sub:"石桌就在前面",bg:"#2b2a22"}))(store.get("era","classic")):null,watchers:legendVisit(st),thinking:!!st.thinking||(!st.result&&st.turn!==st.human),botSide:st.human==="r"?"b":"r",result:st.result?(st.result.w||"draw"):null,hint:o.hint,
+    parkDraw(v.querySelector("#bbox"),bd,st.board,o,{tap,arena:st.arena||null,gate:st.journey&&!st.arena?(k=>({img:["data/parkgate/"+k+".webp","data/park/"+k+"_360.webp"],icon:"🍃",title:"走進"+parkName(k),sub:"石桌就在前面",bg:"#2b2a22",quote:parkQuote(k)}))(store.get("era","classic")):null,watchers:legendVisit(st),thinking:!!st.thinking||(!st.result&&st.turn!==st.human),botSide:st.human==="r"?"b":"r",result:st.result?(st.result.w||"draw"):null,hint:o.hint,
       opp:(st.arena&&CHAMP_LOOK(st.arena,st.human==="r"?"b":"r"))||(N?NPC_LOOK(N,st.human==="r"?"b":"r"):PIKA_LOOK(st.human==="r"?"b":"r")),oppHello:st.arena&&ARENA[st.arena]?ARENA[st.arena].hi:N?N.say:"我是 Pikafish，請多指教。",oppWin:st.arena&&ARENA[st.arena]?ARENA[st.arena].win:N?N.win:"將死了，再接再厲。",oppLose:st.arena&&ARENA[st.arena]?ARENA[st.arena].lose:N?N.lose:"你贏了，佩服佩服！"});
     if(N&&NPC_HI!==st.id){NPC_HI=st.id;if(pk0&&!st.moves.length)setTimeout(()=>{try{if(PARK&&PARK.host===hb)PARK.v.oppSay(N.say,2.6)}catch(e){}},900)}}
   let lastN=null;   // 上一次畫的步數：步數剛好多一步才秀開局名（重新整理、開新局不秀）
@@ -3795,7 +3876,7 @@ function CpuGame(v,practicePage,mode){
     const n0=lastN;st=s;lastN=s.moves.length;if(s.arena&&!s.result&&!parkOn()){store.set("park3d",true);setTimeout(()=>{draw();topBar()},0)}/* 意見回饋 319：朝代擂台的棋一律在公園 3D 裡 */if(!st.legal.some(([f])=>f===sel))sel=-1;
     const lk=!!(st.arena&&!st.result);if(lk&&!parkOn())store.set("park3d",true);PARK_J=st.journey||null;const pr=!!st.practice;if(pr!==PARK_OFF){PARK_OFF=pr;arenaLock=null}
     if(lk!==arenaLock||(st.journey||null)!==jKey){arenaLock=lk;jKey=st.journey||null;topBar()}draw();
-    if(!st.result&&!st.practice&&st.id&&st.moves.length<=(st.human==="b"?1:0)&&KJ_LAST!==st.id){KJ_LAST=st.id;loadKaiju();setTimeout(()=>kaijuFx(bd.svg,"r"),parkOn()?1600:350)}   /* 意見回饋 416：開局特效 */
+    if(!st.result&&!st.practice&&st.id&&st.moves.length<=(st.human==="b"?1:0)&&KJ_LAST!==st.id){KJ_LAST=st.id;loadKaiju();const kj=()=>kaijuFx(bd.svg,"r");if(parkOn())kjWait(kj);else setTimeout(kj,350)}   /* 意見回饋 416：開局特效 */
     if(n0!=null&&lastN===n0+1&&!st.practice){const cue=openingCue(st.moves);if(cue)setTimeout(()=>openFx(bd.svg,cue[1],cue[0]),350)}
     const lv=st.levels[st.level-1]||{},me=st.human,bot=opp(me);
     const CR=st.cpuRate||{},CB=st.car||{},cpts=st.reward?(CB.table||[])[st.level-1]||0:0;paintSeg(modeOf(st));if(!st.ranked&&st.level&&!st.practice)store.set("cpuLevel",st.level);
@@ -4303,7 +4384,12 @@ async function preloadAll(){if(!OFF||!("caches" in window))return;
   let M;try{M=await (await fetch("data/preload.json",{cache:"no-cache"})).json()}catch(e){return}
   const done=store.get(PRE_KEY,null)===M.v;let c;try{c=await caches.open("xqlab-look")}catch(e){return}
   const base=new URL(".",location.href).href,abs=u=>new URL(u,base).href;
-  const miss=[];await Promise.all(M.items.map(async([u,sz])=>{try{if(!(await c.match(abs(u))))miss.push([u,sz])}catch(e){miss.push([u,sz])}}));
+  const PH=store.get("preH",{}),NH={},miss=[];   /* 換過的圖（檔名一樣、內容不同）也要重新下載：秦、漢黑棋換新圖後手機一直是舊的 */
+  await Promise.all(M.items.map(async([u,sz,h])=>{NH[u]=h;try{const r=await c.match(abs(u));if(!r)return miss.push([u,sz,h]);
+    const stale=h&&(PH[u]?PH[u]!==h:+(r.headers.get("content-length")||sz)!==sz);if(stale)miss.push([u,sz,h,1])}catch(e){miss.push([u,sz,h])}}));
+  if(M.big)(async()=>{try{const BH=store.get("bigH",{}),dc=await caches.open("xqlab-data"),o={};for(const[u,sz,h]of M.big){o[u]=h;const r=await dc.match(abs(u));
+    if(r&&(BH[u]?BH[u]!==h:+(r.headers.get("content-length")||sz)!==sz))await dc.delete(abs(u))}store.set("bigH",o)}catch(e){}})();   /* 特級大師對局換了內容：刪掉手機裡的舊檔，下次用到時重抓 */
+  const okH=()=>{const o={};for(const u in NH)if(!fail.some(f=>f[0]===u))o[u]=NH[u];store.set("preH",o)};
   const total=miss.reduce((t,x)=>t+x[1],0);let got=0,ov=null,bar=null,txt=null,fail=[];
   if(miss.length&&!done){ov=document.createElement("div");ov.id="preov";
     ov.innerHTML=`<div class="ld-img"><img alt=""><img alt=""></div><div class="ld-q"><div class="ld-tt"></div><div class="ld-qt"></div><div class="ld-src"></div></div>
@@ -4313,13 +4399,13 @@ async function preloadAll(){if(!OFF||!("caches" in window))return;
     setTimeout(()=>{const k=ov&&ov.querySelector(".pre-skip");if(k){k.hidden=false;k.onclick=()=>{ov.remove();ov=null}}},20000)}
   const show=()=>{if(!ov)return;const p=total?Math.min(100,Math.floor(got*100/total)):100;bar.style.width=p+"%";txt.textContent=`${p}%　${(got/1048576).toFixed(1)} ／ ${(total/1048576).toFixed(1)} MB`};show();
   const q=miss.slice().sort((a,b)=>(b[0].indexOf("data/loading/")===0)-(a[0].indexOf("data/loading/")===0));let run=0;   /* 載入畫面的水墨畫先下載 */
-  await new Promise(ok=>{if(!q.length)return ok();const next=()=>{if(!q.length&&!run)return ok();while(run<6&&q.length){const [u,sz]=q.shift();run++;
-    fetch(abs(u)).then(r=>{if(!r.ok)throw new Error(r.status);return c.put(abs(u),r)}).then(()=>{got+=sz}).catch(()=>{fail.push([u,sz]);got+=sz}).finally(()=>{run--;show();next()})}};next()});
-  if(!fail.length)store.set(PRE_KEY,M.v);
+  await new Promise(ok=>{if(!q.length)return ok();const next=()=>{if(!q.length&&!run)return ok();while(run<6&&q.length){const [u,sz,h,fr]=q.shift();run++;
+    fetch(abs(u)+(fr?"?fresh="+h:""),fr?{cache:"no-store"}:void 0).then(r=>{if(!r.ok)throw new Error(r.status);return c.put(abs(u),r)}).then(()=>{got+=sz}).catch(()=>{fail.push([u,sz,h,fr]);got+=sz}).finally(()=>{run--;show();next()})}};next()});
+  if(!fail.length)store.set(PRE_KEY,M.v);okH();
   if(ov){txt.textContent="載好了";setTimeout(()=>{if(ov){ov.classList.add("out");setTimeout(()=>ov&&ov.remove(),400)}},250)}
   /* 失敗的在背景再試三次 */
-  if(fail.length){let tries=0;const retry=async()=>{tries++;const left=[];for(const[u,sz]of fail){try{const r=await fetch(abs(u));if(!r.ok)throw 0;await c.put(abs(u),r)}catch(e){left.push([u,sz])}}
-    fail=left;if(!fail.length)store.set(PRE_KEY,M.v);else if(tries<3)setTimeout(retry,30000)};setTimeout(retry,15000)}
+  if(fail.length){let tries=0;const retry=async()=>{tries++;const left=[];for(const[u,sz,h,fr]of fail){try{const r=await fetch(abs(u)+(fr?"?fresh="+h:""),fr?{cache:"no-store"}:void 0);if(!r.ok)throw 0;await c.put(abs(u),r)}catch(e){left.push([u,sz,h,fr])}}
+    fail=left;okH();if(!fail.length)store.set(PRE_KEY,M.v);else if(tries<3)setTimeout(retry,30000)};setTimeout(retry,15000)}
   /* 目前朝代的大圖先解碼、3D 程式先載入 */
   const e=store.get("era","classic");for(const u of[`data/park/${e}_360.webp`,`data/pano/${e}_sky.webp`,`data/pano/${e}_ground.webp`,`data/pset/${e}/board.webp`]){try{const im=new Image();im.src=u;im.decode().catch(()=>{})}catch(x){}}
   setTimeout(()=>{try{parkLoad().catch(()=>{});loadScript("map3d.js?v="+encodeURIComponent(window.XQ_BUILD||"")).catch(()=>{})}catch(x){}},300)}

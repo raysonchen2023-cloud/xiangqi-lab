@@ -882,17 +882,20 @@
     else if(opt.gate&&opt.gate.title){const G=opt.gate,imgs=(G.img||[]).filter(u=>typeof u==="string"&&/^data\/[\w\/.-]+$/.test(u));
       veil.style.background=/^#[0-9a-f]{3,8}$/i.test(G.bg||"")?G.bg:"#22201c";veil.style.color="#fff";
       veil.innerHTML=`<style>@keyframes gtZoom{from{transform:scale(1.12)}to{transform:scale(1)}}@keyframes gtDots{0%{content:""}33%{content:"．"}66%{content:"．．"}100%{content:"．．．"}}.gt-s::after{content:"";animation:gtDots 1.2s steps(1) infinite}
-        @keyframes gtBob{0%,100%{transform:translateY(0)}50%{transform:translateY(-6px)}}
+        @keyframes gtBob{0%,100%{transform:translateY(0)}50%{transform:translateY(-6px)}}@keyframes gtQ{to{opacity:1;transform:none}}
         @keyframes gtL{0%{transform:translateX(-120px) rotate(-30deg)}45%,55%{transform:translateX(-26px) rotate(0)}100%{transform:translateX(-120px) rotate(-30deg)}}
         @keyframes gtR{0%{transform:translateX(120px) rotate(30deg)}45%,55%{transform:translateX(26px) rotate(0)}100%{transform:translateX(120px) rotate(30deg)}}
         @keyframes gtSpark{0%,40%{opacity:0;transform:scale(.3)}50%{opacity:1;transform:scale(1.25)}62%,100%{opacity:0;transform:scale(1.6)}}
         .gt-c{position:absolute;left:50%;top:0;width:52px;height:52px;margin-left:-26px;border-radius:50%;display:flex;align-items:center;justify-content:center;font:900 26px 'Noto Serif TC','PMingLiU',serif;background:radial-gradient(circle at 40% 35%,#fff8ec,#efd9b2);box-shadow:0 6px 12px rgba(0,0,0,.45)}</style>
-        <div class="gt-bg" style="position:absolute;inset:0;background:center/cover no-repeat;animation:gtZoom 3s ease-out forwards"></div>
+        <div class="gt-bg" style="position:absolute;inset:0;background:center/cover no-repeat;animation:gtZoom ${G.quote?7:3}s ease-out forwards"></div>
         <div style="position:absolute;inset:0;background:linear-gradient(rgba(10,8,6,.55),rgba(10,8,6,.05) 45%,rgba(10,8,6,.4))"></div>
         <div style="position:relative;margin-bottom:40%;text-align:center;text-shadow:0 2px 10px rgba(0,0,0,.85)"><div class="gt-i" style="font-size:44px;animation:gtBob 1.4s ease-in-out infinite"></div>
         <div class="gt-t" style="font:900 26px 'Noto Serif TC','PMingLiU',serif;letter-spacing:.2em;margin-top:4px"></div><div class="gt-s" style="font:600 14px sans-serif;margin-top:4px"></div>
-        ${G.duel?'<div style="position:relative;height:60px;margin-top:18px"><div class="gt-c" style="color:#C8102E;border:3px solid #C8102E;animation:gtL 1.6s ease-in-out infinite">帥</div><div class="gt-c" style="color:#1E1A16;border:3px solid #1E1A16;animation:gtR 1.6s ease-in-out infinite">將</div><div style="position:absolute;left:50%;top:4px;margin-left:-22px;font-size:40px;animation:gtSpark 1.6s ease-out infinite">✨</div></div>':""}</div>`;
+        ${G.duel?'<div style="position:relative;height:60px;margin-top:18px"><div class="gt-c" style="color:#C8102E;border:3px solid #C8102E;animation:gtL 1.6s ease-in-out infinite">帥</div><div class="gt-c" style="color:#1E1A16;border:3px solid #1E1A16;animation:gtR 1.6s ease-in-out infinite">將</div><div style="position:absolute;left:50%;top:4px;margin-left:-22px;font-size:40px;animation:gtSpark 1.6s ease-out infinite">✨</div></div>':""}</div>${G.quote?'<div class="gt-q" style="position:absolute;left:0;right:0;bottom:0;padding:56px 26px max(30px,env(safe-area-inset-bottom,0px));text-align:center;background:linear-gradient(rgba(10,8,6,0),rgba(10,8,6,.62) 38%,rgba(10,8,6,.78));opacity:0;transform:translateY(10px);animation:gtQ 1.1s .5s ease-out forwards"><div class="gt-qt" style="font:700 clamp(19px,5.4vw,28px)/1.6 BiauKai,Kaiti TC,STKaiti,DFKai-SB,KaiTi,Noto Serif TC,serif;letter-spacing:.06em;text-wrap:balance;max-width:560px;margin:0 auto"></div><div class="gt-qw" style="margin-top:10px;font:600 13.5px/1.5 Noto Serif TC,serif;color:#F2DDB0"></div><div class="gt-qn" style="margin-top:6px;font:500 12px/1.55 sans-serif;color:rgba(255,255,255,.72);max-width:520px;margin-left:auto;margin-right:auto"></div><div style="margin-top:12px;font:500 11px sans-serif;color:rgba(255,255,255,.5)">點一下畫面就進園子</div></div>':""}`;
       veil.querySelector(".gt-i").textContent=G.icon||"";veil.querySelector(".gt-t").textContent=G.title;veil.querySelector(".gt-s").textContent=G.sub||"";
+      /* 開發者要求：過場配一句那個朝代棋手的名言，停久一點讓人看完（依字數約 5～9 秒），點一下畫面可以提早進去 */
+      if(G.quote&&G.quote.q){const Q=G.quote;veil.querySelector(".gt-qt").textContent="「"+Q.q+"」";veil.querySelector(".gt-qw").textContent="── "+(Q.who||"")+(Q.src?"　"+Q.src:"");veil.querySelector(".gt-qn").textContent=Q.n||"";
+        veil._qmin=Math.min(9000,Math.max(4800,3200+String(Q.q).length*120));veil.style.pointerEvents="auto";veil.addEventListener("pointerdown",()=>{veil._qskip=true},{once:true})}
       const bg=veil.querySelector(".gt-bg");(function tryI(i){if(i>=imgs.length)return;const im=new Image();im.onload=()=>{bg.style.backgroundImage="url("+imgs[i]+")"};im.onerror=()=>tryI(i+1);im.src=imgs[i]})(0)}
     el.append(veil);
     hint.textContent="點棋子走棋・點物件看介紹・拖曳轉頭・兩指縮放";el.append(hint);setTimeout(()=>hint.style.opacity=0,4500);
@@ -1239,14 +1242,14 @@
       furn.tick(s);rd.render(sc,cam)}
     // 第一次 draw 之後，等所有圖片（背景、道具、棋盤、棋子、Pikafish）都載好才淡入；最多等 6 秒
     let drawn=false,shown=false;const t0=performance.now();rd.domElement.style.opacity=0;rd.domElement.style.transition="opacity .35s";
-    const reveal=()=>{if(shown)return;shown=true;rd.domElement.style.opacity=1;veil.style.opacity=0;setTimeout(()=>veil.remove(),400)};
-    const waitShow=()=>{if(stopped||shown)return;if((drawn&&!inflight.size&&performance.now()-t0>1200)||performance.now()-t0>6000){requestAnimationFrame(()=>requestAnimationFrame(reveal));return}setTimeout(waitShow,80)};
+    const shownCb=[];const reveal=()=>{if(shown)return;shown=true;rd.domElement.style.opacity=1;veil.style.opacity=0;setTimeout(()=>veil.remove(),400);shownCb.splice(0).forEach(f=>{try{f()}catch(e){}})};
+    const waitShow=()=>{if(stopped||shown)return;const mn=veil._qskip?1200:Math.max(1200,veil._qmin||0),dt=performance.now()-t0;if((drawn&&!inflight.size&&dt>mn)||dt>Math.max(6000,veil._qskip?0:mn+2000)){requestAnimationFrame(()=>requestAnimationFrame(reveal));return}setTimeout(waitShow,80)};
     fit();placeCam();requestAnimationFrame(frame);setTimeout(waitShow,80);
     const onRs=()=>{if(el.style.display!=="none")fit()};window.addEventListener("resize",onRs);
     function destroy(){if(stopped)return;stopped=true;window.removeEventListener("resize",onRs);try{rd.dispose();rd.forceContextLoss()}catch(e){}el.remove();opt.onDestroy&&opt.onDestroy()}
     // 意見回饋 244：切回平面棋盤時只藏起來、暫停繪製（不拆掉 3D 場景），再切回公園就直接顯示，不用重新載入
     /* 意見回饋 370：棋盤格 → 螢幕座標（App 的吃子水墨圈畫在公園棋盤的那一格上） */
     const screenOf=i=>{try{const[x,z]=pos(i),v=new T.Vector3(x,TOP,z).project(cam),r=el.getBoundingClientRect();if(!r.width)return null;return{x:r.left+(v.x+1)/2*r.width,y:r.top+(1-v.y)/2*r.height}}catch(e){return null}};
-    return{el,draw,destroy,say,screenOf,oppSay:(t,d)=>opp.say(t,d),resetView(){reset()},hide(){el.style.display="none"},show(){if(el.style.display==="none"){el.style.display="";fit()}}}}
+    return{el,draw,destroy,say,screenOf,whenShown(f){if(shown)f();else shownCb.push(f)},oppSay:(t,d)=>opp.say(t,d),resetView(){reset()},hide(){el.style.display="none"},show(){if(el.style.display==="none"){el.style.display="";fit()}}}}
   window.XQPark3D={create};
 })();
