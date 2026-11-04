@@ -1056,8 +1056,14 @@
       for(const ps of POSES){const src=base+((look.spriteMap&&look.spriteMap[ps])||ps)+".webp",   /* 擂主只有 idle、think、move、win、lose：用 spriteMap 對到 Pikafish 的六種姿勢 */im=loadImg(src,()=>{ims[ps]=imgCache[src];done()});if(im){ims[ps]=im;done()}}};
     const setOpp=look=>{const k=JSON.stringify(look||null);if(k===oppKey)return;oppKey=k;killSpr();if(!look){opp.g.clear();opp.B=null;return}if(look.flat&&look.sprite&&look.spriteMeta){opp.g.clear();opp.B=null;makeSpr(look);return}buildActor(opp,look);opp.g.visible=true};   /* 開發者：園子的路人棋友、故事人物用 Gemini 畫好的形象（平面立牌） */   /* 意見回饋 377：對手（Pikafish、擂主）一律用 3D 立體的，繞著桌子轉也是立體的 */
     // 我這一側的小帥：平常是自己的；觀戰時換成棋盤近端那一方玩家的小帥（意見回饋 259）
+    /* 意見回饋 551：小帥坐在鼓凳上，可是腿往正前方伸、被圓牌身體整個擋住，從背後的鏡頭看像站在凳子上。
+       改成兩腿往左右張開、伸出圓牌外（髖部也往外挪），身體稍微往後靠，從背後看得到兩隻腳掛在凳子邊 */
+    const mateSit=B=>{if(!B||!B.legs)return;B.legs.forEach((l,i)=>{const sd=i?1:-1;l.rotation.order="YXZ";l.rotation.y=sd*.6;l.position.x=sd*.5;
+      /* 加一段小腿：原本的腿當大腿（往前平放），腳移到膝蓋下面，中間補一段同材質的小腿往下垂（腿的 -y＝往前，-z＝往下） */
+      const th=l.children.find(m=>m.isMesh&&m.geometry&&m.geometry.type==="CapsuleGeometry"),ft=l.children.find(m=>m.isMesh&&m.geometry&&m.geometry.type==="SphereGeometry");
+      if(th&&ft&&!l.userData.knee){l.userData.knee=1;const sh=new T.Mesh(th.geometry,th.material);sh.rotation.x=PI/2;sh.position.set(0,-.4,-.17);sh.castShadow=true;l.add(sh);ft.position.set(0,-.46,-.38);ft.scale.set(1,1.35,.6)}});if(B.torso)B.torso.rotation.x=-.1};
     let mateKey=null;const setMate=look=>{const k=JSON.stringify(look||null);if(k===mateKey)return;mateKey=k;mate.g.position.y=MSEAT;mate.g.userData.y0=null;
-      buildActor(mate,look||{});mateTop();try{mate.g.updateMatrixWorld(true);const b=new T.Box3().setFromObject(mate.g);mate.g.position.y-=b.min.y-(MSEAT+.02)}catch(e){}};   // 坐在自己的椅子上（座面 y=MSEAT）
+      buildActor(mate,look||{});mateSit(mate.B);mateTop();try{mate.g.updateMatrixWorld(true);const b=new T.Box3().setFromObject(mate.B&&mate.B.torso&&!mate.B.glb?mate.B.torso:mate.g);   /* 551：用身體底部對齊座面，小腿垂在凳子旁邊 */mate.g.position.y-=b.min.y-(MSEAT+.02)}catch(e){}};   // 坐在自己的椅子上（座面 y=MSEAT）
     setMate(null);
     const say=(t,d)=>mate.say(t,d);
     // 意見回饋 248：分出勝負時兩邊都有 5 秒的勝負動畫（endT 倒數；oppRes／mateRes＝win、lose、draw）
@@ -1283,7 +1289,7 @@
         if(mate.face==="happy"&&(mate.faceT>0||mood)){R(B,0,-.2,0,-2.6+.3*Math.sin(s*10));R(B,1,-.2,0,2.6-.3*Math.sin(s*10));hx=-.35;hy=0}
         else if(mate.face==="open"&&mate.faceT>0){R(B,0,-.4,0,-1.2);R(B,1,-.4,0,1.2);hx=-.2;hy=0}
         {const e=endPose(mate,mateRes,B,.5);if(e){hx=e[0];hy=e[1]}}
-        B.legs[0].rotation.x=-1.35+.25*Math.sin(s*2.2);B.legs[1].rotation.x=-1.35-.25*Math.sin(s*2.2);
+        B.legs[0].rotation.x=-1.5+.08*Math.sin(s*2.2);B.legs[1].rotation.x=-1.5-.08*Math.sin(s*2.2);   /* 意見回饋 551：坐著，大腿平放、小腿輕輕晃 */
         lerp(B.head.rotation,"x",hx);lerp(B.head.rotation,"y",hy);tick(mate)}
       furn.tick(s);rd.render(sc,cam)}
     // 第一次 draw 之後，等所有圖片（背景、道具、棋盤、棋子、Pikafish）都載好才淡入；最多等 6 秒

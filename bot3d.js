@@ -246,10 +246,12 @@
   /* 意見回饋 549：小帥、小帥妹的真實 3D 模型肚子上是一塊空白圓牌，這裡寫上選的棋子（其他角色的圓牌位置不準，照 503 不貼）。
      ME_RING＝在正面圖上量的圓牌中心（u 從左、v 從上，模型寬高的比例）和半徑（模型寬的比例） */
   const ME_RING={me_boy:{u:.5,v:.625,r:.2},me_girl:{u:.497,v:.62,r:.2}};
+  /* 意見回饋 555：其他角色的圓牌位置（正面圖上自動找、人工看過的 69 個模型，data/tripo_app/ring3d.json），表上沒有的模型不寫字 */
+  let R3=null;try{fetch("data/tripo_app/ring3d.json").then(r=>r.ok?r.json():null).then(j=>{R3=j}).catch(()=>{})}catch(e){}
   const glyTex=(ch,k)=>cv(512,(g,n)=>{const h=n/2,ink="帥仕相俥傌炮兵".includes(ch)?"#C8102E":"#1E1A16",gp=typeof GLY!=="undefined"&&GLY[k]&&GLY[k][ch];
     if(gp&&window.Path2D){const P2=new Path2D(gp),sc=3.3;g.save();g.translate(h-50*sc,h-50*sc);g.scale(sc,sc);g.fillStyle=ink;g.fill(P2);g.strokeStyle=ink;g.lineWidth=1.8;g.lineJoin="round";g.stroke(P2);g.restore();return}
     g.font='900 300px "Noto Serif TC","PMingLiU","Songti TC","SimSun",serif';g.textAlign="center";g.textBaseline="middle";g.fillStyle=ink;g.fillText(ch,h,h+12)});
-  function attachGLB(B,o){if(!window.XQGLB)return;const meId=(String(o.glb||"").match(/\/(me_boy|me_girl)\.glb/)||[])[1],meCh=PC(),meK=eraK();const box0=new T.Box3().setFromObject(B.bot),h0=box0.max.y-box0.min.y,y0=box0.min.y;
+  function attachGLB(B,o){if(!window.XQGLB)return;const meId=(String(o.glb||"").match(/\/(\w+)\.glb/)||[])[1],meCh=PC(),meK=eraK();const box0=new T.Box3().setFromObject(B.bot),h0=box0.max.y-box0.min.y,y0=box0.min.y;
     const face=B.torso.children.find(m=>m.isMesh&&m.geometry&&m.geometry.type==="CircleGeometry");
     B.glbP=window.XQGLB(o.glb).catch(()=>window.XQGLB(o.glb)).then(sc=>{if(!sc)throw new Error("empty");   /* 意見回饋 505：失敗自動重試一次；結果交給畫面顯示「載入中／失敗」 */const g=sc.clone(true);g.rotation.y=-Math.PI/2;g.updateMatrixWorld(true);   /* 意見回饋 503：Tripo 的模型臉朝 +X（側面），轉 90 度讓臉朝前；之前圓牌朝前、模型朝側面，看起來圓牌浮在身體旁邊 */
       const bb=new T.Box3().setFromObject(g),sz=bb.getSize(new T.Vector3()),c=bb.getCenter(new T.Vector3());if(!(sz.y>0))return;
@@ -261,7 +263,8 @@
         /* 圓牌貼在模型表面：從正前方打一條射線，碰到的地方再往前一點（不浮在空中、也不埋進身體） */
         let pz=bb.max.z;try{const hit=new T.Raycaster(new T.Vector3(px,py,bb.max.z+sz.z+1),new T.Vector3(0,0,-1)).intersectObject(g,true)[0];if(hit)pz=hit.point.z}catch(e){}
         d.position.set(px-c.x,py-bb.min.y,pz-c.z+sz.y*.004);hold.add(d)}
-      if(meId&&ME_RING[meId]){try{const R=ME_RING[meId],rad=R.r*sz.x*.9,px=bb.min.x+R.u*sz.x,py=bb.max.y-R.v*sz.y;
+      const R3e=meId&&!ME_RING[meId]&&R3&&Array.isArray(R3[meId])?{u:R3[meId][0],v:R3[meId][1],r:R3[meId][2]*.85}:null;
+      if(meId&&(ME_RING[meId]||R3e)){try{const R=ME_RING[meId]||R3e,rad=R.r*sz.x*.9,px=bb.min.x+R.u*sz.x,py=bb.max.y-R.v*sz.y;
         let pz=bb.max.z;const hit=new T.Raycaster(new T.Vector3(px,py,bb.max.z+sz.z+1),new T.Vector3(0,0,-1)).intersectObject(g,true)[0];if(hit)pz=hit.point.z;
         const d=new T.Mesh(new T.CircleGeometry(rad,48),new T.MeshBasicMaterial({map:glyTex(meCh,meK),transparent:true,depthWrite:false,toneMapped:false}));d.name="meGly";
         d.position.set(px-c.x,py-bb.min.y,pz-c.z+sz.y*.006);hold.add(d)}catch(e){}}
