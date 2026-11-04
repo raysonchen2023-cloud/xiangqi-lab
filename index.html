@@ -545,6 +545,30 @@ html[data-era=ming] .topbar,html[data-era=qing] .topbar{border-bottom-width:4px}
  </nav>
 </div>
 <script>
+/* 開發者決定（Gemini 效能審閱 P0-1）：存檔雙份，資料不會因為瀏覽器清掉 localStorage 就不見
+   1. 所有寫進 localStorage 的東西（修為、等級、戰績、集章、解鎖、設定、未下完的棋…），同時寫一份到 IndexedDB（xqlab-save）
+   2. 第一次升級到這版：把現有的 localStorage 整份搬進 IndexedDB，一筆都不少
+   3. 打開時發現 localStorage 被清掉或缺了一大半，就從 IndexedDB 搬回來，自動重開一次
+   4. 請瀏覽器把這個網站的資料標成「持久儲存」，降低被系統清掉的機會 */
+(function(){if(!window.indexedDB||!window.localStorage)return;var DB=null,W=[],SKIP=/^(xqReload|xqRestored)$/;
+  function open(cb){if(DB)return cb(DB);W.push(cb);if(W.length>1)return;var r;try{r=indexedDB.open("xqlab-save",1)}catch(e){W=[];return}
+    r.onupgradeneeded=function(){try{r.result.createObjectStore("kv")}catch(e){}};r.onsuccess=function(){DB=r.result;var q=W;W=[];q.forEach(function(f){try{f(DB)}catch(e){}})};r.onerror=function(){W=[]}}
+  function put(k,v){open(function(d){try{var t=d.transaction("kv","readwrite");if(v===null)t.objectStore("kv").delete(k);else t.objectStore("kv").put(v,k)}catch(e){}})}
+  var P=Storage.prototype,oS=P.setItem,oR=P.removeItem,oC=P.clear;
+  P.setItem=function(k,v){oS.call(this,k,v);try{if(this===localStorage&&!SKIP.test(k))put(String(k),String(v))}catch(e){}};
+  P.removeItem=function(k){oR.call(this,k);try{if(this===localStorage)put(String(k),null)}catch(e){}};
+  P.clear=function(){oC.call(this);try{if(this===localStorage)open(function(d){d.transaction("kv","readwrite").objectStore("kv").clear()})}catch(e){}};
+  window.XQSave={dump:function(){var o={};for(var i=0;i<localStorage.length;i++){var k=localStorage.key(i);if(!SKIP.test(k))o[k]=localStorage.getItem(k)}return o},
+    load:function(o,done){var ks=[];for(var i=0;i<localStorage.length;i++)ks.push(localStorage.key(i));ks.forEach(function(k){if(!SKIP.test(k))localStorage.removeItem(k)});for(var k in o)localStorage.setItem(k,o[k]);setTimeout(done||function(){},600)}};
+  open(function(d){try{var t=d.transaction("kv","readonly"),st=t.objectStore("kv"),rk=st.getAllKeys(),rv=st.getAll();
+    t.oncomplete=function(){var K=rk.result||[],V=rv.result||[],i;
+      if(!K.length){for(i=0;i<localStorage.length;i++){var k=localStorage.key(i);if(!SKIP.test(k))put(k,localStorage.getItem(k))}return}
+      var miss=[];for(i=0;i<K.length;i++)if(localStorage.getItem(K[i])===null)miss.push(i);
+      if(miss.length&&(miss.length>=5||localStorage.length<K.length/2)&&!sessionStorage.getItem("xqRestored")){
+        miss.forEach(function(j){try{oS.call(localStorage,K[j],V[j])}catch(e){}});sessionStorage.setItem("xqRestored","1");location.reload()}}}catch(e){}});
+  try{if(navigator.storage&&navigator.storage.persist)navigator.storage.persisted().then(function(p){if(!p)return navigator.storage.persist()}).catch(function(){})}catch(e){}})();
+</script>
+<script>
 // 安全網：打開 4 秒後畫面還是空的（更新到一半、程式出錯），顯示「修復」按鈕：清掉 App 快取重新下載（引擎、棋譜、戰績都不會刪）
 (function(){var err="",t0=Date.now();window.addEventListener("error",function(e){err=String(e.message||"")});
   var chk=function(){var v=document.getElementById("view");if(!v||v.children.length)return;if(document.getElementById("preov")||(!err&&Date.now()-t0<15000))return setTimeout(chk,2000);   /* 開發者：4 秒白畫面「修復並重開」不穩定（手機慢、載入畫面還在時會誤判） */
@@ -553,7 +577,7 @@ html[data-era=ming] .topbar,html[data-era=qing] .topbar{border-bottom-width:4px}
       if(!window.caches)return go();caches.keys().then(function(ks){return Promise.all(ks.filter(function(k){return k.indexOf("xqlab-app-")===0}).map(function(k){return caches.delete(k)}))})
         .then(function(){return navigator.serviceWorker&&navigator.serviceWorker.getRegistration()}).then(function(r){return r&&r.update()}).catch(function(){}).then(go)}};setTimeout(chk,4000)})();
 </script>
-<script>window.XQ_OFFLINE=true;window.XQ_BUILD="20261104-1342";</script>
+<script>window.XQ_OFFLINE=true;window.XQ_BUILD="20261104-1359";</script>
 <script src="core.js"></script>
 <script src="engine.js"></script>
 <script src="local.js"></script>
@@ -1475,9 +1499,11 @@ const REWARD=false;if(!REWARD&&store.get("cpuCar",false))store.set("cpuCar",fals
   gap();addEventListener("resize",()=>setTimeout(gap,300))}catch(e){}})();
 if(OFF&&"serviceWorker" in navigator){
   // 註冊 service worker；第一次要重新整理一次，多執行緒（跨來源隔離）才會生效
-  navigator.serviceWorker.register("sw.js").then(()=>{
-    if(!self.crossOriginIsolated&&!sessionStorage.getItem("xqReload")){sessionStorage.setItem("xqReload","1");
-      if(navigator.serviceWorker.controller)location.reload();else navigator.serviceWorker.addEventListener("controllerchange",()=>location.reload())}}).catch(()=>{});
+  /* 開發者決定（Gemini 效能審閱 P0-2）：等 service worker 真的就緒、接管這一頁再看；還沒有跨來源隔離（多執行緒引擎開不起來）就自動重整，同一次打開最多兩次 */
+  navigator.serviceWorker.register("sw.js").then(()=>navigator.serviceWorker.ready).then(()=>{
+    const n=+(sessionStorage.getItem("xqReload")||0);if(self.crossOriginIsolated||n>=2)return;
+    const go=()=>{sessionStorage.setItem("xqReload",String(n+1));location.reload()};
+    if(navigator.serviceWorker.controller)setTimeout(go,n?800:0);else navigator.serviceWorker.addEventListener("controllerchange",go,{once:true})}).catch(()=>{});
   // 自動更新：打開 App、切回 App、以及開著的時候每 5 分鐘，都去問一次有沒有新版。
   // 新版下載好就跳出視窗「有新版本」；下棋或測驗中只在上方顯示一條提示，不打斷。
   const hadCtl=!!navigator.serviceWorker.controller;let lastChk=0,shown=false,updating=false;
@@ -1506,7 +1532,7 @@ if(OFF&&"serviceWorker" in navigator){
     modal(`<div class="em">🆕</div><h2>有新版本</h2>${note?`<p style="text-align:left;white-space:pre-wrap">${esc(note)}</p>`:""}<p class="muted">${v?"版本 "+esc(v)+"<br>":""}在背景更新，你可以留在這個畫面繼續做事，換到別的頁面時才套用新版。你的戰績、棋譜和設定都會保留。</p>`,[["背景更新",doUpdate],["稍後",()=>{shown=false},true]])}
   window.XQ_notifyNew=notifyNew;
   window.XQ_checkUpdate=async()=>{chk(true);const[a,n]=await Promise.all([appVer(),netVer()]);return{a,n}};
-  if(hadCtl)navigator.serviceWorker.addEventListener("controllerchange",()=>{if(updating)return;if(sessionStorage.getItem("xqReload")==="1"&&!self.crossOriginIsolated)return;notifyNew()})}
+  if(hadCtl)navigator.serviceWorker.addEventListener("controllerchange",()=>{if(updating)return;if(+(sessionStorage.getItem("xqReload")||0)>0&&!self.crossOriginIsolated)return;notifyNew()})}
 if(OFF&&window.XQEngine){let bar=null;
   XQEngine.onProgress((got,total)=>{if(!bar){bar=document.createElement("div");bar.className="toast";bar.style.bottom="auto";bar.style.top="calc(70px + var(--safeT))";document.body.append(bar);setTimeout(()=>{if(bar)bar.style.display="none"},1200)}
     const p=Math.round(got/total*100);bar.textContent=`第一次使用：下載 Pikafish 引擎 ${p}%（${(got/1048576).toFixed(0)}／${(total/1048576).toFixed(0)} MB）`;
@@ -2696,6 +2722,41 @@ function Stats(v){
   v.querySelectorAll("#sTabs button").forEach(b=>b.onclick=()=>{vibrate(5);tab=b.dataset.k;store.set("statsTab",tab);paint()});
   paint();return{}}
 
+/* ================= 📱 換手機轉移碼（開發者決定，Gemini 效能審閱 P0-1）=================
+   舊手機：整份存檔（XQSave.dump）壓縮 → 用 8 碼轉移碼推出 AES-GCM 金鑰加密 → 分段發到 MQTT 留存頻道（頻道名是轉移碼的雜湊，沒有碼找不到）
+   新手機：輸入轉移碼 → 收齊 → 解密、解壓 → 確認後取代這支手機的資料 → 刪掉頻道上的資料（一次性）→ 重開
+   公開伺服器上只有加密過的資料；30 分鐘後失效 */
+const XF_ABC="ABCDEFGHJKMNPQRSTUVWXYZ23456789";
+const xfNorm=c=>String(c||"").toUpperCase().replace(/[^A-Z0-9]/g,"").replace(/[IL]/g,"1").replace(/O/g,"0");
+async function xfKeys(code){const te=new TextEncoder(),c=xfNorm(code),h=new Uint8Array(await crypto.subtle.digest("SHA-256",te.encode("xqlab-xfer-id:"+c))),id=[...h.slice(0,10)].map(x=>x.toString(16).padStart(2,"0")).join("");
+  const base=await crypto.subtle.importKey("raw",te.encode(c),"PBKDF2",false,["deriveKey"]);
+  const key=await crypto.subtle.deriveKey({name:"PBKDF2",salt:te.encode("xqlab-xfer-salt-v1"),iterations:150000,hash:"SHA-256"},base,{name:"AES-GCM",length:256},false,["encrypt","decrypt"]);
+  return{id,key,topic:k=>`${XQNet.root()}/x/${id}/${k}`}}
+const xfB64=u=>{let s="";for(let i=0;i<u.length;i+=32768)s+=String.fromCharCode.apply(null,u.subarray(i,i+32768));return btoa(s)},xfUnB64=b=>Uint8Array.from(atob(b),c=>c.charCodeAt(0));
+async function xfZip(u,inflate){if(!window.CompressionStream)return u;const s=new Blob([u]).stream().pipeThrough(inflate?new DecompressionStream("gzip"):new CompressionStream("gzip"));return new Uint8Array(await new Response(s).arrayBuffer())}
+async function xfSend(){if(!OFF||!window.XQNet||!window.XQSave||!crypto.subtle)return toast("這個瀏覽器不支援轉移碼");
+  const code=[...crypto.getRandomValues(new Uint8Array(8))].map(x=>XF_ABC[x%XF_ABC.length]).join(""),shown=code.slice(0,4)+"-"+code.slice(4);
+  sheet("📱 產生轉移碼",async b=>{b.innerHTML='<p class="muted">整理資料、加密中…</p>';
+    try{const K=await xfKeys(code),raw=new TextEncoder().encode(JSON.stringify({v:1,at:Date.now(),data:XQSave.dump()})),zip=await xfZip(raw),iv=crypto.getRandomValues(new Uint8Array(12));
+      const enc=new Uint8Array(await crypto.subtle.encrypt({name:"AES-GCM",iv},K.key,zip)),b64=xfB64(enc),CH=120000,parts=[];for(let i=0;i<b64.length;i+=CH)parts.push(b64.slice(i,i+CH));
+      const exp=Date.now()+30*60000;if(!await XQNet.putRetained(K.topic("m"),JSON.stringify({v:1,n:parts.length,iv:xfB64(iv),gz:!!window.CompressionStream,exp})))throw new Error("連不上線上伺服器，等一下再試");
+      for(let i=0;i<parts.length;i++)await XQNet.putRetained(K.topic(i),parts[i]);
+      setTimeout(()=>{for(let i=0;i<parts.length;i++)XQNet.putRetained(K.topic(i),"");XQNet.putRetained(K.topic("m"),"")},30*60000);
+      b.innerHTML=`<p>在新手機打開象棋研究室 →「設定 → 其他 → 📱 換手機 → 輸入轉移碼」，輸入：</p><div style="font:900 34px/1.3 ui-monospace,monospace;letter-spacing:.12em;text-align:center;margin:12px 0;color:var(--accent)">${shown}</div>
+        <p class="muted" style="font-size:13px">30 分鐘內有效（到 ${new Date(exp).toLocaleTimeString().slice(0,-3)}），新手機收到後就失效。這支手機的資料不會被刪掉。資料大小約 ${Math.ceil(b64.length/1024)} KB。</p><button class="btn ghost" id="xfX" style="width:100%">作廢這組碼</button>`;
+      b.querySelector("#xfX").onclick=()=>{for(let i=0;i<parts.length;i++)XQNet.putRetained(K.topic(i),"");XQNet.putRetained(K.topic("m"),"");toast("這組轉移碼已作廢");closeSheet()}}
+    catch(e){b.innerHTML=`<p>⚠ ${esc(e.message||String(e))}</p>`}})}
+async function xfRecv(){if(!OFF||!window.XQNet||!window.XQSave||!crypto.subtle)return toast("這個瀏覽器不支援轉移碼");
+  sheet("📱 輸入轉移碼",b=>{b.innerHTML='<p>輸入舊手機上顯示的 8 碼：</p><input id="xfC" inputmode="text" autocomplete="off" autocapitalize="characters" maxlength="9" placeholder="ABCD-1234" style="width:100%;font:900 26px ui-monospace,monospace;letter-spacing:.12em;text-align:center;padding:10px;border-radius:12px;border:1px solid var(--line);background:var(--card);color:inherit"><button class="btn" id="xfGo" style="width:100%;margin-top:10px">下載資料</button><p class="muted" id="xfM" style="font-size:13px"></p>';
+    const msg=t=>{b.querySelector("#xfM").textContent=t};
+    b.querySelector("#xfGo").onclick=async()=>{const code=xfNorm(b.querySelector("#xfC").value);if(code.length!==8)return msg("轉移碼是 8 碼");msg("連線中…");
+      try{const K=await xfKeys(code),m=await XQNet.getRetained(K.topic("m"),10000);if(!m)return msg("找不到這組轉移碼：可能打錯、過期，或已經用過了");const M=JSON.parse(m);if(M.exp&&Date.now()>M.exp)return msg("這組轉移碼已經過期，請在舊手機重新產生");
+        let b64="";for(let i=0;i<M.n;i++){msg(`下載中… ${i+1}／${M.n}`);const p=await XQNet.getRetained(K.topic(i),10000);if(!p)return msg("資料不完整，請在舊手機重新產生轉移碼");b64+=p}
+        let u=new Uint8Array(await crypto.subtle.decrypt({name:"AES-GCM",iv:xfUnB64(M.iv)},K.key,xfUnB64(b64)));if(M.gz)u=await xfZip(u,true);
+        const D=JSON.parse(new TextDecoder().decode(u)),n=Object.keys(D.data||{}).length;if(!n)return msg("收到的資料是空的");
+        modal(`<div class="em">📱</div><h2>用舊手機的資料取代這支手機？</h2><p class="muted">收到 ${n} 筆資料（${new Date(D.at).toLocaleString()} 產生）。這支手機原本的修為、戰績和設定會被換掉。</p>`,
+          [["取代並重新開啟",()=>{for(let i=0;i<M.n;i++)XQNet.putRetained(K.topic(i),"");XQNet.putRetained(K.topic("m"),"");XQSave.load(D.data,()=>{location.replace(location.pathname+"#/");setTimeout(()=>location.reload(),80)})}],["取消",null,true]])}
+      catch(e){msg("解不開：轉移碼不對，或資料已經被換掉了")}}})}
 // ================= 設定：棋盤風格、棋子樣式、走棋顯示 =================
 const SAMPLE_FEN0="rnbakabnr/9/1c5c1/p1p1p1p1p/9/9/P1P1P1P1P/1C5C1/9/RNBAKABNR",SAMPLE_FEN1="rnbakabnr/9/1c5c1/p1p1p1p1p/9/9/P1P1P1P1P/1C2C4/9/RNBAKABNR",SAMPLE_LAST={f:70,t:67};
 function Settings(v){
@@ -2738,7 +2799,8 @@ function Settings(v){
         <div class="row" style="justify-content:space-between"><span>🤏 拖動</span><span class="muted">放到任何地方</span></div>
         <div class="row" style="justify-content:space-between;gap:10px"><span style="white-space:nowrap">👆👆👆 點三下</span><span class="muted" style="text-align:right">鞠躬去休息、隱藏起來；想叫他回來，打開上面的「顯示 3D 象棋小人」</span></div></div>
       <div class="row" style="gap:8px;margin-top:10px"><button class="btn" id="askB" style="flex:1">💬 問<span class="botN">${BOTN()}</span></button><button class="btn ghost" id="botHome" style="flex:1">↩ 回到預設位置</button></div></div>
-    <div data-pane="more"><div class="sec-t" style="margin-top:4px">我的資料</div><div class="items" style="padding:0">
+    <div data-pane="more"><div class="sec-t" style="margin-top:4px">📱 換手機</div><div class="card" style="line-height:1.75;font-size:14px">把這支手機的修為、等級、戰績、集章、解鎖、設定和沒下完的棋，整份搬到新手機。<div class="row" style="gap:8px;margin-top:10px;flex-wrap:wrap"><button class="btn" id="xfOut" style="flex:1;min-width:140px">產生轉移碼（舊手機）</button><button class="btn ghost" id="xfIn" style="flex:1;min-width:140px">輸入轉移碼（新手機）</button></div><p class="muted" style="font-size:12.5px;margin:8px 0 0">資料用轉移碼加密後才傳出去，30 分鐘內有效，新手機收到後就刪掉，同一組碼不能再用。</p></div>
+    <div class="sec-t">我的資料</div><div class="items" style="padding:0">
       <button class="item" id="nm"><span class="lb">✏</span><span class="tx"><b>我的名字</b><span id="nmS"></span></span><span class="muted">›</span></button></div>
     ${OFF?`<div class="card" style="margin-top:8px"><label class="row" style="justify-content:space-between"><span><b>線上大廳顯示我的城市</b><br><span class="muted">由網路位置推估，只顯示城市</span></span><input type="checkbox" class="sw" id="cityT" ${store.get("showCity",false)?"checked":""}></label></div>`:""}
     <div class="sec-t">支援</div><div class="items" style="padding:0">
@@ -2790,6 +2852,7 @@ function Settings(v){
     for(const[k,name]of BOARD_THEMES){const b=document.createElement("button");b.className=k===cur?"on":"";const bd=Board(null);bd.draw(b1,{last:SAMPLE_LAST,theme:k,anim:false,arrow:false});
       b.append(bd.svg);const s=document.createElement("span");s.textContent=name;b.append(s);
       b.onclick=()=>{vibrate(5);store.set("boardTheme",k);paint();show(true)};th.append(b)}
+    {const xo=v.querySelector("#xfOut"),xi=v.querySelector("#xfIn");if(xo)xo.onclick=()=>{vibrate(5);xfSend()};if(xi)xi.onclick=()=>{vibrate(5);xfRecv()}}
     {const hcI=v.querySelector("#hiCon");if(hcI){hcI.checked=!!store.get("hiCon",false);hcI.onchange=()=>{store.set("hiCon",hcI.checked);vibrate(5);try{if(PARK){PARK.v.destroy();PARK=null}}catch(e){}show(true)}}}
     v.querySelector("#ps").innerHTML=[["classic","傳統"],["solid","實心"],["3d","🎲 立體"]].map(([k,l])=>`<button data-p="${k}" class="${ps===k?"on":""}">${l}</button>`).join("");
     v.querySelectorAll("[data-p]").forEach(x=>x.onclick=()=>{store.set("pieceStyle",x.dataset.p);paint();show(false)});

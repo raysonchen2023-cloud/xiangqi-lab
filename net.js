@@ -153,6 +153,8 @@ var XQNet=(function(){
 
   return{
     on,start(){want=true;connect()},
+    root:()=>ROOT,
+    putRetained(topic,s){return new Promise(res=>{let k=0;const go=()=>{if(cli&&cli.up){cli.pub(topic,s,true);res(true)}else if(k++<25){if(!want){want=true;connect()}setTimeout(go,400)}else res(false)};go()})},
     getRetained(topic,ms){return new Promise(res=>{let t=null,g=null;const done=v=>{clearTimeout(t);clearTimeout(g);delete W[topic];try{if(cli&&cli.up)cli.unsub([topic])}catch(e){}res(v||null)};
       t=setTimeout(()=>done(null),ms||8000);W[topic]=done;if(!want){want=true;connect()}const go=()=>{if(cli&&cli.up)cli.sub([topic]);else g=setTimeout(go,400)};go()})},refresh:()=>presence(),
     /* 從伺服器抓回某一盤保留的最後狀態（補存漏掉的棋譜，意見回饋 280） */
