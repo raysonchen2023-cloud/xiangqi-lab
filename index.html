@@ -212,7 +212,76 @@ html[data-era] .sec-t{border-left:4px solid var(--trim);padding-left:8px}
 html[data-era=qin] .card,html[data-era=qin] .tile{border-radius:6px}
 html[data-era=han] .card,html[data-era=han] .tile{border-top:3px solid var(--accent)}
 html[data-era=song] .card,html[data-era=song] .tile{border-radius:10px;box-shadow:none}
-[data-pane=look] #mv .muted,[data-pane=sound] .muted{display:none}   /* 554：聲音頁也不放說明小字 */   /* 意見回饋 547：棋盤設定頁不放說明小字 */
+[data-pane=look] #mv .muted,[data-pane=sound] .muted{display:none}
+/* 意見回饋 553（開發者：找兩位 RPG 專家重新美化「我的角色」）：甲的立繪舞台（八角窗、須彌座、直式名字匾額、官印）＋乙的境界台（九層塔、八角玉環）、六角章、什錦花窗。顏色只用朝代變數 */
+.me2{display:flex;flex-direction:column;gap:14px;padding-bottom:18px}
+.me-stage{position:relative;isolation:isolate;height:360px;border-radius:20px;overflow:hidden;
+  background:var(--motif-bg,none),radial-gradient(120% 80% at 50% 38%,color-mix(in srgb,var(--accent) 16%,var(--card)) 0,var(--card) 62%,color-mix(in srgb,var(--bg) 70%,var(--bar)) 100%);
+  border:1px solid color-mix(in srgb,var(--trim,var(--accent)) 45%,var(--line));box-shadow:0 4px 14px color-mix(in srgb,var(--bar) 18%,transparent)}
+.me-stage::after{content:"";position:absolute;inset:8px;z-index:4;pointer-events:none;--c:color-mix(in srgb,var(--trim,var(--accent)) 70%,transparent);background-repeat:no-repeat;
+  background-image:linear-gradient(var(--c) 0 0),linear-gradient(var(--c) 0 0),linear-gradient(var(--c) 0 0),linear-gradient(var(--c) 0 0),linear-gradient(var(--c) 0 0),linear-gradient(var(--c) 0 0),linear-gradient(var(--c) 0 0),linear-gradient(var(--c) 0 0);
+  background-size:22px 2px,2px 22px,22px 2px,2px 22px,22px 2px,2px 22px,22px 2px,2px 22px;background-position:0 0,0 0,100% 0,100% 0,0 100%,0 100%,100% 100%,100% 100%}
+.me-halo{position:absolute;left:50%;top:2px;width:300px;aspect-ratio:1;transform:translateX(-50%);border-radius:50%;
+  background:repeating-conic-gradient(color-mix(in srgb,var(--trim,var(--accent)) 40%,transparent) 0 1.5deg,transparent 1.5deg 9deg);
+  -webkit-mask:radial-gradient(closest-side,transparent 80%,#000 82% 94%,transparent 96%);mask:radial-gradient(closest-side,transparent 80%,#000 82% 94%,transparent 96%);animation:meSpin 80s linear infinite}
+.me-win{--oct:polygon(29.3% 0,70.7% 0,100% 29.3%,100% 70.7%,70.7% 100%,29.3% 100%,0 70.7%,0 29.3%);position:absolute;left:50%;top:34px;width:236px;aspect-ratio:1;transform:translateX(-50%);clip-path:var(--oct);background:var(--trim,var(--accent))}
+.me-win::before,.me-win::after{content:"";position:absolute;clip-path:var(--oct)}
+.me-win::before{inset:3px;background:var(--card)}
+.me-win::after{inset:9px;background:var(--motif-bg,none),radial-gradient(circle at 50% 62%,color-mix(in srgb,var(--accent2) 30%,var(--card)) 0,color-mix(in srgb,var(--accent) 12%,var(--card)) 58%,var(--card))}
+html[data-era=qin] .me-win{--oct:inset(0 round 8px)}html[data-era=song] .me-win{--oct:circle(50%)}
+.me-glow{position:absolute;left:50%;bottom:52px;width:220px;height:46px;transform:translateX(-50%);z-index:1;border-radius:50%;opacity:.8;background:radial-gradient(closest-side,color-mix(in srgb,var(--accent2) 45%,transparent),transparent)}
+.me-ped{position:absolute;left:50%;bottom:22px;width:230px;height:44px;transform:translateX(-50%);z-index:1;
+  clip-path:polygon(4% 0,96% 0,100% 30%,94% 30%,94% 62%,100% 62%,100% 100%,0 100%,0 62%,6% 62%,6% 30%,0 30%);
+  background:linear-gradient(180deg,color-mix(in srgb,var(--wood) 80%,var(--card)) 0 30%,color-mix(in srgb,var(--wood) 65%,var(--bar)) 30% 62%,var(--wood) 62%)}
+.me-fig{position:absolute;left:50%;bottom:58px;width:210px;height:280px;transform:translateX(-50%);z-index:2;padding:0;border:0;background:none;cursor:pointer}
+.me-fig img{width:100%;height:100%;object-fit:contain;object-position:50% 100%;transform-origin:50% 100%;filter:drop-shadow(0 6px 8px color-mix(in srgb,var(--bar) 35%,transparent));animation:meIn .5s ease-out both,meBreath 3.6s ease-in-out .5s infinite}
+.me-name{--sh:polygon(0 10px,10px 0,calc(100% - 10px) 0,100% 10px,100% calc(100% - 10px),calc(100% - 10px) 100%,10px 100%,0 calc(100% - 10px));position:absolute;left:18px;top:20px;z-index:3;isolation:isolate;min-width:48px;max-height:230px;padding:12px 8px;display:flex;flex-direction:column;gap:4px;align-items:center;writing-mode:vertical-rl;text-orientation:upright;clip-path:var(--sh);background:var(--trim,var(--accent));border:0;cursor:pointer;font:inherit}
+.me-name::before{content:"";position:absolute;inset:2px;z-index:-1;clip-path:var(--sh);background:linear-gradient(90deg,color-mix(in srgb,var(--wood) 18%,var(--card)),var(--card))}
+.me-name b{font:900 24px/1.05 var(--serif);letter-spacing:.08em;color:var(--ink)}.me-name small{font-size:12.5px;color:var(--muted);max-height:150px;overflow:hidden}
+.me-seal{position:absolute;right:18px;top:20px;z-index:3;width:60px;height:60px;padding:3px;border-radius:8px;display:flex;align-items:center;justify-content:center;writing-mode:vertical-rl;font:900 16px/1.05 var(--serif);color:var(--accent);background:color-mix(in srgb,var(--accent) 8%,var(--card));border:3px solid var(--accent);box-shadow:inset 0 0 0 2px var(--card),inset 0 0 0 3.5px var(--accent);transform:rotate(-4deg);animation:meStamp .45s cubic-bezier(.3,1.4,.5,1) .35s both;cursor:pointer}
+.me-seal.q{font-size:20px}
+.me-act{position:absolute;bottom:18px;z-index:3;width:56px;height:56px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;border-radius:12px;border:2px solid color-mix(in srgb,var(--trim,var(--accent)) 70%,var(--line));background:color-mix(in srgb,var(--card) 88%,transparent);font:11px var(--sans);color:var(--ink);box-shadow:0 2px 6px color-mix(in srgb,var(--bar) 18%,transparent);transition:transform .12s;cursor:pointer}
+.me-act.l{left:18px}.me-act.r{right:18px}.me-act:active,.me-name:active,.me-seal:active{transform:scale(.92)}
+.me-act em{font:900 18px/1 var(--serif);font-style:normal;color:var(--accent)}
+.me-act .pc{width:26px;height:26px;border-radius:50%;display:grid;place-items:center;font:900 15px/1 var(--serif);background:var(--piece);border:1.5px solid currentColor;box-shadow:inset 0 0 0 2px var(--piece),inset 0 0 0 3px currentColor}
+.me-act .pc.r{color:var(--red)}.me-act .pc.b{color:var(--blk)}
+.me-stage.tap .me-glow{animation:meGlow .5s ease-out}
+/* 境界台：九層塔（官階）＋八角玉環（修為） */
+.mr{display:grid;grid-template-columns:1fr 1fr;padding:12px 8px;background:var(--card);box-shadow:inset 0 0 0 1px color-mix(in srgb,var(--trim,var(--accent)) 50%,var(--line));clip-path:polygon(14px 0,calc(100% - 14px) 0,100% 14px,100% calc(100% - 14px),calc(100% - 14px) 100%,14px 100%,0 calc(100% - 14px),0 14px)}
+.mr>button{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:8px;min-height:180px;padding:0;border:0;background:none;font:inherit;color:inherit;cursor:pointer}
+.mr>button+button{border-left:1px dashed var(--line)}.mr>button>b{font:900 15px var(--serif);letter-spacing:.3em;color:var(--muted)}
+.ta{display:flex;flex-direction:column;align-items:center;gap:3px;width:120px}
+.ta i{display:block;height:13px;width:calc(38% + var(--n)*7.75%);background:linear-gradient(90deg,var(--accent) var(--f),color-mix(in srgb,var(--ink) 11%,var(--card)) var(--f));clip-path:polygon(5px 0,calc(100% - 5px) 0,100% 100%,0 100%)}
+.ta i.on{animation:tierGlow 2.6s ease-in-out infinite}
+.jr{position:relative;display:block;width:130px;height:130px;padding:3px;box-sizing:border-box;background:var(--trim,var(--accent));clip-path:polygon(29.3% 0,70.7% 0,100% 29.3%,100% 70.7%,70.7% 100%,29.3% 100%,0 70.7%,0 29.3%)}
+.jp{display:block;width:100%;height:100%;clip-path:polygon(29.3% 0,70.7% 0,100% 29.3%,100% 70.7%,70.7% 100%,29.3% 100%,0 70.7%,0 29.3%);background:radial-gradient(circle at 30% 22%,color-mix(in srgb,var(--card) 50%,transparent),transparent 42%),conic-gradient(var(--accent2) var(--pp),color-mix(in srgb,var(--ink) 12%,var(--card)) 0)}
+.jh{position:absolute;inset:20px;display:flex;flex-direction:column;align-items:center;justify-content:center;background:var(--card);clip-path:polygon(29.3% 0,70.7% 0,100% 29.3%,100% 70.7%,70.7% 100%,29.3% 100%,0 70.7%,0 29.3%)}
+.jh b{font:900 26px/1 var(--serif);color:var(--accent)}.jh small{margin-top:5px;font:800 15px var(--serif);letter-spacing:.2em;color:var(--ink)}
+/* 六角章 */
+.mx{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px}
+.hx{--h:polygon(16px 0,calc(100% - 16px) 0,100% 50%,calc(100% - 16px) 100%,16px 100%,0 50%);position:relative;display:flex;align-items:center;justify-content:center;gap:6px;height:56px;padding:0 14px;background:color-mix(in srgb,var(--trim,var(--accent)) 55%,var(--line));clip-path:var(--h)}
+.hx::before{content:"";position:absolute;inset:1.5px;background:color-mix(in srgb,var(--accent) 6%,var(--card));clip-path:var(--h)}
+.hx>*{position:relative}.hx>span{font-size:20px;width:24px;height:24px;display:flex;align-items:center;justify-content:center}.hx>span .ti{width:24px;height:24px}
+.hx b{display:flex;flex-direction:column;font:900 17px/1.1 var(--serif);color:var(--ink);font-variant-numeric:tabular-nums}.hx b small{font:700 12.5px var(--serif);color:var(--ink);opacity:.75}
+/* 粉牆黛瓦＋什錦花窗（八角、扇面、海棠、寶瓶） */
+.mwall{position:relative;margin-top:12px;padding:24px 8px 14px;background:color-mix(in srgb,var(--card) 70%,var(--bg));border:1px solid var(--line);border-top:0;border-radius:0 0 16px 16px}
+.mwall::before{content:"";position:absolute;left:-6px;right:-6px;top:-12px;height:17px;border-radius:3px 3px 0 0;background:linear-gradient(var(--trim,var(--accent)),var(--trim,var(--accent))) top/100% 6px no-repeat,radial-gradient(circle at 50% 6px,var(--trim,var(--accent)) 5px,transparent 5.5px) 0 0/14px 17px repeat-x}
+.mws{display:grid;grid-template-columns:1fr 1fr;gap:14px 8px}
+.mw{display:flex;flex-direction:column;align-items:center;gap:4px;padding:2px 0;border:0;background:none;font:inherit;color:inherit;cursor:pointer;-webkit-tap-highlight-color:transparent}
+.mw .wf{position:relative;width:min(148px,100%);aspect-ratio:120/108}
+.mw svg{position:absolute;inset:0;width:100%;height:100%;overflow:visible;filter:drop-shadow(0 2px 3px color-mix(in srgb,var(--ink) 22%,transparent))}
+.mw .o{fill:color-mix(in srgb,var(--accent) 8%,var(--card));stroke:var(--trim,var(--accent));stroke-width:4;stroke-linejoin:round;transition:fill .15s}
+.mw .i{fill:none;stroke:color-mix(in srgb,var(--trim,var(--accent)) 45%,var(--line));stroke-width:1.5;transform:scale(.84);transform-box:fill-box;transform-origin:center}
+.mw .ic{position:absolute;left:50%;top:var(--iy,50%);transform:translate(-50%,-50%);width:58px;height:58px;display:flex;align-items:center;justify-content:center;font-size:40px;transition:transform .15s}.mw .ic .ti{width:58px;height:58px}
+.mw[data-c=r]{--iy:42%}.mw[data-c=z]{--iy:63%}.mw[data-c=z] .ic{width:52px;height:52px;font-size:34px}
+.mw>b{font:900 16px var(--serif);letter-spacing:.1em;color:var(--ink)}.mw>b small{margin-left:6px;font:800 14px var(--serif);letter-spacing:0;color:var(--accent);font-variant-numeric:tabular-nums}
+.mw:active .ic{transform:translate(-50%,-50%) scale(.9)}.mw:active .o{fill:color-mix(in srgb,var(--accent) 18%,var(--card))}
+.mw.empty .ic{filter:grayscale(1);opacity:.4}.mw.empty .i{stroke-dasharray:3 4}
+@media (max-width:380px){.me-win{width:200px;top:44px}.me-halo{width:256px;top:12px}.me-fig{width:186px;height:248px}}
+@keyframes meSpin{to{transform:translateX(-50%) rotate(360deg)}}@keyframes meIn{from{opacity:0;transform:translateY(18px) scale(.96)}}
+@keyframes meBreath{50%{transform:translateY(-3px) scale(1.012)}}@keyframes meStamp{from{opacity:0;transform:scale(1.6) rotate(-10deg)}70%{transform:scale(.94) rotate(-4deg)}}
+@keyframes meGlow{50%{opacity:1;transform:translateX(-50%) scale(1.3)}}@keyframes tierGlow{50%{filter:brightness(1.3) saturate(1.2)}}
+@media (prefers-reduced-motion:reduce){.me-stage *,.ta i.on{animation:none!important}}   /* 554：聲音頁也不放說明小字 */   /* 意見回饋 547：棋盤設定頁不放說明小字 */
 html[data-era=tang] .card,html[data-era=tang] .tile,html[data-era=qing] .card,html[data-era=qing] .tile{box-shadow:inset 0 0 0 3px var(--card),inset 0 0 0 4px color-mix(in srgb,var(--trim) 60%,transparent),0 1px 3px #0000001a}
 html[data-era=ming] .topbar,html[data-era=qing] .topbar{border-bottom-width:4px}
 .eragrid{display:grid;grid-template-columns:repeat(2,1fr);gap:8px}
@@ -587,7 +656,7 @@ html[data-era=ming] .topbar,html[data-era=qing] .topbar{border-bottom-width:4px}
       if(!window.caches)return go();caches.keys().then(function(ks){return Promise.all(ks.filter(function(k){return k.indexOf("xqlab-app-")===0}).map(function(k){return caches.delete(k)}))})
         .then(function(){return navigator.serviceWorker&&navigator.serviceWorker.getRegistration()}).then(function(r){return r&&r.update()}).catch(function(){}).then(go)}};setTimeout(chk,4000)})();
 </script>
-<script>window.XQ_OFFLINE=true;window.XQ_BUILD="20261105-0345";</script>
+<script>window.XQ_OFFLINE=true;window.XQ_BUILD="20261105-0356";</script>
 <script src="core.js"></script>
 <script src="engine.js"></script>
 <script src="local.js"></script>
@@ -3890,15 +3959,35 @@ const meImgRefresh=()=>document.querySelectorAll("img[data-meimg]").forEach(y=>{
 function meFigOpen(src){vibrate(5);figView(myLook()||{p:botPc(),e:store.get("era","classic"),g:9},"🙂 "+meName(),`<p class="muted" style="font-size:13.5px;margin:0">${esc(myName()||"還沒取名字")}・園子裡的你、線上對手看到的你都是這個樣子</p>`,[["關閉",()=>closeSheet(),true]],src||meImg())}
 function meChip(){const tb=$("#topbar");if(!tb)return;{const o=document.getElementById("meChip");if(o)o.remove()}const R=rankInfo(),I=xpInfo(),b=document.createElement("button");b.id="meChip";b.type="button";b.setAttribute("aria-label","我的角色");
   b.innerHTML=`<img src="${meImg()}" ${meImgTag(myStyle(),mySex())} alt="" onerror="this.replaceWith(document.createTextNode('🙂'))"><small>${esc(R.name)}<br>修為 Lv ${I.L}</small>`;b.onclick=()=>{vibrate(5);location.hash="#/me"};tb.insertBefore(b,$("#title"))}
-function Me(v){Profile(v);setTop("🙂 我的角色","#/");setTabs(true,"#/");const pad=v.querySelector(".pad");if(!pad)return;const R=rankInfo(),d=document.createElement("div");
-  d.innerHTML=`<div class="card row" style="gap:12px;align-items:center;margin-bottom:8px"><img id="meFig2" role="button" aria-label="看我的 3D 角色" src="${meImg()}" ${meImgTag(myStyle(),mySex())} alt="" style="width:72px;height:90px;object-fit:contain;flex:none;cursor:pointer" onerror="this.remove()">
-    <div style="flex:1;min-width:0"><b style="font-size:19px">${meName()}</b><br><span class="muted" style="font-size:13.5px">${esc(myName()||"還沒取名字")}・點頭像看 3D</span>
-    <div class="row" style="gap:6px;margin-top:8px;flex-wrap:wrap"><button class="pill" id="meOb">換角色</button><button class="pill" id="meNm">改名</button><button class="pill" id="mePc">換棋子</button></div></div></div>
-    <div class="card" style="margin-bottom:8px"><div class="row" style="justify-content:space-between;align-items:baseline"><b style="font-size:17px">🏛 官階：${esc(R.name)}</b><span class="muted" style="font-size:13px">電腦段位 ${R.p} 分</span></div>
-    <div class="st-bar" style="margin:6px 0 2px"><i style="width:${R.pc}%"></i></div><small class="muted">${R.hi?`再 ${R.hi-R.p} 分升${esc(R.next)}・到「挑戰電腦 → 🏅 積分挑戰」贏棋升官`:"已經是最高的官階"}</small></div>`;
-  pad.prepend(...d.children);
-  {const f=v.querySelector("#meFig2");if(f)f.onclick=()=>meFigOpen(f.src)}{const o=v.querySelector("#meOb");if(o)o.onclick=()=>{vibrate(5);onboard(true)}}{const n=v.querySelector("#meNm");if(n)n.onclick=()=>{vibrate(5);nameSheet(false)}}
-  {const pc=v.querySelector("#mePc");if(pc)pc.onclick=()=>{vibrate(5);store.set("setTab","bot");location.hash="#/settings"}}}
+/* 意見回饋 553：我的角色頁重新設計（兩位 RPG 專家合併）：立繪舞台 → 境界台（官階九層塔、修為八角玉環）→ 六角章 → 什錦花窗收藏格。
+   收藏格點了照舊打開原本的清單（借用 Profile 畫好、藏起來的圓鈕）；沒有說明小字，點官印／九層塔看九個品級，點玉環看修為 */
+const ME_WIN={b:"M36 2H84L118 36V72L84 106H36L2 72V36Z",r:"M2 17A136 136 0 0 1 118 17L81 95A50 50 0 0 0 39 95Z",
+  s:"M26 20A44 44 0 0 1 94 20A36 36 0 0 1 94 88A44 44 0 0 1 26 88A36 36 0 0 1 26 20Z",
+  z:"M44 4H76V10C76 16 68 18 68 26C68 32 112 40 112 68C112 92 92 104 60 104C28 104 8 92 8 68C8 40 52 32 52 26C52 18 44 16 44 10Z"};
+const meWin=(k,ic,lb,n,cnt)=>`<button class="mw${cnt?"":" empty"}" data-c="${k}" aria-label="${lb} ${n}"><span class="wf"><svg viewBox="0 0 120 108" aria-hidden="true"><path class="o" d="${ME_WIN[k]}"/><path class="i" d="${ME_WIN[k]}"/></svg><span class="ic">${ic}</span></span><b>${lb}<small>${n}</small></b></button>`;
+function rankSheet(){const R=rankInfo(),era=store.get("era","classic");sheet("🏛 官階",b=>{b.innerHTML=`<div class="items" style="padding:0">${[1,2,3,4,5,6,7,8,9].map(g=>`<div class="item"${g===R.g?' style="box-shadow:inset 0 0 0 2px var(--accent)"':g<R.g?' style="opacity:.5"':""}><span class="lb">${g===R.g?"🏛":g<R.g?"🔒":"✓"}</span><span class="tx"><b>${esc(RANKT(era,g))}</b></span></div>`).join("")}</div>`})}
+function Me(v){Profile(v);setTop("🙂 我的角色","#/");setTabs(true,"#/");const pad=v.querySelector(".pad");if(!pad)return;
+  const R=rankInfo(),I=xpInfo(),H=hintInfo(),B=bag(),Sx=jSecrets(),S=jStars(),Js=jStages(),L=legendState(),star=Js.reduce((a,x)=>a+(S[x.id]||0),0),
+    xp=I.need?Math.round(I.rest*100/I.need):100,nS=Object.keys(Sx).length,nZ=Object.values(relicsMine()).reduce((a,x)=>a+x.length,0),pc=myPc(),red="帥仕相俥傌炮兵".includes(pc),d=document.createElement("div");
+  d.className="me2";
+  d.innerHTML=`<section class="me-stage" id="meSt"><div class="me-halo"></div><div class="me-win"></div><div class="me-glow"></div><div class="me-ped"></div>
+      <button class="me-fig" id="meFig2" aria-label="看我的 3D 角色"><img src="${meImg()}" ${meImgTag(myStyle(),mySex())} alt="" onerror="this.remove()"></button>
+      <button class="me-name" id="meNm" aria-label="改名"><b>${meName()}</b><small>${esc(myName()||"")}</small></button>
+      <button class="me-seal${[...R.name].length===4?" q":""}" id="meSeal" aria-label="官階 ${esc(R.name)}">${esc(R.name)}</button>
+      <button class="me-act l" id="meOb"><em>⇄</em>換角色</button>
+      <button class="me-act r" id="mePc"><span class="pc ${red?"r":"b"}">${esc(pc)}</span>換棋子</button></section>
+    <section class="mr"><button id="meRk" aria-label="官階 ${esc(R.name)}"><span class="ta">${[1,2,3,4,5,6,7,8,9].map(t=>`<i${t===R.g?' class="on"':""} style="--n:${t-1};--f:${t>=R.g?100:t===R.g-1?R.pc:0}%"></i>`).join("")}</span><b>官階</b></button>
+      <button id="meXp" aria-label="修為 Lv ${I.L} ${esc(I.title)}"><span class="jr"><span class="jp" style="--pp:${xp}%"></span><span class="jh"><b>Lv ${I.L}</b><small>${esc(I.title)}</small></span></span><b>修為</b></button></section>
+    <section class="mx"><div class="hx"><span>${ETIMG("f_idea","","💡")}</span><b>${H.left+(H.bonus||0)}<small>提示棋</small></b></div>
+      <div class="hx"><span>⭐</span><b>${star}<small>雲河棋路</small></b></div>
+      <div class="hx"><span>${ETIMG("p_story","","📖")}</span><b>${L.n}／36<small>故事</small></b></div></section>
+    <section class="mwall"><div class="mws">${meWin("b",ETIMG("p_board","data/treasure/board_normal.webp","🎁"),"棋盤",B.boards.length,B.boards.length)}${meWin("r",ETIMG("p_kifu","data/treasure/record_normal.webp","📜"),"棋譜",B.records.length,B.records.length)}${meWin("s",ETIMG("p_secret","","🤝"),"秘境棋友",`${nS}／${SECRETS.length}`,nS)}${meWin("z","🏺","珍品",`${nZ}／130`,nZ)}</div></section>`;
+  const circ=pad.querySelector(".circles");pad.replaceChildren(d);if(circ){circ.style.display="none";pad.append(circ)}
+  const on=(id,fn)=>{const e=v.querySelector(id);if(e)e.onclick=()=>{vibrate(5);fn(e)}};
+  on("#meFig2",f=>{const st=v.querySelector("#meSt");if(st){st.classList.remove("tap");void st.offsetWidth;st.classList.add("tap")}const im=f.querySelector("img");setTimeout(()=>meFigOpen(im&&im.src),220)});
+  on("#meNm",()=>nameSheet(false));on("#meOb",()=>onboard(true));on("#mePc",()=>{store.set("setTab","bot");location.hash="#/settings"});
+  on("#meSeal",rankSheet);on("#meRk",rankSheet);on("#meXp",xpSheet);
+  v.querySelectorAll(".mw[data-c]").forEach(b=>b.onclick=()=>{const o=circ&&circ.querySelector(`[data-c="${b.dataset.c}"]`);if(o)o.click()})}
 function Profile(v){setTop("🎒 棋童資料","#/adventure");setTabs(true,"#/");v.className="view";const I=xpInfo(),H=hintInfo(),B=bag(),Sx=jSecrets(),S=jStars(),Js=jStages(),L=legendState(),star=Js.reduce((a,x)=>a+(S[x.id]||0),0);
   const card=x=>`<div class="bcard ${x.rarity}"><div class="bic">${TIMG(`data/treasure/board_${x.rarity==="broken"?"broken":x.rarity==="rare"?"rare":"normal"}.webp`,x.rarity==="broken"?"🧩":x.rarity==="rare"?"📜":"♟")}</div><b>${esc(x.name)}</b><small style="color:${RAR[x.rarity][1]}">${RAR[x.rarity][0]}</small><small class="muted">${esc(x.from)}・${new Date(x.at).toLocaleDateString()}</small>
     ${x.rarity==="rare"&&!x.used?`<button class="pill" data-ex="${x.uid}">🪨 拿去石桌給兩位老人</button>`:x.used?'<small class="muted">已經跟兩位老人換過獎勵</small>':""}</div>`;
