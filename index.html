@@ -525,7 +525,7 @@ html[data-era=ming] .topbar,html[data-era=qing] .topbar{border-bottom-width:4px}
       if(!window.caches)return go();caches.keys().then(function(ks){return Promise.all(ks.filter(function(k){return k.indexOf("xqlab-app-")===0}).map(function(k){return caches.delete(k)}))})
         .then(function(){return navigator.serviceWorker&&navigator.serviceWorker.getRegistration()}).then(function(r){return r&&r.update()}).catch(function(){}).then(go)}},4000)})();
 </script>
-<script>window.XQ_OFFLINE=true;window.XQ_BUILD="20261104-0950";</script>
+<script>window.XQ_OFFLINE=true;window.XQ_BUILD="20261104-1000";</script>
 <script src="core.js"></script>
 <script src="engine.js"></script>
 <script src="local.js"></script>
@@ -3293,7 +3293,7 @@ const arenaTitle=()=>{const n=Object.keys(arenaStamps()).length;const t=ARENA_TI
 window.XQ_TITLE=arenaTitle;   // 大廳廣播：別人點你的資料卡看得到
 /* 擂主強度跟著你的電腦段位（新手大約「入門」棋力，越高段擂主越強）；意見回饋 288：最強的是經典公園的擂主，再強一級（不在 App 裡說破，讓玩家自己摸索） */
 function arenaLevel(era){let p=0;try{p=(JSON.parse(localStorage.getItem("xq_cpuRate")||"null")||{}).pts||0}catch(e){}
-  const base=p>=1150?7:p>=900?6:p>=600?5:p>=300?4:p>=100?3:2;return era==="classic"?Math.min(8,Math.max(6,base+2)):base}   /* 意見回饋 426：故事裡石桌棋仙是最高段位，擂台裡也最難：至少第 6 級、永遠比其他擂主高兩級 */
+  const base=p>=1150?7:p>=900?6:p>=600?5:p>=300?4:p>=100?3:2;return era==="classic"?7:base}   /* 意見回饋 426、427：石桌棋仙固定在「全力」的前一級（第 7 級職業頂尖），不跟著段位變 */
 const eraLabel=k=>({classic:"經典園子",qin:"秦朝",han:"漢朝",sanguo:"三國",weijin:"魏晉",nanbei:"南北朝",sui:"隋朝",tang:"唐朝",wudai:"五代",song:"宋朝",yuan:"元朝",ming:"明朝",qing:"清朝"})[k]||k;
 /* 意見回饋 412：古代沒有「公園」這個詞（清末才出現），各朝代用當時的說法：秦漢的皇家「苑囿」（上林苑）、三國「園囿」（銅雀園）、
    魏晉以後文人的「園林」（金谷園、華林園）、隋煬帝的「西苑」→「林苑」、宋代的「園圃」、元代的「園亭」、清代口語的「園子」 */
@@ -3303,7 +3303,7 @@ const sealHTML=(era,on,big)=>{const A=ARENA[era],s=A?A.seal:"?";return`<span cla
 // 擂台面板：這個朝代的擂主介紹、難度、有沒有蓋過章；按「挑戰」開打
 function arenaSheet(era,start){era=ARENA[era]?era:"classic";const A=ARENA[era],S=arenaStamps()[era],lv=arenaLevel(era),LV=["入門","新手","業餘初段","業餘高段","棋協大師","特級大師","職業頂尖","全力"][lv-1];
   sheet(`🏯 ${eraLabel(era)}擂台`,b=>{b.innerHTML=`<div style="display:flex;gap:14px;align-items:center">${sealHTML(era,!!S,true)}<div><div style="font-size:20px;font-weight:900;font-family:var(--serif)">${esc(A.name)}</div>
-      <div class="muted" style="font-size:13px">擂主棋力：${LV}（跟著你的段位）</div></div></div>
+      <div class="muted" style="font-size:13px">擂主棋力：${LV}（${era==="classic"?"固定，全力的前一級":"跟著你的段位"}）</div></div></div>
     <p style="line-height:1.7;margin:10px 0">${esc(A.intro)}</p>
     <div class="card" style="margin-bottom:10px">${S?`✅ 已經蓋過章（${new Date(S.at).toLocaleDateString()}，${S.n} 步贏下）。可以再挑戰練功，但章只會蓋一次。`:"打贏擂主，就能在集章簿蓋上「"+esc(A.seal)+"」字朱印。"}</div>
     <div class="row" style="gap:8px"><button class="btn" id="arGo" style="flex:2">⚔ 挑戰擂主</button><button class="btn ghost" id="arBk" style="flex:1">📜 集章簿</button></div>`;
@@ -3791,7 +3791,7 @@ function CpuGame(v,practicePage,mode){
     const lv=st.levels[st.level-1]||{},me=st.human,bot=opp(me);
     const CR=st.cpuRate||{},CB=st.car||{},cpts=st.reward?(CB.table||[])[st.level-1]||0:0;paintSeg(modeOf(st));if(!st.ranked&&st.level&&!st.practice)store.set("cpuLevel",st.level);
     // 對手列右邊：目前的段位／難度，點了開「開新局」選單（換難度、換紅黑）
-    const NP=parkNpcOf(st),top=(NP?npcHTML(bot,NP,"園子裡的路人棋友・"+(lv.desc||"")):playerHTML(bot,st.arena&&ARENA[st.arena]?`🏯 ${ARENA[st.arena].name}`:"Pikafish",st.arena&&ARENA[st.arena]?`${eraLabel(st.arena)}擂主・強度跟著你的段位`:st.ranked?"積分挑戰・強度跟著你的段位":st.reward?`🚗 獎勵模式・贏了 +${cpts} 點`:lv.desc||"自選難度"))+
+    const NP=parkNpcOf(st),top=(NP?npcHTML(bot,NP,"園子裡的路人棋友・"+(lv.desc||"")):playerHTML(bot,st.arena&&ARENA[st.arena]?`🏯 ${ARENA[st.arena].name}`:"Pikafish",st.arena&&ARENA[st.arena]?`${eraLabel(st.arena)}擂主・${st.arena==="classic"?"職業頂尖（全力的前一級）":"強度跟著你的段位"}`:st.ranked?"積分挑戰・強度跟著你的段位":st.reward?`🚗 獎勵模式・贏了 +${cpts} 點`:lv.desc||"自選難度"))+
       `<button class="cpu-chip${st.ranked?" rk":""}" aria-label="${st.ranked?"段位與開新局":"換難度"}"><span><b>${st.ranked?"🏅 "+esc(st.rkName||CR.rank||""):(st.reward?"🚗 ":"")+"第 "+st.level+" 級"}</b><small>${st.ranked?(CR.pts||0)+" 分":st.reward?(CB.pts||0).toLocaleString()+" 點":esc(lv.name||"")}</small></span><i>›</i></button>`;
     const pT=v.querySelector("#pTop");if(pT.dataset.h!==top){pT.dataset.h=top;pT.innerHTML=top}
     const bt=playerHTML(me,"你",PLAYER[me]+(st.ranked&&CR.next?`・再 ${CR.toNext} 分升 ${CR.next}`:"")+(st.reward?`・🚗 ${(CB.pts||0).toLocaleString()} 點`:""));
