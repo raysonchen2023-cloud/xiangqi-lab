@@ -591,12 +591,12 @@
       wins=(g,w,h,c)=>{g.fillStyle=c;for(let k=0;k<4;k++){const x=(k*2+.5)/8*w;g.beginPath();g.moveTo(x-10,h*.85);g.lineTo(x-10,h*.4);g.quadraticCurveTo(x,h*.12,x+10,h*.4);g.lineTo(x+10,h*.85);g.fill()}},
       win=cv(256,128,(g,w,h)=>{g.fillStyle=SS;g.fillRect(0,0,w,h);noise(g,w,h,3000,"0,0,0",.15);wins(g,w,h,"#FFD27A")}),mask=cv(256,128,(g,w,h)=>{g.fillStyle="#000";g.fillRect(0,0,w,h);wins(g,w,h,"#FFE0A0")}),
       chamber=M(0xffffff,{map:win,emissive:0xffffff,emissiveMap:mask,emissiveIntensity:1.3,roughness:.85});
-      const petals=(m,n,R,y,w,h,t,tilt)=>{for(let i=0;i<n;i++){const a=(i+.5)/n*TAU;sp(m,Math.sin(a)*R,y,Math.cos(a)*R,w,h,t,[tilt,a,0,"YXZ"])}};
+      const petals=(m,n,R,y,w,h,t,tilt,cz)=>{for(let i=0;i<n;i++){const a=(i+.5)/n*TAU;sp(m,Math.sin(a)*R,y,(cz||0)+Math.cos(a)*R,w,h,t,[tilt,a,0,"YXZ"])}};   /* cz：花瓣圈中心的 z（意見回饋 524） */
       return{frame:0x6B4A2E,
         table(){roundTop(8.2,1.0,top,band,s2);la(s2,[[0,GY],[4.4,GY],[4.4,GY+1.2],[3.6,GY+1.4],[3.0,GY+2.4],[1.9,GY+3.4],[1.6,GY+9],[1.6,GY+13],[2.2,GY+15.5],[3.0,GY+16.8],[3.4,GY+18],[0,GY+18]],8);
           petals(st,16,2.75,-2.9,.8,1.6,.38,.55);petals(st,16,3.1,GY+2.4,.85,1.5,.38,-.85);tor(st,0,GY+9.5,0,1.7,.22,TAU,null,24);tor(st,0,GY+12.5,0,1.7,.22,TAU,null,24)},
         bench(){bx(st,0,YS-.5,BZ,13.4,1.0,4.9,null,8);for(const x of[-4.8,4.8]){bx(s2,x,(GY+YS-1)/2,BZ,2.4,YS-1-GY,4.0,null,8);bx(band,x,YS-2.3,BZ,2.5,1.4,4.1);bx(band,x,GY+1.0,BZ,2.7,1.6,4.3)}
-          bx(st,0,YS+2.9,BZ-2.35,12.6,5.8,.8,[-.06,0,0],8);bx(band,0,YS+5.2,BZ-1.98,12.6,1.3,.08,[-.06,0,0]);tor(st,0,YS+5.9,BZ-2.4,2.5,.38,PI,[0,0,0],24);sp(st,0,YS+8.6,BZ-2.4,.45,.7,.45);petals(st,8,.5,YS+8.1,.28,.5,.15,.6)},
+          bx(st,0,YS+2.9,BZ-2.35,12.6,5.8,.8,[-.06,0,0],8);bx(band,0,YS+5.2,BZ-1.98,12.6,1.3,.08,[-.06,0,0]);tor(st,0,YS+5.9,BZ-2.4,2.5,.38,PI,[0,0,0],24);sp(st,0,YS+8.6,BZ-2.4,.45,.7,.45);petals(st,8,.5,YS+8.1,.28,.5,.15,.6,BZ-2.4)}   /* 意見回饋 524：靠背頂上那圈蓮瓣少了 z，跑到石桌正中間上方浮著 */,
         stool(){ct(s2,0,GY+6.5,0,1.6,2.1,13,24);petals(st,12,1.75,-6.1,.62,1.15,.3,.6);petals(st,12,2.1,GY+1.2,.65,1.1,.3,-.85);ct(st,0,-5.3,0,2.15,1.95,.6,24)},
         lamp(){const Y=-4.4;la(s2,[[0,GY],[2.3,GY],[2.3,GY+1.0],[1.7,GY+1.3],[0,GY+1.3]],8);petals(st,8,1.35,GY+1.7,.55,.9,.3,-.85);cy(st,0,(GY+1.6+Y-2.3)/2,0,.5,Y-2.3-GY-1.6,8);
           tor(st,0,GY+7,0,.55,.12,TAU,null,8);la(st,[[0,Y-2.4],[.6,Y-2.4],[1.5,Y-1.6],[1.65,Y-1.3],[0,Y-1.3]],8);petals(st,8,1.25,Y-1.9,.5,.8,.25,.6);
@@ -911,23 +911,26 @@
     hint.textContent="點棋子走棋・點物件看介紹・拖曳轉頭・兩指縮放";el.append(hint);if(veil._qmin)hint.style.opacity=0;else setTimeout(()=>hint.style.opacity=0,4500);   /* 有名言的過場：操作提示等過場收掉才出現 */
     const EK=eraKey(),E=ERA[EK];
     el.style.background=E.mist;
+    let MAPL=null,PANM=null,PANDH=0,PANROT=0,PSPOTS=null,MAPM=null,HILL=null,lastKf=-1;   /* 地圖上的地名：[名字, x%, y%, 種類]；長卷的網格、圖高、地標（意見回饋 517、525） */
     const sc=new T.Scene(),FARHIDE=[];sc.fog=new T.Fog(new T.Color(E.mist),70,320);sc.background=new T.Color(E.mist);   /* 意見回饋 486：環景沒畫到的地方顯示朝代的霧色，不會一片黑 */
-    const cam=new T.PerspectiveCamera(50,1,.5,700);
+    const cam=new T.PerspectiveCamera(50,1,.5,700);try{if(localStorage.getItem("xq_dbg3d"))window.__PK={sc,cam}}catch(e){}   /* 除錯用：localStorage 設 xq_dbg3d 才打開 */
     // 光：午後斜陽（唯一投影光，陰影範圍只包住石桌，陰影比較銳利）＋暖色天光＋冷色補光；整體對比拉高，不再灰白
     sc.add(new T.HemisphereLight(0xFFF1DA,0x5A4A36,.42));
     const sun=new T.DirectionalLight(0xFFD9A8,1.15);sun.position.set(-18,34,14);sun.castShadow=true;sun.shadow.mapSize.set(2048,2048);
     Object.assign(sun.shadow.camera,{left:-11,right:11,top:11,bottom:-11,near:10,far:80});sun.shadow.bias=-.0004;sun.shadow.normalBias=.02;sun.shadow.radius=3;sc.add(sun);
     const fill=new T.DirectionalLight(0xC8DCFF,.28);fill.position.set(20,12,-18);sc.add(fill);
     // 天空球（含下半部的雲海色）＋水墨長卷
-    const sky=new T.Mesh(new T.SphereGeometry(400,32,16),new T.MeshBasicMaterial({map:skyTex(E),side:T.BackSide,fog:false,depthWrite:false,toneMapped:false}));sc.add(sky);FARHIDE.push(sky);
+    const sky=new T.Mesh(new T.SphereGeometry(400,32,16),new T.MeshBasicMaterial({map:skyTex(E),side:T.BackSide,fog:false,depthWrite:false,toneMapped:false}));sky.renderOrder=-2;sc.add(sky);FARHIDE.push(sky);   /* 意見回饋 517／525：拉遠功能把天空改成半透明後，天空排到長卷後面畫、整片蓋住長卷（城、蒙古包都看不到）；天空固定最先畫 */
     const BI=opt.bg?{src:opt.bg,pano:true,hz:.58,hor:PANO_HOR,rot:0}:BG_IMG[EK],FULL=!!BI;   /* 意見回饋 362：石桌往事的關卡在那一站的地點環景裡下（渡口、聽濤樓茶館、雲河棋會、決賽、石桌） */   // FULL：有朝代長卷，背景是完整一圈，可以整個轉身看
     {const pt=panTex(Object.assign({},E,{userBg:FULL}),EK.length*977+13);pt.wrapS=T.RepeatWrapping;pt.repeat.x=-1;   // 從圓柱內側看，貼圖要左右翻回來
       const arc=FULL?TAU:PAN.arc,pan=new T.Mesh(new T.CylinderGeometry(PAN.r,PAN.r,PAN.yt-PAN.yb,FULL?128:64,1,true,PI-arc/2,arc),new T.MeshBasicMaterial({map:pt,side:T.BackSide,transparent:true,fog:false,depthWrite:false,toneMapped:false}));
-      pan.position.y=(PAN.yt+PAN.yb)/2;pan.renderOrder=-1;sc.add(pan);FARHIDE.push(pan);
+      pan.position.y=(PAN.yt+PAN.yb)/2;pan.renderOrder=-1;sc.add(pan);FARHIDE.push(pan);PANM=pan;
       if(BI){const put=()=>{const im=imgCache[BI.src];if(!im||!im.naturalWidth||!el.isConnected)return;try{let pc;
           if(BI.pano){// 整圈長圖：圓柱的高度、位置照圖的比例重做（圖不變形），貼圖換成 4096×1024
             const pg=panoGeo(BI,im.naturalWidth,im.naturalHeight);pan.geometry.dispose();pan.geometry=new T.CylinderGeometry(PAN.r,PAN.r,pg.Hc,128,1,true,0,TAU);pan.position.y=pg.cy;
-            const c=pt.image;if(c.width!==PANO.W||c.height!==PANO.H){c.width=PANO.W;c.height=PANO.H;pt.dispose()}pc=drawPano(c.getContext("2d"),c.width,c.height,im,BI)}
+            const c=pt.image;if(c.width!==PANO.W||c.height!==PANO.H){c.width=PANO.W;c.height=PANO.H;pt.dispose()}pc=drawPano(c.getContext("2d"),c.width,c.height,im,BI);PANDH=Math.round(c.width*im.naturalHeight/im.naturalWidth);PANROT=BI.rot||0;
+            /* 意見回饋 525：長卷上每個地標的位置和名字（data/pano/spots.json），點到哪裡就說是哪裡 */
+            if(!opt.bg)fetch("data/pano/spots.json").then(r=>r.ok?r.json():null).then(J=>{if(J&&Array.isArray(J[EK]))PSPOTS=J[EK]}).catch(()=>{})}
           else pc=drawUserPan(pt.image.getContext("2d"),pt.image.width,pt.image.height,im,BI);pt.needsUpdate=true;
           // 天空球、霧、底色都換成圖上的宣紙色：長卷上下淡出的地方看不出色帶
           const sk=sky.material.map,sg=sk.image.getContext("2d"),gr=sg.createLinearGradient(0,0,0,sk.image.height),top=new T.Color(pc.top);
@@ -956,7 +959,8 @@
         const t=srgb(new T.Texture(im));t.anisotropy=4;t.needsUpdate=true;
         const map=new T.Mesh(new T.CircleGeometry(ERAMAP_R,96),new T.MeshStandardMaterial({map:t,transparent:true,roughness:1,metalness:0,depthWrite:false}));
         map.rotation.x=-PI/2;map.position.y=FL-.08;map.receiveShadow=true;map.renderOrder=-.2;sc.add(map);
-        hill.visible=false;
+        /* 意見回饋 525：地圖平鋪在石台高度會蓋住長卷下半部（城、塔、蒙古包都在那裡）；平常照舊是山坡＋長卷，鏡頭拉遠時地圖才浮現、山坡才收掉 */
+        MAPM=map;HILL=hill;map.material.opacity=0;map.visible=false;lastKf=-1;
         /* 意見回饋 517：拉遠看地圖時，地圖上的地名點得到（data/eramap/labels.json 的位置，介紹在 App 的 places.json） */
         fetch("data/eramap/labels.json").then(r=>r.ok?r.json():null).then(L=>{if(L&&Array.isArray(L[EK]))MAPL=L[EK]}).catch(()=>{})};
       if(loadImg(ms,mp))setTimeout(mp,0)}
@@ -967,7 +971,6 @@
     // 朝代家具（桌、長椅、凳子、燈）：見 buildFurn；桌面頂面 y=0，長椅座面高度 SY
     /* 意見回饋 406：椅面抬高到桌面下約 30 公分（真實的桌椅落差），人坐著露出比較多身體，桌子看起來才矮 */
     const BZ=-12.6,SY=(window.__SY||-2.7),BL=13,iron=M(0x2A2620,{roughness:.45,metalness:.6});
-    let MAPL=null;   /* 地圖上的地名：[名字, x%, y%, 種類] */
     const infos=[];   // 意見回饋 240：點得到、會跳說明的物件
     const bills=[];   // 意見回饋 375：鏡頭可以繞著桌子轉，貼圖（道具、座椅）每一格都轉向鏡頭
     const fades=[];   /* 意見回饋 421：轉頭時剛好擋在畫面正中間、桌子後面的樹，淡成水墨的薄影，讓遠景透出來 */
@@ -1147,12 +1150,12 @@
     /* 意見回饋 375：左右拖曳＝鏡頭繞著棋桌轉（轉到對面就看得到小帥的臉、背景一樣是一整圈），上下拖曳＝俯視的高低；不動的時候跟原本的畫面一樣 */
     /* 意見回饋 421（構圖）：坐正的時候跟原本一樣（看整盤棋）；繞著桌子轉開時鏡頭自動放低一點、視線往上抬，畫面上半部讓給遠方的山水（前景平台和道具、中景城樓、遠景山和天空）；
        往上拖（壓低鏡頭）也一樣把視線抬到地平線附近，越過小帥的頭看出去 */
-    let lastKf=-1;const smooth=(a,b,x)=>{const t=clamp((x-a)/(b-a),0,1);return t*t*(3-2*t)},FADEV=new T.Vector3();
+    const smooth=(a,b,x)=>{const t=clamp((x-a)/(b-a),0,1);return t*t*(3-2*t)},FADEV=new T.Vector3();
     const placeCam=()=>{const wy=Math.abs(Math.atan2(Math.sin(yaw),Math.cos(yaw))),orb=smooth(.2,1.1,wy),low=clamp(-pitch/.7,0,1);
       const off=camBase.clone().sub(PIV),lk=look.clone().sub(PIV),el0=Math.atan2(off.y,Math.hypot(off.x,off.z)),el=clamp(el0+pitch-.26*orb,.1,1.5),R=Math.min(off.length()*zoom,330),az=Math.atan2(off.x,off.z)+yaw;
       /* 開發者 11/4：畫面拉遠看石台底下的朝代大地圖——鏡頭距離超過 105（長卷半徑的 62%）以後，鏡頭慢慢升高成俯視，長卷、天空跟著淡掉，霧也變淡 */
-      const kf=smooth(90,165,R),elF=el+(1.38-el)*kf;   /* 意見回饋 517：鏡頭走出長卷（半徑 170）之前長卷就完全淡掉，不會從外面看到一根半透明的「柱子」 */
-      if(kf!==lastKf){lastKf=kf;for(const m of FARHIDE){m.visible=kf<.98;if(m.material){m.material.opacity=1-kf;m.material.transparent=true}}if(sc.fog){sc.fog.near=70+kf*260;sc.fog.far=320+kf*520}}
+      const kf=smooth(105,220,R),elF=el+(1.38-el)*kf;   /* 意見回饋 525：拉到一半還要看得到環景長卷（517 時提早淡掉，改回原本的距離） */
+      if(kf!==lastKf){lastKf=kf;for(const m of FARHIDE){m.visible=kf<.98;if(m.material){m.material.opacity=1-kf;m.material.transparent=true}}if(MAPM){const a=smooth(.04,.45,kf);MAPM.visible=a>0;MAPM.material.opacity=a;if(HILL)HILL.visible=a<.9}if(sc.fog){sc.fog.near=70+kf*260;sc.fog.far=320+kf*520}}
       lk.y+=4*orb*(1-low)+4.5*low;
       cam.position.set(PIV.x+Math.sin(az)*Math.cos(elF)*R,PIV.y+Math.sin(elF)*R,PIV.z+Math.cos(az)*Math.cos(elF)*R);
       const c=Math.cos(yaw),s2=Math.sin(yaw);cam.lookAt(PIV.x+lk.x*c+lk.z*s2,PIV.y+lk.y,PIV.z-lk.x*s2+lk.z*c);cam.rotateX(CAMV.dp);
@@ -1191,6 +1194,10 @@
       /* 意見回饋 517：拉遠看朝代地圖時，點地名附近（地圖寬度 5% 以內）跳出那個地方的介紹 */
       if(onG&&MAPL&&lastKf>.25&&Math.hypot(gh.x,gh.z)<ERAMAP_R){const px=(gh.x/ERAMAP_R+1)*50,py=(gh.z/ERAMAP_R+1)*50;let best=null,bd=5;for(const l of MAPL){const d=Math.hypot(l[1]-px,l[2]-py);if(d<bd){bd=d;best=l}}if(best)return"map:"+best[0]}
       if(onG&&Math.hypot(gh.x,gh.z)<24)return null;
+      /* 意見回饋 525：點到遠方長卷，照點到的位置找那一段畫的是什麼（山、城、塔……），找不到才用整體介紹 */
+      if(PSPOTS&&PANM&&PANM.visible&&PANDH){const h=ray.intersectObject(PANM,false)[0];if(h&&h.uv){const ix=(((1-h.uv.x)-PANROT/360)%1+1)%1,iy=((1-h.uv.y)*PANO.H-PANO.mt)/PANDH;let best=null,ba=9;
+        for(const p of PSPOTS){const dx=ix<p.x0?p.x0-ix:ix>p.x1?ix-p.x1:0,dy=iy<p.y0?p.y0-iy:iy>p.y1?iy-p.y1:0;if(dx>.025||dy>.12)continue;const a=(p.x1-p.x0)*(p.y1-p.y0)+dx*4+dy;if(a<ba){ba=a;best=p}}
+        if(best)return"pano:"+best.name}}
       return"bg"};
     // 觸控：一指拖曳轉頭（有朝代長卷的可以整圈轉身，其他左右各約 69 度）、兩指捏合拉近拉遠（0.6～1.25 倍）、點一下選子、點兩下回正（含縮放）
     /* 意見回饋 360：公園的棋盤可以放得更大、縮得更小（兩指捏合的範圍放寬），右下角加 ＋／－ 按鈕 */

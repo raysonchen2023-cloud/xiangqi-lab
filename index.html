@@ -581,7 +581,7 @@ html[data-era=ming] .topbar,html[data-era=qing] .topbar{border-bottom-width:4px}
       if(!window.caches)return go();caches.keys().then(function(ks){return Promise.all(ks.filter(function(k){return k.indexOf("xqlab-app-")===0}).map(function(k){return caches.delete(k)}))})
         .then(function(){return navigator.serviceWorker&&navigator.serviceWorker.getRegistration()}).then(function(r){return r&&r.update()}).catch(function(){}).then(go)}};setTimeout(chk,4000)})();
 </script>
-<script>window.XQ_OFFLINE=true;window.XQ_BUILD="20261104-2148";</script>
+<script>window.XQ_OFFLINE=true;window.XQ_BUILD="20261104-2242";</script>
 <script src="core.js"></script>
 <script src="engine.js"></script>
 <script src="local.js"></script>
@@ -619,9 +619,9 @@ const MY_KIND=/iPad/.test(navigator.userAgent)||/Macintosh/.test(navigator.userA
 // 線上大廳顯示大概的城市（意見回饋 159）：App 打開後用免費的 IP 定位服務（geojs.io）查一次，只留城市名、不存 IP，一天更新一次；設定「其他」可以關
 let MY_CITY="";
 const CITY_ZH=[["New Taipei","新北"],["Taipei","台北"],["Taoyuan","桃園"],["Hsinchu","新竹"],["Miaoli","苗栗"],["Taichung","台中"],["Changhua","彰化"],["Nantou","南投"],["Yunlin","雲林"],["Chiayi","嘉義"],["Tainan","台南"],["Kaohsiung","高雄"],["Pingtung","屏東"],["Yilan","宜蘭"],["Hualien","花蓮"],["Taitung","台東"],["Keelung","基隆"],["Penghu","澎湖"],["Kinmen","金門"],["Lienchiang","馬祖"],["Hong Kong","香港"],["Macau","澳門"]];
-function fetchCity(force){if(!OFF||!store.get("showCity",false)){MY_CITY="";return}const c=store.get("cityCache",null);if(!force&&c&&Date.now()-c.at<864e5){MY_CITY=c.n;return}
+function fetchCity(force){if(!OFF||!store.get("showCity",true)){MY_CITY="";return}const c=store.get("cityCache",null);if(!force&&c&&Date.now()-c.at<864e5){MY_CITY=c.n;return}
   fetch("https://get.geojs.io/v1/ip/geo.json").then(r=>r.json()).then(j=>{const t=(j.city||"")+" "+(j.region||""),hit=CITY_ZH.find(([k])=>t.includes(k));
-    const n=hit?hit[1]:(j.city||j.region||j.country||"");store.set("cityCache",{n,at:Date.now()});MY_CITY=store.get("showCity",false)?n:"";if(window.XQNet&&XQNet.refresh)XQNet.refresh()}).catch(()=>{})}
+    const n=hit?hit[1]:(j.city||j.region||j.country||"");store.set("cityCache",{n,at:Date.now()});MY_CITY=store.get("showCity",true)?n:"";if(window.XQNet&&XQNet.refresh)XQNet.refresh()}).catch(()=>{})}
 setTimeout(()=>fetchCity(false),3000);
 window.XQ_ME=()=>{const m=meInfo();return{"x-xq-dev":m.id+(MY_KIND?"-"+MY_KIND:""),"x-xq-name":encodeURIComponent(m.name||"")}};
 async function api(u,b){if(window.XQ)return XQ.api(u,b);   // 離線版：由手機裡的 local.js 處理
@@ -1690,9 +1690,7 @@ function Lobby(v){setTop("線上對戰・觀戰",false,[["📤",shareSheet,"分�
     const games={},watchers={};for(const p of ps)if(p.st==="playing"&&p.gid)(games[p.gid]=games[p.gid]||[]).push(p);
     for(const p of ps)if(p.st==="watching"&&p.gid)(watchers[p.gid]=watchers[p.gid]||[]).push(p);
     const free=ps.filter(p=>p.st!=="playing"&&!(p.st==="watching"&&p.gid&&games[p.gid]));
-    box.innerHTML=`<div class="card"><div class="row" style="justify-content:space-between"><span>我是 <b>${esc(XQNet.me().name)}</b></span><button class="pill" id="ed">✏ 改名字</button></div>
-        <div class="row" style="justify-content:space-between;margin-top:6px"><span class="muted">${up?"🟢 已進入大廳":"⏳ 連線到大廳中…"}</span><button class="pill" id="rk">🏅 ${esc(XQNet.rating().rank)}・${XQNet.rating().pts} 分</button></div>
-        </div>
+    box.innerHTML=`${up?"":'<div class="muted" style="text-align:center;margin:2px 0 4px">⏳ 連線到大廳中…</div>'}<!-- 意見回饋 527：「我是…／已進入大廳」小卡拿掉 -->
       ${XQNet.playing()?'<button class="btn" id="back" style="margin-top:10px">♟ 回到我進行中的對局</button>'
         :XQNet.seeking()?`<div class="card" style="margin-top:10px;text-align:center"><div style="font-size:30px">🎲</div><b>正在幫你找對手…</b><div class="muted">${XQNet.seekers()?`另外有 ${XQNet.seekers()} 人也在找，馬上配對`:"有人按「隨機配對」就會自動開始"}</div><button class="btn ghost" id="sk0" style="margin-top:8px">取消</button></div>`
         :'<button class="btn" id="sk1" style="margin-top:10px">🎲 隨機配對（自動找一位線上對手）</button>'}
@@ -1713,9 +1711,9 @@ function Lobby(v){setTop("線上對戰・觀戰",false,[["📤",shareSheet,"分�
           :`<div class="card muted">${up?(rest.length?"大家都在對戰或觀戰中，可以先去看一盤，或按上面「隨機配對」等人。":"目前只有你在線上。請朋友打開象棋研究室（按右上角 📤 分享），他們就會出現在這裡。"):"連線中…"}</div>`)})()}
       ${!OFF||DEVREMOTE()?`<div class="sec-t">📺 AI 對戰</div><button class="item card" id="aiw" style="width:100%;display:flex;gap:12px;align-items:center;text-align:left"><span style="font-size:28px">📺</span><span style="flex:1;min-width:0"><b>GPT 對 Claude</b><br><span class="muted">電腦上的兩個 AI 在下棋</span></span><span class="muted">›</span></button>`:""}
       <!-- 意見回饋 347：大廳下面那段說明拿掉 -->`;
-    box.querySelector("#ed").onclick=()=>{closeSheet();store.set("setTab","bot");store.set("setFocus","name");location.hash="#/settings"};   /* 意見回饋 498：到「設定 → 外觀」改名字 */
+    (box.querySelector("#ed")||{}).onclick=()=>{closeSheet();store.set("setTab","bot");store.set("setFocus","name");location.hash="#/settings"};   /* 意見回饋 498：到「設定 → 外觀」改名字 */
     {const tp=box.querySelector("#tcp");if(tp)tp.onclick=()=>sheet("⏱ 對局時制",b=>{b.innerHTML=`<p class="muted" style="margin:0 0 10px">每一方的總思考時間。開局時跟對手比，雙方選的不同就用比較短的；沒選就是 15 分鐘。另外每一步最多 3 分鐘。</p><div class="items" style="padding:0">${[[5,"快棋"],[10,"快棋"],[15,"預設・常見比賽"],[20,"慢一點"],[30,"慢棋"]].map(([m,l])=>`<button class="item" data-tc="${m}"><span class="lb">${XQNet.tc()===m?"✅":"⏱"}</span><span class="tx"><b>每方 ${m} 分鐘</b><span>${l}</span></span></button>`).join("")}</div>`;
-      b.querySelectorAll("[data-tc]").forEach(x=>x.onclick=()=>{XQNet.setTc(+x.dataset.tc);vibrate(5);closeSheet();toast(`⏱ 時制改成每方 ${x.dataset.tc} 分鐘`);paint()})})}box.querySelector("#rk").onclick=()=>location.hash="#/stats";
+      b.querySelectorAll("[data-tc]").forEach(x=>x.onclick=()=>{XQNet.setTc(+x.dataset.tc);vibrate(5);closeSheet();toast(`⏱ 時制改成每方 ${x.dataset.tc} 分鐘`);paint()})})}(box.querySelector("#rk")||{}).onclick=()=>location.hash="#/stats";
     const s1=box.querySelector("#sk1"),s0=box.querySelector("#sk0");if(s1)s1.onclick=()=>{vibrate(10);XQNet.seek(true)};if(s0)s0.onclick=()=>XQNet.seek(false);
     const bk=box.querySelector("#back");if(bk)bk.onclick=()=>location.hash="#/pvp";const mg=box.querySelector("#myg");if(mg)mg.onclick=()=>location.hash="#/pvp";
     box.querySelectorAll("[data-w]").forEach(b=>b.onclick=()=>{const go=()=>{XQNet.watch(b.dataset.w);location.hash="#/pvp"};if(XQNet.playing())confirmBox("你有一盤進行中的對局，去觀戰會離開它，確定？",go,"確定");else go()});
@@ -2820,7 +2818,7 @@ function onboard(force){if(!force&&store.get("onboard1",false))return;let sx=myS
   const card=(k,on,img,t,sub)=>`<button class="obc${on?" on":""}" data-k="${k}"><img src="${img}" alt="" onerror="this.style.visibility='hidden'"><b>${t}</b><small>${sub}</small></button>`;
   const paint=b=>{const name=myName()||"";
     b.innerHTML=step===0?`<p class="muted" style="margin:0 0 8px">歡迎來到象棋研究室！先選你在棋桌前的樣子（之後可以在「設定 → 外觀」改）</p><div class="obg">${card("m",sx==="m","data/xs/xs_idle.webp","男生","小帥")+card("f",sx==="f","data/xs/xs_girl_idle.webp","女生","小帥妹")}</div><button class="btn" id="obN" style="width:100%;margin-top:12px">下一步</button>`
-      :step===1?`<p class="muted" style="margin:0 0 8px">角色要用哪一種樣子？園子裡的你、跟你下棋的對手都會照這個顯示</p><div class="obg">${card("q",st==="q",`data/xs/prev_q_${sx==="f"?"girl":"boy"}.webp`,"🧸 Q 版","圓滾滾的棋子小人")+card("real",st==="real",`data/xs/prev_real_${sx==="f"?"girl":"boy"}.webp`,"🗿 真實版","照畫好的人物做的 3D")}</div><div class="row" style="gap:8px;margin-top:12px"><button class="btn ghost" id="obB" style="flex:1">上一步</button><button class="btn" id="obN" style="flex:2">下一步</button></div>`
+      :step===1?`<p class="muted" style="margin:0 0 8px">角色要用哪一種樣子？園子裡的你、跟你下棋的對手都會照這個顯示</p><div class="obg">${card("q",st==="q",`data/xs/prev_q_${sx==="f"?"girl":"boy"}.webp`,(sx==="f"?"🧸 小帥妹Q版":"🧸 小帥Q版"),"圓滾滾的棋子小人")+card("real",st==="real",`data/xs/prev_real_${sx==="f"?"girl":"boy"}.webp`,(sx==="f"?"🗿 小帥妹":"🗿 小帥"),"照畫好的人物做的 3D")}</div><div class="row" style="gap:8px;margin-top:12px"><button class="btn ghost" id="obB" style="flex:1">上一步</button><button class="btn" id="obN" style="flex:2">下一步</button></div>`
       :`<p class="muted" style="margin:0 0 8px">最後，幫自己取個名字（線上對戰、大廳會顯示）</p><input id="obName" maxlength="16" value="${esc(name)}" placeholder="例如：雲河小棋手" style="width:100%;font-size:18px;padding:12px;border-radius:12px;border:1px solid var(--line);background:var(--card);color:inherit"><div class="row" style="gap:8px;margin-top:12px"><button class="btn ghost" id="obB" style="flex:1">上一步</button><button class="btn" id="obN" style="flex:2">開始下棋</button></div>`;
     b.querySelectorAll(".obc").forEach(x=>x.onclick=()=>{vibrate(5);if(step===0)sx=x.dataset.k;else st=x.dataset.k;paint(b)});
     const bk=b.querySelector("#obB");if(bk)bk.onclick=()=>{step--;paint(b)};
@@ -2836,9 +2834,10 @@ const SAMPLE_FEN0="rnbakabnr/9/1c5c1/p1p1p1p1p/9/9/P1P1P1P1P/1C5C1/9/RNBAKABNR",
 function Settings(v){
   setTop("設定",false);setTabs(true,"#/settings");
   // 設定分成四個分頁，一次只看一類（意見回饋 141）
-  let stab=store.get("setTab","look");
+  let stab=store.get("setTab","look");if(stab==="play")stab="look";   /* 意見回饋 526：分頁改成 角色／棋盤／聲音／系統，原本的「走棋」併進「棋盤」 */
   v.innerHTML=`<div class="pad home">
-    <div class="st-tabs" id="sgTabs" style="position:static;margin:4px 0 10px">${[["look","🎨","外觀"],["play","♟","走棋"],["sound","🔊","聲音"],["bot","🙂","角色"],["more","⋯","其他"]].map(([k,e,l])=>`<button data-k="${k}"><i class="tic" data-ic="t_${k}">${e}</i> ${l}</button>`).join("")}</div>
+    <button class="item" id="fbTop" style="width:100%;margin:2px 0 10px;border-radius:14px;border:1.5px solid color-mix(in srgb,var(--accent) 45%,var(--line));background:color-mix(in srgb,var(--accent) 7%,var(--card,#fff))"><span class="lb">${ETIMG("feedback","","💬")}</span><span class="tx"><b>意見回饋</b><span>遇到問題、想要新功能，直接告訴開發者（可附截圖）</span></span><span class="muted">›</span></button>   <!-- 意見回饋 523：意見回饋放在設定最上面，哪個分頁都看得到 -->
+    <div class="st-tabs" id="sgTabs" style="position:static;margin:4px 0 10px">${[["bot","🙂","角色"],["look","♟","棋盤"],["sound","🔊","聲音"],["more","⚙","系統"]].map(([k,e,l])=>`<button data-k="${k}"><i class="tic" data-ic="t_${k}">${e}</i> ${l}</button>`).join("")}</div>
     <div data-pane="look">
     <div class="card" style="padding:10px"><div id="pv" style="max-width:300px;margin:0 auto"></div>
       <div class="row" style="justify-content:space-between;margin-top:6px"><span class="muted">示範：紅方 炮二平五</span><button class="pill" id="replay">▶ 再走一次</button></div></div>
@@ -2852,7 +2851,7 @@ function Settings(v){
     <div class="sec-t">棋子樣式</div><div class="opt" id="ps"></div>
     <label class="row" style="justify-content:space-between;padding:8px 2px"><span><b>高對比棋子</b><br><span class="muted">白底大字、紅黑字，看不清楚朝代棋子時打開</span></span><input type="checkbox" class="sw" id="hiCon"></label>
     </div>
-    <div data-pane="play"><div class="sec-t" style="margin-top:4px">測試特效與音效</div><div class="card"><div id="tb" style="max-width:300px;margin:0 auto"></div>
+    <div data-pane="look"><div class="sec-t">測試特效與音效</div><div class="card"><div id="tb" style="max-width:300px;margin:0 auto"></div>
       <div class="opt" id="tbb" style="justify-content:center;flex-wrap:wrap;margin-top:8px">${[["mv","♟ 走一步"],["cap","💥 吃子"],["ck","⚔ 將軍"],["op","🚩 開局動畫"]].map(([k,l])=>`<button data-tst="${k}">${l}</button>`).join("")}</div>
       <p class="muted" style="font-size:12px;margin:6px 0 0;text-align:center">照目前的設定播放：下面關掉的特效、聲音，這裡也不會出現</p></div>
       <div class="sec-t">走棋顯示與特效</div><div class="card sgc" id="mv"></div></div>
@@ -2860,7 +2859,7 @@ function Settings(v){
     <div data-pane="bot">
     <div class="sec-t" style="margin-top:4px">我的角色</div><div class="card row" style="gap:10px;align-items:center;margin-bottom:6px">   <!-- 意見回饋 506：精簡成一張小卡；522：跟官階、棋子、顯示放在同一個「角色」分頁 -->
       <img src="data/xs/prev_${myStyle()==="real"?"real":"q"}_${mySex()==="f"?"girl":"boy"}.webp" alt="" style="width:46px;height:58px;object-fit:contain;flex:none" onerror="this.remove()">
-      <div style="flex:1;min-width:0"><b>${mySex()==="f"?"小帥妹":"小帥"}・${myStyle()==="real"?"真實版":"Q 版"}</b><br><span class="muted" style="font-size:13px">${esc(myName()||"還沒取名字")}</span></div>
+      <div style="flex:1;min-width:0"><b>${mySex()==="f"?"小帥妹":"小帥"}${myStyle()==="real"?"":"Q版"}</b>   <!-- 開發者 11/4：只寫「小帥Q版」或「小帥」，不寫「真實版」 --><br><span class="muted" style="font-size:13px">${esc(myName()||"還沒取名字")}</span></div>
       <button class="pill" id="obAgain">換角色</button><button class="pill" id="nmLook">改名</button></div>
     ${(()=>{let p=0;try{p=(JSON.parse(localStorage.getItem("xq_cpuRate")||"null")||{}).pts||0}catch(e){}
       const TH=[1500,1150,1000,800,600,400,200,100,0],g=TH.findIndex(t=>p>=t)+1,lo=TH[g-1],hi=g>1?TH[g-2]:null,pc=hi?Math.round((p-lo)/(hi-lo)*100):100,ZH="〇一二三四五六七八九";
@@ -2877,10 +2876,8 @@ function Settings(v){
         <div class="row" style="gap:10px"><b style="white-space:nowrap">大小</b><input type="range" id="botSz" min="0.6" max="2" step="0.05" value="${store.get("botSize",.7)}" style="flex:1"><b id="botSzV" style="width:46px;text-align:right">${Math.round(store.get("botSize",.7)*100)}%</b></div></div>
       <details class="card" style="padding:10px 12px;margin-top:12px"><summary style="font-weight:700;cursor:pointer">怎麼跟<span class="botN">${BOTN()}</span>互動</summary><div class="gst" style="margin-top:8px"><div><i>👆</i><b>點一下</b><span>表演一個動作</span></div><div><i>✌️</i><b>點兩下</b><span>出去散步（停放時）</span></div><div><i>✋</i><b>長按</b><span>問<span class="botN">${BOTN()}</span>問題</span></div><div><i>🤏</i><b>拖動</b><span>放到任何地方</span></div><div><i>👆</i><b>點三下</b><span>鞠躬，先藏起來</span></div><p class="muted">藏起來之後，打開上面的「顯示 3D 象棋小人」就會回來</p></div></details>
       <div class="row" style="gap:8px;margin-top:10px"><button class="btn" id="askB" style="flex:1">💬 問<span class="botN">${BOTN()}</span></button><button class="btn ghost" id="botHome" style="flex:1">↩ 回到預設位置</button></div></div>
-    <div data-pane="more"><div class="sec-t" style="margin-top:4px">我的資料</div><div class="items" style="padding:0">
-      <button class="item" id="nm"><span class="lb">${ETIMG("o_name","","✏")}</span><span class="tx"><b>我的名字</b><span id="nmS"></span></span><span class="muted">到外觀改 ›</span></button></div>
-    ${OFF?`<div class="card" style="margin-top:8px"><label class="row" style="justify-content:space-between"><span><b>線上大廳顯示我的城市</b><br><span class="muted">由網路位置推估，只顯示城市</span></span><input type="checkbox" class="sw" id="cityT" ${store.get("showCity",false)?"checked":""}></label></div>`:""}
-    <div class="sec-t">支援</div><div class="items" style="padding:0">
+    <div data-pane="more">   <!-- 意見回饋 523：「我的名字」「顯示我的城市」拿掉（名字在角色分頁改，城市一律照網路位置自動顯示）；「其他」改名「系統」 -->
+    <div class="sec-t" style="margin-top:4px">支援</div><div class="items" style="padding:0">
       <button class="item" id="fb"><span class="lb">${ETIMG("feedback","","💬")}</span><span class="tx"><b>意見回饋</b><span>回報錯誤、想要的功能</span></span><span class="muted">›</span></button><button class="item" id="fxh"><span class="lb">${ETIMG("o_fixes","","🛠")}</span><span class="tx"><b>修正紀錄</b><span>你回報、已經修好的問題</span></span><span class="muted">›</span></button>
       <button class="item" id="sh"><span class="lb">${ETIMG("share","","📤")}</span><span class="tx"><b>分享給朋友</b><span>QR code・LINE</span></span><span class="muted">›</span></button></div>
     <div class="sec-t">關於</div><div class="card" id="about" style="line-height:1.9">
@@ -2899,11 +2896,11 @@ function Settings(v){
         <tr><td>Google Apps Script</td><td>意見回饋管理頁（接 Google 表單和試算表）</td></tr>
         <tr><td>JSON</td><td>棋譜、題庫、故事、朝代資料</td></tr></table>
         <div class="muted" style="font-size:12px;margin-top:4px">線上大廳用 MQTT 通訊協定連線；Pikafish 的神經網路權重另外下載。</div></details>`:""}</div>
-    ${OFF?'<div class="sec-t">隱私</div><div class="card muted" style="font-size:13.5px;line-height:1.7">'+'App 每 7 天（或名字、段位改變時）會把你的名字、裝置代號、線上段位、App 版本、手機種類和螢幕大小送到開發者的 Google 表單，方便查問題、校正難度；不會送棋譜、聊天內容或其他個人資料。'+'</div>':''}
+    ${OFF?'<div class="sec-t">隱私</div><div class="card muted" style="font-size:13.5px;line-height:1.7">'+'App 每 7 天（或名字、段位改變時）會把你的名字、裝置代號、線上段位、App 版本、手機種類和螢幕大小送到開發者的 Google 表單，方便查問題、校正難度；不會送棋譜、聊天內容或其他個人資料。線上大廳會顯示由網路位置推估的城市（只到城市，不是精確位置）。'+'</div>':''}
     ${OFF?'<div class="sec-t">進階</div><div class="card"><label class="row" style="justify-content:space-between"><span><b>開發者模式</b><br><span class="muted">一般玩家不用打開。打開後才會顯示連線電腦、AI 對戰等開發者功能</span></span><input type="checkbox" class="sw" id="dm"></label></div>'
       +(DEVMODE()?'<div class="items" style="padding:0;margin-top:8px"><button class="item" id="fa"><span class="lb">📋</span><span class="tx"><b>意見回饋管理</b><span>看所有回饋和截圖，決定玩家的回饋要不要修</span></span><span class="muted">›</span></button><button class="item" id="cn"><span class="lb">🖥</span><span class="tx"><b>連線到開發者的電腦</b><span>看 AI 對戰、同步大師棋譜</span></span><span class="muted">›</span></button><button class="item" id="rb"><span class="lb">🔄</span><span class="tx"><b>重置虛擬玩家</b><span>20 位棋友的積分、戰績、練習紀錄歸零；舊資料留在電腦上</span></span><span class="muted">›</span></button></div>':""):""}${OFF?'<div class="sec-t">📱 換手機</div><div class="card"><div class="row" style="gap:8px;flex-wrap:wrap"><button class="btn" id="xfOut" style="flex:1;min-width:140px">產生轉移碼（舊手機）</button><button class="btn ghost" id="xfIn" style="flex:1;min-width:140px">輸入轉移碼（新手機）</button></div></div>':""}</div></div>`;
   let tbRefresh=()=>{};
-  const showTab=()=>{if(stab==="play")tbRefresh();v.querySelectorAll("#sgTabs button").forEach(b=>b.classList.toggle("on",b.dataset.k===stab));v.querySelectorAll("[data-pane]").forEach(x=>x.hidden=x.dataset.pane!==stab)};
+  const showTab=()=>{if(stab==="look")tbRefresh();v.querySelectorAll("#sgTabs button").forEach(b=>b.classList.toggle("on",b.dataset.k===stab));v.querySelectorAll("[data-pane]").forEach(x=>x.hidden=x.dataset.pane!==stab)};
   v.querySelectorAll("#sgTabs button").forEach(b=>b.onclick=()=>{vibrate(5);stab=b.dataset.k;store.set("setTab",stab);showTab()});showTab();
   // 測試特效與音效（意見回饋）：用真的走棋流程（Board.draw 的 fresh＋fx）播放，所以會照設定開關
   {const tb=Board(null),box=v.querySelector("#tb");box.append(tb.svg);const S0=parseFen(START);let tbLast=S0;tb.draw(S0,{anim:false});
@@ -2964,7 +2961,7 @@ function Settings(v){
     {const so=v.querySelector("#sndOn");if(so)so.onchange=()=>{store.set("mvSound",so.checked);v.querySelector("#sndBox").classList.toggle("sp-off",!so.checked);const k=store.get("sndStyle","wood");v.querySelectorAll("[data-snd]").forEach(y=>y.classList.toggle("on",so.checked&&y.dataset.snd===k));if(so.checked){unlockAudio();(/^s\d\d$/.test(k)?loadSfx(k):Promise.resolve()).then(()=>withAudio(()=>moveSound0(false)))}}}
     v.querySelectorAll("[data-snd]").forEach(x=>x.onclick=()=>{const k=x.dataset.snd;store.set("mvSound",k!=="off");{const so=v.querySelector("#sndOn");if(so)so.checked=true;const bx=v.querySelector("#sndBox");if(bx)bx.classList.remove("sp-off")}if(k==="off"){v.querySelectorAll("[data-snd]").forEach(y=>y.classList.toggle("on",y===x));return}store.set("sndStyle",k);v.querySelectorAll("[data-snd]").forEach(y=>y.classList.toggle("on",y===x));unlockAudio();(/^s\d\d$/.test(k)?loadSfx(k):Promise.resolve()).then(()=>{withAudio(()=>moveSound0(false));setTimeout(()=>withAudio(()=>moveSound0(true)),550)})});
     v.querySelectorAll("[data-t]").forEach(x=>x.onchange=()=>{store.set(x.dataset.t,x.checked);if(x.checked&&(x.dataset.t==="mvSound"||x.dataset.t==="capSound")){unlockAudio();moveSound(x.dataset.t==="capSound")}if(x.checked&&x.dataset.t==="voiceCall"){primeVoice();setTimeout(()=>sayCall("將軍"),150)}show(true)});
-    v.querySelector("#nmS").textContent=myName()||"還沒取名字";show(false)};
+    {const ns=v.querySelector("#nmS");if(ns)ns.textContent=myName()||"還沒取名字"}show(false)};
   v.querySelectorAll("[data-bp]").forEach(x=>x.onclick=()=>{store.set("botPiece",x.dataset.bp);v.querySelectorAll("[data-bp]").forEach(y=>y.classList.toggle("on",y===x));vibrate(5);
     if(BOT&&BOT.rebuild){BOT.rebuild();setTimeout(()=>{if(BOT&&BOT.say)BOT.say(`我現在是${BOTN()}了！`,3)},200)}toast(`小人換成「${x.dataset.bp}」，名字叫${BOTN()}`);v.querySelectorAll(".botN").forEach(y=>y.textContent=BOTN())});
   /* 意見回饋 307：開發者重置虛擬玩家——用這支手機跟電腦配對時拿到的存取碼簽名，電腦上的虛擬玩家程式驗過簽名才會重置 */
@@ -2977,7 +2974,7 @@ function Settings(v){
       for(let i=0;i<8;i++){await new Promise(z=>setTimeout(z,2000));let x=null;try{x=JSON.parse(await XQNet.ctlAck(3000))}catch(e){}
         if(x&&x.n===n){toast(x.ok?`✅ 已重置 ${x.bots} 位虛擬玩家（舊資料存在電腦：${x.arch}）`:"❌ "+x.why,5000);return}}
       toast("電腦沒有回覆：虛擬玩家的程式可能沒在跑")}catch(e){toast(e.message)}},"重置")}
-  {const ab=v.querySelector("#askB");if(ab)ab.onclick=()=>askSheet();const bh=v.querySelector("#botHome");if(bh)bh.onclick=()=>{store.set("botPos",null);if(BOT){BOT.stop();BOT=null}syncBot();toast("小帥回到預設位置了")}}{const bt=v.querySelector("#botT");if(bt)bt.onchange=()=>{store.set("bot3d",bt.checked);syncBot();if(bt.checked)toast("小人出來了！點它會表演")};const sz=v.querySelector("#botSz"),szv=v.querySelector("#botSzV");if(sz)sz.oninput=()=>{store.set("botSize",+sz.value);szv.textContent=Math.round(sz.value*100)+"%";if(BOT&&BOT.setScale)BOT.setScale(+sz.value)}}{const ct=v.querySelector("#cityT");if(ct)ct.onchange=()=>{store.set("showCity",ct.checked);if(ct.checked)fetchCity(true);else{MY_CITY="";if(window.XQNet&&XQNet.refresh)XQNet.refresh()}}}v.querySelector("#nm").onclick=()=>{vibrate(5);stab="look";store.set("setTab","look");showTab();setTimeout(()=>{const x=v.querySelector("#nmLook");if(x)x.scrollIntoView({block:"center",behavior:"smooth"})},60)};   /* 意見回饋 498：名字只在「外觀 → 我的角色」改 */v.querySelector("#fb").onclick=()=>feedbackSheet();{const fx=v.querySelector("#fxh");if(fx)fx.onclick=()=>fixHistory()}v.querySelector("#sh").onclick=shareSheet;const cn=v.querySelector("#cn");if(cn)cn.onclick=connectSheet;const fa=v.querySelector("#fa");if(fa)fa.onclick=()=>location.hash="#/fbadmin";
+  {const ab=v.querySelector("#askB");if(ab)ab.onclick=()=>askSheet();const bh=v.querySelector("#botHome");if(bh)bh.onclick=()=>{store.set("botPos",null);if(BOT){BOT.stop();BOT=null}syncBot();toast("小帥回到預設位置了")}}{const bt=v.querySelector("#botT");if(bt)bt.onchange=()=>{store.set("bot3d",bt.checked);syncBot();if(bt.checked)toast("小人出來了！點它會表演")};const sz=v.querySelector("#botSz"),szv=v.querySelector("#botSzV");if(sz)sz.oninput=()=>{store.set("botSize",+sz.value);szv.textContent=Math.round(sz.value*100)+"%";if(BOT&&BOT.setScale)BOT.setScale(+sz.value)}}{const ct=v.querySelector("#cityT");if(ct)ct.onchange=()=>{store.set("showCity",ct.checked);if(ct.checked)fetchCity(true);else{MY_CITY="";if(window.XQNet&&XQNet.refresh)XQNet.refresh()}}}v.querySelector("#nm").onclick=()=>{vibrate(5);stab="look";store.set("setTab","look");showTab();setTimeout(()=>{const x=v.querySelector("#nmLook");if(x)x.scrollIntoView({block:"center",behavior:"smooth"})},60)};   /* 意見回饋 498：名字只在「外觀 → 我的角色」改 */v.querySelector("#fb").onclick=()=>feedbackSheet();{const ft=v.querySelector("#fbTop");if(ft)ft.onclick=()=>{vibrate(5);feedbackSheet()}}{const fx=v.querySelector("#fxh");if(fx)fx.onclick=()=>fixHistory()}v.querySelector("#sh").onclick=shareSheet;const cn=v.querySelector("#cn");if(cn)cn.onclick=connectSheet;const fa=v.querySelector("#fa");if(fa)fa.onclick=()=>location.hash="#/fbadmin";
   paint();return{}}
 
 // ================= 意見回饋：存到 Google 表單（沒網路先存在手機，之後自動補送） =================
@@ -3528,6 +3525,9 @@ function parkInfo(k){const era=store.get("era","classic"),E=PARK_INFO[era]||PARK
    if(pid){let nm="";try{const x=XQNet.people().find(p=>p.id===pid);nm=x?x.name:""}catch(e){}oppCard(pid,nm,{});return}
    if(k.startsWith("p:"))return}
   /* 意見回饋 517：拉遠看朝代地圖時點到地名，跳出那個地方在這個朝代的介紹（data/eramap/places.json） */
+  /* 意見回饋 525：點到遠方長卷上的地標（山、城、塔、蒙古包……），跳出那個地標的名字和介紹（data/pano/spots.json） */
+  if(k.startsWith("pano:")){const nm=k.slice(5);(parkInfo.S||(parkInfo.S=fetch("data/pano/spots.json").then(r=>r.ok?r.json():{}).catch(()=>({})))).then(J=>{const p=(J[era]||[]).find(x=>x.name===nm);
+      sheet("🏞 "+nm,b=>{b.innerHTML=`<div class="muted" style="margin:-4px 0 8px">${esc(en)}${yr?`・${esc(yr)}`:""}・遠方的風景</div><p style="line-height:1.8;margin:0;font-size:16px">${esc(p&&p.desc||(E.bg||[])[1]||"")}</p>`})});return}
   if(k.startsWith("map:")){const nm=k.slice(4);(parkInfo.P||(parkInfo.P=fetch("data/eramap/places.json").then(r=>r.ok?r.json():{}).catch(()=>({})))).then(P=>{const d=(P[era]||{})[nm]||(P.classic||{})[nm]||"";
       sheet("📍 "+nm,b=>{b.innerHTML=`<div class="muted" style="margin:-4px 0 8px">${esc(en)}${yr?`・${esc(yr)}`:""}・地圖上的地名</div><p style="line-height:1.8;margin:0;font-size:16px">${esc(d||"這是"+en+"地圖上標的地方。")}</p><p class="muted" style="font-size:13px;margin:10px 0 0">點兩下畫面回到石桌</p>`})});return}
   let t,x;if(k==="opp"){const op=PARK&&PARK.last&&PARK.last.ex&&PARK.last.ex.opp;
@@ -4764,7 +4764,10 @@ function showChat(text,mine,name,at){const d=document.createElement("div");d.cla
 // 3D 象棋小人（意見回饋 159）：在畫面上自由走動、做手勢；開發者預設開、玩家預設關，設定「其他」可以切換
 const botPc=()=>{const c=store.get("botPiece","帥");return typeof c==="string"&&c.length===1&&"帥仕相俥傌炮兵將士象車馬砲卒".includes(c)?c:"帥"},BOTN=()=>"小"+({俥:"車",傌:"馬",砲:"炮"}[botPc()]||botPc())+(store.get("pSex","m")==="f"?"妹":"");   /* 意見回饋 492：女生版叫小帥妹 */
 let BOT=null,botBusy=false;const botOn=()=>store.get("bot3d",true);
-window.addEventListener("xq-bot-hide",()=>{store.set("bot3d",false);syncBot();toast("小帥先休息了。到「設定」打開「顯示 3D 象棋小人」就會回來")});   // 意見回饋 167：預設打開
+window.addEventListener("xq-bot-hide",()=>{store.set("bot3d",false);syncBot();toast("小帥先休息了。在任何頁面點三下，就會回來")});
+/* 意見回饋 528（開發者）：小帥藏起來以後，在任何頁面快速點三下就叫回來（點在按鈕、輸入框上不算） */
+{let tp=[];document.addEventListener("pointerdown",e=>{if(store.get("bot3d",true))return;if(e.target.closest&&e.target.closest("button,a,input,textarea,select,label,canvas,.sheet,#sheet"))return;const now=Date.now();tp=tp.filter(t=>now-t.t<650&&Math.hypot(t.x-e.clientX,t.y-e.clientY)<60);tp.push({t:now,x:e.clientX,y:e.clientY});
+  if(tp.length>=3){tp=[];store.set("bot3d",true);syncBot();vibrate(15);toast("小帥回來了！")}},{passive:true})}   // 意見回饋 167：預設打開
 async function syncBot(){if(botBusy)return;botBusy=true;try{if(botOn()&&!BOT){await loadScript(OFF?"three.min.js":"/m/three.min.js");await loadScript((OFF?"bot3d.js":"/m/bot3d.js")+"?v="+encodeURIComponent(window.XQ_BUILD||""));if(botOn()&&window.XQBot3D)BOT=window.XQBot3D.start()}
   else if(!botOn()&&BOT){BOT.stop();BOT=null}}catch(e){}botBusy=false}
 setTimeout(syncBot,0);   // 意見回饋 164：一打開就載入，不要等
