@@ -580,7 +580,7 @@ html[data-era=ming] .topbar,html[data-era=qing] .topbar{border-bottom-width:4px}
       if(!window.caches)return go();caches.keys().then(function(ks){return Promise.all(ks.filter(function(k){return k.indexOf("xqlab-app-")===0}).map(function(k){return caches.delete(k)}))})
         .then(function(){return navigator.serviceWorker&&navigator.serviceWorker.getRegistration()}).then(function(r){return r&&r.update()}).catch(function(){}).then(go)}};setTimeout(chk,4000)})();
 </script>
-<script>window.XQ_OFFLINE=true;window.XQ_BUILD="20261104-1622";</script>
+<script>window.XQ_OFFLINE=true;window.XQ_BUILD="20261104-1628";</script>
 <script src="core.js"></script>
 <script src="engine.js"></script>
 <script src="local.js"></script>
@@ -3329,10 +3329,12 @@ async function figView(look,title,html,btns,img){sheet(title,async b=>{
 /* 意見回饋 400：石桌往事的人物偶爾路過線上大廳（每 15 分鐘換一批，大約六成的時候會有 1～2 位），點他看人物、可以跟他下一盤；難度照故事裡的設定 */
 const JCHAR_LV={liu_young:3,shen_young:4,agula_young:3,boatman:2,scholar:4,liu_old:6};
 function lobbyVisitors(){const slot=Math.floor(Date.now()/9e5);let h=slot*2654435761>>>0;const rnd=()=>{h=(h*1103515245+12345)>>>0;return h/4294967296};
-  if(rnd()>.6)return[];const ks=Object.keys(JCHAR),out=[];const n=rnd()<.35?2:1;while(out.length<n){const k=ks[Math.floor(rnd()*ks.length)];if(!out.includes(k))out.push(k)}return out}
+  if(rnd()>.6)return[];const ks=Object.keys(JCHAR),out=[];const n=rnd()<.35?2:1;while(out.length<n){const k=ks[Math.floor(rnd()*ks.length)];if(!out.includes(k))out.push(k)}
+  /* 意見回饋 480（開發者）：剛跟他下過一盤（不管輸贏、中途離開）就先離開大廳，隨機過 5～20 分鐘才可能再遇到 */
+  const gone=store.get("visitGone",{}),now=Date.now();return out.filter(k=>!(gone[k]>now))}
 function jcharSheet(k){const c=JCHAR[k];if(!c)return;const lv=JCHAR_LV[k]||3;
   figView(JCHAR_LOOK(k,"b"),"🪨 "+c.name,`<p style="font-size:16px;line-height:1.8;margin:0 0 6px">「${esc(c.hi)}」</p><p class="muted" style="font-size:13px;margin:0 0 4px">石桌往事裡的人物・第 ${lv} 級的實力（照故事裡的棋力）</p>`,
-    [["♟ 跟他下一盤",()=>{closeSheet();jStart("char:"+k,{human:"r",level:lv,journey:"char:"+k},()=>{location.hash="#/journey/play";setTimeout(()=>toast(`🪨 ${c.name}：${c.hi}`),500)})}],["關閉",()=>closeSheet(),true]],`data/journey/char_${k}_idle.webp`)}
+    [["♟ 跟他下一盤",()=>{closeSheet();{const g=store.get("visitGone",{}),now=Date.now();for(const x in g)if(g[x]<now)delete g[x];g[k]=now+(5+Math.random()*15)*60000;store.set("visitGone",g)}jStart("char:"+k,{human:"r",level:lv,journey:"char:"+k},()=>{location.hash="#/journey/play";setTimeout(()=>toast(`🪨 ${c.name}：${c.hi}`),500)})}],["關閉",()=>closeSheet(),true]],`data/journey/char_${k}_idle.webp`)}
 /* 人物與年表：點人物看 3D 小人（照人物設定配的帽子、衣服） */
 const PEOPLE_LOOK={"沈石川":{pc:"馬",hat:"bun",hc:"#E8E6E0",robe:"#5E6B5C"},"柳寒舟":{pc:"砲",hat:"bun",hc:"#D8D6D0",robe:"#8A8A86"},"阿古拉":{pc:"車",hat:"fur",hc:"#F0EDE6",robe:"#3E6FA8"},"周文淵":{pc:"士",hat:"fangjin",hc:"#151515",robe:"#7A2E2A"},
   "柳老篙":{pc:"卒",hat:"cap",hc:"#C9A86A",robe:"#7A6A50"},"秦小禾":{pc:"象",hat:"buns",hc:"#2A1D16",robe:"#C76B6B"},"朱元璋":{pc:"將",hat:"fangjin",hc:"#2A1D16",robe:"#B8862E"},"錢小滿":{pc:"兵",hat:"hair",hc:"#2A1D16",robe:"#8A6A3A"}};
