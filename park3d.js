@@ -946,6 +946,10 @@
         for(let i=0;i<P.count;i++){const x=P.getX(i),y=P.getY(i),z=P.getZ(i),th=Math.acos(clamp(y/R0,-1,1)),ph=Math.atan2(z,x),k=th/TM*.5;U.setXY(i,.5+k*Math.cos(ph),.5+k*Math.sin(ph))}U.needsUpdate=true;
         const t=srgb(new T.Texture(im));t.needsUpdate=true;const cap=new T.Mesh(g,new T.MeshBasicMaterial({map:t,side:T.BackSide,transparent:true,depthWrite:false,fog:false,toneMapped:false}));cap.renderOrder=-.5;sc.add(cap)};if(loadImg(ss,sp))setTimeout(sp,0)}
     mesh(new T.CylinderGeometry(TR,TR*.9,26+FL-GY,48,1,true),stone2,[0,FL-(26+FL-GY)/2,0],{noCast:1});
+    /* 意見回饋 490（開發者：石台邊像懸崖，希望像雲河棋路那樣是山坡上的大石台）：石台外圍加一圈往外慢慢往下的山坡（草地、碎石），遠的地方淡進霧裡，把石台側面那圈牆蓋住 */
+    {const pts=[[TR-.2,FL-.06],[TR+4,FL-.9],[TR+12,FL-3.6],[TR+26,FL-9],[TR+46,FL-18],[TR+76,FL-32],[TR+120,FL-52]].map(([r,y])=>new T.Vector2(r,y));
+      const hg=new T.LatheGeometry(pts,96),hm=M(0xffffff,{map:(()=>{const t=stoneTex(EK==="yuan"?"#7E8C62":"#7A8466",10);return t})(),roughness:.95});hm.color=new T.Color(E.mist).lerp(new T.Color("#7C8A68"),.55);
+      const hill=new T.Mesh(hg,hm);hill.material.side=T.DoubleSide;hill.receiveShadow=true;sc.add(hill)}
     {/* 意見回饋 406：平台邊的石欄杆跟著地面抬高後幾乎跟桌面一樣高，降成約 20 公分的矮欄；421：矮欄＋36 根望柱從桌邊看過去還是一整圈牆（像一座高石台的邊、又剛好擋在山水前面），
        改成貼地的一圈石砌收邊（約 7 公分），只留平台的邊線，不擋遠景 */
       const curb=new T.Mesh(new T.CylinderGeometry(TR-.15,TR-.15,.45,96,1,true),stone2);curb.material.side=T.DoubleSide;curb.position.y=FL+.22;sc.add(curb);

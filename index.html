@@ -100,7 +100,7 @@ input,select{font:inherit;font-size:16px;color:inherit}
 .thero{margin-top:4px}.tstats{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px}.tstat{display:flex;flex-direction:column;align-items:center;text-align:center;padding:10px 4px;border-radius:12px;background:color-mix(in srgb,var(--accent) 8%,var(--card));min-width:0}
 .tstat small{font-size:12px;color:var(--muted)}.tstat b{font:900 32px/1.1 var(--serif);color:var(--accent);margin:2px 0}.tstat b i{font:600 12px var(--sans,inherit);font-style:normal;color:var(--muted);margin-left:2px}.tstat span{font-size:11.5px;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:100%}
 .tsum{margin:12px 2px 10px;line-height:1.7;font-size:14.5px}
-.eic{width:1.4em;height:1.4em;object-fit:contain;display:inline-block;vertical-align:middle;filter:drop-shadow(0 1px 1px rgba(0,0,0,.18))}#topRight .ib .eic{width:26px;height:26px;padding:2px;border-radius:50%;background:rgba(255,248,236,.92)}.tabbar .ic .eic{width:26px;height:26px;filter:none}#sgTabs .tic{font-style:normal}.fbt i .eic{width:34px;height:34px}.fba i .eic{width:28px;height:28px}#go .eic{width:24px;height:24px;vertical-align:-6px}#sTabs .eic{width:20px;height:20px;vertical-align:-5px}.st-rk .hd .eic{width:22px;height:22px;vertical-align:-6px}.item .lb .eic{width:28px;height:28px}.sec-t .eic{width:24px;height:24px;vertical-align:-6px;margin-right:2px}#sgTabs .tic .eic{width:22px;height:22px;vertical-align:-5px}.circles button .ti.eic{width:52px;height:52px}.tabbar button .ic:has(.eic){filter:none;opacity:.55}.tabbar button.on .ic:has(.eic){opacity:1}
+.eic{width:1.4em;height:1.4em;object-fit:contain;display:inline-block;vertical-align:middle;filter:drop-shadow(0 1px 1px rgba(0,0,0,.18))}#topRight .ib .eic{width:26px;height:26px;padding:2px;border-radius:50%;background:rgba(255,248,236,.92)}.tabbar .ic .eic{width:26px;height:26px;filter:none}#sgTabs .tic{font-style:normal}.obg{display:grid;grid-template-columns:1fr 1fr;gap:10px}.obc{display:flex;flex-direction:column;align-items:center;gap:4px;padding:10px 6px;border-radius:14px;border:2px solid var(--line);background:var(--card);color:inherit}.obc.on{border-color:var(--accent);box-shadow:0 0 0 2px color-mix(in srgb,var(--accent) 30%,transparent)}.obc img{width:100%;aspect-ratio:3/4;object-fit:contain}.obc small{color:var(--muted);font-size:12px}.fbt i .eic{width:34px;height:34px}.fba i .eic{width:28px;height:28px}#go .eic{width:24px;height:24px;vertical-align:-6px}#sTabs .eic{width:20px;height:20px;vertical-align:-5px}.st-rk .hd .eic{width:22px;height:22px;vertical-align:-6px}.item .lb .eic{width:28px;height:28px}.sec-t .eic{width:24px;height:24px;vertical-align:-6px;margin-right:2px}#sgTabs .tic .eic{width:22px;height:22px;vertical-align:-5px}.circles button .ti.eic{width:52px;height:52px}.tabbar button .ic:has(.eic){filter:none;opacity:.55}.tabbar button.on .ic:has(.eic){opacity:1}
 .ecover{position:fixed;inset:0;z-index:9990;display:flex;align-items:center;justify-content:center;background:#1c140d;opacity:0;transition:opacity .45s ease}.ecover.on{opacity:1}
 .ecover i{position:absolute;inset:0;background-size:cover;background-position:center;filter:saturate(1.05);transform:scale(1.08);transition:transform 2.4s ease-out}.ecover.on i{transform:scale(1)}
 .ecover>div{position:relative;text-align:center;color:#fff;font-family:var(--serif);text-shadow:0 2px 12px rgba(0,0,0,.7);background:rgba(20,12,6,.38);padding:18px 26px;border-radius:16px}
@@ -580,7 +580,7 @@ html[data-era=ming] .topbar,html[data-era=qing] .topbar{border-bottom-width:4px}
       if(!window.caches)return go();caches.keys().then(function(ks){return Promise.all(ks.filter(function(k){return k.indexOf("xqlab-app-")===0}).map(function(k){return caches.delete(k)}))})
         .then(function(){return navigator.serviceWorker&&navigator.serviceWorker.getRegistration()}).then(function(r){return r&&r.update()}).catch(function(){}).then(go)}};setTimeout(chk,4000)})();
 </script>
-<script>window.XQ_OFFLINE=true;window.XQ_BUILD="20261104-1716";</script>
+<script>window.XQ_OFFLINE=true;window.XQ_BUILD="20261104-1806";</script>
 <script src="core.js"></script>
 <script src="engine.js"></script>
 <script src="local.js"></script>
@@ -1491,8 +1491,8 @@ function route(){
   screen=Home(v)}
 window.addEventListener("hashchange",route);
 // 線上版（手機用電腦給的網址打開）：第一次進來請取名字
-if(!window.XQ_OFFLINE&&!/^(localhost|127\.|\[::1\])/.test(location.hostname)&&!myName())setTimeout(()=>nameSheet(true),800);
-if(window.XQ_OFFLINE&&!myName()&&!store.get("nameAsked",false))setTimeout(()=>{if(myName()||document.querySelector("#sheet"))return;store.set("nameAsked",true);nameSheet(true)},1500);
+if(!window.XQ_OFFLINE&&!/^(localhost|127\.|\[::1\])/.test(location.hostname)&&!myName()&&store.get("onboard1",false))setTimeout(()=>nameSheet(true),800);   /* 意見回饋 491：還沒選角色的人，名字在選角色畫面一起取 */
+if(window.XQ_OFFLINE&&!myName()&&!store.get("nameAsked",false)&&store.get("onboard1",false))setTimeout(()=>{if(myName()||document.querySelector("#sheet"))return;store.set("nameAsked",true);nameSheet(true)},1500);
 function poller(fn,ms){let on=true,t=null;const tick=async()=>{if(!on)return;try{await fn()}catch(e){}if(on)t=setTimeout(tick,typeof ms==="function"?ms():ms)};tick();return()=>{on=false;clearTimeout(t)}}
 
 // ================= 離線版專用：連線、引擎下載 =================
@@ -2775,6 +2775,22 @@ async function xfRecv(){if(!OFF||!window.XQNet||!window.XQSave||!crypto.subtle)r
         modal(`<div class="em">📱</div><h2>用舊手機的資料取代這支手機？</h2><p class="muted">收到 ${n} 筆資料（${new Date(D.at).toLocaleString()} 產生）。這支手機原本的修為、戰績和設定會被換掉。</p>`,
           [["取代並重新開啟",()=>{for(let i=0;i<M.n;i++)XQNet.putRetained(K.topic(i),"");XQNet.putRetained(K.topic("m"),"");XQSave.load(D.data,()=>{location.replace(location.pathname+"#/");setTimeout(()=>location.reload(),80)})}],["取消",null,true]])}
       catch(e){msg("解不開：轉移碼不對，或資料已經被換掉了")}}})}
+/* 意見回饋 491（開發者）：第一次進 App 先選「男生／女生」「Q 版／真實版」（拿素材給玩家看差別），再取名字；老玩家更新到這版也會跳一次 */
+function onboard(force){if(!force&&store.get("onboard1",false))return;let sx=mySex(),st=myStyle(),step=0;
+  const card=(k,on,img,t,sub)=>`<button class="obc${on?" on":""}" data-k="${k}"><img src="${img}" alt="" onerror="this.style.visibility='hidden'"><b>${t}</b><small>${sub}</small></button>`;
+  const paint=b=>{const name=myName()||"";
+    b.innerHTML=step===0?`<p class="muted" style="margin:0 0 8px">歡迎來到象棋研究室！先選你在棋桌前的樣子（之後可以在「設定 → 外觀」改）</p><div class="obg">${card("m",sx==="m","data/xs/xs_idle.webp","男生","小帥")+card("f",sx==="f","data/xs/xs_girl_idle.webp","女生","小帥妹")}</div><button class="btn" id="obN" style="width:100%;margin-top:12px">下一步</button>`
+      :step===1?`<p class="muted" style="margin:0 0 8px">角色要用哪一種樣子？園子裡的你、跟你下棋的對手都會照這個顯示</p><div class="obg">${card("q",st==="q",`data/xs/prev_q_${sx==="f"?"girl":"boy"}.webp`,"🧸 Q 版","圓滾滾的棋子小人")+card("real",st==="real",`data/xs/prev_real_${sx==="f"?"girl":"boy"}.webp`,"🗿 真實版","照畫好的人物做的 3D")}</div><div class="row" style="gap:8px;margin-top:12px"><button class="btn ghost" id="obB" style="flex:1">上一步</button><button class="btn" id="obN" style="flex:2">下一步</button></div>`
+      :`<p class="muted" style="margin:0 0 8px">最後，幫自己取個名字（線上對戰、大廳會顯示）</p><input id="obName" maxlength="16" value="${esc(name)}" placeholder="例如：雲河小棋手" style="width:100%;font-size:18px;padding:12px;border-radius:12px;border:1px solid var(--line);background:var(--card);color:inherit"><div class="row" style="gap:8px;margin-top:12px"><button class="btn ghost" id="obB" style="flex:1">上一步</button><button class="btn" id="obN" style="flex:2">開始下棋</button></div>`;
+    b.querySelectorAll(".obc").forEach(x=>x.onclick=()=>{vibrate(5);if(step===0)sx=x.dataset.k;else st=x.dataset.k;paint(b)});
+    const bk=b.querySelector("#obB");if(bk)bk.onclick=()=>{step--;paint(b)};
+    b.querySelector("#obN").onclick=()=>{vibrate(8);if(step<2){step++;return paint(b)}
+      const nm=(b.querySelector("#obName").value||"").trim();store.set("pSex",sx);store.set("pStyle",st);store.set("oppLook",st==="real"?"real":"3d");store.set("onboard1",true);
+      if(nm){try{setMyName(nm)}catch(e){}}
+      try{if(PARK){PARK.v.destroy();PARK=null}}catch(e){}closeSheet();toast(`歡迎，${nm||"棋友"}！`);setTimeout(()=>{try{route()}catch(e){}},300)}};
+  sheet(step===0?"🎎 選你的角色":"🎎 選你的角色",paint)}
+setTimeout(()=>{try{if(!/#\/(play|journey\/play|cpu)/.test(location.hash))onboard(false)}catch(e){}},2500);
+
 // ================= 設定：棋盤風格、棋子樣式、走棋顯示 =================
 const SAMPLE_FEN0="rnbakabnr/9/1c5c1/p1p1p1p1p/9/9/P1P1P1P1P/1C5C1/9/RNBAKABNR",SAMPLE_FEN1="rnbakabnr/9/1c5c1/p1p1p1p1p/9/9/P1P1P1P1P/1C2C4/9/RNBAKABNR",SAMPLE_LAST={f:70,t:67};
 function Settings(v){
@@ -2788,7 +2804,10 @@ function Settings(v){
       <div class="row" style="justify-content:space-between;margin-top:6px"><span class="muted">示範：紅方 炮二平五</span><button class="pill" id="replay">▶ 再走一次</button></div></div>
     <div class="sec-t">朝代風格<span class="muted" style="font-size:12px;font-weight:400">每一頁都會換</span></div><div class="eragrid" id="era"></div>
     <div class="sec-t">深淺色</div><div class="opt" id="pt"></div><p class="muted" id="ptN" style="font-size:12px;margin:4px 4px 0"></p>
-    <div class="sec-t">棋盤風格</div><div class="thgrid" id="th"></div>
+    <div class="sec-t">棋盤風格</div>
+    <label class="row" style="justify-content:space-between;padding:4px 2px 10px"><span><b>🌳 3D 園子棋盤</b><br><span class="muted">下棋時坐在 3D 園子的石桌前；關掉就用平面棋盤</span></span><input type="checkbox" class="sw" id="p3d"></label>   <!-- 意見回饋 488 -->
+    <div class="thgrid" id="th"></div>
+    <div class="sec-t">我的角色</div><button class="btn ghost" id="obAgain" style="width:100%;margin-bottom:6px">🎎 重新選角色（男生／女生、Q 版／真實版、名字）</button>
     <div class="sec-t">對手形象<span class="muted" style="font-size:12px;font-weight:400">下棋時對面坐的人</span></div><div class="opt" id="ol"></div>
     <div class="sec-t">棋子樣式</div><div class="opt" id="ps"></div>
     <label class="row" style="justify-content:space-between;padding:8px 2px"><span><b>高對比棋子</b><br><span class="muted">白底大字、紅黑字，看不清楚朝代棋子時打開</span></span><input type="checkbox" class="sw" id="hiCon"></label>
@@ -2870,6 +2889,8 @@ function Settings(v){
     /* 意見回饋 442、456（開發者）：對手形象可以選——3D 立體小人（跟小帥一樣是立體的，每個人帽子、衣服不同）或畫好的立繪 */
     {const ol=v.querySelector("#ol");if(ol){const cur=store.get("oppLook","3d");ol.innerHTML=[["3d","🧸 Q 版 3D"],["real","🗿 真實 3D"],["art","🖼 畫好的立繪"]].map(([k,l])=>`<button data-ol="${k}" class="${cur===k?"on":""}">${l}</button>`).join("");
       ol.querySelectorAll("[data-ol]").forEach(x=>x.onclick=()=>{vibrate(5);store.set("oppLook",x.dataset.ol);paint()})}}
+    {const oa=v.querySelector("#obAgain");if(oa)oa.onclick=()=>{vibrate(5);onboard(true)}}
+    {const p3=v.querySelector("#p3d");if(p3){p3.checked=!!store.get("park3d",true);p3.onchange=()=>{vibrate(5);store.set("park3d",p3.checked);toast(p3.checked?"下棋時會在 3D 園子裡":"下棋時用平面棋盤")}}}
     {const hcI=v.querySelector("#hiCon");if(hcI){hcI.checked=!!store.get("hiCon",false);hcI.onchange=()=>{store.set("hiCon",hcI.checked);vibrate(5);try{if(PARK){PARK.v.destroy();PARK=null}}catch(e){}show(true)}}}
     v.querySelector("#ps").innerHTML=[["classic","傳統"],["solid","實心"],["3d","🎲 立體"]].map(([k,l])=>`<button data-p="${k}" class="${ps===k?"on":""}">${l}</button>`).join("");
     v.querySelectorAll("[data-p]").forEach(x=>x.onclick=()=>{store.set("pieceStyle",x.dataset.p);paint();show(false)});
@@ -3343,6 +3364,27 @@ const CHAMP_LOOK=(era,side)=>CHAMP_META&&ARENA[era]?{p:side==="r"?"帥":"將",e:
 /* 意見回饋 425：石桌往事的園子（第一集、第二集以後共用）每次開一盤，隨機遇到一位路人棋友（不會連續兩次同一位），難度以玩家等級為中心上下浮動一級。
    立繪 data/npc/<id>.webp（Gemini 畫的，還沒有就只顯示名字）；3D 用 bot3d.js 的路人造型（hat 帽子／頭髮、hc 顏色、robe 衣服、band 頭帶、acc 髮簪／花），不受「Pikafish 造型」設定影響；pc 是身上那顆棋子（黑方的字） */
 const PARK_NPC=[
+  /* 開發者（11/4）：20 位年輕女性棋手（唐宋元明清各種身分，元朝、明朝各多 5 位），立繪 npc/w*.webp */
+  {"id":"w01_tang_lady","name":"長安的牡丹娘子","pc":"士","say":"從長安帶來的棋，你接得住嗎？","win":"牡丹開得正好，這盤也是。","lose":"好棋！這一盤，我記在團扇上了。","hat":"topknot","hc":"#1E1A16","robe":"#C8322A"},
+  {"id":"w02_song_tea","name":"點茶的青盞姑娘","pc":"象","say":"先喝口茶，棋要慢慢下。","win":"茶還溫著，棋已經下完了。","lose":"這一手，比我的茶還香。","hat":"topknot","hc":"#1E1A16","robe":"#9CC8D8"},
+  {"id":"w03_yuan_rider","name":"草原女騎手","pc":"馬","say":"我的馬跳得比風還快！","win":"哈！草原上可沒人追得上我。","lose":"你的馬比我的還野，佩服！","hat":"hair","hc":"#1E1A16","robe":"#2456A6"},
+  {"id":"w04_ming_scholar","name":"女扮男裝的書生","pc":"士","say":"在下……咳，小生請教一盤。","win":"書上寫的，果然沒錯。","lose":"這一手書上沒有，我得記下來。","hat":"fangjin","hc":"#151515","robe":"#B8A0D8"},
+  {"id":"w05_qing_gege","name":"溜出府看棋的格格","pc":"將","say":"噓——別說我在這兒下棋。","win":"本格格贏了，不許告訴阿瑪！","lose":"輸了？再來一盤，這盤不算！","hat":"hair","hc":"#1E1A16","robe":"#F0B8C8"},
+  {"id":"w06_swordswoman","name":"路過的江湖女俠","pc":"車","say":"劍不出鞘，棋上見真章。","win":"承讓。下一盤，換你先手。","lose":"好身手！江湖再見。","hat":"topknot","hc":"#1E1A16","robe":"#1E1A16"},
+  {"id":"w07_fisher_girl","name":"水鄉漁家女","pc":"卒","say":"剛收網回來，手還是濕的呢！","win":"今天魚多，棋也贏！","lose":"魚跑了，棋也輸了……","hat":"hair","hc":"#C9A86A","robe":"#3E5A8A"},
+  {"id":"w08_embroider","name":"蘇州繡娘","pc":"象","say":"一針一線，一步一步。","win":"繡好了，這盤也收針了。","lose":"你這一手，針腳比我還細。","hat":"topknot","hc":"#1E1A16","robe":"#E8B860"},
+  {"id":"w09_qin_player","name":"抱琴的女琴師","pc":"士","say":"琴放一邊，先聽聽棋聲。","win":"一曲終了，勝負也定了。","lose":"好棋，像一段好曲子。","hat":"topknot","hc":"#1E1A16","robe":"#F5F3EE"},
+  {"id":"w10_general","name":"少年女將軍","pc":"車","say":"排兵布陣，本將軍最在行！","win":"全軍得勝，收兵！","lose":"敗得心服口服，下次再戰。","hat":"helmet","hc":"#9AA0A8","robe":"#8E2A22"},
+  {"id":"w11_yuan_falconer","name":"馴鷹少女","pc":"馬","say":"我的鷹在天上看著你的棋。","win":"鷹看得準，我下得也準！","lose":"連鷹都替你叫好了。","hat":"hair","hc":"#1E1A16","robe":"#8E2A22"},
+  {"id":"w12_yuan_merchant","name":"西域商隊的姑娘","pc":"砲","say":"駱駝隊明天才走，今天陪你下棋。","win":"這盤棋，我賺到了！","lose":"這筆買賣我虧了，再來！","hat":"kerchief","hc":"#E8DCC8","robe":"#2456A6"},
+  {"id":"w13_yuan_singer","name":"勾欄的雜劇女伶","pc":"砲","say":"台下看戲，台上下棋，今天換個角色。","win":"這齣戲，我唱贏了！","lose":"好戲！這盤你是主角。","hat":"topknot","hc":"#1E1A16","robe":"#F0A0B8"},
+  {"id":"w14_yuan_porcelain","name":"畫青花的女工","pc":"象","say":"畫一筆青花，走一步棋。","win":"這盤棋，跟青花一樣漂亮。","lose":"你的棋，比我的青花還細。","hat":"bandana","hc":"#2F4A8A","robe":"#2F4A8A"},
+  {"id":"w15_yuan_archer","name":"草原女射手","pc":"車","say":"百步穿楊，棋盤上也一樣。","win":"正中靶心！","lose":"這一箭，我射偏了。","hat":"hair","hc":"#1E1A16","robe":"#6A4A2A"},
+  {"id":"w16_ming_poet","name":"江南才女","pc":"士","say":"作詩缺一句，下盤棋找靈感。","win":"得了！這句就叫『一車定乾坤』。","lose":"這一步，可以寫成一首詩了。","hat":"topknot","hc":"#1E1A16","robe":"#F0C0C8"},
+  {"id":"w17_ming_pipa","name":"秦淮琵琶女","pc":"象","say":"彈完這曲，陪你下一盤。","win":"大珠小珠落玉盤，這盤是我的。","lose":"好棋，弦都要斷了。","hat":"topknot","hc":"#1E1A16","robe":"#F5F3EE"},
+  {"id":"w18_ming_doctor","name":"年輕女醫","pc":"卒","say":"下棋跟看病一樣，要先看準。","win":"藥到病除，棋到局終。","lose":"這一手，我得開帖藥給自己。","hat":"kerchief","hc":"#C8C0B0","robe":"#7A8FA8"},
+  {"id":"w19_ming_teahouse","name":"茶館少東家","pc":"卒","say":"客官，下盤棋再走嘛！","win":"茶錢免了，棋錢照收！","lose":"好棋！這壺茶我請。","hat":"hair","hc":"#1E1A16","robe":"#E8B860"},
+  {"id":"w20_ming_guard","name":"女捕快","pc":"車","say":"奉命巡街，順便抓一盤棋。","win":"人贓俱獲，這盤你輸了。","lose":"你這步棋，連我都抓不到。","hat":"sui","hc":"#1E1A16","robe":"#B8322A"},
   {id:"niao",name:"遛鳥的老伯",pc:"象",say:"我的畫眉聽得懂棋，你走錯它會叫。",win:"畫眉叫了吧？就說你走錯了。",lose:"好棋！畫眉都替你叫好。",hat:"scholar",hc:"#5A4630",robe:"#6B5A44"},
   {id:"duanjin",name:"練八段錦的大娘",pc:"砲",say:"剛打完一套拳，手正熱，來一盤！",win:"棋跟拳一樣，要天天練！",lose:"輸得痛快！明天再來過招。",hat:"bun",hc:"#2A1D16",band:"#C8382E",robe:"#B4453A"},
   {id:"douhua",name:"賣豆花的小販",pc:"卒",say:"下贏了請你一碗，下輸了你請我。",win:"一碗豆花，記你帳上囉！",lose:"願賭服輸，這碗豆花我請！",hat:"scarf",hc:"#E6D3A3",robe:"#C9A46A"},
@@ -3376,12 +3418,16 @@ const PIKA_LOOK=side=>({p:side==="r"?"帥":"將",e:store.get("era","classic"),g:
 const ACTOR_FIG={liuji:["fangjin","#151515","#2F4A6B"],zhangsanfeng:["bun","#E8E6E0","#5E6B5C"],shinaian:["scholar","#1E1A16","#6A4E3A"],shenwansan:["futou","#3a2a1e","#8A5A2B"],changyuchun:["helmet","#6B6B6B","#8E2A22"],wangmian:["bun","#1E1A16","#4E6B3A"],
   tea:["bun","#D8D6D0","#7A6A50"],scholar:["fangjin","#151515","#3E6FA8"],guard:["helmet","#5A5A5A","#5A2420"],monk:["hair","#E2C29A","#C98A2E"],teller:["wusha","#1E1A16","#6B3A5A"]};
 const oppArt=()=>store.get("oppLook","3d")==="art";
+/* 意見回饋 491（開發者）：玩家可以選男生（小帥）或女生，Q 版或真實 3D；園子裡坐在你這一側的就是你選的 */
+const mySex=()=>store.get("pSex","m"),myStyle=()=>store.get("pStyle","q");
+const myLook=()=>{const f=mySex()==="f",id=f?"me_girl":"me_boy";let L=f?{p:"帥",e:store.get("era","classic"),g:9,npc:"me",cus:"me:girl"}:null;
+  if(myStyle()==="real"&&TRIPO[id]){L=L||{p:"帥",e:store.get("era","classic"),g:9};L={...L,glb:`data/tripo_app/${id}.glb`,ring:TRIPO[id]}}return L};
 /* 意見回饋 471：真實 3D（Tripo 模型）。TRIPO＝有模型的角色和身上圓牌的位置（tools/tripo_slim.py 產生）；XQGLB 載入 .glb（three.js 官方 GLTFLoader，用 App 的 three） */
-let TRIPO={};fetch("data/tripo_app/tripo.json").then(r=>r.ok?r.json():{}).then(j=>{TRIPO=j||{}}).catch(()=>{});
+let TRIPO={};const TRIPO_ALIAS={a_changyuchun:"p_b1p_changyuchun",a_liuji:"p_b1p_liubowen",a_shenwansan:"p_b1p_shenwansan",a_shinaian:"p_b1p_shinaian",a_wangmian:"p_b1p_wangmian"};   /* 秘境棋友跟人物表是同一個人，共用模型 */fetch("data/tripo_app/tripo.json").then(r=>r.ok?r.json():{}).then(j=>{TRIPO=j||{}}).catch(()=>{});
 let GLTF_P=null;const GLBC={};window.XQGLB=url=>GLBC[url]||(GLBC[url]=(GLTF_P=GLTF_P||import(new URL(OFF?"GLTFLoader.mjs":"/m/GLTFLoader.mjs",location.href).href)).then(m=>new Promise((res,rej)=>new m.GLTFLoader().load(url,g=>res(g.scene),undefined,rej))).catch(e=>{delete GLBC[url];throw e}));
 const oppFig=L=>{if(!L||oppArt())return L;const o={...L};delete o.flat;delete o.sprite;delete o.spriteMeta;delete o.spriteMap;
   if(o.actor&&ACTOR_FIG[o.actor]&&!o.npc){const[h,hc,rb]=ACTOR_FIG[o.actor];Object.assign(o,{npc:o.actor,hat:h,hc,robe:rb})}
-  if(store.get("oppLook","3d")==="real"&&typeof o.cus==="string"){const id=o.cus.replace(":","_");if(TRIPO[id]){o.glb=`data/tripo_app/${id}.glb`;o.ring=TRIPO[id]}}return o};
+  if(store.get("oppLook","3d")==="real"&&typeof o.cus==="string"){const id0=o.cus.replace(":","_"),id=TRIPO_ALIAS[id0]||id0;if(TRIPO[id]){o.glb=`data/tripo_app/${id}.glb`;o.ring=TRIPO[id]}}return o};
 const ACTOR_LOOK=(id,side)=>({p:npcPc({pc:ACTOR_PC[id]||"將"},side),e:store.get("era","classic"),g:9,actor:id,cus:"a:"+id,flat:true,sprite:"data/actors/",spriteMeta:{w:380,h:512,mask:true,faceOf:faceOf("actors",{idle:id,think:id,move:id,happy:id,sad:id,surprise:id},id)},spriteMap:{idle:id,think:id,move:id,happy:id,sad:id,surprise:id}});
 const innActor=j=>{if(!String(j||"").startsWith("inn:"))return null;const x=INN.concat(SECRETS).find(z=>"inn:"+z.id===j);return x?{...x,pc:ACTOR_PC[x.id]||"將",img:`data/actors/${x.id}.webp`,win:"承讓了，下次再來！",lose:"好棋！佩服。"}:null};
 // 公園棋盤的朝代造型（意見回饋 216）：跟棋盤模式同一套底圖、格線色、棋子底圖、字色、字形
@@ -3439,7 +3485,7 @@ function parkDraw(host,bd,board,o,ex){
     if(!pv){toast("這台裝置沒辦法顯示 3D，先用棋盤模式");store.set("park3d",false);return}PARK={host,v:pv,era:store.get("era","classic"),bg:ex.bg||null};parkUi(host,pv);setTimeout(()=>{try{pv.say(`我是${BOTN()}，幫你加油！`,2.6);if(ex.oppHello)setTimeout(()=>pv.oppSay(ex.oppHello,2.6),1400)}catch(e){}},700)}
   /* 意見回饋 417：園子上方標出朝代和那個朝代對園子的叫法（例如「唐朝・園林」「漢朝・苑囿」） */
   {let tg=host.querySelector(".pkname");if(!tg){tg=document.createElement("div");tg.className="pkname";if(getComputedStyle(host).position==="static")host.style.position="relative";host.append(tg)}const k=store.get("era","classic");tg.textContent=ex.bgName||((k==="classic"?"經典":eraLabel(k))+"・"+(PW[k]||"園子"));tg.hidden=false}
-  if(PARK.v.show)PARK.v.show();bd.svg.style.display="none";botVis(false);ex.look=parkLook();if(ex.opp)ex.opp=oppFig(ex.opp);PARK.last={board,o,ex};PARK.v.draw(board,o,ex)}
+  if(PARK.v.show)PARK.v.show();bd.svg.style.display="none";botVis(false);ex.look=parkLook();if(ex.opp)ex.opp=oppFig(ex.opp);if(!ex.mateLook)ex.mateLook=myLook();PARK.last={board,o,ex};PARK.v.draw(board,o,ex)}
 // 意見回饋 241：在公園裡按鈕換成「▦」（回棋盤模式），在棋盤模式是「🌳」（去公園）
 const parkIcon=()=>parkOn()?"▦":"🌳",parkLabel=()=>parkOn()?"回棋盤模式":"去園子下棋（3D）";
 const parkBtn=redraw=>[parkIcon(),e=>{store.set("park3d",!parkOn());vibrate(8);toast(parkOn()?`🌳 園子 3D 棋盤：${BOTN()}坐在對面跟你下（拖曳可以看四周）`:"回到棋盤模式");
