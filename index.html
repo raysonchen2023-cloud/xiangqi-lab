@@ -578,7 +578,7 @@ html[data-era=ming] .topbar,html[data-era=qing] .topbar{border-bottom-width:4px}
       if(!window.caches)return go();caches.keys().then(function(ks){return Promise.all(ks.filter(function(k){return k.indexOf("xqlab-app-")===0}).map(function(k){return caches.delete(k)}))})
         .then(function(){return navigator.serviceWorker&&navigator.serviceWorker.getRegistration()}).then(function(r){return r&&r.update()}).catch(function(){}).then(go)}};setTimeout(chk,4000)})();
 </script>
-<script>window.XQ_OFFLINE=true;window.XQ_BUILD="20261104-1506";</script>
+<script>window.XQ_OFFLINE=true;window.XQ_BUILD="20261104-1509";</script>
 <script src="core.js"></script>
 <script src="engine.js"></script>
 <script src="local.js"></script>
@@ -2773,6 +2773,7 @@ function Settings(v){
     <div class="sec-t">朝代風格<span class="muted" style="font-size:12px;font-weight:400">每一頁都會換</span></div><div class="eragrid" id="era"></div>
     <div class="sec-t">深淺色</div><div class="opt" id="pt"></div><p class="muted" id="ptN" style="font-size:12px;margin:4px 4px 0"></p>
     <div class="sec-t">棋盤風格</div><div class="thgrid" id="th"></div>
+    <div class="sec-t">對手形象<span class="muted" style="font-size:12px;font-weight:400">下棋時對面坐的人</span></div><div class="opt" id="ol"></div>
     <div class="sec-t">棋子樣式</div><div class="opt" id="ps"></div>
     <label class="row" style="justify-content:space-between;padding:8px 2px"><span><b>高對比棋子</b><br><span class="muted">白底大字、紅黑字，看不清楚朝代棋子時打開</span></span><input type="checkbox" class="sw" id="hiCon"></label>
     </div>
@@ -2849,6 +2850,9 @@ function Settings(v){
       b.append(bd.svg);const s=document.createElement("span");s.textContent=name;b.append(s);
       b.onclick=()=>{vibrate(5);store.set("boardTheme",k);paint();show(true)};th.append(b)}
     {const xo=v.querySelector("#xfOut"),xi=v.querySelector("#xfIn");if(xo)xo.onclick=()=>{vibrate(5);xfSend()};if(xi)xi.onclick=()=>{vibrate(5);xfRecv()}}
+    /* 意見回饋 442、456（開發者）：對手形象可以選——3D 立體小人（跟小帥一樣是立體的，每個人帽子、衣服不同）或畫好的立繪 */
+    {const ol=v.querySelector("#ol");if(ol){const cur=store.get("oppLook","3d");ol.innerHTML=[["3d","🧸 3D 立體小人"],["art","🖼 畫好的立繪"]].map(([k,l])=>`<button data-ol="${k}" class="${cur===k?"on":""}">${l}</button>`).join("");
+      ol.querySelectorAll("[data-ol]").forEach(x=>x.onclick=()=>{vibrate(5);store.set("oppLook",x.dataset.ol);paint()})}}
     {const hcI=v.querySelector("#hiCon");if(hcI){hcI.checked=!!store.get("hiCon",false);hcI.onchange=()=>{store.set("hiCon",hcI.checked);vibrate(5);try{if(PARK){PARK.v.destroy();PARK=null}}catch(e){}show(true)}}}
     v.querySelector("#ps").innerHTML=[["classic","傳統"],["solid","實心"],["3d","🎲 立體"]].map(([k,l])=>`<button data-p="${k}" class="${ps===k?"on":""}">${l}</button>`).join("");
     v.querySelectorAll("[data-p]").forEach(x=>x.onclick=()=>{store.set("pieceStyle",x.dataset.p);paint();show(false)});
@@ -3349,7 +3353,13 @@ const npcHTML=(side,n,sub)=>`<div class="av ${side} npc" role="button" aria-labe
 let NPC_HI=null;   /* 已經打過招呼的那盤園子（同一個 3D 園子裡再下一盤時，新的對手開口打招呼） */
 const PIKA_LOOK=side=>({p:side==="r"?"帥":"將",e:store.get("era","classic"),g:1,thin:true,wl:true,flat:!!PIKA_META,sprite:PIKA_META?PIKA_META_DIR:null,spriteMeta:PIKA_META});
 /* 驛站旅人、秘境棋友：data/actors/<id>.webp（一張立繪，六種表情共用）；3D 人物檢視時用帽子顏色配的立體小人 */
-const ACTOR_LOOK=(id,side)=>({p:npcPc({pc:ACTOR_PC[id]||"將"},side),e:store.get("era","classic"),g:9,flat:true,sprite:"data/actors/",spriteMeta:{w:380,h:512,mask:true,faceOf:faceOf("actors",{idle:id,think:id,move:id,happy:id,sad:id,surprise:id},id)},spriteMap:{idle:id,think:id,move:id,happy:id,sad:id,surprise:id}});
+/* 驛站旅人、秘境棋友的 3D 小人造型（帽子、帽色、衣服）：選「3D 立體小人」時用，每個人看得出不一樣 */
+const ACTOR_FIG={liuji:["fangjin","#151515","#2F4A6B"],zhangsanfeng:["bun","#E8E6E0","#5E6B5C"],shinaian:["scholar","#1E1A16","#6A4E3A"],shenwansan:["futou","#3a2a1e","#8A5A2B"],changyuchun:["helmet","#6B6B6B","#8E2A22"],wangmian:["bun","#1E1A16","#4E6B3A"],
+  tea:["bun","#D8D6D0","#7A6A50"],scholar:["fangjin","#151515","#3E6FA8"],guard:["helmet","#5A5A5A","#5A2420"],monk:["hair","#E2C29A","#C98A2E"],teller:["wusha","#1E1A16","#6B3A5A"]};
+const oppArt=()=>store.get("oppLook","3d")==="art";
+const oppFig=L=>{if(!L||oppArt())return L;const o={...L};delete o.flat;delete o.sprite;delete o.spriteMeta;delete o.spriteMap;
+  if(o.actor&&ACTOR_FIG[o.actor]&&!o.npc){const[h,hc,rb]=ACTOR_FIG[o.actor];Object.assign(o,{npc:o.actor,hat:h,hc,robe:rb})}return o};
+const ACTOR_LOOK=(id,side)=>({p:npcPc({pc:ACTOR_PC[id]||"將"},side),e:store.get("era","classic"),g:9,actor:id,flat:true,sprite:"data/actors/",spriteMeta:{w:380,h:512,mask:true,faceOf:faceOf("actors",{idle:id,think:id,move:id,happy:id,sad:id,surprise:id},id)},spriteMap:{idle:id,think:id,move:id,happy:id,sad:id,surprise:id}});
 const innActor=j=>{if(!String(j||"").startsWith("inn:"))return null;const x=INN.concat(SECRETS).find(z=>"inn:"+z.id===j);return x?{...x,pc:ACTOR_PC[x.id]||"將",img:`data/actors/${x.id}.webp`,win:"承讓了，下次再來！",lose:"好棋！佩服。"}:null};
 // 公園棋盤的朝代造型（意見回饋 216）：跟棋盤模式同一套底圖、格線色、棋子底圖、字色、字形
 /* 意見回饋 438、439（開發者：同一個朝代，平面和 3D 的棋盤、棋子不能不一樣）：這裡的判斷跟平面棋盤（Board 的 draw）一模一樣——
@@ -3406,7 +3416,7 @@ function parkDraw(host,bd,board,o,ex){
     if(!pv){toast("這台裝置沒辦法顯示 3D，先用棋盤模式");store.set("park3d",false);return}PARK={host,v:pv,era:store.get("era","classic"),bg:ex.bg||null};parkUi(host,pv);setTimeout(()=>{try{pv.say(`我是${BOTN()}，幫你加油！`,2.6);if(ex.oppHello)setTimeout(()=>pv.oppSay(ex.oppHello,2.6),1400)}catch(e){}},700)}
   /* 意見回饋 417：園子上方標出朝代和那個朝代對園子的叫法（例如「唐朝・園林」「漢朝・苑囿」） */
   {let tg=host.querySelector(".pkname");if(!tg){tg=document.createElement("div");tg.className="pkname";if(getComputedStyle(host).position==="static")host.style.position="relative";host.append(tg)}const k=store.get("era","classic");tg.textContent=ex.bgName||((k==="classic"?"經典":eraLabel(k))+"・"+(PW[k]||"園子"));tg.hidden=false}
-  if(PARK.v.show)PARK.v.show();bd.svg.style.display="none";botVis(false);ex.look=parkLook();PARK.last={board,o,ex};PARK.v.draw(board,o,ex)}
+  if(PARK.v.show)PARK.v.show();bd.svg.style.display="none";botVis(false);ex.look=parkLook();if(ex.opp)ex.opp=oppFig(ex.opp);PARK.last={board,o,ex};PARK.v.draw(board,o,ex)}
 // 意見回饋 241：在公園裡按鈕換成「▦」（回棋盤模式），在棋盤模式是「🌳」（去公園）
 const parkIcon=()=>parkOn()?"▦":"🌳",parkLabel=()=>parkOn()?"回棋盤模式":"去園子下棋（3D）";
 const parkBtn=redraw=>[parkIcon(),e=>{store.set("park3d",!parkOn());vibrate(8);toast(parkOn()?`🌳 園子 3D 棋盤：${BOTN()}坐在對面跟你下（拖曳可以看四周）`:"回到棋盤模式");
@@ -4180,12 +4190,12 @@ function CpuGame(v,practicePage,mode){
   /* 意見回饋 431：點對手頭像看他的 3D 人物（拖曳可以轉） */
   const oppInfo=()=>{if(!st)return null;const bot=st.human==="r"?"b":"r",N=parkNpcOf(st),L0=lvPlayOf(st),jk=(L0&&L0.lvp.opp)||(String(st.journey||"").startsWith("char:")?st.journey.slice(5):null);
     if(jk&&JCHAR[jk])return{look:JCHAR_LOOK(jk,bot),name:JCHAR[jk].name,img:`data/journey/char_${jk}_idle.webp`,say:JCHAR[jk].hi};
-    {const ia=innActor(st.journey);if(ia)return{look:null,name:ia.name,img:ia.img,say:ia.say.replace(/^「|」$/g,"")}}
+    {const ia=innActor(st.journey);if(ia)return{look:ACTOR_LOOK(ia.id,bot),name:ia.name,img:ia.img,say:ia.say.replace(/^「|」$/g,"")}}
     if(st.arena&&ARENA[st.arena])return{look:CHAMP_LOOK(st.arena,bot)||{p:bot==="r"?"帥":"將",e:st.arena,g:9},name:ARENA[st.arena].name,img:`data/champ/${st.arena}_idle.webp`,say:ARENA[st.arena].hi};
     if(N)return{look:NPC_LOOK(N,bot),name:N.name,img:`data/npc/${N.id}.webp`,say:N.say};
     return{look:PIKA_LOOK(bot),name:"Pikafish",img:null,say:"我是 Pikafish，請多指教。"}};
   v.querySelector("#pTop").onclick=e=>{if(e.target.closest(".cpu-chip")){vibrate(8);newSheet();return}
-    if(e.target.closest(".av")){const o=oppInfo();if(!o)return;vibrate(5);figView(o.look,"👤 "+o.name,`<p style="font-size:16px;line-height:1.8;margin:0">「${esc(o.say)}」</p>`,[["關閉",()=>closeSheet(),true]],o.img)}};
+    if(e.target.closest(".av")){const o=oppInfo();if(!o)return;vibrate(5);figView(oppArt()&&o.img?null:oppFig(o.look),"👤 "+o.name,`<p style="font-size:16px;line-height:1.8;margin:0">「${esc(o.say)}」</p>`,[["關閉",()=>closeSheet(),true]],o.img)}};   /* 意見回饋 445：跟坐在位子上的同一個形象（立繪就看立繪、3D 就看 3D） */
   const acts=actionBar(v.querySelector("#acts"),[...(MODE==="journey"&&store.get("jPending",null)?[["jhint","💡","提示",()=>jBattleHint(st,h=>{pHint=h;draw()})]]:[]),["undo","↶","悔棋",()=>post("/play/undo")],
     ["new","＋","新局",()=>newSheet(),true],["resign","🏳","認輸",()=>confirmBox("確定認輸？",()=>post("/play/resign"),"認輸")],["review","📖","檢討",()=>review(false,st&&st.id)],["setup","🧪","擺盤",()=>st&&setupSheet(st.board,st.turn,st.human==="b",!st.ranked)]]);
   async function post(u,b){if(busy)return;busy=true;try{render(await api(u,b||{}))}catch(e){toast(e.message)}finally{busy=false}}
