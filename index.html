@@ -269,6 +269,16 @@ html[data-era=ming] .topbar,html[data-era=qing] .topbar{border-bottom-width:4px}
 /* 意見回饋 416：開局特效——墨帶一抹、金色書法「開局」由左到右像毛筆寫出來，右邊蓋一方「紅先／黑先」朱印 */
 .pkname{position:absolute;top:8px;left:50%;transform:translateX(-50%);z-index:6;pointer-events:none;padding:3px 14px;border-radius:99px;background:rgba(28,18,10,.62);color:#fbeed4;font:800 14px/1.5 var(--serif);letter-spacing:.14em;white-space:nowrap;box-shadow:0 2px 6px rgba(0,0,0,.25)}
 #preov{position:fixed;inset:0;z-index:9999;display:flex;align-items:flex-end;justify-content:center;background:#F3ECDD;padding:24px max(24px,env(safe-area-inset-left,0px)) max(28px,env(safe-area-inset-bottom,0px));transition:opacity .4s;overflow:hidden}#preov.out{opacity:0}
+.hub3{display:grid;gap:12px;margin-top:6px}.hub3 .hubc{display:flex!important;flex-direction:row!important;align-items:center!important;justify-content:flex-start!important;gap:14px;width:100%;min-height:112px;padding:16px 16px 16px 14px!important;text-align:left!important;position:relative}
+.hubc .hi{font-size:40px;width:64px;height:64px;display:flex;align-items:center;justify-content:center;flex:none;margin:0!important}.hubc .hi img{width:56px;height:56px;object-fit:contain}
+.hubc .tx{display:flex!important;flex-direction:column;gap:4px;flex:1;min-width:0;align-items:flex-start!important;text-align:left!important}.hubc .t{font-family:var(--serif);font-size:24px!important;font-weight:900;letter-spacing:.14em;line-height:1.2}.hubc .s{font-size:13px;line-height:1.5;color:var(--muted);white-space:normal!important;overflow:visible!important;text-overflow:clip!important;display:block}.hubc .go{flex:none;font-size:22px;color:var(--muted);margin:0!important}.hubc .bd{position:static!important;margin-left:8px;vertical-align:middle;letter-spacing:0;font-size:11px}
+.hubc.hb{border-color:color-mix(in srgb,#C8102E 40%,var(--line))}.hubc.ha{border-color:color-mix(in srgb,#8A5A2B 45%,var(--line))}.hubc.hl{border-color:color-mix(in srgb,#2E6E5E 45%,var(--line))}
+#sndPill{position:fixed;right:calc(12px + env(safe-area-inset-right,0px));bottom:calc(76px + env(safe-area-inset-bottom,0px));z-index:9000;padding:6px 12px;border-radius:99px;background:rgba(30,22,14,.78);color:#F6E7CF;font-size:13px;font-weight:700;pointer-events:none;animation:sndp 1.6s ease-in-out infinite}@keyframes sndp{50%{opacity:.6}}@media (prefers-reduced-motion:reduce){#sndPill{animation:none}}
+.instc{display:flex;align-items:center;gap:12px;width:100%;margin:0 0 12px;padding:12px 14px;text-align:left;font:inherit;color:inherit;cursor:pointer;border:2px dashed color-mix(in srgb,var(--accent) 55%,var(--line));background:color-mix(in srgb,var(--accent) 7%,var(--card))}.instc .ii{font-size:30px;flex:none}.instc .tx{display:flex;flex-direction:column;flex:1;min-width:0}.instc small{color:var(--muted);font-size:12.5px;line-height:1.5}.instc .go{color:var(--accent);font-size:20px}
+.famg{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:8px;margin-bottom:6px}.famc{display:flex;flex-direction:column;gap:2px;padding:9px 11px;border-radius:12px;border:1px solid var(--line);background:var(--card);opacity:.6;min-width:0}.famc.on{opacity:1;cursor:pointer;border-color:color-mix(in srgb,#2F9E5B 55%,var(--line));box-shadow:0 0 0 2px color-mix(in srgb,#2F9E5B 25%,transparent)}.famc b{font-size:14px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.famc small{color:var(--muted);font-size:11.5px}
+.pkview{position:absolute;right:calc(10px + env(safe-area-inset-right,0px));top:10px;z-index:6;border:none;border-radius:99px;padding:5px 11px;font:inherit;font-size:12.5px;font-weight:700;color:#F6E7CF;background:rgba(30,22,14,.55);backdrop-filter:blur(3px);cursor:pointer}
+.pkhint{position:absolute;inset:0;z-index:7;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px;background:rgba(20,14,8,.38);color:#fff;text-align:center;pointer-events:none;transition:opacity .5s}.pkhint.out{opacity:0}.pkhint b{font-size:17px;margin-top:6px}.pkhint span{font-size:13px;opacity:.9}
+.pkh-hand{font-size:46px;animation:pkswipe 1.5s ease-in-out infinite}@keyframes pkswipe{0%,100%{transform:translateX(-46px)}50%{transform:translateX(46px)}}@media (prefers-reduced-motion:reduce){.pkh-hand{animation:none}}
 .lvh{display:flex;justify-content:space-between;align-items:baseline;gap:8px;flex-wrap:wrap;margin:2px 2px 8px}.lvh b{font-family:var(--serif);font-size:17px}.lvh span{color:var(--muted);font-size:12.5px;font-variant-numeric:tabular-nums}
 .lvsay{line-height:1.85;white-space:pre-wrap;font-size:15px}.lvno{border-color:color-mix(in srgb,var(--red,#B5452B) 45%,transparent)}
 .lvch{display:grid;gap:8px;margin-top:10px}.lvch .btn{white-space:normal;text-align:left;width:100%}
@@ -534,14 +544,14 @@ html[data-era=ming] .topbar,html[data-era=qing] .topbar{border-bottom-width:4px}
 </div>
 <script>
 // 安全網：打開 4 秒後畫面還是空的（更新到一半、程式出錯），顯示「修復」按鈕：清掉 App 快取重新下載（引擎、棋譜、戰績都不會刪）
-(function(){var err="";window.addEventListener("error",function(e){err=String(e.message||"")});
-  setTimeout(function(){var v=document.getElementById("view");if(!v||v.children.length)return;
+(function(){var err="",t0=Date.now();window.addEventListener("error",function(e){err=String(e.message||"")});
+  var chk=function(){var v=document.getElementById("view");if(!v||v.children.length)return;if(document.getElementById("preov")||(!err&&Date.now()-t0<15000))return setTimeout(chk,2000);   /* 開發者：4 秒白畫面「修復並重開」不穩定（手機慢、載入畫面還在時會誤判） */
     v.innerHTML='<div style="padding:24px;text-align:center"><div style="font-size:44px">🔧</div><h2>畫面沒有載入成功</h2><p style="color:#888;font-size:13px">'+err.replace(/[<>&]/g,"")+'</p><button id="xqFix" style="font-size:17px;padding:12px 22px;border-radius:12px;background:#B5452B;color:#fff">修復並重新開啟</button></div>';
     document.getElementById("xqFix").onclick=function(){var go=function(){location.replace(location.pathname+"#/");setTimeout(function(){location.reload()},50)};
       if(!window.caches)return go();caches.keys().then(function(ks){return Promise.all(ks.filter(function(k){return k.indexOf("xqlab-app-")===0}).map(function(k){return caches.delete(k)}))})
-        .then(function(){return navigator.serviceWorker&&navigator.serviceWorker.getRegistration()}).then(function(r){return r&&r.update()}).catch(function(){}).then(go)}},4000)})();
+        .then(function(){return navigator.serviceWorker&&navigator.serviceWorker.getRegistration()}).then(function(r){return r&&r.update()}).catch(function(){}).then(go)}};setTimeout(chk,4000)})();
 </script>
-<script>window.XQ_OFFLINE=true;window.XQ_BUILD="20261104-1210";</script>
+<script>window.XQ_OFFLINE=true;window.XQ_BUILD="20261104-1243";</script>
 <script src="core.js"></script>
 <script src="engine.js"></script>
 <script src="local.js"></script>
@@ -833,8 +843,12 @@ const unlockAudio=()=>{primeVoice();try{if(navigator.audioSession&&navigator.aud
     if(!AC)return;AC._t=now;AC._ct=AC.currentTime;
     if(AC.state!=="running"){const p=AC.resume();if(p&&p.catch)p.catch(()=>{})}
     if(!AC._primed){const b=AC.createBuffer(1,1,22050),src=AC.createBufferSource();src.buffer=b;src.connect(AC.destination);src.start(0);AC._primed=1}}catch(e){}};
-for(const ev of["pointerdown","touchend","click","keydown"])document.addEventListener(ev,unlockAudio,{passive:true,capture:true});
-document.addEventListener("visibilitychange",()=>{if(document.hidden&&AC){try{AC.close()}catch(e){}AC=null}});
+const sndOn=()=>{try{return store.get("capSound",true)||store.get("mvSound",false)||store.get("voiceCall",true)}catch(e){return false}};
+function sndPill(show){let p=document.getElementById("sndPill");if(!show){if(p)p.remove();return}if(p||!sndOn())return;
+  p=document.createElement("div");p.id="sndPill";p.textContent="🔇 點任意處喚醒聲音";document.body.append(p)}
+for(const ev of["pointerdown","touchend","click","keydown"])document.addEventListener(ev,()=>{unlockAudio();sndPill(false)},{passive:true,capture:true});
+setTimeout(()=>{if(!AC||AC.state!=="running")sndPill(true)},1500);
+document.addEventListener("visibilitychange",()=>{if(document.hidden&&AC){try{AC.close()}catch(e){}AC=null}if(!document.hidden)setTimeout(()=>{if(!AC||AC.state!=="running")sndPill(true)},400)});
 window.addEventListener("pagehide",()=>{if(AC){try{AC.close()}catch(e){}AC=null}});
 // 聲音還沒醒（例如電腦走棋）就先叫醒再播，不要直接丟掉；排程往後留 20ms，剛醒來時開頭才不會被切掉
 // 語音報「吃」「將軍」（意見回饋 139 補充）：用手機內建的中文語音朗讀，離線也能用；設定「語音報吃、將軍」可以關
@@ -1254,6 +1268,8 @@ function Board(onTap,onSwipe){
   function piece(p,i,dy,T,PS,up){const s=sideOf(p),col=s==="r"?T.r:T.b,g=el("g",{}),x=X(i),y=Y(i),yt=y+dy,ch=NAMES[s][p.toUpperCase()];
     const txt=(c,o,a)=>el("text",Object.assign({x,y:yt+10+o,"text-anchor":"middle","font-family":"var(--serif)","font-weight":900,"font-size":28,fill:c},a||{}),ch);
     g.append(el("ellipse",up?{cx:x+5,cy:y+13,rx:34,ry:31,fill:`url(#psh${uid})`}:{cx:x+2,cy:y+7,rx:31,ry:29.5,fill:`url(#psh${uid})`}));
+    if(store.get("hiCon",false)){const hc=s==="r"?"#C8102E":"#111111";g.append(el("circle",{cx:x,cy:yt,r:28.5,fill:"#FFFFFF",stroke:hc,"stroke-width":4}));g.append(el("circle",{cx:x,cy:yt,r:22.5,fill:"none",stroke:hc,"stroke-width":1.6}));
+      g.append(txt(hc,2,{"font-size":35,"font-family":"\"Noto Sans TC\",\"PingFang TC\",\"Microsoft JhengHei\",sans-serif"}));if(up)g.append(el("circle",{cx:x,cy:yt,r:31,fill:"none",stroke:T.mv,"stroke-width":4}));return g}   /* 高對比棋子 */
     if(curPK&&PSET.has(curPK)){g.append(el("image",{href:`data/pset/${curPK}/${s}${p.toUpperCase()}.webp`,x:x-30,y:yt-30,width:60,height:60}));   /* 意見回饋 399：整顆棋子（字已經畫在上面）的朝代圖 */
       if(up)g.append(el("circle",{cx:x,cy:yt,r:29,fill:"none",stroke:T.mv,"stroke-width":4}));return g}
     // 朝代棋子底圖（使用者用 Gemini 做的，data/pieces/<朝代>-r/b.webp）：立體樣式才用；字的顏色依底色，再描一圈反差邊
@@ -1294,7 +1310,7 @@ function Board(onTap,onSwipe){
   let lastKey="";
   function draw(board,o){o=o||{};
     // 跟上一次畫的完全一樣（盤面、選子、箭頭、風格都沒變）就不重畫：對戰畫面每秒更新，重畫整個棋盤在手機上會卡、會閃
-    const key=board.join(",")+"|"+JSON.stringify(o)+"|"+[store.get("boardTheme",""),store.get("pieceStyle",""),store.get("mvArrow",true),store.get("pageTheme",""),store.get("era","")].join(",");
+    const key=board.join(",")+"|"+JSON.stringify(o)+"|"+[store.get("boardTheme",""),store.get("pieceStyle",""),store.get("mvArrow",true),store.get("pageTheme",""),store.get("era",""),store.get("hiCon",false)].join(",");
     if(key===lastKey&&svg.firstChild)return;lastKey=key;
     flip=!!o.flip;svg.innerHTML="";
     const T=boardTheme(o.theme),PS=o.pstyle||store.get("pieceStyle","3d");
@@ -1398,6 +1414,9 @@ function route(){
   const h=location.hash.replace(/^#/,"")||"/",p=h.split("/").filter(Boolean).map(decodeURIComponent);
   if(OFF&&window.XQNet&&XQNet.finished()&&p[0]!=="pvp")XQNet.leave();
   if(!p.length)return screen=Home(v);
+  if(p[0]==="hub"&&(p[1]==="battle"||p[1]==="learn"))return screen=Home(v,p[1]);
+  if(p[0]==="camp")return screen=Camp(v,p[1]?+p[1]:0);
+  if(p[0]==="theme")return screen=Theme(v,p[1]?decodeURIComponent(p[1]):"");
   if(p[0]==="play"){navReplace("#/");return}   // 舊的「對弈」頁已經併進首頁
   if(p[0]==="cpu")return screen=CpuGame(v,false,"cpu");
   if(p[0]==="arena")return screen=CpuGame(v,false,"arena");   /* 意見回饋 413：朝代擂台自己一個網址 */
@@ -1601,7 +1620,10 @@ function Lobby(v){setTop("線上對戰・觀戰",false,[["📤",shareSheet,"分�
           return `<div class="card" style="margin-bottom:8px${watching?";border:2px solid var(--accent2)":""}"><div class="row" style="justify-content:space-between;gap:8px"><span style="min-width:0">⚔ ${l.map(pn).join(" 對 ")}${l.length<2?' <span class="muted">對 （對手暫時不在大廳）</span>':""}</span><button class="pill" data-w="${esc(g)}" style="flex:none">👀 ${watching?"回去看":"觀看"}</button></div>
             ${w.length?`<div class="muted" style="font-size:12.5px;margin-top:4px">👀 ${w.length} 人在看：${w.map(p=>`<span data-p="${esc(p.id)}" style="cursor:pointer;text-decoration:underline dotted">${esc(p.name)}</span>`).join("、")}</div>`:""}</div>`};
         const VS=lobbyVisitors(),vis=VS.length?`<div class="sec-t">🪨 路過的石桌往事人物</div>${VS.map(k=>`<button class="card row" data-jc="${k}" style="width:100%;gap:10px;margin-bottom:8px;font:inherit;color:inherit;text-align:left;cursor:pointer"><img src="data/journey/char_${k}_idle.webp" alt="" style="width:46px;height:62px;object-fit:contain;flex:none" onerror="this.remove()"><span style="flex:1;min-width:0"><b>${esc(JCHAR[k].name)}</b><br><span class="muted" style="font-size:12.5px">「${esc(JCHAR[k].hi)}」</span></span><span class="muted">›</span></button>`).join("")}`:"";
-        return vis+`<div class="sec-t">⚔ 正在對戰（${rest.length+(G?1:0)} 盤）・點「觀看」就能觀戰</div>`+(mine||rest.length?mine+rest.map(card).join(""):`<div class="card muted" style="margin-bottom:8px">${up?"目前沒有人在對戰，有人開始下棋就會出現在這裡。":"連線中…"}</div>`)+
+        /* 開發者決定（Gemini 遊戲化審閱）：熟面孔——對戰過的棋友（本機的線上戰績記著 ID 和名字），在線上時亮起來、點一下就能邀請 */
+        const FH=(()=>{let h=[];try{h=(XQNet.rating().hist||[])}catch(e){}const seen=new Set(),out=[];for(const x of h){if(!x.oid||seen.has(x.oid)||x.oid===XQNet.me().id)continue;seen.add(x.oid);out.push(x);if(out.length>=12)break}return out})();
+        const fam=FH.length?`<div class="sec-t">👥 熟面孔（${FH.filter(x=>ps.some(p=>p.id===x.oid)).length}／${FH.length} 在線上）</div><div class="famg">${FH.map(x=>{const on=ps.find(p=>p.id===x.oid),busy=on&&on.st==="playing";return`<${on?`span data-p="${esc(on.id)}"`:"span"} class="famc${on?" on":""}"><b>${on?"🟢":"⚪"} ${esc(on?on.name:x.opp)}</b><small>${on?(busy?"對戰中":on.st==="watching"?"觀戰中":"在線上・點一下邀請"):"上次 "+(x.res==="w"?"你贏":x.res==="l"?"你輸":"和棋")+"・"+new Date(x.at).toLocaleDateString()}</small></${"span"}>`}).join("")}</div>`:"";
+        return vis+fam+`<div class="sec-t">⚔ 正在對戰（${rest.length+(G?1:0)} 盤）・點「觀看」就能觀戰</div>`+(mine||rest.length?mine+rest.map(card).join(""):`<div class="card muted" style="margin-bottom:8px">${up?"目前沒有人在對戰，有人開始下棋就會出現在這裡。":"連線中…"}</div>`)+
           `<div class="sec-t">🟢 可以邀請的棋友（${free.filter(p=>p.st==="idle"||p.st==="seeking").length}）</div>`+
           (free.length?free.map(p=>`<div class="card row" data-p="${esc(p.id)}" style="justify-content:space-between;margin-bottom:8px;cursor:pointer"><span><b>${esc(p.name)}</b> <span class="pill">${esc(XQNet.rankOf(p.pts))}</span>${p.tc?` <span class="muted" style="font-size:12px">⏱${+p.tc}分</span>`:""} <span class="muted" style="font-size:12px">ⓘ</span><br><span class="muted">${p.st==="idle"&&p.doing?"📖 "+esc(String(p.doing).slice(0,10))+"中":ST[p.st]||""}${p.city?"・📍"+esc(p.city):""}</span></span>
             ${p.st==="idle"||p.st==="seeking"?`<button class="pill" data-i="${esc(p.id)}" style="background:var(--accent);color:#fff;border:none;padding:6px 12px">⚔ 邀請對戰</button>`:""}</div>`).join("")
@@ -1728,39 +1750,44 @@ function standaloneOnlineWarn(v){if(OFF||!(matchMedia("(display-mode: standalone
   const c=document.createElement("div");c.className="card";c.style.cssText="margin:12px;border-color:var(--warn)";
   c.innerHTML=`<b>⚠ 這個主畫面圖示會失效</b><p class="muted" style="margin:6px 0">它記住的是電腦這次的臨時網址，電腦程式一重開就連不上。請改裝「象棋研究室」正式版：按下面按鈕，在 Safari 打開後選「加入主畫面」，再把這個舊圖示刪掉。正式版會自己找到電腦的新網址。</p><button class="btn" id="gh">打開正式版（已帶好連線設定）</button>`;
   v.prepend(c);c.querySelector("#gh").onclick=async()=>{let u=APP_HOME;try{const r=await api("/remote");u=(r.urls||[]).find(x=>x.includes("#connect="))||u}catch(e){}location.href=u}}
-function Home(v){
+function Home(v,hub){   /* hub：沒有＝首頁三張大卡；"battle"＝對戰頁；"learn"＝學習頁（開發者看 Gemini UI／UX 審閱後決定） */
   const RI=DEVREMOTE()?XQ.remoteInfo():null;  // 這支手機連過主人的電腦嗎
   const standalone=matchMedia("(display-mode: standalone)").matches||navigator.standalone;
   setTop("象棋研究室",false,OFF?[["📤",shareSheet,"分享給朋友"]].concat(RI?[["🔗",connectSheet,"連線到電腦"]]:[],(DEVMODE()?[["📋",openFbAdmin,"意見回饋管理"]]:[]),[["💬",()=>feedbackSheet(),"意見回饋"]]):[["📤",shareSheet,"分享給朋友"],["👥",whoSheet,"誰在線上"],["💬",()=>feedbackSheet(),"意見回饋"]]);setTabs(true,"#/");   /* 意見回饋 409：意見回饋按鈕放在首頁最右上角 */
+  if(hub){setTop(hub==="battle"?"⚔ 對戰":"📚 學習","#/");setTabs(true,"#/")}
   const T=(k,go,ic,t,id,s,x,cta)=>`<button class="tile strip ${k}${x||""}" data-go="${go}"><span class="ic">${ic}</span><span class="tx"><span class="t">${t}</span><span class="s"${id?` id="${id}"`:""}>${s}</span></span><b class="go">${cta||"›"}</b></button>`;
   v.innerHTML=`<div class="home">
    ${RI?'<div class="card hstat" id="hStatus"><span class="muted">檢查中…</span></div>':""}
-   <!-- 實戰、學習、收藏：每項一長條（左圖示、標題＋重點、右箭頭），跟朝代擂台同一個樣式 -->
-   <div class="sec-t" style="margin-top:4px">實戰</div>
+   <!-- 首頁三張大卡；對戰、學習各一頁（裡面還是原本那些長條） -->
+   ${!hub&&OFF&&!standalone&&!(store.get("instAsk",null)||{}).no?`<button class="card instc" id="hInst2"><span class="ii">📲</span><span class="tx"><b>加到主畫面</b><small>像 App 一樣全螢幕打開，沒網路也能下棋・點這裡看怎麼加</small></span><b class="go">›</b></button>`:""}
+   ${!hub&&!store.get("campSeen",false)&&!Object.keys(store.get("record",{})).length?`<button class="card instc" data-go="#/camp"><span class="ii">🔰</span><span class="tx"><b>第一次下象棋？</b><small>從新手訓練營開始：12 堂小課，每課親手走一步</small></span><b class="go">›</b></button>`:""}
+   ${!hub?`<div class="hub3">
+     <button class="tile hubc hb" data-go="#/hub/battle"><span class="hi">⚔</span><span class="tx"><span class="t">對戰</span><span class="s" id="hNet">挑戰電腦・線上對戰・朝代擂台</span></span><b class="go">›</b></button>
+     ${OFF?(()=>{const L=legendState(),J=jStages(),I=xpInfo();return`<button class="tile hubc ha" data-go="#/adventure"><span class="hi">🪨</span><span class="tx"><span class="t">冒險</span><span class="s" id="hLegend">石桌往事・Lv ${I.L} ${I.title}・故事 ${L.n}／36 回・雲河棋路 ${L.pass||0}／${J.length} 關</span></span><b class="go">›</b></button>`})():""}
+     <button class="tile hubc hl" data-go="#/hub/learn"><span class="hi">📚</span><span class="tx"><span class="t">學習</span><span class="s">測驗・猜著法・錯棋重練・我的開局・棋譜庫・規則</span></span><b class="go">›</b></button>
+   </div>`:""}
+   ${hub==="battle"?`<div class="sec-t" style="margin-top:4px">實戰</div>
    <div class="hero strips">
     ${T("k1","#/cpu","🤖","挑戰電腦","hCpu","Pikafish・積分挑戰","","下棋 ›")}
     ${OFF?T("k2","#/lobby","🌐","線上對戰・觀戰","hNet","看誰在線上・邀請對戰・觀看別人下棋","","進大廳 ›"):T("k4","#/watch/ai","📺","AI 對戰","hAi","GPT 對 Claude")}
    </div>
-   <div class="sec-t">學習</div>
+   ${OFF?'<div class="sec-t">朝代擂台</div>':""}
+${OFF?(()=>{const n=Object.keys(arenaStamps()).length,t=arenaTitle();return`<button class="card" id="hArena" style="display:flex;align-items:center;gap:12px;width:100%;margin:0 0 8px;padding:10px 14px;text-align:left;font:inherit;color:inherit;cursor:pointer;border-color:color-mix(in srgb,#C8102E 45%,var(--line))"><span style="font-size:30px">🏯</span><span style="flex:1;min-width:0"><b style="font-size:16px;font-family:var(--serif)">朝代擂台</b><span class="muted" style="display:block;font-size:12.5px">${n?`集章 ${n}/13${t?"・"+esc(t):""}・下一位擂主等你`:"園子裡 13 位朝代擂主，打贏蓋一枚印章"}</span></span><b style="color:#C8102E">挑戰 ›</b></button>`})():""}
+   ${OFF&&REWARD?`<div class="sec-t">收藏</div><div class="hero strips">
+    ${T("k3","#/garage","🚗","我的車庫","hCar",(()=>{try{const b=JSON.parse(localStorage.getItem("xq_carBank"));if(b)return`🚗 ${b.pts.toLocaleString()} 點・收藏 ${Object.keys(b.owned||{}).length} 台`}catch(e){}return"贏棋拿點數換車"})())}
+   </div>`:""}`:""}
+   ${hub==="learn"?`<div class="sec-t">學習</div>
    <div class="hero strips">
+    ${T("k2","#/camp","🔰","新手訓練營","",(()=>{const n=Object.keys(campStars()).length;return n?`已上完 ${n}／${CAMP.length} 課`:"第一次下象棋？12 堂小課，親手走一步學一招"})())}
     ${T("k1","#/stats","🏅","我的戰績","","勝負・段位・🎯 我的棋力")}
     ${T("k3","#/openings","📊","我的開局","","你常用的開局・勝率・中局正招")}
     ${T("k2","#/redo","🔁","錯棋重練","","從下錯的那一步再下一次，練到對")}
     ${T("k3","#/quiz","🎯","棋力測驗","hQuiz","每級 2 題・估出你的段位（新手～專2）")}
+    ${T("k1","#/theme","🧠","主題訓練","","將軍・捉雙・抽將・牽制…選一個主題連做 10 題")}
     ${T("k1","#/guess","🎓","猜著法","hGuess","跟著大師名局一步步猜下一手・練局面判斷")}
     ${T("k4","#/db","📜","棋譜庫","","古譜・特級大師名局・我的對局")}
     ${T("k2","#/terms","📚","象棋規則","","玩法・記譜法・術語・殺法")}
-   </div>
-   ${OFF?(()=>{const L=legendState(),J=jStages(),S=jStars(),i=J.findIndex(x=>!S[x.id]),cur=J[i<0?J.length-1:i],I=xpInfo(),pk=parkOn();
-     return`<div class="sec-t">冒險</div>
-${OFF?(()=>{const n=Object.keys(arenaStamps()).length,t=arenaTitle();return`<button class="card" id="hArena" style="display:flex;align-items:center;gap:12px;width:100%;margin:0 0 8px;padding:10px 14px;text-align:left;font:inherit;color:inherit;cursor:pointer;border-color:color-mix(in srgb,#C8102E 45%,var(--line))"><span style="font-size:30px">🏯</span><span style="flex:1;min-width:0"><b style="font-size:16px;font-family:var(--serif)">朝代擂台</b><span class="muted" style="display:block;font-size:12.5px">${n?`集章 ${n}/13${t?"・"+esc(t):""}・下一位擂主等你`:"園子裡 13 位朝代擂主，打贏蓋一枚印章"}</span></span><b style="color:#C8102E">挑戰 ›</b></button>`})():""}
-   <div class="hero strips">
-    ${T("k3","#/adventure","🪨","石桌往事","hLegend",`Lv ${I.L} ${I.title}・故事 ${L.n}／36 回・雲河棋路 ${L.pass||0}／${J.length} 關`,"","冒險 ›")}
-   </div>`})():""}
-   ${OFF&&REWARD?`<div class="sec-t">收藏</div><div class="hero strips">
-    ${T("k3","#/garage","🚗","我的車庫","hCar",(()=>{try{const b=JSON.parse(localStorage.getItem("xq_carBank"));if(b)return`🚗 ${b.pts.toLocaleString()} 點・收藏 ${Object.keys(b.owned||{}).length} 台`}catch(e){}return"贏棋拿點數換車"})())}
    </div>`:""}
-
    <div class="hfoot">
     ${standalone?"":'<button class="lk" id="hInst" style="flex-basis:100%">📲 加到主畫面，像 App 一樣全螢幕使用</button>'}
     ${OFF?`<span id="hVer">版本讀取中…</span><button class="pill" id="hUpd">檢查更新</button>`:""}
@@ -1773,14 +1800,14 @@ ${OFF?(()=>{const n=Object.keys(arenaStamps()).length,t=arenaTitle();return`<but
       if(r.a===r.n){b.textContent="✓ 已是最新版";return}
       b.textContent="下載新版中…";setTimeout(()=>location.reload(),6000)};
     const hc=v.querySelector("#hConn");if(hc)hc.onclick=connectSheet}
-  const hi=v.querySelector("#hInst");if(hi)hi.onclick=()=>installGuide(true);
+  const hi=v.querySelector("#hInst");if(hi)hi.onclick=()=>installGuide(true);{const h2=v.querySelector("#hInst2");if(h2)h2.onclick=()=>{vibrate(5);installGuide(true)}}
   v.querySelectorAll("[data-go]").forEach(b=>b.onclick=()=>{vibrate(5);location.hash=b.dataset.go});
   {const hl=v.querySelector("#hLegend");if(hl){const t=hl.closest(".tile");if(t)t.onclick=()=>{vibrate(5);location.hash="#/adventure"}}}
   {const hx=v.querySelector("#hXP");if(hx){const t=hx.closest(".tile");if(t)t.onclick=()=>{vibrate(5);xpSheet()}}}
   {const ha=v.querySelector("#hArena");if(ha)ha.onclick=()=>{vibrate(5);store.set("park3d",true);location.hash="#/arena"}}
   standaloneOnlineWarn(v.firstElementChild||v);
   if(OFF){if(RI)homeStatus(v.querySelector("#hStatus"));if(window.XQ_justConnected){XQ_justConnected=false;if(DEVMODE())setTimeout(()=>toast("已連上電腦！"),300)}}
-  const qb=store.get("quizBest",null);if(qb)v.querySelector("#hQuiz").textContent="最好："+qb.rank;
+  const qb=store.get("quizBest",null);if(qb&&v.querySelector("#hQuiz"))v.querySelector("#hQuiz").textContent="最好："+qb.rank;
   let offNet=[];if(OFF&&window.XQNet){const upd=()=>{const e=v.querySelector("#hNet");if(!e)return;const n=XQNet.people().length;
       e.textContent=(XQNet.playing()?"🔴 你有一盤進行中・":"")+(XQNet.status()!=="up"?"連線中…":n?`🟢 ${n} 位棋友在線上`:"目前只有你在線上");
       // 線上段位（XQNet.rating() 回傳 {pts,rank,w,l,d}）
@@ -1966,7 +1993,7 @@ function Guess(v){
 // ================= 象棋術語：殺法、開局、戰術、棋形、規則 =================
 // 象棋規則（意見回饋 137）：上方三個分頁「玩法／記譜法／術語」；術語＝原本的象棋術語
 function Terms(v,pick){
-  setTop("象棋規則","#/");setTabs(false);
+  setTop("象棋規則","#/");setTabs(true,"#/");
   let tab=pick?"terms":store.get("rulesTab","play");
   v.innerHTML=`<div class="st-tabs" id="rTabs" style="margin:10px 12px 4px;position:static">${[["play","🎮 玩法"],["note","✍ 記譜法"],["terms","📚 術語"]].map(([k,l])=>`<button data-k="${k}">${l}</button>`).join("")}</div>
     <div id="rPlay" class="home" style="padding-top:4px"></div><div id="rNote" class="home" style="padding-top:4px"></div><div id="rTerms">`+`<div class="search"><input id="q" placeholder="搜尋術語，例如：馬後炮、屏風馬"></div><div class="chips" id="cats"></div><div class="items" id="list"></div>
@@ -2086,7 +2113,7 @@ function XQ_START_BOARD(){if(!XQ_START_BOARD.b){const b=Array(90).fill(null),row
 // ---------- 🔁 錯棋重練 ----------
 // 從自己下過的錯著／露著那一步之前開始，跟第 7 級（職業頂尖）的 Pikafish 重下；不算戰績
 function Redo(v){
-  setTop("錯棋重練","#/");setTabs(false);
+  setTop("錯棋重練","#/");setTabs(true,"#/");
   /* 意見回饋 338：錯棋重練自己留一盤——有沒下完的就提醒，點了接著下 */
   api("/play/state").then(st=>{const box=v.querySelector("#rRes");if(!box)return;const cur=st.practice&&!st.result?{n:st.moves.length-(st.practice.base||0)}:null,o=(st.others||[]).find(z=>z.kind==="practice");if(!cur&&!o)return;
     box.innerHTML=`<button class="card row" style="width:100%;margin-top:10px;justify-content:space-between;border:2px solid var(--red);font:inherit;color:inherit;text-align:left"><span>⏳ <b>還有一題錯棋重練沒下完</b></span><b>繼續下 ›</b></button>`;
@@ -2155,7 +2182,7 @@ function blackDefence(moves){const r1=NORM(moves[0]&&moves[0].cn),bs=[1,3,5].map
   if(/^炮[28]平[37]/.test(b1))return"卒底炮";if(/^相[37]進5/.test(b1))return"飛象";if(/^兵[37]進1/.test(b1))return"挺卒";
   if(/^馬[28]進[37]/.test(b1))return"起馬應對";if(/^炮[28]平[46]/.test(b1))return"士角炮應對";return"其他應法"}
 function Openings(v){
-  setTop("我的開局","#/");setTabs(false);
+  setTop("我的開局","#/");setTabs(true,"#/");
   v.innerHTML=`<div class="home"><div id="ob"><div class="muted" style="text-align:center;padding:20px">整理你下過的對局中…</div></div></div>`;
   (async()=>{const gs=await myGames(150);if(!v.isConnected)return;const box=v.querySelector("#ob");
     if(!gs.length){box.innerHTML='<div class="card muted" style="text-align:center;line-height:1.7">還沒有自己的對局。<br>下幾盤挑戰電腦或線上對戰，這裡就會統計你常用的開局。</div>';
@@ -2416,7 +2443,7 @@ async function skillPentagon(box){
   const tip=pk.weak?`<button class="btn" data-go="${pk.weak.go[0]}" style="width:100%;margin-top:10px">🎯 建議先練：${pk.weak.k}（${pk.weak.v} 分）・${pk.weak.go[1]} ›</button><div class="muted" style="font-size:12px;margin-top:4px;text-align:center">從樣本夠的幾項裡挑分數最低的</div>`
     :pk.even?`<p class="muted" style="margin:8px 0 0;line-height:1.6">樣本夠的幾項分數差不多（${pk.lo.k} ${pk.lo.v}～${pk.hi.k} ${pk.hi.v}，相差不到 5 分），沒有明顯的弱項。想再上一層，挑一項按「去練」。</p>`
     :`<p class="muted" style="margin:8px 0 0;line-height:1.6">還要多一點樣本（實戰每項 ${SK.MIN} 步、殺法 ${SK.QMIN} 題，至少兩項夠了），才能告訴你先練哪一項。多下幾盤挑戰電腦、做一次棋力測驗就有了。</p>`;
-  const rowH=a=>`<div class="skr${a.v!=null&&!a.ok?" low":""}"><div class="nm"><b>${a.k}</b><small>${a.n?`近 ${a.n} ${a.u}${a.g?`・${a.g} 盤`:""}`:a.u==="題"?"還沒做測驗":"還沒有"}${a.v!=null&&!a.ok?"・樣本還少":""}</small></div><b class="sc">${a.v==null?"—":a.v}</b><button data-go="${a.go[0]}">去練：${a.go[1]} ›</button></div>`;
+  const rowH=a=>`<div class="skr${a.v!=null&&!a.ok?" low":""}"><div class="nm"><b>${a.k}</b><small>${a.n?`近 ${a.n} ${a.u}${a.g?`・${a.g} 盤`:""}`:a.u==="題"?"還沒做測驗":"還沒有"}${a.v!=null&&!a.ok?"・樣本還少":""}</small></div><b class="sc">${a.v==null?"—":a.v}</b>${(g=>`<button data-go="${g[0]}">去練：${g[1]} ›</button>`)(a.k==="殺法"?["#/theme/"+encodeURIComponent(weakTheme()),"主題訓練・"+weakTheme()]:a.go)}</div>`;
   box.innerHTML=penSVG(A.map(a=>[a.k,a.v,a.v!=null&&!a.ok]))+`<div class="row" style="justify-content:space-between;margin-top:4px"><span class="muted">最近 ${nG} 盤${st.best!=null?`・走出電腦首選 ${st.best}%`:""}</span><b>綜合 ${total} 分（${gradeFor(total)[0]}）</b></div>
     ${tip}<div class="skl">${A.map(rowH).join("")}</div>
     <p class="muted" style="font-size:12px;margin:6px 0 0;line-height:1.6">虛線、淡色＝樣本還少（實戰不到 ${SK.MIN} 步、殺法不到 ${SK.QMIN} 題），先參考就好。${hu?`用過提示或悔棋的 ${hu} 盤不算。`:""}</p>
@@ -2609,7 +2636,7 @@ async function talentReport(box){
   const tg=box.querySelector("#tgo");if(tg)tg.onclick=()=>{vibrate(5);const b=document.querySelector('#sTabs button[data-k="all"]');if(b){b.click();scrollTo(0,0)}else location.hash="#/stats"};
   if(pend.length)setTimeout(()=>talentBackfill(box,pend),300)}
 function Stats(v){
-  setTop("我的戰績","#/");setTabs(false);
+  setTop("我的戰績","#/");setTabs(true,"#/");
   // 版面：上面一排「總覽／電腦／線上／獎勵」分頁，一次只看一類，不會越堆越長
   // 總覽＝三個重點數字＋棋力五邊形＋各模式勝負對照表＋對局紀錄；其他分頁各自的段位卡和細表
   const NET=!!(OFF&&window.XQNet),pct=(w,n)=>n?Math.round(w*100/n)+"%":"—";
@@ -2682,6 +2709,7 @@ function Settings(v){
     <div class="sec-t">深淺色</div><div class="opt" id="pt"></div><p class="muted" id="ptN" style="font-size:12px;margin:4px 4px 0"></p>
     <div class="sec-t">棋盤風格</div><div class="thgrid" id="th"></div>
     <div class="sec-t">棋子樣式</div><div class="opt" id="ps"></div>
+    <label class="row" style="justify-content:space-between;padding:8px 2px"><span><b>高對比棋子</b><br><span class="muted">白底大字、紅黑字，看不清楚朝代棋子時打開</span></span><input type="checkbox" class="sw" id="hiCon"></label>
     </div>
     <div data-pane="play"><div class="sec-t" style="margin-top:4px">測試特效與音效</div><div class="card"><div id="tb" style="max-width:300px;margin:0 auto"></div>
       <div class="opt" id="tbb" style="justify-content:center;flex-wrap:wrap;margin-top:8px">${[["mv","♟ 走一步"],["cap","💥 吃子"],["ck","⚔ 將軍"],["op","🚩 開局動畫"]].map(([k,l])=>`<button data-tst="${k}">${l}</button>`).join("")}</div>
@@ -2760,6 +2788,7 @@ function Settings(v){
     for(const[k,name]of BOARD_THEMES){const b=document.createElement("button");b.className=k===cur?"on":"";const bd=Board(null);bd.draw(b1,{last:SAMPLE_LAST,theme:k,anim:false,arrow:false});
       b.append(bd.svg);const s=document.createElement("span");s.textContent=name;b.append(s);
       b.onclick=()=>{vibrate(5);store.set("boardTheme",k);paint();show(true)};th.append(b)}
+    {const hcI=v.querySelector("#hiCon");if(hcI){hcI.checked=!!store.get("hiCon",false);hcI.onchange=()=>{store.set("hiCon",hcI.checked);vibrate(5);try{if(PARK){PARK.v.destroy();PARK=null}}catch(e){}show(true)}}}
     v.querySelector("#ps").innerHTML=[["classic","傳統"],["solid","實心"],["3d","🎲 立體"]].map(([k,l])=>`<button data-p="${k}" class="${ps===k?"on":""}">${l}</button>`).join("");
     v.querySelectorAll("[data-p]").forEach(x=>x.onclick=()=>{store.set("pieceStyle",x.dataset.p);paint();show(false)});
     const pt=store.get("pageTheme","auto");v.querySelector("#pt").innerHTML=[["auto","跟著手機"],["light","☀ 淺色"],["dark","🌙 深色"]].map(([k,l])=>`<button data-m="${k}" class="${pt===k?"on":""}">${l}</button>`).join("");
@@ -3088,7 +3117,7 @@ function carSVG(c){
   return s+"</svg>"}
 
 function Garage(v){
-  setTop("我的車庫","#/");setTabs(false);
+  setTop("我的車庫","#/");setTabs(true,"#/");
   v.innerHTML=`<div class="home"><div class="card gar-top" id="gt"><span class="muted">讀取中…</span></div><div id="gown"></div>
     <input id="gq" class="gar-q" type="search" placeholder="🔍 搜尋車名、品牌（例如 RAV4、賓士、跑車）" autocomplete="off"><div class="st-res" id="gf" style="margin:8px 0 6px"></div><div class="gar-ty" id="gty"></div><div id="gl"></div><p class="muted" id="gsrc" style="font-size:12px;text-align:center;margin:14px 0"></p></div>`;
   let D=null,B=null,show="all",ty="",q="";
@@ -3257,7 +3286,7 @@ const PIKA_LOOK=side=>({p:side==="r"?"帥":"將",e:store.get("era","classic"),g:
 function parkLook(){const k=store.get("era","classic"),e=curEra(),T=boardTheme(e?"auto":"wood3d"),bk=BOARD_IMG[k]?k:null;
   // 字形晚到（第一次切到這個朝代）：拿上一次的參數重畫公園棋盤，棋子字面才會換成朝代字形（之前這裡什麼都沒做，要等走下一步才換）
   if(GLY_ERAS.has(k)&&!GLY[k])needGly(k,()=>{try{const a=PARK&&PARK.last;if(a&&GLY[k]&&store.get("era","classic")===k){a.ex.look=parkLook();PARK.v.draw(a.board,a.o,a.ex)}}catch(e){}});
-  const ps=PSET.has(k);return{k,pset:ps?`data/pset/${k}/`:null,img:ps?`data/pset/${k}/board.webp`:bk?`data/boards/${BOARD_IMG_FILE[bk]||bk}.webp`:null,rect:ps?PSET_RECT:bk?BOARD_IMG[bk]:null,grid:T&&T.grid||"#3A1D0A",
+  const ps=PSET.has(k)&&!store.get("hiCon",false);return{k,hc:!!store.get("hiCon",false),pset:ps?`data/pset/${k}/`:null,img:ps?`data/pset/${k}/board.webp`:bk?`data/boards/${BOARD_IMG_FILE[bk]||bk}.webp`:null,rect:ps?PSET_RECT:bk?BOARD_IMG[bk]:null,grid:T&&T.grid||"#3A1D0A",
     pieces:PIECE_INK[k]?{r:`data/pieces/${k}-r.webp`,b:`data/pieces/${k}-b.webp`}:null,ink:PIECE_INK[k]||null,gly:GLY[k]||null,bold:GLY_BOLD[k]||0}}
 /* 意見回饋 334：錯棋重練一律用棋盤模式（PARK_OFF），不改玩家原本的公園設定 */
 let PARK=null,PARK_LOADING=null,PARK_OFF=false,PARK_J=null;
@@ -3285,16 +3314,23 @@ function parkInfo(k){const era=store.get("era","classic"),E=PARK_INFO[era]||PARK
   else if(k==="mate"){t="小帥（你）";x="坐在這一側的就是你的小帥！他的官帽和官服會跟著你的電腦段位升官；你走出好棋他會開心，贏了會跳起來慶祝。點他旁邊的桌子、茶杯、椅子、樹，都有各自的介紹。"}
   else if(E[k]){[t,x]=E[k]}else return;
   sheet(`${k==="bg"?"🏞":k==="opp"?"🤖":k==="mate"?"🙂":"🔎"} ${t}`,b=>{b.innerHTML=`<div class="muted" style="margin:-4px 0 8px">${esc(en)}${yr?`・${esc(yr)}`:""}${k==="bg"?"・遠方的風景":""}</div><p style="line-height:1.8;margin:0;font-size:16px">${esc(x)}</p>`})}
+/* 開發者決定（Gemini UI／UX 審閱）：3D 園子角落有「俯視／平視」切換；第一次進園子播 3 秒半透明的手勢提示（拖曳轉身、兩指縮放、點兩下回正） */
+function parkUi(host,pv){let b=host.querySelector(".pkview");if(!b){b=document.createElement("button");b.type="button";b.className="pkview";host.append(b)}
+  const modes=[["top","俯視"],["flat","平視"]];let m=store.get("parkView","");const paint=()=>{const nx=modes.find(x=>x[0]!==m)||modes[0];b.textContent=(nx[0]==="top"?"⬇ ":"👁 ")+nx[1];b.setAttribute("aria-label","切換成"+nx[1])};paint();
+  if(m&&pv.setView)setTimeout(()=>{try{pv.setView(m)}catch(e){}},400);
+  b.onclick=e=>{e.stopPropagation();vibrate(5);m=m==="top"?"flat":"top";store.set("parkView",m);try{pv.setView(m)}catch(x){}paint()};
+  if(!store.get("parkHint",false)){const go=()=>{if(!host.isConnected)return;store.set("parkHint",true);const h=document.createElement("div");h.className="pkhint";h.innerHTML='<div class="pkh-hand">👆</div><b>拖曳轉身看四周</b><span>兩指捏合縮放・點兩下回到原本的角度</span>';host.append(h);setTimeout(()=>{h.classList.add("out");setTimeout(()=>h.remove(),500)},3000)};
+    if(pv.whenShown)pv.whenShown(()=>setTimeout(go,300));else setTimeout(go,1200)}}
 function parkDraw(host,bd,board,o,ex){
   // 關掉公園：同一個棋盤的公園只藏起來（意見回饋 244：來回切換不用每次重建 3D 場景，比較順）
-  {const tg=host.querySelector(".pkname");if(tg)tg.hidden=!parkOn()}
+  {const tg=host.querySelector(".pkname");if(tg)tg.hidden=!parkOn();const pv0=host.querySelector(".pkview");if(pv0)pv0.hidden=!parkOn()}
   if(!parkOn()){if(PARK&&PARK.host===host){if(PARK.v.hide)PARK.v.hide();else{PARK.v.destroy();PARK=null}}bd.svg.style.display="";botVis(true);return}
   // 意見回饋 270：載入完還是沒有 XQPark3D（例如程式出錯）就停下來改用棋盤模式，不能一直重試（之前會無限循環、整個 App 卡死）
   if(!window.XQPark3D){bd.svg.style.display="";parkLoad().then(()=>{if(!window.XQPark3D)throw new Error("park3d 沒有載入成功");if(document.body.contains(host))parkDraw(host,bd,board,o,ex)}).catch(()=>{toast("園子 3D 棋盤載入失敗，先用棋盤模式");store.set("park3d",false)});return}
   if(PARK&&(PARK.era!==store.get("era","classic")||(PARK.bg||null)!==(ex.bg||null))){PARK.v.destroy();PARK=null}   // 換了朝代（例如從集章簿換過去）：公園重建
   if(!PARK||PARK.host!==host||!document.body.contains(PARK.v.el)){if(PARK)PARK.v.destroy();
     const pv=XQPark3D.create(host,{arena:ex.arena||null,gate:ex.gate||null,bg:ex.bg||null,onTap:i=>ex.tap(i),onInfo:k=>parkInfo(k),onDestroy:()=>{if(PARK&&PARK.v===pv){PARK=null;botVis(true)}}});
-    if(!pv){toast("這台裝置沒辦法顯示 3D，先用棋盤模式");store.set("park3d",false);return}PARK={host,v:pv,era:store.get("era","classic"),bg:ex.bg||null};setTimeout(()=>{try{pv.say(`我是${BOTN()}，幫你加油！`,2.6);if(ex.oppHello)setTimeout(()=>pv.oppSay(ex.oppHello,2.6),1400)}catch(e){}},700)}
+    if(!pv){toast("這台裝置沒辦法顯示 3D，先用棋盤模式");store.set("park3d",false);return}PARK={host,v:pv,era:store.get("era","classic"),bg:ex.bg||null};parkUi(host,pv);setTimeout(()=>{try{pv.say(`我是${BOTN()}，幫你加油！`,2.6);if(ex.oppHello)setTimeout(()=>pv.oppSay(ex.oppHello,2.6),1400)}catch(e){}},700)}
   /* 意見回饋 417：園子上方標出朝代和那個朝代對園子的叫法（例如「唐朝・園林」「漢朝・苑囿」） */
   {let tg=host.querySelector(".pkname");if(!tg){tg=document.createElement("div");tg.className="pkname";if(getComputedStyle(host).position==="static")host.style.position="relative";host.append(tg)}const k=store.get("era","classic");tg.textContent=ex.bgName||((k==="classic"?"經典":eraLabel(k))+"・"+(PW[k]||"園子"));tg.hidden=false}
   if(PARK.v.show)PARK.v.show();bd.svg.style.display="none";botVis(false);ex.look=parkLook();PARK.last={board,o,ex};PARK.v.draw(board,o,ex)}
@@ -3494,7 +3530,7 @@ async function legendTimeline(){const D=await legendData();if(!D)return;const P=
     b.querySelectorAll("[data-pp]").forEach(x=>x.onclick=()=>{const n=x.dataset.pp,p=P.find(z=>z.name===n),L=PEOPLE_LOOK[n];if(!L&&!PIMG[n])return;vibrate(5);figView(L?{p:L.pc,e:"classic",g:9,npc:n,hat:L.hat,hc:L.hc,robe:L.robe}:null,"🪨 "+n,`<p class="muted" style="font-size:13.5px;line-height:1.7;margin:0">${esc(p&&p.note||"")}</p>`,[["關閉",()=>closeSheet(),true]],PIMG[n]||null)})})}
 function legendBook(){closeSheet();LEGEND_PREVIEW=false;location.hash="#/adventure"}
 /* 意見回饋 316：石桌往事改成一整頁——上面是你的棋童小卡，中間是雲河棋路、驛站、棋童資料、人物年表，下面是章節 */
-function Adventure(v){LEGEND_PREVIEW=false;setTop("🪨 石桌往事","#/");setTabs(false);v.className="view";v.innerHTML='<div class="pad muted">載入中…</div>';
+function Adventure(v){LEGEND_PREVIEW=false;setTop("🪨 石桌往事","#/");setTabs(true,"#/");v.className="view";v.innerHTML='<div class="pad muted">載入中…</div>';
   legendData().then(D=>{if(!D){v.innerHTML='<div class="pad"><div class="card muted">故事載入失敗，等一下再試</div></div>';return}
     const L=legendState(),open=k=>k<=1||k<=L.n,I=xpInfo(),H=hintInfo(),B=bag(),Sx=jSecrets(),Js=jStages(),S=jStars();
     const list=D.chapters.map((c,k)=>[k+1,c.title]),sc=k=>(D.scenes||[]).filter(x=>x.ch===k);
@@ -3524,7 +3560,7 @@ function Adventure(v){LEGEND_PREVIEW=false;setTop("🪨 石桌往事","#/");setT
 /* ---------- 🎒 棋童資料：等級、修為、提示棋、棋盤收藏、棋譜、秘境棋友 ---------- */
 const bag=()=>({boards:[],records:[],...store.get("bag",{})}),bagSave=B=>store.set("bag",B);
 const RAR={rare:["稀有","#C9962B"],normal:["一般","#3A7BD5"],broken:["損壞","#8E8E8E"]};
-function Profile(v){setTop("🎒 棋童資料","#/adventure");setTabs(false);v.className="view";const I=xpInfo(),H=hintInfo(),B=bag(),Sx=jSecrets(),S=jStars(),Js=jStages(),L=legendState(),star=Js.reduce((a,x)=>a+(S[x.id]||0),0);
+function Profile(v){setTop("🎒 棋童資料","#/adventure");setTabs(true,"#/");v.className="view";const I=xpInfo(),H=hintInfo(),B=bag(),Sx=jSecrets(),S=jStars(),Js=jStages(),L=legendState(),star=Js.reduce((a,x)=>a+(S[x.id]||0),0);
   const card=x=>`<div class="bcard ${x.rarity}"><div class="bic">${TIMG(`data/treasure/board_${x.rarity==="broken"?"broken":x.rarity==="rare"?"rare":"normal"}.webp`,x.rarity==="broken"?"🧩":x.rarity==="rare"?"📜":"♟")}</div><b>${esc(x.name)}</b><small style="color:${RAR[x.rarity][1]}">${RAR[x.rarity][0]}</small><small class="muted">${esc(x.from)}・${new Date(x.at).toLocaleDateString()}</small>
     ${x.rarity==="rare"&&!x.used?`<button class="pill" data-ex="${x.uid}">🪨 拿去石桌給兩位老人</button>`:x.used?'<small class="muted">已經跟兩位老人換過獎勵</small>':""}</div>`;
   v.innerHTML=`<div class="pad"><div class="card prof"><div class="pl"><div class="lv">Lv ${I.L}</div><div><b style="font-size:20px">🀄 ${I.title}</b><div class="st-bar" style="margin:6px 0 2px"><i style="width:${I.need?Math.round(I.rest*100/I.need):100}%"></i></div><small class="muted">${I.need?`${I.rest}／${I.need} 修為・累積 ${I.total}`:`累積 ${I.total} 修為・已到最高等級`}</small></div></div>
@@ -3741,7 +3777,7 @@ function journeyGameEnd(st){if(!st||!st.result)return;
   if(st.result.w===st.human){const n=st.moves.length,stars=Math.min(P.hint?2:3,n<=60?3:n<=100?2:1);jSet(s.id,stars,"闖關");setTimeout(()=>toast(`🗺 雲河棋路「${JR[s.r].name}・${s.name}」過關！${"★".repeat(stars)}${"☆".repeat(3-stars)}（${Math.ceil(n/2)} 回合內贏）`),1500)}
   else setTimeout(()=>toast(`🗺 「${s.name}」還沒過關，回雲河棋路再挑戰一次`),1500)}
 function Journey(v,sid){
-  setTop("雲河棋路","#/adventure");setTabs(false);const L=jStages(),S=jStars();
+  setTop("雲河棋路","#/adventure");setTabs(!sid,"#/");const L=jStages(),S=jStars();
   if(sid==="inn")return innSheet(v);
   if(sid==="park")return ParkGate(v);
   if(sid){const i=L.findIndex(x=>x.id===sid);if(i<0||!jOpen(L,i)){navReplace("#/journey");return{}}return L[i].t==="lv"?jLevel(v,L[i]):jPuzzle(v,L[i])}
@@ -3789,12 +3825,12 @@ async function jBattleHint(st,show){const P=store.get("jPending",null);if(!P||!s
 /* 回到當年的結果回寫到闖關（LegendScene 判定後呼叫） */
 function jSceneDone(key,stars){const id=store.get("jScene",null),s=jStages().find(x=>x.id===id);const any=jStages().filter(x=>x.t==="scene"&&x.scene===key);for(const x of any)jSet(x.id,stars,"回到當年");if(s)store.set("jScene",null)}
 /* 解題關：5 題，難度照這一站的等級。意見回饋 429：每次挑戰都換新題目——這一關做過的題先不出，同難度的題都輪過一遍才重來 */
-function jPuzzle(v,s){setTop("雲河棋路・"+s.name,"#/journey");let D=null,Q=[],k=0,ok=0,board=null,sel=-1,LEGAL=[],done=false,hk=null,usedHint=false;const bd=Board(x=>tap(x));
+function jPuzzle(v,s){setTop(s.theme?"🧠 "+s.name:"雲河棋路・"+s.name,s.theme?"#/theme":"#/journey");let D=null,Q=[],k=0,ok=0,board=null,sel=-1,LEGAL=[],done=false,hk=null,usedHint=false;const bd=Board(x=>tap(x));
   (async()=>{try{D=await api("/quiz/data")}catch(e){v.innerHTML=`<div class="pad"><div class="card muted">${esc(e.message)}</div></div>`;return}
-    let pool=D.items.filter(q=>q.tier>=s.lo&&q.tier<=s.hi&&(!s.cats||s.cats.includes(qzCat(q))));if(pool.length<5)pool=D.items.filter(q=>q.tier>=s.lo&&q.tier<=s.hi);
+    let pool=s.tag?D.items.filter(q=>(q.tags||[]).includes(s.tag)):D.items.filter(q=>q.tier>=s.lo&&q.tier<=s.hi&&(!s.cats||s.cats.includes(qzCat(q))));if(pool.length<5&&!s.tag)pool=D.items.filter(q=>q.tier>=s.lo&&q.tier<=s.hi);
     const SEEN=store.get("jpSeen",{}),seen=new Set(SEEN[s.id]||[]);let fresh=pool.filter(q=>!seen.has(String(q.id)));
-    if(fresh.length<5){seen.clear();fresh=pool.slice()}
-    while(Q.length<5&&fresh.length)Q.push(fresh.splice(Math.floor(Math.random()*fresh.length),1)[0]);
+    if(fresh.length<(s.count||5)){seen.clear();fresh=pool.slice()}
+    while(Q.length<(s.count||5)&&fresh.length)Q.push(fresh.splice(Math.floor(Math.random()*fresh.length),1)[0]);
     for(const q of Q)seen.add(String(q.id));SEEN[s.id]=[...seen].slice(-400);store.set("jpSeen",SEEN);
     v.className="view fixed";v.innerHTML=`<div class="status" id="qh" style="margin-top:6px"></div><div class="boardbox" id="bbox"></div><div class="status" id="stat"></div><div class="note" id="note" style="white-space:pre-wrap"></div><div style="flex:1"></div><div class="actions" id="acts"></div>`;
     v.querySelector("#bbox").append(bd.svg);show()})();
@@ -3811,11 +3847,11 @@ function jPuzzle(v,s){setTop("雲河棋路・"+s.name,"#/journey");let D=null,Q=
     const nb=board.slice();nb[q.t]=nb[q.f];nb[q.f]=null;draw({board:nb,last:{f:q.f,t:q.t},sel:-1,targets:[]});
     v.querySelector("#stat").textContent=hit?"✔ 答對了！":f<0?"正解如下":"✘ 不是這步";v.querySelector("#note").textContent=`正解：${q.cn}${q.mate?`，${q.mate} 步內殺棋`:""}\nPikafish 的後續：${(q.pv||[]).join(" ")}`;
     actionBar(v.querySelector("#acts"),[["next","›",k+1<Q.length?"下一題":"看結果",()=>{k++;if(k<Q.length)show();else result()},true]])}
-  function result(){const stars=Math.min(usedHint?2:3,ok>=5?3:ok>=4?2:ok>=3?1:0),best=stars?jSet(s.id,stars,"闖關"):(jStars()[s.id]||0);v.className="view";
+  function result(){const N=Q.length||5,r=ok/N,stars=Math.min(usedHint?2:3,r>=.999?3:r>=.8?2:r>=.6?1:0);let best;if(s.theme){const TS=store.get("themeStat",{}),x=TS[s.tag]||{n:0,ok:0};x.n+=N;x.ok+=ok;x.at=Date.now();TS[s.tag]=x;store.set("themeStat",TS);best=stars}else best=stars?jSet(s.id,stars,"闖關"):(jStars()[s.id]||0);v.className="view";
     v.innerHTML=`<div class="pad"><div class="card" style="text-align:center"><div style="font-size:44px">${stars?"🎉":"💪"}</div><h2 style="margin:4px 0">${stars?"過關！":"差一點"}</h2>
-      <div style="font-size:30px;color:var(--accent)">${"★".repeat(stars)}${"☆".repeat(3-stars)}</div><p>答對 <b>${ok}</b> / ${Q.length} 題${stars?"":"（答對 3 題才過關）"}${usedHint&&ok>=5?"（用了提示，最多 ★★）":""}</p>${best>stars?`<p class="muted">這關最好成績 ${"★".repeat(best)}</p>`:""}
-      <button class="btn" id="back">回雲河棋路</button><button class="btn ghost" id="again">再挑戰一次</button></div></div>`;
-    v.querySelector("#back").onclick=()=>goBack("#/journey");v.querySelector("#again").onclick=()=>{k=0;ok=0;v.innerHTML="";route()}}
+      <div style="font-size:30px;color:var(--accent)">${"★".repeat(stars)}${"☆".repeat(3-stars)}</div><p>答對 <b>${ok}</b> / ${Q.length} 題${stars?"":`（答對 ${Math.ceil(N*.6)} 題才過關）`}${usedHint&&ok>=5?"（用了提示，最多 ★★）":""}</p>${best>stars?`<p class="muted">這關最好成績 ${"★".repeat(best)}</p>`:""}
+      <button class="btn" id="back">${s.theme?"回主題訓練":"回雲河棋路"}</button><button class="btn ghost" id="again">再挑戰一次</button></div></div>`;
+    v.querySelector("#back").onclick=()=>goBack(s.theme?"#/theme":"#/journey");v.querySelector("#again").onclick=()=>{k=0;ok=0;v.innerHTML="";route()}}
   return{}}
 
 /* ================= 🎴 石桌往事的特製關卡（開發者：36 回每回一關，照劇情設計玩法）=================
@@ -3832,16 +3868,16 @@ function lvIncense(host,sec,done){if(!host||!sec)return{stop(){}};const el=docum
   const tick=()=>{if(!on||!el.isConnected)return;const left=Math.max(0,sec-(Date.now()-t0)/1000);bar.style.width=(left*100/sec)+"%";tx.textContent="🪔 "+Math.ceil(left)+" 秒";
     if(left<=0){on=false;el.classList.add("out");done&&done();return}requestAnimationFrame(tick)};tick();
   return{stop(){on=false;el.remove()}}}
-function jLevel(v,s){setTop("🎴 "+s.name,"#/journey");setTabs(false);v.className="view";v.innerHTML='<div class="pad muted">載入中…</div>';
-  legendData().then(D=>{const ch=D&&D.chapters[s.n-1],G=ch&&ch.game;if(!G||!(G.steps||[]).length){v.innerHTML='<div class="pad"><div class="card muted">這一關的資料還沒準備好</div></div>';return}
+function jLevel(v,s,src){setTop((src&&src.icon||"🎴")+" "+s.name,src?src.back:"#/journey");setTabs(false);v.className="view";v.innerHTML='<div class="pad muted">載入中…</div>';
+  (src?Promise.resolve(null):legendData()).then(D=>{const ch=src?{title:src.title||"",game:src.G}:D&&D.chapters[s.n-1],G=ch&&ch.game;if(!G||!(G.steps||[]).length){v.innerHTML='<div class="pad"><div class="card muted">這一關的資料還沒準備好</div></div>';return}
   let R=jRunGet(s.id);if(!R||R.done){R={id:s.id,k:0,miss:0,hint:false};jRunSet(R)}
   const N=G.steps.length,save=()=>jRunSet(R),bd=Board(x=>onTap&&onTap(x));let onTap=null,inc=null;
   const hdr=()=>`<div class="lvh"><b>${esc(G.name||s.lvName)}</b><span>第 ${Math.min(R.k+1,N)}／${N} 步・失誤 ${R.miss}${R.hint?"・用過提示":""}</span></div>`;
   const stop=()=>{if(inc){inc.stop();inc=null}onTap=null};
   const next=()=>{stop();R.k++;save();run()};
   const miss=why=>{R.miss++;save();vibrate([20,40,20]);if(why)toast(why);const h=v.querySelector(".lvh span");if(h)h.textContent=`第 ${Math.min(R.k+1,N)}／${N} 步・失誤 ${R.miss}${R.hint?"・用過提示":""}`};
-  const failCard=msg=>{stop();v.className="view";v.innerHTML=`<div class="pad">${hdr()}<div class="card" style="text-align:center;line-height:1.8"><div style="font-size:40px">💪</div><p>${esc(msg)}</p><button class="btn" id="lvR" style="width:100%">再試這一步</button><button class="btn ghost" id="lvB" style="width:100%;margin-top:6px">回雲河棋路</button></div></div>`;
-    v.querySelector("#lvR").onclick=run;v.querySelector("#lvB").onclick=()=>goBack("#/journey")};
+  const failCard=msg=>{stop();v.className="view";v.innerHTML=`<div class="pad">${hdr()}<div class="card" style="text-align:center;line-height:1.8"><div style="font-size:40px">💪</div><p>${esc(msg)}</p><button class="btn" id="lvR" style="width:100%">再試這一步</button><button class="btn ghost" id="lvB" style="width:100%;margin-top:6px">${src?"回上一頁":"回雲河棋路"}</button></div></div>`;
+    v.querySelector("#lvR").onclick=run;v.querySelector("#lvB").onclick=()=>goBack(src?src.back:"#/journey")};
   const sayBox=t=>t?`<div class="card lvsay">${esc(t)}</div>`:"";
   const blank=b=>b.map(()=>null);
   if(R.k===0&&!R.intro){v.innerHTML=`<div class="pad">${hdr()}${ch.title?`<p class="muted" style="font-size:13px;margin:0 2px 8px">📖 ${esc(ch.title)}</p>`:""}${sayBox(G.intro||"")}
@@ -3919,13 +3955,13 @@ function jLevel(v,s){setTop("🎴 "+s.name,"#/journey");setTabs(false);v.classNa
         const P=store.get("jPending",null);if(P){P.lvp={goal:st.goal||"win",limit:st.limit||0,timer:st.timer||0,blind:!!st.blind,opp:st.opp||null,step:R.k};store.set("jPending",P)}
         location.hash="#/journey/play"},true)}}
   function finish(){stop();const r=G.rules||{},m3=r.maxMistakes3!=null?r.maxMistakes3:0,m2=r.maxMistakes2!=null?r.maxMistakes2:2;
-    const stars=R.miss<=m3&&!R.hint?3:R.miss<=m2?2:1,best=jSet(s.id,stars,"闖關");if(R.p3!==undefined)store.set("park3d",R.p3);R.done=true;save();
-    const Ls=jStages(),nx=Ls[s.n],more=s.n<Ls.length;v.className="view";
+    const stars=R.miss<=m3&&!R.hint?3:R.miss<=m2?2:1,best=src?src.done(stars):jSet(s.id,stars,"闖關");if(R.p3!==undefined)store.set("park3d",R.p3);R.done=true;save();
+    const Ls=src?[]:jStages(),more=!src&&s.n<Ls.length;v.className="view";
     v.innerHTML=`<div class="pad"><div class="card" style="text-align:center"><div style="font-size:44px">🎉</div><h2 style="margin:4px 0">過關！</h2><div style="font-size:30px;color:var(--accent)">${"★".repeat(stars)}${"☆".repeat(3-stars)}</div>
       <p class="muted">失誤 ${R.miss} 次${R.hint?"・用了提示（最多 ★★）":""}${best>stars?`・這關最好成績 ${"★".repeat(best)}`:""}</p>${G.outro?`<p style="line-height:1.8;text-align:left">${esc(G.outro)}</p>`:""}${G.reward?`<p class="muted" style="font-size:13px">🎁 ${esc(G.reward)}</p>`:""}
-      ${more?`<button class="btn" id="lvNx">📖 讀第${CNUM(s.n+1)}回</button>`:""}<button class="btn ghost" id="lvBk" style="margin-top:6px">回雲河棋路</button><button class="btn ghost" id="lvAg" style="margin-top:6px">再挑戰一次</button></div></div>`;
+      ${more?`<button class="btn" id="lvNx">📖 讀第${CNUM(s.n+1)}回</button>`:""}${src&&src.next?`<button class="btn" id="lvCn">${esc(src.next[0])}</button>`:""}<button class="btn ghost" id="lvBk" style="margin-top:6px">${src?"回上一頁":"回雲河棋路"}</button><button class="btn ghost" id="lvAg" style="margin-top:6px">再挑戰一次</button></div></div>`;
     const nb=v.querySelector("#lvNx");if(nb)nb.onclick=()=>{location.hash="#/adventure";setTimeout(()=>legendRead(s.n+1),400)};
-    v.querySelector("#lvBk").onclick=()=>goBack("#/journey");v.querySelector("#lvAg").onclick=()=>{jRunSet(null);route()}}
+    {const cn=v.querySelector("#lvCn");if(cn)cn.onclick=src.next[1]}v.querySelector("#lvBk").onclick=()=>goBack(src?src.back:"#/journey");v.querySelector("#lvAg").onclick=()=>{jRunSet(null);route()}}
   })}
 /* 對局步驟在挑戰電腦畫面裡：盲棋（看不到棋子）、香條計時、「撐過幾步」到了就算過 */
 function lvPlayOf(st){const P=store.get("jPending",null);return P&&st&&P.game===st.id&&P.lvp?P:null}
@@ -3941,6 +3977,31 @@ function lvWatch(st,v){const P=lvPlayOf(st);
   const host=v.querySelector(".lvhost")||(()=>{const d=document.createElement("div");d.className="lvhost";const bb=v.querySelector("#bbox");bb.parentNode.insertBefore(d,bb);return d})();
   LV_INC=lvIncense(host,L.timer,()=>{const R=jRunGet(P.id);if(R){R.miss++;jRunSet(R)}toast("🪔 香燒完了，算一次失誤（可以繼續下）");LV_INC=null})}
 
+/* ================= 🧠 主題訓練：題庫依戰術主題（tools/tag_tactics.js 用規則程式標的）連做 10 題 ================= */
+const THEMES=[["將軍","走一步就將軍，逼對方先解"],["殺棋","幾步之內把對方將死"],["抽將","讓開一顆子露出將軍，順手吃子"],["捉雙","一步同時捉住兩顆大子"],["閃擊","移開一顆子，讓後面的子捉到大子"],["牽制","釘住對方的子，讓它不敢動"],["引離","送子把對方的守子引開"],["悶宮","將被自己的子堵死"]];
+function weakTheme(){const TS=store.get("themeStat",{});const L=THEMES.map(([k])=>[k,TS[k]]);const un=L.find(([,x])=>!x||x.n<5);if(un)return un[0];return L.sort((a,b)=>a[1].ok/a[1].n-b[1].ok/b[1].n)[0][0]}
+function Theme(v,tag){if(tag){const T=THEMES.find(x=>x[0]===tag);if(!T){navReplace("#/theme");return{}}
+    setTop("🧠 主題訓練・"+tag,"#/theme");setTabs(false);return jPuzzle(v,{id:"tm-"+tag,t:"puz",name:"主題訓練・"+tag,lo:0,hi:99,tag,count:10,theme:true})}
+  setTop("🧠 主題訓練","#/hub/learn");setTabs(true,"#/");v.className="view";v.innerHTML='<div class="pad muted">載入中…</div>';
+  api("/quiz/data").then(D=>{const TS=store.get("themeStat",{}),cnt=k=>D.items.filter(q=>(q.tags||[]).includes(k)).length,w=weakTheme();
+    v.innerHTML=`<div class="pad"><div class="card" style="line-height:1.8">挑一個戰術主題，連做 10 題。<span class="muted" style="font-size:13.5px">題目是題庫裡的基本題和大師名局，照戰術分類；答對 6 題過關。</span></div>
+      <div class="sec-t">主題</div><div class="items" style="padding:0">${THEMES.map(([k,d])=>{const x=TS[k],n=cnt(k),pc=x&&x.n?Math.round(x.ok*100/x.n):null;return`<button class="item" data-t="${k}" ${n?"":"disabled"}><span class="lb">${k===w?"🎯":"🧠"}</span><span class="tx"><b>${k}${k===w?' <span class="pill" style="font-size:11px">最需要練</span>':""}</b><span>${esc(d)}・${n} 題${pc!=null?`・正確率 ${pc}%`:""}</span></span><span class="muted">›</span></button>`}).join("")}</div></div>`;
+    v.querySelectorAll("[data-t]").forEach(b=>b.onclick=()=>{vibrate(5);location.hash="#/theme/"+encodeURIComponent(b.dataset.t)})}).catch(e=>{v.innerHTML='<div class="pad"><div class="card muted">'+esc(e.message)+'</div></div>'});return{}}
+/* ================= 🔰 新手訓練營 =================
+   開發者決定（Gemini 象棋教學審閱）：每種棋子怎麼走、蹩馬腿、將軍、解將、雙車錯、馬後炮，一課走一步；局面都用規則程式驗過（將死的真的將死） */
+const CAMP=[{"n":1,"name":"帥","intro":"帥（將）只能在九宮裡走，一次一格。","pass":"走對這一步","star3":"一次就走對、不用提示","rules":{"maxMistakes3":0,"maxMistakes2":1},"outro":"對！帥永遠出不了九宮。","steps":[{"t":"puzzle","items":[{"start":{"fen":"3k5/9/9/9/9/9/9/9/9/4K4","turn":"r"},"line":["e0e1"],"ask":"把帥往前走一格。","note":"對！帥永遠出不了九宮。"}]}]},{"n":2,"name":"仕","intro":"仕（士）只能斜走一格，也出不了九宮。","pass":"走對這一步","star3":"一次就走對、不用提示","rules":{"maxMistakes3":0,"maxMistakes2":1},"outro":"仕是帥的貼身保鑣。","steps":[{"t":"puzzle","items":[{"start":{"fen":"3k5/9/9/9/9/9/9/9/9/3AK4","turn":"r"},"line":["d0e1"],"ask":"把仕斜走到九宮正中間。","note":"仕是帥的貼身保鑣。"}]}]},{"n":3,"name":"相","intro":"相（象）走「田」字，一次斜走兩格，而且不能過河。","pass":"走對這一步","star3":"一次就走對、不用提示","rules":{"maxMistakes3":0,"maxMistakes2":1},"outro":"相只在自己這半邊守家。","steps":[{"t":"puzzle","items":[{"start":{"fen":"3k5/9/9/9/9/9/9/9/9/2B1K4","turn":"r"},"line":["c0e2"],"ask":"把相飛到田字的另一角。","note":"相只在自己這半邊守家。"}]}]},{"n":4,"name":"傌","intro":"傌（馬）走「日」字：先直走一格，再斜走一格。","pass":"走對這一步","star3":"一次就走對、不用提示","rules":{"maxMistakes3":0,"maxMistakes2":1},"outro":"馬八進七，最常見的出馬。","steps":[{"t":"puzzle","items":[{"start":{"fen":"3k5/9/9/9/9/9/9/9/9/1N2K4","turn":"r"},"line":["b0c2"],"ask":"把傌跳出來。","note":"馬八進七，最常見的出馬。"}]}]},{"n":5,"name":"蹩馬腿","intro":"傌往前跳的那一格被擋住，就跳不過去，這叫「蹩馬腿」。","pass":"走對這一步","star3":"一次就走對、不用提示","rules":{"maxMistakes3":0,"maxMistakes2":1},"outro":"被擋住的方向不能跳，只能往沒擋住的地方跳。","steps":[{"t":"puzzle","items":[{"start":{"fen":"3k5/9/9/9/9/9/9/9/1C7/1N2K4","turn":"r"},"line":["b0d1"],"ask":"前面被炮擋住了，找出傌現在唯一能跳的那一步。","note":"被擋住的方向不能跳，只能往沒擋住的地方跳。"}]}]},{"n":6,"name":"俥","intro":"俥（車）走直線，橫豎都行，一次可以走很多格，前面沒擋就一直走。","pass":"走對這一步","star3":"一次就走對、不用提示","rules":{"maxMistakes3":0,"maxMistakes2":1},"outro":"車是最厲害的子，「一車十子寒」。","steps":[{"t":"puzzle","items":[{"start":{"fen":"3k5/9/9/p8/9/9/9/9/9/R3K4","turn":"r"},"line":["a0a6"],"ask":"用俥吃掉對方的卒。","note":"車是最厲害的子，「一車十子寒」。"}]}]},{"n":7,"name":"炮","intro":"炮平常走法跟車一樣，但要吃子時，中間一定要隔一顆子（叫「炮架」）。","pass":"走對這一步","star3":"一次就走對、不用提示","rules":{"maxMistakes3":0,"maxMistakes2":1},"outro":"中間的兵就是炮架。","steps":[{"t":"puzzle","items":[{"start":{"fen":"3k5/9/9/n8/9/9/P8/9/9/C3K4","turn":"r"},"line":["a0a6"],"ask":"隔著自己的兵，用炮吃掉對方的馬。","note":"中間的兵就是炮架。"}]}]},{"n":8,"name":"兵","intro":"兵（卒）只能往前一格；過了河以後，也可以橫著走。","pass":"走對這一步","star3":"一次就走對、不用提示","rules":{"maxMistakes3":0,"maxMistakes2":1},"outro":"過河的兵像小車，越靠近對方九宮越有用。","steps":[{"t":"puzzle","items":[{"start":{"fen":"3k5/9/9/9/4P4/9/9/9/9/4K4","turn":"r"},"line":["e5d5"],"ask":"這個兵已經過河了，把它往左橫走一格。","note":"過河的兵像小車，越靠近對方九宮越有用。"}]}]},{"n":9,"name":"將軍","intro":"走一步直接攻擊對方的將，叫「將軍」。被將軍的一方一定要先解。","pass":"走對這一步","star3":"一次就走對、不用提示","rules":{"maxMistakes3":0,"maxMistakes2":1},"outro":"將軍！對方要躲開才行。","steps":[{"t":"puzzle","items":[{"start":{"fen":"4k4/9/9/9/9/9/9/9/9/R2K5","turn":"r"},"line":["a0a9"],"ask":"把俥沉到對方底線將軍。","note":"將軍！對方要躲開才行。"}]}]},{"n":10,"name":"解將","intro":"被將軍時要馬上解：躲開、擋住，或吃掉將你的子。","pass":"走對這一步","star3":"一次就走對、不用提示","rules":{"maxMistakes3":0,"maxMistakes2":1},"outro":"吃掉將軍的子，是最乾脆的解法。","steps":[{"t":"puzzle","items":[{"start":{"fen":"3k5/9/9/9/R3r4/9/9/9/9/4K4","turn":"r"},"line":["a5e5"],"ask":"你的帥被車將軍了！用俥把那個車吃掉。","note":"吃掉將軍的子，是最乾脆的解法。"}]}]},{"n":11,"name":"雙車錯","intro":"兩個車一個封住一排、一個沉底將軍，將就沒地方躲，這叫「雙車錯」。","pass":"走對這一步","star3":"一次就走對、不用提示","rules":{"maxMistakes3":0,"maxMistakes2":1},"outro":"將死了！上面那排被封住，將無路可走。","steps":[{"t":"puzzle","items":[{"start":{"fen":"4k4/R8/9/9/9/9/9/9/9/1R1K5","turn":"r"},"line":["b0b9"],"ask":"一步殺：用另一個俥沉底將死。","note":"將死了！上面那排被封住，將無路可走。"}]}]},{"n":12,"name":"馬後炮","intro":"馬守住將旁邊的格子，炮在馬後面將軍，這叫「馬後炮」。","pass":"走對這一步","star3":"一次就走對、不用提示","rules":{"maxMistakes3":0,"maxMistakes2":1},"outro":"馬後炮，將死了！","steps":[{"t":"puzzle","items":[{"start":{"fen":"4k4/9/4N4/9/9/9/9/9/9/C4K3","turn":"r"},"line":["a0e0"],"ask":"一步殺：把炮平到馬的正後方將死。","note":"馬後炮，將死了！"}]}]}];
+const campStars=()=>store.get("campStars",{});
+function Camp(v,n){setTabs(n?false:true,"#/");store.set("campSeen",true);const S=campStars();
+  if(n){const G=CAMP[n-1];if(!G){navReplace("#/camp");return{}}
+    return jLevel(v,{id:"camp"+n,n,name:`第 ${n} 課・${G.name}`,lvName:G.name},{G,title:"🔰 新手訓練營",back:"#/camp",icon:"🔰",
+      done:st=>{const A=campStars(),b=Math.max(st,A[n]||0);if(!A[n])addXP(10,"新手訓練營","camp:"+n);A[n]=b;store.set("campStars",A);return b},
+      next:n<CAMP.length?["下一課：「"+CAMP[n].name+"」 ›",()=>{jRunSet(null);location.hash="#/camp/"+(n+1)}]:null})}
+  setTop("🔰 新手訓練營","#/hub/learn");v.className="view";const got=CAMP.filter(c=>S[c.n]).length;
+  v.innerHTML=`<div class="pad"><div class="card" style="line-height:1.8"><b>第一次下象棋？從這裡開始。</b><br><span class="muted" style="font-size:13.5px">每一課小帥說一句話，你親手走一步：先認識每種棋子怎麼走，再學將軍、解將，最後學兩種最基本的殺法。全部 ${CAMP.length} 課、大約 5 分鐘。</span></div>
+    <div class="sec-t">課程（${got}／${CAMP.length}）</div><div class="items" style="padding:0">${CAMP.map(c=>{const k=S[c.n]||0,open=c.n===1||S[c.n-1];return`<button class="item" data-c="${c.n}" ${open?"":"disabled"}><span class="lb">${open?(k?"✅":"🔰"):"🔒"}</span><span class="tx"><b>第 ${c.n} 課・${esc(c.name)}</b><span>${k?"★".repeat(k)+"☆".repeat(3-k):open?esc(c.intro.slice(0,28))+"…":"先上完前一課"}</span></span><span class="muted">›</span></button>`}).join("")}</div>
+    ${got>=CAMP.length?'<div class="card" style="margin-top:10px;text-align:center">🎉 訓練營全部結業！去「挑戰電腦」第 1 級試試身手吧。<br><button class="btn" id="cGo" style="margin-top:8px">去挑戰電腦 ›</button></div>':""}</div>`;
+  v.querySelectorAll("[data-c]").forEach(b=>b.onclick=()=>{vibrate(5);jRunSet(null);location.hash="#/camp/"+b.dataset.c});
+  {const g=v.querySelector("#cGo");if(g)g.onclick=()=>{store.set("cpuLevel",1);location.hash="#/cpu"}}return{}}
 /* ================= 🕰 回到當年（意見回饋 313）=================
    石桌往事裡的對局，用「妙棋精選」裡 Pikafish 驗證過的特級大師實戰來演：你站在旁邊看，不能插手；
    棋自動一步一步下，下到那一步妙棋之前停下來——換作是你，會怎麼走？
@@ -4045,7 +4106,7 @@ function CpuGame(v,practicePage,mode){
     if(sel>=0&&st.legal.some(([f,t])=>f===sel&&t===i)){const f=sel;sel=-1;vibrate(15);return post("/play/move",{f,t:i})}
     sel=i===sel?-1:st.legal.some(([f])=>f===i)?i:-1;if(sel>=0)vibrate(5);draw()}
   function draw(){if(!st)return;const last=st.moves[st.moves.length-1],N=parkNpcOf(st),hb=v.querySelector("#bbox"),pk0=!!(PARK&&PARK.host===hb&&document.body.contains(PARK.v.el));
-    const o={flip:st.human==="b",last,sel,targets:sel>=0?st.legal.filter(([f])=>f===sel).map(x=>x[1]):[],hint:st.hint?[st.hint.f,st.hint.t]:pHint&&pHint.n===st.moves.length?[pHint.f,pHint.t]:null,check:st.check,fx:true};const LVB=lvPlayOf(st);hb.classList.toggle("lvblind",!!(LVB&&LVB.lvp.blind&&!st.result));if(LVB&&LVB.lvp.blind&&!st.result){bd.draw(st.board.map(()=>null),o);return}bd.draw(st.board,o);
+    const o={flip:st.human==="b",last,sel,targets:sel>=0?st.legal.filter(([f])=>f===sel).map(x=>x[1]):[],hint:st.hint?[st.hint.f,st.hint.t]:pHint&&pHint.n===st.moves.length?(pHint.t==null?[pHint.f]:[pHint.f,pHint.t]):null,check:st.check,fx:true};const LVB=lvPlayOf(st);hb.classList.toggle("lvblind",!!(LVB&&LVB.lvp.blind&&!st.result));if(LVB&&LVB.lvp.blind&&!st.result){bd.draw(st.board.map(()=>null),o);return}bd.draw(st.board,o);
     legendCheck(st);legendBadge(v.querySelector("#bbox"),!parkOn()&&legendVisit(st).length>0);
     const JS0=st.journey&&/^h\d\d$/.test(st.journey)?jStages().find(x=>x.id===st.journey):null,JOPP=LVB&&LVB.lvp.opp&&JCHAR[LVB.lvp.opp]?LVB.lvp.opp:String(st.journey||"").startsWith("char:")&&JCHAR[st.journey.slice(5)]?st.journey.slice(5):null;
     parkDraw(v.querySelector("#bbox"),bd,st.board,o,{tap,bg:JS0?`data/park/j${JR[JS0.r].k}_360.webp`:null,bgName:JS0?"雲河鎮・"+JR[JS0.r].name:null,arena:st.arena||null,gate:st.journey&&!st.arena?(k=>({img:["data/parkgate/"+k+".webp","data/park/"+k+"_360.webp"],icon:"🍃",title:"走進"+parkName(k),sub:"石桌就在前面",bg:"#2b2a22",quote:parkQuote(k)}))(store.get("era","classic")):null,watchers:legendVisit(st),thinking:!!st.thinking||(!st.result&&st.turn!==st.human),botSide:st.human==="r"?"b":"r",result:st.result?(st.result.w||"draw"):null,hint:o.hint,
@@ -4155,13 +4216,17 @@ async function review(rep,id){let it=null;for(let k=0;k<12&&!it;k++){try{const d
     // 每走一個不同的著法算一次；不是正手、妙手的都算一次「沒找到」
     if(sig&&d.last!==sig){d.last=sig;d.n++;if(!good)d.fail=(d.fail||0)+1;if(good||ok)d.ok=true;
       /* 意見回饋 301：間隔重複（萊特納盒）：練對升一格，下次在 1、3、7、14、30 天後複習；練錯退一格，10 分鐘後再來 */
-      const IV=[0,1,3,7,14,30];d.box=good?Math.min(5,(d.box||0)+1):Math.max(0,(d.box||0)-1);d.due=Date.now()+(good?IV[d.box]*864e5:6e5);
+      const IV=[0,1,3,7,14,30];d.box=good?(d.hint?(d.box||0):Math.min(5,(d.box||0)+1)):Math.max(0,(d.box||0)-1);if(good)d.hint=false;d.due=Date.now()+(good?IV[d.box]*864e5:6e5);
       all[P0.key]=d;store.set("redoDone",all)}
     const fail=d.fail||0,bc=m.bc||P0.bc;
     if(good){s2.textContent=`✅ 「${m.cn}」是${m.q}！比上次的${P0.q}進步了，繼續跟電腦下完吧`;return}
+    const HB=practiceBoard(),HM=bc?bcMove(HB,st.human,bc):null,C0=window.XQCore;let say="";
+    if(HM&&fail>=3&&C0){const pc=HB[HM.f],cap=HB[HM.t],after=C0.make(HB,HM.f,HM.t),ck=C0.inCheck(after,opp(st.human)),nm=x=>C0.NAMES[C0.sideOf(x)][x.toUpperCase()];
+      say=`動你的「${nm(pc)}」`+(cap?`，可以吃掉對方的「${nm(cap)}」`:"")+(ck?"，走了就是將軍":"")+(!cap&&!ck?"，先把它調到更好的位置，看看能威脅到什麼":"")}
+    if(HM&&fail>=2){if(!d.hint){d.hint=true;all[P0.key]=d;store.set("redoDone",all)}const want=fail>=4?{f:HM.f,t:HM.t,n:P0.base}:{f:HM.f,t:null,n:P0.base};if(!pHint||pHint.t!==want.t||pHint.f!==want.f){pHint=want;setTimeout(draw,0)}}
     s2.textContent=(ok?`👍 「${m.cn}」是${m.q}，比上次好；按 ↶ 悔棋再挑戰正手`:`❌ 「${m.cn}」還是${m.q}，按 ↶ 悔棋再想一次`)+`（第 ${fail} 次）`+
-      (fail>=5&&bc?`\n💡 試了 ${fail} 次，Pikafish 建議走「${bc}」`:fail<5?`・再 ${5-fail} 次沒找到正手就給提示`:"");
-    if(fail>=5&&bc){pa.hidden=false;pa.innerHTML='<button class="pill" id="pHn">💡 在棋盤上看建議</button><button class="pill" id="pPv">▶ 推演後面</button>';
+      (!HM?"":fail>=4?`\n💡 提示三：黃框是建議的落點（Pikafish 建議走「${bc}」）`:fail>=3?`\n💡 提示二：${say}（黃框是該動的子）`:fail>=2?"\n💡 提示一：黃框這顆子就是關鍵":"・再錯一次就給提示");
+    if(fail>=4&&bc){pa.hidden=false;pa.innerHTML='<button class="pill" id="pHn">💡 在棋盤上看建議</button><button class="pill" id="pPv">▶ 推演後面</button>';
       pa.querySelector("#pHn").onclick=()=>{const mv=bcMove(practiceBoard(),st.human,bc);if(!mv)return toast("找不到這步");vibrate(5);
         pHint={...mv,n:P0.base};if(st.moves.length>P0.base)toast("按 ↶ 悔棋回到起點，就看得到建議的那一步（黃框）");draw()};
       pa.querySelector("#pPv").onclick=()=>{vibrate(5);pvSheet(bc)}}}
@@ -4579,17 +4644,22 @@ async function preloadAll(){if(!OFF||!("caches" in window))return;
   if(M.big)(async()=>{try{const BH=store.get("bigH",{}),dc=await caches.open("xqlab-data"),o={};for(const[u,sz,h]of M.big){o[u]=h;const r=await dc.match(abs(u));
     if(r&&(BH[u]?BH[u]!==h:+(r.headers.get("content-length")||sz)!==sz))await dc.delete(abs(u))}store.set("bigH",o)}catch(e){}})();   /* 特級大師對局換了內容：刪掉手機裡的舊檔，下次用到時重抓 */
   const okH=()=>{const o={};for(const u in NH)if(!fail.some(f=>f[0]===u))o[u]=NH[u];store.set("preH",o)};
-  const total=miss.reduce((t,x)=>t+x[1],0);let got=0,ov=null,bar=null,txt=null,fail=[];
-  if(miss.length&&!done){ov=document.createElement("div");ov.id="preov";
+  const E0=store.get("era","classic"),ERA_K=["classic","qin","han","sanguo","weijin","nanbei","sui","tang","wudai","song","yuan","ming","qing"];
+  const eraOf=u=>{for(const e of ERA_K)if(new RegExp("[/_.]"+e+"([/_.]|$)").test(u))return e;return null};
+  const CORE_DIR=/^data\/(sfx|voice|glyphs|pieces|boards|icons|xs|pika|pika2|loading|stones|park|park3d|pano|pset|seat|champ|npc|parkgate|arenagate|inn)\//;
+  const isCore=u=>{if(!CORE_DIR.test(u)||/^data\/park\/j/.test(u))return false;const e=eraOf(u);return !e||e===E0};
+  const coreMiss=miss.filter(x=>isCore(x[0]));
+  const total=coreMiss.reduce((t,x)=>t+x[1],0);let got=0,ov=null,bar=null,txt=null,fail=[];
+  if(coreMiss.length&&!done){ov=document.createElement("div");ov.id="preov";
     ov.innerHTML=`<div class="ld-img"><img alt=""><img alt=""></div><div class="ld-q"><div class="ld-tt"></div><div class="ld-qt"></div><div class="ld-src"></div></div>
       <div class="pre-in"><div class="pre-t">象棋研究室</div><div class="pre-s">${store.get(PRE_KEY,null)?"有新的圖和故事，正在搬進手機…":"第一次開啟，正在把棋盤、園子和故事都搬進手機…"}</div>
-      <div class="pre-bar"><i></i></div><div class="pre-n">準備中…</div><div class="pre-h">只有第一次和改版後需要等，之後打開就直接進去，下棋時不會再卡。</div><button class="pre-skip" type="button" hidden>先進去逛（背景繼續下載）</button></div>`;
+      <div class="pre-bar"><i></i></div><div class="pre-n">準備中…</div><div class="pre-h">先把常用的載好就進去；其他朝代和故事的圖在背景繼續下載。</div><button class="pre-skip" type="button" hidden>先進去逛（背景繼續下載）</button></div>`;
     document.body.append(ov);bar=ov.querySelector(".pre-bar i");txt=ov.querySelector(".pre-n");ldShow(ov);
     setTimeout(()=>{const k=ov&&ov.querySelector(".pre-skip");if(k){k.hidden=false;k.onclick=()=>{ov.remove();ov=null}}},20000)}
-  const show=()=>{if(!ov)return;const p=total?Math.min(100,Math.floor(got*100/total)):100;bar.style.width=p+"%";txt.textContent=`${p}%　${(got/1048576).toFixed(1)} ／ ${(total/1048576).toFixed(1)} MB`};show();
-  const q=miss.slice().sort((a,b)=>(b[0].indexOf("data/loading/")===0)-(a[0].indexOf("data/loading/")===0));let run=0;   /* 載入畫面的水墨畫先下載 */
+  const show=()=>{if(!ov)return;if(total&&got>=total){txt.textContent="載好了";const o=ov;ov=null;setTimeout(()=>{o.classList.add("out");setTimeout(()=>o.remove(),400)},250);return}const p=total?Math.min(100,Math.floor(got*100/total)):100;bar.style.width=p+"%";txt.textContent=`${p}%　${(got/1048576).toFixed(1)} ／ ${(total/1048576).toFixed(1)} MB`};show();
+  const rank=x=>x[0].indexOf("data/loading/")===0?0:isCore(x[0])?1:2,q=miss.slice().sort((a,b)=>rank(a)-rank(b));let run=0;   /* 載入畫面的水墨畫先下載，接著核心，其他在背景 */
   await new Promise(ok=>{if(!q.length)return ok();const next=()=>{if(!q.length&&!run)return ok();while(run<6&&q.length){const [u,sz,h,fr]=q.shift();run++;
-    fetch(abs(u)+(fr?"?fresh="+h:""),fr?{cache:"no-store"}:void 0).then(r=>{if(!r.ok)throw new Error(r.status);return c.put(abs(u),r)}).then(()=>{got+=sz}).catch(()=>{fail.push([u,sz,h,fr]);got+=sz}).finally(()=>{run--;show();next()})}};next()});
+    fetch(abs(u)+(fr?"?fresh="+h:""),fr?{cache:"no-store"}:void 0).then(r=>{if(!r.ok)throw new Error(r.status);return c.put(abs(u),r)}).then(()=>{if(isCore(u))got+=sz}).catch(()=>{fail.push([u,sz,h,fr]);if(isCore(u))got+=sz}).finally(()=>{run--;show();next()})}};next()});
   if(!fail.length)store.set(PRE_KEY,M.v);okH();
   if(ov){txt.textContent="載好了";setTimeout(()=>{if(ov){ov.classList.add("out");setTimeout(()=>ov&&ov.remove(),400)}},250)}
   /* 失敗的在背景再試三次 */
@@ -4795,7 +4865,7 @@ function Library(v,c0){
   const pick=c=>{libState.player="";libState.q="";qi.value="";libState.limit=60;load(c)};
   function paintCols(){const seg=v.querySelector("#grp"),box=v.querySelector("#cols");
     const gs=GRPS.filter(([g])=>books.some(b=>grpOf(b)===g)||(g==="gm"&&DEVREMOTE()));
-    seg.hidden=gs.length<2;seg.innerHTML="";
+    if(!seg||!seg.isConnected)return;seg.hidden=gs.length<2;seg.innerHTML="";
     for(const[g,l]of gs){const x=document.createElement("button");x.textContent=l;x.classList.toggle("on",g===grp);
       x.onclick=()=>{if(g===grp)return;grp=g;const f=books.find(b=>grpOf(b)===g);if(f)pick(f.key);else{paintCols();libState.c=null;data=null;showNone()}};seg.append(x)}
     box.innerHTML="";
@@ -4811,7 +4881,7 @@ function Library(v,c0){
     v.querySelector("#items").innerHTML='<div class="lib-empty">載入中…</div>';v.querySelector("#more").innerHTML="";
     try{data=await api("/db/items?c="+encodeURIComponent(c))}catch(e){data=null;empty("⚠",esc(e.message));return}
     if(libState.c!==c)return;
-    const hasP=data.items.some(x=>x.red||x.black);v.querySelector("#pf").hidden=!hasP;if(!hasP)libState.player="";filter()}
+    const hasP=data.items.some(x=>x.red||x.black);{const pf=v.querySelector("#pf");if(!pf)return;pf.hidden=!hasP}if(!hasP)libState.player="";filter()}
   function filter(top){if(!data)return;if(top)libState.pg=0;const q=s2(libState.q.trim()),pn=libState.player;
     shown=data.items.filter(it=>{
       if(pn){const r=(it.red||"").includes(pn),b=(it.black||"").includes(pn);if(libState.side==="r"?!r:libState.side==="b"?!b:!(r||b))return false;

@@ -87,6 +87,8 @@
   /* 意見回饋 399：這個朝代有 Gemini 整套棋子（LOOK.pset），棋面直接貼那一顆的圖（字已經畫在上面） */
   const PSRC=b=>["r","b"].flatMap(s=>"KABRNCP".split("").map(k=>b+s+k+".webp"));
   const faceTex=(ch,red,onReady)=>{const L=LOOK,s=red?"r":"b",im=L&&L.pieces?loadImg(L.pieces[s],onReady):null,key=ch+(im?"|"+L.k:"");if(faceCache[key])return faceCache[key];
+    if(L&&L.hc){const k="hc|"+ch;return faceCache[k]||(faceCache[k]=cv(FN,FN,(g,n)=>{const ink=red?"#C8102E":"#111111";g.fillStyle="#FFFFFF";g.fillRect(0,0,n,n);g.strokeStyle=ink;g.lineWidth=n*.05;g.beginPath();g.arc(n/2,n/2,n*.44,0,TAU);g.stroke();g.lineWidth=n*.02;g.beginPath();g.arc(n/2,n/2,n*.36,0,TAU);g.stroke();
+      g.font=`900 ${n*.6|0}px "Noto Sans TC","PingFang TC",sans-serif`;g.textAlign="center";g.textBaseline="middle";g.fillStyle=ink;g.fillText(ch,n/2,n/2+n*.03)}))}   /* 高對比棋子 */
     if(L&&L.pset){const lt=Object.keys(NAMES[s]).find(k=>NAMES[s][k]===ch),src=L.pset+s+lt+".webp",pim=loadImg(src,onReady),pk="ps|"+src;if(faceCache[pk])return faceCache[pk];
       if(pim)return faceCache[pk]=cv(FN,FN,(g,n)=>{g.fillStyle=rimOf(pim);g.fillRect(0,0,n,n);g.imageSmoothingQuality="high";g.drawImage(pim,-n*.03,-n*.03,n*1.06,n*1.06)})}
     if(L&&L.pieces&&!im)return plainFace(ch,red);
@@ -1250,6 +1252,6 @@
     // 意見回饋 244：切回平面棋盤時只藏起來、暫停繪製（不拆掉 3D 場景），再切回公園就直接顯示，不用重新載入
     /* 意見回饋 370：棋盤格 → 螢幕座標（App 的吃子水墨圈畫在公園棋盤的那一格上） */
     const screenOf=i=>{try{const[x,z]=pos(i),v=new T.Vector3(x,TOP,z).project(cam),r=el.getBoundingClientRect();if(!r.width)return null;return{x:r.left+(v.x+1)/2*r.width,y:r.top+(1-v.y)/2*r.height}}catch(e){return null}};
-    return{el,draw,destroy,say,screenOf,whenShown(f){if(shown)f();else shownCb.push(f)},oppSay:(t,d)=>opp.say(t,d),resetView(){reset()},hide(){el.style.display="none"},show(){if(el.style.display==="none"){el.style.display="";fit()}}}}
+    return{el,draw,destroy,say,screenOf,whenShown(f){if(shown)f();else shownCb.push(f)},oppSay:(t,d)=>opp.say(t,d),resetView(){reset()},setView(m){tyaw=0;tpitch=m==="top"?.5:m==="flat"?-.85:0;tzoom=1},hide(){el.style.display="none"},show(){if(el.style.display==="none"){el.style.display="";fit()}}}}
   window.XQPark3D={create};
 })();
