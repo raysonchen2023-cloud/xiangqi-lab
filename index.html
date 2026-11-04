@@ -699,7 +699,7 @@ html[data-era=ming] .topbar,html[data-era=qing] .topbar{border-bottom-width:4px}
       if(!window.caches)return go();caches.keys().then(function(ks){return Promise.all(ks.filter(function(k){return k.indexOf("xqlab-app-")===0}).map(function(k){return caches.delete(k)}))})
         .then(function(){return navigator.serviceWorker&&navigator.serviceWorker.getRegistration()}).then(function(r){return r&&r.update()}).catch(function(){}).then(go)}};setTimeout(chk,4000)})();
 </script>
-<script>window.XQ_OFFLINE=true;window.XQ_BUILD="20261105-0535";</script>
+<script>window.XQ_OFFLINE=true;window.XQ_BUILD="20261105-0550";</script>
 <script src="core.js"></script>
 <script src="engine.js"></script>
 <script src="local.js"></script>
@@ -1059,22 +1059,22 @@ function cymHit(t,v,dur){dur=dur||1;const n=AC.createBufferSource(),b=AC.createB
   const hp=AC.createBiquadFilter(),g=AC.createGain();hp.type="highpass";hp.frequency.value=3200;g.gain.value=.16*(v||1);n.buffer=b;n.connect(hp);hp.connect(g);g.connect(AC.destination);n.start(t)}
 function bellHit(t,f){[1,2.76,5.4,8.93].forEach((k,i)=>{const o=AC.createOscillator(),g=AC.createGain();o.type="sine";o.frequency.value=f*k;g.gain.setValueAtTime(0,t);g.gain.linearRampToValueAtTime(.12/(1+i),t+.004);g.gain.exponentialRampToValueAtTime(.0008,t+1.8/(1+i*.6));o.connect(g);g.connect(AC.destination);o.start(t);o.stop(t+2)})}
 /* 背景音樂（開發者 11/5：每個朝代兩種當時最流行的樂器，Gemini Lyria 做的古風曲，data/bgm/<朝代>/，清單在 data/bgm/index.json）。
-   聲音頁「背景音樂」打開才播（預設關）；這個朝代沒有曲子就不播；曲子隨機輪流、App 切到背景就暫停、換朝代就換曲子 */
+   聲音頁「背景音樂」打開才播（意見回饋 572：91 首做完後預設打開）；這個朝代沒有曲子就不播；曲子隨機輪流、App 切到背景就暫停、換朝代就換曲子 */
 var BGM={a:null,list:null,titles:null,era:null,src:"",last:-1};
 /* 意見回饋 575（開發者）：每一首都有曲名（data/bgm/titles.json，key 是「朝代/檔名」）；聲音頁的背景音樂下面顯示正在播哪一首，可以換一首 */
 function bgmTitles(){return BGM.titles||(BGM.titles=fetch("data/bgm/titles.json").then(r=>r.ok?r.json():{}).catch(()=>({})))}
-async function bgmNow(){const el=document.getElementById("bgmNow");if(!el)return;const on=!!store.get("bgm",false)&&BGM.a&&!BGM.a.paused&&BGM.src;if(!on){el.style.display="none";return}
+async function bgmNow(){const el=document.getElementById("bgmNow");if(!el)return;const on=!!store.get("bgm",true)&&BGM.a&&!BGM.a.paused&&BGM.src;if(!on){el.style.display="none";return}
   const k=BGM.src.replace(/^data\/bgm\//,""),T=(await bgmTitles())||{},t=T[k];el.style.display="flex";
   el.innerHTML=`<span style="flex:1;min-width:0">♪ 正在播放${t?`《${esc(t)}》`:""}</span><button class="btn ghost" id="bgmNext" style="flex:none;width:auto;margin:0;padding:4px 12px;font-size:13px;white-space:nowrap">換一首</button>`;
   el.querySelector("#bgmNext").onclick=()=>{vibrate(5);bgmSync(true)}}
 function bgmList(){return BGM.list||(BGM.list=fetch("data/bgm/index.json").then(r=>r.ok?r.json():{}).catch(()=>({})))}
-async function bgmSync(next){const on=!!store.get("bgm",false)&&!document.hidden,era=store.get("era","classic");
+async function bgmSync(next){const on=!!store.get("bgm",true)&&!document.hidden,era=store.get("era","classic");
   if(!on){if(BGM.a)BGM.a.pause();return}const L=((await bgmList())||{})[era]||[];if(!L.length){if(BGM.a)BGM.a.pause();return}
   if(!BGM.a){BGM.a=new Audio();BGM.a.volume=.35;BGM.a.preload="auto";BGM.a.onended=()=>bgmSync(true);BGM.a.onplay=BGM.a.onpause=()=>bgmNow()}
   if(next||BGM.era!==era||!BGM.src){BGM.era=era;let n=Math.floor(Math.random()*L.length);if(L.length>1&&n===BGM.last)n=(n+1)%L.length;BGM.last=n;BGM.src=`data/bgm/${era}/${L[n]}`;BGM.a.src=BGM.src}
   if(BGM.a.paused)BGM.a.play().catch(()=>{})}
 document.addEventListener("visibilitychange",()=>{bgmSync()});
-document.addEventListener("pointerdown",()=>{if(store.get("bgm",false)&&(!BGM.a||BGM.a.paused))bgmSync()},{passive:true});   /* 手機要先點一下畫面才准出聲 */
+document.addEventListener("pointerdown",()=>{if(store.get("bgm",true)&&(!BGM.a||BGM.a.paused))bgmSync()},{passive:true});   /* 手機要先點一下畫面才准出聲 */
 document.addEventListener("change",e=>{const t=e.target;if(t&&t.dataset&&t.dataset.t==="bgm")setTimeout(()=>bgmSync(),60)});
 window.XQ_DRUM=(era,kind)=>{if(!store.get("gateDrum",true))return;try{unlockAudio()}catch(e){}
   withAudio(()=>{const pat=DRUM_PAT[era]||DRUM_PAT.classic,t0=AC.currentTime+.08,sp=kind==="path"?1.15:1;
@@ -3093,7 +3093,7 @@ function Settings(v){
     /* 意見回饋 535：滑到中間停住的那張就套用；畫面重畫後把選中的那張捲回中間 */
     {const ew=v.querySelector("#era"),on=ew&&ew.querySelector(".on");if(ew){ew._quiet=true;if(on)ew.scrollLeft=on.offsetLeft-(ew.clientWidth-on.offsetWidth)/2;setTimeout(()=>{ew._quiet=false},250);
       ew.onscroll=()=>{if(ew._quiet)return;clearTimeout(ew._t);ew._t=setTimeout(()=>{const mid=ew.scrollLeft+ew.clientWidth/2;let best=null,bd=1e9;for(const x of ew.querySelectorAll("[data-e]")){const d=Math.abs(x.offsetLeft+x.offsetWidth/2-mid);if(d<bd){bd=d;best=x}}if(best&&best.dataset.e!==store.get("era","classic"))best.click()},170)}}}
-    const tg=(k,label,sub)=>`<label class="row" style="justify-content:space-between;padding:6px 0"><span><b>${label}</b><br><span class="muted">${sub}</span></span><input type="checkbox" class="sw" data-t="${k}" ${store.get(k,k!=="mvSound"&&k!=="bgm")?"checked":""}></label>`;
+    const tg=(k,label,sub)=>`<label class="row" style="justify-content:space-between;padding:6px 0"><span><b>${label}</b><br><span class="muted">${sub}</span></span><input type="checkbox" class="sw" data-t="${k}" ${store.get(k,k!=="mvSound")?"checked":""}></label>`;
     v.querySelector("#mv").innerHTML=tg("mvArrow","箭頭","從原來位置畫箭頭指到新位置")+'<div style="border-top:1px solid var(--line)"></div>'+tg("mvAnim","動畫","棋子滑過去，被吃的棋子淡出")+'<div style="border-top:1px solid var(--line)"></div>'+tg("capSound","吃子音效","吃子時重重「啪」一聲、將軍時「鏘」一聲")+'<div style="border-top:1px solid var(--line)"></div>'+tg("gateDrum","🥁 過場鼓聲","進園子、上擂台、走荒野小徑時，敲一段那個朝代戰場上的鼓和鑼")+'<div style="border-top:1px solid var(--line)"></div>'+tg("bgm","🎵 背景音樂","")+'<div style="border-top:1px solid var(--line)"></div>'+`<div style="padding:6px 0" id="vcRow"><b>語音報「吃」「將軍」</b><br><span class="muted">吃子喊「吃！」、將軍喊「將軍！」；點一下可以試聽；可調語速</span><div class="st-res" style="margin:8px 0 0">${[["off","關"],["m","男聲"],["f","女聲"]].map(([k,l])=>`<button data-vc="${k}" class="${(store.get("voiceCall",true)?store.get("voiceSex","m"):"off")===k?"on":""}">${l}</button>`).join("")}</div><div class="st-res" style="margin:8px 0 0;align-items:center"><span class="muted" style="font-size:13px">語速</span>${[["s","慢"],["n","中"],["f","快"]].map(([k,l])=>`<button data-vr="${k}" class="${store.get("voiceRate","n")===k?"on":""}">${l}</button>`).join("")}</div></div>`+'<div style="border-top:1px solid var(--line)"></div>'+sndPicker()+'<div style="border-top:1px solid var(--line)"></div>'+tg("ckFx","將軍特效","被將軍或將對方軍時，棋盤上蓋「將軍！」字樣")+'<div style="border-top:1px solid var(--line)"></div>'+tg("capFx","吃子特效","吃子時被吃的那格蓋一個水墨「吃」字")+'<div style="border-top:1px solid var(--line)"></div>'+'<div style="border-top:1px solid var(--line)"></div>'+tg("voiceMove","🎤 聲控走棋","下棋時右上角多一個 🎤，按下去說「馬八進七」「炮二平五」就會走"+(vcOK()?"":"（這個瀏覽器不支援語音辨識）"))+'<div style="border-top:1px solid var(--line)"></div>'+tg("opFx","開局名稱動畫","走出中炮、仙人指路、屏風馬…時，棋盤上展開卷軸寫出開局名");
     {const mvB=v.querySelector("#mv"),sdB=v.querySelector("#snd");sdB.innerHTML="";mvB.querySelectorAll(":scope>div[style*='border-top']").forEach(x=>x.remove());
       const st=mvB.querySelector("#sndSt");if(st)sdB.append(st.parentElement);
