@@ -69,7 +69,10 @@ var XQ=(function(){
   async function carSell(b){const d=await (await fetch("data/cars.json")).json(),c=d.cars.find(x=>x.id===b.id);if(!c)throw new Error("找不到這台車");
     const B=carBank(),own=B.owned[c.id];if(!own)throw new Error("你沒有這台車");const{v}=carValue(c,own.at);
     delete B.owned[c.id];B.pts+=v;B.sold=(B.sold||0)+1;B.hist.unshift({sell:c.id,d:v,at:Date.now()});B.hist=B.hist.slice(0,100);ls.set("carBank",B);return{...carState(),gain:v}}
-  const savePlay=()=>ls.set("play",{id:P.id,human:P.human,level:P.level,ranked:!!P.ranked,reward:!!P.reward,arena:P.arena||null,journey:P.journey||null,stamp:P.stamp||null,prize:P.prize||null,rk:P.rk,rate:P.rate||null,result:P.result,practice:P.practice||null,moves:saveMoves(P.moves)});
+  /* 意見回饋 415：這盤用過幾次提示（/play/hint、雲河棋路的提示棋 /play/hintmark）、悔過幾次棋（/play/undo）。
+     存檔時一起寄進對局紀錄，我的戰績算棋力、成長時把這種盤排除，才公平；舊存檔沒有這兩欄就照算 */
+  const assist=G=>({...(G&&G.hintN?{hintN:G.hintN}:{}),...(G&&G.undoN?{undoN:G.undoN}:{})});
+  const savePlay=()=>ls.set("play",{id:P.id,human:P.human,level:P.level,ranked:!!P.ranked,reward:!!P.reward,arena:P.arena||null,journey:P.journey||null,stamp:P.stamp||null,prize:P.prize||null,rk:P.rk,rate:P.rate||null,result:P.result,practice:P.practice||null,...assist(P),moves:saveMoves(P.moves)});
   function ensureP(){if(P)return;const s=ls.get("play",null);if(s&&s.moves){P=s;P.hint=null;stateRebuild(P)}else playNew("r",3);setTimeout(playEngine,0)}
   // pre：錯棋重練，先擺上舊對局到錯棋之前的著法（moves），info 記上次走了什麼
   // arena：公園朝代擂台（意見回饋 255）＝這盤是挑戰哪個朝代的擂主；贏了蓋那個朝代的章
@@ -79,8 +82,8 @@ var XQ=(function(){
   const kindOf=G=>G&&G.practice?"practice":G&&G.journey?"journey":G&&G.arena?"arena":"cpu",unfinished=G=>!!(G&&!G.result&&G.moves&&G.moves.length);
   // 積分挑戰下到一半就丟掉（開同一種的新局）：算輸，不然輸棋前開新局就能躲掉扣分
   function forfeit(G){if(!G||!G.ranked||G.result||G.moves.length<2)return;const keep=P;P=G;
-    P.result={w:opp(P.human),why:"中途離開，算輸"};cpuRateApply("l");pushGame("play",{id:P.id,date:P.id.slice(0,10),level:0,ranked:true,rk:P.rk,human:P.human,result:P.result,moves:saveMoves(P.moves)});P=keep}
-  const stashOut=G=>({id:G.id,human:G.human,level:G.level,ranked:!!G.ranked,reward:!!G.reward,arena:G.arena||null,journey:G.journey||null,rk:G.rk,result:null,practice:G.practice||null,moves:saveMoves(G.moves)});
+    P.result={w:opp(P.human),why:"中途離開，算輸"};cpuRateApply("l");pushGame("play",{id:P.id,date:P.id.slice(0,10),level:0,ranked:true,rk:P.rk,human:P.human,result:P.result,...assist(P),moves:saveMoves(P.moves)});P=keep}
+  const stashOut=G=>({id:G.id,human:G.human,level:G.level,ranked:!!G.ranked,reward:!!G.reward,arena:G.arena||null,journey:G.journey||null,rk:G.rk,result:null,practice:G.practice||null,...assist(G),moves:saveMoves(G.moves)});
   // play2：收起來的棋，每一種一盤 {cpu,arena,journey}（舊版只存一盤，讀的時候換成新格式）
   function stashAll(){let s=ls.get("play2",null);if(s&&s.moves)s={[kindOf(s)]:s};const o={};
     for(const k of["cpu","arena","journey","practice"]){const g=s&&s[k];if(g&&g.moves&&g.moves.length&&!g.result)o[k]=g}return o}
@@ -117,7 +120,7 @@ var XQ=(function(){
     if(P.arena&&!P.journey&&res==="w"&&P.moves.length>=2){const S=ls.get("arenaStamps",{}),first=!S[P.arena];if(first)S[P.arena]={at:new Date().toISOString(),lv:P.level,n:P.moves.length};ls.set("arenaStamps",S);
       P.stamp={era:P.arena,first,total:Object.keys(S).length}}
     else if(kindOf(P)==="cpu"){const rec=ls.get("record",{}),L=rec[P.level]||(rec[P.level]={w:0,l:0,d:0});L[res]++;ls.set("record",rec)}
-    pushGame("play",{id:P.id,date:P.id.slice(0,10),level:P.level,ranked:!!P.ranked,reward:!!P.reward,rk:P.rk,human:P.human,result:P.result,moves:saveMoves(P.moves)});savePlay()}
+    pushGame("play",{id:P.id,date:P.id.slice(0,10),level:P.level,ranked:!!P.ranked,reward:!!P.reward,rk:P.rk,human:P.human,result:P.result,...assist(P),moves:saveMoves(P.moves)});savePlay()}
   async function analyzePlay(){if(paBusy||!P)return;paBusy=true;try{await analyzeList(P,savePlay,()=>!!P&&!P.result&&P.turn!==P.human)}finally{paBusy=false}}
   const ucis=()=>P.moves.map(m=>iccs(m.f,m.t));
   /* 意見回饋 363：秘境棋友的開局喜好是真的——跟他下時，這盤有 90% 機率照他愛下的開局走前一兩步（紅方、黑方各一套），之後才交給 Pikafish */
@@ -164,9 +167,10 @@ var XQ=(function(){
       if(!legal(P.board,P.turn).some(([x,y])=>x===f&&y===t))throw new Error("這步不合法");playApply(f,t);setTimeout(playEngine,0)}
     else if(p==="/play/undo"){if(P.ranked)throw new Error("積分挑戰不能悔棋");if(P.reward)throw new Error("獎勵模式不能悔棋");if(P.arena)throw new Error("朝代擂台不能悔棋");   /* 意見回饋 382 *//* 意見回饋 380：電腦（擂主）還在想的時候也能悔棋——引擎算完會發現步數變了、自動丟掉那步 */
       const floor=P.practice?P.practice.base:0;if(P.moves.length<=floor)throw new Error("已經回到練習的起點");
-      while(P.moves.length>floor){const m=P.moves.pop();if(m.by===P.human)break}P.result=null;P.hint=null;stateRebuild(P);savePlay();setTimeout(playEngine,0)}
+      while(P.moves.length>floor){const m=P.moves.pop();if(m.by===P.human)break}P.undoN=(P.undoN||0)+1;P.result=null;P.hint=null;stateRebuild(P);savePlay();setTimeout(playEngine,0)}
     else if(p==="/play/hint"){throw new Error("挑戰電腦不提供提示，要靠自己");if(P.result||P.turn!==P.human)throw new Error("現在不能提示");
-      const r=await XQEngine.search({moves:ucis()},{movetime:1500},1),f=parseSq(r.best.slice(0,2)),t=parseSq(r.best.slice(2,4));P.hint={f,t,cn:notate(P.board,f,t)}}
+      const r=await XQEngine.search({moves:ucis()},{movetime:1500},1),f=parseSq(r.best.slice(0,2)),t=parseSq(r.best.slice(2,4));P.hint={f,t,cn:notate(P.board,f,t)};P.hintN=(P.hintN||0)+1;savePlay()}
+    else if(p==="/play/hintmark"){if(!P.result){P.hintN=(P.hintN||0)+1;savePlay()}}   /* 意見回饋 415：雲河棋路的提示棋在畫面那邊算，這裡只記「這盤用過提示」 */
     else if(p==="/play/resign"){if(!P.result)playEnd(opp(P.human),"你認輸")}
     return playState()}
 
@@ -254,7 +258,7 @@ var XQ=(function(){
     if(!d)return null;d.byId=new Map(d.items.map(x=>[x.id,x]));return bookCache[key]=d}
   async function gameItems(kind){const list=(await idb.get("games:"+kind))||[];
     return list.slice().reverse().map(g=>{if(kind==="play"){const lv=LEVELS[g.level-1]||{name:"?"},bot=g.ranked?"Pikafish 積分挑戰（"+(RANKS[g.rk]||["?"])[0]+"）":"Pikafish 第"+g.level+"級「"+lv.name+"」"+(g.reward?"・🚗獎勵":"");g={...g,red:g.human==="r"?"你":bot,black:g.human==="b"?"你":bot}}
-      return gameItem(g,false)})}
+      return{...gameItem(g,false),...assist(g)}})}
   async function dbBooks(){const out=[];for(const b of await publicBooks())out.push({key:b.key,name:b.name,count:b.count});
     for(const b of await syncedBooks())if(out.some(x=>x.key===b.key))unsync(b.key);else out.push({key:b.key,name:b.name,count:b.count,synced:b.at});   // 以前從電腦同步過、現在已內建的，不要出現兩份
     if(remoteInfo())out.push({key:"ai",name:"AI 對局",count:0});

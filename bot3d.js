@@ -404,14 +404,37 @@
     return{act:k=>doAct(typeof k==="number"?comboAct(k):k),say,setScale,rebuild,count:COMBO.length,lines:LINES.length,
       stop(){stopped=true;window.removeEventListener("pointerdown",pDown,true);window.removeEventListener("pointermove",pMove,true);window.removeEventListener("pointerup",pUp,true);window.removeEventListener("pointercancel",pUp,true);clearInterval(eraT);clearInterval(boardT);window.removeEventListener("xq-call",onCall);window.removeEventListener("xq-result",onResult);window.removeEventListener("resize",onResize);try{rd.dispose()}catch(e){}box.remove()}}}
   // 瘦長版（公園 3D 棋盤的 Pikafish）：身體窄、高，手腳往內收，戴圓眼鏡
-  function thinify(B){const tz=B.torso;tz.children.forEach(o=>{if(o===B.head||B.arms.includes(o))return;o.scale.x*=.6;o.scale.y*=1.18;o.position.y*=1.18});
+  function thinify(B,noGlass){const tz=B.torso;tz.children.forEach(o=>{if(o===B.head||B.arms.includes(o))return;o.scale.x*=.6;o.scale.y*=1.18;o.position.y*=1.18});
     B.arms.forEach(a=>{a.position.x*=.62;a.scale.set(.85,1.1,.85)});B.legs.forEach(l=>{l.position.x*=.7;l.scale.set(.8,1.25,.8)});B.head.scale.set(.88,1.02,.9);B.head.position.y+=.08;tz.position.y+=.1;
-    const fr=new T.MeshPhysicalMaterial({color:0x1A1A1A,metalness:.6,roughness:.25,clearcoat:1}),gl=new T.MeshPhysicalMaterial({color:0xBFE3FF,transparent:true,opacity:.28,roughness:.05,clearcoat:1});
+    if(noGlass)return;const fr=new T.MeshPhysicalMaterial({color:0x1A1A1A,metalness:.6,roughness:.25,clearcoat:1}),gl=new T.MeshPhysicalMaterial({color:0xBFE3FF,transparent:true,opacity:.28,roughness:.05,clearcoat:1});
     for(const s of[-1,1]){const r=new T.Mesh(new T.TorusGeometry(.14,.022,10,28),fr);r.position.set(.19*s,.13,.5);B.head.add(r);const g=new T.Mesh(new T.CircleGeometry(.13,24),gl);g.position.set(.19*s,.13,.505);B.head.add(g)}
     const br=new T.Mesh(new T.CylinderGeometry(.015,.015,.12,8),fr);br.rotation.z=PI/2;br.position.set(0,.14,.51);B.head.add(br)}
+  /* 意見回饋 418：第二款 Pikafish「臥龍」——白綸巾、黑色及耳短髮齊眉瀏海、白色鶴氅（袖子褲子）、深藍腰帶、手拿白羽扇，不戴眼鏡 */
+  function wolongify(B){const P=(c,o)=>new T.MeshPhysicalMaterial(Object.assign({color:c,roughness:.55,metalness:0,clearcoat:.35},o||{})),ink=new T.MeshBasicMaterial({color:0x2a1a10,side:T.BackSide});
+    const add=(par,geo,m,pos,lw)=>{const x=new T.Mesh(geo,m);if(pos)x.position.set(...pos);par.add(x);if(lw){const l=new T.Mesh(geo,ink);l.scale.setScalar(1+lw);x.add(l)}return x};
+    const W=P("#F7F4EC"),N=P("#22335E",{clearcoat:.8,roughness:.35}),H=P("#16120F",{roughness:.5,clearcoat:.3}),fB=P("#5A3A22",{roughness:.4,clearcoat:.8});
+    B.hat.children.forEach(c=>c.visible=false);
+    const isPhys=o=>o.isMesh&&o.material&&o.material.isMeshPhysicalMaterial;
+    /* 袖子、褲子、鞋子換成白色；拿掉右手的笏板 */
+    B.arms.forEach(a=>a.children.forEach(o=>{if(!isPhys(o))return;if(o.geometry.type==="BoxGeometry")o.visible=false;else o.material=W}));
+    B.legs.forEach(l=>l.children.forEach(o=>{if(isPhys(o))o.material=W}));
+    /* 腰帶換深藍、拿掉品級牌 */
+    B.torso.children.forEach(o=>{if(!o.isMesh)return;if(o.geometry.type==="BoxGeometry")o.material=N;else if(o.geometry.type==="PlaneGeometry")o.visible=false});
+    /* 頭髮：後腦一片半球殼＋齊眉瀏海 */
+    const hair=add(B.head,new T.SphereGeometry(.55,36,20,0,Math.PI*2,0,Math.PI*.5),H,[0,.17,-.03],.03);hair.rotation.x=-.6;
+    add(B.head,new T.BoxGeometry(.74,.075,.16),H,[0,.47,.4],.03).rotation.x=-.5;
+    for(const sd of[-1,1])add(B.head,new T.BoxGeometry(.12,.3,.3),H,[.47*sd,.12,.05],.04);
+    /* 綸巾：頭頂一塊白布＋髮髻＋兩條帶子垂在腦後 */
+    const cap=add(B.head,new T.SphereGeometry(.34,28,16),W,[0,.62,-.08],.05);cap.scale.set(1,.5,1);
+    add(B.head,new T.SphereGeometry(.13,18,12),W,[0,.8,-.1],.06);
+    for(const sd of[-1,1]){const rb=add(B.head,new T.BoxGeometry(.07,.5,.02),W,[.12*sd,.38,-.55],.06);rb.rotation.x=.25;rb.rotation.z=.12*sd}
+    /* 右手的白羽扇 */
+    const hand=B.arms[1];add(hand,new T.CylinderGeometry(.025,.03,.34,10),fB,[0,-.72,.12],.08).rotation.x=-.3;
+    const fan=add(hand,new T.SphereGeometry(.3,24,16),W,[0,-1.02,.2],.04);fan.scale.set(.85,1.05,.12);fan.rotation.x=-.3;
+    for(let i=-2;i<=2;i++){const v=add(hand,new T.BoxGeometry(.012,.46,.01),P("#C9C2B2"),[i*.07,-1.0,.25]);v.rotation.x=-.3;v.rotation.z=i*.12}}
   // 公園 3D 棋盤（意見回饋 212）要讓小帥坐在對面：給一個獨立的小帥模型和表情設定
   const faceApply=(P,F,blink,mOpen)=>{P.eyes.forEach((e,i)=>{e.g.scale.y=F==="happy"||(F==="wink"&&i===1)?.12:blink?.1:1;e.brow.position.y=.15+(F==="open"||F==="happy"?.03:0);e.brow.rotation.z=PI/2+(F==="sad"?-.45*e.s:0)});
     const o=mOpen||F==="open"||F==="happy";P.mouth.open.visible=o;P.mouth.smile.visible=!o;P.mouth.smile.rotation.z=F==="sad"?0:PI;P.mouth.smile.scale.y=F==="flat"?.2:1;P.mouth.smile.position.y=F==="sad"?-.06:0;P.tear.visible=F==="sad"};
   window.XQBot3D={start,acts:Object.keys(ACTS),combos:COMBO.length,lines:LINES.length,figure:o=>{o=o||{};PCO=typeof o.p==="string"&&o.p.length===1&&"帥仕相俥傌炮兵將士象車馬砲卒".includes(o.p)?o.p:null;
-    try{const B=build(TH[o.e]?o.e:eraK(),o.g>=1&&o.g<=9?o.g:grade());if(o.thin)thinify(B);return B}finally{PCO=null}},faceApply,name:()=>BNAME()};
+    try{const B=build(TH[o.e]?o.e:eraK(),o.g>=1&&o.g<=9?o.g:grade());if(o.thin)thinify(B,!!o.wl);if(o.wl)wolongify(B);return B}finally{PCO=null}},faceApply,name:()=>BNAME()};
 })();
