@@ -23,7 +23,11 @@
   const inflight=new Set();
   const loadImg=(src,cb)=>{if(!src)return null;const c=imgCache[src];if(c){if(c.complete&&c.naturalWidth)return c;c.addEventListener("load",()=>cb&&cb(),{once:true});return null}
     const im=new Image();im.decoding="async";inflight.add(im);const off=()=>inflight.delete(im);im.addEventListener("load",off,{once:true});im.addEventListener("error",off,{once:true});
-    im.src=src;imgCache[src]=im;im.addEventListener("load",()=>cb&&cb(),{once:true});return null};
+    im.src=src;imgCache[src]=im;im.addEventListener("load",()=>cb&&cb(),{once:true});
+    /* 意見回饋 486、487（宋朝環景一直是黑的，重開也一樣）：手機快取裡那張圖壞了，解碼失敗——把壞的快取刪掉、繞過快取重抓一次（下次開會重新存一份好的） */
+    if(!/[?&]fresh=/.test(src))im.addEventListener("error",()=>{try{const u=new URL(src,location.href).href;if(window.caches)caches.keys().then(ks=>ks.forEach(k=>caches.open(k).then(c=>c.delete(u)))).catch(()=>{})}catch(e){}
+      setTimeout(()=>{const r=new Image();r.decoding="async";inflight.add(r);const off2=()=>inflight.delete(r);r.addEventListener("load",()=>{off2();imgCache[src]=r;cb&&cb()},{once:true});r.addEventListener("error",off2,{once:true});r.src=src+(src.includes("?")?"&":"?")+"fresh="+Date.now()},1200)},{once:true});
+    return null};
   const boardTex=onReady=>{const t=MOB?cv(1040,1140,(g,w,h)=>drawBoard(g,w,h,onReady)):cv(1560,1710,(g,w,h)=>drawBoard(g,w,h,onReady));return t};
   function drawBoard(g,w,h,onReady){const u=w/BW;const L=LOOK,im=L&&L.img?loadImg(L.img,onReady):null;
     if(im&&L.rect){// 平面棋盤座標：格線原點 (40,40)、格距 60；這裡格線原點在 1.2 格處
