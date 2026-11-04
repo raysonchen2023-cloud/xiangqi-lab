@@ -241,7 +241,7 @@ html[data-era=qin] .me-win{--oct:inset(0 round 8px)}html[data-era=song] .me-win{
 .me-seal{position:absolute;right:18px;top:20px;z-index:3;width:60px;height:60px;padding:3px;border-radius:8px;display:flex;align-items:center;justify-content:center;writing-mode:vertical-rl;font:900 16px/1.05 var(--serif);color:var(--accent);background:color-mix(in srgb,var(--accent) 8%,var(--card));border:3px solid var(--accent);box-shadow:inset 0 0 0 2px var(--card),inset 0 0 0 3.5px var(--accent);transform:rotate(-4deg);animation:meStamp .45s cubic-bezier(.3,1.4,.5,1) .35s both;cursor:pointer}
 .me-seal.q{font-size:20px}
 /* 意見回饋 568：①花窗碰到屋簷 ②官階（官印＋九層塔）放一起 ③名字匾額改成橫匾，掛在月洞門正上方 */
-.me-name{left:50%;top:10px;transform:translateX(-50%);writing-mode:horizontal-tb;flex-direction:row;align-items:baseline;gap:8px;max-height:none;max-width:78%;min-width:0;padding:8px 22px;white-space:nowrap}
+.me-name{left:50%;top:auto;bottom:10px;transform:translateX(-50%);writing-mode:horizontal-tb;flex-direction:row;align-items:baseline;gap:8px;max-height:none;max-width:calc(100% - 170px);min-width:0;padding:8px 22px;white-space:nowrap}
 .me-name b{font-size:21px;letter-spacing:.12em}.me-name small{font-size:12px;max-height:none;overflow:hidden;text-overflow:ellipsis}
 .me-name:active{transform:translateX(-50%) scale(.95)}
 .rkx{display:flex;align-items:center;gap:10px}.mr .me-seal{position:static;flex:none;animation:none;transform:rotate(-4deg)}
@@ -278,7 +278,7 @@ html[data-era=qin] .me-win{--oct:inset(0 round 8px)}html[data-era=song] .me-win{
 .mw svg{position:absolute;inset:0;width:100%;height:100%;overflow:visible;filter:drop-shadow(0 2px 3px color-mix(in srgb,var(--ink) 22%,transparent))}
 .mw .o{fill:color-mix(in srgb,var(--accent) 8%,var(--card));stroke:var(--trim,var(--accent));stroke-width:4;stroke-linejoin:round;transition:fill .15s}
 .mw .i{fill:none;stroke:color-mix(in srgb,var(--trim,var(--accent)) 45%,var(--line));stroke-width:1.5;transform:scale(.84);transform-box:fill-box;transform-origin:center}
-.mw .wv{display:none}html[data-era=song] .mw .wv{display:block}.mw .ic{position:absolute;left:50%;top:var(--iy,50%);transform:translate(-50%,-50%);width:58px;height:58px;display:flex;align-items:center;justify-content:center;font-size:40px;transition:transform .15s}.mw .ic .ti{width:58px;height:58px}
+.mw .wv{display:none}.me2.art .mw .wv{display:block}.mw .ic{position:absolute;left:50%;top:var(--iy,50%);transform:translate(-50%,-50%);width:58px;height:58px;display:flex;align-items:center;justify-content:center;font-size:40px;transition:transform .15s}.mw .ic .ti{width:58px;height:58px}
 .mw[data-c=r]{--iy:42%}.mw[data-c=z]{--iy:63%}.mw[data-c=z] .ic{width:52px;height:52px;font-size:34px}
 .mw>b{font:900 16px var(--serif);letter-spacing:.1em;color:var(--ink)}.mw>b small{margin-left:6px;font:800 14px var(--serif);letter-spacing:0;color:var(--accent);font-variant-numeric:tabular-nums}
 .mw:active .ic{transform:translate(-50%,-50%) scale(.9)}.mw:active .o{fill:color-mix(in srgb,var(--accent) 18%,var(--card))}
@@ -289,42 +289,42 @@ html[data-era=qin] .me-win{--oct:inset(0 round 8px)}html[data-era=song] .me-win{
 @keyframes meGlow{50%{opacity:1;transform:translateX(-50%) scale(1.3)}}@keyframes tierGlow{50%{filter:brightness(1.3) saturate(1.2)}}
 @media (prefers-reduced-motion:reduce){.me-stage *,.ta i.on{animation:none!important}}
 /* 意見回饋 560：宋朝版的我的角色頁，用 Gemini 畫的素材（data/me_song/）：月洞門舞台、汝窯須彌座、木匾額、朱印、天青玉環、九層塔、六角牌、粉牆黛瓦、什錦花窗 */
-html[data-era=song] .me-stage{background:url(data/me_song/stage_bg.webp) center 62%/cover no-repeat}
-html[data-era=song] .me-stage .me-halo,html[data-era=song] .me-stage .me-win{display:none}
-html[data-era=song] .me-ped{height:58px;width:250px;bottom:18px;clip-path:none;background:url(data/me_song/pedestal.webp) center bottom/contain no-repeat}
-html[data-era=song] .me-ped::before{display:none}
-html[data-era=song] .me-name{clip-path:none;background:url(data/me_song/name_plaque_h.webp) center/100% 100% no-repeat;padding:10px 30px 11px}
-html[data-era=song] .me-name::before{display:none}
-html[data-era=song] .me-name b{color:#2A2118}html[data-era=song] .me-name small{color:#6B5A48}
-html[data-era=song] .me-seal{border:0;box-shadow:none;background:url(data/me_song/seal.webp) center/100% 100% no-repeat;color:#B3261E;width:64px;height:64px;padding:8px}
-html[data-era=song] .jr{background:none;clip-path:none;padding:0}
-html[data-era=song] .jr::after{content:"";position:absolute;inset:0;background:url(data/me_song/jade_ring.webp) center/contain no-repeat;pointer-events:none}
-html[data-era=song] .jp{transform:scale(.82)}
-html[data-era=song] .jh{inset:31%;background:color-mix(in srgb,var(--card) 92%,transparent);z-index:1}html[data-era=song] .jh b{font-size:19px}html[data-era=song] .jh small{font-size:12px;margin-top:3px}
-html[data-era=song] .ta{position:relative;width:96px;height:172px;gap:0}
-html[data-era=song] .ta i{display:none}
-html[data-era=song] .ta::before,html[data-era=song] .ta::after{content:"";position:absolute;inset:0;background:url(data/me_song/pagoda.webp) center bottom/contain no-repeat}
-html[data-era=song] .ta::before{filter:grayscale(1);opacity:.35}
-html[data-era=song] .ta::after{clip-path:inset(calc(100% - var(--lit,11%)) 0 0 0);transition:clip-path .9s ease-out}
-html[data-era=song] .hx{clip-path:none;background:url(data/me_song/hex_badge.webp) center/100% 100% no-repeat}
-html[data-era=song] .hx::before{display:none}
-html[data-era=song] .mwall{background:url(data/me_song/wall.webp) center top/cover no-repeat;border:0;padding-top:66px}
-html[data-era=song] .mwall::before{display:none}
+.me2.art .me-stage{background:var(--u-stage_bg) center 62%/cover no-repeat}
+.me2.art .me-stage .me-halo,.me2.art .me-stage .me-win{display:none}
+.me2.art .me-ped{height:58px;width:250px;bottom:18px;clip-path:none;background:var(--u-pedestal) center bottom/contain no-repeat}
+.me2.art .me-ped::before{display:none}
+.me2.art .me-name{clip-path:none;background:var(--u-name_plaque_h) center/100% 100% no-repeat;padding:10px 30px 11px}
+.me2.art .me-name::before{display:none}
+.me2.art .me-name b{color:#2A2118}.me2.art .me-name small{color:#6B5A48}
+.me2.art .me-seal{border:0;box-shadow:none;background:var(--u-seal) center/100% 100% no-repeat;color:#B3261E;width:64px;height:64px;padding:8px}
+.me2.art .jr{background:none;clip-path:none;padding:0}
+.me2.art .jr::after{content:"";position:absolute;inset:0;background:var(--u-jade_ring) center/contain no-repeat;pointer-events:none}
+.me2.art .jp{transform:scale(.82)}
+.me2.art .jh{inset:31%;background:color-mix(in srgb,var(--card) 92%,transparent);z-index:1}.me2.art .jh b{font-size:19px}.me2.art .jh small{font-size:12px;margin-top:3px}
+.me2.art .ta{position:relative;width:96px;height:172px;gap:0}
+.me2.art .ta i{display:none}
+.me2.art .ta::before,.me2.art .ta::after{content:"";position:absolute;inset:0;background:var(--u-pagoda) center bottom/contain no-repeat}
+.me2.art .ta::before{filter:grayscale(1);opacity:.35}
+.me2.art .ta::after{clip-path:inset(calc(100% - var(--lit,11%)) 0 0 0);transition:clip-path .9s ease-out}
+.me2.art .hx{clip-path:none;background:var(--u-hex_badge) center/100% 100% no-repeat}
+.me2.art .hx::before{display:none}
+.me2.art .mwall{background:var(--u-wall) center top/cover no-repeat;border:0;padding-top:66px}
+.me2.art .mwall::before{display:none}
 /* 意見回饋 565（美術總監＋RPG 專家）：窗裡不放圖示，改放「窗後的一小景」（Gemini 畫的 view_*），用窗形遮罩（mask_*，比窗洞外擴 3%）裁切，窗框蓋在最上層、影子落進窗洞上緣做出深度；
    空的收藏格窗內起霧，秘境棋友、珍品照收集進度散霧（--mist） */
-html[data-era=song] .mw svg,html[data-era=song] .mw .ic{display:none}
-html[data-era=song] .mw .wf{background:none;aspect-ratio:var(--ar,1)}
-html[data-era=song] .mw .wv{position:absolute;inset:0;background:linear-gradient(to bottom,rgba(38,58,60,.28),rgba(38,58,60,0) 30%),var(--view) var(--vx,50%) var(--vy,50%)/var(--vs,92%) no-repeat;-webkit-mask:var(--mask) center/contain no-repeat;mask:var(--mask) center/contain no-repeat;transition:filter .6s,background-size .25s}
-html[data-era=song] .mw .wv::after{content:"";position:absolute;inset:0;background:radial-gradient(circle at 50% 55%,rgba(238,242,240,calc(var(--mist,0)*.85)),rgba(238,242,240,var(--mist,0)));transition:background .9s}
-html[data-era=song] .mw .wf::after{content:"";position:absolute;inset:0;pointer-events:none;background:var(--frame) center/contain no-repeat;filter:drop-shadow(0 3px 2px rgba(30,50,52,.38)) drop-shadow(0 1px 0 rgba(255,255,255,.5))}
-html[data-era=song] .mw.empty .wv{filter:grayscale(.85) contrast(.6) brightness(1.12)}
-html[data-era=song] .mw:active .wv{--vs:98%}
-html[data-era=song] .mw[data-c=b]{--frame:url(data/me_song/win_b.webp);--mask:url(data/me_song/mask_b.png);--view:url(data/me_song/view_b.webp);--vy:70%;--vs:110%}html[data-era=song] .mw[data-c=b] .wf{width:132px}
-html[data-era=song] .mw[data-c=r]{--frame:url(data/me_song/win_r.webp);--mask:url(data/me_song/mask_r.png);--view:url(data/me_song/view_r.webp);--ar:347/214;--vs:100% auto;--vy:52%}html[data-era=song] .mw[data-c=r] .wf{width:158px}
-html[data-era=song] .mw[data-c=s]{--frame:url(data/me_song/win_s.webp);--mask:url(data/me_song/mask_s.png);--view:url(data/me_song/view_s.webp);--ar:348/347;--vy:60%;--vs:105%}html[data-era=song] .mw[data-c=s] .wf{width:132px}
-html[data-era=song] .mw[data-c=z]{--frame:url(data/me_song/win_z.webp);--mask:url(data/me_song/mask_z.png);--view:url(data/me_song/view_z.webp);--ar:239/347;--vs:auto 104%}html[data-era=song] .mw[data-c=z] .wf{width:auto;height:156px}
-html[data-era=song] .mw>b small{color:#9A6A45}html[data-era=song] .mw.empty>b small{color:#9AA5A3}
-html[data-era=song] .mw>b{color:#2E3B3A}   /* 554：聲音頁也不放說明小字 */   /* 意見回饋 547：棋盤設定頁不放說明小字 */
+.me2.art .mw svg,.me2.art .mw .ic{display:none}
+.me2.art .mw .wf{background:none;aspect-ratio:var(--ar,1)}
+.me2.art .mw .wv{position:absolute;inset:0;background:linear-gradient(to bottom,rgba(38,58,60,.28),rgba(38,58,60,0) 30%),var(--view) var(--vx,50%) var(--vy,50%)/var(--vs,92%) no-repeat;-webkit-mask:var(--mask) center/contain no-repeat;mask:var(--mask) center/contain no-repeat;transition:filter .6s,background-size .25s}
+.me2.art .mw .wv::after{content:"";position:absolute;inset:0;background:radial-gradient(circle at 50% 55%,rgba(238,242,240,calc(var(--mist,0)*.85)),rgba(238,242,240,var(--mist,0)));transition:background .9s}
+.me2.art .mw .wf::after{content:"";position:absolute;inset:0;pointer-events:none;background:var(--frame) center/contain no-repeat;filter:drop-shadow(0 3px 2px rgba(30,50,52,.38)) drop-shadow(0 1px 0 rgba(255,255,255,.5))}
+.me2.art .mw.empty .wv{filter:grayscale(.85) contrast(.6) brightness(1.12)}
+.me2.art .mw:active .wv{--vs:98%}
+.me2.art .mw[data-c=b]{--frame:var(--u-win_b);--mask:var(--u-mask_b);--view:var(--u-view_b);--vy:70%;--vs:110%}.me2.art .mw[data-c=b] .wf{width:132px}
+.me2.art .mw[data-c=r]{--frame:var(--u-win_r);--mask:var(--u-mask_r);--view:var(--u-view_r);--ar:347/214;--vs:100% auto;--vy:52%}.me2.art .mw[data-c=r] .wf{width:158px}
+.me2.art .mw[data-c=s]{--frame:var(--u-win_s);--mask:var(--u-mask_s);--view:var(--u-view_s);--ar:348/347;--vy:60%;--vs:105%}.me2.art .mw[data-c=s] .wf{width:132px}
+.me2.art .mw[data-c=z]{--frame:var(--u-win_z);--mask:var(--u-mask_z);--view:var(--u-view_z);--ar:239/347;--vs:auto 104%}.me2.art .mw[data-c=z] .wf{width:auto;height:156px}
+.me2.art .mw>b small{color:#9A6A45}.me2.art .mw.empty>b small{color:#9AA5A3}
+.me2.art .mw>b{color:#2E3B3A}   /* 554：聲音頁也不放說明小字 */   /* 意見回饋 547：棋盤設定頁不放說明小字 */
 html[data-era=tang] .card,html[data-era=tang] .tile,html[data-era=qing] .card,html[data-era=qing] .tile{box-shadow:inset 0 0 0 3px var(--card),inset 0 0 0 4px color-mix(in srgb,var(--trim) 60%,transparent),0 1px 3px #0000001a}
 html[data-era=ming] .topbar,html[data-era=qing] .topbar{border-bottom-width:4px}
 .eragrid{display:grid;grid-template-columns:repeat(2,1fr);gap:8px}
@@ -699,7 +699,7 @@ html[data-era=ming] .topbar,html[data-era=qing] .topbar{border-bottom-width:4px}
       if(!window.caches)return go();caches.keys().then(function(ks){return Promise.all(ks.filter(function(k){return k.indexOf("xqlab-app-")===0}).map(function(k){return caches.delete(k)}))})
         .then(function(){return navigator.serviceWorker&&navigator.serviceWorker.getRegistration()}).then(function(r){return r&&r.update()}).catch(function(){}).then(go)}};setTimeout(chk,4000)})();
 </script>
-<script>window.XQ_OFFLINE=true;window.XQ_BUILD="20261105-0510";</script>
+<script>window.XQ_OFFLINE=true;window.XQ_BUILD="20261105-0514";</script>
 <script src="core.js"></script>
 <script src="engine.js"></script>
 <script src="local.js"></script>
@@ -4011,6 +4011,8 @@ function meChip(){const tb=$("#topbar");if(!tb)return;{const o=document.getEleme
   b.innerHTML=`<img src="${meImg()}" ${meImgTag(myStyle(),mySex())} alt="" onerror="this.replaceWith(document.createTextNode('🙂'))"><small>${esc(R.name)}<br>修為 Lv ${I.L}</small>`;b.onclick=()=>{vibrate(5);location.hash="#/me"};tb.append(b)}   /* 意見回饋 570：頭像放到最右上 */
 /* 意見回饋 553：我的角色頁重新設計（兩位 RPG 專家合併）：立繪舞台 → 境界台（官階九層塔、修為八角玉環）→ 六角章 → 什錦花窗收藏格。
    收藏格點了照舊打開原本的清單（借用 Profile 畫好、藏起來的圓鈕）；沒有說明小字，點官印／九層塔看九個品級，點玉環看修為 */
+/* 意見回饋 571：我的角色頁的朝代美術素材（Gemini 畫的，data/me_<朝代>/）；有素材的朝代才套用，其他朝代維持程式畫的版面 */
+const ME_ART=new Set(["song"]),ME_ART_FILES=["stage_bg.webp","pedestal.webp","name_plaque_h.webp","seal.webp","jade_ring.webp","pagoda.webp","hex_badge.webp","wall.webp","win_b.webp","win_r.webp","win_s.webp","win_z.webp","mask_b.png","mask_r.png","mask_s.png","mask_z.png","view_b.webp","view_r.webp","view_s.webp","view_z.webp"];
 const ME_WIN={b:"M36 2H84L118 36V72L84 106H36L2 72V36Z",r:"M2 17A136 136 0 0 1 118 17L81 95A50 50 0 0 0 39 95Z",
   s:"M26 20A44 44 0 0 1 94 20A36 36 0 0 1 94 88A44 44 0 0 1 26 88A36 36 0 0 1 26 20Z",
   z:"M44 4H76V10C76 16 68 18 68 26C68 32 112 40 112 68C112 92 92 104 60 104C28 104 8 92 8 68C8 40 52 32 52 26C52 18 44 16 44 10Z"};
@@ -4019,7 +4021,7 @@ function rankSheet(){const R=rankInfo(),era=store.get("era","classic");sheet("�
 function Me(v){Profile(v);setTop("🙂 我的角色","#/");setTabs(true,"#/");const pad=v.querySelector(".pad");if(!pad)return;
   const R=rankInfo(),I=xpInfo(),H=hintInfo(),B=bag(),Sx=jSecrets(),S=jStars(),Js=jStages(),L=legendState(),star=Js.reduce((a,x)=>a+(S[x.id]||0),0),
     xp=I.need?Math.round(I.rest*100/I.need):100,nS=Object.keys(Sx).length,nZ=Object.values(relicsMine()).reduce((a,x)=>a+x.length,0),pc=myPc(),red="帥仕相俥傌炮兵".includes(pc),d=document.createElement("div");
-  d.className="me2";
+  d.className="me2";{const era=store.get("era","classic");if(ME_ART.has(era)){d.classList.add("art");d.style.cssText=ME_ART_FILES.map(f=>`--u-${f.replace(/\..*$/,"")}:url(data/me_${era}/${f})`).join(";")}}
   d.innerHTML=`<section class="me-stage" id="meSt"><div class="me-halo"></div><div class="me-win"></div><div class="me-glow"></div><div class="me-ped"></div>
       <button class="me-fig" id="meFig2" aria-label="看我的 3D 角色"><img src="${meImg()}" ${meImgTag(myStyle(),mySex())} alt="" onerror="this.remove()"></button>
       <button class="me-name" id="meNm" aria-label="改名"><b>${meName()}</b><small>${esc(myName()||"")}</small></button>
