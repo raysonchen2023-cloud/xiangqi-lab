@@ -587,7 +587,7 @@ html[data-era=ming] .topbar,html[data-era=qing] .topbar{border-bottom-width:4px}
       if(!window.caches)return go();caches.keys().then(function(ks){return Promise.all(ks.filter(function(k){return k.indexOf("xqlab-app-")===0}).map(function(k){return caches.delete(k)}))})
         .then(function(){return navigator.serviceWorker&&navigator.serviceWorker.getRegistration()}).then(function(r){return r&&r.update()}).catch(function(){}).then(go)}};setTimeout(chk,4000)})();
 </script>
-<script>window.XQ_OFFLINE=true;window.XQ_BUILD="20261105-0257";</script>
+<script>window.XQ_OFFLINE=true;window.XQ_BUILD="20261105-0309";</script>
 <script src="core.js"></script>
 <script src="engine.js"></script>
 <script src="local.js"></script>
@@ -3944,6 +3944,11 @@ const JL2=[["晨掃石枰","記盤＋限步對局",1,1,1],["南邊來的客人",
    🗝 秘境棋友：藏在某些朝代公園的樹、茶杯、燈籠後面，要自己在公園 3D 裡點到才會發現；找到後也會出現在驛站，比較強、修為也多 */
 const INN=[{id:"tea",name:"賣茶的老婦",ic:"🍵",lv:1,xp:20,say:"「喝口茶，陪老身下一盤，不急不急。」"},{id:"scholar",name:"趕考的書生",ic:"📜",lv:2,xp:25,say:"「小生進京趕考，路上棋癮犯了，請賜教。」"},
   {id:"guard",name:"走鏢的鏢師",ic:"🗡",lv:3,xp:30,say:"「鏢車在外面歇著，咱們速戰速決！」"},{id:"monk",name:"行腳僧",ic:"📿",lv:4,xp:40,say:"「阿彌陀佛，棋盤上也能修行。」"},{id:"teller",name:"說書人",ic:"🪭",lv:5,xp:50,say:"「欲知勝負如何，且看下回分解！」"}];
+/* 意見回饋 548（開發者）：驛站旅人只告訴玩家「第幾級」，不寫修為。實際棋力在一段範圍裡浮動（用積分挑戰的段位強度 RLV 0～16）：
+   第 1 級＝新手、第 2 級＝新手到入門、第 3 級＝入門到業餘、第 4 級＝業餘、第 5 級＝業餘高段到專業；贏了下次強一格、輸了弱一格。越強贏了修為越多（玩家看不到） */
+const INN_BAND=[[0,1],[1,3],[3,6],[6,10],[10,14]];
+const innRlv=x=>{const i=INN.indexOf(x),B=INN_BAND[i]||INN_BAND[0],v=store.get("innAdj",{})[x.id];return Math.max(B[0],Math.min(B[1],Number.isInteger(v)?v:B[0]))};
+const innXP=r=>15+r*6,innLvN=x=>INN.indexOf(x)+1;
 /* 意見回饋 316：秘境棋友是元末明初的歷史人物（棋藝是故事的想像）；難度照你的等級配，不會太難 */
 /* 意見回饋 540：秘境棋友的圖示用他自己的立繪（data/actors/<id>.webp），沒有才用 emoji */
 const secIc=x=>`<img src="data/actors/${x.id}.webp" alt="" style="width:40px;height:48px;object-fit:contain" onerror="this.replaceWith(document.createTextNode('${x.ic}'))">`;
@@ -4035,18 +4040,18 @@ function travel(to,done){if(document.querySelector(".travel"))return;try{window.
   const h0=location.hash;let ended=false;const end=()=>{if(ended)return;ended=true;removeEventListener("hashchange",end);clearInterval(tl);clearTimeout(tm);ov.classList.add("out");setTimeout(()=>ov.remove(),350);if(done&&location.hash===h0)done()};addEventListener("hashchange",end);
   const tm=setTimeout(end,5000);ov.querySelector(".tskip").onclick=e=>{e.stopPropagation();end()}}
 function innSheet(v){setTimeout(innDrop,1200);setTop("🏮 驛站","#/adventure");const I=xpInfo(),Sx=jSecrets(),nx=JR.find(R=>R.lv>I.L);v.className="view";
-  const row=(x,locked)=>`<button class="item" data-inn="${x.id}" ${locked?"disabled":""}><span class="lb" style="font-size:24px">${locked?"❔":secIc(x)}</span><span class="tx"><b>${locked?"？？？（還沒找到）":esc(x.name)}</b><span>${locked?"":x.who?`${esc(x.who)}・第 ${secretLv(x)} 級的實力・贏了 +${secretXP(x)} 修為`:`第 ${x.lv} 級的實力・贏了 +${x.xp} 修為（另加對局修為）`}</span></span><span class="muted">${locked?"":"›"}</span></button>`;
+  const row=(x,locked)=>`<button class="item" data-inn="${x.id}" ${locked?"disabled":""}><span class="lb" style="font-size:24px">${locked?"❔":secIc(x)}</span><span class="tx"><b>${locked?"？？？（還沒找到）":esc(x.name)}</b><span>${locked?"":x.who?`${esc(x.who)}・第 ${secretLv(x)} 級`:`第 ${innLvN(x)} 級`}</span></span><span class="muted">${locked?"":"›"}</span></button>`;
   const IE=store.get("era","classic");
-  v.innerHTML=`<div class="pad"><div class="abn" style="height:160px;background-image:url(data/inn/${IE}.webp);margin-bottom:10px"><div class="hc"><b>🏮 ${esc(eraLabel(IE))}的驛站</b><small>路過的旅人都在這裡歇腳下棋</small></div></div><div class="card" style="line-height:1.8">🀄 <b>Lv ${I.L} ${I.title}</b>${nx?`・下一站「${nx.name}」要 Lv ${nx.lv}，還差 ${nx.lv-I.L} 級`:"・每一站都能進了"}<br><span class="muted" style="font-size:13px">驛站裡都是路過的旅人，找誰下都可以、下幾次都可以；輸了也有對局修為。</span></div>
+  v.innerHTML=`<div class="pad"><div class="abn" style="height:160px;background-image:url(data/inn/${IE}.webp);margin-bottom:10px"><div class="hc"><b>🏮 ${esc(eraLabel(IE))}的驛站</b><small>路過的旅人都在這裡歇腳下棋</small></div></div><div class="card" style="line-height:1.8">🀄 <b>Lv ${I.L} ${I.title}</b>${nx?`・下一站「${nx.name}」要 Lv ${nx.lv}，還差 ${nx.lv-I.L} 級`:"・每一站都能進了"}<br><span class="muted" style="font-size:13px">驛站裡都是路過的旅人，找誰下都可以、下幾次都可以。</span></div>
     <button class="btn ghost" id="toPark" style="width:100%;margin-top:8px">🌳 走荒野小徑去園子</button>
     <div class="sec-t">🏮 路過的旅人</div><div class="items" style="padding:0">${INN.map(x=>row(x)).join("")}</div>
     <div class="sec-t">🗝 秘境棋友（${Object.keys(Sx).length}/${SECRETS.length}）</div><div class="items" style="padding:0">${SECRETS.map(x=>row(x,!Sx[x.id])).join("")}</div>
 </div>`;
   (v.querySelector("#toPark")||{}).onclick=()=>travel("park",()=>{location.hash="#/journey/park"});
   v.querySelectorAll("[data-inn]").forEach(b=>b.onclick=()=>{const x=INN.concat(SECRETS).find(z=>z.id===b.dataset.inn);if(!x||(SECRETS.includes(x)&&!Sx[x.id]))return;
-    const lv=x.who?secretLv(x):x.lv,xp=x.who?secretXP(x):x.xp;
-    sheet(`${x.ic} ${x.name}`,c=>{c.innerHTML=`${x.who?secretBio(x):""}<p style="font-size:16px;line-height:1.8">${esc(x.say)}</p><p class="muted">第 ${lv} 級的實力。贏了 +${xp} 修為（另加對局修為），輸了也有對局修為。</p><button class="btn" id="ig" style="width:100%">⚔ 下一盤</button>`;
-      c.querySelector("#ig").onclick=()=>{closeSheet();jStart("inn:"+x.id,{human:"r",level:lv,journey:"inn:"+x.id},()=>{location.hash="#/journey/play";setTimeout(()=>toast(`${x.ic} ${x.name}：${x.say}`),500)})}})});
+    const lv=x.who?secretLv(x):innLvN(x),rl=x.who?null:innRlv(x);
+    sheet(`${x.ic} ${x.name}`,c=>{c.innerHTML=`${x.who?secretBio(x):""}<p style="font-size:16px;line-height:1.8">${esc(x.say)}</p><p class="muted">第 ${lv} 級</p><button class="btn" id="ig" style="width:100%">⚔ 下一盤</button>`;
+      c.querySelector("#ig").onclick=()=>{closeSheet();if(rl!=null)store.set("innCur",{id:x.id,rl});jStart("inn:"+x.id,rl==null?{human:"r",level:lv,journey:"inn:"+x.id}:{human:"r",level:Math.max(1,Math.min(6,1+Math.floor(rl/3))),rlv:rl,journey:"inn:"+x.id},()=>{location.hash="#/journey/play";setTimeout(()=>toast(`${x.ic} ${x.name}：${x.say}`),500)})}})});
   return{}}
 /* 意見回饋 327：石桌往事的棋（雲河棋路、驛站、公園）自己留一盤，跟朝代擂台、挑戰電腦互不干擾 */
 const parkLv=()=>Math.max(1,Math.min(6,1+Math.floor(xpInfo().L/8)));
@@ -4063,7 +4068,8 @@ async function jStart(id,b,go,force){let st;try{st=await api("/play/state")}catc
   modal(`<div class="em">🪨</div><h2>石桌往事還有一盤沒下完</h2><p class="muted">「${esc(jName(g.journey))}」下到第 ${Math.ceil(g.n/2)} 回合。石桌往事一次只留一盤，開新的，那一盤就不留了。</p>`,
     [["⏳ 繼續那一盤",()=>{location.hash="#/journey/play"}],["放棄，開新的",fresh],["取消",null,true]])}
 /* 結果視窗、新局：跟同一位對手（園子、驛站）再下一盤 */
-function jAgain(st){const j=st.journey,n0=j==="park"?parkNpcOf(st):null;return api("/play/new",{human:"r",level:st.level,journey:j}).then(s=>{if(j==="park")parkNpcNew(s.id,s.level,n0&&n0.id);store.set("jPending",j==="park"?null:{id:j,game:s.id});return s})}   /* 意見回饋 425：園子再下一盤＝同一位路人、同樣的難度 */
+function jAgain(st){const j=st.journey,n0=j==="park"?parkNpcOf(st):null,ix=String(j||"").startsWith("inn:")?INN.find(z=>"inn:"+z.id===j):null,rl=ix?innRlv(ix):null;if(ix)store.set("innCur",{id:ix.id,rl});   /* 意見回饋 548：驛站旅人再下一盤用調整後的強度 */
+  return api("/play/new",ix?{human:"r",level:Math.max(1,Math.min(6,1+Math.floor(rl/3))),rlv:rl,journey:j}:{human:"r",level:st.level,journey:j}).then(s=>{if(j==="park")parkNpcNew(s.id,s.level,n0&&n0.id);store.set("jPending",j==="park"?null:{id:j,game:s.id});return s})}   /* 意見回饋 425：園子再下一盤＝同一位路人、同樣的難度 */
 async function jResume(box){if(!box)return;let st;try{st=await api("/play/state")}catch(e){return}
   const cur=st.journey&&!st.result&&st.moves&&st.moves.length?{journey:st.journey,n:st.moves.length,me:st.turn===st.human}:null,
     o=(st.others||[]).find(z=>z.kind==="journey"),g=cur||(o?{journey:o.journey,n:o.n,me:(o.n%2?"b":"r")===o.human}:null);
@@ -4115,7 +4121,9 @@ function journeyGameEnd(st){if(!st||!st.result)return;
   if(!st.practice&&(st.moves||[]).length>=10)addXP(st.result.w===st.human?40:15,"對局","g:"+st.id);   /* QA P1-3：雙方各走不到 5 步就結束（走一步就認輸）不給修為，免得刷經驗 */
   const P=store.get("jPending",null);if(!P||P.game!==st.id)return;store.set("jPending",null);
   if(String(P.id).startsWith("inn:")){const x=INN.concat(SECRETS).find(z=>"inn:"+z.id===P.id);if(!x)return;
-    if(st.result.w===st.human){const xp=x.who?secretXP(x):x.xp;addXP(xp,"驛站","inn:"+st.id);setTimeout(()=>toast(`${x.ic} ${x.name}：「好棋！佩服。」（+${xp} 修為）`),1500);
+    let rl=null;if(!x.who){const C=store.get("innCur",null);rl=C&&C.id===x.id&&Number.isInteger(C.rl)?C.rl:innRlv(x);const i=INN.indexOf(x),B=INN_BAND[i]||INN_BAND[0],A=store.get("innAdj",{});
+      if(st.result.w===st.human)A[x.id]=Math.min(B[1],rl+1);else if(st.result.w)A[x.id]=Math.max(B[0],rl-1);store.set("innAdj",A)}
+    if(st.result.w===st.human){const xp=x.who?secretXP(x):innXP(rl);addXP(xp,"驛站","inn:"+st.id);setTimeout(()=>toast(`${x.ic} ${x.name}：「好棋！佩服。」`),1500);
       if(x.who){const W=store.get("secretWins",{});W[x.id]=(W[x.id]||0)+1;store.set("secretWins",W);setTimeout(()=>secretGift(x,st.id),7000)}}
     else setTimeout(()=>toast(`${x.ic} ${x.name}：「承讓了，下次再來！」`),1500);return}
   if(P.lvp){const R=jRunGet(P.id),L=P.lvp,me=st.human,won=st.result.w===me,lost=!!st.result.w&&st.result.w!==me,n=st.moves.filter(m=>m.by===me).length;
