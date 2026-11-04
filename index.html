@@ -581,7 +581,7 @@ html[data-era=ming] .topbar,html[data-era=qing] .topbar{border-bottom-width:4px}
       if(!window.caches)return go();caches.keys().then(function(ks){return Promise.all(ks.filter(function(k){return k.indexOf("xqlab-app-")===0}).map(function(k){return caches.delete(k)}))})
         .then(function(){return navigator.serviceWorker&&navigator.serviceWorker.getRegistration()}).then(function(r){return r&&r.update()}).catch(function(){}).then(go)}};setTimeout(chk,4000)})();
 </script>
-<script>window.XQ_OFFLINE=true;window.XQ_BUILD="20261104-2242";</script>
+<script>window.XQ_OFFLINE=true;window.XQ_BUILD="20261104-2255";</script>
 <script src="core.js"></script>
 <script src="engine.js"></script>
 <script src="local.js"></script>
@@ -1522,7 +1522,7 @@ function route(){
   // AI 對局在開發者的電腦上，要連上電腦才看得到；一般玩家（或連線已被清掉）從舊連結進來時說明清楚，不要卡在「載入中」（意見回饋 135）
   if((p[0]==="db"&&p[1]==="ai"||p[0]==="watch"&&p[1]==="ai")&&OFF&&!DEVREMOTE()){setTop("AI 對局","#/");setTabs(false);
     v.innerHTML='<div class="home"><div class="card" style="text-align:center;line-height:1.8"><div style="font-size:40px">📺</div><b>AI 對局只在開發者的電腦上</b><br><span class="muted">這部分要連上開發者的電腦才看得到，一般玩家不需要。其他棋譜都在「📚 棋譜」裡。</span><div class="row" style="gap:8px;margin-top:12px;justify-content:center"><button class="btn" id="g1">📚 去棋譜</button><button class="btn ghost" id="g2">回首頁</button></div></div></div>';
-    v.querySelector("#g1").onclick=()=>location.hash="#/db";v.querySelector("#g2").onclick=()=>location.hash="#/";return screen={}}
+    (v.querySelector("#g1")||{}).onclick=()=>location.hash="#/db";(v.querySelector("#g2")||{}).onclick=()=>location.hash="#/";return screen={}}
   if(p[0]==="db"&&p.length>=3)return screen=Viewer(v,p[1],p.slice(2).join("/"));
   if(p[0]==="db")return screen=Library(v,p[1]);
   screen=Home(v)}
@@ -1875,7 +1875,7 @@ ${OFF?(()=>{const n=Object.keys(arenaStamps()).length,t=arenaTitle();return`<but
    </div>
   </div>`;
   if(OFF){appVer().then(x=>{const e=v.querySelector("#hVer");if(e)e.textContent="版本 "+(!x?"未知":/^\d{8}-\d{4}$/.test(x)?`${x.slice(0,4)}/${x.slice(4,6)}/${x.slice(6,8)} ${x.slice(9,11)}:${x.slice(11,13)}`:x.slice(0,8))});
-    v.querySelector("#hUpd").onclick=async e=>{const b=e.target;b.disabled=true;b.textContent="檢查中…";
+    (v.querySelector("#hUpd")||{}).onclick=async e=>{const b=e.target;b.disabled=true;b.textContent="檢查中…";
       const r=window.XQ_checkUpdate?await XQ_checkUpdate():{};
       if(!r.n){b.textContent="沒有網路";b.disabled=false;return}
       if(r.a===r.n){b.textContent="✓ 已是最新版";return}
@@ -1954,7 +1954,7 @@ function Quiz(v){
       ${best?`<p>目前最好成績：<b>${esc(best.rank)}</b>（${new Date(best.at).toLocaleDateString()}）</p>`:""}
       ${last?`<button class="btn" id="go3">從上次的程度開始（約 ${esc(D0rank(last.th))}）</button>`:""}
       <button class="btn${last?" ghost":""}" id="go">我是新手</button><button class="btn ghost" id="go2">我會下棋</button></div></div>`;
-    v.querySelector("#go").onclick=()=>start(-3);v.querySelector("#go2").onclick=()=>start(-1.2);const g3=v.querySelector("#go3");if(g3)g3.onclick=()=>start(last.th)}
+    (v.querySelector("#go")||{}).onclick=()=>start(-3);(v.querySelector("#go2")||{}).onclick=()=>start(-1.2);const g3=v.querySelector("#go3");if(g3)g3.onclick=()=>start(last.th)}
   const RK=["新手","入門1","入門2","入門3","業1","業2","業3","業4","業5","業6","業7","業8","業9","專1","專2"],D0rank=th=>RK[qzTier(th,RK.length)];
   async function start(m0){try{D=D||await api("/quiz/data")}catch(e){return toast(e.message)}
     {const CAL=store.get("calib",null);if(CAL&&CAL.irt)for(const it of D.items){const k=CAL.irt[it.id];if(k&&isFinite(k.a)&&isFinite(k.b)){it.ca=k.a;it.cb=k.b}}}
@@ -2004,7 +2004,7 @@ function Quiz(v){
       <div style="display:grid;grid-template-columns:repeat(${byC.length},1fr);gap:8px;margin:12px 0">${byC.map(([k,o,m])=>`<div class="card" style="padding:8px"><div class="muted" style="font-size:12px">${k}</div><b style="font-size:18px">${o}/${m}</b></div>`).join("")}</div>
       <p class="muted" style="font-size:12px;text-align:left;line-height:1.7">判定方式：試題反應理論（3PL）。每題的難度和鑑別度由 Pikafish 分析估出來，系統每答一題就更新一次你的能力值 θ（目前 ${est.th.toFixed(2)} ± ${est.se.toFixed(2)}），誤差夠小就停。四類題目的對錯會進到「我的戰績 → 🧬 天賦」的能力剖面；題目難度會用大家的答題結果（只有題號和對錯，不含名字）定期校正。結果只是估計，不是正式段位。</p>
       <button class="btn" id="again">再測一次（換新題目）</button><button class="btn ghost" id="st">看我的成長</button></div></div>`;
-    v.querySelector("#again").onclick=()=>start(est.th);v.querySelector("#st").onclick=()=>{store.set("statsTab","talent");location.hash="#/stats"}}
+    (v.querySelector("#again")||{}).onclick=()=>start(est.th);(v.querySelector("#st")||{}).onclick=()=>{store.set("statsTab","talent");location.hash="#/stats"}}
   intro();return{}}
 
 /* ================= 🎓 猜著法（意見回饋 301） =================
@@ -2027,7 +2027,7 @@ function Guess(v){
       ${last?`<p class="muted">上一局：${esc(last.title||"")}・猜中 ${last.m}/${last.n} 步・${last.pts} 分</p>`:""}
       <button class="btn" id="go">開始（隨機挑一盤）</button></div></div>`;
     v.querySelectorAll("[data-s]").forEach(b=>b.onclick=()=>{src=b.dataset.s;store.set("guessSrc",src);intro()});
-    v.querySelector("#go").onclick=start}
+    (v.querySelector("#go")||{}).onclick=start}
   async function start(){v.innerHTML='<div class="pad"><div class="card muted" style="text-align:center">挑一盤對局…（特級大師對局第一次要下載，會久一點）</div></div>';
     let d;try{d=await api("/db/items?c="+src)}catch(e){toast(e.message);return intro()}
     const pool=d.items.filter(x=>/勝|胜/.test(String(x.result||"")));if(!pool.length){toast("找不到分出勝負的對局");return intro()}
@@ -2068,7 +2068,7 @@ function Guess(v){
       <p>猜中大師 <b>${m}</b> / ${res.length} 步${acpl!=null?`・平均每步少 ${Math.round(acpl)} 分・這局著法品質約等級分 ${elo}`:""}</p>
       <p class="muted" style="font-size:12.5px;text-align:left;line-height:1.7">每一步的損失 δ 會進到天賦系統的 Regan 著法品質模型：δ 越小、越常跟大師想的一樣，「著法品質」和「局面判斷」就越高。</p>
       <button class="btn" id="again">再猜一盤</button><button class="btn ghost" id="st">看我的成長</button></div></div>`;
-    v.querySelector("#again").onclick=start;v.querySelector("#st").onclick=()=>{store.set("statsTab","talent");location.hash="#/stats"}}
+    (v.querySelector("#again")||{}).onclick=start;(v.querySelector("#st")||{}).onclick=()=>{store.set("statsTab","talent");location.hash="#/stats"}}
   intro();return{}}
 
 // ================= 象棋術語：殺法、開局、戰術、棋形、規則 =================
@@ -2921,7 +2921,7 @@ function Settings(v){
     dm.checked=false;devLogin(()=>{store.set("devMode",true);toast("已打開開發者模式");route()})}}
   const b0=parseFen(SAMPLE_FEN0),b1=parseFen(SAMPLE_FEN1),pv=Board(null);v.querySelector("#pv").append(pv.svg);
   const show=animate=>{if(animate){pv.draw(b0,{anim:false});setTimeout(()=>pv.draw(b1,{last:SAMPLE_LAST}),250)}else pv.draw(b1,{last:SAMPLE_LAST,anim:false})};
-  v.querySelector("#replay").onclick=()=>show(true);
+  (v.querySelector("#replay")||{}).onclick=()=>show(true);
   const th=v.querySelector("#th");
   const paint=()=>{const cur=store.get("boardTheme","wood3d"),ps=store.get("pieceStyle","3d");th.innerHTML="";
     for(const[k,name]of BOARD_THEMES){const b=document.createElement("button");b.className=k===cur?"on":"";const bd=Board(null);bd.draw(b1,{last:SAMPLE_LAST,theme:k,anim:false,arrow:false});
@@ -2974,7 +2974,7 @@ function Settings(v){
       for(let i=0;i<8;i++){await new Promise(z=>setTimeout(z,2000));let x=null;try{x=JSON.parse(await XQNet.ctlAck(3000))}catch(e){}
         if(x&&x.n===n){toast(x.ok?`✅ 已重置 ${x.bots} 位虛擬玩家（舊資料存在電腦：${x.arch}）`:"❌ "+x.why,5000);return}}
       toast("電腦沒有回覆：虛擬玩家的程式可能沒在跑")}catch(e){toast(e.message)}},"重置")}
-  {const ab=v.querySelector("#askB");if(ab)ab.onclick=()=>askSheet();const bh=v.querySelector("#botHome");if(bh)bh.onclick=()=>{store.set("botPos",null);if(BOT){BOT.stop();BOT=null}syncBot();toast("小帥回到預設位置了")}}{const bt=v.querySelector("#botT");if(bt)bt.onchange=()=>{store.set("bot3d",bt.checked);syncBot();if(bt.checked)toast("小人出來了！點它會表演")};const sz=v.querySelector("#botSz"),szv=v.querySelector("#botSzV");if(sz)sz.oninput=()=>{store.set("botSize",+sz.value);szv.textContent=Math.round(sz.value*100)+"%";if(BOT&&BOT.setScale)BOT.setScale(+sz.value)}}{const ct=v.querySelector("#cityT");if(ct)ct.onchange=()=>{store.set("showCity",ct.checked);if(ct.checked)fetchCity(true);else{MY_CITY="";if(window.XQNet&&XQNet.refresh)XQNet.refresh()}}}v.querySelector("#nm").onclick=()=>{vibrate(5);stab="look";store.set("setTab","look");showTab();setTimeout(()=>{const x=v.querySelector("#nmLook");if(x)x.scrollIntoView({block:"center",behavior:"smooth"})},60)};   /* 意見回饋 498：名字只在「外觀 → 我的角色」改 */v.querySelector("#fb").onclick=()=>feedbackSheet();{const ft=v.querySelector("#fbTop");if(ft)ft.onclick=()=>{vibrate(5);feedbackSheet()}}{const fx=v.querySelector("#fxh");if(fx)fx.onclick=()=>fixHistory()}v.querySelector("#sh").onclick=shareSheet;const cn=v.querySelector("#cn");if(cn)cn.onclick=connectSheet;const fa=v.querySelector("#fa");if(fa)fa.onclick=()=>location.hash="#/fbadmin";
+  {const ab=v.querySelector("#askB");if(ab)ab.onclick=()=>askSheet();const bh=v.querySelector("#botHome");if(bh)bh.onclick=()=>{store.set("botPos",null);if(BOT){BOT.stop();BOT=null}syncBot();toast("小帥回到預設位置了")}}{const bt=v.querySelector("#botT");if(bt)bt.onchange=()=>{store.set("bot3d",bt.checked);syncBot();if(bt.checked)toast("小人出來了！點它會表演")};const sz=v.querySelector("#botSz"),szv=v.querySelector("#botSzV");if(sz)sz.oninput=()=>{store.set("botSize",+sz.value);szv.textContent=Math.round(sz.value*100)+"%";if(BOT&&BOT.setScale)BOT.setScale(+sz.value)}}{const ct=v.querySelector("#cityT");if(ct)ct.onchange=()=>{store.set("showCity",ct.checked);if(ct.checked)fetchCity(true);else{MY_CITY="";if(window.XQNet&&XQNet.refresh)XQNet.refresh()}}}(v.querySelector("#nm")||{}).onclick=()=>{vibrate(5);stab="look";store.set("setTab","look");showTab();setTimeout(()=>{const x=v.querySelector("#nmLook");if(x)x.scrollIntoView({block:"center",behavior:"smooth"})},60)};   /* 意見回饋 498：名字只在「外觀 → 我的角色」改 */(v.querySelector("#fb")||{}).onclick=()=>feedbackSheet();{const ft=v.querySelector("#fbTop");if(ft)ft.onclick=()=>{vibrate(5);feedbackSheet()}}{const fx=v.querySelector("#fxh");if(fx)fx.onclick=()=>fixHistory()}(v.querySelector("#sh")||{}).onclick=shareSheet;const cn=v.querySelector("#cn");if(cn)cn.onclick=connectSheet;const fa=v.querySelector("#fa");if(fa)fa.onclick=()=>location.hash="#/fbadmin";
   paint();return{}}
 
 // ================= 意見回饋：存到 Google 表單（沒網路先存在手機，之後自動補送） =================
@@ -3096,7 +3096,7 @@ function FbAdmin(v){setTop("意見回饋管理","#/settings");setTabs(false);
     <h2 style="font-family:var(--serif);margin:6px 0">意見回饋管理</h2>
     <p class="muted" style="line-height:1.7">在 Google 上打開管理頁，看所有回饋和截圖。<br>玩家寫的回饋按「✅ 核准修正」後 Claude 才會修；開發者寫的 Claude 會直接修。<br>第一次打開如果要求登入，請登入你的 Google 帳號（只有你的帳號打得開）。</p>
     <button class="btn" id="go">打開意見回饋管理</button></div></div>`;
-  v.querySelector("#go").onclick=openFbAdmin;return{}}
+  (v.querySelector("#go")||{}).onclick=openFbAdmin;return{}}
 
 // 遊戲畫面共用：棋盤＋上下玩家條＋狀態＋著法條＋動作列
 function gameLayout(v){
@@ -3273,7 +3273,7 @@ function Garage(v){
   // 搜尋：車名、品牌（英文／中文）、車型都比對，不分大小寫、忽略空白和連字號
   const norm=x=>String(x||"").toLowerCase().replace(/[\s\-_.·]/g,"");
   const hit=c=>{if(!q)return true;const k=norm(q);return [c.name,c.brand,c.zh,c.model,CAR_TYPE[c.type],c.cls].some(x=>norm(x).includes(k))};
-  v.querySelector("#gq").oninput=e=>{q=e.target.value.trim();paint()};
+  (v.querySelector("#gq")||{}).oninput=e=>{q=e.target.value.trim();paint()};
   Promise.all([CARS(),api("/car/state")]).then(([d,b])=>{D=d;B=b;paint()}).catch(e=>{v.querySelector("#gt").innerHTML=`⚠ ${esc(e.message)}`});
   const card=c=>{const own=B.owned[c.id],can=!own&&c.cost<=B.pts;
     return`<button class="car${own?" own":can?" can":" lock"}" data-id="${esc(c.id)}"><div class="car-pic" data-c="${esc(c.id)}">${carPic(c)}</div><b>${esc(c.model||c.name)}</b><span>${esc(c.brand)}${c.zh?" "+esc(c.zh):""}・${CAR_TYPE[c.type]||""}</span>
@@ -3286,7 +3286,7 @@ function Garage(v){
       ${next?`<div class="st-bar" style="margin:10px 0 4px"><i style="width:${pct}%"></i></div><div style="font-size:14px">${can.length?`現在可以換 <b style="color:var(--accent2)">${can.length}</b> 台・`:""}再 <b>${(next.cost-B.pts).toLocaleString()}</b> 點可以換 ${esc(next.name)}</div>`:`<div style="font-size:14px;margin-top:8px">${left.length?`💰 點數已經夠換任何一台了（還有 ${left.length} 台沒換）`:"🎉 全部車款都換到了！"}</div>`}
       <details class="gar-how"><summary>怎麼拿點數？</summary><p>到「挑戰電腦」選 <b>🚗 獎勵</b>，贏一盤拿：${B.table.map((p,i)=>`第 ${i+1} 級 +${p}`).join("、")} 點。和棋拿四成，輸了不扣點。獎勵模式不能悔棋，雙方各走一步以上才算。</p><p>每款車的兌換點數＝8891 新車最低售價（萬元）。</p></details>
       <button class="btn" id="gplay" style="margin-top:10px">▶ 下一盤獎勵棋</button>`;
-    v.querySelector("#gplay").onclick=play;
+    (v.querySelector("#gplay")||{}).onclick=play;
     v.querySelector("#gown").innerHTML=owned.length?`<div class="sec-t">我的收藏</div><div class="gar-own">${owned.sort((a,b)=>B.owned[b.id].at-B.owned[a.id].at).map(card).join("")}</div>`:"";
     const L0=cars.filter(c=>show==="all"||(show==="can"?can.includes(c):show==="own"?B.owned[c.id]:0));
     v.querySelector("#gf").innerHTML=[["all","全部",cars.length],["can","可以換",can.length],["own","已擁有",owned.length]].map(([k,l,n])=>`<button data-k="${k}" class="${show===k?"on":""}">${l} ${n}</button>`).join("");
@@ -3800,7 +3800,7 @@ function Adventure(v){if(store.get("legBook",1)===2&&DEVMODE())return Adventure2
       <p class="muted" style="margin:0 2px 8px;line-height:1.7;font-size:13.5px">${esc(D.blurb||"")}<br>每一回後面都有一關：讀完一回，去雲河棋路過那一關，就能讀下一回。</p>
       <div class="items" style="padding:0">${list.map(([k,t])=>`<button class="item" data-k="${k}" ${open(k)?"":"disabled"}><span class="lb">${open(k)?"📖":"🔒"}</span><span class="tx"><b style="white-space:normal;line-height:1.5">${open(k)?esc(t):"？？？"}</b>${open(k)&&sc(k).length?`<span>🕰 回到當年：${sc(k).map(x=>esc(x.title)+((store.get("sceneDone",{})[x.key])?" ✓":"")).join("、")}</span>`:""}</span><span class="muted">${open(k)?"›":""}</span></button>`).join("")}</div>
       <p class="muted" style="font-size:12px;margin-top:8px">故事是虛構的；年表裡標 📜 的是真實歷史。</p>${DEVMODE()?'<button class="lk" id="aDev" style="margin-top:4px">👁 開發者預覽全文（玩家看不到這個按鈕）</button>':""}</div>`;
-    bookTabsBind(v);v.querySelector("#aMe").onclick=()=>location.hash="#/profile";{const dv=v.querySelector("#aDev");if(dv)dv.onclick=()=>{LEGEND_PREVIEW=true;legendRead(1)}}v.querySelector("#aTl").onclick=()=>legendTimeline();
+    bookTabsBind(v);(v.querySelector("#aMe")||{}).onclick=()=>location.hash="#/profile";{const dv=v.querySelector("#aDev");if(dv)dv.onclick=()=>{LEGEND_PREVIEW=true;legendRead(1)}}(v.querySelector("#aTl")||{}).onclick=()=>legendTimeline();
     v.querySelectorAll(".advgrid [data-go],.doors [data-go]").forEach(b=>b.onclick=()=>{vibrate(5);const g=b.dataset.go;if(g==="#/journey/inn")travel("inn",()=>{location.hash=g});else location.hash=g});   /* 意見回饋 385：去驛站也走一段荒野小徑 */
     /* 意見回饋 318、319：公園的小門——開公園 3D 進挑戰電腦（朝代擂台就在公園裡，不另外開入口） */
     jResume(v.querySelector("#aRes"));if(0)novelData().then(N=>{const box=v.querySelector("#aNovel");if(!box)return;if(!N){box.innerHTML='<div class="muted" style="padding:8px 2px">長篇載入失敗，等一下再試</div>';return}
@@ -3832,7 +3832,7 @@ function Profile(v){setTop("🎒 棋童資料","#/adventure");setTabs(true,"#/")
       pageList(b,B2.records.slice().reverse(),sl=>`<div class="items" style="padding:0">${sl.map(x=>`<button class="item" data-rc="${x.uid}"><span class="lb">${TIMG(`data/treasure/record_${x.rare?"rare":"normal"}.webp`,"📜")}</span><span class="tx"><b>${esc(x.name)}</b><span>${esc(x.from)}</span></span><span class="muted">›</span></button>`).join("")}</div>`,b=>{b.querySelectorAll("[data-rc]").forEach(y=>y.onclick=()=>{const x=bag().records.find(z=>z.uid===y.dataset.rc);if(!x)return;closeSheet();store.set("dbReturn",{c:x.c,to:"#/adventure",at:Date.now()});location.hash=`#/db/${x.c}/${encodeURIComponent(x.id)}`})})});
     else sheet(`🤝 秘境棋友（${Object.keys(S2).length}／${SECRETS.length}）`,b=>{b.innerHTML=`<div class="items" style="padding:0">${SECRETS.map(x=>S2[x.id]?`<button class="item" data-sb="${x.id}"><span class="lb" style="font-size:22px">${x.ic}</span><span class="tx"><b>${esc(x.name)}</b><span>${esc((SECRET_BIO[x.id]||{}).y||"")}・贏過 ${(store.get("secretWins",{})[x.id]||0)} 盤</span></span><span class="muted">›</span></button>`:`<div class="item" style="opacity:.5"><span class="lb">❔</span><span class="tx"><b>？？？</b></span></div>`).join("")}</div>`;b.querySelectorAll("[data-sb]").forEach(y=>y.onclick=()=>{const x=SECRETS.find(z=>z.id===y.dataset.sb);if(x)secretSheet(x)})})};
   v.querySelectorAll(".circles [data-c]").forEach(b=>b.onclick=()=>{vibrate(5);openC(b.dataset.c)});
-  v.querySelector("#pXP").onclick=xpSheet;
+  (v.querySelector("#pXP")||{}).onclick=xpSheet;
   return{}}
 /* 稀有棋盤（整個故事只有一件）拿去石桌給兩位老人：換 5 顆提示棋＋3 份「回到當年」要用的棋譜（先研讀再解主線） */
 async function rareExchange(uid,done){const B=bag(),x=B.boards.find(z=>z.uid===uid);if(!x||x.rarity!=="rare"||x.used)return;const D=await legendData();
@@ -3964,7 +3964,7 @@ function innSheet(v){setTimeout(innDrop,1200);setTop("🏮 驛站","#/adventure"
     <div class="sec-t">🏮 路過的旅人</div><div class="items" style="padding:0">${INN.map(x=>row(x)).join("")}</div>
     <div class="sec-t">🗝 秘境棋友（${Object.keys(Sx).length}/${SECRETS.length}）</div><div class="items" style="padding:0">${SECRETS.map(x=>row(x,!Sx[x.id])).join("")}</div>
 </div>`;
-  v.querySelector("#toPark").onclick=()=>travel("park",()=>{location.hash="#/journey/park"});
+  (v.querySelector("#toPark")||{}).onclick=()=>travel("park",()=>{location.hash="#/journey/park"});
   v.querySelectorAll("[data-inn]").forEach(b=>b.onclick=()=>{const x=INN.concat(SECRETS).find(z=>z.id===b.dataset.inn);if(!x||(SECRETS.includes(x)&&!Sx[x.id]))return;
     const lv=x.who?secretLv(x):x.lv,xp=x.who?secretXP(x):x.xp;
     sheet(`${x.ic} ${x.name}`,c=>{c.innerHTML=`${x.who?secretBio(x):""}<p style="font-size:16px;line-height:1.8">${esc(x.say)}</p><p class="muted">第 ${lv} 級的實力。贏了 +${xp} 修為（另加對局修為），輸了也有對局修為。</p><button class="btn" id="ig" style="width:100%">⚔ 下一盤</button>`;
@@ -4063,7 +4063,7 @@ function Journey(v,sid){
       return`<div class="sec-t">${ri+1}. ${esc(R.name)} <span class="muted" style="font-size:12px">★ ${got}/${st.length*3}${R.lv>1?`・Lv ${R.lv} 才能進`:""}</span></div>${lvNo?`<div class="muted" style="font-size:13px;margin:-2px 2px 6px">🔒 等級還差 ${R.lv-I.L} 級——先去 🏮 驛站找人下棋練等</div>`:""}<div class="card" style="padding:10px 12px${open?"":";opacity:.55"}"><p class="muted" style="margin:0 0 6px;font-size:13px">${esc(R.sub)}</p>
         <div class="jpath">${st.map((s,k)=>{const i=L.indexOf(s),ok=jOpen(L,i),n=S[s.id]||0;return`<button class="jnode${ok?"":" lock"}${n?" done":""}" data-s="${s.id}" style="margin-left:${[2,18,34,18,2,18,34,18][k%8]}%"><span class="ji">${ok?jIcon[s.t]:"🔒"}</span><span class="jt"><b>${esc(s.name)}</b><small>${n?"★".repeat(n)+"☆".repeat(3-n):ok?"還沒過關":!jLvOk(s)?`要 Lv ${JR[s.r].lv}`:"先過前一關"}</small></span></button>`}).join("")}</div></div>`}).join("")}</div>`;
   {const jm=v.querySelector("#jmap");if(jm)jm.onclick=()=>jMap3d(L,S)}
-  v.querySelector("#jxp").onclick=xpSheet;v.querySelector("#jinn").onclick=()=>travel("inn",()=>{location.hash="#/journey/inn"});
+  (v.querySelector("#jxp")||{}).onclick=xpSheet;(v.querySelector("#jinn")||{}).onclick=()=>travel("inn",()=>{location.hash="#/journey/inn"});
   v.querySelectorAll(".jnode").forEach(b=>b.onclick=()=>{const i=L.findIndex(x=>x.id===b.dataset.s);if(!jOpen(L,i))return toast(!jLvOk(L[i])?`等級不夠：「${JR[L[i].r].name}」要 Lv ${JR[L[i].r].lv}，先去 🏮 驛站找人下棋練等`:"先過前一關");jSheet(L[i])});
   return{}}
 /* 意見回饋 394：雲河棋路 3D 沙盤（map3d.js）——一指轉、兩指縮放；點站看進度，按「出發」開那一站下一個還沒過的關。3D 載入失敗就顯示平面地圖 */
@@ -4124,7 +4124,7 @@ function jPuzzle(v,s){setTop(s.theme?"🧠 "+s.name:"雲河棋路・"+s.name,s.t
     v.innerHTML=`<div class="pad"><div class="card" style="text-align:center"><div style="font-size:44px">${stars?"🎉":"💪"}</div><h2 style="margin:4px 0">${stars?"過關！":"差一點"}</h2>
       <div style="font-size:30px;color:var(--accent)">${"★".repeat(stars)}${"☆".repeat(3-stars)}</div><p>答對 <b>${ok}</b> / ${Q.length} 題${stars?"":`（答對 ${Math.ceil(N*.6)} 題才過關）`}${usedHint&&ok>=5?"（用了提示，最多 ★★）":""}</p>${best>stars?`<p class="muted">這關最好成績 ${"★".repeat(best)}</p>`:""}
       <button class="btn" id="back">${s.theme?"回主題訓練":"回雲河棋路"}</button><button class="btn ghost" id="again">再挑戰一次</button></div></div>`;
-    v.querySelector("#back").onclick=()=>goBack(s.theme?"#/theme":"#/journey");v.querySelector("#again").onclick=()=>{k=0;ok=0;v.innerHTML="";route()}}
+    (v.querySelector("#back")||{}).onclick=()=>goBack(s.theme?"#/theme":"#/journey");(v.querySelector("#again")||{}).onclick=()=>{k=0;ok=0;v.innerHTML="";route()}}
   return{}}
 
 /* ================= 🎴 石桌往事第二集《紙譜新局》的新步驟（格式見 story/book2/levels_schema_b2.md）=================
@@ -4321,13 +4321,13 @@ function jLevel(v,s,src){const BKP=s.book===2?"#/adventure":"#/journey";setTop((
   const next=()=>{stop();R.k++;save();run()};
   const miss=why=>{R.miss++;save();vibrate([20,40,20]);if(why)toast(why);const h=v.querySelector(".lvh span");if(h)h.textContent=`第 ${Math.min(R.k+1,N)}／${N} 步・失誤 ${R.miss}${R.hint?"・用過提示":""}`};
   const failCard=msg=>{stop();v.className="view";v.innerHTML=`<div class="pad">${hdr()}<div class="card" style="text-align:center;line-height:1.8"><div style="font-size:40px">💪</div><p>${esc(msg)}</p><button class="btn" id="lvR" style="width:100%">再試這一步</button><button class="btn ghost" id="lvB" style="width:100%;margin-top:6px">${src?"回上一頁":s.book===2?"回第二集":"回雲河棋路"}</button></div></div>`;
-    v.querySelector("#lvR").onclick=run;v.querySelector("#lvB").onclick=()=>goBack(src?src.back:BKP)};
+    (v.querySelector("#lvR")||{}).onclick=run;(v.querySelector("#lvB")||{}).onclick=()=>goBack(src?src.back:BKP)};
   const sayBox=t=>t?`<div class="card lvsay">${esc(t)}</div>`:"";
   const blank=b=>b.map(()=>null);
   const B2=jStepsB2({v,bd,boardPage,stop,next,miss,failCard,setTap:f=>{onTap=f},setInc:i=>{inc=i},useHint:()=>{R.hint=true;save()},flag:(k,x)=>{R.f=R.f||{};R.f[k]=x;save()},sflag:o=>{R.fs=R.fs||{};R.fs[R.k]={...(R.fs[R.k]||{}),...o};save()}});
   if(R.k===0&&!R.intro){v.innerHTML=`<div class="pad">${hdr()}${ch.title?`<p class="muted" style="font-size:13px;margin:0 2px 8px">📖 ${esc(ch.title)}</p>`:""}${sayBox(G.intro||"")}
     <div class="card" style="font-size:14px;line-height:1.8">${G.skill?`<b>練什麼</b>：${esc(G.skill)}<br>`:""}<b>過關</b>：${esc(G.pass||"")}<br><b>三星</b>：${esc(G.star3||"")}</div><button class="btn" id="lvGo" style="width:100%;margin-top:10px">開始</button></div>`;
-    v.querySelector("#lvGo").onclick=()=>{R.intro=1;save();run()};return}
+    (v.querySelector("#lvGo")||{}).onclick=()=>{R.intro=1;save();run()};return}
   run();
   function run(){stop();const st=G.steps[R.k];if(!st)return finish();
     ({talk,guess,memory,play,puzzle,collect:puzzle,...B2}[st.t]||next)(st)}
@@ -4337,7 +4337,7 @@ function jLevel(v,s,src){const BKP=s.book===2?"#/adventure":"#/journey";setTop((
     v.querySelectorAll("[data-i]").forEach(b=>b.onclick=()=>{const x=st.choices[+b.dataset.i];
       if(!x.ok){b.disabled=true;miss();v.querySelector("#lvRp").innerHTML=`<div class="card lvsay lvno">${esc(x.reply||"不對，再想想。")}</div>`;return}
       stop();vibrate(15);v.querySelectorAll("[data-i]").forEach(z=>z.disabled=true);b.classList.remove("ghost");
-      v.querySelector("#lvRp").innerHTML=`${x.reply?`<div class="card lvsay">${esc(x.reply)}</div>`:""}<button class="btn" id="lvN" style="width:100%">繼續</button>`;v.querySelector("#lvN").onclick=next})}
+      v.querySelector("#lvRp").innerHTML=`${x.reply?`<div class="card lvsay">${esc(x.reply)}</div>`:""}<button class="btn" id="lvN" style="width:100%">繼續</button>`;(v.querySelector("#lvN")||{}).onclick=next})}
   /* ---- 棋盤頁（猜著法、記盤、殘局題共用） ---- */
   function boardPage(st){v.className="view fixed";v.innerHTML=`<div class="pad" style="padding-bottom:0">${hdr()}</div><div id="lvT" style="padding:0 12px"></div><div class="boardbox" id="bbox"></div><div class="status" id="stat"></div><div class="note" id="note" style="white-space:pre-wrap"></div><div id="lvO" class="lvch" style="padding:0 12px"></div><div style="flex:1"></div><div class="actions" id="acts"></div>`;
     v.querySelector("#bbox").append(bd.svg);if(st.say)v.querySelector("#note").textContent=st.say}
@@ -4410,7 +4410,7 @@ function jLevel(v,s,src){const BKP=s.book===2?"#/adventure":"#/journey";setTop((
     const gl={win:"贏這一盤",survive:`撐過 ${st.limit||30} 步不輸`,draw:"至少下和"}[st.goal||"win"];
     v.innerHTML=`<div class="pad">${hdr()}${sayBox(st.say)}<div class="card" style="font-size:14px;line-height:1.85">⚔ 對手：第 ${st.ai||3} 級的電腦・你執${st.human==="b"?"黑":"紅"}<br>🎯 ${gl}${st.limit&&st.goal!=="survive"?`（${st.limit} 步內）`:""}${st.remove&&st.remove.length?`<br>🎁 讓子：先拿掉 ${st.remove.length} 顆`:""}${st.start?"<br>♟ 從指定局面開始":""}${st.timer?`<br>🪔 每步一炷香（${st.timer} 秒），燒完算一次失誤`:""}${st.blind?"<br>🙈 盲棋：棋盤上看不到棋子":""}</div>
       ${R.lose?`<p class="muted" style="font-size:13px">這一步已經試了 ${R.lose} 次，加油！</p>`:""}<button class="btn" id="lvP" style="width:100%">開始對局</button></div>`;
-    v.querySelector("#lvP").onclick=()=>{if(st.blind){if(R.p3===undefined){R.p3=parkOn();save()}store.set("park3d",false)}
+    (v.querySelector("#lvP")||{}).onclick=()=>{if(st.blind){if(R.p3===undefined){R.p3=parkOn();save()}store.set("park3d",false)}
       jStart(s.id,{human:st.human==="b"?"b":"r",level:Math.max(1,Math.min(8,st.ai||3)),journey:s.id,lv:{fen:st.start&&st.start.fen||"",turn:st.start&&st.start.turn||"r",remove:st.remove||[],noPerpetual:!!st.noPerpetual}},()=>{
         const P=store.get("jPending",null);if(P){P.lvp={goal:st.goal||"win",limit:st.limit||0,timer:st.timer||0,blind:!!st.blind,opp:st.opp||null,step:R.k,rule:st.rule||null};store.set("jPending",P)}
         location.hash="#/journey/play"},true)}}
@@ -4421,7 +4421,7 @@ function jLevel(v,s,src){const BKP=s.book===2?"#/adventure":"#/journey";setTop((
       <p class="muted">失誤 ${R.miss} 次${R.hint?"・用了提示（最多 ★★）":""}${best>stars?`・這關最好成績 ${"★".repeat(best)}`:""}</p>${G.outro?`<p style="line-height:1.8;text-align:left">${esc(G.outro)}</p>`:""}${G.reward?`<p class="muted" style="font-size:13px">🎁 ${esc(G.reward)}</p>`:""}
       ${more?`<button class="btn" id="lvNx">📖 讀第${CNUM(s.n+1)}回</button>`:""}${src&&src.next?`<button class="btn" id="lvCn">${esc(src.next[0])}</button>`:""}<button class="btn ghost" id="lvBk" style="margin-top:6px">${src?"回上一頁":s.book===2?"回第二集":"回雲河棋路"}</button><button class="btn ghost" id="lvAg" style="margin-top:6px">再挑戰一次</button></div></div>`;
     const nb=v.querySelector("#lvNx");if(nb)nb.onclick=()=>{if(s.book===2)store.set("legBook",2);location.hash="#/adventure";setTimeout(()=>s.book===2?legendRead2(s.n+1):legendRead(s.n+1),400)};
-    {const cn=v.querySelector("#lvCn");if(cn)cn.onclick=src.next[1]}v.querySelector("#lvBk").onclick=()=>goBack(src?src.back:BKP);v.querySelector("#lvAg").onclick=()=>{jRunSet(null);route()}}
+    {const cn=v.querySelector("#lvCn");if(cn)cn.onclick=src.next[1]}(v.querySelector("#lvBk")||{}).onclick=()=>goBack(src?src.back:BKP);(v.querySelector("#lvAg")||{}).onclick=()=>{jRunSet(null);route()}}
   })}
 /* 對局步驟在挑戰電腦畫面裡：盲棋（看不到棋子）、香條計時、「撐過幾步」到了就算過 */
 function lvPlayOf(st){const P=store.get("jPending",null);return P&&st&&P.game===st.id&&P.lvp?P:null}
@@ -4485,7 +4485,7 @@ function LegendScene(v,key){
       <div style="white-space:pre-wrap;font-size:15.5px">${esc(S.intro)}</div>
       <p class="muted" style="font-size:13px;margin-top:10px">你站在人群裡，不能插手。棋會一步一步下，下到關鍵的時候會停下來——換作是你，會怎麼走？跟他當年走的一樣，就加 <b>${L[1]}</b> 分段位積分（難度：${L[0]}）${done?"・這一段你已經領過了":""}。</p>
       <button class="btn" id="go">▶ 擠進人群去看</button></div></div>`;
-    v.querySelector("#go").onclick=start}
+    (v.querySelector("#go")||{}).onclick=start}
   function start(){gameLayout(v);v.querySelector("#strip").insertAdjacentHTML("beforebegin",'<div class="note" id="note" style="white-space:pre-wrap;padding:4px 12px;line-height:1.7"></div>');
     v.querySelector("#bbox").append(bd.svg);head();draw(null);phase="watch";say(S.open||"棋局正膠著，四周安靜得只剩下落子的聲音。");acts();next()}
   function head(){v.querySelector("#pTop").innerHTML=playerHTML(hero==="r"?"b":"r",nm(hero==="r"?"b":"r"),S.otherSub||"",null);
@@ -4565,7 +4565,7 @@ function CpuGame(v,practicePage,mode){
     if(st.arena&&ARENA[st.arena])return{look:CHAMP_LOOK(st.arena,bot)||{p:bot==="r"?"帥":"將",e:st.arena,g:9},name:ARENA[st.arena].name,img:`data/champ/${st.arena}_idle.webp`,say:ARENA[st.arena].hi,age:AGE["c:"+st.arena]};
     if(N)return{look:NPC_LOOK(N,bot),name:N.name,img:`data/npc/${N.id}.webp`,say:N.say,age:AGE["n:"+N.id]};
     return{look:PIKA_LOOK(bot),name:"Pikafish",img:null,say:"我是 Pikafish，請多指教。"}};
-  v.querySelector("#pTop").onclick=e=>{if(e.target.closest(".cpu-chip")){vibrate(8);newSheet();return}
+  (v.querySelector("#pTop")||{}).onclick=e=>{if(e.target.closest(".cpu-chip")){vibrate(8);newSheet();return}
     if(e.target.closest(".av")){const o=oppInfo();if(!o)return;vibrate(5);figView(oppArt()&&o.img?null:oppFig(o.look),"👤 "+o.name,`<p style="font-size:16px;line-height:1.8;margin:0 0 4px">「${esc(o.say)}」</p>${ageLine(o.age)}`,[["關閉",()=>closeSheet(),true]],o.img)}};   /* 意見回饋 445：跟坐在位子上的同一個形象（立繪就看立繪、3D 就看 3D） */
   const acts=actionBar(v.querySelector("#acts"),[...(MODE==="journey"&&store.get("jPending",null)?[["jhint","💡","提示",()=>jBattleHint(st,h=>{pHint=h;draw()})]]:[]),["undo","↶","悔棋",()=>post("/play/undo")],
     ["new","＋","新局",()=>newSheet(),true],["resign","🏳","認輸",()=>confirmBox("確定認輸？",()=>post("/play/resign"),"認輸")],["review","📖","檢討",()=>review(false,st&&st.id)],["setup","🧪","擺盤",()=>st&&setupSheet(st.board,st.turn,st.human==="b",!st.ranked)]]);
@@ -5344,8 +5344,8 @@ function Library(v,c0){
   const s2=t=>[...String(t||"")].map(c=>T2S[c]||c).join("");
   const qi=v.querySelector("#q");qi.value=libState.q;
   qi.oninput=()=>{libState.q=qi.value;libState.limit=60;filter(true)};
-  v.querySelector("#pf").onclick=()=>playerSheet();
-  v.querySelector("#clr").onclick=()=>{libState.q="";qi.value="";libState.player="";libState.side="";libState.res="";libState.limit=60;filter(true)};
+  (v.querySelector("#pf")||{}).onclick=()=>playerSheet();
+  (v.querySelector("#clr")||{}).onclick=()=>{libState.q="";qi.value="";libState.player="";libState.side="";libState.res="";libState.limit=60;filter(true)};
   const pick=c=>{libState.player="";libState.q="";qi.value="";libState.limit=60;load(c)};
   function paintCols(){const seg=v.querySelector("#grp"),box=v.querySelector("#cols");
     const gs=GRPS.filter(([g])=>books.some(b=>grpOf(b)===g)||(g==="gm"&&DEVREMOTE()));
@@ -5699,7 +5699,7 @@ function WatchHub(v){setTop("觀戰",false);setTabs(true,"#/watch");const RI=!OF
     ${RI?`<div class="sec-t">AI 對戰</div><button class="item card" id="ai" style="width:100%;display:flex;gap:12px;align-items:center;text-align:left">
       <span style="font-size:30px">📺</span><span style="flex:1;min-width:0"><b>GPT 對 Claude</b><br><span class="muted" id="aiS">電腦上的兩個 AI 在下棋</span></span><span class="muted">›</span></button>`:""}
     <p class="muted" style="font-size:12px;text-align:center;margin-top:18px">觀戰時可以看雙方走棋、聊天，不會影響對局。</p></div>`;
-  v.querySelector("#lb").onclick=()=>location.hash="#/lobby";const aiB=v.querySelector("#ai");if(aiB)aiB.onclick=()=>location.hash="#/watch/ai";
+  (v.querySelector("#lb")||{}).onclick=()=>location.hash="#/lobby";const aiB=v.querySelector("#ai");if(aiB)aiB.onclick=()=>location.hash="#/watch/ai";
   if(RI)api("/state").then(st=>{const e=v.querySelector("#aiS");if(e)e.innerHTML=st.running?'<span class="live">直播中</span>・第 '+Math.ceil(st.moves.length/2)+" 回合":st.result?"上一盤："+(st.result.w?PLAYER[st.result.w]+"勝":"和局"):"按進去可以開始"}).catch(()=>{const e=v.querySelector("#aiS");if(e)e.textContent="連不到電腦"});
   const ST={idle:"閒置中",seeking:"找對手中",watching:"觀戰中"};
   function paint(){const box=v.querySelector("#wl");if(!box)return;
@@ -5723,7 +5723,7 @@ function Watch(v){
   if(OFF&&!XQ.remoteInfo()){setTop("AI 對戰","#/lobby");setTabs(false);
     v.innerHTML=`<div class="pad"><div class="card" style="text-align:center;padding:24px 16px"><div style="font-size:52px">📺</div><h2 style="font-family:var(--serif);margin:8px 0">要連上電腦才能看 AI 對戰</h2>
       <p class="muted">AI 對戰是電腦上的 GPT 和 Claude 在下棋，手機要連上電腦才看得到。挑戰電腦、雙人對戰、古譜研究不需要連線。</p><button class="btn" id="cn">怎麼連線</button></div></div>`;
-    v.querySelector("#cn").onclick=connectSheet;return{}}
+    (v.querySelector("#cn")||{}).onclick=connectSheet;return{}}
   setTop("AI 對戰","#/lobby");setTabs(false);gameLayout(v);
   let st=null,view=null,clockBase=null;
   const bd=Board(null,d=>{if(!st)return;const n=st.moves.length;let x=view==null?n:view;x=Math.max(0,Math.min(n,x+d));view=x>=n?null:x;draw()});
