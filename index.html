@@ -295,7 +295,7 @@ html[data-era=qin] .me-win{--oct:inset(0 round 8px)}html[data-era=song] .me-win{
 .me2.art .me-ped::before{display:none}
 .me2.art .me-name{clip-path:none;background:var(--u-name_plaque_h) center/100% 100% no-repeat;padding:10px 30px 11px}
 .me2.art .me-name::before{display:none}
-.me2.art .me-name b{color:#2A2118}.me2.art .me-name small{color:#6B5A48}
+.me2.art .me-name b{color:#2A2118}.me2.art.pd .me-name b{color:#FBF3E2;text-shadow:0 1px 2px #000c}.me2.art.pd .me-name small{color:#E9DAC2}.me2.art .hx b,.me2.art .hx b small{color:#2A2118}.me2.art.bd .hx b,.me2.art.bd .hx b small{color:#FBF3E2;text-shadow:0 1px 2px #000c}.me2.art.wd .mw>b,.me2.art.wd .mw>b *{color:#FBF3E2;text-shadow:0 1px 3px #000e}.me2.art .me-name small{color:#6B5A48}
 .me2.art .me-seal{border:0;box-shadow:none;background:var(--u-seal) center/100% 100% no-repeat;color:#B3261E;width:64px;height:64px;padding:8px}
 .me2.art .jr{background:none;clip-path:none;padding:0}
 .me2.art .jr::after{content:"";position:absolute;inset:0;background:var(--u-jade_ring) center/contain no-repeat;pointer-events:none}
@@ -699,7 +699,7 @@ html[data-era=ming] .topbar,html[data-era=qing] .topbar{border-bottom-width:4px}
       if(!window.caches)return go();caches.keys().then(function(ks){return Promise.all(ks.filter(function(k){return k.indexOf("xqlab-app-")===0}).map(function(k){return caches.delete(k)}))})
         .then(function(){return navigator.serviceWorker&&navigator.serviceWorker.getRegistration()}).then(function(r){return r&&r.update()}).catch(function(){}).then(go)}};setTimeout(chk,4000)})();
 </script>
-<script>window.XQ_OFFLINE=true;window.XQ_BUILD="20261105-0550";</script>
+<script>window.XQ_OFFLINE=true;window.XQ_BUILD="20261105-0605";</script>
 <script src="core.js"></script>
 <script src="engine.js"></script>
 <script src="local.js"></script>
@@ -4020,7 +4020,9 @@ function meChip(){const tb=$("#topbar");if(!tb)return;{const o=document.getEleme
 /* 意見回饋 553：我的角色頁重新設計（兩位 RPG 專家合併）：立繪舞台 → 境界台（官階九層塔、修為八角玉環）→ 六角章 → 什錦花窗收藏格。
    收藏格點了照舊打開原本的清單（借用 Profile 畫好、藏起來的圓鈕）；沒有說明小字，點官印／九層塔看九個品級，點玉環看修為 */
 /* 意見回饋 571：我的角色頁的朝代美術素材（Gemini 畫的，data/me_<朝代>/）；有素材的朝代才套用，其他朝代維持程式畫的版面 */
-const ME_ART=new Set(["song"]),ME_ART_FILES=["stage_bg.webp","pedestal.webp","name_plaque_h.webp","seal.webp","jade_ring.webp","pagoda.webp","hex_badge.webp","wall.webp","win_b.webp","win_r.webp","win_s.webp","win_z.webp","mask_b.png","mask_r.png","mask_s.png","mask_z.png","view_b.webp","view_r.webp","view_s.webp","view_z.webp"];
+const ME_ART=new Set(["song","classic","qin","han","sanguo","weijin","nanbei","sui","tang","wudai","yuan","ming","qing"]),
+  /* 意見回饋 571：匾心（p）、六角牌框（b）或花窗底牆（w）是深色的朝代，字改成淺色（照素材中間的亮度量的，亮度 < 120 算深色） */
+  ME_DARK={qin:"bw",han:"bw",sanguo:"bw",tang:"bw",wudai:"bw",ming:"pbw"},ME_ART_FILES=["stage_bg.webp","pedestal.webp","name_plaque_h.webp","seal.webp","jade_ring.webp","pagoda.webp","hex_badge.webp","wall.webp","win_b.webp","win_r.webp","win_s.webp","win_z.webp","mask_b.png","mask_r.png","mask_s.png","mask_z.png","view_b.webp","view_r.webp","view_s.webp","view_z.webp"];
 const ME_WIN={b:"M36 2H84L118 36V72L84 106H36L2 72V36Z",r:"M2 17A136 136 0 0 1 118 17L81 95A50 50 0 0 0 39 95Z",
   s:"M26 20A44 44 0 0 1 94 20A36 36 0 0 1 94 88A44 44 0 0 1 26 88A36 36 0 0 1 26 20Z",
   z:"M44 4H76V10C76 16 68 18 68 26C68 32 112 40 112 68C112 92 92 104 60 104C28 104 8 92 8 68C8 40 52 32 52 26C52 18 44 16 44 10Z"};
@@ -4029,7 +4031,7 @@ function rankSheet(){const R=rankInfo(),era=store.get("era","classic");sheet("�
 function Me(v){Profile(v);setTop("🙂 我的角色","#/");setTabs(true,"#/");const pad=v.querySelector(".pad");if(!pad)return;
   const R=rankInfo(),I=xpInfo(),H=hintInfo(),B=bag(),Sx=jSecrets(),S=jStars(),Js=jStages(),L=legendState(),star=Js.reduce((a,x)=>a+(S[x.id]||0),0),
     xp=I.need?Math.round(I.rest*100/I.need):100,nS=Object.keys(Sx).length,nZ=Object.values(relicsMine()).reduce((a,x)=>a+x.length,0),pc=myPc(),red="帥仕相俥傌炮兵".includes(pc),d=document.createElement("div");
-  d.className="me2";{const era=store.get("era","classic");if(ME_ART.has(era)){d.classList.add("art");d.style.cssText=ME_ART_FILES.map(f=>`--u-${f.replace(/\..*$/,"")}:url(data/me_${era}/${f})`).join(";")}}
+  d.className="me2";{const era=store.get("era","classic");if(ME_ART.has(era)){d.classList.add("art");{const dk=ME_DARK[era]||"";if(dk.includes("p"))d.classList.add("pd");if(dk.includes("b"))d.classList.add("bd");if(dk.includes("w"))d.classList.add("wd")}d.style.cssText=ME_ART_FILES.map(f=>`--u-${f.replace(/\..*$/,"")}:url(data/me_${era}/${f})`).join(";")}}
   d.innerHTML=`<section class="me-stage" id="meSt"><div class="me-halo"></div><div class="me-win"></div><div class="me-glow"></div><div class="me-ped"></div>
       <button class="me-fig" id="meFig2" aria-label="看我的 3D 角色"><img src="${meImg()}" ${meImgTag(myStyle(),mySex())} alt="" onerror="this.remove()"></button>
       <button class="me-name" id="meNm" aria-label="改名"><b>${meName()}</b><small>${esc(myName()||"")}</small></button>
