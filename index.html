@@ -281,7 +281,37 @@ html[data-era=qin] .me-win{--oct:inset(0 round 8px)}html[data-era=song] .me-win{
 @keyframes meSpin{to{transform:translateX(-50%) rotate(360deg)}}@keyframes meIn{from{opacity:0;transform:translateY(18px) scale(.96)}}
 @keyframes meBreath{50%{transform:translateY(-3px) scale(1.012)}}@keyframes meStamp{from{opacity:0;transform:scale(1.6) rotate(-10deg)}70%{transform:scale(.94) rotate(-4deg)}}
 @keyframes meGlow{50%{opacity:1;transform:translateX(-50%) scale(1.3)}}@keyframes tierGlow{50%{filter:brightness(1.3) saturate(1.2)}}
-@media (prefers-reduced-motion:reduce){.me-stage *,.ta i.on{animation:none!important}}   /* 554：聲音頁也不放說明小字 */   /* 意見回饋 547：棋盤設定頁不放說明小字 */
+@media (prefers-reduced-motion:reduce){.me-stage *,.ta i.on{animation:none!important}}
+/* 意見回饋 560：宋朝版的我的角色頁，用 Gemini 畫的素材（data/me_song/）：月洞門舞台、汝窯須彌座、木匾額、朱印、天青玉環、九層塔、六角牌、粉牆黛瓦、什錦花窗 */
+html[data-era=song] .me-stage{background:url(data/me_song/stage_bg.webp) center 62%/cover no-repeat}
+html[data-era=song] .me-stage .me-halo,html[data-era=song] .me-stage .me-win{display:none}
+html[data-era=song] .me-ped{height:58px;width:250px;bottom:18px;clip-path:none;background:url(data/me_song/pedestal.webp) center bottom/contain no-repeat}
+html[data-era=song] .me-ped::before{display:none}
+html[data-era=song] .me-name{clip-path:none;background:url(data/me_song/name_plaque.webp) center/100% 100% no-repeat;padding:22px 12px;min-width:56px}
+html[data-era=song] .me-name::before{display:none}
+html[data-era=song] .me-name b{color:#2A2118}html[data-era=song] .me-name small{color:#6B5A48}
+html[data-era=song] .me-seal{border:0;box-shadow:none;background:url(data/me_song/seal.webp) center/100% 100% no-repeat;color:#B3261E;width:64px;height:64px;padding:8px}
+html[data-era=song] .jr{background:none;clip-path:none;padding:0}
+html[data-era=song] .jr::after{content:"";position:absolute;inset:0;background:url(data/me_song/jade_ring.webp) center/contain no-repeat;pointer-events:none}
+html[data-era=song] .jp{transform:scale(.82)}
+html[data-era=song] .jh{inset:31%;background:color-mix(in srgb,var(--card) 92%,transparent);z-index:1}html[data-era=song] .jh b{font-size:19px}html[data-era=song] .jh small{font-size:12px;margin-top:3px}
+html[data-era=song] .ta{position:relative;width:96px;height:172px;gap:0}
+html[data-era=song] .ta i{display:none}
+html[data-era=song] .ta::before,html[data-era=song] .ta::after{content:"";position:absolute;inset:0;background:url(data/me_song/pagoda.webp) center bottom/contain no-repeat}
+html[data-era=song] .ta::before{filter:grayscale(1);opacity:.35}
+html[data-era=song] .ta::after{clip-path:inset(calc(100% - var(--lit,11%)) 0 0 0);transition:clip-path .9s ease-out}
+html[data-era=song] .hx{clip-path:none;background:url(data/me_song/hex_badge.webp) center/100% 100% no-repeat}
+html[data-era=song] .hx::before{display:none}
+html[data-era=song] .mwall{background:url(data/me_song/wall.webp) center top/cover no-repeat;border:0;padding-top:44px}
+html[data-era=song] .mwall::before{display:none}
+html[data-era=song] .mw svg{display:none}
+html[data-era=song] .mw .wf{background:center/contain no-repeat}
+html[data-era=song] .mw[data-c=b] .wf{background-image:url(data/me_song/win_b.webp)}
+html[data-era=song] .mw[data-c=r] .wf{background-image:url(data/me_song/win_r.webp)}
+html[data-era=song] .mw[data-c=s] .wf{background-image:url(data/me_song/win_s.webp)}
+html[data-era=song] .mw[data-c=z] .wf{background-image:url(data/me_song/win_z.webp)}
+html[data-era=song] .mw[data-c=r]{--iy:40%}html[data-era=song] .mw[data-c=z]{--iy:60%}
+html[data-era=song] .mw>b{color:#2E3B3A}   /* 554：聲音頁也不放說明小字 */   /* 意見回饋 547：棋盤設定頁不放說明小字 */
 html[data-era=tang] .card,html[data-era=tang] .tile,html[data-era=qing] .card,html[data-era=qing] .tile{box-shadow:inset 0 0 0 3px var(--card),inset 0 0 0 4px color-mix(in srgb,var(--trim) 60%,transparent),0 1px 3px #0000001a}
 html[data-era=ming] .topbar,html[data-era=qing] .topbar{border-bottom-width:4px}
 .eragrid{display:grid;grid-template-columns:repeat(2,1fr);gap:8px}
@@ -656,7 +686,7 @@ html[data-era=ming] .topbar,html[data-era=qing] .topbar{border-bottom-width:4px}
       if(!window.caches)return go();caches.keys().then(function(ks){return Promise.all(ks.filter(function(k){return k.indexOf("xqlab-app-")===0}).map(function(k){return caches.delete(k)}))})
         .then(function(){return navigator.serviceWorker&&navigator.serviceWorker.getRegistration()}).then(function(r){return r&&r.update()}).catch(function(){}).then(go)}};setTimeout(chk,4000)})();
 </script>
-<script>window.XQ_OFFLINE=true;window.XQ_BUILD="20261105-0425";</script>
+<script>window.XQ_OFFLINE=true;window.XQ_BUILD="20261105-0438";</script>
 <script src="core.js"></script>
 <script src="engine.js"></script>
 <script src="local.js"></script>
@@ -3983,7 +4013,7 @@ function Me(v){Profile(v);setTop("🙂 我的角色","#/");setTabs(true,"#/");co
       <button class="me-seal${[...R.name].length===4?" q":""}" id="meSeal" aria-label="官階 ${esc(R.name)}">${esc(R.name)}</button>
       <button class="me-act l" id="meOb"><em>⇄</em>換角色</button>
       <button class="me-act r" id="mePc"><span class="pc ${red?"r":"b"}">${esc(pc)}</span>換棋子</button></section>
-    <section class="mr"><button id="meRk" aria-label="官階 ${esc(R.name)}"><span class="ta">${[1,2,3,4,5,6,7,8,9].map(t=>`<i${t===R.g?' class="on"':""} style="--n:${t-1};--f:${t>=R.g?100:t===R.g-1?R.pc:0}%"></i>`).join("")}</span><b>官階</b></button>
+    <section class="mr"><button id="meRk" aria-label="官階 ${esc(R.name)}"><span class="ta" style="--lit:${Math.round(((10-R.g)+(R.g>1?R.pc/100:0))/9*100)}%">${[1,2,3,4,5,6,7,8,9].map(t=>`<i${t===R.g?' class="on"':""} style="--n:${t-1};--f:${t>=R.g?100:t===R.g-1?R.pc:0}%"></i>`).join("")}</span><b>官階</b></button>
       <button id="meXp" aria-label="修為 Lv ${I.L} ${esc(I.title)}"><span class="jr"><span class="jp" style="--pp:${xp}%"></span><span class="jh"><b>Lv ${I.L}</b><small>${esc(I.title)}</small></span></span><b>修為</b></button></section>
     <section class="mx"><div class="hx"><span>${ETIMG("f_idea","","💡")}</span><b>${H.left+(H.bonus||0)}<small>提示棋</small></b></div>
       <div class="hx"><span>⭐</span><b>${star}<small>雲河棋路</small></b></div>
