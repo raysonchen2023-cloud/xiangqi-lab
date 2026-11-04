@@ -699,7 +699,7 @@ html[data-era=ming] .topbar,html[data-era=qing] .topbar{border-bottom-width:4px}
       if(!window.caches)return go();caches.keys().then(function(ks){return Promise.all(ks.filter(function(k){return k.indexOf("xqlab-app-")===0}).map(function(k){return caches.delete(k)}))})
         .then(function(){return navigator.serviceWorker&&navigator.serviceWorker.getRegistration()}).then(function(r){return r&&r.update()}).catch(function(){}).then(go)}};setTimeout(chk,4000)})();
 </script>
-<script>window.XQ_OFFLINE=true;window.XQ_BUILD="20261105-0514";</script>
+<script>window.XQ_OFFLINE=true;window.XQ_BUILD="20261105-0535";</script>
 <script src="core.js"></script>
 <script src="engine.js"></script>
 <script src="local.js"></script>
@@ -1060,11 +1060,17 @@ function cymHit(t,v,dur){dur=dur||1;const n=AC.createBufferSource(),b=AC.createB
 function bellHit(t,f){[1,2.76,5.4,8.93].forEach((k,i)=>{const o=AC.createOscillator(),g=AC.createGain();o.type="sine";o.frequency.value=f*k;g.gain.setValueAtTime(0,t);g.gain.linearRampToValueAtTime(.12/(1+i),t+.004);g.gain.exponentialRampToValueAtTime(.0008,t+1.8/(1+i*.6));o.connect(g);g.connect(AC.destination);o.start(t);o.stop(t+2)})}
 /* 背景音樂（開發者 11/5：每個朝代兩種當時最流行的樂器，Gemini Lyria 做的古風曲，data/bgm/<朝代>/，清單在 data/bgm/index.json）。
    聲音頁「背景音樂」打開才播（預設關）；這個朝代沒有曲子就不播；曲子隨機輪流、App 切到背景就暫停、換朝代就換曲子 */
-var BGM={a:null,list:null,era:null,src:"",last:-1};
+var BGM={a:null,list:null,titles:null,era:null,src:"",last:-1};
+/* 意見回饋 575（開發者）：每一首都有曲名（data/bgm/titles.json，key 是「朝代/檔名」）；聲音頁的背景音樂下面顯示正在播哪一首，可以換一首 */
+function bgmTitles(){return BGM.titles||(BGM.titles=fetch("data/bgm/titles.json").then(r=>r.ok?r.json():{}).catch(()=>({})))}
+async function bgmNow(){const el=document.getElementById("bgmNow");if(!el)return;const on=!!store.get("bgm",false)&&BGM.a&&!BGM.a.paused&&BGM.src;if(!on){el.style.display="none";return}
+  const k=BGM.src.replace(/^data\/bgm\//,""),T=(await bgmTitles())||{},t=T[k];el.style.display="flex";
+  el.innerHTML=`<span style="flex:1;min-width:0">♪ 正在播放${t?`《${esc(t)}》`:""}</span><button class="btn ghost" id="bgmNext" style="flex:none;width:auto;margin:0;padding:4px 12px;font-size:13px;white-space:nowrap">換一首</button>`;
+  el.querySelector("#bgmNext").onclick=()=>{vibrate(5);bgmSync(true)}}
 function bgmList(){return BGM.list||(BGM.list=fetch("data/bgm/index.json").then(r=>r.ok?r.json():{}).catch(()=>({})))}
 async function bgmSync(next){const on=!!store.get("bgm",false)&&!document.hidden,era=store.get("era","classic");
   if(!on){if(BGM.a)BGM.a.pause();return}const L=((await bgmList())||{})[era]||[];if(!L.length){if(BGM.a)BGM.a.pause();return}
-  if(!BGM.a){BGM.a=new Audio();BGM.a.volume=.35;BGM.a.preload="auto";BGM.a.onended=()=>bgmSync(true)}
+  if(!BGM.a){BGM.a=new Audio();BGM.a.volume=.35;BGM.a.preload="auto";BGM.a.onended=()=>bgmSync(true);BGM.a.onplay=BGM.a.onpause=()=>bgmNow()}
   if(next||BGM.era!==era||!BGM.src){BGM.era=era;let n=Math.floor(Math.random()*L.length);if(L.length>1&&n===BGM.last)n=(n+1)%L.length;BGM.last=n;BGM.src=`data/bgm/${era}/${L[n]}`;BGM.a.src=BGM.src}
   if(BGM.a.paused)BGM.a.play().catch(()=>{})}
 document.addEventListener("visibilitychange",()=>{bgmSync()});
@@ -2975,7 +2981,7 @@ function Settings(v){
       <div class="opt" id="tbb" style="justify-content:center;flex-wrap:wrap;margin-top:8px"><button class="pill" id="replay">▶ 示範一步</button>${[["mv","♟ 走一步"],["cap","💥 吃子"],["ck","⚔ 將軍"],["op","🚩 開局動畫"]].map(([k,l])=>`<button data-tst="${k}">${l}</button>`).join("")}</div></div>   <!-- 意見回饋 537：預覽和測試併成一個棋盤；547：小字提示都拿掉 -->
     <div class="sec-t">朝代風格</div><div class="eragrid erasw" id="era"></div>
     <div class="sec-t">棋盤風格</div>
-    <label class="row" style="justify-content:space-between;padding:4px 2px 10px"><span><b>🌳 3D 園子棋盤</b></span><input type="checkbox" class="sw" id="p3d"></label>   <!-- 意見回饋 488 -->
+    <label class="row" style="justify-content:space-between;padding:4px 2px 10px"><span><b>3D 園子棋盤</b></span><input type="checkbox" class="sw" id="p3d"></label>   <!-- 意見回饋 488 -->
     <div class="thgrid thsw" id="th"></div>
     <div class="sec-t">對手形象</div><div class="opt" id="ol"></div>
     <div class="sec-t">棋子樣式</div><div class="opt" id="ps"></div>
@@ -3063,8 +3069,9 @@ function Settings(v){
     {const on=th.querySelector(".on");th._quiet=true;if(on)th.scrollLeft=on.offsetLeft-(th.clientWidth-on.offsetWidth)/2;setTimeout(()=>{th._quiet=false},250);
       th.onscroll=()=>{if(th._quiet)return;clearTimeout(th._t);th._t=setTimeout(()=>{const mid=th.scrollLeft+th.clientWidth/2;let best=null,bd=1e9,i=0;const ks=BOARD_THEMES.map(x=>x[0]);for(const x of th.children){const d=Math.abs(x.offsetLeft+x.offsetWidth/2-mid);if(d<bd){bd=d;best=i}i++}if(best!=null&&ks[best]!==store.get("boardTheme","wood3d"))th.children[best].click()},170)}}
     {const xo=v.querySelector("#xfOut"),xi=v.querySelector("#xfIn");if(xo)xo.onclick=()=>{vibrate(5);xfSend()};if(xi)xi.onclick=()=>{vibrate(5);xfRecv()}}
+    /* 意見回饋 574（開發者）：外觀頁的 3D 園子棋盤、對手形象、棋子樣式拿掉 emoji */
     /* 意見回饋 442、456（開發者）：對手形象可以選——3D 立體小人（跟小帥一樣是立體的，每個人帽子、衣服不同）或畫好的立繪 */
-    {const ol=v.querySelector("#ol");if(ol){const cur=store.get("oppLook","3d");ol.innerHTML=[["3d","🧸 Q 版 3D"],["real","🗿 真實 3D"],["art","🖼 畫好的立繪"]].map(([k,l])=>`<button data-ol="${k}" class="${cur===k?"on":""}">${l}</button>`).join("");
+    {const ol=v.querySelector("#ol");if(ol){const cur=store.get("oppLook","3d");ol.innerHTML=[["3d","Q 版 3D"],["real","真實 3D"],["art","畫好的立繪"]].map(([k,l])=>`<button data-ol="${k}" class="${cur===k?"on":""}">${l}</button>`).join("");
       ol.querySelectorAll("[data-ol]").forEach(x=>x.onclick=()=>{vibrate(5);store.set("oppLook",x.dataset.ol);paint()})}}
     {const oa=v.querySelector("#obAgain");if(oa)oa.onclick=()=>{vibrate(5);onboard(true)}}
     {v.querySelectorAll("[data-zh]").forEach(b=>b.onclick=()=>{vibrate(5);if(!window.XQ_ZH){toast("這個版本還不能切換");return}if(XQ_ZH.mode()===b.dataset.zh)return;toast(b.dataset.zh==="cn"?"切换成简体中文…":"切換成繁體中文…");setTimeout(()=>XQ_ZH.set(b.dataset.zh),300)})}
@@ -3074,7 +3081,7 @@ function Settings(v){
      if(store.get("setFocus","")==="name"&&nl){store.set("setFocus","");setTimeout(()=>{const c=nl.closest(".card");c.scrollIntoView({block:"center",behavior:"smooth"});c.style.transition="box-shadow .3s";c.style.boxShadow="0 0 0 3px var(--accent,#B3261E)";setTimeout(()=>{c.style.boxShadow="";nameSheet(false)},700)},120)}}   /* 意見回饋 498：改名字只放在外觀這裡 */
     {const p3=v.querySelector("#p3d");if(p3){p3.checked=!!store.get("park3d",true);p3.onchange=()=>{vibrate(5);store.set("park3d",p3.checked);toast(p3.checked?"下棋時會在 3D 園子裡":"下棋時用平面棋盤")}}}
     {const hcI=v.querySelector("#hiCon");if(hcI){hcI.checked=!!store.get("hiCon",false);hcI.onchange=()=>{store.set("hiCon",hcI.checked);vibrate(5);try{if(PARK){PARK.v.destroy();PARK=null}}catch(e){}show(true)}}}
-    v.querySelector("#ps").innerHTML=[["classic","傳統"],["solid","實心"],["3d","🎲 立體"]].map(([k,l])=>`<button data-p="${k}" class="${ps===k?"on":""}">${l}</button>`).join("");
+    v.querySelector("#ps").innerHTML=[["classic","傳統"],["solid","實心"],["3d","立體"]].map(([k,l])=>`<button data-p="${k}" class="${ps===k?"on":""}">${l}</button>`).join("");
     v.querySelectorAll("[data-p]").forEach(x=>x.onclick=()=>{store.set("pieceStyle",x.dataset.p);paint();show(false)});
     const pt=store.get("pageTheme","auto");v.querySelector("#pt").innerHTML=[["auto","跟著手機"],["light","☀ 淺色"],["dark","🌙 深色"]].map(([k,l])=>`<button data-m="${k}" class="${pt===k?"on":""}">${l}</button>`).join("");
     v.querySelectorAll("[data-m]").forEach(x=>x.onclick=()=>{const k=x.dataset.m;store.set("pageTheme",k);if(k==="auto")delete document.documentElement.dataset.theme;else document.documentElement.dataset.theme=k;paint()});
@@ -3092,7 +3099,8 @@ function Settings(v){
       const st=mvB.querySelector("#sndSt");if(st)sdB.append(st.parentElement);
       {const x=mvB.querySelector('[data-t="capSound"]');if(x)sdB.append(x.closest("label"))}
       {const vr=mvB.querySelector("#vcRow"),s2=v.querySelector("#snd2");if(vr&&s2)s2.append(vr)}
-      {const s3=v.querySelector("#snd3");for(const k of["gateDrum","bgm"]){const x=mvB.querySelector(`[data-t="${k}"]`);if(x&&s3)s3.append(x.closest("label"))}}
+      {const s3=v.querySelector("#snd3");for(const k of["gateDrum","bgm"]){const x=mvB.querySelector(`[data-t="${k}"]`);if(x&&s3)s3.append(x.closest("label"))}
+        if(s3){const nw=document.createElement("div");nw.id="bgmNow";nw.style.cssText="display:none;align-items:center;gap:8px;padding:0 2px 8px;font-size:13.5px;opacity:.8";s3.append(nw);bgmNow()}}
       [...sdB.children].slice(1).forEach(x=>x.style.borderTop="1px solid var(--line)")}
     v.querySelectorAll("[data-vc]").forEach(x=>x.onclick=()=>{const k=x.dataset.vc;v.querySelectorAll("[data-vc]").forEach(y=>y.classList.toggle("on",y===x));
       store.set("voiceCall",k!=="off");if(k!=="off"){store.set("voiceSex",k);pickVoice();primeVoice();unlockAudio();loadVc().then(()=>{sayCall("將軍");setTimeout(()=>sayCall("吃"),1100)})}});
