@@ -135,12 +135,15 @@
   // 開發者用 Gemini 畫的朝代長卷（data/park/<朝代>.webp）：繞成 360 度一整圈（意見回饋：轉頭看旁邊、後面，圖不能斷、不能突然變成程式畫的山、不能有空白）
   // L、R＝圖上左右兩個主景的範圍（0～1）；crop＝只用圖上這一段（秦的原圖是「歷代一條長卷」，只取最左邊秦的長城、烽火台、紅旗、松亭，轉頭才不會看到別朝代的地標）
   // gap＝主景之間多留幾度雲霧（主景段很窄的時候用，不然一圈會擠太多份）
+  /* 意見回饋 421（構圖）：長卷的地平線原本壓在 -42 度（以前鏡頭高 16 時定的），鏡頭拉高到 27 後整幅山水都沉到平台邊以下，轉頭只看到一片白；
+     改成 -24 度：從預設視角看，長卷下緣（近景草地）剛好藏在平台邊後面，平台像坐落在山水裡（不再像一座高高的石台），轉頭時中景的城樓、遠景的山都露出來 */
+  const PANO_HOR=window.__HOR!=null?window.__HOR:-24;
   const BG_IMG={qin:{src:"data/park/qin.webp",crop:[0,.34],L:[.02,.165],R:[.2,.33],gap:0},han:{src:"data/park/han.webp",L:[.08,.35],R:[.65,.92]},classic:{src:"data/park/classic.webp",L:[.06,.36],R:[.64,.94]},sanguo:{src:"data/park/sanguo.webp",L:[.05,.35],R:[.62,.94]},
     // 新做法（開發者用 Gemini 畫前、右、後、左 4 張，tools/stitch_pano.py 接成一整圈）：pano＝整圈長圖，直接貼滿 360 度
     // hz＝原圖地平線的高度（由上往下 0～1）；hor＝地平線放在鏡頭的仰角幾度（負＝往下看；平台在山上，往外看是俯瞰山谷）；rot＝整圈再轉幾度（正＝往右）
-    tang:{src:"data/park/tang_360.webp",pano:true,hz:.58,hor:-42,rot:0}};
+    tang:{src:"data/park/tang_360.webp",pano:true,hz:.58,hor:PANO_HOR,rot:0}};
   // 其他 12 個朝代也換成 Gemini 畫的整圈背景（同一套規格）
-  for(const k of["classic","qin","han","sanguo","weijin","nanbei","sui","wudai","song","yuan","ming","qing"])BG_IMG[k]={src:"data/park/"+k+"_360.webp",pano:true,hz:.58,hor:-42,rot:0};   // 開發者用 Gemini 畫的 13 朝代長卷全部到齊
+  for(const k of["classic","qin","han","sanguo","weijin","nanbei","sui","wudai","song","yuan","ming","qing"])BG_IMG[k]={src:"data/park/"+k+"_360.webp",pano:true,hz:.58,hor:PANO_HOR,rot:0};   // 開發者用 Gemini 畫的 13 朝代長卷全部到齊
   // 開發者用 Gemini 畫的朝代道具（data/park3d/<朝代>/：tree1、tree2、bench、stool、lantern、cup、tabletop 去背 webp，下緣＝落地／落桌的地方）
   // 有列在這裡的朝代：樹、長椅、凳子、燈籠、茶杯都換成手繪立牌，桌面換成手繪桌面；其他朝代照舊用程式做的 3D 家具。新增朝代＝放圖＋這裡加一行
   // top＝桌面圖上圓桌面的圓心 x、y、半徑（像素，1024 的圖）
@@ -254,7 +257,8 @@
     for(const ox of[-W,0,W]){const x=x0+ox;if(x>=W||x+W<=0)continue;
       g.drawImage(im,0,0,iw,1,x,0,W,y0);g.drawImage(im,0,ih-1,iw,1,x,y1,W,H-y1);g.drawImage(im,0,0,iw,ih,x,y0,W,dh)}
     // 延伸的部分漸變成平均色（圓柱上下緣跟天空球同色，看不出邊）
-    let gr=g.createLinearGradient(0,0,0,y0);gr.addColorStop(0,rgba(A0,1));gr.addColorStop(1,rgba(A0,0));g.fillStyle=gr;g.fillRect(0,0,W,y0);
+    /* 意見回饋 421：長卷抬高後上緣露出來了，最上一列拉長的直條紋會穿幫：上方留白改成平均色，再往圖裡漸變 48 像素 */
+    let gr;g.fillStyle=rgba(A0,1);g.fillRect(0,0,W,y0);gr=g.createLinearGradient(0,y0,0,y0+48);gr.addColorStop(0,rgba(A0,1));gr.addColorStop(1,rgba(A0,0));g.fillStyle=gr;g.fillRect(0,y0,W,48);
     gr=g.createLinearGradient(0,y1,0,H);gr.addColorStop(0,rgba(A1,0));gr.addColorStop(1,rgba(A1,1));g.fillStyle=gr;g.fillRect(0,y1,W,H-y1);
     const hx=c=>"#"+c.map(v=>v.toString(16).padStart(2,"0")).join(""),top=hx(A0),bot=hx(A1);
     return{top,bot}}
@@ -758,7 +762,8 @@
       // 桌面：手繪的圓桌面鋪在桌頂（棋盤底下），受光、收得到棋盤與棋子的影子
       use("tabletop",im=>{const t=texOf(im,1),[cx,cy,r]=PP.top||[im.naturalWidth/2,im.naturalHeight/2,im.naturalWidth/2],iw=im.naturalWidth,ih=im.naturalHeight;
         t.repeat.set(2*r/iw,2*r/ih);t.offset.set((cx-r)/iw,1-(cy+r)/ih);
-        const m=new T.Mesh(new T.CircleGeometry(8.2,96),new T.MeshStandardMaterial({map:t,color:neutOf(X.sc),roughness:.5,toneMapped:false}));m.rotation.x=-PI/2;m.position.y=.006;m.receiveShadow=true;root.add(m);if(X.infos){m.userData.info="table";X.infos.push(m)}});
+        const SQ={qin:7.9,sui:7.8,wudai:7.7,song:7.7,ming:7.9}[EK],TRd=SQ?SQ-.55:8.2;   /* 意見回饋 421：方桌（秦、隋、五代、宋、明）上那片 8.2 的圓桌面比桌子還大、凸出桌邊，看起來像桌上又墊了一座大圓石台；方桌改成嵌在桌面裡的圓 */
+        const m=new T.Mesh(new T.CircleGeometry(TRd,96),new T.MeshStandardMaterial({map:t,color:neutOf(X.sc),roughness:.5,toneMapped:false}));m.rotation.x=-PI/2;m.position.y=.006;m.receiveShadow=true;root.add(m);if(X.infos){m.userData.info="table";X.infos.push(m)}});
       // 長榻：放在台座上、Pikafish 後面
       // 橫的長榻／長椅：寬 14；直的單人椅（明、清的圈椅、太師椅）：高 12
       use("bench",im=>{card(im,Object.assign(im.naturalHeight>im.naturalWidth*.9?{x:0,y:X.FL!=null?X.FL:DT,z:BZ-.4,h:12*BS,tilt:.12}:{x:0,y:X.FL!=null?X.FL:DT,z:BZ-.4,w:14*BS,tilt:.12},{info:"bench"}))});
@@ -787,10 +792,30 @@
           const ft=new T.Mesh(new T.CylinderGeometry(r*2.4,r*3.2,.8,12),postM);ft.position.set(px,GY+.4,pz);root.add(ft);blob(px,GY+.03,pz,1.4,1.4,.35);
           glow(x+nx*.4,LY,z+nz*.4,4.6,.5)}});
       // 樹：牡丹樹、松樹輪流，站在平台邊上，轉頭時當畫面的框
-      [[-14.8,-13.2,"tree2",17],[17.8,-8.2,"tree1",14.5],[-18.2,3.4,"tree1",12.5]].forEach(([x,z,n,h])=>use(n,im=>{const c=card(im,{x,y:GY,z,h,tilt:.12,info:n});blob(x,GY+.03,z,c.w*.32,c.w*.2,.35,c.ry)}));
+      [[-14.8,-13.2,"tree2",17],[17.8,-8.2,"tree1",14.5],[-18.2,3.4,"tree1",12.5]].forEach(([x,z,n,h])=>use(n,im=>{const c=card(im,{x,y:GY,z,h,tilt:.12,info:n});blob(x,GY+.03,z,c.w*.32,c.w*.2,.35,c.ry);if(X.fades)X.fades.push(c.m)}));
       // 茶杯：從斜上方看的手繪茶碗，立牌整張正對鏡頭、下緣貼著杯托前緣（Pikafish 一杯、我一杯，位置跟原本一樣）
-      use("cup",im=>{for(const[x,z]of[[0,-6.85],[.4,7.0]]){const w=1.8,dx=CAMP.x-x,dz=CAMP.z-z,d=Math.hypot(dx,dz)||1,k=w*.32;
-        blob(x,.02,z,w*.5,w*.42,.3,Math.atan2(dx,dz));card(im,{x:x+dx/d*k,y:.015,z:z+dz/d*k,w,tilt:1,info:"cup"})}});}
+      /* 意見回饋 423：茶杯看起來沒有平放——原本立牌的下緣往「舊的鏡頭位置 (0,16,9.2)」挪，鏡頭拉高、繞桌轉之後杯子就歪、浮、滑到杯影外面。
+         改成：找出圖上杯托最寬的那一列（＝杯托圓心，杯子真正落在桌上的點）當轉軸，每一格都讓這個點落在鏡頭看向杯位的那條視線上、
+         整張正對鏡頭；轉軸沿視線往鏡頭挪到剛好整張都在桌面上方（不插進桌面），畫面上杯托圓心永遠蓋在桌上的杯位、杯影正中間 */
+      const cupAY=im=>{try{const c=document.createElement("canvas"),W0=64,H0=Math.max(8,Math.round(64*im.naturalHeight/im.naturalWidth));c.width=W0;c.height=H0;const g=c.getContext("2d");g.drawImage(im,0,0,W0,H0);
+          const d=g.getImageData(0,0,W0,H0).data,ns=[];for(let y=Math.floor(H0*.55);y<H0;y++){let n=0;for(let x=0;x<W0;x++)if(d[(y*W0+x)*4+3]>128)n++;ns.push([y,n])}
+          const mx=Math.max(...ns.map(r=>r[1])),band=ns.filter(r=>r[1]>=mx*.97).map(r=>r[0]),row=(Math.min(...band)+Math.max(...band))/2;
+          return clamp((H0-row-.5)/H0,.06,.45)}catch(e){return .3}};
+      /* 有幾張茶杯圖去背時把杯身、杯托中間挖破了（宋、南北朝…），看得到後面的桌子：跟外面不連通的透明洞補起來（用旁邊的顏色往內填） */
+      const fixCup=im=>{try{const w=im.naturalWidth,h=im.naturalHeight,c=document.createElement("canvas");c.width=w;c.height=h;const g=c.getContext("2d");g.drawImage(im,0,0);
+          const id=g.getImageData(0,0,w,h),d=id.data,N=w*h,out=new Uint8Array(N),q=new Int32Array(N);let qh=0,qt=0;const tr=i=>d[i*4+3]<128;
+          for(let x=0;x<w;x++)for(const y of[0,h-1]){const i=y*w+x;if(tr(i)&&!out[i]){out[i]=1;q[qt++]=i}}
+          for(let y=0;y<h;y++)for(const x of[0,w-1]){const i=y*w+x;if(tr(i)&&!out[i]){out[i]=1;q[qt++]=i}}
+          while(qh<qt){const i=q[qh++],x=i%w;for(const j of[x>0?i-1:-1,x<w-1?i+1:-1,i-w,i+w])if(j>=0&&j<N&&!out[j]&&tr(j)){out[j]=1;q[qt++]=j}}
+          let hole=[];for(let i=0;i<N;i++)if(tr(i)&&!out[i])hole.push(i);if(!hole.length)return im;
+          for(let pass=0;pass<400&&hole.length;pass++){const next=[],done=[];for(const i of hole){const x=i%w;let r=0,gg=0,b=0,n=0;
+              for(const j of[x>0?i-1:-1,x<w-1?i+1:-1,i-w,i+w])if(j>=0&&j<N&&d[j*4+3]>=128){r+=d[j*4];gg+=d[j*4+1];b+=d[j*4+2];n++}
+              if(n)done.push([i,r/n,gg/n,b/n]);else next.push(i)}
+            for(const[i,r,gg,b]of done){d[i*4]=r;d[i*4+1]=gg;d[i*4+2]=b;d[i*4+3]=255}if(!done.length)break;hole=next}
+          g.putImageData(id,0,0);c.naturalWidth=w;c.naturalHeight=h;return c}catch(e){return im}};
+      use("cup",im0=>{const im=fixCup(im0),ay=cupAY(im);for(const[x,z]of[[0,-6.85],[.4,7.0]]){const w=1.8,h=w*im.naturalHeight/im.naturalWidth;
+        blob(x,.02,z,w*.47,w*.44,.3,0);const c=card(im,{x,y:.015,z,w,ax:.5,ay,tilt:1,info:"cup"});c.m.renderOrder=1;
+        const b=X.bills&&X.bills[X.bills.length-1];if(b&&b.m===c.m)Object.assign(b,{cup:[x,z],hb:ay*h})}});}
     return{frame:f.frame||0x5C3418,tick(s){for(const F of flames){const n=Math.sin(s*11+F.ph)*.5+Math.sin(s*17.3+F.ph*2)*.3+Math.sin(s*5.1+F.ph)*.2;
       if(F.k===2){F.o.scale.y=F.s*(1+.18*n);F.o.position.y=F.y0*(1+.09*n);F.o.rotation.y=s*.7+F.ph}else F.o.scale.setScalar(F.s*(1+(F.k?.07:.03)*n))}}}}
 
@@ -905,19 +930,21 @@
     const pave=new T.Mesh(new T.CircleGeometry(TR,64),M(0xffffff,{map:paveTex(),roughness:.95}));pave.rotation.x=-PI/2;pave.position.y=FL;pave.receiveShadow=true;sc.add(pave);
     /* 意見回饋 359：朝代的地面（data/pano/<朝代>_ground.webp，Gemini 畫的俯視地面）鋪在石板平台上；頭頂加一個天頂圓（_sky.webp，魚眼天空、邊緣淡出），鏡頭壓低往上看也是畫的天空 */
     {const gs="data/pano/"+EK+"_ground.webp",gp=()=>{const im=imgCache[gs];if(!im||!im.naturalWidth||!el.isConnected)return;const t=srgb(new T.Texture(im));t.anisotropy=ANI;t.needsUpdate=true;pave.material.map=t;pave.material.needsUpdate=true};if(loadImg(gs,gp))setTimeout(gp,0);
-      const ss="data/pano/"+EK+"_sky.webp",sp=()=>{const im=imgCache[ss];if(!im||!im.naturalWidth||!el.isConnected)return;const TM=1.75,R0=PAN.r-6,g=new T.SphereGeometry(R0,64,24,0,TAU,0,TM),P=g.attributes.position,U=g.attributes.uv;
+      const ss="data/pano/"+EK+"_sky.webp",sp=()=>{const im=imgCache[ss];if(!im||!im.naturalWidth||!el.isConnected)return;const TM=1.3,   /* 意見回饋 421：長卷抬高後，天頂圓淡出的那圈收到長卷上緣以上（原本 1.75 會蓋到山頭） */R0=PAN.r-6,g=new T.SphereGeometry(R0,64,24,0,TAU,0,TM),P=g.attributes.position,U=g.attributes.uv;
         for(let i=0;i<P.count;i++){const x=P.getX(i),y=P.getY(i),z=P.getZ(i),th=Math.acos(clamp(y/R0,-1,1)),ph=Math.atan2(z,x),k=th/TM*.5;U.setXY(i,.5+k*Math.cos(ph),.5+k*Math.sin(ph))}U.needsUpdate=true;
         const t=srgb(new T.Texture(im));t.needsUpdate=true;const cap=new T.Mesh(g,new T.MeshBasicMaterial({map:t,side:T.BackSide,transparent:true,depthWrite:false,fog:false,toneMapped:false}));cap.renderOrder=-.5;sc.add(cap)};if(loadImg(ss,sp))setTimeout(sp,0)}
     mesh(new T.CylinderGeometry(TR,TR*.9,26+FL-GY,48,1,true),stone2,[0,FL-(26+FL-GY)/2,0],{noCast:1});
-    {/* 意見回饋 406：平台邊的石欄杆跟著地面抬高後幾乎跟桌面一樣高，降成約 20 公分的矮欄 */const rail=new T.Mesh(new T.TorusGeometry(TR-.4,.35,6,96),stone);rail.rotation.x=PI/2;rail.position.y=FL+1.8;sc.add(rail);
-      const lowW=new T.Mesh(new T.CylinderGeometry(TR-.2,TR-.2,1.2,64,1,true),stone2);lowW.material.side=T.DoubleSide;lowW.position.y=FL+.6;sc.add(lowW);
-      const pg=new T.BoxGeometry(.8,2,.8);for(let i=0;i<36;i++){const a=i/36*TAU;const p=new T.Mesh(pg,stone);p.position.set(Math.sin(a)*(TR-.4),FL+1,Math.cos(a)*(TR-.4));p.rotation.y=a;sc.add(p)}}
+    {/* 意見回饋 406：平台邊的石欄杆跟著地面抬高後幾乎跟桌面一樣高，降成約 20 公分的矮欄；421：矮欄＋36 根望柱從桌邊看過去還是一整圈牆（像一座高石台的邊、又剛好擋在山水前面），
+       改成貼地的一圈石砌收邊（約 7 公分），只留平台的邊線，不擋遠景 */
+      const curb=new T.Mesh(new T.CylinderGeometry(TR-.15,TR-.15,.45,96,1,true),stone2);curb.material.side=T.DoubleSide;curb.position.y=FL+.22;sc.add(curb);
+      const lip=new T.Mesh(new T.TorusGeometry(TR-.3,.22,5,128),stone);lip.rotation.x=PI/2;lip.position.y=FL+.42;sc.add(lip)}
     // 朝代家具（桌、長椅、凳子、燈）：見 buildFurn；桌面頂面 y=0，長椅座面高度 SY
     /* 意見回饋 406：椅面抬高到桌面下約 30 公分（真實的桌椅落差），人坐著露出比較多身體，桌子看起來才矮 */
     const BZ=-12.6,SY=(window.__SY||-2.7),BL=13,iron=M(0x2A2620,{roughness:.45,metalness:.6});
     const infos=[];   // 意見回饋 240：點得到、會跳說明的物件
     const bills=[];   // 意見回饋 375：鏡頭可以繞著桌子轉，貼圖（道具、座椅）每一格都轉向鏡頭
-    const furn=buildFurn(EK,E,{sc,M,GY,FL,SY,BZ,BL,stone,stone2,iron,infos,bills});
+    const fades=[];   /* 意見回饋 421：轉頭時剛好擋在畫面正中間、桌子後面的樹，淡成水墨的薄影，讓遠景透出來 */
+    const furn=buildFurn(EK,E,{sc,M,GY,FL,SY,BZ,BL,stone,stone2,iron,infos,bills,fades});
     // 木棋盤嵌在桌上：深色實木框，和灰色石桌對比清楚
     const wood=M(furn.frame,{roughness:.55});mesh(new T.BoxGeometry(BW+.5,.6,BH+.5),wood,[0,.24,0]);mesh(new T.BoxGeometry(BW+.62,.08,BH+.62),wood,[0,-.0,0]);   // 厚木棋盤＋底座線腳（意見回饋 215）
     const btex=boardTex(()=>{try{btex.image.getContext("2d").clearRect(0,0,1,1);drawBoard(btex.image.getContext("2d"),btex.image.width,btex.image.height,null);btex.needsUpdate=true}catch(e){}});const bplane=new T.Mesh(new T.PlaneGeometry(BW,BH),new T.MeshStandardMaterial({map:btex,roughness:.6}));bplane.rotation.x=-PI/2;bplane.position.y=TOP-.02+.03;bplane.receiveShadow=true;sc.add(bplane);
@@ -1085,11 +1112,21 @@
     const CO=window.__CAM||{},camBase=new T.Vector3(...(CO.b||[0,27,26])),look=new T.Vector3(...(CO.l||[0,-.3,-.4])),PIV=new T.Vector3(0,-.3,0);   /* 意見回饋 374：小帥坐到正對面，鏡頭往後、往上一點，從他背後看過去；406：座位抬高後鏡頭再拉高，小帥才不會擋到最下排 */
     // 拉近拉遠＝鏡頭沿著「棋盤中心→座位」這條線前後移動，看的方向不變
     /* 意見回饋 375：左右拖曳＝鏡頭繞著棋桌轉（轉到對面就看得到小帥的臉、背景一樣是一整圈），上下拖曳＝俯視的高低；不動的時候跟原本的畫面一樣 */
-    const placeCam=()=>{const off=camBase.clone().sub(PIV),lk=look.clone().sub(PIV),el0=Math.atan2(off.y,Math.hypot(off.x,off.z)),el=clamp(el0+pitch,.06,1.5),R=off.length()*zoom,az=Math.atan2(off.x,off.z)+yaw;
+    /* 意見回饋 421（構圖）：坐正的時候跟原本一樣（看整盤棋）；繞著桌子轉開時鏡頭自動放低一點、視線往上抬，畫面上半部讓給遠方的山水（前景平台和道具、中景城樓、遠景山和天空）；
+       往上拖（壓低鏡頭）也一樣把視線抬到地平線附近，越過小帥的頭看出去 */
+    const smooth=(a,b,x)=>{const t=clamp((x-a)/(b-a),0,1);return t*t*(3-2*t)},FADEV=new T.Vector3();
+    const placeCam=()=>{const wy=Math.abs(Math.atan2(Math.sin(yaw),Math.cos(yaw))),orb=smooth(.2,1.1,wy),low=clamp(-pitch/.7,0,1);
+      const off=camBase.clone().sub(PIV),lk=look.clone().sub(PIV),el0=Math.atan2(off.y,Math.hypot(off.x,off.z)),el=clamp(el0+pitch-.26*orb,.1,1.5),R=off.length()*zoom,az=Math.atan2(off.x,off.z)+yaw;
+      lk.y+=4*orb*(1-low)+4.5*low;
       cam.position.set(PIV.x+Math.sin(az)*Math.cos(el)*R,PIV.y+Math.sin(el)*R,PIV.z+Math.cos(az)*Math.cos(el)*R);
       const c=Math.cos(yaw),s2=Math.sin(yaw);cam.lookAt(PIV.x+lk.x*c+lk.z*s2,PIV.y+lk.y,PIV.z-lk.x*s2+lk.z*c);cam.rotateX(CAMV.dp);
-      for(const b of bills){const m=b.m;if(b.anchor){const dx0=cam.position.x-b.anchor[0],dz0=cam.position.z-b.anchor[1],d0=Math.hypot(dx0,dz0)||1;m.position.set(b.anchor[0]-dx0/d0*b.back,b.y,b.anchor[1]-dz0/d0*b.back)}
-        const wp=m.getWorldPosition(BILLV),dx=cam.position.x-wp.x,dz=cam.position.z-wp.z;m.rotation.set(-b.tilt*Math.atan2(cam.position.y-wp.y,Math.hypot(dx,dz)),Math.atan2(dx,dz),0)}};
+      for(const b of bills){const m=b.m;if(b.cup){const[fx,fz]=b.cup,cx=cam.position.x-fx,cy=cam.position.y-.015,cz=cam.position.z-fz,e=Math.atan2(cy,Math.hypot(cx,cz)),t=clamp((b.hb*Math.cos(e)+.03)/Math.max(cy,.5),0,.5);
+          m.position.set(fx+cx*t,.015+cy*t,fz+cz*t)}
+        else if(b.anchor){const dx0=cam.position.x-b.anchor[0],dz0=cam.position.z-b.anchor[1],d0=Math.hypot(dx0,dz0)||1;m.position.set(b.anchor[0]-dx0/d0*b.back,b.y,b.anchor[1]-dz0/d0*b.back)}
+        const wp=m.getWorldPosition(BILLV),dx=cam.position.x-wp.x,dz=cam.position.z-wp.z;m.rotation.set(-b.tilt*Math.atan2(cam.position.y-wp.y,Math.hypot(dx,dz)),Math.atan2(dx,dz),0)}
+      if(fades.length){const fx=PIV.x-cam.position.x,fz=PIV.z-cam.position.z,fd=Math.hypot(fx,fz)||1;   /* 桌子後面、離畫面中線 9～21 度以內的樹慢慢變淡（最淡 0.28） */
+        for(const m of fades){const wp=m.getWorldPosition(FADEV),vx=wp.x-cam.position.x,vz=wp.z-cam.position.z,vd=Math.hypot(vx,vz)||1,dot=(vx*fx+vz*fz)/fd;
+          const a=Math.acos(clamp(dot/vd,-1,1)),k=dot>fd*.7?smooth(.16,.36,a):1;m.material.opacity=.28+.72*k;m.material.depthWrite=k>.98}}};
     const ray=new T.Raycaster(),ndc=new T.Vector2(),plane=new T.Plane(new T.Vector3(0,1,0),-TOP),hitP=new T.Vector3();
     const pick=(cx,cy)=>{const r=rd.domElement.getBoundingClientRect();ndc.set((cx-r.left)/r.width*2-1,-((cy-r.top)/r.height)*2+1);ray.setFromCamera(ndc,cam);
       // 先看有沒有點到棋子（棋子比較高，從斜上方點比較準）

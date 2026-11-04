@@ -56,13 +56,14 @@
   const woodTex=()=>cv(256,(g,n)=>{g.fillStyle="#B07740";g.fillRect(0,0,n,n);for(let i=0;i<70;i++){g.strokeStyle=`rgba(${60+Math.random()*40|0},${30+Math.random()*20|0},10,${.08+Math.random()*.15})`;g.lineWidth=1+Math.random()*3;
     g.beginPath();const y=Math.random()*n;g.moveTo(0,y);for(let x=0;x<=n;x+=16)g.lineTo(x,y+Math.sin(x/30+i)*4);g.stroke()}});
   // ---------- 造型 ----------
-  function build(k,gr){const th=TH[k]||TH.classic;gr=gr||grade();const robe=ROBE[k]?ROBE[k](gr):null;
+  /* 意見回饋 425：nv＝園子路人的外觀（hat 帽子／頭髮樣式、hc 帽子或頭髮顏色、robe 衣服顏色、band 頭帶顏色、acc 髮簪／花的顏色、shoe 鞋子）；路人沒有官階的寶石、補子、笏板 */
+  function build(k,gr,nv){let th=TH[k]||TH.classic;gr=gr||grade();if(nv)th=Object.assign({},th,{hat:nv.hat||"cap",hc:nv.hc||"#3a2a1e",shoe:nv.shoe||"#3a2a1e"});const robe=nv?nv.robe||th.body:ROBE[k]?ROBE[k](gr):null;
     const bot=new T.Group();
     const P=(c,o)=>new T.MeshPhysicalMaterial(Object.assign({color:c,roughness:.45,metalness:0,clearcoat:.6,clearcoatRoughness:.25},o||{}));
     const INK=new T.MeshBasicMaterial({color:0x3a2010,side:T.BackSide});
     const add=(parent,geo,mat,pos,o)=>{const m=new T.Mesh(geo,mat);if(pos)m.position.set(...pos);parent.add(m);
       if(!(o&&o.noLine)){const l=new T.Mesh(geo,INK);l.scale.setScalar(1+((o&&o.line)||.06));m.add(l)}return m};
-    const metalRobe=k==="sanguo";
+    const metalRobe=k==="sanguo"&&!nv;
     const wood=robe?P(robe,{metalness:metalRobe?.6:0,roughness:metalRobe?.3:.5,clearcoat:.9}):P(th.body,Object.assign(th.tex?{map:woodTex()}:{},th.metal?{metalness:.55}:{},{roughness:th.metal?.35:.5,clearcoat:.9})),skin=P("#FBE9CC",{roughness:.6,clearcoat:.15,sheen:.5,sheenColor:new T.Color("#ffd9b0")}),
       red=P(th.shoe,{clearcoat:1,roughness:.3}),hatM=P(th.hc,{clearcoat:1,roughness:.3}),gold=P(th.rim,{metalness:.75,roughness:.28}),bead=P("#E3B341",{metalness:.75,roughness:.28}),dark=P("#1E120C",{clearcoat:1,roughness:.15}),
       white=new T.MeshBasicMaterial({color:0xffffff}),pink=new T.MeshBasicMaterial({color:0xF59A9A,transparent:true,opacity:.75}),mouthM=P("#7A1A14",{roughness:.6});
@@ -102,20 +103,33 @@
       case"fur":add(hatG,new T.TorusGeometry(.38,.11,12,40),P("#7a5230",{roughness:.9,clearcoat:0}),[0,.58,0],{noLine:1}).rotation.x=PI/2;Cy(.28,.36,.22,hatM,[0,.72,0]);Sp(.07,redM,[0,.86,0]);break;
       case"wusha":Cy(.3,.33,.24,hatM,[0,.68,0]);Sp(.2,hatM,[0,.82,-.12]);for(const s of[-1,1])Sp(.25,hatM,[.52*s,.74,-.14],[1,.5,.12],{line:.08});break;
       case"qing":Cy(.42,.5,.08,hatM,[0,.58,0]);Cy(.08,.34,.2,redM,[0,.72,0]);Sp(.07,bead,[0,.86,0]);break;
+      /* 意見回饋 425：路人的頭髮、頭巾、方巾（頭的球心在 y .14、半徑 .52；頭髮蓋住頭頂、前緣往後翹，不擋眉毛） */
+      case"hair":case"bun":case"buns":case"flower":{const hair=add(hatG,new T.SphereGeometry(.55,32,16,0,TAU,0,PI*.4),hatM,[0,.15,-.04],{line:.03});hair.rotation.x=-.42;
+        if(th.hat==="bun")Sp(.19,hatM,[0,.66,-.3]);
+        if(th.hat==="buns")for(const s of[-1,1])Sp(.14,hatM,[.27*s,.72,-.04]);
+        if(th.hat==="flower"){for(const s of[-1,1]){const b=add(hatG,new T.CapsuleGeometry(.06,.42,4,8),hatM,[.36*s,-.12,-.3],{line:.08});b.rotation.z=.12*s}
+          const fl=P(nv&&nv.acc||"#F07AA0",{clearcoat:.8,roughness:.4});for(let i=0;i<5;i++){const a=i/5*TAU;Sp(.06,fl,[.34+Math.cos(a)*.07,.52+Math.sin(a)*.07,.22],null,{noLine:1})}Sp(.045,P("#F2D27A"),[.34,.52,.25],null,{noLine:1})}
+        if(nv&&nv.acc&&th.hat==="bun"){const pin=add(hatG,new T.CapsuleGeometry(.025,.5,4,8),P(nv.acc,{roughness:.5}),[0,.7,-.32],{line:.1});pin.rotation.z=PI/2-.3}break}
+      case"scarf":Sp(.5,hatM,[0,.42,-.04],[1.04,.6,1.04],{line:.04});Sp(.11,hatM,[0,.42,-.52]);for(const s of[-1,1]){const t=Bx(.09,.3,.025,hatM,[.08*s,.24,-.55]);t.rotation.z=.25*s}break;
+      case"fangjin":Bx(.66,.28,.66,hatM,[0,.68,-.03]);Bx(.7,.06,.7,hatM,[0,.56,-.03]);break;
       default:Cy(.25,.28,.14,hatM,[0,.66,0]);Sp(.07,bead,[0,.77,0])}
+    /* 路人的頭帶（練功的大娘、挑水的少年） */
+    if(nv&&nv.band){const bm=P(nv.band,{clearcoat:.6,roughness:.5}),bd=add(hatG,new T.TorusGeometry(.48,.04,10,48),bm,[0,.36,0],{noLine:1});bd.rotation.x=PI/2-.32;
+      for(const s of[-1,1]){const t=Bx(.08,.32,.025,bm,[.07*s,.3,-.5]);t.rotation.z=.3*s}}
     // 官階：帽前寶石（頂戴色）
-    {const gm=P(BEAD[gr-1],{metalness:gr>=7?.8:.1,roughness:.12,clearcoat:1,transmission:gr===5?.6:0,transparent:gr===5,opacity:gr===5?.85:1});
+    if(!nv){const gm=P(BEAD[gr-1],{metalness:gr>=7?.8:.1,roughness:.12,clearcoat:1,transmission:gr===5?.6:0,transparent:gr===5,opacity:gr===5?.85:1});
       const set=add(hatG,new T.TorusGeometry(.085,.022,8,20),bead,[0,.6,.44],{noLine:1});set.rotation.x=-.25;add(hatG,new T.SphereGeometry(.07,16,12),gm,[0,.6,.47],{line:.12});
       if(k==="qing"&&gr<=3){const f=add(hatG,new T.ConeGeometry(.09,.6,12),P("#2E7D6B",{clearcoat:1,roughness:.3}),[0,.85,-.32],{noLine:1});f.rotation.x=-1.0;f.scale.z=.35;
         add(hatG,new T.SphereGeometry(.06,12,10),P("#1F5BD6",{clearcoat:1}),[0,1.05,-.55],{noLine:1})}}
     // 官階：腰帶＋牌子（明清是補子鳥名，其他朝代寫品級）
-    {const bm=P(BELT[gr-1],{metalness:gr===3||gr===4?.7:.1,roughness:.3,clearcoat:1});const belt=add(torso,new T.BoxGeometry(1.42,.11,.06),bm,[0,-.46,.25],{line:.08});
+    if(nv)add(torso,new T.BoxGeometry(1.42,.1,.06),P(nv.belt||"#3a2a1e",{roughness:.6,clearcoat:.3}),[0,-.46,.25],{line:.08});
+    else{const bm=P(BELT[gr-1],{metalness:gr===3||gr===4?.7:.1,roughness:.3,clearcoat:1});const belt=add(torso,new T.BoxGeometry(1.42,.11,.06),bm,[0,-.46,.25],{line:.08});
       const isBz=k==="ming"||k==="qing",pl=new T.Mesh(new T.PlaneGeometry(.3,.3),P("#fff",{map:plaqueTex(isBz?BUZI[gr-1]:GN[gr],isBz?"#24345a":"#7a1a14","#F2D27A"),roughness:.4,clearcoat:.6,toneMapped:false}));
       pl.position.set(0,-.46,.29);torso.add(pl)}
     // 手
     const arms=[];for(const s of[-1,1]){const sh=new T.Group();sh.position.set(.82*s,.14,0);torso.add(sh);
       add(sh,new T.CapsuleGeometry(.105,.32,8,16),skin,[0,-.27,0],{line:.12});add(sh,new T.SphereGeometry(.15,20,14),skin,[0,-.56,0],{line:.09});
-      if(s===1){const hu=add(sh,new T.BoxGeometry(.09,.5,.025),P(gr<=5?"#F2EAD6":"#8A6A44",{roughness:.35,clearcoat:.8}),[0,-.62,.16],{line:.1});hu.rotation.x=-.35}   // 笏板：五品以上象牙、六品以下木
+      if(s===1&&!nv){const hu=add(sh,new T.BoxGeometry(.09,.5,.025),P(gr<=5?"#F2EAD6":"#8A6A44",{roughness:.35,clearcoat:.8}),[0,-.62,.16],{line:.1});hu.rotation.x=-.35}   // 笏板：五品以上象牙、六品以下木
       arms.push(sh)}
     // 腳
     const legs=[];for(const s of[-1,1]){const hp=new T.Group();hp.position.set(.3*s,.6,0);bot.add(hp);
@@ -409,32 +423,31 @@
     if(noGlass)return;const fr=new T.MeshPhysicalMaterial({color:0x1A1A1A,metalness:.6,roughness:.25,clearcoat:1}),gl=new T.MeshPhysicalMaterial({color:0xBFE3FF,transparent:true,opacity:.28,roughness:.05,clearcoat:1});
     for(const s of[-1,1]){const r=new T.Mesh(new T.TorusGeometry(.14,.022,10,28),fr);r.position.set(.19*s,.13,.5);B.head.add(r);const g=new T.Mesh(new T.CircleGeometry(.13,24),gl);g.position.set(.19*s,.13,.505);B.head.add(g)}
     const br=new T.Mesh(new T.CylinderGeometry(.015,.015,.12,8),fr);br.rotation.z=PI/2;br.position.set(0,.14,.51);B.head.add(br)}
-  /* 意見回饋 418：第二款 Pikafish「臥龍」——白綸巾、黑色及耳短髮齊眉瀏海、白色鶴氅（袖子褲子）、深藍腰帶、手拿白羽扇，不戴眼鏡 */
+  /* 意見回饋 418：第二款 Pikafish「冷面國手」（開發者從 6 版定裝照選的第 3 版）——頭髮梳得一絲不亂、頭頂玉簪髮髻、臉旁兩縷鬢髮，
+     黑色寬袖配白色衣襬（像一顆黑子加一顆白子），右手兩指拈著一枚棋子；眉毛壓低、嘴角收平，一看就不是來亂的。不戴眼鏡 */
   function wolongify(B){const P=(c,o)=>new T.MeshPhysicalMaterial(Object.assign({color:c,roughness:.55,metalness:0,clearcoat:.35},o||{})),ink=new T.MeshBasicMaterial({color:0x2a1a10,side:T.BackSide});
     const add=(par,geo,m,pos,lw)=>{const x=new T.Mesh(geo,m);if(pos)x.position.set(...pos);par.add(x);if(lw){const l=new T.Mesh(geo,ink);l.scale.setScalar(1+lw);x.add(l)}return x};
-    const W=P("#F7F4EC"),N=P("#22335E",{clearcoat:.8,roughness:.35}),H=P("#16120F",{roughness:.5,clearcoat:.3}),fB=P("#5A3A22",{roughness:.4,clearcoat:.8});
-    B.hat.children.forEach(c=>c.visible=false);
+    const BK=P("#17161A",{clearcoat:.6,roughness:.4}),WH=P("#F5F3EE"),H=P("#121010",{roughness:.45,clearcoat:.4}),JD=P("#9CCFBF",{clearcoat:1,roughness:.15}),WD=P("#C08850",{clearcoat:.8,roughness:.35});
+    B.hat.children.forEach(c=>c.visible=false);B.stern=true;
     const isPhys=o=>o.isMesh&&o.material&&o.material.isMeshPhysicalMaterial;
-    /* 袖子、褲子、鞋子換成白色；拿掉右手的笏板 */
-    B.arms.forEach(a=>a.children.forEach(o=>{if(!isPhys(o))return;if(o.geometry.type==="BoxGeometry")o.visible=false;else o.material=W}));
-    B.legs.forEach(l=>l.children.forEach(o=>{if(isPhys(o))o.material=W}));
-    /* 腰帶換深藍、拿掉品級牌 */
-    B.torso.children.forEach(o=>{if(!o.isMesh)return;if(o.geometry.type==="BoxGeometry")o.material=N;else if(o.geometry.type==="PlaneGeometry")o.visible=false});
-    /* 頭髮：後腦一片半球殼＋齊眉瀏海 */
-    const hair=add(B.head,new T.SphereGeometry(.55,36,20,0,Math.PI*2,0,Math.PI*.5),H,[0,.17,-.03],.03);hair.rotation.x=-.6;
-    add(B.head,new T.BoxGeometry(.74,.075,.16),H,[0,.47,.4],.03).rotation.x=-.5;
-    for(const sd of[-1,1])add(B.head,new T.BoxGeometry(.12,.3,.3),H,[.47*sd,.12,.05],.04);
-    /* 綸巾：頭頂一塊白布＋髮髻＋兩條帶子垂在腦後 */
-    const cap=add(B.head,new T.SphereGeometry(.34,28,16),W,[0,.62,-.08],.05);cap.scale.set(1,.5,1);
-    add(B.head,new T.SphereGeometry(.13,18,12),W,[0,.8,-.1],.06);
-    for(const sd of[-1,1]){const rb=add(B.head,new T.BoxGeometry(.07,.5,.02),W,[.12*sd,.38,-.55],.06);rb.rotation.x=.25;rb.rotation.z=.12*sd}
-    /* 右手的白羽扇 */
-    const hand=B.arms[1];add(hand,new T.CylinderGeometry(.025,.03,.34,10),fB,[0,-.72,.12],.08).rotation.x=-.3;
-    const fan=add(hand,new T.SphereGeometry(.3,24,16),W,[0,-1.02,.2],.04);fan.scale.set(.85,1.05,.12);fan.rotation.x=-.3;
-    for(let i=-2;i<=2;i++){const v=add(hand,new T.BoxGeometry(.012,.46,.01),P("#C9C2B2"),[i*.07,-1.0,.25]);v.rotation.x=-.3;v.rotation.z=i*.12}}
+    /* 黑色寬袖（手套留白）、白色褲腳；拿掉右手的笏板 */
+    B.arms.forEach(a=>a.children.forEach(o=>{if(!isPhys(o))return;if(o.geometry.type==="BoxGeometry")o.visible=false;else if(o.geometry.type==="CapsuleGeometry")o.material=BK}));
+    B.legs.forEach(l=>l.children.forEach(o=>{if(isPhys(o))o.material=o.geometry.type==="CapsuleGeometry"?WH:BK}));
+    /* 腰帶黑色、拿掉品級牌 */
+    B.torso.children.forEach(o=>{if(!o.isMesh)return;if(o.geometry.type==="BoxGeometry")o.material=BK;else if(o.geometry.type==="PlaneGeometry")o.visible=false});
+    /* 頭髮全部往後梳：頭頂到後腦一片殼，額頭露出來 */
+    const hair=add(B.head,new T.SphereGeometry(.555,36,20,0,Math.PI*2,0,Math.PI*.46),H,[0,.17,-.04],.03);hair.rotation.x=-.72;
+    /* 頭頂髮髻＋玉簪 */
+    add(B.head,new T.SphereGeometry(.15,20,14),H,[0,.74,-.12],.05).scale.set(1,.85,1);
+    const pin=add(B.head,new T.CylinderGeometry(.018,.018,.5,10),JD,[0,.76,-.12]);pin.rotation.z=Math.PI/2;
+    /* 臉旁兩縷鬢髮 */
+    for(const sd of[-1,1]){const lock=add(B.head,new T.CapsuleGeometry(.035,.3,4,8),H,[.43*sd,.05,.2],.05);lock.rotation.z=-.12*sd}
+    /* 右手兩指拈一枚棋子 */
+    const pc=add(B.arms[1],new T.CylinderGeometry(.12,.12,.06,24),WD,[0,-.72,.14],.06);pc.rotation.x=Math.PI/2-.3;
+    add(B.arms[1],new T.CircleGeometry(.085,20),WH,[0,-.72+.0,.177]).rotation.x=-.3}
   // 公園 3D 棋盤（意見回饋 212）要讓小帥坐在對面：給一個獨立的小帥模型和表情設定
-  const faceApply=(P,F,blink,mOpen)=>{P.eyes.forEach((e,i)=>{e.g.scale.y=F==="happy"||(F==="wink"&&i===1)?.12:blink?.1:1;e.brow.position.y=.15+(F==="open"||F==="happy"?.03:0);e.brow.rotation.z=PI/2+(F==="sad"?-.45*e.s:0)});
-    const o=mOpen||F==="open"||F==="happy";P.mouth.open.visible=o;P.mouth.smile.visible=!o;P.mouth.smile.rotation.z=F==="sad"?0:PI;P.mouth.smile.scale.y=F==="flat"?.2:1;P.mouth.smile.position.y=F==="sad"?-.06:0;P.tear.visible=F==="sad"};
+  const faceApply=(P,F,blink,mOpen)=>{P.eyes.forEach((e,i)=>{e.g.scale.y=(P.stern&&F==="happy")?.7:F==="happy"||(F==="wink"&&i===1)?.12:blink?.1:1;e.brow.position.y=.15+(F==="open"||F==="happy"?.03:0);e.brow.rotation.z=PI/2+(F==="sad"?-.45*e.s:0)+(P.stern&&F!=="sad"?.28*e.s:0)});
+    const o=P.stern?F==="open"&&!mOpen?false:!!mOpen:(mOpen||F==="open"||F==="happy");P.mouth.open.visible=o;P.mouth.smile.visible=!o;P.mouth.smile.rotation.z=F==="sad"?0:PI;P.mouth.smile.scale.y=F==="flat"||(P.stern&&F!=="happy")?.2:P.stern?.45:1;P.mouth.smile.position.y=F==="sad"?-.06:0;P.tear.visible=F==="sad"};
   window.XQBot3D={start,acts:Object.keys(ACTS),combos:COMBO.length,lines:LINES.length,figure:o=>{o=o||{};PCO=typeof o.p==="string"&&o.p.length===1&&"帥仕相俥傌炮兵將士象車馬砲卒".includes(o.p)?o.p:null;
-    try{const B=build(TH[o.e]?o.e:eraK(),o.g>=1&&o.g<=9?o.g:grade());if(o.thin)thinify(B,!!o.wl);if(o.wl)wolongify(B);return B}finally{PCO=null}},faceApply,name:()=>BNAME()};
+    try{const B=build(TH[o.e]?o.e:eraK(),o.g>=1&&o.g<=9?o.g:grade(),o.npc?{hat:o.hat,hc:o.hc,robe:o.robe,band:o.band,acc:o.acc,shoe:o.shoe,belt:o.belt}:null);if(o.thin)thinify(B,!!o.wl);if(o.wl)wolongify(B);return B}finally{PCO=null}},faceApply,name:()=>BNAME()};
 })();
