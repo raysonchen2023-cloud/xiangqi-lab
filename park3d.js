@@ -956,7 +956,9 @@
         const t=srgb(new T.Texture(im));t.anisotropy=4;t.needsUpdate=true;
         const map=new T.Mesh(new T.CircleGeometry(ERAMAP_R,96),new T.MeshStandardMaterial({map:t,transparent:true,roughness:1,metalness:0,depthWrite:false}));
         map.rotation.x=-PI/2;map.position.y=FL-.08;map.receiveShadow=true;map.renderOrder=-.2;sc.add(map);
-        hill.visible=false};
+        hill.visible=false;
+        /* 意見回饋 517：拉遠看地圖時，地圖上的地名點得到（data/eramap/labels.json 的位置，介紹在 App 的 places.json） */
+        fetch("data/eramap/labels.json").then(r=>r.ok?r.json():null).then(L=>{if(L&&Array.isArray(L[EK]))MAPL=L[EK]}).catch(()=>{})};
       if(loadImg(ms,mp))setTimeout(mp,0)}
     {/* 意見回饋 406：平台邊的石欄杆跟著地面抬高後幾乎跟桌面一樣高，降成約 20 公分的矮欄；421：矮欄＋36 根望柱從桌邊看過去還是一整圈牆（像一座高石台的邊、又剛好擋在山水前面），
        改成貼地的一圈石砌收邊（約 7 公分），只留平台的邊線，不擋遠景 */
@@ -965,6 +967,7 @@
     // 朝代家具（桌、長椅、凳子、燈）：見 buildFurn；桌面頂面 y=0，長椅座面高度 SY
     /* 意見回饋 406：椅面抬高到桌面下約 30 公分（真實的桌椅落差），人坐著露出比較多身體，桌子看起來才矮 */
     const BZ=-12.6,SY=(window.__SY||-2.7),BL=13,iron=M(0x2A2620,{roughness:.45,metalness:.6});
+    let MAPL=null;   /* 地圖上的地名：[名字, x%, y%, 種類] */
     const infos=[];   // 意見回饋 240：點得到、會跳說明的物件
     const bills=[];   // 意見回饋 375：鏡頭可以繞著桌子轉，貼圖（道具、座椅）每一格都轉向鏡頭
     const fades=[];   /* 意見回饋 421：轉頭時剛好擋在畫面正中間、桌子後面的樹，淡成水墨的薄影，讓遠景透出來 */
@@ -1148,7 +1151,7 @@
     const placeCam=()=>{const wy=Math.abs(Math.atan2(Math.sin(yaw),Math.cos(yaw))),orb=smooth(.2,1.1,wy),low=clamp(-pitch/.7,0,1);
       const off=camBase.clone().sub(PIV),lk=look.clone().sub(PIV),el0=Math.atan2(off.y,Math.hypot(off.x,off.z)),el=clamp(el0+pitch-.26*orb,.1,1.5),R=Math.min(off.length()*zoom,330),az=Math.atan2(off.x,off.z)+yaw;
       /* 開發者 11/4：畫面拉遠看石台底下的朝代大地圖——鏡頭距離超過 105（長卷半徑的 62%）以後，鏡頭慢慢升高成俯視，長卷、天空跟著淡掉，霧也變淡 */
-      const kf=smooth(105,220,R),elF=el+(1.38-el)*kf;
+      const kf=smooth(90,165,R),elF=el+(1.38-el)*kf;   /* 意見回饋 517：鏡頭走出長卷（半徑 170）之前長卷就完全淡掉，不會從外面看到一根半透明的「柱子」 */
       if(kf!==lastKf){lastKf=kf;for(const m of FARHIDE){m.visible=kf<.98;if(m.material){m.material.opacity=1-kf;m.material.transparent=true}}if(sc.fog){sc.fog.near=70+kf*260;sc.fog.far=320+kf*520}}
       lk.y+=4*orb*(1-low)+4.5*low;
       cam.position.set(PIV.x+Math.sin(az)*Math.cos(elF)*R,PIV.y+Math.sin(elF)*R,PIV.z+Math.cos(az)*Math.cos(elF)*R);
@@ -1184,7 +1187,10 @@
       if(near)return near;   /* 點在鏤空的椅背、樹葉縫裡：算點到那個物件，不要穿過去變成遠方風景 */
       {const q=new T.Vector3(),onT=y=>ray.ray.intersectPlane(new T.Plane(new T.Vector3(0,1,0),-y),q)&&Math.hypot(q.x,q.z)<8.4;for(let y=0;y>=-2.6;y-=.2)if(onT(y))return"table"}   /* 桌子的側邊 */
       // 都沒點到：射線碰到平台地面（離桌子 24 以內）就不算；越過平台的就是遠方背景
-      const gp=new T.Plane(new T.Vector3(0,1,0),-FL),gh=new T.Vector3();if(ray.ray.intersectPlane(gp,gh)&&Math.hypot(gh.x,gh.z)<24)return null;
+      const gp=new T.Plane(new T.Vector3(0,1,0),-FL),gh=new T.Vector3(),onG=ray.ray.intersectPlane(gp,gh);
+      /* 意見回饋 517：拉遠看朝代地圖時，點地名附近（地圖寬度 5% 以內）跳出那個地方的介紹 */
+      if(onG&&MAPL&&lastKf>.25&&Math.hypot(gh.x,gh.z)<ERAMAP_R){const px=(gh.x/ERAMAP_R+1)*50,py=(gh.z/ERAMAP_R+1)*50;let best=null,bd=5;for(const l of MAPL){const d=Math.hypot(l[1]-px,l[2]-py);if(d<bd){bd=d;best=l}}if(best)return"map:"+best[0]}
+      if(onG&&Math.hypot(gh.x,gh.z)<24)return null;
       return"bg"};
     // 觸控：一指拖曳轉頭（有朝代長卷的可以整圈轉身，其他左右各約 69 度）、兩指捏合拉近拉遠（0.6～1.25 倍）、點一下選子、點兩下回正（含縮放）
     /* 意見回饋 360：公園的棋盤可以放得更大、縮得更小（兩指捏合的範圍放寬），右下角加 ＋／－ 按鈕 */

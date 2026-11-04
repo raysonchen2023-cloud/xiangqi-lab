@@ -369,12 +369,12 @@ var XQ=(function(){
   // 從電腦把棋譜同步到手機（之後離線也能看）
   // 從網站下載大型棋譜（例如特級大師對局 33 MB），不用連電腦
   async function bigBooks(){try{return await(await fetch(BASE+"data/big-books.json")).json()}catch(e){return[]}}
-  async function syncSite(key,name,onProgress){
+  async function syncSite(key,name,onProgress,h){
     const res=await fetch(BASE+"data/"+key+".json",{cache:"no-store"});if(!res.ok)throw new Error("下載失敗（"+res.status+"）");
     const total=+res.headers.get("content-length")||0,reader=res.body.getReader(),chunks=[];let got=0;
     for(;;){const{done,value}=await reader.read();if(done)break;chunks.push(value);got+=value.length;if(onProgress)onProgress(got,total)}
     const text=await new Blob(chunks).text(),d=JSON.parse(text);
-    await idb.set("col:"+key,text);const cols=(await syncedBooks()).filter(x=>x.key!==key);cols.push({key,name:d.name||name,count:d.items.length,at:new Date().toISOString()});
+    await idb.set("col:"+key,text);const cols=(await syncedBooks()).filter(x=>x.key!==key);cols.push({key,name:d.name||name,count:d.items.length,at:new Date().toISOString(),h:h||null});
     await idb.set("cols",cols);delete bookCache[key];return d.items.length}
   async function sync(key,name,onProgress){
     const res=await remote("/db/raw?c="+encodeURIComponent(key),undefined,{raw:true});if(!res.ok)throw new Error("電腦上沒有這個資料夾");
