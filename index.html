@@ -578,7 +578,7 @@ html[data-era=ming] .topbar,html[data-era=qing] .topbar{border-bottom-width:4px}
       if(!window.caches)return go();caches.keys().then(function(ks){return Promise.all(ks.filter(function(k){return k.indexOf("xqlab-app-")===0}).map(function(k){return caches.delete(k)}))})
         .then(function(){return navigator.serviceWorker&&navigator.serviceWorker.getRegistration()}).then(function(r){return r&&r.update()}).catch(function(){}).then(go)}};setTimeout(chk,4000)})();
 </script>
-<script>window.XQ_OFFLINE=true;window.XQ_BUILD="20261104-1529";</script>
+<script>window.XQ_OFFLINE=true;window.XQ_BUILD="20261104-1535";</script>
 <script src="core.js"></script>
 <script src="engine.js"></script>
 <script src="local.js"></script>
@@ -3723,7 +3723,7 @@ const JR=[
   {k:"shizhuo",name:"石桌",sub:"第三十～卅六回：架閣庫的舊字、白頭的阿古拉，和那盤沒下完的棋。",tiers:[12,14],ch:[30,36],lv:30}];
 /* 開發者決定：石桌往事換成 36 回，每回一關（名稱、玩法類型、電腦等級；tools/legend_export.js 會照大綱自動更新這一行）。
    特製玩法（猜著法、盲棋、對話選項、香條計時、讓子、殘局起手…）要等引擎驗過局面才做；在那之前：有電腦等級的先下一盤對弈，其他先用題庫解題 */
-const JL=[["送車","讓子＋殘局起手＋猜著法",1,0],["桌子底下","盲棋＋記盤",0,0],["小卒過河","殘局起手",2,0],["當場拆穿","對話選項＋殘局起手",2,0],["蠟燭燒完了","對話選項＋盲棋＋猜著法",0,0],["他撕一張，我們寫一張","收集＋香條計時",0,0],["最後一支香","記盤＋對話選項＋香條計時對局",2,0],["背後那門砲","香條計時＋殘局起手＋猜著法",3,0],["三炷香","殘局起手＋香條計時",3,0],["第四十二步","猜著法＋對話選項",0,0],["州衙三問","對話選項",0,0],["每晚擺一遍","記盤＋猜著法",0,0],["草席下的棋","盲棋＋限步對局",3,0],["秘境棋友・王冕","限步對局",2,0],["書信棋","猜著法",0,0],["柳老篙的手","對話選項",0,0],["指導棋","限步對局＋猜著法",1,0],["炮八平五是哪一路兵馬","對話選項＋限步對局",2,0],["孤城","殘局起手",3,0],["雙馬飲泉","殘局起手 ×3",0,0],["撐到轎子來","限步對局＋香條計時",3,0],["秘境棋友・沈萬三","限步對局",4,0],["棋仙讓車","讓子對局",4,0],["拼匾","收集＋殘局題 ×5",0,0],["盲棋","盲棋＋猜著法",0,0],["只敢問一句","對話選項＋香條計時對局",3,0],["讓雙馬","讓子對局",3,0],["秘境棋友・邋遢道人","限步對局",5,0],["拆船","收集＋殘局題 ×3",0,0],["賈半步的殘局","殘局起手",4,0],["架閣庫","收集＋對話選項＋香條計時",0,0],["石桌刻痕","殘局題",0,0],["過宮炮","讓子對局",4,0],["不怕的棋","對話選項＋限步對局",4,0],["雨中推演","猜著法＋記盤",0,0],["炮八平四","殘局起手",6,0]];/*JL*/
+const JL=[["送車","讓子＋殘局起手＋猜著法",1,1],["桌子底下","盲棋＋記盤",0,1],["小卒過河","殘局起手",2,1],["當場拆穿","對話選項＋殘局起手",2,1],["蠟燭燒完了","對話選項＋盲棋＋猜著法",0,1],["他撕一張，我們寫一張","收集＋香條計時",0,1],["最後一支香","記盤＋對話選項＋香條計時對局",2,1],["背後那門砲","香條計時＋殘局起手＋猜著法",3,1],["三炷香","殘局起手＋香條計時",3,1],["第四十二步","猜著法＋對話選項",0,1],["州衙三問","對話選項",0,1],["每晚擺一遍","記盤＋猜著法",0,1],["草席下的棋","盲棋＋限步對局",3,1],["秘境棋友・王冕","限步對局",2,1],["書信棋","猜著法",0,1],["柳老篙的手","對話選項",0,1],["指導棋","限步對局＋猜著法",1,1],["炮八平五是哪一路兵馬","對話選項＋限步對局",2,1],["孤城","殘局起手",3,1],["雙馬飲泉","殘局起手 ×3",0,1],["撐到轎子來","限步對局＋香條計時",3,1],["秘境棋友・沈萬三","限步對局",4,1],["棋仙讓車","讓子對局",4,1],["拼匾","收集＋殘局題 ×5",0,1],["盲棋","盲棋＋猜著法",0,1],["只敢問一句","對話選項＋香條計時對局",3,1],["讓雙馬","讓子對局",3,1],["秘境棋友・邋遢道人","限步對局",5,1],["拆船","收集＋殘局題 ×3",0,1],["賈半步的殘局","殘局起手",4,1],["架閣庫","收集＋對話選項＋香條計時",0,1],["石桌刻痕","殘局題",0,1],["過宮炮","讓子對局",4,1],["不怕的棋","對話選項＋限步對局",4,1],["雨中推演","猜著法＋記盤",0,1],["炮八平四","殘局起手",6,1]];/*JL*/
 /* 🏮 驛站（意見回饋 315）：等級不夠進下一站時，來這裡找路過的旅人下棋練等，下幾次都可以；贏了多給修為。
    🗝 秘境棋友：藏在某些朝代公園的樹、茶杯、燈籠後面，要自己在公園 3D 裡點到才會發現；找到後也會出現在驛站，比較強、修為也多 */
 const INN=[{id:"tea",name:"賣茶的老婦",ic:"🍵",lv:1,xp:20,say:"「喝口茶，陪老身下一盤，不急不急。」"},{id:"scholar",name:"趕考的書生",ic:"📜",lv:2,xp:25,say:"「小生進京趕考，路上棋癮犯了，請賜教。」"},
@@ -4003,7 +4003,7 @@ function jLevel(v,s,src){setTop((src&&src.icon||"🎴")+" "+s.name,src?src.back:
     boardPage(st);ask();
     function draw(){v.querySelector("#bbox").classList.toggle("lvblind",!!st.blind);bd.draw(st.blind?blank(b):b,{flip,last})}
     function play(u){const [f,t]=lvSq(u);hist.push(C.notate(b,f,t));b=C.make(b,f,t);turn=turn==="r"?"b":"r";last={f,t}}
-    function ask(){stop();const it=st.items[i];if(!it){return ok>=(st.pass||st.items.length)?next():failCard(`答對 ${ok} 題，要答對 ${st.pass||st.items.length} 題才過這一步。`)}
+    function ask(){stop();const it=st.items[i];if(!it){return ok>=((st.pass!=null?st.pass:st.items.length))?next():failCard(`答對 ${ok} 題，要答對 ${(st.pass!=null?st.pass:st.items.length)} 題才過這一步。`)}
       for(const u of it.before||[])play(u);draw();
       v.querySelector("#stat").textContent=`第 ${i+1}／${st.items.length} 題・${C.PLAYER[turn]}走`;
       v.querySelector("#note").textContent=(i===0&&st.say?st.say+"\n":"")+(it.ask||"這一步該怎麼走？")+(st.blind&&hist.length?"\n棋譜："+hist.slice(-8).join("　"):"");
@@ -4019,11 +4019,15 @@ function jLevel(v,s,src){setTop((src&&src.icon||"🎴")+" "+s.name,src?src.back:
         v.querySelector("#note").textContent=(it.note||"")+(st.blind&&hist.length?"\n棋譜："+hist.slice(-8).join("　"):"");
         actionBar(v.querySelector("#acts"),[["next","›",i+1<st.items.length?"下一題":"繼續",()=>{i++;ask()},true]])}}}
   /* ---- 記盤：亮出局面幾秒，蓋起來問問題 ---- */
-  function memory(st){let {b}=lvBoard(st.start,st.auto),i=0,ok=0;const flip=(st.start&&st.start.turn)==="b";boardPage(st);bd.draw(b,{flip});
+  function memory(st){let {b}=lvBoard(st.start,st.auto),i=0,ok=0;const flip=(st.start&&st.start.turn)==="b";boardPage(st);
+    if(st.show===0){bd.draw(blank(b),{flip});const lines=String(st.say||"").split(/(?<=」)/).map(x=>x.trim()).filter(Boolean);let heard=0;   /* 開發者：show:0＝只唸、不亮盤 */
+      const play=()=>{const n=v.querySelector("#note");let k=0;n.style.whiteSpace="pre-line";n.textContent="";v.querySelector("#stat").textContent="👂 只能聽，不能看棋盤";const one=()=>{if(!v.isConnected)return;if(k<lines.length){n.textContent=lines.slice(0,++k).join("\n");setTimeout(one,1600)}else{heard++;actionBar(v.querySelector("#acts"),[...(heard<2?[["again","↺","再聽一次",play]]:[]),["go","›","聽好了",()=>{n.textContent="";ask()},true]])}};actionBar(v.querySelector("#acts"),[]);one()};
+      play();return}
+    bd.draw(b,{flip});
     let left=st.show||8;v.querySelector("#stat").textContent=`記住這個局面：${left} 秒`;actionBar(v.querySelector("#acts"),[["go","›","記好了",()=>{clearInterval(tm);hide()},true]]);
     const tm=setInterval(()=>{left--;if(!v.isConnected)return clearInterval(tm);if(left<=0){clearInterval(tm);hide()}else{const e=v.querySelector("#stat");if(e)e.textContent=`記住這個局面：${left} 秒`}},1000);
     function hide(){bd.draw(blank(b),{flip});ask()}
-    function ask(){const q=(st.questions||[])[i];if(!q)return ok>=(st.pass||(st.questions||[]).length)?next():failCard(`答對 ${ok} 題，要答對 ${st.pass||st.questions.length} 題才過這一步。`);
+    function ask(){const q=(st.questions||[])[i];if(!q)return ok>=((st.pass!=null?st.pass:(st.questions||[]).length))?next():failCard(`答對 ${ok} 題，要答對 ${(st.pass!=null?st.pass:st.questions.length)} 題才過這一步。`);
       v.querySelector("#stat").textContent=`第 ${i+1}／${st.questions.length} 題`;v.querySelector("#note").textContent=q.ask||"";
       v.querySelector("#lvO").innerHTML=(q.options||[]).map((o,k)=>`<button class="btn ghost" data-k="${k}">${esc(o)}</button>`).join("");actionBar(v.querySelector("#acts"),[]);
       v.querySelectorAll("#lvO [data-k]").forEach(x=>x.onclick=()=>{const hit=+x.dataset.k===q.answer;if(hit){ok++;vibrate(15)}else miss();
@@ -4032,7 +4036,7 @@ function jLevel(v,s,src){setTop((src&&src.icon||"🎴")+" "+s.name,src?src.back:
         actionBar(v.querySelector("#acts"),[["next","›",i+1<st.questions.length?"下一題":"繼續",()=>{i++;bd.draw(blank(b),{flip});ask()},true]])})}}
   /* ---- 殘局題／收集：玩家照 line 走自己那一方，對方自動應；走錯算失誤、可以重來；collect 每解一題拿一樣東西 ---- */
   function puzzle(st){const C=window.XQCore,items=st.t==="collect"?(st.from||[]):(st.items||[]),got=[];let i=0,solved=0;boardPage(st);ask();
-    function ask(){stop();const it=items[i];if(!it){return solved>=(st.pass||items.length)?next():failCard(`解出 ${solved} 題，要解出 ${st.pass||items.length} 題才過這一步。`)}
+    function ask(){stop();const it=items[i];if(!it){return solved>=((st.pass!=null?st.pass:items.length))?next():failCard(`解出 ${solved} 題，要解出 ${(st.pass!=null?st.pass:items.length)} 題才過這一步。`)}
       let {b,turn}=lvBoard(it.start,it.auto),j=0,sel=-1,last=null,peek=false,hk=null;const me=turn,flip=me==="b";
       const coll=st.t==="collect"?`\n收集：${(st.items||[]).map((x,k)=>k<got.length?"✔"+x:"□"+x).join("　")}`:"";
       const draw=()=>bd.draw(b,{flip,sel,last,targets:sel>=0?C.legal(b,turn).filter(([f])=>f===sel).map(x=>x[1]):[],...(hk?{hint:hk}:{})});
