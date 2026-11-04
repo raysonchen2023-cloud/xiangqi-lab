@@ -1,7 +1,7 @@
 // Service worker：
 // 1) 離線快取：App、古譜、引擎存在手機裡；神經網路檔（48 MB）放在另一個快取，更新 App 時不用重新下載
 // 2) 多執行緒：幫每個回應加上 COOP/COEP 標頭（WebAssembly 多執行緒需要「跨來源隔離」，GitHub Pages 自己不能設）
-const VERSION="20261104-1031";
+const VERSION="20261104-1050";
 const APP_CACHE="xqlab-app-"+VERSION,ENGINE_CACHE="xqlab-engine";
 const APP_FILES=["./","index.html","core.js","engine.js","local.js","manifest.json","icon.svg","icon-180.png","icon-512.png","qrcode.min.js","jsQR.min.js","net.js","bot3d.js","park3d.js","engine/pikafish.js","engine/pikafish.wasm",
   "data/books.json","data/shiqingyaqu.json","data/juzhongmi.json","data/meihuapu.json","data/kaiju.json","data/canju.json","data/xuyinchuan.json","data/big-books.json","data/quiz.json","data/terms.json","data/gmbios.json","data/cars.json","three.min.js","map3d.js","data/park-legend.json","data/park-novel.json","data/preload.json"];   /* 意見回饋 422：3D 程式和故事也一起先存 */
@@ -27,7 +27,7 @@ self.addEventListener("fetch",e=>{
     // 特級大師對局（33 MB）：存在不跟版本走的快取，發新版不用重新下載
     if(isBig){const c=await caches.open("xqlab-data"),hit=await c.match(req.url);if(hit)return isolate(hit);const res=await fetch(req.url);if(res.ok)await c.put(req.url,res.clone());return isolate(res)}
     // 外觀圖（朝代棋盤、棋子、字形）：存在獨立快取，改版也不用重抓
-    if(/\/data\/(boards|pieces|glyphs|sfx|voice|qa|park|park3d|pika|pika2|path|inn|map|stonetable|treasure|legend|champ|stones|seat|pano|pieceset|journey|xs|people|icons|arenagate|parkgate|pset|map3d|levels|npc)\//.test(url.pathname)){const c=await caches.open("xqlab-look"),hit=await c.match(req.url);if(hit)return isolate(hit);const res=await fetch(req.url);if(res.ok)await c.put(req.url,res.clone());return isolate(res)}
+    if(/\/data\/(boards|pieces|glyphs|sfx|voice|qa|park|park3d|pika|pika2|path|inn|map|stonetable|treasure|legend|champ|stones|seat|pano|pieceset|journey|xs|people|icons|arenagate|parkgate|pset|map3d|levels|npc|loading)\//.test(url.pathname)){const c=await caches.open("xqlab-look"),hit=await c.match(req.url);if(hit)return isolate(hit);const res=await fetch(req.url);if(res.ok)await c.put(req.url,res.clone());return isolate(res)}
     if(isNnue){const c=await caches.open(ENGINE_CACHE),hit=await c.match(req.url);if(hit)return isolate(hit);return isolate(await fetch(req))}
     const c=await caches.open(APP_CACHE);
     // 頁面：用這一版快取裡的（跟 JS 檔同一版，不會新頁面配舊程式）；新版由 App 檢查更新後重新載入

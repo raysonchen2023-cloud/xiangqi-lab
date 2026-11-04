@@ -268,7 +268,14 @@ html[data-era=ming] .topbar,html[data-era=qing] .topbar{border-bottom-width:4px}
 .ckfx .seal.s4{font-size:.22em;left:calc(50% + 5.4em)}
 /* 意見回饋 416：開局特效——墨帶一抹、金色書法「開局」由左到右像毛筆寫出來，右邊蓋一方「紅先／黑先」朱印 */
 .pkname{position:absolute;top:8px;left:50%;transform:translateX(-50%);z-index:6;pointer-events:none;padding:3px 14px;border-radius:99px;background:rgba(28,18,10,.62);color:#fbeed4;font:800 14px/1.5 var(--serif);letter-spacing:.14em;white-space:nowrap;box-shadow:0 2px 6px rgba(0,0,0,.25)}
-#preov{position:fixed;inset:0;z-index:9999;display:flex;align-items:center;justify-content:center;background:var(--bg,#F6EFE2);padding:24px max(24px,env(safe-area-inset-left,0px));transition:opacity .4s}#preov.out{opacity:0}
+#preov{position:fixed;inset:0;z-index:9999;display:flex;align-items:flex-end;justify-content:center;background:#F3ECDD;padding:24px max(24px,env(safe-area-inset-left,0px)) max(28px,env(safe-area-inset-bottom,0px));transition:opacity .4s;overflow:hidden}#preov.out{opacity:0}
+.ld-img{position:absolute;inset:0}.ld-img img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;object-position:center 30%;opacity:0;transition:opacity 1.2s ease;transform:scale(1.04)}.ld-img img.on{opacity:1;animation:ldzoom 7s ease-out forwards}
+@keyframes ldzoom{from{transform:scale(1.04)}to{transform:scale(1)}}
+.ld-img::after{content:"";position:absolute;inset:0;background:linear-gradient(to bottom,rgba(243,236,221,.72) 0%,rgba(243,236,221,0) 30%,rgba(243,236,221,0) 58%,rgba(243,236,221,.93) 80%,#F3ECDD 100%)}
+.ld-q{position:absolute;left:0;right:0;top:max(7vh,env(safe-area-inset-top,0px));padding:0 28px;text-align:center;color:#2A1F15;opacity:0;transition:opacity .6s}.ld-q.on{opacity:1}
+.ld-qt{font:700 clamp(22px,6.4vw,34px)/1.55 "BiauKai","Kaiti TC","STKaiti","DFKai-SB","KaiTi",var(--serif);letter-spacing:.08em;text-wrap:balance;text-shadow:0 0 12px #F3ECDD,0 0 4px #F3ECDD;max-width:520px;margin:0 auto}
+.ld-src{margin-top:8px;font:500 14px "BiauKai","Kaiti TC","STKaiti","DFKai-SB","KaiTi",var(--serif);color:#5A4632;text-shadow:0 0 8px #F3ECDD}.ld-tt{margin-bottom:10px;font-size:12px;letter-spacing:.3em;color:#8A2A1A}
+#preov .pre-in{position:relative}#preov .pre-h{color:#5A4632}
 .pre-in{width:100%;max-width:340px;text-align:center}.pre-t{font:900 30px var(--serif);letter-spacing:.18em;color:var(--accent,#9E1B15)}.pre-s{margin:10px 0 18px;font-size:14px;line-height:1.7;color:var(--muted,#7a6a58)}
 .pre-bar{height:10px;border-radius:99px;background:color-mix(in srgb,var(--accent,#9E1B15) 15%,transparent);overflow:hidden}.pre-bar i{display:block;height:100%;width:0;border-radius:inherit;background:var(--accent,#9E1B15);transition:width .2s}
 .pre-n{margin-top:10px;font:600 15px/1.4 ui-monospace,monospace;color:var(--text,#2a2018)}.pre-h{margin-top:14px;font-size:12.5px;line-height:1.6;color:var(--muted,#7a6a58)}.pre-skip{margin-top:18px;border:1px solid var(--line,#d8c8b0);background:none;border-radius:99px;padding:8px 16px;font:inherit;font-size:13px;color:var(--muted,#7a6a58)}
@@ -529,7 +536,7 @@ html[data-era=ming] .topbar,html[data-era=qing] .topbar{border-bottom-width:4px}
       if(!window.caches)return go();caches.keys().then(function(ks){return Promise.all(ks.filter(function(k){return k.indexOf("xqlab-app-")===0}).map(function(k){return caches.delete(k)}))})
         .then(function(){return navigator.serviceWorker&&navigator.serviceWorker.getRegistration()}).then(function(r){return r&&r.update()}).catch(function(){}).then(go)}},4000)})();
 </script>
-<script>window.XQ_OFFLINE=true;window.XQ_BUILD="20261104-1031";</script>
+<script>window.XQ_OFFLINE=true;window.XQ_BUILD="20261104-1050";</script>
 <script src="core.js"></script>
 <script src="engine.js"></script>
 <script src="local.js"></script>
@@ -4281,6 +4288,17 @@ const LOADING={};function loadScript(src){return LOADING[src]||(LOADING[src]=new
    清單版本存在 localStorage：同一版已經全部載好就不再蓋畫面，只在背景補缺的。下載失敗的不卡住，記下來在背景重試。
    載完之後：目前朝代的大圖先解碼（img.decode），3D 程式（three、bot3d、park3d、map3d）先載入，進園子就不用再等 */
 const PRE_KEY="preloadDone";
+/* 意見回饋 422：載入畫面輪播象棋起源與典故的水墨畫，每張配一句有出處的名言，5 秒換一張（淡入淡出） */
+const LD_Q=[["ld01_liubo","戰國・六博與象棋","菎蔽象棋，有六簙些。","《楚辭・招魂》"],["ld02_mengchang","戰國・孟嘗君府","燕則鬥象棋而舞鄭女。","劉向《說苑・善說》"],
+  ["ld03_hongou","楚漢・鴻溝為界","中分天下，割鴻溝以西者為漢，鴻溝而東者為楚。","司馬遷《史記・項羽本紀》"],["ld04_hanxin","傳說・韓信軍中創棋","觀棋不語真君子，起手無回大丈夫。","民間棋諺"],
+  ["ld05_beizhou","北周・武帝制《象經》","大都博弈皆戲劇，象戲翻能學用兵。","北宋 程顥《象戲》"],["ld06_baoying","唐・寶應象棋","天馬斜飛度三止，上將橫行擊四方。","唐 牛僧孺《玄怪錄・岑順》"],
+  ["ld07_dangju","唐・旁觀者清","當局稱迷，傍觀見審。","《舊唐書・元行沖傳》"],["ld08_songding","北宋・象棋定型","車馬尚存周戰法，偏裨兼備漢官名。","北宋 程顥《象戲》"],
+  ["ld09_nansong","南宋・臨安棋待詔","寧失一子，不失一先。","棋諺"],["ld10_mingpu","明・刻書坊刻棋譜","一著不慎，滿盤皆輸。","俗諺"]];
+function ldShow(ov){const im=ov.querySelectorAll(".ld-img img"),tt=ov.querySelector(".ld-tt"),qt=ov.querySelector(".ld-qt"),sr=ov.querySelector(".ld-src"),Q=ov.querySelector(".ld-q");
+  let i=Math.floor(Math.random()*LD_Q.length),k=0;
+  const go=()=>{if(!ov.isConnected)return;const [id,t,q,s]=LD_Q[i%LD_Q.length],a=im[k],b=im[1-k];
+    const on=()=>{if(!ov.isConnected)return;a.classList.add("on");b.classList.remove("on");Q.classList.remove("on");setTimeout(()=>{tt.textContent=t;qt.textContent=q;sr.textContent="── "+s;Q.classList.add("on")},350);k=1-k;i++;setTimeout(go,5200)};
+    a.onload=on;a.onerror=()=>{i++;setTimeout(go,400)};a.src="data/loading/"+id+".webp"};go()}
 async function preloadAll(){if(!OFF||!("caches" in window))return;
   let M;try{M=await (await fetch("data/preload.json",{cache:"no-cache"})).json()}catch(e){return}
   const done=store.get(PRE_KEY,null)===M.v;let c;try{c=await caches.open("xqlab-look")}catch(e){return}
@@ -4288,12 +4306,13 @@ async function preloadAll(){if(!OFF||!("caches" in window))return;
   const miss=[];await Promise.all(M.items.map(async([u,sz])=>{try{if(!(await c.match(abs(u))))miss.push([u,sz])}catch(e){miss.push([u,sz])}}));
   const total=miss.reduce((t,x)=>t+x[1],0);let got=0,ov=null,bar=null,txt=null,fail=[];
   if(miss.length&&!done){ov=document.createElement("div");ov.id="preov";
-    ov.innerHTML=`<div class="pre-in"><div class="pre-t">象棋研究室</div><div class="pre-s">${store.get(PRE_KEY,null)?"有新的圖和故事，正在搬進手機…":"第一次開啟，正在把棋盤、園子和故事都搬進手機…"}</div>
+    ov.innerHTML=`<div class="ld-img"><img alt=""><img alt=""></div><div class="ld-q"><div class="ld-tt"></div><div class="ld-qt"></div><div class="ld-src"></div></div>
+      <div class="pre-in"><div class="pre-t">象棋研究室</div><div class="pre-s">${store.get(PRE_KEY,null)?"有新的圖和故事，正在搬進手機…":"第一次開啟，正在把棋盤、園子和故事都搬進手機…"}</div>
       <div class="pre-bar"><i></i></div><div class="pre-n">準備中…</div><div class="pre-h">只有第一次和改版後需要等，之後打開就直接進去，下棋時不會再卡。</div><button class="pre-skip" type="button" hidden>先進去逛（背景繼續下載）</button></div>`;
-    document.body.append(ov);bar=ov.querySelector(".pre-bar i");txt=ov.querySelector(".pre-n");
+    document.body.append(ov);bar=ov.querySelector(".pre-bar i");txt=ov.querySelector(".pre-n");ldShow(ov);
     setTimeout(()=>{const k=ov&&ov.querySelector(".pre-skip");if(k){k.hidden=false;k.onclick=()=>{ov.remove();ov=null}}},20000)}
   const show=()=>{if(!ov)return;const p=total?Math.min(100,Math.floor(got*100/total)):100;bar.style.width=p+"%";txt.textContent=`${p}%　${(got/1048576).toFixed(1)} ／ ${(total/1048576).toFixed(1)} MB`};show();
-  const q=miss.slice();let run=0;
+  const q=miss.slice().sort((a,b)=>(b[0].indexOf("data/loading/")===0)-(a[0].indexOf("data/loading/")===0));let run=0;   /* 載入畫面的水墨畫先下載 */
   await new Promise(ok=>{if(!q.length)return ok();const next=()=>{if(!q.length&&!run)return ok();while(run<6&&q.length){const [u,sz]=q.shift();run++;
     fetch(abs(u)).then(r=>{if(!r.ok)throw new Error(r.status);return c.put(abs(u),r)}).then(()=>{got+=sz}).catch(()=>{fail.push([u,sz]);got+=sz}).finally(()=>{run--;show();next()})}};next()});
   if(!fail.length)store.set(PRE_KEY,M.v);
