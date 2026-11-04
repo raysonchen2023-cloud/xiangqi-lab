@@ -586,7 +586,7 @@ html[data-era=ming] .topbar,html[data-era=qing] .topbar{border-bottom-width:4px}
       if(!window.caches)return go();caches.keys().then(function(ks){return Promise.all(ks.filter(function(k){return k.indexOf("xqlab-app-")===0}).map(function(k){return caches.delete(k)}))})
         .then(function(){return navigator.serviceWorker&&navigator.serviceWorker.getRegistration()}).then(function(r){return r&&r.update()}).catch(function(){}).then(go)}};setTimeout(chk,4000)})();
 </script>
-<script>window.XQ_OFFLINE=true;window.XQ_BUILD="20261104-2346";</script>
+<script>window.XQ_OFFLINE=true;window.XQ_BUILD="20261104-2353";</script>
 <script src="core.js"></script>
 <script src="engine.js"></script>
 <script src="local.js"></script>
@@ -762,7 +762,7 @@ function sheet(title,build){
   try{if(!(history.state&&history.state.xqSheet)){const d=NAV_D+1;history.pushState({xqSheet:1,d},"",location.href);NAV_D=d}}catch(e){}
   document.querySelectorAll("#scrim,#sheet").forEach(e=>e.remove());const sc=document.createElement("div");sc.className="scrim";sc.id="scrim";
   const sh=document.createElement("div");sh.className="sheet";sh.id="sheet";
-  sh.innerHTML=`<div class="grab"></div><div class="sh-t">${esc(title)}</div><div class="sh-b"></div>`;
+  sh.innerHTML=`<div class="grab"></div><div class="sh-t">${icoTitle(title)}</div><div class="sh-b"></div>`;
   document.body.append(sc,sh);build(sh.querySelector(".sh-b"));
   sh.getBoundingClientRect();setTimeout(()=>{sc.classList.add("show");sh.classList.add("show")},16);
   sc.onclick=closeSheet;
@@ -1484,7 +1484,10 @@ function iconize(){document.querySelectorAll("[data-go] > .ic,[data-go] > .dic")
   document.querySelectorAll("#topRight .ib").forEach(b=>{if(b.querySelector("img"))return;const n=ICO_EMO[b.textContent.trim()];if(n)icoImg(b,n)})}
 function icoEra(){document.querySelectorAll("img.eic").forEach(im=>{im.src=icoSrc(im.dataset.ico)})}
 {let icoT=0;new MutationObserver(()=>{if(icoT)return;icoT=requestAnimationFrame(()=>{icoT=0;try{iconize()}catch(e){}})}).observe(document.body,{childList:true,subtree:true})}
-function setTop(title,back,right){{const mc=document.getElementById("meChip");if(mc)mc.remove()}$("#title").textContent=title;$("#back").hidden=!back;$("#back").onclick=()=>goBack(back);
+/* 意見回饋 540（開發者）：標題、彈出視窗標題開頭的 emoji，有當朝代手繪圖示的就換成圖示（data/icons/<朝代>/） */
+const EMO_ICO={"🙂":"t_bot","🎒":"t_bot","🤝":"p_secret","🗝":"p_secret","🎁":"p_board","📜":"p_kifu","📖":"p_story","🏮":"inn","🌳":"park","🏯":"arena","💬":"feedback","📤":"share","🚗":"garage","🔁":"redo","⚙":"settings"};
+function icoTitle(t){const m=String(t).match(/^(\S+)\s+([\s\S]*)$/),k=m&&EMO_ICO[m[1].replace(/\uFE0F/g,"")];return k?ETIMG(k,"",m[1])+" "+esc(m[2]):esc(t)}
+function setTop(title,back,right){{const mc=document.getElementById("meChip");if(mc)mc.remove()}$("#title").innerHTML=icoTitle(title);$("#back").hidden=!back;$("#back").onclick=()=>goBack(back);
   const tr=$("#topRight");tr.innerHTML="";if(right)for(const[icon,fn,label]of right){const b=document.createElement("button");b.className="ib";b.textContent=icon;b.title=label||"";b.onclick=fn;tr.append(b)}
   // 全螢幕畫面（沒有底部導覽列）一律加「回首頁」，加入主畫面的 App 模式沒有瀏覽器上一頁也能回去
   if(back&&back!=="#/"&&!(right&&right.length>=2)){const h=document.createElement("button");h.className="ib";h.textContent="🏠";h.title="回首頁";h.onclick=()=>{location.hash="#/"};tr.append(h)}}
@@ -2854,7 +2857,10 @@ function Settings(v){
     <div class="sec-t">文字<span class="muted" style="font-size:12px;font-weight:400">棋譜、棋手名字、賽事名稱也跟著換</span></div><div class="opt" id="zhO" data-nocc>${[["tw","繁體中文"],["cn","简体中文"]].map(([k,l])=>`<button data-zh="${k}"${((window.XQ_ZH&&XQ_ZH.mode())||"tw")===k?' class="on"':""}>${l}</button>`).join("")}</div>   <!-- 意見回饋 518：繁簡切換（zh.js） -->
     <label class="row" style="justify-content:space-between;padding:8px 2px"><span><b>高對比棋子</b><br><span class="muted">白底大字、紅黑字，看不清楚朝代棋子時打開</span></span><input type="checkbox" class="sw" id="hiCon"></label>
     <div class="sec-t">走棋顯示與特效</div><div class="card sgc" id="mv"></div></details></div>
-    <div data-pane="sound"><div class="sec-t" style="margin-top:4px">聲音</div><div class="card sgc" id="snd"></div></div>
+    <div data-pane="sound">   <!-- 意見回饋 541：聲音頁分成三張卡片：棋子聲、語音、氛圍 -->
+      <div class="sec-t" style="margin-top:4px">${ETIMG("t_sound","","♟")} 棋子聲<span class="muted" style="font-size:12px;font-weight:400">走棋、吃子的聲音</span></div><div class="card sgc" id="snd"></div>
+      <div class="sec-t">${ETIMG("t_play","","🗣")} 語音報子<span class="muted" style="font-size:12px;font-weight:400">吃子、將軍時唸出來</span></div><div class="card sgc" id="snd2"></div>
+      <div class="sec-t">${ETIMG("arena","","🥁")} 氛圍<span class="muted" style="font-size:12px;font-weight:400">過場的鼓聲、鑼聲</span></div><div class="card sgc" id="snd3"></div></div>
     <div data-pane="bot">
     <div class="sec-t" style="margin-top:4px">我的角色</div><div class="card row" style="gap:10px;align-items:center;margin-bottom:6px">   <!-- 意見回饋 506：精簡成一張小卡；522：跟官階、棋子、顯示放在同一個「角色」分頁 -->
       <img id="meFig" role="button" aria-label="看我的 3D 角色" src="data/xs/prev_${myStyle()==="real"?"real":"q"}_${mySex()==="f"?"girl":"boy"}.webp" alt="" style="width:46px;height:58px;object-fit:contain;flex:none;cursor:pointer" onerror="this.remove()">
@@ -2957,15 +2963,16 @@ function Settings(v){
     v.querySelector("#mv").innerHTML=tg("mvArrow","箭頭","從原來位置畫箭頭指到新位置")+'<div style="border-top:1px solid var(--line)"></div>'+tg("mvAnim","動畫","棋子滑過去，被吃的棋子淡出")+'<div style="border-top:1px solid var(--line)"></div>'+tg("capSound","吃子音效","吃子時重重「啪」一聲、將軍時「鏘」一聲")+'<div style="border-top:1px solid var(--line)"></div>'+tg("gateDrum","🥁 過場鼓聲","進園子、上擂台、走荒野小徑時，敲一段那個朝代戰場上的鼓和鑼")+'<div style="border-top:1px solid var(--line)"></div>'+`<div style="padding:6px 0" id="vcRow"><b>語音報「吃」「將軍」</b><br><span class="muted">吃子喊「吃！」、將軍喊「將軍！」；點一下可以試聽；可調語速</span><div class="st-res" style="margin:8px 0 0">${[["off","關"],["m","男聲"],["f","女聲"]].map(([k,l])=>`<button data-vc="${k}" class="${(store.get("voiceCall",true)?store.get("voiceSex","m"):"off")===k?"on":""}">${l}</button>`).join("")}</div><div class="st-res" style="margin:8px 0 0;align-items:center"><span class="muted" style="font-size:13px">語速</span>${[["s","慢"],["n","中"],["f","快"]].map(([k,l])=>`<button data-vr="${k}" class="${store.get("voiceRate","n")===k?"on":""}">${l}</button>`).join("")}</div></div>`+'<div style="border-top:1px solid var(--line)"></div>'+sndPicker()+'<div style="border-top:1px solid var(--line)"></div>'+tg("ckFx","將軍特效","被將軍或將對方軍時，棋盤上蓋「將軍！」字樣")+'<div style="border-top:1px solid var(--line)"></div>'+tg("capFx","吃子特效","吃子時被吃的那格蓋一個水墨「吃」字")+'<div style="border-top:1px solid var(--line)"></div>'+'<div style="border-top:1px solid var(--line)"></div>'+tg("voiceMove","🎤 聲控走棋","下棋時右上角多一個 🎤，按下去說「馬八進七」「炮二平五」就會走"+(vcOK()?"":"（這個瀏覽器不支援語音辨識）"))+'<div style="border-top:1px solid var(--line)"></div>'+tg("opFx","開局名稱動畫","走出中炮、仙人指路、屏風馬…時，棋盤上展開卷軸寫出開局名");
     {const mvB=v.querySelector("#mv"),sdB=v.querySelector("#snd");sdB.innerHTML="";mvB.querySelectorAll(":scope>div[style*='border-top']").forEach(x=>x.remove());
       const st=mvB.querySelector("#sndSt");if(st)sdB.append(st.parentElement);
-      for(const k of["capSound","gateDrum"]){const x=mvB.querySelector(`[data-t="${k}"]`);if(x)sdB.append(x.closest("label"))}
-      const vr=mvB.querySelector("#vcRow");if(vr)sdB.append(vr);
+      {const x=mvB.querySelector('[data-t="capSound"]');if(x)sdB.append(x.closest("label"))}
+      {const vr=mvB.querySelector("#vcRow"),s2=v.querySelector("#snd2");if(vr&&s2)s2.append(vr)}
+      {const x=mvB.querySelector('[data-t="gateDrum"]'),s3=v.querySelector("#snd3");if(x&&s3)s3.append(x.closest("label"))}
       [...sdB.children].slice(1).forEach(x=>x.style.borderTop="1px solid var(--line)")}
     v.querySelectorAll("[data-vc]").forEach(x=>x.onclick=()=>{const k=x.dataset.vc;v.querySelectorAll("[data-vc]").forEach(y=>y.classList.toggle("on",y===x));
       store.set("voiceCall",k!=="off");if(k!=="off"){store.set("voiceSex",k);pickVoice();primeVoice();unlockAudio();loadVc().then(()=>{sayCall("將軍");setTimeout(()=>sayCall("吃"),1100)})}});
     v.querySelectorAll("[data-vr]").forEach(x=>x.onclick=()=>{store.set("voiceRate",x.dataset.vr);v.querySelectorAll("[data-vr]").forEach(y=>y.classList.toggle("on",y===x));
       if(!store.get("voiceCall",true))return;primeVoice();unlockAudio();loadVc().then(()=>{sayCall("將軍");setTimeout(()=>sayCall("吃"),1100)})});
     {const so=v.querySelector("#sndOn");if(so)so.onchange=()=>{store.set("mvSound",so.checked);v.querySelector("#sndBox").classList.toggle("sp-off",!so.checked);const k=store.get("sndStyle","wood");v.querySelectorAll("[data-snd]").forEach(y=>y.classList.toggle("on",so.checked&&y.dataset.snd===k));if(so.checked){unlockAudio();(/^s\d\d$/.test(k)?loadSfx(k):Promise.resolve()).then(()=>withAudio(()=>moveSound0(false)))}}}
-    {const ss=v.querySelector("#sndSel"),st=v.querySelector("#sndTry"),tryS=k=>{unlockAudio();(/^sdd$/.test(k)?loadSfx(k):Promise.resolve()).then(()=>{withAudio(()=>moveSound0(false));setTimeout(()=>withAudio(()=>moveSound0(true)),550)})};
+    {const ss=v.querySelector("#sndSel"),st=v.querySelector("#sndTry"),tryS=k=>{unlockAudio();(/^s\d\d$/.test(k)?loadSfx(k):Promise.resolve()).then(()=>{withAudio(()=>moveSound0(false));setTimeout(()=>withAudio(()=>moveSound0(true)),550)})};
       if(ss)ss.onchange=()=>{const k=ss.value;store.set("mvSound",true);store.set("sndStyle",k);{const so=v.querySelector("#sndOn");if(so)so.checked=true;const bx=v.querySelector("#sndBox");if(bx)bx.classList.remove("sp-off")}tryS(k)};
       if(st)st.onclick=()=>{vibrate(5);tryS(ss?ss.value:store.get("sndStyle","wood"))}}
     v.querySelectorAll("[data-snd]").forEach(x=>x.onclick=()=>{const k=x.dataset.snd;store.set("mvSound",k!=="off");{const so=v.querySelector("#sndOn");if(so)so.checked=true;const bx=v.querySelector("#sndBox");if(bx)bx.classList.remove("sp-off")}if(k==="off"){v.querySelectorAll("[data-snd]").forEach(y=>y.classList.toggle("on",y===x));return}store.set("sndStyle",k);v.querySelectorAll("[data-snd]").forEach(y=>y.classList.toggle("on",y===x));unlockAudio();(/^s\d\d$/.test(k)?loadSfx(k):Promise.resolve()).then(()=>{withAudio(()=>moveSound0(false));setTimeout(()=>withAudio(()=>moveSound0(true)),550)})});
@@ -3021,7 +3028,7 @@ function sndPicker(){const on=store.get("mvSound",false),cur=store.get("sndStyle
     .sp-c em{font-style:normal;font-size:11px;font-weight:700;padding:1px 5px;border-radius:6px;background:var(--line);font-variant-numeric:tabular-nums}
     .sp-c.on{border-color:var(--accent);background:color-mix(in srgb,var(--accent) 12%,var(--card));font-weight:700}.sp-c.on i{opacity:1;color:var(--accent)}</style>
     <div style="padding:6px 0" class="${on?"":"sp-off"}" id="sndBox"><label class="sp-h"><span><b>走棋音效</b><br><span class="muted">棋子落下的聲音，從下面的選單挑一種，選了會先試聽（先走子、再吃子）</span></span><input type="checkbox" class="sw" id="sndOn" ${on?"checked":""}></label>
-    <div class="row" id="sndSt" style="gap:8px;margin-top:10px;align-items:center"><select id="sndSel" aria-label="走棋音效" style="flex:1;min-width:0;font:inherit;font-size:15px;padding:10px;border-radius:12px;border:1.5px solid var(--line);background:var(--card);color:inherit">${G.map(([t,L])=>`<optgroup label="${t}">${L.map(([k,l])=>`<option value="${k}"${cur===k?" selected":""}>${String(l).replace(/<[^>]+>/g," ").replace(/s+/g," ").trim()}</option>`).join("")}</optgroup>`).join("")}</select><button class="pill" id="sndTry">▶ 試聽</button></div></div>`}   /* 意見回饋 538：走棋音效改成下拉選單 */
+    <div class="row" id="sndSt" style="gap:8px;margin-top:10px;align-items:center"><select id="sndSel" aria-label="走棋音效" style="flex:1;min-width:0;font:inherit;font-size:15px;padding:10px;border-radius:12px;border:1.5px solid var(--line);background:var(--card);color:inherit">${G.map(([t,L])=>`<optgroup label="${t}">${L.map(([k,l])=>`<option value="${k}"${cur===k?" selected":""}>${String(l).replace(/<[^>]+>/g," ").replace(/\s+/g," ").trim()}</option>`).join("")}</optgroup>`).join("")}</select><button class="pill" id="sndTry">▶ 試聽</button></div></div>`}   /* 意見回饋 538：走棋音效改成下拉選單 */
 // 修正通知（意見回饋 203）：data/fixes.json 列出已修好的回饋（只放線上 ID 的雜湊，不放玩家原文）；
 // 玩家打開 App 會看到自己回報、已修好的問題；開發者看到每一次的修正回報。設定 → 其他 →「修正紀錄」可以再看
 async function fixHash(id){const d=await crypto.subtle.digest("SHA-256",new TextEncoder().encode("xqfix:"+id));return[...new Uint8Array(d)].map(x=>x.toString(16).padStart(2,"0")).join("").slice(0,12)}
@@ -3865,7 +3872,7 @@ function Profile(v){setTop("🎒 棋童資料","#/adventure");setTabs(true,"#/")
       pageList(b,B2.boards.slice().reverse(),sl=>`<div class="bgrid">${sl.map(card).join("")}</div>`,b=>b.querySelectorAll("[data-ex]").forEach(x=>x.onclick=()=>rareExchange(x.dataset.ex,()=>Me(v))))});
     else if(k==="r")sheet(`📜 棋譜（${B2.records.length}）`,b=>{if(!B2.records.length){b.innerHTML='<p class="muted" style="text-align:center">還沒有</p>';return}
       pageList(b,B2.records.slice().reverse(),sl=>`<div class="items" style="padding:0">${sl.map(x=>`<button class="item" data-rc="${x.uid}"><span class="lb">${TIMG(`data/treasure/record_${x.rare?"rare":"normal"}.webp`,"📜")}</span><span class="tx"><b>${esc(x.name)}</b><span>${esc(x.from)}</span></span><span class="muted">›</span></button>`).join("")}</div>`,b=>{b.querySelectorAll("[data-rc]").forEach(y=>y.onclick=()=>{const x=bag().records.find(z=>z.uid===y.dataset.rc);if(!x)return;closeSheet();store.set("dbReturn",{c:x.c,to:"#/adventure",at:Date.now()});location.hash=`#/db/${x.c}/${encodeURIComponent(x.id)}`})})});
-    else sheet(`🤝 秘境棋友（${Object.keys(S2).length}／${SECRETS.length}）`,b=>{b.innerHTML=`<div class="items" style="padding:0">${SECRETS.map(x=>S2[x.id]?`<button class="item" data-sb="${x.id}"><span class="lb" style="font-size:22px">${x.ic}</span><span class="tx"><b>${esc(x.name)}</b><span>${esc((SECRET_BIO[x.id]||{}).y||"")}・贏過 ${(store.get("secretWins",{})[x.id]||0)} 盤</span></span><span class="muted">›</span></button>`:`<div class="item" style="opacity:.5"><span class="lb">❔</span><span class="tx"><b>？？？</b></span></div>`).join("")}</div>`;b.querySelectorAll("[data-sb]").forEach(y=>y.onclick=()=>{const x=SECRETS.find(z=>z.id===y.dataset.sb);if(x)secretSheet(x)})})};
+    else sheet(`🤝 秘境棋友（${Object.keys(S2).length}／${SECRETS.length}）`,b=>{b.innerHTML=`<div class="items" style="padding:0">${SECRETS.map(x=>S2[x.id]?`<button class="item" data-sb="${x.id}"><span class="lb" style="font-size:22px">${secIc(x)}</span><span class="tx"><b>${esc(x.name)}</b><span>${esc((SECRET_BIO[x.id]||{}).y||"")}・贏過 ${(store.get("secretWins",{})[x.id]||0)} 盤</span></span><span class="muted">›</span></button>`:`<div class="item" style="opacity:.5"><span class="lb">❔</span><span class="tx"><b>？？？</b></span></div>`).join("")}</div>`;b.querySelectorAll("[data-sb]").forEach(y=>y.onclick=()=>{const x=SECRETS.find(z=>z.id===y.dataset.sb);if(x)secretSheet(x)})})};
   v.querySelectorAll(".circles [data-c]").forEach(b=>b.onclick=()=>{vibrate(5);openC(b.dataset.c)});
   (v.querySelector("#pXP")||{}).onclick=xpSheet;
   return{}}
@@ -3922,6 +3929,8 @@ const JL2=[["晨掃石枰","記盤＋限步對局",1,1,1],["南邊來的客人",
 const INN=[{id:"tea",name:"賣茶的老婦",ic:"🍵",lv:1,xp:20,say:"「喝口茶，陪老身下一盤，不急不急。」"},{id:"scholar",name:"趕考的書生",ic:"📜",lv:2,xp:25,say:"「小生進京趕考，路上棋癮犯了，請賜教。」"},
   {id:"guard",name:"走鏢的鏢師",ic:"🗡",lv:3,xp:30,say:"「鏢車在外面歇著，咱們速戰速決！」"},{id:"monk",name:"行腳僧",ic:"📿",lv:4,xp:40,say:"「阿彌陀佛，棋盤上也能修行。」"},{id:"teller",name:"說書人",ic:"🪭",lv:5,xp:50,say:"「欲知勝負如何，且看下回分解！」"}];
 /* 意見回饋 316：秘境棋友是元末明初的歷史人物（棋藝是故事的想像）；難度照你的等級配，不會太難 */
+/* 意見回饋 540：秘境棋友的圖示用他自己的立繪（data/actors/<id>.webp），沒有才用 emoji */
+const secIc=x=>`<img src="data/actors/${x.id}.webp" alt="" style="width:40px;height:48px;object-fit:contain" onerror="this.replaceWith(document.createTextNode('${x.ic}'))">`;
 const SECRETS=[{id:"liuji",name:"劉伯溫",who:"元末明初的謀士，幫朱元璋打天下",ic:"🪶",off:1,say:"「運籌帷幄，一盤棋也是。」",found:"{spot}旁邊，一位書生模樣的中年人正在推演什麼。他抬頭一笑：「在下劉基，字伯溫。閒來無事，下一盤？」",gift:"青田石棋盤"},
   {id:"zhangsanfeng",name:"張三丰",who:"傳說中武當山的道人",ic:"☯",off:1,say:"「以柔克剛，棋盤上也是這個道理。」",found:"{spot}後面，一位白鬚道人閉著眼睛打坐，忽然開口：「貧道張三丰，你的棋，有點意思。」",gift:"武當松木棋盤"},
   {id:"shinaian",name:"施耐庵",who:"傳說《水滸傳》的作者",ic:"📖",off:0,say:"「一百零八條好漢，都在這盤棋裡。」",found:"你在{spot}旁邊撿到一疊手稿，一位老先生追過來：「那是我的書稿！……你也下棋？」",gift:"梁山泊竹棋盤"},
@@ -4010,7 +4019,7 @@ function travel(to,done){if(document.querySelector(".travel"))return;try{window.
   const h0=location.hash;let ended=false;const end=()=>{if(ended)return;ended=true;removeEventListener("hashchange",end);clearInterval(tl);clearTimeout(tm);ov.classList.add("out");setTimeout(()=>ov.remove(),350);if(done&&location.hash===h0)done()};addEventListener("hashchange",end);
   const tm=setTimeout(end,5000);ov.querySelector(".tskip").onclick=e=>{e.stopPropagation();end()}}
 function innSheet(v){setTimeout(innDrop,1200);setTop("🏮 驛站","#/adventure");const I=xpInfo(),Sx=jSecrets(),nx=JR.find(R=>R.lv>I.L);v.className="view";
-  const row=(x,locked)=>`<button class="item" data-inn="${x.id}" ${locked?"disabled":""}><span class="lb" style="font-size:24px">${locked?"❔":x.ic}</span><span class="tx"><b>${locked?"？？？（還沒找到）":esc(x.name)}</b><span>${locked?"":x.who?`${esc(x.who)}・第 ${secretLv(x)} 級的實力・贏了 +${secretXP(x)} 修為`:`第 ${x.lv} 級的實力・贏了 +${x.xp} 修為（另加對局修為）`}</span></span><span class="muted">${locked?"":"›"}</span></button>`;
+  const row=(x,locked)=>`<button class="item" data-inn="${x.id}" ${locked?"disabled":""}><span class="lb" style="font-size:24px">${locked?"❔":secIc(x)}</span><span class="tx"><b>${locked?"？？？（還沒找到）":esc(x.name)}</b><span>${locked?"":x.who?`${esc(x.who)}・第 ${secretLv(x)} 級的實力・贏了 +${secretXP(x)} 修為`:`第 ${x.lv} 級的實力・贏了 +${x.xp} 修為（另加對局修為）`}</span></span><span class="muted">${locked?"":"›"}</span></button>`;
   const IE=store.get("era","classic");
   v.innerHTML=`<div class="pad"><div class="abn" style="height:160px;background-image:url(data/inn/${IE}.webp);margin-bottom:10px"><div class="hc"><b>🏮 ${esc(eraLabel(IE))}的驛站</b><small>路過的旅人都在這裡歇腳下棋</small></div></div><div class="card" style="line-height:1.8">🀄 <b>Lv ${I.L} ${I.title}</b>${nx?`・下一站「${nx.name}」要 Lv ${nx.lv}，還差 ${nx.lv-I.L} 級`:"・每一站都能進了"}<br><span class="muted" style="font-size:13px">驛站裡都是路過的旅人，找誰下都可以、下幾次都可以；輸了也有對局修為。</span></div>
     <button class="btn ghost" id="toPark" style="width:100%;margin-top:8px">🌳 走荒野小徑去園子</button>
