@@ -871,9 +871,9 @@
           <circle cx="68" cy="63" r="3.6" fill="#F7B6B6" opacity=".8"/><circle cx="92" cy="63" r="3.6" fill="#F7B6B6" opacity=".8"/>
           <path d="M76 68 Q80 71 84 68" stroke="#2a1a10" stroke-width="1.4" fill="none" stroke-linecap="round"/>
           <rect x="66" y="31" width="28" height="9" rx="2" fill="#D02A1F"/><circle cx="80" cy="29" r="3.4" fill="#E3B341"/><circle cx="72" cy="36" r="2.4" fill="#222"/>
-        </g></svg><div class="xw-t">小帥走去園子</div>`;
+        </g></svg><div class="xw-t">${(()=>{try{return JSON.parse(localStorage.getItem("m_pSex"))==="f"}catch(e){return false}})()?"小帥妹":"小帥"}走去園子</div>`;
      /* 意見回饋 392：「小帥走去公園」換成 Gemini 手繪的走路圖（data/xs/walk_1～8 輪流換），身上貼玩家選的棋子字；圖還沒到之前先用原本畫的 */
-     fetch("data/xs/xs.json").then(r=>r.ok?r.json():null).then(m=>{if(!m||!veil.isConnected)return;const fr=[1,2,3,4,5,6,7,8].map(i=>{const im=new Image();im.src="data/xs/walk_"+i+".webp";return im});
+     /* 意見回饋 492：選女生的話，走去園子的是小帥妹（data/xs/girl/） */const XD=(()=>{try{return JSON.parse(localStorage.getItem("m_pSex"))==="f"}catch(e){return false}})()?"data/xs/girl/":"data/xs/";fetch(XD+"xs.json").then(r=>r.ok?r.json():null).then(m=>{if(!m||!veil.isConnected)return;const fr=[1,2,3,4,5,6,7,8].map(i=>{const im=new Image();im.src=XD+"walk_"+i+".webp";return im});
        return Promise.all(fr.map(im=>im.decode())).then(()=>{const svg=veil.querySelector("svg");if(!svg||!veil.isConnected)return;const g=svg.querySelector(".xw-bob");if(g)g.style.display="none";
          const box=document.createElement("div");box.style.cssText="position:relative;width:200px;height:188px";svg.replaceWith(box);box.append(svg);
          const Hh=120,Ww=Hh*m.w/m.h,f=m.poses.walk_1||m.poses.xs_idle,R=f.r*Ww*.82,red="帥仕相俥傌炮兵".includes(ch);
@@ -911,7 +911,7 @@
     hint.textContent="點棋子走棋・點物件看介紹・拖曳轉頭・兩指縮放";el.append(hint);if(veil._qmin)hint.style.opacity=0;else setTimeout(()=>hint.style.opacity=0,4500);   /* 有名言的過場：操作提示等過場收掉才出現 */
     const EK=eraKey(),E=ERA[EK];
     el.style.background=E.mist;
-    const sc=new T.Scene();sc.fog=new T.Fog(new T.Color(E.mist),70,320);sc.background=new T.Color(E.mist);   /* 意見回饋 486：環景沒畫到的地方顯示朝代的霧色，不會一片黑 */
+    const sc=new T.Scene(),FARHIDE=[];sc.fog=new T.Fog(new T.Color(E.mist),70,320);sc.background=new T.Color(E.mist);   /* 意見回饋 486：環景沒畫到的地方顯示朝代的霧色，不會一片黑 */
     const cam=new T.PerspectiveCamera(50,1,.5,700);
     // 光：午後斜陽（唯一投影光，陰影範圍只包住石桌，陰影比較銳利）＋暖色天光＋冷色補光；整體對比拉高，不再灰白
     sc.add(new T.HemisphereLight(0xFFF1DA,0x5A4A36,.42));
@@ -919,11 +919,11 @@
     Object.assign(sun.shadow.camera,{left:-11,right:11,top:11,bottom:-11,near:10,far:80});sun.shadow.bias=-.0004;sun.shadow.normalBias=.02;sun.shadow.radius=3;sc.add(sun);
     const fill=new T.DirectionalLight(0xC8DCFF,.28);fill.position.set(20,12,-18);sc.add(fill);
     // 天空球（含下半部的雲海色）＋水墨長卷
-    const sky=new T.Mesh(new T.SphereGeometry(400,32,16),new T.MeshBasicMaterial({map:skyTex(E),side:T.BackSide,fog:false,depthWrite:false,toneMapped:false}));sc.add(sky);
+    const sky=new T.Mesh(new T.SphereGeometry(400,32,16),new T.MeshBasicMaterial({map:skyTex(E),side:T.BackSide,fog:false,depthWrite:false,toneMapped:false}));sc.add(sky);FARHIDE.push(sky);
     const BI=opt.bg?{src:opt.bg,pano:true,hz:.58,hor:PANO_HOR,rot:0}:BG_IMG[EK],FULL=!!BI;   /* 意見回饋 362：石桌往事的關卡在那一站的地點環景裡下（渡口、聽濤樓茶館、雲河棋會、決賽、石桌） */   // FULL：有朝代長卷，背景是完整一圈，可以整個轉身看
     {const pt=panTex(Object.assign({},E,{userBg:FULL}),EK.length*977+13);pt.wrapS=T.RepeatWrapping;pt.repeat.x=-1;   // 從圓柱內側看，貼圖要左右翻回來
       const arc=FULL?TAU:PAN.arc,pan=new T.Mesh(new T.CylinderGeometry(PAN.r,PAN.r,PAN.yt-PAN.yb,FULL?128:64,1,true,PI-arc/2,arc),new T.MeshBasicMaterial({map:pt,side:T.BackSide,transparent:true,fog:false,depthWrite:false,toneMapped:false}));
-      pan.position.y=(PAN.yt+PAN.yb)/2;pan.renderOrder=-1;sc.add(pan);
+      pan.position.y=(PAN.yt+PAN.yb)/2;pan.renderOrder=-1;sc.add(pan);FARHIDE.push(pan);
       if(BI){const put=()=>{const im=imgCache[BI.src];if(!im||!im.naturalWidth||!el.isConnected)return;try{let pc;
           if(BI.pano){// 整圈長圖：圓柱的高度、位置照圖的比例重做（圖不變形），貼圖換成 4096×1024
             const pg=panoGeo(BI,im.naturalWidth,im.naturalHeight);pan.geometry.dispose();pan.geometry=new T.CylinderGeometry(PAN.r,PAN.r,pg.Hc,128,1,true,0,TAU);pan.position.y=pg.cy;
@@ -945,7 +945,7 @@
     {const gs="data/pano/"+EK+"_ground.webp",gp=()=>{const im=imgCache[gs];if(!im||!im.naturalWidth||!el.isConnected)return;const t=srgb(new T.Texture(im));t.anisotropy=ANI;t.needsUpdate=true;pave.material.map=t;pave.material.needsUpdate=true};if(loadImg(gs,gp))setTimeout(gp,0);
       const ss="data/pano/"+EK+"_sky.webp",sp=()=>{const im=imgCache[ss];if(!im||!im.naturalWidth||!el.isConnected)return;const TM=1.3,   /* 意見回饋 421：長卷抬高後，天頂圓淡出的那圈收到長卷上緣以上（原本 1.75 會蓋到山頭） */R0=PAN.r-6,g=new T.SphereGeometry(R0,64,24,0,TAU,0,TM),P=g.attributes.position,U=g.attributes.uv;
         for(let i=0;i<P.count;i++){const x=P.getX(i),y=P.getY(i),z=P.getZ(i),th=Math.acos(clamp(y/R0,-1,1)),ph=Math.atan2(z,x),k=th/TM*.5;U.setXY(i,.5+k*Math.cos(ph),.5+k*Math.sin(ph))}U.needsUpdate=true;
-        const t=srgb(new T.Texture(im));t.needsUpdate=true;const cap=new T.Mesh(g,new T.MeshBasicMaterial({map:t,side:T.BackSide,transparent:true,depthWrite:false,fog:false,toneMapped:false}));cap.renderOrder=-.5;sc.add(cap)};if(loadImg(ss,sp))setTimeout(sp,0)}
+        const t=srgb(new T.Texture(im));t.needsUpdate=true;const cap=new T.Mesh(g,new T.MeshBasicMaterial({map:t,side:T.BackSide,transparent:true,depthWrite:false,fog:false,toneMapped:false}));cap.renderOrder=-.5;sc.add(cap);FARHIDE.push(cap)};if(loadImg(ss,sp))setTimeout(sp,0)}
     mesh(new T.CylinderGeometry(TR,TR*.9,26+FL-GY,48,1,true),stone2,[0,FL-(26+FL-GY)/2,0],{noCast:1});
     /* 意見回饋 490（開發者：石台邊像懸崖，希望像雲河棋路那樣是山坡上的大石台）：石台外圍加一圈往外慢慢往下的山坡（草地、碎石），遠的地方淡進霧裡，把石台側面那圈牆蓋住 */
     {const pts=[[TR-.2,FL-.06],[TR+4,FL-.9],[TR+12,FL-3.6],[TR+26,FL-9],[TR+46,FL-18],[TR+76,FL-32],[TR+120,FL-52]].map(([r,y])=>new T.Vector2(r,y));
@@ -1144,11 +1144,14 @@
     /* 意見回饋 375：左右拖曳＝鏡頭繞著棋桌轉（轉到對面就看得到小帥的臉、背景一樣是一整圈），上下拖曳＝俯視的高低；不動的時候跟原本的畫面一樣 */
     /* 意見回饋 421（構圖）：坐正的時候跟原本一樣（看整盤棋）；繞著桌子轉開時鏡頭自動放低一點、視線往上抬，畫面上半部讓給遠方的山水（前景平台和道具、中景城樓、遠景山和天空）；
        往上拖（壓低鏡頭）也一樣把視線抬到地平線附近，越過小帥的頭看出去 */
-    const smooth=(a,b,x)=>{const t=clamp((x-a)/(b-a),0,1);return t*t*(3-2*t)},FADEV=new T.Vector3();
+    let lastKf=-1;const smooth=(a,b,x)=>{const t=clamp((x-a)/(b-a),0,1);return t*t*(3-2*t)},FADEV=new T.Vector3();
     const placeCam=()=>{const wy=Math.abs(Math.atan2(Math.sin(yaw),Math.cos(yaw))),orb=smooth(.2,1.1,wy),low=clamp(-pitch/.7,0,1);
-      const off=camBase.clone().sub(PIV),lk=look.clone().sub(PIV),el0=Math.atan2(off.y,Math.hypot(off.x,off.z)),el=clamp(el0+pitch-.26*orb,.1,1.5),R=Math.min(off.length()*zoom,PAN.r*.62),az=Math.atan2(off.x,off.z)+yaw;
+      const off=camBase.clone().sub(PIV),lk=look.clone().sub(PIV),el0=Math.atan2(off.y,Math.hypot(off.x,off.z)),el=clamp(el0+pitch-.26*orb,.1,1.5),R=Math.min(off.length()*zoom,330),az=Math.atan2(off.x,off.z)+yaw;
+      /* 開發者 11/4：畫面拉遠看石台底下的朝代大地圖——鏡頭距離超過 105（長卷半徑的 62%）以後，鏡頭慢慢升高成俯視，長卷、天空跟著淡掉，霧也變淡 */
+      const kf=smooth(105,220,R),elF=el+(1.38-el)*kf;
+      if(kf!==lastKf){lastKf=kf;for(const m of FARHIDE){m.visible=kf<.98;if(m.material){m.material.opacity=1-kf;m.material.transparent=true}}if(sc.fog){sc.fog.near=70+kf*260;sc.fog.far=320+kf*520}}
       lk.y+=4*orb*(1-low)+4.5*low;
-      cam.position.set(PIV.x+Math.sin(az)*Math.cos(el)*R,PIV.y+Math.sin(el)*R,PIV.z+Math.cos(az)*Math.cos(el)*R);
+      cam.position.set(PIV.x+Math.sin(az)*Math.cos(elF)*R,PIV.y+Math.sin(elF)*R,PIV.z+Math.cos(az)*Math.cos(elF)*R);
       const c=Math.cos(yaw),s2=Math.sin(yaw);cam.lookAt(PIV.x+lk.x*c+lk.z*s2,PIV.y+lk.y,PIV.z-lk.x*s2+lk.z*c);cam.rotateX(CAMV.dp);
       for(const b of bills){const m=b.m;if(b.cup){const[fx,fz]=b.cup,cx=cam.position.x-fx,cy=cam.position.y-.015,cz=cam.position.z-fz,e=Math.atan2(cy,Math.hypot(cx,cz)),t=clamp((b.hb*Math.cos(e)+.03)/Math.max(cy,.5),0,.5);
           m.position.set(fx+cx*t,.015+cy*t,fz+cz*t)}
@@ -1185,7 +1188,7 @@
       return"bg"};
     // 觸控：一指拖曳轉頭（有朝代長卷的可以整圈轉身，其他左右各約 69 度）、兩指捏合拉近拉遠（0.6～1.25 倍）、點一下選子、點兩下回正（含縮放）
     /* 意見回饋 360：公園的棋盤可以放得更大、縮得更小（兩指捏合的範圍放寬），右下角加 ＋／－ 按鈕 */
-    const ZMIN=.35,ZMAX=2.8,   /* 開發者 11/4：拉得更遠，看得到石台底下整張朝代地圖（鏡頭距離另外不超過長卷半徑的 62%） */
+    const ZMIN=.35,ZMAX=8.8,   /* 開發者 11/4：拉得更遠，看得到石台底下整張朝代地圖（鏡頭距離另外不超過長卷半徑的 62%） */
     cvs=rd.domElement,ptrs=new Map();let down=null,lastTap=0,pinch=null;
     {const zb=document.createElement("div");zb.className="pzoom";zb.style.cssText="position:absolute;right:8px;bottom:8px;z-index:3;display:flex;flex-direction:column;gap:6px";
       for(const[t,f,l]of[["＋",.8,"放大"],["－",1.25,"縮小"]]){const b=document.createElement("button");b.type="button";b.textContent=t;b.setAttribute("aria-label",l);
