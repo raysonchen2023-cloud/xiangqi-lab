@@ -559,12 +559,13 @@ html[data-era=ming] .topbar,html[data-era=qing] .topbar{border-bottom-width:4px}
   P.setItem=function(k,v){oS.call(this,k,v);try{if(this===localStorage&&!SKIP.test(k))put(String(k),String(v))}catch(e){}};
   P.removeItem=function(k){oR.call(this,k);try{if(this===localStorage)put(String(k),null)}catch(e){}};
   P.clear=function(){oC.call(this);try{if(this===localStorage)open(function(d){d.transaction("kv","readwrite").objectStore("kv").clear()})}catch(e){}};
-  window.XQSave={dump:function(){var o={};for(var i=0;i<localStorage.length;i++){var k=localStorage.key(i);if(!SKIP.test(k))o[k]=localStorage.getItem(k)}return o},
+  var SOFT={};
+  window.XQSave={soft:function(k,v){try{oS.call(localStorage,k,v);SOFT[k]=1}catch(e){}},dump:function(){var o={};for(var i=0;i<localStorage.length;i++){var k=localStorage.key(i);if(!SKIP.test(k))o[k]=localStorage.getItem(k)}return o},
     load:function(o,done){var ks=[];for(var i=0;i<localStorage.length;i++)ks.push(localStorage.key(i));ks.forEach(function(k){if(!SKIP.test(k))localStorage.removeItem(k)});for(var k in o)localStorage.setItem(k,o[k]);setTimeout(done||function(){},600)}};
   open(function(d){try{var t=d.transaction("kv","readonly"),st=t.objectStore("kv"),rk=st.getAllKeys(),rv=st.getAll();
     t.oncomplete=function(){var K=rk.result||[],V=rv.result||[],i;
-      if(!K.length){for(i=0;i<localStorage.length;i++){var k=localStorage.key(i);if(!SKIP.test(k))put(k,localStorage.getItem(k))}return}
-      var miss=[];for(i=0;i<K.length;i++)if(localStorage.getItem(K[i])===null)miss.push(i);
+      if(!K.length){for(i=0;i<localStorage.length;i++){var k=localStorage.key(i);if(!SKIP.test(k))put(k,localStorage.getItem(k))}SOFT={};return}
+      var miss=[];for(i=0;i<K.length;i++)if(localStorage.getItem(K[i])===null||SOFT[K[i]])miss.push(i);
       if(miss.length&&(miss.length>=5||localStorage.length<K.length/2)&&!sessionStorage.getItem("xqRestored")){
         miss.forEach(function(j){try{oS.call(localStorage,K[j],V[j])}catch(e){}});sessionStorage.setItem("xqRestored","1");location.reload()}}}catch(e){}});
   try{if(navigator.storage&&navigator.storage.persist)navigator.storage.persisted().then(function(p){if(!p)return navigator.storage.persist()}).catch(function(){})}catch(e){}})();
@@ -578,7 +579,7 @@ html[data-era=ming] .topbar,html[data-era=qing] .topbar{border-bottom-width:4px}
       if(!window.caches)return go();caches.keys().then(function(ks){return Promise.all(ks.filter(function(k){return k.indexOf("xqlab-app-")===0}).map(function(k){return caches.delete(k)}))})
         .then(function(){return navigator.serviceWorker&&navigator.serviceWorker.getRegistration()}).then(function(r){return r&&r.update()}).catch(function(){}).then(go)}};setTimeout(chk,4000)})();
 </script>
-<script>window.XQ_OFFLINE=true;window.XQ_BUILD="20261104-1535";</script>
+<script>window.XQ_OFFLINE=true;window.XQ_BUILD="20261104-1541";</script>
 <script src="core.js"></script>
 <script src="engine.js"></script>
 <script src="local.js"></script>
@@ -602,6 +603,9 @@ const fmt=ms=>{if(ms==null)return"";ms=Math.max(0,ms);const t=Math.ceil(ms/1000)
 const esc=s=>String(s==null?"":s).replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
 const vibrate=n=>{try{navigator.vibrate&&navigator.vibrate(n||10)}catch(e){}};
 const store={get(k,d){try{const v=localStorage.getItem("m_"+k);return v==null?d:JSON.parse(v)}catch(e){return d}},set(k,v){try{localStorage.setItem("m_"+k,JSON.stringify(v))}catch(e){}}};
+/* 意見回饋 472（開發者）：第一次打開 App 的新玩家預設用元朝風格（畫面漂亮，也是石桌往事冒險的朝代）；
+   只看「完全沒有任何存檔」的人，已經在玩的人（就算沒選過朝代）照舊 */
+try{let n=0;for(let i=0;i<localStorage.length;i++)if(/^m_/.test(localStorage.key(i)))n++;if(!n&&localStorage.getItem("m_era")==null){const w=(k,v)=>window.XQSave&&XQSave.soft?XQSave.soft("m_"+k,JSON.stringify(v)):store.set(k,v);w("era","yuan");w("boardTheme","auto")}}catch(e){}
 // 我的名字與裝置代號：存在手機裡，連電腦時每個請求都帶上，電腦才知道是誰連進來
 function meInfo(){let m=null;try{m=JSON.parse(localStorage.getItem("xq_me")||"null")}catch(e){}
   if(!m||!m.id){m={id:(crypto.randomUUID?crypto.randomUUID():Date.now().toString(36)+Math.random().toString(36).slice(2)).replace(/[^A-Za-z0-9]/g,"").slice(0,20),name:(m&&m.name)||""};try{localStorage.setItem("xq_me",JSON.stringify(m))}catch(e){}}return m}
