@@ -337,7 +337,7 @@ html[data-era=ming] .topbar,html[data-era=qing] .topbar{border-bottom-width:4px}
 .eragrid button.on b::after{content:" ✓"}
 @media (min-width:700px){.eragrid{grid-template-columns:repeat(4,1fr)}}
 /* 意見回饋 535：設定的朝代棋盤改成左右滑動的一疊卡片，停在中間的那張就套用，上面的棋盤預覽馬上換 */
-#meChip{display:flex;align-items:center;gap:6px;flex:none;border:0;border-radius:999px;padding:2px 10px 2px 2px;margin-right:8px;background:rgba(255,248,236,.16);color:inherit;font:inherit;cursor:pointer}#meChip img{width:30px;height:36px;object-fit:contain}#meChip small{font-size:11px;line-height:1.25;text-align:left;font-weight:700;opacity:.95;white-space:nowrap}
+#meChip{display:flex;align-items:center;gap:6px;flex:none;border:0;border-radius:999px;padding:2px 10px 2px 2px;margin-left:8px;background:rgba(255,248,236,.16);color:inherit;font:inherit;cursor:pointer}#meChip img{width:30px;height:36px;object-fit:contain}#meChip small{font-size:11px;line-height:1.25;text-align:left;font-weight:700;opacity:.95;white-space:nowrap}
 .thgrid.thsw{position:relative;display:flex!important;overflow-x:auto;scroll-snap-type:x mandatory;gap:10px;padding:4px 22% 10px;scrollbar-width:none}.thgrid.thsw::-webkit-scrollbar{display:none}.thgrid.thsw>button{flex:0 0 56%;scroll-snap-align:center;transform:scale(.88);opacity:.7;transition:transform .2s,opacity .2s}.thgrid.thsw>button.on{transform:none;opacity:1}
 .eragrid.erasw{position:relative;display:flex;overflow-x:auto;scroll-snap-type:x mandatory;gap:10px;padding:6px 19% 12px;scrollbar-width:none;-webkit-overflow-scrolling:touch}.eragrid.erasw::-webkit-scrollbar{display:none}
 .eragrid.erasw button{flex:0 0 62%;scroll-snap-align:center;min-height:100px;transition:transform .2s,opacity .2s;transform:scale(.9);opacity:.72}.eragrid.erasw button.on{transform:none;opacity:1}
@@ -699,7 +699,7 @@ html[data-era=ming] .topbar,html[data-era=qing] .topbar{border-bottom-width:4px}
       if(!window.caches)return go();caches.keys().then(function(ks){return Promise.all(ks.filter(function(k){return k.indexOf("xqlab-app-")===0}).map(function(k){return caches.delete(k)}))})
         .then(function(){return navigator.serviceWorker&&navigator.serviceWorker.getRegistration()}).then(function(r){return r&&r.update()}).catch(function(){}).then(go)}};setTimeout(chk,4000)})();
 </script>
-<script>window.XQ_OFFLINE=true;window.XQ_BUILD="20261105-0505";</script>
+<script>window.XQ_OFFLINE=true;window.XQ_BUILD="20261105-0510";</script>
 <script src="core.js"></script>
 <script src="engine.js"></script>
 <script src="local.js"></script>
@@ -1970,7 +1970,7 @@ function standaloneOnlineWarn(v){if(OFF||!(matchMedia("(display-mode: standalone
 function Home(v,hub){   /* hub：沒有＝首頁三張大卡；"battle"＝對戰頁；"learn"＝學習頁（開發者看 Gemini UI／UX 審閱後決定） */
   const RI=DEVREMOTE()?XQ.remoteInfo():null;  // 這支手機連過主人的電腦嗎
   const standalone=matchMedia("(display-mode: standalone)").matches||navigator.standalone;
-  setTop("象棋研究室",false,OFF?[].concat(RI?[["🔗",connectSheet,"連線到電腦"]]:[],(DEVMODE()?[["📋",openFbAdmin,"意見回饋管理"]]:[]))  :[["👥",whoSheet,"誰在線上"]]);meChip();   /* 意見回饋 536：首頁左上角的頭像，點了進「我的角色」；531：首頁右上角的「分享給朋友」「意見回饋」拿掉（都在 設定 → 系統） */setTabs(true,"#/");   /* 意見回饋 409：意見回饋按鈕放在首頁最右上角 */
+  setTop("象棋研究室",false,OFF?[].concat(RI?[["🔗",connectSheet,"連線到電腦"]]:[])  :[["👥",whoSheet,"誰在線上"]]);meChip();   /* 意見回饋 570：📋 移到設定頁 */   /* 意見回饋 536：首頁左上角的頭像，點了進「我的角色」；531：首頁右上角的「分享給朋友」「意見回饋」拿掉（都在 設定 → 系統） */setTabs(true,"#/");   /* 意見回饋 409：意見回饋按鈕放在首頁最右上角 */
   if(hub){setTop(hub==="battle"?"⚔ 對戰":"📚 學習","#/");setTabs(true,"#/")}
   const T=(k,go,ic,t,id,s,x,cta)=>`<button class="tile strip ${k}${x||""}" data-go="${go}"><span class="ic">${ic}</span><span class="tx"><span class="t">${t}</span><span class="s"${id?` id="${id}"`:""}>${s}</span></span><b class="go">${cta||"›"}</b></button>`;
   v.innerHTML=`<div class="home">
@@ -2965,7 +2965,7 @@ const SAMPLE_FEN0="rnbakabnr/9/1c5c1/p1p1p1p1p/9/9/P1P1P1P1P/1C5C1/9/RNBAKABNR",
 async function updCheck(b){b.disabled=true;b.textContent="檢查中…";const r=window.XQ_checkUpdate?await XQ_checkUpdate():{};
   if(!r.n){b.textContent="沒有網路";b.disabled=false;return}if(r.a===r.n){b.textContent="✓ 已是最新版";return}b.textContent="下載新版中…";setTimeout(()=>location.reload(),6000)}
 function Settings(v){
-  setTop("設定",false);setTabs(true,"#/settings");
+  setTop("設定",false,OFF&&DEVMODE()?[["📋",openFbAdmin,"意見回饋管理"]]:[]);   /* 意見回饋 570：意見回饋管理放設定頁右上角 */setTabs(true,"#/settings");
   // 設定分成四個分頁，一次只看一類（意見回饋 141）
   let stab=store.get("setTab","look");if(stab==="play")stab="look";   /* 意見回饋 526：分頁改成 角色／棋盤／聲音／系統，原本的「走棋」併進「棋盤」 */
   v.innerHTML=`<div class="pad home">
@@ -4008,7 +4008,7 @@ const meImgTag=(st,sx)=>{const k=(st==="real"?"real":"q")+"_"+(sx==="f"?"girl":"
 const meImgRefresh=()=>document.querySelectorAll("img[data-meimg]").forEach(y=>{const[k]=y.dataset.meimg.split("|"),[st,sx]=k.split("_");y.dataset.meimg=k+"|"+myPc();y.src=meImgFor(st,sx==="girl"?"f":"m")});
 function meFigOpen(src){vibrate(5);figView(myLook()||{p:botPc(),e:store.get("era","classic"),g:9},"🙂 "+meName(),`<p class="muted" style="font-size:13.5px;margin:0">${esc(myName()||"還沒取名字")}・園子裡的你、線上對手看到的你都是這個樣子</p>`,[["關閉",()=>closeSheet(),true]],src||meImg())}
 function meChip(){const tb=$("#topbar");if(!tb)return;{const o=document.getElementById("meChip");if(o)o.remove()}const R=rankInfo(),I=xpInfo(),b=document.createElement("button");b.id="meChip";b.type="button";b.setAttribute("aria-label","我的角色");
-  b.innerHTML=`<img src="${meImg()}" ${meImgTag(myStyle(),mySex())} alt="" onerror="this.replaceWith(document.createTextNode('🙂'))"><small>${esc(R.name)}<br>修為 Lv ${I.L}</small>`;b.onclick=()=>{vibrate(5);location.hash="#/me"};tb.insertBefore(b,$("#title"))}
+  b.innerHTML=`<img src="${meImg()}" ${meImgTag(myStyle(),mySex())} alt="" onerror="this.replaceWith(document.createTextNode('🙂'))"><small>${esc(R.name)}<br>修為 Lv ${I.L}</small>`;b.onclick=()=>{vibrate(5);location.hash="#/me"};tb.append(b)}   /* 意見回饋 570：頭像放到最右上 */
 /* 意見回饋 553：我的角色頁重新設計（兩位 RPG 專家合併）：立繪舞台 → 境界台（官階九層塔、修為八角玉環）→ 六角章 → 什錦花窗收藏格。
    收藏格點了照舊打開原本的清單（借用 Profile 畫好、藏起來的圓鈕）；沒有說明小字，點官印／九層塔看九個品級，點玉環看修為 */
 const ME_WIN={b:"M36 2H84L118 36V72L84 106H36L2 72V36Z",r:"M2 17A136 136 0 0 1 118 17L81 95A50 50 0 0 0 39 95Z",
