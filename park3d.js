@@ -98,12 +98,16 @@
     if(L&&L.pset){const lt=Object.keys(NAMES[s]).find(k=>NAMES[s][k]===ch),src=L.pset+s+lt+".webp",pim=loadImg(src,onReady),pk="ps|"+src;if(faceCache[pk])return faceCache[pk];
       if(pim)return faceCache[pk]=cv(FN,FN,(g,n)=>{g.fillStyle=rimOf(pim);g.fillRect(0,0,n,n);g.imageSmoothingQuality="high";g.drawImage(pim,-n*.03,-n*.03,n*1.06,n*1.06)})}
     if(L&&L.pieces&&!im)return plainFace(ch,red);
+    if(L&&L.pieceBg&&!L.pieces&&!L.pset)return tintFace(ch,red,L);   /* 意見回饋 561：照平面棋盤風格的棋子顏色 */
     if(im)return faceCache[key]=cv(FN,FN,(g,n)=>{g.fillStyle=rimOf(im);g.fillRect(0,0,n,n);g.imageSmoothingQuality="high";g.drawImage(richImg(im),-n*.01,-n*.01,n*1.02,n*1.02);gloss(g,n);
       /* 意見回饋 345：公園裡紅黑要一眼分得出來——深色字一律換成鮮紅／純黑，外圈再加一道同色的圈（亮色字的朝代照原本的字色） */
       const ink0=(L.ink&&L.ink[s])||(red?"#B3141B":"#141414"),bright=lum(ink0)>.55,ink=bright?ink0:red?"#D3121A":"#0A0A0A";
       g.strokeStyle=ink;g.lineWidth=n*.04;g.beginPath();g.arc(n/2,n/2,n*.43,0,TAU);g.stroke();
       glyph(g,n,ch,ink,L.gly&&L.gly[ch],L.bold||0,bgOf(im))});
     return plainFace(ch,red)};
+  const tintFace=(ch,red,L)=>{const k="tf|"+L.pieceBg+"|"+(L.ink&&L.ink.r)+"|"+(L.ink&&L.ink.b)+"|"+ch;return faceCache[k]||(faceCache[k]=cv(FN,FN,(g,n)=>{const h=n/2;g.fillStyle=L.pieceBg;g.fillRect(0,0,n,n);
+    let gr=g.createRadialGradient(h*.75,h*.7,10,h,h,h);gr.addColorStop(0,"rgba(255,255,255,.28)");gr.addColorStop(.7,"rgba(255,255,255,0)");gr.addColorStop(1,"rgba(0,0,0,.18)");g.fillStyle=gr;g.fillRect(0,0,n,n);
+    const ink=(L.ink&&L.ink[red?"r":"b"])||(red?"#B3261E":"#1E1A16");g.strokeStyle=ink;g.lineWidth=n*.022;g.beginPath();g.arc(h,h,h*.84,0,TAU);g.stroke();gloss(g,n);glyph(g,n,ch,ink,L.gly&&L.gly[ch],L.bold||0,lum(L.pieceBg))}))};
   // 沒有朝代底圖時的木棋：象牙色、紅黑字、內圈細線
   const plainFace=(ch,red)=>faceCache[ch]||(faceCache[ch]=cv(FN,FN,(g,n)=>{const h=n/2;
     let gr=g.createRadialGradient(h*.75,h*.7,40,h,h,h);gr.addColorStop(0,"#FCEFCB");gr.addColorStop(.75,"#EED19A");gr.addColorStop(1,"#D2A35C");g.fillStyle=gr;g.fillRect(0,0,n,n);
@@ -748,10 +752,11 @@
           K.add(new T.CylinderGeometry(1.18,1.18,2.4,6,1,true),glass,[0,Y,0]);for(let i=0;i<6;i++){const a=i/6*TAU,c=Math.sin(a),s=Math.cos(a);bx(zt,c*1.2,Y,s*1.2,.16,2.6,.16,[0,a,0]);beam(gd,[c*1.35,Y+1.5,s*1.35],[c*2.25,Y+2.1,s*2.25],.11,0,6);sp(gd,c*2.32,Y+2.15,s*2.32,.2);sp(gd,c*2.32,Y+1.85,s*2.32,.14);cy(tas,c*2.32,Y+.55,s*2.32,.08,2.5,4)}
           ct(gd,0,Y+1.4,0,1.45,1.35,.25,6);ct(zt,0,Y+1.95,0,.75,1.3,.85,6);sp(gd,0,Y+2.55,0,.3);ct(gd,0,Y-1.4,0,1.35,1.45,.22,6);ct(zt,0,Y-1.75,0,.95,1.3,.5,6);ct(gd,0,Y-2.2,0,.4,.85,.5,6);sp(gd,0,Y-2.55,0,.25);cy(tas,0,Y-3.6,0,.32,1.9,8);glow(0,Y,0,5,.45)}}};
     const f=(F[EK]||F.classic)();
+    let F3D=false;   /* 意見回饋 559：已經做了 3D 長椅、石凳（地面抬高的朝代），就不要再疊手繪的長椅、鼓凳圖，兩個擠在同一個位置看起來像破圖 */
     const PP=PROP_IMG[EK],STOOLS=[[-14.5,1.5],[14.5,-1.5]],LAMPS=[-1,1].map(sx=>[sx,sx*8.1,-17.5]),DT=-9.35;   // DT＝手繪長榻的台座頂面高度
     f.table();
     if(PP&&X.FL==null){if(f.dais)f.dais(DT,15,5.4);else bx(X.stone2,0,(GY+DT)/2,BZ,15,DT-GY,5.4,null,4)}   /* 地面抬高後長榻直接放在地上，不用台座 */
-    else{f.bench();for(const[x,z]of STOOLS){K.at(x,0,z);OX=x;OZ=z;f.stool()}for(const[sx,x,z]of LAMPS){OX=x;OZ=z;K.at(OX,0,OZ);f.lamp(sx)}}
+    else{F3D=true;f.bench();for(const[x,z]of STOOLS){K.at(x,0,z);OX=x;OZ=z;f.stool()}for(const[sx,x,z]of LAMPS){OX=x;OZ=z;K.at(OX,0,OZ);f.lamp(sx)}}
     K.at();K.build(root);OX=OZ=0;
     if(PP)paint();
     // ---- 手繪道具立牌：一張去背圖貼在平面上，轉向座位（鏡頭只在座位上轉頭，不會走動，所以永遠看到正面）；
@@ -775,9 +780,9 @@
         const m=new T.Mesh(new T.CircleGeometry(TRd,96),new T.MeshStandardMaterial({map:t,color:neutOf(X.sc),roughness:.5,toneMapped:false}));m.rotation.x=-PI/2;m.position.y=.006;m.receiveShadow=true;root.add(m);if(X.infos){m.userData.info="table";X.infos.push(m)}});
       // 長榻：放在台座上、Pikafish 後面
       // 橫的長榻／長椅：寬 14；直的單人椅（明、清的圈椅、太師椅）：高 12
-      use("bench",im=>{card(im,Object.assign(im.naturalHeight>im.naturalWidth*.9?{x:0,y:X.FL!=null?X.FL:DT,z:BZ-.4,h:12*BS,tilt:.12}:{x:0,y:X.FL!=null?X.FL:DT,z:BZ-.4,w:14*BS,tilt:.12},{info:"bench"}))});
+      if(!F3D)use("bench",im=>{card(im,Object.assign(im.naturalHeight>im.naturalWidth*.9?{x:0,y:X.FL!=null?X.FL:DT,z:BZ-.4,h:12*BS,tilt:.12}:{x:0,y:X.FL!=null?X.FL:DT,z:BZ-.4,w:14*BS,tilt:.12},{info:"bench"}))});
       // 兩側的三彩鼓凳：站在地上
-      use("stool",im=>{for(const[x,z]of STOOLS){const c=card(im,{x,y:GY,z,h:X.FL!=null?6.2*BS:9.5,tilt:.12,info:"stool"});blob(x,GY+.03,z,c.w*.5,c.w*.3,.4,c.ry)}});
+      if(!F3D)use("stool",im=>{for(const[x,z]of STOOLS){const c=card(im,{x,y:GY,z,h:X.FL!=null?6.2*BS:9.5,tilt:.12,info:"stool"});blob(x,GY+.03,z,c.w*.5,c.w*.3,.4,c.ry)}});
       // 宮燈：掛在立柱的彎鉤上；立柱用 3D 圓柱接到地面（右邊那盞左右翻過來，立柱都在外側）；燭光一團加色柔光，會跳動
       if(EK!=="tang"&&PP.lamp)use("lantern",im=>{const L=PP.lamp,postM=new T.MeshBasicMaterial({color:0x2E2721,toneMapped:false});
         for(const[sx,x,z]of LAMPS){

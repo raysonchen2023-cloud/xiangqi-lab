@@ -265,7 +265,8 @@
         d.position.set(px-c.x,py-bb.min.y,pz-c.z+sz.y*.004);hold.add(d)}
       const R3e=meId&&!ME_RING[meId]&&R3&&Array.isArray(R3[meId])?{u:R3[meId][0],v:R3[meId][1],r:R3[meId][2]*.85}:null;
       if(meId&&(ME_RING[meId]||R3e)){try{const R=ME_RING[meId]||R3e,rad=R.r*sz.x*.9,px=bb.min.x+R.u*sz.x,py=bb.max.y-R.v*sz.y;
-        let pz=bb.max.z;const hit=new T.Raycaster(new T.Vector3(px,py,bb.max.z+sz.z+1),new T.Vector3(0,0,-1)).intersectObject(g,true)[0];if(hit)pz=hit.point.z;
+        /* 意見回饋 564：有些圓牌是凹下去的碟形（明朝擂主），只量圓心的深度會被邊緣擋住、字看起來殘缺；在圓牌上量九個點，取最靠前的深度 */
+        let pz=-1e9;const rc=new T.Raycaster();for(const[dx,dy]of[[0,0],[.75,0],[-.75,0],[0,.75],[0,-.75],[.53,.53],[-.53,.53],[.53,-.53],[-.53,-.53]]){rc.set(new T.Vector3(px+dx*rad,py+dy*rad,bb.max.z+sz.z+1),new T.Vector3(0,0,-1));const hit=rc.intersectObject(g,true)[0];if(hit&&hit.point.z>pz)pz=hit.point.z}if(pz<-1e8)pz=bb.max.z;
         const d=new T.Mesh(new T.CircleGeometry(rad,48),new T.MeshBasicMaterial({map:glyTex(meCh,meK),transparent:true,depthWrite:false,toneMapped:false}));d.name="meGly";
         d.position.set(px-c.x,py-bb.min.y,pz-c.z+sz.y*.006);hold.add(d)}catch(e){}}
       for(const ch of B.bot.children)ch.visible=false;B.bot.add(hold);B.glb=hold;return true});B.glbP.catch(()=>{})}

@@ -125,7 +125,7 @@ input,select{font:inherit;font-size:16px;color:inherit}
 @keyframes tvScroll{from{transform:translateX(0)}to{transform:translateX(-33.34%)}}@keyframes tvScrollFast{from{transform:translateX(0)}to{transform:translateX(-66%)}}
 .travel.back .tl{transform:scaleX(-1)}.travel.back .far,.travel.back .mid{animation-name:tvScrollB}.travel.back .front{animation-name:tvScrollFastB}
 /* 意見回饋 405：往回走（公園 → 驛站）時圖層翻面後要從 +33% 捲回 0，不然左邊會露出一塊空白 */@keyframes tvScrollB{from{transform:scaleX(-1) translateX(33.34%)}to{transform:scaleX(-1) translateX(0)}}@keyframes tvScrollFastB{from{transform:scaleX(-1) translateX(66%)}to{transform:scaleX(-1) translateX(0)}}
-.travel .walker{position:absolute;left:50%;bottom:24%;transform:translateX(-50%);z-index:2}.travel .walker .av{width:54px;height:54px;font-size:26px;border-radius:50%;display:flex;align-items:center;justify-content:center;background:radial-gradient(circle at 40% 35%,#fff8ec,#f1dcb8);border:3px solid #b23a2a;color:#b23a2a;font-family:var(--serif);font-weight:900;animation:tvHop .42s ease-in-out infinite alternate;box-shadow:0 6px 10px rgba(0,0,0,.35)}
+.travel .walker{position:absolute;left:50%;bottom:24%;transform:translateX(-50%);z-index:2}.travel .xsr img{width:100%;height:100%;object-fit:contain;transform-origin:50% 100%;animation:xsHop .44s ease-in-out infinite alternate}@keyframes xsHop{from{transform:translateY(0) rotate(-4deg)}to{transform:translateY(-7px) rotate(4deg)}}.travel .walker .av{width:54px;height:54px;font-size:26px;border-radius:50%;display:flex;align-items:center;justify-content:center;background:radial-gradient(circle at 40% 35%,#fff8ec,#f1dcb8);border:3px solid #b23a2a;color:#b23a2a;font-family:var(--serif);font-weight:900;animation:tvHop .42s ease-in-out infinite alternate;box-shadow:0 6px 10px rgba(0,0,0,.35)}
 @keyframes tvHop{from{transform:translateY(0) rotate(-6deg)}to{transform:translateY(-14px) rotate(6deg)}}
 .travel .xsw{position:relative;animation:tvBob .22s ease-in-out infinite alternate;filter:drop-shadow(0 6px 6px rgba(0,0,0,.35))}.travel .xsw img{display:block;width:100%;height:100%}
 .travel .xsw b{position:absolute;display:flex;align-items:center;justify-content:center;border-radius:50%;background:#F7EFDD;font-family:var(--serif);font-weight:900;line-height:1}
@@ -656,7 +656,7 @@ html[data-era=ming] .topbar,html[data-era=qing] .topbar{border-bottom-width:4px}
       if(!window.caches)return go();caches.keys().then(function(ks){return Promise.all(ks.filter(function(k){return k.indexOf("xqlab-app-")===0}).map(function(k){return caches.delete(k)}))})
         .then(function(){return navigator.serviceWorker&&navigator.serviceWorker.getRegistration()}).then(function(r){return r&&r.update()}).catch(function(){}).then(go)}};setTimeout(chk,4000)})();
 </script>
-<script>window.XQ_OFFLINE=true;window.XQ_BUILD="20261105-0356";</script>
+<script>window.XQ_OFFLINE=true;window.XQ_BUILD="20261105-0425";</script>
 <script src="core.js"></script>
 <script src="engine.js"></script>
 <script src="local.js"></script>
@@ -3607,9 +3607,16 @@ const oppFig=L=>{if(!L||oppArt())return L;const o={...L};delete o.flat;delete o.
 const ACTOR_LOOK=(id,side)=>({p:npcPc({pc:ACTOR_PC[id]||"將"},side),e:store.get("era","classic"),g:9,actor:id,cus:"a:"+id,flat:true,sprite:"data/actors/",spriteMeta:{w:380,h:512,mask:true,faceOf:faceOf("actors",{idle:id,think:id,move:id,happy:id,sad:id,surprise:id},id)},spriteMap:{idle:id,think:id,move:id,happy:id,sad:id,surprise:id}});
 const innActor=j=>{if(!String(j||"").startsWith("inn:"))return null;const x=INN.concat(SECRETS).find(z=>"inn:"+z.id===j);return x?{...x,pc:ACTOR_PC[x.id]||"將",img:`data/actors/${x.id}.webp`,win:"承讓了，下次再來！",lose:"好棋！佩服。"}:null};
 // 公園棋盤的朝代造型（意見回饋 216）：跟棋盤模式同一套底圖、格線色、棋子底圖、字色、字形
+/* 意見回饋 561（開發者：雙人對戰切換平面／園子，棋盤不一樣）：棋盤風格沒有底圖的時候（純色、木紋等風格），3D 園子原本固定畫一塊淺色木板、象牙色棋子；
+   改成直接拿平面棋盤畫好的同一張底圖（boardBG 轉成圖片），棋子底色、紅黑字色也照平面棋盤的風格 */
+const cssVarOut=t=>{const cs=getComputedStyle(document.documentElement);return String(t).replace(/var\((--[\w-]+)(?:,\s*([^()]*))?\)/g,(m,n,d)=>cs.getPropertyValue(n).trim()||(d||"").trim()||"#C8A06A")};   /* 圖片裡的 SVG 讀不到 CSS 變數，先換成實際顏色 */
+function parkLook(){const o=parkLook0();if(o.img||o.hc)return o;try{const tk=store.get("boardTheme","wood3d"),e=curEra(),T0=JSON.parse(cssVarOut(JSON.stringify(boardTheme(tk))));
+  const svg=cssVarOut(`<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 560 620" width="1120" height="1240">${boardBG(T0,e,tk==="auto"?e:null,"pk",false,null)}</svg>`);
+  o.img="data:image/svg+xml;charset=utf-8,"+encodeURIComponent(svg.replace(/<text[^]*?<\/text>/g,"").replace(/font-family=""[^=<>]*?"(?=\s|\/?>)/g,'font-family="serif"'));   /* 楚河漢界由 3D 園子自己寫；SVG 裡字型名稱的雙層引號做成圖片會解析失敗，連同文字一起拿掉 */o.rect=[0,0,560,620];o.grid=T0.grid||o.grid;
+  if(!o.pset&&!o.pieces){o.pieceBg=T0.piece;o.ink=o.ink||{r:T0.r,b:T0.b}}}catch(x){}return o}
 /* 意見回饋 438、439（開發者：同一個朝代，平面和 3D 的棋盤、棋子不能不一樣）：這裡的判斷跟平面棋盤（Board 的 draw）一模一樣——
    棋盤：設定選「跟著朝代」才用朝代棋盤圖，經典＋木紋用經典圖，其他風格用那個風格的格線色；棋子：整套圖 → 朝代底圖（立體樣式才用）→ 程式畫的 */
-function parkLook(){const k=store.get("era","classic"),e=curEra(),tk=store.get("boardTheme","wood3d"),PS=store.get("pieceStyle","3d"),T=boardTheme(tk),
+function parkLook0(){const k=store.get("era","classic"),e=curEra(),tk=store.get("boardTheme","wood3d"),PS=store.get("pieceStyle","3d"),T=boardTheme(tk),
     imgK=tk==="auto"&&e?e.k:(!e&&tk==="wood3d"?"classic":null),pk=e?e.k:(tk==="wood3d"?"classic":null),bk=imgK&&BOARD_IMG[imgK]?imgK:null;
   // 字形晚到（第一次切到這個朝代）：拿上一次的參數重畫公園棋盤，棋子字面才會換成朝代字形（之前這裡什麼都沒做，要等走下一步才換）
   if(GLY_ERAS.has(k)&&!GLY[k])needGly(k,()=>{try{const a=PARK&&PARK.last;if(a&&GLY[k]&&store.get("era","classic")===k){a.ex.look=parkLook();PARK.v.draw(a.board,a.o,a.ex)}}catch(e){}});
@@ -3889,15 +3896,15 @@ const bookTabs=k=>{const ok=book1Done();return`<div class="row" style="gap:8px;m
 const bookTabsBind=v=>v.querySelectorAll("[data-bk]").forEach(b=>b.onclick=()=>{vibrate(5);const n=+b.dataset.bk;if(n===2&&!book1Done()&&!DEVMODE()){toast("🔒 讀完第一集、36 關都過了，第二集就會打開");return}store.set("legBook",n);route()});
 function Adventure2(v){setTop("📜 紙譜新局","#/");setTabs(true,"#/");v.className="view";v.innerHTML='<div class="pad muted">載入中…</div>';
   legendData2().then(D=>{if(!D){v.innerHTML='<div class="pad">'+bookTabs(2)+'<div class="card muted">第二集載入失敗，等一下再試</div></div>';bookTabsBind(v);return}
-    const S=jStars(),L=jStages2(),dev=DEVMODE()&&LEGEND2_PREVIEW,b1=book1Done();let n=1;while(n<=L.length&&S[L[n-1].id])n++;const open=k=>dev||(b1&&k<=n),tot=L.reduce((a,x)=>a+(S[x.id]||0),0);
+    LEGEND2_PREVIEW=false;const S=jStars(),L=jStages2(),dev=false,b1=book1Done();let n=1;while(n<=L.length&&S[L[n-1].id])n++;const open=k=>b1&&k<=n,   /* 意見回饋 563：清單不因開發者預覽全開，跟第一集一樣 */tot=L.reduce((a,x)=>a+(S[x.id]||0),0);
     const acts=[...new Set(D.chapters.map(c=>c.actName||""))];
     v.innerHTML=`<div class="pad">${bookTabs(2)}
       <div class="abn" style="height:150px;background-image:url(data/levels/${((D.chapters[0]||{}).cg||[])[0]||"b2cg01_dawn_sweep"}.webp);background-position:center 60%;margin-bottom:10px"><div class="hc"><b>📜 紙譜新局</b><small>明朝隆慶年間，一顆借來的骨卒</small></div></div>
       <p class="muted" style="margin:0 2px 8px;line-height:1.7;font-size:13.5px">${esc(D.blurb||"")}<br>每一回後面都有一關：讀完一回、過了那一關，就能讀下一回。・★ ${tot}／${L.length*3}${dev?"<br>👁 開發者預覽：36 回全部打開":b1?"":"<br>🔒 讀完第一集、36 關都過了才會打開"}</p>
       ${acts.map(a=>`<div class="sec-t">${esc(a)}</div><div class="items" style="padding:0">${D.chapters.filter(c=>(c.actName||"")===a).map(c=>{const k=c.n,sx=L[k-1],st=sx?S[sx.id]||0:0;
         return`<button class="item" data-k="${k}" ${open(k)?"":"disabled"}><span class="lb">${open(k)?(st?"⭐":"📖"):"🔒"}</span><span class="tx"><b style="white-space:normal;line-height:1.5">${open(k)?esc(c.title):"？？？"}</b>${open(k)?`<span>🎴 ${esc((c.lv||{}).name||"")}${st?"・"+"★".repeat(st):""}</span>`:""}</span><span class="muted">${open(k)?"›":""}</span></button>`}).join("")}</div>`).join("")}
-      <p class="muted" style="font-size:12px;margin-top:8px">故事是虛構的。</p>${DEVMODE()?`<button class="lk" id="a2Dev" style="margin-top:4px">${dev?"👁 關掉開發者預覽":"👁 開發者預覽全文（玩家看不到這個按鈕）"}</button>`:""}</div>`;
-    {const dv=v.querySelector("#a2Dev");if(dv)dv.onclick=()=>{vibrate(5);LEGEND2_PREVIEW=!LEGEND2_PREVIEW;route()}}
+      <p class="muted" style="font-size:12px;margin-top:8px">故事是虛構的。</p>${DEVMODE()?'<button class="lk" id="a2Dev" style="margin-top:4px">👁 開發者預覽全文（玩家看不到這個按鈕）</button>':""}</div>`;
+    {const dv=v.querySelector("#a2Dev");if(dv)dv.onclick=()=>{vibrate(5);LEGEND2_PREVIEW=true;legendRead2(1)}}
     bookTabsBind(v);v.querySelectorAll("[data-k]").forEach(b=>b.onclick=()=>{vibrate(5);legendRead2(+b.dataset.k)})});return{}}
 async function legendRead2(k){const D=await legendData2();if(!D)return;const c=D.chapters[k-1];if(!c)return;const L=jStages2(),sx=L[k-1],S=jStars(),okNext=!!(sx&&S[sx.id])||(DEVMODE()&&LEGEND2_PREVIEW);
   const img=f=>`<img src="data/levels/${f}.webp" alt="" style="width:100%;border-radius:12px;margin:6px 0" onerror="this.remove()">`;
@@ -4145,7 +4152,9 @@ function travel(to,done){if(document.querySelector(".travel"))return;try{window.
   {const im=new Image();im.onload=()=>{const f=ov.querySelector(".front");if(f){f.innerHTML="";f.style.backgroundImage=`url(${im.src})`;f.classList.add("img")}};im.src="data/path/front.webp"}
   /* 意見回饋 369：走路的換成 Gemini 手繪的小帥走路圖（data/xs/walk_1～8 輪流換），身上貼玩家選的棋子字；圖還沒載好前先用原本的棋子圓片 */
   /* 意見回饋 515：選小帥妹的話，荒野小徑上走的也是小帥妹（data/xs/girl/） */const XD=mySex()==="f"?"data/xs/girl/":"data/xs/";
-  fetch(XD+"xs.json").then(r=>r.ok?r.json():null).then(m=>{if(!m||!ov.isConnected)return;const fr=[1,2,3,4,5,6,7,8].map(i=>{const im=new Image();im.src=XD+"walk_"+i+".webp";return im});
+  /* 意見回饋 559：選「真實版」的人，走路圖原本永遠是 Q 版小帥（看起來像舊款）；改用真實版的角色圖（身上寫著選的棋子），一走一跳 */
+  if(myStyle()==="real"){const w=ov.querySelector(".walker"),H=Math.round(Math.min(150,innerHeight*.2)),W=Math.round(H*.75);if(w)w.innerHTML=`<div class="xsw xsr" style="width:${W}px;height:${H}px"><img alt="" src="${meImg()}" ${meImgTag(myStyle(),mySex())}></div><i class="dust"></i>`}
+  else fetch(XD+"xs.json").then(r=>r.ok?r.json():null).then(m=>{if(!m||!ov.isConnected)return;const fr=[1,2,3,4,5,6,7,8].map(i=>{const im=new Image();im.src=XD+"walk_"+i+".webp";return im});
     return Promise.all(fr.map(im=>im.decode())).then(()=>{const w=ov.querySelector(".walker");if(!w||!ov.isConnected)return;const H=Math.round(Math.min(150,innerHeight*.2)),W=H*m.w/m.h,f=m.poses.walk_1||m.poses.xs_idle,R=f.r*W*.82,ch=botPc();
       w.innerHTML=`<div class="xsw" style="width:${W}px;height:${H}px"><img alt="" src="${fr[0].src}"><b style="left:${f.cx*W-R}px;top:${f.cy*H-R}px;width:${2*R}px;height:${2*R}px;font-size:${R*1.25}px;color:${"帥仕相俥傌炮兵".includes(ch)?"#C8102E":"#1E1A16"}">${esc(ch)}</b></div><i class="dust"></i>`;
       const pic=w.querySelector("img");let i=0;const iv=setInterval(()=>{if(!ov.isConnected)return clearInterval(iv);i=(i+1)%8;pic.src=fr[i].src},110)})}).catch(()=>{});
@@ -5657,9 +5666,13 @@ function gradeNote(g,b){if(!g||!g.q)return"這步還沒評等（按 📊 賽後�
   if(g.q==="—")return"";if(g.q==="妙手")return"✨ 妙手：就是 Pikafish 的首選，而且是不容易找到的好棋，沒有更好的走法。";
   if(g.q==="正手")return"✅ 正手：跟 Pikafish 的首選一樣，沒有更好的走法（所以沒有藍色箭頭）。";
   return`Pikafish：這步比最佳著法少 ${g.loss} 分。`+sugText(g,b)+(/錯著|露著/.test(g.q)?"\n想知道為什麼不好？按下面 🔍 分析，看對方最好怎麼應。":"")}
+/* 意見回饋 562：「實際走的」那條箭頭顏色跟著棋盤風格（T.mv），說明文字原本寫死「綠色」；改成照目前棋盤的箭頭顏色說顏色名稱 */
+function mvColorName(){try{let c=String((boardTheme()||{}).mv||"");if(/^var\(/.test(c))c=getComputedStyle(document.documentElement).getPropertyValue(c.slice(4,-1).split(",")[0].trim()).trim();
+  const m=c.match(/^#?([0-9a-f]{6})$/i);if(!m)return"另一條";const n=parseInt(m[1],16),r=(n>>16)/255,g=((n>>8)&255)/255,b=(n&255)/255,mx=Math.max(r,g,b),mn=Math.min(r,g,b),d=mx-mn;if(d<.12)return mx>.6?"白色":"灰色";
+  let h=mx===r?((g-b)/d)%6:mx===g?(b-r)/d+2:(r-g)/d+4;h=(h*60+360)%360;if(h<15||h>=340)return"紅色";if(h<40)return mx<.6?"棕色":"橘色";if(h<65)return"黃色";if(h<165)return"綠色";if(h<200)return"青色";if(h<260)return"藍色";return"紫色"}catch(e){return"另一條"}}
 function sugText(g,b){const L=(g.bp&&g.bp.length?g.bp:g.bm?[g.bm]:[]).slice(0,3);if(!L.length)return g.bc?`建議 ${g.bc}（藍色箭頭）`:"";
   const out=[];try{const C=window.XQCore;for(const u of L){const f=sqI(u.slice(0,2)),t=sqI(u.slice(2,4));if(!b[f]||!C)break;out.push(C.notate(b,f,t));b=b.slice();b[t]=b[f];b[f]=null}}catch(e){}
-  if(!out.length)return`建議 ${g.bc||""}（藍色箭頭）`;return(out.length>1?"建議走法（藍色箭頭）："+out.map((x,i)=>`${i+1}. ${x}`).join("　"):`建議 ${out[0]}（藍色箭頭）`)+"\n綠色箭頭是實際走的"}
+  if(!out.length)return`建議 ${g.bc||""}（藍色箭頭）`;return(out.length>1?"建議走法（藍色箭頭）："+out.map((x,i)=>`${i+1}. ${x}`).join("　"):`建議 ${out[0]}（藍色箭頭）`)+"\n"+mvColorName()+"箭頭是實際走的"}
 function Viewer(v,c,id){
   setTabs(false);v.className="view fixed vw";
   v.innerHTML=`<div class="player vpl" id="vTop" style="padding:3px 12px"></div><div class="evline"><div id="evf"></div></div><div class="boardbox" id="bbox"></div>
