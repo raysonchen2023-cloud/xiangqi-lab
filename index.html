@@ -699,7 +699,7 @@ html[data-era=ming] .topbar,html[data-era=qing] .topbar{border-bottom-width:4px}
       if(!window.caches)return go();caches.keys().then(function(ks){return Promise.all(ks.filter(function(k){return k.indexOf("xqlab-app-")===0}).map(function(k){return caches.delete(k)}))})
         .then(function(){return navigator.serviceWorker&&navigator.serviceWorker.getRegistration()}).then(function(r){return r&&r.update()}).catch(function(){}).then(go)}};setTimeout(chk,4000)})();
 </script>
-<script>window.XQ_OFFLINE=true;window.XQ_BUILD="20261105-0907";</script>
+<script>window.XQ_OFFLINE=true;window.XQ_BUILD="20261105-0913";</script>
 <script src="core.js"></script>
 <script src="engine.js"></script>
 <script src="local.js"></script>
@@ -4064,12 +4064,15 @@ function meChip(){const tb=$("#topbar");if(!tb)return;{const o=document.getEleme
 /* 意見回饋 571：我的角色頁的朝代美術素材（Gemini 畫的，data/me_<朝代>/）；有素材的朝代才套用，其他朝代維持程式畫的版面 */
 const ME_ART=new Set(["song","classic","qin","han","sanguo","weijin","nanbei","sui","tang","wudai","yuan","ming","qing"]),
   /* 意見回饋 571：匾心（p）、六角牌框（b）或花窗底牆（w）是深色的朝代，字改成淺色（照素材中間的亮度量的，亮度 < 120 算深色） */
+  /* 意見回饋 589（開發者：清朝的上排花窗蓋到屋簷）：每個朝代牆面的屋簷（含彩繪樑）佔牆圖高度的比例，花窗一律排在屋簷下面（牆圖 1100×821、cover 鋪滿，所以照實際大小算） */
+  ME_EAVE={song:.125,classic:.225,qin:.2,han:.132,sanguo:.15,weijin:.134,nanbei:.339,sui:.146,tang:.403,wudai:.16,yuan:.218,ming:.33,qing:.315},
   ME_DARK={qin:"bw",han:"bw",sanguo:"bw",tang:"bw",wudai:"bw",ming:"pbw"},ME_ART_FILES=["stage_bg.webp","pedestal.webp","name_plaque_h.webp","seal.webp","jade_ring.webp","pagoda.webp","hex_badge.webp","wall.webp","win_b.webp","win_r.webp","win_s.webp","win_z.webp","mask_b.png","mask_r.png","mask_s.png","mask_z.png","view_b.webp","view_r.webp","view_s.webp","view_z.webp"];
 const ME_WIN={b:"M36 2H84L118 36V72L84 106H36L2 72V36Z",r:"M2 17A136 136 0 0 1 118 17L81 95A50 50 0 0 0 39 95Z",
   s:"M26 20A44 44 0 0 1 94 20A36 36 0 0 1 94 88A44 44 0 0 1 26 88A36 36 0 0 1 26 20Z",
   z:"M44 4H76V10C76 16 68 18 68 26C68 32 112 40 112 68C112 92 92 104 60 104C28 104 8 92 8 68C8 40 52 32 52 26C52 18 44 16 44 10Z"};
 const meWin=(k,ic,lb,n,cnt,mist)=>`<button class="mw${cnt?"":" empty"}" data-c="${k}" aria-label="${lb} ${n}" style="--mist:${cnt?(mist||0).toFixed(2):.6}"><span class="wf"><span class="wv"></span><svg viewBox="0 0 120 108" aria-hidden="true"><path class="o" d="${ME_WIN[k]}"/><path class="i" d="${ME_WIN[k]}"/></svg><span class="ic">${ic}</span></span><b>${lb}<small>${n}</small></b></button>`;
 function rankSheet(){const R=rankInfo(),era=store.get("era","classic");sheet("🏛 官階",b=>{b.innerHTML=`<div class="items" style="padding:0">${[1,2,3,4,5,6,7,8,9].map(g=>`<div class="item"${g===R.g?' style="box-shadow:inset 0 0 0 2px var(--accent)"':g<R.g?' style="opacity:.5"':""}><span class="lb">${g===R.g?"🏛":g<R.g?"🔒":"✓"}</span><span class="tx"><b>${esc(RANKT(era,g))}</b></span></div>`).join("")}</div>`})}
+function meEave(d,era){const w=d.querySelector(".mwall"),f=ME_EAVE[era];if(!w||f==null||!w.isConnected)return;const IW=1100,IH=821;w.style.paddingTop="0px";const C=w.getBoundingClientRect().height,W=w.clientWidth;if(!W)return;let p=f*W*IH/IW;if((C+p)/IH>W/IW)p=f*C/(1-f);w.style.paddingTop=Math.round(p+10)+"px"}
 function Me(v){Profile(v);setTop("🙂 我的角色","#/");setTabs(true,"#/");const pad=v.querySelector(".pad");if(!pad)return;
   const R=rankInfo(),I=xpInfo(),H=hintInfo(),B=bag(),Sx=jSecrets(),S=jStars(),Js=jStages(),L=legendState(),star=Js.reduce((a,x)=>a+(S[x.id]||0),0),
     xp=I.need?Math.round(I.rest*100/I.need):100,nS=Object.keys(Sx).length,nZ=Object.values(relicsMine()).reduce((a,x)=>a+x.length,0),pc=myPc(),red="帥仕相俥傌炮兵".includes(pc),d=document.createElement("div");
@@ -4085,7 +4088,7 @@ function Me(v){Profile(v);setTop("🙂 我的角色","#/");setTabs(true,"#/");co
       <div class="hx"><span>⭐</span><b>${star}<small>雲河棋路</small></b></div>
       <div class="hx"><span>${ETIMG("p_story","","📖")}</span><b>${L.n}／36<small>故事</small></b></div></section>
     <section class="mwall"><div class="mws">${meWin("b",ETIMG("p_board","data/treasure/board_normal.webp","🎁"),"棋盤",B.boards.length,B.boards.length)}${meWin("r",ETIMG("p_kifu","data/treasure/record_normal.webp","📜"),"棋譜",B.records.length,B.records.length)}${meWin("s",ETIMG("p_secret","","🤝"),"秘境棋友",`${nS}／${SECRETS.length}`,nS,.5*(1-nS/SECRETS.length))}${meWin("z","🏺","珍品",`${nZ}／130`,nZ,.5*(1-Math.sqrt(nZ/130)))}</div></section>`;
-  const circ=pad.querySelector(".circles");pad.replaceChildren(d);if(circ){circ.style.display="none";pad.append(circ)}
+  const circ=pad.querySelector(".circles");pad.replaceChildren(d);{const er=store.get("era","classic");if(ME_ART.has(er)&&ME_EAVE[er]!=null){const fit=()=>meEave(d,er);requestAnimationFrame(()=>{fit();requestAnimationFrame(fit)});addEventListener("resize",fit,{once:true})}}if(circ){circ.style.display="none";pad.append(circ)}
   const on=(id,fn)=>{const e=v.querySelector(id);if(e)e.onclick=()=>{vibrate(5);fn(e)}};
   on("#meFig2",f=>{const st=v.querySelector("#meSt");if(st){st.classList.remove("tap");void st.offsetWidth;st.classList.add("tap")}const im=f.querySelector("img");if(!f.dataset.g3)setTimeout(()=>meFigOpen(im&&im.src),220)});   /* 584：舞台已經是 3D 就不用再開大圖 */
   on("#meNm",()=>nameSheet(false));on("#meOb",()=>onboard(true));on("#mePc",()=>{store.set("setTab","bot");location.hash="#/settings"});
