@@ -699,7 +699,7 @@ html[data-era=ming] .topbar,html[data-era=qing] .topbar{border-bottom-width:4px}
       if(!window.caches)return go();caches.keys().then(function(ks){return Promise.all(ks.filter(function(k){return k.indexOf("xqlab-app-")===0}).map(function(k){return caches.delete(k)}))})
         .then(function(){return navigator.serviceWorker&&navigator.serviceWorker.getRegistration()}).then(function(r){return r&&r.update()}).catch(function(){}).then(go)}};setTimeout(chk,4000)})();
 </script>
-<script>window.XQ_OFFLINE=true;window.XQ_BUILD="20261105-0900";</script>
+<script>window.XQ_OFFLINE=true;window.XQ_BUILD="20261105-0907";</script>
 <script src="core.js"></script>
 <script src="engine.js"></script>
 <script src="local.js"></script>
@@ -4274,7 +4274,8 @@ function innSheet(v){setTimeout(innDrop,1200);setTop("🏮 驛站","#/adventure"
       c.querySelector("#ig").onclick=()=>{closeSheet();if(rl!=null)store.set("innCur",{id:x.id,rl});jStart("inn:"+x.id,rl==null?{human:"r",level:lv,journey:"inn:"+x.id}:{human:"r",level:Math.max(1,Math.min(6,1+Math.floor(rl/3))),rlv:rl,journey:"inn:"+x.id},()=>{location.hash="#/journey/play";setTimeout(()=>toast(`${x.ic} ${x.name}：${x.say}`),500)})}})});
   return{}}
 /* 意見回饋 327：石桌往事的棋（雲河棋路、驛站、公園）自己留一盤，跟朝代擂台、挑戰電腦互不干擾 */
-const parkLv=()=>Math.max(1,Math.min(6,1+Math.floor(xpInfo().L/8)));
+/* 意見回饋 588（開發者：路人看起來都是 Lv1，要照修為調整才有挑戰性）：每 3 級修為升一級（Lv3＝第 2 級電腦，最高第 8 級），再照最近輸贏微調：贏了下一位強一點、輸了弱一點（最多上下 2 級） */
+const parkLv=()=>Math.max(1,Math.min(8,1+Math.floor(xpInfo().L/3)+(store.get("parkAdj",0)||0)));
 function jName(j){if(!j)return"石桌往事";if(j==="park")return"園子";if(String(j).startsWith("char:")){const c=JCHAR[String(j).slice(5)];return c?"大廳・"+c.name:"大廳"}if(String(j).startsWith("inn:")){const x=INN.concat(SECRETS).find(z=>"inn:"+z.id===j);return x?"驛站・"+x.name:"驛站"}
   const s=jFindStage(j);return s?(s.book===2?"紙譜新局・":"雲河棋路・")+s.name:"雲河棋路"}
 const jBack=j=>String(j||"").startsWith("char:")?"#/lobby":j==="park"?"#/journey/park":String(j||"").startsWith("inn:")?"#/journey/inn":(()=>{const R=jRunGet(j);return R&&!R.done?"#/journey/"+j:"#/journey"})();
@@ -4351,6 +4352,7 @@ function journeyGameEnd(st){if(!st||!st.result)return;
     if(R){if(P.hint)R.hint=true;if(over)R.miss++;R.f={...(R.f||{}),win:won,draw:!st.result.w,plies:st.moves.length};{const k0=L.step!=null?L.step:R.k;R.fs=R.fs||{};const o=R.fs[k0]||{};R.fs[k0]={...o,win:won,draw:!st.result.w,survived:ok&&!won&&!st.result.w,mine:n,lastPiece:won?lvLastPiece(st):null,retried:o.retried||!ok}}if(L.rule)R.miss+=lvRuleMiss(st,L.rule,me);if(ok)R.k++;else R.lose=(R.lose||0)+1;R.ret=true;jRunSet(R)}
     setTimeout(()=>toast(ok?`🎴 這一步過了${over?`（超過 ${L.limit} 步，算一次失誤）`:""}，回到關卡繼續`:"🎴 這一步沒過，回到關卡再試一次"),1500);
     return}
+  if(P.id==="park"&&st.result.w){const a=store.get("parkAdj",0)||0;store.set("parkAdj",st.result.w===st.human?Math.min(2,a+1):Math.max(-2,a-1))}   /* 588：園子路人照輸贏微調難度 */
   const s=jStages().find(x=>x.id===P.id);if(!s)return;
   if(st.result.w===st.human){const n=st.moves.length,stars=Math.min(P.hint?2:3,n<=60?3:n<=100?2:1);jSet(s.id,stars,"闖關");setTimeout(()=>toast(`🗺 雲河棋路「${JR[s.r].name}・${s.name}」過關！${"★".repeat(stars)}${"☆".repeat(3-stars)}（${Math.ceil(n/2)} 回合內贏）`),1500)}
   else setTimeout(()=>toast(`🗺 「${s.name}」還沒過關，回雲河棋路再挑戰一次`),1500)}
