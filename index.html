@@ -699,7 +699,7 @@ html[data-era=ming] .topbar,html[data-era=qing] .topbar{border-bottom-width:4px}
       if(!window.caches)return go();caches.keys().then(function(ks){return Promise.all(ks.filter(function(k){return k.indexOf("xqlab-app-")===0}).map(function(k){return caches.delete(k)}))})
         .then(function(){return navigator.serviceWorker&&navigator.serviceWorker.getRegistration()}).then(function(r){return r&&r.update()}).catch(function(){}).then(go)}};setTimeout(chk,4000)})();
 </script>
-<script>window.XQ_OFFLINE=true;window.XQ_BUILD="20261105-1149";</script>
+<script>window.XQ_OFFLINE=true;window.XQ_BUILD="20261105-1207";</script>
 <script src="core.js"></script>
 <script src="engine.js"></script>
 <script src="local.js"></script>
@@ -4157,7 +4157,7 @@ function xpSheet(){const I=xpInfo();sheet("🀄 棋道修行",b=>{b.innerHTML=`<
     <div style="text-align:left;font-size:14px;line-height:1.75;margin-top:14px">
       <p style="margin:0 0 8px"><b>💡 提示棋</b>：Lv 5 起每天有（等級越高越多），兩位老人和攢滿 5 個心得也會送。跟電腦的一般對局、雲河棋路、故事裡都能用；用過的那盤不算進我的棋力。</p>
       <p style="margin:0 0 8px"><b>↶ 悔棋符</b>：現在有 <b>${undoLeft()}</b> 張。跟電腦下、故事裡下，要悔棋得用 1 張。跟電腦下完一盤（自己走 10 步以上）有 5% 機會掉 1 張。</p>
-      <p class="muted" style="margin:0;font-size:13px">線上對戰比真實力：不能悔棋、不能提示。積分挑戰、獎勵模式、擂台也不能用。練習（擺盤、錯棋重練）退幾步都可以。</p></div>
+      <p class="muted" style="margin:0;font-size:13px">對局時按「🎒 寶物」就能用。線上對戰比真實力：不能悔棋、不能提示；積分挑戰、獎勵模式也不能用。練習（擺盤、錯棋重練）退幾步都可以。</p></div>
     <div style="height:14px"></div>
     <button class="btn" id="xj" style="width:100%">🗺 去雲河棋路闖關</button>`;b.querySelector("#xj").onclick=()=>{closeSheet();location.hash="#/journey"}})}
 
@@ -4171,6 +4171,8 @@ function useHint(){const H=hintInfo();if(H.left>0){store.set("hintUse",{d:H.day,
   if(!H.per){toast("Lv 5 起才有提示棋，先多練習累積修為");return null}toast("今天的提示棋用完了，明天再來（等級越高，每天越多）");return null}
 /* 意見回饋 594／595（開發者）：悔棋改成寶物「悔棋符」。跟電腦下、故事裡下，要用 1 張悔棋符才能悔一步；線上對戰不能悔棋也不能提示。
    練習（擺盤、錯棋重練）照樣隨便退。掉落：跟電腦下完一盤（自己走 10 步以上）有 5% 機會掉 1 張，同一盤只抽一次 */
+/* 意見回饋 597：哪些對局不能用寶物（提示棋、悔棋符）——回傳原因，可以用就回傳空字串。線上對戰另外在對戰頁就沒有寶物 */
+const itemBlock=st=>!st?"":st.ranked?"積分挑戰要比真實力，不能用寶物":st.reward?"獎勵模式贏的是點數，不能用寶物":st.practice?"練習可以直接退，不用寶物":"";
 const UNDO_DROP=0.05,undoLeft=()=>Math.max(0,+store.get("undoBonus",0)||0);
 function undoDrop(st){if(!st||st.practice||!st.id)return"";if(st.moves.filter(m=>m.by===st.human).length<10)return"";
   const seen=store.get("undoDropIds",[]);if(seen.includes(st.id))return"";store.set("undoDropIds",seen.concat(st.id).slice(-60));
@@ -4431,7 +4433,7 @@ function jSheet(s){const n=jStars()[s.id]||0,R=JR[s.r];legendData().then(D=>{con
 /* 雲河棋路的對弈、守關：用提示棋請 Pikafish 指一步（Lv 20 前只指出要動的子） */
 async function jBattleHint(st,show){const P=store.get("jPending",null),inJ=!!(P&&st&&P.game===st.id);
   /* 意見回饋 595：提示棋除了雲河棋路，跟電腦的一般對局也能用；積分挑戰、獎勵模式、擂台、線上對戰不能用 */
-  if(!st)return;if(!inJ&&(st.ranked||st.reward||st.arena||st.practice))return toast("積分挑戰、獎勵模式和擂台不能用提示");
+  if(!st)return;if(!inJ&&itemBlock(st))return toast(itemBlock(st));   /* 意見回饋 597：擂台也能用 */
   if(st.result||st.turn!==st.human)return toast("輪到你走的時候才能用提示");const H=useHint();if(!H)return;if(inJ){P.hint=true;store.set("jPending",P)}api("/play/hintmark",{}).catch(()=>{});   /* 意見回饋 415：用過提示的那盤不算進我的棋力 */
   
   try{const d=await api("/an/engine",{board:st.board,side:st.human,ms:1500,multipv:1}),u=((d.lines||[])[0]||{}).pvm,C=window.XQCore;if(!u||!u[0])throw new Error("算不出來");
@@ -4985,13 +4987,22 @@ function CpuGame(v,practicePage,mode){
     return{look:PIKA_LOOK(bot),name:"Pikafish",img:null,say:"我是 Pikafish，請多指教。"}};
   (v.querySelector("#pTop")||{}).onclick=e=>{if(e.target.closest(".cpu-chip")){vibrate(8);newSheet();return}
     if(e.target.closest(".av")){const o=oppInfo();if(!o)return;vibrate(5);figView(oppArt()&&o.img?null:oppFig(o.look),"👤 "+o.name,`<p style="font-size:16px;line-height:1.8;margin:0 0 4px">「${esc(o.say)}」</p>${ageLine(o.age)}`,[["關閉",()=>closeSheet(),true]],o.img)}};   /* 意見回饋 445：跟坐在位子上的同一個形象（立繪就看立繪、3D 就看 3D） */
-  const acts=actionBar(v.querySelector("#acts"),[["jhint","💡","提示",()=>jBattleHint(st,h=>{pHint=h;draw()})],["undo","↶","悔棋",()=>undoAsk()],
+  const acts=actionBar(v.querySelector("#acts"),[["bag","🎒","寶物",()=>bagSheet()],["undo","↶","悔棋",()=>undoAsk()],
     ["new","＋","新局",()=>newSheet(),true],["resign","🏳","認輸",()=>confirmBox("確定認輸？",()=>post("/play/resign"),"認輸")],["review","📖","檢討",()=>review(false,st&&st.id)],["setup","🧪","擺盤",()=>st&&setupSheet(st.board,st.turn,st.human==="b",!st.ranked)]]);
   async function post(u,b){if(busy)return;busy=true;try{render(await api(u,b||{}))}catch(e){toast(e.message)}finally{busy=false}}
   /* 意見回饋 594：悔棋要用悔棋符（練習不用） */
-  function undoAsk(){if(!st)return;if(st.practice)return post("/play/undo");const n=undoLeft();
+  function undoAsk(){if(!st)return;if(st.practice)return post("/play/undo");{const no=itemBlock(st);if(no)return toast(no)}const n=undoLeft();
     if(n<=0)return toast("沒有悔棋符了：跟電腦下完一盤（自己走 10 步以上）有 5% 機會掉落");
     confirmBox("用 1 張悔棋符，退回你的上一步？（現在有 "+n+" 張）",()=>{if(undoLeft()<=0)return;store.set("undoBonus",undoLeft()-1);post("/play/undo")},"↶ 用悔棋符")}
+  /* 意見回饋 597（開發者）：對局中多一顆「🎒 寶物」，打開就看到提示棋、悔棋符，按了直接用；積分挑戰、獎勵模式、練習會擋下來並說明原因 */
+  function bagSheet(){if(!st)return;const no=itemBlock(st),H=hintInfo(),hn=H.left+H.bonus,un=undoLeft(),mine=st.moves.some(m=>m.by===st.human),myTurn=!st.result&&st.turn===st.human&&!st.thinking;
+    sheet("🎒 寶物",b=>{b.innerHTML=(no?`<p class="muted" style="margin:0 0 10px">⛔ ${esc(no)}</p>`:"")+
+      `<div class="card" style="display:flex;align-items:center;gap:10px;margin-bottom:10px"><span style="font-size:28px">💡</span><div style="flex:1"><b>提示棋</b>　${hn} 顆<div class="muted" style="font-size:13px">Pikafish 指出關鍵的子${H.full?"和落點":""}；用過的那盤不算進我的棋力</div></div><button class="btn" id="bgH" style="width:auto;padding:8px 16px">使用</button></div>
+      <div class="card" style="display:flex;align-items:center;gap:10px"><span style="font-size:28px">↶</span><div style="flex:1"><b>悔棋符</b>　${un} 張<div class="muted" style="font-size:13px">退回你的上一步</div></div><button class="btn" id="bgU" style="width:auto;padding:8px 16px">使用</button></div>
+      <p class="muted" style="font-size:12.5px;margin:10px 0 0">提示棋：Lv 5 起每天有，兩位老人和攢滿 5 個心得也會送。悔棋符：跟電腦下完一盤（自己走 10 步以上）有 5% 機會掉落。線上對戰、積分挑戰、獎勵模式不能用寶物。</p>`;
+      const bh=b.querySelector("#bgH"),bu=b.querySelector("#bgU");
+      bh.disabled=!!no||!hn||!myTurn;bu.disabled=!!no||!un||!mine;[bh,bu].forEach(x=>{if(x.disabled)x.style.opacity=".4"});
+      bh.onclick=()=>{closeSheet();jBattleHint(st,h=>{pHint=h;draw()})};bu.onclick=()=>{closeSheet();undoAsk()}})}
   function tap(i){if(!st||st.result||st.turn!==st.human||st.thinking)return;
     if(sel>=0&&st.legal.some(([f,t])=>f===sel&&t===i)){const f=sel;sel=-1;vibrate(15);return post("/play/move",{f,t:i})}
     sel=i===sel?-1:st.legal.some(([f])=>f===i)?i:-1;if(sel>=0)vibrate(5);draw()}
@@ -5034,8 +5045,8 @@ function CpuGame(v,practicePage,mode){
     else{s2.textContent=st.check>=0?"⚠ 你被將軍了！":st.hint?"💡 提示："+st.hint.cn:"輪到你"+(st.eval?`・${evt(st.eval.v)}`:"");s2.classList.toggle("hot",st.check>=0||!!st.hint)}
     if(st.practice&&!st.result&&!st.msg)practiceBar(s2);
     renderStrip(v.querySelector("#strip"),st.moves,st.moves.length-1);
-    acts.undo.disabled=st.ranked||st.reward||!!st.arena||!st.moves.some(m=>m.by===st.human);
-    {const jp=store.get("jPending",null),plain=!st.ranked&&!st.reward&&!st.arena&&!st.practice;acts.jhint.hidden=!((MODE==="journey"&&jp)||plain);
+    acts.undo.disabled=st.ranked||st.reward||!st.moves.some(m=>m.by===st.human);   /* 意見回饋 597：擂台也能用悔棋符 */
+    {acts.bag.hidden=!!st.practice;
       if(!st.practice&&!acts.undo.disabled)acts.undo.innerHTML='<span class="ic">↶</span>悔棋'+(undoLeft()?"（"+undoLeft()+"）":"");else acts.undo.innerHTML='<span class="ic">↶</span>悔棋'}   /* 意見回饋 380：電腦還在想也能悔棋；382：朝代擂台不能悔棋 */
     acts.resign.hidden=!!st.result;acts.review.hidden=!st.result;
     if(st.result&&shownResult!==JSON.stringify(st.result)+st.moves.length){shownResult=JSON.stringify(st.result)+st.moves.length;const xp0=store.get("xp",0);try{journeyGameEnd(st)}catch(e){}
@@ -5216,7 +5227,7 @@ const BOT_FAQ=[
  [["觀戰"],"按下方「🌐 線上」，「正在對戰」區每一盤旁邊按「👀 觀看」就能觀戰，看得到誰也在看。","#/lobby","去線上大廳"],
  [["音效","聲音","語音","男聲","女聲","語速"],"到「設定 → 🔊 聲音」：走棋音效有十幾種可以選，還有吃子音效、男聲／女聲報「吃」「將軍」，語速可以調慢中快。","#/settings","打開設定"],
  [["小人","機器人","小帥","你是誰","大小","拖"],"我是小帥！點我一下會表演、點兩下去散步、長按可以問我問題；按住可以把我拖到旁邊。到「設定 → ⋯ 其他」可以關掉我或調大小。"],
- [["悔棋","悔棋符"],"悔棋要用「↶ 悔棋符」：跟電腦的一般對局、故事裡可以用，跟電腦下完一盤有 5% 機會掉 1 張（棋童資料看得到張數）。積分挑戰、獎勵模式、擂台、線上對戰都不能悔棋；練習（擺盤、錯棋重練）可以隨便退。"],
+ [["悔棋","悔棋符"],"悔棋要用「↶ 悔棋符」：跟電腦的一般對局、故事裡可以用，跟電腦下完一盤有 5% 機會掉 1 張（棋童資料看得到張數）。對局時按「🎒 寶物」或「↶ 悔棋」就能用（擂台、故事、挑戰電腦都可以）；積分挑戰、獎勵模式、線上對戰都不能悔棋；練習（擺盤、錯棋重練）可以隨便退。"],
  [["錯棋重練","錯棋","重練"],"和電腦下完，App 會把你走錯的局面收進「錯棋重練」，之後可以回到那個局面重新練，直到走對為止。"],
  [["棋力測驗","測驗","程度"],"首頁的「🎯 棋力測驗」會出一系列題目，估計你目前的程度。","#/","回首頁"],
  [["積分","段位","排名","升級"],"積分挑戰和線上對戰會計分，從新手開始，贏棋加分、輸棋扣分，分數夠就升段。"],
