@@ -699,7 +699,7 @@ html[data-era=ming] .topbar,html[data-era=qing] .topbar{border-bottom-width:4px}
       if(!window.caches)return go();caches.keys().then(function(ks){return Promise.all(ks.filter(function(k){return k.indexOf("xqlab-app-")===0}).map(function(k){return caches.delete(k)}))})
         .then(function(){return navigator.serviceWorker&&navigator.serviceWorker.getRegistration()}).then(function(r){return r&&r.update()}).catch(function(){}).then(go)}};setTimeout(chk,4000)})();
 </script>
-<script>window.XQ_OFFLINE=true;window.XQ_BUILD="20261105-1120";</script>
+<script>window.XQ_OFFLINE=true;window.XQ_BUILD="20261105-1135";</script>
 <script src="core.js"></script>
 <script src="engine.js"></script>
 <script src="local.js"></script>
@@ -1721,18 +1721,28 @@ if(OFF&&"serviceWorker" in navigator){
   setInterval(()=>{if(!document.hidden)chk(true)},5*60000);
   const inGame=()=>/^#\/(cpu|arena|pvp|quiz|watch|journey\/play|redo\/play)(\/|$)/.test(location.hash);
   const fmtV=x=>!x?"":/^\d{8}-\d{4}$/.test(x)?`${x.slice(0,4)}/${x.slice(4,6)}/${x.slice(6,8)} ${x.slice(9,11)}:${x.slice(11,13)}`:x.slice(0,8);
-  async function doUpdate(){updating=true;const tt=document.createElement("div");tt.className="toast";tt.textContent="⬇ 正在更新…";document.body.append(tt);
+  /* 意見回饋 593：更新時看得到進度（第幾個檔／共幾個＋進度條），慢的時候老實說還在下載；套用後重新打開會跳「已更新到新版」 */
+  let updT=null;const updBox=()=>{if(updT&&updT.isConnected)return updT;updT=document.createElement("div");updT.className="toast";updT.style.cssText="min-width:230px;z-index:310";
+    updT.innerHTML='<div class="ut">⬇ 正在下載新版…</div><div style="margin-top:6px;height:5px;border-radius:3px;background:#fff3;overflow:hidden"><i style="display:block;height:100%;width:3%;background:#E9C46A;transition:width .25s"></i></div>';document.body.append(updT);return updT};
+  const updSay=(t,p)=>{const b=updBox();b.querySelector(".ut").textContent=t;if(p!=null)b.querySelector("i").style.width=Math.max(3,Math.min(100,p))+"%"};
+  navigator.serviceWorker.addEventListener("message",e=>{const m=e.data&&e.data.xqUpd;if(!m||!updating)return;const[g,n]=m;updSay(`⬇ 正在下載新版　${g}／${n}`,g/n*95)});
+  const markDone=()=>{try{localStorage.setItem("xqUpdDone",String(Date.now()))}catch(e){}};
+  try{const d=+(localStorage.getItem("xqUpdDone")||0);if(d){localStorage.removeItem("xqUpdDone");if(Date.now()-d<120000){let w=0;const sh=async()=>{if(document.querySelector("#preov")&&++w<200)return setTimeout(sh,300);const v=fmtV(await appVer());
+    const t=document.createElement("div");t.className="toast";t.style.zIndex="310";t.textContent="✓ 已更新到新版"+(v?"（"+v+"）":"")+"，可以繼續用了";document.body.append(t);setTimeout(()=>t.remove(),5000)};setTimeout(sh,600)}}}catch(e){}
+  async function doUpdate(){updating=true;updSay("⬇ 正在檢查新版…",3);const tt=updT;let slow=null;
     try{const r=await navigator.serviceWorker.getRegistration();if(r){await r.update().catch(()=>{});
-      if(r.installing||r.waiting)await new Promise(ok=>{navigator.serviceWorker.addEventListener("controllerchange",ok,{once:true});setTimeout(ok,10000)})}}catch(e){}
+      if(r.installing||r.waiting){slow=setTimeout(()=>updSay("⬇ 網路比較慢，還在下載…下載好會自動套用"),15000);
+        await new Promise(ok=>{navigator.serviceWorker.addEventListener("controllerchange",ok,{once:true});setTimeout(ok,90000)})}}}catch(e){}
+    clearTimeout(slow);updSay(tt.querySelector(".ut").textContent,100);
     // 不馬上重新整理：新版已經在背景下載好，留在原本的畫面（意見回饋寫到一半也不會不見），等換到別的頁面時才套用
     pending=true;
     /* 意見回饋 320：沒在下棋、測驗、打字、開卡片時，下載好就馬上套用；不然才等換頁 */
     const busyNow=()=>inGame()||!!document.querySelector("#sheet.show,.travel")||/^(INPUT|TEXTAREA)$/.test((document.activeElement||{}).tagName||"");
-    if(!busyNow()){tt.textContent="✓ 新版已準備好，馬上套用…";setTimeout(()=>location.reload(),900);return}
-    tt.textContent="✓ 新版已準備好，換到別的頁面時自動套用";setTimeout(()=>tt.remove(),3500);
+    if(!busyNow()){updSay("✓ 新版下載好了，馬上套用…",100);markDone();setTimeout(()=>location.reload(),900);return}
+    updSay("✓ 新版下載好了，換到別的頁面時自動套用",100);setTimeout(()=>tt.remove(),3500);
     document.querySelectorAll(".toast.upd").forEach(x=>x.remove())}
   let pending=false;const seg=h=>(String(h||"").split("#")[1]||"/").split("/")[1]||"";
-  addEventListener("hashchange",e=>{if(pending&&seg(e.newURL)!==seg(e.oldURL))location.reload()});
+  addEventListener("hashchange",e=>{if(pending&&seg(e.newURL)!==seg(e.oldURL)){markDone();location.reload()}});
   let shownV="";
   async function notifyNew(nv,note){if(shown&&(!nv||nv<=shownV))return;shown=true;shownV=nv||shownV;
     if(pending||updating){updating=false;return doUpdate()}const v=fmtV(nv||await appVer());vibrate([20,40,20]);
