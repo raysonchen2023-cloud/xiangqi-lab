@@ -3,7 +3,7 @@
 "use strict";
 var XQ=(function(){
   const C=XQCore,BASE=new URL("./",location.href).href;
-  const{START,parseFen,fen,legal,inCheck,kingSq,iccs,parseSq,notate,opp,LEVELS,stateApply,stateRebuild,judgeState,pickMove,ANALYZE_MS,classifyRaw,PLAYER,summary,fullItem,gameItem}=C;
+  const{START,parseFen,fen,legal,inCheck,kingSq,iccs,parseSq,notate,opp,LEVELS:LEVELS8,stateApply,stateRebuild,judgeState,pickMove,ANALYZE_MS,classifyRaw,PLAYER,summary,fullItem,gameItem}=C;
   const gameId=()=>new Date().toISOString().replace(/[:.]/g,"-").slice(0,19);
   const ls={get(k,d){try{const v=localStorage.getItem("xq_"+k);return v==null?d:JSON.parse(v)}catch(e){return d}},set(k,v){try{localStorage.setItem("xq_"+k,JSON.stringify(v))}catch(e){}}};
 
@@ -41,6 +41,20 @@ var XQ=(function(){
     {depth:3,multipv:6,margin:200},{depth:4,multipv:6,margin:150},{depth:5,multipv:5,margin:120},{depth:6,multipv:4,margin:90},{depth:7,multipv:4,margin:70},
     {depth:8,multipv:3,margin:50},{depth:9,multipv:3,margin:35},{depth:10,multipv:3,margin:25},{depth:12,multipv:2,margin:15},
     {movetime:300},{movetime:500},{movetime:1200},{movetime:3000}];
+  /* 意見回饋 590（開發者：電腦的級數再細分，照 新手／入門×N／業×N／專×N）：挑戰電腦改成 18 級，名字和強度跟積分挑戰的段位一樣，最上面多一級「專3・全力」。
+     舊的 1～8 級（石桌往事、擂台、園子路人傳來的 level，還有以前存的紀錄）照強度換算：1→入門1、2→入門3、3→業2、4→業5、5→業7、6→專1-2、7→專2-1、8→專3 */
+  const LVDESC=x=>x.movetime?`每步想 ${x.movetime/1000} 秒，不放水`:`往後算 ${x.depth} 步，`+(x.margin>=500?"常常亂走":x.margin>=250?"會漏子":x.margin>=150?"偶有失誤":x.margin>=70?"小失誤":x.margin>=35?"很少失誤":"幾乎不失誤");
+  const LEVELS=[...RLV,{movetime:6000}].map((x,i)=>({...x,n:i+1,name:i<RANKS.length?RANKS[i][0]:"專3・全力",desc:i===RLV.length?"每步想 6 秒，人類幾乎贏不了":LVDESC(x)}));
+  const OLD2FINE=[6,2,4,6,9,11,15,16,18],lvOld=n=>OLD2FINE[Math.max(1,Math.min(8,Math.round(+n)||3))];
+  const lvIn=b=>b&&b.lx!=null&&Number.isFinite(+b.lx)?Math.max(1,Math.min(LEVELS.length,Math.round(+b.lx))):lvOld(b&&b.level);
+  (function lvMig(){if(ls.get("lvFine",0))return;try{
+    const R=ls.get("record",null);if(R){const R2={};for(const[k,v]of Object.entries(R)){const o=R2[lvOld(k)]||(R2[lvOld(k)]={w:0,l:0,d:0});for(const z of["w","l","d"])o[z]+=(v&&v[z])||0}ls.set("record",R2)}
+    const B=ls.get("carBank",null);if(B){(B.hist||[]).forEach(h=>{if(h&&h.lv)h.lv=lvOld(h.lv)});if(B.byLv){const N={};for(const[k,v]of Object.entries(B.byLv)){const o=N[lvOld(k)]||(N[lvOld(k)]={w:0,l:0,d:0,pts:0});for(const z of["w","l","d","pts"])o[z]+=(v&&v[z])||0}B.byLv=N}ls.set("carBank",B)}
+    const p=ls.get("play",null);if(p&&p.level){p.level=lvOld(p.level);ls.set("play",p)}
+    const s2=ls.get("play2",null);if(s2){if(s2.moves){if(s2.level)s2.level=lvOld(s2.level)}else for(const g of Object.values(s2))if(g&&g.level)g.level=lvOld(g.level);ls.set("play2",s2)}
+    try{const c=localStorage.getItem("m_cpuLevel");if(c!=null)localStorage.setItem("m_cpuLevel",JSON.stringify(lvOld(JSON.parse(c))))}catch(e){}
+    Promise.resolve().then(async()=>{try{const list=await idb.get("games:play");if(list&&list.length){list.forEach(g=>{if(g&&g.level)g.level=lvOld(g.level)});await idb.set("games:play",list)}}catch(e){}});
+  }catch(e){}ls.set("lvFine",1)})();
   const cpuRate=()=>ls.get("cpuRate",null)||{pts:0,w:0,l:0,d:0,hist:[]};
   /* 意見回饋 段位失準：跟線上一樣改成等級分的期望勝率（對手＝開局時那一段的電腦，強度取那一階的中間），不再固定贏 +20、輸 −15 */
   function cpuRateApply(res){const R=cpuRate(),before=R.pts,lo=RANKS[P.rk][1],hi=RANKS[P.rk+1]?RANKS[P.rk+1][1]:lo+200,op=(lo+hi)/2;
@@ -49,7 +63,7 @@ var XQ=(function(){
     R.hist.unshift({id:P.id,res,d,pts:R.pts,rk:RANKS[P.rk][0],n:P.moves.length,why:P.result?P.result.why:"",at:Date.now()});R.hist=R.hist.slice(0,100);ls.set("cpuRate",R);
     P.rate={res,d,pts:R.pts,rank:RANKS[rankIdx(R.pts)][0],was:RANKS[rankIdx(before)][0]}}
   // 獎勵模式：贏棋拿點數（一點＝台幣一萬），存起來到車庫換車款模型；和棋拿四成，輸了 0 點
-  const CAR_PTS=[2,4,8,15,30,60,120,250];
+  const CAR_PTS=[1,2,3,4,6,8,10,12,15,22,30,38,45,52,60,120,180,250];   /* 590：18 級的獎勵點數（舊的 8 級那幾階照原本的點數） */
   const carBank=()=>ls.get("carBank",null)||{pts:0,earned:0,w:0,l:0,d:0,owned:{},hist:[]};
   function carApply(res){const B=carBank(),full=CAR_PTS[P.level-1]||0,d=res==="w"?full:res==="d"?Math.round(full*.4):0;
     B.pts+=d;B.earned+=d;B[res]++;const lv=(B.byLv=B.byLv||{})[P.level]||(B.byLv[P.level]={w:0,l:0,d:0,pts:0});lv[res]++;lv.pts+=d;   // 各難度的勝負和拿到的點數
@@ -93,7 +107,7 @@ var XQ=(function(){
      桌上就是那一種：不動（下完的也不動，畫面自己決定）。不是：下到一半的先收進 play2 自己那格，再拿出那一種收著的；都沒有才開新的（石桌往事要給 journey 才開，練習不開——不開就連收都不收，不會多出一份重複的）。
      收起來以後先把 P 清掉再開新局，playNew 最後的 forfeit(P) 才不會把剛收起來的積分局算成中途離開 */
   function playOpen(b){ensureP();const k=["arena","journey","practice"].includes(b.kind)?b.kind:"cpu";
-    const s=stashGet(k),era=typeof b.arena==="string"&&/^[a-z]{2,8}$/.test(b.arena)?b.arena:null,lv=d=>Math.max(1,Math.min(LEVELS.length,Math.round(+b.level)||d));
+    const s=stashGet(k),era=typeof b.arena==="string"&&/^[a-z]{2,8}$/.test(b.arena)?b.arena:null,lv=d=>(b.lx!=null||+b.level)?lvIn(b):lvOld(d);
     /* 意見回饋 428：擂台接回沒下完的那盤時，強度換成現在的規則（例如石桌棋仙固定第 7 級），不沿用開局當時存的等級 */
     const relv=g=>{if(k==="arena"&&g&&b.level&&!g.result&&g.level!==lv(3)){g.level=lv(3);return true}return false};
     if(kindOf(P)===k){if(relv(P)){stateRebuild(P);savePlay()}return}
@@ -163,7 +177,7 @@ var XQ=(function(){
       moves:P.moves.map(moveOut),result:P.result,practice:P.practice||null,thinking:playBusy&&P.turn!==P.human,msg:playMsg,eval:lastEv(P.moves),hint:P.hint,
       legal:!P.result&&P.turn===P.human?legal(P.board,P.turn):[],check:!P.result&&inCheck(P.board,P.turn)?kingSq(P.board,P.turn):-1,engine:true}}
   async function playPost(p,b){ensureP();
-    if(p==="/play/new"){playNew(b.human==="b"?"b":"r",Math.max(1,Math.min(LEVELS.length,Math.round(+b.level)||3)),!b.pre&&!!b.ranked,b.pre||null,!!b.reward,typeof b.arena==="string"&&/^[a-z]{2,8}$/.test(b.arena)?b.arena:null,false,jid(b.journey),b.lv);if(P&&!P.ranked&&b.rlv!=null&&Number.isInteger(+b.rlv)){P.rlv=Math.max(0,Math.min(RLV.length-1,+b.rlv));savePlay()}playMsg="";setTimeout(playEngine,0)}
+    if(p==="/play/new"){playNew(b.human==="b"?"b":"r",lvIn(b),!b.pre&&!!b.ranked,b.pre||null,!!b.reward,typeof b.arena==="string"&&/^[a-z]{2,8}$/.test(b.arena)?b.arena:null,false,jid(b.journey),b.lv);if(P&&!P.ranked&&b.rlv!=null&&Number.isInteger(+b.rlv)){P.rlv=Math.max(0,Math.min(RLV.length-1,+b.rlv));savePlay()}playMsg="";setTimeout(playEngine,0)}
     else if(p==="/play/bonus"){   /* 意見回饋 313：石桌往事「回到當年」答對轉折加段位積分；每個轉折只能領一次 */
       const key=String(b.key||"").slice(0,80),pts=Math.max(1,Math.min(20,Math.round(+b.pts)||0)),K=ls.get("bonusKeys",{});
       if(!key)throw new Error("缺少題目代號");const R=cpuRate();

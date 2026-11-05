@@ -699,7 +699,7 @@ html[data-era=ming] .topbar,html[data-era=qing] .topbar{border-bottom-width:4px}
       if(!window.caches)return go();caches.keys().then(function(ks){return Promise.all(ks.filter(function(k){return k.indexOf("xqlab-app-")===0}).map(function(k){return caches.delete(k)}))})
         .then(function(){return navigator.serviceWorker&&navigator.serviceWorker.getRegistration()}).then(function(r){return r&&r.update()}).catch(function(){}).then(go)}};setTimeout(chk,4000)})();
 </script>
-<script>window.XQ_OFFLINE=true;window.XQ_BUILD="20261105-0913";</script>
+<script>window.XQ_OFFLINE=true;window.XQ_BUILD="20261105-0934";</script>
 <script src="core.js"></script>
 <script src="engine.js"></script>
 <script src="local.js"></script>
@@ -3492,8 +3492,8 @@ function Garage(v){
         try{B=await api("/car/redeem",{id:c.id});closeSheet();paint();vibrate([30,40,60]);
           const md=modal(`<div class="car-big car-drive" id="c3d"><div class="car-ph big"></div></div><h2>🎉 換到了！</h2><p><b>${esc(c.name)}</b> 開進你的車庫了</p><p class="muted">剩下 ${B.pts.toLocaleString()} 點</p>`,[["好",null]]);show3D(md.querySelector("#c3d"),c,{drive:true})}
         catch(e){toast(e.message)}},"兌換")})}
-  async function play(){vibrate(8);const level=store.get("cpuLevel",3);
-    const go=async()=>{try{await api("/play/new",{human:"r",level,reward:true});store.set("cpuRanked",false);store.set("cpuCar",true);location.hash="#/cpu"}catch(e){toast(e.message)}};
+  async function play(){vibrate(8);const level=store.get("cpuLevel",6);
+    const go=async()=>{try{await api("/play/new",{human:"r",lx:level,reward:true});store.set("cpuRanked",false);store.set("cpuCar",true);location.hash="#/cpu"}catch(e){toast(e.message)}};
     let s=null;try{s=await api("/play/state")}catch(e){}
     const live=s&&!s.result&&s.moves.length>=2;
     if(live&&s.reward){location.hash="#/cpu";return}
@@ -4923,7 +4923,7 @@ function CpuGame(v,practicePage,mode){
   const MODE=practicePage?"practice":mode||"cpu",KIND=s=>s.kind||(s.practice?"practice":s.journey?"journey":s.arena?"arena":"cpu"),MODE_URL={cpu:"#/cpu",arena:"#/arena",journey:"#/journey/play",practice:"#/redo/play"};let opened=false;
   const openArgs=()=>{if(MODE==="arena"){const e=store.get("era","classic"),k=ARENA[e]?e:"classic";return{kind:"arena",arena:k,level:arenaLevel(k)}}
     if(MODE==="journey"||MODE==="practice")return{kind:MODE};
-    return{kind:"cpu",ranked:OFF&&store.get("cpuRanked",true),reward:REWARD&&store.get("cpuCar",false),level:store.get("cpuLevel",3),human:"r"}};
+    return{kind:"cpu",ranked:OFF&&store.get("cpuRanked",true),reward:REWARD&&store.get("cpuCar",false),lx:store.get("cpuLevel",6),human:"r"}};
   setTabs(false);gameLayout(v);
   let st=null,sel=-1,shownResult=null,busy=false,pHint=null;   // pHint：錯棋重練時在棋盤上畫 Pikafish 的建議
   const bd=Board(i=>tap(i));v.querySelector("#bbox").append(bd.svg);
@@ -5089,20 +5089,20 @@ async function review(rep,id){let it=null;for(let k=0;k<12&&!it;k++){try{const d
       pa.querySelector("#pPv").onclick=()=>{vibrate(5);pvSheet(bc)}}}
   // 開新局。下到一半（雙方都走過）：積分挑戰會算輸，一定要確認；自選難度換成積分挑戰也問一下，免得誤觸把棋丟掉
   function startNew(o){const ranked=OFF&&!!o.ranked,reward=OFF&&!ranked&&!!o.reward,m=ranked?"rank":reward?"car":"free";
-    const go=()=>{closeSheet();shownResult=null;sel=-1;if(OFF){store.set("cpuRanked",ranked);store.set("cpuCar",reward)}paintSeg(m);post("/play/new",{human:o.human,level:o.level,ranked,reward})};
+    const go=()=>{closeSheet();shownResult=null;sel=-1;if(OFF){store.set("cpuRanked",ranked);store.set("cpuCar",reward)}paintSeg(m);post("/play/new",{human:o.human,lx:o.level,ranked,reward})   /* 590：挑戰電腦傳的是細分後的 18 級（lx），其他地方傳的舊 1～8 級由 local.js 換算 */};
     const live=st&&!st.result&&st.moves.length>=2;
     if(live&&st.ranked)confirmBox("積分挑戰還沒下完，開新局會算輸，確定？",go,"確定");
     else if(live&&m!=="free"&&m!==modeOf(st))confirmBox(`這盤還沒下完，要換成${ranked?"積分挑戰":"獎勵模式"}開新局嗎？`,go,ranked?"換成積分挑戰":"換成獎勵模式");else go()}
   // 頂部模式切換：換到另一個模式＝用同樣的紅黑開一盤新局；點目前的模式＝打開開新局選單
   function switchMode(m){if(!st)return;if(modeOf(st)===m)return newSheet();
-    startNew({human:st.human,level:st.level||store.get("cpuLevel",3),ranked:m==="rank",reward:m==="car"})}
+    startNew({human:st.human,level:st.level||store.get("cpuLevel",6),ranked:m==="rank",reward:m==="car"})}
   // 開新局選單：只管這個模式的設定（紅黑、難度），模式本身在頂部切換
   /* 意見回饋 413：石桌往事的「新局」只有重下這一盤、回雲河棋路（驛站、園子），沒有挑戰電腦的難度選單 */
   function jNewSheet(){const j=st.journey,s0=jFindStage(j),live=!st.result&&st.moves.length>=2;
     modal(`<div class="em">🪨</div><h2>${esc(jName(j))}</h2><p class="muted">${live?"這盤還沒下完，重下就會放棄這一盤。":"跟同一位對手再下一盤，或回去換一位。"}</p>`,
       [["⚔ 重下這一盤",()=>{shownResult=null;sel=-1;if(s0)jPlay(s0,true);else jAgain(st).then(render).catch(e=>toast(e.message))}],["‹ 回"+jPlace(j),()=>goBack(jBack(j))],["取消",null,true]])}
   function newSheet(){if(!st)return;if(MODE==="arena")return arenaSheet(ARENA[st.arena]?st.arena:store.get("era","classic"),arenaStart);if(MODE==="journey")return jNewSheet();   /* 意見回饋 396：擂台裡按「新局」只出現挑戰擂台（再挑戰擂主、集章簿），不出現自選難度 */
-    let side=st.human,level=st.level||store.get("cpuLevel",3);const ranked=OFF&&!!st.ranked,reward=OFF&&!!st.reward;
+    let side=st.human,level=st.level||store.get("cpuLevel",6);const ranked=OFF&&!!st.ranked,reward=OFF&&!!st.reward;
     const sh=sheet(ranked?"🏅 積分挑戰・開新局":reward?"🚗 獎勵模式・開新局":"🎚 自選難度・開新局",b=>{const rec=st.record||{},CR=st.cpuRate||{},CB=st.car||{},tb=CB.table||[];
       const paint=()=>{const span=CR.hi!=null?CR.hi-CR.lo:0,pct=span?Math.round(100*(CR.pts-CR.lo)/span):100;
         b.innerHTML=(ranked?`<div class="cpu-rk"><div class="mid"><span class="muted">你的電腦段位</span><span class="pt"><b>${CR.pts||0}</b> 分</span></div>
@@ -5130,7 +5130,7 @@ async function review(rep,id){let it=null;for(let k=0;k<12&&!it;k++){try{const d
       if(MODE==="arena"&&(s.result||!s.moves.length)){if(s.result)shownResult=JSON.stringify(s.result)+s.moves.length;render(s);setTimeout(()=>arenaBtn[1](),300);return}
       /* 戰績頁「開始積分挑戰」「下一盤獎勵棋」：這盤的模式不同就換（下到一半會先問） */
       if(MODE==="cpu"){const w=store.get("cpuWant",null);if(w){store.set("cpuWant",null);setTimeout(()=>{if(st&&modeOf(st)!==w)switchMode(w)},400)}}
-      if(s.result){shownResult=JSON.stringify(s.result)+s.moves.length;const rk=OFF&&!!store.get("cpuRanked",!!s.ranked),cr=OFF&&!rk&&!!store.get("cpuCar",!!s.reward);await post("/play/new",{human:s.human,level:s.level||store.get("cpuLevel",3),ranked:rk,reward:cr});s.ranked=rk;
+      if(s.result){shownResult=JSON.stringify(s.result)+s.moves.length;const rk=OFF&&!!store.get("cpuRanked",!!s.ranked),cr=OFF&&!rk&&!!store.get("cpuCar",!!s.reward);await post("/play/new",{human:s.human,lx:s.level||store.get("cpuLevel",6),ranked:rk,reward:cr});s.ranked=rk;
       toast(s.ranked?`新的一局・積分挑戰`:cr?`新的一局・🚗 獎勵第 ${s.level} 級`:`新的一局・第 ${s.level} 級`);return}}
     render(s)},()=>st&&st.thinking?500:1500);
   // 電腦一走完就馬上畫出來（不等下一次輪詢）
