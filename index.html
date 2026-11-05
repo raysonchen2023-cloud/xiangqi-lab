@@ -699,7 +699,7 @@ html[data-era=ming] .topbar,html[data-era=qing] .topbar{border-bottom-width:4px}
       if(!window.caches)return go();caches.keys().then(function(ks){return Promise.all(ks.filter(function(k){return k.indexOf("xqlab-app-")===0}).map(function(k){return caches.delete(k)}))})
         .then(function(){return navigator.serviceWorker&&navigator.serviceWorker.getRegistration()}).then(function(r){return r&&r.update()}).catch(function(){}).then(go)}};setTimeout(chk,4000)})();
 </script>
-<script>window.XQ_OFFLINE=true;window.XQ_BUILD="20261105-0800";</script>
+<script>window.XQ_OFFLINE=true;window.XQ_BUILD="20261105-0847";</script>
 <script src="core.js"></script>
 <script src="engine.js"></script>
 <script src="local.js"></script>
@@ -3557,35 +3557,48 @@ const JCHAR={liu_young:{name:"少年柳寒舟",pc:"砲",hat:"hair",hc:"#1E1A16",
   liu_old:{name:"柳寒舟",pc:"砲",hat:"bun",hc:"#D8D6D0",robe:"#8A8A86",hi:"你走那步車，讓我想起一個人。",win:"還是太急了。",lose:"好……好棋。"}};
 /* 3D 園子的對手一律是立體小人（意見回饋 377），所以故事角色跟路人一樣用帽子、髮色、衣服顏色來分；畫好的立繪（data/journey/char_*）留給對話和人物頁用 */
 const JCHAR_LOOK=(k,side)=>JCHAR[k]?{...NPC_LOOK({...JCHAR[k],cus:"j:"+k,say:JCHAR[k].hi},side),...(CHAMP_META?{flat:true,sprite:`data/journey/char_${k}_`,spriteMeta:{...CHAMP_META,mask:true,faceOf:faceOf("journey",{idle:`char_${k}_idle`,think:`char_${k}_think`,move:`char_${k}_move`,happy:`char_${k}_win`,sad:`char_${k}_lose`,surprise:`char_${k}_think`},`char_${k}_idle`)},spriteMap:{happy:"win",sad:"lose",surprise:"think"}}:{})}:null;   /* 故事人物也用畫好的形象（5 個姿勢） */
+/* 意見回饋 584（開發者）：3D 人物檢視抽成共用的 fig3d——我的角色頁的舞台直接放 3D（不用再點一次才看得到）、點人物的大圖也用它。
+   o.tight：鏡頭貼近、人物撐滿框（舞台用）；o.zoom：顯示 ＋／－ 並可兩指縮放；o.spin：一直慢慢轉，否則左右輕輕擺動、拖過就停在拖到的角度 */
+async function fig3d(host,look,o){o=o||{};
+  try{await loadScript(OFF?"three.min.js":"/m/three.min.js");await loadScript((OFF?"bot3d.js":"/m/bot3d.js")+"?v="+encodeURIComponent(window.XQ_BUILD||""));if(!window.THREE||!window.XQBot3D||!XQBot3D.figure)throw 0}catch(e){return null}
+  if(!host.isConnected)return null;const T=window.THREE,W=host.clientWidth||200,H=host.clientHeight||W;let r;try{r=new T.WebGLRenderer({antialias:true,alpha:true})}catch(e){return null}
+  r.setPixelRatio(Math.min(2,devicePixelRatio||1));r.setSize(W,H);if(look&&look.glb&&T.sRGBEncoding!=null)r.outputEncoding=T.sRGBEncoding;r.domElement.style.cssText="position:absolute;inset:0;width:100%;height:100%;touch-action:none";host.append(r.domElement);
+  const sc=new T.Scene();sc.add(new T.HemisphereLight(0xFFF6E8,0x6A5A48,1.15));const d=new T.DirectionalLight(0xFFFFFF,.85);d.position.set(3,6,5);sc.add(d);
+  let B;try{B=XQBot3D.figure(look||{})}catch(e){r.dispose();return null}
+  const root=new T.Group();root.add(B.bot);sc.add(root);root.updateMatrixWorld(true);
+  const box=new T.Box3().setFromObject(B.bot),c=box.getCenter(new T.Vector3()),sz=box.getSize(new T.Vector3());B.bot.position.sub(c);const by=B.bot.position.y;
+  const tn=Math.tan(15*Math.PI/180),D0=o.tight?Math.max(sz.y/(2*tn*.94),sz.x/(2*tn*(W/H)*.9)):Math.max(sz.y,sz.x)*2.6;
+  const cam=new T.PerspectiveCamera(30,W/H,.1,400);cam.position.set(0,o.tight?0:sz.y*.06,D0);cam.lookAt(0,0,0);
+  let ry=o.spin?-.35:0,v=.004,drag=null,moved=false,t0=performance.now(),zf=1,pin=null;const ptrs=new Map();
+  const setZ=z=>{zf=Math.max(.6,Math.min(3.2,z));cam.position.set(0,o.tight?0:sz.y*.06,D0/zf);cam.lookAt(0,sz.y*.08*(zf-1)/2.2,0)};
+  host.addEventListener("pointerdown",e=>{ptrs.set(e.pointerId,{x:e.clientX,y:e.clientY});try{host.setPointerCapture(e.pointerId)}catch(_){}
+    if(o.zoom&&ptrs.size===2){const[a,c2]=[...ptrs.values()];pin={d:Math.hypot(a.x-c2.x,a.y-c2.y)||1,z:zf};drag=null}else if(ptrs.size===1)drag={x:e.clientX,ry,m:false}});
+  host.addEventListener("pointermove",e=>{if(ptrs.has(e.pointerId))ptrs.set(e.pointerId,{x:e.clientX,y:e.clientY});
+    if(pin&&ptrs.size>=2){const[a,c2]=[...ptrs.values()];setZ(pin.z*Math.hypot(a.x-c2.x,a.y-c2.y)/pin.d)}else if(drag){const dx=e.clientX-drag.x;if(Math.abs(dx)>4){drag.m=true;moved=true}ry=drag.ry+dx*.012}});
+  const up=e=>{ptrs.delete(e.pointerId);if(ptrs.size<2)pin=null;if(!ptrs.size){if(drag&&drag.m)host.dataset.dragged=Date.now();drag=null}};host.addEventListener("pointerup",up);host.addEventListener("pointercancel",up);
+  if(o.zoom){host.addEventListener("wheel",e=>{e.preventDefault();setZ(zf*Math.exp(-e.deltaY*.0015))},{passive:false});
+    const zb=document.createElement("div");zb.style.cssText="position:absolute;right:8px;bottom:8px;display:flex;flex-direction:column;gap:6px;z-index:2";
+    for(const[l,f]of[["＋",1.25],["－",.8]]){const x=document.createElement("button");x.type="button";x.textContent=l;x.setAttribute("aria-label",f>1?"放大":"縮小");x.style.cssText="width:34px;height:34px;border-radius:50%;border:1px solid rgba(0,0,0,.15);background:rgba(255,250,240,.92);font:700 18px/1 sans-serif;color:#5a4630";
+      x.addEventListener("pointerdown",e=>e.stopPropagation());x.onclick=e=>{e.stopPropagation();vibrate(5);setZ(zf*f)};zb.append(x)}host.append(zb)}
+  const loop=()=>{if(!host.isConnected){try{r.dispose()}catch(e){}return}requestAnimationFrame(loop);if(document.hidden)return;const t=(performance.now()-t0)/1000;
+    if(!drag){if(o.spin)ry+=v;else if(!moved)ry=Math.sin(t*.45)*.38}root.rotation.y=ry;B.bot.position.y=by+Math.sin(t*1.6)*sz.y*.012;
+    try{if(XQBot3D.faceApply)XQBot3D.faceApply(B,"open",(t%4)<.12,false)}catch(e){}r.render(sc,cam)};loop();
+  return{B,r}}
 /* 意見回饋 400：點人物看大幅完整的 3D 小人，左右拖曳可以轉；3D 載入失敗就顯示畫像 */
 async function figView(look,title,html,btns,img){sheet(title,async b=>{
   b.innerHTML=`<div id="fv" style="position:relative;aspect-ratio:1;max-height:56vh;margin:0 auto;border-radius:14px;overflow:hidden;touch-action:none;background:radial-gradient(circle at 50% 38%,#F6EEDF,#CDBB9C)"></div><p class="muted" style="text-align:center;font-size:12.5px;margin:6px 0 10px">左右拖曳可以轉動・兩指捏合或按 ＋／－ 放大縮小</p>${html||""}<div class="lvch" id="fvb"></div>`;
   const bb=b.querySelector("#fvb");for(const[l,fn,gh]of btns||[]){const x=document.createElement("button");x.className="btn"+(gh?" ghost":"");x.textContent=l;x.onclick=fn;bb.append(x)}
   const host=b.querySelector("#fv"),flat=()=>{host.innerHTML=img?`<img src="${img}" alt="" style="width:100%;height:100%;object-fit:contain">`:"";const p=b.querySelector("p.muted");if(p)p.remove()};
   if(!look)return flat();
-  try{await loadScript(OFF?"three.min.js":"/m/three.min.js");await loadScript((OFF?"bot3d.js":"/m/bot3d.js")+"?v="+encodeURIComponent(window.XQ_BUILD||""));if(!window.THREE||!window.XQBot3D||!XQBot3D.figure)throw 0}catch(e){return flat()}
-  if(!host.isConnected)return;const T=window.THREE,W=host.clientWidth,H=host.clientHeight||W;let r;try{r=new T.WebGLRenderer({antialias:true,alpha:true})}catch(e){return flat()}
-  r.setPixelRatio(Math.min(2,devicePixelRatio||1));r.setSize(W,H);if(look&&look.glb&&T.sRGBEncoding!=null)r.outputEncoding=T.sRGBEncoding;host.append(r.domElement);
-  const sc=new T.Scene();sc.add(new T.HemisphereLight(0xFFF6E8,0x6A5A48,1.15));const d=new T.DirectionalLight(0xFFFFFF,.85);d.position.set(3,6,5);sc.add(d);
-  let B;try{B=XQBot3D.figure(look||{})}catch(e){r.dispose();return flat()}
-  if(look&&look.glb&&B.glbP){const tip=document.createElement("div");tip.style.cssText="position:absolute;left:0;right:0;bottom:8px;text-align:center;font-size:12.5px;color:#5a4630";tip.textContent="🗿 真實 3D 載入中…";host.append(tip);   /* 意見回饋 505：看得出是還在載、還是載不到 */
-    B.glbP.then(()=>tip.remove()).catch(e=>{tip.textContent="真實 3D 模型載不到（"+(navigator.onLine?"網路慢或檔案有問題":"沒有網路")+"），先顯示 Q 版"})}const root=new T.Group();root.add(B.bot);sc.add(root);root.updateMatrixWorld(true);
-  const box=new T.Box3().setFromObject(B.bot),c=box.getCenter(new T.Vector3()),sz=box.getSize(new T.Vector3());B.bot.position.sub(c);const by=B.bot.position.y;
-  const cam=new T.PerspectiveCamera(30,W/H,.1,200);cam.position.set(0,sz.y*.06,Math.max(sz.y,sz.x)*2.6);cam.lookAt(0,0,0);
-  /* 意見回饋 534（開發者）：3D 人物除了轉動，也能放大縮小（兩指捏合、滑鼠滾輪、＋／－ 按鈕） */
-  let ry=-.35,v=.004,drag=null,t0=performance.now(),zf=1,pin=null;const D0=Math.max(sz.y,sz.x)*2.6,ptrs=new Map();
-  const setZ=z=>{zf=Math.max(.6,Math.min(3.2,z));cam.position.set(0,sz.y*.06,D0/zf);cam.lookAt(0,sz.y*.08*(zf-1)/2.2,0)};
-  host.addEventListener("pointerdown",e=>{ptrs.set(e.pointerId,{x:e.clientX,y:e.clientY});try{host.setPointerCapture(e.pointerId)}catch(_){}
-    if(ptrs.size===2){const[a,c2]=[...ptrs.values()];pin={d:Math.hypot(a.x-c2.x,a.y-c2.y)||1,z:zf};drag=null}else if(ptrs.size===1)drag={x:e.clientX,ry}});
-  host.addEventListener("pointermove",e=>{if(ptrs.has(e.pointerId))ptrs.set(e.pointerId,{x:e.clientX,y:e.clientY});
-    if(pin&&ptrs.size>=2){const[a,c2]=[...ptrs.values()];setZ(pin.z*Math.hypot(a.x-c2.x,a.y-c2.y)/pin.d)}else if(drag){ry=drag.ry+(e.clientX-drag.x)*.012}});
-  const up=e=>{ptrs.delete(e.pointerId);if(ptrs.size<2)pin=null;if(!ptrs.size)drag=null};host.addEventListener("pointerup",up);host.addEventListener("pointercancel",up);
-  host.addEventListener("wheel",e=>{e.preventDefault();setZ(zf*Math.exp(-e.deltaY*.0015))},{passive:false});
-  {const zb=document.createElement("div");zb.style.cssText="position:absolute;right:8px;bottom:8px;display:flex;flex-direction:column;gap:6px;z-index:2";
-    for(const[l,f]of[["＋",1.25],["－",.8]]){const x=document.createElement("button");x.type="button";x.textContent=l;x.setAttribute("aria-label",f>1?"放大":"縮小");x.style.cssText="width:34px;height:34px;border-radius:50%;border:1px solid rgba(0,0,0,.15);background:rgba(255,250,240,.92);font:700 18px/1 sans-serif;color:#5a4630";
-      x.addEventListener("pointerdown",e=>e.stopPropagation());x.onclick=e=>{e.stopPropagation();vibrate(5);setZ(zf*f)};zb.append(x)}host.append(zb)}
-  const loop=()=>{if(!host.isConnected){try{r.dispose()}catch(e){}return}const t=(performance.now()-t0)/1000;if(!drag)ry+=v;root.rotation.y=ry;B.bot.position.y=by+Math.sin(t*1.6)*sz.y*.012;
-    try{if(XQBot3D.faceApply)XQBot3D.faceApply(B,"open",(t%4)<.12,false)}catch(e){}r.render(sc,cam);requestAnimationFrame(loop)};loop()})}
+  const res=await fig3d(host,look,{zoom:true,spin:true});if(!res)return flat();
+  if(look&&look.glb&&res.B.glbP){const tip=document.createElement("div");tip.style.cssText="position:absolute;left:0;right:0;bottom:8px;text-align:center;font-size:12.5px;color:#5a4630";tip.textContent="🗿 真實 3D 載入中…";host.append(tip);   /* 意見回饋 505：看得出是還在載、還是載不到 */
+    res.B.glbP.then(()=>tip.remove()).catch(e=>{tip.textContent="真實 3D 模型載不到（"+(navigator.onLine?"網路慢或檔案有問題":"沒有網路")+"），先顯示 Q 版"})}})}
+/* 意見回饋 584：我的角色頁舞台上的人物直接是 3D（左右拖曳可以轉，平常輕輕擺動）；真實 3D 載好之前先顯示原本的圖，選「畫好的立繪」的人維持平面圖 */
+async function meFig3d(v){const f=v.querySelector("#meFig2");if(!f||f.dataset.g3||myStyle()==="art")return;f.dataset.g3="1";
+  const look=myLook()||{p:botPc(),e:store.get("era","classic"),g:9},host=document.createElement("div");host.style.cssText="position:absolute;inset:0;opacity:0;transition:opacity .45s;touch-action:none";f.append(host);
+  const res=await fig3d(host,look,{tight:true});if(!res){host.remove();delete f.dataset.g3;return}
+  const show=()=>{host.style.opacity=1;const im=f.querySelector("img");if(im){im.style.transition="opacity .45s";im.style.opacity=0}};
+  if(look&&look.glb&&res.B.glbP)res.B.glbP.then(show,show);else show()}
 /* 意見回饋 400：石桌往事的人物偶爾路過線上大廳（每 15 分鐘換一批，大約六成的時候會有 1～2 位），點他看人物、可以跟他下一盤；難度照故事裡的設定 */
 const JCHAR_LV={liu_young:3,shen_young:4,agula_young:3,boatman:2,scholar:4,liu_old:6};
 function lobbyVisitors(){const slot=Math.floor(Date.now()/9e5);let h=slot*2654435761>>>0;const rnd=()=>{h=(h*1103515245+12345)>>>0;return h/4294967296};
@@ -4074,9 +4087,9 @@ function Me(v){Profile(v);setTop("🙂 我的角色","#/");setTabs(true,"#/");co
     <section class="mwall"><div class="mws">${meWin("b",ETIMG("p_board","data/treasure/board_normal.webp","🎁"),"棋盤",B.boards.length,B.boards.length)}${meWin("r",ETIMG("p_kifu","data/treasure/record_normal.webp","📜"),"棋譜",B.records.length,B.records.length)}${meWin("s",ETIMG("p_secret","","🤝"),"秘境棋友",`${nS}／${SECRETS.length}`,nS,.5*(1-nS/SECRETS.length))}${meWin("z","🏺","珍品",`${nZ}／130`,nZ,.5*(1-Math.sqrt(nZ/130)))}</div></section>`;
   const circ=pad.querySelector(".circles");pad.replaceChildren(d);if(circ){circ.style.display="none";pad.append(circ)}
   const on=(id,fn)=>{const e=v.querySelector(id);if(e)e.onclick=()=>{vibrate(5);fn(e)}};
-  on("#meFig2",f=>{const st=v.querySelector("#meSt");if(st){st.classList.remove("tap");void st.offsetWidth;st.classList.add("tap")}const im=f.querySelector("img");setTimeout(()=>meFigOpen(im&&im.src),220)});
+  on("#meFig2",f=>{const st=v.querySelector("#meSt");if(st){st.classList.remove("tap");void st.offsetWidth;st.classList.add("tap")}const im=f.querySelector("img");if(!f.dataset.g3)setTimeout(()=>meFigOpen(im&&im.src),220)});   /* 584：舞台已經是 3D 就不用再開大圖 */
   on("#meNm",()=>nameSheet(false));on("#meOb",()=>onboard(true));on("#mePc",()=>{store.set("setTab","bot");location.hash="#/settings"});
-  on("#meRk",rankSheet);on("#meXp",xpSheet);
+  on("#meRk",rankSheet);on("#meXp",xpSheet);meFig3d(v);
   v.querySelectorAll(".mw[data-c]").forEach(b=>b.onclick=()=>{const o=circ&&circ.querySelector(`[data-c="${b.dataset.c}"]`);if(o)o.click()})}
 function Profile(v){setTop("🎒 棋童資料","#/adventure");setTabs(true,"#/");v.className="view";const I=xpInfo(),H=hintInfo(),B=bag(),Sx=jSecrets(),S=jStars(),Js=jStages(),L=legendState(),star=Js.reduce((a,x)=>a+(S[x.id]||0),0);
   const card=x=>`<div class="bcard ${x.rarity}"><div class="bic">${TIMG(`data/treasure/board_${x.rarity==="broken"?"broken":x.rarity==="rare"?"rare":"normal"}.webp`,x.rarity==="broken"?"🧩":x.rarity==="rare"?"📜":"♟")}</div><b>${esc(x.name)}</b><small style="color:${RAR[x.rarity][1]}">${RAR[x.rarity][0]}</small><small class="muted">${esc(x.from)}・${new Date(x.at).toLocaleDateString()}</small>
