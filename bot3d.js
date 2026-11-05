@@ -256,9 +256,15 @@
     g.strokeStyle=ink;g.lineWidth=n*.034;g.beginPath();g.arc(h,h,h*.83,0,Math.PI*2);g.stroke();g.lineWidth=n*.009;g.beginPath();g.arc(h,h,h*.745,0,Math.PI*2);g.stroke();
     if(gp&&window.Path2D){const P2=new Path2D(gp),sc=2.75;for(const[dx,dy,c]of[[3,5,sh],[0,0,ink]]){g.save();g.translate(h-50*sc+dx,h-50*sc+dy);g.scale(sc,sc);g.fillStyle=c;g.fill(P2);if(c===ink){g.strokeStyle=ink;g.lineWidth=1.2;g.lineJoin="round";g.stroke(P2)}g.restore()}return}
     g.font='900 236px "Noto Serif TC","Songti TC","PMingLiU","SimSun",serif';g.textAlign="center";g.textBaseline="middle";g.fillStyle=sh;g.fillText(ch,h+3,h+14);g.fillStyle=ink;g.fillText(ch,h,h+9)});
+  const GLB_ANIM_OF={wave:"wave_goodbye_01",hattip:"wave_goodbye_01",point:"wave_goodbye_01",bow:"bow",gongshou:"bow",taichi:"bow",cheer:"cheer",win:"cheer",jump:"cheer",clap:"cheer",flex:"cheer",laugh:"cheer",kick:"cheer"};   /* 小人的動作 → Tripo 動畫名稱 */
   function attachGLB(B,o){if(!window.XQGLB)return;const meId=(String(o.glb||"").match(/\/(\w+)\.glb/)||[])[1],meCh=PC(),meK=eraK();const box0=new T.Box3().setFromObject(B.bot),h0=box0.max.y-box0.min.y,y0=box0.min.y;
     const face=B.torso.children.find(m=>m.isMesh&&m.geometry&&m.geometry.type==="CircleGeometry");
-    B.glbP=window.XQGLB(o.glb).catch(()=>window.XQGLB(o.glb)).then(sc=>{if(!sc)throw new Error("empty");   /* 意見回饋 505：失敗自動重試一次；結果交給畫面顯示「載入中／失敗」 */const g=sc.clone(true);g.rotation.y=-Math.PI/2;g.updateMatrixWorld(true);   /* 意見回饋 503：Tripo 的模型臉朝 +X（側面），轉 90 度讓臉朝前；之前圓牌朝前、模型朝側面，看起來圓牌浮在身體旁邊 */
+    B.glbP=window.XQGLB(o.glb).catch(()=>window.XQGLB(o.glb)).then(sc=>{if(!sc)throw new Error("empty");   /* 意見回饋 505：失敗自動重試一次；結果交給畫面顯示「載入中／失敗」 */const g=sc.clone(true);g.rotation.y=-Math.PI/2;g.updateMatrixWorld(true);
+      /* 開發者 11/5：武俠角色的模型有 Tripo 綁的骨架和動作（待機、走路、揮手、歡呼、鞠躬）。clone 不會把骨架接到複製的骨頭上，照骨頭名字重接；
+         先擺成待機的第一格（沒有每格更新動畫的畫面，也不會停在張開手臂的骨架原始姿勢） */
+      {const clips=(window.XQGLB_ANIM||{})[o.glb]||[];if(clips.length){try{const bn={};g.traverse(n=>{if(n.isBone)bn[n.name]=n});
+        g.traverse(m=>{if(m.isSkinnedMesh&&m.skeleton){const sk=m.skeleton;m.bind(new T.Skeleton(sk.bones.map(b=>bn[b.name]||b),sk.boneInverses),m.bindMatrix)}});
+        B.mixer=new T.AnimationMixer(g);B.clips={};for(const cl of clips)B.clips[cl.name]=B.mixer.clipAction(cl);B.animCur="idle";if(B.clips.idle)B.clips.idle.play();B.mixer.update(0);g.updateMatrixWorld(true)}catch(e){B.mixer=null}}}   /* 意見回饋 503：Tripo 的模型臉朝 +X（側面），轉 90 度讓臉朝前；之前圓牌朝前、模型朝側面，看起來圓牌浮在身體旁邊 */
       const bb=new T.Box3().setFromObject(g),sz=bb.getSize(new T.Vector3()),c=bb.getCenter(new T.Vector3());if(!(sz.y>0))return;
       const hold=new T.Group();hold.name="glb";g.position.set(-c.x,-bb.min.y,-c.z);hold.add(g);hold.scale.setScalar(h0/sz.y);hold.position.y=y0;
       g.traverse(m=>{if(m.isMesh){m.castShadow=true;m.receiveShadow=true}});
@@ -483,6 +489,8 @@
       if(bubT>0){bubT-=t;if(bubT<=0)bub.style.opacity=0;else if((++fitN&7)===0)fitBub()}
       if(!drag){const b=bounds();x=Math.min(Math.max(x,b.x0),Math.max(b.x0,b.x1));y=Math.min(Math.max(y,b.y0),Math.max(b.y0,b.y1))}
       box.style.transform=`translate(${x|0}px,${y|0}px)`;
+      if(B.mixer&&!XS.on){const k0=drag?"idle":act?(GLB_ANIM_OF[act.k]||(/^d_|dance|spin/.test(act.k)?"cheer":"wave_goodbye_01")):walking?"walk":"idle",k=B.clips[k0]?k0:"idle";   /* 武俠角色：照小人正在做的事換動畫 */
+        if(B.animCur!==k&&B.clips[k]){const n=B.clips[k];n.reset().fadeIn(.25).play();const o0=B.clips[B.animCur];if(o0)o0.fadeOut(.25);B.animCur=k}B.mixer.update(t)}
       if(XS.on){const pose=drag?"xs_surprise":act?xsPose(act,now):walking?"walk_"+(1+Math.floor(now/120)%8):"xs_idle",bob=act?Math.abs(Math.sin(actT*7))*H*.03:walking?0:Math.sin(now/500)*H*.006;xsDraw(pose,bob,false)}else rd.render(sc,cam)}
     requestAnimationFrame(frame);
     if(!store.get("botHint",false)){store.set("botHint",true);setTimeout(()=>{if(!stopped){doAct("wave");say("嗨！我是小帥。長按我，可以問我任何象棋問題！",5)}},1800)}

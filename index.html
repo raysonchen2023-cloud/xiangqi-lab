@@ -766,7 +766,7 @@ html[data-era="qing"]:not([data-font="sys"]){--serif:"XQ twkai","Noto Serif TC",
       if(!window.caches)return go();caches.keys().then(function(ks){return Promise.all(ks.filter(function(k){return k.indexOf("xqlab-app-")===0}).map(function(k){return caches.delete(k)}))})
         .then(function(){return navigator.serviceWorker&&navigator.serviceWorker.getRegistration()}).then(function(r){return r&&r.update()}).catch(function(){}).then(go)}};setTimeout(chk,4000)})();
 </script>
-<script>window.XQ_OFFLINE=true;window.XQ_BUILD="20261105-1642";</script>
+<script>window.XQ_OFFLINE=true;window.XQ_BUILD="20261105-1718";</script>
 <script src="core.js"></script>
 <script src="engine.js"></script>
 <script src="local.js"></script>
@@ -3857,7 +3857,7 @@ const myLook=()=>{{const c=myChar();if(c)return TRIPO[c]?{p:myPc(),e:store.get("
   if(myStyle()==="real"&&TRIPO[id]){L=L||{p:myPc(),e:store.get("era","classic"),g:9};L={...L,glb:`data/tripo_app/${id}.glb`,ring:TRIPO[id]}}return L};
 /* 意見回饋 471：真實 3D（Tripo 模型）。TRIPO＝有模型的角色和身上圓牌的位置（tools/tripo_slim.py 產生）；XQGLB 載入 .glb（three.js 官方 GLTFLoader，用 App 的 three） */
 let TRIPO={};const TRIPO_ALIAS={a_changyuchun:"p_b1p_changyuchun",a_liuji:"p_b1p_liubowen",a_shenwansan:"p_b1p_shenwansan",a_shinaian:"p_b1p_shinaian",a_wangmian:"p_b1p_wangmian"};   /* 秘境棋友跟人物表是同一個人，共用模型 */fetch("data/tripo_app/tripo.json").then(r=>r.ok?r.json():{}).then(j=>{TRIPO=j||{}}).catch(()=>{});
-let GLTF_P=null;const GLBC={};window.XQGLB=url=>GLBC[url]||(GLBC[url]=(GLTF_P=GLTF_P||import(new URL(OFF?"GLTFLoader.mjs":"/m/GLTFLoader.mjs",location.href).href)).then(m=>new Promise((res,rej)=>new m.GLTFLoader().load(url,g=>res(g.scene),undefined,rej))).catch(e=>{delete GLBC[url];throw e}));
+let GLTF_P=null;const GLBC={};window.XQGLB=url=>GLBC[url]||(GLBC[url]=(GLTF_P=GLTF_P||import(new URL(OFF?"GLTFLoader.mjs":"/m/GLTFLoader.mjs",location.href).href)).then(m=>new Promise((res,rej)=>new m.GLTFLoader().load(url,g=>{(window.XQGLB_ANIM=window.XQGLB_ANIM||{})[url]=g.animations||[];res(g.scene)},undefined,rej))).catch(e=>{delete GLBC[url];throw e}));
 const oppFig=L=>{if(!L||oppArt())return L;const o={...L};delete o.flat;delete o.sprite;delete o.spriteMeta;delete o.spriteMap;
   if(o.actor&&ACTOR_FIG[o.actor]&&!o.npc){const[h,hc,rb]=ACTOR_FIG[o.actor];Object.assign(o,{npc:o.actor,hat:h,hc,robe:rb})}
   if(store.get("oppLook","3d")==="real"&&typeof o.cus==="string"){const id0=o.cus.replace(":","_"),id=TRIPO_ALIAS[id0]||id0;if(TRIPO[id]){o.glb=`data/tripo_app/${id}.glb`;o.ring=TRIPO[id]}}return o};
