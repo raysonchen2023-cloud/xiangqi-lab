@@ -710,7 +710,7 @@ html[data-era=ming] .topbar,html[data-era=qing] .topbar{border-bottom-width:4px}
       if(!window.caches)return go();caches.keys().then(function(ks){return Promise.all(ks.filter(function(k){return k.indexOf("xqlab-app-")===0}).map(function(k){return caches.delete(k)}))})
         .then(function(){return navigator.serviceWorker&&navigator.serviceWorker.getRegistration()}).then(function(r){return r&&r.update()}).catch(function(){}).then(go)}};setTimeout(chk,4000)})();
 </script>
-<script>window.XQ_OFFLINE=true;window.XQ_BUILD="20261105-1301";</script>
+<script>window.XQ_OFFLINE=true;window.XQ_BUILD="20261105-1307";</script>
 <script src="core.js"></script>
 <script src="engine.js"></script>
 <script src="local.js"></script>
@@ -882,6 +882,16 @@ try{const s0=history.state;if(s0&&typeof s0.d==="number")NAV_D=s0.d;else history
 function pageList(b,list,render,bind,per){per=per||10;let p=0;const N=Math.ceil(list.length/per);
   const go=()=>{b.innerHTML=render(list.slice(p*per,p*per+per))+(N>1?`<div class="row" style="justify-content:space-between;align-items:center;margin-top:12px"><button class="pill" data-pg="-1"${p?"":" disabled"}>‹ 上一頁</button><span class="muted">第 ${p+1}／${N} 頁</span><button class="pill" data-pg="1"${p<N-1?"":" disabled"}>下一頁 ›</button></div>`:"");
     b.querySelectorAll("[data-pg]").forEach(x=>x.onclick=()=>{p=Math.min(N-1,Math.max(0,p+ +x.dataset.pg));vibrate(5);go();b.scrollTop=0});if(bind)bind(b)};go()}
+/* 開發者 11/5：下載時不讓手機自動鎖定（螢幕喚醒鎖 Wake Lock，iOS 16.4 起支援；不支援就什麼都不做）。
+   keepAwake(名稱, 條件)：條件成立的期間螢幕保持亮著；離開 App 再回來會重新要求；條件不成立就自動放掉。iPhone 離開 App 本來就會暫停下載，這個只防「放著不動自動鎖定」 */
+const WAKE={};let wakeLk=null,wakeBusy=false;
+async function wakeSync(){if(wakeBusy)return;wakeBusy=true;try{let need=false;
+  for(const k of Object.keys(WAKE)){const w=WAKE[k];let on=false;try{on=!!w.f()}catch(e){}if(on){w.seen=true;need=true}else if(w.seen||Date.now()-w.at>60000)delete WAKE[k]}   /* 條件成立過、後來不成立才刪（剛登記時畫面可能還沒放上去） */
+  if(need&&!wakeLk&&document.visibilityState==="visible"&&navigator.wakeLock){try{const r=await Promise.race([navigator.wakeLock.request("screen"),new Promise(ok=>setTimeout(()=>ok(null),3000))]);if(r){wakeLk=r;r.addEventListener("release",()=>{if(wakeLk===r)wakeLk=null})}}catch(e){}}
+  else if(!need&&wakeLk){const r=wakeLk;wakeLk=null;try{await r.release()}catch(e){}}}finally{wakeBusy=false}}
+function keepAwake(key,pred){if(pred)WAKE[key]={f:pred,seen:false,at:Date.now()};else delete WAKE[key];setTimeout(wakeSync,50)}
+document.addEventListener("visibilitychange",()=>{if(document.visibilityState==="visible")wakeSync()});
+setInterval(()=>{if(wakeLk||Object.keys(WAKE).length)wakeSync()},3000);
 function sheet(title,build){
   try{if(!(history.state&&history.state.xqSheet)){const d=NAV_D+1;history.pushState({xqSheet:1,d},"",location.href);NAV_D=d}}catch(e){}
   document.querySelectorAll("#scrim,#sheet").forEach(e=>e.remove());const sc=document.createElement("div");sc.className="scrim";sc.id="scrim";
@@ -1766,7 +1776,7 @@ if(OFF&&"serviceWorker" in navigator){
   window.XQ_checkUpdate=async()=>{chk(true);const[a,n]=await Promise.all([appVer(),netVer()]);return{a,n}};
   if(hadCtl)navigator.serviceWorker.addEventListener("controllerchange",()=>{if(updating)return;if(+(sessionStorage.getItem("xqReload")||0)>0&&!self.crossOriginIsolated)return;notifyNew()})}
 if(OFF&&window.XQEngine){let bar=null;
-  XQEngine.onProgress((got,total)=>{if(!bar){bar=document.createElement("div");bar.className="toast";if(/^#[/](cpu|arena|pvp|quiz|watch|journey[/]play|redo[/]play|legend)([/]|$)/.test(location.hash))bar.style.display="none";   /* QA P2-6：下棋、讀故事時不蓋引擎下載進度 */
+  XQEngine.onProgress((got,total)=>{if(!bar){keepAwake("engine",()=>!!bar);bar=document.createElement("div");bar.className="toast";if(/^#[/](cpu|arena|pvp|quiz|watch|journey[/]play|redo[/]play|legend)([/]|$)/.test(location.hash))bar.style.display="none";   /* QA P2-6：下棋、讀故事時不蓋引擎下載進度 */
   bar.style.bottom="auto";bar.style.top="calc(70px + var(--safeT))";document.body.append(bar);setTimeout(()=>{if(bar)bar.style.display="none"},1200)}
     const p=Math.round(got/total*100);bar.textContent=`第一次使用：下載 Pikafish 引擎 ${p}%（${(got/1048576).toFixed(0)}／${(total/1048576).toFixed(0)} MB）`;
     if(got>=total){bar&&bar.remove();bar=null;toast("✅ Pikafish 引擎下載完成")}})}
@@ -5578,7 +5588,7 @@ async function preloadAll(){if(!OFF||!("caches" in window))return;
   const done=false;let c;try{c=await caches.open("xqlab-look")}catch(e){return}
   const MOBP=(()=>{try{return matchMedia("(pointer:coarse)").matches||innerWidth<820}catch(e){return false}})(),wantReal=store.get("pStyle","q")==="real"||store.get("oppLook","3d")==="real";
   M.items=M.items.filter(([u])=>/^data\/tripo_app\//.test(u)?wantReal:/^data\/eramap\//.test(u)?(/_m\.webp$/.test(u)===MOBP):true);   /* 真實 3D 模型只在選了真實版時下載；朝代地圖手機只抓手機版 */
-  let ov=null,bar=null,txt=null;const ovMake=()=>{ov=document.createElement("div");ov.id="preov";
+  let ov=null,bar=null,txt=null;const ovMake=()=>{ov=document.createElement("div");ov.id="preov";keepAwake("preload",()=>!!document.getElementById("preov"));
     ov.innerHTML=`<div class="ld-img"><img alt=""><img alt=""></div><div class="ld-q"><div class="ld-tt"></div><div class="ld-qt"></div><div class="ld-src"></div></div>
       <div class="pre-in"><div class="pre-t">象棋千秋</div><div class="pre-s">檢查手機裡的棋盤、園子和故事…</div>
       <div class="pre-bar"><i></i></div><div class="pre-n">檢查中…</div><div class="pre-h">缺的、換過的會先下載，好了才進首頁。</div><button class="pre-skip" type="button" hidden>先進去逛（背景繼續下載）</button></div>`;
