@@ -788,7 +788,7 @@ html[data-era="qing"]:not([data-font="sys"]){--serif:"XQ twkai","Noto Serif TC",
       if(!window.caches)return go();caches.keys().then(function(ks){return Promise.all(ks.filter(function(k){return k.indexOf("xqlab-app-")===0}).map(function(k){return caches.delete(k)}))})
         .then(function(){return navigator.serviceWorker&&navigator.serviceWorker.getRegistration()}).then(function(r){return r&&r.update()}).catch(function(){}).then(go)}};setTimeout(chk,4000)})();
 </script>
-<script>window.XQ_OFFLINE=true;window.XQ_BUILD="20261106-0726";</script>
+<script>window.XQ_OFFLINE=true;window.XQ_BUILD="20261106-0738";</script>
 <script src="core.js"></script>
 <script src="engine.js"></script>
 <script src="local.js"></script>
@@ -5590,11 +5590,13 @@ function CpuGame(v,practicePage,mode){
     if(e.target.closest(".av")){const o=oppInfo();if(!o)return;vibrate(5);figView(oppArt()&&o.img?null:oppFig(o.look),"👤 "+o.name,`<p style="font-size:16px;line-height:1.8;margin:0 0 4px">「${esc(o.say)}」</p>${ageLine(o.age)}`,[["關閉",()=>closeSheet(),true]],o.img)}};   /* 意見回饋 445：跟坐在位子上的同一個形象（立繪就看立繪、3D 就看 3D） */
   const acts=actionBar(v.querySelector("#acts"),[["bag","🎒","寶物",()=>bagSheet()],["undo","↶","悔棋",()=>undoAsk()],
     ["new","＋","新局",()=>newSheet(),true],["resign","🏳","認輸",()=>confirmBox("確定認輸？",()=>post("/play/resign"),"認輸")],["review","📖","檢討",()=>review(false,st&&st.id)],["setup","🧪","擺盤",()=>st&&setupSheet(st.board,st.turn,st.human==="b",!st.ranked)]]);
-  async function post(u,b){if(busy)return;busy=true;try{render(await api(u,b||{}))}catch(e){toast(e.message)}finally{busy=false}}
+  async function post(u,b){if(busy)return false;busy=true;try{render(await api(u,b||{}));return true}catch(e){toast(e.message);return false}finally{busy=false}}
   /* 意見回饋 594：悔棋要用悔棋符（練習不用） */
   function undoAsk(){if(!st)return;if(st.practice)return post("/play/undo");{const no=itemBlock(st);if(no)return toast(no)}const n=undoLeft();
     if(n<=0)return toast("沒有悔棋符了");
-    confirmBox("用 1 張悔棋符，退回你的上一步？（現在有 "+n+" 張）",()=>{if(undoLeft()<=0)return;store.set("undoBonus",undoLeft()-1);post("/play/undo")},"↶ 用悔棋符")}
+    /* 意見回饋 651（開發者）：還沒走棋就能用掉悔棋符——先確認這盤自己走過棋；而且悔棋真的成功才扣悔棋符（之前先扣再悔，悔不成也白扣） */
+    if(!st.moves.slice(st.practice?st.practice.base||0:0).some(m=>m.by===st.human))return toast("你還沒走棋，不用悔棋");
+    confirmBox("用 1 張悔棋符，退回你的上一步？（現在有 "+n+" 張）",()=>{if(undoLeft()<=0)return;post("/play/undo").then(ok=>{if(ok)store.set("undoBonus",Math.max(0,undoLeft()-1))})},"↶ 用悔棋符")}
   /* 意見回饋 597（開發者）：對局中多一顆「🎒 寶物」，打開就看到提示棋、悔棋符，按了直接用；積分挑戰、獎勵模式、練習會擋下來並說明原因
      意見回饋 600：排版整理——兩樣並排成一樣大的方格（圖示、張數、按鈕上下對齊），說明收成一行，點「怎麼拿到？」才展開 */
   function bagSheet(){if(!st)return;const no=itemBlock(st),H=hintInfo(),hn=H.left+H.bonus,un=undoLeft(),mine=st.moves.some(m=>m.by===st.human),myTurn=!st.result&&st.turn===st.human&&!st.thinking;

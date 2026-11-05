@@ -190,8 +190,8 @@ var XQ=(function(){
     else if(p==="/play/switch"||p==="/play/open"){playOpen(b);playMsg="";setTimeout(playEngine,0)}
     else if(p==="/play/move"){const f=+b.f,t=+b.t;if(P.result)throw new Error("這局已經結束");if(P.turn!==P.human)throw new Error("還沒輪到你");
       if(!legal(P.board,P.turn).some(([x,y])=>x===f&&y===t))throw new Error("這步不合法");playApply(f,t);setTimeout(playEngine,0)}
-    else if(p==="/play/undo"){if(P.ranked)throw new Error("積分挑戰不能悔棋");if(P.reward)throw new Error("獎勵模式不能悔棋");if(P.arena)throw new Error("朝代擂台不能悔棋");   /* 意見回饋 382 *//* 意見回饋 380：電腦（擂主）還在想的時候也能悔棋——引擎算完會發現步數變了、自動丟掉那步 */
-      const floor=P.practice?P.practice.base:0;if(P.moves.length<=floor)throw new Error("已經回到練習的起點");
+    else if(p==="/play/undo"){if(P.ranked)throw new Error("積分挑戰不能悔棋");if(P.reward)throw new Error("獎勵模式不能悔棋");/* 意見回饋 651：開發者 597 決定擂台也能用悔棋符，這裡原本還擋著（382 的舊規則），App 先扣了悔棋符、悔棋卻失敗——拿掉 *//* 意見回饋 380：電腦（擂主）還在想的時候也能悔棋——引擎算完會發現步數變了、自動丟掉那步 */
+      const floor=P.practice?P.practice.base:0;if(P.moves.length<=floor)throw new Error(P.practice?"已經回到練習的起點":"你還沒走棋，不用悔棋");if(!P.moves.slice(floor).some(m=>m.by===P.human))throw new Error("你還沒走棋，不用悔棋");
       while(P.moves.length>floor){const m=P.moves.pop();if(m.by===P.human)break}P.undoN=(P.undoN||0)+1;P.result=null;P.hint=null;stateRebuild(P);savePlay();setTimeout(playEngine,0)}
     else if(p==="/play/hint"){throw new Error("挑戰電腦不提供提示，要靠自己");if(P.result||P.turn!==P.human)throw new Error("現在不能提示");
       const r=await XQEngine.search({moves:ucis()},{movetime:1500},1),f=parseSq(r.best.slice(0,2)),t=parseSq(r.best.slice(2,4));P.hint={f,t,cn:notate(P.board,f,t)};P.hintN=(P.hintN||0)+1;savePlay()}
