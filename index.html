@@ -1,10 +1,10 @@
 <!doctype html>
 <html lang="zh-Hant"><head><meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover,user-scalable=no">
-<title>象棋研究室</title>
+<title>象棋千秋</title><!-- 意見回饋 580（開發者 11/5）：App 改名「象棋研究室」→「象棋千秋」 -->
 <meta name="theme-color" content="#3B2A1A">
 <meta name="apple-mobile-web-app-capable" content="yes"><meta name="mobile-web-app-capable" content="yes">
-<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent"><meta name="apple-mobile-web-app-title" content="象棋研究室">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent"><meta name="apple-mobile-web-app-title" content="象棋千秋">
 <link rel="manifest" href="manifest.json"><link rel="icon" href="icon.svg"><link rel="apple-touch-icon" href="icon-180.png">
 <style>
 :root{--bg:#F3EDE2;--card:#FFFDF8;--ink:#2A1F15;--muted:#7A6A58;--line:#E2D6C3;--accent:#B5452B;--accent2:#2F6B4F;--red:#B3261E;--blk:#1B1F1C;
@@ -656,7 +656,7 @@ html[data-era=ming] .topbar,html[data-era=qing] .topbar{border-bottom-width:4px}
 .vc-tip{position:fixed;left:50%;bottom:calc(110px + var(--safeB,0px));transform:translateX(-50%);z-index:1200;display:flex;flex-direction:column;align-items:center;gap:2px;padding:14px 22px;border-radius:18px;background:rgba(30,20,12,.9);color:#fff;font-size:13px;box-shadow:0 8px 30px rgba(0,0,0,.3);animation:vcP 1.2s ease-in-out infinite}.vc-tip b{font-size:17px}.vc-tip button{margin-top:8px;padding:8px 16px;border-radius:999px;border:1px solid rgba(255,255,255,.5);background:rgba(255,255,255,.12);color:#fff;font:inherit;font-weight:700}@keyframes vcP{50%{box-shadow:0 0 0 10px rgba(181,69,43,.25),0 8px 30px rgba(0,0,0,.3)}}
 </style></head><body>
 <div class="app">
- <div class="topbar" id="topbar"><button class="ib" id="back" hidden><b>‹</b>返回</button><h1 id="title">象棋研究室</h1><span id="topRight"></span></div>
+ <div class="topbar" id="topbar"><button class="ib" id="back" hidden><b>‹</b>返回</button><h1 id="title">象棋千秋</h1><span id="topRight"></span></div>
  <div class="view" id="view"></div>
  <nav class="tabbar" id="tabbar">
   <button data-go="#/"><span class="ic">🏠</span>首頁</button>
@@ -699,7 +699,7 @@ html[data-era=ming] .topbar,html[data-era=qing] .topbar{border-bottom-width:4px}
       if(!window.caches)return go();caches.keys().then(function(ks){return Promise.all(ks.filter(function(k){return k.indexOf("xqlab-app-")===0}).map(function(k){return caches.delete(k)}))})
         .then(function(){return navigator.serviceWorker&&navigator.serviceWorker.getRegistration()}).then(function(r){return r&&r.update()}).catch(function(){}).then(go)}};setTimeout(chk,4000)})();
 </script>
-<script>window.XQ_OFFLINE=true;window.XQ_BUILD="20261105-0952";</script>
+<script>window.XQ_OFFLINE=true;window.XQ_BUILD="20261105-1030";</script>
 <script src="core.js"></script>
 <script src="engine.js"></script>
 <script src="local.js"></script>
@@ -1865,7 +1865,7 @@ function Lobby(v){setTop("線上對戰・觀戰",false,[["📤",shareSheet,"分�
           `<div class="sec-t">${ETIMG("o_invite","","🟢")} 可以邀請的棋友（${free.filter(p=>p.st==="idle"||p.st==="seeking").length}）</div>`+
           (free.length?free.map(p=>`<div class="card row" data-p="${esc(p.id)}" style="justify-content:space-between;margin-bottom:8px;cursor:pointer"><span><b>${esc(p.name)}</b> <span class="pill">${esc(XQNet.rankOf(p.pts))}</span>${p.tc?` <span class="muted" style="font-size:12px">⏱${+p.tc}分</span>`:""} <span class="muted" style="font-size:12px">ⓘ</span><br><span class="muted">${p.st==="idle"&&p.doing?"📖 "+esc(String(p.doing).slice(0,10))+"中":ST[p.st]||""}${p.city?"・📍"+esc(p.city):""}</span></span>
             ${p.st==="idle"||p.st==="seeking"?`<button class="pill" data-i="${esc(p.id)}" style="background:var(--accent);color:#fff;border:none;padding:6px 12px">⚔ 邀請對戰</button>`:""}</div>`).join("")
-          :`<div class="card muted">${up?(rest.length?"大家都在對戰或觀戰中，可以先去看一盤，或按上面「隨機配對」等人。":"目前只有你在線上。請朋友打開象棋研究室（按右上角 📤 分享），他們就會出現在這裡。"):"連線中…"}</div>`)})()}
+          :`<div class="card muted">${up?(rest.length?"大家都在對戰或觀戰中，可以先去看一盤，或按上面「隨機配對」等人。":"目前只有你在線上。請朋友打開象棋千秋（按右上角 📤 分享），他們就會出現在這裡。"):"連線中…"}</div>`)})()}
       ${!OFF||DEVREMOTE()?`<div class="sec-t">📺 AI 對戰</div><button class="item card" id="aiw" style="width:100%;display:flex;gap:12px;align-items:center;text-align:left"><span style="font-size:28px">📺</span><span style="flex:1;min-width:0"><b>GPT 對 Claude</b><br><span class="muted">電腦上的兩個 AI 在下棋</span></span><span class="muted">›</span></button>`:""}
       <!-- 意見回饋 347：大廳下面那段說明拿掉 -->`;
     (box.querySelector("#ed")||{}).onclick=()=>{closeSheet();store.set("setTab","bot");store.set("setFocus","name");location.hash="#/settings"};   /* 意見回饋 498：到「設定 → 外觀」改名字 */
@@ -1923,7 +1923,7 @@ if(OFF&&window.XQNet){XQNet.start();
   XQNet.on("matchfail",x=>{toast(x.auto?"對方離開了，繼續幫你找對手…":"對方離開了，這盤沒有開始");location.hash="#/lobby"});
   XQNet.on("matched",x=>{vibrate([40,60,40]);closeSheet();toast(`🎲 配對成功：對手是 ${x.name}`);goGame()})}
 
-// ================= 分享：讓別的手機也裝象棋研究室 =================
+// ================= 分享：讓別的手機也裝象棋千秋 =================
 const APP_HOME="https://raysonchen2023-cloud.github.io/xiangqi-lab/";
 // 開發者模式：電腦網頁一律是；手機要在 設定→進階 自己打開。掃過電腦 QR code 的玩家也只是玩家，看不到「電腦」相關的字
 const DEVMODE=()=>!OFF||!!store.get("devMode",false);
@@ -1949,11 +1949,11 @@ let installEvt=null;addEventListener("beforeinstallprompt",e=>{e.preventDefault(
 const isStandalone=()=>matchMedia("(display-mode: standalone)").matches||!!navigator.standalone;
 function installGuide(manual){if(isStandalone())return;const ua=navigator.userAgent,inLine=/ Line\/[0-9]/i.test(ua),ios=MY_KIND==="iPhone"||MY_KIND==="iPad";
   const later=()=>store.set("instAsk",{at:Date.now()}),never=()=>store.set("instAsk",{no:true});
-  if(inLine)return modal(`<div class="em">📲</div><h2>用手機的瀏覽器打開</h2><p class="muted">在 LINE 裡沒辦法把象棋研究室加到主畫面。按下面的按鈕，會改用 ${ios?"Safari":"Chrome"} 打開，再照步驟加到主畫面。</p>`,
+  if(inLine)return modal(`<div class="em">📲</div><h2>用手機的瀏覽器打開</h2><p class="muted">在 LINE 裡沒辦法把象棋千秋加到主畫面。按下面的按鈕，會改用 ${ios?"Safari":"Chrome"} 打開，再照步驟加到主畫面。</p>`,
     [["用瀏覽器打開",()=>{later();location.href=APP_HOME+"?openExternalBrowser=1"}],["不用了",never,true]]);
-  if(installEvt)return modal(`<div class="em">📲</div><h2>把象棋研究室加到主畫面？</h2><p class="muted">之後從主畫面點圖示就能打開，全螢幕、沒網路也能下棋。</p>`,
+  if(installEvt)return modal(`<div class="em">📲</div><h2>把象棋千秋加到主畫面？</h2><p class="muted">之後從主畫面點圖示就能打開，全螢幕、沒網路也能下棋。</p>`,
     [["安裝",async()=>{const e=installEvt;installEvt=null;try{await e.prompt();const c=await e.userChoice;if(c&&c.outcome==="accepted")never();else later()}catch(x){later()}}],["稍後",later,true],["我已經裝了／不用了",never,true]]);
-  modal(`<div class="em">📲</div><h2>把象棋研究室加到主畫面？</h2><p class="muted" style="margin-bottom:8px">加了之後，從主畫面點圖示就能打開，全螢幕、沒網路也能下棋。</p>
+  modal(`<div class="em">📲</div><h2>把象棋千秋加到主畫面？</h2><p class="muted" style="margin-bottom:8px">加了之後，從主畫面點圖示就能打開，全螢幕、沒網路也能下棋。</p>
     <div style="text-align:left;line-height:2;font-size:15px">${ios?a2hsSteps(ua)
       :`1. 點瀏覽器右上角的 <b>⋮</b> 選單<br>2. 點 <b>「加到主畫面」</b>或<b>「安裝應用程式」</b><br>3. 按 <b>「新增」</b>`}</div>`,
     [["好，我現在加",()=>{later();a2hsArrow(ua)}],...(ios&&!/Safari/.test(ua.replace(/CriOS|FxiOS|EdgiOS|Ddg/g,"X"))||/CriOS|FxiOS|EdgiOS|Ddg/.test(ua)?[["複製網址（改用 Safari 開）",()=>{later();try{navigator.clipboard.writeText(APP_HOME);toast("已複製網址：打開 Safari 貼到網址列")}catch(e){toast(APP_HOME)}}]]:[]),["我已經加過了",never,true],["不用了",never,true]])}
@@ -1979,14 +1979,14 @@ async function shareSheet(){
   const app=(OFF&&/^https:/.test(location.origin)?location.origin+location.pathname:APP_HOME)+"?openExternalBrowser=1";   // LINE 裡點開會改用手機的瀏覽器
   // 給一般玩家：只有 App 本身。連到電腦的 QR code 放在「🔗 連線到電腦」裡（只有連過電腦的裝置看得到）
   try{await loadScript("qrcode.min.js")}catch(e){return toast(e.message)}
-  sheet("分享象棋研究室",b=>{
-    b.innerHTML=`<p style="text-align:center">朋友用手機相機掃這個 QR code，就能打開<b>象棋研究室</b>。</p>
+  sheet("分享象棋千秋",b=>{
+    b.innerHTML=`<p style="text-align:center">朋友用手機相機掃這個 QR code，就能打開<b>象棋千秋</b>。</p>
       <div class="qrbox" id="qrc"></div>
       <p class="muted" style="text-align:center;margin:4px 0 10px">iPhone：Safari 打開 → 分享 →「加入主畫面」<br>Android：Chrome 選單 →「加到主畫面」<br>有新版會自動更新，不用再分享一次。</p>
       <button class="btn" id="sh">${navigator.share?"用 LINE／訊息分享連結":"複製連結"}</button>`;
     new QRCode(b.querySelector("#qrc"),{text:app,width:220,height:220,correctLevel:QRCode.CorrectLevel.L});
     b.querySelector("#sh").onclick=async()=>{
-      if(navigator.share){try{await navigator.share({title:"象棋研究室",text:"一起來下象棋：",url:app})}catch(e){}return}
+      if(navigator.share){try{await navigator.share({title:"象棋千秋",text:"一起來下象棋：",url:app})}catch(e){}return}
       try{await navigator.clipboard.writeText(app);toast("已複製連結")}catch(e){prompt("複製這個連結",app)}}})}
 // 給開發者：讓自己的另一台裝置也連到電腦（含存取碼，只給自己或信任的人）
 async function deviceQR(base,key){
@@ -2000,12 +2000,12 @@ async function deviceQR(base,key){
 // 線上版（電腦給的 trycloudflare 網址）被加到主畫面的話，電腦重開後網址就失效；請改裝 GitHub 版
 function standaloneOnlineWarn(v){if(OFF||!(matchMedia("(display-mode: standalone)").matches||navigator.standalone))return;
   const c=document.createElement("div");c.className="card";c.style.cssText="margin:12px;border-color:var(--warn)";
-  c.innerHTML=`<b>⚠ 這個主畫面圖示會失效</b><p class="muted" style="margin:6px 0">它記住的是電腦這次的臨時網址，電腦程式一重開就連不上。請改裝「象棋研究室」正式版：按下面按鈕，在 Safari 打開後選「加入主畫面」，再把這個舊圖示刪掉。正式版會自己找到電腦的新網址。</p><button class="btn" id="gh">打開正式版（已帶好連線設定）</button>`;
+  c.innerHTML=`<b>⚠ 這個主畫面圖示會失效</b><p class="muted" style="margin:6px 0">它記住的是電腦這次的臨時網址，電腦程式一重開就連不上。請改裝「象棋千秋」正式版：按下面按鈕，在 Safari 打開後選「加入主畫面」，再把這個舊圖示刪掉。正式版會自己找到電腦的新網址。</p><button class="btn" id="gh">打開正式版（已帶好連線設定）</button>`;
   v.prepend(c);c.querySelector("#gh").onclick=async()=>{let u=APP_HOME;try{const r=await api("/remote");u=(r.urls||[]).find(x=>x.includes("#connect="))||u}catch(e){}location.href=u}}
 function Home(v,hub){   /* hub：沒有＝首頁三張大卡；"battle"＝對戰頁；"learn"＝學習頁（開發者看 Gemini UI／UX 審閱後決定） */
   const RI=DEVREMOTE()?XQ.remoteInfo():null;  // 這支手機連過主人的電腦嗎
   const standalone=matchMedia("(display-mode: standalone)").matches||navigator.standalone;
-  setTop("象棋研究室",false,OFF?[].concat(RI?[["🔗",connectSheet,"連線到電腦"]]:[])  :[["👥",whoSheet,"誰在線上"]]);meChip();   /* 意見回饋 570：📋 移到設定頁 */   /* 意見回饋 536：首頁左上角的頭像，點了進「我的角色」；531：首頁右上角的「分享給朋友」「意見回饋」拿掉（都在 設定 → 系統） */setTabs(true,"#/");   /* 意見回饋 409：意見回饋按鈕放在首頁最右上角 */
+  setTop("象棋千秋",false,OFF?[].concat(RI?[["🔗",connectSheet,"連線到電腦"]]:[])  :[["👥",whoSheet,"誰在線上"]]);meChip();   /* 意見回饋 570：📋 移到設定頁 */   /* 意見回饋 536：首頁左上角的頭像，點了進「我的角色」；531：首頁右上角的「分享給朋友」「意見回饋」拿掉（都在 設定 → 系統） */setTabs(true,"#/");   /* 意見回饋 409：意見回饋按鈕放在首頁最右上角 */
   if(hub){setTop(hub==="battle"?"⚔ 對戰":"📚 學習","#/");setTabs(true,"#/")}
   const T=(k,go,ic,t,id,s,x,cta)=>`<button class="tile strip ${k}${x||""}" data-go="${go}"><span class="ic">${ic}</span><span class="tx"><span class="t">${t}</span><span class="s"${id?` id="${id}"`:""}>${s}</span></span><b class="go">${cta||"›"}</b></button>`;
   v.innerHTML=`<div class="home">
@@ -2963,7 +2963,7 @@ async function xfSend(){if(!OFF||!window.XQNet||!window.XQSave||!crypto.subtle)r
       const exp=Date.now()+30*60000;if(!await XQNet.putRetained(K.topic("m"),JSON.stringify({v:1,n:parts.length,iv:xfB64(iv),gz:!!window.CompressionStream,exp})))throw new Error("連不上線上伺服器，等一下再試");
       for(let i=0;i<parts.length;i++)await XQNet.putRetained(K.topic(i),parts[i]);
       setTimeout(()=>{for(let i=0;i<parts.length;i++)XQNet.putRetained(K.topic(i),"");XQNet.putRetained(K.topic("m"),"")},30*60000);
-      b.innerHTML=`<p>在新手機打開象棋研究室 →「設定 → 其他 → 📱 換手機 → 輸入轉移碼」，輸入：</p><div style="font:900 34px/1.3 ui-monospace,monospace;letter-spacing:.12em;text-align:center;margin:12px 0;color:var(--accent)">${shown}</div>
+      b.innerHTML=`<p>在新手機打開象棋千秋 →「設定 → 其他 → 📱 換手機 → 輸入轉移碼」，輸入：</p><div style="font:900 34px/1.3 ui-monospace,monospace;letter-spacing:.12em;text-align:center;margin:12px 0;color:var(--accent)">${shown}</div>
         <p class="muted" style="font-size:13px">30 分鐘內有效（到 ${new Date(exp).toLocaleTimeString().slice(0,-3)}），新手機收到後就失效。這支手機的資料不會被刪掉。資料大小約 ${Math.ceil(b64.length/1024)} KB。</p><button class="btn ghost" id="xfX" style="width:100%">作廢這組碼</button>`;
       b.querySelector("#xfX").onclick=()=>{for(let i=0;i<parts.length;i++)XQNet.putRetained(K.topic(i),"");XQNet.putRetained(K.topic("m"),"");toast("這組轉移碼已作廢");closeSheet()}}
     catch(e){b.innerHTML=`<p>⚠ ${esc(e.message||String(e))}</p>`}})}
@@ -2982,7 +2982,7 @@ async function xfRecv(){if(!OFF||!window.XQNet||!window.XQSave||!crypto.subtle)r
 function onboard(force){if(!force&&store.get("onboard1",false))return;let sx=mySex(),st=myStyle(),step=0;
   const card=(k,on,img,t,sub)=>`<button class="obc${on?" on":""}" data-k="${k}"><img src="${img}" alt="" onerror="this.style.visibility='hidden'"><b>${t}</b><small>${sub}</small></button>`;
   const paint=b=>{const name=myName()||"";
-    b.innerHTML=step===0?`<p class="muted" style="margin:0 0 8px">歡迎來到象棋研究室！先選你在棋桌前的樣子（之後可以在「設定 → 外觀」改）</p><div class="obg">${card("m",sx==="m","data/xs/xs_idle.webp","男生","小帥")+card("f",sx==="f","data/xs/xs_girl_idle.webp","女生","小帥妹")}</div><button class="btn" id="obN" style="width:100%;margin-top:12px">下一步</button>`
+    b.innerHTML=step===0?`<p class="muted" style="margin:0 0 8px">歡迎來到象棋千秋！先選你在棋桌前的樣子（之後可以在「設定 → 外觀」改）</p><div class="obg">${card("m",sx==="m","data/xs/xs_idle.webp","男生","小帥")+card("f",sx==="f","data/xs/xs_girl_idle.webp","女生","小帥妹")}</div><button class="btn" id="obN" style="width:100%;margin-top:12px">下一步</button>`
       :step===1?`<p class="muted" style="margin:0 0 8px">角色要用哪一種樣子？園子裡的你、跟你下棋的對手都會照這個顯示</p><div class="obg">${card("q",st==="q",meImgFor("q",sx),(sx==="f"?"🧸 小帥妹Q版":"🧸 小帥Q版"),"圓滾滾的棋子小人")+card("real",st==="real",meImgFor("real",sx),(sx==="f"?"🗿 小帥妹":"🗿 小帥"),"照畫好的人物做的 3D")}</div><div class="row" style="gap:8px;margin-top:12px"><button class="btn ghost" id="obB" style="flex:1">上一步</button><button class="btn" id="obN" style="flex:2">下一步</button></div>`
       :`<p class="muted" style="margin:0 0 8px">最後，幫自己取個名字（線上對戰、大廳會顯示）</p><input id="obName" maxlength="16" value="${esc(name)}" placeholder="例如：雲河小棋手" style="width:100%;font-size:18px;padding:12px;border-radius:12px;border:1px solid var(--line);background:var(--card);color:inherit"><div class="row" style="gap:8px;margin-top:12px"><button class="btn ghost" id="obB" style="flex:1">上一步</button><button class="btn" id="obN" style="flex:2">開始下棋</button></div>`;
     b.querySelectorAll(".obc").forEach(x=>x.onclick=()=>{vibrate(5);if(step===0)sx=x.dataset.k;else st=x.dataset.k;paint(b)});
@@ -3048,7 +3048,7 @@ function Settings(v){
       <button class="item" id="fb"><span class="lb">${ETIMG("feedback","","💬")}</span><span class="tx"><b>意見回饋</b><span>回報錯誤、想要的功能</span></span><span class="muted">›</span></button><button class="item" id="fxh"><span class="lb">${ETIMG("o_fixes","","🛠")}</span><span class="tx"><b>修正紀錄</b><span>你回報、已經修好的問題</span></span><span class="muted">›</span></button>${OFF&&!isStandalone()?`<button class="item" id="a2h"><span class="lb">📲</span><span class="tx"><b>加到主畫面</b><span>從主畫面點圖示打開：全螢幕、沒網路也能下棋</span></span><span class="muted">›</span></button>`:""}
       <button class="item" id="sh"><span class="lb">${ETIMG("share","","📤")}</span><span class="tx"><b>分享給朋友</b><span>QR code・LINE</span></span><span class="muted">›</span></button></div>
     <div class="sec-t">關於</div><div class="card" id="about" style="line-height:1.9">
-      <div class="row" style="justify-content:space-between"><span class="muted">App</span><b>象棋研究室</b></div>
+      <div class="row" style="justify-content:space-between"><span class="muted">App</span><b>象棋千秋</b></div>
       <div class="row" style="justify-content:space-between"><span class="muted">開發者</span><b>hungshengc</b></div>
       <div class="row" style="justify-content:space-between"><span class="muted">開始開發</span><b>2026 年 10 月 29 日</b></div>
       <div class="row" style="justify-content:space-between;align-items:center"><span class="muted">版本</span><span class="row" style="gap:8px;align-items:center"><b>${esc(window.XQ_BUILD&&!/__BUILD__/.test(window.XQ_BUILD)?window.XQ_BUILD:"開發中")}</b>${OFF?'<button class="pill" id="aUpd">檢查更新</button>':""}</span></div>   <!-- 意見回饋 531：系統更新從首頁搬到這裡 -->
@@ -5230,13 +5230,13 @@ const BOT_FAQ=[
  [["龜背炮"],"一門炮退到自己帥的背後防守，形狀像烏龜背殼。"],
  [["開局有哪些","開局"],"我會的開局：中炮、屏風馬、反宮馬、順炮、列炮、飛相局、仙人指路、起馬局、過宮炮、士角炮、五七炮、五六炮、單提馬、半途列炮。問我名字，我就在棋盤上示範！"],
  [["殺法有哪些","殺法"],"殺法很多，例如馬後炮、臥槽馬、雙車錯、鐵門栓、悶宮殺、白臉將、大刀剜心……問我名字，我示範給你看！","#/terms","看所有術語"]];
-// 學習指南（意見回饋 183）：依玩家目前的程度，循序漸進建議怎麼用象棋研究室
+// 學習指南（意見回饋 183）：依玩家目前的程度，循序漸進建議怎麼用象棋千秋
 function askGuides(){let p=0;try{p=(JSON.parse(localStorage.getItem("xq_cpuRate")||"null")||{}).pts||0}catch(e){}
   const g=p>=1500?1:p>=1150?2:p>=1000?3:p>=800?4:p>=600?5:p>=400?6:p>=200?7:p>=100?8:9,ZH="〇一二三四五六七八九";
   const now=p<100?"你現在最該做的是 ②③④：先摸清自己的程度，跟電腦從低級開始下，每盤看賽後報告。":p<600?"你已經有基礎了，接下來重點是 ⑤⑥⑦：把錯步練對、背熟殺法、練殘局。":"你的程度不錯！建議主攻 ⑧⑨⑩：深入開局、衝積分升段、找真人對戰。";
   const plan=`① 學規則：「象棋規則」看每種棋子怎麼走、怎麼記譜。\n② 做「棋力測驗」：了解自己現在的程度。\n③ 挑戰電腦：從第 1 級開始，贏了再升一級。\n④ 每盤都看「📊 賽後報告」：找出錯著、露著，看藍色箭頭的正確走法。\n⑤ 「錯棋重練」：把走錯的局面重新練到對。\n⑥ 背熟基本殺法：術語裡的馬後炮、臥槽馬、雙車錯、鐵門栓…（可以問我）。\n⑦ 練殘局：棋譜庫的《適情雅趣》、古典殘局譜，一步一步看。\n⑧ 學開局：中炮對屏風馬、仙人指路、飛相局…看大師對局怎麼下。\n⑨ 積分挑戰：升段，小帥也會跟著升官（你現在 ${p} 分，${RANKT(store.get("era","classic"),g)}）。\n⑩ 線上大廳找真人下，或去觀戰看別人怎麼下。\n\n👉 ${now}`;
   return[
-   [["提升實力","變強","進步","怎麼練","學棋","練棋","計畫","學習","提升","強一點","變厲害","新手怎麼"],"怎麼在象棋研究室提升實力",plan,"#/cpu","開始挑戰電腦","mid"],
+   [["提升實力","變強","進步","怎麼練","學棋","練棋","計畫","學習","提升","強一點","變厲害","新手怎麼"],"怎麼在象棋千秋提升實力",plan,"#/cpu","開始挑戰電腦","mid"],
    [["開局怎麼學","學開局","開局原則","開局要注意"],"開局怎麼學","開局三原則：快出大子（車馬炮）、搶佔中路、不要同一個子連走好幾步。\n建議：先學「中炮」和「屏風馬」兩個最常見的開局（問我就能在棋盤上示範），再到棋譜庫「大師對局」看高手怎麼接著下，最後挑戰電腦時練習同一個開局。","#/terms","看開局術語"],
    [["中局","怎麼算","算棋","計算","思考"],"中局怎麼下","中局要先看全局：①對方剛走那步想幹嘛？②我哪個子沒人保護？③有沒有能將軍、捉子、兌子的好機會？\n看棋譜時按「🔍 分析」，Pikafish 會告訴你這個局面最好的幾步，對照自己的想法最能進步。\n\n👇 直接從大師對局的中局局面練習，選一個難度："," "," ","mid"],
    [["殘局怎麼練","練殘局","殘局技巧"],"殘局怎麼練","殘局重在算步數和配合：兵卒在殘局很值錢，帥也要出來幫忙。\n建議：棋譜庫的「古典殘局譜」從簡單的開始看，先自己想再按下一步；術語裡的殺法也要背熟。\n\n👇 直接從大師對局的殘局練習（你執最後贏的一方），選一個難度：","#/db/canju","打開殘局譜","end"],
@@ -5504,7 +5504,7 @@ async function preloadAll(){if(!OFF||!("caches" in window))return;
   M.items=M.items.filter(([u])=>/^data\/tripo_app\//.test(u)?wantReal:/^data\/eramap\//.test(u)?(/_m\.webp$/.test(u)===MOBP):true);   /* 真實 3D 模型只在選了真實版時下載；朝代地圖手機只抓手機版 */
   let ov=null,bar=null,txt=null;const ovMake=()=>{ov=document.createElement("div");ov.id="preov";
     ov.innerHTML=`<div class="ld-img"><img alt=""><img alt=""></div><div class="ld-q"><div class="ld-tt"></div><div class="ld-qt"></div><div class="ld-src"></div></div>
-      <div class="pre-in"><div class="pre-t">象棋研究室</div><div class="pre-s">檢查手機裡的棋盤、園子和故事…</div>
+      <div class="pre-in"><div class="pre-t">象棋千秋</div><div class="pre-s">檢查手機裡的棋盤、園子和故事…</div>
       <div class="pre-bar"><i></i></div><div class="pre-n">檢查中…</div><div class="pre-h">缺的、換過的會先下載，好了才進首頁。</div><button class="pre-skip" type="button" hidden>先進去逛（背景繼續下載）</button></div>`;
     document.body.append(ov);bar=ov.querySelector(".pre-bar i");txt=ov.querySelector(".pre-n");ldShow(ov);
     setTimeout(()=>{const k=ov&&ov.querySelector(".pre-skip");if(k){k.hidden=false;k.onclick=()=>{ov.remove();ov=null}}},20000)};ovMake();
@@ -5527,7 +5527,7 @@ async function preloadAll(){if(!OFF||!("caches" in window))return;
   if(!miss.length&&ov){const o=ov;ov=null;txt.textContent="都在手機裡了";setTimeout(()=>{o.classList.add("out");setTimeout(()=>o.remove(),400)},350)}
   if(false){ov=document.createElement("div");ov.id="preov";
     ov.innerHTML=`<div class="ld-img"><img alt=""><img alt=""></div><div class="ld-q"><div class="ld-tt"></div><div class="ld-qt"></div><div class="ld-src"></div></div>
-      <div class="pre-in"><div class="pre-t">象棋研究室</div><div class="pre-s">${store.get(PRE_KEY,null)?"有新的圖和故事，正在搬進手機…":"第一次開啟，正在把棋盤、園子和故事都搬進手機…"}</div>
+      <div class="pre-in"><div class="pre-t">象棋千秋</div><div class="pre-s">${store.get(PRE_KEY,null)?"有新的圖和故事，正在搬進手機…":"第一次開啟，正在把棋盤、園子和故事都搬進手機…"}</div>
       <div class="pre-bar"><i></i></div><div class="pre-n">準備中…</div><div class="pre-h">先把常用的載好就進去；其他朝代和故事的圖在背景繼續下載。</div><button class="pre-skip" type="button" hidden>先進去逛（背景繼續下載）</button></div>`;
     document.body.append(ov);bar=ov.querySelector(".pre-bar i");txt=ov.querySelector(".pre-n");ldShow(ov);
     setTimeout(()=>{const k=ov&&ov.querySelector(".pre-skip");if(k){k.hidden=false;k.onclick=()=>{ov.remove();ov=null}}},20000)}

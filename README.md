@@ -1,4 +1,4 @@
-# 象棋研究室（離線版）
+# 象棋千秋（離線版）
 
 手機也能離線使用的中國象棋 App：挑戰 Pikafish（八個難度）、雙人對戰、明清古譜研究與 Pikafish 分析。
 網址：https://raysonchen2023-cloud.github.io/xiangqi-lab/
