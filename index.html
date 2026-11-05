@@ -699,7 +699,7 @@ html[data-era=ming] .topbar,html[data-era=qing] .topbar{border-bottom-width:4px}
       if(!window.caches)return go();caches.keys().then(function(ks){return Promise.all(ks.filter(function(k){return k.indexOf("xqlab-app-")===0}).map(function(k){return caches.delete(k)}))})
         .then(function(){return navigator.serviceWorker&&navigator.serviceWorker.getRegistration()}).then(function(r){return r&&r.update()}).catch(function(){}).then(go)}};setTimeout(chk,4000)})();
 </script>
-<script>window.XQ_OFFLINE=true;window.XQ_BUILD="20261105-1211";</script>
+<script>window.XQ_OFFLINE=true;window.XQ_BUILD="20261105-1218";</script>
 <script src="core.js"></script>
 <script src="engine.js"></script>
 <script src="local.js"></script>
@@ -5703,7 +5703,9 @@ function PvpGame(v){
     for(const s of["r","b"]){const el=v.querySelector(`#ck_${s}`);if(el){const x=b.c[s]-(b.run&&b.turn===s?Date.now()-b.at:0);el.textContent=fmt(x);el.style.color=x<60000&&!(b.turn===s&&b.run)?"var(--red)":""}}}
   const ckT=setInterval(clocks,250);
   let lastN=null;   // 步數剛好多一步才秀開局名
-  function render(s){const n0=lastN;st=s;lastN=s.moves.length;if(NET&&s.mySide&&s.mySide!==seat){seat=s.mySide;flipMan=null;setTitle();flipBtn()}if(!st.legal.some(([f])=>f===sel))sel=-1;draw();
+  function render(s){const n0=lastN;st=s;lastN=s.moves.length;
+    /* 意見回饋 598：對方的棋一到就輕震一下，狀態列也寫出對方走了哪一步——對方秒回時，才不會以為自己能連走兩步 */
+    if(n0!=null&&lastN>n0&&seat&&seat!=="w"){const L=s.moves[s.moves.length-1];if(L&&L.by&&L.by!==seat)vibrate([15,60,15])}if(NET&&s.mySide&&s.mySide!==seat){seat=s.mySide;flipMan=null;setTitle();flipBtn()}if(!st.legal.some(([f])=>f===sel))sel=-1;draw();
     if(n0!=null&&lastN===n0+1&&view==null){const cue=openingCue(st.moves);if(cue)setTimeout(()=>openFx(bd.svg,cue[1],cue[0]),350)}
     {const gk=NET&&window.XQNet&&XQNet.gid?XQNet.gid():null;if(NET&&gk&&!st.result&&!st.moves.length&&seat!=="w"&&KJ_LAST!==gk){KJ_LAST=gk;loadKaiju();setTimeout(()=>kaijuFx(bd.svg,"r"),parkOn()?1600:350)}}   /* 意見回饋 416：線上對戰也有開局特效（觀戰的人不播） */
     const ems=st.emotes||[];if(lastEmo==null)lastEmo=ems.reduce((m,x)=>Math.max(m,x.id),0);
@@ -5726,7 +5728,7 @@ function PvpGame(v){
     const hideEv=seat&&seat!=="w"&&!st.result;v.querySelector(".evline").style.visibility=hideEv?"hidden":"";
     v.querySelector("#evf").style.width=evPct(hideEv?null:st.eval&&st.eval.v)+"%";
     const s2=v.querySelector("#stat");s2.classList.toggle("hot",st.check>=0&&!st.result);
-    s2.textContent=st.waiting?"等對方進入對局…":st.result?st.result.why:seat==="w"?`觀戰中・輪到${PLAYER[st.turn]}（${nm(st.turn)}）`+(st.check>=0?"・被將軍！":"")+(st.moves.length&&qTag(st.moves.length-1)?`・上一步${qTag(st.moves.length-1)}`:""):seat?(st.turn===seat?"輪到你走":`等對方（${PLAYER[st.turn]}）走…`)+(st.check>=0&&st.turn===seat?"・你被將軍了！":"")+(st.draw===seat?"・已提和，等對方回應":"")
+    s2.textContent=st.waiting?"等對方進入對局…":st.result?st.result.why:seat==="w"?`觀戰中・輪到${PLAYER[st.turn]}（${nm(st.turn)}）`+(st.check>=0?"・被將軍！":"")+(st.moves.length&&qTag(st.moves.length-1)?`・上一步${qTag(st.moves.length-1)}`:""):seat?(st.turn===seat?(()=>{const L=st.moves[st.moves.length-1];return L&&L.by&&L.by!==seat&&L.cn?`對方走了「${L.cn}」・輪到你走`:"輪到你走"})():`等對方（${PLAYER[st.turn]}）走…`)+(st.check>=0&&st.turn===seat?"・你被將軍了！":"")+(st.draw===seat?"・已提和，等對方回應":"")
       :`輪到${PLAYER[st.turn]}（${nm(st.turn)}）`+(st.check>=0?"・被將軍！":"")+(st.eval?`・${evt(st.eval.v)}`:"");
     if(NET&&st.watchers)s2.textContent+=`・👀 ${st.watchers} 人觀看`;
     // 每步限時 3 分鐘：剩 1 分鐘以內顯示倒數
