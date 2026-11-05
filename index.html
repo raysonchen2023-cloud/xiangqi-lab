@@ -774,7 +774,7 @@ html[data-era="qing"]:not([data-font="sys"]){--serif:"XQ twkai","Noto Serif TC",
       if(!window.caches)return go();caches.keys().then(function(ks){return Promise.all(ks.filter(function(k){return k.indexOf("xqlab-app-")===0}).map(function(k){return caches.delete(k)}))})
         .then(function(){return navigator.serviceWorker&&navigator.serviceWorker.getRegistration()}).then(function(r){return r&&r.update()}).catch(function(){}).then(go)}};setTimeout(chk,4000)})();
 </script>
-<script>window.XQ_OFFLINE=true;window.XQ_BUILD="20261105-2055";</script>
+<script>window.XQ_OFFLINE=true;window.XQ_BUILD="20261105-2125";</script>
 <script src="core.js"></script>
 <script src="engine.js"></script>
 <script src="local.js"></script>
@@ -6057,6 +6057,10 @@ async function preloadAll(){if(!OFF||!("caches" in window))return;
   const pool=(list,MAXN,MAXB,onDone)=>new Promise(ok=>{let n=0,b=0;const L=list.slice();const next=()=>{if(!L.length&&!n)return ok();
     while(L.length&&n<MAXN&&(n===0||b+L[0][1]<=MAXB)){const it=L.shift();n++;b+=it[1];getOne(it).then(()=>onDone(it,true)).catch(()=>onDone(it,false)).finally(()=>{n--;b-=it[1];next()})}};next()});
   await pool(q,24,6*1048576,(it,ok)=>{if(!ok)fail.push(it);got+=it[1];show()});
+  /* 意見回饋 634（開發者：字體大小一樣沒改好）：頁面一開就從快取用了舊字型，背景換成新字型後，這一次開著的畫面還是舊的（舊檔缺「疆」等字，會跳成系統字型）。
+     換過的朝代字型下載好就直接套用到畫面上（後加的同名字型優先），不用關掉 App 再開 */
+  for(const[u,,,fr]of q){const m=fr&&/^data\/fonts\/xq-(\w+)\.woff2$/.exec(u);if(!m||fail.some(f=>f[0]===u)||!window.FontFace)continue;
+    try{const r=await c.match(abs(u));if(!r)continue;const ff=new FontFace("XQ "+m[1],await r.arrayBuffer(),{display:"swap"});await ff.load();document.fonts.add(ff)}catch(e){}}
   if(!fail.length)store.set(PRE_KEY,M.v);okH();
   if(ov){txt.textContent="載好了";setTimeout(()=>{if(ov){ov.classList.add("out");setTimeout(()=>ov&&ov.remove(),400)}},250)}
   /* 失敗的在背景再試三次 */
