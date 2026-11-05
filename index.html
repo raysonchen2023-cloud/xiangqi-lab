@@ -699,7 +699,7 @@ html[data-era=ming] .topbar,html[data-era=qing] .topbar{border-bottom-width:4px}
       if(!window.caches)return go();caches.keys().then(function(ks){return Promise.all(ks.filter(function(k){return k.indexOf("xqlab-app-")===0}).map(function(k){return caches.delete(k)}))})
         .then(function(){return navigator.serviceWorker&&navigator.serviceWorker.getRegistration()}).then(function(r){return r&&r.update()}).catch(function(){}).then(go)}};setTimeout(chk,4000)})();
 </script>
-<script>window.XQ_OFFLINE=true;window.XQ_BUILD="20261105-0934";</script>
+<script>window.XQ_OFFLINE=true;window.XQ_BUILD="20261105-0952";</script>
 <script src="core.js"></script>
 <script src="engine.js"></script>
 <script src="local.js"></script>
@@ -4046,6 +4046,8 @@ const RAR={rare:["稀有","#C9962B"],normal:["一般","#3A7BD5"],broken:["損壞
    最上面是角色卡（點頭像看 3D、換角色、改名、換棋子）和官階，下面接原本棋童資料的修為、寶物、珍品、秘境棋友 */
 function rankInfo(){let p=0;try{p=(JSON.parse(localStorage.getItem("xq_cpuRate")||"null")||{}).pts||0}catch(e){}const TH=[1500,1150,1000,800,600,400,200,100,0],g=TH.findIndex(t=>p>=t)+1,lo=TH[g-1],hi=g>1?TH[g-2]:null,era=store.get("era","classic");
   return{p,g,hi,pc:hi?Math.round((p-lo)/(hi-lo)*100):100,name:RANKT(era,g),next:g>1?RANKT(era,g-1):""}}
+/* 意見回饋 590（開發者）：跟電腦下（含石桌往事）時，自己那一欄不寫「你」，寫角色名：小帥／小師妹 */
+const meCall=()=>mySex()==="f"?"小師妹":"小帥";
 const meName=()=>(mySex()==="f"?"小帥妹":"小帥")+(myStyle()==="real"?"":"Q版"),meImg=()=>meImgFor(myStyle(),mySex());
 /* 意見回饋 545：預覽圖的圓牌是空白的，這裡在圓牌上寫上「換棋子」選的那顆字；ME_DISC＝圓牌中心與半徑（圖是 300×400） */
 const ME_DISC={q_boy:[150,245,58],real_boy:[143,245,60],q_girl:[151,250,53],real_girl:[140,240,56]},ME_IMGC={};
@@ -4991,7 +4993,7 @@ function CpuGame(v,practicePage,mode){
     const JP=(()=>{const L=lvPlayOf(st),k=(L&&L.lvp.opp)||(String(st.journey||"").startsWith("char:")?st.journey.slice(5):null);return k&&JCHAR[k]?{...JCHAR[k],say:JCHAR[k].hi,img:`data/journey/char_${k}_idle.webp`}:innActor(st.journey)})(),NP=parkNpcOf(st)||JP,top=(NP?npcHTML(bot,NP,(JP&&NP===JP?(NP.name&&NP.name===(innActor(st.journey)||{}).name?"驛站的棋友・":"石桌往事・"):"園子裡的路人棋友・")+(lv.desc||""))   /* 意見回饋 530：驛站的對手不是「石桌往事」 */:playerHTML(bot,st.arena&&ARENA[st.arena]?`🏯 ${ARENA[st.arena].name}`:"Pikafish",st.arena&&ARENA[st.arena]?`${eraLabel(st.arena)}擂主・${st.arena==="classic"?"職業頂尖（全力的前一級）":"強度跟著你的段位"}`:st.ranked?"積分挑戰・強度跟著你的段位":st.reward?`🚗 獎勵模式・贏了 +${cpts} 點`:lv.desc||"自選難度"))+
       `<button class="cpu-chip${st.ranked?" rk":""}" aria-label="${st.ranked?"段位與開新局":"換難度"}"><span><b>${st.ranked?"🏅 "+esc(st.rkName||CR.rank||""):(st.reward?"🚗 ":"")+"第 "+st.level+" 級"}</b><small>${st.ranked?(CR.pts||0)+" 分":st.reward?(CB.pts||0).toLocaleString()+" 點":esc(lv.name||"")}</small></span><i>›</i></button>`;
     const pT=v.querySelector("#pTop");if(pT.dataset.h!==top){pT.dataset.h=top;pT.innerHTML=top}
-    const bt=playerHTML(me,"你",PLAYER[me]+(st.ranked&&CR.next?`・再 ${CR.toNext} 分升 ${CR.next}`:"")+(st.reward?`・🚗 ${(CB.pts||0).toLocaleString()} 點`:""));
+    const bt=playerHTML(me,meCall(),PLAYER[me]+(st.ranked&&CR.next?`・再 ${CR.toNext} 分升 ${CR.next}`:"")+(st.reward?`・🚗 ${(CB.pts||0).toLocaleString()} 點`:""));
     const pB=v.querySelector("#pBot");if(pB.dataset.h!==bt){pB.dataset.h=bt;pB.innerHTML=bt}
     v.querySelector("#pTop").classList.toggle("on",!st.result&&st.turn===bot);v.querySelector("#pBot").classList.toggle("on",!st.result&&st.turn===me);
     v.querySelector("#evf").style.width=evPct(st.eval&&st.eval.v)+"%";
