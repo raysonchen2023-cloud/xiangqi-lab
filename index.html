@@ -667,28 +667,27 @@ html[data-era=ming] .topbar,html[data-era=qing] .topbar{border-bottom-width:4px}
 .bag-help{margin-top:6px;font-size:13px;line-height:1.7;color:var(--muted,#7a6a58)}.bag-help p{margin:0 0 6px}
 
 /* 開發者 11/5：遊玩時的字體跟著朝代換（Gemini 推薦、Claude 查證授權；字型子集在 data/fonts/，授權見 data/fonts/LICENSES.md）。
-   秦、漢、三國、南北朝的字體筆畫個性強，只換標題（--serif）；其他朝代標題和內文（--sans）一起換。字型檔只有切到那個朝代、畫面用到時才下載 */
-@font-face{font-family:"XQ bakudai";src:url("data/fonts/xq-bakudai.woff2") format("woff2");font-display:swap}
-@font-face{font-family:"XQ chenyu";src:url("data/fonts/xq-chenyu.woff2") format("woff2");font-display:swap}
+   意見回饋 612：同一頁不要混兩種字體——標題（--serif）和內文（--sans）用同一套；筆畫太細、太花的辰宇落雁體、授權沒完全查證的莫大毛筆字體不用，秦、漢、三國、南北朝改用霞鶩文楷。
+   意見回饋 611：設定可以選「跟著朝代」或「跟著手機」；跟著手機（html[data-font=sys]）就完全不套。字型檔只有用到時才下載 */
+@font-face{font-family:"XQ wenkai";src:url("data/fonts/xq-wenkai.woff2") format("woff2");font-display:swap}
 @font-face{font-family:"XQ iansui";src:url("data/fonts/xq-iansui.woff2") format("woff2");font-display:swap}
 @font-face{font-family:"XQ twkai";src:url("data/fonts/xq-twkai.woff2") format("woff2");font-display:swap}
-@font-face{font-family:"XQ wenkai";src:url("data/fonts/xq-wenkai.woff2") format("woff2");font-display:swap}
 @font-face{font-family:"XQ genryu";src:url("data/fonts/xq-genryu.woff2") format("woff2");font-display:swap}
 @font-face{font-family:"XQ zhuque";src:url("data/fonts/xq-zhuque.woff2") format("woff2");font-display:swap}
 @font-face{font-family:"XQ cactus";src:url("data/fonts/xq-cactus.woff2") format("woff2");font-display:swap}
 @font-face{font-family:"XQ genwan";src:url("data/fonts/xq-genwan.woff2") format("woff2");font-display:swap}
-html[data-era="qin"]{--serif:"XQ bakudai","Noto Serif TC","Songti TC","SimSun",serif}
-html[data-era="han"]{--serif:"XQ bakudai","Noto Serif TC","Songti TC","SimSun",serif}
-html[data-era="sanguo"]{--serif:"XQ chenyu","Noto Serif TC","Songti TC","SimSun",serif}
-html[data-era="nanbei"]{--serif:"XQ bakudai","Noto Serif TC","Songti TC","SimSun",serif}
-html[data-era="weijin"]{--serif:"XQ iansui","Noto Serif TC","Songti TC","SimSun",serif;--sans:"XQ iansui","Noto Sans TC","PingFang TC","Microsoft JhengHei",system-ui,sans-serif}
-html[data-era="sui"]{--serif:"XQ twkai","Noto Serif TC","Songti TC","SimSun",serif;--sans:"XQ twkai","Noto Sans TC","PingFang TC","Microsoft JhengHei",system-ui,sans-serif}
-html[data-era="tang"]{--serif:"XQ wenkai","Noto Serif TC","Songti TC","SimSun",serif;--sans:"XQ wenkai","Noto Sans TC","PingFang TC","Microsoft JhengHei",system-ui,sans-serif}
-html[data-era="wudai"]{--serif:"XQ genryu","Noto Serif TC","Songti TC","SimSun",serif;--sans:"XQ genryu","Noto Sans TC","PingFang TC","Microsoft JhengHei",system-ui,sans-serif}
-html[data-era="song"]{--serif:"XQ zhuque","Noto Serif TC","Songti TC","SimSun",serif;--sans:"XQ zhuque","Noto Sans TC","PingFang TC","Microsoft JhengHei",system-ui,sans-serif}
-html[data-era="yuan"]{--serif:"XQ cactus","Noto Serif TC","Songti TC","SimSun",serif;--sans:"XQ cactus","Noto Sans TC","PingFang TC","Microsoft JhengHei",system-ui,sans-serif}
-html[data-era="ming"]{--serif:"XQ genwan","Noto Serif TC","Songti TC","SimSun",serif;--sans:"XQ genwan","Noto Sans TC","PingFang TC","Microsoft JhengHei",system-ui,sans-serif}
-html[data-era="qing"]{--serif:"XQ twkai","Noto Serif TC","Songti TC","SimSun",serif;--sans:"XQ twkai","Noto Sans TC","PingFang TC","Microsoft JhengHei",system-ui,sans-serif}
+html[data-era="qin"]:not([data-font="sys"]){--serif:"XQ wenkai","Noto Serif TC","Songti TC","SimSun",serif;--sans:"XQ wenkai","Noto Sans TC","PingFang TC","Microsoft JhengHei",system-ui,sans-serif}
+html[data-era="han"]:not([data-font="sys"]){--serif:"XQ wenkai","Noto Serif TC","Songti TC","SimSun",serif;--sans:"XQ wenkai","Noto Sans TC","PingFang TC","Microsoft JhengHei",system-ui,sans-serif}
+html[data-era="sanguo"]:not([data-font="sys"]){--serif:"XQ wenkai","Noto Serif TC","Songti TC","SimSun",serif;--sans:"XQ wenkai","Noto Sans TC","PingFang TC","Microsoft JhengHei",system-ui,sans-serif}
+html[data-era="nanbei"]:not([data-font="sys"]){--serif:"XQ wenkai","Noto Serif TC","Songti TC","SimSun",serif;--sans:"XQ wenkai","Noto Sans TC","PingFang TC","Microsoft JhengHei",system-ui,sans-serif}
+html[data-era="weijin"]:not([data-font="sys"]){--serif:"XQ iansui","Noto Serif TC","Songti TC","SimSun",serif;--sans:"XQ iansui","Noto Sans TC","PingFang TC","Microsoft JhengHei",system-ui,sans-serif}
+html[data-era="sui"]:not([data-font="sys"]){--serif:"XQ twkai","Noto Serif TC","Songti TC","SimSun",serif;--sans:"XQ twkai","Noto Sans TC","PingFang TC","Microsoft JhengHei",system-ui,sans-serif}
+html[data-era="tang"]:not([data-font="sys"]){--serif:"XQ wenkai","Noto Serif TC","Songti TC","SimSun",serif;--sans:"XQ wenkai","Noto Sans TC","PingFang TC","Microsoft JhengHei",system-ui,sans-serif}
+html[data-era="wudai"]:not([data-font="sys"]){--serif:"XQ genryu","Noto Serif TC","Songti TC","SimSun",serif;--sans:"XQ genryu","Noto Sans TC","PingFang TC","Microsoft JhengHei",system-ui,sans-serif}
+html[data-era="song"]:not([data-font="sys"]){--serif:"XQ zhuque","Noto Serif TC","Songti TC","SimSun",serif;--sans:"XQ zhuque","Noto Sans TC","PingFang TC","Microsoft JhengHei",system-ui,sans-serif}
+html[data-era="yuan"]:not([data-font="sys"]){--serif:"XQ cactus","Noto Serif TC","Songti TC","SimSun",serif;--sans:"XQ cactus","Noto Sans TC","PingFang TC","Microsoft JhengHei",system-ui,sans-serif}
+html[data-era="ming"]:not([data-font="sys"]){--serif:"XQ genwan","Noto Serif TC","Songti TC","SimSun",serif;--sans:"XQ genwan","Noto Sans TC","PingFang TC","Microsoft JhengHei",system-ui,sans-serif}
+html[data-era="qing"]:not([data-font="sys"]){--serif:"XQ twkai","Noto Serif TC","Songti TC","SimSun",serif;--sans:"XQ twkai","Noto Sans TC","PingFang TC","Microsoft JhengHei",system-ui,sans-serif}
 </style></head><body>
 <div class="app">
  <div class="topbar" id="topbar"><button class="ib" id="back" hidden><b>‹</b>返回</button><h1 id="title">象棋千秋</h1><span id="topRight"></span></div>
@@ -734,7 +733,7 @@ html[data-era="qing"]{--serif:"XQ twkai","Noto Serif TC","Songti TC","SimSun",se
       if(!window.caches)return go();caches.keys().then(function(ks){return Promise.all(ks.filter(function(k){return k.indexOf("xqlab-app-")===0}).map(function(k){return caches.delete(k)}))})
         .then(function(){return navigator.serviceWorker&&navigator.serviceWorker.getRegistration()}).then(function(r){return r&&r.update()}).catch(function(){}).then(go)}};setTimeout(chk,4000)})();
 </script>
-<script>window.XQ_OFFLINE=true;window.XQ_BUILD="20261105-1409";</script>
+<script>window.XQ_OFFLINE=true;window.XQ_BUILD="20261105-1427";</script>
 <script src="core.js"></script>
 <script src="engine.js"></script>
 <script src="local.js"></script>
@@ -965,6 +964,8 @@ const BOARD_THEMES=[
   ["gold","黑金",{bg:["#26201A","#100D09"],grid:"#C9A65A",piece:"#F3E3BD",r:"#C0392B",b:"#1A1712",mv:"#E8C76A",tex:"sheen"}],
   ["night","夜間",{bg:["#2D2C36","#1C1B22"],grid:"#8F8CA0",piece:"#E8E1D0",r:"#D2453B",b:"#1B1B22",mv:"#6FBF95",tex:"sheen"}]];
 (()=>{const t=store.get("pageTheme","auto");if(t!=="auto")document.documentElement.dataset.theme=t})();
+/* 意見回饋 611：字體跟著朝代或跟著手機 */
+function fontModeApply(){const r=document.documentElement;if(store.get("fontMode","era")==="sys")r.dataset.font="sys";else delete r.dataset.font}fontModeApply();
 // ================= 朝代風格：秦～清，每個朝代一套配色＋傳統紋樣（頂部列、底紋、棋盤都跟著換） =================
 // c＝頁面顏色；b＝「跟著頁面風格」時的棋盤；m＝紋樣；dark＝深色系
 const ERA_MOTIF={
@@ -1693,6 +1694,7 @@ function setTop(title,back,right){{const mc=document.getElementById("meChip");if
 function setTabs(show,on){$("#tabbar").hidden=!show;for(const b of $("#tabbar").children)b.classList.toggle("on",b.dataset.go===on)}
 for(const b of $("#tabbar").children)b.onclick=()=>{vibrate(5);location.hash=b.dataset.go};
 function route(){
+  try{storyEraSync()}catch(e){}   /* 意見回饋 610：故事線自動換朝代 */
   closeSheet();if(screen&&screen.stop)screen.stop();screen=null;PARK_OFF=false;PARK_J=null;
   const v=$("#view");v.className="view";v.innerHTML="";v.scrollTop=0;
   if(window.XQ&&XQ.parseConnect&&location.hash.startsWith("#connect=")){XQ.parseConnect();route();if(!myName())setTimeout(()=>nameSheet(true),500);return}   // 離線版：掃 QR code 帶來的連線資訊
@@ -3079,6 +3081,7 @@ function Settings(v){
     <div class="sec-t">棋子樣式</div><div class="opt" id="ps"></div>
     <details class="card" style="padding:10px 12px;margin-top:14px"><summary style="font-weight:700;cursor:pointer">⚙ 更多設定</summary>   <!-- 意見回饋 576（開發者）：只留「更多設定」，後面的說明拿掉 -->   <!-- 意見回饋 537：不常改的收在這裡 -->
     <div class="sec-t">深淺色</div><div class="opt" id="pt"></div><p class="muted" id="ptN" style="display:none"></p>
+    <div class="sec-t">字體</div><div class="opt" id="ftM"></div>
     <div class="sec-t">文字</div><div class="opt" id="zhO" data-nocc>${[["tw","繁體中文"],["cn","简体中文"]].map(([k,l])=>`<button data-zh="${k}"${((window.XQ_ZH&&XQ_ZH.mode())||"tw")===k?' class="on"':""}>${l}</button>`).join("")}</div>   <!-- 意見回饋 518：繁簡切換（zh.js） -->
     <label class="row" style="justify-content:space-between;padding:8px 2px"><span><b>高對比棋子</b></span><input type="checkbox" class="sw" id="hiCon"></label>
     <div class="sec-t">走棋顯示與特效</div><div class="card sgc" id="mv"></div></details></div>
@@ -3177,6 +3180,9 @@ function Settings(v){
     v.querySelectorAll("[data-p]").forEach(x=>x.onclick=()=>{store.set("pieceStyle",x.dataset.p);paint();show(false)});
     const pt=store.get("pageTheme","auto");v.querySelector("#pt").innerHTML=[["auto","跟著手機"],["light","☀ 淺色"],["dark","🌙 深色"]].map(([k,l])=>`<button data-m="${k}" class="${pt===k?"on":""}">${l}</button>`).join("");
     v.querySelectorAll("[data-m]").forEach(x=>x.onclick=()=>{const k=x.dataset.m;store.set("pageTheme",k);if(k==="auto")delete document.documentElement.dataset.theme;else document.documentElement.dataset.theme=k;paint()});
+    /* 意見回饋 611：字體跟著朝代（每個朝代一套書法或刻本字）或跟著手機（手機內建字體） */
+    {const fm=store.get("fontMode","era"),fb=v.querySelector("#ftM");if(fb){fb.innerHTML=[["era","跟著朝代"],["sys","跟著手機"]].map(([k,l])=>`<button data-ft="${k}" class="${fm===k?"on":""}">${l}</button>`).join("");
+      fb.querySelectorAll("[data-ft]").forEach(x=>x.onclick=()=>{store.set("fontMode",x.dataset.ft);fontModeApply();paint()})}}
     const ce=store.get("era","classic");v.querySelector("#ptN").textContent=curEra()?"朝代風格有自己的配色；選「經典」才會用到深淺色":"";
     v.querySelector("#era").innerHTML=ERAS.map(e=>{const c=e.c,st=c?`--b:${c.bar};--bi:${c.barink};--g:${c.bg};--cd:${c.card};--t:${c.trim};--a:${c.accent};--i:${c.ink};background-image:${eraMotif(e.m,c.ink,e.dark?.09:.07)}`:"--b:#3B2A1A;--g:#F3EDE2;--t:#E2D6C3;--a:#B5452B;--i:#2A1F15";
       return`<button data-e="${e.k}" class="${ce===e.k?"on":""}${c?"":" cl"}" style="${st}"><i style="${c?`background-image:${eraMotif(e.m,c.barink,.3)}`:""}"></i><b>${esc(e.n)}</b><small>${esc(e.s)}</small></button>`}).join("");
@@ -4156,7 +4162,11 @@ function Me(v){Profile(v);setTop("🙂 我的角色","#/");setTabs(true,"#/");co
       <div class="hx"><span>⭐</span><b>${star}<small>雲河棋路</small></b></div>
       <div class="hx"><span>${ETIMG("p_story","","📖")}</span><b>${L.n}／36<small>故事</small></b></div></section>
     <section class="mwall"><div class="mws">${meWin("b",ETIMG("p_board","data/treasure/board_normal.webp","🎁"),"棋盤",B.boards.length,B.boards.length)}${meWin("r",ETIMG("p_kifu","data/treasure/record_normal.webp","📜"),"棋譜",B.records.length,B.records.length)}${meWin("s",ETIMG("p_secret","","🤝"),"秘境棋友",`${nS}／${SECRETS.length}`,nS,.5*(1-nS/SECRETS.length))}${meWin("z","🏺","珍品",`${nZ}／130`,nZ,.5*(1-Math.sqrt(nZ/130)))}</div></section>`;
-  const circ=pad.querySelector(".circles");pad.replaceChildren(d);{const er=store.get("era","classic");if(ME_ART.has(er)&&ME_EAVE[er]!=null){const fit=()=>meEave(d,er);requestAnimationFrame(()=>{fit();requestAnimationFrame(fit)});addEventListener("resize",fit,{once:true})}}if(circ){circ.style.display="none";pad.append(circ)}
+  const circ=pad.querySelector(".circles");pad.replaceChildren(d);{const er=store.get("era","classic");if(ME_ART.has(er)&&ME_EAVE[er]!=null){const fit=()=>meEave(d,er);requestAnimationFrame(()=>{fit();requestAnimationFrame(fit)});addEventListener("resize",fit,{once:true});
+    /* 意見回饋 613：字型（朝代字體）和花窗圖晚一點才載好，標籤高度一變，牆被撐高、屋簷跟著變高，花窗就被壓到——載好、高度變了都重算 */
+    try{document.fonts.ready.then(fit)}catch(e){}
+    try{const ws=d.querySelector(".mws");if(ws&&window.ResizeObserver){let last=-1;const ro=new ResizeObserver(()=>{if(!ws.isConnected){ro.disconnect();return}const h=ws.offsetHeight;if(Math.abs(h-last)>1){last=h;fit()}});ro.observe(ws)}}catch(e){}
+    d.querySelectorAll(".mwall img").forEach(im=>{if(!im.complete)im.addEventListener("load",fit,{once:true})})}}if(circ){circ.style.display="none";pad.append(circ)}
   const on=(id,fn)=>{const e=v.querySelector(id);if(e)e.onclick=()=>{vibrate(5);fn(e)}};
   on("#meFig2",f=>{const st=v.querySelector("#meSt");if(st){st.classList.remove("tap");void st.offsetWidth;st.classList.add("tap")}const im=f.querySelector("img");if(!f.dataset.g3)setTimeout(()=>meFigOpen(im&&im.src),220)});   /* 584：舞台已經是 3D 就不用再開大圖 */
   on("#meNm",()=>nameSheet(false));on("#meOb",()=>onboard(true));on("#mePc",()=>{store.set("setTab","bot");location.hash="#/settings"});
@@ -4407,6 +4417,21 @@ const CNUM=n=>{const c="零一二三四五六七八九";return n<=10?(n===10?"�
 let JS_CACHE=null,JS2_CACHE=null;
 /* 第二集《紙譜新局》：關卡 id 是 b2h01～b2h36（跟第一集的 h01～h36 分開記星星） */
 function jStages2(){if(JS2_CACHE)return JS2_CACHE;return JS2_CACHE=(typeof JL2!=="undefined"?JL2:[]).map(([nm,ty,ai,has,act],k)=>{const n=k+1;return{id:"b2h"+String(n).padStart(2,"0"),n,r:0,book:2,act,name:`第${CNUM(n)}回・${nm}`,lvName:nm,spec:ty,t:"lv"}})}
+/* 意見回饋 610（開發者）：進石桌往事自動換朝代——第一集（元末明初）換成元朝、第二集（明朝）換成明朝；離開故事線就換回玩家自己設定的朝代。
+   做法：進故事時把玩家原本的朝代存在 eraUser，再把 era 改成故事的朝代；離開時從 eraUser 還原。App 在故事裡被關掉，下次打開不在故事頁就會自動還原 */
+const STORY_ERA={1:"yuan",2:"ming"};
+function storyBookOf(h){h=String(h||"");
+  if(/^#\/adventure/.test(h))return store.get("legBook",1)===2?2:1;
+  if(/^#\/journey\/b2h/.test(h))return 2;
+  if(/^#\/journey\/(park|inn)/.test(h))return 0;   /* 園子、驛站可以自己挑朝代，不算故事線 */
+  if(/^#\/journey\/play/.test(h)){const P=store.get("jPending",null);return !P?0:String(P.id||"").startsWith("b2h")?2:1}   /* 園子、驛站裡的對局沒有闖關紀錄 */
+  if(/^#\/(journey|legend)(\/|$)/.test(h))return 1;
+  return 0}
+function storyEraSync(){try{const b=storyBookOf(location.hash),cur=store.get("era","classic"),saved=store.get("eraUser",null);let to=null;
+  if(b){const want=STORY_ERA[b];if(saved==null)store.set("eraUser",cur);if(cur!==want)to=want;
+    if(to&&!store.get("storyEraTip",0)){store.set("storyEraTip",1);setTimeout(()=>toast(`📜 故事發生在${b===1?"元末明初":"明朝"}，畫面換成${b===1?"元朝":"明朝"}風格；離開故事會換回你原本的朝代`),600)}}
+  else if(saved!=null){store.set("eraUser",null);if(cur!==saved)to=saved}
+  if(to){store.set("era",to);try{if(typeof PARK!=="undefined"&&PARK){PARK.v.destroy();PARK=null}}catch(e){}applyEra()}}catch(e){}}
 const jFindStage=id=>jStages().find(x=>x.id===id)||jStages2().find(x=>x.id===id);
 function jStages(){if(JS_CACHE)return JS_CACHE;const out=[];JL.forEach(([nm,ty,ai,has],k)=>{const n=k+1,ri=Math.max(0,JR.findIndex(R=>n>=R.ch[0]&&n<=R.ch[1])),R=JR[ri],id="h"+String(n).padStart(2,"0");
   const base={id,n,r:ri,name:`第${CNUM(n)}回・${nm}`,lvName:nm,spec:ty,lo:R.tiers[0],hi:R.tiers[1]};

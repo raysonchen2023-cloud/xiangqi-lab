@@ -5,8 +5,6 @@
 
 | 檔案 | 原字型 | 作者 | 授權 | 來源 |
 |---|---|---|---|---|
-| xq-bakudai.woff2 | 莫大毛筆字體 | max32002（改自青柳衡山「衡山毛筆フォント」） | SIL OFL 1.1 | https://github.com/max32002/bakudaifont |
-| xq-chenyu.woff2 | 辰宇落雁體 | Chenyu-otf | SIL OFL 1.1 | https://github.com/Chenyu-otf/chenyuluoyan_thin |
 | xq-iansui.woff2 | 芫荽 | ButTaiwan（改自 Fontworks Klee One） | SIL OFL 1.1 | https://github.com/ButTaiwan/iansui |
 | xq-twkai.woff2 | 全字庫正楷體 | 國家發展委員會（全字庫） | SIL OFL 1.1（資料集可擇一：OFL 1.1 或政府資料開放授權條款第1版，本 App 採 OFL 1.1） | https://data.gov.tw/dataset/5961 |
 | xq-wenkai.woff2 | 霞鶩文楷 TC | LXGW | SIL OFL 1.1 | https://github.com/lxgw/LxgwWenkaiTC |
