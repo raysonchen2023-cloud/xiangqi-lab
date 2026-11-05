@@ -317,7 +317,8 @@ html[data-era=qin] .me-win{--oct:inset(0 round 8px)}html[data-era=song] .me-win{
 .me2.art .mw .wv{position:absolute;inset:0;background:linear-gradient(to bottom,rgba(38,58,60,.28),rgba(38,58,60,0) 30%),var(--view) var(--vx,50%) var(--vy,50%)/var(--vs,92%) no-repeat;-webkit-mask:var(--mask) center/contain no-repeat;mask:var(--mask) center/contain no-repeat;transition:filter .6s,background-size .25s}
 .me2.art .mw .wv::after{content:"";position:absolute;inset:0;background:radial-gradient(circle at 50% 55%,rgba(238,242,240,calc(var(--mist,0)*.85)),rgba(238,242,240,var(--mist,0)));transition:background .9s}
 .me2.art .mw .wf::after{content:"";position:absolute;inset:0;pointer-events:none;background:var(--frame) center/contain no-repeat;filter:drop-shadow(0 3px 2px rgba(30,50,52,.38)) drop-shadow(0 1px 0 rgba(255,255,255,.5))}
-.me2.art .mw.empty .wv{filter:grayscale(.85) contrast(.6) brightness(1.12)}
+/* 意見回饋 625（開發者：好多破圖）：空的收藏格原本灰階＋降對比＋提亮＋濃霧，在手機上幾乎全白、像圖壞掉；改成保留顏色、稍微變暗、霧調淡 */
+.me2.art .mw.empty .wv{filter:saturate(.45) brightness(.88)}
 .me2.art .mw:active .wv{--vs:98%}
 .me2.art .mw[data-c=b]{--frame:var(--u-win_b);--mask:var(--u-mask_b);--view:var(--u-view_b);--vy:70%;--vs:110%}.me2.art .mw[data-c=b] .wf{width:132px}
 .me2.art .mw[data-c=r]{--frame:var(--u-win_r);--mask:var(--u-mask_r);--view:var(--u-view_r);--ar:347/214;--vs:100% auto;--vy:52%}.me2.art .mw[data-c=r] .wf{width:158px}
@@ -750,7 +751,7 @@ html[data-era="qing"]:not([data-font="sys"]){--serif:"XQ twkai","Noto Serif TC",
       if(!window.caches)return go();caches.keys().then(function(ks){return Promise.all(ks.filter(function(k){return k.indexOf("xqlab-app-")===0}).map(function(k){return caches.delete(k)}))})
         .then(function(){return navigator.serviceWorker&&navigator.serviceWorker.getRegistration()}).then(function(r){return r&&r.update()}).catch(function(){}).then(go)}};setTimeout(chk,4000)})();
 </script>
-<script>window.XQ_OFFLINE=true;window.XQ_BUILD="20261105-1545";</script>
+<script>window.XQ_OFFLINE=true;window.XQ_BUILD="20261105-1550";</script>
 <script src="core.js"></script>
 <script src="engine.js"></script>
 <script src="local.js"></script>
@@ -4211,7 +4212,7 @@ const ME_ART=new Set(["song","classic","qin","han","sanguo","weijin","nanbei","s
 const ME_WIN={b:"M36 2H84L118 36V72L84 106H36L2 72V36Z",r:"M2 17A136 136 0 0 1 118 17L81 95A50 50 0 0 0 39 95Z",
   s:"M26 20A44 44 0 0 1 94 20A36 36 0 0 1 94 88A44 44 0 0 1 26 88A36 36 0 0 1 26 20Z",
   z:"M44 4H76V10C76 16 68 18 68 26C68 32 112 40 112 68C112 92 92 104 60 104C28 104 8 92 8 68C8 40 52 32 52 26C52 18 44 16 44 10Z"};
-const meWin=(k,ic,lb,n,cnt,mist)=>`<button class="mw${cnt?"":" empty"}" data-c="${k}" aria-label="${lb} ${n}" style="--mist:${cnt?(mist||0).toFixed(2):.6}"><span class="wf"><span class="wv"></span><svg viewBox="0 0 120 108" aria-hidden="true"><path class="o" d="${ME_WIN[k]}"/><path class="i" d="${ME_WIN[k]}"/></svg><span class="ic">${ic}</span></span><b>${lb}<small>${n}</small></b></button>`;
+const meWin=(k,ic,lb,n,cnt,mist)=>`<button class="mw${cnt?"":" empty"}" data-c="${k}" aria-label="${lb} ${n}" style="--mist:${cnt?(mist||0).toFixed(2):.22}"><span class="wf"><span class="wv"></span><svg viewBox="0 0 120 108" aria-hidden="true"><path class="o" d="${ME_WIN[k]}"/><path class="i" d="${ME_WIN[k]}"/></svg><span class="ic">${ic}</span></span><b>${lb}<small>${n}</small></b></button>`;
 function rankSheet(){const R=rankInfo(),era=store.get("era","classic");sheet("🏛 官階",b=>{b.innerHTML=`<div class="items" style="padding:0">${[1,2,3,4,5,6,7,8,9].map(g=>`<div class="item"${g===R.g?' style="box-shadow:inset 0 0 0 2px var(--accent)"':g<R.g?' style="opacity:.5"':""}><span class="lb">${g===R.g?"🏛":g<R.g?"🔒":"✓"}</span><span class="tx"><b>${esc(RANKT(era,g))}</b></span></div>`).join("")}</div>`})}
 function meEave(d,era){const w=d.querySelector(".mwall"),f=ME_EAVE[era];if(!w||f==null||!w.isConnected)return;const IW=1100,IH=821;w.style.paddingTop="0px";const C=w.getBoundingClientRect().height,W=w.clientWidth;if(!W)return;let p=f*W*IH/IW;if((C+p)/IH>W/IW)p=f*C/(1-f);w.style.paddingTop=Math.round(p+10)+"px"}
 function Me(v){Profile(v);setTop("🙂 我的角色","#/");setTabs(true,"#/");const pad=v.querySelector(".pad");if(!pad)return;
