@@ -710,7 +710,7 @@ html[data-era=ming] .topbar,html[data-era=qing] .topbar{border-bottom-width:4px}
       if(!window.caches)return go();caches.keys().then(function(ks){return Promise.all(ks.filter(function(k){return k.indexOf("xqlab-app-")===0}).map(function(k){return caches.delete(k)}))})
         .then(function(){return navigator.serviceWorker&&navigator.serviceWorker.getRegistration()}).then(function(r){return r&&r.update()}).catch(function(){}).then(go)}};setTimeout(chk,4000)})();
 </script>
-<script>window.XQ_OFFLINE=true;window.XQ_BUILD="20261105-1314";</script>
+<script>window.XQ_OFFLINE=true;window.XQ_BUILD="20261105-1353";</script>
 <script src="core.js"></script>
 <script src="engine.js"></script>
 <script src="local.js"></script>
@@ -5602,8 +5602,12 @@ async function preloadAll(){if(!OFF||!("caches" in window))return;
     setTimeout(()=>{const k=ov&&ov.querySelector(".pre-skip");if(k){k.hidden=false;k.onclick=()=>{ov.remove();ov=null}}},20000)};ovMake();
   const base=new URL(".",location.href).href,abs=u=>new URL(u,base).href;
   const PH=store.get("preH",{}),NH={},miss=[];   /* 換過的圖（檔名一樣、內容不同）也要重新下載：秦、漢黑棋換新圖後手機一直是舊的 */
-  await Promise.all(M.items.map(async([u,sz,h])=>{NH[u]=h;try{const r=await c.match(abs(u));if(!r)return miss.push([u,sz,h]);
-    const stale=h&&(PH[u]?PH[u]!==h:+(r.headers.get("content-length")||sz)!==sz);if(stale)miss.push([u,sz,h,1])}catch(e){miss.push([u,sz,h])}}));
+  /* 意見回饋 605（網路專家建議）：一次拿出快取裡全部的網址，比逐檔 match 快很多；有記內容雜湊的直接比對，沒記的才打開看大小 */
+  let have=null;try{have=new Set((await c.keys()).map(r=>r.url))}catch(e){}
+  await Promise.all(M.items.map(async([u,sz,h])=>{NH[u]=h;try{if(have&&!have.has(abs(u)))return miss.push([u,sz,h]);
+    if(PH[u]&&h){if(PH[u]!==h)miss.push([u,sz,h,1]);return}
+    const r=await c.match(abs(u));if(!r)return miss.push([u,sz,h]);
+    const stale=h&&+(r.headers.get("content-length")||sz)!==sz;if(stale)miss.push([u,sz,h,1])}catch(e){miss.push([u,sz,h])}}));
   /* 意見回饋 514／518：下載過的「比賽對局」內容換了（例如轉成繁體），背景自動重新下載，不用玩家刪掉再抓 */
   if(window.XQ&&XQ.bigBooks&&XQ.syncedBooks)(async()=>{try{const big=await XQ.bigBooks(),have=await XQ.syncedBooks();for(const g of big){const c=have.find(x=>x.key===g.key);if(c&&g.h&&c.h!==g.h){await XQ.syncSite(g.key,g.name,null,g.h);console.log("重新下載",g.key)}}}catch(e){}})();
   if(M.big)(async()=>{try{const BH=store.get("bigH",{}),dc=await caches.open("xqlab-data"),o={};for(const[u,sz,h]of M.big){o[u]=h;const r=await dc.match(abs(u));
@@ -5625,12 +5629,18 @@ async function preloadAll(){if(!OFF||!("caches" in window))return;
     setTimeout(()=>{const k=ov&&ov.querySelector(".pre-skip");if(k){k.hidden=false;k.onclick=()=>{ov.remove();ov=null}}},20000)}
   const show=()=>{if(!ov)return;if(total&&got>=total){txt.textContent="載好了";const o=ov;ov=null;setTimeout(()=>{o.classList.add("out");setTimeout(()=>o.remove(),400)},250);return}const p=total?Math.min(100,Math.floor(got*100/total)):100;bar.style.width=p+"%";txt.textContent=`${p}%　${(got/1048576).toFixed(1)} ／ ${(total/1048576).toFixed(1)} MB`};show();
   const rank=x=>x[0].indexOf("data/loading/")===0?0:isCore(x[0])?1:2,q=miss.slice().sort((a,b)=>rank(a)-rank(b));let run=0;   /* 載入畫面的水墨畫先下載，接著核心，其他在背景 */
-  await new Promise(ok=>{if(!q.length)return ok();const next=()=>{if(!q.length&&!run)return ok();while(run<6&&q.length){const [u,sz,h,fr]=q.shift();run++;
-    fetch(abs(u)+(fr?"?fresh="+h:""),fr?{cache:"no-store"}:void 0).then(r=>{if(!r.ok)throw new Error(r.status);return c.put(abs(u),r)}).then(()=>{got+=sz}).catch(()=>{fail.push([u,sz,h,fr]);got+=sz}).finally(()=>{run--;show();next()})}};next()});
+  /* 意見回饋 605（網路專家實測）：GitHub Pages 是 HTTP/2，同時 6 個太少——小檔幾乎都在等來回；改成最多同時 24 個、傳輸中不超過約 6 MB（大檔不會擠爆），
+     每個請求有逾時（20 秒＋每 MB 10 秒），卡住的不會佔著位子；請求帶 ?pre=1 讓 service worker 放行，只由這裡存一次 */
+  const getOne=([u,sz,h,fr])=>{const ac=new AbortController(),to=setTimeout(()=>ac.abort(),20000+sz/1048576*10000);
+    return fetch(abs(u)+"?pre=1"+(fr?"&fresh="+h:""),{cache:fr?"no-store":"default",signal:ac.signal}).then(r=>{if(!r.ok)throw new Error(r.status);return c.put(abs(u),r)}).finally(()=>clearTimeout(to))};
+  const pool=(list,MAXN,MAXB,onDone)=>new Promise(ok=>{let n=0,b=0;const L=list.slice();const next=()=>{if(!L.length&&!n)return ok();
+    while(L.length&&n<MAXN&&(n===0||b+L[0][1]<=MAXB)){const it=L.shift();n++;b+=it[1];getOne(it).then(()=>onDone(it,true)).catch(()=>onDone(it,false)).finally(()=>{n--;b-=it[1];next()})}};next()});
+  await pool(q,24,6*1048576,(it,ok)=>{if(!ok)fail.push(it);got+=it[1];show()});
   if(!fail.length)store.set(PRE_KEY,M.v);okH();
   if(ov){txt.textContent="載好了";setTimeout(()=>{if(ov){ov.classList.add("out");setTimeout(()=>ov&&ov.remove(),400)}},250)}
   /* 失敗的在背景再試三次 */
-  if(fail.length){let tries=0;const retry=async()=>{tries++;const left=[];for(const[u,sz,h,fr]of fail){try{const r=await fetch(abs(u)+(fr?"?fresh="+h:""),fr?{cache:"no-store"}:void 0);if(!r.ok)throw 0;await c.put(abs(u),r)}catch(e){left.push([u,sz,h,fr])}}
+  if(fail.length){let tries=0;const retry=async()=>{if(!navigator.onLine||document.hidden)return setTimeout(retry,15000);tries++;const left=[];
+    await pool(fail,8,3*1048576,(it,ok)=>{if(!ok)left.push(it)});   /* 背景重試用較少的同時數，不搶正在玩的網路 */
     fail=left;okH();if(!fail.length)store.set(PRE_KEY,M.v);else if(tries<3)setTimeout(retry,30000)};setTimeout(retry,15000)}
   /* 目前朝代的大圖先解碼、3D 程式先載入 */
   const e=store.get("era","classic");for(const u of[`data/park/${e}_360.webp`,`data/pano/${e}_sky.webp`,`data/pano/${e}_ground.webp`,psetBoard(e)?`data/pset/${e}/board.webp`:`data/boards/${e}.webp`]){try{const im=new Image();im.src=u;im.decode().catch(()=>{})}catch(x){}}
@@ -5948,8 +5958,9 @@ function gradeNote(g,b){if(!g||!g.q)return"這步還沒評等（按 📊 賽後�
   if(g.q==="正手")return"✅ 正手：跟 Pikafish 的首選一樣，沒有更好的走法（所以沒有藍色箭頭）。";
   return`Pikafish：這步比最佳著法少 ${g.loss} 分。`+sugText(g,b)+(/錯著|露著/.test(g.q)?"\n想知道為什麼不好？按下面 🔍 分析，看對方最好怎麼應。":"")}
 /* 意見回饋 562：「實際走的」那條箭頭顏色跟著棋盤風格（T.mv），說明文字原本寫死「綠色」；改成照目前棋盤的箭頭顏色說顏色名稱 */
-function mvColorName(){try{let c=String((boardTheme()||{}).mv||"");if(/^var\(/.test(c))c=getComputedStyle(document.documentElement).getPropertyValue(c.slice(4,-1).split(",")[0].trim()).trim();
-  const m=c.match(/^#?([0-9a-f]{6})$/i);if(!m)return"另一條";const n=parseInt(m[1],16),r=(n>>16)/255,g=((n>>8)&255)/255,b=(n&255)/255,mx=Math.max(r,g,b),mn=Math.min(r,g,b),d=mx-mn;if(d<.12)return mx>.6?"白色":"灰色";
+/* 意見回饋 607：選了朝代風格時，棋盤畫的是朝代箭頭（ERA_ARROW，例如明朝是紅色連珠），說明文字要照畫出來的那條說顏色，不是棋盤風格的 mv 色 */
+function mvColorName(){try{const eR=curEra(),EA=eR&&ERA_ARROW[eR.k];let c=EA?EA.c:String((boardTheme()||{}).mv||"");if(/^var\(/.test(c))c=getComputedStyle(document.documentElement).getPropertyValue(c.slice(4,-1).split(",")[0].trim()).trim();
+  const m=c.match(/^#?([0-9a-f]{6})$/i);if(!m)return"另一條";const n=parseInt(m[1],16),r=(n>>16)/255,g=((n>>8)&255)/255,b=(n&255)/255,mx=Math.max(r,g,b),mn=Math.min(r,g,b),d=mx-mn;if(d<.12)return mx>.6?"白色":mx<.25?"黑色":"灰色";
   let h=mx===r?((g-b)/d)%6:mx===g?(b-r)/d+2:(r-g)/d+4;h=(h*60+360)%360;if(h<15||h>=340)return"紅色";if(h<40)return mx<.6?"棕色":"橘色";if(h<65)return"黃色";if(h<165)return"綠色";if(h<200)return"青色";if(h<260)return"藍色";return"紫色"}catch(e){return"另一條"}}
 function sugText(g,b){const L=(g.bp&&g.bp.length?g.bp:g.bm?[g.bm]:[]).slice(0,3);if(!L.length)return g.bc?`建議 ${g.bc}（藍色箭頭）`:"";
   const out=[];try{const C=window.XQCore;for(const u of L){const f=sqI(u.slice(0,2)),t=sqI(u.slice(2,4));if(!b[f]||!C)break;out.push(C.notate(b,f,t));b=b.slice();b[t]=b[f];b[f]=null}}catch(e){}
