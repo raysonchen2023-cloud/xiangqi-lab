@@ -338,9 +338,9 @@ html[data-era=ming] .topbar,html[data-era=qing] .topbar{border-bottom-width:4px}
 @media (min-width:700px){.eragrid{grid-template-columns:repeat(4,1fr)}}
 /* 意見回饋 535：設定的朝代棋盤改成左右滑動的一疊卡片，停在中間的那張就套用，上面的棋盤預覽馬上換 */
 #meChip{display:flex;align-items:center;gap:6px;flex:none;border:0;border-radius:999px;padding:2px 10px 2px 2px;margin-left:8px;background:rgba(255,248,236,.16);color:inherit;font:inherit;cursor:pointer}#meChip img{width:30px;height:36px;object-fit:contain}#meChip small{font-size:11px;line-height:1.25;text-align:left;font-weight:700;opacity:.95;white-space:nowrap}
-.thgrid.thsw{position:relative;display:flex!important;overflow-x:auto;scroll-snap-type:x mandatory;gap:10px;padding:4px 22% 10px;scrollbar-width:none}.thgrid.thsw::-webkit-scrollbar{display:none}.thgrid.thsw>button{flex:0 0 56%;scroll-snap-align:center;transform:scale(.88);opacity:.7;transition:transform .2s,opacity .2s}.thgrid.thsw>button.on{transform:none;opacity:1}
-.eragrid.erasw{position:relative;display:flex;overflow-x:auto;scroll-snap-type:x mandatory;gap:10px;padding:6px 19% 12px;scrollbar-width:none;-webkit-overflow-scrolling:touch}.eragrid.erasw::-webkit-scrollbar{display:none}
-.eragrid.erasw button{flex:0 0 62%;scroll-snap-align:center;min-height:100px;transition:transform .2s,opacity .2s;transform:scale(.9);opacity:.72}.eragrid.erasw button.on{transform:none;opacity:1}
+.thgrid.thsw{position:relative;display:flex!important;overflow-x:auto;scroll-snap-type:x proximity;gap:10px;padding:4px 2px 10px;scroll-padding-inline:2px;scrollbar-width:none}.thgrid.thsw::-webkit-scrollbar{display:none}.thgrid.thsw>button{flex:0 0 56%;scroll-snap-align:start;transition:opacity .2s}.thgrid.thsw>button.on{transform:none;opacity:1}
+.eragrid.erasw{position:relative;display:flex;overflow-x:auto;scroll-snap-type:x proximity;gap:10px;padding:6px 2px 12px;scroll-padding-inline:2px;scrollbar-width:none;-webkit-overflow-scrolling:touch}   /* 意見回饋 587（開發者）：朝代風格、棋盤風格兩排改成靠左（跟下面的按鈕對齊），用點的選，捲動不再自動切換 */.eragrid.erasw::-webkit-scrollbar{display:none}
+.eragrid.erasw button{flex:0 0 62%;scroll-snap-align:start;min-height:100px;transition:opacity .2s}.eragrid.erasw button.on{transform:none;opacity:1}
 .thgrid button{display:flex;flex-direction:column;align-items:center;gap:4px;padding:5px 5px 7px;border-radius:14px;background:var(--card);border:2px solid var(--line);font-size:13px}
 .thgrid button.on{border-color:var(--accent);font-weight:700;color:var(--accent)}.thgrid svg{width:100%;display:block;border-radius:9px}
 @media (min-width:700px){.thgrid{grid-template-columns:repeat(5,1fr)}}
@@ -699,7 +699,7 @@ html[data-era=ming] .topbar,html[data-era=qing] .topbar{border-bottom-width:4px}
       if(!window.caches)return go();caches.keys().then(function(ks){return Promise.all(ks.filter(function(k){return k.indexOf("xqlab-app-")===0}).map(function(k){return caches.delete(k)}))})
         .then(function(){return navigator.serviceWorker&&navigator.serviceWorker.getRegistration()}).then(function(r){return r&&r.update()}).catch(function(){}).then(go)}};setTimeout(chk,4000)})();
 </script>
-<script>window.XQ_OFFLINE=true;window.XQ_BUILD="20261105-0854";</script>
+<script>window.XQ_OFFLINE=true;window.XQ_BUILD="20261105-0900";</script>
 <script src="core.js"></script>
 <script src="engine.js"></script>
 <script src="local.js"></script>
@@ -3095,8 +3095,8 @@ function Settings(v){
       b.append(bd.svg);const s=document.createElement("span");s.textContent=name;b.append(s);
       b.onclick=()=>{vibrate(5);store.set("boardTheme",k);paint();show(true)};th.append(b)}
     /* 意見回饋 537：棋盤風格也左右滑動，停在中間的那張就套用 */
-    {const on=th.querySelector(".on");th._quiet=true;if(on)th.scrollLeft=on.offsetLeft-(th.clientWidth-on.offsetWidth)/2;setTimeout(()=>{th._quiet=false},250);
-      th.onscroll=()=>{if(th._quiet)return;clearTimeout(th._t);th._t=setTimeout(()=>{const mid=th.scrollLeft+th.clientWidth/2;let best=null,bd=1e9,i=0;const ks=BOARD_THEMES.map(x=>x[0]);for(const x of th.children){const d=Math.abs(x.offsetLeft+x.offsetWidth/2-mid);if(d<bd){bd=d;best=i}i++}if(best!=null&&ks[best]!==store.get("boardTheme","wood3d"))th.children[best].click()},170)}}
+    {const on=th.querySelector(".on");th._quiet=true;if(on)th.scrollLeft=Math.max(0,on.offsetLeft-12);setTimeout(()=>{th._quiet=false},250);
+      th.onscroll=()=>{return;if(th._quiet)return;clearTimeout(th._t);th._t=setTimeout(()=>{const mid=th.scrollLeft+th.clientWidth/2;let best=null,bd=1e9,i=0;const ks=BOARD_THEMES.map(x=>x[0]);for(const x of th.children){const d=Math.abs(x.offsetLeft+x.offsetWidth/2-mid);if(d<bd){bd=d;best=i}i++}if(best!=null&&ks[best]!==store.get("boardTheme","wood3d"))th.children[best].click()},170)}}
     {const xo=v.querySelector("#xfOut"),xi=v.querySelector("#xfIn");if(xo)xo.onclick=()=>{vibrate(5);xfSend()};if(xi)xi.onclick=()=>{vibrate(5);xfRecv()}}
     /* 意見回饋 574（開發者）：外觀頁的 3D 園子棋盤、對手形象、棋子樣式拿掉 emoji */
     /* 意見回饋 442、456（開發者）：對手形象可以選——3D 立體小人（跟小帥一樣是立體的，每個人帽子、衣服不同）或畫好的立繪 */
@@ -3120,8 +3120,8 @@ function Settings(v){
     v.querySelectorAll("[data-e]").forEach(x=>x.onclick=()=>{const k=x.dataset.e;if(k===store.get("era","classic"))return;vibrate(5);store.set("era",k);applyEra();
       if(k!=="classic"&&store.get("boardTheme","wood3d")!=="auto"){store.set("boardTheme","auto");toast("棋盤也換成這個朝代的配色（可在下面改回）")}paint();show(true)});
     /* 意見回饋 535：滑到中間停住的那張就套用；畫面重畫後把選中的那張捲回中間 */
-    {const ew=v.querySelector("#era"),on=ew&&ew.querySelector(".on");if(ew){ew._quiet=true;if(on)ew.scrollLeft=on.offsetLeft-(ew.clientWidth-on.offsetWidth)/2;setTimeout(()=>{ew._quiet=false},250);
-      ew.onscroll=()=>{if(ew._quiet)return;clearTimeout(ew._t);ew._t=setTimeout(()=>{const mid=ew.scrollLeft+ew.clientWidth/2;let best=null,bd=1e9;for(const x of ew.querySelectorAll("[data-e]")){const d=Math.abs(x.offsetLeft+x.offsetWidth/2-mid);if(d<bd){bd=d;best=x}}if(best&&best.dataset.e!==store.get("era","classic"))best.click()},170)}}}
+    {const ew=v.querySelector("#era"),on=ew&&ew.querySelector(".on");if(ew){ew._quiet=true;if(on)ew.scrollLeft=Math.max(0,on.offsetLeft-12);setTimeout(()=>{ew._quiet=false},250);
+      ew.onscroll=()=>{return;if(ew._quiet)return;clearTimeout(ew._t);ew._t=setTimeout(()=>{const mid=ew.scrollLeft+ew.clientWidth/2;let best=null,bd=1e9;for(const x of ew.querySelectorAll("[data-e]")){const d=Math.abs(x.offsetLeft+x.offsetWidth/2-mid);if(d<bd){bd=d;best=x}}if(best&&best.dataset.e!==store.get("era","classic"))best.click()},170)}}}
     const tg=(k,label,sub)=>`<label class="row" style="justify-content:space-between;padding:6px 0"><span><b>${label}</b><br><span class="muted">${sub}</span></span><input type="checkbox" class="sw" data-t="${k}" ${store.get(k,k!=="mvSound")?"checked":""}></label>`;
     v.querySelector("#mv").innerHTML=tg("mvArrow","箭頭","從原來位置畫箭頭指到新位置")+'<div style="border-top:1px solid var(--line)"></div>'+tg("mvAnim","動畫","棋子滑過去，被吃的棋子淡出")+'<div style="border-top:1px solid var(--line)"></div>'+tg("capSound","吃子音效","吃子時重重「啪」一聲、將軍時「鏘」一聲")+'<div style="border-top:1px solid var(--line)"></div>'+tg("gateDrum","🥁 過場鼓聲","進園子、上擂台、走荒野小徑時，敲一段那個朝代戰場上的鼓和鑼")+'<div style="border-top:1px solid var(--line)"></div>'+tg("bgm","🎵 背景音樂","")+'<div style="border-top:1px solid var(--line)"></div>'+`<div style="padding:6px 0" id="vcRow"><b>語音報「吃」「將軍」</b><br><span class="muted">吃子喊「吃！」、將軍喊「將軍！」；點一下可以試聽；可調語速</span><div class="st-res" style="margin:8px 0 0">${[["off","關"],["m","男聲"],["f","女聲"]].map(([k,l])=>`<button data-vc="${k}" class="${(store.get("voiceCall",true)?store.get("voiceSex","m"):"off")===k?"on":""}">${l}</button>`).join("")}</div><div class="st-res" style="margin:8px 0 0;align-items:center"><span class="muted" style="font-size:13px">語速</span>${[["s","慢"],["n","中"],["f","快"]].map(([k,l])=>`<button data-vr="${k}" class="${store.get("voiceRate","n")===k?"on":""}">${l}</button>`).join("")}</div></div>`+'<div style="border-top:1px solid var(--line)"></div>'+sndPicker()+'<div style="border-top:1px solid var(--line)"></div>'+tg("ckFx","將軍特效","被將軍或將對方軍時，棋盤上蓋「將軍！」字樣")+'<div style="border-top:1px solid var(--line)"></div>'+tg("capFx","吃子特效","吃子時被吃的那格蓋一個水墨「吃」字")+'<div style="border-top:1px solid var(--line)"></div>'+'<div style="border-top:1px solid var(--line)"></div>'+tg("voiceMove","🎤 聲控走棋","下棋時右上角多一個 🎤，按下去說「馬八進七」「炮二平五」就會走"+(vcOK()?"":"（這個瀏覽器不支援語音辨識）"))+'<div style="border-top:1px solid var(--line)"></div>'+tg("opFx","開局名稱動畫","走出中炮、仙人指路、屏風馬…時，棋盤上展開卷軸寫出開局名");
     {const mvB=v.querySelector("#mv"),sdB=v.querySelector("#snd");sdB.innerHTML="";mvB.querySelectorAll(":scope>div[style*='border-top']").forEach(x=>x.remove());
