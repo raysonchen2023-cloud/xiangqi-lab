@@ -234,12 +234,13 @@ var XQ=(function(){
     const S={moves:g.moves.map(([f,t])=>({f,t}))};stateRebuild(S);NB={key:g.gid+"|"+g.rev,S,g};
     // 下完的網路對局存到「真人對局」，之後可以看賽後報告
     if(g.result&&!netSaved.has(g.id)&&XQNet.side()){netSaved.add(g.id);ls.set("netSaved",[...netSaved].slice(-200));
-      pushGame("pvp",{id:g.id,date:g.id.slice(0,10),red:g.red.name,black:g.black.name,tc:"none",result:g.result,moves:saveMoves(S.moves),net:true}).catch(()=>{netSaved.delete(g.id);ls.set("netSaved",[...netSaved].slice(-200))})}   /* 意見回饋 619：沒存成功就拿掉「已存」記號，下次再存 */
+      pushGame("pvp",{id:g.id,date:g.id.slice(0,10),red:g.red.name,black:g.black.name,tc:"none",result:g.result,moves:saveMoves(S.moves),net:true,mine:XQNet.side()}).catch(()=>{netSaved.delete(g.id);ls.set("netSaved",[...netSaved].slice(-200))})}   /* 意見回饋 619：沒存成功就拿掉「已存」記號，下次再存 */   /* 意見回饋（開發者 11/6 分數審查）：多存 mine＝我是紅還是黑，戰績頁認自己用 */
     return NB}
   /* 補存：伺服器抓回來的已結束網路對局，還沒存過就存進「真人對局」 */
   window.XQ_saveNetGame=async g=>{if(!g||!g.result||!g.id||!Array.isArray(g.moves))return false;const list=(await idb.get("games:pvp"))||[];if(list.some(x=>x.id===g.id))return true;
     const S={moves:g.moves.map(([f,t])=>({f,t}))};stateRebuild(S);netSaved.add(g.id);ls.set("netSaved",[...netSaved].slice(-200));
-    await pushGame("pvp",{id:g.id,date:g.id.slice(0,10),red:g.red.name,black:g.black.name,tc:"none",result:g.result,moves:saveMoves(S.moves),net:true});return true};
+    const mid=(()=>{try{return XQNet.me().id}catch(e){return null}})(),mine=mid&&g.red&&g.red.id===mid?"r":mid&&g.black&&g.black.id===mid?"b":null;   /* 意見回饋（開發者 11/6 分數審查）：補存的也記 mine（用代號比，戰績重建的沒有 id 就留空） */
+    await pushGame("pvp",{id:g.id,date:g.id.slice(0,10),red:g.red.name,black:g.black.name,tc:"none",result:g.result,moves:saveMoves(S.moves),net:true,...(mine?{mine}:{})});return true};
   /* 棋友資料卡打開別人的線上對局：存到「棋友的對局」（最多 50 盤），不混進自己的真人對局 */
   window.XQ_savePeek=async g=>{if(!g||!g.id||!Array.isArray(g.moves))return false;let list=(await idb.get("games:peek"))||[];list=list.filter(x=>x.id!==g.id);
     const S={moves:g.moves.map(([f,t])=>({f,t}))};stateRebuild(S);list.push({id:g.id,date:g.id.slice(0,10),red:g.red.name,black:g.black.name,tc:"none",result:g.result,moves:saveMoves(S.moves),net:true});
@@ -285,7 +286,7 @@ var XQ=(function(){
     if(!d)return null;d.byId=new Map(d.items.map(x=>[x.id,x]));return bookCache[key]=d}
   async function gameItems(kind){const list=(await idb.get("games:"+kind))||[];
     return list.slice().reverse().map(g=>{if(kind==="play"){const lv=LEVELS[g.level-1]||{name:"?"},bot=g.ranked?"Pikafish 積分挑戰（"+(RANKS[g.rk]||["?"])[0]+"）":(g.journey?"石桌往事・":"")+"Pikafish 第"+g.level+"級「"+lv.name+"」"+(g.reward?"・🚗獎勵":"");g={...g,red:g.human==="r"?"你":bot,black:g.human==="b"?"你":bot}}
-      return{...gameItem(g,false),...assist(g)}})}
+      return{...gameItem(g,false),...assist(g),...(g.mine==="r"||g.mine==="b"?{mine:g.mine}:{})}})}   /* 意見回饋（開發者 11/6 分數審查）：線上對局帶出 mine */
   async function dbBooks(){const out=[];for(const b of await publicBooks())out.push({key:b.key,name:b.name,count:b.count});
     for(const b of await syncedBooks())if(out.some(x=>x.key===b.key))unsync(b.key);else out.push({key:b.key,name:b.name,count:b.count,synced:b.at});   // 以前從電腦同步過、現在已內建的，不要出現兩份
     if(remoteInfo())out.push({key:"ai",name:"AI 對局",count:0});
@@ -293,7 +294,7 @@ var XQ=(function(){
       {key:"study",name:"我的研究",count:((await idb.get("games:study"))||[]).length});return out}
   async function dbItems(c){
     if(c==="study")return{name:"我的研究",note:"推演變化後按「💾 存成棋譜」存在這支手機裡的研究",items:((await idb.get("games:study"))||[]).slice().reverse().map(g=>summary(studyItem(g)))};
-    if(c==="play"||c==="pvp")return{name:c==="play"?"人機對局":"真人對局",note:"這支手機上下完的對局",items:(await gameItems(c)).map(summary)};
+    if(c==="play"||c==="pvp")return{name:c==="play"?"人機對局":"真人對局",note:"這支手機上下完的對局",items:(await gameItems(c)).map(it=>({...summary(it),...(it.mine?{mine:it.mine}:{})}))};   /* 意見回饋（開發者 11/6 分數審查）：清單也帶 mine，戰績頁認自己用 */
     if(c==="peek")return{name:"棋友的對局",note:"從棋友資料卡打開過的線上對局",items:(await gameItems(c)).map(summary)};
     const d=await loadBook(c);if(!d)throw new Error("手機裡沒有這個資料夾"+(remoteInfo()?"，可以按「從電腦同步」下載":""));
     return{name:d.name,book:d.book,source:d.source,players:d.players||null,items:d.items.map(summary)}}
