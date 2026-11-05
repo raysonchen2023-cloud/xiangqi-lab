@@ -416,7 +416,9 @@
   let TRIPO_META=null;const tripoMeta=()=>TRIPO_META||(TRIPO_META=fetch("data/tripo_app/tripo.json").then(r=>r.ok?r.json():{}).catch(()=>({})));
   const girlNV=()=>{const C=CUS["me:girl"]||{};return{hat:C.hat,hc:C.hc,robe:C.ring,band:C.band,shoe:C.shoe,belt:C.belt,skin:C.skin,top:C.top,pin:C.pin,band2:C.band2,cus:C}};
   const buildMe=(k,gr)=>{const B=build(k,gr,meSex()==="f"?girlNV():null);
-    if(meReal()){const id=meSex()==="f"?"me_girl":"me_boy";tripoMeta().then(M=>{if(M&&M[id])attachGLB(B,{glb:"data/tripo_app/"+id+".glb",ring:M[id]})})}return B};
+    /* 開發者 11/5：選了武俠角色（pChar），用那位的 Tripo 模型 */
+    const ch=(()=>{const c=store.get("pChar","");return /^x_/.test(c||"")?c:""})();
+    if(meReal()||ch){const id=ch||(meSex()==="f"?"me_girl":"me_boy");tripoMeta().then(M=>{if(M&&M[id])attachGLB(B,{glb:"data/tripo_app/"+id+".glb",ring:M[id]})})}return B};
   function start(){let SC=Math.min(2,Math.max(.6,+store.get("botSize",.7)||1)),W=W0*SC,H=H0*SC,curK=eraK(),curP=BP();
     const box=document.createElement("div");box.className="xqbot";
     box.style.cssText=`position:fixed;left:0;top:0;width:${W}px;height:${H}px;z-index:900;pointer-events:none;will-change:transform;transition:opacity .2s`;

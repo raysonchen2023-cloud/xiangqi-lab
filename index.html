@@ -766,7 +766,7 @@ html[data-era="qing"]:not([data-font="sys"]){--serif:"XQ twkai","Noto Serif TC",
       if(!window.caches)return go();caches.keys().then(function(ks){return Promise.all(ks.filter(function(k){return k.indexOf("xqlab-app-")===0}).map(function(k){return caches.delete(k)}))})
         .then(function(){return navigator.serviceWorker&&navigator.serviceWorker.getRegistration()}).then(function(r){return r&&r.update()}).catch(function(){}).then(go)}};setTimeout(chk,4000)})();
 </script>
-<script>window.XQ_OFFLINE=true;window.XQ_BUILD="20261105-1623";</script>
+<script>window.XQ_OFFLINE=true;window.XQ_BUILD="20261105-1639";</script>
 <script src="core.js"></script>
 <script src="engine.js"></script>
 <script src="local.js"></script>
@@ -3133,16 +3133,16 @@ async function xfRecv(){if(!OFF||!window.XQNet||!window.XQSave||!crypto.subtle)r
       catch(e){msg("解不開：轉移碼不對，或資料已經被換掉了")}}})}
 /* 意見回饋 491（開發者）：第一次進 App 先選「男生／女生」，再取名字；老玩家更新到這版也會跳一次
    意見回饋 604（開發者）：不再問 Q 版還是真實版，一律用真實 3D（之後可以在「設定 → 角色」改）；名字欄先填好「棋友＋4 位 16 進位」 */
-function onboard(force){if(!force&&store.get("onboard1",false))return;let sx=mySex(),st="real",step=0;
+function onboard(force){if(!force&&store.get("onboard1",false))return;let sx=myChar()||mySex(),st="real",step=0;   /* 開發者 11/5：sx 也可以是武俠角色代號（x_…） */
   const card=(k,on,img,t,sub)=>`<button class="obc${on?" on":""}" data-k="${k}"><img src="${img}" alt="" onerror="this.style.visibility='hidden'"><b>${t}</b><small>${sub}</small></button>`;
   const paint=b=>{const name=myName()||"";
-    b.innerHTML=step===0?`<p class="muted" style="margin:0 0 8px">歡迎來到象棋千秋！先選你在棋桌前的樣子（之後可以在「設定 → 🙂 角色」改）<!-- 意見回饋 607：選角色在「🙂 角色」分頁 --></p><div class="obg">${card("m",sx==="m","data/xs/xs_idle.webp","男生","小帥")+card("f",sx==="f","data/xs/xs_girl_idle.webp","女生","小帥妹")}</div><button class="btn" id="obN" style="width:100%;margin-top:12px">下一步</button>`
+    b.innerHTML=step===0?`<p class="muted" style="margin:0 0 8px">歡迎來到象棋千秋！先選你在棋桌前的樣子（之後可以在「設定 → 🙂 角色」改）<!-- 意見回饋 607：選角色在「🙂 角色」分頁 --></p><div class="obg">${card("m",sx==="m","data/xs/xs_idle.webp","男生","小帥")+card("f",sx==="f","data/xs/xs_girl_idle.webp","女生","小帥妹")+Object.entries(WX_CHARS).map(([k,c])=>card(k,sx===k,`data/xs/prev_${k}.webp`,c.n,"武俠角色")).join("")}</div><button class="btn" id="obN" style="width:100%;margin-top:12px">下一步</button>`
       :step===1?`<p class="muted" style="margin:0 0 8px">角色要用哪一種樣子？園子裡的你、跟你下棋的對手都會照這個顯示</p><div class="obg">${card("q",st==="q",meImgFor("q",sx),(sx==="f"?"🧸 小帥妹Q版":"🧸 小帥Q版"),"圓滾滾的棋子小人")+card("real",st==="real",meImgFor("real",sx),(sx==="f"?"🗿 小帥妹":"🗿 小帥"),"照畫好的人物做的 3D")}</div><div class="row" style="gap:8px;margin-top:12px"><button class="btn ghost" id="obB" style="flex:1">上一步</button><button class="btn" id="obN" style="flex:2">下一步</button></div>`
       :`<p class="muted" style="margin:0 0 8px">最後，幫自己取個名字（線上對戰、大廳會顯示），也可以直接用這個</p><input id="obName" maxlength="16" value="${esc(name||defaultName())}" placeholder="例如：雲河小棋手" style="width:100%;font-size:18px;padding:12px;border-radius:12px;border:1px solid var(--line);background:var(--card);color:inherit"><div class="row" style="gap:8px;margin-top:12px"><button class="btn ghost" id="obB" style="flex:1">上一步</button><button class="btn" id="obN" style="flex:2">開始下棋</button></div>`;
     b.querySelectorAll(".obc").forEach(x=>x.onclick=()=>{vibrate(5);if(step===0)sx=x.dataset.k;else st=x.dataset.k;paint(b)});
     const bk=b.querySelector("#obB");if(bk)bk.onclick=()=>{step=0;paint(b)};
     b.querySelector("#obN").onclick=()=>{vibrate(8);if(step<2){step=2;return paint(b)}
-      const nm=(b.querySelector("#obName").value||"").trim()||defaultName();store.set("pSex",sx);store.set("pStyle",st);store.set("oppLook",st==="real"?"real":"3d");store.set("onboard1",true);try{window.dispatchEvent(new Event("xq-look"))}catch(e){}
+      const nm=(b.querySelector("#obName").value||"").trim()||defaultName();if(WX_CHARS[sx]){store.set("pChar",sx);store.set("pSex",WX_CHARS[sx].sx)}else{store.set("pChar","");store.set("pSex",sx)}store.set("pStyle",st);store.set("oppLook",st==="real"?"real":"3d");store.set("onboard1",true);try{window.dispatchEvent(new Event("xq-look"))}catch(e){}
       if(nm){try{setMyName(nm)}catch(e){}}
       try{if(PARK){PARK.v.destroy();PARK=null}}catch(e){}closeSheet();toast(`歡迎，${nm||"棋友"}！`);setTimeout(()=>{try{route()}catch(e){}},300)}};
   sheet(step===0?"🎎 選你的角色":"🎎 選你的角色",paint)}
@@ -3754,7 +3754,7 @@ async function figView(look,title,html,btns,img){sheet(title,async b=>{
   if(look&&look.glb&&res.B.glbP){const tip=document.createElement("div");tip.style.cssText="position:absolute;left:0;right:0;bottom:8px;text-align:center;font-size:12.5px;color:#5a4630";tip.textContent="🗿 真實 3D 載入中…";host.append(tip);   /* 意見回饋 505：看得出是還在載、還是載不到 */
     res.B.glbP.then(()=>tip.remove()).catch(e=>{tip.textContent="真實 3D 模型載不到（"+(navigator.onLine?"網路慢或檔案有問題":"沒有網路")+"），先顯示 Q 版"})}})}
 /* 意見回饋 584：我的角色頁舞台上的人物直接是 3D（左右拖曳可以轉，平常輕輕擺動）；真實 3D 載好之前先顯示原本的圖，選「畫好的立繪」的人維持平面圖 */
-async function meFig3d(v){const f=v.querySelector("#meFig2");if(!f||f.dataset.g3||myStyle()==="art")return;f.dataset.g3="1";
+async function meFig3d(v){const f=v.querySelector("#meFig2");if(!f||f.dataset.g3||myStyle()==="art")return;if(myChar()&&!myLook())return;   /* 武俠角色的 3D 模型還沒好：舞台先放 2D 立繪 */f.dataset.g3="1";
   const look=myLook()||{p:botPc(),e:store.get("era","classic"),g:9},host=document.createElement("div");host.style.cssText="position:absolute;inset:0;opacity:0;transition:opacity .45s;touch-action:none";f.append(host);
   const res=await fig3d(host,look,{tight:true});if(!res){host.remove();delete f.dataset.g3;return}
   const show=()=>{host.style.opacity=1;const im=f.querySelector("img");if(im){im.style.transition="opacity .45s";im.style.opacity=0}};
@@ -3849,7 +3849,11 @@ const oppArt=()=>store.get("oppLook","3d")==="art";
 const mySex=()=>store.get("pSex","m"),myStyle=()=>store.get("pStyle","q");
 /* 意見回饋 545：身上的字跟著「換棋子」選的那顆（原本小帥妹、真實版都寫死「帥」） */
 const myPc=()=>{const c=store.get("botPiece","帥");return typeof c==="string"&&c.length===1&&"帥仕相俥傌炮兵將士象車馬砲卒".includes(c)?c:"帥"};
-const myLook=()=>{const f=mySex()==="f",id=f?"me_girl":"me_boy";let L=f?{p:myPc(),e:store.get("era","classic"),g:9,npc:"me",cus:"me:girl"}:null;
+/* 開發者 11/5：四位武俠風格的原創角色也可以選（pChar；空白＝小帥／小帥妹）。sx＝男女，用在其他還只有男女兩種的地方 */
+const WX_CHARS={x_swordboy:{n:"劍客少年",sx:"m"},x_spiritgirl:{n:"靈族少女",sx:"f"},x_martialgirl:{n:"江湖女俠",sx:"f"},x_miaogirl:{n:"苗疆少女",sx:"f"}};
+const myChar=()=>{const c=store.get("pChar","");return WX_CHARS[c]?c:""};
+const myLook=()=>{{const c=myChar();if(c)return TRIPO[c]?{p:myPc(),e:store.get("era","classic"),g:9,glb:`data/tripo_app/${c}.glb`,ring:TRIPO[c]}:null}
+  const f=mySex()==="f",id=f?"me_girl":"me_boy";let L=f?{p:myPc(),e:store.get("era","classic"),g:9,npc:"me",cus:"me:girl"}:null;
   if(myStyle()==="real"&&TRIPO[id]){L=L||{p:myPc(),e:store.get("era","classic"),g:9};L={...L,glb:`data/tripo_app/${id}.glb`,ring:TRIPO[id]}}return L};
 /* 意見回饋 471：真實 3D（Tripo 模型）。TRIPO＝有模型的角色和身上圓牌的位置（tools/tripo_slim.py 產生）；XQGLB 載入 .glb（three.js 官方 GLTFLoader，用 App 的 three） */
 let TRIPO={};const TRIPO_ALIAS={a_changyuchun:"p_b1p_changyuchun",a_liuji:"p_b1p_liubowen",a_shenwansan:"p_b1p_shenwansan",a_shinaian:"p_b1p_shinaian",a_wangmian:"p_b1p_wangmian"};   /* 秘境棋友跟人物表是同一個人，共用模型 */fetch("data/tripo_app/tripo.json").then(r=>r.ok?r.json():{}).then(j=>{TRIPO=j||{}}).catch(()=>{});
@@ -4207,17 +4211,17 @@ const RAR={rare:["稀有","#C9962B"],normal:["一般","#3A7BD5"],broken:["損壞
 function rankInfo(){let p=0;try{p=(JSON.parse(localStorage.getItem("xq_cpuRate")||"null")||{}).pts||0}catch(e){}const TH=[1500,1150,1000,800,600,400,200,100,0],g=TH.findIndex(t=>p>=t)+1,lo=TH[g-1],hi=g>1?TH[g-2]:null,era=store.get("era","classic");
   return{p,g,hi,pc:hi?Math.round((p-lo)/(hi-lo)*100):100,name:RANKT(era,g),next:g>1?RANKT(era,g-1):""}}
 /* 意見回饋 590（開發者）：跟電腦下（含石桌往事）時，自己那一欄不寫「你」，寫角色名：小帥／小師妹 */
-const meCall=()=>mySex()==="f"?"小師妹":"小帥";
-const meName=()=>(mySex()==="f"?"小帥妹":"小帥")+(myStyle()==="real"?"":"Q版"),meImg=()=>meImgFor(myStyle(),mySex());
+const meCall=()=>myChar()?WX_CHARS[myChar()].n:mySex()==="f"?"小師妹":"小帥";
+const meName=()=>myChar()?WX_CHARS[myChar()].n:(mySex()==="f"?"小帥妹":"小帥")+(myStyle()==="real"?"":"Q版"),meImg=()=>myChar()?meImgFor(myChar()):meImgFor(myStyle(),mySex());
 /* 意見回饋 545：預覽圖的圓牌是空白的，這裡在圓牌上寫上「換棋子」選的那顆字；ME_DISC＝圓牌中心與半徑（圖是 300×400） */
 const ME_DISC={q_boy:[150,245,58],real_boy:[143,245,60],q_girl:[151,250,53],real_girl:[140,240,56]},ME_IMGC={};
-function meImgFor(st,sx){const k=(st==="real"?"real":"q")+"_"+(sx==="f"?"girl":"boy"),f=`data/xs/prev_${k}.webp`,pc=myPc(),ck=k+"|"+pc;if(ME_IMGC[ck]&&ME_IMGC[ck]!==1)return ME_IMGC[ck];
+function meImgFor(st,sx){const k=/^x_/.test(st||"")?st:(st==="real"?"real":"q")+"_"+(sx==="f"?"girl":"boy"),f=`data/xs/prev_${k}.webp`,pc=myPc(),ck=k+"|"+pc;if(!ME_DISC[k])return f;   /* 武俠角色的圓牌被衣服蓋住，不寫字 */if(ME_IMGC[ck]&&ME_IMGC[ck]!==1)return ME_IMGC[ck];
   if(!ME_IMGC[ck]){ME_IMGC[ck]=1;const im=new Image();im.onload=()=>{try{const D=ME_DISC[k],c=document.createElement("canvas");c.width=im.naturalWidth;c.height=im.naturalHeight;const x=c.getContext("2d"),sc=c.width/300;x.drawImage(im,0,0);
     const ff=(getComputedStyle(document.documentElement).getPropertyValue("--serif")||"").trim()||"serif";x.font=`900 ${Math.round(D[2]*1.3*sc)}px ${ff}`;x.textAlign="center";x.textBaseline="middle";x.fillStyle="帥仕相俥傌炮兵".includes(pc)?"#C8102E":"#1E1A16";x.fillText(pc,D[0]*sc,D[1]*sc+D[2]*.06*sc);
     ME_IMGC[ck]=c.toDataURL("image/png");document.querySelectorAll(`img[data-meimg="${ck}"]`).forEach(y=>y.src=ME_IMGC[ck])}catch(e){delete ME_IMGC[ck]}};im.onerror=()=>{delete ME_IMGC[ck]};im.src=f}
   return f}
-const meImgTag=(st,sx)=>{const k=(st==="real"?"real":"q")+"_"+(sx==="f"?"girl":"boy");return `data-meimg="${k}|${myPc()}"`};
-const meImgRefresh=()=>document.querySelectorAll("img[data-meimg]").forEach(y=>{const[k]=y.dataset.meimg.split("|"),[st,sx]=k.split("_");y.dataset.meimg=k+"|"+myPc();y.src=meImgFor(st,sx==="girl"?"f":"m")});
+const meImgTag=(st,sx)=>{if(myChar()&&st===myStyle()&&sx===mySex())st=myChar();const k=/^x_/.test(st||"")?st:(st==="real"?"real":"q")+"_"+(sx==="f"?"girl":"boy");return `data-meimg="${k}|${myPc()}"`};
+const meImgRefresh=()=>document.querySelectorAll("img[data-meimg]").forEach(y=>{const[k]=y.dataset.meimg.split("|");y.dataset.meimg=k+"|"+myPc();if(/^x_/.test(k)){y.src=meImgFor(k);return}const[st,sx]=k.split("_");y.src=meImgFor(st,sx==="girl"?"f":"m")});
 function meFigOpen(src){vibrate(5);figView(myLook()||{p:botPc(),e:store.get("era","classic"),g:9},"🙂 "+meName(),`<p class="muted" style="font-size:13.5px;margin:0">${esc(myName()||"還沒取名字")}・園子裡的你、線上對手看到的你都是這個樣子</p>`,[["關閉",()=>closeSheet(),true]],src||meImg())}
 function meChip(){const tb=$("#topbar");if(!tb)return;{const o=document.getElementById("meChip");if(o)o.remove()}const R=rankInfo(),I=xpInfo(),b=document.createElement("button");b.id="meChip";b.type="button";b.setAttribute("aria-label","我的角色");
   b.innerHTML=`<img src="${meImg()}" ${meImgTag(myStyle(),mySex())} alt="" onerror="this.replaceWith(document.createTextNode('🙂'))"><small>${esc(R.name)}<br>修為 Lv ${I.L}</small>`;b.onclick=()=>{vibrate(5);location.hash="#/me"};tb.append(b)}   /* 意見回饋 570：頭像放到最右上 */
