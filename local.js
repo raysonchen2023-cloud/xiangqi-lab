@@ -29,7 +29,9 @@ var XQ=(function(){
   const moveOut=m=>({f:m.f,t:m.t,by:m.by,cn:m.cn,ck:m.ck,q:m.q,loss:m.loss,ev:m.ev,bc:m.bc,bm:m.bm,bp:m.bp});
   const lastEv=ms=>{for(let i=ms.length-1;i>=0;i--)if(ms[i].ev!=null)return{v:ms[i].ev,ply:i+1};return null};
   const saveMoves=ms=>ms.map(m=>({f:m.f,t:m.t,by:m.by,q:m.q,loss:m.loss,ev:m.ev,bc:m.bc,bm:m.bm,bp:m.bp}));
-  async function pushGame(kind,g){const list=(await idb.get("games:"+kind))||[];list.push(g);await idb.set("games:"+kind,list)}
+  /* 意見回饋 619：存棋譜排隊一筆一筆來（以前兩筆同時存會互相蓋掉），同一個 id 不重複存 */
+  let PG=Promise.resolve();
+  function pushGame(kind,g){const p=PG.then(async()=>{const list=(await idb.get("games:"+kind))||[];if(g&&g.id&&list.some(x=>x.id===g.id))return;list.push(g);await idb.set("games:"+kind,list)});PG=p.catch(()=>{});return p}
 
   // ---------- 挑戰電腦 ----------
   let P=null,playBusy=false,playMsg="",paBusy=false;
@@ -232,7 +234,7 @@ var XQ=(function(){
     const S={moves:g.moves.map(([f,t])=>({f,t}))};stateRebuild(S);NB={key:g.gid+"|"+g.rev,S,g};
     // 下完的網路對局存到「真人對局」，之後可以看賽後報告
     if(g.result&&!netSaved.has(g.id)&&XQNet.side()){netSaved.add(g.id);ls.set("netSaved",[...netSaved].slice(-200));
-      pushGame("pvp",{id:g.id,date:g.id.slice(0,10),red:g.red.name,black:g.black.name,tc:"none",result:g.result,moves:saveMoves(S.moves),net:true})}
+      pushGame("pvp",{id:g.id,date:g.id.slice(0,10),red:g.red.name,black:g.black.name,tc:"none",result:g.result,moves:saveMoves(S.moves),net:true}).catch(()=>{netSaved.delete(g.id);ls.set("netSaved",[...netSaved].slice(-200))})}   /* 意見回饋 619：沒存成功就拿掉「已存」記號，下次再存 */
     return NB}
   /* 補存：伺服器抓回來的已結束網路對局，還沒存過就存進「真人對局」 */
   window.XQ_saveNetGame=async g=>{if(!g||!g.result||!g.id||!Array.isArray(g.moves))return false;const list=(await idb.get("games:pvp"))||[];if(list.some(x=>x.id===g.id))return true;

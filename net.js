@@ -72,14 +72,14 @@ var XQNet=(function(){
   const rec=()=>ls.get("rate",null)||{pts:0,w:0,l:0,d:0,hist:[]};
   const myPts=()=>rec().pts;
   function record(){if(!G||!G.result||G.result.abort||(G.moves.length<2&&!G.result.timeout))return;   // 超時判負一定計分   // 雙方都還沒走就結束：不計分
-    const s=side();if(!s)return;const R=rec();if(R.hist.some(h=>h.gid===G.gid))return;
+    const s=side();if(!s)return;const R=rec();if(R.hist.some(h=>h.gid===G.gid&&(!h.rid||h.rid===G.id)))return;   /* 意見回饋 619：「再來一局」沿用同一個 gid，改用 gid＋這盤的 id 判斷有沒有記過，第二盤以後才會記進戰績 */
     const o=s==="r"?G.black:G.red,op=o.pts!=null?o.pts:(people[o.id]&&people[o.id].pts)||0;
     /* 意見回饋 段位失準：原本贏 +20、輸 −15 會停在勝率 43% 那一階、而且越下越高（每盤淨增 5 分）。
        改成等級分的期望勝率：E＝1/(1+10^((對手−自己)/400))，加減＝K×(結果−E)，雙方一加一減會抵銷；前 15 盤 K＝48 比較快定位，之後 K＝32 */
     const res=G.result.w==null?"d":G.result.w===s?"w":"l",E=1/(1+Math.pow(10,(op-R.pts)/400)),K=(R.w+R.l+R.d)<15?48:32;
     let d=Math.round(K*((res==="w"?1:res==="d"?.5:0)-E));if(res==="w"&&d<1)d=1;if(res==="l"&&d>-1)d=-1;
     const before=R.pts;R.pts=Math.max(0,R.pts+d);d=R.pts-before;R[res]++;
-    R.hist.unshift({gid:G.gid,rid:G.id,opp:o.name,oid:o.id,res,d,pts:R.pts,why:G.result.why||"",n:G.moves.length,at:Date.now(),sd:s});R.hist=R.hist.slice(0,100);ls.set("rate",R);pubHist();
+    R.hist.unshift({gid:G.gid,rid:G.id,opp:o.name,oid:o.id,res,d,pts:R.pts,why:G.result.why||"",n:G.moves.length,at:Date.now(),sd:s,me:(s==="r"?G.red:G.black).name||"",mv:G.moves.map(([f,t])=>String(f).padStart(2,"0")+String(t).padStart(2,"0")).join("")});R.hist=R.hist.slice(0,100);ls.set("rate",R);pubHist();   /* 意見回饋 619：每盤戰績帶一份棋步（每步 4 個數字，34 步約 136 字），棋譜存檔不見、換手機時還能從這裡補回來 */
     presence();emit("rated",{res,d,pts:R.pts,rank:rankOf(R.pts),was:rankOf(before)})}
   /* 意見回饋 283：把自己最近 30 盤的摘要公開放在大廳（保留訊息），別人點你的資料卡就能看你的線上棋譜和戰績分析 */
   function pubHist(){if(!cli||!cli.up)return;const m=me(),R=rec();

@@ -706,6 +706,21 @@ html[data-era="qing"]:not([data-font="sys"]){--serif:"XQ twkai","Noto Serif TC",
 .modal.res .mb .btn:not(.ghost){flex:1 1 100%;font-size:17px;padding:14px 10px}
 .modal.res .mb .btn.ghost{flex:1 1 0;min-width:0;padding:10px 4px;font-size:14px;font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .modal.res .mb .btn.ghost.wide{flex:1 1 100%;font-size:15px}
+
+/* 意見回饋 621：水墨「千秋穿梭」過場——一張張朝代山河圖淡入、推近、淡出；宣紙色底、四周墨色暗角 */
+.travel.qq{background:#e9e1cf}
+.travel.qq .qqs{position:absolute;inset:0}
+.travel.qq .qqi{position:absolute;inset:-4%;background:center/cover no-repeat;opacity:0;transform:scale(1.18) translateX(2%);transition:opacity .55s ease,transform 1.4s cubic-bezier(.2,.6,.3,1)}
+.travel.qq.back .qqi{transform:scale(1.18) translateX(-2%)}
+.travel.qq .qqi.on{opacity:1;transform:scale(1) translateX(0)}
+.travel.qq .qqv{position:absolute;inset:0;pointer-events:none;background:radial-gradient(ellipse 75% 70% at 50% 50%,transparent 55%,rgba(20,16,12,.55) 100%)}
+.travel.qq .qqt{position:absolute;left:18px;bottom:calc(env(safe-area-inset-bottom,0px) + 64px);z-index:3;color:#1a1410;text-shadow:0 0 8px rgba(240,232,214,.95),0 0 3px rgba(240,232,214,.95)}
+.travel.qq .qqt b{display:block;font:900 46px/1.1 var(--serif);letter-spacing:6px}
+.travel.qq .qqt b::after{content:"";display:inline-block;width:12px;height:12px;margin-left:6px;background:#b3241b;border-radius:2px;vertical-align:top}
+.travel.qq .qqt span{font:600 16px var(--serif)}
+.travel.qq .qqt.pop{animation:qqPop .2s ease-out both}@keyframes qqPop{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:none}}
+.travel.qq .tcap{color:#1a1410;text-shadow:0 0 8px rgba(240,232,214,.95)}.travel.qq .tbar{background:rgba(26,20,16,.2)}.travel.qq .tbar i{background:#b3241b}
+.travel.qq .tskip{background:rgba(26,20,16,.55)}
 </style></head><body>
 <div class="app">
  <div class="topbar" id="topbar"><button class="ib" id="back" hidden><b>‹</b>返回</button><h1 id="title">象棋千秋</h1><span id="topRight"></span></div>
@@ -751,7 +766,7 @@ html[data-era="qing"]:not([data-font="sys"]){--serif:"XQ twkai","Noto Serif TC",
       if(!window.caches)return go();caches.keys().then(function(ks){return Promise.all(ks.filter(function(k){return k.indexOf("xqlab-app-")===0}).map(function(k){return caches.delete(k)}))})
         .then(function(){return navigator.serviceWorker&&navigator.serviceWorker.getRegistration()}).then(function(r){return r&&r.update()}).catch(function(){}).then(go)}};setTimeout(chk,4000)})();
 </script>
-<script>window.XQ_OFFLINE=true;window.XQ_BUILD="20261105-1550";</script>
+<script>window.XQ_OFFLINE=true;window.XQ_BUILD="20261105-1623";</script>
 <script src="core.js"></script>
 <script src="engine.js"></script>
 <script src="local.js"></script>
@@ -2636,8 +2651,13 @@ async function recommendGames(box,T,mid,midBy){const avg=a=>a.length?a.reduce((x
 function oppHist(){try{return(window.XQNet&&XQNet.rating?XQNet.rating().hist:[])||[]}catch(e){return[]}}
 function oppSnapSave(ps){const ids=new Set(oppHist().map(h=>h.oid).filter(Boolean));if(!ids.size)return;const S=store.get("oppSnap",{});let ch=false;
   for(const p of ps||[])if(p&&ids.has(p.id)){S[p.id]={id:p.id,name:p.name,pts:p.pts,w:p.w,l:p.l,d:p.d,city:p.city||"",kind:p.kind||"",at:p.at||Date.now()};ch=true}if(ch)store.set("oppSnap",S)}
+/* 意見回饋 619：戰績裡帶的棋步（mv，每步 4 個數字＝起點、終點格號）直接重建棋譜，不用靠伺服器 */
+async function histRebuild(h){if(!h||!h.rid||!h.mv||!window.XQ_saveNetGame)return false;try{const mv=[];for(let i=0;i+3<h.mv.length;i+=4)mv.push([+h.mv.slice(i,i+2),+h.mv.slice(i+2,i+4)]);if(!mv.length)return false;
+  const me=h.me||(typeof myName==="function"&&myName())||"我",sd=h.sd||"r",os=sd==="r"?"b":"r",red={name:sd==="r"?me:h.opp||"對手"},black={name:sd==="r"?h.opp||"對手":me};
+  return await XQ_saveNetGame({id:h.rid,red,black,result:{w:h.res==="w"?sd:h.res==="l"?os:null,why:h.why||""},moves:mv})}catch(e){return false}}
 /* 漏存的網路對局（斷線、不在對局畫面時結束）：從伺服器保留的最後狀態補回棋譜（意見回饋 280） */
 async function netRecover(h){if(!h||!h.gid||!h.rid||!window.XQNet||!XQNet.fetchGame||!window.XQ_saveNetGame)return false;
+  if(h.mv&&await histRebuild(h))return true;   /* 意見回饋 619：先用戰績裡的棋步補，補不到才去伺服器找 */
   try{const g=await XQNet.fetchGame(h.gid,6000);if(!g||g.id!==h.rid||!g.result)return false;return await XQ_saveNetGame(g)}catch(e){return false}}
 if(OFF&&window.XQNet)setTimeout(async()=>{try{const tried=store.get("netRecTried",[]),r=await api("/db/items?c=pvp&limit=500"),ids=new Set((r.items||[]).map(it=>it.id));
   const miss=oppHist().filter(h=>h.rid&&h.gid&&!ids.has(h.rid)&&!tried.includes(h.rid)).slice(0,8);
@@ -3141,7 +3161,7 @@ function Settings(v){
     <div class="st-tabs" id="sgTabs" style="position:static;margin:4px 0 10px">${[["bot","🙂","角色"],["look","♟","棋盤"],["sound","🔊","聲音"],["more","⚙","系統"]].map(([k,e,l])=>`<button data-k="${k}"><i class="tic" data-ic="t_${k}">${e}</i> ${l}</button>`).join("")}</div>
     <div data-pane="look">
     <div class="card" style="padding:10px"><div id="pv" style="max-width:300px;margin:0 auto"></div>
-      <div class="opt" id="tbb" style="justify-content:center;flex-wrap:wrap;margin-top:8px"><button class="pill" id="replay">▶ 示範一步</button>${[["mv","♟ 走一步"],["cap","💥 吃子"],["ck","⚔ 將軍"],["op","🚩 開局動畫"]].map(([k,l])=>`<button data-tst="${k}">${l}</button>`).join("")}</div></div>   <!-- 意見回饋 537：預覽和測試併成一個棋盤；547：小字提示都拿掉 -->
+      <div class="opt" id="tbb" style="justify-content:center;flex-wrap:wrap;margin-top:8px"><!-- 意見回饋 620：「示範一步」跟「走一步」重複，只留走一步（會照設定播特效和音效） -->${[["mv","♟ 走一步"],["cap","💥 吃子"],["ck","⚔ 將軍"],["op","🚩 開局動畫"]].map(([k,l])=>`<button data-tst="${k}">${l}</button>`).join("")}</div></div>   <!-- 意見回饋 537：預覽和測試併成一個棋盤；547：小字提示都拿掉 -->
     <div class="sec-t">朝代風格</div><div class="eragrid erasw" id="era"></div>
     <div class="sec-t">棋盤風格</div>
     <label class="row" style="justify-content:space-between;padding:4px 2px 10px"><span><b>3D 園子棋盤</b></span><input type="checkbox" class="sw" id="p3d"></label>   <!-- 意見回饋 488 -->
@@ -4406,30 +4426,22 @@ async function innDrop(){const day=localDay(),d=store.get("innDrop",{});if(d.d==
   let L=null;try{L=(await api("/db/items?c=brilliant&limit=600")).items}catch(e){return}if(!L||!L.length)return;const it=L[Math.floor(Math.random()*L.length)],who=INN[Math.floor(Math.random()*INN.length)];
   const B=bag();if(B.records.some(z=>z.id===it.id))return;B.records.push({uid:"r"+Date.now().toString(36),c:"brilliant",id:it.id,name:toT(it.name||(it.red+" 對 "+it.black)),from:`驛站・${who.name}留下的`,at:Date.now()});bagSave(B);store.set("innDrop",{d:day,n:(d.d===day?d.n:0)+1});
   vibrate([15,30,15]);sheet(`📜 ${who.name}留下一份棋譜`,b=>{b.innerHTML=`<p style="line-height:1.9;font-size:16px">${who.ic} ${esc(who.name)}起身要走，從行囊裡掉出一份棋譜：「這是我路上抄的比賽棋譜，送你吧，好好研讀。」</p><p class="muted">${esc(recTitle(toT(it.name||"")))}</p><p class="muted" style="font-size:13px">放在「🎒 棋童資料 → 📜 棋譜」，讀完按返回會回到石桌往事。</p><button class="btn" id="dr" style="width:100%">收下</button>`;b.querySelector("#dr").onclick=()=>closeSheet()})}
-/* ================= 🚶 荒野小徑過場（意見回饋 320）=================
-   驛站和公園之間走約 5 秒：遠景、中景、前景（逃難的人群）三層用不同速度捲動（視差），帥棋子在中間一跳一跳地走。
-   Gemini 畫好 data/path/far、mid1、mid2、front 之後自動換成正式的圖；還沒畫好前用漸層和小圖示代替 */
-function travel(to,done){if(document.querySelector(".travel"))return;try{window.XQ_DRUM&&XQ_DRUM(store.get("era","classic"),"path")}catch(e){}const back=to==="inn",ov=document.createElement("div");ov.className="travel"+(back?" back":"");
-  const LINES=["城頭的鑼又響了，一隊逃難的人從身邊跑過……","路邊翻倒的板車上，還掛著半個包袱。","遠處冒著煙，誰家的屋子又燒了。","有人往南逃，有人往北跑，只有你往石桌走。","風裡夾著沙，路標歪了一半。"];
-  const crowd="🏃‍♂️ 🧺 🏃‍♀️ 🫏 🧓 🏃 👨‍👧 🛒 🏃‍♂️ 🚩 🏃‍♀️ 🧺 🏃 🫏 🧓 👨‍👧 🛒 🏃‍♂️ 🚩 🏃‍♀️";
-  ov.innerHTML=`<div class="tl far"></div><div class="tl mid"></div><div class="walker"><div class="av r">帥</div><i class="dust"></i></div><div class="tl front"><span>${crowd}</span><span>${crowd}</span></div>
-    <div class="tcap"><b>🚶 荒野小徑</b><span>${back?"園子 → 驛站":"驛站 → 園子"}</span><p id="tline">${LINES[0]}</p><div class="tbar"><i></i></div></div><button class="tskip">跳過 ›</button>`;
+/* 意見回饋 621（開發者）：驛站↔園子的過場改成水墨「千秋穿梭」——一張張朝代山河圖（Gemini 畫的 data/qianqiu/<朝代>.webp）
+   從秦一路穿到元末（回驛站時倒著走），每張淡入、慢慢推近再淡出，左上寫朝代和一句；不再出現小帥／小師妹（原本的荒野小徑三層捲動、走路圖都拿掉） */
+const QQ_ERAS=[["qin","秦","長城下的民夫"],["han","漢","冰封大漠，戰馬奔騰"],["sanguo","三國","赤壁火船，渡口難民"],["weijin","魏晉","衣冠南渡"],["nanbei","南北朝","一江分南北"],
+  ["sui","隋","運河兩岸的縴夫"],["tang","唐","盛世轉衰，蜀道難行"],["wudai","五代","天下碎成十國"],["song","宋","北騎南下，煙雨江南"],["yuan","元末","黃河決堤，一路逃到石桌"]];
+function travel(to,done){if(document.querySelector(".travel"))return;try{window.XQ_DRUM&&XQ_DRUM(store.get("era","classic"),"path")}catch(e){}
+  const back=to==="inn",ov=document.createElement("div");ov.className="travel qq"+(back?" back":"");
+  const L=back?QQ_ERAS.slice().reverse():QQ_ERAS,T=6000,per=T/L.length;
+  ov.innerHTML=`<div class="qqs">${L.map(([k])=>`<div class="qqi" style="background-image:url(data/qianqiu/${k}.webp)"></div>`).join("")}</div><div class="qqv"></div>
+    <div class="qqt pop"><b id="qqN">${L[0][1]}</b><span id="qqS">${L[0][2]}</span></div>
+    <div class="tcap"><b>千秋穿梭</b><span>${back?"園子 → 驛站":"驛站 → 園子"}</span><div class="tbar"><i style="animation-duration:${T}ms"></i></div></div><button class="tskip">跳過 ›</button>`;
   document.body.append(ov);vibrate(8);
-  /* 有 Gemini 的圖就換上 */
-  const img=(cls,src,bg)=>{const im=new Image();im.onload=()=>{const el=ov.querySelector(cls);if(el){el.style.backgroundImage=bg(src);el.classList.add("img")}};im.src=src};
-  img(".far","data/path/far.webp",u=>`url(${u})`);img(".mid","data/path/mid1.webp",u=>`url(${u}),url(data/path/mid2.webp)`);
-  {const im=new Image();im.onload=()=>{const f=ov.querySelector(".front");if(f){f.innerHTML="";f.style.backgroundImage=`url(${im.src})`;f.classList.add("img")}};im.src="data/path/front.webp"}
-  /* 意見回饋 369：走路的換成 Gemini 手繪的小帥走路圖（data/xs/walk_1～8 輪流換），身上貼玩家選的棋子字；圖還沒載好前先用原本的棋子圓片 */
-  /* 意見回饋 515：選小帥妹的話，荒野小徑上走的也是小帥妹（data/xs/girl/） */const XD=mySex()==="f"?"data/xs/girl/":"data/xs/";
-  /* 意見回饋 559：選「真實版」的人，走路圖原本永遠是 Q 版小帥（看起來像舊款）；改用真實版的角色圖（身上寫著選的棋子），一走一跳 */
-  if(myStyle()==="real"){const w=ov.querySelector(".walker"),H=Math.round(Math.min(150,innerHeight*.2)),W=Math.round(H*.75);if(w)w.innerHTML=`<div class="xsw xsr" style="width:${W}px;height:${H}px"><img alt="" src="${meImg()}" ${meImgTag(myStyle(),mySex())}></div><i class="dust"></i>`}
-  else fetch(XD+"xs.json").then(r=>r.ok?r.json():null).then(m=>{if(!m||!ov.isConnected)return;const fr=[1,2,3,4,5,6,7,8].map(i=>{const im=new Image();im.src=XD+"walk_"+i+".webp";return im});
-    return Promise.all(fr.map(im=>im.decode())).then(()=>{const w=ov.querySelector(".walker");if(!w||!ov.isConnected)return;const H=Math.round(Math.min(150,innerHeight*.2)),W=H*m.w/m.h,f=m.poses.walk_1||m.poses.xs_idle,R=f.r*W*.82,ch=botPc();
-      w.innerHTML=`<div class="xsw" style="width:${W}px;height:${H}px"><img alt="" src="${fr[0].src}"><b style="left:${f.cx*W-R}px;top:${f.cy*H-R}px;width:${2*R}px;height:${2*R}px;font-size:${R*1.25}px;color:${"帥仕相俥傌炮兵".includes(ch)?"#C8102E":"#1E1A16"}">${esc(ch)}</b></div><i class="dust"></i>`;
-      const pic=w.querySelector("img");let i=0;const iv=setInterval(()=>{if(!ov.isConnected)return clearInterval(iv);i=(i+1)%8;pic.src=fr[i].src},110)})}).catch(()=>{});
-  let k=0;const tl=setInterval(()=>{k=(k+1)%LINES.length;const e=ov.querySelector("#tline");if(e)e.textContent=LINES[k]},1600);
+  const I=ov.querySelectorAll(".qqi"),tx=ov.querySelector(".qqt"),nE=ov.querySelector("#qqN"),sE=ov.querySelector("#qqS");let k=0;I[0].classList.add("on");
+  const tl=setInterval(()=>{k++;if(k>=I.length)return clearInterval(tl);I[k].classList.add("on");if(k>1)I[k-2].classList.remove("on");
+    nE.textContent=L[k][1];sE.textContent=L[k][2];tx.classList.remove("pop");void tx.offsetWidth;tx.classList.add("pop")},per);
   const h0=location.hash;let ended=false;const end=()=>{if(ended)return;ended=true;removeEventListener("hashchange",end);clearInterval(tl);clearTimeout(tm);ov.classList.add("out");setTimeout(()=>ov.remove(),350);if(done&&location.hash===h0)done()};addEventListener("hashchange",end);
-  const tm=setTimeout(end,5000);ov.querySelector(".tskip").onclick=e=>{e.stopPropagation();end()}}
+  const tm=setTimeout(end,T);ov.querySelector(".tskip").onclick=e=>{e.stopPropagation();end()}}
 function innSheet(v){setTimeout(innDrop,1200);setTop("🏮 驛站","#/adventure");const I=xpInfo(),Sx=jSecrets(),nx=JR.find(R=>R.lv>I.L);v.className="view";
   const row=(x,locked)=>`<button class="item" data-inn="${x.id}" ${locked?"disabled":""}><span class="lb" style="font-size:24px">${locked?"❔":secIc(x)}</span><span class="tx"><b>${locked?"？？？（還沒找到）":esc(x.name)}</b><span>${locked?"":x.who?`${esc(x.who)}・第 ${secretLv(x)} 級`:`第 ${innLvN(x)} 級`}</span></span><span class="muted">${locked?"":"›"}</span></button>`;
   const IE=store.get("era","classic");
