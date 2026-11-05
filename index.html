@@ -654,6 +654,17 @@ html[data-era=ming] .topbar,html[data-era=qing] .topbar{border-bottom-width:4px}
 .sgc>*+*{border-top:1px solid var(--line)}
 .rd-g{background:var(--card);border:1px solid var(--line);border-radius:14px;margin:10px 0;overflow:hidden}.rd-g>summary{list-style:none;display:flex;justify-content:space-between;align-items:center;gap:8px;padding:10px 12px;font-size:14px;cursor:pointer}.rd-g>summary::-webkit-details-marker{display:none}.rd-g>summary b{font-size:13px;color:var(--accent);white-space:nowrap}.rd-g>summary::after{content:"▸";color:var(--muted);transition:transform .2s}.rd-g[open]>summary::after{transform:rotate(90deg)}.rd-g .st-list{margin:0;border-radius:0;border:0;border-top:1px solid var(--line)}
 .vc-tip{position:fixed;left:50%;bottom:calc(110px + var(--safeB,0px));transform:translateX(-50%);z-index:1200;display:flex;flex-direction:column;align-items:center;gap:2px;padding:14px 22px;border-radius:18px;background:rgba(30,20,12,.9);color:#fff;font-size:13px;box-shadow:0 8px 30px rgba(0,0,0,.3);animation:vcP 1.2s ease-in-out infinite}.vc-tip b{font-size:17px}.vc-tip button{margin-top:8px;padding:8px 16px;border-radius:999px;border:1px solid rgba(255,255,255,.5);background:rgba(255,255,255,.12);color:#fff;font:inherit;font-weight:700}@keyframes vcP{50%{box-shadow:0 0 0 10px rgba(181,69,43,.25),0 8px 30px rgba(0,0,0,.3)}}
+/* 意見回饋 600：對局中的🎒寶物面板 */
+.bagg{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.bagt{display:flex;flex-direction:column;align-items:center;text-align:center;padding:14px 10px 10px;border:1px solid var(--line,#d8c8b0);border-radius:16px;background:var(--card,#FFFDF8)}
+.bag-ic{font-size:30px;line-height:1;height:36px;display:flex;align-items:center}.bag-ic img{height:34px}
+.bag-nm{margin-top:6px;font-weight:800;font-size:15px}
+.bag-n{font:900 30px/1.1 var(--serif);margin:4px 0 2px}.bag-n small{font-size:13px;font-weight:600;margin-left:3px}
+.bag-d{font-size:12.5px;color:var(--muted,#7a6a58);min-height:2.2em}
+.bagt .btn{width:100%;margin-top:8px;padding:9px 0}.bagt .btn:disabled{opacity:.38}
+.bag-w{font-size:12px;color:var(--muted,#7a6a58);min-height:1.4em;margin-top:4px}
+.bag-no{background:color-mix(in srgb,var(--accent,#9E1B15) 10%,transparent);border-radius:10px;padding:8px 12px;margin-bottom:10px;font-size:14px}
+.bag-help{margin-top:6px;font-size:13px;line-height:1.7;color:var(--muted,#7a6a58)}.bag-help p{margin:0 0 6px}
 </style></head><body>
 <div class="app">
  <div class="topbar" id="topbar"><button class="ib" id="back" hidden><b>‹</b>返回</button><h1 id="title">象棋千秋</h1><span id="topRight"></span></div>
@@ -699,7 +710,7 @@ html[data-era=ming] .topbar,html[data-era=qing] .topbar{border-bottom-width:4px}
       if(!window.caches)return go();caches.keys().then(function(ks){return Promise.all(ks.filter(function(k){return k.indexOf("xqlab-app-")===0}).map(function(k){return caches.delete(k)}))})
         .then(function(){return navigator.serviceWorker&&navigator.serviceWorker.getRegistration()}).then(function(r){return r&&r.update()}).catch(function(){}).then(go)}};setTimeout(chk,4000)})();
 </script>
-<script>window.XQ_OFFLINE=true;window.XQ_BUILD="20261105-1255";</script>
+<script>window.XQ_OFFLINE=true;window.XQ_BUILD="20261105-1301";</script>
 <script src="core.js"></script>
 <script src="engine.js"></script>
 <script src="local.js"></script>
@@ -5005,14 +5016,23 @@ function CpuGame(v,practicePage,mode){
   function undoAsk(){if(!st)return;if(st.practice)return post("/play/undo");{const no=itemBlock(st);if(no)return toast(no)}const n=undoLeft();
     if(n<=0)return toast("沒有悔棋符了：每盤下完照對手強度有機會掉落（對手越強越容易掉）");
     confirmBox("用 1 張悔棋符，退回你的上一步？（現在有 "+n+" 張）",()=>{if(undoLeft()<=0)return;store.set("undoBonus",undoLeft()-1);post("/play/undo")},"↶ 用悔棋符")}
-  /* 意見回饋 597（開發者）：對局中多一顆「🎒 寶物」，打開就看到提示棋、悔棋符，按了直接用；積分挑戰、獎勵模式、練習會擋下來並說明原因 */
+  /* 意見回饋 597（開發者）：對局中多一顆「🎒 寶物」，打開就看到提示棋、悔棋符，按了直接用；積分挑戰、獎勵模式、練習會擋下來並說明原因
+     意見回饋 600：排版整理——兩樣並排成一樣大的方格（圖示、張數、按鈕上下對齊），說明收成一行，點「怎麼拿到？」才展開 */
   function bagSheet(){if(!st)return;const no=itemBlock(st),H=hintInfo(),hn=H.left+H.bonus,un=undoLeft(),mine=st.moves.some(m=>m.by===st.human),myTurn=!st.result&&st.turn===st.human&&!st.thinking;
-    sheet("🎒 寶物",b=>{b.innerHTML=(no?`<p class="muted" style="margin:0 0 10px">⛔ ${esc(no)}</p>`:"")+
-      `<div class="card" style="display:flex;align-items:center;gap:10px;margin-bottom:10px"><span style="font-size:28px">💡</span><div style="flex:1"><b>提示棋</b>　${hn} 顆<div class="muted" style="font-size:13px">Pikafish 指出關鍵的子${H.full?"和落點":""}；用過的那盤不算進我的棋力</div></div><button class="btn" id="bgH" style="width:auto;padding:8px 16px">使用</button></div>
-      <div class="card" style="display:flex;align-items:center;gap:10px"><span style="font-size:28px">↶</span><div style="flex:1"><b>悔棋符</b>　${un} 張<div class="muted" style="font-size:13px">退回你的上一步</div></div><button class="btn" id="bgU" style="width:auto;padding:8px 16px">使用</button></div>
-      <p class="muted" style="font-size:12.5px;margin:10px 0 0">提示棋：Lv 5 起每天有，兩位老人和攢滿 5 個心得也會送。每盤下完（自己走 10 步以上）兩樣各有機會掉落：對手越強機率越高（電腦第 N 級約 N%，贏了再 +2%，最高 20%），連 15 盤沒掉下一盤必掉；線上對戰也會掉。線上對戰、積分挑戰、獎勵模式不能用寶物。</p>`;
+    const why=(n,ok,need)=>no?"這盤不能用":!n?"沒有了":!ok?need:"";
+    sheet("🎒 寶物",b=>{b.innerHTML=(no?`<div class="bag-no">⛔ ${esc(no)}</div>`:"")+
+      `<div class="bagg">
+        <div class="bagt"><div class="bag-ic">💡</div><div class="bag-nm">提示棋</div><div class="bag-n">${hn}<small>顆</small></div><div class="bag-d">指出關鍵的那顆子</div>
+          <button class="btn" id="bgH">使用</button><div class="bag-w">${esc(why(hn,myTurn,"輪到你才能用"))}</div></div>
+        <div class="bagt"><div class="bag-ic">↶</div><div class="bag-nm">悔棋符</div><div class="bag-n">${un}<small>張</small></div><div class="bag-d">退回你的上一步</div>
+          <button class="btn" id="bgU">使用</button><div class="bag-w">${esc(why(un,mine,"你還沒走棋"))}</div></div></div>
+      <button class="lk" id="bgQ" style="margin-top:10px">怎麼拿到？</button>
+      <div class="bag-help" id="bgT" hidden><p>💡 提示棋：Lv 5 起每天有，等級越高越多；兩位老人和攢滿 5 個心得也會送。用過的那盤不算進我的棋力。</p>
+        <p>🎁 掉落：每盤下完（自己走 10 步以上），兩樣各有機會掉 1 個。對手越強越容易掉（電腦第 N 級約 N%，贏了再 +2%，最高 20%）；連 15 盤沒掉，下一盤一定掉。線上對戰也會掉。</p>
+        <p>⛔ 不能用：線上對戰、積分挑戰、獎勵模式。</p></div>`;
       const bh=b.querySelector("#bgH"),bu=b.querySelector("#bgU");
-      bh.disabled=!!no||!hn||!myTurn;bu.disabled=!!no||!un||!mine;[bh,bu].forEach(x=>{if(x.disabled)x.style.opacity=".4"});
+      bh.disabled=!!no||!hn||!myTurn;bu.disabled=!!no||!un||!mine;
+      b.querySelector("#bgQ").onclick=()=>{const t=b.querySelector("#bgT");t.hidden=!t.hidden};
       bh.onclick=()=>{closeSheet();jBattleHint(st,h=>{pHint=h;draw()})};bu.onclick=()=>{closeSheet();undoAsk()}})}
   function tap(i){if(!st||st.result||st.turn!==st.human||st.thinking)return;
     if(sel>=0&&st.legal.some(([f,t])=>f===sel&&t===i)){const f=sel;sel=-1;vibrate(15);return post("/play/move",{f,t:i})}
