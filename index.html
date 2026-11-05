@@ -734,6 +734,12 @@ html[data-era="qing"]:not([data-font="sys"]){--serif:"XQ twkai","Noto Serif TC",
 .mr .me-seal,.mr .me-seal.q,.me2.art .mr .me-seal{width:auto;min-width:42px;height:auto;min-height:62px;padding:9px 7px;white-space:nowrap;text-orientation:upright;font-size:16px;line-height:1.1;letter-spacing:.06em}
 /* 意見回饋 645（開發者）：設定 → 棋盤，預覽下面的四顆按鈕（走一步、吃子、將軍、開局動畫）固定一行不換行，照螢幕寬度平均分、字跟著縮放（手機、平板都一樣） */
 #tbb{flex-wrap:nowrap;gap:clamp(4px,1.5vw,10px)}#tbb button{flex:1 1 auto;min-width:0;max-width:160px;white-space:nowrap;padding:9px clamp(3px,1.2vw,12px);font-size:clamp(11.5px,3.5vw,15px);letter-spacing:0}
+/* 意見回饋 644：珍品藏局——撿到珍品／珍品冊單件的「現在解」區塊、紅色「已解」小印、一朝全解的金色朝代名 */
+.rl-cj{border:1px solid #C9962B;border-radius:12px;padding:10px 12px;margin:4px 0 10px;background:var(--card)}.rl-cj b{font-size:15px}.rl-cj p{margin:6px 0;line-height:1.7;font-size:14.5px}
+.rl-seal{position:absolute;right:2px;bottom:2px;font-size:10px;font-weight:900;line-height:1;color:#C0392B;border:1.5px solid #C0392B;border-radius:4px;padding:2px 3px;background:rgba(255,255,255,.88);transform:rotate(-12deg);font-family:var(--serif);letter-spacing:1px;pointer-events:none}
+.rl-seal.sm{position:static;display:inline-block;margin-left:6px;vertical-align:2px;font-size:11px}
+.rl-seal.lg{position:static;display:inline-block;font-size:20px;padding:6px 8px;border-width:2.5px;flex:none}
+.sec-t.rl-gold{color:#C8962E}
 </style></head><body>
 <div class="app">
  <div class="topbar" id="topbar"><button class="ib" id="back" hidden><b>‹</b>返回</button><h1 id="title">象棋千秋</h1><span id="topRight"></span></div>
@@ -779,7 +785,7 @@ html[data-era="qing"]:not([data-font="sys"]){--serif:"XQ twkai","Noto Serif TC",
       if(!window.caches)return go();caches.keys().then(function(ks){return Promise.all(ks.filter(function(k){return k.indexOf("xqlab-app-")===0}).map(function(k){return caches.delete(k)}))})
         .then(function(){return navigator.serviceWorker&&navigator.serviceWorker.getRegistration()}).then(function(r){return r&&r.update()}).catch(function(){}).then(go)}};setTimeout(chk,4000)})();
 </script>
-<script>window.XQ_OFFLINE=true;window.XQ_BUILD="20261106-0606";</script>
+<script>window.XQ_OFFLINE=true;window.XQ_BUILD="20261106-0640";</script>
 <script src="core.js"></script>
 <script src="engine.js"></script>
 <script src="local.js"></script>
@@ -1819,7 +1825,7 @@ function route(){
   if(p[0]==="journey"&&p[1]==="play")return screen=CpuGame(v,false,"journey");   /* 意見回饋 413：石桌往事（雲河棋路、驛站、園子、守關）的對局頁 */
   if(p[0]==="journey")return screen=Journey(v,p[1]?decodeURIComponent(p[1]):null);
   if(p[0]==="adventure"){store.set("dbReturn",null);return screen=Adventure(v)}
-  if(p[0]==="profile"||p[0]==="me")return screen=Me(v);   /* 意見回饋 536：棋童資料併進「我的角色」 */
+  if(p[0]==="profile"||p[0]==="me"){screen=Me(v);if(p[1]==="relics"&&typeof relicBook==="function"){const h=location.hash;setTimeout(()=>{if(location.hash===h)relicBook()},120)}return screen}   /* 意見回饋 536：棋童資料併進「我的角色」；644：#/me/relics 直接打開珍品冊（藏局解完、問小帥都帶到這裡） */
   if(p[0]==="terms")return screen=Terms(v,p[1]);
   // AI 對局在開發者的電腦上，要連上電腦才看得到；一般玩家（或連線已被清掉）從舊連結進來時說明清楚，不要卡在「載入中」（意見回饋 135）
   if((p[0]==="db"&&p[1]==="ai"||p[0]==="watch"&&p[1]==="ai")&&OFF&&!DEVREMOTE()){setTop("AI 對局","#/");setTabs(false);
@@ -3153,13 +3159,13 @@ async function xfRecv(){if(!OFF||!window.XQNet||!window.XQSave||!crypto.subtle)r
 function onboard(force){if(!force&&store.get("onboard1",false))return;let sx=myChar()||mySex(),st="real",step=0;   /* 開發者 11/5：sx 也可以是武俠角色代號（x_…） */
   const card=(k,on,img,t,sub)=>`<button class="obc${on?" on":""}" data-k="${k}"><img src="${img}" alt="" onerror="this.style.visibility='hidden'"><b>${t}</b><small>${sub}</small></button>`;
   const paint=b=>{const name=myName()||"";
-    b.innerHTML=step===0?`<p class="muted" style="margin:0 0 8px">歡迎來到象棋千秋！先選你在棋桌前的樣子（之後可以在「設定 → 🙂 角色」改）<!-- 意見回饋 607：選角色在「🙂 角色」分頁 --></p><div class="obg">${card("m",sx==="m","data/xs/xs_idle.webp","男生","小帥")+card("f",sx==="f","data/xs/xs_girl_idle.webp","女生","小帥妹")+Object.entries(WX_CHARS).map(([k,c])=>card(k,sx===k,`data/xs/prev_${k}.webp`,c.n,"武俠角色")).join("")}</div><button class="btn" id="obN" style="width:100%;margin-top:12px">下一步</button>`
+    b.innerHTML=step===0?`<p class="muted" style="margin:0 0 8px">歡迎來到象棋千秋！先選你在棋桌前的樣子（之後可以在「設定 → 🙂 角色」改）<!-- 意見回饋 607：選角色在「🙂 角色」分頁 --></p><div class="obg">${card("m",sx==="m","data/xs/xs_idle.webp","男生","小帥")+card("f",sx==="f","data/xs/xs_girl_idle.webp","女生","小帥妹")+Object.entries(WX_CHARS).map(([k,c])=>card(k,sx===k,`data/xs/prev_${k}.webp`,c.n,c.s||"雲河四子")).join("")}</div><button class="btn" id="obN" style="width:100%;margin-top:12px">下一步</button>`
       :step===1?`<p class="muted" style="margin:0 0 8px">角色要用哪一種樣子？園子裡的你、跟你下棋的對手都會照這個顯示</p><div class="obg">${card("q",st==="q",meImgFor("q",sx),(sx==="f"?"🧸 小帥妹Q版":"🧸 小帥Q版"),"圓滾滾的棋子小人")+card("real",st==="real",meImgFor("real",sx),(sx==="f"?"🗿 小帥妹":"🗿 小帥"),"照畫好的人物做的 3D")}</div><div class="row" style="gap:8px;margin-top:12px"><button class="btn ghost" id="obB" style="flex:1">上一步</button><button class="btn" id="obN" style="flex:2">下一步</button></div>`
       :`<p class="muted" style="margin:0 0 8px">最後，幫自己取個名字（線上對戰、大廳會顯示），也可以直接用這個</p><input id="obName" maxlength="16" value="${esc(name||defaultName())}" placeholder="例如：雲河小棋手" style="width:100%;font-size:18px;padding:12px;border-radius:12px;border:1px solid var(--line);background:var(--card);color:inherit"><div class="row" style="gap:8px;margin-top:12px"><button class="btn ghost" id="obB" style="flex:1">上一步</button><button class="btn" id="obN" style="flex:2">開始下棋</button></div>`;
     b.querySelectorAll(".obc").forEach(x=>x.onclick=()=>{vibrate(5);if(step===0)sx=x.dataset.k;else st=x.dataset.k;paint(b)});
     const bk=b.querySelector("#obB");if(bk)bk.onclick=()=>{step=0;paint(b)};
     b.querySelector("#obN").onclick=()=>{vibrate(8);if(step<2){step=2;return paint(b)}
-      const nm=(b.querySelector("#obName").value||"").trim()||defaultName();if(WX_CHARS[sx]){store.set("pChar",sx);store.set("pSex",WX_CHARS[sx].sx)}else{store.set("pChar","");store.set("pSex",sx)}store.set("pStyle",st);store.set("oppLook",st==="real"?"real":"3d");store.set("onboard1",true);try{window.dispatchEvent(new Event("xq-look"))}catch(e){}
+      const nm=(b.querySelector("#obName").value||"").trim()||defaultName();if(WX_CHARS[sx]){if(store.get("pChar","")!==sx&&WX_CHARS[sx].pc)store.set("botPiece",WX_CHARS[sx].pc);store.set("pChar",sx);store.set("pSex",WX_CHARS[sx].sx)}else{store.set("pChar","");store.set("pSex",sx)}store.set("pStyle",st);store.set("oppLook",st==="real"?"real":"3d");store.set("onboard1",true);try{window.dispatchEvent(new Event("xq-look"))}catch(e){}
       if(nm){try{setMyName(nm)}catch(e){}}
       try{if(PARK){PARK.v.destroy();PARK=null}}catch(e){}closeSheet();toast(`歡迎，${nm||"棋友"}！`);setTimeout(()=>{try{route()}catch(e){}},300)}};
   sheet(step===0?"🎎 選你的角色":"🎎 選你的角色",paint)}
@@ -3867,7 +3873,9 @@ const mySex=()=>store.get("pSex","m"),myStyle=()=>store.get("pStyle","q");
 /* 意見回饋 545：身上的字跟著「換棋子」選的那顆（原本小帥妹、真實版都寫死「帥」） */
 const myPc=()=>{const c=store.get("botPiece","帥");return typeof c==="string"&&c.length===1&&"帥仕相俥傌炮兵將士象車馬砲卒".includes(c)?c:"帥"};
 /* 開發者 11/5：四位武俠風格的原創角色也可以選（pChar；空白＝小帥／小帥妹）。sx＝男女，用在其他還只有男女兩種的地方 */
-const WX_CHARS={x_swordboy:{n:"劍客少年",sx:"m"},x_spiritgirl:{n:"靈族少女",sx:"f"},x_martialgirl:{n:"江湖女俠",sx:"f"},x_miaogirl:{n:"苗疆少女",sx:"f"}};
+/* 意見回饋 646（開發者 11/6）：資深玩家說「沒有逍遙哥哥」——四位要拉開跟既有武俠作品的距離。改成原創的「雲河四子」，各綁一顆棋子（pc＝選這位時預設的棋子、s＝選角卡小字、t＝一句話身分、say＝口頭禪、old＝舊稱呼）
+   造型代號 x_swordboy 等不變，舊存檔照樣能用 */
+const WX_CHARS={x_swordboy:{n:"齊直行",sx:"m",pc:"俥",s:"俥・車行少年",t:"雲河棋路上的車行少年，一把直劍走到底",say:"看準了，就一直走！",old:"劍客少年"},x_spiritgirl:{n:"田恬",sx:"f",pc:"相",s:"相・茶棚姑娘",t:"守在雲河南岸茶棚、從不過河的溫柔姑娘",say:"慢慢來，先把家顧好。",old:"靈族少女"},x_martialgirl:{n:"雷響響",sx:"f",pc:"炮",s:"炮・煙火作坊",t:"揚州煙火作坊的女兒，最愛隔山打牛",say:"隔一個，剛剛好！",old:"江湖女俠"},x_miaogirl:{n:"駱跳跳",sx:"f",pc:"傌",s:"傌・驛站養馬",t:"驛站養馬的姑娘，走日字、最會拐彎",say:"前面堵住了？那我拐個彎！",old:"苗疆少女"}};
 const myChar=()=>{const c=store.get("pChar","");return WX_CHARS[c]?c:""};
 const myLook=()=>{{const c=myChar();if(c)return TRIPO[c]?{p:myPc(),e:store.get("era","classic"),g:9,glb:`data/tripo_app/${c}.glb`,ring:TRIPO[c]}:null}
   const f=mySex()==="f",id=f?"me_girl":"me_boy";let L=f?{p:myPc(),e:store.get("era","classic"),g:9,npc:"me",cus:"me:girl"}:null;
@@ -4494,23 +4502,29 @@ async function secretGift(x,gid){const K=store.get("giftGames",{});if(K[gid])ret
     ${rar==="rare"?'<p class="muted" style="line-height:1.7">稀有的拓本可以拿去石桌給兩位老人，換 💡 5 顆提示棋和 📜 3 份當年的棋譜。</p>':""}<button class="btn" id="gb" style="width:100%">看我的棋童資料</button>`;b.querySelector("#gb").onclick=()=>{closeSheet();location.hash="#/profile"}})}
 /* 驛站偶爾掉比賽棋譜：每次逛有兩成機率，每天最多 2 份（從妙棋精選的實戰裡挑） */
 /* 意見回饋 536（開發者）：點公園的環景長卷，有 20% 機率掉落那個朝代的珍品（每個朝代 10 樣：普通 6、稀有 3、傳說 1；Gemini 畫的 data/relics/<朝代>__<id>.webp）。
-   兩次掉落至少隔 2 分鐘，免得一直點就全部拿完；收進「棋童資料 → 🏺 珍品」 */
+   兩次掉落至少隔 2 分鐘，免得一直點就全部拿完；收進「我的角色 → 🏺 珍品」 */
 const relicEra=e=>e==="classic"?"古風":eraLabel(e);let RELICS_P=null;const relicsData=()=>RELICS_P||(RELICS_P=fetch("data/relics/relics.json").then(r=>r.ok?r.json():{}).catch(()=>({})));
 const relicsMine=()=>store.get("relics",{}),RELIC_RK={common:["普通","#8A7A66"],rare:["稀有","#2F6FB5"],legend:["傳說","#C8962E"]};
 const relicImg=(era,id,ic)=>`<img src="data/relics/${era}__${id}.webp" alt="" style="width:100%;height:100%;object-fit:contain" onerror="this.replaceWith(document.createTextNode('${ic||"🏺"}'))">`;
+/* 意見回饋 644（開發者 11/6 選方案 A）：珍品藏局——每件珍品配一局同典故的殘局（relics.json 的 cj 題號、cjName 局名、bridge 典故橋；題目都取自 canju-set.json 已驗證的題）。
+   解法沿用一盞茶解題頁 #/canju/z/<珍品 id>，不算進茶單；不看答案解開就記進 store "relicSolved"＝{珍品 id:{at,p}}，珍品冊那一格蓋紅色「已解」小印，一朝 10 件全解開，朝代名變金色 */
+const relicSolved=()=>store.get("relicSolved",{});
+function relicGo(id){const go=()=>{closeSheet();location.hash="#/canju/z/"+encodeURIComponent(id)};if(/^#\/(cpu|arena|pvp|journey\/play|redo\/play)/.test(location.hash))confirmBox("要離開這盤棋，去解這件珍品的藏局嗎？",go,"去解藏局");else go()}
+const relicCjHTML=x=>{if(!x||!x.cj)return"";const ok=!!relicSolved()[x.id];return`<div class="rl-cj"><b>🔍 這件珍品藏著一局〈${esc(x.cjName||"")}〉</b>${ok?'<span class="rl-seal sm">已解</span>':""}<p>${esc(x.bridge||"")}</p><button class="btn${ok?" ghost":""}" data-rlgo="${esc(x.id)}" style="width:100%;margin-top:2px">${ok?"再解一次":"現在解"}</button></div>`};
+const relicCjBind=b=>b.querySelectorAll("[data-rlgo]").forEach(y=>y.onclick=()=>relicGo(y.dataset.rlgo));
 async function relicDrop(era){const R=await relicsData(),L=R[era];if(!Array.isArray(L)||!L.length)return false;const mine=relicsMine(),have=mine[era]||[];
   if(Date.now()-(store.get("relicAt",0)||0)<12e4||Math.random()>=.2)return false;const left=L.filter(x=>!have.includes(x.id));if(!left.length)return false;
   const W={common:70,rare:25,legend:5},tot=left.reduce((a,x)=>a+(W[x.rarity]||10),0);let r=Math.random()*tot,it=left[0];for(const x of left){r-=W[x.rarity]||10;if(r<=0){it=x;break}}
   mine[era]=have.concat(it.id);store.set("relics",mine);store.set("relicAt",Date.now());vibrate([15,30,15,30,40]);const[rk,rc]=RELIC_RK[it.rarity]||RELIC_RK.common;
   sheet("🏺 撿到一件"+relicEra(era)+"的珍品！",b=>{b.innerHTML=`<div style="text-align:center"><div style="width:180px;height:180px;margin:0 auto 6px;display:flex;align-items:center;justify-content:center;font-size:90px">${relicImg(era,it.id)}</div>
     <div style="display:inline-block;padding:2px 10px;border-radius:999px;color:#fff;background:${rc};font-size:12px;font-weight:700">${rk}</div><h3 style="margin:6px 0 4px;font-family:var(--serif)">${esc(it.name)}</h3></div>
-    <p style="line-height:1.8;margin:0 0 8px;font-size:15.5px">${esc(it.desc||"")}</p><p class="muted" style="font-size:13px;text-align:center">${esc(relicEra(era))}的珍品：${mine[era].length}／${L.length}・放在「🎒 棋童資料 → 🏺 珍品」</p><button class="btn" id="rlOk" style="width:100%">收下</button>`;
-    b.querySelector("#rlOk").onclick=()=>closeSheet()});return true}
-async function relicBook(){const R=await relicsData(),mine=relicsMine(),eras=Object.keys(R);
-  sheet(`🏺 朝代珍品（${eras.reduce((a,e)=>a+(mine[e]||[]).length,0)}／${eras.reduce((a,e)=>a+R[e].length,0)}）`,b=>{b.innerHTML=/* 意見回饋 544：不寫去哪裡找，讓玩家自己撞見 */eras.map(e=>{const h=mine[e]||[];return`<div class="sec-t">${esc(relicEra(e))}<span class="muted" style="font-size:12px;font-weight:400">${h.length}／${R[e].length}</span></div>
-      <div style="display:grid;grid-template-columns:repeat(5,1fr);gap:6px">${R[e].map(x=>{const got=h.includes(x.id),rc=(RELIC_RK[x.rarity]||RELIC_RK.common)[1];return`<button data-rl="${e}|${x.id}" style="aspect-ratio:1;border-radius:12px;border:2px solid ${got?rc:"var(--line)"};background:var(--card);padding:3px;display:flex;align-items:center;justify-content:center;font-size:26px;${got?"":"filter:grayscale(1) brightness(.35);opacity:.55"}">${got?relicImg(e,x.id):"？"}</button>`}).join("")}</div>`}).join("");
+    <p style="line-height:1.8;margin:0 0 8px;font-size:15.5px">${esc(it.desc||"")}</p><p class="muted" style="font-size:13px;text-align:center">${esc(relicEra(era))}的珍品：${mine[era].length}／${L.length}・放在「我的角色 → 🏺 珍品」</p>${relicCjHTML(it)}<button class="btn${it.cj?" ghost":""}" id="rlOk" style="width:100%">收下</button>`;
+    b.querySelector("#rlOk").onclick=()=>closeSheet();relicCjBind(b)});return true}
+async function relicBook(){const R=await relicsData(),mine=relicsMine(),eras=Object.keys(R),Z=relicSolved(),nz=eras.reduce((a,e)=>a+R[e].filter(x=>Z[x.id]).length,0);
+  sheet(`🏺 朝代珍品（${eras.reduce((a,e)=>a+(mine[e]||[]).length,0)}／${eras.reduce((a,e)=>a+R[e].length,0)}）`,b=>{b.innerHTML=/* 意見回饋 544：不寫去哪裡找，讓玩家自己撞見 */`<p class="muted" style="font-size:13px;line-height:1.6;margin:0 0 4px">每件珍品都藏著一局殘局：點開珍品按「現在解」。不看答案解開，會蓋上紅色「已解」印；一個朝代 10 件全解開，朝代名變成金色。${nz?`（已解 ${nz} 局）`:""}</p>`+eras.map(e=>{const h=mine[e]||[],gold=R[e].length>0&&R[e].every(x=>Z[x.id]&&h.includes(x.id));return`<div class="sec-t${gold?" rl-gold":""}">${gold?"✦ ":""}${esc(relicEra(e))}<span class="muted" style="font-size:12px;font-weight:400">${h.length}／${R[e].length}${R[e].some(x=>Z[x.id])?`・已解 ${R[e].filter(x=>Z[x.id]).length}`:""}</span></div>
+      <div style="display:grid;grid-template-columns:repeat(5,1fr);gap:6px">${R[e].map(x=>{const got=h.includes(x.id),rc=(RELIC_RK[x.rarity]||RELIC_RK.common)[1];return`<button data-rl="${e}|${x.id}" style="position:relative;aspect-ratio:1;border-radius:12px;border:2px solid ${got?rc:"var(--line)"};background:var(--card);padding:3px;display:flex;align-items:center;justify-content:center;font-size:26px;${got?"":"filter:grayscale(1) brightness(.35);opacity:.55"}">${got?relicImg(e,x.id):"？"}${got&&Z[x.id]?'<span class="rl-seal">已解</span>':""}</button>`}).join("")}</div>`}).join("");
     b.querySelectorAll("[data-rl]").forEach(y=>y.onclick=()=>{const[e,id]=y.dataset.rl.split("|"),x=(R[e]||[]).find(z=>z.id===id);if(!x||!(mine[e]||[]).includes(id)){toast("還沒找到這件珍品");return}const[rk,rc]=RELIC_RK[x.rarity]||RELIC_RK.common;
-      sheet("🏺 "+x.name,bb=>{bb.innerHTML=`<div style="text-align:center"><div style="width:180px;height:180px;margin:0 auto 6px;display:flex;align-items:center;justify-content:center;font-size:90px">${relicImg(e,x.id)}</div><div style="display:inline-block;padding:2px 10px;border-radius:999px;color:#fff;background:${rc};font-size:12px;font-weight:700">${rk}・${esc(relicEra(e))}</div></div><p style="line-height:1.8;font-size:15.5px">${esc(x.desc||"")}</p><button class="btn ghost" id="rlBk" style="width:100%">← 回珍品冊</button>`;bb.querySelector("#rlBk").onclick=()=>relicBook()})})})}
+      sheet("🏺 "+x.name,bb=>{bb.innerHTML=`<div style="text-align:center"><div style="width:180px;height:180px;margin:0 auto 6px;display:flex;align-items:center;justify-content:center;font-size:90px">${relicImg(e,x.id)}</div><div style="display:inline-block;padding:2px 10px;border-radius:999px;color:#fff;background:${rc};font-size:12px;font-weight:700">${rk}・${esc(relicEra(e))}</div></div><p style="line-height:1.8;font-size:15.5px">${esc(x.desc||"")}</p>${relicCjHTML(x)}<button class="btn ghost" id="rlBk" style="width:100%">← 回珍品冊</button>`;bb.querySelector("#rlBk").onclick=()=>relicBook();relicCjBind(bb)})})})}
 async function cupDrop(){const day=localDay(),d=store.get("cupDrop",{});if(d.d===day&&d.n>=2)return false;if(Math.random()>=.3)return false;
   {const x=await prevTarget();if(x){prevGrant(x);store.set("cupDrop",{d:day,n:(d.d===day?d.n:0)+1});vibrate([15,30,15]);sheet("🍵 茶杯底下壓著一張紙",b=>{b.innerHTML=`<p style="line-height:1.9;font-size:16px">你掀起茶杯，杯底壓著一張摺得整整齊齊的紙——是一份<b>預習卷</b>：古譜裡跟下一關「${esc(x.lvName)}」同型的例局。</p><p class="muted" style="font-size:13px;line-height:1.7">闖那一關時，按畫面上方的「📜 預習卷」就能打開來看。看預習卷不會扣分，那一關照樣能收齊兵馬車。</p><button class="btn" id="cd" style="width:100%">收下</button>`;b.querySelector("#cd").onclick=()=>closeSheet()});return true}}   /* 意見回饋 573 */
   let L=null;try{L=(await api("/db/items?c=brilliant&limit=600")).items}catch(e){return false}if(!L||!L.length)return false;const it=L[Math.floor(Math.random()*L.length)];
@@ -5221,7 +5235,8 @@ function Camp(v,n){setTabs(n?false:true,"#/");store.set("campSeen",true);const S
    存檔：store "cj"＝{r:棋力分（跟題目 d 同一把尺 1～10）,day,list:[{slot,id,st,res}],st:{n,last,best,fz,days,relics},solved:{題號:{at,p,a}},seen:[]}；
         store "cjRun"＝正在解的那一題 {id,path:[自己走過的著法],mist,hl,hintUsed,ans,slow,undo,t0}，每走一步就存。
    茶單每天凌晨 4 點換（cjDay）。一口＋一盞解完（或看完答案）、一壺解完或跳過＝今天完成；連續天數斷一天會自動用掉「每 7 天一次」的免簽。
-   每連續 7 天完成，從玩家還沒拿到的珍品裡掉一件（優先當天題目那本書的朝代）。 */
+   每連續 7 天完成，從玩家還沒拿到的珍品裡掉一件（優先當天題目那本書的朝代）；130 件都收齊後，改成指名一局還沒解的珍品藏局。
+   珍品藏局（意見回饋 644）：#/canju/z/<珍品 id> 用同一個解題畫面，但不算茶單；正在解的存在 store "cjRunZ"，不看答案解開記進 store "relicSolved"（07-legend.js）。 */
 const CJ0={URL:"data/canju/canju-set.json",SLOT:{sip:["一口","☕"],cup:["一盞","🍵"],pot:["一壺","🫖"]},
   LV:[[2.5,"入門"],[4,"初級"],[5.5,"中級"],[7,"中高級"],[99,"高級"]],ERA:{"明":"ming","清":"qing","明清":"ming","現代":"classic"},
   TYPES:["一步定勝負","短殺","中殺","大師收官","古譜校錯"]};
@@ -5257,7 +5272,11 @@ async function cjRelic(era){if(typeof relicsData!=="function"||typeof relicsMine
   for(const e of eras){const L=R[e];if(!Array.isArray(L))continue;const have=mine[e]||[],left=L.filter(x=>!have.includes(x.id));if(!left.length)continue;
     const W={common:70,rare:25,legend:5},tot=left.reduce((a,x)=>a+(W[x.rarity]||10),0);let r=Math.random()*tot,it=left[0];for(const x of left){r-=W[x.rarity]||10;if(r<=0){it=x;break}}
     mine[e]=have.concat(it.id);store.set("relics",mine);return{era:e,it}}
-  return null}
+  /* 意見回饋 644：珍品都收齊了——改成指名一局還沒解的藏局（優先 era 那個朝代）；藏局也全解開了才回傳 null */
+  const Z=store.get("relicSolved",{}),cand=[];for(const e of eras)for(const x of R[e]||[])if(x.cj&&!Z[x.id])cand.push({era:e,it:x});if(!cand.length)return null;
+  const pref=cand.filter(c=>c.era===era),pool=pref.length?pref:cand;return{...pool[Math.floor(Math.random()*pool.length)],named:true}}
+const cjAllRelics=()=>typeof relicsMine==="function"&&Object.values(relicsMine()).reduce((a,x)=>a+(x||[]).length,0)>=130;
+const cjZBind=b=>b.querySelectorAll("[data-rlgo]").forEach(y=>y.onclick=()=>{if(typeof relicGo==="function")return relicGo(y.dataset.rlgo);closeSheet();location.hash="#/canju/z/"+encodeURIComponent(y.dataset.rlgo)});
 
 /* ---------- 出處、文字 ---------- */
 function cjSrc(P,long){const s=P.src||{};if(s.book==="特級大師對局")return`${esc(s.year)} ${esc(s.title)}${long&&s.red&&s.black?`・${esc(s.red)} 對 ${esc(s.black)}${s.result?"（"+esc(s.result)+"）":""}`:""}`;
@@ -5296,7 +5315,7 @@ function cjCSS(){if(document.getElementById("canju-css"))return;const st=documen
 /* ---------- 首頁小卡 ---------- */
 function cjCardText(){const S=cjState(),k=cjDay(),L=S.day===k?S.list:null,done=L?L.filter(x=>x.st==="done"||x.st==="skip").length:0,T=cjStreakNow(S);
   const t=L?(cjCleared(L)?"今天的茶喝完了 ✔":`今日茶單 ${done}／3`):"今日茶單・3 題";
-  const s=(T.n?`🔥 連續 ${T.n} 天・`:"")+(L&&cjCleared(L)?`再 ${7-(T.n%7)} 天得一件珍品`:"每天 5～8 分鐘・古譜與大師殘局");return{t,s}}
+  const s=(T.n?`🔥 連續 ${T.n} 天・`:"")+(L&&cjCleared(L)?`再 ${7-(T.n%7)} 天${cjAllRelics()?"指名一局珍品藏局":"得一件珍品"}`:"每天 5～8 分鐘・古譜與大師殘局");return{t,s}}
 function canjuCardHTML(){cjCSS();const x=cjCardText();return`<button class="card cj-home" id="cjHome" data-go="#/canju"><span class="cj-hi">🍵</span><span class="tx"><b id="cjHomeT">${esc(x.t)}</b><small id="cjHomeS">${esc(x.s)}</small></span><b class="go">›</b></button>`}
 function canjuCardBind(el){const c=el&&(el.id==="cjHome"?el:el.querySelector&&el.querySelector("#cjHome"));if(!c)return;c.onclick=()=>{if(typeof vibrate==="function")vibrate(5);location.hash="#/canju"};
   cjData().then(D=>{if(!c.isConnected)return;const S=cjState();cjToday(D,S);const x=cjCardText(),a=c.querySelector("#cjHomeT"),b=c.querySelector("#cjHomeS");if(a)a.textContent=x.t;if(b)b.textContent=x.s}).catch(()=>{})}
@@ -5310,13 +5329,13 @@ function CanjuDaily(v){cjCSS();setTop("🍵 一盞茶殘局","#/hub/learn");if(t
     const left=7-(T.n%7);
     v.innerHTML=`<div class="cj-wrap">
       <div class="card"><div class="cj-head"><span class="cj-big">🍵</span><div style="flex:1;min-width:0"><b>今日茶單</b><div class="muted">${cjDay().slice(5).replace("-","/")}・一口、一盞、一壺，約 5～8 分鐘</div></div></div>
-        <div class="cj-chips"><span>🔥 連續 ${T.n} 天${T.today?"":T.willFz?"（今天完成會用掉免簽）":""}</span><span>最長 ${S.st.best||0} 天</span><span>🛡 免簽 ${T.fzOk?"可用":"這 7 天已用"}</span><span>🏺 ${cjCleared(L)&&T.today&&S.st.n%7===0?"今天剛拿到珍品":`再 ${left} 天得珍品`}</span></div></div>
+        <div class="cj-chips"><span>🔥 連續 ${T.n} 天${T.today?"":T.willFz?"（今天完成會用掉免簽）":""}</span><span>最長 ${S.st.best||0} 天</span><span>🛡 免簽 ${T.fzOk?"可用":"這 7 天已用"}</span><span>🏺 ${cjAllRelics()?(cjCleared(L)&&T.today&&S.st.n%7===0?"今天剛指名一局藏局":`再 ${left} 天指名藏局`):(cjCleared(L)&&T.today&&S.st.n%7===0?"今天剛拿到珍品":`再 ${left} 天得珍品`)}</span></div></div>
       ${tea(L[0])}${tea(L[1])}${tea(L[2])}
       ${L[2].st==="todo"||L[2].st==="run"?'<button class="cj-skip" id="cjSkip">今天沒空，跳過一壺</button>':""}
       ${cjCleared(L)?'<div class="card muted" style="text-align:center">今天的茶喝完了，明天凌晨 4 點換新茶單。還想多練，就到下面的自由練習。</div>':""}
       <div class="cj-sec">自由練習（不算茶單）</div>
       <div class="cj-types">${CJ0.TYPES.map(t=>`<button data-t="${t}"><b>${t}</b><small>解過 ${cnt(t)}</small></button>`).join("")}</div>
-      <details class="card"><summary><b>怎麼玩</b></summary><p class="muted" style="line-height:1.7;margin:6px 0 0">輪到你走，對方會用 Pikafish 最頑強的應法。走錯了，對方會真的下出反駁給你看，看完可以退回重想（這題就不算完美），或用 1 張悔棋符收回。<br>提示有四層：①免費的方向提示 ②1 顆提示棋圈出關鍵子 ③指出落點（Lv 20 起跟第②層一起給）④看答案（沒有修為、沒有心得）。<br>沒用提示、沒走錯解開＝完美，第一次完美得 1 個心得（5 個換 1 顆提示棋）。一口＋一盞解完、一壺解完或跳過，今天就算完成；斷一天會自動用掉每 7 天一次的免簽，每連續 7 天得一件珍品。<br>題目來自《適情雅趣》《橘中秘》、清代殘局譜與特級大師實戰，每題都由 Pikafish 深算驗證過。目前題庫 ${D.items.length} 題，你解過 ${nSolved} 題。</p></details>
+      <details class="card"><summary><b>怎麼玩</b></summary><p class="muted" style="line-height:1.7;margin:6px 0 0">輪到你走，對方會用 Pikafish 最頑強的應法。走錯了，對方會真的下出反駁給你看，看完可以退回重想（這題就不算完美），或用 1 張悔棋符收回。<br>提示有四層：①免費的方向提示 ②1 顆提示棋圈出關鍵子 ③指出落點（Lv 20 起跟第②層一起給）④看答案（沒有修為、沒有心得）。<br>沒用提示、沒走錯解開＝完美，第一次完美得 1 個心得（5 個換 1 顆提示棋）。一口＋一盞解完、一壺解完或跳過，今天就算完成；斷一天會自動用掉每 7 天一次的免簽，每連續 7 天得一件珍品（130 件收齊後，改成指名一局還沒解的珍品藏局）。<br>題目來自《適情雅趣》《橘中秘》、清代殘局譜與特級大師實戰，每題都由 Pikafish 深算驗證過。目前題庫 ${D.items.length} 題，你解過 ${nSolved} 題。</p></details>
     </div>`;
     v.querySelectorAll(".cj-tea").forEach(b=>b.onclick=()=>{if(typeof vibrate==="function")vibrate(5);location.hash="#/canju/"+encodeURIComponent(b.dataset.id)});
     const sk=v.querySelector("#cjSkip");if(sk)sk.onclick=()=>{const S2=cjState();const x=(S2.list||[])[2];if(!x||S2.day!==cjDay())return;x.st="skip";let hit=null;if(cjCleared(S2.list))hit=cjStreakHit(S2);cjSave(S2);if((store.get("cjRun",null)||{}).id===x.id)store.set("cjRun",null);
@@ -5326,35 +5345,43 @@ function CanjuDaily(v){cjCSS();setTop("🍵 一盞茶殘局","#/hub/learn");if(t
 function cjNext(D,S,t,not){const pool=D.items.filter(x=>x.t===t&&!S.solved[x.id]&&x.id!==not);const P=pool.length?pool:D.items.filter(x=>x.t===t&&x.id!==not);if(!P.length)return null;
   const tg=t==="一步定勝負"?S.r-1:S.r;P.sort((a,b)=>Math.abs(a.d-tg)-Math.abs(b.d-tg));const k=Math.min(P.length,8);return P[Math.floor(Math.random()*k)].id}
 /* 今天剛完成：連續天數訊息、7 天珍品 */
-async function cjAfterClear(hit,S,D){let rel=null;if(hit.relic){const P=D&&S.list&&D.byId[S.list[1].id];rel=await cjRelic(CJ0.ERA[(P&&P.src&&P.src.era)||""]||"classic");if(rel){S.st.relics=(S.st.relics||0)+1;cjSave(S)}}
+async function cjAfterClear(hit,S,D){let rel=null;if(hit.relic){const P=D&&S.list&&D.byId[S.list[1].id];rel=await cjRelic(CJ0.ERA[(P&&P.src&&P.src.era)||""]||"classic");if(rel&&!rel.named){S.st.relics=(S.st.relics||0)+1;cjSave(S)}}
   if(!hit.relic&&!hit.msg){toast(`🔥 今天的茶單完成！連續 ${hit.n} 天`);return null}
-  if(!rel&&!hit.msg){toast(`🔥 連續 ${hit.n} 天！珍品都收齊了`);return null}
-  sheet(`🔥 連續 ${hit.n} 天`,b=>{b.innerHTML=`${hit.msg?`<p class="muted">${esc(hit.msg)}</p>`:""}${rel?cjRelicHTML(rel):""}<button class="btn" id="cjOk" style="margin-top:12px">好</button>`;b.querySelector("#cjOk").onclick=closeSheet});return rel}
-function cjRelicHTML(rel){const rk=(typeof RELIC_RK!=="undefined"&&RELIC_RK[rel.it.rarity])||["",""];const img=typeof relicImg==="function"?relicImg(rel.era,rel.it.id):"🏺";
-  return`<div class="cj-relic"><div class="im">${img}</div><div><b>🎁 連續 7 天的獎勵：${esc(rel.it.name||"")}</b><div class="muted">${typeof relicEra==="function"?esc(relicEra(rel.era)):""}・${esc(rk[0])}・收進「我的角色 → 珍品」</div><div class="muted" style="font-size:12.5px;margin-top:4px">${esc(rel.it.desc||"")}</div></div></div>`}
+  if(!rel&&!hit.msg){toast(`🔥 連續 ${hit.n} 天！珍品和藏局都收齊了`);return null}
+  sheet(`🔥 連續 ${hit.n} 天`,b=>{b.innerHTML=`${hit.msg?`<p class="muted">${esc(hit.msg)}</p>`:""}${rel?cjRelicHTML(rel):""}<button class="btn${rel&&rel.named?" ghost":""}" id="cjOk" style="margin-top:12px">好</button>`;b.querySelector("#cjOk").onclick=closeSheet;cjZBind(b)});return rel}
+function cjRelicHTML(rel){const rk=(typeof RELIC_RK!=="undefined"&&RELIC_RK[rel.it.rarity])||["",""];const img=typeof relicImg==="function"?relicImg(rel.era,rel.it.id):"🏺",en=typeof relicEra==="function"?esc(relicEra(rel.era)):"";
+  if(rel.named)return`<div class="cj-relic"><div class="im">${img}</div><div style="flex:1;min-width:0"><b>🎁 連續 7 天的獎勵：指名藏局〈${esc(rel.it.cjName||"")}〉</b><div class="muted">珍品都收齊了！這次指名你解${en}「${esc(rel.it.name||"")}」藏著的殘局。</div><div class="muted" style="font-size:12.5px;margin-top:4px">${esc(rel.it.bridge||"")}</div><button class="btn" data-rlgo="${esc(rel.it.id)}" style="margin-top:6px;width:100%">現在解</button></div></div>`;
+  return`<div class="cj-relic"><div class="im">${img}</div><div style="flex:1;min-width:0"><b>🎁 連續 7 天的獎勵：${esc(rel.it.name||"")}</b><div class="muted">${en}・${esc(rk[0])}・收進「我的角色 → 🏺 珍品」</div><div class="muted" style="font-size:12.5px;margin-top:4px">${esc(rel.it.desc||"")}</div>${rel.it.cj?`<div style="font-size:13.5px;margin-top:6px"><b>🔍 這件珍品藏著一局〈${esc(rel.it.cjName||"")}〉</b></div><button class="btn ghost" data-rlgo="${esc(rel.it.id)}" style="margin-top:4px;width:100%">現在解</button>`:""}</div></div>`}
 
 /* ---------- 解題畫面 ---------- */
-function CanjuPlay(v,id){cjCSS();const H0=location.hash,here=()=>v.isConnected&&location.hash===H0;   /* 畫面容器換頁後還是同一個：用網址判斷還在不在這一題（示範後續還在跑時換頁，解完卡不要跳到下一題上） */const C=window.XQCore;setTop("🍵 一盞茶殘局","#/canju");if(typeof setTabs==="function")setTabs(false);
+function CanjuPlay(v,id){cjCSS();const H0=location.hash,here=()=>v.isConnected&&location.hash===H0;   /* 畫面容器換頁後還是同一個：用網址判斷還在不在這一題（示範後續還在跑時換頁，解完卡不要跳到下一題上） */const C=window.XQCore;
+  /* 意見回饋 644：#/canju/z/<珍品 id>＝珍品藏局（不算茶單，存檔用 cjRunZ） */
+  const zm=/^z\/(.+)$/.exec(id),Z=zm?{rid:zm[1]}:null,RK=Z?"cjRunZ":"cjRun";
+  setTop(Z?"🏺 珍品藏局":"🍵 一盞茶殘局",Z?"#/me/relics":"#/canju");if(typeof setTabs==="function")setTabs(false);
   v.className="view fixed";v.innerHTML=`<div class="cj-top" id="cjH"></div><div class="boardbox" id="bbox"></div><div class="status" id="stat"></div><div class="note cj-note" id="note"></div><div style="flex:1"></div><div class="actions" id="acts"></div>`;
   const $=q=>v.querySelector(q);let D=null,P=null,S=null,R=null,b=null,node=null,step=0,sel=-1,busy=false,hk=null,tok=0,last=null,me="r",flip=false;
   const bd=Board(x=>tap(x));$("#bbox").append(bd.svg);
   const sq=u=>[C.parseSq(u.slice(0,2)),C.parseSq(u.slice(2,4))],ck=bb=>C.inCheck(bb,"r")?C.kingSq(bb,"r"):C.inCheck(bb,"b")?C.kingSq(bb,"b"):-1;
   const stat=t=>{const e=$("#stat");if(e)e.textContent=t},note=t=>{const e=$("#note");if(e)e.textContent=t||""};
-  const save=()=>store.set("cjRun",R),later=(f,ms)=>{const my=tok;setTimeout(()=>{if(my===tok&&here())f()},ms)};
-  const slotOf=()=>{const S2=cjState();return S2.day===cjDay()?(S2.list||[]).find(x=>x.id===id)||null:null};
-  cjData().then(d=>{if(!v.isConnected)return;D=d;P=D.byId[id];if(!P){v.className="view";v.innerHTML='<div class="pad"><div class="card muted">找不到這一題（題庫可能更新了）。<br><a href="#/canju">回今日茶單</a></div></div>';return}
-    S=cjState();me=P.side;flip=me==="b";R=store.get("cjRun",null);if(!R||R.id!==id)R={id,path:[],mist:0,hl:0,hm:0,hintUsed:false,ans:false,slow:0,undo:0,t0:Date.now()};
+  const save=()=>store.set(RK,R),later=(f,ms)=>{const my=tok;setTimeout(()=>{if(my===tok&&here())f()},ms)};
+  const slotOf=()=>{if(Z)return null;const S2=cjState();return S2.day===cjDay()?(S2.list||[]).find(x=>x.id===id)||null:null};
+  /* 藏局：先從 relics.json 找出這件珍品配的題號；還沒撿到的珍品不能解 */
+  const zLoad=d=>relicsData().then(RL=>{const e=Object.keys(RL).find(k=>(RL[k]||[]).some(x=>x.id===Z.rid)),x=e&&RL[e].find(y=>y.id===Z.rid);if(!x||!x.cj)throw new Error("找不到這件珍品的藏局（資料可能更新了）。");
+    if(!((typeof relicsMine==="function"?relicsMine():{})[e]||[]).includes(x.id))throw new Error("還沒找到這件珍品，撿到了才能解它藏著的殘局。");Object.assign(Z,{era:e,it:x,RL});id=x.cj;return d});
+  cjData().then(d=>Z?zLoad(d):d).then(d=>{if(!v.isConnected)return;D=d;P=D.byId[id];if(!P){v.className="view";v.innerHTML=`<div class="pad"><div class="card muted">找不到這一題（題庫可能更新了）。<br><a href="${Z?"#/me/relics":"#/canju"}">${Z?"回珍品冊":"回今日茶單"}</a></div></div>`;return}
+    S=cjState();me=P.side;flip=me==="b";R=store.get(RK,null);if(!R||R.id!==id)R={id,path:[],mist:0,hl:0,hm:0,hintUsed:false,ans:false,slow:0,undo:0,t0:Date.now()};
     {const sl=slotOf();if(sl&&sl.st==="todo"){const S2=cjState();const x=S2.list.find(y=>y.id===id);x.st="run";cjSave(S2)}}
-    if(!rebuild())return finish();save();show()}).catch(e=>{v.className="view";v.innerHTML=`<div class="pad"><div class="card muted">${esc(e.message)}</div></div>`});
+    if(!rebuild())return finish();save();show()}).catch(e=>{v.className="view";v.innerHTML=`<div class="pad"><div class="card muted">${esc(e.message)}${Z?'<br><a href="#/me/relics">回珍品冊</a>':""}</div></div>`});
   /* 照存檔的 path 重走一遍；回傳 false＝其實已經解完 */
   function rebuild(){b=C.parseFen(P.fen);node=P.tree;step=0;last=null;for(const u of R.path){const o=node&&node.o[u];if(!o){R.path=R.path.slice(0,step);break}
       const[f,t]=sq(u);b=C.make(b,f,t);last={f,t};step++;if(o[1]){const[f2,t2]=sq(o[0]);b=C.make(b,f2,t2);last={f:f2,t:t2};node=o[1]}else{node=null;return false}}return true}
   function draw(o){bd.draw(o&&o.board||b,{flip,sel,last,check:ck(o&&o.board||b),targets:sel>=0?C.legal(b,me).filter(([f])=>f===sel).map(x=>x[1]):[],...(hk?{hint:hk}:{}),...(o||{})})}
-  function head(){const sl=slotOf(),nm=sl?CJ0.SLOT[sl.slot][0]+"・":"自由練習・";$("#cjH").innerHTML=`<b>${nm}${esc(P.t)}</b>・${cjLv(P.d)}　${cjEra(P)}<span class="muted">${cjSrc(P)}</span>`}
+  function head(){if(Z){$("#cjH").innerHTML=`<b>🏺 ${esc(Z.it.name)}的藏局〈${esc(Z.it.cjName||P.src.title||"")}〉</b>・${esc(P.t)}・${cjLv(P.d)}　${cjEra(P)}<span class="muted">${cjSrc(P)}</span>`;return}
+    const sl=slotOf(),nm=sl?CJ0.SLOT[sl.slot][0]+"・":"自由練習・";$("#cjH").innerHTML=`<b>${nm}${esc(P.t)}</b>・${cjLv(P.d)}　${cjEra(P)}<span class="muted">${cjSrc(P)}</span>`}
   function acts(){const H=typeof hintInfo==="function"?hintInfo():{left:0,bonus:0,full:false},n=H.left+(H.bonus||0);
     const hl=R.hl===0?"提示（免費）":R.hl===1?`提示棋（剩 ${n}）`:R.hl===2&&!H.full?`再一顆：落點（剩 ${n}）`:"已全部提示";
     const a=[["hint","💡",hl,hint],["ans","👁","看答案",reveal]];const sl=slotOf();if(sl&&sl.slot==="pot")a.push(["skip","⏭","跳過一壺",skipPot]);actionBar($("#acts"),a)}
-  function show(){busy=false;sel=-1;head();stat(`${C.PLAYER[me]}走・第 ${step+1}／${P.n} 步`);note(cjTask(P)+(R.hl?"\n💡 "+hintTxt():""));acts();draw()}
+  function show(){busy=false;sel=-1;head();stat(`${C.PLAYER[me]}走・第 ${step+1}／${P.n} 步`);note((Z&&step===0&&!R.hl&&Z.it.bridge?"🏺 "+Z.it.bridge+"\n":"")+cjTask(P)+(R.hl?"\n💡 "+hintTxt():""));acts();draw()}
   const key=()=>Object.keys(node.o)[0];
   function hintTxt(){const u=key();if(step<(P.hint||[]).length&&R.path.every((x,i)=>x===P.line[i*2]))return P.hint[step];return cjHint1(cjFeat(C,b,me,u),P)}
   function hint(){if(busy||!node)return;const u=key(),[f,t]=sq(u);
@@ -5378,7 +5405,7 @@ function CanjuPlay(v,id){cjCSS();const H0=location.hash,here=()=>v.isConnected&&
       if(!bb[f]){done&&done(bb);return}const tx=C.notate(bb,f,t);bb=C.make(bb,f,t);bd.draw(bb,{flip,last:{f,t},check:ck(bb)});cap&&cap(tx,i);setTimeout(go,i===1&&first?500:750)};go()}
   function reveal(){if(busy||!node)return;const go=()=>{R.ans=true;save();let n=node,bb=b;const seq=[];while(n){const u=Object.keys(n.o)[0],o=n.o[u];seq.push(u);if(o[1]){seq.push(o[0]);n=o[1]}else{seq.push(...cjSplit(o[0]));n=null}}
       busy=true;node=null;const acc=[];stat("👁 答案");anim(seq,bb,tx=>{acc.push(tx);note(acc.join("　"))},()=>later(finish,600))};
-    if(typeof confirmBox==="function")confirmBox("看答案這題就沒有修為和心得，確定？",go,"看答案");else go()}
+    if(typeof confirmBox==="function")confirmBox(Z?"看答案這題就沒有修為和心得，珍品也不會蓋上「已解」印，確定？":"看答案這題就沒有修為和心得，確定？",go,"看答案");else go()}
   function skipPot(){if(busy)return;const S2=cjState(),x=(S2.list||[]).find(y=>y.id===id);if(!x)return;x.st="skip";let hit=null;if(cjCleared(S2.list))hit=cjStreakHit(S2);cjSave(S2);store.set("cjRun",null);tok++;
     location.hash="#/canju";if(hit)setTimeout(()=>cjAfterClear(hit,S2,D),500)}
   async function finish(){tok++;busy=true;node=null;S=cjState();const perfect=!R.ans&&R.mist===0&&!R.hintUsed,first=!S.solved[id],ms=Date.now()-(R.t0||Date.now());
@@ -5386,12 +5413,20 @@ function CanjuPlay(v,id){cjCSS();const H0=location.hash,here=()=>v.isConnected&&
     {const sc=R.ans?0:(R.mist?.5:1)*(R.hintUsed?.6:1),p=1/(1+Math.exp(-(S.r-P.d)/1.2));S.r=Math.max(1,Math.min(10,Math.round((S.r+.35*(sc-p))*100)/100))}
     if(!R.ans&&typeof addXP==="function")addXP(5,"殘局","cj:"+id);
     let ins="";if(perfect&&first&&typeof insightN==="function"){const c=insightN()+1;store.set("insightN",c);if(c%5===0){store.set("hintBonus",(store.get("hintBonus",0)||0)+1);ins="🎁 攢滿 5 個心得，換到 1 顆提示棋"}else ins=`💡 有心得（${c%5}／5，攢滿 5 個換 1 顆提示棋）`}
-    let hit=null;const sl=S.day===cjDay()?(S.list||[]).find(x=>x.id===id):null;if(sl&&sl.st!=="done"){sl.st="done";sl.res={p:perfect?1:0,a:R.ans?1:0};if(cjCleared(S.list))hit=cjStreakHit(S)}
-    cjSave(S);store.set("cjRun",null);
+    let hit=null;const sl=!Z&&S.day===cjDay()?(S.list||[]).find(x=>x.id===id):null;if(sl&&sl.st!=="done"){sl.st="done";sl.res={p:perfect?1:0,a:R.ans?1:0};if(cjCleared(S.list))hit=cjStreakHit(S)}
+    cjSave(S);store.set(RK,null);
+    /* 藏局：不看答案解開就蓋「已解」印；這一朝 10 件都解開＝朝代名變金色 */
+    let zs=null;if(Z&&!R.ans){const M=store.get("relicSolved",{}),zf=!M[Z.it.id];if(zf)M[Z.it.id]={at:Date.now(),p:perfect?1:0};else if(perfect)M[Z.it.id].p=1;store.set("relicSolved",M);
+      const EL=Z.RL[Z.era]||[],n=EL.filter(x=>M[x.id]).length;zs={first:zf,n,all:EL.length,gold:EL.length>0&&n===EL.length,goldNew:zf&&EL.length>0&&n===EL.length}}
     try{if(window.XQNet&&XQNet.shareIRT)XQNet.shareIRT({t:"cj",v:1,aid:cjAid(),r:[[id,R.ans?0:1,R.ans?4:(R.hm||0),R.mist,Math.round(ms/100)/10]]})}catch(e){}
-    let rel=null;if(hit&&hit.relic){rel=await cjRelic(CJ0.ERA[(P.src||{}).era]||"classic");if(rel){S=cjState();S.st.relics=(S.st.relics||0)+1;cjSave(S)}}
-    card({perfect,ins,hit,rel})}
-  function card(o){if(!here())return;stat(o.perfect?"★ 完美解開":R.ans?"👁 答案看完了":"✔ 解開了");actionBar($("#acts"),[["card","🍵","解完卡",()=>card(o)],["next","›","下一題",next,true]]);
+    let rel=null;if(hit&&hit.relic){rel=await cjRelic(CJ0.ERA[(P.src||{}).era]||"classic");if(rel&&!rel.named){S=cjState();S.st.relics=(S.st.relics||0)+1;cjSave(S)}}
+    card({perfect,ins,hit,rel,zs})}
+  /* 藏局：下一件還沒解的藏局（自己已經撿到的珍品，優先同一朝） */
+  function zNext(){if(!Z)return null;const M=store.get("relicSolved",{}),mine=typeof relicsMine==="function"?relicsMine():{},eras=[Z.era].concat(Object.keys(Z.RL).filter(e=>e!==Z.era));
+    for(const e of eras)for(const x of Z.RL[e]||[])if(x.cj&&x.id!==Z.it.id&&!M[x.id]&&(mine[e]||[]).includes(x.id))return x;return null}
+  function zCardHTML(o){const en=typeof relicEra==="function"?esc(relicEra(Z.era)):"";if(!o.zs)return`<p class="muted">看了答案，「${esc(Z.it.name)}」還沒蓋上「已解」印；下次不看答案解開就能蓋上。</p>`;
+    return`<div class="cj-relic" style="border-color:#C0392B"><span class="rl-seal lg">已解</span><div style="flex:1;min-width:0"><b>🏺 ${esc(Z.it.name)}的藏局解開了！</b><div class="muted">${o.zs.first?"珍品冊那一格蓋上了紅色「已解」印。":"這件珍品之前就蓋過「已解」印了。"}${en}已解 ${o.zs.n}／${o.zs.all}。</div>${o.zs.goldNew?`<div style="color:#C8962E;font-weight:900;margin-top:4px">✦ ${en}的 ${o.zs.all} 件藏局全部解開，珍品冊上的朝代名變成金色了！</div>`:""}</div></div>`}
+  function card(o){if(!here())return;stat(o.perfect?"★ 完美解開":R.ans?"👁 答案看完了":"✔ 解開了");actionBar($("#acts"),[["card",Z?"🏺":"🍵","解完卡",()=>card(o)],["next","›",Z?(zNext()?"下一件藏局":"回珍品冊"):"下一題",next,true]]);
     const s=P.src||{},trap=P.trap;
     sheet(R.ans?"📖 答案看完了":o.perfect?"🍵 完美解開！":"🍵 解開了！",bx=>{bx.innerHTML=`<div class="cj-card">
       <p><b>${esc(P.t)}</b>・${cjLv(P.d)}　${o.perfect?"★ 完美":R.ans?"看了答案（沒有修為、心得）":`走錯 ${R.mist} 次${R.hintUsed?"・用了提示棋":""}`}${R.slow?`・找到 ${R.slow} 次較慢的殺法`:""}</p>
@@ -5403,14 +5438,15 @@ function CanjuPlay(v,id){cjCSS();const H0=location.hash,here=()=>v.isConnected&&
       ${o.ins?`<p>${esc(o.ins)}</p>`:""}
       ${o.hit?`<p>🔥 今天的茶單完成！連續 ${o.hit.n} 天${o.hit.msg?`<br><span class="muted">${esc(o.hit.msg)}</span>`:""}</p>`:""}
       ${o.rel?cjRelicHTML(o.rel):""}
+      ${Z?zCardHTML(o):""}
       <div class="cj-row">${trap?`<button class="btn ghost" id="cjTrap">如果走 ${esc(C.notate(C.parseFen(P.fen),...sq(trap.mv)))}？</button>`:""}${s.db?`<button class="btn ghost" id="cjBook">看整局</button>`:""}</div>
-      <div class="cj-row"><button class="btn ghost" id="cjBack">回茶單</button><button class="btn" id="cjNext">下一題</button></div></div>`;
+      <div class="cj-row"><button class="btn ghost" id="cjBack">${Z?"回珍品冊":"回茶單"}</button><button class="btn" id="cjNext">${Z?(zNext()?"下一件藏局":"回珍品冊"):"下一題"}</button></div></div>`;
       const on=(q,f)=>{const e=bx.querySelector(q);if(e)e.onclick=f};
-      on("#cjTrap",()=>{closeSheet();trapDemo(o)});on("#cjBook",()=>{closeSheet();location.hash="#/db/"+s.db});on("#cjBack",()=>{closeSheet();location.hash="#/canju"});on("#cjNext",()=>{closeSheet();next()})})}
+      on("#cjTrap",()=>{closeSheet();trapDemo(o)});on("#cjBook",()=>{closeSheet();location.hash="#/db/"+s.db});on("#cjBack",()=>{closeSheet();location.hash=Z?"#/me/relics":"#/canju"});on("#cjNext",()=>{closeSheet();next()});cjZBind(bx)})}
   function trapDemo(o){const tr=P.trap,b0=C.parseFen(P.fen);stat(`如果走 ${C.notate(b0,...sq(tr.mv))}？`);note("");const acc=[];
     actionBar($("#acts"),[["card","🍵","回解完卡",()=>{tok++;card(o)}]]);
     anim([tr.mv].concat(tr.line||[]),b0,(tx,i)=>{acc.push(tx);note(acc.join("　"))},()=>note(acc.join("　")+"\n"+cjWhy(P,tr.code)),true)}
-  function next(){const S2=cjState(),L=S2.day===cjDay()?S2.list||[]:[];const t=L.find(x=>x.id!==id&&(x.st==="todo"||x.st==="run"));if(t){location.hash="#/canju/"+encodeURIComponent(t.id);return}
+  function next(){if(Z){const x=zNext();location.hash=x?"#/canju/z/"+encodeURIComponent(x.id):"#/me/relics";return}const S2=cjState(),L=S2.day===cjDay()?S2.list||[]:[];const t=L.find(x=>x.id!==id&&(x.st==="todo"||x.st==="run"));if(t){location.hash="#/canju/"+encodeURIComponent(t.id);return}
     if(L.some(x=>x.id===id)){location.hash="#/canju";return}const n=cjNext(D,S2,P.t,id);location.hash=n?"#/canju/"+encodeURIComponent(n):"#/canju"}
   return{}}
 /* ================= 🕰 回到當年（意見回饋 313）=================
@@ -5779,11 +5815,12 @@ const BOT_FAQ=[
  [["音效","聲音","語音","男聲","女聲","語速"],"到「設定 → 🔊 聲音」：走棋音效有十幾種可以選，還有吃子音效、男聲／女聲報「吃」「將軍」，語速可以調慢中快。","#/settings","打開設定"],
  [["小人","機器人","小帥","你是誰","大小","拖"],"我是{BOT}！點我一下會表演、點兩下去散步、長按可以問我問題；按住可以把我拖到旁邊。到「設定 → 🙂 角色 → 顯示」可以關掉我或調大小。"],
  [["千秋盃","千秋杯","盃賽","千秋週擂","週擂","擂台大賽","擂台比賽","每週比賽","週六比賽","比賽報名","報名比賽","擂主碑","本週擂主"],"「🏯 千秋盃」是每週六下午 14:00 的 16 強擂台賽（入口在首頁「⚔ 對戰 → 🏆 千秋盃」，線上對戰大廳最上面也有）。週一到週五 22:00 前報名，週六 13:30～13:55 要點將（報到），14:00 開打，大約 17:15 頒獎。單淘汰：兵卒過河（16 強）→ 車馬爭先（8 強）→ 炮震中原（準決賽）→ 九宮論劍（決賽，紅黑各一盤），另有季軍戰。每方 10 分鐘、每步加 5 秒；落子無悔，下滿 20 回合才能提和；和棋加賽一盤超快棋。名次獎：擂主 🪙將令 3 枚和「本週擂主」頭銜、名字刻上千秋擂主碑，亞軍、四強、八強、十六強也有將令、提示棋或悔棋符。人數不夠時由虛擬棋客補位，籤表上會標出來。完全免費。","#/cup","去看千秋盃"],
- [["一盞茶","一盞茶殘局","茶單","今日茶單","每日殘局","殘局練習","殘局題","一口","一壺"],"「🍵 一盞茶殘局」在首頁上面：每天一份茶單，有「一口、一盞、一壺」三題，由易到難。輪到你走，對方會用 Pikafish 最頑強的應法；走錯了它會真的下出反駁給你看，可以退回重想，或用 1 張悔棋符收回。提示有四層（方向提示免費，再來要用提示棋）。沒用提示、沒走錯解開＝完美，第一次完美得 1 個心得，5 個心得換 1 顆提示棋。一口＋一盞解完、一壺解完或跳過就算今天完成；連續 7 天得一件珍品，每 7 天有一次免簽。題目來自《適情雅趣》《橘中秘》和清代殘局，解完還可以到下面自由練習。","#/canju","去喝今天的茶"],
+ [["一盞茶","一盞茶殘局","茶單","今日茶單","每日殘局","殘局練習","殘局題","一口","一壺"],"「🍵 一盞茶殘局」在首頁上面：每天一份茶單，有「一口、一盞、一壺」三題，由易到難。輪到你走，對方會用 Pikafish 最頑強的應法；走錯了它會真的下出反駁給你看，可以退回重想，或用 1 張悔棋符收回。提示有四層（方向提示免費，再來要用提示棋）。沒用提示、沒走錯解開＝完美，第一次完美得 1 個心得，5 個心得換 1 顆提示棋。一口＋一盞解完、一壺解完或跳過就算今天完成；連續 7 天得一件珍品（130 件收齊後，改成指名一局還沒解的珍品藏局），每 7 天有一次免簽。題目來自《適情雅趣》《橘中秘》和清代殘局，解完還可以到下面自由練習。","#/canju","去喝今天的茶"],
+ [["珍品","藏局","珍品藏局","珍品有什麼用","珍品冊","朝代珍品","已解","文物","古董"],"「🏺 珍品」放在「我的角色 → 🏺 珍品」：13 個朝代、每朝 10 件，共 130 件。在各朝代的園子裡到處點點看，說不定會撿到；一盞茶殘局連續 7 天也會送一件。每件珍品都藏著一局同典故的殘局，例如秦陵銅車馬配〈車駕東巡〉、唐代銀香囊配〈馬嵬埋玉〉：撿到的時候，或在珍品冊點開它，按「現在解」就能解。藏局不算今天的茶單，修為照一盞茶自由練習給。不看答案解開，珍品冊那一格會蓋上紅色「已解」小印；一個朝代 10 件全解開，朝代名會變成金色。130 件都收齊後，一盞茶連續 7 天的獎勵改成指名一局還沒解的藏局。","#/me/relics","打開珍品冊"],   /* 意見回饋 644 */
  [["寶物","提示棋","提示","道具","掉寶","掉落","背包"],"對局時按「🎒 寶物」就看得到你的 💡 提示棋和 ↶ 悔棋符，按了直接用。提示棋：Lv 5 起每天有（Lv 5～9 每天 1 顆，之後每 10 級多 1 顆），另外還有庫存；Lv 20 起提示會連落點一起指出。每盤棋下完（自己走 10 步以上）有機會掉一顆提示棋或一張悔棋符，線上對戰也算；雲河棋路的棋罐、點將台、千秋盃也拿得到。積分挑戰、獎勵模式、線上對戰不能用寶物；雲河棋路用了提示，那一關最多收到「馬」。"],
  [["車庫","我的車庫","獎勵模式","點數","換車","8891","車款"],"「🚗 我的車庫」在首頁：到「挑戰電腦」選 🚗 獎勵模式，贏一盤拿點數（難度越高點數越多），和棋拿四成，輸了不扣點；一點＝台幣一萬元，每款車的兌換點數＝8891 新車最低售價（萬元）。獎勵模式不能悔棋、不能用寶物，雙方各走一步以上才算。","#/garage","去我的車庫"],
  [["我的成長","成長","進步","棋力分析","我的棋力","五項","雷達"],"「🏅 我的戰績」裡有「🎯 我的棋力」和「📈 我的成長」。我的棋力看五項：開局、中局、殘局（最近約一段步數的每步準確度，100＝每步都是電腦首選）、殺法（棋力測驗的殺法、戰術題）、穩定（錯著、露著越少越高）。我的成長看你進步得多快，跟電腦、線上、雲河棋路故事裡下的棋都算進去。用過提示或悔棋的那盤不算分數（還是算一次練習量）；還沒評等的對局，打開賽後報告評等後就會算進來。","#/stats","去看我的戰績"],
- [["武俠","武俠角色","劍客少年","靈族少女","江湖女俠","苗疆少女","換角色","選角色","我的角色","換造型"],"除了小帥、小帥妹，還可以選四位武俠風格的原創角色：劍客少年、靈族少女、江湖女俠、苗疆少女。到「設定 → 🙂 角色」換，換了之後，你在棋桌前和故事裡的樣子都會變成你選的角色。","#/settings","去換角色"],
+ [["武俠","武俠角色","雲河四子","齊直行","阿直","田恬","雷響響","駱跳跳","劍客少年","靈族少女","江湖女俠","苗疆少女","換角色","選角色","我的角色","換造型"],"除了小帥、小帥妹，還可以選「雲河四子」，四位原創角色各綁一顆棋子：俥・齊直行（雲河棋路上的車行少年，一把直劍走到底）、相・田恬（守在雲河南岸茶棚、從不過河的溫柔姑娘）、炮・雷響響（揚州煙火作坊的女兒，最愛隔山打牛）、傌・駱跳跳（驛站養馬的姑娘，走日字、最會拐彎）。到「設定 → 🙂 角色」換，選了誰，你的棋子就先換成他那顆（之後也能自己換）；換了之後，你在棋桌前和故事裡的樣子都會變成你選的角色。","#/settings","去換角色"],
  [["第二集","紙譜新局","下一集","續集","第一集"],"「石桌往事」有兩集：第一集《石桌往事》、第二集《紙譜新局》，在「🪨 冒險 → 石桌往事」頁面上面切換。第二集要先把第一集雲河棋路的 36 關都過了才會解鎖（還沒解鎖會顯示 🔒）。","#/legend","去石桌往事"],
  [["悔棋","悔棋符"],"悔棋要用「↶ 悔棋符」：跟電腦的一般對局、故事裡可以用（我的角色看得到張數）。對局時按「🎒 寶物」或「↶ 悔棋」就能用（擂台、故事、挑戰電腦都可以）；積分挑戰、獎勵模式、線上對戰都不能悔棋；練習（擺盤、錯棋重練）可以隨便退。"],
  [["錯棋重練","錯棋","重練"],"和電腦下完，App 會把你走錯的局面收進「錯棋重練」，之後可以回到那個局面重新練，直到走對為止。"],
