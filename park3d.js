@@ -916,7 +916,7 @@
     hint.textContent="點棋子走棋・點物件看介紹・拖曳轉頭・兩指縮放";el.append(hint);if(veil._qmin)hint.style.opacity=0;else setTimeout(()=>hint.style.opacity=0,4500);   /* 有名言的過場：操作提示等過場收掉才出現 */
     const EK=eraKey(),E=ERA[EK];
     el.style.background=E.mist;
-    let MAPL=null,PANM=null,PANDH=0,PANROT=0,PSPOTS=null,MAPM=null,HILL=null,lastKf=-1;   /* 地圖上的地名：[名字, x%, y%, 種類]；長卷的網格、圖高、地標（意見回饋 517、525） */
+    let MAPL=null,PANM=null,PANDH=0,PANROT=0,PSPOTS=null,MAPM=null,HILL=null,lastKf=-1,MAPO=[],MAPOK="",MAPP=null,MAPMN=0,RON=(()=>{try{return JSON.parse(localStorage.getItem("m_eramapRealm")||"true")!==false}catch(e){return true}})();   /* 地圖上的地名：[名字, x%, y%, 種類]；長卷的網格、圖高、地標（意見回饋 517、525） */
     const sc=new T.Scene(),FARHIDE=[];sc.fog=new T.Fog(new T.Color(E.mist),70,320);sc.background=new T.Color(E.mist);   /* 意見回饋 486：環景沒畫到的地方顯示朝代的霧色，不會一片黑 */
     const cam=new T.PerspectiveCamera(50,1,.5,700);try{if(localStorage.getItem("xq_dbg3d"))window.__PK={sc,cam}}catch(e){}   /* 除錯用：localStorage 設 xq_dbg3d 才打開 */
     // 光：午後斜陽（唯一投影光，陰影範圍只包住石桌，陰影比較銳利）＋暖色天光＋冷色補光；整體對比拉高，不再灰白
@@ -960,6 +960,43 @@
       const hg=new T.LatheGeometry(pts,96),hm=M(0xffffff,{map:(()=>{const t=stoneTex(EK==="yuan"?"#7E8C62":"#7A8466",10);return t})(),roughness:.95});hm.color=new T.Color(E.mist).lerp(new T.Color("#7C8A68"),.55);
       const hill=new T.Mesh(hg,hm);hill.material.side=T.DoubleSide;hill.receiveShadow=true;sc.add(hill);
       /* 開發者 11/4：石台底下鋪一張「當朝代的中國大地圖」（Gemini 水墨古地圖，有疆界和地名），畫面拉遠就看得到；地圖載好就換掉山坡，載不到就留著山坡 */
+      /* 意見回饋 647（開發者 11/6 選「在現有手繪地圖上描邊」）：地圖上疊一層「最鼎盛時期的疆域」（半透明色塊＋粗邊界，左上角可開關、附圖例），
+         地名也改由這裡寫上去（主要的一直顯示，次要的拉近才顯示、字小一點）；資料在 data/eramap/realms.json、labels.json（由 xiangqi-db/tools/eramap_geo.py 從經緯度換算） */
+      const eraOverlay=base=>{Promise.all(["realms","labels"].map(f=>fetch("data/eramap/"+f+".json").then(r=>r.ok?r.json():null).catch(()=>null))).then(([RJ,LJ])=>{if(!el.isConnected)return;
+        const RE=RJ&&RJ[EK],LB=LJ&&Array.isArray(LJ[EK])?LJ[EK]:null,S=MOB?1024:2048,k=S/2048,FF='"XQ twkai","KaiTi","STKaiti","DFKai-SB","BiauKai",serif';
+        const mk=()=>{const c=document.createElement("canvas");c.width=c.height=S;return c};
+        /* 跟地圖本身一樣，外圈（圓盤半徑 78% 以外）慢慢淡掉 */
+        const fadeC=g=>{const gr=g.createRadialGradient(S/2,S/2,S/2*.78,S/2,S/2,S/2);gr.addColorStop(0,"rgba(0,0,0,1)");gr.addColorStop(.5,"rgba(0,0,0,.5)");gr.addColorStop(1,"rgba(0,0,0,0)");g.globalCompositeOperation="destination-in";g.fillStyle=gr;g.fillRect(0,0,S,S);g.globalCompositeOperation="source-over"};
+        const add=(c,ro,kind)=>{const t=srgb(new T.CanvasTexture(c));t.anisotropy=4;const m=new T.Mesh(base.geometry,new T.MeshStandardMaterial({map:t,transparent:true,roughness:1,metalness:0,depthWrite:false}));
+          m.rotation.x=-PI/2;m.position.y=base.position.y+.004*ro;m.renderOrder=-.2+.01*ro;m.receiveShadow=true;m.visible=false;m.material.opacity=0;sc.add(m);MAPO.push({m,k:kind});MAPOK=""};
+        if(RE&&Array.isArray(RE.realms)){const c=mk(),g=c.getContext("2d"),P=v=>v*S/100;g.lineJoin="round";g.lineCap="round";
+          const path=p=>{g.beginPath();p.forEach(([x,y],i)=>i?g.lineTo(P(x),P(y)):g.moveTo(P(x),P(y)));g.closePath()};
+          for(const r of RE.realms)for(const p of r.p){path(p);g.globalAlpha=r.d?.16:.24;g.fillStyle=r.c;g.fill()}
+          for(const r of RE.realms)for(const p of r.p){path(p);if(r.d){g.setLineDash([S/90,S/160]);g.lineWidth=Math.max(2,S/300);g.strokeStyle=r.c;g.globalAlpha=.9;g.stroke();g.setLineDash([])}
+            else{g.globalAlpha=.75;g.lineWidth=Math.max(4,S/115);g.strokeStyle="#FAF4E6";g.stroke();g.globalAlpha=.95;g.lineWidth=Math.max(2,S/260);g.strokeStyle=r.c;g.stroke()}}
+          g.globalAlpha=1;fadeC(g);add(c,1,"r");
+          /* 左上角：疆域開關＋圖例（拉遠看到地圖時才出現） */
+          const pn=document.createElement("div");pn.style.cssText="position:absolute;left:8px;top:8px;z-index:3;display:none;max-width:64%;font:600 12px/1.4 system-ui,sans-serif;color:#3a2a1c";
+          const bt=document.createElement("button");bt.type="button";bt.style.cssText="border-radius:99px;border:1px solid rgba(0,0,0,.18);background:rgba(255,255,255,.86);color:#3a2a1c;font:700 13px/1 system-ui,sans-serif;padding:7px 12px;box-shadow:0 1px 4px rgba(0,0,0,.2);cursor:pointer";
+          const lg=document.createElement("div");lg.style.cssText="margin-top:6px;background:rgba(250,244,230,.9);border:1px solid rgba(120,90,60,.45);border-radius:10px;padding:5px 9px";
+          {const h=document.createElement("div");h.style.cssText="font-weight:800;margin-bottom:2px";h.textContent="最鼎盛時的疆域";lg.append(h)}
+          for(const it of RE.legend||[]){const row=document.createElement("div");row.style.cssText="display:flex;align-items:center;gap:6px";const sw=document.createElement("span");
+            sw.style.cssText=`flex:none;width:14px;height:10px;border-radius:2px;background:${it.c}55;border:2px ${it.d?"dashed":"solid"} ${it.c}`;const tx=document.createElement("span");tx.textContent=it.g;row.append(sw,tx);lg.append(row)}
+          const sync=()=>{bt.textContent=RON?"疆域：開":"疆域：關";bt.setAttribute("aria-pressed",RON?"true":"false");lg.style.display=RON?"block":"none";MAPOK=""};
+          for(const ev of["pointerdown","pointerup"])pn.addEventListener(ev,e=>e.stopPropagation());
+          bt.onclick=e=>{e.stopPropagation();RON=!RON;try{localStorage.setItem("m_eramapRealm",JSON.stringify(RON))}catch(_){}sync()};
+          sync();pn.append(bt,lg);el.append(pn);MAPP=pn}
+        if(LB){const ST={n:[92,66,"#961A12"],c:[66,48,"#241A10"],r:[60,46,"#284E68"],s:[58,46,"#463220"]};
+          const draw=minor=>{const c=mk(),g=c.getContext("2d");g.textAlign="center";g.textBaseline="middle";g.lineJoin="round";
+            for(const l of LB){const[nm,x,y,ty,rk,tx,tyy,hid]=l;if((rk===2)!==minor)continue;const st=ST[ty]||ST.c,sz=(rk===1?st[0]:st[1])*k,X=x*S/100,Y=y*S/100;
+              if((ty==="c"||ty==="s")&&!hid){const rd=Math.max(2,(rk===1?9:7)*k);g.fillStyle=st[2];g.strokeStyle="#F6EEDC";g.lineWidth=Math.max(1,rd/2.5);g.beginPath();
+                if(ty==="c")g.arc(X,Y,rd,0,2*PI);else{g.moveTo(X,Y-rd*1.3);g.lineTo(X-rd*1.2,Y+rd);g.lineTo(X+rd*1.2,Y+rd);g.closePath()}g.fill();g.stroke()}
+              const txt=ty==="n"&&nm.length<=2?[...nm].join(" "):nm,TX=(tx!=null?tx:x)*S/100,TY=(tyy!=null?tyy:y)*S/100;
+              g.font=`${Math.round(sz)}px ${FF}`;g.lineWidth=Math.max(3,sz/4.5);g.strokeStyle="#F6EEDC";g.strokeText(txt,TX,TY);g.fillStyle=st[2];g.fillText(txt,TX,TY)}
+            fadeC(g);return c};
+          const go=()=>{if(el.isConnected){add(draw(false),2,"l");add(draw(true),3,"m")}};
+          /* 字型（全字庫正楷體子集）載好再寫，最多等 2.5 秒，等不到就用系統的楷體 */
+          (document.fonts&&document.fonts.load?Promise.race([document.fonts.load('48px "XQ twkai"',LB.map(l=>l[0]).join("")),new Promise(r=>setTimeout(r,2500))]):Promise.resolve()).then(go,go)}})};
       const ms="data/eramap/"+EK+(MOB?"_m":"")+".webp",mp=()=>{const im=imgCache[ms];if(!im||!im.naturalWidth||!el.isConnected)return;
         const t=srgb(new T.Texture(im));t.anisotropy=4;t.needsUpdate=true;
         const map=new T.Mesh(new T.CircleGeometry(ERAMAP_R,96),new T.MeshStandardMaterial({map:t,transparent:true,roughness:1,metalness:0,depthWrite:false}));
@@ -967,7 +1004,7 @@
         /* 意見回饋 525：地圖平鋪在石台高度會蓋住長卷下半部（城、塔、蒙古包都在那裡）；平常照舊是山坡＋長卷，鏡頭拉遠時地圖才浮現、山坡才收掉 */
         MAPM=map;HILL=hill;map.material.opacity=0;map.visible=false;lastKf=-1;
         /* 意見回饋 517：拉遠看地圖時，地圖上的地名點得到（data/eramap/labels.json 的位置，介紹在 App 的 places.json） */
-        fetch("data/eramap/labels.json").then(r=>r.ok?r.json():null).then(L=>{if(L&&Array.isArray(L[EK]))MAPL=L[EK]}).catch(()=>{})};
+        fetch("data/eramap/labels.json").then(r=>r.ok?r.json():null).then(L=>{if(L&&Array.isArray(L[EK]))MAPL=L[EK]}).catch(()=>{});eraOverlay(map)};
       if(loadImg(ms,mp))setTimeout(mp,0)}
     {/* 意見回饋 406：平台邊的石欄杆跟著地面抬高後幾乎跟桌面一樣高，降成約 20 公分的矮欄；421：矮欄＋36 根望柱從桌邊看過去還是一整圈牆（像一座高石台的邊、又剛好擋在山水前面），
        改成貼地的一圈石砌收邊（約 7 公分），只留平台的邊線，不擋遠景 */
@@ -1171,6 +1208,9 @@
       /* 開發者 11/4：畫面拉遠看石台底下的朝代大地圖——鏡頭距離超過 105（長卷半徑的 62%）以後，鏡頭慢慢升高成俯視，長卷、天空跟著淡掉，霧也變淡 */
       const kf=smooth(105,220,R),elF=el+(1.38-el)*kf;   /* 意見回饋 525：拉到一半還要看得到環景長卷（517 時提早淡掉，改回原本的距離） */
       if(kf!==lastKf){lastKf=kf;for(const m of FARHIDE){m.visible=kf<.98;if(m.material){m.material.opacity=1-kf;m.material.transparent=true}}if(MAPM){const a=smooth(.04,.45,kf);MAPM.visible=a>0;MAPM.material.opacity=a;if(HILL)HILL.visible=a<.9}if(sc.fog){sc.fog.near=70+kf*260;sc.fog.far=320+kf*520}}
+      /* 意見回饋 647：疆域層跟著地圖淡入（開關關掉就不顯示）；次要地名鏡頭拉近（距離 255 以內）才出現，拉遠到 295 完全淡掉 */
+      if(MAPM&&MAPO.length){const a=MAPM.visible?MAPM.material.opacity:0;MAPMN=1-smooth(255,295,R);const key=a.toFixed(3)+"/"+MAPMN.toFixed(3)+"/"+RON;
+        if(key!==MAPOK){MAPOK=key;for(const o of MAPO){const v=a*(o.k==="r"?(RON?1:0):o.k==="m"?MAPMN:1);o.m.visible=v>.01;o.m.material.opacity=v}if(MAPP)MAPP.style.display=a>.5?"block":"none"}}
       lk.y+=4*orb*(1-low)+4.5*low;
       cam.position.set(PIV.x+Math.sin(az)*Math.cos(elF)*R,PIV.y+Math.sin(elF)*R,PIV.z+Math.cos(az)*Math.cos(elF)*R);
       const c=Math.cos(yaw),s2=Math.sin(yaw);cam.lookAt(PIV.x+lk.x*c+lk.z*s2,PIV.y+lk.y,PIV.z-lk.x*s2+lk.z*c);cam.rotateX(CAMV.dp);
@@ -1207,7 +1247,7 @@
       // 都沒點到：射線碰到平台地面（離桌子 24 以內）就不算；越過平台的就是遠方背景
       const gp=new T.Plane(new T.Vector3(0,1,0),-FL),gh=new T.Vector3(),onG=ray.ray.intersectPlane(gp,gh);
       /* 意見回饋 517：拉遠看朝代地圖時，點地名附近（地圖寬度 5% 以內）跳出那個地方的介紹 */
-      if(onG&&MAPL&&lastKf>.25&&Math.hypot(gh.x,gh.z)<ERAMAP_R){const px=(gh.x/ERAMAP_R+1)*50,py=(gh.z/ERAMAP_R+1)*50;let best=null,bd=5;for(const l of MAPL){const d=Math.hypot(l[1]-px,l[2]-py);if(d<bd){bd=d;best=l}}if(best)return"map:"+best[0]}
+      if(onG&&MAPL&&lastKf>.25&&Math.hypot(gh.x,gh.z)<ERAMAP_R){const px=(gh.x/ERAMAP_R+1)*50,py=(gh.z/ERAMAP_R+1)*50;let best=null,bd=5;for(const l of MAPL){if(l[4]===2&&MAPMN<.3)continue;const d=Math.hypot((l[5]!=null?l[5]:l[1])-px,(l[6]!=null?l[6]:l[2])-py);if(d<bd){bd=d;best=l}}if(best)return"map:"+best[0]}
       if(onG&&Math.hypot(gh.x,gh.z)<24)return null;
       /* 意見回饋 525：點到遠方長卷，照點到的位置找那一段畫的是什麼（山、城、塔……），找不到才用整體介紹 */
       if(PSPOTS&&PANM&&PANM.visible&&PANDH){const h=ray.intersectObject(PANM,false)[0];if(h&&h.uv){const ix=(((1-h.uv.x)-PANROT/360)%1+1)%1,iy=((1-h.uv.y)*PANO.H-PANO.mt)/PANDH;let best=null,ba=9;
