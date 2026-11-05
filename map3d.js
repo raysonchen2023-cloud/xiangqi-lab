@@ -348,7 +348,7 @@
       card.innerHTML="<b>"+(st.locked?"🔒 ":"")+esc(st.name)+"</b> <span class='sub'>第 "+st.from+"–"+st.to+" 關</span>"+
         "<div class='sub'>"+esc(st.sub||"")+"</div>"+
         "<div class='m3d-bar'><i style='width:"+pct+"%'></i></div>"+
-        "<div>已過 "+ps+"／"+tot+" 關　⭐ "+(st.stars||0)+"／"+tot*3+"</div>"+
+        "<div>已過 "+ps+"／"+tot+" 關　🫙 "+(st.stars||0)+"／"+tot*3+" 子</div>"+
         "<div class='m3d-row'><button data-a='go'"+(st.locked?" disabled":"")+">"+(st.locked?"還沒開放":(ps>=tot?"再闖一次":"出發"))+"</button><button class='g' data-a='x'>✕</button></div>";
       card.querySelector("[data-a=go]").onclick=e=>{e.stopPropagation();if(!st.locked&&opt.onPick)opt.onPick(st,"enter")};
       card.querySelector("[data-a=x]").onclick=e=>{e.stopPropagation();deselect()};
