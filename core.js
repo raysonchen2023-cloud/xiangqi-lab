@@ -78,11 +78,13 @@ const summary=it=>({id:it.id,no:it.no,label:it.label,part:it.part,title:it.title
   type:it.type,red:it.red,black:it.black,event:it.event,year:it.year,date:it.date,open:it.open});
 function fullItem(it){if(!it.board)it.board=parseFen(START);if(!it._an){annotate(it);Object.defineProperty(it,"_an",{value:true})}return it}
 function gameItem(g,isLive){
-  let b=parseFen(START);const moves=g.moves.map(m=>{const cn=notate(b,m.f,m.t);b=make(b,m.f,m.t);return{f:m.f,t:m.t,cn,q:m.q,loss:m.loss,ev:m.ev,bc:m.bc,bm:m.bm,bp:m.bp}});
+  /* 意見回饋 594：石桌往事有些關從中局開始（g.start＝起始局面、g.startTurn＝誰先走），也要存進對局、算進我的成長 */
+  const b0=()=>{try{return g.start?parseFen(g.start):parseFen(START)}catch(e){return parseFen(START)}};const t0=g.startTurn==="b"?1:0;
+  let b=b0();const moves=g.moves.map((m,i)=>{const cn=notate(b,m.f,m.t);b=make(b,m.f,m.t);return{f:m.f,t:m.t,cn,q:m.q,loss:m.loss,ev:m.ev,bc:m.bc,bm:m.bm,bp:m.bp,by:m.by||((i+t0)%2?"b":"r")}});
   const comments={};g.moves.forEach((m,i)=>{if(m.cm)comments["0_"+(i+1)]=PLAYER[m.by]+"："+m.cm});
   return{id:g.id||"current",title:`${g.red} 對 ${g.black}`,red:g.red,black:g.black,year:+String(g.date||g.id||"").slice(0,4)||null,name:(isLive?"【進行中】":"")+(g.date||String(g.id||"").slice(0,10))+"　"+g.red+" 對 "+g.black,
     result:isLive||!g.result?"進行中":(g.result.w?PLAYER[g.result.w]+"勝":"和局")+"（"+g.result.why+"）",
-    board:parseFen(START),lines:[{id:0,parent:null,start:1,moves}],comments,lessons:g.lessons||null}}
+    board:b0(),...(g.start?{start:g.start,startTurn:g.startTurn||"r",mid:1}:{}),...(g.journey?{journey:g.journey}:{}),lines:[{id:0,parent:null,start:1,moves}],comments,lessons:g.lessons||null}}
 // ===== 難度設定 =====
 const LEVELS=[
 // 「深度」= 引擎往後算幾步（紅黑各走一次算 2 步）

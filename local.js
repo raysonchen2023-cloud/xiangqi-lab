@@ -142,7 +142,8 @@ var XQ=(function(){
     if(P.arena&&!P.journey&&res==="w"&&P.moves.length>=2){const S=ls.get("arenaStamps",{}),first=!S[P.arena];if(first)S[P.arena]={at:new Date().toISOString(),lv:P.level,n:P.moves.length};ls.set("arenaStamps",S);
       P.stamp={era:P.arena,first,total:Object.keys(S).length}}
     else if(kindOf(P)==="cpu"){const rec=ls.get("record",{}),L=rec[P.level]||(rec[P.level]={w:0,l:0,d:0});L[res]++;ls.set("record",rec)}
-    if(!P.start)pushGame("play",{id:P.id,date:P.id.slice(0,10),level:P.level,ranked:!!P.ranked,reward:!!P.reward,rk:P.rk,human:P.human,result:P.result,...assist(P),moves:saveMoves(P.moves)});savePlay()}
+    /* 意見回饋 594：石桌往事從中局開始的關也存（記起始局面），我的成長才算得到故事裡下的棋 */
+    pushGame("play",{id:P.id,date:P.id.slice(0,10),level:P.level,ranked:!!P.ranked,reward:!!P.reward,rk:P.rk,human:P.human,result:P.result,...(P.start?{start:P.start,startTurn:P.startTurn||"r"}:{}),...(P.journey?{journey:P.journey}:{}),...assist(P),moves:saveMoves(P.moves)});savePlay()}
   async function analyzePlay(){if(paBusy||!P)return;paBusy=true;try{await analyzeList(P,savePlay,()=>!!P&&!P.result&&P.turn!==P.human)}finally{paBusy=false}}
   const ucis=()=>P.moves.map(m=>iccs(m.f,m.t));
   /* 意見回饋 363：秘境棋友的開局喜好是真的——跟他下時，這盤有 90% 機率照他愛下的開局走前一兩步（紅方、黑方各一套），之後才交給 Pikafish */
@@ -281,7 +282,7 @@ var XQ=(function(){
     else{const s=await idb.get("col:"+key);if(s)d=JSON.parse(s)}
     if(!d)return null;d.byId=new Map(d.items.map(x=>[x.id,x]));return bookCache[key]=d}
   async function gameItems(kind){const list=(await idb.get("games:"+kind))||[];
-    return list.slice().reverse().map(g=>{if(kind==="play"){const lv=LEVELS[g.level-1]||{name:"?"},bot=g.ranked?"Pikafish 積分挑戰（"+(RANKS[g.rk]||["?"])[0]+"）":"Pikafish 第"+g.level+"級「"+lv.name+"」"+(g.reward?"・🚗獎勵":"");g={...g,red:g.human==="r"?"你":bot,black:g.human==="b"?"你":bot}}
+    return list.slice().reverse().map(g=>{if(kind==="play"){const lv=LEVELS[g.level-1]||{name:"?"},bot=g.ranked?"Pikafish 積分挑戰（"+(RANKS[g.rk]||["?"])[0]+"）":(g.journey?"石桌往事・":"")+"Pikafish 第"+g.level+"級「"+lv.name+"」"+(g.reward?"・🚗獎勵":"");g={...g,red:g.human==="r"?"你":bot,black:g.human==="b"?"你":bot}}
       return{...gameItem(g,false),...assist(g)}})}
   async function dbBooks(){const out=[];for(const b of await publicBooks())out.push({key:b.key,name:b.name,count:b.count});
     for(const b of await syncedBooks())if(out.some(x=>x.key===b.key))unsync(b.key);else out.push({key:b.key,name:b.name,count:b.count,synced:b.at});   // 以前從電腦同步過、現在已內建的，不要出現兩份
