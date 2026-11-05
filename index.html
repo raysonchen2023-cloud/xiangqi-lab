@@ -665,6 +665,30 @@ html[data-era=ming] .topbar,html[data-era=qing] .topbar{border-bottom-width:4px}
 .bag-w{font-size:12px;color:var(--muted,#7a6a58);min-height:1.4em;margin-top:4px}
 .bag-no{background:color-mix(in srgb,var(--accent,#9E1B15) 10%,transparent);border-radius:10px;padding:8px 12px;margin-bottom:10px;font-size:14px}
 .bag-help{margin-top:6px;font-size:13px;line-height:1.7;color:var(--muted,#7a6a58)}.bag-help p{margin:0 0 6px}
+
+/* 開發者 11/5：遊玩時的字體跟著朝代換（Gemini 推薦、Claude 查證授權；字型子集在 data/fonts/，授權見 data/fonts/LICENSES.md）。
+   秦、漢、三國、南北朝的字體筆畫個性強，只換標題（--serif）；其他朝代標題和內文（--sans）一起換。字型檔只有切到那個朝代、畫面用到時才下載 */
+@font-face{font-family:"XQ bakudai";src:url("data/fonts/xq-bakudai.woff2") format("woff2");font-display:swap}
+@font-face{font-family:"XQ chenyu";src:url("data/fonts/xq-chenyu.woff2") format("woff2");font-display:swap}
+@font-face{font-family:"XQ iansui";src:url("data/fonts/xq-iansui.woff2") format("woff2");font-display:swap}
+@font-face{font-family:"XQ twkai";src:url("data/fonts/xq-twkai.woff2") format("woff2");font-display:swap}
+@font-face{font-family:"XQ wenkai";src:url("data/fonts/xq-wenkai.woff2") format("woff2");font-display:swap}
+@font-face{font-family:"XQ genryu";src:url("data/fonts/xq-genryu.woff2") format("woff2");font-display:swap}
+@font-face{font-family:"XQ zhuque";src:url("data/fonts/xq-zhuque.woff2") format("woff2");font-display:swap}
+@font-face{font-family:"XQ cactus";src:url("data/fonts/xq-cactus.woff2") format("woff2");font-display:swap}
+@font-face{font-family:"XQ genwan";src:url("data/fonts/xq-genwan.woff2") format("woff2");font-display:swap}
+html[data-era="qin"]{--serif:"XQ bakudai","Noto Serif TC","Songti TC","SimSun",serif}
+html[data-era="han"]{--serif:"XQ bakudai","Noto Serif TC","Songti TC","SimSun",serif}
+html[data-era="sanguo"]{--serif:"XQ chenyu","Noto Serif TC","Songti TC","SimSun",serif}
+html[data-era="nanbei"]{--serif:"XQ bakudai","Noto Serif TC","Songti TC","SimSun",serif}
+html[data-era="weijin"]{--serif:"XQ iansui","Noto Serif TC","Songti TC","SimSun",serif;--sans:"XQ iansui","Noto Sans TC","PingFang TC","Microsoft JhengHei",system-ui,sans-serif}
+html[data-era="sui"]{--serif:"XQ twkai","Noto Serif TC","Songti TC","SimSun",serif;--sans:"XQ twkai","Noto Sans TC","PingFang TC","Microsoft JhengHei",system-ui,sans-serif}
+html[data-era="tang"]{--serif:"XQ wenkai","Noto Serif TC","Songti TC","SimSun",serif;--sans:"XQ wenkai","Noto Sans TC","PingFang TC","Microsoft JhengHei",system-ui,sans-serif}
+html[data-era="wudai"]{--serif:"XQ genryu","Noto Serif TC","Songti TC","SimSun",serif;--sans:"XQ genryu","Noto Sans TC","PingFang TC","Microsoft JhengHei",system-ui,sans-serif}
+html[data-era="song"]{--serif:"XQ zhuque","Noto Serif TC","Songti TC","SimSun",serif;--sans:"XQ zhuque","Noto Sans TC","PingFang TC","Microsoft JhengHei",system-ui,sans-serif}
+html[data-era="yuan"]{--serif:"XQ cactus","Noto Serif TC","Songti TC","SimSun",serif;--sans:"XQ cactus","Noto Sans TC","PingFang TC","Microsoft JhengHei",system-ui,sans-serif}
+html[data-era="ming"]{--serif:"XQ genwan","Noto Serif TC","Songti TC","SimSun",serif;--sans:"XQ genwan","Noto Sans TC","PingFang TC","Microsoft JhengHei",system-ui,sans-serif}
+html[data-era="qing"]{--serif:"XQ twkai","Noto Serif TC","Songti TC","SimSun",serif;--sans:"XQ twkai","Noto Sans TC","PingFang TC","Microsoft JhengHei",system-ui,sans-serif}
 </style></head><body>
 <div class="app">
  <div class="topbar" id="topbar"><button class="ib" id="back" hidden><b>‹</b>返回</button><h1 id="title">象棋千秋</h1><span id="topRight"></span></div>
@@ -710,7 +734,7 @@ html[data-era=ming] .topbar,html[data-era=qing] .topbar{border-bottom-width:4px}
       if(!window.caches)return go();caches.keys().then(function(ks){return Promise.all(ks.filter(function(k){return k.indexOf("xqlab-app-")===0}).map(function(k){return caches.delete(k)}))})
         .then(function(){return navigator.serviceWorker&&navigator.serviceWorker.getRegistration()}).then(function(r){return r&&r.update()}).catch(function(){}).then(go)}};setTimeout(chk,4000)})();
 </script>
-<script>window.XQ_OFFLINE=true;window.XQ_BUILD="20261105-1353";</script>
+<script>window.XQ_OFFLINE=true;window.XQ_BUILD="20261105-1409";</script>
 <script src="core.js"></script>
 <script src="engine.js"></script>
 <script src="local.js"></script>
@@ -4182,10 +4206,10 @@ function addXP(n,why,key){if(!n)return;
 function xpSheet(){const I=xpInfo();sheet("🀄 棋道修行",b=>{b.innerHTML=`<div style="text-align:center"><div style="font-size:40px;font-weight:900;font-family:var(--serif)">Lv ${I.L}</div><div style="font-size:18px"><b>${I.title}</b></div>
     ${I.need?`<div class="st-bar" style="margin:8px 0 2px"><i style="width:${Math.round(I.rest*100/I.need)}%"></i></div><div class="muted">${I.rest} / ${I.need} 修為（累積 ${I.total}）</div>`:'<div class="muted">已到最高等級</div>'}</div>
     <div style="text-align:left;font-size:14px;line-height:1.75;margin-top:14px">
-      <p style="margin:0 0 8px"><b>💡 提示棋</b>：Lv 5 起每天有（等級越高越多），兩位老人和攢滿 5 個心得也會送。跟電腦的一般對局、雲河棋路、故事裡都能用；用過的那盤不算進我的棋力。</p>
-      <p style="margin:0 0 8px"><b>↶ 悔棋符</b>：現在有 <b>${undoLeft()}</b> 張。跟電腦下、故事裡下，要悔棋得用 1 張。</p>
-      <p style="margin:0 0 8px"><b>🎁 掉落</b>：每盤下完（自己走 10 步以上），提示棋和悔棋符各有機會掉 1 個：對手越強機率越高（電腦第 N 級約 N%，贏了再 +2%，最高 20%），哪一樣連 15 盤沒掉，下一盤一定掉。線上對戰也會掉。</p>
-      <p class="muted" style="margin:0;font-size:13px">對局時按「🎒 寶物」就能用。線上對戰比真實力：不能悔棋、不能提示；積分挑戰、獎勵模式也不能用。練習（擺盤、錯棋重練）退幾步都可以。</p></div>
+      <!-- 意見回饋 609：只寫怎麼用，不寫掉落規則 -->
+      <p style="margin:0 0 8px"><b>💡 提示棋</b>：輪到你時用，Pikafish 會指出關鍵的那顆子。用過的那盤不算進我的棋力。</p>
+      <p style="margin:0 0 8px"><b>↶ 悔棋符</b>：現在有 <b>${undoLeft()}</b> 張。用 1 張可以退回你的上一步。</p>
+      <p class="muted" style="margin:0;font-size:13px">對局時按「🎒 寶物」就能用：挑戰電腦、擂台、故事都可以；線上對戰、積分挑戰、獎勵模式比真實力，不能用。</p></div>
     <div style="height:14px"></div>
     <button class="btn" id="xj" style="width:100%">🗺 去雲河棋路闖關</button>`;b.querySelector("#xj").onclick=()=>{closeSheet();location.hash="#/journey"}})}
 
@@ -4211,7 +4235,7 @@ function itemDrop(id,mine,lv,won){if(!id||mine<10)return"";const seen=store.get(
   const pc=dropPct(lv,won),miss={h:0,u:0,...store.get("dropMiss",{})},got=[];
   for(const k of["h","u"]){if(miss[k]>=DROP_PITY||Math.random()<pc/100){miss[k]=0;got.push(k);if(k==="h")store.set("hintBonus",(store.get("hintBonus",0)||0)+1);else store.set("undoBonus",undoLeft()+1)}else miss[k]++}
   store.set("dropMiss",miss);if(!got.length)return"";
-  return"🎁 掉落 "+got.map(k=>k==="h"?"1 顆 💡 提示棋":"1 張 ↶ 悔棋符").join("、")+"！（這盤機率 "+pc+"%，對局時按「🎒 寶物」使用）"}
+  return"🎁 掉落 "+got.map(k=>k==="h"?"1 顆 💡 提示棋":"1 張 ↶ 悔棋符").join("、")+"！（對局時按「🎒 寶物」使用）"}
 function undoDrop(st){if(!st||st.practice||!st.id)return"";const lv=st.ranked&&st.rk!=null?(+st.rk||0)+1:st.level;return itemDrop(st.id,st.moves.filter(m=>m.by===st.human).length,lv,!!(st.result&&st.result.w===st.human))}
 const hintLabel=()=>{const H=hintInfo();return H.per||H.bonus?`提示（剩 ${H.left+H.bonus}）`:"提示（Lv 5）"};
 const JR=[
@@ -5030,7 +5054,7 @@ function CpuGame(v,practicePage,mode){
   async function post(u,b){if(busy)return;busy=true;try{render(await api(u,b||{}))}catch(e){toast(e.message)}finally{busy=false}}
   /* 意見回饋 594：悔棋要用悔棋符（練習不用） */
   function undoAsk(){if(!st)return;if(st.practice)return post("/play/undo");{const no=itemBlock(st);if(no)return toast(no)}const n=undoLeft();
-    if(n<=0)return toast("沒有悔棋符了：每盤下完照對手強度有機會掉落（對手越強越容易掉）");
+    if(n<=0)return toast("沒有悔棋符了");
     confirmBox("用 1 張悔棋符，退回你的上一步？（現在有 "+n+" 張）",()=>{if(undoLeft()<=0)return;store.set("undoBonus",undoLeft()-1);post("/play/undo")},"↶ 用悔棋符")}
   /* 意見回饋 597（開發者）：對局中多一顆「🎒 寶物」，打開就看到提示棋、悔棋符，按了直接用；積分挑戰、獎勵模式、練習會擋下來並說明原因
      意見回饋 600：排版整理——兩樣並排成一樣大的方格（圖示、張數、按鈕上下對齊），說明收成一行，點「怎麼拿到？」才展開 */
@@ -5042,13 +5066,9 @@ function CpuGame(v,practicePage,mode){
           <button class="btn" id="bgH">使用</button><div class="bag-w">${esc(why(hn,myTurn,"輪到你才能用"))}</div></div>
         <div class="bagt"><div class="bag-ic">↶</div><div class="bag-nm">悔棋符</div><div class="bag-n">${un}<small>張</small></div><div class="bag-d">退回你的上一步</div>
           <button class="btn" id="bgU">使用</button><div class="bag-w">${esc(why(un,mine,"你還沒走棋"))}</div></div></div>
-      <button class="lk" id="bgQ" style="margin-top:10px">怎麼拿到？</button>
-      <div class="bag-help" id="bgT" hidden><p>💡 提示棋：Lv 5 起每天有，等級越高越多；兩位老人和攢滿 5 個心得也會送。用過的那盤不算進我的棋力。</p>
-        <p>🎁 掉落：每盤下完（自己走 10 步以上），兩樣各有機會掉 1 個。對手越強越容易掉（電腦第 N 級約 N%，贏了再 +2%，最高 20%）；連 15 盤沒掉，下一盤一定掉。線上對戰也會掉。</p>
-        <p>⛔ 不能用：線上對戰、積分挑戰、獎勵模式。</p></div>`;
+      <p class="muted" style="font-size:12.5px;margin:10px 0 0">💡 用過提示棋的那盤不算進我的棋力。線上對戰、積分挑戰、獎勵模式不能用寶物。</p>`;   /* 意見回饋 609：不寫掉落規則 */
       const bh=b.querySelector("#bgH"),bu=b.querySelector("#bgU");
       bh.disabled=!!no||!hn||!myTurn;bu.disabled=!!no||!un||!mine;
-      b.querySelector("#bgQ").onclick=()=>{const t=b.querySelector("#bgT");t.hidden=!t.hidden};
       bh.onclick=()=>{closeSheet();jBattleHint(st,h=>{pHint=h;draw()})};bu.onclick=()=>{closeSheet();undoAsk()}})}
   function tap(i){if(!st||st.result||st.turn!==st.human||st.thinking)return;
     if(sel>=0&&st.legal.some(([f,t])=>f===sel&&t===i)){const f=sel;sel=-1;vibrate(15);return post("/play/move",{f,t:i})}
@@ -5274,14 +5294,14 @@ const BOT_FAQ=[
  [["觀戰"],"按下方「🌐 線上」，「正在對戰」區每一盤旁邊按「👀 觀看」就能觀戰，看得到誰也在看。","#/lobby","去線上大廳"],
  [["音效","聲音","語音","男聲","女聲","語速"],"到「設定 → 🔊 聲音」：走棋音效有十幾種可以選，還有吃子音效、男聲／女聲報「吃」「將軍」，語速可以調慢中快。","#/settings","打開設定"],
  [["小人","機器人","小帥","你是誰","大小","拖"],"我是小帥！點我一下會表演、點兩下去散步、長按可以問我問題；按住可以把我拖到旁邊。到「設定 → ⋯ 其他」可以關掉我或調大小。"],
- [["悔棋","悔棋符"],"悔棋要用「↶ 悔棋符」：跟電腦的一般對局、故事裡可以用，每盤下完照對手強度有機會掉（最高 20%，連 15 盤沒掉必掉；棋童資料看得到張數）。對局時按「🎒 寶物」或「↶ 悔棋」就能用（擂台、故事、挑戰電腦都可以）；積分挑戰、獎勵模式、線上對戰都不能悔棋；練習（擺盤、錯棋重練）可以隨便退。"],
+ [["悔棋","悔棋符"],"悔棋要用「↶ 悔棋符」：跟電腦的一般對局、故事裡可以用（我的角色看得到張數）。對局時按「🎒 寶物」或「↶ 悔棋」就能用（擂台、故事、挑戰電腦都可以）；積分挑戰、獎勵模式、線上對戰都不能悔棋；練習（擺盤、錯棋重練）可以隨便退。"],
  [["錯棋重練","錯棋","重練"],"和電腦下完，App 會把你走錯的局面收進「錯棋重練」，之後可以回到那個局面重新練，直到走對為止。"],
  [["棋力測驗","測驗","程度"],"首頁的「🎯 棋力測驗」會出一系列題目，估計你目前的程度。","#/","回首頁"],
  [["積分","段位","排名","升級"],"積分挑戰和線上對戰會計分，從新手開始，贏棋加分、輸棋扣分，分數夠就升段。"],
  [["古譜","橘中秘","梅花譜","適情雅趣","殘局譜"],"棋譜庫有《橘中秘》《梅花譜》《適情雅趣》和古典開局、殘局譜，每一局都可以一步一步看。","#/db","打開棋譜庫"],
  [["驛站","練等","等級不夠"],"等級不夠進下一站時，去「雲河棋路 → 🏮 驛站」找路過的旅人下棋練等（賣茶的老婦、趕考的書生、走鏢的鏢師……），下幾次都可以，贏了多給修為。","#/journey/inn","去驛站"],
  [["闖關","雲河棋路","關卡","星星"],"首頁「🗺 雲河棋路」是闖關：沿著石桌往事裡的雲河，從渡口走到石桌，5 站、每站 6 關（解題、回到當年、對弈、守關擂主），每關最多 3 顆星，過關才會開下一關。","#/journey","去闖關"],
- [["等級","修為","經驗","升級","Lv","提示棋","提示"],"首頁「冒險」裡的「🀄 我的修為」就是「棋道修行」等級：下棋、測驗、猜著法、闖關都會累積修為，每 10 級換一個稱號（棋童到棋仙）。等級看練了多少、段位看實力，分開算。Lv 5 起每天有提示棋，Lv 20 起提示會連落點一起指出；跟電腦的一般對局、雲河棋路和故事裡都能用，線上對戰不能用。","#/journey","去闖關"],
+ [["等級","修為","經驗","升級","Lv","提示棋","提示"],"首頁「冒險」裡的「🀄 我的修為」就是「棋道修行」等級：下棋、測驗、猜著法、闖關都會累積修為，每 10 級換一個稱號（棋童到棋仙）。等級看練了多少、段位看實力，分開算。提示棋會指出關鍵的那顆子；跟電腦的一般對局、雲河棋路和故事裡都能用，線上對戰不能用。","#/journey","去闖關"],
  [["撐傘","灰衣老人","柳寒舟","石桌往事","沈石川","棋仙的故事","隱藏角色"],"首頁「冒險」裡的「🪨 石桌往事」就是冒險的入口：元末明初，石桌棋仙沈石川和宿敵柳寒舟的故事（12 章＋尾聲，第一章先讀）。裡面有雲河棋路（闖關，每過兩三關解開下一章，走到盡頭與石桌棋仙對坐一局解開尾聲）、驛站（練等）、我的修為、人物與年表；有「🕰 回到當年」的章節可以站在旁邊看當年那盤棋、猜關鍵一步加段位積分。","#/","去首頁的冒險"],
  [["妙棋","妙手","妙棋精選","冷門","棄子","反敗為勝"],"棋譜庫的「妙棋精選」是從特級大師對局和全國比賽裡挑出來的少見妙棋：很少人走的好棋、主動棄子、要算很多步才看得出來的好棋、看似落後其實反敗為勝的一步。每一步都經過 Pikafish 驗證，打開就停在那一步，註解寫出妙在哪裡。","#/db/brilliant","看妙棋精選"],
  [["大師對局","特級大師對局","比賽"],"棋譜庫的「大師對局」有三萬多局特級大師對局，可以用 👤 棋手篩選。","#/db/gmgames","看大師對局"],
