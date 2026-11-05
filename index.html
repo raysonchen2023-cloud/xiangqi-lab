@@ -699,7 +699,7 @@ html[data-era=ming] .topbar,html[data-era=qing] .topbar{border-bottom-width:4px}
       if(!window.caches)return go();caches.keys().then(function(ks){return Promise.all(ks.filter(function(k){return k.indexOf("xqlab-app-")===0}).map(function(k){return caches.delete(k)}))})
         .then(function(){return navigator.serviceWorker&&navigator.serviceWorker.getRegistration()}).then(function(r){return r&&r.update()}).catch(function(){}).then(go)}};setTimeout(chk,4000)})();
 </script>
-<script>window.XQ_OFFLINE=true;window.XQ_BUILD="20261105-1207";</script>
+<script>window.XQ_OFFLINE=true;window.XQ_BUILD="20261105-1211";</script>
 <script src="core.js"></script>
 <script src="engine.js"></script>
 <script src="local.js"></script>
@@ -4156,7 +4156,8 @@ function xpSheet(){const I=xpInfo();sheet("🀄 棋道修行",b=>{b.innerHTML=`<
     ${I.need?`<div class="st-bar" style="margin:8px 0 2px"><i style="width:${Math.round(I.rest*100/I.need)}%"></i></div><div class="muted">${I.rest} / ${I.need} 修為（累積 ${I.total}）</div>`:'<div class="muted">已到最高等級</div>'}</div>
     <div style="text-align:left;font-size:14px;line-height:1.75;margin-top:14px">
       <p style="margin:0 0 8px"><b>💡 提示棋</b>：Lv 5 起每天有（等級越高越多），兩位老人和攢滿 5 個心得也會送。跟電腦的一般對局、雲河棋路、故事裡都能用；用過的那盤不算進我的棋力。</p>
-      <p style="margin:0 0 8px"><b>↶ 悔棋符</b>：現在有 <b>${undoLeft()}</b> 張。跟電腦下、故事裡下，要悔棋得用 1 張。跟電腦下完一盤（自己走 10 步以上）有 5% 機會掉 1 張。</p>
+      <p style="margin:0 0 8px"><b>↶ 悔棋符</b>：現在有 <b>${undoLeft()}</b> 張。跟電腦下、故事裡下，要悔棋得用 1 張。</p>
+      <p style="margin:0 0 8px"><b>🎁 掉落</b>：每盤下完（自己走 10 步以上），提示棋和悔棋符各有機會掉 1 個：對手越強機率越高（電腦第 N 級約 N%，贏了再 +2%，最高 20%），哪一樣連 15 盤沒掉，下一盤一定掉。線上對戰也會掉。</p>
       <p class="muted" style="margin:0;font-size:13px">對局時按「🎒 寶物」就能用。線上對戰比真實力：不能悔棋、不能提示；積分挑戰、獎勵模式也不能用。練習（擺盤、錯棋重練）退幾步都可以。</p></div>
     <div style="height:14px"></div>
     <button class="btn" id="xj" style="width:100%">🗺 去雲河棋路闖關</button>`;b.querySelector("#xj").onclick=()=>{closeSheet();location.hash="#/journey"}})}
@@ -4170,13 +4171,21 @@ function useHint(){const H=hintInfo();if(H.left>0){store.set("hintUse",{d:H.day,
   if(H.bonus>0){store.set("hintBonus",H.bonus-1);return H}   /* 庫存的提示棋（兩位老人送的）：任何等級都能用 */
   if(!H.per){toast("Lv 5 起才有提示棋，先多練習累積修為");return null}toast("今天的提示棋用完了，明天再來（等級越高，每天越多）");return null}
 /* 意見回饋 594／595（開發者）：悔棋改成寶物「悔棋符」。跟電腦下、故事裡下，要用 1 張悔棋符才能悔一步；線上對戰不能悔棋也不能提示。
-   練習（擺盤、錯棋重練）照樣隨便退。掉落：跟電腦下完一盤（自己走 10 步以上）有 5% 機會掉 1 張，同一盤只抽一次 */
+   練習（擺盤、錯棋重練）照樣隨便退。掉落規則見下面 itemDrop（意見回饋 597） */
 /* 意見回饋 597：哪些對局不能用寶物（提示棋、悔棋符）——回傳原因，可以用就回傳空字串。線上對戰另外在對戰頁就沒有寶物 */
 const itemBlock=st=>!st?"":st.ranked?"積分挑戰要比真實力，不能用寶物":st.reward?"獎勵模式贏的是點數，不能用寶物":st.practice?"練習可以直接退，不用寶物":"";
-const UNDO_DROP=0.05,undoLeft=()=>Math.max(0,+store.get("undoBonus",0)||0);
-function undoDrop(st){if(!st||st.practice||!st.id)return"";if(st.moves.filter(m=>m.by===st.human).length<10)return"";
-  const seen=store.get("undoDropIds",[]);if(seen.includes(st.id))return"";store.set("undoDropIds",seen.concat(st.id).slice(-60));
-  if(Math.random()>=UNDO_DROP)return"";store.set("undoBonus",undoLeft()+1);return"🎁 掉落 1 張 ↶ 悔棋符！（現在有 "+undoLeft()+" 張，跟電腦下或故事裡用）"}
+/* 意見回饋 597（開發者選「強度＋保底」）：每盤結束（自己走 10 步以上）💡 提示棋、↶ 悔棋符各抽一次，線上對戰也算。
+   機率＝對手強度 N%（電腦第 N 級；線上照對手段位換成同級電腦；積分挑戰照那一段），贏了再 +2%，最高 20%。
+   哪一樣連 15 盤沒掉，下一盤那一樣一定掉。同一盤只抽一次 */
+const DROP_MAX=20,DROP_PITY=15,RANK_PTS=[0,50,100,150,200,300,400,500,600,700,800,900,1000,1150,1300,1500,1700],undoLeft=()=>Math.max(0,+store.get("undoBonus",0)||0);
+const ptsLv=p=>{let i=0;RANK_PTS.forEach((t,k)=>{if(+p>=t)i=k});return i+1};
+const dropPct=(lv,won)=>Math.min(DROP_MAX,Math.max(1,Math.round(+lv||1))+(won?2:0));
+function itemDrop(id,mine,lv,won){if(!id||mine<10)return"";const seen=store.get("undoDropIds",[]);if(seen.includes(id))return"";store.set("undoDropIds",seen.concat(id).slice(-60));
+  const pc=dropPct(lv,won),miss={h:0,u:0,...store.get("dropMiss",{})},got=[];
+  for(const k of["h","u"]){if(miss[k]>=DROP_PITY||Math.random()<pc/100){miss[k]=0;got.push(k);if(k==="h")store.set("hintBonus",(store.get("hintBonus",0)||0)+1);else store.set("undoBonus",undoLeft()+1)}else miss[k]++}
+  store.set("dropMiss",miss);if(!got.length)return"";
+  return"🎁 掉落 "+got.map(k=>k==="h"?"1 顆 💡 提示棋":"1 張 ↶ 悔棋符").join("、")+"！（這盤機率 "+pc+"%，對局時按「🎒 寶物」使用）"}
+function undoDrop(st){if(!st||st.practice||!st.id)return"";const lv=st.ranked&&st.rk!=null?(+st.rk||0)+1:st.level;return itemDrop(st.id,st.moves.filter(m=>m.by===st.human).length,lv,!!(st.result&&st.result.w===st.human))}
 const hintLabel=()=>{const H=hintInfo();return H.per||H.bonus?`提示（剩 ${H.left+H.bonus}）`:"提示（Lv 5）"};
 const JR=[
   {k:"dukou",name:"渡口",sub:"第一～七回：撐斷傘的老人、渡船少年和聽濤樓打雜的孩子，河石對瓦片，燭光下的第一盤盲棋。",tiers:[0,3],ch:[1,7],lv:1},
@@ -4992,14 +5001,14 @@ function CpuGame(v,practicePage,mode){
   async function post(u,b){if(busy)return;busy=true;try{render(await api(u,b||{}))}catch(e){toast(e.message)}finally{busy=false}}
   /* 意見回饋 594：悔棋要用悔棋符（練習不用） */
   function undoAsk(){if(!st)return;if(st.practice)return post("/play/undo");{const no=itemBlock(st);if(no)return toast(no)}const n=undoLeft();
-    if(n<=0)return toast("沒有悔棋符了：跟電腦下完一盤（自己走 10 步以上）有 5% 機會掉落");
+    if(n<=0)return toast("沒有悔棋符了：每盤下完照對手強度有機會掉落（對手越強越容易掉）");
     confirmBox("用 1 張悔棋符，退回你的上一步？（現在有 "+n+" 張）",()=>{if(undoLeft()<=0)return;store.set("undoBonus",undoLeft()-1);post("/play/undo")},"↶ 用悔棋符")}
   /* 意見回饋 597（開發者）：對局中多一顆「🎒 寶物」，打開就看到提示棋、悔棋符，按了直接用；積分挑戰、獎勵模式、練習會擋下來並說明原因 */
   function bagSheet(){if(!st)return;const no=itemBlock(st),H=hintInfo(),hn=H.left+H.bonus,un=undoLeft(),mine=st.moves.some(m=>m.by===st.human),myTurn=!st.result&&st.turn===st.human&&!st.thinking;
     sheet("🎒 寶物",b=>{b.innerHTML=(no?`<p class="muted" style="margin:0 0 10px">⛔ ${esc(no)}</p>`:"")+
       `<div class="card" style="display:flex;align-items:center;gap:10px;margin-bottom:10px"><span style="font-size:28px">💡</span><div style="flex:1"><b>提示棋</b>　${hn} 顆<div class="muted" style="font-size:13px">Pikafish 指出關鍵的子${H.full?"和落點":""}；用過的那盤不算進我的棋力</div></div><button class="btn" id="bgH" style="width:auto;padding:8px 16px">使用</button></div>
       <div class="card" style="display:flex;align-items:center;gap:10px"><span style="font-size:28px">↶</span><div style="flex:1"><b>悔棋符</b>　${un} 張<div class="muted" style="font-size:13px">退回你的上一步</div></div><button class="btn" id="bgU" style="width:auto;padding:8px 16px">使用</button></div>
-      <p class="muted" style="font-size:12.5px;margin:10px 0 0">提示棋：Lv 5 起每天有，兩位老人和攢滿 5 個心得也會送。悔棋符：跟電腦下完一盤（自己走 10 步以上）有 5% 機會掉落。線上對戰、積分挑戰、獎勵模式不能用寶物。</p>`;
+      <p class="muted" style="font-size:12.5px;margin:10px 0 0">提示棋：Lv 5 起每天有，兩位老人和攢滿 5 個心得也會送。每盤下完（自己走 10 步以上）兩樣各有機會掉落：對手越強機率越高（電腦第 N 級約 N%，贏了再 +2%，最高 20%），連 15 盤沒掉下一盤必掉；線上對戰也會掉。線上對戰、積分挑戰、獎勵模式不能用寶物。</p>`;
       const bh=b.querySelector("#bgH"),bu=b.querySelector("#bgU");
       bh.disabled=!!no||!hn||!myTurn;bu.disabled=!!no||!un||!mine;[bh,bu].forEach(x=>{if(x.disabled)x.style.opacity=".4"});
       bh.onclick=()=>{closeSheet();jBattleHint(st,h=>{pHint=h;draw()})};bu.onclick=()=>{closeSheet();undoAsk()}})}
@@ -5227,7 +5236,7 @@ const BOT_FAQ=[
  [["觀戰"],"按下方「🌐 線上」，「正在對戰」區每一盤旁邊按「👀 觀看」就能觀戰，看得到誰也在看。","#/lobby","去線上大廳"],
  [["音效","聲音","語音","男聲","女聲","語速"],"到「設定 → 🔊 聲音」：走棋音效有十幾種可以選，還有吃子音效、男聲／女聲報「吃」「將軍」，語速可以調慢中快。","#/settings","打開設定"],
  [["小人","機器人","小帥","你是誰","大小","拖"],"我是小帥！點我一下會表演、點兩下去散步、長按可以問我問題；按住可以把我拖到旁邊。到「設定 → ⋯ 其他」可以關掉我或調大小。"],
- [["悔棋","悔棋符"],"悔棋要用「↶ 悔棋符」：跟電腦的一般對局、故事裡可以用，跟電腦下完一盤有 5% 機會掉 1 張（棋童資料看得到張數）。對局時按「🎒 寶物」或「↶ 悔棋」就能用（擂台、故事、挑戰電腦都可以）；積分挑戰、獎勵模式、線上對戰都不能悔棋；練習（擺盤、錯棋重練）可以隨便退。"],
+ [["悔棋","悔棋符"],"悔棋要用「↶ 悔棋符」：跟電腦的一般對局、故事裡可以用，每盤下完照對手強度有機會掉（最高 20%，連 15 盤沒掉必掉；棋童資料看得到張數）。對局時按「🎒 寶物」或「↶ 悔棋」就能用（擂台、故事、挑戰電腦都可以）；積分挑戰、獎勵模式、線上對戰都不能悔棋；練習（擺盤、錯棋重練）可以隨便退。"],
  [["錯棋重練","錯棋","重練"],"和電腦下完，App 會把你走錯的局面收進「錯棋重練」，之後可以回到那個局面重新練，直到走對為止。"],
  [["棋力測驗","測驗","程度"],"首頁的「🎯 棋力測驗」會出一系列題目，估計你目前的程度。","#/","回首頁"],
  [["積分","段位","排名","升級"],"積分挑戰和線上對戰會計分，從新手開始，贏棋加分、輸棋扣分，分數夠就升段。"],
@@ -5734,6 +5743,9 @@ function PvpGame(v){
     if(!st.draw)drawAsked=null;
     if(st.result&&shownResult!==st.id&&seat==="w"){shownResult=st.id;modal(`<div class="em">${st.result.w?"🏆":"🤝"}</div><h2>${st.result.w?`${PLAYER[st.result.w]}（${esc(nm(st.result.w))}）勝`:"和局"}</h2><p class="muted">${esc(st.result.why)}</p>`,[["回大廳",()=>{XQNet.leave();location.hash="#/lobby"}],["留在這裡",null,true]])}
     if(st.result&&shownResult!==st.id){shownResult=st.id;vibrate([30,40,30]);
+      /* 意見回饋 597：線上對戰也有機會掉寶物（照對手段位），線上不能用、跟電腦下時用 */
+      if(NET&&seat&&seat!=="w"&&window.XQNet)try{const G=XQNet.game(),o=G&&(seat==="r"?G.black:G.red),pt=o?((XQNet.people().find(q=>q.id===o.id)||{}).pts??o.pts):null;
+        const ud=itemDrop(st.id||(XQNet.gid&&XQNet.gid()),st.moves.filter(m=>m.by===seat).length,pt==null?1:ptsLv(pt),st.result.w===seat);if(ud)setTimeout(()=>{vibrate([20,40,60]);toast(ud)},2600)}catch(e){}
       /* 意見回饋 323：線上對戰也用原本的勝負動畫（挑戰電腦同一個 killFx），將死以外（認輸、超時、離線）就在說明那行寫原因；結果視窗等動畫播完再出來 */
       {const w=st.result.w,mine=seat==="r"||seat==="b"?seat:null,win=w?(mine?w===mine:true):false;
         if(w&&!st.result.abort&&st.moves.length>=2){const loser=w==="r"?"b":"r",k=st.board.indexOf(loser==="r"?"K":"k");
