@@ -721,6 +721,8 @@ html[data-era="qing"]:not([data-font="sys"]){--serif:"XQ twkai","Noto Serif TC",
 .travel.qq .tcap{color:#1a1410;text-shadow:0 0 8px rgba(240,232,214,.95)}.travel.qq .tbar{background:rgba(26,20,16,.2)}.travel.qq .tbar i{background:#b3241b}
 .travel.qq .tskip{background:rgba(26,20,16,.55)}
 /* 意見回饋 628（開發者：字體有大有小）：元朝原本用的仙人掌明體仿古籍刻本、字形大小不一，在 iPhone 上整段看起來忽大忽小；改用筆畫均勻的源流明體（跟五代同一套） */
+/* 意見回饋 633（開發者：字有大有小，紅圈處）：「苗疆少女」這種四個字的角色名把橫匾占滿，旁邊的玩家名字被擠到只剩一個字寬；放不下時名字整個換到第二行 */
+.me-name{flex-wrap:wrap;justify-content:center;row-gap:0}.me-name small{flex:none}
 </style></head><body>
 <div class="app">
  <div class="topbar" id="topbar"><button class="ib" id="back" hidden><b>‹</b>返回</button><h1 id="title">象棋千秋</h1><span id="topRight"></span></div>
@@ -766,7 +768,7 @@ html[data-era="qing"]:not([data-font="sys"]){--serif:"XQ twkai","Noto Serif TC",
       if(!window.caches)return go();caches.keys().then(function(ks){return Promise.all(ks.filter(function(k){return k.indexOf("xqlab-app-")===0}).map(function(k){return caches.delete(k)}))})
         .then(function(){return navigator.serviceWorker&&navigator.serviceWorker.getRegistration()}).then(function(r){return r&&r.update()}).catch(function(){}).then(go)}};setTimeout(chk,4000)})();
 </script>
-<script>window.XQ_OFFLINE=true;window.XQ_BUILD="20261105-2029";</script>
+<script>window.XQ_OFFLINE=true;window.XQ_BUILD="20261105-2040";</script>
 <script src="core.js"></script>
 <script src="engine.js"></script>
 <script src="local.js"></script>
