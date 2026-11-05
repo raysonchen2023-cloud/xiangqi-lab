@@ -766,7 +766,7 @@ html[data-era="qing"]:not([data-font="sys"]){--serif:"XQ twkai","Noto Serif TC",
       if(!window.caches)return go();caches.keys().then(function(ks){return Promise.all(ks.filter(function(k){return k.indexOf("xqlab-app-")===0}).map(function(k){return caches.delete(k)}))})
         .then(function(){return navigator.serviceWorker&&navigator.serviceWorker.getRegistration()}).then(function(r){return r&&r.update()}).catch(function(){}).then(go)}};setTimeout(chk,4000)})();
 </script>
-<script>window.XQ_OFFLINE=true;window.XQ_BUILD="20261105-1742";</script>
+<script>window.XQ_OFFLINE=true;window.XQ_BUILD="20261105-2029";</script>
 <script src="core.js"></script>
 <script src="engine.js"></script>
 <script src="local.js"></script>
@@ -4269,7 +4269,7 @@ function Profile(v){setTop("🎒 棋童資料","#/adventure");setTabs(true,"#/")
   const card=x=>`<div class="bcard ${x.rarity}"><div class="bic">${TIMG(`data/treasure/board_${x.rarity==="broken"?"broken":x.rarity==="rare"?"rare":"normal"}.webp`,x.rarity==="broken"?"🧩":x.rarity==="rare"?"📜":"♟")}</div><b>${esc(x.name)}</b><small style="color:${RAR[x.rarity][1]}">${RAR[x.rarity][0]}</small><small class="muted">${esc(x.from)}・${new Date(x.at).toLocaleDateString()}</small>
     ${x.rarity==="rare"&&!x.used?`<button class="pill" data-ex="${x.uid}">🪨 拿去石桌給兩位老人</button>`:x.used?'<small class="muted">已經跟兩位老人換過獎勵</small>':""}</div>`;
   v.innerHTML=`<div class="pad"><div class="card prof"><div class="pl"><div class="lv">Lv ${I.L}</div><div><b style="font-size:20px">🀄 ${I.title}</b><div class="st-bar" style="margin:6px 0 2px"><i style="width:${I.need?Math.round(I.rest*100/I.need):100}%"></i></div><small class="muted">${I.need?`${I.rest}／${I.need} 修為・累積 ${I.total}`:`累積 ${I.total} 修為・已到最高等級`}</small></div></div>
-      <div class="chips"><span>💡 提示棋 今天 ${H.left}${H.bonus?`＋庫存 ${H.bonus}`:""}</span><span>↶ 悔棋符 ${undoLeft()}</span><span>⭐ 雲河棋路 ${star}／${Js.length*3}</span><span>📖 故事 ${L.n}／36 回</span><span>🤝 秘境棋友 ${Object.keys(Sx).length}／${SECRETS.length}</span></div>
+      <div class="chips"><span>💡 提示棋 今天 ${H.left}${H.bonus?`＋庫存 ${H.bonus}`:""}</span><span>↶ 悔棋符 ${undoLeft()}</span><span>⭐ 雲河棋路 ${star}／${Js.length*3}</span>${jHidGot()?`<span>${HIDN.ic} ${HIDN.star} ${jHidGot()}</span>`:""}<span>📖 故事 ${L.n}／36 回</span><span>🤝 秘境棋友 ${Object.keys(Sx).length}／${SECRETS.length}</span></div>
       <button class="lk" id="pXP" style="margin-top:6px">等級、提示棋和悔棋符怎麼來的？</button></div>
     <div class="circles"><button data-c="b"><span>${ETIMG("p_board","data/treasure/board_normal.webp","🎁")}</span><b>棋盤</b><small>${B.boards.length}</small></button><button data-c="r"><span>${ETIMG("p_kifu","data/treasure/record_normal.webp","📜")}</span><b>棋譜</b><small>${B.records.length}</small></button><button data-c="s"><span>${ETIMG("p_secret","","🤝")}</span><b>秘境棋友</b><small>${Object.keys(Sx).length}／${SECRETS.length}</small></button><button data-c="z"><span>🏺</span><b>珍品</b><small>${Object.values(relicsMine()).reduce((a,x)=>a+x.length,0)}／130</small></button></div></div>`;
   /* 意見回饋 322：只放三個圓圈，點了才打開清單，不放說明文字 */
@@ -4565,17 +4565,17 @@ function Journey(v,sid){
   setTop("雲河棋路","#/adventure");setTabs(!sid,"#/");const L=jStages(),S=jStars();
   if(sid==="inn")return innSheet(v);
   if(sid==="park")return ParkGate(v);
-  if(sid&&/~v$/.test(sid)){const bs=jFindStage(sid.slice(0,-2));if(!bs||!jStars()[bs.id]){navReplace("#/journey");return{}}return jVarLevel(v,bs)}   /* 意見回饋 573：變體挑戰 */
+  if(sid&&/~v$/.test(sid)){const bs=jFindStage(sid.slice(0,-2));if(!bs||!jHid()[bs.id]){navReplace("#/journey");return{}}return jVarLevel(v,bs)}   /* 隱藏關卡（開發者 11/5，用原本變體的做法） */
   if(sid&&/^b2h\d\d$/.test(sid)){const L2=jStages2(),i=L2.findIndex(x=>x.id===sid);if(i<0||!((i===0&&book1Done())||S[L2[i-1].id]||DEVMODE())){navReplace("#/adventure");return{}}return jLevel(v,L2[i])}
   if(sid){const i=L.findIndex(x=>x.id===sid);if(i<0||!jOpen(L,i)){navReplace("#/journey");return{}}return L[i].t==="lv"?jLevel(v,L[i]):jPuzzle(v,L[i])}
   const I=xpInfo(),tot=L.reduce((a,s)=>a+(S[s.id]||0),0);v.className="view";
-  v.innerHTML=`<div class="pad"><div class="abn" id="jmap" style="height:170px;background-image:url(data/map/yunhe_map.webp);background-position:center 60%;margin-bottom:10px;cursor:pointer"><div class="hc"><b>🗺 雲河棋路</b><small>從渡口一路走到石桌・點一下看整張地圖</small></div></div><div class="card row" id="jxp" style="justify-content:space-between;cursor:pointer"><span>🀄 <b>Lv ${I.L} ${I.title}</b><br><span class="muted" style="font-size:12.5px">${I.need?`再 ${I.need-I.rest} 修為升級`:"已到最高等級"}・雲河棋路 ★ ${tot} / ${L.length*3}</span></span><span class="muted">›</span></div>
-    <p class="muted" style="font-size:13px;line-height:1.7;margin:8px 2px">沿著石桌往事裡的雲河，從渡口一路走到石桌。每關最多 3 顆星，過關才會開下一關；每一站有等級門檻，等級不夠就先去驛站練棋。</p>
+  v.innerHTML=`<div class="pad"><div class="abn" id="jmap" style="height:170px;background-image:url(data/map/yunhe_map.webp);background-position:center 60%;margin-bottom:10px;cursor:pointer"><div class="hc"><b>🗺 雲河棋路</b><small>從渡口一路走到石桌・點一下看整張地圖</small></div></div><div class="card row" id="jxp" style="justify-content:space-between;cursor:pointer"><span>🀄 <b>Lv ${I.L} ${I.title}</b><br><span class="muted" style="font-size:12.5px">${I.need?`再 ${I.need-I.rest} 修為升級`:"已到最高等級"}・雲河棋路 ★ ${tot} / ${L.length*3}${jHidGot()?` ・${HIDN.ic} ${jHidGot()}`:""}</span></span><span class="muted">›</span></div>
+    <p class="muted" style="font-size:13px;line-height:1.7;margin:8px 2px">沿著石桌往事裡的雲河，從渡口一路走到石桌。每關最多 3 顆星：過關就有 ★、會開下一關；失誤少拿 ★★；失誤不超過 1 次又沒用提示棋拿 ★★★。每一站有等級門檻，等級不夠就先去驛站練棋。</p>
     <button class="card row" id="jinn" style="width:100%;justify-content:space-between;font:inherit;color:inherit;text-align:left;cursor:pointer"><span>🏮 <b>驛站</b><br><span class="muted" style="font-size:12.5px">找路過的旅人下棋練等</span></span><span class="muted">›</span></button>
     ${JR.map((R,ri)=>{const st=L.filter(s=>s.r===ri),got=st.reduce((a,s)=>a+(S[s.id]||0),0),open=jOpen(L,L.indexOf(st[0]));
       const lvNo=I.L<R.lv;
       return`<div class="sec-t">${ri+1}. ${esc(R.name)} <span class="muted" style="font-size:12px">★ ${got}/${st.length*3}${R.lv>1?`・Lv ${R.lv} 才能進`:""}</span></div>${lvNo?`<div class="muted" style="font-size:13px;margin:-2px 2px 6px">🔒 等級還差 ${R.lv-I.L} 級——先去 🏮 驛站找人下棋練等</div>`:""}<div class="card" style="padding:10px 12px${open?"":";opacity:.55"}"><p class="muted" style="margin:0 0 6px;font-size:13px">${esc(R.sub)}</p>
-        <div class="jpath">${st.map((s,k)=>{const i=L.indexOf(s),ok=jOpen(L,i),n=S[s.id]||0;return`<button class="jnode${ok?"":" lock"}${n?" done":""}" data-s="${s.id}" style="margin-left:${[2,18,34,18,2,18,34,18][k%8]}%"><span class="ji">${ok?jIcon[s.t]:"🔒"}</span><span class="jt"><b>${esc(s.name)}</b><small>${n?"★".repeat(n)+"☆".repeat(3-n):ok?"還沒過關":!jLvOk(s)?`要 Lv ${JR[s.r].lv}`:"先過前一關"}</small></span></button>`}).join("")}</div></div>`}).join("")}</div>`;
+        <div class="jpath">${st.map((s,k)=>{const i=L.indexOf(s),ok=jOpen(L,i),n=S[s.id]||0;return`<button class="jnode${ok?"":" lock"}${n?" done":""}" data-s="${s.id}" style="margin-left:${[2,18,34,18,2,18,34,18][k%8]}%"><span class="ji">${ok?jIcon[s.t]:"🔒"}</span><span class="jt"><b>${esc(s.name)}</b><small>${n?"★".repeat(n)+"☆".repeat(3-n)+((jHid()[s.id]||{}).got?HIDN.ic:""):ok?"還沒過關":!jLvOk(s)?`要 Lv ${JR[s.r].lv}`:"先過前一關"}</small></span></button>`}).join("")}</div></div>`}).join("")}</div>`;
   {const jm=v.querySelector("#jmap");if(jm)jm.onclick=()=>jMap3d(L,S)}
   (v.querySelector("#jxp")||{}).onclick=xpSheet;(v.querySelector("#jinn")||{}).onclick=()=>travel("inn",()=>{location.hash="#/journey/inn"});
   v.querySelectorAll(".jnode").forEach(b=>b.onclick=()=>{const i=L.findIndex(x=>x.id===b.dataset.s);if(!jOpen(L,i))return toast(!jLvOk(L[i])?`等級不夠：「${JR[L[i].r].name}」要 Lv ${JR[L[i].r].lv}，先去 🏮 驛站找人下棋練等`:"先過前一關");jSheet(L[i])});
@@ -4598,9 +4598,9 @@ function jMap3d(L,S){sheet("🗺 雲河棋路",async b=>{
 function jSheet(s){const n=jStars()[s.id]||0,R=JR[s.r];legendData().then(D=>{const c=D&&D.chapters[s.n-1],lv=c&&c.lv;
   const how={puz:"從題庫出 5 題，答對 3 題過關：3 題 ★、4 題 ★★、5 題全對 ★★★。",scene:"回到六十年前，站在旁邊看那盤棋；下到關鍵一步時換你想：跟當年一樣 ★★★、Pikafish 也說是好棋 ★★、看答案 ★。",
     ai:`跟第 ${s.lv} 級的電腦下一盤，贏了就過關：30 回合內贏 ★★★、50 回合內 ★★、其他 ★。`,boss:`守關的擂主是「${s.era?ARENA[s.era].name:""}」（第 ${s.lv} 級的實力）。贏了就過關，星星照回合數算，跟對弈一樣；還會順便蓋上擂台的章。`}[s.t];
-  if(s.t==="lv"&&c&&c.game){const G=c.game,Rr=jRunGet(s.id),mid=Rr&&!Rr.done&&Rr.k>0;
-    return sheet(`🎴 ${s.name}`,b=>{b.innerHTML=`<p class="muted" style="margin:0 0 6px;font-size:13px">📖 ${esc(c.title)}</p><div class="card" style="line-height:1.75;font-size:14px;margin-bottom:10px"><b>「${esc(G.name||lv.name)}」</b>（${esc(lv.type)}）<br>${esc(G.intro||lv.play)}</div><p style="line-height:1.8;font-size:14px"><b>過關</b>：${esc(G.pass||"")}<br><b>三星</b>：${esc(G.star3||"")}</p>${n?`<p>目前：${"★".repeat(n)}${"☆".repeat(3-n)}</p>`:""}${mid?`<button class="btn" id="jct" style="width:100%">繼續（第 ${Rr.k+1}／${G.steps.length} 步）</button>`:""}<button class="btn${mid?" ghost":""}" id="jgo" style="width:100%;margin-top:6px">${mid?"從頭開始":n?"再挑戰一次":"開始"}</button><button class="btn ghost" id="jrd" style="width:100%;margin-top:6px">📖 讀第${CNUM(s.n)}回</button>`;
-      const ct=b.querySelector("#jct");if(ct)ct.onclick=()=>{closeSheet();location.hash="#/journey/"+s.id};b.querySelector("#jgo").onclick=()=>{closeSheet();jRunSet({id:s.id,k:0,miss:0,hint:false,intro:1});location.hash="#/journey/"+s.id};   /* 意見回饋 477：說明已經在這裡看過，按開始直接進第一步，不再出現一次一樣的介紹頁 */b.querySelector("#jrd").onclick=()=>{closeSheet();setTimeout(()=>legendRead(s.n),260)}})}
+  if(s.t==="lv"&&c&&c.game){const G=c.game,Rr=jRunGet(s.id),mid=Rr&&!Rr.done&&Rr.k>0,HD=jHid()[s.id];
+    return sheet(`🎴 ${s.name}`,b=>{b.innerHTML=`<p class="muted" style="margin:0 0 6px;font-size:13px">📖 ${esc(c.title)}</p><div class="card" style="line-height:1.75;font-size:14px;margin-bottom:10px"><b>「${esc(G.name||lv.name)}」</b>（${esc(lv.type)}）<br>${esc(G.intro||lv.play)}</div><p style="line-height:1.8;font-size:14px"><b>過關</b>：${esc(G.pass||"")}<br><b>三星</b>：${esc(lvStar3(G))}</p>${n?`<p>目前：${"★".repeat(n)}${"☆".repeat(3-n)}${HD&&HD.got?` ＋ ${HIDN.ic} ${HIDN.star}`:""}</p>`:""}${HD&&!HD.got?`<button class="btn" id="jhd" style="width:100%;margin-bottom:6px">${HIDN.ic} ${HIDN.lv}（${HD.k==="hard"?"困難":"簡單"}）</button>`:""}${mid?`<button class="btn" id="jct" style="width:100%">繼續（第 ${Rr.k+1}／${G.steps.length} 步）</button>`:""}<button class="btn${mid?" ghost":""}" id="jgo" style="width:100%;margin-top:6px">${mid?"從頭開始":n?"再挑戰一次":"開始"}</button><button class="btn ghost" id="jrd" style="width:100%;margin-top:6px">📖 讀第${CNUM(s.n)}回</button>`;
+      {const hb=b.querySelector("#jhd");if(hb)hb.onclick=()=>{closeSheet();jRunSet(null);location.hash="#/journey/"+s.id+"~v"}}const ct=b.querySelector("#jct");if(ct)ct.onclick=()=>{closeSheet();location.hash="#/journey/"+s.id};b.querySelector("#jgo").onclick=()=>{closeSheet();jRunSet({id:s.id,k:0,miss:0,hint:false,intro:1});location.hash="#/journey/"+s.id};   /* 意見回饋 477：說明已經在這裡看過，按開始直接進第一步，不再出現一次一樣的介紹頁 */b.querySelector("#jrd").onclick=()=>{closeSheet();setTimeout(()=>legendRead(s.n),260)}})}
   sheet(`${jIcon[s.t]} ${s.name}`,b=>{b.innerHTML=`${c?`<p class="muted" style="margin:0 0 6px;font-size:13px">📖 ${esc(c.title)}</p>`:""}${lv&&lv.play?`<div class="card" style="line-height:1.75;font-size:14px;margin-bottom:10px"><b>「${esc(lv.name)}」</b>（${esc(lv.type)}）<br>${esc(lv.play)}</div><p class="muted" style="font-size:12.5px;line-height:1.7;margin:0 2px 10px">這一關的特製玩法還在做（要先請引擎驗過局面）。做好之前先這樣過關，現在拿到的星星會保留：</p>`:""}<p style="line-height:1.8">${how}</p>${n?`<p>目前：${"★".repeat(n)}${"☆".repeat(3-n)}</p>`:""}<button class="btn" id="jgo" style="width:100%">${n?"再挑戰一次":"開始"}</button><button class="btn ghost" id="jrd" style="width:100%;margin-top:6px">📖 讀第${CNUM(s.n)}回</button>`;
     b.querySelector("#jgo").onclick=()=>{closeSheet();if(s.t==="puz")location.hash="#/journey/"+s.id;else jPlay(s)};b.querySelector("#jrd").onclick=()=>{closeSheet();setTimeout(()=>legendRead(s.n),260)}})})}
 /* 雲河棋路的對弈、守關：用提示棋請 Pikafish 指一步（Lv 20 前只指出要動的子） */
@@ -4833,7 +4833,7 @@ function lvIncense(host,sec,done){if(!host||!sec)return{stop(){}};const el=docum
 /* ================= 意見回饋 573（開發者）：讓掉落的棋譜真的有用 =================
    ① 預習卷：每一關配 2 局古譜同型例局（data/lines/preview.json，tools/build_preview.js 產生）。公園茶杯、驛站優先掉「下一關」的預習卷；關卡裡按「📜 預習卷」翻，不算用提示、不會少星
    ② 打譜連猜三步：棋譜和預習卷打開時，停在關鍵那一步（妙棋精選停在妙手、古譜殘局從第一手、古譜全局從第 9 步）連猜同一方三手；三步都一次猜中＝有心得，每 5 個心得換 1 顆提示棋
-   ③ 變體星：零失誤過關後，第三顆星要再過「變體」——同一關的棋盤題左右翻過來（或紅黑對調）再走一次，背答案沒用 */
+   ③ 變體星：（開發者 11/5 改掉：三星不用再過變體，結果頁不再出「挑戰變體」按鈕；變體程式先留著） */
 let PREV_P=null,PREV_D=null;const prevData=()=>PREV_P||(PREV_P=fetch("data/lines/preview.json").then(r=>r.ok?r.json():{}).catch(()=>({})).then(d=>(PREV_D=d)));
 /* 妙棋精選的名字後面寫著妙手（「・第 28 回合 車5平8」），猜之前不能露出來 */
 const recTitle=n=>String(n||"").replace(/・第\s*\d+\s*回合.*$/,"");
@@ -4890,6 +4890,12 @@ async function studyOpen(x,o){o=o||{};const C=window.XQCore;let it;try{it=await 
         <button class="btn ghost" id="sdAg" style="width:100%;margin-top:6px">↺ 再猜一次</button><button class="btn" id="sdF" style="width:100%;margin-top:6px">📖 打開整盤棋譜（可以自己擺、叫引擎分析）</button>${o.back?'<button class="btn ghost" id="sdBk" style="width:100%;margin-top:6px">← 回上一頁</button>':""}`;
       RB.querySelector("#sdF").onclick=full;RB.querySelector("#sdAg").onclick=()=>{alive=false;studyOpen(x,o)};const bk=RB.querySelector("#sdBk");if(bk)bk.onclick=()=>{alive=false;o.back()}}})}
 /* 變體：u＝ICCS 著法（"h2e2"）。m＝左右翻；s＝整盤轉半圈＋紅黑對調（走的那一方換顏色）。起始局面都有指定 fen 才用 s（從開局下的轉過來會變成黑先） */
+const lvM3=G=>Math.max(1,(G&&G.rules&&G.rules.maxMistakes3)||0),lvStar3=G=>`失誤不超過 ${lvM3(G)} 次、不用提示棋`;
+/* 開發者 11/5：拿到三星時 30% 機率出現隱藏關卡（簡單：過關就好；困難：原本的零失誤、不用提示、局面翻過來、第二集特別條件），過了多拿一顆隱藏星。
+   jHid＝{關卡 id:{k:"easy"|"hard",got:true/false}}；名稱集中在 HIDN，之後換成象棋用語只改這裡 */
+const HIDN={ic:"🌟",star:"隱藏星",lv:"隱藏關卡"};
+const jHid=()=>store.get("jHid",{}),jHidGot=()=>Object.values(jHid()).filter(x=>x&&x.got).length;
+function jHidRoll(id){const H=jHid();if(H[id])return H[id];if(Math.random()>=.3)return null;H[id]={k:Math.random()<.5?"easy":"hard",got:false};store.set("jHid",H);return H[id]}
 function jVarG(G,mode){const all=G.steps||[];let steps=all.filter(st=>["guess","puzzle","collect"].includes(st.t));if(!steps.length){const P=all.filter(st=>st.t==="play");steps=P.length?[P[P.length-1]]:[]}if(!steps.length)return null;
   const hasFen=z=>!!(z&&z.fen),okS=steps.every(st=>st.t==="guess"?hasFen(st.start):st.t==="play"?hasFen(st.start)&&!(st.offer||[]).length:(st.t==="collect"?st.from||[]:st.items||[]).every(it=>hasFen(it.start))),sw=mode==="s"&&okS;
   const sq=q=>String.fromCharCode(202-q.charCodeAt(0))+(sw?String(9-+q[1]):q[1]),mu=u=>sq(u.slice(0,2))+sq(u.slice(2,4)),oth=t=>t==="b"?"r":"b";
@@ -4901,10 +4907,17 @@ function jVarG(G,mode){const all=G.steps||[];let steps=all.filter(st=>["guess","
     else if(st.t==="play"){o.say=sw?"（變體）同一盤棋，整盤轉過來、紅黑對調再下一次。":"（變體）同一盤棋，左右翻過來再下一次。";o.start=ms(st.start);o.remove=(st.remove||[]).map(sq);o.human=sw?oth(st.human||"r"):st.human;if(st.offer)o.offer=st.offer.map(z=>({...z,remove:z.remove&&z.remove.map(sq),start:z.start&&ms(z.start)}))}
     return o};
   return{name:(G.name||"")+"・變體",intro:`這是「${G.name||""}」的變體：${sw?"整盤轉過來、紅黑對調":"棋盤左右翻過來"}了，同一個思路再走一次。零失誤、不用提示過關，就拿到這一關的第三顆星。`,skill:G.skill,pass:"跟原關卡的棋盤題一樣",star3:"零失誤、不用提示",rules:G.rules,steps:steps.map(cv)}}
-function jVarLevel(v,x){const back=x.book===2?"#/adventure":"#/journey";setTop("⭐ "+x.name+"・變體",back);setTabs(false);v.className="view";v.innerHTML='<div class="pad muted">載入中…</div>';
+function jVarLevel(v,x){const back=x.book===2?"#/adventure":"#/journey",H=jHid()[x.id];if(!H){navReplace(back);return{}}const hard=H.k==="hard";
+  setTop(HIDN.ic+" "+x.name+"・"+HIDN.lv,back);setTabs(false);v.className="view";v.innerHTML='<div class="pad muted">載入中…</div>';
   (x.book===2?legendData2():legendData()).then(D=>{const G=D&&D.chapters[x.n-1]&&D.chapters[x.n-1].game,vid=x.id+"~v",R0=jRunGet(vid),M=store.get("jVarMode",{});let m=R0&&!R0.done&&M[x.id];if(!m){m=Math.random()<.5?"m":"s";M[x.id]=m;store.set("jVarMode",M)}
-    const VG=G&&jVarG(G,m);if(!VG){v.innerHTML='<div class="pad"><div class="card muted">這一關沒有變體</div></div>';return}
-    jLevel(v,{...x,id:vid,name:x.name+"・變體"},{G:VG,title:"⭐ 變體挑戰",icon:"⭐",back,done:n=>{if(n>=3)jSet(x.id,3,"闖關");return jStars()[x.id]||0}})});return{}}
+    if(!G||!(G.steps||[]).length){v.innerHTML='<div class="pad"><div class="card muted">這一關的資料還沒準備好</div></div>';return}
+    const VV=jVarG(G,m),base=VV||{skill:G.skill,steps:G.steps},how=VV?"局面翻過來了，同一個思路再走一次":"同一關再走一次",
+      need=hard?`零失誤、不用提示棋${(G.stars||[]).length?"，還要做到這一關原本的特別條件":""}`:"過關就好";
+    const HG={...base,name:(G.name||"")+"・"+HIDN.lv,intro:`${HIDN.lv}（${hard?"困難":"簡單"}）：${how}。${need}，就拿到一顆 ${HIDN.ic} ${HIDN.star}。`,pass:VV?VV.pass:G.pass,star3:need,
+      rules:hard?{...(G.rules||{}),maxMistakes3:0}:{maxMistakes3:99,maxMistakes2:99},stars:hard?(G.stars||[]).filter(c=>c&&c.step==null):[]};
+    jLevel(v,{...x,id:vid,name:x.name+"・"+HIDN.lv},{G:HG,title:HIDN.ic+" "+HIDN.lv,icon:HIDN.ic,back,hid:true,
+      done:n=>{const ok=n>=(hard?3:1),Hs=jHid(),h=Hs[x.id];if(ok&&h&&!h.got){h.got=true;store.set("jHid",Hs);addXP(20,HIDN.lv,"jh:"+x.id);setTimeout(()=>toast(`${HIDN.ic} 拿到${HIDN.star}！`),600)}return n},
+      line:n=>{const g=(jHid()[x.id]||{}).got;return n>=(hard?3:1)||g?`${HIDN.ic} ${HIDN.star}到手`:`這次沒拿到${HIDN.star}：要${need}，可以再挑戰`}})});return{}}
 function jLevel(v,s,src){prevData();const BKP=s.book===2?"#/adventure":"#/journey";setTop((src&&src.icon||"🎴")+" "+s.name,src?src.back:BKP);setTabs(false);v.className="view";v.innerHTML='<div class="pad muted">載入中…</div>';
   (src?Promise.resolve(null):s.book===2?legendData2():legendData()).then(D=>{const ch=src?{title:src.title||"",game:src.G}:D&&D.chapters[s.n-1],G=ch&&ch.game;if(!G||!(G.steps||[]).length){v.innerHTML='<div class="pad"><div class="card muted">這一關的資料還沒準備好</div></div>';return}
   let R=jRunGet(s.id);if(!R||R.done){R={id:s.id,k:0,miss:0,hint:false};jRunSet(R)}
@@ -4919,8 +4932,8 @@ function jLevel(v,s,src){prevData();const BKP=s.book===2?"#/adventure":"#/journe
   const blank=b=>b.map(()=>null);
   const B2=jStepsB2({v,bd,boardPage,stop,next,miss,failCard,setTap:f=>{onTap=f},setInc:i=>{inc=i},useHint:()=>{R.hint=true;save()},flag:(k,x)=>{R.f=R.f||{};R.f[k]=x;save()},sflag:o=>{R.fs=R.fs||{};R.fs[R.k]={...(R.fs[R.k]||{}),...o};save()}});
   if(R.k===0&&!R.intro){v.innerHTML=`<div class="pad">${hdr()}${ch.title?`<p class="muted" style="font-size:13px;margin:0 2px 8px">📖 ${esc(ch.title)}</p>`:""}${sayBox(G.intro||"")}
-    <div class="card" style="font-size:14px;line-height:1.8">${G.skill?`<b>練什麼</b>：${esc(G.skill)}<br>`:""}<b>過關</b>：${esc(G.pass||"")}<br><b>三星</b>：${esc(G.star3||"")}${!src&&jVarG(G,"m")?"；之後再過一次「變體」（局面翻過來），才拿得到第三顆星":""}${src?"":prevLine(s)}</div><button class="btn" id="lvGo" style="width:100%;margin-top:10px">開始</button></div>`;
-    (v.querySelector("#lvGo")||{}).onclick=()=>{R.intro=1;save();run()};return}
+    <div class="card" style="font-size:14px;line-height:1.8">${G.skill?`<b>練什麼</b>：${esc(G.skill)}<br>`:""}<b>過關</b>：${esc(G.pass||"")}<br><b>${src&&src.hid?"拿"+HIDN.star:"三星"}</b>：${esc(src?G.star3||"":lvStar3(G))}${src?"":prevLine(s)}</div><button class="btn" id="lvGo" style="width:100%;margin-top:10px">開始</button>${(()=>{const h=!src&&jHid()[s.id];return h&&!h.got?`<button class="btn ghost" id="lvHd" style="width:100%;margin-top:6px">${HIDN.ic} ${HIDN.lv}（${h.k==="hard"?"困難":"簡單"}）</button>`:""})()}</div>`;
+    (v.querySelector("#lvGo")||{}).onclick=()=>{R.intro=1;save();run()};(v.querySelector("#lvHd")||{}).onclick=()=>{jRunSet(null);location.hash="#/journey/"+s.id+"~v"};return}
   run();
   function run(){stop();const st=G.steps[R.k];if(!st)return finish();
     ({talk,guess,memory,play,puzzle,collect:puzzle,...B2}[st.t]||next)(st)}
@@ -5007,12 +5020,14 @@ function jLevel(v,s,src){prevData();const BKP=s.book===2?"#/adventure":"#/journe
       jStart(s.id,{human:st.human==="b"?"b":"r",level:Math.max(1,Math.min(8,st.ai||3)),journey:s.id,lv:{fen:st.start&&st.start.fen||"",turn:st.start&&st.start.turn||"r",remove:st.remove||[],noPerpetual:!!st.noPerpetual}},()=>{
         const P=store.get("jPending",null);if(P){P.lvp={goal:st.goal||"win",limit:st.limit||0,timer:st.timer||0,blind:!!st.blind,opp:st.opp||null,step:R.k,rule:st.rule||null};store.set("jPending",P)}
         location.hash="#/journey/play"},true)}}
-  function finish(){stop();const r=G.rules||{},m3=r.maxMistakes3!=null?r.maxMistakes3:0,m2=r.maxMistakes2!=null?r.maxMistakes2:2;
-    let stars=Math.min(b2StarOk(G,R)?3:2,R.miss<=m3&&!R.hint?3:R.miss<=m2?2:1);const needV=!src&&stars===3&&!!jVarG(G,"m")&&(jStars()[s.id]||0)<3;if(needV)stars=2;   /* 意見回饋 573：第三顆星要再過變體 */
-    const best=src?src.done(stars):jSet(s.id,stars,"闖關");   /* 第二集：stars 條件沒達成最多兩顆星 */if(R.p3!==undefined)store.set("park3d",R.p3);R.done=true;save();
+  function finish(){stop();const r=G.rules||{},m3=src?(r.maxMistakes3!=null?r.maxMistakes3:0):lvM3(G),m2=Math.max(r.maxMistakes2!=null?r.maxMistakes2:2,m3);
+    /* 開發者 11/5：三星太難（零失誤＋變體＋第二集的額外條件），改成只比兩星難一級：失誤不超過 1 次、不用提示棋；不用再過變體 */
+    let stars=Math.min(src?(b2StarOk(G,R)?3:2):3,R.miss<=m3&&!R.hint?3:R.miss<=m2?2:1);
+    const best=src?src.done(stars):jSet(s.id,stars,"闖關");if(R.p3!==undefined)store.set("park3d",R.p3);R.done=true;save();
+    const hid=!src&&stars===3?jHidRoll(s.id):null,needV=!!(hid&&!hid.got);   /* 拿到三星：30% 機率出現隱藏關卡（出現過就一直留著，直到過關） */
     const Ls=src?[]:s.book===2?jStages2():jStages(),more=!src&&s.n<Ls.length;v.className="view";
-    v.innerHTML=`<div class="pad"><div class="card" style="text-align:center"><div style="font-size:44px">🎉</div><h2 style="margin:4px 0">過關！</h2><div style="font-size:30px;color:var(--accent)">${"★".repeat(stars)}${"☆".repeat(3-stars)}</div>
-      <p class="muted">失誤 ${R.miss} 次${R.hint?"・用了提示（最多 ★★）":""}${best>stars?`・這關最好成績 ${"★".repeat(best)}`:""}</p>${G.outro?`<p style="line-height:1.8;text-align:left">${esc(G.outro)}</p>`:""}${G.reward?`<p class="muted" style="font-size:13px">🎁 ${esc(G.reward)}</p>`:""}${needV?`<div class="card" style="text-align:left;margin:10px 0 6px;line-height:1.75;font-size:14px">⭐ <b>第三顆星：變體挑戰</b><br>零失誤過關了！同一關的棋盤題會左右翻過來（或紅黑對調）再走一次——背答案沒用，要真的懂才過得了。</div><button class="btn" id="lvV">⭐ 挑戰變體</button>`:""}
+    v.innerHTML=`<div class="pad"><div class="card" style="text-align:center"><div style="font-size:44px">🎉</div><h2 style="margin:4px 0">過關！</h2>${src&&src.line?`<div style="font-size:20px;color:var(--accent);margin:6px 0">${esc(src.line(stars))}</div>`:`<div style="font-size:30px;color:var(--accent)">${"★".repeat(stars)}${"☆".repeat(3-stars)}</div>`}
+      <p class="muted">失誤 ${R.miss} 次${R.hint&&!(src&&src.hid)?"・用了提示（最多 ★★）":R.hint?"・用了提示":""}${best>stars?`・這關最好成績 ${"★".repeat(best)}`:""}</p>${G.outro?`<p style="line-height:1.8;text-align:left">${esc(G.outro)}</p>`:""}${G.reward?`<p class="muted" style="font-size:13px">🎁 ${esc(G.reward)}</p>`:""}${needV?`<div class="card" style="text-align:left;margin:10px 0 6px;line-height:1.75;font-size:14px">${HIDN.ic} <b>${HIDN.lv}出現了！</b>（${hid.k==="hard"?"困難：零失誤、不用提示棋，局面還會翻過來":"簡單：過關就好"}）<br>過了可以額外拿一顆 ${HIDN.ic} ${HIDN.star}。現在不想玩也沒關係，之後在這一關的說明裡還找得到。</div><button class="btn" id="lvV">${HIDN.ic} 進入${HIDN.lv}</button>`:""}
       ${more?`<button class="btn" id="lvNx">📖 讀第${CNUM(s.n+1)}回</button>`:""}${src&&src.next?`<button class="btn" id="lvCn">${esc(src.next[0])}</button>`:""}<button class="btn ghost" id="lvBk" style="margin-top:6px">${src?"回上一頁":s.book===2?"回第二集":"回雲河棋路"}</button><button class="btn ghost" id="lvAg" style="margin-top:6px">再挑戰一次</button></div></div>`;
     {const vb=v.querySelector("#lvV");if(vb)vb.onclick=()=>{jRunSet(null);location.hash="#/journey/"+s.id+"~v"}}
     const nb=v.querySelector("#lvNx");if(nb)nb.onclick=()=>{if(s.book===2)store.set("legBook",2);goUp("#/adventure",()=>s.book===2?legendRead2(s.n+1):legendRead(s.n+1))};   /* 意見回饋 607：退回冒險頁那一層再打開下一回（不往前推一頁） */
