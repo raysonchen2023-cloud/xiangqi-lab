@@ -699,7 +699,7 @@ html[data-era=ming] .topbar,html[data-era=qing] .topbar{border-bottom-width:4px}
       if(!window.caches)return go();caches.keys().then(function(ks){return Promise.all(ks.filter(function(k){return k.indexOf("xqlab-app-")===0}).map(function(k){return caches.delete(k)}))})
         .then(function(){return navigator.serviceWorker&&navigator.serviceWorker.getRegistration()}).then(function(r){return r&&r.update()}).catch(function(){}).then(go)}};setTimeout(chk,4000)})();
 </script>
-<script>window.XQ_OFFLINE=true;window.XQ_BUILD="20261105-0745";</script>
+<script>window.XQ_OFFLINE=true;window.XQ_BUILD="20261105-0800";</script>
 <script src="core.js"></script>
 <script src="engine.js"></script>
 <script src="local.js"></script>
@@ -4608,7 +4608,7 @@ function lvIncense(host,sec,done){if(!host||!sec)return{stop(){}};const el=docum
   return{stop(){on=false;el.remove()}}}
 /* ================= 意見回饋 573（開發者）：讓掉落的棋譜真的有用 =================
    ① 預習卷：每一關配 2 局古譜同型例局（data/lines/preview.json，tools/build_preview.js 產生）。公園茶杯、驛站優先掉「下一關」的預習卷；關卡裡按「📜 預習卷」翻，不算用提示、不會少星
-   ② 打譜猜一手：棋譜和預習卷打開時，先停在關鍵那一步讓你猜（妙棋精選停在妙手、古譜殘局猜第一手、古譜全局猜第 9 步）；第一次就猜對＝有心得（+10 修為，一天最多 3 次）
+   ② 打譜連猜三步：棋譜和預習卷打開時，停在關鍵那一步（妙棋精選停在妙手、古譜殘局從第一手、古譜全局從第 9 步）連猜同一方三手；三步都一次猜中＝有心得，每 5 個心得換 1 顆提示棋
    ③ 變體星：零失誤過關後，第三顆星要再過「變體」——同一關的棋盤題左右翻過來（或紅黑對調）再走一次，背答案沒用 */
 let PREV_P=null,PREV_D=null;const prevData=()=>PREV_P||(PREV_P=fetch("data/lines/preview.json").then(r=>r.ok?r.json():{}).catch(()=>({})).then(d=>(PREV_D=d)));
 /* 妙棋精選的名字後面寫著妙手（「・第 28 回合 車5平8」），猜之前不能露出來 */
@@ -4619,38 +4619,51 @@ function prevGrant(x){const o=prevOwn();o[x.id]=Date.now();store.set("jPrev",o)}
 function prevBtn(x){const id=jBaseId(x&&x.id);if(!PREV_D||!(PREV_D[id]||[]).length)return"";const own=!!prevOwn()[id];return`<button class="lk" data-prev="${id}" style="margin-left:auto;font-size:13px;white-space:nowrap${own?"":";opacity:.55"}">📜 預習卷${own?"":"（還沒有）"}</button>`}
 function prevLine(x){const id=jBaseId(x&&x.id);if(!PREV_D||!(PREV_D[id]||[]).length)return"";return prevOwn()[id]?"<br><b>預習卷</b>：已經拿到，可以先按上面的「📜 預習卷」翻（不算用提示）":"<br><b>預習卷</b>：還沒拿到——公園的茶杯、驛站有機會撿到這一關的預習卷"}
 async function prevSheet(x){const id=jBaseId(x.id),P=(await prevData())[id]||[];if(!P.length)return;if(!prevOwn()[id]){toast("📜 這一關的預習卷還沒拿到：去公園點茶杯、到驛站坐坐，有機會撿到");return}const SG=studyGet();
-  sheet("📜 預習卷・"+(x.lvName||""),b=>{b.innerHTML=`<p class="muted" style="font-size:13.5px;line-height:1.7;margin:0 0 8px">古譜裡跟這一關同型的例局。先猜關鍵那一步，再看整盤；翻預習卷不算用提示、不會少星星。</p><div class="items" style="padding:0">${P.map((z,i)=>{const g=SG[studyKey(z)]||{};return`<button class="item" data-pv="${i}"><span class="lb">📜</span><span class="tx"><b style="white-space:normal;line-height:1.45">${esc(toT(z.name))}</b><span style="white-space:normal">${esc(z.why||"")}${g.i?"・💡 有心得":g.r?"・✔ 讀過":""}</span></span><span class="muted">›</span></button>`}).join("")}</div>`;
+  sheet("📜 預習卷・"+(x.lvName||""),b=>{b.innerHTML=`<p class="muted" style="font-size:13.5px;line-height:1.7;margin:0 0 8px">古譜裡跟這一關同型的例局。先連猜關鍵的三步，再看整盤；三步都一次猜中有心得（每 5 個換 1 顆提示棋）。翻預習卷不算用提示、不會少星星。</p><div class="items" style="padding:0">${P.map((z,i)=>{const g=SG[studyKey(z)]||{};return`<button class="item" data-pv="${i}"><span class="lb">📜</span><span class="tx"><b style="white-space:normal;line-height:1.45">${esc(toT(z.name))}</b><span style="white-space:normal">${esc(z.why||"")}${g.i?"・💡 有心得":g.r?"・✔ 讀過":""}</span></span><span class="muted">›</span></button>`}).join("")}</div>`;
     b.querySelectorAll("[data-pv]").forEach(y=>y.onclick=()=>studyOpen(P[+y.dataset.pv],{back:()=>prevSheet(x),ret:location.hash}))})}
 document.addEventListener("click",e=>{const t=e.target&&e.target.closest&&e.target.closest("[data-prev]");if(!t)return;e.preventDefault();vibrate(5);const x=jFindStage(t.dataset.prev);if(x)prevSheet(x)});
+/* 意見回饋 573（開發者 11/5：讀完拿修為太簡單、會一直按下一步）：打譜改成「連猜三步」——同一方連續三手（中間對方的應著自動走），每步三選一、可以再猜一次；
+   三步都一次猜中才算「💡 有心得」。心得不給修為，改成攢著：每 5 個心得換 1 顆提示棋（存在庫存）。一份棋譜只有第一次猜才算（看過答案再猜是練習） */
+const insightN=()=>{let n=store.get("insightN",null);if(n==null){n=Object.values(studyGet()).filter(g=>g&&g.i).length;store.set("insightN",n)}return n};
 async function studyOpen(x,o){o=o||{};const C=window.XQCore;let it;try{it=await api(`/db/item?c=${encodeURIComponent(x.c)}&id=${encodeURIComponent(x.id)}`)}catch(e){toast("棋譜載入失敗");return}
   const full=()=>{closeSheet();store.set("dbReturn",{c:x.c,to:o.ret||"#/adventure",at:Date.now()});location.hash=`#/db/${x.c}/${encodeURIComponent(x.id)}`};
   const ln=(it.lines||[]).find(l=>l.parent==null)||(it.lines||[])[0]||{},mv=(ln.moves||[]).map(m=>Array.isArray(m)?m:[m.f,m.t]),b0=it.board?it.board.slice():C.parseFen(C.START);if(!mv.length)return full();
-  const opening=!it.board||b0.filter(Boolean).length>=28;let k=x.c==="brilliant"&&it.jump?it.jump-1:opening?Math.min(mv.length-1,8):0;k=Math.max(0,Math.min(k,mv.length-1));
+  const opening=!it.board||b0.filter(Boolean).length>=28;let k0=x.c==="brilliant"&&it.jump?it.jump-1:opening?Math.min(mv.length-1,8):0;k0=Math.max(0,Math.min(k0,mv.length-1));
   const p0=b0[mv[0][0]],first=p0&&p0===p0.toUpperCase()?"r":"b",turnAt=n=>n%2?(first==="r"?"b":"r"):first;
   const boardAt=n=>{let b=b0;for(let i=0;i<n;i++)b=C.make(b,mv[i][0],mv[i][1]);return b};
-  const me=turnAt(k),flip=me==="b",B=boardAt(k),[af,at]=mv[k],L=C.legal(B,me).filter(([f,t])=>!(f===af&&t===at));
-  const same=L.filter(([f])=>String(B[f]).toUpperCase()===String(B[af]).toUpperCase()),sh=a=>a.map(v=>[Math.random(),v]).sort((p,q)=>p[0]-q[0]).map(v=>v[1]);
-  const opts=[[af,at]];for(const m of sh(same).concat(sh(L)))if(opts.length<3&&!opts.some(z=>z[0]===m[0]&&z[1]===m[1]))opts.push(m);
-  const O=sh(opts).map(([f,t])=>({f,t,cn:C.notate(B,f,t),ok:f===af&&t===at})),key=studyKey(x),before=studyGet()[key]||{};
-  const ask=x.c==="brilliant"?"這一步是有名的妙手，猜猜是哪一步？":k===0?"古譜的第一步，猜猜怎麼走？":"古譜裡這一步怎麼走？";
-  sheet("📜 "+recTitle(toT(x.name||it.name||"棋譜")),b=>{b.innerHTML=`${x.why?`<p class="muted" style="font-size:13px;line-height:1.6;margin:0 0 6px">${esc(x.why)}</p>`:""}<div id="sdB" style="max-width:340px;margin:0 auto"></div><p id="sdQ" style="font-size:15px;line-height:1.7;margin:8px 2px 4px"></p><div class="lvch" id="sdO"></div><div id="sdA"></div><div id="sdR"></div>`;
+  const me=turnAt(k0),flip=me==="b",steps=[k0,k0+2,k0+4].filter(k=>k<mv.length),sh=a=>a.map(v=>[Math.random(),v]).sort((p,q)=>p[0]-q[0]).map(v=>v[1]);
+  const optsAt=k=>{const B=boardAt(k),[af,at]=mv[k],L=C.legal(B,me).filter(([f,t])=>!(f===af&&t===at)),same=L.filter(([f])=>String(B[f]).toUpperCase()===String(B[af]).toUpperCase()),opts=[[af,at]];
+    for(const m of sh(same).concat(sh(L)))if(opts.length<3&&!opts.some(z=>z[0]===m[0]&&z[1]===m[1]))opts.push(m);return{B,af,at,O:sh(opts).map(([f,t])=>({f,t,cn:C.notate(B,f,t),ok:f===af&&t===at}))}};
+  const key=studyKey(x),before=studyGet()[key]||{},N=steps.length;
+  sheet("📜 "+recTitle(toT(x.name||it.name||"棋譜")),b=>{b.innerHTML=`${x.why?`<p class="muted" style="font-size:13px;line-height:1.6;margin:0 0 6px">${esc(x.why)}</p>`:""}<div id="sdB" style="max-width:340px;margin:0 auto"></div><p id="sdP" style="text-align:center;font-size:13px;margin:6px 0 0;letter-spacing:.2em"></p><p id="sdQ" style="font-size:15px;line-height:1.7;margin:4px 2px"></p><div class="lvch" id="sdO"></div><div id="sdA"></div><div id="sdR"></div>`;
     const bd=Board(()=>{});bd.svg.style.width="100%";b.querySelector("#sdB").append(bd.svg);
-    const Q=b.querySelector("#sdQ"),OB=b.querySelector("#sdO"),AB=b.querySelector("#sdA"),RB=b.querySelector("#sdR");let tries=0,cur=-1,alive=true;
-    let n=Math.max(0,k-4);bd.draw(boardAt(n),{flip,last:n?{f:mv[n-1][0],t:mv[n-1][1]}:null});Q.textContent=k>0?"先看前面幾步……":"";
-    const step=()=>{if(!alive||!b.isConnected)return;if(n<k){n++;bd.draw(boardAt(n),{flip,last:{f:mv[n-1][0],t:mv[n-1][1]}});setTimeout(step,650)}else askNow()};setTimeout(step,k>0?500:0);
-    function askNow(){Q.textContent=`${C.PLAYER[me]}走：${ask}`;OB.innerHTML=O.map((z,i)=>`<button class="btn ghost" data-o="${i}">${esc(z.cn)}</button>`).join("");
-      OB.querySelectorAll("[data-o]").forEach(y=>y.onclick=()=>{if(y.disabled)return;cur=+y.dataset.o;const z=O[cur];OB.querySelectorAll("[data-o]").forEach(q=>q.classList.toggle("on",+q.dataset.o===cur));vibrate(5);
-        bd.draw(B,{flip,last:k?{f:mv[k-1][0],t:mv[k-1][1]}:null,sel:z.f,targets:[z.t],arrow:true,forceArrow:true});AB.innerHTML='<button class="btn" id="sdOk" style="width:100%;margin-top:6px">✔ 就這一步</button>';AB.querySelector("#sdOk").onclick=pick})}
-    function pick(){const z=O[cur];if(!z)return;tries++;AB.innerHTML="";
+    const Q=b.querySelector("#sdQ"),PB=b.querySelector("#sdP"),OB=b.querySelector("#sdO"),AB=b.querySelector("#sdA"),RB=b.querySelector("#sdR");let si=0,tries=0,cur=-1,alive=true,allFirst=true,S=null;const res=[];
+    const prog=()=>{PB.textContent=N>1?`連猜 ${N} 步　${steps.map((_,i)=>res[i]===1?"●":res[i]===0?"✕":i===si?"◎":"○").join(" ")}`:""};
+    const lastOf=k=>k?{f:mv[k-1][0],t:mv[k-1][1]}:null,live=()=>alive&&b.isConnected;
+    let n=Math.max(0,k0-4);bd.draw(boardAt(n),{flip,last:lastOf(n)});Q.textContent=k0>0?"先看前面幾步……":"";prog();
+    const step=()=>{if(!live())return;if(n<k0){n++;bd.draw(boardAt(n),{flip,last:lastOf(n)});setTimeout(step,650)}else askNow()};setTimeout(step,k0>0?500:0);
+    function askNow(){const k=steps[si];S=optsAt(k);tries=0;cur=-1;prog();bd.draw(S.B,{flip,last:lastOf(k)});
+      Q.textContent=si===0?`${C.PLAYER[me]}走：${x.c==="brilliant"?"這一步是有名的妙手，猜猜是哪一步？":k===0?"古譜的第一步，猜猜怎麼走？":"古譜裡這一步怎麼走？"}${N>1?`（連猜 ${N} 步，第 1 步）`:""}`
+        :`對方應了「${C.notate(boardAt(k-1),mv[k-1][0],mv[k-1][1])}」，你接著怎麼走？（第 ${si+1}／${N} 步）`;
+      OB.innerHTML=S.O.map((z,i)=>`<button class="btn ghost" data-o="${i}">${esc(z.cn)}</button>`).join("");AB.innerHTML="";
+      OB.querySelectorAll("[data-o]").forEach(y=>y.onclick=()=>{if(y.disabled)return;cur=+y.dataset.o;const z=S.O[cur];OB.querySelectorAll("[data-o]").forEach(q=>q.classList.toggle("on",+q.dataset.o===cur));vibrate(5);
+        bd.draw(S.B,{flip,last:lastOf(k),sel:z.f,targets:[z.t],arrow:true,forceArrow:true});AB.innerHTML='<button class="btn" id="sdOk" style="width:100%;margin-top:6px">✔ 就這一步</button>';AB.querySelector("#sdOk").onclick=pick})}
+    function pick(){const z=S&&S.O[cur];if(!z)return;tries++;AB.innerHTML="";const k=steps[si];
       if(!z.ok&&tries<2){vibrate([20,40,20]);const y=OB.querySelector(`[data-o="${cur}"]`);if(y){y.disabled=true;y.classList.remove("on")}Q.textContent="不是這步，再想一次（還有一次機會）";cur=-1;return}
-      OB.querySelectorAll("[data-o]").forEach(q=>{q.disabled=true;if(O[+q.dataset.o].ok)q.classList.remove("ghost")});
-      const ins=z.ok&&tries===1,G2=studyGet(),g={...(G2[key]||{}),r:1};if(ins)g.i=1;G2[key]=g;store.set("study",G2);
-      let gain=0;if(ins&&!before.i){const day=localDay(),d=store.get("studyDay",{}),used=d.d===day?d.n:0;if(used<3){addXP(10,"打譜心得","study:"+key);store.set("studyDay",{d:day,n:used+1});gain=10}}
-      if(z.ok)vibrate(15);let bb=C.make(B,af,at);bd.draw(bb,{flip,last:{f:af,t:at}});
-      const cm=it.comments&&(it.comments[(ln.id||0)+"_"+(k+1)]||it.comments[(ln.id||0)+"_"+it.jump]);const rest=[];for(let i=k+1;i<Math.min(mv.length,k+7);i++){rest.push(C.notate(bb,mv[i][0],mv[i][1]));bb=C.make(bb,mv[i][0],mv[i][1])}
-      Q.textContent=(z.ok?(ins?"✔ 一次就猜中！":"✔ 猜中了"):"✘ 正解是「"+O.find(q=>q.ok).cn+"」")+(ins?(gain?`　💡 有心得 +${gain} 修為`:"　💡 有心得"):"");
-      RB.innerHTML=`${cm?`<p style="font-size:14px;line-height:1.75;margin:6px 2px">${esc(toT(String(cm)))}</p>`:rest.length?`<p class="muted" style="font-size:13.5px;line-height:1.7;margin:6px 2px">古譜接著走：${esc(rest.join("　"))}${mv.length>k+7?"……":""}</p>`:""}<button class="btn" id="sdF" style="width:100%;margin-top:6px">📖 打開整盤棋譜（可以自己擺、叫引擎分析）</button>${o.back?'<button class="btn ghost" id="sdBk" style="width:100%;margin-top:6px">← 回上一頁</button>':""}`;
-      RB.querySelector("#sdF").onclick=full;const bk=RB.querySelector("#sdBk");if(bk)bk.onclick=()=>{alive=false;o.back()}}})}
+      OB.querySelectorAll("[data-o]").forEach(q=>{q.disabled=true;if(S.O[+q.dataset.o].ok)q.classList.remove("ghost")});
+      res[si]=z.ok?1:0;if(!z.ok||tries>1)allFirst=false;if(z.ok)vibrate(15);prog();
+      bd.draw(C.make(S.B,S.af,S.at),{flip,last:{f:S.af,t:S.at}});
+      const ansCn=S.O.find(q=>q.ok).cn;
+      if(!z.ok||si+1>=N){Q.textContent=(z.ok?"✔ 猜中了":"✘ 正解是「"+ansCn+"」")+(z.ok?"":"——連猜到這裡中斷");return done(k)}
+      Q.textContent=(tries===1?"✔ 一次就猜中！":"✔ 猜中了")+"　對方要應了……";
+      setTimeout(()=>{if(!live())return;const r=k+1;if(r<mv.length){bd.draw(boardAt(r+1),{flip,last:{f:mv[r][0],t:mv[r][1]}})}setTimeout(()=>{if(!live())return;si++;askNow()},700)},700)}
+    function done(k){const allOk=res.length===N&&res.every(v=>v===1),first=!before.t,ins=first&&allFirst&&allOk,G2=studyGet(),g={...(G2[key]||{}),r:1,t:1};   /* 只有第一次猜才算心得：看過答案再猜一次只是練習 */if(ins)g.i=1;G2[key]=g;store.set("study",G2);
+      let msg="";if(ins&&!before.i){const c=insightN()+1;store.set("insightN",c);if(c%5===0){store.set("hintBonus",(store.get("hintBonus",0)||0)+1);msg=`🎁 攢滿 5 個心得，換到 1 顆提示棋（存在庫存，闖關時用）`}else msg=`💡 有心得！再 ${5-c%5} 個心得換 1 顆提示棋（${c%5}／5）`}
+      else if(ins)msg="💡 這份棋譜之前就有心得了";else if(!first&&allOk)msg="（練習）這份棋譜第一次猜的時候才算心得";else if(allOk)msg="有幾步是第二次才猜中——三步都一次猜中才算心得";else if(first)msg="這份棋譜的心得沒拿到；換別份棋譜再試";
+      const cm=it.comments&&(it.comments[(ln.id||0)+"_"+(k0+1)]||it.comments[(ln.id||0)+"_"+it.jump]);let bb=boardAt(k+1);const rest=[];for(let i=k+1;i<Math.min(mv.length,k+7);i++){rest.push(C.notate(bb,mv[i][0],mv[i][1]));bb=C.make(bb,mv[i][0],mv[i][1])}
+      RB.innerHTML=`${msg?`<p style="font-size:14.5px;line-height:1.7;margin:6px 2px;font-weight:700">${esc(msg)}</p>`:""}${cm?`<p style="font-size:14px;line-height:1.75;margin:6px 2px">${esc(toT(String(cm)))}</p>`:rest.length?`<p class="muted" style="font-size:13.5px;line-height:1.7;margin:6px 2px">古譜接著走：${esc(rest.join("　"))}${mv.length>k+7?"……":""}</p>`:""}
+        <button class="btn ghost" id="sdAg" style="width:100%;margin-top:6px">↺ 再猜一次</button><button class="btn" id="sdF" style="width:100%;margin-top:6px">📖 打開整盤棋譜（可以自己擺、叫引擎分析）</button>${o.back?'<button class="btn ghost" id="sdBk" style="width:100%;margin-top:6px">← 回上一頁</button>':""}`;
+      RB.querySelector("#sdF").onclick=full;RB.querySelector("#sdAg").onclick=()=>{alive=false;studyOpen(x,o)};const bk=RB.querySelector("#sdBk");if(bk)bk.onclick=()=>{alive=false;o.back()}}})}
 /* 變體：u＝ICCS 著法（"h2e2"）。m＝左右翻；s＝整盤轉半圈＋紅黑對調（走的那一方換顏色）。起始局面都有指定 fen 才用 s（從開局下的轉過來會變成黑先） */
 function jVarG(G,mode){const all=G.steps||[];let steps=all.filter(st=>["guess","puzzle","collect"].includes(st.t));if(!steps.length){const P=all.filter(st=>st.t==="play");steps=P.length?[P[P.length-1]]:[]}if(!steps.length)return null;
   const hasFen=z=>!!(z&&z.fen),okS=steps.every(st=>st.t==="guess"?hasFen(st.start):st.t==="play"?hasFen(st.start)&&!(st.offer||[]).length:(st.t==="collect"?st.from||[]:st.items||[]).every(it=>hasFen(it.start))),sw=mode==="s"&&okS;
