@@ -750,7 +750,7 @@ html[data-era="qing"]:not([data-font="sys"]){--serif:"XQ twkai","Noto Serif TC",
       if(!window.caches)return go();caches.keys().then(function(ks){return Promise.all(ks.filter(function(k){return k.indexOf("xqlab-app-")===0}).map(function(k){return caches.delete(k)}))})
         .then(function(){return navigator.serviceWorker&&navigator.serviceWorker.getRegistration()}).then(function(r){return r&&r.update()}).catch(function(){}).then(go)}};setTimeout(chk,4000)})();
 </script>
-<script>window.XQ_OFFLINE=true;window.XQ_BUILD="20261105-1520";</script>
+<script>window.XQ_OFFLINE=true;window.XQ_BUILD="20261105-1536";</script>
 <script src="core.js"></script>
 <script src="engine.js"></script>
 <script src="local.js"></script>
@@ -1862,6 +1862,8 @@ if(OFF&&"serviceWorker" in navigator){
     if(inGame()){shown=false;const w=()=>{if(inGame())return setTimeout(w,4000);notifyNew(nv,note)};setTimeout(w,4000);return}
     if(0){const t=document.createElement("button");t.className="toast upd";t.style.cssText="bottom:auto;top:calc(64px + var(--safeT));pointer-events:auto;z-index:300";
       t.textContent="🆕 有新版本"+(v?"（"+v+"）":"")+"，點這裡在背景更新，下完這盤換頁時套用";t.onclick=doUpdate;document.body.append(t);return}
+    /* 意見回饋 622（開發者）：更新內容只有開發者看得到；一般玩家只在「你回報的問題修好了」（checkFixes）看到自己回報的那幾則 */
+    try{if(!(typeof DEVMODE==="function"&&DEVMODE()))note=""}catch(e){note=""}
     modal(`<div class="em">🆕</div><h2>有新版本</h2>${note?`<p style="text-align:left;white-space:pre-wrap">${esc(note)}</p>`:""}<p class="muted">${v?"版本 "+esc(v)+"<br>":""}在背景更新，你可以留在這個畫面繼續做事，換到別的頁面時才套用新版。你的戰績、棋譜和設定都會保留。</p>`,[["背景更新",doUpdate],["稍後",()=>{shown=false},true]],"keep")}   /* 意見回饋 607：keep＝換頁也不關 */
   window.XQ_notifyNew=notifyNew;
   window.XQ_checkUpdate=async()=>{chk(true);const[a,n]=await Promise.all([appVer(),netVer()]);return{a,n}};
