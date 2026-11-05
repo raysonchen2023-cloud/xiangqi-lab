@@ -788,7 +788,7 @@ html[data-era="qing"]:not([data-font="sys"]){--serif:"XQ twkai","Noto Serif TC",
       if(!window.caches)return go();caches.keys().then(function(ks){return Promise.all(ks.filter(function(k){return k.indexOf("xqlab-app-")===0}).map(function(k){return caches.delete(k)}))})
         .then(function(){return navigator.serviceWorker&&navigator.serviceWorker.getRegistration()}).then(function(r){return r&&r.update()}).catch(function(){}).then(go)}};setTimeout(chk,4000)})();
 </script>
-<script>window.XQ_OFFLINE=true;window.XQ_BUILD="20261106-0738";</script>
+<script>window.XQ_OFFLINE=true;window.XQ_BUILD="20261106-0755";</script>
 <script src="core.js"></script>
 <script src="engine.js"></script>
 <script src="local.js"></script>
@@ -3480,7 +3480,7 @@ function feedbackSheet(){let type="🐞 錯誤";
       for(let k=0;k<more.length;k++)ok=(await sendRecord(Object.assign({},info,{type,text:`📎 附件續（第 ${k+2}/${more.length+1} 段，接上一則：${t.slice(0,40)}）
 `+more[k],contact,img:""})))&&ok;closeSheet();toast(ok?"✅ 已送出，謝謝你的回饋！":"已存在手機裡，有網路時會自動送出")}})}
 // 線上 ID 登記：名字或段位有變、或超過 7 天，就送一筆「玩家」紀錄到同一個表單
-async function reportPlayer(){if(!OFF||!FEEDBACK_FORM.action)return;if(/^(localhost|127\.|\[::1\])/.test(location.hostname))return;   /* 電腦本機測試不送玩家紀錄（第 502、504 列是測試時誤送的） */const i=await feedbackInfo(),key=i.id+"|"+i.name+"|"+i.rank.split(" ")[0],last=store.get("playerRep",null);
+async function reportPlayer(){if(!OFF||!FEEDBACK_FORM.action)return;if(navigator.webdriver)return;   /* 意見回饋 652：自動化測試（Playwright 等）開的 App 不送玩家登記，名單才分得清真人 */if(/^(localhost|127\.|\[::1\])/.test(location.hostname))return;   /* 電腦本機測試不送玩家紀錄（第 502、504 列是測試時誤送的） */const i=await feedbackInfo(),key=i.id+"|"+i.name+"|"+i.rank.split(" ")[0],last=store.get("playerRep",null);
   if(last&&last.k===key&&Date.now()-last.at<7*864e5)return;
   if(await sendRecord(Object.assign(i,{type:"👤 玩家",text:"",contact:""})))store.set("playerRep",{k:key,at:Date.now()})}
 setTimeout(()=>{flushFeedback();reportPlayer()},8000);window.addEventListener("online",()=>setTimeout(flushFeedback,2000));
@@ -4163,7 +4163,9 @@ const cupPrizeText=p=>{const z=CUP_PRIZE[p];if(!z)return"";return[z.ling?`🪙 �
 function cupTitle(){try{const c=window.XQNet&&XQNet.cupChamp&&XQNet.cupChamp();if(c&&!c.test&&c.id===meInfo().id)return"本週擂主";const G=Object.values(cupGot());
   if(G.filter(x=>x===1).length>=3)return"三屆擂主";if(G.includes(1))return"千秋擂主";if(G.length>=4)return"擂台常客"}catch(e){}return""}
 /* 大廳名字旁的🏆：只認裁判台簽名的擂主碑（自己改 App 改不出來） */
-function cupBadge(id){try{const c=window.XQNet&&XQNet.cupChamp&&XQNet.cupChamp();return c&&!c.test&&c.id===id?' <span title="本週擂主" style="font-size:13px">🏆</span>':""}catch(e){return""}}
+/* 意見回饋 652（開發者）：開發者模式下，32 位虛擬玩家的名字旁邊多一個 🤖（一般玩家看不到，照舊不標示） */
+function devBotTag(id){try{return typeof DEVMODE==="function"&&DEVMODE()&&window.XQNet&&XQNet.isBot&&XQNet.isBot(id)?' <span title="虛擬玩家（只有開發者模式看得到）" style="font-size:12px;opacity:.85">🤖</span>':""}catch(e){return""}}
+function cupBadge(id){let t="";try{const c=window.XQNet&&XQNet.cupChamp&&XQNet.cupChamp();t=c&&!c.test&&c.id===id?' <span title="本週擂主" style="font-size:13px">🏆</span>':""}catch(e){}return t+devBotTag(id)}
 const cupT=t=>{try{return new Date(t).toLocaleString("zh-TW",{weekday:"short",month:"numeric",day:"numeric",hour:"2-digit",minute:"2-digit",hour12:false})}catch(e){return""}};
 function cupMine(S){S=S||(window.XQNet&&XQNet.cup());if(!S||!S.m)return null;const me=meInfo().id;let last=null;
   for(const id of S.order||[]){const m=S.m[id];if(m&&((m.a&&m.a.id===me)||(m.b&&m.b.id===me))){last=m;if(m.st!=="done")return m}}return last}
