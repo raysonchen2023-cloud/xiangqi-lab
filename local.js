@@ -266,12 +266,12 @@ var XQ=(function(){
       if(!legal(S.board,S.turn).some(([x,y])=>x===f&&y===t))throw new Error("這步不合法");
       const T={moves:g.moves.map(([a,z])=>({f:a,t:z}))};stateRebuild(T);stateApply(T,f,t);const r=judgeState(T);
       XQNet.update(n=>{if(XQNet.tickMove)XQNet.tickMove(n,sd);n.moves.push([f,t]);n.draw=null;if(r)n.result=r})}
-    else if(p==="/pvp/undo"){if(g.result)throw new Error("這局已經結束，不能悔棋");const last=S.moves[S.moves.length-1];
+    else if(p==="/pvp/undo"){if(g.result)throw new Error("這局已經結束，不能悔棋");if(g.cup)throw new Error("擂台比賽落子無悔，不能悔棋");const last=S.moves[S.moves.length-1];
       if(!last||last.by!==sd)throw new Error("對方已經走了，不能悔棋");XQNet.update(n=>{n.moves.pop();n.draw=null})}
-    else if(p==="/pvp/draw"){if(g.result)throw new Error("這局已經結束");
+    else if(p==="/pvp/draw"){if(g.result)throw new Error("這局已經結束");if(g.cup&&!(g.draw&&g.draw!==sd)&&g.moves.length<40)throw new Error("擂台比賽要下滿 20 回合才能提和");
       XQNet.update(n=>{if(n.draw&&n.draw!==sd){n.result={w:null,why:"雙方同意和棋"};n.draw=null}else n.draw=n.draw===sd?null:sd})}
     else if(p==="/pvp/resign"){if(!g.result)XQNet.update(n=>{n.result={w:opp(sd),why:PLAYER[sd]+"認輸"}})}
-    else if(p==="/pvp/new"){if(!g.result)throw new Error("這局還沒下完");   // 再來一局：交換紅黑
+    else if(p==="/pvp/new"){if(!g.result)throw new Error("這局還沒下完");if(g.cup)throw new Error("擂台比賽的下一盤由裁判台安排，請回到千秋週擂頁");   // 再來一局：交換紅黑
       XQNet.update(n=>{const r=n.red;n.red=n.black;n.black=r;n.moves=[];n.result=null;n.draw=null;n.id=new Date().toISOString().replace(/[:.]/g,"-").slice(0,19)})}
     return netState()}
 

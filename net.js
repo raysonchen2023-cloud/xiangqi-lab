@@ -10,6 +10,14 @@ var XQNet=(function(){
   const URLS=["wss://broker.emqx.io:8084/mqtt"];
   let ROOT="xqlab-r7k2q/v1";try{const r=JSON.parse(localStorage.getItem("xq_netRoot")||"null");if(r&&/^[\w-]{3,40}$/.test(r))ROOT="xqlab-test-"+r+"/v1"}catch(e){}
   const ALIVE=150000;
+  /* 意見回饋 635（開發者：每週擂台大賽）：千秋週擂由開發者電腦上的裁判台（tools/cup-host.js）主辦；報名名單、籤表、賽果都由裁判台簽名後放在 cup/state，
+     App 只認簽名對得上的那一份（公開伺服器誰都能發訊息，沒簽名就能偽造冠軍）。這裡只放公鑰，私鑰只在開發者電腦 */
+  const CUP_KEY=/^xqlab-test-/.test(ROOT)?{x:"AdIvuWHACyopyR4QKZPcwXRj-CwjFPRGKhdtTRUD7iE",y:"gixRZI_bD2-G1VJBK8pTVUf--TjFwr2o08PhCvTzR3o"}:{x:"AFFHksP_gHhR6T8pWVfhfnO5NuvpRGyjDQFgdjPGlO8",y:"JYvXhSoW71HnDaFZpMroP6kuJy6ILXWRnJTrqBYGXIs"};
+  let CUP=null,CUPHALL=null,cupKeyP=null;
+  const b64u=t=>{t=String(t).replace(/-/g,"+").replace(/_/g,"/");while(t.length%4)t+="=";const r=atob(t),u=new Uint8Array(r.length);for(let i=0;i<r.length;i++)u[i]=r.charCodeAt(i);return u};
+  async function cupVerify(msg){try{const x=JSON.parse(msg);if(!x||typeof x.d!=="string"||typeof x.s!=="string"||!(window.crypto&&crypto.subtle))return null;
+    cupKeyP=cupKeyP||crypto.subtle.importKey("jwk",{kty:"EC",crv:"P-256",x:CUP_KEY.x,y:CUP_KEY.y,ext:true},{name:"ECDSA",namedCurve:"P-256"},false,["verify"]);
+    const ok=await crypto.subtle.verify({name:"ECDSA",hash:"SHA-256"},await cupKeyP,b64u(x.s),new TextEncoder().encode(x.d));return ok?JSON.parse(x.d):null}catch(e){return null}}
 
   // ---------- 很小的 MQTT 3.1.1 用戶端（只用 QoS 0：發布、訂閱、保留訊息、遺囑、心跳） ----------
   function mqtt(url,o){
@@ -71,7 +79,7 @@ var XQNet=(function(){
   const rankOf=p=>RANKS[rankIdx(p)][0];
   const rec=()=>ls.get("rate",null)||{pts:0,w:0,l:0,d:0,hist:[]};
   const myPts=()=>rec().pts;
-  function record(){if(!G||!G.result||G.result.abort||(G.moves.length<2&&!G.result.timeout))return;   // 超時判負一定計分   // 雙方都還沒走就結束：不計分
+  function record(){if(!G||!G.result||G.result.abort||G.result.forfeit||(G.moves.length<2&&!G.result.timeout))return;   // 超時判負一定計分   // 雙方都還沒走就結束：不計分
     const s=side();if(!s)return;const R=rec();if(R.hist.some(h=>h.gid===G.gid&&(!h.rid||h.rid===G.id)))return;   /* 意見回饋 619：「再來一局」沿用同一個 gid，改用 gid＋這盤的 id 判斷有沒有記過，第二盤以後才會記進戰績 */
     const o=s==="r"?G.black:G.red,op=o.pts!=null?o.pts:(people[o.id]&&people[o.id].pts)||0;
     /* 意見回饋 段位失準：原本贏 +20、輸 −15 會停在勝率 43% 那一階、而且越下越高（每盤淨增 5 分）。
@@ -99,7 +107,7 @@ var XQNet=(function(){
     clearTimeout(pendT);if(auto)pendT=setTimeout(()=>{if(pending&&pending.gid===gid){pending=null;tryMatch()}},8000);return gid}
   function connect(){if(cli||!want)return;const m=me();
     cli=mqtt(URLS[urlI],{clientId:"xq"+m.id.slice(0,12)+Math.random().toString(36).slice(2,8),keepalive:30,will:{topic:`${ROOT}/u/${m.id}`,payload:"",retain:true}});
-    cli.onup=()=>{everUp=true;downAt=0;cli.sub([`${ROOT}/u/+`,`${ROOT}/i/${m.id}`,`${ROOT}/sys/ver`,...(cur?gt(cur.gid):[])]);presence();pubHist();flushIRT();clearInterval(hb);hb=setInterval(()=>{presence();staleCheck()},30000);
+    cli.onup=()=>{everUp=true;downAt=0;cli.sub([`${ROOT}/u/+`,`${ROOT}/i/${m.id}`,`${ROOT}/sys/ver`,`${ROOT}/cup/state`,`${ROOT}/cup/hall`,...(cur?gt(cur.gid):[])]);presence();pubHist();flushIRT();clearInterval(hb);hb=setInterval(()=>{presence();staleCheck()},30000);
       if(dirty&&G){dirty=false;setTimeout(()=>{if(G&&cli&&cli.up)pubGame()},600)}if(cur&&!G)waitGame(cur.gid,false);emit("status")};
     cli.onmsg=onMsg;
     cli.ondown=was=>{cli=null;clearInterval(hb);if(!downAt)downAt=Date.now();emit("status");
@@ -107,6 +115,7 @@ var XQNet=(function(){
   const W={};   // 一次性查詢保留訊息（例如電腦的新網址）
   function onMsg(topic,msg){if(W[topic]){W[topic](msg);return}const p=topic.slice(ROOT.length+1).split("/");
     if(p[0]==="sys"&&p[1]==="ver"){try{emit("version",JSON.parse(msg))}catch(e){}return}
+    if(p[0]==="cup"&&(p[1]==="state"||p[1]==="hall")){if(!msg)return;cupVerify(msg).then(d=>{if(!d)return;if(p[1]==="state"){if(CUP&&d.wk===CUP.wk&&(d.n||0)<(CUP.n||0))return;CUP=d}else CUPHALL=d;emit("cup",p[1])});return}
     if(p[0]==="u"){if(!msg)delete people[p[1]];else{try{const x=JSON.parse(msg);if(x&&x.id===p[1])people[p[1]]=x}catch(e){}}emit("people");tryMatch();return}
     if(p[0]==="i"){let x;try{x=JSON.parse(msg)}catch(e){return}if(!x||!x.from||Date.now()-(x.at||0)>120000)return;
       if(x.type==="invite"&&x.auto){   // 隨機配對來的：還在找就自動接受，不然婉拒
@@ -135,7 +144,7 @@ var XQNet=(function(){
     const o=oppOf(me),A=a.moves,B=b.moves,n=Math.min(A.length,B.length);
     for(let i=0;i<n;i++)if(!B[i]||A[i][0]!==B[i][0]||A[i][1]!==B[i][1])return false;
     if(B.length===A.length+1){if(tmOf(a)!==o)return false}
-    else if(B.length===A.length-1){if((A.length-1)%2?o!=="b":o!=="r")return false}
+    else if(B.length===A.length-1){if(a.cup||((A.length-1)%2?o!=="b":o!=="r"))return false}   /* 擂台比賽落子無悔 */
     else if(B.length!==A.length)return false;
     const v=window.XQ_netCheck?window.XQ_netCheck(B):{ok:true,res:null};if(!v||!v.ok)return false;
     if(!b.result)return true;const w=b.result.w;
@@ -157,10 +166,10 @@ var XQNet=(function(){
     if(G.clk&&clockLeft(G,t)<=0)return setResult({w:me,timeout:true,why:PL[t]+"時間用完，超時判負"});
     if(Date.now()-turnAt(G)>TURN_MS)setResult({w:me,timeout:true,why:PL[t]+"超過 3 分鐘沒走，超時判負"})}
   setInterval(timeoutCheck,2000);
-  function staleCheck(){if(!playing()||!cli||!cli.up)return;const o=oppOf(side()),oid=o==="r"?G.red.id:G.black.id;
+  function staleCheck(){if(!playing()||!cli||!cli.up||G.cup)return;   /* 擂台比賽沒有「中止」：斷線的人時間照走 */const o=oppOf(side()),oid=o==="r"?G.red.id:G.black.id;
     if(!onl(oid)&&Date.now()-seenAt>10*60000)setResult({w:null,abort:true,why:"對方離線太久，對局中止"})}
   // 自己離開一盤還沒下完的棋：對方還在線上就算自己認輸；對方已經離線就直接中止
-  function endOnLeave(){if(!playing())return;const s=side(),o=oppOf(s),oid=o==="r"?G.red.id:G.black.id;
+  function endOnLeave(){if(!playing()||G.cup)return;   /* 擂台比賽離開畫面不算認輸（小朋友常誤觸），回來可以接著下 */const s=side(),o=oppOf(s),oid=o==="r"?G.red.id:G.black.id;
     setResult(onl(oid)&&G.moves.length?{w:o,why:PL[s]+"離開對局"}:{w:null,abort:true,why:onl(oid)?"對局取消":"對方離線，對局中止"})}
   // 接受後 12 秒還沒收到對局（對方剛好關掉 App）：取消，隨機配對的話繼續找
   function waitGame(gid,auto){setTimeout(()=>{if(!cur||cur.gid!==gid||G)return;if(cli&&cli.up)cli.unsub(gt(gid));cur=null;ls.set("net",null);
@@ -188,6 +197,10 @@ var XQNet=(function(){
     fetchHist(id,ms){return this.getRetained(`${ROOT}/h/${id}`,ms||5000).then(s=>{try{const x=s&&JSON.parse(s);return x&&x.id===id&&Array.isArray(x.list)?x:null}catch(e){return null}})},
     fetchGame(gid,ms){return this.getRetained(`${ROOT}/g/${gid}/s`,ms||6000).then(s=>{try{const x=s&&JSON.parse(s);return x&&x.gid===gid?x:null}catch(e){return null}})},
     status:()=>cli&&cli.up?"up":want?"connecting":"off",
+    /* 千秋週擂：裁判台簽過名的本週狀態、歷屆擂主；報名、取消、報到送到 cup/req（裁判台收下後更新名單） */
+    cup:()=>CUP,cupHall:()=>CUPHALL,
+    cupReq(t){const m=me();if(!CUP)return false;const go=k=>{if(cli&&cli.up)cli.pub(`${ROOT}/cup/req`,JSON.stringify({t,wk:CUP.wk,id:m.id,name:m.name,pts:myPts(),at:Date.now()}));else if(k<6){if(!want){want=true;connect()}setTimeout(()=>go(k+1),1500)}};go(0);return true},
+    cupChamp:()=>{const h=CUPHALL&&CUPHALL.list&&CUPHALL.list[0];return h&&Date.now()-h.at<8*864e5?h:null},
     downFor:()=>cli&&cli.up||!downAt?0:Date.now()-downAt,pendingSend:()=>dirty,
     people:()=>{const now=Date.now(),i=me().id;return Object.values(people).filter(x=>x.id!==i&&now-x.at<ALIVE)},
     me,active:()=>!!cur,side,game:()=>G,gid:()=>cur&&cur.gid,
@@ -202,7 +215,7 @@ var XQNet=(function(){
     tc:()=>tcPref(),tcs:TCS,tcOf,isBot,tcOk:f=>tcOk(f),setTc(v){if(TCS.includes(+v)){ls.set("tc",+v);presence();emit("people")}},
     clocks(){return G&&G.clk?{r:clockLeft(G,"r"),b:clockLeft(G,"b")}:null},
     /* 走棋前呼叫：扣掉走的人這步用的時間，從現在開始算對方的 */
-    tickMove(n,sd){if(!n||!n.clk)return;const now=Date.now();n.clk[sd]=Math.max(0,n.clk[sd]-(now-effTk(n)));n.tk=now;n.tkN=n.moves.length+1},
+    tickMove(n,sd){if(!n||!n.clk)return;const now=Date.now();n.clk[sd]=Math.max(0,n.clk[sd]-(now-effTk(n)))+(+n.inc||0);n.tk=now;n.tkN=n.moves.length+1},   /* inc：每走一步加幾毫秒（擂台比賽每步加 5 秒） */
     turnLeft(){if(!G||G.result)return null;return Math.max(0,TURN_MS-(Date.now()-turnAt(G)))},
     // 公園 3D 棋盤：對手的小帥造型（棋子、朝代、官階），對手在大廳廣播的
     oppBot(){if(!G||!side())return null;const o=oppOf(side()),x=people[o==="r"?G.red.id:G.black.id];return x&&x.bot||null},
