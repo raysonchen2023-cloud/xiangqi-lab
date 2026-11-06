@@ -849,6 +849,9 @@ body.xqt-on .modal{z-index:10000}body.xqt-on .toast{z-index:10001}body.xqt-on .x
 .sv-a button.main{background:#9E1B15;color:#fff;border-color:#9E1B15}.sv-a button.warn{color:#B3261E;border-color:#e3b3ad}.sv-a button:disabled{opacity:.5}
 .prolog .box{text-align:center}.prolog .box img{width:120px;height:150px;object-fit:contain;display:block;margin:0 auto}.prolog .box p{line-height:1.9;text-align:left}.prolog .pl-say{text-align:center;font-family:var(--serif);font-size:17px}
 .jframe{margin:0 0 10px;font-size:13.5px;color:var(--muted);line-height:1.7}
+
+/* 意見回饋 673：星槎還沒停靠的朝代 */
+.elk{opacity:.42;filter:grayscale(.8)}
 </style></head><body>
 <div class="app">
  <div class="topbar" id="topbar"><button class="ib" id="back" hidden><b>‹</b>返回</button><h1 id="title">象棋千秋</h1><span id="topRight"></span></div>
@@ -896,7 +899,7 @@ body.xqt-on .modal{z-index:10000}body.xqt-on .toast{z-index:10001}body.xqt-on .x
       if(!window.caches)return go();caches.keys().then(function(ks){return Promise.all(ks.filter(function(k){return k.indexOf("xqlab-app-")===0}).map(function(k){return caches.delete(k)}))})
         .then(function(){return navigator.serviceWorker&&navigator.serviceWorker.getRegistration()}).then(function(r){return r&&r.update()}).catch(function(){}).then(go)}};setTimeout(chk,4000)})();
 </script>
-<script>window.XQ_OFFLINE=true;window.XQ_BUILD="20261106-1215";</script>
+<script>window.XQ_OFFLINE=true;window.XQ_BUILD="20261106-1314";</script>
 <script src="core.js"></script>
 <script src="engine.js"></script>
 <script src="local.js"></script>
@@ -3332,7 +3335,7 @@ function onboard(){if(journey())journeyLock();else titleScreen({})}
 // ================= 設定：棋盤風格、棋子樣式、走棋顯示 =================
 const SAMPLE_FEN0="rnbakabnr/9/1c5c1/p1p1p1p1p/9/9/P1P1P1P1P/1C5C1/9/RNBAKABNR",SAMPLE_FEN1="rnbakabnr/9/1c5c1/p1p1p1p1p/9/9/P1P1P1P1P/1C2C4/9/RNBAKABNR",SAMPLE_LAST={f:70,t:67};
 /* 意見回饋 661：關於頁顯示整包遊戲要多大空間。XQ_SIZES 由 build-site.js 建置時填入（開發中的 m.html 是 null，就不顯示） */
-const XQ_SIZES={"pre":160542863,"code":12406795,"eng":51511005,"gm":33668932,"bgm":259516351,"opt":[["比賽對局 1956–2010",21765744],["比賽對局 2011–2014",25596413],["比賽對局 2015–2019",24821916]],"all":600466775,"other":10636756};
+const XQ_SIZES={"pre":160652351,"code":12412226,"eng":51511005,"gm":33668932,"bgm":259516351,"opt":[["比賽對局 1956–2010",21765744],["比賽對局 2011–2014",25596413],["比賽對局 2015–2019",24821916]],"all":600581694,"other":10636756};
 const szMB=b=>b>=1073741824?(b/1073741824).toFixed(1)+" GB":Math.max(1,Math.round(b/1048576))+" MB";
 function aboutSizes(){const S=XQ_SIZES;if(!S)return"";const opt=S.opt||[];   /* 意見回饋 662：玩家只看總數，細項只在開發者模式顯示 */
   return `<div class="row" style="justify-content:space-between"><span class="muted">整包下載</span><b>約 ${szMB(S.all)}</b></div>
@@ -3354,10 +3357,10 @@ function Settings(v){
       <div class="opt" id="tbb" style="justify-content:center;margin-top:8px"><!-- 意見回饋 620：「示範一步」跟「走一步」重複，只留走一步（會照設定播特效和音效） -->${[["mv","♟ 走一步"],["cap","💥 吃子"],["ck","⚔ 將軍"],["op","🚩 開局動畫"]].map(([k,l])=>`<button data-tst="${k}">${l}</button>`).join("")}</div></div>   <!-- 意見回饋 537：預覽和測試併成一個棋盤；547：小字提示都拿掉 -->
     <div class="sec-t">朝代風格</div><div class="eragrid erasw" id="era"></div>
     <div class="sec-t">棋盤風格</div>
-    <label class="row" style="justify-content:space-between;padding:4px 2px 10px"><span><b>3D 園子棋盤</b></span><input type="checkbox" class="sw" id="p3d"></label>   <!-- 意見回饋 488 -->
+    <label class="row" style="display:none"><span><b>3D 園子棋盤</b></span><input type="checkbox" class="sw" id="p3d"></label>   <!-- 意見回饋 488；672（開發者 11/6）：3D 園子棋盤、對手形象、棋子樣式不給玩家選，照目前的設定 -->
     <div class="thgrid thsw" id="th"></div>
-    <div class="sec-t">對手形象</div><div class="opt" id="ol"></div>
-    <div class="sec-t">棋子樣式</div><div class="opt" id="ps"></div>
+    <div class="sec-t" style="display:none">對手形象</div><div class="opt" id="ol" style="display:none"></div>
+    <div class="sec-t" style="display:none">棋子樣式</div><div class="opt" id="ps" style="display:none"></div>
     <details class="card" style="padding:10px 12px;margin-top:14px"><summary style="font-weight:700;cursor:pointer">⚙ 更多設定</summary>   <!-- 意見回饋 576（開發者）：只留「更多設定」，後面的說明拿掉 -->   <!-- 意見回饋 537：不常改的收在這裡 -->
     <div class="sec-t">深淺色</div><div class="opt" id="pt"></div><p class="muted" id="ptN" style="display:none"></p>
     <div class="sec-t">字體</div><div class="opt" id="ftM"></div>
@@ -3465,8 +3468,8 @@ function Settings(v){
       fb.querySelectorAll("[data-ft]").forEach(x=>x.onclick=()=>{store.set("fontMode",x.dataset.ft);fontModeApply();paint()})}}
     const ce=store.get("era","classic");v.querySelector("#ptN").textContent=curEra()?"朝代風格有自己的配色；選「經典」才會用到深淺色":"";
     v.querySelector("#era").innerHTML=ERAS.map(e=>{const c=e.c,st=c?`--b:${c.bar};--bi:${c.barink};--g:${c.bg};--cd:${c.card};--t:${c.trim};--a:${c.accent};--i:${c.ink};background-image:${eraMotif(e.m,c.ink,e.dark?.09:.07)}`:"--b:#3B2A1A;--g:#F3EDE2;--t:#E2D6C3;--a:#B5452B;--i:#2A1F15";
-      return`<button data-e="${e.k}" class="${ce===e.k?"on":""}${c?"":" cl"}" style="${st}"><i style="${c?`background-image:${eraMotif(e.m,c.barink,.3)}`:""}"></i><b>${esc(e.n)}</b><small>${esc(e.s)}</small></button>`}).join("");
-    v.querySelectorAll("[data-e]").forEach(x=>x.onclick=()=>{const k=x.dataset.e;if(k===store.get("era","classic"))return;vibrate(5);store.set("era",k);applyEra();
+      const lk=eraLocked(e.k);return`<button data-e="${e.k}" class="${ce===e.k?"on":""}${c?"":" cl"}${lk?" elk":""}" style="${st}"><i style="${c?`background-image:${eraMotif(e.m,c.barink,.3)}`:""}"></i><b>${esc(e.n)}</b><small>${lk?"🔒 星槎還沒停靠":esc(e.s)}</small></button>`}).join("");   /* 意見回饋 673：還沒解鎖的朝代鎖住 */
+    v.querySelectorAll("[data-e]").forEach(x=>x.onclick=()=>{const k=x.dataset.e;if(k===store.get("era","classic"))return;if(eraLocked(k)){vibrate(8);toast(eraLockMsg(k));return}vibrate(5);store.set("era",k);applyEra();
       if(k!=="classic"&&store.get("boardTheme","wood3d")!=="auto"){store.set("boardTheme","auto");toast("棋盤也換成這個朝代的配色（可在下面改回）")}paint();show(true)});
     /* 意見回饋 535：滑到中間停住的那張就套用；畫面重畫後把選中的那張捲回中間 */
     {const ew=v.querySelector("#era"),on=ew&&ew.querySelector(".on");if(ew){ew._quiet=true;if(on)ew.scrollLeft=Math.max(0,on.offsetLeft-12);setTimeout(()=>{ew._quiet=false},250);
@@ -3718,11 +3721,28 @@ function reportSheet(rep,opts){let s=opts.side||"r";
    store（旅程類）：journey＝{c:角色,sx,born,v,re}（有它就代表角色已鎖定；re=1 舊玩家還能改選一次、2＝用掉或放棄了）；playSec＝這段旅程遊玩秒數
    以後加新的進度鍵（修為、收集、故事…），記得補進 JOURNEY_KEYS，不然讀檔、開新旅程時不會跟著換 */
 /* 意見回饋 669（開發者 11/6）：選角時照角色背景決定棋盤朝代（靈魂設定的十三朝主場）；朝代跟著存檔走，各格各自記得 */
-const CHAR_ERA={x_swordboy:"qin",x_spiritgirl:"nanbei",x_martialgirl:"song",x_miaogirl:"han",x_shuai:"sanguo",x_shi:"ming",x_bing:"sui"};
-const JOURNEY_KEYS=["pChar","pSex","pStyle","botPiece","onboard1","journey","playSec","era","xp","xpDay","xpKeys","record","hintBonus","hintUse","undoBonus","undoDropIds","bag","jarGot","lingN","giftGames","dropMiss",
+/* 意見回饋 673（開發者 11/6）：選定雲河七星後，棋盤朝代跟著星槎航程解鎖——一開始只有家鄉朝代；過渡期修為每升一級，星槎照航線往下停靠一站（之後改成通過那一站的主場關卡）。小帥、小帥妹的舊旅程不鎖 */
+const SHIP_ROUTE=["classic","qin","han","sanguo","weijin","nanbei","sui","tang","wudai","song","yuan","ming","qing"];
+/* 意見回饋 674（開發者 11/6）：星槎開下一站的規則只寫在這裡（SHIP_RULE、shipDockN）。
+   過渡期 xp 和 clear 都開：「修為每升一級」或「解開目前最遠那一站的主場殘局」，任一個做到就往下停靠一站（取兩者走得比較遠的）。
+   之後每站主場殘局都有 3 題以上，把 SHIP_RULE.xp 改成 false，就只看主場殘局。
+   解開主場殘局的站記在旅程鍵 eraOpen（07f-ship.js 的 shipMark 寫入）；航線順序＝家鄉朝代排第一，其他照 SHIP_ROUTE */
+const SHIP_RULE={xp:true,clear:true};
+function shipOrder(){const J=store.get("journey",null),home=J&&CHAR_ERA[J.c];return home?[home,...SHIP_ROUTE.filter(e=>e!==home)]:SHIP_ROUTE.slice()}
+function shipDockN(){const O=shipOrder(),C=store.get("eraOpen",[])||[];let n=1;
+  if(SHIP_RULE.xp){let L=1;try{L=xpInfo().L||1}catch(e){}n=Math.max(n,L)}
+  if(SHIP_RULE.clear)O.forEach((e,i)=>{if(C.includes(e))n=Math.max(n,i+2)});
+  return Math.min(O.length,n)}
+const shipHowNext=()=>SHIP_RULE.xp&&SHIP_RULE.clear?"修為再升一級，或解開目前這一站的主場殘局":SHIP_RULE.xp?"修為再升一級":"解開目前這一站的主場殘局";
+function eraOpenSet(){try{const J=store.get("journey",null);if(!J||!WX_CHARS[J.c]||!CHAR_ERA[J.c])return null;
+  return new Set([...shipOrder().slice(0,shipDockN()),...(store.get("eraOpen",[])||[])])}catch(e){return null}}
+const eraLocked=k=>{const s=eraOpenSet();return!!(s&&!s.has(k))};
+const eraLockMsg=k=>"🔒 星槎還沒停靠"+eraLabel(k)+"："+shipHowNext()+"，星槎就會往下一站開";
+const CHAR_ERA={x_swordboy:"qin",x_spiritgirl:"nanbei",x_martialgirl:"song",x_miaogirl:"yuan",x_shuai:"ming",x_shi:"ming",x_bing:"qing"};   /* 開發者 11/6 改：世界觀定為「雲河星槎」，七人各來自自己的朝代（帥、仕同在明代徽州），棋盤就是他的家鄉朝代 */
+const JOURNEY_KEYS=["pChar","pSex","pStyle","botPiece","onboard1","journey","playSec","era","eraOpen","xp","xpDay","xpKeys","record","hintBonus","hintUse","undoBonus","undoDropIds","bag","jarGot","lingN","giftGames","dropMiss",
   "legend","legendGame","legBook","jStars","jPending","jPrev","jRun","jScene","jHid","jMig36","jpSeen","novelRead","sceneDone","storyEraTip","eraUser","study","campSeen","campStars",
   "npcBond","npcAsk","npcAskSeen","parkNpc","parkNpcLast","parkAdj","visitGone","secrets","secretClue","secretSpots","secretWins","relics","relicSolved","relicAt","histSeen","histSolved","histTitle",
-  "innCur","innDrop","innAdj","xhMake","xhMei","xhTitle","yuDay","yuHint","yuRoute","yuTitle","cupDrop","cupGot","cj","cjRun"].map(k=>"m_"+k)
+  "innCur","innDrop","innAdj","xhMake","xhMei","xhTitle","yuDay","yuHint","yuRoute","yuTitle","cupDrop","cupGot","cj","cjRun","shipAt","shipSolved","cjRunS"].map(k=>"m_"+k)   /* 意見回饋 674：星槎在看哪一站、主場殘局解開的題、正在解的那一題 */
   .concat(["cpuRate","bonusKeys","record","arenaStamps","carBank","play","play2"].map(k=>"xq_"+k));
 const JK=new Set(JOURNEY_KEYS),SLOT_N=3;
 /* 意見回饋 668：舊玩家判斷要在首頁畫出來以前做（首頁會順手寫一些旅程鍵，例如 lingN），所以這裡直接讀 localStorage；null＝已經過渡過了 */
@@ -3776,8 +3796,8 @@ function meGameTalk(st){try{if(!st||!myChar()||typeof BOT==="undefined"||!BOT||!
 function meHi(s){try{const c=myChar();if(!c||!s)return s;const nk=WX_CHARS[c].nk||WX_CHARS[c].n;if(String(s).includes(nk)||Math.random()>=.7)return s;return nk+"，"+String(s).replace(/^「|」$/g,"")}catch(e){return s}}
 /* 驛站旅人看你一眼：依你的角色是男是女稱呼 */
 const innCall=x=>`${x.name}抬頭看了你一眼：「這位${mySex()==="f"?"姑娘":"小哥"}，來得正好。」`;
-/* 石桌往事每回開頭：你扮演的那位坐在「兩杯」茶鋪聽說書（故事正文不改） */
-function jFrame(){try{const c=myChar();if(!c)return"";const nk=WX_CHARS[c].nk||WX_CHARS[c].n;return`<p class="jframe">（${esc(nk)}坐在「兩杯」的長凳上，聽說書人往下講。）</p>`}catch(e){return""}}
+/* 石桌往事每回開頭：你扮演的那位坐在「雲河」星槎的船頭聽說書人講（故事正文不改；開發者 11/6 定案世界觀「雲河星槎」） */
+function jFrame(){try{const c=myChar();if(!c)return"";const nk=WX_CHARS[c].nk||WX_CHARS[c].n;return`<p class="jframe">（${esc(nk)}坐在「雲河」星槎的船頭，聽說書人往下講。）</p>`}catch(e){return""}}
 /* 選了雲河七星，小人身上的棋子就是本命棋子（舊存檔換過棋子的，在這裡改回來） */
 function lockFix(){try{const c=myChar();if(c&&WX_CHARS[c].pc&&store.get("botPiece","")!==WX_CHARS[c].pc)store.set("botPiece",WX_CHARS[c].pc)}catch(e){}}
 function pieceLock(){const c=myChar();if(!c)return;const C=WX_CHARS[c];modal(`<div class="em">🔒</div><h2>${esc(C.n)}就是「${esc(C.pc)}」</h2><p class="muted">雲河七星每個人都是一顆棋子：棋子跟著角色，這段旅程不能換。</p>`,[["好",null]])}
@@ -3786,19 +3806,19 @@ function journeyLock(){const J=journey();if(!J)return titleScreen({});
     (J.re===1?[["最後改選一次",()=>titleScreen({view:"pick",mode:"repick"})]]:[]).concat([["回開頭畫面",()=>titleScreen({})],["💾 存檔與讀檔",saveSheet,true],["好",null,true]]))}
 /* 入局序幕：開新旅程選好角色後看到的三句話 */
 function prologue(){const c=myChar();if(!c)return;const C=WX_CHARS[c],era=store.get("era","classic"),nk=C.nk||C.n;
-  const place=era==="classic"?"眼前還是雲河鎮的園子，風裡卻多了千年前的聲音。":`眼前的石桌，忽然變成了${eraLabel(era)}的園子。`;
-  modal(`<img src="data/xs/prev_${c}.webp" alt="" onerror="this.remove()"><h2>${esc(C.pc)}・${esc(C.n)}</h2><p class="pl-say">「${esc(C.say||"")}」</p><p>泗州雲河鎮。「兩杯」茶鋪的說書人一拍醒木，${esc(nk)}跑上鎮後的土崗，在那張刻著棋盤的石桌上，擺下第一顆子——</p><p>${esc(place)}</p>`,[["入局",()=>{try{route()}catch(e){}}]],"prolog")}
+  const place=era==="classic"?"船艙裡的石桌亮了起來，風裡多了千年前的聲音。":`船艙裡那張刻著棋盤的石桌亮了起來——窗外是${eraLabel(era)}的園子。`;
+  modal(`<img src="data/xs/prev_${c}.webp" alt="" onerror="this.remove()"><h2>${esc(C.pc)}・${esc(C.n)}</h2><p class="pl-say">「${esc(C.say||"")}」</p><p>一艘叫「雲河」的星槎靠了岸。船頭的說書人一拍醒木：「上船吧，${esc(nk)}。」${esc(nk)}踏上船板，在船艙的石桌上擺下第一顆子——</p><p>${esc(place)}</p>`,[["入局",()=>{try{route()}catch(e){}}]],"prolog")}
 
 /* ---------- 新的旅程、讀檔、改選 ---------- */
 async function journeyStart(n,c,nm){const C=WX_CHARS[c];if(!C)return;const had=!!journey(),cur=curSlot();
   if(had&&cur&&cur!==n)await saveNow(true);SAVE_LOCK=true;
   store.set("slotCur",n);saveApply({});
-  store.set("pChar",c);store.set("pSex",C.sx);store.set("pStyle","real");store.set("botPiece",C.pc);store.set("onboard1",true);store.set("journey",{c,sx:C.sx,born:Date.now(),v:1,era:1});if(CHAR_ERA[c]){store.set("era",CHAR_ERA[c]);store.set("eraUser",null);try{applyEra()}catch(e){}}store.set("playSec",0);
+  store.set("pChar",c);store.set("pSex",C.sx);store.set("pStyle","real");store.set("botPiece",C.pc);store.set("onboard1",true);store.set("journey",{c,sx:C.sx,born:Date.now(),v:1,era:2});if(CHAR_ERA[c]){store.set("era",CHAR_ERA[c]);store.set("eraUser",null);try{applyEra()}catch(e){}}store.set("playSec",0);
   if(store.get("oppLook",null)==null)store.set("oppLook","real");if(nm){try{setMyName(nm)}catch(e){}}
   SAVE_LOCK=false;await saveNow(true);
   if(had){SAVE_LOCK=true;saveReload({xqPrologue:"1"});return}
   try{window.dispatchEvent(new Event("xq-look"))}catch(e){}titleClose();try{route()}catch(e){}setTimeout(prologue,500)}
-function journeyRepick(c){const C=WX_CHARS[c],J=journey();if(!C||!J||J.re!==1)return;store.set("pChar",c);store.set("pSex",C.sx);store.set("botPiece",C.pc);store.set("journey",{...J,c,sx:C.sx,re:2,era:1});if(CHAR_ERA[c]){store.set("era",CHAR_ERA[c]);store.set("eraUser",null);try{applyEra()}catch(e){}}
+function journeyRepick(c){const C=WX_CHARS[c],J=journey();if(!C||!J||J.re!==1)return;store.set("pChar",c);store.set("pSex",C.sx);store.set("botPiece",C.pc);store.set("journey",{...J,c,sx:C.sx,re:2,era:2});if(CHAR_ERA[c]){store.set("era",CHAR_ERA[c]);store.set("eraUser",null);try{applyEra()}catch(e){}}
   try{window.dispatchEvent(new Event("xq-look"))}catch(e){}saveNow(true);toast("換好了："+C.n+"（之後就鎖定了）")}
 async function slotLoad(n){let S=null;try{S=await slotGet(n)}catch(e){}
   if(!S||!S.data){const M=slotMetaAll();delete M[n];store.set("slotMeta",M);return toast("這格讀不到資料")}
@@ -3890,7 +3910,7 @@ function titlePaint(view,opt){const o=TITLE;if(!o)return;opt=opt||{};const inn=o
 function saveMigrateOld(){const c=myChar()||(mySex()==="f"?"f":"m");store.set("journey",{c,sx:mySex(),born:Date.now(),v:1,re:1,mig:1});
   if(store.get("playSec",null)==null){let s=0;try{s=Math.round(practiceTotal()*60)}catch(e){}store.set("playSec",s)}store.set("slotCur",1);lockFix();saveNow(true)}
 function saveBoot(){if(SAVE_OLD!==null){store.set("saveMig1",Date.now());if(SAVE_OLD)saveMigrateOld()}lockFix();
-  try{const J=store.get("journey",null);if(J&&CHAR_ERA[J.c]&&!J.era){store.set("era",CHAR_ERA[J.c]);store.set("eraUser",null);store.set("journey",{...J,era:1});setTimeout(()=>{try{applyEra()}catch(e){}},300)}}catch(e){}   /* 意見回饋 669 補：1200 版以前就選好角色的旅程，開 App 時補套一次角色主場的朝代（之後自己換的照自己的） */
+  try{const J=store.get("journey",null);if(J&&CHAR_ERA[J.c]&&J.era!==2){store.set("era",CHAR_ERA[J.c]);store.set("eraUser",null);store.set("journey",{...J,era:2});setTimeout(()=>{try{applyEra()}catch(e){}},300)}}catch(e){}   /* 意見回饋 669 補：1200 版以前就選好角色的旅程，開 App 時補套一次角色主場的朝代（之後自己換的照自己的） */
   let pro=false,shown=false;try{pro=!!sessionStorage.getItem("xqPrologue");if(pro)sessionStorage.removeItem("xqPrologue");shown=!!sessionStorage.getItem("xqTitleShown")}catch(e){}
   if(pro)setTimeout(prologue,1500);
   if(shown||navigator.webdriver||!/^(#\/?)?$/.test(location.hash||""))return;titleScreen({})}
@@ -4242,12 +4262,12 @@ const myPc=()=>{{const x=store.get("pChar","");if(WX_CHARS[x]&&WX_CHARS[x].pc)re
 /* 開發者 11/5：四位武俠風格的原創角色也可以選（pChar；空白＝小帥／小帥妹）。sx＝男女，用在其他還只有男女兩種的地方 */
 /* 意見回饋 646（開發者 11/6）：資深玩家說「沒有逍遙哥哥」——四位要拉開跟既有武俠作品的距離。改成原創的「雲河四子」，各綁一顆棋子（pc＝選這位時預設的棋子、s＝選角卡小字、t＝一句話身分、say＝口頭禪、old＝舊稱呼）
    造型代號 x_swordboy 等不變，舊存檔照樣能用 */
-/* 意見回饋 660：雲河四子定名（開發者 11/6 從 Gemini 第二版取名提案選定）：俥・齊長路（阿路）、相・田飛燕（燕子）、炮・雷借花（花兒）、傌・駱躍梅（小梅）；nk＝小名，was＝舊名（小幫手搜尋用） */
-const WX_CHARS={x_swordboy:{n:"齊長路",bio:"雲河鎮北齊記車行的兒子，十三歲。父親抄小路翻了一車漕米，從此他發誓只走直路；其實他不太識字，棋譜都是靠記形狀記住的。",nk:"阿路",was:"齊直行",sx:"m",pc:"俥",s:"俥・車行少年",t:"雲河棋路上的車行少年，一把直劍走到底",say:"看準了，就一直走！",old:"劍客少年",start:["看準了，就一直走！","這盤，我走直路。"],cap:["直直衝過去，拿下！","這條路是我的！"],win:["看準了，一直走——贏了！","直路也能走到底！"],lose:["……我是不是又衝太快了？","下次我先看清楚路。"],draw:["誰也過不去，那就改天再走。"]},x_spiritgirl:{n:"田飛燕",bio:"雲河南岸渡口茶棚的姑娘，十二歲。媽媽去揚州幫傭一直沒回來，她守著茶棚不肯過河；白天溫柔安靜，夜裡卻偷偷在石桌上練狠狠的殺法。",nk:"燕子",was:"田恬",sx:"f",pc:"相",s:"相・茶棚姑娘",t:"守在雲河南岸茶棚、從不過河的溫柔姑娘",say:"慢慢來，先把家顧好。",old:"靈族少女",start:["慢慢來，先把家顧好。","請多指教。我守，你攻。"],cap:["這顆，我收下了。","過了河的，就別想回去。"],win:["家顧好了，才能贏。","慢慢來，還是贏了。"],lose:["沒關係，我再把家守緊一點。","……今晚再去石桌上練練。"],draw:["守住了，也算沒輸。"]},x_martialgirl:{n:"雷借花",bio:"揚州煙火作坊的女兒，十三歲。小時候玩火藥炸傷了爺爺的耳朵，從此說話特別大聲，好讓爺爺聽得見；其實她最怕打雷。",nk:"花兒",was:"雷響響",sx:"f",pc:"炮",s:"炮・煙火作坊",t:"揚州煙火作坊的女兒，最愛隔山打牛",say:"隔一個，剛剛好！",old:"江湖女俠",start:["隔一個，剛剛好！","準備好了沒？要開炮囉！"],cap:["砰！隔一個，剛剛好！","聽到沒？這一聲是我的！"],win:["贏啦！爺爺你聽見了嗎？","煙火放完，這盤是我的！"],lose:["……沒放響。再來一盤！","可惡，這次被悶住了。"],draw:["雷聲大雨點小，算了，和棋！"]},x_miaogirl:{n:"駱躍梅",bio:"驛站馬槽裡撿來的孩子，十一歲，四人中最小。認得驛道上每一條路，卻不知道自己是從哪條路來的，所以一刻也坐不住。",nk:"小梅",was:"駱跳跳",sx:"f",pc:"傌",s:"傌・驛站養馬",t:"驛站養馬的姑娘，走日字、最會拐彎",say:"前面堵住了？那我拐個彎！",old:"苗疆少女",start:["走日字，最會拐彎！","這條路我認得，跟我來！"],cap:["拐個彎，就到你家了！","前面堵住了？那我繞過去！"],win:["我就說繞路比較快！","驛道上每條路我都認得！"],lose:["唉，這條路走錯了……","下次換一條路試試。"],draw:["走了一大圈，回到原地啦。"]},
+/* 開發者 11/6 再改：世界觀「雲河星槎」後俥來自秦朝，改用秦代常見的單名：齊轍（阿轍，車輪壓出的痕跡＝車走直路、配車輪腰牌）。意見回饋 660：雲河四子定名（開發者 11/6 從 Gemini 第二版取名提案選定）：俥・齊長路（阿路）、相・田飛燕（燕子）、炮・雷借花（花兒）、傌・駱躍梅（小梅）；nk＝小名，was＝舊名（小幫手搜尋用） */
+const WX_CHARS={x_swordboy:{n:"齊轍",bio:"秦朝馳道上運糧車夫的兒子，十三歲。始皇下令「車同軌」，父親有一回抄小路誤了期，被人說成走歪路；從此他發誓只走直路。其實他不太識字，棋譜都是靠記形狀記住的。",nk:"阿轍",was:"齊長路",sx:"m",pc:"俥",s:"俥・秦・車夫之子",t:"秦朝馳道上運糧車夫的兒子，只肯走直路",say:"看準了，就一直走！",old:"劍客少年",start:["看準了，就一直走！","這盤，我走直路。"],cap:["直直衝過去，拿下！","這條路是我的！"],win:["看準了，一直走——贏了！","直路也能走到底！"],lose:["……我是不是又衝太快了？","下次我先看清楚路。"],draw:["誰也過不去，那就改天再走。"]},x_spiritgirl:{n:"田飛燕",bio:"南北朝一江分南北，她在江邊渡口的茶棚長大，十二歲。媽媽在南渡的人潮裡失散，她守著茶棚不肯過江，怕媽媽回來找不到家；白天溫柔安靜，夜裡卻偷偷練狠狠的殺法。",nk:"燕子",was:"田恬",sx:"f",pc:"相",s:"相・南北朝・渡口茶棚",t:"一江分南北，守在江邊渡口茶棚、不肯過江的姑娘",say:"慢慢來，先把家顧好。",old:"靈族少女",start:["慢慢來，先把家顧好。","請多指教。我守，你攻。"],cap:["這顆，我收下了。","過了河的，就別想回去。"],win:["家顧好了，才能贏。","慢慢來，還是贏了。"],lose:["沒關係，我再把家守緊一點。","……今晚再去石桌上練練。"],draw:["守住了，也算沒輸。"]},x_martialgirl:{n:"雷借花",bio:"南宋臨安煙火作坊的女兒，十三歲。小時候玩火藥炸傷了爺爺的耳朵，從此說話特別大聲，好讓爺爺聽得見；其實她最怕打雷。",nk:"花兒",was:"雷響響",sx:"f",pc:"炮",s:"炮・宋・臨安煙火作坊",t:"南宋臨安煙火作坊的女兒，最愛隔山打牛",say:"隔一個，剛剛好！",old:"江湖女俠",start:["隔一個，剛剛好！","準備好了沒？要開炮囉！"],cap:["砰！隔一個，剛剛好！","聽到沒？這一聲是我的！"],win:["贏啦！爺爺你聽見了嗎？","煙火放完，這盤是我的！"],lose:["……沒放響。再來一盤！","可惡，這次被悶住了。"],draw:["雷聲大雨點小，算了，和棋！"]},x_miaogirl:{n:"駱躍梅",bio:"元朝草原驛站（站赤）馬槽裡撿來的孩子，十一歲，七人中最小。認得驛道上每一條路，卻不知道自己是從哪條路來的；裹著她的布上繡著半個「卒」字。",nk:"小梅",was:"駱跳跳",sx:"f",pc:"傌",s:"傌・元・草原驛站",t:"元朝草原驛站（站赤）撿來的孩子，走日字、最會拐彎",say:"前面堵住了？那我拐個彎！",old:"苗疆少女",start:["走日字，最會拐彎！","這條路我認得，跟我來！"],cap:["拐個彎，就到你家了！","前面堵住了？那我繞過去！"],win:["我就說繞路比較快！","驛道上每條路我都認得！"],lose:["唉，這條路走錯了……","下次換一條路試試。"],draw:["走了一大圈，回到原地啦。"]},
   /* 意見回饋 668：雲河七星後三位（開發者 11/6 定案；預覽圖 xs/prev_x_*.webp、3D art/tripo_app/x_*.glb 已就緒） */
-  x_shuai:{n:"沈方庭",nk:"庭哥",sx:"m",pc:"帥",s:"帥・當鋪少爺",t:"雲河鎮當鋪老闆的獨子，天生氣喘、被關在院子裡的少爺",bio:"雲河鎮當鋪老闆的獨子，十三歲。天生氣喘，被家裡嚴令只能待在院子裡，常在窗邊看別的孩子玩；他最想做的，是有一天親自走到鎮外。",say:"我就在這裡，哪也不去。",old:"",start:["我就在這裡，哪也不去。","九宮雖小，也是我的棋盤。"],cap:["我也能親自出手！","別小看待在院子裡的人。"],win:["我……我也走出去了一步！","原來自己站出來，是這種感覺。"],lose:["咳……下次，我不再躲在後面。","沒關係，我記住這盤了。"],draw:["守住了九宮，也不算輸。"]},
-  x_shi:{n:"鐵連城",nk:"城子",sx:"m",pc:"仕",s:"仕・鄰家哥哥",t:"當鋪掌櫃的兒子，從小貼身護著少爺的鄰家哥哥",bio:"當鋪掌櫃的兒子，十四歲，住在沈家隔壁。小時候為了護住方庭受過傷，從此覺得自己只有當盾牌才有用；其實他很想去遠方看看。",say:"有我在，誰也別想碰他。",old:"",start:["有我在，誰也別想碰他。","我守在這兒，你放心攻。"],cap:["想碰他？先過我這關！","擋下來了，還順手吃一個。"],win:["守得住，才贏得了。","這次不只是擋，我也往前了。"],lose:["是我沒擋好……","下次我護得更緊。"],draw:["誰也沒碰到誰，正好。"]},
-  x_bing:{n:"步越溪",nk:"溪兒",sx:"f",pc:"兵",s:"兵・跑腿丫頭",t:"幫人跑腿送貨的窮丫頭，只會往前衝",bio:"幫人跑腿送貨的窮丫頭，十二歲，無父無母。只會拼命往前衝、不敢回頭看；身上一塊破布繡著半個「卒」字，她不知道那是什麼意思。",say:"往前走，絕不退！",old:"",start:["往前走，絕不退！","過了河，我就能橫著走！"],cap:["一步一步，走到你面前了！","小卒子也能咬人！"],win:["一直往前走，總會走到對岸！","看吧，小兵也能贏！"],lose:["……不能回頭，那就再衝一次！","下次我走得更穩。"],draw:["還沒過河呢，下次再來！"]}};
+  x_shuai:{n:"沈方庭",nk:"庭哥",sx:"m",pc:"帥",s:"帥・明・徽州當鋪少爺",t:"明朝徽州當鋪老闆的獨子，天生氣喘、被關在院子裡",bio:"明朝徽州當鋪老闆的獨子，十三歲。天生氣喘，被家裡嚴令只能待在院子裡，常在窗邊看別的孩子玩；他最想做的，是有一天親自走出那道門。",say:"我就在這裡，哪也不去。",old:"",start:["我就在這裡，哪也不去。","九宮雖小，也是我的棋盤。"],cap:["我也能親自出手！","別小看待在院子裡的人。"],win:["我……我也走出去了一步！","原來自己站出來，是這種感覺。"],lose:["咳……下次，我不再躲在後面。","沒關係，我記住這盤了。"],draw:["守住了九宮，也不算輸。"]},
+  x_shi:{n:"鐵連城",nk:"城子",sx:"m",pc:"仕",s:"仕・明・鄰家哥哥",t:"徽州當鋪掌櫃的兒子，從小貼身護著少爺的鄰家哥哥",bio:"徽州當鋪掌櫃的兒子，十四歲，住在沈家隔壁，跟方庭一起長大。小時候為了護住方庭受過傷，從此覺得自己只有當盾牌才有用；其實他很想去遠方看看。",say:"有我在，誰也別想碰他。",old:"",start:["有我在，誰也別想碰他。","我守在這兒，你放心攻。"],cap:["想碰他？先過我這關！","擋下來了，還順手吃一個。"],win:["守得住，才贏得了。","這次不只是擋，我也往前了。"],lose:["是我沒擋好……","下次我護得更緊。"],draw:["誰也沒碰到誰，正好。"]},
+  x_bing:{n:"步越溪",nk:"溪兒",sx:"f",pc:"兵",s:"兵・清・揚州跑腿丫頭",t:"清朝揚州城裡跑腿送貨的窮丫頭，只會往前衝",bio:"清朝揚州城裡幫人跑腿送貨的窮丫頭，十二歲，無父無母。只會拼命往前衝、不敢回頭看；身上有塊傳了好多代的破布，繡著半個「卒」字。",say:"往前走，絕不退！",old:"",start:["往前走，絕不退！","過了河，我就能橫著走！"],cap:["一步一步，走到你面前了！","小卒子也能咬人！"],win:["一直往前走，總會走到對岸！","看吧，小兵也能贏！"],lose:["……不能回頭，那就再衝一次！","下次我走得更穩。"],draw:["還沒過河呢，下次再來！"]}};
 const myChar=()=>{const c=store.get("pChar","");return WX_CHARS[c]?c:""};
 const myLook=()=>{{const c=myChar();if(c)return TRIPO[c]?{p:myPc(),e:store.get("era","classic"),g:9,glb:`data/tripo_app/${c}.glb`,ring:TRIPO[c]}:null}
   const f=mySex()==="f",id=f?"me_girl":"me_boy";let L=f?{p:myPc(),e:store.get("era","classic"),g:9,npc:"me",cus:"me:girl"}:null;
@@ -4988,9 +5008,9 @@ async function jResume(box){if(!box)return;let st;try{st=await api("/play/state"
   box.querySelector("button").onclick=async()=>{vibrate(5);if(!cur)try{await api("/play/switch",{kind:"journey"})}catch(e){}if(g.journey==="park")store.set("park3d",true);location.hash="#/journey/play"}}
 function ParkGate(v){setTop("🌳 園子","#/adventure");setTabs(false);v.className="view";const cur=store.get("era","classic");
   /* 意見回饋 360：石桌上擺著 13 顆朝代石頭（Gemini 畫的，刻著那個朝代書法的字），點一顆就進那個朝代的公園；石頭圖還沒到的先用圓圈 */
-  v.innerHTML=`<div class="pad"><div class="stbl"><p class="stbl-t">擇石一枚，步入彼朝之園</p><div class="eras">${ARENA_ORDER.map(k=>{const sl=ARENA[k].seal||"";return`<button class="era-c stone${k===cur?" on":""}" data-e="${k}"><img src="data/stones/${k}.webp" alt="" onerror="this.parentElement.classList.remove('stone');this.remove()"><span${sl.length>1?' class="two"':""}>${esc(sl)}</span><b>${esc(eraLabel(k))}</b></button>`}).join("")}</div></div><div id="pRes"></div></div>`;
+  v.innerHTML=`<div class="pad"><div class="stbl"><p class="stbl-t">擇石一枚，步入彼朝之園</p><div class="eras">${ARENA_ORDER.map(k=>{const sl=ARENA[k].seal||"";return`<button class="era-c stone${k===cur?" on":""}${eraLocked(k)?" elk":""}" data-e="${k}"><img src="data/stones/${k}.webp" alt="" onerror="this.parentElement.classList.remove('stone');this.remove()"><span${sl.length>1?' class="two"':""}>${esc(sl)}</span><b>${esc(eraLabel(k))}</b></button>`}).join("")}</div></div><div id="pRes"></div></div>`;
   jResume(v.querySelector("#pRes"));
-  v.querySelectorAll("[data-e]").forEach(b=>b.onclick=async()=>{if(b.disabled)return;b.disabled=true;vibrate(5);const k=b.dataset.e;store.set("era",k);try{applyEra()}catch(e){}store.set("park3d",true);
+  v.querySelectorAll("[data-e]").forEach(b=>b.onclick=async()=>{if(b.disabled)return;if(eraLocked(b.dataset.e)){vibrate(8);toast(eraLockMsg(b.dataset.e));return}b.disabled=true;vibrate(5);const k=b.dataset.e;   /* 意見回饋 673：星槎還沒停靠的朝代進不去 */store.set("era",k);try{applyEra()}catch(e){}store.set("park3d",true);
     setTimeout(()=>{b.disabled=false},1500);
     jStart("park",{human:"r",level:parkNpcLv(),journey:"park"},async()=>{await stoneCover(b,k);location.hash="#/journey/play";
       setTimeout(()=>{const r=store.get("parkNpc",null),n=r&&PARK_NPC.find(x=>x.id===r.id);toast(`🌳 ${parkName(k)}到了${n?"・遇到"+n.name:""}`)},600)})})}
@@ -6617,7 +6637,7 @@ const BOT_FAQ=[
  [["寶物","提示棋","提示","道具","掉寶","掉落","背包"],"對局時按「🎒 寶物」就看得到你的 💡 提示棋和 ↶ 悔棋符，按了直接用。提示棋：Lv 5 起每天有（Lv 5～9 每天 1 顆，之後每 10 級多 1 顆），另外還有庫存；Lv 20 起提示會連落點一起指出。每盤棋下完（自己走 10 步以上）有機會掉一顆提示棋或一張悔棋符，線上對戰也算；雲河棋路的棋罐、點將台、千秋盃也拿得到。積分挑戰、獎勵模式、線上對戰不能用寶物；雲河棋路用了提示，那一關最多收到「馬」。"],
  [["車庫","我的車庫","獎勵模式","點數","換車","8891","車款"],"「🚗 我的車庫」在首頁：到「挑戰電腦」選 🚗 獎勵模式，贏一盤拿點數（難度越高點數越多），和棋拿四成，輸了不扣點；一點＝台幣一萬元，每款車的兌換點數＝8891 新車最低售價（萬元）。獎勵模式不能悔棋、不能用寶物，雙方各走一步以上才算。","#/garage","去我的車庫"],
  [["我的成長","成長","進步","棋力分析","我的棋力","五項","雷達"],"「🏅 我的戰績」裡有「🎯 我的棋力」和「📈 我的成長」。我的棋力看五項：開局、中局、殘局（最近約一段步數的每步準確度，100＝每步都是電腦首選）、殺法（棋力測驗的殺法、戰術題）、穩定（失著、敗著越少越高）。我的成長看你進步得多快，跟電腦、線上、雲河棋路故事裡下的棋都算進去。用過提示或悔棋的那盤不算分數（還是算一次練習量）；還沒評等的對局，打開賽後報告評等後就會算進來。","#/stats","去看我的戰績"],
- [["武俠","武俠角色","雲河四子","雲河七星","沈方庭","庭哥","鐵連城","城子","步越溪","溪兒","存檔","讀檔","新的旅程","齊長路","阿路","田飛燕","燕子","雷借花","花兒","駱躍梅","小梅","齊直行","阿直","田恬","雷響響","駱跳跳","劍客少年","靈族少女","江湖女俠","苗疆少女","換角色","選角色","我的角色","換造型"],"開新的旅程時，從「雲河七星」七位原創角色選一位，每位就是一顆棋子：俥・齊長路（車行少年，只肯走直路）、相・田飛燕（渡口茶棚的姑娘，守著茶棚不過河）、炮・雷借花（揚州煙火作坊的女兒，說話大聲）、傌・駱躍梅（驛站撿來的孩子，最會拐彎）、帥・沈方庭（當鋪少爺，天生氣喘被關在院子裡）、仕・鐵連城（從小護著少爺的鄰家哥哥）、兵・步越溪（跑腿丫頭，只會往前衝）。選定就不能換，本命棋子也跟著鎖住；想換身分，回開頭畫面開始「新的旅程」，可以存到另一格。","#/settings","去換角色"],
+ [["武俠","武俠角色","雲河四子","雲河七星","齊轍","阿轍","星槎","雲河星槎","沈方庭","庭哥","鐵連城","城子","步越溪","溪兒","存檔","讀檔","新的旅程","齊長路","阿路","田飛燕","燕子","雷借花","花兒","駱躍梅","小梅","齊直行","阿直","田恬","雷響響","駱跳跳","劍客少年","靈族少女","江湖女俠","苗疆少女","換角色","選角色","我的角色","換造型"],"開新的旅程時，從「雲河七星」七位原創角色選一位，每位就是一顆棋子，各來自不同朝代，搭上穿梭歷史的星槎「雲河」相遇：俥・齊轍（秦，運糧車夫之子，只肯走直路）、相・田飛燕（南北朝，江邊渡口茶棚的姑娘）、炮・雷借花（宋，臨安煙火作坊的女兒）、傌・駱躍梅（元，草原驛站撿來的孩子）、帥・沈方庭（明，徽州當鋪少爺，天生氣喘）、仕・鐵連城（明，從小護著他的鄰家哥哥）、兵・步越溪（清，揚州跑腿丫頭）。棋盤就是他的家鄉朝代。選定就不能換，本命棋子也跟著鎖住；想換身分，回開頭畫面開始「新的旅程」，可以存到另一格。","#/settings","去換角色"],
  [["第二集","紙譜新局","下一集","續集","第一集"],"「石桌往事」有兩集：第一集《石桌往事》、第二集《紙譜新局》，在「🪨 冒險 → 石桌往事」頁面上面切換。第二集要先把第一集雲河棋路的 36 關都過了才會解鎖（還沒解鎖會顯示 🔒）。","#/legend","去石桌往事"],
  [["悔棋","悔棋符"],"悔棋要用「↶ 悔棋符」：跟電腦的一般對局、故事裡可以用（我的角色看得到張數）。對局時按「🎒 寶物」或「↶ 悔棋」就能用（擂台、故事、挑戰電腦都可以）；積分挑戰、獎勵模式、線上對戰都不能悔棋；練習（擺盤、錯棋重練）可以隨便退。"],
  [["錯棋重練","錯棋","重練"],"和電腦下完，App 會把你走錯的局面收進「錯棋重練」，之後可以回到那個局面重新練，直到走對為止。"],

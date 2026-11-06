@@ -257,6 +257,15 @@
     if(gp&&window.Path2D){const P2=new Path2D(gp),sc=2.75;for(const[dx,dy,c]of[[3,5,sh],[0,0,ink]]){g.save();g.translate(h-50*sc+dx,h-50*sc+dy);g.scale(sc,sc);g.fillStyle=c;g.fill(P2);if(c===ink){g.strokeStyle=ink;g.lineWidth=1.2;g.lineJoin="round";g.stroke(P2)}g.restore()}return}
     g.font='900 236px "Noto Serif TC","Songti TC","PMingLiU","SimSun",serif';g.textAlign="center";g.textBaseline="middle";g.fillStyle=sh;g.fillText(ch,h+3,h+14);g.fillStyle=ink;g.fillText(ch,h,h+9)});
   const GLB_ANIM_OF={wave:"wave_goodbye_01",hattip:"wave_goodbye_01",point:"wave_goodbye_01",bow:"bow",gongshou:"bow",taichi:"bow",cheer:"cheer",win:"cheer",jump:"cheer",clap:"cheer",flex:"cheer",laugh:"cheer",kick:"cheer"};   /* 小人的動作 → Tripo 動畫名稱 */
+  /* 開發者 11/6（雲河七星的膚色「還是太深，跟 Gemini 完全不同」）：七位武俠角色（x_ 開頭的模型）改用「手繪上色」材質。
+     顏色直接照貼圖（貼圖的皮膚、腮紅已對齊 2D 定稿），只加一點固定方向（從看的人右上前方）的柔和明暗；不吃場景燈光和色調映射。
+     原因：同一張貼圖，在石桌園子（ACES 色調映射＋暖色太陽）臉會壓成深橘褐色，桌面小人（畫布沒有 sRGB 輸出）又過曝偏黃，人物檢視又是另一個樣子；
+     改成這樣以後三個地方看到的臉色都一樣、都跟 2D 定稿一樣。找不到要換的程式片段（three.js 改版）就照原本的光照，不會壞掉 */
+  const PAINT_C=new WeakMap(),PAINT_L="vec3 outgoingLight = reflectedLight.directDiffuse + reflectedLight.indirectDiffuse + totalEmissiveRadiance;";
+  function paintMat(o){let m=PAINT_C.get(o);if(m)return m;m=new T.MeshLambertMaterial({map:o.map,side:o.side,transparent:o.transparent,opacity:o.opacity,alphaTest:o.alphaTest});m.name="xqPaint";
+    m.onBeforeCompile=s=>{const f=s.fragmentShader;if(!f.includes(PAINT_L)||!f.includes("#include <encodings_fragment>"))return;
+      s.fragmentShader=f.replace(PAINT_L,"vec3 outgoingLight = diffuseColor.rgb * ( .62 + .38 * smoothstep( -.3, .75, dot( normal, normalize( vec3( .35, .55, .75 ) ) ) ) );").replace("#include <tonemapping_fragment>","").replace("#include <encodings_fragment>","gl_FragColor = LinearTosRGB( gl_FragColor );")};
+    m.customProgramCacheKey=()=>"xqPaint";PAINT_C.set(o,m);return m}
   function attachGLB(B,o){if(!window.XQGLB)return;const meId=(String(o.glb||"").match(/\/(\w+)\.glb/)||[])[1],meCh=PC(),meK=eraK();const box0=new T.Box3().setFromObject(B.bot),h0=box0.max.y-box0.min.y,y0=box0.min.y;
     const face=B.torso.children.find(m=>m.isMesh&&m.geometry&&m.geometry.type==="CircleGeometry");
     B.glbP=window.XQGLB(o.glb).catch(()=>window.XQGLB(o.glb)).then(sc=>{if(!sc)throw new Error("empty");   /* 意見回饋 505：失敗自動重試一次；結果交給畫面顯示「載入中／失敗」 */const g=sc.clone(true);g.rotation.y=-Math.PI/2;g.updateMatrixWorld(true);
@@ -268,6 +277,7 @@
       const bb=new T.Box3().setFromObject(g),sz=bb.getSize(new T.Vector3()),c=bb.getCenter(new T.Vector3());if(!(sz.y>0))return;
       const hold=new T.Group();hold.name="glb";g.position.set(-c.x,-bb.min.y,-c.z);hold.add(g);hold.scale.setScalar(h0/sz.y);hold.position.y=y0;
       g.traverse(m=>{if(m.isMesh){m.castShadow=true;m.receiveShadow=true}});
+      if(/^x_/.test(meId||""))g.traverse(m=>{if(m.isMesh&&m.material&&m.material.map)m.material=paintMat(m.material)});   /* 開發者 11/6：雲河七星用手繪上色材質（見 paintMat） */
       /* 意見回饋 503：圓牌的位置是從 2D 立繪換算的，套在 Tripo 模型上會偏（蓋到臉、浮在身體前面），真實版就不另外貼圓牌，看模型本身 */
       if(false&&o.ring&&o.ring.r&&face){const R=o.ring,rad=R.r*sz.x*.95,m=face.material.clone();m.side=T.DoubleSide;
         const d=new T.Mesh(new T.CircleGeometry(rad,48),m),px=bb.min.x+R.u*sz.x,py=bb.max.y-R.v*sz.y;
