@@ -897,6 +897,17 @@ body.xqt-on .modal{z-index:10000}body.xqt-on .toast{z-index:10001}body.xqt-on .x
 
 /* 意見回饋 683：棋理卡的「看示範棋局」按鈕 */
 .shp-demo{margin-top:8px}
+
+/* 意見回饋 684、685：星槎第 1～4 站——解題頁上方的台詞、「📖 讀這一章」卡、選做題小標、《雲河七星》閱讀頁與［棋局］解題卡 */
+.cj-top .shp-psay{margin:4px 0 0;font-family:var(--serif);font-size:14px;color:var(--ink);line-height:1.6}
+.shp-read{display:flex;align-items:center;gap:10px;width:100%;margin:10px 0 0;padding:10px 12px;text-align:left;font:inherit;color:inherit;cursor:pointer;border-radius:12px;border:1px dashed color-mix(in srgb,var(--accent) 55%,var(--line));background:var(--card)}
+.shp-read .shp-ri{font-size:26px;flex:none}.shp-read .tx{flex:1;min-width:0;display:flex;flex-direction:column}.shp-read .tx b{font-size:14.5px}.shp-read .shp-rt{font-size:12.5px;color:var(--muted)}
+.shp-xh{margin-top:14px}.shp-lb{font-weight:900;color:var(--accent)}
+.shp-rd p{line-height:1.95;font-size:16px;margin:0 0 12px;text-align:justify}.shp-rh{font-family:var(--serif);font-size:20px;line-height:1.5;margin:4px 2px 2px}.shp-rs{font-size:12.5px;margin:0 2px 14px!important}
+.shp-rdi{line-height:1.7;margin-bottom:10px}.shp-rdi b{font-family:var(--serif);font-size:18px}.shp-rdi p{font-size:13.5px!important;margin:6px 0 0!important}
+.shp-mk{display:flex;flex-direction:column;gap:6px;align-items:stretch;margin:6px 0 16px;border:2px solid color-mix(in srgb,var(--accent) 50%,var(--line));scroll-margin-top:80px}
+.shp-mk b{font-family:var(--serif);font-size:16px}.shp-mk .muted{font-size:12.5px}.shp-mk p{font-size:13.5px!important;margin:0!important}.shp-mk .btn{margin-top:4px}.shp-mk .lk{align-self:center;font-size:13.5px}
+#rdAfter{scroll-margin-top:70px}
 </style></head><body>
 <div class="app">
  <div class="topbar" id="topbar"><button class="ib" id="back" hidden><b>‹</b>返回</button><h1 id="title">象棋千秋</h1><span id="topRight"></span></div>
@@ -944,7 +955,7 @@ body.xqt-on .modal{z-index:10000}body.xqt-on .toast{z-index:10001}body.xqt-on .x
       if(!window.caches)return go();caches.keys().then(function(ks){return Promise.all(ks.filter(function(k){return k.indexOf("xqlab-app-")===0}).map(function(k){return caches.delete(k)}))})
         .then(function(){return navigator.serviceWorker&&navigator.serviceWorker.getRegistration()}).then(function(r){return r&&r.update()}).catch(function(){}).then(go)}};setTimeout(chk,4000)})();
 </script>
-<script>window.XQ_OFFLINE=true;window.XQ_BUILD="20261106-1640";</script>
+<script>window.XQ_OFFLINE=true;window.XQ_BUILD="20261106-1649";</script>
 <script src="core.js"></script>
 <script src="engine.js"></script>
 <script src="local.js"></script>
@@ -1989,6 +2000,7 @@ function route(){
   if(p[0]==="journey"&&p[1]==="play")return screen=CpuGame(v,false,"journey");   /* 意見回饋 413：石桌往事（雲河棋路、驛站、園子、守關）的對局頁 */
   if(p[0]==="journey")return screen=Journey(v,p[1]?decodeURIComponent(p[1]):null);
   if(p[0]==="adventure"){store.set("dbReturn",null);return screen=typeof Voyage==="function"?Voyage(v):Adventure(v)}   /* 意見回饋 674：#/adventure 改成雲河星槎頁（07f-ship.js），舊網址照樣能用 */
+  if(p[0]==="ship"&&p[1]==="read"&&typeof ShipRead==="function"){store.set("dbReturn",null);return screen=ShipRead(v,p[2]||"",p[3]||"")}   /* 意見回饋 685：《雲河七星》正文（07f-ship.js）：#/ship/read＝書架合集、#/ship/read/<站>[/mark|/after] */
   if(p[0]==="shelf"){store.set("dbReturn",null);const b=p[1]==="2"&&(book1Done()||DEVMODE())?2:1;if(p[1]!==String(b)){navReplace("#/shelf/"+b);return}store.set("legBook",b);return screen=Adventure(v)}   /* 意見回饋 674：星槎書架上的兩本書；第二集照舊要第一集 36 關都過 */
   if(p[0]==="profile"||p[0]==="me"){screen=Me(v);if(p[1]==="relics"&&typeof relicBook==="function"){const h=location.hash;setTimeout(()=>{if(location.hash===h)relicBook()},120)}return screen}   /* 意見回饋 536：棋童資料併進「我的角色」；644：#/me/relics 直接打開珍品冊（藏局解完、問小帥都帶到這裡） */
   if(p[0]==="terms")return screen=Terms(v,p[1]);
@@ -3388,7 +3400,7 @@ function onboard(){if(journey())journeyLock();else titleScreen({})}
 // ================= 設定：棋盤風格、棋子樣式、走棋顯示 =================
 const SAMPLE_FEN0="rnbakabnr/9/1c5c1/p1p1p1p1p/9/9/P1P1P1P1P/1C5C1/9/RNBAKABNR",SAMPLE_FEN1="rnbakabnr/9/1c5c1/p1p1p1p1p/9/9/P1P1P1P1P/1C2C4/9/RNBAKABNR",SAMPLE_LAST={f:70,t:67};
 /* 意見回饋 661：關於頁顯示整包遊戲要多大空間。XQ_SIZES 由 build-site.js 建置時填入（開發中的 m.html 是 null，就不顯示） */
-const XQ_SIZES={"pre":163489571,"code":12495916,"eng":51511005,"gm":33668932,"bgm":259516351,"opt":[["比賽對局 1956–2010",21765744],["比賽對局 2011–2014",25596413],["比賽對局 2015–2019",24821916]],"all":603502604,"other":10636756};
+const XQ_SIZES={"pre":163588623,"code":12517803,"eng":51511005,"gm":33668932,"bgm":259516351,"opt":[["比賽對局 1956–2010",21765744],["比賽對局 2011–2014",25596413],["比賽對局 2015–2019",24821916]],"all":603623543,"other":10636756};
 const szMB=b=>b>=1073741824?(b/1073741824).toFixed(1)+" GB":Math.max(1,Math.round(b/1048576))+" MB";
 function aboutSizes(){const S=XQ_SIZES;if(!S)return"";const opt=S.opt||[];   /* 意見回饋 662：玩家只看總數，細項只在開發者模式顯示 */
   return `<div class="row" style="justify-content:space-between"><span class="muted">整包下載</span><b>約 ${szMB(S.all)}</b></div>
@@ -3807,7 +3819,7 @@ const CHAR_ERA={x_swordboy:"qin",x_spiritgirl:"nanbei",x_martialgirl:"song",x_mi
 const JOURNEY_KEYS=["pChar","pSex","pStyle","botPiece","onboard1","journey","playSec","era","eraOpen","xp","xpDay","xpKeys","record","hintBonus","hintUse","undoBonus","undoDropIds","bag","jarGot","lingN","giftGames","dropMiss",
   "legend","legendGame","legBook","jStars","jPending","jPrev","jRun","jScene","jHid","jMig36","jpSeen","novelRead","sceneDone","storyEraTip","eraUser","study","campSeen","campStars",
   "npcBond","npcAsk","npcAskSeen","parkNpc","parkNpcLast","parkAdj","visitGone","secrets","secretClue","secretSpots","secretWins","relics","relicSolved","relicAt","histSeen","histSolved","histTitle",
-  "innCur","innDrop","innAdj","xhMake","xhMei","xhTitle","yuDay","yuHint","yuRoute","yuTitle","cupDrop","cupGot","cj","cjRun","shipAt","shipSolved","cjRunS","diff","shipDock","shipLearn","undoFree"].map(k=>"m_"+k)   /* 意見回饋 674：星槎在看哪一站、主場殘局解開的題、正在解的那一題；675：航行難度、已停靠的站、學會的棋理、這盤用了幾次免費悔棋 */
+  "innCur","innDrop","innAdj","xhMake","xhMei","xhTitle","yuDay","yuHint","yuRoute","yuTitle","cupDrop","cupGot","cj","cjRun","shipAt","shipSolved","cjRunS","diff","shipDock","shipLearn","undoFree","shipGal","shipStale","shipRead"].map(k=>"m_"+k)   /* 意見回饋 674：星槎在看哪一站、主場殘局解開的題、正在解的那一題；675：航行難度、已停靠的站、學會的棋理、這盤用了幾次免費悔棋；685：七星同局圖鑑與熱身解開的題、看過困斃說明、讀過《雲河七星》哪幾章 */
   .concat(["cpuRate","bonusKeys","record","arenaStamps","carBank","play","play2"].map(k=>"xq_"+k));
 const JK=new Set(JOURNEY_KEYS),SLOT_N=3;
 /* 意見回饋 668：舊玩家判斷要在首頁畫出來以前做（首頁會順手寫一些旅程鍵，例如 lingN），所以這裡直接讀 localStorage；null＝已經過渡過了 */
@@ -5718,12 +5730,13 @@ function Camp(v,n){setTabs(n?false:true,"#/");store.set("campSeen",true);const S
    茶單每天凌晨 4 點換（cjDay）。一口＋一盞解完（或看完答案）、一壺解完或跳過＝今天完成；連續天數斷一天會自動用掉「每 7 天一次」的免簽。
    每連續 7 天完成，從玩家還沒拿到的珍品裡掉一件（優先當天題目那本書的朝代）；130 件都收齊後，改成指名一局還沒解的珍品藏局。
    珍品藏局（意見回饋 644）：#/canju/z/<珍品 id> 用同一個解題畫面，但不算茶單；正在解的存在 store "cjRunZ"，不看答案解開記進 store "relicSolved"（07-legend.js）。 */
-const CJ0={URL:"data/canju/canju-set.json",SLOT:{sip:["一口","☕"],cup:["一盞","🍵"],pot:["一壺","🫖"]},
+const CJ0={URL:"data/canju/canju-set.json",SHIP:"data/canju/ship-set.json",SLOT:{sip:["一口","☕"],cup:["一盞","🍵"],pot:["一壺","🫖"]},
   LV:[[2.5,"入門"],[4,"初級"],[5.5,"中級"],[7,"中高級"],[99,"高級"]],ERA:{"明":"ming","清":"qing","明清":"ming","現代":"classic"},
   TYPES:["一步定勝負","短殺","中殺","大師收官","古譜校錯"]};
 let CJ_P=null;
-function cjData(){return CJ_P||(CJ_P=fetch(CJ0.URL).then(r=>{if(!r.ok)throw new Error("題庫載入失敗（"+r.status+"）");return r.json()})
-  .then(d=>{d.byId={};for(const x of d.items)d.byId[x.id]=x;return d}).catch(e=>{CJ_P=null;throw e}))}
+/* 意見回饋 684、685：星槎石桌的手擺題（ship-set.json，tools/canju/6_ship.js）只併進 byId、不進 items——不排進今日茶單和自由練習；這個檔抓不到也不影響茶單 */
+function cjData(){return CJ_P||(CJ_P=Promise.all([fetch(CJ0.URL).then(r=>{if(!r.ok)throw new Error("題庫載入失敗（"+r.status+"）");return r.json()}),fetch(CJ0.SHIP).then(r=>r.ok?r.json():null).catch(()=>null)])
+  .then(([d,s])=>{d.byId={};for(const x of d.items)d.byId[x.id]=x;if(s&&Array.isArray(s.items))for(const x of s.items)if(!d.byId[x.id])d.byId[x.id]=x;return d}).catch(e=>{CJ_P=null;throw e}))}
 const cjPad=n=>String(n).padStart(2,"0");
 function cjDay(t){const d=new Date((t==null?Date.now():t)-4*36e5);return d.getFullYear()+"-"+cjPad(d.getMonth()+1)+"-"+cjPad(d.getDate())}
 const cjDN=k=>Math.round(Date.parse(k+"T12:00:00Z")/864e5);
@@ -5760,12 +5773,12 @@ const cjAllRelics=()=>typeof relicsMine==="function"&&Object.values(relicsMine()
 const cjZBind=b=>b.querySelectorAll("[data-rlgo]").forEach(y=>y.onclick=()=>{if(typeof relicGo==="function")return relicGo(y.dataset.rlgo);closeSheet();location.hash="#/canju/z/"+encodeURIComponent(y.dataset.rlgo)});
 
 /* ---------- 出處、文字 ---------- */
-function cjSrc(P,long){const s=P.src||{};if(s.book==="特級大師對局")return`${esc(s.year)} ${esc(s.title)}${long&&s.red&&s.black?`・${esc(s.red)} 對 ${esc(s.black)}${s.result?"（"+esc(s.result)+"）":""}`:""}`;
+function cjSrc(P,long){const s=P.src||{};if(s.book==="星槎石桌")return"星槎石桌・"+esc(s.title);   /* 意見回饋 685：手擺題不是古譜，不寫年份 */if(s.book==="特級大師對局")return`${esc(s.year)} ${esc(s.title)}${long&&s.red&&s.black?`・${esc(s.red)} 對 ${esc(s.black)}${s.result?"（"+esc(s.result)+"）":""}`:""}`;
   return`《${esc(s.book)}》〈${esc(s.title)}〉${long&&s.no?" "+esc(s.no):""}${long&&s.part?"・"+esc(s.part):""}`}
-const cjEra=P=>`<span class="cj-era">${esc((P.src||{}).era||"")}</span>`;
-function cjTask(P){if(P.t==="古譜校錯")return`古譜這裡走了「${P.book.cn}」。Pikafish 認為這步可以更好——你找得到嗎？`;
+const cjEra=P=>(P.src||{}).era?`<span class="cj-era">${esc(P.src.era)}</span>`:"";
+function cjTask(P){if(P.task)return P.task;if(P.t==="古譜校錯")return`古譜這裡走了「${P.book.cn}」。Pikafish 認為這步可以更好——你找得到嗎？`;
   if(P.n===1)return P.t==="大師收官"?"大師當年在這裡只有一步能保住勝勢，找出來":"只有一步能保住勝勢，找出來";return`${P.n} 步之內將死對方（對方每步都會用最頑強的應法）`}
-const cjWhy=(P,c)=>c&&c[0]==="m"?`對方反過來 ${c.slice(1)} 回合就能殺你。`:c==="l"?"局面反而變差了。":c==="d"?"這樣只能和棋。":c==="w"?(P.n===1?"還有優勢，但贏不下來了。":"還算不錯，但讓對方的將逃掉了。"):"這步不在解答裡。";
+const cjWhy=(P,c)=>c==="x"?(P.n===1?"對方還有棋可走，緩過氣來了。":`對方緩過氣來，${P.n} 步之內收不下來了。`):c&&c[0]==="m"?`對方反過來 ${c.slice(1)} 回合就能殺你。`:c==="l"?"局面反而變差了。":c==="d"?"這樣只能和棋。":c==="w"?(P.n===1?"還有優勢，但贏不下來了。":"還算不錯，但讓對方的將逃掉了。"):"這步不在解答裡。";
 const cjSplit=s=>String(s||"").match(/.{4}/g)||[];
 function cjW(N){if(!N._w){N._w={};for(const e of String(N.w||"").split(";")){if(!e)continue;const[u,c,l]=e.split(" ");N._w[u]={c,line:cjSplit(l)}}}return N._w}
 function cjFeat(C,b,s,u){const f=C.parseSq(u.slice(0,2)),t=C.parseSq(u.slice(2,4)),nb=C.make(b,f,t),PN={R:"車",N:"馬",C:"炮",P:"兵",K:"帥",A:"士",B:"象"};
@@ -5856,6 +5869,7 @@ function CanjuPlay(v,id){cjCSS();const H0=location.hash,here=()=>v.isConnected&&
   if(XM&&XM.err){v.className="view";v.innerHTML=`<div class="pad"><div class="card muted">${esc(XM.err)}<br><a href="${BK}">回去</a></div></div>`;return{}}   /* 意見回饋 658：還沒走到的站、今天的份走完了、還沒到的花瓣 */
   cjData().then(d=>Z?zLoad(d):d).then(d=>{if(!v.isConnected)return;D=d;P=D.byId[id];if(!P){v.className="view";v.innerHTML=`<div class="pad"><div class="card muted">找不到這一題（題庫可能更新了）。<br><a href="${BK}">${Z?"回珍品冊":HS||XM?"回去":"回今日茶單"}</a></div></div>`;return}
     S=cjState();me=P.side;flip=me==="b";R=store.get(RK,null);if(!R||R.id!==id)R={id,path:[],mist:0,hl:0,hm:0,hintUsed:false,ans:false,slow:0,undo:0,t0:Date.now()};
+    if(XM&&XM.hint1&&!R.path.length&&!R.hl&&!R.ans){R.hl=1;R.hm=Math.max(R.hm||0,1)}   /* 意見回饋 685：星槎聽書難度的劇情局，一開始就打開第一層（免費）提示 */
     {const sl=slotOf();if(sl&&sl.st==="todo"){const S2=cjState();const x=S2.list.find(y=>y.id===id);x.st="run";cjSave(S2)}}
     if(!rebuild())return finish();save();show()}).catch(e=>{v.className="view";v.innerHTML=`<div class="pad"><div class="card muted">${esc(e.message)}${Z?'<br><a href="#/me/relics">回珍品冊</a>':HS||XM?`<br><a href="${BK}">回去</a>`:""}</div></div>`});
   /* 照存檔的 path 重走一遍；回傳 false＝其實已經解完 */
@@ -5880,13 +5894,14 @@ function CanjuPlay(v,id){cjCSS();const H0=location.hash,here=()=>v.isConnected&&
   function tap(x){if(busy||!node)return;const L=C.legal(b,me);if(sel>=0&&L.some(([f,t])=>f===sel&&t===x)){const u=C.iccs(sel,x);sel=-1;return move(u)}sel=L.some(([f])=>f===x)?x:-1;if(sel>=0&&typeof vibrate==="function")vibrate(5);draw()}
   function move(u){const o=node.o[u],[f,t]=sq(u);
     if(o){if(typeof vibrate==="function")vibrate(15);R.path.push(u);R.hl=0;hk=null;b=C.make(b,f,t);last={f,t};save();draw();
-      if(!o[1]){node=null;const demo=cjSplit(o[0]);busy=true;if(demo.length){stat("✔ 對了！看看後續");anim(demo,b,(cnTxt,i)=>note(`後續 ${i}：${cnTxt}`),()=>finish())}else{stat(C.legal(b,C.opp(me)).length?"✔ 對了！":"✔ 將死！");later(finish,700)}return}
+      if(!o[1]){node=null;const demo=cjSplit(o[0]);busy=true;if(demo.length){stat("✔ 對了！看看後續");anim(demo,b,(cnTxt,i)=>note(`後續 ${i}：${cnTxt}`),()=>finish())}else{stat(C.legal(b,C.opp(me)).length?"✔ 對了！":C.inCheck(b,C.opp(me))?"✔ 將死！":"✔ 困斃！對方一步都動不了");later(finish,700)}return}
       busy=true;stat("✔ 好棋");later(()=>{const[f2,t2]=sq(o[0]),tx=C.notate(b,f2,t2);b=C.make(b,f2,t2);last={f:f2,t:t2};node=o[1];step++;show();note(`對方應：${tx}\n`+cjTask(P))},550);return}
     if(node.s&&node.s[u]){R.slow++;save();busy=true;const nb=C.make(b,f,t);bd.draw(nb,{flip,last:{f,t},check:ck(nb)});stat("👍 這步也能贏");note(`${C.notate(b,f,t)}也能贏（${node.s[u]} 回合殺），但還有更快的殺法。再找找看！（不算走錯）`);later(()=>{busy=false;draw()},1100);return}
     wrong(u)}
   function wrong(u){const e=cjW(node)[u]||{c:"",line:[]},[f,t]=sq(u),t0=C.notate(b,f,t);R.mist++;save();busy=true;if(typeof vibrate==="function")vibrate([20,40,20]);
-    const isBook=P.book&&P.book.mv===u;stat(`✘ ${t0}${isBook?"（就是古譜原來那一手）":""}`);note("對方的反駁：");const acc=[];
-    anim([u].concat(e.line),b,(tx,i)=>{if(i>1){acc.push(tx);note("對方的反駁："+acc.join("　"))}},()=>{note(`對方的反駁：${acc.join("　")||"（直接看局面）"}\n這步不行：${cjWhy(P,e.c)}`);
+    let ws="";try{ws=XM&&XM.wrong?XM.wrong(u,step,P)||"":""}catch(x){}if(ws)ws="💬 "+ws+"\n";   /* 意見回饋 685：星槎題走了陷阱，角色先說一句 */
+    const isBook=P.book&&P.book.mv===u;stat(`✘ ${t0}${isBook?"（就是古譜原來那一手）":""}`);note(ws+"對方的反駁：");const acc=[];
+    anim([u].concat(e.line),b,(tx,i)=>{if(i>1){acc.push(tx);note(ws+"對方的反駁："+acc.join("　"))}},()=>{note(`${ws}對方的反駁：${acc.join("　")||"（直接看局面）"}\n這步不行：${cjWhy(P,e.c)}`);
       const a=[["back","↩","退回重想",()=>{tok++;show()}]];if(typeof undoLeft==="function"&&undoLeft()>0)a.push(["undo","↶",`悔棋符收回（剩 ${undoLeft()}）`,()=>{store.set("undoBonus",undoLeft()-1);R.mist=Math.max(0,R.mist-1);R.undo++;save();tok++;show();toast("↶ 收回了，這一步不算走錯")}]);actionBar($("#acts"),a)},1)}
   /* 動畫：一步一步走 seq（第一步立刻走）；cap(中文記譜, 第幾步) */
   function anim(seq,start,cap,done,first){const my=++tok;let bb=start,i=0;const go=()=>{if(my!==tok||!v.isConnected)return;if(i>=seq.length){done&&done(bb);return}const u=seq[i++],[f,t]=sq(u);
@@ -5899,7 +5914,7 @@ function CanjuPlay(v,id){cjCSS();const H0=location.hash,here=()=>v.isConnected&&
   async function finish(){tok++;busy=true;node=null;S=cjState();const perfect=!R.ans&&R.mist===0&&!R.hintUsed,first=!S.solved[id],ms=Date.now()-(R.t0||Date.now());
     S.solved[id]={at:Date.now(),p:perfect?1:0,a:R.ans?1:0};S.seen=S.seen.filter(x=>x!==id).concat(id).slice(-800);
     {const sc=R.ans?0:(R.mist?.5:1)*(R.hintUsed?.6:1),p=1/(1+Math.exp(-(S.r-P.d)/1.2));S.r=Math.max(1,Math.min(10,Math.round((S.r+.35*(sc-p))*100)/100))}
-    if(!R.ans&&typeof addXP==="function")addXP(5,"殘局","cj:"+id);
+    if(!R.ans&&!(XM&&XM.noXP)&&typeof addXP==="function")addXP(5,"殘局","cj:"+id);   /* 意見回饋 685：星槎的選做題（熱身、七星同局圖鑑）不給修為 */
     let ins="";if(perfect&&first&&typeof insightN==="function"){const c=insightN()+1;store.set("insightN",c);if(c%5===0){store.set("hintBonus",(store.get("hintBonus",0)||0)+1);ins="🎁 攢滿 5 個心得，換到 1 顆提示棋"}else ins=`💡 有心得（${c%5}／5，攢滿 5 個換 1 顆提示棋）`}
     let hit=null;const sl=!Z&&!HS&&!XM&&S.day===cjDay()?(S.list||[]).find(x=>x.id===id):null;if(sl&&sl.st!=="done"){sl.st="done";sl.res={p:perfect?1:0,a:R.ans?1:0};if(cjCleared(S.list))hit=cjStreakHit(S)}
     cjSave(S);store.set(RK,null);
@@ -6351,7 +6366,11 @@ function garden2Bind(box){for(const id of["#gdYu","#gdMeY"]){const e=box.querySe
    題目只從 shipBuild 挑：一盞茶殘局題庫裡「第一步就是本命子」的題，照難度的 d 範圍（DIFF.band），再優先殺法標籤（SHIP_LESSON.kill）和那一朝的古譜（books）；
      同一個難度裡，同一種本命子的站不重複出題；不夠 3 題的站顯示「題目準備中」（相目前只有 2 題）。
      benming-pool.json 上了網站以後，把 shipBuild 裡收題那一段換成讀它（src＝canju 的題號）就好。
-   小帥、小帥妹的舊旅程：說書人的學徒——13 站全開、主場角色不說話，上面有「選雲河七星開新旅程」（存到別格，不蓋掉舊進度）。 */
+   小帥、小帥妹的舊旅程：說書人的學徒——13 站全開、主場角色不說話，上面有「選雲河七星開新旅程」（存到別格，不蓋掉舊進度）。
+   意見回饋 684、685（開發者 11/6 同意 story/雲河七星長篇/關卡設計_第1-4章.md）：船艙、秦、漢、三國四站改成固定的「劇情局＋變化題＋古譜」（SHIP_PLAN）；
+     手擺題在 data/canju/ship-set.json（tools/canju/6_ship.js 產生，cjData 只併進 byId、不進茶單）；每題前後各一句台詞（題目的 say、SHIP_SAY_ID）；
+     國手、千秋＝劇情局＋2 題古譜，變化題當選做的熱身；船艙學會了以後有「七星同局圖鑑」（選做、不計點、不給修為，存 shipGal）；
+     正文《雲河七星》（data/canju/yunhe-novel.json）：每站「📖 讀這一章」和書架上的合集都是 #/ship/read（shipReadPage），［棋局］變成一張解題卡，解完回到正文。 */
 const SHIP_PER=3;
 const SHIP_STOP={
   classic:{who:[],place:"船艙石桌",meet:"船頭的說書人",img:"擺開棋盤、認清規則",learn:"認識彼此的棋子與時代"},
@@ -6408,6 +6427,35 @@ const SHIP_LV=[0,0,3,5,6,7,8,9,10,11,12,13,14];
 const SHIP_SAY=["棋盤上的路，走過一次就記得。","慢一點不要緊，星槎不會丟下誰。","今天先下一盤，故事等你回來再講。","輸掉的那一盤，最值得再擺一次。","每一顆子都有自己的走法，也有自己的歸途。",
   "殘譜少一頁，就少一段沒說完的話。","茶涼了再沏，棋輸了再下。","渡口風大，站穩了再過河。","看不懂的棋，多看兩眼就懂了。","一盤棋下完，心裡的結也鬆一點。","別急著贏，先看清楚對方想做什麼。","這一站的人，都在等一盤好棋。","船開得慢，是要讓你把岸上的事看清楚。","石桌上缺的那一塊，要七個人一起補。"];
 const SHIP_PC={"俥":"R","傌":"N","相":"B","仕":"A","帥":"K","炮":"C","兵":"P"};
+/* 意見回饋 684、685：第 1～4 站每站出哪幾題（關卡設計報告第二節）。每站 3 題＝[劇情局, 第 2 題, 第 3 題]；
+   story＝劇情局（五級都一樣）、byDiff＝各難度的第 2、3 題（null＝照舊從題庫自動挑）、warm＝國手、千秋的選做熱身（變化題）、ch＝正文第幾章、who＝正文解題卡上「跟誰一起解」；
+   題目不在題庫裡（舊題庫）就退回自動挑。船艙：劇情局＝自己本命子那一版（學徒用俥），第 2 題換齊轍的俥（自己是俥就換小梅的傌），第 3 題照舊自動挑（相、仕先用帥版）。
+   pre2／pre3＝第 2、3 題前那一句（題目自己有台詞就用題目的） */
+const SHIP_PLAN={
+  classic:{ch:1,who:"齊轍",story:pc=>"xs-classic-"+(SHIP_PC[pc]||"R"),byDiff:pc=>[pc==="俥"?"xs-classic-N":"xs-classic-R",pc==="相"||pc==="仕"?"xs-classic-K":null],
+    pre2:pc=>["說書人",pc==="俥"?"同一盤，換小梅的傌來收。":"同一盤，換阿轍的俥來收。"]},
+  qin:{ch:2,who:"齊轍",story:"xs-qin-0",warm:"zx076",byDiff:{1:["zx076","zx075"],2:["zx076","zx075"],3:["zx075","lk094c5"],4:["sq183c6","sq272"],5:["fx-zx223-15-29","lk083"]}},
+  han:{ch:3,who:"小梅",story:"xs-han-0",warm:"xs-han-1",byDiff:{1:["xs-han-1","lk129c7"],2:["xs-han-1","lk107c6"],3:["xs-han-1","lk093c4"],4:["sq276c5","sq252"],5:["sq252","sq400"]},pre3:["老驛騎","沒到以前，不能算自己贏。"]},
+  sanguo:{ch:4,who:"方庭",story:"xs-sanguo-0",warm:"xs-sanguo-1",byDiff:{1:["xs-sanguo-1","gm1997-1p394p44K4r"],2:["xs-sanguo-1","gm1997-1p394p44K4r"],3:["xs-sanguo-1","lk204c6"],4:["xw056c8","xw057c8"],5:["lk011c4","sq463c6"]},pre3:["道童","叫我看這裡。"]},
+  /* 第 5 站以後（正文還沒定稿，先不排）：魏晉站預定也用《竹香齋》〈車破雙士象〉那一組（zx075、zx076），換成燕子守、對方的車攻——秦站學單車破士象，魏晉站反過來學「士象全守和」。要做時把 todo 換成 story／byDiff */
+  weijin:{todo:"竹香齋〈車破雙士象〉換先後手：燕子守、對方攻"}};
+/* 題庫題（canju-set.json）在星槎裡的台詞：[誰, 話, 動作]；wrong＝第一步走這手時那一句；more＝解完卡上「想多看一題」 */
+const SHIP_SAY_ID={zx076:{pre:[["小梅","這回前面空空的，你直直去呀。"]],done:[["齊轍","路通的時候，就直走。"]]},
+  zx075:{pre:[["小梅","阿轍，路堵住了，先叫我。"]],wrong:{c8c9:["小梅","直直撞上去，象一退就把路封了。"]},done:[["齊轍","退一步，路就出來了。"]],
+    more:{id:"sq430",t:"《適情雅趣》〈能為必勝〉（1570）幾乎是同一個局面、同一個答案；兩百多年後的《竹香齋》還在研究它。"}}};
+/* 這一站這一難度的 3 題（還沒對過題庫）；沒有計畫的站回 null */
+function shipPlanIds(k,dn){const Pl=SHIP_PLAN[k];if(!Pl||!Pl.story)return null;const pc=shipPiece(k),st=typeof Pl.story==="function"?Pl.story(pc):Pl.story,bd=typeof Pl.byDiff==="function"?Pl.byDiff(pc):Pl.byDiff[dn]||[null,null];return[st,bd[0]||null,bd[1]||null]}
+const shipNum=s=>String(s||"").replace(/\d/g,d=>"〇一二三四五六七八九"[d]);
+/* 古譜題前說書人那一句（照出處） */
+function shipSrcLine(P){const s=(P&&P.src)||{};if(s.book==="特級大師對局")return`這是${shipNum(s.year)}年的實戰，大師也只差這一手。`;if(!s.book||s.book==="星槎石桌")return"先把眼前這一手看清楚。";
+  return`這一局出自《${s.book}》。${s.year?shipNum(s.year)+"年的人，也在找這一手。":"古人也在找這一手。"}`}
+/* 這一題的台詞 {pre:[[誰,話,動作]…], done:[…], wrong:{著法:[誰,話]}, more}；slot＝第幾題（0 起；-1＝選做）。學徒只聽得到說書人 */
+function shipSay(k,id,P,slot){const Pl=SHIP_PLAN[k];if(!Pl||!Pl.story)return{};const S=Object.assign({},(P&&P.say)||{},SHIP_SAY_ID[id]||{});
+  if(k==="classic"&&slot===1)S.pre=[Pl.pre2(shipPiece(k))];
+  if(!S.pre&&slot!==0)S.pre=[slot===2&&Pl.pre3?Pl.pre3:["說書人",shipSrcLine(P)]];
+  if(shipAppr()){const f=a=>(a||[]).filter(x=>x[0]==="說書人"),w={};for(const u in S.wrong||{})if(S.wrong[u][0]==="說書人")w[u]=S.wrong[u];Object.assign(S,{pre:f(S.pre),done:f(S.done),wrong:w})}
+  return S}
+const shipLine=x=>`${esc(x[0])}${x[2]?esc(x[2]):""}：「${esc(x[1])}」`;
 const shipAppr=()=>!!journey()&&!myChar();   /* 有旅程、但不是雲河七星＝說書人的學徒 */
 const shipShort=k=>k==="classic"?"星槎":eraLabel(k).length===2?eraLabel(k).replace(/朝$/,""):eraLabel(k);
 const shipDay=()=>Math.floor((Date.now()-4*36e5-new Date().getTimezoneOffset()*6e4)/864e5);
@@ -6435,42 +6483,69 @@ function shipBuild(D){const key=shipKey();if(SHIP_BANK&&SHIP_BANK.D===D&&SHIP_BA
   /* 換成 benming-pool.json：把下面「by＝每種本命子 → 題目」這段換掉即可（只收一盞茶題庫裡有的題，解題頁才畫得出來） */
   const skip=new Set(typeof cjReserved==="function"?cjReserved():[]),by={};
   for(const P of D.items||[]){if(skip.has(P.id))continue;const pc=shipFirstPiece(P);if(pc)(by[pc]=by[pc]||[]).push(P)}
-  const [lo,hi]=diffOf().band,used=new Set(),stops={};
-  const pick=(k,pcC)=>{const Ls=SHIP_LESSON[k]||{},all=(by[SHIP_PC[pcC]]||[]).filter(P=>!used.has(P.id));
+  const [lo,hi]=diffOf().band,used=new Set(),stops={},extra={},dn=diffNow();
+  const pick=(k,pcC,n)=>{n=n||SHIP_PER;const Ls=SHIP_LESSON[k]||{},all=(by[SHIP_PC[pcC]]||[]).filter(P=>!used.has(P.id));
     const sc=P=>((Ls.kill||[]).includes(P.kill)?2:0)+((Ls.books||[]).includes((P.src||{}).book)?1:0)+(Ls.one&&P.t==="一步定勝負"?2:0);
-    let out=[];for(let w=0;w<=8&&out.length<SHIP_PER;w++){const c=all.filter(P=>{const d=+P.d||0;return d>=lo-w&&d<hi+1+w});if(c.length>=SHIP_PER||w===8)out=c.sort((a,b)=>sc(b)-sc(a)||(+a.d||0)-(+b.d||0)||String(a.id).localeCompare(String(b.id))).slice(0,SHIP_PER)}
-    if(out.length<SHIP_PER)out=[];out.forEach(P=>used.add(P.id));stops[k]=out.sort((a,b)=>(+a.d||0)-(+b.d||0)).map(P=>P.id)};
-  SHIP_ROUTE.filter(k=>k!=="classic").forEach(k=>pick(k,WX_CHARS[SHIP_STOP[k].who[0]].pc));pick("classic",shipPiece("classic"));   /* 船艙那站排最後，不跟家鄉各站搶題 */
+    let out=[];for(let w=0;w<=8&&out.length<n;w++){const c=all.filter(P=>{const d=+P.d||0;return d>=lo-w&&d<hi+1+w});if(c.length>=n||w===8)out=c.sort((a,b)=>sc(b)-sc(a)||(+a.d||0)-(+b.d||0)||String(a.id).localeCompare(String(b.id))).slice(0,n)}
+    if(out.length<n)out=[];out.forEach(P=>used.add(P.id));return out.sort((a,b)=>(+a.d||0)-(+b.d||0)).map(P=>P.id)};
+  /* 意見回饋 684、685：有 SHIP_PLAN 的站先放計畫裡的題（題庫裡沒有的那格留空，等一下自動補），別的站照舊自動挑；熱身、七星同局圖鑑也先占住，不給別站和示範棋局用 */
+  const has=id=>!!(id&&D.byId&&D.byId[id]&&D.byId[id].tree),plan={};
+  for(const k of SHIP_ROUTE){const L=shipPlanIds(k,dn);if(!L)continue;plan[k]=L.map(id=>has(id)&&!used.has(id)?id:null);plan[k].forEach(id=>id&&used.add(id))}
+  for(const k in plan){const Pl=SHIP_PLAN[k],x=[];if(dn>=4&&has(Pl.warm)&&!plan[k].includes(Pl.warm))x.push(Pl.warm);
+    if(k==="classic")for(const c of "RNCPKAB"){const id="xs-classic-"+c;if(has(id)&&!plan[k].includes(id))x.push(id)}extra[k]=x;x.forEach(id=>used.add(id))}
+  const fill=k=>{const L=plan[k],miss=L.filter(id=>!id).length;if(!miss){stops[k]=L;return}const pc=k==="classic"?shipPiece(k):WX_CHARS[SHIP_STOP[k].who[0]].pc,got=pick(k,pc,miss);stops[k]=got.length?L.map(id=>id||got.shift()):L.filter(Boolean)};
+  SHIP_ROUTE.filter(k=>k!=="classic"&&!plan[k]).forEach(k=>{stops[k]=pick(k,WX_CHARS[SHIP_STOP[k].who[0]].pc)});
+  SHIP_ROUTE.filter(k=>k!=="classic"&&plan[k]).forEach(fill);if(plan.classic)fill("classic");else stops.classic=pick("classic",shipPiece("classic"));   /* 船艙那站排最後，不跟家鄉各站搶題 */
   /* 意見回饋 683：每站另挑一題當「示範棋局」（同本命子、同棋理、偏簡單），不跟任何一站的主場殘局重複，免得先看到答案 */
   const demo={};[...SHIP_ROUTE].forEach(k=>{const pcC=k==="classic"?shipPiece("classic"):WX_CHARS[SHIP_STOP[k].who[0]].pc,Ls=SHIP_LESSON[k]||{},c=(by[SHIP_PC[pcC]]||[]).filter(P=>!used.has(P.id)&&P.tree&&P.tree.o);
     const nM=P=>{try{const f=(P.line||[])[0];return f?1+(((P.tree.o[f]||[])[0]||"").length/4|0):0}catch(e){return 0}},sc=P=>((Ls.kill||[]).includes(P.kill)?4:0)+((Ls.books||[]).includes((P.src||{}).book)?1:0)-(+P.d||0)*.5+(nM(P)>=3&&nM(P)%2?6:0);   /* 至少三步、最後一步是我方走的（示範才看得到殺棋收尾） */const P=c.sort((a,b)=>sc(b)-sc(a)||String(a.id).localeCompare(String(b.id)))[0];if(P){demo[k]=P.id;used.add(P.id)}});
-  return SHIP_BANK={D,key,stops,demo}}
+  return SHIP_BANK={D,key,stops,demo,extra}}
 function shipBank(){return cjData().then(shipBuild)}
 function shipPuzzles(k){if(!SHIP_BANK||SHIP_BANK.key!==shipKey())return null;return SHIP_BANK.stops[k]||[]}
-function shipReserved(D){try{const B=shipBuild(D),o=[];for(const k in B.stops)o.push(...B.stops[k]);return o}catch(e){return[]}}
+/* 選做的題（國手、千秋的熱身、船艙的七星同局圖鑑）：不計解題點、不給修為 */
+function shipExtras(k){if(!SHIP_BANK||SHIP_BANK.key!==shipKey())return[];return(SHIP_BANK.extra||{})[k]||[]}
+function shipReserved(D){try{const B=shipBuild(D),o=[];for(const k in B.stops)o.push(...B.stops[k]);for(const k in B.extra||{})o.push(...B.extra[k]);return o}catch(e){return[]}}
+/* 題目清單上的小標：劇情局／換一子／變化題／古譜〈題名〉／實戰〈…〉 */
+function shipSlotName(k,i,P){if(!SHIP_PLAN[k]||!SHIP_PLAN[k].story)return`${esc(shipPiece(k))}的妙著`;const s=(P&&P.src)||{};
+  if(i===0)return"劇情局";if(i===1&&k==="classic")return"換一子";if(i===1&&diffNow()<=3)return"變化題";
+  if(s.book==="星槎石桌")return"石桌・"+esc(String(s.title||"").replace(/^.*・/,""))+"版";return(s.book==="特級大師對局"?"實戰":"古譜")+(s.title?"〈"+esc(String(s.title).replace(/-\(.*\)$/,""))+"〉":"")}
 /* 3 個解題點：實心＝自己解、空心＝用過提示、空白＝還沒解 */
 function shipDots(k,L){L=L||shipPuzzles(k)||[];return`<span class="shp-dots">${(L.length?L:[0,0,0]).map(id=>{const r=id&&shipRec(k,id);return`<i class="${r?r.h?"h":"s":""}"></i>`}).join("")}</span>`}
 
 /* ---------- 解題頁設定（07c-canju.js CanjuPlay 的 XM） ---------- */
-function shipXM(k,id){const back=()=>"#/adventure",T=SHIP_STOP[k],Ls=SHIP_LESSON[k]||{};shipBank().catch(()=>{});
+function shipXM(k,id){const rd=/\/read$/.test(id);if(rd)id=id.replace(/\/read$/,"");   /* 意見回饋 685：…/read＝從正文的解題卡來的，解完回到正文 */
+  const T=SHIP_STOP[k],Ls=SHIP_LESSON[k]||{},Pl=SHIP_PLAN[k]||{},back=()=>rd?"#/ship/read/"+k+"/mark":"#/adventure";shipBank().catch(()=>{});
   if(!T)return{err:"找不到這一站（航線可能更新了）。",back};
   if(eraLocked(k))return{err:"星槎還沒停靠"+eraLabel(k)+"：到星槎頁按「⛵ 起航」往下開。",back};
-  {const L=shipPuzzles(k);if(L&&!L.includes(id))return{err:"這一題不在這一站的主場殘局裡（換了難度或題庫更新了），回星槎頁再點一次。",back}}
+  const isX=()=>{const L=shipPuzzles(k);return!!L&&!L.includes(id)&&shipExtras(k).includes(id)},L0=shipPuzzles(k);   /* 選做題（直接打開網址時題庫可能還沒挑好，用到時再判斷） */
+  if(L0&&!L0.includes(id)&&!isX())return{err:"這一題不在這一站的主場殘局裡（換了難度或題庫更新了），回星槎頁再點一次。",back};
+  const slot=()=>{const L=shipPuzzles(k)||[];return L.includes(id)?L.indexOf(id):-1},say=P=>shipSay(k,id,P,isX()?-1:slot());
   const nx=()=>(shipPuzzles(k)||[]).find(x=>x!==id&&!shipRec(k,x))||null;
-  return{id,rk:"cjRunS",back,top:"⛵ 主場殘局",icon:"⛵",ans:"看答案這題就不算解開（也沒有修為），確定？",
-    head:P=>`<b>⛵ ${esc(shipShort(k))}・${esc(Ls.t||T.place)}</b>・本命子「${esc(shipPiece(k))}」的妙著・${cjLv(P.d)}　<span class="muted">${cjSrc(P)}</span>`,
-    mark:o=>shipMark(k,id,o),done:(o,ans)=>shipDoneHTML(k,o,ans),
-    next:()=>{const x=nx();return x?"#/canju/s/"+k+"/"+encodeURIComponent(x):null},nextL:()=>nx()?"下一題":"回星槎"}}
+  return{id,rk:"cjRunS",back,top:"⛵ 主場殘局",icon:"⛵",get ans(){return isX()?"看答案這題就不算解開，確定？":"看答案這題就不算解開（也沒有修為），確定？"},get noXP(){return isX()},
+    hint1:!isX()&&diffNow()===1&&!!Pl.story&&slot()===0,   /* 聽書：劇情局一開始就打開第一層提示（第一層本來就免費，點還是實心） */
+    head:P=>{const i=slot(),S=say(P);return`<b>⛵ ${esc(shipShort(k))}・${esc(Ls.t||T.place)}</b>・${isX()?(k==="classic"?"七星同局圖鑑":"熱身・變化題")+"（選做）":Pl.story&&i>=0?`第 ${i+1} 題・${shipSlotName(k,i,P)}`:`本命子「${esc(shipPiece(k))}」的妙著`}・${cjLv(P.d)}　<span class="muted">${cjSrc(P)}</span>${(S.pre||[]).map(x=>`<div class="shp-psay">${shipLine(x)}</div>`).join("")}`},
+    wrong:(u,step,P)=>{const x=step===0&&(say(P).wrong||{})[u];return x?shipLine(x).replace(/<[^>]+>/g,""):""},
+    mark:o=>isX()?shipGalMark(k,id,o):shipMark(k,id,o),done:(o,ans)=>shipDoneHTML(k,o,ans,id,o&&o.gal),
+    next:()=>{if(rd)return"#/ship/read/"+k+"/after";const x=nx();return x?"#/canju/s/"+k+"/"+encodeURIComponent(x):null},nextL:()=>rd?`📖 回到第${CNUM(Pl.ch||1)}章`:nx()?"下一題":"回星槎"}}
+/* 選做的題解開了：記在 shipGal（不計解題點、不給修為） */
+function shipGalMark(k,id,o){const G=store.get("shipGal",{})||{},first=!G[id];G[id]={at:Date.now(),h:o&&o.hint?1:0};store.set("shipGal",G);return{gal:1,first,h:G[id].h,stale1:shipStale1(id)}}
+/* 第一次解開困斃題：說書人補一句規則 */
+function shipStale1(id){try{const P=SHIP_BANK&&SHIP_BANK.D.byId[id];if(!P||!P.stale||store.get("shipStale",false))return false;store.set("shipStale",true);return true}catch(e){return false}}
 /* 解開（看答案的不會呼叫）：記下這題和有沒有用提示；第一次解開修為 +15；3 題都解開＝學會了（shipLearn） */
 function shipMark(k,id,o){const A=store.get("shipSolved",{})||{},E=A[k]||(A[k]={}),old=shipRec(k,id),h=o&&o.hint?1:0,first=!old;
   if(first)E[id]={at:Date.now(),h};else if(old.h&&!h)E[id]={at:old.at||Date.now(),h:0,up:Date.now()};store.set("shipSolved",A);
   const L=shipPuzzles(k)||[],n=L.filter(x=>shipRec(k,x)).length;let learned=false;
   if(L.length&&n>=L.length&&!shipLearned(k)){const M=store.get("shipLearn",{})||{};M[k]=Date.now();store.set("shipLearn",M);learned=true}
   if(first&&typeof addXP==="function")setTimeout(()=>addXP(15,"主場殘局",`ship:${k}:${id}`),1600);
-  return{first,h,n,all:L.length,learned}}
-function shipDoneHTML(k,o,ans){if(ans||!o)return`<p class="muted">看了答案，這題先不算解開；之後不看答案再解一次就算。</p>`;
-  const Ls=SHIP_LESSON[k]||{},W=shipWho(k,Ls.doneBy);
+  return{first,h,n,all:L.length,learned,stale1:shipStale1(id)}}
+function shipDoneHTML(k,o,ans,id,isX){if(ans||!o)return`<p class="muted">看了答案，這題先不算解開；之後不看答案再解一次就算。</p>`;
+  const Ls=SHIP_LESSON[k]||{},W=shipWho(k,Ls.doneBy),P=id&&SHIP_BANK?SHIP_BANK.D.byId[id]:null,S=id?shipSay(k,id,P,-1):{};
+  const says=`${(S.done||[]).map(x=>`<p class="shp-say">${shipLine(x)}</p>`).join("")}${P&&P.stale?o.stale1?`<p class="shp-say">說書人：「沒被將軍，卻一步也動不了，這叫困斃，一樣算贏。」</p>`:`<p class="muted">困斃：對方一步都動不了，一樣算贏。</p>`:""}`;
+  const more=S.more&&SHIP_BANK&&SHIP_BANK.D.byId[S.more.id]?`<p class="muted">📜 ${esc(S.more.t)}　<a href="#/canju/${encodeURIComponent(S.more.id)}">想多看一題 ›</a></p>`:"";
+  if(isX||o.gal){const G=store.get("shipGal",{})||{},X=shipExtras(k),n=X.filter(x=>G[x]).length;
+    return`<div class="card shp-done">${k==="classic"?`🖼 <b>七星同局圖鑑</b>　${n}／${X.length}`:"🔥 <b>熱身・變化題</b>"}<br><span class="muted">選做的題：不計解題點、不給修為。</span>${says}${more}</div>`}
   return`<div class="card shp-done">⛵ <b>${esc(shipShort(k))}・${esc(Ls.t||"")}</b>　${shipDots(k)}　${o.n}／${o.all}<br><span class="muted">${o.h?"這題用了提示（空心點）；不看提示再解一次，點就會變實心。":"自己解開的（實心點）。"}${o.first?"修為 +15。":""}</span>
+    ${says}${more}
     ${o.learned?`<p class="shp-learn">✅ 學會了：${esc(Ls.t||"")}<br><span class="muted">《千秋棋話》補了 ${shipPages()}／13 頁</span></p>${Ls.done?`<p class="shp-say">${esc(W.n)}：「${esc(Ls.done)}」</p>`:""}`:""}</div>`}
 
 /* ---------- 免費悔棋（照難度：星槎、擂台的對局每盤幾次；08b-cpugame.js undoAsk 呼叫） ---------- */
@@ -6529,6 +6604,7 @@ function Voyage(v){setTop("⛵ 雲河星槎","#/");setTabs(true,"#/");v.classNam
         <div class="shp-lesson${lrn?" ok":""}"><b>📘 ${esc(Ls.t||T.img)}</b>${lrn?'<span class="shp-ok">✅ 學會了</span>':""}
           ${(Ls.x||[]).length?`<p>${Ls.x.map(esc).join("<br>")}</p>`:""}${Ls.k?`<p class="shp-k">口訣：${esc(Ls.k)}</p>`:""}<button class="pill shp-demo" id="spDemo">▶ 看示範棋局</button></div>
         ${SHIP_OLD.has(k)?`<p class="muted shp-old">這一朝還沒有今天的象棋；下面是星槎石桌上的千秋殘局，題目出自明清古譜。</p>`:""}
+        ${SHIP_PLAN[k]&&SHIP_PLAN[k].ch?`<button class="shp-read" id="spRead"><span class="shp-ri">📖</span><span class="tx"><b>讀這一章・《雲河七星》第${CNUM(SHIP_PLAN[k].ch)}章</b><span class="shp-rt">載入中…</span></span><span class="muted">${(store.get("shipRead",{})||{})[k]?"讀過了 ›":"›"}</span></button>`:""}
         <div id="spPz"><p class="muted">主場殘局載入中…</p></div>
         ${lrn&&!ap&&Ls.done?`<p class="shp-say">${esc(Wd.n)}：「${esc(Ls.done)}」</p>`:""}
         ${lrn&&Ls.theme?`<button class="lk" id="spTheme">想多練？主題訓練・${esc(Ls.theme)} 10 題 ›</button>`:""}</div>
@@ -6545,13 +6621,14 @@ function Voyage(v){setTop("⛵ 雲河星槎","#/");setTabs(true,"#/");v.classNam
       <div class="sec-t">📚 船艙書架・說書人講的故事</div>
       <div class="items shp-books" style="padding:0">
         <button class="item" data-sh="1"><span class="lb" style="font-size:24px">🪨</span><span class="tx"><b>第一集・石桌往事</b><span>元末明初・讀到第${CNUM(L.n)}回・${esc(ROAD_NAME)} ${p1}／${J.length} 關</span></span><span class="muted">›</span></button>
-        <button class="item" data-sh="2"><span class="lb" style="font-size:24px">${b1?"📜":"🔒"}</span><span class="tx"><b>第二集・紙譜新局</b><span>${b1?`明朝隆慶・過了 ${p2}／${J2.length} 關`:`第一集 ${J.length} 關都過了才會打開`}</span></span><span class="muted">${b1?"›":""}</span></button></div>
+        <button class="item" data-sh="2"><span class="lb" style="font-size:24px">${b1?"📜":"🔒"}</span><span class="tx"><b>第二集・紙譜新局</b><span>${b1?`明朝隆慶・過了 ${p2}／${J2.length} 關`:`第一集 ${J.length} 關都過了才會打開`}</span></span><span class="muted">${b1?"›":""}</span></button>
+        <button class="item" id="spYunhe"><span class="lb" style="font-size:24px">🌌</span><span class="tx"><b>雲河七星・合集</b><span>七個孩子上了星槎・第 1～4 章（船艙、秦、漢、三國）</span></span><span class="muted">›</span></button></div>
       <div class="sec-t">🎒 行囊</div>
       <div class="advgrid"><button id="spDiff"><span>🎚</span><b>航行難度</b><small>${esc(diffOf().n)}・隨時可換</small></button><button data-go="#/profile"><span>🎒</span><b>棋童資料</b><small>棋盤・棋譜・棋友</small></button><button id="spTl"><span>📅</span><b>人物與年表</b><small>石桌往事的人物</small></button><button id="spSave"><span>💾</span><b>存檔與讀檔</b><small>${curSlot()?`第 ${curSlot()} 格`:"3 格存檔"}</small></button></div>
     </div>`;
     const on=(q,fn)=>{const e=v.querySelector(q);if(e)e.onclick=()=>{vibrate(5);fn()}};
     on("#spNew",shipNewJourney);on("#spPark",()=>shipPark(k));on("#spInn",()=>shipInn(k));on("#spArena",()=>shipArena(k));on("#spParks",()=>{location.hash="#/journey/park"});
-    on("#spTl",()=>legendTimeline());on("#spSave",()=>saveSheet());on("#spDiff",()=>diffSheet(paint));on("#spEndDb",()=>{location.hash="#/db"});
+    on("#spTl",()=>legendTimeline());on("#spYunhe",()=>{SHIP_RD_BACK="#/adventure";location.hash="#/ship/read"});on("#spSave",()=>saveSheet());on("#spDiff",()=>diffSheet(paint));on("#spEndDb",()=>{location.hash="#/db"});
     on("#spHist",()=>{if(typeof histCard==="function")histCard(k)});on("#spTheme",()=>{location.hash="#/theme/"+encodeURIComponent(Ls.theme)});
     on("#spSail",()=>shipSailGo(()=>{if(v.isConnected)paint();const r=v.closest(".scroll")||document.scrollingElement;try{r.scrollTop=0}catch(e){}}));
     v.querySelectorAll(".advgrid [data-go]").forEach(b=>b.onclick=()=>{vibrate(5);location.hash=b.dataset.go});
@@ -6562,8 +6639,12 @@ function Voyage(v){setTop("⛵ 雲河星槎","#/");setTabs(true,"#/");v.classNam
     {const dm=v.querySelector("#spDemo");if(dm)dm.onclick=()=>{vibrate(5);shipDemo(k)}}   /* 意見回饋 683 */
     shipBank().then(()=>{const box=v.querySelector("#spPz");if(!box||!box.isConnected)return;const Lz=shipPuzzles(k)||[],pc=shipPiece(k);
       if(!Lz.length){box.innerHTML=`<p class="muted shp-pz0">🧩 主場殘局題目準備中：「${esc(pc)}」走妙著的殘局還在找，先去園子、驛站走走。</p>`;return}
-      const B=SHIP_BANK.D.byId;box.innerHTML=`<div class="shp-pzh">主場殘局 ${shipDots(k,Lz)}<span class="muted">實心＝自己解・空心＝用過提示</span></div><div class="items" style="padding:0">${Lz.map((id,i)=>{const P=B[id]||{},r=shipRec(k,id);return`<button class="item" data-pz="${esc(id)}"><span class="lb shp-lb"><i class="${r?r.h?"h":"s":""}"></i></span><span class="tx"><b>第 ${i+1} 題・${esc(pc)}的妙著</b><span>${esc(P.t||"")}${P.d!=null?"・"+cjLv(P.d):""}・${r?r.h?"用了提示":"自己解開":"還沒解"}</span></span><span class="muted">›</span></button>`}).join("")}</div>`;
-      box.querySelectorAll("[data-pz]").forEach(b=>b.onclick=()=>{vibrate(5);location.hash="#/canju/s/"+k+"/"+encodeURIComponent(b.dataset.pz)})}).catch(e=>{const box=v.querySelector("#spPz");if(box)box.innerHTML=`<p class="muted">主場殘局載入失敗：${esc(e.message||String(e))}</p>`})};
+      const B=SHIP_BANK.D.byId,pl=!!(SHIP_PLAN[k]&&SHIP_PLAN[k].story),G=store.get("shipGal",{})||{},X=shipExtras(k),all3=Lz.every(id=>shipRec(k,id));
+      /* 意見回饋 684、685：有 SHIP_PLAN 的站寫成「第 1 題・劇情局」「第 2 題・變化題」「第 3 題・古譜〈題名〉」；國手、千秋多一列選做熱身；船艙 3 題都解開了多一排七星同局圖鑑 */
+      const xs=X.filter(id=>k!=="classic"||all3||lrn),xRow=xs.length?`<div class="shp-pzh shp-xh">${k==="classic"?"🖼 七星同局圖鑑":"🔥 熱身"}<span class="muted">選做・不計點、不給修為${k==="classic"?"・其他同伴那一版":""}</span></div><div class="items" style="padding:0">${xs.map(id=>{const P=B[id]||{},g=G[id];return`<button class="item" data-pz="${esc(id)}"><span class="lb shp-lb">${g?"✓":"・"}</span><span class="tx"><b>${k==="classic"?esc(P.pc||"")+"・"+esc(String((P.src||{}).title||"").replace(/^.*・/,""))+"版":"變化題・"+esc(String((P.src||{}).title||"").replace(/^.*・/,""))}</b><span>${cjSrc(P)}・${cjLv(P.d)}・${g?"解開了":"還沒解"}</span></span><span class="muted">›</span></button>`}).join("")}</div>`:"";
+      box.innerHTML=`<div class="shp-pzh">主場殘局 ${shipDots(k,Lz)}<span class="muted">實心＝自己解・空心＝用過提示</span></div><div class="items" style="padding:0">${Lz.map((id,i)=>{const P=B[id]||{},r=shipRec(k,id);return`<button class="item" data-pz="${esc(id)}"><span class="lb shp-lb"><i class="${r?r.h?"h":"s":""}"></i></span><span class="tx"><b>第 ${i+1} 題・${pl?shipSlotName(k,i,P):esc(pc)+"的妙著"}</b><span>${pl?cjSrc(P):esc(P.t||"")}${P.d!=null?"・"+cjLv(P.d):""}・${r?r.h?"用了提示":"自己解開":"還沒解"}</span></span><span class="muted">›</span></button>`}).join("")}</div>${xRow}`;
+      box.querySelectorAll("[data-pz]").forEach(b=>b.onclick=()=>{vibrate(5);location.hash="#/canju/s/"+k+"/"+encodeURIComponent(b.dataset.pz)})}).catch(e=>{const box=v.querySelector("#spPz");if(box)box.innerHTML=`<p class="muted">主場殘局載入失敗：${esc(e.message||String(e))}</p>`});
+    {const rb=v.querySelector("#spRead");if(rb){rb.onclick=()=>{vibrate(5);SHIP_RD_BACK="#/adventure";location.hash="#/ship/read/"+k};yunheData().then(N=>{const c=N&&N.chapters.find(x=>x.k===k),t=rb.querySelector(".shp-rt");if(c&&t&&rb.isConnected)t.textContent=c.title.replace(/^第.+?章\s*/,"")+"・約 "+(Math.round(c.paras.join("").length/100)/10)+" 千字"}).catch(()=>{})}}};
   paint();return{}}
 
 /* 意見回饋 674（開發者 11/6）：說書人在經典園子（船艙）說書——每天第一次進經典園子，說書人先拍醒木講一段，可以去書架聽這一回，或先下棋 */
@@ -6582,6 +6663,33 @@ async function shipDemo(k){let B;try{B=await shipBank()}catch(e){return toast("�
       b.querySelector("#dmL").innerHTML=cns.map((c,j)=>`<span style="${j===i-1?"font-weight:900;color:var(--accent)":""}">${j+1}. ${esc(c)}</span>`).join("　")};
     b.querySelector("#dmP").onclick=()=>{clearInterval(tm);i=Math.max(0,i-1);show()};b.querySelector("#dmN").onclick=()=>{clearInterval(tm);i=Math.min(boards.length-1,i+1);show()};
     b.querySelector("#dmG").onclick=()=>{clearInterval(tm);i=0;show();tm=setInterval(()=>{if(!b.isConnected||i>=boards.length-1)return clearInterval(tm);i++;show()},1100)};show()})}
+
+/* ---------- 意見回饋 685（開發者 11/6：正文兩邊都放）：《雲河七星》正文 data/canju/yunhe-novel.json（tools/yunhe_novel_export.js 產生）----------
+   #/ship/read＝船艙書架上的合集（目錄）；#/ship/read/<站>＝那一章（星槎每一站的「📖 讀這一章」也到這裡，兩邊讀同一份）；…/mark、…/after＝捲到解題卡、解題卡的下一段。
+   正文的［棋局］換成一張解題卡：「♟ 解這一局」→ #/canju/s/<站>/<題號>/read，解完卡的「📖 回到第 n 章」回到下一段；「先往下讀」不解也能讀完，不擋人、不動解題點。卡上不寫著法。 */
+let YUNHE_P=null,SHIP_RD_BACK=null;
+function yunheData(){return YUNHE_P||(YUNHE_P=fetch("data/canju/yunhe-novel.json").then(r=>{if(!r.ok)throw new Error("正文載入失敗（"+r.status+"）");return r.json()}).catch(e=>{YUNHE_P=null;throw e}))}
+function ShipRead(v,k,at){setTabs(false);v.className="view";v.innerHTML='<div class="pad muted">正文載入中…</div>';setTop("📖 雲河七星",k?SHIP_RD_BACK||"#/ship/read":"#/adventure");
+  yunheData().then(N=>{if(!v.isConnected)return;const R=store.get("shipRead",{})||{},kz=c=>Math.round(c.paras.join("").length/100)/10;
+    const mkDone=c=>{const m=c.marks[0];return!!(m&&(shipRec(m.k,m.id)||(store.get("shipGal",{})||{})[m.id]))};
+    if(!k){v.innerHTML=`<div class="pad shp-rd"><div class="card shp-rdi"><b>🌌 ${esc(N.title||"雲河七星")}</b><p class="muted">${esc(N.note||"")}</p></div>
+      <div class="items" style="padding:0">${N.chapters.map(c=>`<button class="item" data-rk="${esc(c.k)}"><span class="lb">${R[c.k]?"📖":"📘"}</span><span class="tx"><b style="white-space:normal;line-height:1.5">${esc(c.title)}</b><span>⛵ ${esc(shipShort(c.k))}・約 ${kz(c)} 千字${R[c.k]?"・讀過了":""}${mkDone(c)?"・♟ 解開了":""}</span></span><span class="muted">›</span></button>`).join("")}</div>
+      <p class="muted" style="font-size:12.5px;margin:10px 2px 0">之後的章節定稿了再補上。</p></div>`;
+      v.querySelectorAll("[data-rk]").forEach(b=>b.onclick=()=>{vibrate(5);SHIP_RD_BACK="#/ship/read";location.hash="#/ship/read/"+b.dataset.rk});return}
+    const i=N.chapters.findIndex(c=>c.k===k);if(i<0){navReplace("#/ship/read");return}
+    const c=N.chapters[i],m=c.marks[0]||null,Pl=SHIP_PLAN[k]||{},lock=eraLocked(k),done=mkDone(c),pv=N.chapters[i-1],nx=N.chapters[i+1];
+    if(!R[k]){R[k]=Date.now();store.set("shipRead",R)}setTop("📖 第"+CNUM(c.n)+"章",SHIP_RD_BACK||"#/ship/read");
+    const mk=m?`<div class="card shp-mk" id="rdMk"><b>♟ 跟${esc(Pl.who||"大家")}一起解這一局</b><span class="muted">${esc(m.label)}</span>
+      ${lock?`<p class="muted">星槎停靠${esc(eraLabel(k))}以後，就能在這裡解這一局。</p>`:`<button class="btn" id="rdGo">${done?"✅ 解開了・再看一次":"♟ 解這一局"}</button>`}<button class="lk" id="rdSkip">先往下讀 ›</button></div>`:"";
+    v.innerHTML=`<div class="pad shp-rd"><h2 class="shp-rh">${esc(c.title)}</h2><p class="muted shp-rs">《${esc(N.title||"雲河七星")}》・⛵ ${esc(shipShort(k))}・${esc((SHIP_STOP[k]||{}).place||"")}</p>
+      ${c.paras.map((p,j)=>(m&&m.at===j?mk:"")+`<p${m&&m.at===j?' id="rdAfter"':""}>${esc(p)}</p>`).join("")}${m&&m.at>=c.paras.length?mk:""}
+      <div class="row" style="gap:8px;margin-top:16px">${pv?'<button class="btn ghost" id="rdP" style="flex:1">‹ 上一章</button>':""}${nx?'<button class="btn" id="rdN" style="flex:1">下一章 ›</button>':""}</div>
+      ${nx?"":'<p class="muted" style="text-align:center;font-size:13px">下一章定稿了再補上。</p>'}<button class="lk" id="rdShip" style="margin-top:6px">⛵ 回星槎頁 ›</button></div>`;
+    const on=(q,fn)=>{const e=v.querySelector(q);if(e)e.onclick=()=>{vibrate(5);fn()}},to=(q,blk)=>{const e=v.querySelector(q);if(e)try{e.scrollIntoView({block:blk||"start",behavior:"smooth"})}catch(x){e.scrollIntoView()}};
+    on("#rdGo",()=>{location.hash="#/canju/s/"+k+"/"+encodeURIComponent(m.id)+"/read"});on("#rdSkip",()=>to("#rdAfter"));
+    on("#rdP",()=>{location.hash="#/ship/read/"+pv.k});on("#rdN",()=>{location.hash="#/ship/read/"+nx.k});on("#rdShip",()=>{location.hash="#/adventure"});
+    if(at==="mark")setTimeout(()=>to("#rdMk","center"),60);else if(at==="after")setTimeout(()=>to("#rdAfter"),60)}).catch(e=>{if(v.isConnected)v.innerHTML=`<div class="pad"><div class="card muted">${esc(e.message||String(e))}<br>正文要先下載才能讀（連上網路再打開一次）。</div></div>`});
+  return{}}
 /* ================= 🕰 回到當年（意見回饋 313）=================
    石桌往事裡的對局，用「妙棋精選」裡 Pikafish 驗證過的特級大師實戰來演：你站在旁邊看，不能插手；
    棋自動一步一步下，下到那一步妙棋之前停下來——換作是你，會怎麼走？
