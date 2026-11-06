@@ -1027,7 +1027,7 @@ body.xqt-on .modal{z-index:10000}body.xqt-on .toast{z-index:10001}body.xqt-on .x
       if(!window.caches)return go();caches.keys().then(function(ks){return Promise.all(ks.filter(function(k){return k.indexOf("xqlab-app-")===0}).map(function(k){return caches.delete(k)}))})
         .then(function(){return navigator.serviceWorker&&navigator.serviceWorker.getRegistration()}).then(function(r){return r&&r.update()}).catch(function(){}).then(go)}};setTimeout(chk,4000)})();
 </script>
-<script>window.XQ_OFFLINE=true;window.XQ_BUILD="20261106-2335";</script>
+<script>window.XQ_OFFLINE=true;window.XQ_BUILD="20261106-2355";</script>
 <script src="core.js"></script>
 <script src="engine.js"></script>
 <script src="local.js"></script>
@@ -2808,7 +2808,7 @@ function XQ_START_BOARD(){if(!XQ_START_BOARD.b){const b=Array(90).fill(null),row
   rows.forEach((r,y)=>{let x=0;for(const ch of r){if(/\d/.test(ch))x+=+ch;else{b[y*9+x]=ch;x++}}});XQ_START_BOARD.b=b}return XQ_START_BOARD.b}
 
 // ---------- 🔁 錯棋重練 ----------
-// 從自己下過的失著／敗著那一步之前開始，跟第 7 級（職業頂尖）的 Pikafish 重下；不算戰績
+// 從自己下過的失著／敗著那一步之前開始，跟第 16 級「專2-1」的 Pikafish 重下（舊 8 級制的第 7 級＝職業頂尖，換到 18 級制就是 16）；不算戰績。意見回饋 714：說明原本還寫舊名稱
 function Redo(v){
   setTop("錯棋重練","#/");setTabs(true,"#/");
   /* 意見回饋 338：錯棋重練自己留一盤——有沒下完的就提醒，點了接著下 */
@@ -2817,7 +2817,7 @@ function Redo(v){
       box.innerHTML=`<p class="muted" style="font-size:13px;margin:10px 2px 0">✅ 上一題已經練會了，對局還留著，想下完可以 <a href="#/redo/play">接著下</a></p>`;return}}
     box.innerHTML=`<button class="card row" style="width:100%;margin-top:10px;justify-content:space-between;border:2px solid var(--red);font:inherit;color:inherit;text-align:left"><span>⏳ <b>還有一題錯棋重練沒下完</b></span><b>繼續下 ›</b></button>`;
     box.querySelector("button").onclick=()=>{vibrate(5);location.hash="#/redo/play"}}).catch(()=>{});
-  v.innerHTML=`<div class="home"><div class="card" style="line-height:1.7">找出你下過的<b style="color:var(--red)">失著、敗著</b>，從那一步之前的局面重新開始，跟最強的電腦（第 7 級・職業頂尖）再下一次。<br><span class="muted">想出比上次好的一步，就算練會了；練會的題目會在 1、3、7、14、30 天後再出現讓你複習（間隔重複），練錯就縮短間隔。練習的對局不算戰績。</span></div>
+  v.innerHTML=`<div class="home"><div class="card" style="line-height:1.7">找出你下過的<b style="color:var(--red)">失著、敗著</b>，從那一步之前的局面重新開始，跟很強的電腦（第 16 級「專2-1」）再下一次。<br><span class="muted">想出比上次好的一步，就算練會了；練會的題目會在 1、3、7、14、30 天後再出現讓你複習（間隔重複），練錯就縮短間隔。練習的對局不算戰績。</span></div>
     <div id="rRes"></div><div class="st-res" id="rf" style="margin:12px 0 4px"></div><div id="rl"><div class="muted" style="text-align:center;padding:20px">找你下過的錯棋中…</div></div></div>`;
   // 清單變長的整理（意見回饋 132）：
   // 1. 同一盤裡連續的錯（相隔 2 步以內）合成一題：從第一個錯開始練，後面那幾步本來就會一起重下
@@ -2860,7 +2860,7 @@ function Redo(v){
   async function start(x){vibrate(8);
     const go=async()=>{try{const pre={moves:x.g.moves.slice(0,x.ply-1).map(m=>({f:m.f,t:m.t,q:m.q,loss:m.loss,ev:m.ev,bc:m.bc,bm:m.bm,bp:m.bp})),
         info:{key:x.key,ply:x.ply,cn:x.m.cn,q:x.m.q,loss:x.m.loss,bc:x.m.bc||"",opp:x.g.opp||"",date:String(x.g.id).slice(0,10)}};
-      await api("/play/new",{human:x.g.side,level:7,pre});location.hash="#/redo/play"}catch(e){toast(e.message)}};
+      await api("/play/new",{human:x.g.side,lx:16,pre});location.hash="#/redo/play"}catch(e){toast(e.message)}};
     let s=null;try{s=await api("/play/state")}catch(e){}
     if(s&&s.ranked&&!s.result&&s.moves.length>=2)confirmBox("積分挑戰還沒下完，開始練習會算輸，確定？",go,"開始練習");
     else if(s&&!s.ranked&&!s.practice&&!s.result&&s.moves.length>=2)confirmBox("挑戰電腦還有一盤沒下完，開始練習會蓋掉它，確定？",go,"開始練習");else go()}
@@ -3501,7 +3501,7 @@ function onboard(){if(journey())journeyLock();else titleScreen({})}
 // ================= 設定：棋盤風格、棋子樣式、走棋顯示 =================
 const SAMPLE_FEN0="rnbakabnr/9/1c5c1/p1p1p1p1p/9/9/P1P1P1P1P/1C5C1/9/RNBAKABNR",SAMPLE_FEN1="rnbakabnr/9/1c5c1/p1p1p1p1p/9/9/P1P1P1P1P/1C2C4/9/RNBAKABNR",SAMPLE_LAST={f:70,t:67};
 /* 意見回饋 661：關於頁顯示整包遊戲要多大空間。XQ_SIZES 由 build-site.js 建置時填入（開發中的 m.html 是 null，就不顯示） */
-const XQ_SIZES={"pre":192189933,"code":12576588,"eng":51511005,"gm":33668932,"bgm":259516351,"opt":[["比賽對局 1956–2010",21765744],["比賽對局 2011–2014",25596413],["比賽對局 2015–2019",24821916]],"all":632283638,"other":10636756};
+const XQ_SIZES={"pre":192189933,"code":12577847,"eng":51511005,"gm":33668932,"bgm":259516351,"opt":[["比賽對局 1956–2010",21765744],["比賽對局 2011–2014",25596413],["比賽對局 2015–2019",24821916]],"all":632284897,"other":10636756};
 const szMB=b=>b>=1073741824?(b/1073741824).toFixed(1)+" GB":Math.max(1,Math.round(b/1048576))+" MB";
 function aboutSizes(){const S=XQ_SIZES;if(!S)return"";const opt=S.opt||[];   /* 意見回饋 662：玩家只看總數，細項只在開發者模式顯示 */
   return `<div class="row" style="justify-content:space-between"><span class="muted">整包下載</span><b>約 ${szMB(S.all)}</b></div>
@@ -4703,7 +4703,10 @@ function parkQuote(k){const L=PARK_Q[k]||PARK_Q.classic;let last=-1;try{const v=
   try{sessionStorage.setItem("pq_"+k,String(i))}catch(e){}const[q,who,src,n]=L[i];return{q,who,src,n}}
 const sealHTML=(era,on,big)=>{const A=ARENA[era],s=A?A.seal:"?";return`<span class="seal-st${on?" on":""}${big?" big":""}${s.length>1?" two":""}">${esc(s)}</span>`};
 // 擂台面板：這個朝代的擂主介紹、難度、有沒有蓋過章；按「挑戰」開打
-function arenaSheet(era,start){era=ARENA[era]?era:"classic";const A=ARENA[era],S=arenaStamps()[era],lv=arenaLevel(era),LV=["入門","新手","業餘初段","業餘高段","棋協大師","特級大師","職業頂尖","全力"][lv-1];
+/* 意見回饋 714：擂主棋力寫成新的 18 級名稱（舊 8 級的 lv 在引擎那邊會換成 2,4,6,9,11,15,16,18 級），跟對局畫面的「第 N 級「業2」」一致；航行難度的加減照引擎 lvAdj 算 */
+const ARENA_FINE=[0,2,4,6,9,11,15,16,18],FINE_NM=["新手","入門1","入門2","入門3","業1","業2","業3","業4","業5","業6","業7","業8","業9","專1-1","專1-2","專2-1","專2-2","專3・全力"];
+const arenaLvName=lv=>{const n0=ARENA_FINE[Math.max(1,Math.min(8,lv))],d=typeof diffDx==="function"?Math.round(+diffDx()||0):0,n=!d?n0:d>0?Math.min(Math.max(n0,17),n0+d):Math.max(1,n0+d);return`第 ${n} 級「${FINE_NM[n-1]}」`};
+function arenaSheet(era,start){era=ARENA[era]?era:"classic";const A=ARENA[era],S=arenaStamps()[era],lv=arenaLevel(era),LV=arenaLvName(lv);
   /* 意見回饋 697（開發者 11/6）：擂主只在自己那一朝守擂。別朝的擂主卡（集章簿點別朝、擂台「下一位擂主」）只能看，按鈕寫「⛵ 回星槎開往〇朝」；還沒停靠的寫「還沒停靠」，不能打 */
   const away=era!==store.get("era","classic"),lockd=away&&eraLocked(era);
   sheet(`🏯 ${eraLabel(era)}擂台`,b=>{b.innerHTML=`<div style="display:flex;gap:14px;align-items:center">${sealHTML(era,!!S,true)}<div><div style="font-size:20px;font-weight:900;font-family:var(--serif)">${esc(A.name)}</div>
