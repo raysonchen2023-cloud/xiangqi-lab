@@ -944,7 +944,7 @@ body.xqt-on .modal{z-index:10000}body.xqt-on .toast{z-index:10001}body.xqt-on .x
       if(!window.caches)return go();caches.keys().then(function(ks){return Promise.all(ks.filter(function(k){return k.indexOf("xqlab-app-")===0}).map(function(k){return caches.delete(k)}))})
         .then(function(){return navigator.serviceWorker&&navigator.serviceWorker.getRegistration()}).then(function(r){return r&&r.update()}).catch(function(){}).then(go)}};setTimeout(chk,4000)})();
 </script>
-<script>window.XQ_OFFLINE=true;window.XQ_BUILD="20261106-1557";</script>
+<script>window.XQ_OFFLINE=true;window.XQ_BUILD="20261106-1600";</script>
 <script src="core.js"></script>
 <script src="engine.js"></script>
 <script src="local.js"></script>
@@ -1366,14 +1366,16 @@ async function bgmNow(){const el=document.getElementById("bgmNow");if(!el)return
   const ins={zheng:"古箏",bianzhong:"編鐘",paixiao:"排簫",xun:"塤",ruan:"阮",konghou:"箜篌",dizi:"笛子",pipa:"琵琶",xiao:"洞簫",qin:"古琴",morinkhuur:"馬頭琴",sanxian:"三弦",erhu:"二胡"}[(k.split("/").pop()||"").replace(/_\d+\.\w+$/,"")]||"";
   el.innerHTML=`<span style="flex:1;min-width:0">♪ 正在播放${t?`《${esc(t)}》`:""}${ins?`・${ins}`:""}</span><button class="btn ghost" id="bgmNext" style="flex:none;width:auto;margin:0;padding:4px 12px;font-size:13px;white-space:nowrap">換一首</button>`;
   el.querySelector("#bgmNext").onclick=()=>{vibrate(5);bgmSync(true)}}
-function bgmList(){return BGM.list||(BGM.list=fetch("data/bgm/index.json").then(r=>r.ok?r.json():{}).catch(()=>({})))}
+function bgmList(){return BGM.list||(BGM.list=fetch("data/bgm/index.json").then(r=>r.ok?r.json():{}).catch(()=>({}))).then(j=>{BGM.L=j;return j})}
+/* 意見回饋 687：iPhone 只准在點擊的當下開始播放；清單已經載好就不要 await，直接同步呼叫 play()，免得等下載完那一下點擊已經「過期」 */
 async function bgmSync(next){const on=!!store.get("bgm",true)&&!document.hidden,era=store.get("era","classic");
-  if(!on){if(BGM.a)BGM.a.pause();return}const L=((await bgmList())||{})[era]||[];if(!L.length){if(BGM.a)BGM.a.pause();return}
+  if(!on){if(BGM.a)BGM.a.pause();return}const L=((BGM.L||await bgmList())||{})[era]||[];if(!L.length){if(BGM.a)BGM.a.pause();return}
   if(!BGM.a){BGM.a=new Audio();BGM.a.volume=.35;BGM.a.preload="auto";BGM.a.onended=()=>bgmSync(true);BGM.a.onplay=BGM.a.onpause=()=>bgmNow()}
   if(next||BGM.era!==era||!BGM.src){BGM.era=era;let n=Math.floor(Math.random()*L.length);if(L.length>1&&n===BGM.last)n=(n+1)%L.length;BGM.last=n;BGM.src=`data/bgm/${era}/${L[n]}`;BGM.a.src=BGM.src}
   if(BGM.a.paused)BGM.a.play().catch(()=>{})}
-document.addEventListener("visibilitychange",()=>{bgmSync()});
-document.addEventListener("pointerdown",()=>{if(store.get("bgm",true)&&(!BGM.a||BGM.a.paused))bgmSync()},{passive:true});   /* 手機要先點一下畫面才准出聲 */
+document.addEventListener("visibilitychange",()=>{if(document.hidden){BGM.wake=1}bgmSync()});
+for(const ev of["pointerdown","touchend"])document.addEventListener(ev,()=>{if(!store.get("bgm",true))return;if(BGM.a&&BGM.wake&&BGM.a.paused){try{BGM.a.pause()}catch(e){}BGM.a=null;BGM.src=""}BGM.wake=0;if(!BGM.a||BGM.a.paused)bgmSync()},{passive:true,capture:true});   /* 手機要先點一下畫面才准出聲；意見回饋 687：改成最先收到點擊（別的按鈕擋不掉），從背景回來、音樂停著就重建播放器 */
+setTimeout(()=>{try{bgmList()}catch(e){}},300);   /* 先把清單載好 */
 document.addEventListener("change",e=>{const t=e.target;if(t&&t.dataset&&t.dataset.t==="bgm")setTimeout(()=>bgmSync(),60)});
 window.XQ_DRUM=(era,kind)=>{if(!store.get("gateDrum",true))return;try{unlockAudio()}catch(e){}
   withAudio(()=>{const pat=DRUM_PAT[era]||DRUM_PAT.classic,t0=AC.currentTime+.08,sp=kind==="path"?1.15:1;
@@ -3384,7 +3386,7 @@ function onboard(){if(journey())journeyLock();else titleScreen({})}
 // ================= 設定：棋盤風格、棋子樣式、走棋顯示 =================
 const SAMPLE_FEN0="rnbakabnr/9/1c5c1/p1p1p1p1p/9/9/P1P1P1P1P/1C5C1/9/RNBAKABNR",SAMPLE_FEN1="rnbakabnr/9/1c5c1/p1p1p1p1p/9/9/P1P1P1P1P/1C2C4/9/RNBAKABNR",SAMPLE_LAST={f:70,t:67};
 /* 意見回饋 661：關於頁顯示整包遊戲要多大空間。XQ_SIZES 由 build-site.js 建置時填入（開發中的 m.html 是 null，就不顯示） */
-const XQ_SIZES={"pre":163489571,"code":12495317,"eng":51511005,"gm":33668932,"bgm":259516351,"opt":[["比賽對局 1956–2010",21765744],["比賽對局 2011–2014",25596413],["比賽對局 2015–2019",24821916]],"all":603502005,"other":10636756};
+const XQ_SIZES={"pre":163489571,"code":12495916,"eng":51511005,"gm":33668932,"bgm":259516351,"opt":[["比賽對局 1956–2010",21765744],["比賽對局 2011–2014",25596413],["比賽對局 2015–2019",24821916]],"all":603502604,"other":10636756};
 const szMB=b=>b>=1073741824?(b/1073741824).toFixed(1)+" GB":Math.max(1,Math.round(b/1048576))+" MB";
 function aboutSizes(){const S=XQ_SIZES;if(!S)return"";const opt=S.opt||[];   /* 意見回饋 662：玩家只看總數，細項只在開發者模式顯示 */
   return `<div class="row" style="justify-content:space-between"><span class="muted">整包下載</span><b>約 ${szMB(S.all)}</b></div>
