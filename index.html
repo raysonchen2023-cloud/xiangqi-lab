@@ -1027,7 +1027,7 @@ body.xqt-on .modal{z-index:10000}body.xqt-on .toast{z-index:10001}body.xqt-on .x
       if(!window.caches)return go();caches.keys().then(function(ks){return Promise.all(ks.filter(function(k){return k.indexOf("xqlab-app-")===0}).map(function(k){return caches.delete(k)}))})
         .then(function(){return navigator.serviceWorker&&navigator.serviceWorker.getRegistration()}).then(function(r){return r&&r.update()}).catch(function(){}).then(go)}};setTimeout(chk,4000)})();
 </script>
-<script>window.XQ_OFFLINE=true;window.XQ_BUILD="20261107-0120";</script>
+<script>window.XQ_OFFLINE=true;window.XQ_BUILD="20261107-0210";</script>
 <script src="core.js"></script>
 <script src="engine.js"></script>
 <script src="local.js"></script>
@@ -3501,7 +3501,7 @@ function onboard(){if(journey())journeyLock();else titleScreen({})}
 // ================= 設定：棋盤風格、棋子樣式、走棋顯示 =================
 const SAMPLE_FEN0="rnbakabnr/9/1c5c1/p1p1p1p1p/9/9/P1P1P1P1P/1C5C1/9/RNBAKABNR",SAMPLE_FEN1="rnbakabnr/9/1c5c1/p1p1p1p1p/9/9/P1P1P1P1P/1C2C4/9/RNBAKABNR",SAMPLE_LAST={f:70,t:67};
 /* 意見回饋 661：關於頁顯示整包遊戲要多大空間。XQ_SIZES 由 build-site.js 建置時填入（開發中的 m.html 是 null，就不顯示） */
-const XQ_SIZES={"pre":192189951,"code":12578153,"eng":51511005,"gm":33668932,"bgm":259516351,"opt":[["比賽對局 1956–2010",21765744],["比賽對局 2011–2014",25596413],["比賽對局 2015–2019",24821916]],"all":632285221,"other":10636756};
+const XQ_SIZES={"pre":192189952,"code":12580829,"eng":51511005,"gm":33668932,"bgm":259516351,"opt":[["比賽對局 1956–2010",21765744],["比賽對局 2011–2014",25596413],["比賽對局 2015–2019",24821916]],"all":632287898,"other":10636756};
 const szMB=b=>b>=1073741824?(b/1073741824).toFixed(1)+" GB":Math.max(1,Math.round(b/1048576))+" MB";
 function aboutSizes(){const S=XQ_SIZES;if(!S)return"";const opt=S.opt||[];   /* 意見回饋 662：玩家只看總數，細項只在開發者模式顯示 */
   return `<div class="row" style="justify-content:space-between"><span class="muted">整包下載</span><b>約 ${szMB(S.all)}</b></div>
@@ -4847,8 +4847,8 @@ async function legendTimeline(keep){const D=await legendData();if(!D)return;cons
   sheet("📅 人物與年表",b=>{b.innerHTML=`<div class="sec-t" style="margin-top:0">人物</div>${P.map(x=>{const im=PIMG[x.name];return`<div class="ppl" data-pp="${esc(x.name)}" style="cursor:pointer;${im?"":""}"${im?' style="flex-direction:row;gap:10px;align-items:center"':""}>${im?`<img src="${im}" alt="" onerror="this.remove()" style="flex:none;width:52px;height:70px;object-fit:contain">`:""}<div class="pn" style="flex:1;min-width:0"><b>${esc(x.name)}</b>${pplTag(x)}（${x.born}${x.died?"–"+x.died:""}）${ageOfP(x)?`<span class="muted" style="font-size:12.5px">${esc(ageOfP(x))}</span>`:""}<small>${esc(x.note||"")}</small>${x.verse?`<small style="font-family:var(--serif);font-style:italic;margin-top:2px">${esc(String(x.verse).split(/[。\n]/).filter(Boolean).slice(0,2).join("，"))}</small>`:""}</div></div>`}).join("")}
     <div class="sec-t">大事年表</div>${T.map(x=>`<div class="tlr"><div class="ty"><b>${x.y}</b><small>${esc(x.era||"")}</small></div><div class="tt">${x.h?"📜":"🪨"} ${esc(x.t)}</div></div>`).join("")}
     <p class="muted" style="font-size:12px;line-height:1.7;margin-top:8px">📜 是真實的歷史；🪨 是石桌往事的故事（虛構）。沈石川、柳寒舟、阿古拉、周文淵和雲河鎮都是編的。</p>`;
-    b.querySelectorAll("[data-pp]").forEach(x=>x.onclick=()=>{const n=x.dataset.pp,p=P.find(z=>z.name===n),L=PEOPLE_LOOK[n];if(!L&&!PIMG[n])return;vibrate(5);const sh=document.getElementById("sheet"),keep=[sh?sh.scrollTop:0,sh&&sh.querySelector(".sh-b")?sh.querySelector(".sh-b").scrollTop:0];const pid=(m=>m?"p:"+m[1]:/legend\/liu|journey\/char_liu_old/.test(PIMG[n]||"")?"j:liu_old":null)(String(PIMG[n]||"").match(/people\/(\w+)\.webp/));
-      figView(L||pid?oppFig({p:L?L.pc:"將",e:"classic",g:9,npc:n,hat:L&&L.hat,hc:L&&L.hc,robe:L&&L.robe,cus:pid}):null,"🪨 "+n,`${ageLine(ageOfP(p))}<p class="muted" style="font-size:13.5px;line-height:1.7;margin:0">${esc(p&&p.note||"")}</p>`,[["← 回人物列表",()=>legendTimeline(keep)],["關閉",()=>closeSheet(),true]],PIMG[n]||null)})})}
+    b.querySelectorAll("[data-pp]").forEach(x=>x.onclick=()=>{const n=x.dataset.pp,p=P.find(z=>z.name===n),L=PEOPLE_LOOK[n];if(!L&&!PIMG[n])return;vibrate(5);const sh=document.getElementById("sheet"),keep=[sh?sh.scrollTop:0,sh&&sh.querySelector(".sh-b")?sh.querySelector(".sh-b").scrollTop:0];const pid=(m=>m?(m[1]==="npc"?"n:":"p:")+m[2]:/legend\/liu|journey\/char_liu_old/.test(PIMG[n]||"")?"j:liu_old":null)(String(PIMG[n]||"").match(/(people|npc)\/(\w+)\.webp/)),NPC=typeof PARK_NPC!=="undefined"?PARK_NPC.find(z=>z.name===n):null;   /* 意見回饋 719：賣豆花的小販這類園子棋友（data/npc/）也接上 3D 模型 n_<id>，棋子字照園子名單；原本只認 people/，找不到模型就顯示下半身不完整的畫像 */
+      figView(L||pid?oppFig({p:L?L.pc:NPC&&NPC.pc||"將",e:"classic",g:9,npc:n,hat:L&&L.hat,hc:L&&L.hc,robe:L&&L.robe,cus:pid}):null,"🪨 "+n,`${ageLine(ageOfP(p))}<p class="muted" style="font-size:13.5px;line-height:1.7;margin:0">${esc(p&&p.note||"")}</p>`,[["← 回人物列表",()=>legendTimeline(keep)],["關閉",()=>closeSheet(),true]],PIMG[n]||null)})})}
 /* 意見回饋 674：石桌往事、紙譜新局搬到星槎的書架（#/shelf/1、#/shelf/2）；#/adventure 改成雲河星槎頁（07f-ship.js）。SHELF()＝目前那一本書的網址 */
 const SHELF=b=>"#/shelf/"+(b||(store.get("legBook",1)===2&&(book1Done()||DEVMODE())?2:1));
 function legendBook(){closeSheet();LEGEND_PREVIEW=false;location.hash=SHELF()}
