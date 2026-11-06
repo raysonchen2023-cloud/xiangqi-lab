@@ -917,7 +917,7 @@ body.xqt-on .modal{z-index:10000}body.xqt-on .toast{z-index:10001}body.xqt-on .x
       if(!window.caches)return go();caches.keys().then(function(ks){return Promise.all(ks.filter(function(k){return k.indexOf("xqlab-app-")===0}).map(function(k){return caches.delete(k)}))})
         .then(function(){return navigator.serviceWorker&&navigator.serviceWorker.getRegistration()}).then(function(r){return r&&r.update()}).catch(function(){}).then(go)}};setTimeout(chk,4000)})();
 </script>
-<script>window.XQ_OFFLINE=true;window.XQ_BUILD="20261106-1359";</script>
+<script>window.XQ_OFFLINE=true;window.XQ_BUILD="20261106-1414";</script>
 <script src="core.js"></script>
 <script src="engine.js"></script>
 <script src="local.js"></script>
@@ -3357,7 +3357,7 @@ function onboard(){if(journey())journeyLock();else titleScreen({})}
 // ================= 設定：棋盤風格、棋子樣式、走棋顯示 =================
 const SAMPLE_FEN0="rnbakabnr/9/1c5c1/p1p1p1p1p/9/9/P1P1P1P1P/1C5C1/9/RNBAKABNR",SAMPLE_FEN1="rnbakabnr/9/1c5c1/p1p1p1p1p/9/9/P1P1P1P1P/1C2C4/9/RNBAKABNR",SAMPLE_LAST={f:70,t:67};
 /* 意見回饋 661：關於頁顯示整包遊戲要多大空間。XQ_SIZES 由 build-site.js 建置時填入（開發中的 m.html 是 null，就不顯示） */
-const XQ_SIZES={"pre":162828243,"code":12440181,"eng":51511005,"gm":33668932,"bgm":259516351,"opt":[["比賽對局 1956–2010",21765744],["比賽對局 2011–2014",25596413],["比賽對局 2015–2019",24821916]],"all":602785541,"other":10636756};
+const XQ_SIZES={"pre":162828243,"code":12440477,"eng":51511005,"gm":33668932,"bgm":259516351,"opt":[["比賽對局 1956–2010",21765744],["比賽對局 2011–2014",25596413],["比賽對局 2015–2019",24821916]],"all":602785837,"other":10636756};
 const szMB=b=>b>=1073741824?(b/1073741824).toFixed(1)+" GB":Math.max(1,Math.round(b/1048576))+" MB";
 function aboutSizes(){const S=XQ_SIZES;if(!S)return"";const opt=S.opt||[];   /* 意見回饋 662：玩家只看總數，細項只在開發者模式顯示 */
   return `<div class="row" style="justify-content:space-between"><span class="muted">整包下載</span><b>約 ${szMB(S.all)}</b></div>
@@ -5026,7 +5026,7 @@ async function jStart(id,b,go,force){let st;try{st=await api("/play/state")}catc
     [["⏳ 繼續那一盤",()=>{location.hash="#/journey/play"}],["放棄，開新的",fresh],["取消",null,true]])}
 /* 結果視窗、新局：跟同一位對手（園子、驛站）再下一盤 */
 function jAgain(st){const j=st.journey,n0=j==="park"?parkNpcOf(st):null,ix=String(j||"").startsWith("inn:")?INN.find(z=>"inn:"+z.id===j):null,rl=ix?innRlv(ix):null;if(ix)store.set("innCur",{id:ix.id,rl});   /* 意見回饋 548：驛站旅人再下一盤用調整後的強度 */
-  return api("/play/new",ix?{human:"r",level:Math.max(1,Math.min(6,1+Math.floor(rl/3))),rlv:rl,journey:j}:{human:"r",level:st.level,journey:j}).then(s=>{if(j==="park")parkNpcNew(s.id,s.level,n0&&n0.id);store.set("jPending",j==="park"?null:{id:j,game:s.id});return s})}   /* 意見回饋 425：園子再下一盤＝同一位路人、同樣的難度 */
+  return api("/play/new",ix?{human:"r",level:Math.max(1,Math.min(6,1+Math.floor(rl/3))),rlv:rl,journey:j}:{human:"r",lx:st.level,journey:j}).then(s=>{if(j==="park")parkNpcNew(s.id,s.level,n0&&n0.id);store.set("jPending",j==="park"?null:{id:j,game:s.id});return s})}   /* 意見回饋 425：園子再下一盤＝同一位路人、同樣的難度。開發者 11/6 修：st.level 已是細分的 1～18 級，要用 lx 傳；原本傳 level 會被當成舊 1～8 級再換算一次，入門3 再下一盤變業5 */
 async function jResume(box){if(!box)return;let st;try{st=await api("/play/state")}catch(e){return}
   const cur=st.journey&&!st.result&&st.moves&&st.moves.length?{journey:st.journey,n:st.moves.length,me:st.turn===st.human}:null,
     o=(st.others||[]).find(z=>z.kind==="journey"),g=cur||(o?{journey:o.journey,n:o.n,me:(o.n%2?"b":"r")===o.human}:null);
@@ -6628,7 +6628,7 @@ function CpuGame(v,practicePage,mode){
       if(st.reward){const Z=st.prize;
         modal(`<div class="em">${win?"🏆":draw0?"🤝":"💪"}</div><h2>${win?"你贏了！":draw0?"和局":"這盤輸了"}</h2><p class="muted">${esc(st.result.why)}・🚗 獎勵模式（第 ${st.level} 級）</p>`+
           (Z?`<p style="font-size:18px;font-weight:900">${Z.d>0?`🚗 +${Z.d} 點`:"這盤沒有拿到點數"} → 共 ${Z.pts.toLocaleString()} 點</p><p class="muted" id="nxcar"></p>`:'<p class="muted">雙方還沒各走一步，這盤不算</p>'),
-          resBtns(["再來一局 ›",()=>api("/play/new",{human:st.human,level:st.level,reward:true}).then(render).catch(e=>toast(e.message))],["🚗 去車庫",()=>location.hash="#/garage"]),"res");
+          resBtns(["再來一局 ›",()=>api("/play/new",{human:st.human,lx:st.level,reward:true}).then(render).catch(e=>toast(e.message))],["🚗 去車庫",()=>location.hash="#/garage"]),"res");
         if(Z)CARS().then(d=>{const o=(st.car||{}).owned||{},left=d.cars.filter(c=>!o[c.id]),can=left.filter(c=>c.cost<=Z.pts).length,nx=left.find(c=>c.cost>Z.pts),el=$("#nxcar");
           if(el)el.textContent=(can?`現在可以換 ${can} 台車！`:"")+(nx?`${can?"・":""}再 ${(nx.cost-Z.pts).toLocaleString()} 點可以換 ${nx.name}`:"")}).catch(()=>{});
         return}
@@ -6656,7 +6656,7 @@ function CpuGame(v,practicePage,mode){
               return nx?resBtns(["📖 下一回 ›",()=>{if(nx.book===2)store.set("legBook",2);goUp(SHELF(nx.book===2?2:1),()=>nx.book===2?legendRead2(nx.n):legendRead(nx.n))}],bk):resBtns(bk)}
             return resBtns(again,bk)})(),"res");return}
       modal(`<div class="em">${win?"🏆":draw0?"🤝":"💪"}</div><h2>${win?"你贏了！":draw0?"和局":"這盤輸了"}</h2><p class="muted">${esc(st.result.why)}・${st.journey?`🪨 ${esc(jName(st.journey))}`:`對手第 ${st.level} 級「${esc(lv.name||"")}」`}</p>`+XPR,
-        resBtns([win&&st.level<8?"挑戰下一級 ›":"再來一局",()=>api("/play/new",{human:st.human,level:win&&st.level<8?st.level+1:st.level}).then(render).catch(e=>toast(e.message))]),"res")}}
+        resBtns([win&&st.level<18?"挑戰下一級 ›":"再來一局",()=>api("/play/new",{human:st.human,lx:win&&st.level<18?st.level+1:st.level})   /* 開發者 11/6 修：等級是細分的 1～18 級，用 lx 傳、上限 18；原本傳 level 會被再換算一次，難度暴跳 */.then(render).catch(e=>toast(e.message))]),"res")}}
   // 賽後報告：用這一盤自己的編號打開（意見回饋 234：以前拿存檔清單第一筆，存檔還沒寫完或順序不同時會開到別盤）
 async function review(rep,id){let it=null;for(let k=0;k<12&&!it;k++){try{const d=await api("/db/items?c=play");it=id?d.items.find(x=>x.id===id):d.items[0]}catch(e){}if(!it)await new Promise(r=>setTimeout(r,250))}
   if(!it)return toast("找不到這盤的存檔");if(rep)store.set("openReport","play/"+it.id);REVIEW_BACK={id:it.id,h:location.hash};location.hash="#/db/play/"+encodeURIComponent(it.id)}   /* 意見回饋 607：記下從哪一盤去看報告，回來時不要自動開新局 */
