@@ -944,7 +944,7 @@ body.xqt-on .modal{z-index:10000}body.xqt-on .toast{z-index:10001}body.xqt-on .x
       if(!window.caches)return go();caches.keys().then(function(ks){return Promise.all(ks.filter(function(k){return k.indexOf("xqlab-app-")===0}).map(function(k){return caches.delete(k)}))})
         .then(function(){return navigator.serviceWorker&&navigator.serviceWorker.getRegistration()}).then(function(r){return r&&r.update()}).catch(function(){}).then(go)}};setTimeout(chk,4000)})();
 </script>
-<script>window.XQ_OFFLINE=true;window.XQ_BUILD="20261106-1600";</script>
+<script>window.XQ_OFFLINE=true;window.XQ_BUILD="20261106-1640";</script>
 <script src="core.js"></script>
 <script src="engine.js"></script>
 <script src="local.js"></script>
@@ -1370,9 +1370,11 @@ function bgmList(){return BGM.list||(BGM.list=fetch("data/bgm/index.json").then(
 /* 意見回饋 687：iPhone 只准在點擊的當下開始播放；清單已經載好就不要 await，直接同步呼叫 play()，免得等下載完那一下點擊已經「過期」 */
 async function bgmSync(next){const on=!!store.get("bgm",true)&&!document.hidden,era=store.get("era","classic");
   if(!on){if(BGM.a)BGM.a.pause();return}const L=((BGM.L||await bgmList())||{})[era]||[];if(!L.length){if(BGM.a)BGM.a.pause();return}
-  if(!BGM.a){BGM.a=new Audio();BGM.a.volume=.35;BGM.a.preload="auto";BGM.a.onended=()=>bgmSync(true);BGM.a.onplay=BGM.a.onpause=()=>bgmNow()}
+  if(!BGM.a){BGM.a=new Audio();BGM.a.volume=.35;BGM.a.preload="auto";BGM.a.onended=()=>bgmSync(true);BGM.a.onplay=BGM.a.onpause=()=>bgmNow();BGM.a.onerror=()=>{const x=BGM.a&&BGM.a.error;BGM.err="media"+(x?x.code:"")}}
   if(next||BGM.era!==era||!BGM.src){BGM.era=era;let n=Math.floor(Math.random()*L.length);if(L.length>1&&n===BGM.last)n=(n+1)%L.length;BGM.last=n;BGM.src=`data/bgm/${era}/${L[n]}`;BGM.a.src=BGM.src}
-  if(BGM.a.paused)BGM.a.play().catch(()=>{})}
+  if(BGM.a.paused){BGM.tries=(BGM.tries||0)+1;try{const p=BGM.a.play();if(p&&p.then)p.then(()=>{BGM.err="";BGM.ok=(BGM.ok||0)+1},e=>{BGM.err=(e&&e.name)||"err"})}catch(e){BGM.err="throw"}}}
+/* 意見回饋 689：iPhone 還是沒背景音樂，回饋單（開發者）和設定 → 聲音附上播放器狀態，才知道卡在哪一步 */
+function bgmDiag(){try{const a=BGM.a,L=(BGM.L||{})[store.get("era","classic")]||[];return`bgm:${store.get("bgm",true)?"開":"關"}/${store.get("era","classic")}/清單${BGM.L?L.length:"未載"}/${a?(a.paused?"停":"播")+"/rs"+a.readyState+"/ns"+a.networkState+"/t"+(a.currentTime||0).toFixed(1):"無播放器"}/試${BGM.tries||0}成${BGM.ok||0}${BGM.err?"/錯"+BGM.err:""}/AC:${typeof AC!=="undefined"&&AC?AC.state:"無"}/sess:${navigator.audioSession?navigator.audioSession.type:"無"}/sw:${navigator.serviceWorker&&navigator.serviceWorker.controller?"有":"無"}`}catch(e){return"bgm:診斷失敗"}}
 document.addEventListener("visibilitychange",()=>{if(document.hidden){BGM.wake=1}bgmSync()});
 for(const ev of["pointerdown","touchend"])document.addEventListener(ev,()=>{if(!store.get("bgm",true))return;if(BGM.a&&BGM.wake&&BGM.a.paused){try{BGM.a.pause()}catch(e){}BGM.a=null;BGM.src=""}BGM.wake=0;if(!BGM.a||BGM.a.paused)bgmSync()},{passive:true,capture:true});   /* 手機要先點一下畫面才准出聲；意見回饋 687：改成最先收到點擊（別的按鈕擋不掉），從背景回來、音樂停著就重建播放器 */
 setTimeout(()=>{try{bgmList()}catch(e){}},300);   /* 先把清單載好 */
@@ -3532,7 +3534,7 @@ function Settings(v){
       {const x=mvB.querySelector('[data-t="capSound"]');if(x)sdB.append(x.closest("label"))}
       {const vr=mvB.querySelector("#vcRow"),s2=v.querySelector("#snd2");if(vr&&s2)s2.append(vr)}
       {const s3=v.querySelector("#snd3");for(const k of["gateDrum","bgm"]){const x=mvB.querySelector(`[data-t="${k}"]`);if(x&&s3)s3.append(x.closest("label"))}
-        if(s3){const nw=document.createElement("div");nw.id="bgmNow";nw.style.cssText="display:none;align-items:center;gap:8px;padding:0 2px 8px;font-size:13.5px;opacity:.8";s3.append(nw);bgmNow()}}
+        if(s3){const nw=document.createElement("div");nw.id="bgmNow";nw.style.cssText="display:none;align-items:center;gap:8px;padding:0 2px 8px;font-size:13.5px;opacity:.8";s3.append(nw);bgmNow();if(DEVMODE()){const dg=document.createElement("div");dg.style.cssText="padding:0 2px 8px;font-size:12px;opacity:.75;word-break:break-all";dg.innerHTML=`<span id="bgmDg"></span> <button class="btn ghost" id="bgmTest" style="width:auto;margin:4px 0 0;padding:3px 10px;font-size:12.5px">▶ 測試背景音樂</button>`;s3.append(dg);const up=()=>{const e=dg.querySelector("#bgmDg");if(e)e.textContent="🛠 "+bgmDiag()};up();dg.querySelector("#bgmTest").onclick=()=>{if(BGM.a&&BGM.a.paused){BGM.a=null;BGM.src=""}bgmSync();setTimeout(up,300);setTimeout(up,1500);setTimeout(up,4000)}}}}
       [...sdB.children].slice(1).forEach(x=>x.style.borderTop="1px solid var(--line)")}
     v.querySelectorAll("[data-vc]").forEach(x=>x.onclick=()=>{const k=x.dataset.vc;v.querySelectorAll("[data-vc]").forEach(y=>y.classList.toggle("on",y===x));
       store.set("voiceCall",k!=="off");if(k!=="off"){store.set("voiceSex",k);pickVoice();primeVoice();unlockAudio();loadVc().then(()=>{sayCall("將軍");setTimeout(()=>sayCall("吃"),1100)})}});
@@ -3575,7 +3577,7 @@ function shrinkImage(file){return new Promise((ok,no)=>{const u=URL.createObject
   im.onerror=()=>{URL.revokeObjectURL(u);no(new Error("讀不到這張圖片"))};im.src=u})}
 async function feedbackInfo(){const m=meInfo(),r=window.XQNet&&XQNet.rating?XQNet.rating():null;
   return{id:m.id||"",name:m.name||"",rank:r?`${r.rank} ${r.pts}分 (${r.w}勝${r.l}負${r.d}和)`:"",ver:(A=>{const run=window.XQ_BUILD&&!/__/.test(XQ_BUILD)?XQ_BUILD:"";return run&&A&&A!==run?`${run}（已下載 ${A}，換頁後套用）`:(A||run)})(await appVer())||"",
-    dev:(MY_KIND||"其他")+((matchMedia("(display-mode: standalone)").matches||navigator.standalone)?"・主畫面App":"・瀏覽器")+`・${innerWidth}x${innerHeight}`,page:location.hash||"#/",role:DEVMODE()?"開發者":"玩家"}}
+    dev:(MY_KIND||"其他")+((matchMedia("(display-mode: standalone)").matches||navigator.standalone)?"・主畫面App":"・瀏覽器")+`・${innerWidth}x${innerHeight}`+(DEVMODE()&&typeof bgmDiag==="function"?"・"+bgmDiag():""),page:location.hash||"#/",role:DEVMODE()?"開發者":"玩家"}}
 async function postForm(rec){const F=FEEDBACK_FORM;if(!F.action)throw new Error("表單還沒設定");
   const body=new URLSearchParams();for(const k in F.entries)if(F.entries[k]&&rec[k]!=null)body.append(F.entries[k],String(rec[k]).slice(0,k==="img"?31000:k==="text"?45000:2000));
   // 用 sendBeacon「送出就好、不等回覆」：App 為了跑 Pikafish 開了嚴格的跨網域模式，fetch 讀不到 Google 的回覆會被當成失敗（其實已經送到），造成重複送出
