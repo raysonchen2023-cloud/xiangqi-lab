@@ -976,6 +976,10 @@ body.xqt-on .modal{z-index:10000}body.xqt-on .toast{z-index:10001}body.xqt-on .x
 .shs-card{position:absolute;left:7%;right:7%;top:15%;padding:3.2cqw 4.4cqw;border-radius:14px;background:rgba(255,251,242,.88);border:1.5px solid #2a2018;color:#2a2018;box-shadow:0 4px 16px rgba(0,0,0,.25);font-size:3.4cqw;line-height:1.55;max-height:46%;overflow:auto}
 .shs-card b{display:block;font:900 4.6cqw/1.3 var(--serif,serif)}.shs-card p{margin:1cqw 0 0}.shs-card .muted{color:#6b5a48}.shs-card .shp-say{color:#5a3a22}
 .shl-more{padding-top:10px}.shl-more .port-say{margin-bottom:8px}
+
+/* 意見回饋 712：渡口圖上的歷史景點（白底墨字小牌，跟金色的三扇門分開） */
+.po-sight{position:absolute;transform:translate(-50%,-50%);padding:.7cqw 2.2cqw;border-radius:99px;border:1px solid rgba(42,32,24,.75);background:rgba(255,251,242,.86);color:#2a2018;font:800 3.1cqw/1.3 var(--serif,serif);white-space:nowrap;box-shadow:0 1px 5px rgba(0,0,0,.28);cursor:pointer}
+.po-sight:active{transform:translate(-50%,-50%) scale(.95)}
 </style></head><body>
 <div class="app">
  <div class="topbar" id="topbar"><button class="ib" id="back" hidden><b>‹</b>返回</button><h1 id="title">象棋千秋</h1><span id="topRight"></span></div>
@@ -1023,7 +1027,7 @@ body.xqt-on .modal{z-index:10000}body.xqt-on .toast{z-index:10001}body.xqt-on .x
       if(!window.caches)return go();caches.keys().then(function(ks){return Promise.all(ks.filter(function(k){return k.indexOf("xqlab-app-")===0}).map(function(k){return caches.delete(k)}))})
         .then(function(){return navigator.serviceWorker&&navigator.serviceWorker.getRegistration()}).then(function(r){return r&&r.update()}).catch(function(){}).then(go)}};setTimeout(chk,4000)})();
 </script>
-<script>window.XQ_OFFLINE=true;window.XQ_BUILD="20261106-2311";</script>
+<script>window.XQ_OFFLINE=true;window.XQ_BUILD="20261106-2335";</script>
 <script src="core.js"></script>
 <script src="engine.js"></script>
 <script src="local.js"></script>
@@ -3497,7 +3501,7 @@ function onboard(){if(journey())journeyLock();else titleScreen({})}
 // ================= 設定：棋盤風格、棋子樣式、走棋顯示 =================
 const SAMPLE_FEN0="rnbakabnr/9/1c5c1/p1p1p1p1p/9/9/P1P1P1P1P/1C5C1/9/RNBAKABNR",SAMPLE_FEN1="rnbakabnr/9/1c5c1/p1p1p1p1p/9/9/P1P1P1P1P/1C2C4/9/RNBAKABNR",SAMPLE_LAST={f:70,t:67};
 /* 意見回饋 661：關於頁顯示整包遊戲要多大空間。XQ_SIZES 由 build-site.js 建置時填入（開發中的 m.html 是 null，就不顯示） */
-const XQ_SIZES={"pre":192189933,"code":12568083,"eng":51511005,"gm":33668932,"bgm":259516351,"opt":[["比賽對局 1956–2010",21765744],["比賽對局 2011–2014",25596413],["比賽對局 2015–2019",24821916]],"all":632275133,"other":10636756};
+const XQ_SIZES={"pre":192189933,"code":12576588,"eng":51511005,"gm":33668932,"bgm":259516351,"opt":[["比賽對局 1956–2010",21765744],["比賽對局 2011–2014",25596413],["比賽對局 2015–2019",24821916]],"all":632283638,"other":10636756};
 const szMB=b=>b>=1073741824?(b/1073741824).toFixed(1)+" GB":Math.max(1,Math.round(b/1048576))+" MB";
 function aboutSizes(){const S=XQ_SIZES;if(!S)return"";const opt=S.opt||[];   /* 意見回饋 662：玩家只看總數，細項只在開發者模式顯示 */
   return `<div class="row" style="justify-content:space-between"><span class="muted">整包下載</span><b>約 ${szMB(S.all)}</b></div>
@@ -5116,8 +5120,8 @@ const relicSolved=()=>store.get("relicSolved",{});
 function relicGo(id){const go=()=>{closeSheet();location.hash="#/canju/z/"+encodeURIComponent(id)};if(/^#\/(cpu|arena|pvp|journey\/play|redo\/play)/.test(location.hash))confirmBox("要離開這盤棋，去解這件珍品的藏局嗎？",go,"去解藏局");else go()}
 const relicCjHTML=x=>{if(!x||!x.cj)return"";const ok=!!relicSolved()[x.id];return`<div class="rl-cj"><b>🔍 這件珍品藏著一局〈${esc(x.cjName||"")}〉</b>${ok?'<span class="rl-seal sm">已解</span>':""}<p>${esc(x.bridge||"")}</p><button class="btn${ok?" ghost":""}" data-rlgo="${esc(x.id)}" style="width:100%;margin-top:2px">${ok?"再解一次":"現在解"}</button></div>`};
 const relicCjBind=b=>b.querySelectorAll("[data-rlgo]").forEach(y=>y.onclick=()=>relicGo(y.dataset.rlgo));
-async function relicDrop(era){const R=await relicsData(),L=R[era];if(!Array.isArray(L)||!L.length)return false;const mine=relicsMine(),have=mine[era]||[];
-  if(Date.now()-(store.get("relicAt",0)||0)<12e4||Math.random()>=.2)return false;const left=L.filter(x=>!have.includes(x.id));if(!left.length)return false;
+async function relicDrop(era,p){const R=await relicsData(),L=R[era];if(!Array.isArray(L)||!L.length)return false;const mine=relicsMine(),have=mine[era]||[];
+  if(Date.now()-(store.get("relicAt",0)||0)<12e4||Math.random()>=(p||.2))return false;   /* 意見回饋 712：渡口景點用 15%（p＝.15） */const left=L.filter(x=>!have.includes(x.id));if(!left.length)return false;
   const W={common:70,rare:25,legend:5},tot=left.reduce((a,x)=>a+(W[x.rarity]||10),0);let r=Math.random()*tot,it=left[0];for(const x of left){r-=W[x.rarity]||10;if(r<=0){it=x;break}}
   mine[era]=have.concat(it.id);store.set("relics",mine);store.set("relicAt",Date.now());vibrate([15,30,15,30,40]);const[rk,rc]=RELIC_RK[it.rarity]||RELIC_RK.common;
   sheet("🏺 撿到一件"+relicEra(era)+"的珍品！",b=>{b.innerHTML=`<div style="text-align:center"><div style="width:180px;height:180px;margin:0 auto 6px;display:flex;align-items:center;justify-content:center;font-size:90px">${relicImg(era,it.id)}</div>
@@ -6749,16 +6753,19 @@ function shipArena(k,rep){if(eraLocked(k))return toast(eraLockMsg(k));shipEra(k)
 /* 渡口圖上三扇門的位置 [園子, 驛站, 擂台]（左%, 上%），照每一張圖量的 */
 const PORT_SPOT={_:[[25,58],[73,50],[50,30]],classic:[[22,56],[76,57],[44,36]],qin:[[36,61],[71,64],[46,41]],han:[[30,55],[73,58],[55,33]],sanguo:[[28,59],[78,63],[56,41]],weijin:[[27,55],[80,60],[70,38]],
   nanbei:[[33,57],[80,62],[62,40]],sui:[[34,64],[75,61],[50,41]],tang:[[25,60],[70,68],[42,40]],wudai:[[28,46],[75,58],[64,33]],song:[[25,62],[72,67],[55,40]],yuan:[[30,63],[67,62],[46,43]],ming:[[27,59],[80,67],[47,36]],qing:[[27,47],[77,55],[57,30]]};
+/* 意見回饋 712（開發者 11/6）：渡口圖上當朝的歷史景點 [名字, 左%, 上%, 介紹]，照 Gemini 畫進每張圖的東西量的；點了 15% 機率先撿到那一朝的珍品（relicDrop，跟園子點長卷一樣），沒撿到就看介紹 */
+const PORT_SIGHT={"qin":[["萬里長城",20,21,"秦始皇統一六國後，把燕、趙、秦原本各自修的長城連起來，西起臨洮、東到遼東，用來擋北方的匈奴。「萬里長城」這個說法就是從這時開始的。"],["烽火台",72,21,"長城沿線每隔一段路就有一座烽火台。白天燒柴冒煙、晚上點火，敵人一來，一台接一台傳下去，邊關的消息很快就能傳到遠方。"],["秦直道",86,34,"秦始皇命大將蒙恬修的軍用大道，從咸陽北邊的雲陽一路往北通到九原（今天內蒙古包頭一帶），長七百多公里，又寬又直，大軍可以很快開到北方邊境。"]],"han":[["漢代烽燧",14,25,"漢朝在河西走廊和往西域的路上修了許多烽燧，也就是守望台，士兵在上面守望、傳遞軍情。考古學家在這些遺址挖出大量木簡，叫「漢簡」，記下了戍守士兵的日常生活。"],["玉門關",85,27,"漢武帝時設在河西走廊最西邊的關口。西域出產的美玉從這裡運進中原，所以叫玉門關。出了關就是大漠，是絲綢之路上最重要的關卡之一。"]],"sanguo":[["火燒戰船",38,28,"曹操的戰船首尾相連，吳將黃蓋假裝投降，帶著裝滿乾柴、澆了油的船衝向曹營，順著東南風點火，戰船燒成一片。這就是有名的「火燒赤壁」。"],["赤壁",80,24,"西元 208 年，孫權和劉備的聯軍在長江赤壁一帶大敗曹操。這一仗之後，魏、蜀、吳三分天下的局面慢慢成形。"],["北岸營寨",86,46,"曹操大軍駐紮在長江北岸，孫劉聯軍在南岸。北方來的士兵不習慣坐船打仗，軍中又流行疾病，這些都是曹軍戰敗的原因。"]],"weijin":[["竹林",12,28,"魏晉之際，嵇康、阮籍、山濤等七位名士常在竹林下喝酒、彈琴、談天說理，被稱為「竹林七賢」。他們不愛官場的規矩，嚮往自然自在的生活。"],["曲水",42,31,"東晉永和九年（353 年），王羲之和朋友在蘭亭的溪邊玩「曲水流觴」：酒杯順著彎彎的溪水漂，停在誰面前，誰就要作詩。王羲之為這些詩寫的序，就是有名的〈蘭亭集序〉。"]],"nanbei":[["石窟大佛",20,26,"北魏在大同開鑿雲岡石窟，遷都洛陽後又開鑿龍門石窟，在山崖上雕出巨大的佛像。北朝的佛教藝術，大多保存在這些石窟裡。"],["山寺佛塔",56,23,"南朝的皇帝和貴族很信佛，梁武帝甚至幾次捨身出家。杜牧寫「南朝四百八十寺」，說的就是當年建康城一帶寺廟林立的樣子。"],["長江",72,75,"南北朝時，南方和北方的政權大致隔著長江、淮河對峙了一百多年。長江又寬又急，北方的大軍很難渡江南下。"]],"sui":[["隋煬帝的龍舟",34,19,"運河開通後，隋煬帝坐著四層高的大龍舟南下江都（今天的揚州）巡遊，跟隨的船隊前後連綿兩百多里。這樣勞民傷財，也是隋朝很快滅亡的原因之一。"],["大運河",80,19,"隋煬帝動員上百萬民工，以洛陽為中心開鑿運河，北到涿郡、南到餘杭，把海河、黃河、淮河、長江、錢塘江五大水系連在一起。從此南方的糧食可以用船運到北方。"]],"tang":[["長安城門",28,16,"唐代的長安是當時世界上最大的城市之一，四周有高大的城牆。城裡的大街像棋盤一樣橫平豎直，劃分成一百多個「坊」。"],["大雁塔",80,19,"玄奘從天竺取經回來後，在長安的慈恩寺建了這座塔，收藏他帶回來的經書和佛像。新考上的進士會到塔下題名，叫「雁塔題名」。"],["西市",88,33,"長安有東市和西市。西市靠近絲綢之路的起點，西域來的胡商很多，賣珠寶、香料、胡餅。據說我們說「買東西」，就是從逛東市、西市來的。"]],"wudai":[["遠方的烽火",22,16,"五代只有短短五十多年，中原就換了後梁、後唐、後晉、後漢、後周五個朝代，戰爭幾乎沒有停過。"],["荒村",12,56,"連年打仗，許多百姓離開家鄉逃難，田地荒廢、村子成了廢墟。直到宋太祖趙匡胤建立宋朝，天下才慢慢安定下來。"]],"song":[["雷峰塔",30,17,"吳越國王錢俶在西湖邊建的塔，因為蓋在雷峰上而得名。後來流傳的《白蛇傳》裡，白娘子就被法海壓在雷峰塔下。"],["斷橋",38,25,"西湖白堤上的拱橋。冬天下雪後，橋面向陽的雪先融化，遠看橋像斷了一樣，叫「斷橋殘雪」，是西湖十景之一。《白蛇傳》裡許仙和白娘子也在這裡相遇。"],["元宵花燈",88,38,"宋朝的元宵節非常熱鬧，臨安城家家掛燈，街上有燈山、煙火和舞隊，一連好幾夜。辛棄疾寫「東風夜放花千樹」，寫的就是元宵夜的燈火。"]],"yuan":[["蒙古包",15,37,"蒙古人跟著水草放牧遷徙，住的是可以拆開、搬走的圓形氈帳。元朝的皇帝每年夏天還會到草原上的上都避暑。"],["站赤",87,46,"元朝在全國設了一千多處驛站，蒙古話叫「站赤」。官員和信使拿著牌子，就能在驛站換馬、吃住，消息可以從大都一路傳到很遠的地方。馬可・波羅的遊記也寫到這套驛站制度。"]],"ming":[["馬頭牆",12,30,"徽州民居的白牆高出屋頂，一層一層像昂起的馬頭，所以叫馬頭牆。房子挨得很近，高牆可以擋住火勢，又叫「封火牆」。明朝徽商在外做生意致富，回鄉蓋起這樣的大宅。"],["石牌坊",68,29,"徽州的村口常立著石牌坊，表彰考上功名的讀書人，或是孝順、守節的人。歙縣棠樾村有一整排的牌坊群。"],["黃山",78,16,"徽州境內的名山，以奇松、怪石、雲海出名。明朝的旅行家徐霞客兩次登上黃山，留下了遊記。"]],"qing":[["文峰塔",88,13,"揚州城南運河邊的七層寶塔，明朝萬曆年間建造。運河上的船老遠就能看到它，像是揚州的路標。"],["瘦西湖",80,26,"揚州城外細長的湖，兩岸是鹽商修的園林。乾隆皇帝南巡時來過，湖上的五亭橋、白塔都是那個時候修的。"],["漕運糧船",68,73,"清朝每年要從江南用船把幾百萬石糧食，經過大運河運到北京，叫「漕運」。揚州正好在運河和長江交會的地方，糧船、鹽商都聚在這裡，城市非常繁華。"]]};
+function portSight(k,i){const s=(PORT_SIGHT[k]||[])[i];if(!s)return;vibrate(5);relicDrop(k,.15).then(got=>{if(got)return;const T=SHIP_STOP[k]||{};sheet("📍 "+s[0],b=>{b.innerHTML=`<div class="muted" style="margin:-4px 0 8px">${esc(eraLabel(k))}・${esc(T.place||"")}</div><p style="line-height:1.8;margin:0;font-size:16px">${esc(s[3])}</p>`})}).catch(()=>{})}
 function Port(v){const k=shipHere(),T=SHIP_STOP[k]||SHIP_STOP.classic,Ls=SHIP_LESSON[k]||{},ap=shipAppr(),AS=typeof arenaStamps==="function"?arenaStamps():{},A=ARENA[k]||{},lrn=shipLearned(k);
   setTop("⚓ "+portName(k),"^#/adventure",[["⛵",()=>goUp("#/adventure"),"回星槎"]]);setTabs(false);v.className="view";
   const byT=ap||!Ls.open,W=byT?shipWho(k,"teller"):shipWho(k,lrn&&Ls.done?Ls.doneBy:Ls.openBy),say=byT?shipQuote():lrn&&Ls.done?Ls.done:Ls.open;
   const Q=PORT_SPOT[k]||PORT_SPOT._;   /* 意見回饋 709：渡口上方＝那一朝的滿版水墨圖（data/shipmap/port_<朝代>.webp），三扇門是圖上的金色入口 */
-  v.innerHTML=shpPage("port_"+k,"⚓ "+esc(portName(k)),(k==="classic"?"雲河星槎":esc(eraLabel(k)))+"・"+esc(T.place),[["poPark",Q[0][0],Q[0][1],"🌳 "+esc(parkName(k)),"路人棋友"],["poInn",Q[1][0],Q[1][1],"🏮 "+esc(innName(k)),"旅人・秘境棋友"],["poArena",Q[2][0],Q[2][1],"🏯 "+esc(A.name||"擂主")+(AS[k]?" ✓":""),"擂台"]])+`<div class="pad port">
+  v.innerHTML=shpPage("port_"+k,"⚓ "+esc(portName(k)),(k==="classic"?"雲河星槎":esc(eraLabel(k)))+"・"+esc(T.place),[["poPark",Q[0][0],Q[0][1],"🌳 "+esc(parkName(k)),"路人棋友"],["poInn",Q[1][0],Q[1][1],"🏮 "+esc(innName(k)),"旅人・秘境棋友"],["poArena",Q[2][0],Q[2][1],"🏯 "+esc(A.name||"擂主")+(AS[k]?" ✓":""),"擂台"]],(PORT_SIGHT[k]||[]).map((s,i)=>`<button class="po-sight" data-ps="${i}" style="left:${s[1]}%;top:${s[2]}%">📍 ${esc(s[0])}</button>`).join(""))+`<div class="pad port">
     <div class="card port-say"><img src="${W.img}" alt="" onerror="this.remove()"><p><b>${esc(W.n)}</b>「${esc(say)}」</p></div>
     <div id="poRes"></div>
     <button class="btn ghost" id="poShip" style="width:100%;margin-top:12px">⛵ 回星槎</button></div>`;
   const on=(q,fn)=>{const e=v.querySelector(q);if(e)e.onclick=()=>{vibrate(5);fn()}};
-  on("#poPark",()=>walk("park",()=>shipPark(k)));on("#poInn",()=>shipInn(k));on("#poArena",()=>shipArena(k));on("#poShip",()=>goUp("#/adventure"));
+  on("#poPark",()=>walk("park",()=>shipPark(k)));on("#poInn",()=>shipInn(k));on("#poArena",()=>shipArena(k));on("#poShip",()=>goUp("#/adventure"));v.querySelectorAll("[data-ps]").forEach(b=>b.onclick=()=>portSight(k,+b.dataset.ps));
   jResume(v.querySelector("#poRes"));shpFit(v);return{}}
 
 /* ---------- 想換成雲河七星：開新旅程，存到空的那一格（沒有空格就到開頭畫面挑） ---------- */
@@ -6803,7 +6810,7 @@ function ShipPz(v){setTop("♟ 千秋殘局","#/adventure");setTabs(false);v.cla
 function shpPage(img,cap,sub,spots,over){return`<div class="shp-page cq"><img src="data/shipmap/${img}.webp" alt="">${over||""}<div class="shp-cap"><b>${cap}</b><small>${sub}</small></div>${spots.map(([id,x,y,b,sm,cl])=>`<button class="shp-spot${cl?" "+cl:""}" id="${id}" style="left:${x}%;top:${y}%"><b>${b}</b>${sm?`<small>${sm}</small>`:""}</button>`).join("")}</div>`}
 const shpOn=(v,q,fn)=>{const e=v.querySelector(q);if(e)e.onclick=()=>{vibrate(5);fn()}};
 /* 入口按鈕靠圖邊時往裡推，不超出圖（字長短不一，例如擂主名字） */
-function shpFit(v){requestAnimationFrame(()=>{const P=v.querySelector(".shp-page.cq");if(!P)return;const R=P.getBoundingClientRect();if(!R.width)return;P.querySelectorAll(".shp-spot").forEach(b=>{const r=b.getBoundingClientRect(),m=6;let d=0;if(r.left<R.left+m)d=R.left+m-r.left;else if(r.right>R.right-m)d=R.right-m-r.right;if(d)b.style.left="calc("+b.style.left+" + "+Math.round(d)+"px)"})})}
+function shpFit(v){requestAnimationFrame(()=>{const P=v.querySelector(".shp-page.cq");if(!P)return;const R=P.getBoundingClientRect();if(!R.width)return;P.querySelectorAll(".shp-spot,.po-sight").forEach(b=>{const r=b.getBoundingClientRect(),m=6;let d=0;if(r.left<R.left+m)d=R.left+m-r.left;else if(r.right>R.right-m)d=R.right-m-r.right;if(d)b.style.left="calc("+b.style.left+" + "+Math.round(d)+"px)"})})}
 /* 這站棋理 #/ship/lesson：船頭、說書人的燈籠和木牌；木牌上寫棋理卡，三團星光＝看示範棋局、這一朝的棋、讀這一章 */
 function ShipLesson(v){setTop("📘 這站棋理","#/adventure");setTabs(false);v.className="view";const k=shipHere(),T=SHIP_STOP[k]||{},Ls=SHIP_LESSON[k]||{},ap=shipAppr(),lrn=shipLearned(k),H=typeof HIST!=="undefined"?HIST[k]:null,ch=SHIP_PLAN[k]&&SHIP_PLAN[k].ch,Wo=shipWho(k,Ls.openBy),Wd=shipWho(k,Ls.doneBy);
   const board=`<div class="shl-board"><b>${esc(Ls.t||T.img||"")}${lrn?" ✅":""}</b>${(Ls.x||[]).map(x=>`<p>${esc(x)}</p>`).join("")}${Ls.k?`<p class="shl-k">口訣：${esc(Ls.k)}</p>`:""}</div>`;
