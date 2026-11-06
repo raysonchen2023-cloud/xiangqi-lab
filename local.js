@@ -51,6 +51,8 @@ var XQ=(function(){
   const LEVELS=[...RLV,{movetime:6000}].map((x,i)=>({...x,n:i+1,name:i<RANKS.length?RANKS[i][0]:"專3・全力",desc:i===RLV.length?"每步想 6 秒，人類幾乎贏不了":LVDESC(x)}));
   const OLD2FINE=[6,2,4,6,9,11,15,16,18],lvOld=n=>OLD2FINE[Math.max(1,Math.min(8,Math.round(+n)||3))];
   const lvIn=b=>b&&b.lx!=null&&Number.isFinite(+b.lx)?Math.max(1,Math.min(LEVELS.length,Math.round(+b.lx))):lvOld(b&&b.level);
+  /* 意見回饋 675：App 的航行難度——星槎裡的對局（園子、驛站、秘境、擂主、章回棋路）多傳 dx＝加減幾段（-6～6）；往上最多到專2-2（第 17 級），原本就是 18 級的不動；挑戰電腦、積分挑戰不傳 */
+  const dxOf=b=>{const d=Math.round(+((b||{}).dx));return Number.isFinite(d)?Math.max(-6,Math.min(6,d)):0},lvAdj=(b,n)=>{const d=dxOf(b);return !d?n:d>0?Math.min(Math.max(n,17),n+d):Math.max(1,n+d)};
   (function lvMig(){if(ls.get("lvFine",0))return;try{
     const R=ls.get("record",null);if(R){const R2={};for(const[k,v]of Object.entries(R)){const o=R2[lvOld(k)]||(R2[lvOld(k)]={w:0,l:0,d:0});for(const z of["w","l","d"])o[z]+=(v&&v[z])||0}ls.set("record",R2)}
     const B=ls.get("carBank",null);if(B){(B.hist||[]).forEach(h=>{if(h&&h.lv)h.lv=lvOld(h.lv)});if(B.byLv){const N={};for(const[k,v]of Object.entries(B.byLv)){const o=N[lvOld(k)]||(N[lvOld(k)]={w:0,l:0,d:0,pts:0});for(const z of["w","l","d","pts"])o[z]+=(v&&v[z])||0}B.byLv=N}ls.set("carBank",B)}
@@ -111,7 +113,7 @@ var XQ=(function(){
      桌上就是那一種：不動（下完的也不動，畫面自己決定）。不是：下到一半的先收進 play2 自己那格，再拿出那一種收著的；都沒有才開新的（石桌往事要給 journey 才開，練習不開——不開就連收都不收，不會多出一份重複的）。
      收起來以後先把 P 清掉再開新局，playNew 最後的 forfeit(P) 才不會把剛收起來的積分局算成中途離開 */
   function playOpen(b){ensureP();const k=["arena","journey","practice"].includes(b.kind)?b.kind:"cpu";
-    const s=stashGet(k),era=typeof b.arena==="string"&&/^[a-z]{2,8}$/.test(b.arena)?b.arena:null,lv=d=>(b.lx!=null||+b.level)?lvIn(b):lvOld(d);
+    const s=stashGet(k),era=typeof b.arena==="string"&&/^[a-z]{2,8}$/.test(b.arena)?b.arena:null,lv=d=>lvAdj(b,(b.lx!=null||+b.level)?lvIn(b):lvOld(d));
     /* 意見回饋 428：擂台接回沒下完的那盤時，強度換成現在的規則（例如石桌棋仙固定第 7 級），不沿用開局當時存的等級 */
     const relv=g=>{if(k==="arena"&&g&&b.level&&!g.result&&g.level!==lv(3)){g.level=lv(3);return true}return false};
     if(kindOf(P)===k){if(relv(P)){stateRebuild(P);savePlay()}return}
@@ -182,7 +184,7 @@ var XQ=(function(){
       moves:P.moves.map(moveOut),result:P.result,practice:P.practice||null,thinking:playBusy&&P.turn!==P.human,msg:playMsg,eval:lastEv(P.moves),hint:P.hint,
       legal:!P.result&&P.turn===P.human?legal(P.board,P.turn):[],check:!P.result&&inCheck(P.board,P.turn)?kingSq(P.board,P.turn):-1,engine:true}}
   async function playPost(p,b){ensureP();
-    if(p==="/play/new"){playNew(b.human==="b"?"b":"r",lvIn(b),!b.pre&&!!b.ranked,b.pre||null,!!b.reward,typeof b.arena==="string"&&/^[a-z]{2,8}$/.test(b.arena)?b.arena:null,false,jid(b.journey),b.lv);if(P&&!P.ranked&&b.rlv!=null&&Number.isInteger(+b.rlv)){P.rlv=Math.max(0,Math.min(RLV.length-1,+b.rlv));savePlay()}playMsg="";setTimeout(playEngine,0)}
+    if(p==="/play/new"){playNew(b.human==="b"?"b":"r",lvAdj(b,lvIn(b)),!b.pre&&!!b.ranked,b.pre||null,!!b.reward,typeof b.arena==="string"&&/^[a-z]{2,8}$/.test(b.arena)?b.arena:null,false,jid(b.journey),b.lv);if(P&&!P.ranked&&b.rlv!=null&&Number.isInteger(+b.rlv)){P.rlv=Math.max(0,Math.min(RLV.length-1,+b.rlv+dxOf(b)));savePlay()}playMsg="";setTimeout(playEngine,0)}
     else if(p==="/play/bonus"){   /* 意見回饋 313：石桌往事「回到當年」答對轉折加段位積分；每個轉折只能領一次 */
       const key=String(b.key||"").slice(0,80),pts=Math.max(1,Math.min(20,Math.round(+b.pts)||0)),K=ls.get("bonusKeys",{});
       if(!key)throw new Error("缺少題目代號");const R=cpuRate();
