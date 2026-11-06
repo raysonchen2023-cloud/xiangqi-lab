@@ -896,7 +896,7 @@ body.xqt-on .modal{z-index:10000}body.xqt-on .toast{z-index:10001}body.xqt-on .x
       if(!window.caches)return go();caches.keys().then(function(ks){return Promise.all(ks.filter(function(k){return k.indexOf("xqlab-app-")===0}).map(function(k){return caches.delete(k)}))})
         .then(function(){return navigator.serviceWorker&&navigator.serviceWorker.getRegistration()}).then(function(r){return r&&r.update()}).catch(function(){}).then(go)}};setTimeout(chk,4000)})();
 </script>
-<script>window.XQ_OFFLINE=true;window.XQ_BUILD="20261106-1157";</script>
+<script>window.XQ_OFFLINE=true;window.XQ_BUILD="20261106-1200";</script>
 <script src="core.js"></script>
 <script src="engine.js"></script>
 <script src="local.js"></script>
@@ -3332,7 +3332,7 @@ function onboard(){if(journey())journeyLock();else titleScreen({})}
 // ================= 設定：棋盤風格、棋子樣式、走棋顯示 =================
 const SAMPLE_FEN0="rnbakabnr/9/1c5c1/p1p1p1p1p/9/9/P1P1P1P1P/1C5C1/9/RNBAKABNR",SAMPLE_FEN1="rnbakabnr/9/1c5c1/p1p1p1p1p/9/9/P1P1P1P1P/1C2C4/9/RNBAKABNR",SAMPLE_LAST={f:70,t:67};
 /* 意見回饋 661：關於頁顯示整包遊戲要多大空間。XQ_SIZES 由 build-site.js 建置時填入（開發中的 m.html 是 null，就不顯示） */
-const XQ_SIZES={"pre":160273767,"code":12405504,"eng":51511005,"gm":33668932,"bgm":259516351,"opt":[["比賽對局 1956–2010",21765744],["比賽對局 2011–2014",25596413],["比賽對局 2015–2019",24821916]],"all":600196388,"other":10636756};
+const XQ_SIZES={"pre":160273767,"code":12406011,"eng":51511005,"gm":33668932,"bgm":259516351,"opt":[["比賽對局 1956–2010",21765744],["比賽對局 2011–2014",25596413],["比賽對局 2015–2019",24821916]],"all":600196895,"other":10636756};
 const szMB=b=>b>=1073741824?(b/1073741824).toFixed(1)+" GB":Math.max(1,Math.round(b/1048576))+" MB";
 function aboutSizes(){const S=XQ_SIZES;if(!S)return"";const opt=S.opt||[];   /* 意見回饋 662：玩家只看總數，細項只在開發者模式顯示 */
   return `<div class="row" style="justify-content:space-between"><span class="muted">整包下載</span><b>約 ${szMB(S.all)}</b></div>
@@ -3717,7 +3717,9 @@ function reportSheet(rep,opts){let s=opts.side||"r";
    store（不跟存檔走）：slotCur＝使用中的格；slotMeta＝{格:摘要}（開頭畫面直接用）；exportAt＝上次匯出；saveMig1＝舊玩家過渡做完的時間
    store（旅程類）：journey＝{c:角色,sx,born,v,re}（有它就代表角色已鎖定；re=1 舊玩家還能改選一次、2＝用掉或放棄了）；playSec＝這段旅程遊玩秒數
    以後加新的進度鍵（修為、收集、故事…），記得補進 JOURNEY_KEYS，不然讀檔、開新旅程時不會跟著換 */
-const JOURNEY_KEYS=["pChar","pSex","pStyle","botPiece","onboard1","journey","playSec","xp","xpDay","xpKeys","record","hintBonus","hintUse","undoBonus","undoDropIds","bag","jarGot","lingN","giftGames","dropMiss",
+/* 意見回饋 669（開發者 11/6）：選角時照角色背景決定棋盤朝代（靈魂設定的十三朝主場）；朝代跟著存檔走，各格各自記得 */
+const CHAR_ERA={x_swordboy:"qin",x_spiritgirl:"nanbei",x_martialgirl:"song",x_miaogirl:"han",x_shuai:"sanguo",x_shi:"ming",x_bing:"sui"};
+const JOURNEY_KEYS=["pChar","pSex","pStyle","botPiece","onboard1","journey","playSec","era","xp","xpDay","xpKeys","record","hintBonus","hintUse","undoBonus","undoDropIds","bag","jarGot","lingN","giftGames","dropMiss",
   "legend","legendGame","legBook","jStars","jPending","jPrev","jRun","jScene","jHid","jMig36","jpSeen","novelRead","sceneDone","storyEraTip","eraUser","study","campSeen","campStars",
   "npcBond","npcAsk","npcAskSeen","parkNpc","parkNpcLast","parkAdj","visitGone","secrets","secretClue","secretSpots","secretWins","relics","relicSolved","relicAt","histSeen","histSolved","histTitle",
   "innCur","innDrop","innAdj","xhMake","xhMei","xhTitle","yuDay","yuHint","yuRoute","yuTitle","cupDrop","cupGot","cj","cjRun"].map(k=>"m_"+k)
@@ -3791,12 +3793,12 @@ function prologue(){const c=myChar();if(!c)return;const C=WX_CHARS[c],era=store.
 async function journeyStart(n,c,nm){const C=WX_CHARS[c];if(!C)return;const had=!!journey(),cur=curSlot();
   if(had&&cur&&cur!==n)await saveNow(true);SAVE_LOCK=true;
   store.set("slotCur",n);saveApply({});
-  store.set("pChar",c);store.set("pSex",C.sx);store.set("pStyle","real");store.set("botPiece",C.pc);store.set("onboard1",true);store.set("journey",{c,sx:C.sx,born:Date.now(),v:1});store.set("playSec",0);
+  store.set("pChar",c);store.set("pSex",C.sx);store.set("pStyle","real");store.set("botPiece",C.pc);store.set("onboard1",true);store.set("journey",{c,sx:C.sx,born:Date.now(),v:1});if(CHAR_ERA[c]){store.set("era",CHAR_ERA[c]);store.set("eraUser",null);try{applyEra()}catch(e){}}store.set("playSec",0);
   if(store.get("oppLook",null)==null)store.set("oppLook","real");if(nm){try{setMyName(nm)}catch(e){}}
   SAVE_LOCK=false;await saveNow(true);
   if(had){SAVE_LOCK=true;saveReload({xqPrologue:"1"});return}
   try{window.dispatchEvent(new Event("xq-look"))}catch(e){}titleClose();try{route()}catch(e){}setTimeout(prologue,500)}
-function journeyRepick(c){const C=WX_CHARS[c],J=journey();if(!C||!J||J.re!==1)return;store.set("pChar",c);store.set("pSex",C.sx);store.set("botPiece",C.pc);store.set("journey",{...J,c,sx:C.sx,re:2});
+function journeyRepick(c){const C=WX_CHARS[c],J=journey();if(!C||!J||J.re!==1)return;store.set("pChar",c);store.set("pSex",C.sx);store.set("botPiece",C.pc);store.set("journey",{...J,c,sx:C.sx,re:2});if(CHAR_ERA[c]){store.set("era",CHAR_ERA[c]);store.set("eraUser",null);try{applyEra()}catch(e){}}
   try{window.dispatchEvent(new Event("xq-look"))}catch(e){}saveNow(true);toast("換好了："+C.n+"（之後就鎖定了）")}
 async function slotLoad(n){let S=null;try{S=await slotGet(n)}catch(e){}
   if(!S||!S.data){const M=slotMetaAll();delete M[n];store.set("slotMeta",M);return toast("這格讀不到資料")}
