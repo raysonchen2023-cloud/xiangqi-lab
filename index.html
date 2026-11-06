@@ -848,7 +848,7 @@ html[data-era="qing"]:not([data-font="sys"]){--serif:"XQ twkai","Noto Serif TC",
       if(!window.caches)return go();caches.keys().then(function(ks){return Promise.all(ks.filter(function(k){return k.indexOf("xqlab-app-")===0}).map(function(k){return caches.delete(k)}))})
         .then(function(){return navigator.serviceWorker&&navigator.serviceWorker.getRegistration()}).then(function(r){return r&&r.update()}).catch(function(){}).then(go)}};setTimeout(chk,4000)})();
 </script>
-<script>window.XQ_OFFLINE=true;window.XQ_BUILD="20261106-0959";</script>
+<script>window.XQ_OFFLINE=true;window.XQ_BUILD="20261106-1008";</script>
 <script src="core.js"></script>
 <script src="engine.js"></script>
 <script src="local.js"></script>
@@ -3269,14 +3269,14 @@ setTimeout(()=>{try{if(!/#\/(play|journey\/play|cpu)/.test(location.hash))onboar
 // ================= 設定：棋盤風格、棋子樣式、走棋顯示 =================
 const SAMPLE_FEN0="rnbakabnr/9/1c5c1/p1p1p1p1p/9/9/P1P1P1P1P/1C5C1/9/RNBAKABNR",SAMPLE_FEN1="rnbakabnr/9/1c5c1/p1p1p1p1p/9/9/P1P1P1P1P/1C2C4/9/RNBAKABNR",SAMPLE_LAST={f:70,t:67};
 /* 意見回饋 661：關於頁顯示整包遊戲要多大空間。XQ_SIZES 由 build-site.js 建置時填入（開發中的 m.html 是 null，就不顯示） */
-const XQ_SIZES={"pre":156833890,"code":12360087,"eng":51511005,"gm":33668932,"bgm":259516351,"opt":[["比賽對局 1956–2010",21765744],["比賽對局 2011–2014",25596413],["比賽對局 2015–2019",24821916]],"all":596711094,"other":10636756};
+const XQ_SIZES={"pre":156833890,"code":12360150,"eng":51511005,"gm":33668932,"bgm":259516351,"opt":[["比賽對局 1956–2010",21765744],["比賽對局 2011–2014",25596413],["比賽對局 2015–2019",24821916]],"all":596711157,"other":10636756};
 const szMB=b=>b>=1073741824?(b/1073741824).toFixed(1)+" GB":Math.max(1,Math.round(b/1048576))+" MB";
-function aboutSizes(){const S=XQ_SIZES;if(!S)return"";const opt=S.opt||[];
+function aboutSizes(){const S=XQ_SIZES;if(!S)return"";const opt=S.opt||[];   /* 意見回饋 662：玩家只看總數，細項只在開發者模式顯示 */
   return `<div class="row" style="justify-content:space-between"><span class="muted">整包下載</span><b>約 ${szMB(S.all)}</b></div>
-      <div class="muted" style="font-size:12.5px;line-height:1.75;margin:0 0 6px">・開 App 時先載好（程式、圖片、音效、字型）：${szMB(S.pre+S.code)}<br>・開 App 後在背景自動下載：棋力引擎 ${szMB(S.eng)}、特級大師對局 ${szMB(S.gm)}（開了省數據模式就不自動下載）<br>・用到時才下載：背景音樂 ${szMB(S.bgm)}、其他圖片 ${szMB(S.other)}${opt.length?`<br>・選購（按下載才會存）：${opt.map(x=>esc(x[0])+" "+szMB(x[1])).join("、")}`:""}</div>
-      <div class="row" style="justify-content:space-between"><span class="muted">這支手機已用</span><b id="aUse">計算中…</b></div>`}
+      <div class="row" style="justify-content:space-between"><span class="muted">這支手機已用</span><b id="aUse">計算中…</b></div>${DEVMODE()?`
+      <details style="margin:2px 0 4px"><summary class="muted">🛠 下載大小細項（開發者）</summary><div class="muted" style="font-size:12.5px;line-height:1.75">・開 App 時先載好（程式、圖片、音效、字型）：${szMB(S.pre+S.code)}<br>・背景自動下載：棋力引擎 ${szMB(S.eng)}、特級大師對局 ${szMB(S.gm)}<br>・用到時才下載：背景音樂 ${szMB(S.bgm)}、其他圖片 ${szMB(S.other)}${opt.length?`<br>・選購：${opt.map(x=>esc(x[0])+" "+szMB(x[1])).join("、")}`:""}</div></details>`:""}`}
 function aboutUsage(el){try{if(!navigator.storage||!navigator.storage.estimate){el.textContent="這個瀏覽器查不到";return}
-  navigator.storage.estimate().then(e=>{el.textContent=szMB(e.usage||0)+(e.quota?`（可用上限約 ${szMB(e.quota)}）`:"")}).catch(()=>{el.textContent="查不到"})}catch(e){el.textContent="查不到"}}
+  navigator.storage.estimate().then(e=>{el.textContent=szMB(e.usage||0)}).catch(()=>{el.textContent="查不到"})}catch(e){el.textContent="查不到"}}
 /* 意見回饋 531：檢查更新（設定 → 系統 → 關於） */
 async function updCheck(b){b.disabled=true;b.textContent="檢查中…";const r=window.XQ_checkUpdate?await XQ_checkUpdate():{};
   if(!r.n){b.textContent="沒有網路";b.disabled=false;return}if(r.a===r.n){b.textContent="✓ 已是最新版";return}b.textContent="下載新版中…";setTimeout(()=>location.reload(),6000)}
