@@ -226,7 +226,7 @@
     const labLayer=div("");labLayer.style.cssText="position:absolute;inset:0;pointer-events:none";el.appendChild(labLayer);
     const hint=div("m3d-hint","一指轉動・兩指縮放・點地標前往・點兩下回正");el.appendChild(hint);
     const card=div("m3d-card");el.appendChild(card);
-    const veil=div("m3d-veil","雲河棋路展開中…");el.appendChild(veil);
+    const veil=div("m3d-veil",(typeof ROAD_NAME!=="undefined"?ROAD_NAME:"章回棋路")+"展開中…");   /* 意見回饋 674：路名跟著 App 的 ROAD_NAME */el.appendChild(veil);
     const dbg=opt.debug?div("m3d-dbg",""):null;if(dbg)el.appendChild(dbg);
 
     /* ---------- 場景、鏡頭、燈 ---------- */
