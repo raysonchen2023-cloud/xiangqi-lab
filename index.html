@@ -1027,7 +1027,7 @@ body.xqt-on .modal{z-index:10000}body.xqt-on .toast{z-index:10001}body.xqt-on .x
       if(!window.caches)return go();caches.keys().then(function(ks){return Promise.all(ks.filter(function(k){return k.indexOf("xqlab-app-")===0}).map(function(k){return caches.delete(k)}))})
         .then(function(){return navigator.serviceWorker&&navigator.serviceWorker.getRegistration()}).then(function(r){return r&&r.update()}).catch(function(){}).then(go)}};setTimeout(chk,4000)})();
 </script>
-<script>window.XQ_OFFLINE=true;window.XQ_BUILD="20261106-2355";</script>
+<script>window.XQ_OFFLINE=true;window.XQ_BUILD="20261107-0120";</script>
 <script src="core.js"></script>
 <script src="engine.js"></script>
 <script src="local.js"></script>
@@ -3501,7 +3501,7 @@ function onboard(){if(journey())journeyLock();else titleScreen({})}
 // ================= 設定：棋盤風格、棋子樣式、走棋顯示 =================
 const SAMPLE_FEN0="rnbakabnr/9/1c5c1/p1p1p1p1p/9/9/P1P1P1P1P/1C5C1/9/RNBAKABNR",SAMPLE_FEN1="rnbakabnr/9/1c5c1/p1p1p1p1p/9/9/P1P1P1P1P/1C2C4/9/RNBAKABNR",SAMPLE_LAST={f:70,t:67};
 /* 意見回饋 661：關於頁顯示整包遊戲要多大空間。XQ_SIZES 由 build-site.js 建置時填入（開發中的 m.html 是 null，就不顯示） */
-const XQ_SIZES={"pre":192189933,"code":12577847,"eng":51511005,"gm":33668932,"bgm":259516351,"opt":[["比賽對局 1956–2010",21765744],["比賽對局 2011–2014",25596413],["比賽對局 2015–2019",24821916]],"all":632284897,"other":10636756};
+const XQ_SIZES={"pre":192189951,"code":12578153,"eng":51511005,"gm":33668932,"bgm":259516351,"opt":[["比賽對局 1956–2010",21765744],["比賽對局 2011–2014",25596413],["比賽對局 2015–2019",24821916]],"all":632285221,"other":10636756};
 const szMB=b=>b>=1073741824?(b/1073741824).toFixed(1)+" GB":Math.max(1,Math.round(b/1048576))+" MB";
 function aboutSizes(){const S=XQ_SIZES;if(!S)return"";const opt=S.opt||[];   /* 意見回饋 662：玩家只看總數，細項只在開發者模式顯示 */
   return `<div class="row" style="justify-content:space-between"><span class="muted">整包下載</span><b>約 ${szMB(S.all)}</b></div>
@@ -4415,7 +4415,7 @@ const PARK_NPC=[
   {"id":"w15_yuan_archer","era":"yuan","name":"草原女射手","pc":"車","say":"百步穿楊，棋盤上也一樣。","win":"正中靶心！","lose":"這一箭，我射偏了。","hat":"hair","hc":"#1E1A16","robe":"#6A4A2A"},
   {"id":"w16_ming_poet","era":"ming","name":"江南才女","pc":"車","say":"作詩缺一句，下盤棋找靈感。","win":"得了！這句就叫『一車定乾坤』。","lose":"這一步，可以寫成一首詩了。","hat":"topknot","hc":"#1E1A16","robe":"#F0C0C8"},
   {"id":"w17_ming_pipa","era":"ming","name":"秦淮琵琶女","pc":"象","say":"彈完這曲，陪你下一盤。","win":"大珠小珠落玉盤，這盤是我的。","lose":"好棋，弦都要斷了。","hat":"topknot","hc":"#1E1A16","robe":"#F5F3EE"},
-  {"id":"w18_ming_doctor","era":"ming","name":"年輕女醫","pc":"卒","say":"下棋跟看病一樣，要先看準。","win":"藥到病除，棋到局終。","lose":"這一手，我得開帖藥給自己。","hat":"kerchief","hc":"#C8C0B0","robe":"#7A8FA8"},
+  {"id":"w18_ming_doctor","era":"ming","name":"背藥箱的女大夫","pc":"卒","say":"下棋跟看病一樣，要先看準。","win":"藥到病除，棋到局終。","lose":"這一手，我得開帖藥給自己。","hat":"kerchief","hc":"#C8C0B0","robe":"#7A8FA8"},
   {"id":"w19_ming_teahouse","era":"ming","name":"茶館少東家","pc":"卒","say":"客官，下盤棋再走嘛！","win":"茶錢免了，棋錢照收！","lose":"好棋！這壺茶我請。","hat":"hair","hc":"#1E1A16","robe":"#E8B860"},
   {"id":"w20_ming_guard","era":"ming","name":"女捕快","pc":"車","say":"奉命巡街，順便抓一盤棋。","win":"人贓俱獲，這盤你輸了。","lose":"你這步棋，連我都抓不到。","hat":"sui","hc":"#1E1A16","robe":"#B8322A"},
   {id:"niao",name:"遛鳥的老伯",pc:"象",say:"我的畫眉聽得懂棋，你走錯它會叫。",win:"畫眉叫了吧？就說你走錯了。",lose:"好棋！畫眉都替你叫好。",hat:"scholar",hc:"#5A4630",robe:"#6B5A44"},
@@ -6184,7 +6184,7 @@ const NPC_BOND={
     mail:"那晚秦淮河上的燈很亮，我在船頭彈了一段〈楚漢〉，彈到垓下那裡，滿船的人都不出聲。我心裡想的卻是你那盤棋——楚河漢界，原來都在同一張桌上。等你來南京，我再為你彈一次。——秦淮琵琶女"},
   w18_ming_doctor:{c:["明朝無錫的女醫談允賢，跟著祖母學醫，專門替婦女看病。","談允賢五十歲時把自己的病案寫成《女醫雜言》，是中國很早的女醫師著作。","明朝李時珍花了將近三十年，寫成收錄一千八百多種藥物的《本草綱目》。"],
     l:["看病要望聞問切，下棋也要先看清楚。","有些病只有女醫能看，所以我一定要學好。","你這陣子臉色不錯，棋也下得好。"],
-    mail:"最近看診的人多，我每晚都把病案記下來，學談允賢老前輩那樣。累的時候，就擺一盤我們下過的棋，擺完心就靜了。給你配了一包安神的茶，別熬夜下棋。——年輕女醫"},
+    mail:"最近看診的人多，我每晚都把病案記下來，學談允賢老前輩那樣。累的時候，就擺一盤我們下過的棋，擺完心就靜了。給你配了一包安神的茶，別熬夜下棋。——背藥箱的女大夫"},
   w19_ming_teahouse:{c:["明太祖朱元璋下令停止進貢壓成餅的團茶，改進散茶，用沸水沖泡散茶從此流行起來。","明末張岱在《陶庵夢憶》裡寫過一家茶館，他還替那家茶館取名「露兄」。","明朝下象棋的人很多，《適情雅趣》、《橘中秘》都是當時刻印流行的棋譜。"],
     l:["客官，這壺茶喝完，再下一盤嘛！","我爹說，茶館開得久，靠的是熟客。","你的位子，我天天都留著。"],
     mail:"客官見字：你常坐的那張靠窗的桌子，我天天擦得乾乾淨淨，誰也不讓坐。我爹說這是做生意的大忌，可他自己也常望著門口問：「那位下棋的客人怎麼還沒來？」新茶到了，等你。——茶館少東家"},
