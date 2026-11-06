@@ -803,6 +803,24 @@ html[data-era="qing"]:not([data-font="sys"]){--serif:"XQ twkai","Noto Serif TC",
 .xh-acts{display:flex;flex-direction:column;gap:8px}.xh-acts .btn{width:100%;margin:0}
 .xh-hist p{line-height:1.8;font-size:14.5px;margin:6px 0}
 .xh-dev{font-size:13px;border-style:dashed}.xh-devb{display:flex;flex-wrap:wrap;gap:6px;margin-top:6px}.xh-devb .btn{flex:1 1 auto;margin:0;min-height:34px;padding:4px 10px;font-size:13px}
+
+/* 意見回饋 663：滑動選角 */
+.obk{position:relative;outline:none}.obk-vp{position:relative;overflow:hidden;touch-action:pan-y;user-select:none;-webkit-user-select:none}.obk-tr{display:flex;gap:8px;will-change:transform}
+.obk-sl{flex:0 0 calc(100% - 56px);opacity:.35;transition:opacity .28s}.obk-sl.on{opacity:1}
+.obk-im{position:relative;height:clamp(220px,44dvh,340px);display:flex;justify-content:center}.obk-im img{height:100%;width:auto;max-width:100%;object-fit:contain;pointer-events:none}
+.obk-say{position:absolute;top:4%;right:2%;max-width:60%;background:#fff8ec;border:1.5px solid var(--line);border-radius:14px;padding:6px 10px;font-size:14px;line-height:1.4;color:#3b2a1a;box-shadow:0 2px 6px rgba(0,0,0,.12);opacity:0;transform:translateY(4px);transition:opacity .2s,transform .2s;pointer-events:none}
+.obk-say.in{opacity:1;transform:none}.obk-say::after{content:"";position:absolute;left:14px;bottom:-7px;border:7px solid transparent;border-top-color:#fff8ec;border-bottom:0}
+.obk-cur{position:absolute;left:6%;top:4%;background:#b3261e;color:#fff;font-size:12.5px;padding:3px 9px;border-radius:999px;transform:rotate(-8deg)}
+.obk-ar{position:absolute;top:50%;transform:translateY(-50%);width:44px;height:44px;border-radius:50%;border:1px solid var(--line);background:color-mix(in srgb,var(--card) 85%,transparent);font-size:26px;line-height:1;color:inherit;padding:0}
+.obk-ar.l{left:2px}.obk-ar.r{right:2px}.obk-ar:disabled{opacity:.25}
+.obk-info{text-align:center;margin-top:8px;min-height:62px}.obk-nm{display:flex;align-items:center;justify-content:center;gap:8px;font-size:22px;min-height:44px}
+.obk-pc{width:28px;height:28px;border-radius:50%;background:#b3261e;color:#fff;font-size:16px;display:inline-flex;align-items:center;justify-content:center;font-weight:700;flex:0 0 auto}
+.obk-i{width:44px;height:44px;border:0;background:none;font-size:18px;color:var(--muted);padding:0}
+.obk-s{font-size:14px;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.obk-bio{font-size:13.5px;line-height:1.7;text-align:left;background:var(--card);border:1px solid var(--line);border-radius:12px;padding:8px 12px;margin-top:6px}
+.obk-dots{display:flex;justify-content:center;gap:10px;margin:10px 0 4px}.obk-dots button{width:8px;height:8px;border-radius:4px;border:0;padding:0;background:var(--line);transition:width .2s}.obk-dots button.on{width:20px;background:#b3261e}
+.obk-live{position:absolute;left:-9999px;width:1px;height:1px;overflow:hidden}.obk-go{width:100%;min-height:52px;margin-top:8px;font-size:17px}
+@media (prefers-reduced-motion:reduce){.obk-say{transition:none}.obk-sl{transition:none}}
 </style></head><body>
 <div class="app">
  <div class="topbar" id="topbar"><button class="ib" id="back" hidden><b>‹</b>返回</button><h1 id="title">象棋千秋</h1><span id="topRight"></span></div>
@@ -848,7 +866,7 @@ html[data-era="qing"]:not([data-font="sys"]){--serif:"XQ twkai","Noto Serif TC",
       if(!window.caches)return go();caches.keys().then(function(ks){return Promise.all(ks.filter(function(k){return k.indexOf("xqlab-app-")===0}).map(function(k){return caches.delete(k)}))})
         .then(function(){return navigator.serviceWorker&&navigator.serviceWorker.getRegistration()}).then(function(r){return r&&r.update()}).catch(function(){}).then(go)}};setTimeout(chk,4000)})();
 </script>
-<script>window.XQ_OFFLINE=true;window.XQ_BUILD="20261106-1021";</script>
+<script>window.XQ_OFFLINE=true;window.XQ_BUILD="20261106-1026";</script>
 <script src="core.js"></script>
 <script src="engine.js"></script>
 <script src="local.js"></script>
@@ -3251,25 +3269,52 @@ async function xfRecv(){if(!OFF||!window.XQNet||!window.XQSave||!crypto.subtle)r
       catch(e){msg("解不開：轉移碼不對，或資料已經被換掉了")}}})}
 /* 意見回饋 491（開發者）：第一次進 App 先選「男生／女生」，再取名字；老玩家更新到這版也會跳一次
    意見回饋 604（開發者）：不再問 Q 版還是真實版，一律用真實 3D（之後可以在「設定 → 角色」改）；名字欄先填好「棋友＋4 位 16 進位」 */
-function onboard(force){if(!force&&store.get("onboard1",false))return;let sx=myChar()||mySex(),st="real",step=0;   /* 開發者 11/5：sx 也可以是武俠角色代號（x_…） */
-  const card=(k,on,img,t,sub)=>`<button class="obc${on?" on":""}" data-k="${k}"><img src="${img}" alt="" onerror="this.style.visibility='hidden'"><b>${t}</b><small>${sub}</small></button>`;
-  const paint=b=>{const name=myName()||"";
-    b.innerHTML=step===0?`<p class="muted" style="margin:0 0 8px">歡迎來到象棋千秋！先選你在棋桌前的樣子（之後可以在「設定 → 🙂 角色」改）<!-- 意見回饋 607：選角色在「🙂 角色」分頁 --></p><div class="obg">${card("m",sx==="m","data/xs/xs_idle.webp","男生","小帥")+card("f",sx==="f","data/xs/xs_girl_idle.webp","女生","小帥妹")+Object.entries(WX_CHARS).map(([k,c])=>card(k,sx===k,`data/xs/prev_${k}.webp`,c.n,c.s||"雲河四子")).join("")}</div><button class="btn" id="obN" style="width:100%;margin-top:12px">下一步</button>`
-      :step===1?`<p class="muted" style="margin:0 0 8px">角色要用哪一種樣子？園子裡的你、跟你下棋的對手都會照這個顯示</p><div class="obg">${card("q",st==="q",meImgFor("q",sx),(sx==="f"?"🧸 小帥妹Q版":"🧸 小帥Q版"),"圓滾滾的棋子小人")+card("real",st==="real",meImgFor("real",sx),(sx==="f"?"🗿 小帥妹":"🗿 小帥"),"照畫好的人物做的 3D")}</div><div class="row" style="gap:8px;margin-top:12px"><button class="btn ghost" id="obB" style="flex:1">上一步</button><button class="btn" id="obN" style="flex:2">下一步</button></div>`
-      :`<p class="muted" style="margin:0 0 8px">最後，幫自己取個名字（線上對戰、大廳會顯示），也可以直接用這個</p><input id="obName" maxlength="16" value="${esc(name||defaultName())}" placeholder="例如：雲河小棋手" style="width:100%;font-size:18px;padding:12px;border-radius:12px;border:1px solid var(--line);background:var(--card);color:inherit"><div class="row" style="gap:8px;margin-top:12px"><button class="btn ghost" id="obB" style="flex:1">上一步</button><button class="btn" id="obN" style="flex:2">開始下棋</button></div>`;
-    b.querySelectorAll(".obc").forEach(x=>x.onclick=()=>{vibrate(5);if(step===0)sx=x.dataset.k;else st=x.dataset.k;paint(b)});
-    const bk=b.querySelector("#obB");if(bk)bk.onclick=()=>{step=0;paint(b)};
-    b.querySelector("#obN").onclick=()=>{vibrate(8);if(step<2){step=2;return paint(b)}
-      const nm=(b.querySelector("#obName").value||"").trim()||defaultName();if(WX_CHARS[sx]){if(store.get("pChar","")!==sx&&WX_CHARS[sx].pc)store.set("botPiece",WX_CHARS[sx].pc);store.set("pChar",sx);store.set("pSex",WX_CHARS[sx].sx)}else{store.set("pChar","");store.set("pSex",sx)}store.set("pStyle",st);store.set("oppLook",st==="real"?"real":"3d");store.set("onboard1",true);try{window.dispatchEvent(new Event("xq-look"))}catch(e){}
-      if(nm){try{setMyName(nm)}catch(e){}}
-      try{if(PARK){PARK.v.destroy();PARK=null}}catch(e){}closeSheet();toast(`歡迎，${nm||"棋友"}！`);setTimeout(()=>{try{route()}catch(e){}},300)}};
-  sheet(step===0?"🎎 選你的角色":"🎎 選你的角色",paint)}
+/* 意見回饋 663（開發者 11/6，RPG／第一人稱兩位設計師討論後的規格）：選角改成一次一位、左右滑動。立繪、名字＋棋子、口頭禪泡泡；小故事收在 ⓘ；
+   跟手滑動，拖過 25% 或夠快才換；兩端回彈不循環；離螢幕邊 24px 內起手的滑動留給系統返回；箭頭、小圓點、鍵盤 ← → Home End、橫向滾輪都能換 */
+function obCarousel(b,L,start,onPick,cur){let i=start,dx=0,drag=null,lastDrag=0;const RM=matchMedia("(prefers-reduced-motion: reduce)").matches;
+  b.innerHTML=`<div class="obk" role="region" aria-roledescription="輪播" aria-label="選角色" tabindex="0"><div class="obk-vp"><div class="obk-tr">${L.map((x,j)=>`<div class="obk-sl" data-j="${j}"><div class="obk-im"><img src="${x.img}" alt="${esc(x.n)}" draggable="false">${x.say?`<div class="obk-say">${esc(x.say)}</div>`:""}${cur===x.k?'<span class="obk-cur">目前</span>':""}</div></div>`).join("")}</div><button class="obk-ar l" aria-label="上一位">‹</button><button class="obk-ar r" aria-label="下一位">›</button></div><div class="obk-info"><div class="obk-nm"></div><div class="obk-s"></div><div class="obk-bio" hidden></div></div><div class="obk-dots">${L.map((x,j)=>`<button aria-label="第 ${j+1} 位：${esc(x.n)}" data-j="${j}"></button>`).join("")}</div><div class="obk-live" aria-live="polite"></div><button class="btn obk-go"></button></div>`;
+  const vp=b.querySelector(".obk-vp"),tr=b.querySelector(".obk-tr"),sl=[...tr.children],dots=[...b.querySelectorAll(".obk-dots button")],nm=b.querySelector(".obk-nm"),ss=b.querySelector(".obk-s"),bio=b.querySelector(".obk-bio"),go=b.querySelector(".obk-go"),live=b.querySelector(".obk-live"),al=b.querySelector(".obk-ar.l"),ar=b.querySelector(".obk-ar.r");
+  const W=()=>sl[0].offsetWidth+8,base=()=>(vp.clientWidth-sl[0].offsetWidth)/2;
+  const place=anim=>{tr.style.transition=anim&&!RM?"transform .28s cubic-bezier(.2,.8,.2,1)":"none";tr.style.transform="translateX("+(base()-i*W()+dx)+"px)";sl.forEach((x,j)=>x.classList.toggle("on",j===i))};
+  const info=first=>{const x=L[i];nm.innerHTML=(x.pc?'<span class="obk-pc">'+esc(x.pc)+'</span>':"")+"<b>"+esc(x.n)+"</b>"+(x.bio?'<button class="obk-i" aria-label="看故事">ⓘ</button>':"");ss.textContent=x.s;bio.hidden=true;bio.textContent=x.bio||"";
+    dots.forEach((d,j)=>d.classList.toggle("on",j===i));al.disabled=i===0;ar.disabled=i===L.length-1;go.textContent=cur?(cur===x.k?"就是這位":"換成"+x.nk):"就選"+x.nk;
+    live.textContent="第 "+(i+1)+" 位，共 "+L.length+" 位，"+(x.pc?x.pc+"・":"")+x.n;const ib=nm.querySelector(".obk-i");if(ib)ib.onclick=()=>{bio.hidden=!bio.hidden};
+    sl.forEach(z=>{const q=z.querySelector(".obk-say");if(q)q.classList.remove("in")});const say=sl[i].querySelector(".obk-say");if(say)setTimeout(()=>say.classList.add("in"),RM?0:120);
+    if(!first){try{if(store.get("capSound",true))withAudio(()=>moveSound0(false))}catch(e){}}};
+  const to=j=>{j=Math.max(0,Math.min(L.length-1,j));const ch=j!==i;i=j;dx=0;place(true);if(ch)info(false)};
+  al.onclick=()=>to(i-1);ar.onclick=()=>to(i+1);dots.forEach(d=>d.onclick=()=>to(+d.dataset.j));
+  sl.forEach((z,j)=>z.onclick=()=>{if(performance.now()-lastDrag<350)return;if(j!==i)to(j)});
+  go.onclick=()=>{if(cur&&cur===L[i].k){closeSheet();return}const im=sl[i].querySelector(".obk-im");if(!RM&&im&&im.animate)im.animate([{transform:"scale(1)"},{transform:"scale(1.04)"},{transform:"scale(1)"}],{duration:240});setTimeout(()=>onPick(L[i]),RM?0:240)};
+  vp.addEventListener("pointerdown",e=>{if(e.pointerType!=="mouse"&&(e.clientX<24||e.clientX>innerWidth-24))return;if(e.target.closest(".obk-ar"))return;drag={x:e.clientX,y:e.clientY,t:performance.now(),on:false,id:e.pointerId}});
+  vp.addEventListener("pointermove",e=>{if(!drag||e.pointerId!==drag.id)return;const mx=e.clientX-drag.x,my=e.clientY-drag.y;
+    if(!drag.on){if(Math.abs(mx)>10&&Math.abs(mx)>1.2*Math.abs(my)){drag.on=true;try{vp.setPointerCapture(e.pointerId)}catch(_){}}else{if(Math.abs(my)>10)drag=null;return}}
+    let d=mx;if((i===0&&d>0)||(i===L.length-1&&d<0))d=Math.sign(d)*Math.min(60,Math.abs(d)*.3);dx=d;place(false)});
+  const up=e=>{if(!drag)return;const on=drag.on,mx=e.clientX-drag.x,v=Math.abs(mx)/Math.max(1,performance.now()-drag.t);drag=null;if(!on)return;lastDrag=performance.now();
+    if(Math.abs(mx)>sl[0].offsetWidth*.25||v>=.4)to(i+(mx<0?1:-1));else{dx=0;place(true)}};
+  vp.addEventListener("pointerup",up);vp.addEventListener("pointercancel",up);
+  let wh=0;vp.addEventListener("wheel",e=>{if(Math.abs(e.deltaX)<=Math.abs(e.deltaY))return;e.preventDefault();wh+=e.deltaX;if(Math.abs(wh)>=50){to(i+(wh>0?1:-1));wh=0}},{passive:false});
+  b.querySelector(".obk").onkeydown=e=>{if(e.key==="ArrowLeft")to(i-1);else if(e.key==="ArrowRight")to(i+1);else if(e.key==="Home")to(0);else if(e.key==="End")to(L.length-1);else return;e.preventDefault()};
+  requestAnimationFrame(()=>{place(false);info(true)});const rs=()=>{if(!b.isConnected)return removeEventListener("resize",rs);place(false)};addEventListener("resize",rs)}
+/* 意見回饋 491／604：第一次進 App 選角色、取名字；663 起選角用上面的滑動元件。從設定或我的頁再次選角時，停在目前的角色、選了就換，不重走取名 */
+function onboard(force){if(!force&&store.get("onboard1",false))return;let sx=myChar()||mySex(),st="real",step=0;const again=!!force&&store.get("onboard1",false);
+  const picks=()=>[{k:"m",img:"data/xs/xs_idle.webp",n:"小帥",nk:"小帥",pc:"",s:"原本的棋子小人・男生",say:"來，下一盤！",bio:""},{k:"f",img:"data/xs/xs_girl_idle.webp",n:"小帥妹",nk:"小帥妹",pc:"",s:"原本的棋子小人・女生",say:"一起下棋吧！",bio:""}]
+    .concat(Object.entries(WX_CHARS).map(([k,c])=>({k,img:"data/xs/prev_"+k+".webp",n:c.n,nk:c.nk||c.n,pc:c.pc||"",s:c.s||"雲河四子",say:c.say||"",bio:c.bio||c.t||""})));
+  const apply=()=>{if(WX_CHARS[sx]){if(store.get("pChar","")!==sx&&WX_CHARS[sx].pc)store.set("botPiece",WX_CHARS[sx].pc);store.set("pChar",sx);store.set("pSex",WX_CHARS[sx].sx)}else{store.set("pChar","");store.set("pSex",sx)}store.set("pStyle",st);store.set("oppLook",st==="real"?"real":"3d");store.set("onboard1",true);try{window.dispatchEvent(new Event("xq-look"))}catch(e){}};
+  const finish=msg=>{try{if(PARK){PARK.v.destroy();PARK=null}}catch(e){}closeSheet();toast(msg);setTimeout(()=>{try{route()}catch(e){}},300)};
+  const paint=b=>{
+    if(step===0){const L=picks();obCarousel(b,L,Math.max(0,L.findIndex(x=>x.k===sx)),x=>{vibrate(10);sx=x.k;if(again){apply();finish("換好了："+x.n);return}step=2;paint(b)},again?(myChar()||mySex()):null);return}
+    const P=picks().find(x=>x.k===sx)||picks()[0],name=myName()||"",pc=WX_CHARS[sx]&&WX_CHARS[sx].pc;
+    b.innerHTML='<div class="row" style="gap:12px;align-items:center;margin:0 0 10px"><img src="'+P.img+'" alt="" style="width:64px;height:64px;object-fit:contain;border-radius:12px;background:var(--card)"><div style="flex:1;min-width:0"><b style="font-size:17px">'+esc(P.n)+'</b>'+(pc?'<div class="muted" style="font-size:12.5px">你的棋子已設為「'+esc(pc)+'」，之後可以在設定改</div>':"")+'</div><button class="btn ghost" id="obB" style="padding:8px 12px;min-height:44px">‹ 換人</button></div>'
+      +'<p class="muted" style="margin:0 0 8px">最後，幫自己取個名字（線上對戰、大廳會顯示），也可以直接用這個</p><input id="obName" maxlength="16" value="'+esc(name||defaultName())+'" placeholder="例如：雲河小棋手" style="width:100%;font-size:18px;padding:12px;border-radius:12px;border:1px solid var(--line);background:var(--card);color:inherit"><button class="btn" id="obN" style="width:100%;margin-top:12px;min-height:52px;font-size:17px">開始下棋</button>';
+    b.querySelector("#obB").onclick=()=>{step=0;paint(b)};
+    b.querySelector("#obN").onclick=()=>{vibrate(8);const nm=(b.querySelector("#obName").value||"").trim()||defaultName();apply();if(nm){try{setMyName(nm)}catch(e){}}finish("歡迎，"+(nm||"棋友")+"！")}};
+  sheet(again?"🎎 換角色":"🎎 選一位陪你下棋的夥伴",paint)}
 setTimeout(()=>{try{if(!/#\/(play|journey\/play|cpu)/.test(location.hash))onboard(false)}catch(e){}},2500);
 
 // ================= 設定：棋盤風格、棋子樣式、走棋顯示 =================
 const SAMPLE_FEN0="rnbakabnr/9/1c5c1/p1p1p1p1p/9/9/P1P1P1P1P/1C5C1/9/RNBAKABNR",SAMPLE_FEN1="rnbakabnr/9/1c5c1/p1p1p1p1p/9/9/P1P1P1P1P/1C2C4/9/RNBAKABNR",SAMPLE_LAST={f:70,t:67};
 /* 意見回饋 661：關於頁顯示整包遊戲要多大空間。XQ_SIZES 由 build-site.js 建置時填入（開發中的 m.html 是 null，就不顯示） */
-const XQ_SIZES={"pre":156833890,"code":12360773,"eng":51511005,"gm":33668932,"bgm":259516351,"opt":[["比賽對局 1956–2010",21765744],["比賽對局 2011–2014",25596413],["比賽對局 2015–2019",24821916]],"all":596711780,"other":10636756};
+const XQ_SIZES={"pre":156833890,"code":12369112,"eng":51511005,"gm":33668932,"bgm":259516351,"opt":[["比賽對局 1956–2010",21765744],["比賽對局 2011–2014",25596413],["比賽對局 2015–2019",24821916]],"all":596720119,"other":10636756};
 const szMB=b=>b>=1073741824?(b/1073741824).toFixed(1)+" GB":Math.max(1,Math.round(b/1048576))+" MB";
 function aboutSizes(){const S=XQ_SIZES;if(!S)return"";const opt=S.opt||[];   /* 意見回饋 662：玩家只看總數，細項只在開發者模式顯示 */
   return `<div class="row" style="justify-content:space-between"><span class="muted">整包下載</span><b>約 ${szMB(S.all)}</b></div>
@@ -3986,7 +4031,7 @@ const myPc=()=>{const c=store.get("botPiece","帥");return typeof c==="string"&&
 /* 意見回饋 646（開發者 11/6）：資深玩家說「沒有逍遙哥哥」——四位要拉開跟既有武俠作品的距離。改成原創的「雲河四子」，各綁一顆棋子（pc＝選這位時預設的棋子、s＝選角卡小字、t＝一句話身分、say＝口頭禪、old＝舊稱呼）
    造型代號 x_swordboy 等不變，舊存檔照樣能用 */
 /* 意見回饋 660：雲河四子定名（開發者 11/6 從 Gemini 第二版取名提案選定）：俥・齊長路（阿路）、相・田飛燕（燕子）、炮・雷借花（花兒）、傌・駱躍梅（小梅）；nk＝小名，was＝舊名（小幫手搜尋用） */
-const WX_CHARS={x_swordboy:{n:"齊長路",nk:"阿路",was:"齊直行",sx:"m",pc:"俥",s:"俥・車行少年",t:"雲河棋路上的車行少年，一把直劍走到底",say:"看準了，就一直走！",old:"劍客少年"},x_spiritgirl:{n:"田飛燕",nk:"燕子",was:"田恬",sx:"f",pc:"相",s:"相・茶棚姑娘",t:"守在雲河南岸茶棚、從不過河的溫柔姑娘",say:"慢慢來，先把家顧好。",old:"靈族少女"},x_martialgirl:{n:"雷借花",nk:"花兒",was:"雷響響",sx:"f",pc:"炮",s:"炮・煙火作坊",t:"揚州煙火作坊的女兒，最愛隔山打牛",say:"隔一個，剛剛好！",old:"江湖女俠"},x_miaogirl:{n:"駱躍梅",nk:"小梅",was:"駱跳跳",sx:"f",pc:"傌",s:"傌・驛站養馬",t:"驛站養馬的姑娘，走日字、最會拐彎",say:"前面堵住了？那我拐個彎！",old:"苗疆少女"}};
+const WX_CHARS={x_swordboy:{n:"齊長路",bio:"雲河鎮北齊記車行的兒子，十三歲。父親抄小路翻了一車漕米，從此他發誓只走直路；其實他不太識字，棋譜都是靠記形狀記住的。",nk:"阿路",was:"齊直行",sx:"m",pc:"俥",s:"俥・車行少年",t:"雲河棋路上的車行少年，一把直劍走到底",say:"看準了，就一直走！",old:"劍客少年"},x_spiritgirl:{n:"田飛燕",bio:"雲河南岸渡口茶棚的姑娘，十二歲。媽媽去揚州幫傭一直沒回來，她守著茶棚不肯過河；白天溫柔安靜，夜裡卻偷偷在石桌上練狠狠的殺法。",nk:"燕子",was:"田恬",sx:"f",pc:"相",s:"相・茶棚姑娘",t:"守在雲河南岸茶棚、從不過河的溫柔姑娘",say:"慢慢來，先把家顧好。",old:"靈族少女"},x_martialgirl:{n:"雷借花",bio:"揚州煙火作坊的女兒，十三歲。小時候玩火藥炸傷了爺爺的耳朵，從此說話特別大聲，好讓爺爺聽得見；其實她最怕打雷。",nk:"花兒",was:"雷響響",sx:"f",pc:"炮",s:"炮・煙火作坊",t:"揚州煙火作坊的女兒，最愛隔山打牛",say:"隔一個，剛剛好！",old:"江湖女俠"},x_miaogirl:{n:"駱躍梅",bio:"驛站馬槽裡撿來的孩子，十一歲，四人中最小。認得驛道上每一條路，卻不知道自己是從哪條路來的，所以一刻也坐不住。",nk:"小梅",was:"駱跳跳",sx:"f",pc:"傌",s:"傌・驛站養馬",t:"驛站養馬的姑娘，走日字、最會拐彎",say:"前面堵住了？那我拐個彎！",old:"苗疆少女"}};
 const myChar=()=>{const c=store.get("pChar","");return WX_CHARS[c]?c:""};
 const myLook=()=>{{const c=myChar();if(c)return TRIPO[c]?{p:myPc(),e:store.get("era","classic"),g:9,glb:`data/tripo_app/${c}.glb`,ring:TRIPO[c]}:null}
   const f=mySex()==="f",id=f?"me_girl":"me_boy";let L=f?{p:myPc(),e:store.get("era","classic"),g:9,npc:"me",cus:"me:girl"}:null;
