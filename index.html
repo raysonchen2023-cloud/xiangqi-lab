@@ -892,8 +892,8 @@ body.xqt-on .modal{z-index:10000}body.xqt-on .toast{z-index:10001}body.xqt-on .x
 .xqt-df em{font-style:normal;font-size:11px;font-weight:700;margin-left:6px;padding:1px 6px;border-radius:999px;background:#B5452B22;color:#B5452B}
 
 /* 意見回饋 679：點 3D 角色的物件跳出的介紹 */
-.fig-item{position:absolute;left:10px;right:52px;bottom:10px;z-index:3;background:rgba(255,250,240,.96);border-radius:12px;padding:10px 12px;box-shadow:0 4px 14px rgba(0,0,0,.18);color:#3a2e22;line-height:1.6;font-size:14px}
-.fig-item b{font-size:15px;color:#8E2A22}.fig-item p{margin:4px 0}.fig-item small{color:#9a8a76;font-size:11.5px}
+.fig-item{position:fixed;left:12px;right:12px;bottom:calc(var(--safeB,0px) + 74px);max-width:560px;margin:0 auto;z-index:60;background:rgba(255,250,240,.98);border-radius:16px;padding:14px 18px 12px;box-shadow:0 6px 24px rgba(0,0,0,.28);color:#3a2e22;line-height:1.75;font-size:15px;border:1px solid rgba(142,42,34,.18);animation:figIn .2s ease-out}   /* 意見回饋 681：寬一點、放在畫面下方 */
+.fig-item b{font-size:16px;color:#8E2A22}.fig-item p{margin:6px 0 4px}.fig-item small{color:#9a8a76;font-size:12px}@keyframes figIn{from{opacity:0;transform:translateY(12px)}to{opacity:1;transform:none}}
 </style></head><body>
 <div class="app">
  <div class="topbar" id="topbar"><button class="ib" id="back" hidden><b>‹</b>返回</button><h1 id="title">象棋千秋</h1><span id="topRight"></span></div>
@@ -941,7 +941,7 @@ body.xqt-on .modal{z-index:10000}body.xqt-on .toast{z-index:10001}body.xqt-on .x
       if(!window.caches)return go();caches.keys().then(function(ks){return Promise.all(ks.filter(function(k){return k.indexOf("xqlab-app-")===0}).map(function(k){return caches.delete(k)}))})
         .then(function(){return navigator.serviceWorker&&navigator.serviceWorker.getRegistration()}).then(function(r){return r&&r.update()}).catch(function(){}).then(go)}};setTimeout(chk,4000)})();
 </script>
-<script>window.XQ_OFFLINE=true;window.XQ_BUILD="20261106-1531";</script>
+<script>window.XQ_OFFLINE=true;window.XQ_BUILD="20261106-1534";</script>
 <script src="core.js"></script>
 <script src="engine.js"></script>
 <script src="local.js"></script>
@@ -3381,7 +3381,7 @@ function onboard(){if(journey())journeyLock();else titleScreen({})}
 // ================= 設定：棋盤風格、棋子樣式、走棋顯示 =================
 const SAMPLE_FEN0="rnbakabnr/9/1c5c1/p1p1p1p1p/9/9/P1P1P1P1P/1C5C1/9/RNBAKABNR",SAMPLE_FEN1="rnbakabnr/9/1c5c1/p1p1p1p1p/9/9/P1P1P1P1P/1C2C4/9/RNBAKABNR",SAMPLE_LAST={f:70,t:67};
 /* 意見回饋 661：關於頁顯示整包遊戲要多大空間。XQ_SIZES 由 build-site.js 建置時填入（開發中的 m.html 是 null，就不顯示） */
-const XQ_SIZES={"pre":162833587,"code":12478173,"eng":51511005,"gm":33668932,"bgm":259516351,"opt":[["比賽對局 1956–2010",21765744],["比賽對局 2011–2014",25596413],["比賽對局 2015–2019",24821916]],"all":602828877,"other":10636756};
+const XQ_SIZES={"pre":162833587,"code":12478625,"eng":51511005,"gm":33668932,"bgm":259516351,"opt":[["比賽對局 1956–2010",21765744],["比賽對局 2011–2014",25596413],["比賽對局 2015–2019",24821916]],"all":602829329,"other":10636756};
 const szMB=b=>b>=1073741824?(b/1073741824).toFixed(1)+" GB":Math.max(1,Math.round(b/1048576))+" MB";
 function aboutSizes(){const S=XQ_SIZES;if(!S)return"";const opt=S.opt||[];   /* 意見回饋 662：玩家只看總數，細項只在開發者模式顯示 */
   return `<div class="row" style="justify-content:space-between"><span class="muted">整包下載</span><b>約 ${szMB(S.all)}</b></div>
@@ -4202,10 +4202,10 @@ async function fig3d(host,look,o){o=o||{};
   try{const ro=new ResizeObserver(()=>{if(!host.isConnected){ro.disconnect();return}const w=host.clientWidth,h=host.clientHeight;if(!w||!h)return;r.setSize(w,h,false);cam.aspect=w/h;cam.updateProjectionMatrix()});ro.observe(host)}catch(e){}   /* 開發者 11/6：3D 只在一開始照框的大小畫，之後框變大小（圖片載入、版面撐開）畫面就被拉長，雷借花的棋子看起來變成直立橢圓；框變大小時跟著用正確比例重畫 */
   const cidM=((look&&look.glb)||"").match(/\/(\w+)\.glb/),ITM=cidM&&WX_ITEMS[cidM[1]];   /* 意見回饋 679：點角色身上的物件看故事 */
   const segD=(x,y,[[x1,y1],[x2,y2]])=>{const dx=x2-x1,dy=y2-y1,k=Math.max(0,Math.min(1,((x-x1)*dx+(y-y1)*dy)/(dx*dx+dy*dy||1)));return Math.hypot(x-x1-k*dx,y-y1-k*dy)};
-  const itemTap=e=>{try{const old=host.querySelector(".fig-item");if(old){old.remove();return}if(!ITM||!B.glbRoot||!B.glbRaw)return;const rc=host.getBoundingClientRect(),ray=new T.Raycaster();ray.setFromCamera(new T.Vector2((e.clientX-rc.left)/rc.width*2-1,-(e.clientY-rc.top)/rc.height*2+1),cam);
+  const itemTap=e=>{try{const old=document.querySelector(".fig-item");if(old){old.remove();return}if(!ITM||!B.glbRoot||!B.glbRaw)return;const rc=host.getBoundingClientRect(),ray=new T.Raycaster();ray.setFromCamera(new T.Vector2((e.clientX-rc.left)/rc.width*2-1,-(e.clientY-rc.top)/rc.height*2+1),cam);
     const hit=ray.intersectObject(B.glbRoot,true)[0];if(!hit)return;const P=B.glbRoot.worldToLocal(hit.point.clone()),mn=B.glbRaw.min,mx=B.glbRaw.max,h=(mx.y-mn.y)||1,u=-(P.z-(mn.z+mx.z)/2)/h,vv=(P.y-mn.y)/h,fr=P.x>(mn.x+mx.x)/2?1:-1;
     const it=ITM.find(q=>(!q.side||q.side===fr)&&(q.ln?segD(u,vv,q.ln)<(q.w||.05):(u>=q.u[0]&&u<=q.u[1]&&vv>=q.v[0]&&vv<=q.v[1])));if(!it)return;vibrate(5);const C=WX_CHARS[cidM[1]]||{},nm=it.pc?"本命子・"+(C.pc||""):it.n,tx=it.pc?`${C.n||""}的身體是一顆木頭棋子，刻著本命子「${C.pc||""}」。${WX_PC_RULE[C.pc]||""}`:it.t;   /* 意見回饋 680：點身體的木棋子，介紹本命子和它的走法 */
-    const d=document.createElement("div");d.className="fig-item";d.innerHTML=`<b>${esc(nm)}</b><p>${esc(tx)}</p><small>點一下關閉</small>`;d.addEventListener("pointerdown",x=>x.stopPropagation());d.onclick=()=>d.remove();host.append(d)}catch(err){}};
+    const d=document.createElement("div");d.className="fig-item";d.innerHTML=`<b>${esc(nm)}</b><p>${esc(tx)}</p><small>點一下關閉</small>`;d.addEventListener("pointerdown",x=>x.stopPropagation());d.onclick=()=>d.remove();document.body.append(d)}catch(err){}};   /* 意見回饋 681：說明框改成固定在畫面下方、整個寬度，不疊在角色身上 */
   let ry=o.spin?-.35:0,v=.004,drag=null,moved=false,t0=performance.now(),zf=1,pin=null;const ptrs=new Map();
   const setZ=z=>{zf=Math.max(.6,Math.min(3.2,z));cam.position.set(0,o.tight?0:sz.y*.06,D0/zf);cam.lookAt(0,sz.y*.08*(zf-1)/2.2,0)};
   host.addEventListener("pointerdown",e=>{ptrs.set(e.pointerId,{x:e.clientX,y:e.clientY});try{host.setPointerCapture(e.pointerId)}catch(_){}
@@ -4217,7 +4217,7 @@ async function fig3d(host,look,o){o=o||{};
     const zb=document.createElement("div");zb.style.cssText="position:absolute;right:8px;bottom:8px;display:flex;flex-direction:column;gap:6px;z-index:2";
     for(const[l,f]of[["＋",1.25],["－",.8]]){const x=document.createElement("button");x.type="button";x.textContent=l;x.setAttribute("aria-label",f>1?"放大":"縮小");x.style.cssText="width:34px;height:34px;border-radius:50%;border:1px solid rgba(0,0,0,.15);background:rgba(255,250,240,.92);font:700 18px/1 sans-serif;color:#5a4630";
       x.addEventListener("pointerdown",e=>e.stopPropagation());x.onclick=e=>{e.stopPropagation();vibrate(5);setZ(zf*f)};zb.append(x)}host.append(zb)}
-  const loop=()=>{if(!host.isConnected){try{r.dispose()}catch(e){}return}requestAnimationFrame(loop);if(document.hidden)return;const t=(performance.now()-t0)/1000;
+  const loop=()=>{if(!host.isConnected){try{r.dispose()}catch(e){}const fi=document.querySelector(".fig-item");if(fi)fi.remove();return}requestAnimationFrame(loop);if(document.hidden)return;const t=(performance.now()-t0)/1000;
     if(!drag){if(o.spin)ry+=v;else if(!moved)ry=Math.sin(t*.45)*.38}root.rotation.y=ry;B.bot.position.y=by+Math.sin(t*1.6)*sz.y*.012;
     try{if(XQBot3D.faceApply)XQBot3D.faceApply(B,"open",(t%4)<.12,false)}catch(e){}r.render(sc,cam)};loop();
   return{B,r}}
