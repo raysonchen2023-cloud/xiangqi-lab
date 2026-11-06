@@ -284,12 +284,12 @@
         /* 圓牌貼在模型表面：從正前方打一條射線，碰到的地方再往前一點（不浮在空中、也不埋進身體） */
         let pz=bb.max.z;try{const hit=new T.Raycaster(new T.Vector3(px,py,bb.max.z+sz.z+1),new T.Vector3(0,0,-1)).intersectObject(g,true)[0];if(hit)pz=hit.point.z}catch(e){}
         d.position.set(px-c.x,py-bb.min.y,pz-c.z+sz.y*.004);hold.add(d)}
-      const R3e=meId&&!ME_RING[meId]&&R3&&Array.isArray(R3[meId])?{u:R3[meId][0],v:R3[meId][1],r:R3[meId][2]*.85,z:R3[meId][3]}:null;
-      if(meId&&(ME_RING[meId]||R3e)){try{const R=ME_RING[meId]||R3e,rad=R.r*sz.x*.9,px=bb.min.x+R.u*sz.x,py=bb.max.y-R.v*sz.y;
+      const R3e=meId&&!ME_RING[meId]&&R3&&Array.isArray(R3[meId])?{u:R3[meId][0],v:R3[meId][1],r:R3[meId][2]*.85,z:R3[meId][3],back:R3[meId][4]===1}:null;
+      if(meId&&(ME_RING[meId]||R3e)){try{const R=ME_RING[meId]||R3e,rad=R.r*sz.x*.9,px=R.back?bb.max.x-R.u*sz.x:bb.min.x+R.u*sz.x,py=bb.max.y-R.v*sz.y;
         /* 意見回饋 564：有些圓牌是凹下去的碟形（明朝擂主），只量圓心的深度會被邊緣擋住、字看起來殘缺；在圓牌上量九個點，取最靠前的深度 */
-        let pz=-1e9;const rc=new T.Raycaster();for(const[dx,dy]of[[0,0],[.75,0],[-.75,0],[0,.75],[0,-.75],[.53,.53],[-.53,.53],[.53,-.53],[-.53,-.53]]){rc.set(new T.Vector3(px+dx*rad,py+dy*rad,bb.max.z+sz.z+1),new T.Vector3(0,0,-1));const hit=rc.intersectObject(g,true)[0];if(hit&&hit.point.z>pz)pz=hit.point.z}if(pz<-1e8)pz=bb.max.z;if(R.z!=null)pz=bb.min.z+R.z*sz.z;   /* 意見回饋 665：少年阿古拉手上捧著棋盤，打點量到的是棋盤表面，圓片浮在胸口前面、一轉就偏到旁邊；ring3d.json 第 4 個值是校正量到的圓面深度 */
+        let pz=-1e9;const rc=new T.Raycaster();for(const[dx,dy]of[[0,0],[.75,0],[-.75,0],[0,.75],[0,-.75],[.53,.53],[-.53,.53],[.53,-.53],[-.53,-.53]]){rc.set(new T.Vector3(px+dx*rad,py+dy*rad,R.back?bb.min.z-sz.z-1:bb.max.z+sz.z+1),new T.Vector3(0,0,R.back?1:-1));const hit=rc.intersectObject(g,true)[0];const hz=hit?(R.back?-hit.point.z:hit.point.z):-1e9;if(hz>pz)pz=hz}if(pz<-1e8)pz=R.back?-bb.min.z:bb.max.z;if(R.back)pz=-pz;   /* 開發者 11/6：齊轍的棋子揹在背後，圓牌貼在背面（ring3d.json 第 5 個值＝1） */if(R.z!=null)pz=bb.min.z+R.z*sz.z;   /* 意見回饋 665：少年阿古拉手上捧著棋盤，打點量到的是棋盤表面，圓片浮在胸口前面、一轉就偏到旁邊；ring3d.json 第 4 個值是校正量到的圓面深度 */
         const d=new T.Mesh(new T.CircleGeometry(rad,48),new T.MeshBasicMaterial({map:glyTex(meCh,meK),color:0xEDE6D8,transparent:true,depthWrite:false,toneMapped:false}));d.name="meGly";{const _p=new T.Vector3(),_n=new T.Vector3(),_v=new T.Vector3();d.onBeforeRender=(rn,s2,cam)=>{try{d.getWorldPosition(_p);_n.set(0,0,1).transformDirection(d.matrixWorld);_v.copy(cam.position).sub(_p).normalize();d.material.opacity=Math.max(0,Math.min(1,(_n.dot(_v)-.3)/.3))}catch(e){}}}   /* 584：轉到側面時字面淡掉，不會看到一片紙浮在身上 */   /* 577：整面棋子、不受燈光影響（背光時不會變成深褐），顏色稍微壓暗一點才不會比身體亮太多 */
-        d.position.set(px-c.x,py-bb.min.y,pz-c.z+sz.y*.006);hold.add(d)}catch(e){}}
+        d.position.set(px-c.x,py-bb.min.y,pz-c.z+(R.back?-1:1)*sz.y*.006);if(R.back)d.rotation.y=Math.PI;hold.add(d)}catch(e){}}
       for(const ch of B.bot.children)ch.visible=false;B.bot.add(hold);B.glb=hold;return true});B.glbP.catch(()=>{})}
 
   // ---------- 招牌動作 ----------
