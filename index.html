@@ -788,7 +788,7 @@ html[data-era="qing"]:not([data-font="sys"]){--serif:"XQ twkai","Noto Serif TC",
       if(!window.caches)return go();caches.keys().then(function(ks){return Promise.all(ks.filter(function(k){return k.indexOf("xqlab-app-")===0}).map(function(k){return caches.delete(k)}))})
         .then(function(){return navigator.serviceWorker&&navigator.serviceWorker.getRegistration()}).then(function(r){return r&&r.update()}).catch(function(){}).then(go)}};setTimeout(chk,4000)})();
 </script>
-<script>window.XQ_OFFLINE=true;window.XQ_BUILD="20261106-0755";</script>
+<script>window.XQ_OFFLINE=true;window.XQ_BUILD="20261106-0847";</script>
 <script src="core.js"></script>
 <script src="engine.js"></script>
 <script src="local.js"></script>
@@ -4313,9 +4313,9 @@ function Adventure(v){if(store.get("legBook",1)===2&&(book1Done()||DEVMODE()))re
       <div class="abn" style="height:150px;background-image:url(data/stonetable/scene.webp);background-position:center 70%;margin-bottom:10px"><div class="hc"><b>🪨 石桌往事</b><small>元末烽火裡，一張石桌、一盤沒下完的棋</small></div></div>
       <button class="card advme" id="aMe"><span class="xl">Lv ${I.L}</span><span class="xt"><b>🀄 ${I.title}</b><span class="st-bar"><i style="width:${I.need?Math.round(I.rest*100/I.need):100}%"></i></span><small>${I.need?`再 ${I.need-I.rest} 修為升級`:"已到最高等級"}・💡 提示棋 ${H.left+H.bonus}・↶ 悔棋符 ${undoLeft()}・🎁 ${B.boards.length}・📜 ${B.records.length}</small></span><span class="muted">棋童資料 ›</span></button>
       <div class="doors">
-        <button class="door" data-go="#/journey"><span class="dic">🗺</span><b>雲河棋路</b><small>${L.pass||0}／${Js.length} 關</small></button>
-        <button class="door" data-go="#/journey/inn"><span class="dic">🏮</span><b>驛站</b><small>練等・掉棋譜</small></button>
-        <button class="door" data-go="#/journey/park"><span class="dic">🌳</span><b>園子</b><small>選朝代</small></button></div>
+        <!-- 意見回饋 656（開發者）：三個門底下的小字註解拿掉 --><button class="door" data-go="#/journey"><span class="dic">🗺</span><b>雲河棋路</b></button>
+        <button class="door" data-go="#/journey/inn"><span class="dic">🏮</span><b>驛站</b></button>
+        <button class="door" data-go="#/journey/park"><span class="dic">🌳</span><b>園子</b></button></div>
       <div id="aRes"></div>
       <div class="advgrid">
         <button data-go="#/profile"><span>🎒</span><b>棋童資料</b><small>棋盤・棋譜・棋友</small></button>
