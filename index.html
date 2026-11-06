@@ -945,6 +945,14 @@ body.xqt-on .modal{z-index:10000}body.xqt-on .toast{z-index:10001}body.xqt-on .x
 .me-name.me-cn{bottom:30px;padding:7px 26px;cursor:default;max-width:calc(100% - 150px)}
 .me-born2{position:absolute;left:50%;bottom:7px;transform:translateX(-50%);z-index:3;font-size:11.5px;line-height:1.5;color:#fff;background:rgba(0,0,0,.5);padding:1px 10px;border-radius:99px;white-space:nowrap}
 .me-nick{position:absolute;right:10px;top:10px;z-index:4;font:600 12.5px/1.3 inherit;padding:4px 10px;border-radius:99px;border:1px solid var(--line);background:color-mix(in srgb,var(--card) 90%,transparent);color:var(--ink,var(--text));max-width:48%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;cursor:pointer}
+
+/* 意見回饋 707：星槎頁＝水墨圖＋分頁 */
+.shp-map .shp-cap{position:absolute;left:0;right:0;top:0;padding:8px 12px 18px;background:linear-gradient(rgba(20,16,12,.72),rgba(20,16,12,0));color:#fff;display:flex;flex-direction:column;gap:2px;pointer-events:none}
+.shp-map .shp-cap b{font:900 16px/1.3 var(--serif,serif);color:#fff}.shp-map .shp-cap small{font-size:11.5px;color:rgba(255,255,255,.88)}
+.shp-tabs{position:sticky;top:0;z-index:5;display:flex;gap:4px;overflow-x:auto;margin:12px 0 8px;padding:6px 2px;background:var(--bg,#f3ede2);scrollbar-width:none}.shp-tabs::-webkit-scrollbar{display:none}
+.shp-tabs button{flex:1 0 auto;border:1px solid var(--line);background:var(--card);color:var(--text);border-radius:99px;padding:7px 12px;font:700 13.5px/1.2 inherit;white-space:nowrap;cursor:pointer}
+.shp-tabs button.on{background:var(--accent,#B5452B);border-color:var(--accent,#B5452B);color:#fff}
+.shp-pane .sec-t:first-child{margin-top:4px}
 </style></head><body>
 <div class="app">
  <div class="topbar" id="topbar"><button class="ib" id="back" hidden><b>‹</b>返回</button><h1 id="title">象棋千秋</h1><span id="topRight"></span></div>
@@ -992,7 +1000,7 @@ body.xqt-on .modal{z-index:10000}body.xqt-on .toast{z-index:10001}body.xqt-on .x
       if(!window.caches)return go();caches.keys().then(function(ks){return Promise.all(ks.filter(function(k){return k.indexOf("xqlab-app-")===0}).map(function(k){return caches.delete(k)}))})
         .then(function(){return navigator.serviceWorker&&navigator.serviceWorker.getRegistration()}).then(function(r){return r&&r.update()}).catch(function(){}).then(go)}};setTimeout(chk,4000)})();
 </script>
-<script>window.XQ_OFFLINE=true;window.XQ_BUILD="20261106-2025";</script>
+<script>window.XQ_OFFLINE=true;window.XQ_BUILD="20261106-2050";</script>
 <script src="core.js"></script>
 <script src="engine.js"></script>
 <script src="local.js"></script>
@@ -3464,7 +3472,7 @@ function onboard(){if(journey())journeyLock();else titleScreen({})}
 // ================= 設定：棋盤風格、棋子樣式、走棋顯示 =================
 const SAMPLE_FEN0="rnbakabnr/9/1c5c1/p1p1p1p1p/9/9/P1P1P1P1P/1C5C1/9/RNBAKABNR",SAMPLE_FEN1="rnbakabnr/9/1c5c1/p1p1p1p1p/9/9/P1P1P1P1P/1C2C4/9/RNBAKABNR",SAMPLE_LAST={f:70,t:67};
 /* 意見回饋 661：關於頁顯示整包遊戲要多大空間。XQ_SIZES 由 build-site.js 建置時填入（開發中的 m.html 是 null，就不顯示） */
-const XQ_SIZES={"pre":175983451,"code":12551861,"eng":51511005,"gm":33668932,"bgm":259516351,"opt":[["比賽對局 1956–2010",21765744],["比賽對局 2011–2014",25596413],["比賽對局 2015–2019",24821916]],"all":616320987,"other":10905314};
+const XQ_SIZES={"pre":175983451,"code":12556176,"eng":51511005,"gm":33668932,"bgm":259516351,"opt":[["比賽對局 1956–2010",21765744],["比賽對局 2011–2014",25596413],["比賽對局 2015–2019",24821916]],"all":616325302,"other":10905314};
 const szMB=b=>b>=1073741824?(b/1073741824).toFixed(1)+" GB":Math.max(1,Math.round(b/1048576))+" MB";
 function aboutSizes(){const S=XQ_SIZES;if(!S)return"";const opt=S.opt||[];   /* 意見回饋 662：玩家只看總數，細項只在開發者模式顯示 */
   return `<div class="row" style="justify-content:space-between"><span class="muted">整包下載</span><b>約 ${szMB(S.all)}</b></div>
@@ -4907,7 +4915,7 @@ function Me(v){Profile(v);setTop("🙂 我的角色","#/");setTabs(true,"#/");co
       <button class="me-fig" id="meFig2" aria-label="看我的 3D 角色"><img src="${meImg()}" ${meImgTag(myStyle(),mySex())} alt="" onerror="this.remove()"></button>
       ${wxBornLine()?`<div class="me-name me-cn"><b>${meName()}</b></div><div class="me-born2">${esc(wxBornLine())}</div><button class="me-nick" id="meNm" aria-label="改線上名字">🌐 ${esc(myName()||"取個線上名字")} ✎</button>`:`<button class="me-name" id="meNm" aria-label="改名"><b>${meName()}</b><small>${esc(myName()||"")}</small></button>`}
       <button class="me-act l" id="meOb"><em>🔒</em>旅程</button>
-      <button class="me-act r" id="mePc"><span class="pc ${red?"r":"b"}">${esc(pc)}</span>${myChar()?"🔒 本命":"換棋子"}</button></section>
+      <button class="me-act r" id="mePc"><span class="pc ${red?"r":"b"}">${esc(pc)}</span>${myChar()?"本命":"換棋子"}</button></section>
     <section class="mr"><button id="meRk" aria-label="官階 ${esc(R.name)}"><span class="rkx"><span class="me-seal${[...R.name].length===4?" q":""}">${esc(R.name)}</span><span class="ta" style="--lit:${Math.round(((10-R.g)+(R.g>1?R.pc/100:0))/9*100)}%">${[1,2,3,4,5,6,7,8,9].map(t=>`<i${t===R.g?' class="on"':""} style="--n:${t-1};--f:${t>=R.g?100:t===R.g-1?R.pc:0}%"></i>`).join("")}</span></span><b>官階</b></button>
       <button id="meXp" aria-label="修為 Lv ${I.L} ${esc(I.title)}"><span class="jr"><span class="jp" style="--pp:${xp}%"></span><svg class="jpb" viewBox="0 0 100 100" aria-hidden="true"><path class="t" d="M50 10L66.57 10L90 33.43L90 66.57L66.57 90L33.43 90L10 66.57L10 33.43L33.43 10Z" pathLength="100"/><path class="f" d="M50 10L66.57 10L90 33.43L90 66.57L66.57 90L33.43 90L10 66.57L10 33.43L33.43 10Z" pathLength="100" style="stroke-dasharray:${xp} 100"/></svg><span class="jh"><b>Lv ${I.L}</b><small>${esc(I.title)}</small></span></span><b>修為</b></button></section>
     <section class="mx m4"><div class="hx"><span>${ETIMG("f_idea","","💡")}</span><b>${H.left+(H.bonus||0)}<small>提示棋</small></b></div>
@@ -6727,6 +6735,25 @@ function shipHomeHTML(){try{const ap=shipAppr(),k=shipAt(),T=SHIP_STOP[k]||SHIP_
     <span class="s" id="hLegend">${ap?"說書人的學徒・十三站都能去":`停靠：${esc(shipShort(k))}・${esc(T.place)}・《千秋棋話》${shipPages()}／13 頁`}</span>
     <span class="s shq">說書人：「${esc(shipQuote())}」</span><span class="s">📖 石桌往事讀到第${CNUM(L.n)}回</span></span><b class="go">›</b></button>`}catch(e){return`<button class="tile hubc ha" data-go="#/adventure"><span class="hi">⛵</span><span class="tx"><span class="t">雲河星槎</span><span class="s" id="hLegend">船頭、下船、書架</span></span><b class="go">›</b></button>`}}
 
+/* 意見回饋 707（開發者 11/6）：星槎頁太長——最上面水墨圖（站名、進度寫在圖上），下面航線、下船，再下面分頁「棋理｜千秋殘局｜下一站｜書架｜行囊」一次只顯示一頁；點圖上的標籤就切到那一頁 */
+const SHIP_TABS=[["lesson","📘 棋理"],["pz","♟ 千秋殘局"],["next","⛵ 下一站"],["shelf","📚 書架"],["bag","🎒 行囊"]];
+function shipTabs(v){const root=v.querySelector(".shp");if(!root)return null;
+  const ab=root.querySelector(":scope > .abn"),map=root.querySelector(".shp-map");
+  if(ab&&map){const hc=ab.querySelector(".hc");if(hc){hc.classList.add("shp-cap");map.append(hc)}ab.remove()}
+  const res=root.querySelector("#spRes");if(!res)return null;
+  const P={};const bar=document.createElement("div");bar.className="shp-tabs";bar.innerHTML=SHIP_TABS.map(([k,l])=>`<button data-tab="${k}">${l}</button>`).join("");
+  const box=document.createElement("div");box.className="shp-panes";for(const[k]of SHIP_TABS){const d=document.createElement("div");d.className="shp-pane";d.dataset.pane=k;P[k]=d;box.append(d)}
+  let cur="lesson",n=res.nextElementSibling;const move=[];while(n){move.push(n);n=n.nextElementSibling}
+  for(const e of move){const t=(e.textContent||"").trim();
+    if(e.id==="spShelf")cur="shelf";else if(e.id==="spBag")cur="bag";else if(e.classList.contains("sec-t")&&/下一站|旅程終點/.test(t))cur="next";else if(e.id==="spLesson")cur="lesson";
+    P[cur].append(e)}
+  const pz=box.querySelector("#spPz");if(pz){const h=document.createElement("div");h.className="sec-t";h.textContent="♟ 千秋殘局";P.pz.append(h,pz)}
+  for(const k in P)if(!P[k].children.length){P[k].innerHTML='<p class="muted" style="padding:10px 2px">這一站沒有這一項。</p>'}
+  res.after(bar,box);
+  const show=(k,scroll)=>{if(!P[k])k="lesson";for(const b of bar.children)b.classList.toggle("on",b.dataset.tab===k);for(const x in P)P[x].style.display=x===k?"":"none";try{store.set("shipTab",k)}catch(e){}if(scroll)bar.scrollIntoView({block:"start"})};
+  bar.querySelectorAll("[data-tab]").forEach(b=>b.onclick=()=>{vibrate(5);show(b.dataset.tab)});
+  show(store.get("shipTab","lesson"));return show}
+
 /* ---------- 星槎頁 #/adventure ---------- */
 function Voyage(v){setTop("⛵ 雲河星槎","#/");setTabs(true,"#/");v.className="view";
   const paint=()=>{const ap=shipAppr(),D=shipDocked(),k=shipHere(),T=SHIP_STOP[k],Ls=SHIP_LESSON[k]||{},O=ap?SHIP_ROUTE:shipOrder(),I=xpInfo(),L=legendState(),S=jStars(),J=jStages(),J2=jStages2(),
@@ -6734,7 +6761,7 @@ function Voyage(v){setTop("⛵ 雲河星槎","#/");setTabs(true,"#/");v.classNam
     const who=T.who.map(c=>[c,WX_CHARS[c]]).filter(x=>x[1]),Wo=shipWho(k,Ls.openBy),Wd=shipWho(k,Ls.doneBy),lrn=shipLearned(k),H=typeof HIST!=="undefined"?HIST[k]:null;
     const Ln=nx?SHIP_LESSON[nx]||{}:{},Hn=nx&&typeof HIST!=="undefined"?HIST[nx]:null,lvH=nx?SHIP_LV[O.indexOf(nx)]||0:0;
     v.innerHTML=`<div class="pad shp">
-      <div class="shp-map"><img src="data/shipmap/ship_map.webp" alt="雲河星槎"><button class="shp-hs" data-hs="route" style="left:22%;top:13%">🌌 航線</button><button class="shp-hs" data-hs="parks" style="left:13%;top:37%">🪨 千秋石枰</button><button class="shp-hs" data-hs="lesson" style="left:80%;top:17%">📘 這站棋理</button><button class="shp-hs hot" data-hs="pz" style="left:50%;top:43%">♟ 千秋殘局</button><button class="shp-hs" data-hs="shelf" style="left:22%;top:53%">📚 書架</button><button class="shp-hs" data-hs="read" style="left:33%;top:73%">📖 讀這一章</button><button class="shp-hs" data-hs="bag" style="left:52%;top:79%">🎒 行囊</button><button class="shp-hs" data-hs="sail" style="left:17%;top:85%">⛵ 起航</button><button class="shp-hs" data-hs="port" style="left:80%;top:73%">⚓ 下船</button></div>
+      <div class="shp-map"><img src="data/shipmap/ship_map.webp" alt="雲河星槎"><button class="shp-hs" data-hs="route" style="left:30%;top:25%">🌌 航線</button><button class="shp-hs" data-hs="parks" style="left:13%;top:37%">🪨 千秋石枰</button><button class="shp-hs" data-hs="lesson" style="left:80%;top:17%">📘 這站棋理</button><button class="shp-hs hot" data-hs="pz" style="left:50%;top:43%">♟ 千秋殘局</button><button class="shp-hs" data-hs="shelf" style="left:22%;top:53%">📚 書架</button><button class="shp-hs" data-hs="read" style="left:33%;top:73%">📖 讀這一章</button><button class="shp-hs" data-hs="bag" style="left:52%;top:79%">🎒 行囊</button><button class="shp-hs" data-hs="sail" style="left:17%;top:85%">⛵ 起航</button><button class="shp-hs" data-hs="port" style="left:80%;top:73%">⚓ 下船</button></div>
       ${ap?`<div class="card shp-ap"><b>📜 你是說書人的學徒</b><p class="muted">十三站都能去，各站的主場角色不會跟你說話。想用雲河七星的眼睛走一趟？開新的旅程會存到另一格，這段旅程不會被蓋掉。</p><button class="btn" id="spNew" style="width:100%">⛵ 選雲河七星開新旅程</button></div>`:""}
       <div class="abn" style="height:128px;background-image:url(data/inn/${k}.webp);margin-bottom:10px"><div class="hc"><b>⛵ ${esc(shipShort(k))}・${esc(T.place)}</b><small>🀄 Lv ${I.L}・《千秋棋話》${shipPages()}／13 頁・停靠 ${D.length}／13・🎚 ${esc(diffOf().n)}</small></div></div>
       <div class="shp-route" id="spRoute">${O.map((e,i)=>{const dk=D.includes(e),on=e===k,ok=shipLearned(e),isN=e===nx;return`<button class="shp-st${dk?" dk":" lk"}${on?" on":""}${ok?" ok":""}${isN?" nx":""}" data-st="${e}"><i>${dk?esc((ARENA[e]||{}).seal||"棋"):isN?"⛵":"🔒"}</i><span>${i+1}・${esc(shipShort(e))}</span></button>`}).join("")}</div>
@@ -6770,7 +6797,10 @@ function Voyage(v){setTop("⛵ 雲河星槎","#/");setTabs(true,"#/");v.classNam
     </div>`;
     const on=(q,fn)=>{const e=v.querySelector(q);if(e)e.onclick=()=>{vibrate(5);fn()}};
     /* 意見回饋 698：圖上的入口——能直接做的就直接做（下船、起航、讀這一章、千秋石枰），其他捲到下面那一段 */
+    const showTab=shipTabs(v);
     v.querySelectorAll("[data-hs]").forEach(b=>b.onclick=()=>{vibrate(5);const q=s=>v.querySelector(s),go=s=>{const e=q(s);if(e)e.scrollIntoView({block:"start"})},h=b.dataset.hs;
+      if(showTab&&{lesson:1,pz:1,shelf:1,bag:1}[h]){showTab(h,true);return}
+      if(showTab&&h==="sail"){showTab("next",true);const e=q("#spSail");if(!e)toast("十三站都停靠過了");return}
       if(h==="port"){const e=q("#spPort");if(e)e.click();return}
       if(h==="parks"){const e=q("#spParks");if(e)e.click();return}
       if(h==="sail"){const e=q("#spSail");if(e){e.scrollIntoView({block:"center"});return}toast("十三站都停靠過了");return}
