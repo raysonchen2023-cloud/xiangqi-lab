@@ -493,7 +493,7 @@
         if(B.animCur!==k&&B.clips[k]){const n=B.clips[k];n.reset().fadeIn(.25).play();const o0=B.clips[B.animCur];if(o0)o0.fadeOut(.25);B.animCur=k}B.mixer.update(t)}
       if(XS.on){const pose=drag?"xs_surprise":act?xsPose(act,now):walking?"walk_"+(1+Math.floor(now/120)%8):"xs_idle",bob=act?Math.abs(Math.sin(actT*7))*H*.03:walking?0:Math.sin(now/500)*H*.006;xsDraw(pose,bob,false)}else rd.render(sc,cam)}
     requestAnimationFrame(frame);
-    if(!store.get("botHint",false)){store.set("botHint",true);setTimeout(()=>{if(!stopped){doAct("wave");say("嗨！我是小帥。長按我，可以問我任何象棋問題！",5)}},1800)}
+    if(!store.get("botHint",false)){store.set("botHint",true);setTimeout(()=>{if(!stopped){doAct("wave");say(window.XQ_MELINE&&window.XQ_MELINE("me")?"嗨！我是"+window.XQ_MELINE("me")+"。長按我，可以問小帥任何象棋問題！":"嗨！我是小帥。長按我，可以問我任何象棋問題！",5)}},1800)}
     // 點／拖小人：事件只給小人，不會穿到後面的按鈕
     const stop=e=>{e.stopPropagation();if(e.cancelable)e.preventDefault()};
     hit.addEventListener("pointerdown",e=>{stop(e);try{hit.setPointerCapture(e.pointerId)}catch(_){}drag={sx:e.clientX,sy:e.clientY,ox:x,oy:y,moved:false,touch:e.pointerType==="touch"};act=null;
@@ -526,10 +526,10 @@
     const onCall=e=>{const s=e.detail;if(s==="將軍")doAct("shock");else if(s==="吃"){doAct("cheer");say("吃！",1.4)}};
     window.addEventListener("xq-call",onCall);
     // 勝負：贏了開心跳、輸了難過掉眼淚、和棋聳聳肩
-    const pick=a=>a[Math.random()*a.length|0];
-    const onResult=e=>{const r=e.detail;quietT=performance.now()+20000;setTimeout(()=>{if(r==="win"){doAct("win");say(pick(["我們贏了！🏆","太厲害了！","勝利！耶～","你是冠軍！","贏啦贏啦！"]),5)}
-      else if(r==="lose"){doAct("lose");say(pick(["嗚嗚…輸了","好可惜…","沒關係，再來一盤！","下次一定贏！","我陪你複盤吧"]),5)}
-      else{doAct("draw");say(pick(["和棋～勢均力敵","握手言和！","平分秋色","不分勝負！"]),5)}},400)};
+    const pick=a=>a[Math.random()*a.length|0],ML=k=>{try{return window.XQ_MELINE?window.XQ_MELINE(k):null}catch(e){return null}};   /* 意見回饋 668：扮演雲河七星時，贏輸和說自己的台詞 */
+    const onResult=e=>{const r=e.detail;quietT=performance.now()+20000;setTimeout(()=>{if(r==="win"){doAct("win");say(ML("win")||pick(["我們贏了！🏆","太厲害了！","勝利！耶～","你是冠軍！","贏啦贏啦！"]),5)}
+      else if(r==="lose"){doAct("lose");say(ML("lose")||pick(["嗚嗚…輸了","好可惜…","沒關係，再來一盤！","下次一定贏！","我陪你複盤吧"]),5)}
+      else{doAct("draw");say(ML("draw")||pick(["和棋～勢均力敵","握手言和！","平分秋色","不分勝負！"]),5)}},400)};
     window.addEventListener("xq-result",onResult);
     // 有棋盤的畫面（看棋譜、對戰、練習）：自動走到右下角，不擋棋盤（意見回饋 168）；在這個畫面拖過就照使用者放的位置
     const bigBoard=()=>{let best=null;for(const e of document.querySelectorAll('svg[viewBox="0 0 560 620"]')){if(e.closest(".xqbot"))continue;const r=e.getBoundingClientRect();
