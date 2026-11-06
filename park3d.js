@@ -917,6 +917,7 @@
     const EK=eraKey(),E=ERA[EK];
     el.style.background=E.mist;
     let MAPL=null,PANM=null,PANDH=0,PANROT=0,PSPOTS=null,MAPM=null,HILL=null,lastKf=-1,MAPO=[],MAPOK="",MAPP=null,MAPMN=0,RON=(()=>{try{return JSON.parse(localStorage.getItem("m_eramapRealm")||"true")!==false}catch(e){return true}})();   /* 地圖上的地名：[名字, x%, y%, 種類]；長卷的網格、圖高、地標（意見回饋 517、525） */
+    let RTF=null,RTK="",RTS=null,RTP=null,RTT=0,RTA=0;   /* 意見回饋 658（B 輿圖遊歷）：路線圖層的重畫函式、目前畫的版本、各站位置（點得到）、左下角的提示、上次檢查的時間、上一格地圖的透明度 */
     const sc=new T.Scene(),FARHIDE=[];sc.fog=new T.Fog(new T.Color(E.mist),70,320);sc.background=new T.Color(E.mist);   /* 意見回饋 486：環景沒畫到的地方顯示朝代的霧色，不會一片黑 */
     const cam=new T.PerspectiveCamera(50,1,.5,700);try{if(localStorage.getItem("xq_dbg3d"))window.__PK={sc,cam}}catch(e){}   /* 除錯用：localStorage 設 xq_dbg3d 才打開 */
     // 光：午後斜陽（唯一投影光，陰影範圍只包住石桌，陰影比較銳利）＋暖色天光＋冷色補光；整體對比拉高，不再灰白
@@ -996,7 +997,24 @@
             fadeC(g);return c};
           const go=()=>{if(el.isConnected){add(draw(false),2,"l");add(draw(true),3,"m")}};
           /* 字型（全字庫正楷體子集）載好再寫，最多等 2.5 秒，等不到就用系統的楷體 */
-          (document.fonts&&document.fonts.load?Promise.race([document.fonts.load('48px "XQ twkai"',LB.map(l=>l[0]).join("")),new Promise(r=>setTimeout(r,2500))]):Promise.resolve()).then(go,go)}})};
+          (document.fonts&&document.fonts.load?Promise.race([document.fonts.load('48px "XQ twkai"',LB.map(l=>l[0]).join("")),new Promise(r=>setTimeout(r,2500))]):Promise.resolve()).then(go,go)}
+        /* 意見回饋 658（B 輿圖遊歷）：石桌往事的園子裡，App（07e-garden2.js 的 window.XQ_MAPROUTE）給這個朝代的路線，畫在地名上面一層：
+           虛線是還沒走的路、紅線是走過的、整條走完變金線；下一站畫一圈發亮的光暈；地圖原本沒有的地名（t）自己寫上。key 變了才重畫（下面 placeCam 每 0.8 秒問一次） */
+        RTF=()=>{let R=null;try{R=window.XQ_MAPROUTE?window.XQ_MAPROUTE(EK):null}catch(e){}const key=R&&R.key||"";if(key===RTK)return;RTK=key;
+          for(let i=MAPO.length-1;i>=0;i--)if(MAPO[i].k==="t"){const m=MAPO[i].m;sc.remove(m);if(m.material.map)m.material.map.dispose();m.material.dispose();MAPO.splice(i,1)}
+          RTS=null;MAPOK="";if(!R||!Array.isArray(R.s)||R.s.length<2){if(RTP)RTP.style.display="none";return}
+          const c=mk(),g=c.getContext("2d"),P=v=>v*S/100,pt=R.s.map(q=>[P(q.x),P(q.y)]),L=pt.length-1,n=Math.min(R.n|0,L+1),rd=S/105;
+          const line=(a,b)=>{g.beginPath();g.moveTo(pt[a][0],pt[a][1]);for(let i=a+1;i<=b;i++)g.lineTo(pt[i][0],pt[i][1]);g.stroke()};g.lineJoin="round";g.lineCap="round";
+          if(R.all){g.strokeStyle="rgba(255,248,225,.9)";g.lineWidth=S/95;line(0,L);g.strokeStyle="#D4A017";g.lineWidth=S/170;line(0,L)}
+          else{g.setLineDash([S/70,S/120]);g.strokeStyle="rgba(122,74,42,.8)";g.lineWidth=S/320;line(0,L);g.setLineDash([]);if(n>1){g.strokeStyle="rgba(255,248,225,.85)";g.lineWidth=S/150;line(0,n-1);g.strokeStyle="#B0281E";g.lineWidth=S/260;line(0,n-1)}}
+          R.s.forEach((q,i)=>{const[x,y]=pt[i];
+            if(q.st===2){const gr=g.createRadialGradient(x,y,0,x,y,rd*4.2);gr.addColorStop(0,"rgba(255,214,90,.95)");gr.addColorStop(.45,"rgba(255,196,60,.55)");gr.addColorStop(1,"rgba(255,196,60,0)");g.fillStyle=gr;g.beginPath();g.arc(x,y,rd*4.2,0,2*PI);g.fill()}
+            g.beginPath();g.arc(x,y,rd,0,2*PI);g.fillStyle=R.all?"#D4A017":q.st===1?"#B0281E":q.st===2?"#FFF3C4":"#FAF4E6";g.fill();g.lineWidth=Math.max(2,rd/2.6);g.strokeStyle=q.st===2?"#C8961E":q.st===1||R.all?"#FAF4E6":"#7A4A2A";g.stroke();
+            if(q.t){const sz=Math.round(50*k);g.font=sz+"px "+FF;g.textAlign="center";g.textBaseline="middle";g.lineWidth=Math.max(3,sz/4.5);g.strokeStyle="#F6EEDC";g.strokeText(q.t,x,y-rd-sz*.75);g.fillStyle="#3A2414";g.fillText(q.t,x,y-rd-sz*.75)}});
+          add(c,4,"t");RTS=R.s.map(q=>[q.nm,q.x,q.y]);
+          if(!RTP){RTP=document.createElement("div");RTP.style.cssText="position:absolute;left:8px;bottom:8px;z-index:3;display:none;max-width:calc(100% - 70px);font:700 12.5px/1.45 system-ui,sans-serif;color:#3a2a1c;background:rgba(255,246,214,.92);border:1px solid #C8961E;border-radius:10px;padding:5px 9px;pointer-events:none;box-shadow:0 1px 4px rgba(0,0,0,.2)";el.append(RTP)}
+          RTP.textContent=R.tip||""};
+        RTF()})};
       const ms="data/eramap/"+EK+(MOB?"_m":"")+".webp",mp=()=>{const im=imgCache[ms];if(!im||!im.naturalWidth||!el.isConnected)return;
         const t=srgb(new T.Texture(im));t.anisotropy=4;t.needsUpdate=true;
         const map=new T.Mesh(new T.CircleGeometry(ERAMAP_R,96),new T.MeshStandardMaterial({map:t,transparent:true,roughness:1,metalness:0,depthWrite:false}));
@@ -1209,8 +1227,9 @@
       const kf=smooth(105,220,R),elF=el+(1.38-el)*kf;   /* 意見回饋 525：拉到一半還要看得到環景長卷（517 時提早淡掉，改回原本的距離） */
       if(kf!==lastKf){lastKf=kf;for(const m of FARHIDE){m.visible=kf<.98;if(m.material){m.material.opacity=1-kf;m.material.transparent=true}}if(MAPM){const a=smooth(.04,.45,kf);MAPM.visible=a>0;MAPM.material.opacity=a;if(HILL)HILL.visible=a<.9}if(sc.fog){sc.fog.near=70+kf*260;sc.fog.far=320+kf*520}}
       /* 意見回饋 647：疆域層跟著地圖淡入（開關關掉就不顯示）；次要地名鏡頭拉近（距離 255 以內）才出現，拉遠到 295 完全淡掉 */
-      if(MAPM&&MAPO.length){const a=MAPM.visible?MAPM.material.opacity:0;MAPMN=1-smooth(255,295,R);const key=a.toFixed(3)+"/"+MAPMN.toFixed(3)+"/"+RON;
-        if(key!==MAPOK){MAPOK=key;for(const o of MAPO){const v=a*(o.k==="r"?(RON?1:0):o.k==="m"?MAPMN:1);o.m.visible=v>.01;o.m.material.opacity=v}if(MAPP)MAPP.style.display=a>.5?"block":"none"}}
+      if(MAPM&&MAPO.length){const a=MAPM.visible?MAPM.material.opacity:0;MAPMN=1-smooth(255,295,R);
+        if(RTF&&a>0){const tn=performance.now();if(!RTA||tn-RTT>800){RTT=tn;RTF()}}RTA=a;   /* 意見回饋 658：地圖一出現、之後每 0.8 秒問一次路線有沒有變（解完一站回來、換了模式） */const key=a.toFixed(3)+"/"+MAPMN.toFixed(3)+"/"+RON;
+        if(key!==MAPOK){MAPOK=key;for(const o of MAPO){const v=a*(o.k==="r"?(RON?1:0):o.k==="m"?MAPMN:1);o.m.visible=v>.01;o.m.material.opacity=v}if(MAPP)MAPP.style.display=a>.5?"block":"none";if(RTP)RTP.style.display=a>.5&&RTS?"block":"none"}}
       lk.y+=4*orb*(1-low)+4.5*low;
       cam.position.set(PIV.x+Math.sin(az)*Math.cos(elF)*R,PIV.y+Math.sin(elF)*R,PIV.z+Math.cos(az)*Math.cos(elF)*R);
       const c=Math.cos(yaw),s2=Math.sin(yaw);cam.lookAt(PIV.x+lk.x*c+lk.z*s2,PIV.y+lk.y,PIV.z-lk.x*s2+lk.z*c);cam.rotateX(CAMV.dp);
@@ -1247,6 +1266,7 @@
       // 都沒點到：射線碰到平台地面（離桌子 24 以內）就不算；越過平台的就是遠方背景
       const gp=new T.Plane(new T.Vector3(0,1,0),-FL),gh=new T.Vector3(),onG=ray.ray.intersectPlane(gp,gh);
       /* 意見回饋 517：拉遠看朝代地圖時，點地名附近（地圖寬度 5% 以內）跳出那個地方的介紹 */
+      if(onG&&RTS&&lastKf>.25&&Math.hypot(gh.x,gh.z)<ERAMAP_R){const px=(gh.x/ERAMAP_R+1)*50,py=(gh.z/ERAMAP_R+1)*50;let best=null,bd=3.2;for(const q of RTS){const d=Math.hypot(q[1]-px,q[2]-py);if(d<bd){bd=d;best=q}}if(best)return"map:"+best[0]}   /* 意見回饋 658（B 輿圖遊歷）：路線上的站先檢查（有些站地圖原本沒標） */
       if(onG&&MAPL&&lastKf>.25&&Math.hypot(gh.x,gh.z)<ERAMAP_R){const px=(gh.x/ERAMAP_R+1)*50,py=(gh.z/ERAMAP_R+1)*50;let best=null,bd=5;for(const l of MAPL){if(l[4]===2&&MAPMN<.3)continue;const d=Math.hypot((l[5]!=null?l[5]:l[1])-px,(l[6]!=null?l[6]:l[2])-py);if(d<bd){bd=d;best=l}}if(best)return"map:"+best[0]}
       if(onG&&Math.hypot(gh.x,gh.z)<24)return null;
       /* 意見回饋 525：點到遠方長卷，照點到的位置找那一段畫的是什麼（山、城、塔……），找不到才用整體介紹 */

@@ -771,6 +771,38 @@ html[data-era="qing"]:not([data-font="sys"]){--serif:"XQ twkai","Noto Serif TC",
 .gd-sec{font-weight:900;margin:12px 0 4px}
 .gd-me{display:flex;gap:8px;padding:8px;margin-top:10px}.gd-me button{flex:1;display:flex;flex-direction:column;align-items:center;gap:2px;padding:8px 4px;border:1px solid var(--line);border-radius:12px;background:var(--bg);color:inherit;font:inherit;cursor:pointer}
 .gd-me button span{font-size:24px;line-height:1}.gd-me button b{font-size:14px}.gd-me button small{font-size:12px;color:var(--muted)}
+/* 意見回饋 658（07e-garden2.js）：🧭 輿圖遊歷（地名小卡的一站、路線、路引）、❄ 九九消寒圖；我的角色小卡多了兩格，改成兩欄 */
+.gd-me{flex-wrap:wrap}.gd-me button{flex:1 1 calc(50% - 4px);min-width:0}
+.yu-st{border:1px solid #D9B86A;border-left:4px solid #C8961E;border-radius:12px;padding:8px 12px;margin:4px 0 0;background:var(--bg)}
+.yu-sh{display:flex;justify-content:space-between;gap:6px;flex-wrap:wrap;font-size:14px}.yu-sh span{color:var(--muted);font-size:12.5px}
+.yu-st p{margin:6px 0 0;line-height:1.75;font-size:14.5px}
+.yu-src{font-size:12.5px!important;color:var(--muted);margin:4px 0 0}
+.yu-th{color:#9A6A12;font-size:13.5px!important}
+.yu-row{display:flex;gap:8px;flex-wrap:wrap;margin-top:10px}.yu-row .btn{flex:1 1 140px;margin:0}
+.yu-hd{display:flex;gap:12px;align-items:center;margin-bottom:8px;line-height:1.6}
+.yu-list{margin:8px 0 10px;padding:0 0 0 2px;list-style:none;display:flex;flex-direction:column;gap:6px}
+.yu-list li{border:1px solid var(--line);border-radius:10px;padding:6px 10px;opacity:.6}.yu-list li.on{opacity:1}.yu-list li.nx{opacity:1;border-color:#C8961E;background:var(--bg)}
+.yu-list li b{display:block;font-size:14.5px}.yu-list li span{display:block;font-size:13px;line-height:1.65;margin-top:2px}
+.yu-done{display:flex;gap:12px;align-items:center;border:1px solid #C9962B;border-radius:12px;padding:8px;margin-top:8px;line-height:1.6}
+.yu-done .yu-ic{font-size:40px;line-height:1;flex:none;width:58px;text-align:center}
+.yu-gold{color:#C8962E;font-weight:900;margin-top:4px}
+.xh{display:flex;flex-direction:column;gap:10px}
+.xh-cd b{display:block;font-family:var(--serif);font-size:19px}.xh-cd span{display:block;color:var(--muted);font-size:13.5px;line-height:1.6;margin-top:2px}
+.xh-art{width:100%;max-width:440px;margin:0 auto}
+.xh-svg{display:block;width:100%;height:auto;border-radius:14px;box-shadow:0 1px 4px rgba(0,0,0,.15)}
+.xh-p{stroke-width:1.4;cursor:pointer}
+.xh-p.done{fill:#D23A4A;stroke:#A8202E}.xh-p.done.new{fill:#E8475A}
+.xh-p.today{fill:#FFF6D8;stroke:#D4A017;stroke-width:2.4;animation:xhPulse 1.4s ease-in-out infinite}
+.xh-p.open{fill:#FBE6E9;stroke:#D88A95;stroke-dasharray:3 2}
+.xh-p.lock{fill:#FFFFFF;stroke:#C9BBAA;cursor:default}
+@keyframes xhPulse{0%,100%{stroke-width:2.2}50%{stroke-width:4.2}}
+.xh-t{font:700 11px var(--serif,serif);fill:#6A4A32;text-anchor:middle}
+.xh-lg{display:flex;flex-wrap:wrap;gap:6px 14px;justify-content:center;font-size:12.5px;color:var(--muted)}.xh-lg span{display:inline-flex;align-items:center;gap:5px}
+.xh-dot{display:inline-block;width:12px;height:16px;border-radius:50%;border:1.5px solid}
+.xh-dot.done{background:#D23A4A;border-color:#A8202E}.xh-dot.today{background:#FFF6D8;border-color:#D4A017}.xh-dot.open{background:#FBE6E9;border-color:#D88A95;border-style:dashed}.xh-dot.lock{background:#fff;border-color:#C9BBAA}
+.xh-acts{display:flex;flex-direction:column;gap:8px}.xh-acts .btn{width:100%;margin:0}
+.xh-hist p{line-height:1.8;font-size:14.5px;margin:6px 0}
+.xh-dev{font-size:13px;border-style:dashed}.xh-devb{display:flex;flex-wrap:wrap;gap:6px;margin-top:6px}.xh-devb .btn{flex:1 1 auto;margin:0;min-height:34px;padding:4px 10px;font-size:13px}
 </style></head><body>
 <div class="app">
  <div class="topbar" id="topbar"><button class="ib" id="back" hidden><b>‹</b>返回</button><h1 id="title">象棋千秋</h1><span id="topRight"></span></div>
@@ -816,7 +848,7 @@ html[data-era="qing"]:not([data-font="sys"]){--serif:"XQ twkai","Noto Serif TC",
       if(!window.caches)return go();caches.keys().then(function(ks){return Promise.all(ks.filter(function(k){return k.indexOf("xqlab-app-")===0}).map(function(k){return caches.delete(k)}))})
         .then(function(){return navigator.serviceWorker&&navigator.serviceWorker.getRegistration()}).then(function(r){return r&&r.update()}).catch(function(){}).then(go)}};setTimeout(chk,4000)})();
 </script>
-<script>window.XQ_OFFLINE=true;window.XQ_BUILD="20261106-0951";</script>
+<script>window.XQ_OFFLINE=true;window.XQ_BUILD="20261106-0959";</script>
 <script src="core.js"></script>
 <script src="engine.js"></script>
 <script src="local.js"></script>
@@ -1852,6 +1884,7 @@ function route(){
   if(p[0]==="quiz")return screen=Quiz(v);
   if(p[0]==="guess")return screen=Guess(v);
   if(p[0]==="canju")return screen=p[1]?CanjuPlay(v,decodeURIComponent(p.slice(1).join("/"))):CanjuDaily(v);   /* 一盞茶殘局：今日茶單／解題 */
+  if(p[0]==="xiaohan"&&typeof XiaohanPage==="function")return screen=XiaohanPage(v);   /* 意見回饋 658（D）：九九消寒圖（07e-garden2.js） */
   if(p[0]==="legend")return screen=LegendScene(v,decodeURIComponent(p[1]||""));
   if(p[0]==="journey"&&p[1]==="play")return screen=CpuGame(v,false,"journey");   /* 意見回饋 413：石桌往事（雲河棋路、驛站、園子、守關）的對局頁 */
   if(p[0]==="journey")return screen=Journey(v,p[1]?decodeURIComponent(p[1]):null);
@@ -3236,7 +3269,7 @@ setTimeout(()=>{try{if(!/#\/(play|journey\/play|cpu)/.test(location.hash))onboar
 // ================= 設定：棋盤風格、棋子樣式、走棋顯示 =================
 const SAMPLE_FEN0="rnbakabnr/9/1c5c1/p1p1p1p1p/9/9/P1P1P1P1P/1C5C1/9/RNBAKABNR",SAMPLE_FEN1="rnbakabnr/9/1c5c1/p1p1p1p1p/9/9/P1P1P1P1P/1C2C4/9/RNBAKABNR",SAMPLE_LAST={f:70,t:67};
 /* 意見回饋 661：關於頁顯示整包遊戲要多大空間。XQ_SIZES 由 build-site.js 建置時填入（開發中的 m.html 是 null，就不顯示） */
-const XQ_SIZES={"pre":156768570,"code":12302756,"eng":51511005,"gm":33668932,"bgm":259516351,"opt":[["比賽對局 1956–2010",21765744],["比賽對局 2011–2014",25596413],["比賽對局 2015–2019",24821916]],"all":596588443,"other":10636756};
+const XQ_SIZES={"pre":156833890,"code":12360087,"eng":51511005,"gm":33668932,"bgm":259516351,"opt":[["比賽對局 1956–2010",21765744],["比賽對局 2011–2014",25596413],["比賽對局 2015–2019",24821916]],"all":596711094,"other":10636756};
 const szMB=b=>b>=1073741824?(b/1073741824).toFixed(1)+" GB":Math.max(1,Math.round(b/1048576))+" MB";
 function aboutSizes(){const S=XQ_SIZES;if(!S)return"";const opt=S.opt||[];
   return `<div class="row" style="justify-content:space-between"><span class="muted">整包下載</span><b>約 ${szMB(S.all)}</b></div>
@@ -4003,6 +4036,7 @@ function oppLine(op,era){if(!OPPL||!OPPL.lines)return null;const L=OPPL.lines,c=
 function parkInfo(k){const era=store.get("era","classic"),E=PARK_INFO[era]||PARK_INFO.classic,[en,yr]=E._;vibrate(5);
   if(OFF&&PARK_J==="park"&&typeof secretFind==="function"&&secretFind(era,k))return;   /* 意見回饋 315：秘境棋友 */
   if(k==="table"&&PARK_J==="park"&&typeof histCard==="function"){histCard(era);return}   /* 意見回饋 658（C 象棋從哪裡來）：石桌往事的園子裡點石桌＝這個朝代的棋史卡（秘境棋友上一行先檢查） */
+  if(k==="lantern"&&PARK_J==="park"&&typeof xhLantern==="function"){xhLantern(era);return}   /* 意見回饋 658（D 九九消寒圖）：石桌往事的園子裡點燈籠＝節令小卡（秘境棋友先檢查；燈籠的介紹寫在小卡最下面） */
   /* 意見回饋 348：石桌往事的公園裡，掀開茶杯有機會找到一份棋譜（寶物）；沒找到才跳茶杯的介紹 */
   if(k==="cup"&&PARK_J==="park"&&!parkInfo.skip){cupDrop().then(ok=>{if(!ok){parkInfo.skip=true;try{parkInfo(k)}finally{parkInfo.skip=false}}});return}
   // 網路對戰／觀戰時點到人：跳出那位棋友的資料卡（意見回饋 261）
@@ -4015,7 +4049,8 @@ function parkInfo(k){const era=store.get("era","classic"),E=PARK_INFO[era]||PARK
   if((k==="bg"||k.startsWith("pano:"))&&!parkInfo.skipRelic){relicDrop(era).then(got=>{if(!got){parkInfo.skipRelic=true;try{parkInfo(k)}finally{parkInfo.skipRelic=false}}});return}   /* 意見回饋 536：點長卷有機會撿到珍品 */
   if(k.startsWith("pano:")){const nm=k.slice(5);(parkInfo.S||(parkInfo.S=fetch("data/pano/spots.json").then(r=>r.ok?r.json():{}).catch(()=>({})))).then(J=>{const p=(J[era]||[]).find(x=>x.name===nm);
       sheet("🏞 "+nm,b=>{b.innerHTML=`<div class="muted" style="margin:-4px 0 8px">${esc(en)}${yr?`・${esc(yr)}`:""}・遠方的風景</div><p style="line-height:1.8;margin:0;font-size:16px">${esc(p&&p.desc||(E.bg||[])[1]||"")}</p>`})});return}
-  if(k.startsWith("map:")){const nm=k.slice(4);(parkInfo.P||(parkInfo.P=fetch("data/eramap/places.json").then(r=>r.ok?r.json():{}).catch(()=>({})))).then(P=>{const d=(P[era]||{})[nm]||(P.classic||{})[nm]||"";
+  if(k.startsWith("map:")){const nm=k.slice(4),PJ=PARK_J;(parkInfo.P||(parkInfo.P=fetch("data/eramap/places.json").then(r=>r.ok?r.json():{}).catch(()=>({})))).then(P=>{const d=(P[era]||{})[nm]||(P.classic||{})[nm]||"";
+      if(PJ==="park"&&typeof yuMapSheet==="function"&&yuMapSheet(era,nm,d,en,yr))return;   /* 意見回饋 658（B 輿圖遊歷）：石桌往事的園子裡，點到路線上的地名＝介紹＋「⚔ 在這裡過一關」 */
       sheet("📍 "+nm,b=>{b.innerHTML=`<div class="muted" style="margin:-4px 0 8px">${esc(en)}${yr?`・${esc(yr)}`:""}・地圖上的地名</div><p style="line-height:1.8;margin:0;font-size:16px">${esc(d||"這是"+en+"地圖上標的地方。")}</p><p class="muted" style="font-size:13px;margin:10px 0 0">點兩下畫面回到石桌</p>`})});return}
   let t,x;if(k==="opp"){const op=PARK&&PARK.last&&PARK.last.ex&&PARK.last.ex.opp,OL=op&&!(op.sprite&&!op.npc&&!op.cus)?oppLine(op,era):null;
     if(OL){t=OL.name;x=`「${OL.say}」`}
@@ -4031,7 +4066,8 @@ function parkUi(host,pv){let b=host.querySelector(".pkview");if(!b){b=document.c
   if(m&&pv.setView)setTimeout(()=>{try{pv.setView(m)}catch(e){}},400);
   b.onclick=e=>{e.stopPropagation();vibrate(5);m=m==="top"?"flat":"top";store.set("parkView",m);try{pv.setView(m)}catch(x){}paint()};
   if(!store.get("parkHint",false)){const go=()=>{if(!host.isConnected)return;if(fxBusy()||document.querySelector(".kjfx"))return setTimeout(go,500);store.set("parkHint",true);const h=document.createElement("div");h.className="pkhint";h.innerHTML='<div class="pkh-hand">👆</div><b>拖曳轉身看四周</b><span>兩指捏合縮放・點兩下回到原本的角度</span>';host.append(h);setTimeout(()=>{h.classList.add("out");setTimeout(()=>h.remove(),500)},3000)};
-    if(pv.whenShown)pv.whenShown(()=>setTimeout(go,300));else setTimeout(go,1200)}}
+    if(pv.whenShown)pv.whenShown(()=>setTimeout(go,300));else setTimeout(go,1200)}
+  if(typeof yuHintMaybe==="function")yuHintMaybe(host)}   /* 意見回饋 658（B 輿圖遊歷）：第一次在石桌往事的園子裡，提示地圖可以點（07e-garden2.js） */
 function parkDraw(host,bd,board,o,ex){
   // 關掉公園：同一個棋盤的公園只藏起來（意見回饋 244：來回切換不用每次重建 3D 場景，比較順）
   {const tg=host.querySelector(".pkname");if(tg)tg.hidden=!parkOn();const pv0=host.querySelector(".pkview");if(pv0)pv0.hidden=!parkOn()}
@@ -5337,7 +5373,7 @@ function cjAid(){let a=store.get("anonId",null);if(!a){a=Math.random().toString(
 
 /* ---------- 今日茶單 ---------- */
 function cjToday(D,S){const k=cjDay();if(S.day===k&&Array.isArray(S.list)&&S.list.length===3&&S.list.every(x=>D.byId[x.id]))return S.list;
-  const wd=new Date(Date.parse(k+"T12:00:00Z")).getUTCDay(),wkend=wd===0||wd===6,R=cjRand(k+cjAid()),used=new Set(),skip=new Set([...S.seen,...Object.keys(S.solved)]);
+  const wd=new Date(Date.parse(k+"T12:00:00Z")).getUTCDay(),wkend=wd===0||wd===6,R=cjRand(k+cjAid()),used=new Set(),skip=new Set([...S.seen,...Object.keys(S.solved),...(typeof cjReserved==="function"?cjReserved():[])]);   /* 意見回饋 658：棋史卡、輿圖遊歷、消寒圖的題不排進茶單（07e-garden2.js cjReserved） */
   const want=[["sip",["一步定勝負","短殺"],S.r-1.5],["cup",["短殺","中殺","大師收官"],S.r],["pot",wkend?["古譜校錯","中殺","大師收官"]:["中殺","大師收官","古譜校錯"],S.r+1]];
   S.list=want.map(([slot,ts,tg])=>{const w=slot==="pot"&&wkend?2.5:.4;let pool=D.items.filter(x=>ts.includes(x.t)&&!skip.has(x.id)&&!used.has(x.id));if(!pool.length)pool=D.items.filter(x=>ts.includes(x.t)&&!used.has(x.id));
     let best=pool[0]||D.items[0],bs=1e9;for(const x of pool){const s=Math.abs(x.d-tg)+ts.indexOf(x.t)*w+R()*1.2;if(s<bs){bs=s;best=x}}used.add(best.id);return{slot,id:best.id,st:"todo"}});
@@ -5439,28 +5475,32 @@ function cjRelicHTML(rel){const rk=(typeof RELIC_RK!=="undefined"&&RELIC_RK[rel.
 function CanjuPlay(v,id){cjCSS();const H0=location.hash,here=()=>v.isConnected&&location.hash===H0;   /* 畫面容器換頁後還是同一個：用網址判斷還在不在這一題（示範後續還在跑時換頁，解完卡不要跳到下一題上） */const C=window.XQCore;
   /* 意見回饋 644：#/canju/z/<珍品 id>＝珍品藏局（不算茶單，存檔用 cjRunZ） */
   /* 意見回饋 658：#/canju/h/<朝代>/<題號>＝棋史卡的古法殘局（07d-garden.js；不算茶單，存檔用 cjRunH，不看答案解開記進 store "histSolved"） */
-  const zm=/^z\/(.+)$/.exec(id),Z=zm?{rid:zm[1]}:null,hm=Z?null:/^h\/(\w+)\/(.+)$/.exec(id),HS=hm?{era:hm[1]}:null,RK=Z?"cjRunZ":HS?"cjRunH":"cjRun";if(HS)id=hm[2];
-  const hBack=()=>typeof histBackHash==="function"?histBackHash():"#/journey/park",BK=Z?"#/me/relics":HS?hBack():"#/canju";
-  setTop(Z?"🏺 珍品藏局":HS?"📜 古法殘局":"🍵 一盞茶殘局",BK);if(typeof setTabs==="function")setTabs(false);
+  /* 意見回饋 658：#/canju/r/<朝代>/<第幾站>＝輿圖遊歷、#/canju/x/<冬至那年>/<第幾瓣>＝九九消寒圖（07e-garden2.js 的 cjXMode 給這一題的設定 XM；不算茶單，存檔用 XM.rk，不看答案解開才呼叫 XM.mark） */
+  const XM=typeof cjXMode==="function"?cjXMode(id):null;
+  const zm=XM?null:/^z\/(.+)$/.exec(id),Z=zm?{rid:zm[1]}:null,hm=Z||XM?null:/^h\/(\w+)\/(.+)$/.exec(id),HS=hm?{era:hm[1]}:null,RK=XM?XM.rk||"cjRunX":Z?"cjRunZ":HS?"cjRunH":"cjRun";if(HS)id=hm[2];if(XM&&XM.id)id=XM.id;
+  const hBack=()=>typeof histBackHash==="function"?histBackHash():"#/journey/park",BK=XM?XM.back():Z?"#/me/relics":HS?hBack():"#/canju";
+  setTop(XM?XM.top||"🍵 一盞茶殘局":Z?"🏺 珍品藏局":HS?"📜 古法殘局":"🍵 一盞茶殘局",BK);if(typeof setTabs==="function")setTabs(false);
   v.className="view fixed";v.innerHTML=`<div class="cj-top" id="cjH"></div><div class="boardbox" id="bbox"></div><div class="status" id="stat"></div><div class="note cj-note" id="note"></div><div style="flex:1"></div><div class="actions" id="acts"></div>`;
   const $=q=>v.querySelector(q);let D=null,P=null,S=null,R=null,b=null,node=null,step=0,sel=-1,busy=false,hk=null,tok=0,last=null,me="r",flip=false;
   const bd=Board(x=>tap(x));$("#bbox").append(bd.svg);
   const sq=u=>[C.parseSq(u.slice(0,2)),C.parseSq(u.slice(2,4))],ck=bb=>C.inCheck(bb,"r")?C.kingSq(bb,"r"):C.inCheck(bb,"b")?C.kingSq(bb,"b"):-1;
   const stat=t=>{const e=$("#stat");if(e)e.textContent=t},note=t=>{const e=$("#note");if(e)e.textContent=t||""};
   const save=()=>store.set(RK,R),later=(f,ms)=>{const my=tok;setTimeout(()=>{if(my===tok&&here())f()},ms)};
-  const slotOf=()=>{if(Z||HS)return null;const S2=cjState();return S2.day===cjDay()?(S2.list||[]).find(x=>x.id===id)||null:null};
+  const slotOf=()=>{if(Z||HS||XM)return null;const S2=cjState();return S2.day===cjDay()?(S2.list||[]).find(x=>x.id===id)||null:null};
   /* 藏局：先從 relics.json 找出這件珍品配的題號；還沒撿到的珍品不能解 */
   const zLoad=d=>relicsData().then(RL=>{const e=Object.keys(RL).find(k=>(RL[k]||[]).some(x=>x.id===Z.rid)),x=e&&RL[e].find(y=>y.id===Z.rid);if(!x||!x.cj)throw new Error("找不到這件珍品的藏局（資料可能更新了）。");
     if(!((typeof relicsMine==="function"?relicsMine():{})[e]||[]).includes(x.id))throw new Error("還沒找到這件珍品，撿到了才能解它藏著的殘局。");Object.assign(Z,{era:e,it:x,RL});id=x.cj;return d});
-  cjData().then(d=>Z?zLoad(d):d).then(d=>{if(!v.isConnected)return;D=d;P=D.byId[id];if(!P){v.className="view";v.innerHTML=`<div class="pad"><div class="card muted">找不到這一題（題庫可能更新了）。<br><a href="${BK}">${Z?"回珍品冊":HS?"回去":"回今日茶單"}</a></div></div>`;return}
+  if(XM&&XM.err){v.className="view";v.innerHTML=`<div class="pad"><div class="card muted">${esc(XM.err)}<br><a href="${BK}">回去</a></div></div>`;return{}}   /* 意見回饋 658：還沒走到的站、今天的份走完了、還沒到的花瓣 */
+  cjData().then(d=>Z?zLoad(d):d).then(d=>{if(!v.isConnected)return;D=d;P=D.byId[id];if(!P){v.className="view";v.innerHTML=`<div class="pad"><div class="card muted">找不到這一題（題庫可能更新了）。<br><a href="${BK}">${Z?"回珍品冊":HS||XM?"回去":"回今日茶單"}</a></div></div>`;return}
     S=cjState();me=P.side;flip=me==="b";R=store.get(RK,null);if(!R||R.id!==id)R={id,path:[],mist:0,hl:0,hm:0,hintUsed:false,ans:false,slow:0,undo:0,t0:Date.now()};
     {const sl=slotOf();if(sl&&sl.st==="todo"){const S2=cjState();const x=S2.list.find(y=>y.id===id);x.st="run";cjSave(S2)}}
-    if(!rebuild())return finish();save();show()}).catch(e=>{v.className="view";v.innerHTML=`<div class="pad"><div class="card muted">${esc(e.message)}${Z?'<br><a href="#/me/relics">回珍品冊</a>':HS?`<br><a href="${BK}">回去</a>`:""}</div></div>`});
+    if(!rebuild())return finish();save();show()}).catch(e=>{v.className="view";v.innerHTML=`<div class="pad"><div class="card muted">${esc(e.message)}${Z?'<br><a href="#/me/relics">回珍品冊</a>':HS||XM?`<br><a href="${BK}">回去</a>`:""}</div></div>`});
   /* 照存檔的 path 重走一遍；回傳 false＝其實已經解完 */
   function rebuild(){b=C.parseFen(P.fen);node=P.tree;step=0;last=null;for(const u of R.path){const o=node&&node.o[u];if(!o){R.path=R.path.slice(0,step);break}
       const[f,t]=sq(u);b=C.make(b,f,t);last={f,t};step++;if(o[1]){const[f2,t2]=sq(o[0]);b=C.make(b,f2,t2);last={f:f2,t:t2};node=o[1]}else{node=null;return false}}return true}
   function draw(o){bd.draw(o&&o.board||b,{flip,sel,last,check:ck(o&&o.board||b),targets:sel>=0?C.legal(b,me).filter(([f])=>f===sel).map(x=>x[1]):[],...(hk?{hint:hk}:{}),...(o||{})})}
-  function head(){if(HS){$("#cjH").innerHTML=`<b>📜 ${esc(eraLabel(HS.era))}的古法殘局</b>・${esc(P.t)}・${cjLv(P.d)}　${cjEra(P)}<span class="muted">${cjSrc(P)}</span>`;return}
+  function head(){if(XM){$("#cjH").innerHTML=XM.head(P);return}
+    if(HS){$("#cjH").innerHTML=`<b>📜 ${esc(eraLabel(HS.era))}的古法殘局</b>・${esc(P.t)}・${cjLv(P.d)}　${cjEra(P)}<span class="muted">${cjSrc(P)}</span>`;return}
     if(Z){$("#cjH").innerHTML=`<b>🏺 ${esc(Z.it.name)}的藏局〈${esc(Z.it.cjName||P.src.title||"")}〉</b>・${esc(P.t)}・${cjLv(P.d)}　${cjEra(P)}<span class="muted">${cjSrc(P)}</span>`;return}
     const sl=slotOf(),nm=sl?CJ0.SLOT[sl.slot][0]+"・":"自由練習・";$("#cjH").innerHTML=`<b>${nm}${esc(P.t)}</b>・${cjLv(P.d)}　${cjEra(P)}<span class="muted">${cjSrc(P)}</span>`}
   function acts(){const H=typeof hintInfo==="function"?hintInfo():{left:0,bonus:0,full:false},n=H.left+(H.bonus||0);
@@ -5490,7 +5530,7 @@ function CanjuPlay(v,id){cjCSS();const H0=location.hash,here=()=>v.isConnected&&
       if(!bb[f]){done&&done(bb);return}const tx=C.notate(bb,f,t);bb=C.make(bb,f,t);bd.draw(bb,{flip,last:{f,t},check:ck(bb)});cap&&cap(tx,i);setTimeout(go,i===1&&first?500:750)};go()}
   function reveal(){if(busy||!node)return;const go=()=>{R.ans=true;save();let n=node,bb=b;const seq=[];while(n){const u=Object.keys(n.o)[0],o=n.o[u];seq.push(u);if(o[1]){seq.push(o[0]);n=o[1]}else{seq.push(...cjSplit(o[0]));n=null}}
       busy=true;node=null;const acc=[];stat("👁 答案");anim(seq,bb,tx=>{acc.push(tx);note(acc.join("　"))},()=>later(finish,600))};
-    if(typeof confirmBox==="function")confirmBox(Z?"看答案這題就沒有修為和心得，珍品也不會蓋上「已解」印，確定？":HS?"看答案這題就沒有修為和心得，也不算進棋史卡，確定？":"看答案這題就沒有修為和心得，確定？",go,"看答案");else go()}
+    if(typeof confirmBox==="function")confirmBox(XM?XM.ans:Z?"看答案這題就沒有修為和心得，珍品也不會蓋上「已解」印，確定？":HS?"看答案這題就沒有修為和心得，也不算進棋史卡，確定？":"看答案這題就沒有修為和心得，確定？",go,"看答案");else go()}
   function skipPot(){if(busy)return;const S2=cjState(),x=(S2.list||[]).find(y=>y.id===id);if(!x)return;x.st="skip";let hit=null;if(cjCleared(S2.list))hit=cjStreakHit(S2);cjSave(S2);store.set("cjRun",null);tok++;
     location.hash="#/canju";if(hit)setTimeout(()=>cjAfterClear(hit,S2,D),500)}
   async function finish(){tok++;busy=true;node=null;S=cjState();const perfect=!R.ans&&R.mist===0&&!R.hintUsed,first=!S.solved[id],ms=Date.now()-(R.t0||Date.now());
@@ -5498,22 +5538,23 @@ function CanjuPlay(v,id){cjCSS();const H0=location.hash,here=()=>v.isConnected&&
     {const sc=R.ans?0:(R.mist?.5:1)*(R.hintUsed?.6:1),p=1/(1+Math.exp(-(S.r-P.d)/1.2));S.r=Math.max(1,Math.min(10,Math.round((S.r+.35*(sc-p))*100)/100))}
     if(!R.ans&&typeof addXP==="function")addXP(5,"殘局","cj:"+id);
     let ins="";if(perfect&&first&&typeof insightN==="function"){const c=insightN()+1;store.set("insightN",c);if(c%5===0){store.set("hintBonus",(store.get("hintBonus",0)||0)+1);ins="🎁 攢滿 5 個心得，換到 1 顆提示棋"}else ins=`💡 有心得（${c%5}／5，攢滿 5 個換 1 顆提示棋）`}
-    let hit=null;const sl=!Z&&!HS&&S.day===cjDay()?(S.list||[]).find(x=>x.id===id):null;if(sl&&sl.st!=="done"){sl.st="done";sl.res={p:perfect?1:0,a:R.ans?1:0};if(cjCleared(S.list))hit=cjStreakHit(S)}
+    let hit=null;const sl=!Z&&!HS&&!XM&&S.day===cjDay()?(S.list||[]).find(x=>x.id===id):null;if(sl&&sl.st!=="done"){sl.st="done";sl.res={p:perfect?1:0,a:R.ans?1:0};if(cjCleared(S.list))hit=cjStreakHit(S)}
     cjSave(S);store.set(RK,null);
     /* 藏局：不看答案解開就蓋「已解」印；這一朝 10 件都解開＝朝代名變金色 */
     let zs=null;if(Z&&!R.ans){const M=store.get("relicSolved",{}),zf=!M[Z.it.id];if(zf)M[Z.it.id]={at:Date.now(),p:perfect?1:0};else if(perfect)M[Z.it.id].p=1;store.set("relicSolved",M);
       const EL=Z.RL[Z.era]||[],n=EL.filter(x=>M[x.id]).length;zs={first:zf,n,all:EL.length,gold:EL.length>0&&n===EL.length,goldNew:zf&&EL.length>0&&n===EL.length}}
     const hs=HS&&!R.ans&&typeof histSolvedMark==="function"?histSolvedMark(HS.era,id):null;   /* 意見回饋 658：棋史卡的古法殘局 */
+    let xs=null;if(XM&&!R.ans)try{xs=XM.mark({perfect})}catch(e){console.warn(e)}   /* 意見回饋 658：輿圖遊歷的一站、消寒圖的一瓣 */
     try{if(window.XQNet&&XQNet.shareIRT)XQNet.shareIRT({t:"cj",v:1,aid:cjAid(),r:[[id,R.ans?0:1,R.ans?4:(R.hm||0),R.mist,Math.round(ms/100)/10]]})}catch(e){}
     let rel=null;if(hit&&hit.relic){rel=await cjRelic(CJ0.ERA[(P.src||{}).era]||"classic");if(rel&&!rel.named){S=cjState();S.st.relics=(S.st.relics||0)+1;cjSave(S)}}
-    card({perfect,ins,hit,rel,zs,hs})}
+    card({perfect,ins,hit,rel,zs,hs,xs})}
   /* 藏局：下一件還沒解的藏局（自己已經撿到的珍品，優先同一朝） */
   function zNext(){if(!Z)return null;const M=store.get("relicSolved",{}),mine=typeof relicsMine==="function"?relicsMine():{},eras=[Z.era].concat(Object.keys(Z.RL).filter(e=>e!==Z.era));
     for(const e of eras)for(const x of Z.RL[e]||[])if(x.cj&&x.id!==Z.it.id&&!M[x.id]&&(mine[e]||[]).includes(x.id))return x;return null}
   function zCardHTML(o){const en=typeof relicEra==="function"?esc(relicEra(Z.era)):"";if(!o.zs)return`<p class="muted">看了答案，「${esc(Z.it.name)}」還沒蓋上「已解」印；下次不看答案解開就能蓋上。</p>`;
     return`<div class="cj-relic" style="border-color:#C0392B"><span class="rl-seal lg">已解</span><div style="flex:1;min-width:0"><b>🏺 ${esc(Z.it.name)}的藏局解開了！</b><div class="muted">${o.zs.first?"珍品冊那一格蓋上了紅色「已解」印。":"這件珍品之前就蓋過「已解」印了。"}${en}已解 ${o.zs.n}／${o.zs.all}。</div>${o.zs.goldNew?`<div style="color:#C8962E;font-weight:900;margin-top:4px">✦ ${en}的 ${o.zs.all} 件藏局全部解開，珍品冊上的朝代名變成金色了！</div>`:""}</div></div>`}
-  const hNext=()=>HS&&typeof histNext==="function"?histNext(HS.era,id):null,nxL=()=>Z?(zNext()?"下一件藏局":"回珍品冊"):HS?(hNext()?"下一題":"回去"):"下一題";
-  function card(o){if(!here())return;stat(o.perfect?"★ 完美解開":R.ans?"👁 答案看完了":"✔ 解開了");actionBar($("#acts"),[["card",Z?"🏺":HS?"📜":"🍵","解完卡",()=>card(o)],["next","›",nxL(),next,true]]);
+  const hNext=()=>HS&&typeof histNext==="function"?histNext(HS.era,id):null,nxL=()=>XM?XM.nextL():Z?(zNext()?"下一件藏局":"回珍品冊"):HS?(hNext()?"下一題":"回去"):"下一題";
+  function card(o){if(!here())return;stat(o.perfect?"★ 完美解開":R.ans?"👁 答案看完了":"✔ 解開了");actionBar($("#acts"),[["card",XM?XM.icon||"🍵":Z?"🏺":HS?"📜":"🍵","解完卡",()=>card(o)],["next","›",nxL(),next,true]]);
     const s=P.src||{},trap=P.trap;
     sheet(R.ans?"📖 答案看完了":o.perfect?"🍵 完美解開！":"🍵 解開了！",bx=>{bx.innerHTML=`<div class="cj-card">
       <p><b>${esc(P.t)}</b>・${cjLv(P.d)}　${o.perfect?"★ 完美":R.ans?"看了答案（沒有修為、心得）":`走錯 ${R.mist} 次${R.hintUsed?"・用了提示棋":""}`}${R.slow?`・找到 ${R.slow} 次較慢的殺法`:""}</p>
@@ -5527,14 +5568,16 @@ function CanjuPlay(v,id){cjCSS();const H0=location.hash,here=()=>v.isConnected&&
       ${o.rel?cjRelicHTML(o.rel):""}
       ${Z?zCardHTML(o):""}
       ${HS&&typeof histCardDoneHTML==="function"?histCardDoneHTML(HS.era,o.hs,R.ans):""}
+      ${XM?XM.done(o.xs,R.ans):""}
       <div class="cj-row">${trap?`<button class="btn ghost" id="cjTrap">如果走 ${esc(C.notate(C.parseFen(P.fen),...sq(trap.mv)))}？</button>`:""}${s.db?`<button class="btn ghost" id="cjBook">看整局</button>`:""}</div>
-      <div class="cj-row"><button class="btn ghost" id="cjBack">${Z?"回珍品冊":HS?"回去":"回茶單"}</button><button class="btn" id="cjNext">${nxL()}</button></div></div>`;
+      <div class="cj-row"><button class="btn ghost" id="cjBack">${Z?"回珍品冊":HS||XM?"回去":"回茶單"}</button><button class="btn" id="cjNext">${nxL()}</button></div></div>`;
       const on=(q,f)=>{const e=bx.querySelector(q);if(e)e.onclick=f};
       on("#cjTrap",()=>{closeSheet();trapDemo(o)});on("#cjBook",()=>{closeSheet();location.hash="#/db/"+s.db});on("#cjBack",()=>{closeSheet();location.hash=BK});on("#cjNext",()=>{closeSheet();next()});cjZBind(bx)})}
   function trapDemo(o){const tr=P.trap,b0=C.parseFen(P.fen);stat(`如果走 ${C.notate(b0,...sq(tr.mv))}？`);note("");const acc=[];
     actionBar($("#acts"),[["card","🍵","回解完卡",()=>{tok++;card(o)}]]);
     anim([tr.mv].concat(tr.line||[]),b0,(tx,i)=>{acc.push(tx);note(acc.join("　"))},()=>note(acc.join("　")+"\n"+cjWhy(P,tr.code)),true)}
-  function next(){if(HS){const x=hNext();location.hash=x?"#/canju/h/"+HS.era+"/"+encodeURIComponent(x):BK;return}
+  function next(){if(XM){location.hash=XM.next()||BK;return}
+    if(HS){const x=hNext();location.hash=x?"#/canju/h/"+HS.era+"/"+encodeURIComponent(x):BK;return}
     if(Z){const x=zNext();location.hash=x?"#/canju/z/"+encodeURIComponent(x.id):"#/me/relics";return}const S2=cjState(),L=S2.day===cjDay()?S2.list||[]:[];const t=L.find(x=>x.id!==id&&(x.st==="todo"||x.st==="run"));if(t){location.hash="#/canju/"+encodeURIComponent(t.id);return}
     if(L.some(x=>x.id===id)){location.hash="#/canju";return}const n=cjNext(D,S2,P.t,id);location.hash=n?"#/canju/"+encodeURIComponent(n):"#/canju"}
   return{}}
@@ -5737,12 +5780,201 @@ function histBook(){const S=store.get("histSeen",{})||{},M=histSolvedAll();
 /* ---------- 入口：驛站（📮 信箱、羈絆冊、棋史卡冊）和我的角色 ---------- */
 function gardenInn(v){const box=v.querySelector("#gardenBox");if(!box)return;const L=npcLetters(),M=npcBonds(),W=NPC_W(),met=W.filter(n=>M[n.id]&&M[n.id].m).length;
   box.innerHTML=`<div class="sec-t">📮 信箱（${L.length} 封）</div>${L.length?`<div class="items" style="padding:0">${L.map(n=>`<button class="item" data-mail="${n.id}"><span class="lb" style="font-size:22px">💌</span><span class="tx"><b>${esc(n.name)}的信${M[n.id]&&M[n.id].r?"":" 🆕"}</b><span>寄自${esc(eraLabel(n.era))}</span></span><span class="muted">›</span></button>`).join("")}</div>`:`<div class="card muted" style="font-size:13px">還沒有信。園子裡的女棋手羈絆到第 3 級，她會寫信寄來這裡。</div>`}
-    <div class="sec-t">🌸 園子棋友</div><div class="items" style="padding:0"><button class="item" id="gdBond"><span class="lb" style="font-size:22px">🌸</span><span class="tx"><b>羈絆和身分小卡</b><span>遇過 ${met}／${W.length} 位</span></span><span class="muted">›</span></button><button class="item" id="gdHist"><span class="lb" style="font-size:22px">📜</span><span class="tx"><b>棋史卡冊${histTitle()?"・🏅 棋史通":""}</b><span>收到 ${histSeenN()}／13・解開 ${histDoneN()}／13</span></span><span class="muted">›</span></button></div>`;
+    <div class="sec-t">🌸 園子棋友</div><div class="items" style="padding:0"><button class="item" id="gdBond"><span class="lb" style="font-size:22px">🌸</span><span class="tx"><b>羈絆和身分小卡</b><span>遇過 ${met}／${W.length} 位</span></span><span class="muted">›</span></button><button class="item" id="gdHist"><span class="lb" style="font-size:22px">📜</span><span class="tx"><b>棋史卡冊${histTitle()?"・🏅 棋史通":""}</b><span>收到 ${histSeenN()}／13・解開 ${histDoneN()}／13</span></span><span class="muted">›</span></button>${typeof garden2InnHTML==="function"?garden2InnHTML():""}</div>`;   /* 意見回饋 658（B、D）：🧭 輿圖遊歷、❄ 九九消寒圖（07e-garden2.js） */
   box.querySelectorAll("[data-mail]").forEach(y=>y.onclick=()=>{vibrate(5);const n=PARK_NPC.find(z=>z.id===y.dataset.mail);if(n)npcMail(n,()=>{if(box.isConnected)gardenInn(v)})});
-  box.querySelector("#gdBond").onclick=()=>{vibrate(5);npcBondBook()};box.querySelector("#gdHist").onclick=()=>{vibrate(5);histBook()}}
+  box.querySelector("#gdBond").onclick=()=>{vibrate(5);npcBondBook()};box.querySelector("#gdHist").onclick=()=>{vibrate(5);histBook()};if(typeof garden2Bind==="function")garden2Bind(box)}
 function gardenMeCard(){const d=document.createElement("div");d.className="card gd-me";const M=npcBonds(),W=NPC_W(),met=W.filter(n=>M[n.id]&&M[n.id].m).length,nl=npcLetters().filter(n=>!(M[n.id]||{}).r).length;
-  d.innerHTML=`<button id="gdMeB"><span>🌸</span><b>園子棋友</b><small>遇過 ${met}／${W.length}${nl?`・💌 ${nl} 封新信`:""}</small></button><button id="gdMeH"><span>📜</span><b>棋史卡</b><small>${histSeenN()}／13${histTitle()?"・🏅 棋史通":""}</small></button>`;
-  d.querySelector("#gdMeB").onclick=()=>{vibrate(5);npcBondBook()};d.querySelector("#gdMeH").onclick=()=>{vibrate(5);histBook()};return d}
+  d.innerHTML=`<button id="gdMeB"><span>🌸</span><b>園子棋友</b><small>遇過 ${met}／${W.length}${nl?`・💌 ${nl} 封新信`:""}</small></button><button id="gdMeH"><span>📜</span><b>棋史卡</b><small>${histSeenN()}／13${histTitle()?"・🏅 棋史通":""}</small></button>${typeof garden2MeHTML==="function"?garden2MeHTML():""}`;   /* 意見回饋 658（B、D）：🧭 輿圖遊歷、❄ 消寒圖 */
+  d.querySelector("#gdMeB").onclick=()=>{vibrate(5);npcBondBook()};d.querySelector("#gdMeH").onclick=()=>{vibrate(5);histBook()};if(typeof garden2Bind==="function")garden2Bind(d);return d}
+/* ================= 🧭 輿圖遊歷・❄ 九九消寒圖（意見回饋 658，開發者 11/6 核准 B、D）=================
+   只在石桌往事的園子（PARK_J==="park"）裡出現；不碰積分挑戰、擂台、線上對戰；沒有付費、抽卡、新貨幣，獎勵只有收藏、稱號、少量修為。
+   B．輿圖遊歷
+      13 個朝代各一條真實路線（4～6 站，共 60 站；站名、說明、出處在 YU_R，傳說、真偽有爭議的都標明）。
+      園子拉遠看朝代地圖時，路線畫在地圖上（xiangqi-lab/src/park3d.js 讀 window.XQ_MAPROUTE）：虛線是還沒走的路、紅線是走過的、整條走完變金線；下一站發亮。
+      點地名（06-cpu.js parkInfo 的 map:），是路線上的站就多一個「⚔ 在這裡過一關」。每站一題 canju-set.json 驗證過的殘局（照那一站的主題挑殺法，一站比一站難）。
+      解題頁 #/canju/r/<朝代>/<第幾站>（07c-canju.js 的 cjXMode；不算茶單，看答案不算過關）。一天最多走 2 站（重解走過的站不算）；每站修為 +15；
+      整條走完：地圖畫金線、得到一張路引（集章簿 → 🧭 路引，跟擂主的印分開）；13 條都走完 → 稱號「行萬里路」＋修為 50。
+   D．九九消寒圖
+      明朝劉侗、于奕正《帝京景物略》：「日冬至，畫素梅一枝，為瓣八十有一，日染一瓣。」從冬至那天起 81 天，每天一題（XH_Q，由淺到深），解開就染一瓣。
+      題目跟棋史卡（C）、輿圖遊歷（B）的題都不重複；新排的今日茶單也不會出這些題（cjReserved，07c-canju.js cjToday）。
+      漏掉的日子可以補，一天最多補 3 瓣；九九過了，還沒染的花瓣照樣每天能補 3 瓣。每開滿一朵（9 瓣）修為 +10；81 瓣都染完 → 稱號「九九消寒」＋修為 30。
+      頁面 #/xiaohan；解題頁 #/canju/x/<冬至那年>/<第幾瓣 0～80>。冬至還沒到：顯示倒數和說明；開發者模式可以預覽（存檔另外放在 "dev"，不動真的進度）。
+      石桌往事的園子裡點燈籠（秘境棋友先檢查）跳出節令小卡。冬至日期：XH_SOL（2025～2040，Meeus 算法驗算過），表外的年份用 xhSol() 估算。
+   存檔（store）：yuRoute＝{朝代:{n:走過幾站,at:[每站過關時間],done:整條走完的時間}}；yuDay＝{d:日期,n:今天走了幾站}；yuTitle＝拿到「行萬里路」的時間；
+        yuBack＝解完題要回去的網址；yuHint＝看過「地圖可以點」的提示；
+        xhMei＝{冬至那年:{第幾瓣:染上的時間}}；xhMake＝{d:日期,n:今天補了幾瓣}；xhTitle＝{冬至那年:拿到「九九消寒」的時間}；xhBack＝消寒圖頁的返回網址；xhDev＝開發者預覽假裝是第幾天（0＝關）；
+        cjRunR／cjRunX＝正在解的那一題（跟 cjRun 同格式） */
+
+/* ---------- B．輿圖遊歷：路線（p＝地圖上的位置，圖寬的 %；被石台蓋住的站推到石台邊；nl＝地圖原本沒有這個地名，要自己寫字；q＝題號） ---------- */
+const YU_R={
+  classic:{"t":"大禹治水・九州","seal":"禹跡","yr":"傳說時代","src":"《尚書．禹貢》","tale":1,"x":"《尚書．禹貢》說，大禹治好洪水以後，把天下分成九州：冀、兗、青、徐、揚、荊、豫、梁、雍。這是很早的地理書，可是大禹治水是傳說，九州也是後人整理出來的說法，並沒有人真的照這條路走過。我們照《禹貢》九州的順序，挑五州走一趟。","s":[{"n":"冀州","p":[63.3,31],"x":"《禹貢》從冀州寫起：「既載壺口，治梁及岐。」治水先從黃河的壺口下手。","q":"gm2013-B84A43K1A3r"},{"n":"兗州","p":[64.6,35.9],"x":"「九河既道，雷夏既澤。」黃河下游的許多河道都疏通了，雷夏這片大澤也蓄起水來。","q":"lk196"},{"n":"徐州","p":[72.6,44],"x":"「淮、沂其乂，蒙、羽其藝。」淮水、沂水治理好了，蒙山、羽山一帶也能種田了。","q":"mr007"},{"n":"荊州","p":[51.9,63],"x":"「江、漢朝宗于海。」長江和漢水，像諸侯去朝見天子一樣，一起流向大海。","q":"ys063"},{"n":"雍州","p":[35.1,35],"x":"「黑水、西河惟雍州。」九州裡最後寫到的一州，在西北，黃河在它的東邊往南流。","q":"lk202c4"}]},
+  qin:{"t":"始皇東巡","seal":"東巡","yr":"前 219、前 210 年","src":"《史記．秦始皇本紀》","x":"秦始皇統一天下以後，好幾次出巡。這條路把《史記》記的兩次合起來走：始皇二十八年（前 219 年）登泰山、到琅邪；三十七年（前 210 年）上會稽，回程病死在沙丘。","s":[{"n":"咸陽","p":[42.1,44],"x":"秦的都城。統一以後，秦始皇下令「車同軌，書同文字」：全國車輪的距離一樣、文字的寫法也一樣。","th":"車同軌：用車殺","q":"lk242c4"},{"n":"泰山","p":[66.2,38.9],"x":"前 219 年，秦始皇登上泰山，立石刻字、舉行封禮。《史記》說下山時遇到暴風雨，他在一棵樹下躲雨，就封那棵樹為「五大夫」。","q":"sq308"},{"n":"琅邪","p":[73,40.4],"x":"同一年他往南到琅邪，非常喜歡這裡，一住就是三個月，還遷了三萬戶百姓到琅邪臺下。","q":"lk113c4"},{"n":"會稽","p":[77.3,53.9],"x":"前 210 年，他上會稽山祭拜大禹，遠望南海，又立了一塊石碑，刻字稱頌秦朝的功德。","q":"sq056c8"},{"n":"沙丘","p":[60.8,36.3],"nl":1,"x":"回程走到平原津就病倒了，七月死在沙丘平臺。丞相李斯怕天下大亂，把消息瞞住，不發喪。","q":"sq463c6"}]},
+  han:{"t":"張騫出使西域","seal":"鑿空","yr":"約前 139～前 126 年","src":"《史記．大宛列傳》","x":"漢武帝想聯合大月氏一起對付匈奴，招人出使，張騫去應徵。他這一去十三年，出發時一百多人，回來的只剩兩個人。司馬遷說張騫這一趟是「鑿空」——第一次把通往西域的路打通。","s":[{"n":"長安","p":[58.7,54.7],"x":"張騫以郎官的身分應募出使大月氏，帶著胡人甘父（堂邑父）從長安出發。","q":"sq245"},{"n":"隴西","p":[39.7,55.5],"nl":1,"x":"《史記》說他們「出隴西」，往西走，就得經過匈奴的地盤。","q":"ys280"},{"n":"匈奴","p":[51.5,26.7],"x":"他們被匈奴抓住，送到單于那裡。匈奴把張騫留了十多年，還讓他娶妻生子，可是張騫一直把漢朝的符節帶在身邊，沒有丟掉。","q":"lk171c5"},{"n":"西域","p":[12.5,35.8],"x":"他找機會逃走，往西到了大宛，再經康居到大月氏。《史記》說大宛「多善馬，馬汗血」。可惜大月氏過得安穩，不想再跟匈奴打仗了。","th":"大宛出好馬：用馬殺","q":"lk128"},{"n":"羌","p":[36.1,51.9],"x":"回程他沿著南山走，想從羌人的地方回漢朝，又被匈奴抓住。一年多後匈奴內亂，他才帶著妻子和堂邑父逃回長安。","q":"sq100"}]},
+  sanguo:{"t":"赤壁之戰","seal":"赤壁","yr":"建安十三年（208 年）","src":"《三國志．武帝紀》《三國志．先主傳》","x":"建安十三年，曹操已經平定北方，帶兵南下荊州，最後在赤壁跟孫權、劉備的聯軍交戰。注意：草船借箭、借東風是小說《三國演義》的情節，不是正史。","s":[{"n":"鄴","p":[62.1,37.7],"x":"這年正月，曹操回到鄴城，挖了一個玄武池，在池裡訓練水軍。","q":"ys042"},{"n":"襄陽","p":[59.7,51.8],"x":"七月曹操南征劉表。八月劉表病死，兒子劉琮駐在襄陽；九月曹操到了新野，劉琮就投降了。","th":"象棋的「砲」原本是拋石頭的機器：官渡之戰時曹操造了「發石車」，袁紹的兵叫它「霹靂車」（《三國志．袁紹傳》）。這一站用炮殺","q":"lk001c4"},{"n":"江陵","p":[58.6,57.9],"nl":1,"x":"江陵存著很多軍需。曹操怕劉備搶先占領，丟下輜重，帶五千精騎一天一夜追了三百多里，在當陽長坂追上劉備，接著進了江陵。","th":"精騎急追：用馬殺","q":"lk147c4"},{"n":"赤壁","p":[61.8,58],"x":"曹操從江陵順江東下，在赤壁跟孫權、劉備的聯軍交戰，打輸了。《三國志．周瑜傳》記載黃蓋用火攻燒了曹軍的船；軍中又鬧瘟疫，曹操只好退兵。","th":"隔著江打：用炮殺","q":"sq052"}]},
+  weijin:{"t":"淝水之戰","seal":"淝水","yr":"太元八年（383 年）","src":"《晉書．苻堅載記》《晉書．謝安傳》","x":"前秦的苻堅統一北方以後，帶大軍南下，想一口氣滅掉東晉，結果在淝水被謝玄打敗。「草木皆兵」「風聲鶴唳」兩個成語都出自這一仗。","s":[{"n":"長安","p":[47.6,40.4],"x":"苻堅從長安出發，《晉書》說他帶了步兵六十多萬、騎兵二十七萬。","q":"ys056"},{"n":"項城","p":[64.1,51.5],"nl":1,"x":"苻堅到了項城，聽說弟弟苻融已經攻下壽春，就把大軍留在項城，自己帶著八千輕騎趕過去。","q":"zx042"},{"n":"淝水","p":[68.6,53.9],"x":"兩軍隔著淝水對陣。苻堅登上壽春城，望見八公山上的草木，都以為是晉兵——這就是「草木皆兵」。秦軍往後一退就亂了，逃兵聽到風聲、鶴叫，都以為晉軍追來了。","s":"《晉書．謝玄傳》（風聲鶴唳）","q":"xw056c8"},{"n":"建康","p":[73.4,54.6],"x":"捷報送到建康時，謝安正在跟客人下圍棋。他看完信，隨手放在一旁，照樣下棋。客人問起，他只淡淡地說：「小兒輩遂已破賊。」","th":"謝安的沉著：只有一步能保住勝勢","q":"sq315"}]},
+  nanbei:{"t":"佛窟東傳","seal":"石窟","yr":"439～500 年前後","src":"《魏書．釋老志》","x":"南北朝時佛教很興盛，北魏從西到東開鑿了許多石窟。《魏書．釋老志》說，涼州和敦煌很早就信佛；北魏打下涼州以後，把那裡的人和僧人遷到京城，佛教在北方更加興旺。","s":[{"n":"敦煌","p":[14.7,27.4],"x":"《釋老志》說敦煌靠近西域，「村塢相屬，多有塔寺」——一個村子接著一個村子，到處都是佛塔和佛寺。莫高窟就在這裡。","q":"ys147"},{"n":"涼州","p":[33,36.5],"x":"涼州從張軌以後，世世代代信佛。北魏太延年間（439 年）打下涼州，把那裡的百姓遷到京城平城，僧人和佛事也一起往東來了。","q":"lk084"},{"n":"平城","t":"平城・雲岡","p":[58.7,30.8],"x":"僧人曇曜請北魏文成帝在京城西邊的武州山開鑿石窟，「開窟五所」，每個石窟一尊大佛。這就是今天雲岡石窟的「曇曜五窟」。","q":"sq162"},{"n":"洛陽","t":"洛陽・龍門","p":[59.4,46.8],"x":"孝文帝遷都洛陽以後，宣武帝景明初年（500 年）照著平城石窟的樣子，在洛陽南邊的伊闕山開鑿石窟，就是今天的龍門石窟。","q":"lk012"}]},
+  sui:{"t":"隋朝大運河","seal":"運河","yr":"605～610 年","src":"《隋書．煬帝紀》《資治通鑑》","x":"隋煬帝在幾年之內，把好幾段運河連起來：南到餘杭，北到涿郡，中心在洛陽。南方的米糧從此可以一路坐船運到北方。運河一段接一段往前挖，就像小兵一步一步往前拱。","s":[{"n":"餘杭","p":[79,57.2],"x":"大業六年（610 年）開江南河，從京口（今天的鎮江）到餘杭，八百多里。","s":"《資治通鑑》卷一八一","th":"運河一段一段往前挖：小兵往前拱","q":"sq030c6"},{"n":"江都","p":[76.3,51.1],"x":"大業元年（605 年），徵發淮南十多萬人開邗溝，從山陽到揚子進入長江。同年八月，隋煬帝坐著龍舟到江都。","s":"《資治通鑑》卷一八〇","th":"小兵往前拱","q":"lk019c6"},{"n":"大運河","t":"通濟渠","p":[66.8,47.1],"x":"大業元年（605 年）開通濟渠：從洛陽的西苑引穀水、洛水接到黃河，再從板渚引黃河水接到淮水，前後動用了一百多萬人。","th":"小兵往前拱","q":"sq273"},{"n":"洛陽","p":[58.7,45.4],"x":"大運河的中心是東都洛陽。大業元年（605 年），隋煬帝下令營建東都。","q":"lk204c6"},{"n":"涿郡","p":[65.9,29.8],"x":"大業四年（608 年）開永濟渠，引沁水南通黃河、北通涿郡，動用河北一百多萬人。大業七年，隋煬帝就從江都坐龍舟，經運河到涿郡，準備攻打高句麗。","th":"小兵往前拱","q":"sq351c4"}]},
+  tang:{"t":"玄奘西行","seal":"西行","yr":"貞觀初年～十九年（645 年）","src":"《大唐西域記》《大慈恩寺三藏法師傳》","x":"玄奘為了找到佛經的原典，偷偷出關往西走，在印度學了十多年，貞觀十九年（645 年）帶著六百多部經書回到長安。出發的年份有貞觀元年、三年兩種說法。他口述、弟子辯機寫成的《大唐西域記》，記下了一百多個國家的風土。","s":[{"n":"長安","p":[60.7,54.7],"x":"玄奘想去天竺（印度）求經，可是朝廷不准百姓出境，他就自己悄悄出發了。","q":"ys378"},{"n":"涼州","p":[51.1,38.4],"nl":1,"x":"涼州是往西域去的大城。涼州都督知道玄奘要出境，逼他回長安；有法師偷偷派兩個弟子送他，從此他白天躲起來、晚上才趕路。","s":"《慈恩傳》","q":"zx168"},{"n":"高昌","p":[31.2,35.5],"nl":1,"x":"高昌王麴文泰非常敬重玄奘，想留他當國師。玄奘絕食好幾天，高昌王才讓他走，還送他衣物、馬匹，和給西域各國的信。","s":"《慈恩傳》","th":"高昌王送的馬：用馬殺","q":"mr042"},{"n":"屈支","t":"屈支（龜茲）","a":["安西"],"p":[21.4,36.2],"x":"屈支就是龜茲。《大唐西域記》說這裡「管絃伎樂，特善諸國」，音樂比別國都好。後來唐朝把安西都護府搬到這裡。","q":"mr078c4"},{"n":"碎葉","p":[10.9,31.2],"x":"翻過冰雪覆蓋的凌山，到了素葉水城（碎葉）。玄奘在這裡見到西突厥的葉護可汗，可汗派人一路護送他往南走。","th":"突厥騎兵護送：用馬殺","q":"mr008c4"},{"n":"敦煌","t":"敦煌（回程）","p":[38.2,42.1],"x":"在印度學了十多年，玄奘從于闐出發，經過沙州（敦煌）回國，貞觀十九年正月回到長安。","s":"《慈恩傳》","q":"mr068c5"}]},
+  wudai:{"t":"周世宗的統一大業","seal":"世宗","yr":"954～959 年","src":"《舊五代史．世宗紀》《新五代史．周本紀》","x":"後周世宗柴榮在位不到六年，北打北漢和契丹、南打南唐，替後來宋朝統一天下打好了底子。","s":[{"n":"汴梁","p":[64.2,49.1],"x":"顯德元年（954 年），柴榮剛即位，北漢就聯合契丹南下。老臣馮道勸他不要親征，柴榮還是自己帶兵出了汴梁。","s":"《新五代史．馮道傳》","q":"lk203c7"},{"n":"高平","a":["北漢"],"p":[61.2,46.5],"nl":1,"x":"兩軍在高平交戰。後周右翼的將領臨陣逃跑，柴榮親自冒著箭雨督戰，趙匡胤也在這一仗立了大功，終於打敗北漢。","th":"兩路齊發：用雙將","q":"lk105c7"},{"n":"壽州","a":["南唐"],"p":[70.1,54.9],"nl":1,"x":"柴榮三次親征南唐。南唐大將劉仁贍死守壽州一年多，城到顯德四年（957 年）才投降。第二年，南唐把長江以北的州縣都割給了後周。","th":"圍城：讓對方無棋可走（困斃）","q":"sq426c5"},{"n":"瓦橋關","a":["燕雲十六州"],"p":[67.7,37.3],"nl":1,"x":"顯德六年（959 年），柴榮北伐契丹，不到兩個月就收回瀛州、莫州、寧州和瓦橋、益津、淤口三關。正要往幽州進兵，卻得了重病，回到汴梁不久就去世了。","q":"jc112c7"}]},
+  song:{"t":"澶淵之盟","seal":"澶淵","yr":"景德元年（1004 年）","src":"《宋史．真宗紀》《宋史．寇準傳》","x":"遼國的蕭太后和遼聖宗帶大軍南下，一路打到黃河邊的澶州。宰相寇準力勸宋真宗親征，最後雙方訂下和約，此後宋遼一百多年沒有大戰。","s":[{"n":"汴京","p":[60.9,45.6],"x":"遼軍逼近時，有大臣主張遷都金陵、成都避難；寇準堅決反對，勸真宗親自出征。","th":"寇準力排眾議：只有一步能保住勝勢","q":"gm1983-3r2n294KA3r"},{"n":"澶州","p":[62.3,42.9],"x":"真宗渡過黃河，登上澶州北城的城門樓，遠近的宋軍望見皇帝的傘蓋，歡呼聲傳到幾十里外。先前宋軍用床子弩射死了遼軍大將蕭撻凜，遼軍士氣大挫。","th":"不打大仗，也能讓對方沒路走（困斃）","q":"sq423c8"},{"n":"雄州","p":[64.1,33],"nl":1,"x":"和約說好：宋每年給遼絹二十萬匹、銀十萬兩，兩國以白溝河一帶為界。第二年起，宋在雄州等地開了「榷場」，兩國百姓可以在這裡做買賣。","s":"《宋史．食貨志》","q":"sq276c5"},{"n":"燕京","p":[64.5,30.2],"x":"燕京是遼國的南京。訂約以後，宋遼每年都派使者互相祝賀新年和生日，宋朝的使者要經過這裡，再往北去見遼國皇帝。","q":"lk007"}]},
+  yuan:{"t":"馬可．波羅的見聞","seal":"東遊","yr":"1275～1291 年（照遊記的說法）","src":"《馬可．波羅遊記》","tale":2,"x":"威尼斯人馬可．波羅說自己跟著父親和叔叔來到元朝，在中國住了十七年。他的遊記讓歐洲人認識了東方；不過書裡有些事跟中國史料對不上，學者對他到底去過哪些地方，到今天還有爭論。這條路照遊記自己的說法走。","s":[{"n":"上都","p":[69.1,36.6],"x":"遊記說，他們先到忽必烈夏天住的上都見到大汗。書裡描寫了上都的大理石宮殿，和大汗在草原上的行宮。","q":"sq201c6"},{"n":"大都","p":[70.1,41.7],"x":"大都是元朝的首都，遊記叫它「汗八里」，意思是「大汗的城」。書裡說城裡街道筆直、方方正正，整座城像一張棋盤。","th":"像棋盤的城：用車殺","q":"lk021c7"},{"n":"杭州","p":[79.1,61],"x":"遊記把杭州叫「行在」，說它是世上最美、最富的城市，城裡有大湖，還說有一萬二千座橋——這個數字顯然誇大了。","q":"sq293c5"},{"n":"泉州","p":[78.1,72.5],"x":"泉州在遊記裡叫「刺桐」，說是世上最大的港口之一。1291 年前後，他們從這裡坐船出海，護送一位元朝的姑娘嫁到伊兒汗國，從此回到家鄉。中國的史料《站赤》（收在《永樂大典》）也記了同行三位使者的名字，跟遊記對得上。","q":"lk133"}]},
+  ming:{"t":"永樂北遷","seal":"北遷","yr":"1403～1421 年","src":"《明史．成祖本紀》《明史．宋禮傳》","x":"明成祖朱棣原本是鎮守北平的燕王。他當上皇帝以後，把北平改名北京，疏通運河，親征漠北，最後在永樂十九年（1421 年）把都城從南京遷到北京。石桌往事的故事發生在永樂十年（1412 年），正好在這段時間的中間。","s":[{"n":"南京","p":[73.3,56],"x":"明朝一開始的都城在南京。永樂元年（1403 年），朱棣把自己起兵的北平改名為北京。","q":"gm2003-4A42BAK2R1r"},{"n":"泗州","p":[72.4,53.5],"nl":1,"x":"從南京往北，要經過淮水邊的泗州。石桌往事的雲河鎮就設定在泗州一帶（雲河鎮是虛構的）。真實的明朝泗州城，在清朝康熙年間被洪水淹沒，沉到了洪澤湖底。","th":"運河邊的小兵：小兵往前拱","q":"mr043c4"},{"n":"會通河","p":[66.7,46.8],"nl":1,"x":"永樂九年（1411 年），工部尚書宋禮重新疏通山東的會通河，在南旺分水，運河從此能一路通到北京。","th":"疏通河道：小兵往前拱","q":"sq150c6"},{"n":"北京","p":[66.1,35],"x":"永樂四年（1406 年）下詔營建北京宮殿，永樂十八年（1420 年）完工，第二年正式遷都北京。","q":"lk142"},{"n":"韃靼","p":[52,21.5],"x":"永樂八年（1410 年），朱棣第一次親征漠北，在斡難河打敗韃靼的本雅失里。他一生五次親征漠北，最後一次死在回程的榆木川。","th":"漠北騎兵：用馬殺","q":"lk154"}]},
+  qing:{"t":"從盛京到江南","seal":"南巡","yr":"1644～1703 年","src":"《清史稿．世祖本紀》《清史稿．聖祖本紀》","x":"清朝從東北的盛京起家，入關定都北京。康熙皇帝六次南巡江南，又在承德蓋了避暑山莊。","s":[{"n":"盛京","p":[80.9,39.1],"x":"盛京就是今天的瀋陽。努爾哈赤把都城遷到這裡，皇太極改名盛京，又在這裡把國號改為「清」。","q":"gm2006-K2C11RB4c1r"},{"n":"山海關","p":[76,43.8],"nl":1,"x":"順治元年（1644 年），明將吳三桂打開山海關，跟清軍一起打敗李自成，清軍從這裡入關。","q":"lk037c8"},{"n":"北京","p":[70.8,44.7],"x":"同一年秋天，順治皇帝從盛京來到北京，從此北京成了清朝的都城。","q":"sq010c5"},{"n":"江南","p":[76.7,63.8],"x":"康熙二十三年（1684 年），康熙第一次南巡，到了蘇州、江寧（南京），還到明孝陵祭拜。他一生南巡六次，主要是去看黃河和運河的河工。","th":"治河：小兵往前拱","q":"mr030"},{"n":"承德","p":[72.8,42.2],"x":"康熙四十二年（1703 年），在熱河（今天的承德）開始蓋避暑山莊。皇帝夏天在這裡處理政事，秋天到附近的木蘭圍場打獵、會見蒙古各部。","th":"木蘭秋獮：用馬殺","q":"lk217"}]}};
+const YU_DAY=2,YU_TOTAL=Object.values(YU_R).reduce((a,r)=>a+r.s.length,0);
+const yuAll=()=>store.get("yuRoute",{})||{};
+const yuOf=era=>{const A=yuAll()[era]||{};return{n:A.n||0,at:A.at||[],done:A.done||0}};
+const yuDoneN=()=>ARENA_ORDER.filter(k=>YU_R[k]&&yuOf(k).done).length;
+const yuStopsN=()=>ARENA_ORDER.reduce((a,k)=>a+(YU_R[k]?Math.min(yuOf(k).n,YU_R[k].s.length):0),0);
+function yuDay(){const d=localDay(),a=store.get("yuDay",null);return a&&a.d===d?a:{d,n:0}}
+const yuLeftToday=()=>Math.max(0,YU_DAY-yuDay().n);
+const yuTitle=()=>store.get("yuTitle",0)?"行萬里路":"";
+const yuName=s=>s.t||s.n;
+const yuFind=(era,nm)=>{const R=YU_R[era];return R?R.s.findIndex(s=>s.n===nm||(s.a||[]).includes(nm)):-1};
+const yuSeal=(era,on,big)=>`<span class="seal-st two${on?" on":""}${big?" big":""}">${esc((YU_R[era]||{}).seal||"？")}</span>`;
+const yuTale=R=>R.tale===1?"📖 傳說":R.tale===2?"📖 真偽有爭議":"";
+const yuInPark=era=>typeof PARK_J!=="undefined"&&PARK_J==="park"&&store.get("era","classic")===era;
+function yuBackHash(){const h=store.get("yuBack","");return typeof h==="string"&&/^#\//.test(h)&&!/^#\/canju/.test(h)?h:"#/journey/park"}
+
+/* 給 park3d.js 畫路線：只有石桌往事的園子才有；key 變了才重畫 */
+window.XQ_MAPROUTE=era=>{if(typeof PARK_J==="undefined"||PARK_J!=="park")return null;const R=YU_R[era];if(!R)return null;const N=R.s.length,n=Math.min(yuOf(era).n,N);
+  return{key:era+":"+n,n,all:n>=N,tip:n>=N?`🧭 ${R.t}：整條走完了`:`🧭 ${R.t}：點發亮的「${yuName(R.s[n])}」，在那裡過一關`,
+    s:R.s.map((s,i)=>({nm:s.n,t:s.nl?yuName(s):"",x:s.p[0],y:s.p[1],st:i<n?1:i===n?2:0}))}};
+
+/* 點到地圖上的地名（06-cpu.js parkInfo）：是這個朝代路線上的站，就換成「介紹＋這一站」的小卡；回傳 true＝處理好了 */
+function yuMapSheet(era,nm,d,en,yr){const i=yuFind(era,nm);if(i<0)return false;
+  sheet("📍 "+nm,b=>{b.innerHTML=`<div class="muted" style="margin:-4px 0 8px">${esc(en)}${yr?`・${esc(yr)}`:""}・地圖上的地名</div>${d?`<p style="line-height:1.8;margin:0 0 8px;font-size:16px">${esc(d)}</p>`:""}${yuStopHTML(era,i)}`;yuStopBind(b,era,i)});return true}
+function yuStopHTML(era,i){const R=YU_R[era],s=R.s[i],N=R.s.length,n=Math.min(yuOf(era).n,N),st=i<n?"done":i===n?"next":"lock";
+  const btn=st==="done"?`<button class="btn ghost" data-yu="go">↻ 再解一次（不算新的一站）</button>`:st==="next"?(yuLeftToday()?`<button class="btn" data-yu="go">⚔ 在這裡過一關</button>`:`<button class="btn" disabled>今天已經走了 ${YU_DAY} 站，明天再上路</button>`):`<button class="btn ghost" disabled>🔒 先走到第 ${n+1} 站「${esc(yuName(R.s[n]))}」</button>`;
+  return`<div class="yu-st"><div class="yu-sh"><b>🧭 ${esc(R.t)}・第 ${i+1}／${N} 站${st==="done"?" ✔":""}</b><span>${esc(R.yr)}${yuTale(R)?"・"+yuTale(R):""}</span></div>
+    <p><b>${esc(yuName(s))}</b>：${esc(s.x)}</p><p class="yu-src">出處：${esc(s.s||R.src)}</p>${s.th?`<p class="yu-th">♟ ${esc(s.th)}</p>`:""}
+    <div class="yu-row">${btn}<button class="btn ghost" data-yu="route">看整條路線</button></div></div>`}
+function yuStopBind(b,era,i){b.querySelectorAll("[data-yu]").forEach(y=>y.onclick=()=>{vibrate(5);if(y.dataset.yu==="go")yuGo(era,i);else yuRouteSheet(era)})}
+function yuGo(era,i){store.set("yuBack",location.hash);closeSheet();location.hash="#/canju/r/"+era+"/"+i}
+/* 一條路線：說明、出處、各站（走到才看得到說明）；在那個朝代的園子裡可以直接過下一站，不在就帶你去 */
+function yuRouteSheet(era){const R=YU_R[era];if(!R)return;const P=yuOf(era),N=R.s.length,n=Math.min(P.n,N),here=yuInPark(era);
+  sheet(`🧭 ${R.t}`,b=>{const nx=R.s[n];b.innerHTML=`<div class="yu-hd">${yuSeal(era,!!P.done,true)}<div><div class="muted">${esc(eraLabel(era))}・${esc(R.yr)}${yuTale(R)?"・"+yuTale(R):""}</div><div><b>${n}／${N} 站</b>${P.done?"・✔ 拿到路引":""}</div></div></div>
+    <p class="gd-hist" style="font-size:15px">${esc(R.x)}</p><p class="yu-src">出處：${esc(R.src)}</p>
+    <ol class="yu-list">${R.s.map((s,i)=>`<li class="${i<n?"on":i===n?"nx":""}"><b>${i<n?"✔":i===n?"➜":"・"} ${esc(yuName(s))}</b>${i<=n?`<span>${esc(s.x)}</span>`:`<span class="muted">走到這一站才看得到</span>`}</li>`).join("")}</ol>
+    ${P.done?`<p class="muted" style="font-size:13px">整條路線走完了，回到${esc(eraLabel(era))}的園子拉遠看地圖，路線是金色的。</p>`:here?(yuLeftToday()?`<button class="btn" id="yuNx" style="width:100%">⚔ 在「${esc(yuName(nx))}」過一關</button>`:`<button class="btn" disabled style="width:100%">今天已經走了 ${YU_DAY} 站，明天再上路</button>`)
+      :`<button class="btn" id="yuPk" style="width:100%">🌳 去${esc(eraLabel(era))}${era==="classic"?"":"的園子"}</button><p class="muted" style="font-size:12.5px;margin:6px 0 0">到了石桌往事的園子，兩指拉遠看地圖，點發亮的「${esc(yuName(nx))}」。</p>`}
+    <button class="btn ghost" id="yuBk" style="width:100%;margin-top:8px">🧭 全部路引</button>`;
+    const q=s=>b.querySelector(s);if(q("#yuNx"))q("#yuNx").onclick=()=>{vibrate(5);yuGo(era,n)};
+    if(q("#yuPk"))q("#yuPk").onclick=()=>{vibrate(5);store.set("era",era);try{applyEra()}catch(e){}closeSheet();location.hash="#/journey/park"};
+    q("#yuBk").onclick=()=>{vibrate(5);yuBook()}})}
+/* 路引冊（集章簿裡的新頁，跟擂主的印分開） */
+function yuBook(){const n=yuDoneN();
+  sheet(`🧭 路引（${n}／13）`,b=>{b.innerHTML=`<p class="muted" style="font-size:13px;margin:0 0 8px;line-height:1.6">每個朝代有一條真實的路線。在石桌往事的園子裡兩指拉遠看地圖，點發亮的地名就能在那裡過一關，一天最多走 ${YU_DAY} 站。整條走完拿到一張路引，13 條都走完得到稱號「行萬里路」。目前走過 ${yuStopsN()}／${YU_TOTAL} 站。${yuTitle()?"<br>🏅 你已經「行萬里路」了。":""}</p>
+    <div class="stamp-grid">${ARENA_ORDER.filter(k=>YU_R[k]).map(k=>{const R=YU_R[k],P=yuOf(k);return`<button class="stamp-cell" data-yr="${k}">${yuSeal(k,!!P.done)}<b>${esc(eraLabel(k))}</b><small>${esc(R.t)}<br>${Math.min(P.n,R.s.length)}／${R.s.length} 站</small></button>`}).join("")}</div>`;
+    b.querySelectorAll("[data-yr]").forEach(y=>y.onclick=()=>{vibrate(5);yuRouteSheet(y.dataset.yr)})})}
+/* 第一次在石桌往事的園子裡：告訴玩家地圖可以點（06-cpu.js parkUi 呼叫；等操作提示、開局特效過去） */
+function yuHintMaybe(host){if(store.get("yuHint",false))return;let n=0;const go=()=>{if(!host.isConnected||PARK_J!=="park"||n++>20)return;
+    if(!store.get("parkHint",false)||document.querySelector(".pkhint,.kjfx,.npc-ask")||(typeof fxBusy==="function"&&fxBusy()))return setTimeout(go,1500);
+    store.set("yuHint",true);const h=document.createElement("div");h.className="pkhint";h.innerHTML='<div class="pkh-hand">🧭</div><b>新玩法：輿圖遊歷</b><span>兩指捏合拉遠，看石台底下的朝代地圖<br>點發亮的地名，就能在那裡過一關</span>';host.append(h);setTimeout(()=>{h.classList.add("out");setTimeout(()=>h.remove(),500)},4500)};
+  setTimeout(go,6000)}
+
+/* 解題頁的設定（07c-canju.js CanjuPlay 呼叫）：r/<朝代>/<第幾站>、x/<冬至那年>/<第幾瓣>；err＝不能解 */
+function cjXMode(id){let m=/^r\/(\w+)\/(\d+)$/.exec(id);if(m)return yuXM(m[1],+m[2]);m=/^x\/(\w+)\/(\d+)$/.exec(id);if(m)return xhXM(m[1],+m[2]);return null}
+function yuXM(era,i){const R=YU_R[era],s=R&&R.s[i],back=yuBackHash;if(!s)return{err:"找不到這一站（路線可能更新了）。",back};const N=R.s.length,n=Math.min(yuOf(era).n,N);
+  if(i>n)return{err:`還沒走到這一站：先走第 ${n+1} 站「${yuName(R.s[n])}」。`,back};
+  if(i===n&&!yuLeftToday())return{err:`今天已經走了 ${YU_DAY} 站，明天再上路。`,back};
+  const nx=()=>{const j=Math.min(yuOf(era).n,N);return j<N&&j>i&&yuLeftToday()?j:-1};
+  return{id:s.q,rk:"cjRunR",back,top:"🧭 輿圖遊歷",icon:"🧭",ans:"看答案這題就沒有修為和心得，這一站也不算過關，確定？",
+    head:P=>`<b>🧭 ${esc(R.t)}・${esc(yuName(s))}（${i+1}／${N}）</b>・${esc(P.t)}・${cjLv(P.d)}　${cjEra(P)}<span class="muted">${cjSrc(P)}</span>`,
+    mark:()=>yuMark(era,i),done:(o,ans)=>yuDoneHTML(era,i,o,ans),
+    next:()=>{const j=nx();return j>=0?"#/canju/r/"+era+"/"+j:null},nextL:()=>{const j=nx();return j>=0?"下一站："+yuName(R.s[j]):"回園子"}}}
+/* 不看答案解開：是下一站就前進一站、修為 +15；整條走完記下來；13 條都走完 → 稱號 */
+function yuMark(era,i){const R=YU_R[era];if(!R)return null;const A=yuAll(),E=A[era]||(A[era]={n:0,at:[]}),N=R.s.length;E.at=E.at||[];let first=false,fin=false,title=false;
+  if(i===(E.n||0)&&i<N){first=true;E.n=i+1;E.at[i]=Date.now();const D=yuDay();D.n++;store.set("yuDay",D);if(E.n>=N&&!E.done){E.done=Date.now();fin=true}}
+  store.set("yuRoute",A);if(first)setTimeout(()=>addXP(15,"輿圖遊歷",`yu:${era}:${i}`),1600);
+  if(fin&&!store.get("yuTitle",0)&&ARENA_ORDER.every(k=>!YU_R[k]||(A[k]&&A[k].done))){store.set("yuTitle",Date.now());setTimeout(()=>addXP(50,"行萬里路","yu:title"),3400);title=true}
+  return{first,fin,title,n:E.n,N}}
+function yuDoneHTML(era,i,o,ans){const R=YU_R[era],s=R.s[i],nm=esc(yuName(s));if(ans||!o)return`<p class="muted">看了答案，「${nm}」這一站還不算過關；不看答案解開才算。</p>`;
+  if(!o.first)return`<p>🧭 「${nm}」之前就過關了（${esc(R.t)} ${Math.min(o.n,o.N)}／${o.N} 站）。</p>`;
+  return`<div class="yu-done">${o.fin?yuSeal(era,true,true):'<span class="yu-ic">🧭</span>'}<div><b>${nm}過關！修為 +15</b><div class="muted">${esc(R.t)}：${o.n}／${o.N} 站${o.fin?"":`・今天還能走 ${yuLeftToday()} 站`}</div>
+    ${o.fin?`<div class="yu-gold">整條路線走完了！拿到「${esc(R.seal)}」路引，地圖上的路線變成金色（集章簿 → 🧭 路引）。</div>`:""}${o.title?`<div class="yu-gold">🏅 13 條路線都走完了！得到稱號「行萬里路」，修為 +50</div>`:""}</div></div>`}
+
+/* ---------- D．九九消寒圖 ---------- */
+/* 81 題（canju-set.json 的題號），第 1 瓣最淺、第 81 瓣最深 */
+const XH_Q=["sq033","gm2007-4nr33K1AR2b","sq088","gm2007-94A43AK1B2r","sq110","gm2003-B44A2rN4K4b","sq176","gm2009-C3cB93AKA3r","zx044","gm2005-44A42B1KC3r","jz044","gm2010-p491R1AKA3r","sq045","sq331","gm2005-3R4B3K56B2b","sq365","ys234","jz048","lk124c5","ys067c4","sq114c9","sq125c9","mr110","sq253","lk070c4","lk148c5","lk172c7","sq104c5","sq140c8","sq171c6","sq220","sq320","zx038","ys193","sq116c7","ys068c4","lk183","sq143","sq066","lk017c6","lk116c6","mr001","ys061c7","ys110","sq034c6","sq406c4","gm1990-B4A42B1KA3r","sq165c6","lk229c5","sq068","gm2004-A1p14A44K4r","sq352","lk058c5","lk121","lk253","mr011","mr057","lk243","sq112","mr012","lk132","sq412c6","sq275","sq198","sq264","lk199","sq111","mr055","lk166","mr056","sq067","sq336c5","lk026","lk045","sq015","gm2013-4B493AKAB2r","lk022","sq099","sq231","gm2011-24A44KA1r1r","sq242"];
+/* 冬至的日期（台灣時間）：用 Meeus《天文算法》第 27 章（含 24 個週期項）算的，例如 2025 年 12/21 23:03、2026 年 12/22 04:50、2027 年 12/22 10:42 */
+const XH_SOL={2025:"2025-12-21",2026:"2026-12-22",2027:"2027-12-22",2028:"2028-12-21",2029:"2029-12-21",2030:"2030-12-22",2031:"2031-12-22",2032:"2032-12-21",2033:"2033-12-21",2034:"2034-12-22",2035:"2035-12-22",2036:"2036-12-21",2037:"2037-12-21",2038:"2038-12-22",2039:"2039-12-22",2040:"2040-12-21"};
+const XH_FROM=2026,XH_MAKE=3,XH_NINE=["一九","二九","三九","四九","五九","六九","七九","八九","九九"];
+/* 表外的年份：Meeus 的平均冬至公式（誤差在一小時內），換成台灣時間的日期 */
+function xhSol(y){if(XH_SOL[y])return XH_SOL[y];const Y=(y-2000)/1000,jd=2451900.05952+365242.74049*Y-.06223*Y*Y-.00823*Y*Y*Y+.00032*Y*Y*Y*Y;return new Date((jd-2440587.5)*864e5+8*36e5).toISOString().slice(0,10)}
+const xhDN=k=>Math.floor(Date.parse(k+"T00:00:00Z")/864e5),xhKey=n=>new Date(n*864e5).toISOString().slice(0,10),xhMD=k=>(+k.slice(5,7))+"/"+(+k.slice(8,10));
+/* 現在是哪一季、第幾天：season＝那一季冬至的年份（開發者預覽是 "dev"）；pre＝還沒上線（2026 年冬至以前）；active＝在九九裡；ended＝九九過了 */
+function xhNow(){const today=localDay(),T=xhDN(today),y=+today.slice(0,4);let sy=y;if(T<xhDN(xhSol(y)))sy=y-1;
+  const dev=typeof DEVMODE==="function"&&DEVMODE()?(store.get("xhDev",0)|0):0;
+  if(dev>0){const day=Math.min(82,dev);return{season:"dev",dev:true,start:xhKey(T-day+1),end:xhKey(T-day+81),day,active:day<=81,ended:day>81,pre:false,next:xhSol(sy+1),cd:xhDN(xhSol(sy+1))-T}}
+  const start=xhSol(sy),day=T-xhDN(start)+1,next=xhSol(sy+1);return{season:String(sy),start,end:xhKey(xhDN(start)+80),day,active:day>=1&&day<=81,ended:day>81,pre:sy<XH_FROM,next,cd:xhDN(next)-T}}
+const xhMei=season=>(store.get("xhMei",{})||{})[season]||{};
+function xhMake(){const d=localDay(),a=store.get("xhMake",null);return a&&a.d===d?a:{d,n:0}}
+/* 每一瓣的狀態：done 染好了、today 今天的、open 可以補、lock 日子還沒到 */
+function xhStateFn(N){const M=xhMei(N.season),t=N.pre?-1:N.active?N.day-1:81;return i=>M[i]?"done":i===t?"today":i<t?"open":"lock"}
+function xhOpen(){const h=location.hash;if(!/^#\/(canju|xiaohan)/.test(h))store.set("xhBack",h);closeSheet();location.hash="#/xiaohan"}
+function xhShort(N){if(N.pre)return`冬至 ${xhMD(N.next)} 開始・還有 ${N.cd} 天`;const c=Object.keys(xhMei(N.season)).length;
+  return N.active?`${XH_NINE[Math.floor((N.day-1)/9)]}第 ${(N.day-1)%9+1} 天・已染 ${c}／81`:`已染 ${c}／81・下一個冬至還有 ${N.cd} 天`}
+
+/* 一枝素梅：9 朵、每朵 9 瓣（一九在枝根，九九在枝梢）；st(i)＝第 i 瓣的狀態 */
+const XH_B=[[62,292],[128,228],[82,135],[196,170],[163,92],[300,214],[258,118],[226,42],[318,52]];
+function xhPetals(cx,cy,b,st,tap){let s="";for(let k=0;k<9;k++){const i=b*9+k,a=(-90+k*40)*Math.PI/180,x=cx+Math.cos(a)*13.5,y=cy+Math.sin(a)*13.5,c=st(i);
+    s+=`<ellipse class="xh-p ${c}"${tap?` data-i="${i}"`:""} cx="${x.toFixed(1)}" cy="${y.toFixed(1)}" rx="7" ry="12.5" transform="rotate(${k*40} ${x.toFixed(1)} ${y.toFixed(1)})"/>`}
+  return s+`<circle cx="${cx}" cy="${cy}" r="4.5" fill="#E8B83A" stroke="#B8862A" stroke-width="1"/>`}
+function xhSVG(st){let p="";XH_B.forEach(([x,y],b)=>{p+=`<g>${xhPetals(x,y,b,st,true)}<text x="${b===6?x+40:x}" y="${b===6?y+4:y+38}" class="xh-t">${XH_NINE[b]}</text></g>`});
+  return`<svg class="xh-svg" viewBox="0 0 360 340" role="img" aria-label="九九消寒圖：一枝素梅，九朵、每朵九瓣"><rect x="0" y="0" width="360" height="340" rx="14" fill="#F7EFDF"/>
+    <g fill="none" stroke="#5A3F2C" stroke-linecap="round"><path d="M18 332 C70 292 100 252 140 216 C185 176 232 142 270 96 C290 72 310 56 346 34" stroke-width="7"/><path d="M140 216 C120 182 104 156 84 136" stroke-width="4"/>
+    <path d="M186 178 C190 146 180 116 165 94" stroke-width="3.5"/><path d="M232 142 C260 160 284 188 300 214" stroke-width="4"/><path d="M270 96 C256 76 242 60 228 44" stroke-width="3"/></g>${p}</svg>`}
+function xhMini(i,season){const b=Math.floor(i/9),M=xhMei(season);return`<svg viewBox="-30 -30 60 60" width="58" height="58" style="flex:none">${xhPetals(0,0,b,j=>M[j]?(j===i?"done new":"done"):"lock",false)}</svg>`}
+
+/* 消寒圖頁 #/xiaohan */
+function XiaohanPage(v){const bk=(()=>{const h=store.get("xhBack","");return typeof h==="string"&&/^#\//.test(h)&&!/^#\/(canju|xiaohan)/.test(h)?h:"#/"})();
+  setTop("❄ 九九消寒圖",bk);if(typeof setTabs==="function")setTabs(false);v.className="view";
+  const HX=`<div class="card xh-hist"><b>📜 九九消寒圖</b><p>民間從冬至那天開始「數九」：每九天是一個「九」，數完九個九、八十一天，天氣就暖和了。明朝劉侗、于奕正寫的《帝京景物略》記載北京人的習俗：「日冬至，畫素梅一枝，為瓣八十有一，日染一瓣。」——冬至那天畫一枝白梅，一共八十一片花瓣，每天染紅一片；花瓣染完，九九也過完，春天就來了。</p><p class="muted" style="font-size:13px;margin:0">這裡把它換成一天一題殘局：解開，就染一瓣。題目從淺到深，都經過 Pikafish 驗證。</p></div>`;
+  const HOW=`<details class="card"><summary><b>怎麼玩</b></summary><p class="muted" style="line-height:1.7;margin:6px 0 0">冬至那天起，每天開放一瓣（第幾天就是第幾瓣）。點那一瓣、或按「解今天這一瓣」，不看答案解開，花瓣就染紅。<br>漏掉的日子可以補做，一天最多補 ${XH_MAKE} 瓣；九九過了也能慢慢補。<br>每開滿一朵（9 瓣）修為 +10，81 瓣都染完得到稱號「九九消寒」，修為 +30。這些題不算今日茶單。</p></details>`;
+  const draw=()=>{if(!v.isConnected)return;const N=xhNow(),st=xhStateFn(N),M=xhMei(N.season),cnt=Object.keys(M).length,mk=xhMake(),mkLeft=Math.max(0,XH_MAKE-mk.n);
+    const opens=[];for(let i=0;i<81;i++)if(st(i)==="open")opens.push(i);const t=N.active?N.day-1:-1;
+    const dev=typeof DEVMODE==="function"&&DEVMODE()?`<div class="card xh-dev">🛠 開發者預覽${N.dev?`：假裝是第 ${N.day} 天${N.day>81?"（九九已過）":""}（另存在 "dev"，不動真的進度）<div class="xh-devb"><button class="btn ghost" data-dv="-1">−1 天</button><button class="btn ghost" data-dv="1">＋1 天</button><button class="btn ghost" data-dv="9">＋9 天</button><button class="btn ghost" data-dv="0">結束預覽</button></div>`:`<div class="xh-devb"><button class="btn ghost" data-dv="1">從冬至第 1 天開始預覽</button></div>`}</div>`:"";
+    let head,acts="";
+    if(N.pre){head=`<div class="xh-cd"><b>❄ 還有 ${N.cd} 天到冬至</b><span>${N.next.slice(0,4)} 年冬至是 ${xhMD(N.next)}。那天起 81 天，每天一題殘局，解開就染一瓣梅花。</span></div>`}
+    else{const b=N.active?Math.floor(t/9):8;head=`<div class="xh-cd"><b>${N.active?`❄ 今天是${XH_NINE[b]}第 ${t%9+1} 天`:"🌸 九九過完了"}</b><span>${N.dev?"預覽":N.season+" 年冬至"}（${xhMD(N.start)}）起・到 ${xhMD(N.end)}・已染 <b>${cnt}</b>／81 瓣${N.ended?`・下一個冬至 ${xhMD(N.next)}（還有 ${N.cd} 天）`:""}</span></div>`;
+      if(N.active)acts+=st(t)==="done"?`<button class="btn ghost" disabled>✔ 今天這一瓣染好了</button>`:`<button class="btn" data-go="${t}">❄ 解今天這一瓣（${XH_NINE[b]}第 ${t%9+1} 瓣）</button>`;
+      if(opens.length)acts+=mkLeft?`<button class="btn${N.active&&st(t)!=="done"?" ghost":""}" data-go="${opens[0]}">補做一瓣（還有 ${opens.length} 瓣沒染・今天還能補 ${mkLeft} 瓣）</button>`:`<button class="btn ghost" disabled>今天補了 ${XH_MAKE} 瓣，明天再補（還有 ${opens.length} 瓣）</button>`;
+      if(!acts&&cnt>=81)acts=`<div class="yu-gold" style="text-align:center">🏅 81 瓣都染完了，春天到了！稱號「九九消寒」</div>`}
+    v.innerHTML=`<div class="pad xh">${dev}<div class="card">${head}</div><div class="xh-art">${xhSVG(st)}</div>
+      <div class="xh-lg"><span><i class="xh-dot done"></i>染好了</span><span><i class="xh-dot today"></i>今天</span><span><i class="xh-dot open"></i>可以補</span><span><i class="xh-dot lock"></i>還沒到</span></div>
+      ${acts?`<div class="xh-acts">${acts}</div>`:""}${HX}${HOW}</div>`;
+    const go=i=>{const s=st(i);if(s==="lock")return toast(N.pre?"冬至還沒到":"這一瓣的日子還沒到");if(s==="done")return toast("這一瓣已經染好了");if(s==="open"&&!mkLeft)return toast(`今天補了 ${XH_MAKE} 瓣，明天再補`);vibrate(5);location.hash="#/canju/x/"+N.season+"/"+i};
+    v.querySelectorAll("[data-i]").forEach(e=>e.addEventListener("click",()=>go(+e.dataset.i)));v.querySelectorAll("[data-go]").forEach(e=>e.onclick=()=>go(+e.dataset.go));
+    v.querySelectorAll("[data-dv]").forEach(e=>e.onclick=()=>{vibrate(5);const d=+e.dataset.dv,c=store.get("xhDev",0)|0;store.set("xhDev",d===0?0:Math.max(1,Math.min(82,(c||0)+d)));draw()})};
+  draw();return{}}
+/* 燈籠：節令小卡（石桌往事的園子裡點燈籠，06-cpu.js parkInfo；秘境棋友先檢查） */
+function xhLantern(era){const N=xhNow(),E=PARK_INFO[era]||PARK_INFO.classic,ln=E.lantern;vibrate(5);
+  sheet("❄ 節令・九九消寒圖",b=>{b.innerHTML=`<p class="gd-hist" style="font-size:15px">${N.pre?`冬至還有 <b>${N.cd}</b> 天（${xhMD(N.next)}）。那天起 81 天，每天一題殘局，解開就染一瓣梅花——這是明朝北京人「九九消寒圖」的習俗。`:N.active?`今天是${XH_NINE[Math.floor((N.day-1)/9)]}第 ${(N.day-1)%9+1} 天，消寒圖已染 ${Object.keys(xhMei(N.season)).length}／81 瓣。`:`九九過完了，消寒圖已染 ${Object.keys(xhMei(N.season)).length}／81 瓣；沒染的花瓣每天還能補 ${XH_MAKE} 瓣。`}</p>
+    <button class="btn" id="xhGo" style="width:100%">打開消寒圖</button>${ln?`<p class="muted" style="font-size:12.5px;margin:10px 0 0">這盞${esc(ln[0])}：${esc(ln[1])}</p>`:""}`;b.querySelector("#xhGo").onclick=()=>xhOpen()})}
+function xhMark(season,i,st){const A=store.get("xhMei",{})||{},M=A[season]||(A[season]={});if(M[i])return{first:false,season};M[i]=Date.now();store.set("xhMei",A);
+  if(st==="open"){const m=xhMake();m.n++;store.set("xhMake",m)}
+  const b=Math.floor(i/9),bf=[0,1,2,3,4,5,6,7,8].every(k=>M[b*9+k]),cnt=Object.keys(M).length,real=season!=="dev";let title=false;
+  if(bf&&real)setTimeout(()=>addXP(10,"消寒圖",`xh:${season}:${b}`),1600);
+  if(cnt>=81){const T=store.get("xhTitle",{})||{};if(!T[season]){T[season]=Date.now();store.set("xhTitle",T);title=true;if(real)setTimeout(()=>addXP(30,"九九消寒",`xh:${season}:all`),3400)}}
+  return{first:true,season,b,bf,cnt,title,make:st==="open"}}
+const xhTitle=()=>Object.keys(store.get("xhTitle",{})||{}).some(k=>k!=="dev")?"九九消寒":"";
+function xhXM(season,i){const back=()=>"#/xiaohan",N=xhNow();if(N.pre)return{err:"冬至還沒到，九九消寒圖還沒開始。",back};
+  if(season!==N.season||!(i>=0&&i<81))return{err:"這一瓣不是這一季消寒圖上的。",back};
+  const st=xhStateFn(N)(i);if(st==="lock")return{err:"這一瓣的日子還沒到。",back};if(st==="open"&&xhMake().n>=XH_MAKE)return{err:`今天已經補了 ${XH_MAKE} 瓣，明天再補。`,back};
+  return{id:XH_Q[i],rk:"cjRunX",back,top:"❄ 九九消寒圖",icon:"❄",ans:"看答案這題就沒有修為和心得，這一瓣也不會染上顏色，確定？",
+    head:P=>`<b>❄ ${XH_NINE[Math.floor(i/9)]}第 ${i%9+1} 瓣${st==="open"?"（補做）":""}</b>・${esc(P.t)}・${cjLv(P.d)}　${cjEra(P)}<span class="muted">${cjSrc(P)}</span>`,
+    mark:()=>xhMark(season,i,st),done:(o,ans)=>xhDoneHTML(i,o,ans),next:()=>null,nextL:()=>"回消寒圖"}}
+function xhDoneHTML(i,o,ans){if(ans||!o)return`<p class="muted">看了答案，這一瓣還不會染上顏色；不看答案解開才算。</p>`;if(!o.first)return`<p>❄ 這一瓣之前就染好了。</p>`;
+  return`<div class="yu-done">${xhMini(i,o.season)}<div><b>❄ ${XH_NINE[o.b]}第 ${i%9+1} 瓣染上了${o.make?"（補做）":""}</b><div class="muted">消寒圖已染 ${o.cnt}／81 瓣${o.make?`・今天還能補 ${Math.max(0,XH_MAKE-xhMake().n)} 瓣`:""}</div>
+    ${o.bf?`<div class="yu-gold">🌸 ${XH_NINE[o.b]}這朵梅花開滿了！${o.season!=="dev"?"修為 +10":""}</div>`:""}${o.title?`<div class="yu-gold">🏅 81 瓣都染完了，春天到了！得到稱號「九九消寒」${o.season!=="dev"?"，修為 +30":""}</div>`:""}</div></div>`}
+
+/* 今日茶單不出這些題（棋史卡 C、輿圖遊歷 B、消寒圖 D 用的；07c-canju.js cjToday） */
+function cjReserved(){if(cjReserved.S)return cjReserved.S;const S=new Set(XH_Q);for(const k in YU_R)for(const s of YU_R[k].s)S.add(s.q);if(typeof HIST!=="undefined")for(const k in HIST)for(const q of HIST[k].q)S.add(q);return cjReserved.S=S}
+
+/* ---------- 入口：驛站「🌸 園子棋友」那一列、我的角色小卡（07d-garden.js 的 gardenInn／gardenMeCard 呼叫） ---------- */
+function garden2InnHTML(){return`<button class="item" id="gdYu"><span class="lb" style="font-size:22px">🧭</span><span class="tx"><b>輿圖遊歷・路引${yuTitle()?"・🏅 行萬里路":""}</b><span>走完 ${yuDoneN()}／13 條・${yuStopsN()}／${YU_TOTAL} 站</span></span><span class="muted">›</span></button><button class="item" id="gdXh"><span class="lb" style="font-size:22px">❄</span><span class="tx"><b>九九消寒圖${xhTitle()?"・🏅 九九消寒":""}</b><span>${esc(xhShort(xhNow()))}</span></span><span class="muted">›</span></button>`}
+function garden2MeHTML(){const N=xhNow();return`<button id="gdMeY"><span>🧭</span><b>輿圖遊歷</b><small>路引 ${yuDoneN()}／13</small></button><button id="gdMeX"><span>❄</span><b>消寒圖</b><small>${N.pre?`冬至還有 ${N.cd} 天`:`已染 ${Object.keys(xhMei(N.season)).length}／81`}</small></button>`}
+function garden2Bind(box){for(const id of["#gdYu","#gdMeY"]){const e=box.querySelector(id);if(e)e.onclick=()=>{vibrate(5);yuBook()}}for(const id of["#gdXh","#gdMeX"]){const e=box.querySelector(id);if(e)e.onclick=()=>{vibrate(5);xhOpen()}}}
 /* ================= 🕰 回到當年（意見回饋 313）=================
    石桌往事裡的對局，用「妙棋精選」裡 Pikafish 驗證過的特級大師實戰來演：你站在旁邊看，不能插手；
    棋自動一步一步下，下到那一步妙棋之前停下來——換作是你，會怎麼走？
@@ -5805,8 +6037,10 @@ function stampBook(start){const S=arenaStamps(),n=Object.keys(S).length,t=arenaT
   sheet("📜 集章簿",b=>{b.innerHTML=`<p style="margin:0 0 8px">已蓋 <b>${n}</b> / 13 枚${t?`・稱號 <b style="color:var(--accent)">「${esc(t)}」</b>`:""}${nx?`<br><span class="muted" style="font-size:13px">再蓋 ${nx[0]-n} 枚得到稱號「${esc(nx[1])}」</span>`:""}</p>
     <div class="stamp-grid">${ARENA_ORDER.map(k=>`<button class="stamp-cell" data-e="${k}">${sealHTML(k,!!S[k])}<b>${esc(eraLabel(k))}</b><small>${S[k]?new Date(S[k].at).toLocaleDateString():esc(ARENA[k].name)}</small></button>`).join("")}</div>
     <p class="muted" style="font-size:12px;line-height:1.6;margin-top:10px">朝代擂台在園子 3D 棋盤裡：首頁 → ⚔ 對戰 → 🏯 朝代擂台。集到 3、7、13 枚會得到稱號，在大廳點你的資料卡大家都看得到。</p>
-    ${OFF?`<button class="btn ghost" id="lgBk" style="width:100%;margin-top:6px">🪨 石桌往事（已解開 ${legendState().n}／36 回）</button>`:""}`;
+    ${OFF?`<button class="btn ghost" id="lgBk" style="width:100%;margin-top:6px">🪨 石桌往事（已解開 ${legendState().n}／36 回）</button>`:""}
+    ${typeof yuBook==="function"?`<button class="btn ghost" id="yuBkS" style="width:100%;margin-top:6px">🧭 路引（輿圖遊歷 ${yuDoneN()}／13 條）</button>`:""}`;
     {const lb=b.querySelector("#lgBk");if(lb)lb.onclick=()=>legendBook()}
+    {const yb=b.querySelector("#yuBkS");if(yb)yb.onclick=()=>yuBook()}   /* 意見回饋 658（B）：集章簿裡的新頁「路引」，跟擂主的印分開（07e-garden2.js） */
     b.querySelectorAll(".stamp-cell").forEach(c=>c.onclick=()=>{const k=c.dataset.e;store.set("era",k);try{applyEra&&applyEra()}catch(e){}arenaSheet(k,start)})})}
 // 蓋章動畫：畫面中間一方朱印「蓋」下去
 function stampFx(era){const A=ARENA[era];if(!A)return;const d=document.createElement("div");d.className="stampfx";d.innerHTML=sealHTML(era,true,true);document.body.append(d);vibrate([20,60,40]);setTimeout(()=>d.remove(),2600)}
@@ -6101,6 +6335,9 @@ const BOT_FAQ=[
  [["猜著法","猜棋","名局練習","猜大師"],"首頁「📚 學習 → 🎓 猜著法」：跟著大師名局（許銀川對局或特級大師對局）一步步猜下一手，Pikafish 算你猜的那步比最好的少幾分，跟大師一樣得 10 分。資料會進到我的棋力的著法品質。","#/guess","去猜著法"],
  [["自適應","測驗怎麼算","棋力測驗"],"棋力測驗（首頁「📚 學習 → 🎯 棋力測驗」）是自適應的：答對就出難一點、答錯就簡單一點，每題挑最能分辨你程度的題目，大約 8～20 題就能估出段位，還會告訴你 80% 把握的範圍。","#/quiz","去做測驗"],
  [["集章","集章簿","印章","蓋章","朱印"],"集章簿有 13 個朝代的印章：打贏該朝代的擂主就蓋一枚。在首頁「⚔ 對戰 → 🏯 朝代擂台」的擂主卡按「📜 集章簿」可以看，點還沒蓋的朝代就能換過去挑戰。","#/arena","去朝代擂台"],
+ /* 意見回饋 658（B、D）：輿圖遊歷、九九消寒圖（07e-garden2.js） */
+ [["輿圖遊歷","路引","地圖路線","行萬里路"],"石桌往事的園子裡，兩指拉遠就看得到石台底下的朝代地圖。每個朝代有一條真實的路線（例如秦朝的始皇東巡、唐朝的玄奘西行），點發亮的地名就能在那裡解一題殘局過關，一天最多走 2 站。整條走完拿到一張路引（集章簿 → 🧭 路引），13 條都走完得到稱號「行萬里路」。"],
+ [["消寒圖","九九消寒圖","數九","冬至"],"冬至那天起 81 天，每天一題殘局，解開就染一瓣梅花，這是明朝《帝京景物略》記載的「九九消寒圖」。漏掉的日子可以補，一天最多補 3 瓣。在驛站的「🌸 園子棋友」，或石桌往事的園子裡點燈籠，都能打開。","#/xiaohan","打開消寒圖"],
  [["稱號","擂台新秀","七朝豪傑","十三朝棋王"],"集章簿蓋到 3 枚得到「擂台新秀」、7 枚「七朝豪傑」、13 枚「十三朝棋王」。稱號會顯示在線上大廳的棋友資料卡，大家點你都看得到。"],
  [["公園","公園模式","3D","公園下棋","園子","園林","苑囿"],"挑戰電腦或線上對戰時按右上角 🌳 就到園子 3D 棋盤，有 13 個朝代的風景可以 360 度轉頭看（各朝代的叫法不同：秦漢叫苑囿、魏晉以後叫園林、清代叫園子）；在園子裡點樹、桌子、茶杯、燈籠會跳出介紹。朝代擂台也在園子裡（首頁「⚔ 對戰 → 🏯 朝代擂台」）。按 ▦ 回棋盤模式。","#/cpu","去園子下棋"],
  [["擺盤","推演","試走","變化"],"對局中按下方「🧪 擺盤」會開一張新棋盤，從當下局面紅黑兩邊都由你走，試各種變化，不影響正在下的那盤；觀戰時也可以用。"],
