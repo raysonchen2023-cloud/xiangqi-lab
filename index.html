@@ -963,6 +963,12 @@ body.xqt-on .modal{z-index:10000}body.xqt-on .toast{z-index:10001}body.xqt-on .x
 .shp-spot:active{transform:translate(-50%,-50%) scale(.95)}.shp-pznone{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);background:rgba(20,16,12,.75);color:#fff;padding:10px 14px;border-radius:12px}
 .shp-pzhint{margin:10px 2px;font-size:12.5px;text-align:center}
 .shp-page{margin:0}
+
+/* 709 補充：石桌上的棋子跟著題目、開始下棋時拉近 */
+.pz-svg{position:absolute;left:0;top:0;width:100%;height:auto;aspect-ratio:768/1376;pointer-events:none;transition:opacity .16s}
+.shp-spot.sel{border-color:#fff;box-shadow:0 0 18px rgba(255,224,138,.95);transform:translate(-50%,-50%) scale(1.08)}
+.pz-go{position:absolute;left:50%;bottom:4%;transform:translateX(-50%);width:auto;padding:12px 28px;font-size:17px;border-radius:99px;box-shadow:0 4px 16px rgba(0,0,0,.45);z-index:3}
+#pzPage{transition:transform .42s ease-in,opacity .42s ease-in;transform-origin:50% 60%}#pzPage.zoom{transform:scale(2.2);opacity:0}
 </style></head><body>
 <div class="app">
  <div class="topbar" id="topbar"><button class="ib" id="back" hidden><b>‹</b>返回</button><h1 id="title">象棋千秋</h1><span id="topRight"></span></div>
@@ -1010,7 +1016,7 @@ body.xqt-on .modal{z-index:10000}body.xqt-on .toast{z-index:10001}body.xqt-on .x
       if(!window.caches)return go();caches.keys().then(function(ks){return Promise.all(ks.filter(function(k){return k.indexOf("xqlab-app-")===0}).map(function(k){return caches.delete(k)}))})
         .then(function(){return navigator.serviceWorker&&navigator.serviceWorker.getRegistration()}).then(function(r){return r&&r.update()}).catch(function(){}).then(go)}};setTimeout(chk,4000)})();
 </script>
-<script>window.XQ_OFFLINE=true;window.XQ_BUILD="20261106-2125";</script>
+<script>window.XQ_OFFLINE=true;window.XQ_BUILD="20261106-2140";</script>
 <script src="core.js"></script>
 <script src="engine.js"></script>
 <script src="local.js"></script>
@@ -3483,7 +3489,7 @@ function onboard(){if(journey())journeyLock();else titleScreen({})}
 // ================= 設定：棋盤風格、棋子樣式、走棋顯示 =================
 const SAMPLE_FEN0="rnbakabnr/9/1c5c1/p1p1p1p1p/9/9/P1P1P1P1P/1C5C1/9/RNBAKABNR",SAMPLE_FEN1="rnbakabnr/9/1c5c1/p1p1p1p1p/9/9/P1P1P1P1P/1C2C4/9/RNBAKABNR",SAMPLE_LAST={f:70,t:67};
 /* 意見回饋 661：關於頁顯示整包遊戲要多大空間。XQ_SIZES 由 build-site.js 建置時填入（開發中的 m.html 是 null，就不顯示） */
-const XQ_SIZES={"pre":175983451,"code":12562739,"eng":51511005,"gm":33668932,"bgm":259516351,"opt":[["比賽對局 1956–2010",21765744],["比賽對局 2011–2014",25596413],["比賽對局 2015–2019",24821916]],"all":616518531,"other":11091980};
+const XQ_SIZES={"pre":175983451,"code":12566033,"eng":51511005,"gm":33668932,"bgm":259516351,"opt":[["比賽對局 1956–2010",21765744],["比賽對局 2011–2014",25596413],["比賽對局 2015–2019",24821916]],"all":616513271,"other":11083426};
 const szMB=b=>b>=1073741824?(b/1073741824).toFixed(1)+" GB":Math.max(1,Math.round(b/1048576))+" MB";
 function aboutSizes(){const S=XQ_SIZES;if(!S)return"";const opt=S.opt||[];   /* 意見回饋 662：玩家只看總數，細項只在開發者模式顯示 */
   return `<div class="row" style="justify-content:space-between"><span class="muted">整包下載</span><b>約 ${szMB(S.all)}</b></div>
@@ -6775,15 +6781,28 @@ function shipTabs(v){const root=v.querySelector(".shp");if(!root)return null;
 
 /* 意見回饋 709（開發者 11/6）：星槎頁的入口各開一頁滿版水墨圖，圖上再點下去就到棋盤。先做千秋殘局：石桌特寫，三團金色星光＝這一站的三題 */
 const SHIP_PZ_SPOT=[[17,42],[80,37],[64,85]];
+/* 石桌棋盤在圖上的位置（圖 768×1376；路 u＝0..8、橫線 v＝0..9，黑方底線 v＝0），照 page_canju.webp 量的 */
+const PZ_TL=[320,582],PZ_TR=[697,737],PZ_BL=[65,853],PZ_BR=[453,1065];
+const pzP=(u,v)=>{const s=u/8,t=v/9;return[(1-s)*(1-t)*PZ_TL[0]+s*(1-t)*PZ_TR[0]+(1-s)*t*PZ_BL[0]+s*t*PZ_BR[0],(1-s)*(1-t)*PZ_TL[1]+s*(1-t)*PZ_TR[1]+(1-s)*t*PZ_BL[1]+s*t*PZ_BR[1]]};
+const PZ_CN={r:"車",n:"馬",b:"象",a:"士",k:"將",c:"砲",p:"卒",R:"俥",N:"傌",B:"相",A:"仕",K:"帥",C:"炮",P:"兵"};
+function pzSvg(fen){const L=[];String(fen||"").split(" ")[0].split("/").forEach((row,v)=>{let u=0;for(const c of row){if(/\d/.test(c)){u+=+c;continue}if(PZ_CN[c])L.push([u,v,c]);u++}});
+  L.sort((a,b)=>pzP(a[0],a[1])[1]-pzP(b[0],b[1])[1]);const rx=21.4,ry=17.6,th=6.7;
+  return L.map(([u,v,c])=>{const[x,y]=pzP(u,v),red=c===c.toUpperCase(),sd=red?"#78100a":"#080808",tp=red?"#d6221a":"#1d1d1d",hi=red?"#ff7864":"#787878",tc=red?"#ffecd6":"#e8e8e4";
+    return`<g><ellipse cx="${x+4.6}" cy="${y+th+4.6}" rx="${rx}" ry="${ry}" fill="rgba(0,0,0,.28)"/><ellipse cx="${x}" cy="${y+th}" rx="${rx}" ry="${ry}" fill="${sd}"/><rect x="${x-rx}" y="${y}" width="${rx*2}" height="${th}" fill="${sd}"/><ellipse cx="${x}" cy="${y}" rx="${rx}" ry="${ry}" fill="${tp}" stroke="${sd}" stroke-width="2"/><ellipse cx="${x}" cy="${y}" rx="${rx*.78}" ry="${ry*.78}" fill="none" stroke="${hi}" stroke-width="1.4"/><text x="${x}" y="${y+8.6}" text-anchor="middle" font-size="25" font-family="var(--serif),serif" font-weight="700" fill="${tc}">${PZ_CN[c]}</text></g>`}).join("")}
 function ShipPz(v){setTop("♟ 千秋殘局","#/adventure");setTabs(false);v.className="view";const k=shipHere(),T=SHIP_STOP[k]||{};
-  v.innerHTML=`<div class="shp-page"><img src="data/shipmap/page_canju.webp" alt="星槎石桌"><div class="shp-cap"><b>♟ 千秋殘局・${esc(shipShort(k))}</b><small>${esc(T.place||"")}</small></div><div id="pzSpots"></div></div><div id="pzMore"></div>`;
-  shipBank().then(()=>{if(!v.isConnected)return;const Lz=shipPuzzles(k)||[],B=SHIP_BANK.D.byId,sp=v.querySelector("#pzSpots"),more=v.querySelector("#pzMore");
+  v.innerHTML=`<div class="shp-page" id="pzPage"><img src="data/shipmap/page_canju.webp" alt="星槎石桌"><svg class="pz-svg" viewBox="0 0 768 1376" preserveAspectRatio="xMidYMid meet" id="pzSvg"></svg><div class="shp-cap"><b>♟ 千秋殘局・${esc(shipShort(k))}</b><small id="pzCap">${esc(T.place||"")}</small></div><div id="pzSpots"></div><button class="btn pz-go" id="pzGo" style="display:none">♟ 開始下棋</button></div><div id="pzMore"></div>`;
+  shipBank().then(()=>{if(!v.isConnected)return;const Lz=(shipPuzzles(k)||[]).slice(0,3),B=SHIP_BANK.D.byId,sp=v.querySelector("#pzSpots"),more=v.querySelector("#pzMore"),svg=v.querySelector("#pzSvg"),cap=v.querySelector("#pzCap"),go=v.querySelector("#pzGo");
     if(!Lz.length){sp.innerHTML=`<div class="shp-pznone">🧩 這一站的千秋殘局還在準備中</div>`;return}
-    sp.innerHTML=Lz.slice(0,3).map((id,i)=>{const P=B[id]||{},r=shipRec(k,id),nm=(typeof shipSlotName==="function"?shipSlotName(k,i,P):"")||`第 ${i+1} 題`,[x,y]=SHIP_PZ_SPOT[i]||[50,50];
-      return`<button class="shp-spot${r?" ok":""}" data-pz="${esc(id)}" style="left:${x}%;top:${y}%"><b>${r?(r.h?"◐":"●"):"★"} 第 ${i+1} 題</b><small>${esc(String(nm).replace(/^第\s*\d+\s*題・?/,""))}</small></button>`}).join("");
+    sp.innerHTML=Lz.map((id,i)=>{const P=B[id]||{},r=shipRec(k,id),nm=(typeof shipSlotName==="function"?shipSlotName(k,i,P):"")||`第 ${i+1} 題`,[x,y]=SHIP_PZ_SPOT[i]||[50,50];
+      return`<button class="shp-spot${r?" ok":""}" data-i="${i}" style="left:${x}%;top:${y}%"><b>${r?(r.h?"◐":"●"):"★"} 第 ${i+1} 題</b><small>${esc(String(nm).replace(/^第\s*\d+\s*題・?/,""))}</small></button>`}).join("");
+    let cur=-1;const pick=i=>{cur=i;const P=B[Lz[i]]||{};svg.style.opacity=0;setTimeout(()=>{svg.innerHTML=pzSvg(P.fen);svg.style.opacity=1},160);
+      sp.querySelectorAll(".shp-spot").forEach(b=>b.classList.toggle("sel",+b.dataset.i===i));cap.textContent=`第 ${i+1} 題・${String(P.task||P.t||"").split("：")[0]}${P.side==="b"?"・黑方先走":"・紅方先走"}`;go.style.display=""};
+    sp.querySelectorAll(".shp-spot").forEach(b=>b.onclick=()=>{vibrate(5);pick(+b.dataset.i)});
+    go.onclick=()=>{if(cur<0)return;vibrate(8);const pg=v.querySelector("#pzPage");pg.classList.add("zoom");setTimeout(()=>{location.hash="#/canju/s/"+k+"/"+encodeURIComponent(Lz[cur])},430)};
+    pick(Math.max(0,Lz.findIndex(id=>!shipRec(k,id))));
     const X=(typeof shipExtras==="function"?shipExtras(k):[])||[];
-    more.innerHTML=`<p class="muted shp-pzhint">點石桌旁的星光開始解題・● 自己解開　◐ 用過提示　★ 還沒解</p>`+(X.length?`<div class="items" style="padding:0">${X.map(id=>{const P=B[id]||{};return`<button class="item" data-pz="${esc(id)}"><span class="lb">🔥</span><span class="tx"><b>選做・${esc(String((P.src||{}).title||"").replace(/^.*・/,""))}</b><span>不計點、不給修為</span></span><span class="muted">›</span></button>`}).join("")}</div>`:"");
-    v.querySelectorAll("[data-pz]").forEach(b=>b.onclick=()=>{vibrate(5);location.hash="#/canju/s/"+k+"/"+encodeURIComponent(b.dataset.pz)})})}
+    more.innerHTML=`<p class="muted shp-pzhint">點石桌旁的星光看那一題，石桌上就換成那一盤；再按「開始下棋」・● 自己解開　◐ 用過提示　★ 還沒解</p>`+(X.length?`<div class="items" style="padding:0">${X.map(id=>{const P=B[id]||{};return`<button class="item" data-pz="${esc(id)}"><span class="lb">🔥</span><span class="tx"><b>選做・${esc(String((P.src||{}).title||"").replace(/^.*・/,""))}</b><span>不計點、不給修為</span></span><span class="muted">›</span></button>`}).join("")}</div>`:"");
+    more.querySelectorAll("[data-pz]").forEach(b=>b.onclick=()=>{vibrate(5);location.hash="#/canju/s/"+k+"/"+encodeURIComponent(b.dataset.pz)})})}
 
 /* ---------- 星槎頁 #/adventure ---------- */
 function Voyage(v){setTop("⛵ 雲河星槎","#/");setTabs(true,"#/");v.className="view";
