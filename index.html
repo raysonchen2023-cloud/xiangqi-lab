@@ -894,6 +894,9 @@ body.xqt-on .modal{z-index:10000}body.xqt-on .toast{z-index:10001}body.xqt-on .x
 /* 意見回饋 679：點 3D 角色的物件跳出的介紹 */
 .fig-item{position:fixed;left:12px;right:12px;bottom:calc(var(--safeB,0px) + 74px);max-width:560px;margin:0 auto;z-index:60;background:rgba(255,250,240,.98);border-radius:16px;padding:14px 18px 12px;box-shadow:0 6px 24px rgba(0,0,0,.28);color:#3a2e22;line-height:1.75;font-size:15px;border:1px solid rgba(142,42,34,.18);animation:figIn .2s ease-out}   /* 意見回饋 681：寬一點、放在畫面下方 */
 .fig-item b{font-size:16px;color:#8E2A22}.fig-item p{margin:6px 0 4px}.fig-item small{color:#9a8a76;font-size:12px}@keyframes figIn{from{opacity:0;transform:translateY(12px)}to{opacity:1;transform:none}}
+
+/* 意見回饋 683：棋理卡的「看示範棋局」按鈕 */
+.shp-demo{margin-top:8px}
 </style></head><body>
 <div class="app">
  <div class="topbar" id="topbar"><button class="ib" id="back" hidden><b>‹</b>返回</button><h1 id="title">象棋千秋</h1><span id="topRight"></span></div>
@@ -941,7 +944,7 @@ body.xqt-on .modal{z-index:10000}body.xqt-on .toast{z-index:10001}body.xqt-on .x
       if(!window.caches)return go();caches.keys().then(function(ks){return Promise.all(ks.filter(function(k){return k.indexOf("xqlab-app-")===0}).map(function(k){return caches.delete(k)}))})
         .then(function(){return navigator.serviceWorker&&navigator.serviceWorker.getRegistration()}).then(function(r){return r&&r.update()}).catch(function(){}).then(go)}};setTimeout(chk,4000)})();
 </script>
-<script>window.XQ_OFFLINE=true;window.XQ_BUILD="20261106-1544";</script>
+<script>window.XQ_OFFLINE=true;window.XQ_BUILD="20261106-1553";</script>
 <script src="core.js"></script>
 <script src="engine.js"></script>
 <script src="local.js"></script>
@@ -3381,7 +3384,7 @@ function onboard(){if(journey())journeyLock();else titleScreen({})}
 // ================= 設定：棋盤風格、棋子樣式、走棋顯示 =================
 const SAMPLE_FEN0="rnbakabnr/9/1c5c1/p1p1p1p1p/9/9/P1P1P1P1P/1C5C1/9/RNBAKABNR",SAMPLE_FEN1="rnbakabnr/9/1c5c1/p1p1p1p1p/9/9/P1P1P1P1P/1C2C4/9/RNBAKABNR",SAMPLE_LAST={f:70,t:67};
 /* 意見回饋 661：關於頁顯示整包遊戲要多大空間。XQ_SIZES 由 build-site.js 建置時填入（開發中的 m.html 是 null，就不顯示） */
-const XQ_SIZES={"pre":163489571,"code":12478626,"eng":51511005,"gm":33668932,"bgm":259516351,"opt":[["比賽對局 1956–2010",21765744],["比賽對局 2011–2014",25596413],["比賽對局 2015–2019",24821916]],"all":603485314,"other":10636756};
+const XQ_SIZES={"pre":163489571,"code":12482436,"eng":51511005,"gm":33668932,"bgm":259516351,"opt":[["比賽對局 1956–2010",21765744],["比賽對局 2011–2014",25596413],["比賽對局 2015–2019",24821916]],"all":603489124,"other":10636756};
 const szMB=b=>b>=1073741824?(b/1073741824).toFixed(1)+" GB":Math.max(1,Math.round(b/1048576))+" MB";
 function aboutSizes(){const S=XQ_SIZES;if(!S)return"";const opt=S.opt||[];   /* 意見回饋 662：玩家只看總數，細項只在開發者模式顯示 */
   return `<div class="row" style="justify-content:space-between"><span class="muted">整包下載</span><b>約 ${szMB(S.all)}</b></div>
@@ -6434,7 +6437,10 @@ function shipBuild(D){const key=shipKey();if(SHIP_BANK&&SHIP_BANK.D===D&&SHIP_BA
     let out=[];for(let w=0;w<=8&&out.length<SHIP_PER;w++){const c=all.filter(P=>{const d=+P.d||0;return d>=lo-w&&d<hi+1+w});if(c.length>=SHIP_PER||w===8)out=c.sort((a,b)=>sc(b)-sc(a)||(+a.d||0)-(+b.d||0)||String(a.id).localeCompare(String(b.id))).slice(0,SHIP_PER)}
     if(out.length<SHIP_PER)out=[];out.forEach(P=>used.add(P.id));stops[k]=out.sort((a,b)=>(+a.d||0)-(+b.d||0)).map(P=>P.id)};
   SHIP_ROUTE.filter(k=>k!=="classic").forEach(k=>pick(k,WX_CHARS[SHIP_STOP[k].who[0]].pc));pick("classic",shipPiece("classic"));   /* 船艙那站排最後，不跟家鄉各站搶題 */
-  return SHIP_BANK={D,key,stops}}
+  /* 意見回饋 683：每站另挑一題當「示範棋局」（同本命子、同棋理、偏簡單），不跟任何一站的主場殘局重複，免得先看到答案 */
+  const demo={};[...SHIP_ROUTE].forEach(k=>{const pcC=k==="classic"?shipPiece("classic"):WX_CHARS[SHIP_STOP[k].who[0]].pc,Ls=SHIP_LESSON[k]||{},c=(by[SHIP_PC[pcC]]||[]).filter(P=>!used.has(P.id)&&P.tree&&P.tree.o);
+    const nM=P=>{try{const f=(P.line||[])[0];return f?1+(((P.tree.o[f]||[])[0]||"").length/4|0):0}catch(e){return 0}},sc=P=>((Ls.kill||[]).includes(P.kill)?4:0)+((Ls.books||[]).includes((P.src||{}).book)?1:0)-(+P.d||0)*.5+(nM(P)>=3&&nM(P)%2?6:0);   /* 至少三步、最後一步是我方走的（示範才看得到殺棋收尾） */const P=c.sort((a,b)=>sc(b)-sc(a)||String(a.id).localeCompare(String(b.id)))[0];if(P){demo[k]=P.id;used.add(P.id)}});
+  return SHIP_BANK={D,key,stops,demo}}
 function shipBank(){return cjData().then(shipBuild)}
 function shipPuzzles(k){if(!SHIP_BANK||SHIP_BANK.key!==shipKey())return null;return SHIP_BANK.stops[k]||[]}
 function shipReserved(D){try{const B=shipBuild(D),o=[];for(const k in B.stops)o.push(...B.stops[k]);return o}catch(e){return[]}}
@@ -6517,7 +6523,7 @@ function Voyage(v){setTop("⛵ 雲河星槎","#/");setTabs(true,"#/");v.classNam
             ${!ap&&Ls.open?`<p class="shp-say">${esc(Wo.n)}：「${esc(Ls.open)}」</p>`:""}
             <p class="muted">遇見${esc(T.meet)}</p></div></div>
         <div class="shp-lesson${lrn?" ok":""}"><b>📘 ${esc(Ls.t||T.img)}</b>${lrn?'<span class="shp-ok">✅ 學會了</span>':""}
-          ${(Ls.x||[]).length?`<p>${Ls.x.map(esc).join("<br>")}</p>`:""}${Ls.k?`<p class="shp-k">口訣：${esc(Ls.k)}</p>`:""}</div>
+          ${(Ls.x||[]).length?`<p>${Ls.x.map(esc).join("<br>")}</p>`:""}${Ls.k?`<p class="shp-k">口訣：${esc(Ls.k)}</p>`:""}<button class="pill shp-demo" id="spDemo">▶ 看示範棋局</button></div>
         ${SHIP_OLD.has(k)?`<p class="muted shp-old">這一朝還沒有今天的象棋；下面是星槎石桌上的千秋殘局，題目出自明清古譜。</p>`:""}
         <div id="spPz"><p class="muted">主場殘局載入中…</p></div>
         ${lrn&&!ap&&Ls.done?`<p class="shp-say">${esc(Wd.n)}：「${esc(Ls.done)}」</p>`:""}
@@ -6549,6 +6555,7 @@ function Voyage(v){setTop("⛵ 雲河星槎","#/");setTabs(true,"#/");v.classNam
     v.querySelectorAll("[data-st]").forEach(b=>b.onclick=()=>{const e=b.dataset.st;if(!D.includes(e)){vibrate(8);return toast(e===nx?"⛵ 下面的「起航」就能開往"+shipShort(e):eraLockMsg(e))}vibrate(5);store.set("shipAt",e);paint()});
     {const r=v.querySelector("#spRoute .on");if(r)try{r.scrollIntoView({block:"nearest",inline:"center"})}catch(e){}}
     jResume(v.querySelector("#spRes"));
+    {const dm=v.querySelector("#spDemo");if(dm)dm.onclick=()=>{vibrate(5);shipDemo(k)}}   /* 意見回饋 683 */
     shipBank().then(()=>{const box=v.querySelector("#spPz");if(!box||!box.isConnected)return;const Lz=shipPuzzles(k)||[],pc=shipPiece(k);
       if(!Lz.length){box.innerHTML=`<p class="muted shp-pz0">🧩 主場殘局題目準備中：「${esc(pc)}」走妙著的殘局還在找，先去園子、驛站走走。</p>`;return}
       const B=SHIP_BANK.D.byId;box.innerHTML=`<div class="shp-pzh">主場殘局 ${shipDots(k,Lz)}<span class="muted">實心＝自己解・空心＝用過提示</span></div><div class="items" style="padding:0">${Lz.map((id,i)=>{const P=B[id]||{},r=shipRec(k,id);return`<button class="item" data-pz="${esc(id)}"><span class="lb shp-lb"><i class="${r?r.h?"h":"s":""}"></i></span><span class="tx"><b>第 ${i+1} 題・${esc(pc)}的妙著</b><span>${esc(P.t||"")}${P.d!=null?"・"+cjLv(P.d):""}・${r?r.h?"用了提示":"自己解開":"還沒解"}</span></span><span class="muted">›</span></button>`}).join("")}</div>`;
@@ -6559,6 +6566,18 @@ function Voyage(v){setTop("⛵ 雲河星槎","#/");setTabs(true,"#/");v.classNam
 function tellerTalk(force){try{const day=new Date().toDateString();if(!force&&store.get("tellerDay","")===day)return;store.set("tellerDay",day);const L=legendState(),done=!!L.epi;
   sheet("🪭 船艙裡的說書人",b=>{b.innerHTML=`<div class="tlr"><img src="data/actors/teller.webp" alt="" onerror="this.remove()"><div><p class="tlr-q">「${esc(shipQuote())}」</p><p class="muted">醒木一拍：${done?"「《石桌往事》講完了，今天換《紙譜新局》。」":`「今天接著講《石桌往事》第${CNUM(L.n)}回。」`}</p></div></div><button class="btn" id="tl1" style="width:100%;margin-top:10px">📖 去書架聽這一回</button><button class="btn ghost" id="tl2" style="width:100%;margin-top:8px">♟ 先下這盤棋</button>`;
     b.querySelector("#tl1").onclick=()=>{closeSheet();location.hash=SHELF()};b.querySelector("#tl2").onclick=()=>closeSheet()})}catch(e){}}
+
+/* 意見回饋 683（開發者 11/6）：棋理卡的「看示範棋局」——用小棋盤一步一步播放同棋理的一題古譜殘局（正解＋對方最頑強的應法），看懂了再去解主場殘局 */
+async function shipDemo(k){let B;try{B=await shipBank()}catch(e){return toast("示範棋局載入失敗")}const id=B.demo&&B.demo[k],P=id&&B.D.byId[id];if(!P)return toast("這一站的示範棋局還在準備");
+  const first=(P.line||[])[0];if(!first)return toast("這一站的示範棋局還在準備");const rest=((P.tree.o[first]||[])[0]||"").match(/.{4}/g)||[],mv=[first,...rest].slice(0,15);
+  const C=window.XQCore,boards=[parseFen(String(P.fen).split(" ")[0])],lasts=[null],cns=[];for(const u of mv){const f=sqI(u.slice(0,2)),tt=sqI(u.slice(2,4)),bb=boards[boards.length-1];if(!bb[f])break;let cn="";try{cn=C?C.notate(bb,f,tt):""}catch(e){}const nb=bb.slice();nb[tt]=nb[f];nb[f]=null;boards.push(nb);lasts.push({f,t:tt});cns.push(cn)}
+  const Ls=SHIP_LESSON[k]||{},src=P.src||{},flip=P.side==="b",who=P.side==="b"?"黑方":"紅方";
+  sheet("▶ 示範棋局",b=>{b.innerHTML=`<p class="muted" style="text-align:center;margin:0 0 4px;line-height:1.6">📘 ${esc(Ls.t||"")}${src.book?`<br>出自《${esc(src.book)}》${src.title?"「"+esc(src.title)+"」":""}`:""}</p><p id="dmM" style="text-align:center;margin:0 0 6px;font-weight:700"></p><div id="dmB"></div><div class="pv-ctl"><button class="pill" id="dmP">◀ 上一步</button><button class="pill" id="dmG">▶ 自動播放</button><button class="pill" id="dmN">下一步 ▶</button></div><p id="dmL" style="font-size:14px;line-height:1.8;margin:8px 0 0"></p><p class="muted" style="font-size:12.5px;line-height:1.6;margin:8px 0 0">這是另一題同棋理的古譜殘局，不是這一站的主場殘局。看懂了，再去解那 3 題。</p>`;
+    const mb=Board(()=>{});b.querySelector("#dmB").append(mb.svg);let i=0,tm=null;
+    const show=()=>{mb.draw(boards[i],{flip,last:lasts[i]});b.querySelector("#dmM").textContent=i?`第 ${i} 步：${cns[i-1]}${i===1?"（妙著）":""}${i===boards.length-1?"・結束":""}`:`起點・${who}先走，按「自動播放」看怎麼下`;
+      b.querySelector("#dmL").innerHTML=cns.map((c,j)=>`<span style="${j===i-1?"font-weight:900;color:var(--accent)":""}">${j+1}. ${esc(c)}</span>`).join("　")};
+    b.querySelector("#dmP").onclick=()=>{clearInterval(tm);i=Math.max(0,i-1);show()};b.querySelector("#dmN").onclick=()=>{clearInterval(tm);i=Math.min(boards.length-1,i+1);show()};
+    b.querySelector("#dmG").onclick=()=>{clearInterval(tm);i=0;show();tm=setInterval(()=>{if(!b.isConnected||i>=boards.length-1)return clearInterval(tm);i++;show()},1100)};show()})}
 /* ================= 🕰 回到當年（意見回饋 313）=================
    石桌往事裡的對局，用「妙棋精選」裡 Pikafish 驗證過的特級大師實戰來演：你站在旁邊看，不能插手；
    棋自動一步一步下，下到那一步妙棋之前停下來——換作是你，會怎麼走？
