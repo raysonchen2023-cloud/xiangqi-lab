@@ -896,7 +896,7 @@ body.xqt-on .modal{z-index:10000}body.xqt-on .toast{z-index:10001}body.xqt-on .x
       if(!window.caches)return go();caches.keys().then(function(ks){return Promise.all(ks.filter(function(k){return k.indexOf("xqlab-app-")===0}).map(function(k){return caches.delete(k)}))})
         .then(function(){return navigator.serviceWorker&&navigator.serviceWorker.getRegistration()}).then(function(r){return r&&r.update()}).catch(function(){}).then(go)}};setTimeout(chk,4000)})();
 </script>
-<script>window.XQ_OFFLINE=true;window.XQ_BUILD="20261106-1200";</script>
+<script>window.XQ_OFFLINE=true;window.XQ_BUILD="20261106-1215";</script>
 <script src="core.js"></script>
 <script src="engine.js"></script>
 <script src="local.js"></script>
@@ -3332,7 +3332,7 @@ function onboard(){if(journey())journeyLock();else titleScreen({})}
 // ================= 設定：棋盤風格、棋子樣式、走棋顯示 =================
 const SAMPLE_FEN0="rnbakabnr/9/1c5c1/p1p1p1p1p/9/9/P1P1P1P1P/1C5C1/9/RNBAKABNR",SAMPLE_FEN1="rnbakabnr/9/1c5c1/p1p1p1p1p/9/9/P1P1P1P1P/1C2C4/9/RNBAKABNR",SAMPLE_LAST={f:70,t:67};
 /* 意見回饋 661：關於頁顯示整包遊戲要多大空間。XQ_SIZES 由 build-site.js 建置時填入（開發中的 m.html 是 null，就不顯示） */
-const XQ_SIZES={"pre":160273767,"code":12406011,"eng":51511005,"gm":33668932,"bgm":259516351,"opt":[["比賽對局 1956–2010",21765744],["比賽對局 2011–2014",25596413],["比賽對局 2015–2019",24821916]],"all":600196895,"other":10636756};
+const XQ_SIZES={"pre":160542863,"code":12406795,"eng":51511005,"gm":33668932,"bgm":259516351,"opt":[["比賽對局 1956–2010",21765744],["比賽對局 2011–2014",25596413],["比賽對局 2015–2019",24821916]],"all":600466775,"other":10636756};
 const szMB=b=>b>=1073741824?(b/1073741824).toFixed(1)+" GB":Math.max(1,Math.round(b/1048576))+" MB";
 function aboutSizes(){const S=XQ_SIZES;if(!S)return"";const opt=S.opt||[];   /* 意見回饋 662：玩家只看總數，細項只在開發者模式顯示 */
   return `<div class="row" style="justify-content:space-between"><span class="muted">整包下載</span><b>約 ${szMB(S.all)}</b></div>
@@ -3450,7 +3450,7 @@ function Settings(v){
       ol.querySelectorAll("[data-ol]").forEach(x=>x.onclick=()=>{vibrate(5);store.set("oppLook",x.dataset.ol);paint()})}}
     {const oa=v.querySelector("#obAgain");if(oa)oa.onclick=()=>{vibrate(5);saveSheet()}}   /* 意見回饋 668 */
     {v.querySelectorAll("[data-zh]").forEach(b=>b.onclick=()=>{vibrate(5);if(!window.XQ_ZH){toast("這個版本還不能切換");return}if(XQ_ZH.mode()===b.dataset.zh)return;toast(b.dataset.zh==="cn"?"切换成简体中文…":"切換成繁體中文…");setTimeout(()=>XQ_ZH.set(b.dataset.zh),300)})}
-    {const mf=v.querySelector("#meFig");if(mf)mf.onclick=()=>{vibrate(5);const nm=mySex()==="f"?"小帥妹":"小帥";figView(myLook()||{p:botPc(),e:store.get("era","classic"),g:9},"🙂 "+nm+(myStyle()==="real"?"":"Q版"),`<p class="muted" style="font-size:13.5px;margin:0">${esc(myName()||"還沒取名字")}・園子裡的你、線上對手看到的你都是這個樣子</p>`,[["關閉",()=>closeSheet(),true]],mf.src)}}   /* 意見回饋 534：點角色小卡上的小帥／小帥妹，跳出 3D 模型 */
+    {const mf=v.querySelector("#meFig");if(mf)mf.onclick=()=>{vibrate(5);figView(myLook()||{p:botPc(),e:store.get("era","classic"),g:9},"🙂 "+meName(),`<p class="muted" style="font-size:13.5px;margin:0">${esc(myName()||"還沒取名字")}・園子裡的你、線上對手看到的你都是這個樣子</p>`,[["關閉",()=>closeSheet(),true]],mf.src)}}   /* 意見回饋 534：點角色小卡上的小帥／小帥妹，跳出 3D 模型 */
     {const nl=v.querySelector("#nmLook");if(nl)nl.onclick=()=>{vibrate(5);nameSheet(false)};
      /* 意見回饋 519／520：從線上大廳按「改名」過來，直接捲到改名字的地方、亮一下，再打開改名視窗 */
      if(store.get("setFocus","")==="name"&&nl){store.set("setFocus","");setTimeout(()=>{const c=nl.closest(".card");c.scrollIntoView({block:"center",behavior:"smooth"});c.style.transition="box-shadow .3s";c.style.boxShadow="0 0 0 3px var(--accent,#B3261E)";setTimeout(()=>{c.style.boxShadow="";nameSheet(false)},700)},120)}}   /* 意見回饋 498：改名字只放在外觀這裡 */
@@ -3793,12 +3793,12 @@ function prologue(){const c=myChar();if(!c)return;const C=WX_CHARS[c],era=store.
 async function journeyStart(n,c,nm){const C=WX_CHARS[c];if(!C)return;const had=!!journey(),cur=curSlot();
   if(had&&cur&&cur!==n)await saveNow(true);SAVE_LOCK=true;
   store.set("slotCur",n);saveApply({});
-  store.set("pChar",c);store.set("pSex",C.sx);store.set("pStyle","real");store.set("botPiece",C.pc);store.set("onboard1",true);store.set("journey",{c,sx:C.sx,born:Date.now(),v:1});if(CHAR_ERA[c]){store.set("era",CHAR_ERA[c]);store.set("eraUser",null);try{applyEra()}catch(e){}}store.set("playSec",0);
+  store.set("pChar",c);store.set("pSex",C.sx);store.set("pStyle","real");store.set("botPiece",C.pc);store.set("onboard1",true);store.set("journey",{c,sx:C.sx,born:Date.now(),v:1,era:1});if(CHAR_ERA[c]){store.set("era",CHAR_ERA[c]);store.set("eraUser",null);try{applyEra()}catch(e){}}store.set("playSec",0);
   if(store.get("oppLook",null)==null)store.set("oppLook","real");if(nm){try{setMyName(nm)}catch(e){}}
   SAVE_LOCK=false;await saveNow(true);
   if(had){SAVE_LOCK=true;saveReload({xqPrologue:"1"});return}
   try{window.dispatchEvent(new Event("xq-look"))}catch(e){}titleClose();try{route()}catch(e){}setTimeout(prologue,500)}
-function journeyRepick(c){const C=WX_CHARS[c],J=journey();if(!C||!J||J.re!==1)return;store.set("pChar",c);store.set("pSex",C.sx);store.set("botPiece",C.pc);store.set("journey",{...J,c,sx:C.sx,re:2});if(CHAR_ERA[c]){store.set("era",CHAR_ERA[c]);store.set("eraUser",null);try{applyEra()}catch(e){}}
+function journeyRepick(c){const C=WX_CHARS[c],J=journey();if(!C||!J||J.re!==1)return;store.set("pChar",c);store.set("pSex",C.sx);store.set("botPiece",C.pc);store.set("journey",{...J,c,sx:C.sx,re:2,era:1});if(CHAR_ERA[c]){store.set("era",CHAR_ERA[c]);store.set("eraUser",null);try{applyEra()}catch(e){}}
   try{window.dispatchEvent(new Event("xq-look"))}catch(e){}saveNow(true);toast("換好了："+C.n+"（之後就鎖定了）")}
 async function slotLoad(n){let S=null;try{S=await slotGet(n)}catch(e){}
   if(!S||!S.data){const M=slotMetaAll();delete M[n];store.set("slotMeta",M);return toast("這格讀不到資料")}
@@ -3890,6 +3890,7 @@ function titlePaint(view,opt){const o=TITLE;if(!o)return;opt=opt||{};const inn=o
 function saveMigrateOld(){const c=myChar()||(mySex()==="f"?"f":"m");store.set("journey",{c,sx:mySex(),born:Date.now(),v:1,re:1,mig:1});
   if(store.get("playSec",null)==null){let s=0;try{s=Math.round(practiceTotal()*60)}catch(e){}store.set("playSec",s)}store.set("slotCur",1);lockFix();saveNow(true)}
 function saveBoot(){if(SAVE_OLD!==null){store.set("saveMig1",Date.now());if(SAVE_OLD)saveMigrateOld()}lockFix();
+  try{const J=store.get("journey",null);if(J&&CHAR_ERA[J.c]&&!J.era){store.set("era",CHAR_ERA[J.c]);store.set("eraUser",null);store.set("journey",{...J,era:1});setTimeout(()=>{try{applyEra()}catch(e){}},300)}}catch(e){}   /* 意見回饋 669 補：1200 版以前就選好角色的旅程，開 App 時補套一次角色主場的朝代（之後自己換的照自己的） */
   let pro=false,shown=false;try{pro=!!sessionStorage.getItem("xqPrologue");if(pro)sessionStorage.removeItem("xqPrologue");shown=!!sessionStorage.getItem("xqTitleShown")}catch(e){}
   if(pro)setTimeout(prologue,1500);
   if(shown||navigator.webdriver||!/^(#\/?)?$/.test(location.hash||""))return;titleScreen({})}
@@ -4115,6 +4116,7 @@ async function fig3d(host,look,o){o=o||{};
   const box=new T.Box3().setFromObject(B.bot),c=box.getCenter(new T.Vector3()),sz=box.getSize(new T.Vector3());B.bot.position.sub(c);const by=B.bot.position.y;
   const tn=Math.tan(15*Math.PI/180),D0=o.tight?Math.max(sz.y/(2*tn*.94),sz.x/(2*tn*(W/H)*.9)):Math.max(sz.y,sz.x)*2.6;
   const cam=new T.PerspectiveCamera(30,W/H,.1,400);cam.position.set(0,o.tight?0:sz.y*.06,D0);cam.lookAt(0,0,0);
+  try{const ro=new ResizeObserver(()=>{if(!host.isConnected){ro.disconnect();return}const w=host.clientWidth,h=host.clientHeight;if(!w||!h)return;r.setSize(w,h,false);cam.aspect=w/h;cam.updateProjectionMatrix()});ro.observe(host)}catch(e){}   /* 開發者 11/6：3D 只在一開始照框的大小畫，之後框變大小（圖片載入、版面撐開）畫面就被拉長，雷借花的棋子看起來變成直立橢圓；框變大小時跟著用正確比例重畫 */
   let ry=o.spin?-.35:0,v=.004,drag=null,moved=false,t0=performance.now(),zf=1,pin=null;const ptrs=new Map();
   const setZ=z=>{zf=Math.max(.6,Math.min(3.2,z));cam.position.set(0,o.tight?0:sz.y*.06,D0/zf);cam.lookAt(0,sz.y*.08*(zf-1)/2.2,0)};
   host.addEventListener("pointerdown",e=>{ptrs.set(e.pointerId,{x:e.clientX,y:e.clientY});try{host.setPointerCapture(e.pointerId)}catch(_){}
