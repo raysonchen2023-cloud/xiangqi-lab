@@ -486,7 +486,7 @@
       if(talk>0)talk-=t;const mOpen=F==="open"||F==="happy"||(F!=="sad"&&F!=="flat"&&talk>0&&Math.sin(now/70)>0);P.mouth.open.visible=mOpen;P.mouth.smile.visible=!mOpen;
       P.mouth.smile.rotation.z=F==="sad"?0:PI;P.mouth.smile.scale.y=F==="flat"?.2:1;P.mouth.smile.position.y=F==="sad"?-.06:0;
       P.tear.visible=F==="sad";if(F==="sad"){const k=(now/1400)%1;P.tear.position.set(-.2,.1-.32*k,.47);P.tear.material.opacity=.85*(1-k*.6)}
-      if(bubT>0){bubT-=t;if(bubT<=0)bub.style.opacity=0;else if((++fitN&7)===0)fitBub()}
+      if(bubT>0){bubT-=t;if(bubT<=0)bub.style.opacity=0;else if((++fitN&1)===0)fitBub()}
       if(!drag){const b=bounds();x=Math.min(Math.max(x,b.x0),Math.max(b.x0,b.x1));y=Math.min(Math.max(y,b.y0),Math.max(b.y0,b.y1))}
       box.style.transform=`translate(${x|0}px,${y|0}px)`;
       if(B.mixer&&!XS.on){const k0=drag?"idle":act?(GLB_ANIM_OF[act.k]||(/^d_|dance|spin/.test(act.k)?"cheer":"wave_goodbye_01")):walking?"walk":"idle",k=B.clips[k0]?k0:"idle";   /* 武俠角色：照小人正在做的事換動畫 */

@@ -743,6 +743,8 @@ html[data-era="qing"]:not([data-font="sys"]){--serif:"XQ twkai","Noto Serif TC",
 /* 意見回饋 649（開發者）：朝代美術版的修為玉環——原本進度色塊壓在玉環圖底下，只從中間的洞露出一點、各朝代露出多少不一樣，跟「棋道修行」的進度條對不起來。改成在玉環圖上面沿著環帶畫一圈八角光帶，從正上方順時針走到目前進度 */
 .jpb{display:none}.me2.art .jp{display:none}.me2.art .jr::after{z-index:1}.me2.art .jpb{display:block;position:absolute;inset:0;width:100%;height:100%;z-index:2;pointer-events:none;overflow:visible}
 .jpb path{fill:none;stroke-width:6.5;stroke-linejoin:round}.jpb .t{stroke:rgba(20,16,10,.28)}.jpb .f{stroke:#e0442b;stroke-linecap:round;filter:drop-shadow(0 0 1.5px rgba(255,240,220,.95)) drop-shadow(0 0 3px rgba(224,68,43,.6))}
+/* 意見回饋 657（開發者）：照真人帳號的螢幕尺寸檢查——矮螢幕（高度 620 以下，例如 440×535）和橫向（例如 951×653）時，下棋畫面上下的玩家卡、狀態列、按鈕列佔掉太多，3D 棋桌只剩 230～350px 高；這種螢幕自動縮緊，讓出空間給棋盤。一般直立手機不受影響 */
+@media (max-height:620px),(orientation:landscape) and (max-height:820px){.player{padding:2px 12px;gap:8px}.player .av{width:28px;height:28px;border-radius:14px;font-size:14px}.player .nm span{font-size:11px}.player .clk{font-size:15px;padding:1px 8px}.status{min-height:18px;font-size:12px;padding:0 12px}.actions{padding:2px 4px calc(2px + var(--safeB))}.actions button{min-height:38px;flex-direction:row;gap:4px;font-size:11.5px}.actions button .ic{font-size:17px}.actions button.pri .ic{width:30px;height:30px;border-radius:15px;font-size:15px}}
 </style></head><body>
 <div class="app">
  <div class="topbar" id="topbar"><button class="ib" id="back" hidden><b>‹</b>返回</button><h1 id="title">象棋千秋</h1><span id="topRight"></span></div>
@@ -788,7 +790,7 @@ html[data-era="qing"]:not([data-font="sys"]){--serif:"XQ twkai","Noto Serif TC",
       if(!window.caches)return go();caches.keys().then(function(ks){return Promise.all(ks.filter(function(k){return k.indexOf("xqlab-app-")===0}).map(function(k){return caches.delete(k)}))})
         .then(function(){return navigator.serviceWorker&&navigator.serviceWorker.getRegistration()}).then(function(r){return r&&r.update()}).catch(function(){}).then(go)}};setTimeout(chk,4000)})();
 </script>
-<script>window.XQ_OFFLINE=true;window.XQ_BUILD="20261106-0847";</script>
+<script>window.XQ_OFFLINE=true;window.XQ_BUILD="20261106-0900";</script>
 <script src="core.js"></script>
 <script src="engine.js"></script>
 <script src="local.js"></script>
