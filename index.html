@@ -890,6 +890,10 @@ body.xqt-on .modal{z-index:10000}body.xqt-on .toast{z-index:10001}body.xqt-on .x
 .xqt-df{display:block;width:100%;text-align:left;margin:0 0 8px;padding:10px 12px;border-radius:12px;border:1px solid var(--line);background:var(--card);color:inherit;font:inherit;cursor:pointer}
 .xqt-df.on{border:2px solid #B5452B}.xqt-df b{display:block;font-size:16px}.xqt-df small{display:block;opacity:.75;font-size:12.5px;margin-top:2px}
 .xqt-df em{font-style:normal;font-size:11px;font-weight:700;margin-left:6px;padding:1px 6px;border-radius:999px;background:#B5452B22;color:#B5452B}
+
+/* 意見回饋 679：點 3D 角色的物件跳出的介紹 */
+.fig-item{position:absolute;left:10px;right:52px;bottom:10px;z-index:3;background:rgba(255,250,240,.96);border-radius:12px;padding:10px 12px;box-shadow:0 4px 14px rgba(0,0,0,.18);color:#3a2e22;line-height:1.6;font-size:14px}
+.fig-item b{font-size:15px;color:#8E2A22}.fig-item p{margin:4px 0}.fig-item small{color:#9a8a76;font-size:11.5px}
 </style></head><body>
 <div class="app">
  <div class="topbar" id="topbar"><button class="ib" id="back" hidden><b>‹</b>返回</button><h1 id="title">象棋千秋</h1><span id="topRight"></span></div>
@@ -937,7 +941,7 @@ body.xqt-on .modal{z-index:10000}body.xqt-on .toast{z-index:10001}body.xqt-on .x
       if(!window.caches)return go();caches.keys().then(function(ks){return Promise.all(ks.filter(function(k){return k.indexOf("xqlab-app-")===0}).map(function(k){return caches.delete(k)}))})
         .then(function(){return navigator.serviceWorker&&navigator.serviceWorker.getRegistration()}).then(function(r){return r&&r.update()}).catch(function(){}).then(go)}};setTimeout(chk,4000)})();
 </script>
-<script>window.XQ_OFFLINE=true;window.XQ_BUILD="20261106-1433";</script>
+<script>window.XQ_OFFLINE=true;window.XQ_BUILD="20261106-1523";</script>
 <script src="core.js"></script>
 <script src="engine.js"></script>
 <script src="local.js"></script>
@@ -3377,7 +3381,7 @@ function onboard(){if(journey())journeyLock();else titleScreen({})}
 // ================= 設定：棋盤風格、棋子樣式、走棋顯示 =================
 const SAMPLE_FEN0="rnbakabnr/9/1c5c1/p1p1p1p1p/9/9/P1P1P1P1P/1C5C1/9/RNBAKABNR",SAMPLE_FEN1="rnbakabnr/9/1c5c1/p1p1p1p1p/9/9/P1P1P1P1P/1C2C4/9/RNBAKABNR",SAMPLE_LAST={f:70,t:67};
 /* 意見回饋 661：關於頁顯示整包遊戲要多大空間。XQ_SIZES 由 build-site.js 建置時填入（開發中的 m.html 是 null，就不顯示） */
-const XQ_SIZES={"pre":162833587,"code":12465346,"eng":51511005,"gm":33668932,"bgm":259516351,"opt":[["比賽對局 1956–2010",21765744],["比賽對局 2011–2014",25596413],["比賽對局 2015–2019",24821916]],"all":602816050,"other":10636756};
+const XQ_SIZES={"pre":162833587,"code":12473292,"eng":51511005,"gm":33668932,"bgm":259516351,"opt":[["比賽對局 1956–2010",21765744],["比賽對局 2011–2014",25596413],["比賽對局 2015–2019",24821916]],"all":602823996,"other":10636756};
 const szMB=b=>b>=1073741824?(b/1073741824).toFixed(1)+" GB":Math.max(1,Math.round(b/1048576))+" MB";
 function aboutSizes(){const S=XQ_SIZES;if(!S)return"";const opt=S.opt||[];   /* 意見回饋 662：玩家只看總數，細項只在開發者模式顯示 */
   return `<div class="row" style="justify-content:space-between"><span class="muted">整包下載</span><b>約 ${szMB(S.all)}</b></div>
@@ -4196,13 +4200,19 @@ async function fig3d(host,look,o){o=o||{};
   const tn=Math.tan(15*Math.PI/180),D0=o.tight?Math.max(sz.y/(2*tn*.94),sz.x/(2*tn*(W/H)*.9)):Math.max(sz.y,sz.x)*2.6;
   const cam=new T.PerspectiveCamera(30,W/H,.1,400);cam.position.set(0,o.tight?0:sz.y*.06,D0);cam.lookAt(0,0,0);
   try{const ro=new ResizeObserver(()=>{if(!host.isConnected){ro.disconnect();return}const w=host.clientWidth,h=host.clientHeight;if(!w||!h)return;r.setSize(w,h,false);cam.aspect=w/h;cam.updateProjectionMatrix()});ro.observe(host)}catch(e){}   /* 開發者 11/6：3D 只在一開始照框的大小畫，之後框變大小（圖片載入、版面撐開）畫面就被拉長，雷借花的棋子看起來變成直立橢圓；框變大小時跟著用正確比例重畫 */
+  const cidM=((look&&look.glb)||"").match(/\/(\w+)\.glb/),ITM=cidM&&WX_ITEMS[cidM[1]];   /* 意見回饋 679：點角色身上的物件看故事 */
+  const segD=(x,y,[[x1,y1],[x2,y2]])=>{const dx=x2-x1,dy=y2-y1,k=Math.max(0,Math.min(1,((x-x1)*dx+(y-y1)*dy)/(dx*dx+dy*dy||1)));return Math.hypot(x-x1-k*dx,y-y1-k*dy)};
+  const itemTap=e=>{try{const old=host.querySelector(".fig-item");if(old){old.remove();return}if(!ITM||!B.glbRoot||!B.glbRaw)return;const rc=host.getBoundingClientRect(),ray=new T.Raycaster();ray.setFromCamera(new T.Vector2((e.clientX-rc.left)/rc.width*2-1,-(e.clientY-rc.top)/rc.height*2+1),cam);
+    const hit=ray.intersectObject(B.glbRoot,true)[0];if(!hit)return;const P=B.glbRoot.worldToLocal(hit.point.clone()),mn=B.glbRaw.min,mx=B.glbRaw.max,h=(mx.y-mn.y)||1,u=-(P.z-(mn.z+mx.z)/2)/h,vv=(P.y-mn.y)/h,fr=P.x>(mn.x+mx.x)/2?1:-1;
+    const it=ITM.find(q=>(!q.side||q.side===fr)&&(q.ln?segD(u,vv,q.ln)<(q.w||.05):(u>=q.u[0]&&u<=q.u[1]&&vv>=q.v[0]&&vv<=q.v[1])));if(!it)return;vibrate(5);
+    const d=document.createElement("div");d.className="fig-item";d.innerHTML=`<b>${esc(it.n)}</b><p>${esc(it.t)}</p><small>點一下關閉</small>`;d.addEventListener("pointerdown",x=>x.stopPropagation());d.onclick=()=>d.remove();host.append(d)}catch(err){}};
   let ry=o.spin?-.35:0,v=.004,drag=null,moved=false,t0=performance.now(),zf=1,pin=null;const ptrs=new Map();
   const setZ=z=>{zf=Math.max(.6,Math.min(3.2,z));cam.position.set(0,o.tight?0:sz.y*.06,D0/zf);cam.lookAt(0,sz.y*.08*(zf-1)/2.2,0)};
   host.addEventListener("pointerdown",e=>{ptrs.set(e.pointerId,{x:e.clientX,y:e.clientY});try{host.setPointerCapture(e.pointerId)}catch(_){}
     if(o.zoom&&ptrs.size===2){const[a,c2]=[...ptrs.values()];pin={d:Math.hypot(a.x-c2.x,a.y-c2.y)||1,z:zf};drag=null}else if(ptrs.size===1)drag={x:e.clientX,ry,m:false}});
   host.addEventListener("pointermove",e=>{if(ptrs.has(e.pointerId))ptrs.set(e.pointerId,{x:e.clientX,y:e.clientY});
     if(pin&&ptrs.size>=2){const[a,c2]=[...ptrs.values()];setZ(pin.z*Math.hypot(a.x-c2.x,a.y-c2.y)/pin.d)}else if(drag){const dx=e.clientX-drag.x;if(Math.abs(dx)>4){drag.m=true;moved=true}ry=drag.ry+dx*.012}});
-  const up=e=>{ptrs.delete(e.pointerId);if(ptrs.size<2)pin=null;if(!ptrs.size){if(drag&&drag.m)host.dataset.dragged=Date.now();drag=null}};host.addEventListener("pointerup",up);host.addEventListener("pointercancel",up);
+  const up=e=>{ptrs.delete(e.pointerId);if(ptrs.size<2)pin=null;if(!ptrs.size){if(drag&&drag.m)host.dataset.dragged=Date.now();else if(drag&&!pin)itemTap(e);drag=null}};host.addEventListener("pointerup",up);host.addEventListener("pointercancel",up);
   if(o.zoom){host.addEventListener("wheel",e=>{e.preventDefault();setZ(zf*Math.exp(-e.deltaY*.0015))},{passive:false});
     const zb=document.createElement("div");zb.style.cssText="position:absolute;right:8px;bottom:8px;display:flex;flex-direction:column;gap:6px;z-index:2";
     for(const[l,f]of[["＋",1.25],["－",.8]]){const x=document.createElement("button");x.type="button";x.textContent=l;x.setAttribute("aria-label",f>1?"放大":"縮小");x.style.cssText="width:34px;height:34px;border-radius:50%;border:1px solid rgba(0,0,0,.15);background:rgba(255,250,240,.92);font:700 18px/1 sans-serif;color:#5a4630";
@@ -4213,7 +4223,7 @@ async function fig3d(host,look,o){o=o||{};
   return{B,r}}
 /* 意見回饋 400：點人物看大幅完整的 3D 小人，左右拖曳可以轉；3D 載入失敗就顯示畫像 */
 async function figView(look,title,html,btns,img){sheet(title,async b=>{
-  b.innerHTML=`<div id="fv" style="position:relative;aspect-ratio:1;max-height:56vh;margin:0 auto;border-radius:14px;overflow:hidden;touch-action:none;background:radial-gradient(circle at 50% 38%,#F6EEDF,#CDBB9C)"></div><p class="muted" style="text-align:center;font-size:12.5px;margin:6px 0 10px">左右拖曳可以轉動・兩指捏合或按 ＋／－ 放大縮小</p>${html||""}<div class="lvch" id="fvb"></div>`;
+  b.innerHTML=`<div id="fv" style="position:relative;aspect-ratio:1;max-height:56vh;margin:0 auto;border-radius:14px;overflow:hidden;touch-action:none;background:radial-gradient(circle at 50% 38%,#F6EEDF,#CDBB9C)"></div><p class="muted" style="text-align:center;font-size:12.5px;margin:6px 0 10px">左右拖曳可以轉動・兩指捏合或按 ＋／－ 放大縮小${look&&look.glb&&/\/(x_\w+)\.glb/.test(look.glb)&&WX_ITEMS[look.glb.match(/\/(x_\w+)\.glb/)[1]]?"・點身上的物件看故事":""}</p>${html||""}<div class="lvch" id="fvb"></div>`;
   const bb=b.querySelector("#fvb");for(const[l,fn,gh]of btns||[]){const x=document.createElement("button");x.className="btn"+(gh?" ghost":"");x.textContent=l;x.onclick=fn;bb.append(x)}
   const host=b.querySelector("#fv"),flat=()=>{host.innerHTML=img?`<img src="${img}" alt="" style="width:100%;height:100%;object-fit:contain">`:"";const p=b.querySelector("p.muted");if(p)p.remove()};
   if(!look)return flat();
@@ -4328,6 +4338,8 @@ const WX_CHARS={x_swordboy:{n:"齊轍",era:"秦",born:"秦王政二十二年（�
   x_shuai:{n:"沈方庭",nk:"庭哥",sx:"m",pc:"帥",s:"帥・明・徽州當鋪少爺",t:"明朝徽州當鋪老闆的獨子，天生氣喘、被關在院子裡",era:"明",born:"隆慶三年（1569）",up:"萬曆十年（1582）上船，十三歲",bio:"【明・隆慶三年（1569）生】明朝徽州當鋪老闆的獨子，十三歲。天生氣喘，被家裡嚴令只能待在院子裡，常在窗邊看別的孩子玩；他最想做的，是有一天親自走出那道門。",say:"我就在這裡，哪也不去。",old:"",start:["我就在這裡，哪也不去。","九宮雖小，也是我的棋盤。"],cap:["我也能親自出手！","別小看待在院子裡的人。"],win:["我……我也走出去了一步！","原來自己站出來，是這種感覺。"],lose:["咳……下次，我不再躲在後面。","沒關係，我記住這盤了。"],draw:["守住了九宮，也不算輸。"]},
   x_shi:{n:"鐵連城",nk:"城子",sx:"m",pc:"仕",s:"仕・明・鄰家哥哥",t:"徽州當鋪掌櫃的兒子，從小貼身護著少爺的鄰家哥哥",era:"明",born:"隆慶二年（1568）",up:"萬曆十年（1582）上船，十四歲",bio:"【明・隆慶二年（1568）生】徽州當鋪掌櫃的兒子，十四歲，住在沈家隔壁，跟方庭一起長大。小時候為了護住方庭受過傷，從此覺得自己只有當盾牌才有用；其實他很想去遠方看看。",say:"有我在，誰也別想碰他。",old:"",start:["有我在，誰也別想碰他。","我守在這兒，你放心攻。"],cap:["想碰他？先過我這關！","擋下來了，還順手吃一個。"],win:["守得住，才贏得了。","這次不只是擋，我也往前了。"],lose:["是我沒擋好……","下次我護得更緊。"],draw:["誰也沒碰到誰，正好。"]},
   x_bing:{n:"步越溪",nk:"溪兒",sx:"f",pc:"兵",s:"兵・清・揚州跑腿丫頭",t:"清朝揚州城裡跑腿送貨的窮丫頭，只會往前衝",era:"清",born:"乾隆十八年（1753）",up:"乾隆三十年（1765）南巡揚州那年上船，十二歲",bio:"【清・乾隆十八年（1753）生】清朝揚州城裡幫人跑腿送貨的窮丫頭，十二歲，無父無母。只會拼命往前衝、不敢回頭看；身上有塊傳了好多代的破布，繡著半個「卒」字。",say:"往前走，絕不退！",old:"",start:["往前走，絕不退！","過了河，我就能橫著走！"],cap:["一步一步，走到你面前了！","小卒子也能咬人！"],win:["一直往前走，總會走到對岸！","看吧，小兵也能贏！"],lose:["……不能回頭，那就再衝一次！","下次我走得更穩。"],draw:["還沒過河呢，下次再來！"]}};
+/* 意見回饋 679（開發者 11/6）：點 3D 角色身上的物件，看它的介紹和故事。u＝正面看過去的左右（以身高為 1，右為正）、v＝高度（腳底 0、頭頂 1），side 1 只認正面、-1 只認背面、0 都認；ln 是斜線（背上的劍）。量自 11/6 的模型，換模型要重量 */
+const WX_ITEMS={"x_swordboy":[{"n":"紅髮帶","t":"秦朝車夫家的孩子都綁紅髮帶，趕車時汗才不會流進眼睛。阿轍說，髮帶綁緊了，路就看得直。","u":[-0.2,0.2],"v":[0.72,0.82],"side":0},{"n":"木直劍","t":"阿轍自己削的木頭直劍。他說劍跟車一樣，要直才有力。修直道那天，他就是用它撬開了陷在泥溝裡的車輪。","u":[0.17,0.33],"v":[0.56,0.74],"side":0},{"n":"木直劍","t":"阿轍自己削的木頭直劍。他說劍跟車一樣，要直才有力。修直道那天，他就是用它撬開了陷在泥溝裡的車輪。","ln":[[0.25,0.68],[-0.22,0.12]],"w":0.05,"side":-1},{"n":"青銅車輪紋腰牌","t":"父親齊老趕官糧車用的青銅腰牌，刻著車輪的輻條。秦朝「車同軌」，天下的車輪一樣寬，才走得上馳道。阿轍上船那夜，手裡死死攥著它。","u":[0.07,0.22],"v":[0.12,0.3],"side":1}],"x_spiritgirl":[{"n":"青玉雙燕環","t":"兩隻燕子首尾相銜的青玉環，是娘留下的。燕子秋天南飛、春天回來。娘說：「燕子會回來，娘也會。」","u":[0.17,0.37],"v":[0.1,0.28],"side":0},{"n":"白披帛","t":"南朝女子挽在臂彎的長帛。燕子在渡口茶棚倒茶時，披帛被江風一吹，就像江面上的白浪。","u":[-0.47,-0.28],"v":[0.25,0.72],"side":0},{"n":"白披帛","t":"南朝女子挽在臂彎的長帛。燕子在渡口茶棚倒茶時，披帛被江風一吹，就像江面上的白浪。","u":[0.28,0.47],"v":[0.3,0.72],"side":0}],"x_martialgirl":[{"n":"竹節小炮架髮簪","t":"爺爺搭煙火架剩下的竹料，花兒自己削成小炮架插在頭上。炮要隔一個子才打得響，煙火也要有架子，才放得上天。","u":[-0.28,-0.02],"v":[0.82,0.98],"side":0},{"n":"短劍","t":"作坊裡防身用的短劍。花兒很少拔出來，她說真正厲害的是煙火，不是劍。","u":[0.12,0.32],"v":[0.5,0.73],"side":0},{"n":"短劍","t":"作坊裡防身用的短劍。花兒很少拔出來，她說真正厲害的是煙火，不是劍。","ln":[[0.25,0.72],[0,0.36]],"w":0.04,"side":-1},{"n":"白披肩","t":"臨安的冬天冷，爺爺怕她守著煙火爐著涼，給她披上的白披肩。上面還有幾點被火星燙出來的小洞。","u":[-0.4,0.4],"v":[0.08,0.6],"side":-1},{"n":"白披肩","t":"臨安的冬天冷，爺爺怕她守著煙火爐著涼，給她披上的白披肩。上面還有幾點被火星燙出來的小洞。","u":[-0.42,-0.25],"v":[0.08,0.5],"side":1},{"n":"白披肩","t":"臨安的冬天冷，爺爺怕她守著煙火爐著涼，給她披上的白披肩。上面還有幾點被火星燙出來的小洞。","u":[0.25,0.42],"v":[0.08,0.5],"side":1}],"x_miaogirl":[{"n":"帽頂紅珠","t":"西域商隊留下的紅琉璃珠。阿娘把它縫在帽頂最高的地方：「跑多遠，我們都看得見你。」","u":[-0.05,0.05],"v":[0.93,1.02],"side":0},{"n":"紅布小馬","t":"阿娘用碎紅布縫的小馬，裡面塞滿棉絮。小梅走到哪都帶著，說馬走日字，最會拐彎。","u":[0.1,0.3],"v":[0.4,0.62],"side":0},{"n":"銀鈴手鐲","t":"手腕上的銀鈴，一跑就叮叮響。阿娘說：「聽到鈴聲，就知道小梅回來了。」","u":[-0.38,-0.24],"v":[0.18,0.3],"side":0},{"n":"銀鈴手鐲","t":"手腕上的銀鈴，一跑就叮叮響。阿娘說：「聽到鈴聲，就知道小梅回來了。」","u":[0.24,0.38],"v":[0.18,0.3],"side":0},{"n":"銀項圈","t":"驛站裡的大人說，戴銀項圈的孩子會平平安安長大。這是老駱夫婦給小梅的。","u":[-0.15,0.15],"v":[0.52,0.6],"side":1},{"n":"紫色繡花披肩","t":"草原的風大，阿娘在披肩上繡滿了花。小梅坐不住，披肩老是歪到一邊。","u":[-0.27,0.27],"v":[0.36,0.52],"side":1},{"n":"紫色繡花披肩","t":"草原的風大，阿娘在披肩上繡滿了花。小梅坐不住，披肩老是歪到一邊。","u":[-0.27,0.27],"v":[0.35,0.63],"side":-1},{"n":"鈸笠帽","t":"養父老駱年輕時當驛騎戴的舊帽，阿娘把帽圈收小給小梅戴。帽簷很寬，草原的太陽和風沙都擋得住。","u":[-0.32,0.32],"v":[0.7,0.94],"side":0}],"x_shuai":[{"n":"金方型長命鎖","t":"沈家為體弱的獨子打的金長命鎖，盼他長命百歲。方庭一緊張，就會伸手按住它。","u":[-0.07,0.07],"v":[0.15,0.48],"side":1},{"n":"書生方巾","t":"明朝讀書人戴的方巾。方庭因為氣喘不能出門，只能在院子裡讀書，抬頭看別人家的風箏。","u":[-0.18,0.18],"v":[0.78,1],"side":0}],"x_shi":[{"n":"交叉紅繩雙木護腕","t":"兩塊硬木用紅繩交叉綁緊的護腕。連城從小擋在方庭前面，護腕上全是刮痕；紅繩是他自己一圈一圈纏上去的。","u":[-0.36,-0.22],"v":[0.2,0.35],"side":0},{"n":"交叉紅繩雙木護腕","t":"兩塊硬木用紅繩交叉綁緊的護腕。連城從小擋在方庭前面，護腕上全是刮痕；紅繩是他自己一圈一圈纏上去的。","u":[0.22,0.36],"v":[0.2,0.35],"side":0}],"x_bing":[{"n":"破底小草鞋","t":"溪兒自己編的草鞋，腰上還掛著一雙備用的。鞋底磨穿了也捨不得丟——跑腿的人，腳就是飯碗。","u":[0.14,0.28],"v":[0.04,0.26],"side":0},{"n":"靛藍頭巾","t":"揚州跑腿的丫頭都包頭巾，下雪擋寒、天熱擦汗。溪兒的頭巾洗得發白，卻總是綁得整整齊齊。","u":[-0.25,0.25],"v":[0.78,1],"side":0},{"n":"補丁短衫","t":"衣服破了，溪兒就自己縫一塊布上去。她說補丁越多，表示她跑過的路越多。","u":[-0.17,0.17],"v":[0.27,0.4],"side":1}]};
 const myChar=()=>{const c=store.get("pChar","");return WX_CHARS[c]?c:""};
 const myLook=()=>{{const c=myChar();if(c)return TRIPO[c]?{p:myPc(),e:store.get("era","classic"),g:9,glb:`data/tripo_app/${c}.glb`,ring:TRIPO[c]}:null}
   const f=mySex()==="f",id=f?"me_girl":"me_boy";let L=f?{p:myPc(),e:store.get("era","classic"),g:9,npc:"me",cus:"me:girl"}:null;

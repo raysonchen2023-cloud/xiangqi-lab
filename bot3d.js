@@ -268,7 +268,7 @@
     m.customProgramCacheKey=()=>"xqPaint";PAINT_C.set(o,m);return m}
   function attachGLB(B,o){if(!window.XQGLB)return;const meId=(String(o.glb||"").match(/\/(\w+)\.glb/)||[])[1],meCh=PC(),meK=eraK();const box0=new T.Box3().setFromObject(B.bot),h0=box0.max.y-box0.min.y,y0=box0.min.y;
     const face=B.torso.children.find(m=>m.isMesh&&m.geometry&&m.geometry.type==="CircleGeometry");
-    B.glbP=window.XQGLB(o.glb).catch(()=>window.XQGLB(o.glb)).then(sc=>{if(!sc)throw new Error("empty");   /* 意見回饋 505：失敗自動重試一次；結果交給畫面顯示「載入中／失敗」 */const g=sc.clone(true);g.rotation.y=-Math.PI/2;g.updateMatrixWorld(true);
+    B.glbP=window.XQGLB(o.glb).catch(()=>window.XQGLB(o.glb)).then(sc=>{if(!sc)throw new Error("empty");   /* 意見回饋 505：失敗自動重試一次；結果交給畫面顯示「載入中／失敗」 */const g=sc.clone(true);B.glbRoot=g;try{const rb=new T.Box3().setFromObject(g);B.glbRaw={min:rb.min.clone(),max:rb.max.clone()}}catch(e){}g.rotation.y=-Math.PI/2;g.updateMatrixWorld(true);   /* 意見回饋 679：點角色身上的物件，用模型原本的範圍換算位置（glbRoot、glbRaw） */
       /* 開發者 11/5：武俠角色的模型有 Tripo 綁的骨架和動作（待機、走路、揮手、歡呼、鞠躬）。clone 不會把骨架接到複製的骨頭上，照骨頭名字重接；
          先擺成待機的第一格（沒有每格更新動畫的畫面，也不會停在張開手臂的骨架原始姿勢） */
       {const clips=(window.XQGLB_ANIM||{})[o.glb]||[];if(clips.length){try{const bn={};g.traverse(n=>{if(n.isBone)bn[n.name]=n});
