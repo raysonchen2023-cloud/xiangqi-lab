@@ -908,6 +908,9 @@ body.xqt-on .modal{z-index:10000}body.xqt-on .toast{z-index:10001}body.xqt-on .x
 .shp-mk{display:flex;flex-direction:column;gap:6px;align-items:stretch;margin:6px 0 16px;border:2px solid color-mix(in srgb,var(--accent) 50%,var(--line));scroll-margin-top:80px}
 .shp-mk b{font-family:var(--serif);font-size:16px}.shp-mk .muted{font-size:12.5px}.shp-mk p{font-size:13.5px!important;margin:0!important}.shp-mk .btn{margin-top:4px}.shp-mk .lk{align-self:center;font-size:13.5px}
 #rdAfter{scroll-margin-top:70px}
+
+/* 意見回饋 691：名字牌底下多一行朝代、出生年 */
+.me-name.hb{flex-wrap:wrap;justify-content:center;row-gap:1px;padding-top:6px;padding-bottom:6px}.me-name .me-born{flex-basis:100%;text-align:center;font-size:11.5px;max-height:none;overflow:visible}
 </style></head><body>
 <div class="app">
  <div class="topbar" id="topbar"><button class="ib" id="back" hidden><b>‹</b>返回</button><h1 id="title">象棋千秋</h1><span id="topRight"></span></div>
@@ -955,7 +958,7 @@ body.xqt-on .modal{z-index:10000}body.xqt-on .toast{z-index:10001}body.xqt-on .x
       if(!window.caches)return go();caches.keys().then(function(ks){return Promise.all(ks.filter(function(k){return k.indexOf("xqlab-app-")===0}).map(function(k){return caches.delete(k)}))})
         .then(function(){return navigator.serviceWorker&&navigator.serviceWorker.getRegistration()}).then(function(r){return r&&r.update()}).catch(function(){}).then(go)}};setTimeout(chk,4000)})();
 </script>
-<script>window.XQ_OFFLINE=true;window.XQ_BUILD="20261106-1651";</script>
+<script>window.XQ_OFFLINE=true;window.XQ_BUILD="20261106-1800";</script>
 <script src="core.js"></script>
 <script src="engine.js"></script>
 <script src="local.js"></script>
@@ -1279,6 +1282,7 @@ const ERAS=[
     b:{bg:["#F6D77A","#D9A93A"],grid:"#5A3E08","piece":"#FFF8E2",r:"#B3261E",b:"#1E2A30",mv:"#1E5F74",bevel:1}}];
 const ERA_KEYS=["bg","card","ink","muted","line","accent","accent2","bar","barink","trim","red","blk","hl","warn","info","wood","grid","piece"];
 const curEra=()=>{const e=ERAS.find(x=>x.k===store.get("era","classic"));return e&&e.c?e:null};
+const boardEraE=()=>{const k=store.get("boardEra",null);if(k==null)return curEra();const e=ERAS.find(x=>x.k===k);return e&&e.c?e:null};   /* 開發者 11/6：設定裡選的朝代只換棋盤和棋子的樣子，人在哪一朝照星槎停靠 */
 function applyEra(){try{icoEra()}catch(e){}try{if(typeof bgmSync==="function"&&typeof BGM!=="undefined")bgmSync()}catch(e){}const r=document.documentElement,e=curEra();
   for(const p of ERA_KEYS)r.style.removeProperty("--"+p);r.style.removeProperty("--motif-bar");r.style.removeProperty("--motif-bg");r.style.colorScheme="";
   if(e){r.dataset.era=e.k;for(const[k,v]of Object.entries(e.c))r.style.setProperty("--"+k,v);
@@ -1287,7 +1291,7 @@ function applyEra(){try{icoEra()}catch(e){}try{if(typeof bgmSync==="function"&&t
   else delete r.dataset.era;
   const mt=document.querySelector('meta[name="theme-color"]');if(mt)mt.content=e?e.c.bar:"#3B2A1A"}
 applyEra();
-const boardTheme=k=>{k=k||store.get("boardTheme","wood3d");if(k==="auto"&&curEra())return curEra().b;return(BOARD_THEMES.find(t=>t[0]===k)||BOARD_THEMES[0])[2]};
+const boardTheme=k=>{k=k||store.get("boardTheme","wood3d");if(k==="auto"&&boardEraE())return boardEraE().b;return(BOARD_THEMES.find(t=>t[0]===k)||BOARD_THEMES[0])[2]};
 let boardN=0;
 // 走棋音效：用 WebAudio 合成木頭棋子的「叩」聲（吃子比較重），設定裡可以關
 let AC=null;
@@ -1837,12 +1841,12 @@ function Board(onTap,onSwipe){
   let lastKey="";
   function draw(board,o){o=o||{};
     // 跟上一次畫的完全一樣（盤面、選子、箭頭、風格都沒變）就不重畫：對戰畫面每秒更新，重畫整個棋盤在手機上會卡、會閃
-    const key=board.join(",")+"|"+JSON.stringify(o)+"|"+[store.get("boardTheme",""),store.get("pieceStyle",""),store.get("mvArrow",true),store.get("pageTheme",""),store.get("era",""),store.get("hiCon",false),PSET.size].join(",");
+    const key=board.join(",")+"|"+JSON.stringify(o)+"|"+[store.get("boardTheme",""),store.get("pieceStyle",""),store.get("mvArrow",true),store.get("pageTheme",""),store.get("era",""),store.get("boardEra",""),store.get("hiCon",false),PSET.size].join(",");
     if(key===lastKey&&svg.firstChild)return;lastKey=key;
     flip=!!o.flip;svg.innerHTML="";
     const T=boardTheme(o.theme),PS=o.pstyle||store.get("pieceStyle","3d");
     // 朝代：楚河漢界的字體跟著目前朝代；邊框紋飾只有棋盤用「跟著頁面風格」（＝朝代配色）時才加
-    const eR=curEra(),eD=(o.theme||store.get("boardTheme","wood3d"))==="auto"?eR:null,bk=JSON.stringify(T)+"|"+(eR?eR.k:"")+"|"+(eD?1:0)+"|"+flip+"|"+[...PSET].join("");
+    const eR=boardEraE(),eD=(o.theme||store.get("boardTheme","wood3d"))==="auto"?eR:null,bk=JSON.stringify(T)+"|"+(eR?eR.k:"")+"|"+(eD?1:0)+"|"+flip+"|"+[...PSET].join("");
     const tk=o.theme||store.get("boardTheme","wood3d"),imgK=eD?eD.k:(!eR&&tk==="wood3d"?"classic":null);
     curPK=eR?eR.k:(tk==="wood3d"?"classic":null);
     if(bk!==bgKey||!bgG){bgKey=bk;bgG=el("g",{});bgG.innerHTML=boardBG(T,eR,eD,uid,flip,imgK)}
@@ -3400,7 +3404,7 @@ function onboard(){if(journey())journeyLock();else titleScreen({})}
 // ================= 設定：棋盤風格、棋子樣式、走棋顯示 =================
 const SAMPLE_FEN0="rnbakabnr/9/1c5c1/p1p1p1p1p/9/9/P1P1P1P1P/1C5C1/9/RNBAKABNR",SAMPLE_FEN1="rnbakabnr/9/1c5c1/p1p1p1p1p/9/9/P1P1P1P1P/1C2C4/9/RNBAKABNR",SAMPLE_LAST={f:70,t:67};
 /* 意見回饋 661：關於頁顯示整包遊戲要多大空間。XQ_SIZES 由 build-site.js 建置時填入（開發中的 m.html 是 null，就不顯示） */
-const XQ_SIZES={"pre":163588623,"code":12519730,"eng":51511005,"gm":33668932,"bgm":259516351,"opt":[["比賽對局 1956–2010",21765744],["比賽對局 2011–2014",25596413],["比賽對局 2015–2019",24821916]],"all":603625470,"other":10636756};
+const XQ_SIZES={"pre":171750711,"code":12522586,"eng":51511005,"gm":33668932,"bgm":259516351,"opt":[["比賽對局 1956–2010",21765744],["比賽對局 2011–2014",25596413],["比賽對局 2015–2019",24821916]],"all":611790414,"other":10636756};
 const szMB=b=>b>=1073741824?(b/1073741824).toFixed(1)+" GB":Math.max(1,Math.round(b/1048576))+" MB";
 function aboutSizes(){const S=XQ_SIZES;if(!S)return"";const opt=S.opt||[];   /* 意見回饋 662：玩家只看總數，細項只在開發者模式顯示 */
   return `<div class="row" style="justify-content:space-between"><span class="muted">整包下載</span><b>約 ${szMB(S.all)}</b></div>
@@ -3420,7 +3424,7 @@ function Settings(v){
     <div data-pane="look">
     <div class="card" style="padding:10px"><div id="pv" style="max-width:300px;margin:0 auto"></div>
       <div class="opt" id="tbb" style="justify-content:center;margin-top:8px"><!-- 意見回饋 620：「示範一步」跟「走一步」重複，只留走一步（會照設定播特效和音效） -->${[["mv","♟ 走一步"],["cap","💥 吃子"],["ck","⚔ 將軍"],["op","🚩 開局動畫"]].map(([k,l])=>`<button data-tst="${k}">${l}</button>`).join("")}</div></div>   <!-- 意見回饋 537：預覽和測試併成一個棋盤；547：小字提示都拿掉 -->
-    <div class="sec-t">朝代風格</div><div class="eragrid erasw" id="era"></div>
+    <div class="sec-t">棋盤的朝代樣式</div><p class="muted" style="font-size:12.5px;margin:0 2px 6px">只換棋盤和棋子的樣子；要去別的朝代，請到雲河星槎。</p><div class="eragrid erasw" id="era"></div>
     <div class="sec-t">棋盤風格</div>
     <label class="row" style="display:none"><span><b>3D 園子棋盤</b></span><input type="checkbox" class="sw" id="p3d"></label>   <!-- 意見回饋 488；672（開發者 11/6）：3D 園子棋盤、對手形象、棋子樣式不給玩家選，照目前的設定 -->
     <div class="thgrid thsw" id="th"></div>
@@ -3518,7 +3522,7 @@ function Settings(v){
       ol.querySelectorAll("[data-ol]").forEach(x=>x.onclick=()=>{vibrate(5);store.set("oppLook",x.dataset.ol);paint()})}}
     {const oa=v.querySelector("#obAgain");if(oa)oa.onclick=()=>{vibrate(5);saveSheet()}}{const dp=v.querySelector("#dfPick");if(dp)dp.onclick=()=>{vibrate(5);diffSheet(()=>{dp.textContent="🎚 "+diffOf().n})}}   /* 意見回饋 668 */
     {v.querySelectorAll("[data-zh]").forEach(b=>b.onclick=()=>{vibrate(5);if(!window.XQ_ZH){toast("這個版本還不能切換");return}if(XQ_ZH.mode()===b.dataset.zh)return;toast(b.dataset.zh==="cn"?"切换成简体中文…":"切換成繁體中文…");setTimeout(()=>XQ_ZH.set(b.dataset.zh),300)})}
-    {const mf=v.querySelector("#meFig");if(mf)mf.onclick=()=>{vibrate(5);figView(myLook()||{p:botPc(),e:store.get("era","classic"),g:9},"🙂 "+meName(),`<p class="muted" style="font-size:13.5px;margin:0">${esc(myName()||"還沒取名字")}・園子裡的你、線上對手看到的你都是這個樣子</p>`,[["關閉",()=>closeSheet(),true]],mf.src)}}   /* 意見回饋 534：點角色小卡上的小帥／小帥妹，跳出 3D 模型 */
+    {const mf=v.querySelector("#meFig");if(mf)mf.onclick=()=>{vibrate(5);figView(myLook()||{p:botPc(),e:store.get("era","classic"),g:9},"🙂 "+meName(),`<p class="muted" style="font-size:13.5px;margin:0">${esc(myName()||"還沒取名字")}・園子裡的你、線上對手看到的你都是這個樣子</p>${typeof wxBornLine==="function"?ageLine(wxBornLine()):""}`,[["關閉",()=>closeSheet(),true]],mf.src)}}   /* 意見回饋 534：點角色小卡上的小帥／小帥妹，跳出 3D 模型 */
     {const nl=v.querySelector("#nmLook");if(nl)nl.onclick=()=>{vibrate(5);nameSheet(false)};
      /* 意見回饋 519／520：從線上大廳按「改名」過來，直接捲到改名字的地方、亮一下，再打開改名視窗 */
      if(store.get("setFocus","")==="name"&&nl){store.set("setFocus","");setTimeout(()=>{const c=nl.closest(".card");c.scrollIntoView({block:"center",behavior:"smooth"});c.style.transition="box-shadow .3s";c.style.boxShadow="0 0 0 3px var(--accent,#B3261E)";setTimeout(()=>{c.style.boxShadow="";nameSheet(false)},700)},120)}}   /* 意見回饋 498：改名字只放在外觀這裡 */
@@ -3531,10 +3535,10 @@ function Settings(v){
     /* 意見回饋 611：字體跟著朝代（每個朝代一套書法或刻本字）或跟著手機（手機內建字體） */
     {const fm=store.get("fontMode","era"),fb=v.querySelector("#ftM");if(fb){fb.innerHTML=[["era","跟著朝代"],["sys","跟著手機"]].map(([k,l])=>`<button data-ft="${k}" class="${fm===k?"on":""}">${l}</button>`).join("");
       fb.querySelectorAll("[data-ft]").forEach(x=>x.onclick=()=>{store.set("fontMode",x.dataset.ft);fontModeApply();paint()})}}
-    const ce=store.get("era","classic");v.querySelector("#ptN").textContent=curEra()?"朝代風格有自己的配色；選「經典」才會用到深淺色":"";
-    v.querySelector("#era").innerHTML=ERAS.map(e=>{const c=e.c,st=c?`--b:${c.bar};--bi:${c.barink};--g:${c.bg};--cd:${c.card};--t:${c.trim};--a:${c.accent};--i:${c.ink};background-image:${eraMotif(e.m,c.ink,e.dark?.09:.07)}`:"--b:#3B2A1A;--g:#F3EDE2;--t:#E2D6C3;--a:#B5452B;--i:#2A1F15";
+    const ce=store.get("boardEra",null)==null?"":store.get("boardEra");v.querySelector("#ptN").textContent=curEra()?"朝代風格有自己的配色；選「經典」才會用到深淺色":"";
+    v.querySelector("#era").innerHTML=`<button data-e="" class="${ce===""?"on":""} cl" style="--b:#3B2A1A;--g:#F3EDE2;--t:#E2D6C3;--a:#B5452B;--i:#2A1F15"><i></i><b>⛵ 跟著星槎</b><small>停靠哪一朝就用哪一朝</small></button>`+ERAS.map(e=>{const c=e.c,st=c?`--b:${c.bar};--bi:${c.barink};--g:${c.bg};--cd:${c.card};--t:${c.trim};--a:${c.accent};--i:${c.ink};background-image:${eraMotif(e.m,c.ink,e.dark?.09:.07)}`:"--b:#3B2A1A;--g:#F3EDE2;--t:#E2D6C3;--a:#B5452B;--i:#2A1F15";
       const lk=eraLocked(e.k);return`<button data-e="${e.k}" class="${ce===e.k?"on":""}${c?"":" cl"}${lk?" elk":""}" style="${st}"><i style="${c?`background-image:${eraMotif(e.m,c.barink,.3)}`:""}"></i><b>${esc(e.n)}</b><small>${lk?"🔒 星槎還沒停靠":esc(e.s)}</small></button>`}).join("");   /* 意見回饋 673：還沒解鎖的朝代鎖住 */
-    v.querySelectorAll("[data-e]").forEach(x=>x.onclick=()=>{const k=x.dataset.e;if(k===store.get("era","classic"))return;if(eraLocked(k)){vibrate(8);toast(eraLockMsg(k));return}vibrate(5);store.set("era",k);applyEra();
+    v.querySelectorAll("[data-e]").forEach(x=>x.onclick=()=>{const k=x.dataset.e;if(k===ce)return;if(k&&eraLocked(k)){vibrate(8);toast(eraLockMsg(k));return}vibrate(5);store.set("boardEra",k||null);
       if(k!=="classic"&&store.get("boardTheme","wood3d")!=="auto"){store.set("boardTheme","auto");toast("棋盤也換成這個朝代的配色（可在下面改回）")}paint();show(true)});
     /* 意見回饋 535：滑到中間停住的那張就套用；畫面重畫後把選中的那張捲回中間 */
     {const ew=v.querySelector("#era"),on=ew&&ew.querySelector(".on");if(ew){ew._quiet=true;if(on)ew.scrollLeft=Math.max(0,on.offsetLeft-12);setTimeout(()=>{ew._quiet=false},250);
@@ -4359,7 +4363,7 @@ const WX_CHARS={x_swordboy:{n:"齊轍",era:"秦",born:"秦王政二十二年（�
   x_bing:{n:"步越溪",nk:"溪兒",sx:"f",pc:"兵",s:"兵・清・揚州跑腿丫頭",t:"清朝揚州城裡跑腿送貨的窮丫頭，只會往前衝",era:"清",born:"乾隆十八年（1753）",up:"乾隆三十年（1765）南巡揚州那年上船，十二歲",bio:"【清・乾隆十八年（1753）生】清朝揚州城裡幫人跑腿送貨的窮丫頭，十二歲，無父無母。只會拼命往前衝、不敢回頭看；身上有塊傳了好多代的破布，繡著半個「卒」字。",say:"往前走，絕不退！",old:"",start:["往前走，絕不退！","過了河，我就能橫著走！"],cap:["一步一步，走到你面前了！","小卒子也能咬人！"],win:["一直往前走，總會走到對岸！","看吧，小兵也能贏！"],lose:["……不能回頭，那就再衝一次！","下次我走得更穩。"],draw:["還沒過河呢，下次再來！"]}};
 /* 意見回饋 679（開發者 11/6）：點 3D 角色身上的物件，看它的介紹和故事。u＝正面看過去的左右（以身高為 1，右為正）、v＝高度（腳底 0、頭頂 1），side 1 只認正面、-1 只認背面、0 都認；ln 是斜線（背上的劍）。量自 11/6 的模型，換模型要重量 */
 const WX_PC_RULE={俥:"車走直線，一步就能走到底，是棋盤上威力最大的子。",相:"相走田字、不能過河，是守家的子；田字中間有子擋住，叫「塞象眼」，就飛不過去。",炮:"炮也走直線，但吃子時要隔一個子當炮架，這個子叫「炮架」。",傌:"馬走日字，最會拐彎；前面貼著一顆子就會「蹩馬腳」，跳不過去。",帥:"帥只在九宮裡走，一次一步；將和帥不能在同一條直線上照面。",仕:"仕只在九宮裡斜走一步，貼身護著帥。",兵:"兵只能往前走；過了河，就能左右橫走。"};
-const WX_ITEMS={"x_swordboy":[{"n":"紅髮帶","t":"秦朝車夫家的孩子都綁紅髮帶，趕車時汗才不會流進眼睛。阿轍說，髮帶綁緊了，路就看得直。","u":[-0.2,0.2],"v":[0.72,0.82],"side":0},{"n":"木直劍","t":"阿轍自己削的木頭直劍。他說劍跟車一樣，要直才有力。修直道那天，他就是用它撬開了陷在泥溝裡的車輪。","u":[0.17,0.33],"v":[0.56,0.74],"side":0},{"n":"木直劍","t":"阿轍自己削的木頭直劍。他說劍跟車一樣，要直才有力。修直道那天，他就是用它撬開了陷在泥溝裡的車輪。","ln":[[0.25,0.68],[-0.22,0.12]],"w":0.05,"side":-1},{"n":"青銅車輪紋腰牌","t":"父親齊老趕官糧車用的青銅腰牌，刻著車輪的輻條。秦朝「車同軌」，天下的車輪一樣寬，才走得上馳道。阿轍上船那夜，手裡死死攥著它。","u":[0.07,0.22],"v":[0.12,0.3],"side":1},{"n":"髮髻","t":"秦朝男子把頭髮在頭頂盤成髻，再用髮帶束緊。阿轍天天自己綁，綁得跟他的脾氣一樣硬。","u":[-0.1,0.1],"v":[0.84,1],"side":0},{"n":"綠腰帶","t":"綠色的寬腰帶。趕車時繫緊了，顛簸的山路上肚子才不會被車轅撞疼。","u":[-0.27,0.27],"v":[0.27,0.34],"side":1},{"n":"粗布短衣與坎肩","t":"車夫家的粗布短衣，外面套一件深藍坎肩。袖口磨破了好幾次，都是娘一針一線補好的。","u":[-0.34,0.34],"v":[0.33,0.6],"side":1},{"pc":1,"u":[-0.27,0.27],"v":[0.02,0.27],"side":1},{"pc":1,"u":[-0.28,0.28],"v":[0.05,0.62],"side":-1}],"x_spiritgirl":[{"n":"青玉雙燕環","t":"兩隻燕子首尾相銜的青玉環，是娘留下的。燕子秋天南飛、春天回來。娘說：「燕子會回來，娘也會。」","u":[0.17,0.37],"v":[0.1,0.28],"side":0},{"n":"白披帛","t":"南朝女子挽在臂彎的長帛。燕子在渡口茶棚倒茶時，披帛被江風一吹，就像江面上的白浪。","u":[-0.47,-0.28],"v":[0.25,0.72],"side":0},{"n":"白披帛","t":"南朝女子挽在臂彎的長帛。燕子在渡口茶棚倒茶時，披帛被江風一吹，就像江面上的白浪。","u":[0.28,0.47],"v":[0.3,0.72],"side":0},{"pc":1,"u":[-0.27,0.27],"v":[0.06,0.62],"side":1},{"n":"一頭長髮","t":"燕子的頭髮又長又黑，平常披著；忙著煮茶時，就用那支彎月髮簪別起來。","u":[-0.3,0.3],"v":[0.2,0.95],"side":-1}],"x_martialgirl":[{"n":"竹節小炮架髮簪","t":"爺爺搭煙火架剩下的竹料，花兒自己削成小炮架插在頭上。炮要隔一個子才打得響，煙火也要有架子，才放得上天。","u":[-0.28,-0.02],"v":[0.82,0.98],"side":0},{"n":"短劍","t":"作坊裡防身用的短劍。花兒很少拔出來，她說真正厲害的是煙火，不是劍。","u":[0.12,0.32],"v":[0.5,0.73],"side":0},{"n":"短劍","t":"作坊裡防身用的短劍。花兒很少拔出來，她說真正厲害的是煙火，不是劍。","ln":[[0.25,0.72],[0,0.36]],"w":0.04,"side":-1},{"n":"白披肩","t":"臨安的冬天冷，爺爺怕她守著煙火爐著涼，給她披上的白披肩。上面還有幾點被火星燙出來的小洞。","u":[-0.4,0.4],"v":[0.08,0.6],"side":-1},{"n":"白披肩","t":"臨安的冬天冷，爺爺怕她守著煙火爐著涼，給她披上的白披肩。上面還有幾點被火星燙出來的小洞。","u":[-0.42,-0.25],"v":[0.08,0.5],"side":1},{"n":"白披肩","t":"臨安的冬天冷，爺爺怕她守著煙火爐著涼，給她披上的白披肩。上面還有幾點被火星燙出來的小洞。","u":[0.25,0.42],"v":[0.08,0.5],"side":1},{"n":"雙圓髻與紅緞帶","t":"頭上兩個圓髻用紅緞帶綁著。煙火放上天的時候，花兒最愛甩著緞帶跟著跳。","u":[-0.42,-0.16],"v":[0.42,0.98],"side":0},{"n":"雙圓髻與紅緞帶","t":"頭上兩個圓髻用紅緞帶綁著。煙火放上天的時候，花兒最愛甩著緞帶跟著跳。","u":[0.16,0.42],"v":[0.45,0.98],"side":0},{"n":"朱紅短打","t":"朱紅色的短打，方便在作坊裡搬煙火、跑上跑下。被火藥燻黑了，紅色也看不太出來。","u":[-0.3,-0.15],"v":[0.42,0.56],"side":1},{"n":"朱紅短打","t":"朱紅色的短打，方便在作坊裡搬煙火、跑上跑下。被火藥燻黑了，紅色也看不太出來。","u":[0.15,0.3],"v":[0.42,0.56],"side":1},{"pc":1,"u":[-0.27,0.27],"v":[0.06,0.53],"side":1}],"x_miaogirl":[{"n":"帽頂紅珠","t":"西域商隊留下的紅琉璃珠。阿娘把它縫在帽頂最高的地方：「跑多遠，我們都看得見你。」","u":[-0.05,0.05],"v":[0.93,1.02],"side":0},{"n":"紅布小馬","t":"阿娘用碎紅布縫的小馬，裡面塞滿棉絮。小梅走到哪都帶著，說馬走日字，最會拐彎。","u":[0.1,0.3],"v":[0.4,0.62],"side":0},{"n":"銀鈴手鐲","t":"手腕上的銀鈴，一跑就叮叮響。阿娘說：「聽到鈴聲，就知道小梅回來了。」","u":[-0.38,-0.24],"v":[0.18,0.3],"side":0},{"n":"銀鈴手鐲","t":"手腕上的銀鈴，一跑就叮叮響。阿娘說：「聽到鈴聲，就知道小梅回來了。」","u":[0.24,0.38],"v":[0.18,0.3],"side":0},{"n":"銀項圈","t":"驛站裡的大人說，戴銀項圈的孩子會平平安安長大。這是老駱夫婦給小梅的。","u":[-0.15,0.15],"v":[0.52,0.6],"side":1},{"n":"紫色繡花披肩","t":"草原的風大，阿娘在披肩上繡滿了花。小梅坐不住，披肩老是歪到一邊。","u":[-0.27,0.27],"v":[0.36,0.52],"side":1},{"n":"紫色繡花披肩","t":"草原的風大，阿娘在披肩上繡滿了花。小梅坐不住，披肩老是歪到一邊。","u":[-0.27,0.27],"v":[0.35,0.63],"side":-1},{"n":"鈸笠帽","t":"養父老駱年輕時當驛騎戴的舊帽，阿娘把帽圈收小給小梅戴。帽簷很寬，草原的太陽和風沙都擋得住。","u":[-0.32,0.32],"v":[0.7,0.94],"side":0},{"n":"兩條長辮","t":"兩條長辮子是阿娘每天早上幫她編的。小梅騎馬一跑，辮子就在身後甩呀甩。","u":[-0.37,-0.26],"v":[0.36,0.52],"side":0},{"n":"兩條長辮","t":"兩條長辮子是阿娘每天早上幫她編的。小梅騎馬一跑，辮子就在身後甩呀甩。","u":[0.26,0.37],"v":[0.36,0.52],"side":0},{"pc":1,"u":[-0.27,0.27],"v":[0.04,0.37],"side":1},{"pc":1,"u":[-0.28,0.28],"v":[0.04,0.36],"side":-1}],"x_shuai":[{"n":"金方型長命鎖","t":"沈家為體弱的獨子打的金長命鎖，盼他長命百歲。方庭一緊張，就會伸手按住它。","u":[-0.07,0.07],"v":[0.15,0.48],"side":1},{"n":"書生方巾","t":"明朝讀書人戴的方巾。方庭因為氣喘不能出門，只能在院子裡讀書，抬頭看別人家的風箏。","u":[-0.18,0.18],"v":[0.78,1],"side":0},{"n":"朱紅雲紋錦緞","t":"朱紅雲紋錦緞做的長袍，是當鋪少爺的衣裳。料子很好，方庭卻常說，他寧可換一件能出門跑跳的粗布衣。","u":[-0.37,-0.2],"v":[0.22,0.52],"side":0},{"n":"朱紅雲紋錦緞","t":"朱紅雲紋錦緞做的長袍，是當鋪少爺的衣裳。料子很好，方庭卻常說，他寧可換一件能出門跑跳的粗布衣。","u":[0.2,0.37],"v":[0.22,0.52],"side":0},{"pc":1,"u":[-0.27,0.27],"v":[0.02,0.16],"side":1},{"n":"朱紅雲紋錦緞","t":"朱紅雲紋錦緞做的長袍，是當鋪少爺的衣裳。料子很好，方庭卻常說，他寧可換一件能出門跑跳的粗布衣。","u":[-0.22,0.22],"v":[0.15,0.6],"side":1},{"pc":1,"u":[-0.28,0.28],"v":[0.06,0.62],"side":-1}],"x_shi":[{"n":"交叉紅繩雙木護腕","t":"兩塊硬木用紅繩交叉綁緊的護腕。連城從小擋在方庭前面，護腕上全是刮痕；紅繩是他自己一圈一圈纏上去的。","u":[-0.36,-0.22],"v":[0.2,0.35],"side":0},{"n":"交叉紅繩雙木護腕","t":"兩塊硬木用紅繩交叉綁緊的護腕。連城從小擋在方庭前面，護腕上全是刮痕；紅繩是他自己一圈一圈纏上去的。","u":[0.22,0.36],"v":[0.2,0.35],"side":0},{"n":"短馬尾","t":"連城的頭髮綁成短短的馬尾，俐落省事，隨時跳起來就能護人。","u":[-0.15,0.15],"v":[0.86,1.02],"side":0},{"n":"紅腰帶","t":"紅色的寬腰帶，連城每天綁得緊緊的。他說綁緊了，站得才穩。","u":[-0.27,0.27],"v":[0.19,0.31],"side":0},{"n":"靛藍短褂黑背心","t":"靛藍短褂配黑背心，耐穿又好活動。連城說，穿這樣擋在前面才不礙手腳。","u":[-0.37,0.37],"v":[0.32,0.6],"side":1},{"pc":1,"u":[-0.27,0.27],"v":[0.02,0.19],"side":1},{"pc":1,"u":[-0.22,0.22],"v":[0.31,0.68],"side":-1},{"n":"靛藍短褂黑背心","t":"靛藍短褂配黑背心，耐穿又好活動。連城說，穿這樣擋在前面才不礙手腳。","u":[-0.37,0.37],"v":[0.32,0.6],"side":-1}],"x_bing":[{"n":"破底小草鞋","t":"溪兒自己編的草鞋，腰上還掛著一雙備用的。鞋底磨穿了也捨不得丟——跑腿的人，腳就是飯碗。","u":[0.14,0.28],"v":[0.04,0.26],"side":0},{"n":"靛藍頭巾","t":"揚州跑腿的丫頭都包頭巾，下雪擋寒、天熱擦汗。溪兒的頭巾洗得發白，卻總是綁得整整齊齊。","u":[-0.25,0.25],"v":[0.78,1],"side":0},{"n":"補丁短衫","t":"衣服破了，溪兒就自己縫一塊布上去。她說補丁越多，表示她跑過的路越多。","u":[-0.17,0.17],"v":[0.27,0.4],"side":1},{"n":"兩條小辮","t":"溪兒的頭髮編成兩條小辮，塞在頭巾底下，跑起來才不會亂。","u":[-0.28,-0.17],"v":[0.55,0.68],"side":0},{"n":"兩條小辮","t":"溪兒的頭髮編成兩條小辮，塞在頭巾底下，跑起來才不會亂。","u":[0.17,0.28],"v":[0.55,0.68],"side":0},{"pc":1,"u":[-0.27,0.27],"v":[0.06,0.56],"side":1},{"pc":1,"u":[-0.32,0.32],"v":[0.15,0.47],"side":-1}]};
+const WX_ITEMS={"x_swordboy":[{"n":"紅髮帶","t":"秦朝車夫家的孩子都綁紅髮帶，趕車時汗才不會流進眼睛。阿轍說，髮帶綁緊了，路就看得直。","u":[-0.2,0.2],"v":[0.72,0.82],"side":0},{"n":"木直劍","t":"阿轍自己削的木頭直劍。他說劍跟車一樣，要直才有力。修直道那天，他就是用它撬開了陷在泥溝裡的車輪。","u":[0.17,0.33],"v":[0.56,0.74],"side":0},{"n":"木直劍","t":"阿轍自己削的木頭直劍。他說劍跟車一樣，要直才有力。修直道那天，他就是用它撬開了陷在泥溝裡的車輪。","ln":[[0.25,0.68],[-0.22,0.12]],"w":0.05,"side":-1},{"n":"青銅車輪紋腰牌","t":"父親齊老趕官糧車用的青銅腰牌，刻著車輪的輻條。秦朝「車同軌」，天下的車輪一樣寬，才走得上馳道。阿轍上船那夜，手裡死死攥著它。","u":[0.07,0.22],"v":[0.12,0.3],"side":1},{"n":"髮髻","t":"秦朝男子把頭髮在頭頂盤成髻，再用髮帶束緊。阿轍天天自己綁，綁得跟他的脾氣一樣硬。","u":[-0.1,0.1],"v":[0.84,1],"side":0},{"n":"綠腰帶","t":"綠色的寬腰帶。趕車時繫緊了，顛簸的山路上肚子才不會被車轅撞疼。","u":[-0.27,0.27],"v":[0.27,0.34],"side":1},{"n":"粗布短衣與坎肩","t":"車夫家的粗布短衣，外面套一件深藍坎肩。袖口磨破了好幾次，都是娘一針一線補好的。","u":[-0.34,0.34],"v":[0.33,0.6],"side":1},{"pc":1,"u":[-0.27,0.27],"v":[0.02,0.27],"side":1},{"pc":1,"u":[-0.28,0.28],"v":[0.05,0.62],"side":-1}],"x_spiritgirl":[{"n":"青玉雙燕環","t":"兩隻燕子首尾相銜的青玉環，是娘留下的。燕子秋天南飛、春天回來。娘說：「燕子會回來，娘也會。」","u":[0.22,0.37],"v":[0.06,0.24],"side":0},{"n":"白披帛","t":"南朝女子挽在臂彎的長帛。燕子在渡口茶棚倒茶時，披帛被江風一吹，就像江面上的白浪。","u":[-0.42,-0.27],"v":[0.1,0.74],"side":0},{"n":"白披帛","t":"南朝女子挽在臂彎的長帛。燕子在渡口茶棚倒茶時，披帛被江風一吹，就像江面上的白浪。","u":[0.27,0.42],"v":[0.3,0.74],"side":0},{"pc":1,"u":[-0.31,0.31],"v":[0.06,0.63],"side":1},{"n":"一頭長髮","t":"燕子的頭髮又長又黑，平常披著；忙著煮茶時，就用那支彎月髮簪別起來。","u":[-0.3,0.3],"v":[0.2,0.99],"side":-1}],"x_martialgirl":[{"n":"竹節小炮架髮簪","t":"爺爺搭煙火架剩下的竹料，花兒自己削成小炮架插在頭上。炮要隔一個子才打得響，煙火也要有架子，才放得上天。","u":[-0.28,-0.02],"v":[0.82,0.98],"side":0},{"n":"短劍","t":"作坊裡防身用的短劍。花兒很少拔出來，她說真正厲害的是煙火，不是劍。","u":[0.12,0.32],"v":[0.5,0.73],"side":0},{"n":"短劍","t":"作坊裡防身用的短劍。花兒很少拔出來，她說真正厲害的是煙火，不是劍。","ln":[[0.25,0.72],[0,0.36]],"w":0.04,"side":-1},{"n":"白披肩","t":"臨安的冬天冷，爺爺怕她守著煙火爐著涼，給她披上的白披肩。上面還有幾點被火星燙出來的小洞。","u":[-0.4,0.4],"v":[0.08,0.6],"side":-1},{"n":"白披肩","t":"臨安的冬天冷，爺爺怕她守著煙火爐著涼，給她披上的白披肩。上面還有幾點被火星燙出來的小洞。","u":[-0.42,-0.25],"v":[0.08,0.5],"side":1},{"n":"白披肩","t":"臨安的冬天冷，爺爺怕她守著煙火爐著涼，給她披上的白披肩。上面還有幾點被火星燙出來的小洞。","u":[0.25,0.42],"v":[0.08,0.5],"side":1},{"n":"雙圓髻與紅緞帶","t":"頭上兩個圓髻用紅緞帶綁著。煙火放上天的時候，花兒最愛甩著緞帶跟著跳。","u":[-0.42,-0.16],"v":[0.42,0.98],"side":0},{"n":"雙圓髻與紅緞帶","t":"頭上兩個圓髻用紅緞帶綁著。煙火放上天的時候，花兒最愛甩著緞帶跟著跳。","u":[0.16,0.42],"v":[0.45,0.98],"side":0},{"n":"朱紅短打","t":"朱紅色的短打，方便在作坊裡搬煙火、跑上跑下。被火藥燻黑了，紅色也看不太出來。","u":[-0.3,-0.15],"v":[0.42,0.56],"side":1},{"n":"朱紅短打","t":"朱紅色的短打，方便在作坊裡搬煙火、跑上跑下。被火藥燻黑了，紅色也看不太出來。","u":[0.15,0.3],"v":[0.42,0.56],"side":1},{"pc":1,"u":[-0.27,0.27],"v":[0.06,0.53],"side":1}],"x_miaogirl":[{"n":"帽頂紅珠","t":"西域商隊留下的紅琉璃珠。阿娘把它縫在帽頂最高的地方：「跑多遠，我們都看得見你。」","u":[-0.05,0.05],"v":[0.93,1.02],"side":0},{"n":"紅布小馬","t":"阿娘用碎紅布縫的小馬，裡面塞滿棉絮。小梅走到哪都帶著，說馬走日字，最會拐彎。","u":[0.1,0.3],"v":[0.4,0.62],"side":0},{"n":"銀鈴手鐲","t":"手腕上的銀鈴，一跑就叮叮響。阿娘說：「聽到鈴聲，就知道小梅回來了。」","u":[-0.38,-0.24],"v":[0.18,0.3],"side":0},{"n":"銀鈴手鐲","t":"手腕上的銀鈴，一跑就叮叮響。阿娘說：「聽到鈴聲，就知道小梅回來了。」","u":[0.24,0.38],"v":[0.18,0.3],"side":0},{"n":"銀項圈","t":"驛站裡的大人說，戴銀項圈的孩子會平平安安長大。這是老駱夫婦給小梅的。","u":[-0.15,0.15],"v":[0.52,0.6],"side":1},{"n":"紫色繡花披肩","t":"草原的風大，阿娘在披肩上繡滿了花。小梅坐不住，披肩老是歪到一邊。","u":[-0.27,0.27],"v":[0.36,0.52],"side":1},{"n":"紫色繡花披肩","t":"草原的風大，阿娘在披肩上繡滿了花。小梅坐不住，披肩老是歪到一邊。","u":[-0.27,0.27],"v":[0.35,0.63],"side":-1},{"n":"鈸笠帽","t":"養父老駱年輕時當驛騎戴的舊帽，阿娘把帽圈收小給小梅戴。帽簷很寬，草原的太陽和風沙都擋得住。","u":[-0.32,0.32],"v":[0.7,0.94],"side":0},{"n":"兩條長辮","t":"兩條長辮子是阿娘每天早上幫她編的。小梅騎馬一跑，辮子就在身後甩呀甩。","u":[-0.37,-0.26],"v":[0.36,0.52],"side":0},{"n":"兩條長辮","t":"兩條長辮子是阿娘每天早上幫她編的。小梅騎馬一跑，辮子就在身後甩呀甩。","u":[0.26,0.37],"v":[0.36,0.52],"side":0},{"pc":1,"u":[-0.27,0.27],"v":[0.04,0.37],"side":1},{"pc":1,"u":[-0.28,0.28],"v":[0.04,0.36],"side":-1}],"x_shuai":[{"n":"金方型長命鎖","t":"沈家為體弱的獨子打的金長命鎖，盼他長命百歲。方庭一緊張，就會伸手按住它。","u":[-0.07,0.07],"v":[0.15,0.54],"side":1},{"n":"書生方巾","t":"明朝讀書人戴的方巾。方庭因為氣喘不能出門，只能在院子裡讀書，抬頭看別人家的風箏。","u":[-0.18,0.18],"v":[0.78,1],"side":0},{"n":"朱紅雲紋錦緞","t":"朱紅雲紋錦緞做的長袍，是當鋪少爺的衣裳。料子很好，方庭卻常說，他寧可換一件能出門跑跳的粗布衣。","u":[-0.37,-0.2],"v":[0.25,0.52],"side":0},{"n":"朱紅雲紋錦緞","t":"朱紅雲紋錦緞做的長袍，是當鋪少爺的衣裳。料子很好，方庭卻常說，他寧可換一件能出門跑跳的粗布衣。","u":[0.2,0.37],"v":[0.25,0.52],"side":0},{"pc":1,"u":[-0.27,0.27],"v":[0.05,0.2],"side":1},{"n":"朱紅雲紋錦緞","t":"朱紅雲紋錦緞做的長袍，是當鋪少爺的衣裳。料子很好，方庭卻常說，他寧可換一件能出門跑跳的粗布衣。","u":[-0.22,0.22],"v":[0.2,0.6],"side":1},{"pc":1,"u":[-0.28,0.28],"v":[0.06,0.65],"side":-1}],"x_shi":[{"n":"交叉紅繩雙木護腕","t":"兩塊硬木用紅繩交叉綁緊的護腕。連城從小擋在方庭前面，護腕上全是刮痕；紅繩是他自己一圈一圈纏上去的。","u":[-0.36,-0.21],"v":[0.24,0.38],"side":0},{"n":"交叉紅繩雙木護腕","t":"兩塊硬木用紅繩交叉綁緊的護腕。連城從小擋在方庭前面，護腕上全是刮痕；紅繩是他自己一圈一圈纏上去的。","u":[0.21,0.36],"v":[0.24,0.38],"side":0},{"n":"短馬尾","t":"連城的頭髮綁成短短的馬尾，俐落省事，隨時跳起來就能護人。","u":[-0.1,0.22],"v":[0.87,1.02],"side":0},{"n":"紅腰帶","t":"紅色的寬腰帶，連城每天綁得緊緊的。他說綁緊了，站得才穩。","u":[-0.26,0.26],"v":[0.19,0.34],"side":0},{"n":"靛藍短褂黑背心","t":"靛藍短褂配黑背心，耐穿又好活動。連城說，穿這樣擋在前面才不礙手腳。","u":[-0.34,0.34],"v":[0.34,0.61],"side":1},{"pc":1,"u":[-0.26,0.26],"v":[0.05,0.2],"side":1},{"pc":1,"u":[-0.29,0.29],"v":[0.2,0.67],"side":-1},{"n":"靛藍短褂黑背心","t":"靛藍短褂配黑背心，耐穿又好活動。連城說，穿這樣擋在前面才不礙手腳。","u":[-0.35,0.35],"v":[0.34,0.6],"side":-1}],"x_bing":[{"n":"破底小草鞋","t":"溪兒自己編的草鞋，腰上還掛著一雙備用的。鞋底磨穿了也捨不得丟——跑腿的人，腳就是飯碗。","u":[0.16,0.28],"v":[0.05,0.27],"side":0},{"n":"靛藍頭巾","t":"揚州跑腿的丫頭都包頭巾，下雪擋寒、天熱擦汗。溪兒的頭巾洗得發白，卻總是綁得整整齊齊。","u":[-0.25,0.25],"v":[0.78,1],"side":0},{"n":"補丁短衫","t":"衣服破了，溪兒就自己縫一塊布上去。她說補丁越多，表示她跑過的路越多。","u":[-0.17,0.19],"v":[0.28,0.46],"side":1},{"n":"兩條小辮","t":"溪兒的頭髮編成兩條小辮，塞在頭巾底下，跑起來才不會亂。","u":[-0.28,-0.17],"v":[0.56,0.71],"side":0},{"n":"兩條小辮","t":"溪兒的頭髮編成兩條小辮，塞在頭巾底下，跑起來才不會亂。","u":[0.17,0.28],"v":[0.56,0.71],"side":0},{"pc":1,"u":[-0.27,0.27],"v":[0.06,0.6],"side":1},{"pc":1,"u":[-0.32,0.32],"v":[0.08,0.62],"side":-1}]};
 const myChar=()=>{const c=store.get("pChar","");return WX_CHARS[c]?c:""};
 const myLook=()=>{{const c=myChar();if(c)return TRIPO[c]?{p:myPc(),e:store.get("era","classic"),g:9,glb:`data/tripo_app/${c}.glb`,ring:TRIPO[c]}:null}
   const f=mySex()==="f",id=f?"me_girl":"me_boy";let L=f?{p:myPc(),e:store.get("era","classic"),g:9,npc:"me",cus:"me:girl"}:null;
@@ -4811,7 +4815,9 @@ function meImgFor(st,sx){const k=/^x_/.test(st||"")?st:(st==="real"?"real":"q")+
   return f}
 const meImgTag=(st,sx)=>{if(myChar()&&st===myStyle()&&sx===mySex())st=myChar();const k=/^x_/.test(st||"")?st:(st==="real"?"real":"q")+"_"+(sx==="f"?"girl":"boy");return `data-meimg="${k}|${myPc()}"`};
 const meImgRefresh=()=>document.querySelectorAll("img[data-meimg]").forEach(y=>{const[k]=y.dataset.meimg.split("|");y.dataset.meimg=k+"|"+myPc();if(/^x_/.test(k)){y.src=meImgFor(k);return}const[st,sx]=k.split("_");y.src=meImgFor(st,sx==="girl"?"f":"m")});
-function meFigOpen(src){vibrate(5);figView(myLook()||{p:botPc(),e:store.get("era","classic"),g:9},"🙂 "+meName(),`<p class="muted" style="font-size:13.5px;margin:0">${esc(myName()||"還沒取名字")}・園子裡的你、線上對手看到的你都是這個樣子</p>`,[["關閉",()=>closeSheet(),true]],src||meImg())}
+/* 意見回饋 691：雲河七星的朝代、出生年、上船年紀標在 3D 名字底下 */
+function wxBornLine(){const c=typeof WX_CHARS!=="undefined"&&WX_CHARS[myChar()];if(!c||!c.born)return"";const y=(c.born.match(/（([^）]+)）/)||[])[1]||c.born,a=((c.up||"").match(/([一二三四五六七八九十]+歲)$/)||[])[1]||"";return`${c.era}・${y} 年生${a?"・"+a+"上船":""}`}
+function meFigOpen(src){vibrate(5);figView(myLook()||{p:botPc(),e:store.get("era","classic"),g:9},"🙂 "+meName(),`<p class="muted" style="font-size:13.5px;margin:0">${esc(myName()||"還沒取名字")}・園子裡的你、線上對手看到的你都是這個樣子</p>${typeof wxBornLine==="function"?ageLine(wxBornLine()):""}`,[["關閉",()=>closeSheet(),true]],src||meImg())}
 function meChip(){const tb=$("#topbar");if(!tb)return;{const o=document.getElementById("meChip");if(o)o.remove()}const R=rankInfo(),I=xpInfo(),b=document.createElement("button");b.id="meChip";b.type="button";b.setAttribute("aria-label","我的角色");
   b.innerHTML=`<img src="${meImg()}" ${meImgTag(myStyle(),mySex())} alt="" onerror="this.replaceWith(document.createTextNode('🙂'))"><small>${esc(R.name)}<br>修為 Lv ${I.L}</small>`;b.onclick=()=>{vibrate(5);location.hash="#/me"};tb.append(b)}   /* 意見回饋 570：頭像放到最右上 */
 /* 意見回饋 553：我的角色頁重新設計（兩位 RPG 專家合併）：立繪舞台 → 境界台（官階九層塔、修為八角玉環）→ 六角章 → 什錦花窗收藏格。
@@ -4834,7 +4840,7 @@ function Me(v){Profile(v);setTop("🙂 我的角色","#/");setTabs(true,"#/");co
   d.className="me2";{const era=store.get("era","classic");if(ME_ART.has(era)){d.classList.add("art");{const dk=ME_DARK[era]||"";if(dk.includes("p"))d.classList.add("pd");if(dk.includes("b"))d.classList.add("bd");if(dk.includes("w"))d.classList.add("wd")}d.style.cssText=ME_ART_FILES.map(f=>`--u-${f.replace(/\..*$/,"")}:url(data/me_${era}/${f})`).join(";")}}
   d.innerHTML=`<section class="me-stage" id="meSt"><div class="me-halo"></div><div class="me-win"></div><div class="me-glow"></div><div class="me-ped"></div>
       <button class="me-fig" id="meFig2" aria-label="看我的 3D 角色"><img src="${meImg()}" ${meImgTag(myStyle(),mySex())} alt="" onerror="this.remove()"></button>
-      <button class="me-name" id="meNm" aria-label="改名"><b>${meName()}</b><small>${esc(myName()||"")}</small></button>
+      <button class="me-name${wxBornLine()?" hb":""}" id="meNm" aria-label="改名"><b>${meName()}</b><small>${esc(myName()||"")}</small>${wxBornLine()?`<small class="me-born">${esc(wxBornLine())}</small>`:""}</button>
       <button class="me-act l" id="meOb"><em>🔒</em>旅程</button>
       <button class="me-act r" id="mePc"><span class="pc ${red?"r":"b"}">${esc(pc)}</span>${myChar()?"🔒 本命":"換棋子"}</button></section>
     <section class="mr"><button id="meRk" aria-label="官階 ${esc(R.name)}"><span class="rkx"><span class="me-seal${[...R.name].length===4?" q":""}">${esc(R.name)}</span><span class="ta" style="--lit:${Math.round(((10-R.g)+(R.g>1?R.pc/100:0))/9*100)}%">${[1,2,3,4,5,6,7,8,9].map(t=>`<i${t===R.g?' class="on"':""} style="--n:${t-1};--f:${t>=R.g?100:t===R.g-1?R.pc:0}%"></i>`).join("")}</span></span><b>官階</b></button>
@@ -5070,7 +5076,7 @@ function innSheet(v){setTimeout(innDrop,1200);setTop("🏮 驛站","#/adventure"
     <div id="gardenBox"></div>
     <div id="lingBox"></div>
 </div>`;lingShopBind(v);if(typeof gardenInn==="function")gardenInn(v);   /* 意見回饋 658：📮 信箱、🌸 園子棋友的羈絆、📜 棋史卡（07d-garden.js） */
-  (v.querySelector("#toPark")||{}).onclick=()=>travel("park",()=>{location.hash="#/journey/park"});
+  (v.querySelector("#toPark")||{}).onclick=()=>travel("park",()=>{const k=store.get("era","classic");if(typeof shipPark==="function"&&!eraLocked(k))shipPark(k);else location.hash="#/adventure"});   /* 開發者 11/6：入口太多會迷路，驛站直接回停靠的園子，不經過千秋石枰 */
   v.querySelectorAll("[data-inn]").forEach(b=>b.onclick=()=>{const x=INN.concat(SECRETS).find(z=>z.id===b.dataset.inn);if(!x||(SECRETS.includes(x)&&!Sx[x.id]))return;
     const lv=x.who?secretLv(x):innLvN(x),rl=x.who?null:innRlv(x);
     sheet(`${x.ic} ${x.name}`,c=>{c.innerHTML=`${x.who?secretBio(x):""}<p class="muted" style="margin:0 0 2px">${esc(innCall(x))}</p><p style="font-size:16px;line-height:1.8">${esc(x.say)}</p><p class="muted">第 ${lv} 級</p><button class="btn" id="ig" style="width:100%">⚔ 下一盤</button>`;
@@ -5081,7 +5087,7 @@ function innSheet(v){setTimeout(innDrop,1200);setTop("🏮 驛站","#/adventure"
 const parkLv=()=>Math.max(1,Math.min(8,1+Math.floor(xpInfo().L/3)+(store.get("parkAdj",0)||0)));
 function jName(j){if(!j)return"石桌往事";if(j==="park")return"園子";if(String(j).startsWith("char:")){const c=JCHAR[String(j).slice(5)];return c?"大廳・"+c.name:"大廳"}if(String(j).startsWith("inn:")){const x=INN.concat(SECRETS).find(z=>"inn:"+z.id===j);return x?"驛站・"+x.name:"驛站"}
   const s=jFindStage(j);return s?(s.book===2?"紙譜新局・":ROAD_NAME+"・")+s.name:ROAD_NAME}
-const jBack=j=>String(j||"").startsWith("char:")?"#/lobby":j==="park"?"#/journey/park":String(j||"").startsWith("inn:")?"#/journey/inn":(()=>{const R=jRunGet(j);return R&&!R.done?"#/journey/"+j:"#/journey"})();
+const jBack=j=>String(j||"").startsWith("char:")?"#/lobby":j==="park"?(()=>{const R=jRunGet("park");return R&&!R.done?"#/journey/play":"#/adventure"})():String(j||"").startsWith("inn:")?"#/journey/inn":(()=>{const R=jRunGet(j);return R&&!R.done?"#/journey/"+j:"#/journey"})();
 const jPlace=j=>j==="park"?"園子":String(j||"").startsWith("inn:")?"驛站":String(j||"").startsWith("char:")?"大廳":ROAD_NAME;
 /* 意見回饋 413：石桌往事只留一盤（雲河棋路、驛站、園子、守關共用一格）。要開的跟手上那盤不是同一個對手時先問，不會悄悄蓋掉；同一個對手就接著下；force＝重下這一盤 */
 async function jStart(id,b,go,force){let st;try{st=await api("/play/state")}catch(e){toast(e.message);return}
@@ -5100,9 +5106,9 @@ async function jResume(box){if(!box)return;let st;try{st=await api("/play/state"
   if(!g||!box.isConnected)return;
   box.innerHTML=`<button class="card row" style="width:100%;margin-top:10px;justify-content:space-between;border:2px solid var(--red);font:inherit;color:inherit;text-align:left"><span>⏳ <b>${esc(jName(g.journey))}</b><br><span class="muted" style="font-size:12.5px">下到第 ${Math.ceil(g.n/2)} 回合・${g.me?"輪到你走":"輪到電腦"}</span></span><b>繼續下 ›</b></button>`;
   box.querySelector("button").onclick=async()=>{vibrate(5);if(!cur)try{await api("/play/switch",{kind:"journey"})}catch(e){}if(g.journey==="park")store.set("park3d",true);location.hash="#/journey/play"}}
-function ParkGate(v){setTop("🌳 園子","#/adventure");setTabs(false);v.className="view";const cur=store.get("era","classic");
+function ParkGate(v){setTop("🪨 千秋石枰","#/adventure");setTabs(false);v.className="view";const cur=store.get("era","classic");
   /* 意見回饋 360：石桌上擺著 13 顆朝代石頭（Gemini 畫的，刻著那個朝代書法的字），點一顆就進那個朝代的公園；石頭圖還沒到的先用圓圈 */
-  v.innerHTML=`<div class="pad"><div class="stbl"><p class="stbl-t">擇石一枚，步入彼朝之園</p><div class="eras">${ARENA_ORDER.map(k=>{const sl=ARENA[k].seal||"";return`<button class="era-c stone${k===cur?" on":""}${eraLocked(k)?" elk":""}" data-e="${k}"><img src="data/stones/${k}.webp" alt="" onerror="this.parentElement.classList.remove('stone');this.remove()"><span${sl.length>1?' class="two"':""}>${esc(sl)}</span><b>${esc(eraLabel(k))}</b></button>`}).join("")}</div></div><div id="pRes"></div></div>`;
+  v.innerHTML=`<div class="pad"><div class="stbl"><p class="stbl-t">擇石一枚，步入彼朝之園</p><div class="eras">${ARENA_ORDER.filter(k=>!eraLocked(k)).map(k=>{const sl=ARENA[k].seal||"";return`<button class="era-c stone${k===cur?" on":""}${eraLocked(k)?" elk":""}" data-e="${k}"><img src="data/stones/${k}.webp" alt="" onerror="this.parentElement.classList.remove('stone');this.remove()"><span${sl.length>1?' class="two"':""}>${esc(sl)}</span><b>${esc(eraLabel(k))}</b></button>`}).join("")}</div></div><div id="pRes"></div></div>`;
   jResume(v.querySelector("#pRes"));
   v.querySelectorAll("[data-e]").forEach(b=>b.onclick=async()=>{if(b.disabled)return;if(eraLocked(b.dataset.e)){vibrate(8);toast(eraLockMsg(b.dataset.e));return}b.disabled=true;vibrate(5);const k=b.dataset.e;   /* 意見回饋 673：星槎還沒停靠的朝代進不去 */store.set("era",k);try{applyEra()}catch(e){}store.set("park3d",true);
     setTimeout(()=>{b.disabled=false},1500);
@@ -5854,7 +5860,7 @@ function CanjuPlay(v,id){cjCSS();const H0=location.hash,here=()=>v.isConnected&&
   /* 意見回饋 658：#/canju/r/<朝代>/<第幾站>＝輿圖遊歷、#/canju/x/<冬至那年>/<第幾瓣>＝九九消寒圖（07e-garden2.js 的 cjXMode 給這一題的設定 XM；不算茶單，存檔用 XM.rk，不看答案解開才呼叫 XM.mark） */
   const XM=typeof cjXMode==="function"?cjXMode(id):null;
   const zm=XM?null:/^z\/(.+)$/.exec(id),Z=zm?{rid:zm[1]}:null,hm=Z||XM?null:/^h\/(\w+)\/(.+)$/.exec(id),HS=hm?{era:hm[1]}:null,RK=XM?XM.rk||"cjRunX":Z?"cjRunZ":HS?"cjRunH":"cjRun";if(HS)id=hm[2];if(XM&&XM.id)id=XM.id;
-  const hBack=()=>typeof histBackHash==="function"?histBackHash():"#/journey/park",BK=XM?XM.back():Z?"#/me/relics":HS?hBack():"#/canju";
+  const hBack=()=>typeof histBackHash==="function"?histBackHash():"#/adventure",BK=XM?XM.back():Z?"#/me/relics":HS?hBack():"#/canju";
   setTop(XM?XM.top||"🍵 一盞茶殘局":Z?"🏺 珍品藏局":HS?"📜 古法殘局":"🍵 一盞茶殘局",BK);if(typeof setTabs==="function")setTabs(false);
   v.className="view fixed";v.innerHTML=`<div class="cj-top" id="cjH"></div><div class="boardbox" id="bbox"></div><div class="status" id="stat"></div><div class="note cj-note" id="note"></div><div style="flex:1"></div><div class="actions" id="acts"></div>`;
   const $=q=>v.querySelector(q);let D=null,P=null,S=null,R=null,b=null,node=null,step=0,sel=-1,busy=false,hk=null,tok=0,last=null,me="r",flip=false;
@@ -6126,7 +6132,7 @@ const histTitle=()=>store.get("histTitle",0)?"棋史通":"";
 const histSolvedAll=()=>store.get("histSolved",{})||{};
 const histDoneN=()=>{const M=histSolvedAll();return ARENA_ORDER.filter(k=>Object.keys(M[k]||{}).length>0).length};
 const histSeenN=()=>{const S=store.get("histSeen",{})||{};return ARENA_ORDER.filter(k=>S[k]).length};
-function histBackHash(){const h=store.get("histBack","");return typeof h==="string"&&/^#\//.test(h)&&!/^#\/canju/.test(h)?h:"#/journey/park"}
+function histBackHash(){const h=store.get("histBack","");return typeof h==="string"&&/^#\//.test(h)&&!/^#\/canju/.test(h)?h:"#/adventure"}
 function histNext(era,id){const H=HIST[era],M=histSolvedAll()[era]||{};if(!H)return null;return H.q.find(x=>x!==id&&!M[x])||null}
 /* 解題頁不看答案解開時呼叫（07c-canju.js finish）：記下來；13 朝都至少解開 1 題 → 稱號「棋史通」＋修為 30 */
 function histSolvedMark(era,id){const H=HIST[era];if(!H||!H.q.includes(id))return null;const M=histSolvedAll(),E=M[era]||(M[era]={}),first=!E[id];if(first)E[id]=Date.now();store.set("histSolved",M);
@@ -6211,7 +6217,7 @@ const yuFind=(era,nm)=>{const R=YU_R[era];return R?R.s.findIndex(s=>s.n===nm||(s
 const yuSeal=(era,on,big)=>`<span class="seal-st two${on?" on":""}${big?" big":""}">${esc((YU_R[era]||{}).seal||"？")}</span>`;
 const yuTale=R=>R.tale===1?"📖 傳說":R.tale===2?"📖 真偽有爭議":"";
 const yuInPark=era=>typeof PARK_J!=="undefined"&&PARK_J==="park"&&store.get("era","classic")===era;
-function yuBackHash(){const h=store.get("yuBack","");return typeof h==="string"&&/^#\//.test(h)&&!/^#\/canju/.test(h)?h:"#/journey/park"}
+function yuBackHash(){const h=store.get("yuBack","");return typeof h==="string"&&/^#\//.test(h)&&!/^#\/canju/.test(h)?h:"#/adventure"}
 
 /* 給 park3d.js 畫路線：只有石桌往事的園子才有；key 變了才重畫 */
 window.XQ_MAPROUTE=era=>{if(typeof PARK_J==="undefined"||PARK_J!=="park")return null;const R=YU_R[era];if(!R)return null;const N=R.s.length,n=Math.min(yuOf(era).n,N);
@@ -6237,7 +6243,7 @@ function yuRouteSheet(era){const R=YU_R[era];if(!R)return;const P=yuOf(era),N=R.
       :`<button class="btn" id="yuPk" style="width:100%">🌳 去${esc(eraLabel(era))}${era==="classic"?"":"的園子"}</button><p class="muted" style="font-size:12.5px;margin:6px 0 0">到了石桌往事的園子，兩指拉遠看地圖，點發亮的「${esc(yuName(nx))}」。</p>`}
     <button class="btn ghost" id="yuBk" style="width:100%;margin-top:8px">🧭 全部路引</button>`;
     const q=s=>b.querySelector(s);if(q("#yuNx"))q("#yuNx").onclick=()=>{vibrate(5);yuGo(era,n)};
-    if(q("#yuPk"))q("#yuPk").onclick=()=>{vibrate(5);store.set("era",era);try{applyEra()}catch(e){}closeSheet();location.hash="#/journey/park"};
+    if(q("#yuPk"))q("#yuPk").onclick=()=>{vibrate(5);closeSheet();if(typeof shipPark==="function"&&!eraLocked(era))shipPark(era);else location.hash="#/adventure"};
     q("#yuBk").onclick=()=>{vibrate(5);yuBook()}})}
 /* 路引冊（集章簿裡的新頁，跟擂主的印分開） */
 function yuBook(){const n=yuDoneN();
