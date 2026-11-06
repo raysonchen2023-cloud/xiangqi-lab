@@ -126,7 +126,7 @@ function pickMove(r,lv){
   return c[Math.floor(Math.random()*c.length)].mv}
 // ===== 每步評等 =====
 const ANALYZE_MS=400;
-const clampV=v=>Math.max(-2000,Math.min(2000,v));const gradeLoss=l=>l<30?"正手":l<=60?"優著":l<=150?"良著":l<=400?"錯著":"露著";   /* 開發者 11/6（第二裁判：同一個 Pikafish 深算 2258 步對照）：手機只算 0.4 秒，分數本身就會跳 20～30 分，舊的 10／40／100／300 分界線比雜訊還細；放寬成 30／60／150／400，跟深算的一致率 83%→90% */
+const clampV=v=>Math.max(-2000,Math.min(2000,v));const gradeLoss=l=>l<30?"正著":l<=60?"穩著":l<=150?"緩著":l<=400?"失著":"敗著";   /* 開發者 11/6（第二裁判：同一個 Pikafish 深算 2258 步對照）：手機只算 0.4 秒，分數本身就會跳 20～30 分，舊的 10／40／100／300 分界線比雜訊還細；放寬成 30／60／150／400，跟深算的一致率 83%→90% */const qName=q=>({"妙手":"妙著","正手":"正著","優著":"穩著","良著":"緩著","錯著":"失著","露著":"敗著"})[q]||q;   /* 開發者 11/6（意見回饋 659）：評語改用傳統棋評用語；舊存檔、舊快取裡的舊名字讀取時翻成新的 */
 async function classifyRaw(b,s,f,t,ms,lt){   /* lt：對方上一步落在哪一格（判斷「回吃」，可省略） */
   const r=await evalPos(b,s,ms,2);if(r.dead||!r.lines.length)return null;
   const best=r.lines[0],second=r.lines[1],mv=iccs(f,t);
@@ -135,10 +135,10 @@ async function classifyRaw(b,s,f,t,ms,lt){   /* lt：對方上一步落在哪一
   else{const after=make(b,f,t),r2=await evalPos(after,opp(s),ms,1);played=r2.dead?30000:(r2.lines[0]?-r2.lines[0].v:best.v)}
   const loss=Math.max(0,clampV(best.v)-clampV(played)),gap=second?clampV(best.v)-clampV(second.v):0;
   let q;
-  if(best.mv===mv)q=gap>=200&&Math.abs(best.v)<1500&&!inCheck(b,s)&&!(b[t]&&lt===t)?"妙手":"正手";   /* 妙手：唯一好棋差距 200 分以上，而且不是應將、不是被迫回吃 */
+  if(best.mv===mv)q=gap>=200&&Math.abs(best.v)<1500&&!inCheck(b,s)&&!(b[t]&&lt===t)?"妙著":"正著";   /* 妙著：唯一好棋差距 200 分以上，而且不是應將、不是被迫回吃 */
   else q=gradeLoss(loss);
   const bf=parseSq(best.mv.slice(0,2)),bt=parseSq(best.mv.slice(2,4));
   return{q,loss,gap,ev:s==="r"?played:-played,bc:notate(b,bf,bt),bm:best.mv,bp:(best.pv||[]).slice(0,3)}}   // bp：Pikafish 建議的前 3 步（賽後在棋盤上畫箭頭）
-return{START,NAMES,CN,VAL,sideOf,opp,parseFen,fen,legal,legalOk,inCheck,kingSq,make,iccs,parseSq,notate,chasePairs,hasAttackers,PLAYER,annotate,summary,fullItem,gameItem,LEVELS,stateApply,stateRebuild,judgeState,pickMove,ANALYZE_MS,clampV,gradeLoss,classifyRaw};
+return{START,NAMES,CN,VAL,sideOf,opp,parseFen,fen,legal,legalOk,inCheck,kingSq,make,iccs,parseSq,notate,chasePairs,hasAttackers,PLAYER,annotate,summary,fullItem,gameItem,LEVELS,stateApply,stateRebuild,judgeState,pickMove,ANALYZE_MS,clampV,gradeLoss,qName,classifyRaw};
 })();
 if(typeof module!=="undefined")module.exports=XQCore;
