@@ -18,13 +18,15 @@ var XQ=(function(){
   // ---------- Pikafish（網頁版）與評等 ----------
   window.evalPos=async(b,s,ms,multipv)=>{if(!legal(b,s).length)return{lines:[],dead:true};
     return XQEngine.search({fen:fen(b,s)},{movetime:ms||ANALYZE_MS},multipv||1)};
-  async function classify(b,s,f,t){const k="g:"+fen(b,s)+"|"+iccs(f,t);const c=await idb.get(k);if(c)return c;
-    const r=await classifyRaw(b,s,f,t);if(r)await idb.set(k,r);return r}
+  /* 開發者 11/6（第二裁判）：評語分界線放寬、妙手排除應將和回吃——新評等用新的快取鑰匙 g2（回吃要看對方上一步落在哪：lt）；舊快取 g: 有「少幾分」就照新分界線重算評語，不用讓引擎重跑 */
+  async function classify(b,s,f,t,lt){const cap=!!b[t],k="g2:"+fen(b,s)+"|"+iccs(f,t)+(cap&&lt!=null?"|"+lt:"");const c=await idb.get(k);if(c)return c;
+    const o=await idb.get("g:"+fen(b,s)+"|"+iccs(f,t));if(o&&o.loss!=null){const r={...o};if(r.q==="妙手"){if(inCheck(b,s)||(cap&&lt===t))r.q="正手"}else if(r.q!=="—")r.q=gradeLoss(r.loss);await idb.set(k,r);return r}
+    const r=await classifyRaw(b,s,f,t,undefined,lt);if(r)await idb.set(k,r);return r}
   // 依序評等一盤棋裡還沒評等的步
   // pause()：回傳 true 就先停下來（例如輪到電腦走，讓 Pikafish 先想棋，評等等一下再補）
   async function analyzeList(S,save,pause){
-    for(let i=0;i<S.moves.length;i++){const m=S.moves[i];if(m.q)continue;if(pause&&pause())return;
-      const[bs,sd]=S.pos[i].split(" ");let r=null;try{r=await classify(parseFen(bs),sd==="w"?"r":"b",m.f,m.t)}catch(e){return}
+    for(let i=0;i<S.moves.length;i++){const m=S.moves[i];if(m.q){if(m.loss!=null&&m.q!=="妙手"&&m.q!=="—"&&m.q!==gradeLoss(m.loss)){m.q=gradeLoss(m.loss);save()}continue}if(pause&&pause())return;
+      const[bs,sd]=S.pos[i].split(" ");let r=null;try{r=await classify(parseFen(bs),sd==="w"?"r":"b",m.f,m.t,i>0&&S.moves[i-1]?S.moves[i-1].t:null)}catch(e){return}
       if(S.moves[i]!==m)return;if(r)Object.assign(m,r);else m.q="—";save()}}
   const moveOut=m=>({f:m.f,t:m.t,by:m.by,cn:m.cn,ck:m.ck,q:m.q,loss:m.loss,ev:m.ev,bc:m.bc,bm:m.bm,bp:m.bp});
   const lastEv=ms=>{for(let i=ms.length-1;i>=0;i--)if(ms[i].ev!=null)return{v:ms[i].ev,ply:i+1};return null};

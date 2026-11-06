@@ -790,7 +790,7 @@ html[data-era="qing"]:not([data-font="sys"]){--serif:"XQ twkai","Noto Serif TC",
       if(!window.caches)return go();caches.keys().then(function(ks){return Promise.all(ks.filter(function(k){return k.indexOf("xqlab-app-")===0}).map(function(k){return caches.delete(k)}))})
         .then(function(){return navigator.serviceWorker&&navigator.serviceWorker.getRegistration()}).then(function(r){return r&&r.update()}).catch(function(){}).then(go)}};setTimeout(chk,4000)})();
 </script>
-<script>window.XQ_OFFLINE=true;window.XQ_BUILD="20261106-0900";</script>
+<script>window.XQ_OFFLINE=true;window.XQ_BUILD="20261106-0916";</script>
 <script src="core.js"></script>
 <script src="engine.js"></script>
 <script src="local.js"></script>
@@ -2554,7 +2554,7 @@ function Redo(v){
   const dueTxt=x=>{const d=dueAt(x);if(d==null)return"";const dd=Math.ceil((d-Date.now())/864e5);return d<=Date.now()?"📅 該複習":dd<=1?"明天複習":dd+" 天後複習"};
   (async()=>{const gs=await myGames(120),raw=[];
     for(const g of gs){if(!isStdStart(g.it.board))continue;
-      g.moves.forEach((m,i)=>{if(m.by===g.side&&QBAD.includes(m.q))raw.push({g,ply:i+1,m,key:g.c+"/"+g.id+"/"+(i+1)})})}
+      g.moves.forEach((m,i)=>{if(m.by===g.side&&QBAD.includes(qNow(m)))raw.push({g,ply:i+1,m,key:g.c+"/"+g.id+"/"+(i+1)})})}
     raw.sort((a,b)=>String(b.g.id).localeCompare(String(a.g.id))||a.ply-b.ply);
     const cl=[];for(const x of raw){const last=cl[cl.length-1];
       if(last&&last.g===x.g&&x.ply-last.end<=4){last.end=x.ply;last.n++;last.loss=Math.max(last.loss,x.m.loss||0);last.keys.push(x.key);if(x.m.q==="露著")last.m={...last.m,q:"露著"}}
@@ -3520,7 +3520,10 @@ const GRADES=[["S",90,"#7B3FBF","幾乎跟引擎同步，這盤下得非常漂�
   ["C",60,"#D9822B","有明顯的失誤，算棋還要再仔細一點"],["D",0,"#C0392B","失誤偏多，建議多做殺法和殘局練習"]];
 const gradeFor=x=>GRADES.find(g=>x>=g[1]);
 const rnd=n=>Math.ceil(n/2);
+/* 開發者 11/6（第二裁判：同一個 Pikafish 深算對照）：評語分界線放寬成 正手<30／優著≤60／良著≤150／錯著≤400／露著>400 分；存檔裡舊的評語照「少幾分」重算（妙手照舊） */
+function qNow(m){if(!m||m.loss==null||!m.q||m.q==="妙手"||m.q==="—")return m&&m.q;const l=m.loss;return l<30?"正手":l<=60?"優著":l<=150?"良著":l<=400?"錯著":"露著"}
 function gameReport(board0,moves){
+  moves=(moves||[]).map(m=>m&&m.q&&m.loss!=null&&qNow(m)!==m.q?{...m,q:qNow(m)}:m);
   const b=board0.slice(),out={r:null,b:null},plies=[];let endFrom=null;
   /* 意見回饋 594：石桌往事從中局開始的那盤沒有「開局」——只有從標準開局擺起的對局，前 20 步才算開局 */
   const std=(()=>{try{const S=XQCore.parseFen(XQCore.START);return S.every((p,i)=>(p||null)===(board0[i]||null))}catch(e){return true}})();
@@ -3851,26 +3854,27 @@ const ageOfP=p=>{if(!p)return"";if(p.age)return p.age;   /* people.json 可以�
 const ageLine=t=>t?`<p class="muted" style="font-size:13px;margin:0 0 4px">🎂 ${esc(t)}</p>`:"";
 const PARK_NPC=[
   /* 開發者（11/4）：20 位年輕女性棋手（唐宋元明清各種身分，元朝、明朝各多 5 位），立繪 npc/w*.webp */
-  {"id":"w01_tang_lady","name":"長安的牡丹娘子","pc":"士","say":"從長安帶來的棋，你接得住嗎？","win":"牡丹開得正好，這盤也是。","lose":"好棋！這一盤，我記在團扇上了。","hat":"topknot","hc":"#1E1A16","robe":"#C8322A"},
-  {"id":"w02_song_tea","name":"點茶的青盞姑娘","pc":"象","say":"先喝口茶，棋要慢慢下。","win":"茶還溫著，棋已經下完了。","lose":"這一手，比我的茶還香。","hat":"topknot","hc":"#1E1A16","robe":"#9CC8D8"},
-  {"id":"w03_yuan_rider","name":"草原女騎手","pc":"馬","say":"我的馬跳得比風還快！","win":"哈！草原上可沒人追得上我。","lose":"你的馬比我的還野，佩服！","hat":"hair","hc":"#1E1A16","robe":"#2456A6"},
-  {"id":"w04_ming_scholar","name":"女扮男裝的書生","pc":"士","say":"在下……咳，小生請教一盤。","win":"書上寫的，果然沒錯。","lose":"這一手書上沒有，我得記下來。","hat":"fangjin","hc":"#151515","robe":"#B8A0D8"},
-  {"id":"w05_qing_gege","name":"溜出府看棋的格格","pc":"將","say":"噓——別說我在這兒下棋。","win":"本格格贏了，不許告訴阿瑪！","lose":"輸了？再來一盤，這盤不算！","hat":"hair","hc":"#1E1A16","robe":"#F0B8C8"},
-  {"id":"w06_swordswoman","name":"路過的江湖女俠","pc":"車","say":"劍不出鞘，棋上見真章。","win":"承讓。下一盤，換你先手。","lose":"好身手！江湖再見。","hat":"topknot","hc":"#1E1A16","robe":"#1E1A16"},
-  {"id":"w07_fisher_girl","name":"水鄉漁家女","pc":"卒","say":"剛收網回來，手還是濕的呢！","win":"今天魚多，棋也贏！","lose":"魚跑了，棋也輸了……","hat":"hair","hc":"#C9A86A","robe":"#3E5A8A"},
-  {"id":"w08_embroider","name":"蘇州繡娘","pc":"象","say":"一針一線，一步一步。","win":"繡好了，這盤也收針了。","lose":"你這一手，針腳比我還細。","hat":"topknot","hc":"#1E1A16","robe":"#E8B860"},
-  {"id":"w09_qin_player","name":"抱琴的女琴師","pc":"士","say":"琴放一邊，先聽聽棋聲。","win":"一曲終了，勝負也定了。","lose":"好棋，像一段好曲子。","hat":"topknot","hc":"#1E1A16","robe":"#F5F3EE"},
-  {"id":"w10_general","name":"少年女將軍","pc":"車","say":"排兵布陣，本將軍最在行！","win":"全軍得勝，收兵！","lose":"敗得心服口服，下次再戰。","hat":"helmet","hc":"#9AA0A8","robe":"#8E2A22"},
-  {"id":"w11_yuan_falconer","name":"馴鷹少女","pc":"馬","say":"我的鷹在天上看著你的棋。","win":"鷹看得準，我下得也準！","lose":"連鷹都替你叫好了。","hat":"hair","hc":"#1E1A16","robe":"#8E2A22"},
-  {"id":"w12_yuan_merchant","name":"西域商隊的姑娘","pc":"砲","say":"駱駝隊明天才走，今天陪你下棋。","win":"這盤棋，我賺到了！","lose":"這筆買賣我虧了，再來！","hat":"kerchief","hc":"#E8DCC8","robe":"#2456A6"},
-  {"id":"w13_yuan_singer","name":"勾欄的雜劇女伶","pc":"砲","say":"台下看戲，台上下棋，今天換個角色。","win":"這齣戲，我唱贏了！","lose":"好戲！這盤你是主角。","hat":"topknot","hc":"#1E1A16","robe":"#F0A0B8"},
-  {"id":"w14_yuan_porcelain","name":"畫青花的女工","pc":"象","say":"畫一筆青花，走一步棋。","win":"這盤棋，跟青花一樣漂亮。","lose":"你的棋，比我的青花還細。","hat":"bandana","hc":"#2F4A8A","robe":"#2F4A8A"},
-  {"id":"w15_yuan_archer","name":"草原女射手","pc":"車","say":"百步穿楊，棋盤上也一樣。","win":"正中靶心！","lose":"這一箭，我射偏了。","hat":"hair","hc":"#1E1A16","robe":"#6A4A2A"},
-  {"id":"w16_ming_poet","name":"江南才女","pc":"車","say":"作詩缺一句，下盤棋找靈感。","win":"得了！這句就叫『一車定乾坤』。","lose":"這一步，可以寫成一首詩了。","hat":"topknot","hc":"#1E1A16","robe":"#F0C0C8"},
-  {"id":"w17_ming_pipa","name":"秦淮琵琶女","pc":"象","say":"彈完這曲，陪你下一盤。","win":"大珠小珠落玉盤，這盤是我的。","lose":"好棋，弦都要斷了。","hat":"topknot","hc":"#1E1A16","robe":"#F5F3EE"},
-  {"id":"w18_ming_doctor","name":"年輕女醫","pc":"卒","say":"下棋跟看病一樣，要先看準。","win":"藥到病除，棋到局終。","lose":"這一手，我得開帖藥給自己。","hat":"kerchief","hc":"#C8C0B0","robe":"#7A8FA8"},
-  {"id":"w19_ming_teahouse","name":"茶館少東家","pc":"卒","say":"客官，下盤棋再走嘛！","win":"茶錢免了，棋錢照收！","lose":"好棋！這壺茶我請。","hat":"hair","hc":"#1E1A16","robe":"#E8B860"},
-  {"id":"w20_ming_guard","name":"女捕快","pc":"車","say":"奉命巡街，順便抓一盤棋。","win":"人贓俱獲，這盤你輸了。","lose":"你這步棋，連我都抓不到。","hat":"sui","hc":"#1E1A16","robe":"#B8322A"},
+  /* 意見回饋 658（開發者 11/6 選 A「路人回家」）：era＝她的家鄉朝代（依身分判斷：w06 女俠→唐傳奇、w07 漁家女→宋、w08 蘇州繡娘→清、w09 琴師→漢末蔡琰、w10 女將軍→隋末娘子軍）；在家鄉朝代的園子遇到她的機率約 70%（parkNpcNew）。羈絆、身分小卡、信在 07d-garden.js */
+  {"id":"w01_tang_lady","era":"tang","name":"長安的牡丹娘子","pc":"士","say":"從長安帶來的棋，你接得住嗎？","win":"牡丹開得正好，這盤也是。","lose":"好棋！這一盤，我記在團扇上了。","hat":"topknot","hc":"#1E1A16","robe":"#C8322A"},
+  {"id":"w02_song_tea","era":"song","name":"點茶的青盞姑娘","pc":"象","say":"先喝口茶，棋要慢慢下。","win":"茶還溫著，棋已經下完了。","lose":"這一手，比我的茶還香。","hat":"topknot","hc":"#1E1A16","robe":"#9CC8D8"},
+  {"id":"w03_yuan_rider","era":"yuan","name":"草原女騎手","pc":"馬","say":"我的馬跳得比風還快！","win":"哈！草原上可沒人追得上我。","lose":"你的馬比我的還野，佩服！","hat":"hair","hc":"#1E1A16","robe":"#2456A6"},
+  {"id":"w04_ming_scholar","era":"ming","name":"女扮男裝的書生","pc":"士","say":"在下……咳，小生請教一盤。","win":"書上寫的，果然沒錯。","lose":"這一手書上沒有，我得記下來。","hat":"fangjin","hc":"#151515","robe":"#B8A0D8"},
+  {"id":"w05_qing_gege","era":"qing","name":"溜出府看棋的格格","pc":"將","say":"噓——別說我在這兒下棋。","win":"本格格贏了，不許告訴阿瑪！","lose":"輸了？再來一盤，這盤不算！","hat":"hair","hc":"#1E1A16","robe":"#F0B8C8"},
+  {"id":"w06_swordswoman","era":"tang","name":"路過的江湖女俠","pc":"車","say":"劍不出鞘，棋上見真章。","win":"承讓。下一盤，換你先手。","lose":"好身手！江湖再見。","hat":"topknot","hc":"#1E1A16","robe":"#1E1A16"},
+  {"id":"w07_fisher_girl","era":"song","name":"水鄉漁家女","pc":"卒","say":"剛收網回來，手還是濕的呢！","win":"今天魚多，棋也贏！","lose":"魚跑了，棋也輸了……","hat":"hair","hc":"#C9A86A","robe":"#3E5A8A"},
+  {"id":"w08_embroider","era":"qing","name":"蘇州繡娘","pc":"象","say":"一針一線，一步一步。","win":"繡好了，這盤也收針了。","lose":"你這一手，針腳比我還細。","hat":"topknot","hc":"#1E1A16","robe":"#E8B860"},
+  {"id":"w09_qin_player","era":"han","name":"抱琴的女琴師","pc":"士","say":"琴放一邊，先聽聽棋聲。","win":"一曲終了，勝負也定了。","lose":"好棋，像一段好曲子。","hat":"topknot","hc":"#1E1A16","robe":"#F5F3EE"},
+  {"id":"w10_general","era":"sui","name":"少年女將軍","pc":"車","say":"排兵布陣，本將軍最在行！","win":"全軍得勝，收兵！","lose":"敗得心服口服，下次再戰。","hat":"helmet","hc":"#9AA0A8","robe":"#8E2A22"},
+  {"id":"w11_yuan_falconer","era":"yuan","name":"馴鷹少女","pc":"馬","say":"我的鷹在天上看著你的棋。","win":"鷹看得準，我下得也準！","lose":"連鷹都替你叫好了。","hat":"hair","hc":"#1E1A16","robe":"#8E2A22"},
+  {"id":"w12_yuan_merchant","era":"yuan","name":"西域商隊的姑娘","pc":"砲","say":"駱駝隊明天才走，今天陪你下棋。","win":"這盤棋，我賺到了！","lose":"這筆買賣我虧了，再來！","hat":"kerchief","hc":"#E8DCC8","robe":"#2456A6"},
+  {"id":"w13_yuan_singer","era":"yuan","name":"勾欄的雜劇女伶","pc":"砲","say":"台下看戲，台上下棋，今天換個角色。","win":"這齣戲，我唱贏了！","lose":"好戲！這盤你是主角。","hat":"topknot","hc":"#1E1A16","robe":"#F0A0B8"},
+  {"id":"w14_yuan_porcelain","era":"yuan","name":"畫青花的女工","pc":"象","say":"畫一筆青花，走一步棋。","win":"這盤棋，跟青花一樣漂亮。","lose":"你的棋，比我的青花還細。","hat":"bandana","hc":"#2F4A8A","robe":"#2F4A8A"},
+  {"id":"w15_yuan_archer","era":"yuan","name":"草原女射手","pc":"車","say":"百步穿楊，棋盤上也一樣。","win":"正中靶心！","lose":"這一箭，我射偏了。","hat":"hair","hc":"#1E1A16","robe":"#6A4A2A"},
+  {"id":"w16_ming_poet","era":"ming","name":"江南才女","pc":"車","say":"作詩缺一句，下盤棋找靈感。","win":"得了！這句就叫『一車定乾坤』。","lose":"這一步，可以寫成一首詩了。","hat":"topknot","hc":"#1E1A16","robe":"#F0C0C8"},
+  {"id":"w17_ming_pipa","era":"ming","name":"秦淮琵琶女","pc":"象","say":"彈完這曲，陪你下一盤。","win":"大珠小珠落玉盤，這盤是我的。","lose":"好棋，弦都要斷了。","hat":"topknot","hc":"#1E1A16","robe":"#F5F3EE"},
+  {"id":"w18_ming_doctor","era":"ming","name":"年輕女醫","pc":"卒","say":"下棋跟看病一樣，要先看準。","win":"藥到病除，棋到局終。","lose":"這一手，我得開帖藥給自己。","hat":"kerchief","hc":"#C8C0B0","robe":"#7A8FA8"},
+  {"id":"w19_ming_teahouse","era":"ming","name":"茶館少東家","pc":"卒","say":"客官，下盤棋再走嘛！","win":"茶錢免了，棋錢照收！","lose":"好棋！這壺茶我請。","hat":"hair","hc":"#1E1A16","robe":"#E8B860"},
+  {"id":"w20_ming_guard","era":"ming","name":"女捕快","pc":"車","say":"奉命巡街，順便抓一盤棋。","win":"人贓俱獲，這盤你輸了。","lose":"你這步棋，連我都抓不到。","hat":"sui","hc":"#1E1A16","robe":"#B8322A"},
   {id:"niao",name:"遛鳥的老伯",pc:"象",say:"我的畫眉聽得懂棋，你走錯它會叫。",win:"畫眉叫了吧？就說你走錯了。",lose:"好棋！畫眉都替你叫好。",hat:"scholar",hc:"#5A4630",robe:"#6B5A44"},
   {id:"duanjin",name:"練八段錦的大娘",pc:"砲",say:"剛打完一套拳，手正熱，來一盤！",win:"棋跟拳一樣，要天天練！",lose:"輸得痛快！明天再來過招。",hat:"bun",hc:"#2A1D16",band:"#C8382E",robe:"#B4453A"},
   {id:"douhua",name:"賣豆花的小販",pc:"卒",say:"下贏了請你一碗，下輸了你請我。",win:"一碗豆花，記你帳上囉！",lose:"願賭服輸，這碗豆花我請！",hat:"scarf",hc:"#E6D3A3",robe:"#C9A46A"},
@@ -3891,8 +3895,9 @@ const NPC_LOOK=(n,side)=>({p:npcPc(n,side),e:store.get("era","classic"),g:9,npc:
 /* 難度：以玩家等級換算的園子等級（parkLv）為中心，隨機 -1／0／0／+1，限制在電腦的 1～8 級內 */
 const parkNpcLv=()=>Math.max(1,Math.min(8,parkLv()+[-1,0,0,1][Math.floor(Math.random()*4)]));
 /* 開了新的一盤園子：記下這盤（game）遇到誰；keep＝同一位再下一盤，不然隨機挑一位、不跟上一位重複 */
-function parkNpcNew(game,lv,keep){const last=store.get("parkNpcLast",""),pool=PARK_NPC.filter(n=>n.id!==last),n=(keep&&PARK_NPC.find(x=>x.id===keep))||pool[Math.floor(Math.random()*pool.length)];
-  store.set("parkNpcLast",n.id);store.set("parkNpc",{game,id:n.id,lv});return n}
+/* 意見回饋 658：這個朝代有家鄉在這裡的女棋手，七成從她們裡面挑，三成照舊全部隨機（冷門朝代沒人的家鄉，就全部隨機，一樣遇得到人）；不是女棋手的路人照舊 */
+function parkNpcNew(game,lv,keep){const last=store.get("parkNpcLast",""),era=store.get("era","classic"),pool=PARK_NPC.filter(n=>n.id!==last),home=pool.filter(n=>n.era===era),pk=home.length&&Math.random()<.7?home:pool,n=(keep&&PARK_NPC.find(x=>x.id===keep))||pk[Math.floor(Math.random()*pk.length)];
+  store.set("parkNpcLast",n.id);store.set("parkNpc",{game,id:n.id,lv});if(n.era&&typeof npcMet==="function")npcMet(n);return n}
 /* 這盤園子的對手是誰（舊的、沒有記錄的盤用編號固定挑一位，不會每次重畫換人） */
 function parkNpcOf(st){if(!st||st.journey!=="park"||st.arena)return null;const r=store.get("parkNpc",null);if(r&&r.game===st.id)return PARK_NPC.find(x=>x.id===r.id)||PARK_NPC[0];
   let h=0;for(const c of String(st.id||""))h=(h*31+c.charCodeAt(0))>>>0;return PARK_NPC[h%PARK_NPC.length]}
@@ -3960,6 +3965,7 @@ function oppLine(op,era){if(!OPPL||!OPPL.lines)return null;const L=OPPL.lines,c=
   return{name:(op&&op.npc&&op.npc!=="me"?op.npc:null)||(OPPL.nm&&OPPL.nm[id])||"對手",say:a[OPPL_I[id]]}}
 function parkInfo(k){const era=store.get("era","classic"),E=PARK_INFO[era]||PARK_INFO.classic,[en,yr]=E._;vibrate(5);
   if(OFF&&PARK_J==="park"&&typeof secretFind==="function"&&secretFind(era,k))return;   /* 意見回饋 315：秘境棋友 */
+  if(k==="table"&&PARK_J==="park"&&typeof histCard==="function"){histCard(era);return}   /* 意見回饋 658（C 象棋從哪裡來）：石桌往事的園子裡點石桌＝這個朝代的棋史卡（秘境棋友上一行先檢查） */
   /* 意見回饋 348：石桌往事的公園裡，掀開茶杯有機會找到一份棋譜（寶物）；沒找到才跳茶杯的介紹 */
   if(k==="cup"&&PARK_J==="park"&&!parkInfo.skip){cupDrop().then(ok=>{if(!ok){parkInfo.skip=true;try{parkInfo(k)}finally{parkInfo.skip=false}}});return}
   // 網路對戰／觀戰時點到人：跳出那位棋友的資料卡（意見回饋 261）
@@ -4053,7 +4059,7 @@ const ARENA_ORDER=["classic","qin","han","sanguo","weijin","nanbei","sui","tang"
 const ARENA_TITLES=[[13,"十三朝棋王"],[7,"七朝豪傑"],[3,"擂台新秀"]];
 const arenaStamps=()=>{try{return JSON.parse(localStorage.getItem("xq_arenaStamps")||"{}")||{}}catch(e){return{}}};
 const arenaTitle=()=>{const n=Object.keys(arenaStamps()).length;const t=ARENA_TITLES.find(([k])=>n>=k);return t?t[1]:""};
-window.XQ_TITLE=()=>(typeof cupTitle==="function"&&cupTitle())||arenaTitle()||(typeof lingTitle==="function"&&(lingTitle()||jarTitle()))||"";   /* 開發者 11/5：擂台稱號優先，再來是將令、棋罐的稱號 */   // 大廳廣播：別人點你的資料卡看得到
+window.XQ_TITLE=()=>(typeof cupTitle==="function"&&cupTitle())||arenaTitle()||(typeof lingTitle==="function"&&(lingTitle()||jarTitle()))||(typeof histTitle==="function"&&histTitle())||"";   /* 開發者 11/5：擂台稱號優先，再來是將令、棋罐的稱號 */   // 大廳廣播：別人點你的資料卡看得到
 /* 擂主強度跟著你的電腦段位（新手大約「入門」棋力，越高段擂主越強）；意見回饋 288：最強的是經典公園的擂主，再強一級（不在 App 裡說破，讓玩家自己摸索） */
 function arenaLevel(era){let p=0;try{p=(JSON.parse(localStorage.getItem("xq_cpuRate")||"null")||{}).pts||0}catch(e){}
   const base=p>=1150?7:p>=900?6:p>=600?5:p>=300?4:p>=100?3:2;return era==="classic"?7:base}   /* 意見回饋 426、427：石桌棋仙固定在「全力」的前一級（第 7 級職業頂尖），不跟著段位變 */
@@ -5924,7 +5930,7 @@ function askGuides(){let p=0;try{p=(JSON.parse(localStorage.getItem("xq_cpuRate"
    [["殘局怎麼練","練殘局","殘局技巧"],"殘局怎麼練","殘局重在算步數和配合：兵卒在殘局很值錢，帥也要出來幫忙。\n建議：棋譜庫的「古典殘局譜」從簡單的開始看，先自己想再按下一步；術語裡的殺法也要背熟。\n\n👇 直接從大師對局的殘局練習（你執最後贏的一方），選一個難度：","#/db/canju","打開殘局譜","end"],
    [["漏著","送子","被吃","失誤","粗心","大意","看漏"],"怎麼避免漏著、送子","每走一步前花三秒檢查：①對方剛剛那步威脅什麼？②我要走的這個子離開後，原本保護的子還安全嗎？③走完後我的帥會不會被將？\n下完到「錯棋重練」把露著練對，同樣的錯就不會再犯。","#/redo","打開錯棋重練"],
    [["贏電腦","打敗電腦","電腦太強","贏不了"],"怎麼贏電腦","先從比較低的級數開始，連贏幾盤再升級；每盤輸了就看賽後報告，找出是哪一步開始變差。積分挑戰的對手會跟著你的段位調整，最適合穩定進步。","#/cpu","挑戰電腦"],
-   [["賽後報告","評等","妙手","正手","優著","良著","錯著","露著","評分"],"賽後報告的評等","Pikafish 會評每一步：妙手（找到唯一好棋）、正手（最佳或幾乎最佳）、優著（只差一點）、良著（小失誤）、錯著（明顯變差）、露著（大失誤，常是送子或漏殺）。\n藍色箭頭是 Pikafish 建議的走法。先改掉露著和錯著，進步最快。"],
+   [["賽後報告","評等","妙手","正手","優著","良著","錯著","露著","評分"],"賽後報告的評等","Pikafish 會評每一步：妙手（找到唯一好棋，不算被迫回吃或解將）、正手（最佳或差 30 分以內）、優著（差 60 分以內）、良著（差 150 分以內，小失誤）、錯著（差 400 分以內，明顯變差）、露著（差超過 400 分，常是送子或漏殺）。100 分大約是一個兵。\n藍色箭頭是 Pikafish 建議的走法。先改掉露著和錯著，進步最快。"],
    [["防守","怎麼守","被攻擊","擋"],"防守的訣竅","防守先顧帥的安全：士象不要隨便亂動，車要能回防；對方攻勢猛時，可以用兌子減少攻擊子力，或用反擊逼對方回防（以攻代守）。\n\n👇 從中局局面練習攻防："," "," ","mid"],
    [["進攻","怎麼攻","攻擊","殺棋"],"進攻的訣竅","進攻要集中子力：車馬炮至少兩個配合才容易成殺；先找對方的弱點（沒保護的子、空著的肋道、被塞的象眼），再用將軍逼對方應對，搶到先手就不要放。背熟殺法圖形最有幫助。\n\n👇 練習把優勢下贏（殘局）："," "," ","end"],
    [["段位","升段","積分怎麼算","升官"],"段位怎麼升",`積分挑戰和線上對戰都用等級分的算法：贏比自己強的人加得多、輸給比自己弱的人扣得多，跟實力差不多的人下，贏約 +16、輸約 −16；前 15 盤調整幅度大一點，比較快找到你的段位。段位會停在你真實能贏一半的地方，不會因為下得多就一直往上漲。分數夠就升段：新手→入門→業 1～9→專 1、專 2。你現在 ${p} 分（${RANKT(store.get("era","classic"),g)}），小帥的官階也會跟著升。`,"#/cpu","去積分挑戰"],
@@ -6552,7 +6558,7 @@ function bcMove(b,s,cn){try{const C=window.XQCore;if(!C)return null;const m=C.le
 // 每一步下面的說明：好棋說清楚「就是最佳著法」，不好的棋列出藍色箭頭的建議，還沒評等的提示怎麼補算
 function gradeNote(g,b){if(!g||!g.q)return"這步還沒評等（按 📊 賽後報告，Pikafish 會補算，再顯示藍色建議箭頭）";
   if(g.q==="—")return"";if(g.q==="妙手")return"✨ 妙手：就是 Pikafish 的首選，而且是不容易找到的好棋，沒有更好的走法。";
-  if(g.q==="正手")return"✅ 正手：跟 Pikafish 的首選一樣，沒有更好的走法（所以沒有藍色箭頭）。";
+  if(g.q==="正手")return g.loss?`✅ 正手：跟 Pikafish 的首選只差 ${g.loss} 分（30 分以內都算正手，手機上快速評等本來就會差這麼一點）。`:"✅ 正手：跟 Pikafish 的首選一樣，沒有更好的走法（所以沒有藍色箭頭）。";
   return`Pikafish：這步比最佳著法少 ${g.loss} 分。`+sugText(g,b)+(/錯著|露著/.test(g.q)?"\n想知道為什麼不好？按下面 🔍 分析，看對方最好怎麼應。":"")}
 /* 意見回饋 562：「實際走的」那條箭頭顏色跟著棋盤風格（T.mv），說明文字原本寫死「綠色」；改成照目前棋盤的箭頭顏色說顏色名稱 */
 /* 意見回饋 607：選了朝代風格時，棋盤畫的是朝代箭頭（ERA_ARROW，例如明朝是紅色連珠），說明文字要照畫出來的那條說顏色，不是棋盤風格的 mv 色 */
