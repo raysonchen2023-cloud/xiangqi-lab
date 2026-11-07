@@ -1035,7 +1035,7 @@ body.xqt-on .modal{z-index:10000}body.xqt-on .toast{z-index:10001}body.xqt-on .x
 .shpc .tx{min-width:0;flex:1}.shpc .tx .s{display:block;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 
 /* 意見回饋 729：記盤題目醒目 */
-#note.lv-q{font:800 17px/1.5 var(--serif,serif);color:var(--ink,#2a2018);opacity:1;margin:6px 2px 10px}
+#note.lv-q{font:800 17px/1.5 var(--serif,serif);color:var(--ink,#2a2018);opacity:1;margin:6px 2px 10px;flex:0 0 auto;overflow:visible}
 
 /* 意見回饋 733：版權保護——圖片、棋盤、3D 不能長按存圖或拖出去 */
 img,svg,canvas,picture{-webkit-touch-callout:none;-webkit-user-drag:none;user-drag:none;-webkit-user-select:none;user-select:none}
@@ -1120,7 +1120,7 @@ html:has(#xqTitle:not(.out)),html:has(#xqTitle:not(.out)) body{background:#F3ECD
       if(!window.caches)return go();caches.keys().then(function(ks){return Promise.all(ks.filter(function(k){return k.indexOf("xqlab-app-")===0}).map(function(k){return caches.delete(k)}))})
         .then(function(){return navigator.serviceWorker&&navigator.serviceWorker.getRegistration()}).then(function(r){return r&&r.update()}).catch(function(){}).then(go)}};setTimeout(chk,4000)})();
 </script>
-<script>window.XQ_OFFLINE=true;window.XQ_BUILD="20261107-1540";</script>
+<script>window.XQ_OFFLINE=true;window.XQ_BUILD="20261107-1600";</script>
 <script src="core.js"></script>
 <script src="engine.js"></script>
 <script src="local.js"></script>
