@@ -1014,6 +1014,11 @@ body.xqt-on .modal{z-index:10000}body.xqt-on .toast{z-index:10001}body.xqt-on .x
 @keyframes btTwinkle{0%,100%{opacity:.55;transform:rotate(0) scale(.8)}50%{opacity:1;transform:rotate(45deg) scale(1.05)}}
 @media (prefers-reduced-motion:reduce){.bt-glow,.bt-star{animation:none}.bt-rt.nw{animation:none;stroke-dashoffset:0}}
 .bt-card.lock{opacity:.62}.bt-card.flash{animation:btFlash 1.2s ease-out}
+/* 方案 C：旗艦戰役、軍師獻策 */
+.bt-flag{font-style:normal;font-family:system-ui,sans-serif;font-weight:700;color:#8a6200;background:#FFF4D2;border:1px solid #D4A017;border-radius:6px;padding:0 5px;font-size:11.5px;margin-left:6px;vertical-align:2px;white-space:nowrap}
+.bt-card.flag{box-shadow:0 0 0 2px #D4A017,0 2px 10px rgba(212,160,23,.25)}
+.bt-cn-o{display:block;width:100%;text-align:left;line-height:1.65;white-space:normal;padding:10px 12px}.bt-cn-o b{display:block;font-size:12.5px;color:#8a5a2b;margin-bottom:2px}
+.bt-cn .lvch{display:flex;flex-direction:column;gap:8px}.bt-hist{text-align:left;line-height:1.8;font-size:14px;margin:8px 0}.bt-hist p{margin:4px 0 0}
 @keyframes btFlash{0%{box-shadow:0 0 0 3px #F2C14E}100%{box-shadow:0 0 0 0 rgba(242,193,78,0)}}
 </style></head><body>
 <div class="app">
@@ -1062,7 +1067,7 @@ body.xqt-on .modal{z-index:10000}body.xqt-on .toast{z-index:10001}body.xqt-on .x
       if(!window.caches)return go();caches.keys().then(function(ks){return Promise.all(ks.filter(function(k){return k.indexOf("xqlab-app-")===0}).map(function(k){return caches.delete(k)}))})
         .then(function(){return navigator.serviceWorker&&navigator.serviceWorker.getRegistration()}).then(function(r){return r&&r.update()}).catch(function(){}).then(go)}};setTimeout(chk,4000)})();
 </script>
-<script>window.XQ_OFFLINE=true;window.XQ_BUILD="20261107-1257";</script>
+<script>window.XQ_OFFLINE=true;window.XQ_BUILD="20261107-1320";</script>
 <script src="core.js"></script>
 <script src="engine.js"></script>
 <script src="local.js"></script>
@@ -3538,7 +3543,7 @@ function onboard(){if(journey())journeyLock();else titleScreen({})}
 // ================= 設定：棋盤風格、棋子樣式、走棋顯示 =================
 const SAMPLE_FEN0="rnbakabnr/9/1c5c1/p1p1p1p1p/9/9/P1P1P1P1P/1C5C1/9/RNBAKABNR",SAMPLE_FEN1="rnbakabnr/9/1c5c1/p1p1p1p1p/9/9/P1P1P1P1P/1C2C4/9/RNBAKABNR",SAMPLE_LAST={f:70,t:67};
 /* 意見回饋 661：關於頁顯示整包遊戲要多大空間。XQ_SIZES 由 build-site.js 建置時填入（開發中的 m.html 是 null，就不顯示） */
-const XQ_SIZES={"pre":199486678,"code":12630245,"eng":51511005,"gm":33668932,"bgm":259516351,"opt":[["比賽對局 1956–2010",21765744],["比賽對局 2011–2014",25596413],["比賽對局 2015–2019",24821916]],"all":639634040,"other":10636756};
+const XQ_SIZES={"pre":199502387,"code":12637596,"eng":51511005,"gm":33668932,"bgm":259516351,"opt":[["比賽對局 1956–2010",21765744],["比賽對局 2011–2014",25596413],["比賽對局 2015–2019",24821916]],"all":639657100,"other":10636756};
 const szMB=b=>b>=1073741824?(b/1073741824).toFixed(1)+" GB":Math.max(1,Math.round(b/1048576))+" MB";
 function aboutSizes(){const S=XQ_SIZES;if(!S)return"";const opt=S.opt||[];   /* 意見回饋 662：玩家只看總數，細項只在開發者模式顯示 */
   return `<div class="row" style="justify-content:space-between"><span class="muted">整包下載</span><b>約 ${szMB(S.all)}</b></div>
@@ -3966,7 +3971,7 @@ const CHAR_ERA={x_swordboy:"qin",x_spiritgirl:"nanbei",x_martialgirl:"song",x_mi
 const JOURNEY_KEYS=["pChar","pSex","pStyle","botPiece","onboard1","journey","playSec","era","eraOpen","xp","xpDay","xpKeys","record","hintBonus","hintUse","undoBonus","undoDropIds","bag","jarGot","lingN","giftGames","dropMiss",
   "legend","legendGame","legBook","jStars","jPending","jPrev","jRun","jScene","jHid","jMig36","jpSeen","novelRead","sceneDone","storyEraTip","eraUser","study","campSeen","campStars",
   "npcBond","npcAsk","npcAskSeen","parkNpc","parkNpcLast","parkAdj","visitGone","secrets","secretClue","secretSpots","secretWins","relics","relicSolved","relicAt","histSeen","histSolved","histTitle",
-  "innCur","innDrop","innAdj","xhMake","xhMei","xhTitle","yuDay","yuHint","yuRoute","yuTitle","cupDrop","cupGot","cj","cjRun","shipAt","shipSolved","cjRunS","jRunS","battleSeal","battleTitle","cjRunB","jRunB","diff","shipDock","shipLearn","undoFree","shipGal","shipStale","shipRead"].map(k=>"m_"+k)   /* 意見回饋 674：星槎在看哪一站、千秋殘局解開的題、正在解的那一題；675：航行難度、已停靠的站、學會的棋理、這盤用了幾次免費悔棋；685：七星同局圖鑑與熱身解開的題、看過困斃說明、讀過《雲河七星》哪幾章 */
+  "innCur","innDrop","innAdj","xhMake","xhMei","xhTitle","yuDay","yuHint","yuRoute","yuTitle","cupDrop","cupGot","cj","cjRun","shipAt","shipSolved","cjRunS","jRunS","battleSeal","battleTitle","cjRunB","jRunB","battlePlan","diff","shipDock","shipLearn","undoFree","shipGal","shipStale","shipRead"].map(k=>"m_"+k)   /* 意見回饋 674：星槎在看哪一站、千秋殘局解開的題、正在解的那一題；675：航行難度、已停靠的站、學會的棋理、這盤用了幾次免費悔棋；685：七星同局圖鑑與熱身解開的題、看過困斃說明、讀過《雲河七星》哪幾章 */
   .concat(["cpuRate","bonusKeys","record","arenaStamps","carBank","play","play2"].map(k=>"xq_"+k));
 const JK=new Set(JOURNEY_KEYS),SLOT_N=3;
 /* 意見回饋 668：舊玩家判斷要在首頁畫出來以前做（首頁會順手寫一些旅程鍵，例如 lingN），所以這裡直接讀 localStorage；null＝已經過渡過了 */
@@ -7031,7 +7036,9 @@ function battleTitle(){try{const T=store.get("battleTitle",{})||{},k=Object.keys
 const battleMode=c=>(c&&c.play&&c.play.t)||"puzzle";
 /* 照年代一場一場打：第一場一直開著；前一場打下來（或這一場已經蓋過印）才開 */
 const battleOpen=(k,i,S)=>{S=S||battleSeals()[k]||{};return i===0||!!S[i]||!!S[i-1]};
-const battleHref=(k,i,c)=>battleMode(c)==="puzzle"?"#/canju/b/"+k+"/"+i:"#/battle/"+k+"/"+i;
+const battleHref=(k,i,c)=>battleMode(c)==="puzzle"&&!(c&&c.flag)?"#/canju/b/"+k+"/"+i:"#/battle/"+k+"/"+i;   /* 旗艦戰役（方案 C）一律先到 #/battle/<朝代>/<第幾張> 的軍師獻策 */
+/* 方案 C 軍師獻策：這次打開 App 選對過哪幾場（選對才照原本的玩法開打；battlePlan 存每場第一次選對的時間和選錯幾次） */
+const BATTLE_PLAN_OK={};
 /* 打完這一場，下一步去哪：先找後面開著、還沒蓋印的，再找前面的；都打完回 -1 */
 function battleNextIdx(k,i){const N=(BATTLE_CARDS[k]||[]).length,S=battleSeals()[k]||{};for(let j=1;j<N;j++){const x=(i+j)%N;if(!S[x]&&battleOpen(k,x,S))return x}return-1}
 /* 星槎 SHIP_PLAN 在任何難度用到的題都不拿來當戰役題（不然換個難度就撞題） */
@@ -7073,21 +7080,21 @@ function battleMapHTML(k,cards,S,RJ,LJ){const P=cards.map(c=>Array.isArray(c.xy)
   let route="";for(let i=0;i<e;i++){const nw=grow&&i===e-1;route+=`<path d="${seg(i,i+1)}" class="bt-rt${nw?" nw":""}" stroke-width="${f(r*.42)}" pathLength="100"/>`}
   const star=R=>{const s=R*.2;return`M0 ${f(-R)}L${f(s)} ${f(-s)}L${f(R)} 0L${f(s)} ${f(s)}L0 ${f(R)}L${f(-s)} ${f(s)}L${f(-R)} 0L${f(-s)} ${f(-s)}Z`};
   /* 戰役名放哪一邊：右、左、上、下照順序試，挑不壓到別的點、別的名字的那一邊 */
-  const fz=fs*1.05,boxes=[],hit=(a,b)=>a[0]<b[2]&&a[2]>b[0]&&a[1]<b[3]&&a[3]>b[1],dots=Q.map(([x,y])=>[x-r*1.3,y-r*1.3,x+r*1.3,y+r*1.3]);
-  const place=cards.map((c,i)=>{const[x,y]=Q[i],tw=(c.name.replace(/之戰$|之役$|之圍$/,"").length+(c.approx?3:0))*fz,g=r*1.45;
-    const C=[["start",g,r*.4,[x+g,y-fz*.6,x+g+tw,y+fz*.5]],["end",-g,r*.4,[x-g-tw,y-fz*.6,x-g,y+fz*.5]],["middle",0,-r*1.7,[x-tw/2,y-r*1.7-fz*.9,x+tw/2,y-r*1.7+fz*.2]],["middle",0,r*1.7+fz*.8,[x-tw/2,y+r*1.7-fz*.1,x+tw/2,y+r*1.7+fz*.9]]];
+  const fz=fs*1.05,boxes=[],hit=(a,b)=>a[0]<b[2]&&a[2]>b[0]&&a[1]<b[3]&&a[3]>b[1],dots=Q.map(([x,y],j)=>{const R=cards[j].flag?r*2.6:r*1.3;return[x-R,y-R,x+R,y+R]});
+  const place=cards.map((c,i)=>{const[x,y]=Q[i],tw=(c.name.replace(/之戰$|之役$|之圍$/,"").length+(c.approx?3:0)+(c.flag?1:0))*fz,g=r*(c.flag?2.8:1.45),u=r*(c.flag?2.9:1.7);
+    const C=[["start",g,r*.4,[x+g,y-fz*.6,x+g+tw,y+fz*.5]],["end",-g,r*.4,[x-g-tw,y-fz*.6,x-g,y+fz*.5]],["middle",0,-u,[x-tw/2,y-u-fz*.9,x+tw/2,y-u+fz*.2]],["middle",0,u+fz*.8,[x-tw/2,y+u-fz*.1,x+tw/2,y+u+fz*.9]]];
     if(x>vx+w*.66)C.unshift(C.splice(1,1)[0]);
     const ok=z=>z[3][0]>=vx&&z[3][2]<=vx+w&&!boxes.some(b=>hit(b,z[3]))&&!dots.some((d,j)=>j!==i&&hit(d,z[3]));const pick=C.find(ok)||C.find(z=>!boxes.some(b=>hit(b,z[3])))||C[0];boxes.push(pick[3]);return pick});
-  const mk=cards.map((c,i)=>{const[x,y]=Q[i],s=S[i],o=open[i],[anc,tx,ty]=place[i],nm=esc(c.name.replace(/之戰$|之役$|之圍$/,"")),approx=c.approx?"（約）":"";
-    const body=s?`<circle r="${f(r*2.2)}" fill="url(#btGlow)" opacity=".7"/><rect x="${f(-r*1.1)}" y="${f(-r*1.1)}" width="${f(r*2.2)}" height="${f(r*2.2)}" rx="${f(r*.3)}" fill="${s.h?"#FFF4E0":"#B22A1F"}" stroke="${s.h?"#B22A1F":"#F2C14E"}" stroke-width="${f(r*.18)}"/><text y="${f(r*.42)}" font-size="${f(r*1.3)}" fill="${s.h?"#B22A1F":"#FFF4E0"}" class="bt-mt">印</text>`
-      :o?`<circle r="${f(r*3)}" fill="url(#btGlow)" class="bt-glow"/><path d="${star(r*2.3)}" fill="#F6D36B" class="bt-star"/><circle r="${f(r)}" fill="#C8322A" stroke="#F6D36B" stroke-width="${f(r*.25)}"/><text y="${f(r*.4)}" font-size="${f(r*1.15)}" fill="#fff" class="bt-mt">${i+1}</text>`
-      :`<circle r="${f(r*.75)}" fill="#8f8577" stroke="#fff" stroke-width="${f(r*.15)}" opacity=".8"/><text y="${f(r*.3)}" font-size="${f(r*.85)}" fill="#fff" class="bt-mt">${i+1}</text>`;
-    return`<g class="bt-mk${s?" seal":o?" next":" lock"}" data-mk="${i}" transform="translate(${f(x)} ${f(y)})" role="button" aria-label="${esc(c.name)}${s?"・已打下":o?"・可以打":"・還沒開"}">${body}<text x="${f(tx)}" y="${f(ty)}" font-size="${f(fz)}" stroke-width="${f(fs*.28)}" text-anchor="${anc}" class="bt-mn${o||s?"":" off"}">${nm}${approx}</text></g>`}).join("");
+  const mk=cards.map((c,i)=>{const[x,y]=Q[i],s=S[i],o=open[i],[anc,tx,ty]=place[i],nm=esc(c.name.replace(/之戰$|之役$|之圍$/,"")),approx=c.approx?"（約）":"",rr=c.flag?r*1.3:r,ring=c.flag?`<circle r="${f(rr*1.75)}" fill="none" stroke="#D4A017" stroke-width="${f(rr*.2)}"/><circle r="${f(rr*2.05)}" fill="none" stroke="#F6D36B" stroke-width="${f(rr*.08)}" opacity=".9"/>`:"";
+    const body=ring+(s?`<circle r="${f(rr*2.2)}" fill="url(#btGlow)" opacity=".7"/><rect x="${f(-rr*1.1)}" y="${f(-rr*1.1)}" width="${f(rr*2.2)}" height="${f(rr*2.2)}" rx="${f(rr*.3)}" fill="${s.h?"#FFF4E0":"#B22A1F"}" stroke="${s.h?"#B22A1F":"#F2C14E"}" stroke-width="${f(rr*.18)}"/><text y="${f(rr*.42)}" font-size="${f(rr*1.3)}" fill="${s.h?"#B22A1F":"#FFF4E0"}" class="bt-mt">印</text>`
+      :o?`<circle r="${f(rr*3)}" fill="url(#btGlow)" class="bt-glow"/><path d="${star(rr*2.3)}" fill="#F6D36B" class="bt-star"/><circle r="${f(rr)}" fill="#C8322A" stroke="#F6D36B" stroke-width="${f(rr*.25)}"/><text y="${f(rr*.4)}" font-size="${f(rr*1.15)}" fill="#fff" class="bt-mt">${i+1}</text>`
+      :`<circle r="${f(rr*.75)}" fill="#8f8577" stroke="#fff" stroke-width="${f(rr*.15)}" opacity=".8"/><text y="${f(rr*.3)}" font-size="${f(rr*.85)}" fill="#fff" class="bt-mt">${i+1}</text>`);
+    return`<g class="bt-mk${s?" seal":o?" next":" lock"}${c.flag?" flag":""}" data-mk="${i}" transform="translate(${f(x)} ${f(y)})" role="button" aria-label="${esc(c.name)}${s?"・已打下":o?"・可以打":"・還沒開"}">${body}<text x="${f(tx)}" y="${f(ty)}" font-size="${f(fz)}" stroke-width="${f(fs*.28)}" text-anchor="${anc}" class="bt-mn${o||s?"":" off"}">${c.flag?"⭐":""}${nm}${approx}</text></g>`}).join("");
   return`<div class="bt-map"><svg viewBox="${f(vx)} ${f(vy)} ${f(w)} ${f(h)}" preserveAspectRatio="xMidYMid slice" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="${esc(eraLabel(k))}戰役地圖">
     <defs><radialGradient id="btGlow"><stop offset="0" stop-color="#FFF1BF" stop-opacity=".95"/><stop offset=".45" stop-color="#F2C14E" stop-opacity=".5"/><stop offset="1" stop-color="#F2C14E" stop-opacity="0"/></radialGradient></defs>
     <rect x="${f(vx-5)}" y="${f(vy-5)}" width="${f(w+10)}" height="${f(h+10)}" fill="#EFE5CF"/><filter id="btInk"><feColorMatrix type="saturate" values="0"/><feComponentTransfer><feFuncR type="linear" slope="1.12" intercept="-0.04"/><feFuncG type="linear" slope="1.1" intercept="-0.045"/><feFuncB type="linear" slope="1.06" intercept="-0.05"/></feComponentTransfer></filter><image href="data/eramap/${esc(k)}${mob?"_m":""}.webp" x="0" y="0" width="100" height="100" preserveAspectRatio="none" filter="url(#btInk)"/>
     <g>${realm}</g><g>${lab}</g><g fill="none">${route}</g><g>${mk}</g></svg>
-    <div class="bt-map-cap">${RE&&RE.year?`🗺 ${esc(eraLabel(k))}・${esc(RE.year)}的疆域　`:""}<span class="bt-k s">印</span>打下了　<span class="bt-k n">✦</span>下一場　<span class="bt-k l">●</span>還沒開　（約）地點只能標大概</div></div>`}
+    <div class="bt-map-cap">${RE&&RE.year?`🗺 ${esc(eraLabel(k))}・${esc(RE.year)}的疆域　`:""}<span class="bt-k s">印</span>打下了　<span class="bt-k n">✦</span>下一場　<span class="bt-k l">●</span>還沒開　<span class="bt-k n">⭐</span>旗艦戰役（先聽軍師獻策）　（約）地點只能標大概</div></div>`}
 /* ---------- 古戰場頁 #/battle ---------- */
 function Battlefield(v){const k=shipHere();setTop("⚔ 古戰場・"+(k==="classic"?"船艙":eraLabel(k)),"^#/port");setTabs(false);v.className="view";
   if(k==="classic"){v.innerHTML='<div class="pad"><div class="card muted">船艙沒有古戰場。搭星槎到各朝代的渡口，擂台旁邊就有「⚔ 古戰場」。</div></div>';return{}}
@@ -7102,9 +7109,9 @@ function Battlefield(v){const k=shipHere();setTop("⚔ 古戰場・"+(k==="class
       const P=pk[i]&&D.byId[pk[i]];return P?`📜 殘局題：${esc(P.t)}・${cjLv(P.d)}・${cjSrc(P)}`:"題目準備中"};
     const ready=(c,i)=>battleMode(c)==="puzzle"?!!(pk[i]&&D.byId[pk[i]]):battleMode(c)==="hold"?!!battleHoldCfg(B,c):!!battleOddsCfg(B,c);
     v.innerHTML=`<div class="pad bt-page">${battleMapHTML(k,cards,S,RJ,LJ)}<div class="card bt-head"><b>⚔ ${esc(eraLabel(k))}・五場戰役</b><div class="muted">戰役印 ${n}／${cards.length}${tt?"・🏅 "+esc(tt):"・集滿五場：稱號「"+esc(shipShort(k))+"・百戰之將」＋一件珍品"}・題目和電腦強度照🎚 ${esc(diffOf().n)}<br>照年代一場一場打：打下一場，路線就延伸到下一場。</div></div>
-      ${cards.map((c,i)=>{const s=S[i],o=battleOpen(k,i,S),ok=o&&ready(c,i);return`<button class="card bt-card${s?" done":""}${o?"":" lock"}" data-bi="${i}" id="btc${i}"${ok?"":" disabled"}>
+      ${cards.map((c,i)=>{const s=S[i],o=battleOpen(k,i,S),ok=o&&ready(c,i);return`<button class="card bt-card${s?" done":""}${o?"":" lock"}${c.flag?" flag":""}" data-bi="${i}" id="btc${i}"${ok?"":" disabled"}>
         <span class="bt-pic" style="background-image:url(data/shipmap/port_${k}.webp);background-position:${(i*23)%100}% 40%"><span class="bt-pic-n">${esc(c.name)}</span><img src="data/battles/${esc(c.img||c.id+".webp")}" alt="" loading="lazy" onerror="this.remove()"></span>
-        <span class="bt-seal">${s?(s.h?"◐":"印"):o?"⚔":"🔒"}</span><span class="tx"><b>${i+1}・${esc(c.name)}</b><small>${esc(c.year)}${c.sides?"・"+esc(c.sides):""}${c.prov?`・<em class="bt-prov">${esc(c.prov)}</em>`:""}</small>
+        <span class="bt-seal">${s?(s.h?"◐":"印"):o?"⚔":"🔒"}</span><span class="tx"><b>${i+1}・${esc(c.name)}${c.flag?'<em class="bt-flag">⭐ 旗艦戰役</em>':""}</b><small>${esc(c.year)}${c.sides?"・"+esc(c.sides):""}${c.prov?`・<em class="bt-prov">${esc(c.prov)}</em>`:""}</small>
         ${c.at?`<small>📍 ${c.approx?"約在":""}${esc(c.at)}</small>`:""}<span class="bt-line">${esc(c.line)}</span><span class="bt-tag">🗡 計謀：${esc(c.trick)}　📘 道理：${esc(c.lesson)}</span>
         <span class="muted bt-q">${o?`${s?"✅ 已蓋戰役印・":""}${modeTxt(c,i)}`:`🔒 先打下「${esc(cards[i-1].name)}」`}</span></span></button>`}).join("")}
       <p class="muted" style="font-size:12.5px;margin:8px 2px 0;line-height:1.7">點一張戰役卡開打：殘局題解開（看答案不算）、守城撐過步數、讓子對弈贏棋，就蓋戰役印。棋盤上的局面是借那場仗的道理出題，不是當年的戰況；標「存疑」的，是史書記載不完全確定的地方；地圖上標「約」的，是地點只能標大概。</p>
@@ -7120,8 +7127,35 @@ function BattleGo(v,k,i){i=+i|0;setTop("⚔ 古戰場","^#/battle");setTabs(fals
   v.innerHTML='<div class="pad muted">載入中…</div>';
   battleData().then(({B})=>{if(!v.isConnected)return;const cards=(B.eras||{})[k]||[],c=cards[i];if(!c)return bad("找不到這一場戰役（資料可能更新了）。");
     if(!battleOpen(k,i))return bad(`照年代一場一場打：先打下「${cards[i-1].name}」。`);
-    const m=battleMode(c);if(m==="hold")return battleHold(v,k,i,c,B);if(m==="odds")return battleOdds(v,k,i,c,B);navReplace(battleHref(k,i,c))}).catch(e=>bad(e&&e.message||"戰役資料載入失敗"));
+    if(c.flag&&!BATTLE_PLAN_OK[k+":"+i])return battleCouncil(v,k,i,c,B);
+    const m=battleMode(c);if(m==="hold")return battleHold(v,k,i,c,B);if(m==="odds")return battleOdds(v,k,i,c,B);battlePicks(k).then(()=>navReplace("#/canju/b/"+k+"/"+i))}).catch(e=>bad(e&&e.message||"戰役資料載入失敗"));
   return{}}
+/* ---------- 方案 C：軍師獻策（旗艦戰役；資料 card.flag，從 story/軍師獻策_12場.md 來）----------
+   開場一句＋這場的開局棋盤＋三位軍師各獻一策（對話選擇，跟星槎終章的 talk 步驟同一種樣子）。選錯：軍師解釋這策在當時為什麼不行，再選一次（不扣分、不用另做局面）；
+   選對（史實那一策）：照這場原本的玩法開打（殘局題、守城、讓子）。打下來以後跳「歷史上其實是這樣」小卡（battleMark；讓子對弈寫在結果視窗裡）。 */
+function battleStartPos(B,k,i,c){try{const C=window.XQCore,m=battleMode(c);
+  if(m==="hold"){const H=battleHoldCfg(B,c);return H?{b:C.parseFen(H.fen),flip:false}:null}
+  if(m==="odds"){const O=battleOddsCfg(B,c);if(!O)return null;const b=C.parseFen(C.START);for(const q of O.rm)b[C.parseSq(q)]=null;return{b,flip:false}}
+  return battleCouncilPos(k,i)}catch(e){return null}}
+function battleCouncil(v,k,i,c,B){const F=c.flag,old=((store.get("battlePlan",{})||{})[k]||{})[i];setTop("⭐ 軍師獻策","^#/battle");setTabs(false);v.className="view";
+  battlePicks(k).catch(()=>{}).then(()=>{if(!v.isConnected)return;let pv=null;try{pv=battleStartPos(B,k,i,c)}catch(e){}if(!pv&&battleMode(c)==="puzzle")pv=battleCouncilPos(k,i);
+    v.innerHTML=`<div class="pad bt-cn"><div class="lvh"><b>⭐ ${esc(c.name)}・軍師獻策</b><span>${esc(c.year||"")}</span></div><div class="card lvsay">${esc(F.open)}</div>
+      ${pv?'<div class="boardbox" id="btCB" style="max-width:280px;margin:0 auto 4px"></div><p class="muted" style="text-align:center;font-size:12px;margin:0 0 8px">選對計策，就從這個局面開打</p>':""}
+      <p style="margin:6px 2px"><b>三位軍師各獻一策，你採用哪一策？</b></p><div class="lvch">${F.opts.map((o,j)=>`<button class="btn ghost bt-cn-o" data-o="${j}"><b>${esc(o.who)}</b>「${esc(String(o.say).replace(/^「|」$/g,""))}」</button>`).join("")}</div>
+      <div id="btRp"></div>${old?'<button class="btn ghost" id="btSkip" style="width:100%;margin-top:8px">⚔ 直接開打（之前選對過了）</button>':""}</div>`;
+    if(pv){try{const bd=Board(()=>{});v.querySelector("#btCB").append(bd.svg);bd.draw(pv.b,{flip:pv.flip})}catch(e){}}
+    let miss=0;const rp=v.querySelector("#btRp");
+    v.querySelectorAll("[data-o]").forEach(b=>b.onclick=()=>{const o=F.opts[+b.dataset.o];
+      if(!o.ok){miss++;b.disabled=true;vibrate([20,40,20]);rp.innerHTML=`<div class="card lvsay lvno">💭 ${esc(o.re)}<br><span class="muted">這一策在當時行不通，再選一次。</span></div>`;return}
+      vibrate(15);v.querySelectorAll("[data-o]").forEach(z=>z.disabled=true);b.classList.remove("ghost");
+      const A=store.get("battlePlan",{})||{},E=A[k]||(A[k]={});E[i]=E[i]?{...E[i],last:Date.now(),miss:Math.min(E[i].miss|0,miss)}:{at:Date.now(),miss};store.set("battlePlan",A);
+      rp.innerHTML=`<div class="card lvsay">✅ ${esc(o.re)}</div><button class="btn" id="btFight" style="width:100%">⚔ 照這一策開打</button>`;rp.querySelector("#btFight").onclick=()=>battleFight(k,i,c);rp.scrollIntoView({behavior:"smooth",block:"nearest"})});
+    {const sk=v.querySelector("#btSkip");if(sk)sk.onclick=()=>battleFight(k,i,c)}})}
+/* 殘局題的開局（題目資料在 battleData 的 D 裡） */
+function battleCouncilPos(k,i){try{const id=(BATTLE_PK[k+"|"+diffNow()]||[])[i],P=id&&BATTLE_D&&BATTLE_D.byId[id];return P&&P.fen?{b:window.XQCore.parseFen(P.fen),flip:P.side==="b"}:null}catch(e){return null}}
+function battleFight(k,i,c){BATTLE_PLAN_OK[k+":"+i]=1;if(battleMode(c)==="puzzle")battlePicks(k).then(()=>{location.hash="#/canju/b/"+k+"/"+i});else route()}
+/* 打下旗艦戰役：歷史小卡 */
+function battleHistHTML(c){const F=c&&c.flag;if(!F)return"";return`<div class="em">📜</div><h2>歷史上其實是這樣</h2><p style="line-height:1.85;text-align:left">${esc(F.hist)}</p>${F.src?`<p class="muted" style="font-size:12px;text-align:left">出處：${esc(F.src)}</p>`:""}`}
 /* 守城：星槎小關的 relay 自由段（敵軍先動；走滿 N 步、不被將死、仕相不能丟） */
 function battleHold(v,k,i,c,B){const H=battleHoldCfg(B,c),cards=B.eras[k];if(!H){v.innerHTML='<div class="pad"><div class="card muted">這一場的守城局面還在準備。</div></div>';return}
   const kt=battleKeepTxt(H.keep),dn=diffNow();let res=null;
@@ -7146,11 +7180,11 @@ function battleOddsAgain(st){const p=String(st.journey).split(":"),k=p[1],i=+p[2
   return api("/play/new",{human:"r",lx:st.level,journey:st.journey,lv:{fen:"",turn:"r",remove:O.rm}}).then(s=>{store.set("jPending",{id:st.journey,game:s.id});return s})})}
 /* 07-legend.js journeyGameEnd 轉過來（journey＝bt:<朝代>:<第幾張>）：贏了蓋印；結果視窗用 battleResultModal */
 function battleOddsEnd(st,P){const p=String(P.id).split(":"),k=p[1],i=+p[2],win=st.result&&st.result.w===st.human;
-  BATTLE_LAST={j:P.id,o:win?battleMark(k,i,"odds:"+st.id,{hint:!!P.hint}):null}}
+  BATTLE_LAST={j:P.id,o:win?battleMark(k,i,"odds:"+st.id,{hint:!!P.hint,inline:true}):null}}
 function battleResultModal(st,win,draw0,XPR){const p=String(st.journey).split(":"),k=p[1],i=+p[2],c=battleCard(k,i)||{name:"這一場"},o=BATTLE_LAST&&BATTLE_LAST.j===st.journey?BATTLE_LAST.o:null,j=win?battleNextIdx(k,i):-1;
   const cards=BATTLE_CARDS[k]||[];
   modal(`<div class="em">${win?"⚔":draw0?"🤝":"💪"}</div><h2>${win?esc(c.name)+"・打下來了！":draw0?"和局":"這一仗沒打下來"}</h2><p class="muted">${esc(st.result.why)}・⚖ 讓子對弈</p>`+
-    (win&&o?`<p style="font-size:17px;font-weight:900"><span class="bt-seal sm" style="border-color:#B5452B;color:#B5452B">${o.h?"◐":"印"}</span> 戰役印 ${o.n}／${o.all}</p>${o.full?`<p class="bt-full">🏅 ${esc(eraLabel(k))}五場戰役都打下來了！得到稱號「${esc(battleTitleOf(k))}」</p>`:""}`:win?"":'<p class="muted">和棋、輸棋都不蓋戰役印，再下一盤吧！</p>')+XPR,
+    (win&&o?`<p style="font-size:17px;font-weight:900"><span class="bt-seal sm" style="border-color:#B5452B;color:#B5452B">${o.h?"◐":"印"}</span> 戰役印 ${o.n}／${o.all}</p>${o.full?`<p class="bt-full">🏅 ${esc(eraLabel(k))}五場戰役都打下來了！得到稱號「${esc(battleTitleOf(k))}」</p>`:""}`:win?"":'<p class="muted">和棋、輸棋都不蓋戰役印，再下一盤吧！</p>')+(win&&c.flag?`<div class="card bt-hist"><b>📜 歷史上其實是這樣</b><p>${esc(c.flag.hist)}</p></div>`:"")+XPR,
     win?(j>=0&&cards[j]?[[`下一場：${cards[j].name} ›`,()=>goUp("#/battle",()=>{location.hash=battleHref(k,j,cards[j])})],["‹ 回古戰場",()=>goUp("#/battle"),true]]:[["⚔ 回古戰場 ›",()=>goUp("#/battle")]])
       :[["再下一盤 ›",()=>battleOddsStart(k,i,true)],["‹ 回古戰場",()=>goUp("#/battle"),true]],"res")}
 /* ---------- 解題頁設定（07c-canju.js CanjuPlay 的 XM；cjXMode 的 b/<朝代>/<第幾張>）---------- */
@@ -7169,8 +7203,11 @@ function battleMark(k,i,id,o){const A=battleSeals(),E=A[k]||(A[k]={}),old=E[i],h
   if(first)E[i]={at:Date.now(),h,id};else if(old.h&&!h)E[i]={...old,h:0,up:Date.now()};store.set("battleSeal",A);
   if(first&&typeof addXP==="function")setTimeout(()=>addXP(15,"古戰場",`bt:${k}:${i}`),1600);
   const N=(BATTLE_CARDS[k]||[]).length||5,n=Object.keys(E).length;let full=false;
-  const T=store.get("battleTitle",{})||{};if(N&&n>=N&&!T[k]){T[k]=Date.now();store.set("battleTitle",T);full=true;setTimeout(()=>addXP(30,"百戰之將","bt:title:"+k),3200);
-    Promise.resolve(typeof cjRelic==="function"?cjRelic(k):null).then(rel=>{setTimeout(()=>{modal(`<div class="em">🏅</div><h2>${esc(battleTitleOf(k))}</h2><p>${esc(eraLabel(k))}五場戰役都打下來了。</p>${rel?battleRelicHTML(rel):'<p class="muted">珍品都收齊了，這次只有稱號。</p>'}`,[["好",null]])},2600)}).catch(()=>{})}
+  const T=store.get("battleTitle",{})||{};let fullP=null;if(N&&n>=N&&!T[k]){T[k]=Date.now();store.set("battleTitle",T);full=true;setTimeout(()=>addXP(30,"百戰之將","bt:title:"+k),3200);
+    fullP=Promise.resolve(typeof cjRelic==="function"?cjRelic(k):null).catch(()=>null)}
+  const showFull=()=>{if(fullP)fullP.then(rel=>modal(`<div class="em">🏅</div><h2>${esc(battleTitleOf(k))}</h2><p>${esc(eraLabel(k))}五場戰役都打下來了。</p>${rel?battleRelicHTML(rel):'<p class="muted">珍品都收齊了，這次只有稱號。</p>'}`,[["好",null]]))};
+  /* 旗艦戰役（方案 C）：先跳「歷史上其實是這樣」，按「好」再跳稱號；讓子對弈的歷史小卡寫在結果視窗裡（o.inline） */
+  const c=battleCard(k,i);if(c&&c.flag&&!(o&&o.inline))setTimeout(()=>modal(battleHistHTML(c),[["好",showFull]]),1800);else if(fullP)setTimeout(showFull,2600);
   return{first,h:E[i].h,n,all:N,full}}
 function battleDoneHTML(k,i,o,ans){if(ans||!o)return`<p class="muted">看了答案，這一場先不蓋戰役印；之後不看答案再解一次就能蓋。</p>`;
   const c=battleCard(k,i)||{};return`<div class="card bt-done"><b>⚔ ${esc(c.name||"")}</b>　<span class="bt-seal sm">${o.h?"◐":"印"}</span><br><span class="muted">戰役印 ${o.n}／${o.all}・${o.h?"用了提示（空心印）；不看提示再解一次，印就變實心。":"自己打下來的。"}${o.first?"修為 +15。":""}</span>
@@ -7179,7 +7216,8 @@ function battleDoneHTML(k,i,o,ans){if(ans||!o)return`<p class="muted">看了答�
 function battleRelicHTML(rel){if(rel.named&&typeof cjRelicHTML==="function")return cjRelicHTML(rel);const rk=(typeof RELIC_RK!=="undefined"&&RELIC_RK[rel.it.rarity])||["",""],img=typeof relicImg==="function"?relicImg(rel.era,rel.it.id):"🏺",en=typeof relicEra==="function"?esc(relicEra(rel.era)):"";
   return`<div class="cj-relic"><div class="im">${img}</div><div style="flex:1;min-width:0;text-align:left"><b>🎁 百戰之將的獎勵：${esc(rel.it.name||"")}</b><div class="muted">${en}・${esc(rk[0])}・收進「我的角色 → 🏺 珍品」</div><div class="muted" style="font-size:12.5px;margin-top:4px">${esc(rel.it.desc||"")}</div></div></div>`}
 /* battleData 載入後，把卡片也記一份給 XM 用（XM 是同步的） */
-{const f=battleData;battleData=function(){return f().then(x=>{BATTLE_CARDS=(x.B&&x.B.eras)||{};return x})}}
+let BATTLE_D=null;
+{const f=battleData;battleData=function(){return f().then(x=>{BATTLE_CARDS=(x.B&&x.B.eras)||{};BATTLE_D=x.D||null;return x})}}
 /* ================= 🕰 回到當年（意見回饋 313）=================
    石桌往事裡的對局，用「妙棋精選」裡 Pikafish 驗證過的特級大師實戰來演：你站在旁邊看，不能插手；
    棋自動一步一步下，下到那一步妙棋之前停下來——換作是你，會怎麼走？
