@@ -1148,7 +1148,7 @@ html:has(#xqTitle:not(.out)),html:has(#xqTitle:not(.out)) body{background:#F3ECD
       if(!window.caches)return go();caches.keys().then(function(ks){return Promise.all(ks.filter(function(k){return k.indexOf("xqlab-app-")===0}).map(function(k){return caches.delete(k)}))})
         .then(function(){return navigator.serviceWorker&&navigator.serviceWorker.getRegistration()}).then(function(r){return r&&r.update()}).catch(function(){}).then(go)}};setTimeout(chk,4000)})();
 </script>
-<script>window.XQ_OFFLINE=true;window.XQ_BUILD="20261107-1745";</script>
+<script>window.XQ_OFFLINE=true;window.XQ_BUILD="20261107-1830";</script>
 <script src="core.js"></script>
 <script src="engine.js"></script>
 <script src="local.js"></script>
@@ -3696,7 +3696,7 @@ function onboard(){if(journey())journeyLock();else titleScreen({})}
 // ================= 設定：棋盤風格、棋子樣式、走棋顯示 =================
 const SAMPLE_FEN0="rnbakabnr/9/1c5c1/p1p1p1p1p/9/9/P1P1P1P1P/1C5C1/9/RNBAKABNR",SAMPLE_FEN1="rnbakabnr/9/1c5c1/p1p1p1p1p/9/9/P1P1P1P1P/1C2C4/9/RNBAKABNR",SAMPLE_LAST={f:70,t:67};
 /* 意見回饋 661：關於頁顯示整包遊戲要多大空間。XQ_SIZES 由 build-site.js 建置時填入（開發中的 m.html 是 null，就不顯示） */
-const XQ_SIZES={"pre":202987114,"code":12724409,"eng":51511005,"gm":33668932,"bgm":259516351,"opt":[["比賽對局 1956–2010",21765744],["比賽對局 2011–2014",25596413],["比賽對局 2015–2019",24821916]],"all":643228640,"other":10636756};
+const XQ_SIZES={"pre":203809924,"code":12725115,"eng":51511005,"gm":33668932,"bgm":259516351,"opt":[["比賽對局 1956–2010",21765744],["比賽對局 2011–2014",25596413],["比賽對局 2015–2019",24821916]],"all":644052156,"other":10636756};
 const szMB=b=>b>=1073741824?(b/1073741824).toFixed(1)+" GB":Math.max(1,Math.round(b/1048576))+" MB";
 function aboutSizes(){const S=XQ_SIZES;if(!S)return"";const opt=S.opt||[];   /* 意見回饋 662：玩家只看總數，細項只在開發者模式顯示 */
   return `<div class="row" style="justify-content:space-between"><span class="muted">整包下載</span><b>約 ${szMB(S.all)}</b></div>
@@ -7164,7 +7164,9 @@ const yunheOrig=()=>!!store.get("yunheOrig",false);
 /* 這一章照目前的設定要怎麼讀：{c 章（title、paras、marks）, pov＝1 第一人稱整章, side＝旁觀段落 or null} */
 function yunheView(c,M){if(!M||yunheOrig())return{c,pov:0,side:null};const F=M.full&&M.full[c.n];if(F)return{c:{...c,title:F.title,paras:F.paras,marks:F.marks},pov:1,side:null};return{c,pov:0,side:(M.side&&M.side[c.n])||null}}
 /* 意見回饋 728：《雲河七星》合集的章節插畫。[原版第幾段之前, 圖檔, 圖說]；第一人稱版段數不同，照比例換算位置 */
-const YUNHE_PICS={classic:[[3,"ch01_1","齊轍跌進渭水，星槎上伸下一隻溫暖的手"],[58,"ch01_2","七碗熱茶：七個孩子第一次見面"],[152,"ch01_3","石桌邊的一小段刻痕，泛起極淡的微光"]]};
+const YUNHE_PICS={classic:[[3,"ch01_1","齊轍跌進渭水，星槎上伸下一隻溫暖的手"],[58,"ch01_2","七碗熱茶：七個孩子第一次見面"],[152,"ch01_3","石桌邊的一小段刻痕，泛起極淡的微光"]],
+  qin:[[2,"ch02_1","黃土坡上，秦直道正一夯一夯鋪開"],[64,"ch02_2","齊轍削木楔，小梅抱著木板蹲在一旁"],[119,"ch02_3","腰牌擱在掌心，齊轍重新看棋盤"]],
+  han:[[37,"ch03_1","風沙撲來，驚馬在乾河道邊停住"],[85,"ch03_2","小梅按住桌沿，等心裡的急躁過去"],[101,"ch03_3","紅柳旁的窄門前，老驛騎替馬拍沙"]]};
 function yunhePics(k,n0,n){const L=YUNHE_PICS[k]||[],P={};L.forEach(([a,f,cap])=>{const j=Math.min(n-1,Math.max(0,Math.round(a*n/Math.max(1,n0))));P[j]=(P[j]||"")+`<figure class="shp-fig"><img src="data/shipmap/novel/${f}.webp" alt="${esc(cap)}" loading="lazy"><figcaption>${esc(cap)}</figcaption></figure>`});return P}
 function ShipRead(v,k,at){setTabs(false);v.className="view";v.innerHTML='<div class="pad muted">正文載入中…</div>';setTop("📖 雲河七星",k?SHIP_RD_BACK||"#/ship/read":"#/adventure");
   Promise.all([yunheData(),yunhePov()]).then(([N,PV])=>{if(!v.isConnected)return;const R=store.get("shipRead",{})||{},kz=c=>Math.round(c.paras.join("").length/100)/10,M=yunheMine(PV),org=yunheOrig(),me=M?WX_CHARS[myChar()]:null,meN=me?(me.nk||me.n):"";
