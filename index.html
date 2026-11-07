@@ -1027,7 +1027,7 @@ body.xqt-on .modal{z-index:10000}body.xqt-on .toast{z-index:10001}body.xqt-on .x
       if(!window.caches)return go();caches.keys().then(function(ks){return Promise.all(ks.filter(function(k){return k.indexOf("xqlab-app-")===0}).map(function(k){return caches.delete(k)}))})
         .then(function(){return navigator.serviceWorker&&navigator.serviceWorker.getRegistration()}).then(function(r){return r&&r.update()}).catch(function(){}).then(go)}};setTimeout(chk,4000)})();
 </script>
-<script>window.XQ_OFFLINE=true;window.XQ_BUILD="20261107-0507";</script>
+<script>window.XQ_OFFLINE=true;window.XQ_BUILD="20261107-1046";</script>
 <script src="core.js"></script>
 <script src="engine.js"></script>
 <script src="local.js"></script>
@@ -3502,7 +3502,7 @@ function onboard(){if(journey())journeyLock();else titleScreen({})}
 // ================= 設定：棋盤風格、棋子樣式、走棋顯示 =================
 const SAMPLE_FEN0="rnbakabnr/9/1c5c1/p1p1p1p1p/9/9/P1P1P1P1P/1C5C1/9/RNBAKABNR",SAMPLE_FEN1="rnbakabnr/9/1c5c1/p1p1p1p1p/9/9/P1P1P1P1P/1C2C4/9/RNBAKABNR",SAMPLE_LAST={f:70,t:67};
 /* 意見回饋 661：關於頁顯示整包遊戲要多大空間。XQ_SIZES 由 build-site.js 建置時填入（開發中的 m.html 是 null，就不顯示） */
-const XQ_SIZES={"pre":192349034,"code":12591759,"eng":51511005,"gm":33668932,"bgm":259516351,"opt":[["比賽對局 1956–2010",21765744],["比賽對局 2011–2014",25596413],["比賽對局 2015–2019",24821916]],"all":632457910,"other":10636756};
+const XQ_SIZES={"pre":192349034,"code":12591972,"eng":51511005,"gm":33668932,"bgm":259516351,"opt":[["比賽對局 1956–2010",21765744],["比賽對局 2011–2014",25596413],["比賽對局 2015–2019",24821916]],"all":632458123,"other":10636756};
 const szMB=b=>b>=1073741824?(b/1073741824).toFixed(1)+" GB":Math.max(1,Math.round(b/1048576))+" MB";
 function aboutSizes(){const S=XQ_SIZES;if(!S)return"";const opt=S.opt||[];   /* 意見回饋 662：玩家只看總數，細項只在開發者模式顯示 */
   return `<div class="row" style="justify-content:space-between"><span class="muted">整包下載</span><b>約 ${szMB(S.all)}</b></div>
@@ -3784,13 +3784,14 @@ function feedbackSheet(){let type="🐞 錯誤";
       for(let k=0;k<more.length;k++)ok=(await sendRecord(Object.assign({},info,{type,text:`📎 附件續（第 ${k+2}/${more.length+1} 段，接上一則：${t.slice(0,40)}）
 `+more[k],contact,img:""})))&&ok;closeSheet();toast(ok?"✅ 已送出，謝謝你的回饋！":"已存在手機裡，有網路時會自動送出")}})}
 /* 意見回饋 708（開發者）：記這支手機用了多久、在哪些地方待最久（只算畫面開著的時間），跟著玩家登記一起送，表單「內容」欄寫成「總共用了 3 小時・最常待：雲河星槎 1 小時、園子對局 40 分、殘局 20 分」 */
-const USE_NAME=[["#/ship/read","雲河七星閱讀"],["#/journey/play","園子對局"],["#/journey/inn","驛站"],["#/journey/park","千秋石枰"],["#/journey","章回棋路"],["#/adventure","雲河星槎"],["#/port","渡口"],["#/arena","擂台"],["#/canju","殘局"],["#/cpu","挑戰電腦"],["#/lobby","線上對戰"],["#/play","對局"],["#/db","棋譜"],["#/quiz","測驗"],["#/guess","猜著法"],["#/settings","設定"],["#/me","我的角色"],["#/shelf","書架"],["#/stats","戰績"],["#/openings","開局"],["#/redo","錯棋重練"],["#/terms","規則"]];
+const USE_NAME=[["#/ship/read","雲河七星閱讀"],["#/ship","雲河星槎"],["#/journey/play","園子對局"],["#/journey/inn","驛站"],["#/journey/park","千秋石枰"],["#/journey","章回棋路"],["#/adventure","雲河星槎"],["#/port","渡口"],["#/arena","擂台"],["#/canju","殘局"],["#/cpu","挑戰電腦"],["#/lobby","線上對戰"],["#/play","對局"],["#/db","棋譜"],["#/quiz","測驗"],["#/guess","猜著法"],["#/settings","設定"],["#/me","我的角色"],["#/shelf","書架"],["#/stats","戰績"],["#/openings","開局"],["#/redo","錯棋重練"],["#/terms","規則"]];
 const usePlace=h=>{h=h||"#/";if(h==="#/"||h==="#")return"首頁";for(const[p,n]of USE_NAME)if(h===p||h.startsWith(p+"/"))return n;return h.split("/")[1]||"首頁"};
 let useT=Date.now(),useH=location.hash;
 function useTick(){const now=Date.now(),dt=Math.min(now-useT,60000);useT=now;if(document.hidden||dt<=0)return;try{const S=store.get("useStat",null)||{t:0,p:{}};S.t=(S.t||0)+dt;S.p=S.p||{};const k=usePlace(useH);S.p[k]=(S.p[k]||0)+dt;store.set("useStat",S)}catch(e){}}
 setInterval(useTick,15000);addEventListener("hashchange",()=>{useTick();useH=location.hash});document.addEventListener("visibilitychange",()=>{if(document.hidden)useTick();else useT=Date.now()});
 const useFmt=ms=>{const m=Math.round(ms/60000);return m>=60?`${Math.floor(m/60)} 小時${m%60?` ${m%60} 分`:""}`:`${m} 分`};
-function useSummary(){const S=store.get("useStat",null);if(!S||!S.t)return"";const top=Object.entries(S.p||{}).sort((a,b)=>b[1]-a[1]).slice(0,3).map(([k,v])=>`${k} ${useFmt(v)}`);return`總共用了 ${useFmt(S.t)}・最常待：${top.join("、")}`}
+function useSummary(){const S=store.get("useStat",null);if(!S||!S.t)return"";const P={...(S.p||{})};if(P.ship){P["雲河星槎"]=(P["雲河星槎"]||0)+P.ship;delete P.ship}   /* 意見回饋 724：星槎新頁（#/ship/...）以前記成 ship，併進雲河星槎 */
+  const top=Object.entries(P).sort((a,b)=>b[1]-a[1]).slice(0,3).map(([k,v])=>`${k} ${useFmt(v)}`);return`總共用了 ${useFmt(S.t)}・最常待：${top.join("、")}`}
 // 線上 ID 登記：名字或段位有變、或超過 7 天，就送一筆「玩家」紀錄到同一個表單（意見回饋 708：多用了 30 分鐘以上、距離上次超過一天也送，時間才跟得上）
 async function reportPlayer(){if(!OFF||!FEEDBACK_FORM.action)return;if(navigator.webdriver)return;   /* 意見回饋 652：自動化測試（Playwright 等）開的 App 不送玩家登記，名單才分得清真人 */if(/^(localhost|127\.|\[::1\])/.test(location.hostname))return;   /* 電腦本機測試不送玩家紀錄（第 502、504 列是測試時誤送的） */const i=await feedbackInfo(),key=i.id+"|"+i.name+"|"+i.rank.split(" ")[0],last=store.get("playerRep",null);
   const ut=((store.get("useStat",null)||{}).t)||0;if(last&&last.k===key&&Date.now()-last.at<7*864e5&&!(Date.now()-last.at>864e5&&ut-(last.u||0)>=18e5))return;
