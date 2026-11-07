@@ -1100,6 +1100,7 @@ html:has(#xqTitle:not(.out)),html:has(#xqTitle:not(.out)) body{background:#F3ECD
 .qqc .qb .btn{width:100%;margin:0}
 .rl-qq{position:absolute;left:2px;top:2px;font-size:13px;line-height:1;pointer-events:none}
 .rl-qq.won{font-size:9px;font-weight:900;color:#2F6B4F;border:1.5px solid #2F6B4F;border-radius:4px;padding:2px 2px;background:rgba(255,255,255,.88);transform:rotate(-10deg);font-family:var(--serif)}
+.shp-fig{margin:14px -4px 16px;text-align:center}.shp-fig img{width:100%;height:auto;border-radius:10px;display:block;box-shadow:0 2px 10px rgba(0,0,0,.18)}.shp-fig figcaption{font-size:12.5px;color:var(--muted);margin-top:6px;line-height:1.5}   /* 意見回饋 728：合集章節插畫 */
 </style></head><body>
 <div class="app">
  <div class="topbar" id="topbar"><button class="ib" id="back" hidden><b>‹</b>返回</button><h1 id="title">象棋千秋</h1><span id="topRight"></span></div>
@@ -1147,7 +1148,7 @@ html:has(#xqTitle:not(.out)),html:has(#xqTitle:not(.out)) body{background:#F3ECD
       if(!window.caches)return go();caches.keys().then(function(ks){return Promise.all(ks.filter(function(k){return k.indexOf("xqlab-app-")===0}).map(function(k){return caches.delete(k)}))})
         .then(function(){return navigator.serviceWorker&&navigator.serviceWorker.getRegistration()}).then(function(r){return r&&r.update()}).catch(function(){}).then(go)}};setTimeout(chk,4000)})();
 </script>
-<script>window.XQ_OFFLINE=true;window.XQ_BUILD="20261107-1700";</script>
+<script>window.XQ_OFFLINE=true;window.XQ_BUILD="20261107-1730";</script>
 <script src="core.js"></script>
 <script src="engine.js"></script>
 <script src="local.js"></script>
@@ -3695,7 +3696,7 @@ function onboard(){if(journey())journeyLock();else titleScreen({})}
 // ================= 設定：棋盤風格、棋子樣式、走棋顯示 =================
 const SAMPLE_FEN0="rnbakabnr/9/1c5c1/p1p1p1p1p/9/9/P1P1P1P1P/1C5C1/9/RNBAKABNR",SAMPLE_FEN1="rnbakabnr/9/1c5c1/p1p1p1p1p/9/9/P1P1P1P1P/1C2C4/9/RNBAKABNR",SAMPLE_LAST={f:70,t:67};
 /* 意見回饋 661：關於頁顯示整包遊戲要多大空間。XQ_SIZES 由 build-site.js 建置時填入（開發中的 m.html 是 null，就不顯示） */
-const XQ_SIZES={"pre":202552363,"code":12722636,"eng":51511005,"gm":33668932,"bgm":259516351,"opt":[["比賽對局 1956–2010",21765744],["比賽對局 2011–2014",25596413],["比賽對局 2015–2019",24821916]],"all":642792116,"other":10636756};
+const XQ_SIZES={"pre":202983147,"code":12724409,"eng":51511005,"gm":33668932,"bgm":259516351,"opt":[["比賽對局 1956–2010",21765744],["比賽對局 2011–2014",25596413],["比賽對局 2015–2019",24821916]],"all":643224673,"other":10636756};
 const szMB=b=>b>=1073741824?(b/1073741824).toFixed(1)+" GB":Math.max(1,Math.round(b/1048576))+" MB";
 function aboutSizes(){const S=XQ_SIZES;if(!S)return"";const opt=S.opt||[];   /* 意見回饋 662：玩家只看總數，細項只在開發者模式顯示 */
   return `<div class="row" style="justify-content:space-between"><span class="muted">整包下載</span><b>約 ${szMB(S.all)}</b></div>
@@ -7162,6 +7163,9 @@ function yunheMine(P){const me=typeof myChar==="function"?myChar():"";return me&
 const yunheOrig=()=>!!store.get("yunheOrig",false);
 /* 這一章照目前的設定要怎麼讀：{c 章（title、paras、marks）, pov＝1 第一人稱整章, side＝旁觀段落 or null} */
 function yunheView(c,M){if(!M||yunheOrig())return{c,pov:0,side:null};const F=M.full&&M.full[c.n];if(F)return{c:{...c,title:F.title,paras:F.paras,marks:F.marks},pov:1,side:null};return{c,pov:0,side:(M.side&&M.side[c.n])||null}}
+/* 意見回饋 728：《雲河七星》合集的章節插畫。[原版第幾段之前, 圖檔, 圖說]；第一人稱版段數不同，照比例換算位置 */
+const YUNHE_PICS={classic:[[3,"ch01_1","齊轍跌進渭水，星槎上伸下一隻溫暖的手"],[58,"ch01_2","七碗熱茶：七個孩子第一次見面"],[152,"ch01_3","石桌邊的一小段刻痕，泛起極淡的微光"]]};
+function yunhePics(k,n0,n){const L=YUNHE_PICS[k]||[],P={};L.forEach(([a,f,cap])=>{const j=Math.min(n-1,Math.max(0,Math.round(a*n/Math.max(1,n0))));P[j]=(P[j]||"")+`<figure class="shp-fig"><img src="data/shipmap/novel/${f}.webp" alt="${esc(cap)}" loading="lazy"><figcaption>${esc(cap)}</figcaption></figure>`});return P}
 function ShipRead(v,k,at){setTabs(false);v.className="view";v.innerHTML='<div class="pad muted">正文載入中…</div>';setTop("📖 雲河七星",k?SHIP_RD_BACK||"#/ship/read":"#/adventure");
   Promise.all([yunheData(),yunhePov()]).then(([N,PV])=>{if(!v.isConnected)return;const R=store.get("shipRead",{})||{},kz=c=>Math.round(c.paras.join("").length/100)/10,M=yunheMine(PV),org=yunheOrig(),me=M?WX_CHARS[myChar()]:null,meN=me?(me.nk||me.n):"";
     const sw=M?`<button class="lk shp-povsw" id="rdOrig">${org?`👤 換回${esc(meN)}的視角`:"📜 看原本的版本"}</button>`:"";
@@ -7177,7 +7181,7 @@ function ShipRead(v,k,at){setTabs(false);v.className="view";v.innerHTML='<div cl
     const mk=m?`<div class="card shp-mk" id="rdMk"><b>♟ 跟${esc(Pl.who||"大家")}一起解這一局</b><span class="muted">${esc(m.label)}</span>
       ${lock?`<p class="muted">${k==="finale"?"十三站的棋理都學會以後，就能在這裡解這一局。":"星槎停靠"+esc(eraLabel(k))+"以後，就能在這裡解這一局。"}</p>`:`<button class="btn" id="rdGo">${done?"✅ 解開了・再看一次":"♟ 解這一局"}</button>`}<button class="lk" id="rdSkip">先往下讀 ›</button></div>`:"";
     v.innerHTML=`<div class="pad shp-rd"><h2 class="shp-rh">${esc(c.title)}</h2><p class="muted shp-rs">《${esc(N.title||"雲河七星")}》・⛵ ${esc(shipShort(k))}・${esc((SHIP_STOP[k]||{}).place||"")}${V.pov?`・<em class="shp-povt">👤 你的視角：${esc(meN)}</em>`:""}</p>${M?`<div class="shp-povbar">${sw}</div>`:""}
-      ${c.paras.map((p,j)=>(m&&m.at===j?mk:"")+`<p${m&&m.at===j?' id="rdAfter"':""}>${esc(p)}</p>`).join("")}${m&&m.at>=c.paras.length?mk:""}
+      ${(PIC=>c.paras.map((p,j)=>(PIC[j]||"")+(m&&m.at===j?mk:"")+`<p${m&&m.at===j?' id="rdAfter"':""}>${esc(p)}</p>`).join(""))(yunhePics(k,N.chapters[i].paras.length,c.paras.length))}${m&&m.at>=c.paras.length?mk:""}
       ${V.side&&V.side.length?`<div class="shp-side"><h3>我在旁邊看見的</h3><p class="muted shp-sidew">——${esc(meN)}</p>${V.side.map(p=>`<p>${esc(p)}</p>`).join("")}</div>`:""}
       <div class="row" style="gap:8px;margin-top:16px">${pv?'<button class="btn ghost" id="rdP" style="flex:1">‹ 上一章</button>':""}${nx?'<button class="btn" id="rdN" style="flex:1">下一章 ›</button>':""}</div>
       <button class="lk" id="rdShip" style="margin-top:6px">⛵ 回星槎頁 ›</button></div>`;
