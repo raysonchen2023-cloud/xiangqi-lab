@@ -980,6 +980,22 @@ body.xqt-on .modal{z-index:10000}body.xqt-on .toast{z-index:10001}body.xqt-on .x
 /* 意見回饋 712：渡口圖上的歷史景點（白底墨字小牌，跟金色的三扇門分開） */
 .po-sight{position:absolute;transform:translate(-50%,-50%);padding:.7cqw 2.2cqw;border-radius:99px;border:1px solid rgba(42,32,24,.75);background:rgba(255,251,242,.86);color:#2a2018;font:800 3.1cqw/1.3 var(--serif,serif);white-space:nowrap;box-shadow:0 1px 5px rgba(0,0,0,.28);cursor:pointer}
 .po-sight:active{transform:translate(-50%,-50%) scale(.95)}
+
+/* 意見回饋 725：古戰場・戰役題卡（07g-battle.js）。配圖 data/battles/<id>.webp（4:3）；圖還沒有時看到的是那一朝渡口圖淡墨底＋戰役名 */
+.bt-page{display:flex;flex-direction:column;gap:10px}.bt-head b{font:800 18px/1.4 var(--serif,serif)}
+.bt-card{display:grid;grid-template-columns:38% 1fr;gap:10px;align-items:start;width:100%;text-align:left;font:inherit;color:inherit;cursor:pointer;position:relative;padding:10px}
+.bt-card:disabled{opacity:.6;cursor:default}.bt-card.done{border-color:#B5452B}
+.bt-pic{position:relative;display:block;aspect-ratio:4/3;border-radius:10px;overflow:hidden;background:#e8e3d8 center/cover no-repeat;box-shadow:inset 0 0 0 1px rgba(0,0,0,.08)}
+.bt-pic::before{content:"";position:absolute;inset:0;background:radial-gradient(circle at 30% 25%,rgba(255,215,120,.35),transparent 40%),linear-gradient(180deg,rgba(250,246,236,.55),rgba(40,30,20,.45))}
+.bt-pic-n{position:absolute;left:0;right:0;bottom:8px;text-align:center;font:800 16px/1.2 var(--serif,serif);color:#fff;text-shadow:0 1px 6px rgba(0,0,0,.6);letter-spacing:2px}
+.bt-pic img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover}
+.bt-card .tx{display:flex;flex-direction:column;gap:3px;min-width:0}.bt-card .tx b{font:800 16px/1.3 var(--serif,serif)}.bt-card small{color:var(--muted);font-size:12.5px}
+.bt-line{font-size:13.5px;line-height:1.6}.bt-tag{font-size:12.5px;line-height:1.6;color:#8a5a2b}.bt-q{font-size:12px;line-height:1.5}
+.bt-prov{font-style:normal;color:#B5452B;border:1px solid #B5452B;border-radius:6px;padding:0 4px;font-size:11px}
+.bt-seal{position:absolute;right:8px;top:8px;width:34px;height:34px;border-radius:50%;border:2px solid #B5452B;color:#B5452B;display:flex;align-items:center;justify-content:center;font:900 15px/1 var(--serif,serif);background:rgba(255,250,240,.9);transform:rotate(-12deg)}
+.bt-card:not(.done) .bt-seal{border-color:#c9b48a;color:#c9b48a}.bt-seal.sm{position:static;display:inline-flex;width:24px;height:24px;font-size:12px;vertical-align:middle}
+.bt-full{color:#B5452B;font-weight:800;line-height:1.7}
+@media (max-width:420px){.bt-card{grid-template-columns:1fr}}
 </style></head><body>
 <div class="app">
  <div class="topbar" id="topbar"><button class="ib" id="back" hidden><b>‹</b>返回</button><h1 id="title">象棋千秋</h1><span id="topRight"></span></div>
@@ -1027,7 +1043,7 @@ body.xqt-on .modal{z-index:10000}body.xqt-on .toast{z-index:10001}body.xqt-on .x
       if(!window.caches)return go();caches.keys().then(function(ks){return Promise.all(ks.filter(function(k){return k.indexOf("xqlab-app-")===0}).map(function(k){return caches.delete(k)}))})
         .then(function(){return navigator.serviceWorker&&navigator.serviceWorker.getRegistration()}).then(function(r){return r&&r.update()}).catch(function(){}).then(go)}};setTimeout(chk,4000)})();
 </script>
-<script>window.XQ_OFFLINE=true;window.XQ_BUILD="20261107-1046";</script>
+<script>window.XQ_OFFLINE=true;window.XQ_BUILD="20261107-1227";</script>
 <script src="core.js"></script>
 <script src="engine.js"></script>
 <script src="local.js"></script>
@@ -2099,6 +2115,7 @@ function route(){
   if(p[0]==="journey")return screen=Journey(v,p[1]?decodeURIComponent(p[1]):null);
   if(p[0]==="port"&&typeof Port==="function"){store.set("dbReturn",null);return screen=Port(v)}   /* 意見回饋 697（開發者 11/6 定案方案 B）：渡口＝每一朝的中心（07f-ship.js） */
   if(p[0]==="adventure"){store.set("dbReturn",null);return screen=typeof Voyage==="function"?Voyage(v):Adventure(v)}   /* 意見回饋 674：#/adventure 改成雲河星槎頁（07f-ship.js），舊網址照樣能用 */
+  if(p[0]==="battle"&&typeof Battlefield==="function"){store.set("dbReturn",null);return screen=Battlefield(v)}   /* 意見回饋 725：古戰場・戰役題卡（07g-battle.js） */
   if(p[0]==="ship"&&p[1]==="lv"&&typeof ShipLv==="function"){store.set("dbReturn",null);return screen=ShipLv(v,p[2]||"",p[3]||"",p[4]==="read")}   /* 星槎小關（關卡設計_第5-14章 元件 A）：#/ship/lv/<站>/<題號>[/read] */
   if(p[0]==="ship"&&p[1]==="pz"&&typeof ShipPz==="function"){store.set("dbReturn",null);return screen=ShipPz(v)}   /* 意見回饋 709：千秋殘局獨立一頁 */
   if(p[0]==="ship"&&typeof SHIP_PG!=="undefined"&&Object.prototype.hasOwnProperty.call(SHIP_PG,p[1])){store.set("dbReturn",null);return screen=SHIP_PG[p[1]](v)}   /* 意見回饋 709：這站棋理、書架、行囊、起航各一頁（07f-ship.js） */
@@ -3502,7 +3519,7 @@ function onboard(){if(journey())journeyLock();else titleScreen({})}
 // ================= 設定：棋盤風格、棋子樣式、走棋顯示 =================
 const SAMPLE_FEN0="rnbakabnr/9/1c5c1/p1p1p1p1p/9/9/P1P1P1P1P/1C5C1/9/RNBAKABNR",SAMPLE_FEN1="rnbakabnr/9/1c5c1/p1p1p1p1p/9/9/P1P1P1P1P/1C2C4/9/RNBAKABNR",SAMPLE_LAST={f:70,t:67};
 /* 意見回饋 661：關於頁顯示整包遊戲要多大空間。XQ_SIZES 由 build-site.js 建置時填入（開發中的 m.html 是 null，就不顯示） */
-const XQ_SIZES={"pre":192349034,"code":12591972,"eng":51511005,"gm":33668932,"bgm":259516351,"opt":[["比賽對局 1956–2010",21765744],["比賽對局 2011–2014",25596413],["比賽對局 2015–2019",24821916]],"all":632458123,"other":10636756};
+const XQ_SIZES={"pre":199479294,"code":12610159,"eng":51511005,"gm":33668932,"bgm":259516351,"opt":[["比賽對局 1956–2010",21765744],["比賽對局 2011–2014",25596413],["比賽對局 2015–2019",24821916]],"all":639606570,"other":10636756};
 const szMB=b=>b>=1073741824?(b/1073741824).toFixed(1)+" GB":Math.max(1,Math.round(b/1048576))+" MB";
 function aboutSizes(){const S=XQ_SIZES;if(!S)return"";const opt=S.opt||[];   /* 意見回饋 662：玩家只看總數，細項只在開發者模式顯示 */
   return `<div class="row" style="justify-content:space-between"><span class="muted">整包下載</span><b>約 ${szMB(S.all)}</b></div>
@@ -3930,7 +3947,7 @@ const CHAR_ERA={x_swordboy:"qin",x_spiritgirl:"nanbei",x_martialgirl:"song",x_mi
 const JOURNEY_KEYS=["pChar","pSex","pStyle","botPiece","onboard1","journey","playSec","era","eraOpen","xp","xpDay","xpKeys","record","hintBonus","hintUse","undoBonus","undoDropIds","bag","jarGot","lingN","giftGames","dropMiss",
   "legend","legendGame","legBook","jStars","jPending","jPrev","jRun","jScene","jHid","jMig36","jpSeen","novelRead","sceneDone","storyEraTip","eraUser","study","campSeen","campStars",
   "npcBond","npcAsk","npcAskSeen","parkNpc","parkNpcLast","parkAdj","visitGone","secrets","secretClue","secretSpots","secretWins","relics","relicSolved","relicAt","histSeen","histSolved","histTitle",
-  "innCur","innDrop","innAdj","xhMake","xhMei","xhTitle","yuDay","yuHint","yuRoute","yuTitle","cupDrop","cupGot","cj","cjRun","shipAt","shipSolved","cjRunS","jRunS","diff","shipDock","shipLearn","undoFree","shipGal","shipStale","shipRead"].map(k=>"m_"+k)   /* 意見回饋 674：星槎在看哪一站、千秋殘局解開的題、正在解的那一題；675：航行難度、已停靠的站、學會的棋理、這盤用了幾次免費悔棋；685：七星同局圖鑑與熱身解開的題、看過困斃說明、讀過《雲河七星》哪幾章 */
+  "innCur","innDrop","innAdj","xhMake","xhMei","xhTitle","yuDay","yuHint","yuRoute","yuTitle","cupDrop","cupGot","cj","cjRun","shipAt","shipSolved","cjRunS","jRunS","battleSeal","battleTitle","cjRunB","diff","shipDock","shipLearn","undoFree","shipGal","shipStale","shipRead"].map(k=>"m_"+k)   /* 意見回饋 674：星槎在看哪一站、千秋殘局解開的題、正在解的那一題；675：航行難度、已停靠的站、學會的棋理、這盤用了幾次免費悔棋；685：七星同局圖鑑與熱身解開的題、看過困斃說明、讀過《雲河七星》哪幾章 */
   .concat(["cpuRate","bonusKeys","record","arenaStamps","carBank","play","play2"].map(k=>"xq_"+k));
 const JK=new Set(JOURNEY_KEYS),SLOT_N=3;
 /* 意見回饋 668：舊玩家判斷要在首頁畫出來以前做（首頁會順手寫一些旅程鍵，例如 lingN），所以這裡直接讀 localStorage；null＝已經過渡過了 */
@@ -4616,7 +4633,7 @@ const ARENA_ORDER=["classic","qin","han","sanguo","weijin","nanbei","sui","tang"
 const ARENA_TITLES=[[13,"十三朝棋王"],[7,"七朝豪傑"],[3,"擂台新秀"]];
 const arenaStamps=()=>{try{return JSON.parse(localStorage.getItem("xq_arenaStamps")||"{}")||{}}catch(e){return{}}};
 const arenaTitle=()=>{const n=Object.keys(arenaStamps()).length;const t=ARENA_TITLES.find(([k])=>n>=k);return t?t[1]:""};
-window.XQ_TITLE=()=>(typeof cupTitle==="function"&&cupTitle())||arenaTitle()||(typeof lingTitle==="function"&&(lingTitle()||jarTitle()))||(typeof histTitle==="function"&&histTitle())||"";   /* 開發者 11/5：擂台稱號優先，再來是將令、棋罐的稱號 */   // 大廳廣播：別人點你的資料卡看得到
+window.XQ_TITLE=()=>(typeof cupTitle==="function"&&cupTitle())||arenaTitle()||(typeof battleTitle==="function"&&battleTitle())||(typeof lingTitle==="function"&&(lingTitle()||jarTitle()))||(typeof histTitle==="function"&&histTitle())||"";   /* 開發者 11/5：擂台稱號優先，再來是將令、棋罐的稱號 */   // 大廳廣播：別人點你的資料卡看得到
 /* 擂主強度跟著你的電腦段位（新手大約「入門」棋力，越高段擂主越強）；意見回饋 288：最強的是經典公園的擂主，再強一級（不在 App 裡說破，讓玩家自己摸索） */
 function arenaLevel(era){let p=0;try{p=(JSON.parse(localStorage.getItem("xq_cpuRate")||"null")||{}).pts||0}catch(e){}
   const base=p>=1150?7:p>=900?6:p>=600?5:p>=300?4:p>=100?3:2;return era==="classic"?7:base}   /* 意見回饋 426、427：石桌棋仙固定在「全力」的前一級（第 7 級職業頂尖），不跟著段位變 */
@@ -6416,7 +6433,7 @@ function yuHintMaybe(host){if(store.get("yuHint",false))return;let n=0;const go=
   setTimeout(go,6000)}
 
 /* 解題頁的設定（07c-canju.js CanjuPlay 呼叫）：r/<朝代>/<第幾站>、x/<冬至那年>/<第幾瓣>；err＝不能解 */
-function cjXMode(id){let m=/^r\/(\w+)\/(\d+)$/.exec(id);if(m)return yuXM(m[1],+m[2]);m=/^x\/(\w+)\/(\d+)$/.exec(id);if(m)return xhXM(m[1],+m[2]);m=/^s\/(\w+)\/(.+)$/.exec(id);if(m&&typeof shipXM==="function")return shipXM(m[1],m[2]);return null}   /* 意見回饋 674：s/<朝代>/<題號>＝星槎主場殘局（07f-ship.js） */
+function cjXMode(id){let m=/^r\/(\w+)\/(\d+)$/.exec(id);if(m)return yuXM(m[1],+m[2]);m=/^x\/(\w+)\/(\d+)$/.exec(id);if(m)return xhXM(m[1],+m[2]);m=/^s\/(\w+)\/(.+)$/.exec(id);if(m&&typeof shipXM==="function")return shipXM(m[1],m[2]);m=/^b\/(\w+)\/(\d+)$/.exec(id);if(m&&typeof battleXM==="function")return battleXM(m[1],+m[2]);return null}   /* 意見回饋 674：s/<朝代>/<題號>＝星槎主場殘局（07f-ship.js） */
 function yuXM(era,i){const R=YU_R[era],s=R&&R.s[i],back=yuBackHash;if(!s)return{err:"找不到這一站（路線可能更新了）。",back};const N=R.s.length,n=Math.min(yuOf(era).n,N);
   if(i>n)return{err:`還沒走到這一站：先走第 ${n+1} 站「${yuName(R.s[n])}」。`,back};
   if(i===n&&!yuLeftToday())return{err:`今天已經走了 ${YU_DAY} 站，明天再上路。`,back};
@@ -6803,21 +6820,21 @@ function shipArena(k,rep){if(eraLocked(k))return toast(eraLockMsg(k));shipEra(k)
 /* ---------- 渡口 #/port（意見回饋 697，開發者 11/6 定案方案 B）：每一朝的中心。星槎「⚓ 下船」到這裡；三扇門 🌳 園子、🏮 驛站、🏯 擂台，另有「⛵ 回星槎」。
    園子、驛站、擂台的「‹」回渡口，渡口的「‹」回星槎；門之間走步行小卡 ---------- */
 /* 渡口圖上三扇門的位置 [園子, 驛站, 擂台]（左%, 上%），照每一張圖量的 */
-const PORT_SPOT={_:[[25,58],[73,50],[50,30]],classic:[[22,56],[76,57],[44,36]],qin:[[36,61],[71,64],[46,41]],han:[[30,55],[73,58],[55,33]],sanguo:[[28,59],[78,63],[56,41]],weijin:[[27,55],[80,60],[70,38]],
-  nanbei:[[33,57],[80,62],[62,40]],sui:[[34,64],[75,61],[50,41]],tang:[[25,60],[70,68],[42,40]],wudai:[[28,46],[75,58],[64,33]],song:[[25,62],[72,67],[55,40]],yuan:[[30,63],[67,62],[46,43]],ming:[[27,59],[80,67],[47,36]],qing:[[27,47],[77,55],[57,30]]};
+const PORT_SPOT={_:[[25,58],[73,50],[50,30]],classic:[[22,56],[76,57],[44,36]],qin:[[31,62],[75,64],[53,41]],han:[[28,61],[73,67],[52,40]],sanguo:[[28,59],[78,63],[56,41]],weijin:[[27,55],[80,60],[70,38]],
+  nanbei:[[33,57],[80,62],[62,40]],sui:[[20,67],[79,63],[49,44]],tang:[[25,60],[70,68],[42,40]],wudai:[[28,46],[75,58],[64,33]],song:[[25,62],[72,67],[55,40]],yuan:[[30,63],[67,62],[46,43]],ming:[[27,59],[80,67],[47,36]],qing:[[34,59],[65,52],[45,38]]};
 /* 意見回饋 712（開發者 11/6）：渡口圖上當朝的歷史景點 [名字, 左%, 上%, 介紹]，照 Gemini 畫進每張圖的東西量的；點了 15% 機率先撿到那一朝的珍品（relicDrop，跟園子點長卷一樣），沒撿到就看介紹 */
-const PORT_SIGHT={"qin":[["萬里長城",20,21,"秦始皇統一六國後，把燕、趙、秦原本各自修的長城連起來，西起臨洮、東到遼東，用來擋北方的匈奴。「萬里長城」這個說法就是從這時開始的。"],["烽火台",72,21,"長城沿線每隔一段路就有一座烽火台。白天燒柴冒煙、晚上點火，敵人一來，一台接一台傳下去，邊關的消息很快就能傳到遠方。"],["秦直道",86,34,"秦始皇命大將蒙恬修的軍用大道，從咸陽北邊的雲陽一路往北通到九原（今天內蒙古包頭一帶），長七百多公里，又寬又直，大軍可以很快開到北方邊境。"]],"han":[["漢代烽燧",14,25,"漢朝在河西走廊和往西域的路上修了許多烽燧，也就是守望台，士兵在上面守望、傳遞軍情。考古學家在這些遺址挖出大量木簡，叫「漢簡」，記下了戍守士兵的日常生活。"],["玉門關",85,27,"漢武帝時設在河西走廊最西邊的關口。西域出產的美玉從這裡運進中原，所以叫玉門關。出了關就是大漠，是絲綢之路上最重要的關卡之一。"]],"sanguo":[["火燒戰船",38,28,"曹操的戰船首尾相連，吳將黃蓋假裝投降，帶著裝滿乾柴、澆了油的船衝向曹營，順著東南風點火，戰船燒成一片。這就是有名的「火燒赤壁」。"],["赤壁",80,24,"西元 208 年，孫權和劉備的聯軍在長江赤壁一帶大敗曹操。這一仗之後，魏、蜀、吳三分天下的局面慢慢成形。"],["北岸營寨",86,46,"曹操大軍駐紮在長江北岸，孫劉聯軍在南岸。北方來的士兵不習慣坐船打仗，軍中又流行疾病，這些都是曹軍戰敗的原因。"]],"weijin":[["竹林",12,28,"魏晉之際，嵇康、阮籍、山濤等七位名士常在竹林下喝酒、彈琴、談天說理，被稱為「竹林七賢」。他們不愛官場的規矩，嚮往自然自在的生活。"],["曲水",42,31,"東晉永和九年（353 年），王羲之和朋友在蘭亭的溪邊玩「曲水流觴」：酒杯順著彎彎的溪水漂，停在誰面前，誰就要作詩。王羲之為這些詩寫的序，就是有名的〈蘭亭集序〉。"]],"nanbei":[["石窟大佛",20,26,"北魏在大同開鑿雲岡石窟，遷都洛陽後又開鑿龍門石窟，在山崖上雕出巨大的佛像。北朝的佛教藝術，大多保存在這些石窟裡。"],["山寺佛塔",56,23,"南朝的皇帝和貴族很信佛，梁武帝甚至幾次捨身出家。杜牧寫「南朝四百八十寺」，說的就是當年建康城一帶寺廟林立的樣子。"],["長江",72,75,"南北朝時，南方和北方的政權大致隔著長江、淮河對峙了一百多年。長江又寬又急，北方的大軍很難渡江南下。"]],"sui":[["隋煬帝的龍舟",34,19,"運河開通後，隋煬帝坐著四層高的大龍舟南下江都（今天的揚州）巡遊，跟隨的船隊前後連綿兩百多里。這樣勞民傷財，也是隋朝很快滅亡的原因之一。"],["大運河",80,19,"隋煬帝動員上百萬民工，以洛陽為中心開鑿運河，北到涿郡、南到餘杭，把海河、黃河、淮河、長江、錢塘江五大水系連在一起。從此南方的糧食可以用船運到北方。"]],"tang":[["長安城門",28,16,"唐代的長安是當時世界上最大的城市之一，四周有高大的城牆。城裡的大街像棋盤一樣橫平豎直，劃分成一百多個「坊」。"],["大雁塔",80,19,"玄奘從天竺取經回來後，在長安的慈恩寺建了這座塔，收藏他帶回來的經書和佛像。新考上的進士會到塔下題名，叫「雁塔題名」。"],["西市",88,33,"長安有東市和西市。西市靠近絲綢之路的起點，西域來的胡商很多，賣珠寶、香料、胡餅。據說我們說「買東西」，就是從逛東市、西市來的。"]],"wudai":[["遠方的烽火",22,16,"五代只有短短五十多年，中原就換了後梁、後唐、後晉、後漢、後周五個朝代，戰爭幾乎沒有停過。"],["荒村",12,56,"連年打仗，許多百姓離開家鄉逃難，田地荒廢、村子成了廢墟。直到宋太祖趙匡胤建立宋朝，天下才慢慢安定下來。"]],"song":[["雷峰塔",30,17,"吳越國王錢俶在西湖邊建的塔，因為蓋在雷峰上而得名。後來流傳的《白蛇傳》裡，白娘子就被法海壓在雷峰塔下。"],["斷橋",38,25,"西湖白堤上的拱橋。冬天下雪後，橋面向陽的雪先融化，遠看橋像斷了一樣，叫「斷橋殘雪」，是西湖十景之一。《白蛇傳》裡許仙和白娘子也在這裡相遇。"],["元宵花燈",88,38,"宋朝的元宵節非常熱鬧，臨安城家家掛燈，街上有燈山、煙火和舞隊，一連好幾夜。辛棄疾寫「東風夜放花千樹」，寫的就是元宵夜的燈火。"]],"yuan":[["蒙古包",15,37,"蒙古人跟著水草放牧遷徙，住的是可以拆開、搬走的圓形氈帳。元朝的皇帝每年夏天還會到草原上的上都避暑。"],["站赤",87,46,"元朝在全國設了一千多處驛站，蒙古話叫「站赤」。官員和信使拿著牌子，就能在驛站換馬、吃住，消息可以從大都一路傳到很遠的地方。馬可・波羅的遊記也寫到這套驛站制度。"]],"ming":[["馬頭牆",12,30,"徽州民居的白牆高出屋頂，一層一層像昂起的馬頭，所以叫馬頭牆。房子挨得很近，高牆可以擋住火勢，又叫「封火牆」。明朝徽商在外做生意致富，回鄉蓋起這樣的大宅。"],["石牌坊",68,29,"徽州的村口常立著石牌坊，表彰考上功名的讀書人，或是孝順、守節的人。歙縣棠樾村有一整排的牌坊群。"],["黃山",78,16,"徽州境內的名山，以奇松、怪石、雲海出名。明朝的旅行家徐霞客兩次登上黃山，留下了遊記。"]],"qing":[["文峰塔",88,13,"揚州城南運河邊的七層寶塔，明朝萬曆年間建造。運河上的船老遠就能看到它，像是揚州的路標。"],["瘦西湖",80,26,"揚州城外細長的湖，兩岸是鹽商修的園林。乾隆皇帝南巡時來過，湖上的五亭橋、白塔都是那個時候修的。"],["漕運糧船",68,73,"清朝每年要從江南用船把幾百萬石糧食，經過大運河運到北京，叫「漕運」。揚州正好在運河和長江交會的地方，糧船、鹽商都聚在這裡，城市非常繁華。"]]};
+const PORT_SIGHT={"qin":[["萬里長城",32,22,"秦始皇統一六國後，派蒙恬把燕、趙、秦原本各自修的長城連起來，西起臨洮、東到遼東，用來擋匈奴。秦長城多用黃土一層層夯實，山上就地堆石塊，沒有磚砌的城垛和敵樓；我們常看到的磚長城，大多是明朝修的。"],["烽火台",82,26,"長城沿線每隔一段路就有一座烽火台。白天燒柴冒煙、晚上點火，敵人一來，一台接一台傳下去，邊關的消息很快就能傳到遠方。"],["秦直道",75,36,"秦始皇命大將蒙恬修的軍用大道，從咸陽北邊的雲陽一路往北通到九原（今天內蒙古包頭一帶），長七百多公里，又寬又直，大軍可以很快開到北方邊境。"]],"han":[["漢代烽燧",17,27,"漢朝在河西走廊和往西域的路上修了許多烽燧，也就是守望台，士兵在上面守望、傳遞軍情。考古學家在這些遺址挖出大量木簡，叫「漢簡」，記下了戍守士兵的日常生活。"],["玉門關",86,27,"漢武帝時設在敦煌西北的關口，是河西走廊通往西域的大門。相傳西域的美玉從這裡運進中原，所以叫玉門關。漢代的關城是黃土夯成的方形小城，出了關就是大漠，是絲綢之路上的重要關卡。"]],"sanguo":[["火燒戰船",38,28,"曹操的戰船首尾相連，吳將黃蓋假裝投降，帶著裝滿乾柴、澆了油的船衝向曹營，順著東南風點火，戰船燒成一片。這就是有名的「火燒赤壁」。"],["赤壁",80,24,"西元 208 年，孫權和劉備的聯軍在長江赤壁一帶大敗曹操。這一仗之後，魏、蜀、吳三分天下的局面慢慢成形。"],["北岸營寨",86,46,"曹操大軍駐紮在長江北岸，孫劉聯軍在南岸。北方來的士兵不習慣坐船打仗，軍中又流行疾病，這些都是曹軍戰敗的原因。"]],"weijin":[["竹林",12,28,"魏晉之際，嵇康、阮籍、山濤等七位名士常在竹林下喝酒、彈琴、談天說理，被稱為「竹林七賢」。他們不愛官場的規矩，嚮往自然自在的生活。"],["曲水",42,31,"東晉永和九年（353 年），王羲之和朋友在蘭亭的溪邊玩「曲水流觴」：酒杯順著彎彎的溪水漂，停在誰面前，誰就要作詩。王羲之為這些詩寫的序，就是有名的〈蘭亭集序〉。"]],"nanbei":[["棲霞山千佛崖",20,21,"南京棲霞山的石窟，從南朝開始在山崖上鑿佛龕，最大的一龕是無量壽佛，兩旁站著菩薩。北方有雲岡、龍門那樣的大石窟，南方的石窟很少，棲霞山是南朝留下來最重要的一處，就在長江邊上。"],["山寺佛塔",56,23,"南朝的皇帝和貴族很信佛，梁武帝甚至幾次捨身出家。杜牧寫「南朝四百八十寺」，說的就是當年建康城一帶寺廟林立的樣子。"],["長江",72,75,"南北朝時，南方和北方的政權大致隔著長江、淮河對峙了一百多年。長江又寬又急，北方的大軍很難渡江南下。"]],"sui":[["隋煬帝的龍舟",24,31,"運河開通後，隋煬帝坐著四層高的大龍舟南下江都（今天的揚州）巡遊，跟隨的船隊前後連綿兩百多里。這樣勞民傷財，也是隋朝很快滅亡的原因之一。"],["大運河",62,22,"隋煬帝動員上百萬民工，以洛陽為中心開鑿運河，北到涿郡、南到餘杭，把海河、黃河、淮河、長江、錢塘江五大水系連在一起。從此南方的糧食可以用船運到北方。"]],"tang":[["長安城門",28,16,"唐代的長安是當時世界上最大的城市之一，四周有高大的城牆。城裡的大街像棋盤一樣橫平豎直，劃分成一百多個「坊」。"],["大雁塔",79,14,"玄奘從天竺取經回來後，在長安的慈恩寺建了這座塔，收藏他帶回來的經書和佛像。新考上的進士會到塔下題名，叫「雁塔題名」。"],["西市",88,33,"長安有東市和西市。西市靠近絲綢之路的起點，西域來的胡商很多，賣珠寶、香料、胡餅。據說我們說「買東西」，就是從逛東市、西市來的。"]],"wudai":[["遠方的戰火",15,18,"五代只有短短五十多年，中原就換了後梁、後唐、後晉、後漢、後周五個朝代，戰爭幾乎沒有停過。遠方常常看得見村子被戰火燒起的黑煙，百姓只好扶老攜幼逃難。"],["荒村",12,56,"連年打仗，許多百姓離開家鄉逃難，田地荒廢、村子成了廢墟。直到宋太祖趙匡胤建立宋朝，天下才慢慢安定下來。"]],"song":[["雷峰塔",30,17,"吳越國王錢俶在西湖邊建的塔，因為蓋在雷峰上而得名。後來流傳的《白蛇傳》裡，白娘子就被法海壓在雷峰塔下。"],["斷橋",32,24,"西湖白堤東頭的石拱橋。冬天下雪後，橋面向陽的雪先融化，遠看橋像斷了一樣，叫「斷橋殘雪」，南宋時就列入西湖十景。《白蛇傳》裡許仙和白娘子也在這裡相遇。"],["元宵花燈",88,38,"宋朝的元宵節非常熱鬧，臨安城家家掛燈，街上有燈山、煙火和舞隊，一連好幾夜。辛棄疾寫「東風夜放花千樹」，寫的就是元宵夜的燈火。"]],"yuan":[["蒙古包",29,44,"蒙古人跟著水草放牧遷徙，住的是可以拆開、搬走的圓形氈帳。元朝人叫它「穹廬」或「氈帳」，「蒙古包」是清朝以後才有的叫法。元朝的皇帝每年夏天也會到草原上的上都避暑。"],["站赤",87,46,"元朝在全國設了一千多處驛站，蒙古話叫「站赤」。官員和信使拿著牌子，就能在驛站換馬、吃住，消息可以從大都一路傳到很遠的地方。馬可・波羅的遊記也寫到這套驛站制度。"]],"ming":[["馬頭牆",12,30,"徽州民居的白牆高出屋頂，一層一層像昂起的馬頭，所以叫馬頭牆。房子挨得很近，高牆可以擋住火勢，又叫「封火牆」。明朝徽商在外做生意致富，回鄉蓋起這樣的大宅。"],["石牌坊",68,29,"徽州的村口常立著石牌坊，表彰考上功名的讀書人，或是孝順、守節的人。歙縣棠樾村有一整排的牌坊群。"],["黃山",78,16,"徽州境內的名山，以奇松、怪石、雲海出名。明朝的旅行家徐霞客兩次登上黃山，留下了遊記。"]],"qing":[["文峰塔",86,18,"揚州城南古運河邊的八角七層寶塔，明朝萬曆十年（1582 年）建造。塔名「文峰」，是希望地方文風興盛、多出讀書人。運河上的船老遠就能看到它，像是揚州的路標。"],["瘦西湖",22,20,"揚州城西北細長的湖，兩岸是鹽商修的園林。乾隆皇帝南巡時來過，湖上有五座亭子的五亭橋（1757 年）和像寶瓶一樣的白塔（1784 年），都是乾隆年間鹽商出錢修的。"],["漕運糧船",84,82,"清朝每年要從江南用船把幾百萬石糧食，經過大運河運到北京，叫「漕運」。揚州正好在運河和長江交會的地方，糧船、鹽商都聚在這裡，城市非常繁華。"]]};
 function portSight(k,i){const s=(PORT_SIGHT[k]||[])[i];if(!s)return;vibrate(5);relicDrop(k,.15).then(got=>{if(got)return;const T=SHIP_STOP[k]||{};sheet("📍 "+s[0],b=>{b.innerHTML=`<div class="muted" style="margin:-4px 0 8px">${esc(eraLabel(k))}・${esc(T.place||"")}</div><p style="line-height:1.8;margin:0;font-size:16px">${esc(s[3])}</p>`})}).catch(()=>{})}
 function Port(v){const k=shipHere(),T=SHIP_STOP[k]||SHIP_STOP.classic,Ls=SHIP_LESSON[k]||{},ap=shipAppr(),AS=typeof arenaStamps==="function"?arenaStamps():{},A=ARENA[k]||{},lrn=shipLearned(k);
   setTop("⚓ "+portName(k),"^#/adventure",[["⛵",()=>goUp("#/adventure"),"回星槎"]]);setTabs(false);v.className="view";
   const byT=ap||!Ls.open,W=byT?shipWho(k,"teller"):shipWho(k,lrn&&Ls.done?Ls.doneBy:Ls.openBy),say=byT?shipQuote():lrn&&Ls.done?Ls.done:Ls.open;
   const Q=PORT_SPOT[k]||PORT_SPOT._;   /* 意見回饋 709：渡口上方＝那一朝的滿版水墨圖（data/shipmap/port_<朝代>.webp），三扇門是圖上的金色入口 */
-  v.innerHTML=shpPage("port_"+k,"⚓ "+esc(portName(k)),(k==="classic"?"雲河星槎":esc(eraLabel(k)))+"・"+esc(T.place),[["poPark",Q[0][0],Q[0][1],"🌳 "+esc(parkName(k)),"路人棋友"],["poInn",Q[1][0],Q[1][1],"🏮 "+esc(innName(k)),"旅人・秘境棋友"],["poArena",Q[2][0],Q[2][1],"🏯 "+esc(A.name||"擂主")+(AS[k]?" ✓":""),"擂台"]],(PORT_SIGHT[k]||[]).map((s,i)=>`<button class="po-sight" data-ps="${i}" style="left:${s[1]}%;top:${s[2]}%">📍 ${esc(s[0])}</button>`).join(""))+`<div class="pad port">
+  v.innerHTML=shpPage("port_"+k,"⚓ "+esc(portName(k)),(k==="classic"?"雲河星槎":esc(eraLabel(k)))+"・"+esc(T.place),[["poPark",Q[0][0],Q[0][1],"🌳 "+esc(parkName(k)),"路人棋友"],["poInn",Q[1][0],Q[1][1],"🏮 "+esc(innName(k)),"旅人・秘境棋友"],["poArena",Q[2][0],Q[2][1],"🏯 "+esc(A.name||"擂主")+(AS[k]?" ✓":""),"擂台"],...(k==="classic"?[]:[["poBattle",Q[2][0],Math.min(90,Q[2][1]+11),"⚔ 古戰場"+((store.get("battleTitle",{})||{})[k]?" ✓":""),"五場戰役"]])],   /* 意見回饋 725：擂台旁的「⚔ 古戰場」（07g-battle.js），船艙沒有 */(PORT_SIGHT[k]||[]).map((s,i)=>`<button class="po-sight" data-ps="${i}" style="left:${s[1]}%;top:${s[2]}%">📍 ${esc(s[0])}</button>`).join(""))+`<div class="pad port">
     <div class="card port-say"><img src="${W.img}" alt="" onerror="this.remove()"><p><b>${esc(W.n)}</b>「${esc(say)}」</p></div>
     <div id="poRes"></div>
     <button class="btn ghost" id="poShip" style="width:100%;margin-top:12px">⛵ 回星槎</button></div>`;
   const on=(q,fn)=>{const e=v.querySelector(q);if(e)e.onclick=()=>{vibrate(5);fn()}};
-  on("#poPark",()=>walk("park",()=>shipPark(k)));on("#poInn",()=>shipInn(k));on("#poArena",()=>shipArena(k));on("#poShip",()=>goUp("#/adventure"));v.querySelectorAll("[data-ps]").forEach(b=>b.onclick=()=>portSight(k,+b.dataset.ps));
+  on("#poPark",()=>walk("park",()=>shipPark(k)));on("#poInn",()=>shipInn(k));on("#poArena",()=>shipArena(k));on("#poBattle",()=>{location.hash="#/battle"});on("#poShip",()=>goUp("#/adventure"));v.querySelectorAll("[data-ps]").forEach(b=>b.onclick=()=>portSight(k,+b.dataset.ps));
   jResume(v.querySelector("#poRes"));shpFit(v);return{}}
 
 /* ---------- 想換成雲河七星：開新旅程，存到空的那一格（沒有空格就到開頭畫面挑） ---------- */
@@ -6969,6 +6986,84 @@ function ShipRead(v,k,at){setTabs(false);v.className="view";v.innerHTML='<div cl
     on("#rdP",()=>{location.hash="#/ship/read/"+pv.k});on("#rdN",()=>{location.hash="#/ship/read/"+nx.k});on("#rdShip",()=>{location.hash="#/adventure"});
     if(at==="mark")setTimeout(()=>to("#rdMk","center"),60);else if(at==="after")setTimeout(()=>to("#rdAfter"),60)}).catch(e=>{if(v.isConnected)v.innerHTML=`<div class="pad"><div class="card muted">${esc(e.message||String(e))}<br>正文要先下載才能讀（連上網路再打開一次）。</div></div>`});
   return{}}
+/* ================= ⚔ 古戰場・戰役題卡（意見回饋 725 方案 A，開發者 11/7 選定；方案在 story/經典戰役玩法方案_725_v2.md）=================
+   渡口頁「擂台」旁多一扇門「⚔ 古戰場」→ #/battle：那一朝的 5 張戰役卡（戰役名、年份、一句話、關鍵計謀、對應道理）。跟渡口同樣的鎖定規則（停靠過的朝代才進得來）；船艙沒有古戰場。
+   卡片資料 data/canju/battles.json（tools/battles_build.js 從查證版 story/battles_list.json 產生：12 朝 × 5 場；eras＝{朝代:[卡]}，lessons＝{道理:標籤組}）。配圖 data/battles/<id>.webp（4:3），沒有圖時顯示渡口圖淡墨底＋戰役名。
+   點卡 → 解題頁 #/canju/b/<朝代>/<第幾張>（07c-canju.js 的解題畫面，07e-garden2.js 的 cjXMode 轉過來；不算茶單）。
+   題目：照航行難度（DIFF.band）從題庫挑「標籤對得上那張卡的道理」的題（data/canju/tags.json，tools/canju/8_tags.js 產生），同一朝 5 張不重複、不碰茶單保留題和星槎的題；挑不到退回那一朝的千秋殘局題。
+   存檔：battleSeal＝{朝代:{第幾張:{at,h,id}}}（不看答案解開就蓋戰役印；h＝用過提示）；battleTitle＝{朝代:時間}（一朝 5 場集滿：稱號「〇・百戰之將」＋那一朝一件珍品，用 07c-canju.js 的 cjRelic）。 */
+let BATTLE_P=null,BATTLE_PK={};
+function battleData(){return BATTLE_P||(BATTLE_P=Promise.all([fetch("data/canju/battles.json").then(r=>{if(!r.ok)throw new Error("戰役資料載入失敗（"+r.status+"）");return r.json()}),fetch("data/canju/tags.json").then(r=>r.ok?r.json():{tags:{}}).catch(()=>({tags:{}})),cjData()])
+  .then(([B,T,D])=>({B,T,D})).catch(e=>{BATTLE_P=null;throw e}))}
+const battleSeals=()=>store.get("battleSeal",{})||{};
+const battleTitleOf=k=>(store.get("battleTitle",{})||{})[k]?shipShort(k)+"・百戰之將":"";
+/* 稱號（06-cpu.js XQ_TITLE：排在千秋盃、擂台後面，將令、棋罐前面）：最近集滿的那一朝 */
+function battleTitle(){try{const T=store.get("battleTitle",{})||{},k=Object.keys(T).sort((a,b)=>T[b]-T[a])[0];return k?shipShort(k)+"・百戰之將":""}catch(e){return""}}
+/* 星槎 SHIP_PLAN 在任何難度用到的題都不拿來當戰役題（不然換個難度就撞題） */
+function battlePlanIds(){const o=[];try{for(const k in SHIP_PLAN){const Pl=SHIP_PLAN[k];if(typeof Pl.story==="string")o.push(Pl.story);if(Pl.warm)o.push(Pl.warm);if(Pl.byDiff&&typeof Pl.byDiff==="object")for(const d in Pl.byDiff)o.push(...Pl.byDiff[d])}}catch(e){}return o.filter(Boolean)}
+function battleHash(s){let h=7;for(const c of String(s))h=(h*31+c.charCodeAt(0))>>>0;return h}
+/* 這一朝 5 張卡各配哪一題（照目前的航行難度）。12 朝一起挑（照航線順序），60 場盡量不重複；同一朝一定不重複。
+   不拿茶單保留題、星槎 SHIP_PLAN 在任何難度用到的題——只有守和題（xh-，相站第 3 題）例外：守城、守和這類道理的仗少了它們就沒題可配 */
+async function battlePicks(k){const{B,T,D}=await battleData(),dn=diffNow(),key=k+"|"+dn;if(BATTLE_PK[key])return BATTLE_PK[key];
+  const tags=T.tags||{},[lo,hi]=diffOf().band,mid=(lo+hi)/2;
+  const skip=new Set([...(typeof cjReserved==="function"?cjReserved():[]),...(typeof shipReserved==="function"?shipReserved(D):[]),...battlePlanIds()].filter(id=>!/^xh-/.test(id))),used=new Set();
+  const pool=[...D.items,...Object.values(D.byId).filter(P=>P.hold&&!D.items.includes(P))].filter(P=>tags[P.id]&&P.tree&&!skip.has(P.id));
+  try{await shipBank()}catch(e){}
+  const eras=[...SHIP_ROUTE.filter(e=>(B.eras||{})[e]),...Object.keys(B.eras||{}).filter(e=>!SHIP_ROUTE.includes(e))];
+  for(const e of eras){const mine=new Set(),fb=(shipPuzzles(e)||[]).slice();
+    BATTLE_PK[e+"|"+dn]=(B.eras[e]||[]).map((c,i)=>{const groups=(B.lessons||{})[c.lesson]||[];let id=null;
+      for(const reuse of [false,true])for(let w=0;w<=3&&!id;w++)for(const g of groups){if(id)break;const ok=P=>!mine.has(P.id)&&(reuse||!used.has(P.id))&&g.every(t=>tags[P.id].includes(t))&&+P.d>=lo-w&&+P.d<=hi+w;   /* 先放寬題組、再放寬難度；別朝用過的題，真的挑不到才重複 */
+        const cand=pool.filter(ok);if(cand.length){cand.sort((a,b)=>battleHash(c.id+a.id)-battleHash(c.id+b.id));id=cand[0].id}}
+      if(!id)id=fb.find(x=>!mine.has(x))||null;   /* 挑不到同主題的題：退回這一朝的千秋殘局題 */
+      if(id){mine.add(id);used.add(id)}return id})}
+  return BATTLE_PK[key]||[]}
+/* ---------- 古戰場頁 #/battle ---------- */
+function Battlefield(v){const k=shipHere();setTop("⚔ 古戰場・"+(k==="classic"?"船艙":eraLabel(k)),"^#/port");setTabs(false);v.className="view";
+  if(k==="classic"){v.innerHTML='<div class="pad"><div class="card muted">船艙沒有古戰場。搭星槎到各朝代的渡口，擂台旁邊就有「⚔ 古戰場」。</div></div>';return{}}
+  if(eraLocked(k)){v.innerHTML=`<div class="pad"><div class="card muted">${esc(eraLockMsg(k))}</div></div>`;return{}}
+  v.innerHTML='<div class="pad muted">古戰場載入中…</div>';
+  battleData().then(async({B,D})=>{if(!v.isConnected)return;const cards=(B.eras||{})[k]||[];
+    if(!cards.length){v.innerHTML=`<div class="pad"><div class="card" style="line-height:1.8"><b>⚔ ${esc(eraLabel(k))}的古戰場</b><p class="muted">這一朝的五場戰役還在整理，整理好就會出現在這裡。</p></div><button class="btn ghost" id="btBack" style="width:100%;margin-top:10px">⚓ 回渡口</button></div>`;
+      v.querySelector("#btBack").onclick=()=>goUp("#/port");return}
+    const pk=await battlePicks(k);if(!v.isConnected)return;const S=battleSeals()[k]||{},n=cards.filter((c,i)=>S[i]).length,tt=battleTitleOf(k);
+    v.innerHTML=`<div class="pad bt-page"><div class="card bt-head"><b>⚔ ${esc(eraLabel(k))}・五場戰役</b><div class="muted">戰役印 ${n}／${cards.length}${tt?"・🏅 "+esc(tt):"・集滿五場：稱號「"+esc(shipShort(k))+"・百戰之將」＋一件珍品"}・題目難度照🎚 ${esc(diffOf().n)}</div></div>
+      ${cards.map((c,i)=>{const s=S[i],P=pk[i]&&D.byId[pk[i]];return`<button class="card bt-card${s?" done":""}" data-bi="${i}"${P?"":" disabled"}>
+        <span class="bt-pic" style="background-image:url(data/shipmap/port_${k}.webp);background-position:${(i*23)%100}% 40%"><span class="bt-pic-n">${esc(c.name)}</span><img src="data/battles/${esc(c.img||c.id+".webp")}" alt="" loading="lazy" onerror="this.remove()"></span>
+        <span class="bt-seal">${s?(s.h?"◐":"印"):"⚔"}</span><span class="tx"><b>${esc(c.name)}</b><small>${esc(c.year)}${c.sides?"・"+esc(c.sides):""}${c.prov?`・<em class="bt-prov">${esc(c.prov)}</em>`:""}</small>
+        <span class="bt-line">${esc(c.line)}</span><span class="bt-tag">🗡 計謀：${esc(c.trick)}　📘 道理：${esc(c.lesson)}</span>
+        <span class="muted bt-q">${P?`${s?"✅ 已蓋戰役印・":""}${esc(P.t)}・${cjLv(P.d)}・${cjSrc(P)}`:"題目準備中"}</span></span></button>`}).join("")}
+      <p class="muted" style="font-size:12.5px;margin:8px 2px 0;line-height:1.7">點一張戰役卡，解開那一局就蓋戰役印（看答案不算）。棋盤上的局面是借那場仗的道理出題，不是當年的戰況；標「存疑」的，是史書記載不完全確定的地方。</p>
+      <button class="btn ghost" id="btBack" style="width:100%;margin-top:10px">⚓ 回渡口</button></div>`;
+    v.querySelectorAll("[data-bi]").forEach(b=>b.onclick=()=>{vibrate(5);location.hash="#/canju/b/"+k+"/"+b.dataset.bi});
+    v.querySelector("#btBack").onclick=()=>goUp("#/port")}).catch(e=>{if(v.isConnected)v.innerHTML=`<div class="pad"><div class="card muted">${esc(e.message||String(e))}</div></div>`});
+  return{}}
+/* ---------- 解題頁設定（07c-canju.js CanjuPlay 的 XM；cjXMode 的 b/<朝代>/<第幾張>）---------- */
+function battleXM(k,i){const back=()=>"#/battle";if(eraLocked(k))return{err:eraLockMsg(k),back};
+  const pk=BATTLE_PK[k+"|"+diffNow()];if(!pk||!pk[i])return{err:"這一張戰役卡要從古戰場頁打開（換了難度也要回去再點一次）。",back};
+  const c=battleCard(k,i)||{name:"戰役",lesson:""};
+  const nx=()=>{const S=battleSeals()[k]||{};for(let j=1;j<=pk.length;j++){const x=(i+j)%pk.length;if(pk[x]&&!S[x])return x}return-1};
+  return{id:pk[i],rk:"cjRunB",back,top:"⚔ 古戰場",icon:"⚔",ans:"看答案這一場就不算打下來，也不能蓋戰役印，確定？",
+    head:P=>`<b>⚔ ${esc(c.name)}</b>・${esc(c.year||"")}・道理：${esc(c.lesson)}・${cjLv(P.d)}　<span class="muted">${cjSrc(P)}</span><div class="shp-psay">🗡 ${esc(c.trick||"")}：${esc(c.line||"")}</div>`,
+    mark:o=>battleMark(k,i,pk[i],o),done:(o,ans)=>battleDoneHTML(k,i,o,ans),
+    next:()=>{const j=nx();return j>=0?"#/canju/b/"+k+"/"+j:null},nextL:()=>nx()>=0?"下一場":"回古戰場"}}
+function battleCard(k,i){try{return BATTLE_CARDS[k][i]}catch(e){return null}}
+let BATTLE_CARDS={};
+/* 不看答案解開：蓋戰役印；第一次 +15 修為；5 場集滿 → 稱號＋那一朝一件珍品（珍品是非同步抽的，抽到再跳一張卡） */
+function battleMark(k,i,id,o){const A=battleSeals(),E=A[k]||(A[k]={}),old=E[i],h=o&&o.hint?1:0,first=!old;
+  if(first)E[i]={at:Date.now(),h,id};else if(old.h&&!h)E[i]={...old,h:0,up:Date.now()};store.set("battleSeal",A);
+  if(first&&typeof addXP==="function")setTimeout(()=>addXP(15,"古戰場",`bt:${k}:${i}`),1600);
+  const N=(BATTLE_CARDS[k]||[]).length,n=Object.keys(E).length;let full=false;
+  const T=store.get("battleTitle",{})||{};if(N&&n>=N&&!T[k]){T[k]=Date.now();store.set("battleTitle",T);full=true;setTimeout(()=>addXP(30,"百戰之將","bt:title:"+k),3200);
+    Promise.resolve(typeof cjRelic==="function"?cjRelic(k):null).then(rel=>{setTimeout(()=>{modal(`<div class="em">🏅</div><h2>${esc(battleTitleOf(k))}</h2><p>${esc(eraLabel(k))}五場戰役都打下來了。</p>${rel?battleRelicHTML(rel):'<p class="muted">珍品都收齊了，這次只有稱號。</p>'}`,[["好",null]])},2600)}).catch(()=>{})}
+  return{first,h:E[i].h,n,all:N,full}}
+function battleDoneHTML(k,i,o,ans){if(ans||!o)return`<p class="muted">看了答案，這一場先不蓋戰役印；之後不看答案再解一次就能蓋。</p>`;
+  const c=battleCard(k,i)||{};return`<div class="card bt-done"><b>⚔ ${esc(c.name||"")}</b>　<span class="bt-seal sm">${o.h?"◐":"印"}</span><br><span class="muted">戰役印 ${o.n}／${o.all}・${o.h?"用了提示（空心印）；不看提示再解一次，印就變實心。":"自己打下來的。"}${o.first?"修為 +15。":""}</span>
+    ${o.full?`<p class="bt-full">🏅 ${esc(eraLabel(k))}五場戰役都打下來了！得到稱號「${esc(battleTitleOf(k))}」，還有一件珍品（收進「我的角色 → 🏺 珍品」）。</p>`:""}</div>`}
+/* 集滿的珍品卡（照 07c-canju.js cjRelicHTML 的樣子，標題換成百戰之將） */
+function battleRelicHTML(rel){if(rel.named&&typeof cjRelicHTML==="function")return cjRelicHTML(rel);const rk=(typeof RELIC_RK!=="undefined"&&RELIC_RK[rel.it.rarity])||["",""],img=typeof relicImg==="function"?relicImg(rel.era,rel.it.id):"🏺",en=typeof relicEra==="function"?esc(relicEra(rel.era)):"";
+  return`<div class="cj-relic"><div class="im">${img}</div><div style="flex:1;min-width:0;text-align:left"><b>🎁 百戰之將的獎勵：${esc(rel.it.name||"")}</b><div class="muted">${en}・${esc(rk[0])}・收進「我的角色 → 🏺 珍品」</div><div class="muted" style="font-size:12.5px;margin-top:4px">${esc(rel.it.desc||"")}</div></div></div>`}
+/* battleData 載入後，把卡片也記一份給 XM 用（XM 是同步的） */
+{const f=battleData;battleData=function(){return f().then(x=>{BATTLE_CARDS=(x.B&&x.B.eras)||{};return x})}}
 /* ================= 🕰 回到當年（意見回饋 313）=================
    石桌往事裡的對局，用「妙棋精選」裡 Pikafish 驗證過的特級大師實戰來演：你站在旁邊看，不能插手；
    棋自動一步一步下，下到那一步妙棋之前停下來——換作是你，會怎麼走？
