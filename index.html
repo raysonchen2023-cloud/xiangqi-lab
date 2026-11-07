@@ -1037,7 +1037,7 @@ body.xqt-on .modal{z-index:10000}body.xqt-on .toast{z-index:10001}body.xqt-on .x
 img,svg,canvas,picture{-webkit-touch-callout:none;-webkit-user-drag:none;user-drag:none;-webkit-user-select:none;user-select:none}
 
 /* 意見回饋 734：iPhone 主畫面 App 開頭畫面底部露出白條——開頭畫面蓋滿整個螢幕（含底部安全區），網頁底色也換成同一個米色 */
-#xqTitle{min-height:100lvh;bottom:calc(-1 * env(safe-area-inset-bottom,0px));padding-bottom:max(20px,calc(env(safe-area-inset-bottom,0px) * 2))}
+
 html:has(#xqTitle:not(.out)),html:has(#xqTitle:not(.out)) body{background:#F3ECDD}
 </style></head><body>
 <div class="app">
@@ -1086,7 +1086,7 @@ html:has(#xqTitle:not(.out)),html:has(#xqTitle:not(.out)) body{background:#F3ECD
       if(!window.caches)return go();caches.keys().then(function(ks){return Promise.all(ks.filter(function(k){return k.indexOf("xqlab-app-")===0}).map(function(k){return caches.delete(k)}))})
         .then(function(){return navigator.serviceWorker&&navigator.serviceWorker.getRegistration()}).then(function(r){return r&&r.update()}).catch(function(){}).then(go)}};setTimeout(chk,4000)})();
 </script>
-<script>window.XQ_OFFLINE=true;window.XQ_BUILD="20261107-1511";</script>
+<script>window.XQ_OFFLINE=true;window.XQ_BUILD="20261107-1535";</script>
 <script src="core.js"></script>
 <script src="engine.js"></script>
 <script src="local.js"></script>
