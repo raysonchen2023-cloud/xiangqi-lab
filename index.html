@@ -1293,7 +1293,7 @@ html[data-era=qin] .view:has(>.shp-rd),html[data-era=wudai] .view:has(>.shp-rd){
       if(!window.caches)return go();caches.keys().then(function(ks){return Promise.all(ks.filter(function(k){return k.indexOf("xqlab-app-")===0}).map(function(k){return caches.delete(k)}))})
         .then(function(){return navigator.serviceWorker&&navigator.serviceWorker.getRegistration()}).then(function(r){return r&&r.update()}).catch(function(){}).then(go)}};setTimeout(chk,4000)})();
 </script>
-<script>window.XQ_OFFLINE=true;window.XQ_BUILD="20261108-1520";</script>
+<script>window.XQ_OFFLINE=true;window.XQ_BUILD="20261108-1530";</script>
 <script src="core.js"></script>
 <script src="engine.js"></script>
 <script src="local.js"></script>
@@ -4013,7 +4013,7 @@ function onboard(){if(journey())journeyLock();else titleScreen({})}
 // ================= 設定：棋盤風格、棋子樣式、走棋顯示 =================
 const SAMPLE_FEN0="rnbakabnr/9/1c5c1/p1p1p1p1p/9/9/P1P1P1P1P/1C5C1/9/RNBAKABNR",SAMPLE_FEN1="rnbakabnr/9/1c5c1/p1p1p1p1p/9/9/P1P1P1P1P/1C2C4/9/RNBAKABNR",SAMPLE_LAST={f:70,t:67};
 /* 意見回饋 661：關於頁顯示整包遊戲要多大空間。XQ_SIZES 由 build-site.js 建置時填入（開發中的 m.html 是 null，就不顯示） */
-const XQ_SIZES={"pre":215061168,"code":12968990,"eng":51511005,"gm":33668932,"bgm":259516351,"opt":[["比賽對局 1956–2010",21765744],["比賽對局 2011–2014",25596413],["比賽對局 2015–2019",24821916]],"all":660969919,"other":16059400};
+const XQ_SIZES={"pre":215061168,"code":12953104,"eng":51511005,"gm":33668932,"bgm":259516351,"opt":[["比賽對局 1956–2010",21765744],["比賽對局 2011–2014",25596413],["比賽對局 2015–2019",24821916]],"all":660954033,"other":16059400};
 const szMB=b=>b>=1073741824?(b/1073741824).toFixed(1)+" GB":Math.max(1,Math.round(b/1048576))+" MB";
 function aboutSizes(){const S=XQ_SIZES;if(!S)return"";const opt=S.opt||[];   /* 意見回饋 662：玩家只看總數，細項只在開發者模式顯示 */
   return `<div class="row" style="justify-content:space-between"><span class="muted">整包下載</span><b>約 ${szMB(S.all)}</b></div>
@@ -8878,115 +8878,6 @@ const IFX_FX={
     Promise.all(lays.map(e=>e.decode?e.decode():new Promise((ok,no)=>{e.onload=ok;e.onerror=no}))).then(()=>{for(const e of lays)e.style.opacity=1}).catch(()=>{for(const e of lays)e.remove()})}
 };
 ifxStart();
-/* ================= 🛤 首頁路線圖（Gemini 評估 11/8，開發者核准）=================
-   學 Duolingo 首頁那條看得見的路：首頁最上面一張「今天的路」卡，取代 ⭐ 今日推薦、⛵ 雲河星槎大卡、🍵 今日茶單小卡（路上已經有的，下面不再重複）。
-   上半：今天的石板路，一個個節點（沿用今日推薦的判斷函式，07f-ship.js 的 homeRecGame、homeRecShipK、mainDone…）：
-     ♟ 接著下（有下到一半的棋才出現，排第一）→ 🍵 今日茶單 3 題 → ⛵ 這站的千秋殘局（學會了而且不是今天學會的＝⛵ 起航去下一站）
-     → 🪨 石桌往事下一回（第一集都過了換📜紙譜新局）→ 🤖 跟電腦下一盤
-     完成的判斷（都照 cjDay 的「凌晨 4 點換日」）：茶單＝cjCleared；殘局＝這站今天學會了（shipLearn 的時間）或 13 站都停靠過；
-       故事＝今天讀過任何一回（legRead 的時間）；下一盤＝棋譜庫 play 今天有下完的一盤（/db/items，id 是開局時間）。
-     第一個沒完成的節點＝目前這一步：發亮、「你在這裡」；完成的蓋朱紅「完」印；之後的淡一點。全部做完：右上角蓋「圓滿」，主線走完時接 mainDoneHTML。
-   下半：雲河航線 13 站（兩排蛇行）。朱紅方印＝這站學會了；金框發亮＋「這一站」＝人在這一站；實心＝已停靠；虛線＝下一站（點了去起航）；淡的＝還沒到。
-     上面那一行「⛵ 雲河星槎」＝原本的星槎大卡，點了進 #/adventure。
-   03-home-quiz.js 的 Home()：homePathHTML() 放在原本今日推薦的位置、畫完呼叫 homePathBind(v)；有這個檔時大卡區不畫 shipHomeHTML、canjuCardHTML。
-   樣式在這裡（hpCSS），顏色都用 --ink、--card、--red、--muted，秦、五代的深色回紋主題自動跟著變；prefers-reduced-motion 時不發亮、不晃。 */
-let HP_CPU={d:"",n:0};   /* 今天下完幾盤（棋譜庫查一次記住，同一天不重查） */
-const hpDay=t=>typeof cjDay==="function"?cjDay(t):new Date(t==null?Date.now():t).toDateString();
-const hpIsToday=t=>!!t&&+t>0&&hpDay(+t)===hpDay();
-function hpCSS(){if(document.getElementById("hpCss"))return;const st=document.createElement("style");st.id="hpCss";st.textContent=`
-.hpath{margin:0 0 12px;padding:8px 10px 4px;position:relative;overflow:hidden}
-.hp-h{display:flex;align-items:baseline;gap:8px;margin:0 4px}.hp-h b{font:900 15px var(--serif);letter-spacing:.12em}.hp-h small{margin-left:auto;color:var(--muted);font-size:12.5px;font-variant-numeric:tabular-nums}
-.hp-road{position:relative;height:128px;margin-top:2px}.hp-riv{position:relative;height:110px;margin:0 2px}
-.hp-road svg,.hp-riv svg{position:absolute;inset:0;width:100%;height:100%;overflow:visible;pointer-events:none}
-.hp-road path,.hp-riv path{fill:none;stroke-linecap:round;stroke-linejoin:round;vector-effect:non-scaling-stroke}
-.hp-wash{stroke:color-mix(in srgb,var(--ink) 8%,transparent);stroke-width:26}.hp-step{stroke:color-mix(in srgb,var(--ink) 32%,transparent);stroke-width:3;stroke-dasharray:2 10}
-.hp-trail{stroke:color-mix(in srgb,var(--red) 62%,transparent);stroke-width:4}
-.hp-n{position:absolute;top:0;transform:translateX(-50%);width:74px;display:flex;flex-direction:column;align-items:center;background:none;border:0;padding:0;font:inherit;color:inherit;cursor:pointer;-webkit-tap-highlight-color:transparent}
-.hp-n .o{position:relative;width:52px;height:52px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:24px;line-height:1;background:var(--card);border:2.5px solid color-mix(in srgb,var(--ink) 50%,var(--line));box-shadow:0 3px 0 color-mix(in srgb,var(--ink) 22%,transparent);transition:transform .15s}
-.hp-n:active .o{transform:translateY(2px);box-shadow:0 1px 0 color-mix(in srgb,var(--ink) 22%,transparent)}
-.hp-n .l{margin-top:4px;font:900 13px/1.2 var(--serif);white-space:nowrap;max-width:100%;overflow:hidden;text-overflow:ellipsis}.hp-n .s{font-size:11.5px;line-height:1.35;color:var(--muted);white-space:nowrap;max-width:100%;overflow:hidden;text-overflow:ellipsis}
-.hp-n.done .o{border-color:color-mix(in srgb,var(--red) 70%,var(--line))}
-.hp-n.done .o::after{content:"完";position:absolute;right:-7px;bottom:-5px;width:22px;height:22px;border-radius:4px;background:var(--red);color:#fff;font:900 13px/22px var(--serif);text-align:center;transform:rotate(-10deg);box-shadow:0 0 0 2px var(--card)}
-.hp-n.later .o{opacity:.5;filter:grayscale(.55);border-style:dashed}.hp-n.later .l,.hp-n.later .s{opacity:.65}
-.hp-n.cur .o{border:3px solid #C9962B;background:color-mix(in srgb,#C9962B 16%,var(--card));animation:hpGlow 2.6s ease-in-out infinite}
-.hp-n.cur .l{color:color-mix(in srgb,#A8741A 70%,var(--ink))}
-.hp-you{position:absolute;top:-23px;left:50%;transform:translateX(-50%);padding:2px 8px;border-radius:999px;background:#C9962B;color:#fff;font:900 11.5px/1.5 var(--sans);white-space:nowrap;letter-spacing:.04em;animation:hpBob 2.6s ease-in-out infinite;box-shadow:0 1px 3px #0003}
-.hp-you::after{content:"";position:absolute;left:50%;top:100%;margin-left:-5px;border:5px solid transparent;border-top-color:#C9962B}
-.hp-fin{position:absolute;right:6px;top:-30px;width:50px;height:50px;border:3px double var(--red);border-radius:6px;color:var(--red);font:900 17px/20px var(--serif);display:flex;align-items:center;justify-content:center;text-align:center;transform:rotate(-12deg);opacity:.86;letter-spacing:.1em;background:color-mix(in srgb,var(--red) 7%,transparent)}
-.hp-sh{display:flex;align-items:center;gap:8px;width:100%;min-height:44px;margin:0;padding:4px 6px 0;border:0;border-top:1px dashed color-mix(in srgb,var(--ink) 20%,var(--line));background:none;font:inherit;color:inherit;text-align:left;cursor:pointer}
-.hp-sh .ic{font-size:22px;flex:none}.hp-sh .tx{flex:1;min-width:0;display:flex;align-items:baseline;gap:8px}.hp-sh b{font:900 15px var(--serif);letter-spacing:.1em;flex:none}
-.hp-sh small{color:var(--muted);font-size:12.5px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.hp-sh .go{color:var(--muted);font-size:18px}
-.hp-rw{stroke:color-mix(in srgb,#5B7C99 20%,transparent);stroke-width:20}.hp-rl{stroke:color-mix(in srgb,#5B7C99 55%,transparent);stroke-width:1.6;stroke-dasharray:9 7}
-.hp-s{position:absolute;width:44px;height:44px;margin:-22px 0 0 -22px;border:0;background:none;padding:0;display:flex;align-items:center;justify-content:center;cursor:pointer;color:inherit;-webkit-tap-highlight-color:transparent}
-.hp-s i{width:30px;height:30px;border-radius:50%;display:flex;align-items:center;justify-content:center;font:900 14px/1 var(--serif);font-style:normal;background:var(--card);border:2px solid color-mix(in srgb,var(--ink) 48%,var(--line));color:var(--ink)}
-.hp-s.seal i{background:var(--red);border-color:var(--red);color:#fff;border-radius:5px;transform:rotate(-7deg)}
-.hp-s.next i{border-style:dashed;color:var(--muted)}.hp-s.far i{opacity:.38;border-style:dotted;color:var(--muted)}
-.hp-s.here i{width:36px;height:36px;box-shadow:0 0 0 3px #C9962B,0 0 0 7px color-mix(in srgb,#C9962B 25%,transparent);animation:hpGlow2 2.6s ease-in-out infinite}
-.hp-s em{position:absolute;top:100%;left:50%;transform:translateX(-50%);margin-top:-5px;font:800 11px/1.2 var(--sans);font-style:normal;white-space:nowrap;color:var(--muted)}.hp-s.here em{margin-top:4px;color:color-mix(in srgb,#A8741A 75%,var(--ink))}
-@keyframes hpGlow{0%,100%{box-shadow:0 3px 0 color-mix(in srgb,#A8741A 45%,transparent),0 0 0 0 rgba(201,150,43,0)}50%{box-shadow:0 3px 0 color-mix(in srgb,#A8741A 45%,transparent),0 0 0 7px rgba(201,150,43,.24)}}
-@keyframes hpGlow2{0%,100%{box-shadow:0 0 0 3px #C9962B,0 0 0 5px rgba(201,150,43,.15)}50%{box-shadow:0 0 0 3px #C9962B,0 0 0 9px rgba(201,150,43,.3)}}
-@keyframes hpBob{0%,100%{transform:translate(-50%,0)}50%{transform:translate(-50%,-3px)}}
-@media (prefers-reduced-motion:reduce){.hp-n.cur .o,.hp-you,.hp-s.here i{animation:none}.hp-n .o{transition:none}}
-.hpath .mdone{margin:6px 0 4px}
-`;document.head.append(st)}
-/* 一串點連成平滑的曲線（Catmull-Rom → 三次貝茲）；x 是 0～100（寬度百分比），y 是 px */
-function hpCurve(P){if(!P.length)return"";let d=`M${P[0][0]} ${P[0][1]}`;for(let i=0;i<P.length-1;i++){const a=P[i-1]||P[i],b=P[i],c=P[i+1],e=P[i+2]||c,f=n=>+n.toFixed(2);
-  d+=` C${f(b[0]+(c[0]-a[0])/6)} ${f(b[1]+(c[1]-a[1])/6)},${f(c[0]-(e[0]-b[0])/6)} ${f(c[1]-(e[1]-b[1])/6)},${f(c[0])} ${f(c[1])}`}return d}
-
-/* ---------- 今天的節點 ---------- */
-function hpTea(){try{const S=cjState(),L=S.day===cjDay()?S.list:null,ok=!!(L&&cjCleared(L)),n=L?L.filter((x,i)=>x.st==="done"||(i===2&&x.st==="skip")).length:0;
-  return{id:"tea",ic:"🍵",t:"今日茶單",s:ok?"喝完了":`${n}／3 題`,go:"#/canju",done:ok}}catch(e){return null}}
-function hpShip(){try{const k=homeRecShipK();if(!k)return null;const L=shipPuzzles(k),lt=(store.get("shipLearn",{})||{})[k],nm=shipShort(k),nx=shipAppr()?null:shipNextStop(),ln=shipLearned(k);
-  if(!ln&&!(L&&!L.length)){const n=L?L.slice(0,SHIP_PER).filter(id=>shipRec(k,id)).length:null;return{id:"ship",ic:"♟",t:nm+"殘局",s:n==null?"千秋殘局":`${n}／${Math.min(SHIP_PER,L.length)} 題`,go:"#/ship/pz"}}
-  if(nx&&!hpIsToday(lt))return{id:"ship",ic:"⛵",t:"起航",s:"去"+shipShort(nx),go:"#/ship/sail"};
-  if(!ln)return null;return{id:"ship",ic:"♟",t:nm+"殘局",s:"學會了",go:"#/adventure",done:true}}catch(e){return null}}
-function hpStory(){try{if(typeof legendState!=="function"||typeof jStages!=="function")return null;const R=store.get("legRead",{})||{},td=Object.values(R).some(E=>Object.values(E||{}).some(hpIsToday));
-  let b=1,n=legendState().n;if(typeof book1Done==="function"&&book1Done()){if(typeof jStages2!=="function")return null;const S=jStars(),J=jStages2(),x=J.find(z=>!S[z.id]);if(!x)return null;b=2;n=x.n}
-  return{id:"story",ic:b===1?"🪨":"📜",t:`第${CNUM(n)}回`,s:td?"今天讀過了":b===1?"石桌往事":"紙譜新局",go:`#/shelf/${b}/${n}`,done:td}}catch(e){return null}}
-function hpNodes(st,onl){const N=[],g=onl||(typeof homeRecGame==="function"?homeRecGame(st):null);
-  if(g)N.push({id:"go",ic:"♟",t:onl?"回對局":"接著下",s:onl?"線上對局":String(g.t).replace(/^.*：/,""),go:g.go,sw:g.sw,park:g.park});
-  for(const f of[hpTea,hpShip,hpStory]){const x=f();if(x)N.push(x)}
-  if(!(g&&g.go==="#/cpu"))N.push({id:"cpu",ic:"🤖",t:"下一盤",s:HP_CPU.d===hpDay()&&HP_CPU.n?"今天下過了":"跟電腦",go:"#/cpu",done:HP_CPU.d===hpDay()&&HP_CPU.n>0});
-  const c=N.findIndex(x=>!x.done);N.forEach((x,i)=>{x.st=x.done?"done":i===c?"cur":c>=0&&i>c?"later":"todo"});return N}
-
-/* ---------- 雲河航線 13 站 ---------- */
-function hpStations(){try{const ap=shipAppr(),O=shipDockList()?shipOrder():SHIP_ROUTE.slice(),D=new Set(shipDocked()),at=homeRecShipK()||shipAt(),nx=ap?null:shipNextStop();
-  return O.map(k=>({k,c:k==="classic"?"艙":shipShort(k)[0],nm:k==="classic"?"星槎船艙":eraLabel(k),seal:shipLearned(k),here:k===at,dock:D.has(k),next:k===nx}))}catch(e){return[]}}
-function hpRiverHTML(){const S=hpStations();if(!S.length)return"";const a=S.slice(0,7),b=S.slice(7),Y1=24,Y2=76,P=[];
-  a.forEach((s,i)=>{s.x=(i+.5)/7*100;s.y=Y1+(i%2?4:-2)});b.forEach((s,j)=>{s.x=(6-j)/7*100;s.y=Y2+(j%2?-3:3)});
-  S.forEach((s,i)=>{P.push([s.x,s.y]);if(i===a.length-1&&b.length)P.push([99,(Y1+Y2)/2])});const d=hpCurve(P);
-  return`<div class="hp-riv"><svg viewBox="0 0 100 110" preserveAspectRatio="none" aria-hidden="true"><path class="hp-rw" d="${d}"/><path class="hp-rl" d="${d}"/></svg>${S.map(s=>{
-    const cls=[s.seal?"seal":"",s.here?"here":"",!s.dock?(s.next?"next":"far"):""].filter(Boolean).join(" "),lab=s.here?"這一站":s.next?"下一站":"";
-    const al=`${s.nm}：${s.here?"你在這一站，":""}${s.seal?"棋理學會了":s.dock?"已停靠":s.next?"下一站，點了起航":"還沒到"}`;
-    return`<button class="hp-s ${cls}" data-st="${s.k}" style="left:${s.x.toFixed(2)}%;top:${s.y}px" aria-label="${esc(al)}"><i>${esc(s.c)}</i>${lab?`<em>${lab}</em>`:""}</button>`}).join("")}</div>`}
-function hpShipRow(){try{const ap=shipAppr(),k=shipAt(),T=SHIP_STOP[k]||SHIP_STOP.classic,q=String(shipQuote()).match(/有 (\d+) 封新信/);
-  const s=ap?"說書人學徒・13 站都能去":`${shipShort(k)}・${T.place}・棋話 ${shipPages()}／13`;
-  return`<button class="hp-sh" data-go="#/adventure" aria-label="雲河星槎：${esc(s)}${q?`，${q[1]} 封新信`:""}"><span class="ic">⛵</span><span class="tx"><b>雲河星槎</b><small>${esc(s)}${q?`・✉ ${q[1]}`:""}</small></span><b class="go">›</b></button>`}catch(e){return`<button class="hp-sh" data-go="#/adventure"><span class="ic">⛵</span><span class="tx"><b>雲河星槎</b><small>船頭、下船、書架</small></span><b class="go">›</b></button>`}}
-
-/* ---------- 畫 ---------- */
-function hpRoadHTML(N){const n=N.length,P=N.map((x,i)=>{x.x=(i+.5)/n*100;x.y=i%2?36:22;return[x.x,x.y+26]}),c=N.findIndex(x=>x.st==="cur"),last=c<0?n-1:c,all=N.every(x=>x.done);
-  const done=N.filter(x=>x.done).length;
-  return`<div class="hp-h"><b>${all?"🎉 今天的路走完了":"🛤 今天的路"}</b>${all?"":`<small>${done}／${n}</small>`}</div>
-  <div class="hp-road">${all?'<div class="hp-fin" aria-hidden="true">圓<br>滿</div>':""}<svg viewBox="0 0 100 128" preserveAspectRatio="none" aria-hidden="true"><path class="hp-wash" d="${hpCurve(P)}"/><path class="hp-step" d="${hpCurve(P)}"/>${last>0?`<path class="hp-trail" d="${hpCurve(P.slice(0,last+1))}"/>`:""}</svg>
-  ${N.map((x,i)=>`<button class="hp-n ${x.st}" data-i="${i}" style="left:${x.x.toFixed(2)}%;top:${x.y}px" aria-label="${esc(x.t+"・"+x.s+(x.st==="cur"?"，你在這裡":x.done?"，完成了":""))}">${x.st==="cur"?'<span class="hp-you">你在這裡</span>':""}<span class="o">${x.ic}</span><span class="l">${esc(x.t)}</span><span class="s">${esc(x.s)}</span></button>`).join("")}</div>`}
-function homePathHTML(){hpCSS();let N=[];try{N=hpNodes(null,null)}catch(e){}
-  return`<div class="card hpath" id="hPath"><div id="hpRoad">${hpRoadHTML(N)}</div>${hpShipRow()}${hpRiverHTML()}${typeof mainDoneHTML==="function"?mainDoneHTML():""}</div>`}
-function homePathBind(v){const box=v&&v.querySelector("#hPath");if(!box)return;let N=[],onl=null;
-  const go=async x=>{vibrate(5);if(x.sw)try{await api("/play/switch",{kind:x.sw})}catch(e){}if(x.park)store.set("park3d",true);location.hash=x.go};
-  const draw=st=>{if(!box.isConnected)return;try{N=hpNodes(st,onl)}catch(e){return}const r=box.querySelector("#hpRoad");if(!r)return;r.innerHTML=hpRoadHTML(N);
-    r.querySelectorAll(".hp-n").forEach(b=>b.onclick=e=>{e.stopPropagation();const x=N[+b.dataset.i];if(x)go(x)})};
-  try{if(window.XQNet&&XQNet.playing&&XQNet.playing())onl={go:"#/pvp",t:"⚔ 回線上對局"}}catch(e){}
-  draw(null);
-  box.querySelectorAll(".hp-sh").forEach(b=>b.onclick=e=>{e.stopPropagation();vibrate(5);location.hash="#/adventure"});
-  box.querySelectorAll(".hp-s").forEach(b=>b.onclick=e=>{e.stopPropagation();const k=b.dataset.st,s=hpStations().find(z=>z.k===k);if(!s)return;vibrate(5);
-    if(s.here){location.hash=s.seal?"#/adventure":"#/ship/pz";return}
-    if(s.dock){if(typeof goUp==="function"&&typeof shipGoTo==="function")goUp("#/adventure",()=>shipGoTo(k));else location.hash="#/adventure";return}
-    if(s.next){location.hash="#/ship/sail";return}
-    const nx=hpStations().find(z=>z.next);toast(`⛵ 星槎還沒開到${s.nm}${nx?`：先到星槎頁起航去${nx.nm}`:""}`)});
-  try{if(typeof mainDoneBind==="function")mainDoneBind(v)}catch(e){}
-  const cpu=HP_CPU.d===hpDay()?null:api("/db/items?c=play&limit=12").then(d=>{let n=0;for(const it of(d&&d.items)||[]){const r=String(it.result||"");if(r&&!/中止|取消/.test(r)&&hpIsToday(typeof tlTime==="function"?tlTime(it.id):0))n++}HP_CPU={d:hpDay(),n}}).catch(()=>null);
-  Promise.all([api("/play/state").catch(()=>null),typeof cjData==="function"?cjData().then(D=>{try{cjToday(D,cjState())}catch(e){}}).catch(()=>null):null,typeof shipBank==="function"&&homeRecShipK()?shipBank().catch(()=>null):null,cpu])
-    .then(([st])=>draw(st)).catch(()=>{})}
 /* ================= 🕰 回到當年（意見回饋 313）=================
    石桌往事裡的對局，用「妙棋精選」裡 Pikafish 驗證過的特級大師實戰來演：你站在旁邊看，不能插手；
    棋自動一步一步下，下到那一步妙棋之前停下來——換作是你，會怎麼走？
