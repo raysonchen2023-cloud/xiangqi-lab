@@ -909,6 +909,12 @@ body.xqt-on .modal{z-index:10000}body.xqt-on .toast{z-index:10001}body.xqt-on .x
 /* 意見回饋 688：雲河七星依選角的第一人稱故事線（07f-ship.js ShipRead） */
 .shp-povt{font-style:normal;font-family:system-ui,sans-serif;font-size:11.5px;font-weight:700;color:#7a3e10;background:#FCEBD6;border:1px solid #E0A060;border-radius:6px;padding:0 6px;margin-left:6px;white-space:nowrap;vertical-align:2px}
 .shp-povi{border-left:3px solid #E0A060}.shp-povn{margin-top:8px!important}.shp-povbar{text-align:right;margin:-8px 0 8px}.shp-povsw{font-size:13px}
+/* 意見回饋 763：《雲河七星》重點句——朱紅粗體＋淡淡的朱砂底（像用朱筆圈過）；深色（經典深色、系統深色、秦、五代）換亮一點的朱紅。.kl-off＝頁首開關關掉 */
+.shp-rd strong.kl{--kl:#A8322D;--klb:rgba(168,50,45,.09);font-weight:700;color:var(--kl);background:linear-gradient(transparent 58%,var(--klb) 58%);-webkit-box-decoration-break:clone;box-decoration-break:clone;border-radius:2px;padding:0 1px}
+html[data-theme=dark]:not([data-era]) .shp-rd strong.kl,html[data-era=qin] .shp-rd strong.kl,html[data-era=wudai] .shp-rd strong.kl{--kl:#F2967C;--klb:rgba(242,150,124,.16)}
+@media (prefers-color-scheme:dark){html:not([data-theme=light]):not([data-era]) .shp-rd strong.kl{--kl:#F2967C;--klb:rgba(242,150,124,.16)}}
+.shp-rd.kl-off strong.kl{font-weight:inherit;color:inherit;background:none;padding:0}
+.shp-klbar{text-align:right;margin:-10px 0 8px}.shp-klsw{font-size:12.5px}.shp-rd.kl-off .shp-klsw{opacity:.7}
 .shp-side{margin-top:22px;padding-top:12px;border-top:1px dashed var(--line)}.shp-side h3{font-family:var(--serif);font-size:17px;margin:0 2px 2px}.shp-side .shp-sidew{font-size:12.5px;margin:0 2px 10px!important}
 .shp-mk{display:flex;flex-direction:column;gap:6px;align-items:stretch;margin:6px 0 16px;border:2px solid color-mix(in srgb,var(--accent) 50%,var(--line));scroll-margin-top:80px}
 .shp-mk b{font-family:var(--serif);font-size:16px}.shp-mk .muted{font-size:12.5px}.shp-mk p{font-size:13.5px!important;margin:0!important}.shp-mk .btn{margin-top:4px}.shp-mk .lk{align-self:center;font-size:13.5px}
@@ -1294,7 +1300,7 @@ html[data-era=qin] .view:has(>.shp-rd),html[data-era=wudai] .view:has(>.shp-rd){
       if(!window.caches)return go();caches.keys().then(function(ks){return Promise.all(ks.filter(function(k){return k.indexOf("xqlab-app-")===0}).map(function(k){return caches.delete(k)}))})
         .then(function(){return navigator.serviceWorker&&navigator.serviceWorker.getRegistration()}).then(function(r){return r&&r.update()}).catch(function(){}).then(go)}};setTimeout(chk,4000)})();
 </script>
-<script>window.XQ_OFFLINE=true;window.XQ_BUILD="20261108-1620";</script>
+<script>window.XQ_OFFLINE=true;window.XQ_BUILD="20261108-1631";</script>
 <script src="core.js"></script>
 <script src="engine.js"></script>
 <script src="local.js"></script>
@@ -4014,7 +4020,7 @@ function onboard(){if(journey())journeyLock();else titleScreen({})}
 // ================= 設定：棋盤風格、棋子樣式、走棋顯示 =================
 const SAMPLE_FEN0="rnbakabnr/9/1c5c1/p1p1p1p1p/9/9/P1P1P1P1P/1C5C1/9/RNBAKABNR",SAMPLE_FEN1="rnbakabnr/9/1c5c1/p1p1p1p1p/9/9/P1P1P1P1P/1C2C4/9/RNBAKABNR",SAMPLE_LAST={f:70,t:67};
 /* 意見回饋 661：關於頁顯示整包遊戲要多大空間。XQ_SIZES 由 build-site.js 建置時填入（開發中的 m.html 是 null，就不顯示） */
-const XQ_SIZES={"pre":215061180,"code":12957039,"eng":51511005,"gm":33668932,"bgm":259516351,"opt":[["比賽對局 1956–2010",21765744],["比賽對局 2011–2014",25596413],["比賽對局 2015–2019",24821916]],"all":660957980,"other":16059400};
+const XQ_SIZES={"pre":215129287,"code":13003085,"eng":51511005,"gm":33668932,"bgm":259516351,"opt":[["比賽對局 1956–2010",21765744],["比賽對局 2011–2014",25596413],["比賽對局 2015–2019",24821916]],"all":661072133,"other":16059400};
 const szMB=b=>b>=1073741824?(b/1073741824).toFixed(1)+" GB":Math.max(1,Math.round(b/1048576))+" MB";
 function aboutSizes(){const S=XQ_SIZES;if(!S)return"";const opt=S.opt||[];   /* 意見回饋 662：玩家只看總數，細項只在開發者模式顯示 */
   return `<div class="row" style="justify-content:space-between"><span class="muted">整包下載</span><b>約 ${szMB(S.all)}</b></div>
@@ -5445,6 +5451,12 @@ function rdGistHTML(A,bk,n){const t=A&&A.g&&A.g[bk]&&A.g[bk][n];return t?`<detai
 function rdMarker(A,bk){const L=rdList(A,bk),used=new Set();if(!L.length)return esc;
   return p=>{p=String(p);if(/^【/.test(p))return esc(p);const M=[];L.forEach((x,i)=>{if(!used.has(i)){const j=p.indexOf(x.w);if(j>=0)M.push([j,x.w.length,i])}});if(!M.length)return esc(p);
     M.sort((a,b)=>a[0]-b[0]||b[1]-a[1]);let o="",k=0;for(const[j,n,i]of M){if(j<k)continue;o+=esc(p.slice(k,j))+`<span class="rd-w" data-gw="${i}" role="button" tabindex="0">${esc(p.slice(j,j+n))}</span>`;k=j+n;used.add(i)}return o+esc(p.slice(k))}}
+/* 意見回饋 763：每回的重點句（park-legend*.json 的 kl，legend_export.js 從 story/bookN/keylines.json 匯入並驗過）包成 <strong class="kl">，裡面照樣標辭典詞；一句一回只標第一次。樣式、開關跟雲河七星共用（m.css .shp-rd strong.kl／.shp-klbar；開關 store yunheKL，預設開） */
+const klOn=()=>{try{return store.get("yunheKL",true)!==false}catch(e){return true}},klTxt=o=>"✒ 重點句："+(o?"開":"關");
+function klMarker(L,mk){L=(Array.isArray(L)?L:[]).filter(x=>typeof x==="string"&&x);if(!L.length)return mk;const used=new Set();
+  return p=>{p=String(p);if(/^【/.test(p))return mk(p);const M=[];L.forEach((x,i)=>{if(!used.has(i)){const j=p.indexOf(x);if(j>=0)M.push([j,x.length,i])}});if(!M.length)return mk(p);
+    M.sort((a,b)=>a[0]-b[0]||b[1]-a[1]);let o="",k=0;for(const[j,n,i]of M){if(j<k)continue;o+=(j>k?mk(p.slice(k,j)):"")+`<strong class="kl">${mk(p.slice(j,j+n))}</strong>`;k=j+n;used.add(i)}return o+(k<p.length?mk(p.slice(k)):"")}}
+function klToggle(root,btn){if(!root||!btn)return;btn.onclick=()=>{vibrate(5);const o=!klOn();store.set("yunheKL",o);root.classList.toggle("kl-off",!o);btn.textContent=klTxt(o);btn.setAttribute("aria-pressed",String(o))}}
 function rdBind(root,A,bk){const L=rdList(A,bk);if(!root||!L.length)return;const go=e=>{const s=e.target.closest&&e.target.closest(".rd-w"),x=s&&L[+s.dataset.gw];if(!x)return;e.preventDefault();vibrate(5);rdPop(x)};
   root.addEventListener("click",go);root.addEventListener("keydown",e=>{if(e.key==="Enter"||e.key===" ")go(e)})}
 function rdPopClose(){const d=document.getElementById("rdPop");if(d)d.remove()}
@@ -5468,8 +5480,9 @@ function BookChapter(v,b,n,tab){b=b===2?2:1;n=Math.max(1,+n|0);const game=tab===
     let html;
     if(!game){const cg=b===1?(LEG_CG[n]||[]):(c.cg||[]),img=f=>`<img class="bk-cg" src="data/levels/${f}.webp" alt="" loading="lazy" onerror="this.remove()">`;
       const ps=String(c.body||"").split(/\n+/).map(x=>x.trim()).filter(Boolean);
-      html=`<div class="pad shp-rd bk-ch">${tabs}<h2 class="shp-rh">${esc(c.title)}</h2><p class="muted shp-rs">《${b===1?"石桌往事":"紙譜新局"}》${b===2&&(c.year||c.place)?"・"+esc([c.year,c.place].filter(Boolean).join("・")):""}</p>
-        ${rdGistHTML(RA,"b"+b,n)}${cg[0]?img(cg[0]):""}${jFrame()}${(mk=>ps.map(p=>`<p>${mk(p)}</p>`).join(""))(rdMarker(RA,"b"+b))}${cg.slice(1).map(img).join("")}
+      const klN=Array.isArray(c.kl)&&c.kl.length,klY=klOn();
+      html=`<div class="pad shp-rd bk-ch${klN&&!klY?" kl-off":""}">${tabs}<h2 class="shp-rh">${esc(c.title)}</h2><p class="muted shp-rs">《${b===1?"石桌往事":"紙譜新局"}》${b===2&&(c.year||c.place)?"・"+esc([c.year,c.place].filter(Boolean).join("・")):""}</p>${klN?`<div class="shp-klbar"><button class="lk shp-klsw" id="klTg" aria-pressed="${klY}" title="重點句用朱紅粗體標出來">${klTxt(klY)}</button></div>`:""}
+        ${rdGistHTML(RA,"b"+b,n)}${cg[0]?img(cg[0]):""}${jFrame()}${(mk=>ps.map(p=>`<p>${mk(p)}</p>`).join(""))(klMarker(c.kl,rdMarker(RA,"b"+b)))}${cg.slice(1).map(img).join("")}
         ${s?`<div class="card bk-end"><p>這一回到這裡。說書人把棋盤推過來：</p><button class="btn${zn?" ghost":""}" id="cpG">⚔ 去下這一回的棋：「${esc(lvn)}」${zn?"・"+ziStr(zn):""}</button></div>`:""}${nav}</div>`}
     else{const G=c.game,lv=c.lv||{},Rr=s?jRunGet(s.id):null,mid=!!(Rr&&!Rr.done&&Rr.k>0&&G),HD=s?jHid()[s.id]:null,sc=b===1?(D.scenes||[]).filter(x=>x.ch===n):[];
       const how=s&&{puz:"從題庫出 5 題，答對 3 題過關：3 題收兵、4 題收馬、5 題全對收車。",ai:`跟第 ${s.lv} 級的電腦下一盤，贏了就過關：30 回合內贏收車、50 回合內收馬、其他收兵。`,boss:`守關的擂主是「${s.era&&ARENA[s.era]?ARENA[s.era].name:""}」（第 ${s.lv} 級的實力）。贏了就過關，收幾顆子照回合數算，跟對弈一樣；還會順便蓋上擂台的章。`}[s.t];
@@ -5482,7 +5495,7 @@ function BookChapter(v,b,n,tab){b=b===2?2:1;n=Math.max(1,+n|0);const game=tab===
         ${s&&sOk?`${HD&&!HD.got?`<button class="btn" id="cpHd" style="width:100%;margin-bottom:6px">${HIDN.ic} ${HIDN.lv}（${HD.k==="hard"?"困難":"簡單"}）</button>`:""}${mid?`<button class="btn" id="cpCt" style="width:100%">▶ 繼續（第 ${Rr.k+1}／${G.steps.length} 步）</button>`:""}<button class="btn${mid?" ghost":""}" id="cpGo" style="width:100%;margin-top:6px">${mid?"從頭開始":zn?"再挑戰一次":"▶ 開始"}</button>`:""}
         ${sc.map(x=>`<button class="btn ghost" data-sc="${esc(x.key)}" style="width:100%;margin-top:10px">🕰 回到當年：${esc(x.title)}${(store.get("sceneDone",{})[x.key])?"（已過關）":`（答對 +${SCENE_PTS[0][1]}～${SCENE_PTS[2][1]} 段位積分）`}</button>`).join("")}
         <button class="lk" id="cpRd" style="margin-top:10px">📖 回到第${CNUM(n)}回的正文</button>${nav}</div>`}
-    v.innerHTML=html;if(!game)rdBind(v.querySelector(".bk-ch"),RA,"b"+b);
+    v.innerHTML=html;if(!game){rdBind(v.querySelector(".bk-ch"),RA,"b"+b);klToggle(v.querySelector(".bk-ch"),v.querySelector("#klTg"))}
     const on=(q,fn)=>{const e=v.querySelector(q);if(e)e.onclick=()=>{vibrate(5);fn()}},base="#/shelf/"+b+"/"+n;
     v.querySelectorAll("[data-tab]").forEach(x=>x.onclick=()=>{vibrate(5);navReplace(base+(x.dataset.tab?"/"+x.dataset.tab:""))});
     on("#cpG",()=>navReplace(base+"/game"));on("#cpRd",()=>navReplace(base));
@@ -5874,7 +5887,7 @@ function innSheet(v){setTimeout(innDrop,1200);const I=xpInfo(),Sx=jSecrets(),nx=
     <div class="sec-t">🗝 秘境棋友（${Object.keys(Sx).length}/${SECRETS.length}）</div><div class="items" style="padding:0">${SECRETS.map(x=>row(x,!Sx[x.id])).join("")}</div>
     <div id="gardenBox"></div>
     <div id="lingBox"></div>
-</div>`;lingShopBind(v);if(typeof gardenInn==="function")gardenInn(v);   /* 意見回饋 658：📮 信箱、🌸 園子棋友的羈絆、📜 棋史卡（07d-garden.js） */
+</div>`;lingShopBind(v);if(typeof gardenInn==="function")gardenInn(v);if(typeof yzInn==="function")yzInn(v,IE);   /* 意見回饋 759：上方換成驛站滿版圖（07m-yizhan.js）；意見回饋 658：📮 信箱、🌸 園子棋友的羈絆、📜 棋史卡（07d-garden.js） */
   /* 意見回饋 697：同一朝的園子、擂台用步行小卡過去，用 replace 不疊上一頁（「‹」一律回渡口） */
   const okK=()=>{if(eraLocked(IE)){toast(eraLockMsg(IE));return false}return true};
   (v.querySelector("#toPark")||{}).onclick=()=>{vibrate(5);if(okK())walk("park",()=>shipPark(IE,true))};
@@ -7526,7 +7539,8 @@ function Port(v){const k=shipHere(),T=SHIP_STOP[k]||SHIP_STOP.classic,Ls=SHIP_LE
     <button class="btn ghost" id="poShip" style="width:100%;margin-top:12px">⛵ 回星槎</button></div>`;
   const on=(q,fn)=>{const e=v.querySelector(q);if(e)e.onclick=()=>{vibrate(5);fn()}};
   on("#poPark",()=>walk("park",()=>shipPark(k)));on("#poInn",()=>shipInn(k));on("#poArena",()=>shipArena(k));on("#poBattle",()=>{location.hash="#/battle"});on("#poShip",()=>goUp("#/adventure"));v.querySelectorAll("[data-ps]").forEach(b=>b.onclick=()=>portSight(k,+b.dataset.ps));
-  jResume(v.querySelector("#poRes"));shpFit(v);if(typeof v7Try==="function")v7Try(v,"port");return{}}
+  jResume(v.querySelector("#poRes"));shpFit(v);if(typeof portFx==="function")portFx(v,k);   /* 意見回饋 765：船艙圖的 WebGL 動態（07n-portfx.js） */
+  if(typeof v7Try==="function")v7Try(v,"port");return{}}
 
 /* ---------- 想換成雲河七星：開新旅程，存到空的那一格（沒有空格就到開頭畫面挑） ---------- */
 function shipNewJourney(){const M=slotMetaAll(),cur=curSlot(),e=[1,2,3].find(n=>!M[n]&&n!==cur);
@@ -7784,6 +7798,14 @@ function yunheMine(P){if(!YUNHE_POV_ON)return null;const me=typeof myChar==="fun
 const yunheOrig=()=>!!store.get("yunheOrig",false);
 /* 這一章照目前的設定要怎麼讀：{c 章（title、paras、marks）, pov＝1 第一人稱整章, side＝旁觀段落 or null} */
 function yunheView(c,M){if(!M||yunheOrig())return{c,pov:0,side:null};const F=M.full&&M.full[c.n];if(F)return{c:{...c,title:F.title,paras:F.paras,marks:F.marks},pov:1,side:null};return{c,pov:0,side:(M.side&&M.side[c.n])||null}}
+/* 意見回饋 763：重點句 data/canju/yunhe-keylines.json（main＝{章:[句子]}，pov＝{稿子裡的名字:{章:[句子]}}；tools/yunhe_keylines_check.js 檢查每句都在正文裡）。
+   閱讀頁把這些句子包成 <strong class="kl">（朱紅粗體）；頁首「重點句：開／關」存在這台裝置（yunheKL，預設開）。載不到、句子找不到就照舊顯示，不報錯 */
+let YUNHE_KL_P=null;
+function yunheKL(){return YUNHE_KL_P||(YUNHE_KL_P=fetch("data/canju/yunhe-keylines.json").then(r=>r.ok?r.json():null).catch(()=>null).then(x=>{if(!x)YUNHE_KL_P=null;return x}))}
+const yunheKLon=()=>store.get("yunheKL",true)!==false;
+/* W＝原本把段落轉成 HTML 的函式（會跳脫、標名詞小辭典）；重點句裡外分段各自交給 W，所以照樣跳脫 */
+function yunheKLW(W,L){if(!L||!L.length)return W;return p=>{p=String(p);const M=[];L.forEach(s=>{const j=s?p.indexOf(s):-1;if(j>=0)M.push([j,s.length])});if(!M.length)return W(p);
+  M.sort((a,b)=>a[0]-b[0]);let o="",k=0;for(const[j,n]of M){if(j<k)continue;if(j>k)o+=W(p.slice(k,j));o+='<strong class="kl">'+W(p.slice(j,j+n))+"</strong>";k=j+n}return o+(k<p.length?W(p.slice(k)):"")}}
 /* 意見回饋 728：《雲河七星》合集的章節插畫。[原版第幾段之前, 圖檔, 圖說]；第一人稱版段數不同，照比例換算位置 */
 const YUNHE_PICS={classic:[[3,"ch01_1","齊轍跌進渭水，星槎上伸下一隻溫暖的手"],[58,"ch01_2","七碗熱茶：七個孩子第一次見面"],[152,"ch01_3","石桌邊的一小段刻痕，泛起極淡的微光"]],
   qin:[[2,"ch02_1","黃土坡上，秦直道正一夯一夯鋪開"],[64,"ch02_2","齊轍削木楔，小梅抱著木板蹲在一旁"],[119,"ch02_3","腰牌擱在掌心，齊轍重新看棋盤"]],
@@ -7801,7 +7823,7 @@ const YUNHE_PICS={classic:[[3,"ch01_1","齊轍跌進渭水，星槎上伸下一�
   finale:[[20,"ch14_1","七雙眼睛圍著桌邊，誰也不催誰"],[25,"ch14_2","青石嵌回缺槽，桌上的光連成一片"],[125,"ch14_3","連城跟上商隊，回頭用力揮手"]]};
 function yunhePics(k,n0,n){const L=YUNHE_PICS[k]||[],P={};L.forEach(([a,f,cap])=>{const j=Math.min(n-1,Math.max(0,Math.round(a*n/Math.max(1,n0))));P[j]=(P[j]||"")+`<figure class="shp-fig"><img src="data/shipmap/novel/${f}.webp" alt="${esc(cap)}" loading="lazy"><figcaption>${esc(cap)}</figcaption></figure>`});return P}
 function ShipRead(v,k,at){setTabs(false);v.className="view";v.innerHTML='<div class="pad muted">正文載入中…</div>';setTop("📖 雲河七星",k?SHIP_RD_BACK||"#/ship/read":"#/adventure");
-  Promise.all([yunheData(),yunhePov(),k?rdAidQ():null]).then(([N,PV,RA])=>{if(!v.isConnected)return;   /* RA＝閱讀輔助（07-legend.js：百字精華、名詞小辭典），載不到是 null */const R=store.get("shipRead",{})||{},kz=c=>Math.round(c.paras.join("").length/100)/10,M=yunheMine(PV),org=yunheOrig(),me=M?WX_CHARS[myChar()]:null,meN=me?(me.nk||me.n):"";
+  Promise.all([yunheData(),yunhePov(),k?rdAidQ():null,k?yunheKL():null]).then(([N,PV,RA,KL])=>{if(!v.isConnected)return;   /* RA＝閱讀輔助（07-legend.js：百字精華、名詞小辭典），載不到是 null */const R=store.get("shipRead",{})||{},kz=c=>Math.round(c.paras.join("").length/100)/10,M=yunheMine(PV),org=yunheOrig(),me=M?WX_CHARS[myChar()]:null,meN=me?(me.nk||me.n):"";
     const sw=M?`<button class="lk shp-povsw" id="rdOrig">${org?`👤 換回${esc(meN)}的視角`:"📜 看原本的版本"}</button>`:"";
     const mkDone=c=>{const m=c.marks[0];return!!(m&&(shipRec(m.k,m.id)||(store.get("shipGal",{})||{})[m.id]))};
     if(!k){v.innerHTML=`<div class="pad shp-rd"><div class="card shp-rdi"><b>🌌 ${esc(N.title||"雲河七星")}</b><p class="muted">${esc(N.note||"")}</p>${M?`<p class="muted shp-povn">${org?"📜 現在讀的是原本的版本（第三人稱）。":`👤 你是${esc(meN)}：標「你的視角」的兩章，是${esc(meN)}自己說的故事；其他章的最後，多一段「我在旁邊看見的」。`}</p>${sw}`:""}</div>
@@ -7814,13 +7836,15 @@ function ShipRead(v,k,at){setTabs(false);v.className="view";v.innerHTML='<div cl
     if(!R[k]){R[k]=Date.now();store.set("shipRead",R)}setTop("📖 第"+CNUM(c.n)+"章",SHIP_RD_BACK||"#/ship/read");
     const mk=m?`<div class="card shp-mk" id="rdMk"><b>♟ 跟${esc(Pl.who||"大家")}一起解這一局</b><span class="muted">${esc(m.label)}</span>
       ${lock?`<p class="muted">${k==="finale"?"十三站的棋理都學會以後，就能在這裡解這一局。":"星槎停靠"+esc(eraLabel(k))+"以後，就能在這裡解這一局。"}</p>`:`<button class="btn" id="rdGo">${done?"✅ 解開了・再看一次":"♟ 解這一局"}</button>`}<button class="lk" id="rdSkip">先往下讀 ›</button></div>`:"";
-    v.innerHTML=`<div class="pad shp-rd"><h2 class="shp-rh">${esc(c.title)}</h2><p class="muted shp-rs">《${esc(N.title||"雲河七星")}》・⛵ ${esc(shipShort(k))}・${esc((SHIP_STOP[k]||{}).place||"")}${V.pov?`・<em class="shp-povt">👤 你的視角：${esc(meN)}</em>`:""}</p>${M?`<div class="shp-povbar">${sw}</div>`:""}${rdGistHTML(RA,"yh",c.n)}
-      ${((PIC,mkW)=>c.paras.map((p,j)=>(PIC[j]||"")+(m&&m.at===j?mk:"")+`<p${m&&m.at===j?' id="rdAfter"':""}>${mkW(p)}</p>`).join(""))(yunhePics(k,N.chapters[i].paras.length,c.paras.length),rdMarker(RA,"yh"))}${m&&m.at>=c.paras.length?mk:""}
-      ${V.side&&V.side.length?`<div class="shp-side"><h3>我在旁邊看見的</h3><p class="muted shp-sidew">——${esc(meN)}</p>${V.side.map(p=>`<p>${esc(p)}</p>`).join("")}</div>`:""}
+    const KP=(KL&&M&&KL.pov&&KL.pov[M.n])||{},Lc=KL?(V.pov?KP[c.n]:KL.main&&KL.main[c.n]):null,klOn=yunheKLon(),klT=o=>"✒ 重點句："+(o?"開":"關");
+    v.innerHTML=`<div class="pad shp-rd${klOn?"":" kl-off"}"><h2 class="shp-rh">${esc(c.title)}</h2><p class="muted shp-rs">《${esc(N.title||"雲河七星")}》・⛵ ${esc(shipShort(k))}・${esc((SHIP_STOP[k]||{}).place||"")}${V.pov?`・<em class="shp-povt">👤 你的視角：${esc(meN)}</em>`:""}</p>${KL?`<div class="shp-klbar"><button class="lk shp-klsw" id="rdKl" aria-pressed="${klOn}" title="重點句用朱紅粗體標出來">${klT(klOn)}</button></div>`:""}${M?`<div class="shp-povbar">${sw}</div>`:""}${rdGistHTML(RA,"yh",c.n)}
+      ${((PIC,mkW)=>c.paras.map((p,j)=>(PIC[j]||"")+(m&&m.at===j?mk:"")+`<p${m&&m.at===j?' id="rdAfter"':""}>${mkW(p)}</p>`).join(""))(yunhePics(k,N.chapters[i].paras.length,c.paras.length),yunheKLW(rdMarker(RA,"yh"),Lc))}${m&&m.at>=c.paras.length?mk:""}
+      ${V.side&&V.side.length?`<div class="shp-side"><h3>我在旁邊看見的</h3><p class="muted shp-sidew">——${esc(meN)}</p>${(W=>V.side.map(p=>`<p>${W(p)}</p>`).join(""))(yunheKLW(esc,KP[c.n]))}</div>`:""}
       <div class="row" style="gap:8px;margin-top:16px">${pv?'<button class="btn ghost" id="rdP" style="flex:1">‹ 上一章</button>':""}${nx?'<button class="btn" id="rdN" style="flex:1">下一章 ›</button>':""}</div>
       <button class="lk" id="rdShip" style="margin-top:6px">⛵ 回星槎頁 ›</button></div>`;
     rdBind(v.querySelector(".shp-rd"),RA,"yh");const on=(q,fn)=>{const e=v.querySelector(q);if(e)e.onclick=()=>{vibrate(5);fn()}},to=(q,blk)=>{const e=v.querySelector(q);if(e)try{e.scrollIntoView({block:blk||"start",behavior:"smooth"})}catch(x){e.scrollIntoView()}};
     on("#rdGo",()=>{location.hash=shipHref(k,m.id,true)});on("#rdOrig",()=>{store.set("yunheOrig",!org);route()});on("#rdSkip",()=>to("#rdAfter"));
+    on("#rdKl",()=>{const o=!yunheKLon(),b=v.querySelector("#rdKl"),r=v.querySelector(".shp-rd");store.set("yunheKL",o);if(r)r.classList.toggle("kl-off",!o);if(b){b.textContent=klT(o);b.setAttribute("aria-pressed",String(o))}});
     on("#rdP",()=>{location.hash="#/ship/read/"+pv.k});on("#rdN",()=>{location.hash="#/ship/read/"+nx.k});on("#rdShip",()=>{location.hash="#/adventure"});
     if(at==="mark")setTimeout(()=>to("#rdMk","center"),60);else if(at==="after")setTimeout(()=>to("#rdAfter"),60)}).catch(e=>{if(v.isConnected)v.innerHTML=`<div class="pad"><div class="card muted">${esc(e.message||String(e))}<br>正文要先下載才能讀（連上網路再打開一次）。</div></div>`});
   return{}}
@@ -8908,6 +8932,171 @@ const IFX_FX={
     Promise.all(lays.map(e=>e.decode?e.decode():new Promise((ok,no)=>{e.onload=ok;e.onerror=no}))).then(()=>{for(const e of lays)e.style.opacity=1}).catch(()=>{for(const e of lays)e.remove()})}
 };
 ifxStart();
+/* ================= 🏮 驛站滿版水墨圖（意見回饋 759，開發者 11/8「照規劃繼續」；規劃 story/雲河驛站_規劃.md、出圖清單 story/雲河驛站_出圖清單.md）=================
+   innSheet()（07-legend.js）畫完以後呼叫 yzInn(v,k)：把上方 160px 橫幅換成那一朝的滿版圖 data/yizhan/<朝代>.webp（768×1376），原本的清單全部留在圖下面。
+   雲河驛站（船艙那一站，k＝classic）＝總站：🏮 旅人、🗝 秘境棋友、📮 信箱（全部的信）、🏯 點將台，加上「千秋驛路」12 個朝代小圓印：
+     沒停靠（eraLocked）＝霧＋灰印，點了 eraLockMsg；停靠過＝亮；學會了（shipLearned）＝朱印；那一朝有沒讀的信＝紅點；點亮的印走 shipGoTo（千秋穿梭）到那一朝的驛站。
+   各朝驛站：旅人、秘境棋友、這一朝寄來的信（PARK_NPC 的 era），加一個史實小牌 YZ_SIGHT（點了 15% 撿那一朝的珍品，跟渡口景點一樣，沒撿到看介紹）。
+   旅人、秘境棋友的小窗只是轉給清單上原本的按鈕（data-inn），下棋流程完全不變。
+   YZ_ON＝總開關；YZ_READY＝定稿、可以上的圖（沒列的朝代照舊用橫幅）；YZ_SPOT／YZ_ROAD／YZ_SIGHT 的位置照每張圖量的（左%、上%）。樣式在 yzCss()（m.css 有別人在改，先放這裡）。 */
+const YZ_ON=false;
+const YZ_READY=new Set(["classic","qin","han","sanguo","weijin","nanbei","sui","tang","wudai","song","yuan","ming","qing"]);
+const YZ_SPOT={
+  classic:{tr:[51,66],sec:[23,54],mail:[80,69],ling:[85,58]},
+  qin:{tr:[58,49],sec:[27,58],mail:[83,59],sight:[52,79]},
+  han:{tr:[50,56],sec:[22,63],mail:[80,64],sight:[50,79]},
+  sanguo:{tr:[56,50],sec:[27,60],mail:[79,63],sight:[61,85]},
+  weijin:{tr:[57,52],sec:[22,60],mail:[78,67],sight:[54,79]},
+  nanbei:{tr:[55,55],sec:[21,62],mail:[82,69],sight:[54,87]},
+  sui:{tr:[56,52],sec:[17,63],mail:[85,65],sight:[67,82]},
+  tang:{tr:[57,54],sec:[24,58],mail:[84,62],sight:[60,74]},
+  wudai:{tr:[54,54],sec:[23,60],mail:[76,71],sight:[44,81]},
+  song:{tr:[58,54],sec:[18,62],mail:[86,64],sight:[46,78]},
+  yuan:{tr:[60,57],sec:[23,64],mail:[84,64],sight:[69,81]},
+  ming:{tr:[56,56],sec:[32,63],mail:[85,64],sight:[61,79]},
+  qing:{tr:[60,56],sec:[27,59],mail:[86,62],sight:[74,79]}};
+/* 雲河驛站圖上 12 朵小雲（左%、上%＝圓印放在那朵雲的下緣），照 park/yizhan/classic.png 量的：第一排秦漢三國魏晉、第二排南北朝隋唐五代、第三排宋元明清 */
+const YZ_ROAD={qin:[17,18],han:[40,17.5],sanguo:[64,18],weijin:[84,18.5],nanbei:[16.5,29.5],sui:[39,31],tang:[64,30],wudai:[86,32],song:[34,40.5],yuan:[46,41],ming:[65,42],qing:[88,43]};
+const YZ_SEAL={qin:"秦",han:"漢",sanguo:"三國",weijin:"晉",nanbei:"南北",sui:"隋",tang:"唐",wudai:"五代",song:"宋",yuan:"元",ming:"明",qing:"清"};
+/* 史實小牌 [名字, 介紹]：寫法照 story/雲河驛站_規劃.md 第五節（有據的才寫；說法不一的寫「相傳」） */
+const YZ_SIGHT={
+  qin:["車同軌","秦始皇統一天下以後規定「車同軌」：車子兩個輪子之間的寬度全國都一樣，輪子在路上壓出的車轍才對得上，車走得又快又穩。湖北雲夢睡虎地出土的秦簡裡有一條《行書律》，規定命令和寫著「急」的文書，一收到就要馬上送出去。"],
+  han:["烽燧與懸泉置","漢朝在往西域的路上修了許多烽燧：敵人來了，白天燒柴冒煙、夜裡點火，一座接一座把消息傳下去。甘肅敦煌的懸泉置是一處漢代驛站的遺址，四周是夯土圍牆，考古學家在那裡挖出好幾萬枚漢簡，記著來來往往的使者、馬匹和信件。"],
+  sanguo:["江上傳書","三國打仗，消息走得快慢常常決定勝負。在長江邊，送軍情、送公文除了騎馬，也常常要坐船過江。"],
+  weijin:["亭與耳杯","路邊的亭子是旅人歇腳的地方，也是送別朋友的地方。溪上那種兩邊有「耳朵」、像小船一樣的橢圓形杯子叫耳杯，漢朝到魏晉的人常用它喝酒；王羲之和朋友在蘭亭「曲水流觴」，漂在水上的就是這種杯子。"],
+  nanbei:["折梅寄遠","相傳南北朝的陸凱折了一枝梅花，託驛使帶給遠方的朋友范曄，還附了一首詩：「折花逢驛使，寄與隴頭人。江南無所有，聊贈一枝春。」這首詩的作者和故事，古書的說法不太一樣，所以說「相傳」。"],
+  sui:["水驛","隋朝開通大運河以後，南北的船可以一路走水路。到了唐朝，驛站分成陸驛和水驛：陸驛準備馬，水驛準備的是船。"],
+  tang:["三十里一驛","唐朝的《唐六典》記載：大約每三十里設一個驛，全國一共一千六百多所，有陸驛、水驛，也有水陸兩用的驛。驛裡養著驛馬，拿著官府憑證的人才能換馬、住宿。唐朝的詩人常在驛站的牆上題詩。"],
+  wudai:["斷了的驛路","五代只有五十多年，卻換了五個朝代，到處打仗。驛路常常被戰火切斷，信送不到，逃難的人也找不到家人。"],
+  song:["驛和遞鋪","宋朝把「住」和「送」分開：驛和館給來往的官員吃住，送公文交給路邊一間一間的遞鋪。最急的文書用「急腳遞」；岳飛被一天連下十二道「金字牌」召回，就是這種最急的傳遞。"],
+  yuan:["站赤","元朝的驛站叫「站赤」。官員和信使要拿著官府發的「牌子」，才能在站裡換馬、吃住。陸上的站用馬、牛、驢或車，水上的站用船，北方冰天雪地的地方，還有讓狗拉著車在雪地上跑的「狗站」。"],
+  ming:["驛、遞運所、急遞鋪","明朝把傳遞分成三種：水馬驛負責接待和換馬換船，遞運所負責運送物資，急遞鋪負責傳送公文。江蘇高郵的盂城驛是明朝洪武年間蓋的，河北懷來的雞鳴驛是一座驛城，兩處到今天都還保存著。"],
+  qing:["驛站走入歷史","清朝沿用明朝的驛站，軍情另外走「塘鋪」。清末開辦了新式的郵政，寄信不再靠驛馬；民國初年，用了兩千多年的驛站就慢慢撤掉了。"]};
+function yzCss(){if(document.getElementById("yzCss"))return;const s=document.createElement("style");s.id="yzCss";
+  s.textContent=`.yz-page .shp-spot{z-index:2}.yz-seal{position:absolute;z-index:1;transform:translate(-50%,-50%);width:8.4cqw;height:8.4cqw;min-width:30px;min-height:30px;padding:0;border-radius:50%;border:1.5px solid #2a2018;background:rgba(255,251,242,.92);color:#2a2018;font:900 4.2cqw/1 var(--serif,serif);display:flex;align-items:center;justify-content:center;cursor:pointer;box-shadow:0 0 9px 2px rgba(242,201,76,.6)}
+.yz-seal::before{content:"";position:absolute;inset:-7px;border-radius:50%}.yz-seal.w2{font-size:3cqw;letter-spacing:-.05em}.yz-seal:active{transform:translate(-50%,-50%) scale(.92)}
+.yz-seal.ln{background:#B5452B;color:#fff;border-color:#ffe08a}.yz-seal.lk{background:rgba(232,228,220,.9);color:#9a917f;border-color:#b5ad9c;box-shadow:none}
+.yz-seal i{position:absolute;right:-3px;top:-3px;width:10px;height:10px;border-radius:50%;background:#e0362c;border:1.5px solid #fff}
+.yz-fog{position:absolute;z-index:1;transform:translate(-50%,-50%);width:27cqw;height:15cqw;border-radius:50%;pointer-events:none;background:radial-gradient(closest-side,rgba(246,243,236,.97),rgba(246,243,236,.85) 55%,rgba(246,243,236,0))}`;
+  document.head.append(s)}
+/* 有幾封沒讀的信：k＝classic 算全部，其他只算寄自那一朝的 */
+function yzUnread(k){try{const M=npcBonds();return npcLetters().filter(n=>(k==="classic"||n.era===k)&&!(M[n.id]||{}).r).length}catch(e){return 0}}
+function yzMail(k){const M=npcBonds(),L=npcLetters().filter(n=>k==="classic"||n.era===k);
+  sheet(k==="classic"?"📮 信箱":"📮 寄自"+eraLabel(k)+"的信",b=>{b.innerHTML=(L.length?`<div class="items" style="padding:0">${L.map(n=>`<button class="item" data-yzm="${esc(n.id)}"><span class="lb" style="font-size:22px">💌</span><span class="tx"><b>${esc(n.name)}的信${M[n.id]&&M[n.id].r?"":" 🆕"}</b><span>寄自${esc(eraLabel(n.era))}</span></span><span class="muted">›</span></button>`).join("")}</div>`
+      :`<p class="muted" style="line-height:1.7;margin:0">${k==="classic"?"還沒有信。園子裡的女棋手羈絆到第 3 級，她會寫信寄來這裡。":"還沒有寄自"+esc(eraLabel(k))+"的信。這一朝的女棋手羈絆到第 3 級，她的信會先送到這裡。"}</p>`)+(k==="classic"?"":`<button class="btn ghost" id="yzAll" style="width:100%;margin-top:10px">📮 看全部的信</button>`);
+    b.querySelectorAll("[data-yzm]").forEach(y=>y.onclick=()=>{const n=PARK_NPC.find(z=>z.id===y.dataset.yzm);closeSheet();if(n)setTimeout(()=>npcMail(n,()=>route()),260)});
+    const a=b.querySelector("#yzAll");if(a)a.onclick=()=>{closeSheet();setTimeout(()=>yzMail("classic"),260)}})}
+/* 旅人、秘境棋友：把清單上原本的按鈕複製到小窗，點了轉給原本的按鈕 */
+function yzPick(v,ids,title,note){const rows=[...v.querySelectorAll("[data-inn]")].filter(b=>ids.includes(b.dataset.inn)).map(b=>b.outerHTML.replace(/data-inn=/g,"data-yzp=")).join("");
+  sheet(title,b=>{b.innerHTML=`<p class="muted" style="font-size:13px;line-height:1.6;margin:0 0 8px">${note}</p><div class="items" style="padding:0">${rows}</div>`;
+    b.querySelectorAll("[data-yzp]").forEach(y=>y.onclick=()=>{const id=y.dataset.yzp;closeSheet();setTimeout(()=>{const t=v.querySelector('[data-inn="'+id+'"]');if(t&&!t.disabled)t.click()},260)})})}
+function yzSight(k){const s=YZ_SIGHT[k];if(!s)return;vibrate(5);const show=()=>sheet("📍 "+s[0],b=>{b.innerHTML=`<div class="muted" style="margin:-4px 0 8px">${esc(innName(k))}</div><p style="line-height:1.8;margin:0;font-size:16px">${esc(s[1])}</p>`});
+  (typeof relicDrop==="function"?relicDrop(k,.15):Promise.resolve(false)).then(got=>{if(!got)show()}).catch(show)}
+function yzInn(v,k){if(!YZ_ON||!YZ_READY.has(k))return;const S=YZ_SPOT[k],pad=v.querySelector(".pad");if(!S||!pad)return;yzCss();
+  const T=SHIP_STOP[k]||{},nu=yzUnread(k),Sx=jSecrets();
+  const sp=[["yzTr",S.tr,"🏮 路過的旅人","下棋練等","hot"],["yzSec",S.sec,"🗝 秘境棋友","找到 "+Object.keys(Sx).length+"／"+SECRETS.length],["yzMail",S.mail,k==="classic"?"📮 信箱":"📮 這一朝的信",nu?"🆕 "+nu+" 封新信":"書信往來"]];
+  if(S.ling)sp.push(["yzLing",S.ling,"🏯 點將台","將令 "+lingN()+" 枚"]);
+  const road=k!=="classic"?"":SHIP_ROUTE.filter(e=>e!=="classic"&&YZ_ROAD[e]).map(e=>{const p=YZ_ROAD[e],lk=eraLocked(e),ln=!lk&&shipLearned(e),u=!lk&&yzUnread(e),t=YZ_SEAL[e]||eraLabel(e);
+    return(lk?`<i class="yz-fog" style="left:${p[0]}%;top:${p[1]-3.5}%"></i>`:"")+`<button class="yz-seal${lk?" lk":ln?" ln":""}${t.length>1?" w2":""}" data-yze="${e}" style="left:${p[0]}%;top:${p[1]}%" aria-label="${esc(innName(e))}${lk?"（星槎還沒停靠）":ln?"（這一站學會了）":""}${u?"，有新信":""}">${esc(t)}${u?"<i></i>":""}</button>`}).join("");
+  const sub=k==="classic"?"旅人歇腳、書信往來；千秋驛路通往各朝驛站":esc((k==="classic"?"":eraLabel(k)+"・")+(T.place||"")),si=YZ_SIGHT[k]&&S.sight;
+  const d=document.createElement("div");
+  d.innerHTML=`<div class="shp-page cq yz-page"><img src="data/yizhan/${k}.webp" alt="${esc(innName(k))}">${road}<div class="shp-cap"><b>🏮 ${esc(innName(k))}</b><small>${sub}</small></div>${sp.map(([id,p,b,sm,cl])=>`<button class="shp-spot${cl?" "+cl:""}" id="${id}" style="left:${p[0]}%;top:${p[1]}%"><b>${b}</b>${sm?`<small>${sm}</small>`:""}</button>`).join("")}${si?`<button class="po-sight" id="yzSight" style="left:${S.sight[0]}%;top:${S.sight[1]}%">📍 ${esc(YZ_SIGHT[k][0])}</button>`:""}</div>`;
+  const pg=d.firstElementChild;v.insertBefore(pg,pad);const ab=pad.querySelector(".abn");if(ab)ab.remove();
+  const on=(q,fn)=>{const e=pg.querySelector(q);if(e)e.onclick=()=>{vibrate(5);fn()}};
+  on("#yzTr",()=>yzPick(v,INN.map(x=>x.id),"🏮 路過的旅人","驛站裡都是路過的旅人，找誰下都可以、下幾次都可以。"));
+  on("#yzSec",()=>yzPick(v,SECRETS.map(x=>x.id),"🗝 秘境棋友",`找到 ${Object.keys(Sx).length}／${SECRETS.length} 位。還沒找到的藏在各朝代的園子裡；點將台可以用將令換線索。`));
+  on("#yzMail",()=>yzMail(k));on("#yzLing",()=>{const L=v.querySelector("#lingBox");if(L)L.scrollIntoView({behavior:"smooth",block:"start"})});on("#yzSight",()=>yzSight(k));
+  pg.querySelectorAll("[data-yze]").forEach(b=>b.onclick=()=>{const e=b.dataset.yze;vibrate(5);if(eraLocked(e)){toast(eraLockMsg(e));return}shipGoTo(e,()=>route())});
+  shpFit(v)}
+/* ================= 意見回饋 765（開發者 11/8）：渡口「船艙」圖的動態效果 =================
+   #/port 在船艙那一站（classic）用的滿版水墨圖 data/shipmap/port_classic.webp（768x1376），照雲河星槎的做法加 WebGL 動態：
+   深度圖 data/shipmap/layers/pm1_depth.png（384x688；R＝深度、G＝浮島起伏權重、B＝起伏相位；tools/shipmap_layers/portdepth.py 產生）
+   讓整張圖逐像素位移——拖動／滑鼠／陀螺儀視差（共用星槎的 SPX 狀態和「🌀 立體」鈕）、浮島各自慢慢上下浮、小船搖、擂台紅旗飄、
+   燈籠輕晃、星河的金色光點閃、雲霧往旁邊流；入口按鈕照所在位置的深度、起伏一起動。只有一張圖、沒有分層，所以不會有接縫或疊影。
+   開關跟星槎同一個 shpGlOn()（m_shpGL；開發者模式時左下有「🧪 新立體」可切換）。
+   安全網：素材檔名全新（pm1_*，手機不會有同名舊快取）、檢查尺寸、第一格用靜止姿勢畫一次跟原圖比對抽樣點；
+   沒過、WebGL 或 highp 不能用、prefers-reduced-motion，都退回原本的單張圖。離開這頁迴圈自己停並釋放 WebGL */
+const PFX_ON=false;   /* 船艙動態預設開關（還在驗收，先關）；localStorage m_portGL 為 1 開、0 關，沒設照這個 */
+const pfxOn=()=>{const v=store.get("portGL",-1);return v==-1?PFX_ON:v==1};
+const PFX_SZ=[[768,1376],[384,688],[512,512],[512,512]],PFX_PT=[[439,404],[716,527],[224,705],[457,924],[105,1248],[733,1192],[493,624],[619,155]],PFX_M=9;
+const PFX_VS="attribute vec2 a;varying vec2 v;void main(){v=vec2(a.x*.5+.5,.5-a.y*.5)*vec2(768.,1376.);gl_Position=vec4(a,0.,1.);}";
+const PFX_FS=`#ifdef GL_FRAGMENT_PRECISION_HIGH
+precision highp float;
+#else
+precision mediump float;
+#endif
+uniform sampler2D I,Dp,Mi,Mf;uniform vec2 par;uniform float bob,t,k;varying vec2 v;
+const vec2 S=vec2(768.,1376.),BC=vec2(140.,1230.);
+vec2 mir(vec2 u){u=abs(u);return 1.-abs(1.-u);}
+vec3 dat(vec2 p){return texture2D(Dp,clamp(p/S,0.,1.)).rgb;}
+vec2 rot(vec2 r,float a){return vec2(cos(a)*r.x-sin(a)*r.y,sin(a)*r.x+cos(a)*r.y)-r;}
+vec2 off(vec3 q,vec2 p){vec2 o=(q.r*1.6-.6)*par;o.y+=k*bob*q.g*sin(6.2832*(t/6.8+q.b));
+  return o+smoothstep(.7,.95,q.g)*rot(p-BC,k*.012*sin(6.2832*t/5.3));}
+float flag(vec2 p,vec4 f){vec2 c=(p-f.xy)/(f.zw-f.xy);return step(-.08,c.x)*step(c.x,1.15)*step(-.15,c.y)*step(c.y,1.2)*clamp(c.x,0.,1.);}
+vec2 lant(vec2 p,vec2 pv,vec2 c,vec2 rr,float ph){float w=1.-smoothstep(.85,1.25,length((p-c)/rr));return w*rot(p-pv,.06*sin(t*1.9+ph));}
+void main(){vec2 p=v;vec3 q=dat(p);vec2 o=off(q,p);q=dat(p-o);o=off(q,p);
+  float fw=max(max(flag(p,vec4(309.,326.,343.,356.)),flag(p,vec4(427.,294.,474.,322.))),max(flag(p,vec4(455.,352.,502.,388.)),flag(p,vec4(556.,315.,608.,351.))));
+  o.y+=k*fw*2.2*sin(p.x*.25-t*7.);
+  o+=k*(lant(p,vec2(495.,590.),vec2(495.,628.),vec2(22.,46.),0.)+lant(p,vec2(663.,660.),vec2(663.,690.),vec2(22.,38.),1.7));
+  vec2 sp=p-o;vec3 col=texture2D(I,mir(sp/S)).rgb;
+  float gold=step(.66,col.r)*step(.58,col.g)*step(col.b,.55)*step(.27,col.r-col.b);
+  vec2 cl=floor(sp/7.);float h=fract(sin(dot(cl,vec2(12.9898,78.233)))*43758.5453);
+  col=clamp(col*(1.+k*gold*.35*sin(t*(1.5+h*2.)+h*6.2832)),0.,1.);
+  float m=k*(1.-smoothstep(.04,.3,q.g));vec2 r=vec2(p.x+.25*par.x+.12*p.y,p.y+.25*par.y)/1400.;
+  col=mix(col,vec3(.275,.282,.306),m*texture2D(Mi,r-vec2(t/130.,0.)).a*.7);
+  col=mix(col,vec3(1.),m*texture2D(Mf,r+vec2(.37-t/75.,.21)).a*.75);
+  gl_FragColor=vec4(col,1.);}`;
+/* 共用的小工具：編譯著色器、鋪滿畫面的四邊形、上傳貼圖（data＝深度圖、雲霧這類資料貼圖不轉色；rep＝可以 REPEAT 的 2 的次方貼圖） */
+function pfxGl(cv,vs,fs,tex){const gl=cv.getContext("webgl",{alpha:false,antialias:false,depth:false,stencil:false,premultipliedAlpha:false,powerPreference:"low-power"});if(!gl)return null;
+  const hp=gl.getShaderPrecisionFormat(gl.FRAGMENT_SHADER,gl.HIGH_FLOAT);if(!hp||hp.precision<16)return null;
+  const sh=(ty,src)=>{const s=gl.createShader(ty);gl.shaderSource(s,src);gl.compileShader(s);if(!gl.getShaderParameter(s,gl.COMPILE_STATUS))throw new Error(gl.getShaderInfoLog(s));return s};
+  const pg=gl.createProgram();gl.attachShader(pg,sh(gl.VERTEX_SHADER,vs));gl.attachShader(pg,sh(gl.FRAGMENT_SHADER,fs));gl.linkProgram(pg);if(!gl.getProgramParameter(pg,gl.LINK_STATUS))throw new Error("link");gl.useProgram(pg);
+  gl.bindBuffer(gl.ARRAY_BUFFER,gl.createBuffer());gl.bufferData(gl.ARRAY_BUFFER,new Float32Array([-1,-1,1,-1,-1,1,1,1]),gl.STATIC_DRAW);const al=gl.getAttribLocation(pg,"a");gl.enableVertexAttribArray(al);gl.vertexAttribPointer(al,2,gl.FLOAT,false,0,0);
+  tex.forEach(([n,img,data,rep],i)=>{gl.activeTexture(gl.TEXTURE0+i);gl.bindTexture(gl.TEXTURE_2D,gl.createTexture());
+    gl.pixelStorei(gl.UNPACK_FLIP_Y_WEBGL,false);gl.pixelStorei(gl.UNPACK_PREMULTIPLY_ALPHA_WEBGL,false);gl.pixelStorei(gl.UNPACK_COLORSPACE_CONVERSION_WEBGL,data?gl.NONE:gl.BROWSER_DEFAULT_WEBGL);
+    gl.texImage2D(gl.TEXTURE_2D,0,gl.RGBA,gl.RGBA,gl.UNSIGNED_BYTE,img);const w=rep?gl.REPEAT:gl.CLAMP_TO_EDGE;
+    gl.texParameteri(gl.TEXTURE_2D,gl.TEXTURE_WRAP_S,w);gl.texParameteri(gl.TEXTURE_2D,gl.TEXTURE_WRAP_T,w);gl.texParameteri(gl.TEXTURE_2D,gl.TEXTURE_MIN_FILTER,gl.LINEAR);gl.texParameteri(gl.TEXTURE_2D,gl.TEXTURE_MAG_FILTER,gl.LINEAR);gl.uniform1i(gl.getUniformLocation(pg,n),i)});
+  return{gl,pg,u:n=>gl.getUniformLocation(pg,n)}}
+/* 靜止姿勢畫一次，抽樣點跟原圖比（平均每色差）；舊圖、轉色、精度出錯都會對不上 */
+function pfxTest(gl,draw,bw,bh,base,W,H,pts){draw();const c=document.createElement("canvas");c.width=W;c.height=H;const x=c.getContext("2d");x.drawImage(base,0,0,W,H);const px=new Uint8Array(4);let d=0;
+  for(const[a,b]of pts){gl.readPixels(Math.min(bw-1,Math.floor((a+.5)*bw/W)),Math.max(0,bh-1-Math.floor((b+.5)*bh/H)),1,1,gl.RGBA,gl.UNSIGNED_BYTE,px);const q=x.getImageData(a,b,1,1).data;d+=(Math.abs(px[0]-q[0])+Math.abs(px[1]-q[1])+Math.abs(px[2]-q[2]))/3}
+  return d/pts.length}
+function portFx(v,k){const P=v&&v.querySelector(".shp-page.cq");if(!P||k!=="classic"||matchMedia("(prefers-reduced-motion: reduce)").matches)return;
+  if(!pfxOn())return;
+  const base=P.querySelector(":scope>img"),spots=[...P.querySelectorAll(".shp-spot,.po-sight")],cv=document.createElement("canvas");if(!base)return;
+  cv.className="pfx-gl";cv.setAttribute("aria-hidden","true");cv.style.cssText="position:absolute;left:0;top:0;width:100%;height:100%;display:block;pointer-events:none";base.after(cv);
+  const fail=()=>{cv.remove();P.classList.remove("pfx-on");base.style.visibility="";spots.forEach(b=>b.style.translate="")};
+  if(!document.getElementById("pfxCss")){const s=document.createElement("style");s.id="pfxCss";s.textContent=".shp-page.pfx-on>.ifx{display:none}";document.head.append(s)}   /* WebGL 動態跑起來就不疊 07k-inkfx 的粒子層（兩套一起會重複閃、燈火位置對不上） */
+  const ld=s=>new Promise((ok,no)=>{const i=new Image();i.onload=()=>ok(i);i.onerror=no;i.src="data/shipmap/"+s});
+  Promise.all(["port_classic.webp","layers/pm1_depth.png","layers/sm_mist_ink.webp","layers/sm_mist_fog.webp"].map(ld)).then(im=>{if(!P.isConnected)return;
+    if(im.some((m,i)=>m.naturalWidth!==PFX_SZ[i][0]||m.naturalHeight!==PFX_SZ[i][1]))throw 0;
+    const G=pfxGl(cv,PFX_VS,PFX_FS,[["I",im[0]],["Dp",im[1],1],["Mi",im[2],1,1],["Mf",im[3],1,1]]);if(!G)throw 0;
+    const{gl,u}=G,U={par:u("par"),bob:u("bob"),t:u("t"),k:u("k")};
+    /* 入口按鈕跟著所在位置動：JS 讀同一張深度圖，算按鈕錨點的位移（視差＋浮島起伏） */
+    const dc=document.createElement("canvas");dc.width=384;dc.height=688;const dx=dc.getContext("2d");dx.drawImage(im[1],0,0);const DD=dx.getImageData(0,0,384,688).data;
+    const at=(x,y)=>{const i=(Math.min(687,Math.max(0,Math.round(y/2)))*384+Math.min(383,Math.max(0,Math.round(x/2))))*4;return[DD[i]/255*1.6-.6,DD[i+1]/255,DD[i+2]/255]};
+    const SP=spots.map(b=>{const L=parseFloat(b.style.left),T=parseFloat(b.style.top);return[b,at(L/100*768,T/100*1376)]});
+    SPX.el=P;SPX.hl=null;SPX.ls=[];SPX.cx=SPX.cy=SPX.tx=SPX.ty=0;
+    const t0=performance.now();let W=0,H=0,bw=0,bh=0,first=true;const meas=()=>{W=P.clientWidth;H=base.clientHeight};meas();if(window.ResizeObserver)new ResizeObserver(meas).observe(P);
+    const step=now=>{if(!P.isConnected||SPX.el!==P){const x=gl.getExtension("WEBGL_lose_context");if(x)x.loseContext();return}
+      if(!window.ResizeObserver)meas();SPX.cx+=(SPX.tx-SPX.cx)*SPX.k;SPX.cy+=(SPX.ty-SPX.cy)*SPX.k;
+      if(W&&H){const w=Math.round(Math.min(W*(devicePixelRatio||1),960)),h=Math.round(w*H/W);if(w!==bw||h!==bh){cv.width=bw=w;cv.height=bh=h;gl.viewport(0,0,w,h)}
+        if(first){const d=pfxTest(gl,()=>{gl.uniform2f(U.par,0,0);gl.uniform1f(U.bob,0);gl.uniform1f(U.t,0);gl.uniform1f(U.k,0);gl.drawArrays(gl.TRIANGLE_STRIP,0,4)},bw,bh,im[0],768,1376,PFX_PT);SPX.pfxDiff=d;
+          if(!(d<40)){SPX.el=null;const x=gl.getExtension("WEBGL_lose_context");if(x)x.loseContext();fail();if(typeof DEVMODE==="function"&&DEVMODE())toast("🧪 船艙動態自我檢查沒過（差 "+Math.round(d)+"），先用單張圖");return}}
+        /* 視差最大 9px、浮島起伏 3px（CSS px），週期 6.8 秒、各島相位不同；portdepth.py 已檢查不會拉破 */
+        const s=W/768,t=(now-t0)/1000,px=PFX_M*SPX.cx,py=PFX_M*SPX.cy;
+        gl.uniform2f(U.par,px/s,py/s);gl.uniform1f(U.bob,3/s);gl.uniform1f(U.t,t%88660);gl.uniform1f(U.k,1);gl.drawArrays(gl.TRIANGLE_STRIP,0,4);
+        for(const[b,[d,g,ph]]of SP)b.style.translate=`${(d*px).toFixed(2)}px ${(d*py+3*g*Math.sin(2*Math.PI*(t/6.8+ph))).toFixed(2)}px`;
+        if(first){first=false;base.style.visibility="hidden";P.classList.add("pfx-on")}}
+      requestAnimationFrame(step)};
+    requestAnimationFrame(step);
+    const cl=v=>Math.max(-1,Math.min(1,v)),go=(x,y,kk)=>{SPX.tx=cl(x);SPX.ty=cl(y);SPX.k=kk};
+    P.addEventListener("pointermove",e=>{if(e.pointerType!=="mouse")return;const r=P.getBoundingClientRect();go((e.clientX-r.left)/r.width*2-1,(e.clientY-r.top)/r.height*2-1,.08)});
+    P.addEventListener("pointerleave",e=>{if(e.pointerType==="mouse")go(0,0,.035)});
+    P.addEventListener("touchstart",e=>{const t=e.touches[0];SPX.drag={x:t.clientX,y:t.clientY}},{passive:true});
+    P.addEventListener("touchmove",e=>{const t=e.touches[0],d=SPX.drag;if(d)go((t.clientX-d.x)/110,(t.clientY-d.y)/110,.18)},{passive:true});
+    const up=()=>{SPX.drag=null;SPX.g0=null;go(0,0,.035)};P.addEventListener("touchend",up,{passive:true});P.addEventListener("touchcancel",up,{passive:true});
+    if(typeof shpGyroBtn==="function")shpGyroBtn(P)}).catch(fail)}
 /* ================= 🕰 回到當年（意見回饋 313）=================
    石桌往事裡的對局，用「妙棋精選」裡 Pikafish 驗證過的特級大師實戰來演：你站在旁邊看，不能插手；
    棋自動一步一步下，下到那一步妙棋之前停下來——換作是你，會怎麼走？
