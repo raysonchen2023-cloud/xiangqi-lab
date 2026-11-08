@@ -1341,7 +1341,7 @@ html[data-era=qin] .view:has(>.shp-rd),html[data-era=wudai] .view:has(>.shp-rd){
       if(!window.caches)return go();caches.keys().then(function(ks){return Promise.all(ks.filter(function(k){return k.indexOf("xqlab-app-")===0}).map(function(k){return caches.delete(k)}))})
         .then(function(){return navigator.serviceWorker&&navigator.serviceWorker.getRegistration()}).then(function(r){return r&&r.update()}).catch(function(){}).then(go)}};setTimeout(chk,4000)})();
 </script>
-<script>window.XQ_OFFLINE=true;window.XQ_BUILD="20261109-0930";</script>
+<script>window.XQ_OFFLINE=true;window.XQ_BUILD="20261109-1000";</script>
 <script src="core.js"></script>
 <script src="engine.js"></script>
 <script src="local.js"></script>
@@ -14632,7 +14632,7 @@ function Viewer(v,c,id){
      一樓左邊 6 格書櫥＝6 部古譜（每格一部，點了直接開那部的清單）；右邊卷宗櫥＝大師對局（特級大師對局）；
      二樓一排人物畫軸＝72 位特級大師小傳（點了選人，直接開他的對局）；3 口樟木箱＝比賽對局 3 冊：沒下載＝朱紅封條、下載中＝封條發金光、下載完＝封條變金、可以打開；
      前景閱覽大案：攤開的冊子＝繼續研究（書頁上畫一張迷你棋盤）、一疊手抄冊＝我的對局（局數越多越厚，三段）、燈檠上的青瓷油盞＝搜尋。
-   書名、標籤都由程式疊上去（圖上沒有字）。接 07w 走路（SHW_LIBMAP，上二樓走中央樓梯，樓上身高不縮）、07x 縮放。圖片網址帶 LB_IMGV。
+   書名、標籤都由程式疊上去（圖上沒有字）。接 07w 走路（SHW_LIBMAP，上二樓沿樓梯踏板走、再走二樓迴廊；樓上身高照透視縮小，回饋 807）、07x 縮放。圖片網址帶 LB_IMGV。
    開關 LIBMAP_ON（false＝照舊清單）；樣式在 lbCss */
 const LIBMAP_ON=true;   /* 開發者 11/8 照建議先開 */
 const LB_IMGV="2200";
@@ -14643,9 +14643,13 @@ const LB_BOX=[[71.5,30],[83.5,30.5],[94.5,31]];   /* 3 口樟木箱（封條中�
 const LB_SPOTS=[["lbGm",84,51.5,"🏆 大師對局"],["lbBio",33,12,"🖼 特級大師"],["lbTour",84,24.5,"📦 比賽對局"],["lbRead",51,77.5,"📖 繼續研究"],["lbMine",80,75.5,"📒 我的對局"],["lbFind",24.5,69.5,"🔍 搜尋"]];
 let LB_OPEN=null;   /* 換頁到 #/db/<書> 之後要不要直接打開面板（"list"／"q"） */
 /* 07w 的座標表：一樓在大案後面的地板上走；書櫥前、卷宗櫥前；中央樓梯上二樓，畫軸前、木箱前 */
-const SHW_LIBMAP={el:40,h:y=>.09+(Math.max(y,64)-74)*.0012,look0:[50,60],
-  N:{home:[50,74],lamp:[30,75],book:[50,75.5],stack:[78,75],shelf:[33,69],cab:[67,72],sf:[42,64],s1:[49,50],st:[57,36.5],por:[30,32.5],b1:[64,35.5],box:[82,35.5]},
-  E:"home-lamp home-book home-stack lamp-shelf home-sf sf-shelf home-cab sf-s1 s1-st st-por st-b1 b1-box",
+/* 回饋 807（開發者 11/9）：上二樓要照樓梯走——沿著一級一級的踏板（t1～t5）爬到樓梯頂（top），再沿二樓迴廊：往左走到畫軸前（g0→g1→g2→por），往右走到樟木箱前（r1→box）；
+   一樓的入口只走一樓的路。身高照透視：一樓照舊，從樓梯腳（y 64%）往上每 1% 縮 0.00059，二樓約是一樓的七成五 */
+const SHW_LIBMAP={el:40,h:y=>y>=64?.09+(y-74)*.0012:.078-(64-y)*.00059,look0:[50,60],
+  N:{home:[50,74],lamp:[30,75],book:[50,75.5],stack:[78,75],shelf:[33,69],cab:[67,72],sf:[42,64],
+    t1:[43.6,59.2],t2:[45.6,54.5],t3:[48.4,48],t4:[51.8,41.8],t5:[57.3,36.7],top:[62.5,34.7],
+    g0:[61.2,32.3],g1:[52.1,30.5],g2:[39.1,31.4],por:[29.9,32],r1:[66.4,33.1],box:[83.3,32]},
+  E:"home-lamp home-book home-stack lamp-shelf home-sf sf-shelf home-cab sf-t1 t1-t2 t2-t3 t3-t4 t4-t5 t5-top top-g0 g0-g1 g1-g2 g2-por top-r1 r1-box",
   HS:{lbGm:["cab",84,62,"bow"],lbBio:["por",30,22,"bow"],lbTour:["box",84,31,"cheer"],lbRead:["book",51,84,"bow"],lbMine:["stack",80,82,"bow"],lbFind:["lamp",26,80,"wave"],
     lbC0:["shelf",8,55,"bow"],lbC1:["shelf",20,55,"bow"],lbC2:["shelf",8,60,"bow"],lbC3:["shelf",20,60,"bow"],lbC4:["shelf",8,65,"bow"],lbC5:["shelf",20,65,"bow"]}};
 function lbCss(){if(document.getElementById("lbCss"))return;const s=document.createElement("style");s.id="lbCss";s.textContent=`
