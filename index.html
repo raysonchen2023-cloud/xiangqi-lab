@@ -1341,7 +1341,7 @@ html[data-era=qin] .view:has(>.shp-rd),html[data-era=wudai] .view:has(>.shp-rd){
       if(!window.caches)return go();caches.keys().then(function(ks){return Promise.all(ks.filter(function(k){return k.indexOf("xqlab-app-")===0}).map(function(k){return caches.delete(k)}))})
         .then(function(){return navigator.serviceWorker&&navigator.serviceWorker.getRegistration()}).then(function(r){return r&&r.update()}).catch(function(){}).then(go)}};setTimeout(chk,4000)})();
 </script>
-<script>window.XQ_OFFLINE=true;window.XQ_BUILD="20261108-2220";</script>
+<script>window.XQ_OFFLINE=true;window.XQ_BUILD="20261108-2230";</script>
 <script src="core.js"></script>
 <script src="engine.js"></script>
 <script src="local.js"></script>
@@ -11447,7 +11447,7 @@ if(typeof Lobby==="function"){const f0=Lobby;Lobby=function(v){const r=f0.apply(
    場景跟著設定變：深色＝夜版（data/setmap/set_night.webp，還沒畫好前用程式把畫面調暗、點燈）；聲音全關＝古琴蓋上琴囊；
      換朝代棋盤＝棋桌上的棋盤框換成那一朝的顏色；高對比＝棋子描金邊。
    標籤只有大字。接 07w 走路（SHW_SETMAP）、07x 兩指縮放。圖片網址帶 SM_IMGV。開關 SETMAP_ON（false＝照舊分頁清單）；樣式在 smCss */
-const SETMAP_ON=false;
+const SETMAP_ON=true;
 const SM_IMGV="2200";
 /* 入口：[id, 左%, 上%, 大字, 分頁, 要捲到的元素]（量 768×1376 的 set_day_v2，標籤放在東西上方） */
 const SM_SPOTS=[
