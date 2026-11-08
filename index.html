@@ -1043,6 +1043,7 @@ body.xqt-on .modal{z-index:10000}body.xqt-on .toast{z-index:10001}body.xqt-on .x
 @keyframes pxtw{from{opacity:.5}to{opacity:1}}
 .shp-gy{position:absolute;left:10px;bottom:10px;z-index:2;padding:4px 10px;border-radius:99px;border:1px solid rgba(255,240,210,.4);background:rgba(30,22,14,.6);color:#F6E7CF;font:700 12px/1.2 var(--serif,serif);cursor:pointer}
 .shp-gy.on{background:#B5452B;border-color:#7a2414;color:#fff}
+.shp-gldev{position:absolute;left:10px;bottom:46px;z-index:2;padding:4px 10px;border-radius:99px;border:1px dashed rgba(255,240,210,.5);background:rgba(30,22,14,.6);color:#F6E7CF;font:700 12px/1.2 var(--serif,serif);white-space:nowrap;cursor:pointer}.shp-gldev.on{background:#2f6b4f}   /* 意見回饋 760：開發者模式才有的 WebGL 新立體測試開關 */
 @media (prefers-reduced-motion:reduce){.shp-px .px-fl,.shp-px .px-star{animation:none}}
 /* 意見回饋 748／757（開發者 11/8）：星槎航行感＋立體改用 WebGL 深度位移（07f-ship.js shpPx）。船身起伏、雲霧帶、船邊雲浪都在 canvas 裡畫；
    熱點 .shp-hl 由 JS 每格套上跟船層一樣的位移和轉動（轉軸同為 50% 62%）；金色光點仍是 CSS 動畫 */
@@ -1293,7 +1294,7 @@ html[data-era=qin] .view:has(>.shp-rd),html[data-era=wudai] .view:has(>.shp-rd){
       if(!window.caches)return go();caches.keys().then(function(ks){return Promise.all(ks.filter(function(k){return k.indexOf("xqlab-app-")===0}).map(function(k){return caches.delete(k)}))})
         .then(function(){return navigator.serviceWorker&&navigator.serviceWorker.getRegistration()}).then(function(r){return r&&r.update()}).catch(function(){}).then(go)}};setTimeout(chk,4000)})();
 </script>
-<script>window.XQ_OFFLINE=true;window.XQ_BUILD="20261108-1540";</script>
+<script>window.XQ_OFFLINE=true;window.XQ_BUILD="20261108-1550";</script>
 <script src="core.js"></script>
 <script src="engine.js"></script>
 <script src="local.js"></script>
@@ -4013,7 +4014,7 @@ function onboard(){if(journey())journeyLock();else titleScreen({})}
 // ================= 設定：棋盤風格、棋子樣式、走棋顯示 =================
 const SAMPLE_FEN0="rnbakabnr/9/1c5c1/p1p1p1p1p/9/9/P1P1P1P1P/1C5C1/9/RNBAKABNR",SAMPLE_FEN1="rnbakabnr/9/1c5c1/p1p1p1p1p/9/9/P1P1P1P1P/1C2C4/9/RNBAKABNR",SAMPLE_LAST={f:70,t:67};
 /* 意見回饋 661：關於頁顯示整包遊戲要多大空間。XQ_SIZES 由 build-site.js 建置時填入（開發中的 m.html 是 null，就不顯示） */
-const XQ_SIZES={"pre":215061180,"code":12953416,"eng":51511005,"gm":33668932,"bgm":259516351,"opt":[["比賽對局 1956–2010",21765744],["比賽對局 2011–2014",25596413],["比賽對局 2015–2019",24821916]],"all":660954357,"other":16059400};
+const XQ_SIZES={"pre":215061180,"code":12957039,"eng":51511005,"gm":33668932,"bgm":259516351,"opt":[["比賽對局 1956–2010",21765744],["比賽對局 2011–2014",25596413],["比賽對局 2015–2019",24821916]],"all":660957980,"other":16059400};
 const szMB=b=>b>=1073741824?(b/1073741824).toFixed(1)+" GB":Math.max(1,Math.round(b/1048576))+" MB";
 function aboutSizes(){const S=XQ_SIZES;if(!S)return"";const opt=S.opt||[];   /* 意見回饋 662：玩家只看總數，細項只在開發者模式顯示 */
   return `<div class="row" style="justify-content:space-between"><span class="muted">整包下載</span><b>約 ${szMB(S.all)}</b></div>
@@ -7645,22 +7646,41 @@ void main(){vec2 p=v;
   vec4 b=texture2D(B,mir(sp/S));gl_FragColor=vec4(mix(col,b.rgb,b.a),1.);}`;
 /* 意見回饋 760（11/8）：iPhone 上船頭、帆一帶破圖，先關掉 WebGL 立體、退回原本的單張圖，修好再打開 */
 const SHP_GL_ON=false;
-function shpGl(cv,im){if(!SHP_GL_ON)return null;const gl=cv.getContext("webgl",{alpha:false,antialias:false,depth:false,stencil:false,premultipliedAlpha:false,powerPreference:"low-power"});if(!gl)return null;
+/* 意見回饋 760 查到的原因：1511 版沿用舊檔名 sm_bg／sm_ship，手機快取（xqlab-look）裡還是 11/7 分層版的舊圖（960x1264、船層沒有帆桅），
+   預載在背景換新以前星槎頁就先用了舊圖，帆桅那塊變成舊背景的模糊補洞。修法：新素材改名 sm2_*（手機裡不可能有舊的）、載入後檢查尺寸、
+   第一格用靜止姿勢畫一次跟原圖比對幾個點（舊圖、轉色、精度不對都會對不上），不對就退回單張圖。
+   測試開關：SHP_GL_ON 仍是 false；localStorage m_shpGL 為 1 才開（開發者模式時星槎頁左下有「🧪 新立體」可切換） */
+const shpGlOn=()=>SHP_GL_ON||store.get("shpGL",0)==1,SHP_GLSZ=[[896,1200],[896,1200],[448,600],[512,512],[512,512]],SHP_GLPT=[[674,382],[811,217],[550,556],[742,282],[424,864],[176,936]];
+function shpGlTest(gl,U,bw,bh,base){gl.uniform2f(U.par,0,0);gl.uniform2f(U.roll,0,0);gl.uniform1f(U.bob,0);gl.uniform1f(U.rot,0);gl.uniform1f(U.t,0);gl.drawArrays(gl.TRIANGLE_STRIP,0,4);
+  const c=document.createElement("canvas");c.width=896;c.height=1200;const x=c.getContext("2d");x.drawImage(base,0,0,896,1200);const px=new Uint8Array(4);let d=0;
+  for(const[a,b]of SHP_GLPT){gl.readPixels(Math.min(bw-1,Math.floor((a+.5)*bw/896)),Math.max(0,bh-1-Math.floor((b+.5)*bh/1200)),1,1,gl.RGBA,gl.UNSIGNED_BYTE,px);const q=x.getImageData(a,b,1,1).data;d+=(Math.abs(px[0]-q[0])+Math.abs(px[1]-q[1])+Math.abs(px[2]-q[2]))/3}
+  return d/SHP_GLPT.length}   /* 抽樣點都在帆、燈籠、船艙、船頭、甲板、船身的平坦處；正確時平均差 < 10，舊快取約 180 */
+function shpGlDev(M){if(!(typeof DEVMODE==="function"&&DEVMODE())||M.querySelector(".shp-gldev"))return;const on=store.get("shpGL",0)==1;   /* 只有開發者模式看得到：切換 WebGL 新立體（存在 m_shpGL） */
+  const b=document.createElement("button");b.type="button";b.className="shp-gldev"+(on?" on":"");b.textContent=on?"🧪 新立體：開":"🧪 新立體：關";M.appendChild(b);
+  b.onclick=e=>{e.stopPropagation();vibrate(5);store.set("shpGL",on?0:1);toast(on?"已關掉 WebGL 新立體":"已打開 WebGL 新立體（測試中）");route()}}
+function shpGl(cv,im){if(!shpGlOn())return null;const gl=cv.getContext("webgl",{alpha:false,antialias:false,depth:false,stencil:false,premultipliedAlpha:false,powerPreference:"low-power"});if(!gl)return null;
+  const hp=gl.getShaderPrecisionFormat(gl.FRAGMENT_SHADER,gl.HIGH_FLOAT);if(!hp||hp.precision<16)return null;   /* 座標用 0～1200 像素，片段著色器沒有 highp 就不用 WebGL */
+  if(im.some((m,i)=>m.naturalWidth!==SHP_GLSZ[i][0]||m.naturalHeight!==SHP_GLSZ[i][1]))return null;   /* 尺寸不對＝拿到舊圖或壞圖 */
   const sh=(ty,src)=>{const s=gl.createShader(ty);gl.shaderSource(s,src);gl.compileShader(s);if(!gl.getShaderParameter(s,gl.COMPILE_STATUS))throw new Error(gl.getShaderInfoLog(s));return s};
   const pg=gl.createProgram();gl.attachShader(pg,sh(gl.VERTEX_SHADER,SHP_VS));gl.attachShader(pg,sh(gl.FRAGMENT_SHADER,SHP_FS));gl.linkProgram(pg);if(!gl.getProgramParameter(pg,gl.LINK_STATUS))throw new Error("link");gl.useProgram(pg);
   gl.bindBuffer(gl.ARRAY_BUFFER,gl.createBuffer());gl.bufferData(gl.ARRAY_BUFFER,new Float32Array([-1,-1,1,-1,-1,1,1,1]),gl.STATIC_DRAW);const al=gl.getAttribLocation(pg,"a");gl.enableVertexAttribArray(al);gl.vertexAttribPointer(al,2,gl.FLOAT,false,0,0);
-  ["A","B","Dp","Mi","Mf"].forEach((n,i)=>{gl.activeTexture(gl.TEXTURE0+i);gl.bindTexture(gl.TEXTURE_2D,gl.createTexture());gl.texImage2D(gl.TEXTURE_2D,0,gl.RGBA,gl.RGBA,gl.UNSIGNED_BYTE,im[i]);
+  ["A","B","Dp","Mi","Mf"].forEach((n,i)=>{gl.activeTexture(gl.TEXTURE0+i);gl.bindTexture(gl.TEXTURE_2D,gl.createTexture());
+    gl.pixelStorei(gl.UNPACK_FLIP_Y_WEBGL,false);gl.pixelStorei(gl.UNPACK_PREMULTIPLY_ALPHA_WEBGL,false);gl.pixelStorei(gl.UNPACK_COLORSPACE_CONVERSION_WEBGL,i>1?gl.NONE:gl.BROWSER_DEFAULT_WEBGL);   /* 深度圖、雲霧是資料，不能被轉色 */
+    gl.texImage2D(gl.TEXTURE_2D,0,gl.RGBA,gl.RGBA,gl.UNSIGNED_BYTE,im[i]);
     const w=i>2?gl.REPEAT:gl.CLAMP_TO_EDGE;gl.texParameteri(gl.TEXTURE_2D,gl.TEXTURE_WRAP_S,w);gl.texParameteri(gl.TEXTURE_2D,gl.TEXTURE_WRAP_T,w);gl.texParameteri(gl.TEXTURE_2D,gl.TEXTURE_MIN_FILTER,gl.LINEAR);gl.texParameteri(gl.TEXTURE_2D,gl.TEXTURE_MAG_FILTER,gl.LINEAR);gl.uniform1i(gl.getUniformLocation(pg,n),i)});
   const U={};["par","roll","bob","rot","t"].forEach(n=>U[n]=gl.getUniformLocation(pg,n));return{gl,U}}
 function shpPx(M){const box=M&&M.querySelector(".shp-px");if(!box)return;const cv=box.querySelector(".px-gl"),I=M.querySelector(".shp-in"),hl=M.querySelector(".shp-hl");
-  const ld=s=>new Promise((ok,no)=>{const i=new Image();i.onload=()=>ok(i);i.onerror=no;i.src="data/shipmap/layers/sm_"+s});
-  Promise.all(["bg.webp","ship.webp","depth.png","mist_ink.webp","mist_fog.webp"].map(ld)).then(im=>{if(!M.isConnected)return;const G=shpGl(cv,im);if(!G)throw 0;
+  shpGlDev(M);if(!shpGlOn()){box.remove();return}
+  const ld=s=>new Promise((ok,no)=>{const i=new Image();i.onload=()=>ok(i);i.onerror=no;i.src="data/shipmap/"+s});
+  Promise.all(["layers/sm2_bg.webp","layers/sm2_ship.webp","layers/sm2_depth.png","layers/sm_mist_ink.webp","layers/sm_mist_fog.webp","ship_map.webp"].map(ld)).then(im=>{if(!M.isConnected)return;const G=shpGl(cv,im.slice(0,5));if(!G)throw 0;
     SPX.el=M;SPX.hl=hl;SPX.ls=[...box.querySelectorAll("[data-k]")].map(i=>[i,SHP_PX.find(p=>p[0]===i.dataset.k)[1]]);SPX.cx=SPX.cy=SPX.tx=SPX.ty=0;
     const{gl,U}=G,t0=performance.now();let W=0,H=0,bw=0,bh=0,first=true;const meas=()=>{W=I.clientWidth;H=I.clientHeight};meas();
     if(window.ResizeObserver)new ResizeObserver(meas).observe(I);
     const step=now=>{if(!M.isConnected||SPX.el!==M){const x=gl.getExtension("WEBGL_lose_context");if(x)x.loseContext();return}
       if(!window.ResizeObserver)meas();SPX.cx+=(SPX.tx-SPX.cx)*SPX.k;SPX.cy+=(SPX.ty-SPX.cy)*SPX.k;
       if(W){const w=Math.round(Math.min(W*(devicePixelRatio||1),1120)),h=Math.round(w*H/W);if(w!==bw||h!==bh){cv.width=bw=w;cv.height=bh=h;gl.viewport(0,0,w,h)}
+        if(first){const d=shpGlTest(gl,U,bw,bh,im[5]);SPX.glDiff=d;if(!(d<40)){SPX.el=null;box.remove();if(hl)hl.style.transform="";const x=gl.getExtension("WEBGL_lose_context");if(x)x.loseContext();
+          if(typeof DEVMODE==="function"&&DEVMODE())toast("🧪 新立體自我檢查沒過（差 "+Math.round(d)+"），先用單張圖");return}}
         /* 起伏 2.6px、轉動 ±0.33°、桅頂橫搖 5px（都以 CSS px 計），週期 7.4 秒；視差最大 12px，兩者相加也不會拉破（depth.py 已檢查） */
         const s=W/896,t=(now-t0)/1000,ph=t*2*Math.PI/7.4,bob=2.6*Math.sin(ph),rot=.0058*Math.sin(ph+.9),rl=5*Math.sin(ph+.5),px=SHP_PXM*SPX.cx,py=SHP_PXM*SPX.cy;
         gl.uniform2f(U.par,px/s,py/s);gl.uniform2f(U.roll,.805*rl/s,.594*rl/s);gl.uniform1f(U.bob,bob/s);gl.uniform1f(U.rot,rot);gl.uniform1f(U.t,t%88660);gl.drawArrays(gl.TRIANGLE_STRIP,0,4);
