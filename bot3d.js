@@ -266,6 +266,63 @@
     m.onBeforeCompile=s=>{const f=s.fragmentShader;if(!f.includes(PAINT_L)||!f.includes("#include <encodings_fragment>"))return;
       s.fragmentShader=f.replace(PAINT_L,"vec3 outgoingLight = diffuseColor.rgb * ( .62 + .38 * smoothstep( -.3, .75, dot( normal, normalize( vec3( .35, .55, .75 ) ) ) ) );").replace("#include <tonemapping_fragment>","").replace("#include <encodings_fragment>","gl_FragColor = LinearTosRGB( gl_FragColor );")};
     m.customProgramCacheKey=()=>"xqPaint";PAINT_C.set(o,m);return m}
+  /* 開發者 11/8（Gemini 評估：真實 3D 小人跟水墨背景、水墨插畫割裂）：試做「水墨」材質，預設關，開發者看過對照圖再決定。
+     A＝卡通色塊：三階明暗（最亮那階就是貼圖原色），光從看的人右上前方（跟 paintMat 一樣，各場景臉色一致），外加反面外殼（inverted hull）畫墨線；
+     B＝A 再降一點飽和、疊紙紋、輪廓邊緣往宣紙色暈開，墨線粗細和濃淡有變化。
+     墨線用反面外殼不用後處理：每個模型多畫一次（只算頂點、片段很省），不用另外的整張畫面緩衝；手機上比較順。
+     外殼沿「同位置頂點平均」的法線往外推（貼圖接縫處法線不同也不會裂開），粗細照螢幕像素算、最多不超過身高的 1.1%（遠處小人不會糊成一團）；
+     外殼的深度往後退身高的 3%（只改深度、不改位置），眼窩、腮紅、衣褶這些凹處的外殼就藏在身體後面，不會在臉上冒出多的線，外輪廓照樣畫得出來。
+     B 的紙色只加在亮的地方（頭髮、墨色衣服保持黑，不會變灰）。
+     切換：網址加 ?toon=a／?toon=b／?toon=off（記在 m_toon3d），或主控台 XQTOON("a"|"b"|"")；原本的寫實材質留著，切回 off 就換回來 */
+  const TOON_C=new WeakMap(),TOON_M0=new WeakMap(),TOON_H=new WeakSet(),TOON_R=[];let TOON=(()=>{try{const q=(location.search+"&"+(location.hash.split("?")[1]||"")).match(/[?&]toon=(\w+)/);if(q){const v=/^[ab]$/.test(q[1])?q[1]:"";store.set("toon3d",v);return v}}catch(e){}const v=store.get("toon3d","a");return v==="a"||v==="b"?v:""})();   /* 開發者 11/8 選定 A（卡通色塊＋墨線）為預設；?toon=off 可切回寫實 */
+  const TOON_F="float xqH(vec2 p){vec3 p3=fract(vec3(p.xyx)*.1031);p3+=dot(p3,p3.yzx+33.33);return fract((p3.x+p3.y)*p3.z);}\nfloat xqN(vec2 p){vec2 i=floor(p),f=fract(p);f=f*f*(3.-2.*f);return mix(mix(xqH(i),xqH(i+vec2(1.,0.)),f.x),mix(xqH(i+vec2(0.,1.)),xqH(i+vec2(1.,1.)),f.x),f.y);}\n";
+  const TOON_L="float xqD = dot( normal, normalize( vec3( .35, .55, .75 ) ) );\n"+
+    "#ifdef XQ_TOON_B\n"+
+    "vec3 outgoingLight = diffuseColor.rgb * ( .78 + .11 * smoothstep( -.2, -.1, xqD ) + .11 * smoothstep( .26, .36, xqD ) );\n"+
+    "vec3 xqP = vec3( .86, .79, .64 );\n"+
+    "float xqY = dot( outgoingLight, vec3( .2126, .7152, .0722 ) ); float xqK = smoothstep( .02, .35, xqY ); outgoingLight = mix( mix( vec3( xqY ), outgoingLight, .94 ), xqP, .08 * xqK );\n"+
+    "float xqG = xqN( gl_FragCoord.xy * .45 ) * .55 + xqN( gl_FragCoord.xy * 1.7 ) * .45;\n"+
+    "outgoingLight *= .975 + .05 * xqG;\n"+
+    "float xqR = 1. - abs( dot( normal, geometry.viewDir ) );\n"+
+    "outgoingLight = mix( outgoingLight, xqP, ( .1 + .2 * xqK ) * smoothstep( .8, 1.02, xqR + ( xqG - .5 ) * .2 ) );\n"+
+    "#else\n"+
+    "vec3 outgoingLight = diffuseColor.rgb * ( .70 + .15 * smoothstep( -.16, -.10, xqD ) + .15 * smoothstep( .28, .34, xqD ) );\n"+
+    "#endif\n";
+  function toonMat(o,mode){let c=TOON_C.get(o);if(!c)TOON_C.set(o,c={});if(c[mode])return c[mode];
+    const m=new T.MeshLambertMaterial({map:o.map||null,color:o.color&&o.name!=="xqPaint"?o.color.clone():0xffffff,side:o.side,transparent:o.transparent,opacity:o.opacity,alphaTest:o.alphaTest,vertexColors:!!o.vertexColors});m.name="xqToon"+mode;
+    if(mode==="b")m.defines={XQ_TOON_B:""};
+    m.onBeforeCompile=s=>{const f=s.fragmentShader;if(!f.includes(PAINT_L)||!f.includes("#include <encodings_fragment>"))return;
+      s.fragmentShader=f.replace("#include <common>","#include <common>\n"+TOON_F).replace(PAINT_L,TOON_L).replace("#include <tonemapping_fragment>","").replace("#include <encodings_fragment>","gl_FragColor = LinearTosRGB( gl_FragColor );")};
+    m.customProgramCacheKey=()=>"xqToon"+mode;c[mode]=m;return m}
+  /* 外殼法線：同一個位置的頂點（貼圖接縫會把一個點拆成好幾個）法線取平均，存成 xqON；同一個模型的複製品共用，只算一次 */
+  function toonGeo(geo){if(geo.userData.xqON!==undefined)return geo.userData.xqON;geo.userData.xqON=false;
+    try{const p=geo.attributes.position,n=geo.attributes.normal;if(!p||!n)return false;const N=p.count,acc=new Map(),key=new Array(N),out=new Float32Array(N*3);
+      for(let i=0;i<N;i++){const k=Math.round(p.getX(i)*2e4)+","+Math.round(p.getY(i)*2e4)+","+Math.round(p.getZ(i)*2e4);key[i]=k;let a=acc.get(k);if(!a)acc.set(k,a=[0,0,0]);a[0]+=n.getX(i);a[1]+=n.getY(i);a[2]+=n.getZ(i)}
+      for(let i=0;i<N;i++){const a=acc.get(key[i]),l=Math.hypot(a[0],a[1],a[2])||1;out[i*3]=a[0]/l;out[i*3+1]=a[1]/l;out[i*3+2]=a[2]/l}
+      geo.setAttribute("xqON",new T.BufferAttribute(out,3));if(!geo.boundingBox)geo.computeBoundingBox();const bb=geo.boundingBox;geo.userData.xqON=Math.max(bb.max.y-bb.min.y,bb.max.x-bb.min.x,bb.max.z-bb.min.z)||1}catch(e){}
+    return geo.userData.xqON}
+  const HULL_V="#include <common>\n#include <skinning_pars_vertex>\nattribute vec3 xqON;\nuniform float uW;\nuniform float uMax;\nuniform float uBias;\nuniform float uGH;\nuniform float uVar;\n"+
+    "void main(){\nvec3 objectNormal = xqON;\n#include <skinbase_vertex>\n#include <skinnormal_vertex>\n#include <begin_vertex>\n#include <skinning_vertex>\n#include <project_vertex>\n"+
+    "vec3 vn = normalize( normalMatrix * objectNormal );\nfloat k = projectionMatrix[ 2 ][ 3 ] < -.5 ? -mvPosition.z : 1.;\n"+
+    "float t = position.y / uGH * 23. + position.x / uGH * 9. + position.z / uGH * 5.;\nfloat w = min( uW * k, uMax ) * ( 1. - uVar + uVar * 1.6 * ( .5 + .5 * sin( t ) ) );\n"+
+    "mvPosition.xyz += vn * w;\ngl_Position = projectionMatrix * mvPosition;\n"+
+    "vec4 xqB = projectionMatrix * vec4( mvPosition.xy, mvPosition.z - uBias, 1. );\ngl_Position.z = xqB.z / xqB.w * gl_Position.w;\n}";
+  const HULL_FR="uniform vec3 uInk;\nuniform float uVar;\n"+TOON_F+"void main(){\nfloat g = xqN( gl_FragCoord.xy * .6 );\ngl_FragColor = vec4( mix( uInk, uInk + vec3( .22, .2, .17 ), uVar * g * 1.3 ), 1. );\n}";
+  function toonHull(m,mode){const gh=toonGeo(m.geometry);if(!gh)return null;
+    const mat=new T.ShaderMaterial({uniforms:{uW:{value:0},uMax:{value:0},uBias:{value:0},uGH:{value:gh},uVar:{value:mode==="b"?.45:0},uInk:{value:mode==="b"?new T.Vector3(.2,.16,.13):new T.Vector3(.13,.09,.07)}},vertexShader:HULL_V,fragmentShader:HULL_FR,side:T.BackSide});mat.name="xqHull";
+    const h=m.isSkinnedMesh?new T.SkinnedMesh(m.geometry,mat):new T.Mesh(m.geometry,mat);if(m.isSkinnedMesh){h.bindMode=m.bindMode;h.bind(m.skeleton,m.bindMatrix)}
+    h.name="xqHull";TOON_H.add(h);h.raycast=()=>{};h.castShadow=false;h.receiveShadow=false;h.frustumCulled=m.frustumCulled;const PX=mode==="b"?2.3:1.7;
+    h.onBeforeRender=(r,s,cam)=>{try{const el=r.domElement,ch=el.clientHeight||el.height||1,u=mat.uniforms;
+      u.uW.value=cam.isPerspectiveCamera?PX*2*Math.tan(cam.fov*Math.PI/360)/(cam.zoom||1)/ch:PX*(cam.top-cam.bottom)/(cam.zoom||1)/ch;const H=gh*h.matrixWorld.getMaxScaleOnAxis();u.uMax.value=H*.011;u.uBias.value=H*.03}catch(e){}};
+    return h}
+  function toonApply(g,mode){const ms=[];g.traverse(m=>{if(m.isMesh&&!TOON_H.has(m))ms.push(m)});
+    for(const m of ms){if(!TOON_M0.has(m))TOON_M0.set(m,m.material);const o=TOON_M0.get(m);
+      for(const c of m.children.filter(c=>TOON_H.has(c)))m.remove(c);
+      if(!mode||!o||Array.isArray(o)){m.material=o;continue}
+      m.material=toonMat(o,mode);if(!o.transparent){const h=toonHull(m,mode);if(h)m.add(h)}}}
+  window.XQTOON=v=>{if(v===undefined)return TOON;TOON=v==="a"||v==="b"?v:"";store.set("toon3d",TOON);
+    for(let i=TOON_R.length-1;i>=0;i--){const g=TOON_R[i].deref?TOON_R[i].deref():TOON_R[i];if(!g){TOON_R.splice(i,1);continue}try{toonApply(g,TOON)}catch(e){}}return TOON};
+  function toonReg(g){TOON_R.push(window.WeakRef?new WeakRef(g):g);if(TOON)try{toonApply(g,TOON)}catch(e){}}
   function attachGLB(B,o){if(!window.XQGLB)return;const meId=(String(o.glb||"").match(/\/(\w+)\.glb/)||[])[1],meCh=PC(),meK=eraK();const box0=new T.Box3().setFromObject(B.bot),h0=box0.max.y-box0.min.y,y0=box0.min.y;
     const face=B.torso.children.find(m=>m.isMesh&&m.geometry&&m.geometry.type==="CircleGeometry");
     B.glbP=window.XQGLB(o.glb).catch(()=>window.XQGLB(o.glb)).then(sc=>{if(!sc)throw new Error("empty");   /* 意見回饋 505：失敗自動重試一次；結果交給畫面顯示「載入中／失敗」 */const g=sc.clone(true);B.glbRoot=g;try{const rb=new T.Box3().setFromObject(g);B.glbRaw={min:rb.min.clone(),max:rb.max.clone()}}catch(e){}g.rotation.y=-Math.PI/2;g.updateMatrixWorld(true);   /* 意見回饋 679：點角色身上的物件，用模型原本的範圍換算位置（glbRoot、glbRaw） */
@@ -278,6 +335,7 @@
       const hold=new T.Group();hold.name="glb";g.position.set(-c.x,-bb.min.y,-c.z);hold.add(g);hold.scale.setScalar(h0/sz.y);hold.position.y=y0;
       g.traverse(m=>{if(m.isMesh){m.castShadow=true;m.receiveShadow=true}});
       if(/^x_/.test(meId||""))g.traverse(m=>{if(m.isMesh&&m.material&&m.material.map)m.material=paintMat(m.material)});   /* 開發者 11/6：雲河七星用手繪上色材質（見 paintMat） */
+      toonReg(g);   /* 開發者 11/8：水墨材質試做（預設關，見 toonMat） */
       /* 意見回饋 503：圓牌的位置是從 2D 立繪換算的，套在 Tripo 模型上會偏（蓋到臉、浮在身體前面），真實版就不另外貼圓牌，看模型本身 */
       if(false&&o.ring&&o.ring.r&&face){const R=o.ring,rad=R.r*sz.x*.95,m=face.material.clone();m.side=T.DoubleSide;
         const d=new T.Mesh(new T.CircleGeometry(rad,48),m),px=bb.min.x+R.u*sz.x,py=bb.max.y-R.v*sz.y;
