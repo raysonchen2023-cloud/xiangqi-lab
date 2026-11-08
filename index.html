@@ -1341,7 +1341,7 @@ html[data-era=qin] .view:has(>.shp-rd),html[data-era=wudai] .view:has(>.shp-rd){
       if(!window.caches)return go();caches.keys().then(function(ks){return Promise.all(ks.filter(function(k){return k.indexOf("xqlab-app-")===0}).map(function(k){return caches.delete(k)}))})
         .then(function(){return navigator.serviceWorker&&navigator.serviceWorker.getRegistration()}).then(function(r){return r&&r.update()}).catch(function(){}).then(go)}};setTimeout(chk,4000)})();
 </script>
-<script>window.XQ_OFFLINE=true;window.XQ_BUILD="20261108-2020";</script>
+<script>window.XQ_OFFLINE=true;window.XQ_BUILD="20261108-2030";</script>
 <script src="core.js"></script>
 <script src="engine.js"></script>
 <script src="local.js"></script>
@@ -9784,6 +9784,7 @@ const PWD={
   ming:{f:[[50,32.8,52.2,34.7,"h"],[46.2,35.8,48.5,38.2,"h"],[60.2,33.8,62.2,35.8,"h"]],s:[[33,30.6,0]]},
   qing:{f:[[40.2,30.1,42.7,31.5,"h"],[50.9,28.4,53.5,29.6,"h"],[54.9,31.7,57.8,33.4,"h"],[64.5,29.4,66.7,31,"h"]],s:[]}};
 const PWD_PT=[[25,25],[75,25],[50,50],[25,75],[75,75],[50,90],[12,60],[88,60]];
+/* 意見回饋 786（旗子飄得不協調）：著色器裡的 fm()＝這個像素像不像旗布（彩度高或很黑），只有旗布跟著飄，旗桿、擂台、天空不動 */
 const PWD_FS=`#ifdef GL_FRAGMENT_PRECISION_HIGH
 precision highp float;
 #else
@@ -9791,12 +9792,14 @@ precision mediump float;
 #endif
 uniform sampler2D I,Mi,Mf;uniform float t,k,DM,DS;uniform vec3 DC;uniform vec4 F[6];uniform float FT[6];uniform vec4 SM[3];uniform vec4 DB;varying vec2 v;
 const vec2 S=vec2(768.,1376.);
+float fm(vec3 c){float mx=max(c.r,max(c.g,c.b)),mn=min(c.r,min(c.g,c.b)),l=dot(c,vec3(.3,.59,.11));return max(smoothstep(.16,.3,mx-mn),1.-smoothstep(.1,.2,l));}
 float box(vec2 p,vec4 b,float e){vec2 a=smoothstep(b.xy-e,b.xy+e,p)*(1.-smoothstep(b.zw-e,b.zw+e,p));return a.x*a.y;}
 void main(){vec2 p=v,o=vec2(0.);
   for(int i=0;i<6;i++){vec4 f=F[i];if(f.z>f.x){vec2 c=(p-f.xy)/(f.zw-f.xy);float n=step(-.15,c.x)*step(c.x,1.25)*step(-.2,c.y)*step(c.y,1.25),ph=float(i)*1.7;
     if(FT[i]<.5){float w=clamp(c.x,0.,1.);o.y+=n*w*1.8*sin(c.x*5.5-t*6.5+ph);o.x+=n*w*.6*sin(c.x*4.-t*5.+ph);}
     else{float w=clamp(c.y,0.,1.);o.x+=n*w*1.6*sin(c.y*5.-t*5.5+ph);}}}
-  vec3 col=texture2D(I,clamp((p-o*k)/S,0.,1.)).rgb;
+  vec3 c0=texture2D(I,clamp(p/S,0.,1.)).rgb,cw=texture2D(I,clamp((p-o*k)/S,0.,1.)).rgb,col=c0;
+  if(dot(o,o)>.0001){float w=max(fm(c0),fm(cw));col=mix(c0,cw,w);}
   if(DB.z>DB.x){float m=box(p,DB,36.)*k;
     float sand=DM>.5&&DM<1.5?1.:smoothstep(.05,.18,col.r-col.b)*smoothstep(-.03,.04,col.r-col.g)*smoothstep(.36,.6,dot(col,vec3(.3,.59,.11)));
     float rb=texture2D(Mf,vec2(p.y/70.+.3,(p.x-t*70.)/460.)).a,lo=texture2D(Mi,vec2(p.y/34.+.6,(p.x-t*95.)/300.)).a,big=texture2D(Mf,vec2(p.y/260.,(p.x-t*45.)/900.)).a;
