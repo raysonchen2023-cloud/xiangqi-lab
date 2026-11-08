@@ -1341,7 +1341,7 @@ html[data-era=qin] .view:has(>.shp-rd),html[data-era=wudai] .view:has(>.shp-rd){
       if(!window.caches)return go();caches.keys().then(function(ks){return Promise.all(ks.filter(function(k){return k.indexOf("xqlab-app-")===0}).map(function(k){return caches.delete(k)}))})
         .then(function(){return navigator.serviceWorker&&navigator.serviceWorker.getRegistration()}).then(function(r){return r&&r.update()}).catch(function(){}).then(go)}};setTimeout(chk,4000)})();
 </script>
-<script>window.XQ_OFFLINE=true;window.XQ_BUILD="20261109-1030";</script>
+<script>window.XQ_OFFLINE=true;window.XQ_BUILD="20261109-1100";</script>
 <script src="core.js"></script>
 <script src="engine.js"></script>
 <script src="local.js"></script>
@@ -11006,6 +11006,10 @@ try{rdCss()}catch(e){}
      HS＝入口 → ［停靠點, 面向的位置 左%, 上%, 動作 bow／wave／cheer］；home＝起點；look0＝站著時面向哪裡。停靠點都選在東西「前面」（腳比東西低），角色疊在圖上才不會像站在桌上。
    開關：SHIP_WALK_ON（星槎，07f-ship.js 的 Voyage 呼叫 shipWalk）、SHW_PORT_ON（渡口，包一層 portWind）、SHW_YZ_ON（驛站，包一層 yzInn）；SHW_PORT／SHW_YZ 有座標表的朝代才走。樣式在 shwCss */
 const SHIP_WALK_ON=true,SHW_PORT_ON=true,SHW_YZ_ON=true;   /* 開發者 11/8 說全開 */
+/* 回饋 808（開發者 11/9）：角色矮，遇到桌子就跳上去——座標表多一個 T:{桌面節點:{hy:桌下地板的 y%}}；桌面節點只連一條邊到桌邊的地板節點，
+   走那一條邊時不用走的，改成跳（先蹲、空中拉長、落地再蹲一下，約 0.45 秒，程式做的位移和縮放，動作檔照舊只用待機）；站在桌上時身高照桌下地板的透視算（hy），不會變小；
+   下一次點別的地方，先跳下來再走。prefers-reduced-motion 時整個走路角色本來就不出現；保險起見那時改成直接滑過去。開關 WALK_HOP_ON */
+const WALK_HOP_ON=true;
 const WALK_BOT_MERGE=true;   /* 回饋 802（開發者 11/9）：有走路角色的頁面，小帥（.xqbot）不再另外出現，走路角色兼小帥：點角色（或頭上的 💬）開小選單＝問問題、聽棋語、我的角色；小帥的話改說在角色頭上 */
 /* 星槎主畫面 ship_map.webp 896×1200。意見回饋 787（開發者 11/8）：棋話一頁要真的走到船頭——從右舷沿船艙右邊的甲板（r2、r3）走到船頭講台前（lesson）；下船停在跳板中段 */
 const SHW_SHIP={W:896,H:1200,el:35,h:y=>.088+(y-66)*.001,home:"home",look0:[50,84],
@@ -11104,7 +11108,7 @@ function shwRoute(C,from,to){const N=Object.assign({},C.N),E=shwEdges(C).slice()
   const a=add("_a",from),b=add("_b",to);if(TE._a&&TE._b&&k(TE._a)===k(TE._b))E.push(["_a","_b"]);
   const ids=shwPath({W:C.W,H:C.H,N,_e:E},a,b),segE=[];for(let i=1;i<ids.length;i++)segE.push(TE[ids[i-1]]||TE[ids[i]]||[ids[i-1],ids[i]]);
   return{pts:ids.map(n=>N[n]),segE}}
-function shwNear(C,p){let best=null;const W=C.W/100,H=C.H/100;for(const[a,b]of shwEdges(C)){const A=C.N[a],B=C.N[b];if(!A||!B)continue;
+function shwNear(C,p){let best=null;const W=C.W/100,H=C.H/100;for(const[a,b]of shwEdges(C)){const A=C.N[a],B=C.N[b];if(!A||!B)continue;if(C.T&&(C.T[a]||C.T[b]))continue;   /* 808：點空地不會停在跳上桌的那一段半空中 */
   const dx=(B[0]-A[0])*W,dy=(B[1]-A[1])*H,t=Math.max(0,Math.min(1,((p[0]-A[0])*W*dx+(p[1]-A[1])*H*dy)/(dx*dx+dy*dy||1))),d=Math.hypot((p[0]-A[0])*W-t*dx,(p[1]-A[1])*H-t*dy);
   if(!best||d<best.d)best={d,p:[A[0]+(B[0]-A[0])*t,A[1]+(B[1]-A[1])*t],e:[a,b]}}return best}
 /* 點擊位置換成原圖的百分比：星槎的入口層 .shp-hl 每格有位移＋轉動（立體視差、起伏），反算回去 */
@@ -11117,6 +11121,11 @@ function shwFreeOk(S,e){const t=e.target;if(!t||!t.closest||!S.M.contains(t))ret
 const shwYaw=(C,a,b)=>Math.atan2((b[0]-a[0])*C.W/100,(b[1]-a[1])*C.H/100/Math.sin(C.el*Math.PI/180));
 const shwWrap=d=>{while(d>Math.PI)d-=2*Math.PI;while(d<-Math.PI)d+=2*Math.PI;return d};
 const shwRM=()=>{try{return matchMedia("(prefers-reduced-motion: reduce)").matches}catch(e){return false}};
+/* 808：一跳（u 0→1）：先蹲（0～0.16）、空中照弧線走並拉長（0.16～0.86）、落地蹲一下；身高參考的 y 從 h0 換到 h1 */
+function shwHop(S,a,b,u,h0,h1){S.hy=h0+(h1-h0)*u;if(shwRM()){S.x=a[0]+(b[0]-a[0])*u;S.y=a[1]+(b[1]-a[1])*u;S.sq=null;return}const p0=.16,p1=.86;
+  if(u<p0){const k=u/p0;S.x=a[0];S.y=a[1];S.sq=[1+.12*k,1-.16*k];S.hy=h0}
+  else if(u<p1){const v=(u-p0)/(p1-p0),s=Math.sin(Math.PI*v),hA=2.2+Math.abs(b[1]-a[1])*.35;S.x=a[0]+(b[0]-a[0])*v;S.y=a[1]+(b[1]-a[1])*v-hA*s;S.sq=[1-.08*s,1+.12*s];S.hy=h0+(h1-h0)*v}
+  else{const k=(u-p1)/(1-p1),s=Math.sin(Math.PI*k);S.x=b[0];S.y=b[1];S.sq=[1+.1*s,1-.12*s];S.hy=h1}}
 /* 星槎主畫面（07f-ship.js 的 Voyage 呼叫） */
 function shipWalk(v,k){if(!SHIP_WALK_ON)return;const M=v.querySelector(".shp-map.full"),hl=M&&M.querySelector(".shp-hl");if(!hl)return;
   shwMount({v,cfg:SHW_SHIP,root:M,frame:M.querySelector(".shp-in"),layer:hl,before:hl.firstChild,sel:"[data-hs]",keyOf:b=>b.dataset.hs,find:h=>v.querySelector(`[data-hs="${h}"]`),mem:"ship"})}
@@ -11140,9 +11149,15 @@ function shwClick(S,e){if(S.pass||!S.ready||!S.box.isConnected)return;const g=S.
   if(!shwFreeOk(S,e))return;const p=shwPt(S,e);if(!(p[0]>=0&&p[0]<=100&&p[1]>=0&&p[1]<=100))return;const q=shwNear(S.C,p);if(!q)return;shwInk(S,p);shwGo(S,{free:1,q,tap:p})}   /* 意見回饋 782：點空地＝走到路網上離那裡最近的點，走到只換待機 */
 function shwGo(S,o){shwDrop();const C=S.C,g0=S.go;if(g0&&g0.btn&&g0.btn!==o.btn)g0.btn.classList.remove("shw-fade");
   if(S.stay&&S.stay!==o.btn){S.stay.classList.remove("shw-fade");S.stay=null;SHW_MEMH[S.o.mem]=null}
-  const from=g0&&S.curE?{p:[S.x,S.y],e:S.curE}:S.at,to=o.free?{p:o.q.p,e:o.q.e}:o.H[0],R=shwRoute(C,from,to);let L=0;for(let i=1;i<R.pts.length;i++)L+=shwPx(C,R.pts[i-1],R.pts[i]);
-  if(o.btn)o.btn.classList.add("shw-fade");const end=R.pts[R.pts.length-1];
-  S.go={free:!!o.free,hs:o.hs,btn:o.btn,to,pts:R.pts,segE:R.segE,L,dur:L?Math.max(o.free?.35:.6,Math.min(1.2,.3+L/650)):0,t:0,act:-1,
+  if(g0&&g0.ph){const q=g0.ph==="down"?g0.hd[1]:g0.hu[1];S.x=q[0];S.y=q[1];S.sq=null;S.curE=null;if(g0.ph==="up"){S.at=g0.to;S.hy=C.T[g0.to].hy}else{S.at=g0.hdTo;S.hy=null}}   /* 808：跳到一半又點別處：先算跳完 */
+  const from=g0&&!g0.ph&&S.curE?{p:[S.x,S.y],e:S.curE}:S.at,to=o.free?{p:o.q.p,e:o.q.e}:o.H[0],R=shwRoute(C,from,to);
+  /* 808：從桌上出發＝先跳下來；目的地在桌上＝走到桌邊再跳上去 */
+  let pts=R.pts,segE=R.segE,hd=null,hu=null,hdTo=null;if(WALK_HOP_ON&&C.T&&pts.length>1){const isT=e=>e&&(C.T[e[0]]||C.T[e[1]]);
+    if(typeof from==="string"&&C.T[from]&&isT(segE[0])){hd=[pts[0],pts[1]];hdTo=segE[0][0]===from?segE[0][1]:segE[0][0];pts=pts.slice(1);segE=segE.slice(1)}
+    const n=pts.length-1;if(n>=1&&typeof to==="string"&&C.T[to]&&isT(segE[n-1])){hu=[pts[n-1],pts[n]];pts=pts.slice(0,n);segE=segE.slice(0,n-1)}}
+  let L=0;for(let i=1;i<pts.length;i++)L+=shwPx(C,pts[i-1],pts[i]);
+  if(o.btn)o.btn.classList.add("shw-fade");const end=hu?hu[1]:pts[pts.length-1];
+  S.go={free:!!o.free,hs:o.hs,btn:o.btn,to,pts,segE,hd,hu,hdTo,ph:hd?"down":null,th:0,L,dur:L?Math.max(o.free?.35:.6,Math.min(1.2,.3+L/650)):0,t:0,act:-1,
     look:o.free?(shwPx(C,end,o.tap)>14?shwYaw(C,end,o.tap):null):shwYaw(C,end,[o.H[1],o.H[2]]),A:o.free?null:o.H[3]}}
 function shwOpen(S){const g=S.go;if(!g||g.free)return;S.go=null;S.curE=null;S.at=SHW_MEM[S.o.mem]=g.to;S.x=S.C.N[g.to][0];S.y=S.C.N[g.to][1];S.yaw=g.look;S.anim("idle",1);S.place();
   let b=g.btn;if(!b||!b.isConnected)b=S.o.find(g.hs);if(!b)return;S.pass=true;try{b.click()}finally{S.pass=false;if(g.btn!==b)g.btn.classList.remove("shw-fade");b.classList.add("shw-fade");S.stay=b;SHW_MEMH[S.o.mem]=null;shwUnfade(S,b,1500)}}
@@ -11226,8 +11241,9 @@ async function shwLoad(S){
   const ft=new T.Vector3(0,0,0).project(cam),ftF=(1-ft.y)/2,YMAX=Math.max(...Object.values(C.N).map(p=>p[1]));let cw=0,ch=0,Iw=0,Ih=0;
   const fit=()=>{Iw=S.I.clientWidth;Ih=S.I.clientHeight;if(!Ih)return;const h=Math.round(shwHt(C,YMAX)*Ih/(Math.cos(EL)/1.45)),w=Math.round(h*.75);if(h!==ch||w!==cw){ch=h;cw=w;r.setSize(cw,ch);
     Object.assign(cv.style,{left:-cw/2+"px",top:-Math.round(ftF*ch)+"px"});Object.assign(sh.style,{width:Math.round(ch*.34)+"px",height:Math.round(ch*.1)+"px",left:-Math.round(ch*.17)+"px",top:-Math.round(ch*.05)+"px"})}S.place()};
-  const P0=typeof S.at==="string"?C.N[S.at]:S.at.p,HS0=typeof S.at==="string"&&Object.values(C.HS).find(h=>h[0]===S.at);S.x=P0[0];S.y=P0[1];S.yaw=S.at===C.home||!HS0?shwYaw(C,P0,typeof S.at==="string"?C.look0:[P0[0],P0[1]+5]):shwYaw(C,P0,[HS0[1],HS0[2]]);
-  S.place=()=>{if(!Ih)return;const k=shwHt(C,S.y)/shwHt(C,YMAX);S.box.style.transform=`translate(${(S.x*Iw/100).toFixed(1)}px,${(S.y*Ih/100).toFixed(1)}px) scale(${k.toFixed(4)})`};
+  const P0=typeof S.at==="string"?C.N[S.at]:S.at.p,HS0=typeof S.at==="string"&&Object.values(C.HS).find(h=>h[0]===S.at);S.x=P0[0];S.y=P0[1];S.hy=C.T&&typeof S.at==="string"&&C.T[S.at]?C.T[S.at].hy:null;S.sq=null;S.yaw=S.at===C.home||!HS0?shwYaw(C,P0,typeof S.at==="string"?C.look0:[P0[0],P0[1]+5]):shwYaw(C,P0,[HS0[1],HS0[2]]);
+  S.place=()=>{if(!Ih)return;const k=shwHt(C,S.hy!=null?S.hy:S.y)/shwHt(C,YMAX);S.box.style.transform=`translate(${(S.x*Iw/100).toFixed(1)}px,${(S.y*Ih/100).toFixed(1)}px) scale(${k.toFixed(4)})`;
+    cv.style.transformOrigin=`50% ${(ftF*100).toFixed(1)}%`;cv.style.transform=S.sq?`scale(${S.sq[0].toFixed(3)},${S.sq[1].toFixed(3)})`:""};   /* 808：站在桌上照桌下地板的透視（hy）；跳的時候蹲、拉長（sq） */
   const clips=B.mixer&&B.clips||null;let cur=null,yawR=S.yaw;
   S.anim=(n,ts)=>{if(!clips){S.pn=n;return}const a=clips[n]||clips.idle;if(!a)return;a.timeScale=ts||1;if(a===cur)return;a.reset().fadeIn(n==="idle"?.25:.12).play();if(cur)cur.fadeOut(.15);cur=a};
   S.anim("idle",1);
@@ -11240,9 +11256,12 @@ async function shwLoad(S){
     if(!S.ready){if(S.o.gate&&!S.o.gate()){last=now;return}S.ready=true;fit();shwStay(S)}
     if(!S.go&&now-(S.lk||0)>1000){S.lk=now;const g2=shwLookG();if(g2!==S.lg){S.lg=g2;shwLoad(S).catch(()=>{S.box.remove();S.ready=false;document.body.classList.remove("shw-on")});return}}
     const dt=Math.min(.05,(now-last)/1000);last=now;acc+=dt;const g=S.go;let walk=false;
-    if(g){g.t+=dt;if(g.t<g.dur){walk=true;const u=g.t/g.dur,s=.65*u+.35*(.5-.5*Math.cos(Math.PI*u));let d=s*g.L,i=1;
+    if(g&&g.ph){g.th+=dt;const up=g.ph==="up",[a,b]=up?g.hu:g.hd,u=Math.min(1,g.th/(shwRM()?.25:.45));shwHop(S,a,b,u,up?a[1]:C.T[S.at]?C.T[S.at].hy:a[1],up?C.T[g.to].hy:b[1]);S.yaw=shwYaw(C,a,b);S.anim("idle",1);
+      if(u>=1){S.sq=null;S.x=b[0];S.y=b[1];if(up){g.upDone=1;S.hy=C.T[g.to].hy}else S.hy=null;g.ph=null}S.place()}   /* 808：跳上桌、跳下桌 */
+    else if(g){g.t+=dt;if(g.t<g.dur){walk=true;const u=g.t/g.dur,s=.65*u+.35*(.5-.5*Math.cos(Math.PI*u));let d=s*g.L,i=1;
         for(;i<g.pts.length;i++){const sl=shwPx(C,g.pts[i-1],g.pts[i]);if(d<=sl||i===g.pts.length-1){const f=sl?Math.min(1,d/sl):1,a=g.pts[i-1],b=g.pts[i];S.x=a[0]+(b[0]-a[0])*f;S.y=a[1]+(b[1]-a[1])*f;S.curE=g.segE[i-1]||null;if(sl)S.yaw=shwYaw(C,a,b);break}d-=sl}
         S.anim("walk",Math.max(1.3,Math.min(2.4,g.L/g.dur/220)))}
+      else if(g.hu&&!g.upDone){g.ph="up";g.th=0;S.curE=null;const q=g.hu[0];S.x=q[0];S.y=q[1]}
       else if(g.free){S.go=null;S.curE=null;const q=g.pts[g.pts.length-1];S.x=q[0];S.y=q[1];S.at=SHW_MEM[S.o.mem]=g.to;if(g.look!=null)S.yaw=g.look;S.anim("idle",1)}
       else{if(g.act<0){g.act=g.t;S.curE=null;S.x=C.N[g.to][0];S.y=C.N[g.to][1];S.yaw=g.look;S.anim(SHW_ACT[g.A]||"idle",g.A==="bow"?2.2:1.8)}if(g.t-g.act>.62)shwOpen(S)}
       S.place()}
@@ -12065,9 +12084,10 @@ const FBP_SEAL=[617,842,23],FBP_PILL=[673,866],FBP_JADE=[364,580];
 /* 告示榜上圖裡原本就有的 3 張空白紙條（左、上、寬、高，像素）：程式的回條就貼在這 3 張上面，跟著榜的透視微微斜 */
 const FBP_SLIPS=[[84,300,35,116],[131,289,30,112],[174,268,26,108]],FBP_SLIPN=[88,428];
 const SHW_FBP={el:40,h:[.085,70,.0012],look0:[42,60],home:"home",
-  N:{home:[66,93],mid:[42,83],desk:[40,76],gui:[82,81],lft:[12,72],brd:[18,57]},
-  E:"home-mid mid-desk mid-gui mid-lft lft-brd home-gui",
-  HS:{fbpBoard:["brd",18,40,"bow"]}};
+  N:{home:[66,93],mid:[42,83],desk:[40,76],gui:[82,81],lft:[12,72],brd:[18,57],te:[30,64],tb:[27,49.5]},
+  E:"home-mid mid-desk mid-gui mid-lft lft-brd home-gui desk-te te-tb",
+  T:{tb:{hy:61}},   /* 回饋 808：點「寫信」＝走到書案左前角、跳上案角（不站在信箋上），揮手後打開信箋 */
+  HS:{fbpBoard:["brd",18,40,"bow"],fbpWrite:["tb",50,47,"wave"]}};
 const fbpPc=(x,y)=>[x/7.68,y/13.76];
 const fbpDark=()=>{const t=store.get("pageTheme","auto");return t==="dark"||(t==="auto"&&matchMedia("(prefers-color-scheme: dark)").matches)};
 /* 錯誤模式的淡棋盤（程式畫，保證畫對）：9 直 10 橫、河界、九宮 X */
@@ -12378,7 +12398,8 @@ const CJM_IMGV="2330";
 /* 三件茶器（像素，768×1376）：[槽位, 口沿中心 x, y, 半寬, 半高, 點擊框中心 x, y, 寬, 高] */
 const CJM_VES=[["sip",241,638,50,12,241,652,120,70],["cup",401,555,73,16,401,590,190,120],["pot",586,417,24,6,586,520,150,230]];
 const CJM_SPOUT=[500,430];
-const SHW_CJ_BASE={el:42,h:[.085,70,.0012],look0:[52,45],home:"home",N:{home:[50,96],mid:[46,90],tbl:[40,84]},E:"home-mid mid-tbl"};
+const SHW_CJ_BASE={el:42,h:[.085,70,.0012],look0:[52,45],home:"home",N:{home:[50,96],mid:[46,90],tbl:[40,84],te:[62,84],tt:[64.5,59]},E:"home-mid mid-tbl tbl-te mid-te te-tt",
+  T:{tt:{hy:76}}};   /* 回饋 808：點茶具＝跳上石茶桌最前面的桌角（茶盞右下的空處，不擋茶具），鞠躬 */
 const cjmPc=(x,y)=>[x/7.68,y/13.76];
 const cjmDark=()=>{const t=store.get("pageTheme","auto");return t==="dark"||(t==="auto"&&matchMedia("(prefers-color-scheme: dark)").matches)};
 /* 今天的季節花葉（依月份，一天一種）：[名稱, 顏色, 形狀] */
@@ -12422,7 +12443,7 @@ function canjuMap(v){if(v.querySelector(".cjm-page"))return;const wrap=v.querySe
   P.querySelectorAll(".cjm-hit").forEach(b=>b.onclick=e=>{e.stopPropagation();const t=P.querySelector(`.cjm-tag[data-id="${CSS.escape(b.dataset.id)}"]`);if(t)t.click();else open(b.dataset.id)});
   P.querySelectorAll(".cjm-tag").forEach(b=>b.onclick=()=>open(b.dataset.id));
   if(typeof shpFit==="function")shpFit(v);
-  const HS={};CJM_VES.forEach(([k,x,y])=>{const[a,b]=pc(x,y);HS["cjm_"+k]=["tbl",+a.toFixed(2),+b.toFixed(2),all?"cheer":"bow"]});
+  const HS={};CJM_VES.forEach(([k,x,y])=>{const[a,b]=pc(x,y);HS["cjm_"+k]=[typeof WALK_HOP_ON!=="undefined"&&WALK_HOP_ON?"tt":"tbl",+a.toFixed(2),+b.toFixed(2),all?"cheer":"bow"]});
   try{if(typeof shwPage==="function"&&typeof SHIP_WALK_ON!=="undefined"&&SHIP_WALK_ON)shwPage(v,Object.assign({},SHW_PG0,SHW_CJ_BASE,{HS}),"cjm")}catch(e){}
   try{if(typeof zmPage==="function")zmPage(v)}catch(e){}}
 if(typeof CanjuDaily==="function"){const f0=CanjuDaily;CanjuDaily=function(v){const r=f0.apply(this,arguments);
@@ -13214,8 +13235,9 @@ const KJ2_IMGV="2410";
 const KJ2_BOARD=[[240,412],[535,412],[560,654],[214,654]];   /* 棋枰上面四角（像素 768×1376） */
 const KJ2_SLIP=[[252,722],[526,722],[530,786],[248,786]];
 const KJ2_RED=[148,572],KJ2_BLK=[632,610],KJ2_SCR=[585,448];
-const SHW_KJ2={el:40,h:[.085,92,.0028],look0:[50,40],home:"home",N:{home:[50,97],front:[50,80]},E:"home-front",
-  HS:{kj2Brd:["front",50,38,"cheer"],kj2Red:["front",20,42,"idle"],kj2Blk:["front",82,44,"idle"],kj2Slip:["front",50,55,"idle"],kj2Scr:["front",76,32,"idle"]}};
+const SHW_KJ2={el:40,h:[.085,92,.0028],look0:[50,40],home:"home",N:{home:[50,97],front:[50,80],fl:[24,78],tl:[18,54.5],fr:[76,78],tr:[82,54.5]},E:"home-front front-fl fl-tl front-fr fr-tr home-fl home-fr",
+  T:{tl:{hy:80},tr:{hy:80}},   /* 身高照「矮几前」那一點的透視（這頁透視縮得快，照桌腳會太小） */   /* 回饋 808：點朱冊／墨冊＝跳上矮几前面左右兩角（冊子前的空處，不站在棋枰和紙籤上） */
+  HS:{kj2Brd:["front",50,38,"cheer"],kj2Red:["tl",20,42,"idle"],kj2Blk:["tr",82,44,"idle"],kj2Slip:["front",50,55,"idle"],kj2Scr:["front",76,32,"idle"]}};
 const kj2Pc=(x,y)=>[(x/7.68).toFixed(2),(y/13.76).toFixed(2)];
 const kj2Dark=()=>{const t=store.get("pageTheme","auto"),h=new Date().getHours();return t==="dark"||(t==="auto"&&matchMedia("(prefers-color-scheme: dark)").matches)||h>=19||h<5};
 function kj2M3(w,h,q){const[[x0,y0],[x1,y1],[x2,y2],[x3,y3]]=q,dx1=x1-x2,dx2=x3-x2,dx3=x0-x1+x2-x3,dy1=y1-y2,dy2=y3-y2,dy3=y0-y1+y2-y3,den=dx1*dy2-dx2*dy1;
@@ -14737,8 +14759,9 @@ const SJ_IMGV="2500";
 const SJ_PG=[[[172,416],[596,416],[611,678],[157,678]],[[155,684],[613,684],[639,966],[128,966]]];   /* 上頁、下頁四角（像素 768×1376） */
 const SJ_LAMP=[241,262],SJ_TI=[190,1112];
 const SJ_INK={hantao:["#2a2420",2.2,"刻本"],xiang:["#2a2420",2.2,"刻本"],juanzong:["#4a4038",1,"卷宗"],shouchao:["#b8402c",1.1,"手抄"]};
-const SHW_SJ={W:768,H:1376,el:45,h:[.075,96,.001],look0:[50,60],home:"home",N:{home:[17,96],front:[50,96]},E:"home-front",
-  HS:{sjGrp:["front",50,60,"idle"]}};
+const SHW_SJ={W:768,H:1376,el:45,h:[.075,96,.001],look0:[50,60],home:"home",N:{home:[17,96],front:[50,96],fe:[50,91],tb:[50,82]},E:"home-front front-fe fe-tb",
+  T:{tb:{hy:96}},   /* 回饋 808：換分類＝跳上書案下方的空處（書頁下面、硯台左邊），不擋清單 */
+  HS:{sjGrp:["tb",50,60,"idle"]}};
 const sjKind=c=>["ai","play","pvp","study"].includes(c)?"shouchao":/^(gmgames|xuyinchuan)$/.test(c||"")?"juanzong":(typeof LB_OLD!=="undefined"&&LB_OLD.some(x=>x[0]===c))?"hantao":"xiang";
 const sjDark=()=>{const t=store.get("pageTheme","auto"),h=new Date().getHours();return t==="dark"||(t==="auto"&&matchMedia("(prefers-color-scheme: dark)").matches)||h>=19||h<5};
 const sjCn=n=>{const d="〇一二三四五六七八九";n=Math.max(1,n|0);if(n<10)return d[n];if(n<100)return(n>=20?d[Math.floor(n/10)]:"")+"十"+(n%10?d[n%10]:"");return String(n)};
