@@ -1300,7 +1300,7 @@ html[data-era=qin] .view:has(>.shp-rd),html[data-era=wudai] .view:has(>.shp-rd){
       if(!window.caches)return go();caches.keys().then(function(ks){return Promise.all(ks.filter(function(k){return k.indexOf("xqlab-app-")===0}).map(function(k){return caches.delete(k)}))})
         .then(function(){return navigator.serviceWorker&&navigator.serviceWorker.getRegistration()}).then(function(r){return r&&r.update()}).catch(function(){}).then(go)}};setTimeout(chk,4000)})();
 </script>
-<script>window.XQ_OFFLINE=true;window.XQ_BUILD="20261108-1750";</script>
+<script>window.XQ_OFFLINE=true;window.XQ_BUILD="20261108-1800";</script>
 <script src="core.js"></script>
 <script src="engine.js"></script>
 <script src="local.js"></script>
@@ -9111,14 +9111,14 @@ const IFX_FX={
 };
 ifxStart();
 /* ================= 🏮 驛站滿版水墨圖（意見回饋 759，開發者 11/8「照規劃繼續」；規劃 story/雲河驛站_規劃.md、出圖清單 story/雲河驛站_出圖清單.md）=================
-   innSheet()（07-legend.js）畫完以後呼叫 yzInn(v,k)：把上方 160px 橫幅換成那一朝的滿版圖 data/yizhan/<朝代>_c.webp（768×1376；意見回饋 769 的淡彩版，用新檔名避開手機舊快取；純水墨原圖在 park/yizhan/，要退回就轉檔放進 art/yizhan/ 再把 YZ_IMG 設成 ""），原本的清單全部留在圖下面。
+   innSheet()（07-legend.js）畫完以後呼叫 yzInn(v,k)：把上方 160px 橫幅換成那一朝的滿版圖 data/yizhan/<朝代>_f.webp（768×1376；意見回饋 773 的全彩水墨版，載不到退回 769 的淡彩 _c，用新檔名避開手機舊快取；純水墨原圖在 park/yizhan/，要退回就轉檔放進 art/yizhan/ 再把 YZ_IMG 設成 ""），原本的清單全部留在圖下面。
    雲河驛站（船艙那一站，k＝classic）＝總站：🏮 旅人、🗝 秘境棋友、📮 信箱（全部的信）、🏯 點將台，加上「千秋驛路」12 個朝代小圓印：
      沒停靠（eraLocked）＝霧＋灰印，點了 eraLockMsg；停靠過＝亮；學會了（shipLearned）＝朱印；那一朝有沒讀的信＝紅點；點亮的印走 shipGoTo（千秋穿梭）到那一朝的驛站。
    各朝驛站：旅人、秘境棋友、這一朝寄來的信（PARK_NPC 的 era），加一個史實小牌 YZ_SIGHT（點了 15% 撿那一朝的珍品，跟渡口景點一樣，沒撿到看介紹）。
    旅人、秘境棋友的小窗只是轉給清單上原本的按鈕（data-inn），下棋流程完全不變。
    YZ_ON＝總開關；YZ_READY＝定稿、可以上的圖（沒列的朝代照舊用橫幅）；YZ_SPOT／YZ_ROAD／YZ_SIGHT 的位置照每張圖量的（左%、上%）。樣式在 yzCss()（m.css 有別人在改，先放這裡）。 */
 const YZ_ON=true;   /* 開發者 11/8：史學顧問核過，打開 */
-const YZ_IMG="_c";
+const YZ_IMG="_f";   /* 意見回饋 773：全彩水墨版 <朝代>_f.webp；載不到退回淡彩 _c（img 的 onerror） */
 const YZ_READY=new Set(["classic","qin","han","sanguo","weijin","nanbei","sui","tang","wudai","song","yuan","ming","qing"]);
 const YZ_SPOT={
   classic:{tr:[51,66],sec:[23,54],mail:[80,69],ling:[85,58]},
@@ -9179,7 +9179,7 @@ function yzInn(v,k){if(!YZ_ON||!YZ_READY.has(k))return;const S=YZ_SPOT[k],pad=v.
     return(lk?`<i class="yz-fog" style="left:${p[0]}%;top:${p[1]-3.5}%"></i>`:"")+`<button class="yz-seal${lk?" lk":ln?" ln":""}${t.length>1?" w2":""}" data-yze="${e}" style="left:${p[0]}%;top:${p[1]}%" aria-label="${esc(innName(e))}${lk?"（星槎還沒停靠）":ln?"（這一站學會了）":""}${u?"，有新信":""}">${esc(t)}${u?"<i></i>":""}</button>`}).join("");
   const sub=k==="classic"?"旅人歇腳、書信往來；千秋驛路通往各朝驛站":esc((k==="classic"?"":eraLabel(k)+"・")+(T.place||"")),si=YZ_SIGHT[k]&&S.sight;
   const d=document.createElement("div");
-  d.innerHTML=`<div class="shp-page cq yz-page"><img src="data/yizhan/${k}${YZ_IMG}.webp" alt="${esc(innName(k))}">${road}<div class="shp-cap"><b>🏮 ${esc(innName(k))}</b><small>${sub}</small></div>${sp.map(([id,p,b,sm,cl])=>`<button class="shp-spot${cl?" "+cl:""}" id="${id}" style="left:${p[0]}%;top:${p[1]}%"><b>${b}</b>${sm?`<small>${sm}</small>`:""}</button>`).join("")}${si?`<button class="po-sight" id="yzSight" style="left:${S.sight[0]}%;top:${S.sight[1]}%">📍 ${esc(YZ_SIGHT[k][0])}</button>`:""}</div>`;
+  d.innerHTML=`<div class="shp-page cq yz-page"><img src="data/yizhan/${k}${YZ_IMG}.webp" alt="${esc(innName(k))}" onerror="if(!this.dataset.fb){this.dataset.fb=1;this.src='data/yizhan/${k}_c.webp'}">${road}<div class="shp-cap"><b>🏮 ${esc(innName(k))}</b><small>${sub}</small></div>${sp.map(([id,p,b,sm,cl])=>`<button class="shp-spot${cl?" "+cl:""}" id="${id}" style="left:${p[0]}%;top:${p[1]}%"><b>${b}</b>${sm?`<small>${sm}</small>`:""}</button>`).join("")}${si?`<button class="po-sight" id="yzSight" style="left:${S.sight[0]}%;top:${S.sight[1]}%">📍 ${esc(YZ_SIGHT[k][0])}</button>`:""}</div>`;
   const pg=d.firstElementChild;v.insertBefore(pg,pad);const ab=pad.querySelector(".abn");if(ab)ab.remove();
   const on=(q,fn)=>{const e=pg.querySelector(q);if(e)e.onclick=()=>{vibrate(5);fn()}};
   on("#yzTr",()=>yzPick(v,INN.map(x=>x.id),"🏮 路過的旅人","驛站裡都是路過的旅人，找誰下都可以、下幾次都可以。"));
