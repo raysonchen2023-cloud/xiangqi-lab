@@ -1214,7 +1214,7 @@ html .tabbar,html[data-era] .tabbar{border-top:1px solid color-mix(in srgb,var(-
 /* 6. 彩色 Q 版立繪：外面包一個淡宣紙圓底＋一圈淡墨筆觸環（不改圖）。大廳路過人物、驛站旅人、園子棋友、對局頭像 */
 [data-jc]>img,[data-inn] .lb>img,.gd-nc img,.gd-who img{width:56px!important;height:56px!important;padding:4px;box-sizing:border-box;border-radius:50%;object-fit:cover;object-position:50% 8%;background:var(--pfr);flex:none}
 .gd-who img{width:72px!important;height:72px!important}[data-inn] .lb:has(>img){min-width:56px}
-.player .av.npc{background:var(--pfr);outline:1.5px solid rgba(42,32,24,.4);outline-offset:1px}.player .av.npc img{background:none}
+.player .av.npc:has(>img){background:#F6EEDC;outline:1.5px solid rgba(42,32,24,.4);outline-offset:1px}.player .av.npc img{background:#F6EEDC}   /* 意見回饋 755：只在真的有頭像圖時才換成紙底；圖載不到（onerror 移除）時保留原本紅／黑底白字的帥將頭像，不然白字落在紙底上變成白圈 */
 /* 7. 雲河七星：正文頁純紙色＋紙紋；插畫加窄墨框、像貼在書頁上；目錄改直書章回目錄，圖示改朱紅小印（讀過的實心、沒讀的空心） */
 .view:has(>.shp-rd){background:var(--read-paper) var(--paper-tex)}
 .shp-fig img{border-radius:2px;border:1.5px solid rgba(42,32,24,.72);box-shadow:0 0 0 4px var(--read-paper),0 0 0 5px rgba(42,32,24,.2),0 9px 16px -8px rgba(60,40,20,.42)}
@@ -1301,7 +1301,7 @@ html[data-era=qin] .view:has(>.shp-rd),html[data-era=wudai] .view:has(>.shp-rd){
       if(!window.caches)return go();caches.keys().then(function(ks){return Promise.all(ks.filter(function(k){return k.indexOf("xqlab-app-")===0}).map(function(k){return caches.delete(k)}))})
         .then(function(){return navigator.serviceWorker&&navigator.serviceWorker.getRegistration()}).then(function(r){return r&&r.update()}).catch(function(){}).then(go)}};setTimeout(chk,4000)})();
 </script>
-<script>window.XQ_OFFLINE=true;window.XQ_BUILD="20261108-1430";</script>
+<script>window.XQ_OFFLINE=true;window.XQ_BUILD="20261108-1501";</script>
 <script src="core.js"></script>
 <script src="engine.js"></script>
 <script src="local.js"></script>
@@ -4021,7 +4021,7 @@ function onboard(){if(journey())journeyLock();else titleScreen({})}
 // ================= 設定：棋盤風格、棋子樣式、走棋顯示 =================
 const SAMPLE_FEN0="rnbakabnr/9/1c5c1/p1p1p1p1p/9/9/P1P1P1P1P/1C5C1/9/RNBAKABNR",SAMPLE_FEN1="rnbakabnr/9/1c5c1/p1p1p1p1p/9/9/P1P1P1P1P/1C2C4/9/RNBAKABNR",SAMPLE_LAST={f:70,t:67};
 /* 意見回饋 661：關於頁顯示整包遊戲要多大空間。XQ_SIZES 由 build-site.js 建置時填入（開發中的 m.html 是 null，就不顯示） */
-const XQ_SIZES={"pre":215030447,"code":12928020,"eng":51511005,"gm":33668932,"bgm":259516351,"opt":[["比賽對局 1956–2010",21765744],["比賽對局 2011–2014",25596413],["比賽對局 2015–2019",24821916]],"all":660898228,"other":16059400};
+const XQ_SIZES={"pre":215030447,"code":12928744,"eng":51511005,"gm":33668932,"bgm":259516351,"opt":[["比賽對局 1956–2010",21765744],["比賽對局 2011–2014",25596413],["比賽對局 2015–2019",24821916]],"all":660898952,"other":16059400};
 const szMB=b=>b>=1073741824?(b/1073741824).toFixed(1)+" GB":Math.max(1,Math.round(b/1048576))+" MB";
 function aboutSizes(){const S=XQ_SIZES;if(!S)return"";const opt=S.opt||[];   /* 意見回饋 662：玩家只看總數，細項只在開發者模式顯示 */
   return `<div class="row" style="justify-content:space-between"><span class="muted">整包下載</span><b>約 ${szMB(S.all)}</b></div>
@@ -4333,7 +4333,7 @@ function gameLayout(v){
   v.innerHTML=`<div class="player" id="pTop"></div><div class="evline"><div id="evf"></div></div><div class="boardbox" id="bbox"></div>
    <div class="player" id="pBot"></div><div class="status" id="stat"></div><div class="strip" id="strip"></div><div style="flex:1"></div><div class="actions" id="acts"></div>`;}
 /* 開發者 11/6：選了雲河七星的玩家，對局下方的頭像寫自己的本命子、放自己的角色（原本一律寫帥／將） */
-function playerHTML(side,name,sub,clock){let pc=side==="r"?"帥":"將",im="";try{const c=myChar(),C=c&&WX_CHARS[c];if(C&&name===meName()){const R2B={帥:"將",仕:"士",相:"象",俥:"車",傌:"馬",炮:"砲",兵:"卒"},B2R={};for(const k in R2B)B2R[R2B[k]]=k;pc=side==="r"?(B2R[C.pc]||C.pc):(R2B[C.pc]||C.pc);im=`<img src="xs/prev_${c}.webp" alt="" onerror="this.remove()">`}}catch(e){}return`<div class="av ${side}${im?" npc":""}">${esc(pc)}${im}</div><div class="nm"><b>${esc(name)}</b><span>${esc(sub||"")}</span></div>${clock!=null?`<div class="clk">${clock}</div>`:""}`}
+function playerHTML(side,name,sub,clock){let pc=side==="r"?"帥":"將",im="";try{const c=myChar(),C=c&&WX_CHARS[c];if(C&&name===meName()){const R2B={帥:"將",仕:"士",相:"象",俥:"車",傌:"馬",炮:"砲",兵:"卒"},B2R={};for(const k in R2B)B2R[R2B[k]]=k;pc=side==="r"?(B2R[C.pc]||C.pc):(R2B[C.pc]||C.pc);im=`<img src="data/xs/prev_${c}.webp" alt="" onerror="this.remove()">`}}catch(e){}return`<div class="av ${side}${im?" npc":""}">${esc(pc)}${im}</div><div class="nm"><b>${esc(name)}</b><span>${esc(sub||"")}</span></div>${clock!=null?`<div class="clk">${clock}</div>`:""}`}
 function renderStrip(box,moves,curIdx,onPick){
   const key=moves.map(m=>m.cn+(m.q||"")).join()+"|"+curIdx;if(box.dataset.k===key)return;box.dataset.k=key;box.innerHTML="";
   moves.forEach((m,i)=>{const c=document.createElement("button");c.className="chip "+(m.by||(i%2?"b":"r"))+(i===curIdx?" on":"");
