@@ -1341,7 +1341,7 @@ html[data-era=qin] .view:has(>.shp-rd),html[data-era=wudai] .view:has(>.shp-rd){
       if(!window.caches)return go();caches.keys().then(function(ks){return Promise.all(ks.filter(function(k){return k.indexOf("xqlab-app-")===0}).map(function(k){return caches.delete(k)}))})
         .then(function(){return navigator.serviceWorker&&navigator.serviceWorker.getRegistration()}).then(function(r){return r&&r.update()}).catch(function(){}).then(go)}};setTimeout(chk,4000)})();
 </script>
-<script>window.XQ_OFFLINE=true;window.XQ_BUILD="20261109-0500";</script>
+<script>window.XQ_OFFLINE=true;window.XQ_BUILD="20261109-0515";</script>
 <script src="core.js"></script>
 <script src="engine.js"></script>
 <script src="local.js"></script>
@@ -11255,6 +11255,9 @@ async function shwLoad(S){
    畫法跟 07w 走路角色一樣（XQBot3D.figure＋正交鏡頭、同一個 el 仰角和 SHW_PORT 的身高比例），離開頁面就收掉 WebGL；頁面藏起來或捲出畫面就不畫。
    渡口同時有：07r 的風（shader）＋走路角色＋這位＝3 個 WebGL。開關 PORT_HOST3D；前綴 ph4 */
 const PORT_HOST3D=true;
+/* 回饋 805（開發者 11/9「拿掉紅圈處，冗」）：渡口下方的說話小卡（.port-say）和大顆「⛵ 回星槎」按鈕藏起來（標題列已有 ⛵）。
+   小卡只是藏（display:none），07j 串門子、07t 劇集照舊插在它後面、照舊顯示；主人站著時點她聽那句，沒站人（說書人、玩家自己的角色、學徒、3D 載不起來）就在抵達時用泡泡講一次 */
+const PORT_CARD_HIDE=true;
 function ph4Css(){if(document.getElementById("ph4Css"))return;const s=document.createElement("style");s.id="ph4Css";s.textContent=`
 .ph4{position:absolute;left:0;top:0;width:0;height:0;z-index:5;pointer-events:none;opacity:0;transition:opacity .5s}
 .ph4.on{opacity:1}.ph4 canvas{position:absolute;pointer-events:none}
@@ -11264,19 +11267,30 @@ function ph4Css(){if(document.getElementById("ph4Css"))return;const s=document.c
 .ph4-say b{display:block;font-size:11.5px;color:#8a2a1a;letter-spacing:.06em}
 .ph4-say.on{opacity:1}.ph4-say::after{content:"";position:absolute;left:50%;bottom:-7px;margin-left:-6px;border:6px solid transparent;border-top-color:#3a2618;border-bottom:0}
 .ph4-say.side::after{display:none}.ph4-say.low{z-index:190}
+.pad.port.ph4-nc>.port-say,.pad.port.ph4-nc>#poShip{display:none}
 .port-say.ph4-flash{animation:ph4Fl 1.6s ease-out}
 @keyframes ph4Fl{0%,40%{box-shadow:0 0 0 3px rgba(242,201,76,.95),0 0 14px 4px rgba(255,214,120,.7)}100%{box-shadow:none}}
 @media (prefers-reduced-motion:reduce){.port-say.ph4-flash{animation:none}}`;document.head.append(s)}
 /* 這一朝渡口小卡上說話的七星主人（說書人、或就是玩家自己的角色時回傳空字串） */
 function ph4Who(k){try{const Ls=SHIP_LESSON[k]||{},T=SHIP_STOP[k]||{};if(shipAppr()||!Ls.open)return"";const by=shipLearned(k)&&Ls.done?Ls.doneBy:Ls.openBy;if(by==="teller")return"";
   const c=by||(T.who||[])[0]||"";if(!c||!WX_CHARS[c]||c===myChar())return"";return c}catch(e){return""}}
-function ph4Mount(v,k){if(!PORT_HOST3D||shwRM()||!SHW_PORT_ON||!SHW_PORT[k])return;const P=v&&v.querySelector(".shp-page.cq");if(!P||P.dataset.ph4)return;const c=ph4Who(k);if(!c)return;P.dataset.ph4="1";ph4Css();
+function ph4Mount(v,k){if(!PORT_HOST3D||shwRM()||!SHW_PORT_ON||!SHW_PORT[k])return false;const P=v&&v.querySelector(".shp-page.cq");if(!P||P.dataset.ph4)return!!(P&&P.dataset.ph4);const c=ph4Who(k);if(!c||typeof TRIPO!=="undefined"&&Object.keys(TRIPO).length&&!TRIPO[c])return false;P.dataset.ph4="1";ph4Css();
   const C=shwCfg(SHW_PORT[k],SHW_PSX[k]);if(Array.isArray(C.h))C.h=[C.h[0]*SHW_PORT_K,C.h[1],C.h[2]*SHW_PORT_K];
   const box=document.createElement("div");box.className="ph4";box.setAttribute("aria-hidden","true");box.innerHTML='<i class="sh"></i>';
   const hit=document.createElement("button");hit.type="button";hit.className="ph4-hit";const nm=(WX_CHARS[c].nk||WX_CHARS[c].n||"");hit.setAttribute("aria-label",nm+"：聽她說話");hit.style.display="none";
   const say=document.createElement("div");say.className="ph4-say";say.setAttribute("aria-live","polite");
   const before=P.querySelector(".shp-spot,.po-sight");P.insertBefore(box,before&&before.parentNode===P?before:null);P.append(hit,say);
-  ph4Load(P,box,hit,say,C,k,c).catch(()=>{box.remove();hit.remove();say.remove()})}
+  ph4Load(P,box,hit,say,C,k,c).catch(()=>{box.remove();hit.remove();say.remove();ph4Line(v,k)});return true}
+/* 小卡那一句（名字、話）：直接讀藏起來的小卡 */
+function ph4Card(v){const p=v&&v.querySelector(".port-say p"),b=p&&p.querySelector("b"),full=p?p.textContent:"",t=(full.match(/「([\s\S]*)」\s*$/)||[])[1]||full.replace(b?b.textContent:"","").trim();return{n:b?b.textContent:"",t}}
+/* 沒站人時：抵達後（下船過場、步行小卡播完）在走路角色起點上方用宣紙泡泡講一次 */
+function ph4Line(v,k){if(!PORT_CARD_HIDE)return;const P=v&&v.querySelector(".shp-page.cq");if(!P||P.dataset.ph4l)return;const L=ph4Card(v);if(!L.t)return;P.dataset.ph4l="1";ph4Css();
+  const say=document.createElement("div");say.className="ph4-say";say.setAttribute("aria-live","polite");say.innerHTML=`<b>${esc(L.n)}</b>${esc(L.t)}`;P.append(say);let n=0;
+  const go=()=>{if(!say.isConnected)return;if((P.classList.contains("pc-run")||document.querySelector(".walkc")||document.hidden)&&++n<60)return void setTimeout(go,300);
+    const C=SHW_PORT[k]?shwCfg(SHW_PORT[k],SHW_PSX[k]):null,H=C&&C.N[C.home]||[50,70],Ih=P.clientHeight,Iw=P.clientWidth,hh=C?shwHt(C,H[1])*SHW_PORT_K*Ih:Ih*.06;
+    Object.assign(say.style,{left:(H[0]*Iw/100)+"px",top:(H[1]*Ih/100-hh-6)+"px"});say.classList.add("on");try{if(typeof shwSayFit==="function")shwSayFit(say,P,hh+say.offsetHeight+14)}catch(e){}
+    setTimeout(()=>{say.classList.remove("on");setTimeout(()=>say.remove(),400)},Math.max(4000,Math.min(9000,L.t.length*170)))};
+  setTimeout(go,900)}
 /* 站的位置：home 往左或往右錯開，挑不壓到標籤、也不壓到走路角色起點的那一邊 */
 function ph4Spot(P,C,hFr){const H=C.N[C.home]||[50,70],W=P.clientWidth,Hh=P.clientHeight,labs=[...P.querySelectorAll(".shp-spot,.po-sight")].map(b=>{const r=b.getBoundingClientRect(),q=P.getBoundingClientRect();return[r.left-q.left,r.top-q.top,r.right-q.left,r.bottom-q.top]});
   const cand=[[H[0]+11,H[1]+1.5],[H[0]-11,H[1]+1.5],[H[0]+16,H[1]+3],[H[0]-16,H[1]+3],[H[0]+11,H[1]-3],[H[0]-11,H[1]-3]].filter(([x,y])=>x>8&&x<92&&y<94);
@@ -11304,11 +11318,11 @@ async function ph4Load(P,box,hit,say,C,k,cid){
   let vis=true;try{const io=new IntersectionObserver(es=>{vis=es.some(e=>e.isIntersecting)});io.observe(P)}catch(e){}
   if(window.ResizeObserver){const ro=new ResizeObserver(()=>{if(!box.isConnected){ro.disconnect();return}fit()});ro.observe(P)}fit();
   /* 點她：說小卡那一句、小卡閃一下 */
-  let sayT=0;hit.onclick=e=>{e.stopPropagation();e.preventDefault();if(typeof vibrate==="function")vibrate(5);const card=(P.closest(".view")||document).querySelector(".port-say");
+  let sayT=0;hit.onclick=e=>{e.stopPropagation();e.preventDefault();if(typeof vibrate==="function")vibrate(5);const card=(P.closest(".view")||document).querySelector(".port-say"),cardOn=!!(card&&card.offsetParent);
     const p=card&&card.querySelector("p"),bn=p&&p.querySelector("b"),full=p?p.textContent:"",t=(full.match(/「([\s\S]*)」\s*$/)||[])[1]||full.replace(bn?bn.textContent:"","").trim();if(!t)return;
     say.innerHTML=`<b>${esc(bn?bn.textContent:(Cc.nk||Cc.n||""))}</b>${esc(t)}`;say.classList.add("on");say.style.marginLeft="";fit();try{if(typeof shwSayFit==="function")shwSayFit(say,P,(parseFloat(hit.style.height)||0)+say.offsetHeight+14)}catch(err){}
     clearTimeout(sayT);sayT=setTimeout(()=>say.classList.remove("on"),Math.max(3000,Math.min(9000,t.length*170)));waveAt=performance.now();
-    if(card){card.classList.remove("ph4-flash");void card.offsetWidth;card.classList.add("ph4-flash");setTimeout(()=>{try{card.scrollIntoView({behavior:"smooth",block:"nearest"})}catch(err){}},350)}};
+    if(cardOn){card.classList.remove("ph4-flash");void card.offsetWidth;card.classList.add("ph4-flash");setTimeout(()=>{try{card.scrollIntoView({behavior:"smooth",block:"nearest"})}catch(err){}},350)}};
   const outside=e=>{if(!box.isConnected){document.removeEventListener("click",outside,true);return}if(e.target!==hit)say.classList.remove("on")};document.addEventListener("click",outside,true);
   let last=performance.now(),acc=0,fr=0,waveAt=performance.now()+4000+Math.random()*4000,nextWave=0,yawR=yaw0();
   const end=()=>{try{cv.remove()}catch(e){}try{r.dispose();r.forceContextLoss()}catch(e){}hit.remove();say.remove()};
@@ -11321,7 +11335,7 @@ async function ph4Load(P,box,hit,say,C,k,cid){
     if(!clips&&B.arms&&B.arms[1]){const w=now>=waveAt&&now<waveAt+1800;B.arms[1].rotation.z=w?2.5:0}
     if(fr++&1)return;if(clips)B.mixer.update(acc);acc=0;B.bot.position.y=by;r.render(sc,cam);if(!box.classList.contains("on"))box.classList.add("on")};
   requestAnimationFrame(loop)}
-if(typeof portWind==="function"){const f0=portWind;portWind=function(v,k){const r=f0.apply(this,arguments);try{ph4Mount(v,k)}catch(e){}return r}}
+if(typeof portWind==="function"){const f0=portWind;portWind=function(v,k){const r=f0.apply(this,arguments);try{const pad=PORT_CARD_HIDE&&v&&v.querySelector(".pad.port");if(pad){ph4Css();pad.classList.add("ph4-nc")}if(!ph4Mount(v,k)&&pad)ph4Line(v,k)}catch(e){}return r}}
 /* ================= 🔍 滿版水墨圖兩指縮放（意見回饋 785，開發者 11/8「玩家手指縮放可以放大縮小星船/渡口/驛站」）=================
    星槎主畫面（.shp-map.full 裡的 .shp-in）、渡口與驛站（.shp-page.cq）都可以兩指縮放 1～2.5 倍；放大後單指拖曳看別處；雙擊（電腦：雙按）還原。
    整個框一起用 transform 縮放，所以圖上的入口標籤、3D 角色（07w）、07r 渡口風、07k 疊層、星槎的 WebGL 立體都跟著圖走、位置對得上。
