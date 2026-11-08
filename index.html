@@ -1341,7 +1341,7 @@ html[data-era=qin] .view:has(>.shp-rd),html[data-era=wudai] .view:has(>.shp-rd){
       if(!window.caches)return go();caches.keys().then(function(ks){return Promise.all(ks.filter(function(k){return k.indexOf("xqlab-app-")===0}).map(function(k){return caches.delete(k)}))})
         .then(function(){return navigator.serviceWorker&&navigator.serviceWorker.getRegistration()}).then(function(r){return r&&r.update()}).catch(function(){}).then(go)}};setTimeout(chk,4000)})();
 </script>
-<script>window.XQ_OFFLINE=true;window.XQ_BUILD="20261108-2100";</script>
+<script>window.XQ_OFFLINE=true;window.XQ_BUILD="20261108-2110";</script>
 <script src="core.js"></script>
 <script src="engine.js"></script>
 <script src="local.js"></script>
@@ -11186,17 +11186,28 @@ const HUB_DEF={
 const HUB_LAMP={learn:[[1.7,39],[98.3,39],[21.7,40.5],[38.7,40.5],[61.7,40.5],[78.7,40.5],[12.5,33.7],[87.5,33.7],[21.7,28.8],[78.7,28.8],[38.3,16.5],[61.7,16.5]],
   battle:[[3,30.5],[22.5,29],[50,26.5],[65,25.5],[26.5,42.5],[51,39],[91,64.5],[62,72]]};
 const HUB_STEAM=[23,63],HUB_POND="polygon(60% 62.3%,73.5% 62.3%,77.5% 68.4%,61% 68.4%)";
-/* 07w 的座標表（腳底的位置）。學習頁：從大門口的石階進來，前院左右是石碑、沙盤；穿過門樓到中庭；講堂月台；左側迴廊繞到藏書閣前的小廣場 */
+/* 07w 的座標表（腳底的位置）。學習頁：從大門口的石階進來，穿過門樓（門樓屋頂那一段角色先隱身）到中庭；石桌、洗墨池、迴廊木板在中庭兩旁；
+   講堂月台只有正中間一道台階。意見回饋 790：去藏書閣（棋譜庫、猜著法）一律從大考桌左邊繞過、穿過講堂正中間敞開的門（門內到講堂後面隱身），再走到閣門；
+   原本沿左側迴廊上去、從中庭斜穿月台磚牆的路都拿掉了。
+   對戰頁：從大門石階進穿堂，穿過門樓（屋頂那一段隱身）到天井；八仙桌右邊是線上對戰、左後方是挑戰電腦。意見回饋 791：千秋盃走右邊木樓梯上二樓——
+   樓梯腳→下段樓梯→轉角平台→上段樓梯→樓梯頂→二樓迴廊→說書台旁；在樓上時身高照樓梯腳算，不再照 y 縮小（h 用函式）。
+   hide：[左%,右%,上%,下%] 範圍內角色隱身（07y 的 hbHide 照角色位置改透明度） */
 const SHW_HUB={
-  learn:{el:45,h:[.033,29,.0007],look0:[50,99],
-    N:{home:[50,95],fl:[31,93],stele:[16,92],fr:[69,93],sand:[80,91],g:[50,86],c:[50,70.5],tea:[25,71],pond:[56,67],r1:[70,71.5],theme:[84,65],rec:[19,61],t1:[50,57],exam:[50,52.5],open:[70,52.5],tl:[22,52],l1:[26,41],l2:[32,31],guess:[42,29.5],door:[50,29]},
-    E:"home-fl fl-stele home-fr fr-sand home-g g-c c-tea c-pond c-r1 r1-theme c-rec tea-rec c-t1 t1-exam exam-open exam-tl rec-tl tl-l1 l1-l2 l2-guess guess-door",
+  learn:{el:45,h:[.033,29,.0007],look0:[50,99],hide:[[40,60,70.9,77.6],[44,56,30.4,44.6]],
+    N:{home:[50,95],fl:[31,93],stele:[16,92],fr:[69,93],sand:[80,91],g:[50,86],c:[50,69.5],tea:[25,71],pond:[56,67],r1:[70,73],r2:[84,73],theme:[85,65],
+      t1:[50,57],exam:[50,52.5],open:[70,52.5],tL:[34,52.6],tl:[22,52],tLb:[34.5,47.3],hd:[50,46.7],hin:[50,44.2],hb:[50,30],guess:[42,29.5],door:[50,28.8]},
+    E:"home-fl fl-stele home-fr fr-sand home-g g-c c-tea c-pond c-r1 r1-r2 r2-theme c-t1 t1-exam exam-open exam-tL tL-tl tL-tLb tLb-hd hd-hin hin-hb hb-door hb-guess",
     HS:{hbTerms:["stele",19,80,"bow"],hbCamp:["sand",80,79,"wave"],hbCanju:["tea",23,60,"bow"],hbRedo:["pond",74,64,"wave"],hbTheme:["theme",95,60,"wave"],
       hbQuiz:["exam",50,48,"bow"],hbStats:["tl",10,47,"wave"],hbOpen:["open",70,44,"wave"],hbGuess:["guess",48,18,"wave"],hbDb:["door",50,24,"bow"]}},
-  battle:{el:40,h:[.07,64,.0007],look0:[40,95],
-    N:{home:[80,85],th:[78,77],g2:[68,66],c:[50,64],cpu:[37,64],arena:[70,56],stair:[60,49]},
-    E:"home-th th-g2 g2-c c-cpu g2-arena arena-stair",
-    HS:{hbNet:["c",50,55,"bow"],hbCpu:["cpu",18,64,"bow"],hbArena:["arena",84,50,"cheer"],hbCup:["stair",60,38,"wave"],hbCar:["th",84,72,"wave"]}}};
+  battle:{el:40,h:y=>.07+(Math.max(y,48.2)-64)*.0007,look0:[40,95],hide:[[68,92,57.3,65.6]],
+    N:{home:[80,88],th:[80,76],arena:[73,56],n:[65,53.5],bt:[50,49],tlb:[38,49.3],cpu:[35,52.5],sf:[58,48.2],s1:[64,43.3],sl:[69.5,39.3],s2:[66.2,36.3],st:[59.5,31.6],gal:[53,32.5],stage:[44.5,32.8]},
+    E:"home-th th-arena arena-n n-bt n-sf bt-sf bt-tlb tlb-cpu sf-s1 s1-sl sl-s2 s2-st st-gal gal-stage",
+    HS:{hbNet:["n",52,53,"bow"],hbCpu:["cpu",15,64,"bow"],hbArena:["arena",84,50,"cheer"],hbCup:["stage",35,32,"bow"],hbCar:["th",84,72,"wave"]}}};
+/* 角色走進 hide 範圍（穿過門樓、講堂裡面）就淡出，走出來再出現：看 07w 每格寫的 translate 換成百分比 */
+function hbHide(P,Z){const b=P.querySelector(".shw");if(!b||!Z||!Z.length)return;b.style.transition="opacity .18s";
+  const mo=new MutationObserver(()=>{if(!b.isConnected){mo.disconnect();return}const m=/translate\(([-\d.]+)px,\s*([-\d.]+)px\)/.exec(b.style.transform),W=P.clientWidth,H=P.clientHeight;if(!m||!W||!H)return;
+    const x=+m[1]/W*100,y=+m[2]/H*100,o=Z.some(z=>x>=z[0]&&x<=z[1]&&y>=z[2]&&y<=z[3])?"0":"";if(b.style.opacity!==o)b.style.opacity=o});
+  mo.observe(b,{attributes:true,attributeFilter:["style"]})}
 function hbCss(){if(document.getElementById("hbCss"))return;const s=document.createElement("style");s.id="hbCss";s.textContent=`
 .hub-page{margin:0 0 6px}.hub-page .shp-spot{max-width:46%;padding:4px 11px}.hub-page .shp-spot b{white-space:nowrap;font-size:14px}.hub-page .shp-spot.hot{padding:5px 13px}.hub-page .shp-spot.hot b{font-size:15px}.hb-hidden{display:none!important}
 .hb-fx{position:absolute;inset:0;pointer-events:none;overflow:hidden}
@@ -11246,7 +11257,7 @@ function hubMap(v,hub){const D=HUB_DEF[hub],home=v.querySelector(".home");if(!D|
     const mo=new MutationObserver(upd);mo.observe(o.c,{subtree:true,childList:true,characterData:true})}
   try{(hub==="learn"?hbFxLearn:hbFxBattle)(P,P.querySelector(":scope>img"))}catch(e){}
   if(typeof shpFit==="function")shpFit(v);
-  try{if(typeof shwPage==="function"&&SHIP_WALK_ON&&SHW_HUB[hub])shwPage(v,Object.assign({},SHW_PG0,SHW_HUB[hub]),"hub:"+hub)}catch(e){}
+  try{if(typeof shwPage==="function"&&SHIP_WALK_ON&&SHW_HUB[hub]){shwPage(v,Object.assign({},SHW_PG0,SHW_HUB[hub]),"hub:"+hub);hbHide(P,SHW_HUB[hub].hide)}}catch(e){}
   try{if(typeof zmPage==="function")zmPage(v)}catch(e){}}
 if(typeof Home==="function"){const f0=Home;Home=function(v,hub){const r=f0.apply(this,arguments);try{if(HUB_MAP_ON&&(hub==="learn"||hub==="battle"))hubMap(v,hub)}catch(e){}return r}}
 /* ================= 🕰 回到當年（意見回饋 313）=================
