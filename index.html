@@ -351,7 +351,7 @@ html[data-era=ming] .topbar,html[data-era=qing] .topbar{border-bottom-width:4px}
 .opt{display:flex;flex-wrap:wrap;gap:8px;margin:6px 0 12px}
 .opt button{padding:9px 14px;border-radius:12px;background:var(--bg);border:1px solid var(--line);font-weight:500}
 .opt button.on{background:var(--accent);color:#fff;border-color:var(--accent)}
-.btn{display:block;width:100%;padding:13px;border-radius:10px;background:var(--btn-main,var(--accent));color:#fff;font-weight:900;font-size:16px;text-align:center;margin-top:6px}   /* 畫風一致性第一批：主要按鈕＝朱紅印章色（--btn-main）、次要按鈕＝墨框 */
+.btn{display:block;width:100%;padding:13px;border-radius:var(--btn-r,10px);background:var(--btn-main,var(--accent));color:#fff;font-weight:900;font-size:16px;text-align:center;margin-top:6px}   /* 畫風一致性第一批：主要按鈕＝朱紅印章色（--btn-main）、次要按鈕＝墨框 */
 .btn.ghost{background:var(--bg);color:var(--ink);border:1px solid var(--ghost-edge,var(--line))}
 .lvl{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin:8px 0 12px}
 .lvl button{border-radius:14px;padding:10px 4px;background:var(--bg);border:1px solid var(--line);display:flex;flex-direction:column;align-items:center;gap:2px}
@@ -1194,8 +1194,8 @@ html:has(#xqTitle:not(.out)),html:has(#xqTitle:not(.out)) body{background:#F3ECD
   --ink-edge:color-mix(in srgb,var(--ink) 20%,transparent);--ink-halo:0 0 4px color-mix(in srgb,var(--ink) 9%,transparent);--ghost-edge:color-mix(in srgb,var(--ink) 38%,transparent);
   --ico-f:saturate(.55) sepia(.15) contrast(1.05);
   --pfr:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Cg fill='none' stroke='%232A2018' stroke-linecap='round'%3E%3Cpath d='M50 4.6a45.4 45.4 0 1 1-31.4 12.7' stroke-width='2.8' stroke-opacity='.6'/%3E%3Cpath d='M14.5 22.5a45 45 0 0 1 8.5-8.2' stroke-width='1.5' stroke-opacity='.38'/%3E%3Cpath d='M51 8a42 42 0 0 0-39 27' stroke-width='.9' stroke-opacity='.26'/%3E%3C/g%3E%3C/svg%3E") center/100% 100% no-repeat,radial-gradient(circle at 50% 40%,#FFFCF4 0,#F5ECDA 64%,#E8DBC1 100%)}
-/* 深色朝代（秦、五代）與經典深色：暗宣紙；標題字用金色，色帶用 trim，朱紅稍微提亮 */
-html[data-era=qin],html[data-era=wudai],html[data-theme=dark]:not([data-era]){--ink-bar:var(--barink);--band:var(--trim);--zhu:#B8452F;--read-paper:var(--bg);--ink-halo:0 0 6px rgba(0,0,0,.35);--ico-f:saturate(.6) sepia(.12) brightness(.96)}
+/* 經典深色：暗宣紙；標題字用金色，色帶用 trim，朱紅稍微提亮（秦、五代 11/8 開發者要求改回原樣，見這一段最後） */
+html[data-theme=dark]:not([data-era]){--ink-bar:var(--barink);--band:var(--trim);--zhu:#B8452F;--read-paper:var(--bg);--ink-halo:0 0 6px rgba(0,0,0,.35);--ico-f:saturate(.6) sepia(.12) brightness(.96)}
 @media (prefers-color-scheme:dark){html:not([data-theme=light]):not([data-era]){--ink-bar:var(--barink);--band:var(--trim,var(--accent));--zhu:#B8452F;--read-paper:var(--bg);--ink-halo:0 0 6px rgba(0,0,0,.35);--ico-f:saturate(.6) sepia(.12) brightness(.96)}}
 /* 1. 全站紙紋（取代滿版回紋）；卡片的朝代色邊改淡墨線 */
 html .app,html.gapfix .app,html[data-era] .app{background-image:var(--paper-tex)}
@@ -1238,6 +1238,22 @@ html .tabbar,html[data-era] .tabbar{border-top:1px solid color-mix(in srgb,var(-
 .bt-mn{fill:#3A1E14}.bt-k.s{background:#A8321F}.bt-k.n{color:#A8741A}.bt-k.l{color:#3A2E24}
 /* 2. 對局頁下方的主要按鈕（新局）也用朱紅 */
 .actions button.pri .ic{background:var(--btn-main)}
+/* 秦、五代：開發者 11/8 看了「學習（秦）」對照圖，要求深色朝代改回原本的樣子——深色回紋滿版底、回紋標題列、圖示的方形色塊底與原本飽和度、卡片原本的邊框和陰影、原本的按鈕色。
+   做法：把上面用到的變數在這兩朝換回原值（不套紙紋、不套圖示濾鏡），再把被蓋掉的幾條規則照原本的寫回來 */
+html[data-era=qin],html[data-era=wudai]{--paper-tex:none;--paper-bar:var(--bar);--ink-bar:var(--barink);--btn-main:var(--accent);--read-paper:transparent;
+  --ink-edge:color-mix(in srgb,var(--trim) 40%,var(--line));--ink-halo:0 1px 3px #0000001a;--ghost-edge:var(--line);--ico-f:saturate(1);--btn-r:14px}
+html[data-era=qin] .app,html[data-era=wudai] .app{background-image:var(--motif-bg)}
+html.gapfix[data-era=qin],html.gapfix[data-era=qin] body,html.gapfix[data-era=wudai],html.gapfix[data-era=wudai] body{background:var(--card)}
+html[data-era=qin] .topbar,html[data-era=wudai] .topbar{background:var(--bar) var(--motif-bar);border-bottom:3px solid var(--trim);box-shadow:none}
+html[data-era=qin] .topbar .ib:active,html[data-era=wudai] .topbar .ib:active{background:#ffffff22}
+html[data-era=qin] .topbar .cpu-seg,html[data-era=wudai] .topbar .cpu-seg{background:#ffffff1f}
+html[data-era=qin] #meChip,html[data-era=wudai] #meChip{background:rgba(255,248,236,.16)}
+html[data-era=qin] .tabbar,html[data-era=wudai] .tabbar{background:var(--card);border-top:2px solid var(--trim)}
+html[data-era=qin] .tabbar button,html[data-era=wudai] .tabbar button{color:var(--muted)}
+html[data-era=qin] .tile .ic:has(.eic),html[data-era=wudai] .tile .ic:has(.eic){background:color-mix(in srgb,var(--c) 15%,var(--card))}
+html[data-era=wudai] .card,html[data-era=wudai] .tile{border-radius:16px}html[data-era=qin] .item,html[data-era=wudai] .item{border-radius:14px;border-color:var(--line)}
+html[data-era=qin] .hrec,html[data-era=wudai] .hrec,html[data-era=wudai] .instc{border-radius:16px}html[data-era=qin] .rd-gist,html[data-era=wudai] .rd-gist{border-radius:12px}
+html[data-era=qin] .view:has(>.shp-rd),html[data-era=wudai] .view:has(>.shp-rd){background:none}
 </style></head><body>
 <div class="app">
  <div class="topbar" id="topbar"><button class="ib" id="back" hidden><b>‹</b>返回</button><h1 id="title">象棋千秋</h1><span id="topRight"></span></div>
@@ -1285,7 +1301,7 @@ html .tabbar,html[data-era] .tabbar{border-top:1px solid color-mix(in srgb,var(-
       if(!window.caches)return go();caches.keys().then(function(ks){return Promise.all(ks.filter(function(k){return k.indexOf("xqlab-app-")===0}).map(function(k){return caches.delete(k)}))})
         .then(function(){return navigator.serviceWorker&&navigator.serviceWorker.getRegistration()}).then(function(r){return r&&r.update()}).catch(function(){}).then(go)}};setTimeout(chk,4000)})();
 </script>
-<script>window.XQ_OFFLINE=true;window.XQ_BUILD="20261108-1330";</script>
+<script>window.XQ_OFFLINE=true;window.XQ_BUILD="20261108-1400";</script>
 <script src="core.js"></script>
 <script src="engine.js"></script>
 <script src="local.js"></script>
@@ -1574,7 +1590,7 @@ const E=(bg,card,ink,muted,line,accent,accent2,bar,barink,trim,extra)=>Object.as
 const ERAS=[
   {k:"classic",n:"經典",s:"原本的樣式，可配淺色／深色"},
   {k:"qin",n:"秦・玄黑",s:"秦尚黑：黑漆、青銅、回紋",m:"meander",dark:1,
-    c:E("#221F1B","#2B2722","#EADFCB","#A39276","#463D33","#D2503A","#C9973F","#0A0807","#E2C48A","#8C6A35",{red:"#E0574B",blk:"#0F0D0B",warn:"#E3A34A",info:"#8FA9C8"}),
+    c:E("#14110E","#1F1A15","#EADFCB","#A39276","#3A3026","#D2503A","#C9973F","#0A0807","#E2C48A","#8C6A35",{red:"#E0574B",blk:"#0F0D0B",warn:"#E3A34A",info:"#8FA9C8"}),
     b:{bg:["#2E261F","#17130F"],grid:"#B98A45",piece:"#EAD9B8",r:"#C8382A",b:"#14110E",mv:"#E2B65A",bevel:1}},
   {k:"han",n:"漢・漆朱",s:"漢代漆器：朱紅配黑、雲氣紋",m:"cloud",
     c:E("#F3E7D7","#FCF6EC","#2A1410","#7E5E50","#E0CDB8","#A3271C","#3B5E46","#1A0F0C","#F0C9A0","#A3271C",{blk:"#1A1210"}),
@@ -1595,7 +1611,7 @@ const ERAS=[
     c:E("#F7EBD3","#FFF8EA","#3A1F0E","#87674A","#EAD3AE","#C2571A","#2E7D5B","#6E1F1A","#F7D88F","#D9A441"),
     b:{bg:["#F2CC85","#C98F3E"],grid:"#5E3110",piece:"#FFF6E2",r:"#B3261E",b:"#2A160A",mv:"#2E7D5B",bevel:1}},
   {k:"wudai",n:"五代・夜宴",s:"韓熙載夜宴圖：夜色、硃砂、石綠",m:"coin",dark:1,
-    c:E("#24201C","#2D2823","#EFE3CF","#A8977C","#4A4037","#D9603F","#5FA88A","#0F0C0A","#EBD3A8","#7A5A3A",{red:"#E0574B",blk:"#151210",warn:"#E3A34A",info:"#8FA9C8"}),
+    c:E("#1A1613","#26201B","#EFE3CF","#A8977C","#3D342B","#D9603F","#5FA88A","#0F0C0A","#EBD3A8","#7A5A3A",{red:"#E0574B",blk:"#151210",warn:"#E3A34A",info:"#8FA9C8"}),
     b:{bg:["#3A2E24","#231B15"],grid:"#CDA86A",piece:"#EAD9B8",r:"#C8382A",b:"#151210",mv:"#7CC9A6",bevel:1}},
   {k:"song",n:"宋・汝窯",s:"雨過天青：素雅、冰裂紋",m:"crackle",
     c:E("#E6EEEA","#F6FAF8","#22312D","#64776F","#CDDCD5","#3E7C76","#8B6A3E","#4B6B65","#EAF3EF","#9DBDB2"),
@@ -1618,7 +1634,7 @@ function applyEra(){try{icoEra()}catch(e){}try{if(typeof bgmSync==="function"&&t
     r.style.setProperty("--wood",e.b.bg[1]);r.style.setProperty("--grid",e.b.grid);r.style.setProperty("--piece",e.b.piece);
     r.style.setProperty("--motif-bar",eraMotif(e.m,e.c.barink,.2));r.style.setProperty("--motif-bg",eraMotif(e.m,e.c.ink,e.dark?.07:.05));r.style.colorScheme=e.dark?"dark":"light"}
   else delete r.dataset.era;
-  const mt=document.querySelector('meta[name="theme-color"]');if(mt)mt.content=e?(e.dark?e.c.bg:e.c.card):"#3B2A1A"}   /* 畫風一致性第一批（11/8）：標題列改成紙色，手機狀態列跟著用紙色；秦、五代的 bg／card 從純黑改成暗宣紙（深墨灰） */
+  const mt=document.querySelector('meta[name="theme-color"]');if(mt)mt.content=e?(e.dark?e.c.bar:e.c.card):"#3B2A1A"}   /* 畫風一致性第一批（11/8）：淺色朝代的標題列改成紙色，手機狀態列跟著用紙色；秦、五代開發者要求維持原本的深色樣子（狀態列照舊用 bar） */
 applyEra();
 const boardTheme=k=>{k=k||store.get("boardTheme","wood3d");if(k==="auto"&&boardEraE())return boardEraE().b;return(BOARD_THEMES.find(t=>t[0]===k)||BOARD_THEMES[0])[2]};
 let boardN=0;
@@ -4005,7 +4021,7 @@ function onboard(){if(journey())journeyLock();else titleScreen({})}
 // ================= 設定：棋盤風格、棋子樣式、走棋顯示 =================
 const SAMPLE_FEN0="rnbakabnr/9/1c5c1/p1p1p1p1p/9/9/P1P1P1P1P/1C5C1/9/RNBAKABNR",SAMPLE_FEN1="rnbakabnr/9/1c5c1/p1p1p1p1p/9/9/P1P1P1P1P/1C2C4/9/RNBAKABNR",SAMPLE_LAST={f:70,t:67};
 /* 意見回饋 661：關於頁顯示整包遊戲要多大空間。XQ_SIZES 由 build-site.js 建置時填入（開發中的 m.html 是 null，就不顯示） */
-const XQ_SIZES={"pre":214369082,"code":12923704,"eng":51511005,"gm":33668932,"bgm":259516351,"opt":[["比賽對局 1956–2010",21765744],["比賽對局 2011–2014",25596413],["比賽對局 2015–2019",24821916]],"all":660232547,"other":16059400};
+const XQ_SIZES={"pre":214579684,"code":12926722,"eng":51511005,"gm":33668932,"bgm":259516351,"opt":[["比賽對局 1956–2010",21765744],["比賽對局 2011–2014",25596413],["比賽對局 2015–2019",24821916]],"all":660446167,"other":16059400};
 const szMB=b=>b>=1073741824?(b/1073741824).toFixed(1)+" GB":Math.max(1,Math.round(b/1048576))+" MB";
 function aboutSizes(){const S=XQ_SIZES;if(!S)return"";const opt=S.opt||[];   /* 意見回饋 662：玩家只看總數，細項只在開發者模式顯示 */
   return `<div class="row" style="justify-content:space-between"><span class="muted">整包下載</span><b>約 ${szMB(S.all)}</b></div>
@@ -8690,7 +8706,7 @@ function v7Sheet(c,line,back){const C=WX_CHARS[c],nm=C.nk||C.n;
          wave 旗幟／衣角／蘆葦／柳條飄動（把那一塊圖切成幾條，離旗桿越遠擺越大）、layers 分層的戰馬與人物（第二步，資料在 data/inkfx/layers/）。
    全部用 Web Animations 只動 transform 和 opacity；畫面不在視窗內（IntersectionObserver）或切到背景（visibilitychange）就暫停；圖從頁面拿掉就收掉動畫。
    有 prefers-reduced-motion 就完全不建立。開關：store「inkFx」（true／false），沒設的時候照 IFX_DEFAULT（開發者驗收前先關著）。 */
-const IFX_DEFAULT=false;
+const IFX_DEFAULT=true;   /* 意見回饋 752：開發者 11/8 驗收通過，預設開啟 */
 const IFX={map:null,P:null,L:new Set(),io:null,mo:null,css:false,started:false,hidden:false,prune:0};
 const IFX_RE=/(?:^|\/)data\/((?:battles|loading|shipmap\/novel)\/[\w-]+|shipmap\/port_[\w-]+)\.webp(?:[?#].*)?$/;
 const ifxRM=()=>{try{return matchMedia("(prefers-reduced-motion: reduce)").matches}catch(e){return false}};
@@ -8733,7 +8749,7 @@ function ifxBuild(R){const g=ifxGeom(R.img);if(g.cw<40||g.ch<30)return;const sz=
   for(const a of R.A){try{a.cancel()}catch(e){}}R.A=[];R.st.textContent="";
   Object.assign(R.ov.style,{left:g.L+"px",top:g.T+"px",width:g.cw+"px",height:g.ch+"px",borderRadius:getComputedStyle(R.img).borderRadius});
   Object.assign(R.st.style,{left:g.x+"px",top:g.y+"px",width:g.w+"px",height:g.h+"px"});
-  const C={W:g.w,H:g.h,st:R.st,A:R.A,hole:(R.cfg.hole||[]),src:R.img.currentSrc||R.img.src,mob:ifxMob(),seed:ifxSeed(R.key)};
+  const C={W:g.w,H:g.h,st:R.st,A:R.A,hole:(R.cfg.hole||[]),src:R.img.currentSrc||R.img.src,flt:getComputedStyle(R.img).filter,mob:ifxMob(),seed:ifxSeed(R.key)};
   for(const f of R.cfg.fx||[]){const fn=IFX_FX[f.t];if(fn)try{fn(C,f)}catch(e){}}
   R.on=false;ifxRun(R)}
 /* ---------- 小工具 ---------- */
@@ -8806,7 +8822,7 @@ const IFX_FX={
     for(let i=0;i<n;i++){const w=W*.32,h=Math.hypot(W,H)*1.2,el=ifxEl(C,"ifl",w,h,`linear-gradient(90deg,rgba(255,240,205,0),rgba(255,240,205,${(.1+.18*k).toFixed(3)}) 50%,rgba(255,240,205,0))`,0,0),y=(H-h)/2;
       ifxAn(C,el,[{transform:ifxT(-w*1.4,y,1,ang),opacity:0},{transform:ifxT(W*.15,y,1,ang),opacity:1,offset:.3},{transform:ifxT(W*.75,y,1,ang),opacity:1,offset:.7},{transform:ifxT(W*1.2,y,1,ang),opacity:0}],ifxR(C,20,30),{ph:i/n+ifxR(C,0,.2),ease:"ease-in-out"})}},
   /* 飄動：把 box 那一塊圖切成幾條，離 piv（L／R＝旗桿在左／右、T＝上面固定像柳條、B＝下面固定像蘆葦）越遠擺越大；每條上下多留一點邊、邊緣羽化 */
-  wave(C,f){const[x0,y0,x1,y1]=f.box,piv=f.piv||"L",n=f.n||5,W=C.W,H=C.H,amp=(f.amp??2.2)*Math.max(.7,W/600),per=f.per||1.7,vert=piv==="L"||piv==="R";
+  wave(C,f){const[x0,y0,x1,y1]=f.box,piv=f.piv||"L",n=f.n||5,W=C.W,H=C.H,amp=(f.amp??3)*Math.max(.7,W/600),per=f.per||1.7,vert=piv==="L"||piv==="R";
     const bx=x0/100*W,by=y0/100*H,bw=(x1-x0)/100*W,bh=(y1-y0)/100*H,m=amp*2.5+3,img=`url("${C.src.replace(/"/g,"%22")}")`;
     for(let i=0;i<n;i++){const d=(i+.5)/n,far=(piv==="L"||piv==="T")?d:1-d,A=amp*Math.pow(far,1.3);if(A<.25)continue;
       let x,y,w,h,mk;if(vert){w=bw/n*1.7;h=bh+2*m;x=bx+bw*i/n-bw/n*.35;y=by-m;mk=`linear-gradient(90deg,transparent,#000 28%,#000 72%,transparent),linear-gradient(180deg,transparent,#000 ${m}px,#000 calc(100% - ${m}px),transparent)`}
@@ -8818,10 +8834,11 @@ const IFX_FX={
   /* 第二步：分層的戰馬與人物。f.bg＝補好背景的整張底圖（蓋在原圖上）、f.L＝切出來的去背圖層 [{src,box,mv}]，mv 是動法 */
   layers(C,f){const W=C.W,H=C.H,base="data/inkfx/layers/",lays=[];
     const mk=(src,box)=>{const e=document.createElement("img");e.className="ifL";e.alt="";e.decoding="async";e.draggable=false;e.src=base+src;const[a,b,c,d]=box||[0,0,100,100];
-      e.style.cssText=`left:${(a/100*W).toFixed(1)}px;top:${(b/100*H).toFixed(1)}px;width:${((c-a)/100*W).toFixed(1)}px;height:${((d-b)/100*H).toFixed(1)}px;opacity:0;transition:opacity .5s`;C.st.append(e);lays.push(e);return e};
+      e.style.cssText=`left:${(a/100*W).toFixed(1)}px;top:${(b/100*H).toFixed(1)}px;width:${((c-a)/100*W).toFixed(1)}px;height:${((d-b)/100*H).toFixed(1)}px;opacity:0;transition:opacity .5s${C.flt&&C.flt!=="none"?";filter:"+C.flt:""}`;C.st.append(e);   /* 原圖有濾鏡（別的工程師加的畫風），圖層也套一樣的 */lays.push(e);return e};
     if(f.bg)mk(f.bg);
-    for(const L of f.L||[]){const e=mk(L.src,L.box),mv=L.mv||{},u=W/100,v=H/100,S=12,kf=[],gx=(mv.gx||0)*u,bob=(mv.bob||0)*v,rot=mv.rot||0,surge=mv.surge||1,tilt=mv.tilt||0;
-      for(let j=0;j<=S;j++){const t=j/S,sx=Math.sin(t*Math.PI*2*surge)*gx,by=-Math.abs(Math.sin(t*Math.PI*2*(mv.beats||4)))*bob,r=Math.sin(t*Math.PI*2*(mv.beats||4))*tilt+Math.sin(t*Math.PI*2)*rot;kf.push({transform:`translate3d(${sx.toFixed(2)}px,${by.toFixed(2)}px,0) rotate(${r.toFixed(2)}deg)`})}
+    /* mv：gx／gy＝往前衝再回來的距離（%），bob＝馬步起伏（%），beats＝一個週期跑幾步，tilt＝跟著步伐微微前後傾（度），flut／fb＝旗面飄動（度／一週期幾次），per＝週期（秒），ph＝相位（秒），org＝轉軸 */
+    for(const L of f.L||[]){const e=mk(L.src,L.box),mv=L.mv||{},u=W/100,v=H/100,S=48,kf=[],gx=(mv.gx||0)*u,gy=(mv.gy||0)*v,bob=(mv.bob||0)*v,surge=mv.surge||1,tilt=mv.tilt||0,bt=mv.beats||4,P2=Math.PI*2;
+      for(let j=0;j<=S;j++){const t=j/S,s=(1-Math.cos(t*P2*surge))/2,sx=s*gx,sy=s*gy,by=-Math.abs(Math.sin(t*Math.PI*bt))*bob,r=Math.sin(t*P2*bt)*tilt+Math.sin(t*P2*(mv.fb||5))*(mv.flut||0);kf.push({transform:`translate3d(${sx.toFixed(2)}px,${(sy+by).toFixed(2)}px,0) rotate(${r.toFixed(2)}deg)`})}
       e.style.transformOrigin=mv.org||"50% 100%";const a=e.animate(kf,{duration:(mv.per||3.6)*1000,iterations:Infinity,delay:-(mv.ph||0)*1000,easing:"linear"});a.pause();C.A.push(a)}
     /* 圖層都載好才一起淡入，載不到就留原圖 */
     Promise.all(lays.map(e=>e.decode?e.decode():new Promise((ok,no)=>{e.onload=ok;e.onerror=no}))).then(()=>{for(const e of lays)e.style.opacity=1}).catch(()=>{for(const e of lays)e.remove()})}
