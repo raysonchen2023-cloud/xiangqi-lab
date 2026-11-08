@@ -326,6 +326,16 @@
   /* 開發者 11/8（畫風盤點第 3 條）：園子的道具（park3d.js）借用同一套墨線外殼；XQTOON 切換時通知園子（lis） */
   const TOON_KIT=window.XQTOON_KIT={hull:(m,O)=>toonHull(m,"a",O),isHull:o=>TOON_H.has(o),lis:[]};
   function toonReg(g){TOON_R.push(window.WeakRef?new WeakRef(g):g);if(TOON)try{toonApply(g,TOON)}catch(e){}}
+  /* 意見回饋 819（開發者：駱躍梅的皮帶看起來歪歪的）：雲河七星共用的 Tripo 待機動作（idle，15.37 秒一圈），第 0 秒那格上半身往一邊側傾約 4.6 度（頭反向扶正），
+     我的角色頁、人物檢視（fig3d）不播動作，一直停在這一格，腰帶和帶扣就斜斜的、帽子卻是正的。待機是無縫循環，把整段循環往後挪到上半身最正的那一刻（13.6 秒：側傾不到 1 度、頭正、只微微轉頭），
+     reset() 回到開頭也是正的姿勢；有在播動作的地方（走路角色、桌面小人）只是循環的起點不同，動作本身沒變。每段動作只挪一次（XQGLB_ANIM 快取共用） */
+  const IDLE_T0=13.6;
+  function idleShift(cl){if(!cl||cl.name!=="idle"||cl.xqT0!=null)return;cl.xqT0=0;const D=cl.duration,t0=cl.tracks.length?cl.tracks[0].times[0]:0,P=D-t0;if(!(P>IDLE_T0-t0+.5)||!(IDLE_T0>t0))return;
+    for(const tr of cl.tracks){const tm=tr.times,n=tm.length;if(n<2||Math.abs(tm[0]-t0)>1e-3||Math.abs(tm[n-1]-D)>1e-3||tr.createInterpolant.isInterpolantFactoryMethodGLTFCubicSpline||tr.getInterpolation()!==T.InterpolateLinear&&!(tr.getInterpolation()===T.InterpolateDiscrete&&n===2))return}   /* 每條軌都是同一段完整循環（Tripo 從第 1 格 1/30 秒開始，最後一格＝第一格）、線性內插才挪；只有兩格的「階梯」軌（不動的骨頭）整段都是第一格的值，挪了一樣 */
+    for(const tr of cl.tracks){const tm=tr.times,vs=tr.values,n=tm.length,k=vs.length/n;if(tr.getInterpolation()===T.InterpolateDiscrete){const v2=new vs.constructor(k*2);v2.set(vs.subarray(0,k));v2.set(vs.subarray(0,k),k);tr.times=new Float32Array([0,P]);tr.values=v2;continue}const vS=Array.from(tr.createInterpolant().evaluate(IDLE_T0)),K=[[0,vS]];
+      for(let i=0;i<n-1;i++){if(Math.abs(tm[i]-IDLE_T0)<1e-4)continue;K.push([(tm[i]-IDLE_T0+P)%P,Array.from(vs.subarray(i*k,i*k+k))])}
+      K.sort((x,y)=>x[0]-y[0]);K.push([P,vS]);const T3=new Float32Array(K.length),V3=new vs.constructor(K.length*k);K.forEach(([t,v],i)=>{T3[i]=t;V3.set(v,i*k)});tr.times=T3;tr.values=V3}
+    cl.duration=P;cl.xqT0=IDLE_T0}
   function attachGLB(B,o){if(!window.XQGLB)return;const meId=(String(o.glb||"").match(/\/(\w+)\.glb/)||[])[1],meCh=PC(),meK=eraK();const box0=new T.Box3().setFromObject(B.bot),h0=box0.max.y-box0.min.y,y0=box0.min.y;
     const face=B.torso.children.find(m=>m.isMesh&&m.geometry&&m.geometry.type==="CircleGeometry");
     B.glbP=window.XQGLB(o.glb).catch(()=>window.XQGLB(o.glb)).then(sc=>{if(!sc)throw new Error("empty");   /* 意見回饋 505：失敗自動重試一次；結果交給畫面顯示「載入中／失敗」 */const g=sc.clone(true);B.glbRoot=g;try{const rb=new T.Box3().setFromObject(g);B.glbRaw={min:rb.min.clone(),max:rb.max.clone()}}catch(e){}g.rotation.y=-Math.PI/2;g.updateMatrixWorld(true);   /* 意見回饋 679：點角色身上的物件，用模型原本的範圍換算位置（glbRoot、glbRaw） */
@@ -333,7 +343,7 @@
          先擺成待機的第一格（沒有每格更新動畫的畫面，也不會停在張開手臂的骨架原始姿勢） */
       {const clips=(window.XQGLB_ANIM||{})[o.glb]||[];if(clips.length){try{const bn={};g.traverse(n=>{if(n.isBone)bn[n.name]=n});
         g.traverse(m=>{if(m.isSkinnedMesh&&m.skeleton){const sk=m.skeleton;m.bind(new T.Skeleton(sk.bones.map(b=>bn[b.name]||b),sk.boneInverses),m.bindMatrix)}});
-        B.mixer=new T.AnimationMixer(g);B.clips={};for(const cl of clips)B.clips[cl.name]=B.mixer.clipAction(cl);B.animCur="idle";if(B.clips.idle)B.clips.idle.play();B.mixer.update(0);g.updateMatrixWorld(true)}catch(e){B.mixer=null}}}   /* 意見回饋 503：Tripo 的模型臉朝 +X（側面），轉 90 度讓臉朝前；之前圓牌朝前、模型朝側面，看起來圓牌浮在身體旁邊 */
+        for(const cl of clips)idleShift(cl);B.mixer=new T.AnimationMixer(g);B.clips={};for(const cl of clips)B.clips[cl.name]=B.mixer.clipAction(cl);B.animCur="idle";if(B.clips.idle)B.clips.idle.play();B.mixer.update(0);g.updateMatrixWorld(true)}catch(e){B.mixer=null}}}   /* 意見回饋 503：Tripo 的模型臉朝 +X（側面），轉 90 度讓臉朝前；之前圓牌朝前、模型朝側面，看起來圓牌浮在身體旁邊 */
       const bb=new T.Box3().setFromObject(g),sz=bb.getSize(new T.Vector3()),c=bb.getCenter(new T.Vector3());if(!(sz.y>0))return;
       const hold=new T.Group();hold.name="glb";g.position.set(-c.x,-bb.min.y,-c.z);hold.add(g);hold.scale.setScalar(h0/sz.y);hold.position.y=y0;
       g.traverse(m=>{if(m.isMesh){m.castShadow=true;m.receiveShadow=true}});
