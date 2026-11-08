@@ -1341,7 +1341,7 @@ html[data-era=qin] .view:has(>.shp-rd),html[data-era=wudai] .view:has(>.shp-rd){
       if(!window.caches)return go();caches.keys().then(function(ks){return Promise.all(ks.filter(function(k){return k.indexOf("xqlab-app-")===0}).map(function(k){return caches.delete(k)}))})
         .then(function(){return navigator.serviceWorker&&navigator.serviceWorker.getRegistration()}).then(function(r){return r&&r.update()}).catch(function(){}).then(go)}};setTimeout(chk,4000)})();
 </script>
-<script>window.XQ_OFFLINE=true;window.XQ_BUILD="20261109-0215";</script>
+<script>window.XQ_OFFLINE=true;window.XQ_BUILD="20261109-0230";</script>
 <script src="core.js"></script>
 <script src="engine.js"></script>
 <script src="local.js"></script>
@@ -11002,6 +11002,7 @@ try{rdCss()}catch(e){}
      HS＝入口 → ［停靠點, 面向的位置 左%, 上%, 動作 bow／wave／cheer］；home＝起點；look0＝站著時面向哪裡。停靠點都選在東西「前面」（腳比東西低），角色疊在圖上才不會像站在桌上。
    開關：SHIP_WALK_ON（星槎，07f-ship.js 的 Voyage 呼叫 shipWalk）、SHW_PORT_ON（渡口，包一層 portWind）、SHW_YZ_ON（驛站，包一層 yzInn）；SHW_PORT／SHW_YZ 有座標表的朝代才走。樣式在 shwCss */
 const SHIP_WALK_ON=true,SHW_PORT_ON=true,SHW_YZ_ON=true;   /* 開發者 11/8 說全開 */
+const WALK_BOT_MERGE=true;   /* 回饋 802（開發者 11/9）：有走路角色的頁面，小帥（.xqbot）不再另外出現，走路角色兼小帥：點角色（或頭上的 💬）開小選單＝問問題、聽棋語、我的角色；小帥的話改說在角色頭上 */
 /* 星槎主畫面 ship_map.webp 896×1200。意見回饋 787（開發者 11/8）：棋話一頁要真的走到船頭——從右舷沿船艙右邊的甲板（r2、r3）走到船頭講台前（lesson）；下船停在跳板中段 */
 const SHW_SHIP={W:896,H:1200,el:35,h:y=>.088+(y-66)*.001,home:"home",look0:[50,84],
   N:{home:[60.5,70.5],pz:[55.5,69.2],bag:[50,69.8],c2:[44.5,68.6],read:[34.5,66.8],shelf:[31.5,62.5],d1:[26.8,67.6],t1:[22.5,71.5],t2:[24.5,77.5],sail:[23.8,79.2],l1:[30.6,57.5],parks:[32.5,51.5],g1:[65,66.2],port:[77.5,72.5],r1:[69.3,60],r2:[79.5,48],r3:[78.5,37.5],lesson:[74,31.5]},
@@ -11128,7 +11129,7 @@ function shwMount(o){if(shwRM()||!o.root||!o.frame||o.root.dataset.shw)return;o.
   const C=o.cfg,box=document.createElement("div");box.className="shw";box.setAttribute("aria-hidden","true");box.innerHTML='<i class="shw-sh"></i>';o.layer.insertBefore(box,o.before&&o.before.parentNode===o.layer?o.before:o.layer.firstChild);
   const at=SHW_MEM[o.mem],okAt=typeof at==="string"?!!C.N[at]:!!(at&&at.p&&at.e&&C.N[at.e[0]]&&C.N[at.e[1]]),S={o,C,v:o.v,M:o.root,I:o.frame,box,ready:false,pass:false,go:null,at:okAt?at:C.home};
   o.root.addEventListener("click",e=>shwClick(S,e),true);
-  shwLoad(S).catch(()=>{box.remove();S.ready=false;document.body.classList.remove("shw-on")})}
+  shwLoad(S).then(()=>{try{if(WALK_BOT_MERGE)shwBotHook(S)}catch(e){}}).catch(()=>{box.remove();S.ready=false;document.body.classList.remove("shw-on")})}
 function shwClick(S,e){if(S.pass||!S.ready||!S.box.isConnected)return;const g=S.go,b=e.target.closest&&e.target.closest(S.o.sel);
   if(g&&!g.free&&(g.act>=0||(b&&b===g.btn))){e.stopPropagation();e.preventDefault();shwOpen(S);return}   /* 走向入口時再點同一個入口、或已經在做小動作：直接開 */
   if(b){const h=S.o.keyOf(b),H=S.C.HS[h];if(!H||!S.C.N[H[0]])return;e.stopPropagation();e.preventDefault();vibrate(5);shwGo(S,{hs:h,btn:b,H});return}
@@ -11149,6 +11150,43 @@ function shwLift(S,b){try{const cv=S.box.querySelector("canvas");if(!cv||!b.isCo
 function shwDrop(){document.querySelectorAll("[data-shw-lift]").forEach(x=>{x.style.translate="";delete x.dataset.shwLift})}
 function shwUnfade(S,b,ms){clearTimeout(S.uf);S.uf=setTimeout(()=>{if(!b.isConnected||(S.go&&S.go.btn===b))return;shwLift(S,b);b.classList.add("shw-unfade");b.classList.remove("shw-fade");if(S.stay===b)S.stay=null;setTimeout(()=>b.classList.remove("shw-unfade"),700)},ms)}
 function shwStay(S){}
+/* ---------- 回饋 802：走路角色兼小帥 ----------
+   角色身上一顆透明按鈕、頭上一個小 💬：點了在角色旁邊開水墨小選單（問問題＝askSheet、聽棋語＝讓小帥講一句（BOT.act）、我的角色＝#/me）；
+   小帥講的話（bot3d 的 xq-bot-said 事件）在角色頭上用宣紙小泡泡顯示。位置跟著 07w 每格寫的 translate／scale 和畫布大小（跟 07z 的 hmMe 同一算法） */
+function shwBotCss(){if(document.getElementById("shwBotCss"))return;const s=document.createElement("style");s.id="shwBotCss";s.textContent=`
+.shw-me{position:absolute;z-index:150;background:transparent;border:0;padding:0;border-radius:40%;cursor:pointer;-webkit-tap-highlight-color:transparent}
+.shw-hint{position:absolute;z-index:151;transform:translate(-50%,-100%);border:1px solid rgba(60,40,24,.55);border-radius:10px 10px 10px 2px;background:#f6efdf;color:#3a2618;font:700 11px/1 var(--serif,serif);padding:3px 5px;cursor:pointer;box-shadow:0 1px 2px rgba(0,0,0,.25);opacity:.92}
+.shw-say{position:absolute;z-index:210;transform:translate(-50%,-100%);max-width:62%;width:max-content;background:#fbf6ea;color:#2f2216;border:1.5px solid #3a2618;border-radius:12px;padding:5px 10px;font:700 12.5px/1.45 var(--serif,serif);text-align:center;box-shadow:0 2px 6px rgba(0,0,0,.22);pointer-events:none;opacity:0;transition:opacity .25s}
+.shw-say.on{opacity:1}.shw-say::after{content:"";position:absolute;left:50%;bottom:-7px;margin-left:-6px;border:6px solid transparent;border-top-color:#3a2618;border-bottom:0}
+.shw-menu{position:absolute;z-index:211;display:flex;flex-direction:column;gap:4px;padding:6px;background:#f6efdf url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='80' height='80'%3E%3Cfilter id='n'%3E%3CfeTurbulence baseFrequency='.9'/%3E%3CfeColorMatrix values='0 0 0 0 .4 0 0 0 0 .3 0 0 0 0 .2 0 0 0 .06 0'/%3E%3C/filter%3E%3Crect width='80' height='80' filter='url(%23n)'/%3E%3C/svg%3E");border:1.5px solid #3a2618;border-radius:10px;box-shadow:0 4px 12px rgba(0,0,0,.3)}
+.shw-menu button{border:1px solid rgba(60,40,24,.35);border-radius:999px;background:rgba(255,255,255,.55);color:#2f2216;font:800 13px/1 var(--serif,serif);padding:7px 12px;white-space:nowrap;text-align:left;cursor:pointer}
+.shw-menu button:active{background:#e9d9b4}`;document.head.append(s)}
+function shwBotHook(S){if(S.botHook||!S.box||!S.box.isConnected)return;S.botHook=1;shwBotCss();const L=S.o.layer,box=S.box;
+  const hit=document.createElement("button");hit.type="button";hit.className="shw-me";hit.setAttribute("aria-label","我的角色：問問題、聽棋語");
+  const hint=document.createElement("button");hint.type="button";hint.className="shw-hint";hint.textContent="💬";hint.setAttribute("aria-label","問問題、聽棋語");
+  const say=document.createElement("div");say.className="shw-say";say.setAttribute("aria-live","polite");
+  for(const e of[hit,hint,say])e.style.display="none";L.append(hit,hint,say);
+  let menu=null,head=[0,0],sayT=0;
+  const shut=()=>{if(menu){menu.remove();menu=null}};
+  const open=e=>{e.stopPropagation();e.preventDefault();if(typeof vibrate==="function")vibrate(5);if(menu){shut();return}
+    menu=document.createElement("div");menu.className="shw-menu";const bot=typeof BOT!=="undefined"&&BOT&&BOT.act;
+    menu.innerHTML=`<button type="button" data-a="ask">💬 問問題</button>${bot?'<button type="button" data-a="tale">📜 聽棋語</button>':""}<button type="button" data-a="me">🙂 我的角色</button>`;
+    L.append(menu);const W=L.clientWidth||S.I.clientWidth,left=head[0]>W*.6;Object.assign(menu.style,{top:Math.max(4,head[1]-10)+"px",left:left?"":(head[0]+18)+"px",right:left?(W-head[0]+18)+"px":""});
+    menu.querySelectorAll("button").forEach(b=>b.onclick=ev=>{ev.stopPropagation();const a=b.dataset.a;shut();
+      if(a==="ask"){if(typeof askSheet==="function")askSheet();else try{window.dispatchEvent(new CustomEvent("xq-bot-ask"))}catch(err){}}
+      else if(a==="tale"){try{BOT.act(Math.random()*(BOT.count||1)|0)}catch(err){}}
+      else location.hash="#/me"})};
+  hit.onclick=open;hint.onclick=open;
+  const outside=e=>{if(!box.isConnected){document.removeEventListener("click",outside,true);return}if(menu&&!menu.contains(e.target)&&e.target!==hit&&e.target!==hint)shut()};document.addEventListener("click",outside,true);
+  const upd=()=>{if(!box.isConnected){mo.disconnect();shut();return}const m=/translate\(([-\d.]+)px,\s*([-\d.]+)px\)\s*scale\(([\d.]+)\)/.exec(box.style.transform),cv=box.querySelector("canvas");
+    if(!m||!cv||!box.classList.contains("on")||box.style.opacity==="0"){hit.style.display=hint.style.display="none";say.style.display="none";return}
+    const k=+m[3],cw=parseFloat(cv.style.width)||cv.clientWidth,ch=parseFloat(cv.style.height)||cv.clientHeight,Lf=parseFloat(cv.style.left)||0,T=parseFloat(cv.style.top)||0,x=+m[1],y=+m[2],top=y+(T+ch*.12)*k;
+    head=[x,top];Object.assign(hit.style,{display:"",left:(x+(Lf+cw*.28)*k).toFixed(1)+"px",top:top.toFixed(1)+"px",width:(cw*.44*k).toFixed(1)+"px",height:(Math.max(0,-T-ch*.12)*k).toFixed(1)+"px"});
+    Object.assign(hint.style,{display:say.classList.contains("on")?"none":"",left:(x+cw*.16*k).toFixed(1)+"px",top:(top+2).toFixed(1)+"px"});Object.assign(say.style,{display:"",left:x.toFixed(1)+"px",top:(top-4).toFixed(1)+"px"})};
+  const mo=new MutationObserver(upd);mo.observe(box,{attributes:true,attributeFilter:["style","class"]});upd();
+  const said=e=>{if(!box.isConnected){window.removeEventListener("xq-bot-said",said);return}if(!document.body.classList.contains("shw-on"))return;const t=String(e.detail||"").trim();if(!t)return;
+    say.textContent=t;say.classList.add("on");hint.style.display="none";clearTimeout(sayT);sayT=setTimeout(()=>{say.classList.remove("on");upd()},Math.max(2200,Math.min(9000,t.length*170)))};
+  window.addEventListener("xq-bot-said",said)}
 /* 意見回饋 795（開發者 11/8）：冷啟動時 3D 模型清單（tripo.json）還沒抓回來，myLook() 會退成預設小人（綠色），標題列頭像卻已經是選的角色。
    載入前先等清單（最多 3 秒）；之後每秒比一次要用的模型，存檔或清單晚到、換了角色，就在同一個框裡換模型（只在站著時換，不打斷走路；S.gen 讓舊的畫布和迴圈自己收掉） */
 function shwTripo(){return new Promise(res=>{let n=0;const k=()=>{if(typeof TRIPO==="undefined"||Object.keys(TRIPO).length||++n>30)res();else setTimeout(k,100)};k()})}
@@ -11376,7 +11414,7 @@ function hmCss(){if(document.getElementById("hmCss"))return;const s=document.cre
 @keyframes hmSky{0%,100%{opacity:.75}50%{opacity:1}}
 .hm-me{position:absolute;z-index:3;background:transparent;border:0;padding:0;border-radius:40%;cursor:pointer;-webkit-tap-highlight-color:transparent}
 .hm-inst{position:absolute;left:50%;bottom:1.4%;transform:translateX(-50%);z-index:4;border:1.5px solid #f2c94c;border-radius:999px;background:rgba(20,16,12,.72);color:#ffe08a;font:800 13px/1 var(--serif,serif);padding:7px 14px;white-space:nowrap;cursor:pointer}
-body.hm-on.shw-on .xqbot{visibility:visible}
+${typeof WALK_BOT_MERGE!=="undefined"&&WALK_BOT_MERGE?"":"body.hm-on.shw-on .xqbot{visibility:visible}"}
 @media (prefers-reduced-motion:reduce){.hm-sky{animation:none}}`;document.head.append(s)}
 /* 完全沒下過棋（跟原本首頁「🔰 第一次下象棋？」卡同一個判斷） */
 const hmNew=()=>!store.get("campSeen",false)&&!Object.keys(store.get("record",{})).length;
@@ -11385,7 +11423,7 @@ function hmRecSheet(){sheet("📜 今日推薦",b=>{if(typeof homePathHTML==="fu
   else if(typeof homeRecHTML==="function"){b.innerHTML=homeRecHTML();try{homeRecBind(b)}catch(e){}b.querySelectorAll("[data-go]").forEach(x=>x.addEventListener("click",()=>closeSheet(),true))}
   else b.innerHTML='<p class="muted">今天先跟電腦下一盤吧！</p>'})}
 /* 點 3D 角色＝我的角色：一顆透明按鈕跟著 07w 的角色（看它每格寫的 translate／scale 和畫布的大小） */
-function hmMe(P){const box=P.querySelector(".shw");if(!box)return;const btn=document.createElement("button");btn.type="button";btn.className="hm-me";btn.setAttribute("aria-label","我的角色");btn.style.display="none";P.append(btn);
+function hmMe(P){if(typeof WALK_BOT_MERGE!=="undefined"&&WALK_BOT_MERGE)return;   /* 回饋 802：角色兼小帥時，點角色由 07w 的小選單接手（裡面有「我的角色」） */const box=P.querySelector(".shw");if(!box)return;const btn=document.createElement("button");btn.type="button";btn.className="hm-me";btn.setAttribute("aria-label","我的角色");btn.style.display="none";P.append(btn);
   btn.onclick=e=>{e.stopPropagation();vibrate(5);location.hash="#/me"};
   const upd=()=>{if(!box.isConnected){mo.disconnect();return}const m=/translate\(([-\d.]+)px,\s*([-\d.]+)px\)\s*scale\(([\d.]+)\)/.exec(box.style.transform),cv=box.querySelector("canvas");
     if(!m||!cv||!box.classList.contains("on")||box.style.opacity==="0"){btn.style.display="none";return}
