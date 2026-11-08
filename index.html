@@ -1341,7 +1341,7 @@ html[data-era=qin] .view:has(>.shp-rd),html[data-era=wudai] .view:has(>.shp-rd){
       if(!window.caches)return go();caches.keys().then(function(ks){return Promise.all(ks.filter(function(k){return k.indexOf("xqlab-app-")===0}).map(function(k){return caches.delete(k)}))})
         .then(function(){return navigator.serviceWorker&&navigator.serviceWorker.getRegistration()}).then(function(r){return r&&r.update()}).catch(function(){}).then(go)}};setTimeout(chk,4000)})();
 </script>
-<script>window.XQ_OFFLINE=true;window.XQ_BUILD="20261108-1850";</script>
+<script>window.XQ_OFFLINE=true;window.XQ_BUILD="20261108-1900";</script>
 <script src="core.js"></script>
 <script src="engine.js"></script>
 <script src="local.js"></script>
@@ -9525,7 +9525,7 @@ const chdRootBind=b=>{const x=b.querySelector("#chdRoot");if(x)x.onclick=()=>{if
    ① 驛站信箱（07m-yizhan.js yzMail：那一朝的信、雲河驛站的全部的信）多一封「寄不出去的信」（CHD_TXT[c].letter，角色上船頭幾夜寫的，第一人稱）；讀過記 chd.home[朝代].r。
    ② 信末夾一張殘譜＝這一站多一題本命殺法題（chdHomePick：一盞茶題庫、照本命挑、打開那一刻存 chd.home[朝代].pz），解題頁 #/canju/s/<朝代>/<題號>（07f-ship.js shipXM 先問 chdHomeXM），修為照一盞茶 +5，解開記 chd.home[朝代].ok；茶單、續局不出這題（shipMorePool 跳過 chdHomeIds）。
    ③ 星槎頁在家鄉那一站，地圖上方多一個「🏠 故鄉」小標記（chdHomeMark，07f-ship.js Voyage 呼叫）。 */
-const CHD4_ON=false;   /* 先給開發者看過再開 */
+const CHD4_ON=true;   /* 先給開發者看過再開 */
 const chdHomeEra=c=>(typeof CHAR_ERA!=="undefined"&&CHAR_ERA[c])||"";
 /* 這位角色的家鄉站已經停靠過了嗎 */
 function chdHomeOpen(c){c=c||chdMe();const e=chdHomeEra(c);if(!CHD4_ON||!e||!chdT(c))return"";try{if(typeof shipAppr==="function"&&shipAppr())return"";if(typeof shipDocked==="function"&&!shipDocked().includes(e))return"";if(typeof eraLocked==="function"&&eraLocked(e))return""}catch(x){return""}return e}
@@ -9777,7 +9777,7 @@ const PWD={
   tang:{f:[[35.8,28.6,40,31.3,"h"],[48.6,26.3,52.7,28.7,"h"],[56,29.8,60.3,33,"h"],[67,28,71,30.4,"h"]],s:[[84,22.5,0]],d:[12,28,80,72,0,.7]},
   wudai:{f:[[49,21.5,50.8,25.1,"v"],[62.4,20.1,64.2,22.8,"v"],[71,22.8,73.3,27.1,"v"],[82.4,20.9,84.2,24.2,"v"]],s:[[13,19.5,1],[30,19.3,1],[85,18.3,1]],d:[0,48,100,74,1,.8]},
   song:{f:[[42.2,28.8,46,32.1,"v"],[55.5,27,57.6,29.8,"v"],[58.5,30.8,62.1,34.5,"v"],[71.3,28.3,74.3,31.8,"v"]],s:[]},
-  yuan:{f:[[43.4,38.1,45.3,39,"h"],[51.8,36.9,53.1,37.6,"h"],[54.4,39.3,56.8,40.3,"h"],[61.6,37.8,63.3,38.6,"h"]],s:[[91.5,39.6,0]],d:[30,47,100,68,2,1.4]},
+  yuan:{f:[[43.4,38.1,45.3,39,"h"],[51.8,36.9,53.1,37.6,"h"],[54.4,39.3,56.8,40.3,"h"],[61.6,37.8,63.3,38.6,"h"]],s:[[91.5,39.6,0]]}/* 意見回饋 779：元朝是草地，不要沙塵 */,
   ming:{f:[[50,32.8,52.2,34.7,"h"],[46.2,35.8,48.5,38.2,"h"],[60.2,33.8,62.2,35.8,"h"]],s:[[33,30.6,0]]},
   qing:{f:[[40.2,30.1,42.7,31.5,"h"],[50.9,28.4,53.5,29.6,"h"],[54.9,31.7,57.8,33.4,"h"],[64.5,29.4,66.7,31,"h"]],s:[]}};
 const PWD_PT=[[25,25],[75,25],[50,50],[25,75],[75,75],[50,90],[12,60],[88,60]];
