@@ -1341,7 +1341,7 @@ html[data-era=qin] .view:has(>.shp-rd),html[data-era=wudai] .view:has(>.shp-rd){
       if(!window.caches)return go();caches.keys().then(function(ks){return Promise.all(ks.filter(function(k){return k.indexOf("xqlab-app-")===0}).map(function(k){return caches.delete(k)}))})
         .then(function(){return navigator.serviceWorker&&navigator.serviceWorker.getRegistration()}).then(function(r){return r&&r.update()}).catch(function(){}).then(go)}};setTimeout(chk,4000)})();
 </script>
-<script>window.XQ_OFFLINE=true;window.XQ_BUILD="20261108-1910";</script>
+<script>window.XQ_OFFLINE=true;window.XQ_BUILD="20261108-1930";</script>
 <script src="core.js"></script>
 <script src="engine.js"></script>
 <script src="local.js"></script>
@@ -4061,7 +4061,7 @@ function onboard(){if(journey())journeyLock();else titleScreen({})}
 // ================= 設定：棋盤風格、棋子樣式、走棋顯示 =================
 const SAMPLE_FEN0="rnbakabnr/9/1c5c1/p1p1p1p1p/9/9/P1P1P1P1P/1C5C1/9/RNBAKABNR",SAMPLE_FEN1="rnbakabnr/9/1c5c1/p1p1p1p1p/9/9/P1P1P1P1P/1C2C4/9/RNBAKABNR",SAMPLE_LAST={f:70,t:67};
 /* 意見回饋 661：關於頁顯示整包遊戲要多大空間。XQ_SIZES 由 build-site.js 建置時填入（開發中的 m.html 是 null，就不顯示） */
-const XQ_SIZES={"pre":243825346,"code":13341095,"eng":51511005,"gm":33668932,"bgm":259516351,"opt":[["比賽對局 1956–2010",21765744],["比賽對局 2011–2014",25596413],["比賽對局 2015–2019",24821916]],"all":691279962,"other":17233160};
+const XQ_SIZES={"pre":244466493,"code":13356660,"eng":51511005,"gm":33668932,"bgm":259516351,"opt":[["比賽對局 1956–2010",21765744],["比賽對局 2011–2014",25596413],["比賽對局 2015–2019",24821916]],"all":691936674,"other":17233160};
 const szMB=b=>b>=1073741824?(b/1073741824).toFixed(1)+" GB":Math.max(1,Math.round(b/1048576))+" MB";
 function aboutSizes(){const S=XQ_SIZES;if(!S)return"";const opt=S.opt||[];   /* 意見回饋 662：玩家只看總數，細項只在開發者模式顯示 */
   return `<div class="row" style="justify-content:space-between"><span class="muted">整包下載</span><b>約 ${szMB(S.all)}</b></div>
@@ -9527,7 +9527,7 @@ const chdRootBind=b=>{const x=b.querySelector("#chdRoot");if(x)x.onclick=()=>{if
    ① 驛站信箱（07m-yizhan.js yzMail：那一朝的信、雲河驛站的全部的信）多一封「寄不出去的信」（CHD_TXT[c].letter，角色上船頭幾夜寫的，第一人稱）；讀過記 chd.home[朝代].r。
    ② 信末夾一張殘譜＝這一站多一題本命殺法題（chdHomePick：一盞茶題庫、照本命挑、打開那一刻存 chd.home[朝代].pz），解題頁 #/canju/s/<朝代>/<題號>（07f-ship.js shipXM 先問 chdHomeXM），修為照一盞茶 +5，解開記 chd.home[朝代].ok；茶單、續局不出這題（shipMorePool 跳過 chdHomeIds）。
    ③ 星槎頁在家鄉那一站，地圖上方多一個「🏠 故鄉」小標記（chdHomeMark，07f-ship.js Voyage 呼叫）。 */
-const CHD4_ON=true;   /* 先給開發者看過再開 */
+const CHD4_ON=true;   /* 開發者 11/8 說直接全部打開 */
 const chdHomeEra=c=>(typeof CHAR_ERA!=="undefined"&&CHAR_ERA[c])||"";
 /* 這位角色的家鄉站已經停靠過了嗎 */
 function chdHomeOpen(c){c=c||chdMe();const e=chdHomeEra(c);if(!CHD4_ON||!e||!chdT(c))return"";try{if(typeof shipAppr==="function"&&shipAppr())return"";if(typeof shipDocked==="function"&&!shipDocked().includes(e))return"";if(typeof eraLocked==="function"&&eraLocked(e))return""}catch(x){return""}return e}
@@ -10399,7 +10399,7 @@ async function epDev(k){EP_DEV=1;try{const here=epHere(),S=epSt();
      （照 battles.json 的 lessons 標籤挑），解開修為 +15；每場一次。秦、三國、魏晉、南北朝、五代沒有女棋手，跳過。
    存檔（05b-save.js JOURNEY_KEYS）：wmDays＝有下棋的日子；wmPg＝{女:{s0 開始數的那天,L:[{d 寄到那天,at,q 題號,r 讀了,ok 回信了}]}}；wmBm＝{d 今天,n 今天比了幾題,ok {題號:時間},ht {角色:女:時間}}；
      wmScr＝{a/b:{k 拿到第幾卷(0～3)、4＝解開,at [時間],ask {女:1},q 題號,done}}；wmEcho＝{p {id,k,i,at} 等著說的那一場,done {戰役 id:時間},q {戰役 id:題號}}；jRunW＝守局的進度。 */
-const WM_PIGEON_ON=false,WM_BENMING_ON=false,WM_SCROLL_ON=false,WM_ECHO_ON=false;   /* 開發者還沒看過：先全部關著 */
+const WM_PIGEON_ON=true,WM_BENMING_ON=true,WM_SCROLL_ON=true,WM_ECHO_ON=true;   /* 開發者 11/8 說四案打開 */
 const WM_FLAG={pg:()=>WM_PIGEON_ON,bm:()=>WM_BENMING_ON,scr:()=>WM_SCROLL_ON,echo:()=>WM_ECHO_ON},WM_NAME={pg:"🕊 飛鴿傳譜",bm:"🀄 本命子之道",scr:"📜 千秋殘譜",echo:"⚔ 古戰場的迴響"};
 function wmOn(k){try{if(WM_FLAG[k]()===true)return true;return typeof DEVMODE==="function"&&DEVMODE()&&!!(store.get("wmDev",{})||{})[k]}catch(e){return false}}
 const wmAny=()=>Object.keys(WM_FLAG).some(wmOn);
@@ -10704,20 +10704,20 @@ const WM_EC={
   sui_1:["w10","這一仗本將軍最熟！賀若弼守江北的時候，每回換防都叫人馬集合在歷陽，大張旗幟、營帳遍野。陳人以為大軍要渡江，慌忙調兵；後來知道只是換防，就散了。次數一多，陳人看慣了，再也不防備——等真的渡江，他們還沒發覺。"],
   sui_2:["w10","以前跟突厥打仗，大家都把戎車、步騎擺成方陣，騎兵躲在裡面。楊素說：這是自保的辦法，打不贏的。他把舊法全撤了，叫各軍擺成騎陣。達頭可汗一聽，高興得下馬朝天拜，以為是老天送他的機會——結果被楊素打得大敗。只守不攻，是贏不了的。"],
   sui_3:["w10","這一仗，是我們隋軍敗得最慘的一回。高句麗的乙支文德一天之內跟隋軍打了七仗，七仗都假裝敗走，一路把隋軍引到離平壤城三十里的地方。等隋軍回師，渡薩水渡到一半，他才從後面殺出來。"],
-  sui_4:["w10","聖上北巡，被始畢可汗圍在雁門。那時年紀輕輕的李世民應募去救，跟將軍雲定興說：多帶旗鼓，白天讓旌旗連綿幾十里，夜裡鉦鼓相應，突厥一定以為救兵來了。後來突厥果然解圍走了。排兵布陣，有時候讓人看見的，比真有的還要緊。"],
+  sui_4:["w10","聖上北巡，被始畢可汗圍在雁門。那時年紀輕輕的李世民應募去救，跟將軍雲定興說：多帶旗鼓，白天讓旌旗連綿幾十里，夜裡鉦鼓相應，突厥一定以為救兵來了。再加上義成公主派人騙始畢說北邊告急，各路援兵也真的趕到了，突厥這才解圍走了。排兵布陣，有時候讓人看見的，比真有的還要緊。"],
   sui_5:["w10","宋老生守在霍邑城裡不出來。李淵叫李建成、李世民帶著幾十個騎兵到城下，舉著馬鞭指指點點，像要圍城，還朝城上罵。宋老生一怒，開城出戰，李世民從南邊的高地衝下來，隋軍大敗，宋老生也死在城下。對方躲著不出來，就想辦法讓他自己出來。"],
-  tang_1:["w06","虎牢關。李世民先一步搶下這道關，竇建德號稱十萬的大軍堵在關前，一個多月過不去。決戰那天，夏軍從早上列陣到中午，又餓又累，坐的坐、搶水喝的搶水喝，唐軍這才殺出來。竇建德中了槊，被活捉。先到的人，佔的是地利。"],
+  tang_1:["w06","虎牢關。李世民先一步搶下這道關，竇建德十幾萬大軍、號稱三十萬，堵在關前，一個多月過不去。決戰那天，夏軍從早上列陣到中午，又餓又累，坐的坐、搶水喝的搶水喝，唐軍這才殺出來。竇建德中了槊，被活捉。先到的人，佔的是地利。"],
   tang_2:["w06","頡利可汗才派人來請和，唐朝的使者還在他營裡。李靖說，這正是動手的時候，帶了一萬精騎、二十天的乾糧出發。先鋒趁著大霧，摸到離牙帳只剩七里，突厥人才發覺，頡利只好丟下營帳逃走。以為談和了，就是最鬆懈的時候。"],
   tang_3:["w06","天山那一仗，鐵勒派了幾十個最驍勇的騎士出來挑戰。薛仁貴連發三箭，射倒三個人，其餘的一下子全下馬投降了。軍中唱：「將軍三箭定天山，戰士長歌入漢關。」打頭的倒了，後面的就散了。"],
   tang_4:["w01","安祿山作亂那年，張巡守雍丘，城裡的箭用完了。他叫人紮了一千多個草人，穿上黑衣，夜裡用繩子垂下城牆。令狐潮的兵爭著射，竟得了幾十萬枝箭。後來再垂下去的是真人，賊兵以為又是草人，笑著不防備，五百個死士一衝，賊營就亂了。"],
   tang_5:["w01","那一夜大風雪，旌旗都被吹裂了，路上凍死的人馬一個接一個。李愬帶兵連夜急行，四更天到了蔡州城下，城裡竟沒有一個人知道。他們在城牆上鑿出腳窩爬上去——吳元濟那時候還沒起身呢。"],
-  song_1:["w02","遼兵南下打到澶州，寇準勸真宗皇帝親自過河，登上北城。將士遠遠望見御蓋，歡呼聲傳出好幾十里。遼將蕭撻凜出來察看地形，被宋軍的床子弩射中，傷重而死。後來兩國議和，宋朝每年送遼國銀十萬兩、絹二十萬匹。仗打得穩，談的時候腰桿才直。"],
-  song_2:["w07","這一段我是聽說書的講的，真假不曉得：狄青在賓州過上元節，連擺三夜燈宴。第二夜喝到一半，他說身子不舒服，先回內室歇著；客人一直不敢散，到天亮才有人飛馬來報——他半夜已經帶兵翻過崑崙關了。"],
+  song_1:["w02","遼兵南下打到澶州，大將蕭撻凜出來察看地形，被宋軍的床子弩射中，當天晚上就死了。過了幾天，寇準勸真宗皇帝親自過河，登上北城，將士遠遠望見御蓋，歡呼聲傳出好幾十里。後來兩國議和，宋朝每年送遼國銀十萬兩、絹二十萬匹。仗先打穩了，談的時候腰桿才直；就像點茶，茶沫先咬住了盞，才不怕人來比。"],
+  song_2:["w07","這一段是我聽說書的講的：狄青在賓州過上元節，說要連擺三夜燈宴。第二夜喝到一半，他說身子不舒服，先回內室歇著；客人一直不敢散，到天亮才有人飛馬來報——他半夜已經帶兵奪下崑崙關了。"],
   song_3:["w07","水上的仗，我們打漁的最愛聽！韓世忠的水軍把金兵的船堵在黃天蕩，一堵就是四十八天，聽說他夫人梁氏還親自擂鼓。可最後金兵鑿通了一條舊河道，又趁著沒風放火箭燒船，還是逃出去了。堵住了退路，也要守得住最後一步。"],
-  song_4:["w02","金兀朮的拐子馬又快又重，三匹馬用皮索連在一起衝過來。岳家軍的步兵拿著麻扎刀，彎下身子，不抬頭看人，專砍馬腿——一匹馬倒了，連著的另外兩匹也跑不動。看起來最大的子，也有最弱的地方。"],
+  song_4:["w02","聽說金兀朮的拐子馬又快又重，岳家後人的書上說，是三匹馬用皮索連在一起衝過來的——也有人說，拐子馬其實是排在兩翼的騎兵。不管怎樣，岳家軍的步兵拿著麻扎刀，彎下身子，不抬頭看人，專砍馬腿。看起來最大的子，也有最弱的地方。"],
   song_5:["w02","蒙古大汗蒙哥親自來攻合州的釣魚城。那座城建在山上，三面臨江，守將王堅帶著軍民守了好幾個月，蒙古兵一直攻不上去。後來蒙哥在軍中去世，蒙古大軍只好撤走。守住了，就是勝。"],
   yuan_1:["w03","野狐嶺？聽老人說，金國的兵比我們多得多，卻把兵分散在各個山口守著。成吉思汗把人馬攏在一起，從中間一口氣衝過去，金兵就潰了。跑馬也是這樣，馬群散開了衝不動，攏在一起才像一陣風。"],
-  yuan_2:["w15","拖雷借道宋朝的地界，繞到金國的背後。金兵追著他跑了一路，到了三峰山又碰上大雪，凍得拿不穩兵器，被團團圍住，大敗。正面打不進去，就繞到背後。"],
+  yuan_2:["w15","拖雷派人向宋朝借路，宋朝不肯，還殺了使者，他乾脆硬闖過宋朝的地界，繞到金國的背後。金兵追著他跑了一路，到了三峰山又碰上大雪，凍得拿不穩兵器，被團團圍住，大敗。正面打不進去，就繞到背後。"],
   yuan_3:["w12","襄陽、樊城被圍了五年多，南邊來的援軍一次次被打回去。後來從西域請來兩位造砲的匠人，造出了回回砲，石彈打出去聲震天地，打中了城裡的譙樓，守將呂文煥只好開城投降。我們商隊的老駝夫說，那兩位匠人是從很遠的西邊來的。"],
   yuan_4:["w13","這段要是排成戲，一定叫座！朱元璋叫康茂才寫信假投降，說到時候在江東橋接應，那本是一座木橋。陳友諒帶兵趕到，一看竟是石橋，連喊好幾聲「老康」，都沒人答應，這才知道上當——伏兵四起，殺得他大敗。"],
   yuan_5:["w14","陳友諒的戰船又高又大，一艘連著一艘，像水上的城。朱元璋等到東北風起，叫幾條小船裝滿火藥和蘆葦，順著風放火衝過去。風急火烈，煙焰漲天，聽說連湖水都映紅了。燒青花也是這樣，火候一到，什麼都定了。"],
@@ -10726,7 +10726,7 @@ const WM_EC={
   ming_3:["w04","小生……咳，在書院聽先生講過。寧王在南昌起兵，順江東下要取南京。王守仁不去追他，反倒先攻下他的老巢南昌；寧王一聽，只好回頭來救，在鄱陽湖上兵敗被擒，前後不過一個多月。先生說：讀書人也打得了仗。"],
   ming_4:["w16","戚將軍的鴛鴦陣，十二個人一隊：藤牌在前，狼筅跟著，後頭是長槍，再後頭是短兵，長的短的互相掩護，誰也不單打獨鬥。在台州打倭寇，九戰九捷。我想替它寫一首詩，可惜還缺一句。"],
   ming_5:["w17","努爾哈赤帶著大軍來攻寧遠，袁崇煥燒掉城外的房舍，把人都收進城裡，在城頭架起紅夷大砲。砲聲一響，後金兵死傷一片，努爾哈赤起兵以來，這是頭一回吃大敗仗。我彈曲子時常想：弦再細，張緊了，也能發出那樣的聲響。"],
-  qing_1:["w05","噓——這段阿瑪最愛講。明軍分四路來攻，太祖爺說：「憑爾幾路來，我只一路去。」把兵攏在一處，幾天之內，一路一路把明軍打敗了。"],
+  qing_1:["w05","噓——這段阿瑪最愛講。明軍分四路來攻，聽說太祖爺說：「恁爾幾路來，我只一路去。」把兵攏在一處，先打最強的那一路，五天之內打垮了三路，剩下那一路也嚇得退回去了。"],
   qing_2:["w05","山海關外，吳三桂和李自成殺得難分難解，多爾袞按兵不動，就在旁邊看著。等兩邊都打累了，正好颳起大風，沙塵漫天，清兵才從吳軍的右邊衝出去，李自成的兵一下就潰了。等，有時候比衝還難。"],
   qing_3:["w08","鄭成功的船趁著漲潮，從鹿耳門那條又淺又窄的水道駛進去。荷蘭人以為那裡大船進不來，沒派重兵守著。後來他把熱蘭遮城圍了九個月，荷蘭人才投降，離開台灣。走一條別人想不到的線，跟繡花一樣。"],
   qing_4:["w08","噶爾丹叫人把上萬頭駱駝的腳綁起來，讓牠們趴在地上，背上架著箱垛，蓋上濕氈，圍成一道「駝城」，兵就躲在後面放箭放槍。清軍用火砲把駝城轟開一道缺口，再衝進去。再密的針腳，拆開一處，整塊就鬆了。"],
@@ -10911,77 +10911,151 @@ function rdCss(){if(!RELIC_DROP_ON||document.getElementById("rdCss"))return;cons
 @keyframes rdRing{0%{opacity:.9;transform:scale(.5)}to{opacity:0;transform:scale(1.8)}}
 @keyframes rdStamp{0%{opacity:0;transform:rotate(-14deg) scale(2.2)}to{opacity:1;transform:rotate(-14deg) scale(1)}}`;document.head.append(s)}
 try{rdCss()}catch(e){}
-/* ================= 🚶 星槎甲板上的玩家角色（開發者 11/8，先拿星槎主畫面 #/adventure 當樣板）=================
-   進星槎頁時，玩家的角色（myChar() 的 Tripo 3D 模型；說書人的學徒、沒有模型時用 Q 版小人）站在甲板上，跟著船層 .shp-hl 一起起伏位移；
-   點圖上的入口（.shp-hs），角色轉身、播走路動作，沿甲板上的路線走到那個入口旁（0.6～1.2 秒，照距離），到了做一個小動作（伸手／鞠躬／歡呼），再開原本的入口；
-   走路或做動作時再點一次（點哪裡都行）＝直接開。這一次開了哪個入口，回到星槎時角色就站在那裡（只記在記憶體，重開 App 回到石桌旁）。
-   角色在甲板上時，右下角到處走的小帥（.xqbot）先藏起來，離開星槎頁就回來，免得兩個人重疊。
-   3D 還沒載好、載不到、prefers-reduced-motion：不攔點擊，照舊直接開。角色的畫布 pointer-events:none，入口照舊最上層、一樣好點。
-   效能：角色另用一張小畫布（約 0.2 倍畫面高）畫，正交鏡頭；站著不動時 30fps、走路時每格畫；離開頁面自己停並釋放 WebGL。
-   座標表（ship_map.webp 896×1200 的百分比，量的是腳底踩的甲板）：SHW_N 節點、SHW_E 甲板上可以走的路（避開石桌、書架、書案、箱子、桅杆、船艙，不出船舷）、SHW_HS 每個入口的停靠點＋面向哪裡＋到了做什麼。
-   換星槎主圖要重量。開關 SHIP_WALK_ON（false＝照舊）。由 07f-ship.js 的 Voyage 呼叫 shipWalk(v,k)；樣式在檔內 shwCss */
-const SHIP_WALK_ON=false;
-const SHW_N={home:[60.5,70.5],pz:[55.5,69.2],bag:[50,69.8],c2:[44.5,68.6],read:[34.5,66.8],shelf:[31.5,62.5],d1:[26.8,67.6],t1:[22.5,71.5],t2:[24.5,77.5],sail:[28,79.8],l1:[30.6,57.5],parks:[32.5,51.5],g1:[65,66.2],port:[72.5,69.6],r1:[69.3,60],lesson:[70.5,52.5]};
-const SHW_E="home-pz pz-bag bag-c2 c2-read read-shelf read-d1 shelf-d1 d1-t1 t1-t2 t2-sail shelf-l1 l1-parks home-g1 pz-g1 g1-port g1-r1 r1-lesson".split(" ").map(s=>s.split("-"));
-/* 入口 → [停靠點, 面向的位置 x, y, 到了做的動作]；千秋石枰、起航、下船、棋話一頁在船外或船頭，走到船邊對應的位置 */
-const SHW_HS={pz:["pz",50,58,"bow"],bag:["bag",50,76,"wave"],read:["read",31,71,"bow"],shelf:["shelf",24,58,"wave"],parks:["parks",13,40,"wave"],sail:["sail",17,83,"cheer"],port:["port",86,77,"wave"],lesson:["lesson",77,25,"bow"]};
-const SHW_LOOK0=[50,84],SHW_EL=35*Math.PI/180,SHW_ACT={bow:"bow",wave:"wave_goodbye_01",cheer:"cheer"};   /* 站著時面向左下；鏡頭俯角 35°（石桌橢圓的扁度量出來的） */
-const shwH=y=>.088+(y-66)*.001;   /* 角色身高＝圖高的幾成，越下面（越近）越大 */
-let SHW_AT="home";
+/* ================= 🚶 3D 角色在滿版水墨圖上走動（開發者 11/8：先做星槎主畫面 #/adventure；同日「渡口和驛站也都要讓 3D 角色可以和在雲河星槎一樣走路活動」）=================
+   玩家的角色（myChar() 的 Tripo 3D 模型；說書人的學徒、沒有模型時用 Q 版小人）站在圖上；點圖上的入口，角色轉身、播走路動作，沿量好的路線走到入口旁
+   （0.6～1.2 秒，照距離），到了做一個小動作（伸手／鞠躬／歡呼），再開原本的入口；走路或做動作時再點一次（點圖上哪裡都行）＝直接開。
+   開了哪個入口，回到這張圖時角色就站在那裡（每張圖各記各的，只記在記憶體，重開 App 回到起點）。角色在圖上時，到處走的小帥（.xqbot）先藏起來，離開就回來。
+   3D 還沒載好、載不到、prefers-reduced-motion：不攔點擊，照舊直接開。角色畫布 pointer-events:none，入口照舊在最上層。
+   入口只是被「延後」：走到了用原本按鈕的 click() 再按一次，所以原本掛在入口上的東西（07v 景點掉寶、07u 包的 yzMail、千秋穿梭…）都照常。
+   效能：角色另用一張小畫布畫（正交鏡頭）；站著 30fps、走路每格畫；離開頁面自己停並釋放 WebGL。
+   共用的是 shwMount(o)：o.cfg＝座標表（見 SHW_SHIP），o.root＝攔點擊的範圍，o.frame＝跟原圖一樣大的框（座標的 100%），o.layer＋o.before＝角色插在哪，
+     o.sel／o.keyOf＝哪些是入口、入口的代號，o.find＝用代號找回入口，o.mem＝記住位置用的名字，o.gate＝回 false 時先不出現（渡口等下船過場播完）。
+   座標表：W、H＝原圖像素；el＝鏡頭俯角（度）；h(y)＝角色身高佔圖高的比例；N＝節點［左%, 上%］（量的是腳底踩的地面）；E＝可以走的路（"a-b"，避開桌子、牆、樹、桅杆，不出地面）；
+     HS＝入口 → ［停靠點, 面向的位置 左%, 上%, 動作 bow／wave／cheer］；home＝起點；look0＝站著時面向哪裡。停靠點都選在東西「前面」（腳比東西低），角色疊在圖上才不會像站在桌上。
+   開關：SHIP_WALK_ON（星槎，07f-ship.js 的 Voyage 呼叫 shipWalk）、SHW_PORT_ON（渡口，包一層 portWind）、SHW_YZ_ON（驛站，包一層 yzInn）；SHW_PORT／SHW_YZ 有座標表的朝代才走。樣式在 shwCss */
+const SHIP_WALK_ON=false,SHW_PORT_ON=false,SHW_YZ_ON=false;
+/* 星槎主畫面 ship_map.webp 896×1200 */
+const SHW_SHIP={W:896,H:1200,el:35,h:y=>.088+(y-66)*.001,home:"home",look0:[50,84],
+  N:{home:[60.5,70.5],pz:[55.5,69.2],bag:[50,69.8],c2:[44.5,68.6],read:[34.5,66.8],shelf:[31.5,62.5],d1:[26.8,67.6],t1:[22.5,71.5],t2:[24.5,77.5],sail:[23.8,79.2],l1:[30.6,57.5],parks:[32.5,51.5],g1:[65,66.2],port:[72.5,69.6],r1:[69.3,60],lesson:[70.5,52.5]},
+  E:"home-pz pz-bag bag-c2 c2-read read-shelf read-d1 shelf-d1 d1-t1 t1-t2 t2-sail shelf-l1 l1-parks home-g1 pz-g1 g1-port g1-r1 r1-lesson",
+  HS:{pz:["pz",50,58,"bow"],bag:["bag",50,76,"wave"],read:["read",31,71,"bow"],shelf:["shelf",24,58,"wave"],parks:["parks",13,40,"wave"],sail:["sail",17,83,"cheer"],port:["port",86,77,"wave"],lesson:["lesson",77,25,"bow"]}};
+/* 渡口 port_<朝代>_f.webp、驛站 data/yizhan/<朝代>_f.webp 都是 768×1376、俯角 38°（沒寫的照 SHW_PG0）；h＝[身高, 在 y 多少時, 每往下 1% 加多少]。
+   渡口入口代號＝按鈕 id（poPark 園子、poInn 驛站、poArena 擂台、poBattle 古戰場）、景點＝ps0、ps1…（PORT_SIGHT 的順序）；驛站＝yzTr 旅人、yzSec 秘境棋友、yzMail 信箱、yzLing 點將台（只有雲河驛站）、yzSight 史實小牌。
+   開發者 11/8 選「標籤淡掉」：角色走向哪個入口，那個入口的金框標籤就淡掉（shw-fade），所以停靠點直接放在門口、桌前（標籤底下的地面）；開了入口就還原。
+   遠方的景點（城樓、塔、山、河上的船）走到最靠近那個方向的空地，轉身看過去。擂台在對岸的（明）走到岸邊。 */
+const SHW_PG0={W:768,H:1376,el:38,home:"home",look0:[45,90],h:[.045,60,.0009]};
+const SHW_PORT={
+  qin:{N:{home:[51,67],p1:[50,60.5],park:[31,61],inn:[76,63.5],i1:[64,63.5],battle:[55,51],arena:[52,43],s2:[64,44.5]},E:"home-p1 p1-park home-i1 p1-i1 i1-inn p1-battle battle-arena battle-s2 arena-s2",
+    HS:{poPark:["park",29,56,"wave"],poInn:["inn",77.5,58,"bow"],poArena:["arena",52,35,"cheer"],poBattle:["battle",58,40,"wave"],ps0:["park",32,22,"wave"],ps1:["s2",82,26,"wave"],ps2:["s2",75,36,"wave"]}},
+  han:{h:[.045,62,.0009],N:{home:[48,71],c:[45,62],park:[27,59.5],i1:[62,68],inn:[75.5,64.5],battle:[49,52],arena:[50,38],n0:[30,45],n1:[68,37]},E:"home-c c-park home-i1 c-i1 i1-inn c-battle battle-arena c-n0 arena-n1",
+    HS:{poPark:["park",25,54,"wave"],poInn:["inn",77,59,"bow"],poArena:["arena",50,31,"cheer"],poBattle:["battle",50,42,"wave"],ps0:["n0",17,27,"wave"],ps1:["n1",86,24,"wave"]}},
+  sanguo:{N:{home:[52,68],c:[53,60],park:[39,61.5],i1:[66,64],inn:[77,67.5],battle:[60,55],arena:[52,46.5],n1:[44,48],n2:[66,48],n3:[74,57]},E:"home-c c-park home-i1 c-i1 i1-inn c-battle battle-i1 c-n1 n1-arena arena-n2 i1-n3",
+    HS:{poPark:["park",30,59,"wave"],poInn:["inn",82,63,"bow"],poArena:["arena",56,40,"cheer"],poBattle:["battle",64,49,"wave"],ps0:["n1",38,28,"wave"],ps1:["n2",80,24,"wave"],ps2:["n3",88,46,"wave"]}},
+  weijin:{N:{home:[50,61],c:[45,56],park:[28,56.5],inn:[78,60.5],n1:[60,47],arena:[66,38.5],battle:[66,52],s0:[19,52],s1:[44,46]},E:"home-c c-park c-n1 n1-arena home-inn c-battle park-s0 c-s1",
+    HS:{poPark:["park",27,51.5,"wave"],poInn:["inn",80,55,"bow"],poArena:["arena",65,32,"cheer"],poBattle:["battle",70,45,"wave"],ps0:["s0",12,28,"wave"],ps1:["s1",42,31,"wave"]}},
+  nanbei:{N:{home:[42,62],c:[48,56],park:[33,58],battle:[62,53],inn:[78,62],n1:[52,45],arena:[60,41],s0:[38,47],s2:[62,62]},E:"home-c c-park c-battle battle-inn c-n1 n1-arena c-s0 home-s2 s2-inn",
+    HS:{poPark:["park",33,54,"wave"],poInn:["inn",80,56,"bow"],poArena:["arena",62,34,"cheer"],poBattle:["battle",62,46,"wave"],ps0:["s0",24,30,"wave"],ps1:["n1",56,23,"wave"],ps2:["s2",72,75,"wave"]}},
+  sui:{N:{home:[70,73],c:[66,64],inn:[73,64],p1:[52,60],park:[39,61],battle:[52,53],arena:[48,46.5],s0:[36,45]},E:"home-c c-inn c-p1 p1-park p1-battle battle-arena arena-s0",
+    HS:{poPark:["park",28,60,"wave"],poInn:["inn",82,59,"bow"],poArena:["arena",55,38,"cheer"],poBattle:["battle",50,46,"wave"],ps0:["s0",24,31,"wave"],ps1:["arena",62,22,"wave"]}},
+  tang:{N:{home:[40,66],c:[45,58],park:[26,60.5],inn:[72,68],battle:[42,52.5],arena:[45,41.5],n0:[32,46],n2:[68,38]},E:"home-c c-park home-inn c-inn c-battle battle-arena battle-n0 arena-n2",
+    HS:{poPark:["park",24,55,"wave"],poInn:["inn",76,61,"bow"],poArena:["arena",45,35,"cheer"],poBattle:["battle",42,45,"wave"],ps0:["n0",28,16,"wave"],ps1:["arena",79,14,"wave"],ps2:["n2",88,33,"wave"]}},
+  wudai:{N:{home:[55,69],r1:[64,62],inn:[76,59.5],r2:[56,51],c:[40,53],park:[31,47],n0:[38,38],s1:[22,57],battle:[58,46],arena:[62,34.5]},E:"home-r1 r1-inn r1-r2 r2-c c-park c-n0 c-s1 r2-battle battle-arena",
+    HS:{poPark:["park",26,42,"wave"],poInn:["inn",78,53,"bow"],poArena:["arena",64,28,"cheer"],poBattle:["battle",64,38,"wave"],ps0:["n0",15,18,"wave"],ps1:["s1",12,56,"wave"]}},
+  song:{N:{home:[52,71],c:[50,60],park:[28,62],inn:[72,68.5],battle:[55,52],arena:[55,41],n1:[40,46],n2:[74,42]},E:"home-c c-park home-inn c-inn c-battle battle-arena battle-n1 arena-n2",
+    HS:{poPark:["park",25,56,"wave"],poInn:["inn",77,62,"bow"],poArena:["arena",55,34,"cheer"],poBattle:["battle",55,45,"wave"],ps0:["n1",30,17,"wave"],ps1:["n1",32,24,"wave"],ps2:["n2",88,38,"wave"]}},
+  yuan:{N:{home:[50,68],c:[46,60],park:[32,61.5],inn:[67,63.5],battle:[46,55],arena:[46,44.5],s0:[33,48],m1:[62,44],s1:[78,43.5]},E:"home-c c-park home-inn c-inn c-battle battle-arena battle-s0 arena-m1 m1-s1",
+    HS:{poPark:["park",30,57,"wave"],poInn:["inn",70,57,"bow"],poArena:["arena",50,40,"cheer"],poBattle:["battle",46,48,"wave"],ps0:["s0",29,44,"wave"],ps1:["s1",87,46,"wave"]}},
+  ming:{N:{home:[42,67],c:[45,60],park:[24,63],inn:[77,70],arena:[42,56],battle:[50,56.5],n0:[26,53],n1:[53,55]},E:"home-c c-park c-arena arena-battle battle-n1 c-n0 home-inn",
+    HS:{poPark:["park",34,62,"wave"],poInn:["inn",82,64,"bow"],poArena:["arena",47,36,"cheer"],poBattle:["battle",47,47,"wave"],ps0:["n0",12,30,"wave"],ps1:["n1",68,29,"wave"],ps2:["n1",78,16,"wave"]}},
+  qing:{N:{home:[45,61],c:[47,56],park:[34,59.5],inn:[64,52.5],battle:[45,50],arena:[45,39.5],w:[36,38],n1:[32,31],n2:[60,60]},E:"home-c c-park c-inn c-battle battle-arena arena-w w-n1 home-n2 n2-inn",
+    HS:{poPark:["park",33,55,"wave"],poInn:["inn",69,47,"bow"],poArena:["arena",50,33,"cheer"],poBattle:["battle",45,43,"wave"],ps0:["arena",86,18,"wave"],ps1:["n1",22,20,"wave"],ps2:["n2",84,82,"wave"]}}};
+const SHW_YZ={
+  classic:{h:[.05,66,.001],look0:[50,90],N:{home:[67,74.5],b1:[61,72.2],tr:[54,69.8],c1:[44,69.5],c2:[37.5,63],sec:[31,56],mail:[77,71],ling:[88,65.5]},E:"home-b1 b1-tr tr-c1 c1-c2 c2-sec home-mail b1-mail mail-ling",
+    HS:{yzTr:["tr",54.5,62,"bow"],yzSec:["sec",21,51,"wave"],yzMail:["mail",81,66,"wave"],yzLing:["ling",86,55,"cheer"]}},
+  qin:{h:[.065,60,.001],N:{home:[55,68],tr:[60,50.5],c:[42,62],sec:[29,60.5],mail:[73,66.5],r:[72,72],sight:[70,84]},E:"home-tr home-c c-sec home-mail home-r r-sight",
+    HS:{yzTr:["tr",60,43,"bow"],yzSec:["sec",27,56,"wave"],yzMail:["mail",83,58,"wave"],yzSight:["sight",58,78,"wave"]}},
+  han:{h:[.07,60,.001],N:{home:[50,68],tr:[52,59],sec:[24,63.5],mail:[78,72],sight:[30,80]},E:"home-tr home-sec home-mail home-sight",
+    HS:{yzTr:["tr",52,50,"bow"],yzSec:["sec",22,57,"wave"],yzMail:["mail",80,64,"wave"],yzSight:["sight",45,80,"wave"]}},
+  sanguo:{h:[.06,60,.001],N:{home:[52,64],tr:[55,53],sec:[31,63],mail:[73,67],p:[46,72],sight:[40,79]},E:"home-tr home-sec home-mail home-p p-sight",
+    HS:{yzTr:["tr",56,46,"bow"],yzSec:["sec",28,59,"wave"],yzMail:["mail",80,62,"wave"],yzSight:["sight",61,85,"wave"]}},
+  weijin:{h:[.065,60,.001],N:{home:[45,68],tr:[60,59.5],sec:[39,62],mail:[70,72],sight:[48,73]},E:"home-tr home-sec home-mail home-sight",
+    HS:{yzTr:["tr",58,50,"bow"],yzSec:["sec",24,59,"wave"],yzMail:["mail",78,66,"wave"],yzSight:["sight",54,79,"wave"]}},
+  nanbei:{h:[.07,60,.001],N:{home:[45,70],tr:[55,62],sec:[25,69],mail:[76,75],sight:[44,79]},E:"home-tr home-sec home-mail home-sight",
+    HS:{yzTr:["tr",55,52,"bow"],yzSec:["sec",21,62,"wave"],yzMail:["mail",82,68,"wave"],yzSight:["sight",54,87,"wave"]}},
+  sui:{h:[.07,60,.001],N:{home:[40,68],tr:[58,63],sec:[24,66],mail:[75,70],sight:[60,73]},E:"home-tr home-sec home-mail home-sight tr-mail",
+    HS:{yzTr:["tr",56,55,"bow"],yzSec:["sec",16,59,"wave"],yzMail:["mail",85,63,"wave"],yzSight:["sight",67,82,"wave"]}},
+  tang:{h:[.075,60,.001],N:{home:[38,68],tr:[55,58],sec:[24,63],n:[65,62],mail:[80,68],w:[42,80],sight:[58,84]},E:"home-tr home-sec home-n tr-n n-mail home-w w-sight",
+    HS:{yzTr:["tr",58,48,"bow"],yzSec:["sec",24,57,"wave"],yzMail:["mail",84,61,"wave"],yzSight:["sight",60,76,"wave"]}},
+  wudai:{h:[.07,60,.001],N:{home:[45,68],tr:[52,58],sec:[25,66],mail:[70,74],sight:[32,80]},E:"home-tr home-sec home-mail home-sight",
+    HS:{yzTr:["tr",52,50,"bow"],yzSec:["sec",22,60,"wave"],yzMail:["mail",78,69,"wave"],yzSight:["sight",45,78,"wave"]}},
+  song:{h:[.07,60,.001],N:{home:[45,66],tr:[60,58],sec:[22,67],mail:[80,70],w2:[32,70],sight:[33,80]},E:"home-tr home-sec home-mail home-w2 sec-w2 w2-sight",
+    HS:{yzTr:["tr",60,49,"bow"],yzSec:["sec",20,60,"wave"],yzMail:["mail",85,62,"wave"],yzSight:["sight",46,77,"wave"]}},
+  yuan:{h:[.065,60,.001],N:{home:[40,72],tr:[60,61],sec:[22,67],mail:[78,68],w:[46,85],sight:[60,88]},E:"home-tr home-sec home-mail home-w w-sight",
+    HS:{yzTr:["tr",60,54,"bow"],yzSec:["sec",22,62,"wave"],yzMail:["mail",85,63,"wave"],yzSight:["sight",68,80,"wave"]}},
+  ming:{h:[.07,60,.001],N:{home:[45,64],tr:[57,60],sec:[37,66],m1:[72,63],mail:[80,68],sight:[41,83]},E:"home-tr home-sec tr-m1 m1-mail home-sight",
+    HS:{yzTr:["tr",57,52,"bow"],yzSec:["sec",34,61,"wave"],yzMail:["mail",86,62,"wave"],yzSight:["sight",55,80,"wave"]}},
+  qing:{h:[.065,60,.001],N:{home:[45,62],tr:[60,59.5],sec:[28,63],mail:[85,62.5],sight:[60,70]},E:"home-tr home-sec home-mail home-sight tr-mail",
+    HS:{yzTr:["tr",60,52,"bow"],yzSec:["sec",26,57,"wave"],yzMail:["mail",88,53,"wave"],yzSight:["sight",74,78,"wave"]}}};
+const SHW_ACT={bow:"bow",wave:"wave_goodbye_01",cheer:"cheer"},SHW_MEM={};
 function shwCss(){if(document.getElementById("shwCss"))return;const s=document.createElement("style");s.id="shwCss";s.textContent=`
 .shw{position:absolute;left:0;top:0;width:0;height:0;pointer-events:none;transform-origin:0 0;opacity:0;transition:opacity .35s}
 .shw.on{opacity:1}.shw canvas{position:absolute;display:block;pointer-events:none}
-.shw-sh{position:absolute;border-radius:50%;background:radial-gradient(closest-side,rgba(40,30,20,.42),rgba(40,30,20,.18) 60%,rgba(40,30,20,0));pointer-events:none}
-body.shw-on .xqbot{visibility:hidden}`;document.head.append(s)}
-const shwPx=(a,b)=>Math.hypot((b[0]-a[0])*8.96,(b[1]-a[1])*12);
-function shwPath(a,b){if(a===b)return[a];const D={},P={},Q=new Set(Object.keys(SHW_N));for(const k of Q)D[k]=1e9;D[a]=0;
+.shw-sh{position:absolute;border-radius:50%;background:radial-gradient(closest-side,rgba(40,30,20,.55),rgba(40,30,20,.25) 60%,rgba(40,30,20,0));pointer-events:none}
+body.shw-on .xqbot{visibility:hidden}
+.shw-fade{opacity:.15!important;transition:opacity .25s ease!important}.shw-fade::after{animation:none!important;opacity:0!important}`;document.head.append(s)}
+const shwHt=(C,y)=>typeof C.h==="function"?C.h(y):C.h[0]+(y-C.h[1])*C.h[2];
+const shwPx=(C,a,b)=>Math.hypot((b[0]-a[0])*C.W/100,(b[1]-a[1])*C.H/100);
+function shwEdges(C){if(!C._e)C._e=C.E.split(" ").map(s=>s.split("-"));return C._e}
+function shwPath(C,a,b){if(a===b)return[a];const N=C.N,D={},P={},Q=new Set(Object.keys(N));for(const k of Q)D[k]=1e9;D[a]=0;
   while(Q.size){let u=null;for(const k of Q)if(u===null||D[k]<D[u])u=k;Q.delete(u);if(u===b||D[u]>=1e9)break;
-    for(const[x,y]of SHW_E){const w=x===u?y:y===u?x:null;if(w&&Q.has(w)){const d=D[u]+shwPx(SHW_N[u],SHW_N[w]);if(d<D[w]){D[w]=d;P[w]=u}}}}
+    for(const[x,y]of shwEdges(C)){const w=x===u?y:y===u?x:null;if(w&&Q.has(w)){const d=D[u]+shwPx(C,N[u],N[w]);if(d<D[w]){D[w]=d;P[w]=u}}}}
   if(D[b]>=1e9)return[a,b];const o=[b];while(o[0]!==a)o.unshift(P[o[0]]);return o}
-const shwYaw=(a,b)=>Math.atan2((b[0]-a[0])*8.96,(b[1]-a[1])*12/Math.sin(SHW_EL));
+const shwYaw=(C,a,b)=>Math.atan2((b[0]-a[0])*C.W/100,(b[1]-a[1])*C.H/100/Math.sin(C.el*Math.PI/180));
 const shwWrap=d=>{while(d>Math.PI)d-=2*Math.PI;while(d<-Math.PI)d+=2*Math.PI;return d};
-function shipWalk(v,k){if(!SHIP_WALK_ON)return;try{if(matchMedia("(prefers-reduced-motion: reduce)").matches)return}catch(e){}
-  const M=v.querySelector(".shp-map.full"),I=M&&M.querySelector(".shp-in"),hl=M&&M.querySelector(".shp-hl");if(!hl||M.dataset.shw)return;M.dataset.shw="1";shwCss();
-  const box=document.createElement("div");box.className="shw";box.setAttribute("aria-hidden","true");box.innerHTML='<i class="shw-sh"></i>';hl.prepend(box);
-  const S={v,M,I,box,ready:false,pass:false,go:null,at:SHW_N[SHW_AT]?SHW_AT:"home"};
-  M.addEventListener("click",e=>shwClick(S,e),true);
+const shwRM=()=>{try{return matchMedia("(prefers-reduced-motion: reduce)").matches}catch(e){return false}};
+/* 星槎主畫面（07f-ship.js 的 Voyage 呼叫） */
+function shipWalk(v,k){if(!SHIP_WALK_ON)return;const M=v.querySelector(".shp-map.full"),hl=M&&M.querySelector(".shp-hl");if(!hl)return;
+  shwMount({v,cfg:SHW_SHIP,root:M,frame:M.querySelector(".shp-in"),layer:hl,before:hl.firstChild,sel:"[data-hs]",keyOf:b=>b.dataset.hs,find:h=>v.querySelector(`[data-hs="${h}"]`),mem:"ship"})}
+/* 渡口、驛站：滿版圖 .shp-page.cq（圖寬 100%，框＝圖的大小），入口是 .shp-spot（id）和 .po-sight（渡口 data-ps、驛站 id） */
+function shwPage(v,cfg,mem,gate){const P=v&&v.querySelector(".shp-page.cq");if(!P||!cfg)return;
+  const kOf=b=>b.id||(b.dataset.ps!=null?"ps"+b.dataset.ps:""),fd=h=>/^ps\d+$/.test(h)?P.querySelector(`[data-ps="${h.slice(2)}"]`):P.querySelector("#"+h);
+  shwMount({v,cfg,root:P,frame:P,layer:P,before:P.querySelector(".shp-spot,.po-sight"),sel:".shp-spot,.po-sight",keyOf:kOf,find:fd,mem,gate})}
+function shwPort(v,k){if(!SHW_PORT_ON||!SHW_PORT[k])return;shwPage(v,Object.assign({},SHW_PG0,SHW_PORT[k]),"port:"+k,()=>{const P=v.querySelector(".shp-page.cq");return!!P&&!P.classList.contains("pc-run")&&!document.querySelector(".walkc")})}   /* 07p 下船過場（pc-run）、步行小卡（.walkc）播完才出現 */
+function shwYz(v,k){if(!SHW_YZ_ON||!SHW_YZ[k])return;shwPage(v,Object.assign({},SHW_PG0,SHW_YZ[k]),"yz:"+k,()=>!document.querySelector(".walkc"))}
+if(typeof portWind==="function"){const f0=portWind;portWind=function(v,k){const r=f0.apply(this,arguments);try{shwPort(v,k)}catch(e){}return r}}
+if(typeof yzInn==="function"){const f0=yzInn;yzInn=function(v,k){const r=f0.apply(this,arguments);try{shwYz(v,k)}catch(e){}return r}}
+function shwMount(o){if(shwRM()||!o.root||!o.frame||o.root.dataset.shw)return;o.root.dataset.shw="1";shwCss();
+  const C=o.cfg,box=document.createElement("div");box.className="shw";box.setAttribute("aria-hidden","true");box.innerHTML='<i class="shw-sh"></i>';o.layer.insertBefore(box,o.before&&o.before.parentNode===o.layer?o.before:o.layer.firstChild);
+  const at=SHW_MEM[o.mem],S={o,C,v:o.v,M:o.root,I:o.frame,box,ready:false,pass:false,go:null,at:C.N[at]?at:C.home};
+  o.root.addEventListener("click",e=>shwClick(S,e),true);
   shwLoad(S).catch(()=>{box.remove();S.ready=false;document.body.classList.remove("shw-on")})}
 function shwClick(S,e){if(S.pass)return;if(S.go){e.stopPropagation();e.preventDefault();shwOpen(S);return}
-  const b=e.target.closest&&e.target.closest("[data-hs]");if(!b||!S.ready||!S.box.isConnected)return;const H=SHW_HS[b.dataset.hs];if(!H)return;
-  e.stopPropagation();e.preventDefault();vibrate(5);const pts=shwPath(S.at,H[0]).map(n=>SHW_N[n]);let L=0;for(let i=1;i<pts.length;i++)L+=shwPx(pts[i-1],pts[i]);
-  S.go={hs:b.dataset.hs,btn:b,to:H[0],pts,L,dur:L?Math.max(.6,Math.min(1.2,.3+L/650)):0,t:0,act:-1,look:shwYaw(SHW_N[H[0]],[H[1],H[2]]),A:H[3]}}
-function shwOpen(S){const g=S.go;if(!g)return;S.go=null;S.at=SHW_AT=g.to;S.x=SHW_N[g.to][0];S.y=SHW_N[g.to][1];S.yaw=g.look;S.anim("idle",1);S.place();
-  let b=g.btn;if(!b||!b.isConnected)b=S.v.querySelector(`[data-hs="${g.hs}"]`);if(!b)return;S.pass=true;try{b.click()}finally{S.pass=false}}
+  const b=e.target.closest&&e.target.closest(S.o.sel);if(!b||!S.ready||!S.box.isConnected)return;const h=S.o.keyOf(b),H=S.C.HS[h];if(!H||!S.C.N[H[0]])return;
+  e.stopPropagation();e.preventDefault();vibrate(5);b.classList.add("shw-fade");const C=S.C,pts=shwPath(C,S.at,H[0]).map(n=>C.N[n]);let L=0;for(let i=1;i<pts.length;i++)L+=shwPx(C,pts[i-1],pts[i]);
+  S.go={hs:h,btn:b,to:H[0],pts,L,dur:L?Math.max(.6,Math.min(1.2,.3+L/650)):0,t:0,act:-1,look:shwYaw(C,C.N[H[0]],[H[1],H[2]]),A:H[3]}}
+function shwOpen(S){const g=S.go;if(!g)return;S.go=null;S.at=SHW_MEM[S.o.mem]=g.to;S.x=S.C.N[g.to][0];S.y=S.C.N[g.to][1];S.yaw=g.look;S.anim("idle",1);S.place();
+  let b=g.btn;if(!b||!b.isConnected)b=S.o.find(g.hs);if(!b)return;S.pass=true;try{b.click()}finally{S.pass=false;g.btn.classList.remove("shw-fade");b.classList.remove("shw-fade")}}
 async function shwLoad(S){
   await loadScript(OFF?"three.min.js":"/m/three.min.js");await loadScript((OFF?"bot3d.js":"/m/bot3d.js")+"?v="+encodeURIComponent(window.XQ_BUILD||""));
   const T=window.THREE;if(!T||!window.XQBot3D||!XQBot3D.figure)throw 0;if(!S.box.isConnected)return;
   const look=(typeof myLook==="function"&&myLook())||{p:botPc(),e:store.get("era","classic"),g:9},B=XQBot3D.figure(look);if(look.glb){if(!B.glbP)throw 0;await B.glbP}
   if(!S.box.isConnected)return;
-  const r=new T.WebGLRenderer({antialias:true,alpha:true,powerPreference:"low-power"});r.setPixelRatio(Math.min(2,devicePixelRatio||1));if(look.glb&&T.sRGBEncoding!=null)r.outputEncoding=T.sRGBEncoding;
+  const C=S.C,EL=C.el*Math.PI/180,r=new T.WebGLRenderer({antialias:true,alpha:true,powerPreference:"low-power"});r.setPixelRatio(Math.min(2,devicePixelRatio||1));if(look.glb&&T.sRGBEncoding!=null)r.outputEncoding=T.sRGBEncoding;
   const cv=r.domElement,sh=S.box.querySelector(".shw-sh");S.box.append(cv);
   const sc=new T.Scene();sc.add(new T.HemisphereLight(0xFFF6E8,0x6A5A48,1.15));const dl=new T.DirectionalLight(0xFFFFFF,.85);dl.position.set(-3,6,5);sc.add(dl);
   const root=new T.Group();root.rotation.order="YXZ";root.add(B.bot);sc.add(root);root.updateMatrixWorld(true);
   const bx=new T.Box3().setFromObject(B.bot),c=bx.getCenter(new T.Vector3()),hM=(bx.max.y-bx.min.y)||1;B.bot.position.x-=c.x;B.bot.position.z-=c.z;B.bot.position.y-=bx.min.y;const by=B.bot.position.y;
-  const vh=hM*1.45,cam=new T.OrthographicCamera(-vh*.375,vh*.375,vh/2,-vh/2,hM*.1,hM*20),tg=new T.Vector3(0,hM*.6,0);cam.position.set(0,tg.y+Math.sin(SHW_EL)*hM*6,Math.cos(SHW_EL)*hM*6);cam.lookAt(tg);cam.updateMatrixWorld(true);
-  const ft=new T.Vector3(0,0,0).project(cam),ftF=(1-ft.y)/2,YMAX=80;let cw=0,ch=0,Iw=0,Ih=0;
-  const fit=()=>{Iw=S.I.clientWidth;Ih=S.I.clientHeight;if(!Ih)return;const h=Math.round(shwH(YMAX)*Ih/(Math.cos(SHW_EL)/1.45)),w=Math.round(h*.75);if(h!==ch||w!==cw){ch=h;cw=w;r.setSize(cw,ch);
-    Object.assign(cv.style,{left:-cw/2+"px",top:-Math.round(ftF*ch)+"px"});Object.assign(sh.style,{width:Math.round(ch*.3)+"px",height:Math.round(ch*.085)+"px",left:-Math.round(ch*.15)+"px",top:-Math.round(ch*.0425)+"px"})}S.place()};
-  S.x=SHW_N[S.at][0];S.y=SHW_N[S.at][1];S.yaw=S.at==="home"?shwYaw(SHW_N.home,SHW_LOOK0):(()=>{const H=Object.values(SHW_HS).find(h=>h[0]===S.at);return H?shwYaw(SHW_N[S.at],[H[1],H[2]]):0})();
-  S.place=()=>{if(!Ih)return;const k=shwH(S.y)/shwH(YMAX);S.box.style.transform=`translate(${(S.x*Iw/100).toFixed(1)}px,${(S.y*Ih/100).toFixed(1)}px) scale(${k.toFixed(4)})`};
+  const vh=hM*1.45,cam=new T.OrthographicCamera(-vh*.375,vh*.375,vh/2,-vh/2,hM*.1,hM*20),tg=new T.Vector3(0,hM*.6,0);cam.position.set(0,tg.y+Math.sin(EL)*hM*6,Math.cos(EL)*hM*6);cam.lookAt(tg);cam.updateMatrixWorld(true);
+  const ft=new T.Vector3(0,0,0).project(cam),ftF=(1-ft.y)/2,YMAX=Math.max(...Object.values(C.N).map(p=>p[1]));let cw=0,ch=0,Iw=0,Ih=0;
+  const fit=()=>{Iw=S.I.clientWidth;Ih=S.I.clientHeight;if(!Ih)return;const h=Math.round(shwHt(C,YMAX)*Ih/(Math.cos(EL)/1.45)),w=Math.round(h*.75);if(h!==ch||w!==cw){ch=h;cw=w;r.setSize(cw,ch);
+    Object.assign(cv.style,{left:-cw/2+"px",top:-Math.round(ftF*ch)+"px"});Object.assign(sh.style,{width:Math.round(ch*.34)+"px",height:Math.round(ch*.1)+"px",left:-Math.round(ch*.17)+"px",top:-Math.round(ch*.05)+"px"})}S.place()};
+  const HS0=Object.values(C.HS).find(h=>h[0]===S.at);S.x=C.N[S.at][0];S.y=C.N[S.at][1];S.yaw=S.at===C.home||!HS0?shwYaw(C,C.N[S.at],C.look0):shwYaw(C,C.N[S.at],[HS0[1],HS0[2]]);
+  S.place=()=>{if(!Ih)return;const k=shwHt(C,S.y)/shwHt(C,YMAX);S.box.style.transform=`translate(${(S.x*Iw/100).toFixed(1)}px,${(S.y*Ih/100).toFixed(1)}px) scale(${k.toFixed(4)})`};
   const clips=B.mixer&&B.clips||null;let cur=null,yawR=S.yaw;
   S.anim=(n,ts)=>{if(!clips){S.pn=n;return}const a=clips[n]||clips.idle;if(!a)return;a.timeScale=ts||1;if(a===cur)return;a.reset().fadeIn(n==="idle"?.25:.12).play();if(cur)cur.fadeOut(.15);cur=a};
   S.anim("idle",1);
   const a0=B.arms&&B.arms[1]?B.arms[1].rotation.z:0,proc=(t,walk,act,p)=>{if(clips)return;const ph=t*14;root.position.y=walk?Math.abs(Math.sin(ph))*hM*.04:act==="cheer"?Math.abs(Math.sin(p*Math.PI*2))*hM*.12:0;root.rotation.z=walk?Math.sin(ph)*.07:0;root.rotation.x=act==="bow"?Math.sin(Math.min(1,p*1.6)*Math.PI/2)*.45:0;
     if(B.legs&&B.legs.length===2)B.legs.forEach((l,i)=>l.rotation.x=walk?Math.sin(ph)*.6*(i?1:-1):0);if(B.arms&&B.arms.length===2){B.arms.forEach((a,i)=>a.rotation.x=walk?Math.sin(ph)*.5*(i?-1:1):0);B.arms[1].rotation.z=act==="wave"||act==="cheer"?a0+Math.min(1,p*3)*2.5:a0}};
   if(window.ResizeObserver){const ro=new ResizeObserver(()=>{if(!S.box.isConnected){ro.disconnect();return}fit()});ro.observe(S.I)}fit();
-  let last=performance.now(),acc=0,fr=0,t0=last;S.ready=true;
+  let last=performance.now(),acc=0,fr=0,t0=last;
   const end=()=>{S.ready=false;S.go=null;document.body.classList.remove("shw-on");try{r.dispose();r.forceContextLoss()}catch(e){}};
   const loop=now=>{if(!S.box.isConnected||!S.M.isConnected){end();return}requestAnimationFrame(loop);if(document.hidden){last=now;return}
+    if(!S.ready){if(S.o.gate&&!S.o.gate()){last=now;return}S.ready=true;fit()}
     const dt=Math.min(.05,(now-last)/1000);last=now;acc+=dt;const g=S.go;let walk=false;
     if(g){g.t+=dt;if(g.t<g.dur){walk=true;const u=g.t/g.dur,s=.65*u+.35*(.5-.5*Math.cos(Math.PI*u));let d=s*g.L,i=1;
-        for(;i<g.pts.length;i++){const sl=shwPx(g.pts[i-1],g.pts[i]);if(d<=sl||i===g.pts.length-1){const f=sl?Math.min(1,d/sl):1,a=g.pts[i-1],b=g.pts[i];S.x=a[0]+(b[0]-a[0])*f;S.y=a[1]+(b[1]-a[1])*f;if(sl)S.yaw=shwYaw(a,b);break}d-=sl}
+        for(;i<g.pts.length;i++){const sl=shwPx(C,g.pts[i-1],g.pts[i]);if(d<=sl||i===g.pts.length-1){const f=sl?Math.min(1,d/sl):1,a=g.pts[i-1],b=g.pts[i];S.x=a[0]+(b[0]-a[0])*f;S.y=a[1]+(b[1]-a[1])*f;if(sl)S.yaw=shwYaw(C,a,b);break}d-=sl}
         S.anim("walk",Math.max(1.3,Math.min(2.4,g.L/g.dur/220)))}
-      else{if(g.act<0){g.act=g.t;S.x=SHW_N[g.to][0];S.y=SHW_N[g.to][1];S.yaw=g.look;S.anim(SHW_ACT[g.A]||"idle",g.A==="bow"?2.2:1.8)}if(g.t-g.act>.62)shwOpen(S)}
+      else{if(g.act<0){g.act=g.t;S.x=C.N[g.to][0];S.y=C.N[g.to][1];S.yaw=g.look;S.anim(SHW_ACT[g.A]||"idle",g.A==="bow"?2.2:1.8)}if(g.t-g.act>.62)shwOpen(S)}
       S.place()}
     yawR+=shwWrap(S.yaw-yawR)*Math.min(1,dt*(walk?16:9));root.rotation.y=yawR;
     proc((now-t0)/1000,walk,g&&g.act>=0?g.A:null,g&&g.act>=0?(g.t-g.act)/.62:0);
