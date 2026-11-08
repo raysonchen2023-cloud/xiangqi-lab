@@ -1341,7 +1341,7 @@ html[data-era=qin] .view:has(>.shp-rd),html[data-era=wudai] .view:has(>.shp-rd){
       if(!window.caches)return go();caches.keys().then(function(ks){return Promise.all(ks.filter(function(k){return k.indexOf("xqlab-app-")===0}).map(function(k){return caches.delete(k)}))})
         .then(function(){return navigator.serviceWorker&&navigator.serviceWorker.getRegistration()}).then(function(r){return r&&r.update()}).catch(function(){}).then(go)}};setTimeout(chk,4000)})();
 </script>
-<script>window.XQ_OFFLINE=true;window.XQ_BUILD="20261108-2240";</script>
+<script>window.XQ_OFFLINE=true;window.XQ_BUILD="20261108-2250";</script>
 <script src="core.js"></script>
 <script src="engine.js"></script>
 <script src="local.js"></script>
@@ -11013,7 +11013,7 @@ function shwCss(){if(document.getElementById("shwCss"))return;const s=document.c
 .shw.on{opacity:1}.shw canvas{position:absolute;display:block;pointer-events:none}
 .shw-sh{position:absolute;border-radius:50%;background:radial-gradient(closest-side,rgba(40,30,20,.55),rgba(40,30,20,.25) 60%,rgba(40,30,20,0));pointer-events:none}
 body.shw-on .xqbot{visibility:hidden}
-.shw-fade{opacity:.15!important;transition:opacity .25s ease!important}.shw-ink{position:absolute;width:36px;height:36px;margin:-18px 0 0 -18px;border-radius:50%;pointer-events:none;z-index:5;background:radial-gradient(closest-side,rgba(38,30,24,0) 38%,rgba(38,30,24,.42) 64%,rgba(38,30,24,.12) 86%,rgba(38,30,24,0));animation:shwInk .6s ease-out forwards}@keyframes shwInk{from{transform:scale(.3);opacity:.95}to{transform:scale(1.15);opacity:0}}@keyframes shwInkR{0%,60%{opacity:.7}100%{opacity:0}}@media (prefers-reduced-motion:reduce){.shw-ink{animation:shwInkR .4s linear forwards}}[data-shw-lift]{transition:translate .25s ease}.shw-unfade{transition:opacity .6s ease!important}.shw-fade::after{animation:none!important;opacity:0!important}`;document.head.append(s)}
+.shw-fade{opacity:.15!important;transition:opacity .25s ease!important}.shw-ink{position:absolute;width:36px;height:36px;margin:-18px 0 0 -18px;border-radius:50%;pointer-events:none;z-index:5;background:radial-gradient(closest-side,rgba(38,30,24,0) 38%,rgba(38,30,24,.42) 64%,rgba(38,30,24,.12) 86%,rgba(38,30,24,0));animation:shwInk .6s ease-out forwards}@keyframes shwInk{from{transform:scale(.3);opacity:.95}to{transform:scale(1.15);opacity:0}}@keyframes shwInkR{0%,60%{opacity:.7}100%{opacity:0}}@media (prefers-reduced-motion:reduce){.shw-ink{animation:shwInkR .4s linear forwards}}[data-shw-lift]{transition:translate .25s ease}.shw-iso{isolation:isolate}.shw-iso.shw-iso .shp-spot,.shw-iso.shw-iso .po-sight,.shw-iso.shw-iso [data-hs]{z-index:200}.shw-unfade{transition:opacity .6s ease!important}.shw-fade::after{animation:none!important;opacity:0!important}`;document.head.append(s)}
 const shwHt=(C,y)=>typeof C.h==="function"?C.h(y):C.h[0]+(y-C.h[1])*C.h[2];
 const shwPx=(C,a,b)=>Math.hypot((b[0]-a[0])*C.W/100,(b[1]-a[1])*C.H/100);
 function shwEdges(C){if(!C._e)C._e=C.E.split(" ").map(s=>s.split("-"));return C._e}
@@ -11052,7 +11052,7 @@ function shwPort(v,k){if(!SHW_PORT_ON||!SHW_PORT[k])return;const C=shwCfg(SHW_PO
 function shwYz(v,k){if(!SHW_YZ_ON||!SHW_YZ[k])return;shwPage(v,Object.assign({},SHW_PG0,SHW_YZ[k]),"yz:"+k,()=>!document.querySelector(".walkc"))}
 if(typeof portWind==="function"){const f0=portWind;portWind=function(v,k){const r=f0.apply(this,arguments);try{shwPort(v,k)}catch(e){}return r}}
 if(typeof yzInn==="function"){const f0=yzInn;yzInn=function(v,k){const r=f0.apply(this,arguments);try{shwYz(v,k)}catch(e){}return r}}
-function shwMount(o){if(shwRM()||!o.root||!o.frame||o.root.dataset.shw)return;o.root.dataset.shw="1";shwCss();
+function shwMount(o){if(shwRM()||!o.root||!o.frame||o.root.dataset.shw)return;o.root.dataset.shw="1";shwCss();o.root.classList.add("shw-iso");
   const C=o.cfg,box=document.createElement("div");box.className="shw";box.setAttribute("aria-hidden","true");box.innerHTML='<i class="shw-sh"></i>';o.layer.insertBefore(box,o.before&&o.before.parentNode===o.layer?o.before:o.layer.firstChild);
   const at=SHW_MEM[o.mem],okAt=typeof at==="string"?!!C.N[at]:!!(at&&at.p&&at.e&&C.N[at.e[0]]&&C.N[at.e[1]]),S={o,C,v:o.v,M:o.root,I:o.frame,box,ready:false,pass:false,go:null,at:okAt?at:C.home};
   o.root.addEventListener("click",e=>shwClick(S,e),true);
@@ -11077,11 +11077,16 @@ function shwLift(S,b){try{const cv=S.box.querySelector("canvas");if(!cv||!b.isCo
 function shwDrop(){document.querySelectorAll("[data-shw-lift]").forEach(x=>{x.style.translate="";delete x.dataset.shwLift})}
 function shwUnfade(S,b,ms){clearTimeout(S.uf);S.uf=setTimeout(()=>{if(!b.isConnected||(S.go&&S.go.btn===b))return;shwLift(S,b);b.classList.add("shw-unfade");b.classList.remove("shw-fade");if(S.stay===b)S.stay=null;setTimeout(()=>b.classList.remove("shw-unfade"),700)},ms)}
 function shwStay(S){}
+/* 意見回饋 795（開發者 11/8）：冷啟動時 3D 模型清單（tripo.json）還沒抓回來，myLook() 會退成預設小人（綠色），標題列頭像卻已經是選的角色。
+   載入前先等清單（最多 3 秒）；之後每秒比一次要用的模型，存檔或清單晚到、換了角色，就在同一個框裡換模型（只在站著時換，不打斷走路；S.gen 讓舊的畫布和迴圈自己收掉） */
+function shwTripo(){return new Promise(res=>{let n=0;const k=()=>{if(typeof TRIPO==="undefined"||Object.keys(TRIPO).length||++n>30)res();else setTimeout(k,100)};k()})}
+function shwLookG(){try{return((typeof myLook==="function"&&myLook())||{}).glb||""}catch(e){return""}}
 async function shwLoad(S){
   await loadScript(OFF?"three.min.js":"/m/three.min.js");await loadScript((OFF?"bot3d.js":"/m/bot3d.js")+"?v="+encodeURIComponent(window.XQ_BUILD||""));
   const T=window.THREE;if(!T||!window.XQBot3D||!XQBot3D.figure)throw 0;if(!S.box.isConnected)return;
-  const look=(typeof myLook==="function"&&myLook())||{p:botPc(),e:store.get("era","classic"),g:9},B=XQBot3D.figure(look);if(look.glb){if(!B.glbP)throw 0;await B.glbP}
-  if(!S.box.isConnected)return;
+  const G=S.gen=(S.gen||0)+1;await shwTripo();if(!S.box.isConnected||S.gen!==G)return;
+  const look=(typeof myLook==="function"&&myLook())||{p:botPc(),e:store.get("era","classic"),g:9},B=XQBot3D.figure(look);S.lg=look.glb||"";if(look.glb){if(!B.glbP)throw 0;await B.glbP}
+  if(!S.box.isConnected||S.gen!==G)return;
   const C=S.C,EL=C.el*Math.PI/180,r=new T.WebGLRenderer({antialias:true,alpha:true,powerPreference:"low-power"});r.setPixelRatio(Math.min(2,devicePixelRatio||1));if(look.glb&&T.sRGBEncoding!=null)r.outputEncoding=T.sRGBEncoding;
   const cv=r.domElement,sh=S.box.querySelector(".shw-sh");S.box.append(cv);
   const sc=new T.Scene();sc.add(new T.HemisphereLight(0xFFF6E8,0x6A5A48,1.15));const dl=new T.DirectionalLight(0xFFFFFF,.85);dl.position.set(-3,6,5);sc.add(dl);
@@ -11098,11 +11103,12 @@ async function shwLoad(S){
   S.anim("idle",1);
   const a0=B.arms&&B.arms[1]?B.arms[1].rotation.z:0,proc=(t,walk,act,p)=>{if(clips)return;const ph=t*14;root.position.y=walk?Math.abs(Math.sin(ph))*hM*.04:act==="cheer"?Math.abs(Math.sin(p*Math.PI*2))*hM*.12:0;root.rotation.z=walk?Math.sin(ph)*.07:0;root.rotation.x=act==="bow"?Math.sin(Math.min(1,p*1.6)*Math.PI/2)*.45:0;
     if(B.legs&&B.legs.length===2)B.legs.forEach((l,i)=>l.rotation.x=walk?Math.sin(ph)*.6*(i?1:-1):0);if(B.arms&&B.arms.length===2){B.arms.forEach((a,i)=>a.rotation.x=walk?Math.sin(ph)*.5*(i?-1:1):0);B.arms[1].rotation.z=act==="wave"||act==="cheer"?a0+Math.min(1,p*3)*2.5:a0}};
-  if(window.ResizeObserver){const ro=new ResizeObserver(()=>{if(!S.box.isConnected){ro.disconnect();return}fit()});ro.observe(S.I)}fit();
+  if(window.ResizeObserver){const ro=new ResizeObserver(()=>{if(!S.box.isConnected||S.gen!==G){ro.disconnect();return}fit()});ro.observe(S.I)}fit();
   let last=performance.now(),acc=0,fr=0,t0=last;
-  const end=()=>{S.ready=false;S.go=null;if(!document.querySelector(".shw.on"))document.body.classList.remove("shw-on");try{r.dispose();r.forceContextLoss()}catch(e){}};
-  const loop=now=>{if(!S.box.isConnected||!S.M.isConnected){end();return}requestAnimationFrame(loop);if(document.hidden){last=now;return}
+  const end=()=>{try{cv.remove()}catch(e){}if(S.gen!==G)return void(()=>{try{r.dispose();r.forceContextLoss()}catch(e){}})();S.ready=false;S.go=null;if(!document.querySelector(".shw.on"))document.body.classList.remove("shw-on");try{r.dispose();r.forceContextLoss()}catch(e){}};
+  const loop=now=>{if(!S.box.isConnected||!S.M.isConnected||S.gen!==G){end();return}requestAnimationFrame(loop);if(document.hidden){last=now;return}
     if(!S.ready){if(S.o.gate&&!S.o.gate()){last=now;return}S.ready=true;fit();shwStay(S)}
+    if(!S.go&&now-(S.lk||0)>1000){S.lk=now;const g2=shwLookG();if(g2!==S.lg){S.lg=g2;shwLoad(S).catch(()=>{S.box.remove();S.ready=false;document.body.classList.remove("shw-on")});return}}
     const dt=Math.min(.05,(now-last)/1000);last=now;acc+=dt;const g=S.go;let walk=false;
     if(g){g.t+=dt;if(g.t<g.dur){walk=true;const u=g.t/g.dur,s=.65*u+.35*(.5-.5*Math.cos(Math.PI*u));let d=s*g.L,i=1;
         for(;i<g.pts.length;i++){const sl=shwPx(C,g.pts[i-1],g.pts[i]);if(d<=sl||i===g.pts.length-1){const f=sl?Math.min(1,d/sl):1,a=g.pts[i-1],b=g.pts[i];S.x=a[0]+(b[0]-a[0])*f;S.y=a[1]+(b[1]-a[1])*f;S.curE=g.segE[i-1]||null;if(sl)S.yaw=shwYaw(C,a,b);break}d-=sl}
