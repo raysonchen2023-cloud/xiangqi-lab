@@ -1341,7 +1341,7 @@ html[data-era=qin] .view:has(>.shp-rd),html[data-era=wudai] .view:has(>.shp-rd){
       if(!window.caches)return go();caches.keys().then(function(ks){return Promise.all(ks.filter(function(k){return k.indexOf("xqlab-app-")===0}).map(function(k){return caches.delete(k)}))})
         .then(function(){return navigator.serviceWorker&&navigator.serviceWorker.getRegistration()}).then(function(r){return r&&r.update()}).catch(function(){}).then(go)}};setTimeout(chk,4000)})();
 </script>
-<script>window.XQ_OFFLINE=true;window.XQ_BUILD="20261108-1930";</script>
+<script>window.XQ_OFFLINE=true;window.XQ_BUILD="20261108-1940";</script>
 <script src="core.js"></script>
 <script src="engine.js"></script>
 <script src="local.js"></script>
@@ -10914,6 +10914,7 @@ try{rdCss()}catch(e){}
 /* ================= 🚶 3D 角色在滿版水墨圖上走動（開發者 11/8：先做星槎主畫面 #/adventure；同日「渡口和驛站也都要讓 3D 角色可以和在雲河星槎一樣走路活動」）=================
    玩家的角色（myChar() 的 Tripo 3D 模型；說書人的學徒、沒有模型時用 Q 版小人）站在圖上；點圖上的入口，角色轉身、播走路動作，沿量好的路線走到入口旁
    （0.6～1.2 秒，照距離），到了做一個小動作（伸手／鞠躬／歡呼），再開原本的入口；走路或做動作時再點一次（點圖上哪裡都行）＝直接開。
+   走向哪個入口，那個入口的金框標籤就淡掉（shw-fade，0.25 秒到 0.15），角色才看得到站在門口；開了入口就還原，其他入口的標籤不動。
    開了哪個入口，回到這張圖時角色就站在那裡（每張圖各記各的，只記在記憶體，重開 App 回到起點）。角色在圖上時，到處走的小帥（.xqbot）先藏起來，離開就回來。
    3D 還沒載好、載不到、prefers-reduced-motion：不攔點擊，照舊直接開。角色畫布 pointer-events:none，入口照舊在最上層。
    入口只是被「延後」：走到了用原本按鈕的 click() 再按一次，所以原本掛在入口上的東西（07v 景點掉寶、07u 包的 yzMail、千秋穿梭…）都照常。
@@ -10923,7 +10924,7 @@ try{rdCss()}catch(e){}
    座標表：W、H＝原圖像素；el＝鏡頭俯角（度）；h(y)＝角色身高佔圖高的比例；N＝節點［左%, 上%］（量的是腳底踩的地面）；E＝可以走的路（"a-b"，避開桌子、牆、樹、桅杆，不出地面）；
      HS＝入口 → ［停靠點, 面向的位置 左%, 上%, 動作 bow／wave／cheer］；home＝起點；look0＝站著時面向哪裡。停靠點都選在東西「前面」（腳比東西低），角色疊在圖上才不會像站在桌上。
    開關：SHIP_WALK_ON（星槎，07f-ship.js 的 Voyage 呼叫 shipWalk）、SHW_PORT_ON（渡口，包一層 portWind）、SHW_YZ_ON（驛站，包一層 yzInn）；SHW_PORT／SHW_YZ 有座標表的朝代才走。樣式在 shwCss */
-const SHIP_WALK_ON=false,SHW_PORT_ON=false,SHW_YZ_ON=false;
+const SHIP_WALK_ON=true,SHW_PORT_ON=true,SHW_YZ_ON=true;   /* 開發者 11/8 說全開 */
 /* 星槎主畫面 ship_map.webp 896×1200 */
 const SHW_SHIP={W:896,H:1200,el:35,h:y=>.088+(y-66)*.001,home:"home",look0:[50,84],
   N:{home:[60.5,70.5],pz:[55.5,69.2],bag:[50,69.8],c2:[44.5,68.6],read:[34.5,66.8],shelf:[31.5,62.5],d1:[26.8,67.6],t1:[22.5,71.5],t2:[24.5,77.5],sail:[23.8,79.2],l1:[30.6,57.5],parks:[32.5,51.5],g1:[65,66.2],port:[72.5,69.6],r1:[69.3,60],lesson:[70.5,52.5]},
@@ -10986,7 +10987,7 @@ const SHW_YZ={
     HS:{yzTr:["tr",57,52,"bow"],yzSec:["sec",34,61,"wave"],yzMail:["mail",86,62,"wave"],yzSight:["sight",55,80,"wave"]}},
   qing:{h:[.065,60,.001],N:{home:[45,62],tr:[60,59.5],sec:[28,63],mail:[85,62.5],sight:[60,70]},E:"home-tr home-sec home-mail home-sight tr-mail",
     HS:{yzTr:["tr",60,52,"bow"],yzSec:["sec",26,57,"wave"],yzMail:["mail",88,53,"wave"],yzSight:["sight",74,78,"wave"]}}};
-const SHW_ACT={bow:"bow",wave:"wave_goodbye_01",cheer:"cheer"},SHW_MEM={};
+const SHW_ACT={bow:"bow",wave:"wave_goodbye_01",cheer:"cheer"},SHW_MEM={},SHW_MEMH={};   /* SHW_MEMH：角色現在站在哪個入口前（那個標籤保持淡，開發者 11/8） */
 function shwCss(){if(document.getElementById("shwCss"))return;const s=document.createElement("style");s.id="shwCss";s.textContent=`
 .shw{position:absolute;left:0;top:0;width:0;height:0;pointer-events:none;transform-origin:0 0;opacity:0;transition:opacity .35s}
 .shw.on{opacity:1}.shw canvas{position:absolute;display:block;pointer-events:none}
@@ -11021,10 +11022,12 @@ function shwMount(o){if(shwRM()||!o.root||!o.frame||o.root.dataset.shw)return;o.
   shwLoad(S).catch(()=>{box.remove();S.ready=false;document.body.classList.remove("shw-on")})}
 function shwClick(S,e){if(S.pass)return;if(S.go){e.stopPropagation();e.preventDefault();shwOpen(S);return}
   const b=e.target.closest&&e.target.closest(S.o.sel);if(!b||!S.ready||!S.box.isConnected)return;const h=S.o.keyOf(b),H=S.C.HS[h];if(!H||!S.C.N[H[0]])return;
-  e.stopPropagation();e.preventDefault();vibrate(5);b.classList.add("shw-fade");const C=S.C,pts=shwPath(C,S.at,H[0]).map(n=>C.N[n]);let L=0;for(let i=1;i<pts.length;i++)L+=shwPx(C,pts[i-1],pts[i]);
+  e.stopPropagation();e.preventDefault();vibrate(5);if(S.stay&&S.stay!==b)S.stay.classList.remove("shw-fade");S.stay=null;b.classList.add("shw-fade");const C=S.C,pts=shwPath(C,S.at,H[0]).map(n=>C.N[n]);let L=0;for(let i=1;i<pts.length;i++)L+=shwPx(C,pts[i-1],pts[i]);
   S.go={hs:h,btn:b,to:H[0],pts,L,dur:L?Math.max(.6,Math.min(1.2,.3+L/650)):0,t:0,act:-1,look:shwYaw(C,C.N[H[0]],[H[1],H[2]]),A:H[3]}}
 function shwOpen(S){const g=S.go;if(!g)return;S.go=null;S.at=SHW_MEM[S.o.mem]=g.to;S.x=S.C.N[g.to][0];S.y=S.C.N[g.to][1];S.yaw=g.look;S.anim("idle",1);S.place();
-  let b=g.btn;if(!b||!b.isConnected)b=S.o.find(g.hs);if(!b)return;S.pass=true;try{b.click()}finally{S.pass=false;g.btn.classList.remove("shw-fade");b.classList.remove("shw-fade")}}
+  let b=g.btn;if(!b||!b.isConnected)b=S.o.find(g.hs);if(!b)return;S.pass=true;try{b.click()}finally{S.pass=false;if(g.btn!==b)g.btn.classList.remove("shw-fade");b.classList.add("shw-fade");S.stay=b;SHW_MEMH[S.o.mem]=g.hs}}
+/* 回到這一頁、角色出現時：站在哪個入口前，那個標籤保持淡 */
+function shwStay(S){const h=SHW_MEMH[S.o.mem],H=h&&S.C.HS[h];if(!H||H[0]!==S.at)return;const b=S.o.find(h);if(b){b.classList.add("shw-fade");S.stay=b}}
 async function shwLoad(S){
   await loadScript(OFF?"three.min.js":"/m/three.min.js");await loadScript((OFF?"bot3d.js":"/m/bot3d.js")+"?v="+encodeURIComponent(window.XQ_BUILD||""));
   const T=window.THREE;if(!T||!window.XQBot3D||!XQBot3D.figure)throw 0;if(!S.box.isConnected)return;
@@ -11050,7 +11053,7 @@ async function shwLoad(S){
   let last=performance.now(),acc=0,fr=0,t0=last;
   const end=()=>{S.ready=false;S.go=null;document.body.classList.remove("shw-on");try{r.dispose();r.forceContextLoss()}catch(e){}};
   const loop=now=>{if(!S.box.isConnected||!S.M.isConnected){end();return}requestAnimationFrame(loop);if(document.hidden){last=now;return}
-    if(!S.ready){if(S.o.gate&&!S.o.gate()){last=now;return}S.ready=true;fit()}
+    if(!S.ready){if(S.o.gate&&!S.o.gate()){last=now;return}S.ready=true;fit();shwStay(S)}
     const dt=Math.min(.05,(now-last)/1000);last=now;acc+=dt;const g=S.go;let walk=false;
     if(g){g.t+=dt;if(g.t<g.dur){walk=true;const u=g.t/g.dur,s=.65*u+.35*(.5-.5*Math.cos(Math.PI*u));let d=s*g.L,i=1;
         for(;i<g.pts.length;i++){const sl=shwPx(C,g.pts[i-1],g.pts[i]);if(d<=sl||i===g.pts.length-1){const f=sl?Math.min(1,d/sl):1,a=g.pts[i-1],b=g.pts[i];S.x=a[0]+(b[0]-a[0])*f;S.y=a[1]+(b[1]-a[1])*f;if(sl)S.yaw=shwYaw(C,a,b);break}d-=sl}
