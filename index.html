@@ -1341,7 +1341,7 @@ html[data-era=qin] .view:has(>.shp-rd),html[data-era=wudai] .view:has(>.shp-rd){
       if(!window.caches)return go();caches.keys().then(function(ks){return Promise.all(ks.filter(function(k){return k.indexOf("xqlab-app-")===0}).map(function(k){return caches.delete(k)}))})
         .then(function(){return navigator.serviceWorker&&navigator.serviceWorker.getRegistration()}).then(function(r){return r&&r.update()}).catch(function(){}).then(go)}};setTimeout(chk,4000)})();
 </script>
-<script>window.XQ_OFFLINE=true;window.XQ_BUILD="20261108-2110";</script>
+<script>window.XQ_OFFLINE=true;window.XQ_BUILD="20261108-2120";</script>
 <script src="core.js"></script>
 <script src="engine.js"></script>
 <script src="local.js"></script>
@@ -11172,6 +11172,7 @@ if(typeof yzInn==="function"){const f0=yzInn;yzInn=function(v,k){const r=f0.appl
    接 07w 的走路（座標表 SHW_HUB，用 shwPage）、07x 的兩指縮放（zmPage）。prefers-reduced-motion：燈火、茶煙、煙火不動，只有靜態樣子。
    開關 HUB_MAP_ON（false＝照舊卡片清單）；樣式在 hbCss */
 const HUB_MAP_ON=true;
+const HB_IMGV="2111";   /* 圖的版本：data/hubmap 存在不跟版本走的快取，同檔名換圖時把這個數字改掉，手機才會重抓（意見回饋 789 換棋盤） */
 /* 入口：[標籤 id（也是 07w 的入口代號）, 卡片的選擇器, 標籤左%, 上%]（量 768×1376 的定稿圖，標籤放在東西上方，角色站在東西前面） */
 const HUB_DEF={
   learn:{img:"learn",cap:"📚 學習",sub:"千秋翰林書院・前院啟蒙、中庭日課、講堂考校、藏書閣典藏",spots:[
@@ -11242,7 +11243,7 @@ function hbFxLearn(P){const fx=P.querySelector(".hb-fx");if(!fx)return;
   hbRedoN().then(n=>{if(n==null||!pond.isConnected)return;pond.innerHTML=n>0?`<i class="hb-ink" style="opacity:${Math.min(.85,.3+n*.06).toFixed(2)}"></i>`:'<i class="hb-clear"></i>'})}
 function hbFxBattle(P,img){let ph="";try{const S=window.XQNet&&XQNet.cup&&XQNet.cup();ph=S&&S.ph||""}catch(e){}
   const alt=ph==="reg"||ph==="wait"?"battle_red":ph==="ck"||ph==="play"?"battle_curtain":"";
-  if(alt){const im=new Image();im.onload=()=>{if(img.isConnected)img.src=im.src};im.src="data/hubmap/"+alt+".webp"}   /* 換圖前先載好，載不到就留原圖 */
+  if(alt){const im=new Image();im.onload=()=>{if(img.isConnected)img.src=im.src};im.src="data/hubmap/"+alt+".webp?v="+HB_IMGV}   /* 換圖前先載好，載不到就留原圖 */
   const fx=P.querySelector(".hb-fx");if(!fx)return;
   if(alt==="battle_curtain")fx.insertAdjacentHTML("beforeend",HUB_LAMP.battle.map(p=>`<i class="hb-lamp on" style="left:${p[0]}%;top:${p[1]}%"></i>`).join(""));
   if(ph==="done")fx.insertAdjacentHTML("beforeend",[[64,14,0],[81,11,-.9],[95,15,-1.7],[72,18,-.4],[57,12,-2.2]].map(([x,y,d])=>`<i class="hb-fw" style="left:${x}%;top:${y}%;animation-delay:${d}s"></i>`).join(""))}
@@ -11250,7 +11251,7 @@ function hubMap(v,hub){const D=HUB_DEF[hub],home=v.querySelector(".home");if(!D|
   const fresh=!store.get("campSeen",false)&&!Object.keys(campStars()).length&&!Object.keys(store.get("record",{})).length;
   const sp=D.spots.map(([id,sel,x,y])=>{const c=hbCard(v,sel);return c?{id,c,x,y}:null}).filter(Boolean);
   const d=document.createElement("div");
-  d.innerHTML=`<div class="shp-page cq hub-page"><img src="data/hubmap/${D.img}.webp" alt="${esc(D.cap)}"><div class="hb-fx" aria-hidden="true"></div><div class="shp-cap"><b>${esc(D.cap)}</b></div>${sp.map(o=>`<button class="shp-spot${hbHot(o.c)||(fresh&&(o.id==="hbCamp"||o.id==="hbTerms"))?" hot":""}" id="${o.id}" style="left:${o.x}%;top:${o.y}%"><b>${esc(hbTitle(o.c))}</b></button>`).join("")}</div>`;
+  d.innerHTML=`<div class="shp-page cq hub-page"><img src="data/hubmap/${D.img}.webp?v=${HB_IMGV}" alt="${esc(D.cap)}"><div class="hb-fx" aria-hidden="true"></div><div class="shp-cap"><b>${esc(D.cap)}</b></div>${sp.map(o=>`<button class="shp-spot${hbHot(o.c)||(fresh&&(o.id==="hbCamp"||o.id==="hbTerms"))?" hot":""}" id="${o.id}" style="left:${o.x}%;top:${o.y}%"><b>${esc(hbTitle(o.c))}</b></button>`).join("")}</div>`;
   const P=d.firstElementChild;v.insertBefore(P,home);home.classList.add("hb-hidden");
   for(const o of sp){const b=P.querySelector("#"+o.id);if(!b)continue;b.onclick=()=>o.c.click();
     const upd=()=>{if(!b.isConnected){mo.disconnect();return}const h=hbHot(o.c)||(fresh&&(o.id==="hbCamp"||o.id==="hbTerms"));if(b.classList.contains("hot")!==h)b.classList.toggle("hot",h)};
