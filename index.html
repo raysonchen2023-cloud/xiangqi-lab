@@ -1044,22 +1044,14 @@ body.xqt-on .modal{z-index:10000}body.xqt-on .toast{z-index:10001}body.xqt-on .x
 .shp-gy{position:absolute;left:10px;bottom:10px;z-index:2;padding:4px 10px;border-radius:99px;border:1px solid rgba(255,240,210,.4);background:rgba(30,22,14,.6);color:#F6E7CF;font:700 12px/1.2 var(--serif,serif);cursor:pointer}
 .shp-gy.on{background:#B5452B;border-color:#7a2414;color:#fff}
 @media (prefers-reduced-motion:reduce){.shp-px .px-fl,.shp-px .px-star{animation:none}}
-/* 意見回饋 748（開發者 11/8）：星槎航行感——船身起伏（.px-sw；熱點的 .px-hw 同一組動畫、同一個轉軸，所以一起動）、雲霧帶往後流、船邊雲浪與光點往後飄 */
-.shp-map.full .px-sw,.shp-px .px-D{position:absolute;inset:0;pointer-events:none;will-change:transform}
-.shp-map.full.px-on .px-sw{transform-origin:50% 62%;animation:pxsway 7.4s ease-in-out -.5s infinite}
-.shp-map.full.px-on .px-sw2{animation-name:pxsway2;animation-delay:0s}
-@keyframes pxsway{0%,100%{transform:translate3d(0,0,0) rotate(0deg)}25%{transform:translate3d(0,-2.5px,0) rotate(.3deg)}50%{transform:translate3d(0,.5px,0) rotate(0deg)}75%{transform:translate3d(0,3px,0) rotate(-.35deg)}}
-@keyframes pxsway2{0%,100%{transform:translate3d(0,0,0) rotate(0deg)}25%{transform:translate3d(0,-2.5px,0) rotate(.42deg)}50%{transform:translate3d(0,.5px,0) rotate(0deg)}75%{transform:translate3d(0,3px,0) rotate(-.48deg)}}
-.shp-px .px-mr{position:absolute;left:50%;top:50%;width:185%;height:0;padding-top:185%;transform:translate(-50%,-50%) rotate(126deg)}
-.shp-px .px-mi{position:absolute;left:0;top:0;width:100%;height:100%;max-width:none;will-change:transform;animation:pxflow 110s linear infinite}
-.shp-px .px-mi.px-m2{left:-100%}.shp-px .px-fog{animation-duration:62s;opacity:.85}
-@keyframes pxflow{from{transform:translate3d(0,0,0)}to{transform:translate3d(100%,0,0)}}
-.shp-px .px-wk{position:absolute;width:20%;height:12%;margin:-6% 0 0 -10%;border-radius:50%;background:radial-gradient(closest-side,rgba(255,255,255,.85),rgba(255,255,255,.4) 55%,rgba(255,255,255,0));opacity:0;will-change:transform,opacity;animation:pxwake 6.4s ease-out infinite}
-.shp-px .px-wk.g{background:radial-gradient(closest-side,rgba(95,95,100,.22),rgba(95,95,100,.08) 60%,rgba(95,95,100,0))}
-@keyframes pxwake{0%{transform:translate3d(0,0,0) scale(.55);opacity:0}25%{opacity:1}100%{transform:translate3d(-70%,95%,0) scale(1.35);opacity:0}}
+/* 意見回饋 748／757（開發者 11/8）：星槎航行感＋立體改用 WebGL 深度位移（07f-ship.js shpPx）。船身起伏、雲霧帶、船邊雲浪都在 canvas 裡畫；
+   熱點 .shp-hl 由 JS 每格套上跟船層一樣的位移和轉動（轉軸同為 50% 62%）；金色光點仍是 CSS 動畫 */
+.shp-map.full .px-hw,.shp-px .px-D{position:absolute;inset:0;pointer-events:none}.shp-px .px-D{will-change:transform}
+.shp-map.full .shp-hl{transform-origin:50% 62%}
+.shp-px .px-gl{position:absolute;left:0;top:0;width:100%;height:100%;display:block}
 .shp-px .px-mo{position:absolute;width:5%;height:0;padding-top:5%;margin:-2.5% 0 0 -2.5%;border-radius:50%;background:radial-gradient(closest-side,#fffbe6 0,#ffe08a 22%,rgba(255,196,80,.55) 45%,rgba(255,190,80,0));opacity:0;will-change:transform,opacity;animation:pxmote 8.6s linear infinite}
 @keyframes pxmote{0%{transform:translate3d(0,0,0) scale(.7);opacity:0}15%{opacity:.95}80%{opacity:.7}100%{transform:translate3d(-260%,350%,0) scale(1);opacity:0}}
-@media (prefers-reduced-motion:reduce){.shp-map.full.px-on .px-sw,.shp-px .px-mi,.shp-px .px-wk,.shp-px .px-mo{animation:none}}
+@media (prefers-reduced-motion:reduce){.shp-px .px-mo{animation:none}}
 
 /* 意見回饋 727：首頁雲河星槎大卡每行不換行，太長用「…」 */
 .shpc .tx{min-width:0;flex:1}.shpc .tx .s{display:block;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
@@ -1301,7 +1293,7 @@ html[data-era=qin] .view:has(>.shp-rd),html[data-era=wudai] .view:has(>.shp-rd){
       if(!window.caches)return go();caches.keys().then(function(ks){return Promise.all(ks.filter(function(k){return k.indexOf("xqlab-app-")===0}).map(function(k){return caches.delete(k)}))})
         .then(function(){return navigator.serviceWorker&&navigator.serviceWorker.getRegistration()}).then(function(r){return r&&r.update()}).catch(function(){}).then(go)}};setTimeout(chk,4000)})();
 </script>
-<script>window.XQ_OFFLINE=true;window.XQ_BUILD="20261108-1501";</script>
+<script>window.XQ_OFFLINE=true;window.XQ_BUILD="20261108-1511";</script>
 <script src="core.js"></script>
 <script src="engine.js"></script>
 <script src="local.js"></script>
@@ -2741,14 +2733,14 @@ function Home(v,hub){   /* hub：沒有＝首頁三張大卡；"battle"＝對戰
    <!-- 首頁三張大卡；對戰、學習各一頁（裡面還是原本那些長條） -->
    ${!hub&&OFF&&!standalone&&!(store.get("instAsk",null)||{}).no?`<button class="card instc" id="hInst2"><span class="ii">📲</span><span class="tx"><b>加到主畫面</b><small>全螢幕・沒網路也能下</small></span><b class="go">›</b></button>`:""}
    ${!hub&&!store.get("campSeen",false)&&!Object.keys(store.get("record",{})).length?`<button class="card instc" data-go="#/camp"><span class="ii">🔰</span><span class="tx"><b>第一次下象棋？</b><small>12 堂小課・一課一步</small></span><b class="go">›</b></button>`:""}
-   ${!hub&&OFF&&typeof homeRecHTML==="function"?homeRecHTML():""}
+   ${!hub&&OFF?(typeof homePathHTML==="function"?homePathHTML():typeof homeRecHTML==="function"?homeRecHTML():""):""}
    ${!hub?`<div class="hub3">
-     ${OFF?(typeof shipHomeHTML==="function"?shipHomeHTML():(()=>{const L=legendState(),J=jStages(),I=xpInfo();return`<button class="tile hubc ha" data-go="#/adventure"><span class="hi">🪨</span><span class="tx"><span class="t">冒險</span><span class="s" id="hLegend">故事 ${L.n}／36 回・棋路 ${L.pass||0}／${J.length} 關・Lv ${I.L}</span></span><b class="go">›</b></button>`})()):""}
+     ${OFF&&typeof homePathHTML!=="function"?(typeof shipHomeHTML==="function"?shipHomeHTML():(()=>{const L=legendState(),J=jStages(),I=xpInfo();return`<button class="tile hubc ha" data-go="#/adventure"><span class="hi">🪨</span><span class="tx"><span class="t">冒險</span><span class="s" id="hLegend">故事 ${L.n}／36 回・棋路 ${L.pass||0}／${J.length} 關・Lv ${I.L}</span></span><b class="go">›</b></button>`})()):""}
      <!-- 意見回饋 674：「冒險」換成「⛵ 雲河星槎」放最上面（07f-ship.js 的 shipHomeHTML）；對戰卡右邊的「⚡ 下一盤」直接進挑戰電腦（沒下完就接著下，下完了就照上次的設定開新局） -->
      <button class="tile hubc hb" data-go="#/hub/battle"><span class="hi">⚔</span><span class="tx"><span class="t">對戰</span><span class="s" id="hNet">電腦・線上・比賽</span></span><span class="qk" id="hQuick" role="button" tabindex="0" aria-label="下一盤：直接挑戰電腦">⚡ 下一盤</span></button>
      <button class="tile hubc hl" data-go="#/hub/learn"><span class="hi">📚</span><span class="tx"><span class="t">學習</span><span class="s">訓練營・測驗・棋譜</span></span><b class="go">›</b></button>
    </div>`:""}
-   ${!hub&&OFF&&typeof canjuCardHTML==="function"?canjuCardHTML():""}
+   ${!hub&&OFF&&typeof canjuCardHTML==="function"&&typeof homePathHTML!=="function"?canjuCardHTML():""}
    ${hub==="battle"?`<div class="sec-t" style="margin-top:4px">實戰</div>
    <div class="hero strips">
     ${T("k1","#/cpu","🤖","挑戰電腦","hCpu","Pikafish・積分挑戰","","下棋 ›")}
@@ -2782,7 +2774,7 @@ ${OFF?(()=>{const n=Object.keys(arenaStamps()).length,t=arenaTitle();return`<but
   const hi=v.querySelector("#hInst");if(hi)hi.onclick=()=>installGuide(true);{const h2=v.querySelector("#hInst2");if(h2)h2.onclick=()=>{vibrate(5);installGuide(true)}}
   v.querySelectorAll("[data-go]").forEach(b=>b.onclick=()=>{vibrate(5);location.hash=b.dataset.go});
   try{if(!hub&&OFF)canjuCardBind(v)}catch(e){}   /* 一盞茶殘局：首頁「今日茶單」小卡更新文字 */
-  try{if(!hub&&OFF&&typeof homeRecBind==="function")homeRecBind(v)}catch(e){}   /* Gemini 評估 11/8：⭐ 今日推薦（07f-ship.js） */
+  try{if(!hub&&OFF){if(typeof homePathBind==="function")homePathBind(v);else if(typeof homeRecBind==="function")homeRecBind(v)}}catch(e){}   /* Gemini 評估 11/8：🛤 首頁路線圖（07l-homepath.js），取代 ⭐ 今日推薦、星槎大卡、今日茶單小卡；沒有那個檔就照舊 */
   {const hl=v.querySelector("#hLegend");if(hl){const t=hl.closest(".tile");if(t)t.onclick=()=>{vibrate(5);location.hash="#/adventure"}}}
   {const q=v.querySelector("#hQuick");if(q){const go=e=>{e.stopPropagation();e.preventDefault();vibrate(5);location.hash="#/cpu"};q.onclick=go;q.onkeydown=e=>{if(e.key==="Enter"||e.key===" ")go(e)}}}   /* 意見回饋 674：⚡ 下一盤 */
   {const hx=v.querySelector("#hXP");if(hx){const t=hx.closest(".tile");if(t)t.onclick=()=>{vibrate(5);xpSheet()}}}
@@ -4021,7 +4013,7 @@ function onboard(){if(journey())journeyLock();else titleScreen({})}
 // ================= 設定：棋盤風格、棋子樣式、走棋顯示 =================
 const SAMPLE_FEN0="rnbakabnr/9/1c5c1/p1p1p1p1p/9/9/P1P1P1P1P/1C5C1/9/RNBAKABNR",SAMPLE_FEN1="rnbakabnr/9/1c5c1/p1p1p1p1p/9/9/P1P1P1P1P/1C2C4/9/RNBAKABNR",SAMPLE_LAST={f:70,t:67};
 /* 意見回饋 661：關於頁顯示整包遊戲要多大空間。XQ_SIZES 由 build-site.js 建置時填入（開發中的 m.html 是 null，就不顯示） */
-const XQ_SIZES={"pre":215030447,"code":12928744,"eng":51511005,"gm":33668932,"bgm":259516351,"opt":[["比賽對局 1956–2010",21765744],["比賽對局 2011–2014",25596413],["比賽對局 2015–2019",24821916]],"all":660898952,"other":16059400};
+const XQ_SIZES={"pre":215061168,"code":12968491,"eng":51511005,"gm":33668932,"bgm":259516351,"opt":[["比賽對局 1956–2010",21765744],["比賽對局 2011–2014",25596413],["比賽對局 2015–2019",24821916]],"all":660969420,"other":16059400};
 const szMB=b=>b>=1073741824?(b/1073741824).toFixed(1)+" GB":Math.max(1,Math.round(b/1048576))+" MB";
 function aboutSizes(){const S=XQ_SIZES;if(!S)return"";const opt=S.opt||[];   /* 意見回饋 662：玩家只看總數，細項只在開發者模式顯示 */
   return `<div class="row" style="justify-content:space-between"><span class="muted">整包下載</span><b>約 ${szMB(S.all)}</b></div>
@@ -5503,13 +5495,14 @@ function BookChapter(v,b,n,tab){b=b===2?2:1;n=Math.max(1,+n|0);const game=tab===
 /* 意見回饋 474（開發者）：看完人物資訊要能回到人物列表，而且停在剛才捲到的位置 */
 /* 意見回饋 556：人物旁邊標「真實人物／虛構人物／真假未定」（照 note 開頭的 📜 判斷：📜 真實人物、📜 真假未定，沒有 📜 的是故事裡編的） */
 const pplTag=x=>{const n=String(x&&x.note||""),[t,c]=/^📜\s*真假未定/.test(n)?["真假未定","#B5652E"]:/^📜/.test(n)?["真實人物","#2F6B4F"]:["虛構人物","#8A6D5A"];return` <span style="display:inline-block;font-size:11.5px;font-weight:700;padding:1px 7px;border-radius:9px;border:1px solid ${c};color:${c};vertical-align:2px">${t}</span>`};
-async function legendTimeline(keep){const D=await legendData();if(!D)return;const P=D.people||[],T=D.timeline||[];
+/* 第二集《紙譜新局》也有人物與年表（story/book2/people.json → park-legend2.json）：bk=2 讀第二集的資料，「回人物列表」也回第二集 */
+async function legendTimeline(keep,bk){bk=bk===2?2:1;const D=await (bk===2?legendData2():legendData());if(!D)return;const P=D.people||[],T=D.timeline||[];
   if(keep)setTimeout(()=>{const s=document.getElementById("sheet");if(!s)return;s.scrollTop=keep[0];const sb=s.querySelector(".sh-b");if(sb)sb.scrollTop=keep[1]},40);
   sheet("📅 人物與年表",b=>{b.innerHTML=`<div class="sec-t" style="margin-top:0">人物</div>${P.map(x=>{const im=PIMG[x.name];return`<div class="ppl" data-pp="${esc(x.name)}" style="cursor:pointer;${im?"":""}"${im?' style="flex-direction:row;gap:10px;align-items:center"':""}>${im?`<img src="${im}" alt="" onerror="this.remove()" style="flex:none;width:52px;height:70px;object-fit:contain">`:""}<div class="pn" style="flex:1;min-width:0"><b>${esc(x.name)}</b>${pplTag(x)}（${x.born}${x.died?"–"+x.died:""}）${ageOfP(x)?`<span class="muted" style="font-size:12.5px">${esc(ageOfP(x))}</span>`:""}<small>${esc(x.note||"")}</small>${x.verse?`<small style="font-family:var(--serif);font-style:italic;margin-top:2px">${esc(String(x.verse).split(/[。\n]/).filter(Boolean).slice(0,2).join("，"))}</small>`:""}</div></div>`}).join("")}
     <div class="sec-t">大事年表</div>${T.map(x=>`<div class="tlr"><div class="ty"><b>${x.y}</b><small>${esc(x.era||"")}</small></div><div class="tt">${x.h?"📜":"🪨"} ${esc(x.t)}</div></div>`).join("")}
-    <p class="muted" style="font-size:12px;line-height:1.7;margin-top:8px">📜 是真實的歷史；🪨 是石桌往事的故事（虛構）。沈石川、柳寒舟、阿古拉、周文淵和雲河鎮都是編的。</p>`;
+    <p class="muted" style="font-size:12px;line-height:1.7;margin-top:8px">${bk===2?"📜 是真實的歷史；🪨 是紙譜新局的故事（虛構）。錢滿川、白映紅、方小醒和雲河鎮都是編的；徐芝、陳學禮、朱晉楨是真有其人，跟他們下棋的事是故事裡編的。":"📜 是真實的歷史；🪨 是石桌往事的故事（虛構）。沈石川、柳寒舟、阿古拉、周文淵和雲河鎮都是編的。"}</p>`;
     b.querySelectorAll("[data-pp]").forEach(x=>x.onclick=()=>{const n=x.dataset.pp,p=P.find(z=>z.name===n),L=PEOPLE_LOOK[n];if(!L&&!PIMG[n])return;vibrate(5);const sh=document.getElementById("sheet"),keep=[sh?sh.scrollTop:0,sh&&sh.querySelector(".sh-b")?sh.querySelector(".sh-b").scrollTop:0];const pid=(m=>m?(m[1]==="npc"?"n:":"p:")+m[2]:/legend\/liu|journey\/char_liu_old/.test(PIMG[n]||"")?"j:liu_old":null)(String(PIMG[n]||"").match(/(people|npc)\/(\w+)\.webp/)),NPC=typeof PARK_NPC!=="undefined"?PARK_NPC.find(z=>z.name===n):null;   /* 意見回饋 719：賣豆花的小販這類園子棋友（data/npc/）也接上 3D 模型 n_<id>，棋子字照園子名單；原本只認 people/，找不到模型就顯示下半身不完整的畫像 */
-      figView(L||pid?oppFig({p:L?L.pc:NPC&&NPC.pc||"將",e:"classic",g:9,npc:n,hat:L&&L.hat,hc:L&&L.hc,robe:L&&L.robe,cus:pid}):null,"🪨 "+n,`${ageLine(ageOfP(p))}<p class="muted" style="font-size:13.5px;line-height:1.7;margin:0">${esc(p&&p.note||"")}</p>`,[["← 回人物列表",()=>legendTimeline(keep)],["關閉",()=>closeSheet(),true]],PIMG[n]||null)})})}
+      figView(L||pid?oppFig({p:L?L.pc:NPC&&NPC.pc||"將",e:"classic",g:9,npc:n,hat:L&&L.hat,hc:L&&L.hc,robe:L&&L.robe,cus:pid}):null,"🪨 "+n,`${ageLine(ageOfP(p))}<p class="muted" style="font-size:13.5px;line-height:1.7;margin:0">${esc(p&&p.note||"")}</p>`,[["← 回人物列表",()=>legendTimeline(keep,bk)],["關閉",()=>closeSheet(),true]],PIMG[n]||null)})})}
 /* 意見回饋 674：石桌往事、紙譜新局搬到星槎的書架（#/shelf/1、#/shelf/2）；#/adventure 改成雲河星槎頁（07f-ship.js）。SHELF()＝目前那一本書的網址 */
 const SHELF=b=>"#/shelf/"+(b||(store.get("legBook",1)===2&&(book1Done()||DEVMODE())?2:1));
 function legendBook(){closeSheet();LEGEND_PREVIEW=false;location.hash=SHELF()}
@@ -5552,7 +5545,7 @@ function Adventure(v){const bk=store.get("legBook",1)===2&&(book1Done()||DEVMODE
     const zi=k=>{const n=zn(k),rd=!!RD[k]&&!n;return`<span class="bk-zi${rd?" rd":""}" aria-label="${n?"收了 "+n+" 顆子":rd?"讀過了，還沒闖":"還沒收子"}">${ZI.map((z,i)=>`<i class="${i<n?"on":""}">${i<n?z:rd?"・":""}</i>`).join("")}</span>`};
     const row=k=>{const o=openK(k)||(bk===1&&LEGEND_PREVIEW&&DEVMODE());return`<button class="bk-row${k===cur&&!done?" cur":""}" data-k="${k}"${o?"":" disabled"}><span class="bk-no">${CNUM(k)}</span><span class="bk-tt">${o?esc(title(k)):"？？？"}${k===cur&&!done?" 🔖":""}${o?"":`<small>🔒 ${bk===2&&!b1?"第一集 36 關都過了才會打開":"先過第"+CNUM(k-1)+"回的棋"}</small>`}</span>${zi(k)}</button>`};
     const toc=groups.map(g=>{const got=g.ks.reduce((a,k)=>a+zn(k),0);return`<div class="bk-g"><div class="bk-gh"><b>${esc(g.n)}</b><span>${got}／${g.ks.length*3} 子</span></div>${g.gate?`<p class="bk-gate">${esc(g.gate)}</p>`:""}${g.ks.map(row).join("")}</div>`}).join("");
-    const ppl=bk===1?(D.people||[]).length:0;
+    const ppl=(D.people||[]).length;   /* 第二集有 people.json 之後，附錄也出現人物與年表 */
     v.innerHTML=`<div class="bk-page"><div class="bk-cover bk${bk}"><div class="bk-fb" style="background-image:url(${M.fb})"></div><img src="data/shipmap/book${bk}_cover.webp" alt="" onerror="this.remove()"><i class="bk-star s1"></i><i class="bk-star s2"></i><i class="bk-star s3"></i>
       <div class="bk-title"><b>${esc(M.t)}</b><small>${esc(M.sub)}</small></div></div>${mark}
       <div class="pad bk-toc"><div id="bkRes"></div>
@@ -5560,12 +5553,12 @@ function Adventure(v){const bk=store.get("legBook",1)===2&&(book1Done()||DEVMODE
         <details class="bk-rule"><summary>每回最多收三顆子：兵＝過關、馬＝失誤少、車＝幾乎沒失誤 ›</summary><p>${esc(D.blurb||"")}</p><p>每一回後面都有一盤棋。讀完一回、過了那一盤，就能讀下一回。收到的子放進棋罐，可以換提示棋、悔棋符、稱號。車＝失誤不超過 1 次、又沒用提示棋。${bk===1?"後面幾卷有等級門檻，等級不夠就下船到驛站找人下棋，或回前面的回多收幾顆子。":""}</p></details>
         <div class="bk-th">目　錄</div>${toc}
         ${ppl||bk===1?`<div class="bk-th">附　錄</div>`:""}<div class="bk-apx">${ppl?'<button class="bk-ap" id="bkTl">📅 人物與年表 ›</button>':""}${bk===1?'<button class="bk-ap" id="bkMap">🗺 雲河地圖 ›</button>':""}</div>
-        <p class="muted" style="font-size:12px;margin-top:10px">${bk===1?"故事是虛構的；年表裡標 📜 的是真實歷史。":"故事是虛構的。"}${bk===2&&!b1?"<br>🔒 讀完第一集、36 關都過了才會打開":""}</p>
+        <p class="muted" style="font-size:12px;margin-top:10px">${bk===1||ppl?"故事是虛構的；年表裡標 📜 的是真實歷史。":"故事是虛構的。"}${bk===2&&!b1?"<br>🔒 讀完第一集、36 關都過了才會打開":""}</p>
         ${DEVMODE()?'<button class="lk" id="bkDev" style="margin-top:4px">👁 開發者預覽全文（玩家看不到這個按鈕）</button>':""}</div></div>`;
     const on=(q,fn)=>{const e=v.querySelector(q);if(e)e.onclick=()=>{vibrate(5);fn()}};
     const rd=k=>bk===1?legendRead(k):legendRead2(k);
     on("#bkRead",()=>rd(done?1:cur));on("#bkGo",()=>{if(stOk(cur))return jGo(sc);toast(gateTxt(sc)?gateTxt(sc).replace("🔒 ","等級不夠：")+"・下船到 🏮 驛站找人下棋練等，或回前面的回多收幾顆子":"先過前一回的棋")});
-    on("#bkB2",()=>{location.hash="#/ship/shelf"});on("#bkTl",()=>legendTimeline());on("#bkMap",()=>jMap3d(J,S));
+    on("#bkB2",()=>{location.hash="#/ship/shelf"});on("#bkTl",()=>legendTimeline(null,bk));on("#bkMap",()=>jMap3d(J,S));
     on("#bkDev",()=>{if(bk===1){LEGEND_PREVIEW=true;legendRead(1)}else{LEGEND2_PREVIEW=true;legendRead2(1)}});
     v.querySelectorAll(".bk-row[data-k]").forEach(b=>b.onclick=()=>{vibrate(5);rd(+b.dataset.k)});
     jResume(v.querySelector("#bkRes"),j=>J.some(s=>s.id===j));   /* 只有這本書的對局下到一半才出現 */
@@ -7618,27 +7611,61 @@ const SHIP_PG={lesson:ShipLesson,shelf:ShipShelf,bag:ShipBag,sail:ShipSail};
 /* 開發者 11/7：星槎主畫面「假 3D 視差」——原圖切成四層（art/shipmap/layers：雲海星河 bg、船身＋碼頭 ship、帆桅旗燈 fg、金色星光 star），
    手指拖動、滑鼠移動、手機傾斜（按「🌀 立體」才開陀螺儀，iOS 才不會一進來就跳權限）時各層位移不同，放開慢慢回正；
    熱點包在 .shp-hl 裡跟著船身層走；圖層沒載到就留原本的單張圖；有設 prefers-reduced-motion 就不切層、不動 */
-const SHP_PX=[["bg",-.5],["mist",-.25],["wake",.1],["ship",.3],["fg",.85],["star",1.25],["mote",1.1]],SHP_PXM=12,SPX={el:null,ls:[],hl:null,tx:0,ty:0,cx:0,cy:0,k:.06,raf:0,drag:null,gyro:false,g0:null};
-/* 意見回饋 748（開發者 11/8）：「船有真的在移動」的航行感——船身和帆桅慢慢起伏搖擺（.px-sw，熱點包在同樣的 .px-hw 裡一起動）、
-   兩條水墨雲霧帶沿船身方向往後流（sm_mist_ink／sm_mist_fog，左右無縫）、船邊雲浪和金色光點往後飄。全部是 CSS 動畫，只動 transform 和 opacity；
-   視差的位移寫在外層 [data-k]，動畫在裡層，兩邊疊加不打架；離開這頁元素被換掉動畫就停；prefers-reduced-motion 時 shpPxHtml 不輸出，完全不動 */
-const SHP_WAKE=[[88,27,0],[85,43,2.1],[80,58,4.3],[33,39,1.2],[19,55,3.4],[7,75,.6],[22,95,2.8],[47,90,5]],SHP_MOTE=[[78,12,0],[95,32,2.6],[67,7,5.1],[98,50,1.3],[54,21,3.9],[91,68,6.2]];
+const SHP_PX=[["star",1.25],["mote",1.1]],SHP_PXM=12,SHP_SHIPD=.3,SPX={el:null,ls:[],hl:null,tx:0,ty:0,cx:0,cy:0,k:.06,drag:null,gyro:false,g0:null};
+/* 意見回饋 748／757（開發者 11/8）：航行感＋立體改用 WebGL「兩層深度位移」（素材由 tools/shipmap_layers/depth.py 產生）——
+   背景 sm_bg（船挖掉後鏡射補洞）＋船層 sm_ship（船身、碼頭、繩、帆桅旗燈合成一層），船層照深度圖 sm_depth 逐像素位移：桅杆越高位移越大、
+   船身慢慢起伏搖擺、桅頂跟著橫搖；帆桅和船身不再分層，所以沒有接縫、灰影、疊影。雲霧帶往後流、船邊雲浪也畫在同一支著色器裡。
+   熱點 .shp-hl 每格套上跟船層一樣的位移和轉動；金色星光、光點仍用 DOM 疊在最上面。WebGL 不能用或圖載不到就留原本的單張圖；
+   prefers-reduced-motion 時 shpPxHtml 不輸出，完全不動；離開這頁迴圈自己停並釋放 WebGL */
+const SHP_MOTE=[[78,12,0],[95,32,2.6],[67,7,5.1],[98,50,1.3],[54,21,3.9],[91,68,6.2]];
 function shpPxHtml(){if(matchMedia("(prefers-reduced-motion: reduce)").matches)return"";
-  const src=k=>`data/shipmap/layers/sm_${k}.webp`,im=k=>`<img class="px-L px-${k}" data-k="${k}" src="${src(k)}" alt="" draggable="false">`,mi=(c,k)=>`<img class="px-mi ${c}" src="${src(k)}" alt="" draggable="false">`;
-  const dots=(L,c)=>L.map(([x,y,d],i)=>`<i class="${c}${i%3===1?" g":""}" style="left:${x}%;top:${y}%;animation-delay:${d}s"></i>`).join("");
-  return`<div class="shp-px" aria-hidden="true">${im("bg")}<div class="px-D" data-k="mist"><div class="px-mr">${mi("px-ink","mist_ink")}${mi("px-ink px-m2","mist_ink")}${mi("px-fog","mist_fog")}${mi("px-fog px-m2","mist_fog")}</div></div>`+
-    `<div class="px-D" data-k="wake">${dots(SHP_WAKE,"px-wk")}</div><div class="px-sw">${im("ship")}</div><div class="px-sw px-sw2">${im("fg")}</div><div class="px-fl">${im("star")}</div><div class="px-D" data-k="mote">${dots(SHP_MOTE,"px-mo")}</div></div>`}
-function shpPxApply(){const t=d=>`translate3d(${(d*SHP_PXM*SPX.cx).toFixed(2)}px,${(d*SHP_PXM*SPX.cy).toFixed(2)}px,0)`;
-  for(const[i,d]of SPX.ls)i.style.transform=t(d);if(SPX.hl)SPX.hl.style.transform=t(SHP_PX.find(p=>p[0]==="ship")[1])}
-function shpPxRun(){if(SPX.raf)return;
-  const step=()=>{SPX.raf=0;if(!SPX.el||!SPX.el.isConnected){SPX.el=null;return}
-    SPX.cx+=(SPX.tx-SPX.cx)*SPX.k;SPX.cy+=(SPX.ty-SPX.cy)*SPX.k;
-    const done=Math.abs(SPX.tx-SPX.cx)<.002&&Math.abs(SPX.ty-SPX.cy)<.002;if(done){SPX.cx=SPX.tx;SPX.cy=SPX.ty}
-    shpPxApply();if(!done)SPX.raf=requestAnimationFrame(step)};
-  SPX.raf=requestAnimationFrame(step)}
-function shpPx(M){const box=M&&M.querySelector(".shp-px");if(!box)return;const ims=[...box.querySelectorAll("img.px-L")];
-  Promise.all(ims.map(i=>i.complete?(i.naturalWidth?1:Promise.reject()):new Promise((ok,no)=>{i.onload=ok;i.onerror=no}))).then(()=>{if(!M.isConnected)return;
-    M.classList.add("px-on");SPX.el=M;SPX.ls=[...box.querySelectorAll("[data-k]")].map(i=>[i,SHP_PX.find(p=>p[0]===i.dataset.k)[1]]);SPX.hl=M.querySelector(".shp-hl");SPX.cx=SPX.cy=SPX.tx=SPX.ty=0;shpPxApply();
+  const dots=SHP_MOTE.map(([x,y,d])=>`<i class="px-mo" style="left:${x}%;top:${y}%;animation-delay:${d}s"></i>`).join("");
+  return`<div class="shp-px" aria-hidden="true"><canvas class="px-gl"></canvas><div class="px-fl"><img class="px-L px-star" data-k="star" src="data/shipmap/layers/sm_star.webp" alt="" draggable="false"></div><div class="px-D" data-k="mote">${dots}</div></div>`}
+function shpPxApply(){const t=d=>`translate3d(${(d*SHP_PXM*SPX.cx).toFixed(2)}px,${(d*SHP_PXM*SPX.cy).toFixed(2)}px,0)`;for(const[i,d]of SPX.ls)i.style.transform=t(d)}
+function shpPxRun(){}   /* 動畫迴圈在 shpPx 裡一直跑（每格讀 SPX.tx／ty），這裡不用另外啟動 */
+const SHP_VS="attribute vec2 a;varying vec2 v;void main(){v=vec2(a.x*.5+.5,.5-a.y*.5)*vec2(896.,1200.);gl_Position=vec4(a,0.,1.);}";
+const SHP_FS=`#ifdef GL_FRAGMENT_PRECISION_HIGH
+precision highp float;
+#else
+precision mediump float;
+#endif
+uniform sampler2D A,B,Dp,Mi,Mf;uniform vec2 par,roll;uniform float bob,rot,t;varying vec2 v;
+const vec2 S=vec2(896.,1200.),C=vec2(448.,744.),E1=vec2(-.594,.805),E2=vec2(-.805,-.594);
+vec2 mir(vec2 u){u=abs(u);return 1.-abs(1.-u);}
+float dep(vec2 p){return texture2D(Dp,clamp(p/S,0.,1.)).r*1.6-.6;}
+vec2 off(float d,vec2 p){vec2 q=p-C;float c=cos(rot),s=sin(rot);return d*par+vec2(0.,bob)+vec2(c*q.x-s*q.y,s*q.x+c*q.y)-q+max(d-.3,0.)/.6*roll;}
+void main(){vec2 p=v;
+  vec3 col=texture2D(A,mir((p-(-.6+.25*p.y/S.y)*par)/S)).rgb;
+  vec2 q=p+.25*par-S*.5,r=vec2(dot(q,E1),dot(q,E2))/1658.;
+  col=mix(col,vec3(.275,.282,.306),texture2D(Mi,r-vec2(t/110.,0.)).a*.9);
+  col=mix(col,vec3(1.),texture2D(Mf,r+vec2(.37-t/62.,.21)).a*.85);
+  vec2 sp=p-off(dep(p),p);sp=p-off(dep(sp),p);
+  float wk=texture2D(Dp,clamp(sp/S,0.,1.)).g*smoothstep(.04,.45,texture2D(Mf,r*2.3+vec2(-t/13.,.5)).a);
+  col=mix(col,vec3(1.),wk*.8);
+  vec4 b=texture2D(B,mir(sp/S));gl_FragColor=vec4(mix(col,b.rgb,b.a),1.);}`;
+function shpGl(cv,im){const gl=cv.getContext("webgl",{alpha:false,antialias:false,depth:false,stencil:false,premultipliedAlpha:false,powerPreference:"low-power"});if(!gl)return null;
+  const sh=(ty,src)=>{const s=gl.createShader(ty);gl.shaderSource(s,src);gl.compileShader(s);if(!gl.getShaderParameter(s,gl.COMPILE_STATUS))throw new Error(gl.getShaderInfoLog(s));return s};
+  const pg=gl.createProgram();gl.attachShader(pg,sh(gl.VERTEX_SHADER,SHP_VS));gl.attachShader(pg,sh(gl.FRAGMENT_SHADER,SHP_FS));gl.linkProgram(pg);if(!gl.getProgramParameter(pg,gl.LINK_STATUS))throw new Error("link");gl.useProgram(pg);
+  gl.bindBuffer(gl.ARRAY_BUFFER,gl.createBuffer());gl.bufferData(gl.ARRAY_BUFFER,new Float32Array([-1,-1,1,-1,-1,1,1,1]),gl.STATIC_DRAW);const al=gl.getAttribLocation(pg,"a");gl.enableVertexAttribArray(al);gl.vertexAttribPointer(al,2,gl.FLOAT,false,0,0);
+  ["A","B","Dp","Mi","Mf"].forEach((n,i)=>{gl.activeTexture(gl.TEXTURE0+i);gl.bindTexture(gl.TEXTURE_2D,gl.createTexture());gl.texImage2D(gl.TEXTURE_2D,0,gl.RGBA,gl.RGBA,gl.UNSIGNED_BYTE,im[i]);
+    const w=i>2?gl.REPEAT:gl.CLAMP_TO_EDGE;gl.texParameteri(gl.TEXTURE_2D,gl.TEXTURE_WRAP_S,w);gl.texParameteri(gl.TEXTURE_2D,gl.TEXTURE_WRAP_T,w);gl.texParameteri(gl.TEXTURE_2D,gl.TEXTURE_MIN_FILTER,gl.LINEAR);gl.texParameteri(gl.TEXTURE_2D,gl.TEXTURE_MAG_FILTER,gl.LINEAR);gl.uniform1i(gl.getUniformLocation(pg,n),i)});
+  const U={};["par","roll","bob","rot","t"].forEach(n=>U[n]=gl.getUniformLocation(pg,n));return{gl,U}}
+function shpPx(M){const box=M&&M.querySelector(".shp-px");if(!box)return;const cv=box.querySelector(".px-gl"),I=M.querySelector(".shp-in"),hl=M.querySelector(".shp-hl");
+  const ld=s=>new Promise((ok,no)=>{const i=new Image();i.onload=()=>ok(i);i.onerror=no;i.src="data/shipmap/layers/sm_"+s});
+  Promise.all(["bg.webp","ship.webp","depth.png","mist_ink.webp","mist_fog.webp"].map(ld)).then(im=>{if(!M.isConnected)return;const G=shpGl(cv,im);if(!G)throw 0;
+    SPX.el=M;SPX.hl=hl;SPX.ls=[...box.querySelectorAll("[data-k]")].map(i=>[i,SHP_PX.find(p=>p[0]===i.dataset.k)[1]]);SPX.cx=SPX.cy=SPX.tx=SPX.ty=0;
+    const{gl,U}=G,t0=performance.now();let W=0,H=0,bw=0,bh=0,first=true;const meas=()=>{W=I.clientWidth;H=I.clientHeight};meas();
+    if(window.ResizeObserver)new ResizeObserver(meas).observe(I);
+    const step=now=>{if(!M.isConnected||SPX.el!==M){const x=gl.getExtension("WEBGL_lose_context");if(x)x.loseContext();return}
+      if(!window.ResizeObserver)meas();SPX.cx+=(SPX.tx-SPX.cx)*SPX.k;SPX.cy+=(SPX.ty-SPX.cy)*SPX.k;
+      if(W){const w=Math.round(Math.min(W*(devicePixelRatio||1),1120)),h=Math.round(w*H/W);if(w!==bw||h!==bh){cv.width=bw=w;cv.height=bh=h;gl.viewport(0,0,w,h)}
+        /* 起伏 2.6px、轉動 ±0.33°、桅頂橫搖 5px（都以 CSS px 計），週期 7.4 秒；視差最大 12px，兩者相加也不會拉破（depth.py 已檢查） */
+        const s=W/896,t=(now-t0)/1000,ph=t*2*Math.PI/7.4,bob=2.6*Math.sin(ph),rot=.0058*Math.sin(ph+.9),rl=5*Math.sin(ph+.5),px=SHP_PXM*SPX.cx,py=SHP_PXM*SPX.cy;
+        gl.uniform2f(U.par,px/s,py/s);gl.uniform2f(U.roll,.805*rl/s,.594*rl/s);gl.uniform1f(U.bob,bob/s);gl.uniform1f(U.rot,rot);gl.uniform1f(U.t,t%88660);gl.drawArrays(gl.TRIANGLE_STRIP,0,4);
+        if(hl)hl.style.transform=`translate3d(${(SHP_SHIPD*px).toFixed(2)}px,${(SHP_SHIPD*py+bob).toFixed(2)}px,0) rotate(${rot.toFixed(5)}rad)`;
+        shpPxApply();if(first){first=false;M.classList.add("px-on")}}
+      requestAnimationFrame(step)};
+    requestAnimationFrame(step);
     const cl=v=>Math.max(-1,Math.min(1,v)),go=(x,y,k)=>{SPX.tx=cl(x);SPX.ty=cl(y);SPX.k=k;shpPxRun()};
     M.addEventListener("pointermove",e=>{if(e.pointerType!=="mouse")return;const r=M.getBoundingClientRect();go((e.clientX-r.left)/r.width*2-1,(e.clientY-r.top)/r.height*2-1,.08)});
     M.addEventListener("pointerleave",e=>{if(e.pointerType==="mouse")go(0,0,.035)});
@@ -7646,7 +7673,7 @@ function shpPx(M){const box=M&&M.querySelector(".shp-px");if(!box)return;const i
     M.addEventListener("touchstart",e=>{const t=e.touches[0];SPX.drag={x:t.clientX,y:t.clientY}},{passive:true});
     M.addEventListener("touchmove",e=>{const t=e.touches[0],d=SPX.drag;if(d)go((t.clientX-d.x)/110,(t.clientY-d.y)/110,.18)},{passive:true});
     const up=()=>{SPX.drag=null;SPX.g0=null;go(0,0,.035)};M.addEventListener("touchend",up,{passive:true});M.addEventListener("touchcancel",up,{passive:true});
-    shpGyroBtn(M)}).catch(()=>{box.remove()})}
+    shpGyroBtn(M)}).catch(()=>{box.remove();M.classList.remove("px-on");if(hl)hl.style.transform=""})}
 function shpGyroOn(e){if(!SPX.el||!SPX.el.isConnected||SPX.drag)return;const b=e.beta,g=e.gamma;if(b==null||g==null)return;
   if(!SPX.g0)SPX.g0={b,g};const o=SPX.g0;o.b+=(b-o.b)*.004;o.g+=(g-o.g)*.004;   /* 基準角度慢慢跟上：拿久了自動回正 */
   SPX.tx=Math.max(-1,Math.min(1,(g-o.g)/18));SPX.ty=Math.max(-1,Math.min(1,(b-o.b)/18));SPX.k=.1;shpPxRun()}
@@ -8513,7 +8540,12 @@ function Codex(v){setTop("📚 千秋大百科","#/me");if(typeof setTabs==="fun
     v.innerHTML=`<div class="pad" style="padding-bottom:28px"><div class="card cx-top"><span class="cx-ring" style="--p:${P.p}" role="img" aria-label="總完成度 ${P.p}%"><b>${P.p}%</b></span><div><b style="font-size:18px;font-family:var(--serif)">總完成度</b>
       <div class="muted" style="font-size:13px;line-height:1.6">有總數的 ${P.n} 類收集，各類完成比例的平均${full?`・已經集滿 ${full} 類`:""}。<br>修為、官階是等級，不算進去；寶物、棋盤、棋譜這些沒有上限的只寫已收。</div></div></div>
       ${CODEX_GRP.map(([g,t])=>{const G=L.filter(c=>c.g===g);return G.length?`<div class="sec-t">${t}</div><div class="cx-grid">${G.map(cxCard).join("")}</div>`:""}).join("")}
+      <button class="btn ghost" id="cxReplay" style="width:100%;margin-top:12px">🎁 再看一次開箱</button>
       <p class="muted" style="font-size:12.5px;line-height:1.7;margin-top:12px">點一張卡，直接打開那個收藏冊或去拿的地方。</p></div>`;
+    /* 開發者 11/8：開箱動畫平常要撿到新珍品才看得到；這顆拿已經有的珍品重播一次（沒有就借一件給你看），不會多給東西 */
+    {const rb=v.querySelector("#cxReplay");if(rb)rb.onclick=async()=>{if(typeof vibrate==="function")vibrate(5);try{const R=await relicsData(),M=relicsMine(),own=[];for(const e in M)for(const id of M[e]||[]){const it=(R[e]||[]).find(z=>z.id===id);if(it)own.push([e,it])}
+      let pick=own.length?own[Math.floor(Math.random()*own.length)]:null;if(!pick){const es=Object.keys(R).filter(e=>(R[e]||[]).length);if(es.length){const e=es[Math.floor(Math.random()*es.length)];pick=[e,R[e][Math.floor(Math.random()*R[e].length)]]}}
+      if(pick)relicFx(pick[0],pick[1],{from:own.length?"重播開箱・你收藏的珍品":"開箱預覽・還沒收到的珍品"});else toast("珍品資料還沒載好")}catch(e){toast("暫時沒辦法播放")}}}
     v.querySelectorAll("[data-cx]").forEach(b=>b.onclick=()=>{const c=CODEX.find(z=>z.id===b.dataset.cx);if(!c)return;if(typeof vibrate==="function")vibrate(5);try{c.go()}catch(e){toast("這一類暫時打不開")}})}).catch(e=>{if(v.isConnected)v.innerHTML=`<div class="pad"><div class="card muted">${esc(e.message||"載入失敗")}</div></div>`});return{}}
 /* 我的角色頁底下的小卡（07-legend.js Me） */
 function codexMeCard(){cxCss();const d=document.createElement("div");d.className="card";d.innerHTML=`<button class="cx-me" id="cxMe"><span class="cx-ic">📚</span><span style="flex:1;min-width:0"><b>千秋大百科</b><br><span class="muted" style="font-size:13px" id="cxMeS">所有收藏一次看：已收多少、去哪裡拿、有什麼用</span></span><span class="muted">›</span></button>`;
@@ -8844,6 +8876,115 @@ const IFX_FX={
     Promise.all(lays.map(e=>e.decode?e.decode():new Promise((ok,no)=>{e.onload=ok;e.onerror=no}))).then(()=>{for(const e of lays)e.style.opacity=1}).catch(()=>{for(const e of lays)e.remove()})}
 };
 ifxStart();
+/* ================= 🛤 首頁路線圖（Gemini 評估 11/8，開發者核准）=================
+   學 Duolingo 首頁那條看得見的路：首頁最上面一張「今天的路」卡，取代 ⭐ 今日推薦、⛵ 雲河星槎大卡、🍵 今日茶單小卡（路上已經有的，下面不再重複）。
+   上半：今天的石板路，一個個節點（沿用今日推薦的判斷函式，07f-ship.js 的 homeRecGame、homeRecShipK、mainDone…）：
+     ♟ 接著下（有下到一半的棋才出現，排第一）→ 🍵 今日茶單 3 題 → ⛵ 這站的千秋殘局（學會了而且不是今天學會的＝⛵ 起航去下一站）
+     → 🪨 石桌往事下一回（第一集都過了換📜紙譜新局）→ 🤖 跟電腦下一盤
+     完成的判斷（都照 cjDay 的「凌晨 4 點換日」）：茶單＝cjCleared；殘局＝這站今天學會了（shipLearn 的時間）或 13 站都停靠過；
+       故事＝今天讀過任何一回（legRead 的時間）；下一盤＝棋譜庫 play 今天有下完的一盤（/db/items，id 是開局時間）。
+     第一個沒完成的節點＝目前這一步：發亮、「你在這裡」；完成的蓋朱紅「完」印；之後的淡一點。全部做完：右上角蓋「圓滿」，主線走完時接 mainDoneHTML。
+   下半：雲河航線 13 站（兩排蛇行）。朱紅方印＝這站學會了；金框發亮＋「這一站」＝人在這一站；實心＝已停靠；虛線＝下一站（點了去起航）；淡的＝還沒到。
+     上面那一行「⛵ 雲河星槎」＝原本的星槎大卡，點了進 #/adventure。
+   03-home-quiz.js 的 Home()：homePathHTML() 放在原本今日推薦的位置、畫完呼叫 homePathBind(v)；有這個檔時大卡區不畫 shipHomeHTML、canjuCardHTML。
+   樣式在這裡（hpCSS），顏色都用 --ink、--card、--red、--muted，秦、五代的深色回紋主題自動跟著變；prefers-reduced-motion 時不發亮、不晃。 */
+let HP_CPU={d:"",n:0};   /* 今天下完幾盤（棋譜庫查一次記住，同一天不重查） */
+const hpDay=t=>typeof cjDay==="function"?cjDay(t):new Date(t==null?Date.now():t).toDateString();
+const hpIsToday=t=>!!t&&+t>0&&hpDay(+t)===hpDay();
+function hpCSS(){if(document.getElementById("hpCss"))return;const st=document.createElement("style");st.id="hpCss";st.textContent=`
+.hpath{margin:0 0 12px;padding:8px 10px 4px;position:relative;overflow:hidden}
+.hp-h{display:flex;align-items:baseline;gap:8px;margin:0 4px}.hp-h b{font:900 15px var(--serif);letter-spacing:.12em}.hp-h small{margin-left:auto;color:var(--muted);font-size:12.5px;font-variant-numeric:tabular-nums}
+.hp-road{position:relative;height:128px;margin-top:2px}.hp-riv{position:relative;height:110px;margin:0 2px}
+.hp-road svg,.hp-riv svg{position:absolute;inset:0;width:100%;height:100%;overflow:visible;pointer-events:none}
+.hp-road path,.hp-riv path{fill:none;stroke-linecap:round;stroke-linejoin:round;vector-effect:non-scaling-stroke}
+.hp-wash{stroke:color-mix(in srgb,var(--ink) 8%,transparent);stroke-width:26}.hp-step{stroke:color-mix(in srgb,var(--ink) 32%,transparent);stroke-width:3;stroke-dasharray:2 10}
+.hp-trail{stroke:color-mix(in srgb,var(--red) 62%,transparent);stroke-width:4}
+.hp-n{position:absolute;top:0;transform:translateX(-50%);width:74px;display:flex;flex-direction:column;align-items:center;background:none;border:0;padding:0;font:inherit;color:inherit;cursor:pointer;-webkit-tap-highlight-color:transparent}
+.hp-n .o{position:relative;width:52px;height:52px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:24px;line-height:1;background:var(--card);border:2.5px solid color-mix(in srgb,var(--ink) 50%,var(--line));box-shadow:0 3px 0 color-mix(in srgb,var(--ink) 22%,transparent);transition:transform .15s}
+.hp-n:active .o{transform:translateY(2px);box-shadow:0 1px 0 color-mix(in srgb,var(--ink) 22%,transparent)}
+.hp-n .l{margin-top:4px;font:900 13px/1.2 var(--serif);white-space:nowrap;max-width:100%;overflow:hidden;text-overflow:ellipsis}.hp-n .s{font-size:11.5px;line-height:1.35;color:var(--muted);white-space:nowrap;max-width:100%;overflow:hidden;text-overflow:ellipsis}
+.hp-n.done .o{border-color:color-mix(in srgb,var(--red) 70%,var(--line))}
+.hp-n.done .o::after{content:"完";position:absolute;right:-7px;bottom:-5px;width:22px;height:22px;border-radius:4px;background:var(--red);color:#fff;font:900 13px/22px var(--serif);text-align:center;transform:rotate(-10deg);box-shadow:0 0 0 2px var(--card)}
+.hp-n.later .o{opacity:.5;filter:grayscale(.55);border-style:dashed}.hp-n.later .l,.hp-n.later .s{opacity:.65}
+.hp-n.cur .o{border:3px solid #C9962B;background:color-mix(in srgb,#C9962B 16%,var(--card));animation:hpGlow 2.6s ease-in-out infinite}
+.hp-n.cur .l{color:color-mix(in srgb,#A8741A 70%,var(--ink))}
+.hp-you{position:absolute;top:-23px;left:50%;transform:translateX(-50%);padding:2px 8px;border-radius:999px;background:#C9962B;color:#fff;font:900 11.5px/1.5 var(--sans);white-space:nowrap;letter-spacing:.04em;animation:hpBob 2.6s ease-in-out infinite;box-shadow:0 1px 3px #0003}
+.hp-you::after{content:"";position:absolute;left:50%;top:100%;margin-left:-5px;border:5px solid transparent;border-top-color:#C9962B}
+.hp-fin{position:absolute;right:6px;top:-30px;width:50px;height:50px;border:3px double var(--red);border-radius:6px;color:var(--red);font:900 17px/20px var(--serif);display:flex;align-items:center;justify-content:center;text-align:center;transform:rotate(-12deg);opacity:.86;letter-spacing:.1em;background:color-mix(in srgb,var(--red) 7%,transparent)}
+.hp-sh{display:flex;align-items:center;gap:8px;width:100%;min-height:44px;margin:0;padding:4px 6px 0;border:0;border-top:1px dashed color-mix(in srgb,var(--ink) 20%,var(--line));background:none;font:inherit;color:inherit;text-align:left;cursor:pointer}
+.hp-sh .ic{font-size:22px;flex:none}.hp-sh .tx{flex:1;min-width:0;display:flex;align-items:baseline;gap:8px}.hp-sh b{font:900 15px var(--serif);letter-spacing:.1em;flex:none}
+.hp-sh small{color:var(--muted);font-size:12.5px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.hp-sh .go{color:var(--muted);font-size:18px}
+.hp-rw{stroke:color-mix(in srgb,#5B7C99 20%,transparent);stroke-width:20}.hp-rl{stroke:color-mix(in srgb,#5B7C99 55%,transparent);stroke-width:1.6;stroke-dasharray:9 7}
+.hp-s{position:absolute;width:44px;height:44px;margin:-22px 0 0 -22px;border:0;background:none;padding:0;display:flex;align-items:center;justify-content:center;cursor:pointer;color:inherit;-webkit-tap-highlight-color:transparent}
+.hp-s i{width:30px;height:30px;border-radius:50%;display:flex;align-items:center;justify-content:center;font:900 14px/1 var(--serif);font-style:normal;background:var(--card);border:2px solid color-mix(in srgb,var(--ink) 48%,var(--line));color:var(--ink)}
+.hp-s.seal i{background:var(--red);border-color:var(--red);color:#fff;border-radius:5px;transform:rotate(-7deg)}
+.hp-s.next i{border-style:dashed;color:var(--muted)}.hp-s.far i{opacity:.38;border-style:dotted;color:var(--muted)}
+.hp-s.here i{width:36px;height:36px;box-shadow:0 0 0 3px #C9962B,0 0 0 7px color-mix(in srgb,#C9962B 25%,transparent);animation:hpGlow2 2.6s ease-in-out infinite}
+.hp-s em{position:absolute;top:100%;left:50%;transform:translateX(-50%);margin-top:-5px;font:800 11px/1.2 var(--sans);font-style:normal;white-space:nowrap;color:var(--muted)}.hp-s.here em{margin-top:4px;color:color-mix(in srgb,#A8741A 75%,var(--ink))}
+@keyframes hpGlow{0%,100%{box-shadow:0 3px 0 color-mix(in srgb,#A8741A 45%,transparent),0 0 0 0 rgba(201,150,43,0)}50%{box-shadow:0 3px 0 color-mix(in srgb,#A8741A 45%,transparent),0 0 0 7px rgba(201,150,43,.24)}}
+@keyframes hpGlow2{0%,100%{box-shadow:0 0 0 3px #C9962B,0 0 0 5px rgba(201,150,43,.15)}50%{box-shadow:0 0 0 3px #C9962B,0 0 0 9px rgba(201,150,43,.3)}}
+@keyframes hpBob{0%,100%{transform:translate(-50%,0)}50%{transform:translate(-50%,-3px)}}
+@media (prefers-reduced-motion:reduce){.hp-n.cur .o,.hp-you,.hp-s.here i{animation:none}.hp-n .o{transition:none}}
+.hpath .mdone{margin:6px 0 4px}
+`;document.head.append(st)}
+/* 一串點連成平滑的曲線（Catmull-Rom → 三次貝茲）；x 是 0～100（寬度百分比），y 是 px */
+function hpCurve(P){if(!P.length)return"";let d=`M${P[0][0]} ${P[0][1]}`;for(let i=0;i<P.length-1;i++){const a=P[i-1]||P[i],b=P[i],c=P[i+1],e=P[i+2]||c,f=n=>+n.toFixed(2);
+  d+=` C${f(b[0]+(c[0]-a[0])/6)} ${f(b[1]+(c[1]-a[1])/6)},${f(c[0]-(e[0]-b[0])/6)} ${f(c[1]-(e[1]-b[1])/6)},${f(c[0])} ${f(c[1])}`}return d}
+
+/* ---------- 今天的節點 ---------- */
+function hpTea(){try{const S=cjState(),L=S.day===cjDay()?S.list:null,ok=!!(L&&cjCleared(L)),n=L?L.filter((x,i)=>x.st==="done"||(i===2&&x.st==="skip")).length:0;
+  return{id:"tea",ic:"🍵",t:"今日茶單",s:ok?"喝完了":`${n}／3 題`,go:"#/canju",done:ok}}catch(e){return null}}
+function hpShip(){try{const k=homeRecShipK();if(!k)return null;const L=shipPuzzles(k),lt=(store.get("shipLearn",{})||{})[k],nm=shipShort(k),nx=shipAppr()?null:shipNextStop(),ln=shipLearned(k);
+  if(!ln&&!(L&&!L.length)){const n=L?L.slice(0,SHIP_PER).filter(id=>shipRec(k,id)).length:null;return{id:"ship",ic:"♟",t:nm+"殘局",s:n==null?"千秋殘局":`${n}／${Math.min(SHIP_PER,L.length)} 題`,go:"#/ship/pz"}}
+  if(nx&&!hpIsToday(lt))return{id:"ship",ic:"⛵",t:"起航",s:"去"+shipShort(nx),go:"#/ship/sail"};
+  if(!ln)return null;return{id:"ship",ic:"♟",t:nm+"殘局",s:"學會了",go:"#/adventure",done:true}}catch(e){return null}}
+function hpStory(){try{if(typeof legendState!=="function"||typeof jStages!=="function")return null;const R=store.get("legRead",{})||{},td=Object.values(R).some(E=>Object.values(E||{}).some(hpIsToday));
+  let b=1,n=legendState().n;if(typeof book1Done==="function"&&book1Done()){if(typeof jStages2!=="function")return null;const S=jStars(),J=jStages2(),x=J.find(z=>!S[z.id]);if(!x)return null;b=2;n=x.n}
+  return{id:"story",ic:b===1?"🪨":"📜",t:`第${CNUM(n)}回`,s:td?"今天讀過了":b===1?"石桌往事":"紙譜新局",go:`#/shelf/${b}/${n}`,done:td}}catch(e){return null}}
+function hpNodes(st,onl){const N=[],g=onl||(typeof homeRecGame==="function"?homeRecGame(st):null);
+  if(g)N.push({id:"go",ic:"♟",t:onl?"回對局":"接著下",s:onl?"線上對局":String(g.t).replace(/^.*：/,""),go:g.go,sw:g.sw,park:g.park});
+  for(const f of[hpTea,hpShip,hpStory]){const x=f();if(x)N.push(x)}
+  if(!(g&&g.go==="#/cpu"))N.push({id:"cpu",ic:"🤖",t:"下一盤",s:HP_CPU.d===hpDay()&&HP_CPU.n?"今天下過了":"跟電腦",go:"#/cpu",done:HP_CPU.d===hpDay()&&HP_CPU.n>0});
+  const c=N.findIndex(x=>!x.done);N.forEach((x,i)=>{x.st=x.done?"done":i===c?"cur":c>=0&&i>c?"later":"todo"});return N}
+
+/* ---------- 雲河航線 13 站 ---------- */
+function hpStations(){try{const ap=shipAppr(),O=shipDockList()?shipOrder():SHIP_ROUTE.slice(),D=new Set(shipDocked()),at=homeRecShipK()||shipAt(),nx=ap?null:shipNextStop();
+  return O.map(k=>({k,c:k==="classic"?"艙":shipShort(k)[0],nm:k==="classic"?"星槎船艙":eraLabel(k),seal:shipLearned(k),here:k===at,dock:D.has(k),next:k===nx}))}catch(e){return[]}}
+function hpRiverHTML(){const S=hpStations();if(!S.length)return"";const a=S.slice(0,7),b=S.slice(7),Y1=24,Y2=76,P=[];
+  a.forEach((s,i)=>{s.x=(i+.5)/7*100;s.y=Y1+(i%2?4:-2)});b.forEach((s,j)=>{s.x=(6-j)/7*100;s.y=Y2+(j%2?-3:3)});
+  S.forEach((s,i)=>{P.push([s.x,s.y]);if(i===a.length-1&&b.length)P.push([99,(Y1+Y2)/2])});const d=hpCurve(P);
+  return`<div class="hp-riv"><svg viewBox="0 0 100 110" preserveAspectRatio="none" aria-hidden="true"><path class="hp-rw" d="${d}"/><path class="hp-rl" d="${d}"/></svg>${S.map(s=>{
+    const cls=[s.seal?"seal":"",s.here?"here":"",!s.dock?(s.next?"next":"far"):""].filter(Boolean).join(" "),lab=s.here?"這一站":s.next?"下一站":"";
+    const al=`${s.nm}：${s.here?"你在這一站，":""}${s.seal?"棋理學會了":s.dock?"已停靠":s.next?"下一站，點了起航":"還沒到"}`;
+    return`<button class="hp-s ${cls}" data-st="${s.k}" style="left:${s.x.toFixed(2)}%;top:${s.y}px" aria-label="${esc(al)}"><i>${esc(s.c)}</i>${lab?`<em>${lab}</em>`:""}</button>`}).join("")}</div>`}
+function hpShipRow(){try{const ap=shipAppr(),k=shipAt(),T=SHIP_STOP[k]||SHIP_STOP.classic,q=String(shipQuote()).match(/有 (\d+) 封新信/);
+  const s=ap?"說書人學徒・13 站都能去":`${shipShort(k)}・${T.place}・棋話 ${shipPages()}／13`;
+  return`<button class="hp-sh" data-go="#/adventure" aria-label="雲河星槎：${esc(s)}${q?`，${q[1]} 封新信`:""}"><span class="ic">⛵</span><span class="tx"><b>雲河星槎</b><small>${esc(s)}${q?`・✉ ${q[1]}`:""}</small></span><b class="go">›</b></button>`}catch(e){return`<button class="hp-sh" data-go="#/adventure"><span class="ic">⛵</span><span class="tx"><b>雲河星槎</b><small>船頭、下船、書架</small></span><b class="go">›</b></button>`}}
+
+/* ---------- 畫 ---------- */
+function hpRoadHTML(N){const n=N.length,P=N.map((x,i)=>{x.x=(i+.5)/n*100;x.y=i%2?36:22;return[x.x,x.y+26]}),c=N.findIndex(x=>x.st==="cur"),last=c<0?n-1:c,all=N.every(x=>x.done);
+  const done=N.filter(x=>x.done).length;
+  return`<div class="hp-h"><b>${all?"🎉 今天的路走完了":"🛤 今天的路"}</b>${all?"":`<small>${done}／${n}</small>`}</div>
+  <div class="hp-road">${all?'<div class="hp-fin" aria-hidden="true">圓<br>滿</div>':""}<svg viewBox="0 0 100 128" preserveAspectRatio="none" aria-hidden="true"><path class="hp-wash" d="${hpCurve(P)}"/><path class="hp-step" d="${hpCurve(P)}"/>${last>0?`<path class="hp-trail" d="${hpCurve(P.slice(0,last+1))}"/>`:""}</svg>
+  ${N.map((x,i)=>`<button class="hp-n ${x.st}" data-i="${i}" style="left:${x.x.toFixed(2)}%;top:${x.y}px" aria-label="${esc(x.t+"・"+x.s+(x.st==="cur"?"，你在這裡":x.done?"，完成了":""))}">${x.st==="cur"?'<span class="hp-you">你在這裡</span>':""}<span class="o">${x.ic}</span><span class="l">${esc(x.t)}</span><span class="s">${esc(x.s)}</span></button>`).join("")}</div>`}
+function homePathHTML(){hpCSS();let N=[];try{N=hpNodes(null,null)}catch(e){}
+  return`<div class="card hpath" id="hPath"><div id="hpRoad">${hpRoadHTML(N)}</div>${hpShipRow()}${hpRiverHTML()}${typeof mainDoneHTML==="function"?mainDoneHTML():""}</div>`}
+function homePathBind(v){const box=v&&v.querySelector("#hPath");if(!box)return;let N=[],onl=null;
+  const go=async x=>{vibrate(5);if(x.sw)try{await api("/play/switch",{kind:x.sw})}catch(e){}if(x.park)store.set("park3d",true);location.hash=x.go};
+  const draw=st=>{if(!box.isConnected)return;try{N=hpNodes(st,onl)}catch(e){return}const r=box.querySelector("#hpRoad");if(!r)return;r.innerHTML=hpRoadHTML(N);
+    r.querySelectorAll(".hp-n").forEach(b=>b.onclick=e=>{e.stopPropagation();const x=N[+b.dataset.i];if(x)go(x)})};
+  try{if(window.XQNet&&XQNet.playing&&XQNet.playing())onl={go:"#/pvp",t:"⚔ 回線上對局"}}catch(e){}
+  draw(null);
+  box.querySelectorAll(".hp-sh").forEach(b=>b.onclick=e=>{e.stopPropagation();vibrate(5);location.hash="#/adventure"});
+  box.querySelectorAll(".hp-s").forEach(b=>b.onclick=e=>{e.stopPropagation();const k=b.dataset.st,s=hpStations().find(z=>z.k===k);if(!s)return;vibrate(5);
+    if(s.here){location.hash=s.seal?"#/adventure":"#/ship/pz";return}
+    if(s.dock){if(typeof goUp==="function"&&typeof shipGoTo==="function")goUp("#/adventure",()=>shipGoTo(k));else location.hash="#/adventure";return}
+    if(s.next){location.hash="#/ship/sail";return}
+    const nx=hpStations().find(z=>z.next);toast(`⛵ 星槎還沒開到${s.nm}${nx?`：先到星槎頁起航去${nx.nm}`:""}`)});
+  try{if(typeof mainDoneBind==="function")mainDoneBind(v)}catch(e){}
+  const cpu=HP_CPU.d===hpDay()?null:api("/db/items?c=play&limit=12").then(d=>{let n=0;for(const it of(d&&d.items)||[]){const r=String(it.result||"");if(r&&!/中止|取消/.test(r)&&hpIsToday(typeof tlTime==="function"?tlTime(it.id):0))n++}HP_CPU={d:hpDay(),n}}).catch(()=>null);
+  Promise.all([api("/play/state").catch(()=>null),typeof cjData==="function"?cjData().then(D=>{try{cjToday(D,cjState())}catch(e){}}).catch(()=>null):null,typeof shipBank==="function"&&homeRecShipK()?shipBank().catch(()=>null):null,cpu])
+    .then(([st])=>draw(st)).catch(()=>{})}
 /* ================= 🕰 回到當年（意見回饋 313）=================
    石桌往事裡的對局，用「妙棋精選」裡 Pikafish 驗證過的特級大師實戰來演：你站在旁邊看，不能插手；
    棋自動一步一步下，下到那一步妙棋之前停下來——換作是你，會怎麼走？
@@ -9240,16 +9381,21 @@ const BOT_FAQ=[
  [["車庫","我的車庫","獎勵模式","點數","換車","8891","車款"],"「🚗 我的車庫」在首頁：到「挑戰電腦」選 🚗 獎勵模式，贏一盤拿點數（難度越高點數越多），和棋拿四成，輸了不扣點；一點＝台幣一萬元，每款車的兌換點數＝8891 新車最低售價（萬元）。獎勵模式不能悔棋、不能用寶物，雙方各走一步以上才算。","#/garage","去我的車庫"],
  [["我的成長","成長","進步","棋力分析","我的棋力","五項","雷達"],"「🏅 我的戰績」裡有「🎯 我的棋力」和「📈 我的成長」。我的棋力看五項：開局、中局、殘局（最近約一段步數的每步準確度，100＝每步都是電腦首選）、殺法（棋力測驗的殺法、戰術題）、穩定（失著、敗著越少越高）。我的成長看你進步得多快，跟電腦、線上、雲河棋路故事裡下的棋都算進去。用過提示或悔棋的那盤不算分數（還是算一次練習量）；還沒評等的對局，打開賽後報告評等後就會算進來。","#/stats","去看我的戰績"],
  [["武俠","武俠角色","雲河四子","雲河七星","齊轍","阿轍","星槎","雲河星槎","沈方庭","庭哥","鐵連城","城子","步越溪","溪兒","存檔","讀檔","新的旅程","齊長路","阿路","田飛燕","燕子","雷借花","花兒","駱躍梅","小梅","齊直行","阿直","田恬","雷響響","駱跳跳","劍客少年","靈族少女","江湖女俠","苗疆少女","換角色","選角色","我的角色","換造型"],"開新的旅程時，從「雲河七星」七位原創角色選一位，每位就是一顆棋子，各來自不同朝代，搭上穿梭歷史的星槎「雲河」相遇：俥・齊轍（秦，運糧車夫之子，只肯走直路）、相・田飛燕（南北朝，江邊渡口茶棚的姑娘）、炮・雷借花（宋，臨安煙火作坊的女兒）、傌・駱躍梅（元，草原驛站撿來的孩子）、帥・沈方庭（明，徽州當鋪少爺，天生氣喘）、仕・鐵連城（明，從小護著他的鄰家哥哥）、兵・步越溪（清，揚州跑腿丫頭）。棋盤就是他的家鄉朝代。選定就不能換，本命棋子也跟著鎖住；想換身分，回開頭畫面開始「新的旅程」，可以存到另一格。","#/settings","去換角色"],
- [["第二集","紙譜新局","下一集","續集","第一集"],`「石桌往事」有兩集：第一集《石桌往事》、第二集《紙譜新局》，都放在「⛵ 雲河星槎」的船艙書架上，一本書一本書分開放。第二集要先把第一集${ROAD_NAME}的 36 關都過了才會解鎖（還沒解鎖會顯示 🔒）。`,"#/shelf/1","去書架"],
+ [["第二集","紙譜新局","下一集","續集","第一集"],`「石桌往事」有兩集：第一集《石桌往事》、第二集《紙譜新局》，都放在「⛵ 雲河星槎」的船艙書架上，一本書一本書分開放。第二集要先把第一集的 36 關都過了才會打開（還沒打開會顯示 🔒）。兩本書的版面一樣：書封、書籤卡、目錄，書末附錄都有「📅 人物與年表」。第二集講明朝隆慶到崇禎年間，錢小滿的玄孫錢滿川和烏蘭的玄孫女白映紅的故事。`,"#/ship/shelf","去書架"],
+ /* 石桌往事書頁改版（意見回饋 735）：書封、書籤卡、目錄、每回的正文／棋局頁籤、百字精華、附錄，小帥照新版的位置回答 */
+ [["書架","書封","書籤","書籤卡","目錄","讀下去","讀到哪","回目","故事在哪","怎麼讀故事"],"「⛵ 雲河星槎 → 船艙書架」放著兩本書，點一本就打開。最上面是書封；書封下面那張 🔖 書籤卡寫著你讀到第幾回：按「📖 讀下去」接著讀，按「⚔ 闖關」直接去下這一回的棋。往下捲是目錄，每回一行：左邊是第幾回，中間是回目，右邊三格是你收到的子（兵、馬、車）；有灰色小點的，表示讀過了、還沒下棋。還沒打開的回寫著「？？？」和 🔒。左上角「‹」回書架。","#/ship/shelf","去書架"],
+ [["棋局頁籤","頁籤","正文","棋局在哪","這一回的棋","上一回","下一回","回書","怎麼開始下"],"在目錄點一回，就打開那一回的頁面。最上面有兩個頁籤：「📖 正文」是故事；「⚔ 棋局」是這一回的棋，寫著怎麼玩、怎樣算過關、怎樣收到車，按「▶ 開始」就下。讀到正文最後，按「⚔ 去下這一回的棋」也會跳到棋局頁籤；下完棋按「回書」，會回到這裡。過了這一回的棋，最下面的「下一回 ›」才會亮。","#/shelf/1","打開石桌往事"],
+ [["百字精華","精華","這一回講什麼","看不懂的字","名詞","底線","小辭典"],"每回正文最上面有一段「📜 百字精華」：用一百字左右先說這一回的重點，看完再讀正文，比較不會迷路；點標題可以收起來。正文裡有些古代的名詞（官名、地名、老東西）下面有淡淡的底線，點一下，{BOT}會跳出來用白話解釋；同一個詞，一回只標第一次。","#/shelf/1","打開石桌往事"],
+ [["人物與年表","人物年表","年表","大事年表","誰是誰","真實人物","虛構人物","附錄","雲河地圖"],"打開書，捲到目錄最下面的「附　錄」，按「📅 人物與年表」：上面是書裡的人，名字旁邊標著「真實人物」或「虛構人物」，還寫著生在哪一年、故事裡幾歲；有畫像的人點一下可以看大圖或 3D，看完按「← 回人物列表」。下面是大事年表，把故事和真的歷史排在一起：📜 是真的歷史，🪨 是故事裡編的。兩集都有人物與年表；第一集還有「🗺 雲河地圖」，一指轉、兩指放大。","#/shelf/1","打開石桌往事"],
  [["悔棋","悔棋符"],"悔棋要用「↶ 悔棋符」：跟電腦的一般對局、故事裡可以用（我的角色看得到張數）。對局時按「🎒 寶物」或「↶ 悔棋」就能用（擂台、故事、挑戰電腦都可以）；積分挑戰、獎勵模式、線上對戰都不能悔棋；練習（擺盤、錯棋重練）可以隨便退。"],
  [["錯棋重練","錯棋","重練"],"和電腦下完，App 會把你走錯的局面收進「錯棋重練」，之後可以回到那個局面重新練，直到走對為止。"],
  [["棋力測驗","測驗","程度"],"首頁「📚 學習 → 🎯 棋力測驗」會出一系列題目，估計你目前的程度。","#/quiz","去做測驗"],
  [["積分","段位","排名","升級"],"積分挑戰和線上對戰會計分，從新手開始，贏棋加分、輸棋扣分，分數夠就升段。"],
  [["古譜","橘中秘","梅花譜","適情雅趣","殘局譜"],"棋譜庫有《橘中秘》《梅花譜》《適情雅趣》和古典開局、殘局譜，每一局都可以一步一步看。","#/db","打開棋譜庫"],
  [["驛站","練等","等級不夠"],`等級不夠進${ROAD_NAME}的下一${ROAD_UNIT}時，去「⛵ 雲河星槎 → ⚓ 下船 → 渡口的 🏮 驛站」找路過的旅人下棋練等（賣茶的老婦、趕考的書生、走鏢的鏢師……），下幾次都可以，贏了多給修為。`,"#/journey/inn","去驛站"],
- [["闖關","雲河棋路",ROAD_NAME,"關卡","星星","棋罐","兵馬車","將令","點將台","隱藏殘局"],`「⛵ 雲河星槎 → 書架 → 石桌往事」的目錄就是${ROAD_NAME}：每回一行，右邊三格是那一回收到的子；書封上的「⚔ 闖關」或讀完一回最下面的按鈕直接進那一關。跟著說書人講的石桌往事，從渡口走到石桌，分 5 ${ROAD_UNIT}，兩集各 36 關，過關才會開下一關。每關最多收三顆子：過關收「兵」、失誤少收「馬」、失誤不超過 1 次又沒用提示棋收「車」。子放進棋罐，集到 10、20、36、72 子會換提示棋、悔棋符、稱號、預習卷全開，棋罐夠多也能代替等級進下一${ROAD_UNIT}。收到車時有機會出現隱藏殘局，解開得「將令」，拿去驛站的點將台換東西。`,"#/journey","去闖關"],
+ [["闖關","雲河棋路",ROAD_NAME,"關卡","星星","棋罐","兵馬車","將令","點將台","隱藏殘局"],`以前的${ROAD_NAME}已經併進書裡：「⛵ 雲河星槎 → 書架 → 石桌往事」的目錄就是${ROAD_NAME}，每回一行，右邊三格是那一回收到的子（舊網址 #/journey 會自動轉到這裡）。要下棋，按書封書籤卡上的「⚔ 闖關」，或打開那一回、點「⚔ 棋局」頁籤再按「▶ 開始」。兩集各 36 回、每回一關，過了這一回的棋才會打開下一回；第一集分 5 ${ROAD_UNIT}，第二集分 4 幕。每關最多收三顆子：過關收「兵」、失誤少收「馬」、失誤不超過 1 次又沒用提示棋收「車」。子放進棋罐，集到 10、20、36、72 子會換提示棋、悔棋符、稱號、預習卷全開，棋罐夠多也能代替等級進下一${ROAD_UNIT}。收到車時有機會出現隱藏殘局，解開得「將令」，拿去驛站的點將台換東西。`,"#/shelf/1","去闖關"],
  [["等級","修為","經驗","升級","Lv","提示棋","提示"],`「⛵ 雲河星槎」頁上面的「🀄 Lv」就是「棋道修行」等級（修為）：下棋、測驗、猜著法、闖關都會累積修為，每 10 級換一個稱號（棋童到棋仙）。等級看練了多少、段位看實力，分開算。提示棋會指出關鍵的那顆子；跟電腦的一般對局、${ROAD_NAME}和故事裡都能用，線上對戰不能用。`,"#/adventure","去雲河星槎"],
- [["撐傘","灰衣老人","柳寒舟","石桌往事","沈石川","棋仙的故事","隱藏角色"],`「🪨 石桌往事」是說書人在星槎上講的故事，放在「⛵ 雲河星槎」的船艙書架：元末明初，石桌棋仙沈石川和宿敵柳寒舟的故事（36 回，第一回先讀）。書的目錄就是${ROAD_NAME}（每回後面一關，過關解開下一回，走到盡頭與石桌棋仙對坐一局解開尾聲），書末附錄有人物與年表、雲河地圖；有「🕰 回到當年」的章節可以站在旁邊看當年那盤棋、猜關鍵一步加段位積分。`,"#/shelf/1","去石桌往事"],
+ [["撐傘","灰衣老人","柳寒舟","石桌往事","沈石川","棋仙的故事","隱藏角色"],`「🪨 石桌往事」是說書人在星槎上講的故事，放在「⛵ 雲河星槎」的船艙書架：元末明初，石桌棋仙沈石川和宿敵柳寒舟的故事（36 回，從第一回讀起）。書的目錄就是${ROAD_NAME}：每回一頁，分「📖 正文」和「⚔ 棋局」兩個頁籤，正文開頭有「📜 百字精華」；過了這一回的棋，才會打開下一回。書末附錄有「📅 人物與年表」和「🗺 雲河地圖」。有幾回的棋局頁籤裡有「🕰 回到當年」，可以站在旁邊看當年那盤棋、猜關鍵一步加段位積分。`,"#/shelf/1","去石桌往事"],
  [["星槎","雲河星槎","冒險","主線","主場殘局","千秋殘局","站章","下一站","說書人","學徒","停靠","起航","棋理","千秋棋話"],"「⛵ 雲河星槎」是你自己的主線，在首頁最上面。船頭有 13 站航線：每一站學一個棋理：一張棋理卡加 3 題千秋殘局（妙著一定由主場角色的本命子走）。解題點實心＝自己解開、空心＝用過提示，看答案不算；3 題都解開就「學會了」，《千秋棋話》補一頁。下面還有「這一朝的棋」，講那個朝代的人下什麼棋。想往下一站，按「⛵ 起航」就走，什麼時候開由你決定；13 站都停靠過，會看到旅程終點卡。到站按「⚓ 下船」到那一朝的渡口，渡口有三扇門：🌳 園子、🏮 驛站、🏯 擂台；船艙書架放著說書人講的《石桌往事》《紙譜新局》。小帥、小帥妹的舊旅程是「說書人的學徒」，13 站全開。","#/adventure","去雲河星槎"],
  [["渡口","下船","千秋穿梭","千秋石枰","回星槎","換朝代","去別的朝代"],"星槎每停一站，按「⚓ 下船」就到那一朝的渡口（船艙那一站叫「船艙」）。渡口有三扇門：🌳 園子（找路人棋友）、🏮 驛站（旅人、秘境棋友、信箱）、🏯 擂台（擂主）；三處之間走幾步就到，不用回船上。園子、驛站、擂台的「‹」回渡口，渡口的「‹」回星槎，每一頁右上的「⛵」都能直接回星槎。換朝代只在星槎：按「⛵ 起航」往下一站、點航線上停靠過的站，或「🪨 千秋石枰」點一顆石頭，都會播一段千秋穿梭（只播經過的那幾朝，可以跳過）。","#/port","去渡口"],   /* 意見回饋 697 */
  [["難度","航行難度","聽書","入局","破陣","國手","千秋","太難","太簡單"],"「🎚 航行難度」有五級：聽書（新手～入門1）、入局（入門2～業1，預設）、破陣（業2～業4）、國手（業5～業7）、千秋（業8 以上）。難度只管星槎裡的電腦對手（園子、驛站、擂主、章回棋路）強弱和千秋殘局的題目，聽書、入局每天多送提示棋、每盤有免費悔棋；挑戰電腦、積分挑戰、線上、今日茶單不受影響。隨時可以在星槎頁的行囊、設定裡換，已停靠的站和學會的棋理都不收回。","#/adventure","去雲河星槎"],
