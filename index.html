@@ -1341,7 +1341,7 @@ html[data-era=qin] .view:has(>.shp-rd),html[data-era=wudai] .view:has(>.shp-rd){
       if(!window.caches)return go();caches.keys().then(function(ks){return Promise.all(ks.filter(function(k){return k.indexOf("xqlab-app-")===0}).map(function(k){return caches.delete(k)}))})
         .then(function(){return navigator.serviceWorker&&navigator.serviceWorker.getRegistration()}).then(function(r){return r&&r.update()}).catch(function(){}).then(go)}};setTimeout(chk,4000)})();
 </script>
-<script>window.XQ_OFFLINE=true;window.XQ_BUILD="20261109-1100";</script>
+<script>window.XQ_OFFLINE=true;window.XQ_BUILD="20261109-1130";</script>
 <script src="core.js"></script>
 <script src="engine.js"></script>
 <script src="local.js"></script>
@@ -12083,6 +12083,8 @@ const FBP_ICO=k=>k==="fb_idea"?`<img class="ti eic" src="data/feedback/fb_idea.w
 const FBP_SEAL=[617,842,23],FBP_PILL=[673,866],FBP_JADE=[364,580];
 /* 告示榜上圖裡原本就有的 3 張空白紙條（左、上、寬、高，像素）：程式的回條就貼在這 3 張上面，跟著榜的透視微微斜 */
 const FBP_SLIPS=[[84,300,35,116],[131,289,30,112],[174,268,26,108]],FBP_SLIPN=[88,428];
+/* 意見回饋 813：回條字太長會被紙條切掉；先取第一個逗號前的短句，再一個字一個字縮到放得下，結尾加「…」 */
+function fbpSlipFit(e,t){t=t.split(/[，,；;。（(]/)[0].trim()||t;const put=u=>{e.innerHTML=`<b>已修</b>${esc(u)}`},over=()=>e.scrollWidth>e.clientWidth+1||e.scrollHeight>e.clientHeight+1;put(t);if(!over())return;for(let n=t.length-1;n>0;n--){put(t.slice(0,n).trim()+"…");if(!over())return}}
 const SHW_FBP={el:40,h:[.085,70,.0012],look0:[42,60],home:"home",
   N:{home:[66,93],mid:[42,83],desk:[40,76],gui:[82,81],lft:[12,72],brd:[18,57],te:[30,64],tb:[27,49.5]},
   E:"home-mid mid-desk mid-gui mid-lft lft-brd home-gui desk-te te-tb",
@@ -12206,7 +12208,7 @@ function FeedbackPage(v,sub){fbpCss();setTop("💬 意見回饋","#/settings");i
     (typeof myFixes==="function"?myFixes():Promise.resolve(null)).then(F=>{if(!v.isConnected)return;const fl=v.querySelector(".fbp-fl"),cap=v.querySelector("#fbpFixes .sec-t span");
       if(!F){fl.innerHTML='<div class="card muted" style="text-align:center">讀不到修正紀錄</div>';return}
       if(cap)cap.textContent=F.dev?"全部的修正，最新的在最上面":"你回報、已經修好的問題";fl.innerHTML=fixList(F.items,F.dev);
-      const top=F.items.slice(0,3);P.querySelectorAll(".fbp-slip").forEach((e,i)=>{const x=top[i];if(!x)return;e.style.display="";e.innerHTML=`<b>已修</b>${esc(String(x.n||"已修正").replace(/^[✅\s]+/,"").slice(0,14))}`});
+      const top=F.items.slice(0,3);P.querySelectorAll(".fbp-slip").forEach((e,i)=>{const x=top[i];if(!x)return;e.style.display="";fbpSlipFit(e,String(x.n||"已修正").replace(/^[✅\s]+/,""))});
       {const n=P.querySelector(".fbp-slipn");if(F.items.length>3){n.textContent=`共 ${F.items.length} 張`;n.classList.add("on")}}
       if(sub==="fixes"){sub="";setTimeout(toList,120)}}).catch(()=>{});
     paint();
