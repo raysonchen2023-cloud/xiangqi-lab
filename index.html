@@ -1341,7 +1341,7 @@ html[data-era=qin] .view:has(>.shp-rd),html[data-era=wudai] .view:has(>.shp-rd){
       if(!window.caches)return go();caches.keys().then(function(ks){return Promise.all(ks.filter(function(k){return k.indexOf("xqlab-app-")===0}).map(function(k){return caches.delete(k)}))})
         .then(function(){return navigator.serviceWorker&&navigator.serviceWorker.getRegistration()}).then(function(r){return r&&r.update()}).catch(function(){}).then(go)}};setTimeout(chk,4000)})();
 </script>
-<script>window.XQ_OFFLINE=true;window.XQ_BUILD="20261109-0400";</script>
+<script>window.XQ_OFFLINE=true;window.XQ_BUILD="20261109-0430";</script>
 <script src="core.js"></script>
 <script src="engine.js"></script>
 <script src="local.js"></script>
@@ -11164,10 +11164,18 @@ function shwBotCss(){if(document.getElementById("shwBotCss"))return;const s=docu
 .shw-me{position:absolute;z-index:150;background:transparent;border:0;padding:0;border-radius:40%;cursor:pointer;-webkit-tap-highlight-color:transparent}
 .shw-hint{position:absolute;z-index:151;transform:translate(-50%,-100%);border:1px solid rgba(60,40,24,.55);border-radius:10px 10px 10px 2px;background:#f6efdf;color:#3a2618;font:700 11px/1 var(--serif,serif);padding:3px 5px;cursor:pointer;box-shadow:0 1px 2px rgba(0,0,0,.25);opacity:.92}
 .shw-say{position:absolute;z-index:210;transform:translate(-50%,-100%);max-width:62%;width:max-content;background:#fbf6ea;color:#2f2216;border:1.5px solid #3a2618;border-radius:12px;padding:5px 10px;font:700 12.5px/1.45 var(--serif,serif);text-align:center;box-shadow:0 2px 6px rgba(0,0,0,.22);pointer-events:none;opacity:0;transition:opacity .25s}
-.shw-say.on{opacity:1}.shw-say::after{content:"";position:absolute;left:50%;bottom:-7px;margin-left:-6px;border:6px solid transparent;border-top-color:#3a2618;border-bottom:0}
+.shw-say.on{opacity:1}.shw-say.side::after{display:none}.shw-say.low{z-index:190}.shw-say::after{content:"";position:absolute;left:50%;bottom:-7px;margin-left:-6px;border:6px solid transparent;border-top-color:#3a2618;border-bottom:0}
 .shw-menu{position:absolute;z-index:211;display:flex;flex-direction:column;gap:4px;padding:6px;background:#f6efdf url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='80' height='80'%3E%3Cfilter id='n'%3E%3CfeTurbulence baseFrequency='.9'/%3E%3CfeColorMatrix values='0 0 0 0 .4 0 0 0 0 .3 0 0 0 0 .2 0 0 0 .06 0'/%3E%3C/filter%3E%3Crect width='80' height='80' filter='url(%23n)'/%3E%3C/svg%3E");border:1.5px solid #3a2618;border-radius:10px;box-shadow:0 4px 12px rgba(0,0,0,.3)}
 .shw-menu button{border:1px solid rgba(60,40,24,.35);border-radius:999px;background:rgba(255,255,255,.55);color:#2f2216;font:800 13px/1 var(--serif,serif);padding:7px 12px;white-space:nowrap;text-align:left;cursor:pointer}
 .shw-menu button:active{background:#e9d9b4}`;document.head.append(s)}
+/* 回饋 804：泡泡別蓋住標籤（⚔ 古戰場等）：疊到標籤就往有空的那一邊挪，再不行就放到腳下；都擠，才沉到標籤底下（z 190＜標籤 200） */
+function shwSayFit(el,L,below){try{el.style.marginLeft=el.style.marginTop=el.style.maxWidth="";el.classList.remove("side","low");const labs=[...L.querySelectorAll(".shp-spot,.po-sight")].filter(b=>b.offsetParent&&getComputedStyle(b).opacity!=="0").map(b=>b.getBoundingClientRect());
+  const LR=L.getBoundingClientRect();
+  for(const mw of["","44%","34%"]){el.style.maxWidth=mw;const r=el.getBoundingClientRect(),w=r.width,hit=(dx,dy)=>labs.filter(q=>!(q.right<r.left+dx+2||q.left>r.right+dx-2||q.bottom<r.top+dy+2||q.top>r.bottom+dy-2));
+    const h0=hit(0,0);if(!h0.length){if(mw)el.classList.add("side");return}
+    const up=Math.min(...h0.map(q=>q.top))-r.bottom-6,C=[[-(w/2+24),0],[w/2+24,0],[-(w+30),0],[w+30,0],[0,up],[-w/3,up],[w/3,up]];if(below)C.push([0,below],[-w/3,below],[w/3,below],[-w/2,below],[w/2,below]);
+    for(const[dx,dy]of C){if(r.left+dx<LR.left+2||r.right+dx>LR.right-2||r.bottom+dy>LR.bottom-2||r.top+dy<LR.top+2)continue;if(!hit(dx,dy).length){el.style.marginLeft=dx+"px";el.style.marginTop=dy+"px";el.classList.add("side");return}}}
+  el.style.maxWidth="";el.classList.add("low")}catch(e){}}
 function shwBotHook(S){if(S.botHook||!S.box||!S.box.isConnected)return;S.botHook=1;shwBotCss();const L=S.o.layer,box=S.box;
   const hit=document.createElement("button");hit.type="button";hit.className="shw-me";hit.setAttribute("aria-label","我的角色：問問題、聽棋語");
   const hint=document.createElement("button");hint.type="button";hint.className="shw-hint";hint.textContent="💬";hint.setAttribute("aria-label","問問題、聽棋語");
@@ -11189,10 +11197,11 @@ function shwBotHook(S){if(S.botHook||!S.box||!S.box.isConnected)return;S.botHook
     if(!m||!cv||!box.classList.contains("on")||box.style.opacity==="0"){hit.style.display=hint.style.display="none";say.style.display="none";return}
     const k=+m[3],cw=parseFloat(cv.style.width)||cv.clientWidth,ch=parseFloat(cv.style.height)||cv.clientHeight,Lf=parseFloat(cv.style.left)||0,T=parseFloat(cv.style.top)||0,x=+m[1],y=+m[2],top=y+(T+ch*.12)*k;
     head=[x,top];Object.assign(hit.style,{display:"",left:(x+(Lf+cw*.28)*k).toFixed(1)+"px",top:top.toFixed(1)+"px",width:(cw*.44*k).toFixed(1)+"px",height:(Math.max(0,-T-ch*.12)*k).toFixed(1)+"px"});
-    Object.assign(hint.style,{display:say.classList.contains("on")?"none":"",left:(x+cw*.16*k).toFixed(1)+"px",top:(top+2).toFixed(1)+"px"});Object.assign(say.style,{display:"",left:x.toFixed(1)+"px",top:(top-4).toFixed(1)+"px"})};
+    Object.assign(hint.style,{display:say.classList.contains("on")?"none":"",left:(x+cw*.16*k).toFixed(1)+"px",top:(top+2).toFixed(1)+"px"});Object.assign(say.style,{display:"",left:x.toFixed(1)+"px",top:(top-4).toFixed(1)+"px"});if(say.classList.contains("on")&&performance.now()-(say._ft||0)>300){say._ft=performance.now();shwSayFit(say,L,Math.max(0,-(T+ch*.12)*k)+say.offsetHeight+14)}};
   const mo=new MutationObserver(upd);mo.observe(box,{attributes:true,attributeFilter:["style","class"]});upd();
   const said=e=>{if(!box.isConnected){window.removeEventListener("xq-bot-said",said);return}if(!document.body.classList.contains("shw-on"))return;const t=String(e.detail||"").trim();if(!t)return;
-    say.textContent=t;say.classList.add("on");hint.style.display="none";clearTimeout(sayT);sayT=setTimeout(()=>{say.classList.remove("on");upd()},Math.max(2200,Math.min(9000,t.length*170)))};
+    if(/^[♪♫\s]+/.test(t))return;   /* 回饋 804：動作、舞蹈的小標不進泡泡（bot3d 也不再送出） */
+    say.textContent=t;say.classList.add("on");hint.style.display="none";say._ft=0;upd();clearTimeout(sayT);sayT=setTimeout(()=>{say.classList.remove("on");upd()},Math.max(2000,Math.min(5000,t.length*150)))};
   window.addEventListener("xq-bot-said",said)}
 /* 意見回饋 795（開發者 11/8）：冷啟動時 3D 模型清單（tripo.json）還沒抓回來，myLook() 會退成預設小人（綠色），標題列頭像卻已經是選的角色。
    載入前先等清單（最多 3 秒）；之後每秒比一次要用的模型，存檔或清單晚到、換了角色，就在同一個框裡換模型（只在站著時換，不打斷走路；S.gen 讓舊的畫布和迴圈自己收掉） */
@@ -11238,6 +11247,81 @@ async function shwLoad(S){
     if(!g&&(fr++&1))return;if(clips)B.mixer.update(acc);acc=0;B.bot.position.y=by;r.render(sc,cam);
     if(!S.box.classList.contains("on")){S.box.classList.add("on");document.body.classList.add("shw-on")}};
   requestAnimationFrame(loop)}
+/* ================= 回饋 804（開發者 11/9 選最小方案）：渡口站著這一朝的七星主人 =================
+   渡口下方小卡在說話的那位（shipWho：SHIP_LESSON 的 openBy／doneBy，沒有就 SHIP_STOP[k].who[0]；南北朝＝x_spiritgirl 田飛燕）用 3D 站在碼頭上：
+     平常待機，偶爾揮手；位置在 home 附近、往沒有標籤的那一邊錯開，不跟走路角色的起點疊在一起。
+     點她：頭上出宣紙泡泡，講的就是小卡那一句（直接讀小卡的字，保證一樣），小卡捲進畫面、閃一下。
+   說書人、或主人就是玩家自己選的角色：不多放人。只放一位。
+   畫法跟 07w 走路角色一樣（XQBot3D.figure＋正交鏡頭、同一個 el 仰角和 SHW_PORT 的身高比例），離開頁面就收掉 WebGL；頁面藏起來或捲出畫面就不畫。
+   渡口同時有：07r 的風（shader）＋走路角色＋這位＝3 個 WebGL。開關 PORT_HOST3D；前綴 ph4 */
+const PORT_HOST3D=true;
+function ph4Css(){if(document.getElementById("ph4Css"))return;const s=document.createElement("style");s.id="ph4Css";s.textContent=`
+.ph4{position:absolute;left:0;top:0;width:0;height:0;z-index:5;pointer-events:none;opacity:0;transition:opacity .5s}
+.ph4.on{opacity:1}.ph4 canvas{position:absolute;pointer-events:none}
+.ph4 .sh{position:absolute;border-radius:50%;background:radial-gradient(rgba(40,28,18,.32),rgba(40,28,18,0) 70%)}
+.ph4-hit{position:absolute;z-index:150;background:transparent;border:0;padding:0;border-radius:40%;cursor:pointer;-webkit-tap-highlight-color:transparent}
+.ph4-say{position:absolute;z-index:210;transform:translate(-50%,-100%);max-width:52%;width:max-content;background:#fbf6ea;color:#2f2216;border:1.5px solid #3a2618;border-radius:12px;padding:6px 10px;font:700 12.5px/1.5 var(--serif,serif);text-align:left;box-shadow:0 2px 6px rgba(0,0,0,.22);pointer-events:none;opacity:0;transition:opacity .25s}
+.ph4-say b{display:block;font-size:11.5px;color:#8a2a1a;letter-spacing:.06em}
+.ph4-say.on{opacity:1}.ph4-say::after{content:"";position:absolute;left:50%;bottom:-7px;margin-left:-6px;border:6px solid transparent;border-top-color:#3a2618;border-bottom:0}
+.ph4-say.side::after{display:none}.ph4-say.low{z-index:190}
+.port-say.ph4-flash{animation:ph4Fl 1.6s ease-out}
+@keyframes ph4Fl{0%,40%{box-shadow:0 0 0 3px rgba(242,201,76,.95),0 0 14px 4px rgba(255,214,120,.7)}100%{box-shadow:none}}
+@media (prefers-reduced-motion:reduce){.port-say.ph4-flash{animation:none}}`;document.head.append(s)}
+/* 這一朝渡口小卡上說話的七星主人（說書人、或就是玩家自己的角色時回傳空字串） */
+function ph4Who(k){try{const Ls=SHIP_LESSON[k]||{},T=SHIP_STOP[k]||{};if(shipAppr()||!Ls.open)return"";const by=shipLearned(k)&&Ls.done?Ls.doneBy:Ls.openBy;if(by==="teller")return"";
+  const c=by||(T.who||[])[0]||"";if(!c||!WX_CHARS[c]||c===myChar())return"";return c}catch(e){return""}}
+function ph4Mount(v,k){if(!PORT_HOST3D||shwRM()||!SHW_PORT_ON||!SHW_PORT[k])return;const P=v&&v.querySelector(".shp-page.cq");if(!P||P.dataset.ph4)return;const c=ph4Who(k);if(!c)return;P.dataset.ph4="1";ph4Css();
+  const C=shwCfg(SHW_PORT[k],SHW_PSX[k]);if(Array.isArray(C.h))C.h=[C.h[0]*SHW_PORT_K,C.h[1],C.h[2]*SHW_PORT_K];
+  const box=document.createElement("div");box.className="ph4";box.setAttribute("aria-hidden","true");box.innerHTML='<i class="sh"></i>';
+  const hit=document.createElement("button");hit.type="button";hit.className="ph4-hit";const nm=(WX_CHARS[c].nk||WX_CHARS[c].n||"");hit.setAttribute("aria-label",nm+"：聽她說話");hit.style.display="none";
+  const say=document.createElement("div");say.className="ph4-say";say.setAttribute("aria-live","polite");
+  const before=P.querySelector(".shp-spot,.po-sight");P.insertBefore(box,before&&before.parentNode===P?before:null);P.append(hit,say);
+  ph4Load(P,box,hit,say,C,k,c).catch(()=>{box.remove();hit.remove();say.remove()})}
+/* 站的位置：home 往左或往右錯開，挑不壓到標籤、也不壓到走路角色起點的那一邊 */
+function ph4Spot(P,C,hFr){const H=C.N[C.home]||[50,70],W=P.clientWidth,Hh=P.clientHeight,labs=[...P.querySelectorAll(".shp-spot,.po-sight")].map(b=>{const r=b.getBoundingClientRect(),q=P.getBoundingClientRect();return[r.left-q.left,r.top-q.top,r.right-q.left,r.bottom-q.top]});
+  const cand=[[H[0]+11,H[1]+1.5],[H[0]-11,H[1]+1.5],[H[0]+16,H[1]+3],[H[0]-16,H[1]+3],[H[0]+11,H[1]-3],[H[0]-11,H[1]-3]].filter(([x,y])=>x>8&&x<92&&y<94);
+  const bad=([x,y])=>{const px=x*W/100,py=y*Hh/100,h=hFr(y)*Hh,w=h*.6;return labs.some(([a,b,c2,d])=>!(c2<px-w/2||a>px+w/2||d<py-h||b>py))};
+  return cand.find(p=>!bad(p))||cand[0]||[H[0]+11,H[1]]}
+async function ph4Load(P,box,hit,say,C,k,cid){
+  await loadScript(OFF?"three.min.js":"/m/three.min.js");await loadScript((OFF?"bot3d.js":"/m/bot3d.js")+"?v="+encodeURIComponent(window.XQ_BUILD||""));
+  const T=window.THREE;if(!T||!window.XQBot3D||!XQBot3D.figure)throw 0;if(!box.isConnected)return;await shwTripo();if(!box.isConnected)return;
+  const Cc=WX_CHARS[cid]||{},look=TRIPO[cid]?{p:Cc.pc||"俥",e:k,g:9,glb:`data/tripo_app/${cid}.glb`,ring:TRIPO[cid]}:null;if(!look)throw 0;
+  const B=XQBot3D.figure(look);if(!B.glbP)throw 0;await B.glbP;if(!box.isConnected)return;
+  const EL=C.el*Math.PI/180,r=new T.WebGLRenderer({antialias:true,alpha:true,powerPreference:"low-power"});r.setPixelRatio(Math.min(2,devicePixelRatio||1));if(T.sRGBEncoding!=null)r.outputEncoding=T.sRGBEncoding;
+  const cv=r.domElement,sh=box.querySelector(".sh");box.append(cv);
+  const sc=new T.Scene();sc.add(new T.HemisphereLight(0xFFF6E8,0x6A5A48,1.15));const dl=new T.DirectionalLight(0xFFFFFF,.85);dl.position.set(-3,6,5);sc.add(dl);
+  const root=new T.Group();root.rotation.order="YXZ";root.add(B.bot);sc.add(root);root.updateMatrixWorld(true);
+  const bx=new T.Box3().setFromObject(B.bot),ce=bx.getCenter(new T.Vector3()),hM=(bx.max.y-bx.min.y)||1;B.bot.position.x-=ce.x;B.bot.position.z-=ce.z;B.bot.position.y-=bx.min.y;const by=B.bot.position.y;
+  const vh=hM*1.45,cam=new T.OrthographicCamera(-vh*.375,vh*.375,vh/2,-vh/2,hM*.1,hM*20),tg=new T.Vector3(0,hM*.6,0);cam.position.set(0,tg.y+Math.sin(EL)*hM*6,Math.cos(EL)*hM*6);cam.lookAt(tg);cam.updateMatrixWorld(true);
+  const ft=new T.Vector3(0,0,0).project(cam),ftF=(1-ft.y)/2,hFr=y=>shwHt(C,y)/(Math.cos(EL)/1.45);
+  let at=null,cw=0,ch=0;
+  const fit=()=>{const Iw=P.clientWidth,Ih=P.clientHeight;if(!Ih)return;if(!at)at=ph4Spot(P,C,hFr);const h=Math.round(hFr(at[1])*Ih),w=Math.round(h*.75);if(h!==ch||w!==cw){ch=h;cw=w;r.setSize(cw,ch)}
+    const x=at[0]*Iw/100,y=at[1]*Ih/100;Object.assign(cv.style,{left:(x-cw/2)+"px",top:(y-Math.round(ftF*ch))+"px"});Object.assign(sh.style,{width:Math.round(ch*.34)+"px",height:Math.round(ch*.1)+"px",left:(x-Math.round(ch*.17))+"px",top:(y-Math.round(ch*.05))+"px"});
+    const top=y-Math.round(ftF*ch)+ch*.12;Object.assign(hit.style,{display:"",left:(x-cw*.22)+"px",top:top+"px",width:(cw*.44)+"px",height:Math.max(10,y-top)+"px"});Object.assign(say.style,{left:x+"px",top:(top-4)+"px"})};
+  /* 面向：朝畫面中間偏一點，不背對人 */
+  const yaw0=()=>at?Math.max(-.6,Math.min(.6,(50-at[0])*.03)):0;
+  const clips=B.mixer&&B.clips||null;let cur=null;const anim=n=>{if(!clips)return;const a=clips[n]||clips.idle;if(!a||a===cur)return;a.reset().fadeIn(.25).play();if(cur)cur.fadeOut(.2);cur=a};anim("idle");
+  let vis=true;try{const io=new IntersectionObserver(es=>{vis=es.some(e=>e.isIntersecting)});io.observe(P)}catch(e){}
+  if(window.ResizeObserver){const ro=new ResizeObserver(()=>{if(!box.isConnected){ro.disconnect();return}fit()});ro.observe(P)}fit();
+  /* 點她：說小卡那一句、小卡閃一下 */
+  let sayT=0;hit.onclick=e=>{e.stopPropagation();e.preventDefault();if(typeof vibrate==="function")vibrate(5);const card=(P.closest(".view")||document).querySelector(".port-say");
+    const p=card&&card.querySelector("p"),bn=p&&p.querySelector("b"),full=p?p.textContent:"",t=(full.match(/「([\s\S]*)」\s*$/)||[])[1]||full.replace(bn?bn.textContent:"","").trim();if(!t)return;
+    say.innerHTML=`<b>${esc(bn?bn.textContent:(Cc.nk||Cc.n||""))}</b>${esc(t)}`;say.classList.add("on");say.style.marginLeft="";fit();try{if(typeof shwSayFit==="function")shwSayFit(say,P,(parseFloat(hit.style.height)||0)+say.offsetHeight+14)}catch(err){}
+    clearTimeout(sayT);sayT=setTimeout(()=>say.classList.remove("on"),Math.max(3000,Math.min(9000,t.length*170)));waveAt=performance.now();
+    if(card){card.classList.remove("ph4-flash");void card.offsetWidth;card.classList.add("ph4-flash");setTimeout(()=>{try{card.scrollIntoView({behavior:"smooth",block:"nearest"})}catch(err){}},350)}};
+  const outside=e=>{if(!box.isConnected){document.removeEventListener("click",outside,true);return}if(e.target!==hit)say.classList.remove("on")};document.addEventListener("click",outside,true);
+  let last=performance.now(),acc=0,fr=0,waveAt=performance.now()+4000+Math.random()*4000,nextWave=0,yawR=yaw0();
+  const end=()=>{try{cv.remove()}catch(e){}try{r.dispose();r.forceContextLoss()}catch(e){}hit.remove();say.remove()};
+  const loop=now=>{if(!box.isConnected||!P.isConnected){end();return}requestAnimationFrame(loop);if(document.hidden||!vis){last=now;return}
+    if(P.classList.contains("pc-run")||document.querySelector(".walkc")){last=now;return}   /* 下船過場、步行小卡播完才出現（跟走路角色一樣） */
+    const dt=Math.min(.05,(now-last)/1000);last=now;acc+=dt;
+    /* 偶爾揮手：每 9～15 秒一次，約 1.8 秒 */
+    if(now>=waveAt&&now<waveAt+1800){anim(clips&&clips[SHW_ACT.wave]?SHW_ACT.wave:"wave")}else{anim("idle");if(now>=waveAt+1800){waveAt=now+9000+Math.random()*6000}}
+    yawR+=(yaw0()-yawR)*Math.min(1,dt*4);root.rotation.y=yawR;
+    if(!clips&&B.arms&&B.arms[1]){const w=now>=waveAt&&now<waveAt+1800;B.arms[1].rotation.z=w?2.5:0}
+    if(fr++&1)return;if(clips)B.mixer.update(acc);acc=0;B.bot.position.y=by;r.render(sc,cam);if(!box.classList.contains("on"))box.classList.add("on")};
+  requestAnimationFrame(loop)}
+if(typeof portWind==="function"){const f0=portWind;portWind=function(v,k){const r=f0.apply(this,arguments);try{ph4Mount(v,k)}catch(e){}return r}}
 /* ================= 🔍 滿版水墨圖兩指縮放（意見回饋 785，開發者 11/8「玩家手指縮放可以放大縮小星船/渡口/驛站」）=================
    星槎主畫面（.shp-map.full 裡的 .shp-in）、渡口與驛站（.shp-page.cq）都可以兩指縮放 1～2.5 倍；放大後單指拖曳看別處；雙擊（電腦：雙按）還原。
    整個框一起用 transform 縮放，所以圖上的入口標籤、3D 角色（07w）、07r 渡口風、07k 疊層、星槎的 WebGL 立體都跟著圖走、位置對得上。

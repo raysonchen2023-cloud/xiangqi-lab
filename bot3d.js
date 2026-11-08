@@ -397,26 +397,26 @@
       R(B,0,0,0,-1.5);R(B,1,0,0,1.5);B.legs[0].rotation.x=.35*wv(p,3)*L;B.legs[1].rotation.x=-.35*wv(p,3)*L;B.root.rotation.z+=.05*wv(p,4)*L;B.face="open"}},
     pushup:{d:4.6,say:"伏地挺身，一、二…",f:(p,B)=>{const L=p<.15?ease(p/.15):p>.85?ease((1-p)/.15):1;B.bot.rotation.y=PI/2*L;B.root.rotation.z=-PI/2*L;B.root.position.x=-1.05*L;
       const up=(Math.cos(p*TAU*4)+1)/2;B.root.position.y=(.5+.35*up)*L;R(B,0,-PI/2*L,0,-.15);R(B,1,-PI/2*L,0,.15);B.face=up>.5?"smile":"open"}},
-    d_tap:{d:3.4,say:"♪ 踢踏舞",f:(p,B)=>{const s=wv(p,10);B.legs[0].rotation.x=.5*Math.max(0,s);B.legs[1].rotation.x=.5*Math.max(0,-s);R(B,0,.3*s,0,-.5);R(B,1,-.3*s,0,.5);B.root.position.y+=.04*Math.abs(s)}},
-    d_ballet:{d:3.4,say:"♪ 芭蕾舞",f:(p,B)=>{B.root.position.y+=.14;R(B,0,0,0,-2.6+.2*wv(p,2));R(B,1,0,0,2.6-.2*wv(p,2));B.root.rotation.y=ease(p)*TAU;B.legs[1].rotation.x=-.9*bell(p);B.face="happy"}},
-    d_jazz:{d:3.4,say:"♪ 爵士舞",f:(p,B)=>{const s=wv(p,4);R(B,0,-.3,.35*wv(p,8),-1.4);R(B,1,-.3,-.35*wv(p,8),1.4);B.root.rotation.z=.12*s;B.head.rotation.z=-.15*s;B.face="open"}},
-    d_robot:{d:3.4,say:"♪ 機械舞",f:(p,B)=>{const q=Math.floor(p*8)%4;R(B,0,q%2?-1.57:0,0,q<2?-1.57:-.3);R(B,1,q%2?0:-1.57,0,q<2?.3:1.57);B.head.rotation.y=[0,.5,0,-.5][q]}},
-    d_moon:{d:3.4,say:"♪ 月球漫步",f:(p,B)=>{const s=wv(p,4);B.root.rotation.y=.9;B.root.position.x=.8-1.6*p;B.legs[0].rotation.x=.4*s;B.legs[1].rotation.x=-.4*s;R(B,0,.3*s,0,-.3);R(B,1,-.3*s,0,.3)}},
-    d_swing:{d:3.4,say:"♪ 搖擺舞",f:(p,B)=>{const s=wv(p,3);B.root.rotation.z=.25*s;R(B,0,0,0,-1.2+.8*s);R(B,1,0,0,1.2+.8*s);B.root.position.y+=.08*Math.abs(s)}},
-    d_chacha:{d:3.4,say:"♪ 恰恰",f:(p,B)=>{const q=(p*6)%1,st=q<.75?Math.sin(q/.75*PI*3):0;B.legs[0].rotation.x=.4*Math.max(0,st);B.legs[1].rotation.x=.4*Math.max(0,-st);B.root.rotation.z=.12*st;R(B,0,-.4,0,-.9);R(B,1,-.4,0,.9)}},
-    d_waltz:{d:3.4,say:"♪ 華爾滋",f:(p,B)=>{B.root.rotation.y=ease(p)*TAU*1.5;R(B,0,-.9,0,-1.2);R(B,1,-.3,0,1.6);B.root.position.y+=.06*Math.abs(wv(p,3));B.face="happy"}},
-    d_twist:{d:3.4,say:"♪ 扭扭舞",f:(p,B)=>{const s=wv(p,6);B.torso.rotation.y=.6*s;B.root.position.y-=.1;R(B,0,-.6,0,-.6-.3*s);R(B,1,-.6,0,.6-.3*s)}},
-    d_horse:{d:3.4,say:"♪ 騎馬舞",f:(p,B)=>{const s=wv(p,6);R(B,0,-1.4,.6,-.2);R(B,1,-1.4+.6*Math.max(0,s),-.6,.2);B.legs[0].rotation.x=.5*Math.max(0,s);B.legs[1].rotation.x=.5*Math.max(0,-s);B.root.position.y+=.15*Math.abs(s);B.face="open"}},
-    d_hula:{d:3.4,say:"♪ 草裙舞",f:(p,B)=>{const s=wv(p,3);B.root.rotation.z=.15*s;R(B,0,-1.3,.5*s,-1);R(B,1,-1.3,.5*s,1);B.head.rotation.z=-.1*s}},
-    d_yangge:{d:3.4,say:"♪ 秧歌",f:(p,B)=>{const s=wv(p,4);R(B,0,0,0,-.6-1.6*Math.max(0,s));R(B,1,0,0,.6+1.6*Math.max(0,-s));B.legs[0].rotation.x=.3*s;B.legs[1].rotation.x=-.3*s;B.face="happy"}},
-    d_wave:{d:3.4,say:"♪ 波浪舞",f:(p,B)=>{R(B,0,0,0,-1.5-.6*Math.sin(p*TAU*3));R(B,1,0,0,1.5-.6*Math.sin(p*TAU*3+1.5));B.root.position.y+=.08*Math.sin(p*TAU*3+.75);B.head.rotation.z=.15*Math.sin(p*TAU*3)}},
-    d_disco:{d:3.4,say:"♪ 迪斯可",f:(p,B)=>{const q=Math.floor(p*6)%2;R(B,1,0,0,q?2.6:.4);R(B,0,0,0,q?-.4:-2.6);B.root.rotation.z=q?.12:-.12;B.face="open"}},
-    d_cancan:{d:3.4,say:"♪ 康康舞",f:(p,B)=>{const s=wv(p,4);B.legs[0].rotation.x=-1.2*Math.max(0,s);B.legs[1].rotation.x=-1.2*Math.max(0,-s);R(B,0,0,0,-1.6);R(B,1,0,0,1.6);B.root.position.y+=.1*Math.abs(s);B.face="happy"}},
-    d_penguin:{d:3.4,say:"♪ 企鵝舞",f:(p,B)=>{const s=wv(p,6);B.root.rotation.z=.15*s;R(B,0,0,0,-.45-.25*Math.max(0,s));R(B,1,0,0,.45+.25*Math.max(0,-s));B.legs[0].rotation.z=-.15;B.legs[1].rotation.z=.15}},
-    d_clapdance:{d:3.4,say:"♪ 拍手舞",f:(p,B)=>{const q=(p*4)%1;if(q<.5){const k=(Math.sin(q*TAU*4)+1)/2;R(B,0,0,.4,-(2.6-.4*k));R(B,1,0,-.4,2.6-.4*k)}else{R(B,0,-.4,0,-.25);R(B,1,-.4,0,.25);B.root.position.y-=.12}}},
-    d_freeze:{d:3.4,say:"♪ 街舞定格",f:(p,B)=>{const q=Math.min(3,Math.floor(p*4));const P=[[-2.6,.3,.4],[-.3,1.6,-.3],[-1.6,2.6,.3],[-.8,.8,0]][q];R(B,0,0,0,P[0]);R(B,1,0,0,P[1]);B.root.rotation.z=P[2]*.3;B.face=q%2?"open":"happy"}},
-    d_top:{d:3.4,say:"♪ 陀螺轉",f:(p,B)=>{B.root.rotation.y=ease(p)*TAU*3;R(B,0,0,0,-1.5);R(B,1,0,0,1.5);B.root.position.y+=.1*bell(p);B.face="open"}},
-    d_jacks:{d:3.4,say:"♪ 開合跳",f:(p,B)=>{const s=Math.abs(wv(p,4));R(B,0,0,0,-.3-2.4*s);R(B,1,0,0,.3+2.4*s);B.legs[0].rotation.z=-.35*s;B.legs[1].rotation.z=.35*s;B.root.position.y+=.25*s}},
+    d_tap:{d:3.4,say:"♪ ♫",f:(p,B)=>{const s=wv(p,10);B.legs[0].rotation.x=.5*Math.max(0,s);B.legs[1].rotation.x=.5*Math.max(0,-s);R(B,0,.3*s,0,-.5);R(B,1,-.3*s,0,.5);B.root.position.y+=.04*Math.abs(s)}},
+    d_ballet:{d:3.4,say:"♪ ♫",f:(p,B)=>{B.root.position.y+=.14;R(B,0,0,0,-2.6+.2*wv(p,2));R(B,1,0,0,2.6-.2*wv(p,2));B.root.rotation.y=ease(p)*TAU;B.legs[1].rotation.x=-.9*bell(p);B.face="happy"}},
+    d_jazz:{d:3.4,say:"♪ ♫",f:(p,B)=>{const s=wv(p,4);R(B,0,-.3,.35*wv(p,8),-1.4);R(B,1,-.3,-.35*wv(p,8),1.4);B.root.rotation.z=.12*s;B.head.rotation.z=-.15*s;B.face="open"}},
+    d_robot:{d:3.4,say:"♪ ♫",f:(p,B)=>{const q=Math.floor(p*8)%4;R(B,0,q%2?-1.57:0,0,q<2?-1.57:-.3);R(B,1,q%2?0:-1.57,0,q<2?.3:1.57);B.head.rotation.y=[0,.5,0,-.5][q]}},
+    d_moon:{d:3.4,say:"♪ ♫",f:(p,B)=>{const s=wv(p,4);B.root.rotation.y=.9;B.root.position.x=.8-1.6*p;B.legs[0].rotation.x=.4*s;B.legs[1].rotation.x=-.4*s;R(B,0,.3*s,0,-.3);R(B,1,-.3*s,0,.3)}},
+    d_swing:{d:3.4,say:"♪ ♫",f:(p,B)=>{const s=wv(p,3);B.root.rotation.z=.25*s;R(B,0,0,0,-1.2+.8*s);R(B,1,0,0,1.2+.8*s);B.root.position.y+=.08*Math.abs(s)}},
+    d_chacha:{d:3.4,say:"♪ ♫",f:(p,B)=>{const q=(p*6)%1,st=q<.75?Math.sin(q/.75*PI*3):0;B.legs[0].rotation.x=.4*Math.max(0,st);B.legs[1].rotation.x=.4*Math.max(0,-st);B.root.rotation.z=.12*st;R(B,0,-.4,0,-.9);R(B,1,-.4,0,.9)}},
+    d_waltz:{d:3.4,say:"♪ ♫",f:(p,B)=>{B.root.rotation.y=ease(p)*TAU*1.5;R(B,0,-.9,0,-1.2);R(B,1,-.3,0,1.6);B.root.position.y+=.06*Math.abs(wv(p,3));B.face="happy"}},
+    d_twist:{d:3.4,say:"♪ ♫",f:(p,B)=>{const s=wv(p,6);B.torso.rotation.y=.6*s;B.root.position.y-=.1;R(B,0,-.6,0,-.6-.3*s);R(B,1,-.6,0,.6-.3*s)}},
+    d_horse:{d:3.4,say:"♪ ♫",f:(p,B)=>{const s=wv(p,6);R(B,0,-1.4,.6,-.2);R(B,1,-1.4+.6*Math.max(0,s),-.6,.2);B.legs[0].rotation.x=.5*Math.max(0,s);B.legs[1].rotation.x=.5*Math.max(0,-s);B.root.position.y+=.15*Math.abs(s);B.face="open"}},
+    d_hula:{d:3.4,say:"♪ ♫",f:(p,B)=>{const s=wv(p,3);B.root.rotation.z=.15*s;R(B,0,-1.3,.5*s,-1);R(B,1,-1.3,.5*s,1);B.head.rotation.z=-.1*s}},
+    d_yangge:{d:3.4,say:"♪ ♫",f:(p,B)=>{const s=wv(p,4);R(B,0,0,0,-.6-1.6*Math.max(0,s));R(B,1,0,0,.6+1.6*Math.max(0,-s));B.legs[0].rotation.x=.3*s;B.legs[1].rotation.x=-.3*s;B.face="happy"}},
+    d_wave:{d:3.4,say:"♪ ♫",f:(p,B)=>{R(B,0,0,0,-1.5-.6*Math.sin(p*TAU*3));R(B,1,0,0,1.5-.6*Math.sin(p*TAU*3+1.5));B.root.position.y+=.08*Math.sin(p*TAU*3+.75);B.head.rotation.z=.15*Math.sin(p*TAU*3)}},
+    d_disco:{d:3.4,say:"♪ ♫",f:(p,B)=>{const q=Math.floor(p*6)%2;R(B,1,0,0,q?2.6:.4);R(B,0,0,0,q?-.4:-2.6);B.root.rotation.z=q?.12:-.12;B.face="open"}},
+    d_cancan:{d:3.4,say:"♪ ♫",f:(p,B)=>{const s=wv(p,4);B.legs[0].rotation.x=-1.2*Math.max(0,s);B.legs[1].rotation.x=-1.2*Math.max(0,-s);R(B,0,0,0,-1.6);R(B,1,0,0,1.6);B.root.position.y+=.1*Math.abs(s);B.face="happy"}},
+    d_penguin:{d:3.4,say:"♪ ♫",f:(p,B)=>{const s=wv(p,6);B.root.rotation.z=.15*s;R(B,0,0,0,-.45-.25*Math.max(0,s));R(B,1,0,0,.45+.25*Math.max(0,-s));B.legs[0].rotation.z=-.15;B.legs[1].rotation.z=.15}},
+    d_clapdance:{d:3.4,say:"♪ ♫",f:(p,B)=>{const q=(p*4)%1;if(q<.5){const k=(Math.sin(q*TAU*4)+1)/2;R(B,0,0,.4,-(2.6-.4*k));R(B,1,0,-.4,2.6-.4*k)}else{R(B,0,-.4,0,-.25);R(B,1,-.4,0,.25);B.root.position.y-=.12}}},
+    d_freeze:{d:3.4,say:"♪ ♫",f:(p,B)=>{const q=Math.min(3,Math.floor(p*4));const P=[[-2.6,.3,.4],[-.3,1.6,-.3],[-1.6,2.6,.3],[-.8,.8,0]][q];R(B,0,0,0,P[0]);R(B,1,0,0,P[1]);B.root.rotation.z=P[2]*.3;B.face=q%2?"open":"happy"}},
+    d_top:{d:3.4,say:"♪ ♫",f:(p,B)=>{B.root.rotation.y=ease(p)*TAU*3;R(B,0,0,0,-1.5);R(B,1,0,0,1.5);B.root.position.y+=.1*bell(p);B.face="open"}},
+    d_jacks:{d:3.4,say:"♪ ♫",f:(p,B)=>{const s=Math.abs(wv(p,4));R(B,0,0,0,-.3-2.4*s);R(B,1,0,0,.3+2.4*s);B.legs[0].rotation.z=-.35*s;B.legs[1].rotation.z=.35*s;B.root.position.y+=.25*s}},
     carry:{d:99,f:(p,B,t)=>{R(B,0,0,0,-2.6);R(B,1,0,0,2.6);B.legs[0].rotation.x=.4*Math.sin(t*9);B.legs[1].rotation.x=-.4*Math.sin(t*9);B.face="open"}}};
   const SIGNATURE=["wave","jump","cheer","dance","think","bow","spin","clap","point","sleep","shrug","flex","nap","kick","roll","prop","liewave","laugh","hattip","gongshou","heart","kiss","lookout","taichi","scratch","belly","knock","stretch","thumbs2","headstand","pushup","d_tap","d_ballet","d_jazz","d_robot","d_moon","d_swing","d_chacha","d_waltz","d_twist","d_horse","d_hula","d_yangge","d_wave","d_disco","d_cancan","d_penguin","d_clapdance","d_freeze","d_top","d_jacks"];
 
@@ -533,8 +533,8 @@
     // 泡泡不超出畫面左右（小帥站在邊邊時往內移）；小帥會走動，所以泡泡顯示期間每幾格重新算
     let bubDx=0,fitN=0;const fitBub=()=>{try{const r=bub.getBoundingClientRect(),W=window.innerWidth,cur=r.left-bubDx,w=r.width,dx=Math.min(0,W-6-(cur+w))+Math.max(0,6-cur);
       if(Math.abs(dx-bubDx)>.5){bubDx=dx;bub.style.transform=`translate(calc(-50% + ${Math.round(dx)}px),-100%)`}}catch(e){}};
-    const say=(s,d)=>{s=String(s).replace(/小帥/g,BNAME()).replace("身體是一顆帥","身體是一顆"+BP());bub.textContent=s;bub.style.opacity=1;fitBub();bubT=d||2;talk=Math.min(1.2,.25+s.length*.08);try{window.dispatchEvent(new CustomEvent("xq-bot-said",{detail:s}))}catch(e){}};
-    const doAct=a=>{if(typeof a==="string")a=ACTS[a];if(!a)return;act=a;actT=0;tx=x;ty=y;const w=a.say;if(w)say(w,w.length>26?Math.min(10,w.length*.17+.8):Math.max(1.8,Math.min(6,w.length*.16+.6,a.d+3)))};
+    const say=(s,d,lbl)=>{s=String(s).replace(/小帥/g,BNAME()).replace("身體是一顆帥","身體是一顆"+BP());bub.textContent=s;bub.style.opacity=1;fitBub();bubT=d||2;talk=Math.min(1.2,.25+s.length*.08);if(!lbl)try{window.dispatchEvent(new CustomEvent("xq-bot-said",{detail:s}))}catch(e){}};   /* 回饋 804：動作本身的小標（♪ 舞名、嗨！之類）只在小帥自己的泡泡閃一下，不送出 xq-bot-said（走路角色的泡泡、問答記錄只收真正的話：提示、棋語、冷知識） */
+    const doAct=a=>{if(typeof a==="string")a=ACTS[a];if(!a)return;act=a;actT=0;tx=x;ty=y;const lbl=!(Object.getOwnPropertyDescriptor(a,"say")||{}).get,w=a.say;if(w)say(w,w.length>26?Math.min(10,w.length*.17+.8):Math.max(1.8,Math.min(6,w.length*.16+.6,a.d+3)),lbl)};
     // 抽牌：300 種組合＋招牌動作洗牌後輪流出，不會一直重複
     const randAct=()=>{if(!deck.length){deck=[...COMBO.keys(),...SIGNATURE];for(let i=deck.length-1;i>0;i--){const j=Math.random()*(i+1)|0;[deck[i],deck[j]]=[deck[j],deck[i]]}}const k=deck.pop();return typeof k==="number"?comboAct(k):ACTS[k]};
     const wander=()=>{if(parked||boardMode||sheetMode)return;const b=bounds();tx=b.x0+Math.random()*Math.max(0,b.x1-b.x0);ty=Math.max(70,b.y0)+Math.random()*Math.max(0,b.y1-Math.max(70,b.y0))};
