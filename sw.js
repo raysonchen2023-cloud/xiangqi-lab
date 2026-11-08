@@ -1,7 +1,7 @@
 // Service worker：
 // 1) 離線快取：App、古譜、引擎存在手機裡；神經網路檔（48 MB）放在另一個快取，更新 App 時不用重新下載
 // 2) 多執行緒：幫每個回應加上 COOP/COEP 標頭（WebAssembly 多執行緒需要「跨來源隔離」，GitHub Pages 自己不能設）
-const VERSION="20261108-2300";
+const VERSION="20261108-2310";
 const APP_CACHE="xqlab-app-"+VERSION,ENGINE_CACHE="xqlab-engine";
 const APP_FILES=["./","index.html","core.js","engine.js","local.js","manifest.json","icon.svg","icon-180.png","icon-512.png","icon-512-mask.png","qrcode.min.js","jsQR.min.js","net.js","zh.js","opencc-cn2t.js","opencc-t2cn.js","bot3d.js","park3d.js","engine/pikafish.js","engine/pikafish.wasm",
   "data/books.json","data/shiqingyaqu.json","data/juzhongmi.json","data/meihuapu.json","data/kaiju.json","data/canju.json","data/xuyinchuan.json","data/big-books.json","data/quiz.json","data/terms.json","data/gmbios.json","data/cars.json","three.min.js","map3d.js","data/park-legend.json","data/park-novel.json","data/preload.json"];   /* 意見回饋 422：3D 程式和故事也一起先存 */
@@ -35,7 +35,7 @@ self.addEventListener("fetch",e=>{
     // 特級大師對局（33 MB）：存在不跟版本走的快取，發新版不用重新下載
     if(isBig){const c=await caches.open("xqlab-data"),hit=await c.match(req.url);if(hit)return isolate(hit);const res=await fetch(req.url,{cache:"no-cache"});if(res.ok)await c.put(req.url,res.clone());return isolate(res)}
     // 外觀圖（朝代棋盤、棋子、字形）：存在獨立快取，改版也不用重抓
-    if(/\/data\/(boards|pieces|glyphs|sfx|voice|qa|park|park3d|pika|pika2|path|inn|map|stonetable|treasure|legend|champ|stones|seat|pano|pieceset|journey|xs|people|icons|arenagate|parkgate|pset|map3d|levels|npc|loading|blind|actors|tripo_app|eramap|relics|lines|fonts|canju|qianqiu|shipmap|battles|yizhan|hubmap|homemap|lobbymap|setmap|libmap|tabink)\//.test(url.pathname)&&!url.searchParams.has("fresh")){const c=await caches.open("xqlab-look");
+    if(/\/data\/(boards|pieces|glyphs|sfx|voice|qa|park|park3d|pika|pika2|path|inn|map|stonetable|treasure|legend|champ|stones|seat|pano|pieceset|journey|xs|people|icons|arenagate|parkgate|pset|map3d|levels|npc|loading|blind|actors|tripo_app|eramap|relics|lines|fonts|canju|qianqiu|shipmap|battles|yizhan|hubmap|homemap|lobbymap|setmap|libmap|tabink|feedback)\//.test(url.pathname)&&!url.searchParams.has("fresh")){const c=await caches.open("xqlab-look");
       /* 意見回饋 507：清單檔（tripo.json、xs.json、faces.json…）一律先抓網路上最新的，沒網路才用存的——之前 tripo.json 第一次存下來（只有 5 個角色）就永遠不更新，手機上大部分角色都退回 Q 版 */
       if(/\.json$/.test(url.pathname)){try{const res=await fetch(req.url,{cache:"no-cache"});if(res.ok){await c.put(req.url,res.clone());return isolate(res)}}catch(err){}const old=await c.match(req.url);if(old)return isolate(old)}
       const hit=await c.match(req.url);if(hit)return isolate(hit);const res=await fetch(req.url,{cache:"no-cache"});if(res.ok)await c.put(req.url,res.clone());return isolate(res)}

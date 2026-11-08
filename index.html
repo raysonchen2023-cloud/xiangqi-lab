@@ -1341,7 +1341,7 @@ html[data-era=qin] .view:has(>.shp-rd),html[data-era=wudai] .view:has(>.shp-rd){
       if(!window.caches)return go();caches.keys().then(function(ks){return Promise.all(ks.filter(function(k){return k.indexOf("xqlab-app-")===0}).map(function(k){return caches.delete(k)}))})
         .then(function(){return navigator.serviceWorker&&navigator.serviceWorker.getRegistration()}).then(function(r){return r&&r.update()}).catch(function(){}).then(go)}};setTimeout(chk,4000)})();
 </script>
-<script>window.XQ_OFFLINE=true;window.XQ_BUILD="20261108-2300";</script>
+<script>window.XQ_OFFLINE=true;window.XQ_BUILD="20261108-2310";</script>
 <script src="core.js"></script>
 <script src="engine.js"></script>
 <script src="local.js"></script>
@@ -11453,7 +11453,7 @@ if(typeof Lobby==="function"){const f0=Lobby;Lobby=function(v){const r=f0.apply(
    場景跟著設定變：深色＝夜版（data/setmap/set_night.webp，還沒畫好前用程式把畫面調暗、點燈）；聲音全關＝古琴蓋上琴囊；
      換朝代棋盤＝棋桌上的棋盤框換成那一朝的顏色；高對比＝棋子描金邊。
    標籤只有大字。接 07w 走路（SHW_SETMAP）、07x 兩指縮放。圖片網址帶 SM_IMGV。開關 SETMAP_ON（false＝照舊分頁清單）；樣式在 smCss */
-const SETMAP_ON=true;
+const SETMAP_ON=true;   /* 開發者 11/8 說打開 */
 const SM_IMGV="2200";
 /* 入口：[id, 左%, 上%, 大字, 分頁, 要捲到的元素]（量 768×1376 的 set_day_v2，標籤放在東西上方） */
 const SM_SPOTS=[
@@ -11521,7 +11521,7 @@ function setMap(v){const root=v.querySelector(".pad.home");if(!root||v.querySele
       const card=el.closest(".card,.items,.opt,.eragrid,label,.item")||el;body.scrollTop=Math.max(0,card.getBoundingClientRect().top-body.getBoundingClientRect().top+body.scrollTop-14);
       root.querySelectorAll(".sm-flash").forEach(x=>x.classList.remove("sm-flash"));void card.offsetWidth;card.classList.add("sm-flash");setTimeout(()=>card.classList.remove("sm-flash"),1500)},60)};
   for(const[id,,,,tab,sel]of SM_SPOTS){const b=P.querySelector("#"+id);if(!b)continue;
-    b.onclick=()=>{vibrate(5);if(id==="smMirror"){const f=root.querySelector("#meFig");if(f){f.click();return}}open(tab,sel)}}
+    b.onclick=()=>{vibrate(5);if(id==="smMirror"){const f=root.querySelector("#meFig");if(f){f.click();return}}if((id==="smMail"||id==="smNote")&&typeof FEEDBACK_PAGE_ON!=="undefined"&&FEEDBACK_PAGE_ON){location.hash=id==="smMail"?"#/feedback":"#/feedback/fixes";return}open(tab,sel)}}   /* 回饋 799：信插、手札一下直達意見回饋頁（07s3） */
   smScene(P);
   /* 設定改了（深淺色、聲音、朝代棋盤、高對比）：畫軸開著時每次改都重畫場景 */
   root.addEventListener("click",()=>setTimeout(()=>smScene(P),80));root.addEventListener("change",()=>setTimeout(()=>smScene(P),80));
@@ -11562,6 +11562,157 @@ function tbInk(){const t=document.getElementById("tabbar");if(!t)return;tbCss();
     const im=new Image();im.alt="";im.decoding="async";im.onerror=()=>{ic.textContent=ic.dataset.emo||"";ic.style.fontSize="22px"};ic.dataset.emo=ic.textContent;ic.textContent="";ic.append(im);im.src=`data/tabink/${k}.webp?v=${TB_IMGV}`}}
 if(TABBAR_INK_ON&&typeof setTabs==="function"){const f0=setTabs;setTabs=function(){const r=f0.apply(this,arguments);try{tbInk()}catch(e){}return r};
   try{matchMedia("(prefers-color-scheme: dark)").addEventListener("change",()=>{try{tbInk()}catch(e){}})}catch(e){}}
+/* ================= ✉ 意見回饋頁「驛站信房」（回饋 799，開發者 11/8 選定 Gemini 方案 1＋10 合體；考究說明 park/feedback/考究說明.md，史學顧問核圖中）=================
+   圖：park/feedback/fb_day_v2.png（Gemini 重畫一次＋程式局部修＋宣紙後製）、夜版 fb_night_v1.png → art/feedback/ → data/feedback/。
+   #/feedback 一頁（#/feedback/fixes 直接捲到修正紀錄）：天字客房隔壁的信房，點一下就到，不再經過設定畫軸。
+     書案上的薛濤箋＝寫信：點了從上方展開一張大箋（鍵盤彈出也留在鍵盤上方），裡面就是原本 feedbackSheet 的表單（原封不動拿來用：類型、1500 字、截圖 4 張＋文字檔 3 個、聯絡方式、postForm、沒網路排隊、自動附上資訊）；
+     青銅匭三個口＝類型：正面「申冤」＝🐞 錯誤、右側「招諫」＝💡 建議、蓋頂「延恩」＝💬 其他（選錯誤時箋上淡淡浮出一張程式畫的正確棋盤：9×10、楚河、九宮 X）；
+     白玉鎮紙下＝附件縮圖；圓木印＝送出（程式疊一顆寫「兵」的棋子）；蠟丸碟＝還沒送出、排隊中的信；
+     左牆黑漆告示榜（張榜公布已修的事）＝修正紀錄（myFixes／fixList 照舊：玩家只看自己回報、已修好的，開發者看全部），牌上貼最新幾張回條。
+   設定頁的信插、手札、修好通知的「全部修正紀錄」、設定清單裡的「意見回饋」都直接開這一頁（包一層 feedbackSheet／fixHistory，07s2 的信插、手札直接換頁）。
+   路由：#/feedback 原本會落到 Home(v)，這裡包一層 Home 接走。接 07w 走路（SHW_FBP）。開關 FEEDBACK_PAGE_ON（false＝照舊用底部表單）；圖片網址帶 FBP_IMGV */
+const FEEDBACK_PAGE_ON=true;
+const FBP_IMGV="2310";
+/* 量 768×1376 的圖（像素）：箋紙四角＝上、右、左（第四角自己算）；匭的三個口；木印；蠟丸碟；告示榜上可以貼回條的空處 */
+const FBP_PAPER={o:[359,575],x:[583,650],y:[250,655]};
+const FBP_SHENYUAN="申冤";   /* 銅匭西面的名稱：《資治通鑑》作「伸冤」，《唐會要》卷 55 作「申冤」；史學顧問 11/8 定用「申冤」 */
+const FBP_SLOT=[["錯誤",FBP_SHENYUAN,657,784,"f_bug"],["建議","招諫",716,781,"fb_idea"],["其他","延恩",672,719,"f_other"]];
+const FBP_ICO=k=>k==="fb_idea"?`<img class="ti eic" src="data/feedback/fb_idea.webp?v=${FBP_IMGV}" alt="">`:ETIMG(k,"","");   /* 開發者 11/8：「建議」原本的圖示在好幾個朝代是阿拉丁神燈、還有玻璃燈罩，信房頁改用中國陶燈盞（art/feedback/fb_idea） */
+const FBP_SEAL=[617,842,23],FBP_PILL=[673,866],FBP_JADE=[364,580];
+/* 告示榜上圖裡原本就有的 3 張空白紙條（左、上、寬、高，像素）：程式的回條就貼在這 3 張上面，跟著榜的透視微微斜 */
+const FBP_SLIPS=[[84,300,35,116],[131,289,30,112],[174,268,26,108]],FBP_SLIPN=[88,428];
+const SHW_FBP={el:40,h:[.085,70,.0012],look0:[42,60],home:"home",
+  N:{home:[66,93],mid:[42,83],desk:[40,76],gui:[82,81],lft:[12,72],brd:[18,57]},
+  E:"home-mid mid-desk mid-gui mid-lft lft-brd home-gui",
+  HS:{fbpBoard:["brd",18,40,"bow"]}};
+const fbpPc=(x,y)=>[x/7.68,y/13.76];
+const fbpDark=()=>{const t=store.get("pageTheme","auto");return t==="dark"||(t==="auto"&&matchMedia("(prefers-color-scheme: dark)").matches)};
+/* 錯誤模式的淡棋盤（程式畫，保證畫對）：9 直 10 橫、河界、九宮 X */
+function fbpGrid(){const L=[];for(let i=0;i<9;i++)L.push(i%8?`M${i} 0V4M${i} 5V9`:`M${i} 0V9`);for(let j=0;j<10;j++)L.push(`M0 ${j}H8`);L.push("M3 0L5 2M5 0L3 2M3 7L5 9M5 7L3 9");
+  return`<svg class="fbp-grid" viewBox="-.6 -.6 9.2 10.2" preserveAspectRatio="xMidYMid meet" aria-hidden="true"><path d="${L.join("")}" fill="none" stroke="currentColor" stroke-width=".06"/></svg>`}
+function fbpCss(){if(document.getElementById("fbpCss"))return;const s=document.createElement("style");s.id="fbpCss";s.textContent=`
+.fbp-page{margin:0 0 6px}.fbp-page .shp-spot{max-width:44%;padding:3px 10px;z-index:3}.fbp-page .shp-spot b{white-space:nowrap;font-size:13.5px}
+.fbp-fx{position:absolute;inset:0;pointer-events:none}
+.fbp-slot{position:absolute;width:5.6%;height:2.4%;transform:translate(-50%,-50%);border-radius:40%;border:2px solid transparent;pointer-events:auto;background:none;padding:0;cursor:pointer}
+.fbp-slot.on{border-color:#f2c94c;box-shadow:0 0 8px #f2c94c,inset 0 0 6px rgba(242,201,76,.6)}
+.fbp-ty{position:absolute;right:1.5%;display:flex;flex-direction:column;align-items:flex-end;gap:4px;pointer-events:auto;z-index:4}
+.fbp-ty button{border:1.5px solid #b08a3c;border-radius:999px;background:rgba(30,24,18,.72);color:#f6e7c8;font:800 12.5px/1 var(--serif,serif);padding:4px 9px;white-space:nowrap;cursor:pointer}
+.fbp-ty button[data-i="0"]{background:rgba(236,229,214,.94);color:#3a2a1c;border-color:#9a8a6a}.fbp-ty button[data-i="1"]{background:rgba(150,52,36,.9);color:#fbeedd;border-color:#c78a5a}.fbp-ty button[data-i="2"]{background:rgba(44,88,102,.9);color:#e8f1ef;border-color:#7fa6a8}
+.fbp-ty button.on{border-color:#f2c94c;box-shadow:0 0 0 2px #f2c94c,0 0 8px rgba(242,201,76,.8)}
+.fbp-ty small{font-size:10px;opacity:.75;margin-left:3px;font-weight:600}
+.fbp-paper{position:absolute;left:0;top:0;transform-origin:0 0;pointer-events:auto;cursor:text;overflow:hidden;color:#5a2f22;border:0;padding:0;background:none;text-align:left}
+.fbp-paper .fbp-grid{position:absolute;inset:6% 8%;width:84%;height:88%;color:rgba(150,52,36,.22);display:none}
+.fbp-page.err .fbp-paper .fbp-grid{display:block}
+.fbp-paper p{position:relative;margin:0;padding:7% 9%;font:600 9px/1.45 var(--serif,serif);white-space:pre-wrap;word-break:break-all;max-height:100%;opacity:.9}
+.fbp-paper p:empty::before{content:"點這裡寫信";opacity:.55}
+.fbp-seal{position:absolute;transform:translate(-50%,-50%);border-radius:50%;border:0;padding:0;cursor:pointer;pointer-events:auto;z-index:4;
+  background:radial-gradient(circle at 40% 35%,#fff7e6,#eedcb6 70%,#d9bf8c);box-shadow:inset 0 0 0 2px #a63a24,inset 0 0 0 4px #f3e3c0,inset 0 0 0 5px #a63a24,0 2px 3px rgba(0,0,0,.35);
+  color:#a63a24;font:900 15px/1 var(--serif,serif);display:flex;align-items:center;justify-content:center}
+.fbp-seal.stamp{animation:fbpStamp .6s ease}@keyframes fbpStamp{0%{transform:translate(-50%,-50%) scale(1)}35%{transform:translate(-50%,-80%) scale(1.25)}70%{transform:translate(-50%,-45%) scale(.92)}100%{transform:translate(-50%,-50%) scale(1)}}
+.fbp-thumbs{position:absolute;display:flex;gap:2px;transform:translate(-10%,0);pointer-events:none}
+.fbp-thumbs img{width:14px;height:14px;object-fit:cover;border:1px solid #fff;box-shadow:0 1px 2px rgba(0,0,0,.4);border-radius:2px}
+.fbp-thumbs i{font-style:normal;font:700 10px/14px sans-serif;background:rgba(30,24,18,.7);color:#fff;border-radius:7px;padding:0 4px}
+.fbp-q{position:absolute;transform:translate(-30%,75%);background:rgba(30,24,18,.78);color:#ffe7a8;font:700 11px/1 sans-serif;border-radius:999px;padding:3px 7px;white-space:nowrap;display:none}
+.fbp-q.on{display:block}
+.fbp-slip{position:absolute;background:#f7efdc;border-radius:1px;padding:2px 1px;font:600 8px/1.15 var(--serif,serif);color:#3a2618;overflow:hidden;writing-mode:vertical-rl;transform:skewY(-6deg);transform-origin:0 0;box-shadow:0 0 0 .5px rgba(60,40,20,.35)}
+.fbp-slip b{display:inline-block;color:#b23a26;border:1px solid #b23a26;border-radius:2px;font-size:7px;padding:1px 0;margin:0 0 2px}
+.fbp-slipn{position:absolute;transform:translate(0,-50%);background:rgba(30,24,18,.75);color:#f6e7c8;font:700 9px/1 sans-serif;border-radius:999px;padding:2px 6px;white-space:nowrap;display:none}.fbp-slipn.on{display:block}
+.fbp-ty .eic{width:15px;height:15px;vertical-align:-3px;margin-right:2px}
+.fbp-page.sent .fbp-paper{transition:transform .7s ease-in,opacity .7s ease-in;opacity:0}
+.fbp-pn{position:fixed;left:10px;right:10px;top:calc(env(safe-area-inset-top,0px) + 8px);z-index:950;display:flex;flex-direction:column;max-height:80vh;
+  background:#f6dccc url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='120' height='120'%3E%3Cfilter id='n'%3E%3CfeTurbulence baseFrequency='.9' numOctaves='2'/%3E%3CfeColorMatrix values='0 0 0 0 .5 0 0 0 0 .3 0 0 0 0 .25 0 0 0 .07 0'/%3E%3C/filter%3E%3Crect width='120' height='120' filter='url(%23n)'/%3E%3C/svg%3E");
+  color:#3a2216;border-radius:4px;box-shadow:0 10px 30px rgba(0,0,0,.35),inset 0 0 0 1px rgba(150,70,50,.25);transform:translateY(calc(-100% - 40px));transition:transform .28s ease;overflow:hidden}
+.fbp-pn.open{transform:none}
+.fbp-pn-h{display:flex;align-items:center;gap:8px;padding:9px 12px 4px;font:900 15px var(--serif,serif)}.fbp-pn-h button{margin-left:auto;border:1px solid rgba(90,40,20,.35);background:rgba(255,255,255,.35);border-radius:999px;padding:4px 10px;font:700 13px var(--serif,serif);color:inherit;cursor:pointer}
+.fbp-pn-b{overflow:auto;padding:0 12px 12px;-webkit-overflow-scrolling:touch}
+.fbp-pn .fbw{gap:10px}.fbp-pn .fbw .lead,.fbp-pn .fbw>div:first-child>.fbl{display:none}
+.fbp-pn .fbt button{background:rgba(255,250,240,.6);border-color:rgba(120,60,40,.3)}.fbp-pn .fbt button.on{border-color:#a63a24;background:rgba(166,58,36,.12);box-shadow:0 0 0 2px rgba(166,58,36,.25)}
+.fbp-pn .fbbox{position:relative}.fbp-pn .fbbox textarea{position:relative;z-index:1;background:rgba(255,248,240,.35);border-color:rgba(120,60,40,.3);min-height:24vh;font-family:var(--serif,serif)}
+.fbp-pn .fbbox .fbp-grid{position:absolute;left:8%;right:8%;top:6%;bottom:10%;width:84%;height:84%;color:rgba(150,52,36,.16);display:none;z-index:0;pointer-events:none}
+.fbp-pn.err .fbbox .fbp-grid{display:block}
+.fbp-pn .fba label{background:rgba(255,250,240,.5);border-color:rgba(120,60,40,.35)}
+.fbp-pn input#fc{background:rgba(255,250,240,.5);border-color:rgba(120,60,40,.3)}
+.fbp-pn #go{display:none}
+.fbp-send{display:flex;align-items:center;justify-content:center;gap:10px;margin-top:2px}
+.fbp-send .fbp-seal{position:relative;transform:none;width:46px;height:46px;font-size:22px}
+.fbp-send .fbp-seal.stamp{animation:fbpStamp2 .6s ease}@keyframes fbpStamp2{35%{transform:translateY(-8px) scale(1.2)}70%{transform:scale(.92)}}
+.fbp-send b{font:900 15px var(--serif,serif)}
+.fbp-list{padding-top:4px}.fbp-list .sec-t{display:flex;align-items:baseline;gap:8px}.fbp-list.flash{animation:smFlashL 1.4s ease-out 1}@keyframes smFlashL{0%{box-shadow:0 0 0 0 rgba(242,201,76,.9)}40%{box-shadow:0 0 0 6px rgba(242,201,76,.5)}100%{box-shadow:0 0 0 0 rgba(242,201,76,0)}}
+@media (prefers-reduced-motion:reduce){.fbp-pn{transition:none}.fbp-seal.stamp,.fbp-send .fbp-seal.stamp{animation:none}.fbp-page.sent .fbp-paper{transition:none}}`;document.head.append(s)}
+let FBP_F0=null,FBP_FX0=null;
+function FeedbackPage(v,sub){fbpCss();setTop("💬 意見回饋","#/settings");if(typeof setTabs==="function")setTabs(true,"#/settings");v.className="view";
+  const st={vv:null,ro:null,stop:false};
+  const render=()=>{
+    const dk=fbpDark(),pc=fbpPc,[sx,sy]=pc(FBP_SEAL[0],FBP_SEAL[1]),[qx,qy]=pc(FBP_PILL[0],FBP_PILL[1]),[jx,jy]=pc(FBP_JADE[0],FBP_JADE[1]);
+    const[nx,ny]=pc(FBP_SLIPN[0],FBP_SLIPN[1]);
+    v.innerHTML=`<div class="shp-page cq fbp-page"><img src="data/feedback/${dk?"fb_night":"fb_day"}.webp?v=${FBP_IMGV}" alt="驛站信房"><div class="fbp-fx" aria-hidden="true"></div>
+      <button type="button" class="fbp-paper" aria-label="寫信"><svg></svg><p></p></button>
+      ${FBP_SLOT.map(([t,n,x,y],i)=>{const[px,py]=pc(x,y);return`<button type="button" class="fbp-slot" data-i="${i}" style="left:${px.toFixed(2)}%;top:${py.toFixed(2)}%" aria-label="${esc(n+"・"+t)}"></button>`}).join("")}
+      <div class="fbp-ty" style="top:${(pc(0,520)[1]).toFixed(2)}%">${FBP_SLOT.map(([t,n,,,ik],i)=>`<button type="button" data-i="${i}">${FBP_ICO(ik)}${esc(t)}<small>${esc(n)}</small></button>`).join("")}</div>
+      <button type="button" class="fbp-seal" style="left:${sx.toFixed(2)}%;top:${sy.toFixed(2)}%;width:${(FBP_SEAL[2]*2/7.68).toFixed(2)}%;aspect-ratio:1" aria-label="蓋印送出">兵</button>
+      <div class="fbp-thumbs" style="left:${jx.toFixed(2)}%;top:${(jy+1.2).toFixed(2)}%"></div>
+      <span class="fbp-q" style="left:${qx.toFixed(2)}%;top:${qy.toFixed(2)}%"></span>
+      <div class="fbp-slips">${FBP_SLIPS.map(([x,y,w,h])=>{const[a,b]=pc(x,y);return`<div class="fbp-slip" style="left:${a.toFixed(2)}%;top:${b.toFixed(2)}%;width:${(w/7.68).toFixed(2)}%;height:${(h/13.76).toFixed(2)}%;display:none"></div>`}).join("")}<span class="fbp-slipn" style="left:${nx.toFixed(2)}%;top:${ny.toFixed(2)}%"></span></div>
+      <button class="shp-spot" id="fbpWrite" style="left:47%;top:39.5%"><b>✍ 寫信</b></button>
+      <button class="shp-spot" id="fbpBoard" style="left:19%;top:15.5%"><b>📋 修正紀錄</b></button>
+      <button class="shp-spot" id="fbpSend" style="left:75.5%;top:66.2%"><b>🖋 送出</b></button></div>
+      <div class="pad fbp-list" id="fbpFixes"><div class="sec-t">📋 修正紀錄<span class="muted" style="font-size:12px;font-weight:400"></span></div><div class="fbp-fl"><div class="card muted" style="text-align:center">讀取中…</div></div></div>`;
+    const P=v.querySelector(".fbp-page"),paper=P.querySelector(".fbp-paper");paper.querySelector("svg").outerHTML=fbpGrid();
+    /* 箋紙：一個長方形用 matrix 斜貼到書案上的箋紙（量好的三個角） */
+    const fit=()=>{const k=P.clientWidth/768;if(!k)return;const{o,x,y}=FBP_PAPER,X=[x[0]-o[0],x[1]-o[1]],Y=[y[0]-o[0],y[1]-o[1]],lx=Math.hypot(...X),ly=Math.hypot(...Y);
+      Object.assign(paper.style,{left:o[0]*k+"px",top:o[1]*k+"px",width:lx*k+"px",height:ly*k+"px",transform:`matrix(${X[0]/lx},${X[1]/lx},${Y[0]/ly},${Y[1]/ly},0,0)`})};
+    fit();if(window.ResizeObserver){if(st.ro)st.ro.disconnect();st.ro=new ResizeObserver(fit);st.ro.observe(P)}
+    /* 寫信的大箋：原本的 feedbackSheet 表單整份建在這裡（送出、附件、排隊都是原本的程式） */
+    const pn=document.createElement("div");pn.className="fbp-pn";pn.setAttribute("role","dialog");pn.setAttribute("aria-label","寫信");v.append(pn);
+    const s0=sheet;sheet=(t,f)=>{f(pn)};try{(FBP_F0||feedbackSheet)()}catch(e){}finally{sheet=s0}
+    const fbw=pn.querySelector(".fbw");if(!fbw){P.querySelector(".fbp-paper").onclick=()=>(FBP_F0||feedbackSheet)();return}
+    const body=document.createElement("div");body.className="fbp-pn-b";while(pn.firstChild)body.append(pn.firstChild);
+    pn.innerHTML='<div class="fbp-pn-h">🖋 薛濤箋<button type="button">收起</button></div>';pn.append(body);
+    {const bx=pn.querySelector(".fbbox");if(bx)bx.insertAdjacentHTML("afterbegin",fbpGrid())}
+    {const b=pn.querySelectorAll("[data-y]")[1],i=b&&b.querySelector("i");if(i)i.innerHTML=FBP_ICO("fb_idea")}
+    const go=pn.querySelector("#go");if(go)go.insertAdjacentHTML("afterend",'<div class="fbp-send"><button type="button" class="fbp-seal" aria-label="蓋印送出">兵</button><b>蓋印送出</b></div>');
+    const fx=pn.querySelector("#fx"),pp=paper.querySelector("p");
+    const open=on=>{pn.classList.toggle("open",on);if(on)setTimeout(()=>{try{fx.focus({preventScroll:true})}catch(e){fx.focus()}},280);else fx.blur()};
+    pn.querySelector(".fbp-pn-h button").onclick=()=>open(false);
+    /* 鍵盤彈出：大箋留在鍵盤上方（看 visualViewport 的高度） */
+    const vvFit=()=>{const vv=window.visualViewport;if(!vv)return;pn.style.top=(vv.offsetTop+8)+"px";pn.style.maxHeight=Math.max(220,vv.height-16)+"px"};
+    if(window.visualViewport&&!st.vv){st.vv=vvFit;visualViewport.addEventListener("resize",vvFit);visualViewport.addEventListener("scroll",vvFit)}vvFit();
+    const ty=()=>{const b=pn.querySelector("[data-y].on");const all=[...pn.querySelectorAll("[data-y]")];return Math.max(0,all.indexOf(b))};
+    const paint=()=>{const i=ty();P.querySelectorAll(".fbp-slot,.fbp-ty button").forEach(b=>b.classList.toggle("on",+b.dataset.i===i));P.classList.toggle("err",i===0);pn.classList.toggle("err",i===0);
+      pp.textContent=fx.value.slice(0,160);
+      const th=P.querySelector(".fbp-thumbs"),im=[...pn.querySelectorAll("#fps img")].map(x=>x.src),nf=pn.querySelectorAll("#ffl .fch").length;
+      th.innerHTML=im.map(s=>`<img src="${s}" alt="">`).join("")+(nf?`<i>📎${nf}</i>`:"");
+      const q=(store.get("fbQueue",[])||[]).filter(r=>r.type&&!/玩家/.test(r.type)).length,qe=P.querySelector(".fbp-q");qe.textContent=q?`待送 ${q}`:"";qe.classList.toggle("on",!!q)};
+    const pick=i=>{const b=pn.querySelectorAll("[data-y]")[i];if(b)b.click();paint()};
+    P.querySelectorAll(".fbp-slot,.fbp-ty button").forEach(b=>b.onclick=e=>{e.stopPropagation();vibrate(5);pick(+b.dataset.i)});
+    pn.querySelectorAll("[data-y]").forEach(b=>b.addEventListener("click",()=>setTimeout(paint,0)));
+    fx.addEventListener("input",paint);new MutationObserver(paint).observe(body,{childList:true,subtree:true});
+    paper.onclick=()=>{vibrate(5);open(true)};P.querySelector("#fbpWrite").onclick=()=>{vibrate(5);open(true)};
+    /* 送出＝蓋印：先蓋印、箋紙摺進匭裡，再跑原本的送出（成功或排隊都由原本的程式 toast） */
+    const send=async()=>{if(!go||go.disabled)return;if(fx.value.trim().length<2){open(true);toast("請先寫下內容");return}
+      vibrate(10);open(false);P.querySelectorAll(".fbp-seal").forEach(s=>{s.classList.remove("stamp");void s.offsetWidth;s.classList.add("stamp")});pn.querySelectorAll(".fbp-seal").forEach(s=>s.classList.add("stamp"));
+      const sl=FBP_SLOT[ty()],k=P.clientWidth/768,{o}=FBP_PAPER;paper.style.transform+=` translate(${((sl[2]-o[0])*k*.6).toFixed(0)}px,${((sl[3]-o[1])*k*.6).toFixed(0)}px) scale(.15)`;
+      setTimeout(()=>P.classList.add("sent"),250);
+      try{await go.onclick({target:go})}catch(e){}
+      setTimeout(()=>{if(!st.stop&&v.isConnected&&/^#\/feedback/.test(location.hash))render()},900)};
+    P.querySelector(".fbp-seal").onclick=e=>{e.stopPropagation();send()};P.querySelector("#fbpSend").onclick=()=>send();
+    {const s=pn.querySelector(".fbp-send .fbp-seal");if(s)s.onclick=()=>send()}
+    /* 告示榜：最新幾張回條；點了捲到下面的修正紀錄 */
+    const toList=()=>{const L=v.querySelector("#fbpFixes");if(!L)return;v.scrollTop=Math.max(0,L.offsetTop-8);L.classList.remove("flash");void L.offsetWidth;L.classList.add("flash")};
+    P.querySelector("#fbpBoard").onclick=()=>{vibrate(5);toList()};
+    (typeof myFixes==="function"?myFixes():Promise.resolve(null)).then(F=>{if(!v.isConnected)return;const fl=v.querySelector(".fbp-fl"),cap=v.querySelector("#fbpFixes .sec-t span");
+      if(!F){fl.innerHTML='<div class="card muted" style="text-align:center">讀不到修正紀錄</div>';return}
+      if(cap)cap.textContent=F.dev?"全部的修正，最新的在最上面":"你回報、已經修好的問題";fl.innerHTML=fixList(F.items,F.dev);
+      const top=F.items.slice(0,3);P.querySelectorAll(".fbp-slip").forEach((e,i)=>{const x=top[i];if(!x)return;e.style.display="";e.innerHTML=`<b>已修</b>${esc(String(x.n||"已修正").replace(/^[✅\s]+/,"").slice(0,14))}`});
+      {const n=P.querySelector(".fbp-slipn");if(F.items.length>3){n.textContent=`共 ${F.items.length} 張`;n.classList.add("on")}}
+      if(sub==="fixes"){sub="";setTimeout(toList,120)}}).catch(()=>{});
+    paint();
+    try{if(typeof shwPage==="function"&&typeof SHIP_WALK_ON!=="undefined"&&SHIP_WALK_ON)shwPage(v,Object.assign({},SHW_PG0,SHW_FBP),"fbp")}catch(e){}};
+  render();
+  return{stop(){st.stop=true;if(st.ro)st.ro.disconnect();if(st.vv&&window.visualViewport){visualViewport.removeEventListener("resize",st.vv);visualViewport.removeEventListener("scroll",st.vv)}}}}
+if(typeof feedbackSheet==="function"){FBP_F0=feedbackSheet;feedbackSheet=function(){if(FEEDBACK_PAGE_ON){location.hash="#/feedback";return}return FBP_F0.apply(this,arguments)}}
+if(typeof fixHistory==="function"){FBP_FX0=fixHistory;fixHistory=function(){if(FEEDBACK_PAGE_ON){location.hash="#/feedback/fixes";return}return FBP_FX0.apply(this,arguments)}}
+if(typeof Home==="function"){const f0=Home;Home=function(v,hub){if(FEEDBACK_PAGE_ON&&!hub&&/^#\/feedback(\/|$)/.test(location.hash))return FeedbackPage(v,location.hash.split("/")[2]||"");return f0.apply(this,arguments)}}
 /* ================= 🕰 回到當年（意見回饋 313）=================
    石桌往事裡的對局，用「妙棋精選」裡 Pikafish 驗證過的特級大師實戰來演：你站在旁邊看，不能插手；
    棋自動一步一步下，下到那一步妙棋之前停下來——換作是你，會怎麼走？
