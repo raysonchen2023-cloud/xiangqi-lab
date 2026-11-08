@@ -1122,6 +1122,7 @@ html:has(#xqTitle:not(.out)),html:has(#xqTitle:not(.out)) body{background:#F3ECD
 .bk-end{margin:18px 0 6px;text-align:center;line-height:1.7;border:1.5px solid color-mix(in srgb,#f2c94c 60%,var(--line))}.bk-end p{margin:0 0 8px!important;font-size:14.5px!important;text-align:center!important}.bk-end .btn{width:100%;white-space:normal}
 .bk-nav{gap:8px;margin-top:14px}.bk-nav .btn:disabled{opacity:.45;cursor:default}.bk-navt{font-size:13px;margin:6px 2px 0;text-align:center}
 .bk-game .bk-gi{line-height:1.75;font-size:14.5px}.bk-game .bk-gi p{margin:6px 0 0}.bk-gp{line-height:1.85;font-size:14.5px;margin:10px 2px}
+.shl-lore{margin:10px 0;line-height:1.7}.shl-lore b{display:block;margin-bottom:4px;color:var(--accent,#b33a2b)}.shl-lore p{margin:0;font-size:14px}   /* 11/8：棋話一頁的星槎小知識 */
 </style></head><body>
 <div class="app">
  <div class="topbar" id="topbar"><button class="ib" id="back" hidden><b>‹</b>返回</button><h1 id="title">象棋千秋</h1><span id="topRight"></span></div>
@@ -1169,7 +1170,7 @@ html:has(#xqTitle:not(.out)),html:has(#xqTitle:not(.out)) body{background:#F3ECD
       if(!window.caches)return go();caches.keys().then(function(ks){return Promise.all(ks.filter(function(k){return k.indexOf("xqlab-app-")===0}).map(function(k){return caches.delete(k)}))})
         .then(function(){return navigator.serviceWorker&&navigator.serviceWorker.getRegistration()}).then(function(r){return r&&r.update()}).catch(function(){}).then(go)}};setTimeout(chk,4000)})();
 </script>
-<script>window.XQ_OFFLINE=true;window.XQ_BUILD="20261108-0400";</script>
+<script>window.XQ_OFFLINE=true;window.XQ_BUILD="20261108-0445";</script>
 <script src="core.js"></script>
 <script src="engine.js"></script>
 <script src="local.js"></script>
@@ -3739,7 +3740,7 @@ function onboard(){if(journey())journeyLock();else titleScreen({})}
 // ================= 設定：棋盤風格、棋子樣式、走棋顯示 =================
 const SAMPLE_FEN0="rnbakabnr/9/1c5c1/p1p1p1p1p/9/9/P1P1P1P1P/1C5C1/9/RNBAKABNR",SAMPLE_FEN1="rnbakabnr/9/1c5c1/p1p1p1p1p/9/9/P1P1P1P1P/1C2C4/9/RNBAKABNR",SAMPLE_LAST={f:70,t:67};
 /* 意見回饋 661：關於頁顯示整包遊戲要多大空間。XQ_SIZES 由 build-site.js 建置時填入（開發中的 m.html 是 null，就不顯示） */
-const XQ_SIZES={"pre":209734447,"code":12745057,"eng":51511005,"gm":33668932,"bgm":259516351,"opt":[["比賽對局 1956–2010",21765744],["比賽對局 2011–2014",25596413],["比賽對局 2015–2019",24821916]],"all":649996621,"other":10636756};
+const XQ_SIZES={"pre":209737691,"code":12748741,"eng":51511005,"gm":33668932,"bgm":259516351,"opt":[["比賽對局 1956–2010",21765744],["比賽對局 2011–2014",25596413],["比賽對局 2015–2019",24821916]],"all":650003549,"other":10636756};
 const szMB=b=>b>=1073741824?(b/1073741824).toFixed(1)+" GB":Math.max(1,Math.round(b/1048576))+" MB";
 function aboutSizes(){const S=XQ_SIZES;if(!S)return"";const opt=S.opt||[];   /* 意見回饋 662：玩家只看總數，細項只在開發者模式顯示 */
   return `<div class="row" style="justify-content:space-between"><span class="muted">整包下載</span><b>約 ${szMB(S.all)}</b></div>
@@ -6854,7 +6855,23 @@ const SHIP_OLD=new Set(["qin","han","sanguo","weijin","nanbei","sui","tang","wud
 const SHIP_LV=[0,0,3,5,6,7,8,9,10,11,12,13,14];
 /* 說書人每天換一句（首頁星槎大卡的小字）；有新信的時候先提醒信 */
 const SHIP_SAY=["棋盤上的路，走過一次就記得。","慢一點不要緊，星槎不會丟下誰。","今天先下一盤，故事等你回來再講。","輸掉的那一盤，最值得再擺一次。","每一顆子都有自己的走法，也有自己的歸途。",
-  "殘譜少一頁，就少一段沒說完的話。","茶涼了再沏，棋輸了再下。","渡口風大，站穩了再過河。","看不懂的棋，多看兩眼就懂了。","一盤棋下完，心裡的結也鬆一點。","別急著贏，先看清楚對方想做什麼。","這一站的人，都在等一盤好棋。","船開得慢，是要讓你把岸上的事看清楚。","石桌上缺的那一塊，要七個人一起補。"];
+  "殘譜少一頁，就少一段沒說完的話。","茶涼了再沏，棋輸了再下。","渡口風大，站穩了再過河。","看不懂的棋，多看兩眼就懂了。","一盤棋下完，心裡的結也鬆一點。","別急著贏，先看清楚對方想做什麼。","這一站的人，都在等一盤好棋。","船開得慢，是要讓你把岸上的事看清楚。","石桌上缺的那一塊，要七個人一起補。",
+  "古書上說，海邊每年八月有一隻浮槎來去，從不誤期。咱們這艘星槎也一樣，說好哪天到，就哪天到。","有人乘著浮槎漂到天河，看見織女在織布、牽牛人在飲牛。客官，咱們今天也漂一段。",
+  "天上要是多了一顆「客星」，就是有凡人乘槎闖進天河了。今晚那顆，說不定就是你。","明朝鄭和下西洋，隨行的人把見聞寫成《星槎勝覽》。咱們把棋話一頁一頁收齊，也算一本星槎勝覽。"];   /* 星槎典故（11/8 開發者要的）：《博物志》浮槎、客星犯牽牛、費信《星槎勝覽》 */
+/* 棋話一頁的「星槎小知識」：每一站一則，照航線順序 */
+const SHIP_LORE=[["星槎是什麼？","「槎」念作「茶」，是木筏、浮木。「星槎」是傳說中能從海上一路漂到天河的木筏，後來泛指通往遠方、天上的奇船。「雲河」說的就是銀河，取自銀河的古名「雲漢」；古人也叫它天河、星河。"],
+  ["浮槎與八月槎","晉代張華的《博物志》記載：海邊有人每年八月看見一隻浮槎來去，從不誤期。他帶足糧食乘上去，十多天後到了有城郭、有織女的地方——原來是天河。所以浮槎又叫「八月槎」。"],
+  ["客星犯牽牛","乘槎的人回到人間，去問蜀地的嚴君平。嚴君平說：某年某月，有一顆「客星」靠近了牽牛星。一算日子，正是他到天河的那一天。"],
+  ["乘槎","坐上星槎，叫「乘槎」。後來的詩文常用它比喻遠行、出使或求仙。"],
+  ["張騫乘槎","後來的傳說把乘槎的人說成漢朝的張騫：他奉命尋找黃河的源頭，一路乘槎到了天河。這是傳說，不是史實，但很受詩人喜愛。"],
+  ["博望槎","張騫被封為博望侯，所以「博望槎」就借指出使遠方的船，常出現在送人出使的詩裡。"],
+  ["八月槎入詩","唐代杜甫流落夔州時，在〈秋興八首〉裡寫「奉使虛隨八月槎」。他借張騫奉命乘槎的典故，說自己想跟著使者的船回長安，卻落了空，藏著思鄉的心情。"],
+  ["海客乘槎","唐代李商隱〈海客〉一開頭就寫「海客乘槎上紫氛」，把乘槎寫成直上雲霄的浪漫畫面。"],
+  ["仙槎","仙人乘的筏，叫「仙槎」。詩詞裡常和蓬萊、瑤池這些仙境寫在一起。"],
+  ["槎客","乘槎的人叫「槎客」，後來也用來稱呼遠行的旅人和使者。在星槎上的七個孩子，都是槎客。"],
+  ["星槎勝覽","古人把朝廷派出的使者比作天上的「使星」，唐宋時就用「星槎」稱使者乘的船。明朝鄭和下西洋，隨行的費信沿用這個說法，把沿途各國的見聞寫成《星槎勝覽》。"],
+  ["銀河的名字","銀河在古代有很多名字：天河、天漢、雲漢、星河、銀漢……「雲河星槎」的「雲河」，就是從「雲漢」來的。"],
+  ["牛郎織女","乘槎人在天河看見的織女和牽牛，就是七夕故事裡的織女和牛郎。這對星的傳說比《博物志》還早，《詩經》和東漢的詩裡就有了。七夕，正是在秋天。"]];
 const SHIP_PC={"俥":"R","傌":"N","相":"B","仕":"A","帥":"K","炮":"C","兵":"P"};
 /* 意見回饋 684、685：第 1～4 站每站出哪幾題（關卡設計報告第二節）。每站 3 題＝[劇情局, 第 2 題, 第 3 題]；
    story＝劇情局（五級都一樣）、byDiff＝各難度的第 2、3 題（null＝照舊從題庫自動挑）、warm＝國手、千秋的選做熱身（變化題）、ch＝正文第幾章、who＝正文解題卡上「跟誰一起解」；
@@ -7128,6 +7145,7 @@ function ShipLesson(v){setTop("📘 棋話一頁","#/adventure");setTabs(false);
   v.innerHTML=shpPage("page_lesson","📘 棋話一頁・"+esc(shipShort(k)),esc(T.place||"")+(lrn?"・✅ 學會了":""),sp,board)+`<div class="pad shl-more">
     ${!ap&&Ls.open?`<div class="card port-say"><img src="${Wo.img}" alt="" onerror="this.remove()"><p><b>${esc(Wo.n)}</b>「${esc(Ls.open)}」</p></div>`:""}
     ${lrn&&!ap&&Ls.done?`<div class="card port-say"><img src="${Wd.img}" alt="" onerror="this.remove()"><p><b>${esc(Wd.n)}</b>「${esc(Ls.done)}」</p></div>`:""}
+    ${(L=>L?`<div class="card shl-lore"><b>🌌 星槎小知識・${esc(L[0])}</b><p>${esc(L[1])}</p></div>`:"")(SHIP_LORE[Math.max(0,SHIP_ROUTE.indexOf(k))%SHIP_LORE.length])}
     ${SHIP_OLD.has(k)?'<p class="muted shp-old">這一朝還沒有今天的象棋；星槎石桌上的千秋殘局，題目出自明清古譜。</p>':""}
     <p class="muted shp-pzhint">${lrn?"✅ 這站的 3 題千秋殘局都解開了":"千秋殘局 3 題都自己解開，就算學會這一頁棋話"}</p>
     ${lrn&&Ls.theme?`<button class="lk" id="slTheme">想多練？主題訓練・${esc(Ls.theme)} 10 題 ›</button>`:""}</div>`;
