@@ -1341,7 +1341,7 @@ html[data-era=qin] .view:has(>.shp-rd),html[data-era=wudai] .view:has(>.shp-rd){
       if(!window.caches)return go();caches.keys().then(function(ks){return Promise.all(ks.filter(function(k){return k.indexOf("xqlab-app-")===0}).map(function(k){return caches.delete(k)}))})
         .then(function(){return navigator.serviceWorker&&navigator.serviceWorker.getRegistration()}).then(function(r){return r&&r.update()}).catch(function(){}).then(go)}};setTimeout(chk,4000)})();
 </script>
-<script>window.XQ_OFFLINE=true;window.XQ_BUILD="20261109-1200";</script>
+<script>window.XQ_OFFLINE=true;window.XQ_BUILD="20261109-1215";</script>
 <script src="core.js"></script>
 <script src="engine.js"></script>
 <script src="local.js"></script>
@@ -11096,7 +11096,7 @@ function shwCss(){if(document.getElementById("shwCss"))return;const s=document.c
 .shw.on{opacity:1}.shw canvas{position:absolute;display:block;pointer-events:none}
 .shw-sh{position:absolute;border-radius:50%;background:radial-gradient(closest-side,rgba(40,30,20,.55),rgba(40,30,20,.25) 60%,rgba(40,30,20,0));pointer-events:none}
 body.shw-on .xqbot{visibility:hidden}
-.shw-fade{opacity:.15!important;transition:opacity .25s ease!important}.shw-ink{position:absolute;width:36px;height:36px;margin:-18px 0 0 -18px;border-radius:50%;pointer-events:none;z-index:5;background:radial-gradient(closest-side,rgba(38,30,24,0) 38%,rgba(38,30,24,.42) 64%,rgba(38,30,24,.12) 86%,rgba(38,30,24,0));animation:shwInk .6s ease-out forwards}@keyframes shwInk{from{transform:scale(.3);opacity:.95}to{transform:scale(1.15);opacity:0}}@keyframes shwInkR{0%,60%{opacity:.7}100%{opacity:0}}@media (prefers-reduced-motion:reduce){.shw-ink{animation:shwInkR .4s linear forwards}}[data-shw-lift]{transition:translate .25s ease}.shw-iso{isolation:isolate}.shw-iso.shw-iso .shp-spot,.shw-iso.shw-iso .po-sight,.shw-iso.shw-iso [data-hs]{z-index:200}.shw-unfade{transition:opacity .6s ease!important}.shw-fade::after{animation:none!important;opacity:0!important}`;document.head.append(s)}
+.shw-fade{opacity:.15!important;transition:opacity .25s ease!important}[data-shwnf].shw-fade{opacity:1!important}.shw-ink{position:absolute;width:36px;height:36px;margin:-18px 0 0 -18px;border-radius:50%;pointer-events:none;z-index:5;background:radial-gradient(closest-side,rgba(38,30,24,0) 38%,rgba(38,30,24,.42) 64%,rgba(38,30,24,.12) 86%,rgba(38,30,24,0));animation:shwInk .6s ease-out forwards}@keyframes shwInk{from{transform:scale(.3);opacity:.95}to{transform:scale(1.15);opacity:0}}@keyframes shwInkR{0%,60%{opacity:.7}100%{opacity:0}}@media (prefers-reduced-motion:reduce){.shw-ink{animation:shwInkR .4s linear forwards}}[data-shw-lift]{transition:translate .25s ease}.shw-iso{isolation:isolate}.shw-iso.shw-iso .shp-spot,.shw-iso.shw-iso .po-sight,.shw-iso.shw-iso [data-hs]{z-index:200}.shw-unfade{transition:opacity .6s ease!important}.shw-fade::after{animation:none!important;opacity:0!important}`;document.head.append(s)}
 const shwHt=(C,y)=>typeof C.h==="function"?C.h(y):C.h[0]+(y-C.h[1])*C.h[2];
 const shwPx=(C,a,b)=>Math.hypot((b[0]-a[0])*C.W/100,(b[1]-a[1])*C.H/100);
 function shwEdges(C){if(!C._e)C._e=C.E.split(" ").map(s=>s.split("-"));return C._e}
@@ -11123,6 +11123,9 @@ function shwFreeOk(S,e){const t=e.target;if(!t||!t.closest||!S.M.contains(t))ret
 const shwYaw=(C,a,b)=>Math.atan2((b[0]-a[0])*C.W/100,(b[1]-a[1])*C.H/100/Math.sin(C.el*Math.PI/180));
 const shwWrap=d=>{while(d>Math.PI)d-=2*Math.PI;while(d<-Math.PI)d+=2*Math.PI;return d};
 const shwRM=()=>{try{return matchMedia("(prefers-reduced-motion: reduce)").matches}catch(e){return false}};
+/* 816：點在哪張桌面上——回傳那張桌上離點最近的桌面節點 */
+function shwInPoly(P,p){if(!P)return false;let c=false;for(let i=0,j=P.length-1;i<P.length;j=i++){const a=P[i],b=P[j];if((a[1]>p[1])!==(b[1]>p[1])&&p[0]<(b[0]-a[0])*(p[1]-a[1])/(b[1]-a[1])+a[0])c=!c}return c}
+function shwTblAt(C,p){let best=null,d=1e9;for(const k in C.T){if(!C.N[k]||!shwInPoly(C.T[k].poly,p))continue;const x=shwPx(C,C.N[k],p);if(x<d){d=x;best=k}}return best}
 /* 808：一跳（u 0→1）：先蹲（0～0.16）、空中照弧線走並拉長（0.16～0.86）、落地蹲一下；身高參考的 y 從 h0 換到 h1 */
 function shwHop(S,a,b,u,h0,h1){S.hy=h0+(h1-h0)*u;if(shwRM()){S.x=a[0]+(b[0]-a[0])*u;S.y=a[1]+(b[1]-a[1])*u;S.sq=null;return}const p0=.16,p1=.86;
   if(u<p0){const k=u/p0;S.x=a[0];S.y=a[1];S.sq=[1+.12*k,1-.16*k];S.hy=h0}
@@ -11145,10 +11148,15 @@ function shwMount(o){if(shwRM()||!o.root||!o.frame||o.root.dataset.shw)return;o.
   const at=SHW_MEM[o.mem],okAt=typeof at==="string"?!!C.N[at]:!!(at&&at.p&&at.e&&C.N[at.e[0]]&&C.N[at.e[1]]),S={o,C,v:o.v,M:o.root,I:o.frame,box,ready:false,pass:false,go:null,at:okAt?at:C.home};
   o.root.addEventListener("click",e=>shwClick(S,e),true);
   shwLoad(S).then(()=>{try{if(WALK_BOT_MERGE)shwBotHook(S)}catch(e){}}).catch(()=>{box.remove();S.ready=false;document.body.classList.remove("shw-on")})}
-function shwClick(S,e){if(S.pass||!S.ready||!S.box.isConnected)return;const g=S.go,b=e.target.closest&&e.target.closest(S.o.sel);
+function shwClick(S,e){if(S.pass||!S.ready||!S.box.isConnected)return;const g=S.go;let b=e.target.closest&&e.target.closest(S.o.sel),tk=null;
+  /* 回饋 816：桌上的東西本身（例如信房的信箋）也算入口：座標表 TS:{選擇器:入口代號}，先跳上桌再打開 */
+  if(!b&&WALK_HOP_ON&&S.C.TS&&e.target.closest)for(const k in S.C.TS){const x=e.target.closest(k);if(x&&S.M.contains(x)){b=x;tk=S.C.TS[k];x.dataset.shwnf="1";break}}
   if(g&&!g.free&&(g.act>=0||(b&&b===g.btn))){e.stopPropagation();e.preventDefault();shwOpen(S);return}   /* 走向入口時再點同一個入口、或已經在做小動作：直接開 */
-  if(b){const h=S.o.keyOf(b),H=S.C.HS[h];if(!H||!S.C.N[H[0]])return;e.stopPropagation();e.preventDefault();vibrate(5);shwGo(S,{hs:h,btn:b,H});return}
-  if(!shwFreeOk(S,e))return;const p=shwPt(S,e);if(!(p[0]>=0&&p[0]<=100&&p[1]>=0&&p[1]<=100))return;const q=shwNear(S.C,p);if(!q)return;shwInk(S,p);shwGo(S,{free:1,q,tap:p})}   /* 意見回饋 782：點空地＝走到路網上離那裡最近的點，走到只換待機 */
+  if(b){const h=tk||S.o.keyOf(b),H=S.C.HS[h];if(!H||!S.C.N[H[0]])return;e.stopPropagation();e.preventDefault();vibrate(5);shwGo(S,{hs:h,btn:b,H});return}
+  if(!shwFreeOk(S,e))return;const p=shwPt(S,e);if(!(p[0]>=0&&p[0]<=100&&p[1]>=0&&p[1]<=100))return;
+  /* 回饋 816：點到桌面（T 裡的 poly 多邊形）＝走到桌邊、跳上最近的桌面節點，不觸發別的；人已經在這張桌上＝留在原處轉過去看 */
+  if(WALK_HOP_ON&&S.C.T){const tn=shwTblAt(S.C,p);if(tn){e.stopPropagation();e.preventDefault();shwInk(S,p);const cur=!S.go&&typeof S.at==="string"&&S.C.T[S.at]?S.at:null;
+    if(cur&&shwInPoly(S.C.T[cur].poly,p)){S.yaw=shwYaw(S.C,S.C.N[cur],p);return}vibrate(5);shwGo(S,{H:[tn,p[0],p[1]-4,null],tap:p});return}}const q=shwNear(S.C,p);if(!q)return;shwInk(S,p);shwGo(S,{free:1,q,tap:p})}   /* 意見回饋 782：點空地＝走到路網上離那裡最近的點，走到只換待機 */
 function shwGo(S,o){shwDrop();const C=S.C,g0=S.go;if(g0&&g0.btn&&g0.btn!==o.btn)g0.btn.classList.remove("shw-fade");
   if(S.stay&&S.stay!==o.btn){S.stay.classList.remove("shw-fade");S.stay=null;SHW_MEMH[S.o.mem]=null}
   if(g0&&g0.ph){const q=g0.ph==="down"?g0.hd[1]:g0.hu[1];S.x=q[0];S.y=q[1];S.sq=null;S.curE=null;if(g0.ph==="up"){S.at=g0.to;S.hy=C.T[g0.to].hy}else{S.at=g0.hdTo;S.hy=null}}   /* 808：跳到一半又點別處：先算跳完 */
@@ -12068,7 +12076,7 @@ if(TABBAR_INK_ON&&typeof setTabs==="function"){const f0=setTabs;setTabs=function
   try{matchMedia("(prefers-color-scheme: dark)").addEventListener("change",()=>{try{tbInk()}catch(e){}})}catch(e){}}
 /* ================= ✉ 意見回饋頁「驛站信房」（回饋 799，開發者 11/8 選定 Gemini 方案 1＋10 合體；考究說明 park/feedback/考究說明.md，史學顧問核圖中）=================
    圖：park/feedback/fb_day_v2.png（Gemini 重畫一次＋程式局部修＋宣紙後製）、夜版 fb_night_v1.png → art/feedback/ → data/feedback/。
-   #/feedback 一頁（#/feedback/fixes 直接捲到修正紀錄）：天字客房隔壁的信房，點一下就到，不再經過設定畫軸。
+   #/feedback 一頁（#/feedback/fixes 直接打開告示榜的榜文；回饋 812：頁面只留滿版圖，修正紀錄不再接在圖下面）：天字客房隔壁的信房，點一下就到，不再經過設定畫軸。
      書案上的薛濤箋＝寫信：點了從上方展開一張大箋（鍵盤彈出也留在鍵盤上方），裡面就是原本 feedbackSheet 的表單（原封不動拿來用：類型、1500 字、截圖 4 張＋文字檔 3 個、聯絡方式、postForm、沒網路排隊、自動附上資訊）；
      青銅匭三個口＝類型：正面「申冤」＝🐞 錯誤、右側「招諫」＝💡 建議、蓋頂「延恩」＝💬 其他（選錯誤時箋上淡淡浮出一張程式畫的正確棋盤：9×10、楚河、九宮 X）；
      白玉鎮紙下＝附件縮圖；圓木印＝送出（程式疊一顆寫「兵」的棋子）；蠟丸碟＝還沒送出、排隊中的信；
@@ -12090,7 +12098,7 @@ function fbpSlipFit(e,t){t=t.split(/[，,；;。（(]/)[0].trim()||t;const put=u
 const SHW_FBP={el:40,h:[.085,70,.0012],look0:[42,60],home:"home",
   N:{home:[66,93],mid:[42,83],desk:[40,76],gui:[82,81],lft:[12,72],brd:[18,57],te:[30,64],tb:[27,49.5]},
   E:"home-mid mid-desk mid-gui mid-lft lft-brd home-gui desk-te te-tb",
-  T:{tb:{hy:61}},   /* 回饋 808：點「寫信」＝走到書案左前角、跳上案角（不站在信箋上），揮手後打開信箋 */
+  T:{tb:{hy:61,poly:[[38,38.5],[92,44.5],[77,55.5],[19,48.5]]}},TS:{".fbp-paper":"fbpWrite",".fbp-slip":"fbpBoard",".fbp-slipn":"fbpBoard"},   /* 回饋 816：點書案桌面任何一處＝跳上案角；點信箋本身＝先跳上去再打開 */   /* 回饋 808：點「寫信」＝走到書案左前角、跳上案角（不站在信箋上），揮手後打開信箋 */
   HS:{fbpBoard:["brd",18,40,"bow"],fbpWrite:["tb",50,47,"wave"]}};
 const fbpPc=(x,y)=>[x/7.68,y/13.76];
 const fbpDark=()=>{const t=store.get("pageTheme","auto");return t==="dark"||(t==="auto"&&matchMedia("(prefers-color-scheme: dark)").matches)};
@@ -12145,7 +12153,25 @@ function fbpCss(){if(document.getElementById("fbpCss"))return;const s=document.c
 .fbp-send .fbp-seal.stamp{animation:fbpStamp2 .6s ease}@keyframes fbpStamp2{35%{transform:translateY(-8px) scale(1.2)}70%{transform:scale(.92)}}
 .fbp-send b{font:900 15px var(--serif,serif)}
 .fbp-list{padding-top:4px}.fbp-list .sec-t{display:flex;align-items:baseline;gap:8px}.fbp-list.flash{animation:smFlashL 1.4s ease-out 1}@keyframes smFlashL{0%{box-shadow:0 0 0 0 rgba(242,201,76,.9)}40%{box-shadow:0 0 0 6px rgba(242,201,76,.5)}100%{box-shadow:0 0 0 0 rgba(242,201,76,0)}}
-@media (prefers-reduced-motion:reduce){.fbp-pn{transition:none}.fbp-seal.stamp,.fbp-send .fbp-seal.stamp{animation:none}.fbp-page.sent .fbp-paper{transition:none}}`;document.head.append(s)}
+.fbp-bws{position:fixed;inset:0;z-index:948;background:rgba(20,14,8,.35);display:none}.fbp-bws.open{display:block}
+.fbp-bw{position:fixed;left:50%;top:calc(env(safe-area-inset-top,0px) + 56px);bottom:calc(env(safe-area-inset-bottom,0px) + 70px);width:min(92vw,460px);z-index:949;display:flex;flex-direction:column;
+  transform:translate(-50%,10px) scale(.97);opacity:0;pointer-events:none;transition:transform .25s ease,opacity .2s;border-radius:2px;color:#2a1d12;border:2px solid #3a2a1c;
+  background:#efe3c6 url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='120' height='120'%3E%3Cfilter id='n'%3E%3CfeTurbulence baseFrequency='.9' numOctaves='2'/%3E%3CfeColorMatrix values='0 0 0 0 .5 0 0 0 0 .35 0 0 0 0 .2 0 0 0 .07 0'/%3E%3C/filter%3E%3Crect width='120' height='120' filter='url(%23n)'/%3E%3C/svg%3E");
+  box-shadow:inset 0 0 0 5px #efe3c6,inset 0 0 0 6px rgba(58,42,28,.7),0 12px 32px rgba(0,0,0,.4)}
+.fbp-bw.open{transform:translate(-50%,0);opacity:1;pointer-events:auto}
+.fbp-bw-h{position:relative;display:flex;align-items:center;justify-content:center;padding:16px 44px 6px;font:900 20px/1.2 var(--kai,var(--serif,serif));letter-spacing:6px;color:#7a1e12}
+.fbp-bw-h button{position:absolute;right:8px;top:8px;border:0;background:none;font-size:22px;color:inherit;cursor:pointer;padding:4px 8px;letter-spacing:0}
+.fbp-bw-c{text-align:center;font:600 13px/1.5 var(--serif,serif);color:#6a5640;padding:0 16px 8px;margin:0 14px;border-bottom:1px solid rgba(58,42,28,.35)}
+.fbp-bw-b{flex:1;overflow:auto;-webkit-overflow-scrolling:touch;overscroll-behavior:contain;padding:10px 14px 14px}
+.fbp-bw-m{text-align:center;color:#6a5640;font:600 14px var(--serif,serif);margin:24px 0}
+.fbp-bw .card{background:rgba(255,250,238,.7);border:1px solid rgba(110,80,50,.25);box-shadow:none;color:#2a1d12}.fbp-bw .muted{color:#6a5640}
+.fbp-bw [style*="font-size:12px"],.fbp-bw [style*="font-size:11px"]{font-size:13px!important}
+.fbp-bw-more{text-align:center;margin-top:6px}
+.fbp-bw.dk{background:#1d212b;color:#e9e0cc;border-color:#8a7a5a;box-shadow:inset 0 0 0 5px #1d212b,inset 0 0 0 6px rgba(200,180,140,.5),0 12px 32px rgba(0,0,0,.6)}
+.fbp-bw.dk .fbp-bw-h{color:#e8b7a0}.fbp-bw.dk .fbp-bw-c,.fbp-bw.dk .muted,.fbp-bw.dk .fbp-bw-m{color:#b8a888}.fbp-bw.dk .fbp-bw-c{border-color:rgba(200,180,140,.35)}
+.fbp-bw.dk .card{background:rgba(255,255,255,.05);border-color:rgba(200,180,140,.2);color:#e9e0cc}
+.fbp-slip,.fbp-slipn{cursor:pointer;pointer-events:auto}
+@media (prefers-reduced-motion:reduce){.fbp-bw{transition:none}.fbp-pn{transition:none}.fbp-seal.stamp,.fbp-send .fbp-seal.stamp{animation:none}.fbp-page.sent .fbp-paper{transition:none}}`;document.head.append(s)}
 let FBP_F0=null,FBP_FX0=null;
 function FeedbackPage(v,sub){fbpCss();setTop("💬 意見回饋","#/settings");if(typeof setTabs==="function")setTabs(true,"#/settings");v.className="view";
   const st={vv:null,ro:null,stop:false};
@@ -12162,8 +12188,7 @@ function FeedbackPage(v,sub){fbpCss();setTop("💬 意見回饋","#/settings");i
       <div class="fbp-slips">${FBP_SLIPS.map(([x,y,w,h])=>{const[a,b]=pc(x,y);return`<div class="fbp-slip" style="left:${a.toFixed(2)}%;top:${b.toFixed(2)}%;width:${(w/7.68).toFixed(2)}%;height:${(h/13.76).toFixed(2)}%;display:none"></div>`}).join("")}<span class="fbp-slipn" style="left:${nx.toFixed(2)}%;top:${ny.toFixed(2)}%"></span></div>
       <button class="shp-spot" id="fbpWrite" style="left:47%;top:39.5%"><b>✍ 寫信</b></button>
       <button class="shp-spot" id="fbpBoard" style="left:19%;top:15.5%"><b>📋 修正紀錄</b></button>
-      <button class="shp-spot" id="fbpSend" style="left:75.5%;top:66.2%"><b>🖋 送出</b></button></div>
-      <div class="pad fbp-list" id="fbpFixes"><div class="sec-t">📋 修正紀錄<span class="muted" style="font-size:12px;font-weight:400"></span></div><div class="fbp-fl"><div class="card muted" style="text-align:center">讀取中…</div></div></div>`;
+      <button class="shp-spot" id="fbpSend" style="left:75.5%;top:66.2%"><b>🖋 送出</b></button></div>`;   /* 回饋 812：圖下面不再接修正紀錄清單（改成告示榜的榜文面板） */
     const P=v.querySelector(".fbp-page"),paper=P.querySelector(".fbp-paper");paper.querySelector("svg").outerHTML=fbpGrid();
     /* 箋紙：一個長方形用 matrix 斜貼到書案上的箋紙（量好的三個角） */
     const fit=()=>{const k=P.clientWidth/768;if(!k)return;const{o,x,y}=FBP_PAPER,X=[x[0]-o[0],x[1]-o[1]],Y=[y[0]-o[0],y[1]-o[1]],lx=Math.hypot(...X),ly=Math.hypot(...Y);
@@ -12204,15 +12229,25 @@ function FeedbackPage(v,sub){fbpCss();setTop("💬 意見回饋","#/settings");i
       setTimeout(()=>{if(!st.stop&&v.isConnected&&/^#\/feedback/.test(location.hash))render()},900)};
     P.querySelector(".fbp-seal").onclick=e=>{e.stopPropagation();send()};P.querySelector("#fbpSend").onclick=()=>send();
     {const s=pn.querySelector(".fbp-send .fbp-seal");if(s)s.onclick=()=>send()}
-    /* 告示榜：最新幾張回條；點了捲到下面的修正紀錄 */
-    const toList=()=>{const L=v.querySelector("#fbpFixes");if(!L)return;v.scrollTop=Math.max(0,L.offsetTop-8);L.classList.remove("flash");void L.offsetWidth;L.classList.add("flash")};
-    P.querySelector("#fbpBoard").onclick=()=>{vibrate(5);toList()};
-    (typeof myFixes==="function"?myFixes():Promise.resolve(null)).then(F=>{if(!v.isConnected)return;const fl=v.querySelector(".fbp-fl"),cap=v.querySelector("#fbpFixes .sec-t span");
-      if(!F){fl.innerHTML='<div class="card muted" style="text-align:center">讀不到修正紀錄</div>';return}
-      if(cap)cap.textContent=F.dev?"全部的修正，最新的在最上面":"你回報、已經修好的問題";fl.innerHTML=fixList(F.items,F.dev);
+    /* 回饋 812（開發者 11/9）：頁面只留滿版圖。告示榜（標籤、榜上的回條、「共 N 張」）＝在圖上展開一張直式榜文：
+       標題那行照舊（開發者看全部、玩家看自己回報且已修好的），清單照舊用 fixList；一次先排 20 筆，捲到底或按「再看」再接 20 筆；返回鍵、榜外、✕ 都收起；#/feedback/fixes 直接打開 */
+    const bw=document.createElement("div");bw.className="fbp-bw"+(dk?" dk":"");bw.setAttribute("role","dialog");bw.setAttribute("aria-label","修正紀錄");
+    bw.innerHTML='<div class="fbp-bw-h"><b>修正紀錄</b><button type="button" aria-label="收起">✕</button></div><div class="fbp-bw-c"></div><div class="fbp-bw-b"><div class="fbp-fl"><p class="fbp-bw-m">讀取中…</p></div><div class="fbp-bw-more"></div></div>';
+    const bs=document.createElement("div");bs.className="fbp-bws";v.append(bs,bw);
+    let FX=null,shown=0,unB=null;const BN=20,fl=bw.querySelector(".fbp-fl"),sc=bw.querySelector(".fbp-bw-b");
+    const more=()=>{if(!FX||shown>=FX.items.length)return;const nx=FX.items.slice(shown,shown+BN);fl.insertAdjacentHTML("beforeend",fixList(nx,FX.dev));shown+=nx.length;
+      const m=bw.querySelector(".fbp-bw-more"),left=FX.items.length-shown;m.innerHTML=left>0?`<button type="button" class="btn ghost">再看 ${Math.min(BN,left)} 筆（還有 ${left} 筆）</button>`:"";const b=m.querySelector("button");if(b)b.onclick=()=>{vibrate(5);more()}};
+    sc.addEventListener("scroll",()=>{if(sc.scrollTop+sc.clientHeight>sc.scrollHeight-240)more()},{passive:true});
+    const openB=()=>{if(bw.classList.contains("open"))return;bw.classList.add("open");bs.classList.add("open");if(typeof xqPanelNav==="function")unB=xqPanelNav(()=>{unB=null;bw.classList.remove("open");bs.classList.remove("open")})};
+    const closeB=()=>{bw.classList.remove("open");bs.classList.remove("open");if(unB){const f=unB;unB=null;f()}};
+    bw.querySelector(".fbp-bw-h button").onclick=closeB;bs.onclick=closeB;
+    P.querySelector("#fbpBoard").onclick=()=>{vibrate(5);openB()};P.querySelectorAll(".fbp-slip,.fbp-slipn").forEach(e=>e.onclick=()=>{vibrate(5);openB()});
+    (typeof myFixes==="function"?myFixes():Promise.resolve(null)).then(F=>{if(!v.isConnected)return;const cap=bw.querySelector(".fbp-bw-c");
+      if(!F){fl.innerHTML='<p class="fbp-bw-m">讀不到修正紀錄</p>';return}
+      FX=F;cap.textContent=F.dev?"全部的修正，最新的在最上面":"你回報、已經修好的問題";fl.innerHTML="";if(F.items.length)more();else fl.innerHTML=fixList([],F.dev);
       const top=F.items.slice(0,3);P.querySelectorAll(".fbp-slip").forEach((e,i)=>{const x=top[i];if(!x)return;e.style.display="";fbpSlipFit(e,String(x.n||"已修正").replace(/^[✅\s]+/,""))});
-      {const n=P.querySelector(".fbp-slipn");if(F.items.length>3){n.textContent=`共 ${F.items.length} 張`;n.classList.add("on")}}
-      if(sub==="fixes"){sub="";setTimeout(toList,120)}}).catch(()=>{});
+      {const n=P.querySelector(".fbp-slipn");if(F.items.length>3){n.textContent=`共 ${F.items.length} 張`;n.classList.add("on")}}}).catch(()=>{if(v.isConnected)fl.innerHTML='<p class="fbp-bw-m">讀不到修正紀錄</p>'});
+    if(sub==="fixes"){sub="";setTimeout(openB,60)}
     paint();
     try{if(typeof shwPage==="function"&&typeof SHIP_WALK_ON!=="undefined"&&SHIP_WALK_ON)shwPage(v,Object.assign({},SHW_PG0,SHW_FBP),"fbp")}catch(e){}};
   render();
@@ -12403,7 +12438,7 @@ const CJM_IMGV="2330";
 const CJM_VES=[["sip",241,638,50,12,241,652,120,70],["cup",401,555,73,16,401,590,190,120],["pot",586,417,24,6,586,520,150,230]];
 const CJM_SPOUT=[500,430];
 const SHW_CJ_BASE={el:42,h:[.085,70,.0012],look0:[52,45],home:"home",N:{home:[50,96],mid:[46,90],tbl:[40,84],te:[62,84],tt:[64.5,59]},E:"home-mid mid-tbl tbl-te mid-te te-tt",
-  T:{tt:{hy:76}}};   /* 回饋 808：點茶具＝跳上石茶桌最前面的桌角（茶盞右下的空處，不擋茶具），鞠躬 */
+  T:{tt:{hy:76,poly:[[0,34],[20,30],[100,30],[100,52],[63,60],[0,48]]}}};   /* 回饋 816：點石茶桌桌面任何一處＝跳上桌角 */   /* 回饋 808：點茶具＝跳上石茶桌最前面的桌角（茶盞右下的空處，不擋茶具），鞠躬 */
 const cjmPc=(x,y)=>[x/7.68,y/13.76];
 const cjmDark=()=>{const t=store.get("pageTheme","auto");return t==="dark"||(t==="auto"&&matchMedia("(prefers-color-scheme: dark)").matches)};
 /* 今天的季節花葉（依月份，一天一種）：[名稱, 顏色, 形狀] */
@@ -13240,7 +13275,7 @@ const KJ2_BOARD=[[240,412],[535,412],[560,654],[214,654]];   /* 棋枰上面四�
 const KJ2_SLIP=[[252,722],[526,722],[530,786],[248,786]];
 const KJ2_RED=[148,572],KJ2_BLK=[632,610],KJ2_SCR=[585,448];
 const SHW_KJ2={el:40,h:[.085,92,.0028],look0:[50,40],home:"home",N:{home:[50,97],front:[50,80],fl:[24,78],tl:[18,54.5],fr:[76,78],tr:[82,54.5]},E:"home-front front-fl fl-tl front-fr fr-tr home-fl home-fr",
-  T:{tl:{hy:80},tr:{hy:80}},   /* 身高照「矮几前」那一點的透視（這頁透視縮得快，照桌腳會太小） */   /* 回饋 808：點朱冊／墨冊＝跳上矮几前面左右兩角（冊子前的空處，不站在棋枰和紙籤上） */
+  T:{tl:{hy:80,poly:[[10,25.5],[85,25.5],[93,57],[3,57]]},tr:{hy:80,poly:[[10,25.5],[85,25.5],[93,57],[3,57]]}},   /* 回饋 816：點矮几桌面＝跳上比較近的那一角 */   /* 身高照「矮几前」那一點的透視（這頁透視縮得快，照桌腳會太小） */   /* 回饋 808：點朱冊／墨冊＝跳上矮几前面左右兩角（冊子前的空處，不站在棋枰和紙籤上） */
   HS:{kj2Brd:["front",50,38,"cheer"],kj2Red:["tl",20,42,"idle"],kj2Blk:["tr",82,44,"idle"],kj2Slip:["front",50,55,"idle"],kj2Scr:["front",76,32,"idle"]}};
 const kj2Pc=(x,y)=>[(x/7.68).toFixed(2),(y/13.76).toFixed(2)];
 const kj2Dark=()=>{const t=store.get("pageTheme","auto"),h=new Date().getHours();return t==="dark"||(t==="auto"&&matchMedia("(prefers-color-scheme: dark)").matches)||h>=19||h<5};
@@ -14764,7 +14799,7 @@ const SJ_PG=[[[172,416],[596,416],[611,678],[157,678]],[[155,684],[613,684],[639
 const SJ_LAMP=[241,262],SJ_TI=[190,1112];
 const SJ_INK={hantao:["#2a2420",2.2,"刻本"],xiang:["#2a2420",2.2,"刻本"],juanzong:["#4a4038",1,"卷宗"],shouchao:["#b8402c",1.1,"手抄"]};
 const SHW_SJ={W:768,H:1376,el:45,h:[.075,96,.001],look0:[50,60],home:"home",N:{home:[17,96],front:[50,96],fe:[50,91],tb:[50,82]},E:"home-front front-fe fe-tb",
-  T:{tb:{hy:96}},   /* 回饋 808：換分類＝跳上書案下方的空處（書頁下面、硯台左邊），不擋清單 */
+  T:{tb:{hy:96,poly:[[19,16],[81,16],[96,89],[5,89]]}},   /* 回饋 816：點書案桌面空處＝跳上書案（書頁上的列、題簽、紙籤是按鈕，照舊） */   /* 回饋 808：換分類＝跳上書案下方的空處（書頁下面、硯台左邊），不擋清單 */
   HS:{sjGrp:["tb",50,60,"idle"]}};
 const sjKind=c=>["ai","play","pvp","study"].includes(c)?"shouchao":/^(gmgames|xuyinchuan)$/.test(c||"")?"juanzong":(typeof LB_OLD!=="undefined"&&LB_OLD.some(x=>x[0]===c))?"hantao":"xiang";
 const sjDark=()=>{const t=store.get("pageTheme","auto"),h=new Date().getHours();return t==="dark"||(t==="auto"&&matchMedia("(prefers-color-scheme: dark)").matches)||h>=19||h<5};
