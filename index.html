@@ -1043,6 +1043,22 @@ body.xqt-on .modal{z-index:10000}body.xqt-on .toast{z-index:10001}body.xqt-on .x
 .shp-gy{position:absolute;left:10px;bottom:10px;z-index:2;padding:4px 10px;border-radius:99px;border:1px solid rgba(255,240,210,.4);background:rgba(30,22,14,.6);color:#F6E7CF;font:700 12px/1.2 var(--serif,serif);cursor:pointer}
 .shp-gy.on{background:#B5452B;border-color:#7a2414;color:#fff}
 @media (prefers-reduced-motion:reduce){.shp-px .px-fl,.shp-px .px-star{animation:none}}
+/* 意見回饋 748（開發者 11/8）：星槎航行感——船身起伏（.px-sw；熱點的 .px-hw 同一組動畫、同一個轉軸，所以一起動）、雲霧帶往後流、船邊雲浪與光點往後飄 */
+.shp-map.full .px-sw,.shp-px .px-D{position:absolute;inset:0;pointer-events:none;will-change:transform}
+.shp-map.full.px-on .px-sw{transform-origin:50% 62%;animation:pxsway 7.4s ease-in-out -.5s infinite}
+.shp-map.full.px-on .px-sw2{animation-name:pxsway2;animation-delay:0s}
+@keyframes pxsway{0%,100%{transform:translate3d(0,0,0) rotate(0deg)}25%{transform:translate3d(0,-2.5px,0) rotate(.3deg)}50%{transform:translate3d(0,.5px,0) rotate(0deg)}75%{transform:translate3d(0,3px,0) rotate(-.35deg)}}
+@keyframes pxsway2{0%,100%{transform:translate3d(0,0,0) rotate(0deg)}25%{transform:translate3d(0,-2.5px,0) rotate(.42deg)}50%{transform:translate3d(0,.5px,0) rotate(0deg)}75%{transform:translate3d(0,3px,0) rotate(-.48deg)}}
+.shp-px .px-mr{position:absolute;left:50%;top:50%;width:185%;height:0;padding-top:185%;transform:translate(-50%,-50%) rotate(126deg)}
+.shp-px .px-mi{position:absolute;left:0;top:0;width:100%;height:100%;max-width:none;will-change:transform;animation:pxflow 110s linear infinite}
+.shp-px .px-mi.px-m2{left:-100%}.shp-px .px-fog{animation-duration:62s;opacity:.85}
+@keyframes pxflow{from{transform:translate3d(0,0,0)}to{transform:translate3d(100%,0,0)}}
+.shp-px .px-wk{position:absolute;width:20%;height:12%;margin:-6% 0 0 -10%;border-radius:50%;background:radial-gradient(closest-side,rgba(255,255,255,.85),rgba(255,255,255,.4) 55%,rgba(255,255,255,0));opacity:0;will-change:transform,opacity;animation:pxwake 6.4s ease-out infinite}
+.shp-px .px-wk.g{background:radial-gradient(closest-side,rgba(95,95,100,.22),rgba(95,95,100,.08) 60%,rgba(95,95,100,0))}
+@keyframes pxwake{0%{transform:translate3d(0,0,0) scale(.55);opacity:0}25%{opacity:1}100%{transform:translate3d(-70%,95%,0) scale(1.35);opacity:0}}
+.shp-px .px-mo{position:absolute;width:5%;height:0;padding-top:5%;margin:-2.5% 0 0 -2.5%;border-radius:50%;background:radial-gradient(closest-side,#fffbe6 0,#ffe08a 22%,rgba(255,196,80,.55) 45%,rgba(255,190,80,0));opacity:0;will-change:transform,opacity;animation:pxmote 8.6s linear infinite}
+@keyframes pxmote{0%{transform:translate3d(0,0,0) scale(.7);opacity:0}15%{opacity:.95}80%{opacity:.7}100%{transform:translate3d(-260%,350%,0) scale(1);opacity:0}}
+@media (prefers-reduced-motion:reduce){.shp-map.full.px-on .px-sw,.shp-px .px-mi,.shp-px .px-wk,.shp-px .px-mo{animation:none}}
 
 /* 意見回饋 727：首頁雲河星槎大卡每行不換行，太長用「…」 */
 .shpc .tx{min-width:0;flex:1}.shpc .tx .s{display:block;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
@@ -1170,7 +1186,7 @@ html:has(#xqTitle:not(.out)),html:has(#xqTitle:not(.out)) body{background:#F3ECD
       if(!window.caches)return go();caches.keys().then(function(ks){return Promise.all(ks.filter(function(k){return k.indexOf("xqlab-app-")===0}).map(function(k){return caches.delete(k)}))})
         .then(function(){return navigator.serviceWorker&&navigator.serviceWorker.getRegistration()}).then(function(r){return r&&r.update()}).catch(function(){}).then(go)}};setTimeout(chk,4000)})();
 </script>
-<script>window.XQ_OFFLINE=true;window.XQ_BUILD="20261108-0445";</script>
+<script>window.XQ_OFFLINE=true;window.XQ_BUILD="20261108-0930";</script>
 <script src="core.js"></script>
 <script src="engine.js"></script>
 <script src="local.js"></script>
@@ -3740,7 +3756,7 @@ function onboard(){if(journey())journeyLock();else titleScreen({})}
 // ================= 設定：棋盤風格、棋子樣式、走棋顯示 =================
 const SAMPLE_FEN0="rnbakabnr/9/1c5c1/p1p1p1p1p/9/9/P1P1P1P1P/1C5C1/9/RNBAKABNR",SAMPLE_FEN1="rnbakabnr/9/1c5c1/p1p1p1p1p/9/9/P1P1P1P1P/1C2C4/9/RNBAKABNR",SAMPLE_LAST={f:70,t:67};
 /* 意見回饋 661：關於頁顯示整包遊戲要多大空間。XQ_SIZES 由 build-site.js 建置時填入（開發中的 m.html 是 null，就不顯示） */
-const XQ_SIZES={"pre":209737691,"code":12748741,"eng":51511005,"gm":33668932,"bgm":259516351,"opt":[["比賽對局 1956–2010",21765744],["比賽對局 2011–2014",25596413],["比賽對局 2015–2019",24821916]],"all":650003549,"other":10636756};
+const XQ_SIZES={"pre":209885469,"code":12753400,"eng":51511005,"gm":33668932,"bgm":259516351,"opt":[["比賽對局 1956–2010",21765744],["比賽對局 2011–2014",25596413],["比賽對局 2015–2019",24821916]],"all":650155986,"other":10636756};
 const szMB=b=>b>=1073741824?(b/1073741824).toFixed(1)+" GB":Math.max(1,Math.round(b/1048576))+" MB";
 function aboutSizes(){const S=XQ_SIZES;if(!S)return"";const opt=S.opt||[];   /* 意見回饋 662：玩家只看總數，細項只在開發者模式顯示 */
   return `<div class="row" style="justify-content:space-between"><span class="muted">整包下載</span><b>約 ${szMB(S.all)}</b></div>
@@ -7182,21 +7198,27 @@ const SHIP_PG={lesson:ShipLesson,shelf:ShipShelf,bag:ShipBag,sail:ShipSail};
 /* 開發者 11/7：星槎主畫面「假 3D 視差」——原圖切成四層（art/shipmap/layers：雲海星河 bg、船身＋碼頭 ship、帆桅旗燈 fg、金色星光 star），
    手指拖動、滑鼠移動、手機傾斜（按「🌀 立體」才開陀螺儀，iOS 才不會一進來就跳權限）時各層位移不同，放開慢慢回正；
    熱點包在 .shp-hl 裡跟著船身層走；圖層沒載到就留原本的單張圖；有設 prefers-reduced-motion 就不切層、不動 */
-const SHP_PX=[["bg",-.5],["ship",.3],["fg",.85],["star",1.25]],SHP_PXM=12,SPX={el:null,ls:[],hl:null,tx:0,ty:0,cx:0,cy:0,k:.06,raf:0,drag:null,gyro:false,g0:null};
+const SHP_PX=[["bg",-.5],["mist",-.25],["wake",.1],["ship",.3],["fg",.85],["star",1.25],["mote",1.1]],SHP_PXM=12,SPX={el:null,ls:[],hl:null,tx:0,ty:0,cx:0,cy:0,k:.06,raf:0,drag:null,gyro:false,g0:null};
+/* 意見回饋 748（開發者 11/8）：「船有真的在移動」的航行感——船身和帆桅慢慢起伏搖擺（.px-sw，熱點包在同樣的 .px-hw 裡一起動）、
+   兩條水墨雲霧帶沿船身方向往後流（sm_mist_ink／sm_mist_fog，左右無縫）、船邊雲浪和金色光點往後飄。全部是 CSS 動畫，只動 transform 和 opacity；
+   視差的位移寫在外層 [data-k]，動畫在裡層，兩邊疊加不打架；離開這頁元素被換掉動畫就停；prefers-reduced-motion 時 shpPxHtml 不輸出，完全不動 */
+const SHP_WAKE=[[88,27,0],[85,43,2.1],[80,58,4.3],[33,39,1.2],[19,55,3.4],[7,75,.6],[22,95,2.8],[47,90,5]],SHP_MOTE=[[78,12,0],[95,32,2.6],[67,7,5.1],[98,50,1.3],[54,21,3.9],[91,68,6.2]];
 function shpPxHtml(){if(matchMedia("(prefers-reduced-motion: reduce)").matches)return"";
-  const im=k=>`<img class="px-L px-${k}" data-k="${k}" src="data/shipmap/layers/sm_${k}.webp" alt="" draggable="false">`;
-  return`<div class="shp-px" aria-hidden="true">${SHP_PX.map(([k])=>k==="star"?`<div class="px-fl">${im(k)}</div>`:im(k)).join("")}</div>`}
+  const src=k=>`data/shipmap/layers/sm_${k}.webp`,im=k=>`<img class="px-L px-${k}" data-k="${k}" src="${src(k)}" alt="" draggable="false">`,mi=(c,k)=>`<img class="px-mi ${c}" src="${src(k)}" alt="" draggable="false">`;
+  const dots=(L,c)=>L.map(([x,y,d],i)=>`<i class="${c}${i%3===1?" g":""}" style="left:${x}%;top:${y}%;animation-delay:${d}s"></i>`).join("");
+  return`<div class="shp-px" aria-hidden="true">${im("bg")}<div class="px-D" data-k="mist"><div class="px-mr">${mi("px-ink","mist_ink")}${mi("px-ink px-m2","mist_ink")}${mi("px-fog","mist_fog")}${mi("px-fog px-m2","mist_fog")}</div></div>`+
+    `<div class="px-D" data-k="wake">${dots(SHP_WAKE,"px-wk")}</div><div class="px-sw">${im("ship")}</div><div class="px-sw px-sw2">${im("fg")}</div><div class="px-fl">${im("star")}</div><div class="px-D" data-k="mote">${dots(SHP_MOTE,"px-mo")}</div></div>`}
 function shpPxApply(){const t=d=>`translate3d(${(d*SHP_PXM*SPX.cx).toFixed(2)}px,${(d*SHP_PXM*SPX.cy).toFixed(2)}px,0)`;
-  for(const[i,d]of SPX.ls)i.style.transform=t(d);if(SPX.hl)SPX.hl.style.transform=t(SHP_PX[1][1])}
+  for(const[i,d]of SPX.ls)i.style.transform=t(d);if(SPX.hl)SPX.hl.style.transform=t(SHP_PX.find(p=>p[0]==="ship")[1])}
 function shpPxRun(){if(SPX.raf)return;
   const step=()=>{SPX.raf=0;if(!SPX.el||!SPX.el.isConnected){SPX.el=null;return}
     SPX.cx+=(SPX.tx-SPX.cx)*SPX.k;SPX.cy+=(SPX.ty-SPX.cy)*SPX.k;
     const done=Math.abs(SPX.tx-SPX.cx)<.002&&Math.abs(SPX.ty-SPX.cy)<.002;if(done){SPX.cx=SPX.tx;SPX.cy=SPX.ty}
     shpPxApply();if(!done)SPX.raf=requestAnimationFrame(step)};
   SPX.raf=requestAnimationFrame(step)}
-function shpPx(M){const box=M&&M.querySelector(".shp-px");if(!box)return;const ims=[...box.querySelectorAll("img")];
+function shpPx(M){const box=M&&M.querySelector(".shp-px");if(!box)return;const ims=[...box.querySelectorAll("img.px-L")];
   Promise.all(ims.map(i=>i.complete?(i.naturalWidth?1:Promise.reject()):new Promise((ok,no)=>{i.onload=ok;i.onerror=no}))).then(()=>{if(!M.isConnected)return;
-    M.classList.add("px-on");SPX.el=M;SPX.ls=ims.map(i=>[i,SHP_PX.find(p=>p[0]===i.dataset.k)[1]]);SPX.hl=M.querySelector(".shp-hl");SPX.cx=SPX.cy=SPX.tx=SPX.ty=0;shpPxApply();
+    M.classList.add("px-on");SPX.el=M;SPX.ls=[...box.querySelectorAll("[data-k]")].map(i=>[i,SHP_PX.find(p=>p[0]===i.dataset.k)[1]]);SPX.hl=M.querySelector(".shp-hl");SPX.cx=SPX.cy=SPX.tx=SPX.ty=0;shpPxApply();
     const cl=v=>Math.max(-1,Math.min(1,v)),go=(x,y,k)=>{SPX.tx=cl(x);SPX.ty=cl(y);SPX.k=k;shpPxRun()};
     M.addEventListener("pointermove",e=>{if(e.pointerType!=="mouse")return;const r=M.getBoundingClientRect();go((e.clientX-r.left)/r.width*2-1,(e.clientY-r.top)/r.height*2-1,.08)});
     M.addEventListener("pointerleave",e=>{if(e.pointerType==="mouse")go(0,0,.035)});
@@ -7233,7 +7255,7 @@ function shpMapFit(v){requestAnimationFrame(()=>{const M=v.querySelector&&v.quer
 function Voyage(v){setTop("⛵ 雲河星槎","#/");setTabs(true,"#/");v.className="view";
   const paint=()=>{const ap=shipAppr(),D=shipDocked(),k=shipHere(),T=SHIP_STOP[k],O=ap?SHIP_ROUTE:shipOrder(),I=xpInfo(),nx=ap?null:shipNextStop();
     v.innerHTML=`<div class="pad shp">
-      <div class="shp-map full"><div class="shp-in"><img class="shp-base" src="data/shipmap/ship_map.webp" alt="雲河星槎">${shpPxHtml()}<div class="shp-hl"><button class="shp-hs" data-hs="parks" style="left:13%;top:37%">🪨 千秋石枰</button><button class="shp-hs" data-hs="lesson" style="left:80%;top:17%">📘 棋話一頁</button><button class="shp-hs hot" data-hs="pz" style="left:50%;top:43%">♟ 千秋殘局</button><button class="shp-hs" data-hs="shelf" style="left:22%;top:53%">📚 書架</button><button class="shp-hs" data-hs="read" style="left:33%;top:73%">📖 讀這一章</button><button class="shp-hs" data-hs="bag" style="left:52%;top:79%">🎒 行囊</button><button class="shp-hs" data-hs="sail" style="left:17%;top:85%">⛵ 起航</button><button class="shp-hs" data-hs="port" style="left:80%;top:73%">⚓ 下船</button></div></div><div class="hc shp-cap"><b>⛵ ${esc(shipShort(k))}・${esc(T.place)}</b><small>🀄 Lv ${I.L}・《千秋棋話》${shipPages()}／13 頁・停靠 ${D.length}／13・🎚 ${esc(diffOf().n)}</small></div></div>
+      <div class="shp-map full"><div class="shp-in"><img class="shp-base" src="data/shipmap/ship_map.webp" alt="雲河星槎">${shpPxHtml()}<div class="px-sw px-hw"><div class="shp-hl"><button class="shp-hs" data-hs="parks" style="left:13%;top:37%">🪨 千秋石枰</button><button class="shp-hs" data-hs="lesson" style="left:80%;top:17%">📘 棋話一頁</button><button class="shp-hs hot" data-hs="pz" style="left:50%;top:43%">♟ 千秋殘局</button><button class="shp-hs" data-hs="shelf" style="left:22%;top:53%">📚 書架</button><button class="shp-hs" data-hs="read" style="left:33%;top:73%">📖 讀這一章</button><button class="shp-hs" data-hs="bag" style="left:52%;top:79%">🎒 行囊</button><button class="shp-hs" data-hs="sail" style="left:17%;top:85%">⛵ 起航</button><button class="shp-hs" data-hs="port" style="left:80%;top:73%">⚓ 下船</button></div></div></div><div class="hc shp-cap"><b>⛵ ${esc(shipShort(k))}・${esc(T.place)}</b><small>🀄 Lv ${I.L}・《千秋棋話》${shipPages()}／13 頁・停靠 ${D.length}／13・🎚 ${esc(diffOf().n)}</small></div></div>
       ${ap?`<div class="card shp-ap"><b>📜 你是說書人的學徒</b><p class="muted">十三站都能去，各站的主場角色不會跟你說話。想用雲河七星的眼睛走一趟？開新的旅程會存到另一格，這段旅程不會被蓋掉。</p><button class="btn" id="spNew" style="width:100%">⛵ 選雲河七星開新旅程</button></div>`:""}
       <div class="shp-route-x" hidden>${O.map((e,i)=>{const dk=D.includes(e),on=e===k,ok=shipLearned(e),isN=e===nx;return`<button class="shp-st${dk?" dk":" lk"}${on?" on":""}${ok?" ok":""}${isN?" nx":""}" data-st="${e}"><i>${dk?esc((ARENA[e]||{}).seal||"棋"):isN?"⛵":"🔒"}</i><span>${i+1}・${esc(shipShort(e))}</span></button>`}).join("")}</div>
       <div id="spRes"></div>
