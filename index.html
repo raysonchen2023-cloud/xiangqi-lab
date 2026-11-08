@@ -1341,7 +1341,7 @@ html[data-era=qin] .view:has(>.shp-rd),html[data-era=wudai] .view:has(>.shp-rd){
       if(!window.caches)return go();caches.keys().then(function(ks){return Promise.all(ks.filter(function(k){return k.indexOf("xqlab-app-")===0}).map(function(k){return caches.delete(k)}))})
         .then(function(){return navigator.serviceWorker&&navigator.serviceWorker.getRegistration()}).then(function(r){return r&&r.update()}).catch(function(){}).then(go)}};setTimeout(chk,4000)})();
 </script>
-<script>window.XQ_OFFLINE=true;window.XQ_BUILD="20261109-1300";</script>
+<script>window.XQ_OFFLINE=true;window.XQ_BUILD="20261109-1330";</script>
 <script src="core.js"></script>
 <script src="engine.js"></script>
 <script src="local.js"></script>
@@ -11140,7 +11140,8 @@ function shwTPath(C,tb,a,b){if(shwTSeg(C,tb,a,b))return[a,b];const V=[a,b],W=C.W
     for(let w=0;w<n;w++)if(!U[w]){const d=D[u]+shwPx(C,V[u],V[w]);if(d<D[w]&&shwTSeg(C,tb,V[u],V[w])){D[w]=d;P[w]=u}}}
   if(D[1]>=1e9)return null;const o=[1];while(o[0]!==0)o.unshift(P[o[0]]);return o.map(i=>V[i])}
 /* 走不到 q（被桌上的東西圍住）：改走到「從 q 往起點方向」第一個走得到的可站處 */
-function shwTReach(C,tb,a,q){let P=shwTPath(C,tb,a,q);if(P)return P;for(let k=1;k<=24;k++){const t=k/24,r=shwTStand(C,tb,[q[0]+(a[0]-q[0])*t,q[1]+(a[1]-q[1])*t]);if(r&&(P=shwTPath(C,tb,a,r)))return P}return[a]}
+function shwTReach(C,tb,a,q){if(!shwTOk(C,tb,a)){const a2=shwTStand(C,tb,a);if(a2){const P2=shwTReach(C,tb,a2,q);return[a].concat(P2)}}   /* 825：起點卡在障礙裡或桌邊外：先挪到最近的可站處 */
+  let P=shwTPath(C,tb,a,q);if(P)return P;for(let k=1;k<=24;k++){const t=k/24,r=shwTStand(C,tb,[q[0]+(a[0]-q[0])*t,q[1]+(a[1]-q[1])*t]);if(r&&(P=shwTPath(C,tb,a,r)))return P}return[a]}
 const shwTHy=(tb,p)=>tb.hy[1]+(p[1]-tb.hy[0])*tb.hy[2];
 const shwLen=(C,pts)=>{let L=0;for(let i=1;i<pts.length;i++)L+=shwPx(C,pts[i-1],pts[i]);return L};
 /* 一段一段做：走（地板或桌面）、跳 */
@@ -11182,6 +11183,9 @@ function shwClick(S,e){if(S.pass||!S.ready||!S.box.isConnected)return;const g=S.
   if(WALK_HOP_ON&&S.C.TB){const tn=shwTblAt(S.C,p);if(tn){e.stopPropagation();e.preventDefault();shwInk(S,p);vibrate(5);shwGo(S,{free:1,tbl:tn,tap:p});return}}const q=shwNear(S.C,p);if(!q)return;shwInk(S,p);shwGo(S,{free:1,q,tap:p})}   /* 意見回饋 782：點空地＝走到路網上離那裡最近的點，走到只換待機 */
 function shwGo(S,o){shwDrop();const C=S.C,g0=S.go;if(g0&&g0.btn&&g0.btn!==o.btn)g0.btn.classList.remove("shw-fade");
   if(S.stay&&S.stay!==o.btn){S.stay.classList.remove("shw-fade");S.stay=null;SHW_MEMH[S.o.mem]=null}
+  /* 825：位置記錄不一致（記的是桌上的點、卻不在桌上；或桌上的點卡在障礙裡）時先修正，免得找路出錯、點哪裡都不動 */
+  if(S.at&&typeof S.at==="object"&&!S.at.e){if(S.at.t&&C.TB&&C.TB[S.at.t]&&!(g0&&g0.ph))S.onT=S.at.t;else if(!S.onT)S.at=C.home}
+  if(S.onT&&C.TB&&C.TB[S.onT]&&!(g0&&g0.ph)&&!shwTOk(C,C.TB[S.onT],[S.x,S.y])){const q=shwTStand(C,C.TB[S.onT],[S.x,S.y]);if(q){S.x=q[0];S.y=q[1]}}
   if(g0&&g0.ph==="hop"){S.x=g0.b[0];S.y=g0.b[1];S.sq=null;S.curE=null;if(g0.up){S.onT=g0.tb;S.hy=g0.h1}else{S.onT=null;S.hy=null;S.at=g0.fn}}   /* 跳到一半又點別處：先算跳完 */
   const fromF=()=>g0&&!g0.ph&&!g0.onT&&S.curE?{p:[S.x,S.y],e:S.curE}:S.at,flo=(f,t)=>{const R=shwRoute(C,f,t);return{k:"w",pts:R.pts,segE:R.segE}};
   let dT=null,dP=null,to;const seq=[];if(WALK_HOP_ON&&C.TB){if(o.tbl&&o.tap){dT=o.tbl;dP=o.tap}else if(!o.free&&C.T&&C.T[o.H[0]]){dT=C.T[o.H[0]];dP=C.N[o.H[0]]}}
@@ -11202,6 +11206,7 @@ function shwGo(S,o){shwDrop();const C=S.C,g0=S.go;if(g0&&g0.btn&&g0.btn!==o.btn)
   S.go={free:!!o.free,hs:o.hs,btn:o.btn,to,seq,pts:[end],segE:[],L:0,dur:0,t:0,act:-1,
     look:o.tap&&(o.free||o.tbl)?(shwPx(C,end,o.tap)>14?shwYaw(C,end,o.tap):null):o.free?null:shwYaw(C,end,[o.H[1],o.H[2]]),A:o.free?null:o.H[3]};
   shwNext(S)}
+{const f0=shwGo;shwGo=function(S,o){try{return f0(S,o)}catch(e){try{S.go=null;S.onT=null;S.hy=null;S.at=S.C.home;S.x=S.C.N[S.C.home][0];S.y=S.C.N[S.C.home][1];return f0(S,o)}catch(e2){}}}}   /* 825：萬一找路出錯，回到起點重找，不要整個卡住 */
 function shwOpen(S){const g=S.go;if(!g||g.free)return;S.go=null;S.curE=null;S.at=SHW_MEM[S.o.mem]=g.to;{const P=typeof g.to==="string"?S.C.N[g.to]:g.to.p;S.x=P[0];S.y=P[1]}S.yaw=g.look;S.anim("idle",1);S.place();
   let b=g.btn;if(!b||!b.isConnected)b=S.o.find(g.hs);if(!b)return;S.pass=true;try{b.click()}finally{S.pass=false;if(g.btn!==b)g.btn.classList.remove("shw-fade");b.classList.add("shw-fade");S.stay=b;SHW_MEMH[S.o.mem]=null;shwUnfade(S,b,1500)}}
 /* 意見回饋 784（開發者 11/8）：走路途中標籤淡到 0.15；角色停好 1.5 秒後標籤淡回正常，回到這一頁時標籤一律照常（不再一直保持淡，免得像被藏起來） */
@@ -11214,6 +11219,16 @@ function shwUnfade(S,b,ms){clearTimeout(S.uf);S.uf=setTimeout(()=>{if(!b.isConne
 function shwStay(S){}
 /* 回饋 803：滿版頁上的全螢幕面板（碑林拓片、信房大箋…）也登記一筆上一頁紀錄：按左上「‹返回」、手機的返回鍵、瀏覽器上一頁＝先收起面板，回到場景；
    用 xqPanel 記號（不用 sheet 的 xqSheet，免得關掉面板上的小卡片時被一起退掉）。回傳一個「用按鈕收起時」要呼叫的函式（把那一筆退掉） */
+/* 回饋 822／823（開發者 11/9，iPhone 有瀏海）：場景頁的面板要放在頂欄和底部導覽中間。量頂欄下緣、底欄上緣（沒有底欄就用 safe-area），寫成 CSS 變數 --xqT、--xqB，
+   面板用 top:var(--xqT)、bottom:var(--xqB)；頂欄、底欄變高變矮（換頁、轉向、字型載好）都重量 */
+function xqBars(){try{const R=document.documentElement,t=document.getElementById("topbar"),b=document.getElementById("tabbar"),vh=window.innerHeight||R.clientHeight;
+  let pr=document.getElementById("xqSafeProbe");if(!pr){pr=document.createElement("div");pr.id="xqSafeProbe";pr.style.cssText="position:fixed;left:0;top:0;width:0;height:0;visibility:hidden;pointer-events:none;padding-top:var(--safeT,0px);padding-bottom:var(--safeB,0px)";document.body.append(pr)}
+  const cs=getComputedStyle(pr),sT=parseFloat(cs.paddingTop)||0,sB=parseFloat(cs.paddingBottom)||0,vis=e=>e&&e.offsetParent!==null&&e.offsetHeight>0;
+  const T=vis(t)?Math.max(sT,t.getBoundingClientRect().bottom):sT,B=vis(b)?Math.max(sB,vh-b.getBoundingClientRect().top):sB;
+  R.style.setProperty("--xqT",Math.round(T)+"px");R.style.setProperty("--xqB",Math.round(B)+"px")}catch(e){}}
+{let q=0;const go=()=>{if(q)return;q=requestAnimationFrame(()=>{q=0;xqBars()})};addEventListener("resize",go);addEventListener("orientationchange",go);addEventListener("hashchange",()=>{go();setTimeout(go,300)});
+  const init=()=>{go();try{const ro=new ResizeObserver(go);["topbar","tabbar"].forEach(id=>{const e=document.getElementById(id);if(e)ro.observe(e)});new MutationObserver(go).observe(document.getElementById("tabbar")||document.body,{attributes:true,attributeFilter:["style","class","hidden"]})}catch(e){}try{document.fonts.ready.then(go)}catch(e){}};
+  if(document.readyState==="loading")addEventListener("DOMContentLoaded",init);else init()}
 let XQP_N=0;addEventListener("popstate",()=>{if(!(history.state||{}).xqPanel||XQP_N>0)return;setTimeout(()=>{if((history.state||{}).xqPanel&&XQP_N<=0)history.back()},0)});   /* 面板已經不在（開著面板直接換頁留下的）那一筆：自動再退一格 */
 function xqPanelNav(close){let on=true;XQP_N++;try{const d=NAV_D+1;history.pushState({xqPanel:1,d},"",location.href);NAV_D=d;if(typeof navMark==="function")navMark(d,true,true)}catch(e){}
   const done=()=>{if(!on)return false;on=false;XQP_N=Math.max(0,XQP_N-1);removeEventListener("popstate",pop);removeEventListener("hashchange",gone);return true};
@@ -11284,7 +11299,7 @@ async function shwLoad(S){
   const ft=new T.Vector3(0,0,0).project(cam),ftF=(1-ft.y)/2,YMAX=Math.max(...Object.values(C.N).map(p=>p[1]));let cw=0,ch=0,Iw=0,Ih=0;
   const fit=()=>{Iw=S.I.clientWidth;Ih=S.I.clientHeight;if(!Ih)return;const h=Math.round(shwHt(C,YMAX)*Ih/(Math.cos(EL)/1.45)),w=Math.round(h*.75);if(h!==ch||w!==cw){ch=h;cw=w;r.setSize(cw,ch);
     Object.assign(cv.style,{left:-cw/2+"px",top:-Math.round(ftF*ch)+"px"});Object.assign(sh.style,{width:Math.round(ch*.34)+"px",height:Math.round(ch*.1)+"px",left:-Math.round(ch*.17)+"px",top:-Math.round(ch*.05)+"px"})}S.place()};
-  const P0=typeof S.at==="string"?C.N[S.at]:S.at.p,HS0=typeof S.at==="string"&&Object.values(C.HS).find(h=>h[0]===S.at);S.x=P0[0];S.y=P0[1];S.hy=null;S.onT=null;S.sq=null;S.yaw=S.at===C.home||!HS0?shwYaw(C,P0,typeof S.at==="string"?C.look0:[P0[0],P0[1]+5]):shwYaw(C,P0,[HS0[1],HS0[2]]);
+  const P0=typeof S.at==="string"?C.N[S.at]:S.at.p,HS0=typeof S.at==="string"&&Object.values(C.HS).find(h=>h[0]===S.at);S.x=P0[0];S.y=P0[1];S.onT=S.at&&S.at.t&&C.TB&&C.TB[S.at.t]?S.at.t:null;S.hy=S.onT?shwTHy(C.TB[S.onT],P0):null;S.sq=null;   /* 825：換造型重載角色時，站在桌上的照舊算在桌上 */S.yaw=S.at===C.home||!HS0?shwYaw(C,P0,typeof S.at==="string"?C.look0:[P0[0],P0[1]+5]):shwYaw(C,P0,[HS0[1],HS0[2]]);
   S.place=()=>{if(!Ih)return;const k=shwHt(C,S.hy!=null?S.hy:S.y)/shwHt(C,YMAX);S.box.style.transform=`translate(${(S.x*Iw/100).toFixed(1)}px,${(S.y*Ih/100).toFixed(1)}px) scale(${k.toFixed(4)})`;
     cv.style.transformOrigin=`50% ${(ftF*100).toFixed(1)}%`;cv.style.transform=S.sq?`scale(${S.sq[0].toFixed(3)},${S.sq[1].toFixed(3)})`:""};   /* 808：站在桌上照桌下地板的透視（hy）；跳的時候蹲、拉長（sq） */
   const clips=B.mixer&&B.clips||null;let cur=null,yawR=S.yaw;
@@ -11803,10 +11818,11 @@ function mfM3(w,h,q){const[[x0,y0],[x1,y1],[x2,y2],[x3,y3]]=q,dx1=x1-x2,dx2=x3-x
   const g=(dx3*dy2-dx2*dy3)/den,hh=(dx1*dy3-dx3*dy1)/den,a=x1-x0+g*x1,b=x3-x0+hh*x3,d=y1-y0+g*y1,e=y3-y0+hh*y3;
   return`matrix3d(${a/w},${d/w},0,${g/w},${b/h},${e/h},0,${hh/h},0,0,1,0,${x0},${y0},0,1)`}
 function mfCss(){if(document.getElementById("mfCss"))return;const s=document.createElement("style");s.id="mfCss";s.textContent=`
-.lm-dw.mf-pn{top:0;max-height:none;border:0;border-radius:0;background:#2a2018;overflow:hidden;box-shadow:none}
+.lm-dw.mf-pn{top:var(--xqT,0px);bottom:var(--xqB,0px);max-height:none;border:0;border-radius:0;background:#2a2018;overflow:hidden;box-shadow:none}
 .lm-dw.mf-pn.mf-dk{background:#121826}
 .mf-pn .lm-dw-b{display:none}
-.mf-pn .lm-dw-h{position:absolute;left:0;right:0;top:0;z-index:6;padding:calc(8px + env(safe-area-inset-top,0px)) 14px 10px;background:linear-gradient(rgba(246,239,223,.94) 70%,rgba(246,239,223,0));color:#2a1f15}
+.lm-dw.mf-pn:not(.open){transform:translateY(calc(100% + var(--xqB,0px) + 24px))}   /* 822：面板夾在頂欄和底欄中間 */
+.mf-pn .lm-dw-h{position:absolute;left:0;right:0;top:0;z-index:6;padding:8px 14px 10px;background:linear-gradient(rgba(246,239,223,.94) 70%,rgba(246,239,223,0));color:#2a1f15}
 .mf-pn.mf-dk .lm-dw-h{background:linear-gradient(rgba(22,28,42,.94) 70%,rgba(22,28,42,0));color:#efe6d2}
 .mf-pn.mf-z .lm-dw-h button{visibility:hidden}
 .mf-sc{position:absolute;inset:0;overflow:hidden;z-index:0;transition:opacity .2s}.mf-sc.mf-fade{opacity:0;transition:none}
@@ -11840,13 +11856,13 @@ function mfCss(){if(document.getElementById("mfCss"))return;const s=document.cre
 .mf-hs[hidden]{display:none}
 #mfBox span{left:100%;top:50%;transform:translate(4px,-50%)}
 .mf-jc{position:absolute;transform:translate(-50%,-100%) rotate(var(--r,0deg));transform-origin:50% 100%;border:1px solid #6a1a10;background:#c4472f;color:#fbeee0;border-radius:1px;padding:5px 4px;font:800 13px/1.1 var(--kai,var(--serif,serif));writing-mode:vertical-rl;cursor:pointer;box-shadow:1px 1px 2px rgba(0,0,0,.35)}
-.mf-nav{position:absolute;left:0;right:0;bottom:calc(14px + env(safe-area-inset-bottom,0px));z-index:7;display:none;justify-content:center;align-items:center;gap:8px;padding:0 12px}
+.mf-nav{position:absolute;left:0;right:0;bottom:14px;z-index:7;display:none;justify-content:center;align-items:center;gap:8px;padding:0 12px}
 .mf-z .mf-nav{display:flex}
 .mf-nav button,.mf-nav span{border:1px solid #8a6a3a;background:#f3ead2;color:#3a2618;border-radius:4px;padding:8px 12px;font:800 14px/1 var(--kai,var(--serif,serif));white-space:nowrap}
 .mf-nav span{background:rgba(243,234,210,.85)}.mf-nav button:disabled{opacity:.4}
-.mf-zx{position:absolute;right:12px;top:calc(8px + env(safe-area-inset-top,0px));z-index:7;display:none;border:1px solid #8a6a3a;background:#f3ead2;color:#3a2618;border-radius:4px;padding:6px 10px;font:800 14px/1 var(--kai,var(--serif,serif))}
+.mf-zx{position:absolute;right:12px;top:8px;z-index:7;display:none;border:1px solid #8a6a3a;background:#f3ead2;color:#3a2618;border-radius:4px;padding:6px 10px;font:800 14px/1 var(--kai,var(--serif,serif))}
 .mf-z .mf-zx{display:block}
-.sheet.mf-card{left:16px;right:16px;bottom:auto;top:50%;max-width:420px;margin:0 auto;max-height:86vh;border-radius:3px;color:#1e130c;background:#c8604a url(data/rostermap/mf_card.webp?v=${MF_IMGV}) center/cover;box-shadow:0 0 0 1px #5a1a10,inset 0 0 0 6px rgba(246,230,204,.0),0 10px 30px rgba(0,0,0,.45);transform:translateY(-40%) scale(.85);opacity:0;transition:transform .22s ease,opacity .18s;padding-bottom:0}
+.sheet.mf-card{left:16px;right:16px;bottom:auto;top:calc((var(--xqT,56px) + 100vh - var(--xqB,64px))/2);max-width:420px;margin:0 auto;max-height:calc(100vh - var(--xqT,56px) - var(--xqB,64px) - 16px);border-radius:3px;color:#1e130c;background:#c8604a url(data/rostermap/mf_card.webp?v=${MF_IMGV}) center/cover;box-shadow:0 0 0 1px #5a1a10,inset 0 0 0 6px rgba(246,230,204,.0),0 10px 30px rgba(0,0,0,.45);transform:translateY(-40%) scale(.85);opacity:0;transition:transform .22s ease,opacity .18s;padding-bottom:0}
 .sheet.mf-card.show{transform:translateY(-50%);opacity:1}
 .sheet.mf-card::before{content:"";position:absolute;inset:7px;border:1.5px solid rgba(30,19,12,.75);pointer-events:none}
 .sheet.mf-card .grab{display:none}
@@ -12028,7 +12044,7 @@ function smCss(){if(document.getElementById("smCss"))return;const s=document.cre
 .sm-frame{position:absolute;pointer-events:none;mix-blend-mode:multiply;opacity:.55}
 .sm-gold{position:absolute;border-radius:50%;border:1.5px solid #e8b93c;box-shadow:0 0 2px #f2c94c;transform:translate(-50%,-50%);pointer-events:none}
 .sm-flash{animation:smFlash 1.4s ease-out 1}@keyframes smFlash{0%{box-shadow:0 0 0 0 rgba(242,201,76,.9)}40%{box-shadow:0 0 0 6px rgba(242,201,76,.55)}100%{box-shadow:0 0 0 0 rgba(242,201,76,0)}}
-.sm-dw{position:fixed;left:0;right:0;bottom:0;z-index:950;max-height:76vh;display:flex;flex-direction:column;transform:translateY(105%);transition:transform .3s ease;
+.sm-dw{position:fixed;left:0;right:0;bottom:var(--xqB,0px);z-index:950;max-height:min(76vh,calc(100vh - var(--xqT,56px) - var(--xqB,64px) - 8px));display:flex;flex-direction:column;transform:translateY(calc(100% + var(--xqB,0px) + 24px));transition:transform .3s ease;
   background:#f6efdf url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='120' height='120'%3E%3Cfilter id='n'%3E%3CfeTurbulence baseFrequency='.9' numOctaves='2'/%3E%3CfeColorMatrix values='0 0 0 0 .45 0 0 0 0 .38 0 0 0 0 .28 0 0 0 .06 0'/%3E%3C/filter%3E%3Crect width='120' height='120' filter='url(%23n)'/%3E%3C/svg%3E");
   color:#2a1f15;box-shadow:0 -6px 24px rgba(0,0,0,.28)}
 .sm-dw::before,.sm-dw::after{content:"";position:absolute;left:-6px;right:-6px;height:12px;border-radius:6px;background:linear-gradient(#7a4a24,#4a2a12 60%,#7a4a24);box-shadow:0 1px 3px rgba(0,0,0,.4)}
@@ -12170,9 +12186,9 @@ function fbpCss(){if(document.getElementById("fbpCss"))return;const s=document.c
 .fbp-slipn{position:absolute;transform:translate(0,-50%);background:rgba(30,24,18,.75);color:#f6e7c8;font:700 9px/1 sans-serif;border-radius:999px;padding:2px 6px;white-space:nowrap;display:none}.fbp-slipn.on{display:block}
 .fbp-ty .eic{width:15px;height:15px;vertical-align:-3px;margin-right:2px}
 .fbp-page.sent .fbp-paper{transition:transform .7s ease-in,opacity .7s ease-in;opacity:0}
-.fbp-pn{position:fixed;left:10px;right:10px;top:calc(env(safe-area-inset-top,0px) + 8px);z-index:950;display:flex;flex-direction:column;max-height:80vh;
+.fbp-pn{position:fixed;left:10px;right:10px;top:calc(var(--xqT,56px) + 6px);z-index:950;display:flex;flex-direction:column;max-height:calc(100vh - var(--xqT,56px) - var(--xqB,64px) - 14px);max-height:calc(100dvh - var(--xqT,56px) - var(--xqB,64px) - 14px);
   background:#f6dccc url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='120' height='120'%3E%3Cfilter id='n'%3E%3CfeTurbulence baseFrequency='.9' numOctaves='2'/%3E%3CfeColorMatrix values='0 0 0 0 .5 0 0 0 0 .3 0 0 0 0 .25 0 0 0 .07 0'/%3E%3C/filter%3E%3Crect width='120' height='120' filter='url(%23n)'/%3E%3C/svg%3E");
-  color:#3a2216;border-radius:4px;box-shadow:0 10px 30px rgba(0,0,0,.35),inset 0 0 0 1px rgba(150,70,50,.25);transform:translateY(calc(-100% - 40px));transition:transform .28s ease;overflow:hidden}
+  color:#3a2216;border-radius:4px;box-shadow:0 10px 30px rgba(0,0,0,.35),inset 0 0 0 1px rgba(150,70,50,.25);transform:translateY(calc(-100% - var(--xqT,56px) - 40px));transition:transform .28s ease;overflow:hidden}
 .fbp-pn.open{transform:none}
 .fbp-pn-h{display:flex;align-items:center;gap:8px;padding:9px 12px 4px;font:900 15px var(--serif,serif)}.fbp-pn-h button{margin-left:auto;border:1px solid rgba(90,40,20,.35);background:rgba(255,255,255,.35);border-radius:999px;padding:4px 10px;font:700 13px var(--serif,serif);color:inherit;cursor:pointer}
 .fbp-pn-b{overflow:auto;padding:0 12px 12px;-webkit-overflow-scrolling:touch}
@@ -12190,7 +12206,8 @@ function fbpCss(){if(document.getElementById("fbpCss"))return;const s=document.c
 .fbp-send b{font:900 15px var(--serif,serif)}
 .fbp-list{padding-top:4px}.fbp-list .sec-t{display:flex;align-items:baseline;gap:8px}.fbp-list.flash{animation:smFlashL 1.4s ease-out 1}@keyframes smFlashL{0%{box-shadow:0 0 0 0 rgba(242,201,76,.9)}40%{box-shadow:0 0 0 6px rgba(242,201,76,.5)}100%{box-shadow:0 0 0 0 rgba(242,201,76,0)}}
 .fbp-bws{position:fixed;inset:0;z-index:948;background:rgba(20,14,8,.35);display:none}.fbp-bws.open{display:block}
-.fbp-bw{position:fixed;left:50%;top:calc(env(safe-area-inset-top,0px) + 56px);bottom:calc(env(safe-area-inset-bottom,0px) + 70px);width:min(92vw,460px);z-index:949;display:flex;flex-direction:column;
+.fbp-pns{position:fixed;inset:0;z-index:949;background:rgba(20,14,8,.18);display:none}.fbp-pns.open{display:block}   /* 822：寫信大箋外面點一下＝收起（草稿留著） */
+.fbp-bw{position:fixed;left:50%;top:calc(var(--xqT,56px) + 8px);bottom:calc(var(--xqB,64px) + 8px);width:min(92vw,460px);z-index:949;display:flex;flex-direction:column;
   transform:translate(-50%,10px) scale(.97);opacity:0;pointer-events:none;transition:transform .25s ease,opacity .2s;border-radius:2px;color:#2a1d12;border:2px solid #3a2a1c;
   background:#efe3c6 url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='120' height='120'%3E%3Cfilter id='n'%3E%3CfeTurbulence baseFrequency='.9' numOctaves='2'/%3E%3CfeColorMatrix values='0 0 0 0 .5 0 0 0 0 .35 0 0 0 0 .2 0 0 0 .07 0'/%3E%3C/filter%3E%3Crect width='120' height='120' filter='url(%23n)'/%3E%3C/svg%3E");
   box-shadow:inset 0 0 0 5px #efe3c6,inset 0 0 0 6px rgba(58,42,28,.7),0 12px 32px rgba(0,0,0,.4)}
@@ -12241,10 +12258,10 @@ function FeedbackPage(v,sub){fbpCss();setTop("💬 意見回饋","#/settings");i
     const go=pn.querySelector("#go");if(go)go.insertAdjacentHTML("afterend",'<div class="fbp-send"><button type="button" class="fbp-seal" aria-label="蓋印送出">兵</button><b>蓋印送出</b></div>');
     const fx=pn.querySelector("#fx"),pp=paper.querySelector("p");
     const open=on=>{const was=pn.classList.contains("open");if(on&&!was&&typeof xqPanelNav==="function")st.unNav=xqPanelNav(()=>{st.unNav=null;pn.classList.remove("open");fx.blur()});if(!on&&was&&st.unNav){const f=st.unNav;st.unNav=null;f()}pn.classList.toggle("open",on);if(on)setTimeout(()=>{try{fx.focus({preventScroll:true})}catch(e){fx.focus()}},280);else fx.blur()};
-    pn.querySelector(".fbp-pn-h button").onclick=()=>open(false);
+    pn.querySelector(".fbp-pn-h button").onclick=()=>open(false);{const ps=document.createElement("div");ps.className="fbp-pns";v.insertBefore(ps,pn);ps.onclick=()=>open(false);new MutationObserver(()=>ps.classList.toggle("open",pn.classList.contains("open"))).observe(pn,{attributes:true,attributeFilter:["class"]})}   /* 822：大箋外面（上下露出的圖面）點一下＝收起，打的字留著 */
     /* 鍵盤彈出：大箋留在鍵盤上方（看 visualViewport 的高度） */
-    const vvFit=()=>{const vv=window.visualViewport;if(!vv)return;pn.style.top=(vv.offsetTop+8)+"px";pn.style.maxHeight=Math.max(220,vv.height-16)+"px"};
-    if(window.visualViewport&&!st.vv){st.vv=vvFit;visualViewport.addEventListener("resize",vvFit);visualViewport.addEventListener("scroll",vvFit)}vvFit();
+    const vvFit=()=>{const vv=window.visualViewport;if(!vv)return;const R=getComputedStyle(document.documentElement),T=parseFloat(R.getPropertyValue("--xqT"))||0,B=parseFloat(R.getPropertyValue("--xqB"))||0,top=Math.max(vv.offsetTop+8,T+6),bot=Math.min(vv.offsetTop+vv.height-8,innerHeight-B-8);pn.style.top=top+"px";pn.style.maxHeight=Math.max(220,bot-top)+"px"};   /* 822：鍵盤之外，也不要被頂欄、底部導覽擋住 */
+    if(window.visualViewport&&!st.vv){st.vv=vvFit;visualViewport.addEventListener("resize",vvFit);visualViewport.addEventListener("scroll",vvFit)}vvFit();if(typeof xqBars==="function"){xqBars();vvFit()}
     const ty=()=>{const b=pn.querySelector("[data-y].on");const all=[...pn.querySelectorAll("[data-y]")];return Math.max(0,all.indexOf(b))};
     const paint=()=>{const i=ty();P.querySelectorAll(".fbp-slot,.fbp-ty button").forEach(b=>b.classList.toggle("on",+b.dataset.i===i));P.classList.toggle("err",i===0);pn.classList.toggle("err",i===0);
       pp.textContent=fx.value.slice(0,160);
@@ -12309,9 +12326,9 @@ const SHW_HQ={W:768,H:1376,el:45,h:[.08,72,.0012],look0:[50,40],home:"home",N:{h
 let HQ_ACT=null;   /* 這支手機剛產生、還有效的轉移碼 {code, exp}（只放記憶體） */
 const hqDark=()=>{const t=store.get("pageTheme","auto"),h=new Date().getHours();return t==="dark"||(t==="auto"&&matchMedia("(prefers-color-scheme: dark)").matches)||h>=19||h<5};
 function hqCss(){if(document.getElementById("hqCss"))return;const s=document.createElement("style");s.id="hqCss";s.textContent=`
-.hq-pn{position:fixed;inset:0;z-index:950;background:#2a2018;overflow:hidden;transform:translateY(105%);transition:transform .3s ease;color:#2a1f15}
+.hq-pn{position:fixed;left:0;right:0;top:var(--xqT,0px);bottom:var(--xqB,0px);z-index:950;background:#2a2018;overflow:hidden;transform:translateY(calc(100% + var(--xqB,0px) + 24px));transition:transform .3s ease;color:#2a1f15}
 .hq-pn.open{transform:none}.hq-pn.hq-dk{background:#121826}
-.hq-h{position:absolute;left:0;right:0;top:0;z-index:6;display:flex;align-items:center;gap:8px;padding:calc(8px + env(safe-area-inset-top,0px)) 14px 10px;font:900 16px var(--serif,serif);background:linear-gradient(rgba(246,239,223,.94) 70%,rgba(246,239,223,0))}
+.hq-h{position:absolute;left:0;right:0;top:0;z-index:6;display:flex;align-items:center;gap:8px;padding:8px 14px 10px;font:900 16px var(--serif,serif);background:linear-gradient(rgba(246,239,223,.94) 70%,rgba(246,239,223,0))}
 .hq-dk .hq-h{background:linear-gradient(rgba(22,28,42,.94) 70%,rgba(22,28,42,0));color:#efe6d2}
 .hq-h button{margin-left:auto;border:0;background:none;font-size:22px;cursor:pointer;color:inherit}
 .hq-sc{position:absolute;inset:0;overflow:hidden}.hq-fr{position:absolute;left:0;top:0}
@@ -12633,12 +12650,12 @@ function tb2Css(){if(document.getElementById("tbmCss"))return;const s=document.c
 @keyframes tbInk{0%{opacity:.25}100%{opacity:1}}
 .tb-leaf{position:absolute;width:3.2%;aspect-ratio:1;animation:tbFall 11s linear infinite;animation-delay:-3s}.tb-leaf svg{width:100%;height:100%;display:block}
 @keyframes tbFall{0%{transform:translate(0,-30vh) rotate(0)}75%{transform:translate(-10vw,0) rotate(200deg)}100%{transform:translate(-11vw,0) rotate(210deg)}}
-.tb-pn{position:fixed;inset:0;z-index:948;display:flex;flex-direction:column;background:#1b1916 url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence baseFrequency='.7' numOctaves='2'/%3E%3CfeColorMatrix values='0 0 0 0 .9 0 0 0 0 .88 0 0 0 0 .82 0 0 0 .05 0'/%3E%3C/filter%3E%3Crect width='160' height='160' filter='url(%23n)'/%3E%3C/svg%3E");
+.tb-pn{position:fixed;left:0;right:0;top:var(--xqT,0px);bottom:var(--xqB,0px);z-index:948;display:flex;flex-direction:column;background:#1b1916 url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence baseFrequency='.7' numOctaves='2'/%3E%3CfeColorMatrix values='0 0 0 0 .9 0 0 0 0 .88 0 0 0 0 .82 0 0 0 .05 0'/%3E%3C/filter%3E%3Crect width='160' height='160' filter='url(%23n)'/%3E%3C/svg%3E");
   color:#ece4d2;transform:scale(.92);opacity:0;pointer-events:none;transition:opacity .3s,transform .3s}
 .tb-pn.open{opacity:1;transform:none;pointer-events:auto}
-.tb-pn-h{display:flex;align-items:center;gap:8px;padding:calc(env(safe-area-inset-top,0px) + 12px) 16px 6px;font:900 18px var(--serif,serif);letter-spacing:.2em}
+.tb-pn-h{display:flex;align-items:center;gap:8px;padding:12px 16px 6px;font:900 18px var(--serif,serif);letter-spacing:.2em}
 .tb-pn-h button{margin-left:auto;border:1px solid rgba(236,228,210,.4);background:none;color:inherit;border-radius:999px;padding:4px 12px;font:700 14px var(--serif,serif);letter-spacing:0;cursor:pointer}
-.tb-pn-b{flex:1;overflow:auto;-webkit-overflow-scrolling:touch;padding:0 4px calc(env(safe-area-inset-bottom,0px) + 24px)}
+.tb-pn-b{flex:1;overflow:auto;-webkit-overflow-scrolling:touch;padding:0 4px 24px}
 .tb-pn #rTabs{display:none}
 .tb-pn.tb-pn .card{background:rgba(236,228,210,.04)!important;border:1px solid rgba(236,228,210,.16)!important;box-shadow:none!important;color:#ece4d2!important;line-height:2!important}
 .tb-pn.tb-pn .card div[style*="background"]{background:rgba(236,228,210,.07)!important}
@@ -14959,7 +14976,7 @@ function sjM3(w,h,q){const[[x0,y0],[x1,y1],[x2,y2],[x3,y3]]=q,dx1=x1-x2,dx2=x3-x
   const g=(dx3*dy2-dx2*dy3)/den,hh=(dx1*dy3-dx3*dy1)/den,a=x1-x0+g*x1,b=x3-x0+hh*x3,d=y1-y0+g*y1,e=y3-y0+hh*y3;
   return`matrix3d(${a/w},${d/w},0,${g/w},${b/h},${e/h},0,${hh/h},0,0,1,0,${x0},${y0},0,1)`}
 function sjCss(){if(document.getElementById("sjCss"))return;const s=document.createElement("style");s.id="sjCss";s.textContent=`
-.lb-pn.sj-pn{top:0;height:auto;border:0;border-radius:0;background:#3a2c1e;overflow:hidden}
+.lb-pn.sj-pn{top:var(--xqT,0px);bottom:var(--xqB,0px);height:auto;border:0;border-radius:0;background:#3a2c1e;overflow:hidden}
 .lb-pn.sj-pn.sj-dk{background:#151b28}
 .sj-sc{position:absolute;inset:0;overflow:hidden;z-index:0}
 .sj-fr{position:absolute;left:0;top:0}
@@ -14992,7 +15009,8 @@ function sjCss(){if(document.getElementById("sjCss"))return;const s=document.cre
 .sj-lamp{position:absolute;width:15%;aspect-ratio:1;transform:translate(-50%,-50%);border:0;padding:0;background:none;border-radius:50%;cursor:pointer;-webkit-tap-highlight-color:transparent}
 .sj-lamp span{position:absolute;left:50%;top:100%;transform:translate(-50%,-30%);background:#f3ead2;border:1px solid #8a6a3a;color:#3a2618;border-radius:3px;font:800 13px/1 var(--kai,var(--serif,serif));padding:3px 5px;white-space:nowrap;box-shadow:0 1px 2px rgba(0,0,0,.25)}
 .sj-qon .sj-lamp{box-shadow:0 0 0 2px rgba(242,201,76,.75),0 0 14px 4px rgba(242,201,76,.35)}
-.sj-pn .lb-pn-h{position:absolute;left:0;right:0;top:0;z-index:6;padding:calc(8px + env(safe-area-inset-top,0px)) 14px 10px;background:linear-gradient(rgba(246,239,223,.95) 72%,rgba(246,239,223,0));color:#2a1f15}
+.lb-pn.sj-pn:not(.open){transform:translateY(calc(100% + var(--xqB,0px) + 24px))}   /* 822：面板夾在頂欄和底欄中間 */
+.sj-pn .lb-pn-h{position:absolute;left:0;right:0;top:0;z-index:6;padding:8px 14px 10px;background:linear-gradient(rgba(246,239,223,.95) 72%,rgba(246,239,223,0));color:#2a1f15}
 .sj-pn.sj-dk .lb-pn-h{background:linear-gradient(rgba(26,32,46,.95) 72%,rgba(26,32,46,0));color:#efe6d2}
 .sj-pn .lb-pn-b{position:absolute;left:0;right:0;top:var(--sj-hb,46px);z-index:5;overflow:visible;flex:none;pointer-events:none}
 .sj-pn .lb-pn-b .lib{max-width:680px;margin:0 auto;padding:0;pointer-events:none}
