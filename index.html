@@ -1341,7 +1341,7 @@ html[data-era=qin] .view:has(>.shp-rd),html[data-era=wudai] .view:has(>.shp-rd){
       if(!window.caches)return go();caches.keys().then(function(ks){return Promise.all(ks.filter(function(k){return k.indexOf("xqlab-app-")===0}).map(function(k){return caches.delete(k)}))})
         .then(function(){return navigator.serviceWorker&&navigator.serviceWorker.getRegistration()}).then(function(r){return r&&r.update()}).catch(function(){}).then(go)}};setTimeout(chk,4000)})();
 </script>
-<script>window.XQ_OFFLINE=true;window.XQ_BUILD="20261108-2010";</script>
+<script>window.XQ_OFFLINE=true;window.XQ_BUILD="20261108-2020";</script>
 <script src="core.js"></script>
 <script src="engine.js"></script>
 <script src="local.js"></script>
@@ -10914,8 +10914,9 @@ function rdCss(){if(!RELIC_DROP_ON||document.getElementById("rdCss"))return;cons
 try{rdCss()}catch(e){}
 /* ================= 🚶 3D 角色在滿版水墨圖上走動（開發者 11/8：先做星槎主畫面 #/adventure；同日「渡口和驛站也都要讓 3D 角色可以和在雲河星槎一樣走路活動」）=================
    玩家的角色（myChar() 的 Tripo 3D 模型；說書人的學徒、沒有模型時用 Q 版小人）站在圖上；點圖上的入口，角色轉身、播走路動作，沿量好的路線走到入口旁
-   （0.6～1.2 秒，照距離），到了做一個小動作（伸手／鞠躬／歡呼），再開原本的入口；走路或做動作時再點一次（點圖上哪裡都行）＝直接開。
-   走向哪個入口，那個入口的金框標籤就淡掉（shw-fade，0.25 秒到 0.15），角色才看得到站在門口；開了入口就還原，其他入口的標籤不動。
+   （0.6～1.2 秒，照距離），到了做一個小動作（伸手／鞠躬／歡呼），再開原本的入口；走向入口時再點同一個入口、或在做小動作時點一下＝直接開。
+   意見回饋 782：點圖上不是入口的地方＝走過去（點在水、屋頂、天空就走到路網上離那裡最近的點），走到只換待機；走到一半點別處就改走新目標。
+   走向哪個入口，那個入口的金框標籤就淡掉（shw-fade，0.25 秒到 0.15），角色才看得到站在門口；停好 1.5 秒後淡回正常（意見回饋 784），其他入口的標籤不動。
    開了哪個入口，回到這張圖時角色就站在那裡（每張圖各記各的，只記在記憶體，重開 App 回到起點）。角色在圖上時，到處走的小帥（.xqbot）先藏起來，離開就回來。
    3D 還沒載好、載不到、prefers-reduced-motion：不攔點擊，照舊直接開。角色畫布 pointer-events:none，入口照舊在最上層。
    入口只是被「延後」：走到了用原本按鈕的 click() 再按一次，所以原本掛在入口上的東西（07v 景點掉寶、07u 包的 yzMail、千秋穿梭…）都照常。
@@ -10961,6 +10962,21 @@ const SHW_PORT={
     HS:{poPark:["park",34,62,"wave"],poInn:["inn",82,64,"bow"],poArena:["arena",47,36,"cheer"],poBattle:["battle",47,47,"wave"],ps0:["n0",12,30,"wave"],ps1:["n1",68,29,"wave"],ps2:["n1",78,16,"wave"]}},
   qing:{N:{home:[45,61],c:[47,56],park:[34,59.5],inn:[64,52.5],battle:[45,50],arena:[45,39.5],w:[36,38],n1:[32,31],n2:[60,60]},E:"home-c c-park c-inn c-battle battle-arena arena-w w-n1 home-n2 n2-inn",
     HS:{poPark:["park",33,55,"wave"],poInn:["inn",69,47,"bow"],poArena:["arena",50,33,"cheer"],poBattle:["battle",45,43,"wave"],ps0:["arena",86,18,"wave"],ps1:["n1",22,20,"wave"],ps2:["n2",84,82,"wave"]}}};
+/* 意見回饋 782（開發者 11/8）：渡口景點也要走過去——每一朝加幾個路點，走到景點腳下或旁邊能站的地面；在遠山、對岸、水上真的到不了的（秦長城、三國火燒戰船與赤壁、南北朝山寺、宋雷峰塔與斷橋、明的對岸三景、清文峰塔、大雁塔），
+   走到最靠近、還在地面上的地方再轉身望過去。N、E 併進 SHW_PORT[朝代]，HS 蓋掉原本的景點停靠點 */
+const SHW_PSX={
+  qin:{N:{wall:[36,38.5],q1:[70,33],beacon:[79,29],road:[72,35.5]},E:"arena-wall s2-q1 q1-beacon q1-road",HS:{ps0:["wall",32,22,"wave"],ps1:["beacon",82,24,"wave"],ps2:["road",76,34,"wave"]}},
+  han:{N:{h1:[22,36],tower:[18,31],h2:[77,32],yumen:[83,29.5]},E:"n0-h1 h1-tower n1-h2 h2-yumen",HS:{ps0:["tower",17,26,"wave"],ps1:["yumen",86,24,"wave"]}},
+  sanguo:{N:{ship:[40,43],cliff:[72,43],camp:[84,50]},E:"n1-ship n2-cliff n3-camp",HS:{ps0:["ship",38,28,"wave"],ps1:["cliff",80,24,"wave"],ps2:["camp",88,46,"wave"]}},
+  weijin:{N:{bamboo:[17,46],creek:[45,37]},E:"s0-bamboo s1-creek",HS:{ps0:["bamboo",12,28,"wave"],ps1:["creek",42,31,"wave"]}},
+  nanbei:{N:{nb1:[36,38],cave:[27,32],temple:[48,31],river:[66,63]},E:"s0-nb1 nb1-cave nb1-temple s2-river",HS:{ps0:["cave",24,27,"wave"],ps1:["temple",56,23,"wave"],ps2:["river",72,75,"wave"]}},
+  sui:{N:{bank:[34,38.5],canal:[38,34.5]},E:"s0-bank s0-canal",HS:{ps0:["bank",24,31,"wave"],ps1:["canal",62,22,"wave"]}},
+  tang:{N:{t1:[30,34],gate:[28,23.5],t2:[72,28],market:[86,37]},E:"n0-t1 t1-gate n2-t2 n2-market",HS:{ps0:["gate",28,16,"wave"],ps1:["t2",79,14,"wave"],ps2:["market",88,33,"wave"]}},
+  wudai:{N:{far:[18,30],ruin:[17,61]},E:"n0-far s1-ruin",HS:{ps0:["far",15,18,"wave"],ps1:["ruin",12,56,"wave"]}},
+  song:{N:{lamp:[84,43]},E:"n2-lamp",HS:{ps2:["lamp",88,38,"wave"]}},
+  yuan:{N:{yurt:[30,48],zhan:[83,44]},E:"s0-yurt s1-zhan",HS:{ps0:["yurt",29,44,"wave"],ps1:["zhan",87,46,"wave"]}},
+  qing:{N:{g1:[55,33],tower:[70,25],lake:[30,29.5],dock:[61,66]},E:"arena-g1 g1-tower n1-lake n2-dock",HS:{ps0:["tower",86,18,"wave"],ps1:["lake",22,20,"wave"],ps2:["dock",84,82,"wave"]}}};
+const shwCfg=(B,X)=>{const C=Object.assign({},SHW_PG0,B);if(X){C.N=Object.assign({},B.N,X.N);C.E=B.E+" "+X.E;C.HS=Object.assign({},B.HS,X.HS)}return C};
 const SHW_YZ={
   classic:{h:[.05,66,.001],look0:[50,90],N:{home:[67,74.5],b1:[61,72.2],tr:[54,69.8],c1:[44,69.5],c2:[37.5,63],sec:[31,56],mail:[77,71],ling:[88,65.5]},E:"home-b1 b1-tr tr-c1 c1-c2 c2-sec home-mail b1-mail mail-ling",
     HS:{yzTr:["tr",54.5,62,"bow"],yzSec:["sec",21,51,"wave"],yzMail:["mail",81,66,"wave"],yzLing:["ling",86,55,"cheer"]}},
@@ -10994,7 +11010,7 @@ function shwCss(){if(document.getElementById("shwCss"))return;const s=document.c
 .shw.on{opacity:1}.shw canvas{position:absolute;display:block;pointer-events:none}
 .shw-sh{position:absolute;border-radius:50%;background:radial-gradient(closest-side,rgba(40,30,20,.55),rgba(40,30,20,.25) 60%,rgba(40,30,20,0));pointer-events:none}
 body.shw-on .xqbot{visibility:hidden}
-.shw-fade{opacity:.15!important;transition:opacity .25s ease!important}.shw-fade::after{animation:none!important;opacity:0!important}`;document.head.append(s)}
+.shw-fade{opacity:.15!important;transition:opacity .25s ease!important}.shw-unfade{transition:opacity .6s ease!important}.shw-fade::after{animation:none!important;opacity:0!important}`;document.head.append(s)}
 const shwHt=(C,y)=>typeof C.h==="function"?C.h(y):C.h[0]+(y-C.h[1])*C.h[2];
 const shwPx=(C,a,b)=>Math.hypot((b[0]-a[0])*C.W/100,(b[1]-a[1])*C.H/100);
 function shwEdges(C){if(!C._e)C._e=C.E.split(" ").map(s=>s.split("-"));return C._e}
@@ -11002,6 +11018,22 @@ function shwPath(C,a,b){if(a===b)return[a];const N=C.N,D={},P={},Q=new Set(Objec
   while(Q.size){let u=null;for(const k of Q)if(u===null||D[k]<D[u])u=k;Q.delete(u);if(u===b||D[u]>=1e9)break;
     for(const[x,y]of shwEdges(C)){const w=x===u?y:y===u?x:null;if(w&&Q.has(w)){const d=D[u]+shwPx(C,N[u],N[w]);if(d<D[w]){D[w]=d;P[w]=u}}}}
   if(D[b]>=1e9)return[a,b];const o=[b];while(o[0]!==a)o.unshift(P[o[0]]);return o}
+/* 意見回饋 782：位置可以是節點名字，或 {p:[左%,上%], e:[節點a,節點b]}（路網某一段上的一點）；暫時把起點、終點接進路網再找最短路 */
+function shwRoute(C,from,to){const N=Object.assign({},C.N),E=shwEdges(C).slice(),TE={},k=e=>e.slice().sort().join("|");
+  const add=(id,q)=>{if(typeof q==="string")return q;N[id]=q.p;TE[id]=q.e;E.push([id,q.e[0]],[id,q.e[1]]);return id};
+  const a=add("_a",from),b=add("_b",to);if(TE._a&&TE._b&&k(TE._a)===k(TE._b))E.push(["_a","_b"]);
+  const ids=shwPath({W:C.W,H:C.H,N,_e:E},a,b),segE=[];for(let i=1;i<ids.length;i++)segE.push(TE[ids[i-1]]||TE[ids[i]]||[ids[i-1],ids[i]]);
+  return{pts:ids.map(n=>N[n]),segE}}
+function shwNear(C,p){let best=null;const W=C.W/100,H=C.H/100;for(const[a,b]of shwEdges(C)){const A=C.N[a],B=C.N[b];if(!A||!B)continue;
+  const dx=(B[0]-A[0])*W,dy=(B[1]-A[1])*H,t=Math.max(0,Math.min(1,((p[0]-A[0])*W*dx+(p[1]-A[1])*H*dy)/(dx*dx+dy*dy||1))),d=Math.hypot((p[0]-A[0])*W-t*dx,(p[1]-A[1])*H-t*dy);
+  if(!best||d<best.d)best={d,p:[A[0]+(B[0]-A[0])*t,A[1]+(B[1]-A[1])*t],e:[a,b]}}return best}
+/* 點擊位置換成原圖的百分比：星槎的入口層 .shp-hl 每格有位移＋轉動（立體視差、起伏），反算回去 */
+function shwPt(S,e){const I=S.I,r=I.getBoundingClientRect();let x=e.clientX-r.left,y=e.clientY-r.top;const L=S.o.layer;
+  if(L!==I){try{const cs=getComputedStyle(L),tf=cs.transform;if(tf&&tf!=="none"){const o=cs.transformOrigin.split(" ").map(parseFloat),M=new DOMMatrix().translate(o[0],o[1]).multiply(new DOMMatrix(tf)).translate(-o[0],-o[1]),q=M.inverse().transformPoint(new DOMPoint(x,y));x=q.x;y=q.y}}catch(err){}}
+  return[x/I.clientWidth*100,y/I.clientHeight*100]}
+/* 只有點在圖本身（圖、畫布、圖層容器）才算「點空地」；按鈕、連結、驛路小圓印、七星來訪等都不攔 */
+function shwFreeOk(S,e){const t=e.target;if(!t||!t.closest||!S.M.contains(t))return false;if(t.closest("button,a,input,select,textarea,label,[role=button],[tabindex],.v7"))return false;
+  return t===S.M||t===S.I||t.tagName==="IMG"||t.tagName==="CANVAS"||!!t.closest(".shp-hl,.px-sw,.shp-px,.ifx")}
 const shwYaw=(C,a,b)=>Math.atan2((b[0]-a[0])*C.W/100,(b[1]-a[1])*C.H/100/Math.sin(C.el*Math.PI/180));
 const shwWrap=d=>{while(d>Math.PI)d-=2*Math.PI;while(d<-Math.PI)d+=2*Math.PI;return d};
 const shwRM=()=>{try{return matchMedia("(prefers-reduced-motion: reduce)").matches}catch(e){return false}};
@@ -11012,23 +11044,30 @@ function shipWalk(v,k){if(!SHIP_WALK_ON)return;const M=v.querySelector(".shp-map
 function shwPage(v,cfg,mem,gate){const P=v&&v.querySelector(".shp-page.cq");if(!P||!cfg)return;
   const kOf=b=>b.id||(b.dataset.ps!=null?"ps"+b.dataset.ps:""),fd=h=>/^ps\d+$/.test(h)?P.querySelector(`[data-ps="${h.slice(2)}"]`):P.querySelector("#"+h);
   shwMount({v,cfg,root:P,frame:P,layer:P,before:P.querySelector(".shp-spot,.po-sight"),sel:".shp-spot,.po-sight",keyOf:kOf,find:fd,mem,gate})}
-function shwPort(v,k){if(!SHW_PORT_ON||!SHW_PORT[k])return;shwPage(v,Object.assign({},SHW_PG0,SHW_PORT[k]),"port:"+k,()=>{const P=v.querySelector(".shp-page.cq");return!!P&&!P.classList.contains("pc-run")&&!document.querySelector(".walkc")})}   /* 07p 下船過場（pc-run）、步行小卡（.walkc）播完才出現 */
+function shwPort(v,k){if(!SHW_PORT_ON||!SHW_PORT[k])return;shwPage(v,shwCfg(SHW_PORT[k],SHW_PSX[k]),"port:"+k,()=>{const P=v.querySelector(".shp-page.cq");return!!P&&!P.classList.contains("pc-run")&&!document.querySelector(".walkc")})}   /* 07p 下船過場（pc-run）、步行小卡（.walkc）播完才出現 */
 function shwYz(v,k){if(!SHW_YZ_ON||!SHW_YZ[k])return;shwPage(v,Object.assign({},SHW_PG0,SHW_YZ[k]),"yz:"+k,()=>!document.querySelector(".walkc"))}
 if(typeof portWind==="function"){const f0=portWind;portWind=function(v,k){const r=f0.apply(this,arguments);try{shwPort(v,k)}catch(e){}return r}}
 if(typeof yzInn==="function"){const f0=yzInn;yzInn=function(v,k){const r=f0.apply(this,arguments);try{shwYz(v,k)}catch(e){}return r}}
 function shwMount(o){if(shwRM()||!o.root||!o.frame||o.root.dataset.shw)return;o.root.dataset.shw="1";shwCss();
   const C=o.cfg,box=document.createElement("div");box.className="shw";box.setAttribute("aria-hidden","true");box.innerHTML='<i class="shw-sh"></i>';o.layer.insertBefore(box,o.before&&o.before.parentNode===o.layer?o.before:o.layer.firstChild);
-  const at=SHW_MEM[o.mem],S={o,C,v:o.v,M:o.root,I:o.frame,box,ready:false,pass:false,go:null,at:C.N[at]?at:C.home};
+  const at=SHW_MEM[o.mem],okAt=typeof at==="string"?!!C.N[at]:!!(at&&at.p&&at.e&&C.N[at.e[0]]&&C.N[at.e[1]]),S={o,C,v:o.v,M:o.root,I:o.frame,box,ready:false,pass:false,go:null,at:okAt?at:C.home};
   o.root.addEventListener("click",e=>shwClick(S,e),true);
   shwLoad(S).catch(()=>{box.remove();S.ready=false;document.body.classList.remove("shw-on")})}
-function shwClick(S,e){if(S.pass)return;if(S.go){e.stopPropagation();e.preventDefault();shwOpen(S);return}
-  const b=e.target.closest&&e.target.closest(S.o.sel);if(!b||!S.ready||!S.box.isConnected)return;const h=S.o.keyOf(b),H=S.C.HS[h];if(!H||!S.C.N[H[0]])return;
-  e.stopPropagation();e.preventDefault();vibrate(5);if(S.stay&&S.stay!==b)S.stay.classList.remove("shw-fade");S.stay=null;b.classList.add("shw-fade");const C=S.C,pts=shwPath(C,S.at,H[0]).map(n=>C.N[n]);let L=0;for(let i=1;i<pts.length;i++)L+=shwPx(C,pts[i-1],pts[i]);
-  S.go={hs:h,btn:b,to:H[0],pts,L,dur:L?Math.max(.6,Math.min(1.2,.3+L/650)):0,t:0,act:-1,look:shwYaw(C,C.N[H[0]],[H[1],H[2]]),A:H[3]}}
-function shwOpen(S){const g=S.go;if(!g)return;S.go=null;S.at=SHW_MEM[S.o.mem]=g.to;S.x=S.C.N[g.to][0];S.y=S.C.N[g.to][1];S.yaw=g.look;S.anim("idle",1);S.place();
-  let b=g.btn;if(!b||!b.isConnected)b=S.o.find(g.hs);if(!b)return;S.pass=true;try{b.click()}finally{S.pass=false;if(g.btn!==b)g.btn.classList.remove("shw-fade");b.classList.add("shw-fade");S.stay=b;SHW_MEMH[S.o.mem]=g.hs}}
-/* 回到這一頁、角色出現時：站在哪個入口前，那個標籤保持淡 */
-function shwStay(S){const h=SHW_MEMH[S.o.mem],H=h&&S.C.HS[h];if(!H||H[0]!==S.at)return;const b=S.o.find(h);if(b){b.classList.add("shw-fade");S.stay=b}}
+function shwClick(S,e){if(S.pass||!S.ready||!S.box.isConnected)return;const g=S.go,b=e.target.closest&&e.target.closest(S.o.sel);
+  if(g&&!g.free&&(g.act>=0||(b&&b===g.btn))){e.stopPropagation();e.preventDefault();shwOpen(S);return}   /* 走向入口時再點同一個入口、或已經在做小動作：直接開 */
+  if(b){const h=S.o.keyOf(b),H=S.C.HS[h];if(!H||!S.C.N[H[0]])return;e.stopPropagation();e.preventDefault();vibrate(5);shwGo(S,{hs:h,btn:b,H});return}
+  if(!shwFreeOk(S,e))return;const p=shwPt(S,e);if(!(p[0]>=0&&p[0]<=100&&p[1]>=0&&p[1]<=100))return;const q=shwNear(S.C,p);if(!q)return;shwGo(S,{free:1,q,tap:p})}   /* 意見回饋 782：點空地＝走到路網上離那裡最近的點，走到只換待機 */
+function shwGo(S,o){const C=S.C,g0=S.go;if(g0&&g0.btn&&g0.btn!==o.btn)g0.btn.classList.remove("shw-fade");
+  if(S.stay&&S.stay!==o.btn){S.stay.classList.remove("shw-fade");S.stay=null;SHW_MEMH[S.o.mem]=null}
+  const from=g0&&S.curE?{p:[S.x,S.y],e:S.curE}:S.at,to=o.free?{p:o.q.p,e:o.q.e}:o.H[0],R=shwRoute(C,from,to);let L=0;for(let i=1;i<R.pts.length;i++)L+=shwPx(C,R.pts[i-1],R.pts[i]);
+  if(o.btn)o.btn.classList.add("shw-fade");const end=R.pts[R.pts.length-1];
+  S.go={free:!!o.free,hs:o.hs,btn:o.btn,to,pts:R.pts,segE:R.segE,L,dur:L?Math.max(o.free?.35:.6,Math.min(1.2,.3+L/650)):0,t:0,act:-1,
+    look:o.free?(shwPx(C,end,o.tap)>14?shwYaw(C,end,o.tap):null):shwYaw(C,end,[o.H[1],o.H[2]]),A:o.free?null:o.H[3]}}
+function shwOpen(S){const g=S.go;if(!g||g.free)return;S.go=null;S.curE=null;S.at=SHW_MEM[S.o.mem]=g.to;S.x=S.C.N[g.to][0];S.y=S.C.N[g.to][1];S.yaw=g.look;S.anim("idle",1);S.place();
+  let b=g.btn;if(!b||!b.isConnected)b=S.o.find(g.hs);if(!b)return;S.pass=true;try{b.click()}finally{S.pass=false;if(g.btn!==b)g.btn.classList.remove("shw-fade");b.classList.add("shw-fade");S.stay=b;SHW_MEMH[S.o.mem]=null;shwUnfade(S,b,1500)}}
+/* 意見回饋 784（開發者 11/8）：走路途中標籤淡到 0.15；角色停好 1.5 秒後標籤淡回正常，回到這一頁時標籤一律照常（不再一直保持淡，免得像被藏起來） */
+function shwUnfade(S,b,ms){clearTimeout(S.uf);S.uf=setTimeout(()=>{if(!b.isConnected||(S.go&&S.go.btn===b))return;b.classList.add("shw-unfade");b.classList.remove("shw-fade");if(S.stay===b)S.stay=null;setTimeout(()=>b.classList.remove("shw-unfade"),700)},ms)}
+function shwStay(S){}
 async function shwLoad(S){
   await loadScript(OFF?"three.min.js":"/m/three.min.js");await loadScript((OFF?"bot3d.js":"/m/bot3d.js")+"?v="+encodeURIComponent(window.XQ_BUILD||""));
   const T=window.THREE;if(!T||!window.XQBot3D||!XQBot3D.figure)throw 0;if(!S.box.isConnected)return;
@@ -11043,7 +11082,7 @@ async function shwLoad(S){
   const ft=new T.Vector3(0,0,0).project(cam),ftF=(1-ft.y)/2,YMAX=Math.max(...Object.values(C.N).map(p=>p[1]));let cw=0,ch=0,Iw=0,Ih=0;
   const fit=()=>{Iw=S.I.clientWidth;Ih=S.I.clientHeight;if(!Ih)return;const h=Math.round(shwHt(C,YMAX)*Ih/(Math.cos(EL)/1.45)),w=Math.round(h*.75);if(h!==ch||w!==cw){ch=h;cw=w;r.setSize(cw,ch);
     Object.assign(cv.style,{left:-cw/2+"px",top:-Math.round(ftF*ch)+"px"});Object.assign(sh.style,{width:Math.round(ch*.34)+"px",height:Math.round(ch*.1)+"px",left:-Math.round(ch*.17)+"px",top:-Math.round(ch*.05)+"px"})}S.place()};
-  const HS0=Object.values(C.HS).find(h=>h[0]===S.at);S.x=C.N[S.at][0];S.y=C.N[S.at][1];S.yaw=S.at===C.home||!HS0?shwYaw(C,C.N[S.at],C.look0):shwYaw(C,C.N[S.at],[HS0[1],HS0[2]]);
+  const P0=typeof S.at==="string"?C.N[S.at]:S.at.p,HS0=typeof S.at==="string"&&Object.values(C.HS).find(h=>h[0]===S.at);S.x=P0[0];S.y=P0[1];S.yaw=S.at===C.home||!HS0?shwYaw(C,P0,typeof S.at==="string"?C.look0:[P0[0],P0[1]+5]):shwYaw(C,P0,[HS0[1],HS0[2]]);
   S.place=()=>{if(!Ih)return;const k=shwHt(C,S.y)/shwHt(C,YMAX);S.box.style.transform=`translate(${(S.x*Iw/100).toFixed(1)}px,${(S.y*Ih/100).toFixed(1)}px) scale(${k.toFixed(4)})`};
   const clips=B.mixer&&B.clips||null;let cur=null,yawR=S.yaw;
   S.anim=(n,ts)=>{if(!clips){S.pn=n;return}const a=clips[n]||clips.idle;if(!a)return;a.timeScale=ts||1;if(a===cur)return;a.reset().fadeIn(n==="idle"?.25:.12).play();if(cur)cur.fadeOut(.15);cur=a};
@@ -11052,14 +11091,15 @@ async function shwLoad(S){
     if(B.legs&&B.legs.length===2)B.legs.forEach((l,i)=>l.rotation.x=walk?Math.sin(ph)*.6*(i?1:-1):0);if(B.arms&&B.arms.length===2){B.arms.forEach((a,i)=>a.rotation.x=walk?Math.sin(ph)*.5*(i?-1:1):0);B.arms[1].rotation.z=act==="wave"||act==="cheer"?a0+Math.min(1,p*3)*2.5:a0}};
   if(window.ResizeObserver){const ro=new ResizeObserver(()=>{if(!S.box.isConnected){ro.disconnect();return}fit()});ro.observe(S.I)}fit();
   let last=performance.now(),acc=0,fr=0,t0=last;
-  const end=()=>{S.ready=false;S.go=null;document.body.classList.remove("shw-on");try{r.dispose();r.forceContextLoss()}catch(e){}};
+  const end=()=>{S.ready=false;S.go=null;if(!document.querySelector(".shw.on"))document.body.classList.remove("shw-on");try{r.dispose();r.forceContextLoss()}catch(e){}};
   const loop=now=>{if(!S.box.isConnected||!S.M.isConnected){end();return}requestAnimationFrame(loop);if(document.hidden){last=now;return}
     if(!S.ready){if(S.o.gate&&!S.o.gate()){last=now;return}S.ready=true;fit();shwStay(S)}
     const dt=Math.min(.05,(now-last)/1000);last=now;acc+=dt;const g=S.go;let walk=false;
     if(g){g.t+=dt;if(g.t<g.dur){walk=true;const u=g.t/g.dur,s=.65*u+.35*(.5-.5*Math.cos(Math.PI*u));let d=s*g.L,i=1;
-        for(;i<g.pts.length;i++){const sl=shwPx(C,g.pts[i-1],g.pts[i]);if(d<=sl||i===g.pts.length-1){const f=sl?Math.min(1,d/sl):1,a=g.pts[i-1],b=g.pts[i];S.x=a[0]+(b[0]-a[0])*f;S.y=a[1]+(b[1]-a[1])*f;if(sl)S.yaw=shwYaw(C,a,b);break}d-=sl}
+        for(;i<g.pts.length;i++){const sl=shwPx(C,g.pts[i-1],g.pts[i]);if(d<=sl||i===g.pts.length-1){const f=sl?Math.min(1,d/sl):1,a=g.pts[i-1],b=g.pts[i];S.x=a[0]+(b[0]-a[0])*f;S.y=a[1]+(b[1]-a[1])*f;S.curE=g.segE[i-1]||null;if(sl)S.yaw=shwYaw(C,a,b);break}d-=sl}
         S.anim("walk",Math.max(1.3,Math.min(2.4,g.L/g.dur/220)))}
-      else{if(g.act<0){g.act=g.t;S.x=C.N[g.to][0];S.y=C.N[g.to][1];S.yaw=g.look;S.anim(SHW_ACT[g.A]||"idle",g.A==="bow"?2.2:1.8)}if(g.t-g.act>.62)shwOpen(S)}
+      else if(g.free){S.go=null;S.curE=null;const q=g.pts[g.pts.length-1];S.x=q[0];S.y=q[1];S.at=SHW_MEM[S.o.mem]=g.to;if(g.look!=null)S.yaw=g.look;S.anim("idle",1)}
+      else{if(g.act<0){g.act=g.t;S.curE=null;S.x=C.N[g.to][0];S.y=C.N[g.to][1];S.yaw=g.look;S.anim(SHW_ACT[g.A]||"idle",g.A==="bow"?2.2:1.8)}if(g.t-g.act>.62)shwOpen(S)}
       S.place()}
     yawR+=shwWrap(S.yaw-yawR)*Math.min(1,dt*(walk?16:9));root.rotation.y=yawR;
     proc((now-t0)/1000,walk,g&&g.act>=0?g.A:null,g&&g.act>=0?(g.t-g.act)/.62:0);
