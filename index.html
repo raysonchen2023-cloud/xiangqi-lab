@@ -1294,7 +1294,7 @@ html[data-era=qin] .view:has(>.shp-rd),html[data-era=wudai] .view:has(>.shp-rd){
       if(!window.caches)return go();caches.keys().then(function(ks){return Promise.all(ks.filter(function(k){return k.indexOf("xqlab-app-")===0}).map(function(k){return caches.delete(k)}))})
         .then(function(){return navigator.serviceWorker&&navigator.serviceWorker.getRegistration()}).then(function(r){return r&&r.update()}).catch(function(){}).then(go)}};setTimeout(chk,4000)})();
 </script>
-<script>window.XQ_OFFLINE=true;window.XQ_BUILD="20261108-1611";</script>
+<script>window.XQ_OFFLINE=true;window.XQ_BUILD="20261108-1620";</script>
 <script src="core.js"></script>
 <script src="engine.js"></script>
 <script src="local.js"></script>
@@ -7405,6 +7405,8 @@ function shipSlotName(k,i,P){if(!SHIP_PLAN[k]||!SHIP_PLAN[k].story)return`${esc(
 function shipDots(k,L){L=L||shipPuzzles(k)||[];return`<span class="shp-dots">${(L.length?L:[0,0,0]).map(id=>{const r=id&&shipRec(k,id);return`<i class="${r?r.h?"h":"s":""}"></i>`}).join("")}</span>`}
 
 /* ---------- 解題頁設定（07c-canju.js CanjuPlay 的 XM） ---------- */
+/* 意見回饋 762 第零版：這站學會了、還有下一站（不是學徒）＝下一站的代號，結果卡和石桌頁的主按鈕改成「⛵ 起航」 */
+const shipSailTo=k=>{try{return shipLearned(k)&&!shipAppr()?shipNextStop():null}catch(e){return null}};
 function shipXM(k,id){const rd=/\/read$/.test(id);if(rd)id=id.replace(/\/read$/,"");   /* 意見回饋 685：…/read＝從正文的解題卡來的，解完回到正文 */
   const T=SHIP_STOP[k],Ls=SHIP_LESSON[k]||{},Pl=SHIP_PLAN[k]||{},back=()=>rd?"#/ship/read/"+k+"/mark":"#/adventure";shipBank().catch(()=>{});
   if(!T)return{err:"找不到這一站（航線可能更新了）。",back};
@@ -7419,7 +7421,7 @@ function shipXM(k,id){const rd=/\/read$/.test(id);if(rd)id=id.replace(/\/read$/,
     head:P=>{const i=slot(),S=say(P);return`<b>⛵ ${esc(shipShort(k))}・${esc(Ls.t||T.place)}</b>・${isX()?(k==="classic"?"七星同局圖鑑":"熱身・變化題")+"（選做）":Pl.story&&i>=0?`第 ${i+1} 題・${shipSlotName(k,i,P)}`:`本命子「${esc(shipPiece(k))}」的妙著`}・${cjLv(P.d)}　<span class="muted">${cjSrc(P)}</span>${(S.pre||[]).map(x=>`<div class="shp-psay">${shipLine(x)}</div>`).join("")}`},
     wrong:(u,step,P)=>{const x=step===0&&(say(P).wrong||{})[u];return x?shipLine(x).replace(/<[^>]+>/g,""):""},
     mark:o=>isX()?shipGalMark(k,id,o):shipMark(k,id,o),done:(o,ans)=>shipDoneHTML(k,o,ans,id,o&&o.gal),
-    next:()=>{if(rd)return"#/ship/read/"+k+"/after";const x=nx();return x?shipHref(k,x):null},nextL:()=>rd?`📖 回到第${CNUM(Pl.ch||1)}章`:nx()?"下一題":"回星槎"}}
+    next:()=>{if(rd)return"#/ship/read/"+k+"/after";const x=nx();return x?shipHref(k,x):shipSailTo(k)?"#/ship/sail":null},nextL:()=>rd?`📖 回到第${CNUM(Pl.ch||1)}章`:nx()?"下一題":shipSailTo(k)?"⛵ 起航去"+shipShort(shipSailTo(k)):"回星槎"}}
 /* ---------- 星槎小關（關卡設計_第5-14章 元件 A，開發者 11/7）：一格題目是石桌往事的關卡步驟（relay、judge、guess、memory、talk、arrange、puzzle）----------
    資料在 ship-set.json 的 lv:1 項目（tools/canju/ship_levels.json → 6_ship.js 檢查走法後併進去）：game＝石桌往事關卡格式，byDiff＝各航行難度的覆寫（陣列照位置合併，null＝不改）。
    #/ship/lv/<站>/<題號>[/read]；用 07-legend.js 的 jLevel 跑，進度存 jRunS（不蓋掉石桌往事玩到一半的 jRun）；過關＝解開，用過提示＝空心點（shipRec 的 h）。 */
@@ -7443,7 +7445,7 @@ function ShipLv(v,k,id,rd){const T=SHIP_STOP[k],Pl=SHIP_PLAN[k]||{},Ls=SHIP_LESS
         if(res&&res.learned&&Ls.done&&k!=="finale")G.outro=(G.outro?G.outro+"　":"")+`✅ 學會了：${Ls.t||""}。${W.n}：「${Ls.done}」`;if(res&&res.learned&&k==="finale")setTimeout(shipFinaleCard,1200);return stars},
       line:()=>!res?"":isX?"🔥 熱身做完了（選做）":k==="finale"?"✅ 千秋歸位・石桌補全了":res.learned?`✅ 學會了：${Ls.t||""}`:`⛵ ${shipShort(k)}・解開 ${res.n}／${res.all}${res.h?"（用過提示，空心點）":""}`,
       get next(){if(rd)return[`📖 回到第${CNUM(Pl.ch||1)}章`,()=>{location.hash="#/ship/read/"+k+"/after"}];if(isX)return["回千秋殘局",()=>goUp("#/ship/pz")];
-        if(k==="finale")return["⛵ 回起航頁",()=>goUp("#/ship/sail")];const x=nx();return x?["下一題 ›",()=>{location.hash=shipHref(k,x)}]:["回星槎",()=>goUp("#/adventure")]}})}).catch(e=>bad(e&&e.message||"題庫載入失敗"));
+        if(k==="finale")return["⛵ 回起航頁",()=>goUp("#/ship/sail")];const x=nx();return x?["下一題 ›",()=>{location.hash=shipHref(k,x)}]:shipSailTo(k)?["⛵ 起航去"+shipShort(shipSailTo(k)),()=>goUp("#/ship/sail")]:["回星槎",()=>goUp("#/adventure")]}})}).catch(e=>bad(e&&e.message||"題庫載入失敗"));
   return{}}
 /* 終章過關：石桌補全的收尾卡（第 14 章：青石嵌回缺槽、刻痕的光連成一片） */
 function shipFinaleCard(){try{modal(`<img src="data/actors/teller.webp" alt="" onerror="this.remove()"><h2>🪨 石桌補全了</h2><p style="line-height:1.8">青石嵌回缺槽，河界的刻線依然清楚，刻痕的青玉色光連成一片。《千秋棋話》的書頁翻到了最後。</p><p class="pl-say">說書人：「不是每盤殘局都能贏。可人常把一時的難，當作往後再也沒有路。」</p>`,[["好",null]],"prolog")}catch(e){}}
@@ -7558,7 +7560,14 @@ function ShipPz(v){setTop("♟ 千秋殘局","#/adventure");setTabs(false);v.cla
       sp.querySelectorAll(".shp-spot").forEach(b=>b.classList.toggle("sel",+b.dataset.i===i));cap.textContent=`第 ${i+1} 題・${String(P.task||P.t||"").split("：")[0]}${P.side==="b"?"・黑方先走":"・紅方先走"}`;go.style.display=""};
     sp.querySelectorAll(".shp-spot").forEach(b=>b.onclick=()=>{vibrate(5);pick(+b.dataset.i)});
     go.onclick=()=>{if(cur<0)return;vibrate(8);const pg=v.querySelector("#pzPage");pg.classList.add("zoom");setTimeout(()=>{location.hash=shipHref(k,Lz[cur])},430)};
-    pick(Math.max(0,Lz.findIndex(id=>!shipRec(k,id))));
+    /* 意見回饋 762 第零版：3 題都解開了＝不再自動擺回第 1 題；標「✅ 學會了」，主按鈕換「⛵ 起航」，點星光才擺那一題、多一顆「重溫」 */
+    if(Lz.every(id=>shipRec(k,id))){const nxS=shipSailTo(k),hb=v.querySelector(".shp-cap b"),bs="pointer-events:auto;width:auto;margin:0;padding:12px 20px;font-size:16px;border-radius:99px;box-shadow:0 4px 16px rgba(0,0,0,.45)",w=document.createElement("div");
+      if(hb)hb.textContent+="・✅ 學會了";cap.textContent="這站的 3 題都解開了・點星光可以重溫";go.remove();
+      w.style.cssText="position:absolute;left:0;right:0;bottom:4%;display:flex;justify-content:center;gap:10px;z-index:3;pointer-events:none";
+      w.innerHTML=`<button class="btn ghost" id="pzRe" style="${bs};display:none">♟ 重溫</button><button class="btn" id="pzSail" style="${bs}">${nxS?"⛵ 起航去"+esc(shipShort(nxS)):"‹ 回星槎"}</button>`;v.querySelector("#pzPage").append(w);
+      const re=w.querySelector("#pzRe");sp.querySelectorAll(".shp-spot").forEach(b=>b.addEventListener("click",()=>{re.style.display="";re.textContent="♟ 重溫第 "+(+b.dataset.i+1)+" 題"}));
+      re.onclick=()=>go.onclick();w.querySelector("#pzSail").onclick=()=>{vibrate(8);location.hash=nxS?"#/ship/sail":"#/adventure"}}
+    else pick(Math.max(0,Lz.findIndex(id=>!shipRec(k,id))));
     const X=(typeof shipExtras==="function"?shipExtras(k):[])||[];
     more.innerHTML=`<p class="muted shp-pzhint">點石桌旁的星光看那一題，石桌上就換成那一盤；再按「開始下棋」・● 自己解開　◐ 用過提示　★ 還沒解</p>`+(X.length?`<div class="items" style="padding:0">${X.map(id=>{const P=B[id]||{};return`<button class="item" data-pz="${esc(id)}"><span class="lb">🔥</span><span class="tx"><b>選做・${esc(String((P.src||{}).title||"").replace(/^.*・/,""))}</b><span>不計點、不給修為</span></span><span class="muted">›</span></button>`}).join("")}</div>`:"");
     more.querySelectorAll("[data-pz]").forEach(b=>b.onclick=()=>{vibrate(5);location.hash=shipHref(k,b.dataset.pz)})})}
@@ -7725,7 +7734,7 @@ function shpMapFit(v){requestAnimationFrame(()=>{const M=v.querySelector&&v.quer
 function Voyage(v){setTop("⛵ 雲河星槎","#/");setTabs(true,"#/");v.className="view";
   const paint=()=>{const ap=shipAppr(),D=shipDocked(),k=shipHere(),T=SHIP_STOP[k],O=ap?SHIP_ROUTE:shipOrder(),I=xpInfo(),nx=ap?null:shipNextStop();
     v.innerHTML=`<div class="pad shp">
-      <div class="shp-map full"><div class="shp-in"><img class="shp-base" src="data/shipmap/ship_map.webp" alt="雲河星槎">${shpPxHtml()}<div class="px-sw px-hw"><div class="shp-hl"><button class="shp-hs" data-hs="parks" style="left:13%;top:37%">🪨 千秋石枰</button><button class="shp-hs" data-hs="lesson" style="left:80%;top:17%">📘 棋話一頁</button><button class="shp-hs hot" data-hs="pz" style="left:50%;top:43%">♟ 千秋殘局</button><button class="shp-hs" data-hs="shelf" style="left:22%;top:53%">📚 書架</button><button class="shp-hs" data-hs="read" style="left:33%;top:73%">📖 讀這一章</button><button class="shp-hs" data-hs="bag" style="left:52%;top:79%">🎒 行囊</button><button class="shp-hs" data-hs="sail" style="left:17%;top:85%">⛵ 起航</button><button class="shp-hs" data-hs="port" style="left:80%;top:73%">⚓ 下船</button></div></div></div><div class="hc shp-cap"><b>⛵ ${esc(shipShort(k))}・${esc(T.place)}</b><small>🀄 Lv ${I.L}・《千秋棋話》${shipPages()}／13 頁・停靠 ${D.length}／13・🎚 ${esc(diffOf().n)}</small></div></div>
+      <div class="shp-map full"><div class="shp-in"><img class="shp-base" src="data/shipmap/ship_map.webp" alt="雲河星槎">${shpPxHtml()}<div class="px-sw px-hw"><div class="shp-hl"><button class="shp-hs" data-hs="parks" style="left:13%;top:37%">🪨 千秋石枰</button><button class="shp-hs" data-hs="lesson" style="left:80%;top:17%">📘 棋話一頁</button><button class="shp-hs${shipLearned(k)?"":" hot"}" data-hs="pz" style="left:50%;top:43%">♟ 千秋殘局${shipLearned(k)?" ✓":""}</button><button class="shp-hs" data-hs="shelf" style="left:22%;top:53%">📚 書架</button><button class="shp-hs" data-hs="read" style="left:33%;top:73%">📖 讀這一章</button><button class="shp-hs" data-hs="bag" style="left:52%;top:79%">🎒 行囊</button><button class="shp-hs${shipLearned(k)&&nx?" hot":""}" data-hs="sail" style="left:17%;top:85%">⛵ 起航</button><button class="shp-hs" data-hs="port" style="left:80%;top:73%">⚓ 下船</button></div></div></div><div class="hc shp-cap"><b>⛵ ${esc(shipShort(k))}・${esc(T.place)}</b><small>🀄 Lv ${I.L}・《千秋棋話》${shipPages()}／13 頁・停靠 ${D.length}／13・🎚 ${esc(diffOf().n)}</small></div></div>
       ${ap?`<div class="card shp-ap"><b>📜 你是說書人的學徒</b><p class="muted">十三站都能去，各站的主場角色不會跟你說話。想用雲河七星的眼睛走一趟？開新的旅程會存到另一格，這段旅程不會被蓋掉。</p><button class="btn" id="spNew" style="width:100%">⛵ 選雲河七星開新旅程</button></div>`:""}
       <div class="shp-route-x" hidden>${O.map((e,i)=>{const dk=D.includes(e),on=e===k,ok=shipLearned(e),isN=e===nx;return`<button class="shp-st${dk?" dk":" lk"}${on?" on":""}${ok?" ok":""}${isN?" nx":""}" data-st="${e}"><i>${dk?esc((ARENA[e]||{}).seal||"棋"):isN?"⛵":"🔒"}</i><span>${i+1}・${esc(shipShort(e))}</span></button>`}).join("")}</div>
       ${mainDoneHTML()}<div id="spRes"></div>
