@@ -1055,7 +1055,8 @@
        跟著小人的 toon3d 設定走（小人水墨關掉，園子也一起關）；localStorage 的 m_parkToon 設成 "off" 可以只關園子。
        ‧立體道具（桌、凳、長榻、燈、火盆、茶杯、樹幹、石欄）：明暗照場景的光（影子還在），但只分三階，最亮那階就是貼圖原色；外面加 bot3d 的墨線外殼。
          雙面的薄片（落葉、欄邊）不加外殼，從背面看才不會多一片黑影；外殼深度往後退 0.3（凹處不冒線）
-       ‧手繪立牌（燈籠、樹、長榻圖）：沿著去背的邊描一圈約 1.6 像素的墨線（要 WebGL2）
+       ‧手繪立牌（燈籠、樹、長榻圖）：沿著去背的邊描一圈約 1.6 像素的墨線（要 WebGL2）；
+         判斷「邊」要用貼圖本身的透明度，不能用乘過材質透明度的值（意見回饋 753：擋在畫面中間的樹會淡到 0.28，之前整棵被當成「邊」塗成黑剪影），墨線也跟著樹一起淡
        ‧地面：飽和度減半、乘上淡淡的紙紋（跟著地面不跟著鏡頭），外圈往宣紙色暈白
        ‧棋盤（木框、盤面）、棋子、小人、天空、長卷、地圖都不動；棋子和小人在這之後才加進場景，本來就不在範圍裡 */
     const PT={roots:sc.children.slice(),M0:new WeakMap(),C:new WeakMap(),st:new WeakMap(),inst:new WeakSet(),u:{value:0},on:null};
@@ -1077,7 +1078,7 @@
     const PT_W2=!!(rd.capabilities&&rd.capabilities.isWebGL2);
     function ptCard(o){if(PT.inst.has(o)||!PT_W2)return;PT.inst.add(o);const ob=o.onBeforeCompile;
       o.onBeforeCompile=(s,r)=>{if(ob)ob(s,r);s.uniforms.xqInk=PT.u;
-        s.fragmentShader=s.fragmentShader.replace("#include <common>","#include <common>\nuniform float xqInk;").replace("#include <map_fragment>","#include <map_fragment>\n#ifdef USE_MAP\nif ( xqInk > .5 ) {\nvec2 xqD = fwidth( vUv ) * 1.6;\nfloat xqA = max( max( texture2D( map, vUv + vec2( xqD.x, 0. ) ).a, texture2D( map, vUv - vec2( xqD.x, 0. ) ).a ), max( texture2D( map, vUv + vec2( 0., xqD.y ) ).a, texture2D( map, vUv - vec2( 0., xqD.y ) ).a ) );\nfloat xqE = smoothstep( .35, .65, xqA ) * ( 1. - smoothstep( .35, .65, diffuseColor.a ) );\ndiffuseColor = mix( diffuseColor, vec4( .015, .008, .006, 1. ), xqE );\n}\n#endif")};
+        s.fragmentShader=s.fragmentShader.replace("#include <common>","#include <common>\nuniform float xqInk;").replace("#include <map_fragment>","#include <map_fragment>\n#ifdef USE_MAP\nif ( xqInk > .5 ) {\nvec2 xqD = fwidth( vUv ) * 1.6;\nfloat xqA = max( max( texture2D( map, vUv + vec2( xqD.x, 0. ) ).a, texture2D( map, vUv - vec2( xqD.x, 0. ) ).a ), max( texture2D( map, vUv + vec2( 0., xqD.y ) ).a, texture2D( map, vUv - vec2( 0., xqD.y ) ).a ) );\nfloat xqE = smoothstep( .35, .65, xqA ) * ( 1. - smoothstep( .35, .65, sampledDiffuseColor.a ) );\ndiffuseColor = mix( diffuseColor, vec4( .015, .008, .006, opacity ), xqE );\n}\n#endif")};
       o.customProgramCacheKey=()=>"xqCard";o.needsUpdate=true}
     function ptRun(){if(!el.isConnected)return;const on=ptOn(),K=window.XQTOON_KIT;PT.u.value=on?1:0;PT.on=on;const ms=[];
       for(const r of PT.roots)r.traverse(m=>{if(m.isMesh&&!(K&&K.isHull(m)))ms.push(m)});
