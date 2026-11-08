@@ -1341,7 +1341,7 @@ html[data-era=qin] .view:has(>.shp-rd),html[data-era=wudai] .view:has(>.shp-rd){
       if(!window.caches)return go();caches.keys().then(function(ks){return Promise.all(ks.filter(function(k){return k.indexOf("xqlab-app-")===0}).map(function(k){return caches.delete(k)}))})
         .then(function(){return navigator.serviceWorker&&navigator.serviceWorker.getRegistration()}).then(function(r){return r&&r.update()}).catch(function(){}).then(go)}};setTimeout(chk,4000)})();
 </script>
-<script>window.XQ_OFFLINE=true;window.XQ_BUILD="20261108-2330";</script>
+<script>window.XQ_OFFLINE=true;window.XQ_BUILD="20261108-2342";</script>
 <script src="core.js"></script>
 <script src="engine.js"></script>
 <script src="local.js"></script>
@@ -3855,7 +3855,7 @@ function Stats(v){
    - 測驗：quizLog[].at、a（每題 [難度,對錯,…]）；猜著法：guessLog[].at、n 猜了幾步、m 猜中幾步
    - 對局：棋譜庫 /db/items 的 play（挑戰電腦、擂台、園子、故事都存在這裡）和 pvp（線上），id 是開局時間；勝負照 result
    - 棋話：shipLearn {站: 學會的時間}；主題訓練：themeStat[主題].at（最後一次練的時間）
-   - 擂主：xq_arenaStamps[朝代].at（第一次打贏）；古戰場：battleSeal[朝代][第幾場].at（第一次打下來）
+   - 擂主：xq_arenaStamps[朝代].at（第一次打贏）；古戰場：battleSeal[朝代][戰役id].at（第一次打下來；意見回饋 767 起照 id 記）
    - 讀懂地圖：跟「我的成長」同一套算法（readTheta／readCalc），每天記一筆在 wkRead（存檔清單有它），跟 7～13 天前那筆比；沒有就跟 rdLog 的上個月比
    - 遊玩時間：useDay（05-settings.js useTick，11/8 起才有）；專心練習：practiceMin（對局、測驗、猜著法、錯棋重練的畫面開著而且有操作）
    沒有日期、不算進「本週」：新手訓練營的星數、石桌往事讀到第幾回、攔路棋客（evLog 只記遇到的時間，不分輸贏）、修為（只有總數）。
@@ -3898,8 +3898,9 @@ async function wkData(){const{t0,t1,ks}=wkRange(),inW=t=>t>=t0&&t<=t1,days=new S
   const TS=store.get("themeStat",{})||{};R.themes=Object.entries(TS).filter(([,x])=>x&&inW(x.at)).map(([k])=>k);
   /* 擂主、古戰場 */
   const AS=typeof arenaStamps==="function"?arenaStamps():{};R.arena=Object.entries(AS).filter(([,x])=>x&&inW(Date.parse(x.at))).map(([k])=>({k,n:(typeof ARENA!=="undefined"&&ARENA[k]||{}).name||"",era:k==="classic"?"星槎船艙":eraLabel(k)}));
-  const BS=store.get("battleSeal",{})||{},bw=[];for(const[k,E]of Object.entries(BS))for(const[i,x]of Object.entries(E||{}))if(x&&inW(x.at))bw.push([k,+i]);R.battles=[];
-  if(bw.length){let B=null;try{B=await fetch("data/canju/battles.json").then(r=>r.ok?r.json():null)}catch(e){}R.battles=bw.map(([k,i])=>{const b=B&&B.eras&&B.eras[k]&&B.eras[k][i];return b&&b.name||"一場古戰役"})}
+  /* 意見回饋 767：battleSeal 改照戰役 id 記（{朝代:{戰役id:印}}）；還沒搬家的舊存檔是第幾張，照舊表換成「朝代_(第幾張+1)」 */
+  const BS=store.get("battleSeal",{})||{},bw=[];for(const[k,E]of Object.entries(BS))for(const[q,x]of Object.entries(E||{}))if(x&&inW(x.at))bw.push([k,/^[0-9]+$/.test(q)?k+"_"+(+q+1):q]);R.battles=[];
+  if(bw.length){let B=null;try{B=await fetch(typeof BTL_FILE!=="undefined"?BTL_FILE:"data/canju/battles.json").then(r=>r.ok?r.json():null)}catch(e){}R.battles=bw.map(([k,id])=>{const b=B&&B.eras&&(B.eras[k]||[]).find(c=>c&&c.id===id);return b&&b.name||"一場古戰役"})}
   /* 時間 */
   const UD=store.get("useDay",null)||{},PM=store.get("practiceMin",{})||{};let use=0,pm=0;
   for(const k of ks){if(UD[k]){use+=UD[k];if(UD[k]>=3e5)days.add(k)}if(PM[k]){pm+=PM[k];if(PM[k]>=1)days.add(k)}}
@@ -4061,7 +4062,7 @@ function onboard(){if(journey())journeyLock();else titleScreen({})}
 // ================= 設定：棋盤風格、棋子樣式、走棋顯示 =================
 const SAMPLE_FEN0="rnbakabnr/9/1c5c1/p1p1p1p1p/9/9/P1P1P1P1P/1C5C1/9/RNBAKABNR",SAMPLE_FEN1="rnbakabnr/9/1c5c1/p1p1p1p1p/9/9/P1P1P1P1P/1C2C4/9/RNBAKABNR",SAMPLE_LAST={f:70,t:67};
 /* 意見回饋 661：關於頁顯示整包遊戲要多大空間。XQ_SIZES 由 build-site.js 建置時填入（開發中的 m.html 是 null，就不顯示） */
-const XQ_SIZES={"pre":244466493,"code":13356660,"eng":51511005,"gm":33668932,"bgm":259516351,"opt":[["比賽對局 1956–2010",21765744],["比賽對局 2011–2014",25596413],["比賽對局 2015–2019",24821916]],"all":691936674,"other":17233160};
+const XQ_SIZES={"pre":256127055,"code":13504565,"eng":51511005,"gm":33668932,"bgm":259516351,"opt":[["比賽對局 1956–2010",21765744],["比賽對局 2011–2014",25596413],["比賽對局 2015–2019",24821916]],"all":703745141,"other":17233160};
 const szMB=b=>b>=1073741824?(b/1073741824).toFixed(1)+" GB":Math.max(1,Math.round(b/1048576))+" MB";
 function aboutSizes(){const S=XQ_SIZES;if(!S)return"";const opt=S.opt||[];   /* 意見回饋 662：玩家只看總數，細項只在開發者模式顯示 */
   return `<div class="row" style="justify-content:space-between"><span class="muted">整包下載</span><b>約 ${szMB(S.all)}</b></div>
@@ -4493,7 +4494,7 @@ const CHAR_ERA={x_swordboy:"qin",x_spiritgirl:"nanbei",x_martialgirl:"song",x_mi
 const JOURNEY_KEYS=["pChar","pSex","pStyle","botPiece","onboard1","journey","playSec","era","eraOpen","xp","xpDay","xpKeys","record","hintBonus","hintUse","undoBonus","undoDropIds","bag","jarGot","lingN","giftGames","dropMiss",
   "legend","legendGame","legBook","legRead","jStars","jPending","jPrev","jRun","jScene","jHid","jMig36","jpSeen","novelRead","sceneDone","storyEraTip","eraUser","study","campSeen","campStars",
   "npcBond","npcAsk","npcAskSeen","parkNpc","parkNpcLast","parkAdj","visitGone","secrets","secretClue","secretSpots","secretWins","relics","relicSolved","relicAt","histSeen","histSolved","histTitle",
-  "innCur","innDrop","innAdj","xhMake","xhMei","xhTitle","yuDay","yuHint","yuRoute","yuTitle","cupDrop","cupGot","cj","cjRun","shipAt","shipSolved","cjRunS","jRunS","battleSeal","battleTitle","battleVol","battleGrand","cjRunB","jRunB","battlePlan","diff","shipDock","shipLearn","undoFree","shipGal","shipStale","shipRead","shipMore","evLog","evPawn","evHeld","evStash","jRunE","cjRunE","rdLog","firstWin","wkRead","visit7","chd","ep","cjRunEp","wmDays","wmPg","wmBm","wmScr","wmEcho","jRunW"].map(k=>"m_"+k)   /* Gemini 遊玩樂趣評估（開發者 11/8 核准）：visit7＝七星來訪的次數、說過的話、小任務（07j-visit.js）；evStash＝千秋穿梭收進囊中、12 小時內再處理的突發事件（07h-qqev.js）；firstWin＝新手秒開局下過（或跳過）了；wkRead＝學習週報每天記一筆讀懂地圖比例，算「比上週」。意見回饋 737 第二期：rdLog＝讀過哪些棋譜、猜著法每盤答對幾手（壓縮成字串）。意見回饋 674：星槎在看哪一站、千秋殘局解開的題、正在解的那一題；675：航行難度、已停靠的站、學會的棋理、這盤用了幾次免費悔棋；685：七星同局圖鑑與熱身解開的題、看過困斃說明、讀過《雲河七星》哪幾章 */
+  "innCur","innDrop","innAdj","xhMake","xhMei","xhTitle","yuDay","yuHint","yuRoute","yuTitle","cupDrop","cupGot","cj","cjRun","shipAt","shipSolved","cjRunS","jRunS","battleSeal","battleTitle","battleVol","battleGrand","battleVolY","battleVolLegacy","battleMig","battleSeal0","cjRunB","jRunB","battlePlan","diff","shipDock","shipLearn","undoFree","shipGal","shipStale","shipRead","shipMore","evLog","evPawn","evHeld","evStash","jRunE","cjRunE","rdLog","firstWin","wkRead","visit7","chd","ep","cjRunEp","wmDays","wmPg","wmBm","wmScr","wmEcho","jRunW"].map(k=>"m_"+k)   /* Gemini 遊玩樂趣評估（開發者 11/8 核准）：visit7＝七星來訪的次數、說過的話、小任務（07j-visit.js）；evStash＝千秋穿梭收進囊中、12 小時內再處理的突發事件（07h-qqev.js）；firstWin＝新手秒開局下過（或跳過）了；wkRead＝學習週報每天記一筆讀懂地圖比例，算「比上週」。意見回饋 737 第二期：rdLog＝讀過哪些棋譜、猜著法每盤答對幾手（壓縮成字串）。意見回饋 674：星槎在看哪一站、千秋殘局解開的題、正在解的那一題；675：航行難度、已停靠的站、學會的棋理、這盤用了幾次免費悔棋；685：七星同局圖鑑與熱身解開的題、看過困斃說明、讀過《雲河七星》哪幾章 */
   .concat(["cpuRate","bonusKeys","record","arenaStamps","carBank","play","play2"].map(k=>"xq_"+k));
 const JK=new Set(JOURNEY_KEYS),SLOT_N=3;
 /* 意見回饋 668：舊玩家判斷要在首頁畫出來以前做（首頁會順手寫一些旅程鍵，例如 lingN），所以這裡直接讀 localStorage；null＝已經過渡過了 */
@@ -5946,7 +5947,7 @@ function innSheet(v){setTimeout(innDrop,1200);const I=xpInfo(),Sx=jSecrets(),nx=
 /* 意見回饋 327：石桌往事的棋（雲河棋路、驛站、公園）自己留一盤，跟朝代擂台、挑戰電腦互不干擾 */
 /* 意見回饋 588（開發者：路人看起來都是 Lv1，要照修為調整才有挑戰性）：每 3 級修為升一級（Lv3＝第 2 級電腦，最高第 8 級），再照最近輸贏微調：贏了下一位強一點、輸了弱一點（最多上下 2 級） */
 const parkLv=()=>Math.max(1,Math.min(8,1+Math.floor(xpInfo().L/3)+(store.get("parkAdj",0)||0)));
-function jName(j){if(!j)return"石桌往事";if(j==="park")return"園子";if(String(j).startsWith("bt:")){const p=String(j).split(":"),c=typeof battleCard==="function"?battleCard(p[1],+p[2]):null;return"古戰場・"+(c?c.name:"讓子對弈")}if(String(j).startsWith("char:")){const c=JCHAR[String(j).slice(5)];return c?"大廳・"+c.name:"大廳"}if(String(j).startsWith("inn:")){const x=INN.concat(SECRETS).find(z=>"inn:"+z.id===j);return x?"驛站・"+x.name:"驛站"}
+function jName(j){if(!j)return"石桌往事";if(j==="park")return"園子";if(String(j).startsWith("bt:")){const c=typeof battleCardJ==="function"?battleCardJ(j):null;return"古戰場・"+(c?c.name:"讓子對弈")}if(String(j).startsWith("char:")){const c=JCHAR[String(j).slice(5)];return c?"大廳・"+c.name:"大廳"}if(String(j).startsWith("inn:")){const x=INN.concat(SECRETS).find(z=>"inn:"+z.id===j);return x?"驛站・"+x.name:"驛站"}
   const s=jFindStage(j);return s?(s.book===2?"紙譜新局・":ROAD_NAME+"・")+s.name:ROAD_NAME}
 const jBack=j=>String(j||"").startsWith("bt:")?"#/battle":String(j||"").startsWith("char:")?"#/lobby":j==="park"?"#/port":String(j||"").startsWith("inn:")?"#/journey/inn":(()=>{const R=jRunGet(j);if(R&&!R.done)return"#/journey/"+j;const s=jFindStage(j);return s?jChapterHref(s):"#/shelf/1"})();
 const jPlace=j=>String(j||"").startsWith("bt:")?"古戰場":j==="park"?"渡口":String(j||"").startsWith("inn:")?"驛站":String(j||"").startsWith("char:")?"大廳":(()=>{const s=jFindStage(j);return s?"第"+CNUM(s.n)+"回":"石桌往事"})();   /* 意見回饋 735：章回棋路併進書的目錄，回到書 */
@@ -8061,23 +8062,72 @@ async function shipMorePz(v,k,Lz,B){const sp=v.querySelector("#pzSpots"),svg=v.q
        題目照航行難度（DIFF.band）從題庫挑「標籤對得上那張卡的道理」的題（data/canju/tags.json），12 朝一起挑、盡量不重複，不碰茶單保留題和星槎的題；挑不到退回那一朝的千秋殘局題。
      play.t＝hold（守城撐 N 步）：#/battle/<朝代>/<第幾張> → 07-legend.js jLevel 跑星槎小關同一種 relay 自由段：敵軍先動，你走滿 N 步，不被將死、仕相一顆都不能丟（holds 的局面、N、電腦等級照航行難度）。進度存 jRunB。
      play.t＝odds（讓子對弈）：#/battle/<朝代>/<第幾張> 說明頁 → jStart 開整盤對弈（journey＝bt:<朝代>:<第幾張>），你執紅先拿掉幾顆子（兵少的一方），贏了才蓋印；結果視窗在 08b-cpugame.js 轉給 battleResultModal。
-   存檔：battleSeal＝{朝代:{第幾張:{at,h,id}}}（不看答案打下來就蓋戰役印；h＝用過提示）；battleTitle＝{朝代:時間}（一朝 5 場集滿：稱號「〇・百戰之將」＋那一朝一件珍品，用 07c-canju.js 的 cjRelic）；
-   battleSeen＝{朝代:路線畫到第幾場}（只在這台裝置，用來播「路線延伸」的動畫）。 */
+   存檔（舊版，11/8 前）：battleSeal＝{朝代:{第幾張:{at,h,id}}}（不看答案打下來就蓋戰役印；h＝用過提示）——現在改照戰役 id 記，見下面意見回饋 767 那段；battleTitle＝{朝代:時間}（一朝 5 場集滿：稱號「〇・百戰之將」＋那一朝一件珍品，用 07c-canju.js 的 cjRelic）；
+   battleSeen＝{朝代:路線畫到第幾場}（只在這台裝置，用來播「路線延伸」的動畫）。
+   意見回饋 767（開發者 11/8 定案）：每朝 25 場照年份排、每 5 場一卷，資料改讀 data/canju/battles2.json（舊的 battles.json 留給還沒更新的舊程式）。
+     存檔改成照戰役 id 記：battleSeal＝{朝代:{戰役id:{at,h,id,c}}}（id＝題目，c＝戰役 id）；battlePlan＝{朝代:{戰役id:…}}。舊存檔（照第幾張記）由 battleMig 搬一次：
+     舊的第 i 張一定是「朝代_(i+1)」，照這張表換成 id；舊資料先整份備份到 battleSeal0；記號 battleMig＝{v:2,at}。之後只要看到數字 key（例如雲端還原了舊備份、舊程式又蓋了印）就再搬一次，結果一樣。
+     開卷：前一卷打下 3 場（前一卷還沒上線滿 3 場就要全部），或這一卷已經有印；卷內照年份一場一場打。
+     集滿：每卷 5 場都上線而且都打下 → battleVolY＝{朝代:{卷:時間}}，修為 +30＋珍品；舊版已經領過的次數記在 battleVolLegacy＝{朝代:{n,used}}，先拿來抵（不重複領），抵完才發。
+     第一次集滿任何一卷：稱號「〇・百戰之將」（battleTitle，舊版拿到的照留）；一朝 25 場全部打下：「〇・千古名將」（battleGrand）。
+   總開關 BTL_Y_ON（照年份五卷）：false＝卡片、順序、集滿獎勵、說明文字都跟 11/8 前線上版一樣（讀 battles.json，卷一＝百戰之將、卷二＝battleVol），存檔也不動（照第幾張記，程式在記憶體裡換成 id，寫回時換回第幾張；修為紀錄、journey id 也是線上版的格式）；
+     true＝讀 battles2.json、照年份分卷、存檔搬家（battleMig，舊資料備份在 battleSeal0）、battleVolY＋battleVolLegacy 抵扣。battleVolLegacy 在第一次用 true 的時候才照當時的 battleTitle／battleVol 算（battleLegacy），所以關著的期間玩家照舊領的獎勵也會算進去。 */
+const BTL_Y_ON=true;
+const BTL_FILE=BTL_Y_ON?"data/canju/battles2.json":"data/canju/battles.json";
 let BATTLE_P=null,BATTLE_PK={},BATTLE_LAST=null;
-function battleData(){return BATTLE_P||(BATTLE_P=Promise.all([fetch("data/canju/battles.json").then(r=>{if(!r.ok)throw new Error("戰役資料載入失敗（"+r.status+"）");return r.json()}),fetch("data/canju/tags.json").then(r=>r.ok?r.json():{tags:{}}).catch(()=>({tags:{}})),cjData(),
+function battleData(){return BATTLE_P||(BATTLE_P=Promise.all([fetch(BTL_FILE).then(r=>{if(!r.ok)throw new Error("戰役資料載入失敗（"+r.status+"）");return r.json()}),fetch("data/canju/tags.json").then(r=>r.ok?r.json():{tags:{}}).catch(()=>({tags:{}})),cjData(),
     fetch("data/eramap/realms.json").then(r=>r.ok?r.json():null).catch(()=>null),fetch("data/eramap/labels.json").then(r=>r.ok?r.json():null).catch(()=>null)])
   .then(([B,T,D,RJ,LJ])=>({B,T,D,RJ,LJ})).catch(e=>{BATTLE_P=null;throw e}))}
-const battleSeals=()=>store.get("battleSeal",{})||{};
+/* ---------- 存檔搬家（照第幾張記 → 照戰役 id 記），見檔頭 ---------- */
+const BTL_NUM=x=>/^\d+$/.test(String(x));
+function battleMigMap(o,k){const N={};for(const[x,v]of Object.entries(o||{})){if(!v)continue;const id=BTL_NUM(x)?k+"_"+(+x+1):x,p=N[id];N[id]=!p?v:{...p,...v,at:Math.min(+p.at||Infinity,+v.at||Infinity),h:Math.min(p.h|0,v.h|0)}}return N}
+function battleMig(){if(!BTL_Y_ON)return false;try{const A=store.get("battleSeal",{})||{},P=store.get("battlePlan",{})||{},has=o=>Object.values(o||{}).some(E=>E&&typeof E==="object"&&Object.keys(E).some(BTL_NUM));
+    if(!has(A)&&!has(P))return false;
+    if(!store.get("battleSeal0",null))store.set("battleSeal0",{at:Date.now(),seal:JSON.parse(JSON.stringify(A)),plan:JSON.parse(JSON.stringify(P)),title:store.get("battleTitle",{})||{},vol:store.get("battleVol",{})||{}});
+    let n=0;
+    for(const k of Object.keys(A)){const E=A[k];if(!E||typeof E!=="object"||!Object.keys(E).some(BTL_NUM))continue;n+=Object.keys(E).filter(BTL_NUM).length;const N=battleMigMap(E,k);for(const id in N)N[id]={...N[id],c:id};A[k]=N}
+    for(const k of Object.keys(P))if(P[k]&&typeof P[k]==="object"&&Object.keys(P[k]).some(BTL_NUM))P[k]=battleMigMap(P[k],k);
+    store.set("battleSeal",A);store.set("battlePlan",P);
+    /* 修為紀錄：舊鍵 bt:<朝代>:<第幾張> 補一個新鍵 bt:<戰役id>（舊鍵留著），同一場不會再領一次 +15 */
+    {const K=store.get("xpKeys",{})||{};let ch=0;for(const q of Object.keys(K)){const m=/^bt:([a-z]+):(\d+)$/.exec(q);if(m){const nk="bt:"+m[1]+"_"+(+m[2]+1);if(!K[nk]){K[nk]=1;ch=1}}}if(ch)store.set("xpKeys",K)}
+    {const R=store.get("jRunB",null),m=R&&/^bt:(\w+):(\d+)(:.*)?$/.exec(R.id||"");if(m){R.id="bt:"+m[1]+":"+m[1]+"_"+(+m[2]+1)+(m[3]||"");store.set("jRunB",R)}}
+    {const J=store.get("jPending",null),m=J&&/^bt:(\w+):(\d+)$/.exec(J.id||"");if(m){J.id="bt:"+m[1]+":"+m[1]+"_"+(+m[2]+1);store.set("jPending",J)}}
+    try{store.set("battleSeen",{});sessionStorage.removeItem("btAt")}catch(e){}
+    store.set("battleMig",{v:2,at:Date.now(),n});return true}catch(e){return false}}
+try{battleMig()}catch(e){}
+/* 舊版已經領過幾次集滿獎勵（舊卷一＝百戰之將、舊卷二起＝battleVol）：BTL_Y_ON 第一次打開時記一次（_at），之後新卷集滿先抵這個數 */
+function battleLegacy(){const L0=store.get("battleVolLegacy",null);if(L0&&L0._at)return L0;const T=store.get("battleTitle",{})||{},V=store.get("battleVol",{})||{},LG={_at:Date.now()};
+  for(const k of new Set([...Object.keys(T),...Object.keys(V)]))LG[k]={n:(T[k]?1:0)+Object.keys(V[k]||{}).length,used:0};store.set("battleVolLegacy",LG);return LG}
+if(BTL_Y_ON)try{battleLegacy()}catch(e){}
+/* 照 id 記的原始存檔（{朝代:{戰役id:印}}） */
+/* 總開關關著：存檔一個字都不改（跟線上版一樣照第幾張記），這裡只在記憶體裡換成 id 給程式用；寫回時再換回第幾張（battleSealSave） */
+const battleSealsId=()=>{if(!BTL_Y_ON){const A=store.get("battleSeal",{})||{},o={};for(const k of Object.keys(A))o[k]=battleMigMap(A[k],k);return o}battleMig();return store.get("battleSeal",{})||{}};
+/* 戰役 id → 線上版的第幾張（qin_3 → "2"）；開關打開時就是 id 本身。用在 battleSeal、battlePlan、修為紀錄、journey id */
+const battleNumKey=(k,cid)=>{const t=String(cid||"");return t.startsWith(k+"_")&&BTL_NUM(t.slice(k.length+1))?String(+t.slice(k.length+1)-1):t};
+const battleKey=(k,cid)=>BTL_Y_ON?cid:battleNumKey(k,cid);
+function battleSealSave(A){if(BTL_Y_ON){store.set("battleSeal",A);return}const o={};for(const k of Object.keys(A)){const m={};for(const[q,v]of Object.entries(A[k]||{})){if(!v)continue;const{c,...x}=v;m[battleNumKey(k,q)]=x}o[k]=m}store.set("battleSeal",o)}
+/* 畫面用：{朝代:{第幾張:印}}（照現在 battles2.json 的順序換成位置，跟以前的程式一樣用 S[i]） */
+const battleSeals=()=>{const A=battleSealsId(),o={};for(const k of Object.keys(A)){const C=BATTLE_CARDS[k]||[],E=A[k]||{},m={};C.forEach((c,i)=>{if(c&&E[c.id])m[i]=E[c.id]});o[k]=m}return o};
+/* 照 journey／關卡 id 找戰役：bt:<朝代>:<戰役id>（舊版是 bt:<朝代>:<第幾張>，照舊表換成 id） */
+function battleJ(j){const p=String(j||"").split(":"),k=p[1]||"";let id=p[2]||"";if(BTL_NUM(id))id=k+"_"+(+id+1);const i=(BATTLE_CARDS[k]||[]).findIndex(c=>c&&c.id===id);return{k,id,i}}
+function battleCardJ(j){const r=battleJ(j);return r.i>=0?BATTLE_CARDS[r.k][r.i]:null}
 const battleTitleOf=k=>(store.get("battleGrand",{})||{})[k]?shipShort(k)+"・千古名將":(store.get("battleTitle",{})||{})[k]?shipShort(k)+"・百戰之將":"";
 /* 稱號（06-cpu.js XQ_TITLE：排在千秋盃、擂台後面，將令、棋罐前面）：最近集滿的那一朝；意見回饋 767：一朝全部（5 卷 25 場）打下來是「〇・千古名將」，排在百戰之將前面 */
 function battleTitle(){try{const G=store.get("battleGrand",{})||{},g=Object.keys(G).sort((a,b)=>G[b]-G[a])[0];if(g)return shipShort(g)+"・千古名將";const T=store.get("battleTitle",{})||{},k=Object.keys(T).sort((a,b)=>T[b]-T[a])[0];return k?shipShort(k)+"・百戰之將":""}catch(e){return""}}
 const battleMode=c=>(c&&c.play&&c.play.t)||"puzzle";
+/* 守城玩法的名稱：不是守城牆的（例如尾隨敵軍、攔截援軍、封鎖湖面），資料寫 play.nm，卡面就不寫「守城」（史學顧問 11/8） */
+const battleHoldNm=c=>c&&c.play&&c.play.nm?"🛡 "+c.play.nm:"🏯 守城";
 /* 照年代一場一場打：第一場一直開著；前一場打下來（或這一場已經蓋過印）才開 */
-const battleOpen=(k,i,S)=>{S=S||battleSeals()[k]||{};const C=BATTLE_CARDS[k]||[],vo=(C[i]&&C[i].vol)||1,f=C.findIndex(z=>((z&&z.vol)||1)===vo);
-  if(f<0)return i===0||!!S[i]||!!S[i-1];if(i!==f)return!!S[i]||!!S[i-1];return vo<2||!!S[i]||battleVolSeals(k,vo-1,S)>=3};   /* 意見回饋 767 分卷：每卷第一場要前一卷打下 3 場才開；卷內照年代一場一場打 */
+const battleOpen=(k,i,S)=>{S=S||battleSeals()[k]||{};const C=BATTLE_CARDS[k]||[];if(!C[i])return i===0;if(S[i])return true;const vo=C[i].vol||1,f=C.findIndex(z=>((z&&z.vol)||1)===vo);
+  if(i!==f)return!!S[i-1];return battleVolOpen(k,vo,S)};   /* 意見回饋 767 分卷：每卷第一場看 battleVolOpen；卷內照年份一場一場打（蓋過印的那張一直開著，也帶開下一張） */
 const BTL_VN=["","一","二","三","四","五","六","七","八","九"];
 const battleVolOf=(k,i)=>(((BATTLE_CARDS[k]||[])[i]||{}).vol)||1;
-function battleLockTxt(k,i){const C=BATTLE_CARDS[k]||[],vo=battleVolOf(k,i);if(vo>1&&C.findIndex(z=>(z.vol||1)===vo)===i)return`卷${BTL_VN[vo-1]||vo-1}先打下 3 場，卷${BTL_VN[vo]||vo}才會開`;return`先打下「${(C[i-1]||{}).name||"前一場"}」`}
+/* 前一卷（有上線場次的前一卷）要打下幾場，這一卷才開：3 場；前一卷上線不到 3 場就要全部 */
+function battleVolNeed(k,vo){const C=BATTLE_CARDS[k]||[],vs=[...new Set(C.map(c=>c.vol||1))].sort((a,b)=>a-b),j=vs.indexOf(vo);if(j<=0)return null;const pv=vs[j-1];return{pv,need:Math.min(3,C.filter(c=>(c.vol||1)===pv).length)}}
+function battleVolOpen(k,vo,S){S=S||battleSeals()[k]||{};const C=BATTLE_CARDS[k]||[],q=battleVolNeed(k,vo);if(!q)return true;
+  if(C.some((c,i)=>(c.vol||1)===vo&&S[i]))return true;   /* 這一卷已經有印（舊版打下、搬家帶過來的）：直接開，不吃虧 */
+  return battleVolSeals(k,q.pv,S)>=q.need}
+function battleLockTxt(k,i){const C=BATTLE_CARDS[k]||[],vo=battleVolOf(k,i),q=battleVolNeed(k,vo);if(q&&C.findIndex(z=>(z.vol||1)===vo)===i)return`卷${BTL_VN[q.pv]||q.pv}先打下 ${q.need} 場，卷${BTL_VN[vo]||vo}才會開`;return`先打下「${(C[i-1]||{}).name||"前一場"}」`}
 function battleVolSeals(k,vo,S){S=S||battleSeals()[k]||{};return(BATTLE_CARDS[k]||[]).filter((c,i)=>((c.vol||1)===vo)&&S[i]).length}
 const battleHref=(k,i,c)=>battleMode(c)==="puzzle"&&!(c&&c.flag)?"#/canju/b/"+k+"/"+i:"#/battle/"+k+"/"+i;   /* 旗艦戰役（方案 C）一律先到 #/battle/<朝代>/<第幾張> 的軍師獻策 */
 /* 方案 C 軍師獻策：這次打開 App 選對過哪幾場（選對才照原本的玩法開打；battlePlan 存每場第一次選對的時間和選錯幾次） */
@@ -8145,20 +8195,20 @@ function Battlefield(v){const k=shipHere();setTop("⚔ 古戰場・"+(k==="class
   if(eraLocked(k)){v.innerHTML=`<div class="pad"><div class="card muted">${esc(eraLockMsg(k))}</div></div>`;return{}}
   v.innerHTML='<div class="pad muted">古戰場載入中…</div>';
   battleData().then(async({B,D,RJ,LJ})=>{if(!v.isConnected)return;const cards=(B.eras||{})[k]||[];
-    if(!cards.length){v.innerHTML=`<div class="pad"><div class="card" style="line-height:1.8"><b>⚔ ${esc(eraLabel(k))}的古戰場</b><p class="muted">這一朝的五場戰役還在整理，整理好就會出現在這裡。</p></div><button class="btn ghost" id="btBack" style="width:100%;margin-top:10px">⚓ 回渡口</button></div>`;
+    if(!cards.length){v.innerHTML=`<div class="pad"><div class="card" style="line-height:1.8"><b>⚔ ${esc(eraLabel(k))}的古戰場</b><p class="muted">這一朝的戰役還在整理，整理好就會出現在這裡。</p></div><button class="btn ghost" id="btBack" style="width:100%;margin-top:10px">⚓ 回渡口</button></div>`;
       v.querySelector("#btBack").onclick=()=>goUp("#/port");return}
     const pk=await battlePicks(k);if(!v.isConnected)return;const S=battleSeals()[k]||{},n=cards.filter((c,i)=>S[i]).length,tt=battleTitleOf(k);
-    const modeTxt=(c,i)=>{const m=battleMode(c);if(m==="hold"){const H=battleHoldCfg(B,c);return H?`🏯 守城：敵軍先動，撐過 ${H.n} 步，${battleKeepTxt(H.keep)}一顆都不能丟`:"守城（設定準備中）"}
+    const modeTxt=(c,i)=>{const m=battleMode(c);if(m==="hold"){const H=battleHoldCfg(B,c);return H?`${battleHoldNm(c)}：敵軍先動，撐過 ${H.n} 步，${battleKeepTxt(H.keep)}一顆都不能丟`:"守城（設定準備中）"}
       if(m==="odds"){const O=battleOddsCfg(B,c);return O?`⚖ 讓子對弈：你少了${esc(O.cut)}，跟第 ${O.lv} 級「${esc((typeof FINE_NM!=="undefined"&&FINE_NM[O.lv-1])||"")}」電腦下一盤，贏了才算`:"讓子對弈（設定準備中）"}
       const P=pk[i]&&D.byId[pk[i]];return P?`📜 殘局題：${esc(P.t)}・${cjLv(P.d)}・${cjSrc(P)}`:"題目準備中"};
     const ready=(c,i)=>battleMode(c)==="puzzle"?!!(pk[i]&&D.byId[pk[i]]):battleMode(c)==="hold"?!!battleHoldCfg(B,c):!!battleOddsCfg(B,c);
     if(BTL_MAP_ON)return battleField2(v,k,{cards,S,tt,modeTxt,ready,RJ,LJ});
-    v.innerHTML=`<div class="pad bt-page">${battleMapHTML(k,cards,S,RJ,LJ)}<div class="card bt-head"><b>⚔ ${esc(eraLabel(k))}・五場戰役</b><div class="muted">戰役印 ${n}／${cards.length}${tt?"・🏅 "+esc(tt):"・集滿五場：稱號「"+esc(shipShort(k))+"・百戰之將」＋一件珍品"}・題目和電腦強度照🎚 ${esc(diffOf().n)}<br>照年代一場一場打：打下一場，路線就延伸到下一場。</div></div>
+    v.innerHTML=`<div class="pad bt-page">${battleMapHTML(k,cards,S,RJ,LJ)}<div class="card bt-head"><b>⚔ ${esc(eraLabel(k))}・${cards.length} 場戰役</b><div class="muted">戰役印 ${n}／${cards.length}${tt?"・🏅 "+esc(tt):"・集滿一卷 5 場：稱號「"+esc(shipShort(k))+"・百戰之將」＋一件珍品"}・題目和電腦強度照🎚 ${esc(diffOf().n)}<br>照年代一場一場打：打下一場，路線就延伸到下一場。</div></div>
       ${cards.map((c,i)=>{const s=S[i],o=battleOpen(k,i,S),ok=o&&ready(c,i);return`<button class="card bt-card${s?" done":""}${o?"":" lock"}${c.flag?" flag":""}" data-bi="${i}" id="btc${i}"${ok?"":" disabled"}>
         <span class="bt-pic" style="background-image:url(data/shipmap/port_${k}.webp);background-position:${(i*23)%100}% 40%"><span class="bt-pic-n">${esc(c.name)}</span><img src="data/battles/${esc(c.img||c.id+".webp")}" alt="" loading="lazy" onerror="this.remove()"></span>
         <span class="bt-seal">${s?(s.h?"◐":"印"):o?"⚔":"🔒"}</span><span class="tx"><b>${i+1}・${esc(c.name)}${c.flag?'<em class="bt-flag">⭐ 旗艦戰役</em>':""}</b><small>${esc(c.year)}${c.sides?"・"+esc(c.sides):""}${c.prov?`・<em class="bt-prov">${esc(c.prov)}</em>`:""}</small>
         ${c.at?`<small>📍 ${c.approx?"約在":""}${esc(c.at)}</small>`:""}<span class="bt-line">${esc(c.line)}</span><span class="bt-tag">🗡 計謀：${esc(c.trick)}　📘 道理：${esc(c.lesson)}</span>
-        <span class="muted bt-q">${o?`${s?"✅ 已蓋戰役印・":""}${modeTxt(c,i)}`:`🔒 先打下「${esc(cards[i-1].name)}」`}</span></span></button>`}).join("")}
+        <span class="muted bt-q">${o?`${s?"✅ 已蓋戰役印・":""}${modeTxt(c,i)}`:`🔒 ${esc(battleLockTxt(k,i))}`}</span></span></button>`}).join("")}
       <p class="muted" style="font-size:12.5px;margin:8px 2px 0;line-height:1.7">點一張戰役卡開打：殘局題解開（看答案不算）、守城撐過步數、讓子對弈贏棋，就蓋戰役印。棋盤上的局面是借那場仗的道理出題，不是當年的戰況；標「存疑」的，是史書記載不完全確定的地方；地圖上標「約」的，是地點只能標大概。</p>
       <button class="btn ghost" id="btBack" style="width:100%;margin-top:10px">⚓ 回渡口</button></div>`;
     v.querySelectorAll("[data-bi]").forEach(b=>b.onclick=()=>{vibrate(5);const i=+b.dataset.bi;location.hash=battleHref(k,i,cards[i])});
@@ -8169,7 +8219,7 @@ function Battlefield(v){const k=shipHere();setTop("⚔ 古戰場・"+(k==="class
    BTL_MAP_ON＝false 回到舊版（上面地圖＋下面卡片清單）。抽屜：半高，拉把往上拉＝全高、往下拉＝收起，點地圖空白處也收起；‹ 上一場／下一場 › 照路線順序切換。
    ☰ 戰役清單＝抽屜改成清單；ⓘ＝圖例和玩法說明。從戰役回來：sessionStorage btAt＝「朝代:第幾張」（進戰役時記，battleAtSet），地圖停在那一場、抽屜打開。寬螢幕（≥820px）抽屜改成右邊固定欄。 */
 const BTL_MAP_ON=true;
-/* 意見回饋 767：分卷（每朝 5 卷×5 場）。false＝只用卷一（battles.json 裡卷二起的卡在 battleData 先濾掉），古戰場跟以前一樣 */
+/* 意見回饋 767：分卷（每朝 5 卷×5 場，照年份）。false＝只用卷一（battles2.json 裡卷二起的卡在 battleData 先濾掉） */
 const BTL_VOL_ON=true;   /* 開發者 11/8：卷二 60 場經史學顧問考核，打開 */
 let BTL_FIT=null;
 function battleAtSet(k,i){try{sessionStorage.setItem("btAt",k+":"+i)}catch(e){}}
@@ -8201,7 +8251,7 @@ function battleField2(v,k,X){const{cards,S,tt,modeTxt,ready,RJ,LJ}=X,N=cards.len
   const card=i=>{const c=cards[i],s=S[i],o=battleOpen(k,i,S),ok=o&&ready(c,i);
     return`<div class="bt-pic bt2-pic${o?"":" lock"}" ${pic(c,i)}><span class="bt-pic-n">${esc(c.name)}</span><img src="data/battles/${esc(c.img||c.id+".webp")}" alt="" onerror="this.remove()">${s?`<span class="bt-seal">${s.h?"◐":"印"}</span>`:""}</div>
       <div class="bt2-tx">${multi?`<small class="bt2-vl">卷${BTL_VN[vOf(i)]||vOf(i)}</small>`:""}<b>${i+1}・${esc(c.name)}${c.flag?'<em class="bt-flag">⭐ 旗艦戰役</em>':""}</b><small>${esc(c.year)}${c.sides?"・"+esc(c.sides):""}${c.prov?`・<em class="bt-prov">${esc(c.prov)}</em>`:""}</small>
-      ${c.at?`<small>📍 ${c.approx?"約在":""}${esc(c.at)}</small>`:""}<span class="bt-line">${esc(c.line)}</span><span class="bt-tag">🗡 計謀：${esc(c.trick)}　📘 道理：${esc(c.lesson)}</span>
+      ${c.at?`<small>📍 ${c.approx?"約在":""}${esc(c.at)}</small>`:""}<span class="bt-line">${esc(c.line)}</span>${c.hist&&!c.flag?`<details class="bt2-hist"><summary>📜 史實</summary><p>${esc(c.hist)}</p>${c.histSrc?`<p class="muted">出處：${esc(c.histSrc)}</p>`:""}</details>`:""}<span class="bt-tag">🗡 計謀：${esc(c.trick)}　📘 道理：${esc(c.lesson)}</span>
       <span class="muted bt-q">${o?`${s?(s.h?"◐ 用過提示，不看提示再打一次印就變實心・":"✅ 已蓋戰役印・"):""}${modeTxt(c,i)}`:`🔒 ${esc(battleLockTxt(k,i))}${/才會開$/.test(battleLockTxt(k,i))?"":"才開"}`}</span>
       ${s&&c.flag?`<details class="bt2-hist"><summary>📜 歷史上其實是這樣</summary><p>${esc(c.flag.hist)}</p>${c.flag.src?`<p class="muted">出處：${esc(c.flag.src)}</p>`:""}</details>`:""}</div>
       <div class="bt2-nav"><button class="btn ghost" data-go="${i-1}"${i<1?" disabled":""}>‹ 上一場</button><button class="btn" id="bt2Go"${ok?"":" disabled"}>${!o?"🔒 還沒開":!ok?"題目準備中":c.flag?(s?"⭐ 再打一次":"⭐ 聽軍師獻策"):s?"⚔ 再打一次":"⚔ 開戰"}</button><button class="btn ghost" data-go="${i+1}"${i>=N-1?" disabled":""}>下一場 ›</button></div>`};
@@ -8215,7 +8265,7 @@ function battleField2(v,k,X){const{cards,S,tt,modeTxt,ready,RJ,LJ}=X,N=cards.len
     Bd.querySelectorAll("[data-li]").forEach(b=>b.onclick=()=>{vibrate(5);show(+b.dataset.li)});open(!wide()&&N>6)}
   const info=()=>modal(`<div class="em">⚔</div><h2>${esc(eraLabel(k))}古戰場</h2><div class="bt2-lg">${RE&&RE.year?`<p>🗺 地圖是${esc(eraLabel(k))}・${esc(RE.year)}的疆域</p>`:""}
     <p><span class="bt-k s">印</span> 打下了（◐＝用過提示）</p><p><span class="bt-k n">✦</span> 下一場，可以打</p><p><span class="bt-k l">●</span> 還沒開</p><p>⭐ 旗艦戰役：先聽軍師獻策</p><p>（約）地點只能標大概</p></div>
-    <p class="muted" style="text-align:left;line-height:1.75;font-size:13px">點地圖上的戰役，就會看到那一場的故事。照年代一場一場打：打下一場，路線就延伸到下一場。殘局題解開（看答案不算）、守城撐過步數、讓子對弈贏棋，就蓋戰役印；題目和電腦強度照🎚 ${esc(diffOf().n)}。${multi?`分成 ${VS.length} 卷，每卷 5 場；前一卷打下 3 場，下一卷就開。卷一集滿：稱號「${esc(shipShort(k))}・百戰之將」＋一件珍品；卷二起每卷集滿：修為 +30＋一件珍品；全部打下：稱號「${esc(shipShort(k))}・千古名將」。`:tt?"":"集滿 "+N+" 場：稱號「"+esc(shipShort(k))+"・百戰之將」＋一件珍品。"}<br>棋盤上的局面是借那場仗的道理出題，不是當年的戰況；標「存疑」的，是史書記載不完全確定的地方。</p>`,[["好",null]]);
+    <p class="muted" style="text-align:left;line-height:1.75;font-size:13px">點地圖上的戰役，就會看到那一場的故事。照年份一場一場打：打下一場，路線就延伸到下一場。殘局題解開（看答案不算）、守城撐過步數、讓子對弈贏棋，就蓋戰役印；題目和電腦強度照🎚 ${esc(diffOf().n)}。${multi&&!BTL_Y_ON?`分成 ${VS.length} 卷，每卷 5 場；前一卷打下 3 場，下一卷就開。卷一集滿：稱號「${esc(shipShort(k))}・百戰之將」＋一件珍品；卷二起每卷集滿：修為 +30＋一件珍品；全部打下：稱號「${esc(shipShort(k))}・千古名將」。`:multi?`照年份分成 ${VS.length} 卷，每卷 5 場（卷一最早、卷五最晚）；前一卷打下 3 場，下一卷就開。每卷集滿：修為 +30＋一件珍品；第一次集滿任何一卷：稱號「${esc(shipShort(k))}・百戰之將」；一朝 25 場全部打下：稱號「${esc(shipShort(k))}・千古名將」。`:tt?"":"集滿 "+N+" 場：稱號「"+esc(shipShort(k))+"・百戰之將」＋一件珍品。"}<br>棋盤上的局面是借那場仗的道理出題，不是當年的戰況；標「存疑」的，是史書記載不完全確定的地方。</p>`,[["好",null]]);
   W.querySelector("#bt2I").onclick=()=>{vibrate(5);info()};W.querySelector("#bt2L").onclick=()=>{vibrate(5);list()};M.addEventListener("click",()=>{if(!Sh.hidden)close()});
   {const H=W.querySelector("#bt2H");let y0=null,dy=0;H.addEventListener("pointerdown",e=>{if(wide())return;y0=e.clientY;dy=0;Sh.style.transition="none";try{H.setPointerCapture(e.pointerId)}catch(x){}});
     H.addEventListener("pointermove",e=>{if(y0==null)return;dy=e.clientY-y0;Sh.style.transform=dy>0?`translateY(${dy}px)`:""});
@@ -8243,7 +8293,7 @@ function battleStartPos(B,k,i,c){try{const C=window.XQCore,m=battleMode(c);
   if(m==="hold"){const H=battleHoldCfg(B,c);return H?{b:C.parseFen(H.fen),flip:false}:null}
   if(m==="odds"){const O=battleOddsCfg(B,c);if(!O)return null;const b=C.parseFen(C.START);for(const q of O.rm)b[C.parseSq(q)]=null;return{b,flip:false}}
   return battleCouncilPos(k,i)}catch(e){return null}}
-function battleCouncil(v,k,i,c,B){const F=c.flag,old=((store.get("battlePlan",{})||{})[k]||{})[i];setTop("⭐ 軍師獻策","^#/battle");setTabs(false);v.className="view";
+function battleCouncil(v,k,i,c,B){battleMig();const F=c.flag,old=((store.get("battlePlan",{})||{})[k]||{})[battleKey(k,c.id)];setTop("⭐ 軍師獻策","^#/battle");setTabs(false);v.className="view";
   battlePicks(k).catch(()=>{}).then(()=>{if(!v.isConnected)return;let pv=null;try{pv=battleStartPos(B,k,i,c)}catch(e){}if(!pv&&battleMode(c)==="puzzle")pv=battleCouncilPos(k,i);
     v.innerHTML=`<div class="pad bt-cn"><div class="lvh"><b>⭐ ${esc(c.name)}・軍師獻策</b><span>${esc(c.year||"")}</span></div><div class="card lvsay">${esc(F.open)}</div>
       ${pv?'<div class="boardbox" id="btCB" style="max-width:280px;margin:0 auto 4px"></div><p class="muted" style="text-align:center;font-size:12px;margin:0 0 8px">選對計策，就從這個局面開打</p>':""}
@@ -8254,7 +8304,7 @@ function battleCouncil(v,k,i,c,B){const F=c.flag,old=((store.get("battlePlan",{}
     v.querySelectorAll("[data-o]").forEach(b=>b.onclick=()=>{const o=F.opts[+b.dataset.o];
       if(!o.ok){miss++;b.disabled=true;vibrate([20,40,20]);rp.innerHTML=`<div class="card lvsay lvno">💭 ${esc(o.re)}<br><span class="muted">這一策在當時行不通，再選一次。</span></div>`;return}
       vibrate(15);v.querySelectorAll("[data-o]").forEach(z=>z.disabled=true);b.classList.remove("ghost");
-      const A=store.get("battlePlan",{})||{},E=A[k]||(A[k]={});E[i]=E[i]?{...E[i],last:Date.now(),miss:Math.min(E[i].miss|0,miss)}:{at:Date.now(),miss};store.set("battlePlan",A);
+      const A=store.get("battlePlan",{})||{},E=A[k]||(A[k]={}),q=battleKey(k,c.id);E[q]=E[q]?{...E[q],last:Date.now(),miss:Math.min(E[q].miss|0,miss)}:{at:Date.now(),miss};store.set("battlePlan",A);
       rp.innerHTML=`<div class="card lvsay">✅ ${esc(o.re)}</div><button class="btn" id="btFight" style="width:100%">⚔ 照這一策開打</button>`;rp.querySelector("#btFight").onclick=()=>battleFight(k,i,c);rp.scrollIntoView({behavior:"smooth",block:"nearest"})});
     {const sk=v.querySelector("#btSkip");if(sk)sk.onclick=()=>battleFight(k,i,c)}})}
 /* 殘局題的開局（題目資料在 battleData 的 D 裡） */
@@ -8264,11 +8314,11 @@ function battleFight(k,i,c){BATTLE_PLAN_OK[k+":"+i]=1;if(battleMode(c)==="puzzle
 function battleHistHTML(c){const F=c&&c.flag;if(!F)return"";return`<div class="em">📜</div><h2>歷史上其實是這樣</h2><p style="line-height:1.85;text-align:left">${esc(F.hist)}</p>${F.src?`<p class="muted" style="font-size:12px;text-align:left">出處：${esc(F.src)}</p>`:""}`}
 /* 守城：星槎小關的 relay 自由段（敵軍先動；走滿 N 步、不被將死、仕相不能丟） */
 function battleHold(v,k,i,c,B){const H=battleHoldCfg(B,c),cards=B.eras[k];if(!H){v.innerHTML='<div class="pad"><div class="card muted">這一場的守城局面還在準備。</div></div>';return}
-  const kt=battleKeepTxt(H.keep),dn=diffNow();let res=null;
-  const G={name:c.name,intro:`${c.trick}：${c.line}`,skill:`${c.lesson}——守城：先護住帥，仕、相連在一起，不讓敵軍找到破口`,pass:`敵軍先動。撐過 ${H.n} 步：不被將死，${kt}一顆都不能丟`,star3:"一次就撐過、不用提示",rules:{maxMistakes3:0,maxMistakes2:1},
-    steps:[{t:"relay",say:H.say||"",start:{fen:H.fen,turn:H.turn||"b"},human:"r",segs:[{who:"you",name:"你",n:H.n,keep:H.keep||[],opp:{ai:H.ai},hint:`${(c.play&&c.play.say)||"守住城牆"}：撐過 ${H.n} 步，${kt}不能丟（被將死也不行）。`,fail:"城牆破了。先護住帥，再把仕、相連在一起，再守一次。"}]}],
-    outro:`${c.name}・城守住了！${c.lesson}。`};
-  jLevel(v,{id:"bt:"+k+":"+i+":"+dn,name:c.name},{G,rk:"jRunB",icon:"⚔",back:"#/battle",title:`${eraLabel(k)}・${c.name}・🏯 守城`,
+  const kt=battleKeepTxt(H.keep),dn=diffNow(),wall=!(c.play&&c.play.nm);let res=null;
+  const G={name:c.name,intro:`${c.trick}：${c.line}`,skill:`${c.lesson}——${wall?"守城":c.play.nm}：先護住帥，仕、相連在一起，不讓敵軍找到破口`,pass:`敵軍先動。撐過 ${H.n} 步：不被將死，${kt}一顆都不能丟`,star3:"一次就撐過、不用提示",rules:{maxMistakes3:0,maxMistakes2:1},
+    steps:[{t:"relay",say:H.say||"",start:{fen:H.fen,turn:H.turn||"b"},human:"r",segs:[{who:"you",name:"你",n:H.n,keep:H.keep||[],opp:{ai:H.ai},hint:`${(c.play&&c.play.say)||"守住城牆"}：撐過 ${H.n} 步，${kt}不能丟（被將死也不行）。`,fail:(wall?"城牆破了。":"陣腳亂了。")+"先護住帥，再把仕、相連在一起，再守一次。"}]}],
+    outro:`${c.name}・${wall?"城守住了":"撐住了"}！${c.lesson}。`};
+  jLevel(v,{id:"bt:"+k+":"+battleKey(k,c.id)+":"+dn,name:c.name},{G,rk:"jRunB",icon:"⚔",back:"#/battle",title:`${eraLabel(k)}・${c.name}・${battleHoldNm(c)}`,
     done:(stars,R)=>{res=battleMark(k,i,"hold:"+c.play.pos,{hint:!!(R&&R.hint)});return stars},
     line:()=>res?`⚔ 戰役印 ${res.n}／${res.all}${res.h?"（用過提示，空心印）":""}${res.full?"・🏅 "+battleTitleOf(k):""}`:"",
     get next(){const j=battleNextIdx(k,i);return j>=0?[`下一場：${cards[j].name} ›`,()=>{location.hash=battleHref(k,j,cards[j])}]:["回古戰場",()=>goUp("#/battle")]}})}
@@ -8279,15 +8329,15 @@ function battleOdds(v,k,i,c,B){const O=battleOddsCfg(B,c);if(!O){v.innerHTML='<d
     <div class="card" style="font-size:14px;line-height:1.85">⚖ <b>讓子對弈</b>${c.play.force?`・${esc(c.play.force)}`:""}<br>🎁 你執紅，扮演兵少的一方：先拿掉${esc(O.cut)}<br>⚔ 對手：第 ${O.lv} 級「${esc(nm)}」電腦（🎚 ${esc(diffOf().n)}）<br>🎯 贏這一盤就蓋戰役印；和棋、輸棋都可以再下<br>📘 道理：${esc(c.lesson)}</div>
     <button class="btn" id="btGo" style="width:100%;margin-top:10px">開始對局</button><button class="btn ghost" id="btBk" style="width:100%;margin-top:6px">回古戰場</button></div>`;
   v.querySelector("#btGo").onclick=()=>battleOddsStart(k,i,false);v.querySelector("#btBk").onclick=()=>goUp("#/battle")}
-function battleOddsStart(k,i,force){battleData().then(({B})=>{const c=((B.eras||{})[k]||[])[i],O=c&&battleOddsCfg(B,c);if(!O)return toast("找不到這一場的讓子設定");const id="bt:"+k+":"+i,dx=typeof diffDx==="function"?Math.round(+diffDx()||0):0;
+function battleOddsStart(k,i,force){battleData().then(({B})=>{const c=((B.eras||{})[k]||[])[i],O=c&&battleOddsCfg(B,c);if(!O)return toast("找不到這一場的讓子設定");const id="bt:"+k+":"+battleKey(k,c.id),dx=typeof diffDx==="function"?Math.round(+diffDx()||0):0;
   jStart(id,{human:"r",lx:Math.max(1,Math.min(18,O.lv-dx)),journey:id,lv:{fen:"",turn:"r",remove:O.rm}},()=>{if(location.hash==="#/journey/play")route();else location.hash="#/journey/play";setTimeout(()=>toast(`⚔ ${c.name}：讓子對弈，贏了就蓋戰役印`),500)},force)}).catch(e=>toast(e&&e.message||"戰役資料載入失敗"))}
 /* 對局頁的「新局 → 重下這一盤」（07-legend.js jAgain 轉過來）：同樣的讓子、同樣的電腦等級 */
-function battleOddsAgain(st){const p=String(st.journey).split(":"),k=p[1],i=+p[2];return battleData().then(({B})=>{const c=((B.eras||{})[k]||[])[i],O=c&&battleOddsCfg(B,c);if(!O)throw new Error("找不到這一場的讓子設定");
+function battleOddsAgain(st){return battleData().then(({B})=>{const{k,i}=battleJ(st.journey),c=((B.eras||{})[k]||[])[i],O=c&&battleOddsCfg(B,c);if(!O)throw new Error("找不到這一場的讓子設定");
   return api("/play/new",{human:"r",lx:st.level,journey:st.journey,lv:{fen:"",turn:"r",remove:O.rm}}).then(s=>{store.set("jPending",{id:st.journey,game:s.id});return s})})}
-/* 07-legend.js journeyGameEnd 轉過來（journey＝bt:<朝代>:<第幾張>）：贏了蓋印；結果視窗用 battleResultModal */
-function battleOddsEnd(st,P){const p=String(P.id).split(":"),k=p[1],i=+p[2],win=st.result&&st.result.w===st.human;
-  BATTLE_LAST={j:P.id,o:win?battleMark(k,i,"odds:"+st.id,{hint:!!P.hint,inline:true}):null}}
-function battleResultModal(st,win,draw0,XPR){const p=String(st.journey).split(":"),k=p[1],i=+p[2],c=battleCard(k,i)||{name:"這一場"},o=BATTLE_LAST&&BATTLE_LAST.j===st.journey?BATTLE_LAST.o:null,j=win?battleNextIdx(k,i):-1;
+/* 07-legend.js journeyGameEnd 轉過來（journey＝bt:<朝代>:<戰役id>；舊版是第幾張，battleJ 換成 id）：贏了蓋印；結果視窗用 battleResultModal */
+function battleOddsEnd(st,P){const{k,id}=battleJ(P.id),win=st.result&&st.result.w===st.human;
+  BATTLE_LAST={j:P.id,o:win&&k&&id?battleMarkId(k,id,"odds:"+st.id,{hint:!!P.hint,inline:true}):null}}
+function battleResultModal(st,win,draw0,XPR){const{k,i}=battleJ(st.journey),c=battleCard(k,i)||{name:"這一場"},o=BATTLE_LAST&&BATTLE_LAST.j===st.journey?BATTLE_LAST.o:null,j=win?battleNextIdx(k,i):-1;
   const cards=BATTLE_CARDS[k]||[];
   modal(`<div class="em">${win?"⚔":draw0?"🤝":"💪"}</div><h2>${win?esc(c.name)+"・打下來了！":draw0?"和局":"這一仗沒打下來"}</h2><p class="muted">${esc(st.result.why)}・⚖ 讓子對弈</p>`+
     (win&&o?`<p style="font-size:17px;font-weight:900"><span class="bt-seal sm" style="border-color:#B5452B;color:#B5452B">${o.h?"◐":"印"}</span> 戰役印 ${o.n}／${o.all}</p>${battleFullTxt(k,o,0)}`:win?"":'<p class="muted">和棋、輸棋都不蓋戰役印，再下一盤吧！</p>')+(win&&c.flag?`<div class="card bt-hist"><b>📜 歷史上其實是這樣</b><p>${esc(c.flag.hist)}</p></div>`:"")+XPR,
@@ -8304,35 +8354,56 @@ function battleXM(k,i){const back=()=>"#/battle";if(eraLocked(k))return{err:eraL
     next:()=>{const j=battleNextIdx(k,i);return j>=0&&cards[j]?battleHref(k,j,cards[j]):null},nextL:()=>battleNextIdx(k,i)>=0?"下一場":"回古戰場"}}
 function battleCard(k,i){try{return BATTLE_CARDS[k][i]}catch(e){return null}}
 let BATTLE_CARDS={};
-/* 打下來：蓋戰役印；第一次 +15 修為；5 場集滿 → 稱號＋那一朝一件珍品（珍品是非同步抽的，抽到再跳一張卡） */
-function battleMark(k,i,id,o){const A=battleSeals(),E=A[k]||(A[k]={}),old=E[i],h=o&&o.hint?1:0,first=!old;
-  if(first)E[i]={at:Date.now(),h,id};else if(old.h&&!h)E[i]={...old,h:0,up:Date.now()};store.set("battleSeal",A);
-  if(first&&typeof addXP==="function")setTimeout(()=>addXP(15,"古戰場",`bt:${k}:${i}`),1600);
-  const C=BATTLE_CARDS[k]||[],vo=battleVolOf(k,i),ix=C.map((z,j)=>j).filter(j=>(C[j].vol||1)===vo),N=ix.length||5,n=ix.length?ix.filter(j=>E[j]).length:Object.keys(E).length;let full=false,grand=false;
-  const T=store.get("battleTitle",{})||{};let fullP=null;
-  if(N&&n>=N){if(vo<2){if(!T[k]){T[k]=Date.now();store.set("battleTitle",T);full=true;setTimeout(()=>addXP(30,"百戰之將","bt:title:"+k),3200)}}
-    else{const V=store.get("battleVol",{})||{},Vk=V[k]||(V[k]={});if(!Vk[vo]){Vk[vo]=Date.now();store.set("battleVol",V);full=true;setTimeout(()=>addXP(30,"古戰場・卷"+(BTL_VN[vo]||vo),"bt:vol:"+k+":"+vo),3200)}}
-    if(full)fullP=Promise.resolve(typeof cjRelic==="function"?cjRelic(k,{quiet:1}):null).catch(()=>null)}
-  if(C.length>5&&C.every((z,j)=>E[j])){const Gd=store.get("battleGrand",{})||{};if(!Gd[k]){Gd[k]=Date.now();store.set("battleGrand",Gd);grand=true;if(!fullP)fullP=Promise.resolve(null)}}
-  const ttl=vo<2?shipShort(k)+"・百戰之將":`${eraLabel(k)}・卷${BTL_VN[vo]||vo}`,big=grand?shipShort(k)+"・千古名將":ttl;
-  const showFull=()=>{if(fullP)fullP.then(rel=>{const m=()=>modal(`<div class="em">${grand?"🏆":"🏅"}</div><h2>${esc(big)}</h2><p>${esc(eraLabel(k))}${vo<2?(C.length>5?"・卷一":""):"・卷"+(BTL_VN[vo]||vo)}五場戰役都打下來了${vo<2?"":"：修為 +30"}。${grand?`全部 ${C.length} 場都打下來，得到稱號「${esc(shipShort(k)+"・千古名將")}」。`:""}</p>${rel?battleRelicHTML(rel):full?(vo<2?'<p class="muted">珍品都收齊了，這次只有稱號。</p>':'<p class="muted">珍品都收齊了，這次沒有珍品。</p>'):""}`,[["好",null]]);
+/* 打下來：蓋戰役印（照戰役 id 記）；第一次 +15 修為；一卷 5 場集滿 → 修為＋那一朝一件珍品（珍品是非同步抽的，抽到再跳一張卡），第一次集滿再加稱號 */
+function battleMark(k,i,id,o){const c=(BATTLE_CARDS[k]||[])[i];if(!c)return{first:false,h:0,n:0,all:0};return battleMarkId(k,c.id,id,o)}
+/* 照戰役 id 蓋印（讓子對弈從對局頁回來時，戰役資料可能還沒載入，所以不靠位置）。07u-women.js 包這個函式做「古戰場的迴響」 */
+function battleMarkId(k,cid,id,o){const A=battleSealsId(),E=A[k]||(A[k]={}),old=E[cid],h=o&&o.hint?1:0,first=!old;
+  if(first)E[cid]=BTL_Y_ON?{at:Date.now(),h,id,c:cid}:{at:Date.now(),h,id};else if(old.h&&!h)E[cid]={...old,h:0,up:Date.now()};battleSealSave(A);
+  if(first&&typeof addXP==="function")setTimeout(()=>addXP(15,"古戰場","bt:"+(BTL_Y_ON?cid:k+":"+battleNumKey(k,cid))),1600);
+  const C=BATTLE_CARDS[k]||[],ci=C.findIndex(z=>z&&z.id===cid),c=C[ci],vo=(c&&c.vol)||1,ix=C.map((z,j)=>j).filter(j=>(C[j].vol||1)===vo),N=ix.length,n=ix.filter(j=>E[C[j].id]).length;
+  let full=false,paid=false,title=false,grand=false,fullP=null;
+  if(!BTL_Y_ON){
+    /* 總開關關著：跟 11/8 前線上版一樣（卷一集滿＝百戰之將＋珍品＋修為 30；卷二起＝battleVol＋修為 30＋珍品；全部打下＝千古名將），只是照 id 數印 */
+    const T=store.get("battleTitle",{})||{};
+    if(c&&N&&n>=N){if(vo<2){if(!T[k]){T[k]=Date.now();store.set("battleTitle",T);full=true;title=true;setTimeout(()=>addXP(30,"百戰之將","bt:title:"+k),3200)}}
+      else{const V=store.get("battleVol",{})||{},Vk=V[k]||(V[k]={});if(!Vk[vo]){Vk[vo]=Date.now();store.set("battleVol",V);full=true;setTimeout(()=>addXP(30,"古戰場・卷"+(BTL_VN[vo]||vo),"bt:vol:"+k+":"+vo),3200)}}
+      if(full){paid=true;fullP=Promise.resolve(typeof cjRelic==="function"?cjRelic(k,{quiet:1}):null).catch(()=>null)}}
+    if(C.length>5&&C.every(z=>E[z.id])){const Gd=store.get("battleGrand",{})||{};if(!Gd[k]){Gd[k]=Date.now();store.set("battleGrand",Gd);grand=true;if(!fullP)fullP=Promise.resolve(null)}}
+    const ttl=vo<2?shipShort(k)+"・百戰之將":`${eraLabel(k)}・卷${BTL_VN[vo]||vo}`,big=grand?shipShort(k)+"・千古名將":ttl;
+    const showFull=()=>{if(fullP)fullP.then(rel=>{const m=()=>modal(`<div class="em">${grand?"🏆":"🏅"}</div><h2>${esc(big)}</h2><p>${esc(eraLabel(k))}${vo<2?(C.length>5?"・卷一":""):"・卷"+(BTL_VN[vo]||vo)}五場戰役都打下來了${vo<2?"":"：修為 +30"}。${grand?`全部 ${C.length} 場都打下來，得到稱號「${esc(shipShort(k)+"・千古名將")}」。`:""}</p>${rel?battleRelicHTML(rel):full?(vo<2?'<p class="muted">珍品都收齊了，這次只有稱號。</p>':'<p class="muted">珍品都收齊了，這次沒有珍品。</p>'):""}`,[["好",null]]);
+      if(rel&&!rel.named&&typeof relicFx==="function")relicFx(rel.era,rel.it,{from:ttl+"的獎勵"}).then(m);else m()})};
+    if(c&&c.flag&&!(o&&o.inline))setTimeout(()=>modal(battleHistHTML(c),[["好",showFull]]),1800);else if(fullP)setTimeout(showFull,2600);
+    return{first,h:E[cid].h,n,all:N,full,paid,title,vo,grand,total:C.length}}
+  /* 一卷 5 場都上線、都打下：每卷只結算一次（battleVolY）；舊版領過的次數先抵（battleVolLegacy） */
+  if(c&&N>=5&&n>=N){const V=store.get("battleVolY",{})||{},Vk=V[k]||(V[k]={});if(!Vk[vo]){Vk[vo]=Date.now();store.set("battleVolY",V);full=true;
+      const LG=battleLegacy(),lg=LG[k];if(lg&&(lg.n|0)>(lg.used|0)){lg.used=(lg.used|0)+1;store.set("battleVolLegacy",LG)}
+      else{paid=true;if(typeof addXP==="function")setTimeout(()=>addXP(30,"古戰場・卷"+(BTL_VN[vo]||vo),"bt:volY:"+k+":"+vo),3200);fullP=Promise.resolve(typeof cjRelic==="function"?cjRelic(k,{quiet:1}):null).catch(()=>null)}
+      const T=store.get("battleTitle",{})||{};if(!T[k]){T[k]=Date.now();store.set("battleTitle",T);title=true}
+      if(!fullP)fullP=Promise.resolve(null)}}
+  if(C.length>=25&&C.every(z=>E[z.id])){const Gd=store.get("battleGrand",{})||{};if(!Gd[k]){Gd[k]=Date.now();store.set("battleGrand",Gd);grand=true;if(!fullP)fullP=Promise.resolve(null)}}
+  const ttl=`${eraLabel(k)}・卷${BTL_VN[vo]||vo}`,big=grand?shipShort(k)+"・千古名將":title?shipShort(k)+"・百戰之將":ttl;
+  const showFull=()=>{if(fullP)fullP.then(rel=>{const m=()=>modal(`<div class="em">${grand?"🏆":"🏅"}</div><h2>${esc(big)}</h2><p>${full?`${esc(eraLabel(k))}・卷${BTL_VN[vo]||vo}五場戰役都打下來了${paid?"：修為 +30":""}。`:""}${title?`得到稱號「${esc(shipShort(k)+"・百戰之將")}」。`:""}${grand?`全部 ${C.length} 場都打下來，得到稱號「${esc(shipShort(k)+"・千古名將")}」。`:""}</p>${full&&!paid?'<p class="muted">這一卷的修為和珍品，你在舊版分卷時已經領過了（古戰場改成照年份分卷，打過的仗都還在）。</p>':""}${rel?battleRelicHTML(rel):paid?'<p class="muted">珍品都收齊了，這次沒有珍品。</p>':""}`,[["好",null]]);
     if(rel&&!rel.named&&typeof relicFx==="function")relicFx(rel.era,rel.it,{from:ttl+"的獎勵"}).then(m);else m()})};   /* Gemini 評估 11/8：跳稱號卡前先播開箱（07i-codex.js） */
   /* 旗艦戰役（方案 C）：先跳「歷史上其實是這樣」，按「好」再跳稱號；讓子對弈的歷史小卡寫在結果視窗裡（o.inline） */
-  const c=battleCard(k,i);if(c&&c.flag&&!(o&&o.inline))setTimeout(()=>modal(battleHistHTML(c),[["好",showFull]]),1800);else if(fullP)setTimeout(showFull,2600);
-  return{first,h:E[i].h,n,all:N,full,vo,grand,total:C.length}}
+  if(c&&c.flag&&!(o&&o.inline))setTimeout(()=>modal(battleHistHTML(c),[["好",showFull]]),1800);else if(fullP)setTimeout(showFull,2600);
+  return{first,h:E[cid].h,n,all:N,full,paid,title,vo,grand,total:C.length}}
 function battleDoneHTML(k,i,o,ans){if(ans||!o)return`<p class="muted">看了答案，這一場先不蓋戰役印；之後不看答案再解一次就能蓋。</p>`;
   const c=battleCard(k,i)||{};return`<div class="card bt-done"><b>⚔ ${esc(c.name||"")}</b>　<span class="bt-seal sm">${o.h?"◐":"印"}</span><br><span class="muted">戰役印 ${o.n}／${o.all}・${o.h?"用了提示（空心印）；不看提示再解一次，印就變實心。":"自己打下來的。"}${o.first?"修為 +15。":""}</span>
     ${battleFullTxt(k,o,1)}</div>`}
-/* 集滿的那一句（意見回饋 767：卷一＝百戰之將＋珍品；卷二起＝修為 +30＋珍品；一朝全部打下＝千古名將）；rel＝1 要寫珍品收在哪裡 */
-function battleFullTxt(k,o,rel){if(!o)return"";const vo=o.vo||1,V=BTL_VOL_ON&&(BATTLE_CARDS[k]||[]).length>5,R=rel?"，還有一件珍品（收進「我的角色 → 🏺 珍品」）":"";let t="";
-  if(o.full)t+=vo<2?`<p class="bt-full">🏅 ${esc(eraLabel(k))}${V?"・卷一":""}五場戰役都打下來了！得到稱號「${esc(shipShort(k)+"・百戰之將")}」${R}。</p>`:`<p class="bt-full">🏅 ${esc(eraLabel(k))}・卷${BTL_VN[vo]||vo}五場戰役都打下來了！修為 +30${R}。</p>`;
+/* 集滿的那一句（意見回饋 767：每卷集滿＝修為 +30＋珍品，舊版領過的先抵；第一次集滿任何一卷＝百戰之將；一朝全部打下＝千古名將）；rel＝1 要寫珍品收在哪裡 */
+function battleFullTxt(k,o,rel){if(!o)return"";const vo=o.vo||1,R=rel?"，還有一件珍品（收進「我的角色 → 🏺 珍品」）":"";let t="";
+  if(!BTL_Y_ON){const V=BTL_VOL_ON&&(BATTLE_CARDS[k]||[]).length>5;   /* 總開關關著：11/8 前線上版的寫法 */
+    if(o.full)t+=vo<2?`<p class="bt-full">🏅 ${esc(eraLabel(k))}${V?"・卷一":""}五場戰役都打下來了！得到稱號「${esc(shipShort(k)+"・百戰之將")}」${R}。</p>`:`<p class="bt-full">🏅 ${esc(eraLabel(k))}・卷${BTL_VN[vo]||vo}五場戰役都打下來了！修為 +30${R}。</p>`}
+  else if(o.full)t+=`<p class="bt-full">🏅 ${esc(eraLabel(k))}・卷${BTL_VN[vo]||vo}五場戰役都打下來了！${o.paid?"修為 +30"+R:"（這一卷的獎勵在舊版已經領過）"}${o.title?`，得到稱號「${esc(shipShort(k)+"・百戰之將")}」`:""}。</p>`;
   if(o.grand)t+=`<p class="bt-full">🏆 ${esc(eraLabel(k))}全部 ${o.total||""} 場戰役都打下來了！得到稱號「${esc(shipShort(k)+"・千古名將")}」。</p>`;return t}
-/* 集滿的珍品卡（照 07c-canju.js cjRelicHTML 的樣子，標題換成百戰之將） */
+/* 集滿的珍品卡（照 07c-canju.js cjRelicHTML 的樣子，標題換成古戰場） */
 function battleRelicHTML(rel){if(rel.named&&typeof cjRelicHTML==="function")return cjRelicHTML(rel);const rk=(typeof RELIC_RK!=="undefined"&&RELIC_RK[rel.it.rarity])||["",""],img=typeof relicImg==="function"?relicImg(rel.era,rel.it.id):"🏺",en=typeof relicEra==="function"?esc(relicEra(rel.era)):"";
-  return`<div class="cj-relic"><div class="im">${img}</div><div style="flex:1;min-width:0;text-align:left"><b>🎁 百戰之將的獎勵：${esc(rel.it.name||"")}</b><div class="muted">${en}・${esc(rk[0])}・收進「我的角色 → 🏺 珍品」</div><div class="muted" style="font-size:12.5px;margin-top:4px">${esc(rel.it.desc||"")}</div></div></div>`}
+  return`<div class="cj-relic"><div class="im">${img}</div><div style="flex:1;min-width:0;text-align:left"><b>🎁 ${BTL_Y_ON?"古戰場集滿":"百戰之將"}的獎勵：${esc(rel.it.name||"")}</b><div class="muted">${en}・${esc(rk[0])}・收進「我的角色 → 🏺 珍品」</div><div class="muted" style="font-size:12.5px;margin-top:4px">${esc(rel.it.desc||"")}</div></div></div>`}
 /* battleData 載入後，把卡片也記一份給 XM 用（XM 是同步的） */
 let BATTLE_D=null;
-{const f=battleData;battleData=function(){return f().then(x=>{if(x.B&&x.B.eras&&!x.B.vf){x.B.vf=1;if(!BTL_VOL_ON)for(const e in x.B.eras)x.B.eras[e]=x.B.eras[e].filter(c=>(c.vol||1)<2)}BATTLE_CARDS=(x.B&&x.B.eras)||{};BATTLE_D=x.D||null;return x})}}
+/* BTL_HIDE：臨時不讓某幾場出現（戰役 id）。平常的上線開關在 story/battles_list.json 的 on（tools/battles_build.js 沒上線的不寫進 battles2.json）；存檔照 id 記，拿掉幾場位置變了也不會對錯印 */
+const BTL_HIDE=[];
+{const f=battleData;battleData=function(){return f().then(x=>{if(x.B&&x.B.eras&&!x.B.vf){x.B.vf=1;for(const e in x.B.eras)x.B.eras[e]=x.B.eras[e].filter(c=>c&&!BTL_HIDE.includes(c.id)&&(BTL_VOL_ON||(c.vol||1)<2))}BATTLE_CARDS=(x.B&&x.B.eras)||{};BATTLE_D=x.D||null;return x})}}
 /* ================= 🌀 千秋穿梭・突發事件（第一批；開發者 11/7 核准，提案 story/千秋穿梭突發事件提案.md）=================
    觸發點：07-legend.js qianqiu() 的 end()，呼叫 done 以前先問 qqEvent()；有事件就把穿梭畫面停在途經那一朝的圖上、壓暗，跳出事件卡（跳過動畫照樣有事件）。
      qianqiu 第 4 個參數是從哪裡來：park＝千秋石枰（20%）、sail＝星槎起航、go＝航線換站／擂主卡／集章簿（35%）。
@@ -8786,14 +8857,14 @@ const cxN=o=>Object.keys(o||{}).length,cxTry=(f,z)=>{try{const r=f();return r==n
 function cxMe(c){location.hash="#/me";let n=0;const f=()=>{const b=document.querySelector(`.mw[data-c="${c}"]`);if(b)b.click();else if(++n<10)setTimeout(f,120)};setTimeout(f,160)}
 let CX_BT_P=null;
 function cxBattleTotal(){const B=cxTry(()=>BATTLE_CARDS,null);if(B&&cxN(B))return Promise.resolve(Object.values(B).reduce((a,x)=>a+(x||[]).length,0));
-  return CX_BT_P||(CX_BT_P=fetch("data/canju/battles.json").then(r=>r.ok?r.json():null).then(j=>j&&j.eras?Object.values(j.eras).reduce((a,x)=>a+(x||[]).filter(c=>(typeof BTL_VOL_ON!=="undefined"&&BTL_VOL_ON)||((c&&c.vol)||1)<2).length,0):null).catch(()=>{CX_BT_P=null;return null}))}
+  return CX_BT_P||(CX_BT_P=fetch(typeof BTL_FILE!=="undefined"?BTL_FILE:"data/canju/battles.json").then(r=>r.ok?r.json():null).then(j=>j&&j.eras?Object.values(j.eras).reduce((a,x)=>a+(x||[]).filter(c=>c&&!(typeof BTL_HIDE!=="undefined"&&BTL_HIDE.includes(c.id))&&((typeof BTL_VOL_ON!=="undefined"&&BTL_VOL_ON)||(c.vol||1)<2)).length,0):null).catch(()=>{CX_BT_P=null;return null}))}
 /* 稱號：照各系統自己的條件逐一對（06-cpu.js XQ_TITLE 那幾個來源） */
 function cxTitles(){const L=[],add=(t,how,got)=>L.push({t,how,got:!!got});
   const G=cxTry(()=>Object.values(cupGot()),[]),cur=cxTry(()=>cupTitle(),"");
   add("本週擂主","千秋盃拿到冠軍，7 天內掛著",cur==="本週擂主");add("千秋擂主","千秋盃拿過一次冠軍",G.includes(1));add("三屆擂主","千秋盃拿過三次冠軍",G.filter(x=>x===1).length>=3);add("擂台常客","千秋盃參加 4 屆以上",G.length>=4);
   const an=cxTry(()=>cxN(arenaStamps()),0);cxTry(()=>ARENA_TITLES,[]).slice().reverse().forEach(([k,t])=>add(t,`朝代擂台蓋滿 ${k} 枚擂台印`,an>=k));
-  const BT=cxTry(()=>store.get("battleTitle",{})||{},{});Object.keys(BT).forEach(k=>add(cxTry(()=>shipShort(k),eraLabel(k))+"・百戰之將","這一朝古戰場 5 場都打下來",true));
-  if(!cxN(BT))add("〇・百戰之將","某一朝古戰場 5 場都打下來（每朝一個）",false);
+  const BT=cxTry(()=>store.get("battleTitle",{})||{},{});Object.keys(BT).forEach(k=>add(cxTry(()=>shipShort(k),eraLabel(k))+"・百戰之將",(typeof BTL_Y_ON!=="undefined"&&BTL_Y_ON)?"這一朝古戰場有一卷 5 場都打下來":"這一朝古戰場 5 場都打下來",true));
+  if(!cxN(BT))add("〇・百戰之將",(typeof BTL_Y_ON!=="undefined"&&BTL_Y_ON)?"某一朝古戰場有一卷 5 場都打下來（每朝一個）":"某一朝古戰場 5 場都打下來（每朝一個）",false);
   const jn=cxTry(()=>jarN(),0);cxTry(()=>JAR_TITLES,[]).slice().reverse().forEach(([k,t])=>add(t,`棋罐收到 ${k} 子`,jn>=k));
   add("領令先鋒","隱藏殘局累積拿到 12 枚將令",cxTry(()=>jHidGot(),0)>=12);add("棋史通","13 張棋史卡都不看答案解開 1 題",cxTry(()=>histTitle(),""));
   add("行萬里路","輿圖遊歷 13 條路線都走完",cxTry(()=>yuTitle(),""));add("九九消寒","九九消寒圖 81 瓣都染完",cxTry(()=>xhTitle(),""));return L}
@@ -8814,7 +8885,7 @@ const CODEX=[
   {id:"bond",g:"book",ic:"🌸",nm:"園子棋友",say:"園子裡的女棋手：常跟她下棋、幫她的委託就加羈絆，到第 3 級她會寄信到驛站。",v:()=>{const M=npcBonds(),W=NPC_W();return{x:W.filter(n=>M[n.id]&&M[n.id].m).length,y:W.length,u:"位"}},go:()=>npcBondBook()},
   {id:"hist",g:"book",ic:"📜",nm:"棋史卡",say:"在石桌往事的園子裡點石桌，收到那一朝的棋史卡；13 張都解開 1 題古法殘局，得到「棋史通」。",v:()=>({x:histSeenN(),y:13,u:"張",s:`古法殘局解開 ${histDoneN()}／13 朝`}),go:()=>histBook()},
   {id:"arena",g:"seal",ic:"🏯",nm:"擂台印",say:"每一朝渡口的擂台打贏擂主，就在集章簿蓋一枚朱印；集到 3、7、13 枚各有稱號。",v:()=>({x:cxN(arenaStamps()),y:ARENA_ORDER.length,u:"枚"}),go:()=>stampBook()},
-  {id:"battle",g:"seal",ic:"⚔",nm:"戰役印",say:"渡口的古戰場：每場戰役打下來蓋一枚戰役印；一朝 5 場集滿得到「百戰之將」和一件珍品。",v:async()=>{const S=store.get("battleSeal",{})||{},x=Object.values(S).reduce((a,E)=>a+cxN(E),0),y=await cxBattleTotal();return y?{x,y,u:"枚"}:{x,u:"枚"}},go:()=>{location.hash="#/battle"}},
+  {id:"battle",g:"seal",ic:"⚔",nm:"戰役印",get say(){return (typeof BTL_Y_ON!=="undefined"&&BTL_Y_ON)?"渡口的古戰場：每場戰役打下來蓋一枚戰役印；照年份分成五卷，每卷 5 場集滿得到修為和一件珍品，第一次集滿再得到「百戰之將」。":"渡口的古戰場：每場戰役打下來蓋一枚戰役印；一朝 5 場集滿得到「百戰之將」和一件珍品。"},v:async()=>{const S=store.get("battleSeal",{})||{},x=Object.values(S).reduce((a,E)=>a+cxN(E),0),y=await cxBattleTotal();return y?{x,y,u:"枚"}:{x,u:"枚"}},go:()=>{location.hash="#/battle"}},
   {id:"yu",g:"seal",ic:"🧭",nm:"路引",say:"輿圖遊歷：在園子兩指拉遠看地圖，點發亮的地名過關；整條路線走完拿一張路引，13 條都走完得到「行萬里路」。",v:()=>({x:yuDoneN(),y:13,u:"張",s:`走過 ${yuStopsN()}／${YU_TOTAL} 站`}),go:()=>yuBook()},
   {id:"cup",g:"seal",ic:"🏆",nm:"千秋盃名次",say:"每週六下午的 16 強擂台賽；打進十六強以上就有獎（將令、提示棋、修為），冠軍刻上擂主碑。",v:()=>({x:cxN(cupGot()),u:"屆"}),go:()=>{location.hash="#/cup"}},
   {id:"title",g:"seal",ic:"🏅",nm:"稱號",say:"擂台、戰役、棋罐、將令、棋史卡、路引、消寒圖、千秋盃集滿都有稱號；大廳裡別人看得到。",v:()=>{const L=cxTitles().filter(x=>x.got);return{x:L.length,u:"個",s:L.length?L.slice(0,3).map(x=>x.t).join("、")+(L.length>3?"…":""):""}},go:()=>cxTitleSheet()},
@@ -9635,7 +9706,7 @@ function chdEggOk(c,P){const B=CHD_BM[c];if(!B||!P)return false;const mv=chdLine
   return mine[mine.length-1].pc===B.pc}
 const chdEgg=c=>((chdSt().egg||{})[c])||null;
 function chdEggDone(k,i,id,o,ans){if(!CHD3_ON||ans||!o)return"";const c=chdMe(),T=chdT(c);if(!T||!T.egg)return"";let P=null;try{P=BATTLE_D&&BATTLE_D.byId&&BATTLE_D.byId[id]}catch(e){}if(!chdEggOk(c,P))return"";
-  const first=!chdEgg(c);if(first)chdSet(S=>{S.egg=S.egg||{};S.egg[c]={at:Date.now(),k,i}});chdCss();const B=CHD_BM[c],how=B.pc==="B"||B.pc==="A"?"本命子"+WX_CHARS[c].pc+"一隻都沒丟":"最後一步是本命子"+WX_CHARS[c].pc;
+  const first=!chdEgg(c);if(first)chdSet(S=>{S.egg=S.egg||{};S.egg[c]={at:Date.now(),k,i,...((typeof BTL_Y_ON!=="undefined"&&BTL_Y_ON)?{id:((typeof BATTLE_CARDS!=="undefined"&&BATTLE_CARDS[k]||[])[i]||{}).id||""}:{})}});chdCss();const B=CHD_BM[c],how=B.pc==="B"||B.pc==="A"?"本命子"+WX_CHARS[c].pc+"一隻都沒丟":"最後一步是本命子"+WX_CHARS[c].pc;
   return`<div class="chd-say">${chdFace(c)}<span><b>${esc(chdNk(c))}・本命定乾坤</b>${esc(how)}！${first?"解開了一張歷史彩蛋卡：":"彩蛋卡已經收在本命修行裡："}〈${esc(T.egg.t)}〉<br><button class="lk" data-chdegg="${esc(c)}" style="text-decoration:underline;font-size:14px">📜 看彩蛋卡</button></span></div>`}
 function chdEggSheet(c){const T=chdT(c);if(!T||!T.egg)return;const E=T.egg;sheet("📜 "+E.t,b=>{b.innerHTML=`<p class="muted" style="font-size:12.5px;margin:0 0 6px">本命定乾坤・${esc(WX_CHARS[c].n)}（${esc(WX_CHARS[c].era)}）的歷史彩蛋</p><p style="line-height:1.9;font-size:16px;margin:0 0 10px">${esc(E.x)}</p>
   <details><summary class="muted" style="font-size:13px">依據</summary><ul style="font-size:12.5px;line-height:1.7;margin:6px 0 0;padding-left:18px">${(E.src||[]).map(s=>`<li>${esc(String(s).replace(/（[^）]*待考[^）]*）/g,""))}</li>`).join("")}</ul></details>`})}
@@ -10388,7 +10459,7 @@ async function epDev(k){EP_DEV=1;try{const here=epHere(),S=epSt();
    女棋手都是原創平民（PARK_NPC，06-cpu.js），不寫成史上真人的親友；七星的台詞照《雲河七星》口吻（方庭不叫「庭哥」），只用選角卡上公開的身世，不說破後段。
    這個檔不改別人的檔：用「包一層」接上原本的函式（跟 07t-episodes.js 同一種做法）——
      npcAskMaybe（07d，園子開局）、npcHello（07d，開局第一句）、meGameTalk（05b，七星開局那句；有拌嘴時讓出來）、npcBondUp（07d，羈絆升級卡）、
-     gardenInn（07d，驛站清單）、yzMail／yzUnread（07m，驛站信箱與新信數）、relicBook（07-legend，珍品冊）、parkNpcNew（06-cpu，園子遇到誰）、battleMark（07g，打下戰役）、
+     gardenInn（07d，驛站清單）、yzMail／yzUnread（07m，驛站信箱與新信數）、relicBook（07-legend，珍品冊）、parkNpcNew（06-cpu，園子遇到誰）、battleMarkId（07g，打下戰役）、
      shipMorePool（07o，挑題池；這裡挑過的題不再出給續局）；挑到的題也記進一盞茶的 seen（茶單、續局都會跳過）。
    開關（每案一個常數；開發者模式可以在驛站清單的「🧪 女棋手故事線」暫時打開試玩，store "wmDev"，不跟存檔走）：
    5 飛鴿傳譜（WM_PIGEON_ON）：羈絆滿 3 級的女棋手，之後每隔 5～7 個「有下棋的日子」（store "wmDays"，記有拿到修為的那幾天；不是每日登入）往驛站信箱寄一封飛鴿信，
@@ -10399,7 +10470,7 @@ async function epDev(k){EP_DEV=1;try{const here=epHere(),S=epSt();
    1 千秋殘譜流轉（WM_SCROLL_ON）：兩條跨朝代的線（WM_SCR）。清弦圖：漢 琴師 滿級給上卷 → 唐 牡丹娘子 考你守住「單車難破士象全」（#/ship/wmhold/a，jLevel 的 relay）→ 明 琵琶女 考一題 → 三卷合一＝sq218（《適情雅趣》〈路隔星河〉，6 步殺）；
      蘆花圖：宋 漁家女 滿級給上段 → 元 青花女工 考一題「一步都不能錯」→ 清 繡娘 考你守住馬卒來攻（#/ship/wmhold/b）→ 合一＝xw077（《心武殘編》〈四季落花〉）。
      兩個守局都用 Pikafish 驗過是和局（深度 22，±0.2 以內）；兩題終局 Pikafish 深度 24 都是唯一一手開始的連殺。解完收進珍品冊上方的「📜 千秋殘譜」（信物：清弦帛書、蘆花繡帕），修為 +40。
-   7 古戰場的迴響（WM_ECHO_ON）：打下卷一的一場戰役後 24 小時內進那一朝的園子，這一朝的女棋手（WM_EC 寫好每場由誰說）一定坐在石桌對面，說起這一仗，再擺一題同一個道理的殘局
+   7 古戰場的迴響（WM_ECHO_ON）：打下 WM_EC 寫好的那幾場戰役（舊卷一那 5 場，照戰役 id 認）後 24 小時內進那一朝的園子，這一朝的女棋手（WM_EC 寫好每場由誰說）一定坐在石桌對面，說起這一仗，再擺一題同一個道理的殘局
      （照 battles.json 的 lessons 標籤挑），解開修為 +15；每場一次。秦、三國、魏晉、南北朝、五代沒有女棋手，跳過。
    存檔（05b-save.js JOURNEY_KEYS）：wmDays＝有下棋的日子；wmPg＝{女:{s0 開始數的那天,L:[{d 寄到那天,at,q 題號,r 讀了,ok 回信了}]}}；wmBm＝{d 今天,n 今天比了幾題,ok {題號:時間},ht {角色:女:時間}}；
      wmScr＝{a/b:{k 拿到第幾卷(0～3)、4＝解開,at [時間],ask {女:1},q 題號,done}}；wmEcho＝{p {id,k,i,at} 等著說的那一場,done {戰役 id:時間},q {戰役 id:題號}}；jRunW＝守局的進度。 */
@@ -10737,10 +10808,11 @@ const WM_EC={
   qing_5:["w05","阿瑪看邸報的時候說的：法國兵在淡水的滬尾登陸，孫開華帶著清兵和鄉勇埋伏在海邊的樹林裡，等法國兵走進林子才殺出來，把他們打回船上。"]};
 const WM_EC_H=24*36e5;
 const wmEcSt=()=>{const S=store.get("wmEcho",null)||{};S.done=S.done||{};S.q=S.q||{};return S};
-function wmEchoMark(k,i){if(!wmOn("echo"))return;const c=(typeof BATTLE_CARDS!=="undefined"&&BATTLE_CARDS[k]||[])[i];if(!c||!WM_EC[c.id])return;const S=wmEcSt();if(S.done[c.id])return;
-  S.p={id:c.id,k,i,at:Date.now(),name:c.name,lesson:c.lesson||""};store.set("wmEcho",S)}
+/* 意見回饋 767：古戰場改成照年份分卷、存檔照戰役 id 記，這裡也照 id 找卡（不看第幾張） */
+function wmEchoMark(k,cid){if(!wmOn("echo")||!WM_EC[cid])return;const C=(typeof BATTLE_CARDS!=="undefined"&&BATTLE_CARDS[k])||[],c=C.find(z=>z&&z.id===cid);if(!c)return;const S=wmEcSt();if(S.done[c.id])return;
+  S.p={id:c.id,k,i:C.indexOf(c),at:Date.now(),name:c.name,lesson:c.lesson||""};store.set("wmEcho",S)}
 function wmEchoDue(era){if(!wmOn("echo"))return null;const S=wmEcSt(),p=S.p;if(!p||p.k!==era||S.done[p.id]||Date.now()-(p.at||0)>WM_EC_H)return null;return p}
-if(typeof battleMark==="function"){const bm0=battleMark;battleMark=function(k,i){const r=bm0.apply(this,arguments);try{wmEchoMark(k,i)}catch(e){}return r}}
+if(typeof battleMarkId==="function"){const bm0=battleMarkId;battleMarkId=function(k,cid){const r=bm0.apply(this,arguments);try{wmEchoMark(k,cid)}catch(e){}return r}}
 function wmEchoSheet(p){const N=wmN(WM_EC[p.id][0]);if(!N)return;
   sheet(`⚔ ${N.name}說起${p.name}`,b=>{b.innerHTML=wmWhoHTML(N,`「${esc(WM_EC[p.id][1])}」`)+`<p class="muted" style="font-size:13px;line-height:1.7">她在石桌上擺了一局：「這一仗講的是『${esc(p.lesson)}』。棋盤上，也是同一個道理。」</p><div class="cj-row"><button class="btn" id="wmGo">♟ 看她擺的局</button><button class="btn ghost" id="wmNo">先下棋</button></div>`;
     b.querySelector("#wmNo").onclick=closeSheet;const go=b.querySelector("#wmGo");go.onclick=()=>{go.disabled=true;wmEchoPz(p).catch(e=>{toast(e.message||"題目載入失敗");go.disabled=false})}})}
@@ -10822,7 +10894,7 @@ function wmDevBind(box,v){box.querySelectorAll("[data-wmdv]").forEach(b=>b.oncli
     else if(t==="talk"||t==="bmpz"){WM_FORCE={bm:t==="talk"?"bmtalk":"bmpz"};toast("下一盤園子遇到配對的女棋手時觸發（要開 🀄、要選雲河七星）")}
     else if(t==="scra"||t==="scrb"){const L=t.slice(3),S=wmScrSt();if(S[L].k>=3){toast("三卷都齊了，去解吧");wmScrSheet(L);return}S[L].k++;S[L].at[S[L].k-1]=Date.now();const n=wmN(WM_SCR[L].w[S[L].k]);if(n&&S[L].k<3)S[L].ask[wmS(n)]=1;store.set("wmScr",S);wmScrSheet(L)}
     else if(t==="echo"){const k=store.get("era","classic"),C=(typeof BATTLE_CARDS!=="undefined"&&BATTLE_CARDS[k])||[];if(!C.length){toast("先打開一次古戰場（載入戰役卡），再回來按");return}
-      const c=C[0];if(!WM_EC[c.id]){toast("這一朝沒有女棋手，換一朝試");return}const S=wmEcSt();delete S.done[c.id];S.p={id:c.id,k,i:0,at:Date.now(),name:c.name,lesson:c.lesson||""};store.set("wmEcho",S);toast(`⚔ ${c.name}：24 小時內進${eraLabel(k)}的園子`)}})}
+      const c=C.find(z=>z&&WM_EC[z.id]);if(!c){toast("這一朝沒有女棋手，換一朝試");return}const S=wmEcSt();delete S.done[c.id];S.p={id:c.id,k,i:C.indexOf(c),at:Date.now(),name:c.name,lesson:c.lesson||""};store.set("wmEcho",S);toast(`⚔ ${c.name}：24 小時內進${eraLabel(k)}的園子`)}})}
 /* ================= 🎁 景點掉寶（開發者 11/8）=================
    渡口的朝代景點（07f-ship.js PORT_SIGHT，portSight）和各朝驛站的史實小牌（07m-yizhan.js YZ_SIGHT，yzSight）點了以後呼叫 relicSightDrop(kind,era,name)：
    kind＝"p" 渡口景點、"y" 驛站小牌；era＝朝代鍵；name＝景點名字。回傳 Promise：true＝撿到新珍品（呼叫的地方就不再跳介紹），false＝照舊看介紹。
@@ -11285,7 +11357,7 @@ if(typeof Home==="function"){const f0=Home;Home=function(v,hub){const r=f0.apply
    加到主畫面：圖下方一條浮動小條（原本首頁的提示卡藏起來了）。
    接 07w 走路（座標表 SHW_HOMEMAP）、07x 兩指縮放。圖片網址帶 HM_IMGV（data/homemap 在不跟版本走的快取裡，換圖要改這個數字）。
    開關 HOME_MAP_ON（false＝照舊卡片首頁）；樣式在 hmCss */
-const HOME_MAP_ON=true;
+const HOME_MAP_ON=true;   /* 開發者 11/8 說打開 */
 const HM_IMGV="2251";   /* 圖的版本：同檔名換圖時改掉，手機才會重抓 */
 /* 入口：[標籤 id（也是 07w 的入口代號）, 標籤左%, 上%, 大字]（量 768×1376 的 home_v5，標籤放在東西上方） */
 const HM_SPOTS=[["hmShip",52,15,"⛵ 雲河星槎"],["hmBattle",14,25.5,"⚔ 對戰"],["hmLearn",86,26.5,"📚 學習"],["hmRec",12,44,"📜 今日推薦"],["hmQuick",52,47.5,"⚡ 下一盤"]];
