@@ -1341,7 +1341,7 @@ html[data-era=qin] .view:has(>.shp-rd),html[data-era=wudai] .view:has(>.shp-rd){
       if(!window.caches)return go();caches.keys().then(function(ks){return Promise.all(ks.filter(function(k){return k.indexOf("xqlab-app-")===0}).map(function(k){return caches.delete(k)}))})
         .then(function(){return navigator.serviceWorker&&navigator.serviceWorker.getRegistration()}).then(function(r){return r&&r.update()}).catch(function(){}).then(go)}};setTimeout(chk,4000)})();
 </script>
-<script>window.XQ_OFFLINE=true;window.XQ_BUILD="20261109-0730";</script>
+<script>window.XQ_OFFLINE=true;window.XQ_BUILD="20261109-0800";</script>
 <script src="core.js"></script>
 <script src="engine.js"></script>
 <script src="local.js"></script>
@@ -8145,12 +8145,15 @@ async function battlePicks(k){const{B,T,D}=await battleData(),dn=diffNow(),key=k
   const pool=[...D.items,...Object.values(D.byId).filter(P=>P.hold&&!D.items.includes(P))].filter(P=>tags[P.id]&&P.tree&&!skip.has(P.id));
   try{await shipBank()}catch(e){}
   const eras=[...SHIP_ROUTE.filter(e=>(B.eras||{})[e]),...Object.keys(B.eras||{}).filter(e=>!SHIP_ROUTE.includes(e))];
-  for(const e of eras){const mine=new Set(),fb=(shipPuzzles(e)||[]).slice();
-    BATTLE_PK[e+"|"+dn]=(B.eras[e]||[]).map(c=>{if(battleMode(c)!=="puzzle")return null;const groups=(B.lessons||{})[c.lesson]||[];let id=null;
+  /* 挑題批次（卡的 wave，沒寫＝1）：先替第 1 批的卡挑完 12 朝，再挑第 2 批…。後來才上線的卡寫 wave:2，這樣舊卡配到的題跟加卡前一模一樣（每一批內還是照航線、照卡片順序挑） */
+  const MINE={},FB={},waves=[...new Set(eras.flatMap(e=>(B.eras[e]||[]).map(c=>+c.wave||1)))].sort((a,b)=>a-b);
+  for(const e of eras){MINE[e]=new Set();FB[e]=(shipPuzzles(e)||[]).slice();BATTLE_PK[e+"|"+dn]=(B.eras[e]||[]).map(()=>null)}
+  for(const wv of waves)for(const e of eras){const mine=MINE[e],fb=FB[e],out=BATTLE_PK[e+"|"+dn];
+    (B.eras[e]||[]).forEach((c,i)=>{if((+c.wave||1)!==wv||battleMode(c)!=="puzzle")return;const groups=(B.lessons||{})[c.lesson]||[];let id=null;
       for(const reuse of [false,true])for(let w=0;w<=3&&!id;w++)for(const g of groups){if(id)break;const ok=P=>!mine.has(P.id)&&(reuse||!used.has(P.id))&&g.every(t=>tags[P.id].includes(t))&&+P.d>=lo-w&&+P.d<=hi+w;   /* 先放寬題組、再放寬難度；別朝用過的題，真的挑不到才重複 */
         const cand=pool.filter(ok);if(cand.length){cand.sort((a,b)=>battleHash(c.id+a.id)-battleHash(c.id+b.id));id=cand[0].id}}
       if(!id)id=fb.find(x=>!mine.has(x))||null;   /* 挑不到同主題的題：退回這一朝的千秋殘局題 */
-      if(id){mine.add(id);used.add(id)}return id})}
+      if(id){mine.add(id);used.add(id)}out[i]=id})}
   return BATTLE_PK[key]||[]}
 /* 守城、讓子在這個航行難度的設定 */
 function battleHoldCfg(B,c){const H=(B.holds||{})[c.play.pos];if(!H)return null;const d=diffNow()-1;return{...H,n:(H.n||[])[d]||H.n[0]||8,ai:(H.ai||[])[d]||H.ai[0]||3}}
