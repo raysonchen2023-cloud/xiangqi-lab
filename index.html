@@ -1341,7 +1341,7 @@ html[data-era=qin] .view:has(>.shp-rd),html[data-era=wudai] .view:has(>.shp-rd){
       if(!window.caches)return go();caches.keys().then(function(ks){return Promise.all(ks.filter(function(k){return k.indexOf("xqlab-app-")===0}).map(function(k){return caches.delete(k)}))})
         .then(function(){return navigator.serviceWorker&&navigator.serviceWorker.getRegistration()}).then(function(r){return r&&r.update()}).catch(function(){}).then(go)}};setTimeout(chk,4000)})();
 </script>
-<script>window.XQ_OFFLINE=true;window.XQ_BUILD="20261109-1000";</script>
+<script>window.XQ_OFFLINE=true;window.XQ_BUILD="20261109-1030";</script>
 <script src="core.js"></script>
 <script src="engine.js"></script>
 <script src="local.js"></script>
@@ -5088,7 +5088,8 @@ function parkNpcNew(game,lv,keep){if(!keep&&typeof qqParkKeep==="function")try{k
 /* 這盤園子的對手是誰（舊的、沒有記錄的盤用編號固定挑一位，不會每次重畫換人） */
 function parkNpcOf(st){if(!st||st.journey!=="park"||st.arena)return null;const r=store.get("parkNpc",null);if(r&&r.game===st.id)return PARK_NPC.find(x=>x.id===r.id)||PARK_NPC[0];
   let h=0;for(const c of String(st.id||""))h=(h*31+c.charCodeAt(0))>>>0;return PARK_NPC[h%PARK_NPC.length]}
-const npcHTML=(side,n,sub)=>`<div class="av ${side} npc" role="button" aria-label="看${esc(n.name)}的 3D 人物">${esc(npcPc(n,side))}<img src="${n.img||`data/npc/${n.id}.webp`}" alt="" onerror="this.remove()"></div><div class="nm"><b>${esc(n.name)}</b><span>${esc(sub||"")}</span></div>`;
+const NPC_FTOP={"amah":5.5,"niao":17.7,"tiaoshui":10.1,"w01_tang_lady":18.1,"w02_song_tea":3.4,"w03_yuan_rider":18.5,"w04_ming_scholar":13.1,"w05_qing_gege":7.6,"w09_qin_player":30.7,"w10_general":5.1,"w11_yuan_falconer":10.5,"w13_yuan_singer":37.1,"w16_ming_poet":6.7,"w17_ming_pipa":5.1,"w19_ming_teahouse":8.4,"w20_ming_guard":3.8};/* 意見回饋 809：人物畫得低的圖，頭像往上對齊頭頂 */
+const npcHTML=(side,n,sub)=>`<div class="av ${side} npc" role="button" aria-label="看${esc(n.name)}的 3D 人物">${esc(npcPc(n,side))}<img src="${n.img||`data/npc/${n.id}.webp`}"${!n.img&&NPC_FTOP[n.id]?` style="top:-${NPC_FTOP[n.id]}%"`:""} alt="" onerror="this.remove()"></div><div class="nm"><b>${esc(n.name)}</b><span>${esc(sub||"")}</span></div>`;
 let NPC_HI=null;   /* 已經打過招呼的那盤園子（同一個 3D 園子裡再下一盤時，新的對手開口打招呼） */
 const PIKA_LOOK=side=>({cus:"k:"+(/pika2/.test(String(PIKA_META_DIR||""))?"pika2":"pika"),p:side==="r"?"帥":"將",e:store.get("era","classic"),g:1,thin:true,wl:true,flat:!!PIKA_META,sprite:PIKA_META?PIKA_META_DIR:null,spriteMeta:PIKA_META});
 /* 驛站旅人、秘境棋友：data/actors/<id>.webp（一張立繪，六種表情共用）；3D 人物檢視時用帽子顏色配的立體小人 */
