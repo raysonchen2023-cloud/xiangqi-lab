@@ -1186,7 +1186,7 @@ html:has(#xqTitle:not(.out)),html:has(#xqTitle:not(.out)) body{background:#F3ECD
       if(!window.caches)return go();caches.keys().then(function(ks){return Promise.all(ks.filter(function(k){return k.indexOf("xqlab-app-")===0}).map(function(k){return caches.delete(k)}))})
         .then(function(){return navigator.serviceWorker&&navigator.serviceWorker.getRegistration()}).then(function(r){return r&&r.update()}).catch(function(){}).then(go)}};setTimeout(chk,4000)})();
 </script>
-<script>window.XQ_OFFLINE=true;window.XQ_BUILD="20261108-0930";</script>
+<script>window.XQ_OFFLINE=true;window.XQ_BUILD="20261108-1000";</script>
 <script src="core.js"></script>
 <script src="engine.js"></script>
 <script src="local.js"></script>
@@ -8055,11 +8055,15 @@ function CpuGame(v,practicePage,mode){
     const pB=v.querySelector("#pBot");if(pB.dataset.h!==bt){pB.dataset.h=bt;pB.innerHTML=bt}
     v.querySelector("#pTop").classList.toggle("on",!st.result&&st.turn===bot);v.querySelector("#pBot").classList.toggle("on",!st.result&&st.turn===me);
     v.querySelector("#evf").style.width=evPct(st.eval&&st.eval.v)+"%";
-    const s2=v.querySelector("#stat");s2.classList.remove("hot","wrap");{const pa=v.querySelector("#pAct");if(pa&&!st.practice)pa.hidden=true}
-    if(st.msg)s2.textContent=st.msg;else if(st.result)s2.textContent=st.result.why;
-    else if(st.thinking)s2.textContent=(NP?NP.name:"Pikafish")+" 思考中…";
-    else{s2.textContent=st.check>=0?"⚠ 你被將軍了！":st.hint?"💡 提示："+st.hint.cn:"輪到你"+(st.eval?`・${evt(st.eval.v)}`:"");s2.classList.toggle("hot",st.check>=0||!!st.hint)}
-    if(st.practice&&!st.result&&!st.msg)practiceBar(s2);
+    /* 意見回饋 749（開發者）：錯棋重練的狀態列一直閃——每次輪詢（1.5 秒）都重寫 #stat 的文字，「」裡的著法（藍色可點的 .mvt，250 毫秒後才由 mvtWrap 加回）和 🔁 圖示（emoWalk）被洗掉又加回。
+       改成先在 S2 算好要顯示的文字和 hot／wrap，跟上次寫進去的一樣就不動 DOM */
+    const s2=v.querySelector("#stat"),S2={textContent:"",cls:{},classList:{add:(...a)=>a.forEach(k=>{S2.cls[k]=1}),toggle:(k,on)=>{if(on)S2.cls[k]=1;else delete S2.cls[k]}},after:x=>s2.after(x)};{const pa=v.querySelector("#pAct");if(pa&&!st.practice&&!pa.hidden)pa.hidden=true}
+    if(st.msg)S2.textContent=st.msg;else if(st.result)S2.textContent=st.result.why;
+    else if(st.thinking)S2.textContent=(NP?NP.name:"Pikafish")+" 思考中…";
+    else{S2.textContent=st.check>=0?"⚠ 你被將軍了！":st.hint?"💡 提示："+st.hint.cn:"輪到你"+(st.eval?`・${evt(st.eval.v)}`:"");S2.classList.toggle("hot",st.check>=0||!!st.hint)}
+    if(st.practice&&!st.result&&!st.msg)practiceBar(S2);
+    if(s2.dataset.t!==S2.textContent){s2.dataset.t=S2.textContent;s2.textContent=S2.textContent}
+    for(const k of["hot","wrap"])if(s2.classList.contains(k)!==!!S2.cls[k])s2.classList.toggle(k,!!S2.cls[k]);
     renderStrip(v.querySelector("#strip"),st.moves,st.moves.length-1);
     acts.undo.disabled=st.ranked||st.reward||!st.moves.some(m=>m.by===st.human);   /* 意見回饋 597：擂台也能用悔棋符 */
     {acts.bag.hidden=!!st.practice;
@@ -8155,14 +8159,16 @@ async function review(rep,id){let it=null;for(let k=0;k<12&&!it;k++){try{const d
     const fail=d.fail||0,bc=m.bc||P0.bc;
     if(good){s2.textContent=`✅ 「${m.cn}」是${m.q}！比上次的${P0.q}進步了，這題練會了。可以繼續跟電腦下完，也可以直接結束這題`;
       /* 意見回饋 648（開發者）：練會了，這盤就不該再被「還有一題沒下完」催——給一顆結束鈕；錯棋重練頁看到這盤已練會，也只淡淡提醒 */
-      pa.hidden=false;pa.innerHTML='<button class="pill" id="pEnd">✅ 練會了，結束這題</button>';pa.querySelector("#pEnd").onclick=()=>{vibrate(5);post("/play/resign").catch(()=>{}).finally(()=>{toast("✅ 這題練會了");location.hash="#/redo"})};return}
+      pa.hidden=false;if(pa.dataset.k!=="end"){pa.dataset.k="end";   /* 意見回饋 749：按鈕一樣就不重畫（每次輪詢重畫會閃、也可能吃掉正在按的那一下） */
+        pa.innerHTML='<button class="pill" id="pEnd">✅ 練會了，結束這題</button>';pa.querySelector("#pEnd").onclick=()=>{vibrate(5);post("/play/resign").catch(()=>{}).finally(()=>{toast("✅ 這題練會了");location.hash="#/redo"})}}return}
     const HB=practiceBoard(),HM=bc?bcMove(HB,st.human,bc):null,C0=window.XQCore;let say="";
     if(HM&&fail>=3&&C0){const pc=HB[HM.f],cap=HB[HM.t],after=C0.make(HB,HM.f,HM.t),ck=C0.inCheck(after,opp(st.human)),nm=x=>C0.NAMES[C0.sideOf(x)][x.toUpperCase()];
       say=`動你的「${nm(pc)}」`+(cap?`，可以吃掉對方的「${nm(cap)}」`:"")+(ck?"，走了就是將軍":"")+(!cap&&!ck?"，先把它調到更好的位置，看看能威脅到什麼":"")}
     if(HM&&fail>=2){if(!d.hint){d.hint=true;all[P0.key]=d;store.set("redoDone",all)}const want=fail>=4?{f:HM.f,t:HM.t,n:P0.base}:{f:HM.f,t:null,n:P0.base};if(!pHint||pHint.t!==want.t||pHint.f!==want.f){pHint=want;setTimeout(draw,0)}}
     s2.textContent=(ok?`👍 「${m.cn}」是${m.q}，比上次好；按 ↶ 悔棋再挑戰正著`:`❌ 「${m.cn}」還是${m.q}，按 ↶ 悔棋再想一次`)+`（第 ${fail} 次）`+
       (!HM?"":fail>=4?`\n💡 提示三：黃色標記是建議的落點（Pikafish 建議走「${bc}」）`:fail>=3?`\n💡 提示二：${say}（黃色標記是該動的子）`:fail>=2?"\n💡 提示一：黃色標記的這顆子就是關鍵":"・再錯一次就給提示");
-    if(fail>=4&&bc){pa.hidden=false;pa.innerHTML='<button class="pill" id="pHn">💡 在棋盤上看建議</button><button class="pill" id="pPv">▶ 推演後面</button>';
+    if(fail>=4&&bc&&pa.dataset.k===P0.key+"|"+bc)pa.hidden=false;
+    else if(fail>=4&&bc){pa.hidden=false;pa.dataset.k=P0.key+"|"+bc;pa.innerHTML='<button class="pill" id="pHn">💡 在棋盤上看建議</button><button class="pill" id="pPv">▶ 推演後面</button>';
       pa.querySelector("#pHn").onclick=()=>{const mv=bcMove(practiceBoard(),st.human,bc);if(!mv)return toast("找不到這步");vibrate(5);
         pHint={...mv,n:P0.base};if(st.moves.length>P0.base)toast("按 ↶ 悔棋回到起點，就看得到建議的那一步（黃色標記）");draw()};
       pa.querySelector("#pPv").onclick=()=>{vibrate(5);pvSheet(bc)}}}
