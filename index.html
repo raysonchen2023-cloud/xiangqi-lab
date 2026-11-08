@@ -1341,7 +1341,7 @@ html[data-era=qin] .view:has(>.shp-rd),html[data-era=wudai] .view:has(>.shp-rd){
       if(!window.caches)return go();caches.keys().then(function(ks){return Promise.all(ks.filter(function(k){return k.indexOf("xqlab-app-")===0}).map(function(k){return caches.delete(k)}))})
         .then(function(){return navigator.serviceWorker&&navigator.serviceWorker.getRegistration()}).then(function(r){return r&&r.update()}).catch(function(){}).then(go)}};setTimeout(chk,4000)})();
 </script>
-<script>window.XQ_OFFLINE=true;window.XQ_BUILD="20261109-1145";</script>
+<script>window.XQ_OFFLINE=true;window.XQ_BUILD="20261109-1200";</script>
 <script src="core.js"></script>
 <script src="engine.js"></script>
 <script src="local.js"></script>
@@ -2488,7 +2488,9 @@ if(OFF&&"serviceWorker" in navigator){
     // 不馬上重新整理：新版已經在背景下載好，留在原本的畫面（意見回饋寫到一半也不會不見），等換到別的頁面時才套用
     pending=true;
     /* 意見回饋 320：沒在下棋、測驗、打字、開卡片時，下載好就馬上套用；不然才等換頁 */
-    const busyNow=()=>inGame()||!!document.querySelector("#sheet.show,.travel,.walkc")||/^(INPUT|TEXTAREA)$/.test((document.activeElement||{}).tagName||"");
+    /* 意見回饋 817：按「背景更新」時輸入框已經失焦，所以也看有沒有寫了字的輸入框；意見回饋頁、殘局、古戰場、擂台、主題訓練這些棋局頁也算在忙 */
+    const typed=()=>[...document.querySelectorAll("textarea,input[type=text],input:not([type])")].some(x=>x.offsetParent&&String(x.value||"").trim());
+    const busyNow=()=>inGame()||/^#\/(feedback|canju|battle|theme|cup|legend|lobby|adventure|redo|exam|today)(\/|$)/.test(location.hash)||typed()||!!document.querySelector("#sheet.show,.travel,.walkc")||/^(INPUT|TEXTAREA)$/.test((document.activeElement||{}).tagName||"");
     if(!busyNow()){updSay("✓ 新版下載好了，馬上套用…",100);markDone();setTimeout(()=>location.reload(),900);return}
     updSay("✓ 新版下載好了，換到別的頁面時自動套用",100);setTimeout(()=>tt.remove(),3500);
     document.querySelectorAll(".toast.upd").forEach(x=>x.remove())}
