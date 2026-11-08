@@ -1230,7 +1230,7 @@ html:has(#xqTitle:not(.out)),html:has(#xqTitle:not(.out)) body{background:#F3ECD
       if(!window.caches)return go();caches.keys().then(function(ks){return Promise.all(ks.filter(function(k){return k.indexOf("xqlab-app-")===0}).map(function(k){return caches.delete(k)}))})
         .then(function(){return navigator.serviceWorker&&navigator.serviceWorker.getRegistration()}).then(function(r){return r&&r.update()}).catch(function(){}).then(go)}};setTimeout(chk,4000)})();
 </script>
-<script>window.XQ_OFFLINE=true;window.XQ_BUILD="20261108-1200";</script>
+<script>window.XQ_OFFLINE=true;window.XQ_BUILD="20261108-1230";</script>
 <script src="core.js"></script>
 <script src="engine.js"></script>
 <script src="local.js"></script>
@@ -7699,7 +7699,8 @@ function homeRecGame(st){try{if(!st)return null;const nm=(k,j)=>k==="journey"?(t
   if(st.moves&&st.moves.length&&!st.result&&HREC_KIND[st.kind])return{go:HREC_KIND[st.kind][0],t:`♟ 接著下：${nm(st.kind,st.journey)}`,park:st.kind==="journey"&&st.journey==="park"};
   const o=(st.others||[]).find(z=>z&&z.n&&HREC_KIND[z.kind]);return o?{go:HREC_KIND[o.kind][0],t:`♟ 接著下：${nm(o.kind,o.journey)}`,sw:o.kind,park:o.kind==="journey"&&o.journey==="park"}:null}catch(e){return null}}
 function homeRecBind(v){const b=v&&v.querySelector("#hRec");if(!b)return;let R={go:"#/cpu",t:"🤖 跟電腦下一盤"};
-  const set=r=>{if(!r||!b.isConnected)return;R=r;const t=b.querySelector("#hRecT");if(t)t.textContent=r.t;b.dataset.go=r.go;b.setAttribute("aria-label","今日推薦："+r.t)};
+  const set=r=>{if(!r||!b.isConnected)return;R=r;const t=b.querySelector("#hRecT");if(t)t.textContent=r.t;b.dataset.go=r.go;b.setAttribute("aria-label","今日推薦："+r.t);
+    {const cj=v.querySelector("#cjHome");if(cj)cj.hidden=r.go==="#/canju"}};
   const pick=(st,onl)=>onl||homeRecGame(st)||homeRecTea()||(s=>s&&!s.wait?s:null)(homeRecShip())||mainDoneRec()||{go:"#/cpu",t:"🤖 跟電腦下一盤"};
   let onl=null;try{if(window.XQNet&&XQNet.playing&&XQNet.playing())onl={go:"#/pvp",t:"⚔ 回線上對局"}}catch(e){}
   set(pick(null,onl));mainDoneBind(v);
