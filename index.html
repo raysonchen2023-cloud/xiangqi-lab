@@ -1341,7 +1341,7 @@ html[data-era=qin] .view:has(>.shp-rd),html[data-era=wudai] .view:has(>.shp-rd){
       if(!window.caches)return go();caches.keys().then(function(ks){return Promise.all(ks.filter(function(k){return k.indexOf("xqlab-app-")===0}).map(function(k){return caches.delete(k)}))})
         .then(function(){return navigator.serviceWorker&&navigator.serviceWorker.getRegistration()}).then(function(r){return r&&r.update()}).catch(function(){}).then(go)}};setTimeout(chk,4000)})();
 </script>
-<script>window.XQ_OFFLINE=true;window.XQ_BUILD="20261108-2210";</script>
+<script>window.XQ_OFFLINE=true;window.XQ_BUILD="20261108-2220";</script>
 <script src="core.js"></script>
 <script src="engine.js"></script>
 <script src="local.js"></script>
@@ -11436,6 +11436,93 @@ function lobbyMap(v){const lb=v.querySelector("#lb");if(!lb||v.querySelector(".l
   try{if(typeof shwPage==="function"&&SHIP_WALK_ON)shwPage(v,Object.assign({},SHW_PG0,SHW_LOBBY),"lobby")}catch(e){}
   try{if(typeof zmPage==="function")zmPage(v)}catch(e){}}
 if(typeof Lobby==="function"){const f0=Lobby;Lobby=function(v){const r=f0.apply(this,arguments);try{if(LOBBY_MAP_ON&&OFF&&window.XQNet)lobbyMap(v)}catch(e){}return r}}
+/* ================= ⚙ 設定頁滿版水墨圖「雲河驛站・天字客房」（開發者 11/8 定案：Gemini 方案 1＋3 合體；史學顧問核圖中）=================
+   規劃：story/gemini_app/39 號 md；圖：park/setmap/set_day_v4.png、夜版 set_night.png（11/8：炕桌棋盤改成有厚度、比較俯視的棋枰，底線 9 子分得開；Gemini＋兩次局部修：13 把扇、明式衣架與四方平定巾、桌上鏡架銅鏡、羅漢床上的炕桌與腳踏、檻窗、石磬、無蓋宣德爐、單張路引；琴頭翻到右邊、炕桌棋盤都是程式畫；宣紙後製）→ art/setmap/set_day.webp。
+   包一層 Settings(v)：原本的四個分頁（角色／棋盤／聲音／系統）照舊畫、照舊綁好，整包收進從下方滑出的「宣紙畫軸」面板；
+   點圖上的東西＝打開畫軸、切到那個分頁、捲到那一段並閃一下（菱花鏡直接看 3D 立繪）：
+     角色：衣帽架＝換造型（我的角色）、桌上的銅鏡＝3D 立繪（#meFig）、牆上腰牌＝官階、書案上的刻刀匣＝本命棋子；
+     棋盤：羅漢床上的炕桌＝棋盤（預覽和測試）、牆上 13 把摺扇＝朝代樣式、支摘窗＝深淺色、筆筒＝字體；
+     聲音：七弦琴＝語音報棋、石磬＝棋子聲、宣德爐的香煙＝氛圍；
+     系統：玄關長案的信插＝意見回饋、手札＝修正紀錄、驛路文牒＝關於・版本、地上的包袱書箱＝換手機、書案角落的小鎖匣＝隱私・開發者模式。
+   場景跟著設定變：深色＝夜版（data/setmap/set_night.webp，還沒畫好前用程式把畫面調暗、點燈）；聲音全關＝古琴蓋上琴囊；
+     換朝代棋盤＝棋桌上的棋盤框換成那一朝的顏色；高對比＝棋子描金邊。
+   標籤只有大字。接 07w 走路（SHW_SETMAP）、07x 兩指縮放。圖片網址帶 SM_IMGV。開關 SETMAP_ON（false＝照舊分頁清單）；樣式在 smCss */
+const SETMAP_ON=false;
+const SM_IMGV="2200";
+/* 入口：[id, 左%, 上%, 大字, 分頁, 要捲到的元素]（量 768×1376 的 set_day_v2，標籤放在東西上方） */
+const SM_SPOTS=[
+  ["smFan",15,10.5,"🪭 朝代棋盤","look","#era"],["smWin",55,15,"🪟 深淺色","look","#pt"],["smBoard",50,31,"♟ 棋盤","look","#pv"],
+  ["smBrush",77,28,"🖌 字體","look","#ftM"],["smKnife",90,24.5,"🔪 本命棋子","bot","[data-bp],.bpc"],["smLock",95,31,"🔒","more","#dm"],
+  ["smRobe",16,39.5,"👘 換造型","bot","#meFig"],["smTag",7,57,"🏮 官階","bot",".botN"],["smMirror",32,50.5,"🪞 3D 立繪","bot","#meFig"],
+  ["smInc",55,48.5,"🕯 氛圍","sound","#snd3"],["smQin",76,49.5,"🎵 語音報棋","sound","#snd2"],["smBell",93,45,"🔔 棋子聲","sound","#snd"],
+  ["smMail",70,70.5,"✉ 意見回饋","more","#fb"],["smNote",55,77,"📒 修正紀錄","more","#fxh"],["smPass",86,76,"📜 關於","more","#about"],["smPack",48,84,"🎒 換手機","more","#xfOut"]];
+/* 07w 的座標表：從右下角的房門進來；鏡台、香爐凳、琴桌、羅漢床前的棋桌之間留走道 */
+const SHW_SETMAP={el:40,h:[.085,70,.0012],look0:[40,60],
+  N:{home:[80,95],f1:[55,73],f2:[46,61],tbl:[47,52],dk1:[64,51],desk:[78,49.5],mir:[32,72],robe:[17,70],snd:[66,65],xuan:[48,79]},
+  E:"home-f1 f1-f2 f2-tbl tbl-dk1 dk1-desk f1-mir mir-robe f1-snd f1-xuan home-xuan",
+  HS:{smFan:["robe",15,25,"bow"],smWin:["tbl",55,24,"wave"],smBoard:["tbl",50,35,"cheer"],smBrush:["desk",79,32,"bow"],smKnife:["desk",86,34,"bow"],smLock:["desk",94,35,"bow"],
+    smRobe:["robe",16,48,"bow"],smTag:["robe",3,48,"bow"],smMirror:["mir",32,60,"bow"],smInc:["snd",56,54,"wave"],smQin:["snd",75,54,"wave"],smBell:["snd",93,52,"wave"],
+    smMail:["xuan",72,75,"bow"],smNote:["xuan",67,82,"bow"],smPass:["xuan",70,79,"bow"],smPack:["xuan",50,90,"wave"]}};
+/* 棋桌上程式畫的棋盤（量圖的像素）：四個角 P00 左上、P10 左下、P11 右下、P01 右上；U 往下＝9 條直線、V 往右＝10 條橫線 */
+const SM_BOARD={q:[[354,453],[343,486],[447,486],[436,453]],mu:.07,mv:.045};   /* 史學顧問 11/8：棋盤移到羅漢床上的炕桌（set_day_v3） */
+function smCss(){if(document.getElementById("smCss"))return;const s=document.createElement("style");s.id="smCss";s.textContent=`
+.set-page{margin:0 0 6px}.set-page .shp-spot{max-width:40%;padding:3px 9px;z-index:3}.set-page .shp-spot b{white-space:nowrap;font-size:13px}
+.sm-fx{position:absolute;inset:0;pointer-events:none;overflow:hidden}
+.sm-night{position:absolute;inset:0;background:linear-gradient(rgba(16,22,48,.55),rgba(20,24,40,.5));mix-blend-mode:multiply}
+.sm-lamp{position:absolute;width:30%;aspect-ratio:1;transform:translate(-50%,-50%);border-radius:50%;background:radial-gradient(closest-side,rgba(255,214,140,.55),rgba(255,190,90,0));mix-blend-mode:screen}
+.sm-bag{position:absolute;left:63.5%;top:52.2%;width:24.5%;height:3.6%;border-radius:40% 40% 30% 30%/60% 60% 40% 40%;transform:rotate(-1.2deg);
+  background:repeating-linear-gradient(90deg,rgba(255,255,255,.06) 0 3px,transparent 3px 9px),linear-gradient(#2f4a7a,#1f3358);box-shadow:inset 0 0 0 1px #11203a,0 1px 2px rgba(0,0,0,.35)}
+.sm-bag::after{content:"";position:absolute;right:6%;top:-35%;width:7%;height:170%;border-radius:40%;background:#c69a3c;box-shadow:inset 0 0 0 1px #6b4f17}
+.sm-frame{position:absolute;pointer-events:none;mix-blend-mode:multiply;opacity:.55}
+.sm-gold{position:absolute;border-radius:50%;border:1.5px solid #e8b93c;box-shadow:0 0 2px #f2c94c;transform:translate(-50%,-50%);pointer-events:none}
+.sm-flash{animation:smFlash 1.4s ease-out 1}@keyframes smFlash{0%{box-shadow:0 0 0 0 rgba(242,201,76,.9)}40%{box-shadow:0 0 0 6px rgba(242,201,76,.55)}100%{box-shadow:0 0 0 0 rgba(242,201,76,0)}}
+.sm-dw{position:fixed;left:0;right:0;bottom:0;z-index:950;max-height:76vh;display:flex;flex-direction:column;transform:translateY(105%);transition:transform .3s ease;
+  background:#f6efdf url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='120' height='120'%3E%3Cfilter id='n'%3E%3CfeTurbulence baseFrequency='.9' numOctaves='2'/%3E%3CfeColorMatrix values='0 0 0 0 .45 0 0 0 0 .38 0 0 0 0 .28 0 0 0 .06 0'/%3E%3C/filter%3E%3Crect width='120' height='120' filter='url(%23n)'/%3E%3C/svg%3E");
+  color:#2a1f15;box-shadow:0 -6px 24px rgba(0,0,0,.28)}
+.sm-dw::before,.sm-dw::after{content:"";position:absolute;left:-6px;right:-6px;height:12px;border-radius:6px;background:linear-gradient(#7a4a24,#4a2a12 60%,#7a4a24);box-shadow:0 1px 3px rgba(0,0,0,.4)}
+.sm-dw::before{top:-8px}.sm-dw::after{bottom:-8px}
+.sm-dw.open{transform:none}.sm-dw-h{display:flex;align-items:center;gap:8px;padding:12px 14px 4px;font:900 16px var(--serif,serif)}.sm-dw-h button{margin-left:auto;border:0;background:none;font-size:20px;cursor:pointer;color:inherit}
+.sm-dw-b{overflow:auto;padding:0 2px 18px;-webkit-overflow-scrolling:touch}
+.sm-scrim{position:fixed;inset:0;z-index:949;background:rgba(0,0,0,.22);display:none}.sm-scrim.open{display:block}
+@media (prefers-reduced-motion:reduce){.sm-dw{transition:none}.sm-flash{animation:none}}`;document.head.append(s)}
+const smDark=()=>{const t=store.get("pageTheme","auto");return t==="dark"||(t==="auto"&&matchMedia("(prefers-color-scheme: dark)").matches)};
+const smMute=()=>!store.get("mvSound",false)&&!store.get("voiceCall",true)&&!store.get("bgm",true);
+/* 棋盤四角雙線性內插：u 往下（0..1）、v 往右（0..1）→ 圖上像素 */
+const smAt=(u,v)=>{const[a,b,c,d]=SM_BOARD.q;return[a[0]*(1-u)*(1-v)+b[0]*u*(1-v)+c[0]*u*v+d[0]*(1-u)*v,a[1]*(1-u)*(1-v)+b[1]*u*(1-v)+c[1]*u*v+d[1]*(1-u)*v]};
+function smScene(P){const fx=P.querySelector(".sm-fx"),img=P.querySelector(":scope>img");if(!fx||!img)return;const W=768,H=1376,pc=([x,y])=>[x/W*100,y/H*100];
+  const dk=smDark();let night=false;
+  if(dk){const im=new Image();im.onload=()=>{if(img.isConnected&&smDark()){img.src=im.src;night=true;const n=fx.querySelector(".sm-night");if(n)n.remove();fx.querySelectorAll(".sm-lamp").forEach(x=>x.remove())}};im.src=`data/setmap/set_night.webp?v=${SM_IMGV}`}
+  else if(!/set_day/.test(img.src))img.src=`data/setmap/set_day.webp?v=${SM_IMGV}`;
+  let h="";
+  if(dk&&!night)h+='<i class="sm-night"></i><i class="sm-lamp" style="left:80%;top:30%"></i><i class="sm-lamp" style="left:55%;top:46%;width:22%"></i><i class="sm-lamp" style="left:56%;top:51%;width:14%"></i>';
+  if(smMute())h+='<i class="sm-bag" title="琴囊"></i>';
+  try{const e=typeof boardEraE==="function"?boardEraE():null;if(e&&e.b){const[x0,y0]=pc(SM_BOARD.q[1]),[x1]=pc(SM_BOARD.q[2]),[,y1]=pc(SM_BOARD.q[0]);
+    h+=`<i class="sm-frame" style="left:${(x0-.6).toFixed(2)}%;top:${(y1-.4).toFixed(2)}%;width:${(x1-x0+1.2).toFixed(2)}%;height:${(pc(SM_BOARD.q[1])[1]-y1+.8).toFixed(2)}%;border:3px solid ${e.b.bg[1]};background:${e.b.bg[0]}22;border-radius:2px"></i>`}}catch(err){}
+  if(store.get("hiCon",false)){const P0=[];for(const side of[[0,"k"],[9,"r"]]){const j0=side[0],dj=j0?-1:1;for(let i=0;i<9;i++)P0.push([i,j0]);P0.push([1,j0+2*dj],[7,j0+2*dj]);for(const i of[0,2,4,6,8])P0.push([i,j0+3*dj])}
+    const{mu,mv}=SM_BOARD,cw=(SM_BOARD.q[3][0]-SM_BOARD.q[0][0])*(1-2*mv)/9/W*100*.86;
+    h+=P0.map(([i,j])=>{const[x,y]=pc(smAt(mu+(1-2*mu)*i/8,mv+(1-2*mv)*j/9));return`<i class="sm-gold" style="left:${x.toFixed(2)}%;top:${y.toFixed(2)}%;width:${cw.toFixed(2)}%;aspect-ratio:1.25"></i>`}).join("")}
+  fx.innerHTML=h}
+function setMap(v){const root=v.querySelector(".pad.home");if(!root||v.querySelector(".set-page"))return;smCss();
+  const d=document.createElement("div");
+  d.innerHTML=`<div class="shp-page cq set-page"><img src="data/setmap/set_day.webp?v=${SM_IMGV}" alt="天字客房"><div class="sm-fx" aria-hidden="true"></div>${SM_SPOTS.map(([id,x,y,t])=>`<button class="shp-spot" id="${id}" style="left:${x}%;top:${y}%"><b>${esc(t)}</b></button>`).join("")}</div>`;
+  const P=d.firstElementChild;v.insertBefore(P,root);
+  /* 宣紙畫軸：原本的設定整包搬進來（還在 v 裡面，原本綁的按鈕、paint() 都照常） */
+  const dw=document.createElement("div");dw.className="sm-dw";dw.innerHTML='<div class="sm-dw-h">📜 設定<button type="button" aria-label="收起畫軸">✕</button></div><div class="sm-dw-b"></div>';
+  const sc=document.createElement("div");sc.className="sm-scrim";v.append(sc,dw);const body=dw.querySelector(".sm-dw-b");body.append(root);
+  const close=()=>{dw.classList.remove("open");sc.classList.remove("open");smScene(P)};dw.querySelector("button").onclick=close;sc.onclick=close;
+  const open=(tab,sel)=>{const tb=root.querySelector(`#sgTabs [data-k="${tab}"]`);if(tb)tb.click();dw.classList.add("open");sc.classList.add("open");
+    setTimeout(()=>{let el=null;for(const s of String(sel||"").split(",")){el=root.querySelector(s.trim());if(el)break}if(!el)return;const det=el.closest("details");if(det&&!det.open)det.open=true;
+      const card=el.closest(".card,.items,.opt,.eragrid,label,.item")||el;body.scrollTop=Math.max(0,card.getBoundingClientRect().top-body.getBoundingClientRect().top+body.scrollTop-14);
+      root.querySelectorAll(".sm-flash").forEach(x=>x.classList.remove("sm-flash"));void card.offsetWidth;card.classList.add("sm-flash");setTimeout(()=>card.classList.remove("sm-flash"),1500)},60)};
+  for(const[id,,,,tab,sel]of SM_SPOTS){const b=P.querySelector("#"+id);if(!b)continue;
+    b.onclick=()=>{vibrate(5);if(id==="smMirror"){const f=root.querySelector("#meFig");if(f){f.click();return}}open(tab,sel)}}
+  smScene(P);
+  /* 設定改了（深淺色、聲音、朝代棋盤、高對比）：畫軸開著時每次改都重畫場景 */
+  root.addEventListener("click",()=>setTimeout(()=>smScene(P),80));root.addEventListener("change",()=>setTimeout(()=>smScene(P),80));
+  if(typeof shpFit==="function")shpFit(v);
+  try{if(typeof shwPage==="function"&&SHIP_WALK_ON)shwPage(v,Object.assign({},SHW_PG0,SHW_SETMAP),"set")}catch(e){}
+  try{if(typeof zmPage==="function")zmPage(v)}catch(e){}}
+if(typeof Settings==="function"){const f0=Settings;Settings=function(v){const r=f0.apply(this,arguments);try{if(SETMAP_ON)setMap(v)}catch(e){}return r}}
 /* ================= 🕰 回到當年（意見回饋 313）=================
    石桌往事裡的對局，用「妙棋精選」裡 Pikafish 驗證過的特級大師實戰來演：你站在旁邊看，不能插手；
    棋自動一步一步下，下到那一步妙棋之前停下來——換作是你，會怎麼走？
@@ -12781,6 +12868,98 @@ function Viewer(v,c,id){
     loadGrades().then(()=>{if(store.get("openReport")===c+"/"+id){store.set("openReport",null);report(true)}})}).catch(e=>{v.querySelector("#note").textContent="⚠ "+e.message});
   return self}
 
+/* ================= 📜 棋譜庫滿版水墨圖「崇文書閣」（開發者 11/8 定案：Gemini 方案 1＋8＋考究修正；史學顧問核圖中）=================
+   規劃：story/gemini_app/38 號 md；圖：park/libmap/lib_v4.png（史學顧問 11/8：照宋式鉤闌、直櫺窗、灰藍方磚整張重出 lib_v3，再局部修：書冊平放、卷軸包書帙掛牙籤、畫軸無題款加驚燕、燈檠蓮瓣油盞（白天不點）、攤平的蝴蝶裝；宣紙後製）→ art/libmap/lib.webp。
+   學習頁翰林書院的藏書閣內部（宋代），兩層挑空、中央木樓梯。包一層 Library(v,c0)：原本的棋譜清單（分組、書目、搜尋、篩選、分頁）照舊畫、照舊綁好，
+   整包收進從下方滑出的宣紙面板（點 ✕ 回到書閣）；點棋局照舊直接進棋盤；找棋跟原本一樣快（同一份清單、同一個 api）。
+     一樓左邊 6 格書櫥＝6 部古譜（每格一部，點了直接開那部的清單）；右邊卷宗櫥＝大師對局（特級大師對局）；
+     二樓一排人物畫軸＝72 位特級大師小傳（點了選人，直接開他的對局）；3 口樟木箱＝比賽對局 3 冊：沒下載＝朱紅封條、下載中＝封條發金光、下載完＝封條變金、可以打開；
+     前景閱覽大案：攤開的冊子＝繼續研究（書頁上畫一張迷你棋盤）、一疊手抄冊＝我的對局（局數越多越厚，三段）、燈檠上的青瓷油盞＝搜尋。
+   書名、標籤都由程式疊上去（圖上沒有字）。接 07w 走路（SHW_LIBMAP，上二樓走中央樓梯，樓上身高不縮）、07x 縮放。圖片網址帶 LB_IMGV。
+   開關 LIBMAP_ON（false＝照舊清單）；樣式在 lbCss */
+const LIBMAP_ON=true;   /* 開發者 11/8 照建議先開 */
+const LB_IMGV="2200";
+const LB_OLD=[["shiqingyaqu","適情","適情雅趣"],["juzhongmi","橘中","橘中秘"],["meihuapu","梅花","梅花譜"],["kaiju","開局","古典開局譜"],["canju","殘局","古典殘局譜"],["brilliant","妙棋","妙棋精選"]];   /* [書, 書櫥格子上的短名, 全名] */
+/* 6 格書櫥的位置（格子中心，%；上下三層、每層兩格） */
+const LB_CELLS=[[10,55.5],[21,54],[10,60],[21,58.5],[10,64.5],[21,62.5]];
+const LB_BOX=[[71.5,30],[83.5,30.5],[94.5,31]];   /* 3 口樟木箱（封條中心） */
+const LB_SPOTS=[["lbGm",84,51.5,"🏆 大師對局"],["lbBio",33,12,"🖼 特級大師"],["lbTour",84,24.5,"📦 比賽對局"],["lbRead",51,77.5,"📖 繼續研究"],["lbMine",80,75.5,"📒 我的對局"],["lbFind",24.5,69.5,"🔍 搜尋"]];
+let LB_OPEN=null;   /* 換頁到 #/db/<書> 之後要不要直接打開面板（"list"／"q"） */
+/* 07w 的座標表：一樓在大案後面的地板上走；書櫥前、卷宗櫥前；中央樓梯上二樓，畫軸前、木箱前 */
+const SHW_LIBMAP={el:40,h:y=>.09+(Math.max(y,64)-74)*.0012,look0:[50,60],
+  N:{home:[50,74],lamp:[30,75],book:[50,75.5],stack:[78,75],shelf:[33,69],cab:[67,72],sf:[42,64],s1:[49,50],st:[57,36.5],por:[30,32.5],b1:[64,35.5],box:[82,35.5]},
+  E:"home-lamp home-book home-stack lamp-shelf home-sf sf-shelf home-cab sf-s1 s1-st st-por st-b1 b1-box",
+  HS:{lbGm:["cab",84,62,"bow"],lbBio:["por",30,22,"bow"],lbTour:["box",84,31,"cheer"],lbRead:["book",51,84,"bow"],lbMine:["stack",80,82,"bow"],lbFind:["lamp",26,80,"wave"],
+    lbC0:["shelf",8,55,"bow"],lbC1:["shelf",20,55,"bow"],lbC2:["shelf",8,60,"bow"],lbC3:["shelf",20,60,"bow"],lbC4:["shelf",8,65,"bow"],lbC5:["shelf",20,65,"bow"]}};
+function lbCss(){if(document.getElementById("lbCss"))return;const s=document.createElement("style");s.id="lbCss";s.textContent=`
+.lib-page{margin:0 0 6px}.lib-page .shp-spot{max-width:44%;padding:4px 10px;z-index:3}.lib-page .shp-spot b{white-space:nowrap;font-size:13.5px}
+.lb-fx{position:absolute;inset:0;pointer-events:none}
+.lb-cell{position:absolute;width:10.4%;height:4%;transform:translate(-50%,-50%);border:0;padding:0;background:none;cursor:pointer;pointer-events:auto;z-index:2}
+.lb-cell span{position:absolute;left:50%;top:0;transform:translate(-50%,-55%);background:#f3ead2;border:1px solid #8a6a3a;color:#3a2618;border-radius:3px;font:800 10.5px/1 var(--serif,serif);padding:2px 3px;writing-mode:horizontal-tb;white-space:nowrap;box-shadow:0 1px 2px rgba(0,0,0,.25)}
+.lb-box{position:absolute;width:10.5%;height:6%;transform:translate(-50%,-50%);border:0;padding:0;background:none;cursor:pointer;pointer-events:auto;z-index:2}
+.lb-box i{position:absolute;left:38%;top:12%;width:24%;height:76%;border-radius:1px;opacity:0}
+.lb-box.dl i{opacity:1;background:linear-gradient(90deg,rgba(255,215,90,.0),rgba(255,226,120,.85),rgba(255,215,90,0));background-size:200% 100%;animation:lbShine 1.2s linear infinite;mix-blend-mode:screen}
+.lb-box.ok i{opacity:1;background:#d9b04a;box-shadow:0 0 6px 2px rgba(242,201,76,.7)}
+@keyframes lbShine{from{background-position:200% 0}to{background-position:0 0}}
+.lb-mini{position:absolute;left:52.4%;top:81.2%;width:8.2%;aspect-ratio:9/10;transform:skewX(-6deg);opacity:.82;pointer-events:none}
+.lb-thick{position:absolute;left:70%;width:15%;height:1%;border-radius:2px;background:linear-gradient(#e9dcc0,#cdbb93);box-shadow:inset 0 -1px 0 #8b7550;pointer-events:none}
+.lb-pn{position:fixed;left:0;right:0;bottom:0;z-index:950;height:80vh;display:flex;flex-direction:column;transform:translateY(105%);transition:transform .3s ease;background:#f6efdf;color:#2a1f15;border-top:2px solid #8a5a2a;border-radius:14px 14px 0 0;box-shadow:0 -6px 24px rgba(0,0,0,.28)}
+.lb-pn.open{transform:none}.lb-pn-h{display:flex;align-items:center;gap:8px;padding:10px 14px 4px;font:900 16px var(--serif,serif)}.lb-pn-h button{margin-left:auto;border:0;background:none;font-size:22px;cursor:pointer;color:inherit}
+.lb-pn-b{overflow:auto;flex:1;-webkit-overflow-scrolling:touch}
+.lb-scrim{position:fixed;inset:0;z-index:949;background:rgba(0,0,0,.22);display:none}.lb-scrim.open{display:block}
+@media (prefers-reduced-motion:reduce){.lb-pn{transition:none}.lb-box.dl i{animation:none}}`;document.head.append(s)}
+/* 迷你棋盤（SVG）：照「繼續研究」那盤的開始局面畫（拿不到就畫開局） */
+function lbMini(fen){let b=null;try{b=parseFen(fen||START)}catch(e){}const G=[];for(let i=0;i<9;i++)G.push(`<line x1="${i}" y1="0" x2="${i}" y2="${i%8?4:9}"/>`,i%8?`<line x1="${i}" y1="5" x2="${i}" y2="9"/>`:"");
+  for(let j=0;j<10;j++)G.push(`<line x1="0" y1="${j}" x2="8" y2="${j}"/>`);G.push('<path d="M3 0 5 2M5 0 3 2M3 7 5 9M5 7 3 9"/>');
+  let P="";if(b&&b.length===90)for(let k=0;k<90;k++){const p=b[k];if(!p)continue;const x=k%9,y=Math.floor(k/9),r=p===p.toUpperCase();P+=`<circle cx="${x}" cy="${y}" r=".36" fill="${r?"#b8402c":"#2a2420"}" stroke="#e8d6b0" stroke-width=".08"/>`}
+  return`<svg class="lb-mini" viewBox="-.6 -.6 9.2 10.2" aria-hidden="true"><g stroke="#7a5a3a" stroke-width=".07" fill="none">${G.join("")}</g>${P}</svg>`}
+function libMap(v,c0){const root=v.querySelector(".lib");if(!root||v.querySelector(".lib-page"))return;lbCss();
+  const d=document.createElement("div");
+  d.innerHTML=`<div class="shp-page cq lib-page"><img src="data/libmap/lib.webp?v=${LB_IMGV}" alt="崇文書閣"><div class="lb-fx"></div>
+    ${LB_OLD.map(([k,n,f],i)=>`<button class="lb-cell" id="lbC${i}" data-c="${k}" style="left:${LB_CELLS[i][0]}%;top:${LB_CELLS[i][1]}%" aria-label="${esc(f)}"><span>${esc(n)}</span></button>`).join("")}
+    ${LB_BOX.map(([x,y],i)=>`<button class="lb-box" data-i="${i}" style="left:${x}%;top:${y}%" aria-label="比賽對局第 ${i+1} 箱"><i></i></button>`).join("")}
+    ${LB_SPOTS.map(([id,x,y,t])=>`<button class="shp-spot" id="${id}" style="left:${x}%;top:${y}%"><b>${esc(t)}</b></button>`).join("")}</div>`;
+  const P=d.firstElementChild;v.insertBefore(P,root);
+  const pn=document.createElement("div");pn.className="lb-pn";pn.innerHTML='<div class="lb-pn-h">📜 <span id="lbT">書目</span><button type="button" aria-label="回到書閣">✕</button></div><div class="lb-pn-b"></div>';
+  const sc=document.createElement("div");sc.className="lb-scrim";v.append(sc,pn);pn.querySelector(".lb-pn-b").append(root);
+  const open=(t,q)=>{pn.classList.add("open");sc.classList.add("open");const tt=pn.querySelector("#lbT");if(tt&&t)tt.textContent=t;if(q){const qi=root.querySelector("#q");if(qi)setTimeout(()=>qi.focus(),320)}};
+  const close=()=>{pn.classList.remove("open");sc.classList.remove("open")};pn.querySelector(".lb-pn-h button").onclick=close;sc.onclick=close;
+  /* 開某一部書：已經是這部就直接打開面板；不是就換到 #/db/<書>（原本的 Library 會載好那部），進來後自動打開 */
+  const book=(k,t,q)=>{if(k&&k!==libState.c){LB_OPEN={t,q};libState.q="";libState.player="";location.hash="#/db/"+encodeURIComponent(k);return}open(t,q)};
+  P.querySelectorAll(".lb-cell").forEach(b=>b.onclick=()=>{vibrate(5);book(b.dataset.c,b.getAttribute("aria-label"))});
+  const GO={lbGm:()=>book("gmgames","大師對局"),lbMine:()=>book("play","我的對局"),lbFind:()=>open("搜尋",true),
+    lbRead:()=>{const r=store.get("recent",[])[0];if(r)location.hash=`#/db/${encodeURIComponent(r.c)}/${encodeURIComponent(r.id)}`;else book("shiqingyaqu","適情雅趣")},
+    lbBio:()=>lbBios(book),lbTour:()=>lbTours(P,book)};
+  for(const[id]of LB_SPOTS){const b=P.querySelector("#"+id);if(b)b.onclick=()=>{vibrate(5);try{GO[id]()}catch(e){}}}
+  P.querySelectorAll(".lb-box").forEach(b=>b.onclick=()=>{vibrate(5);lbTours(P,book,+b.dataset.i)});
+  /* 場景狀態：繼續研究的迷你棋盤、手抄冊的厚度、樟木箱的封條 */
+  const fx=P.querySelector(".lb-fx"),r=store.get("recent",[])[0];fx.innerHTML=lbMini(r&&r.fen);
+  api("/db/books").then(bs=>{if(!P.isConnected)return;const n=bs.filter(x=>["play","pvp","study"].includes(x.key)).reduce((a,x)=>a+(x.count||0),0),lv=n>=200?3:n>=50?2:n>0?1:0;
+    fx.insertAdjacentHTML("beforeend",Array.from({length:lv},(_,i)=>`<i class="lb-thick" style="top:${(77.6-i*1.1).toFixed(1)}%"></i>`).join(""));lbSeal(P,bs)}).catch(()=>{});
+  if(LB_OPEN){const o=LB_OPEN;LB_OPEN=null;setTimeout(()=>open(o.t,o.q),30)}
+  if(typeof shpFit==="function")shpFit(v);
+  try{if(typeof shwPage==="function"&&SHIP_WALK_ON)shwPage(v,Object.assign({},SHW_PG0,SHW_LIBMAP,{HS:Object.fromEntries(Object.entries(SHW_LIBMAP.HS))}),"lib",null)}catch(e){}
+  try{if(typeof zmPage==="function")zmPage(v)}catch(e){}}
+/* 樟木箱封條：下載好的變金色（可以打開），下載中發金光 */
+let LB_DL={};
+function lbSeal(P,bs){(window.XQ&&XQ.bigBooks?XQ.bigBooks():Promise.resolve([])).then(big=>{if(!P.isConnected)return;P._big=big||[];
+  P.querySelectorAll(".lb-box").forEach((b,i)=>{const g=P._big[i];if(!g)return;b.classList.toggle("ok",!!(bs||[]).find(x=>x.key===g.key&&x.synced));b.classList.toggle("dl",!!LB_DL[g.key]);b.setAttribute("aria-label",g.name)})}).catch(()=>{})}
+/* 比賽對局：三口箱子各一冊；下載好的直接開，沒下載的問要不要下載（跟原本「⬇ 下載」同一個 XQ.syncSite） */
+function lbTours(P,book,i){const big=P._big||[];const one=g=>{api("/db/books").then(bs=>{const h=bs.find(x=>x.key===g.key&&x.synced);if(h){book(g.key,g.name);return}
+    sheet("下載"+g.name,b=>{b.innerHTML=`<p>${esc(g.name)}${g.count?`：${g.count.toLocaleString()} 局`:""}，約 ${Math.round(g.size/1048576)} MB。下載一次存在手機裡，之後沒網路也能看。建議用 Wi-Fi 下載。</p><p class="muted" id="bp"></p><button class="btn" id="bg">開始下載</button>`;
+      const bt=b.querySelector("#bg"),bp=b.querySelector("#bp");bt.onclick=async()=>{bt.disabled=true;bt.textContent="下載中…";LB_DL[g.key]=1;lbSeal(P,bs);
+        try{const n=await XQ.syncSite(g.key,g.name,(got,total)=>{bp.textContent=`已下載 ${(got/1048576).toFixed(1)}${total?" / "+(total/1048576).toFixed(1):""} MB`},g.h);
+          delete LB_DL[g.key];bp.textContent=`✅ 完成，共 ${n} 局`;toast("下載完成，箱子打開了");api("/db/books").then(x=>lbSeal(P,x)).catch(()=>{});setTimeout(()=>{closeSheet();book(g.key,g.name)},700)}
+        catch(e){delete LB_DL[g.key];lbSeal(P,bs);bp.textContent="⚠ "+e.message+"，請確認網路後再試";bt.disabled=false;bt.textContent="再試一次"}}})}).catch(()=>{})};
+  if(i!=null&&big[i])return one(big[i]);
+  sheet("📦 比賽對局",b=>{b.innerHTML=big.map((g,k)=>`<button class="item" data-k="${k}"><span class="lb">📦</span><span class="tx"><b>${esc(g.name)}</b><span>${g.count?g.count.toLocaleString()+" 局・":""}約 ${Math.round(g.size/1048576)} MB</span></span><span class="muted">›</span></button>`).join("")||'<p class="muted">讀不到比賽對局的書目</p>';
+    b.querySelectorAll("[data-k]").forEach(x=>x.onclick=()=>{closeSheet();setTimeout(()=>one(big[+x.dataset.k]),250)})})}
+/* 特級大師小傳：照 gmbios.json 列出來，點一位＝開特級大師對局、篩選他的對局 */
+function lbBios(book){XQ_BIOS().then(B=>{const L=Object.entries(B||{}).sort((a,b)=>String(a[1].gm||"9999").localeCompare(String(b[1].gm||"9999")));
+  sheet(`🖼 特級大師（${L.length} 位）`,b=>{b.innerHTML=`<div class="items" style="padding:0">${L.map(([n,p])=>`<button class="item" data-n="${esc(n)}"><span class="lb">🖼</span><span class="tx"><b>${esc(p.zh||n)}</b><span>${esc([p.gm&&p.gm+" 年特級大師",p.from].filter(Boolean).join("・"))}</span></span><span class="muted">›</span></button>`).join("")}</div>`;
+    b.querySelectorAll("[data-n]").forEach(x=>x.onclick=()=>{const n=x.dataset.n;closeSheet();libState.player=n;libState.side="";libState.res="";libState.limit=60;
+      if(libState.c==="gmgames"){book("gmgames",(B[n]&&B[n].zh)||n);try{const qi=document.querySelector(".lib #q");if(qi)qi.dispatchEvent(new Event("input"))}catch(e){}}else{LB_OPEN={t:(B[n]&&B[n].zh)||n};location.hash="#/db/gmgames"}})})}).catch(()=>toast("讀不到特級大師的資料"))}
+if(typeof Library==="function"){const f0=Library;Library=function(v,c0){const r=f0.apply(this,arguments);try{if(LIBMAP_ON)libMap(v,c0)}catch(e){}return r}}
 // ================= AI 對戰直播 =================
 // ================= 觀戰：線上棋友正在下的棋＋AI 對戰 =================
 function WatchHub(v){setTop("觀戰",false);setTabs(true,"#/watch");const RI=!OFF||DEVREMOTE();   // 一般玩家（沒連過電腦）看不到 AI 對戰
