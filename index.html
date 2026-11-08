@@ -1300,7 +1300,7 @@ html[data-era=qin] .view:has(>.shp-rd),html[data-era=wudai] .view:has(>.shp-rd){
       if(!window.caches)return go();caches.keys().then(function(ks){return Promise.all(ks.filter(function(k){return k.indexOf("xqlab-app-")===0}).map(function(k){return caches.delete(k)}))})
         .then(function(){return navigator.serviceWorker&&navigator.serviceWorker.getRegistration()}).then(function(r){return r&&r.update()}).catch(function(){}).then(go)}};setTimeout(chk,4000)})();
 </script>
-<script>window.XQ_OFFLINE=true;window.XQ_BUILD="20261108-1730";</script>
+<script>window.XQ_OFFLINE=true;window.XQ_BUILD="20261108-1740";</script>
 <script src="core.js"></script>
 <script src="engine.js"></script>
 <script src="local.js"></script>
@@ -5077,7 +5077,7 @@ const myLook=()=>{{const c=myChar();if(c)return TRIPO[c]?{p:myPc(),e:store.get("
 let TRIPO={};const TRIPO_ALIAS={a_changyuchun:"p_b1p_changyuchun",a_liuji:"p_b1p_liubowen",a_shenwansan:"p_b1p_shenwansan",a_shinaian:"p_b1p_shinaian",a_wangmian:"p_b1p_wangmian"};   /* 秘境棋友跟人物表是同一個人，共用模型 */fetch("data/tripo_app/tripo.json").then(r=>r.ok?r.json():{}).then(j=>{TRIPO=j||{}}).catch(()=>{});
 let GLTF_P=null;const GLBC={};window.XQGLB=url=>GLBC[url]||(GLBC[url]=(GLTF_P=GLTF_P||import(new URL(OFF?"GLTFLoader.mjs":"/m/GLTFLoader.mjs",location.href).href)).then(m=>new Promise((res,rej)=>new m.GLTFLoader().load(url,g=>{(window.XQGLB_ANIM=window.XQGLB_ANIM||{})[url]=g.animations||[];res(g.scene)},undefined,rej))).catch(e=>{delete GLBC[url];throw e}));
 /* 意見回饋 772（開發者）：格格的 3D 多一隻手、側臉變形。照 3D 驗收標準（兩隻手、臉不變形、不破圖不空心、顏色跟立繪一致）逐一檢查後，不合格的模型先不顯示真實 3D，退回畫好的立繪；FIG2D_BAD＝立繪本身也多手的，改用 Q 版小人。模型重做好、驗收過再從名單拿掉 */
-const FIG3D_BLOCK=new Set(["n_w05_qing_gege","n_w02_song_tea","n_w04_ming_scholar","n_w07_fisher_girl","n_w17_ming_pipa","n_w08_embroider","n_w09_qin_player","n_w10_general","n_w12_yuan_merchant","n_w13_yuan_singer","n_w14_yuan_porcelain","n_maihua","c_qin","c_yuan","c_song","c_weijin","j_agula_young","k_pika2","p_b1p_jiabanbu","p_b1p_jiabanbu_old","p_b1p_qianxiaoman","p_b1p_zhaoshoutian","p_b2p_zhujinzhen_young"]),FIG2D_BAD=new Set(["n_w05_qing_gege"]);
+const FIG3D_BLOCK=new Set(["n_w05_qing_gege","n_w02_song_tea","n_w04_ming_scholar","n_w07_fisher_girl","n_w17_ming_pipa","n_w08_embroider","n_w09_qin_player","n_w10_general","n_w12_yuan_merchant","n_w13_yuan_singer","n_w14_yuan_porcelain","n_maihua","c_qin","c_yuan","c_song","c_weijin","j_agula_young","k_pika2","p_b1p_jiabanbu","p_b1p_jiabanbu_old","p_b1p_qianxiaoman","p_b1p_zhaoshoutian","p_b2p_zhujinzhen_young"]),FIG2D_BAD=new Set([]);   /* 格格的立繪 11/8 已重畫成兩隻手（擦掉臉前「噓」的那隻），改回顯示立繪 */
 const oppFig=L=>{if(!L||oppArt())return L;const o={...L};delete o.flat;delete o.sprite;delete o.spriteMeta;delete o.spriteMap;
   if(o.actor&&ACTOR_FIG[o.actor]&&!o.npc){const[h,hc,rb]=ACTOR_FIG[o.actor];Object.assign(o,{npc:o.actor,hat:h,hc,robe:rb})}
   if(store.get("oppLook","3d")==="real"&&typeof o.cus==="string"){const id0=o.cus.replace(":","_"),id=TRIPO_ALIAS[id0]||id0;if(TRIPO[id]&&FIG3D_BLOCK.has(id))return FIG2D_BAD.has(id)?o:{...L,nog3:1};if(TRIPO[id]){o.glb=`data/tripo_app/${id}.glb`;o.ring=TRIPO[id]}}return o};
