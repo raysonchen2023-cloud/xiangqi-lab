@@ -1341,7 +1341,7 @@ html[data-era=qin] .view:has(>.shp-rd),html[data-era=wudai] .view:has(>.shp-rd){
       if(!window.caches)return go();caches.keys().then(function(ks){return Promise.all(ks.filter(function(k){return k.indexOf("xqlab-app-")===0}).map(function(k){return caches.delete(k)}))})
         .then(function(){return navigator.serviceWorker&&navigator.serviceWorker.getRegistration()}).then(function(r){return r&&r.update()}).catch(function(){}).then(go)}};setTimeout(chk,4000)})();
 </script>
-<script>window.XQ_OFFLINE=true;window.XQ_BUILD="20261109-0300";</script>
+<script>window.XQ_OFFLINE=true;window.XQ_BUILD="20261109-0330";</script>
 <script src="core.js"></script>
 <script src="engine.js"></script>
 <script src="local.js"></script>
@@ -11445,7 +11445,7 @@ function homeMap(v){const home=v.querySelector(".home");if(!home||v.querySelecto
   const P=d.firstElementChild;v.insertBefore(P,home);home.classList.add("hb-hidden");if(typeof hbCss==="function")hbCss();else home.style.display="none";
   const GO={hmShip:"#/adventure",hmBattle:"#/hub/battle",hmLearn:"#/hub/learn"};
   for(const[id]of HM_SPOTS){const b=P.querySelector("#"+id);if(!b)continue;
-    b.onclick=()=>{vibrate(5);if(GO[id]){location.hash=GO[id];return}if(id==="hmRec"){hmRecSheet();return}if(id==="hmQuick")location.hash=hmNew()?"#/camp":"#/cpu"}}
+    b.onclick=()=>{vibrate(5);if(GO[id]){location.hash=GO[id];return}if(id==="hmRec"){if(typeof TODAY_MAP_ON!=="undefined"&&TODAY_MAP_ON){location.hash="#/today";return}hmRecSheet();return}if(id==="hmQuick")location.hash=hmNew()?"#/camp":"#/cpu"}}
   {const ib=P.querySelector("#hmInst");if(ib)ib.onclick=e=>{e.stopPropagation();vibrate(5);installGuide(true)}}
   if(typeof shpFit==="function")shpFit(v);
   try{if(typeof shwPage==="function"&&SHIP_WALK_ON){shwPage(v,Object.assign({},SHW_PG0,SHW_HOMEMAP),"home");hmMe(P)}}catch(e){}
@@ -12135,6 +12135,123 @@ function termsMap(v){if(v.querySelector(".tb-page"))return;const tabs=v.querySel
   try{if(typeof shwPage==="function"&&typeof SHIP_WALK_ON!=="undefined"&&SHIP_WALK_ON)shwPage(v,Object.assign({},SHW_PG0,SHW_TB,{HS}),"tb")}catch(e){}
   try{if(typeof zmPage==="function")zmPage(v)}catch(e){}}
 if(typeof Terms==="function"){const f0=Terms;Terms=function(v,pick){const r=f0.apply(this,arguments);try{if(TERMS_MAP_ON&&!pick)termsMap(v)}catch(e){}return r}}
+/* ================= 📜 今日推薦「宋代橋頭榜文牌」（開發者 11/9 選定 Gemini 方案 1，Claude 依考究清單修正；考究說明 park/todaymap/考究說明.md，史學顧問核圖中）=================
+   圖：park/todaymap/today_day_v2.png（Gemini 一次到位；程式抹掉告示紙角的圖釘頭，看起來是漿糊貼的）、夜版 today_night_v1.png（簷角白紙燈籠、月夜）→ art/todaymap/ → data/todaymap/。
+   首頁左岸橋頭告示牌的近景：#/today 一頁，取代原本首頁「📜 今日推薦」的底部視窗（07z 的告示牌標籤改成換頁）。
+   今天的路（照 07l 的判斷：接著下、今日茶單、這站殘局、石桌往事、下一盤）一件一張告示：牌上原本 3 張空白紙，多的由程式照紙的樣子和透視再貼一兩張；
+     每張紙頭一顆棋子分類（帥＝下一盤、俥＝接著下、炮＝殘局茶單、傌＝星槎殘局、相＝讀故事），字由程式直寫；做完的蓋朱印「訖」（不用打勾）；全部做完，牌上蓋「圓滿」。
+   時間感：簷下的影子跟著真實時間移動（早上偏藍、傍晚偏橘，中午影子短）；渡口茶攤石桌上的香爐是「百刻香」（香篆），程式畫出今天燒到第幾刻（一晝夜一百刻）。
+   節氣：牌頂寫今天的節氣；冬至前後下雪、清明細雨、春分飄桃花、秋分落葉。角色在牌前待機，全部做完歡呼。
+   接 07w 走路（SHW_TD）、07x 縮放。開關 TODAY_MAP_ON；圖片網址帶 TD_IMGV。路由：#/today 原本落到 Home(v)，這裡包一層 Home 接走 */
+const TODAY_MAP_ON=true;
+const TD_IMGV="2350";
+/* 告示紙四角（像素 768×1376；左上、右上、右下、左下）：前 3 張是圖上原本的紙，後 2 張是程式加貼的位置 */
+const TD_NOTES=[[[270,540],[367,522],[372,685],[272,710]],[[512,491],[587,477],[595,600],[520,619]],[[397,616],[482,596],[487,725],[402,747]],
+  [[512,640],[593,626],[600,735],[518,752]],[[398,497],[478,483],[482,570],[402,585]]];
+const TD_GLYPH={go:"俥",tea:"炮",ship:"傌",story:"相",cpu:"帥"};
+const TD_EAVE=[[222,446],[642,424]],TD_CENSER=[629,932,45,15],TD_TERM_AT=[440,470];
+const SHW_TD={el:40,h:[.085,70,.0012],look0:[50,45],home:"home",N:{home:[50,96],mid:[47,88],brd:[40,82.5]},E:"home-mid mid-brd"};
+/* 二十四節氣（約略的國曆日期，每年差一天以內） */
+const TD_TERMS=[[1,6,"小寒"],[1,20,"大寒"],[2,4,"立春"],[2,19,"雨水"],[3,6,"驚蟄"],[3,21,"春分"],[4,5,"清明"],[4,20,"穀雨"],[5,6,"立夏"],[5,21,"小滿"],[6,6,"芒種"],[6,21,"夏至"],
+  [7,7,"小暑"],[7,23,"大暑"],[8,8,"立秋"],[8,23,"處暑"],[9,8,"白露"],[9,23,"秋分"],[10,8,"寒露"],[10,24,"霜降"],[11,7,"立冬"],[11,22,"小雪"],[12,7,"大雪"],[12,22,"冬至"]];
+const tdPc=(x,y)=>[x/7.68,y/13.76];
+/* 今天要做的事：照 07l-homepath.js 的判斷（那個檔目前沒有接進 m.html，所以這裡帶一份 td 前綴的副本）：接著下、今日茶單、這站殘局、石桌往事、下一盤 */
+let TD_CPU={d:"",n:0};   /* 今天下完幾盤（棋譜庫查一次記住，同一天不重查） */
+const tdHpDay=t=>typeof cjDay==="function"?cjDay(t):new Date(t==null?Date.now():t).toDateString();
+const tdHpIsToday=t=>!!t&&+t>0&&tdHpDay(+t)===tdHpDay();
+/* ---------- 今天的節點 ---------- */
+function tdHpTea(){try{const S=cjState(),L=S.day===cjDay()?S.list:null,ok=!!(L&&cjCleared(L)),n=L?L.filter((x,i)=>x.st==="done"||(i===2&&x.st==="skip")).length:0;
+  return{id:"tea",ic:"🍵",t:"今日茶單",s:ok?"喝完了":`${n}／3 題`,go:"#/canju",done:ok}}catch(e){return null}}
+function tdHpShip(){try{const k=homeRecShipK();if(!k)return null;const L=shipPuzzles(k),lt=(store.get("shipLearn",{})||{})[k],nm=shipShort(k),nx=shipAppr()?null:shipNextStop(),ln=shipLearned(k);
+  if(!ln&&!(L&&!L.length)){const n=L?L.slice(0,SHIP_PER).filter(id=>shipRec(k,id)).length:null;return{id:"ship",ic:"♟",t:nm+"殘局",s:n==null?"千秋殘局":`${n}／${Math.min(SHIP_PER,L.length)} 題`,go:"#/ship/pz"}}
+  if(nx&&!tdHpIsToday(lt))return{id:"ship",ic:"⛵",t:"起航",s:"去"+shipShort(nx),go:"#/ship/sail"};
+  if(!ln)return null;return{id:"ship",ic:"♟",t:nm+"殘局",s:"學會了",go:"#/adventure",done:true}}catch(e){return null}}
+function tdHpStory(){try{if(typeof legendState!=="function"||typeof jStages!=="function")return null;const R=store.get("legRead",{})||{},td=Object.values(R).some(E=>Object.values(E||{}).some(tdHpIsToday));
+  let b=1,n=legendState().n;if(typeof book1Done==="function"&&book1Done()){if(typeof jStages2!=="function")return null;const S=jStars(),J=jStages2(),x=J.find(z=>!S[z.id]);if(!x)return null;b=2;n=x.n}
+  return{id:"story",ic:b===1?"🪨":"📜",t:`第${CNUM(n)}回`,s:td?"今天讀過了":b===1?"石桌往事":"紙譜新局",go:`#/shelf/${b}/${n}`,done:td}}catch(e){return null}}
+function tdHpNodes(st,onl){const N=[],g=onl||(typeof homeRecGame==="function"?homeRecGame(st):null);
+  if(g)N.push({id:"go",ic:"♟",t:onl?"回對局":"接著下",s:onl?"線上對局":String(g.t).replace(/^.*：/,""),go:g.go,sw:g.sw,park:g.park});
+  for(const f of[tdHpTea,tdHpShip,tdHpStory]){const x=f();if(x)N.push(x)}
+  if(!(g&&g.go==="#/cpu"))N.push({id:"cpu",ic:"🤖",t:"下一盤",s:TD_CPU.d===tdHpDay()&&TD_CPU.n?"今天下過了":"跟電腦",go:"#/cpu",done:TD_CPU.d===tdHpDay()&&TD_CPU.n>0});
+  const c=N.findIndex(x=>!x.done);N.forEach((x,i)=>{x.st=x.done?"done":i===c?"cur":c>=0&&i>c?"later":"todo"});return N}
+function tdTerm(d){d=d||new Date();const m=d.getMonth()+1,day=d.getDate();let t=TD_TERMS[TD_TERMS.length-1][2];for(const[a,b,n]of TD_TERMS)if(m>a||(m===a&&day>=b))t=n;return t}
+function tdTermTag(d){d=d||new Date();const m=d.getMonth()+1,day=d.getDate(),t=tdTerm(d);return TD_TERMS.some(([a,b,n])=>a===m&&b===day&&n===t)?"今日・"+t:"節氣・"+t}
+const tdDarkNow=()=>{const t=store.get("pageTheme","auto"),h=new Date().getHours();return t==="dark"||(t==="auto"&&matchMedia("(prefers-color-scheme: dark)").matches)||h>=20||h<5};
+/* 長方形（w×h）→ 告示紙四邊形的 CSS matrix3d */
+function tdM3(w,h,q){const[[x0,y0],[x1,y1],[x2,y2],[x3,y3]]=q,dx1=x1-x2,dx2=x3-x2,dx3=x0-x1+x2-x3,dy1=y1-y2,dy2=y3-y2,dy3=y0-y1+y2-y3,den=dx1*dy2-dx2*dy1;
+  const g=(dx3*dy2-dx2*dy3)/den,hh=(dx1*dy3-dx3*dy1)/den,a=x1-x0+g*x1,b=x3-x0+hh*x3,d=y1-y0+g*y1,e=y3-y0+hh*y3;
+  return`matrix3d(${a/w},${d/w},0,${g/w},${b/h},${e/h},0,${hh/h},0,0,1,0,${x0},${y0},0,1)`}
+function tdCss(){if(document.getElementById("tdCss"))return;const s=document.createElement("style");s.id="tdCss";s.textContent=`
+.td-page{margin:0 0 8px}
+.td-fx{position:absolute;inset:0;pointer-events:none;overflow:hidden}
+.td-note{position:absolute;left:0;top:0;width:100px;height:160px;transform-origin:0 0;border:0;padding:8px 6px;background:none;cursor:pointer;pointer-events:auto;color:#2a1f15;display:flex;flex-direction:row-reverse;align-items:flex-start;gap:4px;overflow:hidden;text-align:left}
+.td-night .td-note.paper{background:linear-gradient(160deg,#cdbf9f,#b3a483);box-shadow:1px 2px 3px rgba(0,0,0,.45)}
+.td-note.paper{background:linear-gradient(160deg,#f1e6cc,#e0d0ac);box-shadow:1px 2px 3px rgba(60,40,20,.35),inset 0 0 0 1px rgba(120,90,50,.18)}
+.td-note .pc{flex:none;width:26px;height:26px;border-radius:50%;display:flex;align-items:center;justify-content:center;font:900 15px/1 var(--serif,serif);background:#f3e6c8;box-shadow:inset 0 0 0 2px currentColor,inset 0 0 0 4px #f3e6c8,inset 0 0 0 5px currentColor}
+.td-note .pc.r{color:#b23a26}.td-note .pc.k{color:#2a2420}
+.td-note .tx{writing-mode:vertical-rl;display:flex;flex-direction:column;gap:4px;max-height:100%}
+.td-note .tx b{font:900 19px/1.15 var(--serif,serif);letter-spacing:.06em}
+.td-note .tx small{font:600 11.5px/1.3 var(--serif,serif);color:#5a4632}
+.td-note.cur{box-shadow:0 0 0 2px rgba(242,201,76,.85),0 0 10px 2px rgba(255,214,120,.65)}
+.td-note .seal{position:absolute;left:8px;bottom:10px;width:30px;height:30px;border:2px solid #b23a26;border-radius:3px;color:#b23a26;font:900 19px/26px var(--serif,serif);text-align:center;transform:rotate(-12deg);background:rgba(255,240,230,.25);opacity:.92}
+.td-term{position:absolute;transform:translate(-50%,-50%);background:#f6efdf;border:1px solid rgba(60,40,24,.5);border-radius:2px;padding:2px 8px;font:800 11px/1.3 var(--serif,serif);color:#3a2618;white-space:nowrap;box-shadow:0 1px 2px rgba(0,0,0,.25)}
+.td-done{position:absolute;transform:translate(-50%,-50%) rotate(-10deg);width:15%;aspect-ratio:1;border:3px solid #b23a26;border-radius:6px;color:#b23a26;display:flex;align-items:center;justify-content:center;writing-mode:vertical-rl;font:900 22px/1.05 var(--serif,serif);background:rgba(255,236,226,.3);opacity:.9}
+.td-snow i,.td-rain i,.td-pet i{position:absolute;top:-6%;display:block;animation:tdFall linear infinite}
+.td-snow i{width:5px;height:5px;border-radius:50%;background:#fff;box-shadow:0 0 2px rgba(255,255,255,.8)}
+.td-rain i{width:1px;height:16px;background:linear-gradient(rgba(200,210,230,0),rgba(200,210,230,.8));animation-name:tdRain}
+.td-pet i{width:9px;height:7px;border-radius:60% 40% 60% 40%;background:var(--pc,#f2b8c0);opacity:.9}
+@keyframes tdFall{to{transform:translate(-6vw,112vh) rotate(260deg)}}@keyframes tdRain{to{transform:translate(-3vw,110vh)}}
+.td-smoke{position:absolute;width:3%;aspect-ratio:1/4;transform:translate(-50%,-100%)}
+.td-smoke i{position:absolute;left:40%;bottom:0;width:20%;height:100%;border-radius:50%;background:linear-gradient(to top,rgba(240,240,240,.7),rgba(240,240,240,0));filter:blur(2px);animation:tdSmoke 4s ease-in-out infinite}
+@keyframes tdSmoke{0%{transform:translateX(0) scaleY(.5);opacity:0}30%{opacity:.8}100%{transform:translateX(60%) scaleY(1.1);opacity:0}}
+.td-page .shp-spot.td-tag{padding:4px 12px}.td-page .shp-spot.td-tag b{font-size:14px;white-space:nowrap}
+@media (prefers-reduced-motion:reduce){.td-snow i,.td-rain i,.td-pet i,.td-smoke i{animation:none}.td-snow,.td-rain,.td-pet{display:none}}`;document.head.append(s)}
+/* 簷影：早晚長、中午短；早上影子往右偏、傍晚往左偏 */
+function tdShadow(){const d=new Date(),h=d.getHours()+d.getMinutes()/60,len=Math.max(14,Math.min(110,14+Math.abs(12.5-h)*14)),dx=Math.max(-60,Math.min(60,(12.5-h)*10)),[[x0,y0],[x1,y1]]=TD_EAVE;
+  const P=[[x0,y0],[x1,y1],[x1+dx,y1+len],[x0+dx,y0+len]].map(([x,y])=>`${(x/7.68).toFixed(2)},${(y/13.76).toFixed(2)}`).join(" ");
+  const tint=h>=5&&h<8.5?"rgba(120,150,205,.16)":h>=16&&h<19.5?"rgba(255,150,70,.16)":"";
+  return`<svg style="position:absolute;inset:0;width:100%;height:100%" viewBox="0 0 100 100" preserveAspectRatio="none"><polygon points="${P}" fill="rgba(40,28,18,.2)" style="filter:blur(.6px)"/></svg>${tint?`<span style="position:absolute;inset:0;background:${tint};mix-blend-mode:multiply"></span>`:""}`}
+/* 百刻香：香篆的香路（三圈螺旋），已燒的一段是灰白的香灰、燒到的那一點是紅火，上面一縷細煙 */
+function tdIncense(){const d=new Date(),f=(d.getHours()*60+d.getMinutes())/1440,[cx,cy,rx,ry]=TD_CENSER,N=180,pts=[];
+  for(let i=0;i<=N;i++){const t=i/N,a=t*6*Math.PI,r=.92-.78*t;pts.push([cx+Math.cos(a)*rx*r,cy+Math.sin(a)*ry*r])}
+  const path=A=>A.map(([x,y],i)=>`${i?"L":"M"}${(x/7.68).toFixed(3)} ${(y/13.76).toFixed(3)}`).join(""),k=Math.max(1,Math.round(f*N)),[ex,ey]=pts[k];
+  return`<svg style="position:absolute;inset:0;width:100%;height:100%" viewBox="0 0 100 100" preserveAspectRatio="none"><path d="${path(pts)}" fill="none" stroke="rgba(120,84,48,.55)" stroke-width=".28" vector-effect="non-scaling-stroke" style="stroke-width:1.6px"/>
+    <path d="${path(pts.slice(0,k+1))}" fill="none" stroke="rgba(236,232,224,.95)" vector-effect="non-scaling-stroke" style="stroke-width:1.8px"/>
+    <ellipse cx="${(ex/7.68).toFixed(3)}" cy="${(ey/13.76).toFixed(3)}" rx=".45" ry=".25" fill="#ff7a2a" style="filter:drop-shadow(0 0 .4px #ffb070)"/></svg>
+    <span class="td-smoke" style="left:${(ex/7.68).toFixed(2)}%;top:${(ey/13.76).toFixed(2)}%"><i></i></span>`}
+/* 節氣疊圖：冬至下雪、清明細雨、春分桃花、秋分落葉 */
+function tdWeather(term){const n=term==="冬至"||term==="小寒"?"snow":term==="清明"?"rain":term==="春分"?"pet":term==="秋分"?"leaf":"";if(!n)return"";
+  let h="";for(let i=0;i<(n==="rain"?36:18);i++){const l=(i*53%100),dl=-(i*.37%6).toFixed(2),du=(n==="rain"?1.1:6)+(i%5)*(n==="rain"?.2:1.2);
+    h+=`<i style="left:${l}%;animation-duration:${du}s;animation-delay:${dl}s${n==="leaf"?";--pc:#c8642c":""}"></i>`}
+  return`<span class="${n==="snow"?"td-snow":n==="rain"?"td-rain":"td-pet"}" style="position:absolute;inset:0">${h}</span>`}
+function TodayPage(v){tdCss();setTop("📜 今日推薦","#/");if(typeof setTabs==="function")setTabs(true,"#/");v.className="view";
+  const term=tdTerm(),P=document.createElement("div");P.className="shp-page cq td-page"+(tdDarkNow()?" td-night":"");v.innerHTML="";v.append(P);
+  const[tx,ty]=tdPc(...TD_TERM_AT);
+  P.innerHTML=`<img src="data/todaymap/${tdDarkNow()?"today_night":"today_day"}.webp?v=${TD_IMGV}" alt="橋頭榜文牌"><div class="td-fx" aria-hidden="true">${tdShadow()}${tdIncense()}${tdWeather(term)}<span class="td-term" style="left:${tx.toFixed(2)}%;top:${ty.toFixed(2)}%">${esc(tdTermTag())}</span></div><div class="td-ns"></div>`;
+  let N=[],onl=null;
+  const go=async x=>{if(typeof vibrate==="function")vibrate(5);if(x.sw)try{await api("/play/switch",{kind:x.sw})}catch(e){}if(x.park)store.set("park3d",true);location.hash=x.go};
+  const fit=()=>{const k=P.clientWidth/768;if(!k)return;P.querySelectorAll(".td-note").forEach(f=>{const q=TD_NOTES[+f.dataset.i].map(([x,y])=>[x*k,y*k]);f.style.transform=tdM3(100,160,q)})};
+  const draw=st=>{if(!P.isConnected)return;try{N=tdHpNodes(st,onl)}catch(e){N=[]}const L=N.slice(0,TD_NOTES.length),all=L.length&&L.every(x=>x.done);
+    const box=P.querySelector(".td-ns");
+    box.innerHTML=L.map((x,i)=>{const g=TD_GLYPH[x.id]||"兵",red=true;
+      return`<button type="button" class="td-note${i>=3?" paper":""}${x.st==="cur"?" cur":""}" data-i="${i}" aria-label="${esc(x.t+"・"+x.s+(x.done?"，完成了":""))}"><span class="pc ${red?"r":"k"}">${g}</span><span class="tx"><b>${esc(x.t)}</b><small>${esc(x.s)}</small></span>${x.done?'<span class="seal">訖</span>':""}</button>`}).join("")+
+      L.map((x,i)=>{const q=TD_NOTES[i],[a,b]=tdPc((q[0][0]+q[1][0])/2,Math.min(q[0][1],q[1][1])-14);return`<button class="shp-spot td-tag" id="tdT${i}" data-i="${i}" data-nolift="1" style="left:${a.toFixed(2)}%;top:${b.toFixed(2)}%;opacity:0;pointer-events:none" aria-hidden="true"><b>${esc(x.t)}</b></button>`}).join("")+
+      (all?`<span class="td-done" style="left:${tdPc(560,690)[0].toFixed(2)}%;top:${tdPc(560,690)[1].toFixed(2)}%">圓滿</span>`:"");
+    fit();
+    box.querySelectorAll(".td-note").forEach(b=>b.onclick=e=>{e.stopPropagation();const t=box.querySelector("#tdT"+b.dataset.i);if(t)t.click()});
+    box.querySelectorAll(".td-tag").forEach(t=>t.onclick=()=>{const x=N[+t.dataset.i];if(x)go(x)});
+    const HS={};L.forEach((x,i)=>{const q=TD_NOTES[i],[a,b]=tdPc((q[0][0]+q[2][0])/2,(q[0][1]+q[2][1])/2);HS["tdT"+i]=["brd",+a.toFixed(2),+b.toFixed(2),all?"cheer":"idle"]});
+    if(!P.dataset.shw){try{if(typeof shwPage==="function"&&typeof SHIP_WALK_ON!=="undefined"&&SHIP_WALK_ON)shwPage(v,Object.assign({},SHW_PG0,SHW_TD,{HS}),"td")}catch(e){}}};
+  if(window.ResizeObserver){const ro=new ResizeObserver(()=>{if(!P.isConnected){ro.disconnect();return}fit()});ro.observe(P)}
+  try{if(window.XQNet&&XQNet.playing&&XQNet.playing())onl={go:"#/pvp",t:"⚔ 回線上對局"}}catch(e){}
+  draw(null);
+  const cpu=TD_CPU.d===tdHpDay()?null:api("/db/items?c=play&limit=12").then(d=>{let n=0;for(const it of(d&&d.items)||[]){const r=String(it.result||"");if(r&&!/中止|取消/.test(r)&&tdHpIsToday(typeof tlTime==="function"?tlTime(it.id):0))n++}TD_CPU={d:tdHpDay(),n}}).catch(()=>null);
+  Promise.all([api("/play/state").catch(()=>null),typeof cjData==="function"?cjData().then(D=>{try{cjToday(D,cjState())}catch(e){}}).catch(()=>null):null,typeof shipBank==="function"&&typeof homeRecShipK==="function"&&homeRecShipK()?shipBank().catch(()=>null):null,cpu])
+    .then(([st])=>draw(st)).catch(()=>{});
+  if(typeof shpFit==="function")shpFit(v);
+  try{if(typeof zmPage==="function")zmPage(v)}catch(e){}
+  return{}}
+if(typeof Home==="function"){const f0=Home;Home=function(v,hub){if(TODAY_MAP_ON&&!hub&&/^#\/today\/?$/.test(location.hash))return TodayPage(v);return f0.apply(this,arguments)}}
 /* ================= 🕰 回到當年（意見回饋 313）=================
    石桌往事裡的對局，用「妙棋精選」裡 Pikafish 驗證過的特級大師實戰來演：你站在旁邊看，不能插手；
    棋自動一步一步下，下到那一步妙棋之前停下來——換作是你，會怎麼走？
