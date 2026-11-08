@@ -1341,7 +1341,7 @@ html[data-era=qin] .view:has(>.shp-rd),html[data-era=wudai] .view:has(>.shp-rd){
       if(!window.caches)return go();caches.keys().then(function(ks){return Promise.all(ks.filter(function(k){return k.indexOf("xqlab-app-")===0}).map(function(k){return caches.delete(k)}))})
         .then(function(){return navigator.serviceWorker&&navigator.serviceWorker.getRegistration()}).then(function(r){return r&&r.update()}).catch(function(){}).then(go)}};setTimeout(chk,4000)})();
 </script>
-<script>window.XQ_OFFLINE=true;window.XQ_BUILD="20261108-2200";</script>
+<script>window.XQ_OFFLINE=true;window.XQ_BUILD="20261108-2210";</script>
 <script src="core.js"></script>
 <script src="engine.js"></script>
 <script src="local.js"></script>
@@ -11279,7 +11279,7 @@ if(typeof Home==="function"){const f0=Home;Home=function(v,hub){const r=f0.apply
    加到主畫面：圖下方一條浮動小條（原本首頁的提示卡藏起來了）。
    接 07w 走路（座標表 SHW_HOMEMAP）、07x 兩指縮放。圖片網址帶 HM_IMGV（data/homemap 在不跟版本走的快取裡，換圖要改這個數字）。
    開關 HOME_MAP_ON（false＝照舊卡片首頁）；樣式在 hmCss */
-const HOME_MAP_ON=false;
+const HOME_MAP_ON=true;
 const HM_IMGV="2200";   /* 圖的版本：同檔名換圖時改掉，手機才會重抓 */
 /* 入口：[標籤 id（也是 07w 的入口代號）, 標籤左%, 上%, 大字]（量 768×1376 的 home_v5，標籤放在東西上方） */
 const HM_SPOTS=[["hmShip",52,15,"⛵ 雲河星槎"],["hmBattle",14,25.5,"⚔ 對戰"],["hmLearn",86,26.5,"📚 學習"],["hmRec",12,44,"📜 今日推薦"],["hmQuick",52,47.5,"⚡ 下一盤"]];
@@ -11341,7 +11341,7 @@ if(typeof Home==="function"){const f0=Home;Home=function(v,hub){const r=f0.apply
      右柱木牌＝🏅 我的戰績 #/stats；左邊竹簡卷＝📜 名冊（清單抽屜）；左下特別棋桌＝📺 AI 對戰（有 #aiw 才是 AI 對戰；手機版沒有 AI 對戰就改成 🤖 挑戰電腦 #/cpu）。
    標籤只有大字。接 07w 走路（SHW_LOBBY）、07x 兩指縮放。圖片網址帶 LM_IMGV（data/lobbymap 在不跟版本走的快取裡，換圖要改這個數字）。
    開關 LOBBY_MAP_ON（false＝照舊清單）；樣式在 lmCss */
-const LOBBY_MAP_ON=false;
+const LOBBY_MAP_ON=true;
 const LM_IMGV="2200";
 const LM_IMG=n=>`data/lobbymap/${n}.webp?v=${LM_IMGV}`;
 /* 入口標籤：[id, 左%, 上%, 大字]（量 768×1376 的 lobby_v4，標籤放在東西上方） */
