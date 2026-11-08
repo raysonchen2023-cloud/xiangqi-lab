@@ -1341,7 +1341,7 @@ html[data-era=qin] .view:has(>.shp-rd),html[data-era=wudai] .view:has(>.shp-rd){
       if(!window.caches)return go();caches.keys().then(function(ks){return Promise.all(ks.filter(function(k){return k.indexOf("xqlab-app-")===0}).map(function(k){return caches.delete(k)}))})
         .then(function(){return navigator.serviceWorker&&navigator.serviceWorker.getRegistration()}).then(function(r){return r&&r.update()}).catch(function(){}).then(go)}};setTimeout(chk,4000)})();
 </script>
-<script>window.XQ_OFFLINE=true;window.XQ_BUILD="20261109-1215";</script>
+<script>window.XQ_OFFLINE=true;window.XQ_BUILD="20261109-1230";</script>
 <script src="core.js"></script>
 <script src="engine.js"></script>
 <script src="local.js"></script>
@@ -12669,6 +12669,26 @@ const TD_NOTES=[[[270,540],[367,522],[372,685],[272,710]],[[512,491],[587,477],[
   [[512,640],[593,626],[600,735],[518,752]],[[398,497],[478,483],[482,570],[402,585]]];
 const TD_GLYPH={go:"俥",tea:"炮",ship:"傌",story:"相",cpu:"帥"};
 const TD_EAVE=[[222,446],[642,424]],TD_CENSER=[629,932,45,15],TD_TERM_AT=[440,470];
+/* 回饋 818：點畫裡的東西看說明（07w6-sceneinfo.js 的 sciPage；內容取自 park/todaymap/考究說明.md；告示紙是入口，不登記） */
+const TD_SCI={k:"td",nm:"今日推薦",it:[
+  {n:"小瓦頂和簷影",s:[[[152,255],[645,212],[748,358],[700,392],[300,472],[95,440],[70,410],[160,320]]],
+   t:"告示牌頂上蓋了一道小瓦頂，照宋代的樣子畫。仔細看簷下的影子：它跟著真實的時間移動，中午短短的，早上和傍晚拉得長長的。早上整張畫偏淡藍，傍晚偏橘色。",
+   tn:"告示牌頂上蓋了一道小瓦頂，照宋代的樣子畫。白天簷下的影子會跟著真實的時間移動；天黑了就換成這張月夜。"},
+  {n:"橋頭告示牌",s:[[[240,470],[612,420],[612,722],[240,835]],[[180,330],[240,330],[240,1060],[180,1040]],[[600,400],[650,400],[650,890],[600,895]]],
+   t:"人來人往的橋頭、路口，最適合貼告示讓大家看見；古時候官府也常在大路口貼出榜文。宋代的名畫《清明上河圖》裡，街上就掛滿了招牌。牌上用白紙或淡米色紙，因為黃紙是皇帝放榜（黃榜）才用的。"},
+  {n:"節氣小紙條",s:[[[378,450],[502,450],[502,490],[378,490]]],
+   t:"牌頂這張小紙條寫著今天的節氣。一年有二十四個節氣，日期每年最多差一天。冬至前後會下雪、清明飄細雨、春分飛桃花、秋分落葉子，到了那幾天回來看看！"},
+  {n:"百刻香",s:[[628,935,50]],
+   t:"這是宋代人的時鐘「百刻香」。他們在香爐裡用香粉印出一條彎彎曲曲的香路，叫「香篆」；香路分成一百刻，點一次剛好燒一天一夜。灰白的那段是已經燒過的，那一點紅火就是現在的時間。"},
+  {n:"渡口茶攤石桌",s:[[[478,950],[600,905],[768,845],[768,1000],[690,1040],[680,1140],[630,1140],[630,1070],[550,1060],[545,1085],[500,1080],[490,990]]],
+   t:"渡口邊的茶攤小石桌，和告示牌、瓦頂、石樁一樣，都照宋代的樣子畫。桌上那個三足香爐點的是「百刻香」，點點香爐看它怎麼報時。"},
+  {n:"渡口石樁",s:[[[22,842],[108,842],[112,1022],[22,1022]]],
+   t:"這裡是首頁「楚河渡口棋鎮」的橋頭。棋鎮裡什麼朝代都有，不過橋頭這一角的石樁、告示牌、茶攤石桌和香爐，都是照宋代的樣子畫的。"},
+  {n:"楚河和對岸",nh:1,s:[[[0,90],[768,90],[768,780],[640,830],[500,870],[300,900],[240,880],[150,880],[110,850],[0,860]]],
+   t:"告示牌後面淡淡的河就是楚河，對岸有垂柳和一排屋簷。這裡和首頁「楚河渡口棋鎮」是同一個地方，用同一套筆法畫的。",
+   tn:"告示牌後面的河就是楚河，對岸有垂柳和一排屋簷。這裡和首頁「楚河渡口棋鎮」是同一個地方；天黑了換成月夜，對岸的窗子透出暖暖的燈光。"},
+  {n:"白紙燈籠",dn:"n",s:[[[662,382],[752,382],[752,570],[662,570]]],
+   t:"天黑了，告示牌的簷角掛起一盞素白的紙燈籠。夜裡告示紙的顏色也跟著暗下來，對岸的窗子透出暖光。"}]};
 const SHW_TD={el:40,h:[.085,70,.0012],look0:[50,45],home:"home",N:{home:[50,96],mid:[47,88],brd:[40,82.5]},E:"home-mid mid-brd"};
 /* 二十四節氣（約略的國曆日期，每年差一天以內） */
 const TD_TERMS=[[1,6,"小寒"],[1,20,"大寒"],[2,4,"立春"],[2,19,"雨水"],[3,6,"驚蟄"],[3,21,"春分"],[4,5,"清明"],[4,20,"穀雨"],[5,6,"立夏"],[5,21,"小滿"],[6,6,"芒種"],[6,21,"夏至"],
@@ -12769,6 +12789,7 @@ function TodayPage(v){tdCss();setTop("📜 今日推薦","#/");if(typeof setTabs
     .then(([st])=>draw(st)).catch(()=>{});
   if(typeof shpFit==="function")shpFit(v);
   try{if(typeof zmPage==="function")zmPage(v)}catch(e){}
+  try{if(typeof sciPage==="function")sciPage(v,TD_SCI)}catch(e){}
   return{}}
 if(typeof Home==="function"){const f0=Home;Home=function(v,hub){if(TODAY_MAP_ON&&!hub&&/^#\/today\/?$/.test(location.hash))return TodayPage(v);return f0.apply(this,arguments)}}
 /* ================= 🖼 特級大師「崇文畫像長廊」（41 案第 6 頁：Gemini 方案 1＋2，Claude 依考究清單修正；考究說明 park/gmmap/考究說明.md，史學顧問核圖中）=================
@@ -12788,6 +12809,25 @@ const GM2_Q=[[[89,316],[176,382],[176,862],[89,911]],[[251,441],[295,477],[295,7
 const GM2_ERA=[["","全部"],["a","1950 年以前生"],["b","1950–60 年代生"],["c","1970 年代生"],["d","1980 年代以後生"]];
 /* 長廊很深（消失點約在圖高 51%）：照透視算是 (y－50.9)×0.0111，Q 版角色身形寬，縮成約七成（＝(y－50.6)×0.0075） */
 const SHW_GM2={el:40,h:[.085,61.7,.0075],look0:[48,45],home:"home",N:{home:[56,63],sc:[49,60]},E:"home-sc",HS:{gm2Go:["sc",45.7,45,"bow"]}};
+/* 回饋 818：點畫裡的東西看說明（07w6-sceneinfo.js 的 sciPage；內容取自 park/gmmap/考究說明.md；走道地板留給角色走路，不登記） */
+const GM2_SCI={k:"gm2",nm:"特級大師",it:[
+  {n:"淡青裱褙",s:[[[62,85],[198,240],[202,915],[58,1058]],[[236,305],[306,385],[306,818],[234,882]]],
+   t:"掛軸四周的布叫「裱褙」，這裡用淡淡的青色素綾。南宋的書《齊東野語》記皇宮收藏的掛軸用「碧綾」來裱，這裡只取它淡雅的青色。不用皇宮的黑綾，也不織鸞鳥花紋，因為這裡是書院的長廊，不是皇宮。"},
+  {n:"山水畫心",s:[GM2_Q[0],GM2_Q[1]],
+   t:"掛軸中間的畫有山、竹、梅、蘭石、雲水、寒林六款，都是宋畫常見的題材，用水墨淡淡上色畫在絹上。六款照名冊順序輪流掛，不代表哪位大師的棋風。72 位大師都是現代真實的棋手，所以這裡不畫任何人的臉，表示尊重。"},
+  {n:"畫像和像贊",s:[[[324,420],[444,540],[444,698],[324,795]]],
+   t:"替值得敬重的人畫像、寫讚美的文字（叫「像贊」），是很久的傳統。唐太宗曾把二十四位功臣畫在凌煙閣；宋代的朱熹也替六位先生的畫像各寫了一首贊。走到第三軸前鞠躬，就是向先賢行禮。"},
+  {n:"直欞窗",s:[[[450,560],[526,560],[526,654],[450,654]]],
+   t:"長廊的盡頭是一扇直欞窗，一根根直木條排得整整齊齊。素面的直欞窗、直欞欄杆，都是宋代木造建築常見的樣子。",
+   tn:"長廊的盡頭是一扇直欞窗，一根根直木條排得整整齊齊，是宋代木造建築常見的樣子。晚上月光就從中庭和這扇窗照進來。"},
+  {n:"素面欄杆",s:[[[530,655],[600,690],[768,780],[768,1140],[610,862],[530,732]]],
+   t:"右邊是素面的直欞欄杆，欄杆外是挑空的中庭。這裡照宋代的樣子畫，不畫明清時代那種雕花欄杆。",
+   tn:"右邊是素面的直欞欄杆，照宋代的樣子畫，不畫明清時代那種雕花欄杆。晚上月光照進來，欄杆的影子長長地落在地板上。"},
+  {n:"樑架和椽子",s:[[[222,0],[700,0],[620,300],[556,500],[444,500],[352,300]],[[598,262],[620,262],[620,860],[598,860]]],
+   t:"抬頭看：屋頂的樑架和一根根椽子都露在外面，沒有用天花板遮起來。這種露明的樑架，是宋式木構常見的樣子。"},
+  {n:"一樓的書櫃",s:[[[620,425],[768,405],[768,772],[620,700]]],
+   t:"欄杆外是挑空的中庭，對面是書閣一樓的書櫃。這座樓和棋譜庫的「崇文書閣」是同一座：二樓是畫像長廊，一樓是書櫃。",
+   tn:"欄杆外是挑空的中庭，對面是書閣一樓的書櫃，夜裡有幾扇窗透出燈火。這座樓和棋譜庫的「崇文書閣」是同一座：二樓是畫像長廊，一樓是書櫃。"}]};
 let GM2_ST={era:"",q:""},GM2_ITEMS=null,GM2_P=null;
 const gm2Dark=()=>{const t=store.get("pageTheme","auto"),h=new Date().getHours();return t==="dark"||(t==="auto"&&matchMedia("(prefers-color-scheme: dark)").matches)||h>=20||h<5};
 const gm2Era=p=>{const y=parseInt(p&&p.born)||0;return!y?"":y<1950?"a":y<1970?"b":y<1980?"c":"d"};
@@ -12896,6 +12936,7 @@ function GmHall(v){gm2Css();setTop("🖼 特級大師","#/db");if(typeof setTabs
   if(!P.dataset.shw){try{if(typeof shwPage==="function"&&typeof SHIP_WALK_ON!=="undefined"&&SHIP_WALK_ON)shwPage(v,Object.assign({},SHW_PG0,SHW_GM2),"gm2")}catch(e){}}
   if(typeof shpFit==="function")shpFit(v);
   try{if(typeof zmPage==="function")zmPage(v)}catch(e){}
+  try{if(typeof sciPage==="function")sciPage(v,GM2_SCI)}catch(e){}
   return{}}
 if(typeof Home==="function"){const f0=Home;Home=function(v,hub){if(GM_MAP_ON&&!hub&&/^#\/gm\/?$/.test(location.hash))return GmHall(v);return f0.apply(this,arguments)}}
 if(typeof lbBios==="function"){const f0=lbBios;lbBios=function(){if(GM_MAP_ON){location.hash="#/gm";return}return f0.apply(this,arguments)}}
@@ -12915,6 +12956,24 @@ const CP2_SCR=[[[192,484],[258,487],[258,742],[192,738]],[[276,472],[494,472],[4
 const CP2_BRD=[[575,562],[675,570],[674,800],[577,787]];
 const CP2_BOOK=[[369,759],[425,759],[425,787],[369,787]];
 const CP2_LAMP=[[150,228],[618,228]],CP2_BALL=[384,214];
+/* 回饋 818：點畫裡的東西看說明（07w6-sceneinfo.js 的 sciPage；內容取自 park/cupmap/考究說明.md）。屏風、大掛板、英雄帖是入口本身，不登記；英雄帖放進 no（點了當空地），中間走道留給角色 */
+const CP2_SCI={k:"cp2",nm:"千秋盃",it:[
+  {n:"朱紅帳額",s:[[[85,66],[690,66],[690,206],[85,212]]],
+   t:"台上方這塊朱紅的布叫「帳額」。整張畫大多是木頭色和淡墨，只有帳額用朱紅，所以屏風上貼的紅紙名字特別醒目。比賽日，帳額下還會掛一顆紅綵球。"},
+  {n:"說書台",s:[[[250,748],[527,748],[527,906],[250,906]],[[333,662],[442,662],[442,750],[333,750]]],
+   t:"說書台是說書人講故事的地方。宋代汴京的「瓦子」裡有五十多座大小勾欄，最大的能坐好幾千人，還有專門講歷史故事的藝人。到了明代，南京的說書人柳敬亭一天只說一回，聽一回要一兩銀子。這座茶樓的說書台，就是把說書的傳統搬進茶樓。"},
+  {n:"屏風的楣板",s:[[[186,450],[264,450],[264,484],[186,484]],[[266,426],[507,426],[507,470],[266,470]],[[508,450],[594,450],[594,484],[508,484]]],
+   t:"屏風最上面這條雕花木板叫楣板，只雕卷草紋和回紋，沒有龍。因為明代規定，官員和老百姓的房子、屏風都不准雕龍。"},
+  {n:"徽州茶樓",s:[[[33,0],[84,0],[87,928],[28,928]],[[691,0],[746,0],[750,928],[688,928]],[[80,208],[152,208],[152,402],[80,402]],[[626,208],[702,208],[702,402],[626,402]],[[84,478],[152,478],[152,662],[84,662]],[[634,478],[692,478],[692,662],[634,662]]],
+   t:"這座茶樓和對戰頁的「徽州深院茶樓」是同一座。二樓正中是說書台，兩旁的格扇窗、粗木柱和朱紅帳額，都和天井那張大圖一樣。",
+   tn:"這座茶樓和對戰頁的「徽州深院茶樓」是同一座。散場後的夜裡，月光從兩側的格扇窗照進來，台上留下一格一格的窗影。"},
+  {n:"台下看座",s:[[[0,1034],[312,1034],[312,1376],[0,1376]],[[478,1034],[768,1034],[768,1376],[478,1376]]],
+   t:"台下一排排長凳是看座，坐在這裡，視線一路看到屏風上的金榜。平常日子只有空凳子，冷冷清清；到了比賽日才掛燈、掛綵球，熱鬧起來。"},
+  {n:"茶碗",s:[[28,1166,24],[62,1196,26],[714,1172,24],[752,1200,26]],
+   t:"在茶樓喝茶看棋，是很熱鬧的事。象棋名家胡榮華回憶 1950 年代的上海：豫園的得意樓上泡一壺茶就能看象棋，高手還用大棋盤表演對局。茶樓掛大棋盤看棋是近代才常見的，這座明代的茶樓是把那份熱鬧借進來。"},
+  {n:"紅紗燈",on:P=>!!P.querySelector(".cp2-lamp"),s:[[[122,226],[178,226],[178,348],[122,348]],[[590,226],[646,226],[646,348],[590,348]]],
+   t:"比賽日才掛起的兩盞紅紗燈。宮燈是宮廷裡用的東西，民間的茶樓掛的是紅紗燈籠。"}],
+  no:[CP2_BOOK]};
 const SHW_CP2={el:40,h:[.085,70,.0012],look0:[50,40],home:"home",N:{home:[50,96],mid:[50,86],top:[50,78]},E:"home-mid mid-top",
   HS:{cp2Book:["top",51,57,"wave"],cp2Scr:["mid",50,42,"idle"],cp2Brd:["top",81,49,"idle"]}};
 const cp2Pc=(x,y)=>[(x/7.68).toFixed(2),(y/13.76).toFixed(2)];
@@ -13031,6 +13090,7 @@ function cp2Wrap(v,R){if(!CUP_MAP_ON||!window.XQNet||!v.querySelector("#cupb"))r
   if(!P.dataset.shw){try{if(typeof shwPage==="function"&&typeof SHIP_WALK_ON!=="undefined"&&SHIP_WALK_ON)shwPage(v,cfg,"cp2")}catch(e){}}
   if(typeof shpFit==="function")shpFit(v);
   try{if(typeof zmPage==="function")zmPage(v)}catch(e){}
+  try{if(typeof sciPage==="function")sciPage(v,CP2_SCI)}catch(e){}
   const st0=R&&R.stop;return Object.assign({},R,{stop:()=>{offs.forEach(f=>{try{f()}catch(e){}});clearInterval(t);if(st0)st0()}})}
 if(typeof CupPage==="function"){const f0=CupPage;CupPage=function(v){const R=f0.apply(this,arguments);try{return cp2Wrap(v,R)}catch(e){return R}}}
 /* ================= 🔁 錯棋重練「臨池書案＋曝書竹竿」（42 案第 1 頁：Gemini 方案 1＋4，Claude 依考究清單修正；考究說明 park/redomap/考究說明.md，史學顧問核圖中）=================
@@ -13342,6 +13402,55 @@ function kj2Wrap(v,R0){if(!OPEN_MAP_ON||!v.querySelector("#ob"))return R0;kj2Css
   try{if(typeof zmPage==="function")zmPage(v)}catch(e){}
   return R0}
 if(typeof Openings==="function"){const f0=Openings;Openings=function(v){const R=f0.apply(this,arguments);try{return kj2Wrap(v,R)}catch(e){return R}}}
+/* ================= 🔎 滿版圖「點畫裡的東西看說明」（開發者回饋 818：「對所有繪製的圖可以讓玩家點選物件，然後跳出顯示相關文件說明，就像在環景圖或對戰時點桌子上的物件那樣……不要把物件名稱直接寫上去，會太累亂，玩家點了再顯示」）=================
+   圖上平常什麼都不標；點到登記過的東西＝跳出小卡（名稱＋兩三句白話介紹，跟 06-cpu.js 的 parkInfo 同一個 sheet 樣式），07w 的角色照舊走過去、轉身看那個東西。
+   點擊順序：入口標籤／告示紙等按鈕（07w 先攔、或按鈕自己處理）＞這裡登記的物件＞空地（07w 走路）。只在點到「圖本身」時才判斷，按鈕、連結、角色身上的透明按鈕一律不碰；
+     不攔、不 stopPropagation，所以 07w 點空地走路照舊（走到路網上最近的點、轉身看點到的地方）。no：裡的形狀＝入口本身的物件（例如英雄帖），點了當空地，不跳卡。
+   座標一律是原圖像素（通常 768×1376），點擊位置用圖的 getBoundingClientRect 換算，07x 兩指放大後也對得上。圖網址有 _night 就是夜景，物件可分日夜（dn:"d"／"n"）、夜裡另寫一段（tn）。
+   提示：每一頁第一次進來，所有物件的輪廓淡淡閃一次（約 2.6 秒）；整個 App 第一次還會在圖上方出一行「點畫裡的東西，看看它的故事」，之後不再出現。
+   用法（各頁模組在畫好圖、接好 07w 之後呼叫一次）：sciPage(v,{k:"td",nm:"今日推薦",it:[{n:"名稱",t:"說明",tn:"夜裡的說明",dn:"n",on:P=>布林,s:[形狀,…]}],no:[形狀,…]})
+     形狀：多邊形 [[x,y],[x,y],…]（三點以上）或圓 [x,y,r]；nh:1＝第一次進頁閃輪廓時不畫它（整片背景這種大範圍，畫出來像一個大框）；W、H 不寫＝768×1376。開關 SCENE_INFO_ON；樣式在 sciCss */
+const SCENE_INFO_ON=true;
+function sciCss(){if(document.getElementById("sciCss"))return;const s=document.createElement("style");s.id="sciCss";s.textContent=`
+.sci-fx{position:absolute;pointer-events:none;overflow:visible;z-index:3}
+.sci-fx .o{fill:rgba(255,236,190,.14);stroke:rgba(255,224,150,.95);stroke-width:2.5px;vector-effect:non-scaling-stroke;filter:drop-shadow(0 0 3px rgba(255,210,120,.9))}
+.sci-fx.tap{animation:sciTap .75s ease-out forwards}.sci-fx.hint{animation:sciHint 2.6s ease-in-out forwards}
+.sci-fx.hint .o{fill:rgba(255,240,205,.08);stroke-dasharray:7 5;stroke-width:1.8px}
+@keyframes sciTap{0%{opacity:0}20%{opacity:1}100%{opacity:0}}@keyframes sciHint{0%{opacity:0}30%{opacity:.75}55%{opacity:.35}75%{opacity:.7}100%{opacity:0}}
+.sci-tip{position:absolute;left:50%;top:12px;transform:translateX(-50%);z-index:4;pointer-events:none;white-space:nowrap;padding:5px 14px;border-radius:999px;background:rgba(246,239,223,.92);color:#3a2618;border:1px solid rgba(90,64,30,.35);font:700 13px/1.3 var(--serif,serif);box-shadow:0 2px 6px rgba(0,0,0,.2);animation:sciTip 4.2s ease-in-out forwards}
+@keyframes sciTip{0%{opacity:0;transform:translate(-50%,-6px)}12%,78%{opacity:1;transform:translate(-50%,0)}100%{opacity:0}}
+.sci-sr{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);clip-path:inset(50%);white-space:nowrap}
+@media (prefers-reduced-motion:reduce){.sci-fx.tap,.sci-fx.hint,.sci-tip{animation:none;opacity:.6}}`;document.head.append(s)}
+const sciIn=(s,p)=>{if(typeof s[0]==="number")return Math.hypot(p[0]-s[0],p[1]-s[1])<=s[2];let c=false;for(let i=0,j=s.length-1;i<s.length;j=i++){const a=s[i],b=s[j];if((a[1]>p[1])!==(b[1]>p[1])&&p[0]<(b[0]-a[0])*(p[1]-a[1])/(b[1]-a[1])+a[0])c=!c}return c};
+const sciArea=s=>{if(typeof s[0]==="number")return Math.PI*s[2]*s[2];let a=0;for(let i=0,j=s.length-1;i<s.length;j=i++)a+=(s[j][0]+s[i][0])*(s[j][1]-s[i][1]);return Math.abs(a/2)};
+const sciNight=I=>/_night/.test(I.currentSrc||I.src||"");
+/* 這一頁現在看得到的物件（日夜、條件） */
+const sciLive=(D,P,I)=>{const n=sciNight(I);return(D.it||[]).filter(x=>(!x.dn||(x.dn==="n")===n)&&(!x.on||(()=>{try{return!!x.on(P)}catch(e){return false}})()))};
+/* 點到哪一件：重疊時取面積最小的那個形狀（香爐在桌上、畫心在掛軸裡） */
+function sciHit(D,P,I,p){if((D.no||[]).some(s=>sciIn(s,p)))return null;let best=null,ba=1e12;
+  for(const x of sciLive(D,P,I))for(const s of x.s){if(!sciIn(s,p))continue;const a=sciArea(s);if(a<ba){ba=a;best={x,s}}}return best}
+/* 疊一張跟圖一樣大的 SVG，把形狀描出來（點到時亮一下、第一次進頁時全部淡淡閃一次） */
+function sciDraw(P,I,D,S,cls,ms){const W=D.W||768,H=D.H||1376,ns="http://www.w3.org/2000/svg",g=document.createElementNS(ns,"svg");g.setAttribute("class","sci-fx "+cls);g.setAttribute("aria-hidden","true");
+  g.setAttribute("viewBox",`0 0 ${W} ${H}`);g.setAttribute("preserveAspectRatio","none");Object.assign(g.style,{left:I.offsetLeft+"px",top:I.offsetTop+"px",width:I.offsetWidth+"px",height:I.offsetHeight+"px"});
+  g.innerHTML=S.map(s=>typeof s[0]==="number"?`<circle class="o" cx="${s[0]}" cy="${s[1]}" r="${s[2]}"/>`:`<polygon class="o" points="${s.map(q=>q.join(",")).join(" ")}"/>`).join("");P.append(g);setTimeout(()=>g.remove(),ms)}
+function sciShow(D,x,night){if(typeof vibrate==="function")vibrate(5);const t=night&&x.tn?x.tn:x.t;
+  sheet("🔎 "+x.n,b=>{b.innerHTML=`<div class="muted" style="margin:-4px 0 8px">${esc(D.nm||"")}${D.nm?"・":""}畫裡的東西</div><p style="line-height:1.8;margin:0;font-size:16px">${esc(t)}</p>`})}
+function sciHint(P,I,D){const seen=store.get("sciSeen",{})||{};if(seen[D.k])return;
+  const go=()=>{if(!P.isConnected||!I.offsetWidth)return;const L=sciLive(D,P,I);if(!L.length)return;seen[D.k]=1;store.set("sciSeen",seen);sciDraw(P,I,D,L.filter(x=>!x.nh).flatMap(x=>x.s),"hint",2700);
+    if(!store.get("sciTip",false)){store.set("sciTip",true);const t=document.createElement("div");t.className="sci-tip";t.setAttribute("aria-hidden","true");t.textContent="點畫裡的東西，看看它的故事";t.style.top=(I.offsetTop+12)+"px";P.append(t);setTimeout(()=>t.remove(),4400)}};
+  const later=()=>setTimeout(go,900);if(I.complete&&I.naturalWidth)later();else I.addEventListener("load",later,{once:true})}
+function sciPage(v,D){if(!SCENE_INFO_ON||!D||!D.it)return;const P=v&&v.querySelector(".shp-page.cq"),I=P&&P.querySelector(":scope>img");if(!P||!I||P.dataset.sci)return;P.dataset.sci="1";sciCss();
+  const W=D.W||768,H=D.H||1376;
+  const pt=e=>{const r=I.getBoundingClientRect();if(!r.width||!r.height)return null;return[(e.clientX-r.left)/r.width*W,(e.clientY-r.top)/r.height*H]};
+  const onImg=t=>!!t&&!!t.closest&&P.contains(t)&&!t.closest("button,a,input,select,textarea,label,[role=button],[tabindex],.v7")&&!P.classList.contains("pc-run");
+  P.addEventListener("click",e=>{if(e.defaultPrevented||!onImg(e.target))return;const p=pt(e);if(!p||p[0]<0||p[1]<0||p[0]>W||p[1]>H)return;const h=sciHit(D,P,I,p);if(!h)return;
+    sciDraw(P,I,D,[h.s],"tap",800);sciShow(D,h.x,sciNight(I))});
+  /* 電腦滑鼠移到物件上換成手指游標（手機沒有游標，不影響） */
+  P.addEventListener("pointermove",e=>{if(e.pointerType!=="mouse")return;const p=onImg(e.target)?pt(e):null,on=!!(p&&sciHit(D,P,I,p));if(P.dataset.sciCur!==(on?"1":"")){P.dataset.sciCur=on?"1":"";P.style.cursor=on?"pointer":""}});
+  /* 讀螢幕的人：一排看不見的按鈕，一樣開小卡 */
+  const sr=document.createElement("div");sr.className="sci-sr";sr.innerHTML=`<span>畫裡可以點的東西：</span>`+(D.it||[]).map((x,i)=>`<button type="button" data-i="${i}">${esc(x.n)}</button>`).join("");P.append(sr);
+  sr.onclick=e=>{const b=e.target.closest("button");if(!b)return;e.stopPropagation();sciShow(D,D.it[+b.dataset.i],sciNight(I))};
+  sciHint(P,I,D)}
 /* ================= 🕰 回到當年（意見回饋 313）=================
    石桌往事裡的對局，用「妙棋精選」裡 Pikafish 驗證過的特級大師實戰來演：你站在旁邊看，不能插手；
    棋自動一步一步下，下到那一步妙棋之前停下來——換作是你，會怎麼走？
