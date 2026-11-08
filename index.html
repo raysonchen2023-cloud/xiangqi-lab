@@ -1341,7 +1341,7 @@ html[data-era=qin] .view:has(>.shp-rd),html[data-era=wudai] .view:has(>.shp-rd){
       if(!window.caches)return go();caches.keys().then(function(ks){return Promise.all(ks.filter(function(k){return k.indexOf("xqlab-app-")===0}).map(function(k){return caches.delete(k)}))})
         .then(function(){return navigator.serviceWorker&&navigator.serviceWorker.getRegistration()}).then(function(r){return r&&r.update()}).catch(function(){}).then(go)}};setTimeout(chk,4000)})();
 </script>
-<script>window.XQ_OFFLINE=true;window.XQ_BUILD="20261109-0515";</script>
+<script>window.XQ_OFFLINE=true;window.XQ_BUILD="20261109-0530";</script>
 <script src="core.js"></script>
 <script src="engine.js"></script>
 <script src="local.js"></script>
@@ -11268,6 +11268,7 @@ function ph4Css(){if(document.getElementById("ph4Css"))return;const s=document.c
 .ph4-say.on{opacity:1}.ph4-say::after{content:"";position:absolute;left:50%;bottom:-7px;margin-left:-6px;border:6px solid transparent;border-top-color:#3a2618;border-bottom:0}
 .ph4-say.side::after{display:none}.ph4-say.low{z-index:190}
 .pad.port.ph4-nc>.port-say,.pad.port.ph4-nc>#poShip{display:none}
+.ph4-pz{position:absolute;z-index:4;background:transparent;border:0;padding:0;cursor:pointer;-webkit-tap-highlight-color:transparent}
 .port-say.ph4-flash{animation:ph4Fl 1.6s ease-out}
 @keyframes ph4Fl{0%,40%{box-shadow:0 0 0 3px rgba(242,201,76,.95),0 0 14px 4px rgba(255,214,120,.7)}100%{box-shadow:none}}
 @media (prefers-reduced-motion:reduce){.port-say.ph4-flash{animation:none}}`;document.head.append(s)}
@@ -11335,7 +11336,31 @@ async function ph4Load(P,box,hit,say,C,k,cid){
     if(!clips&&B.arms&&B.arms[1]){const w=now>=waveAt&&now<waveAt+1800;B.arms[1].rotation.z=w?2.5:0}
     if(fr++&1)return;if(clips)B.mixer.update(acc);acc=0;B.bot.position.y=by;r.render(sc,cam);if(!box.classList.contains("on"))box.classList.add("on")};
   requestAnimationFrame(loop)}
-if(typeof portWind==="function"){const f0=portWind;portWind=function(v,k){const r=f0.apply(this,arguments);try{const pad=PORT_CARD_HIDE&&v&&v.querySelector(".pad.port");if(pad){ph4Css();pad.classList.add("ph4-nc")}if(!ph4Mount(v,k)&&pad)ph4Line(v,k)}catch(e){}return r}}
+/* 回饋 806（開發者 11/9「角色可以直接走到星槎上船處返回星槎」）：每一朝渡口的碼頭盡頭（靠船的地方）加一個金色標籤「⛵ 上星槎」，
+   取代 805 藏起來的大按鈕。點標籤、或點碼頭盡頭那一塊空地：角色沿路走到碼頭盡頭、朝船揮手，再回星槎（#/adventure）。標題列的 ⛵ 照舊是捷徑。
+   PH4_PIER[朝代]＝{N:新路點（腳底位置，照每張渡口圖量的，走在地面和碼頭木板上）, E:接到原本路網的邊, at:標籤位置, boat:面向的船}；併進 SHW_PSX（07w 掛路網時會一起讀）。
+   船艙（classic）本來就在星槎上，沒有碼頭，不加 */
+const PH4_PIER={
+  qin:{N:{pq1:[46,72],pier:[17,82]},E:"home-pq1 pq1-pier",at:[19,76],boat:[5,93]},
+  han:{N:{pier:[32,83]},E:"home-pier",at:[31,77],boat:[30,91]},
+  sanguo:{N:{pq1:[50,75],pier:[27,81]},E:"home-pq1 pq1-pier",at:[27,75.5],boat:[8,92]},
+  weijin:{N:{pq1:[36,68],pier:[13,77]},E:"home-pq1 pq1-pier",at:[16,71.5],boat:[8,88]},
+  nanbei:{N:{pq1:[25,68],pier:[10,73.5]},E:"home-pq1 pq1-pier",at:[13,68],boat:[15,88]},
+  sui:{N:{pq1:[47,82],pier:[24,91]},E:"home-pq1 pq1-pier",at:[25,85.5],boat:[12,95]},
+  tang:{N:{pq1:[40,74],pier:[21,85]},E:"home-pq1 pq1-pier",at:[22,79.5],boat:[20,94]},
+  wudai:{N:{pq1:[42,76.5],pier:[17,84]},E:"home-pq1 pq1-pier",at:[19,78.5],boat:[15,95]},
+  song:{N:{pq1:[48,79],pier:[15,88]},E:"home-pq1 pq1-pier",at:[17,82.5],boat:[8,94]},
+  yuan:{N:{pier:[25,80.5]},E:"home-pier",at:[12,81],boat:[10,92]},
+  ming:{N:{pq1:[36,73],pier:[15,76]},E:"home-pq1 pq1-pier",at:[10,82],boat:[20,90]},
+  qing:{N:{pq1:[40,71],pier:[9,80]},E:"dock-pq1 pq1-pier",at:[12,74.5],boat:[18,92]}};
+if(typeof SHW_PSX!=="undefined")for(const k in PH4_PIER){const A=PH4_PIER[k],X=SHW_PSX[k]||(SHW_PSX[k]={N:{},E:"",HS:{}});X.N=Object.assign({},X.N,A.N);X.E=(X.E?X.E+" ":"")+A.E;X.HS=Object.assign({},X.HS,{poBoard:["pier",A.boat[0],A.boat[1],"wave"]})}
+function ph4Pier(v,k){const A=PH4_PIER[k],P=v&&v.querySelector(".shp-page.cq");if(!A||!P||P.querySelector("#poBoard"))return;ph4Css();
+  const b=document.createElement("button");b.className="shp-spot";b.id="poBoard";b.style.left=A.at[0]+"%";b.style.top=A.at[1]+"%";b.innerHTML="<b>⛵ 上星槎</b>";b.setAttribute("aria-label","走到碼頭上星槎");
+  b.onclick=()=>{if(typeof vibrate==="function")vibrate(5);goUp("#/adventure")};
+  const z=document.createElement("button");z.type="button";z.className="ph4-pz";z.setAttribute("aria-hidden","true");z.tabIndex=-1;const e=A.N.pier;Object.assign(z.style,{left:(e[0]-9)+"%",top:(e[1]-4.5)+"%",width:"18%",height:"7%"});
+  z.onclick=ev=>{ev.stopPropagation();b.click()};
+  const first=P.querySelector(".shp-spot");P.insertBefore(z,first);P.append(b)}
+if(typeof portWind==="function"){const f0=portWind;portWind=function(v,k){try{if(PORT_CARD_HIDE)ph4Pier(v,k)}catch(e){}const r=f0.apply(this,arguments);try{const pad=PORT_CARD_HIDE&&v&&v.querySelector(".pad.port");if(pad){ph4Css();pad.classList.add("ph4-nc")}if(!ph4Mount(v,k)&&pad)ph4Line(v,k)}catch(e){}return r}}
 /* ================= 🔍 滿版水墨圖兩指縮放（意見回饋 785，開發者 11/8「玩家手指縮放可以放大縮小星船/渡口/驛站」）=================
    星槎主畫面（.shp-map.full 裡的 .shp-in）、渡口與驛站（.shp-page.cq）都可以兩指縮放 1～2.5 倍；放大後單指拖曳看別處；雙擊（電腦：雙按）還原。
    整個框一起用 transform 縮放，所以圖上的入口標籤、3D 角色（07w）、07r 渡口風、07k 疊層、星槎的 WebGL 立體都跟著圖走、位置對得上。
