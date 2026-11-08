@@ -1341,7 +1341,7 @@ html[data-era=qin] .view:has(>.shp-rd),html[data-era=wudai] .view:has(>.shp-rd){
       if(!window.caches)return go();caches.keys().then(function(ks){return Promise.all(ks.filter(function(k){return k.indexOf("xqlab-app-")===0}).map(function(k){return caches.delete(k)}))})
         .then(function(){return navigator.serviceWorker&&navigator.serviceWorker.getRegistration()}).then(function(r){return r&&r.update()}).catch(function(){}).then(go)}};setTimeout(chk,4000)})();
 </script>
-<script>window.XQ_OFFLINE=true;window.XQ_BUILD="20261108-2030";</script>
+<script>window.XQ_OFFLINE=true;window.XQ_BUILD="20261108-2040";</script>
 <script src="core.js"></script>
 <script src="engine.js"></script>
 <script src="local.js"></script>
@@ -11031,7 +11031,7 @@ function shwNear(C,p){let best=null;const W=C.W/100,H=C.H/100;for(const[a,b]of s
   const dx=(B[0]-A[0])*W,dy=(B[1]-A[1])*H,t=Math.max(0,Math.min(1,((p[0]-A[0])*W*dx+(p[1]-A[1])*H*dy)/(dx*dx+dy*dy||1))),d=Math.hypot((p[0]-A[0])*W-t*dx,(p[1]-A[1])*H-t*dy);
   if(!best||d<best.d)best={d,p:[A[0]+(B[0]-A[0])*t,A[1]+(B[1]-A[1])*t],e:[a,b]}}return best}
 /* 點擊位置換成原圖的百分比：星槎的入口層 .shp-hl 每格有位移＋轉動（立體視差、起伏），反算回去 */
-function shwPt(S,e){const I=S.I,r=I.getBoundingClientRect();let x=e.clientX-r.left,y=e.clientY-r.top;const L=S.o.layer;
+function shwPt(S,e){const I=S.I,r=I.getBoundingClientRect();let x=(e.clientX-r.left)*I.clientWidth/(r.width||1),y=(e.clientY-r.top)*I.clientHeight/(r.height||1);const L=S.o.layer;   /* 意見回饋 785：圖可能被 07x 兩指放大，先除掉縮放 */
   if(L!==I){try{const cs=getComputedStyle(L),tf=cs.transform;if(tf&&tf!=="none"){const o=cs.transformOrigin.split(" ").map(parseFloat),M=new DOMMatrix().translate(o[0],o[1]).multiply(new DOMMatrix(tf)).translate(-o[0],-o[1]),q=M.inverse().transformPoint(new DOMPoint(x,y));x=q.x;y=q.y}}catch(err){}}
   return[x/I.clientWidth*100,y/I.clientHeight*100]}
 /* 只有點在圖本身（圖、畫布、圖層容器）才算「點空地」；按鈕、連結、驛路小圓印、七星來訪等都不攔 */
@@ -11109,6 +11109,56 @@ async function shwLoad(S){
     if(!g&&(fr++&1))return;if(clips)B.mixer.update(acc);acc=0;B.bot.position.y=by;r.render(sc,cam);
     if(!S.box.classList.contains("on")){S.box.classList.add("on");document.body.classList.add("shw-on")}};
   requestAnimationFrame(loop)}
+/* ================= 🔍 滿版水墨圖兩指縮放（意見回饋 785，開發者 11/8「玩家手指縮放可以放大縮小星船/渡口/驛站」）=================
+   星槎主畫面（.shp-map.full 裡的 .shp-in）、渡口與驛站（.shp-page.cq）都可以兩指縮放 1～2.5 倍；放大後單指拖曳看別處；雙擊（電腦：雙按）還原。
+   整個框一起用 transform 縮放，所以圖上的入口標籤、3D 角色（07w）、07r 渡口風、07k 疊層、星槎的 WebGL 立體都跟著圖走、位置對得上。
+   手勢：點一下照舊（開入口、點哪走哪）；沒放大時單指照舊捲頁面；拖曳或縮放後放開手指的那一下不算點擊。
+   iOS：沒放大時 touch-action:pan-y（系統不縮放、不雙擊放大），放大後 none；再擋 gesturestart。電腦：ctrl＋滾輪縮放、放大後滑鼠拖曳、雙按還原。
+   渡口、驛站的圖外面包一層 .zm-wrap（overflow:hidden，接手原本的外距）裁切放大的圖。每次進頁面都是新的畫面，縮放回到 1 倍。
+   不改別人的檔：包一層 07f 的 shpPx（星槎）、portWind（渡口）、yzInn（驛站）。開關 ZOOM_ON；樣式在 zmCss */
+const ZOOM_ON=true,ZM_MAX=2.5;
+function zmCss(){if(document.getElementById("zmCss"))return;const s=document.createElement("style");s.id="zmCss";s.textContent=`
+.zm-wrap{position:relative;overflow:hidden}.zm-c{touch-action:pan-y}.zm-c.zm-on{touch-action:none;cursor:grab}`;document.head.append(s)}
+/* C＝看得到的框（裁切範圍），E＝被縮放的圖層（座標的 100%） */
+function zmAttach(C,E){if(!ZOOM_ON||!C||!E||C.dataset.zm)return;C.dataset.zm="1";zmCss();C.classList.add("zm-c");
+  let s=1,tx=0,ty=0,sup=0;const cl=(v,a,b)=>Math.max(a,Math.min(b,v));
+  const box=()=>({W:C.clientWidth,H:C.clientHeight,ox:E.offsetLeft,oy:E.offsetTop,ew:E.offsetWidth,eh:E.offsetHeight});
+  const apply=()=>{const B=box();s=cl(s,1,ZM_MAX);if(s<=1.001){s=1;tx=ty=0}
+    tx=cl(tx,B.W-s*(B.ox+B.ew),-s*B.ox);ty=cl(ty,B.H-s*(B.oy+B.eh),-s*B.oy);
+    if(s===1){E.style.transform="";E.style.transformOrigin=""}else{E.style.transformOrigin="0 0";E.style.transform=`translate(${(tx+(s-1)*B.ox).toFixed(1)}px,${(ty+(s-1)*B.oy).toFixed(1)}px) scale(${s.toFixed(3)})`}
+    C.classList.toggle("zm-on",s>1)};
+  const loc=(x,y)=>{const r=C.getBoundingClientRect();return[x-r.left,y-r.top]};
+  const zoomAt=(ns,m,s0,t0,m0)=>{const c=[(m0[0]-t0[0])/s0,(m0[1]-t0[1])/s0];s=cl(ns,1,ZM_MAX);tx=m[0]-s*c[0];ty=m[1]-s*c[1];apply()};
+  const reset=()=>{s=1;tx=ty=0;apply()};
+  /* 觸控：兩指縮放（以兩指中點為準，也跟著平移）、放大時單指拖曳、雙擊還原 */
+  let T=null,last=null;
+  C.addEventListener("touchstart",e=>{const t=e.touches;if(t.length>=2){const a=loc(t[0].clientX,t[0].clientY),b=loc(t[1].clientX,t[1].clientY);T={pinch:1,d0:Math.hypot(a[0]-b[0],a[1]-b[1])||1,m0:[(a[0]+b[0])/2,(a[1]+b[1])/2],s0:s,t0:[tx,ty],moved:1};sup=1;e.preventDefault()}
+    else if(t.length===1){const p=loc(t[0].clientX,t[0].clientY);T={p0:p,t0:[tx,ty],moved:0,at:Date.now()}}},{passive:false});
+  C.addEventListener("touchmove",e=>{if(!T)return;const t=e.touches;
+    if(T.pinch&&t.length>=2){e.preventDefault();const a=loc(t[0].clientX,t[0].clientY),b=loc(t[1].clientX,t[1].clientY),d=Math.hypot(a[0]-b[0],a[1]-b[1]);zoomAt(T.s0*d/T.d0,[(a[0]+b[0])/2,(a[1]+b[1])/2],T.s0,T.t0,T.m0);return}
+    if(!T.pinch&&t.length===1&&s>1){const p=loc(t[0].clientX,t[0].clientY),dx=p[0]-T.p0[0],dy=p[1]-T.p0[1];if(!T.moved&&Math.hypot(dx,dy)<8)return;T.moved=1;sup=1;e.preventDefault();tx=T.t0[0]+dx;ty=T.t0[1]+dy;apply()}},{passive:false});
+  const tend=e=>{if(!T)return;if(e.touches.length)return;const was=T;T=null;if(was.pinch||was.moved){sup=Date.now()+450;return}
+    const now=Date.now(),p=was.p0;if(s>1&&last&&now-last.t<320&&Math.hypot(p[0]-last.p[0],p[1]-last.p[1])<30){last=null;sup=now+450;reset();return}last={t:now,p}};
+  C.addEventListener("touchend",tend);C.addEventListener("touchcancel",tend);
+  C.addEventListener("gesturestart",e=>e.preventDefault());
+  /* 電腦：ctrl＋滾輪縮放、放大後滑鼠拖曳、雙按還原 */
+  C.addEventListener("wheel",e=>{if(!e.ctrlKey)return;e.preventDefault();const m=loc(e.clientX,e.clientY);zoomAt(s*Math.exp(-e.deltaY*.0025),m,s,[tx,ty],m)},{passive:false});
+  let D=null;C.addEventListener("pointerdown",e=>{if(e.pointerType!=="mouse"||e.button!==0||s<=1)return;D={p0:loc(e.clientX,e.clientY),t0:[tx,ty],moved:0}});
+  C.addEventListener("pointermove",e=>{if(!D||e.pointerType!=="mouse")return;const p=loc(e.clientX,e.clientY),dx=p[0]-D.p0[0],dy=p[1]-D.p0[1];if(!D.moved&&Math.hypot(dx,dy)<5)return;if(!D.moved)try{C.setPointerCapture(e.pointerId)}catch(err){}D.moved=1;tx=D.t0[0]+dx;ty=D.t0[1]+dy;apply()});
+  const pup=e=>{if(!D)return;if(D.moved)sup=Date.now()+300;D=null};C.addEventListener("pointerup",pup);C.addEventListener("pointercancel",pup);
+  C.addEventListener("dblclick",e=>{if(s>1){e.preventDefault();reset()}});
+  /* 拖曳、縮放後放開的那一下不算點擊（掛在 document 捕獲，比圖上的入口、07w 點哪走哪都早） */
+  const kill=e=>{if(!C.isConnected){document.removeEventListener("click",kill,true);return}if(!C.contains(e.target))return;if(sup===1||sup>Date.now()){sup=0;e.stopPropagation();e.preventDefault()}};
+  document.addEventListener("click",kill,true);
+  if(window.ResizeObserver){const ro=new ResizeObserver(()=>{if(!C.isConnected){ro.disconnect();return}if(s>1)apply()});ro.observe(C)}
+  C.zm={reset,get s(){return s},set:(ns,mx,my)=>zoomAt(ns,[mx,my],s,[tx,ty],[mx,my])};apply()}
+/* 渡口、驛站：.shp-page.cq 外面包一層裁切框，接手原本的外距 */
+function zmPage(v){const P=v&&v.querySelector(".shp-page.cq");if(!P||P.dataset.zm||!ZOOM_ON)return;let W=P.parentNode;
+  if(!W.classList.contains("zm-wrap")){W=document.createElement("div");W.className="zm-wrap";const cs=getComputedStyle(P);W.style.margin=cs.margin;P.style.margin="0";P.parentNode.insertBefore(W,P);W.append(P)}
+  P.dataset.zm="1";zmAttach(W,P)}
+if(typeof shpPx==="function"){const f0=shpPx;shpPx=function(M){const r=f0.apply(this,arguments);try{if(M)zmAttach(M,M.querySelector(".shp-in"))}catch(e){}return r}}
+if(typeof portWind==="function"){const f0=portWind;portWind=function(v,k){const r=f0.apply(this,arguments);try{zmPage(v)}catch(e){}return r}}
+if(typeof yzInn==="function"){const f0=yzInn;yzInn=function(v,k){const r=f0.apply(this,arguments);try{zmPage(v)}catch(e){}return r}}
 /* ================= 🕰 回到當年（意見回饋 313）=================
    石桌往事裡的對局，用「妙棋精選」裡 Pikafish 驗證過的特級大師實戰來演：你站在旁邊看，不能插手；
    棋自動一步一步下，下到那一步妙棋之前停下來——換作是你，會怎麼走？
