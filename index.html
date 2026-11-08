@@ -1341,7 +1341,7 @@ html[data-era=qin] .view:has(>.shp-rd),html[data-era=wudai] .view:has(>.shp-rd){
       if(!window.caches)return go();caches.keys().then(function(ks){return Promise.all(ks.filter(function(k){return k.indexOf("xqlab-app-")===0}).map(function(k){return caches.delete(k)}))})
         .then(function(){return navigator.serviceWorker&&navigator.serviceWorker.getRegistration()}).then(function(r){return r&&r.update()}).catch(function(){}).then(go)}};setTimeout(chk,4000)})();
 </script>
-<script>window.XQ_OFFLINE=true;window.XQ_BUILD="20261108-1900";</script>
+<script>window.XQ_OFFLINE=true;window.XQ_BUILD="20261108-1910";</script>
 <script src="core.js"></script>
 <script src="engine.js"></script>
 <script src="local.js"></script>
@@ -9242,12 +9242,14 @@ function yzPick(v,ids,title,note){const rows=[...v.querySelectorAll("[data-inn]"
     b.querySelectorAll("[data-yzp]").forEach(y=>y.onclick=()=>{const id=y.dataset.yzp;closeSheet();setTimeout(()=>{const t=v.querySelector('[data-inn="'+id+'"]');if(t&&!t.disabled)t.click()},260)})})}
 /* 意見回饋 777（開發者）：滿版圖已經放得下所有入口，圖下面的清單收起來（YZ_NOLIST_ON）。清單還在畫面裡（只是藏著），旅人、秘境棋友、信箱照舊轉給它；
    圖上沒有熱點的入口（羈絆、棋史卡冊、輿圖、消寒圖、各朝的點將台、走去園子／擂台，以及之後別人加進清單的按鈕）都收在右上角「☰ 其他」：小窗裡列的是清單上原本的按鈕，點了轉給原本的按鈕 */
-const YZ_NOLIST_ON=false;
+const YZ_NOLIST_ON=true;
 function yzLing(){sheet("🏯 點將台",b=>{b.innerHTML='<div id="lingBox"></div>';lingShopBind(b)})}
 function yzMore(v,k,pad){const C=pad.querySelector(".card"),B=[...pad.querySelectorAll("button")].filter(b=>!b.closest("#lingBox")&&!b.hasAttribute("data-inn")&&!b.hasAttribute("data-mail")&&b.id!=="toShip"&&!b.disabled);
   B.forEach((b,i)=>b.dataset.yzi=i);
   const row=(ic,t,s,a)=>`<button class="item" ${a}><span class="lb" style="font-size:22px">${ic}</span><span class="tx"><b>${t}</b>${s?`<span>${s}</span>`:""}</span><span class="muted">›</span></button>`;
-  sheet("☰ 其他",b=>{b.innerHTML=(C?`<div class="card" style="line-height:1.7;font-size:14px;margin-bottom:8px">${C.innerHTML}</div>`:"")+`<div class="items" style="padding:0">${B.map(x=>x.classList.contains("item")?x.outerHTML.replace(/\sid="[^"]*"/,"").replace(/data-yzi=/,"data-yzr="):row("",x.innerHTML,"",`data-yzr="${x.dataset.yzi}"`)).join("")}${k==="classic"?"":row("🏯","點將台","將令 "+lingN()+" 枚",'id="yzMLing"')}${row("📋","顯示完整清單","圖下面原本的清單","id=\"yzMList\"")}</div>`;
+  const one=x=>x.classList.contains("item")?x.outerHTML.replace(/\sid="[^"]*"/,"").replace(/data-yzi=/,"data-yzr="):`<button class="item" data-yzr="${x.dataset.yzi}"><span class="tx"><b>${x.innerHTML}</b></span><span class="muted">›</span></button>`;
+  let H="",cur="",n=0;for(const e of pad.querySelectorAll(".sec-t,button")){if(e.classList.contains("sec-t")){cur=`<div class="sec-t" style="margin-top:10px">${e.innerHTML}</div>`;continue}if(!B.includes(e))continue;H+=cur+one(e);cur="";n++}
+  sheet("☰ 其他",b=>{b.innerHTML=(C?`<div class="card" style="line-height:1.7;font-size:14px;margin-bottom:8px">${C.innerHTML}</div>`:"")+`<div class="items" style="padding:0">${H}${k==="classic"?"":row("🏯","點將台","將令 "+lingN()+" 枚",'id="yzMLing"')}${row("📋","顯示完整清單","圖下面原本的清單","id=\"yzMList\"")}</div>`;
     b.querySelectorAll("[data-yzr]").forEach(y=>y.onclick=()=>{const t=pad.querySelector('[data-yzi="'+y.dataset.yzr+'"]');closeSheet();if(t)setTimeout(()=>t.click(),260)});
     const L=b.querySelector("#yzMLing");if(L)L.onclick=()=>{closeSheet();setTimeout(yzLing,260)};
     b.querySelector("#yzMList").onclick=()=>{closeSheet();pad.classList.remove("yz-nolist");setTimeout(()=>pad.scrollIntoView({behavior:"smooth",block:"start"}),300)}})}
