@@ -1341,7 +1341,7 @@ html[data-era=qin] .view:has(>.shp-rd),html[data-era=wudai] .view:has(>.shp-rd){
       if(!window.caches)return go();caches.keys().then(function(ks){return Promise.all(ks.filter(function(k){return k.indexOf("xqlab-app-")===0}).map(function(k){return caches.delete(k)}))})
         .then(function(){return navigator.serviceWorker&&navigator.serviceWorker.getRegistration()}).then(function(r){return r&&r.update()}).catch(function(){}).then(go)}};setTimeout(chk,4000)})();
 </script>
-<script>window.XQ_OFFLINE=true;window.XQ_BUILD="20261109-0230";</script>
+<script>window.XQ_OFFLINE=true;window.XQ_BUILD="20261109-0300";</script>
 <script src="core.js"></script>
 <script src="engine.js"></script>
 <script src="local.js"></script>
@@ -11150,6 +11150,13 @@ function shwLift(S,b){try{const cv=S.box.querySelector("canvas");if(!cv||!b.isCo
 function shwDrop(){document.querySelectorAll("[data-shw-lift]").forEach(x=>{x.style.translate="";delete x.dataset.shwLift})}
 function shwUnfade(S,b,ms){clearTimeout(S.uf);S.uf=setTimeout(()=>{if(!b.isConnected||(S.go&&S.go.btn===b))return;shwLift(S,b);b.classList.add("shw-unfade");b.classList.remove("shw-fade");if(S.stay===b)S.stay=null;setTimeout(()=>b.classList.remove("shw-unfade"),700)},ms)}
 function shwStay(S){}
+/* 回饋 803：滿版頁上的全螢幕面板（碑林拓片、信房大箋…）也登記一筆上一頁紀錄：按左上「‹返回」、手機的返回鍵、瀏覽器上一頁＝先收起面板，回到場景；
+   用 xqPanel 記號（不用 sheet 的 xqSheet，免得關掉面板上的小卡片時被一起退掉）。回傳一個「用按鈕收起時」要呼叫的函式（把那一筆退掉） */
+let XQP_N=0;addEventListener("popstate",()=>{if(!(history.state||{}).xqPanel||XQP_N>0)return;setTimeout(()=>{if((history.state||{}).xqPanel&&XQP_N<=0)history.back()},0)});   /* 面板已經不在（開著面板直接換頁留下的）那一筆：自動再退一格 */
+function xqPanelNav(close){let on=true;XQP_N++;try{const d=NAV_D+1;history.pushState({xqPanel:1,d},"",location.href);NAV_D=d;if(typeof navMark==="function")navMark(d,true,true)}catch(e){}
+  const done=()=>{if(!on)return false;on=false;XQP_N=Math.max(0,XQP_N-1);removeEventListener("popstate",pop);removeEventListener("hashchange",gone);return true};
+  const pop=()=>{const st=history.state||{};if(st.xqPanel)return;if(done())try{close()}catch(e){}};const gone=()=>{done()};addEventListener("popstate",pop);addEventListener("hashchange",gone);
+  return()=>{if(!done())return;try{if(history.state&&history.state.xqPanel)history.back()}catch(e){}}}
 /* ---------- 回饋 802：走路角色兼小帥 ----------
    角色身上一顆透明按鈕、頭上一個小 💬：點了在角色旁邊開水墨小選單（問問題＝askSheet、聽棋語＝讓小帥講一句（BOT.act）、我的角色＝#/me）；
    小帥講的話（bot3d 的 xq-bot-said 事件）在角色頭上用宣紙小泡泡顯示。位置跟著 07w 每格寫的 translate／scale 和畫布大小（跟 07z 的 hmMe 同一算法） */
@@ -11568,7 +11575,7 @@ function lobbyMap(v){const lb=v.querySelector("#lb");if(!lb||v.querySelector(".l
   /* 名冊抽屜：原本的清單整個搬進來（還在 v 裡面，paint() 照樣找得到 #lb） */
   const dw=document.createElement("div");dw.className="lm-dw";dw.innerHTML='<div class="lm-dw-h">📜 名冊<button type="button" aria-label="關上名冊">✕</button></div><div class="lm-dw-b"></div>';
   const sc=document.createElement("div");sc.className="lm-scrim";v.append(sc,dw);dw.querySelector(".lm-dw-b").append(lb);
-  const open=on=>{dw.classList.toggle("open",on);sc.classList.toggle("open",on)};dw.querySelector("button").onclick=()=>open(false);sc.onclick=()=>open(false);
+  let unNav=null;const open=on=>{const was=dw.classList.contains("open");if(on&&!was&&typeof xqPanelNav==="function")unNav=xqPanelNav(()=>{unNav=null;dw.classList.remove("open");sc.classList.remove("open")});if(!on&&was&&unNav){const f=unNav;unNav=null;f()}dw.classList.toggle("open",on);sc.classList.toggle("open",on)};   /* 回饋 803：返回鍵先收名冊 */dw.querySelector("button").onclick=()=>open(false);sc.onclick=()=>open(false);
   /* 清單裡按了會換頁、開資料卡的按鈕：先把抽屜收起來 */
   lb.addEventListener("click",e=>{if(e.target.closest("button,[data-p],[data-jc]"))setTimeout(()=>{if(!document.getElementById("sheet")&&!document.querySelector(".modal .box"))open(false)},50)});
   const lbPress=sel=>{const b=lb.querySelector(sel);if(b){b.click();return true}return false};
@@ -11656,8 +11663,8 @@ function setMap(v){const root=v.querySelector(".pad.home");if(!root||v.querySele
   /* 宣紙畫軸：原本的設定整包搬進來（還在 v 裡面，原本綁的按鈕、paint() 都照常） */
   const dw=document.createElement("div");dw.className="sm-dw";dw.innerHTML='<div class="sm-dw-h">📜 設定<button type="button" aria-label="收起畫軸">✕</button></div><div class="sm-dw-b"></div>';
   const sc=document.createElement("div");sc.className="sm-scrim";v.append(sc,dw);const body=dw.querySelector(".sm-dw-b");body.append(root);
-  const close=()=>{dw.classList.remove("open");sc.classList.remove("open");smScene(P)};dw.querySelector("button").onclick=close;sc.onclick=close;
-  const open=(tab,sel)=>{const tb=root.querySelector(`#sgTabs [data-k="${tab}"]`);if(tb)tb.click();dw.classList.add("open");sc.classList.add("open");
+  let unNav=null;const close=()=>{dw.classList.remove("open");sc.classList.remove("open");smScene(P);if(unNav){const f=unNav;unNav=null;f()}};dw.querySelector("button").onclick=close;sc.onclick=close;   /* 回饋 803：開畫軸也登記一筆上一頁，返回鍵先收畫軸 */
+  const open=(tab,sel)=>{const tb=root.querySelector(`#sgTabs [data-k="${tab}"]`);if(tb)tb.click();if(!dw.classList.contains("open")&&typeof xqPanelNav==="function")unNav=xqPanelNav(()=>{unNav=null;dw.classList.remove("open");sc.classList.remove("open");smScene(P)});dw.classList.add("open");sc.classList.add("open");
     setTimeout(()=>{let el=null;for(const s of String(sel||"").split(",")){el=root.querySelector(s.trim());if(el)break}if(!el)return;const det=el.closest("details");if(det&&!det.open)det.open=true;
       const card=el.closest(".card,.items,.opt,.eragrid,label,.item")||el;body.scrollTop=Math.max(0,card.getBoundingClientRect().top-body.getBoundingClientRect().top+body.scrollTop-14);
       root.querySelectorAll(".sm-flash").forEach(x=>x.classList.remove("sm-flash"));void card.offsetWidth;card.classList.add("sm-flash");setTimeout(()=>card.classList.remove("sm-flash"),1500)},60)};
@@ -11813,7 +11820,7 @@ function FeedbackPage(v,sub){fbpCss();setTop("💬 意見回饋","#/settings");i
     {const b=pn.querySelectorAll("[data-y]")[1],i=b&&b.querySelector("i");if(i)i.innerHTML=FBP_ICO("fb_idea")}
     const go=pn.querySelector("#go");if(go)go.insertAdjacentHTML("afterend",'<div class="fbp-send"><button type="button" class="fbp-seal" aria-label="蓋印送出">兵</button><b>蓋印送出</b></div>');
     const fx=pn.querySelector("#fx"),pp=paper.querySelector("p");
-    const open=on=>{pn.classList.toggle("open",on);if(on)setTimeout(()=>{try{fx.focus({preventScroll:true})}catch(e){fx.focus()}},280);else fx.blur()};
+    const open=on=>{const was=pn.classList.contains("open");if(on&&!was&&typeof xqPanelNav==="function")st.unNav=xqPanelNav(()=>{st.unNav=null;pn.classList.remove("open");fx.blur()});if(!on&&was&&st.unNav){const f=st.unNav;st.unNav=null;f()}pn.classList.toggle("open",on);if(on)setTimeout(()=>{try{fx.focus({preventScroll:true})}catch(e){fx.focus()}},280);else fx.blur()};
     pn.querySelector(".fbp-pn-h button").onclick=()=>open(false);
     /* 鍵盤彈出：大箋留在鍵盤上方（看 visualViewport 的高度） */
     const vvFit=()=>{const vv=window.visualViewport;if(!vv)return;pn.style.top=(vv.offsetTop+8)+"px";pn.style.maxHeight=Math.max(220,vv.height-16)+"px"};
@@ -12112,9 +12119,10 @@ function termsMap(v){if(v.querySelector(".tb-page"))return;const tabs=v.querySel
   /* 拓片面板：原本的分頁和內容整包搬進來（還在 v 裡面，原本綁好的按鈕、搜尋、示範都照常） */
   const pn=document.createElement("div");pn.className="tb-pn";pn.setAttribute("role","dialog");pn.innerHTML='<div class="tb-pn-h"><span id="tbPnT"></span><button type="button">收起拓片</button></div><div class="tb-pn-b"></div>';
   const body=pn.querySelector(".tb-pn-b");for(const id of["rTabs","rPlay","rNote","rTerms"]){const e=v.querySelector("#"+id);if(e)body.append(e)}v.append(pn);
-  const close=()=>pn.classList.remove("open");pn.querySelector(".tb-pn-h button").onclick=close;
+  let unNav=null;const close=()=>{pn.classList.remove("open");if(unNav){const f=unNav;unNav=null;f()}};pn.querySelector(".tb-pn-h button").onclick=close;
   const openTab=k=>{const b=body.querySelector(`#rTabs [data-k="${k}"]`);if(b)b.click();pn.querySelector("#tbPnT").textContent=(TB_STELE.find(s=>s[0]===k)||[])[1]||"";body.scrollTop=0;
     if(k==="note"){const n=body.querySelector("#rNote");if(n&&!n.querySelector(".tb-files"))n.insertAdjacentHTML("afterbegin",tbFiles())}
+    if(!pn.classList.contains("open")&&typeof xqPanelNav==="function")unNav=xqPanelNav(()=>{unNav=null;pn.classList.remove("open")});   /* 回饋 803：返回鍵先收起拓片 */
     pn.classList.add("open");const R=store.get("termsRead",{})||{};if(!R[k]){R[k]=1;store.set("termsRead",R)}};
   const rub=k=>{const S=TB_STELE.find(s=>s[0]===k);if(!S)return;if(matchMedia("(prefers-reduced-motion: reduce)").matches){openTab(k);return}
     const[,,x0,y0,x1,y1]=S,[a,b]=pc(x0,y0),[c,d]=pc(x1,y1),r=document.createElement("span");r.className="tb-rub";
@@ -13526,8 +13534,8 @@ function libMap(v,c0){const root=v.querySelector(".lib");if(!root||v.querySelect
   const P=d.firstElementChild;v.insertBefore(P,root);
   const pn=document.createElement("div");pn.className="lb-pn";pn.innerHTML='<div class="lb-pn-h">📜 <span id="lbT">書目</span><button type="button" aria-label="回到書閣">✕</button></div><div class="lb-pn-b"></div>';
   const sc=document.createElement("div");sc.className="lb-scrim";v.append(sc,pn);pn.querySelector(".lb-pn-b").append(root);
-  const open=(t,q)=>{pn.classList.add("open");sc.classList.add("open");const tt=pn.querySelector("#lbT");if(tt&&t)tt.textContent=t;if(q){const qi=root.querySelector("#q");if(qi)setTimeout(()=>qi.focus(),320)}};
-  const close=()=>{pn.classList.remove("open");sc.classList.remove("open")};pn.querySelector(".lb-pn-h button").onclick=close;sc.onclick=close;
+  let unNav=null;const open=(t,q)=>{if(!pn.classList.contains("open")&&typeof xqPanelNav==="function")unNav=xqPanelNav(()=>{unNav=null;pn.classList.remove("open");sc.classList.remove("open")});pn.classList.add("open");sc.classList.add("open");const tt=pn.querySelector("#lbT");if(tt&&t)tt.textContent=t;if(q){const qi=root.querySelector("#q");if(qi)setTimeout(()=>qi.focus(),320)}};
+  const close=()=>{pn.classList.remove("open");sc.classList.remove("open");if(unNav){const f=unNav;unNav=null;f()}};pn.querySelector(".lb-pn-h button").onclick=close;sc.onclick=close;   /* 回饋 803：返回鍵先收面板 */
   /* 開某一部書：已經是這部就直接打開面板；不是就換到 #/db/<書>（原本的 Library 會載好那部），進來後自動打開 */
   const book=(k,t,q)=>{if(k&&k!==libState.c){LB_OPEN={t,q};libState.q="";libState.player="";location.hash="#/db/"+encodeURIComponent(k);return}open(t,q)};
   P.querySelectorAll(".lb-cell").forEach(b=>b.onclick=()=>{vibrate(5);book(b.dataset.c,b.getAttribute("aria-label"))});
