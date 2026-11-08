@@ -39,18 +39,18 @@ input,select{font:inherit;font-size:16px;color:inherit}
 .view{flex:1;min-height:0;overflow:auto;-webkit-overflow-scrolling:touch}
 .view.fixed{overflow:hidden;display:flex;flex-direction:column}
 /* 底部導覽列 */
-.tabbar{flex:none;display:flex;background:var(--card);border-top:1px solid var(--line);padding-bottom:var(--safeB);position:relative;z-index:3;transform:translateZ(0)}
+.tabbar{flex:none;display:flex;background:var(--paper-bar,var(--card)) var(--paper-tex,none);border-top:1px solid var(--line);padding-bottom:var(--safeB);position:relative;z-index:3;transform:translateZ(0)}
 .tabbar button{flex:1;display:flex;flex-direction:column;align-items:center;gap:1px;padding:7px 0 6px;font-size:11px;color:var(--muted)}
 .tabbar button .ic{font-size:22px;line-height:1.1;filter:grayscale(1);opacity:.7}
 .tabbar button.on{color:var(--accent);font-weight:700}.tabbar button.on .ic{filter:none;opacity:1}
 /* 卡片 */
 .pad{padding:12px}
-.card{background:var(--card);border-radius:16px;padding:14px;box-shadow:0 1px 3px #0000001a;border:1px solid var(--line)}
+.card{background:var(--card) var(--paper-tex,none);border-radius:8px;padding:14px;box-shadow:var(--ink-halo,0 1px 3px #0000001a);border:1px solid var(--ink-edge,var(--line))}   /* 畫風一致性第一批（11/8）：白卡陰影改淡墨線邊、圓角縮小、疊紙紋 */
 /* 首頁／對弈入口：同一種方塊 */
 .home{padding:12px;max-width:680px;margin:0 auto}
 .hero{display:grid;grid-template-columns:1fr 1fr;gap:10px}
 .hero.c3{grid-template-columns:repeat(3,1fr)}
-.tile{--c:var(--accent);background:var(--card);border-radius:16px;padding:12px;border:1px solid var(--line);box-shadow:0 1px 3px #0000001a;
+.tile{--c:var(--accent);background:var(--card) var(--paper-tex,none);border-radius:8px;padding:12px;border:1px solid var(--ink-edge,var(--line));box-shadow:var(--ink-halo,0 1px 3px #0000001a);
   display:flex;flex-direction:column;align-items:stretch;gap:1px;height:124px;min-width:0;text-align:left;position:relative;overflow:hidden;transition:transform .1s}
 .tile:active{transform:scale(.97)}
 .tile .ic{width:44px;height:44px;border-radius:12px;display:flex;align-items:center;justify-content:center;font-size:24px;line-height:1;margin-bottom:auto;
@@ -100,7 +100,7 @@ input,select{font:inherit;font-size:16px;color:inherit}
 .thero{margin-top:4px}.tstats{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px}.tstat{display:flex;flex-direction:column;align-items:center;text-align:center;padding:10px 4px;border-radius:12px;background:color-mix(in srgb,var(--accent) 8%,var(--card));min-width:0}
 .tstat small{font-size:12px;color:var(--muted)}.tstat b{font:900 32px/1.1 var(--serif);color:var(--accent);margin:2px 0}.tstat b i{font:600 12px var(--sans,inherit);font-style:normal;color:var(--muted);margin-left:2px}.tstat span{font-size:11.5px;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:100%}
 .tsum{margin:12px 2px 10px;line-height:1.7;font-size:14.5px}
-.eic{width:1.4em;height:1.4em;object-fit:contain;display:inline-block;vertical-align:middle;filter:drop-shadow(0 1px 1px rgba(0,0,0,.18))}.eic.emi{width:1.3em;height:1.3em;vertical-align:-.28em;margin:0 .05em}#topRight .ib .eic{width:26px;height:26px;padding:2px;border-radius:50%;background:rgba(255,248,236,.92)}.tabbar .ic .eic{width:26px;height:26px;filter:none}#sgTabs .tic{font-style:normal}.obg{display:grid;grid-template-columns:1fr 1fr;gap:10px}.obc{display:flex;flex-direction:column;align-items:center;gap:4px;padding:10px 6px;border-radius:14px;border:2px solid var(--line);background:var(--card);color:inherit}.obc.on{border-color:var(--accent);box-shadow:0 0 0 2px color-mix(in srgb,var(--accent) 30%,transparent)}.obc img{width:100%;aspect-ratio:3/4;object-fit:contain}.obc small{color:var(--muted);font-size:12px}.fbt i .eic{width:34px;height:34px}.fba i .eic{width:28px;height:28px}#go .eic{width:24px;height:24px;vertical-align:-6px}#sTabs .eic{width:20px;height:20px;vertical-align:-5px}.st-rk .hd .eic{width:22px;height:22px;vertical-align:-6px}.item .lb .eic{width:28px;height:28px}.sec-t .eic{width:24px;height:24px;vertical-align:-6px;margin-right:2px}#sgTabs .tic .eic{width:22px;height:22px;vertical-align:-5px}.circles button .ti.eic{width:52px;height:52px}.tabbar button .ic:has(.eic){filter:none;opacity:.55}.tabbar button.on .ic:has(.eic){opacity:1}
+.eic{width:1.4em;height:1.4em;object-fit:contain;display:inline-block;vertical-align:middle;filter:var(--ico-f,) drop-shadow(0 1px 1px rgba(0,0,0,.18))}.eic.emi{width:1.3em;height:1.3em;vertical-align:-.28em;margin:0 .05em}#topRight .ib .eic{width:26px;height:26px;padding:2px;border-radius:50%;background:rgba(255,248,236,.92)}.tabbar .ic .eic{width:26px;height:26px;filter:var(--ico-f,none)}#sgTabs .tic{font-style:normal}.obg{display:grid;grid-template-columns:1fr 1fr;gap:10px}.obc{display:flex;flex-direction:column;align-items:center;gap:4px;padding:10px 6px;border-radius:14px;border:2px solid var(--line);background:var(--card);color:inherit}.obc.on{border-color:var(--accent);box-shadow:0 0 0 2px color-mix(in srgb,var(--accent) 30%,transparent)}.obc img{width:100%;aspect-ratio:3/4;object-fit:contain}.obc small{color:var(--muted);font-size:12px}.fbt i .eic{width:34px;height:34px}.fba i .eic{width:28px;height:28px}#go .eic{width:24px;height:24px;vertical-align:-6px}#sTabs .eic{width:20px;height:20px;vertical-align:-5px}.st-rk .hd .eic{width:22px;height:22px;vertical-align:-6px}.item .lb .eic{width:28px;height:28px}.sec-t .eic{width:24px;height:24px;vertical-align:-6px;margin-right:2px}#sgTabs .tic .eic{width:22px;height:22px;vertical-align:-5px}.circles button .ti.eic{width:52px;height:52px}.tabbar button .ic:has(.eic){filter:none;opacity:.55}.tabbar button.on .ic:has(.eic){opacity:1}
 .ecover{position:fixed;inset:0;z-index:9990;display:flex;align-items:center;justify-content:center;background:#1c140d;opacity:0;transition:opacity .45s ease}.ecover.on{opacity:1}
 .ecover i{position:absolute;inset:0;background-size:cover;background-position:center;filter:saturate(1.05);transform:scale(1.08);transition:transform 2.4s ease-out}.ecover.on i{transform:scale(1)}
 .ecover>div{position:relative;text-align:center;color:#fff;font-family:var(--serif);text-shadow:0 2px 12px rgba(0,0,0,.7);background:rgba(20,12,6,.38);padding:18px 26px;border-radius:16px}
@@ -110,8 +110,9 @@ input,select{font:inherit;font-size:16px;color:inherit}
 @keyframes sflip{0%{transform:perspective(500px) rotateY(0) scale(1)}60%{transform:perspective(500px) rotateY(400deg) scale(1.25)}100%{transform:perspective(500px) rotateY(540deg) scale(1.15)}}
 .xpres{margin:10px auto 4px;max-width:260px;padding:10px 12px;border:1px solid var(--line);border-radius:12px;background:var(--bg);font-size:16px;text-align:center}.xpres b{font-size:20px;color:var(--accent)}.xpres small{display:block;color:var(--muted);font-size:12.5px;margin:2px 0 6px}
 .tdet{margin-top:12px}.tdet>summary{cursor:pointer;list-style:none;padding:12px 14px;border:1px solid var(--line);border-radius:12px;background:var(--card);font-weight:700;font-size:14px}.tdet>summary::-webkit-details-marker{display:none}.tdet>summary::after{content:" ▾";color:var(--muted)}.tdet[open]>summary::after{content:" ▴"}
-.stbl{border-radius:18px;padding:14px 8px 16px;background:#6b6a63 url(data/stonetable/top.webp) center/cover;box-shadow:inset 0 0 40px rgba(0,0,0,.45),0 3px 10px rgba(0,0,0,.25)}.stbl-t{margin:0 0 4px;text-align:center;color:#fff;font:700 15px var(--serif);text-shadow:0 1px 4px #000}
-.era-c.stone img{width:86px;height:86px;object-fit:contain;filter:drop-shadow(0 4px 4px rgba(0,0,0,.45));transition:transform .15s}.era-c.stone>span{display:none}.era-c.stone b{color:#fff;text-shadow:0 1px 3px #000}.era-c.stone.on img{transform:scale(1.12);filter:drop-shadow(0 0 8px #ffd27a) drop-shadow(0 4px 4px rgba(0,0,0,.45))}.era-c.stone:active img{transform:scale(.94)}
+/* 畫風一致性第 10 條（11/8）：千秋石枰改成宣紙＋淡墨棋盤線＋金色星光（拿掉寫實石板和火星），石頭換水墨石卵 data/stones/<朝代>_ink.webp，朱紅字由程式疊上 */
+.stbl{position:relative;border-radius:18px;padding:14px 8px 16px;background-color:#F4EDDC;background-image:radial-gradient(circle at 12% 9%,rgba(232,190,90,.9) 0 1.4px,transparent 2.6px),radial-gradient(circle at 88% 16%,rgba(232,190,90,.85) 0 1.8px,transparent 3.2px),radial-gradient(circle at 70% 4%,rgba(232,190,90,.7) 0 1px,transparent 2px),radial-gradient(circle at 6% 62%,rgba(232,190,90,.75) 0 1.2px,transparent 2.4px),radial-gradient(circle at 95% 74%,rgba(232,190,90,.85) 0 1.6px,transparent 3px),radial-gradient(circle at 30% 97%,rgba(232,190,90,.7) 0 1.1px,transparent 2.2px),radial-gradient(ellipse at 50% 45%,transparent 55%,rgba(70,58,44,.13)),linear-gradient(90deg,rgba(42,31,21,.11) 1px,transparent 1px),linear-gradient(rgba(42,31,21,.11) 1px,transparent 1px);background-size:auto,auto,auto,auto,auto,auto,auto,calc(100%/8) 100%,100% calc(100%/9);background-position:0 0,0 0,0 0,0 0,0 0,0 0,0 0,calc(50% + .5px) 0,0 calc(50% + .5px);box-shadow:inset 0 0 0 1.5px rgba(42,31,21,.55),inset 0 0 0 6px #F4EDDC,inset 0 0 0 7px rgba(42,31,21,.3),0 2px 8px rgba(42,31,21,.12)}.stbl-t{margin:0 0 4px;text-align:center;color:#2A1F15;font:700 15px var(--serif);letter-spacing:.12em}.stbl .muted{color:#6E5E4C!important}
+.era-c.stone{position:relative}.era-c.stone img{width:86px;height:86px;object-fit:contain;filter:drop-shadow(0 3px 2px rgba(42,31,21,.22));transition:transform .15s}.era-c.stone>span{position:absolute;left:50%;top:43px;transform:translate(-50%,-50%);width:auto;height:auto;background:none;border:0;border-radius:0;box-shadow:none;color:#B3261E;font-size:30px;line-height:1;pointer-events:none;opacity:.92;transition:opacity .2s}.era-c.stone>span.two{font-size:19px;letter-spacing:-.02em}.era-c.stone img.sflip+span{opacity:0}.era-c.stone b{color:#2A1F15}.era-c.stone.on img{transform:scale(1.12);filter:drop-shadow(0 0 7px rgba(232,190,90,.95)) drop-shadow(0 3px 2px rgba(42,31,21,.22))}.era-c.stone.on>span{transform:translate(-50%,-50%) scale(1.12);color:#B3261E;border:0}.era-c.stone:active img{transform:scale(.94)}
 .eras{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:16px 6px;margin-top:10px}.era-c{display:flex;flex-direction:column;align-items:center;gap:6px;background:none;border:0;padding:0;font:inherit;color:inherit;cursor:pointer;min-width:0}.era-c span{width:78px;height:78px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-family:var(--serif);font-size:30px;font-weight:900;background:radial-gradient(circle at 35% 30%,var(--card),color-mix(in srgb,var(--accent) 14%,var(--card)));border:2px solid color-mix(in srgb,var(--accent) 45%,var(--line));box-shadow:0 2px 6px rgba(0,0,0,.12)}.era-c span.two{font-size:22px}.era-c.on span{border-color:var(--red);color:var(--red);border-width:3px}.era-c b{font-size:13.5px}
 .doors{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px;margin-top:12px}.door{display:flex;flex-direction:column;align-items:center;gap:2px;padding:14px 4px 8px;border:2px solid color-mix(in srgb,var(--accent) 45%,var(--line));border-bottom-width:4px;border-radius:999px 999px 10px 10px;background:linear-gradient(180deg,color-mix(in srgb,var(--accent) 10%,var(--card)),var(--card));font:inherit;color:inherit;cursor:pointer;min-width:0}.door .dic{font-size:26px}.door b{font-size:14px}.door small{font-size:11px;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:100%}
 .travel{position:fixed;inset:0;z-index:9998;overflow:hidden;background:linear-gradient(180deg,#3a1d14 0%,#8a3b1f 38%,#d98a3a 52%,#6b5434 53%,#4a3a26 100%);animation:tvIn .35s ease both}.travel.out{animation:tvOut .35s ease both}
@@ -326,7 +327,7 @@ html[data-era=qin] .me-win{--oct:inset(0 round 8px)}html[data-era=song] .me-win{
 .me2.art .mw[data-c=z]{--frame:var(--u-win_z);--mask:var(--u-mask_z);--view:var(--u-view_z);--ar:239/347;--vs:auto 104%}.me2.art .mw[data-c=z] .wf{width:auto;height:156px}
 .me2.art .mw>b small{color:#9A6A45}.me2.art .mw.empty>b small{color:#9AA5A3}
 .me2.art .mw>b{color:#2E3B3A}   /* 554：聲音頁也不放說明小字 */   /* 意見回饋 547：棋盤設定頁不放說明小字 */
-html[data-era=tang] .card,html[data-era=tang] .tile,html[data-era=qing] .card,html[data-era=qing] .tile{box-shadow:inset 0 0 0 3px var(--card),inset 0 0 0 4px color-mix(in srgb,var(--trim) 60%,transparent),0 1px 3px #0000001a}
+html[data-era=tang] .card,html[data-era=tang] .tile,html[data-era=qing] .card,html[data-era=qing] .tile{box-shadow:inset 0 0 0 3px var(--card),inset 0 0 0 4px color-mix(in srgb,var(--trim) 60%,transparent),var(--ink-halo,0 1px 3px #0000001a)}
 html[data-era=ming] .topbar,html[data-era=qing] .topbar{border-bottom-width:4px}
 .eragrid{display:grid;grid-template-columns:repeat(2,1fr);gap:8px}
 .eragrid button{position:relative;display:flex;flex-direction:column;align-items:flex-start;text-align:left;padding:30px 10px 9px;border-radius:12px;min-height:84px;overflow:hidden;
@@ -351,8 +352,8 @@ html[data-era=ming] .topbar,html[data-era=qing] .topbar{border-bottom-width:4px}
 .opt{display:flex;flex-wrap:wrap;gap:8px;margin:6px 0 12px}
 .opt button{padding:9px 14px;border-radius:12px;background:var(--bg);border:1px solid var(--line);font-weight:500}
 .opt button.on{background:var(--accent);color:#fff;border-color:var(--accent)}
-.btn{display:block;width:100%;padding:13px;border-radius:14px;background:var(--accent);color:#fff;font-weight:900;font-size:16px;text-align:center;margin-top:6px}
-.btn.ghost{background:var(--bg);color:var(--ink);border:1px solid var(--line)}
+.btn{display:block;width:100%;padding:13px;border-radius:10px;background:var(--btn-main,var(--accent));color:#fff;font-weight:900;font-size:16px;text-align:center;margin-top:6px}   /* 畫風一致性第一批：主要按鈕＝朱紅印章色（--btn-main）、次要按鈕＝墨框 */
+.btn.ghost{background:var(--bg);color:var(--ink);border:1px solid var(--ghost-edge,var(--line))}
 .lvl{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin:8px 0 12px}
 .lvl button{border-radius:14px;padding:10px 4px;background:var(--bg);border:1px solid var(--line);display:flex;flex-direction:column;align-items:center;gap:2px}
 .lvl button b{font-size:20px;font-family:var(--serif)}.lvl button span{font-size:11px;color:var(--muted)}
@@ -500,7 +501,7 @@ html[data-era=ming] .topbar,html[data-era=qing] .topbar{border-bottom-width:4px}
 .chips button{flex:none;padding:7px 13px;border-radius:999px;background:var(--card);border:1px solid var(--line);font-size:14px;white-space:nowrap}
 .chips button.on{background:var(--ink);color:var(--bg);border-color:var(--ink);font-weight:700}
 .items{padding:4px 12px 16px;display:flex;flex-direction:column;gap:8px}
-.item{background:var(--card);border-radius:14px;padding:11px 14px;border:1px solid var(--line);text-align:left;display:flex;gap:12px;align-items:center}
+.item{background:var(--card) var(--paper-tex,none);border-radius:8px;padding:11px 14px;border:1px solid var(--ink-edge,var(--line));text-align:left;display:flex;gap:12px;align-items:center}
 .item:active{background:var(--bg)}
 .item .lb{flex:none;min-width:42px;text-align:center;font-size:12px;color:var(--muted);font-variant-numeric:tabular-nums}
 .item .tx{flex:1;min-width:0}.item .tx b{display:block;font-family:var(--serif);font-size:15px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
@@ -789,17 +790,18 @@ html[data-era="qing"]:not([data-font="sys"]){--serif:"XQ twkai","Noto Serif TC",
 .xh{display:flex;flex-direction:column;gap:10px}
 .xh-cd b{display:block;font-family:var(--serif);font-size:19px}.xh-cd span{display:block;color:var(--muted);font-size:13.5px;line-height:1.6;margin-top:2px}
 .xh-art{width:100%;max-width:440px;margin:0 auto}
-.xh-svg{display:block;width:100%;height:auto;border-radius:14px;box-shadow:0 1px 4px rgba(0,0,0,.15)}
-.xh-p{stroke-width:1.4;cursor:pointer}
-.xh-p.done{fill:#D23A4A;stroke:#A8202E}.xh-p.done.new{fill:#E8475A}
-.xh-p.today{fill:#FFF6D8;stroke:#D4A017;stroke-width:2.4;animation:xhPulse 1.4s ease-in-out infinite}
-.xh-p.open{fill:#FBE6E9;stroke:#D88A95;stroke-dasharray:3 2}
-.xh-p.lock{fill:#FFFFFF;stroke:#C9BBAA;cursor:default}
+/* 畫風一致性第 11 條（11/8）：水墨梅枝——沒染的花瓣是淡墨圈、染好的是朱紅、今天那瓣描金 */
+.xh-svg{display:block;width:100%;height:auto;border-radius:14px;box-shadow:0 1px 4px rgba(42,31,21,.12)}
+.xh-p{stroke-width:1.3;cursor:pointer}
+.xh-p.done{fill:#B8321F;fill-opacity:.88;stroke:#8E2416}.xh-p.done.new{fill:#D0402A}
+.xh-p.today{fill:#FBF4E2;stroke:#C9A23F;stroke-width:2.4;animation:xhPulse 1.4s ease-in-out infinite}
+.xh-p.open{fill:#F8E9E0;stroke:#B8321F;stroke-opacity:.6;stroke-dasharray:2.5 2}
+.xh-p.lock{fill:#FBF7EE;fill-opacity:.82;stroke:#2A1F15;stroke-opacity:.42;cursor:default}
 @keyframes xhPulse{0%,100%{stroke-width:2.2}50%{stroke-width:4.2}}
-.xh-t{font:700 11px var(--serif,serif);fill:#6A4A32;text-anchor:middle}
+.xh-t{font:700 11px var(--serif,serif);fill:#2A1F15;fill-opacity:.78;text-anchor:middle}
 .xh-lg{display:flex;flex-wrap:wrap;gap:6px 14px;justify-content:center;font-size:12.5px;color:var(--muted)}.xh-lg span{display:inline-flex;align-items:center;gap:5px}
 .xh-dot{display:inline-block;width:12px;height:16px;border-radius:50%;border:1.5px solid}
-.xh-dot.done{background:#D23A4A;border-color:#A8202E}.xh-dot.today{background:#FFF6D8;border-color:#D4A017}.xh-dot.open{background:#FBE6E9;border-color:#D88A95;border-style:dashed}.xh-dot.lock{background:#fff;border-color:#C9BBAA}
+.xh-dot.done{background:#B8321F;border-color:#8E2416}.xh-dot.today{background:#FBF4E2;border-color:#C9A23F}.xh-dot.open{background:#F8E9E0;border-color:rgba(184,50,31,.6);border-style:dashed}.xh-dot.lock{background:#FBF7EE;border-color:rgba(42,31,21,.42)}
 .xh-acts{display:flex;flex-direction:column;gap:8px}.xh-acts .btn{width:100%;margin:0}
 .xh-hist p{line-height:1.8;font-size:14.5px;margin:6px 0}
 .xh-dev{font-size:13px;border-style:dashed}.xh-devb{display:flex;flex-wrap:wrap;gap:6px;margin-top:6px}.xh-devb .btn{flex:1 1 auto;margin:0;min-height:34px;padding:4px 10px;font-size:13px}
@@ -1183,6 +1185,60 @@ html:has(#xqTitle:not(.out)),html:has(#xqTitle:not(.out)) body{background:#F3ECD
 .gc-l2{display:flex;align-items:center;justify-content:space-between;gap:8px;margin-top:6px;font-size:12.5px}.gc-w{border:0;background:none;padding:0;font:inherit;color:inherit;text-decoration:underline dotted;cursor:pointer}
 .gc-sub{display:block;font-size:12.5px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .nmx{display:flex;align-items:baseline;gap:4px;min-width:0;white-space:nowrap}.nmx b{min-width:0;overflow:hidden;text-overflow:ellipsis}.nmx small{flex:none;font-size:11px}
+/* ===== 畫風一致性第一批（開發者 11/8 核准；xiangqi-db/story/畫風一致性盤點.md 第 1、2、4、6、7、8 條） =====
+   主視覺：水墨、大量留白，只用朱紅和金色星光點綴。這一段只動「呈現」：紙紋、墨線、色帶、濾鏡；不改任何定稿圖。
+   --paper-tex＝160px 平鋪的宣紙纖維（暖灰色、很淡的透明圖，淺底上是淡墨、深底上是淡白，一張通用）
+   --paper-bar＝標題列、分頁列的紙色；--ink-bar＝標題字色（淺色朝代用朝代的 bar 色，深色朝代用金色 barink）；--band＝標題列下面 3px 朝代色帶
+   13 朝的色票還是在 01-board.js 的 ERAS；秦、五代的內容區改成「暗宣紙」（深墨灰，不用純黑）也是在那裡改的 */
+:root{--zhu:#A8321F;--btn-main:var(--zhu);--paper-tex:url("data:image/webp;base64,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");
+  --paper-bar:color-mix(in srgb,var(--card) 60%,var(--bg));--ink-bar:var(--bar);--band:var(--bar);--read-paper:color-mix(in srgb,var(--card) 50%,#F4ECDB);
+  --ink-edge:color-mix(in srgb,var(--ink) 20%,transparent);--ink-halo:0 0 4px color-mix(in srgb,var(--ink) 9%,transparent);--ghost-edge:color-mix(in srgb,var(--ink) 38%,transparent);
+  --ico-f:saturate(.55) sepia(.15) contrast(1.05);
+  --pfr:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Cg fill='none' stroke='%232A2018' stroke-linecap='round'%3E%3Cpath d='M50 4.6a45.4 45.4 0 1 1-31.4 12.7' stroke-width='2.8' stroke-opacity='.6'/%3E%3Cpath d='M14.5 22.5a45 45 0 0 1 8.5-8.2' stroke-width='1.5' stroke-opacity='.38'/%3E%3Cpath d='M51 8a42 42 0 0 0-39 27' stroke-width='.9' stroke-opacity='.26'/%3E%3C/g%3E%3C/svg%3E") center/100% 100% no-repeat,radial-gradient(circle at 50% 40%,#FFFCF4 0,#F5ECDA 64%,#E8DBC1 100%)}
+/* 深色朝代（秦、五代）與經典深色：暗宣紙；標題字用金色，色帶用 trim，朱紅稍微提亮 */
+html[data-era=qin],html[data-era=wudai],html[data-theme=dark]:not([data-era]){--ink-bar:var(--barink);--band:var(--trim);--zhu:#B8452F;--read-paper:var(--bg);--ink-halo:0 0 6px rgba(0,0,0,.35);--ico-f:saturate(.6) sepia(.12) brightness(.96)}
+@media (prefers-color-scheme:dark){html:not([data-theme=light]):not([data-era]){--ink-bar:var(--barink);--band:var(--trim,var(--accent));--zhu:#B8452F;--read-paper:var(--bg);--ink-halo:0 0 6px rgba(0,0,0,.35);--ico-f:saturate(.6) sepia(.12) brightness(.96)}}
+/* 1. 全站紙紋（取代滿版回紋）；卡片的朝代色邊改淡墨線 */
+html .app,html.gapfix .app,html[data-era] .app{background-image:var(--paper-tex)}
+html.gapfix,html.gapfix body{background:var(--paper-bar)}
+html[data-era] .card,html[data-era] .tile{border-color:var(--ink-edge)}
+.hrec,.instc{border-radius:8px}.rd-gist{border-radius:6px}
+.tile .ic:has(.eic){background:none}
+/* 2. 標題列、分頁列：紙色底＋3px 朝代色帶，標題字用朝代色；列裡原本「深底淺字」的東西（例如挑戰電腦的積分／自選）跟著反過來 */
+.topbar{--bar:var(--paper-bar);--barink:var(--ink-bar)}
+html .topbar,html[data-era] .topbar{background:var(--paper-bar) var(--paper-tex);border-bottom:3px solid var(--band);box-shadow:0 1px 0 color-mix(in srgb,var(--ink) 10%,transparent)}
+.topbar .ib:active{background:color-mix(in srgb,var(--ink) 10%,transparent)}
+.topbar .cpu-seg{background:color-mix(in srgb,var(--ink) 8%,transparent)}
+#meChip{background:color-mix(in srgb,var(--ink) 6%,transparent)}
+html .tabbar,html[data-era] .tabbar{border-top:1px solid color-mix(in srgb,var(--ink) 18%,transparent)}
+.tabbar button{color:color-mix(in srgb,var(--muted) 55%,var(--ink))}
+/* 6. 彩色 Q 版立繪：外面包一個淡宣紙圓底＋一圈淡墨筆觸環（不改圖）。大廳路過人物、驛站旅人、園子棋友、對局頭像 */
+[data-jc]>img,[data-inn] .lb>img,.gd-nc img,.gd-who img{width:56px!important;height:56px!important;padding:4px;box-sizing:border-box;border-radius:50%;object-fit:cover;object-position:50% 8%;background:var(--pfr);flex:none}
+.gd-who img{width:72px!important;height:72px!important}[data-inn] .lb:has(>img){min-width:56px}
+.player .av.npc{background:var(--pfr);outline:1.5px solid rgba(42,32,24,.4);outline-offset:1px}.player .av.npc img{background:none}
+/* 7. 雲河七星：正文頁純紙色＋紙紋；插畫加窄墨框、像貼在書頁上；目錄改直書章回目錄，圖示改朱紅小印（讀過的實心、沒讀的空心） */
+.view:has(>.shp-rd){background:var(--read-paper) var(--paper-tex)}
+.shp-fig img{border-radius:2px;border:1.5px solid rgba(42,32,24,.72);box-shadow:0 0 0 4px var(--read-paper),0 0 0 5px rgba(42,32,24,.2),0 9px 16px -8px rgba(60,40,20,.42)}
+.shp-rd:has(>.shp-rdi)>.items{writing-mode:vertical-rl;display:flex;flex-flow:column wrap;align-items:stretch;width:100%;gap:0;margin-top:6px;padding:10px 0!important;border-top:2px solid color-mix(in srgb,var(--ink) 55%,transparent);border-bottom:1px solid color-mix(in srgb,var(--ink) 30%,transparent);counter-reset:ch}
+.shp-rd:has(>.shp-rdi)>.items>.item{flex:0 0 auto;gap:8px;padding:6px 6px 10px;background:none;border:0;border-left:1px solid color-mix(in srgb,var(--ink) 14%,transparent);border-radius:0;align-items:center}
+.shp-rd:has(>.shp-rdi)>.items>.item:active{background:color-mix(in srgb,var(--zhu) 8%,transparent)}
+.shp-rd:has(>.shp-rdi)>.items>.item>.muted{display:none}
+.shp-rd:has(>.shp-rdi)>.items .tx b{font-size:15.5px;letter-spacing:.06em;line-height:1.55!important}
+.shp-rd:has(>.shp-rdi)>.items .tx span{font-size:11.5px;letter-spacing:.02em}
+.shp-rd:has(>.shp-rdi)>.items .lb{counter-increment:ch;flex:none;min-width:0;width:26px;height:26px;display:grid;place-items:center;writing-mode:horizontal-tb;font-size:0;border:1.5px solid var(--zhu);border-radius:4px;transform:rotate(-4deg)}
+.shp-rd:has(>.shp-rdi)>.items .lb>*{display:none}
+.shp-rd:has(>.shp-rdi)>.items .lb::before{content:counter(ch,cjk-ideographic);font:900 12px/1 var(--serif);letter-spacing:-.08em;color:var(--zhu)}
+.shp-rd:has(>.shp-rdi)>.items .lb:has(img){background:var(--zhu)}.shp-rd:has(>.shp-rdi)>.items .lb:has(img)::before{color:#FFF6E8}
+/* 8. 古戰場地圖：地圖本身的水墨濾鏡在 07g-battle.js（btInk）；這裡疊紙紋，標記改墨色＋朱紅，「下一場」留金色星光 */
+.bt-map{position:relative;border-radius:8px;box-shadow:0 0 0 1px rgba(42,32,24,.28),0 2px 8px -2px rgba(60,40,20,.25)}
+.bt-map::after{content:"";position:absolute;inset:0;border-radius:inherit;background:var(--paper-tex);mix-blend-mode:multiply;pointer-events:none}
+.bt-rt{stroke:#A8321F}
+.bt-mk.next>circle:not([fill=none]):not(.bt-glow){fill:#FFF8EA;stroke:#A8321F}.bt-mk.next>.bt-mt{fill:#A8321F}
+.bt-mk.lock>circle:not([fill=none]){fill:#F7F0E2;stroke:#3A2E24;opacity:.92}.bt-mk.lock>.bt-mt{fill:#3A2E24}
+.bt-mk.seal>circle[fill^="url"]{display:none}.bt-mk.seal>rect[fill="#B22A1F"]{fill:#A8321F;stroke:#3A2A1E}
+.bt-mn{fill:#3A1E14}.bt-k.s{background:#A8321F}.bt-k.n{color:#A8741A}.bt-k.l{color:#3A2E24}
+/* 2. 對局頁下方的主要按鈕（新局）也用朱紅 */
+.actions button.pri .ic{background:var(--btn-main)}
 </style></head><body>
 <div class="app">
  <div class="topbar" id="topbar"><button class="ib" id="back" hidden><b>‹</b>返回</button><h1 id="title">象棋千秋</h1><span id="topRight"></span></div>
@@ -1230,7 +1286,7 @@ html:has(#xqTitle:not(.out)),html:has(#xqTitle:not(.out)) body{background:#F3ECD
       if(!window.caches)return go();caches.keys().then(function(ks){return Promise.all(ks.filter(function(k){return k.indexOf("xqlab-app-")===0}).map(function(k){return caches.delete(k)}))})
         .then(function(){return navigator.serviceWorker&&navigator.serviceWorker.getRegistration()}).then(function(r){return r&&r.update()}).catch(function(){}).then(go)}};setTimeout(chk,4000)})();
 </script>
-<script>window.XQ_OFFLINE=true;window.XQ_BUILD="20261108-1230";</script>
+<script>window.XQ_OFFLINE=true;window.XQ_BUILD="20261108-1301";</script>
 <script src="core.js"></script>
 <script src="engine.js"></script>
 <script src="local.js"></script>
@@ -1519,7 +1575,7 @@ const E=(bg,card,ink,muted,line,accent,accent2,bar,barink,trim,extra)=>Object.as
 const ERAS=[
   {k:"classic",n:"經典",s:"原本的樣式，可配淺色／深色"},
   {k:"qin",n:"秦・玄黑",s:"秦尚黑：黑漆、青銅、回紋",m:"meander",dark:1,
-    c:E("#14110E","#1F1A15","#EADFCB","#A39276","#3A3026","#D2503A","#C9973F","#0A0807","#E2C48A","#8C6A35",{red:"#E0574B",blk:"#0F0D0B",warn:"#E3A34A",info:"#8FA9C8"}),
+    c:E("#221F1B","#2B2722","#EADFCB","#A39276","#463D33","#D2503A","#C9973F","#0A0807","#E2C48A","#8C6A35",{red:"#E0574B",blk:"#0F0D0B",warn:"#E3A34A",info:"#8FA9C8"}),
     b:{bg:["#2E261F","#17130F"],grid:"#B98A45",piece:"#EAD9B8",r:"#C8382A",b:"#14110E",mv:"#E2B65A",bevel:1}},
   {k:"han",n:"漢・漆朱",s:"漢代漆器：朱紅配黑、雲氣紋",m:"cloud",
     c:E("#F3E7D7","#FCF6EC","#2A1410","#7E5E50","#E0CDB8","#A3271C","#3B5E46","#1A0F0C","#F0C9A0","#A3271C",{blk:"#1A1210"}),
@@ -1540,7 +1596,7 @@ const ERAS=[
     c:E("#F7EBD3","#FFF8EA","#3A1F0E","#87674A","#EAD3AE","#C2571A","#2E7D5B","#6E1F1A","#F7D88F","#D9A441"),
     b:{bg:["#F2CC85","#C98F3E"],grid:"#5E3110",piece:"#FFF6E2",r:"#B3261E",b:"#2A160A",mv:"#2E7D5B",bevel:1}},
   {k:"wudai",n:"五代・夜宴",s:"韓熙載夜宴圖：夜色、硃砂、石綠",m:"coin",dark:1,
-    c:E("#1A1613","#26201B","#EFE3CF","#A8977C","#3D342B","#D9603F","#5FA88A","#0F0C0A","#EBD3A8","#7A5A3A",{red:"#E0574B",blk:"#151210",warn:"#E3A34A",info:"#8FA9C8"}),
+    c:E("#24201C","#2D2823","#EFE3CF","#A8977C","#4A4037","#D9603F","#5FA88A","#0F0C0A","#EBD3A8","#7A5A3A",{red:"#E0574B",blk:"#151210",warn:"#E3A34A",info:"#8FA9C8"}),
     b:{bg:["#3A2E24","#231B15"],grid:"#CDA86A",piece:"#EAD9B8",r:"#C8382A",b:"#151210",mv:"#7CC9A6",bevel:1}},
   {k:"song",n:"宋・汝窯",s:"雨過天青：素雅、冰裂紋",m:"crackle",
     c:E("#E6EEEA","#F6FAF8","#22312D","#64776F","#CDDCD5","#3E7C76","#8B6A3E","#4B6B65","#EAF3EF","#9DBDB2"),
@@ -1563,7 +1619,7 @@ function applyEra(){try{icoEra()}catch(e){}try{if(typeof bgmSync==="function"&&t
     r.style.setProperty("--wood",e.b.bg[1]);r.style.setProperty("--grid",e.b.grid);r.style.setProperty("--piece",e.b.piece);
     r.style.setProperty("--motif-bar",eraMotif(e.m,e.c.barink,.2));r.style.setProperty("--motif-bg",eraMotif(e.m,e.c.ink,e.dark?.07:.05));r.style.colorScheme=e.dark?"dark":"light"}
   else delete r.dataset.era;
-  const mt=document.querySelector('meta[name="theme-color"]');if(mt)mt.content=e?e.c.bar:"#3B2A1A"}
+  const mt=document.querySelector('meta[name="theme-color"]');if(mt)mt.content=e?(e.dark?e.c.bg:e.c.card):"#3B2A1A"}   /* 畫風一致性第一批（11/8）：標題列改成紙色，手機狀態列跟著用紙色；秦、五代的 bg／card 從純黑改成暗宣紙（深墨灰） */
 applyEra();
 const boardTheme=k=>{k=k||store.get("boardTheme","wood3d");if(k==="auto"&&boardEraE())return boardEraE().b;return(BOARD_THEMES.find(t=>t[0]===k)||BOARD_THEMES[0])[2]};
 let boardN=0;
@@ -3950,7 +4006,7 @@ function onboard(){if(journey())journeyLock();else titleScreen({})}
 // ================= 設定：棋盤風格、棋子樣式、走棋顯示 =================
 const SAMPLE_FEN0="rnbakabnr/9/1c5c1/p1p1p1p1p/9/9/P1P1P1P1P/1C5C1/9/RNBAKABNR",SAMPLE_FEN1="rnbakabnr/9/1c5c1/p1p1p1p1p/9/9/P1P1P1P1P/1C2C4/9/RNBAKABNR",SAMPLE_LAST={f:70,t:67};
 /* 意見回饋 661：關於頁顯示整包遊戲要多大空間。XQ_SIZES 由 build-site.js 建置時填入（開發中的 m.html 是 null，就不顯示） */
-const XQ_SIZES={"pre":209940457,"code":12875913,"eng":51511005,"gm":33668932,"bgm":259516351,"opt":[["比賽對局 1956–2010",21765744],["比賽對局 2011–2014",25596413],["比賽對局 2015–2019",24821916]],"all":650333487,"other":10636756};
+const XQ_SIZES={"pre":214580127,"code":12903758,"eng":51511005,"gm":33668932,"bgm":259516351,"opt":[["比賽對局 1956–2010",21765744],["比賽對局 2011–2014",25596413],["比賽對局 2015–2019",24821916]],"all":660423646,"other":16059400};
 const szMB=b=>b>=1073741824?(b/1073741824).toFixed(1)+" GB":Math.max(1,Math.round(b/1048576))+" MB";
 function aboutSizes(){const S=XQ_SIZES;if(!S)return"";const opt=S.opt||[];   /* 意見回饋 662：玩家只看總數，細項只在開發者模式顯示 */
   return `<div class="row" style="justify-content:space-between"><span class="muted">整包下載</span><b>約 ${szMB(S.all)}</b></div>
@@ -5541,7 +5597,7 @@ function meEave(d,era){const w=d.querySelector(".mwall"),f=ME_EAVE[era];if(!w||f
 function Me(v){Profile(v);setTop("🙂 我的角色","#/");setTabs(true,"#/");const pad=v.querySelector(".pad");if(!pad)return;
   const R=rankInfo(),I=xpInfo(),H=hintInfo(),B=bag(),Sx=jSecrets(),S=jStars(),Js=jStages(),L=legendState(),star=Js.reduce((a,x)=>a+(S[x.id]||0),0),
     xp=I.need?Math.round(I.rest*100/I.need):100,nS=Object.keys(Sx).length,nZ=Object.values(relicsMine()).reduce((a,x)=>a+x.length,0),pc=myPc(),red="帥仕相俥傌炮兵".includes(pc),d=document.createElement("div");
-  d.className="me2";{const era=store.get("era","classic");if(ME_ART.has(era)){d.classList.add("art");{const dk=ME_DARK[era]||"";if(dk.includes("p"))d.classList.add("pd");if(dk.includes("b"))d.classList.add("bd");if(dk.includes("w"))d.classList.add("wd")}d.style.cssText=ME_ART_FILES.map(f=>`--u-${f.replace(/\..*$/,"")}:url(data/me_${era}/${f})`).join(";")}}
+  d.className="me2";{const era=store.get("era","classic");if(ME_ART.has(era)){d.classList.add("art");{const dk=ME_DARK[era]||"";if(dk.includes("p"))d.classList.add("pd");if(dk.includes("b"))d.classList.add("bd");if(dk.includes("w"))d.classList.add("wd")}d.style.cssText=ME_ART_FILES.map(f=>`--u-${f.replace(/\..*$/,"")}:url(data/me_${era}/${/^(stage_bg|wall|win_|view_|pedestal)/.test(f)?f.replace(".webp","_ink.webp"):f})`).join(";")}}
   d.innerHTML=`<section class="me-stage" id="meSt"><div class="me-halo"></div><div class="me-win"></div><div class="me-glow"></div><div class="me-ped"></div>
       <button class="me-fig" id="meFig2" aria-label="看我的 3D 角色"><img src="${meImg()}" ${meImgTag(myStyle(),mySex())} alt="" onerror="this.remove()"></button>
       ${wxBornLine()?`<div class="me-name me-cn"><b>${meName()}</b></div><div class="me-born2">${esc(wxBornLine())}</div><button class="me-nick" id="meNm" aria-label="改線上名字">🌐 ${esc(myName()||"取個線上名字")} ✎</button>`:`<button class="me-name" id="meNm" aria-label="改名"><b>${meName()}</b><small>${esc(myName()||"")}</small></button>`}
@@ -5745,7 +5801,9 @@ const QQ_ERAS=[["qin","秦","長城下的民夫"],["han","漢","冰封大漠，�
   ["sui","隋","運河兩岸的縴夫"],["tang","唐","盛世轉衰，蜀道難行"],["wudai","五代","天下碎成十國"],["song","宋","北騎南下，煙雨江南"],["yuan","元末","黃河決堤，一路逃到石桌"],
   ["ming","明","徽州棋社，刻本棋譜傳天下"],["qing","清","茶館裡人人在打梅花譜"]];
 const QQ_INFO=k=>k==="classic"?["classic","星槎","雲河上的船艙"]:QQ_ERAS.find(x=>x[0]===k)||[k,eraLabel(k),""];
-const QQ_IMG=k=>k==="classic"?"url(data/inn/classic.webp)":`url(data/qianqiu/${k}.webp),url(data/parkgate/${k}.webp)`;   /* 明、清還沒有山河圖，先用園門圖墊著 */
+/* 畫風一致性第 5 條（11/8）：驛站橫幅、園門開場卡改用水墨化的 *_ink.webp（原圖保留，同資料夾）；cpu、online 這兩張沒有水墨版 */
+const INK_DIR=new Set(["inn","parkgate"]),inkArt=(d,k)=>`data/${d}/${k}${INK_DIR.has(d)&&k!=="cpu"&&k!=="online"?"_ink":""}.webp`;
+const QQ_IMG=k=>k==="classic"?`url(${inkArt("inn","classic")})`:`url(data/qianqiu/${k}.webp),url(${inkArt("parkgate",k)})`;   /* 明、清還沒有山河圖，先用園門圖墊著 */
 function qianqiu(from,to,done,src){if(document.querySelector(".travel,.walkc"))return;if(!to||from===to){if(done)done();return}
   try{window.XQ_DRUM&&XQ_DRUM(to,"path")}catch(e){}
   const O=QQ_ERAS.map(x=>x[0]),a=O.indexOf(from),b=O.indexOf(to),back=a>=0&&b>=0&&b<a;
@@ -5772,7 +5830,7 @@ function walk(to,done,cap){if(document.querySelector(".travel,.walkc"))return;co
   const day=new Date().toDateString(),W=store.get("walkSeen",null),seen=W&&W.d===day&&Array.isArray(W.k)?W.k:[],key=k+":"+to,fast=seen.includes(key);
   if(!fast)store.set("walkSeen",{d:day,k:seen.concat(key).slice(-60)});
   const c=document.createElement("div");c.className="walkc"+(fast?" fast":"");
-  if(!fast)c.innerHTML=`<i style="background-image:url(data/${WALK_IMG[to]||"parkgate"}/${k}.webp),url(data/parkgate/${k}.webp)"></i><div><small>${esc(cap||(to==="port"?"🚶 沿著小徑走回":"🚶 沿著小徑走到"))}</small><b>${esc(walkName(to,k))}</b></div>`;
+  if(!fast)c.innerHTML=`<i style="background-image:url(${inkArt(WALK_IMG[to]||"parkgate",k)}),url(${inkArt("parkgate",k)})"></i><div><small>${esc(cap||(to==="port"?"🚶 沿著小徑走回":"🚶 沿著小徑走到"))}</small><b>${esc(walkName(to,k))}</b></div>`;
   document.body.append(c);requestAnimationFrame(()=>c.classList.add("on"));
   const h0=location.hash;let ended=false;const end=()=>{if(ended)return;ended=true;clearTimeout(tm);if(done&&location.hash===h0)done();setTimeout(()=>{c.classList.remove("on");setTimeout(()=>c.remove(),300)},fast?40:100)};
   c.onclick=end;const tm=setTimeout(end,fast?170:620)}   /* 小卡停 0.6 秒、淡出 0.3 秒，全程不到 1 秒；淡入淡出版約 0.5 秒 */
@@ -5800,7 +5858,7 @@ function innSheet(v){setTimeout(innDrop,1200);const I=xpInfo(),Sx=jSecrets(),nx=
   /* 意見回饋 697（開發者 11/6 定案）：驛站是這一朝渡口的一扇門——「‹」回渡口（從章回棋路、棋童資料點進來的回原本那一頁），右上「⛵」回星槎；朝代照星槎停靠那一朝（shipHere），不帶故事的朝代 */
   const IE=typeof shipHere==="function"?shipHere():store.get("era","classic"),pv=navPrev(),out=pv&&/^#\/(journey|shelf|profile|me)(\/|$)/.test(pv)&&!/^#\/journey\/(inn|play|park)/.test(pv)?pv:null;
   setTop("🏮 "+innName(IE),out||"^#/port",[["⛵",()=>goUp("#/adventure"),"回星槎"]]);
-  v.innerHTML=`<div class="pad"><div class="abn" style="height:160px;background-image:url(data/inn/${IE}.webp);margin-bottom:10px"><div class="hc"><b>🏮 ${esc(innName(IE))}</b><small>路過的旅人都在這裡歇腳下棋</small></div></div><div class="card" style="line-height:1.8">🀄 <b>Lv ${I.L} ${I.title}</b>${nx?`・${ROAD_NAME}「${roadSeg(JR.indexOf(nx))}」要 Lv ${nx.lv}（還差 ${nx.lv-I.L} 級），或棋罐 ${JAR_GATE[JR.indexOf(nx)]} 子（你有 ${jarN()} 子）`:`・${ROAD_NAME}每一${ROAD_UNIT}都能進了`}<br><span class="muted" style="font-size:13px">驛站裡都是路過的旅人，找誰下都可以、下幾次都可以。</span></div>
+  v.innerHTML=`<div class="pad"><div class="abn" style="height:160px;background-image:url(${inkArt("inn",IE)});margin-bottom:10px"><div class="hc"><b>🏮 ${esc(innName(IE))}</b><small>路過的旅人都在這裡歇腳下棋</small></div></div><div class="card" style="line-height:1.8">🀄 <b>Lv ${I.L} ${I.title}</b>${nx?`・${ROAD_NAME}「${roadSeg(JR.indexOf(nx))}」要 Lv ${nx.lv}（還差 ${nx.lv-I.L} 級），或棋罐 ${JAR_GATE[JR.indexOf(nx)]} 子（你有 ${jarN()} 子）`:`・${ROAD_NAME}每一${ROAD_UNIT}都能進了`}<br><span class="muted" style="font-size:13px">驛站裡都是路過的旅人，找誰下都可以、下幾次都可以。</span></div>
     <div class="inn-walk"><button class="btn ghost" id="toPark">🌳 走去園子</button><button class="btn ghost" id="toArena">🏯 走去擂台</button><button class="btn ghost" id="toShip">⛵ 回星槎</button></div>
     <div class="sec-t">🏮 路過的旅人</div><div class="items" style="padding:0">${INN.map(x=>row(x)).join("")}</div>
     <div class="sec-t">🗝 秘境棋友（${Object.keys(Sx).length}/${SECRETS.length}）</div><div class="items" style="padding:0">${SECRETS.map(x=>row(x,!Sx[x.id])).join("")}</div>
@@ -5845,7 +5903,7 @@ async function jResume(box,only){if(!box)return;let st;try{st=await api("/play/s
 /* 意見回饋 711（開發者 11/6）：13 顆石頭都擺出來，還沒停靠的朝代變灰、點了跳提示（不再藏起來，只剩一半不好看） */
 function ParkGate(v){setTop("🪨 千秋石枰","#/adventure");setTabs(false);v.className="view";const cur=typeof shipHere==="function"?shipHere():store.get("era","classic");
   /* 意見回饋 360：石桌上擺著 13 顆朝代石頭（Gemini 畫的，刻著那個朝代書法的字），點一顆就進那個朝代的公園；石頭圖還沒到的先用圓圈 */
-  v.innerHTML=`<div class="pad"><div class="stbl"><p class="stbl-t">擇石一枚，步入彼朝之園</p><p class="muted" style="text-align:center;font-size:13px;margin:-4px 0 8px">點一顆石頭，星槎就開往那一朝，直接進那裡的園子・灰色的是星槎還沒停靠過</p><div class="eras">${ARENA_ORDER.map(k=>{const sl=ARENA[k].seal||"";return`<button class="era-c stone${k===cur?" on":""}${eraLocked(k)?" elk":""}" data-e="${k}"><img src="data/stones/${k}.webp" alt="" onerror="this.parentElement.classList.remove('stone');this.remove()"><span${sl.length>1?' class="two"':""}>${esc(sl)}</span><b>${esc(eraLabel(k))}</b></button>`}).join("")}</div></div><div id="pRes"></div></div>`;
+  v.innerHTML=`<div class="pad"><div class="stbl"><p class="stbl-t">擇石一枚，步入彼朝之園</p><p class="muted" style="text-align:center;font-size:13px;margin:-4px 0 8px">點一顆石頭，星槎就開往那一朝，直接進那裡的園子・灰色的是星槎還沒停靠過</p><div class="eras">${ARENA_ORDER.map(k=>{const sl=ARENA[k].seal||"";return`<button class="era-c stone${k===cur?" on":""}${eraLocked(k)?" elk":""}" data-e="${k}"><img src="data/stones/${k}_ink.webp" alt="" onerror="this.parentElement.classList.remove('stone');this.remove()"><span${sl.length>1?' class="two"':""}>${esc(sl)}</span><b>${esc(eraLabel(k))}</b></button>`}).join("")}</div></div><div id="pRes"></div></div>`;
   jResume(v.querySelector("#pRes"));
   /* 意見回饋 697（開發者 11/6）：千秋石枰是換朝代——石頭翻轉後播千秋穿梭（只播經過的那幾朝），era 和星槎停靠（shipAt）一起改；點的是現在這一朝就直接進園子。
      園子換掉千秋石枰這一頁（replace），園子的「‹」回渡口 */
@@ -5857,7 +5915,7 @@ function ParkGate(v){setTop("🪨 千秋石枰","#/adventure");setTabs(false);v.
 /* 意見回饋 389：點朝代石頭——石頭先慢慢翻轉，再出現那個朝代的封面（驛站場景圖＋朝代名＋印），然後才進公園下棋；點封面可以跳過 */
 function stoneCover(b,k){return new Promise(res=>{const im=b.querySelector("img")||b;im.classList.add("sflip");vibrate(8);
   const info=(PARK_INFO[k]||PARK_INFO.classic)._||[eraLabel(k),""],seal=(ARENA[k]&&ARENA[k].seal)||"";let done=false;
-  setTimeout(()=>{const c=document.createElement("div");c.className="ecover";c.innerHTML=`<i style="background-image:url(data/inn/${k}.webp)"></i><div><b>${esc(eraLabel(k))}</b><small>${esc(info[1]||"")}</small></div>`;   /* 開發者：拿掉印章，下面已經寫了朝代名 */
+  setTimeout(()=>{const c=document.createElement("div");c.className="ecover";c.innerHTML=`<i style="background-image:url(${inkArt("inn",k)})"></i><div><b>${esc(eraLabel(k))}</b><small>${esc(info[1]||"")}</small></div>`;   /* 開發者：拿掉印章，下面已經寫了朝代名 */
     document.body.append(c);requestAnimationFrame(()=>c.classList.add("on"));
     const fin=()=>{if(done)return;done=true;res();setTimeout(()=>{c.classList.remove("on");setTimeout(()=>c.remove(),600)},700)};c.onclick=fin;setTimeout(fin,1700)},900)})}
 const CNUM=n=>{const c="零一二三四五六七八九";return n<=10?(n===10?"十":c[n]):n<20?"十"+c[n-10]:c[Math.floor(n/10)]+"十"+(n%10?c[n%10]:"")};
@@ -7068,11 +7126,27 @@ function xhShort(N){if(N.pre)return`冬至 ${xhMD(N.next)} 開始・還有 ${N.c
 const XH_B=[[62,292],[128,228],[82,135],[196,170],[163,92],[300,214],[258,118],[226,42],[318,52]];
 function xhPetals(cx,cy,b,st,tap){let s="";for(let k=0;k<9;k++){const i=b*9+k,a=(-90+k*40)*Math.PI/180,x=cx+Math.cos(a)*13.5,y=cy+Math.sin(a)*13.5,c=st(i);
     s+=`<ellipse class="xh-p ${c}"${tap?` data-i="${i}"`:""} cx="${x.toFixed(1)}" cy="${y.toFixed(1)}" rx="7" ry="12.5" transform="rotate(${k*40} ${x.toFixed(1)} ${y.toFixed(1)})"/>`}
-  return s+`<circle cx="${cx}" cy="${cy}" r="4.5" fill="#E8B83A" stroke="#B8862A" stroke-width="1"/>`}
+  /* 畫風一致性第 11 條（11/8）：花蕊改成墨點花鬚（原本黃色圓心） */
+  let m="";for(let k=0;k<7;k++){const a=(-90+k*51.4)*Math.PI/180,x=cx+Math.cos(a)*5.2,y=cy+Math.sin(a)*5.2;m+=`<path d="M${cx} ${cy}L${x.toFixed(1)} ${y.toFixed(1)}"/><circle cx="${x.toFixed(1)}" cy="${y.toFixed(1)}" r=".9"/>`}
+  return s+`<g class="xh-st" stroke="#2A1F15" stroke-width=".6" fill="#2A1F15">${m}<circle cx="${cx}" cy="${cy}" r="1.6" fill="#C9A23F" stroke="none"/></g>`}
+/* 畫風一致性第 11 條（11/8）：梅枝改成水墨枯枝——每一筆照粗細漸變畫成實心筆觸（根粗梢細），加紙紋、皴擦飛白、苔點；花瓣位置不變 */
+const XH_STROKES=[[[[[18,332],[70,292],[100,252],[140,216]],[[140,216],[185,176],[232,142],[270,96]],[[270,96],[290,72],[310,56],[346,34]]],13,1.6],
+  [[[[140,216],[120,182],[104,156],[84,136]]],6.5,1.2],[[[[186,178],[190,146],[180,116],[165,94]]],5.5,1.2],[[[[232,142],[260,160],[284,188],[300,214]]],6,1.2],
+  [[[[270,96],[256,76],[242,60],[228,44]]],4.6,1],[[[[96,252],[82,246],[68,248],[52,240]]],3.2,.6],[[[[300,214],[306,226],[310,238],[318,250]]],2.4,.5],[[[[318,52],[322,42],[326,32],[331,22]]],2.2,.5],[[[[84,136],[78,124],[74,114],[70,104]]],2,.5]];
+function xhBrush(segs,w0,w1){const P=[];segs.forEach((g,si)=>{for(let i=si?1:0;i<=16;i++){const t=i/16,u=1-t;
+    P.push([u*u*u*g[0][0]+3*u*u*t*g[1][0]+3*u*t*t*g[2][0]+t*t*t*g[3][0],u*u*u*g[0][1]+3*u*u*t*g[1][1]+3*u*t*t*g[2][1]+t*t*t*g[3][1]])}});
+  const n=P.length,L=[],R=[];for(let i=0;i<n;i++){const a=P[Math.max(0,i-1)],b=P[Math.min(n-1,i+1)],dx=b[0]-a[0],dy=b[1]-a[1],d=Math.hypot(dx,dy)||1,t=i/(n-1),
+    w=(w0+(w1-w0)*Math.pow(t,.8))*(1+.12*Math.sin(i*1.7))/2;L.push([P[i][0]-dy/d*w,P[i][1]+dx/d*w]);R.push([P[i][0]+dy/d*w,P[i][1]-dx/d*w])}
+  const q=a=>a.map(p=>p[0].toFixed(1)+" "+p[1].toFixed(1));return{d:"M"+q(L).join("L")+"L"+q(R.reverse()).join("L")+"Z",c:"M"+q(P).join("L")}}
 function xhSVG(st){let p="";XH_B.forEach(([x,y],b)=>{p+=`<g>${xhPetals(x,y,b,st,true)}<text x="${b===6?x+40:x}" y="${b===6?y+4:y+38}" class="xh-t">${XH_NINE[b]}</text></g>`});
-  return`<svg class="xh-svg" viewBox="0 0 360 340" role="img" aria-label="九九消寒圖：一枝素梅，九朵、每朵九瓣"><rect x="0" y="0" width="360" height="340" rx="14" fill="#F7EFDF"/>
-    <g fill="none" stroke="#5A3F2C" stroke-linecap="round"><path d="M18 332 C70 292 100 252 140 216 C185 176 232 142 270 96 C290 72 310 56 346 34" stroke-width="7"/><path d="M140 216 C120 182 104 156 84 136" stroke-width="4"/>
-    <path d="M186 178 C190 146 180 116 165 94" stroke-width="3.5"/><path d="M232 142 C260 160 284 188 300 214" stroke-width="4"/><path d="M270 96 C256 76 242 60 228 44" stroke-width="3"/></g>${p}</svg>`}
+  let br="",dry="";for(const[s,w0,w1]of XH_STROKES){const B=xhBrush(s,w0,w1);br+=`<path d="${B.d}"/>`;if(w0>=4.5)dry+=`<path d="${B.c}" stroke-width="${(w0*.28).toFixed(1)}"/>`}
+  const moss=[[44,312],[110,244],[158,200],[205,160],[246,128],[286,80],[121,196],[262,170]].map(([x,y],i)=>`<ellipse cx="${x}" cy="${y}" rx="${1.6+i%3*.5}" ry="${1.1+i%2*.4}" transform="rotate(${i*37} ${x} ${y})"/>`).join("");
+  return`<svg class="xh-svg" viewBox="0 0 360 340" role="img" aria-label="九九消寒圖：一枝素梅，九朵、每朵九瓣"><defs><filter id="xhRough" x="-5%" y="-5%" width="110%" height="110%"><feTurbulence type="fractalNoise" baseFrequency=".9" numOctaves="2" seed="7"/><feDisplacementMap in="SourceGraphic" scale="2.6"/></filter>
+    <filter id="xhPaper" x="0" y="0" width="100%" height="100%"><feTurbulence type="fractalNoise" baseFrequency=".75 .12" numOctaves="3" seed="3"/><feColorMatrix values="0 0 0 0 .42 0 0 0 0 .34 0 0 0 0 .24 0 0 0 -1.15 .58"/><feComposite in2="SourceGraphic" operator="in"/></filter>
+    <radialGradient id="xhWash" cx=".5" cy=".5" r=".72"><stop offset=".6" stop-color="#2A1F15" stop-opacity="0"/><stop offset="1" stop-color="#2A1F15" stop-opacity=".1"/></radialGradient></defs>
+    <rect x="0" y="0" width="360" height="340" rx="14" fill="#F4EDDC"/><rect x="0" y="0" width="360" height="340" rx="14" fill="#F4EDDC" filter="url(#xhPaper)" opacity=".55"/><rect x="0" y="0" width="360" height="340" rx="14" fill="url(#xhWash)"/>
+    <g fill="#2A2420" fill-opacity=".9" filter="url(#xhRough)">${br}</g><g fill="none" stroke="#F4EDDC" stroke-opacity=".5" stroke-linecap="round" stroke-dasharray="1.2 3.4 .6 5" filter="url(#xhRough)">${dry}</g>
+    <g fill="#1A1410" fill-opacity=".85">${moss}</g>${p}<rect x="320" y="296" width="24" height="30" rx="2" fill="#B3261E" opacity=".86"/><path d="M325 302h14M325 311h14M325 320h14M332 300v22" stroke="#F4EDDC" stroke-width="1.6" opacity=".9"/></svg>`}
 function xhMini(i,season){const b=Math.floor(i/9),M=xhMei(season);return`<svg viewBox="-30 -30 60 60" width="58" height="58" style="flex:none">${xhPetals(0,0,b,j=>M[j]?(j===i?"done new":"done"):"lock",false)}</svg>`}
 
 /* 消寒圖頁 #/xiaohan */
@@ -7398,7 +7472,7 @@ function diffSheet(after){sheet("🎚 航行難度",b=>{const cur=diffNow(),sg=d
 function shipSailGo(done){const from=shipAt(),k=shipSail();if(!k)return;shipEra(k);vibrate([10,40,10]);try{saveNow(true)}catch(e){}
   qianqiu(from,k,()=>shipDockCover(k,done),"sail")}
 function shipDockCover(k,done){const Ls=SHIP_LESSON[k]||{},T=SHIP_STOP[k],c=document.createElement("div");let fin=false;c.className="ecover";
-  c.innerHTML=`<i style="background-image:url(data/inn/${k}.webp)"></i><div><span class="es">${esc((ARENA[k]||{}).seal||"⛵")}</span><b>${esc(shipShort(k))}</b><small>⛵ 星槎停靠・${esc(T.place)}</small></div>`;
+  c.innerHTML=`<i style="background-image:url(data/inn/${k}_ink.webp),url(data/inn/${k}.webp)"></i><div><span class="es">${esc((ARENA[k]||{}).seal||"⛵")}</span><b>${esc(shipShort(k))}</b><small>⛵ 星槎停靠・${esc(T.place)}</small></div>`;
   document.body.append(c);requestAnimationFrame(()=>c.classList.add("on"));
   const arrive=()=>{if(fin)return;fin=true;c.classList.remove("on");setTimeout(()=>c.remove(),500);const W=shipWho(k,Ls.openBy);
     modal(`<img src="${W.img}" alt="" onerror="this.remove()"><h2>${esc(shipShort(k))}・${esc(T.place)}</h2>${Ls.open?`<p class="pl-say">${esc(W.n)}：「${esc(Ls.open)}」</p>`:""}<p>📘 棋話一頁：<b>${esc(Ls.t||"")}</b></p>`,[["看這一站",()=>{if(done)done()}]],"prolog")};
@@ -7700,7 +7774,7 @@ function homeRecGame(st){try{if(!st)return null;const nm=(k,j)=>k==="journey"?(t
   const o=(st.others||[]).find(z=>z&&z.n&&HREC_KIND[z.kind]);return o?{go:HREC_KIND[o.kind][0],t:`♟ 接著下：${nm(o.kind,o.journey)}`,sw:o.kind,park:o.kind==="journey"&&o.journey==="park"}:null}catch(e){return null}}
 function homeRecBind(v){const b=v&&v.querySelector("#hRec");if(!b)return;let R={go:"#/cpu",t:"🤖 跟電腦下一盤"};
   const set=r=>{if(!r||!b.isConnected)return;R=r;const t=b.querySelector("#hRecT");if(t)t.textContent=r.t;b.dataset.go=r.go;b.setAttribute("aria-label","今日推薦："+r.t);
-    {const cj=v.querySelector("#cjHome");if(cj)cj.hidden=r.go==="#/canju"}};
+    {const cj=v.querySelector("#cjHome");if(cj)cj.hidden=r.go==="#/canju"}};   /* 意見回饋 751：推薦的就是茶單時，下面的「今日茶單」小卡先藏起來，不重複 */
   const pick=(st,onl)=>onl||homeRecGame(st)||homeRecTea()||(s=>s&&!s.wait?s:null)(homeRecShip())||mainDoneRec()||{go:"#/cpu",t:"🤖 跟電腦下一盤"};
   let onl=null;try{if(window.XQNet&&XQNet.playing&&XQNet.playing())onl={go:"#/pvp",t:"⚔ 回線上對局"}}catch(e){}
   set(pick(null,onl));mainDoneBind(v);
@@ -7786,7 +7860,7 @@ function battleMapHTML(k,cards,S,RJ,LJ){const P=cards.map(c=>Array.isArray(c.xy)
     return`<g class="bt-mk${s?" seal":o?" next":" lock"}${c.flag?" flag":""}" data-mk="${i}" transform="translate(${f(x)} ${f(y)})" role="button" aria-label="${esc(c.name)}${s?"・已打下":o?"・可以打":"・還沒開"}">${body}<text x="${f(tx)}" y="${f(ty)}" font-size="${f(fz)}" stroke-width="${f(fs*.28)}" text-anchor="${anc}" class="bt-mn${o||s?"":" off"}">${c.flag?"⭐":""}${nm}${approx}</text></g>`}).join("");
   return`<div class="bt-map"><svg viewBox="${f(vx)} ${f(vy)} ${f(w)} ${f(h)}" preserveAspectRatio="xMidYMid slice" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="${esc(eraLabel(k))}戰役地圖">
     <defs><radialGradient id="btGlow"><stop offset="0" stop-color="#FFF1BF" stop-opacity=".95"/><stop offset=".45" stop-color="#F2C14E" stop-opacity=".5"/><stop offset="1" stop-color="#F2C14E" stop-opacity="0"/></radialGradient></defs>
-    <rect x="${f(vx-5)}" y="${f(vy-5)}" width="${f(w+10)}" height="${f(h+10)}" fill="#EFE5CF"/><filter id="btInk"><feColorMatrix type="saturate" values="0"/><feComponentTransfer><feFuncR type="linear" slope="1.12" intercept="-0.04"/><feFuncG type="linear" slope="1.1" intercept="-0.045"/><feFuncB type="linear" slope="1.06" intercept="-0.05"/></feComponentTransfer></filter><image href="data/eramap/${esc(k)}${mob?"_m":""}.webp" x="0" y="0" width="100" height="100" preserveAspectRatio="none" filter="url(#btInk)"/>
+    <rect x="${f(vx-5)}" y="${f(vy-5)}" width="${f(w+10)}" height="${f(h+10)}" fill="#EFE5CF"/><filter id="btInk" color-interpolation-filters="sRGB"><feColorMatrix type="saturate" values="0"/><feComponentTransfer><feFuncR type="linear" slope="1.3" intercept="-0.18"/><feFuncG type="linear" slope="1.3" intercept="-0.18"/><feFuncB type="linear" slope="1.3" intercept="-0.18"/></feComponentTransfer><feColorMatrix type="matrix" values=".757 0 0 0 .18  0 .749 0 0 .149  0 0 .687 0 .125  0 0 0 1 0"/></filter><image href="data/eramap/${esc(k)}${mob?"_m":""}.webp" x="0" y="0" width="100" height="100" preserveAspectRatio="none" filter="url(#btInk)"/>
     <g>${realm}</g><g>${lab}</g><g fill="none">${route}</g><g>${mk}</g></svg>
     <div class="bt-map-cap">${RE&&RE.year?`🗺 ${esc(eraLabel(k))}・${esc(RE.year)}的疆域　`:""}<span class="bt-k s">印</span>打下了　<span class="bt-k n">✦</span>下一場　<span class="bt-k l">●</span>還沒開　<span class="bt-k n">⭐</span>旗艦戰役（先聽軍師獻策）　（約）地點只能標大概</div></div>`}
 /* ---------- 古戰場頁 #/battle ---------- */
@@ -8747,7 +8821,7 @@ function CpuGame(v,practicePage,mode){
     const o={flip:st.human==="b",last,sel,targets:sel>=0?st.legal.filter(([f])=>f===sel).map(x=>x[1]):[],hint:st.hint?[st.hint.f,st.hint.t]:pHint&&pHint.n===st.moves.length?(pHint.t==null?[pHint.f]:[pHint.f,pHint.t]):null,check:st.check,fx:true};const LVB=lvPlayOf(st);hb.classList.toggle("lvblind",!!(LVB&&LVB.lvp.blind&&!st.result));if(LVB&&LVB.lvp.blind&&!st.result){bd.draw(st.board.map(()=>null),o);return}bd.draw(st.board,o);
     legendCheck(st);legendBadge(v.querySelector("#bbox"),!parkOn()&&legendVisit(st).length>0);
     const JS0=st.journey&&/^(b2)?h\d\d$/.test(st.journey)?jFindStage(st.journey):null,JOPP=LVB&&LVB.lvp.opp&&JCHAR[LVB.lvp.opp]?LVB.lvp.opp:String(st.journey||"").startsWith("char:")&&JCHAR[st.journey.slice(5)]?st.journey.slice(5):null;
-    parkDraw(v.querySelector("#bbox"),bd,st.board,o,{tap,bg:JS0?`data/park/j${JR[JS0.r].k}_360.webp`:null,bgName:JS0?"雲河鎮・"+JR[JS0.r].name:innActor(st.journey)?"🏮 "+innName(store.get("era","classic")):null,   /* 意見回饋 530：在驛站下棋，標籤寫驛站，不是朝代園林 */arena:st.arena||null,gate:st.journey&&!st.arena?(k=>innActor(st.journey)?{img:["data/inn/"+k+".webp","data/parkgate/"+k+".webp"],icon:"🏮",title:"走進"+innName(k),sub:"旅人在燈下擺好棋盤了",bg:"#2b2a22",qk:k}:{img:["data/parkgate/"+k+".webp","data/park/"+k+"_360.webp"],icon:"🍃",title:"走進"+parkName(k),sub:"石桌就在前面",bg:"#2b2a22",qk:k})(store.get("era","classic"))   /* 意見回饋 697：驛站旅人的對局，載入畫面和標籤都寫「〇〇的驛站」 */:(!st.journey&&!st.arena&&!st.practice&&!st.net?{img:["data/parkgate/cpu.webp","data/parkgate/"+store.get("era","classic")+".webp"],icon:"🪶",title:"茅廬對弈",sub:"臥龍先生擺好棋盤了",bg:"#1f2a22"}:null),watchers:legendVisit(st),thinking:!!st.thinking||(!st.result&&st.turn!==st.human),botSide:st.human==="r"?"b":"r",result:st.result?(st.result.w||"draw"):null,hint:o.hint&&o.hint.length===1?[o.hint[0],o.hint[0]]:o.hint,   /* 意見回饋 607：只提示一顆子（錯棋重練提示一、二、提示棋）時傳同一格兩次，園子 3D 才畫得出黃圈（park3d 只畫兩格的提示） */
+    parkDraw(v.querySelector("#bbox"),bd,st.board,o,{tap,bg:JS0?`data/park/j${JR[JS0.r].k}_360.webp`:null,bgName:JS0?"雲河鎮・"+JR[JS0.r].name:innActor(st.journey)?"🏮 "+innName(store.get("era","classic")):null,   /* 意見回饋 530：在驛站下棋，標籤寫驛站，不是朝代園林 */arena:st.arena||null,gate:st.journey&&!st.arena?(k=>innActor(st.journey)?{img:["data/inn/"+k+"_ink.webp","data/parkgate/"+k+"_ink.webp","data/inn/"+k+".webp"],icon:"🏮",title:"走進"+innName(k),sub:"旅人在燈下擺好棋盤了",bg:"#2b2a22",qk:k}:{img:["data/parkgate/"+k+"_ink.webp","data/parkgate/"+k+".webp","data/park/"+k+"_360.webp"],icon:"🍃",title:"走進"+parkName(k),sub:"石桌就在前面",bg:"#2b2a22",qk:k})(store.get("era","classic"))   /* 意見回饋 697：驛站旅人的對局，載入畫面和標籤都寫「〇〇的驛站」 */:(!st.journey&&!st.arena&&!st.practice&&!st.net?{img:["data/parkgate/cpu.webp","data/parkgate/"+store.get("era","classic")+".webp"],icon:"🪶",title:"茅廬對弈",sub:"臥龍先生擺好棋盤了",bg:"#1f2a22"}:null),watchers:legendVisit(st),thinking:!!st.thinking||(!st.result&&st.turn!==st.human),botSide:st.human==="r"?"b":"r",result:st.result?(st.result.w||"draw"):null,hint:o.hint&&o.hint.length===1?[o.hint[0],o.hint[0]]:o.hint,   /* 意見回饋 607：只提示一顆子（錯棋重練提示一、二、提示棋）時傳同一格兩次，園子 3D 才畫得出黃圈（park3d 只畫兩格的提示） */
       opp:(JOPP&&JCHAR_LOOK(JOPP,st.human==="r"?"b":"r"))||(innActor(st.journey)?ACTOR_LOOK(innActor(st.journey).id,st.human==="r"?"b":"r"):null)||(st.arena&&CHAMP_LOOK(st.arena,st.human==="r"?"b":"r"))||(N?NPC_LOOK(N,st.human==="r"?"b":"r"):PIKA_LOOK(st.human==="r"?"b":"r")),oppHello:JOPP?JCHAR[JOPP].hi:st.arena&&ARENA[st.arena]?ARENA[st.arena].hi:N?N.say:"我是 Pikafish，請多指教。",oppWin:JOPP?JCHAR[JOPP].win:st.arena&&ARENA[st.arena]?ARENA[st.arena].win:N?N.win:"將死了，再接再厲。",oppLose:JOPP?JCHAR[JOPP].lose:st.arena&&ARENA[st.arena]?ARENA[st.arena].lose:N?N.lose:"你贏了，佩服佩服！"});
     if(typeof meGameTalk==="function")meGameTalk(st);   /* 意見回饋 668：你扮演的雲河七星開局、吃子時說一句 */
     if(N&&NPC_HI!==st.id){NPC_HI=st.id;if(pk0&&!st.moves.length)setTimeout(()=>{try{if(PARK&&PARK.host===hb)PARK.v.oppSay(meHi((typeof npcHello==="function"&&npcHello(N))||N.say),2.6)}catch(e){}},900);if(typeof npcAskMaybe==="function")npcAskMaybe(N,st,hb)}}   /* 意見回饋 658：有羈絆的女棋手打招呼換成新台詞；開局偶爾來委託（小卡，不打斷對局） */

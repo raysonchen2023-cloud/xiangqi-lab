@@ -308,12 +308,12 @@
     "mvPosition.xyz += vn * w;\ngl_Position = projectionMatrix * mvPosition;\n"+
     "vec4 xqB = projectionMatrix * vec4( mvPosition.xy, mvPosition.z - uBias, 1. );\ngl_Position.z = xqB.z / xqB.w * gl_Position.w;\n}";
   const HULL_FR="uniform vec3 uInk;\nuniform float uVar;\n"+TOON_F+"void main(){\nfloat g = xqN( gl_FragCoord.xy * .6 );\ngl_FragColor = vec4( mix( uInk, uInk + vec3( .22, .2, .17 ), uVar * g * 1.3 ), 1. );\n}";
-  function toonHull(m,mode){const gh=toonGeo(m.geometry);if(!gh)return null;
+  function toonHull(m,mode,O){O=O||{};const gh=toonGeo(m.geometry);if(!gh)return null;
     const mat=new T.ShaderMaterial({uniforms:{uW:{value:0},uMax:{value:0},uBias:{value:0},uGH:{value:gh},uVar:{value:mode==="b"?.45:0},uInk:{value:mode==="b"?new T.Vector3(.2,.16,.13):new T.Vector3(.13,.09,.07)}},vertexShader:HULL_V,fragmentShader:HULL_FR,side:T.BackSide});mat.name="xqHull";
     const h=m.isSkinnedMesh?new T.SkinnedMesh(m.geometry,mat):new T.Mesh(m.geometry,mat);if(m.isSkinnedMesh){h.bindMode=m.bindMode;h.bind(m.skeleton,m.bindMatrix)}
     h.name="xqHull";TOON_H.add(h);h.raycast=()=>{};h.castShadow=false;h.receiveShadow=false;h.frustumCulled=m.frustumCulled;const PX=mode==="b"?2.3:1.7;
     h.onBeforeRender=(r,s,cam)=>{try{const el=r.domElement,ch=el.clientHeight||el.height||1,u=mat.uniforms;
-      u.uW.value=cam.isPerspectiveCamera?PX*2*Math.tan(cam.fov*Math.PI/360)/(cam.zoom||1)/ch:PX*(cam.top-cam.bottom)/(cam.zoom||1)/ch;const H=gh*h.matrixWorld.getMaxScaleOnAxis();u.uMax.value=H*.011;u.uBias.value=H*.03}catch(e){}};
+      u.uW.value=cam.isPerspectiveCamera?PX*2*Math.tan(cam.fov*Math.PI/360)/(cam.zoom||1)/ch:PX*(cam.top-cam.bottom)/(cam.zoom||1)/ch;const S=h.matrixWorld.getMaxScaleOnAxis(),H=gh*S;u.uMax.value=O.max!=null?O.max*S:H*.011;u.uBias.value=O.bias!=null?O.bias*S:H*.03}catch(e){}};
     return h}
   function toonApply(g,mode){const ms=[];g.traverse(m=>{if(m.isMesh&&!TOON_H.has(m))ms.push(m)});
     for(const m of ms){if(!TOON_M0.has(m))TOON_M0.set(m,m.material);const o=TOON_M0.get(m);
@@ -321,7 +321,10 @@
       if(!mode||!o||Array.isArray(o)){m.material=o;continue}
       m.material=toonMat(o,mode);if(!o.transparent){const h=toonHull(m,mode);if(h)m.add(h)}}}
   window.XQTOON=v=>{if(v===undefined)return TOON;TOON=v==="a"||v==="b"?v:"";store.set("toon3d",TOON);
-    for(let i=TOON_R.length-1;i>=0;i--){const g=TOON_R[i].deref?TOON_R[i].deref():TOON_R[i];if(!g){TOON_R.splice(i,1);continue}try{toonApply(g,TOON)}catch(e){}}return TOON};
+    for(let i=TOON_R.length-1;i>=0;i--){const g=TOON_R[i].deref?TOON_R[i].deref():TOON_R[i];if(!g){TOON_R.splice(i,1);continue}try{toonApply(g,TOON)}catch(e){}}
+    for(const f of TOON_KIT.lis.slice())try{f(TOON)}catch(e){}return TOON};
+  /* 開發者 11/8（畫風盤點第 3 條）：園子的道具（park3d.js）借用同一套墨線外殼；XQTOON 切換時通知園子（lis） */
+  const TOON_KIT=window.XQTOON_KIT={hull:(m,O)=>toonHull(m,"a",O),isHull:o=>TOON_H.has(o),lis:[]};
   function toonReg(g){TOON_R.push(window.WeakRef?new WeakRef(g):g);if(TOON)try{toonApply(g,TOON)}catch(e){}}
   function attachGLB(B,o){if(!window.XQGLB)return;const meId=(String(o.glb||"").match(/\/(\w+)\.glb/)||[])[1],meCh=PC(),meK=eraK();const box0=new T.Box3().setFromObject(B.bot),h0=box0.max.y-box0.min.y,y0=box0.min.y;
     const face=B.torso.children.find(m=>m.isMesh&&m.geometry&&m.geometry.type==="CircleGeometry");

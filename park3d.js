@@ -1051,6 +1051,52 @@
     const falling=[];{const lg=new T.PlaneGeometry(.5,.34),cols=[E.acc2,0xD9A548,0xC98A3A];for(let i=0;i<8;i++){const l=new T.Mesh(lg,new T.MeshStandardMaterial({color:new T.Color(cols[i%3]),side:T.DoubleSide,roughness:1}));
       l.userData={x:(Math.random()-.5)*40,z:-12-Math.random()*20,y:Math.random()*30,s:.6+Math.random()*.8,ph:Math.random()*TAU};sc.add(l);falling.push(l)}}
 
+    /* 開發者 11/8（畫風盤點第 3 條：園子的道具、地面是寫實貼圖，跟水墨小人、水墨長卷打架）：園子也套小人那套水墨材質（A 版）。
+       跟著小人的 toon3d 設定走（小人水墨關掉，園子也一起關）；localStorage 的 m_parkToon 設成 "off" 可以只關園子。
+       ‧立體道具（桌、凳、長榻、燈、火盆、茶杯、樹幹、石欄）：明暗照場景的光（影子還在），但只分三階，最亮那階就是貼圖原色；外面加 bot3d 的墨線外殼。
+         雙面的薄片（落葉、欄邊）不加外殼，從背面看才不會多一片黑影；外殼深度往後退 0.3（凹處不冒線）
+       ‧手繪立牌（燈籠、樹、長榻圖）：沿著去背的邊描一圈約 1.6 像素的墨線（要 WebGL2）
+       ‧地面：飽和度減半、乘上淡淡的紙紋（跟著地面不跟著鏡頭），外圈往宣紙色暈白
+       ‧棋盤（木框、盤面）、棋子、小人、天空、長卷、地圖都不動；棋子和小人在這之後才加進場景，本來就不在範圍裡 */
+    const PT={roots:sc.children.slice(),M0:new WeakMap(),C:new WeakMap(),st:new WeakMap(),inst:new WeakSet(),u:{value:0},on:null};
+    const PT_L="vec3 outgoingLight = reflectedLight.directDiffuse + reflectedLight.indirectDiffuse + totalEmissiveRadiance;";
+    const PT_N="float xqH(vec2 p){vec3 p3=fract(vec3(p.xyx)*.1031);p3+=dot(p3,p3.yzx+33.33);return fract((p3.x+p3.y)*p3.z);}\nfloat xqN(vec2 p){vec2 i=floor(p),f=fract(p);f=f*f*(3.-2.*f);return mix(mix(xqH(i),xqH(i+vec2(1.,0.)),f.x),mix(xqH(i+vec2(0.,1.)),xqH(i+vec2(1.,1.)),f.x),f.y);}\n";
+    const ptOn=()=>{let v="a",p="";try{v=window.XQTOON?window.XQTOON():JSON.parse(localStorage.getItem("m_toon3d")||'"a"')}catch(e){}try{p=JSON.parse(localStorage.getItem("m_parkToon")||'""')}catch(e){}return !!v&&p!=="off"};
+    function ptMat(o){let m=PT.C.get(o);if(m)return m;
+      m=new T.MeshLambertMaterial({map:o.map||null,color:o.color&&o.toneMapped!==false?o.color.clone():new T.Color(1,1,1),   /* 手繪桌面那種材質的顏色是「光色的倒數」（抵銷暖光），水墨版不吃光色，就不能再乘，不然會偏藍 */emissive:o.emissive?o.emissive.clone():new T.Color(0),emissiveMap:o.emissiveMap||null,emissiveIntensity:o.emissiveIntensity!=null?o.emissiveIntensity:1,side:o.side,transparent:o.transparent,opacity:o.opacity,alphaTest:o.alphaTest,vertexColors:!!o.vertexColors,fog:o.fog!==false});m.name="xqParkToon";
+      m.onBeforeCompile=s=>{const f=s.fragmentShader;if(!f.includes(PT_L)||!f.includes("#include <encodings_fragment>"))return;
+        s.fragmentShader=f.replace(PT_L,"vec3 xqL = reflectedLight.directDiffuse + reflectedLight.indirectDiffuse;\nfloat xqI = dot( xqL, vec3( .2126, .7152, .0722 ) ) / max( dot( diffuseColor.rgb, vec3( .2126, .7152, .0722 ) ), .02 );\nvec3 outgoingLight = diffuseColor.rgb * ( .68 + .16 * smoothstep( .5, .56, xqI ) + .16 * smoothstep( .85, .91, xqI ) ) + totalEmissiveRadiance;")
+          .replace("#include <tonemapping_fragment>","").replace("#include <encodings_fragment>","gl_FragColor = LinearTosRGB( gl_FragColor );")};
+      m.customProgramCacheKey=()=>"xqParkToon";PT.C.set(o,m);return m}
+    /* 地面、立牌：不換材質，在原本的材質上加一段開關（PT.u）控制的水墨處理，切換時不用重新編譯 */
+    function ptGround(o){if(PT.inst.has(o))return;PT.inst.add(o);const ob=o.onBeforeCompile;
+      o.onBeforeCompile=(s,r)=>{if(ob)ob(s,r);s.uniforms.xqInk=PT.u;
+        s.vertexShader=s.vertexShader.replace("#include <common>","#include <common>\nvarying vec3 vXqW;").replace("#include <project_vertex>","#include <project_vertex>\nvXqW = ( modelMatrix * vec4( transformed, 1.0 ) ).xyz;");
+        s.fragmentShader=s.fragmentShader.replace("#include <common>","#include <common>\nuniform float xqInk;\nvarying vec3 vXqW;\n"+PT_N).replace("#include <map_fragment>","#include <map_fragment>\nif ( xqInk > .5 ) {\nfloat xqY = dot( diffuseColor.rgb, vec3( .2126, .7152, .0722 ) );\nvec3 xqC = mix( vec3( xqY ), diffuseColor.rgb, .5 );\nfloat xqG = xqN( vXqW.xz * 3.1 ) * .5 + xqN( vXqW.xz * 11. ) * .3 + xqN( vXqW.xz * 37. ) * .2;\nxqC *= vec3( 1., .975, .92 ) * ( .9 + .14 * xqG );\ndiffuseColor.rgb = mix( xqC, vec3( .84, .79, .68 ), .45 * smoothstep( 15., 21.5, length( vXqW.xz ) ) );\n}")};
+      o.customProgramCacheKey=()=>"xqGround";o.needsUpdate=true}
+    const PT_W2=!!(rd.capabilities&&rd.capabilities.isWebGL2);
+    function ptCard(o){if(PT.inst.has(o)||!PT_W2)return;PT.inst.add(o);const ob=o.onBeforeCompile;
+      o.onBeforeCompile=(s,r)=>{if(ob)ob(s,r);s.uniforms.xqInk=PT.u;
+        s.fragmentShader=s.fragmentShader.replace("#include <common>","#include <common>\nuniform float xqInk;").replace("#include <map_fragment>","#include <map_fragment>\n#ifdef USE_MAP\nif ( xqInk > .5 ) {\nvec2 xqD = fwidth( vUv ) * 1.6;\nfloat xqA = max( max( texture2D( map, vUv + vec2( xqD.x, 0. ) ).a, texture2D( map, vUv - vec2( xqD.x, 0. ) ).a ), max( texture2D( map, vUv + vec2( 0., xqD.y ) ).a, texture2D( map, vUv - vec2( 0., xqD.y ) ).a ) );\nfloat xqE = smoothstep( .35, .65, xqA ) * ( 1. - smoothstep( .35, .65, diffuseColor.a ) );\ndiffuseColor = mix( diffuseColor, vec4( .015, .008, .006, 1. ), xqE );\n}\n#endif")};
+      o.customProgramCacheKey=()=>"xqCard";o.needsUpdate=true}
+    function ptRun(){if(!el.isConnected)return;const on=ptOn(),K=window.XQTOON_KIT;PT.u.value=on?1:0;PT.on=on;const ms=[];
+      for(const r of PT.roots)r.traverse(m=>{if(m.isMesh&&!(K&&K.isHull(m)))ms.push(m)});
+      for(const m of ms){if(!PT.M0.has(m))PT.M0.set(m,m.material);const o=PT.M0.get(m);if(!o||Array.isArray(o)||m===bplane||o===wood||FARHIDE.includes(m))continue;
+        if(m===pave||(m.parent===sc&&m.geometry&&m.geometry.type==="LatheGeometry")){ptGround(o);continue}   /* 石板地、外圍山坡 */
+        if(o.isMeshBasicMaterial){if(o.map&&o.alphaTest>0&&o.depthWrite!==false)ptCard(o);continue}
+        if(!o.isMeshStandardMaterial||o.transparent||PT.st.get(m)===on)continue;PT.st.set(m,on);
+        for(const c of m.children.filter(c=>K&&K.isHull(c)))m.remove(c);
+        if(!on){m.material=o;continue}
+        m.material=ptMat(o);if(K&&(o.side===T.FrontSide||ptClosed(m.geometry))){const h=K.hull(m,{bias:.3,max:.35});if(h)m.add(h)}}}
+    /* 雙面材質（例如石材跟石欄共用一個材質）：形狀是封閉的才加外殼；薄片、開口的圓筒不加。同位置的頂點併成一個點，數只屬於一個三角形的邊 */
+    function ptClosed(geo){if(geo.userData.xqClosed!=null)return geo.userData.xqClosed;let ok=false;
+      try{const p=geo.attributes.position,N=p.count,id=new Map(),vi=new Int32Array(N);for(let i=0;i<N;i++){const k=Math.round(p.getX(i)*1e3)+","+Math.round(p.getY(i)*1e3)+","+Math.round(p.getZ(i)*1e3);let v=id.get(k);if(v===undefined)id.set(k,v=id.size);vi[i]=v}
+        const ix=geo.index,F=ix?ix.count/3:N/3,E=new Map(),V=id.size+1,at=j=>vi[ix?ix.getX(j):j];
+        for(let f=0;f<F;f++)for(let e=0;e<3;e++){const a=at(f*3+e),b=at(f*3+(e+1)%3);if(a===b)continue;const k=a<b?a*V+b:b*V+a;E.set(k,(E.get(k)||0)+1)}
+        let open=0;for(const c of E.values())if(c===1)open++;ok=E.size>0&&open/E.size<.02}catch(e){}
+      geo.userData.xqClosed=ok;return ok}
+    {const K=window.XQTOON_KIT,lis=()=>{if(!el.isConnected){if(K)K.lis.splice(K.lis.indexOf(lis)>>>0,1);return}ptRun()};if(K)K.lis.push(lis);
+      ptRun();for(const t of[1500,4000,9000])setTimeout(ptRun,t);window.XQPARKTOON=v=>{try{localStorage.setItem("m_parkToon",JSON.stringify(v===false||v==="off"?"off":""))}catch(e){}ptRun();return PT.on}}   /* 立牌、手繪桌面是圖載好才加進場景，晚一點再掃幾次 */
     // ---------- 角色：對面長椅坐對手（電腦＝瘦版 Pikafish；真人＝對方自己的小帥），我這邊桌角坐我的小帥 ----------
     // 意見回饋 212：小帥是玩家的夥伴，坐在玩家這一邊；對面是對手的位置
     const mkBub=(x,y,z,w)=>{const b=new T.Sprite(new T.SpriteMaterial({transparent:true,depthTest:false}));b.scale.set(w,w*.31,1);b.position.set(x,y,z);b.visible=false;b.renderOrder=10;sc.add(b);return b};
