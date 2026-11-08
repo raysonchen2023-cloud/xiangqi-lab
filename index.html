@@ -1341,7 +1341,7 @@ html[data-era=qin] .view:has(>.shp-rd),html[data-era=wudai] .view:has(>.shp-rd){
       if(!window.caches)return go();caches.keys().then(function(ks){return Promise.all(ks.filter(function(k){return k.indexOf("xqlab-app-")===0}).map(function(k){return caches.delete(k)}))})
         .then(function(){return navigator.serviceWorker&&navigator.serviceWorker.getRegistration()}).then(function(r){return r&&r.update()}).catch(function(){}).then(go)}};setTimeout(chk,4000)})();
 </script>
-<script>window.XQ_OFFLINE=true;window.XQ_BUILD="20261108-2310";</script>
+<script>window.XQ_OFFLINE=true;window.XQ_BUILD="20261108-2320";</script>
 <script src="core.js"></script>
 <script src="engine.js"></script>
 <script src="local.js"></script>
@@ -11347,9 +11347,20 @@ if(typeof Home==="function"){const f0=Home;Home=function(v,hub){const r=f0.apply
      右柱木牌＝🏅 我的戰績 #/stats；左邊竹簡卷＝📜 名冊（清單抽屜）；左下特別棋桌＝📺 AI 對戰（有 #aiw 才是 AI 對戰；手機版沒有 AI 對戰就改成 🤖 挑戰電腦 #/cpu）。
    標籤只有大字。接 07w 走路（SHW_LOBBY）、07x 兩指縮放。圖片網址帶 LM_IMGV（data/lobbymap 在不跟版本走的快取裡，換圖要改這個數字）。
    開關 LOBBY_MAP_ON（false＝照舊清單）；樣式在 lmCss */
-const LOBBY_MAP_ON=true;
+const LOBBY_MAP_ON=true;   /* 開發者 11/8 說打開 */
 const LM_IMGV="2200";
 const LM_IMG=n=>`data/lobbymap/${n}.webp?v=${LM_IMGV}`;
+/* 回饋 800（開發者 11/8「打燈籠有一點不好看」）：亮著的燈原本是圓滾滾的橘色燈籠圖，外面再罩一圈 340% 大、screen 混色的光（看起來像白色圓盤）。
+   改成程式畫的細長紙燈籠（SVG：繩、上下黑邊、淡墨描邊和竹骨、流蘇），亮燈＝暖黃紙色＋一小圈柔光（一般混色、不發白），暗燈＝暗紅舊紙。開關 LM_INK_LAMP（false＝照舊用圖） */
+const LM_INK_LAMP=true;
+const LM_LAMP_SVG='<svg width="0" height="0" style="position:absolute" aria-hidden="true"><defs>'+
+  '<radialGradient id="lmLgOn" cx="50%" cy="45%" r="60%"><stop offset="0" stop-color="#fff0c4"/><stop offset=".55" stop-color="#f3b45c"/><stop offset="1" stop-color="#c8602e"/></radialGradient>'+
+  '<linearGradient id="lmLgOff" x1="0" x2="1"><stop offset="0" stop-color="#6e3426"/><stop offset=".45" stop-color="#9a4b34"/><stop offset="1" stop-color="#5f2c20"/></linearGradient>'+
+  '<symbol id="lmLamp" viewBox="0 0 20 46"><path d="M10 0V8" stroke="#3a2a1c" stroke-width=".8"/><rect x="6.4" y="6.4" width="7.2" height="2.2" rx=".6" fill="#2b2016"/>'+
+  '<path d="M10 8.4C16.9 8.8 17.5 29.6 10 30.8C2.5 29.6 3.1 8.8 10 8.4Z" style="fill:var(--lmf)" stroke="#3a2416" stroke-width=".9"/>'+
+  '<path d="M10 8.6V30.6M6.8 9.6C5 16 5 23.6 6.8 29.8M13.2 9.6C15 16 15 23.6 13.2 29.8" fill="none" stroke="rgba(70,34,16,.45)" stroke-width=".5"/>'+
+  '<rect x="7" y="30.4" width="6" height="2" rx=".5" fill="#2b2016"/><path d="M10 32.4V44" stroke="#a8321e" stroke-width="1.3"/><circle cx="10" cy="34.4" r="1" fill="#a8321e"/></symbol></defs></svg>';
+const LM_TBL={};   /* 對局 gid → 桌子的位置（同一盤一直坐同一張桌，直到下完） */
 /* 入口標籤：[id, 左%, 上%, 大字]（量 768×1376 的 lobby_v4，標籤放在東西上方） */
 const LM_SPOTS=[["lmCup",50,15.5,"🏆 千秋盃"],["lmGong",50,50.5,"🎲 隨機配對"],["lmMe",86,39.5,"🏅 我的戰績"],["lmList",13,46.5,"📜 名冊"],["lmAi",16,68.5,"📺 AI 對戰"]];
 /* 八張棋桌的位置（桌子中心，%）：左兩張、右四張、銅鑼前兩張，中軸和兩側走道都空著（角色不會穿過桌子） */
@@ -11382,6 +11393,13 @@ function lmCss(){if(document.getElementById("lmCss"))return;const s=document.cre
 .lm-lp.fam i{background:#e2b53e;box-shadow:0 0 3px #f2c94c}.lm-lp.story i{background:#3f8f86;box-shadow:0 0 3px #7fd1c4}
 .lm-fig{position:absolute;width:3.4%;transform:translate(-50%,-100%);pointer-events:none;opacity:.88;z-index:1}
 @keyframes lmFl{from{opacity:.8}to{opacity:1}}
+.lm-lp.ink{width:2.3%;transform:translate(-50%,-4%)}.lm-lp.ink.f1{width:2.6%}
+.lm-lp.ink svg{display:block;width:100%;height:auto;overflow:visible;--lmf:url(#lmLgOff);filter:drop-shadow(0 1px 1px rgba(40,24,12,.35))}
+.lm-lp.ink.on svg{--lmf:url(#lmLgOn)}
+.lm-lp.ink.on::before{width:230%;top:42%;background:radial-gradient(closest-side,rgba(255,176,80,.42),rgba(255,160,60,.16) 60%,rgba(255,150,50,0));mix-blend-mode:normal}
+.lm-more{position:absolute;transform:translate(-50%,-50%);z-index:3;pointer-events:auto;cursor:pointer;border:1px solid #6b4a2a;border-radius:3px;background:#f3e6c8;color:#3a2618;font:800 12px/1 var(--serif,serif);padding:4px 8px;box-shadow:0 1px 3px rgba(40,24,12,.4);white-space:nowrap}
+.lm-more::before{content:"";position:absolute;left:50%;bottom:100%;width:1px;height:8px;background:#3a2a1c}
+.lm-quiet{position:absolute;left:50%;top:65%;transform:translate(-50%,-50%);z-index:3;pointer-events:none;background:rgba(30,24,18,.62);color:#f6e7c8;font:700 12px/1 var(--serif,serif);padding:5px 10px;border-radius:999px;white-space:nowrap}
 .lm-wave{position:absolute;left:50%;top:59.5%;width:22%;aspect-ratio:1;transform:translate(-50%,-50%);pointer-events:none}
 .lm-wave i{position:absolute;inset:0;border-radius:50%;border:2px solid rgba(242,201,76,.85);animation:lmWave 1.8s ease-out infinite;opacity:0}
 .lm-wave i:nth-child(2){animation-delay:-.6s}.lm-wave i:nth-child(3){animation-delay:-1.2s}
@@ -11398,31 +11416,44 @@ function lmSlots(ids){for(const k of Object.keys(LM_SLOT))if(!ids.includes(k))de
 /* 照 XQNet 的即時資料畫棋桌、燈籠、剪影、銅鑼狀態 */
 function lmPaint(v,P){const lay=P.querySelector(".lm-l");if(!lay||!window.XQNet)return;let ps=[];try{ps=XQNet.people()||[]}catch(e){}
   const me=(()=>{try{return XQNet.me().id}catch(e){return""}})(),G=(()=>{try{return XQNet.playing()&&XQNet.game()}catch(e){return null}})();
-  const games={};for(const p of ps)if(p.st==="playing"&&p.gid)(games[p.gid]=games[p.gid]||[]).push(p);
-  const gids=Object.keys(games).filter(g=>!G||g!==G.gid).slice(0,G?7:8);
-  const T=[];if(G)T.push({mine:1,gid:G.gid});for(const g of gids)T.push({gid:g,l:games[g]});while(T.length<4)T.push({empty:1});
   /* 熟面孔、路過的石桌往事人物 */
   let fam=new Set();try{for(const x of(XQNet.rating().hist||[]))if(x.oid)fam.add(x.oid)}catch(e){}
+  const games={};for(const p of ps)if(p.st==="playing"&&p.gid)(games[p.gid]=games[p.gid]||[]).push(p);
+  /* 回饋 800：棋局比桌子多時，照熱度挑（熟面孔在下的最先、觀眾多的、段位高的），已經上桌的那盤不會被換走；其他的收進「更多棋局」 */
+  const all=Object.keys(games).filter(g=>!G||g!==G.gid),cap=G?7:8;
+  const heat=g=>(games[g].some(p=>fam.has(p.id))?1e6:0)+ps.filter(p=>p.st==="watching"&&p.gid===g).length*1e4+games[g].reduce((t,p)=>t+(+p.pts||0),0);
+  for(const g of Object.keys(LM_TBL))if(!all.includes(g)||LM_TBL[g]>=cap)delete LM_TBL[g];
+  {const used=new Set(Object.values(LM_TBL));for(const g of all.filter(g=>LM_TBL[g]==null).sort((a,b)=>heat(b)-heat(a))){let k=0;while(used.has(k))k++;if(k>=cap)break;LM_TBL[g]=k;used.add(k)}}
+  const gids=Object.keys(LM_TBL).sort((a,b)=>LM_TBL[a]-LM_TBL[b]),moreG=all.length-gids.length;
+  const T=[];if(G)T.push({mine:1,gid:G.gid});for(const g of gids)T.push({gid:g,l:games[g]});while(T.length<4)T.push({empty:1});
   let VS=[];try{VS=typeof lobbyVisitors==="function"?lobbyVisitors():[]}catch(e){}
-  const ids=ps.filter(p=>p.id!==me).map(p=>p.id).concat(VS.map(k=>"jc:"+k));lmSlots(ids);
+  /* 回饋 800：人比燈多（50 盞）時，熟面孔、真人先點燈，石桌往事人物其次，雲遊棋客（電腦）最後；點不到燈的人數掛在「＋N 人」木牌上（點了開名冊） */
+  const pri=id=>/^jc:/.test(id)?2:fam.has(id)?0:(typeof isCloud==="function"&&isCloud(id))?3:1;
+  const ids0=ps.filter(p=>p.id!==me).map(p=>p.id).concat(VS.map(k=>"jc:"+k)),ids=ids0.map((id,i)=>[id,i]).sort((a,b)=>pri(a[0])-pri(b[0])||a[1]-b[1]).map(x=>x[0]).slice(0,LM_LAMPS.length);
+  const extra=ids0.length-ids.length;lmSlots(ids);
   const lit={};for(const p of ps)if(p.id!==me&&LM_SLOT[p.id]!=null)lit[LM_SLOT[p.id]]={id:p.id,name:p.name,cls:(fam.has(p.id)?" fam":"")+(typeof isCloud==="function"&&isCloud(p.id)?" bot":"")};
   for(const k of VS){const s=LM_SLOT["jc:"+k];if(s!=null)lit[s]={jc:k,name:(typeof JCHAR!=="undefined"&&JCHAR[k]&&JCHAR[k].name)||k,cls:" story"}}
   const FIG=["fig_sit","fig_lean","fig_fan"];
   lay.innerHTML=T.slice(0,8).map((t,i)=>{const[x,y]=LM_TABLES[i];const nm=t.l?t.l.map(p=>p.name).join(" 對 "):"";
       return`<button class="lm-t${t.mine?" mine":""}${t.empty?" empty":""}" ${t.gid?`data-g="${esc(t.gid)}"`:""}${t.mine?' data-mine="1"':""} style="left:${x}%;top:${y}%;z-index:${Math.round(y)}" aria-label="${esc(t.mine?"我的對局":t.empty?"空桌":nm+"・觀戰")}" tabindex="${t.empty?-1:0}"><img src="${LM_IMG(t.empty?"table_empty":"table_game")}" alt=""></button>`}).join("")+
     LM_LAMPS.map(([x,y,f],i)=>{const o=lit[i];const fig=o&&(f===2||x<15||x>85)?`<img class="lm-fig" src="${LM_IMG(FIG[i%3])}" alt="" style="left:${x}%;top:${y+(f===2?10.5:7.5)}%">`:"";
-      return`${fig}<button class="lm-lp f${f}${o?" on"+o.cls:""}" ${o?(o.jc?`data-jc="${esc(o.jc)}"`:`data-p="${esc(o.id)}"`):""} style="left:${x}%;top:${y}%" aria-label="${o?esc(o.name):"空著的燈"}" tabindex="${o?0:-1}"><img src="${LM_IMG(o?"lantern_on":"lantern_off")}" alt="">${o&&/fam|story/.test(o.cls)?"<i></i>":""}</button>`}).join("")+
-    (XQNet.seeking&&XQNet.seeking()?'<span class="lm-wave"><i></i><i></i><i></i></span>':"");
+      return`${fig}<button class="lm-lp f${f}${LM_INK_LAMP?" ink":""}${o?" on"+o.cls:""}" ${o?(o.jc?`data-jc="${esc(o.jc)}"`:`data-p="${esc(o.id)}"`):""} style="left:${x}%;top:${y}%" aria-label="${o?esc(o.name):"空著的燈"}" tabindex="${o?0:-1}">${LM_INK_LAMP?'<svg viewBox="0 0 20 46"><use href="#lmLamp"/></svg>':`<img src="${LM_IMG(o?"lantern_on":"lantern_off")}" alt="">`}${o&&/fam|story/.test(o.cls)?"<i></i>":""}</button>`}).join("")+
+    (XQNet.seeking&&XQNet.seeking()?'<span class="lm-wave"><i></i><i></i><i></i></span>':"")+
+    (extra>0?`<button type="button" class="lm-more" data-more="p" style="left:88%;top:30.5%">＋${extra} 人</button>`:"")+
+    (moreG>0?`<button type="button" class="lm-more" data-more="g" style="left:67%;top:90%">更多棋局 ＋${moreG}</button>`:"")+
+    (!ids0.length&&!T.some(t=>t.gid)?'<span class="lm-quiet">天井清靜・敲鑼等棋友</span>':"");
   /* 點了＝按清單裡對應的那顆（邀請、觀戰、確認視窗都照原本） */
   const lb=v.querySelector("#lb"),press=sel=>{const b=lb&&lb.querySelector(sel);if(b){b.click();return true}return false};
   lay.querySelectorAll(".lm-t[data-g]").forEach(b=>b.onclick=e=>{e.stopPropagation();vibrate(5);if(b.dataset.mine){location.hash="#/pvp";return}press(`[data-w="${CSS.escape(b.dataset.g)}"]`)||toast("這盤剛下完了")});
   lay.querySelectorAll(".lm-lp[data-p]").forEach(b=>b.onclick=e=>{e.stopPropagation();vibrate(5);press(`[data-p="${CSS.escape(b.dataset.p)}"]`)||(typeof oppCard==="function"&&oppCard(b.dataset.p,b.getAttribute("aria-label")))});
   lay.querySelectorAll(".lm-lp[data-jc]").forEach(b=>b.onclick=e=>{e.stopPropagation();vibrate(5);if(typeof jcharSheet==="function")jcharSheet(b.dataset.jc)});
+  lay.querySelectorAll(".lm-more").forEach(b=>b.onclick=e=>{e.stopPropagation();vibrate(5);const l=P.querySelector("#lmList");if(l)l.click()});
+  {const l=P.querySelector("#lmList b");if(l)l.textContent=ids0.length?`📜 名冊 ${ids0.length}`:"📜 名冊"}
   const gb=P.querySelector("#lmGong");if(gb){const sk=XQNet.seeking&&XQNet.seeking();gb.querySelector("b").textContent=sk?"🥁 找對手中…":"🎲 隨機配對";gb.classList.toggle("hot",!!sk)}
   const ai=P.querySelector("#lmAi");if(ai)ai.querySelector("b").textContent=lb&&lb.querySelector("#aiw")?"📺 AI 對戰":"🤖 挑戰電腦"}
 function lobbyMap(v){const lb=v.querySelector("#lb");if(!lb||v.querySelector(".lobby-page"))return;lmCss();
   const d=document.createElement("div");
-  d.innerHTML=`<div class="shp-page cq lobby-page"><img src="${LM_IMG("lobby")}" alt="千燈天井"><div class="lm-l"></div>${LM_SPOTS.map(([id,x,y,t])=>`<button class="shp-spot" id="${id}" style="left:${x}%;top:${y}%"><b>${esc(t)}</b></button>`).join("")}</div>`;
+  d.innerHTML=`<div class="shp-page cq lobby-page"><img src="${LM_IMG("lobby")}" alt="千燈天井"><div class="lm-l"></div>${LM_INK_LAMP?LM_LAMP_SVG:""}${LM_SPOTS.map(([id,x,y,t])=>`<button class="shp-spot" id="${id}" style="left:${x}%;top:${y}%"><b>${esc(t)}</b></button>`).join("")}</div>`;
   const P=d.firstElementChild;v.insertBefore(P,lb);
   /* 名冊抽屜：原本的清單整個搬進來（還在 v 裡面，paint() 照樣找得到 #lb） */
   const dw=document.createElement("div");dw.className="lm-dw";dw.innerHTML='<div class="lm-dw-h">📜 名冊<button type="button" aria-label="關上名冊">✕</button></div><div class="lm-dw-b"></div>';
