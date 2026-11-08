@@ -1341,7 +1341,7 @@ html[data-era=qin] .view:has(>.shp-rd),html[data-era=wudai] .view:has(>.shp-rd){
       if(!window.caches)return go();caches.keys().then(function(ks){return Promise.all(ks.filter(function(k){return k.indexOf("xqlab-app-")===0}).map(function(k){return caches.delete(k)}))})
         .then(function(){return navigator.serviceWorker&&navigator.serviceWorker.getRegistration()}).then(function(r){return r&&r.update()}).catch(function(){}).then(go)}};setTimeout(chk,4000)})();
 </script>
-<script>window.XQ_OFFLINE=true;window.XQ_BUILD="20261108-2000";</script>
+<script>window.XQ_OFFLINE=true;window.XQ_BUILD="20261108-2010";</script>
 <script src="core.js"></script>
 <script src="engine.js"></script>
 <script src="local.js"></script>
@@ -9767,7 +9767,7 @@ x_bing:{
      這裡有畫煙、沙塵的朝代，就把 inkfx 在那張圖上的 smoke／dust 拿掉（避免兩套重複、風向不一）。
    安全網：圖尺寸要 768x1376、第一格用「不動」畫一次跟原圖比對抽樣點、沒有 highp 或 WebGL 就不做、prefers-reduced-motion 不播；
      畫布寬上限 960；離開這頁迴圈自己停並釋放 WebGL。開關：常數 PORTFX2_ON ＋ localStorage m_portWind（1 開、0 關）；開發者模式時圖左下有「🧪 渡口風」切換 */
-const PORTFX2_ON=false;   /* 等開發者確認後打開 */
+const PORTFX2_ON=true;   /* 開發者 11/8 說打開 */
 const pwdOn=()=>{const v=store.get("portWind",-1);return v==-1?PORTFX2_ON:v==1};
 /* 每朝設定（座標都是圖上的百分比）：f＝旗 [左,上,右,下,"h" 橫旗（旗桿在左）／"v" 直幡（從上垂下）]、s＝煙 [x,y,1 濃煙／0 炊煙]、d＝沙塵範圍 [左,上,右,下,1＝灰土（不看地面顏色）／2＝草原（不限黃土、淡一點也疊）,強度] */
 const PWD={
