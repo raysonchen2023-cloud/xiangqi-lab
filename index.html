@@ -1341,7 +1341,7 @@ html[data-era=qin] .view:has(>.shp-rd),html[data-era=wudai] .view:has(>.shp-rd){
       if(!window.caches)return go();caches.keys().then(function(ks){return Promise.all(ks.filter(function(k){return k.indexOf("xqlab-app-")===0}).map(function(k){return caches.delete(k)}))})
         .then(function(){return navigator.serviceWorker&&navigator.serviceWorker.getRegistration()}).then(function(r){return r&&r.update()}).catch(function(){}).then(go)}};setTimeout(chk,4000)})();
 </script>
-<script>window.XQ_OFFLINE=true;window.XQ_BUILD="20261108-2040";</script>
+<script>window.XQ_OFFLINE=true;window.XQ_BUILD="20261108-2050";</script>
 <script src="core.js"></script>
 <script src="engine.js"></script>
 <script src="local.js"></script>
@@ -10930,11 +10930,11 @@ try{rdCss()}catch(e){}
      HS＝入口 → ［停靠點, 面向的位置 左%, 上%, 動作 bow／wave／cheer］；home＝起點；look0＝站著時面向哪裡。停靠點都選在東西「前面」（腳比東西低），角色疊在圖上才不會像站在桌上。
    開關：SHIP_WALK_ON（星槎，07f-ship.js 的 Voyage 呼叫 shipWalk）、SHW_PORT_ON（渡口，包一層 portWind）、SHW_YZ_ON（驛站，包一層 yzInn）；SHW_PORT／SHW_YZ 有座標表的朝代才走。樣式在 shwCss */
 const SHIP_WALK_ON=true,SHW_PORT_ON=true,SHW_YZ_ON=true;   /* 開發者 11/8 說全開 */
-/* 星槎主畫面 ship_map.webp 896×1200 */
+/* 星槎主畫面 ship_map.webp 896×1200。意見回饋 787（開發者 11/8）：棋話一頁要真的走到船頭——從右舷沿船艙右邊的甲板（r2、r3）走到船頭講台前（lesson）；下船停在跳板中段 */
 const SHW_SHIP={W:896,H:1200,el:35,h:y=>.088+(y-66)*.001,home:"home",look0:[50,84],
-  N:{home:[60.5,70.5],pz:[55.5,69.2],bag:[50,69.8],c2:[44.5,68.6],read:[34.5,66.8],shelf:[31.5,62.5],d1:[26.8,67.6],t1:[22.5,71.5],t2:[24.5,77.5],sail:[23.8,79.2],l1:[30.6,57.5],parks:[32.5,51.5],g1:[65,66.2],port:[72.5,69.6],r1:[69.3,60],lesson:[70.5,52.5]},
-  E:"home-pz pz-bag bag-c2 c2-read read-shelf read-d1 shelf-d1 d1-t1 t1-t2 t2-sail shelf-l1 l1-parks home-g1 pz-g1 g1-port g1-r1 r1-lesson",
-  HS:{pz:["pz",50,58,"bow"],bag:["bag",50,76,"wave"],read:["read",31,71,"bow"],shelf:["shelf",24,58,"wave"],parks:["parks",13,40,"wave"],sail:["sail",17,83,"cheer"],port:["port",86,77,"wave"],lesson:["lesson",77,25,"bow"]}};
+  N:{home:[60.5,70.5],pz:[55.5,69.2],bag:[50,69.8],c2:[44.5,68.6],read:[34.5,66.8],shelf:[31.5,62.5],d1:[26.8,67.6],t1:[22.5,71.5],t2:[24.5,77.5],sail:[23.8,79.2],l1:[30.6,57.5],parks:[32.5,51.5],g1:[65,66.2],port:[77.5,72.5],r1:[69.3,60],r2:[79.5,48],r3:[78.5,37.5],lesson:[74,31.5]},
+  E:"home-pz pz-bag bag-c2 c2-read read-shelf read-d1 shelf-d1 d1-t1 t1-t2 t2-sail shelf-l1 l1-parks home-g1 pz-g1 g1-port g1-r1 r1-r2 r2-r3 r3-lesson",
+  HS:{pz:["pz",50,58,"bow"],bag:["bag",50,76,"wave"],read:["read",31,71,"bow"],shelf:["shelf",24,58,"wave"],parks:["parks",13,40,"wave"],sail:["sail",17,83,"cheer"],port:["port",86,77,"wave"],lesson:["lesson",77,23,"bow"]}};
 /* 渡口 port_<朝代>_f.webp、驛站 data/yizhan/<朝代>_f.webp 都是 768×1376、俯角 38°（沒寫的照 SHW_PG0）；h＝[身高, 在 y 多少時, 每往下 1% 加多少]。
    渡口入口代號＝按鈕 id（poPark 園子、poInn 驛站、poArena 擂台、poBattle 古戰場）、景點＝ps0、ps1…（PORT_SIGHT 的順序）；驛站＝yzTr 旅人、yzSec 秘境棋友、yzMail 信箱、yzLing 點將台（只有雲河驛站）、yzSight 史實小牌。
    開發者 11/8 選「標籤淡掉」：角色走向哪個入口，那個入口的金框標籤就淡掉（shw-fade），所以停靠點直接放在門口、桌前（標籤底下的地面）；開了入口就還原。
