@@ -1370,7 +1370,7 @@ html[data-hicon] .tabbar button.on{box-shadow:inset 0 -3px 0 currentColor}
       if(!window.caches)return go();caches.keys().then(function(ks){return Promise.all(ks.filter(function(k){return k.indexOf("xqlab-app-")===0}).map(function(k){return caches.delete(k)}))})
         .then(function(){return navigator.serviceWorker&&navigator.serviceWorker.getRegistration()}).then(function(r){return r&&r.update()}).catch(function(){}).then(go)}};setTimeout(chk,4000)})();
 </script>
-<script>window.XQ_OFFLINE=true;window.XQ_BUILD="20261110-0900";</script>
+<script>window.XQ_OFFLINE=true;window.XQ_BUILD="20261110-0930";</script>
 <script src="core.js"></script>
 <script src="engine.js"></script>
 <script src="local.js"></script>
@@ -12789,8 +12789,9 @@ const HM_IMGV="0730";   /* 圖的版本：同檔名換圖時改掉，手機才�
 const HUB_NAME={learn:{qin:"學室",han:"太學",sanguo:"太學",weijin:"國子學",nanbei:"國學",sui:"國子寺",tang:"國子監",wudai:"國子監",song:"書院",yuan:"書院",ming:"書院",qing:"書院"},
   quick:{qin:"博一局",han:"博一局",sanguo:"弈一局",weijin:"手談一局",nanbei:"坐隱一局",sui:"弈一局",tang:"象戲一局",wudai:"象戲一局",song:"著一局",yuan:"著一盤",ming:"下一盤",qing:"殺一盤"},   /* 11/9 開發者：「下一盤」也照朝代：秦漢六博叫「博」；魏晉「手談」（支遁）、「坐隱」（王坦之），見《世說新語》；唐牛僧孺《玄怪錄》寶應象戲；宋元「著棋」；清俗話「殺一盤」 */
     battle:{qin:"酒肆",han:"酒肆",sanguo:"酒肆",weijin:"酒壚",nanbei:"酒肆",sui:"酒肆",tang:"旗亭",wudai:"茶肆",song:"茶坊",yuan:"茶肆",ming:"茶樓",qing:"茶館"}};
-function xqHubName(k){let e="";try{e=typeof shipAt==="function"&&typeof shipDockList==="function"&&shipDockList()?shipAt():""}catch(x){}const n=(HUB_NAME[k]||{})[e];return(k==="quick"?"⚡ ":k==="battle"?"⚔ ":"📚 ")+(n||(k==="quick"?"下一盤":k==="battle"?"對戰":"學習"))}
-const HM_SPOTS=[["hmShip",52,15,"⛵ 雲河星槎"],["hmBattle",14,25.5,"⚔ 對戰"],["hmLearn",86,26.5,"📚 學習"],["hmRec",12,44,"📜 今日推薦"],["hmQuick",52,47.5,"⚡ 下一盤"]];
+function xqHubName(k){let e="";try{e=typeof shipAt==="function"&&typeof shipDockList==="function"&&shipDockList()?shipAt():""}catch(x){}const n=(HUB_NAME[k]||{})[e];return(k==="quick"?"♟ ":k==="battle"?"⚔ ":"📚 ")+(n||(k==="quick"?"下一盤":k==="battle"?"對戰":"學習"))}
+/* 11/9 開發者：「下一盤」前面的閃電跟水墨圖示融合不了，換成 ♟（e_piece 手繪棋子圖示） */
+const HM_SPOTS=[["hmShip",52,15,"⛵ 雲河星槎"],["hmBattle",14,25.5,"⚔ 對戰"],["hmLearn",86,26.5,"📚 學習"],["hmRec",12,44,"📜 今日推薦"],["hmQuick",52,47.5,"♟ 下一盤"]];
 /* 07w 的座標表（腳底的位置）：起點在橋中央廣場（石桌左前方）；石桌四周繞著走，不穿過桌子；往後經廣場後緣走木棧道到星槎跳板；
    左右各從拱橋兩端的石階下到碼頭步道：左岸沿河岸步道上去到牌坊前、橋頭告示牌前；右岸過草地到書院山門石階下 */
 const SHW_HOMEMAP={el:40,h:[.05,60,.0008],look0:[50,99],
@@ -13003,6 +13004,11 @@ if(typeof Lobby==="function"){const f0=Lobby;Lobby=function(v){const r=f0.apply(
    角色：從門口青磚地走到案前；點自己的名帖、千秋盃時鞠躬，點拜匣揮手；點名字、水牌不等角色。字最小 13px。開關 ROSTER_MAP_ON（false＝照舊抽屜）；圖片網址帶 MF_IMGV；前綴 mf */
 const ROSTER_MAP_ON=true;
 const MF_IMGV="2500";
+/* 11/9 史學顧問盤查 C 類：門房照停靠朝代換圖（考究說明 park/rostermap/考究說明_各朝_1109.md）。分「宋以前、宋以後」兩組：
+   秦到五代＝roster_<day|night>_han.webp（錫燈台→青銅豆形燈、拜匣→黑漆朱裡長方漆盒；門外紅紗燈→大廳唐以前的青銅懸燈、隔扇格心→直櫺）；宋以後、沒停靠用原圖。
+   案上的客簿、名帖、紅帖、漆盒口（MF_BOX）、門口位置都沒動 */
+const MF_ERA_HAN=["qin","han","sanguo","weijin","nanbei","sui","tang","wudai"];
+function mfG(){let e="";try{e=typeof hbDockEra==="function"?hbDockEra():typeof shipAt==="function"&&typeof shipDockList==="function"&&shipDockList()?shipAt()||"":""}catch(x){}return MF_ERA_HAN.includes(e)?"han":""}
 const MF_PG=[[[140,772],[280,766],[268,893],[72,893]],[[302,766],[446,772],[470,893],[288,893]]];   /* 客簿左頁、右頁可寫的範圍（像素 768×1376） */
 const MF_CARD=[[491,778],[608,778],[675,924],[524,924]],MF_BD=[93,245,368,397],MF_TIE=[610,735],MF_BOX=[132,695],MF_DOOR=[612,380];
 const SHW_MF={W:768,H:1376,el:40,h:[.072,88,.0012],look0:[50,60],home:"home",N:{home:[34,95],front:[50,88],l:[20,88],r:[78,88]},E:"home-front front-l front-r home-l",
@@ -13088,7 +13094,7 @@ function mfWrap(v){const dw=v.querySelector(".lm-dw"),lb=v.querySelector("#lb"),
   const hd=dw.querySelector(".lm-dw-h");if(hd&&hd.firstChild&&hd.firstChild.nodeType===3)hd.firstChild.textContent="名冊";
   const pct=(x,y)=>`left:${(x/7.68).toFixed(2)}%;top:${(y/13.76).toFixed(2)}%`;
   const sc=document.createElement("div");sc.className="mf-sc";
-  sc.innerHTML=`<div class="mf-fr"><img class="mf-bg" src="data/rostermap/${dk?"roster_night":"roster_day"}.webp?v=${MF_IMGV}" alt="茶樓門房的櫃台案：水牌、客簿、名帖、拜匣">
+  sc.innerHTML=`<div class="mf-fr"><img class="mf-bg" src="data/rostermap/${dk?"roster_night":"roster_day"}${mfG()?"_"+mfG():""}.webp?v=${MF_IMGV}" alt="${mfG()?"門房的迎客案：水牌、客簿、名帖、漆盒":"茶樓門房的櫃台案：水牌、客簿、名帖、拜匣"}">
     <div class="mf-bd" style="left:${(MF_BD[0]/7.68).toFixed(2)}%;top:${(MF_BD[1]/13.76).toFixed(2)}%;width:${((MF_BD[2]-MF_BD[0])/7.68).toFixed(2)}%;height:${((MF_BD[3]-MF_BD[1])/13.76).toFixed(2)}%"></div>
     <div class="mf-q mf-p" data-p="0"><div class="mf-g"></div></div><div class="mf-q mf-p" data-p="1"><div class="mf-g"></div></div>
     <button type="button" class="mf-q mf-me" id="mfMe"></button>
@@ -14033,7 +14039,7 @@ function campMap(v){if(v.querySelector(".camp-page"))return;const pad=v.querySel
   try{if(typeof shwPage==="function"&&typeof SHIP_WALK_ON!=="undefined"&&SHIP_WALK_ON)shwPage(v,Object.assign({},SHW_PG0,cpCfg(Math.min(cur,12))),"camp:"+Math.min(cur,12))}catch(e){}
   try{if(typeof zmPage==="function")zmPage(v)}catch(e){}}
 if(typeof Camp==="function"){const f0=Camp;Camp=function(v,n){const r=f0.apply(this,arguments);try{if(CAMP_MAP_ON&&!n)campMap(v)}catch(e){}return r}}
-/* ================= 🍵 一盞茶殘局「宋代點茶席」（開發者 11/9 選定 Gemini 方案 1，Claude 依考究清單修正；考究說明 park/canjumap/考究說明.md，史學顧問核圖中）=================
+/* ================= 🍵 一盞茶殘局「宋代點茶席」（11/9 起秦到隋、唐五代另有各朝版，見 CJM_ERA）（開發者 11/9 選定 Gemini 方案 1，Claude 依考究清單修正；考究說明 park/canjumap/考究說明.md，史學顧問核圖中）=================
    圖：park/canjumap/canju_day_v4.png（Gemini 重畫兩次＋一次局部修：宋式船形茶碾、朱漆盞托；程式把桌色壓成青石灰）、夜版 canju_night_v1.png（燭台、風爐炭火）→ art/canjumap/ → data/canjumap/。
    書院中庭青石茶桌：一口＝小青白瓷茶甌、一盞＝兔毫建盞配盞托、一壺＝宋式湯瓶（小口無蓋、長流），點了直接開那一題（#/canju/<題號>，跟原本的茶單按鈕一樣）。
    程式疊的狀態：解開的那件浮出白色湯花（湯瓶冒熱氣）；三題都解開＝「分茶／茶百戲」（陶穀《清異錄》），大盞湯花裡浮現一顆「帥」字棋子紋；
@@ -14044,11 +14050,23 @@ const CJM_IMGV="2330";
 /* 三件茶器（像素，768×1376）：[槽位, 口沿中心 x, y, 半寬, 半高, 點擊框中心 x, y, 寬, 高] */
 const CJM_VES=[["sip",241,638,50,12,241,652,120,70],["cup",401,555,73,16,401,590,190,120],["pot",586,417,24,6,586,520,150,230]];
 const CJM_SPOUT=[500,430];
+/* 11/9 史學顧問盤查 C 類：照星槎停靠的朝代換茶法（考究說明 park/canjumap/考究說明_各朝_1109.md；圖 canju_<day|night>_<組>.webp，宋以後、沒停靠用原圖）。
+   weijin＝秦到隋「煮茶」：陶臼木杵、長柄瓢、青瓷碗配青瓷盤托、青瓷小碗、青瓷盤口壺（沒有流＝不冒壺嘴熱氣）、陶爐上架陶釜；湯是茶色，不是白色湯花；
+     三題全解＝大碗湯面一圈圈漣漪、熱氣變濃，不出字（顧問：加蔥薑橘皮煮的茶湯不會浮出白紋）。
+   tang＝唐五代「煎茶」（《茶經》）：木茶碾、竹夾竹則、越窯青瓷碗配朱漆盞托、白瓷小甌、青瓷執壺、風爐上架生鐵鍑；三題全解＝大碗浮起一層細白「沫餑」，不出字。
+   宋以後照舊：白色湯花，三題全解＝分茶「帥」字紋。器物口沿座標各組量過（盤口壺比湯瓶高、口寬） */
+const CJM_ERA={qin:"weijin",han:"weijin",sanguo:"weijin",weijin:"weijin",nanbei:"weijin",sui:"weijin",tang:"tang",wudai:"tang"};
+const CJM_VES_G={weijin:[["sip",242,635,50,12,241,652,120,70],["cup",401,563,74,17,401,592,190,120],["pot",588,404,55,8,588,515,150,240]],
+  tang:[["sip",241,638,50,12,241,652,120,70],["cup",401,567,76,17,401,595,190,120],["pot",587,427,46,8,587,522,150,230]]};
+const CJM_SPOUT_G={weijin:null,tang:[510,474]};
+function cjmG(){let e="";try{e=typeof hbDockEra==="function"?hbDockEra():typeof shipAt==="function"&&typeof shipDockList==="function"&&shipDockList()?shipAt()||"":""}catch(x){}return CJM_ERA[e]||""}
 const SHW_CJ_BASE={el:42,h:[.085,70,.0012],look0:[52,45],home:"home",N:{home:[50,96],mid:[46,90],tbl:[40,84],te:[62,84],tl2:[28,76],tt:[61,57]},E:"home-mid mid-tbl tbl-te mid-te tbl-tl2 mid-tl2",
   T:{tt:"tea"},   /* 回饋 820：石茶桌桌面可以走，繞過茶筅、茶碾、黑盞、白盞、執壺；前角、左前兩個跳點 */
   TB:{tea:{poly:[[0,39],[17,31],[60,31],[100,40],[100,44],[62,59],[0,49.5]],hy:[59,76,1],hops:[["te",[61,57]],["tl2",[26,52.5]]],
     ob:[[[26,33],[36,33],[36,39.5],[26,39.5]],[[34,32],[63,32],[63,40.5],[34,40.5]],[[41,40],[63,40],[63,48.5],[41,48.5]],[[24,45],[38,45],[38,50.5],[24,50.5]],[[65,29],[85,29],[85,45.5],[65,45.5]]]}}};   /* 回饋 816：點石茶桌桌面任何一處＝跳上桌角 */   /* 回饋 808：點茶具＝跳上石茶桌最前面的桌角（茶盞右下的空處，不擋茶具），鞠躬 */
 const cjmPc=(x,y)=>[x/7.68,y/13.76];
+/* 秦到隋組：陶臼挪到桌面左後角 (48–196, 438–572 像素)，桌面走路多一塊障礙 */
+function cjmShw(g){if(g!=="weijin")return SHW_CJ_BASE;const B=JSON.parse(JSON.stringify(SHW_CJ_BASE));B.TB.tea.ob.push([[6,32],[25.5,32],[25.5,41.5],[6,41.5]]);return B}
 const cjmDark=()=>{const t=store.get("pageTheme","auto");return t==="dark"||(t==="auto"&&matchMedia("(prefers-color-scheme: dark)").matches)};
 /* 今天的季節花葉（依月份，一天一種）：[名稱, 顏色, 形狀] */
 function cjmLeaf(){const m=new Date().getMonth()+1,d=new Date().getDate();
@@ -14072,27 +14090,33 @@ function cjmCss(){if(document.getElementById("cjmCss"))return;const s=document.c
 .cjm-hit{position:absolute;transform:translate(-50%,-50%);border:0;padding:0;background:none;cursor:pointer;pointer-events:auto;border-radius:30%}
 .cjm-page .shp-spot.cjm-tag{padding:3px 9px}.cjm-page .shp-spot.cjm-tag b{font-size:13px;white-space:nowrap}
 .cjm-page .shp-spot.cjm-tag.done{border-color:#B5452B}.cjm-page .shp-spot.cjm-tag.done b{color:#ffd9c8}
-@media (prefers-reduced-motion:reduce){.cjm-steam i{animation:none;opacity:.6}.cjm-leaf{animation:none;transform:translate(-8vw,0) rotate(30deg)}}`;document.head.append(s)}
+.cjm-foam.boil{background:radial-gradient(ellipse at 45% 40%,#d8b878 0,#c29a58 60%,#a67c42 86%,rgba(166,124,66,0) 100%);opacity:.92}.cjm-foam.boil::after{display:none}
+.cjm-rip{position:absolute;inset:6% 4%}.cjm-rip i{position:absolute;inset:0;border-radius:50%;border:1.5px solid rgba(255,238,205,.8);opacity:0;animation:cjmRip 2.8s ease-out infinite}.cjm-rip i:nth-child(2){animation-delay:-.93s}.cjm-rip i:nth-child(3){animation-delay:-1.86s}
+@keyframes cjmRip{0%{transform:scale(.15);opacity:.95}100%{transform:scale(1);opacity:0}}
+.cjm-mo{position:absolute;inset:5%;border-radius:50%;background:radial-gradient(circle,#fff 0 28%,rgba(255,255,255,0) 32%) 0 0/5px 4px,radial-gradient(circle,rgba(255,255,255,.9) 0 26%,rgba(255,255,255,0) 30%) 2px 2px/7px 5px,radial-gradient(ellipse,#fffdf7 0,#f5eedd 70%,rgba(245,238,221,.7) 100%);box-shadow:inset 0 0 3px rgba(150,120,70,.35)}
+.cjm-steam.thick i{filter:blur(4px)}
+@media (prefers-reduced-motion:reduce){.cjm-rip i{animation:none;opacity:.6}.cjm-steam i{animation:none;opacity:.6}.cjm-leaf{animation:none;transform:translate(-8vw,0) rotate(30deg)}}`;document.head.append(s)}
 function canjuMap(v){if(v.querySelector(".cjm-page"))return;const wrap=v.querySelector(".cj-wrap");if(!wrap||typeof cjState!=="function")return;cjmCss();
   const S=cjState(),L=S.day===cjDay()&&Array.isArray(S.list)&&S.list.length===3?S.list:null;if(!L)return;
   const bySlot={};for(const x of L)bySlot[x.slot]=x;const solved=k=>bySlot[k]&&bySlot[k].st==="done",all=solved("sip")&&solved("cup")&&solved("pot");
   const P=document.createElement("div");P.className="shp-page cq cjm-page";const pc=cjmPc;let fx="";
-  for(const[k,x,y,rx,ry]of CJM_VES){if(!solved(k))continue;const[a,b]=pc(x,y);
-    if(k==="pot"){const[sx,sy]=pc(...CJM_SPOUT);fx+=`<span class="cjm-steam" style="left:${a.toFixed(2)}%;top:${b.toFixed(2)}%"><i></i><i></i><i></i></span><span class="cjm-steam" style="left:${sx.toFixed(2)}%;top:${sy.toFixed(2)}%;width:6%"><i></i><i></i></span>`;continue}
-    fx+=`<span class="cjm-foam" style="left:${a.toFixed(2)}%;top:${b.toFixed(2)}%;width:${(rx*2/7.68).toFixed(2)}%;height:${(ry*2/13.76).toFixed(2)}%">${k==="cup"&&all?'<span class="cjm-art"><svg viewBox="-12 -12 24 24" preserveAspectRatio="none" aria-hidden="true"><circle r="10" fill="none" stroke="rgba(140,96,52,.55)" stroke-width="1.1"/><circle r="8.2" fill="none" stroke="rgba(140,96,52,.35)" stroke-width=".6"/><text y="4.2" text-anchor="middle" font-size="12" font-weight="900" fill="rgba(150,70,40,.62)" font-family="serif">帥</text></svg></span>':""}</span>`;
-    fx+=`<span class="cjm-steam" style="left:${a.toFixed(2)}%;top:${(b-1).toFixed(2)}%;width:${k==="cup"?9:6}%"><i></i><i></i><i></i></span>`}
+  const g=cjmG(),VES=CJM_VES_G[g]||CJM_VES,SP=g in CJM_SPOUT_G?CJM_SPOUT_G[g]:CJM_SPOUT;
+  for(const[k,x,y,rx,ry]of VES){if(!solved(k))continue;const[a,b]=pc(x,y);
+    if(k==="pot"){if(!SP){fx+=`<span class="cjm-steam" style="left:${a.toFixed(2)}%;top:${b.toFixed(2)}%"><i></i><i></i><i></i></span>`;continue}const[sx,sy]=pc(...SP);fx+=`<span class="cjm-steam" style="left:${a.toFixed(2)}%;top:${b.toFixed(2)}%"><i></i><i></i><i></i></span><span class="cjm-steam" style="left:${sx.toFixed(2)}%;top:${sy.toFixed(2)}%;width:6%"><i></i><i></i></span>`;continue}
+    fx+=`<span class="cjm-foam${g==="weijin"?" boil":""}" style="left:${a.toFixed(2)}%;top:${b.toFixed(2)}%;width:${(rx*2/7.68).toFixed(2)}%;height:${(ry*2/13.76).toFixed(2)}%">${k==="cup"&&all?(g==="weijin"?'<span class="cjm-rip"><i></i><i></i><i></i></span>':g==="tang"?'<span class="cjm-mo"></span>':'<span class="cjm-art"><svg viewBox="-12 -12 24 24" preserveAspectRatio="none" aria-hidden="true"><circle r="10" fill="none" stroke="rgba(140,96,52,.55)" stroke-width="1.1"/><circle r="8.2" fill="none" stroke="rgba(140,96,52,.35)" stroke-width=".6"/><text y="4.2" text-anchor="middle" font-size="12" font-weight="900" fill="rgba(150,70,40,.62)" font-family="serif">帥</text></svg></span>'):""}</span>`;
+    fx+=`<span class="cjm-steam${k==="cup"&&all&&g==="weijin"?" thick":""}" style="left:${a.toFixed(2)}%;top:${(b-1).toFixed(2)}%;width:${k==="cup"?(all&&g==="weijin"?13:9):6}%"><i></i><i></i><i></i></span>`}
   const[lfN,lfC,lfK]=cjmLeaf();fx+=`<span class="cjm-leaf" title="${esc(lfN)}" style="left:62%;top:58%">${cjmLeafSvg(lfC,lfK)}</span>`;
   const NM={sip:"一口",cup:"一盞",pot:"一壺"};
-  P.innerHTML=`<img src="data/canjumap/${cjmDark()?"canju_night":"canju_day"}.webp?v=${CJM_IMGV}" alt="宋代點茶席"><div class="cjm-fx" aria-hidden="true">${fx}</div>`+
-    CJM_VES.map(([k,,,,,hx,hy,w,h])=>{const[a,b]=pc(hx,hy),it=bySlot[k];return`<button type="button" class="cjm-hit" data-id="${esc(it.id)}" style="left:${a.toFixed(2)}%;top:${b.toFixed(2)}%;width:${(w/7.68).toFixed(2)}%;height:${(h/13.76).toFixed(2)}%" aria-label="${NM[k]}"></button>`}).join("")+
-    CJM_VES.map(([k,mx,my])=>{const[a,b]=pc(mx,my-(k==="cup"?62:k==="pot"?40:44)),it=bySlot[k];return`<button class="shp-spot cjm-tag${solved(k)?" done":""}" id="cjm_${k}" data-id="${esc(it.id)}" style="left:${a.toFixed(2)}%;top:${b.toFixed(2)}%"><b>${NM[k]}</b></button>`}).join("");
+  P.innerHTML=`<img src="data/canjumap/${cjmDark()?"canju_night":"canju_day"}${g?"_"+g:""}.webp?v=${CJM_IMGV}" alt="${g==="weijin"?"煮茶席":g==="tang"?"煎茶席":"宋代點茶席"}"><div class="cjm-fx" aria-hidden="true">${fx}</div>`+
+    VES.map(([k,,,,,hx,hy,w,h])=>{const[a,b]=pc(hx,hy),it=bySlot[k];return`<button type="button" class="cjm-hit" data-id="${esc(it.id)}" style="left:${a.toFixed(2)}%;top:${b.toFixed(2)}%;width:${(w/7.68).toFixed(2)}%;height:${(h/13.76).toFixed(2)}%" aria-label="${NM[k]}"></button>`}).join("")+
+    VES.map(([k,mx,my])=>{const[a,b]=pc(mx,my-(k==="cup"?62:k==="pot"?40:44)),it=bySlot[k];return`<button class="shp-spot cjm-tag${solved(k)?" done":""}" id="cjm_${k}" data-id="${esc(it.id)}" style="left:${a.toFixed(2)}%;top:${b.toFixed(2)}%"><b>${NM[k]}</b></button>`}).join("");
   v.insertBefore(P,wrap);
   const open=id=>{if(typeof vibrate==="function")vibrate(5);location.hash="#/canju/"+encodeURIComponent(id)};
   P.querySelectorAll(".cjm-hit").forEach(b=>b.onclick=e=>{e.stopPropagation();const t=P.querySelector(`.cjm-tag[data-id="${CSS.escape(b.dataset.id)}"]`);if(t)t.click();else open(b.dataset.id)});
   P.querySelectorAll(".cjm-tag").forEach(b=>b.onclick=()=>open(b.dataset.id));
   if(typeof shpFit==="function")shpFit(v);
-  const HS={};CJM_VES.forEach(([k,x,y])=>{const[a,b]=pc(x,y);HS["cjm_"+k]=[typeof WALK_HOP_ON!=="undefined"&&WALK_HOP_ON?"tt":"tbl",+a.toFixed(2),+b.toFixed(2),all?"cheer":"bow"]});
-  try{if(typeof shwPage==="function"&&typeof SHIP_WALK_ON!=="undefined"&&SHIP_WALK_ON)shwPage(v,Object.assign({},SHW_PG0,SHW_CJ_BASE,{HS}),"cjm")}catch(e){}
+  const HS={};VES.forEach(([k,x,y])=>{const[a,b]=pc(x,y);HS["cjm_"+k]=[typeof WALK_HOP_ON!=="undefined"&&WALK_HOP_ON?"tt":"tbl",+a.toFixed(2),+b.toFixed(2),all?"cheer":"bow"]});
+  try{if(typeof shwPage==="function"&&typeof SHIP_WALK_ON!=="undefined"&&SHIP_WALK_ON)shwPage(v,Object.assign({},SHW_PG0,cjmShw(g),{HS}),"cjm")}catch(e){}
   try{if(typeof zmPage==="function")zmPage(v)}catch(e){}}
 if(typeof CanjuDaily==="function"){const f0=CanjuDaily;CanjuDaily=function(v){const r=f0.apply(this,arguments);
   try{if(CANJU_MAP_ON){const mo=new MutationObserver(()=>{if(!v.isConnected){mo.disconnect();return}if(v.querySelector(".cj-wrap")){mo.disconnect();try{canjuMap(v)}catch(e){}}});mo.observe(v,{childList:true});if(v.querySelector(".cj-wrap"))canjuMap(v)}}catch(e){}return r}}
@@ -14276,31 +14300,46 @@ if(typeof Terms==="function"){const f0=Terms;Terms=function(v,pick){const r=f0.a
      每張紙頭一顆棋子分類（帥＝下一盤、俥＝接著下、炮＝殘局茶單、傌＝星槎殘局、相＝讀故事），字由程式直寫；做完的蓋朱印「訖」（不用打勾）；全部做完，牌上蓋「圓滿」。
    時間感：簷下的影子跟著真實時間移動（早上偏藍、傍晚偏橘，中午影子短）；渡口茶攤石桌上的香爐是「百刻香」（香篆），程式畫出今天燒到第幾刻（一晝夜一百刻）。
    節氣：牌頂寫今天的節氣；冬至前後下雪、清明細雨、春分飄桃花、秋分落葉。角色在牌前待機，全部做完歡呼。
+   11/9 各朝版：照停靠朝代換圖（TD_ERA、tdG；見下面 TD_ERA 的說明）。
    接 07w 走路（SHW_TD）、07x 縮放。開關 TODAY_MAP_ON；圖片網址帶 TD_IMGV。路由：#/today 原本落到 Home(v)，這裡包一層 Home 接走 */
 const TODAY_MAP_ON=true;
 const TD_IMGV="2350";
+/* 11/9 史學顧問盤查 C 類：照星槎停靠的朝代換圖（考究說明 park/todaymap/考究說明_各朝_1109.md；圖是 today_<day|night>_<組>.webp，宋以後、沒停靠用原圖）。
+   組：han＝秦漢三國（平脊瓦當、告示寫在木牘上＝扁書、夜裡青銅燈盞）、weijin＝魏晉南北朝隋（平脊、紙告示、青銅燈盞）、tang＝唐五代（緩坡微翹、紙告示、白紙燈籠）。
+   告示的位置（TD_NOTES）、簷影、香爐都沒動。程式加貼的第 4、5 張：han 組是木牘（.wood）；weijin、tang 組是淡黃潢紙（.huang，圖上原本 3 張也淡淡染黃）；宋以後照舊米白紙 */
+const TD_ERA={qin:"han",han:"han",sanguo:"han",weijin:"weijin",nanbei:"weijin",sui:"weijin",tang:"tang",wudai:"tang"};
+function tdG(){let e="";try{e=typeof hbDockEra==="function"?hbDockEra():typeof shipAt==="function"&&typeof shipDockList==="function"&&shipDockList()?shipAt()||"":""}catch(x){}return TD_ERA[e]||""}
 /* 告示紙四角（像素 768×1376；左上、右上、右下、左下）：前 3 張是圖上原本的紙，後 2 張是程式加貼的位置 */
 const TD_NOTES=[[[270,540],[367,522],[372,685],[272,710]],[[512,491],[587,477],[595,600],[520,619]],[[397,616],[482,596],[487,725],[402,747]],
   [[512,640],[593,626],[600,735],[518,752]],[[398,497],[478,483],[482,570],[402,585]]];
 const TD_GLYPH={go:"俥",tea:"炮",ship:"傌",story:"相",cpu:"帥"};
 const TD_EAVE=[[222,446],[642,424]],TD_CENSER=[629,932,45,15],TD_TERM_AT=[440,470];
 /* 回饋 818：點畫裡的東西看說明（07w6-sceneinfo.js 的 sciPage；內容取自 park/todaymap/考究說明.md；告示紙是入口，不登記；開發者 11/9：大片背景不登記，拿掉「楚河和對岸」） */
+const TD_BOARD=[[[240,470],[612,420],[612,722],[240,835]],[[180,330],[240,330],[240,1060],[180,1040]],[[600,400],[650,400],[650,890],[600,895]]];
 const TD_SCI={k:"td",nm:"今日推薦",it:[
   {n:"小瓦頂和簷影",s:[[[152,255],[645,212],[748,358],[700,392],[300,472],[95,440],[70,410],[160,320]]],
    t:"告示牌頂上蓋了一道小瓦頂，替告示紙擋雨。仔細看簷下的影子：它跟著真實的時間移動，中午短短的，早上和傍晚拉得長長的。早上整張畫偏淡藍，傍晚偏橘色。",
    tn:"告示牌頂上蓋了一道小瓦頂，替告示紙擋雨。白天簷下的影子會跟著真實的時間移動；天黑了就換成這張月夜。"},
-  {n:"橋頭告示牌",s:[[[240,470],[612,420],[612,722],[240,835]],[[180,330],[240,330],[240,1060],[180,1040]],[[600,400],[650,400],[650,890],[600,895]]],
+  {n:"橋頭告示牌",on:()=>!tdG(),s:TD_BOARD,
    t:"人來人往的橋頭、路口，最適合貼告示讓大家看見；古時候官府也常在大路口張貼詔令和榜文。牌上用白紙或淡米色紙，因為黃紙在後來是皇帝放榜（黃榜）才用的。"},
+  {n:"橋頭告示牌",on:()=>tdG()==="han",s:TD_BOARD,
+   t:"人來人往的橋頭、路口，最適合貼告示讓大家看見。這時候紙還不普遍，官府的告示寫在削平的薄木板上，掛在顯眼的地方{{han:；漢簡記載，詔令要寫在「扁書」上，掛在鄉、亭、市、里顯眼的地方，讓百姓都知道}}。牌上這幾塊淡色的木板就是「木牘」。"},
+  {n:"橋頭告示牌",on:()=>tdG()==="weijin",s:TD_BOARD,
+   t:"人來人往的橋頭、路口，最適合貼告示讓大家看見；官府也常在大路口張貼詔令和榜文。晉朝以後，官府文書不再寫在竹木簡上，改用紙，而且多用染黃的「潢紙」，可以防蟲，所以牌上的告示紙是淡黃色的。"},
+  {n:"橋頭告示牌",on:()=>tdG()==="tang",s:TD_BOARD,
+   t:"人來人往的橋頭、路口，最適合貼告示讓大家看見；官府也常在大路口張貼詔令和榜文。晉唐官府文書多用染黃的「潢紙」，可以防蟲，所以牌上的告示紙是淡黃色的。"},
   {n:"節氣小紙條",s:[[[378,450],[502,450],[502,490],[378,490]]],
    t:"牌頂這張小紙條寫著今天的節氣。一年有二十四個節氣，日期每年最多差一天。冬至前後會下雪、清明飄細雨、春分飛桃花、秋分落葉子，到了那幾天回來看看！"},
   {n:"百刻香",s:[[628,935,50]],
-   t:"這是古人用來計時的「百刻香」。古人把一天一夜分成一百刻，漢代就這樣算時間；在香爐裡用香粉印出一條彎彎曲曲的香路，叫「香篆」，香路也分成一百刻，點一次剛好燒一天一夜，宋代的《香譜》記下了這種做法。灰白的那段是已經燒過的，那一點紅火就是現在的時間。"},
+   t:"這是古人用來計時的「百刻香」。古人把一天一夜分成一百刻{{han:，漢代就這樣算時間}}；在香爐裡用香粉印出一條彎彎曲曲的香路，叫「香篆」，香路也分成一百刻，點一次剛好燒一天一夜{{song:，宋代的《香譜》記下了這種做法}}。灰白的那段是已經燒過的，那一點紅火就是現在的時間。"},
   {n:"渡口茶攤石桌",s:[[[478,950],[600,905],[768,845],[768,1000],[690,1040],[680,1140],[630,1140],[630,1070],[550,1060],[545,1085],[500,1080],[490,990]]],
    t:"渡口邊的茶攤小石桌，是過河的人歇腳喝茶的地方。桌上那個三足香爐點的是「百刻香」，點點香爐看它怎麼報時。"},
   {n:"渡口石樁",s:[[[22,842],[108,842],[112,1022],[22,1022]]],
    t:"這裡是首頁「楚河渡口棋鎮」的橋頭。這幾根石樁是用來繫船纜的，跟告示牌、茶攤石桌一樣，都是渡口常見的東西。"},
-  {n:"白紙燈籠",fe:"tang",dn:"n",s:[[[662,382],[752,382],[752,570],[662,570]]],
-   t:"天黑了，告示牌的簷角亮起一盞燈。夜裡告示紙的顏色也跟著暗下來，對岸的窗子透出暖光。"}]};
+  {n:"白紙燈籠",fe:"tang",dn:"n",on:()=>tdG()!=="han"&&tdG()!=="weijin",s:[[[662,382],[752,382],[752,570],[662,570]]],
+   t:"天黑了，告示牌的簷角亮起一盞燈。夜裡告示紙的顏色也跟著暗下來，對岸的窗子透出暖光。"},
+  {n:"青銅燈盞",dn:"n",on:()=>tdG()==="han"||tdG()==="weijin",s:[[[620,388],[768,388],[768,660],[620,660]]],
+   t:"天黑了，告示牌的簷角吊起一盞青銅燈盞：三根細鏈吊著一個淺淺的圓盤，盤裡點著一朵小火苗。這時候還不用紙糊的燈籠，線上大廳裡吊的也是這種燈。夜裡告示的顏色跟著暗下來，對岸的窗子透出暖光。"}]};
 const SHW_TD={el:40,h:[.085,70,.0012],look0:[50,45],home:"home",N:{home:[50,96],mid:[47,88],brd:[40,82.5]},E:"home-mid mid-brd"};
 /* 二十四節氣（約略的國曆日期，每年差一天以內） */
 const TD_TERMS=[[1,6,"小寒"],[1,20,"大寒"],[2,4,"立春"],[2,19,"雨水"],[3,6,"驚蟄"],[3,21,"春分"],[4,5,"清明"],[4,20,"穀雨"],[5,6,"立夏"],[5,21,"小滿"],[6,6,"芒種"],[6,21,"夏至"],
@@ -14321,7 +14360,7 @@ function tdHpStory(){try{if(typeof legendState!=="function"||typeof jStages!=="f
   let b=1,n=legendState().n;if(typeof book1Done==="function"&&book1Done()){if(typeof jStages2!=="function")return null;const S=jStars(),J=jStages2(),x=J.find(z=>!S[z.id]);if(!x)return null;b=2;n=x.n}
   return{id:"story",ic:b===1?"🪨":"📜",t:`第${CNUM(n)}回`,s:td?"今天讀過了":b===1?"石桌往事":"紙譜新局",go:`#/shelf/${b}/${n}`,done:td}}catch(e){return null}}
 /* 11/9 史學顧問盤查：「下一盤」紙條跟首頁一樣照停靠朝代改詞（07z 的 xqHubName("quick")，去掉前面的「⚡ 」）；函式不在或沒停靠＝照舊「下一盤」 */
-function tdQuickName(){try{if(typeof xqHubName==="function")return String(xqHubName("quick")).replace(/^⚡\s*/,"")||"下一盤"}catch(e){}return"下一盤"}
+function tdQuickName(){try{if(typeof xqHubName==="function")return String(xqHubName("quick")).replace(/^(⚡|♟)\s*/,"")||"下一盤"}catch(e){}return"下一盤"}
 function tdHpNodes(st,onl){const N=[],g=onl||(typeof homeRecGame==="function"?homeRecGame(st):null);
   if(g)N.push({id:"go",ic:"♟",t:onl?"回對局":"接著下",s:onl?"線上對局":String(g.t).replace(/^.*：/,""),go:g.go,sw:g.sw,park:g.park});
   for(const f of[tdHpTea,tdHpShip,tdHpStory]){const x=f();if(x)N.push(x)}
@@ -14340,6 +14379,9 @@ function tdCss(){if(document.getElementById("tdCss"))return;const s=document.cre
 .td-note{position:absolute;left:0;top:0;width:100px;height:160px;transform-origin:0 0;border:0;padding:8px 6px;background:none;cursor:pointer;pointer-events:auto;color:#2a1f15;display:flex;flex-direction:row-reverse;align-items:flex-start;gap:4px;overflow:hidden;text-align:left}
 
 .td-note.paper{background:radial-gradient(28% 18% at 30% 22%,rgba(196,164,110,.28),rgba(196,164,110,0) 70%),radial-gradient(22% 16% at 72% 58%,rgba(190,158,104,.22),rgba(190,158,104,0) 70%),radial-gradient(30% 14% at 40% 86%,rgba(180,150,100,.2),rgba(180,150,100,0) 70%),radial-gradient(120% 90% at 45% 40%,#f3ecd6 55%,#e6d8b6 100%);border-radius:1px 2px 1px 3px;box-shadow:inset 0 0 0 1.4px rgba(52,36,22,.82),inset 0 0 7px rgba(150,115,60,.28),4px 5px 4px rgba(45,30,15,.32)}.td-note.paper::after{content:"";position:absolute;left:0;bottom:0;width:12px;height:12px;background:linear-gradient(45deg,rgba(0,0,0,0) 50%,#d9cba8 50%);box-shadow:inset 1px -1px 0 rgba(52,36,22,.7)}.td-night .td-note.paper{background:radial-gradient(28% 18% at 30% 22%,rgba(110,85,50,.3),rgba(110,85,50,0) 70%),radial-gradient(22% 16% at 72% 58%,rgba(110,85,50,.24),rgba(110,85,50,0) 70%),radial-gradient(120% 90% at 45% 40%,#cdb796 55%,#b29c7a 100%);box-shadow:inset 0 0 0 1.4px rgba(30,20,12,.85),inset 0 0 7px rgba(80,60,30,.32),4px 5px 4px rgba(0,0,0,.42)}.td-night .td-note.paper::after{background:linear-gradient(45deg,rgba(0,0,0,0) 50%,#a8916f 50%)}
+.td-note.wood{background:linear-gradient(90deg,rgba(150,110,60,.10) 0 1px,rgba(0,0,0,0) 1px 7px) 0 0/7px 100%,radial-gradient(120% 90% at 45% 40%,#efe2c2 55%,#dcc79e 100%);border-radius:1px;box-shadow:inset 0 0 0 1.4px rgba(52,36,22,.82),inset 0 0 6px rgba(120,85,40,.3),4px 5px 4px rgba(45,30,15,.32)}.td-note.wood::before{content:"";position:absolute;left:50%;top:5px;width:5px;height:5px;margin-left:-2.5px;border-radius:50%;background:#5a3d22}.td-night .td-note.wood{background:radial-gradient(120% 90% at 45% 40%,#c9b089 55%,#a99068 100%);box-shadow:inset 0 0 0 1.4px rgba(30,20,12,.85),4px 5px 4px rgba(0,0,0,.42)}
+.td-note.huang:not(.paper){background:rgba(214,172,72,.2);mix-blend-mode:multiply}.td-night .td-note.huang:not(.paper){background:rgba(190,150,60,.16)}
+.td-note.paper.huang{background:radial-gradient(28% 18% at 30% 22%,rgba(196,150,70,.28),rgba(196,150,70,0) 70%),radial-gradient(120% 90% at 45% 40%,#f1e1b0 55%,#e2cb8e 100%)}.td-night .td-note.paper.huang{background:radial-gradient(120% 90% at 45% 40%,#cbb27e 55%,#ad955f 100%)}
 .td-note .pc{flex:none;width:26px;height:26px;border-radius:50%;display:flex;align-items:center;justify-content:center;font:900 15px/1 var(--serif,serif);background:#f3e6c8;box-shadow:inset 0 0 0 2px currentColor,inset 0 0 0 4px #f3e6c8,inset 0 0 0 5px currentColor}
 .td-note .pc.r{color:#b23a26}.td-note .pc.k{color:#2a2420}
 .td-note .tx{writing-mode:vertical-rl;display:flex;flex-direction:column;gap:4px;max-height:100%}
@@ -14380,14 +14422,14 @@ function tdWeather(term){const n=term==="冬至"||term==="小寒"?"snow":term===
 function TodayPage(v){tdCss();setTop("📜 今日推薦","#/");if(typeof setTabs==="function")setTabs(true,"#/");v.className="view";
   const term=tdTerm(),P=document.createElement("div");P.className="shp-page cq td-page"+(tdDarkNow()?" td-night":"");v.innerHTML="";v.append(P);
   const[tx,ty]=tdPc(...TD_TERM_AT);
-  P.innerHTML=`<img src="data/todaymap/${tdDarkNow()?"today_night":"today_day"}.webp?v=${TD_IMGV}" alt="橋頭榜文牌"><div class="td-fx" aria-hidden="true">${tdShadow()}${tdIncense()}${tdWeather(term)}<span class="td-term" style="left:${tx.toFixed(2)}%;top:${ty.toFixed(2)}%">${esc(tdTermTag())}</span></div><div class="td-ns"></div>`;
+  const tg=tdG();P.innerHTML=`<img src="data/todaymap/${tdDarkNow()?"today_night":"today_day"}${tg?"_"+tg:""}.webp?v=${TD_IMGV}" alt="橋頭榜文牌"><div class="td-fx" aria-hidden="true">${tdShadow()}${tdIncense()}${tdWeather(term)}<span class="td-term" style="left:${tx.toFixed(2)}%;top:${ty.toFixed(2)}%">${esc(tdTermTag())}</span></div><div class="td-ns"></div>`;
   let N=[],onl=null;
   const go=async x=>{if(typeof vibrate==="function")vibrate(5);if(x.sw)try{await api("/play/switch",{kind:x.sw})}catch(e){}if(x.park)store.set("park3d",true);location.hash=x.go};
   const fit=()=>{const k=P.clientWidth/768;if(!k)return;P.querySelectorAll(".td-note").forEach(f=>{const q=TD_NOTES[+f.dataset.i].map(([x,y])=>[x*k,y*k]);f.style.transform=tdM3(100,160,q)})};
   const draw=st=>{if(!P.isConnected)return;try{N=tdHpNodes(st,onl)}catch(e){N=[]}const L=N.slice(0,TD_NOTES.length),all=L.length&&L.every(x=>x.done);
     const box=P.querySelector(".td-ns");
     box.innerHTML=L.map((x,i)=>{const g=TD_GLYPH[x.id]||"兵",red=true;
-      return`<button type="button" class="td-note${i>=3?" paper":""}${x.st==="cur"?" cur":""}" data-i="${i}" aria-label="${esc(x.t+"・"+x.s+(x.done?"，完成了":""))}"><span class="pc ${red?"r":"k"}">${g}</span><span class="tx"><b>${esc(x.t)}</b><small>${esc(x.s)}</small></span>${x.done?'<span class="seal">訖</span>':""}</button>`}).join("")+
+      return`<button type="button" class="td-note${i>=3?(tg==="han"?" wood":" paper"):""}${tg==="weijin"||tg==="tang"?" huang":""}${x.st==="cur"?" cur":""}" data-i="${i}" aria-label="${esc(x.t+"・"+x.s+(x.done?"，完成了":""))}"><span class="pc ${red?"r":"k"}">${g}</span><span class="tx"><b>${esc(x.t)}</b><small>${esc(x.s)}</small></span>${x.done?'<span class="seal">訖</span>':""}</button>`}).join("")+
       L.map((x,i)=>{const q=TD_NOTES[i],[a,b]=tdPc((q[0][0]+q[1][0])/2,Math.min(q[0][1],q[1][1])-14);return`<button class="shp-spot td-tag" id="tdT${i}" data-i="${i}" data-nolift="1" style="left:${a.toFixed(2)}%;top:${b.toFixed(2)}%;opacity:0;pointer-events:none" aria-hidden="true"><b>${esc(x.t)}</b></button>`}).join("")+
       (all?`<span class="td-done" style="left:${tdPc(560,690)[0].toFixed(2)}%;top:${tdPc(560,690)[1].toFixed(2)}%">圓滿</span>`:"");
     fit();
@@ -14413,10 +14455,18 @@ if(typeof Home==="function"){const f0=Home;Home=function(v,hub){if(TODAY_MAP_ON&
    名印與楷書名牌由程式畫（印文用一般字體，不假裝篆書）；讀過他的 5 盤以上，軸角蓋一方中性的「覽」字小印，不寫稱讚的話。
    上方：長廊圖，牆上六軸的畫心由程式貼上山水；角色走到第三軸前鞠躬，往下就是畫像長廊。
    下方：竹牌分出生年代＋搜尋；點一軸就地展開（返回鍵先收起），小傳和全部對局滑出來，點一盤就開棋。
-   入口：棋譜庫二樓的「特級大師」畫軸（10b 的 lbBios）。開關 GM_MAP_ON；圖片網址帶 GM2_IMGV。路由：#/gm 原本落到 Home(v)，這裡包一層 Home 接走 */
+   入口：棋譜庫二樓的「特級大師」畫軸（10b 的 lbBios）。開關 GM_MAP_ON；圖片網址帶 GM2_IMGV。路由：#/gm 原本落到 Home(v)，這裡包一層 Home 接走
+   11/9 各朝版（史學顧問盤查 C 類第 3 項；考究說明＋顧問核 park/gmmap/考究說明_各朝_1109.md）：照棋譜庫的畫像形制分 3 組，停靠判斷跟 07y hbDockEra() 一樣：
+     han＝秦～三國「分格壁畫」（白灰牆上的朱色寬框）、weijin＝魏晉～五代「畫障」（深褐木框）；宋以後、沒停靠用原圖（立軸）。
+     圖 gm_day_<組>／gm_night_<組>：框是沿 GM2_Q 畫的，畫心照舊貼、座標不用分組。顧問必改：兩組的畫心只輪流用「山」「雲水」兩款（墨竹、墨梅、蘭石、寒林要到五代、北宋才成熟）；
+     下方 72 軸跟著換形制（gm2-g-han 朱框、gm2-g-weijin 木框，都沒有掛繩、軸桿）；說明另加「分格壁畫」「畫障」，「山水畫心」改寫（g:"han weijin"＝只在這幾組登記，gm2Sci） */
 const GM_MAP_ON=true;
 const GM2_IMGV="2360";
 const GM2_HEARTS=["gh_shan","gh_zhu","gh_mei","gh_lan","gh_yun","gh_lin"];
+const GM2_GRP={qin:"han",han:"han",sanguo:"han",weijin:"weijin",nanbei:"weijin",sui:"weijin",tang:"weijin",wudai:"weijin"};
+const gm2Grp=()=>{let e="";try{e=typeof hbDockEra==="function"?hbDockEra():typeof sciDock==="function"?sciDock():""}catch(x){}return GM2_GRP[e]||""};
+const gm2Img=(dk,g)=>`data/gmmap/${dk?"gm_night":"gm_day"}${g?"_"+g:""}.webp?v=${GM2_IMGV}`;
+const gm2Hearts=g=>g?["gh_shan","gh_yun"]:GM2_HEARTS;
 /* 牆上六軸畫心的四角（像素 768×1376；左上、右上、右下、左下） */
 const GM2_Q=[[[89,316],[176,382],[176,862],[89,911]],[[251,441],[295,477],[295,762],[251,795]],[[339,509],[363,524],[363,720],[339,735]],
   [[385,545],[397,555],[397,697],[385,705]],[[411,557],[419,564],[419,676],[411,680]],[[430,570],[436,575],[436,660],[430,662]]];
@@ -14427,10 +14477,16 @@ const SHW_GM2={el:40,h:[.085,61.7,.0075],look0:[48,45],home:"home",N:{home:[56,6
 const GM2_SCI={k:"gm2",nm:"特級大師",it:[
   {n:"淡青裱褙",fe:"song",s:[[[62,85],[198,240],[202,915],[58,1058]],[[236,305],[306,385],[306,818],[234,882]]],
    t:"畫四周鑲著一圈淡淡的青色素綾，看起來淡雅；不用皇宮的黑綾，也不織鸞鳥花紋，因為這裡是書院的長廊，不是皇宮。"},
-  {n:"山水畫心",s:[GM2_Q[0],GM2_Q[1]],
-   t:"掛軸中間的畫有山、竹、梅、蘭石、雲水、寒林六款，都是宋畫常見的題材，用水墨淡淡上色畫在絹上。六款照名冊順序輪流掛，不代表哪位大師的棋風。72 位大師都是現代真實的棋手，所以這裡不畫任何人的臉，表示尊重。"},
+  {n:"分格壁畫",g:"han",s:[[[77,281],[186,368],[186,878],[77,944]],[[244,420],[301,469],[301,770],[244,816]],[[334,496],[367,518],[367,726],[334,748]]],
+   t:"牆上這一格一格朱色邊框的畫，是直接畫在白灰牆上的壁畫。{{<han:秦代的宮殿裡已經有壁畫，咸陽宮遺址就出土過壁畫殘片；}}{{han:漢宣帝曾把霍光等十一位功臣畫在麒麟閣裡；}}那時候還沒有掛軸，畫多半畫在牆上、屏風上或絲帛上。"},
+  {n:"畫障",g:"weijin",s:[[[69,256],[192,358],[192,889],[69,967]],[[239,405],[305,464],[305,776],[239,831]],[[331,487],[370,513],[370,731],[331,757]]],
+   t:"牆上嵌著一塊塊木框畫板，叫畫屏或畫障。{{nanbei:北魏司馬金龍墓出土過一塊塊畫在木板上的漆畫屏風；}}那時候還沒有掛軸，畫多半畫在屏風和牆上。"},
+  {n:"山水畫心",g:"song",s:[GM2_Q[0],GM2_Q[1]],
+   t:"掛軸中間的畫有山、竹、梅、蘭石、雲水、寒林六款{{song:，都是宋畫常見的題材}}，用水墨淡淡上色畫在絹上。六款照名冊順序輪流掛，不代表哪位大師的棋風。72 位大師都是現代真實的棋手，所以這裡不畫任何人的臉，表示尊重。"},
+  {n:"山水畫心",g:"han weijin",s:[GM2_Q[0],GM2_Q[1]],
+   t:"牆上的畫只畫山水雲氣，不畫任何人的臉。72 位大師都是現代真實的棋手，所以這裡不畫肖像，表示尊重。"},
   {n:"畫像和像贊",s:[[[324,420],[444,540],[444,698],[324,795]]],
-   t:"替值得敬重的人畫像、寫讚美的文字（叫「像贊」），是很久的傳統。唐太宗曾把二十四位功臣畫在凌煙閣；宋代的朱熹也替六位先生的畫像各寫了一首贊。走到第三軸前鞠躬，就是向先賢行禮。"},
+   t:"替值得敬重的人畫像、寫讚美的文字（叫「像贊」），是很久的傳統。{{tang:唐太宗曾把二十四位功臣畫在凌煙閣{{song:；宋代的朱熹也替六位先生的畫像各寫了一首贊}}。}}{{<tang:{{han:漢宣帝曾在麒麟閣畫霍光等十一位功臣像。}}}}走到第三{{<song:幅畫}}{{song:軸}}前鞠躬，就是向先賢行禮。"},
   {n:"直欞窗",s:[[[450,560],[526,560],[526,654],[450,654]]],
    t:"長廊的盡頭是一扇直欞窗，一根根直木條排得整整齊齊。直欞窗是中國很古老的窗子樣式，素面、樸素。",
    tn:"長廊的盡頭是一扇直欞窗，一根根直木條排得整整齊齊，是中國很古老的窗子樣式。晚上月光就從中庭和這扇窗照進來。"},
@@ -14442,6 +14498,8 @@ const GM2_SCI={k:"gm2",nm:"特級大師",it:[
   {n:"一樓的書櫃",s:[[[620,425],[768,405],[768,772],[620,700]]],
    t:"欄杆外是挑空的中庭，對面是書閣一樓的書櫃。這座樓和棋譜庫的書閣是同一座：二樓是畫像長廊，一樓是書櫃。",
    tn:"欄杆外是挑空的中庭，對面是書閣一樓的書櫃，夜裡有幾扇窗透出燈火。這座樓和棋譜庫的書閣是同一座：二樓是畫像長廊，一樓是書櫃。"}]};
+/* 這一組要登記的物件（g 沒寫＝每組都有；原圖那組＝song） */
+const gm2Sci=g=>Object.assign({},GM2_SCI,{it:GM2_SCI.it.filter(x=>!x.g||x.g.split(" ").includes(g||"song"))});
 let GM2_ST={era:"",q:""},GM2_ITEMS=null,GM2_P=null;
 const gm2Dark=()=>{const t=store.get("pageTheme","auto"),h=new Date().getHours();return t==="dark"||(t==="auto"&&matchMedia("(prefers-color-scheme: dark)").matches)||h>=20||h<5};
 const gm2Era=p=>{const y=parseInt(p&&p.born)||0;return!y?"":y<1950?"a":y<1970?"b":y<1980?"c":"d"};
@@ -14471,6 +14529,11 @@ function gm2Css(){if(document.getElementById("gm2Css"))return;const s=document.c
 .gm2-hall.dk .gm2-mt{filter:brightness(.8)}.gm2-hall.dk .gm2-ht img{filter:brightness(.85)}
 .gm2-ht{display:block;position:relative;aspect-ratio:.45;overflow:hidden;box-shadow:0 0 0 1px rgba(60,40,24,.35)}
 .gm2-ht img{width:100%;height:100%;object-fit:cover;display:block}
+.gm2-g-han .gm2-cord,.gm2-g-han .gm2-rod,.gm2-g-weijin .gm2-cord,.gm2-g-weijin .gm2-rod{display:none}
+.gm2-g-han .gm2-mt{margin-top:10px;padding:8%;background:#b5563f;background-image:linear-gradient(100deg,rgba(255,255,255,.07),transparent 40%,rgba(90,20,10,.1) 70%,transparent);box-shadow:inset 0 0 0 1px rgba(80,40,28,.45),inset 0 0 0 4px rgba(150,60,40,.25)}
+.gm2-g-han .gm2-ht{box-shadow:0 0 0 1px rgba(80,40,28,.5)}
+.gm2-g-weijin .gm2-mt{margin-top:10px;padding:9%;background:#5a4130;background-image:repeating-linear-gradient(90deg,rgba(0,0,0,.08) 0 2px,transparent 2px 7px),linear-gradient(135deg,#6e5039,#4b3424 65%,#5a4130);box-shadow:inset 1px 1px 0 rgba(255,228,190,.22),inset -1px -1px 0 rgba(0,0,0,.4),2px 3px 4px rgba(30,20,10,.35)}
+.gm2-g-weijin .gm2-ht{box-shadow:0 0 0 2px rgba(176,140,100,.6)}
 .gm2-lan{position:absolute;right:6%;bottom:5%;width:24%;aspect-ratio:1;border:1.5px solid #b23a26;border-radius:2px;color:#b23a26;font:900 13px/1 var(--serif,serif);display:flex;align-items:center;justify-content:center;background:rgba(255,240,230,.35);transform:rotate(-6deg);opacity:.9}
 .gm2-nb{display:flex;align-items:center;gap:6px;margin-top:7px;max-width:100%}
 .gm2-seal{flex:none;width:26px;height:26px;border:1.5px solid #b23a26;border-radius:2px;color:#b23a26;display:flex;align-items:center;justify-content:center;background:rgba(255,245,236,.6);overflow:hidden}
@@ -14496,7 +14559,7 @@ function gm2Css(){if(document.getElementById("gm2Css"))return;const s=document.c
 .gm2-page .shp-spot.gm2-tagspot{padding:4px 12px}.gm2-page .shp-spot.gm2-tagspot b{white-space:nowrap}
 @media (prefers-reduced-motion:reduce){.gm2-dt{animation:none}}`;document.head.append(s)}
 /* 72 位排成一定的順序（出生年、沒有的排後面，同年依名字）；第 n 軸用第 n % 6 款畫心，跟人無關 */
-function gm2List(B){return Object.entries(B||{}).map(([n,p])=>({n,p,y:parseInt(p.born)||9999})).sort((a,b)=>a.y-b.y||String(a.p.zh||a.n).localeCompare(String(b.p.zh||b.n),"zh-Hant")).map((x,i)=>Object.assign(x,{h:GM2_HEARTS[i%GM2_HEARTS.length]}))}
+function gm2List(B,HS){HS=HS||GM2_HEARTS;return Object.entries(B||{}).map(([n,p])=>({n,p,y:parseInt(p.born)||9999})).sort((a,b)=>a.y-b.y||String(a.p.zh||a.n).localeCompare(String(b.p.zh||b.n),"zh-Hant")).map((x,i)=>Object.assign(x,{h:HS[i%HS.length]}))}
 /* 讀過幾盤：棋譜頁打開過的特級大師對局（rdLog，04-stats）裡，紅方或黑方是他的 */
 function gm2Read(L){const o=(()=>{try{const g=(rdLog().o||{}).gmgames;return g?g.split(","):[]}catch(e){return[]}})();if(!o.length||!GM2_ITEMS)return{};
   const ids=new Set(o.map(k=>RDL.id("gmgames",k))),C={};for(const it of GM2_ITEMS){if(!ids.has(it.id))continue;for(const x of L)if((it.red||"").includes(x.n)||(it.black||"").includes(x.n))C[x.n]=(C[x.n]||0)+1}return C}
@@ -14504,13 +14567,13 @@ function gm2Read(L){const o=(()=>{try{const g=(rdLog().o||{}).gmgames;return g?g
 const gm2Date=it=>{const d=String(it.date||"");const m=d.match(/^(\d{4})(\d{2})(\d{2})$/);return m?`${m[1]}.${+m[2]}.${+m[3]}`:d||String(it.year||"")};
 function gm2Items(){if(GM2_ITEMS)return Promise.resolve(GM2_ITEMS);return GM2_P||(GM2_P=api("/db/items?c=gmgames").then(d=>GM2_ITEMS=(d&&d.items)||[]).catch(e=>{GM2_P=null;throw e}))}
 function GmHall(v){gm2Css();setTop("🖼 特級大師","#/db");if(typeof setTabs==="function")setTabs(true,"#/db");v.className="view";
-  const dk=gm2Dark(),P=document.createElement("div");P.className="shp-page cq gm2-page"+(dk?" gm2-night":"");v.innerHTML="";v.append(P);
-  const pc=(x,y)=>[(x/7.68).toFixed(2),(y/13.76).toFixed(2)];
-  P.innerHTML=`<img src="data/gmmap/${dk?"gm_night":"gm_day"}.webp?v=${GM2_IMGV}" alt="崇文書閣二樓的畫像長廊"><div class="gm2-fx" aria-hidden="true">${GM2_Q.map((q,i)=>`<img class="gm2-wh" data-i="${i}" src="data/gmmap/${GM2_HEARTS[i]}.webp?v=${GM2_IMGV}" alt="">`).join("")}</div>
+  const dk=gm2Dark(),grp=gm2Grp(),HS=gm2Hearts(grp),P=document.createElement("div");P.className="shp-page cq gm2-page"+(dk?" gm2-night":"");v.innerHTML="";v.append(P);
+  const pc=(x,y)=>[(x/7.68).toFixed(2),(y/13.76).toFixed(2)],ax=grp?"畫":"畫軸";
+  P.innerHTML=`<img src="${gm2Img(dk,grp)}" alt="${grp?"書閣":"崇文書閣"}二樓的畫像長廊"><div class="gm2-fx" aria-hidden="true">${GM2_Q.map((q,i)=>`<img class="gm2-wh" data-i="${i}" src="data/gmmap/${HS[i%HS.length]}.webp?v=${GM2_IMGV}" alt="">`).join("")}</div>
     <button class="shp-spot gm2-tagspot" id="gm2Go" style="left:${pc(351,470)[0]}%;top:${pc(351,470)[1]}%"><b>畫像長廊・往下看</b></button>`;
-  const H=document.createElement("section");H.className="gm2-hall"+(dk?" dk":"");H.setAttribute("aria-label","特級大師畫像長廊");v.append(H);
+  const H=document.createElement("section");H.className="gm2-hall"+(dk?" dk":"")+(grp?" gm2-g-"+grp:"");H.setAttribute("aria-label","特級大師畫像長廊");v.append(H);
   H.innerHTML=`<div class="gm2-bar"><div class="gm2-tags" role="tablist">${GM2_ERA.map(([k,t])=>`<button type="button" class="gm2-tag${GM2_ST.era===k?" on":""}" data-e="${k}" role="tab" aria-selected="${GM2_ST.era===k}">${esc(t)}</button>`).join("")}</div>
-    <input class="gm2-q" type="search" placeholder="找一位：名字、籍貫、頭銜" value="${esc(GM2_ST.q)}" aria-label="搜尋特級大師"><div class="gm2-cnt"></div></div><div class="gm2-grid"><p class="gm2-cnt">展開畫軸中…</p></div>`;
+    <input class="gm2-q" type="search" placeholder="找一位：名字、籍貫、頭銜" value="${esc(GM2_ST.q)}" aria-label="搜尋特級大師"><div class="gm2-cnt"></div></div><div class="gm2-grid"><p class="gm2-cnt">展開${ax}中…</p></div>`;
   const fit=()=>{const k=P.clientWidth/768;if(!k)return;P.querySelectorAll(".gm2-wh").forEach(m=>{const q=GM2_Q[+m.dataset.i].map(([x,y])=>[x*k,y*k]);m.style.transform=gm2M3(90,200,q)})};
   if(window.ResizeObserver){const ro=new ResizeObserver(()=>{if(!P.isConnected){ro.disconnect();return}fit()});ro.observe(P)}fit();
   /* 回饋 833（開發者 11/9：四頁也改成一對一）：這頁圖上只有「畫像長廊」一個入口，面板裡也只有畫像長廊這一塊（年代竹牌、搜尋、72 軸），所以不用藏東西，
@@ -14519,12 +14582,12 @@ function GmHall(v){gm2Css();setTop("🖼 特級大師","#/db");if(typeof setTabs
   let L=[],RD={},unNav=null,openN="";
   const grid=H.querySelector(".gm2-grid"),cnt=H.querySelector(".gm2-bar .gm2-cnt");
   const axHTML=x=>{const p=x.p,nm=p.zh||x.n,seal=nm.length===3?nm+"印":nm.slice(0,4),rd=(RD[x.n]||0)>=5;
-    return`<div class="gm2-ax" data-n="${esc(x.n)}" role="button" tabindex="0" aria-label="${esc(nm+"的畫軸"+(rd?"，已讀過五盤以上":""))}"><div class="gm2-col"><span class="gm2-cord" aria-hidden="true"></span><span class="gm2-rod" aria-hidden="true"></span>
+    return`<div class="gm2-ax" data-n="${esc(x.n)}" role="button" tabindex="0" aria-label="${esc(nm+"的"+ax+(rd?"，已讀過五盤以上":""))}"><div class="gm2-col"><span class="gm2-cord" aria-hidden="true"></span><span class="gm2-rod" aria-hidden="true"></span>
       <span class="gm2-mt"><span class="gm2-ht"><img loading="lazy" src="data/gmmap/${x.h}.webp?v=${GM2_IMGV}" alt="">${rd?'<span class="gm2-lan" aria-hidden="true">覽</span>':""}</span></span><span class="gm2-rod" aria-hidden="true"></span>
       <span class="gm2-nb"><span class="gm2-seal" aria-hidden="true"><i>${esc(seal)}</i></span><span class="gm2-nm"><b>${esc(nm)}</b><small>${p.gm?esc(p.gm)+" 年特級大師":"特級大師"}</small></span></span></div><div class="gm2-dt"></div></div>`};
   const shown=()=>{const q=s2(GM2_ST.q.trim());return L.filter(x=>(!GM2_ST.era||gm2Era(x.p)===GM2_ST.era)&&(!q||[x.n,x.p.zh,x.p.from,(x.p.titles||[]).join(" ")].some(t=>s2(t).includes(q))))};
   const s2=t=>String(t||"").toLowerCase();
-  const draw=()=>{const S=shown();cnt.textContent=`${S.length} 軸`+(S.length<L.length?`・共 ${L.length} 軸`:"");
+  const draw=()=>{const S=shown();cnt.textContent=`${S.length} ${grp?"幅":"軸"}`+(S.length<L.length?`・共 ${L.length} ${grp?"幅":"軸"}`:"");
     grid.innerHTML=S.length?S.map(axHTML).join(""):'<p class="gm2-cnt">沒有找到這位，換個字試試</p>';
     if(openN&&grid.querySelector(`[data-n="${CSS.escape(openN)}"]`))expand(openN,true);else openN=""};
   const collapse=()=>{const o=grid.querySelector(".gm2-ax.open");if(o){o.classList.remove("open");const d=o.querySelector(".gm2-dt");d.innerHTML="";const b=o.querySelector(".gm2-x");if(b)b.remove()}openN=""};
@@ -14538,21 +14601,21 @@ function GmHall(v){gm2Css();setTop("🖼 特級大師","#/db");if(typeof setTabs
   const expand=(n,keep)=>{const el=grid.querySelector(`[data-n="${CSS.escape(n)}"]`);if(!el)return;if(!keep&&openN===n)return;collapse();const x=L.find(y=>y.n===n);if(!x)return;const p=x.p;
     el.classList.add("open");openN=n;const life=[p.born&&String(p.born).slice(0,4)+" 年生",p.died&&String(p.died).slice(0,4)+" 年逝",p.from].filter(Boolean).join("・");
     el.querySelector(".gm2-dt").innerHTML=`<h3>${esc(p.zh||n)}</h3><div class="m">${esc(life)}</div><p>${esc(p.bio||"")}</p>${(p.titles||[]).length?`<ul>${p.titles.map(t=>`<li>${esc(t)}</li>`).join("")}</ul>`:""}<div class="gm2-gl"></div>`;
-    const xb=document.createElement("button");xb.type="button";xb.className="gm2-x";xb.setAttribute("aria-label","收起畫軸");xb.textContent="✕";xb.onclick=e=>{e.stopPropagation();close()};el.append(xb);
+    const xb=document.createElement("button");xb.type="button";xb.className="gm2-x";xb.setAttribute("aria-label","收起"+ax);xb.textContent="✕";xb.onclick=e=>{e.stopPropagation();close()};el.append(xb);
     games(n,el.querySelector(".gm2-gl"),40);
     if(!keep){if(!unNav&&typeof xqPanelNav==="function")unNav=xqPanelNav(()=>{unNav=null;collapse()});requestAnimationFrame(()=>{try{el.scrollIntoView({behavior:"smooth",block:"start"})}catch(e){}})}};
   grid.onclick=e=>{const a=e.target.closest(".gm2-ax");if(!a||a.classList.contains("open"))return;if(typeof vibrate==="function")vibrate(5);expand(a.dataset.n)};
   grid.onkeydown=e=>{if(e.key!=="Enter"&&e.key!==" ")return;const a=e.target.closest(".gm2-ax");if(!a||a.classList.contains("open"))return;e.preventDefault();expand(a.dataset.n)};
   H.querySelectorAll(".gm2-tag").forEach(b=>b.onclick=()=>{GM2_ST.era=b.dataset.e;H.querySelectorAll(".gm2-tag").forEach(t=>{const on=t===b;t.classList.toggle("on",on);t.setAttribute("aria-selected",on)});close();draw()});
   H.querySelector(".gm2-q").oninput=e=>{GM2_ST.q=e.target.value;close();draw()};
-  XQ_BIOS().then(B=>{if(!H.isConnected)return;L=gm2List(B);draw();
+  XQ_BIOS().then(B=>{if(!H.isConnected)return;L=gm2List(B,HS);draw();
     let any=false;try{any=!!(rdLog().o||{}).gmgames}catch(e){}
     if(any)setTimeout(()=>gm2Items().then(()=>{if(!H.isConnected)return;RD=gm2Read(L);if(!openN)draw();else grid.querySelectorAll(".gm2-ax:not(.open)").forEach(a=>{if((RD[a.dataset.n]||0)>=5&&!a.querySelector(".gm2-lan"))a.querySelector(".gm2-ht").insertAdjacentHTML("beforeend",'<span class="gm2-lan" aria-hidden="true">覽</span>')})}).catch(()=>{}),1200)})
     .catch(()=>{grid.innerHTML='<p class="gm2-cnt">讀不到特級大師的資料，請確認網路後再試</p>'});
   if(!P.dataset.shw){try{if(typeof shwPage==="function"&&typeof SHIP_WALK_ON!=="undefined"&&SHIP_WALK_ON)shwPage(v,Object.assign({},SHW_PG0,SHW_GM2),"gm2")}catch(e){}}
   if(typeof shpFit==="function")shpFit(v);
   try{if(typeof zmPage==="function")zmPage(v)}catch(e){}
-  try{if(typeof sciPage==="function")sciPage(v,GM2_SCI)}catch(e){}
+  try{if(typeof sciPage==="function")sciPage(v,gm2Sci(grp))}catch(e){}
   return{}}
 if(typeof Home==="function"){const f0=Home;Home=function(v,hub){if(GM_MAP_ON&&!hub&&/^#\/gm\/?$/.test(location.hash))return GmHall(v);return f0.apply(this,arguments)}}
 if(typeof lbBios==="function"){const f0=lbBios;lbBios=function(){if(GM_MAP_ON){location.hash="#/gm";return}return f0.apply(this,arguments)}}
@@ -14564,32 +14627,54 @@ if(typeof lbBios==="function"){const f0=lbBios;lbBios=function(){if(GM_MAP_ON){l
      英雄帖：報了名就在帖上畫一個朱圈；點帖＝報名／點將／入座（照原本 06c 的按鈕）。
      比賽日（週六點將起）掛兩盞紅紗燈（不用宮燈）、帳額下一顆紅綵球；擂主出爐才灑紅紙屑和金箔（不放煙火光團）。平常冷清。
    角色：到說書桌前揮手（＝簽名）；比賽日在台下歡呼。原本 06c 的內容（報名、對陣表、規則、擂主碑）照舊放在下面。
-   接 07w 走路（SHW_CP2）、07x 縮放。開關 CUP_MAP_ON；圖片網址帶 CP2_IMGV。包一層 CupPage */
+   接 07w 走路（SHW_CP2）、07x 縮放。開關 CUP_MAP_ON；圖片網址帶 CP2_IMGV。包一層 CupPage
+   11/9 各朝版（史學顧問盤查 C 類第 2 項；考究說明＋顧問核 park/cupmap/考究說明_各朝_1109.md）：照星槎停靠的朝代分 4 組換圖，判斷跟 07y hbDockEra() 一樣：
+     han＝秦漢三國（土黃夯土牆、黑漆屏風、竹簡扁鼓、落地矮榻、耳杯）、weijin＝魏晉南北朝隋（麈尾、筌蹄、矮榻、青瓷碗）、tang＝唐五代（朱柱、團扇拍板、圈椅）；
+     宋以後、沒停靠用原圖。圖 cup_day_<組>／cup_night_<組>（tools/era_cupgm.py 貼回原圖，金榜三扇、大掛板、英雄帖位置和原圖一樣，座標不用分組）。
+     比賽日的兩盞燈也分組：han 青銅吊燈盞、weijin 青瓷吊燈盞、tang 白紗燈籠、宋以後紅紗燈；說明條目照組登記（物件寫 g:"han weijin"＝只在這幾組登記，cp2Sci） */
 const CUP_MAP_ON=true;
 const CP2_IMGV="2370";
+const CP2_GRP={qin:"han",han:"han",sanguo:"han",weijin:"weijin",nanbei:"weijin",sui:"weijin",tang:"tang",wudai:"tang"};
+const cp2Grp=()=>{let e="";try{e=typeof hbDockEra==="function"?hbDockEra():typeof sciDock==="function"?sciDock():""}catch(x){}return CP2_GRP[e]||""};
+const cp2Img=(dk,g)=>`data/cupmap/${dk?"cup_night":"cup_day"}${g?"_"+g:""}.webp?v=${CP2_IMGV}`;
 /* 圖上各物的四角（像素 768×1376；左上、右上、右下、左下） */
 const CP2_SCR=[[[192,484],[258,487],[258,742],[192,738]],[[276,472],[494,472],[494,660],[276,660]],[[518,487],[583,484],[583,738],[518,742]]];
 const CP2_BRD=[[575,562],[675,570],[674,800],[577,787]];
 const CP2_BOOK=[[369,759],[425,759],[425,787],[369,787]];
 const CP2_LAMP=[[150,228],[618,228]],CP2_BALL=[384,214];
 /* 回饋 818：點畫裡的東西看說明（07w6-sceneinfo.js 的 sciPage；內容取自 park/cupmap/考究說明.md）。屏風、大掛板、英雄帖是入口本身，不登記；英雄帖放進 no（點了當空地），中間走道留給角色 */
+/* 11/9 各朝版：說明裡 {{朝:…}}／{{<朝:…}} 照停靠朝代顯示（07w6 sciEraText）；宋以前三組（qin～wudai）剛好就是換了圖的三組，所以「{{<song:…}}」＝各朝版圖、「{{song:…}}」＝原圖。
+   g:"han weijin"＝只在這幾組登記（沒寫＝每組都有；原圖那組叫 song），同一件東西各組圖上位置不同（茶碗）或樣子不同（燈）時分開寫，n 相同的共用「看過了沒」 */
+const CP2_LAMP_S=[[[122,226],[178,226],[178,348],[122,348]],[[590,226],[646,226],[646,348],[590,348]]],cp2LampOn=P=>!!P.querySelector(".cp2-lamp");
 const CP2_SCI={k:"cp2",nm:"千秋盃",it:[
   {n:"朱紅帳額",s:[[[85,66],[690,66],[690,206],[85,212]]],
-   t:"台上方這塊朱紅的布叫「帳額」。整張畫大多是木頭色和淡墨，只有帳額用朱紅，所以屏風上貼的紅紙名字特別醒目。比賽日，帳額下還會掛一顆紅綵球。"},
-  {n:"說書台",s:[[[250,748],[527,748],[527,906],[250,906]],[[333,662],[442,662],[442,750],[333,750]]],
-   t:"說書台是說書人講故事的地方。宋代汴京的「瓦子」裡有五十多座大小勾欄，還有專門講歷史故事的藝人；到了明代，南京的說書人柳敬亭一天只說一回，聽一回要一兩銀子。千秋盃就在這座說書台上開賽。"},
+   t:"台上方這塊朱紅的布叫「帳額」。整張畫大多是木頭色和淡墨，朱紅只用在帳額{{tang:{{<song:和前面兩根柱子}}}}，所以屏風上貼的紅紙名字特別醒目。比賽日，帳額下還會掛一顆紅綵球。"},
+  {n:"說書台",nd:"{{<tang:說唱台}}{{tang:{{<song:歌台}}}}{{song:說書台}}",s:[[[250,748],[527,748],[527,906],[250,906]],[[333,662],[442,662],[442,750],[333,750]]],
+   t:"{{<song:這是樓上的{{<tang:說唱台}}{{tang:歌台}}。{{<han:秦代宮中已經有俳優，在宴飲時說唱逗樂；}}{{han:{{<weijin:漢代宴飲時，常有俳優擊鼓說唱，四川出土的東漢說唱俑就抱著一面扁鼓；}}}}{{<weijin:桌上這面扁鼓就是說唱用的。}}{{weijin:{{<tang:魏晉名士喜歡清談，手裡常拿著一柄麈尾，桌上那柄圓圓、鑲一圈白毛的就是；桌後那個籐編的腰鼓形坐墩叫筌蹄。}}}}{{tang:唐代的酒樓叫「旗亭」，伶人在台上唱詩，桌上的拍板和團扇是唱曲的道具。}}{{<tang:桌子比那時候常見的矮案高一些，好讓報名用的帖子擺在顯眼的地方。}}}}{{song:說書台是說書人講故事的地方。{{song:宋代汴京的「瓦子」裡有五十多座大小勾欄，還有專門講歷史故事的藝人{{ming:；到了明代，南京的說書人柳敬亭一天只說一回，聽一回要一兩銀子}}。}}}}千秋盃就在這座{{<song:台}}{{song:說書台}}上開賽。"},
   {n:"屏風的楣板",s:[[[186,450],[264,450],[264,484],[186,484]],[[266,426],[507,426],[507,470],[266,470]],[[508,450],[594,450],[594,484],[508,484]]],
-   t:"屏風最上面這條雕花木板叫楣板，只雕卷草紋和回紋，沒有龍。龍是帝王的象徵，歷代多半不准百姓的房子、屏風雕龍，明代還寫進了規定。"},
-  {n:"徽州茶樓",s:[[[33,0],[84,0],[87,928],[28,928]],[[691,0],[746,0],[750,928],[688,928]],[[80,208],[152,208],[152,402],[80,402]],[[626,208],[702,208],[702,402],[626,402]],[[84,478],[152,478],[152,662],[84,662]],[[634,478],[692,478],[692,662],[634,662]]],
-   t:"這座樓和對戰頁天井那張大圖是同一座。二樓正中是說書台，兩旁的格扇窗、粗木柱和朱紅帳額，都和天井那張大圖一樣。",
-   tn:"這座樓和對戰頁天井那張大圖是同一座。散場後的夜裡，月光從兩側的格扇窗照進來，台上留下一格一格的窗影。"},
+   t:"屏風最上面這條木板叫楣板，{{<weijin:黑漆底上用朱色畫著流動的雲氣紋}}{{weijin:{{<tang:畫著一片接一片的忍冬紋}}}}{{tang:{{<song:畫著一卷接一卷的卷草紋}}}}{{song:只雕卷草紋和回紋}}，沒有龍。龍是帝王的象徵，歷代多半不准百姓的房子、屏風{{<song:畫}}{{song:雕}}龍{{ming:，明代還寫進了規定}}。"},
+  {n:"徽州茶樓",nd:"{{<tang:酒肆}}{{tang:{{<song:旗亭}}}}{{song:{{ming:徽州}}茶樓}}",s:[[[33,0],[84,0],[87,928],[28,928]],[[691,0],[746,0],[750,928],[688,928]],[[80,208],[152,208],[152,402],[80,402]],[[626,208],[702,208],[702,402],[626,402]],[[84,478],[152,478],[152,662],[84,662]],[[634,478],[692,478],[692,662],[634,662]]],
+   t:"這座樓和對戰頁天井那張大圖是同一座。二樓正中是{{<tang:說唱台}}{{tang:{{<song:歌台}}}}{{song:說書台}}，兩旁的{{<song:直欞窗}}{{song:格扇窗}}、粗木柱和朱紅帳額，都和天井那張大圖一樣。",
+   tn:"這座樓和對戰頁天井那張大圖是同一座。散場後的夜裡，月光從兩側的{{<song:直欞窗}}{{song:格扇窗}}照進來，台上留下一{{<song:條一條}}{{song:格一格}}的窗影。"},
   {n:"台下看座",s:[[[0,1034],[312,1034],[312,1376],[0,1376]],[[478,1034],[768,1034],[768,1376],[478,1376]]],
-   t:"台下一排排長凳是看座，坐在這裡，視線一路看到屏風上的金榜。平常日子只有空凳子，冷冷清清；到了比賽日才掛燈、掛綵球，熱鬧起來。"},
-  {n:"茶碗",s:[[28,1166,24],[62,1196,26],[714,1172,24],[752,1200,26]],
+   t:"台下{{<tang:一排排鋪著草蓆的矮榻是看座，那時候的人跪坐、盤坐在榻上，還不坐高凳}}{{tang:一排排長凳是看座}}，坐在這裡，視線一路看到屏風上的金榜。平常日子只有空{{<tang:榻}}{{tang:凳子}}，冷冷清清；到了比賽日才掛燈、掛綵球，熱鬧起來。"},
+  {n:"茶碗",nd:"耳杯",g:"han",s:[[29,1180,22],[63,1206,24],[700,1228,22],[740,1246,24]],
+   t:"台下矮案上擺著紅黑兩色的漆耳杯。{{<han:秦人}}{{han:漢代人}}喝酒用耳杯，在酒肆裡看台上說唱、看棋，是很熱鬧的事。"},
+  {n:"茶碗",nd:"青瓷碗",g:"weijin",s:[[62,1200,22],[100,1224,24],[712,1196,22],[750,1220,24]],
+   t:"台下矮几上是幾只青瓷碗。兩晉{{nanbei:南朝}}的越窯青瓷很流行，這裡用它盛茶湯。"},
+  {n:"茶碗",g:"tang",s:[[28,1166,24],[62,1196,26],[714,1172,24],[752,1200,26]],
+   t:"台下小桌上擺著白瓷茶碗。唐代開元以後，城裡開了許多煎茶賣茶的店鋪；在旗亭裡喝茶、聽曲、看棋，是很熱鬧的事。"},
+  {n:"茶碗",g:"song",s:[[28,1166,24],[62,1196,26],[714,1172,24],[752,1200,26]],
    t:"在茶樓喝茶看棋，是很熱鬧的事。象棋名家胡榮華回憶 1950 年代的上海：豫園的得意樓上泡一壺茶就能看象棋，高手還用大棋盤表演對局。這裡是把那份熱鬧借進來。"},
-  {n:"紅紗燈",fe:"tang",on:P=>!!P.querySelector(".cp2-lamp"),s:[[[122,226],[178,226],[178,348],[122,348]],[[590,226],[646,226],[646,348],[590,348]]],
-   t:"比賽日才掛起的兩盞紅燈。宮燈是宮廷裡用的東西，民間的酒樓、茶樓不用宮燈。"}],
+  {n:"紅紗燈",fe:"song",g:"song",on:cp2LampOn,s:CP2_LAMP_S,
+   t:"比賽日才掛起的兩盞紅燈。宮燈是宮廷裡用的東西，民間的酒樓、茶樓不用宮燈。"},
+  {n:"白紗燈",fe:"tang",g:"tang",on:cp2LampOn,s:CP2_LAMP_S,
+   t:"比賽日才掛起的兩盞白紗燈籠，竹骨上蒙一層白紗，裡面點著燈。唐代的上元燈節已經很熱鬧。民間的酒樓不用宮燈，宮燈是宮廷裡用的東西。"},
+  {n:"吊燈盞",g:"han weijin",on:cp2LampOn,s:CP2_LAMP_S,
+   t:"比賽日才吊起的兩盞{{<weijin:青銅}}{{weijin:青瓷}}燈盞：細鏈吊著一只淺淺的燈盞，盞裡點著一朵小火苗。那時候還沒有紙燈籠，照明用的是燈盞。"}],
   no:[CP2_BOOK]};
+/* 這一組要登記的物件（g 沒寫＝每組都有；原圖那組＝song） */
+const cp2Sci=g=>Object.assign({},CP2_SCI,{it:CP2_SCI.it.filter(x=>!x.g||x.g.split(" ").includes(g||"song"))});
 const SHW_CP2={el:40,h:[.085,70,.0012],look0:[50,40],home:"home",N:{home:[50,96],mid:[50,86],top:[50,78]},E:"home-mid mid-top",
   HS:{cp2Book:["top",51,57,"wave"],cp2Scr:["mid",50,42,"idle"],cp2Brd:["top",81,49,"idle"]}};
 const cp2Pc=(x,y)=>[(x/7.68).toFixed(2),(y/13.76).toFixed(2)];
@@ -14606,6 +14691,7 @@ function cp2Css(){if(document.getElementById("cp2Css"))return;const s=document.c
 .cp2-lamp{position:absolute;width:6.5%;transform:translate(-50%,0);transform-origin:50% 0;animation:cp2Sway 5s ease-in-out infinite}
 .cp2-lamp svg{display:block;width:100%;height:auto;filter:drop-shadow(0 0 6px rgba(255,120,80,.55))}
 .cp2-lamp:nth-of-type(2){animation-delay:-2.2s}
+.cp2-lamp.g-han svg,.cp2-lamp.g-weijin svg,.cp2-lamp.g-tang svg{filter:drop-shadow(0 0 6px rgba(255,200,120,.6))}
 @keyframes cp2Sway{0%,100%{transform:translate(-50%,0) rotate(-2deg)}50%{transform:translate(-50%,0) rotate(2deg)}}
 .cp2-ball{position:absolute;width:15%;transform:translate(-50%,-30%)}
 .cp2-ball svg{display:block;width:100%;height:auto}
@@ -14616,6 +14702,10 @@ function cp2Css(){if(document.getElementById("cp2Css"))return;const s=document.c
 @media (prefers-reduced-motion:reduce){.cp2-lamp,.cp2-rain i{animation:none}.cp2-rain{display:none}}`;document.head.append(s)}
 /* 紅紗燈（茶樓用的，不是宮燈）＋紅綵球 */
 const CP2_LAMP_SVG='<svg viewBox="0 0 30 70" aria-hidden="true"><path d="M15 0V9" stroke="#3a2a1c" stroke-width="1"/><rect x="9" y="8" width="12" height="3" rx="1" fill="#2b2016"/><path d="M15 11C26 11.5 27 45 15 47C3 45 4 11.5 15 11Z" fill="#c8402c" stroke="#5a1e12" stroke-width="1"/><path d="M15 11.5V46.5M10 12.5C7 22 7 36 10 46M20 12.5C23 22 23 36 20 46" fill="none" stroke="rgba(90,30,16,.4)" stroke-width=".7"/><ellipse cx="15" cy="27" rx="7" ry="12" fill="rgba(255,214,150,.45)"/><rect x="9.5" y="46" width="11" height="3" rx="1" fill="#2b2016"/><path d="M12 49V64M15 49V67M18 49V64" stroke="#b8322a" stroke-width="1.2"/></svg>';
+/* 11/9 各朝版的燈（顧問核：照對戰頁同組）：唐以前還沒有紙燈籠，用三條細鏈吊一只淺燈盞、點一朵小火苗（han 青銅、weijin 青瓷）；唐五代是竹骨白紗燈籠 */
+const cp2Bowl=(c,s)=>`<svg viewBox="0 0 30 70" aria-hidden="true"><path d="M15 0V7M15 7L6.5 50M15 7V49.5M15 7L23.5 50" stroke="#4a3e2c" stroke-width=".8" stroke-dasharray="1.6 .7" fill="none"/><circle cx="15" cy="7" r="1.3" fill="none" stroke="#4a3e2c" stroke-width=".8"/><ellipse cx="15" cy="45" rx="8" ry="7" fill="rgba(255,205,120,.35)"/><path d="M15 39.5C17.8 43.5 17.8 47.5 15 50C12.2 47.5 12.2 43.5 15 39.5Z" fill="#ffc760"/><path d="M15 43.5C16.1 45.5 16.1 47.8 15 49.3C13.9 47.8 13.9 45.5 15 43.5Z" fill="#fff3cf"/><path d="M4.5 49.5H25.5C24.6 56 20.6 59.5 15 59.5C9.4 59.5 5.4 56 4.5 49.5Z" fill="${c}" stroke="${s}" stroke-width=".9"/><path d="M6.5 52.5C9 55 12 56 15 56" fill="none" stroke="rgba(255,255,255,.28)" stroke-width=".9"/><ellipse cx="15" cy="49.6" rx="10.5" ry="1.6" fill="rgba(40,30,20,.35)" stroke="${s}" stroke-width=".6"/><rect x="13.6" y="59.3" width="2.8" height="2" rx=".6" fill="${s}"/></svg>`;
+const CP2_LAMPS={"":CP2_LAMP_SVG,han:cp2Bowl("#7c6c40","#3e3420"),weijin:cp2Bowl("#9fc2aa","#4c6c58"),
+  tang:'<svg viewBox="0 0 30 70" aria-hidden="true"><path d="M15 0V9" stroke="#3a2a1c" stroke-width="1"/><rect x="9" y="8" width="12" height="3" rx="1" fill="#6a4a28"/><path d="M15 11C26 11.5 27 45 15 47C3 45 4 11.5 15 11Z" fill="#f2ede0" stroke="#6a5a44" stroke-width="1"/><path d="M15 11.5V46.5M10 12.5C7 22 7 36 10 46M20 12.5C23 22 23 36 20 46M6 22H24M5.5 30H24.5M6 38H24" fill="none" stroke="rgba(110,84,50,.38)" stroke-width=".7"/><ellipse cx="15" cy="28" rx="7.5" ry="12.5" fill="rgba(255,214,140,.55)"/><rect x="9.5" y="46" width="11" height="3" rx="1" fill="#6a4a28"/><path d="M15 49V62" stroke="#8a6a42" stroke-width="1"/></svg>'};
 const CP2_BALL_SVG='<svg viewBox="0 0 120 70" aria-hidden="true"><path d="M2 6C25 26 40 30 48 30M118 6C95 26 80 30 72 30" fill="none" stroke="#c23a2a" stroke-width="6" stroke-linecap="round"/><path d="M2 6C25 26 40 30 48 30M118 6C95 26 80 30 72 30" fill="none" stroke="rgba(255,190,170,.4)" stroke-width="2"/><circle cx="60" cy="34" r="15" fill="#c8402c" stroke="#6a2216" stroke-width="1.2"/><path d="M47 28C55 34 65 34 73 28M46 38C55 44 65 44 74 38M60 19C54 27 54 41 60 49M60 19C66 27 66 41 60 49" fill="none" stroke="rgba(110,30,18,.55)" stroke-width="1.2"/><path d="M54 49L50 68M60 49V70M66 49L70 68" stroke="#c23a2a" stroke-width="2.4" stroke-linecap="round"/></svg>';
 /* 名字縮成三個字以內（紅紙窄） */
 const cp2Nm=p=>{if(!p)return"";if(p.none)return"從缺";const n=String(p.name||"").trim();return n.length>4?n.slice(0,3)+"…":n};
@@ -14653,8 +14743,8 @@ function cp2Board(fen,red,blk,cap){const W=200,H=450,ox=22,oy=74,c=19.5;let g=""
 function cp2Fen(g){const b=parseFen(START);for(const m of(g&&g.moves)||[]){const f=m&&(m.f!=null?m.f:m[0]),t=m&&(m.t!=null?m.t:m[1]);if(f==null||t==null||!b[f])continue;b[t]=b[f];b[f]=null}
   let s="";for(let r=0;r<10;r++){let e=0;for(let c=0;c<9;c++){const x=b[r*9+c];if(!x)e++;else{if(e){s+=e;e=0}s+=x}}if(e)s+=e;if(r<9)s+="/"}return s}
 function cp2Wrap(v,R){if(!CUP_MAP_ON||!window.XQNet||!v.querySelector("#cupb"))return R;cp2Css();
-  const dk=cp2Dark(),P=document.createElement("div");P.className="shp-page cq cp2-page"+(dk?" cp2-night":"");
-  P.innerHTML=`<img src="data/cupmap/${dk?"cup_night":"cup_day"}.webp?v=${CP2_IMGV}" alt="茶樓二樓的說書台"><div class="cp2-fx" aria-hidden="true">
+  const dk=cp2Dark(),grp=cp2Grp(),P=document.createElement("div");P.className="shp-page cq cp2-page"+(dk?" cp2-night":"");
+  P.innerHTML=`<img src="${cp2Img(dk,grp)}" alt="${grp==="tang"?"旗亭樓上的歌台":grp?"酒肆樓上的說唱台":"茶樓二樓的說書台"}"><div class="cp2-fx" aria-hidden="true">
       ${CP2_SCR.map((q,i)=>`<div class="cp2-q" data-q="s${i}" style="width:${i===1?300:100}px;height:${i===1?260:380}px"></div>`).join("")}
       <div class="cp2-q" data-q="b" style="width:200px;height:450px"></div><div class="cp2-q" data-q="k" style="width:120px;height:60px"></div><div class="cp2-deco"></div></div>
     <button class="shp-spot cp2-tag" id="cp2Scr" style="left:${cp2Pc(385,405)[0]}%;top:${cp2Pc(385,405)[1]}%"><b>對陣金榜</b></button>
@@ -14691,7 +14781,7 @@ function cp2Wrap(v,R){if(!CUP_MAP_ON||!window.XQNet||!v.querySelector("#cupb"))r
     paintB();
     /* 比賽日：紅紗燈、紅綵球；擂主出爐才灑紅紙屑、金箔 */
     const day=S&&["ck","play","done"].includes(S.ph),deco=P.querySelector(".cp2-deco");let h="";
-    if(day){h+=CP2_LAMP.map(([x,y])=>`<span class="cp2-lamp" style="left:${cp2Pc(x,y)[0]}%;top:${cp2Pc(x,y)[1]}%">${CP2_LAMP_SVG}</span>`).join("")+`<span class="cp2-ball" style="left:${cp2Pc(...CP2_BALL)[0]}%;top:${cp2Pc(...CP2_BALL)[1]}%">${CP2_BALL_SVG}</span>`}
+    if(day){h+=CP2_LAMP.map(([x,y])=>`<span class="cp2-lamp${grp?" g-"+grp:""}" style="left:${cp2Pc(x,y)[0]}%;top:${cp2Pc(x,y)[1]}%">${CP2_LAMPS[grp]||CP2_LAMP_SVG}</span>`).join("")+`<span class="cp2-ball" style="left:${cp2Pc(...CP2_BALL)[0]}%;top:${cp2Pc(...CP2_BALL)[1]}%">${CP2_BALL_SVG}</span>`}
     if(S&&S.ph==="done"&&S.champ){let r="";for(let i=0;i<34;i++){const g=i%3===0;r+=`<i class="${g?"g":""}" style="left:${(i*37)%100}%;--c:${g?"#e8c25a":"#c8402c"};animation-duration:${5+(i%5)}s;animation-delay:-${(i*.53%6).toFixed(2)}s"></i>`}h+=`<span class="cp2-rain" style="position:absolute;inset:0">${r}</span>`}
     if(deco.dataset.h!==h){deco.innerHTML=h;deco.dataset.h=h}
     const cheer=S&&["play","done"].includes(S.ph);try{const c=P._shwCfg;if(c)c.HS.cp2Scr[3]=cheer?"cheer":"idle"}catch(e){}
@@ -14721,7 +14811,7 @@ function cp2Wrap(v,R){if(!CUP_MAP_ON||!window.XQNet||!v.querySelector("#cupb"))r
   if(!P.dataset.shw){try{if(typeof shwPage==="function"&&typeof SHIP_WALK_ON!=="undefined"&&SHIP_WALK_ON)shwPage(v,cfg,"cp2")}catch(e){}}
   if(typeof shpFit==="function")shpFit(v);
   try{if(typeof zmPage==="function")zmPage(v)}catch(e){}
-  try{if(typeof sciPage==="function")sciPage(v,CP2_SCI)}catch(e){}
+  try{if(typeof sciPage==="function")sciPage(v,cp2Sci(grp))}catch(e){}
   const st0=R&&R.stop;return Object.assign({},R,{stop:()=>{offs.forEach(f=>{try{f()}catch(e){}});clearInterval(t);if(st0)st0()}})}
 if(typeof CupPage==="function"){const f0=CupPage;CupPage=function(v){const R=f0.apply(this,arguments);try{return cp2Wrap(v,R)}catch(e){return R}}}
 /* ================= 🔁 錯棋重練「臨池書案＋曝書竹竿」（42 案第 1 頁：Gemini 方案 1＋4，Claude 依考究清單修正；考究說明 park/redomap/考究說明.md，史學顧問核圖中）=================
@@ -15111,18 +15201,18 @@ const SHW_MZ={W:MZ_W,H:MZ_H,el:18,h:[.12,97,.0005],home:"home",look0:[47,120],
 /* 出口（回饋 824）：左下角，從左邊走道往左走出去；點左下這一塊（左 0～9%、上 86～100%）＝出口 */
 if(typeof SHW_EXITS!=="undefined"&&SHW_EXITS&&!("study" in SHW_EXITS))SHW_EXITS.study={at:"lx",out:[-9,97.5],r:[0,86,9,100]};
 /* 點畫裡的東西看說明（07w6 sciPage）：亮格 12 件器物照格子順序（上排左到右、中排、下排） */
-const MZ_RELIC=[["青瓷玉壺春瓶","細頸、圓肚的青瓷瓶，宋元以來很常見的瓶形，明代書齋常拿來插一兩枝花。"],["甜白瓷杯","明代永樂年間景德鎮燒的白瓷，白得像糖霜一樣，所以叫「甜白」。"],
-  ["仿古銅鼎","照商周青銅鼎的樣子鑄的小鼎。明代文人喜歡收藏仿古的銅器，擺在架上賞玩。"],["玉璧","中間有圓孔的扁圓玉器，很早就有，古人當作禮器和佩玉；放在書齋裡是一件古玩。"],
-  ["硯","磨墨用的石頭，文房四寶之一。墨條加一點清水在硯上磨，就有墨汁可以寫字。"],["竹筆筒","截一段粗竹子做成，用來插毛筆，明代的書桌上很常見。"],
+const MZ_RELIC=[["青瓷玉壺春瓶","細頸、圓肚的青瓷瓶{{yuan:，宋元以來很常見的瓶形{{ming:，明代書齋常拿來插一兩枝花}}}}。"],["甜白瓷杯","{{ming:明代永樂年間景德鎮燒的白瓷，白得像糖霜一樣，所以叫「甜白」。}}{{<ming:這是一只潔白的瓷杯，白得像一層糖霜，摸起來溫溫潤潤的。}}","{{ming:甜白}}{{<ming:白}}瓷杯"],
+  ["仿古銅鼎","照商周青銅鼎的樣子鑄的小鼎。{{ming:明代文人喜歡收藏仿古的銅器，擺在架上賞玩。}}"],["玉璧","中間有圓孔的扁圓玉器，很早就有，古人當作禮器和佩玉；放在書齋裡是一件古玩。"],
+  ["硯","磨墨用的石頭，文房四寶之一。墨條加一點清水在硯上磨，就有墨汁可以寫字。"],["竹筆筒","截一段粗竹子做成，用來插毛筆{{ming:，明代的書桌上很常見}}。"],
   ["香盒","放香料的小圓盒，要焚香的時候從這裡取，常常跟香爐擺在一起。"],["青瓷水盂","盛清水的小罐子，磨墨時用小匙舀一點水到硯台上。"],
-  ["銅臥羊鎮紙","一隻四腳收在身下的小銅羊，底部平平的。寫字、畫畫時用它壓住紙，紙才不會被風吹動。明代書房常用這種銅臥獸鎮紙。"],["漆盒","木胎上一層一層塗漆做成的小盒子，可以收小東西。"],
-  ["白瓷小罐","素白、沒有花紋的小罐子，放在亮格裡當擺設。"],["供石（太湖石類）","顏色淺、到處是孔洞的石頭，放在小木座上欣賞它的形狀。明代林有麟寫過一本專講石頭的《素園石譜》。"]];
-const MZ_SCI=[{n:"明式亮格櫃",t:"上面開敞的格子擺東西給人看，下面有門可以收東西。明代的亮格櫃通常只有一到兩層亮格，這裡為了放 12 件珍品改成 3 層 4 格。點下面的櫃門，打開珍品冊。",
+  ["銅臥羊鎮紙","一隻四腳收在身下的小銅羊，底部平平的。寫字、畫畫時用它壓住紙，紙才不會被風吹動。{{ming:明代書房常用這種銅臥獸鎮紙。}}"],["漆盒","木胎上一層一層塗漆做成的小盒子，可以收小東西。"],
+  ["白瓷小罐","素白、沒有花紋的小罐子，放在亮格裡當擺設。"],["供石（太湖石類）","顏色淺、到處是孔洞的石頭，放在小木座上欣賞它的形狀。{{ming:明代林有麟寫過一本專講石頭的《素園石譜》。}}"]];
+const MZ_SCI=[{n:"明式亮格櫃",nd:"{{ming:明式}}亮格櫃",t:"上面開敞的格子擺東西給人看，下面有門可以收東西。{{ming:明代的亮格櫃通常只有一到兩層亮格，這裡為了放 12 件珍品改成 3 層 4 格。}}{{<ming:這裡為了放 12 件珍品，做成 3 層 4 格。}}點下面的櫃門，打開珍品冊。",
     s:[[[50,205],[422,205],[422,247],[50,247]],[[381,247],[426,247],[426,742],[381,742]],[[47,247],[61,247],[61,742],[47,742]]]},
   {n:"矮書格",t:"放書和棋具的木格子。上面擺著疊起來的棋枰和六扇折疊的小圍屏（桌屏），裡面是線裝書和藍布函套書。",s:[[[437,527],[867,527],[867,742],[437,742]]]},
-  {n:"明式長畫桌",t:"四條腿在四個角、腳是馬蹄足，還加了棖子。照明式家具的分法，腿在四角的叫「桌」，腿縮進去的才叫「案」，所以這是一張畫桌。",
+  {n:"明式長畫桌",nd:"{{ming:明式}}長畫桌",t:"四條腿在四個角、腳是馬蹄足，還加了棖子。{{ming:照明式家具的分法，腿在四角的叫「桌」，腿縮進去的才叫「案」，所以}}這是一張畫桌。",
     s:[[[45,868],[800,868],[800,905],[45,905]],[[45,905],[78,905],[78,1150],[45,1150]],[[675,905],[708,905],[708,1150],[675,1150]]]},
-  {n:"油盞",dn:"n",t:"小瓷盞裝油、放一根燈草點著，擱在矮木座上，沒有燈罩、也沒有玻璃。宋到明的瓷油盞常帶一個小把手。",s:[[[414,740],[492,740],[492,802],[414,802]]]}];
+  {n:"油盞",dn:"n",t:"小瓷盞裝油、放一根燈草點著，擱在矮木座上，沒有燈罩、也沒有玻璃。{{ming:宋到明的瓷油盞常帶一個小把手。}}",s:[[[414,740],[492,740],[492,802],[414,802]]]}];
 const mzDark=()=>{const t=store.get("pageTheme","auto"),h=new Date().getHours();return t==="dark"||(t==="auto"&&matchMedia("(prefers-color-scheme: dark)").matches)||h>=19||h<5};
 let MZ_FIG=null;   /* 舞台上 3D 角色（fig3d 回傳的 {B,r}），走路角色沒出現時揮手、歡呼用 */
 function mzCss(){if(document.getElementById("mzCss"))return;const s=document.createElement("style");s.id="mzCss";s.textContent=`
@@ -15209,7 +15299,7 @@ function mzWall(v){const pad=v.querySelector(".pad"),me2=pad&&pad.querySelector(
   if(MZ_WALK_ON&&typeof shwMount==="function"&&typeof SHIP_WALK_ON!=="undefined"&&SHIP_WALK_ON){try{const HS={};for(const k in SHW_MZ.HS){HS[k]=SHW_MZ.HS[k].slice();if(full[k])HS[k][3]="cheer"}
     shwMount({v,cfg:Object.assign({},SHW_MZ,{HS}),root:W,frame:W,layer:W,before:W.querySelector(".mz-hs"),sel:".mz-hs",keyOf:b=>b.id,find:h=>W.querySelector("#"+h),mem:"study"})}catch(e){}}
   /* 點畫裡的東西看說明（07w6）：亮格各格還是淡墨的，說明後面補一句 */
-  if(typeof sciPage==="function"){try{const it=MZ_RELIC.map(([n,t],i)=>{const c=MZ_CELLS[i];return{n,t:t+(i<zOn?"":"（這一格還是淡墨的，多收幾件珍品就會變成彩色。）"),s:[[[c[0]+3,c[1]+3],[c[2]-3,c[1]+3],[c[2]-3,c[3]-3],[c[0]+3,c[3]-3]]]}});
+  if(typeof sciPage==="function"){try{const it=MZ_RELIC.map(([n,t,nd],i)=>{const c=MZ_CELLS[i];return{n,nd,t:t+(i<zOn?"":"（這一格還是淡墨的，多收幾件珍品就會變成彩色。）"),s:[[[c[0]+3,c[1]+3],[c[2]-3,c[1]+3],[c[2]-3,c[3]-3],[c[0]+3,c[3]-3]]]}});
     sciPage(v,{k:"study",nm:"書齋",W:MZ_W,H:MZ_H,it:it.concat(MZ_SCI)})}catch(e){}}
   if(typeof shpFit==="function")try{shpFit(v)}catch(e){}
   try{if(typeof zmPage==="function")zmPage(v)}catch(e){}}
@@ -15256,6 +15346,13 @@ const sciNight=I=>/_night/.test(I.currentSrc||I.src||"");
 const SCI_ERAS=["qin","han","sanguo","weijin","nanbei","sui","tang","wudai","song","yuan","ming","qing"];
 function sciDock(){try{return typeof shipAt==="function"&&typeof shipDockList==="function"&&shipDockList()?shipAt()||"":""}catch(e){return""}}
 function sciEraOk(x,at){if(!x||!x.fe)return true;const i=SCI_ERAS.indexOf(at===undefined?sciDock():at),f=SCI_ERAS.indexOf(x.fe);return i<0||f<0||i>=f}
+/* 11/9 開發者（停五代點百刻香看到「宋代的《香譜》」）：停在某一朝時，說明不能提到比這一朝更晚的朝代、人物、書、事件。說明（t、tn、名稱）裡的分段語法：
+   {{song:…}}＝停在宋或宋以後、或沒停靠時才顯示；{{<song:…}}＝停在宋以前（秦～五代）才顯示，放只講到當朝為止的替代說法。可以巢狀，裡面那層先處理。
+   沒停靠、停在船艙（classic）或不認得的朝代：{{朝:…}} 顯示、{{<朝:…}} 不顯示（跟 sciEraOk 一樣，不認得就當沒停靠）。標記裡寫錯的朝代名同樣處理。
+   所有顯示說明的地方（sciShow 的卡片標題和內文、讀螢幕用的按鈕）都經過這裡；「還有 N 件沒看過」用的是原始名稱 n，不受影響。
+   名稱本身提到後代（明式亮格櫃、徽州茶樓）：另寫 nd＝顯示用的名稱（可用分段語法），n 照舊當「看過了沒」的鍵，玩家已記下的看過紀錄不會跑掉 */
+function sciEraText(t,at){t=t==null?"":String(t);if(t.indexOf("{{")<0)return t;const i=SCI_ERAS.indexOf(at===undefined?sciDock():at);let s=t,p;
+  do{p=s;s=s.replace(/\{\{(<?)([a-z]+):([^{}]*)\}\}/g,(m,lt,e,x)=>{const f=SCI_ERAS.indexOf(e);return(i<0||f<0?!lt:lt?i<f:i>=f)?x:""})}while(s!==p);return s}
 /* 這一頁現在看得到的物件（日夜、條件、fe 朝代門檻） */
 const sciLive=(D,P,I)=>{const n=sciNight(I),at=sciDock();return(D.it||[]).filter(x=>sciEraOk(x,at)&&(!x.dn||(x.dn==="n")===n)&&(!x.on||(()=>{try{return!!x.on(P)}catch(e){return false}})()))};
 /* 點到哪一件：重疊時取面積最小的那個形狀（香爐在桌上、畫心在掛軸裡） */
@@ -15265,8 +15362,8 @@ function sciHit(D,P,I,p){if((D.no||[]).some(s=>sciIn(s,p)))return null;let best=
 function sciDraw(P,I,D,S,cls,ms){const W=D.W||768,H=D.H||1376,ns="http://www.w3.org/2000/svg",g=document.createElementNS(ns,"svg");g.setAttribute("class","sci-fx "+cls);g.setAttribute("aria-hidden","true");
   g.setAttribute("viewBox",`0 0 ${W} ${H}`);g.setAttribute("preserveAspectRatio","none");Object.assign(g.style,{left:I.offsetLeft+"px",top:I.offsetTop+"px",width:I.offsetWidth+"px",height:I.offsetHeight+"px"});
   g.innerHTML=S.map(s=>typeof s[0]==="number"?`<circle class="o" cx="${s[0]}" cy="${s[1]}" r="${s[2]}"/>`:`<polygon class="o" points="${s.map(q=>q.join(",")).join(" ")}"/>`).join("");P.append(g);setTimeout(()=>g.remove(),ms)}
-function sciShow(D,x,night,P,I){if(typeof vibrate==="function")vibrate(5);const t=night&&x.tn?x.tn:x.t;
-  const sh=sheet("🔎 "+x.n,b=>{b.innerHTML=`<div class="muted" style="margin:-4px 0 8px">${esc(D.nm||"")}${D.nm?"・":""}畫裡的東西</div><p style="line-height:1.8;margin:0;font-size:16px">${esc(t)}</p>`});
+function sciShow(D,x,night,P,I){if(typeof vibrate==="function")vibrate(5);const t=sciEraText(night&&x.tn?x.tn:x.t);
+  const sh=sheet("🔎 "+sciEraText(x.nd||x.n),b=>{b.innerHTML=`<div class="muted" style="margin:-4px 0 8px">${esc(D.nm||"")}${D.nm?"・":""}畫裡的東西</div><p style="line-height:1.8;margin:0;font-size:16px">${esc(t)}</p>`});
   try{if(P&&I&&sciMark(D,x))sciAfter(D,P,I,sh)}catch(e){}}
 /* 回饋 839（開發者 11/9 從 Gemini 第三次評估選：「讓小帥說『這頁還有 3 件東西沒看過』」）：
    記住每頁看過哪些物件（store.sciLook＝{頁 k:{名稱:1}}，同名的算一件；日夜各自看得到的才算）。
@@ -15309,7 +15406,7 @@ function sciMount(P,I,D){if(!SCENE_INFO_ON||!P||!I||!D||!D.it||P.dataset.sci)ret
   /* 電腦滑鼠移到物件上換成手指游標（手機沒有游標，不影響） */
   P.addEventListener("pointermove",e=>{if(e.pointerType!=="mouse")return;const p=onImg(e.target)?pt(e):null,on=!!(p&&sciHit(D,P,I,p));if(P.dataset.sciCur!==(on?"1":"")){P.dataset.sciCur=on?"1":"";P.style.cursor=on?"pointer":""}});
   /* 讀螢幕的人：一排看不見的按鈕（同名的只列一次），一樣開小卡（只開現在看得到的那一件） */
-  const nm=[...new Set((D.it||[]).filter(x=>sciEraOk(x)).map(x=>x.n))],sr=document.createElement("div");sr.className="sci-sr";sr.innerHTML=`<span>畫裡可以點的東西：</span>`+nm.map((n,i)=>`<button type="button" data-i="${i}">${esc(n)}</button>`).join("");P.append(sr);
+  const nm=[...new Set((D.it||[]).filter(x=>sciEraOk(x)).map(x=>x.n))],sr=document.createElement("div");sr.className="sci-sr";sr.innerHTML=`<span>畫裡可以點的東西：</span>`+nm.map((n,i)=>`<button type="button" data-i="${i}">${esc(sciEraText(((D.it||[]).find(y=>y.n===n)||{}).nd||n))}</button>`).join("");P.append(sr);
   sr.onclick=e=>{const b=e.target.closest("button");if(!b)return;e.stopPropagation();const n=nm[+b.dataset.i],L=sciLive(D,P,I),x=L.find(y=>y.n===n);if(x)sciShow(D,x,sciNight(I),P,I)};
   sciHint(P,I,D)}
 /* 07w 在框上用捕獲攔點擊：點到桌面（TB）＝走到桌上、點出口那一塊＝走出去，都會擋掉後面的點擊，桌上的東西（茶碾、筆架……）就跳不出卡。
@@ -15335,6 +15432,18 @@ function sciAuto(){if(!SCENE_INFO_ON||typeof SCI_REG==="undefined")return;for(co
    11/9 補了考究說明（史學顧問核過）的首頁、學習、對戰、線上大廳、棋譜庫書閣、設定客房、星槎甲板 7 頁接在最後面（星槎圖是 896×1200，D 裡寫 W、H）；
    11/9 各朝渡口 13 張（park/shipmap/考究說明_各朝渡口_1109.md，待史學顧問核）接在最後面；驛站還沒有考究說明，先不登記；角色收藏頁（07z4）由那邊自己接
    11/9 學習、對戰、棋譜庫三頁的各朝圖 33 筆（park/hubmap/物件說明_各朝三頁_1109.md，說明取自兩份各朝考究說明，物件挑法待史學顧問核）接在最後面 */
+/* 首頁千秋松：照停靠朝代加一句（虛構的鎮上傳說＋各朝常識，不寫具體年份） */
+const SCI_PINE={qin:"秦朝的時候，它還是一棵年輕的松樹，剛長到屋簷那麼高；樹下的人玩的是六博，還沒有象棋。",han:"到了漢朝，它的樹幹已經要兩個小孩手拉手才抱得住，樹下的人玩的是六博。",sanguo:"三國打得最兇的那些年，它照樣每年春天長出新的松針，樹下還是有人在下圍棋。",weijin:"魏晉的讀書人愛在林下彈琴、清談、下圍棋，說不定也有人在這棵樹下坐過。",nanbei:"南北朝分分合合一百多年，它一直站在這裡，沒換過地方；北周武帝寫《象經》的時候，它也在。",sui:"隋朝開大運河的時候，它已經是附近最老的一棵樹，樹下還沒有人下今天這種象棋。",tang:"唐朝詩人賈島寫過「松下問童子」，說的是在松樹下向童子打聽隱士去了哪裡；那時候已經有很像象棋的「象戲」。",wudai:"五代短短五十多年換了五個朝代，它卻一年也沒少長；象戲也在這幾十年裡慢慢改變。",song:"宋朝的畫家愛畫老松，畫裡那種彎彎曲曲的枝幹，跟它長得很像；象棋也在宋代定型。",yuan:"元朝的時候，鎮上的人已經叫它「老松公」，說它比鎮上任何一間房子都老；樹下下的象棋，已經跟今天一樣。",ming:"明朝的人在它旁邊鋪了石階，好讓人走上去看看它，也有人坐在石階上翻《橘中秘》這些棋譜。",qing:"到了清朝，它已經活了將近兩千年，還是年年長出新的松針，樹下常有人捧著《梅花譜》擺棋。"};
+/* 11/9 開發者：「首頁畫面的山／樹／橋，都能結合象棋／朝代的小故事說明」。首頁各物件照停靠朝代換一句（""＝沒停靠或停在船艙），每句把象棋和那一朝連起來；
+   只寫停靠那一朝和以前的事，傳說都寫明「鎮上的人說」。逐句依據見 park/homemap/首頁物件各朝小故事_1109.md（待史學顧問核） */
+const SCI_HM={
+  boat:{qin:"秦朝還沒有象棋，人們玩的是六博，丟幾根竹箸決定怎麼走棋。鎮上的人說，船夫把博箸收在竹篷裡，等客人的時候就拿出來擲。",han:"漢朝人也玩六博。鎮上的人說，船夫最愛跟過河的客人博一局，輸的人自己搖櫓。",sanguo:"三國時，大家愛下的是圍棋，還沒有象棋。鎮上的人說，船夫在竹篷下擺一張小棋盤，一邊等客人一邊下。",weijin:"晉朝張華的《博物志》記了一個傳說：有人每年八月坐著浮槎到天河去，你搭的星槎就像那艘浮槎。那時候的人下的是圍棋，還沒有象棋。",nanbei:"北周武帝寫了一部《象經》，講的是一種「象戲」。鎮上的人說，有個船夫自稱學會了象戲，每個過河的客人都要聽他講一遍。",sui:"隋朝還沒有今天這種象棋。鎮上的人說，河上的船一年比一年多，船夫們排隊等客人時，就在船頭下棋解悶。",tang:"唐代牛僧孺的《玄怪錄》寫到「天馬斜飛度三止」，常被拿來說明唐代已經有很像象棋的「象戲」。鎮上的船夫最愛這一句，說馬走斜線，就像搖櫓轉彎。",wudai:"南唐的董源畫過江南的山水和渡口小舟，就像這條河上的舢板。五代的象戲還在慢慢改變，炮是什麼時候加進來的，到今天還沒有定論。",song:"到了宋代，象棋定型了，南宋的象棋圖上已經有炮。鎮上的船夫說，炮要隔著一顆子才能吃，就像櫓要隔著水才推得動船。",yuan:"元代的象棋已經跟今天一樣，《事林廣記》裡就印著象棋圖。鎮上的人說，運貨的船家會在船頭放一副棋，靠岸就找人下一盤。",ming:"明代是象棋古譜最多的時代，像《適情雅趣》《橘中秘》。鎮上的人說，船夫會把古譜捲起來塞在竹篷裡，下雨天就拿出來翻。",qing:"清代王再越的《梅花譜》是有名的象棋古譜。鎮上的船夫常說：開船跟開局一樣，頭幾步最要緊。","":"這裡原本畫了一艘西式小划艇，跟中國古代的渡口對不上，已經抹掉了。搖櫓過河，就像棋盤上的兵：過了河，才能往左右走。"},
+  willow:{qin:"比秦朝還早的《詩經》裡，就有「昔我往矣，楊柳依依」：我離開的時候，楊柳輕輕地搖擺。秦朝還沒有象棋，鎮上的人說，送行的人常在柳樹下陪朋友玩一局六博。",han:"漢朝人送客到灞橋，會折一枝柳送給遠行的人。那時候大家玩的是六博，還沒有象棋。",sanguo:"三國時，大家愛下圍棋，還沒有象棋。鎮上的人說，柳蔭下那張石凳，是下圍棋的人坐得最久的地方。",weijin:"魏晉的人把下圍棋叫「手談」：不用開口，用棋子聊天。鎮上的人說，名士們最愛坐在柳樹下手談，一坐就是一下午。",nanbei:"北周武帝寫了《象經》，講一種叫「象戲」的棋。鎮上的人說，柳樹下常有人圍著一張新畫的棋圖，一邊比劃，一邊爭這種新棋該怎麼走。",sui:"隋朝還沒有今天這種象棋。鎮上的人說，柳樹年年綠一次，樹下的棋卻一直在變。",tang:"唐代賀知章寫柳：「萬條垂下綠絲絛」，柳條就像一條條綠絲帶。同一個時代，《玄怪錄》裡的「象戲」已經有很像將、馬、車、卒的棋子，只是還看不到炮。",wudai:"五代短短五十多年換了五個朝代。鎮上的人說，那幾年柳樹下送別的人特別多，大家下一盤象戲，就各自上船。",song:"宋代象棋定型，棋盤中間隔著一條河，就像柳樹下這條楚河。鎮上的人說，送朋友上船前，大家喜歡在柳樹下再下一盤。",yuan:"元代的象棋已經跟今天一樣。鎮上的人說，柳樹年年發新芽，樹下下棋的人也一年比一年多。",ming:"明代有《適情雅趣》（1570 年）這樣的象棋古譜。鎮上的人說，教棋的先生最愛坐在柳蔭下讀譜。",qing:"清代的《竹香齋象戲譜》，書名裡還留著「象戲」兩個字。鎮上的人說，柳蔭下總有人捧著古譜，對著石桌擺排局。","":"《詩經》裡有一句「昔我往矣，楊柳依依」，意思是：我離開的時候，楊柳輕輕地搖擺。棋從六博、象戲一路變成今天的象棋，柳樹也在渡口送走了一代又一代的人。"},
+  bridge:{qin:"秦朝人玩六博，還沒有象棋；這種石拱橋，秦朝也還找不到實物。鎮上的人說，這座橋是星槎借來的，好讓兩岸的人過河下棋。",han:"東漢的畫像磚上，已經畫過拱形的橋。漢朝人在橋邊玩的是六博，還沒有象棋。",sanguo:"三國時大家愛下圍棋。鎮上的人說，橋上常有人擺棋盤，從早下到晚，過橋的人也停下來看。",weijin:"西晉太康三年（282 年），洛陽建春門外的旅人橋完工，全用大石砌成，橋下是圓圓的拱洞，是書上明確記載的石拱橋。那時候的人愛下圍棋，把下棋叫「手談」。",nanbei:"北周武帝寫了《象經》，「象戲」是最早寫進書裡的這類棋之一。鎮上的人說，兩岸的人過橋相會，最常聊的就是這種新棋。",sui:"隋朝的李春造了趙州橋，是現存最早的敞肩石拱橋。那時候還沒有今天這種象棋。",tang:"唐代溫庭筠寫「雞聲茅店月，人跡板橋霜」，清早過橋的人在霜上留下腳印。同一個時代，《玄怪錄》寫到「天馬斜飛」，常被拿來說明那時候已經有象戲。",wudai:"五代的象戲還在慢慢改變。鎮上的人說，趕路的人過了這座橋，常在石桌邊歇歇腳，下一盤再上路。",song:"宋代象棋定型，南宋的象棋圖上已經有河界，就跟橋下這條楚河一樣，一邊是黑方、一邊是紅方。",yuan:"元代的象棋已經是今天的樣子。鎮上的人說，過橋的商隊會在橋上停一停，跟鎮上的人下一盤再走。",ming:"明代的象棋古譜很多，像《橘中秘》（1632 年）。鎮上的人說，有人在橋頭擺出古譜裡的殘局，誰解得開，就請他喝茶。",qing:"清代民間流行「江湖排局」。鎮上的人說，擺排局的人最愛守在橋頭，等過路的人來解。","":"中國很早就會造石拱橋，最有名的是隋朝李春造的趙州橋。不管星槎停在哪一朝，這座橋都把兩岸的人連在一起。"},
+  stool:{qin:"秦朝還沒有象棋。鎮上的人說，那時候盒子裡裝的是六博的棋子和竹箸。",han:"漢朝人玩六博，丟竹箸決定怎麼走棋。鎮上的人說，那時候這個盒子裡裝的是博箸和博棋。",sanguo:"三國時大家愛下圍棋。鎮上的人說，那時候盒子裡裝的是黑白兩色的圍棋子。",weijin:"魏晉的名士很愛下圍棋，王坦之把下棋叫「坐隱」：坐在棋盤前，就像隱居一樣忘了外面的事。鎮上的人說，坐上這張石凳，一不小心就會下到天黑。",nanbei:"南朝梁的書裡記了一個傳說：晉朝的王質上山砍柴，看童子下棋，一局還沒下完，斧頭的木柄已經爛了。同一個時代，北周武帝寫了《象經》，講一種叫「象戲」的棋。鎮上的人說，坐上這張石凳看棋，也要小心忘了時間。",sui:"隋朝還沒有今天這種象棋。鎮上的人說，坐在石凳上的人，大多在下圍棋。",tang:"唐代《玄怪錄》裡的「象戲」，有很像將、馬、車、卒的棋子，還看不到炮。鎮上的人說，那時候打開棋盒，會發現少了今天的那幾顆炮。",wudai:"五代的象戲還在慢慢改變，炮是什麼時候加進來的，到今天還沒有定論。鎮上的人說，石凳上的人每次為這件事吵起來，最後都說：「下一盤就知道了。」",song:"宋代象棋定型，南宋的象棋圖上已經有河界和炮。打開棋盒擺出來的，就是那時候定下來的樣子。",yuan:"元代的《事林廣記》裡印著象棋圖。鎮上的人說，坐在石凳上的老先生，最愛照著書上的圖擺棋。",ming:"明代的象棋古譜很多，《適情雅趣》《橘中秘》都是那時候的書。鎮上的人說，石凳上的人一邊翻譜一邊擺子，一坐就是一下午。",qing:"清代的象棋古譜有《梅花譜》《竹香齋象戲譜》。鎮上的人說，那時候盒子裡除了棋子，還夾著一張抄下來的排局。","":"坐上鼓形石凳，打開棋盒，把紅黑兩方的棋子擺好，就可以在橋中央下一盤。"},
+  mtn:{qin:"秦朝還沒有象棋。更早的《楚辭》裡就出現過「象棋」兩個字，不過指的是象牙做的博棋，是玩六博用的。",han:"漢朝人玩的是六博。鎮上的人說，山上的樵夫下山時，最愛在渡口看人丟竹箸行博。",sanguo:"三國打仗打得最兇的那些年，大家下的還是圍棋。鎮上的人說，遠山那頭再亂，山這邊的人照樣在石桌旁下棋。",weijin:"東晉的陶淵明寫「采菊東籬下，悠然見南山」，悠閒地望著遠山。魏晉的人把下圍棋叫「坐隱」，坐著下棋，就像隱居在山裡一樣。",nanbei:"北周武帝寫了《象經》，記下一種叫「象戲」的棋，還召集百官來聽他講解。鎮上的人說，連遠山寺廟裡的和尚，也跑下山來打聽這種新棋怎麼下。",sui:"隋朝還沒有今天這種象棋。鎮上的人說，爬上遠山往下看，楚河就像棋盤中間的一條線。",tang:"唐代杜牧寫秋天的山：「霜葉紅於二月花」。同一個時代，《玄怪錄》裡已經寫到很像象棋的「象戲」。",wudai:"南唐的董源愛畫江南平平遠遠的山水，就像這片遠山。那時候的象戲還在慢慢改變，跟今天的象棋還不完全一樣。",song:"北宋郭熙說「春山淡冶而如笑」，春天的山像在微笑。宋代也是象棋定型的時代，棋盤有了河界，棋子有了炮。",yuan:"元代黃公望畫〈富春山居圖〉，遠山也是這樣淡淡地、平平地展開。那時候的象棋已經跟今天一樣。",ming:"明代是象棋古譜最多的時代，《適情雅趣》《橘中秘》都是那時候的書。鎮上的人說，有位老先生每天爬上遠山，在山頂背完一局古譜才下山。",qing:"清代王再越寫了象棋古譜《梅花譜》。鎮上的人說，從遠山上往下看棋鎮，一片片屋頂排得整整齊齊，像一盤擺好的殘局。","":"不管星槎停在哪一朝，遠山都在那裡；山下的棋，卻從六博、象戲，一路變成今天的象棋。"},
+  river:{qin:"秦朝還沒有象棋，人們玩的是六博。鎮上的人說，那時候這條河還沒有名字，只是安安靜靜地流過棋鎮。",han:"漢朝建立前，項羽和劉邦約好以鴻溝為界，東邊歸楚、西邊歸漢。那時候大家下的是六博，鎮上的人卻說，這條河就是從那時候起叫「楚河」的。",sanguo:"三國時，魏、蜀、吳三家分立，大家愛下的是圍棋。鎮上的人說，那幾年河兩岸的人，最愛隔著河比誰的棋下得好。",weijin:"魏晉的人愛下圍棋，把它叫「坐隱」「手談」。鎮上的人說，常有讀書人坐在河邊下棋，一局下完，河水已經流過好幾里。",nanbei:"南北朝時，南方、北方分成兩邊；北周武帝寫了《象經》，講一種叫「象戲」的棋。鎮上的人說，那時候這條河也被拿來比作兩邊的界線。",sui:"隋朝還沒有今天這種象棋，北周的《象經》倒是還有人記著。鎮上的人說，那時候河上來往的船，一年比一年多。",tang:"唐代白居易寫江南「春來江水綠如藍」，春天的楚河也是這種顏色。同一個時代，牛僧孺的《玄怪錄》寫到一種「象戲」，裡面有很像將、馬、車、卒的棋子，只是還看不到炮。",wudai:"五代短短五十多年換了五個朝代，象戲也在慢慢改變。鎮上的人說，那幾年河上的渡船一天也沒停過。",song:"到了宋代，象棋定型了，南宋的象棋圖上已經有河界：棋盤中間隔著一條河，就像橋下這條楚河。",yuan:"元代的象棋已經是今天的樣子，《事林廣記》裡就印著象棋圖。鎮上的人說，過河的旅人常在橋上擺一盤再走。",ming:"明代留下好幾部象棋古譜，像《適情雅趣》（1570 年）、《橘中秘》（1632 年）。鎮上的人說，渡口的船夫等船時，也會翻古譜。",qing:"清代王再越的《梅花譜》是有名的象棋古譜，民間還流行「江湖排局」。鎮上的人說，排局就像這條河：看起來平靜，底下藏著好多變化。","":"象棋棋盤中間的河界叫「楚河漢界」，借用的是楚漢相爭時以鴻溝為界的故事（《史記·項羽本紀》）。星槎停在不同的朝代，這條河也聽到不一樣的棋聲。"}};
+const sciHm=(k,b)=>{let e="";try{e=typeof sciDock==="function"?sciDock():""}catch(x){}const T=SCI_HM[k]||{};return b+(T[e]||T[""]||"")};
 const SCI_REG=[
 /* 🔰 新手訓練營（park/campmap/考究說明.md）。入口：12 面旗、白色小路（角色走的路）；我方營寨是 07w 的出口（點了走回營帳離開），不登記；營門口挖開讓路 */
 {re:/data\/campmap\/camp_(day|night)/,D:{k:"camp",nm:"新手訓練營",it:[
@@ -15350,27 +15459,43 @@ const SCI_REG=[
   {n:"敵方營寨",s:[[[306,190],[484,190],[484,286],[456,286],[456,300],[426,300],[426,252],[366,252],[366,300],[306,300]]],
    t:"最上面是敵方的營寨，四周圍著到膝蓋高的木柵，裡面兩條白色小路交叉成 X，就像棋盤上九宮的斜線（帥和仕只能在九宮裡走）。白色小路從我們的營寨蛇行、過橋，一路推進到這裡。最後一課寫著「殺」的旗，就插在敵方營門前。"},
   {n:"地形木案",nh:1,s:[[[96,1180],[678,1180],[678,1328],[96,1328]]],
-   t:"這張大木案上捏出了山川地形，用來講兵法、講棋。用模型講地形，東漢的馬援就在皇帝面前用米堆過山谷；到了北宋，沈括更把邊境的山川做成木頭的地形圖。這裡借來在書院教棋：近處是我方，中間的小溪當楚河，遠處是敵方。"},
+   t:"這張大木案上捏出了山川地形，用來講兵法、講棋。{{han:用模型講地形，東漢的馬援就在皇帝面前用米堆過山谷{{song:；到了北宋，沈括更把邊境的山川做成木頭的地形圖}}。}}這裡借來在書院教棋：近處是我方，中間的小溪當楚河，遠處是敵方。"},
   {n:"小山和山石",s:[[[150,350],[205,322],[262,332],[322,352],[336,388],[334,424],[228,434],[150,412]]],
-   t:"木案上的小山和山石，是用淡淡的墨一筆一筆皴擦出來的。用模型堆出山川來講地形，古時候就有人這樣做：《後漢書》記載，馬援曾在皇帝面前用米堆成山谷，一邊指一邊講。"}],no:[]}},
+   t:"木案上的小山和山石，是用淡淡的墨一筆一筆皴擦出來的。{{han:用模型堆出山川來講地形，古時候就有人這樣做：{{nanbei:《後漢書》記載，}}馬援曾在皇帝面前用米堆成山谷，一邊指一邊講。}}"}],no:[]}},
 /* 🍵 一盞茶殘局（park/canjumap/考究說明.md）。入口：一口、一盞、一壺（建盞、盞托、茶甌、湯瓶都是入口本體，不登記）。
-   茶筅、茶匙考究說明寫「之後要局部修」（畫得太像日式、茶匙不是金屬），修好前先不登記 */
+   茶筅、茶匙考究說明寫「之後要局部修」（畫得太像日式、茶匙不是金屬），修好前先不登記。
+   11/9 各朝版（07c2 的 CJM_ERA；park/canjumap/考究說明_各朝_1109.md）：圖網址 canju_*_weijin＝秦到隋煮茶、canju_*_tang＝唐五代煎茶，各組多出來的器物用 on: 看圖網址登記；
+   盤口壺、青瓷碗、小碗、執壺是入口本體，不登記 */
 {re:/data\/canjumap\/canju_(day|night)/,D:{k:"cjm",nm:"一盞茶殘局",it:[
-  {n:"船形茶碾",fe:"tang",s:[[[252,514],[260,534],[340,524],[352,506],[352,464],[452,464],[472,448],[486,428],[482,402],[420,398],[408,394],[348,394],[336,420],[300,466],[268,494]]],
-   t:"這是船形的茶碾，長得像一條小船：下面是長長的碾槽，上面一個圓圓的碾輪，用來把茶餅碾成細末。唐代陸羽的《茶經》就列了「碾」，宋代的《茶具圖贊》還替它取了外號叫「金法曹」。"},
-  {n:"陶風爐",s:[[[552,940],[724,940],[716,1010],[702,1154],[590,1158],[570,1010]]],
-   t:"地上這個陶做的小爐子叫「風爐」，是用來燒水的。「風爐」這個名字，在陸羽的《茶經》裡就有了。",
-   tn:"夜裡風爐的炭火燒得紅紅的，是燭台之外第二個暖暖的光。它是用來燒水的陶風爐，這個名字在陸羽的《茶經》裡就有了。"},
-  {n:"白梅和太湖石",s:[[[388,138],[468,88],[540,28],[596,0],[768,0],[768,244],[690,248],[600,244],[530,194],[460,192],[388,168]],[[0,82],[62,82],[118,148],[112,202],[72,232],[52,264],[0,264]]],
-   t:"右上角伸進來一枝白梅，左上角露出一角太湖石，桌面灑滿樹影。只露出一小部分、留下大片空白，就像從框框裡看出去的書院小景，這叫「框景」和「留白」。"},
+  {n:"船形茶碾",fe:"tang",on:P=>!/_tang\.webp/.test((P.querySelector("img")||{}).src||""),s:[[[252,514],[260,534],[340,524],[352,506],[352,464],[452,464],[472,448],[486,428],[482,402],[420,398],[408,394],[348,394],[336,420],[300,466],[268,494]]],
+   t:"這是船形的茶碾，長得像一條小船：下面是長長的碾槽，上面一個圓圓的碾輪，用來把茶餅碾成細末。唐代陸羽的《茶經》就列了「碾」{{song:，宋代的《茶具圖贊》還替它取了外號叫「金法曹」}}。"},
+  {n:"木茶碾",on:P=>/_tang\.webp/.test((P.querySelector("img")||{}).src||""),s:[[[252,514],[260,534],[340,524],[352,506],[352,464],[452,464],[472,448],[486,428],[482,402],[420,398],[408,394],[348,394],[336,420],[300,466],[268,494]]],
+   t:"這是木頭做的茶碾，長得像一條小船：下面是長長的碾槽，槽裡一個圓圓的碾輪，用來把烤過的茶餅碾成細末。陸羽的《茶經》列了「碾」，還說碾最好用橘木做，其次是梨、桑、桐、柘木。"},
+  {n:"竹夾和竹則",on:P=>/_tang\.webp/.test((P.querySelector("img")||{}).src||""),s:[[[190,500],[300,448],[322,456],[320,478],[250,512],[196,516]]],
+   t:"茶碾旁邊這一雙細竹棒叫「竹夾」，那支小竹匙叫「則」。照陸羽《茶經》的煎法：烤茶餅時用竹夾夾著翻面；水在鍑裡滾了，先用竹夾在湯中心攪出漩渦，再用「則」量好茶末，從中心放下去。"},
+  {n:"生鐵鍑",on:P=>/_tang\.webp/.test((P.querySelector("img")||{}).src||""),s:[[[548,880],[730,880],[732,935],[700,975],[580,975],[550,935]]],
+   t:"風爐上架著一只生鐵的「鍑」，是煎茶用的鍋。陸羽《茶經》說它要「方其耳」「廣其緣」「長其臍」：兩邊做成方耳，才放得正；口沿做寬，水滾的時候才翻得開；底部中間凸出來，火力才集中。",
+   tn:"天黑了，風爐的炭火從鍑底下透出紅光。這只生鐵「鍑」是煎茶用的鍋，陸羽《茶經》說它要「方其耳」「廣其緣」「長其臍」，放得正、滾得開、火力集中。"},
+  {n:"陶臼和木杵",on:P=>/_weijin\.webp/.test((P.querySelector("img")||{}).src||""),s:[[[60,470],[110,440],[172,470],[172,545],[62,545]]],
+   t:"這只粗陶臼和木杵是搗茶用的。這時候的人把茶葉做成茶餅，喝之前先烤一烤，再放進臼裡搗成碎末，然後放進釜裡煮。{{sanguo:三國時魏人張揖的《廣雅》記下了這種喝法：茶餅先烤成紅色，搗成末，用滾水沖，還加蔥、薑、橘子一起喝。}}"},
+  {n:"長柄瓢",on:P=>/_weijin\.webp/.test((P.querySelector("img")||{}).src||""),s:[[[96,600],[196,532],[250,532],[250,580],[120,648],[96,640]]],
+   t:"桌上這把長柄木瓢是用來舀茶湯的：茶在釜裡煮好了，用瓢舀出來，倒進碗裡喝。瓢可以用葫蘆剖開做，也可以用木頭挖成。{{weijin:西晉杜育寫〈荈賦〉，說喝茶「酌之以匏」，匏就是葫蘆做的瓢。}}"},
+  {n:"陶釜",on:P=>/_weijin\.webp/.test((P.querySelector("img")||{}).src||""),s:[[[556,850],[728,850],[736,930],[716,985],[566,985],[548,930]]],
+   t:"陶爐上架著一只矮扁的陶釜，就是古時候的鍋。搗好的茶末跟水一起放進釜裡煮，煮好再用瓢舀出來喝。",
+   tn:"天黑了，陶爐的炭火從釜底下透出紅光，釜裡的茶還冒著熱氣。茶末跟水一起在釜裡煮，煮好再用瓢舀出來喝。"},
+  {n:"陶風爐",nd:"{{tang:陶風爐}}{{<tang:陶爐}}",s:[[[552,940],[724,940],[716,1010],[702,1154],[590,1158],[570,1010]]],
+   t:"地上這個陶做的小爐子{{tang:叫「風爐」，是用來燒水的。「風爐」這個名字，在陸羽的《茶經》裡就有了。}}{{<tang:叫「陶爐」，是用來燒水、煮茶的。}}",
+   tn:"夜裡{{tang:風爐}}{{<tang:陶爐}}的炭火燒得紅紅的，是燭台之外第二個暖暖的光。{{tang:它是用來燒水的陶風爐，這個名字在陸羽的《茶經》裡就有了。}}{{<tang:它是用來燒水、煮茶的陶爐。}}"},
+  {n:"白梅和太湖石",nd:"{{tang:白梅和太湖石}}{{<tang:白梅和山石}}",s:[[[388,138],[468,88],[540,28],[596,0],[768,0],[768,244],[690,248],[600,244],[530,194],[460,192],[388,168]],[[0,82],[62,82],[118,148],[112,202],[72,232],[52,264],[0,264]]],
+   t:"右上角伸進來一枝白梅，左上角露出一角{{tang:太湖石}}{{<tang:山石}}，桌面灑滿樹影。只露出一小部分、留下大片空白，就像從框框裡看出去的{{tang:書院}}{{<tang:庭院}}小景，這叫「框景」和「留白」。"},
   {n:"銅燭台",dn:"n",s:[[[294,302],[330,302],[332,378],[352,386],[348,412],[332,414],[338,478],[292,478],[302,414],[282,408],[282,386],[296,378]]],
-   t:"天黑了，石茶桌上點起一座銅燭台，是這張圖最主要的光。地上風爐的炭火是第二個暖色的光，其他地方只剩淡淡的月光。"}],no:[]}},
+   t:"天黑了，石茶桌上點起一座銅燭台，是這張圖最主要的光。地上{{tang:風爐}}{{<tang:陶爐}}的炭火是第二個暖色的光，其他地方只剩淡淡的月光。"}],no:[]}},
 /* 🧠 主題訓練（park/thememap/考究說明.md）。入口：8 塊黑漆牌和主題名標籤；方磚走道是角色的路；最近兩對牌的框邊放 no */
 {re:/data\/thememap\/theme_(day|night)/,D:{k:"tm",nm:"主題訓練",it:[
   {n:"素面圓柱和柱礎",s:[[[80,902],[124,894],[136,1046],[136,1092],[76,1092],[76,1046]],[[654,894],[698,902],[704,1046],[704,1092],[642,1092],[642,1046]],[[68,176],[120,176],[120,380],[68,380]],[[654,176],[706,176],[706,380],[654,380]]],
    t:"迴廊的柱子是光滑的素面圓柱，柱子底下墊著圓圓的「柱礎」，也沒有刻花。古代木頭建築的柱子底下都墊柱礎，防潮又穩固，這裡畫成最樸素的樣子。"},
   {n:"直欞欄杆",s:[[[118,860],[200,800],[200,940],[120,1030]],[[0,934],[78,904],[80,1080],[0,1186]],[[580,800],[652,866],[652,1028],[580,906]],[[704,904],[768,934],[768,1152],[704,1096]]],
-   t:"兩邊的欄杆用一根根直直的木條排成，叫「直欞欄杆」。這是中國很古老的欄杆樣式，漢代的陶樓模型上就看得到，樣子簡單樸素。"},
+   t:"兩邊的欄杆用一根根直直的木條排成，叫「直欞欄杆」。這是中國很古老的欄杆樣式{{han:，漢代的陶樓模型上就看得到}}，樣子簡單樸素。"},
   {n:"露明的樑和椽子",s:[[[108,156],[668,156],[668,220],[108,220]]],
    t:"抬頭看，屋頂的樑和一根根椽子都直接露在外面，叫做「露明」。畫的時候，樑、椽、柱用濃墨勾線，地磚和牆則用淡墨暈染。"},
   {n:"欄杆外的竹和松",s:[[[140,488],[182,488],[182,546],[200,546],[200,736],[140,736]],[[588,536],[638,536],[638,746],[588,746]],[[0,456],[42,456],[42,900],[0,924]],[[732,452],[768,452],[768,904],[732,896]]],
@@ -15383,7 +15508,7 @@ const SCI_REG=[
 /* 📜 象棋規則・碑林（park/termsmap/考究說明.md）。三通碑是入口本體（放 no）；方磚地是角色的路；碑林後面整片竹林是背景，不登記 */
 {re:/data\/termsmap\/terms_(day|night)/,D:{k:"tb",nm:"象棋規則",it:[
   {n:"碑亭",s:[[[268,355],[505,355],[528,398],[575,448],[560,476],[212,476],[200,450],[245,398]],[[256,480],[292,480],[292,732],[256,732]],[[486,480],[522,480],[522,732],[486,732]]],
-   t:"正中間這座有屋頂的小亭子叫「碑亭」，素面圓柱、灰瓦屋頂。把很多石碑集中立在一處，讓人來看、來拓印，叫做「碑林」，這是中國特有的傳統。有名的西安碑林，是從北宋把唐代的《開成石經》等石碑集中保存開始的。",
+   t:"正中間這座有屋頂的小亭子叫「碑亭」，素面圓柱、灰瓦屋頂。把很多石碑集中立在一處，讓人來看、來拓印，叫做「碑林」，這是中國特有的傳統。{{song:有名的西安碑林，是從北宋把唐代的《開成石經》等石碑集中保存開始的。}}",
    tn:"天黑了，碑亭的屋簷下亮起一盞燈。這座小亭子叫「碑亭」，素面圓柱、灰瓦屋頂。把很多石碑集中立在一處，讓人來看、來拓印，叫做「碑林」，這是中國特有的傳統。"},
   {n:"碑廊",s:[[[0,425],[205,432],[205,494],[80,500],[0,540]],[[525,430],[768,424],[768,548],[705,500],[525,496]]],
    t:"兩旁這一長排有屋頂的走廊叫「碑廊」，和中間的碑亭連在一起，把三通碑圍在中間。灰瓦屋頂、素面圓柱，整個院子左右對稱，正合碑林肅穆的氣氛。"},
@@ -15395,24 +15520,24 @@ const SCI_REG=[
 /* 🔁 錯棋重練（park/redomap/考究說明.md）。入口：四個標籤；攤開的冊子、案角疊冊、曬書竹架是入口本體（no）；洗墨池水面、對岸垂柳是大片背景，不登記 */
 {re:/data\/redomap\/redo_(day|night)/,D:{k:"rd2",nm:"錯棋重練",it:[
   {n:"香篆爐",s:[[572,936,36]],
-   t:"書案上這只是香篆爐，古人用它來計時。香路分成一百刻，點一次剛好燒一天一夜，宋代的《香譜》記下了這種做法。這一頁用它看時間：今天有該複習的錯棋，香就點著；沒有的話，煙的長短表示離下次複習還有幾天。"},
+   t:"書案上這只是香篆爐，古人用它來計時。香路分成一百刻，點一次剛好燒一天一夜{{song:，宋代的《香譜》記下了這種做法}}。這一頁用它看時間：今天有該複習的錯棋，香就點著；沒有的話，煙的長短表示離下次複習還有幾天。"},
   {n:"筆和硯台",s:[[[408,988],[426,1004],[522,916],[512,896],[470,912]],[[456,962],[478,948],[554,956],[554,1002],[532,1022],[456,1014]]],
-   t:"書案上擺著毛筆和硯台，是練字的用具。《晉書》記載王羲之說過：「張芝臨池學書，池水盡黑。」意思是書法家張芝在池邊練字，練到整池水都變黑了。欄杆外那方池子就叫「洗墨池」，用來比喻錯棋也要一練再練，練到會為止。"},
+   t:"書案上擺著毛筆和硯台，是練字的用具。{{weijin:{{tang:《晉書》記載}}王羲之說過：「張芝臨池學書，池水盡黑。」意思是書法家張芝在池邊練字，練到整池水都變黑了。}}{{<weijin:{{han:書法家張芝在池邊練字，練到整池水都變黑了。}}}}欄杆外那方池子就叫「洗墨池」，用來比喻錯棋也要一練再練，練到會為止。"},
   {n:"水榭",nh:1,s:[[[16,0],[74,0],[74,832],[16,832]],[[62,0],[730,0],[730,118],[62,48]],[[730,0],[768,0],[768,1090],[730,1090]]],
    t:"你現在站在池邊的「水榭」裡往外看：近處是木地板和矮書案，中間是欄杆外的洗墨池，右岸立著晾書的竹架。該練的錯棋越多，池水就越黑；全部練完了，水面會閃過一道清光。"},
   {n:"池上的月影",dn:"n",s:[[[338,486],[442,486],[448,560],[424,612],[366,612],[342,560]]],
-   t:"夜裡，月亮倒映在洗墨池上。北宋的曾鞏寫過一篇〈墨池記〉，說臨川有一方池子，相傳是王羲之練字的墨池，不過他自己也懷疑是不是真的。他真正想說的是：本事要靠自己用功學來，就像錯棋要自己練到會。"}],
+   t:"夜裡，月亮倒映在洗墨池上。{{song:北宋的曾鞏寫過一篇〈墨池記〉，說臨川有一方池子，相傳是王羲之練字的墨池，不過他自己也懷疑是不是真的。他真正想說的是：}}{{<song:練字、下棋都一樣，}}本事要靠自己用功學來，就像錯棋要自己練到會。"}],
   no:[[[246,905],[330,844],[470,878],[470,922],[396,972],[246,918]],[[128,830],[228,830],[228,932],[128,932]],[[468,470],[700,350],[742,368],[742,692],[686,692],[686,470],[530,556],[530,762],[490,762],[490,505],[468,505]]]}},
 /* 🎯 棋力測驗（park/exammap/考究說明.md）。入口：四個標籤；桌左四本冊子、案上三份卷子是入口本體（no）；香案前的走道是角色的路 */
 {re:/data\/exammap\/exam_(day|night)/,D:{k:"ex2",nm:"棋力測驗",it:[
   {n:"題名榜",nh:1,s:[[[86,113],[684,113],[684,538],[86,538]]],
-   t:"牆上這面是「題名榜」：朱紅色的框、素色的木榜，不用黃色，因為黃色帶有皇家的意思。照考試名次張貼的榜，從隋唐科舉開始就有，宋代叫「等第榜」。榜上分十五格，從新手到專2；你最近一次測出來的那一級會蓋上一方「吾」字朱印，破了紀錄，印外還會多一個朱圈。"},
+   t:"牆上這面是「題名榜」：朱紅色的框、素色的木榜，不用黃色，因為黃色帶有皇家的意思。{{tang:照考試名次張貼的榜，從隋唐科舉開始就有{{song:，宋代叫「等第榜」}}。}}榜上分十五格，從新手到專2；你最近一次測出來的那一級會蓋上一方「吾」字朱印，破了紀錄，印外還會多一個朱圈。"},
   {n:"香案",s:[[[248,860],[527,860],[527,952],[248,952]],[[354,814],[422,814],[422,902],[354,902]]],
-   t:"考桌前這張矮桌是「香案」，上面擺著香爐。北宋沈括在《夢溪筆談》裡記下：禮部考進士那天，要在台階前擺上香案，主考官和考生面對面互相行禮，這是從唐代傳下來的做法。所以開考前，你的小人會先走到香案前鞠個躬。"},
+   t:"考桌前這張矮桌是「香案」，上面擺著香爐。{{song:北宋沈括在《夢溪筆談》裡記下：禮部考進士那天，要在台階前擺上香案，主考官和考生面對面互相行禮，這是從唐代傳下來的做法。所以}}{{<song:{{tang:唐代禮部考進士那天，要在台階前擺上香案，主考官和考生面對面互相行禮。}}}}開考前，你的小人會先走到香案前鞠個躬。"},
   {n:"茶盞",s:[[313,884,21],[461,884,21]],
-   t:"香案上這兩只小杯子是茶盞。《夢溪筆談》說，從前考進士那天，考場布置得很隆重，管事的官員還會準備好茶湯和飲料。這兩只茶盞，就是取這個意思。"},
+   t:"香案上這兩只小杯子是茶盞。{{song:《夢溪筆談》說，從前考進士那天，考場布置得很隆重，管事的官員還會準備好茶湯和飲料。這兩只茶盞，就是取這個意思。}}"},
   {n:"筆山",s:[[[258,688],[322,688],[322,722],[258,722]]],
-   t:"考桌上這座像小山的擺件叫「筆山」，是一種筆架，毛筆可以擱在山凹上。宋代的書桌上常見這種山形的筆山。"},
+   t:"考桌上這座像小山的擺件叫「筆山」，是一種筆架，毛筆可以擱在山凹上。{{song:宋代的書桌上常見這種山形的筆山。}}"},
   {n:"落地燭台",dn:"n",s:[[[56,538],[130,538],[130,622],[56,622]],[[80,622],[110,622],[110,900],[128,905],[128,936],[58,936],[58,905],[80,900]],[[638,538],[712,538],[712,614],[638,614]],[[660,690],[690,690],[690,900],[708,905],[708,936],[640,936],[640,905],[660,900]]],
    t:"天黑了，考桌兩端各點起一座落地的木燭台，插著白蠟燭，沒有燈罩，也沒有玻璃。暖暖的燭光照亮考桌和題名榜的下半部，四周沉在夜色裡，很有夜裡溫書、準備考試的感覺。"}],
   no:[[[140,645],[252,645],[252,750],[140,750]],[[298,672],[628,672],[628,760],[298,760]]]}},
@@ -15422,7 +15547,7 @@ const SCI_REG=[
    t:"屋簷下掛著一盞素白的燈，書院不用那麼氣派的東西，所以只掛一盞樸素的燈。",
    tn:"天黑了，簷下這盞燈點亮了，暖暖的燈光照亮朱紅榜的右半邊和下面的書案，其他地方都沉在夜色裡。"},
   {n:"素面書案",s:[[[93,712],[647,712],[650,776],[91,776]],[[113,776],[143,776],[143,910],[113,910]],[[598,776],[626,776],[626,910],[598,910]]],
-   t:"這是一張素面的書案，木頭是淡淡的原色。像紫檀那樣深色的名貴家具，要到明清才流行，所以這座書院的書案和棋桌都畫成樸素的淡色木頭。"},
+   t:"這是一張素面的書案，木頭是淡淡的原色。{{qing:像紫檀那樣深色的名貴家具，要到明清才流行，所以}}這座書院的書案和棋桌都畫成樸素的淡色木頭。"},
   {n:"廊邊的窗",s:[[[707,262],[768,255],[768,898],[712,878]]],
    t:"廊下這扇窗邊，擺著一張小方棋桌和兩張方凳。在這座書院裡，「靠窗的一張桌子」就是跟電腦下棋的地方，跟對戰頁那張靠窗的獨桌是同一個意思。"}],
   no:[[[50,300],[588,300],[588,386],[656,386],[656,642],[50,642]],[[166,686],[310,686],[312,752],[163,752]],[[352,670],[606,670],[614,758],[352,758]],[[560,975],[768,975],[768,1124],[560,1106]],[[596,1100],[630,1100],[630,1214],[596,1214]]]}},
@@ -15435,7 +15560,9 @@ const SCI_REG=[
    t:"月光從這扇後窗照進書齋，窗格的影子一格一格落在地板和矮几上。屋裡沒有點燈，只靠月光，安安靜靜地夜裡翻譜。"}],
   no:[[[236,405],[562,405],[562,702],[210,702]],[[70,488],[222,488],[222,656],[70,656]],[[556,528],[708,528],[708,692],[574,692]],[[244,714],[532,714],[534,794],[244,794]],[[466,322],[702,322],[702,500],[466,400]]]}},
 /* 🏮 大廳名冊（park/rostermap/考究說明.md）。是大廳的抽屜：框＝.mf-fr、圖＝img.mf-bg（pointer-events:none）；湊近看客簿（.mf-z）時停用。
-   拜匣、紅帖的熱區畫在 #mfBox、#mfCup 按鈕範圍裡面：按鈕出現時點到的是按鈕；錫燈台有千秋盃標籤時挖掉被標籤蓋住那塊（兩筆同名，看 #mfCup 切換） */
+   拜匣、紅帖的熱區畫在 #mfBox、#mfCup 按鈕範圍裡面：按鈕出現時點到的是按鈕；錫燈台有千秋盃標籤時挖掉被標籤蓋住那塊（兩筆同名，看 #mfCup 切換）。
+   11/9 各朝版（07x3 的 mfG；park/rostermap/考究說明_各朝_1109.md）：圖網址 roster_*_han＝秦到五代（青銅豆形燈、黑漆朱裡漆盒、直櫺門扇），用 on: 看圖網址切換；
+   門外的兩盞青銅懸燈落在「回天井」按鈕裡面，點到的是按鈕，所以不登記 */
 {re:/data\/rostermap\/roster_(day|night)/,img:"img.mf-bg",D:{k:"mf",nm:"名冊",off:P=>!!P.closest(".mf-z"),it:[
   {n:"錫燈台",fe:"song",on:P=>{const b=P.querySelector("#mfCup");return!b||b.hidden},s:[[[666,600],[748,600],[748,752],[680,752]]],
    t:"案上這盞燈台上，放一個敞口的小油盞，沒有任何燈罩。玻璃燈罩的燈是近代的洋油燈，所以這裡不用。",
@@ -15443,13 +15570,23 @@ const SCI_REG=[
   {n:"錫燈台",fe:"song",on:P=>{const b=P.querySelector("#mfCup");return!!b&&!b.hidden},s:[[[714,600],[748,600],[748,752],[680,752],[680,686],[714,686]]],
    t:"案上這盞燈台上，放一個敞口的小油盞，沒有任何燈罩。玻璃燈罩的燈是近代的洋油燈，所以這裡不用。",
    tn:"天黑了，案上的燈台點起來了：一個敞口的小油盞，沒有任何燈罩；玻璃燈罩的燈是近代的洋油燈，所以這裡不用。燈下的客簿書頁照樣看得清楚。"},
-  {n:"拜匣",s:[[[57,642],[207,642],[207,740],[57,740]]],
-   t:"這是裝名帖的小木匣。古人拜訪別人，先遞上寫了名字的帖子：漢代叫「謁」或「刺」，後來叫名帖、拜帖；明代的小說裡，還寫到僕人捧著拜匣跟在主人後面。有路過的石桌往事人物時，他們投來的名帖會露出匣口。"},
+  {n:"青銅豆形燈",on:P=>{const b=P.querySelector("#mfCup");return /_han\.webp/.test((P.querySelector("img.mf-bg")||{}).src||"")&&(!b||b.hidden)},s:[[[640,588],[760,588],[760,752],[655,752]]],
+   t:"案上這座燈叫「豆形燈」：上面一個淺淺的燈盤，中間一根細柱，底下一個喇叭形的圓座，樣子是從盛食物的「豆」變來的，戰國{{han:、漢代}}就有銅的、陶的。燈盤中間那根尖釘用來插燭或固定燈芯。白天不點火，也沒有任何燈罩。",
+   tn:"天黑了，豆形燈的燈盤裡點起一朵小火苗，沒有任何燈罩，暖暖的光照亮案面右半邊，燈下的客簿書頁照樣看得清楚。"},
+  {n:"青銅豆形燈",on:P=>{const b=P.querySelector("#mfCup");return /_han\.webp/.test((P.querySelector("img.mf-bg")||{}).src||"")&&!!b&&!b.hidden},s:[[[714,588],[760,588],[760,752],[680,752],[680,686],[714,686]]],
+   t:"案上這座燈叫「豆形燈」：上面一個淺淺的燈盤，中間一根細柱，底下一個喇叭形的圓座，樣子是從盛食物的「豆」變來的，戰國{{han:、漢代}}就有銅的、陶的。燈盤中間那根尖釘用來插燭或固定燈芯。白天不點火，也沒有任何燈罩。",
+   tn:"天黑了，豆形燈的燈盤裡點起一朵小火苗，沒有任何燈罩，暖暖的光照亮案面右半邊，燈下的客簿書頁照樣看得清楚。"},
+  {n:"漆盒",on:P=>/_han\.webp/.test((P.querySelector("img.mf-bg")||{}).src||""),s:[[[48,598],[224,598],[224,758],[48,758]]],
+   t:"這是一只黑漆朱裡的長方漆盒：外面黑漆、裡面朱紅，是戰國{{han:、漢代}}漆器最常見的配色。古人拜訪別人，先遞上寫了名字的「名刺」{{han:，漢代叫「謁」或「刺」，寫在木牘上}}{{tang:；後來改寫在紙上}}，這只盒子就用來收別人投來的名刺。有路過的石桌往事人物時，他們投來的名帖會露出盒口。"},
+  {n:"拜匣",on:P=>!/_han\.webp/.test((P.querySelector("img.mf-bg")||{}).src||""),s:[[[57,642],[207,642],[207,740],[57,740]]],
+   t:"這是裝名帖的小木匣。古人拜訪別人，先遞上寫了名字的帖子{{han:：漢代叫「謁」或「刺」，後來叫名帖、拜帖{{ming:；明代的小說裡，還寫到僕人捧著拜匣跟在主人後面}}}}。有路過的石桌往事人物時，他們投來的名帖會露出匣口。"},
   {n:"紅帖和筆",s:[[[548,690],[672,690],[674,790],[604,790],[548,774]]],
    t:"案角這份紅帖和一支筆，是千秋盃用的帖子。帖子用的是素紅紙，沒有燙金，因為燙金是近代才有的工藝。千秋盃開始報名時，這裡會出現小籤，點了就能去千秋盃。"},
   {n:"黑漆木案",s:[[[0,958],[768,958],[768,1062],[0,1062]]],
-   t:"門房這張大案是素面的黑漆木案。黑漆家具在中國用了兩千多年，從戰國、漢代的漆器就開始了；深紅色的紅木家具要到清代才流行，所以這裡不用紅木。"},
-  {n:"隔扇",s:[[[446,158],[522,158],[522,592],[446,592]],[[722,158],[768,158],[768,592],[722,592]]],
+   t:"門房這張大案是素面的黑漆木案。黑漆家具在中國用了兩千多年，從戰國{{han:、漢代}}的漆器就開始了{{qing:；深紅色的紅木家具要到清代才流行，所以這裡不用紅木}}。"},
+  {n:"直櫺門扇",on:P=>/_han\.webp/.test((P.querySelector("img.mf-bg")||{}).src||""),s:[[[446,158],[522,158],[522,592],[446,592]],[[722,158],[768,158],[768,592],[722,592]]],
+   t:"通往天井的門邊是一扇扇木門，上半截是一根根等距排列的直木條，叫「直櫺」。這是很古老的樣式{{han:，漢代的陶樓模型上就看得到}}，簡單樸素。"},
+  {n:"隔扇",on:P=>!/_han\.webp/.test((P.querySelector("img.mf-bg")||{}).src||""),s:[[[446,158],[522,158],[522,592],[446,592]],[[722,158],[768,158],[768,592],[722,592]]],
    t:"通往天井的門邊是一扇扇隔扇，上半截透空的花格叫「格心」，這裡用的是一般的幾何花格。有一種叫「萬字紋」的花樣，外國朋友可能會誤會，所以這裡不用。"}],
   no:[[[78,226],[384,226],[384,418],[78,418]],[[50,746],[494,746],[494,924],[50,924]]]}},
 /* ✉ 意見回饋・驛站信房（park/feedback/考究說明.md）。入口：寫信、修正紀錄、箋紙、匭的三個口、類型、木印、告示榜回條；告示榜、銅匭、木印、箋紙是入口本體（no）。
@@ -15462,19 +15599,19 @@ const SCI_REG=[
   {n:"筆架和石硯",s:[[[496,558],[582,568],[582,638],[540,638],[496,606]],[[574,659],[584,659],[584,698],[630,698],[628,724],[552,724],[544,700]]],
    t:"書案右手邊有一個筆架，上面擱著兩支毛筆，前面是一方石硯。這是照書案實際的用法擺的：寫字時右手拿筆，硯台和筆架放在右手邊最順手；左邊那塊白玉鎮紙，則壓在紙的左上角。"},
   {n:"太湖石",s:[[[592,306],[678,306],[678,420],[592,420]]],
-   t:"窗外庭院裡這塊坑坑洞洞、形狀奇特的石頭，叫「太湖石」。在庭院擺石頭欣賞的風氣，唐代就很流行，詩人白居易還寫過一篇《太湖石記》；宋徽宗的「花石綱」，更是把太湖石運進京城。"},
+   t:"窗外庭院裡這塊坑坑洞洞、形狀奇特的石頭，叫「太湖石」。{{tang:在庭院擺石頭欣賞的風氣，唐代就很流行，詩人白居易還寫過一篇《太湖石記》{{song:；宋徽宗的「花石綱」，更是把太湖石運進京城}}。}}"},
   {n:"窗外的竹子",s:[[[452,132],[542,132],[580,240],[580,402],[452,402]]],
-   t:"窗外種著幾竿竹子。竹子是讀書人的象徵，蘇軾有一句詩：「寧可食無肉，不可居無竹。」從窗戶看出去，一角白牆、幾竿竹、一塊石頭，像一幅框起來的畫，這是江南園林「框景」的手法。"},
+   t:"窗外種著幾竿竹子。竹子是讀書人的象徵{{song:，蘇軾有一句詩：「寧可食無肉，不可居無竹。」}}{{<song:。}}從窗戶看出去，一角白牆、幾竿竹、一塊石頭，像一幅框起來的畫，這是江南園林「框景」的手法。"},
   {n:"香几上的油盞",s:[[[684,410],[758,410],[758,500],[684,500]]],
-   t:"窗邊細細高高的小桌子叫「香几」，上面放著一個有嘴的油盞。古時候屋裡點燈，多半用陶瓷或銅做的油盞，放在燈架或几上，陸游的《老學庵筆記》還記過一種「省油燈盞」。白天不點燈，天黑了才點上一朵小火苗。",
+   t:"窗邊細細高高的小桌子叫「香几」，上面放著一個有嘴的油盞。古時候屋裡點燈，多半用陶瓷或銅做的油盞，放在燈架或几上{{song:，陸游的《老學庵筆記》還記過一種「省油燈盞」}}。白天不點燈，天黑了才點上一朵小火苗。",
    tn:"天黑了，香几上的油盞點起一朵小火苗。它是整間信房唯一的燈，暖暖地照亮書案右半邊、銅匭和木印。古時候屋裡點燈，多半用陶瓷或銅做的油盞，沒有玻璃燈罩。"},
   {n:"蠟丸",s:[[[644,849],[704,849],[704,888],[644,888]]],
-   t:"碟子裡這幾顆琥珀色的小球是「蠟丸」。古人會把書信封進蠟丸裡傳送，不怕受潮、也不怕被偷拆，史書上常寫到「蠟丸書」，宋代特別多。在這裡，它代表沒有網路時，你的信先封起來排隊，等驛卒來取。"}],
+   t:"碟子裡這幾顆琥珀色的小球是「蠟丸」。古人會把書信封進蠟丸裡傳送，不怕受潮、也不怕被偷拆，史書上常寫到「蠟丸書」{{song:，宋代特別多}}。在這裡，它代表沒有網路時，你的信先封起來排隊，等驛卒來取。"}],
   no:[[[6,230],[250,230],[250,740],[6,740]],[[608,698],[744,698],[744,846],[608,846]],[617,846,30],[[359,570],[586,648],[474,733],[246,655]]]}},
 /* 📜 關於＋換手機（park/passmap/考究說明.md）。是面板：框＝.hq-fr、圖＝img.hq-bg；文牒、竹書箱、包袱是入口本體（no），驛券是按鈕 */
 {re:/data\/passmap\/pass_(day|night)/,img:"img.hq-bg",D:{k:"hq",nm:"驛路文牒・換手機",it:[
   {n:"香插",s:[[[616,326],[694,326],[694,412],[616,412]]],
-   t:"這是插香用的小香插。產生轉移碼之後，這裡會點上一炷香，在 30 分鐘裡慢慢燒短，讓你看出轉移碼還能用多久，就像大家常說的「一炷香的時間」。這種直接插著燒的線香，元、明以後才常見。"},
+   t:"這是插香用的小香插。產生轉移碼之後，這裡會點上一炷香，在 30 分鐘裡慢慢燒短，讓你看出轉移碼還能用多久，就像大家常說的「一炷香的時間」。{{ming:這種直接插著燒的線香，元、明以後才常見。}}"},
   {n:"小油燈",dn:"n",s:[[[520,314],[598,314],[598,412],[520,412]]],
    t:"天黑了，書案上點起一盞小油燈：敞口的油盞，沒有燈罩，也沒有玻璃。玻璃燈罩的油燈是近代才有的東西。"}],
   no:[[[36,348],[480,348],[480,676],[36,676]],[[428,986],[730,986],[730,1316],[428,1316]],[[574,1166],[766,1166],[766,1356],[574,1356]]]}},
@@ -15482,7 +15619,7 @@ const SCI_REG=[
    左下角的「書體」跟著分類換圖（.sj-ti），同一時間只出現對應的那一件 */
 {re:/data\/deskmap\/desk_(day|night)/,img:"img.sj-bg",D:{k:"sj",nm:"棋譜庫書案",it:[
   {n:"函套線裝冊",on:P=>/sj_hantao/.test((P.querySelector(".sj-ti")||{}).src||""),s:[[[82,1034],[298,1034],[298,1190],[82,1190]]],
-   t:"現在翻的是古譜，所以左下角換成藍布函套裝著的線裝書。《適情雅趣》《橘中秘》《梅花譜》這些棋譜都是明清的書，明清的刻本多半是線裝。中文直排書從右往左翻，所以訂線在右邊、題簽貼在左上角。"},
+   t:"現在翻的是古譜，所以左下角換成藍布函套裝著的線裝書。{{qing:《適情雅趣》《橘中秘》《梅花譜》這些棋譜都是明清的書，明清的刻本多半是線裝。}}{{<qing:{{ming:《適情雅趣》《橘中秘》這些棋譜都是明代的書，線裝書在明代中後期普及。}}}}中文直排書從右往左翻，所以訂線在右邊、題簽貼在左上角。"},
   {n:"布袱卷宗",on:P=>/sj_juanzong/.test((P.querySelector(".sj-ti")||{}).src||""),s:[[[90,1040],[296,1040],[296,1184],[90,1184]]],
    t:"現在翻的是大師對局，所以左下角換成用布袱包著的一疊卷宗。卷宗是抄錄下來的檔案，所以書頁上的框線用細細的墨線。"},
   {n:"樟木箱分冊",on:P=>/sj_xiang/.test((P.querySelector(".sj-ti")||{}).src||""),s:[[[82,994],[298,994],[298,1240],[82,1240]]],
@@ -15491,19 +15628,26 @@ const SCI_REG=[
    t:"現在翻的是我的對局，所以左下角換成一本手抄冊。手寫的書才用紅色的格線，叫「朱絲欄」；自己下的棋就像親手抄下的對局紀錄，所以書頁的格線也變成紅色。"}],
   no:[[[150,398],[614,398],[646,992],[120,992]],[241,268,64]]}},
 /* 🏞 首頁「楚河渡口棋鎮」（park/homemap/考究說明.md）。下雪、下雨換 home_snow／home_rain（構圖對齊、位移 0），共用座標。入口：星槎和木棧道、牌坊、山門、告示牌、石桌是入口本體（no）；橋面廣場、碼頭步道是角色的路，不登記 */
-{re:/data\/homemap\/home(_snow|_rain)?\.webp/,D:{k:"hm2",nm:"楚河渡口棋鎮",it:[
+{re:/data\/homemap\/home[_.]/,D:{k:"hm2",nm:"楚河渡口棋鎮",it:[   /* 11/9：四季、晨昏、各朝首頁也認（構圖對齊）；只屬於宋原圖的物件用 on 濾掉 */
   {n:"舢板",s:[[[438,1160],[470,1152],[560,1180],[640,1222],[662,1262],[612,1272],[540,1250],[462,1215]],[[398,1240],[430,1238],[520,1262],[590,1300],[592,1342],[540,1346],[440,1300],[405,1268]],[[598,1240],[620,1236],[652,1290],[636,1300]]],
-   t:"河面上這兩艘小船叫舢板：船頭方方平平，中間一個拱形的竹篷可以遮雨，船尾有一支長長的櫓，左右搖動就能讓船前進。這裡原本畫了一艘西式小划艇，跟中國古代的渡口對不上，已經抹掉了。"},
+   get t(){return sciHm("boat","河面上這兩艘小船叫舢板：船頭方方平平，中間一個拱形的竹篷可以遮雨，船尾有一支長長的櫓，左右搖動就能讓船前進。")}},
   {n:"垂柳",s:[[[86,1000],[130,950],[200,940],[250,975],[262,1060],[240,1110],[180,1100],[160,1150],[130,1150],[96,1100]],[[524,1020],[560,955],[620,925],[680,950],[702,1010],[700,1090],[660,1110],[640,1095],[600,1100],[540,1080]]],
-   t:"橋下兩岸種著垂柳。古人常在水邊、渡口送別，柳樹是送別詩裡最常見的樹。《詩經》裡有一句「昔我往矣，楊柳依依」，意思是：我離開的時候，楊柳輕輕地搖擺。"},
+   get t(){return sciHm("willow","橋下兩岸種著垂柳。古人常在水邊、渡口送別，柳樹是送別詩裡最常見的樹。")}},
   {n:"青石拱橋",s:[[[110,880],[640,880],[700,905],[700,1000],[520,1000],[505,950],[470,915],[400,900],[330,915],[295,950],[280,1000],[100,1000],[96,905]]],
-   t:"這是一座青石砌的單孔拱橋，橋洞是半圓形，橋上立著一根根石柱和石欄板。中國很早就會造石拱橋，最有名的是隋朝李春造的趙州橋。橋中央的廣場是你出發的地方，就像站在棋盤正中間的河界上。"},
+   get t(){return sciHm("bridge","這是一座青石砌的單孔拱橋，橋洞是半圓形，橋上立著一根根石柱和石欄板。橋中央的廣場是你出發的地方，就像站在棋盤正中間的河界上。")}},
   {n:"石鼓凳",s:[[318,762,24],[478,770,22],[400,822,21]],
-   t:"石桌旁的三個凳子長得像小鼓，叫鼓形石凳。左邊那個上面放著一個褐色木蓋的小圓盒，看起來是棋盒：棋子從盒子裡拿出來，擺到石桌的棋盤上。"},
-  {n:"崖上老松",s:[[[440,70],[540,20],[600,0],[768,0],[768,320],[735,320],[712,200],[660,150],[580,120],[500,110],[440,100]]],
-   t:"右上角斜伸進來一株老松，長在書院那一岸。《論語》說：「歲寒，然後知松柏之後彫也。」天冷了，才知道松柏是最後凋謝的，所以松樹代表耐得住、有骨氣。"},
-  {n:"粉牆黛瓦",s:[[[0,250],[140,245],[255,262],[262,372],[215,385],[205,400],[60,395],[0,420]]],
-   t:"左岸是一片白牆黑瓦的房子，牆頭一層層高起來、蓋著黑瓦，是徽州、江南民居的樣子。左岸通往的對戰茶樓是明代徽州的茶樓，右岸的書院則是宋代的樣子，兩岸隔著一條楚河。"}],
+   get t(){return sciHm("stool","石桌旁的三個凳子長得像小鼓，叫鼓形石凳。左邊那個上面放著一個褐色木蓋的小圓盒，看起來是棋盒：棋子從盒子裡拿出來，擺到石桌的棋盤上。")}},
+  /* 11/9 開發者：「這顆樹也增加故事，例如千年樹：換了好多朝代，這顆樹仍然屹立不搖地落在原地」。每一朝的首頁都畫了它，說明照停靠朝代換一句 */
+  {n:"千秋松",s:[[[440,70],[540,20],[600,0],[768,0],[768,320],[735,320],[712,200],[660,150],[580,120],[500,110],[440,100]]],
+   get t(){let e="";try{e=typeof shipAt==="function"&&typeof shipDockList==="function"&&shipDockList()?shipAt():""}catch(x){}
+     return"右上角這株老松，棋鎮的人叫它「千秋松」。星槎停過的每一朝，它都站在書院那一岸的同一個位置：朝代換了、房子換了、河上的船也換了，只有它從來沒有搬過家。"+(SCI_PINE[e]||"不管星槎停在哪一朝，回到棋鎮都看得到它。")+"《論語》說：「歲寒，然後知松柏之後彫也。」天冷了，才知道松柏是最後凋謝的。"}},
+  /* 11/9 新增：遠山（畫面上方的群山）、楚河（星槎上游、木棧道兩旁、橋洞和橋下的河面；星槎、木棧道是入口本體，不含）。座標照原圖 768×1376 量，各朝首頁構圖對齊 */
+  {n:"遠山",nh:1,s:[[[0,105],[20,100],[45,115],[60,95],[85,65],[110,55],[125,65],[140,95],[175,125],[200,120],[225,100],[245,125],[270,140],[300,128],[330,140],[360,160],[400,165],[440,148],[480,148],[520,150],[560,140],[600,160],[640,185],[655,200],[620,215],[540,210],[470,205],[440,195],[400,190],[340,185],[300,200],[240,205],[150,205],[60,200],[0,200]]],
+   get t(){return sciHm("mtn","畫面最上方這一片遠山，用淡淡的石青、石綠一層層暈開，山腳藏在雲霧裡。")}},
+  {n:"楚河",nh:1,s:[[[318,222],[380,214],[450,220],[520,226],[535,255],[515,288],[288,290],[300,255]],[[275,535],[370,535],[370,665],[258,665],[265,600]],[[500,535],[548,535],[560,600],[555,665],[500,665]],[[300,1000],[295,950],[330,915],[400,900],[470,915],[505,950],[520,1000],[600,1005],[600,1130],[615,1250],[690,1300],[690,1376],[235,1376],[235,1040],[250,1005]]],
+   get t(){return sciHm("river","橋下這條河，棋鎮的人叫它「楚河」：左岸像棋盤上的黑方，右岸像紅方，石橋就架在兩邊交會的地方。")}},
+  {n:"粉牆黛瓦",on:P=>/data\/homemap\/home(_(snow|rain|spring|summer|autumn|winter))?(_(dawn|dusk))?\.webp/.test((P.querySelector(":scope>img")||{}).src||""),s:[[[0,250],[140,245],[255,262],[262,372],[215,385],[205,400],[60,395],[0,420]]],   /* 講的是宋原圖的徽州民居，各朝首頁不登記 */
+   t:"左岸是一片白牆黑瓦的房子{{ming:，牆頭一層層高起來、蓋著黑瓦，是徽州、江南民居的樣子。左岸通往的對戰茶樓是明代徽州的茶樓，右岸的書院則是}}{{<ming:；右岸的書院是}}宋代的樣子，兩岸隔著一條楚河。"}],
   no:[[[285,295],[530,290],[530,530],[285,530]],[[370,500],[500,500],[500,680],[370,680]],[[55,375],[215,375],[215,565],[55,565]],[[560,380],[768,380],[768,615],[560,615]],[[28,645],[152,645],[152,762],[28,762]],[[338,712],[456,712],[456,812],[338,812]]]}},
 /* 📚 學習頁「千秋翰林書院」（park/hubmap/考究說明_學習.md）。十個入口的東西（石碑、沙盤、點茶桌、洗墨池、迴廊木板、考桌、朱紅榜、矮几、二樓露台、閣門）是入口本體（no）；中軸石板路、月台台階是角色的路，不登記
    11/9 各朝版 learn_<朝>（07y 照停靠朝代換）只認原圖 learn.webp：這些說明寫的是宋代書院（斗栱門樓、素紗燈、朱熹講堂），唐以前各朝是學室、太學、國子學，燈也改成青銅吊燈盞，套上去會講錯；各朝的說明另外登記在最後面（lrn_<朝>，park/hubmap/物件說明_各朝三頁_1109.md） */
@@ -15549,7 +15693,7 @@ const SCI_REG=[
   {n:"二樓茶座",s:[[[50,372],[255,372],[255,418],[50,418]],[[515,376],[735,376],[735,418],[515,418]]],
    t:"二樓迴廊擺著方桌和靠背椅，牆上掛著空白的立軸。有人上線，迴廊的燈籠就亮一盞，燈下坐著喝茶的客人；上線的人越多，整座樓就越亮。"},
   {n:"雕花額枋",s:[[[55,234],[160,234],[160,266],[55,266]],[[160,262],[256,262],[256,286],[160,286]],[[512,262],[610,262],[610,286],[512,286]],[[610,252],[725,252],[725,288],[610,288]]],
-   t:"柱子之間的橫樑叫「額枋」，柱頭兩邊托著橫樑的雕花木塊叫「雀替」。徽州的木雕很有名，這裡只刻了捲草花紋。"}],
+   t:"柱子之間的橫樑叫「額枋」，柱頭兩邊托著橫樑的雕花木塊叫「雀替」。{{song:徽州的木雕很有名，}}這裡只刻了捲草花紋。"}],
   no:[[[240,252],[530,252],[530,500],[240,500]],[[296,725],[472,725],[472,940],[296,940]],[[696,580],[740,580],[740,775],[696,775]],[[52,676],[138,676],[138,800],[52,800]],[[8,950],[232,950],[232,1232],[8,1232]]]}},
 /* 📜 棋譜庫「崇文書閣」（park/libmap/考究說明.md）。畫軸、樟木箱、兩座書櫥、攤開的冊子、手抄冊、燈檠是入口本體（no）；中央樓梯、一樓地板是角色的路，不登記；書案後往右的出口由 07w 先攔 */
 {re:/data\/libmap\/lib\.webp/,D:{k:"lb3",nm:"崇文書閣",it:[
@@ -15570,7 +15714,7 @@ const SCI_REG=[
    16 個入口的東西（扇、窗、炕桌、筆筒、刻刀匣、鎖匣、衣架、鏡架、香爐、古琴、石磬、玄關長案、包袱書箱）是入口本體（no）；地毯一帶是角色的路，不登記 */
 {re:/data\/setmap\/set_(day|night)/,D:{k:"sm2",nm:"天字客房",it:[
   {n:"羅漢床",s:[[[232,438],[528,438],[536,600],[232,600]]],
-   t:"窗下這張三面有圍子的矮床，現在大家叫它「羅漢床」，圍子做成透空的格子。床上的小矮桌叫炕桌，棋盤就擺在上面。這是明式家具常見的樣子。",
+   t:"窗下這張三面有圍子的矮床，現在大家叫它「羅漢床」，圍子做成透空的格子。床上的小矮桌叫炕桌，棋盤就擺在上面。{{ming:這是明式家具常見的樣子。}}",
    tn:"夜裡窗戶關上了，窗紙透著淡淡的月光。窗下這張三面有圍子的矮床，現在大家叫它「羅漢床」；床上的小矮桌叫炕桌，棋盤就擺在上面，旁邊的燈檠照亮了它。"},
   {n:"棋盒",s:[[484,503,24]],
    t:"炕桌旁邊這兩個圓圓的木盒是棋盒，收棋子用的。"},
@@ -15579,7 +15723,7 @@ const SCI_REG=[
   {n:"硯台",s:[[[562,446],[606,446],[606,474],[562,474]]],
    t:"書案左邊這方長方形的黑硯，是磨墨寫字用的，旁邊擱著一支筆。筆筒、刻刀匣、小鎖匣也都在這張書案上。"},
   {n:"琴桌",s:[[[470,760],[690,760],[690,870],[650,870],[650,790],[512,790],[512,870],[470,870]]],
-   t:"這張長方矮桌是放古琴的琴桌。古琴有七根弦，琴面嵌著一排小白點叫「琴徽」，標出按弦的位置；嵇康的〈琴賦〉裡就寫到「徽以鍾山之玉」。"},
+   t:"這張長方矮桌是放古琴的琴桌。古琴有七根弦，琴面嵌著一排小白點叫「琴徽」，標出按弦的位置{{sanguo:；嵇康的〈琴賦〉裡就寫到「徽以鍾山之玉」}}。"},
   {n:"香几",s:[[[400,745],[470,745],[470,870],[400,870]]],
    t:"香爐底下這張細腿小方几叫香几。几上除了三足銅香爐，還有一支插著香箸的小瓶，是燒香時配套的用具。"},
   {n:"燈檠",dn:"n",s:[[[540,382],[592,382],[592,645],[536,645]]],
@@ -15590,7 +15734,7 @@ const SCI_REG=[
 {re:/data\/shipmap\/ship_map/,img:"img.shp-base",D:{k:"sp2",nm:"雲河星槎",W:896,H:1200,it:[
   /* 回饋 859（星槎無歲月）：爛柯懸棋是 07w8-shichen.js 程式畫的按鈕，點它開自己的說明卡並記成看過；這裡登記是為了「這頁還有 N 件沒看過」算得到、讀螢幕清單有它（在石桌 no 範圍內，點圖不會重複跳卡） */
   {n:"懸在半空的棋子",nh:1,s:[[398,612,26]],
-   t:"石桌上方懸著一顆沒刻字的紅棋子。傳說晉朝的王質看童子下棋，一局還沒下完，斧頭的木柄已經爛了（舊題任昉《述異記》）。在星槎上沒有時間，這顆棋子懸在這裡，誰也不知道多久了。"},
+   t:"石桌上方懸著一顆沒刻字的紅棋子。{{weijin:傳說晉朝的王質看童子下棋，一局還沒下完，斧頭的木柄已經爛了{{nanbei:（舊題任昉《述異記》）}}。}}在星槎上沒有時間，這顆棋子懸在這裡，誰也不知道多久了。"},
   {n:"船頭紅燈籠",s:[[[770,195],[830,195],[836,262],[812,312],[786,312],[766,262]]],
    t:"船頭高高的木桿上，掛著一盞點亮的紅紙燈籠，在夜裡照路。整張圖幾乎都是黑白水墨，只有燈籠、棋子的紅和天上的金色星點有顏色。"},
   {n:"船旗",s:[[[728,30],[812,62],[792,80],[760,82],[748,110],[728,110]]],
@@ -15624,13 +15768,13 @@ const SCI_REG=[
   no:[[[295,350],[600,320],[600,470],[400,500],[300,480]],[[480,500],[768,490],[768,790],[480,790]],[[105,680],[232,680],[232,762],[105,762]]]}},
 {re:/data\/shipmap\/port_qin(_c|_f)?\.webp/,D:{k:"pt_qin",nm:"秦・咸陽直道渡口",it:[
   {n:"夯土長城",s:[[[0,296],[60,288],[120,278],[200,270],[262,252],[344,252],[348,282],[300,284],[262,282],[205,298],[120,307],[60,314],[0,327]]],
-   t:"山脊上這道平頂的長牆是秦朝的長城。秦始皇統一天下後，派蒙恬把燕、趙、秦原本各自修的長城連起來，用來擋匈奴。秦長城是用黃土一層層夯實的，沒有磚砌的垛口和敵樓；那種磚長城大多是明朝才修的。"},
+   t:"山脊上這道平頂的長牆是秦朝的長城。秦始皇統一天下後，派蒙恬把燕、趙、秦原本各自修的長城連起來，用來擋匈奴。秦長城是用黃土一層層夯實的，沒有磚砌的垛口和敵樓{{ming:；那種磚長城大多是明朝才修的}}。"},
   {n:"烽火台",s:[[[602,292],[640,288],[650,256],[690,256],[668,330],[668,378],[604,378],[600,340]]],
    t:"冒著煙的這座土台是烽火台。敵人來了，白天燒柴放煙、晚上點火，一台接一台傳下去，邊關的消息很快就能傳到很遠的地方。"},
   {n:"秦直道",s:[[[596,370],[642,376],[630,412],[584,440],[574,470],[594,496],[562,528],[518,528],[528,490],[524,460],[560,428],[600,400]]],
    t:"往遠方伸過去的這條路，代表秦直道。它是秦始皇命蒙恬修的軍用大道，從咸陽北邊的雲陽一路往北通到九原（今天內蒙古包頭一帶），長七百多公里，大軍可以很快開到北方邊境。"},
   {n:"老松",s:[[[0,500],[90,486],[200,496],[290,518],[342,580],[322,632],[240,652],[150,652],[132,720],[122,800],[60,812],[0,782]]],
-   t:"前景這棵老松用濃墨畫松針，後面的黃土山只用淡淡的赭黃，一濃一淡就拉開了遠近。秦朝崇尚黑色，《史記》說秦朝的衣服、旗子都「上黑」，所以這張圖用的是玄黑加黃土色。"},
+   t:"前景這棵老松用濃墨畫松針，後面的黃土山只用淡淡的赭黃，一濃一淡就拉開了遠近。秦朝崇尚黑色，{{han:《史記》說}}秦朝的衣服、旗子都「上黑」，所以這張圖用的是玄黑加黃土色。"},
   {n:"上岸的石階",s:[[[300,994],[380,988],[462,1008],[458,1106],[400,1112],[308,1062]]],
    t:"從木棧橋上岸，要走過這一段石階。渡口在渭水邊：咸陽在九嵕山的南邊、渭水的北邊，山的南面和水的北面古人都叫「陽」，所以叫「咸陽」。"}],
   no:[[[288,440],[310,424],[522,418],[532,500],[440,548],[298,522]],[[500,690],[768,660],[768,900],[540,892]],[[150,730],[292,730],[292,842],[150,842]]]}},
@@ -15652,7 +15796,7 @@ const SCI_REG=[
   {n:"赤壁",s:[[[400,300],[430,200],[470,168],[540,148],[620,152],[700,138],[768,148],[768,400],[640,396],[560,390],[500,382],[420,346]]],
    t:"對岸這片紅褐色的陡崖就是赤壁。西元 208 年，孫權和劉備的聯軍在長江赤壁一帶大敗曹操；這一仗之後，魏、蜀、吳三分天下的局面慢慢成形。"},
   {n:"江上的帆船",s:[[[38,362],[70,318],[88,324],[112,374],[102,388],[38,388]],[[94,452],[130,348],[176,352],[216,420],[206,468],[100,472]]],
-   t:"左邊江上這兩艘帆船，掛的是一條條橫竹片撐開的硬帆，樣子比較像唐、宋以後的船。赤壁之戰那時候，江上打仗用的是好幾層樓高的樓船，還有蒙衝、鬥艦這類戰船。"},
+   t:"左邊江上這兩艘帆船，掛的是一條條橫竹片撐開的硬帆{{song:，樣子比較像唐、宋以後的船}}。赤壁之戰那時候，江上打仗用的是好幾層樓高的樓船，還有蒙衝、鬥艦這類戰船。"},
   {n:"北岸營寨",s:[[[420,640],[570,610],[700,628],[722,690],[600,700],[420,700]],[[398,690],[500,676],[502,782],[398,782]]],
    t:"岸上這片帳篷和木柵是營寨。曹操大軍駐紮在長江北岸，孫劉聯軍在南岸。北方來的士兵不習慣坐船打仗，軍中又流行疾病，這些都是曹軍戰敗的原因。"},
   {n:"江邊老松",s:[[[0,560],[100,558],[200,598],[182,680],[130,700],[122,800],[150,880],[60,902],[0,880]]],
@@ -15664,7 +15808,7 @@ const SCI_REG=[
   {n:"曲水",s:[[[228,420],[300,408],[362,428],[352,472],[322,502],[262,522],[240,482]]],
    t:"中間彎彎曲曲的小溪叫「曲水」。東晉永和九年（353 年），王羲之和朋友在蘭亭的溪邊玩「曲水流觴」：酒杯順著溪水漂，停在誰面前，誰就要作詩。王羲之為這些詩寫的序，就是有名的〈蘭亭集序〉。"},
   {n:"松樹",s:[[[370,214],[452,214],[502,250],[582,320],[602,352],[532,382],[482,352],[400,346],[370,300]],[[100,430],[200,420],[262,450],[332,550],[322,622],[232,622],[202,700],[150,700],[140,760],[80,760],[70,600],[100,520]]],
-   t:"擂台後的山崖上，斜斜伸出一棵松樹。魏晉的人很喜歡用松樹形容一個人的風度，《世說新語》說嵇康「肅肅如松下風」，意思是他像松樹下吹過的風，清爽又挺拔。"},
+   t:"擂台後的山崖上，斜斜伸出一棵松樹。魏晉的人很喜歡用松樹形容一個人的風度，{{nanbei:《世說新語》說}}{{<nanbei:有人形容}}嵇康「肅肅如松下風」，意思是他像松樹下吹過的風，清爽又挺拔。"},
   {n:"溪邊山石",s:[[[540,922],[600,900],[700,920],[768,950],[768,1100],[640,1092],[560,1062]]],
    t:"溪邊的山石用乾乾的筆一皴一擦，畫出石頭的紋理，這叫「皴法」。魏晉這一站是所有渡口裡顏色最淡的，只在竹葉和遠山上了一點青綠，看起來清清淡淡。"},
   {n:"遠山雲霧",s:[[[0,198],[60,188],[132,188],[192,230],[202,292],[0,292]]],
@@ -15674,9 +15818,9 @@ const SCI_REG=[
   {n:"棲霞山千佛崖",s:[[[86,232],[252,232],[252,352],[86,352]]],
    t:"山崖上鑿出一個大佛龕，中間坐著佛像，兩旁站著菩薩，就像南京棲霞山的千佛崖。那裡從南朝開始在山壁上鑿佛龕，最大的一龕是無量壽佛，是最重要的南朝石窟之一，就在長江邊上。"},
   {n:"山寺佛塔",s:[[[298,252],[340,248],[400,214],[432,214],[472,250],[482,302],[298,302]]],
-   t:"遠山上有寺廟和佛塔。南朝的皇帝和貴族很信佛，梁武帝還四次到同泰寺「捨身」，要大臣花大錢把他贖回來；杜牧的詩說「南朝四百八十寺」，寫的就是當年建康城一帶寺廟林立的樣子。"},
+   t:"遠山上有寺廟和佛塔。南朝的皇帝和貴族很信佛，梁武帝還四次到同泰寺「捨身」，要大臣花大錢把他贖回來{{tang:；杜牧的詩說「南朝四百八十寺」，寫的就是當年建康城一帶寺廟林立的樣子}}。"},
   {n:"擂台旁的寶塔",s:[[[564,308],[632,308],[630,446],[564,446]],[[654,358],[702,358],[702,442],[654,442]]],
-   t:"擂台旁這座多層寶塔，每層都有屋簷和欄杆。南朝的佛塔多半是方形的木造樓閣塔；這種有平座、欄杆的多層塔，樣子比較像後來宋、遼時代的塔。"},
+   t:"擂台旁這座多層寶塔，每層都有屋簷和欄杆。南朝的佛塔多半是方形的木造樓閣塔{{song:；這種有平座、欄杆的多層塔，樣子比較像後來宋、遼時代的塔}}。"},
   {n:"江上的篷船",s:[[[452,968],[520,984],[604,1012],[604,1046],[540,1048],[466,1004]],[[446,1060],[540,1062],[604,1092],[600,1116],[460,1112]],[[588,1030],[700,1018],[738,1032],[730,1092],[596,1092]],[[46,918],[150,926],[150,966],[50,962]]],
    t:"江面上有幾艘帶竹篷的小船，在兩岸之間擺渡。南北朝時，南方和北方的政權大致隔著長江、淮河對峙了一百多年；長江又寬又急，北方的大軍很難渡江南下。"},
   {n:"老松",s:[[[0,480],[100,468],[200,488],[300,528],[342,600],[252,622],[182,662],[202,722],[140,742],[0,702]]],
@@ -15684,7 +15828,7 @@ const SCI_REG=[
   no:[[[376,440],[562,446],[640,446],[640,562],[400,562]],[[520,618],[768,608],[768,852],[540,852]],[[194,698],[332,698],[332,792],[194,792]]]}},
 {re:/data\/shipmap\/port_sui(_c|_f)?\.webp/,D:{k:"pt_sui",nm:"隋・揚州大運河渡口",it:[
   {n:"隋煬帝的龍舟",s:[[[26,300],[62,266],[100,280],[118,260],[132,238],[168,210],[176,184],[252,186],[260,212],[290,236],[300,292],[374,294],[368,330],[330,394],[260,424],[150,442],[100,432],[60,386],[28,346]]],
-   t:"船頭有龍頭的這艘大船，就是隋煬帝坐的龍舟。《資治通鑑》說它一共有四層，最上層有正殿、朝堂，中間兩層有一百二十間房，還用金玉裝飾。煬帝坐著它沿運河南下江都（今天的揚州），這樣勞民傷財，也是隋朝很快滅亡的原因之一。"},
+   t:"船頭有龍頭的這艘大船，就是隋煬帝坐的龍舟。{{song:《資治通鑑》說}}{{<song:據說}}它一共有四層，最上層有正殿、朝堂，中間兩層有一百二十間房，還用金玉裝飾。煬帝坐著它沿運河南下江都（今天的揚州），這樣勞民傷財，也是隋朝很快滅亡的原因之一。"},
   {n:"運河上的船隊",s:[[[386,330],[420,310],[470,298],[505,288],[520,270],[560,258],[600,248],[662,246],[662,262],[600,274],[576,294],[540,312],[505,332],[480,348],[420,352],[388,348]],[[562,318],[622,322],[618,348],[568,346]]],
    t:"運河上一艘接一艘的平底木船，載著一堆堆貨物。煬帝南巡的時候，船隊前後連綿兩百多里。運河開通以後，南方的糧食也能用船一路運到北方。"},
   {n:"江都的城牆",s:[[[660,236],[768,232],[768,336],[662,336],[652,300]]],
@@ -15702,7 +15846,7 @@ const SCI_REG=[
   no:[[[300,470],[440,440],[602,478],[602,562],[540,642],[420,642],[310,562]],[[555,600],[768,560],[768,902],[590,882],[580,790]],[[140,800],[292,800],[292,900],[140,900]]]}},
 {re:/data\/shipmap\/port_tang(_c|_f)?\.webp/,D:{k:"pt_tang",nm:"唐・長安西市渡口",it:[
   {n:"長安城門",s:[[[0,272],[140,266],[150,194],[302,194],[312,266],[470,300],[470,392],[0,392]]],
-   t:"這是長安的城門和城樓。唐代的長安是當時世界上最大的城市之一，四周有高大的城牆。真正的唐長安城牆是用黃土夯成的，城門洞是用木柱、木樑撐起來的方形門洞；圖上這種圓拱形的門洞，要到宋、元以後才普遍。"},
+   t:"這是長安的城門和城樓。唐代的長安是當時世界上最大的城市之一，四周有高大的城牆。真正的唐長安城牆是用黃土夯成的，城門洞是用木柱、木樑撐起來的方形門洞{{yuan:；圖上這種圓拱形的門洞，要到宋、元以後才普遍}}{{<yuan:，跟圖上這種圓拱形的門洞不一樣}}。"},
   {n:"大雁塔",s:[[[588,150],[628,150],[652,246],[586,246]]],
    t:"遠方方方正正、一層層往上收的塔是大雁塔。玄奘從天竺取經回來後，在慈恩寺建了這座塔，收藏他帶回來的經書和佛像。新考上的進士會到塔下題名，叫「雁塔題名」。"},
   {n:"西市",s:[[[420,330],[500,320],[560,302],[650,300],[768,300],[768,562],[690,562],[600,542],[570,452],[490,422],[420,402]]],
@@ -15724,11 +15868,11 @@ const SCI_REG=[
   {n:"枯樹",s:[[[0,388],[90,378],[202,388],[202,460],[100,522],[90,622],[40,642],[0,622]],[[688,448],[768,448],[768,562],[700,562]],[[678,858],[768,858],[768,962],[690,962]]],
    t:"葉子掉光的枯樹，枝條像爪子一樣伸向天空。五代這一站刻意幾乎不上顏色，只留墨灰和一點焦黃，用「缺少顏色」來表現亂世。"},
   {n:"倒塌的土牆",s:[[[450,930],[560,914],[640,920],[700,958],[768,974],[768,1012],[640,1012],[500,1002],[450,982]]],
-   t:"這一段土牆塌了一半。五代的亂世一直到宋太祖趙匡胤建立宋朝，天下才慢慢安定下來。"}],
+   t:"這一段土牆塌了一半。{{song:五代的亂世一直到宋太祖趙匡胤建立宋朝，天下才慢慢安定下來。}}{{<song:五代的亂世裡，戰爭幾乎沒有停過。}}"}],
   no:[[[348,290],[602,278],[662,340],[642,452],[420,452],[348,402]],[[470,550],[768,550],[768,800],[500,800]],[[138,558],[262,558],[262,632],[138,632]]]}},
 {re:/data\/shipmap\/port_song(_c|_f)?\.webp/,D:{k:"pt_song",nm:"宋・臨安元宵渡口",it:[
   {n:"雷峰塔",s:[[[200,148],[256,148],[260,236],[198,236]]],
-   t:"湖對岸山上的塔是雷峰塔，是吳越國王錢俶在西湖邊建的。南宋時的雷峰塔是八角五層的樓閣式塔，比圖上畫的更粗壯。後來流傳的《白蛇傳》裡，白娘子就被壓在雷峰塔下。"},
+   t:"湖對岸山上的塔是雷峰塔，是吳越國王錢俶在西湖邊建的。南宋時的雷峰塔是八角五層的樓閣式塔，比圖上畫的更粗壯。{{ming:後來流傳的《白蛇傳》裡，白娘子就被壓在雷峰塔下。}}"},
   {n:"斷橋",s:[[[148,316],[220,304],[300,312],[402,334],[402,356],[148,356]]],
    t:"湖上這座單孔石拱橋是斷橋，在西湖白堤的東頭。冬天下雪後，有一種說法是橋面向陽的雪先融化，遠看橋像斷了一樣，叫「斷橋殘雪」，南宋時就列入西湖十景。"},
   {n:"元宵花燈",s:[[[678,318],[768,298],[768,502],[702,522],[682,642],[600,642],[594,502],[678,442]]],
@@ -15744,7 +15888,7 @@ const SCI_REG=[
   no:[[[314,380],[562,370],[562,542],[320,542]],[[490,680],[768,680],[768,962],[490,962]],[[94,738],[286,738],[286,842],[94,842]]]}},
 {re:/data\/shipmap\/port_yuan(_c|_f)?\.webp/,D:{k:"pt_yuan",nm:"元・草原驛站渡口",it:[
   {n:"氈帳",s:[[[202,596],[266,592],[270,642],[202,642]],[[54,490],[146,490],[146,532],[54,532]],[[534,504],[620,500],[768,522],[768,606],[660,606],[600,566],[534,550]],[[722,884],[768,880],[768,952],[722,952]]],
-   t:"草地上這些白色圓頂的帳篷是氈帳，用羊毛氈蓋在木架上，可以拆開、搬走；蒙古人跟著水草放牧遷徙，哪裡的草長得好，就把帳篷搬到哪裡。元朝人叫它「穹廬」或「氈帳」，「蒙古包」是清朝以後才有的叫法。"},
+   t:"草地上這些白色圓頂的帳篷是氈帳，用羊毛氈蓋在木架上，可以拆開、搬走；蒙古人跟著水草放牧遷徙，哪裡的草長得好，就把帳篷搬到哪裡。元朝人叫它「穹廬」或「氈帳」{{qing:，「蒙古包」是清朝以後才有的叫法}}。"},
   {n:"草原的天空",s:[[[0,160],[150,170],[300,232],[420,272],[480,202],[600,152],[700,112],[768,102],[768,330],[700,340],[640,380],[520,428],[420,398],[330,370],[250,340],[160,312],[0,330]]],
    t:"天上一團團的雲是用水墨暈染的，墨和水自然化開，就有了厚有薄。北朝民歌《敕勒歌》說「天似穹廬，籠蓋四野」：草原的天空就像一頂大氈帳，把四面八方都蓋住了。"},
   {n:"草原遠山",s:[[[0,372],[60,350],[120,320],[182,320],[252,364],[330,380],[400,408],[460,420],[520,438],[600,398],[680,350],[740,330],[768,334],[768,452],[0,452]]],
@@ -15788,13 +15932,13 @@ const SCI_REG=[
 /* 📚 學習頁各朝版 learn_qin（park/hubmap/考究說明_各朝學習棋譜_1109.md 的「秦・官府學室」；no 沿用原圖 learn 的入口本體） */
 {re:/data\/hubmap\/learn_qin\.webp/,D:{k:"lrn_qin",nm:"秦・官府學室",it:[
   {n:"學室大門",s:[[[215,1000],[300,958],[470,958],[550,1000],[548,1040],[500,1060],[500,1275],[465,1275],[465,1100],[300,1100],[300,1275],[262,1275],[262,1060],[215,1040]]],
-   t:"大門的柱子和門扇都漆成黑色，屋簷平平直直，不像後代那樣高高翹起。秦朝崇尚黑色，《史記》說秦始皇規定衣服、旗子都「上黑」，所以這裡的柱子、門扇、几案都用黑漆。"},
+   t:"大門的柱子和門扇都漆成黑色，屋簷平平直直，不像後代那樣高高翹起。秦朝崇尚黑色，{{han:《史記》說}}秦始皇規定衣服、旗子都「上黑」，所以這裡的柱子、門扇、几案都用黑漆。"},
   {n:"青銅燈盞",s:[[167,557,17],[297,557,17],[474,557,17],[604,557,17],[13,537,14],[755,537,14],[96,464,13],[672,464,13],[167,396,12],[604,396,12],[294,227,11],[474,227,11]],
    t:"簷下用細鏈吊著小小的青銅燈盞，白天不點火。你在新手訓練營每上完一課，這 12 盞燈就由近到遠多亮一盞。"},
   {n:"學室講堂",s:[[[130,505],[200,425],[560,425],[640,505],[620,530],[610,648],[160,648],[150,530]]],
    t:"秦朝沒有書院，也沒有太學。丞相李斯向秦始皇建議「以吏為師」：想學法令，就跟著官吏學。湖北睡虎地出土的秦代竹簡說，只有史官的子弟才能進「學室」學習，所以這裡叫學室。"},
   {n:"白粉夯土牆",s:[[[160,1118],[268,1112],[268,1258],[178,1258]],[[496,1112],[600,1115],[590,1258],[496,1258]]],
-   t:"大門兩旁是刷了白粉的夯土牆，配上黑漆的柱子和灰黑色的筒瓦。整座學室黑白分明，比宋代的書院沉穩。"},
+   t:"大門兩旁是刷了白粉的夯土牆，配上黑漆的柱子和灰黑色的筒瓦。整座學室黑白分明{{song:，比宋代的書院沉穩}}{{<song:，看起來很沉穩}}。"},
   {n:"前院老樹",s:[[[640,950],[700,925],[768,935],[768,1205],[738,1205],[722,1110],[700,1060],[660,1040],[640,1000]]],
    t:"前院這株老樹斜斜伸到沙盤上方，新手訓練營的沙盤就在樹下。秦朝其實還沒有象棋，流行的是「六博」；這裡的象棋是陪你穿越各朝的棋盤。"},
   {n:"藏書閣旁的古松",s:[[[135,240],[200,195],[260,205],[285,250],[262,300],[262,390],[230,390],[215,290],[150,280]],[[480,240],[530,210],[590,235],[592,270],[540,290],[525,375],[500,375],[505,280],[480,270]]],
@@ -15807,7 +15951,7 @@ const SCI_REG=[
   {n:"青銅燈盞",s:[[167,557,17],[297,557,17],[474,557,17],[604,557,17],[13,537,14],[755,537,14],[96,464,13],[672,464,13],[167,396,12],[604,396,12],[294,227,11],[474,227,11]],
    t:"簷下用細鏈吊著小小的青銅燈盞，白天不點火。你在新手訓練營每上完一課，這 12 盞燈就由近到遠多亮一盞。"},
   {n:"太學講堂",s:[[[130,505],[200,425],[560,425],[640,505],[620,530],[610,648],[160,648],[150,530]]],
-   t:"漢武帝為五經博士招收弟子，這就是太學的開始；到了東漢，太學設在洛陽。四座屋頂的屋簷都比宋代平直，看起來比宋代的書院樸拙。"},
+   t:"漢武帝為五經博士招收弟子，這就是太學的開始；到了東漢，太學設在洛陽。{{song:四座屋頂的屋簷都比宋代平直，看起來比宋代的書院樸拙。}}{{<song:四座屋頂的屋簷都很平直，看起來樸拙。}}"},
   {n:"藏書閣",s:[[[270,155],[495,155],[505,215],[505,250],[485,262],[485,362],[282,362],[282,262],[258,250],[262,215]]],
    t:"後面這座兩層的樓閣，照漢代墓裡出土的陶樓模型來畫，二樓有平座和欄杆。西漢皇家藏書的地方叫天祿閣、石渠閣，這座藏書閣就是取這個意思。"},
   {n:"夯土短牆",s:[[[160,1118],[268,1112],[268,1258],[178,1258]],[[496,1112],[600,1115],[590,1258],[496,1258]]],
@@ -15837,18 +15981,18 @@ const SCI_REG=[
   {n:"青銅燈盞",s:[[167,557,17],[297,557,17],[474,557,17],[604,557,17],[13,537,14],[755,537,14],[96,464,13],[672,464,13],[167,396,12],[604,396,12],[294,227,11],[474,227,11]],
    t:"簷下用細鏈吊著小小的青銅燈盞，白天不點火。你在新手訓練營每上完一課，這 12 盞燈就由近到遠多亮一盞。"},
   {n:"國子學講堂",s:[[[130,505],[200,425],[560,425],[640,505],[620,530],[610,648],[160,648],[150,530]]],
-   t:"西晉武帝在太學之外，另外設立國子學；《晉書》記載這是咸寧二年（276 年）的事。所以魏晉這一朝，這裡叫國子學。"},
+   t:"西晉武帝在太學之外，另外設立國子學；{{tang:《晉書》記載}}這是咸寧二年（276 年）的事。所以魏晉這一朝，這裡叫國子學。"},
   {n:"竹簾和麈尾",s:[[[320,545],[422,545],[422,577],[320,577]]],
-   t:"講堂門上捲起一副竹簾，考桌一角還放著一柄白色的麈尾。魏晉名士清談時手拿麈尾，《世說新語》寫王衍拿著白玉柄的麈尾，手和玉柄白得分不出來。"},
+   t:"講堂門上捲起一副竹簾，考桌一角還放著一柄白色的麈尾。魏晉名士清談時手拿麈尾，{{nanbei:《世說新語》寫}}王衍拿著白玉柄的麈尾，手和玉柄白得分不出來。"},
   {n:"前院老樹",s:[[[640,950],[700,925],[768,935],[768,1205],[738,1205],[722,1110],[700,1060],[660,1040],[640,1000]]],
-   t:"前院老樹下是新手訓練營的沙盤。魏晉的讀書人很愛下圍棋，《世說新語》說王坦之把圍棋叫「坐隱」，支道林把它叫「手談」。"},
+   t:"前院老樹下是新手訓練營的沙盤。魏晉的讀書人很愛下圍棋，{{nanbei:《世說新語》說}}王坦之把圍棋叫「坐隱」，支道林把它叫「手談」。"},
   {n:"藏書閣旁的古松",s:[[[135,240],[200,195],[260,205],[285,250],[262,300],[262,390],[230,390],[215,290],[150,280]],[[480,240],[530,210],[590,235],[592,270],[540,290],[525,375],[500,375],[505,280],[480,270]]],
    t:"藏書閣兩旁各有一株老松，枝幹彎彎曲曲。穿過講堂、走到最後面的藏書閣，就能去棋譜庫讀古譜。"}],
   no:[[[45,1025],[180,1025],[180,1220],[45,1220]],[[555,1072],[725,1072],[725,1215],[555,1215]],[[132,815],[238,815],[238,955],[132,955]],[[448,840],[628,840],[628,985],[448,985]],[[630,660],[768,580],[768,915],[630,800]],[[282,650],[492,650],[492,722],[282,722]],[[18,595],[132,595],[132,865],[18,865]],[[492,635],[640,635],[640,712],[492,712]],[[302,212],[466,212],[466,278],[302,278]],[[330,298],[438,298],[438,365],[330,365]]]}},
 /* 📚 學習頁各朝版 learn_nanbei（park/hubmap/考究說明_各朝學習棋譜_1109.md 的「南北朝・國學」；no 沿用原圖 learn 的入口本體） */
 {re:/data\/hubmap\/learn_nanbei\.webp/,D:{k:"lrn_nanbei",nm:"南北朝・國學",it:[
   {n:"國學大門",s:[[[215,1000],[300,958],[470,958],[550,1000],[548,1040],[500,1060],[500,1275],[465,1275],[465,1100],[300,1100],[300,1275],[262,1275],[262,1060],[215,1040]]],
-   t:"朱紅的門柱配上白牆、灰瓦，門頭的屋簷平平直直。講堂和藏書閣的屋脊兩端還立著鴟尾，是唐朝以前各朝裡最華麗的一座。"},
+   t:"朱紅的門柱配上白牆、灰瓦，門頭的屋簷平平直直。講堂和藏書閣的屋脊兩端還立著鴟尾，是{{tang:唐朝以前各朝裡}}{{<tang:到這一朝為止}}最華麗的一座。"},
   {n:"青銅燈盞",s:[[167,557,17],[297,557,17],[474,557,17],[604,557,17],[13,537,14],[755,537,14],[96,464,13],[672,464,13],[167,396,12],[604,396,12],[294,227,11],[474,227,11]],
    t:"簷下用細鏈吊著小小的青銅燈盞，白天不點火。你在新手訓練營每上完一課，這 12 盞燈就由近到遠多亮一盞。"},
   {n:"國學講堂",s:[[[130,505],[200,425],[560,425],[640,505],[620,530],[610,648],[160,648],[150,530]]],
@@ -15863,7 +16007,7 @@ const SCI_REG=[
 /* 📚 學習頁各朝版 learn_sui（park/hubmap/考究說明_各朝學習棋譜_1109.md 的「隋・國子寺」；no 沿用原圖 learn 的入口本體） */
 {re:/data\/hubmap\/learn_sui\.webp/,D:{k:"lrn_sui",nm:"隋・國子寺",it:[
   {n:"國子寺大門",s:[[[215,1000],[300,958],[470,958],[550,1000],[548,1040],[500,1060],[500,1275],[465,1275],[465,1100],[300,1100],[300,1275],[262,1275],[262,1060],[215,1040]]],
-   t:"朱紅的門柱，上面是屋簷平直的灰瓦門頭。唐朝以前的屋簷大多比較平直，不像後代翹得那麼高。"},
+   t:"朱紅的門柱，上面是屋簷平直的灰瓦門頭。{{tang:唐朝以前的}}{{<tang:這時候的}}屋簷大多比較平直，不像後代翹得那麼高。"},
   {n:"青銅燈盞",s:[[167,557,17],[297,557,17],[474,557,17],[604,557,17],[13,537,14],[755,537,14],[96,464,13],[672,464,13],[167,396,12],[604,396,12],[294,227,11],[474,227,11]],
    t:"簷下用細鏈吊著小小的青銅燈盞，白天不點火。你在新手訓練營每上完一課，這 12 盞燈就由近到遠多亮一盞。"},
   {n:"朱漆隔扇",s:[[[185,545],[620,545],[620,640],[185,640]]],
@@ -15897,11 +16041,11 @@ const SCI_REG=[
   {n:"素紗燈",s:[[167,557,17],[297,557,17],[474,557,17],[604,557,17],[13,537,14],[755,537,14],[96,464,13],[672,464,13],[167,396,12],[604,396,12],[294,227,11],[474,227,11]],
    t:"屋簷下掛的是素紗燈籠。唐代的上元燈節已經很熱鬧，所以從唐朝起，這裡改掛紗燈。你在新手訓練營每上完一課，這 12 盞燈就由近到遠多亮一盞。"},
   {n:"國子監講堂",s:[[[130,505],[200,425],[560,425],[640,505],[620,530],[610,648],[160,648],[150,530]]],
-   t:"後唐長興三年（932 年）起，國子監開始雕版印刷九經。南唐另外在廬山白鹿洞設「廬山國學」，就是後來白鹿洞書院的前身。"},
+   t:"後唐長興三年（932 年）起，國子監開始雕版印刷九經。南唐另外在廬山白鹿洞設「廬山國學」{{song:，就是後來白鹿洞書院的前身}}。"},
   {n:"淡黃泥牆",s:[[[160,1118],[268,1112],[268,1258],[178,1258]],[[496,1112],[600,1115],[590,1258],[496,1258]]],
    t:"大門兩旁的短牆是淡黃色的泥牆，配上褐色的木頭構架，顏色樸素又溫暖。茶桌上青綠色的越窯執壺放在溫碗裡，是這座國子監最亮眼的一點顏色。"},
   {n:"前院老樹",s:[[[640,950],[700,925],[768,935],[768,1205],[738,1205],[722,1110],[700,1060],[660,1040],[640,1000]]],
-   t:"前院老樹下是新手訓練營的沙盤。五代到北宋，是象棋慢慢變成今天這個樣子的過渡時期。"},
+   t:"前院老樹下是新手訓練營的沙盤。{{song:五代到北宋，是象棋慢慢變成今天這個樣子的過渡時期。}}{{<song:五代的象戲還在慢慢改變，炮什麼時候加進來還沒有定論。}}"},
   {n:"藏書閣旁的古松",s:[[[135,240],[200,195],[260,205],[285,250],[262,300],[262,390],[230,390],[215,290],[150,280]],[[480,240],[530,210],[590,235],[592,270],[540,290],[525,375],[500,375],[505,280],[480,270]]],
    t:"藏書閣兩旁各有一株老松，枝幹彎彎曲曲。穿過講堂、走到最後面的藏書閣，就能去棋譜庫讀古譜。"}],
   no:[[[45,1025],[180,1025],[180,1220],[45,1220]],[[555,1072],[725,1072],[725,1215],[555,1215]],[[132,815],[238,815],[238,955],[132,955]],[[448,840],[628,840],[628,985],[448,985]],[[630,660],[768,580],[768,915],[630,800]],[[282,650],[492,650],[492,722],[282,722]],[[18,595],[132,595],[132,865],[18,865]],[[492,635],[640,635],[640,712],[492,712]],[[302,212],[466,212],[466,278],[302,278]],[[330,298],[438,298],[438,365],[330,365]]]}},
@@ -15912,7 +16056,7 @@ const SCI_REG=[
   {n:"素紗燈",s:[[167,557,17],[297,557,17],[474,557,17],[604,557,17],[13,537,14],[755,537,14],[96,464,13],[672,464,13],[167,396,12],[604,396,12],[294,227,11],[474,227,11]],
    t:"屋簷下掛的是素紗燈籠。唐代的上元燈節已經很熱鬧，所以從唐朝起，這裡改掛紗燈。你在新手訓練營每上完一課，這 12 盞燈就由近到遠多亮一盞。"},
   {n:"書院講堂",s:[[[130,505],[200,425],[560,425],[640,505],[620,530],[610,648],[160,648],[150,530]]],
-   t:"元朝時，江南的書院很多。《元史》記載書院的「山長」由朝廷的禮部或行省任命，書院越來越像官辦的學校。講堂的樣子延續宋代的做法，所以跟宋代書院很像。"},
+   t:"元朝時，江南的書院很多。{{ming:《元史》記載}}書院的「山長」由朝廷的禮部或行省任命，書院越來越像官辦的學校。講堂的樣子延續宋代的做法，所以跟宋代書院很像。"},
   {n:"青花罐",s:[[[232,888],[268,888],[268,934],[232,934]]],
    t:"茶桌右邊地上放著一只青花罐。景德鎮在元代燒出成熟的青花瓷，例如有名的至正十一年雲龍象耳瓶；這座書院裡，青花是到元朝才第一次出現。"},
   {n:"黃泥牆",s:[[[160,1118],[268,1112],[268,1258],[178,1258]],[[496,1112],[600,1115],[590,1258],[496,1258]]],
@@ -15957,13 +16101,13 @@ const SCI_REG=[
   {n:"酒肆的雅座",s:[[[0,430],[165,425],[165,505],[0,512]]],
    t:"秦朝還沒有茶樓，所以這裡畫成賣酒的酒肆，兼做客舍。《韓非子》記戰國時宋國有個賣酒的人「懸幟甚高」，把酒旗掛得高高的招客，可見戰國就有掛旗招客的酒肆。"},
   {n:"夯土院牆",s:[[[440,255],[768,250],[768,395],[596,395],[596,345],[505,345],[500,320],[440,300]]],
-   t:"右上這道院牆是黃土一層層夯實的夯土牆，刷成土黃色，牆頂平直，只蓋一道瓦簷。一階一階高起的馬頭牆是明朝中期以後徽州的房子才有的，秦朝沒有。"},
+   t:"右上這道院牆是黃土一層層夯實的夯土牆，刷成土黃色，牆頂平直，只蓋一道瓦簷。{{ming:一階一階高起的馬頭牆是明朝中期以後徽州的房子才有的，秦朝沒有。}}"},
   {n:"黑瓦和黑漆木構",s:[[[0,232],[355,212],[480,222],[500,330],[0,338]]],
-   t:"屋頂鋪著灰黑色的筒瓦，簷口是素面的圓瓦當，柱子、門板漆成深黑色。秦朝崇尚黑色，《史記》說秦朝「衣服旄旌節旗皆上黑」，所以連牌匾也用黑漆。"},
+   t:"屋頂鋪著灰黑色的筒瓦，簷口是素面的圓瓦當，柱子、門板漆成深黑色。秦朝崇尚黑色，{{han:《史記》說秦朝}}{{<han:規定}}「衣服旄旌節旗皆上黑」，所以連牌匾也用黑漆。"},
   {n:"青銅燈盞",s:[[23,424,18],[175,410,18],[499,356,16],[204,586,17],[392,540,16],[699,892,18]],
    t:"屋簷下用細鏈吊著小小的青銅燈盞，秦朝照明用的是青銅燈。平常不點火；等千秋盃開始比賽、說書台垂下大幕，這些燈才會亮起來。"},
   {n:"坐榻和矮几",s:[[[305,697],[362,697],[364,724],[305,726]],[[448,702],[505,702],[512,742],[455,744]],[[272,775],[340,770],[350,812],[278,818]],[[412,792],[485,788],[492,828],[418,832]],[[250,555],[330,555],[330,600],[250,600]]],
-   t:"天井那張寬矮的木榻四周，擺著四張鋪蒲席的小坐榻；樓上樓下也都是矮几和坐席。秦人席地而坐，家具是案、几、席，高桌高椅要到唐宋才普及。"},
+   t:"天井那張寬矮的木榻四周，擺著四張鋪蒲席的小坐榻；樓上樓下也都是矮几和坐席。秦人席地而坐，家具是案、几、席{{song:，高桌高椅要到唐宋才普及}}。"},
   {n:"天邊的星槎",s:[[678,212,32]],
    t:"遠遠的雲上有一艘小帆船，那就是雲河星槎，跟首頁河上停的、星槎頁你搭的是同一艘船。"}],
   no:[[[296,724],[395,686],[490,726],[486,782],[378,818],[298,772]],[[18,775],[305,775],[305,1185],[18,1185]],[[548,395],[768,395],[768,770],[548,770]],[[205,320],[425,320],[425,505],[205,505]],[[428,820],[690,820],[690,1125],[428,1125]],[[505,345],[596,345],[596,525],[505,525]]]}},
@@ -15974,11 +16118,11 @@ const SCI_REG=[
   {n:"陶樓樣式的酒樓",s:[[[90,508],[420,505],[420,640],[300,650],[180,650],[90,590]]],
    t:"這座兩層的酒樓，是照漢代陶樓明器的樣子畫的：夯土牆、木柱、灰筒瓦、直櫺窗，二樓圍著直櫺欄杆。漢代已經有兩三層的木構樓閣，各地漢墓出土了很多這種陶樓。"},
   {n:"夯土院牆",s:[[[440,255],[768,250],[768,395],[596,395],[596,345],[505,345],[500,320],[440,300]]],
-   t:"右上這道夯土院牆，牆頂平直，只蓋一道瓦簷，牆後露出兩坡灰瓦屋頂。一階一階高起的馬頭牆是明朝中期以後才有的，漢朝沒有。"},
+   t:"右上這道夯土院牆，牆頂平直，只蓋一道瓦簷，牆後露出兩坡灰瓦屋頂。{{ming:一階一階高起的馬頭牆是明朝中期以後才有的，漢朝沒有。}}"},
   {n:"青銅燈盞",s:[[23,424,18],[175,410,18],[499,356,16],[204,586,17],[392,540,16],[699,892,18]],
    t:"屋簷下用細鏈吊著小小的青銅燈盞。漢代的燈多半放在案上或燈架上，這裡把燈吊在簷下，是為了配合千秋盃點燈。平常不點火；等千秋盃開始比賽、說書台垂下大幕，這些燈才會亮起來。"},
   {n:"坐榻",s:[[[305,697],[362,697],[364,724],[305,726]],[[448,702],[505,702],[512,742],[455,744]],[[272,775],[340,770],[350,812],[278,818]],[[412,792],[485,788],[492,828],[418,832]],[[250,555],[330,555],[330,600],[250,600]]],
-   t:"天井那張矮榻四周，擺著四張鋪蒲席的小坐榻，一樓、左下房間也是矮几和坐席。漢人席地而坐，高桌高椅要到唐宋才普及。"},
+   t:"天井那張矮榻四周，擺著四張鋪蒲席的小坐榻，一樓、左下房間也是矮几和坐席。漢人席地而坐{{song:，高桌高椅要到唐宋才普及}}。"},
   {n:"天邊的星槎",s:[[678,212,32]],
    t:"遠遠的雲上有一艘小帆船，那就是雲河星槎，跟首頁河上停的、星槎頁你搭的是同一艘船。"}],
   no:[[[296,724],[395,686],[490,726],[486,782],[378,818],[298,772]],[[18,775],[305,775],[305,1185],[18,1185]],[[548,395],[768,395],[768,770],[548,770]],[[205,320],[425,320],[425,505],[205,505]],[[428,820],[690,820],[690,1125],[428,1125]],[[505,345],[596,345],[596,525],[505,525]]]}},
@@ -15987,39 +16131,39 @@ const SCI_REG=[
   {n:"青瓷罐",s:[[[0,430],[165,425],[165,505],[0,512]],[[250,555],[330,555],[330,600],[250,600]]],
    t:"二樓和一樓矮几上青綠色的罐子是青瓷。孫吳的時候，越窯青瓷大量流行，南京、紹興一帶的吳墓出土了很多。"},
   {n:"門前的青瓷盆",s:[[[410,1085],[505,1085],[505,1195],[410,1195]],[[690,915],[760,915],[760,1062],[690,1062]]],
-   t:"門前這幾個青綠釉的盆是青瓷盆，種著蘭草和梅枝。三國孫吳時青瓷已經很流行；成熟的青花瓷要到元朝才燒成，所以這裡不用青花盆。"},
+   t:"門前這幾個青綠釉的盆是青瓷盆，種著蘭草和梅枝。三國孫吳時青瓷已經很流行{{yuan:；成熟的青花瓷要到元朝才燒成，所以這裡不用青花盆}}。"},
   {n:"黃泥夯土院牆",s:[[[440,255],[768,250],[768,395],[596,395],[596,345],[505,345],[500,320],[440,300]]],
-   t:"右上這道黃泥夯土牆，牆頂平直，只蓋一道瓦簷。一階一階高起的馬頭牆是明朝中期以後徽州的房子才有的，三國時還沒有。"},
+   t:"右上這道黃泥夯土牆，牆頂平直，只蓋一道瓦簷。{{ming:一階一階高起的馬頭牆是明朝中期以後徽州的房子才有的，三國時還沒有。}}"},
   {n:"吊燈盞",s:[[23,424,18],[175,410,18],[499,356,16],[204,586,17],[392,540,16],[699,892,18]],
    t:"屋簷下用細鏈吊著小小的燈盞，平常不點火；等千秋盃開始比賽、說書台垂下大幕，這些燈才會亮起來。"},
   {n:"坐榻和矮几",s:[[[305,697],[362,697],[364,724],[305,726]],[[448,702],[505,702],[512,742],[455,744]],[[272,775],[340,770],[350,812],[278,818]],[[412,792],[485,788],[492,828],[418,832]]],
-   t:"天井那張矮榻四周，擺著四張小坐榻。三國時仍是席地而坐，用矮几、坐席和矮榻，高桌高椅要到唐宋才普及。"},
+   t:"天井那張矮榻四周，擺著四張小坐榻。三國時仍是席地而坐，用矮几、坐席和矮榻{{song:，高桌高椅要到唐宋才普及}}。"},
   {n:"天邊的星槎",s:[[678,212,32]],
    t:"遠遠的雲上有一艘小帆船，那就是雲河星槎，跟首頁河上停的、星槎頁你搭的是同一艘船。"}],
   no:[[[296,724],[395,686],[490,726],[486,782],[378,818],[298,772]],[[18,775],[305,775],[305,1185],[18,1185]],[[548,395],[768,395],[768,770],[548,770]],[[205,320],[425,320],[425,505],[205,505]],[[428,820],[690,820],[690,1125],[428,1125]],[[505,345],[596,345],[596,525],[505,525]]]}},
 /* ⚔ 對戰頁 魏晉・酒壚（park/hubmap/考究說明_各朝對戰_1109.md）：竹叢、青瓷吊燈、白粉院牆、酒壚雅座、青瓷盆、坐榻 */
 {re:/data\/hubmap\/battle(_red|_curtain)?_weijin\.webp/,D:{k:"bt_wj",nm:"魏晉・酒壚",it:[
   {n:"酒壚的雅座",s:[[[0,430],[165,425],[165,505],[0,512]]],
-   t:"魏晉這一站畫成「酒壚」，就是賣酒的小店。《世說新語》記王戎經過黃公酒壚，想起當年和嵇康、阮籍在這裡一起喝酒。"},
+   t:"魏晉這一站畫成「酒壚」，就是賣酒的小店。{{nanbei:《世說新語》記}}王戎經過黃公酒壚，想起當年和嵇康、阮籍在這裡一起喝酒。"},
   {n:"竹叢",s:[[[372,505],[430,505],[445,560],[440,605],[375,605]],[[305,840],[385,840],[385,940],[305,940]],[[112,572],[195,572],[195,668],[112,668]]],
-   t:"天井和樓梯邊種了幾叢竹子。《世說新語》記王子猷借住別人的空房子，也要馬上種竹，說「何可一日無此君」，意思是怎麼可以一天沒有竹子。"},
+   t:"天井和樓梯邊種了幾叢竹子。{{nanbei:《世說新語》記}}王子猷借住別人的空房子，也要馬上種竹，說「何可一日無此君」，意思是怎麼可以一天沒有竹子。"},
   {n:"青瓷吊燈",s:[[23,424,18],[175,410,18],[499,356,16],[204,586,17],[392,540,16],[699,892,18],[358,1060,18]],
    t:"屋簷下用細鏈吊著淺碗形的青瓷燈盞，平常不點火；等千秋盃開始比賽、說書台垂下大幕，這些燈才會亮起來。"},
   {n:"白粉院牆",s:[[[440,255],[768,250],[768,395],[596,395],[596,345],[505,345],[500,320],[440,300]]],
-   t:"右上這道白粉牆，牆頂是平的，只蓋一道瓦簷，不是一階一階的馬頭牆。用白灰粉刷牆面，漢魏時就已經有了。"},
+   t:"右上這道白粉牆，牆頂是平的，只蓋一道瓦簷{{ming:，不是一階一階的馬頭牆}}。用白灰粉刷牆面，漢魏時就已經有了。"},
   {n:"門前的青瓷盆",s:[[[378,1085],[505,1085],[505,1190],[378,1190]]],
    t:"門前種蘭草的盆是青綠色的青瓷。兩晉的越窯青瓷很盛行，雞首壺就是那時候的代表器形。"},
   {n:"坐榻",s:[[[305,697],[362,697],[364,724],[305,726]],[[448,702],[505,702],[512,742],[455,744]],[[272,775],[340,770],[350,812],[278,818]],[[412,792],[485,788],[492,828],[418,832]]],
-   t:"天井那張矮榻四周，擺著四張小坐榻。魏晉時仍是席地而坐，用憑几、坐席和矮榻，高桌高椅要到唐宋才普及。"},
+   t:"天井那張矮榻四周，擺著四張小坐榻。魏晉時仍是席地而坐，用憑几、坐席和矮榻{{song:，高桌高椅要到唐宋才普及}}。"},
   {n:"天邊的星槎",s:[[678,212,32]],
    t:"遠遠的雲上有一艘小帆船，那就是雲河星槎，跟首頁河上停的、星槎頁你搭的是同一艘船。"}],
   no:[[[296,724],[395,686],[490,726],[486,782],[378,818],[298,772]],[[18,775],[305,775],[305,1185],[18,1185]],[[548,395],[768,395],[768,770],[548,770]],[[205,320],[425,320],[425,505],[205,505]],[[428,820],[690,820],[690,1125],[428,1125]],[[505,345],[596,345],[596,525],[505,525]]]}},
 /* ⚔ 對戰頁 南北朝・酒肆（park/hubmap/考究說明_各朝對戰_1109.md）：青瓷酒尊、白粉院牆、青瓷吊燈、坐榻 */
 {re:/data\/hubmap\/battle(_red|_curtain)?_nanbei\.webp/,D:{k:"bt_nb",nm:"南北朝・酒肆",it:[
   {n:"青瓷酒尊",s:[[[0,430],[165,425],[165,505],[0,512]]],
-   t:"二樓矮案上放著青瓷的酒尊和碗。杜牧的詩說「水村山郭酒旗風，南朝四百八十寺」，南朝江南的村子和城邊，到處看得到招客的酒旗。"},
+   t:"二樓矮案上放著青瓷的酒尊和碗。{{tang:杜牧的詩說「水村山郭酒旗風，南朝四百八十寺」，南朝江南的村子和城邊，到處看得到招客的酒旗。}}"},
   {n:"白粉院牆",s:[[[440,255],[768,250],[768,395],[596,395],[596,345],[505,345],[500,320],[440,300]]],
-   t:"右上這道白粉牆，牆頂是平的，只蓋一道瓦簷，不是一階一階的馬頭牆。用白灰粉刷牆面，漢魏時就已經有了。"},
+   t:"右上這道白粉牆，牆頂是平的，只蓋一道瓦簷{{ming:，不是一階一階的馬頭牆}}。用白灰粉刷牆面，漢魏時就已經有了。"},
   {n:"青瓷吊燈",s:[[23,424,18],[175,410,18],[499,356,16],[204,586,17],[392,540,16],[699,892,18]],
    t:"屋簷下用細鏈吊著淺碗形的青瓷燈盞，平常不點火；等千秋盃開始比賽、說書台垂下大幕，這些燈才會亮起來。"},
   {n:"坐榻",s:[[[305,697],[362,697],[364,724],[305,726]],[[448,702],[505,702],[512,742],[455,744]],[[272,775],[340,770],[350,812],[278,818]],[[412,792],[485,788],[492,828],[418,832]],[[250,555],[330,555],[330,600],[250,600]]],
@@ -16032,13 +16176,13 @@ const SCI_REG=[
   {n:"盤口壺",s:[[[0,430],[165,425],[165,505],[0,512]]],
    t:"二樓桌上這種口沿像小盤子的壺，叫盤口壺，有白瓷也有青瓷。河南安陽的隋朝張盛墓（595 年）出土過白瓷，是早期白瓷的代表。"},
   {n:"坊牆",s:[[[440,255],[768,250],[768,395],[596,395],[596,345],[505,345],[500,320],[440,300]]],
-   t:"右上這道牆頂平直的白粉牆是坊牆。隋朝的都城大興城採用里坊制，所以這裡畫成平直的坊牆，不畫一階一階的馬頭牆。"},
+   t:"右上這道牆頂平直的白粉牆是坊牆。隋朝的都城大興城採用里坊制，所以這裡畫成平直的坊牆{{ming:，不畫一階一階的馬頭牆}}。"},
   {n:"吊燈盞",s:[[23,424,18],[175,410,18],[499,356,16],[204,586,17],[392,540,16],[699,892,18]],
    t:"屋簷下用細鏈吊著小小的燈盞，平常不點火；等千秋盃開始比賽、說書台垂下大幕，這些燈才會亮起來。"},
   {n:"坐榻",s:[[[305,697],[362,697],[364,724],[305,726]],[[448,702],[505,702],[512,742],[455,744]],[[272,775],[340,770],[350,812],[278,818]],[[412,792],[485,788],[492,828],[418,832]]],
-   t:"天井那張矮榻四周，擺著四張小坐榻。隋代仍以席和榻為主，高桌高椅要到唐宋才普及。"},
+   t:"天井那張矮榻四周，擺著四張小坐榻。隋代仍以席和榻為主{{song:，高桌高椅要到唐宋才普及}}。"},
   {n:"門前的青瓷盆",s:[[[338,1145],[440,1145],[440,1240],[338,1240]],[[458,1105],[505,1105],[505,1190],[458,1190]],[[690,985],[730,985],[730,1055],[690,1055]]],
-   t:"門前的盆景種在青綠色的青瓷盆裡。成熟的青花瓷要到元朝才燒成，隋朝還沒有，所以這裡不用青花盆。"},
+   t:"門前的盆景種在青綠色的青瓷盆裡。{{yuan:成熟的青花瓷要到元朝才燒成，隋朝還沒有，所以這裡不用青花盆。}}"},
   {n:"天邊的星槎",s:[[678,212,32]],
    t:"遠遠的雲上有一艘小帆船，那就是雲河星槎，跟首頁河上停的、星槎頁你搭的是同一艘船。"}],
   no:[[[296,724],[395,686],[490,726],[486,782],[378,818],[298,772]],[[18,775],[305,775],[305,1185],[18,1185]],[[548,395],[768,395],[768,770],[548,770]],[[205,320],[425,320],[425,505],[205,505]],[[428,820],[690,820],[690,1125],[428,1125]],[[505,345],[596,345],[596,525],[505,525]]]}},
@@ -16055,20 +16199,20 @@ const SCI_REG=[
   {n:"門前盆松",s:[[[340,1065],[505,1065],[505,1200],[340,1200]],[[692,905],[768,905],[768,1055],[692,1055]]],
    t:"門前的盆裡種著小松樹，做成盆景。唐朝章懷太子墓（706 年）的壁畫上，就有侍女捧著盆景。"},
   {n:"平直的院牆",s:[[[440,255],[768,250],[768,395],[596,395],[596,345],[505,345],[500,320],[440,300]]],
-   t:"右上這道白牆牆頂平直，只蓋一道瓦簷。一階一階高起的馬頭牆是明朝中期以後徽州的房子才有的，唐朝沒有。"},
+   t:"右上這道白牆牆頂平直，只蓋一道瓦簷。{{ming:一階一階高起的馬頭牆是明朝中期以後徽州的房子才有的，唐朝沒有。}}"},
   {n:"天邊的星槎",s:[[678,212,32]],
    t:"遠遠的雲上有一艘小帆船，那就是雲河星槎，跟首頁河上停的、星槎頁你搭的是同一艘船。"}],
   no:[[[278,690],[502,690],[502,855],[278,855]],[[18,775],[305,775],[305,1185],[18,1185]],[[548,395],[768,395],[768,770],[548,770]],[[205,320],[425,320],[425,505],[205,505]],[[428,820],[690,820],[690,1125],[428,1125]],[[505,345],[596,345],[596,525],[505,525]]]}},
 /* ⚔ 對戰頁 五代・茶肆（park/hubmap/考究說明_各朝對戰_1109.md）：黑漆高桌靠背椅、紙燈籠、淡黃泥牆 */
 {re:/data\/hubmap\/battle(_red|_curtain)?_wudai\.webp/,D:{k:"bt_wd",nm:"五代・茶肆",it:[
   {n:"黑漆高桌和靠背椅",s:[[[0,430],[165,425],[165,505],[0,512]],[[250,555],[330,555],[330,600],[250,600]]],
-   t:"樓上這張黑漆高桌配著靠背椅，是照顧閎中〈韓熙載夜宴圖〉（今天看到的是宋代摹本）裡五代江南士大夫的家具畫的。五代時垂足坐已經普遍，可以用高桌、靠背椅和長凳。"},
+   t:"樓上這張黑漆高桌配著靠背椅，是照顧閎中〈韓熙載夜宴圖〉{{song:（今天看到的是宋代摹本）}}裡五代江南士大夫的家具畫的。五代時垂足坐已經普遍，可以用高桌、靠背椅和長凳。"},
   {n:"素色紙燈籠",s:[[24,418,21],[174,400,21],[500,352,19],[204,584,21],[391,537,19],[697,890,21]],
    t:"屋簷下掛著素色的紙燈籠，唐末五代已經可以用紙燈籠。燈籠平常不點火；等千秋盃開始比賽、說書台垂下大幕，才會亮起來。"},
   {n:"門邊的青瓷瓶",s:[[[684,935],[768,935],[768,1070],[684,1070]]],
    t:"大門右邊立著一個青綠色的青瓷瓶，旁邊的長方盆也是青瓷的顏色。五代越窯的青瓷，有「秘色瓷」的名稱。"},
   {n:"淡黃泥牆",s:[[[440,255],[768,250],[768,395],[596,395],[596,345],[505,345],[500,320],[440,300]]],
-   t:"右上這道淡黃色的泥牆，牆頂平直，只蓋一道瓦簷。一階一階高起的馬頭牆是明朝中期以後才有的，五代還沒有。"},
+   t:"右上這道淡黃色的泥牆，牆頂平直，只蓋一道瓦簷。{{ming:一階一階高起的馬頭牆是明朝中期以後才有的，五代還沒有。}}"},
   {n:"天邊的星槎",s:[[678,212,32]],
    t:"遠遠的雲上有一艘小帆船，那就是雲河星槎，跟首頁河上停的、星槎頁你搭的是同一艘船。"}],
   no:[[[278,690],[502,690],[502,855],[278,855]],[[18,775],[305,775],[305,1185],[18,1185]],[[548,395],[768,395],[768,770],[548,770]],[[205,320],[425,320],[425,505],[205,505]],[[428,820],[690,820],[690,1125],[428,1125]],[[505,345],[596,345],[596,525],[505,525]]]}},
@@ -16079,11 +16223,11 @@ const SCI_REG=[
   {n:"燈掛椅",s:[[[98,440],[134,440],[134,492],[98,492]],[[425,385],[446,385],[446,432],[425,432]]],
    t:"二樓這種靠背椅，椅背頂上的橫木兩端伸出來，叫「燈掛椅」。宋畫裡就看得到，例如〈清明上河圖〉、〈韓熙載夜宴圖〉的宋摹本。"},
   {n:"龍泉青瓷盆",s:[[[450,1127],[502,1127],[502,1195],[450,1195]],[[686,1015],[724,1015],[724,1080],[686,1080]],[[722,960],[768,960],[768,1028],[722,1028]]],
-   t:"大門兩邊這幾個淡青色的盆（兩個圓盆、右邊一個長方盆），是龍泉青瓷。成熟的青花瓷要到元朝才燒成，所以宋朝這一站門前用的是龍泉窯那種粉青色的盆。"},
+   t:"大門兩邊這幾個淡青色的盆（兩個圓盆、右邊一個長方盆），是龍泉青瓷。{{yuan:成熟的青花瓷要到元朝才燒成，所以}}宋朝這一站門前用的是龍泉窯那種粉青色的盆。"},
   {n:"紅紙燈籠",s:[[24,418,21],[174,400,21],[500,352,19],[204,584,21],[391,537,19],[697,890,21]],
    t:"屋簷下掛著圓圓的紅紙燈籠，平常不點火；等千秋盃開始比賽、說書台垂下大幕，這些燈籠才會亮起來。"},
   {n:"白粉院牆",s:[[[440,255],[768,250],[768,395],[596,395],[596,345],[505,345],[500,320],[440,300]]],
-   t:"右上這道白牆牆頂平直，只蓋一道瓦簷，牆後露出灰瓦屋頂。一階一階高起的馬頭牆是明朝中期以後徽州的房子才有的，宋朝沒有。"},
+   t:"右上這道白牆牆頂平直，只蓋一道瓦簷，牆後露出灰瓦屋頂。{{ming:一階一階高起的馬頭牆是明朝中期以後徽州的房子才有的，宋朝沒有。}}"},
   {n:"天邊的星槎",s:[[678,212,32]],
    t:"遠遠的雲上有一艘小帆船，那就是雲河星槎，跟首頁河上停的、星槎頁你搭的是同一艘船。"}],
   no:[[[278,690],[502,690],[502,855],[278,855]],[[18,775],[305,775],[305,1185],[18,1185]],[[548,395],[768,395],[768,770],[548,770]],[[205,320],[425,320],[425,505],[205,505]],[[428,820],[690,820],[690,1125],[428,1125]],[[505,345],[596,345],[596,525],[505,525]]]}},
@@ -16094,7 +16238,7 @@ const SCI_REG=[
   {n:"元青花盆",s:[[[440,1126],[502,1126],[502,1192],[440,1192]],[[688,1010],[724,1010],[724,1076],[688,1076]]],
    t:"門前的花盆是青花瓷，畫著纏枝花紋。景德鎮在元代燒成成熟的青花，英國大維德基金會收藏的至正十一年青花雲龍象耳瓶，就是有名的例子。"},
   {n:"院牆和江南木屋",s:[[[440,255],[768,250],[768,395],[596,395],[596,345],[505,345],[500,320],[440,300]]],
-   t:"右上這道白牆牆頂平直，牆後露出幾座木構外露的江南木屋。一階一階高起的馬頭牆是明朝中期以後才有的，元朝還沒有。"},
+   t:"右上這道白牆牆頂平直，牆後露出幾座木構外露的江南木屋。{{ming:一階一階高起的馬頭牆是明朝中期以後才有的，元朝還沒有。}}"},
   {n:"紅紙燈籠",s:[[24,418,21],[174,400,21],[500,352,19],[204,584,21],[391,537,19],[697,890,21]],
    t:"屋簷下掛著圓圓的紅紙燈籠，平常不點火；等千秋盃開始比賽、說書台垂下大幕，這些燈籠才會亮起來。"},
   {n:"天邊的星槎",s:[[678,212,32]],
@@ -16118,20 +16262,20 @@ const SCI_REG=[
   {n:"竹簾窗",s:[[[520,222],[725,222],[725,358],[520,358]]],
    t:"二樓的窗扇往外推開，窗上捲起一片竹簾，看得到外面的天。這間圖籍室只用三種顏色：黑漆的櫃子和木箱、朱紅的封條、竹簡的黃。"},
   {n:"露明屋架",nh:1,s:[[[0,0],[768,0],[768,190],[500,150],[0,150]]],
-   t:"這裡是秦朝丞相府收藏律令圖書的圖籍室。劉邦的軍隊打進咸陽時，蕭何搶先把秦丞相府、御史府的律令圖書收起來保存，《史記》記下了這件事。"},
+   t:"這裡是秦朝丞相府收藏律令圖書的圖籍室。{{han:劉邦的軍隊打進咸陽時，蕭何搶先把秦丞相府、御史府的律令圖書收起來保存，《史記》記下了這件事。}}"},
   {n:"黑漆長案",s:[[[64,1082],[300,1078],[300,1240],[50,1250]],[[50,1250],[722,1238],[716,1376],[64,1376]]],
    t:"最前面這張黑漆長案，邊緣塗朱紅，案腳做成獸蹄的樣子。秦人其實用比較矮的案；這張是入口和迷你棋盤的位置，構圖固定，借用高案。案上攤開一幅空白素帛，旁邊是一捆捆竹簡。"},
   {n:"青銅豆形燈",s:[[[150,980],[250,980],[250,1040],[205,1048],[205,1125],[228,1135],[228,1165],[155,1165],[155,1135],[175,1125],[175,1048],[150,1040]]],
    t:"燈架上是一盞青銅豆形燈，樣子像一只有高腳的淺盤，盤裡盛油。秦朝的屋裡，就是用這種青銅燈照明。"},
   {n:"黑漆柱子",s:[[[214,560],[252,560],[252,895],[214,895]],[[530,600],[562,600],[562,960],[530,960]]],
-   t:"一樓的柱子、書櫃和木箱都是深黑色。秦朝崇尚黑色，《史記》說秦朝「衣服旄旌節旗皆上黑」，連衣服、旗子都用黑。"}],
+   t:"一樓的柱子、書櫃和木箱都是深黑色。秦朝崇尚黑色，{{han:《史記》說秦朝}}{{<han:規定}}「衣服旄旌節旗皆上黑」，連衣服、旗子都用黑。"}],
   no:[[[0,648],[215,648],[215,1088],[0,1088]],[[538,700],[768,700],[768,1032],[538,1032]],[[0,192],[502,192],[502,425],[0,425]],[[500,368],[768,368],[768,452],[500,452]],[[302,1108],[476,1108],[476,1212],[302,1212]],[[528,1062],[692,1062],[692,1202],[528,1202]]]}},
 /* 📜 漢・棋譜庫「石渠閣」（同上，漢・棋譜庫）。燈登記成物件，no 拿掉燈架 */
 {re:/data\/libmap\/lib_han\.webp/,D:{k:"lb_han",nm:"漢・石渠閣",it:[
   {n:"露明屋架",nh:1,s:[[[0,0],[768,0],[768,190],[500,150],[0,150]]],
    t:"這裡是石渠閣，跟天祿閣一樣，是西漢皇家收藏圖書的地方。漢成帝時，劉向帶人校對、整理皇家收藏的經傳、諸子和詩賦。"},
   {n:"直櫺欄杆",s:[[[0,560],[230,448],[460,440],[460,470],[240,500],[0,612]],[[548,470],[768,486],[768,580],[548,560]]],
-   t:"二樓走廊的欄杆是一根根直直的木條，比宋代一格一格的勾片欄杆樸素。欄杆後面牆上那 11 幅分格壁畫，取的是漢宣帝在麒麟閣畫霍光等十一位功臣像的故事。"},
+   t:"二樓走廊的欄杆是一根根直直的木條，{{song:比宋代一格一格的勾片欄杆樸素}}{{<song:樣子很樸素}}。欄杆後面牆上那 11 幅分格壁畫，取的是漢宣帝在麒麟閣畫霍光等十一位功臣像的故事。"},
   {n:"黑漆朱緣長案",s:[[[64,1082],[300,1078],[300,1240],[50,1250]],[[50,1250],[722,1238],[716,1376],[64,1376]]],
    t:"最前面這張黑漆長案鑲著朱紅的邊，是整間最搶眼的家具。漢代的案其實比較矮；這張是入口和迷你棋盤的位置，構圖固定，借用高案。案上攤開一幅空白素帛，右邊是一捆捆竹簡。"},
   {n:"青銅豆形燈",s:[[[150,980],[250,980],[250,1040],[205,1048],[205,1125],[228,1135],[228,1165],[155,1165],[155,1135],[175,1125],[175,1048],[150,1040]]],
@@ -16168,7 +16312,7 @@ const SCI_REG=[
 /* 📜 南北朝・棋譜庫「文德殿書閣」（同上，南北朝・棋譜庫）。燈登記成物件，no 拿掉燈架 */
 {re:/data\/libmap\/lib_nanbei\.webp/,D:{k:"lb_nb",nm:"南北朝・文德殿書閣",it:[
   {n:"露明屋架",nh:1,s:[[[0,0],[768,0],[768,190],[500,150],[0,150]]],
-   t:"這裡叫文德殿書閣：南朝梁朝初年，在宮中的文德殿收藏了大批圖書（《隋書·經籍志》）。抬頭看，斜屋頂的木架直接露出來，沒有天花板遮住。"},
+   t:"這裡叫文德殿書閣：南朝梁朝初年，在宮中的文德殿收藏了大批圖書{{tang:（《隋書·經籍志》）}}。抬頭看，斜屋頂的木架直接露出來，沒有天花板遮住。"},
   {n:"勾片欄杆和畫屏",s:[[[0,560],[230,448],[460,440],[460,470],[240,500],[0,612]],[[548,470],[768,486],[768,580],[548,560]]],
    t:"二樓欄杆是一格一格的勾片花紋。欄杆後面那排深色框的畫屏，根據的是北魏司馬金龍墓（484 年）出土的木板漆畫屏風，一塊塊畫板上畫著古人。"},
   {n:"朱紅柱子",s:[[[214,560],[252,560],[252,895],[214,895]],[[530,600],[562,600],[562,960],[530,960]]],
@@ -16176,7 +16320,7 @@ const SCI_REG=[
   {n:"蓮瓣青瓷燈盞",s:[[[150,980],[250,980],[250,1040],[205,1048],[205,1125],[228,1135],[228,1165],[155,1165],[155,1135],[175,1125],[175,1048],[150,1040]]],
    t:"燈架上是一只青瓷燈盞，盞口做成一片片蓮花瓣。蓮瓣花紋，跟南北朝時佛教盛行有關。"},
   {n:"長案和紙卷",s:[[[64,1082],[300,1078],[300,1240],[50,1250]],[[50,1250],[722,1238],[716,1376],[64,1376]]],
-   t:"長案上攤開一張空白紙卷，右邊堆著一卷卷紙卷。唐朝以前的書，大多是竹簡、帛書或捲起來的紙卷軸，書櫃裡的紙卷還用書帙包著。"},
+   t:"長案上攤開一張空白紙卷，右邊堆著一卷卷紙卷。{{tang:唐朝以前的}}{{<tang:這時候的}}書，大多是竹簡、帛書或捲起來的紙卷軸，書櫃裡的紙卷還用書帙包著。"},
   {n:"鎮尺",s:[[[278,1112],[300,1115],[288,1205],[266,1202]],[[474,1110],[494,1110],[508,1196],[486,1198]]],
    t:"攤開的紙卷兩邊，各壓著一根長條的「鎮尺」，把紙壓平，是書桌上常見的文具。"}],
   no:[[[0,648],[215,648],[215,1088],[0,1088]],[[538,700],[768,700],[768,1032],[538,1032]],[[0,192],[502,192],[502,425],[0,425]],[[500,368],[768,368],[768,452],[500,452]],[[302,1108],[476,1108],[476,1212],[302,1212]],[[528,1062],[692,1062],[692,1202],[528,1202]]]}},
@@ -16185,7 +16329,7 @@ const SCI_REG=[
   {n:"斗栱屋架",nh:1,s:[[[0,0],[768,0],[768,190],[500,150],[0,150]]],
    t:"抬頭看，屋架上有一朵朵斗栱，還有斜斜撐著的「叉手」，看起來最像宮殿裡的殿閣。這裡是隋煬帝在東都觀文殿收藏圖書的書閣。"},
   {n:"長案和卷軸",s:[[[64,1082],[300,1078],[300,1240],[50,1250]],[[50,1250],[722,1238],[716,1376],[64,1376]]],
-   t:"案上那堆卷軸，軸頭有紅、紺青、黑三種顏色。《隋書·經籍志》說，隋煬帝把秘閣的書抄成五十份副本，分三品：上品用紅琉璃軸，中品用紺琉璃軸，下品用漆軸。"},
+   t:"案上那堆卷軸，軸頭有紅、紺青、黑三種顏色。{{tang:《隋書·經籍志》說，}}隋煬帝把秘閣的書抄成五十份副本，分三品：上品用紅琉璃軸，中品用紺琉璃軸，下品用漆軸。"},
   {n:"蓮瓣青瓷燈盞",s:[[[150,980],[250,980],[250,1040],[205,1048],[205,1125],[228,1135],[228,1165],[155,1165],[155,1135],[175,1125],[175,1048],[150,1040]]],
    t:"燈架上是一只青瓷燈盞，盞口做成一片片蓮花瓣。隋代的青瓷，常見這種蓮瓣花紋。"},
   {n:"勾片欄杆",s:[[[0,560],[230,448],[460,440],[460,470],[240,500],[0,612]],[[548,470],[768,486],[768,580],[548,560]]],
@@ -16211,7 +16355,7 @@ const SCI_REG=[
 /* 📜 五代・棋譜庫「澄心堂書閣」（同上，五代・棋譜庫）。燈盞考究說明沒寫史實，不登記，no 照原圖（含燈架） */
 {re:/data\/libmap\/lib_wudai\.webp/,D:{k:"lb_wd",nm:"五代・澄心堂書閣",it:[
   {n:"露明屋架",nh:1,s:[[[0,0],[768,0],[768,190],[500,150],[0,150]]],
-   t:"澄心堂是南唐宮中的殿堂，後主李煜時在這裡收藏書畫、監製紙張，做出來的「澄心堂紙」，北宋的歐陽修、梅堯臣都很珍惜。抬頭看，斜屋頂的木架直接露出來，沒有天花板遮住。"},
+   t:"澄心堂是南唐宮中的殿堂，後主李煜時在這裡收藏書畫、監製紙張，做出來的「澄心堂紙」{{song:，北宋的歐陽修、梅堯臣都很珍惜}}{{<song:，就是用這座殿堂的名字命名的}}。抬頭看，斜屋頂的木架直接露出來，沒有天花板遮住。"},
   {n:"勾片欄杆和畫障",s:[[[0,560],[230,448],[460,440],[460,470],[240,500],[0,612]],[[548,470],[768,486],[768,580],[548,560]]],
    t:"二樓欄杆是一格一格的勾片花紋。後面那排細木框的畫障，取的是南唐周文矩〈重屏會棋圖〉的意思：畫裡李璟兄弟在下圍棋，背後的屏風裡又畫著一座屏風。"},
   {n:"長案和冊子",s:[[[64,1082],[300,1078],[300,1240],[50,1250]],[[50,1250],[722,1238],[716,1376],[64,1376]]],
@@ -16219,7 +16363,7 @@ const SCI_REG=[
   {n:"鎮尺",s:[[[278,1112],[300,1115],[288,1205],[266,1202]],[[474,1110],[494,1110],[508,1196],[486,1198]]],
    t:"攤開的冊子兩邊，各壓著一根長條的「鎮尺」，把書頁壓平，是書桌上常見的文具。"},
   {n:"柱子和柱礎",s:[[[214,560],[252,560],[252,895],[214,895]],[[530,600],[562,600],[562,960],[530,960]]],
-   t:"一樓兩根素面木柱，柱腳墊著柱礎。五代這一站的書閣，是十一朝裡跟宋代樣子最接近的一間。"}],
+   t:"一樓兩根素面木柱，柱腳墊著柱礎。{{song:五代這一站的書閣，是十一朝裡跟宋代樣子最接近的一間。}}"}],
   no:[[[0,648],[215,648],[215,1088],[0,1088]],[[538,700],[768,700],[768,1032],[538,1032]],[[0,192],[502,192],[502,425],[0,425]],[[500,368],[768,368],[768,452],[500,452]],[[302,1108],[476,1108],[476,1212],[302,1212]],[[528,1062],[692,1062],[692,1202],[528,1202]],[[152,915],[228,915],[228,1168],[152,1168]]]}},
 /* 📜 元・棋譜庫「書院藏書樓」（同上，元・棋譜庫；青花取同一份元・學習的文化段）。燈盞不登記，no 照原圖（含燈架） */
 {re:/data\/libmap\/lib_yuan\.webp/,D:{k:"lb_yuan",nm:"元・書院藏書樓",it:[
@@ -16228,7 +16372,7 @@ const SCI_REG=[
   {n:"青花小罐",s:[[[242,1056],[288,1056],[294,1088],[288,1122],[244,1122],[236,1088]]],
    t:"桌角這只白底藍花的小罐是青花瓷。景德鎮在元代燒成成熟的青花，例如英國大維德基金會收藏的至正十一年青花雲龍象耳瓶；在這座書院藏書樓裡，青花是到元朝才第一次出現。"},
   {n:"勾片欄杆",s:[[[0,560],[230,448],[460,440],[460,470],[240,500],[0,612]],[[548,470],[768,486],[768,580],[548,560]]],
-   t:"二樓的欄杆是一格一格的勾片花紋，跟宋代的書閣一樣。元代的建築延續宋代的做法；到了明、清兩站，欄杆才換成卍字紋和回紋。"},
+   t:"二樓的欄杆是一格一格的勾片花紋，跟宋代的書閣一樣。元代的建築延續宋代的做法{{qing:；到了明、清兩站，欄杆才換成卍字紋和回紋}}。"},
   {n:"長案和冊子",s:[[[64,1082],[300,1078],[300,1240],[50,1250]],[[50,1250],[722,1238],[716,1376],[64,1376]]],
    t:"長案上攤開一本冊子，右邊和木櫥裡疊著素黃、素褐書衣的冊子。元代的書已經不是卷軸，而是平放疊起來的冊子；中國古書都是平放，不直立。"},
   {n:"鎮尺",s:[[[278,1112],[300,1115],[288,1205],[266,1202]],[[474,1110],[494,1110],[508,1196],[486,1198]]],
@@ -16959,7 +17103,7 @@ const EXITS={"/hub/learn":[52,86,"🚪 出書院・回棋鎮"],"/hub/battle":[78
    首頁是最上層，不用出口。設定的入口：星槎全景圖中間艙房的門口「🛏 天字客房・設定」（設定頁本來就是雲河驛站・天字客房） */
 const NOTAB_ON=true;
 const FIXBACK=[[new RegExp("^/lobby$"),"^#/hub/battle"],[new RegExp("^/db(/[^/]+)?$"),"^#/hub/learn"],[new RegExp("^/settings$"),"^#/adventure"],[new RegExp("^/watch(/|$)"),"^#/lobby"]];
-const SHIP_SET=[54,37,"🛏 天字客房・設定"];
+const SHIP_SET=[54,37,"🛏 天字客房"];   /* 回饋 851（開發者 11/9）：拿掉「設定」兩字 */
 function exFind(k){return EXITS[k]||(new RegExp("^/db/[^/]+$").test(k)?EXITS["/db"]:null)}
 function exKey(){return(location.hash||"#/").slice(1).split("?")[0].replace(/\/+$/,"")||"/"}
 function exCss(){if(document.getElementById("exCss"))return;const s=document.createElement("style");s.id="exCss";s.textContent=`
