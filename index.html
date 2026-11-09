@@ -1370,7 +1370,7 @@ html[data-hicon] .tabbar button.on{box-shadow:inset 0 -3px 0 currentColor}
       if(!window.caches)return go();caches.keys().then(function(ks){return Promise.all(ks.filter(function(k){return k.indexOf("xqlab-app-")===0}).map(function(k){return caches.delete(k)}))})
         .then(function(){return navigator.serviceWorker&&navigator.serviceWorker.getRegistration()}).then(function(r){return r&&r.update()}).catch(function(){}).then(go)}};setTimeout(chk,4000)})();
 </script>
-<script>window.XQ_OFFLINE=true;window.XQ_BUILD="20261110-0800";</script>
+<script>window.XQ_OFFLINE=true;window.XQ_BUILD="20261110-0815";</script>
 <script src="core.js"></script>
 <script src="engine.js"></script>
 <script src="local.js"></script>
@@ -6906,6 +6906,7 @@ function cjCSS(){if(document.getElementById("canju-css"))return;const st=documen
 .cj-types button b{display:block;font-size:14.5px}.cj-types button small{color:var(--muted);font-size:12px}
 .cj-top{padding:6px 12px 0;font-size:13.5px;line-height:1.5}.cj-top b{font-size:14.5px}
 .cj-note{white-space:pre-wrap;line-height:1.6}
+.view.fixed .cj-note,.view.fixed #stat,.view.fixed .cj-step{flex:0 0 auto}.view.fixed .cj-note{max-height:22vh;overflow:auto}   /* 11/9 開發者截圖：答對後「後續 1：…」被下一步按鈕蓋住；文字列不准被壓扁，讓棋盤縮一點 */
 .cj-card p{margin:6px 0;line-height:1.7}.cj-card .cj-q{border-left:3px solid var(--accent);padding:4px 10px;background:var(--bg);border-radius:0 8px 8px 0}
 .cj-card .cj-row{display:flex;gap:8px;flex-wrap:wrap;margin-top:10px}.cj-card .cj-row .btn{flex:1 1 140px;margin-top:0}
 .cj-relic{display:flex;gap:12px;align-items:center;border:1px solid #C9962B;border-radius:12px;padding:8px;margin-top:8px}.cj-relic .im{width:72px;height:72px;flex:none;display:flex;align-items:center;justify-content:center;font-size:44px}
