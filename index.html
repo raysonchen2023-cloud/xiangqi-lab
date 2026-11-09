@@ -1370,7 +1370,7 @@ html[data-hicon] .tabbar button.on{box-shadow:inset 0 -3px 0 currentColor}
       if(!window.caches)return go();caches.keys().then(function(ks){return Promise.all(ks.filter(function(k){return k.indexOf("xqlab-app-")===0}).map(function(k){return caches.delete(k)}))})
         .then(function(){return navigator.serviceWorker&&navigator.serviceWorker.getRegistration()}).then(function(r){return r&&r.update()}).catch(function(){}).then(go)}};setTimeout(chk,4000)})();
 </script>
-<script>window.XQ_OFFLINE=true;window.XQ_BUILD="20261110-1300";</script>
+<script>window.XQ_OFFLINE=true;window.XQ_BUILD="20261110-1315";</script>
 <script src="core.js"></script>
 <script src="engine.js"></script>
 <script src="local.js"></script>
@@ -15620,7 +15620,7 @@ const EX2_IMGV="2390";
 const EX2_RK=["新手","入門1","入門2","入門3","業1","業2","業3","業4","業5","業6","業7","業8","業9","專1","專2"];
 const EX2_BOARD=[106,134,664,519];   /* 榜面（左、上、右、下，像素 768×1376） */
 /* [id, 原本的按鈕, 卷子位置, 標籤位置（中間那份放高一排，免得三個標籤疊在一起）, 標籤] */
-const EX2_SCROLL=[["ex2S0","#go",385,718,320,652,"我是新手"],["ex2S1","#go3",462,712,462,598,"從上次開始"],["ex2S2","#go2",548,722,610,652,"我會下棋"]];
+const EX2_SCROLL=[["ex2S0","#go",385,718,372,652,"我是新手"],["ex2S1","#go3",462,712,462,598,"從上次開始"],["ex2S2","#go2",548,722,558,652,"我會下棋"]];   /* 11/10 開發者「排版很醜很歪」：我是新手、我會下棋往中間靠，各自對齊底下那卷 */
 const SHW_EX2={el:40,h:[.09,92,.003],look0:[50,60],home:"home",N:{home:[50,97],altar:[50,83]},E:"home-altar",
   HS:{ex2S0:["altar",50,64,"bow"],ex2S1:["altar",50,64,"bow"],ex2S2:["altar",50,64,"bow"],ex2Book:["altar",25,50,"idle"]}};
 const ex2Pc=(x,y)=>[(x/7.68).toFixed(2),(y/13.76).toFixed(2)];
