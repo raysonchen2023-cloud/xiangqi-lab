@@ -1370,7 +1370,7 @@ html[data-hicon] .tabbar button.on{box-shadow:inset 0 -3px 0 currentColor}
       if(!window.caches)return go();caches.keys().then(function(ks){return Promise.all(ks.filter(function(k){return k.indexOf("xqlab-app-")===0}).map(function(k){return caches.delete(k)}))})
         .then(function(){return navigator.serviceWorker&&navigator.serviceWorker.getRegistration()}).then(function(r){return r&&r.update()}).catch(function(){}).then(go)}};setTimeout(chk,4000)})();
 </script>
-<script>window.XQ_OFFLINE=true;window.XQ_BUILD="20261109-2200";</script>
+<script>window.XQ_OFFLINE=true;window.XQ_BUILD="20261109-2215";</script>
 <script src="core.js"></script>
 <script src="engine.js"></script>
 <script src="local.js"></script>
@@ -4643,8 +4643,8 @@ function diffSuggest(){try{const q=store.get("quizBest",null),r=q&&q.rank;if(!r)
 const CHAR_ERA={x_swordboy:"qin",x_spiritgirl:"nanbei",x_martialgirl:"song",x_miaogirl:"yuan",x_shuai:"ming",x_shi:"ming",x_bing:"qing"};   /* 開發者 11/6 改：世界觀定為「雲河星槎」，七人各來自自己的朝代（帥、仕同在明代徽州），棋盤就是他的家鄉朝代 */
 const JOURNEY_KEYS=["sw7Box","pSex","pStyle","botPiece","onboard1","journey","playSec","era","eraOpen","xp","xpDay","xpKeys","record","hintBonus","hintUse","undoBonus","undoDropIds","bag","jarGot","lingN","giftGames","dropMiss",
   "legend","legendGame","legBook","legRead","jStars","jPending","jPrev","jRun","jScene","jHid","jMig36","jpSeen","novelRead","sceneDone","storyEraTip","eraUser","study","campSeen","campStars",
-  "npcBond","npcAsk","npcAskSeen","parkNpc","parkNpcLast","parkAdj","visitGone","secrets","secretClue","secretSpots","secretWins","relics","relicSolved","relicAt","histSeen","histSolved","histTitle",
-  "innCur","innDrop","innAdj","innGuest","resumeLast","xhMake","xhMei","xhTitle","yuDay","yuHint","yuRoute","yuTitle","cupDrop","cupGot","cj","cjRun","shipAt","shipSolved","cjRunS","jRunS","battleSeal","battleTitle","battleVol","battleGrand","battleVolY","battleVolLegacy","battleMig","battleSeal0","cjRunB","jRunB","battlePlan","diff","shipDock","shipLearn","undoFree","shipGal","shipStale","shipRead","shipMore","evLog","evPawn","evHeld","evStash","jRunE","cjRunE","rdLog","firstWin","wkRead","visit7","chd","ep","cjRunEp","wmDays","wmPg","wmBm","wmScr","wmEcho","jRunW","sealGold","sealIntro","jRunC","rsHint"].map(k=>"m_"+k)   /* 回饋 838（開發者 11/9 選：全模式中斷接續）：jRunC＝新手訓練營玩到一半的那一課、rsHint＝對局裡用掉的提示棋黃框（主題訓練 jpRun、棋力測驗 quizRun 跟 themeStat、quizLog 一樣是棋手本人的，各格共用，不放這裡） */   /* 千秋印（07i2-seal.js，開發者 11/9）：sealGold＝各朝第一次鑄成金印的時間與修為已發、sealIntro＝看過「集章簿換成千秋印譜」說明卡。Gemini 遊玩樂趣評估（開發者 11/8 核准）：visit7＝七星來訪的次數、說過的話、小任務（07j-visit.js）；evStash＝千秋穿梭收進囊中、12 小時內再處理的突發事件（07h-qqev.js）；firstWin＝新手秒開局下過（或跳過）了；wkRead＝學習週報每天記一筆讀懂地圖比例，算「比上週」。意見回饋 737 第二期：rdLog＝讀過哪些棋譜、猜著法每盤答對幾手（壓縮成字串）。意見回饋 674：星槎在看哪一站、千秋殘局解開的題、正在解的那一題；675：航行難度、已停靠的站、學會的棋理、這盤用了幾次免費悔棋；685：七星同局圖鑑與熱身解開的題、看過困斃說明、讀過《雲河七星》哪幾章 */
+  "npcBond","npcAsk","npcAskSeen","parkNpc","parkNpcLast","npcPity","parkAdj","visitGone","secrets","secretClue","secretSpots","secretWins","relics","relicSolved","relicAt","histSeen","histSolved","histTitle",
+  "innCur","innDrop","innAdj","innGuest","resumeLast","xhMake","xhMei","xhTitle","yuDay","yuHint","yuRoute","yuTitle","cupDrop","cupGot","cj","cjRun","shipAt","shipSolved","cjRunS","jRunS","battleSeal","battleTitle","battleVol","battleGrand","battleVolY","battleVolLegacy","battleMig","battleSeal0","cjRunB","jRunB","battlePlan","diff","shipDock","shipLearn","undoFree","shipGal","shipStale","shipRead","shipMore","evLog","evPawn","evHeld","evStash","jRunE","cjRunE","rdLog","firstWin","wkRead","visit7","chd","ep","cjRunEp","wmDays","wmPg","wmBm","wmScr","wmEcho","jRunW","sealGold","sealIntro","jRunC","rsHint"].map(k=>"m_"+k)   /* 回饋 856（開發者 11/9：女棋手分普通／稀有／傳說、機率加保底）：npcPity＝稀有、傳說女棋手的保底計數（06-cpu.js parkNpcNew） */   /* 回饋 838（開發者 11/9 選：全模式中斷接續）：jRunC＝新手訓練營玩到一半的那一課、rsHint＝對局裡用掉的提示棋黃框（主題訓練 jpRun、棋力測驗 quizRun 跟 themeStat、quizLog 一樣是棋手本人的，各格共用，不放這裡） */   /* 千秋印（07i2-seal.js，開發者 11/9）：sealGold＝各朝第一次鑄成金印的時間與修為已發、sealIntro＝看過「集章簿換成千秋印譜」說明卡。Gemini 遊玩樂趣評估（開發者 11/8 核准）：visit7＝七星來訪的次數、說過的話、小任務（07j-visit.js）；evStash＝千秋穿梭收進囊中、12 小時內再處理的突發事件（07h-qqev.js）；firstWin＝新手秒開局下過（或跳過）了；wkRead＝學習週報每天記一筆讀懂地圖比例，算「比上週」。意見回饋 737 第二期：rdLog＝讀過哪些棋譜、猜著法每盤答對幾手（壓縮成字串）。意見回饋 674：星槎在看哪一站、千秋殘局解開的題、正在解的那一題；675：航行難度、已停靠的站、學會的棋理、這盤用了幾次免費悔棋；685：七星同局圖鑑與熱身解開的題、看過困斃說明、讀過《雲河七星》哪幾章 */
   .concat(["cpuRate","bonusKeys","record","arenaStamps","carBank","play","play2"].map(k=>"xq_"+k));
 const JK=new Set(JOURNEY_KEYS),SLOT_N=3;
 /* 意見回饋 668：舊玩家判斷要在首頁畫出來以前做（首頁會順手寫一些旅程鍵，例如 lingN），所以這裡直接讀 localStorage；null＝已經過渡過了 */
@@ -5232,8 +5232,33 @@ const NPC_LOOK=(n,side)=>({p:npcPc(n,side),e:store.get("era","classic"),g:9,npc:
 const parkNpcLv=()=>Math.max(1,Math.min(8,parkLv()+[-1,0,0,1][Math.floor(Math.random()*4)]));
 /* 開了新的一盤園子：記下這盤（game）遇到誰；keep＝同一位再下一盤，不然隨機挑一位、不跟上一位重複 */
 /* 意見回饋 658：這個朝代有家鄉在這裡的女棋手，七成從她們裡面挑，三成照舊全部隨機（冷門朝代沒人的家鄉，就全部隨機，一樣遇得到人）；不是女棋手的路人照舊 */
+/* 回饋 856（開發者 11/9：女棋手分普通／稀有／傳說、機率加保底）：
+   等級 WM_RK（沒寫＝普通 common；稀有 rare 5 位、傳說 legend 4 位），名稱和框色沿用珍品的 RELIC_RK（07-legend.js）。
+     分級照身分和朝代人數：漢、隋各只有 1 位，不能是普通（不然到那一朝第一盤就遇到）→ 琴師稀有、女將軍傳說；宋 2 位都普通（放鬆好收集的一朝）；
+     傳說＝身分最少拋頭露面的四位、各在不同朝代（隋 女將軍、唐 江湖女俠、明 女扮男裝的書生、清 溜出府的格格）；稀有＝有專業、要出遠門或公務在身（漢 琴師、元 馴鷹少女、西域商隊的姑娘、明 女大夫、女捕快）。
+   抽法 parkPickW(cand,era,met,pity,rnd)：cand＝候選（已去掉上一位）、met＝{id:1 遇過}、pity＝保底計數、rnd＝亂數。
+     1. 保底到頂：這一朝沒遇過的稀有／傳說，計數到 NPC_RARE.hard（稀有 10、傳說 14 盤）就一定是她，保證不會永遠遇不到。
+     2. 七成照舊分給這一朝的家鄉女棋手（NPC_RARE.home）：普通的、已經遇過的，每位 0.7÷k（k＝候選裡這一朝的女棋手人數）；
+        沒遇過的稀有／傳說只拿 0.7÷k×f，f＝base＋step×計數（稀有 0.12＋0.06×計數、傳說 0.05＋0.04×計數，最多 1）——越久沒遇到越容易遇到；遇過一次就跟普通一樣（羈絆要多次相遇才升級）。
+     3. 剩下的照舊從全部候選裡抽：路人、普通、遇過的權重 1；沒遇過的稀有、傳說只有 NPC_RARE.out（在家鄉以外偶爾也碰得到）。
+   保底計數 store "npcPity"＝{女棋手 id:從第一次在她家鄉的園子開棋起，又開了幾盤園子棋（哪一朝都算）}（05b-save.js JOURNEY_KEYS，跟存檔走）；遇到了就刪掉。
+     所以到那一朝第一盤只有一成左右會遇到她；在別處下得越多，回到她家鄉時越容易遇到，到頂就一定遇到。
+   故事線、攔路棋客指定的 keep（07u-women.js wmParkKeep、07h-qqev.js qqParkKeep）照舊優先，不看等級。
+   第一次遇到稀有／傳說時記 store "npcFxPend"＝{id,game}，開局時 07u-women.js 的 wmRareFx 播飄落、響一聲磬。模擬：scratchpad wm856/sim.js */
+const WM_RK={w09_qin_player:"rare",w11_yuan_falconer:"rare",w12_yuan_merchant:"rare",w18_ming_doctor:"rare",w20_ming_guard:"rare",w10_general:"legend",w06_swordswoman:"legend",w04_ming_scholar:"legend",w05_qing_gege:"legend"};
+const NPC_RARE={home:.7,base:{rare:.12,legend:.05},step:{rare:.06,legend:.04},hard:{rare:10,legend:14},out:{rare:.35,legend:.15}};
+const npcRk=n=>(n&&WM_RK[n.id])||"common";
+function parkPickW(cand,era,met,pity,rnd){const R=NPC_RARE,odd=n=>!!n.era&&npcRk(n)!=="common"&&!met[n.id],home=cand.filter(n=>n.era&&n.era===era),k=home.length;
+  for(const n of home)if(odd(n)&&(pity[n.id]||0)>=R.hard[npcRk(n)])return n;
+  if(k){let x=rnd();for(const n of home){x-=R.home*(odd(n)?Math.min(1,R.base[npcRk(n)]+R.step[npcRk(n)]*(pity[n.id]||0)):1)/k;if(x<0)return n}}
+  const w=n=>odd(n)?R.out[npcRk(n)]:1,tot=cand.reduce((a,n)=>a+w(n),0);let y=rnd()*tot;for(const n of cand){y-=w(n);if(y<0)return n}return cand[cand.length-1]}
+/* 保底計數：在她的家鄉朝代第一次開園子棋那一盤開始算（計數 0），之後不管在哪一朝，每開一盤 +1；遇到她就刪掉 */
+function npcPityStep(P,era,n,met){for(const id in P)if(met[id]||id===n.id)delete P[id];else P[id]++;for(const w of PARK_NPC)if(w.era&&w.era===era&&w.id!==n.id&&npcRk(w)!=="common"&&!met[w.id]&&P[w.id]==null)P[w.id]=0;return P}
 function parkNpcNew(game,lv,keep){if(!keep&&typeof qqParkKeep==="function")try{keep=qqParkKeep(store.get("era","classic"))}catch(e){}   /* 千秋穿梭突發事件：押著東西的攔路棋客，在她那一朝的園子一定遇到她 */
-  const last=store.get("parkNpcLast",""),era=store.get("era","classic"),pool=PARK_NPC.filter(n=>n.id!==last),home=pool.filter(n=>n.era===era),pk=home.length&&Math.random()<.7?home:pool,n=(keep&&PARK_NPC.find(x=>x.id===keep))||pk[Math.floor(Math.random()*pk.length)];
+  const last=store.get("parkNpcLast",""),era=store.get("era","classic"),pool=PARK_NPC.filter(n=>n.id!==last),M=store.get("npcBond",{})||{},met={};for(const id in M)if(M[id]&&M[id].m)met[id]=1;
+  const P=store.get("npcPity",{})||{},n=(keep&&PARK_NPC.find(x=>x.id===keep))||parkPickW(pool,era,met,P,Math.random);   /* 回饋 856：照等級和保底抽（keep 照舊優先） */
+  try{npcPityStep(P,era,n,met);store.set("npcPity",P);
+    if(n.era&&npcRk(n)!=="common"&&!met[n.id])store.set("npcFxPend",{id:n.id,game})}catch(e){}   /* 回饋 856：家鄉朝代每開一盤沒遇到，她的保底 +1；第一次遇到稀有／傳說，開局播飄落 */
   store.set("parkNpcLast",n.id);store.set("parkNpc",{game,id:n.id,lv});if(n.era&&typeof npcMet==="function")npcMet(n);return n}
 /* 這盤園子的對手是誰（舊的、沒有記錄的盤用編號固定挑一位，不會每次重畫換人） */
 function parkNpcOf(st){if(!st||st.journey!=="park"||st.arena)return null;const r=store.get("parkNpc",null);if(r&&r.game===st.id)return PARK_NPC.find(x=>x.id===r.id)||PARK_NPC[0];
@@ -7067,6 +7092,9 @@ function CanjuPlay(v,id){cjCSS();const H0=location.hash,here=()=>v.isConnected&&
    只出現在石桌往事的園子（st.journey==="park"／PARK_J==="park"），不碰積分挑戰、擂台、線上對戰；沒有付費、抽卡、新貨幣，獎勵只有收藏、稱號、少量修為。
    A．路人回家＋委託
       PARK_NPC 的 20 位女棋手各有家鄉朝代 era（06-cpu.js），在家鄉朝代的園子遇到她的機率約 70%（parkNpcNew）。
+      回饋 856（開發者 11/9：女棋手分普通／稀有／傳說、機率加保底）：還沒遇過的稀有、傳說機率低、越久沒遇到越高（06-cpu.js WM_RK、NPC_RARE）；
+      羈絆冊每位的頭像框用等級框色（珍品的 RELIC_RK），稀有、傳說右上角蓋「稀」「傳」小印（07v-relicdrop.js 的 .rd-seal），冊頂一行框色說明（npcRkTop）。
+      沒遇過的稀有、傳說也先露出框色和小印、不露名字和朝代：讓玩家知道還有難得的人（有期待），又不說去哪裡找（意見回饋 544「讓玩家自己撞見」）。
       園子開局時她偶爾（每天最多 2 次）說「我卡在一盤棋」：先跳一張小卡（幫她看看／下次），不打斷對局；題目從 quiz.json 依玩家程度挑。
       解對羈絆 +1（最多 3 級）：每級解開一張身分小卡（她那個朝代真實的背景）、一句新台詞、修為 +10；滿級她寫一封信寄到驛站的「📮 信箱」。
    C．象棋從哪裡來
@@ -7182,12 +7210,29 @@ function npcBondUp(N){const D=NPC_BOND[N.id];if(!D)return;const M=npcBonds(),B=M
   sheet(`🌸 和${N.name}的羈絆 ${bondHearts(B.n)}`,b=>{b.innerHTML=`<p class="gd-say">「${esc(D.l[B.n-1])}」</p>${npcIdCard(N,B.n-1)}<p class="muted" style="font-size:13px">羈絆第 ${B.n} 級（共 3 級）・修為 +10</p>${B.n>=3?`<p>💌 ${esc(N.name)}說要寫一封信給你，寄到驛站的「📮 信箱」。</p>`:""}<div class="cj-row"><button class="btn ghost" id="gdBk">羈絆冊</button><button class="btn" id="gdOk">好</button></div>`;
     b.querySelector("#gdOk").onclick=closeSheet;b.querySelector("#gdBk").onclick=()=>npcBondBook()})}
 function npcIdCard(N,i){const D=NPC_BOND[N.id];return`<div class="gd-id"><div class="gd-idh"><b>📇 身分小卡 ${i+1}／3</b><span>${esc(eraLabel(N.era))}${D.tale?"・📖 說書人筆下的身分":""}</span></div><p>${esc(D.c[i])}</p></div>`}
-/* 羈絆冊：20 位，沒遇過的顯示「？」 */
-function npcBondBook(){const L=NPC_W(),M=npcBonds(),met=L.filter(n=>M[n.id]&&M[n.id].m).length;
-  sheet(`🌸 園子棋友的羈絆（遇過 ${met}／${L.length}）`,b=>{b.innerHTML=`<p class="muted" style="font-size:13px;margin:0 0 8px">石桌往事的園子裡，女棋手偶爾會請你看一盤棋；幫她解開，羈絆就多一級。她們大多在自己家鄉的朝代出現。</p><div class="gd-grid">${L.map(n=>{const x=M[n.id]||{};return x.m?`<button class="gd-nc" data-w="${n.id}"><img src="data/npc/${n.id}.webp" alt="" onerror="this.remove()"><b>${esc(n.name)}</b><small>${esc(eraLabel(n.era))}・<span class="gd-h">${bondHearts(x.n||0)}</span></small></button>`:`<div class="gd-nc off"><span class="q">？</span><b>？？？</b><small>還沒遇過</small></div>`}).join("")}</div>`;
+/* 回饋 856：等級（06-cpu.js npcRk）、框色（07-legend.js RELIC_RK）、小印（稀、傳；普通不蓋） */
+const NPC_RK_SEAL={rare:"稀",legend:"傳"},NPC_RK_HOW={common:"常遇到",rare:"少遇到",legend:"很難得遇到"};
+const npcRkOf=n=>typeof npcRk==="function"?npcRk(n):"common",npcRkC=r=>((typeof RELIC_RK!=="undefined"&&RELIC_RK[r])||{common:["普通","#8A7A66"],rare:["稀有","#2F6FB5"],legend:["傳說","#C8962E"]}[r]||["普通","#8A7A66"]);
+const npcSeal=r=>NPC_RK_SEAL[r]?`<span class="rd-seal rd-${r}">${NPC_RK_SEAL[r]}</span>`:"";
+function npcRkCss(){if(document.getElementById("npcRkCss"))return;const s=document.createElement("style");s.id="npcRkCss";
+  s.textContent=`.gd-nc{position:relative}.gd-nc.rk img{box-shadow:0 0 0 2.5px var(--rk)}.gd-nc.rk-legend img{box-shadow:0 0 0 2.5px var(--rk),0 0 8px rgba(255,200,80,.55)}
+.gd-nc .q{width:56px;height:56px;border-radius:50%;box-sizing:border-box;border:2.5px solid var(--line)}.gd-nc.off.rk{opacity:.72}.gd-nc.off.rk .q{border-color:var(--rk)}
+.gd-nc>.rd-seal{right:calc(50% - 34px);top:5px}.gd-who .rd-seal.st{vertical-align:-3px}
+.gd-rk-pill{display:inline-block;margin-left:6px;padding:1px 8px;border-radius:999px;color:#fff;font-size:11.5px;font-weight:700;vertical-align:1px}
+.npc-key .rd-tile{border-radius:50%!important}`+(document.getElementById("rdCss")?"":`
+.rd-seal{position:absolute;right:2px;top:2px;width:17px;height:17px;display:flex;align-items:center;justify-content:center;border-radius:50%;border:1.5px solid;font:900 10px/1 var(--serif);background:rgba(255,255,255,.92);pointer-events:none}
+.rd-seal.rd-rare{color:#2F6FB5;border-color:#2F6FB5}.rd-seal.rd-legend{color:#fff;background:#C8962E;border-color:#8A6414;box-shadow:0 0 6px rgba(255,212,90,.9)}
+.rd-key{font-size:12.5px;margin:0 0 8px;display:flex;flex-wrap:wrap;gap:6px 16px;align-items:center}.rd-k{display:inline-flex;align-items:center;gap:4px}.rd-kt{flex-basis:100%}.rd-k i.rd-tile{margin-right:6px;position:relative;width:30px;height:30px;border-radius:8px;border:2.5px solid;display:inline-flex;align-items:center;justify-content:center;font-size:15px;font-style:normal;background:var(--card);flex:none}.rd-k i.rd-tile .rd-seal{right:-6px;top:-6px;width:15px;height:15px;font-size:9px}.rd-k>span{display:flex;flex-direction:column;line-height:1.2}.rd-k b{font-size:13px}.rd-k small{font-size:11px}`);document.head.append(s)}
+/* 冊頂說明（風格同珍品冊的 rdBookTop）：外框顏色＝有多難遇到，後面是這一級遇過幾位 */
+function npcRkTop(L,M){const cnt=r=>{const A=L.filter(n=>npcRkOf(n)===r);return`${A.filter(n=>M[n.id]&&M[n.id].m).length}／${A.length}`};
+  return`<div class="rd-key npc-key muted"><div class="rd-kt">頭像外框的顏色，代表她有多難遇到：</div>${["common","rare","legend"].map(r=>{const[t,c]=npcRkC(r);return`<span class="rd-k"><i class="rd-tile" style="border-color:${c}">🌸${npcSeal(r)}</i><span><b style="color:${c}">${esc(t)}</b><small>${NPC_RK_HOW[r]}・遇過 ${cnt(r)}</small></span></span>`}).join("")}</div>`}
+/* 羈絆冊：20 位，沒遇過的顯示「？」；回饋 856：頭像框用等級框色，稀有、傳說蓋小印（沒遇過的也露框色和小印，不露名字） */
+function npcBondBook(){const L=NPC_W(),M=npcBonds(),met=L.filter(n=>M[n.id]&&M[n.id].m).length;npcRkCss();
+  sheet(`🌸 園子棋友的羈絆（遇過 ${met}／${L.length}）`,b=>{b.innerHTML=`<p class="muted" style="font-size:13px;margin:0 0 8px">石桌往事的園子裡，女棋手偶爾會請你看一盤棋；幫她解開，羈絆就多一級。她們大多在自己家鄉的朝代出現。</p>${npcRkTop(L,M)}<div class="gd-grid">${L.map(n=>{const x=M[n.id]||{},r=npcRkOf(n),c=npcRkC(r)[1],rc=r==="common"?"":` rk-${r}`;return x.m?`<button class="gd-nc rk${rc}" style="--rk:${c}" data-w="${n.id}"><img src="data/npc/${n.id}.webp" alt="" onerror="this.remove()">${npcSeal(r)}<b>${esc(n.name)}</b><small>${esc(eraLabel(n.era))}・<span class="gd-h">${bondHearts(x.n||0)}</span></small></button>`:`<div class="gd-nc off${r==="common"?"":" rk"+rc}" style="--rk:${c}"><span class="q">？</span>${npcSeal(r)}<b>？？？</b><small>還沒遇過</small></div>`}).join("")}</div>`;
     b.querySelectorAll("[data-w]").forEach(y=>y.onclick=()=>{vibrate(5);const n=PARK_NPC.find(z=>z.id===y.dataset.w);if(n)npcBondSheet(n)})})}
 function npcBondSheet(n){const D=NPC_BOND[n.id],x=bondOf(n.id),age=(typeof AGE!=="undefined"&&AGE["n:"+n.id])||"";
-  sheet(`🌸 ${n.name}`,b=>{b.innerHTML=`<div class="gd-who"><img src="data/npc/${n.id}.webp" alt="" onerror="this.remove()"><div><div>家鄉：<b>${esc(eraLabel(n.era))}</b>${age?`・${esc(age)}`:""}</div><div>羈絆 <span class="gd-h">${bondHearts(x.n)}</span>（${x.n}／3）</div><div class="muted" style="font-size:13px">「${esc(n.say)}」</div></div></div>
+  npcRkCss();const rk=npcRkOf(n),[rkt,rkc]=npcRkC(rk);   /* 回饋 856：頭像框、等級小章 */
+  sheet(`🌸 ${n.name}`,b=>{b.innerHTML=`<div class="gd-who"><img src="data/npc/${n.id}.webp" alt="" onerror="this.remove()" style="box-shadow:0 0 0 2.5px ${rkc}"><div><div>家鄉：<b>${esc(eraLabel(n.era))}</b>${age?`・${esc(age)}`:""}<span class="gd-rk-pill" style="background:${rkc}">${esc(rkt)}</span></div><div>羈絆 <span class="gd-h">${bondHearts(x.n)}</span>（${x.n}／3）</div><div class="muted" style="font-size:13px">「${esc(n.say)}」</div></div></div>
     ${[0,1,2].map(i=>i<x.n?npcIdCard(n,i)+`<p class="gd-line">💬「${esc(D.l[i])}」</p>`:`<div class="gd-id off"><div class="gd-idh"><b>🔒 身分小卡 ${i+1}／3</b><span>羈絆第 ${i+1} 級解開</span></div></div>`).join("")}
     ${x.n>=3?`<button class="btn" id="gdMail" style="width:100%">💌 讀她寄來的信</button>`:""}<button class="btn ghost" id="gdBack" style="width:100%">回羈絆冊</button>`;
     const m=b.querySelector("#gdMail");if(m)m.onclick=()=>npcMail(n);b.querySelector("#gdBack").onclick=()=>npcBondBook()})}
@@ -11750,6 +11795,42 @@ function wmDevBind(box,v){box.querySelectorAll("[data-wmdv]").forEach(b=>b.oncli
     else if(t==="scra"||t==="scrb"){const L=t.slice(3),S=wmScrSt();if(S[L].k>=3){toast("三卷都齊了，去解吧");wmScrSheet(L);return}S[L].k++;S[L].at[S[L].k-1]=Date.now();const n=wmN(WM_SCR[L].w[S[L].k]);if(n&&S[L].k<3)S[L].ask[wmS(n)]=1;store.set("wmScr",S);wmScrSheet(L)}
     else if(t==="echo"){const k=store.get("era","classic"),C=(typeof BATTLE_CARDS!=="undefined"&&BATTLE_CARDS[k])||[];if(!C.length){toast("先打開一次古戰場（載入戰役卡），再回來按");return}
       const c=C.find(z=>z&&WM_EC[z.id]);if(!c){toast("這一朝沒有女棋手，換一朝試");return}const S=wmEcSt();delete S.done[c.id];S.p={id:c.id,k,i:C.indexOf(c),at:Date.now(),name:c.name,lesson:c.lesson||""};store.set("wmEcho",S);toast(`⚔ ${c.name}：24 小時內進${eraLabel(k)}的園子`)}})}
+/* =================================================================== 回饋 856：第一次遇到稀有、傳說的她 =================================================================== */
+/* 回饋 856（開發者 11/9：女棋手分普通／稀有／傳說、機率加保底）：第一次在園子遇到稀有、傳說的女棋手（06-cpu.js parkNpcNew 記下 store npcFxPend＝{id,game}），
+   她入座時（等 park3d 的入場過場 .gt-t 收掉、再等 1.6 秒讓「開局」字樣先過去，wmWhenReady）畫面慢慢飄落幾片她的代表物，響一聲磬。不像抽卡：沒有閃光、轉盤、文字；十幾片慢慢飄下、8 秒內自己收掉，
+   飄的時候照常能下棋（pointer-events:none）。代表物是程式畫的 SVG 小形狀（WM_FALL，沒有字、不新畫圖）；聲音用 01-board.js 的 bellHit（App 原有的鐘磬合成聲，
+   珍品開箱也用它，不下載新檔），聲音全關（sndOn）就不響。只播一次（對上這一盤就清掉 npcFxPend）；prefers-reduced-motion 不飄，只響一聲。傳說多幾片。
+   WM_FALL＝[形狀, 填色, 線色]：琴師 白梅、馴鷹少女 羽毛、西域商隊的姑娘 葡萄葉、女大夫 艾葉、女捕快 楓葉、女將軍 雪花、江湖女俠 竹葉、女扮男裝的書生 銀杏葉、格格 海棠花瓣 */
+const WM_FALL={w09_qin_player:["plum","#FBF6EE","#C9A0A8"],w11_yuan_falconer:["feather","#9A7A58","#5A4630"],w12_yuan_merchant:["vine","#7E9A4C","#4E6A2A"],
+  w18_ming_doctor:["ai","#93A88A","#5E7458"],w20_ming_guard:["maple","#C8553A","#8A3020"],w10_general:["snow","#FFFFFF","#9FB4C8"],w06_swordswoman:["bamboo","#6A9A52","#3E6A30"],
+  w04_ming_scholar:["ginkgo","#E3BC4C","#A8862A"],w05_qing_gege:["petal","#F4AFC0","#D9809A"]};
+function wmFallSvg(k,c,s){const P={
+  petal:`<path d="M0-9C5-9 7-3 0 9C-7-3-5-9 0-9Z" fill="${c}" stroke="${s}" stroke-width=".7"/><path d="M0-6V5" stroke="${s}" stroke-width=".5" opacity=".6"/>`,
+  plum:[0,72,144,216,288].map(a=>`<circle cx="${(5*Math.sin(a*Math.PI/180)).toFixed(2)}" cy="${(-5*Math.cos(a*Math.PI/180)).toFixed(2)}" r="4.6" fill="${c}" stroke="${s}" stroke-width=".6"/>`).join("")+`<circle r="2.2" fill="#E8C35A"/>`,
+  bamboo:`<path d="M0-11C2.8-5 2.8 5 0 11C-2.8 5-2.8-5 0-11Z" fill="${c}"/><path d="M0-10V10" stroke="${s}" stroke-width=".6"/>`,
+  ai:`<path d="M0-10C6-6 6 4 0 10C-6 4-6-6 0-10Z" fill="${c}"/><path d="M0-9V10M0-3L3-6M0 1L-3-2M0 4L3 1" stroke="${s}" stroke-width=".6" fill="none"/>`,
+  feather:`<path d="M0 11C-1 4-5-4-1-11C4-5 3 4 0 11Z" fill="${c}"/><path d="M0 11C0 4-.4-4-1-11" stroke="${s}" stroke-width=".7" fill="none"/>`,
+  ginkgo:`<path d="M0 3C-8 2-10-5-7-9C-4-6 4-6 7-9C10-5 8 2 0 3Z" fill="${c}" stroke="${s}" stroke-width=".6"/><path d="M0 3V11" stroke="${s}" stroke-width="1"/>`,
+  maple:`<polygon points="0,-10 2,-4 8,-6 5,0 9,3 3,3 2,9 0,5 -2,9 -3,3 -9,3 -5,0 -8,-6 -2,-4" fill="${c}" stroke="${s}" stroke-width=".6"/><path d="M0 5V11" stroke="${s}" stroke-width="1"/>`,
+  vine:`<path d="M0 10C-2 6-9 6-9 0C-9-3-6-4-5-3C-6-7-3-10 0-7C3-10 6-7 5-3C6-4 9-3 9 0C9 6 2 6 0 10Z" fill="${c}" stroke="${s}" stroke-width=".6"/><path d="M0 9V-6M0 2L-5-1M0 2L5-1" stroke="${s}" stroke-width=".5" fill="none"/>`,
+  snow:`<g stroke="${s}" stroke-width="1.6" stroke-linecap="round" fill="none">${[0,60,120].map(a=>`<path transform="rotate(${a})" d="M0-10V10M0-6L-3-9M0-6L3-9M0 6L-3 9M0 6L3 9"/>`).join("")}</g><g stroke="${c}" stroke-width=".8" stroke-linecap="round" fill="none">${[0,60,120].map(a=>`<path transform="rotate(${a})" d="M0-9V9"/>`).join("")}</g>`};
+  return`<svg viewBox="-12 -12 24 24" aria-hidden="true">${P[k]||P.petal}</svg>`}
+function wmFallCss(){if(document.getElementById("wmFallCss"))return;const s=document.createElement("style");s.id="wmFallCss";
+  s.textContent=`.wmf{position:fixed;inset:0;pointer-events:none;z-index:44;overflow:hidden}.wmf i{position:absolute;top:-40px;display:block;opacity:0;animation:wmfFall var(--d) linear var(--dl) forwards}
+.wmf i>b{display:block;width:var(--s);height:var(--s);animation:wmfSway var(--sw) ease-in-out var(--dl) infinite alternate}.wmf svg{width:100%;height:100%;display:block;filter:drop-shadow(0 1px 1.5px rgba(0,0,0,.22))}
+@keyframes wmfFall{0%{opacity:0;transform:translateY(0) rotate(var(--r0))}12%{opacity:.95}80%{opacity:.9}100%{opacity:0;transform:translateY(calc(100vh + 60px)) rotate(var(--r1))}}
+@keyframes wmfSway{from{transform:translateX(calc(var(--x) * -1))}to{transform:translateX(var(--x))}}`;document.head.append(s)}
+function wmRareSound(rk){try{if(typeof sndOn==="function"&&!sndOn())return;if(typeof withAudio!=="function"||typeof bellHit!=="function")return;withAudio(()=>{bellHit(AC.currentTime+.05,rk==="legend"?440:587)})}catch(e){}}
+/* 播一次：rk＝等級；回傳飄落層（測試用） */
+function wmRareFx(N){const F=WM_FALL[N&&N.id];if(!F)return null;const rk=typeof npcRk==="function"?npcRk(N):"rare";wmRareSound(rk);
+  if(matchMedia("(prefers-reduced-motion: reduce)").matches)return null;wmFallCss();document.querySelectorAll(".wmf").forEach(x=>x.remove());
+  const box=document.createElement("div");box.className="wmf";box.setAttribute("aria-hidden","true");const n=rk==="legend"?18:12,svg=wmFallSvg(F[0],F[1],F[2]),R=(a,b)=>a+Math.random()*(b-a);
+  box.innerHTML=Array.from({length:n},(_,i)=>`<i style="left:${((i+R(.1,.9))/n*100).toFixed(1)}%;--d:${R(4.6,6.4).toFixed(2)}s;--dl:${R(0,1.6).toFixed(2)}s;--r0:${R(-60,60)|0}deg;--r1:${R(120,420)|0}deg"><b style="--s:${R(16,26)|0}px;--sw:${R(1.1,1.9).toFixed(2)}s;--x:${R(8,22)|0}px">${svg}</b></i>`).join("");
+  document.body.append(box);setTimeout(()=>box.remove(),9000);return box}
+/* 開局（08b-cpugame.js 呼叫 npcAskMaybe 的地方）：這一盤是她第一次出現，就等入場過場收掉再飄 */
+if(typeof npcAskMaybe==="function"){const na1=npcAskMaybe;npcAskMaybe=function(N,st,hb){try{const P=store.get("npcFxPend",null);
+  if(P&&N&&st&&P.id===N.id&&P.game===st.id&&st.journey==="park"&&!(st.moves||[]).length){store.set("npcFxPend",null);const h0=location.hash;wmWhenReady(()=>hb&&hb.isConnected&&location.hash===h0,()=>wmRareFx(N),1600)}}catch(e){}
+  return na1.apply(this,arguments)}}
 /* ================= 🎁 景點掉寶（開發者 11/8）=================
    渡口的朝代景點（07f-ship.js PORT_SIGHT，portSight）和各朝驛站的史實小牌（07m-yizhan.js YZ_SIGHT，yzSight）點了以後呼叫 relicSightDrop(kind,era,name)：
    kind＝"p" 渡口景點、"y" 驛站小牌；era＝朝代鍵；name＝景點名字。回傳 Promise：true＝撿到新珍品（呼叫的地方就不再跳介紹），false＝照舊看介紹。
