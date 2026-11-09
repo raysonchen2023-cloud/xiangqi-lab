@@ -1341,7 +1341,7 @@ html[data-era=qin] .view:has(>.shp-rd),html[data-era=wudai] .view:has(>.shp-rd){
       if(!window.caches)return go();caches.keys().then(function(ks){return Promise.all(ks.filter(function(k){return k.indexOf("xqlab-app-")===0}).map(function(k){return caches.delete(k)}))})
         .then(function(){return navigator.serviceWorker&&navigator.serviceWorker.getRegistration()}).then(function(r){return r&&r.update()}).catch(function(){}).then(go)}};setTimeout(chk,4000)})();
 </script>
-<script>window.XQ_OFFLINE=true;window.XQ_BUILD="20261109-1815";</script>
+<script>window.XQ_OFFLINE=true;window.XQ_BUILD="20261109-1830";</script>
 <script src="core.js"></script>
 <script src="engine.js"></script>
 <script src="local.js"></script>
@@ -4067,7 +4067,7 @@ function onboard(){if(journey())journeyLock();else titleScreen({})}
 // ================= 設定：棋盤風格、棋子樣式、走棋顯示 =================
 const SAMPLE_FEN0="rnbakabnr/9/1c5c1/p1p1p1p1p/9/9/P1P1P1P1P/1C5C1/9/RNBAKABNR",SAMPLE_FEN1="rnbakabnr/9/1c5c1/p1p1p1p1p/9/9/P1P1P1P1P/1C2C4/9/RNBAKABNR",SAMPLE_LAST={f:70,t:67};
 /* 意見回饋 661：關於頁顯示整包遊戲要多大空間。XQ_SIZES 由 build-site.js 建置時填入（開發中的 m.html 是 null，就不顯示） */
-const XQ_SIZES={"pre":256127055,"code":13504565,"eng":51511005,"gm":33668932,"bgm":259516351,"opt":[["比賽對局 1956–2010",21765744],["比賽對局 2011–2014",25596413],["比賽對局 2015–2019",24821916]],"all":703745141,"other":17233160};
+const XQ_SIZES={"pre":272143041,"code":14023701,"eng":51511005,"gm":33668932,"bgm":259516351,"opt":[["比賽對局 1956–2010",21765744],["比賽對局 2011–2014",25596413],["比賽對局 2015–2019",24821916]],"all":720256003,"other":17208900};
 const szMB=b=>b>=1073741824?(b/1073741824).toFixed(1)+" GB":Math.max(1,Math.round(b/1048576))+" MB";
 function aboutSizes(){const S=XQ_SIZES;if(!S)return"";const opt=S.opt||[];   /* 意見回饋 662：玩家只看總數，細項只在開發者模式顯示 */
   return `<div class="row" style="justify-content:space-between"><span class="muted">整包下載</span><b>約 ${szMB(S.all)}</b></div>
@@ -11734,7 +11734,7 @@ function xqSheetCss(){if(document.getElementById("xqsCss"))return;const s=docume
 .xqs-h button{position:absolute;right:6px;top:6px;border:0;background:none;font-size:22px;line-height:1;color:var(--ink);cursor:pointer;padding:6px 8px;letter-spacing:0}
 .xqs-c{flex:none;text-align:center;font:600 13px/1.5 var(--serif,serif);color:var(--muted);padding:0 14px 6px;margin:0 12px;border-bottom:1px solid var(--line)}
 .xqs-b{flex:1;min-height:0;overflow:auto;-webkit-overflow-scrolling:touch;overscroll-behavior:contain;padding:6px 4px 14px;border-top:1px solid var(--line);margin:0 6px}
-.xqs-b>*{margin-top:0}
+.xqs-b>*{margin-top:0}.xqs-b .xqs-dup{display:none}
 @media (prefers-reduced-motion:reduce){.xqs,.xqs.open{transition:none}}`;document.head.append(s)}
 function xqSheet(v,o){xqSheetCss();o=o||{};const sc=document.createElement("div");sc.className="xqs-s";const el=document.createElement("div");el.className="xqs";el.setAttribute("role","dialog");
   el.innerHTML='<div class="xqs-h"><b></b><button type="button" aria-label="收起">✕</button></div><div class="xqs-c"></div><div class="xqs-b"></div>';
@@ -11744,8 +11744,19 @@ function xqSheet(v,o){xqSheetCss();o=o||{};const sc=document.createElement("div"
     close(){shut();if(un){const f=un;un=null;f()}},
     go(sel){let n=0;const f=()=>{if(sel==null){b.scrollTop=0;return}const t=typeof sel==="string"?b.querySelector(sel):sel;
       if(t&&b.contains(t)){b.scrollTop=Math.max(0,b.scrollTop+t.getBoundingClientRect().top-b.getBoundingClientRect().top-6)}else if(++n<25)setTimeout(f,120)};setTimeout(f,40)},
-    open(sel,t){if(t!=null)S.title(t);if(!S.on()){el.classList.add("open");sc.classList.add("open");if(typeof xqPanelNav==="function")un=xqPanelNav(()=>{un=null;shut()})}S.go(sel)}};
-  el._S=S;S.title(o.t);el.querySelector(".xqs-h button").onclick=()=>S.close();sc.onclick=()=>S.close();return S}
+    open(sel,t){if(t!=null)S.title(t);if(!S.on()){el.classList.add("open");sc.classList.add("open");if(typeof xqPanelNav==="function")un=xqPanelNav(()=>{un=null;shut()})}S.go(sel);xqSheetDup(S)}};
+  el._S=S;S.title(o.t);{let q=0;new MutationObserver(()=>{clearTimeout(q);q=setTimeout(()=>xqSheetDup(S),80)}).observe(b,{childList:true,subtree:true})}el.querySelector(".xqs-h button").onclick=()=>S.close();sc.onclick=()=>S.close();return S}
+/* 回饋 834（開發者 11/9 截圖：面板標題「語音報棋」底下又一行「語音報子」，「太冗餘重複，盤查所有類似頁面」）：
+   面板一打開（或內容換了），看面板裡「第一個看得到的東西」：如果是一行小標（.sec-t，裡面沒有按鈕或連結），而且
+   ①整張面板只有這一個小標，或 ②小標跟面板標題的漢字一樣／互相包含（例如「🕯 氛圍」底下的「氛圍」），就把那行小標藏起來，標題已經說了。
+   有好幾段的面板（例如「棋盤與走棋特效」底下的「棋盤風格」「走棋顯示與特效」）各段小標照留。只在面板裡藏（.xqs-b .xqs-dup），內容搬回原頁就恢復 */
+function xqSheetDup(S){try{const b=S.b;b.querySelectorAll(".xqs-dup").forEach(x=>x.classList.remove("xqs-dup"));if(!S.on())return;
+  const cj=s=>(s||"").replace(/[^㐀-鿿]/g,""),T=cj(S.el.querySelector(".xqs-h b").textContent);
+  const see=e=>e.getClientRects().length>0&&getComputedStyle(e).visibility!=="hidden";
+  const H=[...b.querySelectorAll(".sec-t")].filter(see);if(!H.length)return;
+  let f=null;for(const e of b.querySelectorAll("*")){if(!see(e))continue;if(e.matches("img,svg,canvas,input,select,button,textarea")||[...e.childNodes].some(n=>n.nodeType===3&&n.textContent.trim())){f=e;break}}
+  const h=H[0];if(!f||!h.contains(f)||h.querySelector("button,a,input,select"))return;
+  const c=cj(h.textContent);if(H.length===1||(c&&T&&(T.includes(c)||c.includes(T))))h.classList.add("xqs-dup")}catch(e){}}
 function xqSheetMove(v,P,S){const V=document.getElementById("view")||v,F=Node.DOCUMENT_POSITION_FOLLOWING;
   const ok=c=>{if(c===S.el||c.classList.contains("xqs")||c.classList.contains("xqs-s")||c.matches("script,style,template,link"))return false;const cs=getComputedStyle(c);return cs.position!=="fixed"&&cs.position!=="absolute"&&cs.display!=="none"};   /* 藏起來的（display:none）先不搬，等它出現（每秒看一次）再搬 */
   const mv=()=>{if(!P.isConnected)return;const L=[];const walk=el=>{for(const c of[...el.children]){if(c===P)continue;if(c.contains(P)){walk(c);continue}if((P.compareDocumentPosition(c)&F)&&ok(c))L.push(c)}};walk(V);L.forEach(c=>S.b.append(c))};
@@ -13667,7 +13678,9 @@ function GmHall(v){gm2Css();setTop("🖼 特級大師","#/db");if(typeof setTabs
     <input class="gm2-q" type="search" placeholder="找一位：名字、籍貫、頭銜" value="${esc(GM2_ST.q)}" aria-label="搜尋特級大師"><div class="gm2-cnt"></div></div><div class="gm2-grid"><p class="gm2-cnt">展開畫軸中…</p></div>`;
   const fit=()=>{const k=P.clientWidth/768;if(!k)return;P.querySelectorAll(".gm2-wh").forEach(m=>{const q=GM2_Q[+m.dataset.i].map(([x,y])=>[x*k,y*k]);m.style.transform=gm2M3(90,200,q)})};
   if(window.ResizeObserver){const ro=new ResizeObserver(()=>{if(!P.isConnected){ro.disconnect();return}fit()});ro.observe(P)}fit();
-  P.querySelector("#gm2Go").onclick=()=>{try{H.scrollIntoView({behavior:"smooth",block:"start"})}catch(e){H.scrollIntoView()}};
+  /* 回饋 833（開發者 11/9：四頁也改成一對一）：這頁圖上只有「畫像長廊」一個入口，面板裡也只有畫像長廊這一塊（年代竹牌、搜尋、72 軸），所以不用藏東西，
+     只把面板標題換成入口名「畫像長廊」（原本是頁名「🖼 特級大師」）。面板是 07w 的 xqSheetAuto 晚一點（0～700ms）才建的，所以點的當下才去拿；還沒建好就照舊捲過去 */
+  P.querySelector("#gm2Go").onclick=()=>{const X=v.querySelector(".xqs"),S=X&&X._S;if(S&&X.contains(H)){S.open(H,"畫像長廊");return}try{H.scrollIntoView({behavior:"smooth",block:"start"})}catch(e){H.scrollIntoView()}};
   let L=[],RD={},unNav=null,openN="";
   const grid=H.querySelector(".gm2-grid"),cnt=H.querySelector(".gm2-bar .gm2-cnt");
   const axHTML=x=>{const p=x.p,nm=p.zh||x.n,seal=nm.length===3?nm+"印":nm.slice(0,4),rd=(RD[x.n]||0)>=5;
@@ -13849,9 +13862,24 @@ function cp2Wrap(v,R){if(!CUP_MAP_ON||!window.XQNet||!v.querySelector("#cupb"))r
     const cheer=S&&["play","done"].includes(S.ph);try{const c=P._shwCfg;if(c)c.HS.cp2Scr[3]=cheer?"cheer":"idle"}catch(e){}
     fit()};
   const box=v.querySelector("#cupb"),press=sel=>{const b=box&&box.querySelector(sel);if(b){b.click();return true}return false},show=()=>{try{box.scrollIntoView({behavior:"smooth",block:"start"})}catch(e){}};
-  P.querySelector("#cp2Book").onclick=()=>{if(!press("#cuJ")&&!press("#cuK")&&!press("#cuR"))show()};
-  P.querySelector("#cp2Scr").onclick=()=>{const t=box&&box.querySelector(".sec-t");try{(t||box).scrollIntoView({behavior:"smooth",block:"start"})}catch(e){}};
-  P.querySelector("#cp2Brd").onclick=()=>{if(feat){XQNet.watch(feat);location.hash="#/pvp"}else show()};
+  /* 回饋 833（開發者 11/9：四頁也改成一對一）：點圖上的東西＝面板只看那一塊，標題換成入口名（照 832 我的戰績的做法）。#cupb 每 20 秒整個重畫，所以用 CSS 照排列位置分塊，不在元素上做記號：
+     英雄帖（book）＝上面的橫幅、報名／點將／入座那一段，加上「比賽規則」「家長看這裡」兩張摺卡（規則沒有自己的入口，歸給英雄帖：帖上本來就寫賽制）；
+     對陣金榜（scr）＝各輪對陣（第一個 .sec-t 起到規則之前），加上最下面的「千秋擂主碑」（擂主碑也沒有自己的入口，歸給金榜：中扇寫的就是擂主）。
+     英雄帖照舊：有報名、點將、入座的鈕就直接按；大掛盤照舊：有正在下的那盤就觀戰，沒有就只跳一行說明，不開面板（掛盤本身就是那一盤棋，沒有另外的內容）。
+     面板上記 data-cp2＝目前那一塊；收起（class 沒了 open）就拿掉 data-cp2、標題換回頁名。面板是 07w 的 xqSheetAuto 晚一點（0～700ms）才建的，所以點的當下才去拿；還沒建好就照舊捲過去 */
+  if(!document.getElementById("cp2OneCss")){const s=document.createElement("style");s.id="cp2OneCss";s.textContent=`.xqs[data-cp2="book"] #cupb>:is(.sec-t,.sec-t~*):not(details){display:none}
+.xqs[data-cp2="scr"] #cupb>:not(.sec-t):not(.sec-t~*),.xqs[data-cp2="scr"] #cupb>details{display:none}`;document.head.append(s)}
+  const one=(k,t)=>{const X=v.querySelector(".xqs"),S=X&&X._S;if(!S||!box||!X.contains(box))return false;
+    if(!X._cp2Mo){X._cp2T0=X.querySelector(".xqs-h b").textContent;X._cp2Mo=new MutationObserver(()=>{if(!X.classList.contains("open")&&X.dataset.cp2){delete X.dataset.cp2;S.title(X._cp2T0)}});X._cp2Mo.observe(X,{attributes:true,attributeFilter:["class"]})}
+    X.dataset.cp2=k;S.open(null,t);return true};
+  P.querySelector("#cp2Book").onclick=()=>{if(!press("#cuJ")&&!press("#cuK")&&!press("#cuR")&&!one("book","英雄帖"))show()};
+  P.querySelector("#cp2Scr").onclick=()=>{const t=box&&box.querySelector(".sec-t");
+    if(!t){toast("還沒有排出對陣，週六點將截止後就會貼上金榜");return}
+    const br=!!box.querySelector(":scope>.sec-t:not(details~*)");   /* 有各輪對陣嗎（沒有的話面板裡只有擂主碑） */
+    if(!one("scr","對陣金榜")){try{t.scrollIntoView({behavior:"smooth",block:"start"})}catch(e){}return}
+    if(!br)toast("還沒有排出對陣，週六點將截止後就會貼上金榜；先看看歷屆擂主")};
+  P.querySelector("#cp2Brd").onclick=()=>{if(feat){XQNet.watch(feat);location.hash="#/pvp";return}let S=null;try{S=XQNet.cup()}catch(e){}
+    toast(S&&S.ph==="play"?"這會兒沒有正在下的對局，下一盤開打就掛上來，點一下觀戰":"週六開擂後，大掛盤會掛上正在下的對局，點一下就能觀戰")};
   draw();const offs=[XQNet.on("cup",draw)],t=setInterval(draw,20000);
   const cfg=Object.assign({},SHW_PG0,SHW_CP2,{HS:Object.assign({},SHW_CP2.HS,{cp2Scr:SHW_CP2.HS.cp2Scr.slice()})});P._shwCfg=cfg;
   {let S=null;try{S=XQNet.cup()}catch(e){}if(S&&["play","done"].includes(S.ph))cfg.HS.cp2Scr[3]="cheer"}
@@ -13920,7 +13948,17 @@ function rd2Wrap(v,R){if(!REDO_MAP_ON||!v.querySelector("#rf"))return R;rd2Css()
     ${sp("rd2Book",RD2_BOOK[0],RD2_BOOK[1]-70,"📅 該複習")}${sp("rd2Stack",RD2_STACK[0]-20,RD2_STACK[1]-75,"還沒練會")}${sp("rd2Pole",610,370,"✅ 練會了")}${sp("rd2All",RD2_ALL[0],RD2_ALL[1],"全部","rd2-small")}`;
   v.insertBefore(P,v.firstChild);
   const rf=v.querySelector("#rf"),cnt=()=>{const o={};rf.querySelectorAll("[data-k]").forEach(b=>{const m=b.textContent.match(/(\d+)\s*$/);o[b.dataset.k]=m?+m[1]:0});return o};
-  const pick=k=>{const b=rf.querySelector(`[data-k="${k}"]`);if(b)b.click();const L=v.querySelector("#rl");try{(L||rf).scrollIntoView({behavior:"smooth",block:"start"})}catch(e){}};
+  /* 回饋 833（開發者 11/9：四頁也改成一對一）：點圖上的東西＝按原本的篩選鈕，面板只看那一份清單，標題換成入口名（照 832 我的戰績的做法）。
+     面板上記 data-rd2＝目前那一份，CSS 藏掉篩選鈕列（#rf，圖上已經各有一個入口）；「該複習／還沒練會／練會了」也藏掉最上面那張說明卡，只留清單（#rl）；
+     說明卡（怎麼練、間隔重複）沒有自己的入口，歸給「全部」；「還有一題沒下完・繼續下」那一格（#rRes）四份都留著。書案上的冊子沒有該複習的題目時照舊改看還沒練會，標題也跟著寫還沒練會。
+     面板收起（class 沒了 open）就拿掉 data-rd2、標題換回頁名。面板是 07w 的 xqSheetAuto 晚一點（0～700ms）才建的，所以點的當下才去拿；還沒建好就照舊捲過去 */
+  if(!document.getElementById("rd2OneCss")){const s=document.createElement("style");s.id="rd2OneCss";s.textContent=`.xqs[data-rd2] #rf{display:none}
+.xqs[data-rd2]:not([data-rd2="all"]) .home>.card:first-child{display:none}`;document.head.append(s)}
+  const RD2_TT={due:"該複習",todo:"還沒練會",ok:"練會了",all:"全部錯棋"};
+  const pick=k=>{const b=rf.querySelector(`[data-k="${k}"]`);if(b)b.click();const L=v.querySelector("#rl"),X=v.querySelector(".xqs"),S=X&&X._S;
+    if(S){if(!X._rd2Mo){X._rd2T0=X.querySelector(".xqs-h b").textContent;X._rd2Mo=new MutationObserver(()=>{if(!X.classList.contains("open")&&X.dataset.rd2){delete X.dataset.rd2;S.title(X._rd2T0)}});X._rd2Mo.observe(X,{attributes:true,attributeFilter:["class"]})}
+      X.dataset.rd2=k;S.open(null,RD2_TT[k]);return}
+    try{(L||rf).scrollIntoView({behavior:"smooth",block:"start"})}catch(e){}};
   P.querySelector("#rd2Book").onclick=()=>{const c=cnt();pick(c.due?"due":"todo")};P.querySelector("#rd2Stack").onclick=()=>pick("todo");P.querySelector("#rd2Pole").onclick=()=>pick("ok");P.querySelector("#rd2All").onclick=()=>pick("all");
   const draw=()=>{if(!P.isConnected)return;const c=cnt(),fx=P.querySelector(".rd2-fx");
     /* 案角疊冊：還沒練會的題數，最多疊 8 本 */
@@ -14170,9 +14208,26 @@ function kj2Wrap(v,R0){if(!OPEN_MAP_ON||!v.querySelector("#ob"))return R0;kj2Css
   const secOf=t=>[...v.querySelectorAll("#ob .sec-t")].find(x=>x.textContent.includes(t));
   const pan=(t,title)=>{const s=secOf(t),c=s&&s.nextElementSibling;if(!c){toast("還沒有自己的對局，下幾盤就會統計");return}sheet(title,b=>{b.classList.add("kj2-pan");b.innerHTML=`<div class="muted" style="margin:-4px 0 8px">${esc(s.textContent)}</div>`;b.append(c.cloneNode(true))})};
   const go=t=>{const s=secOf(t)||v.querySelector("#ob");try{s.scrollIntoView({behavior:"smooth",block:"start"})}catch(e){}};
-  P.querySelector("#kj2Red").onclick=()=>pan("執紅","📕 執紅開局");P.querySelector("#kj2Blk").onclick=()=>pan("執黑","📘 執黑應法");
-  P.querySelector("#kj2Slip").onclick=()=>go("中局");P.querySelector("#kj2Scr").onclick=()=>go("推薦");
-  P.querySelector("#kj2Brd").onclick=()=>{const c=v.querySelector("#ob .card");try{(c||v.querySelector("#ob")).scrollIntoView({behavior:"smooth",block:"start"})}catch(e){}};
+  /* 回饋 833（開發者 11/9：四頁也改成一對一）：點圖上的東西＝面板只看那一塊，標題換成入口名（照 832 我的戰績的做法）。
+     #ob 裡的每一塊先標上 data-kj2b：朱冊＝執紅（red）、墨冊＝執黑（blk）、紙籤＝中局著法（mid）、手卷＝推薦練習（scr）、棋枰＝最上面那張「你執紅最常下…」（brd；還沒有對局時是那張提示）；
+     底下「開局名稱依…」的小字跟執紅、執黑走。#ob 晚一點才排好、推薦練習又更晚插進來，所以 #ob 一有變動就重標。
+     面板上記 data-kj2＝目前那一塊，CSS 藏掉其他的；面板收起（class 沒了 open）就拿掉 data-kj2、標題換回頁名。面板是 07w 的 xqSheetAuto 晚一點（0～700ms）才建的，所以點的當下才去拿；
+     還沒建好就照舊（冊子開小面板、其他捲過去）。原本冊子用的另一張 sheet() 小面板，改成同一張面板，跟其他入口一樣夾在頂欄和底欄中間 */
+  const kj2K=t=>/執紅/.test(t)?"red":/執黑/.test(t)?"blk":/中局/.test(t)?"mid":/推薦/.test(t)?"scr":"";
+  const kj2Tag=()=>{const ob=v.querySelector("#ob");if(!ob)return;let cur="";
+    for(const c of ob.children){let k="";const st=c.querySelector(":scope>.sec-t");
+      if(c.classList.contains("sec-t"))k=cur=kj2K(c.textContent);else if(st)k=kj2K(st.textContent);else if(c.tagName==="P")k="red blk";else if(c.classList.contains("card")&&!cur)k="brd";else k=cur;
+      if(k)c.dataset.kj2b=k;else delete c.dataset.kj2b}};
+  if(!document.getElementById("kj2OneCss")){const s=document.createElement("style");s.id="kj2OneCss";s.textContent=["brd","red","blk","mid","scr"].map(k=>`.xqs[data-kj2="${k}"] #ob>:not([data-kj2b~="${k}"]){display:none}`).join("\n");document.head.append(s)}
+  {const ob=v.querySelector("#ob");if(ob){const mo=new MutationObserver(()=>{if(!P.isConnected){mo.disconnect();return}kj2Tag()});mo.observe(ob,{childList:true});kj2Tag()}}
+  const one=(k,t)=>{kj2Tag();const X=v.querySelector(".xqs"),S=X&&X._S;if(!S)return false;
+    if(!X._kj2Mo){X._kj2T0=X.querySelector(".xqs-h b").textContent;X._kj2Mo=new MutationObserver(()=>{if(!X.classList.contains("open")&&X.dataset.kj2){delete X.dataset.kj2;S.title(X._kj2T0)}});X._kj2Mo.observe(X,{attributes:true,attributeFilter:["class"]})}
+    if(!v.querySelector(`#ob>[data-kj2b~="${k}"]`)){const ld=!v.querySelector("#ob>.card,#ob>.sec-t,#ob [data-kj2b]");
+      toast(ld?"還在整理你下過的對局，請等一下":k==="scr"?"正在挑推薦的大師對局，請等一下":k==="brd"?"還沒有執紅的對局，下幾盤執紅就找得出招牌開局":"還沒有自己的對局，下幾盤就會統計");return true}
+    X.dataset.kj2=k;S.open(null,t);return true};
+  P.querySelector("#kj2Red").onclick=()=>{if(!one("red","執紅開局"))pan("執紅","📕 執紅開局")};P.querySelector("#kj2Blk").onclick=()=>{if(!one("blk","執黑應法"))pan("執黑","📘 執黑應法")};
+  P.querySelector("#kj2Slip").onclick=()=>{if(!one("mid","中局著法"))go("中局")};P.querySelector("#kj2Scr").onclick=()=>{if(!one("scr","推薦對局"))go("推薦")};
+  P.querySelector("#kj2Brd").onclick=()=>{if(one("brd","招牌開局"))return;const c=v.querySelector("#ob .card");try{(c||v.querySelector("#ob")).scrollIntoView({behavior:"smooth",block:"start"})}catch(e){}};
   const cfg=Object.assign({},SHW_PG0,SHW_KJ2,{HS:Object.assign({},SHW_KJ2.HS,{kj2Red:SHW_KJ2.HS.kj2Red.slice(),kj2Blk:SHW_KJ2.HS.kj2Blk.slice()})});
   kj2Data().then(D=>{if(!P.isConnected)return;
     const b=parseFen(START);for(const[f,t]of D.moves){if(b[f]){b[t]=b[f];b[f]=null}}Q("b").innerHTML=kj2BoardSVG(b);Q("s").innerHTML=kj2SlipSVG(D.mid);
