@@ -1341,7 +1341,7 @@ html[data-era=qin] .view:has(>.shp-rd),html[data-era=wudai] .view:has(>.shp-rd){
       if(!window.caches)return go();caches.keys().then(function(ks){return Promise.all(ks.filter(function(k){return k.indexOf("xqlab-app-")===0}).map(function(k){return caches.delete(k)}))})
         .then(function(){return navigator.serviceWorker&&navigator.serviceWorker.getRegistration()}).then(function(r){return r&&r.update()}).catch(function(){}).then(go)}};setTimeout(chk,4000)})();
 </script>
-<script>window.XQ_OFFLINE=true;window.XQ_BUILD="20261109-1600";</script>
+<script>window.XQ_OFFLINE=true;window.XQ_BUILD="20261109-1615";</script>
 <script src="core.js"></script>
 <script src="engine.js"></script>
 <script src="local.js"></script>
@@ -11456,7 +11456,8 @@ function shwExitCfg(o){if(!SHW_EXIT_ON||!o||!o.cfg||!o.mem)return o;const m=o.me
   if(X.boat){const A=typeof PH4_PIER!=="undefined"&&PH4_PIER[m.split(":")[1]];if(!A||!A.boat)return o;X=Object.assign({},X,{out:A.boat})}
   let n=C.home,N=C.N,E=C.E;if(typeof X.at==="string"){if(!N[X.at])return o;n=X.at}else if(X.at){n="_x";N=Object.assign({},N,{_x:X.at});E=E+" "+(X.ln||C.home).split(" ").filter(k=>N[k]&&k!=="_x").map(k=>k+"-_x").join(" ")}
   return Object.assign({},o,{cfg:Object.assign({},C,{N,E,_e:null}),X:{n,out:X.out,r:X.r}})}
-{const f0=shwMount;shwMount=function(o){let o2=o;try{o2=shwExitCfg(o)}catch(e){o2=o}return f0(o2)}}
+const SHW_XR=[];   /* 各頁出口點區（給 07t3 籤筒讓位用）：{f:圖框, r:[左,上,右,下]%} */
+{const f0=shwMount;shwMount=function(o){let o2=o;try{o2=shwExitCfg(o)}catch(e){o2=o}try{if(o2&&o2.X&&o2.X.r&&o2.frame){for(let i=SHW_XR.length-1;i>=0;i--)if(!SHW_XR[i].f.isConnected)SHW_XR.splice(i,1);SHW_XR.push({f:o2.frame,r:o2.X.r})}}catch(e){}return f0(o2)}}
 function shwXTip(S){const X=S.o.X,m=S.o.mem;if(SHW_XT[m]||!X.r)return;SHW_XT[m]=1;try{const I=S.I,L=S.o.layer;if(!I.clientWidth)return;const e=document.createElement("i");e.className="shw-xt";e.setAttribute("aria-hidden","true");e.textContent="‹ 出去";
   const x=Math.max(14,Math.min(86,(X.r[0]+X.r[2])/2)),y=Math.max(5,Math.min(97,(X.r[1]+X.r[3])/2));e.style.left=(x*I.clientWidth/100).toFixed(1)+"px";e.style.top=(y*I.clientHeight/100).toFixed(1)+"px";L.append(e);setTimeout(()=>e.remove(),4400)}catch(err){}}
 function shwWin(S){const X=S.o.X,C=S.C;if(!X||S.o.win0||!shwExitOn())return;S.o.win0=1;shwXTip(S);if(SHW_MEM[S.o.mem]!=null||S.at!==C.home||S.go)return;
@@ -12474,6 +12475,97 @@ function tbInk(){const t=document.getElementById("tabbar");if(!t)return;tbCss();
     const im=new Image();im.alt="";im.decoding="async";im.onerror=()=>{ic.textContent=ic.dataset.emo||"";ic.style.fontSize="22px"};ic.dataset.emo=ic.textContent;ic.textContent="";ic.append(im);im.src=`data/tabink/${k}.webp?v=${TB_IMGV}`}}
 if(TABBAR_INK_ON&&typeof setTabs==="function"){const f0=setTabs;setTabs=function(){const r=f0.apply(this,arguments);try{tbInk()}catch(e){}return r};
   try{matchMedia("(prefers-color-scheme: dark)").addEventListener("change",()=>{try{tbInk()}catch(e){}})}catch(e){}}
+/* ================= 🎋 側邊竹籤筒（開發者 11/9 選定導覽做法 A：「把底下的首頁／線上／棋譜／設定整進繪製的圖裡，又要能快速切換、不迷路」）=================
+   底部導覽列（#tabbar，07t2 的水墨木牌）整條不再出現，每頁的圖真正滿版到底；07w 的 xqBars 看不到底欄就用 safe-area-bottom 當底欄高度，面板、出口、桌面跳躍跟著對齊。
+   畫面右下角固定一個小水墨籤筒（art/tabtube/tube.webp → data/tabtube/），在 safe-area 裡、永遠同一個位置；只有在它會蓋到圖上入口標籤或出口時才往上讓（每頁自動算，盡量不動）。
+   點籤筒：從筒口彈出四支竹籤（slip.webp，橫向拉寬成竹片，字由程式直寫：首頁、線上、棋譜、設定，頂上掛 07t2 的小圖示），目前所在那一支蓋一方朱印「在」；
+     點籤＝切過去並收起；點外面、再點籤筒、按返回都收起；從畫面右邊緣往內滑也能打開。
+   顯示規則照舊跟 setTabs(show,on)：原本藏底欄的地方（對局、讀小說、全螢幕過場…）籤筒也藏；原本底欄按鈕上若有紅點／數字（.dot／.badge／[data-badge]），畫在對應竹籤上。
+   第一次看到：籤筒輕輕晃兩下＋一句「點籤筒換地方」（只出一次，store 的 ttSeen）。深色主題籤筒加一圈淡光；prefers-reduced-motion 不晃、不彈。
+   籤筒放在 .app 裡、疊在畫面上（z 940），面板（948～）、小卡、對話框都蓋在它上面。開關 TABTUBE_ON（false＝照舊底部導覽列）；前綴 tt */
+const TABTUBE_ON=true;
+const TT_IMGV="2401";
+const TT_GO=[["#/","首頁","tab_home"],["#/lobby","線上","tab_lobby"],["#/db","棋譜","tab_db"],["#/settings","設定","tab_set"]];
+let TT_SHOW=false,TT_AT="",TT_UN=null;
+function ttCss(){if(document.getElementById("ttCss"))return;const s=document.createElement("style");s.id="ttCss";s.textContent=`
+#tabbar.tt-gone{display:none!important}
+#view.tt-fillx{overflow-x:hidden}
+.tt-tube{position:fixed;right:calc(6px + env(safe-area-inset-right,0px));bottom:calc(8px + var(--safeB,0px) + var(--ttUp,0px));z-index:940;width:46px;height:100px;border:0;padding:0;margin:0;
+  background:url("data/tabtube/tube.webp?v=${TT_IMGV}") center bottom/contain no-repeat;cursor:pointer;-webkit-tap-highlight-color:transparent;transform-origin:50% 92%;
+  filter:drop-shadow(0 2px 3px rgba(40,26,14,.35));transition:bottom .25s ease,transform .15s}
+.tt-tube[hidden]{display:none}.tt-tube:active{transform:scale(.94)}
+.tt-dk .tt-tube{filter:drop-shadow(0 0 5px rgba(255,222,170,.35)) drop-shadow(0 2px 3px rgba(0,0,0,.55))}
+.tt-tube.wig{animation:ttWig 1s ease-in-out 2}
+@keyframes ttWig{0%,100%{transform:rotate(0)}20%{transform:rotate(-8deg)}45%{transform:rotate(6deg)}70%{transform:rotate(-3deg)}85%{transform:rotate(1deg)}}
+.tt-scr{position:fixed;inset:0;z-index:941;display:none;background:rgba(20,14,8,.12)}.tt-scr.open{display:block}
+.tt-fan{position:fixed;right:calc(2px + env(safe-area-inset-right,0px));bottom:calc(64px + var(--safeB,0px) + var(--ttUp,0px));z-index:942;display:flex;align-items:flex-end;gap:2px;pointer-events:none}
+.tt-fan.open{pointer-events:auto}
+.tt-s{position:relative;flex:none;width:46px;height:200px;border:0;padding:0;margin:0;background:none;cursor:pointer;opacity:0;-webkit-tap-highlight-color:transparent;
+  transform:translateY(70px) rotate(var(--r,0deg));transform-origin:50% 100%;transition:transform .34s cubic-bezier(.3,1.35,.5,1) var(--d,0s),opacity .18s var(--d,0s)}
+.tt-fan.open .tt-s{opacity:1;transform:translateY(0) rotate(var(--r,0deg))}
+.tt-s .st{position:absolute;left:8px;right:8px;top:14px;bottom:0;background:url("data/tabtube/slip.webp?v=${TT_IMGV}") 37.9% 0/209% 100% no-repeat;filter:drop-shadow(1px 2px 2px rgba(30,20,10,.4))}
+.tt-s .ic{position:absolute;left:50%;top:0;width:30px;height:30px;margin-left:-15px;object-fit:contain;pointer-events:none}
+.tt-s .tx{position:absolute;left:50%;top:44px;transform:translateX(-50%);writing-mode:vertical-rl;font:900 16px/1 var(--kai,var(--serif,serif));letter-spacing:5px;color:#2a1a0e;text-shadow:0 0 2px rgba(255,246,224,.95),0 0 4px rgba(255,246,224,.7);white-space:nowrap}
+.tt-s .seal{position:absolute;left:50%;top:116px;width:24px;height:24px;margin-left:-12px;box-sizing:border-box;border:2px solid #b23a26;border-radius:2px;background:rgba(255,240,226,.55);color:#b23a26;font:900 13px/20px var(--kai,var(--serif,serif));text-align:center;transform:rotate(-8deg)}
+.tt-s .dot{position:absolute;right:4px;top:30px;min-width:10px;height:10px;border-radius:5px;background:#d23a26;box-shadow:0 0 0 2px #fff5e0}
+.tt-s:focus-visible{outline:2px solid #b23a26;outline-offset:2px}
+.tt-tip{position:fixed;right:calc(58px + env(safe-area-inset-right,0px));bottom:calc(36px + var(--safeB,0px) + var(--ttUp,0px));z-index:940;pointer-events:none;white-space:nowrap;padding:5px 12px;border-radius:999px;
+  background:rgba(246,239,223,.94);color:#3a2618;border:1px solid rgba(90,64,30,.35);font:700 13px/1.3 var(--serif,serif);box-shadow:0 2px 6px rgba(0,0,0,.2);animation:ttTip 3.8s ease-in-out forwards}
+@keyframes ttTip{0%{opacity:0;transform:translateX(6px)}12%,80%{opacity:1;transform:none}100%{opacity:0}}
+body.tt-on #sndPill{right:calc(60px + env(safe-area-inset-right,0px))}
+@media (prefers-reduced-motion:reduce){.tt-tube.wig{animation:none}.tt-s{transition:none}.tt-tip{animation:none}}`;document.head.append(s)}
+function ttEls(){let t=document.getElementById("ttTube");if(t)return t;ttCss();
+  t=document.createElement("button");t.type="button";t.id="ttTube";t.className="tt-tube";t.hidden=true;t.setAttribute("aria-label","籤筒：換地方（首頁、線上、棋譜、設定）");t.setAttribute("aria-expanded","false");
+  const sc=document.createElement("div");sc.className="tt-scr";sc.id="ttScr";const fan=document.createElement("div");fan.className="tt-fan";fan.id="ttFan";fan.setAttribute("role","menu");fan.setAttribute("aria-label","換地方");
+  fan.innerHTML=TT_GO.map(([go,t2,ic],i)=>`<button type="button" class="tt-s" role="menuitem" tabindex="-1" data-go="${go}" style="--r:${[-8,-4,0,4][i]}deg;--d:${(3-i)*.04}s"><i class="st"></i><img class="ic" alt="" src="data/tabink/${ic}.webp?v=${typeof TB_IMGV!=="undefined"?TB_IMGV:""}" onerror="this.remove()"><b class="tx">${t2}</b></button>`).join("");
+  {const tb=document.getElementById("tabbar"),host=tb&&tb.parentNode||document.body;host.append(sc,fan,t)}   /* 放在 .app 裡（底欄原本的位置）：面板（z 948～949，在 #view 裡）、小卡、對話框都蓋得過它 */
+  t.onclick=()=>{if(typeof vibrate==="function")vibrate(5);ttFan(!fan.classList.contains("open"))};sc.onclick=()=>ttFan(false);
+  fan.querySelectorAll(".tt-s").forEach(b=>b.onclick=()=>{if(typeof vibrate==="function")vibrate(5);const go=b.dataset.go;ttFan(false,1);if(go==="#/"&&typeof goHome==="function")goHome();else location.hash=go});   /* 直接換頁：面板那一格歷史由 07w 自動退掉（跟開著面板換頁一樣） */
+  /* 從畫面右邊緣往內滑＝打開 */
+  let sx=null,sy=0;addEventListener("pointerdown",e=>{sx=TT_SHOW&&e.clientX>innerWidth-18?e.clientX:null;sy=e.clientY},true);
+  addEventListener("pointermove",e=>{if(sx==null)return;if(sx-e.clientX>34&&Math.abs(e.clientY-sy)<40){sx=null;ttFan(true)}},true);addEventListener("pointerup",()=>{sx=null},true);
+  const re=()=>{ttFill();ttAvoid()};addEventListener("resize",()=>{clearTimeout(re.t);re.t=setTimeout(re,120)});addEventListener("hashchange",()=>{ttFan(false,1);setTimeout(re,350);setTimeout(re,1300)});
+  {const V=document.getElementById("view");if(V){new MutationObserver(()=>{clearTimeout(re.m);re.m=setTimeout(re,200)}).observe(V,{childList:true});V.addEventListener("scroll",()=>{clearTimeout(re.s);re.s=setTimeout(ttAvoid,180)},{passive:true})}}   /* 圖比畫面高要捲的頁：捲完才重算讓位，不跟著捲動一直跳 */
+  return t}
+function ttPaint(){const fan=document.getElementById("ttFan");if(!fan)return;const tb=document.getElementById("tabbar");
+  fan.querySelectorAll(".tt-s").forEach(b=>{const on=b.dataset.go===TT_AT,t2=b.querySelector(".tx").textContent;let s=b.querySelector(".seal");
+    if(on&&!s){s=document.createElement("i");s.className="seal";s.setAttribute("aria-hidden","true");s.textContent="在";b.append(s)}else if(!on&&s)s.remove();
+    const ob=tb&&[...tb.children].find(x=>x.dataset.go===b.dataset.go),bd=ob&&ob.querySelector(".dot,.badge,[data-badge]");let d=b.querySelector(".dot");
+    if(bd&&!d){d=document.createElement("i");d.className="dot";d.setAttribute("aria-hidden","true");b.append(d)}else if(!bd&&d)d.remove();
+    b.setAttribute("aria-label",t2+(on?"（目前在這裡）":"")+(bd?"，有新消息":""))});
+  document.body.classList.toggle("tt-dk",typeof tbDark==="function"&&tbDark())}
+function ttFan(open,quiet){const fan=document.getElementById("ttFan"),sc=document.getElementById("ttScr"),t=document.getElementById("ttTube");if(!fan)return;
+  if(open&&!TT_SHOW)return;if(open===fan.classList.contains("open"))return;
+  fan.classList.toggle("open",open);sc.classList.toggle("open",open);t.setAttribute("aria-expanded",open?"true":"false");fan.querySelectorAll(".tt-s").forEach(b=>b.tabIndex=open?0:-1);
+  if(open){ttPaint();if(typeof xqPanelNav==="function")TT_UN=xqPanelNav(()=>{TT_UN=null;ttFan(false)});const f=fan.querySelector(".tt-s");if(f&&!quiet)try{f.focus({preventScroll:true})}catch(e){}}
+  else if(TT_UN){const u=TT_UN;TT_UN=null;if(!quiet)u()}}
+/* 滿版到底：沒有底欄後，圖（照寬度放）比畫面矮時，整張圖等比放大到剛好碰到畫面底（左右各裁掉一點，最多放大 25%），入口標籤若被裁到邊就往內推；
+   圖比畫面高（小手機、iPad）照舊照寬度放、可以往下捲。座標都是圖的百分比，走路、出口、桌面跳躍、面板都跟著圖，不會錯位 */
+function ttFill(){const V=document.getElementById("view");if(!V)return;const P=V.querySelector(".shp-page.cq");if(!P){V.classList.remove("tt-fillx");return}const im=P.querySelector(":scope>img");if(!im)return;
+  const go=()=>{if(!P.isConnected)return;P.style.width="";P.style.marginLeft="";P.style.maxWidth="";V.classList.remove("tt-fillx");P.querySelectorAll(".shp-spot,.po-sight").forEach(b=>{if(b.dataset.ttL!=null)b.style.left=b.dataset.ttL});
+    if(!TABTUBE_ON)return;const vr=V.getBoundingClientRect(),pr=P.getBoundingClientRect(),av=vr.bottom-pr.top,nw=im.naturalWidth||768,nh=im.naturalHeight||1376,W=pr.width,H=W*nh/nw;
+    if(!W||av-H<2||av>H*1.25)return;const set=h=>{const w=Math.round(h*nw/nh);Object.assign(P.style,{maxWidth:"none",width:w+"px",marginLeft:Math.round((W-w)/2)+"px"})};V.classList.add("tt-fillx");set(av);
+    {const ex=V.scrollHeight-V.clientHeight;if(ex>0&&ex<40)set(av-ex)}   /* 圖下還有一點邊距（.pad 之類）就扣掉，免得多出幾 px 可以捲 */
+    requestAnimationFrame(()=>P.querySelectorAll(".shp-spot,.po-sight").forEach(b=>{if(b.dataset.ttL==null)b.dataset.ttL=b.style.left;const q=b.getBoundingClientRect(),m=6;let d=0;if(q.left<vr.left+m)d=vr.left+m-q.left;else if(q.right>vr.right-m)d=vr.right-m-q.right;if(d)b.style.left="calc("+b.dataset.ttL+" + "+Math.round(d)+"px)"}))};
+  if(im.complete&&im.naturalWidth)go();else im.addEventListener("load",go,{once:true})}
+/* 讓位：籤筒蓋到圖上的入口標籤、景點或 07w 出口區時，往上挪到不蓋為止（每次 8px，最多畫面高 40%） */
+function ttAvoid(){const t=document.getElementById("ttTube");if(!t||t.hidden)return;const R=document.documentElement;R.style.setProperty("--ttUp","0px");
+  const V=document.getElementById("view");if(!V)return;const ob=[];
+  V.querySelectorAll(".shp-spot,.po-sight,[data-hs],.cjm-tag,.ph4-pz").forEach(e=>{if(e.closest(".xqs,.fbp-bw"))return;const r=e.getBoundingClientRect();if(r.width>2&&r.height>2&&getComputedStyle(e).visibility!=="hidden")ob.push(r)});
+  try{if(typeof SHW_XR!=="undefined"&&(typeof shwExitOn!=="function"||shwExitOn()))for(const x of SHW_XR){if(!x.f.isConnected||!V.contains(x.f))continue;const f=x.f.getBoundingClientRect(),r=x.r;ob.push({left:f.left+f.width*r[0]/100,right:f.left+f.width*r[2]/100,top:f.top+f.height*r[1]/100,bottom:f.top+f.height*r[3]/100})}}catch(e){}
+  const b0=t.getBoundingClientRect(),hit=u=>ob.some(r=>r.left<b0.right-4&&r.right>b0.left+4&&r.top<b0.bottom-u-4&&r.bottom>b0.top-u+4);
+  let u=0;const mx=innerHeight*.4;while(hit(u)&&u<mx)u+=8;R.style.setProperty("--ttUp",(u<mx?u:0)+"px")}
+function ttSync(){if(!TABTUBE_ON)return;const tb=document.getElementById("tabbar");if(!tb||!document.body)return;const t=ttEls();tb.classList.add("tt-gone");
+  t.hidden=!TT_SHOW;document.body.classList.toggle("tt-on",TT_SHOW);if(!TT_SHOW)ttFan(false,1);ttPaint();setTimeout(ttAvoid,60);
+  if(TT_SHOW)ttFirst()}
+/* 第一次看到才提示：籤筒真的露在最上層（沒被開頭畫面、載入畫面、小卡蓋住）才晃＋說一句，記 ttSeen；被蓋住就 2 秒後再看 */
+function ttFirst(){if(typeof store==="undefined"||store.get("ttSeen",0)||ttFirst.w)return;ttFirst.w=1;const t=document.getElementById("ttTube");
+  const go=()=>{ttFirst.w=0;if(!t||t.hidden||store.get("ttSeen",0))return;const r=t.getBoundingClientRect(),e=document.elementFromPoint(r.left+r.width/2,r.top+r.height*.6);
+    if(document.hidden||!e||(e!==t&&!t.contains(e))){ttFirst.w=1;setTimeout(go,2000);return}store.set("ttSeen",1);t.classList.add("wig");setTimeout(()=>t.classList.remove("wig"),2100);
+    const p=document.createElement("div");p.className="tt-tip";p.setAttribute("role","status");p.textContent="點籤筒換地方";document.body.append(p);setTimeout(()=>p.remove(),3900)};setTimeout(go,900)}
+if(TABTUBE_ON&&typeof setTabs==="function"){const f0=setTabs;setTabs=function(show,on){const r=f0.apply(this,arguments);try{TT_SHOW=!!show;TT_AT=on||"";ttSync()}catch(e){}return r};
+  try{const tb=document.getElementById("tabbar");if(tb){TT_SHOW=!tb.hidden;const o=[...tb.children].find(b=>b.classList.contains("on"));TT_AT=o?o.dataset.go:"";new MutationObserver(()=>{try{ttPaint()}catch(e){}}).observe(tb,{subtree:true,childList:true})}
+    if(document.body)ttSync();else addEventListener("DOMContentLoaded",ttSync)}catch(e){}}
 /* ================= ✉ 意見回饋頁「驛站信房」（回饋 799，開發者 11/8 選定 Gemini 方案 1＋10 合體；考究說明 park/feedback/考究說明.md，史學顧問核圖中）=================
    圖：park/feedback/fb_day_v2.png（Gemini 重畫一次＋程式局部修＋宣紙後製）、夜版 fb_night_v1.png → art/feedback/ → data/feedback/。
    #/feedback 一頁（#/feedback/fixes 直接打開告示榜的榜文；回饋 812：頁面只留滿版圖，修正紀錄不再接在圖下面）：天字客房隔壁的信房，點一下就到，不再經過設定畫軸。
