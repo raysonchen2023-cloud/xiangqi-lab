@@ -1370,7 +1370,7 @@ html[data-hicon] .tabbar button.on{box-shadow:inset 0 -3px 0 currentColor}
       if(!window.caches)return go();caches.keys().then(function(ks){return Promise.all(ks.filter(function(k){return k.indexOf("xqlab-app-")===0}).map(function(k){return caches.delete(k)}))})
         .then(function(){return navigator.serviceWorker&&navigator.serviceWorker.getRegistration()}).then(function(r){return r&&r.update()}).catch(function(){}).then(go)}};setTimeout(chk,4000)})();
 </script>
-<script>window.XQ_OFFLINE=true;window.XQ_BUILD="20261110-0515";</script>
+<script>window.XQ_OFFLINE=true;window.XQ_BUILD="20261110-0530";</script>
 <script src="core.js"></script>
 <script src="engine.js"></script>
 <script src="local.js"></script>
@@ -12773,8 +12773,9 @@ const HM_IMGV="0130";   /* 圖的版本：同檔名換圖時改掉，手機才�
    學：秦學室（睡虎地秦簡）、漢與三國太學、魏晉國子學（西晉咸寧二年）、南北朝國學、隋國子寺、唐五代國子監、宋以後書院；
    弈：秦漢三國酒肆、魏晉酒壚（《世說新語》黃公酒壚）、南北朝隋酒肆、唐旗亭（旗亭畫壁）、五代茶肆、宋茶坊（《東京夢華錄》）、元茶肆、明茶樓、清茶館 */
 const HUB_NAME={learn:{qin:"學室",han:"太學",sanguo:"太學",weijin:"國子學",nanbei:"國學",sui:"國子寺",tang:"國子監",wudai:"國子監",song:"書院",yuan:"書院",ming:"書院",qing:"書院"},
-  battle:{qin:"酒肆",han:"酒肆",sanguo:"酒肆",weijin:"酒壚",nanbei:"酒肆",sui:"酒肆",tang:"旗亭",wudai:"茶肆",song:"茶坊",yuan:"茶肆",ming:"茶樓",qing:"茶館"}};
-function xqHubName(k){let e="";try{e=typeof shipAt==="function"&&typeof shipDockList==="function"&&shipDockList()?shipAt():""}catch(x){}const n=(HUB_NAME[k]||{})[e];return(k==="battle"?"⚔ ":"📚 ")+(n||(k==="battle"?"對戰":"學習"))}
+  quick:{qin:"博一局",han:"博一局",sanguo:"弈一局",weijin:"手談一局",nanbei:"坐隱一局",sui:"弈一局",tang:"象戲一局",wudai:"象戲一局",song:"著一局",yuan:"著一盤",ming:"下一盤",qing:"殺一盤"},   /* 11/9 開發者：「下一盤」也照朝代：秦漢六博叫「博」；魏晉「手談」（支遁）、「坐隱」（王坦之），見《世說新語》；唐牛僧孺《玄怪錄》寶應象戲；宋元「著棋」；清俗話「殺一盤」 */
+    battle:{qin:"酒肆",han:"酒肆",sanguo:"酒肆",weijin:"酒壚",nanbei:"酒肆",sui:"酒肆",tang:"旗亭",wudai:"茶肆",song:"茶坊",yuan:"茶肆",ming:"茶樓",qing:"茶館"}};
+function xqHubName(k){let e="";try{e=typeof shipAt==="function"&&typeof shipDockList==="function"&&shipDockList()?shipAt():""}catch(x){}const n=(HUB_NAME[k]||{})[e];return(k==="quick"?"⚡ ":k==="battle"?"⚔ ":"📚 ")+(n||(k==="quick"?"下一盤":k==="battle"?"對戰":"學習"))}
 const HM_SPOTS=[["hmShip",52,15,"⛵ 雲河星槎"],["hmBattle",14,25.5,"⚔ 對戰"],["hmLearn",86,26.5,"📚 學習"],["hmRec",12,44,"📜 今日推薦"],["hmQuick",52,47.5,"⚡ 下一盤"]];
 /* 07w 的座標表（腳底的位置）：起點在橋中央廣場（石桌左前方）；石桌四周繞著走，不穿過桌子；往後經廣場後緣走木棧道到星槎跳板；
    左右各從拱橋兩端的石階下到碼頭步道：左岸沿河岸步道上去到牌坊前、橋頭告示牌前；右岸過草地到書院山門石階下 */
@@ -12809,7 +12810,7 @@ function hmMe(P){if(typeof WALK_BOT_MERGE!=="undefined"&&WALK_BOT_MERGE)return; 
   const mo=new MutationObserver(upd);mo.observe(box,{attributes:true,attributeFilter:["style","class"]});upd()}
 function homeMap(v){const home=v.querySelector(".home");if(!home||v.querySelector(".home-page"))return;hmCss();
   const nw=hmNew(),standalone=matchMedia("(display-mode: standalone)").matches||navigator.standalone,inst=OFF&&!standalone&&!(store.get("instAsk",null)||{}).no;
-  const lab=id=>id==="hmQuick"&&nw?"🔰 第一次下象棋？":id==="hmLearn"?xqHubName("learn"):id==="hmBattle"?xqHubName("battle"):HM_SPOTS.find(s=>s[0]===id)[3];
+  const lab=id=>id==="hmQuick"&&nw?"🔰 第一次下象棋？":id==="hmLearn"?xqHubName("learn"):id==="hmBattle"?xqHubName("battle"):id==="hmQuick"?xqHubName("quick"):HM_SPOTS.find(s=>s[0]===id)[3];
   const d=document.createElement("div");
   d.innerHTML=`<div class="shp-page cq home-page"><img src="data/homemap/home.webp?v=${HM_IMGV}" alt="楚河渡口棋鎮"><div class="hm-fx" aria-hidden="true">${nw?'<i class="hm-sky"></i>':""}</div>${HM_SPOTS.map(([id,x,y])=>`<button class="shp-spot${id==="hmQuick"&&nw?" hot":""}" id="${id}" style="left:${x}%;top:${y}%"><b>${esc(lab(id))}</b></button>`).join("")}${inst?'<button class="hm-inst" id="hmInst">📲 加到主畫面</button>':""}</div>`;
   const P=d.firstElementChild;v.insertBefore(P,home);home.classList.add("hb-hidden");if(typeof hbCss==="function")hbCss();else home.style.display="none";
