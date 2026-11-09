@@ -1341,7 +1341,7 @@ html[data-era=qin] .view:has(>.shp-rd),html[data-era=wudai] .view:has(>.shp-rd){
       if(!window.caches)return go();caches.keys().then(function(ks){return Promise.all(ks.filter(function(k){return k.indexOf("xqlab-app-")===0}).map(function(k){return caches.delete(k)}))})
         .then(function(){return navigator.serviceWorker&&navigator.serviceWorker.getRegistration()}).then(function(r){return r&&r.update()}).catch(function(){}).then(go)}};setTimeout(chk,4000)})();
 </script>
-<script>window.XQ_OFFLINE=true;window.XQ_BUILD="20261109-1745";</script>
+<script>window.XQ_OFFLINE=true;window.XQ_BUILD="20261109-1800";</script>
 <script src="core.js"></script>
 <script src="engine.js"></script>
 <script src="local.js"></script>
@@ -12561,6 +12561,15 @@ const SM_SPOTS=[
   ["smRobe",16,39.5,"👘 換造型","bot","#meFig"],["smTag",7,57,"🏮 官階","bot",".botN"],["smMirror",32,50.5,"🪞 3D 立繪","bot","#meFig"],
   ["smInc",55,48.5,"🕯 氛圍","sound","#snd3"],["smQin",76,49.5,"🎵 語音報棋","sound","#snd2"],["smBell",93,45,"🔔 棋子聲","sound","#snd"],
   ["smMail",70,70.5,"✉ 意見回饋","more","#fb"],["smNote",55,77,"📒 修正紀錄","more","#fxh"],["smPass",86,76,"📜 關於","more","#about"],["smPack",48,84,"🎒 換手機","more","#xfOut"]];
+/* 回饋 831（開發者 11/9「設定內，每一個入口處只會跳出他的相關內容，按照修正紀錄或我的戰績那種跳法；調聲音只會看到調聲音的內容，不會看到其他設定相關」）：
+   點圖上的器物＝只開那一樣東西自己的面板（07w 的 xqSheet，跟 812 修正紀錄、828 我的戰績同一套：夾在頂欄與底欄之間、可捲、返回／點外面／✕ 收起、顏色跟日夜主題），標題＝那個入口的名字；
+   內容是從 05-settings 原本畫好、綁好的設定「整塊搬」過來的同一批節點（事件、即時生效、存檔都照舊），收起時原封不動搬回原位（留一個註解節點當書籤）。
+   SM_EP［入口］＝要搬的區塊：sec:選擇器＝那一格所在的整段（往上含標題 .sec-t、往下到下一個標題前）；head:＝只要標題＋那一格；el:＝只要那一格；title:文字＝標題正好是這幾個字的那一段；btn:＝單獨一顆按鈕。
+   沒有列在這裡的入口照舊：菱花鏡＝看 3D 立繪、信插／手札＝意見回饋頁、文牒／書箱＝07s4 的換手機面板。整卷畫軸（四個分頁全部設定）留著，入口改成頂欄的「📜 全部設定」。 */
+const SM_EP={smFan:["sec:#era"],smWin:["sec:#pt"],smBoard:["el:#pv","sec:#th","el:#hiCon","sec:#mv"],smBrush:["head:#ftM","head:#zhO"],
+  smKnife:["sec:.bpc","el:#chdForm"],smRobe:["sec:#meFig","sec:#botT","sec:#epSw"],smTag:["title:官階"],
+  smInc:["sec:#snd3"],smQin:["sec:#snd2"],smBell:["sec:#snd"],smLock:["btn:#sh","btn:#a2h","title:隱私","title:進階"]};
+const SM_EPT={smBoard:"♟ 棋盤與走棋特效",smRobe:"👘 我的角色",smLock:"🔒 系統・隱私"};
 /* 07w 的座標表：從右下角的房門進來；鏡台、香爐凳、琴桌、羅漢床前的棋桌之間留走道 */
 const SHW_SETMAP={el:40,h:[.085,70,.0012],look0:[40,60],
   N:{home:[80,95],f1:[55,73],f2:[46,61],tbl:[47,52],dk1:[64,51],desk:[78,49.5],mir:[32,72],robe:[17,70],snd:[66,65],xuan:[48,79]},
@@ -12589,6 +12598,7 @@ function smCss(){if(document.getElementById("smCss"))return;const s=document.cre
 .sm-dw.open{transform:none}.sm-dw-h{display:flex;align-items:center;gap:8px;padding:12px 14px 4px;font:900 16px var(--serif,serif)}.sm-dw-h button{margin-left:auto;border:0;background:none;font-size:20px;cursor:pointer;color:inherit}
 .sm-dw-b{overflow:auto;padding:0 2px 18px;-webkit-overflow-scrolling:touch}
 .sm-scrim{position:fixed;inset:0;z-index:949;background:rgba(0,0,0,.22);display:none}.sm-scrim.open{display:block}
+.sm-epw{padding:2px 8px 6px}.sm-epw>.sec-t:first-child{margin-top:4px}.sm-epw details>summary{cursor:pointer}
 @media (prefers-reduced-motion:reduce){.sm-dw{transition:none}.sm-flash{animation:none}}`;document.head.append(s)}
 const smDark=()=>{const t=store.get("pageTheme","auto");return t==="dark"||(t==="auto"&&matchMedia("(prefers-color-scheme: dark)").matches)};
 const smMute=()=>!store.get("mvSound",false)&&!store.get("voiceCall",true)&&!store.get("bgm",true);
@@ -12619,8 +12629,29 @@ function setMap(v){const root=v.querySelector(".pad.home");if(!root||v.querySele
     setTimeout(()=>{let el=null;for(const s of String(sel||"").split(",")){el=root.querySelector(s.trim());if(el)break}if(!el)return;const det=el.closest("details");if(det&&!det.open)det.open=true;
       const card=el.closest(".card,.items,.opt,.eragrid,label,.item")||el;body.scrollTop=Math.max(0,card.getBoundingClientRect().top-body.getBoundingClientRect().top+body.scrollTop-14);
       root.querySelectorAll(".sm-flash").forEach(x=>x.classList.remove("sm-flash"));void card.offsetWidth;card.classList.add("sm-flash");setTimeout(()=>card.classList.remove("sm-flash"),1500)},60)};
+  /* 831：各入口自己的面板 */
+  const ES=typeof xqSheet==="function"?xqSheet(v,{t:"設定"}):null;let moved=[];
+  const EW=document.createElement("div");EW.className="home sm-epw";if(ES)ES.b.append(EW);
+  const isH=x=>!!(x&&x.classList&&x.classList.contains("sec-t"));
+  const topOf=el=>{let x=el;while(x&&x.parentNode&&x.parentNode!==root&&!(x.parentNode.matches&&x.parentNode.matches("[data-pane],details")))x=x.parentNode;return x&&x.parentNode?x:null};
+  const secOf=(x,head)=>{if(!x)return[];const L=[x];if(!isH(x)){const pv=[];let p=x.previousElementSibling;while(p&&!(p.matches&&p.matches("summary"))){pv.unshift(p);if(isH(p))break;p=p.previousElementSibling}if(pv.length&&isH(pv[0]))L.unshift(...(head?[pv[0]]:pv))}
+    if(!head){let n=x.nextElementSibling;while(n&&!isH(n)&&!(n.matches&&n.matches("summary"))){L.push(n);n=n.nextElementSibling}}return L};
+  const pick=k=>{const i=k.indexOf(":"),t=k.slice(0,i),q=k.slice(i+1);
+    if(t==="title"){const h=[...root.querySelectorAll(".sec-t")].find(x=>x.textContent.trim()===q);return h?secOf(h):[]}
+    const el=root.querySelector(q);if(!el)return[];if(t==="btn")return[el];const x=topOf(el);if(!x)return[];return t==="el"?[x]:secOf(x,t==="head")};
+  const epBack=()=>{for(const[n,ph]of moved){if(ph.parentNode){ph.parentNode.insertBefore(n,ph);ph.remove()}}moved=[];EW.innerHTML=""};
+  const epOpen=id=>{if(!ES)return false;epBack();const seen=new Set();let n=0;
+    for(const k of SM_EP[id]){let box=EW;if(k.startsWith("btn:")){box=EW.querySelector(":scope>.items.sm-epb");if(!box){box=document.createElement("div");box.className="items sm-epb";box.style.padding="0";EW.append(box)}}
+      for(const x of pick(k)){if(seen.has(x)||EW.contains(x))continue;seen.add(x);const ph=document.createComment("sm-ep");x.parentNode.insertBefore(ph,x);moved.push([x,ph]);box.append(x);n++}}
+    if(!n){epBack();return false}const sp=SM_SPOTS.find(z=>z[0]===id);if(id==="smBoard")try{tbPv()}catch(e){}ES.open(null,SM_EPT[id]||(sp?sp[3]:"設定"));return true};
+  const tbPv=()=>{const t=root.querySelector('#sgTabs [data-k="look"]');if(t&&!root.querySelector('[data-pane="look"]:not([hidden])')){const cur=store.get("setTab","look");t.click();if(cur!=="look"){const c=root.querySelector(`#sgTabs [data-k="${cur}"]`);if(c)c.click()}}};   /* 棋盤預覽只在「棋盤」分頁打開時重畫：先切過去畫好再切回原本的分頁 */
+  if(ES){new MutationObserver(()=>{if(!ES.on()&&moved.length){epBack();smScene(P)}}).observe(ES.el,{attributes:true,attributeFilter:["class"]});
+    ES.b.addEventListener("click",()=>setTimeout(()=>smScene(P),80));ES.b.addEventListener("change",()=>setTimeout(()=>smScene(P),80))}
+  /* 整卷畫軸（四個分頁、全部設定）留給想一次看完的人：頂欄右邊「📜 全部設定」 */
+  {const tr=document.getElementById("topRight");if(tr&&!tr.querySelector(".sm-all")){const b=document.createElement("button");b.type="button";b.className="ib sm-all";b.textContent="📜";b.title="全部設定";b.setAttribute("aria-label","全部設定（整卷畫軸）");
+    b.onclick=()=>{vibrate(5);if(ES&&ES.on())ES.close();open(store.get("setTab","look"),"")};tr.prepend(b)}}
   for(const[id,,,,tab,sel]of SM_SPOTS){const b=P.querySelector("#"+id);if(!b)continue;
-    b.onclick=()=>{vibrate(5);if(id==="smMirror"){const f=root.querySelector("#meFig");if(f){f.click();return}}if((id==="smMail"||id==="smNote")&&typeof FEEDBACK_PAGE_ON!=="undefined"&&FEEDBACK_PAGE_ON){location.hash=id==="smMail"?"#/feedback":"#/feedback/fixes";return}open(tab,sel)}}   /* 回饋 799：信插、手札一下直達意見回饋頁（07s3） */
+    b.onclick=()=>{vibrate(5);if(id==="smMirror"){const f=root.querySelector("#meFig");if(f){f.click();return}}if((id==="smMail"||id==="smNote")&&typeof FEEDBACK_PAGE_ON!=="undefined"&&FEEDBACK_PAGE_ON){location.hash=id==="smMail"?"#/feedback":"#/feedback/fixes";return}if(SM_EP[id]&&epOpen(id))return;open(tab,sel)}}   /* 回饋 799：信插、手札一下直達意見回饋頁（07s3） */
   smScene(P);
   /* 設定改了（深淺色、聲音、朝代棋盤、高對比）：畫軸開著時每次改都重畫場景 */
   root.addEventListener("click",()=>setTimeout(()=>smScene(P),80));root.addEventListener("change",()=>setTimeout(()=>smScene(P),80));
