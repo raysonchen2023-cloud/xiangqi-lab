@@ -1370,7 +1370,7 @@ html[data-hicon] .tabbar button.on{box-shadow:inset 0 -3px 0 currentColor}
       if(!window.caches)return go();caches.keys().then(function(ks){return Promise.all(ks.filter(function(k){return k.indexOf("xqlab-app-")===0}).map(function(k){return caches.delete(k)}))})
         .then(function(){return navigator.serviceWorker&&navigator.serviceWorker.getRegistration()}).then(function(r){return r&&r.update()}).catch(function(){}).then(go)}};setTimeout(chk,4000)})();
 </script>
-<script>window.XQ_OFFLINE=true;window.XQ_BUILD="20261110-1215";</script>
+<script>window.XQ_OFFLINE=true;window.XQ_BUILD="20261110-1230";</script>
 <script src="core.js"></script>
 <script src="engine.js"></script>
 <script src="local.js"></script>
@@ -13347,9 +13347,9 @@ const HUB_DEF={
     ["hbQuiz",'[data-go="#/quiz"]',50,45.5],["hbStats",'[data-go="#/stats"]',12,41],["hbOpen",'[data-go="#/openings"]',70,40],
     ["hbGuess",'[data-go="#/guess"]',50,13],["hbDb",'[data-go="#/db"]',50,24.5]]},
   battle:{img:"battle",cap:"⚔ 對戰",sub:"徽州深院茶樓・天井對弈、靠窗挑戰、踢館擂台、二樓千秋盃",spots:[
-    ["hbNet",'[data-go="#/lobby"],[data-go="#/watch/ai"]',50,48.5],["hbCpu",'[data-go="#/cpu"]',19,58],["hbArena","#hArena",83,45],
+    ["hbNet",'[data-go="#/lobby"],[data-go="#/watch/ai"]',50,48.5],["hbCpu",'[data-go="#/cpu"]',19,58],
     ["hbCup",'[data-go="#/cup"]',36,21.5],["hbCar",'[data-go="#/garage"]',80,67],
-    ["hbPvp",'[data-go="#/pvp"]',18,72.5]]}};   /* 回饋 840：同桌對弈＝左邊房間下面那張放棋盒、有凳子的桌子（上面那張擺棋盤的是挑戰電腦） */
+    ["hbPvp",'[data-go="#/pvp"]',18,72.5]]}};   /* 11/10 開發者：拿掉右邊「朝代擂台」入口（擂台走渡口那邊）。回饋 840：同桌對弈＝左邊房間下面那張放棋盒、有凳子的桌子（上面那張擺棋盤的是挑戰電腦） */
 /* 學習頁 12 盞燈籠（由近到遠，照課數點亮）、點茶桌熱氣、洗墨池水面；對戰頁的燈籠 */
 const HUB_LAMP={learn:[[1.7,39],[98.3,39],[21.7,40.5],[38.7,40.5],[61.7,40.5],[78.7,40.5],[12.5,33.7],[87.5,33.7],[21.7,28.8],[78.7,28.8],[38.3,16.5],[61.7,16.5]],
   battle:[[3,30.5],[22.5,29],[50,26.5],[65,25.5],[26.5,42.5],[51,39],[91,64.5],[62,72]]};
@@ -13377,7 +13377,7 @@ const SHW_HUB={
   battle:{el:40,h:y=>.07+(Math.max(y,48.2)-64)*.0007,look0:[40,95],hide:[[68,92,57.3,65.6]],
     N:{home:[80,88],th:[80,76],arena:[73,56],n:[65,53.5],bt:[50,49],tlb:[38,49.3],cpu:[35,52.5],sf:[58,48.2],s1:[64,43.3],sl:[69.5,39.3],s2:[66.2,36.3],st:[59.5,31.6],gal:[53,32.5],stage:[44.5,32.8]},
     E:"home-th th-arena arena-n n-bt n-sf bt-sf bt-tlb tlb-cpu sf-s1 s1-sl sl-s2 s2-st st-gal gal-stage",
-    HS:{hbNet:["n",52,53,"bow"],hbCpu:["cpu",15,64,"bow"],hbArena:["arena",84,50,"cheer"],hbCup:["stage",35,32,"bow"],hbCar:["th",84,72,"wave"],hbPvp:["cpu",9,80,"bow"]}}};
+    HS:{hbNet:["n",52,53,"bow"],hbCpu:["cpu",15,64,"bow"],hbCup:["stage",35,32,"bow"],hbCar:["th",84,72,"wave"],hbPvp:["cpu",9,80,"bow"]}}};
 /* 角色走進 hide 範圍（穿過門樓、講堂裡面）就淡出，走出來再出現：看 07w 每格寫的 translate 換成百分比 */
 function hbHide(P,Z){const b=P.querySelector(".shw");if(!b||!Z||!Z.length)return;b.style.transition="opacity .18s";
   const mo=new MutationObserver(()=>{if(!b.isConnected){mo.disconnect();return}const m=/translate\(([-\d.]+)px,\s*([-\d.]+)px\)/.exec(b.style.transform),W=P.clientWidth,H=P.clientHeight;if(!m||!W||!H)return;
