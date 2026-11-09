@@ -1370,7 +1370,7 @@ html[data-hicon] .tabbar button.on{box-shadow:inset 0 -3px 0 currentColor}
       if(!window.caches)return go();caches.keys().then(function(ks){return Promise.all(ks.filter(function(k){return k.indexOf("xqlab-app-")===0}).map(function(k){return caches.delete(k)}))})
         .then(function(){return navigator.serviceWorker&&navigator.serviceWorker.getRegistration()}).then(function(r){return r&&r.update()}).catch(function(){}).then(go)}};setTimeout(chk,4000)})();
 </script>
-<script>window.XQ_OFFLINE=true;window.XQ_BUILD="20261110-0745";</script>
+<script>window.XQ_OFFLINE=true;window.XQ_BUILD="20261110-0800";</script>
 <script src="core.js"></script>
 <script src="engine.js"></script>
 <script src="local.js"></script>
@@ -13949,7 +13949,9 @@ function hqBuild(v,root){const dk=hqDark(),pn=document.createElement("div");pn.c
       <div class="hq-ft"><button type="button" class="hq-pv">隱私說明 ›</button>${u?`<button type="button" class="hq-upd"${u.disabled?" disabled":""}>${esc(u.textContent.trim())}</button>`:""}</div></div>`;
     const ub=doc.querySelector(".hq-upd");if(ub)ub.onclick=()=>{vibrate(5);const o=root.querySelector("#aUpd");if(o)o.click()};
     doc.querySelector(".hq-pv").onclick=()=>{vibrate(5);const st=[...root.querySelectorAll(".sec-t")].find(x=>x.textContent.trim()==="隱私"),c=st&&st.nextElementSibling;
-      sheet("隱私說明",b=>{b.innerHTML=`<p style="line-height:1.8;margin:0">${esc(c?c.textContent.trim():"這個版本沒有送出任何資料。")}</p>`})};
+      sheet("隱私說明",b=>{const sel=c&&c.querySelector("#myCityS");   /* 11/9 開發者「長話短說講重點」：只講重點三句；城市選單用真的下拉選單（原本 textContent 把選項攤成一串字） */
+        b.innerHTML=c?`<ul style="line-height:1.8;margin:0;padding-left:1.2em"><li>每 7 天送名字、段位、App 版本、手機型號給開發者，用來查問題。</li><li>不送棋譜、聊天和其他個人資料。</li><li>不查你在哪裡；城市要不要在大廳顯示，你自己選。</li></ul>`:`<p style="line-height:1.8;margin:0">這個版本沒有送出任何資料。</p>`;
+        if(sel){const l=document.createElement("label");l.style.cssText="display:flex;align-items:center;gap:8px;margin-top:12px";l.innerHTML=`<span style="flex:1">🏙 大廳顯示我的城市</span>`;const s2=sel.cloneNode(true);s2.removeAttribute("id");s2.value=sel.value;s2.onchange=()=>{sel.value=s2.value;if(typeof sel.onchange==="function")sel.onchange()};l.append(s2);b.append(l)}})};
     act()};
   /* 轉移碼的狀態：左半券、半印、一炷香、書笈封條 */
   const act=()=>{if(HQ_ACT&&Date.now()>HQ_ACT.exp)HQ_ACT=null;const A=HQ_ACT;pn.classList.toggle("hq-on",!!A);
