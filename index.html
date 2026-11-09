@@ -1370,7 +1370,7 @@ html[data-hicon] .tabbar button.on{box-shadow:inset 0 -3px 0 currentColor}
       if(!window.caches)return go();caches.keys().then(function(ks){return Promise.all(ks.filter(function(k){return k.indexOf("xqlab-app-")===0}).map(function(k){return caches.delete(k)}))})
         .then(function(){return navigator.serviceWorker&&navigator.serviceWorker.getRegistration()}).then(function(r){return r&&r.update()}).catch(function(){}).then(go)}};setTimeout(chk,4000)})();
 </script>
-<script>window.XQ_OFFLINE=true;window.XQ_BUILD="20261109-2230";</script>
+<script>window.XQ_OFFLINE=true;window.XQ_BUILD="20261109-2245";</script>
 <script src="core.js"></script>
 <script src="engine.js"></script>
 <script src="local.js"></script>
@@ -15470,6 +15470,9 @@ const SCI_REG=[
 /* ⛵ 雲河星槎甲板（park/shipmap/考究說明.md）。圖 896×1200，框＝.shp-in、圖＝img.shp-base（立體版開著時這張圖 visibility:hidden，但大小位置照舊，用它換算座標）。
    石桌棋盤、書架、書桌、木箱、船尾長舵、跳板、船頭木牌、遠方小村是入口本體（no）；船艙口的包袱在「千秋殘局」標籤底下，不登記 */
 {re:/data\/shipmap\/ship_map/,img:"img.shp-base",D:{k:"sp2",nm:"雲河星槎",W:896,H:1200,it:[
+  /* 回饋 859（星槎無歲月）：爛柯懸棋是 07w8-shichen.js 程式畫的按鈕，點它開自己的說明卡並記成看過；這裡登記是為了「這頁還有 N 件沒看過」算得到、讀螢幕清單有它（在石桌 no 範圍內，點圖不會重複跳卡） */
+  {n:"懸在半空的棋子",nh:1,s:[[398,612,26]],
+   t:"石桌上方懸著一顆沒刻字的紅棋子。傳說晉朝的王質看童子下棋，一局還沒下完，斧頭的木柄已經爛了（舊題任昉《述異記》）。在星槎上沒有時間，這顆棋子懸在這裡，誰也不知道多久了。"},
   {n:"船頭紅燈籠",s:[[[770,195],[830,195],[836,262],[812,312],[786,312],[766,262]]],
    t:"船頭高高的木桿上，掛著一盞點亮的紅紙燈籠，在夜裡照路。整張圖幾乎都是黑白水墨，只有燈籠、棋子的紅和天上的金色星點有顏色。"},
   {n:"船旗",s:[[[728,30],[812,62],[792,80],[760,82],[748,110],[728,110]]],
@@ -15772,9 +15775,10 @@ const sw7Shi=N=>"子丑寅卯辰巳午未申酉戌亥"[Math.floor(((N.getHours()
 const sw7OnDay=(b,N)=>{const B=new Date(b);return Math.round((new Date(N.getFullYear(),N.getMonth(),N.getDate())-new Date(B.getFullYear(),B.getMonth(),B.getDate()))/864e5)+1};
 function sw7AgeCard(){if(typeof vibrate==="function")vibrate(5);const b=sw7Born(),N=new Date(),tm=sw7Term(N),n=b?sw7Age(b):-1,t=!b?"還沒登船":n>=1?`船齡 ${n} 年`:"船齡未滿一年";
   const ymd=d=>`${d.getFullYear()}/${d.getMonth()+1}/${d.getDate()}`;   /* 回饋 839（開發者 11/9「廢話有點多，簡單一些，還有排版」）：只留兩行資料＋一句話，日期用短寫，不折行 */
-  modal(`<div class="em">⛵</div><h2>${esc(t)}</h2><div class="sw7-card">${b?`<div><span>登船日</span><b>${ymd(new Date(b))}（第 ${sw7OnDay(b,N)} 天）</b></div>`:""}<div><span>今天</span><b>${ymd(N)}${tm?`・${esc(tm)}`:""}・${sw7Shi(N)}</b></div></div><p class="muted" style="margin:10px 0 0">${b?"在星槎上，大家都不會變老。":"選好角色、開始旅程那天，就是登船日。"}</p>`,[["好",null]],"sw7-ann")}
+  const xz=typeof CLK_ON!=="undefined"&&CLK_ON&&typeof clkXz==="function";   /* 回饋 858（時辰鐘）：兩行資料底下加十二時辰香篆鐘（07w8-shichen.js） */
+  const m=modal(`<div class="em">⛵</div><h2>${esc(t)}</h2><div class="sw7-card">${b?`<div><span>登船日</span><b>${ymd(new Date(b))}（第 ${sw7OnDay(b,N)} 天）</b></div>`:""}<div><span>今天</span><b>${ymd(N)}${tm?`・${esc(tm)}`:""}・${sw7Shi(N)}</b></div></div>${xz?clkXz(N):""}<p class="muted" style="margin:10px 0 0">${b?"在星槎上，大家都不會變老。":"選好角色、開始旅程那天，就是登船日。"}</p>`,[["好",null]],"sw7-ann"+(xz?" clk-card":""));if(m&&xz)clkXzBind(m,N)}
 /* 首頁頂欄的一行小字（只在首頁；每分鐘更新時辰；換頁時 setTop 改寫標題，這行自然消失） */
-function sw7HomeInfo(){if(!SW7_ON)return;const h=document.getElementById("title");if(!h||!["","#","#/"].includes(location.hash))return;sw7Css();let e=h.querySelector(".sw7-hd");if(!e){e=document.createElement("button");e.type="button";e.className="sw7-hd";e.onclick=ev=>{ev.stopPropagation();sw7AgeCard()};h.append(e)}
+function sw7HomeInfo(){if(!SW7_ON||(typeof CLK_ON!=="undefined"&&CLK_ON))return;   /* 回饋 858（時辰鐘）：改由 07w8 的頂欄星晷顯示 */const h=document.getElementById("title");if(!h||!["","#","#/"].includes(location.hash))return;sw7Css();let e=h.querySelector(".sw7-hd");if(!e){e=document.createElement("button");e.type="button";e.className="sw7-hd";e.onclick=ev=>{ev.stopPropagation();sw7AgeCard()};h.append(e)}
   const N=new Date(),b=sw7Born(),tm=sw7Term(N);e.textContent=[b?`⛵ 船上第 ${sw7OnDay(b,N)} 天`:"⛵ 還沒登船",tm,sw7Shi(N)].filter(Boolean).join("・");e.setAttribute("aria-label","看船齡和今天的時間："+e.textContent)}
 if(typeof Home==="function"){const f0=Home;Home=function(v,hub){const r=f0.apply(this,arguments);if(!hub){setTimeout(()=>{try{sw7HomeInfo()}catch(e){}},0);setTimeout(()=>{try{sw7HomeInfo()}catch(e){}},600)}return r}}
 setInterval(()=>{try{if(document.querySelector("#title .sw7-hd"))sw7HomeInfo()}catch(e){}},60000);
@@ -15887,6 +15891,210 @@ if(SW7_ON){try{
   addEventListener("hashchange",()=>sw7AnnLater(1800));
   if(document.readyState==="complete")sw7AnnLater(6000);else addEventListener("load",()=>sw7AnnLater(6000));
   sw7Scan()}catch(e){}}
+/* ================= 🕰 時辰鐘（回饋 858）＋星槎無歲月（回饋 859）=================
+   開發者 11/9 選定（討論在 story/gemini_app/52_時辰鐘五案_Gemini回覆.md、53_星槎時間不流動五案_Gemini回覆.md；考究在 story/時辰鐘考究說明.md）：
+   ① 頂欄「星晷」：首頁與星槎的場景頁（SW 星槎甲板 #/adventure、#/ship/lesson｜pz｜shelf｜bag｜sail）頂欄標題底下一個程式畫的半圓盤（只露下半段，寬 160、高 38），
+      沿弧排十二地支，盤面照現實時間轉（每分鐘更新），中間固定指針對準現在的時辰，中間大字「午時」；白天水墨晴空、晨昏暖色、夜裡星空。
+      標題旁一行小字「⛵ 第 N 天・節氣」（取代 07w7 的 sw7HomeInfo 那行）；點盤或小字＝開船齡卡（07w7 sw7AgeCard）。
+      頂欄有星晷時加 class clk-on：上下內距縮小，整條約 64px（原本 55px）。星晷節點只做一次、換頁時搬回新標題裡，所以首頁⇄星槎之間能淡入淡出。
+   ② 船齡卡裡的「十二時辰香篆鐘」（clkXz）：銅香爐俯視、香灰上一條 12 段回紋香篆（每段一個時辰，子在正上方、順時針），燒過暗灰、現在這段有火光、沒燒的淺土色；
+      段裡寫地支，爐沿寫現代時間；點某一段，卡片下方換成那個時辰的古名、時間、生肖（民間說法）。全部 SVG，沒有點陣圖。
+   ③ 星槎無歲月：在船上（CLK_SHIP_RE 的路由，或千秋穿梭過場 .travel.qq 還在畫面上），星晷的刻度與大字淡出、換成緩緩自轉的雲河星圖（北斗七星、牽牛織女與星點連線），
+      小字換「✶ 雲河無歲月」；回到陸地淡回刻度。船上開船齡卡多一句「在星槎上，時辰不走。」（香篆照真實時間畫，不停在登船那一刻）。
+   ④ 爛柯懸棋：星槎甲板石桌上方一顆素面紅棋子懸在半空、微微發光、慢慢上下浮動，石桌上有淡影；放在 .shp-hl（跟船身層一起起伏、07x 縮放與左右拖動都跟著走）。
+      點了開說明卡（王質觀棋，白話＋出處）。prefers-reduced-motion 不浮動、不閃。登記在 07w6b SCI_REG 的 sp2（「懸在半空的棋子」），點過算看過。
+   ⑤ 上下船環境音：App 沒有雨雪風聲的環境音（07w7 雨雪只有畫面），所以只把背景音樂（01-board.js 的 BGM.a）在上船時 1 秒淡到 0.15、下船淡回 0.35；
+      不接 WebAudio 低通（iOS 會把 AudioContext 關掉重建，接上的音樂元素會永遠沒聲音）。iPhone Safari 不能改 audio.volume，那裡聽不出差別。
+   開關：CLK_ON（星晷＋香篆鐘）、LK_ON（爛柯懸棋）、CLK_SND_ON（音樂淡出淡入）；前綴 clk／lk */
+const CLK_ON=true,LK_ON=true,CLK_SND_ON=true;
+const CLK_ZHI="子丑寅卯辰巳午未申酉戌亥";
+/* 十二時辰：[古名, 古名白話, 生肖圖示, 生肖, 生肖小故事（民間說法）]；古名的出處見 story/時辰鐘考究說明.md */
+const CLK_SC=[
+  ["夜半","半夜","🐭","鼠","半夜最安靜，老鼠最愛在這時候溜出來找東西吃。"],
+  ["雞鳴","公雞開始啼叫","🐮","牛","牛吃飽了草，這時候慢慢反芻、打個盹，等天亮下田。"],
+  ["平旦","天剛濛濛亮","🐯","虎","天快亮了，據說老虎這時候最有精神、最威風。"],
+  ["日出","太陽從東邊出來","🐰","兔","太陽剛出來，小兔子跑出窩，吃帶著露水的青草。"],
+  ["食時","吃早飯的時候","🐲","龍","傳說這時候龍在天上行雲布雨，幫大地澆水。"],
+  ["隅中","太陽快走到正中間","🐍","蛇","天氣暖起來了，蛇從洞裡爬出來曬太陽。"],
+  ["日中","太陽在天空正中間","🐴","馬","正中午太陽最大，馬兒最有精神，跑得最快。"],
+  ["日昳","太陽開始偏西","🐑","羊","過了中午，羊兒在山坡上慢慢吃草。"],
+  ["晡時","吃晚飯的時候（古人一天常吃兩頓）","🐵","猴","太陽偏西，猴子在樹林裡跳來跳去，叫得最響。"],
+  ["日入","太陽下山","🐔","雞","天快黑了，雞群回到雞窩裡準備睡覺。"],
+  ["黃昏","天色昏黃，快要全黑","🐶","狗","天黑了，狗狗守在門口，幫大家看家。"],
+  ["人定","夜深了，大家都安歇了","🐷","豬","夜深了，豬睡得最熟，還打起呼嚕。"]];
+const clkHH=i=>[(i*2+23)%24,(i*2+1)%24];   /* 子＝23–1、丑＝1–3 … */
+const clkIdx=N=>Math.floor(((N.getHours()+1)%24)/2);
+const clkHr=N=>N.getHours()+N.getMinutes()/60+N.getSeconds()/3600;
+const clkKey=()=>typeof navKey==="function"?navKey(location.hash):(location.hash.replace(/^#/,"")||"/");
+/* 算「在船上」的路由：星槎甲板、船上各頁（棋話、千秋殘局、書架、行囊、起航、正文、小關、女棋手守局）、星槎千秋殘局解題頁、千秋穿梭突發事件（攔路棋客、雲河棋寇）、星槎大掃除。
+   渡口 #/port、園子、驛站、千秋石枰擇石門口都算陸地 */
+const CLK_SHIP_RE=/^\/(adventure|ship(\/|$)|canju\/s\/|canju\/q\/|canju\/e\/5\/|qqev)/;
+/* 頂欄放星晷的頁：首頁、星槎甲板與船上五個滿版場景頁（正文、解題頁不放，免得頂欄變高擠到棋盤） */
+const CLK_DIAL_RE=/^\/(|adventure|ship\/(lesson|pz|shelf|bag|sail))$/;
+const CLK={el:null,sm:null,mode:"",tm:0,vt:null,va:null,vi:0};
+const clkRM=()=>{try{return matchMedia("(prefers-reduced-motion: reduce)").matches}catch(e){return false}};
+function clkShip(){return!!document.querySelector(".travel.qq")||CLK_SHIP_RE.test(clkKey())}
+const clkP=(cx,cy,r,a)=>{const t=a*Math.PI/180;return[+(cx+r*Math.cos(t)).toFixed(2),+(cy+r*Math.sin(t)).toFixed(2)]};
+function clkCss(){if(document.getElementById("clkCss"))return;const s=document.createElement("style");s.id="clkCss";s.textContent=`
+#topbar.clk-on{position:relative;padding-top:calc(var(--safeT,0px) + 2px);padding-bottom:2px}
+#topbar.clk-on #title{align-self:stretch;font-size:17px;line-height:18px;padding-bottom:38px}
+.clk-box{position:absolute;bottom:2px;display:none;align-items:center;gap:6px;overflow:hidden;z-index:1}#topbar.clk-on .clk-box{display:flex}
+.clk-sm{display:grid;flex:0 1 auto;min-width:0;cursor:pointer;font:600 11px/1.25 var(--serif,serif);letter-spacing:.02em;opacity:.9;text-align:left}.clk-sm>span{grid-area:1/1;transition:opacity 1.1s ease}.clk-sm .clk-sl>span{display:block;white-space:nowrap}.clk-sm .clk-ss{white-space:nowrap}
+.clk-sm .clk-ss{opacity:0}.clk-box.ship .clk-sm .clk-sl{opacity:0}.clk-box.ship .clk-sm .clk-ss{opacity:1}
+.clk-dial{display:block;flex:none;width:160px;height:38px;margin:0;padding:0;border:0;background:none;cursor:pointer;-webkit-tap-highlight-color:transparent}
+.clk-dial svg{display:block;width:160px;height:38px;overflow:hidden}
+.clk-dial .clk-land,.clk-dial .clk-star{transition:opacity 1.1s ease}.clk-dial .clk-star{opacity:0}.clk-dial.ship .clk-land{opacity:0}.clk-dial.ship .clk-star{opacity:1}
+.clk-dial .clk-rot{transform-box:view-box;transform-origin:80px -58px;transition:transform 1.2s ease}
+.clk-dial .clk-spin{transform-box:view-box;transform-origin:80px -58px;animation:clkSpin 240s linear infinite}
+@keyframes clkSpin{to{transform:rotate(360deg)}}
+.clk-dial .clk-tw{animation:clkTw 3.2s ease-in-out infinite}@keyframes clkTw{50%{opacity:.35}}
+.clk-dial:focus-visible{outline:2px solid #f3d98f;outline-offset:2px;border-radius:8px}
+.modal.clk-card .box{max-height:calc(100vh - 28px);max-height:calc(100dvh - 28px);overflow-y:auto;padding:16px 16px 18px}.modal.clk-card .em{font-size:30px}.modal.clk-card h2{font-size:21px;margin:4px 0 2px}
+.clk-xz{margin:10px auto 0;max-width:300px}.clk-xz svg{display:block;width:100%;max-width:280px;margin:0 auto;height:auto;touch-action:manipulation}
+.clk-xz .w{cursor:pointer;fill:transparent}.clk-xz .w.sel{fill:rgba(255,206,120,.28)}
+.clk-xz .emb{animation:clkEmb 1.6s ease-in-out infinite}@keyframes clkEmb{50%{opacity:.6}}
+.clk-xzi{margin:6px 2px 0;padding:8px 10px;border-radius:12px;background:rgba(120,86,40,.08);text-align:left;font-size:14.5px;line-height:1.65;min-height:5.2em}
+.clk-xzi b{font-size:16.5px}.clk-xzi .tm{color:#6b5a46;font-size:13.5px;margin-left:6px}.clk-xzi p{margin:3px 0 0}.clk-xzi .fk{color:#6b5a46;font-size:12.5px}
+.clk-shipl{margin:8px 0 0;font-weight:700;color:#5a4a8a}
+@media (max-height:720px){.clk-xz svg{max-width:232px}.modal.clk-card .em{font-size:24px}.clk-xzi{min-height:0}}
+.lk-w{position:absolute;width:7.5%;aspect-ratio:1;transform:translate(-50%,-50%);pointer-events:none;z-index:1}
+.lk-b{position:absolute;inset:-12%;border-radius:50%;pointer-events:auto;border:0;padding:0;background:none;cursor:pointer;-webkit-tap-highlight-color:transparent}
+.lk-f{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;animation:lkBob 4.2s ease-in-out infinite}
+.lk-p{display:block;width:66%;aspect-ratio:1/.78;border-radius:50%;background:radial-gradient(ellipse at 42% 36%,#f0735c 0,#d23a28 46%,#a8261a 78%,#7e1a12 100%);
+  box-shadow:0 3px 0 #741a12,0 0 0 1px rgba(60,10,5,.35),0 0 8px 3px rgba(255,236,170,.9),0 0 20px 9px rgba(255,214,120,.55),0 0 38px 16px rgba(255,236,190,.3);position:relative;animation:lkGlow 4.2s ease-in-out infinite}
+.lk-p::after{content:"";position:absolute;inset:16% 15%;border-radius:50%;border:1px solid rgba(255,215,190,.55)}
+.lk-sh{position:absolute;left:50%;top:157%;width:74%;height:24%;transform:translate(-50%,-50%);border-radius:50%;background:radial-gradient(ellipse closest-side,rgba(30,22,16,.62),rgba(30,22,16,.3) 55%,rgba(30,22,16,0));animation:lkSh 4.2s ease-in-out infinite}
+@keyframes lkBob{0%,100%{transform:translateY(0)}50%{transform:translateY(-14%)}}
+@keyframes lkSh{0%,100%{opacity:1;transform:translate(-50%,-50%) scale(1)}50%{opacity:.62;transform:translate(-50%,-50%) scale(.84)}}
+@keyframes lkGlow{0%,100%{filter:brightness(1)}50%{filter:brightness(1.12)}}
+.lk-b:focus-visible{outline:2px solid #f3d98f;outline-offset:2px}
+.lk-card p{line-height:1.8;margin:0 0 8px;font-size:16px}.lk-card .src{font-size:13px;color:var(--muted);line-height:1.7}.lk-card .ship{font-weight:700}
+@media (prefers-reduced-motion:reduce){.clk-dial .clk-spin,.clk-dial .clk-tw,.clk-xz .emb,.lk-f,.lk-p,.lk-sh{animation:none}.clk-dial .clk-rot{transition:none}}`;document.head.append(s)}
+
+/* ---------- ① 星晷 ---------- */
+/* 天色：照小時內插 [盤上方色, 盤下方色, 字色, 星點透明度] */
+const CLK_SKY=[[0,"#121a35","#26335c","#f3ead2",1],[4.5,"#141c3a","#2b3864","#f3ead2",1],[5.6,"#3b4a78","#e7b38c","#fff4e0",.35],[7,"#a9c3d2","#d7e3e3","#22201d",0],
+  [16.5,"#acc4d0","#d9e4e2","#22201d",0],[17.6,"#e9b98a","#f3dcc0","#3a2618",0],[18.8,"#4a4a78","#c98b74","#fff1dc",.4],[19.6,"#141c3a","#2b3864","#f3ead2",1],[24,"#121a35","#26335c","#f3ead2",1]];
+function clkSky(h){const mix=(a,b,t)=>{const p=x=>[1,3,5].map(i=>parseInt(x.slice(i,i+2),16)),A=p(a),B=p(b);return"#"+A.map((v,i)=>Math.round(v+(B[i]-v)*t).toString(16).padStart(2,"0")).join("")};
+  for(let i=0;i<CLK_SKY.length-1;i++){const a=CLK_SKY[i],b=CLK_SKY[i+1];if(h>=a[0]&&h<=b[0]){const t=(h-a[0])/(b[0]-a[0]||1),tt=t<.5?0:1;return{c1:mix(a[1],b[1],t),c2:mix(a[2],b[2],t),ink:(tt?b:a)[3],st:a[4]+(b[4]-a[4])*t}}}return{c1:"#d6e4ec",c2:"#eef0e8",ink:"#2b2a28",st:0}}
+/* 盤：圓心 (80,-58)、半徑 96，SVG 只露 y≥0 那一段；地支 i 在盤上的角度 -30i 度，整盤轉 90+15×小時，現在的時辰就落在正下方 */
+const CLK_C=[80,-58],CLK_R=96;
+function clkStars(){let a=20251109;const R=()=>(a=(a*1103515245+12345)&0x7fffffff)/0x7fffffff,[cx,cy]=CLK_C,o=[];
+  for(let i=0;i<90;i++){const r=i<25?Math.sqrt(R())*(CLK_R-3):56+Math.sqrt(R())*(CLK_R-60),t=R()*360,[x,y]=clkP(cx,cy,r,t),s=(.45+R()*.9).toFixed(2);o.push(`<circle cx="${x}" cy="${y}" r="${s}" fill="#fff6dc" opacity="${(.45+R()*.5).toFixed(2)}"${i%7===0?' class="clk-tw"':""}/>`)}
+  /* 盤緣一圈（露出來的那段）每隔約 60 度一組星官：北斗七星（勺口朝外）、牽牛三星、織女三星、心宿三星、南斗六星、參宿；座標是盤上的極座標 [半徑, 角度]，只取形狀大意 */
+  const AST=[[[88,92],[80,99],[75,109],[72,120],[66,128],[69,138],[63,147]],[[78,10],[84,17],[90,22]],[[72,-42],[80,-37],[77,-29]],[[70,-95],[78,-88],[86,-82]],[[66,-160],[73,-152],[80,-150],[86,-156],[82,-165],[74,-170]],[[68,48],[76,55],[84,62],[78,70],[70,64]]];
+  AST.forEach((S,j)=>{const P=S.map(([r,t])=>clkP(cx,cy,r,t));const L=j===0?[[0,1],[1,2],[2,3],[3,0],[3,4],[4,5],[5,6]]:P.map((p,i)=>[i,i+1]).slice(0,-1);
+    o.push(L.map(([p,q])=>`<line x1="${P[p][0]}" y1="${P[p][1]}" x2="${P[q][0]}" y2="${P[q][1]}" stroke="#f3d98f" stroke-width=".6" opacity=".7"/>`).join(""));
+    o.push(P.map(([x,y])=>`<circle cx="${x}" cy="${y}" r="1.5" fill="#ffe7a8"/><circle cx="${x}" cy="${y}" r="3.2" fill="#ffe7a8" opacity=".22"/>`).join(""))});
+  return o.join("")}
+function clkDialSvg(){const[cx,cy]=CLK_C,R=CLK_R,ns="http://www.w3.org/2000/svg",lab=[],tk=[];
+  for(let i=0;i<12;i++){const a=-30*i,[x,y]=clkP(cx,cy,R-9.5,a);lab.push(`<text class="clk-z" data-i="${i}" x="${x}" y="${y}" transform="rotate(${a-90} ${x} ${y})" text-anchor="middle" dominant-baseline="central">${CLK_ZHI[i]}</text>`);
+    const[b1,b2]=[clkP(cx,cy,R-1,a+15),clkP(cx,cy,R-5.5,a+15)];tk.push(`<line x1="${b1[0]}" y1="${b1[1]}" x2="${b2[0]}" y2="${b2[1]}"/>`)}
+  return`<svg xmlns="${ns}" viewBox="0 0 160 38" aria-hidden="true" focusable="false"><defs><clipPath id="clkClip"><circle cx="${cx}" cy="${cy}" r="${R}"/></clipPath>
+    <linearGradient id="clkSkyG" x1="0" y1="0" x2="0" y2="1"><stop class="s1" offset="0"/><stop class="s2" offset="1"/></linearGradient>
+    <radialGradient id="clkStarG" cx=".5" cy="0" r="1"><stop offset=".2" stop-color="#1d2650"/><stop offset="1" stop-color="#0c1230"/></radialGradient>
+    <linearGradient id="clkBand" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#cfd8ff" stop-opacity="0"/><stop offset=".5" stop-color="#e6e2ff" stop-opacity=".22"/><stop offset="1" stop-color="#cfd8ff" stop-opacity="0"/></linearGradient></defs>
+    <g clip-path="url(#clkClip)"><g class="clk-land"><rect x="-20" y="-160" width="200" height="200" fill="#000"/><rect x="-20" y="-160" width="200" height="200" class="clk-sky0"/><rect x="-20" y="-2" width="200" height="42" fill="url(#clkSkyG)"/><g class="clk-lst">${clkStars()}</g>
+      <path d="M2 30 Q40 22 70 29 T158 26" stroke="#fff" stroke-opacity=".28" stroke-width="5" fill="none" stroke-linecap="round" class="clk-cl"/>
+      <g class="clk-rot"><g class="clk-tk" stroke-width="1">${tk.join("")}</g><g class="clk-zs" font-size="11.5" font-weight="700" style="font-family:var(--serif,serif)">${lab.join("")}</g></g>
+      <circle cx="${cx}" cy="${cy}" r="${R-15.5}" fill="none" class="clk-in" stroke-width=".7"/>
+      <text class="clk-big" x="80" y="11" text-anchor="middle" dominant-baseline="central" font-size="15.5" font-weight="900" style="font-family:var(--serif,serif)"></text>
+      <path class="clk-ptr" d="M76.5 19.5 L83.5 19.5 L80 25.2 Z"/></g>
+    <g class="clk-star"><rect x="-20" y="-160" width="200" height="200" fill="url(#clkStarG)"/><g class="clk-spin"><rect x="-30" y="-75" width="220" height="34" fill="url(#clkBand)" transform="rotate(-24 80 -58)"/>${clkStars()}</g></g></g>
+    <circle cx="${cx}" cy="${cy}" r="${R-1.6}" fill="none" stroke="#3a2a18" stroke-opacity=".75" stroke-width="3"/><circle cx="${cx}" cy="${cy}" r="${R-1.6}" fill="none" stroke="#e8cf8e" stroke-opacity=".9" stroke-width="1"/></svg>`}
+/* 星晷和小字放在頂欄裡一個絕對定位的框（.clk-box），不放進 #title：標題文字照舊乾淨（07t3 ttDedupe、07w 面板標題都讀 #title 的字），換頁時 setTop 也不會把它洗掉，淡入淡出才接得起來 */
+function clkMake(){if(CLK.box)return;const x=document.createElement("div");x.className="clk-box";
+  x.innerHTML=`<button type="button" class="clk-dial">${clkDialSvg()}</button><span class="clk-sm" aria-hidden="true"><span class="clk-sl"><span></span><span></span></span><span class="clk-ss">✶ 雲河無歲月</span></span>`;
+  const go=e=>{e.stopPropagation();if(typeof sw7AgeCard==="function")sw7AgeCard()};CLK.box=x;CLK.el=x.querySelector(".clk-dial");CLK.sm=x.querySelector(".clk-sm");CLK.el.onclick=go;CLK.sm.onclick=go}
+function clkPaint(){const b=CLK.el;if(!b)return;const N=new Date(),h=clkHr(N),i=clkIdx(N),k=CLK_SC[i],ship=b.classList.contains("ship"),S=clkSky(h),q=s=>b.querySelector(s);
+  q(".s1").setAttribute("stop-color",S.c1);q(".clk-sky0").setAttribute("fill",S.c1);q(".s2").setAttribute("stop-color",S.c2);q(".clk-lst").setAttribute("opacity",S.st.toFixed(2));q(".clk-cl").setAttribute("stroke-opacity",(.3*(1-S.st)).toFixed(2));
+  q(".clk-zs").setAttribute("fill",S.ink);q(".clk-tk").setAttribute("stroke",S.ink);q(".clk-in").setAttribute("stroke",S.ink);q(".clk-in").setAttribute("stroke-opacity",".35");
+  b.querySelectorAll(".clk-z").forEach(t=>{const on=+t.dataset.i===i;t.setAttribute("font-size",on?"13":"11");t.setAttribute("fill",on?(S.st>.5?"#ffd978":"#a3361f"):S.ink)});
+  const big=q(".clk-big");big.textContent=CLK_ZHI[i]+"時";big.setAttribute("fill",S.ink);q(".clk-ptr").setAttribute("fill",S.st>.5?"#ffd978":"#a3361f");
+  {let a=90+15*h;if(CLK.rot!=null)a+=Math.round((CLK.rot-a)/360)*360;CLK.rot=a;q(".clk-rot").style.transform=`rotate(${a.toFixed(2)}deg)`}   /* 過半夜不倒轉一圈 */
+  const bn=typeof sw7Born==="function"?sw7Born():0,tm=typeof sw7Term==="function"?sw7Term(N):"",day=bn&&typeof sw7OnDay==="function"?sw7OnDay(bn,N):0;
+  if(CLK.sm){const L=CLK.sm.querySelectorAll(".clk-sl>span");L[0].textContent=day?`⛵ 第 ${day} 天`:"⛵ 還沒登船";L[1].textContent=tm||""}
+  b.setAttribute("aria-label",ship?"雲河無歲月：在星槎上，時辰不走。點了看船齡":`現在是${CLK_ZHI[i]}時（${k[0]}，${clkHH(i)[0]} 點到 ${clkHH(i)[1]} 點）${tm?"，節氣"+tm:""}。點了看船齡和十二時辰`)}
+/* 每次換頁（包一層 setTop）：判斷這一頁要不要星晷、在不在船上。框一直留在頂欄；剛出現時先保持上一頁（陸地／船上）的樣子，下兩格再換成這一頁的樣子＝淡入淡出 */
+function clkMode(m){const on=m==="ship";CLK.box.classList.toggle("ship",on);CLK.el.classList.toggle("ship",on)}
+function clkPlace(){const tb=document.getElementById("topbar"),h=document.getElementById("title"),x=CLK.box;if(!tb||!h||!x)return;const L=h.offsetLeft+6;x.style.left=L+"px";x.style.maxWidth=Math.max(160,h.offsetLeft+h.offsetWidth-L)+"px"}
+function clkSync(){if(!CLK_ON)return;const tb=document.getElementById("topbar"),h=document.getElementById("title");if(!tb||!h)return;
+  const k=clkKey(),ship=clkShip(),prev=CLK.mode||(ship?"ship":"land"),now=ship?"ship":"land";CLK.mode=now;clkSnd(ship);
+  if(!CLK_DIAL_RE.test(k)||!h.textContent.trim()){tb.classList.remove("clk-on");return}
+  clkCss();clkMake();if(CLK.box.parentElement!==tb)tb.append(CLK.box);
+  const was=tb.classList.contains("clk-on");if(!was){clkMode(prev);tb.classList.add("clk-on")}clkPlace();clkPaint();CLK.box.getBoundingClientRect();
+  if(prev===now)clkMode(now);else requestAnimationFrame(()=>requestAnimationFrame(()=>{clkMode(now);clkPaint()}))}
+if(CLK_ON&&typeof setTop==="function"){const f0=setTop;setTop=function(){const r=f0.apply(this,arguments);try{clkSync()}catch(e){}return r}}
+if(CLK_ON){addEventListener("hashchange",()=>setTimeout(()=>{try{clkSync()}catch(e){}},0));addEventListener("resize",()=>{try{clkPlace()}catch(e){}});
+  setInterval(()=>{try{if(CLK.el&&CLK.el.isConnected&&!document.hidden)clkPaint()}catch(e){}},30000);
+  document.addEventListener("visibilitychange",()=>{try{if(!document.hidden&&CLK.el&&CLK.el.isConnected)clkPaint()}catch(e){}})}
+/* 千秋穿梭過場一開始就算在船上（音樂淡下去）；過場完換頁時 setTop 會再判斷一次 */
+if(CLK_ON&&typeof qianqiu==="function"){const q0=qianqiu;qianqiu=function(){const r=q0.apply(this,arguments);setTimeout(()=>{try{clkSnd(true);if(CLK.box&&CLK.box.isConnected){CLK.mode="ship";clkMode("ship")}}catch(e){}},0);return r}}
+
+/* ---------- ⑤ 上下船：背景音樂淡出淡入（約 1 秒） ---------- */
+function clkSnd(ship){if(!CLK_SND_ON||typeof BGM==="undefined")return;const tg=ship?.15:.35,a=BGM.a;if(CLK.vt===tg&&CLK.va===a)return;const first=CLK.vt==null||CLK.va!==a;CLK.vt=tg;CLK.va=a;clearInterval(CLK.vi);if(!a)return;
+  if(first&&a.paused){try{a.volume=tg}catch(e){}return}
+  const v0=a.volume,t0=performance.now();CLK.vi=setInterval(()=>{const p=Math.min(1,(performance.now()-t0)/1000);try{a.volume=Math.max(0,Math.min(1,v0+(tg-v0)*p))}catch(e){}if(p>=1)clearInterval(CLK.vi)},50)}
+/* 背景音樂元素是第一次點擊才建的（iOS 規定），建好後套上現在該有的音量 */
+if(CLK_SND_ON&&typeof bgmSync==="function"){const b0=bgmSync;bgmSync=function(){const r=b0.apply(this,arguments);Promise.resolve(r).then(()=>{try{if(typeof BGM!=="undefined"&&BGM.a&&BGM.a!==CLK.va)clkSnd(clkShip())}catch(e){}});return r}}
+
+/* ---------- ② 船齡卡裡的十二時辰香篆鐘 ---------- */
+/* 香篆：12 段回紋，第 k 段（子＝0，在正上方，順時針）＝內圈短弧 → 往外 → 外圈長弧 → 往內 → 內圈短弧；尺寸照 viewBox 320 */
+const XZ={c:160,ri:58,ro:122,g:5,rim0:134,rim1:155};
+function xzSeg(k){const{c,ri,ro,g}=XZ,f=-90+30*k,a=f-15,a1=f-15+g,a2=f+15-g,b=f+15,P=(r,t)=>clkP(c,c,r,t).join(" ");
+  return`M${P(ri,a)} A${ri} ${ri} 0 0 1 ${P(ri,a1)} L${P(ro,a1)} A${ro} ${ro} 0 0 1 ${P(ro,a2)} L${P(ri,a2)} A${ri} ${ri} 0 0 1 ${P(ri,b)}`}
+/* 段長與沿段 s 長度的點（給火光定位、燒到一半的虛線長度） */
+function xzLen(){const{ri,ro,g}=XZ,d=Math.PI/180;return[ri*g*d,ro-ri,ro*(30-2*g)*d,ro-ri,ri*g*d]}
+function xzAt(k,s){const{c,ri,ro,g}=XZ,f=-90+30*k,L=xzLen(),d=Math.PI/180;let i=0;while(i<4&&s>L[i]){s-=L[i];i++}s=Math.min(s,L[i]);
+  if(i===0)return clkP(c,c,ri,f-15+s/ri/d);if(i===1)return clkP(c,c,ri+s,f-15+g);if(i===2)return clkP(c,c,ro,f-15+g+s/ro/d);if(i===3)return clkP(c,c,ro-s,f+15-g);return clkP(c,c,ri,f+15-g+s/ri/d)}
+function clkXz(N){N=N||new Date();const{c,ri,ro,rim0,rim1}=XZ,h=clkHr(N),cur=clkIdx(N),f=(((h-(cur*2-1))%24)+24)%24/2,L=xzLen().reduce((a,b)=>a+b,0);
+  const seg=[],lab=[],tm=[],wd=[];
+  for(let k=0;k<12;k++){const d=xzSeg(k),st=k<cur?"b":k===cur?"c":"u";
+    seg.push(st==="c"?`<path d="${d}" stroke="#c9a46e"/><path d="${d}" stroke="#77716a" stroke-dasharray="${(L*f).toFixed(1)} ${L.toFixed(1)}"/>`:`<path d="${d}" stroke="${st==="b"?"#77716a":"#c9a46e"}"/>`);
+    const fa=-90+30*k,[x,y]=clkP(c,c,(ri+ro)/2+6,fa),[tx,ty]=clkP(c,c,(rim0+rim1)/2,fa),[s0,s1]=clkHH(k);
+    lab.push(`<text x="${x}" y="${y}" text-anchor="middle" dominant-baseline="central" font-size="19" font-weight="900" fill="${k===cur?"#8a2a14":"#4a3420"}">${CLK_ZHI[k]}</text>`);
+    tm.push(`<text x="${tx}" y="${ty}" text-anchor="middle" dominant-baseline="central" font-size="11" font-weight="700" fill="#fff4dc">${s0}–${s1}</text>`);
+    const p1=clkP(c,c,46,fa-15),p2=clkP(c,c,rim1,fa-15),p3=clkP(c,c,rim1,fa+15),p4=clkP(c,c,46,fa+15);
+    wd.push(`<path class="w" data-i="${k}" role="button" tabindex="0" aria-label="${CLK_ZHI[k]}時，${s0} 點到 ${s1} 點" d="M${p1.join(" ")} L${p2.join(" ")} A${rim1} ${rim1} 0 0 1 ${p3.join(" ")} L${p4.join(" ")} A46 46 0 0 0 ${p1.join(" ")}Z"/>`)}
+  const[ex,ey]=xzAt(cur,L*f);
+  return`<div class="clk-xz"><svg viewBox="0 0 320 320" role="group" aria-label="十二時辰香篆鐘：點一段看那個時辰" style="font-family:var(--serif,serif)"><defs>
+    <radialGradient id="xzRim" cx=".5" cy=".5" r=".5"><stop offset=".84" stop-color="#5e4020"/><stop offset=".9" stop-color="#b58b50"/><stop offset=".96" stop-color="#8a6334"/><stop offset="1" stop-color="#4f3418"/></radialGradient>
+    <radialGradient id="xzAsh" cx=".46" cy=".42" r=".6"><stop offset="0" stop-color="#f1ece2"/><stop offset=".75" stop-color="#e2dacb"/><stop offset="1" stop-color="#cfc5b3"/></radialGradient>
+    <radialGradient id="xzEmb"><stop offset="0" stop-color="#fff3c0"/><stop offset=".35" stop-color="#ffb347" stop-opacity=".9"/><stop offset="1" stop-color="#ff6a1f" stop-opacity="0"/></radialGradient></defs>
+    <circle cx="${c}" cy="${c}" r="${rim1+3}" fill="#3e2a14" opacity=".25"/><circle cx="${c}" cy="${c}" r="${rim1}" fill="url(#xzRim)"/><circle cx="${c}" cy="${c}" r="${rim0}" fill="url(#xzAsh)"/>
+    <circle cx="${c}" cy="${c}" r="${rim0+.8}" fill="none" stroke="#3b2812" stroke-width="1.2" opacity=".7"/><circle cx="${c}" cy="${c}" r="${rim1-3}" fill="none" stroke="#e2c58e" stroke-width=".6" opacity=".6"/>
+    <g class="xz-w">${wd.join("")}</g>
+    <g fill="none" stroke-width="6.5" stroke-linecap="round" stroke-linejoin="round" pointer-events="none">${seg.join("")}</g>
+    <g pointer-events="none">${tm.join("")}${lab.join("")}
+      <text x="${c}" y="${c-8}" text-anchor="middle" dominant-baseline="central" font-size="22" font-weight="900" fill="#3a2614">${CLK_ZHI[cur]}時</text>
+      <text x="${c}" y="${c+16}" text-anchor="middle" dominant-baseline="central" font-size="13" fill="#6b5a46">${CLK_SC[cur][0]}</text>
+      <circle class="emb" cx="${ex}" cy="${ey}" r="16" fill="url(#xzEmb)"/><circle cx="${ex}" cy="${ey}" r="4.2" fill="#ff8a2a"/><circle cx="${ex}" cy="${ey}" r="2.4" fill="#fff6d0"/></g></svg>
+    <div class="clk-xzi" aria-live="polite"></div>${clkShip()?`<p class="clk-shipl">✶ 在星槎上，時辰不走。</p>`:""}</div>`}
+function clkXzInfo(box,i,cur){const k=CLK_SC[i],[a,b]=clkHH(i);box.innerHTML=`<b>${CLK_ZHI[i]}時・${k[0]}</b><span class="tm">${a}:00–${b}:00${i===cur?"・現在":""}</span>
+  <p>古名「${k[0]}」：${k[1]}。</p><p>${k[2]} 屬${k[3]}：${k[4]}<span class="fk">（民間說法）</span></p>`}
+function clkXzBind(m,N){const root=m&&m.querySelector(".clk-xz");if(!root)return;const cur=clkIdx(N||new Date()),box=root.querySelector(".clk-xzi"),W=[...root.querySelectorAll(".w")];
+  const pick=i=>{W.forEach(w=>w.classList.toggle("sel",+w.dataset.i===i));clkXzInfo(box,i,cur)};
+  W.forEach(w=>{w.addEventListener("click",()=>{if(typeof vibrate==="function")vibrate(5);pick(+w.dataset.i)});w.addEventListener("keydown",e=>{if(e.key==="Enter"||e.key===" "){e.preventDefault();pick(+w.dataset.i)}})});pick(cur)}
+
+/* ---------- ④ 爛柯懸棋（星槎甲板石桌上方） ---------- */
+/* 位置：原圖 896×1200 的 (398,612)（棋盤左上角上空），影子落在桌面 (398,684)；兩處都避開圖上畫的棋子（scratchpad 量過棋子位置） */
+const LK_POS=[398/896*100,612/1200*100];
+function lkMount(){if(!LK_ON)return;const hl=document.querySelector(".shp-map.full .shp-hl");if(!hl||hl.querySelector(".lk-w"))return;clkCss();
+  /* 影子、棋子畫在框裡，透明按鈕疊最上面（按鈕會裁掉超出範圍的內容，影子和光暈不能放進按鈕） */
+  const w=document.createElement("div");w.className="lk-w";w.style.left=LK_POS[0].toFixed(2)+"%";w.style.top=LK_POS[1].toFixed(2)+"%";
+  w.innerHTML=`<i class="lk-sh"></i><i class="lk-f"><i class="lk-p"></i></i><button type="button" class="lk-b" aria-label="懸在半空的棋子：爛柯的故事"></button>`;const b=w.querySelector(".lk-b");b.onclick=e=>{e.stopPropagation();e.preventDefault();lkCard()};
+  ["pointerdown","touchstart","mousedown"].forEach(t=>b.addEventListener(t,ev=>ev.stopPropagation(),{passive:true}));hl.append(w)}
+function lkCard(){if(typeof vibrate==="function")vibrate(5);
+  sheet("♟ 懸在半空的棋子",B=>{B.innerHTML=`<div class="lk-card"><div class="muted" style="margin:-4px 0 8px">雲河星槎・爛柯的故事</div>
+    <p>晉朝有個砍柴的人叫王質，走進石室山，看見幾個孩子一邊下棋、一邊唱歌，就站在旁邊看。孩子給他一顆像棗核的東西，含在嘴裡就不覺得餓。</p>
+    <p>過了一會兒，孩子說：「你怎麼還不走？」王質起身一看，斧頭的木柄（古時候叫「柯」）已經爛光了。回到村裡，認識的人一個都不在了——人間早就過了好多好多年。</p>
+    <p>後來大家把那座山叫「爛柯山」（在今天的浙江衢州），「爛柯」也成了圍棋的別名。</p>
+    <p class="ship">在星槎上沒有時間，這顆棋子懸在這裡，誰也不知道多久了。</p>
+    <p class="src">出處：舊題南朝梁任昉《述異記》卷上（這本書的作者有爭議，清代《四庫全書總目》認為是後人借任昉的名字寫的）。更早的東晉虞喜《志林》也記了王質看兩個童子下棋，原書已經失傳，靠後人轉引。北魏酈道元《水經注・漸江水》引《東陽記》也有這個故事，不過那裡的童子是「彈琴而歌」，不是下棋。照時代來看，王質看的是圍棋；船上這顆是素面的棋子，沒有刻字。</p></div>`});
+  try{if(typeof SCI_REG!=="undefined"&&typeof sciMark==="function"){const R=SCI_REG.find(r=>r.D&&r.D.k==="sp2"),x=R&&R.D.it.find(y=>y.n==="懸在半空的棋子");if(x)sciMark(R.D,x)}}catch(e){}}
+if(LK_ON){let lkq=0;const kick=()=>{if(lkq)return;lkq=1;setTimeout(()=>{lkq=0;try{if(clkKey()==="/adventure")lkMount()}catch(e){}},250)};
+  const init=()=>{try{new MutationObserver(kick).observe(document.body,{childList:true,subtree:true})}catch(e){}addEventListener("hashchange",kick);kick()};
+  if(document.readyState==="loading")addEventListener("DOMContentLoaded",init);else init()}
 /* ================= 🕰 回到當年（意見回饋 313）=================
    石桌往事裡的對局，用「妙棋精選」裡 Pikafish 驗證過的特級大師實戰來演：你站在旁邊看，不能插手；
    棋自動一步一步下，下到那一步妙棋之前停下來——換作是你，會怎麼走？
