@@ -1370,7 +1370,7 @@ html[data-hicon] .tabbar button.on{box-shadow:inset 0 -3px 0 currentColor}
       if(!window.caches)return go();caches.keys().then(function(ks){return Promise.all(ks.filter(function(k){return k.indexOf("xqlab-app-")===0}).map(function(k){return caches.delete(k)}))})
         .then(function(){return navigator.serviceWorker&&navigator.serviceWorker.getRegistration()}).then(function(r){return r&&r.update()}).catch(function(){}).then(go)}};setTimeout(chk,4000)})();
 </script>
-<script>window.XQ_OFFLINE=true;window.XQ_BUILD="20261109-2130";</script>
+<script>window.XQ_OFFLINE=true;window.XQ_BUILD="20261109-2145";</script>
 <script src="core.js"></script>
 <script src="engine.js"></script>
 <script src="local.js"></script>
@@ -15454,7 +15454,8 @@ function sw7Tint(d){d=d||new Date();const h=d.getHours()+d.getMinutes()/60;
   if(h>=5&&h<9)return{c:"dawn",a:h<6?h-5:h<7.5?1:(9-h)/1.5};
   if(h>=17&&h<19)return{c:"dusk",a:h<18?.3+(h-17)*.7:h<18.7?1:(19-h)/.3};
   return null}
-function sw7Css(){if(document.getElementById("sw7Css"))return;const s=document.createElement("style");s.id="sw7Css";s.textContent=`
+function sw7Css(){if(document.getElementById("sw7Css"))return;const s=document.createElement("style");s.id="sw7Css";s.textContent=`#title .sw7-hd{display:block;margin:1px 0 0;padding:0;border:0;background:none;color:inherit;opacity:.82;font:600 11.5px/1.3 var(--serif,serif);letter-spacing:.02em;text-align:left;cursor:pointer;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:100%}#title:has(.sw7-hd){line-height:1.15}
+
 .sw7-fx{position:absolute;left:0;top:0;width:100%;height:100%;pointer-events:none;overflow:hidden}.sw7-fx *{pointer-events:none}
 .sw7-cv,.sw7-leaf{position:absolute;left:0;top:0;width:100%;height:100%}.sw7-fogw,.sw7-fg{position:absolute;inset:0;overflow:hidden}
 .sw7-fg>b,.sw7-fg>canvas{position:absolute;left:0;top:0;width:100%;height:100%;display:block;background:0 0/100% 100% no-repeat}
@@ -15681,10 +15682,18 @@ function sw7AnnLater(ms){setTimeout(()=>{try{sw7AnnTry()}catch(e){}},ms)}
 /* 我的角色頁：3D 名字底下那條加「⛵ 船齡 N 年」 */
 function sw7MeAge(v){const st=v&&v.querySelector("#meSt"),b=sw7Born();if(!SW7_ON||!st||!b||st.querySelector(".sw7-age"))return;sw7Css();const n=sw7Age(b),t=n>=1?`⛵ 船齡 ${n} 年`:"⛵ 船齡未滿一年";
   const b2=st.querySelector(".me-born2");if(b2)b2.insertAdjacentHTML("beforeend",`<button type="button" class="sw7-age">${t}</button>`);else st.insertAdjacentHTML("beforeend",`<div class="me-born2 sw7-b2"><button type="button" class="sw7-age">${t}</button></div>`);
-  const btn=st.querySelector(".sw7-age");if(btn)btn.onclick=e=>{e.stopPropagation();if(typeof vibrate==="function")vibrate(5);const B=new Date(b),N=new Date(),d=Math.round((new Date(N.getFullYear(),N.getMonth(),N.getDate())-new Date(B.getFullYear(),B.getMonth(),B.getDate()))/864e5)+1;
-    const SH="子丑寅卯辰巳午未申酉戌亥"[Math.floor(((N.getHours()+1)%24)/2)],tm=sw7Term(N);   /* 回饋 837（開發者 11/9「如何知道船齡和現在遊戲的時間日期」）：遊戲裡的日子跟凡間（手機）的日期一樣，節氣、時辰也照現實；這裡一起寫出來 */
-    modal(`<div class="em">⛵</div><h2>${esc(t.replace("⛵ ",""))}</h2><p>登船日：${esc(sw7Ymd(B))}（在船上第 ${d} 天）</p><p>今天：${esc(sw7Ymd(N))}${tm?`・${esc(tm)}`:""}・${SH}時</p><p class="muted" style="font-size:13px">遊戲裡的日子跟你手機上的日期一樣；園子、渡口的季節、雨雪和早晚光影，都照今天的節氣和時辰。</p><p class="muted">在星槎上不受凡間歲月影響：凡間一年一年過去，你和七星的模樣、年紀都還是上船那年的樣子。每年的這一天，星槎會記得。<span class="sw7-plain">意思是：在船上，大家都不會變老。</span></p>`,[["好",null]],"sw7-ann")}}
+  const btn=st.querySelector(".sw7-age");if(btn)btn.onclick=e=>{e.stopPropagation();sw7AgeCard()}}
 if(typeof Me==="function"){const f0=Me;Me=function(v){const r=f0.apply(this,arguments);try{sw7MeAge(v)}catch(e){}return r}}
+/* 回饋 837、857（開發者 11/9「船齡要在哪邊查看，還有時間，希望可以在首頁就看到」）：船齡卡抽成一個函式；首頁頂欄「象棋千秋」底下多一行小字＝船上第幾天・節氣・時辰，點了開這張卡 */
+const sw7Shi=N=>"子丑寅卯辰巳午未申酉戌亥"[Math.floor(((N.getHours()+1)%24)/2)]+"時";
+const sw7OnDay=(b,N)=>{const B=new Date(b);return Math.round((new Date(N.getFullYear(),N.getMonth(),N.getDate())-new Date(B.getFullYear(),B.getMonth(),B.getDate()))/864e5)+1};
+function sw7AgeCard(){if(typeof vibrate==="function")vibrate(5);const b=sw7Born(),N=new Date(),tm=sw7Term(N),n=b?sw7Age(b):-1,t=!b?"還沒登船":n>=1?`船齡 ${n} 年`:"船齡未滿一年";
+  modal(`<div class="em">⛵</div><h2>${esc(t)}</h2>${b?`<p>登船日：${esc(sw7Ymd(new Date(b)))}（在船上第 ${sw7OnDay(b,N)} 天）</p>`:`<p class="muted">選好角色、開始新的旅程那天，就是你的登船日。</p>`}<p>今天：${esc(sw7Ymd(N))}${tm?`・${esc(tm)}`:""}・${sw7Shi(N)}</p><p class="muted" style="font-size:13px">遊戲裡的日子跟你手機上的日期一樣；園子、渡口的季節、雨雪和早晚光影，都照今天的節氣和時辰。</p><p class="muted">在星槎上不受凡間歲月影響：凡間一年一年過去，你和七星的模樣、年紀都還是上船那年的樣子。每年的這一天，星槎會記得。<span class="sw7-plain">意思是：在船上，大家都不會變老。</span></p>`,[["好",null]],"sw7-ann")}
+/* 首頁頂欄的一行小字（只在首頁；每分鐘更新時辰；換頁時 setTop 改寫標題，這行自然消失） */
+function sw7HomeInfo(){if(!SW7_ON)return;const h=document.getElementById("title");if(!h||!["","#","#/"].includes(location.hash))return;sw7Css();let e=h.querySelector(".sw7-hd");if(!e){e=document.createElement("button");e.type="button";e.className="sw7-hd";e.onclick=ev=>{ev.stopPropagation();sw7AgeCard()};h.append(e)}
+  const N=new Date(),b=sw7Born(),tm=sw7Term(N);e.textContent=[b?`⛵ 船上第 ${sw7OnDay(b,N)} 天`:"⛵ 還沒登船",tm,sw7Shi(N)].filter(Boolean).join("・");e.setAttribute("aria-label","看船齡和今天的時間："+e.textContent)}
+if(typeof Home==="function"){const f0=Home;Home=function(v,hub){const r=f0.apply(this,arguments);if(!hub){setTimeout(()=>{try{sw7HomeInfo()}catch(e){}},0);setTimeout(()=>{try{sw7HomeInfo()}catch(e){}},600)}return r}}
+setInterval(()=>{try{if(document.querySelector("#title .sw7-hd"))sw7HomeInfo()}catch(e){}},60000);
 
 /* ---------- ④ 朝代過場：千秋穿梭字幕底下一句 ---------- */
 /* 各站故事場景的大約年份（秦直道、漢通西域、赤壁、竹林、劉宋渡江、隋開運河、盛唐長安、五代、南宋臨安元宵、元延祐、明萬曆、清乾隆南巡），只拿來算相差幾百年 */
