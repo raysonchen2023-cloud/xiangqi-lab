@@ -1370,7 +1370,7 @@ html[data-hicon] .tabbar button.on{box-shadow:inset 0 -3px 0 currentColor}
       if(!window.caches)return go();caches.keys().then(function(ks){return Promise.all(ks.filter(function(k){return k.indexOf("xqlab-app-")===0}).map(function(k){return caches.delete(k)}))})
         .then(function(){return navigator.serviceWorker&&navigator.serviceWorker.getRegistration()}).then(function(r){return r&&r.update()}).catch(function(){}).then(go)}};setTimeout(chk,4000)})();
 </script>
-<script>window.XQ_OFFLINE=true;window.XQ_BUILD="20261110-0230";</script>
+<script>window.XQ_OFFLINE=true;window.XQ_BUILD="20261110-0245";</script>
 <script src="core.js"></script>
 <script src="engine.js"></script>
 <script src="local.js"></script>
@@ -16228,7 +16228,16 @@ const EXITS={"/hub/learn":[52,86,"🚪 出書院・回首頁"],"/hub/battle":[78
   "/camp":[50,87,"↩ 回書院"],"/theme":[50,87,"↩ 走回書院"],"/canju":[22,87,"↩ 回書院"],"/terms":[50,87,"🏠 回首頁"],
   "/cup":[50,87,"↩ 下樓・回大廳"],"/redo":[24,87,"🏠 回首頁"],"/stats":[50,87,"🏠 回首頁"],"/openings":[50,87,"🏠 回首頁"],
   "/journey/inn":[18,86,"⛵ 回渡口"],"/ship/lesson":[50,87,"⛵ 回星槎"],"/ship/pz":[50,87,"⛵ 回星槎"],"/ship/shelf":[50,87,"⛵ 回星槎"],"/ship/bag":[50,87,"⛵ 回星槎"],
-  "/feedback":[22,87,"↩ 回設定"],"/me":[50,87,"🏠 回首頁"],"/today":[30,87,"🏠 回首頁"],"/gm":[50,87,"↩ 回棋譜庫"],"/quiz":[50,87,"🏠 回首頁"]};
+  "/feedback":[22,87,"↩ 回設定"],"/me":[50,87,"🏠 回首頁"],"/today":[30,87,"🏠 回首頁"],"/gm":[50,87,"↩ 回棋譜庫"],"/quiz":[50,87,"🏠 回首頁"],
+  "/lobby":[18,88,"↩ 回對戰茶樓"],"/db":[20,88,"↩ 回學習書院"],"/settings":[14,90,"⛵ 回星槎"]};
+/* 開發者 11/9「拿掉頁面右下角的設定，以後統一到星槎裡面開啟設定」「移除頁面底下的首頁／線上／棋譜入口，整頁滿版」「進到 App 只會看到首頁的樣子」：
+   底欄（#tabbar）一律不顯示；原本只靠底欄離開、沒有返回鍵的頁補上回去的路（FIXBACK，跟返回鍵同一套 "^" 回那一層）：
+   線上大廳 → 對戰茶樓（茶樓裡有「線上對戰・觀戰」）、棋譜庫（含各部書）→ 學習書院（書院裡有「棋譜庫」）、設定 → 星槎（星槎上的「天字客房」進來）、觀戰 → 線上大廳。
+   首頁是最上層，不用出口。設定的入口：星槎全景圖中間艙房的門口「🛏 天字客房・設定」（設定頁本來就是雲河驛站・天字客房） */
+const NOTAB_ON=true;
+const FIXBACK=[[new RegExp("^/lobby$"),"^#/hub/battle"],[new RegExp("^/db(/[^/]+)?$"),"^#/hub/learn"],[new RegExp("^/settings$"),"^#/adventure"],[new RegExp("^/watch(/|$)"),"^#/lobby"]];
+const SHIP_SET=[54,37,"🛏 天字客房・設定"];
+function exFind(k){return EXITS[k]||(new RegExp("^/db/[^/]+$").test(k)?EXITS["/db"]:null)}
 function exKey(){return(location.hash||"#/").slice(1).split("?")[0].replace(/\/+$/,"")||"/"}
 function exCss(){if(document.getElementById("exCss"))return;const s=document.createElement("style");s.id="exCss";s.textContent=`
 body.xq-exit #back{display:none!important}
@@ -16241,8 +16250,14 @@ function exCls(a){const on=document.body.classList.contains("xq-exit");document.
 function exSync(){if(!EXIT_ON)return;clearTimeout(EX_T);const k=exKey(),t0=Date.now();
   const go=()=>{const b=document.getElementById("back"),P=document.querySelector("#view .shp-page");
     if(exKey()!==k)return;
+    if(k==="/adventure"){const sp=[...document.querySelectorAll("#view .shp-hs,#view .shp-spot")].find(x=>/下船/.test(x.textContent)),box=sp&&sp.parentElement;
+      if(!box){if(Date.now()-t0<4000)EX_T=setTimeout(go,150);return}exCss();
+      const mk=(cls,x,y,t,fn)=>{if(box.querySelector("."+cls))return;const s=document.createElement("button");s.type="button";s.className=sp.className.split(" ")[0]+" "+cls;s.style.left=x+"%";s.style.top=y+"%";s.textContent=t;s.onclick=e=>{e.stopPropagation();try{vibrate(5)}catch(z){}fn()};box.append(s)};
+      mk("ex-set",SHIP_SET[0],SHIP_SET[1],SHIP_SET[2],()=>{location.hash="#/settings"});   /* 星槎中間艙房門口＝天字客房（設定） */
+      if(b&&!b.hidden&&typeof b.onclick==="function"){mk("ex-home",62,92,"🏠 回首頁",()=>{const bb=document.getElementById("back");if(bb&&typeof bb.onclick==="function")bb.onclick()});exCls("add")}   /* 右下下船石階＝回首頁 */
+      return}
     if(!P){exCls("remove");if(Date.now()-t0<4000)EX_T=setTimeout(go,150);return}
-    exCss();const E=EXITS[k],hasBack=b&&!b.hidden&&typeof b.onclick==="function";
+    exCss();const E=exFind(k),hasBack=b&&!b.hidden&&typeof b.onclick==="function";
     if(k==="/port"){if(!P.querySelector(".ex-bow")){const sp=[...P.querySelectorAll(".shp-spot")].find(x=>/上星槎/.test(x.textContent));if(sp){const w=document.createElement("button");w.type="button";w.className="ex-bow";w.setAttribute("aria-label","上星槎（船頭）");w.onclick=e=>{e.stopPropagation();try{vibrate(5)}catch(x){}sp.click()};P.append(w)}}
       if(hasBack)exCls("add");return}
     if(!E||!hasBack){exCls("remove");return}
@@ -16250,7 +16265,8 @@ function exSync(){if(!EXIT_ON)return;clearTimeout(EX_T);const k=exKey(),t0=Date.
       s.onclick=e=>{e.stopPropagation();try{vibrate(5)}catch(x){}const bb=document.getElementById("back");if(bb&&typeof bb.onclick==="function")bb.onclick()};P.append(s)}
     exCls("add")};
   exCls("remove");EX_T=setTimeout(go,60)}
-if(EXIT_ON){addEventListener("hashchange",exSync);if(typeof setTop==="function"){const f0=setTop;setTop=function(){const r=f0.apply(this,arguments);try{exSync()}catch(e){}return r}}setTimeout(exSync,500)}
+if(EXIT_ON){addEventListener("hashchange",exSync);if(typeof setTop==="function"){const f0=setTop;setTop=function(t,b){const a=[...arguments];if(NOTAB_ON&&!b){const k=exKey(),m=FIXBACK.find(([re])=>re.test(k));if(m)a[1]=m[1]}const r=f0.apply(this,a);try{exSync()}catch(e){}return r}}
+  if(NOTAB_ON&&typeof setTabs==="function"){const f1=setTabs;setTabs=function(show,on){return f1.call(this,false,on)};try{const tb=document.getElementById("tabbar");if(tb)tb.hidden=true}catch(e){}}setTimeout(exSync,500)}
 /* ================= 🕰 回到當年（意見回饋 313）=================
    石桌往事裡的對局，用「妙棋精選」裡 Pikafish 驗證過的特級大師實戰來演：你站在旁邊看，不能插手；
    棋自動一步一步下，下到那一步妙棋之前停下來——換作是你，會怎麼走？
