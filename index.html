@@ -1341,7 +1341,7 @@ html[data-era=qin] .view:has(>.shp-rd),html[data-era=wudai] .view:has(>.shp-rd){
       if(!window.caches)return go();caches.keys().then(function(ks){return Promise.all(ks.filter(function(k){return k.indexOf("xqlab-app-")===0}).map(function(k){return caches.delete(k)}))})
         .then(function(){return navigator.serviceWorker&&navigator.serviceWorker.getRegistration()}).then(function(r){return r&&r.update()}).catch(function(){}).then(go)}};setTimeout(chk,4000)})();
 </script>
-<script>window.XQ_OFFLINE=true;window.XQ_BUILD="20261109-1415";</script>
+<script>window.XQ_OFFLINE=true;window.XQ_BUILD="20261109-1430";</script>
 <script src="core.js"></script>
 <script src="engine.js"></script>
 <script src="local.js"></script>
@@ -4496,7 +4496,7 @@ const CHAR_ERA={x_swordboy:"qin",x_spiritgirl:"nanbei",x_martialgirl:"song",x_mi
 const JOURNEY_KEYS=["pChar","pSex","pStyle","botPiece","onboard1","journey","playSec","era","eraOpen","xp","xpDay","xpKeys","record","hintBonus","hintUse","undoBonus","undoDropIds","bag","jarGot","lingN","giftGames","dropMiss",
   "legend","legendGame","legBook","legRead","jStars","jPending","jPrev","jRun","jScene","jHid","jMig36","jpSeen","novelRead","sceneDone","storyEraTip","eraUser","study","campSeen","campStars",
   "npcBond","npcAsk","npcAskSeen","parkNpc","parkNpcLast","parkAdj","visitGone","secrets","secretClue","secretSpots","secretWins","relics","relicSolved","relicAt","histSeen","histSolved","histTitle",
-  "innCur","innDrop","innAdj","xhMake","xhMei","xhTitle","yuDay","yuHint","yuRoute","yuTitle","cupDrop","cupGot","cj","cjRun","shipAt","shipSolved","cjRunS","jRunS","battleSeal","battleTitle","battleVol","battleGrand","battleVolY","battleVolLegacy","battleMig","battleSeal0","cjRunB","jRunB","battlePlan","diff","shipDock","shipLearn","undoFree","shipGal","shipStale","shipRead","shipMore","evLog","evPawn","evHeld","evStash","jRunE","cjRunE","rdLog","firstWin","wkRead","visit7","chd","ep","cjRunEp","wmDays","wmPg","wmBm","wmScr","wmEcho","jRunW"].map(k=>"m_"+k)   /* Gemini 遊玩樂趣評估（開發者 11/8 核准）：visit7＝七星來訪的次數、說過的話、小任務（07j-visit.js）；evStash＝千秋穿梭收進囊中、12 小時內再處理的突發事件（07h-qqev.js）；firstWin＝新手秒開局下過（或跳過）了；wkRead＝學習週報每天記一筆讀懂地圖比例，算「比上週」。意見回饋 737 第二期：rdLog＝讀過哪些棋譜、猜著法每盤答對幾手（壓縮成字串）。意見回饋 674：星槎在看哪一站、千秋殘局解開的題、正在解的那一題；675：航行難度、已停靠的站、學會的棋理、這盤用了幾次免費悔棋；685：七星同局圖鑑與熱身解開的題、看過困斃說明、讀過《雲河七星》哪幾章 */
+  "innCur","innDrop","innAdj","innGuest","xhMake","xhMei","xhTitle","yuDay","yuHint","yuRoute","yuTitle","cupDrop","cupGot","cj","cjRun","shipAt","shipSolved","cjRunS","jRunS","battleSeal","battleTitle","battleVol","battleGrand","battleVolY","battleVolLegacy","battleMig","battleSeal0","cjRunB","jRunB","battlePlan","diff","shipDock","shipLearn","undoFree","shipGal","shipStale","shipRead","shipMore","evLog","evPawn","evHeld","evStash","jRunE","cjRunE","rdLog","firstWin","wkRead","visit7","chd","ep","cjRunEp","wmDays","wmPg","wmBm","wmScr","wmEcho","jRunW"].map(k=>"m_"+k)   /* Gemini 遊玩樂趣評估（開發者 11/8 核准）：visit7＝七星來訪的次數、說過的話、小任務（07j-visit.js）；evStash＝千秋穿梭收進囊中、12 小時內再處理的突發事件（07h-qqev.js）；firstWin＝新手秒開局下過（或跳過）了；wkRead＝學習週報每天記一筆讀懂地圖比例，算「比上週」。意見回饋 737 第二期：rdLog＝讀過哪些棋譜、猜著法每盤答對幾手（壓縮成字串）。意見回饋 674：星槎在看哪一站、千秋殘局解開的題、正在解的那一題；675：航行難度、已停靠的站、學會的棋理、這盤用了幾次免費悔棋；685：七星同局圖鑑與熱身解開的題、看過困斃說明、讀過《雲河七星》哪幾章 */
   .concat(["cpuRate","bonusKeys","record","arenaStamps","carBank","play","play2"].map(k=>"xq_"+k));
 const JK=new Set(JOURNEY_KEYS),SLOT_N=3;
 /* 意見回饋 668：舊玩家判斷要在首頁畫出來以前做（首頁會順手寫一些旅程鍵，例如 lingN），所以這裡直接讀 localStorage；null＝已經過渡過了 */
@@ -5932,7 +5932,7 @@ function innSheet(v){setTimeout(innDrop,1200);const I=xpInfo(),Sx=jSecrets(),nx=
   setTop("🏮 "+innName(IE),out||"^#/port",[["⛵",()=>goUp("#/adventure"),"回星槎"]]);
   v.innerHTML=`<div class="pad"><div class="abn" style="height:160px;background-image:url(${inkArt("inn",IE)});margin-bottom:10px"><div class="hc"><b>🏮 ${esc(innName(IE))}</b><small>路過的旅人都在這裡歇腳下棋</small></div></div><div class="card" style="line-height:1.8">🀄 <b>Lv ${I.L} ${I.title}</b>${nx?`・${ROAD_NAME}「${roadSeg(JR.indexOf(nx))}」要 Lv ${nx.lv}（還差 ${nx.lv-I.L} 級），或棋罐 ${JAR_GATE[JR.indexOf(nx)]} 子（你有 ${jarN()} 子）`:`・${ROAD_NAME}每一${ROAD_UNIT}都能進了`}<br><span class="muted" style="font-size:13px">驛站裡都是路過的旅人，找誰下都可以、下幾次都可以。</span></div>
     <div class="inn-walk"><button class="btn ghost" id="toPark">🌳 走去園子</button><button class="btn ghost" id="toArena">🏯 走去擂台</button><button class="btn ghost" id="toShip">⛵ 回星槎</button></div>
-    <div class="sec-t">🏮 路過的旅人</div><div class="items" style="padding:0">${INN.map(x=>row(x)).join("")}</div>
+    <div class="sec-t">🏮 路過的旅人</div><div class="items" style="padding:0">${INN.map(x=>row(x)).join("")}${typeof igRows==="function"?igRows(IE):""}</div>
     <div class="sec-t">🗝 秘境棋友（${Object.keys(Sx).length}/${SECRETS.length}）</div><div class="items" style="padding:0">${SECRETS.map(x=>row(x,!Sx[x.id])).join("")}</div>
     <div id="gardenBox"></div>
     <div id="lingBox"></div>
@@ -5946,11 +5946,12 @@ function innSheet(v){setTimeout(innDrop,1200);const I=xpInfo(),Sx=jSecrets(),nx=
     const lv=x.who?secretLv(x):innLvN(x),rl=x.who?null:innRlv(x);
     sheet(`${x.ic} ${x.name}`,c=>{c.innerHTML=`${x.who?secretBio(x):""}<p class="muted" style="margin:0 0 2px">${esc(innCall(x))}</p><p style="font-size:16px;line-height:1.8">${esc(x.say)}</p><p class="muted">第 ${lv} 級</p><button class="btn" id="ig" style="width:100%">⚔ 下一盤</button>`;
       c.querySelector("#ig").onclick=()=>{closeSheet();if(rl!=null)store.set("innCur",{id:x.id,rl});jStart("inn:"+x.id,rl==null?{human:"r",level:lv,journey:"inn:"+x.id}:{human:"r",level:Math.max(1,Math.min(6,1+Math.floor(rl/3))),rlv:rl,journey:"inn:"+x.id},()=>{location.hash="#/journey/play";setTimeout(()=>toast(`${x.ic} ${x.name}：${x.say}`),500)})}})});
+  if(typeof igBind==="function")igBind(v,IE);   /* 意見回饋 826：今天從別處路過的客人（07m2-innguest.js） */
   return{}}
 /* 意見回饋 327：石桌往事的棋（雲河棋路、驛站、公園）自己留一盤，跟朝代擂台、挑戰電腦互不干擾 */
 /* 意見回饋 588（開發者：路人看起來都是 Lv1，要照修為調整才有挑戰性）：每 3 級修為升一級（Lv3＝第 2 級電腦，最高第 8 級），再照最近輸贏微調：贏了下一位強一點、輸了弱一點（最多上下 2 級） */
 const parkLv=()=>Math.max(1,Math.min(8,1+Math.floor(xpInfo().L/3)+(store.get("parkAdj",0)||0)));
-function jName(j){if(!j)return"石桌往事";if(j==="park")return"園子";if(String(j).startsWith("bt:")){const c=typeof battleCardJ==="function"?battleCardJ(j):null;return"古戰場・"+(c?c.name:"讓子對弈")}if(String(j).startsWith("char:")){const c=JCHAR[String(j).slice(5)];return c?"大廳・"+c.name:"大廳"}if(String(j).startsWith("inn:")){const x=INN.concat(SECRETS).find(z=>"inn:"+z.id===j);return x?"驛站・"+x.name:"驛站"}
+function jName(j){if(!j)return"石桌往事";if(j==="park")return"園子";if(String(j).startsWith("bt:")){const c=typeof battleCardJ==="function"?battleCardJ(j):null;return"古戰場・"+(c?c.name:"讓子對弈")}if(String(j).startsWith("char:")){const c=JCHAR[String(j).slice(5)];return c?"大廳・"+c.name:"大廳"}if(String(j).startsWith("inn:")){const x=INN.concat(SECRETS).find(z=>"inn:"+z.id===j)||(typeof igAct==="function"?igAct(j):null);return x?"驛站・"+x.name:"驛站"}
   const s=jFindStage(j);return s?(s.book===2?"紙譜新局・":ROAD_NAME+"・")+s.name:ROAD_NAME}
 const jBack=j=>String(j||"").startsWith("bt:")?"#/battle":String(j||"").startsWith("char:")?"#/lobby":j==="park"?"#/port":String(j||"").startsWith("inn:")?"#/journey/inn":(()=>{const R=jRunGet(j);if(R&&!R.done)return"#/journey/"+j;const s=jFindStage(j);return s?jChapterHref(s):"#/shelf/1"})();
 const jPlace=j=>String(j||"").startsWith("bt:")?"古戰場":j==="park"?"渡口":String(j||"").startsWith("inn:")?"驛站":String(j||"").startsWith("char:")?"大廳":(()=>{const s=jFindStage(j);return s?"第"+CNUM(s.n)+"回":"石桌往事"})();   /* 意見回饋 735：章回棋路併進書的目錄，回到書 */
@@ -5965,6 +5966,7 @@ async function jStart(id,b,go,force){let st;try{st=await api("/play/state")}catc
 /* 結果視窗、新局：跟同一位對手（園子、驛站）再下一盤 */
 function jAgain(st){if(String(st.journey||"").startsWith("bt:")&&typeof battleOddsAgain==="function")return battleOddsAgain(st);   /* 古戰場的讓子對弈：再下一盤要同樣的讓子 */
   const j=st.journey,n0=j==="park"?parkNpcOf(st):null,ix=String(j||"").startsWith("inn:")?INN.find(z=>"inn:"+z.id===j):null,rl=ix?innRlv(ix):null;if(ix)store.set("innCur",{id:ix.id,rl});   /* 意見回饋 548：驛站旅人再下一盤用調整後的強度 */
+  {const ga=!ix&&typeof igAgainArgs==="function"?igAgainArgs(j,typeof diffDx==="function"?diffDx():0):null;if(ga)return api("/play/new",ga).then(s=>{store.set("jPending",{id:j,game:s.id});return s})}   /* 意見回饋 826：路過的客人再下一盤 */
   return api("/play/new",ix?{human:"r",level:Math.max(1,Math.min(6,1+Math.floor(rl/3))),rlv:rl,journey:j,dx:typeof diffDx==="function"?diffDx():0}:{human:"r",lx:st.level,journey:j}).then(s=>{if(j==="park")parkNpcNew(s.id,s.level,n0&&n0.id);store.set("jPending",j==="park"?null:{id:j,game:s.id});return s})}   /* 意見回饋 425：園子再下一盤＝同一位路人、同樣的難度。開發者 11/6 修：st.level 已是細分的 1～18 級，要用 lx 傳；原本傳 level 會被當成舊 1～8 級再換算一次，入門3 再下一盤變業5 */
 async function jResume(box,only){if(!box)return;let st;try{st=await api("/play/state")}catch(e){return}
   const cur=st.journey&&!st.result&&st.moves&&st.moves.length?{journey:st.journey,n:st.moves.length,me:st.turn===st.human}:null,
@@ -6054,7 +6056,7 @@ function journeyGameEnd(st){if(!st||!st.result)return;try{if(typeof qqParkEnd===
   if(!st.practice&&(st.moves||[]).length>=10)addXP(st.result.w===st.human?40:15,"對局","g:"+st.id);   /* QA P1-3：雙方各走不到 5 步就結束（走一步就認輸）不給修為，免得刷經驗 */
   const P=store.get("jPending",null);if(!P||P.game!==st.id)return;store.set("jPending",null);
   if(String(P.id).startsWith("bt:")){if(typeof battleOddsEnd==="function")battleOddsEnd(st,P);return}   /* 古戰場的讓子對弈（07g-battle.js）：贏了蓋戰役印 */
-  if(String(P.id).startsWith("inn:")){const x=INN.concat(SECRETS).find(z=>"inn:"+z.id===P.id);if(!x)return;
+  if(String(P.id).startsWith("inn:")){const x=INN.concat(SECRETS).find(z=>"inn:"+z.id===P.id);if(!x){if(typeof igGameEnd==="function")igGameEnd(st,P);return}   /* 意見回饋 826：路過的客人 */
     let rl=null;if(!x.who){const C=store.get("innCur",null);rl=C&&C.id===x.id&&Number.isInteger(C.rl)?C.rl:innRlv(x);const i=INN.indexOf(x),B=INN_BAND[i]||INN_BAND[0],A=store.get("innAdj",{});
       if(st.result.w===st.human)A[x.id]=Math.min(B[1],rl+1);else if(st.result.w)A[x.id]=Math.max(B[0],rl-1);store.set("innAdj",A)}
     if(st.result.w===st.human){const xp=x.who?secretXP(x):innXP(rl);addXP(xp,"驛站","inn:"+st.id);setTimeout(()=>toast(`${x.ic} ${x.name}：「好棋！佩服。」`),1500);
@@ -9335,7 +9337,7 @@ function yzSight(k){const s=YZ_SIGHT[k];if(!s)return;vibrate(5);const show=()=>s
   (typeof relicSightDrop==="function"?relicSightDrop("y",k,s[0]):typeof relicDrop==="function"?relicDrop(k,.15):Promise.resolve(false)).then(got=>{if(!got)show()}).catch(show)}
 function yzInn(v,k){if(!YZ_ON||!YZ_READY.has(k))return;const S=YZ_SPOT[k],pad=v.querySelector(".pad");if(!S||!pad)return;yzCss();
   const T=SHIP_STOP[k]||{},nu=yzUnread(k),Sx=jSecrets();
-  const sp=[["yzTr",S.tr,"🏮 路過的旅人",(YZ_NOLIST_ON?"Lv "+xpInfo().L+"・":"")+INN.length+" 位・下棋練等","hot"],["yzSec",S.sec,"🗝 秘境棋友","找到 "+Object.keys(Sx).length+"／"+SECRETS.length],["yzMail",S.mail,k==="classic"?"📮 信箱":"📮 這一朝的信",nu?"🆕 "+nu+" 封新信":"書信往來"]];
+  const sp=[["yzTr",S.tr,"🏮 路過的旅人",(YZ_NOLIST_ON?"Lv "+xpInfo().L+"・":"")+(INN.length+(typeof igCount==="function"?igCount(k):0))+" 位・下棋練等","hot"],["yzSec",S.sec,"🗝 秘境棋友","找到 "+Object.keys(Sx).length+"／"+SECRETS.length],["yzMail",S.mail,k==="classic"?"📮 信箱":"📮 這一朝的信",nu?"🆕 "+nu+" 封新信":"書信往來"]];
   if(S.ling)sp.push(["yzLing",S.ling,"🏯 點將台","將令 "+lingN()+" 枚"]);
   const road=k!=="classic"?"":SHIP_ROUTE.filter(e=>e!=="classic"&&YZ_ROAD[e]).map(e=>{const p=YZ_ROAD[e],lk=eraLocked(e),ln=!lk&&shipLearned(e),u=!lk&&yzUnread(e),t=YZ_SEAL[e]||eraLabel(e);
     return(lk?`<i class="yz-fog" style="left:${p[0]}%;top:${p[1]-3.5}%"></i>`:"")+`<button class="yz-seal${lk?" lk":ln?" ln":""}${t.length>1?" w2":""}" data-yze="${e}" style="left:${p[0]}%;top:${p[1]}%" aria-label="${esc(innName(e))}${lk?"（星槎還沒停靠）":ln?"（這一站學會了）":""}${u?"，有新信":""}">${esc(t)}${u?"<i></i>":""}</button>`}).join("");
@@ -9345,11 +9347,105 @@ function yzInn(v,k){if(!YZ_ON||!YZ_READY.has(k))return;const S=YZ_SPOT[k],pad=v.
   const pg=d.firstElementChild;v.insertBefore(pg,pad);const ab=pad.querySelector(".abn");if(ab)ab.remove();
   if(YZ_NOLIST_ON){pad.classList.add("yz-nolist");if(YZ_MORE_ON)pg.insertAdjacentHTML("beforeend",'<button class="yz-more" id="yzMore" aria-label="其他入口：羈絆、棋史卡冊、輿圖、消寒圖、點將台、走去園子和擂台">☰ 其他</button>')}
   const on=(q,fn)=>{const e=pg.querySelector(q);if(e)e.onclick=()=>{vibrate(5);fn()}};
-  on("#yzTr",()=>yzPick(v,INN.map(x=>x.id),"🏮 路過的旅人","驛站裡都是路過的旅人，找誰下都可以、下幾次都可以。"));
+  on("#yzTr",()=>yzPick(v,INN.map(x=>x.id).concat(typeof igIds==="function"?igIds(k):[]),"🏮 路過的旅人","驛站裡都是路過的旅人，找誰下都可以、下幾次都可以。"));
   on("#yzSec",()=>yzPick(v,SECRETS.map(x=>x.id),"🗝 秘境棋友",`找到 ${Object.keys(Sx).length}／${SECRETS.length} 位。還沒找到的藏在各朝代的園子裡；點將台可以用將令換線索。`));
   on("#yzMail",()=>yzMail(k));on("#yzLing",()=>{if(YZ_NOLIST_ON&&pad.classList.contains("yz-nolist"))return yzLing();const L=v.querySelector("#lingBox");if(L)L.scrollIntoView({behavior:"smooth",block:"start"})});on("#yzMore",()=>yzMore(v,k,pad));on("#yzSight",()=>yzSight(k));
   pg.querySelectorAll("[data-yze]").forEach(b=>b.onclick=()=>{const e=b.dataset.yze;vibrate(5);if(eraLocked(e)){toast(eraLockMsg(e));return}shipGoTo(e,()=>route())});
   shpFit(v)}
+/* ================= 🧳 從別處路過的客人（意見回饋 826：驛站旅人只有五位，讓別處的角色也來，世界比較有流通感）=================
+   驛站「🏮 路過的旅人」除了原本五位（INN），每天（照手機日期，同一天固定、換天輪替）多 2～3 位從別處路過的客人：
+     園子路人 PARK_NPC（女棋手照她的家鄉朝代 era；沒有家鄉的經典園子路人照 IG_PARK 的 e 列，只排到身分在那一朝說得通的驛站，雲河驛站一律可以來）、
+     朝代擂主 ARENA（只在自己那一朝的驛站）、石桌往事人物 JCHAR（照 IG_J 的 e：少年時代＝元末、老年＝明）、
+     雲河七星 WX_CHARS（穿越時空的孩子，哪一朝都能來，但一天最多一位、只到星槎停靠過的站；要有雲河七星的旅程，自己選的那位不算）。
+     秘境棋友是要玩家自己在園子找到的秘密，不當客人。
+   輪替（igToday）：種子＝日期＋站名；先抽 2 或 3 位，再從這一站的名單照種子洗牌挑；當天的雲河七星（哪一位、在哪一站）記在存檔，換站也不會變。
+   棋力：照驛站旅人的做法（innRlv／INN_BAND）——每位客人一段 RLV 範圍，從範圍下緣開始，贏了強一格、輸了弱一格（記在 innAdj，鍵是 g.…）；範圍照他原本地方的難度：
+     園子路人、雲河七星＝跟園子一樣以玩家修為換算（parkLv）為中心；擂主＝照擂台強度 arenaLevel；石桌往事人物＝照大廳的 JCHAR_LV；都限在驛站的 0～14 裡。
+   修為：贏了 innXP(rl)，跟驛站旅人一樣（addXP「驛站」）；和棋、輸了不給。
+   存檔 store "innGuest"（05b-save.js JOURNEY_KEYS 的 m_innGuest，跟存檔走）＝{r:{客人:{n 下完幾盤,w 贏,l 輸}},wx:{d 日期,e 站,c 角色}}。
+   對局頁（08b-cpugame.js）用 innAnyAct／igAct 找對手的名字、立繪、3D 造型和台詞；石桌往事一次只留一盤，跟驛站旅人共用 jStart、journeyGameEnd */
+const IG_ON=true;
+/* 經典園子路人沒有家鄉朝代：e＝身分在那一朝說得通的驛站（八段錦、代書、梆子打更、豆花攤宋以後才常見；紙鳶唐以後；遛鳥、木匠刨子明清）；w＝為什麼路過這裡 */
+const IG_T2Q=["tang","wudai","song","yuan","ming","qing"],IG_S2Q=["song","yuan","ming","qing"],IG_ALL=["qin","han","sanguo","weijin","nanbei","sui","tang","wudai","song","yuan","ming","qing"];
+const IG_PARK={niao:{e:["ming","qing"],w:"帶畫眉出來遛遛，走遠了，進來歇歇腳。"},duanjin:{e:IG_S2Q,w:"早上的拳打完了，走到這兒正好歇一歇。"},douhua:{e:IG_S2Q,w:"挑著豆花擔子來賣，趕路的人最愛吃一碗熱的。"},
+  fengzheng:{e:IG_T2Q,w:"風箏斷了線，一路追過來的！"},mujiang:{e:["ming","qing"],w:"驛站的門板壞了，叫我來修，修好了。"},amah:{e:IG_ALL,w:"抱孫子出來走走，他在這兒睡著了。"},
+  daishu:{e:IG_S2Q,w:"驛站人來人往，寫家書的生意好。"},tiaoshui:{e:IG_ALL,w:"給驛站送水，水缸挑滿了，歇一下。"},genggu:{e:IG_S2Q,w:"晚上才打更，白天出來走走。"},maihua:{e:IG_T2Q,w:"驛站來往的客人多，花好賣。"}};
+/* 女棋手（家鄉朝代照 PARK_NPC 的 era）為什麼路過 */
+const IG_PW={w01_tang_lady:"團扇搧累了，進來歇歇腳，順便找人下一盤。",w02_song_tea:"茶具帶在身上，走到哪裡都能點一盞。",w03_yuan_rider:"馬在槽邊喝水，我也進來歇一下。",w04_ming_scholar:"小生……出門遊學，路過貴寶地，借個座位。",
+  w05_qing_gege:"噓——府裡的人找不到這兒來吧？",w06_swordswoman:"趕路累了，劍擱一邊，下盤棋再走。",w07_fisher_girl:"送魚到驛站的廚房，順路找人下棋。",w08_embroider:"送繡品進城，在這兒等車。",
+  w09_qin_player:"琴弦受了潮，借驛站的爐火烘一烘。",w10_general:"隊伍在外頭歇馬，本將軍進來喝口水。",w11_yuan_falconer:"我的鷹停在驛站屋頂上，我在底下等牠。",w12_yuan_merchant:"駱駝隊在驛站換水，明天一早才走。",
+  w13_yuan_singer:"戲班子趕下一個碼頭，在這兒歇一晚。",w14_yuan_porcelain:"送一批青花碗上路，順便歇歇手。",w15_yuan_archer:"出來打獵，弓先掛在門口。",w16_ming_poet:"出門踏青找詩句，走著走著就到了驛站。",
+  w17_ming_pipa:"應邀去別處彈曲，路上在這兒歇腳。",w18_ming_doctor:"來給驛卒看病，看完了，正好下一盤。",w19_ming_teahouse:"來看看別人家的驛站怎麼招呼客人。",w20_ming_guard:"辦案路過，在驛站歇腳。"};
+/* 擂主（只在自己那一朝的驛站） */
+const IG_CW={classic:"五十年沒離開過那張石桌……今天破例，出來走走。",qin:"烽火台換崗，老兵下來走走。",han:"出宮辦差，在驛站換馬。",sanguo:"行軍路過，東風還沒來，先下一盤。",weijin:"酒喝完了，來驛站再打一壺。",
+  nanbei:"雲遊到此，借驛站一席歇腳。",sui:"船靠岸了，上來歇一歇再開船。",tang:"出城賞花，回程在驛站歇腳。",wudai:"下山買紙墨，路過驛站。",song:"茶坊今天歇業，出來找人鬥棋。",yuan:"騎馬出來，在驛站換馬。",
+  ming:"告了幾天假，出城走走。",qing:"園子待悶了，出來看看外面的棋。"};
+/* 石桌往事人物：e＝故事裡的年代（少年時代是元末至正年間、柳寒舟老年是明永樂；老艄公、江南書生故事沒寫年代，元末明初都排） */
+const IG_J={liu_young:{e:["yuan"],w:"渡船靠岸了，我上來找人下棋！"},shen_young:{e:["yuan"],w:"聽濤樓的活幹完了，出來走走。"},agula_young:{e:["yuan"],w:"跟著父親的隊伍路過，馬在外頭吃草。"},
+  boatman:{e:["yuan","ming"],w:"渡口沒客人，上岸來歇歇腿。"},scholar:{e:["yuan","ming"],w:"遊學路過，借一盤棋論論理。"},liu_old:{e:["ming"],w:"撐傘走了很遠的路，進來避一避。"}};
+/* 雲河七星：哪一朝都能來（一天最多一位） */
+const IG_XW={x_swordboy:"星槎靠岸補水，我下來走走。這條路是直的，就走到這兒了。",x_spiritgirl:"星槎靠岸了。大家去逛，我先來驛站把茶燒上。",x_martialgirl:"星槎靠岸了！我先溜下來，找人下一盤炮的棋！",
+  x_miaogirl:"星槎一靠岸，我就先跑來驛站——我從小在驛站長大，聞到馬廄的味道就知道到了！",x_shuai:"星槎靠岸，城子讓我下來走幾步。……我走到這裡了。",x_shi:"方庭在船上歇著，我先下來看看路好不好走。",x_bing:"星槎靠岸，我幫大家跑腿送東西，送完了，歇一下！"};
+const IG_XPC={帥:"將",仕:"士",相:"象",俥:"車",傌:"馬",炮:"砲",兵:"卒"};
+const igDay=()=>{const d=new Date();return d.getFullYear()+"-"+(d.getMonth()+1)+"-"+d.getDate()};
+const igRnd=s=>{let h=2166136261;for(const c of String(s))h=Math.imul(h^c.charCodeAt(0),16777619)>>>0;return()=>{h=(h+0x6D2B79F5)>>>0;let t=Math.imul(h^h>>>15,1|h);t=t+Math.imul(t^t>>>7,61|t)^t;return((t^t>>>14)>>>0)/4294967296}};
+const igData=()=>{const o=store.get("innGuest",null);return o&&typeof o==="object"?o:{}};
+/* 範圍：c＝中心 RLV，往下 2 格、往上 1 格，限在驛站的 0～14 */
+const igBand=c=>{c=Math.max(2,Math.min(13,Math.round(c)));return[c-2,Math.min(14,c+1)]};
+const igParkC=()=>{let L=2;try{L=parkLv()}catch(e){}return 3*(L-1)};
+/* 一位客人（gid＝g.類型.代號；n 園子路人、c 擂主、j 石桌往事人物、x 雲河七星）；k＝站（「從○○路過」要看站） */
+function igMake(gid,k){const m=/^g\.([ncjx])\.(\w+)$/.exec(String(gid||""));if(!m)return null;const t=m[1],id=m[2];k=k||store.get("era","classic");
+  const q=s=>"「"+s+"」";let g=null;
+  if(t==="n"){const n=PARK_NPC.find(z=>z.id===id);if(!n)return null;const w=n.era?IG_PW[id]:(IG_PARK[id]||{}).w;if(!w)return null;
+    g={name:n.name,ic:"🍃",pc:n.pc,img:`data/npc/${id}.webp`,hi:n.say,win:n.win,lose:n.lose,why:w,from:"從"+parkName(n.era||k)+"路過",band:igBand(igParkC()),age:AGE["n:"+id],look:s=>NPC_LOOK(n,s)}}
+  else if(t==="c"){const A=ARENA[id];if(!A||!IG_CW[id])return null;let L=3;try{L=arenaLevel(id)}catch(e){}
+    g={name:A.name,ic:"🏯",pc:(CHAMP_PC[id]&&PC_CH.b[CHAMP_PC[id]])||"將",img:`data/champ/${id}_idle.webp`,hi:A.hi,win:A.win,lose:A.lose,why:IG_CW[id],from:"從"+(id==="classic"?"經典園子":eraLabel(id))+"的擂台路過",band:igBand(Math.min(14,3*(L-1))),age:AGE["c:"+id],look:s=>CHAMP_LOOK(id,s)||{p:s==="r"?"帥":"將",e:id,g:9}}}
+  else if(t==="j"){const J=JCHAR[id];if(!J||!IG_J[id])return null;
+    g={name:J.name,ic:"🪨",pc:J.pc,img:`data/journey/char_${id}_idle.webp`,hi:J.hi,win:J.win,lose:J.lose,why:IG_J[id].w,from:"從石桌往事的雲河鎮路過",band:igBand(3*((JCHAR_LV[id]||3)-1)),age:AGE["j:"+id],look:s=>JCHAR_LOOK(id,s)}}
+  else if(t==="x"){const C=WX_CHARS[id];if(!C||!IG_XW[id])return null;const pc=IG_XPC[C.pc]||"將",f0=x=>Array.isArray(x)?x[0]:x;
+    g={name:C.n,ic:"⛵",pc,img:`data/xs/prev_${id}.webp`,hi:f0(C.start)||C.say,win:f0(C.win),lose:f0(C.lose),why:IG_XW[id],from:"從雲河星槎路過",band:igBand(igParkC()),wx:1,
+      look:s=>({p:npcPc({pc},s),e:store.get("era","classic"),g:9,npc:C.n,about:C.say,hat:"hair",hc:"#1E1A16",robe:"#6B7C6A",cus:"x:"+id.slice(2),...(TRIPO[id]?{glb:`data/tripo_app/${id}.glb`,ring:TRIPO[id]}:{}),flat:true,sprite:"data/xs/",spriteMeta:{w:300,h:400},spriteMap:{idle:"prev_"+id,think:"prev_"+id,move:"prev_"+id,happy:"prev_"+id,sad:"prev_"+id,surprise:"prev_"+id}})}}
+  if(!g)return null;g.gid=gid;g.id=id;g.t=t;g.say=q(g.hi);g.why=q(g.why);return g}
+/* 這一站可能來的客人（不含雲河七星） */
+function igPool(k){const L=[];
+  for(const n of PARK_NPC){if(n.era?n.era===k&&IG_PW[n.id]:IG_PARK[n.id]&&(k==="classic"||IG_PARK[n.id].e.includes(k)))L.push("g.n."+n.id)}
+  if(ARENA[k]&&IG_CW[k])L.push("g.c."+k);
+  for(const j in IG_J)if(JCHAR[j]&&IG_J[j].e.includes(k))L.push("g.j."+j);
+  return L}
+/* 今天的雲河七星客人：要有雲河七星的旅程，自己選的那位不來；六成的日子有一位，挑一站星槎停靠過的站。當天定了就記在存檔，起航多開一站也不會換 */
+function igWxToday(){const day=igDay(),D=igData();if(D.wx&&D.wx.d===day)return D.wx;let w={d:day,e:null,c:null};
+  try{const J=store.get("journey",null),me=J&&WX_CHARS[J.c]?J.c:"";if(me){const r=igRnd(day+"|wx"),ks=Object.keys(IG_XW).filter(c=>c!==me&&WX_CHARS[c]),ok=r()<.6,c=ks[Math.floor(r()*ks.length)],
+    st=SHIP_ROUTE.filter(e=>!eraLocked(e)),e=st[Math.floor(r()*st.length)];if(ok&&c&&e)w={d:day,e,c}}}catch(e){}
+  store.set("innGuest",{...D,wx:w});return w}
+/* 今天這一站的客人（gid 陣列）：2 或 3 位；雲河七星今天停在這一站就佔一位 */
+/* 有自己朝代的人（女棋手、擂主、石桌往事人物）抽中的機會是經典園子路人的 3 倍；各朝驛站一天最多一位經典園子路人（雲河驛站本來就是他們的園子，不限） */
+const igGen=(g,k)=>k!=="classic"&&/^g\.n\./.test(g)&&!(PARK_NPC.find(z=>"g.n."+z.id===g)||{}).era;
+function igToday(k){if(!IG_ON||!k)return[];const day=igDay(),r=igRnd(day+"|"+k),n=r()<.5?2:3,P=igPool(k).map(g=>[g,Math.pow(r(),1/(igGen(g,k)?1:3))]).sort((a,b)=>b[1]-a[1]).map(x=>x[0]);
+  const w=igWxToday(),out=w.e===k&&w.c?["g.x."+w.c]:[];let gn=0;for(const g of P){if(out.length>=n)break;if(igGen(g,k)){if(gn)continue;gn++}out.push(g)}return out}
+const igIds=k=>igToday(k),igCount=k=>igToday(k).length;
+/* 現在的強度（驛站旅人的 innRlv 做法：記過的就用記的，沒有就從範圍下緣開始） */
+function igRlv(g){const B=g.band,v=store.get("innAdj",{})[g.gid];return Math.max(B[0],Math.min(B[1],Number.isInteger(v)?v:B[0]))}
+const igLvN=g=>{const b=g.band[0];return b<1?1:b<3?2:b<6?3:b<10?4:5};
+const igRec=g=>((igData().r||{})[g.gid])||null;
+function igRow(g){const R=igRec(g);return`<button class="item" data-inn="${g.gid}"><span class="lb" style="font-size:24px"><img src="${g.img}" alt="" style="width:40px;height:48px;object-fit:contain" onerror="this.replaceWith(document.createTextNode('${g.ic}'))"></span><span class="tx"><b>${esc(g.name)}</b><span>第 ${igLvN(g)} 級${R&&R.n?`・下過 ${R.n} 盤，贏 ${R.w||0} 盤`:""}</span><span style="font-size:12px;opacity:.75">🧳 ${esc(g.from)}</span></span><span class="muted">›</span></button>`}
+function igRows(k){try{return igToday(k).map(id=>igMake(id,k)).filter(Boolean).map(igRow).join("")}catch(e){return""}}
+/* 對局頁用：驛站的對手（原本的旅人、秘境棋友，或今天路過的客人） */
+function igAct(j){const s=String(j||"");if(!s.startsWith("inn:g."))return null;return igMake(s.slice(4))}
+function innAnyAct(j){return innActor(j)||igAct(j)}
+const innLook=(a,side)=>a.look?a.look(side):ACTOR_LOOK(a.id,side);
+function igStart(g){const rl=igRlv(g);store.set("innCur",{id:g.gid,rl});
+  jStart("inn:"+g.gid,{human:"r",level:Math.max(1,Math.min(6,1+Math.floor(rl/3))),rlv:rl,journey:"inn:"+g.gid},()=>{location.hash="#/journey/play";setTimeout(()=>toast(`${g.ic} ${g.name}：${g.say}`),500)})}
+function igBind(v,k){v.querySelectorAll('[data-inn^="g."]').forEach(b=>b.onclick=()=>{const g=igMake(b.dataset.inn,k);if(!g)return;vibrate(5);const R=igRec(g);
+  sheet(`${g.ic} ${g.name}`,c=>{c.innerHTML=`<div style="display:flex;gap:10px;align-items:flex-start;margin-bottom:6px"><img src="${g.img}" alt="" style="width:64px;height:84px;object-fit:contain;flex:none" onerror="this.remove()"><div><p class="muted" style="margin:0 0 2px;font-size:13px">🧳 ${esc(g.from)}</p><p style="font-size:16px;line-height:1.8;margin:0">${esc(g.why)}</p></div></div>${g.wx?"":`<p class="muted" style="margin:0 0 2px">${esc(innCall(g))}</p>`}<p style="font-size:16px;line-height:1.8;margin:0 0 4px">${esc(g.say)}</p>${ageLine(g.age)}<p class="muted">第 ${igLvN(g)} 級${R&&R.n?`・下過 ${R.n} 盤，贏 ${R.w||0} 盤、輸 ${R.l||0} 盤`:""}・今天路過，明天就不一定在了</p><button class="btn" id="igGo" style="width:100%">⚔ 下一盤</button>`;
+    c.querySelector("#igGo").onclick=()=>{closeSheet();igStart(g)}})})}
+/* 再下一盤（jAgain）：同一位客人、調整後的強度 */
+function igAgainArgs(j,dx){const g=igAct(j);if(!g)return null;const rl=igRlv(g);store.set("innCur",{id:g.gid,rl});return{human:"r",level:Math.max(1,Math.min(6,1+Math.floor(rl/3))),rlv:rl,journey:j,dx}}
+/* 下完（journeyGameEnd 的驛站分支找不到旅人時轉來這裡）：輸贏調強度、記戰績、贏了給修為 */
+function igGameEnd(st,P){const g=igAct(P.id);if(!g)return;const C=store.get("innCur",null),rl=C&&C.id===g.gid&&Number.isInteger(C.rl)?C.rl:igRlv(g),B=g.band,A=store.get("innAdj",{}),won=st.result.w===st.human,lost=!!st.result.w&&!won;
+  if(won)A[g.gid]=Math.min(B[1],rl+1);else if(lost)A[g.gid]=Math.max(B[0],rl-1);store.set("innAdj",A);
+  const D=igData(),R=D.r||{},o=R[g.gid]||{n:0,w:0,l:0};o.n++;if(won)o.w++;if(lost)o.l++;R[g.gid]=o;store.set("innGuest",{...D,r:R});
+  if(won){addXP(innXP(rl),"驛站","inn:"+st.id);setTimeout(()=>toast(`${g.ic} ${g.name}：「${g.lose}」`),1500)}
+  else setTimeout(()=>toast(`${g.ic} ${g.name}：「${lost?g.win:"和棋，改天再下一盤。"}」`),1500)}
 /* ================= 意見回饋 765（開發者 11/8）：渡口「船艙」圖的動態效果 =================
    #/port 在船艙那一站（classic）用的滿版水墨圖 data/shipmap/port_classic.webp（768x1376），照雲河星槎的做法加 WebGL 動態：
    深度圖 data/shipmap/layers/pm1_depth.png（384x688；R＝深度、G＝浮島起伏權重、B＝起伏相位；tools/shipmap_layers/portdepth.py 產生）
@@ -11096,7 +11192,7 @@ function shwCss(){if(document.getElementById("shwCss"))return;const s=document.c
 .shw.on{opacity:1}.shw canvas{position:absolute;display:block;pointer-events:none}
 .shw-sh{position:absolute;border-radius:50%;background:radial-gradient(closest-side,rgba(40,30,20,.55),rgba(40,30,20,.25) 60%,rgba(40,30,20,0));pointer-events:none}
 body.shw-on .xqbot{visibility:hidden}
-.shw-fade{opacity:.15!important;transition:opacity .25s ease!important}[data-shwnf].shw-fade{opacity:1!important}.shw-ink{position:absolute;width:36px;height:36px;margin:-18px 0 0 -18px;border-radius:50%;pointer-events:none;z-index:5;background:radial-gradient(closest-side,rgba(38,30,24,0) 38%,rgba(38,30,24,.42) 64%,rgba(38,30,24,.12) 86%,rgba(38,30,24,0));animation:shwInk .6s ease-out forwards}@keyframes shwInk{from{transform:scale(.3);opacity:.95}to{transform:scale(1.15);opacity:0}}@keyframes shwInkR{0%,60%{opacity:.7}100%{opacity:0}}@media (prefers-reduced-motion:reduce){.shw-ink{animation:shwInkR .4s linear forwards}}[data-shw-lift]{transition:translate .25s ease}.shw-iso{isolation:isolate}.shw-iso.shw-iso .shp-spot,.shw-iso.shw-iso .po-sight,.shw-iso.shw-iso [data-hs]{z-index:200}.shw-unfade{transition:opacity .6s ease!important}.shw-fade::after{animation:none!important;opacity:0!important}`;document.head.append(s)}
+.shw-fade{opacity:.15!important;transition:opacity .25s ease!important}[data-shwnf].shw-fade{opacity:1!important}.shw-ink{position:absolute;width:36px;height:36px;margin:-18px 0 0 -18px;border-radius:50%;pointer-events:none;z-index:5;background:radial-gradient(closest-side,rgba(38,30,24,0) 38%,rgba(38,30,24,.42) 64%,rgba(38,30,24,.12) 86%,rgba(38,30,24,0));animation:shwInk .6s ease-out forwards}@keyframes shwInk{from{transform:scale(.3);opacity:.95}to{transform:scale(1.15);opacity:0}}@keyframes shwInkR{0%,60%{opacity:.7}100%{opacity:0}}@media (prefers-reduced-motion:reduce){.shw-ink{animation:shwInkR .4s linear forwards}}[data-shw-lift]{transition:translate .25s ease}.shw-iso{isolation:isolate}.shw-iso.shw-iso .shp-spot,.shw-iso.shw-iso .po-sight,.shw-iso.shw-iso [data-hs]{z-index:200}.shw-unfade{transition:opacity .6s ease!important}.shw-fade::after{animation:none!important;opacity:0!important}.shw-xt{position:absolute;z-index:4;transform:translate(-50%,-50%);pointer-events:none;white-space:nowrap;padding:3px 10px;border-radius:999px;background:rgba(246,239,223,.88);color:#3a2618;border:1px solid rgba(90,64,30,.3);font:700 13px/1.3 var(--serif,serif);box-shadow:0 1px 4px rgba(0,0,0,.18);opacity:0;animation:shwXt 4.2s ease-in-out forwards}@keyframes shwXt{0%{opacity:0}15%,75%{opacity:.8}100%{opacity:0}}@media (prefers-reduced-motion:reduce){.shw-xt{animation:none;opacity:.6}}`;document.head.append(s)}
 const shwHt=(C,y)=>typeof C.h==="function"?C.h(y):C.h[0]+(y-C.h[1])*C.h[2];
 const shwPx=(C,a,b)=>Math.hypot((b[0]-a[0])*C.W/100,(b[1]-a[1])*C.H/100);
 function shwEdges(C){if(!C._e)C._e=C.E.split(" ").map(s=>s.split("-"));return C._e}
@@ -11148,7 +11244,7 @@ const shwLen=(C,pts)=>{let L=0;for(let i=1;i<pts.length;i++)L+=shwPx(C,pts[i-1],
 function shwNext(S){const g=S.go;if(!g)return;const ph=g.seq.shift();if(!ph)return;const C=S.C;
   if(ph.k==="h"){g.ph="hop";g.a=ph.a;g.b=ph.b;g.up=ph.up;g.tb=ph.tb;g.fn=ph.fn;g.th=0;S.curE=null;S.x=ph.a[0];S.y=ph.a[1];
     g.h0=ph.up?ph.a[1]:shwTHy(C.TB[ph.tb],ph.a);g.h1=ph.up?shwTHy(C.TB[ph.tb],ph.b):ph.b[1];return}
-  g.ph=null;g.pts=ph.pts;g.segE=ph.segE||[];g.onT=ph.onT||null;g.L=shwLen(C,ph.pts);g.t=0;g.dur=g.L?Math.max(g.free?.35:.6,Math.min(1.2,.3+g.L/650)):0}
+  if(g.fd==="in"){S.box.style.opacity="";S.box.style.transition=""}g.fd=ph.fade||null;g.ph=null;g.pts=ph.pts;g.segE=ph.segE||[];g.onT=ph.onT||null;g.L=shwLen(C,ph.pts);g.t=0;g.dur=g.L?Math.max(g.free?.35:.6,Math.min(1.2,.3+g.L/650)):0;if(g.fd){S.box.style.transition="none";if(g.dur)g.dur=Math.max(.7,g.dur)}}
 /* 808：一跳（u 0→1）：先蹲（0～0.16）、空中照弧線走並拉長（0.16～0.86）、落地蹲一下；身高參考的 y 從 h0 換到 h1 */
 function shwHop(S,a,b,u,h0,h1){S.hy=h0+(h1-h0)*u;if(shwRM()){S.x=a[0]+(b[0]-a[0])*u;S.y=a[1]+(b[1]-a[1])*u;S.sq=null;return}const p0=.16,p1=.86;
   if(u<p0){const k=u/p0;S.x=a[0];S.y=a[1];S.sq=[1+.12*k,1-.16*k];S.hy=h0}
@@ -11207,6 +11303,51 @@ function shwGo(S,o){shwDrop();const C=S.C,g0=S.go;if(g0&&g0.btn&&g0.btn!==o.btn)
     look:o.tap&&(o.free||o.tbl)?(shwPx(C,end,o.tap)>14?shwYaw(C,end,o.tap):null):o.free?null:shwYaw(C,end,[o.H[1],o.H[2]]),A:o.free?null:o.H[3]};
   shwNext(S)}
 {const f0=shwGo;shwGo=function(S,o){try{return f0(S,o)}catch(e){try{S.go=null;S.onT=null;S.hy=null;S.at=S.C.home;S.x=S.C.N[S.C.home][0];S.y=S.C.N[S.C.home][1];return f0(S,o)}catch(e2){}}}}   /* 825：萬一找路出錯，回到起點重找，不要整個卡住 */
+/* 回饋 824（開發者 11/9）：每張有走路角色、頂欄有「‹返回」的滿版圖都有「出口」：點出口＝角色走過去、走出畫面（邊走邊淡出），再照頂欄返回一樣回上一頁（有面板開著就先關面板，同 xqPanelNav）。
+   第一次進這一頁（還沒記位置）角色從出口走進來（邊走邊淡入）；平常不標字，每頁每次開 App 第一次進來，出口那裡淡淡閃一下「‹ 出去」（約 4 秒，不擋點擊）。
+   點擊順序：入口標籤、桌上的東西（TS）＞出口＞07w6 點物件（我們 preventDefault，它就不跳卡）＞空地走路。走出去途中再點不理；走進來途中點別處＝先站到出口前的點再照常走。
+   出口表 SHW_EXITS 照 mem 名字（"camp:*" 這種＝同一類各頁共用）：at＝出口前站的點（［左%,上%］新加的節點 _x，或現成節點名；不寫＝起點）、ln＝_x 接到哪些節點、out＝走出去的終點（可在圖外）、r＝點這一塊算出口［左,上,右,下］%（不寫＝不攔點擊、不閃提示，只做走進來）；boat:1＝out 用 07w4 PH4_PIER 那一朝的船。
+   沒寫的頁：起點在圖下緣（上% ≥ 85）＝從起點往下走出畫面，r＝起點左右各 10%、從腳下 1% 到圖底；起點在中間又沒寫＝不做。false＝不做（疊在頁上的面板 sj／mf／hq、星槎分頁）。
+   頂欄沒有返回鍵（分頁首頁）時整個不出現：不走進來、不攔點擊。座標表只加在這裡，各頁自己的座標表（07w6、07y5～07y7 等）不動。開關 SHW_EXIT_ON。 */
+const SHW_EXIT_ON=true;
+const SHW_EXITS={ship:false,sj:false,mf:false,hq:false,
+  fbp:{at:[10,86],ln:"mid lft",out:[-8,88],r:[0,79,18,95]},   /* 信房：左下角跨過門檻往左出去 */
+  gm2:{out:[53,82],r:[28,80,68,100]},   /* 特級大師畫廊：廊道盡頭是直欞窗不是門，往鏡頭這邊（來時的樓梯方向）走出去 */
+  lib:{at:[88,75],ln:"stack",out:[106,75.5],r:[86,72.5,100,79]},   /* 書閣：書案後、書櫃下的走道往右走出去 */
+  "camp:*":{at:"w0",out:[51,74],r:[36,68,64,81]},   /* 沙盤：沿小路走回我方營寨的營帳 */
+  "port:*":{at:"pier",boat:1},   /* 渡口：806 已有碼頭盡頭的「⛵ 上星槎」標籤和點碼頭那一塊（07w4 PH4_PIER，量好的 pier 點和船），出口就用它，這裡不另攔點擊；只加從船上走進來 */
+  "yz:classic":{at:[73,81],ln:"home",out:[78,97],r:[68,80,88,99]},"yz:qin":{at:[64,90],ln:"sight",out:[60,104],r:[50,89,80,100]},
+  "yz:han":{at:[72,88],ln:"mail",out:[74,104],r:[62,87,90,100]},"yz:sanguo":{at:[30,82],ln:"sight",out:[14,94],r:[6,80,36,100]},
+  "yz:weijin":{at:[16,79],ln:"home",out:[42,100],r:[10,78,46,100]},"yz:nanbei":{at:[22,80],ln:"home",out:[10,98],r:[4,79,30,100]},
+  "yz:sui":{at:[20,82],ln:"home",out:[8,98],r:[2,80,30,100]},"yz:tang":{at:[28,86],ln:"w",out:[18,100],r:[10,84,40,100]},
+  "yz:wudai":{at:[50,86],ln:"sight",out:[42,100],r:[34,85,62,100]},"yz:song":{at:[25,85],ln:"sight",out:[14,100],r:[6,83,36,100]},
+  "yz:yuan":{at:[32,88],ln:"w",out:[22,100],r:[14,86,42,100]},"yz:ming":{at:[30,74],ln:"home",out:[10,88],r:[4,72,36,92]},
+  "yz:qing":{at:[38,67],ln:"home",out:[10,80],r:[4,65,42,82]}};   /* 驛站：石階、木橋、碼頭往下（往渡口）走出去 */
+const SHW_XT={};
+function shwExitOn(){const b=document.querySelector("#topbar #back");return!!(b&&!b.hidden&&b.getClientRects().length)}
+function shwExitCfg(o){if(!SHW_EXIT_ON||!o||!o.cfg||!o.mem)return o;const m=o.mem,K=SHW_EXITS;let X=K[m];if(X===undefined)X=K[m.split(":")[0]+":*"];if(X===false)return o;
+  const C=o.cfg,hP=C.N&&C.N[C.home];if(!hP)return o;if(!X){if(hP[1]<85)return o;X={out:[hP[0],108],r:[hP[0]-10,hP[1]-1,hP[0]+10,100]}}
+  if(X.boat){const A=typeof PH4_PIER!=="undefined"&&PH4_PIER[m.split(":")[1]];if(!A||!A.boat)return o;X=Object.assign({},X,{out:A.boat})}
+  let n=C.home,N=C.N,E=C.E;if(typeof X.at==="string"){if(!N[X.at])return o;n=X.at}else if(X.at){n="_x";N=Object.assign({},N,{_x:X.at});E=E+" "+(X.ln||C.home).split(" ").filter(k=>N[k]&&k!=="_x").map(k=>k+"-_x").join(" ")}
+  return Object.assign({},o,{cfg:Object.assign({},C,{N,E,_e:null}),X:{n,out:X.out,r:X.r}})}
+{const f0=shwMount;shwMount=function(o){let o2=o;try{o2=shwExitCfg(o)}catch(e){o2=o}return f0(o2)}}
+function shwXTip(S){const X=S.o.X,m=S.o.mem;if(SHW_XT[m]||!X.r)return;SHW_XT[m]=1;try{const I=S.I,L=S.o.layer;if(!I.clientWidth)return;const e=document.createElement("i");e.className="shw-xt";e.setAttribute("aria-hidden","true");e.textContent="‹ 出去";
+  const x=Math.max(14,Math.min(86,(X.r[0]+X.r[2])/2)),y=Math.max(5,Math.min(97,(X.r[1]+X.r[3])/2));e.style.left=(x*I.clientWidth/100).toFixed(1)+"px";e.style.top=(y*I.clientHeight/100).toFixed(1)+"px";L.append(e);setTimeout(()=>e.remove(),4400)}catch(err){}}
+function shwWin(S){const X=S.o.X,C=S.C;if(!X||S.o.win0||!shwExitOn())return;S.o.win0=1;shwXTip(S);if(SHW_MEM[S.o.mem]!=null||S.at!==C.home||S.go)return;
+  const A=C.N[X.n],R=shwRoute(C,X.n,C.home),seq=[{k:"w",pts:[X.out,A],fade:"in"}];if(R.pts.length>1)seq.push({k:"w",pts:R.pts,segE:R.segE});
+  S.x=X.out[0];S.y=X.out[1];S.box.style.transition="none";S.box.style.opacity="0";
+  S.go={free:true,win:1,to:C.home,seq,pts:[C.N[C.home]],segE:[],L:0,dur:0,t:0,act:-1,look:shwYaw(C,C.N[C.home],C.look0),A:null};shwNext(S);S.place()}
+shwStay=function(S){try{shwWin(S)}catch(e){}};
+{const f0=shwOpen;shwOpen=function(S){const g=S.go,X=S.o.X;const r=f0(S);try{if(g&&X&&g.to===X.n)delete SHW_MEM[S.o.mem]}catch(e){}return r}}   /* 從出口那個點的入口離開（渡口「⛵ 上星槎」）也算走了，下次進來照樣從船上走進來 */
+function shwExitDo(S){const C=S.C,P=C.N[C.home];S.go=null;S.curE=null;S.onT=null;S.hy=null;S.sq=null;S.at=C.home;delete SHW_MEM[S.o.mem];SHW_MEMH[S.o.mem]=null;S.box.style.transition="none";S.box.style.opacity="0";S.anim("idle",1);
+  const bk=document.querySelector("#topbar #back");try{if(bk&&!bk.hidden)bk.click();else history.back()}catch(e){}
+  setTimeout(()=>{if(!S.box.isConnected||S.go)return;S.x=P[0];S.y=P[1];S.yaw=shwYaw(C,P,C.look0);S.place();S.box.style.transition="";S.box.style.opacity=""},1500)}
+{const f0=shwGo;shwGo=function(S,o){const g0=S.go;if(g0&&g0.fd){S.box.style.opacity="";S.box.style.transition=""}const r=f0(S,o);try{const X=S.o.X;if(o&&o.ex&&X&&S.go){S.go.seq.push({k:"w",pts:[S.C.N[X.n],X.out],fade:"out"});S.go.ex=1}}catch(e){}return r}}
+{const f0=shwClick;shwClick=function(S,e){try{const X=S.o.X,g=S.go;if(X&&!S.pass&&S.ready&&S.box.isConnected){
+    if(g&&g.ex&&g.fd==="out"){e.stopPropagation();e.preventDefault();return}
+    if(g&&g.fd==="in"){const A=S.C.N[X.n];S.go=null;S.curE=null;S.x=A[0];S.y=A[1];S.at=X.n;S.box.style.opacity="";S.box.style.transition="";S.place()}
+    const t=e.target,TS=S.C.TS;if(X.r&&shwExitOn()&&shwFreeOk(S,e)&&!(t.closest&&t.closest(S.o.sel))&&!(TS&&t.closest&&Object.keys(TS).some(k=>t.closest(k)))){const p=shwPt(S,e),r=X.r;
+      if(p[0]>=r[0]&&p[0]<=r[2]&&p[1]>=r[1]&&p[1]<=r[3]){e.stopPropagation();e.preventDefault();vibrate(5);shwInk(S,p);shwGo(S,{H:[X.n,X.out[0],X.out[1],null],ex:1});return}}}}catch(err){}return f0(S,e)}}
 function shwOpen(S){const g=S.go;if(!g||g.free)return;S.go=null;S.curE=null;S.at=SHW_MEM[S.o.mem]=g.to;{const P=typeof g.to==="string"?S.C.N[g.to]:g.to.p;S.x=P[0];S.y=P[1]}S.yaw=g.look;S.anim("idle",1);S.place();
   let b=g.btn;if(!b||!b.isConnected)b=S.o.find(g.hs);if(!b)return;S.pass=true;try{b.click()}finally{S.pass=false;if(g.btn!==b)g.btn.classList.remove("shw-fade");b.classList.add("shw-fade");S.stay=b;SHW_MEMH[S.o.mem]=null;shwUnfade(S,b,1500)}}
 /* 意見回饋 784（開發者 11/8）：走路途中標籤淡到 0.15；角色停好 1.5 秒後標籤淡回正常，回到這一頁時標籤一律照常（不再一直保持淡，免得像被藏起來） */
@@ -11318,10 +11459,10 @@ async function shwLoad(S){
       if(u>=1){S.sq=null;S.x=g.b[0];S.y=g.b[1];if(g.up){S.onT=g.tb;S.hy=g.h1}else{S.onT=null;S.hy=null;S.at=g.fn}shwNext(S)}S.place()}   /* 808／820：跳上桌、跳下桌 */
     else if(g){g.t+=dt;if(g.t<g.dur){walk=true;const u=g.t/g.dur,s=.65*u+.35*(.5-.5*Math.cos(Math.PI*u));let d=s*g.L,i=1;
         for(;i<g.pts.length;i++){const sl=shwPx(C,g.pts[i-1],g.pts[i]);if(d<=sl||i===g.pts.length-1){const f=sl?Math.min(1,d/sl):1,a=g.pts[i-1],b=g.pts[i];S.x=a[0]+(b[0]-a[0])*f;S.y=a[1]+(b[1]-a[1])*f;S.curE=g.segE[i-1]||null;if(sl)S.yaw=shwYaw(C,a,b);break}d-=sl}
-        if(g.onT){S.curE=null;S.hy=shwTHy(C.TB[g.onT],[S.x,S.y])}   /* 820：在桌面上走，身高照該點對應的地板 */
+        if(g.onT){S.curE=null;S.hy=shwTHy(C.TB[g.onT],[S.x,S.y])}if(g.fd)S.box.style.opacity=(g.fd==="out"?1-u:u).toFixed(3);   /* 820：在桌面上走，身高照該點對應的地板 */
         S.anim("walk",Math.max(1.3,Math.min(2.4,g.L/g.dur/220)))}
       else if(g.seq&&g.seq.length)shwNext(S)
-      else if(g.free){S.go=null;S.curE=null;const q=g.pts[g.pts.length-1];S.x=q[0];S.y=q[1];S.at=SHW_MEM[S.o.mem]=g.to;if(g.look!=null)S.yaw=g.look;S.anim("idle",1)}
+      else if(g.ex)shwExitDo(S);else if(g.free){if(g.win){S.box.style.opacity="";S.box.style.transition=""}S.go=null;S.curE=null;const q=g.pts[g.pts.length-1];S.x=q[0];S.y=q[1];S.at=SHW_MEM[S.o.mem]=g.to;if(g.look!=null)S.yaw=g.look;S.anim("idle",1)}
       else{if(g.act<0){g.act=g.t;S.curE=null;{const P=typeof g.to==="string"?C.N[g.to]:g.to.p;S.x=P[0];S.y=P[1]}S.yaw=g.look;S.anim(SHW_ACT[g.A]||"idle",g.A==="bow"?2.2:1.8)}if(g.t-g.act>.62)shwOpen(S)}
       S.place()}
     yawR+=shwWrap(S.yaw-yawR)*Math.min(1,dt*(walk?16:9));root.rotation.y=yawR;
@@ -13610,6 +13751,7 @@ function CpuGame(v,practicePage,mode){
   const oppInfo=()=>{if(!st)return null;const bot=st.human==="r"?"b":"r",N=parkNpcOf(st),L0=lvPlayOf(st),jk=(L0&&L0.lvp.opp)||(String(st.journey||"").startsWith("char:")?st.journey.slice(5):null);
     if(jk&&JCHAR[jk])return{look:JCHAR_LOOK(jk,bot),name:JCHAR[jk].name,img:`data/journey/char_${jk}_idle.webp`,say:JCHAR[jk].hi,age:AGE["j:"+jk]};
     {const ia=innActor(st.journey);if(ia)return{look:ACTOR_LOOK(ia.id,bot),name:ia.name,img:ia.img,say:ia.say.replace(/^「|」$/g,""),age:AGE["n:"+ia.id]}}
+    {const ig=igAct(st.journey);if(ig)return{look:ig.look(bot),name:ig.name,img:ig.img,say:ig.hi,age:ig.age}}   /* 意見回饋 826：驛站今天路過的客人（07m2-innguest.js） */
     if(st.arena&&ARENA[st.arena])return{look:CHAMP_LOOK(st.arena,bot)||{p:bot==="r"?"帥":"將",e:st.arena,g:9},name:ARENA[st.arena].name,img:`data/champ/${st.arena}_idle.webp`,say:ARENA[st.arena].hi,age:AGE["c:"+st.arena]};
     if(N)return{look:NPC_LOOK(N,bot),name:N.name,img:`data/npc/${N.id}.webp`,say:N.say,age:AGE["n:"+N.id]};
     return{look:PIKA_LOOK(bot),name:"Pikafish",img:null,say:"我是 Pikafish，請多指教。"}};
@@ -13647,8 +13789,8 @@ function CpuGame(v,practicePage,mode){
     const o={flip:st.human==="b",last,sel,targets:sel>=0?st.legal.filter(([f])=>f===sel).map(x=>x[1]):[],hint:st.hint?[st.hint.f,st.hint.t]:pHint&&pHint.n===st.moves.length?(pHint.t==null?[pHint.f]:[pHint.f,pHint.t]):null,check:st.check,fx:true};const LVB=lvPlayOf(st);hb.classList.toggle("lvblind",!!(LVB&&LVB.lvp.blind&&!st.result));if(LVB&&LVB.lvp.blind&&!st.result){bd.draw(st.board.map(()=>null),o);return}bd.draw(st.board,o);
     legendCheck(st);legendBadge(v.querySelector("#bbox"),!parkOn()&&legendVisit(st).length>0);
     const JS0=st.journey&&/^(b2)?h\d\d$/.test(st.journey)?jFindStage(st.journey):null,JOPP=LVB&&LVB.lvp.opp&&JCHAR[LVB.lvp.opp]?LVB.lvp.opp:String(st.journey||"").startsWith("char:")&&JCHAR[st.journey.slice(5)]?st.journey.slice(5):null;
-    parkDraw(v.querySelector("#bbox"),bd,st.board,o,{tap,bg:JS0?`data/park/j${JR[JS0.r].k}_360.webp`:null,bgName:JS0?"雲河鎮・"+JR[JS0.r].name:innActor(st.journey)?"🏮 "+innName(store.get("era","classic")):null,   /* 意見回饋 530：在驛站下棋，標籤寫驛站，不是朝代園林 */arena:st.arena||null,gate:st.journey&&!st.arena?(k=>innActor(st.journey)?{img:["data/inn/"+k+"_ink.webp","data/parkgate/"+k+"_ink.webp","data/inn/"+k+".webp"],icon:"🏮",title:"走進"+innName(k),sub:"旅人在燈下擺好棋盤了",bg:"#2b2a22",qk:k}:{img:["data/parkgate/"+k+"_ink.webp","data/parkgate/"+k+".webp","data/park/"+k+"_360.webp"],icon:"🍃",title:"走進"+parkName(k),sub:"石桌就在前面",bg:"#2b2a22",qk:k})(store.get("era","classic"))   /* 意見回饋 697：驛站旅人的對局，載入畫面和標籤都寫「〇〇的驛站」 */:(!st.journey&&!st.arena&&!st.practice&&!st.net?{img:["data/parkgate/cpu.webp","data/parkgate/"+store.get("era","classic")+".webp"],icon:"🪶",title:"茅廬對弈",sub:"臥龍先生擺好棋盤了",bg:"#1f2a22"}:null),watchers:legendVisit(st),thinking:!!st.thinking||(!st.result&&st.turn!==st.human),botSide:st.human==="r"?"b":"r",result:st.result?(st.result.w||"draw"):null,hint:o.hint&&o.hint.length===1?[o.hint[0],o.hint[0]]:o.hint,   /* 意見回饋 607：只提示一顆子（錯棋重練提示一、二、提示棋）時傳同一格兩次，園子 3D 才畫得出黃圈（park3d 只畫兩格的提示） */
-      opp:(JOPP&&JCHAR_LOOK(JOPP,st.human==="r"?"b":"r"))||(innActor(st.journey)?ACTOR_LOOK(innActor(st.journey).id,st.human==="r"?"b":"r"):null)||(st.arena&&CHAMP_LOOK(st.arena,st.human==="r"?"b":"r"))||(N?NPC_LOOK(N,st.human==="r"?"b":"r"):PIKA_LOOK(st.human==="r"?"b":"r")),oppHello:JOPP?JCHAR[JOPP].hi:st.arena&&ARENA[st.arena]?ARENA[st.arena].hi:N?N.say:"我是 Pikafish，請多指教。",oppWin:JOPP?JCHAR[JOPP].win:st.arena&&ARENA[st.arena]?ARENA[st.arena].win:N?N.win:"將死了，再接再厲。",oppLose:JOPP?JCHAR[JOPP].lose:st.arena&&ARENA[st.arena]?ARENA[st.arena].lose:N?N.lose:"你贏了，佩服佩服！"});
+    parkDraw(v.querySelector("#bbox"),bd,st.board,o,{tap,bg:JS0?`data/park/j${JR[JS0.r].k}_360.webp`:null,bgName:JS0?"雲河鎮・"+JR[JS0.r].name:innAnyAct(st.journey)?"🏮 "+innName(store.get("era","classic")):null,   /* 意見回饋 530：在驛站下棋，標籤寫驛站，不是朝代園林 */arena:st.arena||null,gate:st.journey&&!st.arena?(k=>innAnyAct(st.journey)?{img:["data/inn/"+k+"_ink.webp","data/parkgate/"+k+"_ink.webp","data/inn/"+k+".webp"],icon:"🏮",title:"走進"+innName(k),sub:"旅人在燈下擺好棋盤了",bg:"#2b2a22",qk:k}:{img:["data/parkgate/"+k+"_ink.webp","data/parkgate/"+k+".webp","data/park/"+k+"_360.webp"],icon:"🍃",title:"走進"+parkName(k),sub:"石桌就在前面",bg:"#2b2a22",qk:k})(store.get("era","classic"))   /* 意見回饋 697：驛站旅人的對局，載入畫面和標籤都寫「〇〇的驛站」 */:(!st.journey&&!st.arena&&!st.practice&&!st.net?{img:["data/parkgate/cpu.webp","data/parkgate/"+store.get("era","classic")+".webp"],icon:"🪶",title:"茅廬對弈",sub:"臥龍先生擺好棋盤了",bg:"#1f2a22"}:null),watchers:legendVisit(st),thinking:!!st.thinking||(!st.result&&st.turn!==st.human),botSide:st.human==="r"?"b":"r",result:st.result?(st.result.w||"draw"):null,hint:o.hint&&o.hint.length===1?[o.hint[0],o.hint[0]]:o.hint,   /* 意見回饋 607：只提示一顆子（錯棋重練提示一、二、提示棋）時傳同一格兩次，園子 3D 才畫得出黃圈（park3d 只畫兩格的提示） */
+      opp:(JOPP&&JCHAR_LOOK(JOPP,st.human==="r"?"b":"r"))||(innAnyAct(st.journey)?innLook(innAnyAct(st.journey),st.human==="r"?"b":"r"):null)||(st.arena&&CHAMP_LOOK(st.arena,st.human==="r"?"b":"r"))||(N?NPC_LOOK(N,st.human==="r"?"b":"r"):PIKA_LOOK(st.human==="r"?"b":"r")),oppHello:JOPP?JCHAR[JOPP].hi:igAct(st.journey)?igAct(st.journey).hi:st.arena&&ARENA[st.arena]?ARENA[st.arena].hi:N?N.say:"我是 Pikafish，請多指教。",oppWin:JOPP?JCHAR[JOPP].win:igAct(st.journey)?igAct(st.journey).win:st.arena&&ARENA[st.arena]?ARENA[st.arena].win:N?N.win:"將死了，再接再厲。",oppLose:JOPP?JCHAR[JOPP].lose:igAct(st.journey)?igAct(st.journey).lose:st.arena&&ARENA[st.arena]?ARENA[st.arena].lose:N?N.lose:"你贏了，佩服佩服！"});
     if(typeof meGameTalk==="function")meGameTalk(st);   /* 意見回饋 668：你扮演的雲河七星開局、吃子時說一句 */
     if(N&&NPC_HI!==st.id){NPC_HI=st.id;if(pk0&&!st.moves.length)setTimeout(()=>{try{if(PARK&&PARK.host===hb)PARK.v.oppSay(meHi((typeof npcHello==="function"&&npcHello(N))||N.say),2.6)}catch(e){}},900);if(typeof npcAskMaybe==="function")npcAskMaybe(N,st,hb)}}   /* 意見回饋 658：有羈絆的女棋手打招呼換成新台詞；開局偶爾來委託（小卡，不打斷對局） */
   let lastN=null;   // 上一次畫的步數：步數剛好多一步才秀開局名（重新整理、開新局不秀）
@@ -13670,7 +13812,7 @@ function CpuGame(v,practicePage,mode){
     const lv=st.levels[st.level-1]||{},me=st.human,bot=opp(me);
     const CR=st.cpuRate||{},CB=st.car||{},cpts=st.reward?(CB.table||[])[st.level-1]||0:0;paintSeg(modeOf(st));if(!st.ranked&&st.level&&!st.practice)store.set("cpuLevel",st.level);
     // 對手列右邊：目前的段位／難度，點了開「開新局」選單（換難度、換紅黑）
-    const JP=(()=>{const L=lvPlayOf(st),k=(L&&L.lvp.opp)||(String(st.journey||"").startsWith("char:")?st.journey.slice(5):null);return k&&JCHAR[k]?{...JCHAR[k],say:JCHAR[k].hi,img:`data/journey/char_${k}_idle.webp`}:innActor(st.journey)})(),NP=parkNpcOf(st)||JP,top=(NP?npcHTML(bot,NP,(JP&&NP===JP?(NP.name&&NP.name===(innActor(st.journey)||{}).name?"驛站的棋友・":"石桌往事・"):"園子裡的路人棋友・")+(lv.desc||""))   /* 意見回饋 530：驛站的對手不是「石桌往事」 */:playerHTML(bot,st.arena&&ARENA[st.arena]?`🏯 ${ARENA[st.arena].name}`:"Pikafish",st.arena&&ARENA[st.arena]?`${eraLabel(st.arena)}擂主${st.arena==="classic"?"・職業頂尖":""}`:st.ranked?"🏅 積分挑戰":st.reward?`🚗 贏了 +${cpts} 點`:lv.desc||"自選難度"))+
+    const JP=(()=>{const L=lvPlayOf(st),k=(L&&L.lvp.opp)||(String(st.journey||"").startsWith("char:")?st.journey.slice(5):null);return k&&JCHAR[k]?{...JCHAR[k],say:JCHAR[k].hi,img:`data/journey/char_${k}_idle.webp`}:innAnyAct(st.journey)})(),NP=parkNpcOf(st)||JP,top=(NP?npcHTML(bot,NP,(JP&&NP===JP?(NP.name&&NP.name===(innAnyAct(st.journey)||{}).name?"驛站的棋友・":"石桌往事・"):"園子裡的路人棋友・")+(lv.desc||""))   /* 意見回饋 530：驛站的對手不是「石桌往事」 */:playerHTML(bot,st.arena&&ARENA[st.arena]?`🏯 ${ARENA[st.arena].name}`:"Pikafish",st.arena&&ARENA[st.arena]?`${eraLabel(st.arena)}擂主${st.arena==="classic"?"・職業頂尖":""}`:st.ranked?"🏅 積分挑戰":st.reward?`🚗 贏了 +${cpts} 點`:lv.desc||"自選難度"))+
       `<button class="cpu-chip${st.ranked?" rk":""}" aria-label="${st.ranked?"段位與開新局":"換難度"}"><span><b>${st.ranked?"🏅 "+esc(st.rkName||CR.rank||""):(st.reward?"🚗 ":"")+"第 "+st.level+" 級"}</b><small>${st.ranked?(CR.pts||0)+" 分":st.reward?(CB.pts||0).toLocaleString()+" 點":esc(lv.name||"")}</small></span><i>›</i></button>`;
     const pT=v.querySelector("#pTop");if(pT.dataset.h!==top){pT.dataset.h=top;pT.innerHTML=top}
     const bt=playerHTML(me,meCall(),PLAYER[me]+(st.ranked&&CR.next?`・再 ${CR.toNext} 分升 ${CR.next}`:"")+(st.reward?`・🚗 ${(CB.pts||0).toLocaleString()} 點`:""));
