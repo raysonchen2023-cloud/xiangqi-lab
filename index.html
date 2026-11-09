@@ -1341,7 +1341,7 @@ html[data-era=qin] .view:has(>.shp-rd),html[data-era=wudai] .view:has(>.shp-rd){
       if(!window.caches)return go();caches.keys().then(function(ks){return Promise.all(ks.filter(function(k){return k.indexOf("xqlab-app-")===0}).map(function(k){return caches.delete(k)}))})
         .then(function(){return navigator.serviceWorker&&navigator.serviceWorker.getRegistration()}).then(function(r){return r&&r.update()}).catch(function(){}).then(go)}};setTimeout(chk,4000)})();
 </script>
-<script>window.XQ_OFFLINE=true;window.XQ_BUILD="20261109-1615";</script>
+<script>window.XQ_OFFLINE=true;window.XQ_BUILD="20261109-1630";</script>
 <script src="core.js"></script>
 <script src="engine.js"></script>
 <script src="local.js"></script>
@@ -11458,8 +11458,8 @@ function shwExitCfg(o){if(!SHW_EXIT_ON||!o||!o.cfg||!o.mem)return o;const m=o.me
   return Object.assign({},o,{cfg:Object.assign({},C,{N,E,_e:null}),X:{n,out:X.out,r:X.r}})}
 const SHW_XR=[];   /* 各頁出口點區（給 07t3 籤筒讓位用）：{f:圖框, r:[左,上,右,下]%} */
 {const f0=shwMount;shwMount=function(o){let o2=o;try{o2=shwExitCfg(o)}catch(e){o2=o}try{if(o2&&o2.X&&o2.X.r&&o2.frame){for(let i=SHW_XR.length-1;i>=0;i--)if(!SHW_XR[i].f.isConnected)SHW_XR.splice(i,1);SHW_XR.push({f:o2.frame,r:o2.X.r})}}catch(e){}return f0(o2)}}
-function shwXTip(S){const X=S.o.X,m=S.o.mem;if(SHW_XT[m]||!X.r)return;SHW_XT[m]=1;try{const I=S.I,L=S.o.layer;if(!I.clientWidth)return;const e=document.createElement("i");e.className="shw-xt";e.setAttribute("aria-hidden","true");e.textContent="‹ 出去";
-  const x=Math.max(14,Math.min(86,(X.r[0]+X.r[2])/2)),y=Math.max(5,Math.min(97,(X.r[1]+X.r[3])/2));e.style.left=(x*I.clientWidth/100).toFixed(1)+"px";e.style.top=(y*I.clientHeight/100).toFixed(1)+"px";L.append(e);setTimeout(()=>e.remove(),4400)}catch(err){}}
+function shwXTip(S){const X=S.o.X,m=S.o.mem;if(SHW_XT[m]||!X.r)return;SHW_XT[m]=1;try{const I=S.I,L=S.o.layer;const e=document.createElement("i");e.className="shw-xt";e.setAttribute("aria-hidden","true");e.textContent="‹ 出去";
+  const x=Math.max(14,Math.min(86,(X.r[0]+X.r[2])/2)),y=Math.max(5,Math.min(97,(X.r[1]+X.r[3])/2));e.style.left=x.toFixed(2)+"%";e.style.top=y.toFixed(2)+"%";L.append(e);setTimeout(()=>e.remove(),4400)}catch(err){}}   /* 830：用百分比，圖還沒載好、之後放大到滿版也對得上（原本用 px，圖沒載好時會跑到頂上） */
 function shwWin(S){const X=S.o.X,C=S.C;if(!X||S.o.win0||!shwExitOn())return;S.o.win0=1;shwXTip(S);if(SHW_MEM[S.o.mem]!=null||S.at!==C.home||S.go)return;
   const A=C.N[X.n],R=shwRoute(C,X.n,C.home),seq=[{k:"w",pts:[X.out,A],fade:"in"}];if(R.pts.length>1)seq.push({k:"w",pts:R.pts,segE:R.segE});
   S.x=X.out[0];S.y=X.out[1];S.box.style.transition="none";S.box.style.opacity="0";
@@ -11574,10 +11574,12 @@ let XQS_UT=0;addEventListener("click",()=>{XQS_UT=Date.now()},true);
 /* 828：所有滿版場景頁（#view 裡的 .shp-page）自動套用：圖下面有內容就整塊搬進面板，頂欄右邊加一顆「📜」打開（標題＝頁名）；圖下沒東西就什麼都不做。
    各頁自己做了面板（例如 07z2 我的戰績）就不重複套。開關 XQS_AUTO_ON */
 const XQS_AUTO_ON=true;let XQS_CUR=null;
+const XQS_NOTB=["#/gm","#/openings","#/redo","#/cup"];   /* 回饋 830：這幾頁圖上的標籤本來就會打開面板並捲到那一塊（特級大師的畫像長廊、開局各節、錯棋清單、千秋盃各欄），頂欄就不再放 📜，免得同一個面板兩個入口 */
 function xqSheetAuto(){if(!XQS_AUTO_ON)return;const V=document.getElementById("view");if(!V)return;const P=V.querySelector(".shp-page");if(!P||V.querySelector(".xqs")||P.closest(".xqs"))return;
   const tt=document.getElementById("title"),S=xqSheet(V,{t:tt?tt.textContent.trim():"清單"});xqSheetMove(V,P,S);
   const vis=c=>c.offsetHeight>4&&[c,...c.querySelectorAll("*")].some(e=>e.getClientRects().length>0&&(e.matches("img,canvas,svg,input")?e.offsetHeight>4:[...e.childNodes].some(n=>n.nodeType===3&&n.textContent.trim())));   /* 真的看得到字或圖才算（面板收著時 innerText 是空的，不能用） */
   const tb=()=>{if(!S.el.isConnected){mo.disconnect();return}const tr=document.getElementById("topRight");if(!tr)return;const any=[...S.b.children].some(vis);let b=tr.querySelector(".xqs-tb");
+    if(any&&XQS_NOTB.some(h=>location.hash===h||location.hash.startsWith(h+"?")))any=false;
     if(any&&!b){b=document.createElement("button");b.type="button";b.className="ib xqs-tb";b.textContent="📜";b.title="清單與說明";b.setAttribute("aria-label","打開清單與說明");b.onclick=()=>{if(typeof vibrate==="function")vibrate(5);S.open(null)};tr.prepend(b)}
     else if(!any&&b)b.remove()};
   const mo=new MutationObserver(()=>{clearTimeout(S._tb);S._tb=setTimeout(tb,60)});mo.observe(S.b,{childList:true,subtree:true,attributes:true,attributeFilter:["style","hidden","class"]});S._tbf=tb;XQS_CUR=S;tb()}
@@ -11935,7 +11937,7 @@ function hubMap(v,hub){const D=HUB_DEF[hub],home=v.querySelector(".home");if(!D|
   const fresh=!store.get("campSeen",false)&&!Object.keys(campStars()).length&&!Object.keys(store.get("record",{})).length;
   const sp=D.spots.map(([id,sel,x,y])=>{const c=hbCard(v,sel);return c?{id,c,x,y}:null}).filter(Boolean);
   const d=document.createElement("div");
-  d.innerHTML=`<div class="shp-page cq hub-page"><img src="data/hubmap/${D.img}.webp?v=${HB_IMGV}" alt="${esc(D.cap)}"><div class="hb-fx" aria-hidden="true"></div><div class="shp-cap"><b>${esc(D.cap)}</b></div>${sp.map(o=>`<button class="shp-spot${hbHot(o.c)||(fresh&&(o.id==="hbCamp"||o.id==="hbTerms"))?" hot":""}" id="${o.id}" style="left:${o.x}%;top:${o.y}%"><b>${esc(hbTitle(o.c))}</b></button>`).join("")}</div>`;
+  d.innerHTML=`<div class="shp-page cq hub-page"><img src="data/hubmap/${D.img}.webp?v=${HB_IMGV}" alt="${esc(D.cap)}"><div class="hb-fx" aria-hidden="true"></div>${sp.map(o=>`<button class="shp-spot${hbHot(o.c)||(fresh&&(o.id==="hbCamp"||o.id==="hbTerms"))?" hot":""}" id="${o.id}" style="left:${o.x}%;top:${o.y}%"><b>${esc(hbTitle(o.c))}</b></button>`).join("")}</div>`;
   const P=d.firstElementChild;v.insertBefore(P,home);home.classList.add("hb-hidden");
   for(const o of sp){const b=P.querySelector("#"+o.id);if(!b)continue;b.onclick=()=>o.c.click();
     const upd=()=>{if(!b.isConnected){mo.disconnect();return}const h=hbHot(o.c)||(fresh&&(o.id==="hbCamp"||o.id==="hbTerms"));if(b.classList.contains("hot")!==h)b.classList.toggle("hot",h)};
@@ -12512,6 +12514,8 @@ function ttCss(){if(document.getElementById("ttCss"))return;const s=document.cre
 .tt-tip{position:fixed;right:calc(58px + env(safe-area-inset-right,0px));bottom:calc(36px + var(--safeB,0px) + var(--ttUp,0px));z-index:940;pointer-events:none;white-space:nowrap;padding:5px 12px;border-radius:999px;
   background:rgba(246,239,223,.94);color:#3a2618;border:1px solid rgba(90,64,30,.35);font:700 13px/1.3 var(--serif,serif);box-shadow:0 2px 6px rgba(0,0,0,.2);animation:ttTip 3.8s ease-in-out forwards}
 @keyframes ttTip{0%{opacity:0;transform:translateX(6px)}12%,80%{opacity:1;transform:none}100%{opacity:0}}
+body.tt-on #topRight .ib[aria-label="回首頁"]{display:none}   /* 回饋 830：籤筒在時，頂欄的 🏠 跟「首頁」竹籤重複，藏起來；籤筒藏著的頁（渡口、對局…）照舊有 🏠 */
+.tt-dup{display:none!important}
 body.tt-on #sndPill{right:calc(60px + env(safe-area-inset-right,0px))}
 @media (prefers-reduced-motion:reduce){.tt-tube.wig{animation:none}.tt-s{transition:none}.tt-tip{animation:none}}`;document.head.append(s)}
 function ttEls(){let t=document.getElementById("ttTube");if(t)return t;ttCss();
@@ -12524,7 +12528,7 @@ function ttEls(){let t=document.getElementById("ttTube");if(t)return t;ttCss();
   /* 從畫面右邊緣往內滑＝打開 */
   let sx=null,sy=0;addEventListener("pointerdown",e=>{sx=TT_SHOW&&e.clientX>innerWidth-18?e.clientX:null;sy=e.clientY},true);
   addEventListener("pointermove",e=>{if(sx==null)return;if(sx-e.clientX>34&&Math.abs(e.clientY-sy)<40){sx=null;ttFan(true)}},true);addEventListener("pointerup",()=>{sx=null},true);
-  const re=()=>{ttFill();ttAvoid()};addEventListener("resize",()=>{clearTimeout(re.t);re.t=setTimeout(re,120)});addEventListener("hashchange",()=>{ttFan(false,1);setTimeout(re,350);setTimeout(re,1300)});
+  const re=()=>{try{ttDedupe()}catch(e){}ttFill();ttAvoid()};addEventListener("resize",()=>{clearTimeout(re.t);re.t=setTimeout(re,120)});addEventListener("hashchange",()=>{ttFan(false,1);setTimeout(re,350);setTimeout(re,1300)});
   {const V=document.getElementById("view");if(V){new MutationObserver(()=>{clearTimeout(re.m);re.m=setTimeout(re,200)}).observe(V,{childList:true});V.addEventListener("scroll",()=>{clearTimeout(re.s);re.s=setTimeout(ttAvoid,180)},{passive:true})}}   /* 圖比畫面高要捲的頁：捲完才重算讓位，不跟著捲動一直跳 */
   return t}
 function ttPaint(){const fan=document.getElementById("ttFan");if(!fan)return;const tb=document.getElementById("tabbar");
@@ -12548,6 +12552,17 @@ function ttFill(){const V=document.getElementById("view");if(!V)return;const P=V
     {const ex=V.scrollHeight-V.clientHeight;if(ex>0&&ex<40)set(av-ex)}   /* 圖下還有一點邊距（.pad 之類）就扣掉，免得多出幾 px 可以捲 */
     requestAnimationFrame(()=>P.querySelectorAll(".shp-spot,.po-sight").forEach(b=>{if(b.dataset.ttL==null)b.dataset.ttL=b.style.left;const q=b.getBoundingClientRect(),m=6;let d=0;if(q.left<vr.left+m)d=vr.left+m-q.left;else if(q.right>vr.right-m)d=vr.right-m-q.right;if(d)b.style.left="calc("+b.dataset.ttL+" + "+Math.round(d)+"px)"}))};
   if(im.complete&&im.naturalWidth)go();else im.addEventListener("load",go,{once:true})}
+/* 回饋 830（開發者 11/9「修正冗餘重複功能」）：同一件事只留一個入口。這裡在換頁後統一收掉「頂欄已經有」的重複：
+   ① 滿版圖上方的標題條（.shp-cap）大字跟頂欄頁名一樣＝藏大字（有小字說明就留小字一行）；大字是「頁名・朝代」＝只留後半；
+   ② 頁面最上面的 h1／h2 跟頂欄頁名一字不差＝藏起來（例如猜著法）；③ 渡口圖上已有「⛵ 上星槎」標籤時，頂欄的 ⛵ 回星槎藏起來。
+   不改各頁自己的檔（07f、07m、03 有別的助手在改），只在畫好之後加 class tt-dup。 */
+const ttNorm=t=>String(t||"").replace(/[^㐀-鿿\w]/g,"");
+function ttDedupe(){const V=document.getElementById("view"),T=document.getElementById("title");if(!V||!T)return;const tn=ttNorm(T.textContent);if(!tn)return;
+  V.querySelectorAll(".shp-page .shp-cap").forEach(c=>{const b=c.querySelector(":scope>b"),sm=c.querySelector(":scope>small");if(!b||b.dataset.ttd)return;const bt=b.textContent,bn=ttNorm(bt);
+    if(bn===tn){b.dataset.ttd="1";if(sm&&ttNorm(sm.textContent))b.classList.add("tt-dup");else c.classList.add("tt-dup")}
+    else if(bn.startsWith(tn)&&/・/.test(bt)&&ttNorm(bt.split("・")[0])===tn){b.dataset.ttd="1";b.textContent=bt.slice(bt.indexOf("・")+1)}});
+  const vt=V.getBoundingClientRect().top;V.querySelectorAll("h1,h2").forEach(h=>{if(h.closest(".xqs,.fbp-bw,.hq-pn,#sheet"))return;const r=h.getBoundingClientRect();if(r.top-vt<160&&ttNorm(h.textContent)===tn)h.classList.add("tt-dup")});
+  if(V.querySelector("#poBoard"))document.querySelectorAll('#topRight .ib[aria-label="回星槎"]').forEach(b=>b.classList.add("tt-dup"))}
 /* 讓位：籤筒蓋到圖上的入口標籤、景點或 07w 出口區時，往上挪到不蓋為止（每次 8px，最多畫面高 40%） */
 function ttAvoid(){const t=document.getElementById("ttTube");if(!t||t.hidden)return;const R=document.documentElement;R.style.setProperty("--ttUp","0px");
   const V=document.getElementById("view");if(!V)return;const ob=[];
@@ -12682,8 +12697,7 @@ function FeedbackPage(v,sub){fbpCss();setTop("💬 意見回饋","#/settings");i
       <span class="fbp-q" style="left:${qx.toFixed(2)}%;top:${qy.toFixed(2)}%"></span>
       <div class="fbp-slips">${FBP_SLIPS.map(([x,y,w,h])=>{const[a,b]=pc(x,y);return`<div class="fbp-slip" style="left:${a.toFixed(2)}%;top:${b.toFixed(2)}%;width:${(w/7.68).toFixed(2)}%;height:${(h/13.76).toFixed(2)}%;display:none"></div>`}).join("")}<span class="fbp-slipn" style="left:${nx.toFixed(2)}%;top:${ny.toFixed(2)}%"></span></div>
       <button class="shp-spot" id="fbpWrite" style="left:47%;top:39.5%"><b>✍ 寫信</b></button>
-      <button class="shp-spot" id="fbpBoard" style="left:19%;top:15.5%"><b>📋 修正紀錄</b></button>
-      <button class="shp-spot" id="fbpSend" style="left:75.5%;top:66.2%"><b>🖋 送出</b></button></div>`;   /* 回饋 812：圖下面不再接修正紀錄清單（改成告示榜的榜文面板） */
+      <button class="shp-spot" id="fbpBoard" style="left:19%;top:15.5%"><b>📋 修正紀錄</b></button></div>`;   /* 回饋 812：圖下面不再接修正紀錄清單（改成告示榜的榜文面板）；回饋 830：拿掉「🖋 送出」標籤——跟紙上那方「兵」朱印（蓋印送出）是同一件事，留朱印一個 */
     const P=v.querySelector(".fbp-page"),paper=P.querySelector(".fbp-paper");paper.querySelector("svg").outerHTML=fbpGrid();
     /* 箋紙：一個長方形用 matrix 斜貼到書案上的箋紙（量好的三個角） */
     const fit=()=>{const k=P.clientWidth/768;if(!k)return;const{o,x,y}=FBP_PAPER,X=[x[0]-o[0],x[1]-o[1]],Y=[y[0]-o[0],y[1]-o[1]],lx=Math.hypot(...X),ly=Math.hypot(...Y);
@@ -12722,7 +12736,7 @@ function FeedbackPage(v,sub){fbpCss();setTop("💬 意見回饋","#/settings");i
       setTimeout(()=>P.classList.add("sent"),250);
       try{await go.onclick({target:go})}catch(e){}
       setTimeout(()=>{if(!st.stop&&v.isConnected&&/^#\/feedback/.test(location.hash))render()},900)};
-    P.querySelector(".fbp-seal").onclick=e=>{e.stopPropagation();send()};P.querySelector("#fbpSend").onclick=()=>send();
+    P.querySelector(".fbp-seal").onclick=e=>{e.stopPropagation();send()};
     {const s=pn.querySelector(".fbp-send .fbp-seal");if(s)s.onclick=()=>send()}
     /* 回饋 812（開發者 11/9）：頁面只留滿版圖。告示榜（標籤、榜上的回條、「共 N 張」）＝在圖上展開一張直式榜文：
        標題那行照舊（開發者看全部、玩家看自己回報且已修好的），清單照舊用 fixList；一次先排 20 筆，捲到底或按「再看」再接 20 筆；返回鍵、榜外、✕ 都收起；#/feedback/fixes 直接打開 */
