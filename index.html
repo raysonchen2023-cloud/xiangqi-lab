@@ -1370,7 +1370,7 @@ html[data-hicon] .tabbar button.on{box-shadow:inset 0 -3px 0 currentColor}
       if(!window.caches)return go();caches.keys().then(function(ks){return Promise.all(ks.filter(function(k){return k.indexOf("xqlab-app-")===0}).map(function(k){return caches.delete(k)}))})
         .then(function(){return navigator.serviceWorker&&navigator.serviceWorker.getRegistration()}).then(function(r){return r&&r.update()}).catch(function(){}).then(go)}};setTimeout(chk,4000)})();
 </script>
-<script>window.XQ_OFFLINE=true;window.XQ_BUILD="20261110-1200";</script>
+<script>window.XQ_OFFLINE=true;window.XQ_BUILD="20261110-1215";</script>
 <script src="core.js"></script>
 <script src="engine.js"></script>
 <script src="local.js"></script>
@@ -13337,6 +13337,8 @@ const HB_IMGV="0700";   /* 圖的版本：data/hubmap 存在不跟版本走的�
 const HB_ERAS={learn:"qin han sanguo weijin nanbei sui tang wudai yuan ming qing".split(" "),battle:"qin han sanguo weijin nanbei sui tang wudai song yuan qing".split(" ")};
 function hbDockEra(){try{return typeof shipAt==="function"&&typeof shipDockList==="function"&&shipDockList()?shipAt()||"":""}catch(x){return""}}
 const hbImg=(base,hub)=>{const e=hbDockEra();return base+((HB_ERAS[hub]||[]).includes(e)?"_"+e:"")};
+/* 11/10 開發者「同桌對弈不應該出現走去園子過場」「挑戰電腦有景點了，不該再出現茅廬」：茶樓裡開的棋（挑戰電腦、同桌對弈），載入畫面用這一朝的對戰茶樓圖＋茶樓名稱，不再是小帥走去園子、茅廬臥龍 */
+function hbGate(icon,title,sub){let n="battle",h="";try{n=hbImg("battle","battle")}catch(e){}try{h=typeof xqHubName==="function"?xqHubName("battle").replace(/^\S+\s/,""):""}catch(e){}return{img:["data/hubmap/"+n+".webp","data/hubmap/battle.webp"],icon,title,sub:(h?h+"・":"")+sub,bg:"#1f2a22"}}
 /* 入口：[標籤 id（也是 07w 的入口代號）, 卡片的選擇器, 標籤左%, 上%]（量 768×1376 的定稿圖，標籤放在東西上方，角色站在東西前面） */
 const HUB_DEF={
   learn:{img:"learn",cap:"📚 學習",sub:"千秋翰林書院・前院啟蒙、中庭日課、講堂考校、藏書閣典藏",spots:[
@@ -17759,7 +17761,7 @@ if(LK_ON){let lkq=0;const kick=()=>{if(lkq)return;lkq=1;setTimeout(()=>{lkq=0;tr
    座標是圖上的百分比（標籤中心）；回 #/ 的寫「回棋鎮」（首頁＝楚河渡口棋鎮；11/9 開發者：回首頁換個詞彙）。開關 EXIT_ON */
 const EXIT_ON=true;
 /* 11/10 開發者「錯誤，是回書院」：戰績、開局、測驗、錯棋重練、規則碑林都是從書院進來的，出口改回書院（直接去 #/hub/learn）；「書院」照停靠朝代換成國子監等 */
-const EXITS={"/hub/learn":[52,86,"🚪 出書院・回棋鎮"],"/hub/battle":[78,87,"🚪 出茶樓・回棋鎮"],
+const EXITS={"/hub/learn":[52,86,"🚪 出書院・回棋鎮","#/"],"/hub/battle":[78,87,"🚪 出茶樓・回棋鎮","#/"],
   "/camp":[50,87,"↩ 回書院"],"/theme":[50,87,"↩ 走回書院"],"/canju":[22,87,"↩ 回書院"],"/terms":[50,87,"↩ 回書院","#/hub/learn"],
   "/cup":[50,87,"↩ 下樓・回大廳"],"/redo":[24,87,"↩ 回書院","#/hub/learn"],"/stats":[50,87,"↩ 回書院","#/hub/learn"],"/openings":[50,87,"↩ 回書院","#/hub/learn"],
   "/journey/inn":[18,86,"⛵ 回渡口"],"/ship/lesson":[50,87,"⛵ 回星槎"],"/ship/pz":[50,87,"⛵ 回星槎"],"/ship/shelf":[50,87,"⛵ 回星槎"],"/ship/bag":[50,87,"⛵ 回星槎"],
@@ -17797,7 +17799,7 @@ function exSync(){if(!EXIT_ON)return;clearTimeout(EX_T);const k=exKey(),t0=Date.
       if(hasBack)exCls("add");return}
     if(!E||!hasBack){exCls("remove");return}
     if(!P.querySelector(".ex-spot")){const s=document.createElement("button");s.type="button";s.className="shp-spot ex-spot";s.style.left=E[0]+"%";s.style.top=E[1]+"%";let lb=E[2];try{if((k==="/hub/learn"||k==="/hub/battle")&&typeof xqHubName==="function")lb="🚪 出"+xqHubName(k.slice(5)).split(" ").slice(1).join(" ")+"・回棋鎮";else if((k==="/lobby"||k==="/db")&&typeof xqHubName==="function"&&typeof shipAt==="function"&&typeof shipDockList==="function"&&shipDockList())lb="↩ 回"+xqHubName(k==="/lobby"?"battle":"learn").split(" ").slice(1).join(" ");else if(/書院/.test(lb)&&typeof xqHubName==="function"&&typeof shipAt==="function"&&typeof shipDockList==="function"&&shipDockList())lb=lb.replace(/學習書院|書院/,xqHubName("learn").split(" ").slice(1).join(" "))}catch(x){}s.innerHTML="<b>"+lb+"</b>";   /* 出口跟著朝代叫法：出國子監・回棋鎮 */
-      s.onclick=e=>{e.stopPropagation();try{vibrate(5)}catch(x){}if(E[3]){location.hash=E[3];return}const bb=document.getElementById("back");if(bb&&typeof bb.onclick==="function")bb.onclick()};P.append(s)}   /* E[3]＝直接去那一頁（回饋 849：意見回饋頁回星槎） */
+      s.onclick=e=>{e.stopPropagation();try{vibrate(5)}catch(x){}if(E[3]){if(E[3]==="#/"&&typeof goHome==="function"){goHome();return}if(typeof goUp==="function")goUp(E[3]);else location.hash=E[3];return}   /* 11/10 開發者「會跑到象棋規則」：回書院改用 goUp（退回紀錄裡的書院那一層，不多疊一頁），出書院／出茶樓直接回首頁，不再「上一頁」退回剛剛的子頁 */const bb=document.getElementById("back");if(bb&&typeof bb.onclick==="function")bb.onclick()};P.append(s)}   /* E[3]＝直接去那一頁（回饋 849：意見回饋頁回星槎） */
     exCls("add")};
   exCls("remove");EX_T=setTimeout(go,60)}
 if(EXIT_ON){addEventListener("hashchange",exSync);if(typeof setTop==="function"){const f0=setTop;setTop=function(t,b){const a=[...arguments];if(NOTAB_ON&&!b){const k=exKey(),m=FIXBACK.find(([re])=>re.test(k));if(m)a[1]=m[1]}const r=f0.apply(this,a);try{exSync()}catch(e){}return r}}
@@ -17944,7 +17946,7 @@ function CpuGame(v,practicePage,mode){
     legendCheck(st);legendBadge(v.querySelector("#bbox"),!parkOn()&&legendVisit(st).length>0);
     const JS0=st.journey&&/^(b2)?h\d\d$/.test(st.journey)?jFindStage(st.journey):null,JOPP=LVB&&LVB.lvp.opp&&JCHAR[LVB.lvp.opp]?LVB.lvp.opp:String(st.journey||"").startsWith("char:")&&JCHAR[st.journey.slice(5)]?st.journey.slice(5):null;
     const OT=oppTalk(st,JOPP,N);   /* 意見回饋 826 追加：對面的人開口、贏、輸、和棋各說自己的話（07m3-opptalk.js） */
-    parkDraw(v.querySelector("#bbox"),bd,st.board,o,{tap,bg:JS0?`data/park/j${JR[JS0.r].k}_360.webp`:null,bgName:JS0?"雲河鎮・"+JR[JS0.r].name:innAnyAct(st.journey)?"🏮 "+innName(store.get("era","classic")):null,   /* 意見回饋 530：在驛站下棋，標籤寫驛站，不是朝代園林 */arena:st.arena||null,gate:st.journey&&!st.arena?(k=>innAnyAct(st.journey)?{img:["data/inn/"+k+"_ink.webp","data/parkgate/"+k+"_ink.webp","data/inn/"+k+".webp"],icon:"🏮",title:"走進"+innName(k),sub:"旅人在燈下擺好棋盤了",bg:"#2b2a22",qk:k}:{img:["data/parkgate/"+k+"_ink.webp","data/parkgate/"+k+".webp","data/park/"+k+"_360.webp"],icon:"🍃",title:"走進"+parkName(k),sub:"石桌就在前面",bg:"#2b2a22",qk:k})(store.get("era","classic"))   /* 意見回饋 697：驛站旅人的對局，載入畫面和標籤都寫「〇〇的驛站」 */:(!st.journey&&!st.arena&&!st.practice&&!st.net?{img:["data/parkgate/cpu.webp","data/parkgate/"+store.get("era","classic")+".webp"],icon:"🪶",title:"茅廬對弈",sub:"臥龍先生擺好棋盤了",bg:"#1f2a22"}:null),watchers:legendVisit(st),thinking:!!st.thinking||(!st.result&&st.turn!==st.human),botSide:st.human==="r"?"b":"r",result:st.result?(st.result.w||"draw"):null,hint:o.hint&&o.hint.length===1?[o.hint[0],o.hint[0]]:o.hint,   /* 意見回饋 607：只提示一顆子（錯棋重練提示一、二、提示棋）時傳同一格兩次，園子 3D 才畫得出黃圈（park3d 只畫兩格的提示） */
+    parkDraw(v.querySelector("#bbox"),bd,st.board,o,{tap,bg:JS0?`data/park/j${JR[JS0.r].k}_360.webp`:null,bgName:JS0?"雲河鎮・"+JR[JS0.r].name:innAnyAct(st.journey)?"🏮 "+innName(store.get("era","classic")):null,   /* 意見回饋 530：在驛站下棋，標籤寫驛站，不是朝代園林 */arena:st.arena||null,gate:st.journey&&!st.arena?(k=>innAnyAct(st.journey)?{img:["data/inn/"+k+"_ink.webp","data/parkgate/"+k+"_ink.webp","data/inn/"+k+".webp"],icon:"🏮",title:"走進"+innName(k),sub:"旅人在燈下擺好棋盤了",bg:"#2b2a22",qk:k}:{img:["data/parkgate/"+k+"_ink.webp","data/parkgate/"+k+".webp","data/park/"+k+"_360.webp"],icon:"🍃",title:"走進"+parkName(k),sub:"石桌就在前面",bg:"#2b2a22",qk:k})(store.get("era","classic"))   /* 意見回饋 697：驛站旅人的對局，載入畫面和標籤都寫「〇〇的驛站」 */:(!st.journey&&!st.arena&&!st.practice&&!st.net?(typeof hbGate==="function"?hbGate("🤖","挑戰電腦","對手擺好棋盤了"):null):null),watchers:legendVisit(st),thinking:!!st.thinking||(!st.result&&st.turn!==st.human),botSide:st.human==="r"?"b":"r",result:st.result?(st.result.w||"draw"):null,hint:o.hint&&o.hint.length===1?[o.hint[0],o.hint[0]]:o.hint,   /* 意見回饋 607：只提示一顆子（錯棋重練提示一、二、提示棋）時傳同一格兩次，園子 3D 才畫得出黃圈（park3d 只畫兩格的提示） */
       opp:(JOPP&&JCHAR_LOOK(JOPP,st.human==="r"?"b":"r"))||(innAnyAct(st.journey)?innLook(innAnyAct(st.journey),st.human==="r"?"b":"r"):null)||(st.arena&&CHAMP_LOOK(st.arena,st.human==="r"?"b":"r"))||(N?NPC_LOOK(N,st.human==="r"?"b":"r"):PIKA_LOOK(st.human==="r"?"b":"r")),oppHello:OT.hi,oppWin:OT.win,oppLose:OT.lose});
     if(typeof meGameTalk==="function")meGameTalk(st);   /* 意見回饋 668：你扮演的雲河七星開局、吃子時說一句 */
     if(NPC_HI!==st.id){NPC_HI=st.id;if(pk0&&!st.moves.length&&!st.result)setTimeout(()=>{try{if(PARK&&PARK.host===hb)PARK.v.oppSay(meHi((N&&typeof npcHello==="function"&&npcHello(N))||OT.hi),2.6)}catch(e){}},900);if(N&&typeof npcAskMaybe==="function")npcAskMaybe(N,st,hb)}}   /* 826 追加：園子 3D 已經開著、換一盤新棋時，不只園子路人，每一位對手都開口打招呼 */   /* 意見回饋 658：有羈絆的女棋手打招呼換成新台詞；開局偶爾來委託（小卡，不打斷對局） */
@@ -18747,7 +18749,7 @@ function PvpGame(v){
       // 點公園裡的人看棋友資料（意見回饋 261）：對面、近端（觀戰時）、觀戰者各是誰
       oppId:NET?(seat==="w"?idOf(far):seat?idOf(seat==="r"?"b":"r"):null):null,mateId:NET&&seat==="w"?idOf(near):null,
       watchers:NET&&window.XQNet&&XQNet.watcherBots?XQNet.watcherBots():[],
-      gate:NET?{img:["data/parkgate/online.webp"],icon:"🌐",title:"線上棋館",sub:seat==="w"?"正在找觀戰的位子":"正在請對手入座",duel:true,bg:"#14213a"}:null}}   /* 意見回饋 410：線上對戰的過場是熱鬧的線上棋館 */
+      gate:NET?{img:["data/parkgate/online.webp"],icon:"🌐",title:"線上棋館",sub:seat==="w"?"正在找觀戰的位子":"正在請對手入座",duel:true,bg:"#14213a"}:(typeof hbGate==="function"?hbGate("👥","同桌對弈","兩人輪流下"):null)}}   /* 意見回饋 410：線上對戰的過場是熱鬧的線上棋館 */
   function clocks(){if(!st||!clockBase||!clockBase.c)return;const b=clockBase;
     if(NET&&window.XQNet&&XQNet.turnLeft){const L=XQNet.turnLeft();for(const s of["r","b"]){const el=v.querySelector(`#mk_${s}`);if(!el)continue;const on=b.run&&b.turn===s&&L!=null,x=on?L:180000;el.textContent="每步 "+fmt(x);el.classList.toggle("hot",on&&x<30000)}}
     for(const s of["r","b"]){const el=v.querySelector(`#ck_${s}`);if(el){const x=b.c[s]-(b.run&&b.turn===s?Date.now()-b.at:0);el.textContent=fmt(x);el.style.color=x<60000&&!(b.turn===s&&b.run)?"var(--red)":""}}}
@@ -18826,6 +18828,7 @@ function PvpGame(v){
   // 網路對局：對方的棋一到就馬上畫出來（原本要等最多 1 秒的輪詢）
   const offG=OFF&&window.XQNet?XQNet.on("game",()=>{if(XQNet.active())refresh()}):null;
   return{stop:()=>{stop();clearInterval(ckT);if(offG)offG()}}}
+
 
 // ================= 棋譜庫（清單） =================
 const libState={c:null,q:"",player:"",side:"",res:"",limit:60};
