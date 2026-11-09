@@ -1370,7 +1370,7 @@ html[data-hicon] .tabbar button.on{box-shadow:inset 0 -3px 0 currentColor}
       if(!window.caches)return go();caches.keys().then(function(ks){return Promise.all(ks.filter(function(k){return k.indexOf("xqlab-app-")===0}).map(function(k){return caches.delete(k)}))})
         .then(function(){return navigator.serviceWorker&&navigator.serviceWorker.getRegistration()}).then(function(r){return r&&r.update()}).catch(function(){}).then(go)}};setTimeout(chk,4000)})();
 </script>
-<script>window.XQ_OFFLINE=true;window.XQ_BUILD="20261109-2315";</script>
+<script>window.XQ_OFFLINE=true;window.XQ_BUILD="20261109-2330";</script>
 <script src="core.js"></script>
 <script src="engine.js"></script>
 <script src="local.js"></script>
@@ -9121,6 +9121,11 @@ const CODEX_GRP=[["grow","🌱 成長"],["item","🎒 寶物"],["seal","🏮 千
 const cxN=o=>Object.keys(o||{}).length,cxTry=(f,z)=>{try{const r=f();return r==null?z:r}catch(e){return z}};
 /* 從我的角色頁打開棋盤、棋譜、秘境棋友（那三個清單在 Profile 裡，我的角色頁的花窗會轉按過去） */
 function cxMe(c){location.hash="#/me";let n=0;const f=()=>{const b=document.querySelector(`.mw[data-c="${c}"]`);if(b)b.click();else if(++n<10)setTimeout(f,120)};setTimeout(f,160)}
+/* 回饋 860（入口盤查後續）：「寶物」卡原本只換到 #/me、要找 .mw[data-c="items"]，可是那頁沒有這顆，點了沒反應。
+   改成打開書齋那張寶物小卡（07z4 mzItemSheet）：已經在 #/me 就直接開；不在就先換過去，等那頁畫好（換頁會關掉小卡）再開 */
+function cxItems(){const op=()=>{if(typeof mzItemSheet==="function")mzItemSheet("bag");else toast("對局時按「🎒 寶物」就能用")};
+  if(navKey(location.hash)==="/me")return op();location.hash="#/me";let n=0;
+  const f=()=>{if(navKey(location.hash)!=="/me")return;if(document.querySelector("#view .me2"))setTimeout(()=>{if(navKey(location.hash)==="/me")op()},120);else if(++n<40)setTimeout(f,120)};setTimeout(f,160)}
 let CX_BT_P=null;
 function cxBattleTotal(){const B=cxTry(()=>BATTLE_CARDS,null);if(B&&cxN(B))return Promise.resolve(Object.values(B).reduce((a,x)=>a+(x||[]).length,0));
   return CX_BT_P||(CX_BT_P=fetch(typeof BTL_FILE!=="undefined"?BTL_FILE:"data/canju/battles.json").then(r=>r.ok?r.json():null).then(j=>j&&j.eras?Object.values(j.eras).reduce((a,x)=>a+(x||[]).filter(c=>c&&!(typeof BTL_HIDE!=="undefined"&&BTL_HIDE.includes(c.id))&&((typeof BTL_VOL_ON!=="undefined"&&BTL_VOL_ON)||(c.vol||1)<2)).length,0):null).catch(()=>{CX_BT_P=null;return null}))}
@@ -9148,7 +9153,7 @@ function cxTitleSheet(){const L=cxTitles(),n=L.filter(x=>x.got).length,top=cxTry
 const CODEX=[
   {id:"xp",g:"grow",ic:"🀄",nm:"修為",lv:1,say:"下棋、解題、過關都會加修為；等級越高，每天送的提示棋越多。",v:()=>{const I=xpInfo();return{x:I.L,y:100,s:`Lv ${I.L}・${I.title}`,u:"級"}},go:()=>xpSheet()},
   {id:"rank",g:"grow",ic:"🏛",nm:"官階",lv:1,say:"挑戰電腦的積分越高，官階越高（九品升到一品）；官名跟著朝代換。",v:()=>{const R=rankInfo();return{x:10-R.g,y:9,s:R.name,u:"階"}},go:()=>rankSheet()},
-  {id:"items",g:"item",ic:"💡",nm:"寶物",say:"提示棋、悔棋符在對局時按「🎒 寶物」就能用；將令拿去驛站的點將台換東西；預習卷附在石桌往事的關卡裡。每盤棋下完都有機會掉。",v:()=>{const H=hintInfo();return{s:`💡 提示棋 ${H.left+(H.bonus||0)}・↶ 悔棋符 ${undoLeft()}・🪙 將令 ${cxTry(()=>lingN(),0)}・📜 預習卷 ${cxTry(()=>cxN(prevOwn()),0)}`}},go:()=>{location.hash="#/me"}},
+  {id:"items",g:"item",ic:"💡",nm:"寶物",say:"提示棋、悔棋符在對局時按「🎒 寶物」就能用；將令拿去驛站的點將台換東西；預習卷附在石桌往事的關卡裡。每盤棋下完都有機會掉。",v:()=>{const H=hintInfo();return{s:`💡 提示棋 ${H.left+(H.bonus||0)}・↶ 悔棋符 ${undoLeft()}・🪙 將令 ${cxTry(()=>lingN(),0)}・📜 預習卷 ${cxTry(()=>cxN(prevOwn()),0)}`}},go:()=>cxItems()},
   {id:"seal",g:"seal",ic:"🏮",nm:"千秋印",say:"每一朝一方千秋印，四邊是四道關：📘 棋理、🏯 擂台、⚔ 古戰場、🧭 輿圖。過一道亮一邊，四邊都亮鑄成金印。以前的擂台印、戰役印、路引、《千秋棋話》頁數都在這裡。",v:()=>({x:sealLitN(),y:SEAL_SIDE_TOTAL(),u:"邊",s:`金印 ${sealGoldN()}／13 方`}),go:()=>sealBook()},
   {id:"relic",g:"book",ic:"🏺",nm:"朝代珍品",say:"13 個朝代的文物，每朝 10 件，分普通、稀有、傳說三級。在園子、渡口、驛站到處點點看會撿到；一盞茶連續 7 天、古戰場集滿一卷也會送。每件藏著一局殘局，不看答案解開就打上紅色「已解」。",v:async()=>{const R=await relicsData(),M=relicsMine(),Z=relicSolved(),CJ=Object.values(R).flat().filter(x=>x.cj);return{x:Object.keys(R).reduce((a,e)=>a+(M[e]||[]).filter(id=>(R[e]||[]).some(z=>z.id===id)).length,0),y:Object.values(R).reduce((a,x)=>a+x.length,0),u:"件",s:CJ.length?`藏局解開 ${CJ.filter(x=>Z[x.id]).length}／${CJ.length} 局`:""}},go:()=>{location.hash="#/me/relics"}},
   {id:"boards",g:"book",ic:"🎁",nm:"棋盤",say:"驛站的秘境棋友送的：跟他下到賽後評等 S 就送一張；稀有的拓本能拿去石桌換獎勵。",v:()=>({x:bag().boards.length,u:"張"}),go:()=>cxMe("b")},
@@ -12464,6 +12469,11 @@ function ph4Line(v,k){if(!PORT_CARD_HIDE)return;const P=v&&v.querySelector(".shp
     setTimeout(()=>{say.classList.remove("on");setTimeout(()=>say.remove(),400)},Math.max(4000,Math.min(9000,L.t.length*170)))};
   setTimeout(go,900)}
 /* 站的位置：home 往左或往右錯開，挑不壓到標籤、也不壓到走路角色起點的那一邊 */
+/* 回饋 860（入口盤查後續）：下面 ph4Spot 的六個候選位置在這幾朝都會壓到標籤（找不到就退回第一個＝home 右邊，正好在「〇朝的驛站」標籤底下），
+   點她上半身會開驛站。用 elementFromPoint 在 440×894、375×667 量過：秦、漢、三國（375 才疊）、宋、元、清。這幾朝直接指定站位 [左%,腳的上%]：
+   秦、三國、元＝石階／木橋右邊的岸邊（離碼頭近、不在走路線上）；漢、宋＝驛站門前的路上（標籤上方，岸邊只剩橋面）；清＝碼頭木板上、走路路點 dock 的右邊（原位頭被標籤蓋住，往下挪又會踩在路點上）。
+   兩種尺寸都不壓標籤、風物匣、碼頭熱區、走路角色的起點 */
+const PH4_AT={qin:[62,79],han:[60,63],sanguo:[62,79],song:[70,61.5],yuan:[62,78],qing:[67,66]};
 function ph4Spot(P,C,hFr){const H=C.N[C.home]||[50,70],W=P.clientWidth,Hh=P.clientHeight,labs=[...P.querySelectorAll(".shp-spot,.po-sight")].map(b=>{const r=b.getBoundingClientRect(),q=P.getBoundingClientRect();return[r.left-q.left,r.top-q.top,r.right-q.left,r.bottom-q.top]});
   const cand=[[H[0]+11,H[1]+1.5],[H[0]-11,H[1]+1.5],[H[0]+16,H[1]+3],[H[0]-16,H[1]+3],[H[0]+11,H[1]-3],[H[0]-11,H[1]-3]].filter(([x,y])=>x>8&&x<92&&y<94);
   const bad=([x,y])=>{const px=x*W/100,py=y*Hh/100,h=hFr(y)*Hh,w=h*.6;return labs.some(([a,b,c2,d])=>!(c2<px-w/2||a>px+w/2||d<py-h||b>py))};
@@ -12481,7 +12491,7 @@ async function ph4Load(P,box,hit,say,C,k,cid){
   const vh=hM*1.45,cam=new T.OrthographicCamera(-vh*.375,vh*.375,vh/2,-vh/2,hM*.1,hM*20),tg=new T.Vector3(0,hM*.6,0);cam.position.set(0,tg.y+Math.sin(EL)*hM*6,Math.cos(EL)*hM*6);cam.lookAt(tg);cam.updateMatrixWorld(true);
   const ft=new T.Vector3(0,0,0).project(cam),ftF=(1-ft.y)/2,hFr=y=>shwHt(C,y)/(Math.cos(EL)/1.45);
   let at=null,cw=0,ch=0;
-  const fit=()=>{const Iw=P.clientWidth,Ih=P.clientHeight;if(!Ih)return;if(!at)at=ph4Spot(P,C,hFr);const h=Math.round(hFr(at[1])*Ih),w=Math.round(h*.75);if(h!==ch||w!==cw){ch=h;cw=w;r.setSize(cw,ch)}
+  const fit=()=>{const Iw=P.clientWidth,Ih=P.clientHeight;if(!Ih)return;if(!at)at=PH4_AT[k]||ph4Spot(P,C,hFr);const h=Math.round(hFr(at[1])*Ih),w=Math.round(h*.75);if(h!==ch||w!==cw){ch=h;cw=w;r.setSize(cw,ch)}
     const x=at[0]*Iw/100,y=at[1]*Ih/100;Object.assign(cv.style,{left:(x-cw/2)+"px",top:(y-Math.round(ftF*ch))+"px"});Object.assign(sh.style,{width:Math.round(ch*.34)+"px",height:Math.round(ch*.1)+"px",left:(x-Math.round(ch*.17))+"px",top:(y-Math.round(ch*.05))+"px"});
     const top=y-Math.round(ftF*ch)+ch*.12;Object.assign(hit.style,{display:"",left:(x-cw*.22)+"px",top:top+"px",width:(cw*.44)+"px",height:Math.max(10,y-top)+"px"});Object.assign(say.style,{left:x+"px",top:(top-4)+"px"})};
   /* 面向：朝畫面中間偏一點，不背對人 */
@@ -12909,8 +12919,9 @@ function lobbyMap(v){const lb=v.querySelector("#lb");if(!lb||v.querySelector(".l
   /* 清單裡按了會換頁、開資料卡的按鈕：先把抽屜收起來 */
   lb.addEventListener("click",e=>{if(e.target.closest("button,[data-p],[data-jc]"))setTimeout(()=>{if(!document.getElementById("sheet")&&!document.querySelector(".modal .box"))open(false)},50)});
   const lbPress=sel=>{const b=lb.querySelector(sel);if(b){b.click();return true}return false};
-  const GO={lmCup:()=>lbPress("#cupE")||(location.hash="#/cup"),lmMe:()=>{location.hash="#/stats"},lmList:()=>open(true),
-    lmGong:()=>{if(XQNet.playing&&XQNet.playing()){lbPress("#back");return}lbPress(XQNet.seeking&&XQNet.seeking()?"#sk0":"#sk1")},
+  let gongT=0;const GO={lmCup:()=>lbPress("#cupE")||(location.hash="#/cup"),lmMe:()=>{location.hash="#/stats"},lmList:()=>open(true),
+    lmGong:()=>{const t=Date.now();if(t-gongT<600)return;gongT=t;   /* 回饋 860（入口盤查後續）：角色已經站在入口前，快點兩下會切換兩次（開始找又取消）；600ms 內只算一次 */
+      if(XQNet.playing&&XQNet.playing()){lbPress("#back");return}lbPress(XQNet.seeking&&XQNet.seeking()?"#sk0":"#sk1")},
     lmAi:()=>lbPress("#aiw")||(location.hash="#/cpu")};
   for(const[id]of LM_SPOTS){const b=P.querySelector("#"+id);if(b)b.onclick=()=>{vibrate(5);try{GO[id]()}catch(e){}}}
   lmPaint(v,P);
@@ -13094,7 +13105,8 @@ function mfWrap(v){const dw=v.querySelector(".lm-dw"),lb=v.querySelector("#lb"),
   function mine(){const bk=lb.querySelector("#back"),s0=lb.querySelector("#sk0"),nm=(typeof myName==="function"&&myName())||"我";
     const[seal,stx,act]=bk?["戰","對局中","回到對局"]:s0?["尋","找對手中","取消"]:["閒","閒著","隨機配對"];
     me.innerHTML=`<b>${esc(nm)}</b><span><em>${seal}</em> ${stx}</span><small>${act} ›</small>`;me.setAttribute("aria-label",`我的名帖：${stx}，點一下${act}`)}
-  me.onclick=()=>{vibrate(5);const b=lb.querySelector("#back")||lb.querySelector("#sk0")||lb.querySelector("#sk1");if(b)b.click()};
+  let meT=0;   /* 回饋 860（入口盤查後續）：「我」那一格會切換（找對手／取消），角色已經站在前面時快點兩下等於沒變；600ms 內只算一次 */
+  me.onclick=()=>{const t=Date.now();if(t-meT<600)return;meT=t;vibrate(5);const b=lb.querySelector("#back")||lb.querySelector("#sk0")||lb.querySelector("#sk1");if(b)b.click()};
   /* 千秋盃（紅帖和筆） */
   function cup(){const c=lb.querySelector("#cupE"),b=fr.querySelector("#mfCup");b.hidden=!c;if(!c)return;const t=mfTx(c.textContent),ph=t.split("擂台・")[1]||"";b.querySelector("span").textContent="千秋盃"+(ph?" "+ph.split("・")[0]:"");b.setAttribute("aria-label",t)}
   fr.querySelector("#mfCup").onclick=()=>{vibrate(5);const c=lb.querySelector("#cupE");if(c)c.click()};
@@ -15067,11 +15079,13 @@ if(typeof fig3d==="function"){const f0=fig3d;fig3d=async function(host){const re
       點標籤會穿過去點到底圖，什麼都不開；標籤是按鈕的子元素，改成可以點（點標籤＝點那個入口）。
    2. 青瓷蓋罐（棋罐）、漆盒（提示棋）原本叫 cxMe("items")，可是我的角色頁沒有 .mw[data-c="items"]，點了沒反應；改成打開下面這張寶物小卡。 */
 function mzItemSheet(k){const T=(f,d)=>{try{return f()}catch(e){return d}};const H=T(()=>hintInfo(),{left:0,bonus:0}),hn=(H.left||0)+(H.bonus||0),un=T(()=>undoLeft(),0),ln=T(()=>lingN(),0),jn=T(()=>jarN(),0),MS=T(()=>JAR_MS,[]);
-  const jar=`<div class="sec-t">🫙 棋罐 ${jn}／${T(()=>JAR_MAX,216)} 子</div><p class="muted" style="font-size:13px;line-height:1.6;margin:0 0 6px">石桌往事每一關依序收「兵」「馬」「車」，收到的子放進棋罐；集到門檻自動換東西。</p>
+  /* 回饋 860（入口盤查後續）：文案跟千秋大百科「寶物」卡對齊、縮短（開發者嫌字太多）；補上預習卷，大百科的寶物卡也改開這張 */
+  const pn=T(()=>Object.keys(prevOwn()||{}).length,0);
+  const jar=`<div class="sec-t">🫙 棋罐 ${jn}／${T(()=>JAR_MAX,216)} 子</div><p class="muted" style="font-size:13px;line-height:1.6;margin:0 0 6px">石桌往事每關收兵、馬、車放進棋罐，集到門檻換寶物和稱號。</p>
     <div class="items" style="padding:0">${MS.map(([n,lb])=>`<div class="item"${jn>=n?"":' style="opacity:.6"'}><span class="lb" style="font-size:20px">${jn>=n?"✅":"🔒"}</span><span class="tx"><b>${n} 子</b><span>${esc(lb)}</span></span></div>`).join("")}</div>`;
-  const bag=`<div class="sec-t">🎒 寶物</div><div class="items" style="padding:0">${[["💡","提示棋",hn,"對局時按「🎒 寶物」就能用；修為等級越高，每天送的提示棋越多。"],["↶","悔棋符",un,"對局時按「🎒 寶物」就能用，退回上一步。"],["🪙","將令",ln,"拿去驛站的點將台換東西。"]]
-    .map(([ic,nm,n,t])=>`<div class="item"><span class="lb" style="font-size:22px">${ic}</span><span class="tx"><b>${nm} ${n}</b><span>${t}</span></span></div>`).join("")}</div>`;
-  sheet(k==="jar"?"🫙 棋罐":"💡 提示棋與寶物",b=>{b.innerHTML=k==="jar"?jar+`<div style="height:8px"></div>`+bag:bag+`<div style="height:8px"></div>`+jar})}
+  const bag=`${k==="jar"?`<div class="sec-t">🎒 寶物</div>`:""}<div class="items" style="padding:0">${[["💡","提示棋",hn,"對局時按「🎒 寶物」用；修為越高，每天送越多。"],["↶","悔棋符",un,"對局時按「🎒 寶物」用，退回一步。"],["🪙","將令",ln,"拿去驛站的點將台換東西。"],["📜","預習卷",pn,"附在石桌往事的關卡裡。"]]
+    .map(([ic,nm,n,t])=>`<div class="item"><span class="lb" style="font-size:22px">${ic}</span><span class="tx"><b>${nm} ${n}</b><span>${t}</span></span></div>`).join("")}</div><p class="muted" style="font-size:12.5px;margin:6px 2px 0">每盤棋下完都有機會掉提示棋、悔棋符。</p>`;
+  sheet(k==="jar"?"🫙 棋罐":"🎒 寶物",b=>{b.innerHTML=k==="jar"?jar+`<div style="height:8px"></div>`+bag:bag+`<div style="height:8px"></div>`+jar})}
 /* 打開千秋印譜：有 sealBook 就用；沒有就退回舊的集章簿，再不行開千秋大百科 */
 function mzSealOpen(){if(typeof sealBook==="function")return sealBook();if(typeof stampBook==="function")return stampBook();location.hash="#/codex"}
 function mzWall(v){const pad=v.querySelector(".pad"),me2=pad&&pad.querySelector(".me2");if(!me2||pad.querySelector(".mz-wall"))return;mzCss();
