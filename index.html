@@ -1370,7 +1370,7 @@ html[data-hicon] .tabbar button.on{box-shadow:inset 0 -3px 0 currentColor}
       if(!window.caches)return go();caches.keys().then(function(ks){return Promise.all(ks.filter(function(k){return k.indexOf("xqlab-app-")===0}).map(function(k){return caches.delete(k)}))})
         .then(function(){return navigator.serviceWorker&&navigator.serviceWorker.getRegistration()}).then(function(r){return r&&r.update()}).catch(function(){}).then(go)}};setTimeout(chk,4000)})();
 </script>
-<script>window.XQ_OFFLINE=true;window.XQ_BUILD="20261110-1230";</script>
+<script>window.XQ_OFFLINE=true;window.XQ_BUILD="20261110-1245";</script>
 <script src="core.js"></script>
 <script src="engine.js"></script>
 <script src="local.js"></script>
@@ -5598,7 +5598,8 @@ function cupWatch(){if(!(OFF&&window.XQNet&&XQNet.on))return;XQNet.on("cup",k=>{
 function cupJoin(gid){if(!gid)return;const go=()=>{XQNet.watch(gid);location.hash="#/pvp"};if(XQNet.playing()&&XQNet.gid()!==gid)confirmBox("你有一盤進行中的對局，去打擂台會離開它，確定？",()=>{XQNet.leave();go()},"去打擂台");else go()}
 setTimeout(cupWatch,600);
 
-function CupPage(v){setTop("🏯 千秋盃","#/lobby");setTabs(true,"#/lobby");v.className="view";
+function CupPage(v){setTop("🏯 千秋盃","#/hub/battle");setTabs(true,"#/hub/battle");   /* 11/10 開發者「千秋盃只留一個」：入口只剩茶坊二樓，下樓回茶坊 */
+  v.className="view";
   if(!OFF||!window.XQNet){v.innerHTML='<div class="pad"><div class="card">千秋盃要用安裝在手機上的 App（GitHub 版）。</div></div>';return{}}
   XQNet.start();v.innerHTML='<div class="pad" id="cupb"><div class="card muted">連線到大廳，讀取本週的擂台…</div></div>';
   const pn=(p,w)=>!p?'<div class="nmx muted">（等前一場的勝者）</div>':p.none?'<div class="nmx muted">（從缺）</div>':`<div class="nmx"><b${w?' style="color:var(--accent)"':""}>${esc(p.name)}</b>${cloudTag(p.bot||isCloud(p.id))}${p.seed?`<small class="muted">${p.seed} 號</small>`:""}</div>`;
@@ -13475,6 +13476,7 @@ function hmCss(){if(document.getElementById("hmCss"))return;const s=document.cre
 .hm-sky::after{content:"";position:absolute;left:12%;right:12%;bottom:-4%;height:22%;border-radius:50%;background:radial-gradient(closest-side,rgba(255,240,190,.75),rgba(255,230,160,0))}
 @keyframes hmSky{0%,100%{opacity:.75}50%{opacity:1}}
 .hm-me{position:absolute;z-index:3;background:transparent;border:0;padding:0;border-radius:40%;cursor:pointer;-webkit-tap-highlight-color:transparent}
+.hm-fbadm{position:absolute;left:50%;top:1.6%;transform:translateX(-50%);z-index:4;border:1.5px solid #f2c94c;border-radius:999px;background:rgba(20,16,12,.72);color:#ffe08a;font:800 13px/1 var(--serif,serif);padding:7px 14px;white-space:nowrap;cursor:pointer}
 .hm-inst{position:absolute;left:50%;bottom:1.4%;transform:translateX(-50%);z-index:4;border:1.5px solid #f2c94c;border-radius:999px;background:rgba(20,16,12,.72);color:#ffe08a;font:800 13px/1 var(--serif,serif);padding:7px 14px;white-space:nowrap;cursor:pointer}
 ${typeof WALK_BOT_MERGE!=="undefined"&&WALK_BOT_MERGE?"":"body.hm-on.shw-on .xqbot{visibility:visible}"}
 @media (prefers-reduced-motion:reduce){.hm-sky{animation:none}}`;document.head.append(s)}
@@ -13496,13 +13498,14 @@ function homeMap(v){const home=v.querySelector(".home");if(!home||v.querySelecto
   const nw=hmNew(),standalone=matchMedia("(display-mode: standalone)").matches||navigator.standalone,inst=OFF&&!standalone&&!(store.get("instAsk",null)||{}).no;
   const lab=id=>id==="hmQuick"&&nw?"🔰 第一次下象棋？":id==="hmLearn"?xqHubName("learn"):id==="hmBattle"?xqHubName("battle"):id==="hmQuick"?xqHubName("quick"):HM_SPOTS.find(s=>s[0]===id)[3];
   const d=document.createElement("div");
-  d.innerHTML=`<div class="shp-page cq home-page"><img src="data/homemap/home.webp?v=${HM_IMGV}" alt="楚河渡口棋鎮"><div class="hm-fx" aria-hidden="true">${nw?'<i class="hm-sky"></i>':""}</div>${HM_SPOTS.map(([id,x,y])=>`<button class="shp-spot${id==="hmQuick"&&nw?" hot":""}" id="${id}" style="left:${x}%;top:${y}%"><b>${esc(lab(id))}</b></button>`).join("")}${inst?'<button class="hm-inst" id="hmInst">📲 加到主畫面</button>':""}</div>`;
+  d.innerHTML=`<div class="shp-page cq home-page"><img src="data/homemap/home.webp?v=${HM_IMGV}" alt="楚河渡口棋鎮"><div class="hm-fx" aria-hidden="true">${nw?'<i class="hm-sky"></i>':""}</div>${HM_SPOTS.map(([id,x,y])=>`<button class="shp-spot${id==="hmQuick"&&nw?" hot":""}" id="${id}" style="left:${x}%;top:${y}%"><b>${esc(lab(id))}</b></button>`).join("")}${inst?'<button class="hm-inst" id="hmInst">📲 加到主畫面</button>':""}${OFF&&typeof DEVMODE==="function"&&DEVMODE()&&typeof openFbAdmin==="function"?'<button class="hm-fbadm" id="hmFbAdm">📋 回饋管理</button>':""}</div>`;   /* 11/10 開發者：開發者用的意見回饋管理放首頁正中間上方（設定頁右上角的 📋 照留） */
   const P=d.firstElementChild;v.insertBefore(P,home);home.classList.add("hb-hidden");if(typeof hbCss==="function")hbCss();else home.style.display="none";
   {const wv=typeof sw7HomeWx==="function"?sw7HomeWx():"",im0=P.querySelector(":scope>img");if(wv&&im0){const pre=new Image();pre.onload=()=>{if(!im0.isConnected)return;try{if(typeof sw7SeaTurn==="function"&&sw7SeaTurn(P,im0,pre.src))return}catch(e){}im0.src=pre.src};pre.src="data/homemap/home_"+wv+".webp?v="+HM_IMGV}}   /* 回饋 811：下雪、下雨天換積雪版 home_snow／雨景版 home_rain（07w7-seasons.js 判斷；先載好再換，載不到留原圖） */
   const GO={hmShip:"#/adventure",hmBattle:"#/hub/battle",hmLearn:"#/hub/learn"};
   for(const[id]of HM_SPOTS){const b=P.querySelector("#"+id);if(!b)continue;
     b.onclick=()=>{vibrate(5);if(GO[id]){location.hash=GO[id];return}if(id==="hmRec"){if(typeof TODAY_MAP_ON!=="undefined"&&TODAY_MAP_ON){location.hash="#/today";return}hmRecSheet();return}if(id==="hmQuick")location.hash=hmNew()?"#/camp":"#/cpu"}}
   {const ib=P.querySelector("#hmInst");if(ib)ib.onclick=e=>{e.stopPropagation();vibrate(5);installGuide(true)}}
+  {const fa=P.querySelector("#hmFbAdm");if(fa)fa.onclick=e=>{e.stopPropagation();e.preventDefault();vibrate(5);openFbAdmin()}}
   if(typeof shpFit==="function")shpFit(v);
   try{if(typeof shwPage==="function"&&SHIP_WALK_ON){shwPage(v,Object.assign({},SHW_PG0,SHW_HOMEMAP),"home");hmMe(P)}}catch(e){}
   try{if(typeof zmPage==="function")zmPage(v)}catch(e){}
@@ -13544,7 +13547,35 @@ const LM_LAMP_SVG='<svg width="0" height="0" style="position:absolute" aria-hidd
   '<rect x="7" y="30.4" width="6" height="2" rx=".5" fill="#2b2016"/><path d="M10 32.4V44" stroke="#a8321e" stroke-width="1.3"/><circle cx="10" cy="34.4" r="1" fill="#a8321e"/></symbol></defs></svg>';
 const LM_TBL={};   /* 對局 gid → 桌子的位置（同一盤一直坐同一張桌，直到下完） */
 /* 入口標籤：[id, 左%, 上%, 大字]（量 768×1376 的 lobby_v4，標籤放在東西上方） */
-const LM_SPOTS=[["lmCup",50,15.5,"🏆 千秋盃"],["lmGong",50,50.5,"🎲 隨機配對"],["lmMe",86,39.5,"🏅 我的戰績"],["lmList",13,46.5,"📜 名冊"],["lmAi",16,68.5,"📺 AI 對戰"]];
+/* 11/10 開發者：拿掉「千秋盃」（只留茶坊二樓那個入口）、「我的戰績」（跟學習書院的重複）；「挑戰電腦」不放在線上對戰天井（只有開發者的 📺 AI 對戰才出現） */
+const LM_SPOTS=[["lmGong",50,50.5,"🎲 隨機配對"],["lmList",13,46.5,"📜 名冊"],["lmAi",16,68.5,"📺 AI 對戰"]];
+/* 11/10 開發者「按下隨機配對，做一個敲鑼的動畫」：天井中央那面鑼（秦～五代的圖畫的是鼓）被敲一下——
+   鑼槌從角色那邊揮過去，鑼面（從同一張圖切出來的圓）晃動、金色聲波一圈圈散開，配 01-board 合成的鑼聲；鼓就敲兩下「咚、咚」、鼓面一彈一彈。
+   位置是 12 張大廳圖量出來的：中心 50.3%、59.6%，直徑約圖寬 10.5%；有沒有開「過場鼓聲」照 XQ_DRUM 的設定 */
+const LM_GONG={x:50.3,y:59.6,d:10.5,drum:["qin","han","sanguo","weijin","nanbei","sui","tang","wudai"]};
+function lmGongCss(){if(document.getElementById("lmGongCss"))return;const s=document.createElement("style");s.id="lmGongCss";s.textContent=`
+.lm-hit{position:absolute;pointer-events:none;z-index:2;transform:translate(-50%,-50%)}
+.lm-hit .gd{position:absolute;inset:0;border-radius:50%;background-repeat:no-repeat;transform-origin:50% 0}
+.lm-hit.gong .gd{animation:lmGongSw 1.6s cubic-bezier(.3,.6,.4,1) .22s both}
+.lm-hit.drum .gd{transform-origin:50% 50%;animation:lmDrumP .34s ease-out .22s 2 both}
+.lm-hit .rp{position:absolute;inset:0;border-radius:50%;border:2.5px solid rgba(255,214,120,.95);box-shadow:0 0 10px rgba(255,200,90,.7);opacity:0;animation:lmRip 1.3s ease-out both}
+.lm-hit.drum .rp{border-color:rgba(255,236,200,.9);box-shadow:0 0 8px rgba(255,230,190,.6)}
+.lm-hit .ml{position:absolute;left:78%;top:84%;width:62%;height:12%;transform-origin:100% 50%;animation:lmMal .62s ease-in-out both}
+.lm-hit.drum .ml{animation:lmMal .34s ease-in-out 2 both}
+.lm-hit .ml i{position:absolute;right:0;top:35%;width:88%;height:30%;border-radius:3px;background:linear-gradient(#8a5a32,#5b3a1e)}
+.lm-hit .ml b{position:absolute;left:0;top:-30%;width:34%;height:160%;border-radius:50%;background:radial-gradient(circle at 35% 35%,#c98b55,#7a3f1c)}
+@keyframes lmGongSw{0%{transform:rotate(0)}12%{transform:rotate(5deg) scale(.97)}28%{transform:rotate(-4deg)}44%{transform:rotate(3deg)}60%{transform:rotate(-2deg)}76%{transform:rotate(1deg)}100%{transform:rotate(0)}}
+@keyframes lmDrumP{0%{transform:scale(1)}30%{transform:scale(.94)}65%{transform:scale(1.03)}100%{transform:scale(1)}}
+@keyframes lmRip{0%{opacity:0;transform:scale(.9)}8%{opacity:1}100%{opacity:0;transform:scale(2.9)}}
+@keyframes lmMal{0%{transform:rotate(-40deg);opacity:0}15%{opacity:1}40%{transform:rotate(3deg)}52%{transform:rotate(-2deg)}100%{transform:rotate(-34deg);opacity:0}}
+@media (prefers-reduced-motion:reduce){.lm-hit .gd,.lm-hit .ml{animation:none}.lm-hit .rp{animation-duration:.8s}}`;document.head.append(s)}
+function lmGongHit(P){try{const im=P&&P.querySelector(":scope>img");if(!im)return;lmGongCss();P.querySelectorAll(".lm-hit").forEach(x=>x.remove());
+  const e=lmEra(),drum=LM_GONG.drum.includes(e),R=im.getBoundingClientRect(),W=R.width,H=R.height,d=W*LM_GONG.d/100,cx=W*LM_GONG.x/100,cy=H*LM_GONG.y/100;
+  const h=document.createElement("div");h.className="lm-hit "+(drum?"drum":"gong");h.style.cssText=`left:${LM_GONG.x}%;top:${LM_GONG.y}%;width:${d}px;height:${d}px`;
+  const n=drum?2:3,rips=Array.from({length:n},(_,i)=>`<span class="rp" style="animation-delay:${(drum?.22+i*.34:.22+i*.28).toFixed(2)}s"></span>`).join("");
+  h.innerHTML=`<div class="gd" style="background-image:url('${im.currentSrc||im.src}');background-size:${W}px ${H}px;background-position:${-(cx-d/2)}px ${-(cy-d/2)}px"></div>${rips}<div class="ml"><i></i><b></b></div>`;
+  P.append(h);setTimeout(()=>h.remove(),2400);
+  if(store.get("gateDrum",true)&&typeof withAudio==="function"){try{unlockAudio()}catch(x){}withAudio(()=>{const t=AC.currentTime+.24;if(drum){drumHit(t,1.1,58);drumHit(t+.34,1,58)}else gongHit(t,150,2.6,true)})}}catch(x){}}
 /* 八張棋桌的位置（桌子中心，%）：左兩張、右四張、銅鑼前兩張，中軸和兩側走道都空著（角色不會穿過桌子） */
 const LM_TABLES=[[22,57],[78,57],[22,66],[78,66],[78,75],[37,78],[63,78],[78,84]];
 /* 50 盞燈：[左%, 上%, 層]（2＝二樓迴廊，有剪影；1＝一樓簷下） */
@@ -13558,7 +13589,7 @@ const SHW_LOBBY={el:40,h:y=>.06+(Math.max(y,53)-80)*.0008,look0:[50,60],
   N:{home:[50,93],c:[50,80],g:[50,71.5],l0:[38,64],l1:[36,52],scr:[15,53],r0:[62,64],r1:[64,52],sgn:[87,51],ai:[31,86],
     sf:[66,53],s1:[72,48],sl:[82,44],s2:[78,37],st:[74,31.5],gal:[67,31],stage:[59,31.5]},
   E:"home-c c-g g-l0 l0-l1 l1-scr g-r0 r0-r1 r1-sgn r1-sf home-ai sf-s1 s1-sl sl-s2 s2-st st-gal gal-stage",
-  HS:{lmCup:["stage",50,30,"bow"],lmGong:["g",50,62,"cheer"],lmMe:["sgn",92,46,"wave"],lmList:["scr",10,51,"bow"],lmAi:["ai",14,79,"bow"]}};
+  HS:{lmGong:["g",50,62,"cheer"],lmList:["scr",10,51,"bow"],lmAi:["ai",14,79,"bow"]}};
 function lmCss(){if(document.getElementById("lmCss"))return;const s=document.createElement("style");s.id="lmCss";s.textContent=`
 .lobby-page{margin:0 0 6px}.lobby-page .shp-spot{max-width:46%;padding:4px 11px;z-index:3}.lobby-page .shp-spot b{white-space:nowrap;font-size:14px}.lobby-page .shp-spot.hot{padding:5px 13px}.lobby-page .shp-spot.hot b{font-size:15px}
 .lm-l{position:absolute;inset:0;pointer-events:none}
@@ -13637,7 +13668,7 @@ function lmPaint(v,P){const lay=P.querySelector(".lm-l");if(!lay||!window.XQNet)
   lay.querySelectorAll(".lm-more").forEach(b=>b.onclick=e=>{e.stopPropagation();vibrate(5);const l=P.querySelector("#lmList");if(l)l.click()});
   {const l=P.querySelector("#lmList b");if(l)l.textContent=ids0.length?`📜 名冊 ${ids0.length}`:"📜 名冊"}
   const gb=P.querySelector("#lmGong");if(gb){const sk=XQNet.seeking&&XQNet.seeking();gb.querySelector("b").textContent=sk?"🥁 找對手中…":"🎲 隨機配對";gb.classList.toggle("hot",!!sk)}
-  const ai=P.querySelector("#lmAi");if(ai)ai.querySelector("b").textContent=lb&&lb.querySelector("#aiw")?"📺 AI 對戰":"🤖 挑戰電腦"}
+  const ai=P.querySelector("#lmAi");if(ai){const aw=!!(lb&&lb.querySelector("#aiw"));ai.querySelector("b").textContent="📺 AI 對戰";ai.style.display=aw?"":"none"}}
 function lobbyMap(v){const lb=v.querySelector("#lb");if(!lb||v.querySelector(".lobby-page"))return;lmCss();
   const d=document.createElement("div");
   d.innerHTML=`<div class="shp-page cq lobby-page"><img src="${LM_IMG(lmN("lobby",lmEra()))}" alt="千燈天井"><div class="lm-l"></div>${LM_INK_LAMP?LM_LAMP_SVG:""}${LM_SPOTS.map(([id,x,y,t])=>`<button class="shp-spot" id="${id}" style="left:${x}%;top:${y}%"><b>${esc(t)}</b></button>`).join("")}</div>`;
@@ -13649,9 +13680,9 @@ function lobbyMap(v){const lb=v.querySelector("#lb");if(!lb||v.querySelector(".l
   /* 清單裡按了會換頁、開資料卡的按鈕：先把抽屜收起來 */
   lb.addEventListener("click",e=>{if(e.target.closest("button,[data-p],[data-jc]"))setTimeout(()=>{if(!document.getElementById("sheet")&&!document.querySelector(".modal .box"))open(false)},50)});
   const lbPress=sel=>{const b=lb.querySelector(sel);if(b){b.click();return true}return false};
-  let gongT=0;const GO={lmCup:()=>lbPress("#cupE")||(location.hash="#/cup"),lmMe:()=>{location.hash="#/stats"},lmList:()=>open(true),
+  let gongT=0;const GO={lmCup:()=>lbPress("#cupE")||(location.hash="#/cup"),lmList:()=>open(true),
     lmGong:()=>{const t=Date.now();if(t-gongT<600)return;gongT=t;   /* 回饋 860（入口盤查後續）：角色已經站在入口前，快點兩下會切換兩次（開始找又取消）；600ms 內只算一次 */
-      if(XQNet.playing&&XQNet.playing()){lbPress("#back");return}lbPress(XQNet.seeking&&XQNet.seeking()?"#sk0":"#sk1")},
+      if(XQNet.playing&&XQNet.playing()){lbPress("#back");return}{const sk=XQNet.seeking&&XQNet.seeking();if(!sk)lmGongHit(P);lbPress(sk?"#sk0":"#sk1")}},
     lmAi:()=>lbPress("#aiw")||(location.hash="#/cpu")};
   for(const[id]of LM_SPOTS){const b=P.querySelector("#"+id);if(b)b.onclick=()=>{vibrate(5);try{GO[id]()}catch(e){}}}
   lmPaint(v,P);
@@ -13721,12 +13752,12 @@ function mfCss(){if(document.getElementById("mfCss"))return;const s=document.cre
 .mf-me{cursor:pointer;color:#1e130c;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;text-align:center;font:700 15px/1.2 var(--serif,serif);padding:4px 2px;border:0;background:none}
 .mf-me b{font:900 15.5px/1.15 var(--kai,var(--serif,serif));max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .mf-me em{font-style:normal;display:inline-flex;align-items:center;justify-content:center;width:19px;height:19px;vertical-align:middle;border:1.5px solid #f6e6cc;border-radius:2px;background:#8a1e12;color:#f6e6cc;font:900 14px/1 var(--kai,var(--serif,serif))}
-.mf-me small{font-size:15px;color:#5a120a;font-weight:800;white-space:nowrap}.mf-me span{white-space:nowrap}
+.mf-me small{font-size:14px;color:#f6e6cc;background:#8a1e12;border-radius:3px;padding:3px 8px;font-weight:800;white-space:nowrap;margin-top:2px}.mf-me span{white-space:nowrap;font-size:14px;color:#3a1a10}
 .mf-hs{position:absolute;transform:translate(-50%,-50%);border:0;padding:0;background:none;cursor:pointer;-webkit-tap-highlight-color:transparent}
 .mf-hs span{position:absolute;left:50%;top:0;transform:translate(-50%,-100%);background:#f3ead2;border:1px solid #8a6a3a;color:#3a2618;border-radius:3px;font:800 13px/1.25 var(--kai,var(--serif,serif));padding:2px 6px;white-space:nowrap;box-shadow:0 1px 2px rgba(0,0,0,.3);pointer-events:auto;cursor:pointer}
 /* 回饋 834（開發者 11/9：棋史卡沒反應、盤查入口點擊）：千秋盃、拜匣（路過的人物）、回天井的標籤畫在熱區外面（上方／右邊），原本 pointer-events:none，點標籤會穿過去沒反應；標籤是按鈕的子元素，改成可以點 */
 .mf-hs[hidden]{display:none}
-#mfBox span{left:100%;top:50%;transform:translate(4px,-50%)}
+#mfBox span{left:50%;top:-50%;transform:translate(-50%,-100%)}   /* 11/10「有點亂」：路過的人物標籤移到名帖（少年阿古那幾張）上面，不再壓到客簿 */
 .mf-jc{position:absolute;transform:translate(-50%,-100%) rotate(var(--r,0deg));transform-origin:50% 100%;border:1px solid #6a1a10;background:#c4472f;color:#fbeee0;border-radius:1px;padding:5px 4px;font:800 13px/1.1 var(--kai,var(--serif,serif));writing-mode:vertical-rl;cursor:pointer;box-shadow:1px 1px 2px rgba(0,0,0,.35)}
 .mf-nav{position:absolute;left:0;right:0;bottom:14px;z-index:7;display:none;justify-content:center;align-items:center;gap:8px;padding:0 12px}
 .mf-z .mf-nav{display:flex}
@@ -13813,7 +13844,7 @@ function mfWrap(v){const dw=v.querySelector(".lm-dw"),lb=v.querySelector("#lb"),
         `<button type="button" class="mf-e${e.el?"":" off"}" data-k="${sp+i}:${j}" aria-label="${esc(e.n+(e.a?"，"+e.a:""))}"${e.el?"":" tabindex=\"-1\""}><i></i><span>${esc(e.n)}</span></button>`).join("");
       g.querySelectorAll(".mf-e").forEach(b=>b.onclick=ev=>{ev.stopPropagation();const[a,j]=b.dataset.k.split(":").map(Number),e=(S.pages[a]||[])[j];if(e&&e.el&&e.el.isConnected){vibrate(5);e.el.click()}})});
     const nNames=E.filter(e=>e.n).length,shown=S.pages.slice(0,2).reduce((t,p)=>t+p.filter(e=>e.n).length,0);
-    if(!S.Z&&nNames>shown){const q=MF_PG[1];more.hidden=false;more.textContent=`還有 ${nNames-shown} 位・翻開`;more.style.left=((q[3][0]+q[2][0])/2/7.68).toFixed(2)+"%";more.style.top=((q[2][1]+12)/13.76).toFixed(2)+"%"}else more.hidden=true;
+    if(!S.Z&&nNames>shown){const q=MF_PG[1];more.hidden=false;more.textContent=`還有 ${nNames-shown} 位・翻開`;more.style.left=((q[3][0]+q[2][0])/2/7.68).toFixed(2)+"%";more.style.top=((q[2][1]+34)/13.76).toFixed(2)+"%"}else more.hidden=true;
     const np=S.pages.length;nav.querySelector("span").textContent=`第 ${S.pi+1}／${np} 頁`;nav.querySelector('[data-t="-1"]').disabled=S.pi<=0;nav.querySelector('[data-t="1"]').disabled=S.pi>=np-1;
     board();mine();cup();box()}
   /* 水牌：正在對戰 */
@@ -13824,7 +13855,7 @@ function mfWrap(v){const dw=v.querySelector(".lm-dw"),lb=v.querySelector("#lb"),
     for(const[i,g]of show.entries())L.push(`<div class="mf-bl"><button type="button" data-g="${i}" aria-label="觀看 ${esc(g.t)}">${esc(g.t)}</button>${g.ws?`<button type="button" class="mf-w" data-gs="${i}">${g.c} 人看</button>`:""}</div>`);
     if(G.length>show.length)L.push(`<div class="mf-bl"><button type="button" data-all="1">還有 ${G.length-show.length} 盤・全部列出</button></div>`);
     if(!my&&!G.length){const m=sec&&sec.nextElementSibling;L.push(`<div class="mf-bm">${esc(m?mfTx(m.textContent):"目前沒有人在對戰")}</div>`)}
-    bd.innerHTML=`<b data-all="1">${esc(sec?mfTx(sec.textContent):"正在對戰")}</b>`+L.join("");
+    bd.innerHTML=`<b data-all="1">${esc(sec?mfTx(sec.textContent).replace(/\s*[☁＝].*$/,""):"正在對戰")}</b>`+L.join("");
     bd.querySelectorAll("[data-g]").forEach(b=>b.onclick=e=>{e.stopPropagation();vibrate(5);const g=show[+b.dataset.g];if(g&&g.w.isConnected)g.w.click()});
     bd.querySelectorAll("[data-gs]").forEach(b=>b.onclick=e=>{e.stopPropagation();vibrate(5);const g=show[+b.dataset.gs];if(g&&g.ws&&g.ws.isConnected)g.ws.click()});
     bd.querySelectorAll("[data-my]").forEach(b=>b.onclick=e=>{e.stopPropagation();vibrate(5);if(my.isConnected)my.click()});
@@ -13838,12 +13869,12 @@ function mfWrap(v){const dw=v.querySelector(".lm-dw"),lb=v.querySelector("#lb"),
       b.querySelectorAll("[data-my]").forEach(x=>x.onclick=()=>{closeSheet();setTimeout(()=>{if(my.isConnected)my.click()},260)})})}
   /* 我的名帖：狀態 */
   function mine(){const bk=lb.querySelector("#back"),s0=lb.querySelector("#sk0"),nm=(typeof myName==="function"&&myName())||"我";
-    const[seal,stx,act]=bk?["戰","對局中","回到對局"]:s0?["尋","找對手中","取消"]:["閒","閒著","隨機配對"];
-    me.innerHTML=`<b>${esc(nm)}</b><span><em>${seal}</em> ${stx}</span><small>${act} ›</small>`;me.setAttribute("aria-label",`我的名帖：${stx}，點一下${act}`)}
+    const[stx,act]=bk?["對局中","回到對局"]:s0?["找對手中","取消"]:["閒著","隨機配對"];
+    me.innerHTML=`<b>${esc(nm)}</b><span>${stx}</span><small>${act} ›</small>`;   /* 11/10 開發者「名冊這頁有點亂」：名帖拿掉和狀態重複的朱印字（閒／閒著），只留名字、狀態、動作三行 */me.setAttribute("aria-label",`我的名帖：${stx}，點一下${act}`)}
   let meT=0;   /* 回饋 860（入口盤查後續）：「我」那一格會切換（找對手／取消），角色已經站在前面時快點兩下等於沒變；600ms 內只算一次 */
   me.onclick=()=>{const t=Date.now();if(t-meT<600)return;meT=t;vibrate(5);const b=lb.querySelector("#back")||lb.querySelector("#sk0")||lb.querySelector("#sk1");if(b)b.click()};
   /* 千秋盃（紅帖和筆） */
-  function cup(){const c=lb.querySelector("#cupE"),b=fr.querySelector("#mfCup");b.hidden=!c;if(!c)return;const t=mfTx(c.textContent),ph=t.split("擂台・")[1]||"";b.querySelector("span").textContent="千秋盃"+(ph?" "+ph.split("・")[0]:"");b.setAttribute("aria-label",t)}
+  function cup(){const c=null,b=fr.querySelector("#mfCup");b.hidden=true;if(!c)return;   /* 11/10 開發者「千秋盃只留一個」：名冊案上的千秋盃不再放，入口只剩茶坊二樓 */const t=mfTx(c.textContent),ph=t.split("擂台・")[1]||"";b.querySelector("span").textContent="千秋盃"+(ph?" "+ph.split("・")[0]:"");b.setAttribute("aria-label",t)}
   fr.querySelector("#mfCup").onclick=()=>{vibrate(5);const c=lb.querySelector("#cupE");if(c)c.click()};
   /* 拜匣：路過的石桌往事人物 */
   function box(){const J=[...lb.querySelectorAll("[data-jc]")],b=fr.querySelector("#mfBox"),w=fr.querySelector(".mf-jcs");b.hidden=!J.length;
@@ -17763,7 +17794,7 @@ const EXIT_ON=true;
 /* 11/10 開發者「錯誤，是回書院」：戰績、開局、測驗、錯棋重練、規則碑林都是從書院進來的，出口改回書院（直接去 #/hub/learn）；「書院」照停靠朝代換成國子監等 */
 const EXITS={"/hub/learn":[52,86,"🚪 出書院・回棋鎮","#/"],"/hub/battle":[78,87,"🚪 出茶樓・回棋鎮","#/"],
   "/camp":[50,87,"↩ 回書院"],"/theme":[50,87,"↩ 走回書院"],"/canju":[22,87,"↩ 回書院"],"/terms":[50,87,"↩ 回書院","#/hub/learn"],
-  "/cup":[50,87,"↩ 下樓・回大廳"],"/redo":[24,87,"↩ 回書院","#/hub/learn"],"/stats":[50,87,"↩ 回書院","#/hub/learn"],"/openings":[50,87,"↩ 回書院","#/hub/learn"],
+  "/cup":[50,87,"↩ 下樓・回茶坊","#/hub/battle"],"/redo":[24,87,"↩ 回書院","#/hub/learn"],"/stats":[50,87,"↩ 回書院","#/hub/learn"],"/openings":[50,87,"↩ 回書院","#/hub/learn"],
   "/journey/inn":[18,86,"⛵ 回渡口"],"/ship/lesson":[50,87,"⛵ 回星槎"],"/ship/pz":[50,87,"⛵ 回星槎"],"/ship/shelf":[50,87,"⛵ 回星槎"],"/ship/bag":[50,87,"⛵ 回星槎"],
   "/feedback":[20,74,"⛵ 回星槎","#/adventure"],"/me":[50,87,"🏘 回棋鎮"],"/today":[30,87,"🏘 回棋鎮"],"/gm":[50,87,"↩ 回棋譜庫"],"/quiz":[50,87,"↩ 回書院","#/hub/learn"],
   "/lobby":[18,88,"↩ 回對戰茶樓"],"/db":[20,88,"↩ 回學習書院"],"/settings":[14,90,"⛵ 回星槎"]};
@@ -17798,7 +17829,7 @@ function exSync(){if(!EXIT_ON)return;clearTimeout(EX_T);const k=exKey(),t0=Date.
     if(k==="/port"){if(!P.querySelector(".ex-bow")){const sp=[...P.querySelectorAll(".shp-spot")].find(x=>/上星槎/.test(x.textContent));if(sp){const w=document.createElement("button");w.type="button";w.className="ex-bow";w.setAttribute("aria-label","上星槎（船頭）");w.onclick=e=>{e.stopPropagation();try{vibrate(5)}catch(x){}sp.click()};P.append(w)}}
       if(hasBack)exCls("add");return}
     if(!E||!hasBack){exCls("remove");return}
-    if(!P.querySelector(".ex-spot")){const s=document.createElement("button");s.type="button";s.className="shp-spot ex-spot";s.style.left=E[0]+"%";s.style.top=E[1]+"%";let lb=E[2];try{if((k==="/hub/learn"||k==="/hub/battle")&&typeof xqHubName==="function")lb="🚪 出"+xqHubName(k.slice(5)).split(" ").slice(1).join(" ")+"・回棋鎮";else if((k==="/lobby"||k==="/db")&&typeof xqHubName==="function"&&typeof shipAt==="function"&&typeof shipDockList==="function"&&shipDockList())lb="↩ 回"+xqHubName(k==="/lobby"?"battle":"learn").split(" ").slice(1).join(" ");else if(/書院/.test(lb)&&typeof xqHubName==="function"&&typeof shipAt==="function"&&typeof shipDockList==="function"&&shipDockList())lb=lb.replace(/學習書院|書院/,xqHubName("learn").split(" ").slice(1).join(" "))}catch(x){}s.innerHTML="<b>"+lb+"</b>";   /* 出口跟著朝代叫法：出國子監・回棋鎮 */
+    if(!P.querySelector(".ex-spot")){const s=document.createElement("button");s.type="button";s.className="shp-spot ex-spot";s.style.left=E[0]+"%";s.style.top=E[1]+"%";let lb=E[2];try{if((k==="/hub/learn"||k==="/hub/battle")&&typeof xqHubName==="function")lb="🚪 出"+xqHubName(k.slice(5)).split(" ").slice(1).join(" ")+"・回棋鎮";else if((k==="/lobby"||k==="/db")&&typeof xqHubName==="function"&&typeof shipAt==="function"&&typeof shipDockList==="function"&&shipDockList())lb="↩ 回"+xqHubName(k==="/lobby"?"battle":"learn").split(" ").slice(1).join(" ");else if(k==="/cup"&&typeof xqHubName==="function")lb="↩ 下樓・回"+xqHubName("battle").split(" ").slice(1).join(" ");else if(/書院/.test(lb)&&typeof xqHubName==="function"&&typeof shipAt==="function"&&typeof shipDockList==="function"&&shipDockList())lb=lb.replace(/學習書院|書院/,xqHubName("learn").split(" ").slice(1).join(" "))}catch(x){}s.innerHTML="<b>"+lb+"</b>";   /* 出口跟著朝代叫法：出國子監・回棋鎮 */
       s.onclick=e=>{e.stopPropagation();try{vibrate(5)}catch(x){}if(E[3]){if(E[3]==="#/"&&typeof goHome==="function"){goHome();return}if(typeof goUp==="function")goUp(E[3]);else location.hash=E[3];return}   /* 11/10 開發者「會跑到象棋規則」：回書院改用 goUp（退回紀錄裡的書院那一層，不多疊一頁），出書院／出茶樓直接回首頁，不再「上一頁」退回剛剛的子頁 */const bb=document.getElementById("back");if(bb&&typeof bb.onclick==="function")bb.onclick()};P.append(s)}   /* E[3]＝直接去那一頁（回饋 849：意見回饋頁回星槎） */
     exCls("add")};
   exCls("remove");EX_T=setTimeout(go,60)}
