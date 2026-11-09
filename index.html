@@ -1370,7 +1370,7 @@ html[data-hicon] .tabbar button.on{box-shadow:inset 0 -3px 0 currentColor}
       if(!window.caches)return go();caches.keys().then(function(ks){return Promise.all(ks.filter(function(k){return k.indexOf("xqlab-app-")===0}).map(function(k){return caches.delete(k)}))})
         .then(function(){return navigator.serviceWorker&&navigator.serviceWorker.getRegistration()}).then(function(r){return r&&r.update()}).catch(function(){}).then(go)}};setTimeout(chk,4000)})();
 </script>
-<script>window.XQ_OFFLINE=true;window.XQ_BUILD="20261110-0045";</script>
+<script>window.XQ_OFFLINE=true;window.XQ_BUILD="20261110-0100";</script>
 <script src="core.js"></script>
 <script src="engine.js"></script>
 <script src="local.js"></script>
@@ -1415,12 +1415,11 @@ function defaultName(){const used=new Set();try{if(window.XQNet&&XQNet.people)XQ
 function setMyName(n){const m=meInfo();m.name=String(n||"").replace(/[\u0000-\u001f<>]/g,"").trim().slice(0,16);try{localStorage.setItem("xq_me",JSON.stringify(m))}catch(e){}}
 // iPad 的瀏覽器自稱 Mac，用觸控點數分辨
 const MY_KIND=/iPad/.test(navigator.userAgent)||/Macintosh/.test(navigator.userAgent)&&navigator.maxTouchPoints>1?"iPad":/iPhone/.test(navigator.userAgent)?"iPhone":/Android/.test(navigator.userAgent)?"Android":/Windows/.test(navigator.userAgent)?"Windows":/Mac/.test(navigator.userAgent)?"Mac":"";
-// 線上大廳顯示大概的城市（意見回饋 159）：App 打開後用免費的 IP 定位服務（geojs.io）查一次，只留城市名、不存 IP，一天更新一次；設定「其他」可以關
+// 線上大廳顯示的城市（意見回饋 159；11/9 改成玩家自己選，不再用 IP 查）
 let MY_CITY="";
 const CITY_ZH=[["New Taipei","新北"],["Taipei","台北"],["Taoyuan","桃園"],["Hsinchu","新竹"],["Miaoli","苗栗"],["Taichung","台中"],["Changhua","彰化"],["Nantou","南投"],["Yunlin","雲林"],["Chiayi","嘉義"],["Tainan","台南"],["Kaohsiung","高雄"],["Pingtung","屏東"],["Yilan","宜蘭"],["Hualien","花蓮"],["Taitung","台東"],["Keelung","基隆"],["Penghu","澎湖"],["Kinmen","金門"],["Lienchiang","馬祖"],["Hong Kong","香港"],["Macau","澳門"]];
-function fetchCity(force){if(!OFF||!store.get("showCity",true)){MY_CITY="";return}const c=store.get("cityCache",null);if(!force&&c&&Date.now()-c.at<864e5){MY_CITY=c.n;return}
-  fetch("https://get.geojs.io/v1/ip/geo.json").then(r=>r.json()).then(j=>{const t=(j.city||"")+" "+(j.region||""),hit=CITY_ZH.find(([k])=>t.includes(k));
-    const n=hit?hit[1]:(j.city||j.region||j.country||"");store.set("cityCache",{n,at:Date.now()});MY_CITY=store.get("showCity",true)?n:"";if(window.XQNet&&XQNet.refresh)XQNet.refresh()}).catch(()=>{})}
+/* 開發者 11/9（Gemini 第 54 份 iOS 上架評估，選「拿掉，改成自己選」）：不再用 IP 定位服務（geojs.io）查城市；大廳要不要顯示城市由玩家在設定「隱私」自己選（store myCity，預設空白＝不顯示）。以前查到的 cityCache 清掉 */
+function fetchCity(){MY_CITY=OFF?String(store.get("myCity","")||""):"";try{if(store.get("cityCache",null))store.set("cityCache",null)}catch(e){}}
 setTimeout(()=>fetchCity(false),3000);
 window.XQ_ME=()=>{const m=meInfo();return{"x-xq-dev":m.id+(MY_KIND?"-"+MY_KIND:""),"x-xq-name":encodeURIComponent(m.name||"")}};
 async function api(u,b){if(window.XQ)return XQ.api(u,b);   // 離線版：由手機裡的 local.js 處理
@@ -4288,7 +4287,7 @@ function Settings(v){
         <tr><td>Google Apps Script</td><td>意見回饋管理頁（接 Google 表單和試算表）</td></tr>
         <tr><td>JSON</td><td>棋譜、題庫、故事、朝代資料</td></tr></table>
         <div class="muted" style="font-size:12px;margin-top:4px">線上大廳用 MQTT 通訊協定連線；Pikafish 的神經網路權重另外下載。</div></details>`:""}</div>
-    ${OFF?'<div class="sec-t">隱私</div><div class="card muted" style="font-size:13.5px;line-height:1.7">'+'App 每 7 天（或名字、段位改變時）會把你的名字、裝置代號、線上段位、App 版本、手機種類和螢幕大小送到開發者的 Google 表單，方便查問題、校正難度；不會送棋譜、聊天內容或其他個人資料。線上大廳會顯示由網路位置推估的城市（只到城市，不是精確位置）。'+'</div>':''}
+    ${OFF?'<div class="sec-t">隱私</div><div class="card muted" style="font-size:13.5px;line-height:1.7">'+'App 每 7 天（或名字、段位改變時）會把你的名字、裝置代號、線上段位、App 版本、手機種類和螢幕大小送到開發者的 Google 表單，方便查問題、校正難度；不會送棋譜、聊天內容或其他個人資料。App 不會用網路位置查你在哪裡；線上大廳要不要顯示城市，由你在下面自己選（預設不顯示；用「稱號」的人一律不顯示）。'+'<label style="display:flex;align-items:center;gap:8px;margin-top:8px;color:var(--ink,inherit)"><span style="flex:1">🏙 大廳顯示我的城市</span><select id="myCityS" style="font:inherit;padding:4px 6px;border-radius:8px">'+[["","不顯示"],...CITY_ZH.map(([,z])=>[z,z])].map(([v,l])=>'<option value="'+v+'"'+(String(store.get("myCity","")||"")===v?" selected":"")+'>'+l+'</option>').join("")+'</select></label>'+'</div>':''}
     ${OFF?'<div class="sec-t">進階</div><div class="card"><label class="row" style="justify-content:space-between"><span><b>開發者模式</b><br><span class="muted">一般玩家不用打開。打開後才會顯示連線電腦、AI 對戰等開發者功能</span></span><input type="checkbox" class="sw" id="dm"></label></div>'
       +(DEVMODE()?'<div class="items" style="padding:0;margin-top:8px"><button class="item" id="fa"><span class="lb">📋</span><span class="tx"><b>意見回饋管理</b><span>看所有回饋和截圖，決定玩家的回饋要不要修</span></span><span class="muted">›</span></button><button class="item" id="cn"><span class="lb">🖥</span><span class="tx"><b>連線到開發者的電腦</b><span>看 AI 對戰、同步大師棋譜</span></span><span class="muted">›</span></button><button class="item" id="rb"><span class="lb">🔄</span><span class="tx"><b>重置虛擬玩家</b><span>32 位棋友的積分、戰績、練習紀錄歸零；舊資料留在電腦上</span></span><span class="muted">›</span></button></div>':""):""}${OFF?'<div class="sec-t">📱 換手機</div><div class="card"><div class="row" style="gap:8px;flex-wrap:nowrap"><button class="btn" id="xfOut" style="flex:1;min-width:0;margin:0;white-space:nowrap;padding-left:6px;padding-right:6px">📤 舊手機產生碼</button><button class="btn ghost" id="xfIn" style="flex:1;min-width:0;margin:0;white-space:nowrap;padding-left:6px;padding-right:6px">📥 新手機輸入碼</button></div></div>':""}</div></div>`;
   let tbRefresh=()=>{};
@@ -4386,7 +4385,7 @@ function Settings(v){
       for(let i=0;i<8;i++){await new Promise(z=>setTimeout(z,2000));let x=null;try{x=JSON.parse(await XQNet.ctlAck(3000))}catch(e){}
         if(x&&x.n===n){toast(x.ok?`✅ 已重置 ${x.bots} 位虛擬玩家（舊資料存在電腦：${x.arch}）`:"❌ "+x.why,5000);return}}
       toast("電腦沒有回覆：虛擬玩家的程式可能沒在跑")}catch(e){toast(e.message)}},"重置")}
-  {const ab=v.querySelector("#askB");if(ab)ab.onclick=()=>askSheet();const bh=v.querySelector("#botHome");if(bh)bh.onclick=()=>{store.set("botPos",null);if(BOT){BOT.stop();BOT=null}syncBot();toast("小帥回到預設位置了")}}{const bt=v.querySelector("#botT");if(bt)bt.onchange=()=>{store.set("bot3d",bt.checked);syncBot();if(bt.checked)toast("小人出來了！點它會表演")};const sz=v.querySelector("#botSz"),szv=v.querySelector("#botSzV");if(sz)sz.oninput=()=>{store.set("botSize",+sz.value);szv.textContent=Math.round(sz.value*100)+"%";if(BOT&&BOT.setScale)BOT.setScale(+sz.value)}}{const ct=v.querySelector("#cityT");if(ct)ct.onchange=()=>{store.set("showCity",ct.checked);if(ct.checked)fetchCity(true);else{MY_CITY="";if(window.XQNet&&XQNet.refresh)XQNet.refresh()}}}(v.querySelector("#nm")||{}).onclick=()=>{vibrate(5);stab="look";store.set("setTab","look");showTab();setTimeout(()=>{const x=v.querySelector("#nmLook");if(x)x.scrollIntoView({block:"center",behavior:"smooth"})},60)};   /* 意見回饋 498：名字只在「外觀 → 我的角色」改 */(v.querySelector("#fb")||{}).onclick=()=>feedbackSheet();{const au=v.querySelector("#aUpd");if(au)au.onclick=()=>{vibrate(5);updCheck(au)}}{const ue=v.querySelector("#aUse");if(ue)aboutUsage(ue)}{const ft=v.querySelector("#fbTop");if(ft)ft.onclick=()=>{vibrate(5);feedbackSheet()}}{const fx=v.querySelector("#fxh");if(fx)fx.onclick=()=>fixHistory()}{const a2=v.querySelector("#a2h");if(a2)a2.onclick=()=>{vibrate(5);installGuide(true)}}(v.querySelector("#sh")||{}).onclick=shareSheet;const cn=v.querySelector("#cn");if(cn)cn.onclick=connectSheet;const fa=v.querySelector("#fa");if(fa)fa.onclick=()=>location.hash="#/fbadmin";if(typeof epSetBind==="function")epSetBind(v);
+  {const ab=v.querySelector("#askB");if(ab)ab.onclick=()=>askSheet();const bh=v.querySelector("#botHome");if(bh)bh.onclick=()=>{store.set("botPos",null);if(BOT){BOT.stop();BOT=null}syncBot();toast("小帥回到預設位置了")}}{const bt=v.querySelector("#botT");if(bt)bt.onchange=()=>{store.set("bot3d",bt.checked);syncBot();if(bt.checked)toast("小人出來了！點它會表演")};const sz=v.querySelector("#botSz"),szv=v.querySelector("#botSzV");if(sz)sz.oninput=()=>{store.set("botSize",+sz.value);szv.textContent=Math.round(sz.value*100)+"%";if(BOT&&BOT.setScale)BOT.setScale(+sz.value)}}{const cs=v.querySelector("#myCityS");if(cs)cs.onchange=()=>{store.set("myCity",cs.value);fetchCity();if(window.XQNet&&XQNet.refresh)XQNet.refresh();toast(cs.value?"大廳會顯示「"+cs.value+"」":"大廳不顯示城市")}}(v.querySelector("#nm")||{}).onclick=()=>{vibrate(5);stab="look";store.set("setTab","look");showTab();setTimeout(()=>{const x=v.querySelector("#nmLook");if(x)x.scrollIntoView({block:"center",behavior:"smooth"})},60)};   /* 意見回饋 498：名字只在「外觀 → 我的角色」改 */(v.querySelector("#fb")||{}).onclick=()=>feedbackSheet();{const au=v.querySelector("#aUpd");if(au)au.onclick=()=>{vibrate(5);updCheck(au)}}{const ue=v.querySelector("#aUse");if(ue)aboutUsage(ue)}{const ft=v.querySelector("#fbTop");if(ft)ft.onclick=()=>{vibrate(5);feedbackSheet()}}{const fx=v.querySelector("#fxh");if(fx)fx.onclick=()=>fixHistory()}{const a2=v.querySelector("#a2h");if(a2)a2.onclick=()=>{vibrate(5);installGuide(true)}}(v.querySelector("#sh")||{}).onclick=shareSheet;const cn=v.querySelector("#cn");if(cn)cn.onclick=connectSheet;const fa=v.querySelector("#fa");if(fa)fa.onclick=()=>location.hash="#/fbadmin";if(typeof epSetBind==="function")epSetBind(v);
   paint();return{}}
 
 // ================= 意見回饋：存到 Google 表單（沒網路先存在手機，之後自動補送） =================
@@ -10060,7 +10059,10 @@ const FM_LIM_OPT=[0,20,30,45,60,90,120],FM_LATE_OPT=["","19:30","20:00","20:30",
 const FM_E={acc:0,due:FM_EYE_MIN*6e4,last:Date.now(),hid:0,act:Date.now(),done:0,pc:0};
 {const s=store.get("fmEye",null);if(s&&Date.now()-(s.at||0)<FM_EYE_GAP*6e4){FM_E.acc=+s.acc||0;FM_E.due=+s.due||FM_EYE_MIN*6e4}}
 const fmSaveE=()=>store.set("fmEye",{acc:Math.round(FM_E.acc),due:Math.round(FM_E.due),at:Date.now()});
-function fmCfg(){const c=store.get("fmCfg",null)||{};return{eye:c.eye!==false,lim:Math.max(0,+c.lim||0),late:/^\d{1,2}:\d{2}$/.test(c.late||"")?c.late:""}}
+function fmCfg(){const c=store.get("fmCfg",null)||{};return{eye:c.eye!==false,lim:Math.max(0,+c.lim||0),late:/^\d{1,2}:\d{2}$/.test(c.late||"")?c.late:"",net:c.net!==false}}
+/* 開發者 11/9（Gemini 第 54 份 iOS 上架評估，全部都做）：家長可以整個關掉線上大廳（fmCfg.net＝false）。關掉＝07x4-lobbysafe.js 把大廳換成說明頁、
+   src/net.js 照「停權中」處理（不公開在線狀態、不能邀請配對、別人的邀請一律婉拒）；單機功能、版本更新通知照常 */
+function fmNetOff(){try{return!fmCfg().net}catch(e){return false}}
 function fmX(){const x=store.get("fmX",null)||{},d=localDay();if(x.d!==d){x.d=d;x.add=0}return x}
 const fmP=h=>String(h==null?location.hash:h).replace(/^#\/?/,"").split("/").filter(Boolean);
 function fmBusy(h){const p=fmP(h),a=p[0]||"",b=p[1]||"";return["cpu","arena","pvp","qqev","quiz","guess","legend"].includes(a)||((a==="journey"||a==="redo")&&b==="play")||(["canju","battle","camp","theme"].includes(a)&&!!b)||(a==="ship"&&(b==="lv"||b==="pz"))}
@@ -10219,6 +10221,7 @@ function fmSetBody(){const c=fmCfg(),u=Math.round(fmUsed()),L=fmLeft();
   return`<div class="fm-row"><span>👁 護眼提醒</span><b>${c.eye?`開（每玩 ${FM_EYE_MIN} 分鐘，看遠方 ${FM_EYE_SEC} 秒）`:"關"}</b></div>
     <div class="fm-row"><span>⏱ 每天最多玩</span><b>${c.lim?c.lim+" 分鐘":"不限制"}</b></div>
     <div class="fm-row"><span>🌙 幾點以後不能玩</span><b>${c.late?`${esc(c.late)} 到早上 ${FM_WAKE} 點`:"不限制"}</b></div>
+    <div class="fm-row"><span>🌐 線上大廳</span><b>${c.net?"開":"關（家長關閉）"}</b></div>
     <div class="fm-row"><span class="muted">今天玩了</span><b>${u} 分鐘${L!=null?(L>0?`・還可以玩 ${Math.floor(L)} 分鐘`:"・今天的時間到了"):""}</b></div>
     <button class="btn ghost" id="fmEdit" style="width:100%;margin-top:10px">🔒 家長修改</button>
     <p class="muted" style="font-size:12.5px;line-height:1.7;margin:8px 0 0">時間到了，正在下的那盤可以下完，下完就回首頁休息；明天自動重新算。家長答對確認題，可以再加 15 或 30 分鐘。遊玩時間＝App 畫面開著的時間。</p>`}
@@ -10228,12 +10231,14 @@ function fmEdit(card){const c=fmCfg();const ov=fmOverlay(`<div class="fm-card fm
     <p class="muted" style="font-size:12.5px;margin:4px 0 0">每玩 ${FM_EYE_MIN} 分鐘，${esc(fmNm())}會在下完一盤或換頁時，提醒看遠方 ${FM_EYE_SEC} 秒。</p>
     <div class="sec-t">⏱ 每天最多玩</div><div class="opt" data-k="lim">${FM_LIM_OPT.map(v=>`<button data-v="${v}"${c.lim===v?' class="on"':""}>${v?v+" 分":"不限制"}</button>`).join("")}</div>
     <div class="sec-t">🌙 幾點以後不能玩</div><div class="opt" data-k="late">${FM_LATE_OPT.map(v=>`<button data-v="${v}"${c.late===v?' class="on"':""}>${v||"不限制"}</button>`).join("")}</div>
-    <p class="muted" style="font-size:12.5px;margin:4px 0 0">設了時間，從那時候到早上 ${FM_WAKE} 點都不能玩。</p></div>
+    <p class="muted" style="font-size:12.5px;margin:4px 0 0">設了時間，從那時候到早上 ${FM_WAKE} 點都不能玩。</p>
+    <div class="sec-t">🌐 線上大廳</div><div class="opt" data-k="net">${[[1,"開"],[0,"關"]].map(([v,l])=>`<button data-v="${v}"${(c.net?1:0)===v?' class="on"':""}>${l}</button>`).join("")}</div>
+    <p class="muted" style="font-size:12.5px;margin:4px 0 0">關掉以後，孩子不會出現在線上大廳，也不能跟陌生人下棋、收邀請；挑戰電腦、故事、殘局、棋譜照常可以玩。</p></div>
     <div class="fm-btns"><button class="btn" id="fmSave">存好</button><button class="btn ghost" id="fmNo">取消</button></div></div>`,true);
-  const N={eye:c.eye?1:0,lim:c.lim,late:c.late};
+  const N={eye:c.eye?1:0,lim:c.lim,late:c.late,net:c.net?1:0};
   ov.querySelectorAll(".opt[data-k]").forEach(g=>g.querySelectorAll("button").forEach(b=>b.onclick=()=>{vibrate(5);const k=g.dataset.k;N[k]=k==="late"?b.dataset.v:+b.dataset.v;g.querySelectorAll("button").forEach(x=>x.classList.toggle("on",x===b))}));
   ov.querySelector("#fmNo").onclick=()=>fmClose(true);
-  ov.querySelector("#fmSave").onclick=()=>{store.set("fmCfg",{eye:!!N.eye,lim:N.lim,late:N.late});store.set("fmEnd","");store.set("fmWarn","");fmClose(true);if(card&&card.isConnected)fmSetFill(card);fmRibbon();toast("✅ 家長設定存好了")}}
+  ov.querySelector("#fmSave").onclick=()=>{store.set("fmCfg",{eye:!!N.eye,lim:N.lim,late:N.late,net:!!N.net});try{if(window.XQNet&&XQNet.refresh)XQNet.refresh();if(/^#\/lobby/.test(location.hash)&&typeof route==="function")route()}catch(e){}store.set("fmEnd","");store.set("fmWarn","");fmClose(true);if(card&&card.isConnected)fmSetFill(card);fmRibbon();toast("✅ 家長設定存好了")}}
 function fmSetMount(v){const pane=v.querySelector('[data-pane="more"]');if(!pane||pane.querySelector("#fmSet"))return;fmCss();
   const t=document.createElement("div");t.className="sec-t";t.id="fmSecT";t.textContent="👪 家長與護眼";const card=document.createElement("div");card.className="card";card.id="fmSet";fmSetFill(card);
   const priv=[...pane.querySelectorAll(".sec-t")].find(x=>x.textContent.trim()==="隱私");if(priv)priv.before(t,card);else pane.append(t,card)}
@@ -10248,6 +10253,15 @@ if(FM_ON){
   addEventListener("xq-result",()=>{FM_E.done=Date.now();setTimeout(fmTry,3000)});
   addEventListener("xq-play",()=>{if(FM_E.done&&Date.now()-FM_E.done>1500)FM_E.done=0});
   setInterval(fmTick,3000);setTimeout(()=>{fmRibbon();fmTry()},4000)}
+
+/* ---------- 開發者 11/9（Gemini 第 54 份 iOS 上架評估，全部都做）：要離開 App 去別的網站，先請家長答一題 ----------
+   xqExtOpen(u)：萬事通的「Google AI 回答」「問 Gemini」用；頁面上連到別的網站的 <a>（萬事通「看全文」、棋手生平的參考連結）在 click 捕獲階段攔下來改走這裡。
+   答對後 10 分鐘內（store fmExtOk）再開外部網站不用再答。下載檔案（a[download]、blob:）和 App 自己的網址不攔 */
+const FM_EXT_FREE=10*60e3;
+function xqExtOpen(u){const go=()=>{store.set("fmExtOk",Date.now());const w=window.open(u,"_blank","noopener");if(!w)location.href=u};
+  if(Date.now()-(+store.get("fmExtOk",0)||0)<FM_EXT_FREE){go();return}fmGate("要打開 App 以外的網站，請家長先答一題（答對後 10 分鐘內不用再答）。",go)}
+document.addEventListener("click",e=>{const a=e.target&&e.target.closest&&e.target.closest("a[href]");if(!a||a.hasAttribute("download"))return;let u;try{u=new URL(a.getAttribute("href"),location.href)}catch(x){return}
+  if(!/^https?:$/.test(u.protocol)||u.origin===location.origin)return;e.preventDefault();e.stopPropagation();xqExtOpen(u.href)},true);
 /* ================= 意見回饋 765（開發者 11/8）：渡口「船艙」圖的動態效果 =================
    #/port 在船艙那一站（classic）用的滿版水墨圖 data/shipmap/port_classic.webp（768x1376），照雲河星槎的做法加 WebGL 動態：
    深度圖 data/shipmap/layers/pm1_depth.png（384x688；R＝深度、G＝浮島起伏權重、B＝起伏相位；tools/shipmap_layers/portdepth.py 產生）
@@ -12027,10 +12041,21 @@ const SHW_YZ={
   qing:{h:[.065,60,.001],N:{home:[45,62],tr:[60,59.5],sec:[28,63],mail:[85,62.5],sight:[60,70]},E:"home-tr home-sec home-mail home-sight tr-mail",
     HS:{yzTr:["tr",60,52,"bow"],yzSec:["sec",26,57,"wave"],yzMail:["mail",88,53,"wave"],yzSight:["sight",74,78,"wave"]}}};
 const SHW_ACT={bow:"bow",wave:"wave_goodbye_01",cheer:"cheer"},SHW_MEM={},SHW_MEMH={};   /* SHW_MEMH：角色現在站在哪個入口前（那個標籤保持淡，開發者 11/8） */
+/* 開發者 11/9（Gemini 評估「2D 插畫和 3D 小人要融在一起」，全部都做）：小人的燈光跟著背景走——
+   背景換夜景（頁面 class 有 -night 或圖檔名有 _night，跟 07t3 ttNight 同一個判斷）＝月光：整體變暗、偏冷藍；
+   白天圖在卯辰時（清晨）偏淡青、酉時（黃昏）偏暖，強弱照 07w7 sw7Tint（跟背景的時辰光影同步）。每秒看一次，有變才改燈 */
+function shwLit(S,T,hl,dl){const P=S.box.closest(".shp-page")||document.querySelector("#view .shp-page"),im=P&&P.querySelector("img");
+  const nt=!!P&&(/(^|\s)[\w-]*-night(\s|$)/.test(P.className)||!!(im&&/_night/.test(im.currentSrc||im.src||"")));
+  const tn=!nt&&typeof sw7Tint==="function"?sw7Tint():null,k=(nt?"n":"d")+(tn?tn.c+Math.round(tn.a*20):"");if(S.litK===k)return;S.litK=k;
+  if(nt){hl.color.set(0x8E9CC8);hl.groundColor.set(0x262438);hl.intensity=.78;dl.color.set(0xB4C3F0);dl.intensity=.42}
+  else{hl.color.set(0xFFF6E8);hl.groundColor.set(0x6A5A48);hl.intensity=1.15;dl.color.set(0xFFFFFF);dl.intensity=.85}
+  if(tn){const a=Math.max(0,Math.min(1,tn.a))*.6;if(tn.c==="dusk"){hl.color.lerp(new T.Color(0xFFD2A6),a);dl.color.lerp(new T.Color(0xFFC08A),a)}else{hl.color.lerp(new T.Color(0xE2EEF6),a);dl.color.lerp(new T.Color(0xE6F0FF),a)}}
+  S.box.classList.toggle("nt",nt)}
 function shwCss(){if(document.getElementById("shwCss"))return;const s=document.createElement("style");s.id="shwCss";s.textContent=`
 .shw{position:absolute;left:0;top:0;width:0;height:0;pointer-events:none;transform-origin:0 0;opacity:0;transition:opacity .35s}
 .shw.on{opacity:1}.shw canvas{position:absolute;display:block;pointer-events:none}
-.shw-sh{position:absolute;border-radius:50%;background:radial-gradient(closest-side,rgba(40,30,20,.55),rgba(40,30,20,.25) 60%,rgba(40,30,20,0));pointer-events:none}
+.shw-sh{position:absolute;border-radius:50%;background:radial-gradient(ellipse 50% 50% at 47% 52%,rgba(30,28,34,.4),rgba(30,28,34,.2) 52%,rgba(30,28,34,.06) 78%,rgba(30,28,34,0)),radial-gradient(ellipse 34% 42% at 62% 45%,rgba(30,28,34,.16),rgba(30,28,34,0));filter:blur(.7px);mix-blend-mode:multiply;pointer-events:none;transition:opacity 1.2s}
+.shw.nt .shw-sh{opacity:.55}   /* 開發者 11/9（Gemini 評估「2D 與 3D 融合」，全部都做）：腳下影子改成淡墨暈開（不規則的兩團墨、邊緣化開、疊色），夜裡月光淡、影子也淡 */
 body.shw-on .xqbot{visibility:hidden}
 .shw-fade{opacity:.15!important;transition:opacity .25s ease!important}[data-shwnf].shw-fade{opacity:1!important}.shw-ink{position:absolute;width:36px;height:36px;margin:-18px 0 0 -18px;border-radius:50%;pointer-events:none;z-index:5;background:radial-gradient(closest-side,rgba(38,30,24,0) 38%,rgba(38,30,24,.42) 64%,rgba(38,30,24,.12) 86%,rgba(38,30,24,0));animation:shwInk .6s ease-out forwards}@keyframes shwInk{from{transform:scale(.3);opacity:.95}to{transform:scale(1.15);opacity:0}}@keyframes shwInkR{0%,60%{opacity:.7}100%{opacity:0}}@media (prefers-reduced-motion:reduce){.shw-ink{animation:shwInkR .4s linear forwards}}[data-shw-lift]{transition:translate .25s ease}.shw-iso{isolation:isolate}.shw-iso.shw-iso .shp-spot,.shw-iso.shw-iso .po-sight,.shw-iso.shw-iso [data-hs]{z-index:200}.shw-unfade{transition:opacity .6s ease!important}.shw-fade::after{animation:none!important;opacity:0!important}.shw-xt{position:absolute;z-index:4;transform:translate(-50%,-50%);pointer-events:none;white-space:nowrap;padding:3px 10px;border-radius:999px;background:rgba(246,239,223,.88);color:#3a2618;border:1px solid rgba(90,64,30,.3);font:700 13px/1.3 var(--serif,serif);box-shadow:0 1px 4px rgba(0,0,0,.18);opacity:0;animation:shwXt 4.2s ease-in-out forwards}@keyframes shwXt{0%{opacity:0}15%,75%{opacity:.8}100%{opacity:0}}@media (prefers-reduced-motion:reduce){.shw-xt{animation:none;opacity:.6}}`;document.head.append(s)}
 const shwHt=(C,y)=>typeof C.h==="function"?C.h(y):C.h[0]+(y-C.h[1])*C.h[2];
@@ -12386,7 +12411,7 @@ async function shwLoad(S){
   if(!S.box.isConnected||S.gen!==G)return;
   const C=S.C,EL=C.el*Math.PI/180,r=new T.WebGLRenderer({antialias:true,alpha:true,powerPreference:"low-power"});r.setPixelRatio(Math.min(2,devicePixelRatio||1));if(look.glb&&T.sRGBEncoding!=null)r.outputEncoding=T.sRGBEncoding;
   const cv=r.domElement,sh=S.box.querySelector(".shw-sh");S.box.append(cv);
-  const sc=new T.Scene();sc.add(new T.HemisphereLight(0xFFF6E8,0x6A5A48,1.15));const dl=new T.DirectionalLight(0xFFFFFF,.85);dl.position.set(-3,6,5);sc.add(dl);
+  const sc=new T.Scene(),hl=new T.HemisphereLight(0xFFF6E8,0x6A5A48,1.15);sc.add(hl);const dl=new T.DirectionalLight(0xFFFFFF,.85);dl.position.set(-3,6,5);sc.add(dl);S.litK="";S.lit=()=>{try{shwLit(S,T,hl,dl)}catch(e){}};S.lit();
   const root=new T.Group();root.rotation.order="YXZ";root.add(B.bot);sc.add(root);root.updateMatrixWorld(true);
   const bx=new T.Box3().setFromObject(B.bot),c=bx.getCenter(new T.Vector3()),hM=(bx.max.y-bx.min.y)||1;B.bot.position.x-=c.x;B.bot.position.z-=c.z;B.bot.position.y-=bx.min.y;const by=B.bot.position.y;
   const vh=hM*1.45,cam=new T.OrthographicCamera(-vh*.375,vh*.375,vh/2,-vh/2,hM*.1,hM*20),tg=new T.Vector3(0,hM*.6,0);cam.position.set(0,tg.y+Math.sin(EL)*hM*6,Math.cos(EL)*hM*6);cam.lookAt(tg);cam.updateMatrixWorld(true);
@@ -12406,7 +12431,7 @@ async function shwLoad(S){
   const end=()=>{try{cv.remove()}catch(e){}if(S.gen!==G)return void(()=>{try{r.dispose();r.forceContextLoss()}catch(e){}})();S.ready=false;S.go=null;if(!document.querySelector(".shw.on"))document.body.classList.remove("shw-on");try{r.dispose();r.forceContextLoss()}catch(e){}};
   const loop=now=>{if(!S.box.isConnected||!S.M.isConnected||S.gen!==G){end();return}requestAnimationFrame(loop);if(document.hidden){last=now;return}
     if(!S.ready){if(S.o.gate&&!S.o.gate()){last=now;return}S.ready=true;fit();shwStay(S)}
-    if(!S.go&&now-(S.lk||0)>1000){S.lk=now;const g2=shwLookG();if(g2!==S.lg){S.lg=g2;shwLoad(S).catch(()=>{S.box.remove();S.ready=false;document.body.classList.remove("shw-on")});return}}
+    if(!S.go&&now-(S.lk||0)>1000){S.lk=now;S.lit();const g2=shwLookG();if(g2!==S.lg){S.lg=g2;shwLoad(S).catch(()=>{S.box.remove();S.ready=false;document.body.classList.remove("shw-on")});return}}
     const dt=Math.min(.05,(now-last)/1000);last=now;acc+=dt;const g=S.go;let walk=false;
     if(g&&g.ph==="hop"){g.th+=dt;const u=Math.min(1,g.th/(shwRM()?.25:.45));shwHop(S,g.a,g.b,u,g.h0,g.h1);S.yaw=shwYaw(C,g.a,g.b);S.anim("idle",1);
       if(u>=1){S.sq=null;S.x=g.b[0];S.y=g.b[1];if(g.up){S.onT=g.tb;S.hy=g.h1}else{S.onT=null;S.hy=null;S.at=g.fn}shwNext(S)}S.place()}   /* 808／820：跳上桌、跳下桌 */
@@ -13294,6 +13319,16 @@ function lbsBanPage(v){setTop("線上對戰・觀戰",false);setTabs(true,"#/lob
   v.querySelector("#lbsFb").onclick=()=>{try{feedbackSheet()}catch(e){location.hash="#/settings"}};v.querySelector("#lbsHome").onclick=()=>{try{goHome()}catch(e){location.hash="#/"}};return{}}
 if(typeof Lobby==="function"){const f0=Lobby;Lobby=function(v){const was=window.XQ_SELFBANNED();try{lbsBanFetch().then(ch=>{if(ch&&window.XQ_SELFBANNED()!==was&&/^#\/lobby/.test(location.hash))route()})}catch(e){}
   if(window.XQ_SELFBANNED())return lbsBanPage(v);return f0.apply(this,arguments)}}
+
+/* ---------- 開發者 11/9：家長關掉線上大廳（07m5-family.js fmNetOff）：src/net.js 照停權處理；大廳只顯示說明，請家長到設定打開 ---------- */
+{const sb0=window.XQ_SELFBANNED;window.XQ_SELFBANNED=()=>{try{if(typeof fmNetOff==="function"&&fmNetOff())return true}catch(e){}return sb0()}}
+function lbsParentOffPage(v){setTop("線上對戰・觀戰",false);setTabs(true,"#/lobby");
+  v.innerHTML=`<div class="pad"><div class="card" style="text-align:center;padding:26px 18px;margin-top:14px;line-height:1.8"><div style="font-size:44px">👪</div>
+    <h2 style="font-family:var(--serif);margin:6px 0 8px">線上大廳已由家長關閉</h2><p style="margin:0 0 6px">挑戰電腦、石桌往事、殘局、棋譜這些單機功能都照常可以玩。</p>
+    <p class="muted" style="font-size:13.5px;margin:0 0 14px">想打開，請家長到「設定 → 👪 家長與護眼 → 🔒 家長修改」。</p>
+    <button class="btn" id="lbpSet">⚙ 到設定</button><button class="btn ghost" id="lbpHome" style="margin-top:8px">回首頁</button></div></div>`;
+  v.querySelector("#lbpSet").onclick=()=>{location.hash="#/settings"};v.querySelector("#lbpHome").onclick=()=>{try{goHome()}catch(e){location.hash="#/"}};return{}}
+if(typeof Lobby==="function"){const f1=Lobby;Lobby=function(v){try{if(typeof fmNetOff==="function"&&fmNetOff())return lbsParentOffPage(v)}catch(e){}return f1.apply(this,arguments)}}
 /* ================= ⚙ 設定頁滿版水墨圖「雲河驛站・天字客房」（開發者 11/8 定案：Gemini 方案 1＋3 合體；史學顧問核圖中）=================
    規劃：story/gemini_app/39 號 md；圖：park/setmap/set_day_v4.png、夜版 set_night.png（11/8：炕桌棋盤改成有厚度、比較俯視的棋枰，底線 9 子分得開；Gemini＋兩次局部修：13 把扇、明式衣架與四方平定巾、桌上鏡架銅鏡、羅漢床上的炕桌與腳踏、檻窗、石磬、無蓋宣德爐、單張路引；琴頭翻到右邊、炕桌棋盤都是程式畫；宣紙後製）→ art/setmap/set_day.webp。
    包一層 Settings(v)：原本的四個分頁（角色／棋盤／聲音／系統）照舊畫、照舊綁好，整包收進從下方滑出的「宣紙畫軸」面板；
@@ -16711,11 +16746,11 @@ function worldIntent(q){const t=q.replace(/\s/g,"");
   if(/詩|詞|下一句|上一句|背一首|唐詩|宋詞/.test(t)||POEM_AU.some(a=>t.includes(a))||POEMS.some(p=>t.includes(p[0])&&p[0].length>=2&&!CHESSY.test(p[0]))||POEMS.some(p=>p[2].split(/[，。？]/).some(l=>l.length>=4&&t.includes(l))))return"poem";
   return""}
 async function worldWeather(q){const t=q.replace(/[？?！!。，,\s]/g,"");let place=(t.match(/^(?:請問|我想知道|幫我查)?(.{2,10}?)(?:的)?(?:今天|明天|現在|這週|這幾天|最近)?(?:的)?(?:天氣|氣溫|溫度|會不會下雨|下雨|會不會冷|會不會熱)/)||[])[1]||"";
-  if(/^(今天|明天|現在|外面|這裡|我這|我們這|這邊|最近|這週|那裡)$/.test(place))place="";let lat,lon,name;
+  if(/^(今天|明天|現在|外面|這裡|我這|我們這|這邊|最近|這週|那裡)$/.test(place))place="";if(!place)place=String(store.get("myCity","")||"");let lat,lon,name;   /* 11/9：不再用 IP 查位置；沒說地方就用設定裡選的城市 */
   if(place){const z=place.replace(/[市縣]$/,"").replace(/^臺/,"台"),en=(CITY_ZH.find(([e,zz])=>zz===z)||[])[0];
     try{const g=await fetch(`https://geocoding-api.open-meteo.com/v1/search?name=${encodeURIComponent(en||place)}&count=1&language=zh`).then(r=>r.json());const h=(g.results||[])[0];if(h){lat=h.latitude;lon=h.longitude;name=place}}catch(e){}
     if(lat==null)return{title:"找不到這個地方",text:`我找不到「${place}」在哪裡 😅 換個說法試試，例如「台北天氣」。`}}
-  if(lat==null){try{const j=await fetch("https://get.geojs.io/v1/ip/geo.json").then(r=>r.json());lat=+j.latitude;lon=+j.longitude;const t2=(j.city||"")+" "+(j.region||""),hit=CITY_ZH.find(([k])=>t2.includes(k));name=hit?hit[1]:(j.city||"你那裡")}catch(e){return null}}
+  if(lat==null)return{title:"想查哪裡的天氣？",text:"跟我說地方就好，例如「台北天氣」「高雄明天會不會下雨」。\n\n也可以到「設定 → 隱私」選你的城市，以後只問「今天天氣」就會查那裡。"};
   const w=await fetch(`https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&current=temperature_2m,apparent_temperature,relative_humidity_2m,weather_code,wind_speed_10m&daily=weather_code,temperature_2m_max,temperature_2m_min,precipitation_probability_max&timezone=auto&forecast_days=3`).then(r=>r.json());
   const c=w.current||{},d=w.daily||{},day=i=>`${["今天","明天","後天"][i]}${WXC[d.weather_code[i]]||""}，${Math.round(d.temperature_2m_min[i])}～${Math.round(d.temperature_2m_max[i])}°C，降雨機率 ${d.precipitation_probability_max[i]==null?"？":d.precipitation_probability_max[i]}%`;
   const tip=c.temperature_2m<16?"有點冷，記得多穿一件 🧥":c.temperature_2m>30?"很熱，記得多喝水 🥤":(d.precipitation_probability_max||[])[0]>=50?"可能會下雨，出門帶把傘 ☂":"天氣不錯，適合下盤棋 😊";
@@ -16798,7 +16833,7 @@ function askSheet(){sheet("🤖 問"+ASKN(),b=>{   /* 意見回饋 668：扮演�
       <div class="row" style="gap:8px"><button class="btn ghost" id="aiG" style="flex:1;padding:11px 6px">🔎 Google AI 回答</button><button class="btn ghost" id="aiM" style="flex:1;padding:11px 6px">✨ 問 Gemini</button></div></div>`;
   const qi=b.querySelector("#aq"),aa=b.querySelector("#aa");
   // 意見回饋 207、208：用玩家自己手機的網路問 Google 的免費 AI（不用金鑰）；Google 不讓 App 直接拿答案，所以開在 Google／Gemini 的畫面
-  {const aiB=b.querySelector("#aiB"),cur=()=>qi.value.trim(),open=u=>{const w=window.open(u,"_blank","noopener");if(!w)location.href=u};
+  {const aiB=b.querySelector("#aiB"),cur=()=>qi.value.trim(),open=u=>{if(typeof xqExtOpen==="function"){xqExtOpen(u);return}const w=window.open(u,"_blank","noopener");if(!w)location.href=u};   /* 11/9：離開 App 先請家長確認（07m5-family.js） */
     b.querySelector("#aiG").onclick=()=>{const q=cur();if(!q){qi.focus();return toast("先在上面打你想問的問題")}open("https://www.google.com/search?udm=50&hl=zh-TW&q="+encodeURIComponent(q))};
     b.querySelector("#aiM").onclick=async()=>{const q=cur();if(!q){qi.focus();return toast("先在上面打你想問的問題")}let ok=false;try{await navigator.clipboard.writeText(q);ok=true}catch(e){}
       toast(ok?"問題已複製，到 Gemini 長按輸入框貼上就能問":"打開 Gemini 後，把問題貼上去問");open("https://gemini.google.com/app")};
