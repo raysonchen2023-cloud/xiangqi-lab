@@ -1370,7 +1370,7 @@ html[data-hicon] .tabbar button.on{box-shadow:inset 0 -3px 0 currentColor}
       if(!window.caches)return go();caches.keys().then(function(ks){return Promise.all(ks.filter(function(k){return k.indexOf("xqlab-app-")===0}).map(function(k){return caches.delete(k)}))})
         .then(function(){return navigator.serviceWorker&&navigator.serviceWorker.getRegistration()}).then(function(r){return r&&r.update()}).catch(function(){}).then(go)}};setTimeout(chk,4000)})();
 </script>
-<script>window.XQ_OFFLINE=true;window.XQ_BUILD="20261110-0845";</script>
+<script>window.XQ_OFFLINE=true;window.XQ_BUILD="20261110-0900";</script>
 <script src="core.js"></script>
 <script src="engine.js"></script>
 <script src="local.js"></script>
@@ -14197,11 +14197,10 @@ function tb2Css(){if(document.getElementById("tbmCss"))return;const s=document.c
 .tb-face{position:absolute;border:0;padding:0;background:none;cursor:pointer;pointer-events:auto}
 .tb-rub{position:absolute;pointer-events:none;overflow:hidden;border-radius:1px}
 .tb-rub i{position:absolute;inset:0}
-.tb-rub .pp{background:rgba(250,246,236,.92);opacity:0;animation:tbPaper .35s ease-out forwards}
-.tb-rub .br{background:repeating-linear-gradient(0deg,rgba(255,255,255,0) 0 5px,rgba(180,172,160,.45) 5px 7px);opacity:0;animation:tbBrush .45s ease-in-out .35s forwards}
-.tb-rub .ink{background:radial-gradient(circle,#1b1916 0 45%,rgba(27,25,22,0) 70%) 0 0/16px 16px,#1b1916;opacity:0;animation:tbInk .55s steps(4) .8s forwards}
-@keyframes tbPaper{to{opacity:1}}@keyframes tbBrush{0%{opacity:0;background-position:0 -40px}50%{opacity:1}100%{opacity:.6;background-position:0 40px}}
-@keyframes tbInk{0%{opacity:.25}100%{opacity:1}}
+.tb-dim{position:absolute;inset:0;pointer-events:none;opacity:0;transition:opacity .45s ease}.tb-dim.on{opacity:1}
+.tb-rub .ink{background:repeating-linear-gradient(90deg,rgba(236,228,210,0) 0 16%,rgba(236,228,210,.22) 16% 17.5%,rgba(236,228,210,0) 17.5% 20%),radial-gradient(120% 90% at 50% 45%,#211e1a 55%,#121110);clip-path:circle(0% at 50% 45%);-webkit-clip-path:circle(0% at 50% 45%);animation:tbInk .6s cubic-bezier(.3,.6,.3,1) .25s forwards;filter:blur(.3px)}
+@keyframes tbInk{to{clip-path:circle(80% at 50% 45%);-webkit-clip-path:circle(80% at 50% 45%)}}
+.tb-pn.tb-fl .tb-pn-h,.tb-pn.tb-fl .tb-pn-b{opacity:0}.tb-pn .tb-pn-h,.tb-pn .tb-pn-b{transition:opacity .25s ease}
 .tb-leaf{position:absolute;width:3.2%;aspect-ratio:1;animation:tbFall 11s linear infinite;animation-delay:-3s}.tb-leaf svg{width:100%;height:100%;display:block}
 @keyframes tbFall{0%{transform:translate(0,-30vh) rotate(0)}75%{transform:translate(-10vw,0) rotate(200deg)}100%{transform:translate(-11vw,0) rotate(210deg)}}
 .tb-pn{position:fixed;left:0;right:0;top:var(--xqT,0px);bottom:var(--xqB,0px);z-index:948;display:flex;flex-direction:column;background:#1b1916 url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence baseFrequency='.7' numOctaves='2'/%3E%3CfeColorMatrix values='0 0 0 0 .9 0 0 0 0 .88 0 0 0 0 .82 0 0 0 .05 0'/%3E%3C/filter%3E%3Crect width='160' height='160' filter='url(%23n)'/%3E%3C/svg%3E");
@@ -14253,9 +14252,16 @@ function termsMap(v){if(v.querySelector(".tb-page"))return;const tabs=v.querySel
     if(!pn.classList.contains("open")&&typeof xqPanelNav==="function")unNav=xqPanelNav(()=>{unNav=null;pn.classList.remove("open")});   /* 回饋 803：返回鍵先收起拓片 */
     pn.classList.add("open");const R=store.get("termsRead",{})||{};if(!R[k]){R[k]=1;store.set("termsRead",R)}};
   const rub=k=>{const S=TB_STELE.find(s=>s[0]===k);if(!S)return;if(matchMedia("(prefers-reduced-motion: reduce)").matches){openTab(k);return}
-    const[,,x0,y0,x1,y1]=S,[a,b]=pc(x0,y0),[c,d]=pc(x1,y1),r=document.createElement("span");r.className="tb-rub";
-    Object.assign(r.style,{left:a.toFixed(2)+"%",top:b.toFixed(2)+"%",width:(c-a).toFixed(2)+"%",height:(d-b).toFixed(2)+"%"});r.innerHTML="<i class='pp'></i><i class='br'></i><i class='ink'></i>";P.querySelector(".tb-fx").append(r);
-    setTimeout(()=>tbPuff(4),800);setTimeout(()=>{openTab(k);setTimeout(()=>r.remove(),400)},1400)};
+    /* 11/9 開發者「動畫太詭異，請重新設計」：原本白紙框、條紋、墨點一格一格跳，框又不貼碑形。改成：四周暗下來只留這通碑 → 碑面墨從中間暈開、透出幾行淡淡的字 → 拓片從碑面升起放大成全螢幕，字最後才淡入 */
+    const[,,x0,y0,x1,y1]=S,[a,b]=pc(x0,y0),[c,d]=pc(x1,y1),fx=P.querySelector(".tb-fx"),r=document.createElement("span"),dm=document.createElement("i");r.className="tb-rub";dm.className="tb-dim";
+    const cx=((a+c)/2).toFixed(1),cy=((b+d)/2).toFixed(1);dm.style.background=`radial-gradient(${((c-a)*1.1).toFixed(1)}% ${((d-b)*.75).toFixed(1)}% at ${cx}% ${cy}%,rgba(20,18,16,0) 60%,rgba(20,18,16,.55) 100%)`;
+    Object.assign(r.style,{left:a.toFixed(2)+"%",top:b.toFixed(2)+"%",width:(c-a).toFixed(2)+"%",height:(d-b).toFixed(2)+"%",borderRadius:"3px"});r.innerHTML="<i class='ink'></i>";fx.append(dm,r);requestAnimationFrame(()=>dm.classList.add("on"));
+    setTimeout(()=>tbPuff(3),300);
+    setTimeout(()=>{const R0=r.getBoundingClientRect(),R1=pn.getBoundingClientRect();pn.classList.add("tb-fl");
+      if(R0.width>2&&R1.width>2){pn.style.transition="none";pn.style.transformOrigin="0 0";pn.style.opacity="1";pn.style.transform=`translate(${(R0.left-R1.left).toFixed(1)}px,${(R0.top-R1.top).toFixed(1)}px) scale(${(R0.width/R1.width).toFixed(4)},${(R0.height/R1.height).toFixed(4)})`;void pn.offsetWidth;
+        pn.style.transition="transform .45s cubic-bezier(.2,.7,.2,1)"}
+      openTab(k);requestAnimationFrame(()=>{pn.style.transform=""});
+      setTimeout(()=>{pn.classList.remove("tb-fl");pn.style.transition=pn.style.transformOrigin=pn.style.opacity="";r.remove();dm.remove()},480)},900)};
   P.querySelectorAll(".tb-face").forEach(f=>f.onclick=e=>{e.stopPropagation();const t=P.querySelector("#tbT_"+f.dataset.k);if(t)t.click();else rub(f.dataset.k)});
   P.querySelectorAll(".tb-tag").forEach(b=>b.onclick=()=>{if(typeof vibrate==="function")vibrate(5);rub(b.dataset.k)});
   if(typeof shpFit==="function")shpFit(v);
@@ -16365,7 +16371,7 @@ const SW7_PAGES=[
   {k:"todayN",re:/data\/todaymap\//,m:"out",rg:"s"},
   {k:"learn",re:/data\/hubmap\/learn/,m:"semi",rg:"s",sky:[[[0,0],[768,0],[768,300],[560,300],[480,331],[300,320],[180,331],[0,291]],[[131,720],[627,720],[660,800],[651,1000],[560,963],[380,949],[213,965],[140,1000],[115,800]]]},
   {k:"battle",re:/data\/hubmap\/battle/,m:"semi",rg:"s",sky:[[[0,0],[768,0],[768,253],[693,253],[587,200],[507,160],[400,160],[400,200],[0,240]],[[213,633],[547,633],[560,667],[747,667],[747,760],[440,853],[440,920],[320,933],[267,800],[200,693]],[[533,1133],[693,1107],[768,1147],[768,1376],[560,1376]]],fg:[[[440,816],[627,787],[696,803],[700,867],[627,927],[507,933],[447,880]]]},
-  {k:"lobby",re:/data\/lobbymap\/lobby\.webp/,m:"semi",rg:"s",sky:[[[47,51],[720,51],[627,167],[627,640],[707,747],[753,1040],[753,1227],[13,1227],[53,747],[147,627],[147,167]]],fg:[[[0,0],[768,0],[768,53],[0,53]],[[0,1220],[768,1220],[768,1280],[0,1280]],[[200,1187],[273,1187],[273,1376],[200,1376]],[[493,1187],[573,1187],[573,1376],[493,1376]]]},
+  {k:"lobby",re:/data\/lobbymap\/lobby(_[a-z]+)?\.webp/,m:"semi",rg:"s",sky:[[[47,51],[720,51],[627,167],[627,640],[707,747],[753,1040],[753,1227],[13,1227],[53,747],[147,627],[147,167]]],fg:[[[0,0],[768,0],[768,53],[0,53]],[[0,1220],[768,1220],[768,1280],[0,1280]],[[200,1187],[273,1187],[273,1376],[200,1376]],[[493,1187],[573,1187],[573,1376],[493,1376]]]},
   {k:"canju",re:/data\/canjumap\//,m:"semi",rg:"s",sky:[[[0,0],[187,0],[187,247],[0,260]],[[267,0],[768,0],[768,313],[267,240]]],fg:[[[187,0],[267,0],[267,400],[187,400]]]},
   {k:"terms",re:/data\/termsmap\//,m:"semi",rg:"s",sky:[[[0,0],[768,0],[768,1376],[0,1376]]]},
   {k:"redo",re:/data\/redomap\/redo_/,m:"semi",rg:"s",sky:[[[77,53],[731,144],[731,920],[80,813]]],fg:[[[60,633],[731,853],[731,891],[60,667]],[[80,713],[731,920],[731,945],[80,740]],[[60,640],[95,640],[95,811],[60,811]],[[296,700],[320,700],[320,793],[296,793]],[[516,760],[540,760],[540,860],[516,860]],[[0,53],[731,127],[731,153],[0,80]]],tr:[[[80,140],[149,100],[260,105],[360,100],[409,160],[400,300],[300,300],[149,305],[80,289]],[[425,140],[529,140],[529,189],[425,189]]]},
@@ -16464,6 +16470,7 @@ function sw7HomeEra(){try{const e=typeof shipAt==="function"?shipAt():"";return 
 /* 日出、夕陽的時段照季節（台灣／江南大約的日出日落：夏天日出 5 點、日落 18:45；冬天日出 6:35、日落 17:15）；季節照首頁用的 SW7_HSEA */
 const SW7_TODW={spring:[5.25,7.25,17.25,19],summer:[4.75,6.75,18,19.75],autumn:[5.25,7.5,16.75,18.5],winter:[6,8,16.5,18.25]};
 /* 11/9 開發者「已經亥時但還是很亮」：首頁沒有夜景圖，日落後（夕陽時段結束）到日出前，整頁蓋一層月夜的深藍；剛入夜、天快亮時淡一點 */
+/* 11/9 開發者「對戰和學習還是亮著」：學習、對戰、線上大廳（露天庭院）也套同一層月夜；棋譜庫在室內不套 */
 function sw7HomeNightA(d,sea){d=d||new Date();const h=d.getHours()+d.getMinutes()/60,w=SW7_TODW[sea]||SW7_TODW.autumn;if(h>=w[3])return Math.min(1,.7+(h-w[3])*.6);if(h<w[0])return w[0]-h<.5?.7+(w[0]-h)*.6:1;return 0}
 function sw7HomeTod(d,sea){d=d||new Date();const h=d.getHours()+d.getMinutes()/60,w=SW7_TODW[sea]||SW7_TODW.autumn;return h>=w[0]&&h<w[1]?"dawn":h>=w[2]&&h<w[3]?"dusk":""}
 function sw7HomeWx(){if(!sw7On())return"";try{const o=SW7_PAGES.find(x=>x.k==="home"),t=sw7TermFor(null,o),p=sw7Precip(t,o.rg),sea=SW7_HSEA[t]||"";
@@ -16551,7 +16558,7 @@ function sw7Leaf(R,o,src){const t=sw7TermFor(R.P,o),par=o&&o.tr&&o.tr.length&&(s
 /* 照現在的設定、節氣、天氣、時辰把這一頁的疊層排好；沒變就只更新晨昏色的濃淡 */
 /* 11/9 開發者截圖：圖還沒下載完（剛換版要重抓）時，月夜層會把空白頁塗成一片藍；圖載好才蓋，載好再補畫一次 */
 function sw7ImgOk(R){const im=R.img;if(im.complete&&im.naturalWidth>0)return true;if(!R.wl){R.wl=1;im.addEventListener("load",()=>{R.wl=0;R.sig="";try{sw7Fill(R)}catch(e){}},{once:true})}return false}
-function sw7Fill(R){const P=R.P,box=R.box,on=sw7On(),img=R.img,src=img.getAttribute("src")||"",o=sw7Page(src),hn=o&&/^home/.test(o.k)&&!/_(dawn|dusk)./.test(src)&&sw7ImgOk(R)?sw7HomeNightA(null,SW7_HSEA[sw7TermFor(P,o)]||""):0,night=/night/i.test(src)||P.classList.contains("td-night")||hn>0,
+function sw7Fill(R){const P=R.P,box=R.box,on=sw7On(),img=R.img,src=img.getAttribute("src")||"",o=sw7Page(src),hn=o&&/^(home|homeAlt|learn|battle|lobby)$/.test(o.k)&&!/_(dawn|dusk)./.test(src)&&sw7ImgOk(R)?sw7HomeNightA(null,SW7_HSEA[sw7TermFor(P,o)]||""):0,night=/night/i.test(src)||P.classList.contains("td-night")||hn>0,
     td=P.classList.contains("td-page"),ov=P.dataset.sw7Term||"",out=on&&o&&o.m!=="in",term=sw7TermFor(P,o),rm=sw7RM(),
     pw=out?(ov?(term==="冬至"?{t:"snow",a:.8}:null):sw7WxFor(P,o)):null,A0=out&&!pw?SW7_AMB[term]||null:null,tone=ov?sw7SeaOf(term):"";
   let k=pw?pw.t:A0?A0[0]:"";if(td&&sw7TdHas(term))k="";
