@@ -1370,7 +1370,7 @@ html[data-hicon] .tabbar button.on{box-shadow:inset 0 -3px 0 currentColor}
       if(!window.caches)return go();caches.keys().then(function(ks){return Promise.all(ks.filter(function(k){return k.indexOf("xqlab-app-")===0}).map(function(k){return caches.delete(k)}))})
         .then(function(){return navigator.serviceWorker&&navigator.serviceWorker.getRegistration()}).then(function(r){return r&&r.update()}).catch(function(){}).then(go)}};setTimeout(chk,4000)})();
 </script>
-<script>window.XQ_OFFLINE=true;window.XQ_BUILD="20261109-2245";</script>
+<script>window.XQ_OFFLINE=true;window.XQ_BUILD="20261109-2300";</script>
 <script src="core.js"></script>
 <script src="engine.js"></script>
 <script src="local.js"></script>
@@ -15930,7 +15930,7 @@ const clkKey=()=>typeof navKey==="function"?navKey(location.hash):(location.hash
    渡口 #/port、園子、驛站、千秋石枰擇石門口都算陸地 */
 const CLK_SHIP_RE=/^\/(adventure|ship(\/|$)|canju\/s\/|canju\/q\/|canju\/e\/5\/|qqev)/;
 /* 頂欄放星晷的頁：首頁、星槎甲板與船上五個滿版場景頁（正文、解題頁不放，免得頂欄變高擠到棋盤） */
-const CLK_DIAL_RE=/^\/(|adventure|ship\/(lesson|pz|shelf|bag|sail))$/;
+const CLK_DIAL_RE=/^\/(|adventure|ship\/(lesson|pz|shelf|bag|sail)|port|journey\/inn)$/;   /* 開發者 11/9「照你的建議，符合史實」：陸地上的渡口、驛站也放星晷（陸地有時辰、星槎上無歲月，對照更清楚）；園子是下棋頁，不放 */
 const CLK={el:null,sm:null,mode:"",tm:0,vt:null,va:null,vi:0};
 const clkRM=()=>{try{return matchMedia("(prefers-reduced-motion: reduce)").matches}catch(e){return false}};
 function clkShip(){return!!document.querySelector(".travel.qq")||CLK_SHIP_RE.test(clkKey())}
@@ -15954,7 +15954,7 @@ function clkCss(){if(document.getElementById("clkCss"))return;const s=document.c
 .clk-xz .w{cursor:pointer;fill:transparent}.clk-xz .w.sel{fill:rgba(255,206,120,.28)}
 .clk-xz .emb{animation:clkEmb 1.6s ease-in-out infinite}@keyframes clkEmb{50%{opacity:.6}}
 .clk-xzi{margin:6px 2px 0;padding:8px 10px;border-radius:12px;background:rgba(120,86,40,.08);text-align:left;font-size:14.5px;line-height:1.65;min-height:5.2em}
-.clk-xzi b{font-size:16.5px}.clk-xzi .tm{color:#6b5a46;font-size:13.5px;margin-left:6px}.clk-xzi p{margin:3px 0 0}.clk-xzi .fk{color:#6b5a46;font-size:12.5px}
+.clk-xzi b{font-size:16.5px}.clk-xzi .tm{color:#6b5a46;font-size:13.5px;margin-left:6px}.clk-xzi p{margin:3px 0 0}.clk-xzi .csrc{font-size:11px;color:var(--muted);margin:6px 0 0;line-height:1.5}.clk-xzi .fk{color:#6b5a46;font-size:12.5px}
 .clk-shipl{margin:8px 0 0;font-weight:700;color:#5a4a8a}
 @media (max-height:720px){.clk-xz svg{max-width:232px}.modal.clk-card .em{font-size:24px}.clk-xzi{min-height:0}}
 .lk-w{position:absolute;width:7.5%;aspect-ratio:1;transform:translate(-50%,-50%);pointer-events:none;z-index:1}
@@ -16071,7 +16071,7 @@ function clkXz(N){N=N||new Date();const{c,ri,ro,rim0,rim1}=XZ,h=clkHr(N),cur=clk
       <circle class="emb" cx="${ex}" cy="${ey}" r="16" fill="url(#xzEmb)"/><circle cx="${ex}" cy="${ey}" r="4.2" fill="#ff8a2a"/><circle cx="${ex}" cy="${ey}" r="2.4" fill="#fff6d0"/></g></svg>
     <div class="clk-xzi" aria-live="polite"></div>${clkShip()?`<p class="clk-shipl">✶ 在星槎上，時辰不走。</p>`:""}</div>`}
 function clkXzInfo(box,i,cur){const k=CLK_SC[i],[a,b]=clkHH(i);box.innerHTML=`<b>${CLK_ZHI[i]}時・${k[0]}</b><span class="tm">${a}:00–${b}:00${i===cur?"・現在":""}</span>
-  <p>古名「${k[0]}」：${k[1]}。</p><p>${k[2]} 屬${k[3]}：${k[4]}<span class="fk">（民間說法）</span></p>`}
+  <p>古名「${k[0]}」：${k[1]}。</p><p>${k[2]} 屬${k[3]}：${k[4]}<span class="fk">（民間說法）</span></p><p class="csrc">古名出處：顧炎武《日知錄》卷二十整理的十二時名${i===8?"；晡時見《說文》「餔，日加申時食也」":""}</p>`}
 function clkXzBind(m,N){const root=m&&m.querySelector(".clk-xz");if(!root)return;const cur=clkIdx(N||new Date()),box=root.querySelector(".clk-xzi"),W=[...root.querySelectorAll(".w")];
   const pick=i=>{W.forEach(w=>w.classList.toggle("sel",+w.dataset.i===i));clkXzInfo(box,i,cur)};
   W.forEach(w=>{w.addEventListener("click",()=>{if(typeof vibrate==="function")vibrate(5);pick(+w.dataset.i)});w.addEventListener("keydown",e=>{if(e.key==="Enter"||e.key===" "){e.preventDefault();pick(+w.dataset.i)}})});pick(cur)}
