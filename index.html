@@ -1370,7 +1370,7 @@ html[data-hicon] .tabbar button.on{box-shadow:inset 0 -3px 0 currentColor}
       if(!window.caches)return go();caches.keys().then(function(ks){return Promise.all(ks.filter(function(k){return k.indexOf("xqlab-app-")===0}).map(function(k){return caches.delete(k)}))})
         .then(function(){return navigator.serviceWorker&&navigator.serviceWorker.getRegistration()}).then(function(r){return r&&r.update()}).catch(function(){}).then(go)}};setTimeout(chk,4000)})();
 </script>
-<script>window.XQ_OFFLINE=true;window.XQ_BUILD="20261110-1400";</script>
+<script>window.XQ_OFFLINE=true;window.XQ_BUILD="20261110-1415";</script>
 <script src="core.js"></script>
 <script src="engine.js"></script>
 <script src="local.js"></script>
@@ -13052,6 +13052,7 @@ function oyCss(){if(document.getElementById("oyCss"))return;const s=document.cre
 .oy-env i::before{content:"";position:absolute;left:0;right:0;top:0;height:16px;background:linear-gradient(to bottom right,transparent 49%,#6b5132 50%,transparent 53%),linear-gradient(to bottom left,transparent 49%,#6b5132 50%,transparent 53%);background-size:50% 100%;background-position:left,right;background-repeat:no-repeat}
 .oy-env i::after{content:"";position:absolute;left:50%;top:9px;width:13px;height:13px;margin-left:-6.5px;border-radius:50%;background:#a3241a;box-shadow:0 0 0 1.5px #f3e3c2 inset}
 .oy-env b{font:800 12.5px/1 var(--kai,var(--serif,serif));color:#3a2618;background:rgba(251,246,234,.92);border:1px solid rgba(107,81,50,.6);border-radius:3px;padding:3px 6px;white-space:nowrap}
+.oy-env.oy-in{right:auto;transform-origin:50% 100%;translate:-50% -100%}.oy-env.oy-in i{width:34px;height:23px}.oy-env.oy-in i::before{height:12px}.oy-env.oy-in i::after{top:6px;width:11px;height:11px;margin-left:-5.5px}
 @keyframes oyEnv{0%,100%{transform:translateY(0) rotate(-3deg)}50%{transform:translateY(-4px) rotate(2deg)}}@media (prefers-reduced-motion:reduce){.oy-env{animation:none}}
 .oy-say img{width:72px;height:auto;flex:none;border-radius:8px;background:#f6eedd}`;document.head.append(s)}
 const oyName=(w,mdl)=>w==="hp"&&mdl==="douhua"?"賣豆花的小販":OY_WHO[w].nm;
@@ -13103,7 +13104,10 @@ function oyPage(v,k,place){if(!OUYU_ON)return;const P=v&&v.querySelector(".shp-p
     card.onclick=act;const say=pad.querySelector(".port-say,.bd-card");if(say)say.after(card);else pad.prepend(card);
     requestAnimationFrame(()=>{if(card.isConnected&&!card.offsetParent&&P&&P.isConnected){card.classList.add("oy-fl");P.append(card)}})};   /* 驛站圖下的清單是藏著的（YZ_NOLIST_ON），小卡放進去看不到：改浮在滿版圖下方 */
   if(OY_LETTER){const env=document.createElement("button");env.type="button";env.className="oy-env";env.setAttribute("aria-label",(r.back?nm+"在等你":"有人求助")+"：點開來看");env.innerHTML=`<i aria-hidden="true"></i><b>${r.back?"有人等你":"有人求助"}</b>`;
-    env.onclick=e=>{e.stopPropagation();e.preventDefault();act()};let n=0;const put=()=>{if(!P.isConnected)return;if((P.classList.contains("pc-run")||document.querySelector(".walkc"))&&++n<40)return void setTimeout(put,300);P.append(env)};setTimeout(put,900);return}
+    env.onclick=e=>{e.stopPropagation();e.preventDefault();act()};let n=0;const put=()=>{if(!P.isConnected)return;if((P.classList.contains("pc-run")||document.querySelector(".walkc"))&&++n<40)return void setTimeout(put,300);
+      /* 開發者 11/10「放在場景裡，例如岸邊或樹上，放右上角很怪」：用 3D 小人的站位規則（沿著角色走得到的路、避開入口標籤和其他角色）找一個地上的點，信就擱在那裡；找不到才放右上角 */
+      let at=null;try{const C=oyCfg(place,k);if(C)at=oySpot(P,C,()=>.07,k)}catch(x){}
+      if(at){env.classList.add("oy-in");env.style.left=at[0]+"%";env.style.top=at[1]+"%"}P.append(env)};setTimeout(put,900);return}
   const C=oyCfg(place,k);if(!C||typeof shwRM==="function"&&shwRM()||typeof XQBot3D==="undefined"&&typeof loadScript!=="function"){addCard();return}
   const box=document.createElement("div");box.className="oy3";box.setAttribute("aria-hidden","true");box.innerHTML='<i class="sh"></i>';
   const hit=document.createElement("button");hit.type="button";hit.className="oy-hit";hit.style.display="none";hit.setAttribute("aria-label",nm+"：點他聽他說");
