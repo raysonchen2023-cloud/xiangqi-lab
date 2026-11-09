@@ -1341,7 +1341,7 @@ html[data-era=qin] .view:has(>.shp-rd),html[data-era=wudai] .view:has(>.shp-rd){
       if(!window.caches)return go();caches.keys().then(function(ks){return Promise.all(ks.filter(function(k){return k.indexOf("xqlab-app-")===0}).map(function(k){return caches.delete(k)}))})
         .then(function(){return navigator.serviceWorker&&navigator.serviceWorker.getRegistration()}).then(function(r){return r&&r.update()}).catch(function(){}).then(go)}};setTimeout(chk,4000)})();
 </script>
-<script>window.XQ_OFFLINE=true;window.XQ_BUILD="20261109-1915";</script>
+<script>window.XQ_OFFLINE=true;window.XQ_BUILD="20261109-1930";</script>
 <script src="core.js"></script>
 <script src="engine.js"></script>
 <script src="local.js"></script>
@@ -7328,6 +7328,8 @@ function cjReserved(){if(cjReserved.S)return cjReserved.S;const S=new Set(XH_Q);
 function garden2InnHTML(){return`<button class="item" id="gdYu"><span class="lb" style="font-size:22px">🧭</span><span class="tx"><b>輿圖遊歷${yuTitle()?"・🏅 行萬里路":""}</b><span>走完 ${yuDoneN()}／13 條・${yuStopsN()}／${YU_TOTAL} 站</span></span><span class="muted">›</span></button><button class="item" id="gdXh"><span class="lb" style="font-size:22px">❄</span><span class="tx"><b>九九消寒圖${xhTitle()?"・🏅 九九消寒":""}</b><span>${esc(xhShort(xhNow()))}</span></span><span class="muted">›</span></button>`}
 function garden2MeHTML(){const N=xhNow();return`<button id="gdMeY"><span>🧭</span><b>輿圖遊歷</b><small>走完 ${yuDoneN()}／13 條</small></button><button id="gdMeX"><span>❄</span><b>消寒圖</b><small>${N.pre?`冬至還有 ${N.cd} 天`:`已染 ${Object.keys(xhMei(N.season)).length}／81`}</small></button>`}
 function garden2Bind(box){for(const id of["#gdYu","#gdMeY"]){const e=box.querySelector(id);if(e)e.onclick=()=>{vibrate(5);yuBook()}}for(const id of["#gdXh","#gdMeX"]){const e=box.querySelector(id);if(e)e.onclick=()=>{vibrate(5);xhOpen()}}}
+/* 11/9 修圖（史學顧問：甲板石桌棋盤、棋子、書頁去字）：甲板圖和分層的網址帶版本，同檔名換圖時改這個數字，手機才會重抓 */
+const SHP_IMGV="2300";
 /* ================= ⛵ 雲河星槎（意見回饋 674 第一、二期；675 開發者 11/6 定案「開站不擋、每站一個棋理＋一句棋史、五級難度」）=================
    首頁「⛵ 雲河星槎」大卡（03-home-quiz.js 呼叫 shipHomeHTML）；#/adventure＝星槎頁 Voyage，由上到下：
      （意見回饋 709 起：星槎頁只剩水墨圖、航線、下船；下面列的棋理、千秋殘局、下一站、書架、行囊各是一頁滿版水墨圖 #/ship/lesson、pz、sail、shelf、bag，渡口 #/port 上方是那一朝的圖）
@@ -7805,7 +7807,7 @@ function shpGl(cv,im){if(!shpGlOn())return null;const gl=cv.getContext("webgl",{
   const U={};["par","roll","bob","rot","t"].forEach(n=>U[n]=gl.getUniformLocation(pg,n));return{gl,U}}
 function shpPx(M){const box=M&&M.querySelector(".shp-px");if(!box)return;const cv=box.querySelector(".px-gl"),I=M.querySelector(".shp-in"),hl=M.querySelector(".shp-hl");
   shpGlDev(M);if(!shpGlOn()){box.remove();return}
-  const ld=s=>new Promise((ok,no)=>{const i=new Image();i.onload=()=>ok(i);i.onerror=no;i.src="data/shipmap/"+s});
+  const ld=s=>new Promise((ok,no)=>{const i=new Image();i.onload=()=>ok(i);i.onerror=no;i.src="data/shipmap/"+s+"?v="+SHP_IMGV});
   Promise.all(["layers/sm2_bg.webp","layers/sm2_ship.webp","layers/sm2_depth.png","layers/sm_mist_ink.webp","layers/sm_mist_fog.webp","ship_map.webp"].map(ld)).then(im=>{if(!M.isConnected)return;const G=shpGl(cv,im.slice(0,5));if(!G)throw 0;
     SPX.el=M;SPX.hl=hl;SPX.ls=[...box.querySelectorAll("[data-k]")].map(i=>[i,SHP_PX.find(p=>p[0]===i.dataset.k)[1]]);SPX.cx=SPX.cy=SPX.tx=SPX.ty=0;
     const{gl,U}=G,t0=performance.now();let W=0,H=0,bw=0,bh=0,first=true;const meas=()=>{W=I.clientWidth;H=I.clientHeight};meas();
@@ -7858,7 +7860,7 @@ function shpMapFit(v){requestAnimationFrame(()=>{const M=v.querySelector&&v.quer
 function Voyage(v){setTop("⛵ 雲河星槎","#/");setTabs(true,"#/");v.className="view";
   const paint=()=>{const ap=shipAppr(),D=shipDocked(),k=shipHere(),T=SHIP_STOP[k],O=ap?SHIP_ROUTE:shipOrder(),I=xpInfo(),nx=ap?null:shipNextStop();
     v.innerHTML=`<div class="pad shp">
-      <div class="shp-map full"><div class="shp-in"><img class="shp-base" src="data/shipmap/ship_map.webp" alt="雲河星槎">${shpPxHtml()}<div class="px-sw px-hw"><div class="shp-hl"><button class="shp-hs" data-hs="parks" style="left:13%;top:37%">🪨 千秋石枰</button><button class="shp-hs" data-hs="lesson" style="left:80%;top:17%">📘 棋話一頁</button><button class="shp-hs${shipLearned(k)?"":" hot"}" data-hs="pz" style="left:50%;top:43%${typeof shipMoreGold==="function"?shipMoreGold(k):""}">♟ 千秋殘局${shipLearned(k)?(typeof shipMoreHs==="function"?shipMoreHs(k):" ✓"):""}</button><button class="shp-hs" data-hs="shelf" style="left:22%;top:53%">📚 書架</button><button class="shp-hs" data-hs="read" style="left:33%;top:73%">📖 讀這一章</button><button class="shp-hs" data-hs="bag" style="left:52%;top:79%">🎒 行囊</button><button class="shp-hs${shipLearned(k)&&nx?" hot":""}" data-hs="sail" style="left:17%;top:85%">⛵ 起航</button><button class="shp-hs" data-hs="port" style="left:80%;top:73%">⚓ 下船</button></div></div></div><div class="hc shp-cap"><b>⛵ ${esc(shipShort(k))}・${esc(T.place)}</b><small>🀄 Lv ${I.L}・《千秋棋話》${shipPages()}／13 頁・停靠 ${D.length}／13・🎚 ${esc(diffOf().n)}</small></div></div>
+      <div class="shp-map full"><div class="shp-in"><img class="shp-base" src="data/shipmap/ship_map.webp?v=${SHP_IMGV}" alt="雲河星槎">${shpPxHtml()}<div class="px-sw px-hw"><div class="shp-hl"><button class="shp-hs" data-hs="parks" style="left:13%;top:37%">🪨 千秋石枰</button><button class="shp-hs" data-hs="lesson" style="left:80%;top:17%">📘 棋話一頁</button><button class="shp-hs${shipLearned(k)?"":" hot"}" data-hs="pz" style="left:50%;top:43%${typeof shipMoreGold==="function"?shipMoreGold(k):""}">♟ 千秋殘局${shipLearned(k)?(typeof shipMoreHs==="function"?shipMoreHs(k):" ✓"):""}</button><button class="shp-hs" data-hs="shelf" style="left:22%;top:53%">📚 書架</button><button class="shp-hs" data-hs="read" style="left:33%;top:73%">📖 讀這一章</button><button class="shp-hs" data-hs="bag" style="left:52%;top:79%">🎒 行囊</button><button class="shp-hs${shipLearned(k)&&nx?" hot":""}" data-hs="sail" style="left:17%;top:85%">⛵ 起航</button><button class="shp-hs" data-hs="port" style="left:80%;top:73%">⚓ 下船</button></div></div></div><div class="hc shp-cap"><b>⛵ ${esc(shipShort(k))}・${esc(T.place)}</b><small>🀄 Lv ${I.L}・《千秋棋話》${shipPages()}／13 頁・停靠 ${D.length}／13・🎚 ${esc(diffOf().n)}</small></div></div>
       ${ap?`<div class="card shp-ap"><b>📜 你是說書人的學徒</b><p class="muted">十三站都能去，各站的主場角色不會跟你說話。想用雲河七星的眼睛走一趟？開新的旅程會存到另一格，這段旅程不會被蓋掉。</p><button class="btn" id="spNew" style="width:100%">⛵ 選雲河七星開新旅程</button></div>`:""}
       <div class="shp-route-x" hidden>${O.map((e,i)=>{const dk=D.includes(e),on=e===k,ok=shipLearned(e),isN=e===nx;return`<button class="shp-st${dk?" dk":" lk"}${on?" on":""}${ok?" ok":""}${isN?" nx":""}" data-st="${e}"><i>${dk?esc((ARENA[e]||{}).seal||"棋"):isN?"⛵":"🔒"}</i><span>${i+1}・${esc(shipShort(e))}</span></button>`}).join("")}</div>
       ${mainDoneHTML()}<div id="spRes"></div>
@@ -12173,7 +12175,7 @@ if(typeof yzInn==="function"){const f0=yzInn;yzInn=function(v,k){const r=f0.appl
    接 07w 的走路（座標表 SHW_HUB，用 shwPage）、07x 的兩指縮放（zmPage）。prefers-reduced-motion：燈火、茶煙、煙火不動，只有靜態樣子。
    開關 HUB_MAP_ON（false＝照舊卡片清單）；樣式在 hbCss */
 const HUB_MAP_ON=true;
-const HB_IMGV="2200";   /* 圖的版本：data/hubmap 存在不跟版本走的快取，同檔名換圖時把這個數字改掉，手機才會重抓（意見回饋 789 換棋盤；11/8 考究清單：學習頁素紗燈、矮几棋枰，對戰頁燈籠不亮、盆松、窗邊象棋） */
+const HB_IMGV="2300";   /* 圖的版本：data/hubmap 存在不跟版本走的快取，同檔名換圖時把這個數字改掉，手機才會重抓（意見回饋 789 換棋盤；11/8 考究清單：學習頁素紗燈、矮几棋枰，對戰頁燈籠不亮、盆松、窗邊象棋） */
 /* 入口：[標籤 id（也是 07w 的入口代號）, 卡片的選擇器, 標籤左%, 上%]（量 768×1376 的定稿圖，標籤放在東西上方，角色站在東西前面） */
 const HUB_DEF={
   learn:{img:"learn",cap:"📚 學習",sub:"千秋翰林書院・前院啟蒙、中庭日課、講堂考校、藏書閣典藏",spots:[
@@ -12188,6 +12190,13 @@ const HUB_DEF={
 /* 學習頁 12 盞燈籠（由近到遠，照課數點亮）、點茶桌熱氣、洗墨池水面；對戰頁的燈籠 */
 const HUB_LAMP={learn:[[1.7,39],[98.3,39],[21.7,40.5],[38.7,40.5],[61.7,40.5],[78.7,40.5],[12.5,33.7],[87.5,33.7],[21.7,28.8],[78.7,28.8],[38.3,16.5],[61.7,16.5]],
   battle:[[3,30.5],[22.5,29],[50,26.5],[65,25.5],[26.5,42.5],[51,39],[91,64.5],[62,72]]};
+/* 回饋 849（11/9 修圖）：學習頁矮几上的棋枰圖上改成空白木面，棋盤由程式照透視畫上去（四角＝原圖像素 768×1376） */
+const HUB_QP=[[507.9,643.6],[564.8,643.6],[570.6,664.6],[514.3,664.6]];
+function hbQpSVG(){const W=180,H=200,ox=10,oy=10,cw=(W-2*ox)/8,ch=(H-2*oy)/9;let g=`<rect x="3" y="3" width="${W-6}" height="${H-6}" fill="none" stroke="rgba(70,45,22,.55)" stroke-width="3"/>`;
+  for(let j=0;j<10;j++)g+=`<line x1="${ox}" y1="${(oy+j*ch).toFixed(1)}" x2="${W-ox}" y2="${(oy+j*ch).toFixed(1)}"/>`;
+  for(let i=0;i<9;i++){const x=(ox+i*cw).toFixed(1);g+=(i===0||i===8)?`<line x1="${x}" y1="${oy}" x2="${x}" y2="${(oy+9*ch).toFixed(1)}"/>`:`<line x1="${x}" y1="${oy}" x2="${x}" y2="${(oy+4*ch).toFixed(1)}"/><line x1="${x}" y1="${(oy+5*ch).toFixed(1)}" x2="${x}" y2="${(oy+9*ch).toFixed(1)}"/>`}
+  const X=i=>ox+i*cw,Y=j=>oy+j*ch;g+=`<line x1="${X(3)}" y1="${Y(0)}" x2="${X(5)}" y2="${Y(2)}"/><line x1="${X(5)}" y1="${Y(0)}" x2="${X(3)}" y2="${Y(2)}"/><line x1="${X(3)}" y1="${Y(7)}" x2="${X(5)}" y2="${Y(9)}"/><line x1="${X(5)}" y1="${Y(7)}" x2="${X(3)}" y2="${Y(9)}"/>`;
+  return`<svg viewBox="0 0 ${W} ${H}" preserveAspectRatio="none" aria-hidden="true"><g stroke="rgba(60,38,18,.7)" stroke-width="2.2" fill="none">${g}</g></svg>`}
 const HUB_STEAM=[23,63],HUB_POND="polygon(60% 62.3%,73.5% 62.3%,77.5% 68.4%,61% 68.4%)";
 /* 07w 的座標表（腳底的位置）。學習頁：從大門口的石階進來，穿過門樓（門樓屋頂那一段角色先隱身）到中庭；石桌、洗墨池、迴廊木板在中庭兩旁；
    講堂月台只有正中間一道台階。意見回饋 790：去藏書閣（棋譜庫、猜著法）一律從大考桌左邊繞過、穿過講堂正中間敞開的門（門內到講堂後面隱身），再走到閣門；
@@ -12213,7 +12222,7 @@ function hbHide(P,Z){const b=P.querySelector(".shw");if(!b||!Z||!Z.length)return
   mo.observe(b,{attributes:true,attributeFilter:["style"]})}
 function hbCss(){if(document.getElementById("hbCss"))return;const s=document.createElement("style");s.id="hbCss";s.textContent=`
 .hub-page{margin:0 0 6px}.hub-page .shp-spot{max-width:46%;padding:4px 11px}.hub-page .shp-spot b{white-space:nowrap;font-size:14px}.hub-page .shp-spot.hot{padding:5px 13px}.hub-page .shp-spot.hot b{font-size:15px}.hb-hidden{display:none!important}
-.hb-fx{position:absolute;inset:0;pointer-events:none;overflow:hidden}
+.hb-fx{position:absolute;inset:0;pointer-events:none;overflow:hidden}.hb-qp{position:absolute;left:0;top:0;width:180px;height:200px;transform-origin:0 0}.hb-qp svg{display:block;width:100%;height:100%}
 .hb-lamp{position:absolute;width:9%;aspect-ratio:1;margin:-4.5% 0 0 -4.5%;border-radius:50%;background:radial-gradient(closest-side,rgba(255,226,150,.9),rgba(255,196,96,.45) 45%,rgba(255,170,60,0));mix-blend-mode:screen;opacity:0;transition:opacity .8s}
 .hb-lamp.on{opacity:1;animation:hbFlick 2.8s ease-in-out infinite alternate}.hb-lamp:nth-child(3n){animation-delay:-1.1s}.hb-lamp:nth-child(3n+1){animation-delay:-2s}
 @keyframes hbFlick{0%{opacity:.8;transform:scale(.96)}50%{opacity:1;transform:scale(1.04)}100%{opacity:.86;transform:scale(1)}}
@@ -12241,6 +12250,8 @@ function hbFxLearn(P){const fx=P.querySelector(".hb-fx");if(!fx)return;
   fx.insertAdjacentHTML("beforeend",HUB_LAMP.learn.map((p,i)=>`<i class="hb-lamp${i<lit?" on":""}" style="left:${p[0]}%;top:${p[1]}%"></i>`).join(""));
   let tea=false;try{const S=cjState(),L=S.day===cjDay()?S.list:null;tea=!cjCleared(L)}catch(e){}
   if(tea)fx.insertAdjacentHTML("beforeend",`<span class="hb-steam" style="left:${HUB_STEAM[0]}%;top:${HUB_STEAM[1]}%"><i></i><i></i><i></i></span>`);
+  try{if(typeof jz2M3==="function"){const q=document.createElement("span");q.className="hb-qp";q.innerHTML=hbQpSVG();fx.append(q);const fit=()=>{const k=P.clientWidth/768;if(!k)return;q.style.transform=jz2M3(180,200,HUB_QP.map(([x,y])=>[x*k,y*k]))};   /* 849：矮几棋枰（jz2M3＝07z2 的透視矩陣） */
+    if(window.ResizeObserver){const ro=new ResizeObserver(()=>{if(!P.isConnected){ro.disconnect();return}fit()});ro.observe(P)}fit()}}catch(e){}
   const pond=document.createElement("span");pond.style.cssText=`position:absolute;inset:0;clip-path:${HUB_POND};-webkit-clip-path:${HUB_POND}`;fx.append(pond);
   hbRedoN().then(n=>{if(n==null||!pond.isConnected)return;pond.innerHTML=n>0?`<i class="hb-ink" style="opacity:${Math.min(.85,.3+n*.06).toFixed(2)}"></i>`:'<i class="hb-clear"></i>'})}
 function hbFxBattle(P,img){let ph="";try{const S=window.XQNet&&XQNet.cup&&XQNet.cup();ph=S&&S.ph||""}catch(e){}
@@ -12276,7 +12287,7 @@ if(typeof Home==="function"){const f0=Home;Home=function(v,hub){const r=f0.apply
    接 07w 走路（座標表 SHW_HOMEMAP）、07x 兩指縮放。圖片網址帶 HM_IMGV（data/homemap 在不跟版本走的快取裡，換圖要改這個數字）。
    開關 HOME_MAP_ON（false＝照舊卡片首頁）；樣式在 hmCss */
 const HOME_MAP_ON=true;   /* 開發者 11/8 說打開 */
-const HM_IMGV="2251";   /* 圖的版本：同檔名換圖時改掉，手機才會重抓 */
+const HM_IMGV="2300";   /* 圖的版本：同檔名換圖時改掉，手機才會重抓 */
 /* 入口：[標籤 id（也是 07w 的入口代號）, 標籤左%, 上%, 大字]（量 768×1376 的 home_v5，標籤放在東西上方） */
 const HM_SPOTS=[["hmShip",52,15,"⛵ 雲河星槎"],["hmBattle",14,25.5,"⚔ 對戰"],["hmLearn",86,26.5,"📚 學習"],["hmRec",12,44,"📜 今日推薦"],["hmQuick",52,47.5,"⚡ 下一盤"]];
 /* 07w 的座標表（腳底的位置）：起點在橋中央廣場（石桌左前方）；石桌四周繞著走，不穿過桌子；往後經廣場後緣走木棧道到星槎跳板；
@@ -12685,7 +12696,7 @@ if(typeof oppCard==="function"){const f0=oppCard;oppCard=function(){const r=f0.a
      換朝代棋盤＝棋桌上的棋盤框換成那一朝的顏色；高對比＝棋子描金邊。
    標籤只有大字。接 07w 走路（SHW_SETMAP）、07x 兩指縮放。圖片網址帶 SM_IMGV。開關 SETMAP_ON（false＝照舊分頁清單）；樣式在 smCss */
 const SETMAP_ON=true;   /* 開發者 11/8 說打開 */
-const SM_IMGV="2200";
+const SM_IMGV="2300";   /* 11/9 修圖：石磬改曲尺形（日夜兩張） */
 /* 入口：[id, 左%, 上%, 大字, 分頁, 要捲到的元素]（量 768×1376 的 set_day_v2，標籤放在東西上方） */
 const SM_SPOTS=[
   ["smFan",15,10.5,"🪭 朝代棋盤","look","#era"],["smWin",55,15,"🪟 深淺色","look","#pt"],["smBoard",50,31,"♟ 棋盤","look","#pv"],
@@ -16636,7 +16647,7 @@ function Viewer(v,c,id){
    書名、標籤都由程式疊上去（圖上沒有字）。接 07w 走路（SHW_LIBMAP，上二樓沿樓梯踏板走、再走二樓迴廊；樓上身高照透視縮小，回饋 807）、07x 縮放。圖片網址帶 LB_IMGV。
    開關 LIBMAP_ON（false＝照舊清單）；樣式在 lbCss */
 const LIBMAP_ON=true;   /* 開發者 11/8 照建議先開 */
-const LB_IMGV="2200";
+const LB_IMGV="2300";   /* 11/9 修圖：驚燕改從天頭垂下 */
 const LB_OLD=[["shiqingyaqu","適情","適情雅趣"],["juzhongmi","橘中","橘中秘"],["meihuapu","梅花","梅花譜"],["kaiju","開局","古典開局譜"],["canju","殘局","古典殘局譜"],["brilliant","妙棋","妙棋精選"]];   /* [書, 書櫥格子上的短名, 全名] */
 /* 6 格書櫥的位置（格子中心，%；上下三層、每層兩格） */
 const LB_CELLS=[[10,55.5],[21,54],[10,60],[21,58.5],[10,64.5],[21,62.5]];
