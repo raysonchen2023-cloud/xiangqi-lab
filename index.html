@@ -1341,7 +1341,7 @@ html[data-era=qin] .view:has(>.shp-rd),html[data-era=wudai] .view:has(>.shp-rd){
       if(!window.caches)return go();caches.keys().then(function(ks){return Promise.all(ks.filter(function(k){return k.indexOf("xqlab-app-")===0}).map(function(k){return caches.delete(k)}))})
         .then(function(){return navigator.serviceWorker&&navigator.serviceWorker.getRegistration()}).then(function(r){return r&&r.update()}).catch(function(){}).then(go)}};setTimeout(chk,4000)})();
 </script>
-<script>window.XQ_OFFLINE=true;window.XQ_BUILD="20261109-2000";</script>
+<script>window.XQ_OFFLINE=true;window.XQ_BUILD="20261109-2015";</script>
 <script src="core.js"></script>
 <script src="engine.js"></script>
 <script src="local.js"></script>
@@ -12954,7 +12954,22 @@ const lbsLs={get(k,d){try{const v=localStorage.getItem("xq_"+k);return v==null?d
 let LBS_SET=null;
 function lbsList(){const L=store.get("lbBlock",[]);return Array.isArray(L)?L.filter(x=>x&&x.id):[]}
 function lbsSetOf(){if(!LBS_SET)LBS_SET=new Set(lbsList().map(x=>String(x.id)));return LBS_SET}
-window.XQ_BLOCKED=id=>!!id&&lbsSetOf().has(String(id));
+window.XQ_BLOCKED=id=>!!id&&(lbsSetOf().has(String(id))||lbsBanned(id));   /* 回饋 852：停權名單上的人也當成已封鎖 */
+
+/* ---------- 回饋 852（停權名單）：開發者用 tools/ban.js 改 data/banlist.json 再發布（只有開發者能 push，所以不用另外簽名）。
+   App 每次打開、每次進大廳都抓一次（最多每 10 分鐘一次），fetch 用 no-store；網址帶 ?pre=1，src/sw.js 才不會攔下來拿舊的快取（sw.js 一般 json 是先看快取）。
+   抓到存在 xq_banList，離線時用上次的。名單上的別人＝已封鎖（XQ_BLOCKED）；自己在名單上（XQ_SELFBANNED）：大廳只顯示說明，src/net.js 不公開在線狀態、不能邀請配對報名 ---------- */
+const LBS_BAN_GAP=10*60000;
+let LBS_BANC=null;
+function lbsBanIds(){if(LBS_BANC)return LBS_BANC;const B=lbsLs.get("banList",null);LBS_BANC=B&&B.ids&&typeof B.ids==="object"?B.ids:{};return LBS_BANC}
+function lbsBanned(id){return!!id&&Object.prototype.hasOwnProperty.call(lbsBanIds(),String(id))}
+window.XQ_BANNED=id=>lbsBanned(id);
+window.XQ_SELFBANNED=()=>{try{return lbsBanned(meInfo().id)}catch(e){return false}};
+let LBS_BAN_P=null;
+function lbsBanFetch(){if(LBS_BAN_P)return LBS_BAN_P;if(Date.now()-(+lbsLs.get("banAt",0)||0)<LBS_BAN_GAP)return Promise.resolve(false);lbsLs.set("banAt",Date.now());
+  LBS_BAN_P=fetch("data/banlist.json?pre=1&t="+Math.floor(Date.now()/60000),{cache:"no-store"}).then(r=>r.ok?r.json():null).then(j=>{if(!j||typeof j.ids!=="object"||!j.ids)return false;
+    const old=JSON.stringify(lbsBanIds());lbsLs.set("banList",{v:j.v||1,at:j.at||"",ids:j.ids,got:Date.now()});LBS_BANC=null;if(JSON.stringify(j.ids)!==old)lbsPing();return true}).catch(()=>false).finally(()=>{LBS_BAN_P=null});return LBS_BAN_P}
+setTimeout(()=>{try{if(OFF)lbsBanFetch()}catch(e){}},2500);
 /* 改了名單：重送一次自己的在線狀態，伺服器回傳那一則時大廳就會重畫（net.js 收到 u/ 會發 people） */
 function lbsPing(){LBS_SET=null;try{if(window.XQNet&&XQNet.refresh)XQNet.refresh()}catch(e){}try{window.dispatchEvent(new CustomEvent("xq-block"))}catch(e){}}
 function lbsBlock(p){if(!p||!p.id)return;const L=lbsList().filter(x=>x.id!==p.id);L.push({id:String(p.id),name:String(p.name||"棋友").slice(0,16),at:Date.now()});store.set("lbBlock",L.slice(-300));lbsPing();toast(`🚫 已封鎖 ${p.name||"這位棋友"}`)}
@@ -12983,7 +12998,7 @@ function lbsReport(p){if(!p||!p.id)return;const R=store.get("lbRep",{})||{},last
       e.target.disabled=true;e.target.textContent="送出中…";
       const W=LBS_REASONS.find(x=>x[0]===why),note=b.querySelector("#lbsTx").value.trim(),also=b.querySelector("#lbsAlso").checked&&!window.XQ_BLOCKED(p.id);
       let live=p.info||null;try{if(!live)live=(store.get("oppSnap",{})||{})[p.id]||null}catch(e){}
-      let chat=[];try{chat=XQNet.chatOf?XQNet.chatOf(p.id).slice(-5).map(x=>"「"+x.text+"」"):[]}catch(e){}   /* chatOf：這盤收到他的聊天（封鎖了也拿得到，給開發者當證據） */
+      let chat=[];try{chat=XQNet.chatOf?XQNet.chatOf(p.id).slice(-5).map(x=>x.text?"「"+x.text+"」":"〔快捷語〕"+(((typeof EMOTES!=="undefined"?EMOTES:[]).find(q=>q[0]===x.e)||[])[2]||x.e)):[]}catch(e){}   /* 回饋 850：快捷語（表情代號）也寫成原句 */   /* chatOf：這盤收到他的聊天（封鎖了也拿得到，給開發者當證據） */
       const d=new Date();let tw="";try{tw=d.toLocaleString("zh-TW",{hour12:false,timeZone:"Asia/Taipei"})}catch(e){tw=d.toLocaleString()}
       const text=["🚩 檢舉線上玩家",`被檢舉的人：${p.name||"（沒有名字）"}`,`對方 ID：${p.id}`,`原因：${W?W[1]:why}`,note?`補充：${note}`:"",`在哪裡：${lbsWhere(p.id)}`,`時間：${tw}（台灣時間）／${d.toISOString()}`,
         live&&live.pts!=null&&window.XQNet&&XQNet.rankOf?`對方資料：${XQNet.rankOf(live.pts)} ${live.pts} 分${live.city?"・"+live.city:""}${live.kind?"・"+live.kind:""}`:"",
@@ -13005,7 +13020,8 @@ function lbsCardRow(oid,name){if(!oid||!window.XQNet)return;let mid="";try{mid=X
   let nm=name||"";if(!nm){try{const s=(store.get("oppSnap",{})||{})[oid];nm=s&&s.name||""}catch(e){}}if(!nm){const h=b.querySelector("div[style*='font-size:22px']");nm=h?h.textContent.trim():"棋友"}
   let info=null;try{info=XQNet.people().find(x=>x.id===oid)||(store.get("oppSnap",{})||{})[oid]||null}catch(e){}
   const p={id:String(oid),name:nm,info},row=document.createElement("div");row.className="lbs-row";
-  const paint=()=>{const bl=window.XQ_BLOCKED(p.id);row.innerHTML=bl?`<span class="muted">🚫 你封鎖了他</span><button type="button" data-lbs="un">解除封鎖</button><button type="button" data-lbs="rep">🚩 檢舉</button>`
+  const paint=()=>{if(lbsBanned(p.id)){row.innerHTML='<span class="muted">⛔ 這個帳號已被開發者停權</span>';return}   /* 回饋 852 */
+    const bl=window.XQ_BLOCKED(p.id);row.innerHTML=bl?`<span class="muted">🚫 你封鎖了他</span><button type="button" data-lbs="un">解除封鎖</button><button type="button" data-lbs="rep">🚩 檢舉</button>`
       :`<button type="button" data-lbs="rep">🚩 檢舉</button><button type="button" data-lbs="blk">🚫 封鎖</button>`;
     row.querySelectorAll("[data-lbs]").forEach(x=>x.onclick=e=>{e.stopPropagation();vibrate(5);const k=x.dataset.lbs;
       if(k==="rep"){closeSheet();setTimeout(()=>lbsReport(p),240)}else if(k==="blk"){closeSheet();setTimeout(()=>lbsBlockAsk(p),240)}else{lbsUnblock(p.id);paint()}})};
@@ -13055,6 +13071,19 @@ function lbsSetInject(v){if(!OFF||!window.XQNet)return;const pane=v.querySelecto
   const w=document.createElement("div");w.id="lbSafe";const nl=pane.querySelector("#nmLook"),c=nl&&nl.closest(".card");
   if(c)c.after(w);else pane.append(w);lbsSetPaint()}
 if(typeof Settings==="function"){const f0=Settings;Settings=function(v){const r=f0.apply(this,arguments);try{lbsSetInject(v)}catch(e){console.error(e)}return r}}
+
+/* ---------- 回饋 850（線上聊天只能用快捷語，全部玩家都一樣）：src/net.js 收到文字時問這個——只認 EMOTES（08b-cpugame.js）裡的原句 ---------- */
+window.XQ_CHAT_OK=t=>{t=String(t||"").trim();try{return!!t&&EMOTES.some(q=>q[2]===t)}catch(e){return false}};
+
+/* ---------- 回饋 852：自己被停權時，進大廳只看到說明（單機功能照常）；每次進大廳順便抓一次停權名單（10 分鐘內抓過就不抓） ---------- */
+function lbsBanPage(v){setTop("線上對戰・觀戰",false);setTabs(true,"#/lobby");
+  v.innerHTML=`<div class="pad"><div class="card" style="text-align:center;padding:26px 18px;margin-top:14px;line-height:1.8"><div style="font-size:44px">🏮</div>
+    <h2 style="font-family:var(--serif);margin:6px 0 8px">線上大廳暫時不能使用</h2><p style="margin:0 0 6px">這個帳號暫時不能使用線上大廳，若有疑問請用意見回饋聯絡。</p>
+    <p class="muted" style="font-size:13.5px;margin:0 0 14px">挑戰電腦、石桌往事、殘局、棋譜這些單機功能都照常可以玩。</p>
+    <button class="btn" id="lbsFb">✍ 意見回饋</button><button class="btn ghost" id="lbsHome" style="margin-top:8px">回首頁</button></div></div>`;
+  v.querySelector("#lbsFb").onclick=()=>{try{feedbackSheet()}catch(e){location.hash="#/settings"}};v.querySelector("#lbsHome").onclick=()=>{try{goHome()}catch(e){location.hash="#/"}};return{}}
+if(typeof Lobby==="function"){const f0=Lobby;Lobby=function(v){const was=window.XQ_SELFBANNED();try{lbsBanFetch().then(ch=>{if(ch&&window.XQ_SELFBANNED()!==was&&/^#\/lobby/.test(location.hash))route()})}catch(e){}
+  if(window.XQ_SELFBANNED())return lbsBanPage(v);return f0.apply(this,arguments)}}
 /* ================= ⚙ 設定頁滿版水墨圖「雲河驛站・天字客房」（開發者 11/8 定案：Gemini 方案 1＋3 合體；史學顧問核圖中）=================
    規劃：story/gemini_app/39 號 md；圖：park/setmap/set_day_v4.png、夜版 set_night.png（11/8：炕桌棋盤改成有厚度、比較俯視的棋枰，底線 9 子分得開；Gemini＋兩次局部修：13 把扇、明式衣架與四方平定巾、桌上鏡架銅鏡、羅漢床上的炕桌與腳踏、檻窗、石磬、無蓋宣德爐、單張路引；琴頭翻到右邊、炕桌棋盤都是程式畫；宣紙後製）→ art/setmap/set_day.webp。
    包一層 Settings(v)：原本的四個分頁（角色／棋盤／聲音／系統）照舊畫、照舊綁好，整包收進從下方滑出的「宣紙畫軸」面板；
@@ -16548,11 +16577,9 @@ function PvpGame(v){
       b.querySelector("#cp").onclick=async()=>{try{await navigator.clipboard.writeText(link);toast("已複製連結")}catch(e){prompt("複製這個連結",link)}}})}
   // 表情：只在連線對戰時用
   let lastEmo=null;
-  function emoteSheet(){sheet(NET?"跟對手說話":"傳個表情給對手",b=>{b.innerHTML=(NET?`<div class="row" style="gap:6px;margin-bottom:10px"><input id="say" maxlength="80" placeholder="打字跟對方聊天…" enterkeyhint="send"
-      style="flex:1;min-width:0;padding:11px;border:1px solid var(--line);border-radius:12px;background:var(--card);color:inherit"><button class="pill" id="sayGo" style="background:var(--accent);color:#fff;border:none;padding:9px 14px">送出</button></div>
-      ${(window.XQNet?XQNet.chatLog():[]).slice(-8).map(x=>`<div class="muted" style="font-size:13px">${esc(x.name||PLAYER[x.by]||"")}：${esc(x.text)}</div>`).join("")}`:"")+`<div class="emogrid">${EMOTES.map(([k,i,t])=>`<button data-e="${k}"><span>${i}</span>${esc(t)}</button>`).join("")}</div>`;
-    const sy=b.querySelector("#say");if(sy){const go=async()=>{const t=sy.value.trim();if(!t)return;sy.value="";closeSheet();try{render(await api("/pvp/chat",{text:t}))}catch(e){toast(e.message)}};
-      b.querySelector("#sayGo").onclick=go;sy.onkeydown=e=>{if(e.key==="Enter"){e.preventDefault();go()}}}
+  function emoteSheet(){sheet(NET?"跟對手說話":"傳個表情給對手",b=>{const qt=x=>x.text||((EMOTES.find(q=>q[0]===x.e)||[])[2]||""),qn=x=>{const G=window.XQNet&&XQNet.game&&XQNet.game(),o=G&&(x.by==="r"?G.red:x.by==="b"?G.black:null);return x.name||(o&&o.name)||PLAYER[x.by]||""};   /* 回饋 850（線上聊天只能用快捷語，開發者 11/9）：拿掉打字框、只留快捷語按鈕；上面列最近 8 句快捷語 */
+    b.innerHTML=(NET?`<p class="muted" style="font-size:12.5px;margin:0 0 8px">線上對局只能用下面的快捷語跟對手說話</p>
+      ${(window.XQNet?XQNet.chatLog():[]).filter(qt).slice(-8).map(x=>`<div class="muted" style="font-size:13px">${esc(qn(x))}：${esc(qt(x))}</div>`).join("")}`:"")+`<div class="emogrid">${EMOTES.map(([k,i,t])=>`<button data-e="${k}"><span>${i}</span>${esc(t)}</button>`).join("")}</div>`;
     b.querySelectorAll("[data-e]").forEach(x=>x.onclick=async()=>{closeSheet();try{const s=await api("/pvp/emote",{seat,e:x.dataset.e});showEmote(x.dataset.e,true);lastEmo=Math.max(lastEmo||0,...(s.emotes||[]).map(m=>m.id));render(s)}catch(e){toast(e.message)}})})}
   function tap(i){if(!st||st.result)return;
     if(seat==="w"){toast("你在觀戰");return}
