@@ -92,7 +92,8 @@ var XQ=(function(){
   /* 意見回饋 415：這盤用過幾次提示（/play/hint、雲河棋路的提示棋 /play/hintmark）、悔過幾次棋（/play/undo）。
      存檔時一起寄進對局紀錄，我的戰績算棋力、成長時把這種盤排除，才公平；舊存檔沒有這兩欄就照算 */
   const assist=G=>({...(G&&G.hintN?{hintN:G.hintN}:{}),...(G&&G.undoN?{undoN:G.undoN}:{})});
-  const savePlay=()=>ls.set("play",{id:P.id,human:P.human,level:P.level,rlv:P.rlv==null?null:P.rlv,ranked:!!P.ranked,reward:!!P.reward,arena:P.arena||null,journey:P.journey||null,stamp:P.stamp||null,prize:P.prize||null,rk:P.rk,rate:P.rate||null,result:P.result,practice:P.practice||null,...assist(P),moves:saveMoves(P.moves)});
+  const keepStart=G=>({...(G&&G.start?{start:G.start,startTurn:G.startTurn||"r"}:{}),...(G&&G.noPerp?{noPerp:true}:{}),...(G&&G.styleOn!=null?{styleOn:G.styleOn}:{})});   /* 對局中途可接續（開發者 11/9）：殘局起手、讓子的關（start）關掉 App 再打開或收起來再拿出來，要從同一個起始局面重建，不然盤面會錯 */
+  const savePlay=()=>ls.set("play",{id:P.id,human:P.human,level:P.level,rlv:P.rlv==null?null:P.rlv,ranked:!!P.ranked,reward:!!P.reward,arena:P.arena||null,journey:P.journey||null,stamp:P.stamp||null,prize:P.prize||null,rk:P.rk,rate:P.rate||null,result:P.result,practice:P.practice||null,...assist(P),...keepStart(P),moves:saveMoves(P.moves)});
   function ensureP(){if(P)return;const s=ls.get("play",null);if(s&&s.moves){P=s;P.hint=null;stateRebuild(P)}else playNew("r",3);setTimeout(playEngine,0)}
   // pre：錯棋重練，先擺上舊對局到錯棋之前的著法（moves），info 記上次走了什麼
   // arena：公園朝代擂台（意見回饋 255）＝這盤是挑戰哪個朝代的擂主；贏了蓋那個朝代的章
@@ -103,7 +104,7 @@ var XQ=(function(){
   // 積分挑戰下到一半就丟掉（開同一種的新局）：算輸，不然輸棋前開新局就能躲掉扣分
   function forfeit(G){if(!G||!G.ranked||G.result||G.moves.length<2)return;const keep=P;P=G;
     P.result={w:opp(P.human),why:"中途離開，算輸"};cpuRateApply("l");pushGame("play",{id:P.id,date:P.id.slice(0,10),level:0,ranked:true,rk:P.rk,human:P.human,result:P.result,...assist(P),moves:saveMoves(P.moves)});P=keep}
-  const stashOut=G=>({id:G.id,human:G.human,level:G.level,rlv:G.rlv==null?null:G.rlv,ranked:!!G.ranked,reward:!!G.reward,arena:G.arena||null,journey:G.journey||null,rk:G.rk,result:null,practice:G.practice||null,...assist(G),moves:saveMoves(G.moves)});
+  const stashOut=G=>({id:G.id,human:G.human,level:G.level,rlv:G.rlv==null?null:G.rlv,ranked:!!G.ranked,reward:!!G.reward,arena:G.arena||null,journey:G.journey||null,rk:G.rk,result:null,practice:G.practice||null,...assist(G),...keepStart(G),moves:saveMoves(G.moves)});
   // play2：收起來的棋，每一種一盤 {cpu,arena,journey}（舊版只存一盤，讀的時候換成新格式）
   function stashAll(){let s=ls.get("play2",null);if(s&&s.moves)s={[kindOf(s)]:s};const o={};
     for(const k of["cpu","arena","journey","practice"]){const g=s&&s[k];if(g&&g.moves&&g.moves.length&&!g.result)o[k]=g}return o}
