@@ -1341,7 +1341,7 @@ html[data-era=qin] .view:has(>.shp-rd),html[data-era=wudai] .view:has(>.shp-rd){
       if(!window.caches)return go();caches.keys().then(function(ks){return Promise.all(ks.filter(function(k){return k.indexOf("xqlab-app-")===0}).map(function(k){return caches.delete(k)}))})
         .then(function(){return navigator.serviceWorker&&navigator.serviceWorker.getRegistration()}).then(function(r){return r&&r.update()}).catch(function(){}).then(go)}};setTimeout(chk,4000)})();
 </script>
-<script>window.XQ_OFFLINE=true;window.XQ_BUILD="20261109-1945";</script>
+<script>window.XQ_OFFLINE=true;window.XQ_BUILD="20261109-2000";</script>
 <script src="core.js"></script>
 <script src="engine.js"></script>
 <script src="local.js"></script>
@@ -2394,6 +2394,7 @@ function route(){
   const h=location.hash.replace(/^#/,"")||"/",p=h.split("/").filter(Boolean).map(decodeURIComponent);
   if(OFF&&window.XQNet&&XQNet.finished()&&p[0]!=="pvp")XQNet.leave();
   if(REVIEW_BACK&&p[0]!=="db"&&navKey(location.hash)!==navKey(REVIEW_BACK.h))REVIEW_BACK=null;   /* 意見回饋 607：看完報告沒有回到那盤棋，就不再留著「回來不要開新局」的記號 */
+  if(OFF&&typeof preGate==="function"&&preGate(p))return;   /* 回饋 845（開發者 11/9 選：折衷先載）：這頁要的圖還沒下載到，先蓋水墨等待畫面、優先下載，好了再進（09b-preload.js） */
   if(!p.length)return screen=Home(v);
   if(p[0]==="hub"&&(p[1]==="battle"||p[1]==="learn"))return screen=Home(v,p[1]);
   if(p[0]==="camp")return screen=Camp(v,p[1]?+p[1]:0);
@@ -2573,18 +2574,21 @@ async function homeStatus(box,tries){
 // 外觀自動下載：App 打開 3 秒後，把所有朝代的棋盤、棋子圖和字形抓下來並先解碼（約 2.8 MB，存在手機裡），第一次切換外觀才不會卡
 const LOOK_IMGS=[];
 {const k=store.get("sndStyle","wood");if(/^s\d\d$/.test(k))setTimeout(()=>loadSfx(k),1500)}
-setTimeout(()=>{if(navigator.connection&&navigator.connection.saveData)return;
+setTimeout(async()=>{await window.PRE_FIRST;if(navigator.connection&&navigator.connection.saveData)return;   /* 回饋 845（開發者 11/9 選：折衷先載）：各朝棋盤、棋子的預覽等首批載完才抓，不跟首批搶網路 */
   const boards=[...new Set(Object.keys(BOARD_IMG).map(k=>BOARD_IMG_FILE[k]||k))],urls=[];
   for(const k of boards)urls.push(`data/boards/${k}.webp`);for(const k in PIECE_INK)for(const s of"rb")urls.push(`data/pieces/${k}-${s}.webp`);
   let i=0;const next=()=>{if(i>=urls.length){for(const k of GLY_ERAS)needGly(k,()=>{});return}
     const im=new Image();im.src=urls[i++];LOOK_IMGS.push(im);(im.decode?im.decode():Promise.resolve()).catch(()=>{}).then(next)};
   next();next()},3000);
 // 特級大師對局（33 MB）自動下載：App 打開 20 秒後，沒下載過就在背景抓一次（存在手機裡，離線也能看）
-if(OFF)setTimeout(async()=>{try{if(!navigator.onLine||(navigator.connection&&navigator.connection.saveData))return;const c=await caches.open("xqlab-data");
-  if(await c.match(new URL("data/gmgames.json",location.href).href))return;await fetch("data/gmgames.json");}catch(e){}},20000);
+if(OFF)setTimeout(async()=>{try{await window.PRE_FIRST;if(!navigator.onLine||(navigator.connection&&navigator.connection.saveData))return;const c=await caches.open("xqlab-data");   /* 回饋 845（開發者 11/9 選：折衷先載）：首批載完才開始抓 */
+  if(await c.match(new URL("data/gmgames.json",location.href).href))return;if(window.PRE_ENG)await window.PRE_ENG.catch(()=>{});   /* 回饋 845：引擎（下棋要用）先下載完再抓大師對局 */
+  await fetch("data/gmgames.json");}catch(e){}},20000);
 // Pikafish 引擎自動下載：App 打開 5 秒後，沒下載過就在背景下載（約 48 MB，只要一次；開了「省數據模式」就不自動下載）
-if(OFF&&window.XQEngine&&XQEngine.prefetch)setTimeout(async()=>{try{if(await XQ.engineCached()||!navigator.onLine||(navigator.connection&&navigator.connection.saveData))return;
-  await XQEngine.prefetch();toast("✅ Pikafish 引擎已自動下載完成，離線也能下棋");const h=document.querySelector("#hStatus");if(h&&h.isConnected)homeStatus(h)}catch(e){}},5000);
+if(OFF&&window.XQEngine&&XQEngine.prefetch)setTimeout(async()=>{try{await window.PRE_FIRST;   /* 回饋 845（開發者 11/9 選：折衷先載）：首批載完才開始抓引擎（49 MB），不跟首批搶網路 */
+  if(await XQ.engineCached()||!navigator.onLine||(navigator.connection&&navigator.connection.saveData))return;
+  const pe=XQEngine.prefetch();window.PRE_ENG=pe.finally(()=>{window.PRE_ENG=null});   /* 回饋 845：引擎下載中，外觀的背景下載讓路（09b-preload.js preBg 只留 1 個） */
+  await pe;toast("✅ Pikafish 引擎已自動下載完成，離線也能下棋");const h=document.querySelector("#hStatus");if(h&&h.isConnected)homeStatus(h)}catch(e){}},5000);
 // 從背景切回 App：首頁的連線燈號重新檢查（手機網路要一點時間恢復，所以等一下再測）
 // 一般玩家：只有「雙人對戰邀請」（帶 seat）的連線才留著；單純連電腦的連結（舊的分享網址）一律清掉，不會出現連不到電腦
 if(OFF)setTimeout(()=>{const r0=XQ.remoteInfo&&XQ.remoteInfo();if(r0&&!r0.seat&&!DEVMODE())XQ.disconnect()},0);
@@ -14963,7 +14967,7 @@ function sciMount(P,I,D){if(!SCENE_INFO_ON||!P||!I||!D||!D.it||P.dataset.sci)ret
   const onImg=t=>!!t&&!!t.closest&&P.contains(t)&&!t.closest("button,a,input,select,textarea,label,[role=button],[tabindex],.v7")&&!P.classList.contains("pc-run")&&!off();
   P._sci={D,I,pt,onImg};
   P.addEventListener("click",e=>{if(e.__sci||e.defaultPrevented||!onImg(e.target))return;const p=pt(e);if(!p||p[0]<0||p[1]<0||p[0]>W||p[1]>H)return;const h=sciHit(D,P,I,p);if(!h)return;
-    sciDraw(P,I,D,[h.s],"tap",800);sciShow(D,h.x,sciNight(I),P,I)});
+    sciShow(D,h.x,sciNight(I),P,I)});   /* 回饋 833（開發者 11/9）：點物件時不再描金邊框，直接跳說明卡 */
   /* 電腦滑鼠移到物件上換成手指游標（手機沒有游標，不影響） */
   P.addEventListener("pointermove",e=>{if(e.pointerType!=="mouse")return;const p=onImg(e.target)?pt(e):null,on=!!(p&&sciHit(D,P,I,p));if(P.dataset.sciCur!==(on?"1":"")){P.dataset.sciCur=on?"1":"";P.style.cursor=on?"pointer":""}});
   /* 讀螢幕的人：一排看不見的按鈕（同名的只列一次），一樣開小卡（只開現在看得到的那一件） */
@@ -14976,7 +14980,7 @@ function sciMount(P,I,D){if(!SCENE_INFO_ON||!P||!I||!D||!D.it||P.dataset.sci)ret
 function sciPre(S,e){const P=S&&S.I,Z=P&&P._sci;if(!Z||S.pass||e.__sci||!S.ready)return;const g=S.go;if(g&&!g.free&&g.act>=0)return;if(!Z.onImg(e.target))return;
   const p=Z.pt(e),W=Z.D.W||768,H=Z.D.H||1376;if(!p||p[0]<0||p[1]<0||p[0]>W||p[1]>H)return;
   const X=S.o&&S.o.X;if(X&&X.r&&typeof shwExitOn==="function"&&shwExitOn()){const x=p[0]/W*100,y=p[1]/H*100;if(x>=X.r[0]&&x<=X.r[2]&&y>=X.r[1]&&y<=X.r[3])return}
-  const h=sciHit(Z.D,P,Z.I,p);if(!h)return;e.__sci=1;sciDraw(P,Z.I,Z.D,[h.s],"tap",800);sciShow(Z.D,h.x,sciNight(Z.I),P,Z.I)}
+  const h=sciHit(Z.D,P,Z.I,p);if(!h)return;e.__sci=1;sciShow(Z.D,h.x,sciNight(Z.I),P,Z.I)}
 if(typeof shwClick==="function"){const f0=shwClick;shwClick=function(S,e){try{sciPre(S,e)}catch(x){}return f0.apply(this,arguments)}}
 function sciPage(v,D){const P=v&&v.querySelector(".shp-page.cq"),I=P&&P.querySelector(":scope>img");sciMount(P,I,D)}
 /* 自動接：07w6b-scenedata.js 的 SCI_REG（[{re:圖網址的正規式, img:找圖的選擇器（不寫＝.shp-page.cq>img）, D:登記資料}]）。
@@ -16378,68 +16382,122 @@ function ldShow(ov){const im=ov.querySelectorAll(".ld-img img"),tt=ov.querySelec
   const go=()=>{if(!ov.isConnected)return;const [id,t,q,s]=LD_Q[i%LD_Q.length],a=im[k],b=im[1-k];
     const on=()=>{if(!ov.isConnected)return;a.classList.add("on");b.classList.remove("on");Q.classList.remove("on");setTimeout(()=>{tt.textContent=t;qt.textContent=q;sr.textContent="── "+s;Q.classList.add("on")},350);k=1-k;i++;setTimeout(go,5200)};
     a.onload=on;a.onerror=()=>{i++;setTimeout(go,400)};a.src="data/loading/"+id+".webp"};go()}
-async function preloadAll(){if(!OFF||!("caches" in window))return;
-  let M;try{M=await (await fetch("data/preload.json",{cache:"no-cache"})).json()}catch(e){return}
-  /* 開發者 11/4：更新後常常沒有把所有東西都搬進手機——改成每次開 App 都先蓋載入畫面、檢查全部檔案，缺的、換過的都下載完才進首頁（20 秒後可以先進去逛） */
-  const done=false;let c;try{c=await caches.open("xqlab-look")}catch(e){return}
+/* 回饋 845（開發者 11/9 選：折衷先載）：開 App 只先載「進首頁和第一盤棋需要的」——preload.json 每一項第四格是層級（0＝首批；"<朝代>"＝目前在那一朝才算首批；1＝背景，
+   由 xiangqi-lab/tools/preload-list.js 照資料夾規則算），載完就進首頁。其餘在背景慢慢下載：下棋時、App 在背景時、某一頁正在等圖時都暫停，頂端一條細線顯示進度。
+   玩家走進一頁而那頁要的圖還沒下載到（preload.json 的 pages 規則＋目前朝代的首批）：只為那一頁蓋水墨暈開的等待畫面，優先下載，好了才進（preGate，02-shell.js 的 route() 呼叫）。
+   舊玩家全部載過的照舊不重下；換過內容（指紋不同）的檔還沒換新前，記錄裡留舊指紋，下次開 App 或走進用到它的頁之前一定先換新。 */
+const PRE={M:null,c:null,pend:new Map(),fly:new Map(),PH:{},NH:{},got:0,first:false,bgN:0,bgT:0,bgTotal:0,bgGot0:0,gate:null,pass:null};
+let PRE_FIRST_OK=()=>{};window.PRE_FIRST=new Promise(r=>{PRE_FIRST_OK=r});   /* 回饋 845：首批好了（或根本不用下載）才開始抓引擎、大師對局這些大檔（02-shell.js），不跟首批搶網路 */
+const PRE_ERAS=["classic","qin","han","sanguo","weijin","nanbei","sui","tang","wudai","song","yuan","ming","qing"],PRE_ERA_RE=new RegExp("[/_.]("+PRE_ERAS.join("|")+")([/_.-]|$)");
+const preEraOf=u=>{const m=PRE_ERA_RE.exec(u);return m?m[1]:null};
+const preFirstOf=(t,e)=>t===undefined||t===0||t===e;   /* 舊格式（沒有第四格）一律算首批＝跟以前一樣全部先載 */
+const preIsFirst=(x,e)=>preFirstOf(x.t,e)||x.u==="data/tripo_app/"+store.get("pChar","")+".glb";   /* 回饋 845：選了真實 3D 的玩家，自己的角色模型也算首批 */
+const PRE_PLAY=/^#\/(cpu|arena|pvp|qqev|journey\/play|redo\/play|canju\/.|battle\/[^/]+\/.|ship\/(lv|pz)|shelf\/[^/]+\/[^/]+\/game)/;   /* 正在下棋的頁：背景下載暫停，確保對局不卡 */
+const PRE_LATE=/^data\/(battles|relics|tripo_app|qa|inkfx)\//;   /* 背景裡最後才抓的大宗（古戰場、珍品、真實 3D…）；故事插圖、人物比較常一進來就看，排前面 */
+const preAbs=u=>new URL(u,new URL(".",location.href).href).href;
+function preSaveH(now){clearTimeout(PRE.hT);const go=()=>{if(!PRE.M)return;const o={};for(const u in PRE.NH){if(PRE.pend.has(u)){if(PRE.PH[u])o[u]=PRE.PH[u]}else o[u]=PRE.NH[u]}
+    store.set("preH",o);if(!PRE.pend.size)store.set(PRE_KEY,PRE.M.v)};   /* 還沒換新的檔留舊指紋，下次才知道還要重抓 */
+  if(now)go();else PRE.hT=setTimeout(go,3000)}
+/* 意見回饋 634：換過的朝代字型下載好就直接套用到畫面上（後加的同名字型優先），不用關掉 App 再開 */
+async function preFont(x){const m=x.fr&&/^data\/fonts\/xq-(\w+)\.woff2$/.exec(x.u);if(!m||!window.FontFace)return;
+  try{const r=await PRE.c.match(preAbs(x.u));if(!r)return;const ff=new FontFace("XQ "+m[1],await r.arrayBuffer(),{display:"swap"});await ff.load();document.fonts.add(ff)}catch(e){}}
+/* 意見回饋 605：請求帶 ?pre=1 讓 service worker 放行，只由這裡存一次；每個請求有逾時（20 秒＋每 MB 10 秒）。同一個檔同時只下載一次（背景和等待畫面共用） */
+function preGet(x){if(PRE.fly.has(x.u))return PRE.fly.get(x.u);const ac=new AbortController(),to=setTimeout(()=>ac.abort(),20000+x.sz/1048576*10000);
+  const p=fetch(preAbs(x.u)+"?pre=1"+(x.fr?"&fresh="+x.h:""),{cache:x.fr?"no-store":"default",signal:ac.signal}).then(r=>{if(!r.ok)throw new Error(r.status);return PRE.c.put(preAbs(x.u),r)})
+    .then(()=>{if(PRE.pend.get(x.u)===x){PRE.pend.delete(x.u);PRE.got+=x.sz}preFont(x);preSaveH()},e=>{x.tries=(x.tries||0)+1;x.wait=Date.now()+30000;throw e})
+    .finally(()=>{clearTimeout(to);PRE.fly.delete(x.u)});
+  PRE.fly.set(x.u,p);return p}
+const prePool=(list,MAXN,MAXB,onDone)=>new Promise(ok=>{let n=0,b=0;const L=list.slice();const next=()=>{if(!L.length&&!n)return ok();
+  while(L.length&&n<MAXN&&(n===0||b+L[0].sz<=MAXB)){const x=L.shift();n++;b+=x.sz;preGet(x).then(()=>onDone(x,true),()=>onDone(x,false)).finally(()=>{n--;b-=x.sz;next()})}};next()});
+/* 背景下載：一次最多 4 個（不搶正在玩的網路），目前朝代的先，古戰場、關卡圖這些大宗最後；失敗的 30 秒後再試，最多三次 */
+function preBg(){const kick=d=>{clearTimeout(PRE.bgT);PRE.bgT=setTimeout(tick,d)};
+  const tick=()=>{PRE.bgT=0;preLine();if(!PRE.pend.size){preSaveH(true);return}
+    if(document.hidden||!navigator.onLine||PRE.gate||PRE_PLAY.test(location.hash))return kick(2000);
+    const e=store.get("era","classic"),now=Date.now();let left=false;
+    const MAXN=window.PRE_ENG?1:4;   /* 引擎（49 MB，下棋要用）下載中：外觀只留 1 個，讓引擎先到 */
+    while(PRE.bgN<MAXN){let best=null,br=9;for(const x of PRE.pend.values()){if((x.tries||0)>=3)continue;left=true;if(PRE.fly.has(x.u)||x.wait>now)continue;
+        const r=(preEraOf(x.u)===e?0:2)+(PRE_LATE.test(x.u)?1:0);if(r<br){br=r;best=x;if(!r)break}}
+      if(!best)break;PRE.bgN++;preGet(best).catch(()=>{}).finally(()=>{PRE.bgN--;kick(30)})}
+    if(!left&&!PRE.bgN){preSaveH(true);preLine();return}   /* 剩下的都失敗三次：先停，下次開 App 再補 */
+    kick(5000)};
+  PRE.bgKick=kick;kick(0)}
+/* 頂端一條細線＝背景下載進度（下棋時不顯示）；關於頁要顯示「已下載 X／全部 Y」可以用 preStat() */
+function preStat(){const M=PRE.M;if(!M)return null;let lb=0;for(const x of PRE.pend.values())lb+=x.sz;return{n:M.items.length-PRE.pend.size,all:M.items.length,left:PRE.pend.size,leftBytes:lb,bytes:M.items.reduce((t,x)=>t+x[1],0)}}
+function preLine(){let el=document.getElementById("preline");const on=PRE.first&&PRE.pend.size&&PRE.bgTotal&&!PRE_PLAY.test(location.hash)&&!PRE.gate;
+  if(!on){if(el)el.remove();return}
+  if(!el){el=document.createElement("div");el.id="preline";el.setAttribute("aria-hidden","true");el.innerHTML="<i></i>";document.body.append(el)}
+  el.firstChild.style.width=Math.max(2,Math.min(100,(PRE.got-PRE.bgGot0)*100/PRE.bgTotal)).toFixed(1)+"%"}
+function preCss(){if(document.getElementById("precss"))return;const s=document.createElement("style");s.id="precss";
+  s.textContent=`#preline{position:fixed;left:0;right:0;top:var(--safeT,0px);height:2px;z-index:9000;pointer-events:none;background:rgba(255,240,210,.08)}#preline i{display:block;height:100%;width:0;background:rgba(222,186,120,.75);transition:width .6s}
+#pgate{position:fixed;inset:0;z-index:9998;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:14px;background:#F3ECDD;transition:opacity .35s;overflow:hidden}#pgate.out{opacity:0;pointer-events:none}
+#pgate .pg-ink{position:relative;width:150px;height:150px;opacity:0;animation:pgIn .4s .25s forwards}
+#pgate .pg-ink i{position:absolute;inset:0;border-radius:50%;background:radial-gradient(circle,rgba(42,31,21,.78) 0,rgba(42,31,21,.45) 32%,rgba(42,31,21,.12) 58%,rgba(42,31,21,0) 72%);filter:blur(5px);transform:scale(.15);animation:pgInk 2.6s ease-out infinite}
+#pgate .pg-ink i:nth-child(2){animation-delay:.85s}#pgate .pg-ink i:nth-child(3){animation-delay:1.7s}
+#pgate .pg-t{font-family:var(--serif,serif);font-size:17px;color:#2A1F15;letter-spacing:.2em;opacity:0;animation:pgIn .4s .35s forwards}#pgate .pg-n{font-size:12px;color:#7A6A58;min-height:1em;opacity:0;animation:pgIn .4s .6s forwards}
+@keyframes pgInk{0%{transform:scale(.15);opacity:.95}70%{opacity:.35}100%{transform:scale(1.45);opacity:0}}@keyframes pgIn{to{opacity:1}}`;document.head.append(s)}
+/* 走進一頁要先有的檔：preload.json 的 pages 規則（{e}＝目前朝代、{1}＝網址第二段）＋目前朝代的首批（玩家換了朝代時，新朝代的棋盤、圖示還沒到） */
+function preNeed(p){if(!PRE.M||!PRE.pend.size)return[];const P=PRE.M.pages||{},e=store.get("era","classic"),k1=p[0]||"",k2=p.slice(0,2).join("/"),now=Date.now();
+  const a1=String(p[1]||"").replace(/[^\w-]/g,""),pats=[...(P[k2]||[]),...(k2!==k1?P[k1]||[]:[])].map(s=>{try{return new RegExp(s.split("{e}").join(e).split("{1}").join(a1))}catch(x){return null}}).filter(Boolean);
+  const out=[];for(const x of PRE.pend.values()){if((x.tries||0)>=3||x.wait>now)continue;if(preIsFirst(x,e)||pats.some(r=>r.test(x.u)))out.push(x)}return out}
+function preGateOff(){PRE.gate=null;const g=document.getElementById("pgate");if(g&&!g.classList.contains("out")){g.classList.add("out");setTimeout(()=>{if(g.classList.contains("out"))g.remove()},400)}if(PRE.bgKick)PRE.bgKick(300)}
+/* 02-shell.js route() 一開始呼叫：這頁的圖都在了就回 false（照常畫）；還缺就蓋等待畫面、優先下載，好了再 route() 一次，回 true */
+function preGate(p){try{const h0=location.hash;
+  if(PRE.pass===h0){PRE.pass=null;preGateOff();return false}PRE.pass=null;
+  if(!PRE.M||document.getElementById("preov")||!navigator.onLine){preGateOff();return false}
+  const need=preNeed(p);if(!need.length){preGateOff();return false}
+  if(PRE.gate&&PRE.gate.h===h0)return true;
+  preCss();let g=document.getElementById("pgate");if(g&&g.classList.contains("out")){g.remove();g=null}
+  if(!g){g=document.createElement("div");g.id="pgate";g.innerHTML=`<div class="pg-ink"><i></i><i></i><i></i></div><div class="pg-t">研墨鋪紙…</div><div class="pg-n"></div>`;document.body.append(g);keepAwake("pgate",()=>!!document.getElementById("pgate"))}
+  const G=PRE.gate={h:h0},n=g.querySelector(".pg-n"),total=need.reduce((t,x)=>t+x.sz,0);let got=0;preLine();
+  const fin=()=>{if(PRE.gate!==G)return;clearTimeout(G.to);PRE.pass=h0;if(location.hash===h0)route();else preGateOff()};
+  G.to=setTimeout(fin,25000+total/1048576*4000);   /* 網路太慢也不要把人關在門外：時間到就先進去 */
+  if(total>=512*1024)n.textContent=`0 ／ ${(total/1048576).toFixed(1)} MB`;
+  prePool(need,24,8*1048576,x=>{got+=x.sz;if(PRE.gate===G&&total>=512*1024)n.textContent=`${(got/1048576).toFixed(1)} ／ ${(total/1048576).toFixed(1)} MB`}).then(fin);
+  return true}catch(e){preGateOff();return false}}
+function preGateNow(){try{const p=(location.hash.replace(/^#/,"")||"/").split("/").filter(Boolean).map(decodeURIComponent);if(preNeed(p).length&&typeof route==="function")route()}catch(e){}}
+async function preloadAll(){if(!OFF||!("caches" in window))return PRE_FIRST_OK();
+  let M;try{M=await (await fetch("data/preload.json",{cache:"no-cache"})).json()}catch(e){return PRE_FIRST_OK()}
+  /* 開發者 11/4：每次開 App 都先蓋載入畫面、檢查全部檔案；回饋 845：缺的、換過的只先下載首批就進首頁（20 秒後可以先進去逛），其他在背景 */
+  let c;try{c=await caches.open("xqlab-look")}catch(e){return PRE_FIRST_OK()}
   const MOBP=(()=>{try{return matchMedia("(pointer:coarse)").matches||innerWidth<820}catch(e){return false}})(),wantReal=store.get("pStyle","q")==="real"||store.get("oppLook","3d")==="real";
-  M.items=M.items.filter(([u])=>/^data\/tripo_app\//.test(u)?wantReal:/^data\/eramap\//.test(u)?(/_m\.webp$/.test(u)===MOBP):true);   /* 真實 3D 模型只在選了真實版時下載；朝代地圖手機只抓手機版 */
+  M.items=M.items.filter(([u])=>/^data\/tripo_app\//.test(u)?wantReal:/^data\/eramap\//.test(u)?(/_m\.webp$/.test(u)===MOBP||!/\.webp$/.test(u)):true);   /* 真實 3D 模型只在選了真實版時下載；朝代地圖手機只抓手機版（清單檔兩邊都要） */
   let ov=null,bar=null,txt=null;const ovMake=()=>{ov=document.createElement("div");ov.id="preov";keepAwake("preload",()=>!!document.getElementById("preov"));
     ov.innerHTML=`<div class="ld-img"><img alt=""><img alt=""></div><div class="ld-q"><div class="ld-tt"></div><div class="ld-qt"></div><div class="ld-src"></div></div>
       <div class="pre-in"><div class="pre-t">象棋千秋</div><div class="pre-s">檢查手機裡的棋盤、園子和故事…</div>
-      <div class="pre-bar"><i></i></div><div class="pre-n">檢查中…</div><div class="pre-h">缺的、換過的會先下載，好了才進首頁。</div><button class="pre-skip" type="button" hidden>先進去逛（背景繼續下載）</button></div>`;
+      <div class="pre-bar"><i></i></div><div class="pre-n">檢查中…</div><div class="pre-h">先把開局要用的搬進手機就進首頁；其他朝代和故事的圖在背景慢慢下載。</div><button class="pre-skip" type="button" hidden>先進去逛（背景繼續下載）</button></div>`;
     document.body.append(ov);bar=ov.querySelector(".pre-bar i");txt=ov.querySelector(".pre-n");ldShow(ov);
-    setTimeout(()=>{const k=ov&&ov.querySelector(".pre-skip");if(k){k.hidden=false;k.onclick=()=>{ov.remove();ov=null}}},20000)};ovMake();
-  const base=new URL(".",location.href).href,abs=u=>new URL(u,base).href;
+    setTimeout(()=>{const k=ov&&ov.querySelector(".pre-skip");if(k){k.hidden=false;k.onclick=()=>{ov.remove();ov=null;PRE_FIRST_OK()}}},20000)};ovMake();
+  const abs=preAbs;
   const PH=store.get("preH",{}),NH={},miss=[];   /* 換過的圖（檔名一樣、內容不同）也要重新下載：秦、漢黑棋換新圖後手機一直是舊的 */
   /* 意見回饋 605（網路專家建議）：一次拿出快取裡全部的網址，比逐檔 match 快很多；有記內容雜湊的直接比對，沒記的才打開看大小 */
   let have=null;try{have=new Set((await c.keys()).map(r=>r.url))}catch(e){}
-  await Promise.all(M.items.map(async([u,sz,h])=>{NH[u]=h;try{if(have&&!have.has(abs(u)))return miss.push([u,sz,h]);
-    if(PH[u]&&h){if(PH[u]!==h)miss.push([u,sz,h,1]);return}
-    const r=await c.match(abs(u));if(!r)return miss.push([u,sz,h]);
-    const stale=h&&+(r.headers.get("content-length")||sz)!==sz;if(stale)miss.push([u,sz,h,1])}catch(e){miss.push([u,sz,h])}}));
+  await Promise.all(M.items.map(async([u,sz,h,t])=>{NH[u]=h;const x={u,sz,h,t};if(PH[u]&&h&&PH[u]!==h)x.fr=1;try{if(have&&!have.has(abs(u)))return miss.push(x);   /* 回饋 845：記錄是舊指紋但快取裡沒有（上次先拿掉了）也要繞過瀏覽器快取抓新的 */
+    if(PH[u]&&h){if(PH[u]!==h)miss.push(x);return}
+    const r=await c.match(abs(u));if(!r)return miss.push(x);
+    if(h&&+(r.headers.get("content-length")||sz)!==sz){x.fr=1;miss.push(x)}}catch(e){miss.push(x)}}));
   /* 意見回饋 514／518：下載過的「比賽對局」內容換了（例如轉成繁體），背景自動重新下載，不用玩家刪掉再抓 */
-  if(window.XQ&&XQ.bigBooks&&XQ.syncedBooks)(async()=>{try{const big=await XQ.bigBooks(),have=await XQ.syncedBooks();for(const g of big){const c=have.find(x=>x.key===g.key);if(c&&g.h&&c.h!==g.h){await XQ.syncSite(g.key,g.name,null,g.h);console.log("重新下載",g.key)}}}catch(e){}})();
+  if(window.XQ&&XQ.bigBooks&&XQ.syncedBooks)(async()=>{try{await window.PRE_FIRST;const big=await XQ.bigBooks(),have=await XQ.syncedBooks();for(const g of big){const c=have.find(x=>x.key===g.key);if(c&&g.h&&c.h!==g.h){await XQ.syncSite(g.key,g.name,null,g.h);console.log("重新下載",g.key)}}}catch(e){}})();
   if(M.big)(async()=>{try{const BH=store.get("bigH",{}),dc=await caches.open("xqlab-data"),o={};for(const[u,sz,h]of M.big){o[u]=h;const r=await dc.match(abs(u));
     if(r&&(BH[u]?BH[u]!==h:+(r.headers.get("content-length")||sz)!==sz))await dc.delete(abs(u))}store.set("bigH",o)}catch(e){}})();   /* 特級大師對局換了內容：刪掉手機裡的舊檔，下次用到時重抓 */
-  const okH=()=>{const o={};for(const u in NH)if(!fail.some(f=>f[0]===u))o[u]=NH[u];store.set("preH",o)};
-  const E0=store.get("era","classic"),ERA_K=["classic","qin","han","sanguo","weijin","nanbei","sui","tang","wudai","song","yuan","ming","qing"];
-  const eraOf=u=>{for(const e of ERA_K)if(new RegExp("[/_.]"+e+"([/_.]|$)").test(u))return e;return null};
-  const CORE_DIR=/^data\/(sfx|voice|glyphs|pieces|boards|icons|xs|pika|pika2|loading|stones|park|park3d|pano|pset|seat|champ|npc|parkgate|arenagate|inn)\//;
-  const isCore=u=>{if(!CORE_DIR.test(u)||/^data\/park\/j/.test(u))return false;const e=eraOf(u);return !e||e===E0};
-  const coreMiss=miss.filter(x=>isCore(x[0]));
-  const total=miss.reduce((t,x)=>t+x[1],0);let got=0,fail=[];
-  if(ov){const ps=ov.querySelector(".pre-s");if(ps)ps.textContent=miss.length?`有 ${miss.length} 個檔案要搬進手機（${(total/1048576).toFixed(1)} MB）…`:"都在手機裡了"}
-  if(!miss.length&&ov){const o=ov;ov=null;txt.textContent="都在手機裡了";setTimeout(()=>{o.classList.add("out");setTimeout(()=>o.remove(),400)},350)}
-  if(false){ov=document.createElement("div");ov.id="preov";
-    ov.innerHTML=`<div class="ld-img"><img alt=""><img alt=""></div><div class="ld-q"><div class="ld-tt"></div><div class="ld-qt"></div><div class="ld-src"></div></div>
-      <div class="pre-in"><div class="pre-t">象棋千秋</div><div class="pre-s">${store.get(PRE_KEY,null)?"有新的圖和故事，正在搬進手機…":"第一次開啟，正在把棋盤、園子和故事都搬進手機…"}</div>
-      <div class="pre-bar"><i></i></div><div class="pre-n">準備中…</div><div class="pre-h">先把常用的載好就進去；其他朝代和故事的圖在背景繼續下載。</div><button class="pre-skip" type="button" hidden>先進去逛（背景繼續下載）</button></div>`;
-    document.body.append(ov);bar=ov.querySelector(".pre-bar i");txt=ov.querySelector(".pre-n");ldShow(ov);
-    setTimeout(()=>{const k=ov&&ov.querySelector(".pre-skip");if(k){k.hidden=false;k.onclick=()=>{ov.remove();ov=null}}},20000)}
+  PRE.M=M;PRE.c=c;PRE.PH=PH;PRE.NH=NH;for(const x of miss)PRE.pend.set(x.u,x);
+  const E0=store.get("era","classic"),isLd=x=>x.u.indexOf("data/loading/")===0;
+  const first=miss.filter(x=>preIsFirst(x,E0)).sort((a,b)=>isLd(b)-isLd(a));   /* 載入畫面的水墨畫先下載 */
+  if(navigator.onLine)for(const x of miss)if(x.fr&&!preIsFirst(x,E0))c.delete(abs(x.u)).catch(()=>{});   /* 回饋 845：換過內容、排在背景才換新的舊檔先從手機快取拿掉——換新以前走進用到它的頁，service worker 會直接上網抓新的，不會看到舊圖 */
+  const total=first.reduce((t,x)=>t+x.sz,0);let got=0;
+  if(ov){const ps=ov.querySelector(".pre-s");if(ps)ps.textContent=first.length?`有 ${first.length} 個檔案要先搬進手機（${(total/1048576).toFixed(1)} MB）…`:"都在手機裡了"}
+  if(!first.length&&ov){const o=ov;ov=null;txt.textContent="都在手機裡了";setTimeout(()=>{o.classList.add("out");setTimeout(()=>o.remove(),400)},350)}
   const show=()=>{if(!ov)return;if(total&&got>=total){txt.textContent="載好了";const o=ov;ov=null;setTimeout(()=>{o.classList.add("out");setTimeout(()=>o.remove(),400)},250);return}const p=total?Math.min(100,Math.floor(got*100/total)):100;bar.style.width=p+"%";txt.textContent=`${p}%　${(got/1048576).toFixed(1)} ／ ${(total/1048576).toFixed(1)} MB`};show();
-  const rank=x=>x[0].indexOf("data/loading/")===0?0:isCore(x[0])?1:2,q=miss.slice().sort((a,b)=>rank(a)-rank(b));let run=0;   /* 載入畫面的水墨畫先下載，接著核心，其他在背景 */
-  /* 意見回饋 605（網路專家實測）：GitHub Pages 是 HTTP/2，同時 6 個太少——小檔幾乎都在等來回；改成最多同時 24 個、傳輸中不超過約 6 MB（大檔不會擠爆），
-     每個請求有逾時（20 秒＋每 MB 10 秒），卡住的不會佔著位子；請求帶 ?pre=1 讓 service worker 放行，只由這裡存一次 */
-  const getOne=([u,sz,h,fr])=>{const ac=new AbortController(),to=setTimeout(()=>ac.abort(),20000+sz/1048576*10000);
-    return fetch(abs(u)+"?pre=1"+(fr?"&fresh="+h:""),{cache:fr?"no-store":"default",signal:ac.signal}).then(r=>{if(!r.ok)throw new Error(r.status);return c.put(abs(u),r)}).finally(()=>clearTimeout(to))};
-  const pool=(list,MAXN,MAXB,onDone)=>new Promise(ok=>{let n=0,b=0;const L=list.slice();const next=()=>{if(!L.length&&!n)return ok();
-    while(L.length&&n<MAXN&&(n===0||b+L[0][1]<=MAXB)){const it=L.shift();n++;b+=it[1];getOne(it).then(()=>onDone(it,true)).catch(()=>onDone(it,false)).finally(()=>{n--;b-=it[1];next()})}};next()});
-  await pool(q,24,6*1048576,(it,ok)=>{if(!ok)fail.push(it);got+=it[1];show()});
-  /* 意見回饋 634（開發者：字體大小一樣沒改好）：頁面一開就從快取用了舊字型，背景換成新字型後，這一次開著的畫面還是舊的（舊檔缺「疆」等字，會跳成系統字型）。
-     換過的朝代字型下載好就直接套用到畫面上（後加的同名字型優先），不用關掉 App 再開 */
-  for(const[u,,,fr]of q){const m=fr&&/^data\/fonts\/xq-(\w+)\.woff2$/.exec(u);if(!m||fail.some(f=>f[0]===u)||!window.FontFace)continue;
-    try{const r=await c.match(abs(u));if(!r)continue;const ff=new FontFace("XQ "+m[1],await r.arrayBuffer(),{display:"swap"});await ff.load();document.fonts.add(ff)}catch(e){}}
-  if(!fail.length)store.set(PRE_KEY,M.v);okH();
+  /* 意見回饋 605（網路專家實測）：GitHub Pages 是 HTTP/2，首批最多同時 24 個、傳輸中不超過約 6 MB */
+  await prePool(first,24,6*1048576,x=>{got+=x.sz;show()});
+  window.__preFirstMs=Math.round(performance.now());   /* 首批花多久（量測用） */
+  PRE.first=true;PRE_FIRST_OK();preSaveH(true);preCss();
   if(ov){txt.textContent="載好了";setTimeout(()=>{if(ov){ov.classList.add("out");setTimeout(()=>ov&&ov.remove(),400)}},250)}
-  /* 失敗的在背景再試三次 */
-  if(fail.length){let tries=0;const retry=async()=>{if(!navigator.onLine||document.hidden)return setTimeout(retry,15000);tries++;const left=[];
-    await pool(fail,8,3*1048576,(it,ok)=>{if(!ok)left.push(it)});   /* 背景重試用較少的同時數，不搶正在玩的網路 */
-    fail=left;okH();if(!fail.length)store.set(PRE_KEY,M.v);else if(tries<3)setTimeout(retry,30000)};setTimeout(retry,15000)}
+  PRE.bgGot0=PRE.got;for(const x of PRE.pend.values())PRE.bgTotal+=x.sz;
+  preBg();setTimeout(preGateNow,700);   /* 首批好了：目前這頁（例如從書籤直接開到古戰場）還缺圖的話，補好再顯示 */
   /* 目前朝代的大圖先解碼、3D 程式先載入 */
   const e=store.get("era","classic");for(const u of[`data/park/${e}_360.webp`,`data/pano/${e}_sky.webp`,`data/pano/${e}_ground.webp`,psetBoard(e)?`data/pset/${e}/board_fit.webp`:`data/boards/${e}_fit.webp`]){try{const im=new Image();im.src=u;im.decode().catch(()=>{})}catch(x){}}
   setTimeout(()=>{try{parkLoad().catch(()=>{});loadScript("map3d.js?v="+encodeURIComponent(window.XQ_BUILD||"")).catch(()=>{})}catch(x){}},300)}
-setTimeout(()=>{try{preloadAll()}catch(e){}},0);
+setTimeout(()=>{try{preloadAll().catch(()=>PRE_FIRST_OK())}catch(e){PRE_FIRST_OK()}},0);
 // 產生「對手掃這個就能加入、自動坐另一邊」的網址
 async function joinLink(other){
   if(OFF){const r=XQ.remoteInfo();if(!r)return null;return location.origin+location.pathname+`#connect=${encodeURIComponent(r.base)}&k=${encodeURIComponent(r.key)}&seat=${other}`}
