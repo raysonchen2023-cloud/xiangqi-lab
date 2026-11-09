@@ -1370,7 +1370,7 @@ html[data-hicon] .tabbar button.on{box-shadow:inset 0 -3px 0 currentColor}
       if(!window.caches)return go();caches.keys().then(function(ks){return Promise.all(ks.filter(function(k){return k.indexOf("xqlab-app-")===0}).map(function(k){return caches.delete(k)}))})
         .then(function(){return navigator.serviceWorker&&navigator.serviceWorker.getRegistration()}).then(function(r){return r&&r.update()}).catch(function(){}).then(go)}};setTimeout(chk,4000)})();
 </script>
-<script>window.XQ_OFFLINE=true;window.XQ_BUILD="20261110-0700";</script>
+<script>window.XQ_OFFLINE=true;window.XQ_BUILD="20261110-0715";</script>
 <script src="core.js"></script>
 <script src="engine.js"></script>
 <script src="local.js"></script>
@@ -8385,7 +8385,14 @@ const battleVolOf=(k,i)=>(((BATTLE_CARDS[k]||[])[i]||{}).vol)||1;
 function battleVolNeed(k,vo){const C=BATTLE_CARDS[k]||[],vs=[...new Set(C.map(c=>c.vol||1))].sort((a,b)=>a-b),j=vs.indexOf(vo);if(j<=0)return null;const pv=vs[j-1];return{pv,need:Math.min(3,C.filter(c=>(c.vol||1)===pv).length)}}
 function battleVolOpen(k,vo,S){S=S||battleSeals()[k]||{};const C=BATTLE_CARDS[k]||[],q=battleVolNeed(k,vo);if(!q)return true;
   if(C.some((c,i)=>(c.vol||1)===vo&&S[i]))return true;   /* 這一卷已經有印（舊版打下、搬家帶過來的）：直接開，不吃虧 */
-  return battleVolSeals(k,q.pv,S)>=q.need}
+  if(battleVolSeals(k,q.pv,S)>=q.need){battleVolKeep(k,vo);return true}
+  return battleVolWas(k,vo)||battleVolOld(k,vo,S)}
+/* 開發者 11/9「已開的保持開」：卷三～五補進 109 場後，前一卷從 1、2 場變 5 場、要打下 3 場，舊玩家已經開的卷會被鎖回去。
+   ①照補場前的規則（只算沒有 wave 的舊場次）重算，當時開了的照樣開；②開過的卷記在 store.btlVO，以後規則再變也不鎖回 */
+function battleVolWas(k,vo){try{const o=store.get("btlVO",{})||{};return!!(o[k]&&o[k][vo])}catch(e){return false}}
+function battleVolKeep(k,vo){try{const o=store.get("btlVO",{})||{};if(o[k]&&o[k][vo])return;(o[k]=o[k]||{})[vo]=1;store.set("btlVO",o)}catch(e){}}
+function battleVolOld(k,vo,S){const C=BATTLE_CARDS[k]||[],old=C.map((c,i)=>[c,i]).filter(([c])=>!c.wave),vs=[...new Set(old.map(([c])=>c.vol||1))].sort((a,b)=>a-b),j=vs.indexOf(vo);if(j<=0)return false;
+  const pv=vs[j-1],P=old.filter(([c])=>(c.vol||1)===pv),need=Math.min(3,P.length),got=P.filter(([c,i])=>S[i]).length;if(got>=need){battleVolKeep(k,vo);return true}return false}
 function battleLockTxt(k,i){const C=BATTLE_CARDS[k]||[],vo=battleVolOf(k,i),q=battleVolNeed(k,vo);if(q&&C.findIndex(z=>(z.vol||1)===vo)===i)return`卷${BTL_VN[q.pv]||q.pv}先打下 ${q.need} 場，卷${BTL_VN[vo]||vo}才會開`;return`先打下「${(C[i-1]||{}).name||"前一場"}」`}
 function battleVolSeals(k,vo,S){S=S||battleSeals()[k]||{};return(BATTLE_CARDS[k]||[]).filter((c,i)=>((c.vol||1)===vo)&&S[i]).length}
 const battleHref=(k,i,c)=>battleMode(c)==="puzzle"&&!(c&&c.flag)?"#/canju/b/"+k+"/"+i:"#/battle/"+k+"/"+i;   /* 旗艦戰役（方案 C）一律先到 #/battle/<朝代>/<第幾張> 的軍師獻策 */
