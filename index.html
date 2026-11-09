@@ -1370,7 +1370,7 @@ html[data-hicon] .tabbar button.on{box-shadow:inset 0 -3px 0 currentColor}
       if(!window.caches)return go();caches.keys().then(function(ks){return Promise.all(ks.filter(function(k){return k.indexOf("xqlab-app-")===0}).map(function(k){return caches.delete(k)}))})
         .then(function(){return navigator.serviceWorker&&navigator.serviceWorker.getRegistration()}).then(function(r){return r&&r.update()}).catch(function(){}).then(go)}};setTimeout(chk,4000)})();
 </script>
-<script>window.XQ_OFFLINE=true;window.XQ_BUILD="20261109-2145";</script>
+<script>window.XQ_OFFLINE=true;window.XQ_BUILD="20261109-2200";</script>
 <script src="core.js"></script>
 <script src="engine.js"></script>
 <script src="local.js"></script>
@@ -15454,7 +15454,8 @@ function sw7Tint(d){d=d||new Date();const h=d.getHours()+d.getMinutes()/60;
   if(h>=5&&h<9)return{c:"dawn",a:h<6?h-5:h<7.5?1:(9-h)/1.5};
   if(h>=17&&h<19)return{c:"dusk",a:h<18?.3+(h-17)*.7:h<18.7?1:(19-h)/.3};
   return null}
-function sw7Css(){if(document.getElementById("sw7Css"))return;const s=document.createElement("style");s.id="sw7Css";s.textContent=`#title .sw7-hd{display:block;margin:1px 0 0;padding:0;border:0;background:none;color:inherit;opacity:.82;font:600 11.5px/1.3 var(--serif,serif);letter-spacing:.02em;text-align:left;cursor:pointer;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:100%}#title:has(.sw7-hd){line-height:1.15}
+function sw7Css(){if(document.getElementById("sw7Css"))return;const s=document.createElement("style");s.id="sw7Css";s.textContent=`.sw7-card{display:grid;gap:6px;margin:6px auto 0;max-width:300px;text-align:left}.sw7-card>div{display:grid;grid-template-columns:4.2em 1fr;gap:8px;align-items:baseline}.sw7-card span{color:var(--muted);font-size:13px}.sw7-card b{font-weight:700;white-space:nowrap}
+#title .sw7-hd{display:block;margin:1px 0 0;padding:0;border:0;background:none;color:inherit;opacity:.82;font:600 11.5px/1.3 var(--serif,serif);letter-spacing:.02em;text-align:left;cursor:pointer;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:100%}#title:has(.sw7-hd){line-height:1.15}
 
 .sw7-fx{position:absolute;left:0;top:0;width:100%;height:100%;pointer-events:none;overflow:hidden}.sw7-fx *{pointer-events:none}
 .sw7-cv,.sw7-leaf{position:absolute;left:0;top:0;width:100%;height:100%}.sw7-fogw,.sw7-fg{position:absolute;inset:0;overflow:hidden}
@@ -15688,7 +15689,8 @@ if(typeof Me==="function"){const f0=Me;Me=function(v){const r=f0.apply(this,argu
 const sw7Shi=N=>"子丑寅卯辰巳午未申酉戌亥"[Math.floor(((N.getHours()+1)%24)/2)]+"時";
 const sw7OnDay=(b,N)=>{const B=new Date(b);return Math.round((new Date(N.getFullYear(),N.getMonth(),N.getDate())-new Date(B.getFullYear(),B.getMonth(),B.getDate()))/864e5)+1};
 function sw7AgeCard(){if(typeof vibrate==="function")vibrate(5);const b=sw7Born(),N=new Date(),tm=sw7Term(N),n=b?sw7Age(b):-1,t=!b?"還沒登船":n>=1?`船齡 ${n} 年`:"船齡未滿一年";
-  modal(`<div class="em">⛵</div><h2>${esc(t)}</h2>${b?`<p>登船日：${esc(sw7Ymd(new Date(b)))}（在船上第 ${sw7OnDay(b,N)} 天）</p>`:`<p class="muted">選好角色、開始新的旅程那天，就是你的登船日。</p>`}<p>今天：${esc(sw7Ymd(N))}${tm?`・${esc(tm)}`:""}・${sw7Shi(N)}</p><p class="muted" style="font-size:13px">遊戲裡的日子跟你手機上的日期一樣；園子、渡口的季節、雨雪和早晚光影，都照今天的節氣和時辰。</p><p class="muted">在星槎上不受凡間歲月影響：凡間一年一年過去，你和七星的模樣、年紀都還是上船那年的樣子。每年的這一天，星槎會記得。<span class="sw7-plain">意思是：在船上，大家都不會變老。</span></p>`,[["好",null]],"sw7-ann")}
+  const ymd=d=>`${d.getFullYear()}/${d.getMonth()+1}/${d.getDate()}`;   /* 回饋 839（開發者 11/9「廢話有點多，簡單一些，還有排版」）：只留兩行資料＋一句話，日期用短寫，不折行 */
+  modal(`<div class="em">⛵</div><h2>${esc(t)}</h2><div class="sw7-card">${b?`<div><span>登船日</span><b>${ymd(new Date(b))}（第 ${sw7OnDay(b,N)} 天）</b></div>`:""}<div><span>今天</span><b>${ymd(N)}${tm?`・${esc(tm)}`:""}・${sw7Shi(N)}</b></div></div><p class="muted" style="margin:10px 0 0">${b?"在星槎上，大家都不會變老。":"選好角色、開始旅程那天，就是登船日。"}</p>`,[["好",null]],"sw7-ann")}
 /* 首頁頂欄的一行小字（只在首頁；每分鐘更新時辰；換頁時 setTop 改寫標題，這行自然消失） */
 function sw7HomeInfo(){if(!SW7_ON)return;const h=document.getElementById("title");if(!h||!["","#","#/"].includes(location.hash))return;sw7Css();let e=h.querySelector(".sw7-hd");if(!e){e=document.createElement("button");e.type="button";e.className="sw7-hd";e.onclick=ev=>{ev.stopPropagation();sw7AgeCard()};h.append(e)}
   const N=new Date(),b=sw7Born(),tm=sw7Term(N);e.textContent=[b?`⛵ 船上第 ${sw7OnDay(b,N)} 天`:"⛵ 還沒登船",tm,sw7Shi(N)].filter(Boolean).join("・");e.setAttribute("aria-label","看船齡和今天的時間："+e.textContent)}
