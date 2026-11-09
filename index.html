@@ -1370,7 +1370,7 @@ html[data-hicon] .tabbar button.on{box-shadow:inset 0 -3px 0 currentColor}
       if(!window.caches)return go();caches.keys().then(function(ks){return Promise.all(ks.filter(function(k){return k.indexOf("xqlab-app-")===0}).map(function(k){return caches.delete(k)}))})
         .then(function(){return navigator.serviceWorker&&navigator.serviceWorker.getRegistration()}).then(function(r){return r&&r.update()}).catch(function(){}).then(go)}};setTimeout(chk,4000)})();
 </script>
-<script>window.XQ_OFFLINE=true;window.XQ_BUILD="20261109-2300";</script>
+<script>window.XQ_OFFLINE=true;window.XQ_BUILD="20261109-2315";</script>
 <script src="core.js"></script>
 <script src="engine.js"></script>
 <script src="local.js"></script>
@@ -12105,7 +12105,9 @@ function shwMount(o){if(shwRM()||!o.root||!o.frame||o.root.dataset.shw)return;o.
 function shwClick(S,e){if(S.pass||!S.ready||!S.box.isConnected)return;const g=S.go;let b=e.target.closest&&e.target.closest(S.o.sel),tk=null;
   /* 回饋 816：桌上的東西本身（例如信房的信箋）也算入口：座標表 TS:{選擇器:入口代號}，先跳上桌再打開 */
   if(!b&&WALK_HOP_ON&&S.C.TS&&e.target.closest)for(const k in S.C.TS){const x=e.target.closest(k);if(x&&S.M.contains(x)){b=x;tk=S.C.TS[k];x.dataset.shwnf="1";break}}
-  if(g&&!g.free&&(g.act>=0||(b&&b===g.btn))){e.stopPropagation();e.preventDefault();shwOpen(S);return}   /* 走向入口時再點同一個入口、或已經在做小動作：直接開 */
+  if(g&&!g.free&&(g.act>=0||(b&&b===g.btn))){e.stopPropagation();e.preventDefault();if(e.isTrusted)shwOpen(S);else setTimeout(()=>{if(S.go===g)shwOpen(S)},0);return}   /* 走向入口時再點同一個入口、或已經在做小動作：直接開 */
+  /* 回饋 834（開發者 11/9：棋史卡沒反應、盤查入口點擊）：別的東西用 入口.click() 轉過來的點擊（一盞茶的茶碗 .cjm-hit、渡口碼頭 .ph4-pz）不是使用者真的點，
+     這時入口自己的 click 還在進行中，shwOpen 裡再呼叫同一顆的 click() 會被瀏覽器直接略過（HTML 規定），結果走路被取消、什麼都沒開；所以這種點擊延到下一輪再開 */
   if(b){const h=tk||S.o.keyOf(b),H=S.C.HS[h];if(!H||!S.C.N[H[0]])return;e.stopPropagation();e.preventDefault();vibrate(5);
     if(tk&&S.C.TB){const p=shwPt(S,e),tn=shwTblAt(S.C,p);if(tn){shwGo(S,{hs:h,btn:b,H,tbl:tn,tap:p});return}}   /* 820：點桌上的東西本身＝走到它旁邊最近的可站處再打開 */
     shwGo(S,{hs:h,btn:b,H});return}
@@ -12975,7 +12977,8 @@ function mfCss(){if(document.getElementById("mfCss"))return;const s=document.cre
 .mf-me em{font-style:normal;display:inline-flex;align-items:center;justify-content:center;width:19px;height:19px;vertical-align:middle;border:1.5px solid #f6e6cc;border-radius:2px;background:#8a1e12;color:#f6e6cc;font:900 14px/1 var(--kai,var(--serif,serif))}
 .mf-me small{font-size:15px;color:#5a120a;font-weight:800;white-space:nowrap}.mf-me span{white-space:nowrap}
 .mf-hs{position:absolute;transform:translate(-50%,-50%);border:0;padding:0;background:none;cursor:pointer;-webkit-tap-highlight-color:transparent}
-.mf-hs span{position:absolute;left:50%;top:0;transform:translate(-50%,-100%);background:#f3ead2;border:1px solid #8a6a3a;color:#3a2618;border-radius:3px;font:800 13px/1.25 var(--kai,var(--serif,serif));padding:2px 6px;white-space:nowrap;box-shadow:0 1px 2px rgba(0,0,0,.3);pointer-events:none}
+.mf-hs span{position:absolute;left:50%;top:0;transform:translate(-50%,-100%);background:#f3ead2;border:1px solid #8a6a3a;color:#3a2618;border-radius:3px;font:800 13px/1.25 var(--kai,var(--serif,serif));padding:2px 6px;white-space:nowrap;box-shadow:0 1px 2px rgba(0,0,0,.3);pointer-events:auto;cursor:pointer}
+/* 回饋 834（開發者 11/9：棋史卡沒反應、盤查入口點擊）：千秋盃、拜匣（路過的人物）、回天井的標籤畫在熱區外面（上方／右邊），原本 pointer-events:none，點標籤會穿過去沒反應；標籤是按鈕的子元素，改成可以點 */
 .mf-hs[hidden]{display:none}
 #mfBox span{left:100%;top:50%;transform:translate(4px,-50%)}
 .mf-jc{position:absolute;transform:translate(-50%,-100%) rotate(var(--r,0deg));transform-origin:50% 100%;border:1px solid #6a1a10;background:#c4472f;color:#fbeee0;border-radius:1px;padding:5px 4px;font:800 13px/1.1 var(--kai,var(--serif,serif));writing-mode:vertical-rl;cursor:pointer;box-shadow:1px 1px 2px rgba(0,0,0,.35)}
@@ -15036,9 +15039,10 @@ function mzCss(){if(document.getElementById("mzCss"))return;const s=document.cre
 .mz-cell{position:absolute;background-repeat:no-repeat;filter:grayscale(1) brightness(1.06) contrast(.92);transition:opacity .6s}
 .mz-dk .mz-cell{filter:grayscale(1) brightness(.92) contrast(.92)}
 .mz-cell.on{opacity:0}
-.mz-hs{position:absolute;z-index:2;border:0;padding:0;margin:0;background:none;cursor:pointer;-webkit-tap-highlight-color:transparent}
+.mz-hs{position:absolute;border:0;padding:0;margin:0;background:none;cursor:pointer;-webkit-tap-highlight-color:transparent}
+/* 回饋 834：熱區不再用 z-index 自成一層，標籤（.mz-lb z-index:3）才能疊在所有熱區上面；不然窄螢幕（375 寬）「棋盤」標籤中間會被後面的消寒圖熱區蓋住，點了開錯 */
 .mz-hs:focus-visible{outline:2px solid #b23a26;outline-offset:2px}
-.mz-lb{position:absolute;transform:translate(-50%,-100%);display:flex;flex-direction:column;align-items:center;background:rgba(243,234,210,.94);border:1px solid #8a6a3a;color:#3a2618;border-radius:3px;padding:2px 4px 3px;white-space:nowrap;box-shadow:0 1px 3px rgba(0,0,0,.3);pointer-events:none}
+.mz-lb{position:absolute;transform:translate(-50%,-100%);display:flex;flex-direction:column;align-items:center;background:rgba(243,234,210,.94);border:1px solid #8a6a3a;color:#3a2618;border-radius:3px;padding:2px 4px 3px;white-space:nowrap;box-shadow:0 1px 3px rgba(0,0,0,.3);pointer-events:auto;cursor:pointer;z-index:3}
 .mz-lb.m{transform:translate(-50%,-50%)}.mz-lb.b{transform:translate(-50%,0)}
 .mz-lb b{font:800 13px/1.2 var(--kai,var(--serif,serif))}
 .mz-lb small{font:700 13px/1.15 var(--serif,serif);color:#8a2a18}.mz-lb small:empty{display:none}
@@ -15058,6 +15062,16 @@ function mzAct(kind,dir){const R=MZ_FIG;if(!R||!R.B||!R.B.bot||!document.body.co
     if(a)B.mixer.update(dt);else if(arm)arm.rotation.z=z0+Math.min(1,t*3)*(kind==="cheer"?2.6:2.2)*k+(kind==="wave"?Math.sin(t*12)*.25*k:0);
     if(t<T)requestAnimationFrame(step);else{B.bot.rotation.y=y0;if(arm&&!a)arm.rotation.z=z0;if(a){a.fadeOut(.2);if(clips.idle){clips.idle.reset().play()}B.mixer.update(.3)}}};requestAnimationFrame(step)}
 if(typeof fig3d==="function"){const f0=fig3d;fig3d=async function(host){const res=await f0.apply(this,arguments);try{if(STUDYMAP_ON&&res&&host&&host.closest&&host.closest("#meFig2"))MZ_FIG=res}catch(e){}return res}}
+/* 回饋 834（開發者 11/9：棋史卡沒反應、盤查入口點擊）：
+   1. 牆上的標籤（.mz-lb）原本 pointer-events:none，而棋史卡、修為、千秋大百科、棋罐、提示棋、園子棋友、棋盤、千秋印譜的標籤都放在熱區外面（畫缸的標籤在畫缸左邊），
+      點標籤會穿過去點到底圖，什麼都不開；標籤是按鈕的子元素，改成可以點（點標籤＝點那個入口）。
+   2. 青瓷蓋罐（棋罐）、漆盒（提示棋）原本叫 cxMe("items")，可是我的角色頁沒有 .mw[data-c="items"]，點了沒反應；改成打開下面這張寶物小卡。 */
+function mzItemSheet(k){const T=(f,d)=>{try{return f()}catch(e){return d}};const H=T(()=>hintInfo(),{left:0,bonus:0}),hn=(H.left||0)+(H.bonus||0),un=T(()=>undoLeft(),0),ln=T(()=>lingN(),0),jn=T(()=>jarN(),0),MS=T(()=>JAR_MS,[]);
+  const jar=`<div class="sec-t">🫙 棋罐 ${jn}／${T(()=>JAR_MAX,216)} 子</div><p class="muted" style="font-size:13px;line-height:1.6;margin:0 0 6px">石桌往事每一關依序收「兵」「馬」「車」，收到的子放進棋罐；集到門檻自動換東西。</p>
+    <div class="items" style="padding:0">${MS.map(([n,lb])=>`<div class="item"${jn>=n?"":' style="opacity:.6"'}><span class="lb" style="font-size:20px">${jn>=n?"✅":"🔒"}</span><span class="tx"><b>${n} 子</b><span>${esc(lb)}</span></span></div>`).join("")}</div>`;
+  const bag=`<div class="sec-t">🎒 寶物</div><div class="items" style="padding:0">${[["💡","提示棋",hn,"對局時按「🎒 寶物」就能用；修為等級越高，每天送的提示棋越多。"],["↶","悔棋符",un,"對局時按「🎒 寶物」就能用，退回上一步。"],["🪙","將令",ln,"拿去驛站的點將台換東西。"]]
+    .map(([ic,nm,n,t])=>`<div class="item"><span class="lb" style="font-size:22px">${ic}</span><span class="tx"><b>${nm} ${n}</b><span>${t}</span></span></div>`).join("")}</div>`;
+  sheet(k==="jar"?"🫙 棋罐":"💡 提示棋與寶物",b=>{b.innerHTML=k==="jar"?jar+`<div style="height:8px"></div>`+bag:bag+`<div style="height:8px"></div>`+jar})}
 /* 打開千秋印譜：有 sealBook 就用；沒有就退回舊的集章簿，再不行開千秋大百科 */
 function mzSealOpen(){if(typeof sealBook==="function")return sealBook();if(typeof stampBook==="function")return stampBook();location.hash="#/codex"}
 function mzWall(v){const pad=v.querySelector(".pad"),me2=pad&&pad.querySelector(".me2");if(!me2||pad.querySelector(".mz-wall"))return;mzCss();
@@ -15094,7 +15108,7 @@ function mzWall(v){const pad=v.querySelector(".pad"),me2=pad&&pad.querySelector(
   const GO={mzBoard:'.mw[data-c="b"]',mzKifu:'.mw[data-c="r"]',mzSecret:'.mw[data-c="s"]',mzZhen:'.mw[data-c="z"]',mzLetter:"#gdMeB",mzHist:"#gdMeH",mzYu:"#gdMeY",mzXh:"#gdMeX",mzCodex:"#cxMe",mzRank:"#meRk",mzXp:"#meXp"};
   W.querySelectorAll(".mz-hs").forEach(b=>b.onclick=()=>{vibrate(5);if(!document.body.classList.contains("shw-on")){const r=b.getBoundingClientRect(),x=(r.left+r.width/2)/innerWidth;try{mzAct(full[b.id]?"cheer":"wave",x<.4?-1:x>.6?1:0)}catch(e){}}
     if(b.id==="mzSeal"){mzSealOpen();return}
-    if(b.id==="mzJar"||b.id==="mzBox"){if(typeof cxMe==="function")cxMe("items");return}
+    if(b.id==="mzJar"||b.id==="mzBox"){mzItemSheet(b.id==="mzJar"?"jar":"bag");return}
     const o=GO[b.id]&&q(GO[b.id]);if(o)o.click()});
   /* 走路角色（07w）：入口是 .mz-hs（id），收滿的那一類改成歡呼 */
   if(MZ_WALK_ON&&typeof shwMount==="function"&&typeof SHIP_WALK_ON!=="undefined"&&SHIP_WALK_ON){try{const HS={};for(const k in SHW_MZ.HS){HS[k]=SHW_MZ.HS[k].slice();if(full[k])HS[k][3]="cheer"}
