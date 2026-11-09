@@ -1370,7 +1370,7 @@ html[data-hicon] .tabbar button.on{box-shadow:inset 0 -3px 0 currentColor}
       if(!window.caches)return go();caches.keys().then(function(ks){return Promise.all(ks.filter(function(k){return k.indexOf("xqlab-app-")===0}).map(function(k){return caches.delete(k)}))})
         .then(function(){return navigator.serviceWorker&&navigator.serviceWorker.getRegistration()}).then(function(r){return r&&r.update()}).catch(function(){}).then(go)}};setTimeout(chk,4000)})();
 </script>
-<script>window.XQ_OFFLINE=true;window.XQ_BUILD="20261110-1100";</script>
+<script>window.XQ_OFFLINE=true;window.XQ_BUILD="20261110-1130";</script>
 <script src="core.js"></script>
 <script src="engine.js"></script>
 <script src="local.js"></script>
@@ -1379,6 +1379,13 @@ html[data-hicon] .tabbar button.on{box-shadow:inset 0 -3px 0 currentColor}
 <script>
 "use strict";
 // ================= 共用小工具 =================
+/* 11/10 開發者「照建議做」：GitHub 只留程式、引擎和首批檔，其餘 data/ 只放 Cloudflare CDN（story/GitHub部署太大_研究_1110.md）。
+   有 service worker 時 sw.js 本來就先走 CDN；沒有 service worker 的瀏覽器（例如 LINE 內建瀏覽器、無痕視窗）直接向 GitHub 要檔，拿不到就自動改向 CDN 要一次：
+   ①圖片、聲音載入失敗（error 事件，捕獲階段）換成 CDN 網址；②fetch 到 404 再問 CDN。只處理同源的 data/、engine/ 路徑，網址後面的 ?v= 不帶 */
+const XQ_CDN="https://xiangqi-cdn.pages.dev/";
+const xqCdnRel=u=>{try{const x=new URL(u,location.href);if(x.origin!==location.origin)return"";const b=location.pathname.replace(/[^/]*$/,""),p=x.pathname.startsWith(b)?decodeURI(x.pathname.slice(b.length)):"";return/^(data|engine)\//.test(p)?p:""}catch(e){return""}};
+addEventListener("error",e=>{const t=e.target;if(!t||!t.tagName||!/^(IMG|AUDIO|SOURCE|VIDEO)$/.test(t.tagName)||t.dataset.cdnTry)return;const r=xqCdnRel(t.currentSrc||t.src||"");if(!r)return;t.dataset.cdnTry="1";t.src=XQ_CDN+r},true);
+{const f0=window.fetch;if(f0)window.fetch=function(i,o){return f0.apply(this,arguments).then(res=>{if(res&&res.status===404){const r=xqCdnRel(typeof i==="string"?i:i&&i.url||"");if(r)return f0.call(window,XQ_CDN+r,{mode:"cors",credentials:"omit"}).then(x=>x.ok?x:res,()=>res)}return res})}}
 const $=s=>document.querySelector(s);
 const NAMES={r:{K:"帥",A:"仕",B:"相",N:"傌",R:"俥",C:"炮",P:"兵"},b:{K:"將",A:"士",B:"象",N:"馬",R:"車",C:"砲",P:"卒"}};
 const CN=["","一","二","三","四","五","六","七","八","九"],PLAYER={r:"紅方",b:"黑方"};

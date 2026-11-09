@@ -1,0 +1,3 @@
+# 11/10：data/ 的大檔只放 Cloudflare CDN（tools/cdn-deploy.js），GitHub Pages 只留首批（preload 第 0 層）、小型 json、banlist／preload／big-books。
+# 要放進 GitHub 的 data 檔請用 git add -f；說明見 xiangqi-db/story/GitHub部署太大_研究_1110.md
+/data/**
