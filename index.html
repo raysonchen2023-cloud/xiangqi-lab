@@ -1370,7 +1370,7 @@ html[data-hicon] .tabbar button.on{box-shadow:inset 0 -3px 0 currentColor}
       if(!window.caches)return go();caches.keys().then(function(ks){return Promise.all(ks.filter(function(k){return k.indexOf("xqlab-app-")===0}).map(function(k){return caches.delete(k)}))})
         .then(function(){return navigator.serviceWorker&&navigator.serviceWorker.getRegistration()}).then(function(r){return r&&r.update()}).catch(function(){}).then(go)}};setTimeout(chk,4000)})();
 </script>
-<script>window.XQ_OFFLINE=true;window.XQ_BUILD="20261110-0615";</script>
+<script>window.XQ_OFFLINE=true;window.XQ_BUILD="20261110-0630";</script>
 <script src="core.js"></script>
 <script src="engine.js"></script>
 <script src="local.js"></script>
@@ -12845,12 +12845,21 @@ if(typeof Home==="function"){const f0=Home;Home=function(v,hub){const r=f0.apply
 const LOBBY_MAP_ON=true;   /* 開發者 11/8 說打開 */
 const LM_IMGV="2200";
 const LM_IMG=n=>`data/lobbymap/${n}.webp?v=${LM_IMGV}`;
+/* 開發者 11/9：照星槎停靠的朝代換圖（story/朝代場景計畫.md；考究說明 park/lobbymap/考究說明_各朝大廳_1109.md）。構圖、入口、棋桌、燈、走路節點的座標都不變。
+   有停靠才算（判斷跟 07y hbDockEra() 一樣）；沒停靠、明朝用原圖和原素材。各朝檔名一律帶朝代（同一組時代的內容一樣），preload-list.js 的 ERA_RE 才分得到各朝：
+     底圖 lobby_<朝>（11 朝）；棋桌 table_empty_<朝>／table_game_<朝>（清用原圖）；茶客 fig_sit／fig_lean／fig_fan_<朝>（11 朝）；
+     燈：秦～隋（唐以前不用紙燈籠）＝細鏈吊的青銅燈盞圖 lantern_on／lantern_off_<朝>；唐、五代＝程式畫的素紗、素紙燈籠（暗燈是淡紙色）；宋以後＝程式畫的紅紙燈籠（照舊） */
+const LM_ERAS="qin han sanguo weijin nanbei sui tang wudai song yuan qing".split(" ");
+const LM_SET={lobby:LM_ERAS,table_empty:LM_ERAS.slice(0,10),table_game:LM_ERAS.slice(0,10),fig_sit:LM_ERAS,fig_lean:LM_ERAS,fig_fan:LM_ERAS,lantern_on:LM_ERAS.slice(0,6),lantern_off:LM_ERAS.slice(0,6)};
+function lmEra(){let e="";try{e=typeof hbDockEra==="function"?hbDockEra():typeof shipAt==="function"&&typeof shipDockList==="function"&&shipDockList()?shipAt()||"":""}catch(x){}return LM_ERAS.includes(e)?e:""}
+const lmN=(n,e)=>e&&(LM_SET[n]||[]).includes(e)?n+"_"+e:n;   /* 素材名 → 這一朝的檔名（沒有就用原素材） */
 /* 回饋 800（開發者 11/8「打燈籠有一點不好看」）：亮著的燈原本是圓滾滾的橘色燈籠圖，外面再罩一圈 340% 大、screen 混色的光（看起來像白色圓盤）。
    改成程式畫的細長紙燈籠（SVG：繩、上下黑邊、淡墨描邊和竹骨、流蘇），亮燈＝暖黃紙色＋一小圈柔光（一般混色、不發白），暗燈＝暗紅舊紙。開關 LM_INK_LAMP（false＝照舊用圖） */
 const LM_INK_LAMP=true;
 const LM_LAMP_SVG='<svg width="0" height="0" style="position:absolute" aria-hidden="true"><defs>'+
   '<radialGradient id="lmLgOn" cx="50%" cy="45%" r="60%"><stop offset="0" stop-color="#fff0c4"/><stop offset=".55" stop-color="#f3b45c"/><stop offset="1" stop-color="#c8602e"/></radialGradient>'+
   '<linearGradient id="lmLgOff" x1="0" x2="1"><stop offset="0" stop-color="#6e3426"/><stop offset=".45" stop-color="#9a4b34"/><stop offset="1" stop-color="#5f2c20"/></linearGradient>'+
+  '<linearGradient id="lmLgOffP" x1="0" x2="1"><stop offset="0" stop-color="#b9ab8c"/><stop offset=".45" stop-color="#e6dcc2"/><stop offset="1" stop-color="#a99a7a"/></linearGradient>'+
   '<symbol id="lmLamp" viewBox="0 0 20 46"><path d="M10 0V8" stroke="#3a2a1c" stroke-width=".8"/><rect x="6.4" y="6.4" width="7.2" height="2.2" rx=".6" fill="#2b2016"/>'+
   '<path d="M10 8.4C16.9 8.8 17.5 29.6 10 30.8C2.5 29.6 3.1 8.8 10 8.4Z" style="fill:var(--lmf)" stroke="#3a2416" stroke-width=".9"/>'+
   '<path d="M10 8.6V30.6M6.8 9.6C5 16 5 23.6 6.8 29.8M13.2 9.6C15 16 15 23.6 13.2 29.8" fill="none" stroke="rgba(70,34,16,.45)" stroke-width=".5"/>'+
@@ -12881,6 +12890,7 @@ function lmCss(){if(document.getElementById("lmCss"))return;const s=document.cre
 .lm-lp{position:absolute;width:3.2%;transform:translate(-50%,-12%);padding:0;border:0;background:none;pointer-events:none;z-index:2}
 .lm-lp.f1{width:3.6%}
 .lm-lp img{display:block;width:100%;height:auto}
+.lm-l .lm-lp>img{width:100%!important;height:auto!important;max-width:none}   /* 秦～隋的青銅燈是 <img>：亮著的故事角色燈有 data-jc，會被全域 [data-jc]>img{width:56px}（角色頭像）放大，這裡壓回去 */
 .lm-lp.on{pointer-events:auto;cursor:pointer}
 .lm-lp.on::before{content:"";position:absolute;left:50%;top:40%;width:340%;aspect-ratio:1;transform:translate(-50%,-50%);border-radius:50%;background:radial-gradient(closest-side,rgba(255,222,140,.55),rgba(255,190,90,0));mix-blend-mode:screen;pointer-events:none;animation:lmFl 3s ease-in-out infinite alternate}
 .lm-lp.bot::before{opacity:.45}
@@ -12891,6 +12901,9 @@ function lmCss(){if(document.getElementById("lmCss"))return;const s=document.cre
 .lm-lp.ink{width:2.3%;transform:translate(-50%,-4%)}.lm-lp.ink.f1{width:2.6%}
 .lm-lp.ink svg{display:block;width:100%;height:auto;overflow:visible;--lmf:url(#lmLgOff);filter:drop-shadow(0 1px 1px rgba(40,24,12,.35))}
 .lm-lp.ink.on svg{--lmf:url(#lmLgOn)}
+.lm-lp.ink.pale svg{--lmf:url(#lmLgOffP)}.lm-lp.ink.pale.on svg{--lmf:url(#lmLgOn)}
+.lm-lp.gu{width:2.4%;transform:translate(-50%,-2%)}.lm-lp.gu.f1{width:2.7%}
+.lm-lp.gu.on::before{width:240%;top:74%;background:radial-gradient(closest-side,rgba(255,176,80,.45),rgba(255,160,60,.16) 60%,rgba(255,150,50,0));mix-blend-mode:normal}
 .lm-lp.ink.on::before{width:230%;top:42%;background:radial-gradient(closest-side,rgba(255,176,80,.42),rgba(255,160,60,.16) 60%,rgba(255,150,50,0));mix-blend-mode:normal}
 .lm-more{position:absolute;transform:translate(-50%,-50%);z-index:3;pointer-events:auto;cursor:pointer;border:1px solid #6b4a2a;border-radius:3px;background:#f3e6c8;color:#3a2618;font:800 12px/1 var(--serif,serif);padding:4px 8px;box-shadow:0 1px 3px rgba(40,24,12,.4);white-space:nowrap}
 .lm-more::before{content:"";position:absolute;left:50%;bottom:100%;width:1px;height:8px;background:#3a2a1c}
@@ -12928,11 +12941,12 @@ function lmPaint(v,P){const lay=P.querySelector(".lm-l");if(!lay||!window.XQNet)
   const extra=ids0.length-ids.length;lmSlots(ids);
   const lit={};for(const p of ps)if(p.id!==me&&LM_SLOT[p.id]!=null)lit[LM_SLOT[p.id]]={id:p.id,name:p.name,cls:(fam.has(p.id)?" fam":"")+(typeof isCloud==="function"&&isCloud(p.id)?" bot":"")};
   for(const k of VS){const s=LM_SLOT["jc:"+k];if(s!=null)lit[s]={jc:k,name:(typeof JCHAR!=="undefined"&&JCHAR[k]&&JCHAR[k].name)||k,cls:" story"}}
-  const FIG=["fig_sit","fig_lean","fig_fan"];
+  const E=lmEra(),GU=(LM_SET.lantern_on||[]).includes(E),PALE=E==="tang"||E==="wudai";   /* 停靠朝代：唐以前掛青銅燈盞圖，唐、五代素紗燈 */
+  const FIG=["fig_sit","fig_lean","fig_fan"].map(n=>lmN(n,E));
   lay.innerHTML=T.slice(0,8).map((t,i)=>{const[x,y]=LM_TABLES[i];const nm=t.l?t.l.map(p=>p.name).join(" 對 "):"";
-      return`<button class="lm-t${t.mine?" mine":""}${t.empty?" empty":""}" ${t.gid?`data-g="${esc(t.gid)}"`:""}${t.mine?' data-mine="1"':""} style="left:${x}%;top:${y}%;z-index:${Math.round(y)}" aria-label="${esc(t.mine?"我的對局":t.empty?"空桌":nm+"・觀戰")}" tabindex="${t.empty?-1:0}"><img src="${LM_IMG(t.empty?"table_empty":"table_game")}" alt=""></button>`}).join("")+
+      return`<button class="lm-t${t.mine?" mine":""}${t.empty?" empty":""}" ${t.gid?`data-g="${esc(t.gid)}"`:""}${t.mine?' data-mine="1"':""} style="left:${x}%;top:${y}%;z-index:${Math.round(y)}" aria-label="${esc(t.mine?"我的對局":t.empty?"空桌":nm+"・觀戰")}" tabindex="${t.empty?-1:0}"><img src="${LM_IMG(lmN(t.empty?"table_empty":"table_game",E))}" alt=""></button>`}).join("")+
     LM_LAMPS.map(([x,y,f],i)=>{const o=lit[i];const fig=o&&(f===2||x<15||x>85)?`<img class="lm-fig" src="${LM_IMG(FIG[i%3])}" alt="" style="left:${x}%;top:${y+(f===2?10.5:7.5)}%">`:"";
-      return`${fig}<button class="lm-lp f${f}${LM_INK_LAMP?" ink":""}${o?" on"+o.cls:""}" ${o?(o.jc?`data-jc="${esc(o.jc)}"`:`data-p="${esc(o.id)}"`):""} style="left:${x}%;top:${y}%" aria-label="${o?esc(o.name):"空著的燈"}" tabindex="${o?0:-1}">${LM_INK_LAMP?'<svg viewBox="0 0 20 46"><use href="#lmLamp"/></svg>':`<img src="${LM_IMG(o?"lantern_on":"lantern_off")}" alt="">`}${o&&/fam|story/.test(o.cls)?"<i></i>":""}</button>`}).join("")+
+      return`${fig}<button class="lm-lp f${f}${GU?" gu":LM_INK_LAMP?" ink"+(PALE?" pale":""):""}${o?" on"+o.cls:""}" ${o?(o.jc?`data-jc="${esc(o.jc)}"`:`data-p="${esc(o.id)}"`):""} style="left:${x}%;top:${y}%" aria-label="${o?esc(o.name):"空著的燈"}" tabindex="${o?0:-1}">${LM_INK_LAMP&&!GU?'<svg viewBox="0 0 20 46"><use href="#lmLamp"/></svg>':`<img src="${LM_IMG(lmN(o?"lantern_on":"lantern_off",E))}" alt="">`}${o&&/fam|story/.test(o.cls)?"<i></i>":""}</button>`}).join("")+
     (XQNet.seeking&&XQNet.seeking()?'<span class="lm-wave"><i></i><i></i><i></i></span>':"")+
     (extra>0?`<button type="button" class="lm-more" data-more="p" style="left:88%;top:30.5%">＋${extra} 人</button>`:"")+
     (moreG>0?`<button type="button" class="lm-more" data-more="g" style="left:67%;top:90%">更多棋局 ＋${moreG}</button>`:"")+
@@ -12948,7 +12962,7 @@ function lmPaint(v,P){const lay=P.querySelector(".lm-l");if(!lay||!window.XQNet)
   const ai=P.querySelector("#lmAi");if(ai)ai.querySelector("b").textContent=lb&&lb.querySelector("#aiw")?"📺 AI 對戰":"🤖 挑戰電腦"}
 function lobbyMap(v){const lb=v.querySelector("#lb");if(!lb||v.querySelector(".lobby-page"))return;lmCss();
   const d=document.createElement("div");
-  d.innerHTML=`<div class="shp-page cq lobby-page"><img src="${LM_IMG("lobby")}" alt="千燈天井"><div class="lm-l"></div>${LM_INK_LAMP?LM_LAMP_SVG:""}${LM_SPOTS.map(([id,x,y,t])=>`<button class="shp-spot" id="${id}" style="left:${x}%;top:${y}%"><b>${esc(t)}</b></button>`).join("")}</div>`;
+  d.innerHTML=`<div class="shp-page cq lobby-page"><img src="${LM_IMG(lmN("lobby",lmEra()))}" alt="千燈天井"><div class="lm-l"></div>${LM_INK_LAMP?LM_LAMP_SVG:""}${LM_SPOTS.map(([id,x,y,t])=>`<button class="shp-spot" id="${id}" style="left:${x}%;top:${y}%"><b>${esc(t)}</b></button>`).join("")}</div>`;
   const P=d.firstElementChild;v.insertBefore(P,lb);
   /* 名冊抽屜：原本的清單整個搬進來（還在 v 裡面，paint() 照樣找得到 #lb） */
   const dw=document.createElement("div");dw.className="lm-dw";dw.innerHTML='<div class="lm-dw-h">📜 名冊<button type="button" aria-label="關上名冊">✕</button></div><div class="lm-dw-b"></div>';
@@ -16940,7 +16954,7 @@ function exSync(){if(!EXIT_ON)return;clearTimeout(EX_T);const k=exKey(),t0=Date.
     if(k==="/port"){if(!P.querySelector(".ex-bow")){const sp=[...P.querySelectorAll(".shp-spot")].find(x=>/上星槎/.test(x.textContent));if(sp){const w=document.createElement("button");w.type="button";w.className="ex-bow";w.setAttribute("aria-label","上星槎（船頭）");w.onclick=e=>{e.stopPropagation();try{vibrate(5)}catch(x){}sp.click()};P.append(w)}}
       if(hasBack)exCls("add");return}
     if(!E||!hasBack){exCls("remove");return}
-    if(!P.querySelector(".ex-spot")){const s=document.createElement("button");s.type="button";s.className="shp-spot ex-spot";s.style.left=E[0]+"%";s.style.top=E[1]+"%";let lb=E[2];try{if((k==="/hub/learn"||k==="/hub/battle")&&typeof xqHubName==="function")lb="🚪 出"+xqHubName(k.slice(5)).split(" ").slice(1).join(" ")+"・回棋鎮"}catch(x){}s.innerHTML="<b>"+lb+"</b>";   /* 出口跟著朝代叫法：出國子監・回棋鎮 */
+    if(!P.querySelector(".ex-spot")){const s=document.createElement("button");s.type="button";s.className="shp-spot ex-spot";s.style.left=E[0]+"%";s.style.top=E[1]+"%";let lb=E[2];try{if((k==="/hub/learn"||k==="/hub/battle")&&typeof xqHubName==="function")lb="🚪 出"+xqHubName(k.slice(5)).split(" ").slice(1).join(" ")+"・回棋鎮";else if((k==="/lobby"||k==="/db")&&typeof xqHubName==="function"&&typeof shipAt==="function"&&typeof shipDockList==="function"&&shipDockList())lb="↩ 回"+xqHubName(k==="/lobby"?"battle":"learn").split(" ").slice(1).join(" ")}catch(x){}s.innerHTML="<b>"+lb+"</b>";   /* 出口跟著朝代叫法：出國子監・回棋鎮 */
       s.onclick=e=>{e.stopPropagation();try{vibrate(5)}catch(x){}if(E[3]){location.hash=E[3];return}const bb=document.getElementById("back");if(bb&&typeof bb.onclick==="function")bb.onclick()};P.append(s)}   /* E[3]＝直接去那一頁（回饋 849：意見回饋頁回星槎） */
     exCls("add")};
   exCls("remove");EX_T=setTimeout(go,60)}
