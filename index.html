@@ -1370,7 +1370,7 @@ html[data-hicon] .tabbar button.on{box-shadow:inset 0 -3px 0 currentColor}
       if(!window.caches)return go();caches.keys().then(function(ks){return Promise.all(ks.filter(function(k){return k.indexOf("xqlab-app-")===0}).map(function(k){return caches.delete(k)}))})
         .then(function(){return navigator.serviceWorker&&navigator.serviceWorker.getRegistration()}).then(function(r){return r&&r.update()}).catch(function(){}).then(go)}};setTimeout(chk,4000)})();
 </script>
-<script>window.XQ_OFFLINE=true;window.XQ_BUILD="20261110-1345";</script>
+<script>window.XQ_OFFLINE=true;window.XQ_BUILD="20261110-1400";</script>
 <script src="core.js"></script>
 <script src="engine.js"></script>
 <script src="local.js"></script>
@@ -12921,6 +12921,10 @@ const bdDev={
      oyDev.go("mj","ming") 直接開這一位這一朝的下一題、oyDev.zf("ming") 直接開張三丰；oyDev.check("port","song",{hour:20,wx:null}) 列出這個情境誰符合條件。到某一朝：shipGoTo("song",()=>route())。
    開關 OUYU_ON；前綴 oy */
 const OUYU_ON=true;
+/* 11/10 開發者「其他 3D 角色這樣放實在很出戲」選 A：渡口、驛站圖上不再站 3D 小人，右上角出現一封求助信（朱印封口），點了才看到這位人物的立繪和請求。
+   OY_LETTER=false 就回到 3D 小人的放法 */
+const OY_LETTER=true;
+const oyImg=(w,mdl)=>{const m=w==="hp"&&mdl==="douhua"?"n_douhua":OY_WHO[w].m;return m.startsWith("a_")?"data/actors/"+m.slice(2)+".webp":"data/npc/"+m.slice(2)+".webp"};
 const OY_DAY=864e5,OY_H=36e5;
 /* 誰：m＝3D 模型（tripo_app）、ic＝頭上的符號、eras＝出現的朝代、at＝地點（port 渡口、yz 驛站）、p＝機率、cd＝冷卻、max＝同一朝最多幫幾次、xp＝第一次解某題的修為 */
 const OY_WHO={
@@ -13042,7 +13046,14 @@ function oyCss(){if(document.getElementById("oyCss"))return;const s=document.cre
 .oy-wrap{position:relative}.oy-ov{position:absolute;pointer-events:none}.oy-ov text{font-size:34px}
 .oy-thumb{position:absolute;right:4px;top:calc(100% + 4px);bottom:auto;width:30%;background:rgba(251,246,234,.95);border:1.5px solid #3a2618;border-radius:8px;padding:2px;pointer-events:none;z-index:3}
 .oy-thumb small{display:block;text-align:center;font-size:11px;color:#5a4630}
-.oy-done{text-align:center;line-height:1.8}`;document.head.append(s)}
+.oy-done{text-align:center;line-height:1.8}
+.oy-env{position:absolute;right:3.5%;top:13%;z-index:6;display:flex;flex-direction:column;align-items:center;gap:3px;padding:0;border:0;background:none;cursor:pointer;-webkit-tap-highlight-color:transparent;animation:oyEnv 2.6s ease-in-out infinite}
+.oy-env i{position:relative;display:block;width:44px;height:30px;background:linear-gradient(#f8efd9,#efe2c3);border:1.5px solid #6b5132;border-radius:2px;box-shadow:0 3px 8px rgba(0,0,0,.3)}
+.oy-env i::before{content:"";position:absolute;left:0;right:0;top:0;height:16px;background:linear-gradient(to bottom right,transparent 49%,#6b5132 50%,transparent 53%),linear-gradient(to bottom left,transparent 49%,#6b5132 50%,transparent 53%);background-size:50% 100%;background-position:left,right;background-repeat:no-repeat}
+.oy-env i::after{content:"";position:absolute;left:50%;top:9px;width:13px;height:13px;margin-left:-6.5px;border-radius:50%;background:#a3241a;box-shadow:0 0 0 1.5px #f3e3c2 inset}
+.oy-env b{font:800 12.5px/1 var(--kai,var(--serif,serif));color:#3a2618;background:rgba(251,246,234,.92);border:1px solid rgba(107,81,50,.6);border-radius:3px;padding:3px 6px;white-space:nowrap}
+@keyframes oyEnv{0%,100%{transform:translateY(0) rotate(-3deg)}50%{transform:translateY(-4px) rotate(2deg)}}@media (prefers-reduced-motion:reduce){.oy-env{animation:none}}
+.oy-say img{width:72px;height:auto;flex:none;border-radius:8px;background:#f6eedd}`;document.head.append(s)}
 const oyName=(w,mdl)=>w==="hp"&&mdl==="douhua"?"賣豆花的小販":OY_WHO[w].nm;
 const oyModel=(w,mdl)=>w==="hp"&&mdl==="douhua"?"n_douhua":OY_WHO[w].m;
 const oyBackHash=place=>place==="yz"?"#/journey/inn":"#/port";
@@ -13091,6 +13102,8 @@ function oyPage(v,k,place){if(!OUYU_ON)return;const P=v&&v.querySelector(".shp-p
     card.innerHTML=`<span class="ic" aria-hidden="true">${ic}</span><span style="flex:1;min-width:0"><b>${esc(nm)}${r.back?"在等你":"好像遇到麻煩了"}</b><br><span class="muted" style="font-size:13px">${r.back?"點這裡聽他說":"點這裡聽聽看，要不要幫忙"}</span></span><span class="muted">›</span>`;
     card.onclick=act;const say=pad.querySelector(".port-say,.bd-card");if(say)say.after(card);else pad.prepend(card);
     requestAnimationFrame(()=>{if(card.isConnected&&!card.offsetParent&&P&&P.isConnected){card.classList.add("oy-fl");P.append(card)}})};   /* 驛站圖下的清單是藏著的（YZ_NOLIST_ON），小卡放進去看不到：改浮在滿版圖下方 */
+  if(OY_LETTER){const env=document.createElement("button");env.type="button";env.className="oy-env";env.setAttribute("aria-label",(r.back?nm+"在等你":"有人求助")+"：點開來看");env.innerHTML=`<i aria-hidden="true"></i><b>${r.back?"有人等你":"有人求助"}</b>`;
+    env.onclick=e=>{e.stopPropagation();e.preventDefault();act()};let n=0;const put=()=>{if(!P.isConnected)return;if((P.classList.contains("pc-run")||document.querySelector(".walkc"))&&++n<40)return void setTimeout(put,300);P.append(env)};setTimeout(put,900);return}
   const C=oyCfg(place,k);if(!C||typeof shwRM==="function"&&shwRM()||typeof XQBot3D==="undefined"&&typeof loadScript!=="function"){addCard();return}
   const box=document.createElement("div");box.className="oy3";box.setAttribute("aria-hidden","true");box.innerHTML='<i class="sh"></i>';
   const hit=document.createElement("button");hit.type="button";hit.className="oy-hit";hit.style.display="none";hit.setAttribute("aria-label",nm+"：點他聽他說");
@@ -13104,10 +13117,10 @@ function oyPage(v,k,place){if(!OUYU_ON)return;const P=v&&v.querySelector(".shp-p
 /* 晴天回報（賣花姑娘／豆花小販）：同一朝、沒下雨、不是同一天 */
 function oyBackVisit(P,k,place){const S=oySt(),B=S.hp.back;if(!B||B.era!==k||oyBuddyBusy(place,k))return null;const d=oyNow();if(oyDay(d)===B.day||oyWx(P))return null;return{w:"hp",mdl:B.mdl,back:1}}
 function oyBackOpen(r){const S=oySt(),B=S.hp.back;if(!B)return;const nm=oyName("hp",B.mdl);
-  sheet("🎁 "+nm,b=>{b.innerHTML=`${oySayHTML(OY_WHO.hp.ic,nm,OY_SAY.hp.back)}<button class="btn" id="oyOk" style="width:100%">謝謝！</button>`;
+  sheet("🎁 "+nm,b=>{b.innerHTML=`${oySayHTML(OY_WHO.hp.ic,nm,OY_SAY.hp.back,OY_LETTER?oyImg("hp",B.mdl):"")}<button class="btn" id="oyOk" style="width:100%">謝謝！</button>`;
     b.querySelector("#oyOk").onclick=()=>{closeSheet();const S2=oySt();delete S2.hp.back;oySave(S2);
       setTimeout(()=>{if(Math.random()<.5)oyRelic(B.era,(OY_RELIC.hp[B.era]||[""]),nm+"送的");else if(typeof addXP==="function")addXP(10,"偶遇回報","ouyu:hpback:"+B.day)},300)}})}
-const oySayHTML=(ic,nm,t)=>`<div class="oy-say"><span class="ic" aria-hidden="true">${ic}</span><p><b>${esc(nm)}</b>「${esc(t)}」</p></div>`;
+const oySayHTML=(ic,nm,t,img)=>`<div class="oy-say">${img?`<img src="${img}" alt="${esc(nm)}" onerror="this.outerHTML='<span class=ic aria-hidden=true>${ic}</span>'">`:`<span class="ic" aria-hidden="true">${ic}</span>`}<p><b>${esc(nm)}</b>「${esc(t)}」</p></div>`;
 /* 點他：說第一句，選要不要幫 */
 function oyMeet(w,era,place){const S=oySt(),cur=S.cur||{},nm=oyName(w,cur.mdl),W=OY_WHO[w];
   let line="";if(w==="ds")line=(S.ds.n|0)>=1?OY_SAY.ds.again[era]:OY_SAY.ds.in[era];
@@ -13117,7 +13130,7 @@ function oyMeet(w,era,place){const S=oySt(),cur=S.cur||{},nm=oyName(w,cur.mdl),W
   else line=OY_SAY.zf.in[era];
   const gift=w==="mj"&&(S.mj.n|0)===1&&!S.mj.gift;
   oyPickPz(w,era,S).then(id=>{if(!id)return toast(nm+"今天沒什麼事，謝謝你。");
-    sheet(W.ic+" "+nm,b=>{b.innerHTML=`${oySayHTML(W.ic,nm,line)}${w==="zf"?`<p class="muted" style="font-size:13px;margin:-4px 0 8px">${esc(OY_SAY.zf.note)}</p>`:""}
+    sheet(W.ic+" "+nm,b=>{b.innerHTML=`${oySayHTML(W.ic,nm,line,OY_LETTER?oyImg(w,cur.mdl):"")}${w==="zf"?`<p class="muted" style="font-size:13px;margin:-4px 0 8px">${esc(OY_SAY.zf.note)}</p>`:""}
       <button class="btn" id="oyGo" style="width:100%">${gift?"謝謝！我也來幫你":"好，我幫你"}</button><button class="btn ghost" id="oyNo" style="width:100%;margin-top:8px">下次再說</button>`;
       b.querySelector("#oyGo").onclick=()=>{closeSheet();const S2=oySt();S2.cur=Object.assign({},S2.cur||{},{w,era,place,pz:id,t:(S2.cur&&S2.cur.t)||Date.now()});if(w==="zf")S2.zf.open=era;oySave(S2);
         const nav=()=>{location.hash="#/ouyu/"+w+"/"+encodeURIComponent(id)};if(gift){const S3=oySt();S3.mj.gift=Date.now();oySave(S3);oyRelic(era,OY_RELIC.mj[era]||[""],"木匠送的").then(()=>setTimeout(nav,400))}else setTimeout(nav,250)};
@@ -13409,6 +13422,15 @@ function hbCss(){if(document.getElementById("hbCss"))return;const s=document.cre
 @media (prefers-reduced-motion:reduce){.hb-lamp.on,.hb-steam i,.hb-clear,.hb-fw{animation:none}.hb-steam i{opacity:.55}.hb-fw{opacity:.9;transform:scale(1)}}`;document.head.append(s)}
 /* 卡片的標題 */
 const hbCard=(v,sel)=>{for(const q of sel.split(",")){const c=v.querySelector(".home "+q.trim()+",.home"+q.trim());if(c)return c}return null};
+/* 11/10 開發者「書院這一頁都轉成朝代的詞彙，不能把原意扭曲，必須 100% 符合原本詞彙的意義」（照 story/書院入口朝代用詞_草案_1110.md，開發者選定）：
+   停靠哪一朝就換那一朝的說法，意思不變；猜著法、一盞茶殘局本來就是古代說法不換；沒停靠（棋鎮）照用原詞。
+   五組：秦漢三國／魏晉南北朝隋／唐五代／宋元／明清 */
+const HB_ERA_GRP={qin:0,han:0,sanguo:0,weijin:1,nanbei:1,sui:1,tang:2,wudai:2,song:3,yuan:3,ming:4,qing:4};
+const HB_ERA_WORD={"棋譜庫":["棋譜石室","棋譜祕閣","棋譜書樓","棋譜閣","棋譜閣"],"我的開局":["我的起手","我的起手","我的起手","我的起手","我的開局"],
+  "棋力測驗":["棋力考校","棋力考校","棋力考校","棋力考校","棋力考校"],"我的戰績":["我的勝負簿","我的勝負簿","我的勝負簿","我的勝負簿","我的勝負簿"],
+  "主題訓練":["分門習練","分門習練","分門習練","分門習練","分門習練"],"錯棋重練":["錯著重習","錯著重習","錯著重習","錯著重習","錯著重習"],
+  "象棋規則":["象戲規則","象戲規則","象戲規則","象棋規則","象棋規則"],"新手訓練營":["初學講武場","初學講武場","初學教場","初學教場","初學校場"]};
+function hbEraWord(t){let e="";try{e=hbDockEra()}catch(x){}const g=HB_ERA_GRP[e];if(g==null)return t;for(const k in HB_ERA_WORD)if(t.includes(k))return t.replace(k,HB_ERA_WORD[k][g]);return t}
 const hbTitle=c=>{const ic=c.querySelector(".ic,span[style*='font-size:30px']"),t=c.querySelector(".t,b");return((ic?ic.textContent+" ":"")+(t?t.childNodes[0]&&t.childNodes[0].nodeType===3?t.childNodes[0].textContent:t.textContent:"")).trim()};
 const hbHot=c=>/繼續/.test((c.querySelector(".go,:scope>b")||{}).textContent||"");
 let HB_REDO=null;   /* {n, at}：洗墨池的墨色，一分鐘內不重算 */
@@ -13435,7 +13457,7 @@ function hubMap(v,hub){const D=HUB_DEF[hub],home=v.querySelector(".home");if(!D|
   const fresh=!store.get("campSeen",false)&&!Object.keys(campStars()).length&&!Object.keys(store.get("record",{})).length;
   const sp=D.spots.map(([id,sel,x,y])=>{const c=hbCard(v,sel);return c?{id,c,x,y}:null}).filter(Boolean);
   const d=document.createElement("div");
-  d.innerHTML=`<div class="shp-page cq hub-page"><img src="data/hubmap/${hbImg(D.img,hub)}.webp?v=${HB_IMGV}" alt="${esc(D.cap)}"><div class="hb-fx" aria-hidden="true"></div>${sp.map(o=>`<button class="shp-spot${hbHot(o.c)||(fresh&&(o.id==="hbCamp"||o.id==="hbTerms"))?" hot":""}" id="${o.id}" style="left:${o.x}%;top:${o.y}%"><b>${esc(hbTitle(o.c))}</b></button>`).join("")}</div>`;
+  d.innerHTML=`<div class="shp-page cq hub-page"><img src="data/hubmap/${hbImg(D.img,hub)}.webp?v=${HB_IMGV}" alt="${esc(D.cap)}"><div class="hb-fx" aria-hidden="true"></div>${sp.map(o=>`<button class="shp-spot${hbHot(o.c)||(fresh&&(o.id==="hbCamp"||o.id==="hbTerms"))?" hot":""}" id="${o.id}" style="left:${o.x}%;top:${o.y}%"><b>${esc(hbEraWord(hbTitle(o.c)))}</b></button>`).join("")}</div>`;
   const P=d.firstElementChild;v.insertBefore(P,home);home.classList.add("hb-hidden");
   for(const o of sp){const b=P.querySelector("#"+o.id);if(!b)continue;b.onclick=()=>o.c.click();
     const upd=()=>{if(!b.isConnected){mo.disconnect();return}const h=hbHot(o.c)||(fresh&&(o.id==="hbCamp"||o.id==="hbTerms"));if(b.classList.contains("hot")!==h)b.classList.toggle("hot",h)};
