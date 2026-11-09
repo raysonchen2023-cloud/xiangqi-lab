@@ -116,6 +116,14 @@
   const stoneTex=(base,rep)=>{const t=cv(512,512,(g,w,h)=>{g.fillStyle=base;g.fillRect(0,0,w,h);noise(g,w,h,9000,"255,255,255",.12);noise(g,w,h,9000,"0,0,0",.14);
     for(let i=0;i<40;i++){g.fillStyle=`rgba(${Math.random()<.5?"40,40,40":"235,230,220"},${.05+Math.random()*.08})`;g.beginPath();g.arc(Math.random()*w,Math.random()*h,4+Math.random()*16,0,TAU);g.fill()}});
     t.wrapS=t.wrapT=T.RepeatWrapping;t.repeat.set(rep,rep);return t};
+  /* 11/10 開發者（宋朝園子石台外那圈「整個是土色」）：山坡改成水墨草地——淡綠底、大片淡墨暈染、短草筆觸、零星碎石，不再是一片平平的土黃 */
+  const grassTex=(base,inkC,rep)=>{const c=new T.Color(inkC||"#2C3B37"),ir=Math.round(c.r*255),ig=Math.round(c.g*255),ib=Math.round(c.b*255);
+    const t=cv(512,512,(g,w,h)=>{g.fillStyle=base;g.fillRect(0,0,w,h);
+      for(let i=0;i<26;i++){const x=Math.random()*w,y=Math.random()*h,r=30+Math.random()*90,gr=g.createRadialGradient(x,y,0,x,y,r),dk=Math.random()<.55;gr.addColorStop(0,dk?`rgba(${ir},${ig},${ib},${.08+Math.random()*.1})`:`rgba(250,248,236,${.08+Math.random()*.1})`);gr.addColorStop(1,"rgba(0,0,0,0)");g.fillStyle=gr;g.fillRect(x-r,y-r,2*r,2*r)}
+      g.lineCap="round";for(let i=0;i<2200;i++){const x=Math.random()*w,y=Math.random()*h,L=5+Math.random()*11,a=-Math.PI/2+(Math.random()-.5)*.9,bend=(Math.random()-.5)*4;g.strokeStyle=`rgba(${ir},${ig},${ib},${.28+Math.random()*.4})`;g.lineWidth=.7+Math.random()*1.3;g.beginPath();g.moveTo(x,y);g.quadraticCurveTo(x+bend,y-L*.55,x+Math.cos(a)*L,y+Math.sin(a)*L);g.stroke()}
+      noise(g,w,h,6000,"255,255,255",.08);noise(g,w,h,6000,"0,0,0",.1);
+      for(let i=0;i<60;i++){g.fillStyle=`rgba(${Math.random()<.5?"90,88,80":"205,200,188"},${.25+Math.random()*.3})`;g.beginPath();g.ellipse(Math.random()*w,Math.random()*h,1.5+Math.random()*3,1+Math.random()*2,Math.random()*3,0,TAU);g.fill()}});
+    t.wrapS=t.wrapT=T.RepeatWrapping;t.repeat.set(rep,rep);return t};
   const paveTex=()=>{const t=cv(512,512,(g,w,h)=>{g.fillStyle="#8F8778";g.fillRect(0,0,w,h);const s=w/4;
     for(let y=0;y<4;y++)for(let x=0;x<4;x++){const v=150+Math.random()*28|0;g.fillStyle=`rgb(${v},${v-8},${v-20})`;g.fillRect(x*s+4,y*s+4,s-8,s-8)}noise(g,w,h,6000,"0,0,0",.12)});
     t.wrapS=t.wrapT=T.RepeatWrapping;t.repeat.set(7,7);return t};
@@ -958,7 +966,7 @@
     mesh(new T.CylinderGeometry(TR,TR*.9,26+FL-GY,48,1,true),stone2,[0,FL-(26+FL-GY)/2,0],{noCast:1});
     /* 意見回饋 490（開發者：石台邊像懸崖，希望像雲河棋路那樣是山坡上的大石台）：石台外圍加一圈往外慢慢往下的山坡（草地、碎石），遠的地方淡進霧裡，把石台側面那圈牆蓋住 */
     {const pts=[[TR-.2,FL-.06],[TR+4,FL-.9],[TR+12,FL-3.6],[TR+26,FL-9],[TR+46,FL-18],[TR+76,FL-32],[TR+120,FL-52]].map(([r,y])=>new T.Vector2(r,y));
-      const hg=new T.LatheGeometry(pts,96),hm=M(0xffffff,{map:(()=>{const t=stoneTex(EK==="yuan"?"#7E8C62":"#7A8466",10);return t})(),roughness:.95});hm.color=new T.Color(E.mist).lerp(new T.Color("#7C8A68"),.55);
+      const hg=new T.LatheGeometry(pts,96),hb="#"+new T.Color(E.mist).lerp(new T.Color(EK==="yuan"?"#7E8F45":"#4A7A35"),.72).getHexString(),hm=M(0xffffff,{map:grassTex(hb,E.ink,10),roughness:.95});
       const hill=new T.Mesh(hg,hm);hill.material.side=T.DoubleSide;hill.receiveShadow=true;sc.add(hill);
       /* 開發者 11/4：石台底下鋪一張「當朝代的中國大地圖」（Gemini 水墨古地圖，有疆界和地名），畫面拉遠就看得到；地圖載好就換掉山坡，載不到就留著山坡 */
       /* 意見回饋 647（開發者 11/6 選「在現有手繪地圖上描邊」）：地圖上疊一層「最鼎盛時期的疆域」（半透明色塊＋粗邊界，左上角可開關、附圖例），
@@ -1057,7 +1065,7 @@
          雙面的薄片（落葉、欄邊）不加外殼，從背面看才不會多一片黑影；外殼深度往後退 0.3（凹處不冒線）
        ‧手繪立牌（燈籠、樹、長榻圖）：沿著去背的邊描一圈約 1.6 像素的墨線（要 WebGL2）；
          判斷「邊」要用貼圖本身的透明度，不能用乘過材質透明度的值（意見回饋 753：擋在畫面中間的樹會淡到 0.28，之前整棵被當成「邊」塗成黑剪影），墨線也跟著樹一起淡
-       ‧地面：飽和度減半、乘上淡淡的紙紋（跟著地面不跟著鏡頭），外圈往宣紙色暈白
+       ‧地面：飽和度減半、乘上淡淡的紙紋（跟著地面不跟著鏡頭），石台外緣往宣紙色暈白（11/10：只暈石台邊那一圈，外面的山坡不再整片漂成土黃）
        ‧棋盤（木框、盤面）、棋子、小人、天空、長卷、地圖都不動；棋子和小人在這之後才加進場景，本來就不在範圍裡 */
     const PT={roots:sc.children.slice(),M0:new WeakMap(),C:new WeakMap(),st:new WeakMap(),inst:new WeakSet(),u:{value:0},on:null};
     const PT_L="vec3 outgoingLight = reflectedLight.directDiffuse + reflectedLight.indirectDiffuse + totalEmissiveRadiance;";
@@ -1073,7 +1081,7 @@
     function ptGround(o){if(PT.inst.has(o))return;PT.inst.add(o);const ob=o.onBeforeCompile;
       o.onBeforeCompile=(s,r)=>{if(ob)ob(s,r);s.uniforms.xqInk=PT.u;
         s.vertexShader=s.vertexShader.replace("#include <common>","#include <common>\nvarying vec3 vXqW;").replace("#include <project_vertex>","#include <project_vertex>\nvXqW = ( modelMatrix * vec4( transformed, 1.0 ) ).xyz;");
-        s.fragmentShader=s.fragmentShader.replace("#include <common>","#include <common>\nuniform float xqInk;\nvarying vec3 vXqW;\n"+PT_N).replace("#include <map_fragment>","#include <map_fragment>\nif ( xqInk > .5 ) {\nfloat xqY = dot( diffuseColor.rgb, vec3( .2126, .7152, .0722 ) );\nvec3 xqC = mix( vec3( xqY ), diffuseColor.rgb, .5 );\nfloat xqG = xqN( vXqW.xz * 3.1 ) * .5 + xqN( vXqW.xz * 11. ) * .3 + xqN( vXqW.xz * 37. ) * .2;\nxqC *= vec3( 1., .975, .92 ) * ( .9 + .14 * xqG );\ndiffuseColor.rgb = mix( xqC, vec3( .84, .79, .68 ), .45 * smoothstep( 15., 21.5, length( vXqW.xz ) ) );\n}")};
+        s.fragmentShader=s.fragmentShader.replace("#include <common>","#include <common>\nuniform float xqInk;\nvarying vec3 vXqW;\n"+PT_N).replace("#include <map_fragment>","#include <map_fragment>\nif ( xqInk > .5 ) {\nfloat xqY = dot( diffuseColor.rgb, vec3( .2126, .7152, .0722 ) );\nvec3 xqC = mix( vec3( xqY ), diffuseColor.rgb, .5 );\nfloat xqG = xqN( vXqW.xz * 3.1 ) * .5 + xqN( vXqW.xz * 11. ) * .3 + xqN( vXqW.xz * 37. ) * .2;\nxqC *= vec3( 1., .975, .92 ) * ( .9 + .14 * xqG );\ndiffuseColor.rgb = mix( xqC, vec3( .84, .79, .68 ), .45 * smoothstep( 15., 21.5, length( vXqW.xz ) ) * ( 1. - smoothstep( 21.5, 24., length( vXqW.xz ) ) ) );\n}")};
       o.customProgramCacheKey=()=>"xqGround";o.needsUpdate=true}
     const PT_W2=!!(rd.capabilities&&rd.capabilities.isWebGL2);
     function ptCard(o){if(PT.inst.has(o)||!PT_W2)return;PT.inst.add(o);const ob=o.onBeforeCompile;
@@ -1272,7 +1280,7 @@
       const off=camBase.clone().sub(PIV),lk=look.clone().sub(PIV),el0=Math.atan2(off.y,Math.hypot(off.x,off.z)),el=clamp(el0+pitch-.26*orb,.1,1.5),R=Math.min(off.length()*zoom,330),az=Math.atan2(off.x,off.z)+yaw;
       /* 開發者 11/4：畫面拉遠看石台底下的朝代大地圖——鏡頭距離超過 105（長卷半徑的 62%）以後，鏡頭慢慢升高成俯視，長卷、天空跟著淡掉，霧也變淡 */
       const kf=smooth(105,220,R),elF=el+(1.38-el)*kf;   /* 意見回饋 525：拉到一半還要看得到環景長卷（517 時提早淡掉，改回原本的距離） */
-      if(kf!==lastKf){lastKf=kf;for(const m of FARHIDE){m.visible=kf<.98;if(m.material){m.material.opacity=1-kf;m.material.transparent=true}}if(MAPM){const a=smooth(.04,.45,kf);MAPM.visible=a>0;MAPM.material.opacity=a;if(HILL)HILL.visible=a<.9}if(sc.fog){sc.fog.near=70+kf*260;sc.fog.far=320+kf*520}}
+      if(kf!==lastKf){lastKf=kf;for(const m of FARHIDE){m.visible=kf<.98;if(m.material){m.material.opacity=1-kf;m.material.transparent=true}}if(MAPM){const a=smooth(.3,.62,kf);MAPM.visible=a>0;MAPM.material.opacity=a;if(HILL)HILL.visible=a<.9}   /* 11/10 開發者「宋朝地面整個是土色」：古地圖鋪在山坡上方，原本一拉遠（kf .04）就淡入、紙色把草地山坡整片蓋成土黃；改成拉得比較遠（kf .3 起）才浮現 */if(sc.fog){sc.fog.near=70+kf*260;sc.fog.far=320+kf*520}}
       /* 意見回饋 647：疆域層跟著地圖淡入（開關關掉就不顯示）；次要地名鏡頭拉近（距離 255 以內）才出現，拉遠到 295 完全淡掉 */
       if(MAPM&&MAPO.length){const a=MAPM.visible?MAPM.material.opacity:0;MAPMN=1-smooth(255,295,R);
         if(RTF&&a>0){const tn=performance.now();if(!RTA||tn-RTT>800){RTT=tn;RTF()}}RTA=a;   /* 意見回饋 658：地圖一出現、之後每 0.8 秒問一次路線有沒有變（解完一站回來、換了模式） */const key=a.toFixed(3)+"/"+MAPMN.toFixed(3)+"/"+RON;

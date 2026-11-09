@@ -1370,7 +1370,7 @@ html[data-hicon] .tabbar button.on{box-shadow:inset 0 -3px 0 currentColor}
       if(!window.caches)return go();caches.keys().then(function(ks){return Promise.all(ks.filter(function(k){return k.indexOf("xqlab-app-")===0}).map(function(k){return caches.delete(k)}))})
         .then(function(){return navigator.serviceWorker&&navigator.serviceWorker.getRegistration()}).then(function(r){return r&&r.update()}).catch(function(){}).then(go)}};setTimeout(chk,4000)})();
 </script>
-<script>window.XQ_OFFLINE=true;window.XQ_BUILD="20261110-1315";</script>
+<script>window.XQ_OFFLINE=true;window.XQ_BUILD="20261110-1330";</script>
 <script src="core.js"></script>
 <script src="engine.js"></script>
 <script src="local.js"></script>
@@ -13693,6 +13693,19 @@ function lobbyMap(v){const lb=v.querySelector("#lb");if(!lb||v.querySelector(".l
   try{if(typeof shwPage==="function"&&SHIP_WALK_ON)shwPage(v,Object.assign({},SHW_PG0,SHW_LOBBY),"lobby")}catch(e){}
   try{if(typeof zmPage==="function")zmPage(v)}catch(e){}}
 if(typeof Lobby==="function"){const f0=Lobby;Lobby=function(v){const r=f0.apply(this,arguments);try{if(LOBBY_MAP_ON&&OFF&&window.XQNet)lobbyMap(v)}catch(e){}return r}}
+/* 11/10 開發者「線上對戰點進去場景跟茶坊不同，玩家會困惑」第一步：
+   ① 茶坊圖上的入口改叫「走進天井・線上對戰」，點了畫面往天井那張方桌拉近、淡出，再到天井頁（像走進去）；
+   ② 天井頁一打開從稍微放大、淡淡的慢慢退回原位，標題改「〇〇・天井」（〇〇跟停靠朝代的茶坊名）。手機設定「減少動態效果」就直接換頁 */
+let LM_IN=0;
+const lmNoMove=()=>{try{return matchMedia("(prefers-reduced-motion: reduce)").matches}catch(e){return false}};
+if(typeof hubMap==="function"){const f0=hubMap;hubMap=function(v,hub){const r=f0.apply(this,arguments);try{if(hub==="battle"){const b=v.querySelector("#hbNet"),P=v.querySelector(".hub-page");if(b&&P){
+  const w=document.createTreeWalker(b,NodeFilter.SHOW_TEXT);while(w.nextNode()){const n=w.currentNode;if(/線上對戰/.test(n.nodeValue)){n.nodeValue=n.nodeValue.replace(/線上對戰・觀戰|線上對戰/,"走進天井・線上對戰");break}}
+  const orig=b.onclick;b.onclick=e=>{if(typeof orig!=="function")return;if(lmNoMove()||!P.animate)return orig(e);if(P.dataset.lmGo)return;P.dataset.lmGo="1";LM_IN=Date.now();
+    P.style.transformOrigin="50% 55%";const an=P.animate([{transform:"scale(1)",opacity:1},{transform:"scale(2.4)",opacity:0}],{duration:460,easing:"ease-in",fill:"forwards"});
+    let done=false;const go=()=>{if(done)return;done=true;orig(e);setTimeout(()=>{try{an.cancel()}catch(x){}delete P.dataset.lmGo},400)};an.onfinish=go;setTimeout(go,600)}}}}catch(e){}return r}}
+if(typeof lobbyMap==="function"){const f1=lobbyMap;lobbyMap=function(v){const r=f1.apply(this,arguments);try{
+  const t=document.getElementById("title");if(t&&typeof xqHubName==="function"){const n=xqHubName("battle").split(" ").slice(1).join(" ");if(n)t.textContent=n+"・天井"}
+  const P=v.querySelector(".lobby-page");if(P&&Date.now()-LM_IN<2500&&!lmNoMove()&&P.animate){LM_IN=0;P.style.transformOrigin="50% 70%";P.animate([{transform:"scale(1.16)",opacity:0},{transform:"scale(1)",opacity:1}],{duration:520,easing:"ease-out"})}}catch(e){}return r}}
 /* ================= 🏮 大廳名冊與棋友資料卡「茶樓門房迎客案」（42 案第 6 頁：Gemini 方案 1＋2，Claude 依考究清單修正；考究說明 park/rostermap/考究說明.md）=================
    圖：park/rostermap/roster_day_v5.png（Gemini 第一張；有玻璃罩的燈用局部修換成明式錫燈台、登記簿頁內框線用程式抹掉、水牌下像人頭肩的牆面水漬抹淡；宣紙濾鏡 0.6）、
        夜版 roster_night_v2.png（天井紅紗燈和錫燈點亮；案下地磚像人形的墨漬換成白天版乾淨地磚、牆上水漬抹淡）→ art/rostermap/ → data/rostermap/。小素材 1 件：mf_card 名帖紅紙底。
