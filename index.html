@@ -1370,7 +1370,7 @@ html[data-hicon] .tabbar button.on{box-shadow:inset 0 -3px 0 currentColor}
       if(!window.caches)return go();caches.keys().then(function(ks){return Promise.all(ks.filter(function(k){return k.indexOf("xqlab-app-")===0}).map(function(k){return caches.delete(k)}))})
         .then(function(){return navigator.serviceWorker&&navigator.serviceWorker.getRegistration()}).then(function(r){return r&&r.update()}).catch(function(){}).then(go)}};setTimeout(chk,4000)})();
 </script>
-<script>window.XQ_OFFLINE=true;window.XQ_BUILD="20261110-1245";</script>
+<script>window.XQ_OFFLINE=true;window.XQ_BUILD="20261110-1300";</script>
 <script src="core.js"></script>
 <script src="engine.js"></script>
 <script src="local.js"></script>
@@ -2497,6 +2497,7 @@ function route(){
   if(p[0]==="ouyu"&&typeof OuyuPage==="function")return screen=OuyuPage(v,p.slice(1));   /* 開發者 11/10：偶遇求助角色的解題頁 #/ouyu/<誰>/<題號>（m/07w5-ouyu.js） */
   if(p[0]==="coop"&&typeof CoopPage==="function")return screen=CoopPage(v,p.slice(1));   /* 開發者 11/9：合作殘譜（同桌 #/coop、殘篇閣 #/coop/lobby；m/07q2-coop.js） */
   if(p[0]==="lobby")return screen=Lobby(v);
+  if(p[0]==="cpuroom"&&typeof CpuRoom==="function")return screen=CpuRoom(v);   /* 11/10 開發者：挑戰電腦的雅間（07z5-cpuroom.js） */
   if(p[0]==="cup")return screen=CupPage(v);   /* 意見回饋 635：千秋盃 */
   if(p[0]==="watch"){if(p[1]==="ai")return screen=Watch(v);navReplace("#/lobby");return}   /* 意見回饋 290：觀戰併進線上大廳 */
   if(p[0]==="stats")return screen=Stats(v);
@@ -2868,6 +2869,7 @@ async function deviceQR(base,key){
     <p class="muted" style="text-align:center">⚠ 含存取碼：掃到的人能操作電腦上的對局。只給自己的裝置或信任的人。</p>`;
     new QRCode(b.querySelector("#qrc"),{text:u,width:220,height:220,correctLevel:QRCode.CorrectLevel.L})})}
 
+
 // ================= 首頁 =================
 // 線上版（電腦給的 trycloudflare 網址）被加到主畫面的話，電腦重開後網址就失效；請改裝 GitHub 版
 function standaloneOnlineWarn(v){if(OFF||!(matchMedia("(display-mode: standalone)").matches||navigator.standalone))return;
@@ -2877,7 +2879,7 @@ function standaloneOnlineWarn(v){if(OFF||!(matchMedia("(display-mode: standalone
 function Home(v,hub){   /* hub：沒有＝首頁三張大卡；"battle"＝對戰頁；"learn"＝學習頁（開發者看 Gemini UI／UX 審閱後決定） */
   const RI=DEVREMOTE()?XQ.remoteInfo():null;  // 這支手機連過主人的電腦嗎
   const standalone=matchMedia("(display-mode: standalone)").matches||navigator.standalone;
-  setTop("象棋千秋",false,OFF?[].concat(RI?[["🔗",connectSheet,"連線到電腦"]]:[])  :[["👥",whoSheet,"誰在線上"]]);meChip();   /* 意見回饋 570：📋 移到設定頁 */   /* 意見回饋 536：首頁左上角的頭像，點了進「我的角色」；531：首頁右上角的「分享給朋友」「意見回饋」拿掉（都在 設定 → 系統） */setTabs(true,"#/");   /* 意見回饋 409：意見回饋按鈕放在首頁最右上角 */
+  setTop("象棋千秋",false,OFF?[].concat(RI?[["🔗",connectSheet,"連線到電腦"]]:[]).concat(!hub&&DEVMODE()&&typeof openFbAdmin==="function"?[["📋",openFbAdmin,"意見回饋管理"]]:[])  :[["👥",whoSheet,"誰在線上"]]);   /* 11/10 開發者：首頁只留 📋 圖示，放在頂欄右上角角色頭像左邊 */meChip();   /* 意見回饋 570：📋 移到設定頁 */   /* 意見回饋 536：首頁左上角的頭像，點了進「我的角色」；531：首頁右上角的「分享給朋友」「意見回饋」拿掉（都在 設定 → 系統） */setTabs(true,"#/");   /* 意見回饋 409：意見回饋按鈕放在首頁最右上角 */
   if(hub){setTop(typeof xqHubName==="function"?xqHubName(hub==="battle"?"battle":"learn"):(hub==="battle"?"⚔ 對戰":"📚 學習"),"#/");setTabs(true,"#/")}
   const T=(k,go,ic,t,id,s,x,cta)=>`<button class="tile strip ${k}${x||""}" data-go="${go}"><span class="ic">${ic}</span><span class="tx"><span class="t">${t}</span><span class="s"${id?` id="${id}"`:""}>${s}</span></span><b class="go">${cta||"›"}</b></button>`;
   v.innerHTML=`<div class="home">
@@ -5368,9 +5370,9 @@ function parkInfo(k){const era=store.get("era","classic"),E=PARK_INFO[era]||PARK
   let t,x;if(k==="opp"){const op=PARK&&PARK.last&&PARK.last.ex&&PARK.last.ex.opp,OL=op&&!(op.sprite&&!op.npc&&!op.cus)?oppLine(op,era):null;
     if(OL){t=OL.name;x=`「${OL.say}」`}
     else if(op&&/^x:/.test(String(op.cus||""))){t=op.npc||"雲河七星";x=`「${op.about||""}」——從雲河星槎下船、路過驛站的雲河七星。`}
-    else if(op&&/^k:/.test(String(op.cus||""))){t="冷面國手";x="坐在對面的是冷面國手：挑戰電腦時跟你下棋的青年棋手。他背後是開源的象棋 AI 引擎 Pikafish（從西洋棋引擎 Stockfish 改編來的），棋力比人類特級大師還強。他會思考、會走棋，輸了也會沮喪喔！"}
+    else if(op&&/^k:/.test(String(op.cus||""))){t="幻影棋客";x="坐在對面的是幻影棋客：挑戰電腦時跟你下棋的水墨幻影，強弱可以隨你調。他背後是開源的象棋 AI 引擎 Pikafish（從西洋棋引擎 Stockfish 改編來的），棋力比人類特級大師還強。他會思考、會走棋，輸了也會沮喪喔！"}
     else if(op&&op.npc){t=op.npc;x=`「${op.about||""}」——在園子裡遇到的路人棋友。每次進園子都可能遇到不同的人，棋力也有高有低。`}
-    else if(op&&op.sprite){t="冷面國手";x="你的對手冷面國手，背後是開源的象棋 AI 引擎 Pikafish（從西洋棋引擎 Stockfish 改編來的），棋力比人類特級大師還強。它會思考、會走棋，輸了也會沮喪喔！"}
+    else if(op&&op.sprite){t="幻影棋客";x="你的對手幻影棋客，背後是開源的象棋 AI 引擎 Pikafish（從西洋棋引擎 Stockfish 改編來的），棋力比人類特級大師還強。它會思考、會走棋，輸了也會沮喪喔！"}
     else{t="對手";x="坐在對面的是你的對手。每個玩家都有自己專屬的小帥造型。"}}
   else if(k==="mate"){t=meName()+"（你）";x="坐在這一側的就是你的角色！官帽和官服會跟著你的電腦段位升官；你走出好棋，角色會開心，贏了會跳起來慶祝。點他旁邊的桌子、茶杯、椅子、樹，都有各自的介紹。"}
   else if(E[k]){[t,x]=E[k]}else return;
@@ -5942,7 +5944,7 @@ function useHint(){const H=hintInfo();if(H.left>0){store.set("hintUse",{d:H.day,
 /* 意見回饋 594／595（開發者）：悔棋改成寶物「悔棋符」。跟電腦下、故事裡下，要用 1 張悔棋符才能悔一步；線上對戰不能悔棋也不能提示。
    練習（擺盤、錯棋重練）照樣隨便退。掉落規則見下面 itemDrop（意見回饋 597） */
 /* 意見回饋 597：哪些對局不能用寶物（提示棋、悔棋符）——回傳原因，可以用就回傳空字串。線上對戰另外在對戰頁就沒有寶物 */
-const itemBlock=st=>!st?"":st.ranked?"積分挑戰要比真實力，不能用寶物":st.reward?"獎勵模式贏的是點數，不能用寶物":st.practice?"練習可以直接退，不用寶物":"";
+const itemBlock=st=>!st?"":(st.kind||(st.practice?"practice":st.journey?"journey":st.arena?"arena":"cpu"))==="cpu"?"跟幻影棋客下棋要比真實力，不能用寶物":st.ranked?"積分挑戰要比真實力，不能用寶物":st.reward?"獎勵模式贏的是點數，不能用寶物":st.practice?"練習可以直接退，不用寶物":"";
 /* 意見回饋 597（開發者選「強度＋保底」）：每盤結束（自己走 10 步以上）💡 提示棋、↶ 悔棋符各抽一次，線上對戰也算。
    機率＝對手強度 N%（電腦第 N 級；線上照對手段位換成同級電腦；積分挑戰照那一段），贏了再 +2%，最高 20%。
    哪一樣連 15 盤沒掉，下一盤那一樣一定掉。同一盤只抽一次 */
@@ -9934,7 +9936,7 @@ const OPT_NDRAW={w01_tang_lady:"牡丹開兩朵，這盤一人一朵。",w02_son
   w14_yuan_porcelain:"一筆一筆，畫成一對了。",w15_yuan_archer:"兩箭都中靶，平手！",w16_ming_poet:"上句下句對得剛好，和了。",w17_ming_pipa:"一曲彈完，餘音不分輸贏。",w18_ming_doctor:"脈象平和，這盤和了。",
   w19_ming_teahouse:"和棋！這壺茶，咱們一人一半。",w20_ming_guard:"人沒抓到，也沒跑掉，算你和。",niao:"畫眉也不知道該替誰叫好。",duanjin:"一來一往，跟打拳一樣，平手！",douhua:"和了？那豆花一人半碗。",
   fengzheng:"和了！我可以去追風箏了嗎？",mujiang:"榫頭對卯眼，剛剛好，和了。",amah:"噓——和了，孫子還睡得好好的。",daishu:"這盤和了，我照實記下。",tiaoshui:"和了！兩桶水一樣重。",genggu:"梆子還沒響，這盤先算平。",maihua:"和了？梅花先插在桌上，下次再說。"};
-const OPT_KM={name:"冷面國手",hi:"坐吧，棋盤已經擺好了。",win:"一步一步，都在算裡。",lose:"……這一手，我沒算到。佩服。",draw:"勢均力敵，和局。"};
+const OPT_KM={name:"幻影棋客",   /* 11/10 開發者選定：電腦對手改叫「幻影棋客」（原冷面國手） */hi:"坐吧，棋盤已經擺好了。",win:"一步一步，都在算裡。",lose:"……這一手，我沒算到。佩服。",draw:"勢均力敵，和局。"};
 const OPT_STORY={hi:"請，該你走了。",win:"這盤是我的，再來吧。",lose:"好棋，這盤你贏了。",draw:"誰也沒贏，和了。"};
 const optQ=s=>String(s||"").replace(/^「|」$/g,"");
 /* 驛站旅人、秘境棋友的四句（x＝INN／SECRETS 那一位） */
@@ -9988,7 +9990,7 @@ const rsLast=g=>rsData().t[g.id]||rsT0(g.id);
 /* 對手是誰：有名字的人回 who；沒有角色的（故事關、古戰場、錯棋重練）回 title */
 function rsWho(g){const j=String(g.journey||"");try{
   if(g.k==="practice")return{title:g.practice&&g.practice.drill?g.practice.title||"練習":"錯棋重練"};if(g.k==="arena")return{who:(ARENA[g.arena]||{}).name||"擂主"};   /* 回饋 838（開發者 11/9 選：全模式中斷接續）：🎯 練習寫練習的題名 */
-  if(g.k==="cpu")return{who:typeof OPT_KM!=="undefined"?OPT_KM.name:"冷面國手",tag:g.ranked?"積分挑戰":g.reward?"獎勵棋":""};   /* 回饋 838（開發者 11/9 選：全模式中斷接續）：對局裡叫冷面國手（回饋 418），小卡也一樣 */
+  if(g.k==="cpu")return{who:typeof OPT_KM!=="undefined"?OPT_KM.name:"幻影棋客",tag:g.ranked?"晉級賽":g.reward?"獎勵棋":"練功房"};   /* 回饋 838（開發者 11/9 選：全模式中斷接續）：對局裡叫冷面國手（回饋 418），小卡也一樣 */
   if(j==="park"){const n=parkNpcOf({...g,journey:"park"});return{who:n?n.name:"園子裡的路人"}}
   {const a=typeof innAnyAct==="function"?innAnyAct(j):null;if(a)return{who:a.name}}
   if(j.startsWith("char:")&&JCHAR[j.slice(5)])return{who:JCHAR[j.slice(5)].name};
@@ -13342,10 +13344,11 @@ const hbImg=(base,hub)=>{const e=hbDockEra();return base+((HB_ERAS[hub]||[]).inc
 function hbGate(icon,title,sub){let n="battle",h="";try{n=hbImg("battle","battle")}catch(e){}try{h=typeof xqHubName==="function"?xqHubName("battle").replace(/^\S+\s/,""):""}catch(e){}return{img:["data/hubmap/"+n+".webp","data/hubmap/battle.webp"],icon,title,sub:(h?h+"・":"")+sub,bg:"#1f2a22"}}
 /* 入口：[標籤 id（也是 07w 的入口代號）, 卡片的選擇器, 標籤左%, 上%]（量 768×1376 的定稿圖，標籤放在東西上方，角色站在東西前面） */
 const HUB_DEF={
+  /* 11/10 開發者：我的戰績、一盞茶殘局的標籤往下挪（戰績貼到牆上紅榜、一盞茶貼到茶几上方） */
   learn:{img:"learn",cap:"📚 學習",sub:"千秋翰林書院・前院啟蒙、中庭日課、講堂考校、藏書閣典藏",spots:[
     ["hbTerms",'[data-go="#/terms"]',15,75.5],["hbCamp",'[data-go="#/camp"]',82,76.5],
-    ["hbCanju",'[data-go="#/canju"]',20,51],["hbRedo",'[data-go="#/redo"]',68,59.5],["hbTheme",'[data-go="#/theme"]',88,54],
-    ["hbQuiz",'[data-go="#/quiz"]',50,45.5],["hbStats",'[data-go="#/stats"]',12,41],["hbOpen",'[data-go="#/openings"]',70,40],
+    ["hbCanju",'[data-go="#/canju"]',24,58],["hbRedo",'[data-go="#/redo"]',68,59.5],["hbTheme",'[data-go="#/theme"]',88,54],
+    ["hbQuiz",'[data-go="#/quiz"]',50,45.5],["hbStats",'[data-go="#/stats"]',12,48],["hbOpen",'[data-go="#/openings"]',70,40],
     ["hbGuess",'[data-go="#/guess"]',50,13],["hbDb",'[data-go="#/db"]',50,24.5]]},
   battle:{img:"battle",cap:"⚔ 對戰",sub:"徽州深院茶樓・天井對弈、靠窗挑戰、踢館擂台、二樓千秋盃",spots:[
     ["hbNet",'[data-go="#/lobby"],[data-go="#/watch/ai"]',50,48.5],["hbCpu",'[data-go="#/cpu"]',19,58],
@@ -13476,7 +13479,6 @@ function hmCss(){if(document.getElementById("hmCss"))return;const s=document.cre
 .hm-sky::after{content:"";position:absolute;left:12%;right:12%;bottom:-4%;height:22%;border-radius:50%;background:radial-gradient(closest-side,rgba(255,240,190,.75),rgba(255,230,160,0))}
 @keyframes hmSky{0%,100%{opacity:.75}50%{opacity:1}}
 .hm-me{position:absolute;z-index:3;background:transparent;border:0;padding:0;border-radius:40%;cursor:pointer;-webkit-tap-highlight-color:transparent}
-.hm-fbadm{position:absolute;left:50%;top:1.6%;transform:translateX(-50%);z-index:4;border:1.5px solid #f2c94c;border-radius:999px;background:rgba(20,16,12,.72);color:#ffe08a;font:800 13px/1 var(--serif,serif);padding:7px 14px;white-space:nowrap;cursor:pointer}
 .hm-inst{position:absolute;left:50%;bottom:1.4%;transform:translateX(-50%);z-index:4;border:1.5px solid #f2c94c;border-radius:999px;background:rgba(20,16,12,.72);color:#ffe08a;font:800 13px/1 var(--serif,serif);padding:7px 14px;white-space:nowrap;cursor:pointer}
 ${typeof WALK_BOT_MERGE!=="undefined"&&WALK_BOT_MERGE?"":"body.hm-on.shw-on .xqbot{visibility:visible}"}
 @media (prefers-reduced-motion:reduce){.hm-sky{animation:none}}`;document.head.append(s)}
@@ -13498,14 +13500,13 @@ function homeMap(v){const home=v.querySelector(".home");if(!home||v.querySelecto
   const nw=hmNew(),standalone=matchMedia("(display-mode: standalone)").matches||navigator.standalone,inst=OFF&&!standalone&&!(store.get("instAsk",null)||{}).no;
   const lab=id=>id==="hmQuick"&&nw?"🔰 第一次下象棋？":id==="hmLearn"?xqHubName("learn"):id==="hmBattle"?xqHubName("battle"):id==="hmQuick"?xqHubName("quick"):HM_SPOTS.find(s=>s[0]===id)[3];
   const d=document.createElement("div");
-  d.innerHTML=`<div class="shp-page cq home-page"><img src="data/homemap/home.webp?v=${HM_IMGV}" alt="楚河渡口棋鎮"><div class="hm-fx" aria-hidden="true">${nw?'<i class="hm-sky"></i>':""}</div>${HM_SPOTS.map(([id,x,y])=>`<button class="shp-spot${id==="hmQuick"&&nw?" hot":""}" id="${id}" style="left:${x}%;top:${y}%"><b>${esc(lab(id))}</b></button>`).join("")}${inst?'<button class="hm-inst" id="hmInst">📲 加到主畫面</button>':""}${OFF&&typeof DEVMODE==="function"&&DEVMODE()&&typeof openFbAdmin==="function"?'<button class="hm-fbadm" id="hmFbAdm">📋 回饋管理</button>':""}</div>`;   /* 11/10 開發者：開發者用的意見回饋管理放首頁正中間上方（設定頁右上角的 📋 照留） */
+  d.innerHTML=`<div class="shp-page cq home-page"><img src="data/homemap/home.webp?v=${HM_IMGV}" alt="楚河渡口棋鎮"><div class="hm-fx" aria-hidden="true">${nw?'<i class="hm-sky"></i>':""}</div>${HM_SPOTS.map(([id,x,y])=>`<button class="shp-spot${id==="hmQuick"&&nw?" hot":""}" id="${id}" style="left:${x}%;top:${y}%"><b>${esc(lab(id))}</b></button>`).join("")}${inst?'<button class="hm-inst" id="hmInst">📲 加到主畫面</button>':""}</div>`;
   const P=d.firstElementChild;v.insertBefore(P,home);home.classList.add("hb-hidden");if(typeof hbCss==="function")hbCss();else home.style.display="none";
   {const wv=typeof sw7HomeWx==="function"?sw7HomeWx():"",im0=P.querySelector(":scope>img");if(wv&&im0){const pre=new Image();pre.onload=()=>{if(!im0.isConnected)return;try{if(typeof sw7SeaTurn==="function"&&sw7SeaTurn(P,im0,pre.src))return}catch(e){}im0.src=pre.src};pre.src="data/homemap/home_"+wv+".webp?v="+HM_IMGV}}   /* 回饋 811：下雪、下雨天換積雪版 home_snow／雨景版 home_rain（07w7-seasons.js 判斷；先載好再換，載不到留原圖） */
   const GO={hmShip:"#/adventure",hmBattle:"#/hub/battle",hmLearn:"#/hub/learn"};
   for(const[id]of HM_SPOTS){const b=P.querySelector("#"+id);if(!b)continue;
     b.onclick=()=>{vibrate(5);if(GO[id]){location.hash=GO[id];return}if(id==="hmRec"){if(typeof TODAY_MAP_ON!=="undefined"&&TODAY_MAP_ON){location.hash="#/today";return}hmRecSheet();return}if(id==="hmQuick")location.hash=hmNew()?"#/camp":"#/cpu"}}
   {const ib=P.querySelector("#hmInst");if(ib)ib.onclick=e=>{e.stopPropagation();vibrate(5);installGuide(true)}}
-  {const fa=P.querySelector("#hmFbAdm");if(fa)fa.onclick=e=>{e.stopPropagation();e.preventDefault();vibrate(5);openFbAdmin()}}
   if(typeof shpFit==="function")shpFit(v);
   try{if(typeof shwPage==="function"&&SHIP_WALK_ON){shwPage(v,Object.assign({},SHW_PG0,SHW_HOMEMAP),"home");hmMe(P)}}catch(e){}
   try{if(typeof zmPage==="function")zmPage(v)}catch(e){}
@@ -16016,6 +16017,102 @@ function mzMap(yu){const n=yu?yu[0]:0,P=MZ_YU.map(([x,y],i)=>`<circle cx="${x}" 
 if(typeof Me==="function"){const f0=Me;Me=function(v){const r=f0.apply(this,arguments);try{if(STUDYMAP_ON)mzWall(v)}catch(e){}return r}}
 /* 籤筒（07t3）讓位只在換頁時算一次；這頁的牆在舞台下面，捲動後再算一次，免得籤筒蓋到畫缸、書格的標籤 */
 {let t=0;document.addEventListener("scroll",()=>{clearTimeout(t);t=setTimeout(()=>{try{if(STUDYMAP_ON&&document.querySelector("#view .mz-wall")&&typeof ttAvoid==="function")ttAvoid()}catch(e){}},150)},{capture:true,passive:true})}
+/* ================= 🀄 茶坊雅間：挑戰電腦的入口（開發者 11/10，Gemini 58 號、story/挑戰電腦雅間_設計定案_1110.md）=================
+   茶坊「挑戰電腦」不再直接開一盤，先進這間雅間（#/cpuroom）：第一人稱坐在棋桌前，桌上的器物就是按鈕——
+     左邊朱紅戰帖＝🥇 晉級賽（原「積分挑戰」：段位自動配對手、算分、不能悔棋提示）；右邊棋譜＝📚 練功房（原「自選難度」：18 級任選、可悔棋提示、不扣分）；
+     左牆木腰牌＝我的段位、分數、勝負；桌前兩個棋罐＝執紅／執黑；右牆四卷卷軸＝練功房四段難度（初學乍練 1～4、略有小成 5～9、登堂入室 10～14、宗師之境 15～18）；
+     桌子正中的茶爐（秦～五代是溫酒爐）＝開局；對面空座疊一個半透明的「幻影棋客」（挑戰電腦的對手圖 data/pika2/）；最下方竹簾＝回茶坊（07w9 出口）。
+   後兩卷在前一卷還沒通關任何一級時畫淡一點（只是提醒，照樣可以選）。
+   圖分三組：明清（原圖，不分朝代也用這張）、宋元（_song：湯瓶風爐、建盞、書卷）、秦～五代（_han：矮案坐席、溫酒爐、竹簡、漆奩）。
+   開關 CPUROOM_ON（false＝茶坊照舊直接進 #/cpu）；圖片網址帶 CR_IMGV；前綴 cr */
+const CPUROOM_ON=true;
+const CR_IMGV="1110";
+const CR_GRP_HAN=["qin","han","sanguo","weijin","nanbei","sui","tang"],CR_GRP_SONG=["wudai","song","yuan"];   /* 史學顧問 11/10：五代已是高桌靠背椅、點茶，歸宋元組 */
+const CR_LV=[[1,4,"初學乍練",""],[5,9,"略有小成",""],[10,14,"登堂入室",""],[15,18,"宗師之境","高手也難勝"]];
+const CR_TXT={rank:["🥇 晉級賽","與實力相當的幻影棋客對決，爭取更高段位！","算分升降段；下到一半離開算輸。"],
+  free:["📚 練功房","十八階幻影任你挑，安心練習不怕輸。","不扣分；輸了不怕，放心試新招，贏了那一級蓋「通關」印。"]};   /* 11/10 開發者：跟電腦下不能用寶物（提示棋、悔棋符），練功房不寫「可以悔棋、看提示」 */
+const CR_GUIDE="想升段就進晉級賽，想練新招就進練功房。";
+/* 熱點（原圖像素 768×1376）：[id, x, y, 標籤] */
+const CR_SPOT={crRank:[150,250],crScroll:[650,352],crRankT:[155,672],crFree:[640,662],crRed:[165,812],crBlack:[635,812],crGo:[384,850]};
+function crEra(){let e="";try{e=typeof hbDockEra==="function"?hbDockEra():""}catch(x){}return CR_GRP_HAN.includes(e)?"han":CR_GRP_SONG.includes(e)?"song":""}
+const crPc=(x,y)=>`left:${(x/7.68).toFixed(2)}%;top:${(y/13.76).toFixed(2)}%`;
+function crCss(){if(document.getElementById("crCss"))return;const s=document.createElement("style");s.id="crCss";s.textContent=`
+.cr-page{margin:0 0 6px}.cr-page .shp-spot{max-width:46%;padding:4px 11px;z-index:3}.cr-page .shp-spot b{white-space:nowrap;font-size:14px}
+.cr-page .shp-spot.on{background:#8a1e12;border-color:#f2c94c;color:#fbeee0;box-shadow:0 0 0 2px rgba(242,201,76,.55),0 2px 8px rgba(0,0,0,.35)}
+.cr-page .shp-spot.on b{color:#fbeee0}
+.cr-ghost{position:absolute;left:50%;bottom:49.6%;width:33%;aspect-ratio:437/640;transform:translateX(-50%);z-index:1;pointer-events:none;opacity:.6;filter:grayscale(.85) sepia(.3) contrast(.95) brightness(1.04);-webkit-mask-image:linear-gradient(#000 62%,rgba(0,0,0,.15));mask-image:linear-gradient(#000 62%,rgba(0,0,0,.15));animation:crBreath 5s ease-in-out infinite}
+.cr-ghost.han{bottom:50.4%}.cr-ghost>img{position:absolute!important;inset:0!important;width:100%!important;height:100%!important;max-width:none!important;margin:0!important;display:block}
+.cr-ghost>i{position:absolute;left:50.4%;top:58.9%;width:34%;aspect-ratio:1;transform:translate(-50%,-50%);border-radius:50%;display:flex;align-items:center;justify-content:center;font:900 normal 0/1 var(--kai,var(--serif,serif))}.cr-ghost>i b{font-size:min(9cqw,40px);color:#1e1a16}
+
+@keyframes crBreath{0%,100%{opacity:.52;transform:translateX(-50%) translateY(0)}50%{opacity:.66;transform:translateX(-50%) translateY(-1.2%)}}
+.cr-name{position:absolute;left:50%;top:21%;transform:translateX(-50%);z-index:2;font:800 13px/1 var(--kai,var(--serif,serif));color:#3a2618;background:rgba(243,234,210,.82);border:1px solid rgba(138,106,58,.7);border-radius:3px;padding:3px 8px;white-space:nowrap;pointer-events:none}
+.cr-card{position:absolute;left:5%;right:5%;top:69.5%;z-index:2;background:rgba(250,244,230,.93);border:1px solid #8a6a3a;border-radius:4px;box-shadow:0 2px 10px rgba(0,0,0,.3);padding:10px 12px 9px;color:#2a1f15;font:600 14px/1.55 var(--serif,serif)}
+.cr-card h3{margin:0 0 3px;font:900 16px/1.3 var(--kai,var(--serif,serif));color:#8a1e12}
+.cr-card p{margin:0}.cr-card small{display:block;margin-top:3px;font-size:13px;color:#5a4630}
+.cr-card .cr-lv{margin-top:6px;padding-top:6px;border-top:1px dashed rgba(90,70,48,.4);font-size:13.5px}
+.cr-card .cr-g{margin-top:6px;font-size:13px;color:#6a5a48}
+.cr-card .cr-cont{margin-top:7px;display:flex;gap:8px;align-items:center;font-size:13.5px}
+.cr-card .cr-cont button{border:1px solid #8a6a3a;background:#f3ead2;color:#3a2618;border-radius:3px;padding:4px 10px;font:800 13.5px/1.2 var(--kai,var(--serif,serif))}
+.cr-pick{display:grid;gap:10px}.cr-pick .cr-sec{border:1px solid var(--line);border-radius:10px;padding:8px 10px}.cr-pick .cr-sec.dim{opacity:.5}
+.cr-pick .cr-sec h4{margin:0 0 6px;font-size:15px;display:flex;justify-content:space-between;gap:6px}.cr-pick .cr-sec h4 small{font-weight:400;color:var(--muted);font-size:13px}
+.cr-pick .cr-lvs{display:flex;flex-wrap:wrap;gap:6px}.cr-pick .cr-lvs button{min-width:62px;padding:6px 8px;border-radius:8px;border:1px solid var(--line);background:var(--card,#fff);font:600 13.5px/1.25 var(--sans);text-align:center}
+.cr-pick .cr-lvs button.on{border-color:#8a1e12;box-shadow:0 0 0 2px rgba(138,30,18,.25)}.cr-pick .cr-lvs button b{display:block;font-size:15px}.cr-pick .cr-lvs button i{display:block;font-style:normal;font-size:12.5px;color:#8a1e12}
+@media (prefers-reduced-motion:reduce){.cr-ghost{animation:none}}`;document.head.append(s)}
+/* 段位資料、目前這盤：/play/state（local.js playState） */
+let CR_ST=null;
+async function crState(){try{CR_ST=await api("/play/state")}catch(e){}return CR_ST}
+const crRanked=()=>OFF&&!!store.get("cpuRanked",true);
+const crLevel=()=>Math.max(1,Math.min(18,store.get("cpuLevel",6)|0||6));
+const crSide=()=>store.get("cpuSide","r")==="b"?"b":"r";
+const crPassed=n=>!!(((CR_ST&&CR_ST.record)||{})[n]||{}).w;
+function crGrpDim(i){if(i<2)return false;const[a,b]=CR_LV[i-1];for(let n=a;n<=b;n++)if(crPassed(n))return false;return true}
+function crLvName(n){const L=(CR_ST&&CR_ST.levels||[])[n-1];return L?L.name:""}
+function crLive(){const s=CR_ST;return!!(s&&s.kind==="cpu"&&!s.result&&(s.moves||[]).length>=2)}
+function crPaint(P){const rk=crRanked(),T=CR_TXT[rk?"rank":"free"],lv=crLevel(),sd=crSide(),CR=(CR_ST&&CR_ST.cpuRate)||{};{const gb=P.querySelector(".cr-ghost i b");if(gb){gb.textContent=sd==="b"?"帥":"將";gb.style.color=sd==="b"?"#C8102E":"#1e1a16"}}
+  P.querySelector("#crRankT").classList.toggle("on",rk);P.querySelector("#crFree").classList.toggle("on",!rk);
+  P.querySelector("#crRed").classList.toggle("on",sd==="r");P.querySelector("#crBlack").classList.toggle("on",sd==="b");
+  P.querySelector("#crScroll").style.display=rk?"none":"";
+  P.querySelector("#crRank b").textContent=`🏅 ${CR.rank||"新手"}・${CR.pts||0} 分`;
+  const gi=CR_LV.findIndex(([a,b])=>lv>=a&&lv<=b),G=CR_LV[gi]||CR_LV[0];
+  const live=crLive(),lm=live?(CR_ST.ranked?"晉級賽":`練功房第 ${CR_ST.level} 級`):"";
+  P.querySelector(".cr-card").innerHTML=`<h3>${T[0]}</h3><p>${T[1]}</p><small>${T[2]}</small>`+
+    (rk?`<div class="cr-lv">對手照你的段位「${esc(CR.rank||"新手")}」配，${CR.next?`再 ${CR.toNext} 分升「${esc(CR.next)}」`:"已經是最高段位"}</div>`:
+      `<div class="cr-lv">難度：${esc(G[2])}・第 ${lv} 級${crLvName(lv)?`（${esc(crLvName(lv))}）`:""}${crPassed(lv)?"・✔ 通關":""}　<span style="color:#6a5a48">點書架上的卷軸換</span></div>`)+
+    `<div class="cr-g">我執${sd==="r"?"紅（先走）":"黑（後走）"}・${CR_GUIDE}</div>`+
+    (live?`<div class="cr-cont"><span>上一盤${lm}還沒下完</span><button type="button" id="crCont">繼續上一盤 ›</button></div>`:"");
+  const cb=P.querySelector("#crCont");if(cb)cb.onclick=e=>{e.stopPropagation();vibrate(5);location.hash="#/cpu"}}
+function crPick(P){const lv0=crLevel();
+  sheet("📚 練功房・選難度",b=>{b.innerHTML=`<div class="cr-pick">${CR_LV.map(([a,z,nm,note],i)=>{const dim=crGrpDim(i);let h="";for(let n=a;n<=z;n++)h+=`<button type="button" data-l="${n}" class="${n===lv0?"on":""}"><b>${n}</b>${esc(crLvName(n)||"")}${crPassed(n)?"<i>✔ 通關</i>":""}</button>`;
+      return`<div class="cr-sec${dim?" dim":""}"><h4><span>${esc(nm)}</span><small>第 ${a}～${z} 級${note?"・"+esc(note):""}${dim?"・前一卷還沒通關":""}</small></h4><div class="cr-lvs">${h}</div></div>`}).join("")}</div>`;
+    b.querySelectorAll("[data-l]").forEach(x=>x.onclick=()=>{vibrate(5);store.set("cpuLevel",+x.dataset.l);closeSheet();crPaint(P)})})}
+function crRankSheet(){const CR=(CR_ST&&CR_ST.cpuRate)||{},span=CR.hi!=null?CR.hi-CR.lo:0,pct=span?Math.round(100*(CR.pts-CR.lo)/span):100;
+  sheet("🏅 我的晉級賽段位",b=>{b.innerHTML=`<div class="cpu-rk"><div class="mid"><span class="muted">段位</span><span class="pt"><b>${CR.pts||0}</b> 分</span></div><div class="rk">${esc(CR.rank||"新手")}</div>
+    <div class="st-bar"><i style="width:${pct}%"></i></div><div class="muted" style="font-size:13px">${CR.next?`再 ${CR.toNext} 分升「${esc(CR.next)}」`:"已經是最高段位"}・${CR.w||0} 勝 ${CR.l||0} 負 ${CR.d||0} 和</div>
+    <p>晉級賽的對手照你的段位配：跟實力差不多的幻影棋客下，贏約 +16、輸約 −16，跟線上對戰分開記分。</p></div>`})}
+async function crStart(){const rk=crRanked(),lv=crLevel(),sd=crSide();
+  const go=async()=>{try{await api("/play/new",{human:sd,lx:lv,ranked:rk});if(OFF){store.set("cpuRanked",rk);store.set("cpuCar",false)}location.hash="#/cpu"}catch(e){toast(e.message||"開不了局")}};
+  if(crLive()){const s=CR_ST;modal(`<div class="em">🀄</div><h2>上一盤還沒下完</h2><p class="muted">${s.ranked?"晉級賽下到一半開新局會算輸。":"可以接著下，或放棄那盤開新局。"}</p>`,
+    [["繼續上一盤",()=>{location.hash="#/cpu"}],[s.ranked?"開新局（上一盤算輸）":"開新局",go],["取消",null,true]]);return}
+  go()}
+function CpuRoom(v){setTop("挑戰電腦","#/hub/battle");setTabs(true,"#/hub/battle");v.className="view";crCss();
+  const g=crEra(),P=document.createElement("div");P.className="shp-page cq cr-page";
+  const sp=(id,t)=>{const[x,y]=CR_SPOT[id];return`<button type="button" class="shp-spot" id="${id}" style="${crPc(x,y)}"><b>${t}</b></button>`};
+  P.innerHTML=`<img src="data/cpuroom/cpuroom_day${g?"_"+g:""}.webp?v=${CR_IMGV}" alt="茶坊深處的對弈雅間：棋桌、戰帖、棋譜、棋罐、茶爐">
+    <div class="cr-ghost${g==="han"?" han":""}" aria-hidden="true"><img src="${typeof PIKA_DIR==="function"?PIKA_DIR():"data/pika2/"}idle.webp" alt=""><i><b>${crSide()==="b"?"帥":"將"}</b></i></div><span class="cr-name">幻影棋客</span>
+    ${sp("crRank","🏅 段位")}${sp("crScroll","📜 選難度")}${OFF?sp("crRankT","🥇 晉級賽"):""}${sp("crFree","📚 練功房")}${sp("crRed","🔴 執紅")}${sp("crBlack","⚫ 執黑")}${sp("crGo",g==="han"?"🍶 開局":"🍵 開局")}
+    <div class="cr-card"></div>`;
+  v.append(P);
+  if(!OFF)store.set("cpuRanked",false);
+  const on=(id,fn)=>{const b=P.querySelector("#"+id);if(b)b.onclick=e=>{e.stopPropagation();vibrate(5);fn()}};
+  on("crRankT",()=>{store.set("cpuRanked",true);crPaint(P)});on("crFree",()=>{store.set("cpuRanked",false);crPaint(P)});
+  on("crRed",()=>{store.set("cpuSide","r");crPaint(P)});on("crBlack",()=>{store.set("cpuSide","b");crPaint(P)});
+  on("crScroll",()=>crPick(P));on("crRank",()=>crRankSheet());on("crGo",()=>crStart());
+  crPaint(P);crState().then(()=>{if(P.isConnected)crPaint(P)});
+  if(typeof shpFit==="function")shpFit(v);
+  try{if(typeof zmPage==="function")zmPage(v)}catch(e){}
+  return{}}
+/* 茶坊圖上的「挑戰電腦」改進雅間（07y-hubmap 的熱點原本按清單裡的 #/cpu 卡片） */
+if(typeof hubMap==="function"){const f0=hubMap;hubMap=function(v,hub){const r=f0.apply(this,arguments);try{if(CPUROOM_ON&&hub==="battle"){const b=v.querySelector("#hbCpu");if(b)b.onclick=()=>{location.hash="#/cpuroom"}}}catch(e){}return r}}
 /* ================= 🔎 滿版圖「點畫裡的東西看說明」（開發者回饋 818：「對所有繪製的圖可以讓玩家點選物件，然後跳出顯示相關文件說明，就像在環景圖或對戰時點桌子上的物件那樣……不要把物件名稱直接寫上去，會太累亂，玩家點了再顯示」）=================
    圖上平常什麼都不標；點到登記過的東西＝跳出小卡（名稱＋兩三句白話介紹，跟 06-cpu.js 的 parkInfo 同一個 sheet 樣式），07w 的角色照舊走過去、轉身看那個東西。
    點擊順序：入口標籤／告示紙等按鈕（07w 先攔、或按鈕自己處理）＞這裡登記的物件＞空地（07w 走路）。只在點到「圖本身」時才判斷，按鈕、連結、角色身上的透明按鈕一律不碰；
@@ -17252,7 +17349,11 @@ const SW7_PAGES=[
 function sw7Page(src){for(const o of SW7_PAGES)if(o.re.test(src))return o;return null}
 /* 這一頁現在是哪個節氣：預設跟手機的真實日期（07y5 tdTerm）。星槎的新世界觀若讓各朝渡口、驛站改用自己的「歷史時間」，在這裡按頁（P、o.k）覆寫就好，天氣、四季變色都問它 */
 function sw7TermFor(P,o){return P&&P.dataset&&P.dataset.sw7Term||sw7Term()}   /* ⑥ 四時風物匣點了某一季＝這一頁 data-sw7-term 暫時覆寫，離開這頁就沒了 */
-function sw7WxFor(P,o){if(!o||o.m==="in"||!o.rg)return null;return sw7Precip(sw7TermFor(P,o),o.rg)}
+/* 11/10 開發者「同一個朝代某個場景下雨，其他場景也要統一下雨」：棋鎮各頁（首頁、書院、茶坊、天井…）原本固定算南方 "s"，渡口、驛站照那一朝自己的地區算，停在唐、五代時會一邊下一邊晴；
+   停靠某一朝時，棋鎮各頁改用那一朝渡口的地區，同一天同一時段的雨雪就一致（沒停靠照舊 "s"） */
+const SW7_TOWN=/^(home|homeAlt|today|todayN|learn|battle|lobby|canju|terms|redo|theme)$/;
+function sw7Rg(o){if(!o||!o.rg)return"";if(!SW7_TOWN.test(o.k||""))return o.rg;let e="";try{e=typeof hbDockEra==="function"?hbDockEra():""}catch(x){}const q=e&&SW7_PAGES.find(x=>x.k==="port_"+e);return q&&q.rg||o.rg}
+function sw7WxFor(P,o){if(!o||o.m==="in"||!o.rg)return null;return sw7Precip(sw7TermFor(P,o),sw7Rg(o))}
 /* 首頁換底圖（07z-homemap.js 問這裡）：大雪節氣那幾天、或小雪～大寒正在下雪＝積雪版 snow；正在下雨＝雨景版 rain；其他＝""（原圖）；設定關掉也是 "" */
 const SW7_SNOWY=new Set(["小雪","大雪","冬至","小寒","大寒"]);
 /* 開發者 11/9「首頁變秋天的時候還是綠色的葉子，冬天也不會變，要符合天氣和大自然」：首頁照季節換整張圖（同一張原圖改的，構圖、入口、走路的路都不變）——
@@ -17317,7 +17418,7 @@ const SW7_TODW={spring:[5.25,7.25,17.25,19],summer:[4.75,6.75,18,19.75],autumn:[
 /* 11/9 開發者「對戰和學習還是亮著」：學習、對戰、線上大廳（露天庭院）也套同一層月夜；棋譜庫在室內不套 */
 function sw7HomeNightA(d,sea){d=d||new Date();const h=d.getHours()+d.getMinutes()/60,w=SW7_TODW[sea]||SW7_TODW.autumn;if(h>=w[3])return Math.min(1,.7+(h-w[3])*.6);if(h<w[0])return w[0]-h<.5?.7+(w[0]-h)*.6:1;return 0}
 function sw7HomeTod(d,sea){d=d||new Date();const h=d.getHours()+d.getMinutes()/60,w=SW7_TODW[sea]||SW7_TODW.autumn;return h>=w[0]&&h<w[1]?"dawn":h>=w[2]&&h<w[3]?"dusk":""}
-function sw7HomeWx(){if(!sw7On())return"";try{const o=SW7_PAGES.find(x=>x.k==="home"),t=sw7TermFor(null,o),p=sw7Precip(t,o.rg),sea=SW7_HSEA[t]||"";
+function sw7HomeWx(){if(!sw7On())return"";try{const o=SW7_PAGES.find(x=>x.k==="home"),t=sw7TermFor(null,o),p=sw7Precip(t,sw7Rg(o)),sea=SW7_HSEA[t]||"";
   const era=sw7HomeEra(),s2=sea||"spring",td=sw7HomeTod(null,s2);if(era){const k=era+"_"+s2;return SW7_HTOD.has(k)&&td?k+"_"+td:k}
   if(t==="大雪"||(p&&p.t==="snow"&&SW7_SNOWY.has(t)))return"snow";if(p&&p.t==="rain"&&(!sea||sea==="spring"||sea==="summer"))return"rain";return sea&&td&&SW7_HTOD.has(sea)?sea+"_"+td:sea}catch(e){}return""}
 const sw7PolyCss=(q,IW,IH)=>`polygon(${q.map(([x,y])=>(x/IW*100).toFixed(2)+"% "+(y/IH*100).toFixed(2)+"%").join(",")})`;
@@ -17794,7 +17895,7 @@ const EXIT_ON=true;
 /* 11/10 開發者「錯誤，是回書院」：戰績、開局、測驗、錯棋重練、規則碑林都是從書院進來的，出口改回書院（直接去 #/hub/learn）；「書院」照停靠朝代換成國子監等 */
 const EXITS={"/hub/learn":[52,86,"🚪 出書院・回棋鎮","#/"],"/hub/battle":[78,87,"🚪 出茶樓・回棋鎮","#/"],
   "/camp":[50,87,"↩ 回書院"],"/theme":[50,87,"↩ 走回書院"],"/canju":[22,87,"↩ 回書院"],"/terms":[50,87,"↩ 回書院","#/hub/learn"],
-  "/cup":[50,87,"↩ 下樓・回茶坊","#/hub/battle"],"/redo":[24,87,"↩ 回書院","#/hub/learn"],"/stats":[50,87,"↩ 回書院","#/hub/learn"],"/openings":[50,87,"↩ 回書院","#/hub/learn"],
+  "/cup":[50,87,"↩ 下樓・回茶坊","#/hub/battle"],"/cpuroom":[50,96,"↩ 掀簾・回茶坊","#/hub/battle"],"/redo":[24,87,"↩ 回書院","#/hub/learn"],"/stats":[50,87,"↩ 回書院","#/hub/learn"],"/openings":[50,87,"↩ 回書院","#/hub/learn"],
   "/journey/inn":[18,86,"⛵ 回渡口"],"/ship/lesson":[50,87,"⛵ 回星槎"],"/ship/pz":[50,87,"⛵ 回星槎"],"/ship/shelf":[50,87,"⛵ 回星槎"],"/ship/bag":[50,87,"⛵ 回星槎"],
   "/feedback":[20,74,"⛵ 回星槎","#/adventure"],"/me":[50,87,"🏘 回棋鎮"],"/today":[30,87,"🏘 回棋鎮"],"/gm":[50,87,"↩ 回棋譜庫"],"/quiz":[50,87,"↩ 回書院","#/hub/learn"],
   "/lobby":[18,88,"↩ 回對戰茶樓"],"/db":[20,88,"↩ 回學習書院"],"/settings":[14,90,"⛵ 回星槎"]};
@@ -17829,7 +17930,7 @@ function exSync(){if(!EXIT_ON)return;clearTimeout(EX_T);const k=exKey(),t0=Date.
     if(k==="/port"){if(!P.querySelector(".ex-bow")){const sp=[...P.querySelectorAll(".shp-spot")].find(x=>/上星槎/.test(x.textContent));if(sp){const w=document.createElement("button");w.type="button";w.className="ex-bow";w.setAttribute("aria-label","上星槎（船頭）");w.onclick=e=>{e.stopPropagation();try{vibrate(5)}catch(x){}sp.click()};P.append(w)}}
       if(hasBack)exCls("add");return}
     if(!E||!hasBack){exCls("remove");return}
-    if(!P.querySelector(".ex-spot")){const s=document.createElement("button");s.type="button";s.className="shp-spot ex-spot";s.style.left=E[0]+"%";s.style.top=E[1]+"%";let lb=E[2];try{if((k==="/hub/learn"||k==="/hub/battle")&&typeof xqHubName==="function")lb="🚪 出"+xqHubName(k.slice(5)).split(" ").slice(1).join(" ")+"・回棋鎮";else if((k==="/lobby"||k==="/db")&&typeof xqHubName==="function"&&typeof shipAt==="function"&&typeof shipDockList==="function"&&shipDockList())lb="↩ 回"+xqHubName(k==="/lobby"?"battle":"learn").split(" ").slice(1).join(" ");else if(k==="/cup"&&typeof xqHubName==="function")lb="↩ 下樓・回"+xqHubName("battle").split(" ").slice(1).join(" ");else if(/書院/.test(lb)&&typeof xqHubName==="function"&&typeof shipAt==="function"&&typeof shipDockList==="function"&&shipDockList())lb=lb.replace(/學習書院|書院/,xqHubName("learn").split(" ").slice(1).join(" "))}catch(x){}s.innerHTML="<b>"+lb+"</b>";   /* 出口跟著朝代叫法：出國子監・回棋鎮 */
+    if(!P.querySelector(".ex-spot")){const s=document.createElement("button");s.type="button";s.className="shp-spot ex-spot";s.style.left=E[0]+"%";s.style.top=E[1]+"%";let lb=E[2];try{if((k==="/hub/learn"||k==="/hub/battle")&&typeof xqHubName==="function")lb="🚪 出"+xqHubName(k.slice(5)).split(" ").slice(1).join(" ")+"・回棋鎮";else if((k==="/lobby"||k==="/db")&&typeof xqHubName==="function"&&typeof shipAt==="function"&&typeof shipDockList==="function"&&shipDockList())lb="↩ 回"+xqHubName(k==="/lobby"?"battle":"learn").split(" ").slice(1).join(" ");else if(k==="/cup"&&typeof xqHubName==="function")lb="↩ 下樓・回"+xqHubName("battle").split(" ").slice(1).join(" ");else if(k==="/cpuroom"&&typeof xqHubName==="function")lb="↩ 掀簾・回"+xqHubName("battle").split(" ").slice(1).join(" ");else if(/書院/.test(lb)&&typeof xqHubName==="function"&&typeof shipAt==="function"&&typeof shipDockList==="function"&&shipDockList())lb=lb.replace(/學習書院|書院/,xqHubName("learn").split(" ").slice(1).join(" "))}catch(x){}s.innerHTML="<b>"+lb+"</b>";   /* 出口跟著朝代叫法：出國子監・回棋鎮 */
       s.onclick=e=>{e.stopPropagation();try{vibrate(5)}catch(x){}if(E[3]){if(E[3]==="#/"&&typeof goHome==="function"){goHome();return}if(typeof goUp==="function")goUp(E[3]);else location.hash=E[3];return}   /* 11/10 開發者「會跑到象棋規則」：回書院改用 goUp（退回紀錄裡的書院那一層，不多疊一頁），出書院／出茶樓直接回首頁，不再「上一頁」退回剛剛的子頁 */const bb=document.getElementById("back");if(bb&&typeof bb.onclick==="function")bb.onclick()};P.append(s)}   /* E[3]＝直接去那一頁（回饋 849：意見回饋頁回星槎） */
     exCls("add")};
   exCls("remove");EX_T=setTimeout(go,60)}
@@ -17922,7 +18023,7 @@ function CpuGame(v,practicePage,mode){
   const topBar=()=>{const lk=!!(typeof st!=="undefined"&&st&&st.arena&&!st.result),pr=!!(st&&st.practice);
     /* 意見回饋 335：錯棋重練是自己的頁面——標題寫「錯棋重練」，上面沒有積分／自選／擂台／公園，返回回到錯棋清單 */
     /* 意見回饋 349：朝代擂台（和石桌往事）的上方不放積分／自選，只寫是哪裡 */
-    setTop(pr?(st.practice.drill?"🎯 "+(st.practice.title||"練習"):"🔁 錯棋重練"):MODE==="arena"?"🏯 朝代擂台":MODE==="journey"?(st&&st.journey==="park"?"🌳 "+parkName(store.get("era","classic")):(String(st&&st.journey||"").startsWith("bt:")?"⚔ ":"🪨 ")+jName(st&&st.journey)):"挑戰電腦",pr?(st.practice.drill?"#/":"#/redo"):MODE==="journey"?(st&&st.journey==="park"?"^#/port":st&&st.journey?jBack(st.journey):"#/adventure"):MODE==="arena"?"^#/port":"#/",   /* 意見回饋 697：園子、擂台的「‹」回這一朝的渡口 */pr?[]:[/* 意見回饋 346：挑戰電腦看不到擂台、驛站的入口——🏯 只在擂台那盤出現（換擂主）、🏮 只在石桌往事的公園出現 */...(MODE==="arena"?[arenaBtn]:[]),...(MODE==="journey"&&OFF&&st&&st.journey==="park"?[["🏮",()=>walk("inn",()=>navReplace("#/journey/inn")),"走去驛站"]]:[]),...(lk?[]:[parkBtn(()=>{draw();topBar()})]),...(MODE==="arena"||(MODE==="journey"&&st&&/^(park$|inn:)/.test(String(st.journey||"")))?[["⛵",()=>goUp("#/adventure"),"回星槎"]]:[])].concat(vcOn()?[["🎤",()=>voiceMove(()=>!st||st.result?{why:"這盤已經結束"}:st.turn!==st.human||st.thinking?{why:"還沒輪到你"}:{board:st.board,legal:st.legal,play:(f,t)=>{sel=-1;post("/play/move",{f,t})}}),"聲控走棋"]]:[]));
+    setTop(pr?(st.practice.drill?"🎯 "+(st.practice.title||"練習"):"🔁 錯棋重練"):MODE==="arena"?"🏯 朝代擂台":MODE==="journey"?(st&&st.journey==="park"?"🌳 "+parkName(store.get("era","classic")):(String(st&&st.journey||"").startsWith("bt:")?"⚔ ":"🪨 ")+jName(st&&st.journey)):"挑戰電腦",pr?(st.practice.drill?"#/":"#/redo"):MODE==="journey"?(st&&st.journey==="park"?"^#/port":st&&st.journey?jBack(st.journey):"#/adventure"):MODE==="arena"?"^#/port":(typeof CPUROOM_ON!=="undefined"&&CPUROOM_ON?"#/cpuroom":"#/"),   /* 意見回饋 697：園子、擂台的「‹」回這一朝的渡口 */pr?[]:[/* 意見回饋 346：挑戰電腦看不到擂台、驛站的入口——🏯 只在擂台那盤出現（換擂主）、🏮 只在石桌往事的公園出現 */...(MODE==="arena"?[arenaBtn]:[]),...(MODE==="journey"&&OFF&&st&&st.journey==="park"?[["🏮",()=>walk("inn",()=>navReplace("#/journey/inn")),"走去驛站"]]:[]),...(lk?[]:[parkBtn(()=>{draw();topBar()})]),...(MODE==="arena"||(MODE==="journey"&&st&&/^(park$|inn:)/.test(String(st.journey||"")))?[["⛵",()=>goUp("#/adventure"),"回星槎"]]:[])].concat(vcOn()?[["🎤",()=>voiceMove(()=>!st||st.result?{why:"這盤已經結束"}:st.turn!==st.human||st.thinking?{why:"還沒輪到你"}:{board:st.board,legal:st.legal,play:(f,t)=>{sel=-1;post("/play/move",{f,t})}}),"聲控走棋"]]:[]));
     try{if(seg&&MODE==="cpu"){const t=$("#title");t.textContent="";t.append(seg)}}catch(e){}};   /* 第一次呼叫時 seg 還沒建立 */
   topBar();
   /* 意見回饋 276、403、413：首頁「🏯 朝代擂台」改走 #/arena，進頁時 /play/open 先換到擂台那一盤（沒有就開目前朝代的），還沒開始才打開擂主卡；不再用 openArena 計時 */
@@ -17930,7 +18031,7 @@ function CpuGame(v,practicePage,mode){
   const modeOf=s=>s.ranked?"rank":s.reward?"car":"free",prefMode=()=>store.get("cpuRanked",true)?"rank":REWARD&&store.get("cpuCar",false)?"car":"free";
   const seg=OFF&&MODE==="cpu"?document.createElement("div"):null;
   if(seg){seg.className="cpu-seg";seg.setAttribute("role","tablist");
-    seg.innerHTML=`<button data-m="rank" role="tab">🏅 積分</button><button data-m="free" role="tab">🎚 自選</button>${REWARD?'<button data-m="car" role="tab">🚗 獎勵</button>':""}`;
+    seg.innerHTML=`<button data-m="rank" role="tab">🥇 晉級賽</button><button data-m="free" role="tab">📚 練功房</button>${REWARD?'<button data-m="car" role="tab">🚗 獎勵</button>':""}`;
     const t=$("#title");t.textContent="";t.append(seg);paintSeg(prefMode());
     seg.querySelectorAll("button").forEach(b=>b.onclick=()=>{vibrate(8);switchMode(b.dataset.m)})}
   function paintSeg(m){if(seg)seg.querySelectorAll("button").forEach(b=>{const on=b.dataset.m===m;b.classList.toggle("on",on);b.setAttribute("aria-selected",on)})}
@@ -17965,7 +18066,7 @@ function CpuGame(v,practicePage,mode){
           <button class="btn" id="bgH">使用</button><div class="bag-w">${esc(why(hn,myTurn,"輪到你才能用"))}</div></div>
         <div class="bagt"><div class="bag-ic">↶</div><div class="bag-nm">悔棋符</div><div class="bag-n">${fr<0?"不限":un}<small>${fr<0?"":"張"}</small></div><div class="bag-d">${fr?"這盤有免費悔棋（航行難度）":"退回你的上一步"}</div>
           <button class="btn" id="bgU">使用</button><div class="bag-w">${esc(why(un,mine,"你還沒走棋"))}</div></div></div>
-      <p class="muted" style="font-size:12.5px;margin:10px 0 0">💡 用過提示棋的那盤不算進我的棋力。線上對戰、積分挑戰、獎勵模式不能用寶物。</p>`;   /* 意見回饋 609：不寫掉落規則 */
+      <p class="muted" style="font-size:12.5px;margin:10px 0 0">💡 用過提示棋的那盤不算進我的棋力。線上對戰、挑戰電腦（晉級賽、練功房）不能用寶物。</p>`;   /* 意見回饋 609：不寫掉落規則 */
       const bh=b.querySelector("#bgH"),bu=b.querySelector("#bgU");
       bh.disabled=!!no||!hn||!myTurn;bu.disabled=!!no||!un||!mine;
       bh.onclick=()=>{closeSheet();jBattleHint(st,h=>{pHint=h;try{if(h&&st)store.set("rsHint",{...h,id:st.id})}catch(e){}draw()})};   /* 回饋 838（開發者 11/9 選：全模式中斷接續）：用掉的提示棋黃框記下來，關掉 App 再打開同一盤同一步還看得到 */bu.onclick=()=>{closeSheet();undoAsk()}})}
@@ -18004,7 +18105,7 @@ function CpuGame(v,practicePage,mode){
     const lv=st.levels[st.level-1]||{},me=st.human,bot=opp(me);
     const CR=st.cpuRate||{},CB=st.car||{},cpts=st.reward?(CB.table||[])[st.level-1]||0:0;paintSeg(modeOf(st));if(!st.ranked&&st.level&&!st.practice)store.set("cpuLevel",st.level);
     // 對手列右邊：目前的段位／難度，點了開「開新局」選單（換難度、換紅黑）
-    const JP=(()=>{const L=lvPlayOf(st),k=(L&&L.lvp.opp)||(String(st.journey||"").startsWith("char:")?st.journey.slice(5):null);return k&&JCHAR[k]?{...JCHAR[k],say:JCHAR[k].hi,img:`data/journey/char_${k}_idle.webp`}:innAnyAct(st.journey)})(),NP=parkNpcOf(st)||JP,top=(NP?npcHTML(bot,NP,(JP&&NP===JP?(NP.name&&NP.name===(innAnyAct(st.journey)||{}).name?"驛站的棋友・":"石桌往事・"):"園子裡的路人棋友・")+(lv.desc||""))   /* 意見回饋 530：驛站的對手不是「石桌往事」 */:playerHTML(bot,st.arena&&ARENA[st.arena]?`🏯 ${ARENA[st.arena].name}`:"Pikafish",st.arena&&ARENA[st.arena]?`${eraLabel(st.arena)}擂主${st.arena==="classic"?"・職業頂尖":""}`:st.ranked?"🏅 積分挑戰":st.reward?`🚗 贏了 +${cpts} 點`:lv.desc||"自選難度"))+
+    const JP=(()=>{const L=lvPlayOf(st),k=(L&&L.lvp.opp)||(String(st.journey||"").startsWith("char:")?st.journey.slice(5):null);return k&&JCHAR[k]?{...JCHAR[k],say:JCHAR[k].hi,img:`data/journey/char_${k}_idle.webp`}:innAnyAct(st.journey)})(),NP=parkNpcOf(st)||JP,top=(NP?npcHTML(bot,NP,(JP&&NP===JP?(NP.name&&NP.name===(innAnyAct(st.journey)||{}).name?"驛站的棋友・":"石桌往事・"):"園子裡的路人棋友・")+(lv.desc||""))   /* 意見回饋 530：驛站的對手不是「石桌往事」 */:playerHTML(bot,st.arena&&ARENA[st.arena]?`🏯 ${ARENA[st.arena].name}`:"幻影棋客",st.arena&&ARENA[st.arena]?`${eraLabel(st.arena)}擂主${st.arena==="classic"?"・職業頂尖":""}`:st.ranked?"🥇 晉級賽":st.reward?`🚗 贏了 +${cpts} 點`:lv.desc||"練功房"))   /* 11/10 開發者：電腦對手叫「幻影棋客」，不再顯示 Pikafish */+
       `<button class="cpu-chip${st.ranked?" rk":""}" aria-label="${st.ranked?"段位與開新局":"換難度"}"><span><b>${st.ranked?"🏅 "+esc(st.rkName||CR.rank||""):(st.reward?"🚗 ":"")+"第 "+st.level+" 級"}</b><small>${st.ranked?(CR.pts||0)+" 分":st.reward?(CB.pts||0).toLocaleString()+" 點":esc(lv.name||"")}</small></span><i>›</i></button>`;
     const pT=v.querySelector("#pTop");if(pT.dataset.h!==top){pT.dataset.h=top;pT.innerHTML=top}
     const bt=playerHTML(me,meCall(),PLAYER[me]+(st.ranked&&CR.next?`・再 ${CR.toNext} 分升 ${CR.next}`:"")+(st.reward?`・🚗 ${(CB.pts||0).toLocaleString()} 點`:""));
@@ -18022,7 +18123,7 @@ function CpuGame(v,practicePage,mode){
     for(const k of["hot","wrap"])if(s2.classList.contains(k)!==!!S2.cls[k])s2.classList.toggle(k,!!S2.cls[k]);
     renderStrip(v.querySelector("#strip"),st.moves,st.moves.length-1);
     acts.undo.disabled=st.ranked||st.reward||!st.moves.some(m=>m.by===st.human);   /* 意見回饋 597：擂台也能用悔棋符 */
-    {acts.bag.hidden=!!st.practice;
+    {const cpuK=KIND(st)==="cpu";acts.bag.hidden=!!st.practice||cpuK;acts.undo.hidden=cpuK;   /* 11/10 開發者「跟電腦或線上不能使用寶物」：挑戰電腦（晉級賽、練功房）不放寶物和悔棋（悔棋符也是寶物）；擂台、石桌往事照舊 */
       if(!st.practice&&!acts.undo.disabled)acts.undo.innerHTML='<span class="ic">↶</span>悔棋'+(undoLeft()?"（"+undoLeft()+"）":"");else acts.undo.innerHTML='<span class="ic">↶</span>悔棋'}   /* 意見回饋 380：電腦還在想也能悔棋；382：朝代擂台不能悔棋 */
     acts.resign.hidden=!!st.result;acts.review.hidden=!st.result;
     if(st.result&&shownResult!==JSON.stringify(st.result)+st.moves.length){shownResult=JSON.stringify(st.result)+st.moves.length;const xp0=store.get("xp",0);try{journeyGameEnd(st)}catch(e){}try{if(typeof chdGameEnd==="function")chdGameEnd(st,MODE)}catch(e){}   /* 意見回饋 774：千秋起手式、七星破擂（07q-chardiff.js） */
@@ -18146,7 +18247,7 @@ async function review(rep,id){let it=null;for(let k=0;k<12&&!it;k++){try{const d
       [["⚔ 重下這一盤",()=>{shownResult=null;sel=-1;if(s0)jPlay(s0,true);else jAgain(st).then(render).catch(e=>toast(e.message))}],["‹ 回"+jPlace(j),()=>goUp(jBack(j))],["取消",null,true]])}   /* 意見回饋 607：退回那一層 */
   function newSheet(){if(!st)return;if(MODE==="arena")return arenaSheet(ARENA[st.arena]?st.arena:store.get("era","classic"),arenaStart);if(MODE==="journey")return jNewSheet();   /* 意見回饋 396：擂台裡按「新局」只出現挑戰擂台（再挑戰擂主、集章簿），不出現自選難度 */
     let side=st.human,level=st.level||store.get("cpuLevel",6);const ranked=OFF&&!!st.ranked,reward=OFF&&!!st.reward;
-    const sh=sheet(ranked?"🏅 積分挑戰・開新局":reward?"🚗 獎勵模式・開新局":"🎚 自選難度・開新局",b=>{const rec=st.record||{},CR=st.cpuRate||{},CB=st.car||{},tb=CB.table||[];
+    const sh=sheet(ranked?"🥇 晉級賽・開新局":reward?"🚗 獎勵模式・開新局":"📚 練功房・開新局",b=>{const rec=st.record||{},CR=st.cpuRate||{},CB=st.car||{},tb=CB.table||[];
       const paint=()=>{const span=CR.hi!=null?CR.hi-CR.lo:0,pct=span?Math.round(100*(CR.pts-CR.lo)/span):100;
         b.innerHTML=(ranked?`<div class="cpu-rk"><div class="mid"><span class="muted">你的電腦段位</span><span class="pt"><b>${CR.pts||0}</b> 分</span></div>
           <div class="rk">${esc(CR.rank||"新手")}</div><div class="st-bar"><i style="width:${pct}%"></i></div>
