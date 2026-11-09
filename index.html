@@ -1341,7 +1341,7 @@ html[data-era=qin] .view:has(>.shp-rd),html[data-era=wudai] .view:has(>.shp-rd){
       if(!window.caches)return go();caches.keys().then(function(ks){return Promise.all(ks.filter(function(k){return k.indexOf("xqlab-app-")===0}).map(function(k){return caches.delete(k)}))})
         .then(function(){return navigator.serviceWorker&&navigator.serviceWorker.getRegistration()}).then(function(r){return r&&r.update()}).catch(function(){}).then(go)}};setTimeout(chk,4000)})();
 </script>
-<script>window.XQ_OFFLINE=true;window.XQ_BUILD="20261109-1800";</script>
+<script>window.XQ_OFFLINE=true;window.XQ_BUILD="20261109-1815";</script>
 <script src="core.js"></script>
 <script src="engine.js"></script>
 <script src="local.js"></script>
@@ -14074,14 +14074,19 @@ function jz2Wrap(v,R0){if(!STAT_MAP_ON||!v.querySelector("#sTabs"))return R0;jz2
   const tab=k=>{const b=v.querySelector(`#sTabs button[data-k="${k}"]`);if(b)b.click();return b};
   const TT={all:"朱紅榜・總覽",talent:"手卷・我的成長",cpu:"棋桌・電腦",net:"紗燈・線上"};
   const SH=typeof xqSheet==="function"?xqSheet(v,{t:"我的戰績"}):null;if(SH)xqSheetMove(v,P,SH);
-  const show=(k,sel,t)=>{tab(k);if(SH)SH.open(sel===undefined?null:sel,t||TT[k]);else setTimeout(()=>{const e=v.querySelector(sel||"#sTabs");try{e.scrollIntoView({behavior:"smooth",block:"start"})}catch(err){}},250)};
+  /* 回饋 832（開發者 11/9「我的戰績也要跟改，因為會看到相鄰的頁面，我希望 1 對 1」）：面板裡不再放分頁鈕，點哪樣東西就只看那一塊——
+     朱紅榜＝總覽（不含對局紀錄）、課簿＝只有對局紀錄、手卷＝我的成長、棋桌＝電腦、紗燈＝線上。面板上記 data-jz2＝目前那一塊，CSS 藏掉其他的 */
+  if(SH&&!document.getElementById("jz2OneCss")){const s=document.createElement("style");s.id="jz2OneCss";s.textContent=`.xqs[data-jz2] #sTabs{display:none}
+.xqs[data-jz2="hist"] #sBody>*:not(#sHist){display:none}.xqs[data-jz2="hist"] #sWk{display:none}
+.xqs[data-jz2="all"] #sHist,.xqs[data-jz2="all"] #sBody>.sec-t:has(+#sHist){display:none}`;document.head.append(s)}
+  const show=(k,sel,t)=>{tab(k);if(SH){SH.el.dataset.jz2=sel==="#sHist"?"hist":k;SH.open(null,t||TT[k])}else setTimeout(()=>{const e=v.querySelector(sel||"#sTabs");try{e.scrollIntoView({behavior:"smooth",block:"start"})}catch(err){}},250)};
   P.querySelector("#jz2Rank").onclick=()=>show("all");
   P.querySelector("#jz2Book").onclick=()=>show("all","#sHist","課簿・對局紀錄");
   P.querySelector("#jz2Scroll").onclick=()=>show("talent");
   P.querySelector("#jz2Tbl").onclick=()=>show("cpu");
   const lb=P.querySelector("#jz2Lamp");if(lb)lb.onclick=()=>show("net");
   P.querySelectorAll(".jz2-hit").forEach(h=>h.onclick=()=>{vibrate(5);const t=P.querySelector("#"+h.dataset.to);if(t)t.click()});
-  if(SH){const tb=v.querySelector("#sTabs");if(tb)tb.addEventListener("click",e=>{const b=e.target.closest&&e.target.closest("button[data-k]");if(b&&TT[b.dataset.k])SH.title(TT[b.dataset.k])})}
+  if(SH){const tb=v.querySelector("#sTabs");if(tb)tb.addEventListener("click",e=>{const b=e.target.closest&&e.target.closest("button[data-k]");if(b&&TT[b.dataset.k]){SH.title(TT[b.dataset.k]);SH.el.dataset.jz2=b.dataset.k}})}
   /* 資料：段位（線上優先）、自選難度過關幾級、五邊形 */
   let R=null,lab="",A=null,pk=null,nOk=0;
   const paint=()=>{if(!P.isConnected)return;P.querySelector(".jz2-board").innerHTML=jz2BoardSVG(R,lab,A,pk);tq.innerHTML=jz2TableSVG(nOk);
