@@ -1341,7 +1341,7 @@ html[data-era=qin] .view:has(>.shp-rd),html[data-era=wudai] .view:has(>.shp-rd){
       if(!window.caches)return go();caches.keys().then(function(ks){return Promise.all(ks.filter(function(k){return k.indexOf("xqlab-app-")===0}).map(function(k){return caches.delete(k)}))})
         .then(function(){return navigator.serviceWorker&&navigator.serviceWorker.getRegistration()}).then(function(r){return r&&r.update()}).catch(function(){}).then(go)}};setTimeout(chk,4000)})();
 </script>
-<script>window.XQ_OFFLINE=true;window.XQ_BUILD="20261109-1900";</script>
+<script>window.XQ_OFFLINE=true;window.XQ_BUILD="20261109-1915";</script>
 <script src="core.js"></script>
 <script src="engine.js"></script>
 <script src="local.js"></script>
@@ -2891,22 +2891,37 @@ function Quiz(v){
      沒做完的那幾題，下次打開測驗時再匿名送去校正題目難度 */
   function saveLog(final){if(!ans.length)return;const lg=store.get("quizLog",[]),i=lg.findIndex(x=>x.at===sid),e={at:sid,n:(D&&D.ranks.length)||15,mode:"cat",th:est.th,se:est.se,part:final?0:1,sh:final?1:0,a:ans.map(x=>[x.tier,x.ok?1:0,x.mate,x.ms,x.cat,x.id,x.tech||""])};
     if(i>=0)lg[i]=e;else lg.push(e);store.set("quizLog",lg.slice(-40))}
-  {const lg=store.get("quizLog",[]);let ch=false;for(const e of lg)if(e.part&&!e.sh&&e.a&&e.a.length){e.sh=1;ch=true;if(window.XQNet&&XQNet.shareIRT)try{XQNet.shareIRT({v:1,th:+(+e.th||0).toFixed(2),r:e.a.map(x=>[x[5],x[1],Math.round(x[3]/100)/10])})}catch(err){}}if(ch)store.set("quizLog",lg)}
+  /* 回饋 838（開發者 11/9 選：全模式中斷接續）：做到一半的測驗存在 store quizRun＝{sid,mu 起始程度,a [{id,ok,ms,tech}] 答過的題,cur 目前這題,an 這題答了沒,at}；
+     打開測驗頁可以「繼續上次的測驗」：同一份（sid 一樣，修為不會重給）、同一題（不能關掉重開換題），7 天沒動就作廢。還能接續的那一份先不送去校正題目，免得做完又送一次 */
+  const RUN=()=>{const r=store.get("quizRun",null);return r&&r.sid&&Array.isArray(r.a)&&Date.now()-(r.at||0)<7*864e5?r:null};
+  const runSave=()=>{try{store.set("quizRun",{sid,mu,a:ans.map(x=>({id:x.id,ok:x.ok?1:0,ms:x.ms|0,tech:x.tech||""})),cur:q?q.id:null,an:answered?1:0,at:Date.now()});if(typeof rsPg==="function")rsPg("qz","quizRun",sid,"#/quiz","棋力測驗",ans.length,0)}catch(e){}};
+  const runClear=()=>{store.set("quizRun",null);if(typeof rsPgClear==="function")rsPgClear("qz")};
+  {const R0=RUN();if(!R0&&store.get("quizRun",null))runClear();const lg=store.get("quizLog",[]);let ch=false;for(const e of lg)if(e.part&&!e.sh&&e.a&&e.a.length&&!(R0&&e.at===R0.sid)){e.sh=1;ch=true;if(window.XQNet&&XQNet.shareIRT)try{XQNet.shareIRT({v:1,th:+(+e.th||0).toFixed(2),r:e.a.map(x=>[x[5],x[1],Math.round(x[3]/100)/10])})}catch(err){}}if(ch)store.set("quizLog",lg)}
   const bd=Board(x=>tap(x));
   function intro(){v.className="view";const best=store.get("quizBest",null),last=store.get("quizTheta",null);
+    const RR=RUN();   /* 回饋 838（開發者 11/9 選：全模式中斷接續）：有做到一半的就先給「繼續」 */
     v.innerHTML=`<div class="pad"><div class="card" style="line-height:1.8"><div style="font-size:40px;text-align:center">🎯</div>
-      <h2 style="text-align:center;margin:4px 0 8px">測測你的棋力</h2>
+      <h2 style="text-align:center;margin:4px 0 8px">測測你的棋力</h2>${RR?`<button class="btn" id="goR" style="margin-bottom:8px">⏳ 繼續上次的測驗（已經答了 ${RR.a.length} 題）</button>`:""}
       <p>這是<b>自適應測驗</b>：答對下一題就難一點，答錯就簡單一點，系統每題都挑「最能分辨你程度」的題目，大約 8～20 題就能估出你的段位（新手～專2）。題目輪流出<b>殺法、戰術、局面判斷、殘局</b>四類。</p>
       <p>每題輪到一方走，找出<b>最好的一步</b>：點棋子，再點要去的位置。不會的話按「不會，看答案」也沒關係，一樣能估得準。</p>
       <p class="muted">題目來自《適情雅趣》、《橘中秘》、《梅花譜》、古典殘局譜，以及特級大師和全國比賽的實戰局面；答案由 Pikafish 深度計算。結果是估計值，不是正式段位。</p>
       ${best?`<p>目前最好成績：<b>${esc(best.rank)}</b>（${new Date(best.at).toLocaleDateString()}）</p>`:""}
       ${last?`<button class="btn" id="go3">從上次的程度開始（約 ${esc(D0rank(last.th))}）</button>`:""}
       <button class="btn${last?" ghost":""}" id="go">我是新手</button><button class="btn ghost" id="go2">我會下棋</button></div></div>`;
+    {const gr=v.querySelector("#goR");if(gr)gr.onclick=()=>resume()}   /* 回饋 838（開發者 11/9 選：全模式中斷接續） */
     (v.querySelector("#go")||{}).onclick=()=>start(-3);(v.querySelector("#go2")||{}).onclick=()=>start(-1.2);const g3=v.querySelector("#go3");if(g3)g3.onclick=()=>start(last.th)}
   const RK=["新手","入門1","入門2","入門3","業1","業2","業3","業4","業5","業6","業7","業8","業9","專1","專2"],D0rank=th=>RK[qzTier(th,RK.length)];
+  const cal=()=>{const CAL=store.get("calib",null);if(CAL&&CAL.irt)for(const it of D.items){const k=CAL.irt[it.id];if(k&&isFinite(k.a)&&isFinite(k.b)){it.ca=k.a;it.cb=k.b}}};
   async function start(m0){try{D=D||await api("/quiz/data")}catch(e){return toast(e.message)}
-    {const CAL=store.get("calib",null);if(CAL&&CAL.irt)for(const it of D.items){const k=CAL.irt[it.id];if(k&&isFinite(k.a)&&isFinite(k.b)){it.ca=k.a;it.cb=k.b}}}
+    cal();runClear();   /* 回饋 838（開發者 11/9 選：全模式中斷接續）：開新的一份＝上一份沒做完的就不接了（照原本：答過的題已經記進 quizLog，下次打開再送去校正） */
     mu=m0;ans=[];asked=new Set();est={th:m0,se:1};sid=Date.now();layout();next()}
+  /* 回饋 838（開發者 11/9 選：全模式中斷接續）：接著上次那一份：照存下的題號把答過的題排回來（參數照現在的校正檔重算），回到同一題 */
+  async function resume(){const r=RUN();if(!r)return intro();try{D=D||await api("/quiz/data")}catch(e){return toast(e.message)}cal();
+    const by=new Map(D.items.map(x=>[String(x.id),x])),A=[];
+    for(const a of r.a){const it=by.get(String(a.id));if(!it){runClear();toast("題庫更新了，這次重新測");return intro()}A.push({id:it.id,tier:it.tier,ok:!!a.ok,mate:it.mate?1:0,cat:qzCat(it),ms:a.ms|0,p:qzPar(it),tech:a.tech||""})}
+    mu=+r.mu||0;sid=r.sid;ans=A;asked=new Set(A.map(x=>x.id));est=ans.length?qzEAP(ans,mu):{th:mu,se:1};layout();
+    const c=r.cur!=null?by.get(String(r.cur)):null;
+    if(c&&!r.an&&!asked.has(c.id)){q=c;q._p=qzPar(c);q._cat=qzCat(c);asked.add(q.id);show();runSave()}else if(done())result();else next()}
   function pick(){const seen=new Set(store.get("quizSeen",[])),n=D.ranks.length;
     const cc={};for(const x of ans)cc[x.cat]=(cc[x.cat]||0)+1;
     let cand=D.items.filter(x=>!asked.has(x.id)).map(x=>({x,p:qzPar(x),cat:qzCat(x)}));
@@ -2917,13 +2932,13 @@ function Quiz(v){
   function layout(){v.className="view fixed";
     v.innerHTML=`<div class="status" id="qh" style="margin-top:6px"></div><div class="boardbox" id="bbox"></div><div class="status" id="stat"></div><div class="note" id="note" style="white-space:pre-wrap"></div><div style="flex:1"></div><div class="actions" id="acts"></div>`;
     v.querySelector("#bbox").append(bd.svg)}
-  function next(){const c=pick();if(!c)return result();q=c.x;q._p=c.p;q._cat=c.cat;asked.add(q.id);show()}
+  function next(){const c=pick();if(!c)return result();q=c.x;q._p=c.p;q._cat=c.cat;asked.add(q.id);show();runSave()}   /* 回饋 838（開發者 11/9 選：全模式中斷接續）：記下這一題（關掉重開還是這題） */
   async function show(){board=q.board.split(",").map(x=>x||null);sel=-1;answered=false;
     const lo=D0rank(est.th-est.se),hi=D0rank(est.th+est.se);
     v.querySelector("#qh").innerHTML=`<b>第 ${ans.length+1} 題</b>・${esc(q._cat)}　<span class="muted">目前估計 ${esc(lo===hi?lo:lo+"～"+hi)}</span>`;
     v.querySelector("#stat").textContent=`${PLAYER[q.side]}走，找出最好的一步`+(q.mate&&!/^(新手|入門1)$/.test(q.rank)?"（有殺棋）":"");v.querySelector("#stat").classList.add("hot");
     v.querySelector("#note").textContent="";
-    actionBar(v.querySelector("#acts"),[["skip","⏭","不會，看答案",()=>judge(-1,-1)],["quit","✕","結束",()=>confirmBox(ans.length>=5?"現在結束，用已經答的題目估計？":ans.length?"結束測驗？答過的題目會記進我的棋力，只是題數太少，不估段位":"結束測驗？",()=>ans.length>=5?result():intro(),"結束")]]);
+    actionBar(v.querySelector("#acts"),[["skip","⏭","不會，看答案",()=>judge(-1,-1)],["quit","✕","結束",()=>confirmBox(ans.length>=5?"現在結束，用已經答的題目估計？":ans.length?"結束測驗？答過的題目會記進我的棋力，只是題數太少，不估段位":"結束測驗？",()=>{if(ans.length>=5)result();else{runClear();intro()}},"結束")]]);   /* 回饋 838（開發者 11/9 選：全模式中斷接續）：自己按結束就不留接續 */
     draw();t0=Date.now();try{LEGAL=(await api("/an/legal",{board,side:q.side})).legal}catch(e){toast(e.message)}}
   function draw(o){bd.draw(o&&o.board||board,{flip:q.side==="b",sel,targets:sel>=0?LEGAL.filter(([f])=>f===sel).map(x=>x[1]):[],...(o||{})})}
   function tap(x){if(!q||answered)return;
@@ -2931,7 +2946,7 @@ function Quiz(v){
     sel=LEGAL.some(([f])=>f===x)?x:-1;if(sel>=0)vibrate(5);draw()}
   const done=()=>ans.length>=20||(ans.length>=8&&est.se<=.35);
   function judge(f,t){answered=true;const ok=f===q.f&&t===q.t,ms=Date.now()-t0;
-    ans.push({id:q.id,tier:q.tier,ok,mate:q.mate?1:0,cat:q._cat,ms,p:q._p,tech:q._cat==="殘局"?endTech(board,q.side):""});est=qzEAP(ans,mu);saveLog(false);addXP(ok?5:2,"測驗",`q:${sid}:${q.id}`);vibrate(ok?15:[20,40,20]);
+    ans.push({id:q.id,tier:q.tier,ok,mate:q.mate?1:0,cat:q._cat,ms,p:q._p,tech:q._cat==="殘局"?endTech(board,q.side):""});est=qzEAP(ans,mu);saveLog(false);runSave();/* 回饋 838（開發者 11/9 選：全模式中斷接續） */addXP(ok?5:2,"測驗",`q:${sid}:${q.id}`);vibrate(ok?15:[20,40,20]);
     store.set("quizSeen",[...new Set([...store.get("quizSeen",[]),q.id])].slice(-600));
     const nb=board.slice();nb[q.t]=nb[q.f];nb[q.f]=null;
     draw({board:nb,last:{f:q.f,t:q.t},sel:-1,targets:[]});
@@ -2942,7 +2957,7 @@ function Quiz(v){
   function result(){const n=D.ranks.length,ti=qzTier(est.th,n),rank=D.ranks[ti],ok=ans.filter(x=>x.ok).length;v.className="view";
     const best=store.get("quizBest",null),better=!best||ti>D.ranks.indexOf(best.rank);
     if(better)store.set("quizBest",{rank,ti,ok,n:ans.length,at:Date.now()});store.set("quizTheta",{th:est.th,se:est.se,at:Date.now()});
-    saveLog(true);
+    saveLog(true);runClear();   /* 回饋 838（開發者 11/9 選：全模式中斷接續）：做完了，清掉接續 */
     if(share&&window.XQNet&&XQNet.shareIRT)try{XQNet.shareIRT({v:1,th:+est.th.toFixed(2),r:ans.map(x=>[x.id,x.ok?1:0,Math.round(x.ms/100)/10])})}catch(e){}
     const lo=D.ranks[qzTier(est.th-1.28*est.se,n)],hi=D.ranks[qzTier(est.th+1.28*est.se,n)],avgS=Math.round(ans.reduce((a,x)=>a+x.ms,0)/ans.length/1000);
     const byC=QZ.CATS.map(k=>{const a=ans.filter(x=>x.cat===k);return[k,a.filter(x=>x.ok).length,a.length]}).filter(x=>x[2]);
@@ -4504,7 +4519,7 @@ const CHAR_ERA={x_swordboy:"qin",x_spiritgirl:"nanbei",x_martialgirl:"song",x_mi
 const JOURNEY_KEYS=["sw7Box","pSex","pStyle","botPiece","onboard1","journey","playSec","era","eraOpen","xp","xpDay","xpKeys","record","hintBonus","hintUse","undoBonus","undoDropIds","bag","jarGot","lingN","giftGames","dropMiss",
   "legend","legendGame","legBook","legRead","jStars","jPending","jPrev","jRun","jScene","jHid","jMig36","jpSeen","novelRead","sceneDone","storyEraTip","eraUser","study","campSeen","campStars",
   "npcBond","npcAsk","npcAskSeen","parkNpc","parkNpcLast","parkAdj","visitGone","secrets","secretClue","secretSpots","secretWins","relics","relicSolved","relicAt","histSeen","histSolved","histTitle",
-  "innCur","innDrop","innAdj","innGuest","resumeLast","xhMake","xhMei","xhTitle","yuDay","yuHint","yuRoute","yuTitle","cupDrop","cupGot","cj","cjRun","shipAt","shipSolved","cjRunS","jRunS","battleSeal","battleTitle","battleVol","battleGrand","battleVolY","battleVolLegacy","battleMig","battleSeal0","cjRunB","jRunB","battlePlan","diff","shipDock","shipLearn","undoFree","shipGal","shipStale","shipRead","shipMore","evLog","evPawn","evHeld","evStash","jRunE","cjRunE","rdLog","firstWin","wkRead","visit7","chd","ep","cjRunEp","wmDays","wmPg","wmBm","wmScr","wmEcho","jRunW","sealGold","sealIntro"].map(k=>"m_"+k)   /* 千秋印（07i2-seal.js，開發者 11/9）：sealGold＝各朝第一次鑄成金印的時間與修為已發、sealIntro＝看過「集章簿換成千秋印譜」說明卡。Gemini 遊玩樂趣評估（開發者 11/8 核准）：visit7＝七星來訪的次數、說過的話、小任務（07j-visit.js）；evStash＝千秋穿梭收進囊中、12 小時內再處理的突發事件（07h-qqev.js）；firstWin＝新手秒開局下過（或跳過）了；wkRead＝學習週報每天記一筆讀懂地圖比例，算「比上週」。意見回饋 737 第二期：rdLog＝讀過哪些棋譜、猜著法每盤答對幾手（壓縮成字串）。意見回饋 674：星槎在看哪一站、千秋殘局解開的題、正在解的那一題；675：航行難度、已停靠的站、學會的棋理、這盤用了幾次免費悔棋；685：七星同局圖鑑與熱身解開的題、看過困斃說明、讀過《雲河七星》哪幾章 */
+  "innCur","innDrop","innAdj","innGuest","resumeLast","xhMake","xhMei","xhTitle","yuDay","yuHint","yuRoute","yuTitle","cupDrop","cupGot","cj","cjRun","shipAt","shipSolved","cjRunS","jRunS","battleSeal","battleTitle","battleVol","battleGrand","battleVolY","battleVolLegacy","battleMig","battleSeal0","cjRunB","jRunB","battlePlan","diff","shipDock","shipLearn","undoFree","shipGal","shipStale","shipRead","shipMore","evLog","evPawn","evHeld","evStash","jRunE","cjRunE","rdLog","firstWin","wkRead","visit7","chd","ep","cjRunEp","wmDays","wmPg","wmBm","wmScr","wmEcho","jRunW","sealGold","sealIntro","jRunC","rsHint"].map(k=>"m_"+k)   /* 回饋 838（開發者 11/9 選：全模式中斷接續）：jRunC＝新手訓練營玩到一半的那一課、rsHint＝對局裡用掉的提示棋黃框（主題訓練 jpRun、棋力測驗 quizRun 跟 themeStat、quizLog 一樣是棋手本人的，各格共用，不放這裡） */   /* 千秋印（07i2-seal.js，開發者 11/9）：sealGold＝各朝第一次鑄成金印的時間與修為已發、sealIntro＝看過「集章簿換成千秋印譜」說明卡。Gemini 遊玩樂趣評估（開發者 11/8 核准）：visit7＝七星來訪的次數、說過的話、小任務（07j-visit.js）；evStash＝千秋穿梭收進囊中、12 小時內再處理的突發事件（07h-qqev.js）；firstWin＝新手秒開局下過（或跳過）了；wkRead＝學習週報每天記一筆讀懂地圖比例，算「比上週」。意見回饋 737 第二期：rdLog＝讀過哪些棋譜、猜著法每盤答對幾手（壓縮成字串）。意見回饋 674：星槎在看哪一站、千秋殘局解開的題、正在解的那一題；675：航行難度、已停靠的站、學會的棋理、這盤用了幾次免費悔棋；685：七星同局圖鑑與熱身解開的題、看過困斃說明、讀過《雲河七星》哪幾章 */
   .concat(["cpuRate","bonusKeys","record","arenaStamps","carBank","play","play2"].map(k=>"xq_"+k));
 const JK=new Set(JOURNEY_KEYS),SLOT_N=3;
 /* 意見回饋 668：舊玩家判斷要在首頁畫出來以前做（首頁會順手寫一些旅程鍵，例如 lingN），所以這裡直接讀 localStorage；null＝已經過渡過了 */
@@ -5968,7 +5983,8 @@ const jBack=j=>String(j||"").startsWith("bt:")?"#/battle":String(j||"").startsWi
 const jPlace=j=>String(j||"").startsWith("bt:")?"古戰場":j==="park"?"渡口":String(j||"").startsWith("inn:")?"驛站":String(j||"").startsWith("char:")?"大廳":(()=>{const s=jFindStage(j);return s?"第"+CNUM(s.n)+"回":"石桌往事"})();   /* 意見回饋 735：章回棋路併進書的目錄，回到書 */
 /* 意見回饋 413：石桌往事只留一盤（雲河棋路、驛站、園子、守關共用一格）。要開的跟手上那盤不是同一個對手時先問，不會悄悄蓋掉；同一個對手就接著下；force＝重下這一盤 */
 async function jStart(id,b,go,force){let st;try{st=await api("/play/state")}catch(e){toast(e.message);return}
-  const cur=st.journey&&!st.result&&st.moves&&st.moves.length?{journey:st.journey,n:st.moves.length}:null,o=(st.others||[]).find(z=>z.kind==="journey"),g=cur||(o?{journey:o.journey,n:o.n}:null);
+  const cur=st.journey&&!st.result&&st.moves&&st.moves.length?{journey:st.journey,n:st.moves.length}:null,o=(st.others||[]).find(z=>z.kind==="journey");let g=cur||(o?{journey:o.journey,n:o.n}:null);
+  if(g&&typeof rsFinGame==="function"&&rsFinGame(rsJId(st)))g=null;   /* 回饋 838（開發者 11/9 選：全模式中斷接續）：「撐過 N 步」已經過關的那盤，不問、直接開新的 */
   const fresh=async()=>{try{store.set("cpuRanked",false);store.set("cpuCar",false);const ez=id==="park"&&typeof qqParkEasy==="function"?qqParkEasy():null;   /* 贖回攔路棋客押走的東西：那一盤低一級（07h-qqev.js） */const s=await api("/play/new",{...b,dx:typeof diffDx==="function"?diffDx():0,...(ez||{})});if(id==="park")parkNpcNew(s.id,ez?ez.level:b.level);   /* 意見回饋 675：照航行難度加減幾段（園子、驛站、秘境棋友、章回棋路對弈關都從這裡開） */store.set("jPending",id==="park"?null:{id,game:s.id});go(true)}catch(e){toast(e.message)}};
   if(force||!g)return fresh();
   if(g.journey===id)return go(false);
@@ -5982,6 +5998,7 @@ function jAgain(st){if(String(st.journey||"").startsWith("bt:")&&typeof battleOd
 async function jResume(box,only){if(!box)return;let st;try{st=await api("/play/state")}catch(e){return}
   const cur=st.journey&&!st.result&&st.moves&&st.moves.length?{journey:st.journey,n:st.moves.length,me:st.turn===st.human}:null,
     o=(st.others||[]).find(z=>z.kind==="journey"),g=cur||(o?{journey:o.journey,n:o.n,me:(o.n%2?"b":"r")===o.human}:null);
+  if(g&&typeof rsFinGame==="function"&&rsFinGame(rsJId(st)))return;   /* 回饋 838（開發者 11/9 選：全模式中斷接續）：「撐過 N 步」已經過關的那盤不出「繼續下」 */
   if(!g||!box.isConnected||(only&&!only(g.journey)))return;   /* only：書頁只看這本書的對局 */
   box.innerHTML=`<button class="card row" style="width:100%;margin-top:10px;justify-content:space-between;border:2px solid var(--red);font:inherit;color:inherit;text-align:left"><span>⏳ <b>${esc(jName(g.journey))}</b><br><span class="muted" style="font-size:12.5px">下到第 ${Math.ceil(g.n/2)} 回合・${g.me?"輪到你走":"輪到電腦"}</span></span><b>繼續下 ›</b></button>`;
   box.querySelector("button").onclick=async()=>{vibrate(5);if(!cur)try{await api("/play/switch",{kind:"journey"})}catch(e){}if(g.journey==="park")store.set("park3d",true);location.hash="#/journey/play"}}
@@ -6117,29 +6134,34 @@ async function jBattleHint(st,show){const P=store.get("jPending",null),inJ=!!(P&
 /* 回到當年的結果回寫到闖關（LegendScene 判定後呼叫） */
 function jSceneDone(key,stars){const id=store.get("jScene",null),s=jStages().find(x=>x.id===id);const any=jStages().filter(x=>x.t==="scene"&&x.scene===key);for(const x of any)jSet(x.id,stars,"回到當年");if(s)store.set("jScene",null)}
 /* 解題關：5 題，難度照這一站的等級。意見回饋 429：每次挑戰都換新題目——這一關做過的題先不出，同難度的題都輪過一遍才重來 */
-function jPuzzle(v,s){setTop(s.theme?"🧠 "+s.name:ROAD_NAME+"・"+s.name,s.theme?"#/theme":jChapterHref(s));let D=null,Q=[],k=0,ok=0,board=null,sel=-1,LEGAL=[],done=false,hk=null,usedHint=false;const bd=Board(x=>tap(x));
+function jPuzzle(v,s){setTop(s.theme?"🧠 "+s.name:ROAD_NAME+"・"+s.name,s.theme?"#/theme":jChapterHref(s));let D=null,Q=[],k=0,ok=0,board=null,sel=-1,LEGAL=[],done=false,hk=null,usedHint=false,RHK=null;const bd=Board(x=>tap(x));
+  /* 回饋 838（開發者 11/9 選：全模式中斷接續）：存這一組做到哪裡（jpRun），順便記進接續小卡（07m4-resume.js rsPg 的 tm） */
+  const H0=location.hash,jpSave=x=>{const o={id:s.id,ids:Q.map(q=>q.id),k:x&&x.k!=null?x.k:k,ok,uh:usedHint?1:0,...(x&&x.hk?{hk:x.hk}:{}),at:Date.now()};store.set("jpRun",o);if(typeof rsPg==="function")try{rsPg("tm","jpRun",s.id,H0,s.tag||s.name,o.k,Q.length)}catch(e){}};
   (async()=>{try{D=await api("/quiz/data")}catch(e){v.innerHTML=`<div class="pad"><div class="card muted">${esc(e.message)}</div></div>`;return}
     let pool=s.tag?D.items.filter(q=>(q.tags||[]).includes(s.tag)):D.items.filter(q=>q.tier>=s.lo&&q.tier<=s.hi&&(!s.cats||s.cats.includes(qzCat(q))));if(pool.length<5&&!s.tag)pool=D.items.filter(q=>q.tier>=s.lo&&q.tier<=s.hi);
+    /* 回饋 838（開發者 11/9 選：全模式中斷接續）：做到一半的那一組（store jpRun＝{id,ids 這組題號,k 做到第幾題,ok,uh 用過提示,hk 這題的提示框,at}）：同一組、同一題接著做，不重抽、不再記 jpSeen */
+    const JR=store.get("jpRun",null),JQ=JR&&JR.id===s.id&&Array.isArray(JR.ids)&&JR.k<JR.ids.length?JR.ids.map(id=>D.items.find(q=>String(q.id)===String(id))).filter(Boolean):null;
+    if(JQ&&JQ.length===JR.ids.length){Q=JQ;k=JR.k|0;ok=JR.ok|0;usedHint=!!JR.uh;RHK=JR.hk&&JR.hk.k===k?JR.hk.v:null}else{
     const SEEN=store.get("jpSeen",{}),seen=new Set(SEEN[s.id]||[]);let fresh=pool.filter(q=>!seen.has(String(q.id)));
     if(fresh.length<(s.count||5)){seen.clear();fresh=pool.slice()}
     while(Q.length<(s.count||5)&&fresh.length)Q.push(fresh.splice(Math.floor(Math.random()*fresh.length),1)[0]);
-    for(const q of Q)seen.add(String(q.id));SEEN[s.id]=[...seen].slice(-400);store.set("jpSeen",SEEN);
+    for(const q of Q)seen.add(String(q.id));SEEN[s.id]=[...seen].slice(-400);store.set("jpSeen",SEEN);jpSave()}
     v.className="view fixed";v.innerHTML=`<div class="status" id="qh" style="margin-top:6px"></div><div class="boardbox" id="bbox"></div><div class="status" id="stat"></div><div class="note" id="note" style="white-space:pre-wrap"></div><div style="flex:1"></div><div class="actions" id="acts"></div>`;
     v.querySelector("#bbox").append(bd.svg);show()})();
-  function show(){const q=Q[k];board=q.board.split(",").map(x=>x||null);sel=-1;done=false;hk=null;
+  function show(){const q=Q[k];board=q.board.split(",").map(x=>x||null);sel=-1;done=false;hk=RHK;RHK=null;   /* 回饋 838（開發者 11/9 選：全模式中斷接續）：RHK＝關掉 App 前這題已經用掉的提示框 */
     v.querySelector("#qh").innerHTML=`<b>第 ${k+1} / ${Q.length} 題</b>・${esc(qzCat(q))}・${esc(q.rank||"")}　<span class="muted">答對 ${ok} 題</span>`;
     v.querySelector("#stat").textContent=`${PLAYER[q.side]}走，找出最好的一步`;v.querySelector("#note").textContent="";
     actionBar(v.querySelector("#acts"),[["hint","💡",hintLabel(),hint],["skip","⏭","不會，看答案",()=>judge(-1,-1)]]);draw();api("/an/legal",{board,side:q.side}).then(r=>{LEGAL=r.legal}).catch(()=>{LEGAL=[]})}
   function draw(o){const q=Q[k];bd.draw(o&&o.board||board,{flip:q.side==="b",sel,targets:sel>=0?LEGAL.filter(([f])=>f===sel).map(x=>x[1]):[],...(hk?{hint:hk}:{}),...(o||{})})}
-  function hint(){if(done)return;if(hk)return toast("這題已經提示過了");const H=useHint();if(!H)return;const q=Q[k];usedHint=true;hk=H.full?[q.f,q.t]:[q.f];
+  function hint(){if(done)return;if(hk)return toast("這題已經提示過了");const H=useHint();if(!H)return;const q=Q[k];usedHint=true;hk=H.full?[q.f,q.t]:[q.f];jpSave({hk:{k,v:hk}});   /* 回饋 838（開發者 11/9 選：全模式中斷接續） */
     v.querySelector("#stat").textContent=H.full?"💡 提示：黃色標記是要動的子和要去的位置":"💡 提示：黃色標記的這顆子就是關鍵（Lv 20 起會連落點一起指出）"/* 意見回饋 607 */;
     actionBar(v.querySelector("#acts"),[["hint","💡",hintLabel(),hint],["skip","⏭","不會，看答案",()=>judge(-1,-1)]]);draw()}
   function tap(x){if(done||!LEGAL.length)return;if(sel>=0&&LEGAL.some(([f,t])=>f===sel&&t===x)){const f=sel;sel=-1;return judge(f,x)}sel=LEGAL.some(([f])=>f===x)?x:-1;if(sel>=0)vibrate(5);draw()}
-  function judge(f,t){if(done)return;done=true;const q=Q[k],hit=f===q.f&&t===q.t;if(hit){ok++;addXP(5,"解題",`jp:${s.id}:${q.id}`)}vibrate(hit?15:[20,40,20]);
+  function judge(f,t){if(done)return;done=true;const q=Q[k],hit=f===q.f&&t===q.t;if(hit){ok++;addXP(5,"解題",`jp:${s.id}:${q.id}`)}vibrate(hit?15:[20,40,20]);jpSave({k:k+1});   /* 回饋 838（開發者 11/9 選：全模式中斷接續）：答完就記成下一題，關掉再打開不會重答這題 */
     const nb=board.slice();nb[q.t]=nb[q.f];nb[q.f]=null;draw({board:nb,last:{f:q.f,t:q.t},sel:-1,targets:[]});
     v.querySelector("#stat").textContent=hit?"✔ 答對了！":f<0?"正解如下":"✘ 不是這步";v.querySelector("#note").textContent=`正解：${q.cn}${q.mate?`，${q.mate} 步內殺棋`:""}\nPikafish 的後續：${(q.pv||[]).join(" ")}`;
     actionBar(v.querySelector("#acts"),[["next","›",k+1<Q.length?"下一題":"看結果",()=>{k++;if(k<Q.length)show();else result()},true]])}
-  function result(){const N=Q.length||5,r=ok/N,stars=Math.min(usedHint?2:3,r>=.999?3:r>=.8?2:r>=.6?1:0);let best;if(s.theme){const TS=store.get("themeStat",{}),x=TS[s.tag]||{n:0,ok:0};x.n+=N;x.ok+=ok;x.at=Date.now();TS[s.tag]=x;store.set("themeStat",TS);best=stars}else best=stars?jSet(s.id,stars,"闖關"):(jStars()[s.id]||0);v.className="view";
+  function result(){store.set("jpRun",null);if(typeof rsPgClear==="function")rsPgClear("tm",s.id);   /* 回饋 838（開發者 11/9 選：全模式中斷接續）：做完了，清掉進度 */const N=Q.length||5,r=ok/N,stars=Math.min(usedHint?2:3,r>=.999?3:r>=.8?2:r>=.6?1:0);let best;if(s.theme){const TS=store.get("themeStat",{}),x=TS[s.tag]||{n:0,ok:0};x.n+=N;x.ok+=ok;x.at=Date.now();TS[s.tag]=x;store.set("themeStat",TS);best=stars}else best=stars?jSet(s.id,stars,"闖關"):(jStars()[s.id]||0);v.className="view";
     v.innerHTML=`<div class="pad"><div class="card" style="text-align:center"><div style="font-size:44px">${stars?"🎉":"💪"}</div><h2 style="margin:4px 0">${stars?"過關！":"差一點"}</h2>
       <div style="margin:8px 0 4px">${ziHTML(stars,false,true)}</div><p>答對 <b>${ok}</b> / ${Q.length} 題${stars?"":`（答對 ${Math.ceil(N*.6)} 題才過關）`}${usedHint&&ok>=5?"（用了提示，最多收到馬）":""}</p>${best>stars?`<p class="muted">這關最好成績 ${ziStr(best)}</p>`:""}
       <button class="btn" id="back">${s.theme?"回主題訓練":"回第"+CNUM(s.n)+"回"}</button><button class="btn ghost" id="again">再挑戰一次</button></div></div>`;
@@ -6171,8 +6193,11 @@ function jStepsB2(X){const C=window.XQCore,{v,bd}=X,$=q=>v.querySelector(q);
   const iccsOpts=(b,list)=>(list||[]).map(u=>{const[f,t]=lvSq(u);let cn=u;try{cn=C.notate(b,f,t)}catch(e){}return{u,cn}});
 
   /* ---- judge：看盤問答（棋盤一直亮著；tap 題要點一顆子；答完附引擎評估和主線箭頭） ---- */
-  function judge(st){let pos=lvBoard(st.start,st.auto),i=0,ok=0;const flip=flipOf(st);X.boardPage(st);ask();
+  function judge(st){let pos=lvBoard(st.start,st.auto),i=0,ok=0;const flip=flipOf(st),hs=[];X.boardPage(st);
     const mv=u=>{const[f,t]=lvSq(u);pos={b:C.make(pos.b,f,t),turn:pos.turn==="r"?"b":"r",last:{f,t}}};
+    /* 回饋 838（開發者 11/9 選：全模式中斷接續）：回到做到的那一題——前面幾題照當時答對沒有（hs）把盤面擺回來 */
+    {const S=X.siGet&&X.siGet("judge");if(S){for(let q=0;q<S.i&&q<st.items.length;q++){const it=st.items[q];if(it.start)pos=lvBoard(it.start);for(const u of it.before||[])mv(u);if((S.h||[])[q])for(const u of it.after||[])mv(u);hs.push((S.h||[])[q]?1:0)}i=S.i;ok=S.ok|0}}
+    ask();
     function ask(){X.stop();const it=st.items[i];const need=st.pass!=null?st.pass:0;
       if(!it)return ok>=need?X.next():X.failCard(`答對 ${ok} 題，要答對 ${need} 題才過這一步。`);
       if(it.start)pos=lvBoard(it.start);for(const u of it.before||[])mv(u);bd.draw(pos.b,{flip,last:pos.last});
@@ -6182,7 +6207,7 @@ function jStepsB2(X){const C=window.XQCore,{v,bd}=X,$=q=>v.querySelector(q);
       O((it.options||[]).map((o,k)=>`<button class="btn ghost" data-k="${k}">${esc(o)}</button>`).join(""));
       v.querySelectorAll("#lvO [data-k]").forEach(x=>x.onclick=()=>{const hit=+x.dataset.k===it.answer;if(hit){ok++;vibrate(15)}else X.miss();
         v.querySelectorAll("#lvO [data-k]").forEach(z=>{z.disabled=true;if(+z.dataset.k===it.answer)z.classList.remove("ghost")});done(hit,it)})}
-    function done(hit,it){const sh=it.show||{};stat(hit?"✔ 答對了":`✘ 正解：${it.tap?"看棋盤上亮的那顆":(it.options||[])[it.answer]||""}`);
+    function done(hit,it){hs[i]=hit?1:0;if(X.siSet)X.siSet({t:"judge",i:i+1,ok,h:hs.slice(0,i+1)});   /* 回饋 838（開發者 11/9 選：全模式中斷接續） */const sh=it.show||{};stat(hit?"✔ 答對了":`✘ 正解：${it.tap?"看棋盤上亮的那顆":(it.options||[])[it.answer]||""}`);
       const n=$("#note");if(n){n.textContent=(it.note||sh.note||"");if(sh.eval!=null)n.insertAdjacentHTML("beforeend",b2EvalBar(sh.eval))}
       const L=(sh.line||[]).slice(0,1);if(L.length){const[f,t]=lvSq(L[0]);bd.draw(pos.b,{flip,last:{f,t},arrow:true,forceArrow:true})}
       else if(it.tap&&it.answerSq&&it.answerSq[0])bd.draw(pos.b,{flip,sel:C.parseSq(it.answerSq[0])});
@@ -6256,11 +6281,14 @@ function jStepsB2(X){const C=window.XQCore,{v,bd}=X,$=q=>v.querySelector(q);
 
   /* ---- relay：接香（同一盤棋分段，別人下、你接手、電腦接手輪流） ---- */
   function relay(st){let pos=lvBoard(st.start),si=0,lastMv=st.lastSq?{f:C.parseSq(st.lastSq),t:C.parseSq(st.lastSq)}:null;const me=st.human||"r",flip=me==="b";X.boardPage(st);
+    /* 回饋 838（開發者 11/9 選：全模式中斷接續）：接香做到第幾段、盤面（f 局面、tn 輪誰、lm 上一手），自由段另外記這一段走了幾步、這一段開始時的局面（fr），關掉 App 再打開從同一個局面接著下（守城、攔路棋客都在這裡） */
+    const FN=b=>C.fen(b,"r").split(" ")[0],rsv=o=>{if(X.siSet)X.siSet({t:"relay",si,f:FN(pos.b),tn:pos.turn,lm:lastMv,...(o||{})})};
+    let RS=X.siGet&&X.siGet("relay");if(RS){try{pos={b:C.parseFen(RS.f),turn:RS.tn==="b"?"b":"r"};lastMv=RS.lm||null;si=RS.si|0}catch(e){RS=null}}
     const draw=extra=>bd.draw(pos.b,{flip,last:lastMv,...(extra||{})});
     const mv=(f,t)=>{pos={b:C.make(pos.b,f,t),turn:pos.turn==="r"?"b":"r"};lastMv={f,t};draw()};
     const over=()=>C.legal(pos.b,pos.turn).length===0;
     draw();note(st.say||"");setTimeout(seg,600);
-    async function seg(){X.stop();const g=(st.segs||[])[si];if(!g)return X.next();const who=g.who==="you"?(g.name||"你"):g.who;stat(`第 ${si+1}／${st.segs.length} 段・${who}`);
+    async function seg(){X.stop();const g=(st.segs||[])[si];if(!g)return X.next();if(!(RS&&RS.si===si&&RS.fr))rsv();   /* 回饋 838（開發者 11/9 選：全模式中斷接續）：每段開頭記一次 */const who=g.who==="you"?(g.name||"你"):g.who;stat(`第 ${si+1}／${st.segs.length} 段・${who}`);
       if(g.line){note(g.say||"");for(const u of g.line){if(!alive())return;const[f,t]=lvSq(u);mv(f,t);await wait(700)}si++;return seg()}
       if(g.mode==="engine"){for(let n=0;n<(g.n||3)&&!over();n++){for(const side of[g.side||me,(g.side||me)==="r"?"b":"r"]){if(!alive()||over())break;if(pos.turn!==side)continue;const m=await b2Eng(pos.b,pos.turn,side===(g.side||me)?2:(st.oppAi||3));if(!m)break;mv(m.f,m.t);await wait(500)}}
         si++;return seg()}
@@ -6274,12 +6302,14 @@ function jStepsB2(X){const C=window.XQCore,{v,bd}=X,$=q=>v.querySelector(q);
         X.setTap(x=>{const L=C.legal(pos.b,pos.turn);if(sel>=0&&L.some(([f,t])=>f===sel&&t===x)){if(C.iccs(sel,x)===sol[j]){hk=null;mv(sel,x);j++;sel=-1;vibrate(15);nextOpp()}else{const nz=typeof stuckNudge==="function"&&++wr===STUCK_N;if(nz){X.useHint();hk=[lvSq(sol[j])[0]]}X.miss(g.hint||"不是這步");sel=-1;draw(hx(null));if(nz)stuckNudge()}return}
           sel=L.some(([f])=>f===x)?x:-1;draw(hx(sel>=0?{sel,targets:L.filter(([f])=>f===sel).map(z=>z[1])}:null))});nextOpp();return}
       /* free：你自由下 n 步，對面是電腦 */
-      {const n0=g.n||6,keep=g.keep||[],cnt=p=>pos.b.filter(x=>x===p).length,kept0=keep.map(cnt),save0=pos,last0=lastMv;let n=0,sel=-1;note(g.hint||(g.goal==="mate"?`${n0} 步內將死對方`:`走滿 ${n0} 步，${keep.map(p=>B2_CN[p]).join("、")}不能丟`));
+      {const n0=g.n||6,keep=g.keep||[],cnt=p=>pos.b.filter(x=>x===p).length;let kept0=keep.map(cnt),save0=pos,last0=lastMv,n=0,sel=-1;
+        if(RS&&RS.si===si&&RS.fr){const F=RS.fr;try{n=F.n|0;save0={b:C.parseFen(F.f0),turn:F.t0==="b"?"b":"r"};last0=F.l0||null;if(Array.isArray(F.k0))kept0=F.k0}catch(e){}}RS=null;   /* 回饋 838（開發者 11/9 選：全模式中斷接續）：自由段走到一半：步數、這段開頭的局面照舊（被將死要重來時退回那裡） */
+        const frv=()=>rsv({fr:{n,f0:FN(save0.b),t0:save0.turn,l0:last0,k0:kept0}});note(g.hint||(g.goal==="mate"?`${n0} 步內將死對方`:`走滿 ${n0} 步，${keep.map(p=>B2_CN[p]).join("、")}不能丟`));
         const fail=msg=>{X.setTap(null);X.miss();pos=save0;lastMv=last0;draw();X.failCard(msg)};
         const after=async()=>{if(over()){X.setTap(null);stat(C.inCheck(pos.b,pos.turn)?"✔ 將死了！":"✔ 困斃！對方一步都動不了");if(g.goal==="keep")si=st.segs.length-1;return acts([["next","›","繼續",()=>{si++;seg()},true]])}
-          if(n>=n0){if(g.goal==="mate")return fail(`${n0} 步內沒有贏下來，這一段重來。`+(g.fail?" "+g.fail:""));if(keep.some((p,i)=>cnt(p)<kept0[i]))return fail("有子被吃掉了，這一段重來。"+(g.fail?" "+g.fail:""));X.setTap(null);stat("✔ 這一段撐過了");return acts([["next","›","繼續",()=>{si++;seg()},true]])}
+          if(n>=n0){if(g.goal!=="mate"&&!keep.some((p,i)=>cnt(p)<kept0[i])){si++;rsv();si--}   /* 回饋 838（開發者 11/9 選：全模式中斷接續）：這段撐過了，記成下一段 */if(g.goal==="mate")return fail(`${n0} 步內沒有贏下來，這一段重來。`+(g.fail?" "+g.fail:""));if(keep.some((p,i)=>cnt(p)<kept0[i]))return fail("有子被吃掉了，這一段重來。"+(g.fail?" "+g.fail:""));X.setTap(null);stat("✔ 這一段撐過了");return acts([["next","›","繼續",()=>{si++;seg()},true]])}
           if(pos.turn!==me){X.setTap(null);const m=await b2Eng(pos.b,pos.turn,(g.opp&&g.opp.ai)||3);if(!alive())return;if(m)mv(m.f,m.t);if(over())return fail("被將死了，這一段重來。"+(g.fail?" "+g.fail:""));X.setTap(tap)}
-          stat(`第 ${si+1} 段・你走（${n}／${n0} 步）`)};
+          frv();stat(`第 ${si+1} 段・你走（${n}／${n0} 步）`)};   /* 回饋 838（開發者 11/9 選：全模式中斷接續）：輪到你走時記下盤面 */
         const tap=x=>{const L=C.legal(pos.b,pos.turn);if(pos.turn!==me)return;if(sel>=0&&L.some(([f,t])=>f===sel&&t===x)){mv(sel,x);sel=-1;n++;vibrate(8);after();return}
           sel=L.some(([f])=>f===x)?x:-1;draw(sel>=0?{sel,targets:L.filter(([f])=>f===sel).map(z=>z[1])}:null)};
         X.setTap(tap);after()}}}
@@ -6329,8 +6359,8 @@ function lvBoard(start,moves){const C=window.XQCore;let b=C.parseFen(start&&star
   for(const u of [...(start&&Array.isArray(start.moves)?start.moves:[]),...(moves||[])]){const f=C.parseSq(u.slice(0,2)),t=C.parseSq(u.slice(2,4));b=C.make(b,f,t);turn=turn==="r"?"b":"r"}return{b,turn}}
 const lvSq=u=>[window.XQCore.parseSq(u.slice(0,2)),window.XQCore.parseSq(u.slice(2,4))];
 /* 香條：一條會燒短的香，燒完呼叫 done（點別的地方或換題時要 stop） */
-function lvIncense(host,sec,done){if(!host||!sec)return{stop(){}};const el=document.createElement("div");el.className="lvinc";el.innerHTML='<i></i><span>🪔 '+sec+' 秒</span>';host.prepend(el);
-  const t0=Date.now(),bar=el.querySelector("i"),tx=el.querySelector("span");let on=true;
+function lvIncense(host,sec,done,at){if(!host||!sec)return{stop(){}};const el=document.createElement("div");el.className="lvinc";el.innerHTML='<i></i><span>🪔 '+sec+' 秒</span>';host.prepend(el);
+  const t0=at||Date.now(),   /* 回饋 838（開發者 11/9 選：全模式中斷接續）：at＝這炷香原本點起來的時間（關掉 App 再打開，香接著燒，不會重新燒滿） */bar=el.querySelector("i"),tx=el.querySelector("span");let on=true;
   const tick=()=>{if(!on||!el.isConnected)return;const left=Math.max(0,sec-(Date.now()-t0)/1000);bar.style.width=(left*100/sec)+"%";tx.textContent="🪔 "+Math.ceil(left)+" 秒";
     if(left<=0){on=false;el.classList.add("out");done&&done();return}requestAnimationFrame(tick)};tick();
   return{stop(){on=false;el.remove()}}}
@@ -6427,16 +6457,20 @@ function jVarLevel(v,x){const back=jChapterHref(x),H=jHid()[x.id];if(!H){navRepl
 function jLevel(v,s,src){prevData();const BKP=jChapterHref(s);setTop((src&&src.icon||"🎴")+" "+s.name,src?src.back:BKP);setTabs(false);v.className="view";v.innerHTML='<div class="pad muted">載入中…</div>';
   (src?Promise.resolve(null):s.book===2?legendData2():legendData()).then(D=>{const ch=src?{title:src.title||"",game:src.G}:D&&D.chapters[s.n-1],G=ch&&ch.game;if(!G||!(G.steps||[]).length){v.innerHTML='<div class="pad"><div class="card muted">這一關的資料還沒準備好</div></div>';return}
   const RK=src&&src.rk||"jRun";let R=jRunGet(s.id,RK);if(!R||R.done){R={id:s.id,k:0,miss:0,hint:false};jRunSet(R,RK)}
-  const N=G.steps.length,save=()=>jRunSet(R,RK),bd=Board(x=>onTap&&onTap(x));let onTap=null,inc=null;
+  const N=G.steps.length,H0=location.hash,bd=Board(x=>onTap&&onTap(x));let onTap=null,inc=null;
+  /* 回饋 838（開發者 11/9 選：全模式中斷接續）：每次存檔順便記進接續小卡（07m4-resume.js rsPg，千秋穿梭突發事件 jRunE 照原本「關掉＝沒發生」不記）；
+     R.si＝這一步做到哪裡（{k 第幾步,t 步驟種類,…}，猜著法／記盤／殘局題／收集／看盤問答做到第幾題、殘局題走到第幾手、接香到第幾段和盤面），關掉 App 再打開回到同一題、同一個局面，已經記的失誤不會因為重做再記一次 */
+  const save=()=>{jRunSet(R,RK);if(RK!=="jRunE"&&typeof rsPg==="function")try{if(R.done)rsPgClear("lv",s.id);else rsPg("lv",RK,s.id,H0,s.name,R.k,N)}catch(e){}};
+  const siGet=t=>R.si&&R.si.k===R.k&&R.si.t===t?R.si:null,siSet=o=>{R.si={k:R.k,...o};save()};
   const hdr=()=>`<div class="lvh"><b>${esc(G.name||s.lvName)}</b><span>第 ${Math.min(R.k+1,N)}／${N} 步・失誤 ${R.miss}${R.hint?"・用過提示":""}</span>${src&&!/~v$/.test(s.id)?"":prevBtn(s)}</div>`;
   const stop=()=>{if(inc){inc.stop();inc=null}onTap=null};
-  const next=()=>{stop();R.k++;save();run()};
+  const next=()=>{stop();R.k++;delete R.si;save();run()};   /* 回饋 838（開發者 11/9 選：全模式中斷接續）：換下一步，清掉這一步的進度 */
   const miss=why=>{R.miss++;save();vibrate([20,40,20]);if(why)toast(why);const h=v.querySelector(".lvh span");if(h)h.textContent=`第 ${Math.min(R.k+1,N)}／${N} 步・失誤 ${R.miss}${R.hint?"・用過提示":""}`};
-  const failCard=msg=>{stop();if(src&&src.onFail)return src.onFail(msg,run);v.className="view";v.innerHTML=`<div class="pad">${hdr()}<div class="card" style="text-align:center;line-height:1.8"><div style="font-size:40px">💪</div><p>${esc(msg)}</p><button class="btn" id="lvR" style="width:100%">再試這一步</button><button class="btn ghost" id="lvB" style="width:100%;margin-top:6px">${src?"回上一頁":s.book===2?"回第二集":"回"+ROAD_NAME}</button></div></div>`;
+  const failCard=msg=>{stop();if(R.si){delete R.si;save()}   /* 回饋 838（開發者 11/9 選：全模式中斷接續）：這一步沒過、要重來，進度從頭 */if(src&&src.onFail)return src.onFail(msg,run);v.className="view";v.innerHTML=`<div class="pad">${hdr()}<div class="card" style="text-align:center;line-height:1.8"><div style="font-size:40px">💪</div><p>${esc(msg)}</p><button class="btn" id="lvR" style="width:100%">再試這一步</button><button class="btn ghost" id="lvB" style="width:100%;margin-top:6px">${src?"回上一頁":s.book===2?"回第二集":"回"+ROAD_NAME}</button></div></div>`;
     (v.querySelector("#lvR")||{}).onclick=run;(v.querySelector("#lvB")||{}).onclick=()=>goBack(src?src.back:BKP)};
   const sayBox=t=>t?`<div class="card lvsay">${esc(t)}</div>`:"";
   const blank=b=>b.map(()=>null);
-  const B2=jStepsB2({v,bd,boardPage,stop,next,miss,failCard,setTap:f=>{onTap=f},setInc:i=>{inc=i},useHint:()=>{R.hint=true;save()},flag:(k,x)=>{R.f=R.f||{};R.f[k]=x;save()},sflag:o=>{R.fs=R.fs||{};R.fs[R.k]={...(R.fs[R.k]||{}),...o};save()}});
+  const B2=jStepsB2({v,bd,boardPage,stop,next,miss,failCard,siGet,siSet,   /* 回饋 838（開發者 11/9 選：全模式中斷接續） */setTap:f=>{onTap=f},setInc:i=>{inc=i},useHint:()=>{R.hint=true;save()},flag:(k,x)=>{R.f=R.f||{};R.f[k]=x;save()},sflag:o=>{R.fs=R.fs||{};R.fs[R.k]={...(R.fs[R.k]||{}),...o};save()}});
   if(R.k===0&&!R.intro){v.innerHTML=`<div class="pad">${hdr()}${ch.title?`<p class="muted" style="font-size:13px;margin:0 2px 8px">📖 ${esc(ch.title)}</p>`:""}${sayBox(G.intro||"")}
     <div class="card" style="font-size:14px;line-height:1.8">${G.skill?`<b>練什麼</b>：${esc(G.skill)}<br>`:""}<b>過關</b>：${esc(G.pass||"")}<br><b>${src&&src.hid?"拿"+HIDN.star:src?"三星":"收車"}</b>：${esc(src?G.star3||"":lvStar3(G))}${src?"":prevLine(s)}</div><button class="btn" id="lvGo" style="width:100%;margin-top:10px">開始</button>${(()=>{const h=!src&&jHid()[s.id];return h&&!h.got?`<button class="btn ghost" id="lvHd" style="width:100%;margin-top:6px">${HIDN.ic} ${HIDN.lv}（${h.k==="hard"?"困難":"簡單"}）</button>`:""})()}</div>`;
     (v.querySelector("#lvGo")||{}).onclick=()=>{R.intro=1;save();run()};(v.querySelector("#lvHd")||{}).onclick=()=>{jRunSet(null,RK);location.hash="#/journey/"+s.id+"~v"};return}
@@ -6456,7 +6490,7 @@ function jLevel(v,s,src){prevData();const BKP=jChapterHref(s);setTop((src&&src.i
     v.querySelector("#bbox").append(bd.svg);if(st.say)v.querySelector("#note").textContent=st.say}
   /* ---- 猜著法：先自動走 auto，每題選一步（選完照正解落子），blind 時只看格線和文字棋譜 ---- */
   function guess(st){const C=window.XQCore;let {b,turn}=lvBoard(st.start,st.auto),i=0,ok=0,last=null;const hist=[],flip=(st.start&&st.start.turn)==="b";
-    boardPage(st);ask();
+    boardPage(st);{const S=siGet("guess");if(S){for(let q=0;q<S.i&&q<st.items.length;q++){for(const u of st.items[q].before||[])play(u);play(st.items[q].answer)}i=S.i;ok=S.ok|0}}   /* 回饋 838（開發者 11/9 選：全模式中斷接續）：回到做到的那一題（前面幾題的著法照正解擺上） */ask();
     function draw(){v.querySelector("#bbox").classList.toggle("lvblind",!!st.blind);bd.draw(st.blind?blank(b):b,{flip,last})}
     function play(u){const [f,t]=lvSq(u);hist.push(C.notate(b,f,t));b=C.make(b,f,t);turn=turn==="r"?"b":"r";last={f,t}}
     function ask(){stop();const it=st.items[i];if(!it){return ok>=((st.pass!=null?st.pass:st.items.length))?next():failCard(`答對 ${ok} 題，要答對 ${(st.pass!=null?st.pass:st.items.length)} 題才過這一步。`)}
@@ -6472,7 +6506,7 @@ function jLevel(v,s,src){prevData();const BKP=jChapterHref(s);setTop((src&&src.i
       v.querySelectorAll("#lvO [data-k]").forEach(x=>x.onclick=()=>prev(+x.dataset.k));
       {let n=v.querySelector("#lvHint");if(!n){n=document.createElement("p");n.id="lvHint";n.className="muted";n.style.cssText="font-size:12.5px;margin:6px 14px 0";v.querySelector("#lvO").after(n)}n.textContent="先點一個選項，棋盤上會畫出那一步"}
       actionBar(v.querySelector("#acts"),[]);
-      function pick(k){stop();{const n=v.querySelector("#lvHint");if(n)n.textContent=""}actionBar(v.querySelector("#acts"),[]);const o=opts[k],hit=!!o&&o.u===it.answer,ans=opts.find(z=>z.u===it.answer);if(hit){ok++;vibrate(15)}else miss(k<0?"🪔 香燒完了":"");
+      function pick(k){stop();{const n=v.querySelector("#lvHint");if(n)n.textContent=""}actionBar(v.querySelector("#acts"),[]);const o=opts[k],hit=!!o&&o.u===it.answer,ans=opts.find(z=>z.u===it.answer);if(hit){ok++;vibrate(15)}else miss(k<0?"🪔 香燒完了":"");siSet({t:"guess",i:i+1,ok});   /* 回饋 838（開發者 11/9 選：全模式中斷接續） */
         v.querySelectorAll("#lvO [data-k]").forEach(x=>{x.disabled=true;const z=opts[+x.dataset.k];if(z.u===it.answer)x.classList.remove("ghost")});
         play(it.answer);draw();
         v.querySelector("#stat").textContent=hit?"✔ 對了！":"✘ 正解是「"+(ans?ans.cn:it.answer)+"」";
@@ -6480,6 +6514,7 @@ function jLevel(v,s,src){prevData();const BKP=jChapterHref(s);setTop((src&&src.i
         actionBar(v.querySelector("#acts"),[["next","›",i+1<st.items.length?"下一題":"繼續",()=>{i++;ask()},true]])}}}
   /* ---- 記盤：亮出局面幾秒，蓋起來問問題 ---- */
   function memory(st){let {b}=lvBoard(st.start,st.auto),i=0,ok=0;const flip=(st.start&&st.start.turn)==="b";boardPage(st);
+    {const S=siGet("memory");if(S){i=S.i;ok=S.ok|0;bd.draw(blank(b),{flip});ask();return}}   /* 回饋 838（開發者 11/9 選：全模式中斷接續）：已經看過盤、答到一半：直接回到那一題（盤面照樣蓋著） */
     if(st.show===0){bd.draw(blank(b),{flip});const lines=String(st.say||"").split(/(?<=」)/).map(x=>x.trim()).filter(Boolean);let heard=0;   /* 開發者：show:0＝只唸、不亮盤 */
       const play=()=>{const n=v.querySelector("#note");let k=0;n.style.whiteSpace="pre-line";n.textContent="";v.querySelector("#stat").textContent="👂 只能聽，不能看棋盤";const one=()=>{if(!v.isConnected)return;if(k<lines.length){n.textContent=lines.slice(0,++k).join("\n");setTimeout(one,1600)}else{heard++;actionBar(v.querySelector("#acts"),[...(heard<2?[["again","↺","再聽一次",play]]:[]),["go","›","聽好了",()=>{n.textContent="";ask()},true]])}};actionBar(v.querySelector("#acts"),[]);one()};
       play();return}
@@ -6490,14 +6525,17 @@ function jLevel(v,s,src){prevData();const BKP=jChapterHref(s);setTop((src&&src.i
     function ask(){const q=(st.questions||[])[i];if(!q)return ok>=((st.pass!=null?st.pass:(st.questions||[]).length))?next():failCard(`答對 ${ok} 題，要答對 ${(st.pass!=null?st.pass:st.questions.length)} 題才過這一步。`);
       v.querySelector("#stat").textContent=`第 ${i+1}／${st.questions.length} 題`;{const n=v.querySelector("#note");n.textContent=q.ask||"";n.classList.add("lv-q")}   /* 意見回饋 729：記盤的題目放大加粗，不再是小小的灰字 */
       v.querySelector("#lvO").innerHTML=(q.options||[]).map((o,k)=>`<button class="btn ghost" data-k="${k}">${esc(o)}</button>`).join("");actionBar(v.querySelector("#acts"),[]);
-      v.querySelectorAll("#lvO [data-k]").forEach(x=>x.onclick=()=>{const hit=+x.dataset.k===q.answer;if(hit){ok++;vibrate(15)}else miss();
+      v.querySelectorAll("#lvO [data-k]").forEach(x=>x.onclick=()=>{const hit=+x.dataset.k===q.answer;if(hit){ok++;vibrate(15)}else miss();siSet({t:"memory",i:i+1,ok});   /* 回饋 838（開發者 11/9 選：全模式中斷接續） */
         v.querySelectorAll("#lvO [data-k]").forEach(z=>{z.disabled=true;if(+z.dataset.k===q.answer)z.classList.remove("ghost")});
         v.querySelector("#stat").textContent=hit?"✔ 記對了":"✘ 不對";bd.draw(b,{flip});
         actionBar(v.querySelector("#acts"),[["next","›",i+1<st.questions.length?"下一題":"繼續",()=>{i++;bd.draw(blank(b),{flip});ask()},true]])})}}
   /* ---- 殘局題／收集：玩家照 line 走自己那一方，對方自動應；走錯算失誤、可以重來；collect 每解一題拿一樣東西 ---- */
-  function puzzle(st){const C=window.XQCore,items=st.t==="collect"?(st.from||[]):(st.items||[]),got=[];let i=0,solved=0;boardPage(st);ask();
+  function puzzle(st){const C=window.XQCore,items=st.t==="collect"?(st.from||[]):(st.items||[]),got=[];let i=0,solved=0,RS=siGet("puzzle");boardPage(st);
+    if(RS){i=RS.i;solved=RS.sv|0;for(let q=0;q<(RS.g|0);q++)got.push(1)}   /* 回饋 838（開發者 11/9 選：全模式中斷接續）：回到做到的那一題；RS.j＝這一題已經走到第幾手 */
+    const sv=(o)=>siSet({t:"puzzle",i,sv:solved,g:got.length,...(o||{})});ask();
     function ask(){stop();const it=items[i];if(!it){return solved>=((st.pass!=null?st.pass:items.length))?next():failCard(`解出 ${solved} 題，要解出 ${(st.pass!=null?st.pass:items.length)} 題才過這一步。`)}
       let {b,turn}=lvBoard(it.start,it.auto),j=0,sel=-1,last=null,peek=false,hk=null,wr=0,ng=false;   /* wr／ng：這一題走錯幾次、主動提示給過沒（07c-canju.js stuckNudge） */const me=turn,flip=me==="b";
+      if(RS&&RS.ii===i&&RS.j>0&&RS.j<it.line.length){for(let q=0;q<RS.j;q++){const[f,t]=lvSq(it.line[q]);b=C.make(b,f,t);last={f,t};turn=turn==="r"?"b":"r"}j=RS.j;peek=!!RS.pk}RS=null;   /* 回饋 838（開發者 11/9 選：全模式中斷接續）：這一題走到一半：照正解擺回那一手 */
       const coll=st.t==="collect"?`\n收集：${(st.items||[]).map((x,k)=>k<got.length?"✔"+x:"□"+x).join("　")}`:"";
       const draw=()=>bd.draw(b,{flip,sel,last,targets:sel>=0?C.legal(b,turn).filter(([f])=>f===sel).map(x=>x[1]):[],...(hk?{hint:hk}:{})});
       const say=()=>{v.querySelector("#stat").textContent=`第 ${i+1}／${items.length} 題・${C.PLAYER[me]}走`;v.querySelector("#note").textContent=(i===0&&st.say?st.say+"\n":"")+(it.ask||"找出最好的著法")+coll};
@@ -6505,12 +6543,12 @@ function jLevel(v,s,src){prevData();const BKP=jChapterHref(s);setTop((src&&src.i
       const bar=()=>actionBar(v.querySelector("#acts"),[["hint","💡",hintLabel(),()=>{const H=useHint();if(!H)return;R.hint=true;save();const [f,t]=lvSq(it.line[j]);hk=H.full?[f,t]:[f];draw()}],["skip","👁","看答案",()=>{peek=true;miss();go(it.line[j])}]]);bar();
       function go(u){const [f,t]=lvSq(u);b=C.make(b,f,t);last={f,t};turn=turn==="r"?"b":"r";j++;sel=-1;hk=null;draw();
         if(j>=it.line.length)return done();
-        onTap=null;setTimeout(()=>{if(!v.isConnected)return;const [f2,t2]=lvSq(it.line[j]);b=C.make(b,f2,t2);last={f:f2,t:t2};turn=turn==="r"?"b":"r";j++;draw();if(j>=it.line.length)return done();onTap=tap},450)}
+        onTap=null;setTimeout(()=>{if(!v.isConnected)return;const [f2,t2]=lvSq(it.line[j]);b=C.make(b,f2,t2);last={f:f2,t:t2};turn=turn==="r"?"b":"r";j++;draw();if(j>=it.line.length)return done();sv({ii:i,j,pk:peek?1:0});/* 回饋 838（開發者 11/9 選：全模式中斷接續） */onTap=tap},450)}
       function tap(x){const L=C.legal(b,turn);if(sel>=0&&L.some(([f,t])=>f===sel&&t===x)){const u=C.iccs(sel,x);if(u===it.line[j]){vibrate(15);return go(u)}
           {const nz=typeof stuckNudge==="function"&&++wr>=STUCK_N&&!ng&&!hk;if(nz){ng=true;R.hint=true;hk=[lvSq(it.line[j])[0]]}miss("不是這步，再想想");sel=-1;draw();if(nz)stuckNudge()}return}   /* 卡關主動提示：同一題走錯 3 次，亮出要動的那顆子（算用了提示，不扣提示棋） */
         sel=L.some(([f])=>f===x)?x:-1;if(sel>=0)vibrate(5);draw()}
       onTap=tap;
-      function done(){onTap=null;if(!peek)solved++;if(st.t==="collect"&&!peek)got.push(1);
+      function done(){onTap=null;if(!peek)solved++;if(st.t==="collect"&&!peek)got.push(1);i++;sv();i--;   /* 回饋 838（開發者 11/9 選：全模式中斷接續）：這一題做完了，記成下一題 */
         v.querySelector("#stat").textContent=peek?"看過答案了":"✔ 解出來了！";v.querySelector("#note").textContent=(it.note||"")+(st.t==="collect"?`\n收集：${(st.items||[]).map((x,k)=>k<got.length?"✔"+x:"□"+x).join("　")}`:"");
         actionBar(v.querySelector("#acts"),[["next","›",i+1<items.length?"下一題":"繼續",()=>{i++;ask()},true]])}}}
   /* ---- 對局：用挑戰電腦的畫面下（盲棋、香條在那邊處理），結束時 journeyGameEnd 判定，再回到這裡 ---- */
@@ -6524,10 +6562,13 @@ function jLevel(v,s,src){prevData();const BKP=jChapterHref(s);setTop((src&&src.i
     const gl={win:"贏這一盤",survive:`撐過 ${st.limit||30} 步不輸`,draw:"至少下和"}[st.goal||"win"];
     v.innerHTML=`<div class="pad">${hdr()}${sayBox(st.say)}<div class="card" style="font-size:14px;line-height:1.85">⚔ 對手：第 ${st.ai||3} 級的電腦・你執${st.human==="b"?"黑":"紅"}<br>🎯 ${gl}${st.limit&&st.goal!=="survive"?`（${st.limit} 步內）`:""}${st.remove&&st.remove.length?`<br>🎁 讓子：先拿掉 ${st.remove.length} 顆`:""}${st.start?"<br>♟ 從指定局面開始":""}${st.timer?`<br>🪔 每步一炷香（${st.timer} 秒），燒完算一次失誤`:""}${st.blind?"<br>🙈 盲棋：棋盤上看不到棋子":""}</div>
       ${R.lose?`<p class="muted" style="font-size:13px">這一步已經試了 ${R.lose} 次，加油！</p>`:""}<button class="btn" id="lvP" style="width:100%">開始對局</button></div>`;
-    (v.querySelector("#lvP")||{}).onclick=()=>{if(st.blind){if(R.p3===undefined){R.p3=parkOn();save()}store.set("park3d",false)}
+    const P0=store.get("jPending",null),same=!!(P0&&P0.id===s.id&&P0.lvp&&P0.lvp.step===R.k);   /* 回饋 838（開發者 11/9 選：全模式中斷接續）：這一步的那盤還沒下完（jPending 還指著它）：按「開始對局」接著下，不重開 */
+    if(same){const b=v.querySelector("#lvP");if(b)b.textContent="⏳ 繼續那一盤"}
+    (v.querySelector("#lvP")||{}).onclick=async()=>{if(st.blind){if(R.p3===undefined){R.p3=parkOn();save()}store.set("park3d",false)}
+      if(same)try{const S0=await api("/play/state");if(S0&&S0.id===P0.game&&S0.result&&typeof rsWasOpen==="function"&&rsWasOpen(S0.id)){location.hash="#/journey/play";return}}catch(e){}   /* 回饋 838（開發者 11/9 選：全模式中斷接續）：那盤在對局頁外分出了勝負，先回對局頁把結果算完 */
       jStart(s.id,{human:st.human==="b"?"b":"r",level:Math.max(1,Math.min(8,st.ai||3)),journey:s.id,lv:{fen:st.start&&st.start.fen||"",turn:st.start&&st.start.turn||"r",remove:st.remove||[],noPerpetual:!!st.noPerpetual}},()=>{
-        const P=store.get("jPending",null);if(P){P.lvp={goal:st.goal||"win",limit:st.limit||0,timer:st.timer||0,blind:!!st.blind,opp:st.opp||null,step:R.k,rule:st.rule||null};store.set("jPending",P)}
-        location.hash="#/journey/play"},true)}}
+        const P=store.get("jPending",null);if(P){const inc=same&&P.lvp?P.lvp.inc:undefined;P.lvp={goal:st.goal||"win",limit:st.limit||0,timer:st.timer||0,blind:!!st.blind,opp:st.opp||null,step:R.k,rule:st.rule||null,...(inc?{inc}:{})};store.set("jPending",P)}
+        location.hash="#/journey/play"},!same)}}
   function finish(){stop();const r=G.rules||{},m3=src?(r.maxMistakes3!=null?r.maxMistakes3:0):lvM3(G),m2=Math.max(r.maxMistakes2!=null?r.maxMistakes2:2,m3);
     /* 開發者 11/5：三星太難（零失誤＋變體＋第二集的額外條件），改成只比兩星難一級：失誤不超過 1 次、不用提示棋；不用再過變體 */
     let stars=Math.min(src?(b2StarOk(G,R)?3:2):3,R.miss<=m3&&!R.hint?3:R.miss<=m2?2:1);
@@ -6547,13 +6588,15 @@ let LV_INC=null,LV_KEY=null;
 function lvWatch(st,v){const P=lvPlayOf(st);
   if(!P||st.result){if(LV_INC){LV_INC.stop();LV_INC=null}LV_KEY=null;return}
   const L=P.lvp,me=st.human,n=st.moves.filter(m=>m.by===me).length;
-  if(L.goal==="survive"&&L.limit&&n>=L.limit){const R=jRunGet(P.id);if(R){R.k++;R.ret=true;jRunSet(R)}store.set("jPending",null);if(LV_INC){LV_INC.stop();LV_INC=null}
+  if(L.goal==="survive"&&L.limit&&n>=L.limit){const R=jRunGet(P.id);if(R){R.k++;R.ret=true;jRunSet(R)}store.set("jPending",null);if(LV_INC){LV_INC.stop();LV_INC=null}try{if(typeof rsFin==="function")rsFin(st.id)}catch(e){}   /* 回饋 838（開發者 11/9 選：全模式中斷接續）：這盤沒有結果，記下來：不再問要不要接續、石桌往事開新盤也不問 */
     toast(`🎉 撐過 ${L.limit} 步了！回到關卡繼續`);setTimeout(()=>{if(navKey(location.hash)==="/journey/play")goUp("#/journey/"+P.id)},1600);return}   /* 意見回饋 607：退回關卡那一層（不往前推一頁）；這 1.6 秒裡已經離開對局頁就不動 */
   if(!L.timer)return;const mine=st.turn===me&&!st.thinking,key=st.id+":"+st.moves.length;
   if(!mine){if(LV_INC){LV_INC.stop();LV_INC=null}LV_KEY=null;return}
   if(LV_KEY===key&&LV_INC)return;if(LV_INC)LV_INC.stop();LV_KEY=key;
   const host=v.querySelector(".lvhost")||(()=>{const d=document.createElement("div");d.className="lvhost";const bb=v.querySelector("#bbox");bb.parentNode.insertBefore(d,bb);return d})();
-  LV_INC=lvIncense(host,L.timer,()=>{const R=jRunGet(P.id);if(R){R.miss++;jRunSet(R)}toast("🪔 香燒完了，算一次失誤（可以繼續下）");LV_INC=null})}
+  /* 回饋 838（開發者 11/9 選：全模式中斷接續）：這一步的香什麼時候點的記在 jPending.lvp.inc，關掉 App 再打開接著燒（不會重新整理就重燒滿）；燒完再點一炷新的 */
+  const I=L.inc&&L.inc.k===key?L.inc:null;if(!I){L.inc={k:key,at:Date.now()};store.set("jPending",P)}
+  LV_INC=lvIncense(host,L.timer,()=>{const R=jRunGet(P.id);if(R){R.miss++;jRunSet(R)}{const P2=store.get("jPending",null);if(P2&&P2.lvp&&P2.game===st.id){P2.lvp.inc={k:key,at:Date.now()};store.set("jPending",P2)}}toast("🪔 香燒完了，算一次失誤（可以繼續下）");LV_INC=null},I?I.at:0)}
 
 /* ================= 🧠 主題訓練：題庫依戰術主題（tools/tag_tactics.js 用規則程式標的）連做 10 題 ================= */
 const THEMES=[["將軍","走一步就將軍，逼對方先解"],["殺棋","幾步之內把對方將死"],["抽將","讓開一顆子露出將軍，順手吃子"],["捉雙","一步同時捉住兩顆大子"],["閃擊","移開一顆子，讓後面的子捉到大子"],["牽制","釘住對方的子，讓它不敢動"],["引離","送子把對方的守子引開"],["悶宮","將被自己的子堵死"]];
@@ -6571,14 +6614,14 @@ const CAMP=[{"n":1,"name":"帥","intro":"帥（將）只能在九宮裡走，一
 const campStars=()=>store.get("campStars",{});
 function Camp(v,n){setTabs(n?false:true,"#/");store.set("campSeen",true);const S=campStars();
   if(n){const G=CAMP[n-1];if(!G){navReplace("#/camp");return{}}
-    return jLevel(v,{id:"camp"+n,n,name:`第 ${n} 課・${G.name}`,lvName:G.name},{G,title:"🔰 新手訓練營",back:"#/camp",icon:"🔰",
+    return jLevel(v,{id:"camp"+n,n,name:`第 ${n} 課・${G.name}`,lvName:G.name},{G,rk:"jRunC",title:"🔰 新手訓練營",back:"#/camp",icon:"🔰",   /* 回饋 838（開發者 11/9 選：全模式中斷接續）：新手訓練營用自己的 jRunC，不再洗掉石桌往事玩到一半的關卡（jRun） */
       done:st=>{const A=campStars(),b=Math.max(st,A[n]||0);if(!A[n])addXP(10,"新手訓練營","camp:"+n);A[n]=b;store.set("campStars",A);return b},
-      next:n<CAMP.length?["下一課：「"+CAMP[n].name+"」 ›",()=>{jRunSet(null);location.hash="#/camp/"+(n+1)}]:null})}
+      next:n<CAMP.length?["下一課：「"+CAMP[n].name+"」 ›",()=>{jRunSet(null,"jRunC");location.hash="#/camp/"+(n+1)}]:null})}
   setTop("🔰 新手訓練營","#/hub/learn");v.className="view";const got=CAMP.filter(c=>S[c.n]).length;
   v.innerHTML=`<div class="pad"><div class="card" style="line-height:1.8"><b>第一次下象棋？從這裡開始。</b><br><span class="muted" style="font-size:13.5px">每一課${BOTN()}說一句話，你親手走一步：先認識每種棋子怎麼走，再學將軍、解將，最後學兩種最基本的殺法。全部 ${CAMP.length} 課、大約 5 分鐘。</span></div>
     <div class="sec-t">課程（${got}／${CAMP.length}）</div><div class="items" style="padding:0">${CAMP.map(c=>{const k=S[c.n]||0,open=c.n===1||S[c.n-1];return`<button class="item" data-c="${c.n}" ${open?"":"disabled"}><span class="lb">${open?(k?"✅":"🔰"):"🔒"}</span><span class="tx"><b>第 ${c.n} 課・${esc(c.name)}</b><span>${k?"★".repeat(k)+"☆".repeat(3-k):open?esc(c.intro.slice(0,28))+"…":"先上完前一課"}</span></span><span class="muted">›</span></button>`}).join("")}</div>
     ${got>=CAMP.length?'<div class="card" style="margin-top:10px;text-align:center">🎉 訓練營全部結業！去「挑戰電腦」第 1 級試試身手吧。<br><button class="btn" id="cGo" style="margin-top:8px">去挑戰電腦 ›</button></div>':""}</div>`;
-  v.querySelectorAll("[data-c]").forEach(b=>b.onclick=()=>{vibrate(5);jRunSet(null);location.hash="#/camp/"+b.dataset.c});
+  v.querySelectorAll("[data-c]").forEach(b=>b.onclick=()=>{vibrate(5);jRunSet(null,"jRunC");location.hash="#/camp/"+b.dataset.c});   /* 回饋 838（開發者 11/9 選：全模式中斷接續） */
   {const g=v.querySelector("#cGo");if(g)g.onclick=()=>{store.set("cpuLevel",1);location.hash="#/cpu"}}return{}}
 /* ================= 🍵 一盞茶殘局（第一版）=================
    企劃：xiangqi-db/story/殘局企劃/殘局企劃.md。題庫：xiangqi-db/art/canju/canju-set.json（tools/canju/4_build.js 產生，建置時複製到網站 data/canju/canju-set.json）。
@@ -9695,23 +9738,37 @@ function optJk(st){let L=null;try{L=typeof lvPlayOf==="function"?lvPlayOf(st):nu
    積分挑戰：照原本的規矩，中途丟掉算輸（免得輸棋前放棄躲扣分），所以小卡只有「繼續」「先不要」，不給放棄。
    線上真人對戰（#/pvp、XQNet）不經過這裡；正在線上對局時也不跳小卡。
    存檔 store "resumeLast"（05b-save.js JOURNEY_KEYS 的 m_resumeLast）＝{r:最新一盤 {t:"play"|"cj",k 種類,g 對局 id,rk 殘局存檔鍵,id 題號,h 網址,nm 題名,n 步數,at 最後動到的時間},t:{對局 id:最後動到的時間}}；
-     盤面本身照舊在 xq_play／xq_play2／cjRun…，這裡不另存一份。超過 7 天沒動的（積分挑戰除外）開 App 時自動清掉、不算輸。 */
+     盤面本身照舊在 xq_play／xq_play2／cjRun…，這裡不另存一份。超過 7 天沒動的（積分挑戰除外）開 App 時自動清掉、不算輸。
+   回饋 838（開發者 11/9 選：全模式中斷接續）：
+     r.t 多了幾種「頁面型」的進度（跟殘局 cj 一樣：盤面存在各自的鍵，這裡只記最新一份）：lv＝石桌往事章回關卡、古戰場守城、星槎小關、女將守局…（07-legend.js jLevel，rk＝jRun／jRunB／jRunS／jRunW／jRunC）、
+       tm＝主題訓練（store jpRun）、qz＝棋力測驗（store quizRun，03-home-quiz.js）；
+     e＝{對局 id:朝代}＝園子路人那盤是在哪一朝的園子開的（接續時換回那一朝，不會把唐朝的路人帶到宋朝園子）；
+     x＝[對局 id]＝「撐過 N 步」的關已經過了、但那盤棋沒有結果（local.js 沒有結束它），不再問要不要接續。舊存檔沒有 e、x 照常讀。 */
 const RS_ON=true,RS_DAYS=7,RS_IDLE=10*60000,RS_URL={cpu:"#/cpu",arena:"#/arena",journey:"#/journey/play",practice:"#/redo/play"};
 const rsKind=G=>G&&G.practice?"practice":G&&G.journey?"journey":G&&G.arena?"arena":"cpu";
 const rsLs=k=>{try{return JSON.parse(localStorage.getItem("xq_"+k)||"null")}catch(e){return null}};
 const rsUnf=G=>!!(G&&!G.result&&Array.isArray(G.moves)&&G.moves.length);
 const rsT0=id=>{const t=Date.parse(String(id||"").replace(/^(\d{4}-\d\d-\d\d)T(\d\d)-(\d\d)-(\d\d).*$/,"$1T$2:$3:$4Z"));return isNaN(t)?0:t};
-const rsData=()=>{const o=store.get("resumeLast",null);return o&&typeof o==="object"?{r:o.r||null,t:o.t||{}}:{r:null,t:{}}};
+const rsData=()=>{const o=store.get("resumeLast",null);return o&&typeof o==="object"?{r:o.r||null,t:o.t||{},e:o.e&&typeof o.e==="object"?o.e:{},x:Array.isArray(o.x)?o.x:[]}:{r:null,t:{},e:{},x:[]}};   /* 回饋 838（開發者 11/9 選：全模式中斷接續）：多了 e、x，舊存檔沒有就給空的 */
 const rsAsked=()=>{try{return JSON.parse(sessionStorage.getItem("rsAsked")||"[]")}catch(e){return[]}};
 const rsAsk=id=>{try{const a=rsAsked();if(!a.includes(id)){a.push(id);sessionStorage.setItem("rsAsked",JSON.stringify(a.slice(-20)))}}catch(e){}};
 /* 收著的、沒下完的對電腦棋（cur＝桌上那盤） */
-function rsGames(){const o=[],P=rsLs("play");if(rsUnf(P))o.push({...P,k:rsKind(P),cur:true});let S=rsLs("play2");if(S&&S.moves)S={[rsKind(S)]:S};
-  for(const k of["cpu","arena","journey","practice"]){const g=S&&S[k];if(rsUnf(g)&&!(P&&g.id===P.id))o.push({...g,k,cur:false})}return o}
+function rsGames(){const o=[],P=rsLs("play"),X=rsData().x;if(rsUnf(P)&&!X.includes(P.id))o.push({...P,k:rsKind(P),cur:true});let S=rsLs("play2");if(S&&S.moves)S={[rsKind(S)]:S};
+  for(const k of["cpu","arena","journey","practice"]){const g=S&&S[k];if(rsUnf(g)&&!(P&&g.id===P.id)&&!X.includes(g.id))o.push({...g,k,cur:false})}return o}   /* 回饋 838（開發者 11/9 選：全模式中斷接續）：已經過關的「撐過 N 步」那盤（x）不算沒下完 */
+/* 回饋 838（開發者 11/9 選：全模式中斷接續）：幾個給別的檔用的小工具
+   rsFin(id)：「撐過 N 步」到了（07-legend.js lvWatch），這盤不再當成沒下完；rsFinGame(id)＝是不是這種盤
+   rsJId(st)：石桌往事那一格（桌上或收著）的對局 id；rsArenaEra()：沒下完的擂台那盤是哪一朝（08b-cpugame.js 開擂台頁時照它算強度，不照現在停的朝代）
+   rsParkEra(id)：園子路人那盤是在哪一朝開的；rsWasOpen(id)：這盤在對局頁開著時還沒下完（不在對局頁時才分出勝負，對局頁要補跑結算） */
+function rsFin(id){if(!id)return;const D=rsData();if(!D.x.includes(id))D.x=D.x.concat(id).slice(-20);delete D.t[id];delete D.e[id];if(D.r&&D.r.g===id)D.r=null;store.set("resumeLast",D)}
+const rsFinGame=id=>!!id&&rsData().x.includes(id);
+function rsJId(st){if(st&&st.journey&&!st.result&&(st.moves||[]).length)return st.id;let S=rsLs("play2");if(S&&S.moves)S={[rsKind(S)]:S};const g=S&&S.journey;return rsUnf(g)?g.id:null}
+function rsArenaEra(){const ok=g=>rsUnf(g)&&rsKind(g)==="arena"&&!g.ranked&&!g.reward&&g.arena;const P=rsLs("play");if(ok(P))return P.arena;let S=rsLs("play2");if(S&&S.moves)S={[rsKind(S)]:S};return S&&ok(S.arena)?S.arena.arena:null}
+const rsParkEra=id=>rsData().e[id]||null,rsWasOpen=id=>!!(id&&rsData().t[id]);
 const rsLast=g=>rsData().t[g.id]||rsT0(g.id);
 /* 對手是誰：有名字的人回 who；沒有角色的（故事關、古戰場、錯棋重練）回 title */
 function rsWho(g){const j=String(g.journey||"");try{
-  if(g.k==="practice")return{title:"錯棋重練"};if(g.k==="arena")return{who:(ARENA[g.arena]||{}).name||"擂主"};
-  if(g.k==="cpu")return{who:"Pikafish",tag:g.ranked?"積分挑戰":g.reward?"獎勵棋":""};
+  if(g.k==="practice")return{title:g.practice&&g.practice.drill?g.practice.title||"練習":"錯棋重練"};if(g.k==="arena")return{who:(ARENA[g.arena]||{}).name||"擂主"};   /* 回饋 838（開發者 11/9 選：全模式中斷接續）：🎯 練習寫練習的題名 */
+  if(g.k==="cpu")return{who:typeof OPT_KM!=="undefined"?OPT_KM.name:"冷面國手",tag:g.ranked?"積分挑戰":g.reward?"獎勵棋":""};   /* 回饋 838（開發者 11/9 選：全模式中斷接續）：對局裡叫冷面國手（回饋 418），小卡也一樣 */
   if(j==="park"){const n=parkNpcOf({...g,journey:"park"});return{who:n?n.name:"園子裡的路人"}}
   {const a=typeof innAnyAct==="function"?innAnyAct(j):null;if(a)return{who:a.name}}
   if(j.startsWith("char:")&&JCHAR[j.slice(5)])return{who:JCHAR[j.slice(5)].name};
@@ -9722,30 +9779,46 @@ function rsCardHTML(g){const W=rsWho(g),n=g.moves.length,st0=g.startTurn||"r",tu
     <p class="muted" style="margin:4px 0 0">下到第 ${Math.ceil(n/2)} 回合・${mine?"輪到你走":"輪到對方"}${d>=1?`・${d} 天前`:""}</p>
     <p class="muted" style="font-size:13px;margin:6px 0 0">${g.ranked?"積分挑戰中途放棄會算輸，這盤先幫你留著。":"放棄這盤不算輸，也不會扣任何東西。"}</p>`}
 /* 繼續：不是桌上那盤就先換過來，再進那一種的對局頁 */
-async function rsGo(g){rsAsk(g.id);if(!g.cur)try{await api("/play/switch",{kind:g.k})}catch(e){}if(g.k==="journey"&&g.journey==="park")store.set("park3d",true);location.hash=RS_URL[g.k]||"#/cpu"}
+async function rsGo(g){rsAsk(g.id);if(!g.cur)try{await api("/play/switch",{kind:g.k})}catch(e){}if(g.k==="journey"&&g.journey==="park")store.set("park3d",true);
+  if(String(g.journey||"").startsWith("bt:")&&typeof battleData==="function")try{await battleData()}catch(e){}   /* 回饋 838（開發者 11/9 選：全模式中斷接續）：古戰場讓子對弈——先載戰役資料，戰役名、下一場、集滿一卷的獎勵才對得上 */
+  location.hash=RS_URL[g.k]||"#/cpu"}
 /* 放棄：不呼叫認輸（認輸會進紀錄、積分局會扣分）。桌上那盤：挑戰電腦換一盤同設定的新棋，其他種類先換成挑戰電腦（那盤被收起來）；再把收著的那一份刪掉 */
 async function rsDrop(g){if(!g||g.ranked)return false;
   if(g.cur){if(g.k==="cpu")await api("/play/new",{human:g.human||"r",lx:g.level||store.get("cpuLevel",6),reward:!!g.reward});else await api("/play/switch",{kind:"cpu",human:"r",lx:store.get("cpuLevel",6)})}
   let S=rsLs("play2");if(S&&S.moves)S={[rsKind(S)]:S};if(S&&S[g.k]&&S[g.k].id===g.id){delete S[g.k];try{localStorage.setItem("xq_play2",JSON.stringify(Object.keys(S).length?S:null))}catch(e){}}
   if(g.k==="journey"){const P=store.get("jPending",null);if(P&&P.game===g.id)store.set("jPending",null)}
-  const D=rsData();delete D.t[g.id];if(D.r&&D.r.g===g.id)D.r=null;store.set("resumeLast",D);return true}
+  const D=rsData();delete D.t[g.id];delete D.e[g.id];if(D.r&&D.r.g===g.id)D.r=null;store.set("resumeLast",D);return true}   /* 回饋 838（開發者 11/9 選：全模式中斷接續）：連同記下的朝代一起清 */
 /* 對局頁每次畫面更新時記一下「最後動到的時間」（同一步一分鐘內不重寫）；下完就把最新一盤清掉 */
-function rsTouch(s){if(!RS_ON||!s||!s.id||s.net)return;const D=rsData(),now=Date.now();
-  if(s.result||!(s.moves||[]).length){if(D.r&&D.r.g===s.id){D.r=null;delete D.t[s.id];store.set("resumeLast",D)}return}
+function rsTouch(s){if(!RS_ON||!s||!s.id||s.net)return;const D=rsData(),now=Date.now();if(D.x.includes(s.id))return;   /* 回饋 838（開發者 11/9 選：全模式中斷接續）：「撐過 N 步」過了的那盤不再記 */
+  /* 回饋 838（開發者 11/9 選：全模式中斷接續）：園子路人那盤第一次畫出來時記下是哪一朝；下完不管是不是最新一盤都把時間清掉（rsWasOpen 靠它分辨「離開對局頁以後才分出勝負」） */
+  if(s.journey==="park"&&!s.result&&!D.e[s.id]){D.e[s.id]=store.get("era","classic");for(const k of Object.keys(D.e))if(!D.t[k]&&k!==s.id)delete D.e[k];store.set("resumeLast",D)}
+  if(s.result||!(s.moves||[]).length){if(s.result&&(D.t[s.id]||D.e[s.id]||(D.r&&D.r.g===s.id))){if(D.r&&D.r.g===s.id)D.r=null;delete D.t[s.id];delete D.e[s.id];store.set("resumeLast",D)}return}
   const n=s.moves.length;if(D.r&&D.r.g===s.id&&D.r.n===n&&now-D.r.at<60000)return;
   D.r={t:"play",k:s.kind||rsKind(s),g:s.id,n,at:now};D.t[s.id]=now;for(const k of Object.keys(D.t))if(now-D.t[k]>RS_DAYS*864e5)delete D.t[k];store.set("resumeLast",D)}
 /* 殘局類：每走一步存檔時記下是哪一題（07c-canju.js 的 save） */
 function rsCj(rk,R,h){if(!RS_ON||!R||!R.id||!(R.path||[]).length||R.ans)return;const D=rsData(),t=document.querySelector("#title"),nm=(t&&t.textContent.trim())||"殘局";
   D.r={t:"cj",rk,id:R.id,h:h||location.hash,nm,n:R.path.length,at:Date.now()};store.set("resumeLast",D)}
 const rsCjOk=r=>{const R=store.get(r.rk,null);return!!(R&&R.id===r.id&&(R.path||[]).length&&!R.ans)};
+/* 回饋 838（開發者 11/9 選：全模式中斷接續）：頁面型的進度（lv 關卡、tm 主題訓練、qz 棋力測驗）跟殘局一樣記最新一份；rsPgOk＝那份還在、還沒做完；rsPgDrop＝放棄（清掉那份，不算輸、不扣東西） */
+const RS_PGK={tm:"jpRun",qz:"quizRun"};
+function rsPg(t,rk,id,h,nm,n,N){if(!RS_ON||!id)return;const D=rsData();D.r={t,rk:rk||RS_PGK[t],id,h:h||location.hash,nm:String(nm||"").slice(0,40),n:n|0,N:N|0,at:Date.now()};store.set("resumeLast",D)}
+function rsPgOk(r){if(!r)return false;if(r.t==="cj")return rsCjOk(r);const R=store.get(r.rk||RS_PGK[r.t],null);if(!R)return false;
+  if(r.t==="lv")return R.id===r.id&&!R.done&&!!(R.k>0||R.intro||R.si);if(r.t==="tm")return R.id===r.id&&Array.isArray(R.ids)&&R.k<R.ids.length;if(r.t==="qz")return R.sid===r.id&&Array.isArray(R.a);return false}
+function rsPgDrop(r){if(!r)return;store.set(r.rk||RS_PGK[r.t],null);const D=rsData();if(D.r&&D.r.t===r.t&&D.r.id===r.id)D.r=null;store.set("resumeLast",D)}
+function rsPgClear(t,id){const D=rsData();if(D.r&&D.r.t===t&&(id==null||D.r.id===id)){D.r=null;store.set("resumeLast",D)}}
 /* 開 App 時：清掉 7 天沒動的；找出最新一盤 */
 async function rsSweep(){const now=Date.now(),lim=RS_DAYS*864e5;for(const g of rsGames())if(!g.ranked&&now-rsLast(g)>lim)try{await rsDrop(g)}catch(e){}
-  const D=rsData();if(D.r&&D.r.t==="cj"&&(!rsCjOk(D.r)||now-D.r.at>lim)){if(rsCjOk(D.r))store.set(D.r.rk,null);D.r=null;store.set("resumeLast",D)}}
-function rsLatest(){const D=rsData(),G=rsGames();if(D.r&&D.r.t==="cj"&&rsCjOk(D.r)){if(!G.length||D.r.at>=Math.max(...G.map(rsLast)))return{cj:D.r}}
+  const D=rsData();if(D.r&&D.r.t!=="play"&&(!rsPgOk(D.r)||now-D.r.at>lim)){if(rsPgOk(D.r))store.set(D.r.rk||RS_PGK[D.r.t],null);D.r=null;store.set("resumeLast",D)}}   /* 回饋 838（開發者 11/9 選：全模式中斷接續）：頁面型的進度一樣 7 天沒動就清掉 */
+function rsLatest(){const D=rsData(),G=rsGames();if(D.r&&D.r.t!=="play"&&rsPgOk(D.r)){if(!G.length||D.r.at>=Math.max(...G.map(rsLast)))return{cj:D.r}}
   if(!G.length)return null;return{g:G.slice().sort((a,b)=>rsLast(b)-rsLast(a))[0]}}
-function rsCard(L,after){if(L.cj){const r=L.cj;rsAsk("cj:"+r.rk+":"+r.id);
-    return modal(`<div class="em">⏳</div><h2 style="font-size:19px;line-height:1.5">上次那題「${esc(r.nm.replace(/^\S*\s/,""))}」還沒解完，要繼續嗎？</h2><p class="muted" style="margin:4px 0 0">已經走了 ${Math.ceil(r.n/2)} 步</p><p class="muted" style="font-size:13px;margin:6px 0 0">放棄這題不算錯，也不會扣任何東西，下次從頭解。</p>`,
-      [["▶ 繼續",()=>{location.hash=r.h}],["放棄這題",()=>{store.set(r.rk,null);const D=rsData();D.r=null;store.set("resumeLast",D);toast("好，這題下次從頭解");after&&after()},true]])}
+function rsCard(L,after){if(L.cj){const r=L.cj;rsAsk(r.t+":"+(r.rk||"")+":"+r.id);
+    /* 回饋 838（開發者 11/9 選：全模式中斷接續）：關卡、主題訓練、棋力測驗也走這張卡，字照種類換 */
+    const nm=esc(r.t==="cj"?String(r.nm||"").replace(/^\S*\s/,""):String(r.nm||"")),T=r.t==="lv"?[`上次「${nm}」那一關還沒過完，要繼續嗎？`,`做到第 ${Math.min(r.n+1,r.N||r.n+1)}${r.N?"／"+r.N:""} 步`,"放棄不算輸，也不會扣任何東西，下次從第一步開始。","放棄這關","好，這關下次從頭來"]
+      :r.t==="tm"?[`上次的主題訓練「${nm}」還沒做完，要繼續嗎？`,`做到第 ${r.n+1}／${r.N||10} 題`,"放棄不算錯，也不會扣任何東西，下次換一組新題。","放棄這組","好，下次換一組新題"]
+      :r.t==="qz"?["上次的棋力測驗還沒做完，要繼續嗎？",`答了 ${r.n} 題`,"放棄不影響最好成績，答過的題目照樣記進我的成長。","放棄這次","好，下次重新測"]
+      :[`上次那題「${nm}」還沒解完，要繼續嗎？`,`已經走了 ${Math.ceil(r.n/2)} 步`,"放棄這題不算錯，也不會扣任何東西，下次從頭解。","放棄這題","好，這題下次從頭解"];
+    return modal(`<div class="em">⏳</div><h2 style="font-size:19px;line-height:1.5">${T[0]}</h2><p class="muted" style="margin:4px 0 0">${T[1]}</p><p class="muted" style="font-size:13px;margin:6px 0 0">${T[2]}</p>`,
+      [["▶ 繼續",()=>{location.hash=r.h}],[T[3],()=>{rsPgDrop(r);toast(T[4]);after&&after()},true]])}
   const g=L.g;rsAsk(g.id);
   return modal(rsCardHTML(g),g.ranked?[["▶ 繼續",()=>rsGo(g)],["先不要",null,true]]:[["▶ 繼續",()=>rsGo(g)],["放棄這盤",()=>rsDrop(g).then(()=>{toast("好，這盤不算，已經收掉了");after&&after()}).catch(e=>toast(e.message)),true]])}
 /* 冷啟動：等開頭畫面、載入畫面、其他視窗都關掉，而且人在首頁，才問一次 */
@@ -13261,7 +13334,7 @@ function campMap(v){if(v.querySelector(".camp-page"))return;const pad=v.querySel
     CP_FLAGS.map(([x,y],i)=>{const n=i+1,[a,b]=cpPc(x,y),k=S[n]||0,st=done(n)?"done":open(n)?"cur":"lock";
       return`<button type="button" class="shp-spot cp-flag ${st}" id="cpF${n}" data-nolift="1" style="left:${a.toFixed(2)}%;top:${b.toFixed(2)}%" aria-label="${esc(`第 ${n} 課・${(CAMP[i]||{}).name||""}${st==="lock"?"（還沒開）":k?`（${k} 顆星）`:""}`)}"><b>${st==="lock"?"":CP_GLYPH[i]}</b>${k?`<i>${"<u></u>".repeat(Math.min(3,k))}</i>`:""}</button>`}).join("");
   v.insertBefore(P,pad);
-  P.querySelectorAll(".cp-flag").forEach(b=>b.onclick=()=>{const n=+b.id.slice(3);vibrate(5);if(!open(n)){toast(`先完成第 ${n-1} 課「${(CAMP[n-2]||{}).name||""}」`);return}if(typeof jRunSet==="function")jRunSet(null);location.hash="#/camp/"+n});
+  P.querySelectorAll(".cp-flag").forEach(b=>b.onclick=()=>{const n=+b.id.slice(3);vibrate(5);if(!open(n)){toast(`先完成第 ${n-1} 課「${(CAMP[n-2]||{}).name||""}」`);return}if(typeof jRunSet==="function")jRunSet(null,"jRunC");location.hash="#/camp/"+n});   /* 回饋 838（開發者 11/9 選：全模式中斷接續）：新手訓練營用自己的 jRunC，不洗掉石桌往事的 jRun */
   if(typeof shpFit==="function")shpFit(v);
   try{if(typeof shwPage==="function"&&typeof SHIP_WALK_ON!=="undefined"&&SHIP_WALK_ON)shwPage(v,Object.assign({},SHW_PG0,cpCfg(Math.min(cur,12))),"camp:"+Math.min(cur,12))}catch(e){}
   try{if(typeof zmPage==="function")zmPage(v)}catch(e){}}
@@ -15269,7 +15342,7 @@ function stampFx(era){const A=ARENA[era];if(!A)return;const d=document.createEle
 function CpuGame(v,practicePage,mode){
   /* 意見回饋 413：這一頁是哪個模式由網址決定（#/cpu 挑戰電腦、#/arena 朝代擂台、#/journey/play 石桌往事、#/redo/play 練習）；標題、返回、上面的按鈕、新局、結果視窗都只看 MODE。守關算石桌往事（KIND 跟 local.js 的 kindOf 一樣：journey 優先） */
   const MODE=practicePage?"practice":mode||"cpu",KIND=s=>s.kind||(s.practice?"practice":s.journey?"journey":s.arena?"arena":"cpu"),MODE_URL={cpu:"#/cpu",arena:"#/arena",journey:"#/journey/play",practice:"#/redo/play"};let opened=false;
-  const openArgs=()=>{if(MODE==="arena"){const e=store.get("era","classic"),k=ARENA[e]?e:"classic";return{kind:"arena",arena:k,level:arenaLevel(k),dx:typeof diffDx==="function"?diffDx():0}}   /* 意見回饋 675：擂主照航行難度加減幾段 */
+  const openArgs=()=>{if(MODE==="arena"){const e=(typeof rsArenaEra==="function"&&rsArenaEra())||store.get("era","classic"),k=ARENA[e]?e:"classic";   /* 回饋 838（開發者 11/9 選：全模式中斷接續）：有沒下完的擂台那盤，強度照那盤的朝代算（不照現在停的朝代，免得石桌棋仙那盤被降級、別朝擂主被升到第 7 級） */return{kind:"arena",arena:k,level:arenaLevel(k),dx:typeof diffDx==="function"?diffDx():0}}   /* 意見回饋 675：擂主照航行難度加減幾段 */
     if(MODE==="journey"||MODE==="practice")return{kind:MODE};
     return{kind:"cpu",ranked:OFF&&store.get("cpuRanked",true),reward:REWARD&&store.get("cpuCar",false),lx:store.get("cpuLevel",6),human:"r"}};
   setTabs(false);gameLayout(v);
@@ -15329,7 +15402,7 @@ function CpuGame(v,practicePage,mode){
       <p class="muted" style="font-size:12.5px;margin:10px 0 0">💡 用過提示棋的那盤不算進我的棋力。線上對戰、積分挑戰、獎勵模式不能用寶物。</p>`;   /* 意見回饋 609：不寫掉落規則 */
       const bh=b.querySelector("#bgH"),bu=b.querySelector("#bgU");
       bh.disabled=!!no||!hn||!myTurn;bu.disabled=!!no||!un||!mine;
-      bh.onclick=()=>{closeSheet();jBattleHint(st,h=>{pHint=h;draw()})};bu.onclick=()=>{closeSheet();undoAsk()}})}
+      bh.onclick=()=>{closeSheet();jBattleHint(st,h=>{pHint=h;try{if(h&&st)store.set("rsHint",{...h,id:st.id})}catch(e){}draw()})};   /* 回饋 838（開發者 11/9 選：全模式中斷接續）：用掉的提示棋黃框記下來，關掉 App 再打開同一盤同一步還看得到 */bu.onclick=()=>{closeSheet();undoAsk()}})}
   function tap(i){if(!st||st.result||st.turn!==st.human||st.thinking)return;
     if(sel>=0&&st.legal.some(([f,t])=>f===sel&&t===i)){const f=sel;sel=-1;vibrate(15);return post("/play/move",{f,t:i})}
     sel=i===sel?-1:st.legal.some(([f])=>f===i)?i:-1;if(sel>=0)vibrate(5);draw()}
@@ -15353,6 +15426,9 @@ function CpuGame(v,practicePage,mode){
     if(opened&&!practicePage&&KIND(s)!==MODE){navReplace(MODE_URL[KIND(s)]||"#/cpu");return}
     /* 意見回饋 342：擂台的棋，公園一定是那個擂主的朝代（例如選過別的朝代公園，回來下擂台也會換回來） */
     if(s.arena&&ARENA[s.arena]&&!s.result&&store.get("era","classic")!==s.arena){if(typeof shipEra==="function"&&!eraLocked(s.arena)){shipEra(s.arena);toast(`🏯 ${eraLabel(s.arena)}擂台還有一盤沒下完，星槎也停到${eraLabel(s.arena)}`)}else{store.set("era",s.arena);try{applyEra()}catch(e){}}}   /* 意見回饋 697：換朝代時 era 和星槎停靠一起改；已經下完的別朝擂台那盤不換朝代（不然進擂台就被帶走） */
+    /* 回饋 838（開發者 11/9 選：全模式中斷接續）：園子路人那盤換回開局時的那一朝（跟上面擂台一樣；07m4-resume.js rsParkEra，舊存檔沒記就不動） */
+    {const pe=s.journey==="park"&&!s.result&&typeof rsParkEra==="function"?rsParkEra(s.id):null;if(pe&&ARENA[pe]&&store.get("era","classic")!==pe){if(typeof shipEra==="function"&&!eraLocked(pe)){shipEra(pe);toast(`🌳 ${eraLabel(pe)}園子還有一盤沒下完，星槎也停到${eraLabel(pe)}`)}else{store.set("era",pe);try{applyEra()}catch(e){}}}}
+    if(!pHint&&!s.result){const H=store.get("rsHint",null);if(H&&H.id===s.id&&H.n===s.moves.length)pHint=H}   /* 回饋 838（開發者 11/9 選：全模式中斷接續）：讀回用掉的提示棋黃框 */
     const n0=lastN;st=s;lastN=s.moves.length;if(typeof rsTouch==="function")try{rsTouch(s)}catch(e){}   /* 對局中途可接續：記下最後動到的時間（07m4-resume.js） */
     if(s.arena&&!s.result&&!parkOn()){store.set("park3d",true);setTimeout(()=>{draw();topBar()},0)}/* 意見回饋 319：朝代擂台的棋一律在公園 3D 裡 */if(!st.legal.some(([f])=>f===sel))sel=-1;
     const lk=!!(st.arena&&!st.result);if(lk&&!parkOn())store.set("park3d",true);PARK_J=st.journey||null;const pr=!!st.practice;if(pr!==PARK_OFF){PARK_OFF=pr;arenaLock=null}
@@ -15527,6 +15603,10 @@ async function review(rep,id){let it=null;for(let k=0;k<12&&!it;k++){try{const d
     if(first){first=false;opened=true;
       /* 意見回饋 607：從「📊 檢討」的報告退回來（REVIEW_BACK 對得上這盤）、或回到已經下完的錯棋重練：不自動開新局、不跳結果視窗，顯示終局盤面 */
       {const rb=REVIEW_BACK;REVIEW_BACK=null;if(s.result&&(practicePage&&s.practice||rb&&rb.id===s.id&&KIND(s)===MODE)){shownResult=JSON.stringify(s.result)+s.moves.length;render(s);return}}
+      /* 回饋 838（開發者 11/9 選：全模式中斷接續）：古戰場讓子對弈先載戰役資料（冷啟動直接接續時 BATTLE_CARDS 還是空的：戰役名、下一場、集滿一卷的獎勵會對不上） */
+      if(String(s.journey||"").startsWith("bt:")&&typeof battleData==="function")try{await battleData()}catch(e){}
+      /* 回饋 838：這盤在對局頁開著時還沒下完、後來（電腦在背景走完、或關掉 App 前送出的那步）才分出勝負——照常跑一次結果（修為、闖關、驛站、擂台印、掉寶），不要直接跳走或開新局把它吞掉 */
+      if(s.result&&KIND(s)===MODE&&!practicePage&&typeof rsWasOpen==="function"&&rsWasOpen(s.id)){render(s);return}
       /* 意見回饋 413：石桌往事頁沒有石桌往事那盤（或那盤已經下完）就回去選，不畫別的模式的棋 */
       if(MODE==="journey"&&(KIND(s)!=="journey"||s.result)){navReplace(KIND(s)==="journey"&&s.journey?jBack(s.journey):"#/adventure");return}
       /* 朝代擂台：還沒開始、或上一盤已經下完，先出擂主卡（選朝代、看集章簿） */
