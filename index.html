@@ -1370,7 +1370,7 @@ html[data-hicon] .tabbar button.on{box-shadow:inset 0 -3px 0 currentColor}
       if(!window.caches)return go();caches.keys().then(function(ks){return Promise.all(ks.filter(function(k){return k.indexOf("xqlab-app-")===0}).map(function(k){return caches.delete(k)}))})
         .then(function(){return navigator.serviceWorker&&navigator.serviceWorker.getRegistration()}).then(function(r){return r&&r.update()}).catch(function(){}).then(go)}};setTimeout(chk,4000)})();
 </script>
-<script>window.XQ_OFFLINE=true;window.XQ_BUILD="20261110-0200";</script>
+<script>window.XQ_OFFLINE=true;window.XQ_BUILD="20261110-0215";</script>
 <script src="core.js"></script>
 <script src="engine.js"></script>
 <script src="local.js"></script>
@@ -16227,18 +16227,20 @@ body.xq-exit #back{display:none!important}
 .ex-bow{position:absolute;left:0;bottom:0;width:30%;height:17%;border:0;padding:0;margin:0;background:none;cursor:pointer;z-index:2;-webkit-tap-highlight-color:transparent}`;document.head.append(s)}
 /* 換頁後等場景圖長出來（最多 4 秒）再放出口；頁面換掉就拿掉 body.xq-exit */
 let EX_T=0;
+/* 回饋 847（開發者 11/9「排版錯誤」截圖：渡口頁時辰鐘蓋到標題）：藏起返回鍵以後標題往左移，07w8 的星晷要照新的標題位置重放 */
+function exCls(a){const on=document.body.classList.contains("xq-exit");document.body.classList[a]("xq-exit");if(on!==document.body.classList.contains("xq-exit"))try{if(typeof clkPlace==="function")clkPlace()}catch(e){}}
 function exSync(){if(!EXIT_ON)return;clearTimeout(EX_T);const k=exKey(),t0=Date.now();
   const go=()=>{const b=document.getElementById("back"),P=document.querySelector("#view .shp-page");
     if(exKey()!==k)return;
-    if(!P){document.body.classList.remove("xq-exit");if(Date.now()-t0<4000)EX_T=setTimeout(go,150);return}
+    if(!P){exCls("remove");if(Date.now()-t0<4000)EX_T=setTimeout(go,150);return}
     exCss();const E=EXITS[k],hasBack=b&&!b.hidden&&typeof b.onclick==="function";
     if(k==="/port"){if(!P.querySelector(".ex-bow")){const sp=[...P.querySelectorAll(".shp-spot")].find(x=>/上星槎/.test(x.textContent));if(sp){const w=document.createElement("button");w.type="button";w.className="ex-bow";w.setAttribute("aria-label","上星槎（船頭）");w.onclick=e=>{e.stopPropagation();try{vibrate(5)}catch(x){}sp.click()};P.append(w)}}
-      if(hasBack)document.body.classList.add("xq-exit");return}
-    if(!E||!hasBack){document.body.classList.remove("xq-exit");return}
+      if(hasBack)exCls("add");return}
+    if(!E||!hasBack){exCls("remove");return}
     if(!P.querySelector(".ex-spot")){const s=document.createElement("button");s.type="button";s.className="shp-spot ex-spot";s.style.left=E[0]+"%";s.style.top=E[1]+"%";s.innerHTML="<b>"+E[2]+"</b>";
       s.onclick=e=>{e.stopPropagation();try{vibrate(5)}catch(x){}const bb=document.getElementById("back");if(bb&&typeof bb.onclick==="function")bb.onclick()};P.append(s)}
-    document.body.classList.add("xq-exit")};
-  document.body.classList.remove("xq-exit");EX_T=setTimeout(go,60)}
+    exCls("add")};
+  exCls("remove");EX_T=setTimeout(go,60)}
 if(EXIT_ON){addEventListener("hashchange",exSync);if(typeof setTop==="function"){const f0=setTop;setTop=function(){const r=f0.apply(this,arguments);try{exSync()}catch(e){}return r}}setTimeout(exSync,500)}
 /* ================= 🕰 回到當年（意見回饋 313）=================
    石桌往事裡的對局，用「妙棋精選」裡 Pikafish 驗證過的特級大師實戰來演：你站在旁邊看，不能插手；
