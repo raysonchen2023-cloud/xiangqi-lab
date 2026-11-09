@@ -1370,7 +1370,7 @@ html[data-hicon] .tabbar button.on{box-shadow:inset 0 -3px 0 currentColor}
       if(!window.caches)return go();caches.keys().then(function(ks){return Promise.all(ks.filter(function(k){return k.indexOf("xqlab-app-")===0}).map(function(k){return caches.delete(k)}))})
         .then(function(){return navigator.serviceWorker&&navigator.serviceWorker.getRegistration()}).then(function(r){return r&&r.update()}).catch(function(){}).then(go)}};setTimeout(chk,4000)})();
 </script>
-<script>window.XQ_OFFLINE=true;window.XQ_BUILD="20261109-2100";</script>
+<script>window.XQ_OFFLINE=true;window.XQ_BUILD="20261109-2115";</script>
 <script src="core.js"></script>
 <script src="engine.js"></script>
 <script src="local.js"></script>
@@ -15093,7 +15093,7 @@ function sciNag(P,I,D){const day=new Date().toDateString(),G=store.get("sciNag",
 const sciSeenNow=(P,I)=>{if(!P.isConnected||!I.offsetWidth)return false;const r=I.getBoundingClientRect(),vw=innerWidth,vh=innerHeight;if(r.bottom<40||r.top>vh-40||r.right<40||r.left>vw-40)return false;
   const x=Math.min(vw-2,Math.max(2,r.left+r.width/2)),y=Math.min(vh-2,Math.max(2,Math.max(r.top,0)+Math.min(r.height,vh)/2)),el=document.elementFromPoint(x,y);return!!el&&(P.contains(el)||el.contains(P)||!!(P.parentElement&&P.parentElement.contains(el)))};
 function sciHint(P,I,D){const seen=store.get("sciSeen",{})||{};if(seen[D.k]){sciNag(P,I,D);return}const t0=Date.now();
-  const go=()=>{if(!P.isConnected||!I.offsetWidth)return;const L=sciLive(D,P,I);if(!L.length)return;seen[D.k]=1;store.set("sciSeen",seen);const br=!!P.closest(".shw-brfirst");sciDraw(P,I,D,L.filter(x=>!x.nh).flatMap(x=>x.s),"hint",br?4800:3000);
+  const go=()=>{if(!P.isConnected||!I.offsetWidth)return;const L=sciLive(D,P,I);if(!L.length)return;seen[D.k]=1;store.set("sciSeen",seen);const br=!!P.closest(".shw-brfirst");   /* 回饋 835（開發者 11/9「偶爾會出現金色線條」）：第一次進頁不再描金色虛線輪廓，只留一行文字提示 */
     if(!store.get("sciTip",false)){store.set("sciTip",true);const t=document.createElement("div");t.className="sci-tip";t.setAttribute("aria-hidden","true");t.textContent="點畫裡的東西，看看它的故事";t.style.top=(Math.max(0,-I.getBoundingClientRect().top+P.getBoundingClientRect().top)+I.offsetTop+12)+"px";if(br){t.style.animationDelay="1.8s";t.style.animationFillMode="both"}P.append(t);setTimeout(()=>t.remove(),br?6400:4600)}};
   /* 等：看得到、不在 off 狀態；有走路角色就再等呼吸光開場（最多 6 秒，3D 載不到就不等） */
   const wait=()=>{if(!P.isConnected)return;const dt=Date.now()-t0;if(dt>120000)return;
