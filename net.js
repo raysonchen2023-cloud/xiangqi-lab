@@ -177,13 +177,18 @@ var XQNet=(function(){
     cli=mqtt(URLS[urlI],{clientId:"xq"+m.id.slice(0,12)+Math.random().toString(36).slice(2,8),keepalive:30,will:{topic:`${ROOT}/u/${m.id}`,payload:"",retain:true},user:MQA.user,pass:MQA.pass});
     /* 回饋 854：連上時不再一律訂整份名單（u/+），改由 syncRoster 看頁面決定；sys/+、cup/+ 用萬用字元合併（專用伺服器每條連線最多 10 個訂閱）。
        30 秒的計時器還在（判對方離線太久），但在線狀態要有變化或滿 30 分鐘才真的送 */
-    cli.onup=()=>{everUp=true;downAt=0;rosterOn=false;trk.clear();prune();cli.sub([`${ROOT}/i/${m.id}`,`${ROOT}/sys/+`,`${ROOT}/cup/+`,...(cur?gt(cur.gid):[])]);syncRoster();presence(true);pubHist();flushIRT();clearInterval(hb);hb=setInterval(()=>{presence();staleCheck()},30000);
+    cli.onup=()=>{everUp=true;downAt=0;rosterOn=false;trk.clear();prune();cli.sub([`${ROOT}/i/${m.id}`,`${ROOT}/sys/+`,`${ROOT}/cup/+`,...(cur?gt(cur.gid):[]),...Object.keys(QS).map(k=>`${ROOT}/${k}`)]);syncRoster();presence(true);pubHist();flushIRT();clearInterval(hb);hb=setInterval(()=>{presence();staleCheck()},30000);
       if(dirty&&G){dirty=false;setTimeout(()=>{if(G&&cli&&cli.up)pubGame()},600)}if(cur&&!G)waitGame(cur.gid,false);emit("status")};
     cli.onmsg=onMsg;
     cli.ondown=was=>{cli=null;clearInterval(hb);if(!downAt)downAt=Date.now();emit("status");
       clearTimeout(retryT);if(want)retryT=setTimeout(connect,was?800:3000)}}
   const W={};   // 一次性查詢保留訊息（例如電腦的新網址）
+  /* 合作殘譜（開發者 11/9；m/07q2-coop.js，設計 story/合作殘譜_同桌與大廳_設計_1109.md）：大廳「🧩 殘篇閣」用的通用頻道，只准 ROOT/q/… 底下的主題（q/h、q/r/<rid>/s、q/r/<rid>/e）；
+     QS＝主題 → 處理函式清單，重新連上時一起訂回去。舊版 App 不訂 q/，收不到也不受影響；這組 API 發不到 sys、cup、cal、ctl、c/ */
+  const QS={},qRel=r=>{if(typeof r!=="string"||!/^q(\/[\w-]{1,40}){1,3}(\/\+)?$/.test(r))throw new Error("殘篇閣主題不合規："+r);return r};
+  const qHit=(k,rel)=>k===rel||(k.endsWith("/+")&&rel.startsWith(k.slice(0,-1))&&rel.length>k.length-1&&rel.indexOf("/",k.length-1)<0);
   function onMsg(topic,msg,retain){if(W[topic]){W[topic](msg);return}const p=topic.slice(ROOT.length+1).split("/");
+    if(p[0]==="q"){const rel=p.join("/");for(const k in QS)if(qHit(k,rel))QS[k].slice().forEach(f=>{try{f(rel,msg,retain)}catch(e){console.error(e)}});return}   /* 合作殘譜 */
     if(p[0]==="sys"&&p[1]==="ver"){try{emit("version",JSON.parse(msg))}catch(e){}return}
     if(p[0]==="sys"&&p[1]==="bots"){try{const x=msg?JSON.parse(msg):null;BOTS_ST=x&&Array.isArray(x.ids)?{up:!!x.up,ids:new Set(x.ids.map(String))}:null}catch(e){BOTS_ST=null}emit("people");return}   /* 回饋 854 */
     if(p[0]==="sys"&&p[1]==="online"){try{const x=msg?JSON.parse(msg):null;ONL=x&&isFinite(x.n)?{n:+x.n,at:+x.at||0}:null}catch(e){ONL=null}emit("people");return}   /* 回饋 854 */
@@ -321,4 +326,9 @@ var XQNet=(function(){
     /* 回饋 854：首頁的「N 人在線上」。收著整份名單就照名單數；沒收名單時用大廳角色程式算的人數（sys/online，扣掉自己）；都沒有就回 null（首頁改寫「線上大廳」） */
     onlineCount(){if(rosterOn)return this.people().length;if(ONL&&BOTS_ST&&BOTS_ST.up)return Math.max(0,ONL.n-(cli&&cli.up&&!selfBan()?1:0));return null},
     /* 回饋 854：其他頁面臨時要整份名單時呼叫（ms 毫秒內都收著，預設 3 分鐘）；名單頁本身不用呼叫 */
-    roster(ms){rosterHold=Date.now()+(ms>0?ms:LINGER);syncRoster()},rosterOn:()=>rosterOn}})();
+    roster(ms){rosterHold=Date.now()+(ms>0?ms:LINGER);syncRoster()},rosterOn:()=>rosterOn,
+    /* 合作殘譜（m/07q2-coop.js）：rel 只准 q/… 開頭。qSub 回傳取消訂閱的函式；qPub 回 true／false（沒連上就是 false，呼叫的人自己補送） */
+    qSub(rel,fn){qRel(rel);const L=QS[rel]=QS[rel]||[];L.push(fn);if(L.length===1&&cli&&cli.up)cli.sub([`${ROOT}/${rel}`]);if(!want){want=true;connect()}
+      return()=>{const M=QS[rel];if(!M)return;const i=M.indexOf(fn);if(i>=0)M.splice(i,1);if(!M.length){delete QS[rel];if(cli&&cli.up)cli.unsub([`${ROOT}/${rel}`])}}},
+    qPub(rel,s,retain){qRel(rel);if(/\+/.test(rel))return false;return!!(cli&&cli.up&&cli.pub(`${ROOT}/${rel}`,String(s),!!retain))},
+    qUp:()=>!!(cli&&cli.up)}})();
