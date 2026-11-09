@@ -1370,7 +1370,7 @@ html[data-hicon] .tabbar button.on{box-shadow:inset 0 -3px 0 currentColor}
       if(!window.caches)return go();caches.keys().then(function(ks){return Promise.all(ks.filter(function(k){return k.indexOf("xqlab-app-")===0}).map(function(k){return caches.delete(k)}))})
         .then(function(){return navigator.serviceWorker&&navigator.serviceWorker.getRegistration()}).then(function(r){return r&&r.update()}).catch(function(){}).then(go)}};setTimeout(chk,4000)})();
 </script>
-<script>window.XQ_OFFLINE=true;window.XQ_BUILD="20261110-0545";</script>
+<script>window.XQ_OFFLINE=true;window.XQ_BUILD="20261110-0600";</script>
 <script src="core.js"></script>
 <script src="engine.js"></script>
 <script src="local.js"></script>
@@ -12656,6 +12656,12 @@ if(typeof yzInn==="function"){const f0=yzInn;yzInn=function(v,k){const r=f0.appl
    開關 HUB_MAP_ON（false＝照舊卡片清單）；樣式在 hbCss */
 const HUB_MAP_ON=true;
 const HB_IMGV="2300";   /* 圖的版本：data/hubmap 存在不跟版本走的快取，同檔名換圖時把這個數字改掉，手機才會重抓（意見回饋 789 換棋盤；11/8 考究清單：學習頁素紗燈、矮几棋枰，對戰頁燈籠不亮、盆松、窗邊象棋） */
+/* 開發者 11/9：兩頁照星槎停靠的朝代換圖（story/朝代場景計畫.md；史學顧問 11/9 核過）。各朝圖跟原圖構圖對齊，標籤、燈、熱氣、洗墨池、矮几棋枰、走路節點的座標都不變。
+   有停靠才算（shipDockList() 有值，判斷跟 07z 的 xqHubName 一樣）；沒停靠、學習頁的宋、對戰頁的明都用原圖。
+   檔名 learn_<朝>、battle_<朝>、battle_red_<朝>、battle_curtain_<朝>：preload-list.js 的 ERA_RE 認得「_<朝>.」，跟著各朝分批下載 */
+const HB_ERAS={learn:"qin han sanguo weijin nanbei sui tang wudai yuan ming qing".split(" "),battle:"qin han sanguo weijin nanbei sui tang wudai song yuan qing".split(" ")};
+function hbDockEra(){try{return typeof shipAt==="function"&&typeof shipDockList==="function"&&shipDockList()?shipAt()||"":""}catch(x){return""}}
+const hbImg=(base,hub)=>{const e=hbDockEra();return base+((HB_ERAS[hub]||[]).includes(e)?"_"+e:"")};
 /* 入口：[標籤 id（也是 07w 的入口代號）, 卡片的選擇器, 標籤左%, 上%]（量 768×1376 的定稿圖，標籤放在東西上方，角色站在東西前面） */
 const HUB_DEF={
   learn:{img:"learn",cap:"📚 學習",sub:"千秋翰林書院・前院啟蒙、中庭日課、講堂考校、藏書閣典藏",spots:[
@@ -12736,7 +12742,7 @@ function hbFxLearn(P){const fx=P.querySelector(".hb-fx");if(!fx)return;
   hbRedoN().then(n=>{if(n==null||!pond.isConnected)return;pond.innerHTML=n>0?`<i class="hb-ink" style="opacity:${Math.min(.85,.3+n*.06).toFixed(2)}"></i>`:'<i class="hb-clear"></i>'})}
 function hbFxBattle(P,img){let ph="";try{const S=window.XQNet&&XQNet.cup&&XQNet.cup();ph=S&&S.ph||""}catch(e){}
   const alt=ph==="reg"||ph==="wait"?"battle_red":ph==="ck"||ph==="play"?"battle_curtain":"";
-  if(alt){const im=new Image();im.onload=()=>{if(img.isConnected)img.src=im.src};im.src="data/hubmap/"+alt+".webp?v="+HB_IMGV}   /* 換圖前先載好，載不到就留原圖 */
+  if(alt){const im=new Image();im.onload=()=>{if(img.isConnected)img.src=im.src};im.src="data/hubmap/"+hbImg(alt,"battle")+".webp?v="+HB_IMGV}   /* 換圖前先載好，載不到就留原圖 */
   const fx=P.querySelector(".hb-fx");if(!fx)return;
   if(alt==="battle_curtain")fx.insertAdjacentHTML("beforeend",HUB_LAMP.battle.map(p=>`<i class="hb-lamp on" style="left:${p[0]}%;top:${p[1]}%"></i>`).join(""));
   if(ph==="done")fx.insertAdjacentHTML("beforeend",[[64,14,0],[81,11,-.9],[95,15,-1.7],[72,18,-.4],[57,12,-2.2]].map(([x,y,d])=>`<i class="hb-fw" style="left:${x}%;top:${y}%;animation-delay:${d}s"></i>`).join(""))}
@@ -12744,7 +12750,7 @@ function hubMap(v,hub){const D=HUB_DEF[hub],home=v.querySelector(".home");if(!D|
   const fresh=!store.get("campSeen",false)&&!Object.keys(campStars()).length&&!Object.keys(store.get("record",{})).length;
   const sp=D.spots.map(([id,sel,x,y])=>{const c=hbCard(v,sel);return c?{id,c,x,y}:null}).filter(Boolean);
   const d=document.createElement("div");
-  d.innerHTML=`<div class="shp-page cq hub-page"><img src="data/hubmap/${D.img}.webp?v=${HB_IMGV}" alt="${esc(D.cap)}"><div class="hb-fx" aria-hidden="true"></div>${sp.map(o=>`<button class="shp-spot${hbHot(o.c)||(fresh&&(o.id==="hbCamp"||o.id==="hbTerms"))?" hot":""}" id="${o.id}" style="left:${o.x}%;top:${o.y}%"><b>${esc(hbTitle(o.c))}</b></button>`).join("")}</div>`;
+  d.innerHTML=`<div class="shp-page cq hub-page"><img src="data/hubmap/${hbImg(D.img,hub)}.webp?v=${HB_IMGV}" alt="${esc(D.cap)}"><div class="hb-fx" aria-hidden="true"></div>${sp.map(o=>`<button class="shp-spot${hbHot(o.c)||(fresh&&(o.id==="hbCamp"||o.id==="hbTerms"))?" hot":""}" id="${o.id}" style="left:${o.x}%;top:${o.y}%"><b>${esc(hbTitle(o.c))}</b></button>`).join("")}</div>`;
   const P=d.firstElementChild;v.insertBefore(P,home);home.classList.add("hb-hidden");
   for(const o of sp){const b=P.querySelector("#"+o.id);if(!b)continue;b.onclick=()=>o.c.click();
     const upd=()=>{if(!b.isConnected){mo.disconnect();return}const h=hbHot(o.c)||(fresh&&(o.id==="hbCamp"||o.id==="hbTerms"));if(b.classList.contains("hot")!==h)b.classList.toggle("hot",h)};
@@ -15461,8 +15467,9 @@ const SCI_REG=[
   {n:"粉牆黛瓦",s:[[[0,250],[140,245],[255,262],[262,372],[215,385],[205,400],[60,395],[0,420]]],
    t:"左岸是一片白牆黑瓦的房子，牆頭一層層高起來、蓋著黑瓦，是徽州、江南民居的樣子。左岸通往的對戰茶樓是明代徽州的茶樓，右岸的書院則是宋代的樣子，兩岸隔著一條楚河。"}],
   no:[[[285,295],[530,290],[530,530],[285,530]],[[370,500],[500,500],[500,680],[370,680]],[[55,375],[215,375],[215,565],[55,565]],[[560,380],[768,380],[768,615],[560,615]],[[28,645],[152,645],[152,762],[28,762]],[[338,712],[456,712],[456,812],[338,812]]]}},
-/* 📚 學習頁「千秋翰林書院」（park/hubmap/考究說明_學習.md）。十個入口的東西（石碑、沙盤、點茶桌、洗墨池、迴廊木板、考桌、朱紅榜、矮几、二樓露台、閣門）是入口本體（no）；中軸石板路、月台台階是角色的路，不登記 */
-{re:/data\/hubmap\/learn/,D:{k:"lrn",nm:"千秋翰林書院",it:[
+/* 📚 學習頁「千秋翰林書院」（park/hubmap/考究說明_學習.md）。十個入口的東西（石碑、沙盤、點茶桌、洗墨池、迴廊木板、考桌、朱紅榜、矮几、二樓露台、閣門）是入口本體（no）；中軸石板路、月台台階是角色的路，不登記
+   11/9 各朝版 learn_<朝>（07y 照停靠朝代換）只認原圖 learn.webp：這些說明寫的是宋代書院（斗栱門樓、素紗燈、朱熹講堂），唐以前各朝是學室、太學、國子學，燈也改成青銅吊燈盞，套上去會講錯；各朝的說明之後照 park/hubmap/考究說明_各朝學習棋譜_1109.md 另寫 */
+{re:/data\/hubmap\/learn\.webp/,D:{k:"lrn",nm:"千秋翰林書院",it:[
   {n:"書院大門",s:[[[215,1000],[300,958],[470,958],[550,1000],[548,1040],[500,1060],[500,1275],[465,1275],[465,1100],[300,1100],[300,1275],[262,1275],[262,1060],[215,1040]]],
    t:"這是書院的大門：兩根朱紅柱子，上面一座灰瓦小門樓，屋簷下一排木頭疊起來的「斗栱」，是宋代木頭建築的特色。這座門早先畫得太像日本神社的鳥居，已經改成宋代書院的門樓。"},
   {n:"素紗燈",s:[[167,557,17],[297,557,17],[474,557,17],[604,557,17],[13,537,14],[755,537,14],[96,464,13],[672,464,13],[167,396,12],[604,396,12],[294,227,11],[474,227,11]],
@@ -15477,8 +15484,10 @@ const SCI_REG=[
    t:"前院這株老樹斜斜伸到沙盤上方，新手訓練營的沙盤就在樹下。書院由下往上分四進：前院學規則、中庭每天練習、講堂考試、藏書閣讀古譜，跟學棋的順序一樣。"}],
   no:[[[45,1025],[180,1025],[180,1220],[45,1220]],[[555,1072],[725,1072],[725,1215],[555,1215]],[[132,815],[238,815],[238,955],[132,955]],[[448,840],[628,840],[628,985],[448,985]],[[630,660],[768,580],[768,915],[630,800]],[[282,650],[492,650],[492,722],[282,722]],[[18,595],[132,595],[132,865],[18,865]],[[492,635],[640,635],[640,712],[492,712]],[[302,212],[466,212],[466,278],[302,278]],[[330,298],[438,298],[438,365],[330,365]]]}},
 /* ⚔ 對戰頁「徽州深院茶樓」（park/hubmap/考究說明_對戰.md）。千秋盃時換 battle_red（樓梯旁紅榜）、battle_curtain（說書台大幕、燈籠亮），構圖對齊、共用座標；紅榜那一塊不登記。
-   八仙桌、靠窗小房間、踢館牌匾和擂台、說書台、大門是入口本體（no）；天井石板、樓梯是角色的路 */
-{re:/data\/hubmap\/battle/,D:{k:"bt2",nm:"徽州深院茶樓",it:[
+   八仙桌、靠窗小房間、踢館牌匾和擂台、說書台、大門是入口本體（no）；天井石板、樓梯是角色的路
+   11/9 各朝版 battle_<朝>、battle_red_<朝>、battle_curtain_<朝>（07y 照停靠朝代換）只認原圖這三張：馬頭牆、青花盆松、朱紅燈籠、燭台雅座都是明代茶樓的東西，各朝圖已經換掉（唐以前沒有馬頭牆、燈是吊燈盞，漢門邊是蘭草不是長凳），套上去會講錯；
+   各朝的說明之後照 park/hubmap/考究說明_各朝對戰_1109.md 另寫。棋譜庫的 re 本來就只認 lib.webp，各朝 lib_<朝> 也一樣不套 */
+{re:/data\/hubmap\/battle(_red|_curtain)?\.webp/,D:{k:"bt2",nm:"徽州深院茶樓",it:[
   {n:"馬頭牆",s:[[[388,150],[505,150],[505,205],[485,260],[400,260],[390,205]],[[485,215],[580,215],[580,262],[548,290],[488,262]],[[540,280],[700,300],[700,390],[540,355]],[[688,252],[768,252],[768,330],[692,320]]],
    t:"白牆頂上一階一階高起、蓋著黑瓦的牆，叫「馬頭牆」，因為形狀像一匹匹昂起的馬頭，也叫封火牆。它是明代徽州房子最好認的特徵。"},
   {n:"天邊的星槎",s:[[675,180,32]],
@@ -17877,6 +17886,10 @@ function Viewer(v,c,id){
    開關 LIBMAP_ON（false＝照舊清單）；樣式在 lbCss */
 const LIBMAP_ON=true;   /* 開發者 11/8 照建議先開 */
 const LB_IMGV="2300";   /* 11/9 修圖：驚燕改從天頭垂下 */
+/* 開發者 11/9：書閣照星槎停靠的朝代換圖 lib_<朝>（史學顧問 11/9 核過；書櫥格子、木箱封條、標籤、迷你棋盤、走路節點的座標都不變）。
+   有停靠才算（跟 07y hbDockEra、07z xqHubName 同一個判斷）；沒停靠、宋用原圖 lib */
+const LB_ERAS="qin han sanguo weijin nanbei sui tang wudai yuan ming qing".split(" ");
+function lbImg(){let e="";try{e=typeof hbDockEra==="function"?hbDockEra():typeof shipAt==="function"&&typeof shipDockList==="function"&&shipDockList()?shipAt():""}catch(x){}return LB_ERAS.includes(e)?"lib_"+e:"lib"}
 const LB_OLD=[["shiqingyaqu","適情","適情雅趣"],["juzhongmi","橘中","橘中秘"],["meihuapu","梅花","梅花譜"],["kaiju","開局","古典開局譜"],["canju","殘局","古典殘局譜"],["brilliant","妙棋","妙棋精選"]];   /* [書, 書櫥格子上的短名, 全名] */
 /* 6 格書櫥的位置（格子中心，%；上下三層、每層兩格） */
 const LB_CELLS=[[10,55.5],[21,54],[10,60],[21,58.5],[10,64.5],[21,62.5]];
@@ -17917,7 +17930,7 @@ function lbMini(fen){let b=null;try{b=parseFen(fen||START)}catch(e){}const G=[];
   return`<svg class="lb-mini" viewBox="-.6 -.6 9.2 10.2" aria-hidden="true"><g stroke="#7a5a3a" stroke-width=".07" fill="none">${G.join("")}</g>${P}</svg>`}
 function libMap(v,c0){const root=v.querySelector(".lib");if(!root||v.querySelector(".lib-page"))return;lbCss();
   const d=document.createElement("div");
-  d.innerHTML=`<div class="shp-page cq lib-page"><img src="data/libmap/lib.webp?v=${LB_IMGV}" alt="崇文書閣"><div class="lb-fx"></div>
+  d.innerHTML=`<div class="shp-page cq lib-page"><img src="data/libmap/${lbImg()}.webp?v=${LB_IMGV}" alt="崇文書閣"><div class="lb-fx"></div>
     ${LB_OLD.map(([k,n,f],i)=>`<button class="lb-cell" id="lbC${i}" data-c="${k}" style="left:${LB_CELLS[i][0]}%;top:${LB_CELLS[i][1]}%" aria-label="${esc(f)}"><span>${esc(n)}</span></button>`).join("")}
     ${LB_BOX.map(([x,y],i)=>`<button class="lb-box" data-i="${i}" style="left:${x}%;top:${y}%" aria-label="比賽對局第 ${i+1} 箱"><i></i></button>`).join("")}
     ${LB_SPOTS.map(([id,x,y,t])=>`<button class="shp-spot" id="${id}" style="left:${x}%;top:${y}%"><b>${esc(t)}</b></button>`).join("")}</div>`;
