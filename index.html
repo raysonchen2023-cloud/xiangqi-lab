@@ -1370,7 +1370,7 @@ html[data-hicon] .tabbar button.on{box-shadow:inset 0 -3px 0 currentColor}
       if(!window.caches)return go();caches.keys().then(function(ks){return Promise.all(ks.filter(function(k){return k.indexOf("xqlab-app-")===0}).map(function(k){return caches.delete(k)}))})
         .then(function(){return navigator.serviceWorker&&navigator.serviceWorker.getRegistration()}).then(function(r){return r&&r.update()}).catch(function(){}).then(go)}};setTimeout(chk,4000)})();
 </script>
-<script>window.XQ_OFFLINE=true;window.XQ_BUILD="20261110-0445";</script>
+<script>window.XQ_OFFLINE=true;window.XQ_BUILD="20261110-0500";</script>
 <script src="core.js"></script>
 <script src="engine.js"></script>
 <script src="local.js"></script>
@@ -16234,13 +16234,13 @@ if(LK_ON){let lkq=0;const kick=()=>{if(lkq)return;lkq=1;setTimeout(()=>{lkq=0;tr
    有滿版圖（.shp-page）而且頂欄本來有「‹ 返回」的頁：在圖上放一個出口標籤（門口、樓梯口、地板靠近讀者的那一邊），點了跟原本的返回一模一樣（呼叫 #back 的 onclick，
    setTop 決定回哪裡，含 "^" 回那一層），頂欄的返回藏起來（body.xq-exit）。沒有大圖的清單、文章、下棋頁照舊有返回。
    渡口（各朝 port_<朝>_f）：左下角的星槎船頭／碼頭整塊也能點，跟「⛵ 上星槎」一樣回星槎。
-   座標是圖上的百分比（標籤中心）；回 #/ 的寫「回首頁」（避免跟各朝的渡口搞混）。開關 EXIT_ON */
+   座標是圖上的百分比（標籤中心）；回 #/ 的寫「回棋鎮」（首頁＝楚河渡口棋鎮；11/9 開發者：回首頁換個詞彙）。開關 EXIT_ON */
 const EXIT_ON=true;
-const EXITS={"/hub/learn":[52,86,"🚪 出書院・回首頁"],"/hub/battle":[78,87,"🚪 出茶樓・回首頁"],
-  "/camp":[50,87,"↩ 回書院"],"/theme":[50,87,"↩ 走回書院"],"/canju":[22,87,"↩ 回書院"],"/terms":[50,87,"🏠 回首頁"],
-  "/cup":[50,87,"↩ 下樓・回大廳"],"/redo":[24,87,"🏠 回首頁"],"/stats":[50,87,"🏠 回首頁"],"/openings":[50,87,"🏠 回首頁"],
+const EXITS={"/hub/learn":[52,86,"🚪 出書院・回棋鎮"],"/hub/battle":[78,87,"🚪 出茶樓・回棋鎮"],
+  "/camp":[50,87,"↩ 回書院"],"/theme":[50,87,"↩ 走回書院"],"/canju":[22,87,"↩ 回書院"],"/terms":[50,87,"🏘 回棋鎮"],
+  "/cup":[50,87,"↩ 下樓・回大廳"],"/redo":[24,87,"🏘 回棋鎮"],"/stats":[50,87,"🏘 回棋鎮"],"/openings":[50,87,"🏘 回棋鎮"],
   "/journey/inn":[18,86,"⛵ 回渡口"],"/ship/lesson":[50,87,"⛵ 回星槎"],"/ship/pz":[50,87,"⛵ 回星槎"],"/ship/shelf":[50,87,"⛵ 回星槎"],"/ship/bag":[50,87,"⛵ 回星槎"],
-  "/feedback":[20,74,"⛵ 回星槎","#/adventure"],"/me":[50,87,"🏠 回首頁"],"/today":[30,87,"🏠 回首頁"],"/gm":[50,87,"↩ 回棋譜庫"],"/quiz":[50,87,"🏠 回首頁"],
+  "/feedback":[20,74,"⛵ 回星槎","#/adventure"],"/me":[50,87,"🏘 回棋鎮"],"/today":[30,87,"🏘 回棋鎮"],"/gm":[50,87,"↩ 回棋譜庫"],"/quiz":[50,87,"🏘 回棋鎮"],
   "/lobby":[18,88,"↩ 回對戰茶樓"],"/db":[20,88,"↩ 回學習書院"],"/settings":[14,90,"⛵ 回星槎"]};
 /* 開發者 11/9「拿掉頁面右下角的設定，以後統一到星槎裡面開啟設定」「移除頁面底下的首頁／線上／棋譜入口，整頁滿版」「進到 App 只會看到首頁的樣子」：
    底欄（#tabbar）一律不顯示；原本只靠底欄離開、沒有返回鍵的頁補上回去的路（FIXBACK，跟返回鍵同一套 "^" 回那一層）：
@@ -16266,14 +16266,14 @@ function exSync(){if(!EXIT_ON)return;clearTimeout(EX_T);const k=exKey(),t0=Date.
       if(!box){if(Date.now()-t0<4000)EX_T=setTimeout(go,150);return}exCss();
       const mk=(cls,x,y,t,fn)=>{if(box.querySelector("."+cls))return;const s=document.createElement("button");s.type="button";s.className=sp.className.split(" ")[0]+" "+cls;s.style.left=x+"%";s.style.top=y+"%";s.textContent=t;s.onclick=e=>{e.stopPropagation();try{vibrate(5)}catch(z){}fn()};box.append(s)};
       mk("ex-set",SHIP_SET[0],SHIP_SET[1],SHIP_SET[2],()=>{location.hash="#/settings"});   /* 星槎中間艙房門口＝天字客房（設定） */
-      if(b&&!b.hidden&&typeof b.onclick==="function"){mk("ex-home",62,92,"🏠 回首頁",()=>{const bb=document.getElementById("back");if(bb&&typeof bb.onclick==="function")bb.onclick()});exCls("add")}   /* 右下下船石階＝回首頁 */
+      if(b&&!b.hidden&&typeof b.onclick==="function"){mk("ex-home",62,92,"🏘 回棋鎮",()=>{const bb=document.getElementById("back");if(bb&&typeof bb.onclick==="function")bb.onclick()});exCls("add")}   /* 右下下船石階＝回首頁 */
       return}
     if(!P){exCls("remove");if(Date.now()-t0<4000)EX_T=setTimeout(go,150);return}
     exCss();const E=exFind(k),hasBack=b&&!b.hidden&&typeof b.onclick==="function";
     if(k==="/port"){if(!P.querySelector(".ex-bow")){const sp=[...P.querySelectorAll(".shp-spot")].find(x=>/上星槎/.test(x.textContent));if(sp){const w=document.createElement("button");w.type="button";w.className="ex-bow";w.setAttribute("aria-label","上星槎（船頭）");w.onclick=e=>{e.stopPropagation();try{vibrate(5)}catch(x){}sp.click()};P.append(w)}}
       if(hasBack)exCls("add");return}
     if(!E||!hasBack){exCls("remove");return}
-    if(!P.querySelector(".ex-spot")){const s=document.createElement("button");s.type="button";s.className="shp-spot ex-spot";s.style.left=E[0]+"%";s.style.top=E[1]+"%";s.innerHTML="<b>"+E[2]+"</b>";
+    if(!P.querySelector(".ex-spot")){const s=document.createElement("button");s.type="button";s.className="shp-spot ex-spot";s.style.left=E[0]+"%";s.style.top=E[1]+"%";let lb=E[2];try{if((k==="/hub/learn"||k==="/hub/battle")&&typeof xqHubName==="function")lb="🚪 出"+xqHubName(k.slice(5)).split(" ").slice(1).join(" ")+"・回棋鎮"}catch(x){}s.innerHTML="<b>"+lb+"</b>";   /* 出口跟著朝代叫法：出國子監・回棋鎮 */
       s.onclick=e=>{e.stopPropagation();try{vibrate(5)}catch(x){}if(E[3]){location.hash=E[3];return}const bb=document.getElementById("back");if(bb&&typeof bb.onclick==="function")bb.onclick()};P.append(s)}   /* E[3]＝直接去那一頁（回饋 849：意見回饋頁回星槎） */
     exCls("add")};
   exCls("remove");EX_T=setTimeout(go,60)}
