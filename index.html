@@ -1370,7 +1370,7 @@ html[data-hicon] .tabbar button.on{box-shadow:inset 0 -3px 0 currentColor}
       if(!window.caches)return go();caches.keys().then(function(ks){return Promise.all(ks.filter(function(k){return k.indexOf("xqlab-app-")===0}).map(function(k){return caches.delete(k)}))})
         .then(function(){return navigator.serviceWorker&&navigator.serviceWorker.getRegistration()}).then(function(r){return r&&r.update()}).catch(function(){}).then(go)}};setTimeout(chk,4000)})();
 </script>
-<script>window.XQ_OFFLINE=true;window.XQ_BUILD="20261110-0815";</script>
+<script>window.XQ_OFFLINE=true;window.XQ_BUILD="20261110-0830";</script>
 <script src="core.js"></script>
 <script src="engine.js"></script>
 <script src="local.js"></script>
@@ -16307,8 +16307,8 @@ function sw7Css(){if(document.getElementById("sw7Css"))return;const s=document.c
 .sw7-cv,.sw7-leaf{position:absolute;left:0;top:0;width:100%;height:100%}.sw7-fogw,.sw7-fg{position:absolute;inset:0;overflow:hidden}
 .sw7-fg>b,.sw7-fg>canvas{position:absolute;left:0;top:0;width:100%;height:100%;display:block;background:0 0/100% 100% no-repeat}
 .sw7-tint{position:absolute;inset:0;mix-blend-mode:multiply;transition:opacity 2s}
-.sw7-night{position:absolute;inset:0;mix-blend-mode:multiply;transition:opacity 2s;background:linear-gradient(180deg,rgb(52,62,108) 0%,rgb(70,80,124) 45%,rgb(58,64,104) 100%)}
-.sw7-moon{position:absolute;inset:0;mix-blend-mode:screen;transition:opacity 2s;background:radial-gradient(30% 16% at 80% 9%,rgba(200,210,240,.28),rgba(200,210,240,0) 70%)}
+.sw7-night{position:absolute;inset:0;transition:opacity 2s;background:linear-gradient(180deg,rgba(12,18,52,.62) 0%,rgba(16,24,58,.52) 45%,rgba(10,14,40,.6) 100%)}   /* 11/9 iPhone 上 multiply 混色沒作用，不透明的藍整片蓋住圖；改成半透明深藍、不靠混色 */
+.sw7-moon{position:absolute;inset:0;transition:opacity 2s;background:radial-gradient(30% 16% at 80% 9%,rgba(200,210,240,.28),rgba(200,210,240,0) 70%)}
 .sw7-tint.dawn{background:linear-gradient(180deg,rgba(112,166,196,.24),rgba(140,186,198,.14) 55%,rgba(160,196,204,.1))}
 .sw7-tint.dusk{background:linear-gradient(200deg,rgba(255,150,72,.26),rgba(255,176,104,.15) 55%,rgba(226,146,108,.1))}
 .sw7-mist{position:absolute;inset:0;transition:opacity 3s}
