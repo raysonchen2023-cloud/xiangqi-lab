@@ -1341,7 +1341,7 @@ html[data-era=qin] .view:has(>.shp-rd),html[data-era=wudai] .view:has(>.shp-rd){
       if(!window.caches)return go();caches.keys().then(function(ks){return Promise.all(ks.filter(function(k){return k.indexOf("xqlab-app-")===0}).map(function(k){return caches.delete(k)}))})
         .then(function(){return navigator.serviceWorker&&navigator.serviceWorker.getRegistration()}).then(function(r){return r&&r.update()}).catch(function(){}).then(go)}};setTimeout(chk,4000)})();
 </script>
-<script>window.XQ_OFFLINE=true;window.XQ_BUILD="20261109-1515";</script>
+<script>window.XQ_OFFLINE=true;window.XQ_BUILD="20261109-1530";</script>
 <script src="core.js"></script>
 <script src="engine.js"></script>
 <script src="local.js"></script>
@@ -11390,11 +11390,43 @@ function shwWin(S){const X=S.o.X,C=S.C;if(!X||S.o.win0||!shwExitOn())return;S.o.
   S.x=X.out[0];S.y=X.out[1];S.box.style.transition="none";S.box.style.opacity="0";
   S.go={free:true,win:1,to:C.home,seq,pts:[C.N[C.home]],segE:[],L:0,dur:0,t:0,act:-1,look:shwYaw(C,C.N[C.home],C.look0),A:null};shwNext(S);S.place()}
 shwStay=function(S){try{shwWin(S)}catch(e){}};
-{const f0=shwOpen;shwOpen=function(S){const g=S.go,X=S.o.X;const r=f0(S);try{if(g&&X&&g.to===X.n)delete SHW_MEM[S.o.mem]}catch(e){}return r}}   /* 從出口那個點的入口離開（渡口「⛵ 上星槎」）也算走了，下次進來照樣從船上走進來 */
+/* 開發者選定（Gemini 第二次評估 47 第 7 節第 1 項「略過走路動畫」）：點入口後角色照常走過去；走到之前再點同一個入口（或同一個標籤、器物）就立刻打開（shwClick 本來就這樣接，
+   這裡補上淡出淡入和桌上狀態）。整個 App 第一次走向入口時，標籤下面出一行小字「再點一次，直接進去」（約 3 秒，只出一次，記在 store 的 shwTapTip）。 */
+function shwTapTip(S,b){if(typeof store==="undefined"||store.get("shwTapTip",0))return;store.set("shwTapTip",1);const L=S.o.layer,lr=L.getBoundingClientRect(),br=b.getBoundingClientRect();if(!lr.width||!lr.height)return;
+  const e=document.createElement("i");e.className="shw-xt shw-tt";e.setAttribute("aria-hidden","true");e.textContent="再點一次，直接進去";
+  e.style.left=Math.max(16,Math.min(84,(br.left+br.width/2-lr.left)/lr.width*100)).toFixed(2)+"%";e.style.top=Math.min(95,(br.bottom-lr.top)/lr.height*100+2.4).toFixed(2)+"%";L.append(e);setTimeout(()=>e.remove(),3400)}
+/* 開發者選定（同上第 3 項「地圖熱點視覺提示」）：入口淡淡呼吸光。光暈畫在入口對應的器物上（座標表 HS 的「面向位置」），不是標籤上；
+   第一次進頁：全部入口依序淡淡亮一次（約 1.3 秒）；之後 20 秒沒碰畫面，才每 7 秒輪一個入口亮一下，一碰畫面就重新計時。角色在走、頁面藏起來時不亮。
+   光暈比器物大一圈（約圖寬 28%，標籤蓋在器物上時外圈仍看得到），日景是暖黃淡光帶一圈淡墨邊、夜景是燈火色（screen 疊色）；pointer-events:none 不擋點擊；prefers-reduced-motion 整個不出現。
+   07w6 物件第一次閃輪廓（.sci-fx.hint）讓入口先：入口亮的那 1.8 秒先等，再閃物件（只用 CSS 延後，不動 07w6）。開關 SHW_BR_ON */
+const SHW_BR_ON=true;
+function shwBrCss(){if(document.getElementById("shwBrCss"))return;const s=document.createElement("style");s.id="shwBrCss";s.textContent=`
+.shw-br{position:absolute;width:var(--d);height:var(--d);margin:calc(var(--d) / -2) 0 0 calc(var(--d) / -2);border-radius:50%;pointer-events:none;z-index:3;opacity:0;
+  background:radial-gradient(closest-side,rgba(255,232,160,.42),rgba(255,214,120,.34) 52%,rgba(168,112,40,.3) 76%,rgba(168,112,40,0));animation:shwBr 1.3s ease-in-out forwards}
+.shw-br.n{background:radial-gradient(closest-side,rgba(255,214,140,.5),rgba(255,190,100,.3) 52%,rgba(255,170,80,.18) 76%,rgba(255,170,80,0));mix-blend-mode:screen}
+@keyframes shwBr{0%{opacity:0;transform:scale(.82)}45%{opacity:.9;transform:scale(1)}100%{opacity:0;transform:scale(1.08)}}
+.shw-brfirst .sci-fx.hint{animation-delay:1.8s!important;animation-fill-mode:both!important}
+.shw-tt{animation-duration:3.2s}
+@media (prefers-reduced-motion:reduce){.shw-br{display:none}}`;document.head.append(s)}
+function shwBreath(S){if(!SHW_BR_ON||shwRM())return;const C=S.C,L=S.o.layer,I=S.I,M=S.M;if(!C.HS||!L||!I)return;shwBrCss();
+  const night=()=>{const im=I.tagName==="IMG"?I:I.querySelector("img");return!!(im&&/_night/.test(im.currentSrc||im.src||""))||/(^|[ -])(night|dk)( |$)|-night|hq-dk/.test(M.className)};
+  const keys=()=>Object.keys(C.HS).filter(h=>{const e=S.o.find(h);return e&&e.isConnected&&e.getClientRects().length>0&&getComputedStyle(e).visibility!=="hidden"&&C.HS[h][1]!=null});
+  const glow=(h,dl)=>{const H=C.HS[h];if(!H||!I.clientWidth||!L.isConnected)return;const e=document.createElement("i");e.className="shw-br"+(night()?" n":"");e.setAttribute("aria-hidden","true");
+    e.style.setProperty("--d",Math.round(Math.max(80,I.clientWidth*.28))+"px");e.style.left=(H[1]*I.clientWidth/100).toFixed(1)+"px";e.style.top=(H[2]*I.clientHeight/100).toFixed(1)+"px";if(dl)e.style.animationDelay=dl+"ms";
+    L.insertBefore(e,S.box.parentNode===L?S.box:L.firstChild);setTimeout(()=>e.remove(),1500+(dl||0))};
+  M.classList.add("shw-brfirst");setTimeout(()=>M.classList.remove("shw-brfirst"),4800);
+  setTimeout(()=>{if(!document.hidden)keys().forEach((h,i)=>glow(h,i*140))},500);
+  let last=Date.now(),i=0,nx=0;M.addEventListener("pointerdown",()=>{last=Date.now()},true);
+  const it=setInterval(()=>{if(!S.box.isConnected||!M.isConnected){clearInterval(it);return}const now=Date.now();if(document.hidden||S.go||now-last<20000||now<nx)return;
+    const K=keys();if(!K.length)return;glow(K[i++%K.length]);nx=now+7000},1000)}
+{const f1=shwStay;shwStay=function(S){f1(S);try{if(!S.o.br0){S.o.br0=1;shwBreath(S)}}catch(e){}}}
+{const f0=shwOpen;shwOpen=function(S){const g=S.go,X=S.o.X;try{if(g&&!g.free&&(g.ph==="hop"||g.t<g.dur||(g.seq&&g.seq.length))){const C=S.C;S.sq=null;S.curE=null;   /* 走到一半再點同一個入口＝直接開：角色淡一下站到入口前，不卡在半路（Gemini 第二次評估第 7 節第 1 項，開發者選定） */
+    if(g.to&&g.to.t&&C.TB&&C.TB[g.to.t]){S.onT=g.to.t;S.hy=shwTHy(C.TB[g.to.t],g.to.p)}else{S.onT=null;S.hy=null}
+    S.box.style.transition="none";S.box.style.opacity="0";requestAnimationFrame(()=>requestAnimationFrame(()=>{S.box.style.transition="";S.box.style.opacity=""}))}}catch(e){}const r=f0(S);try{if(g&&X&&g.to===X.n)delete SHW_MEM[S.o.mem]}catch(e){}return r}}   /* 從出口那個點的入口離開（渡口「⛵ 上星槎」）也算走了，下次進來照樣從船上走進來 */
 function shwExitDo(S){const C=S.C,P=C.N[C.home];S.go=null;S.curE=null;S.onT=null;S.hy=null;S.sq=null;S.at=C.home;delete SHW_MEM[S.o.mem];SHW_MEMH[S.o.mem]=null;S.box.style.transition="none";S.box.style.opacity="0";S.anim("idle",1);
   const bk=document.querySelector("#topbar #back");try{if(bk&&!bk.hidden)bk.click();else history.back()}catch(e){}
   setTimeout(()=>{if(!S.box.isConnected||S.go)return;S.x=P[0];S.y=P[1];S.yaw=shwYaw(C,P,C.look0);S.place();S.box.style.transition="";S.box.style.opacity=""},1500)}
-{const f0=shwGo;shwGo=function(S,o){const g0=S.go;if(g0&&g0.fd){S.box.style.opacity="";S.box.style.transition=""}const r=f0(S,o);try{const X=S.o.X;if(o&&o.ex&&X&&S.go){S.go.seq.push({k:"w",pts:[S.C.N[X.n],X.out],fade:"out"});S.go.ex=1}}catch(e){}return r}}
+{const f0=shwGo;shwGo=function(S,o){const g0=S.go;if(g0&&g0.fd){S.box.style.opacity="";S.box.style.transition=""}const r=f0(S,o);try{if(o&&o.btn&&!o.free&&!o.ex)shwTapTip(S,o.btn)}catch(e){}try{const X=S.o.X;if(o&&o.ex&&X&&S.go){S.go.seq.push({k:"w",pts:[S.C.N[X.n],X.out],fade:"out"});S.go.ex=1}}catch(e){}return r}}
 {const f0=shwClick;shwClick=function(S,e){try{const X=S.o.X,g=S.go;if(X&&!S.pass&&S.ready&&S.box.isConnected){
     if(g&&g.ex&&g.fd==="out"){e.stopPropagation();e.preventDefault();return}
     if(g&&g.fd==="in"){const A=S.C.N[X.n];S.go=null;S.curE=null;S.x=A[0];S.y=A[1];S.at=X.n;S.box.style.opacity="";S.box.style.transition="";S.place()}
@@ -11427,6 +11459,56 @@ function xqPanelNav(close){let on=true;XQP_N++;try{const d=NAV_D+1;history.pushS
   const done=()=>{if(!on)return false;on=false;XQP_N=Math.max(0,XQP_N-1);removeEventListener("popstate",pop);removeEventListener("hashchange",gone);return true};
   const pop=()=>{const st=history.state||{};if(st.xqPanel)return;if(done())try{close()}catch(e){}};const gone=()=>{done()};addEventListener("popstate",pop);addEventListener("hashchange",gone);
   return()=>{if(!done())return;try{if(history.state&&history.state.xqPanel)history.back()}catch(e){}}}
+/* ---------- 回饋 828（開發者 11/9「我的戰績那一頁也是只有滿版繪圖，底下的額外跳新的視窗，比照修正紀錄的做法」）----------
+   滿版場景頁圖下面原本接的內容（清單、卡片、按鈕、說明）一律收進一張面板，照 812 修正紀錄榜文的做法：夾在頂欄與底欄之間（--xqT／--xqB）、可以捲、
+   返回鍵／點面板外面／✕ 都收起；顏色跟 App 的日夜主題走（--bg／--ink，深色主題＝深色面板），字不會跟底色撞在一起。頁面本身只剩滿版圖。
+   xqSheet(v,{t:標題,cap:小字}) → S：S.open(要捲到的元素或選擇器，null＝捲到最上面；第二個參數＝換標題)、S.close()、S.on()、S.title(t)、S.b＝捲動區。
+   xqSheetMove(v,P,S)：把 #view 裡排在滿版圖 P 後面的內容（不含 fixed／absolute 的浮層）整塊「搬」進 S.b——是同一批節點，按鈕、事件、之後重畫都照舊；
+   之後才加進來的也自動搬。各頁只要把原本「捲到圖下某一塊」的入口改成 S.open(那一塊)。 */
+function xqSheetCss(){if(document.getElementById("xqsCss"))return;const s=document.createElement("style");s.id="xqsCss";s.textContent=`
+.xqs-s{position:fixed;inset:0;z-index:948;background:rgba(20,14,8,.35);display:none}.xqs-s.open{display:block}
+.xqs{position:fixed;left:50%;top:calc(var(--xqT,56px) + 8px);bottom:calc(var(--xqB,64px) + 8px);width:min(94vw,520px);z-index:949;display:flex;flex-direction:column;box-sizing:border-box;
+  transform:translate(-50%,10px) scale(.97);opacity:0;visibility:hidden;pointer-events:none;transition:transform .25s ease,opacity .2s,visibility 0s linear .25s;border-radius:3px;color:var(--ink);background:var(--bg);
+  border:2px solid rgba(58,42,28,.8);box-shadow:inset 0 0 0 5px var(--bg),inset 0 0 0 6px rgba(140,104,64,.6),0 12px 32px rgba(0,0,0,.45)}
+.xqs.open{transform:translate(-50%,0);opacity:1;visibility:visible;pointer-events:auto;transition:transform .25s ease,opacity .2s}
+.xqs-h{position:relative;flex:none;display:flex;align-items:center;justify-content:center;padding:14px 46px 6px;font:900 19px/1.25 var(--kai,var(--serif,serif));letter-spacing:4px;color:var(--accent);text-align:center}
+.xqs-h button{position:absolute;right:6px;top:6px;border:0;background:none;font-size:22px;line-height:1;color:var(--ink);cursor:pointer;padding:6px 8px;letter-spacing:0}
+.xqs-c{flex:none;text-align:center;font:600 13px/1.5 var(--serif,serif);color:var(--muted);padding:0 14px 6px;margin:0 12px;border-bottom:1px solid var(--line)}
+.xqs-b{flex:1;min-height:0;overflow:auto;-webkit-overflow-scrolling:touch;overscroll-behavior:contain;padding:6px 4px 14px;border-top:1px solid var(--line);margin:0 6px}
+.xqs-b>*{margin-top:0}
+@media (prefers-reduced-motion:reduce){.xqs,.xqs.open{transition:none}}`;document.head.append(s)}
+function xqSheet(v,o){xqSheetCss();o=o||{};const sc=document.createElement("div");sc.className="xqs-s";const el=document.createElement("div");el.className="xqs";el.setAttribute("role","dialog");
+  el.innerHTML='<div class="xqs-h"><b></b><button type="button" aria-label="收起">✕</button></div><div class="xqs-c"></div><div class="xqs-b"></div>';
+  const c=el.querySelector(".xqs-c");if(o.cap)c.textContent=o.cap;else c.remove();v.append(sc,el);let un=null;const b=el.querySelector(".xqs-b");
+  const shut=()=>{el.classList.remove("open");sc.classList.remove("open")};
+  const S={el,b,on:()=>el.classList.contains("open"),title(t){el.querySelector(".xqs-h b").textContent=t||"";el.setAttribute("aria-label",t||"")},
+    close(){shut();if(un){const f=un;un=null;f()}},
+    go(sel){let n=0;const f=()=>{if(sel==null){b.scrollTop=0;return}const t=typeof sel==="string"?b.querySelector(sel):sel;
+      if(t&&b.contains(t)){b.scrollTop=Math.max(0,b.scrollTop+t.getBoundingClientRect().top-b.getBoundingClientRect().top-6)}else if(++n<25)setTimeout(f,120)};setTimeout(f,40)},
+    open(sel,t){if(t!=null)S.title(t);if(!S.on()){el.classList.add("open");sc.classList.add("open");if(typeof xqPanelNav==="function")un=xqPanelNav(()=>{un=null;shut()})}S.go(sel)}};
+  el._S=S;S.title(o.t);el.querySelector(".xqs-h button").onclick=()=>S.close();sc.onclick=()=>S.close();return S}
+function xqSheetMove(v,P,S){const V=document.getElementById("view")||v,F=Node.DOCUMENT_POSITION_FOLLOWING;
+  const ok=c=>{if(c===S.el||c.classList.contains("xqs")||c.classList.contains("xqs-s")||c.matches("script,style,template,link"))return false;const cs=getComputedStyle(c);return cs.position!=="fixed"&&cs.position!=="absolute"&&cs.display!=="none"};   /* 藏起來的（display:none）先不搬，等它出現（每秒看一次）再搬 */
+  const mv=()=>{if(!P.isConnected)return;const L=[];const walk=el=>{for(const c of[...el.children]){if(c===P)continue;if(c.contains(P)){walk(c);continue}if((P.compareDocumentPosition(c)&F)&&ok(c))L.push(c)}};walk(V);L.forEach(c=>S.b.append(c))};
+  mv();const it=setInterval(()=>{if(!P.isConnected){clearInterval(it);return}mv()},1000);const mo=new MutationObserver(()=>{if(!P.isConnected){mo.disconnect();return}mv()});let e=P.parentNode;while(e&&V.contains(e)){mo.observe(e,{childList:true});if(e===V)break;e=e.parentNode}
+  return()=>{mo.disconnect();clearInterval(it)}}
+/* 828：各頁原本「點圖上標籤＝捲到圖下某一塊」的寫法不用改——那一塊搬進面板後，玩家剛點過（1.5 秒內）時對它 scrollIntoView＝打開面板並捲到那裡；
+   不是玩家點的（頁面自己捲）就不打開，也不捲動整頁。 */
+let XQS_UT=0;addEventListener("click",()=>{XQS_UT=Date.now()},true);
+{const f0=Element.prototype.scrollIntoView;Element.prototype.scrollIntoView=function(){try{const x=this.closest&&this.closest(".xqs");if(x&&x._S){if(x._S.on())x._S.go(this);else if(Date.now()-XQS_UT<1500)x._S.open(this);return}}catch(e){}return f0.apply(this,arguments)}}
+/* 828：所有滿版場景頁（#view 裡的 .shp-page）自動套用：圖下面有內容就整塊搬進面板，頂欄右邊加一顆「📜」打開（標題＝頁名）；圖下沒東西就什麼都不做。
+   各頁自己做了面板（例如 07z2 我的戰績）就不重複套。開關 XQS_AUTO_ON */
+const XQS_AUTO_ON=true;let XQS_CUR=null;
+function xqSheetAuto(){if(!XQS_AUTO_ON)return;const V=document.getElementById("view");if(!V)return;const P=V.querySelector(".shp-page");if(!P||V.querySelector(".xqs")||P.closest(".xqs"))return;
+  const tt=document.getElementById("title"),S=xqSheet(V,{t:tt?tt.textContent.trim():"清單"});xqSheetMove(V,P,S);
+  const vis=c=>c.offsetHeight>4&&[c,...c.querySelectorAll("*")].some(e=>e.getClientRects().length>0&&(e.matches("img,canvas,svg,input")?e.offsetHeight>4:[...e.childNodes].some(n=>n.nodeType===3&&n.textContent.trim())));   /* 真的看得到字或圖才算（面板收著時 innerText 是空的，不能用） */
+  const tb=()=>{if(!S.el.isConnected){mo.disconnect();return}const tr=document.getElementById("topRight");if(!tr)return;const any=[...S.b.children].some(vis);let b=tr.querySelector(".xqs-tb");
+    if(any&&!b){b=document.createElement("button");b.type="button";b.className="ib xqs-tb";b.textContent="📜";b.title="清單與說明";b.setAttribute("aria-label","打開清單與說明");b.onclick=()=>{if(typeof vibrate==="function")vibrate(5);S.open(null)};tr.prepend(b)}
+    else if(!any&&b)b.remove()};
+  const mo=new MutationObserver(()=>{clearTimeout(S._tb);S._tb=setTimeout(tb,60)});mo.observe(S.b,{childList:true,subtree:true,attributes:true,attributeFilter:["style","hidden","class"]});S._tbf=tb;XQS_CUR=S;tb()}
+{let q=0;const run=()=>{clearTimeout(q);q=setTimeout(()=>{try{xqSheetAuto()}catch(e){}},0);setTimeout(()=>{try{xqSheetAuto();if(XQS_CUR&&XQS_CUR.el.isConnected)XQS_CUR._tbf()}catch(e){}},700)};
+  const init=()=>{const V=document.getElementById("view");if(!V)return;new MutationObserver(run).observe(V,{childList:true});addEventListener("hashchange",run);run()};
+  if(document.readyState==="loading")addEventListener("DOMContentLoaded",init);else init()}
 /* ---------- 回饋 802：走路角色兼小帥 ----------
    角色身上一顆透明按鈕、頭上一個小 💬：點了在角色旁邊開水墨小選單（問問題＝askSheet、聽棋語＝讓小帥講一句（BOT.act）、我的角色＝#/me）；
    小帥講的話（bot3d 的 xq-bot-said 事件）在角色頭上用宣紙小泡泡顯示。位置跟著 07w 每格寫的 translate／scale 和畫布大小（跟 07z 的 hmMe 同一算法） */
@@ -13525,6 +13607,7 @@ function jz2Css(){if(document.getElementById("jz2Css"))return;const s=document.c
 .jz2-lamp{position:absolute;transform:translate(-50%,-50%);writing-mode:vertical-rl;font:900 12px/1.1 var(--kai,var(--serif,serif));color:#7a2a1a;letter-spacing:.1em;white-space:nowrap}
 .jz2-night .jz2-board{filter:sepia(.12)}
 .jz2-page .shp-spot.jz2-tag b{white-space:nowrap}
+.jz2-hit{position:absolute;border:0;background:none;padding:0;margin:0;cursor:pointer;-webkit-tap-highlight-color:transparent}
 .st .st-lv .w.jz2-ok{display:inline-block;width:18px;height:18px;border:2px solid #b23a26;border-radius:50%;color:transparent;font-size:0;vertical-align:middle}`;document.head.append(s)}
 /* 朱紅榜：左邊五邊形（最弱一角朱圈＋建議先練），右邊段位大字＋朱印，下緣朱線＝離下一段多遠 */
 function jz2BoardSVG(R,lab,A,pk){const W=523,H=250;let g="";
@@ -13558,17 +13641,24 @@ function jz2Wrap(v,R0){if(!STAT_MAP_ON||!v.querySelector("#sTabs"))return R0;jz2
   const NET=!!(OFF&&window.XQNet);
   P.innerHTML=`<img src="data/statmap/${dk?"stat_night":"stat_day"}.webp?v=${JZ2_IMGV}" alt="書院廊下的朱紅榜">
     <div class="jz2-fx"><div class="jz2-board" style="left:${(bl/7.68).toFixed(2)}%;top:${(bt/13.76).toFixed(2)}%;width:${((br-bl)/7.68).toFixed(2)}%;height:${((bb-bt)/13.76).toFixed(2)}%"></div><div class="jz2-tq"></div><div class="jz2-lw"></div></div>
+    <button type="button" class="jz2-hit" data-to="jz2Rank" aria-label="朱紅榜：段位、進度、五邊形" style="left:${(bl/7.68).toFixed(2)}%;top:${(bt/13.76).toFixed(2)}%;width:${((br-bl)/7.68).toFixed(2)}%;height:${((bb-bt)/13.76).toFixed(2)}%"></button><button type="button" class="jz2-hit" data-to="jz2Tbl" aria-label="棋桌：電腦" style="left:74.7%;top:71.5%;width:24.2%;height:7.8%"></button>
     ${sp("jz2Rank",354,330,"📋 總覽")}${sp("jz2Book",JZ2_BOOK[0],JZ2_BOOK[1]-48,"課簿・對局紀錄")}${sp("jz2Scroll",JZ2_SCROLL[0],JZ2_SCROLL[1]-48,"手卷・我的成長")}${sp("jz2Tbl",665,950,"棋桌・電腦")}${NET?sp("jz2Lamp",632,230,"紗燈・線上"):""}`;
   v.insertBefore(P,v.firstChild);
   const tq=P.querySelector(".jz2-tq"),fit=()=>{const k=P.clientWidth/768;if(!k)return;tq.style.transform=jz2M3(200,225,JZ2_TABLE.map(([x,y])=>[x*k,y*k]))};
   if(window.ResizeObserver){const ro=new ResizeObserver(()=>{if(!P.isConnected){ro.disconnect();return}fit()});ro.observe(P)}fit();
+  /* 回饋 828（開發者 11/9）：頁面只留滿版圖。原本接在圖下的戰績（四個分頁、對局紀錄、成長、電腦、線上）整塊收進一張面板（07w 的 xqSheet，照 812 修正紀錄的做法）：
+     點榜上的標籤（或榜面、棋桌本身）＝切到那一分頁、展開面板、捲到那一塊；面板裡照舊可以切分頁；返回鍵、點外面、✕ 收起 */
   const tab=k=>{const b=v.querySelector(`#sTabs button[data-k="${k}"]`);if(b)b.click();return b};
-  const show=sel=>{setTimeout(()=>{const t=v.querySelector(sel)||v.querySelector("#sTabs");try{t.scrollIntoView({behavior:"smooth",block:"start"})}catch(e){}},250)};
-  P.querySelector("#jz2Rank").onclick=()=>{tab("all");show("#sTabs")};
-  P.querySelector("#jz2Book").onclick=()=>{tab("all");let n=0;const w=()=>{const h=v.querySelector("#sHist");if(h){try{h.scrollIntoView({behavior:"smooth",block:"start"})}catch(e){}}else if(++n<20)setTimeout(w,150)};setTimeout(w,200)};
-  P.querySelector("#jz2Scroll").onclick=()=>{tab("talent");show("#sTabs")};
-  P.querySelector("#jz2Tbl").onclick=()=>{tab("cpu");show("#sTabs")};
-  const lb=P.querySelector("#jz2Lamp");if(lb)lb.onclick=()=>{tab("net");show("#sTabs")};
+  const TT={all:"朱紅榜・總覽",talent:"手卷・我的成長",cpu:"棋桌・電腦",net:"紗燈・線上"};
+  const SH=typeof xqSheet==="function"?xqSheet(v,{t:"我的戰績"}):null;if(SH)xqSheetMove(v,P,SH);
+  const show=(k,sel,t)=>{tab(k);if(SH)SH.open(sel===undefined?null:sel,t||TT[k]);else setTimeout(()=>{const e=v.querySelector(sel||"#sTabs");try{e.scrollIntoView({behavior:"smooth",block:"start"})}catch(err){}},250)};
+  P.querySelector("#jz2Rank").onclick=()=>show("all");
+  P.querySelector("#jz2Book").onclick=()=>show("all","#sHist","課簿・對局紀錄");
+  P.querySelector("#jz2Scroll").onclick=()=>show("talent");
+  P.querySelector("#jz2Tbl").onclick=()=>show("cpu");
+  const lb=P.querySelector("#jz2Lamp");if(lb)lb.onclick=()=>show("net");
+  P.querySelectorAll(".jz2-hit").forEach(h=>h.onclick=()=>{vibrate(5);const t=P.querySelector("#"+h.dataset.to);if(t)t.click()});
+  if(SH){const tb=v.querySelector("#sTabs");if(tb)tb.addEventListener("click",e=>{const b=e.target.closest&&e.target.closest("button[data-k]");if(b&&TT[b.dataset.k])SH.title(TT[b.dataset.k])})}
   /* 資料：段位（線上優先）、自選難度過關幾級、五邊形 */
   let R=null,lab="",A=null,pk=null,nOk=0;
   const paint=()=>{if(!P.isConnected)return;P.querySelector(".jz2-board").innerHTML=jz2BoardSVG(R,lab,A,pk);tq.innerHTML=jz2TableSVG(nOk);
