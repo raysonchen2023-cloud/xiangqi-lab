@@ -1370,7 +1370,7 @@ html[data-hicon] .tabbar button.on{box-shadow:inset 0 -3px 0 currentColor}
       if(!window.caches)return go();caches.keys().then(function(ks){return Promise.all(ks.filter(function(k){return k.indexOf("xqlab-app-")===0}).map(function(k){return caches.delete(k)}))})
         .then(function(){return navigator.serviceWorker&&navigator.serviceWorker.getRegistration()}).then(function(r){return r&&r.update()}).catch(function(){}).then(go)}};setTimeout(chk,4000)})();
 </script>
-<script>window.XQ_OFFLINE=true;window.XQ_BUILD="20261110-0000";</script>
+<script>window.XQ_OFFLINE=true;window.XQ_BUILD="20261110-0015";</script>
 <script src="core.js"></script>
 <script src="engine.js"></script>
 <script src="local.js"></script>
@@ -2927,8 +2927,8 @@ ${OFF?(()=>{const n=Object.keys(arenaStamps()).length,t=arenaTitle();return`<but
   standaloneOnlineWarn(v.firstElementChild||v);
   if(OFF){if(RI)homeStatus(v.querySelector("#hStatus"));if(window.XQ_justConnected){XQ_justConnected=false;if(DEVMODE())setTimeout(()=>toast("已連上電腦！"),300)}}
   const qb=store.get("quizBest",null);if(qb&&v.querySelector("#hQuiz"))v.querySelector("#hQuiz").textContent="最好："+qb.rank;
-  let offNet=[];if(OFF&&window.XQNet){const upd=()=>{const e=v.querySelector("#hNet");if(!e)return;const n=XQNet.people().length;
-      e.textContent=(XQNet.playing()?"🔴 有一盤在下・":"")+(XQNet.status()!=="up"?"連線中…":n?`🟢 ${n} 人在線上`:"⚪ 只有你在線上");
+  let offNet=[];if(OFF&&window.XQNet){const upd=()=>{const e=v.querySelector("#hNet");if(!e)return;const n=XQNet.onlineCount?XQNet.onlineCount():XQNet.people().length;   /* 回饋 854（開發者 11/9：專用 MQTT 伺服器、降流量）：首頁不收整份在線名單，人數用大廳角色程式算好的；拿不到人數就只寫「線上大廳」 */
+      e.textContent=(XQNet.playing()?"🔴 有一盤在下・":"")+(XQNet.status()!=="up"?"連線中…":n==null?"🟢 線上大廳・邀請對戰・觀戰":n?`🟢 ${n} 人在線上`:"⚪ 只有你在線上");
       // 線上段位（XQNet.rating() 回傳 {pts,rank,w,l,d}）
       let rt=null;try{rt=XQNet.rating?XQNet.rating():null}catch(x){}
       const tile=e.closest(".tile");let bd=tile.querySelector(".bd");
@@ -17590,12 +17590,16 @@ function libMap(v,c0){const root=v.querySelector(".lib");if(!root||v.querySelect
   const P=d.firstElementChild;v.insertBefore(P,root);
   const pn=document.createElement("div");pn.className="lb-pn";pn.innerHTML='<div class="lb-pn-h">📜 <span id="lbT">書目</span><button type="button" aria-label="回到書閣">✕</button></div><div class="lb-pn-b"></div>';
   const sc=document.createElement("div");sc.className="lb-scrim";v.append(sc,pn);pn.querySelector(".lb-pn-b").append(root);
-  let unNav=null;const open=(t,q)=>{if(!pn.classList.contains("open")&&typeof xqPanelNav==="function")unNav=xqPanelNav(()=>{unNav=null;pn.classList.remove("open");sc.classList.remove("open")});pn.classList.add("open");sc.classList.add("open");const tt=pn.querySelector("#lbT");if(tt&&t)tt.textContent=t;if(q){const qi=root.querySelector("#q");if(qi)setTimeout(()=>qi.focus(),320)}};
+  /* 回饋 841（開發者 11/9「棋譜庫裡面的入口也是 1 對 1」）：面板記住是哪個入口打開的（data-one），CSS 藏掉看得到別的入口的東西——
+     一律藏「繼續研究」卡（圖上有自己的入口）；book＝書櫥、大師對局、特級大師、比賽對局：只看那一部，藏分類鈕和書籤列；mine＝我的對局：只留我的對局底下幾本；find＝搜尋：保留選書（要選在哪部裡找） */
+  if(!document.getElementById("lbOneCss")){const s1=document.createElement("style");s1.id="lbOneCss";s1.textContent=`.lb-pn[data-one] #libRecent{display:none}
+.lb-pn[data-one="book"] #grp,.lb-pn[data-one="book"] #cols,.lb-pn[data-one="mine"] #grp{display:none}`;document.head.append(s1)}
+  let unNav=null;const open=(t,q,m)=>{pn.dataset.one=m||(q?"find":"book");if(!pn.classList.contains("open")&&typeof xqPanelNav==="function")unNav=xqPanelNav(()=>{unNav=null;pn.classList.remove("open");sc.classList.remove("open")});pn.classList.add("open");sc.classList.add("open");const tt=pn.querySelector("#lbT");if(tt&&t)tt.textContent=t;if(q){const qi=root.querySelector("#q");if(qi)setTimeout(()=>qi.focus(),320)}};
   const close=()=>{pn.classList.remove("open");sc.classList.remove("open");if(unNav){const f=unNav;unNav=null;f()}};pn.querySelector(".lb-pn-h button").onclick=close;sc.onclick=close;   /* 回饋 803：返回鍵先收面板 */
   /* 開某一部書：已經是這部就直接打開面板；不是就換到 #/db/<書>（原本的 Library 會載好那部），進來後自動打開 */
-  const book=(k,t,q)=>{if(k&&k!==libState.c){LB_OPEN={t,q};libState.q="";libState.player="";location.hash="#/db/"+encodeURIComponent(k);return}open(t,q)};
+  const book=(k,t,q,m)=>{if(k&&k!==libState.c){LB_OPEN={t,q,m};libState.q="";libState.player="";location.hash="#/db/"+encodeURIComponent(k);return}open(t,q,m)};
   P.querySelectorAll(".lb-cell").forEach(b=>b.onclick=()=>{vibrate(5);book(b.dataset.c,b.getAttribute("aria-label"))});
-  const GO={lbGm:()=>book("gmgames","大師對局"),lbMine:()=>book("play","我的對局"),lbFind:()=>open("搜尋",true),
+  const GO={lbGm:()=>book("gmgames","大師對局"),lbMine:()=>book("play","我的對局",false,"mine"),lbFind:()=>open("搜尋",true),
     lbRead:()=>{const r=store.get("recent",[])[0];if(r)location.hash=`#/db/${encodeURIComponent(r.c)}/${encodeURIComponent(r.id)}`;else book("shiqingyaqu","適情雅趣")},
     lbBio:()=>lbBios(book),lbTour:()=>lbTours(P,book)};
   for(const[id]of LB_SPOTS){const b=P.querySelector("#"+id);if(b)b.onclick=()=>{vibrate(5);try{GO[id]()}catch(e){}}}
@@ -17604,7 +17608,7 @@ function libMap(v,c0){const root=v.querySelector(".lib");if(!root||v.querySelect
   const fx=P.querySelector(".lb-fx"),r=store.get("recent",[])[0];fx.innerHTML=lbMini(r&&r.fen);
   api("/db/books").then(bs=>{if(!P.isConnected)return;const n=bs.filter(x=>["play","pvp","study"].includes(x.key)).reduce((a,x)=>a+(x.count||0),0),lv=n>=200?3:n>=50?2:n>0?1:0;
     fx.insertAdjacentHTML("beforeend",Array.from({length:lv},(_,i)=>`<i class="lb-thick" style="top:${(77.6-i*1.1).toFixed(1)}%"></i>`).join(""));lbSeal(P,bs)}).catch(()=>{});
-  if(LB_OPEN){const o=LB_OPEN;LB_OPEN=null;setTimeout(()=>open(o.t,o.q),30)}
+  if(LB_OPEN){const o=LB_OPEN;LB_OPEN=null;setTimeout(()=>open(o.t,o.q,o.m),30)}
   if(typeof shpFit==="function")shpFit(v);
   try{if(typeof shwPage==="function"&&SHIP_WALK_ON)shwPage(v,Object.assign({},SHW_PG0,SHW_LIBMAP,{HS:Object.fromEntries(Object.entries(SHW_LIBMAP.HS))}),"lib",null)}catch(e){}
   try{if(typeof zmPage==="function")zmPage(v)}catch(e){}}
