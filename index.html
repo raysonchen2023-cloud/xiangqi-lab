@@ -1370,7 +1370,7 @@ html[data-hicon] .tabbar button.on{box-shadow:inset 0 -3px 0 currentColor}
       if(!window.caches)return go();caches.keys().then(function(ks){return Promise.all(ks.filter(function(k){return k.indexOf("xqlab-app-")===0}).map(function(k){return caches.delete(k)}))})
         .then(function(){return navigator.serviceWorker&&navigator.serviceWorker.getRegistration()}).then(function(r){return r&&r.update()}).catch(function(){}).then(go)}};setTimeout(chk,4000)})();
 </script>
-<script>window.XQ_OFFLINE=true;window.XQ_BUILD="20261110-0100";</script>
+<script>window.XQ_OFFLINE=true;window.XQ_BUILD="20261110-0130";</script>
 <script src="core.js"></script>
 <script src="engine.js"></script>
 <script src="local.js"></script>
@@ -10270,11 +10270,11 @@ document.addEventListener("click",e=>{const a=e.target&&e.target.closest&&e.targ
    開關：常數 PFX_ON（預設）＋ localStorage m_portGL（1 開、0 關）；開發者模式時圖的左下有「🧪 船艙動態」可切換。
    安全網：素材檔名全新（pm1_*，手機不會有同名舊快取）、檢查尺寸、第一格用靜止姿勢畫一次跟原圖比對抽樣點；
    沒過、WebGL 或 highp 不能用、prefers-reduced-motion，都退回原本的單張圖。離開這頁迴圈自己停並釋放 WebGL */
-const PFX_ON=false;   /* 船艙動態預設開關（還在驗收，先關）；localStorage m_portGL 為 1 開、0 關，沒設照這個 */
+const PFX_ON=true;   /* 船艙動態預設開關（開發者 11/9 回饋 765「可以預設打開」）；localStorage m_portGL 為 1 開、0 關，沒設照這個 */
 const pfxOn=()=>{const v=store.get("portGL",-1);return v==-1?PFX_ON:v==1};
 function pfxDev(P){if(!(typeof DEVMODE==="function"&&DEVMODE())||P.querySelector(".shp-gldev"))return;const on=pfxOn();   /* 只有開發者模式看得到：切換船艙動態（存在 m_portGL），樣式借星槎的 .shp-gldev */
   const b=document.createElement("button");b.type="button";b.className="shp-gldev"+(on?" on":"");b.style.position="absolute";b.textContent=on?"🧪 船艙動態：開":"🧪 船艙動態：關";P.appendChild(b);
-  b.onclick=e=>{e.stopPropagation();vibrate(5);store.set("portGL",on?0:1);toast(on?"已關掉船艙動態":"已打開船艙動態（測試中）");route()}}
+  b.onclick=e=>{e.stopPropagation();vibrate(5);store.set("portGL",on?0:1);toast(on?"已關掉船艙動態":"已打開船艙動態");route()}}
 const PFX_SZ=[[768,1376],[384,688],[512,512],[512,512]],PFX_PT=[[439,404],[716,527],[224,705],[457,924],[105,1248],[733,1192],[493,624],[619,155]],PFX_M=9;
 const PFX_VS="attribute vec2 a;varying vec2 v;void main(){v=vec2(a.x*.5+.5,.5-a.y*.5)*vec2(768.,1376.);gl_Position=vec4(a,0.,1.);}";
 const PFX_FS=`#ifdef GL_FRAGMENT_PRECISION_HIGH
@@ -12767,7 +12767,7 @@ if(typeof Home==="function"){const f0=Home;Home=function(v,hub){const r=f0.apply
    接 07w 走路（座標表 SHW_HOMEMAP）、07x 兩指縮放。圖片網址帶 HM_IMGV（data/homemap 在不跟版本走的快取裡，換圖要改這個數字）。
    開關 HOME_MAP_ON（false＝照舊卡片首頁）；樣式在 hmCss */
 const HOME_MAP_ON=true;   /* 開發者 11/8 說打開 */
-const HM_IMGV="2300";   /* 圖的版本：同檔名換圖時改掉，手機才會重抓 */
+const HM_IMGV="0130";   /* 圖的版本：同檔名換圖時改掉，手機才會重抓 */
 /* 入口：[標籤 id（也是 07w 的入口代號）, 標籤左%, 上%, 大字]（量 768×1376 的 home_v5，標籤放在東西上方） */
 const HM_SPOTS=[["hmShip",52,15,"⛵ 雲河星槎"],["hmBattle",14,25.5,"⚔ 對戰"],["hmLearn",86,26.5,"📚 學習"],["hmRec",12,44,"📜 今日推薦"],["hmQuick",52,47.5,"⚡ 下一盤"]];
 /* 07w 的座標表（腳底的位置）：起點在橋中央廣場（石桌左前方）；石桌四周繞著走，不穿過桌子；往後經廣場後緣走木棧道到星槎跳板；
@@ -12807,7 +12807,7 @@ function homeMap(v){const home=v.querySelector(".home");if(!home||v.querySelecto
   const d=document.createElement("div");
   d.innerHTML=`<div class="shp-page cq home-page"><img src="data/homemap/home.webp?v=${HM_IMGV}" alt="楚河渡口棋鎮"><div class="hm-fx" aria-hidden="true">${nw?'<i class="hm-sky"></i>':""}</div>${HM_SPOTS.map(([id,x,y])=>`<button class="shp-spot${id==="hmQuick"&&nw?" hot":""}" id="${id}" style="left:${x}%;top:${y}%"><b>${esc(lab(id))}</b></button>`).join("")}${inst?'<button class="hm-inst" id="hmInst">📲 加到主畫面</button>':""}</div>`;
   const P=d.firstElementChild;v.insertBefore(P,home);home.classList.add("hb-hidden");if(typeof hbCss==="function")hbCss();else home.style.display="none";
-  {const wv=typeof sw7HomeWx==="function"?sw7HomeWx():"",im0=P.querySelector(":scope>img");if(wv&&im0){const pre=new Image();pre.onload=()=>{if(im0.isConnected)im0.src=pre.src};pre.src="data/homemap/home_"+wv+".webp?v="+HM_IMGV}}   /* 回饋 811：下雪、下雨天換積雪版 home_snow／雨景版 home_rain（07w7-seasons.js 判斷；先載好再換，載不到留原圖） */
+  {const wv=typeof sw7HomeWx==="function"?sw7HomeWx():"",im0=P.querySelector(":scope>img");if(wv&&im0){const pre=new Image();pre.onload=()=>{if(!im0.isConnected)return;try{if(typeof sw7SeaTurn==="function"&&sw7SeaTurn(P,im0,pre.src))return}catch(e){}im0.src=pre.src};pre.src="data/homemap/home_"+wv+".webp?v="+HM_IMGV}}   /* 回饋 811：下雪、下雨天換積雪版 home_snow／雨景版 home_rain（07w7-seasons.js 判斷；先載好再換，載不到留原圖） */
   const GO={hmShip:"#/adventure",hmBattle:"#/hub/battle",hmLearn:"#/hub/learn"};
   for(const[id]of HM_SPOTS){const b=P.querySelector("#"+id);if(!b)continue;
     b.onclick=()=>{vibrate(5);if(GO[id]){location.hash=GO[id];return}if(id==="hmRec"){if(typeof TODAY_MAP_ON!=="undefined"&&TODAY_MAP_ON){location.hash="#/today";return}hmRecSheet();return}if(id==="hmQuick")location.hash=hmNew()?"#/camp":"#/cpu"}}
@@ -15654,7 +15654,7 @@ function sw7Css(){if(document.getElementById("sw7Css"))return;const s=document.c
    tr：落葉樹的樹冠（柳、槐、闊葉樹；松柏竹不圈），節氣變色只改這裡面偏綠的像素。量法與檢查圖：scratchpad t811／genpages.py */
 const SW7_PAGES=[
   {k:"home",re:/data\/homemap\/home\.webp/,m:"out",rg:"s",fg:[[[300,60],[400,20],[520,0],[768,0],[768,387],[720,387],[700,200],[640,153],[560,140],[467,127],[387,107]]],tr:[[[80,960],[149,935],[229,949],[261,1009],[249,1089],[200,1109],[109,1120],[69,1060]],[[527,940],[600,915],[689,935],[709,1000],[689,1085],[600,1095],[540,1060]],[[693,1260],[768,1240],[768,1376],[693,1376]],[[261,261],[300,257],[305,309],[265,312]]]},
-  {k:"homeAlt",re:/data\/homemap\/home_(snow|rain)/,m:"out",rg:"s"},
+  {k:"homeAlt",re:/data\/homemap\/home_(snow|rain|spring|summer|autumn|winter)/,m:"out",rg:"s"},
   {k:"today",re:/data\/todaymap\/today_day/,m:"out",rg:"s",tr:[[[0,120],[60,109],[140,149],[149,249],[120,329],[0,340]],[[215,149],[289,125],[360,160],[365,249],[220,255]],[[400,160],[469,128],[549,149],[549,245],[400,249]]]},
   {k:"todayN",re:/data\/todaymap\//,m:"out",rg:"s"},
   {k:"learn",re:/data\/hubmap\/learn/,m:"semi",rg:"s",sky:[[[0,0],[768,0],[768,300],[560,300],[480,331],[300,320],[180,331],[0,291]],[[131,720],[627,720],[660,800],[651,1000],[560,963],[380,949],[213,965],[140,1000],[115,800]]]},
@@ -15699,8 +15699,56 @@ function sw7TermFor(P,o){return P&&P.dataset&&P.dataset.sw7Term||sw7Term()}   /*
 function sw7WxFor(P,o){if(!o||o.m==="in"||!o.rg)return null;return sw7Precip(sw7TermFor(P,o),o.rg)}
 /* 首頁換底圖（07z-homemap.js 問這裡）：大雪節氣那幾天、或小雪～大寒正在下雪＝積雪版 snow；正在下雨＝雨景版 rain；其他＝""（原圖）；設定關掉也是 "" */
 const SW7_SNOWY=new Set(["小雪","大雪","冬至","小寒","大寒"]);
-function sw7HomeWx(){if(!sw7On())return"";try{const o=SW7_PAGES.find(x=>x.k==="home"),t=sw7TermFor(null,o),p=sw7Precip(t,o.rg);
-  if(t==="大雪"||(p&&p.t==="snow"&&SW7_SNOWY.has(t)))return"snow";if(p&&p.t==="rain")return"rain"}catch(e){}return""}
+/* 開發者 11/9「首頁變秋天的時候還是綠色的葉子，冬天也不會變，要符合天氣和大自然」：首頁照季節換整張圖（同一張原圖改的，構圖、入口、走路的路都不變）——
+   春（立春～穀雨）＝home_spring（柳樹嫩黃綠、桃花杏花、盆栽牡丹；設定關掉「場景節氣天氣」才用原圖）；夏（立夏～處暑，立秋、處暑柳樹還綠）＝home_summer（柳濃綠、岸邊荷花）；
+   秋（白露～立冬）＝home_autumn（柳葉轉黃、蘆花、遠山赭紅、書院旁闊葉樹黃紅，松竹照舊綠）；冬（小雪～大寒）＝home_winter（柳枝光禿、枯草、松竹常青）。
+   下雪照舊換 home_snow；雨景圖 home_rain 的柳樹是春天的綠，只在春夏用，秋冬下雨就用那一季的圖、雨由程式畫。季節圖不再做 ⑤ 的換色（已經畫好了） */
+const SW7_HSEA={"立春":"spring","雨水":"spring","驚蟄":"spring","春分":"spring","清明":"spring","穀雨":"spring","立夏":"summer","小滿":"summer","芒種":"summer","夏至":"summer","小暑":"summer","大暑":"summer","立秋":"summer","處暑":"summer",
+  "白露":"autumn","秋分":"autumn","寒露":"autumn","霜降":"autumn","立冬":"autumn","小雪":"winter","大雪":"winter","冬至":"winter","小寒":"winter","大寒":"winter"};
+/* ---------- 開發者 11/9「轉換季節的時候要有轉折感，讓玩家有『哇，換季了』的體驗」：首頁換季轉場 ----------
+   這一季（SW7_HSEA，春夏秋冬，跟天氣無關）跟上次在首頁看到的季節（store hmSea）不一樣，就在新的季節圖載好時播一次（每季一次）：
+   ① 先蓋一張上一季的圖；② 從橋上石桌那裡往外，新季節像墨在宣紙上暈開一樣一圈圈露出來（約 2.8 秒）；
+   ③ 同時飄這一季的東西（春桃花瓣、夏荷花瓣、秋黃紅落葉、冬細霜）；④ 上方一張宣紙小籤：一句古詩文（附出處；開發者 11/9 拿掉白話）；⑤ 小帥說一句。
+   開頭畫面、載入畫面還蓋著就等它們關掉再播。第一次裝 App（還沒選角色）只記下季節、不播；以前看過首頁的人，上一季算春（舊版首頁就是春景）。
+   「減少動態」：不暈開、不飄，只淡入淡出＋小籤。設定關掉「場景節氣天氣」時不換季節圖，也就不播 */
+const SW7_SEA_TXT={spring:{e:"🌸",n:"春天來了",q:"竹外桃花三兩枝，春江水暖鴨先知。",s:"蘇軾〈惠崇春江晚景〉",w:"竹林外開了幾枝桃花，春天的江水變暖和了。",say:"哇，換季了！桃花開了，柳樹也冒出嫩芽了！",p:["#f4b6c2","#f9d3dc","#fbe7ec"]},
+  summer:{e:"🪷",n:"夏天到了",q:"接天蓮葉無窮碧，映日荷花別樣紅。",s:"楊萬里〈曉出淨慈寺送林子方〉",w:"荷葉綠到天邊，太陽照著荷花，紅得特別好看。",say:"哇，夏天了！橋下開了荷花，柳樹好綠喔！",p:["#f6c9d4","#fbe2e8","#cfe6c3"]},
+  autumn:{e:"🍂",n:"秋天到了",q:"見一葉落，而知歲之將暮。",s:"《淮南子・說山訓》",w:"看到一片葉子落下來，就知道這一年快要過完了。",say:"哇，換季了！柳樹都變黃了，葉子掉到河裡了！",p:["#d9a441","#c8642c","#e8c25a","#a8462a"]},
+  winter:{e:"❄",n:"冬天到了",q:"歲寒，然後知松柏之後彫也。",s:"《論語・子罕》",w:"天氣最冷的時候，才看得出松樹柏樹最晚凋零。",say:"哇，冬天了！柳樹的葉子都掉光了，只有松樹還是綠的。",p:["#ffffff","#eef3f8","#dfe8f1"]}};
+function sw7SeaNow(){try{const o=SW7_PAGES.find(x=>x.k==="home");return SW7_HSEA[sw7TermFor(null,o)]||"spring"}catch(e){return""}}
+function sw7SeaCss(){if(document.getElementById("sw7SeaCss"))return;const s=document.createElement("style");s.id="sw7SeaCss";s.textContent=`
+.sw7-turn{position:absolute;left:0;top:0;width:100%;height:auto;display:block;pointer-events:none;z-index:2}
+.sw7-pt{position:absolute;top:-4%;pointer-events:none;z-index:3;opacity:0;animation:sw7Fall var(--d,3.6s) ease-in var(--dl,0s) forwards}
+.sw7-pt.leaf{width:12px;height:7px;border-radius:70% 0 70% 0}.sw7-pt.petal{width:9px;height:7px;border-radius:60% 60% 60% 10%}.sw7-pt.frost{width:5px;height:5px;border-radius:50%;box-shadow:0 0 4px rgba(255,255,255,.9)}
+@keyframes sw7Fall{0%{opacity:0;transform:translate(0,0) rotate(0)}12%{opacity:.95}85%{opacity:.85}100%{opacity:0;transform:translate(var(--dx,30px),var(--dy,62vh)) rotate(var(--rt,320deg))}}
+.sw7-slip{position:absolute;left:50%;top:14%;z-index:320;transform:translate(-50%,-8px);width:84%;max-width:380px;box-sizing:border-box;padding:12px 14px 11px;text-align:center;
+  background:#f7f0dc;color:#3a2618;border:1px solid rgba(120,84,40,.35);border-radius:4px;box-shadow:0 6px 22px rgba(40,25,10,.28);opacity:0;transition:opacity .7s,transform .7s;font-family:var(--serif,serif);pointer-events:auto;cursor:pointer}
+.sw7-slip.on{opacity:1;transform:translate(-50%,0)}.sw7-slip b{display:block;font-size:20px;letter-spacing:.12em;margin-bottom:6px}.sw7-slip q{display:block;quotes:none;font-size:14.5px;letter-spacing:.02em;font-weight:700;line-height:1.6;color:#5a2a14}
+.sw7-slip small{display:block;font-size:11.5px;color:#7a6650;margin:2px 0 6px}.sw7-slip span{display:block;font-size:13px;line-height:1.6;color:#4a3828}
+@media (prefers-reduced-motion:reduce){.sw7-pt{display:none}.sw7-slip{transition:opacity .4s}}`;document.head.append(s)}
+/* 回傳 true＝這次由轉場負責換圖 */
+function sw7SeaTurn(P,im0,newSrc){const sea=sw7SeaNow();if(!sea)return false;let prev=store.get("hmSea",null);
+  if(!prev){const old=(()=>{try{return typeof sw7Born==="function"&&sw7Born()>0}catch(e){return false}})();if(!old){store.set("hmSea",sea);return false}prev="spring"}
+  if(prev===sea)return false;store.set("hmSea",sea);sw7SeaCss();
+  const oldSrc=prev==="spring"?im0.src:"data/homemap/home_"+prev+".webp?v="+(typeof HM_IMGV!=="undefined"?HM_IMGV:"");
+  const ov=document.createElement("img");ov.className="sw7-turn";ov.alt="";ov.setAttribute("aria-hidden","true");let started=false;
+  const go=()=>{if(started)return;started=true;if(!P.isConnected)return;P.insertBefore(ov,im0.nextSibling);im0.src=newSrc;sw7SeaWait(P,()=>sw7SeaPlay(P,ov,sea))};
+  ov.onload=go;ov.onerror=()=>{ov.src=im0.src};setTimeout(go,1500);ov.src=oldSrc;return true}
+/* 等開頭畫面（body.xqt-on）、載入畫面（#preov）關掉，畫面在前景才播；等太久（2 分鐘）就直接拿掉舊圖 */
+function sw7SeaWait(P,f){const t0=Date.now();const k=()=>{if(!P.isConnected)return;const busy=document.body.classList.contains("xqt-on")||document.getElementById("preov")||document.hidden;
+  if(!busy){setTimeout(f,350);return}if(Date.now()-t0>12e4){const o=P.querySelector(".sw7-turn");if(o)o.remove();return}setTimeout(k,400)};k()}
+function sw7SeaPlay(P,ov,sea){const T=SW7_SEA_TXT[sea],rm=sw7RM(),D=rm?900:2800,t0=performance.now();
+  const step=now=>{if(!ov.isConnected)return;const u=Math.min(1,(now-t0)/D);
+    if(rm)ov.style.opacity=String(1-u);else{const e=u<.5?2*u*u:1-Math.pow(-2*u+2,2)/2,r=(e*150).toFixed(1),m=`radial-gradient(circle at 50% 46%,transparent ${r}%,rgba(0,0,0,.55) calc(${r}% + 6%),#000 calc(${r}% + 16%))`;ov.style.webkitMaskImage=m;ov.style.maskImage=m}
+    if(u<1)requestAnimationFrame(step);else ov.remove()};requestAnimationFrame(step);
+  if(!rm){const kind=sea==="autumn"?"leaf":sea==="winter"?"frost":"petal";for(let i=0;i<26;i++){const d=document.createElement("i");d.className="sw7-pt "+kind;
+    d.style.left=(Math.random()*100).toFixed(1)+"%";d.style.background=T.p[i%T.p.length];d.style.setProperty("--d",(3+Math.random()*2.2).toFixed(2)+"s");d.style.setProperty("--dl",(Math.random()*1.6).toFixed(2)+"s");
+    d.style.setProperty("--dx",((Math.random()-.5)*120).toFixed(0)+"px");d.style.setProperty("--dy",(40+Math.random()*45).toFixed(0)+"vh");d.style.setProperty("--rt",((Math.random()-.5)*720).toFixed(0)+"deg");P.append(d);setTimeout(()=>d.remove(),7600)}}
+  const sl=document.createElement("div");sl.className="sw7-slip";sl.setAttribute("role","status");sl.innerHTML=`<b>${T.e} ${esc(T.n)}</b><q>${esc(T.q)}</q><small>${esc(T.s)}</small>`;   /* 開發者 11/9「拿掉底下的白話文，味道整個變調」：小籤只留古詩文和出處 */
+  const off=()=>{sl.classList.remove("on");setTimeout(()=>sl.remove(),800)};sl.onclick=off;P.append(sl);setTimeout(()=>sl.classList.add("on"),rm?100:900);setTimeout(off,rm?6500:8000);
+  setTimeout(()=>{try{if(typeof BOT!=="undefined"&&BOT&&BOT.say)BOT.say(T.say,5);else window.dispatchEvent(new CustomEvent("xq-bot-said",{detail:T.say}))}catch(e){}},rm?400:2600)}
+function sw7HomeWx(){if(!sw7On())return"";try{const o=SW7_PAGES.find(x=>x.k==="home"),t=sw7TermFor(null,o),p=sw7Precip(t,o.rg),sea=SW7_HSEA[t]||"";
+  if(t==="大雪"||(p&&p.t==="snow"&&SW7_SNOWY.has(t)))return"snow";if(p&&p.t==="rain"&&(!sea||sea==="spring"||sea==="summer"))return"rain";return sea}catch(e){}return""}
 const sw7PolyCss=(q,IW,IH)=>`polygon(${q.map(([x,y])=>(x/IW*100).toFixed(2)+"% "+(y/IH*100).toFixed(2)+"%").join(",")})`;
 
 /* ---------- ① 雨雪本體：每種效果一組 mk（生一顆）＋ draw（畫一格），要換畫法整組換掉 ----------
