@@ -1370,7 +1370,7 @@ html[data-hicon] .tabbar button.on{box-shadow:inset 0 -3px 0 currentColor}
       if(!window.caches)return go();caches.keys().then(function(ks){return Promise.all(ks.filter(function(k){return k.indexOf("xqlab-app-")===0}).map(function(k){return caches.delete(k)}))})
         .then(function(){return navigator.serviceWorker&&navigator.serviceWorker.getRegistration()}).then(function(r){return r&&r.update()}).catch(function(){}).then(go)}};setTimeout(chk,4000)})();
 </script>
-<script>window.XQ_OFFLINE=true;window.XQ_BUILD="20261110-0215";</script>
+<script>window.XQ_OFFLINE=true;window.XQ_BUILD="20261110-0230";</script>
 <script src="core.js"></script>
 <script src="engine.js"></script>
 <script src="local.js"></script>
@@ -15654,7 +15654,7 @@ function sw7Css(){if(document.getElementById("sw7Css"))return;const s=document.c
    tr：落葉樹的樹冠（柳、槐、闊葉樹；松柏竹不圈），節氣變色只改這裡面偏綠的像素。量法與檢查圖：scratchpad t811／genpages.py */
 const SW7_PAGES=[
   {k:"home",re:/data\/homemap\/home\.webp/,m:"out",rg:"s",fg:[[[300,60],[400,20],[520,0],[768,0],[768,387],[720,387],[700,200],[640,153],[560,140],[467,127],[387,107]]],tr:[[[80,960],[149,935],[229,949],[261,1009],[249,1089],[200,1109],[109,1120],[69,1060]],[[527,940],[600,915],[689,935],[709,1000],[689,1085],[600,1095],[540,1060]],[[693,1260],[768,1240],[768,1376],[693,1376]],[[261,261],[300,257],[305,309],[265,312]]]},
-  {k:"homeAlt",re:/data\/homemap\/home_(snow|rain|spring|summer|autumn|winter)/,m:"out",rg:"s"},
+  {k:"homeAlt",re:/data\/homemap\/home_(snow|rain|spring|summer|autumn|winter|[a-z]+_(spring|summer|autumn|winter))/,m:"out",rg:"s"},
   {k:"today",re:/data\/todaymap\/today_day/,m:"out",rg:"s",tr:[[[0,120],[60,109],[140,149],[149,249],[120,329],[0,340]],[[215,149],[289,125],[360,160],[365,249],[220,255]],[[400,160],[469,128],[549,149],[549,245],[400,249]]]},
   {k:"todayN",re:/data\/todaymap\//,m:"out",rg:"s"},
   {k:"learn",re:/data\/hubmap\/learn/,m:"semi",rg:"s",sky:[[[0,0],[768,0],[768,300],[560,300],[480,331],[300,320],[180,331],[0,291]],[[131,720],[627,720],[660,800],[651,1000],[560,963],[380,949],[213,965],[140,1000],[115,800]]]},
@@ -15730,7 +15730,7 @@ function sw7SeaCss(){if(document.getElementById("sw7SeaCss"))return;const s=docu
 function sw7SeaTurn(P,im0,newSrc){const sea=sw7SeaNow();if(!sea)return false;let prev=store.get("hmSea",null);
   if(!prev){const old=(()=>{try{return typeof sw7Born==="function"&&sw7Born()>0}catch(e){return false}})();if(!old){store.set("hmSea",sea);return false}prev="spring"}
   if(prev===sea)return false;store.set("hmSea",sea);sw7SeaCss();
-  const oldSrc=prev==="spring"?im0.src:"data/homemap/home_"+prev+".webp?v="+(typeof HM_IMGV!=="undefined"?HM_IMGV:"");
+  const era=sw7HomeEra(),oldSrc=prev==="spring"&&!era?im0.src:"data/homemap/home_"+(era?era+"_":"")+prev+".webp?v="+(typeof HM_IMGV!=="undefined"?HM_IMGV:"");
   const ov=document.createElement("img");ov.className="sw7-turn";ov.alt="";ov.setAttribute("aria-hidden","true");let started=false;
   const go=()=>{if(started)return;started=true;if(!P.isConnected)return;P.insertBefore(ov,im0.nextSibling);im0.src=newSrc;sw7SeaWait(P,()=>sw7SeaPlay(P,ov,sea))};
   ov.onload=go;ov.onerror=()=>{ov.src=im0.src};setTimeout(go,1500);ov.src=oldSrc;return true}
@@ -15747,8 +15747,17 @@ function sw7SeaPlay(P,ov,sea){const T=SW7_SEA_TXT[sea],rm=sw7RM(),D=rm?900:2800,
   const sl=document.createElement("div");sl.className="sw7-slip";sl.setAttribute("role","status");sl.innerHTML=`<b>${T.e} ${esc(T.n)}</b><q>${esc(T.q)}</q><small>${esc(T.s)}</small>`;   /* 開發者 11/9「拿掉底下的白話文，味道整個變調」：小籤只留古詩文和出處 */
   const off=()=>{sl.classList.remove("on");setTimeout(()=>sl.remove(),800)};sl.onclick=off;P.append(sl);setTimeout(()=>sl.classList.add("on"),rm?100:900);setTimeout(off,rm?6500:8000);
   setTimeout(()=>{try{if(typeof BOT!=="undefined"&&BOT&&BOT.say)BOT.say(T.say,5);else window.dispatchEvent(new CustomEvent("xq-bot-said",{detail:T.say}))}catch(e){}},rm?400:2600)}
+/* 開發者 11/9「除了白天和晚上，也會有傍晚的夕陽和日出」：首頁有畫好的季節就換日出、夕陽圖（home_<季>_dawn／_dusk，跟季節圖同構圖）。
+   日出 5:00～7:30（卯時）、夕陽 16:30～18:30（酉時前後）；還沒畫的季節照舊用季節圖＋淡淡的晨昏色。換圖時不再疊 ② 的晨昏色（圖本身已經是晨昏） */
+const SW7_HTOD={autumn:{dawn:1,dusk:1}};
+/* 開發者 11/9「首頁也要根據停靠的朝代來區分，畫出不同朝代首頁」：首頁換成星槎停靠那一朝的版本（home_<朝>_<季>，跟宋代原圖同構圖，星槎造型不變）。
+   SW7_HERA＝已經畫好四季的朝代；宋、還沒畫好的朝代、還沒登船＝現在這套（宋代江南）。各朝還沒有雨景、雪景、晨昏圖：用那一季的圖，雨雪由程式畫 */
+const SW7_HERA={};   /* 漢朝四季等史學顧問必改修完再打開（han:1） */
+function sw7HomeEra(){try{const e=typeof shipAt==="function"?shipAt():"";return e&&e!=="song"&&SW7_HERA[e]?e:""}catch(x){return""}}
+function sw7HomeTod(d){d=d||new Date();const h=d.getHours()+d.getMinutes()/60;return h>=5&&h<7.5?"dawn":h>=16.5&&h<18.5?"dusk":""}
 function sw7HomeWx(){if(!sw7On())return"";try{const o=SW7_PAGES.find(x=>x.k==="home"),t=sw7TermFor(null,o),p=sw7Precip(t,o.rg),sea=SW7_HSEA[t]||"";
-  if(t==="大雪"||(p&&p.t==="snow"&&SW7_SNOWY.has(t)))return"snow";if(p&&p.t==="rain"&&(!sea||sea==="spring"||sea==="summer"))return"rain";return sea}catch(e){}return""}
+  const era=sw7HomeEra();if(era)return era+"_"+(sea||"spring");
+  if(t==="大雪"||(p&&p.t==="snow"&&SW7_SNOWY.has(t)))return"snow";if(p&&p.t==="rain"&&(!sea||sea==="spring"||sea==="summer"))return"rain";const td=sw7HomeTod();return sea&&td&&SW7_HTOD[sea]&&SW7_HTOD[sea][td]?sea+"_"+td:sea}catch(e){}return""}
 const sw7PolyCss=(q,IW,IH)=>`polygon(${q.map(([x,y])=>(x/IW*100).toFixed(2)+"% "+(y/IH*100).toFixed(2)+"%").join(",")})`;
 
 /* ---------- ① 雨雪本體：每種效果一組 mk（生一顆）＋ draw（畫一格），要換畫法整組換掉 ----------
@@ -15834,7 +15843,7 @@ function sw7Fill(R){const P=R.P,box=R.box,on=sw7On(),img=R.img,src=img.getAttrib
     pw=out?(ov?(term==="冬至"?{t:"snow",a:.8}:null):sw7WxFor(P,o)):null,A0=out&&!pw?SW7_AMB[term]||null:null,tone=ov?sw7SeaOf(term):"";
   let k=pw?pw.t:A0?A0[0]:"";if(td&&sw7TdHas(term))k="";
   if(k==="fly"&&!night)k="";if(rm&&k&&k!=="fog"&&!(SW7_KIND[k]&&SW7_KIND[k].still))k="";
-  const tn=on&&!night&&!td?sw7Tint():null,sky=o&&o.m==="semi"?o.sky||null:null,IW=o&&o.W||768,IH=o&&o.H||1376,
+  const tn=on&&!night&&!td&&!/_(dawn|dusk)\./.test(src)?sw7Tint():null,sky=o&&o.m==="semi"?o.sky||null:null,IW=o&&o.W||768,IH=o&&o.H||1376,
     sig=[k,night,rm,tn?tn.c:"",term,src,pw?pw.a.toFixed(2):"",on,ov].join("|");
   if(sig!==R.sig){R.sig=sig;if(R.cv&&SW7.io)SW7.io.unobserve(R.cv);R.cv=R.cx=null;R.A=[];R.W=R.H=0;R.k=k;R.night=night;R.run=false;R.amt=pw?pw.a:1;
     R.col=A0&&A0[2]||"";R.n=A0&&A0[1]||0;R.sky=sky;R.IW=IW;R.IH=IH;R.lk="";
