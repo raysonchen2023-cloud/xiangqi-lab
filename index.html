@@ -1341,7 +1341,7 @@ html[data-era=qin] .view:has(>.shp-rd),html[data-era=wudai] .view:has(>.shp-rd){
       if(!window.caches)return go();caches.keys().then(function(ks){return Promise.all(ks.filter(function(k){return k.indexOf("xqlab-app-")===0}).map(function(k){return caches.delete(k)}))})
         .then(function(){return navigator.serviceWorker&&navigator.serviceWorker.getRegistration()}).then(function(r){return r&&r.update()}).catch(function(){}).then(go)}};setTimeout(chk,4000)})();
 </script>
-<script>window.XQ_OFFLINE=true;window.XQ_BUILD="20261109-1715";</script>
+<script>window.XQ_OFFLINE=true;window.XQ_BUILD="20261109-1730";</script>
 <script src="core.js"></script>
 <script src="engine.js"></script>
 <script src="local.js"></script>
@@ -12669,12 +12669,35 @@ if(TABBAR_INK_ON&&typeof setTabs==="function"){const f0=setTabs;setTabs=function
    顯示規則照舊跟 setTabs(show,on)：原本藏底欄的地方（對局、讀小說、全螢幕過場…）籤筒也藏；原本底欄按鈕上若有紅點／數字（.dot／.badge／[data-badge]），畫在對應竹籤上。
    第一次看到：籤筒輕輕晃兩下＋一句「點籤筒換地方」（只出一次，store 的 ttSeen）。深色主題籤筒加一圈淡光；prefers-reduced-motion 不晃、不彈。
    籤筒放在 .app 裡、疊在畫面上（z 940），面板（948～）、小卡、對話框都蓋在它上面。開關 TABTUBE_ON（false＝照舊底部導覽列）；前綴 tt */
+/* 11/9 改版（Gemini 第 48 案方案一，開發者選定「雲霧手卷底欄」，玩家反映籤筒難找）：TT_MODE="mist"＝底部常駐四個入口（首頁、線上、棋譜、設定，一次點到），
+   背後一層由下往上淡掉的水墨雲霧（羽化邊，不是硬色塊）；用的就是原本的 #tabbar 按鈕（07t2 的水墨小物件圖示、setTabs、紅點都照舊），只是改成浮在畫面上；
+   目前所在的入口：字變朱紅、外圈一道淡泥金描邊；每格至少 44×44；字和圖示外圍一圈淡宣紙光暈（深色主題換成墨色光暈），白天夜景都看得清楚。
+   底欄用 position:absolute 貼在 .app 底（.app 本身是 fixed），offsetParent 照舊有值，xqBars、07f 星槎圖量底欄的寫法都不用改。
+   滿版圖畫到雲霧底下（雲霧上緣羽化蓋在圖上），但 #view 底下留出底欄那一段（--ttH），圖上的入口標籤、出口、小人不會被底欄擋住；xqBars 量到的底欄高度＝雲霧下面那排入口。
+   原本藏底欄的頁（對局、讀小說、渡口、驛站…）照舊藏，那些頁頂欄有返回和 🏠。TT_MODE="tube"＝回到右下角竹籤筒（圖 art/tabtube/ 先留著）。 */
 const TABTUBE_ON=true;
+const TT_MODE="mist";
 const TT_IMGV="2401";
 const TT_GO=[["#/","首頁","tab_home"],["#/lobby","線上","tab_lobby"],["#/db","棋譜","tab_db"],["#/settings","設定","tab_set"]];
 let TT_SHOW=false,TT_AT="",TT_UN=null;
 function ttCss(){if(document.getElementById("ttCss"))return;const s=document.createElement("style");s.id="ttCss";s.textContent=`
 #tabbar.tt-gone{display:none!important}
+.tabbar.tt-mist{--ttm:244,237,220;position:absolute;left:0;right:0;bottom:0;z-index:30;display:flex;gap:2px;border:0!important;box-shadow:none!important;background:none!important;background-color:transparent!important;
+  padding:2px 8px calc(4px + var(--safeB,0px));overflow:visible;transform:none}
+.tabbar.tt-mist.tb-dark,.tabbar.tt-mist.tt-night{--ttm:24,22,30}
+.tabbar.tt-mist::before{content:"";position:absolute;left:0;right:0;bottom:0;top:-26px;z-index:-1;pointer-events:none;
+  background:radial-gradient(40% 58% at 12% 100%,rgba(var(--ttm),.55),rgba(var(--ttm),0) 72%),radial-gradient(44% 64% at 50% 104%,rgba(var(--ttm),.5),rgba(var(--ttm),0) 74%),
+    radial-gradient(38% 60% at 88% 100%,rgba(var(--ttm),.55),rgba(var(--ttm),0) 72%),linear-gradient(to top,rgba(var(--ttm),.95) 0,rgba(var(--ttm),.9) calc(100% - 30px),rgba(var(--ttm),.42) calc(100% - 13px),rgba(var(--ttm),0) 100%)}
+.tabbar.tb-ink.tt-mist button{flex:1;min-height:56px;min-width:44px;gap:1px;padding:3px 0 2px;margin:0;border:0;border-radius:14px;background:none;box-shadow:none;color:#3a2a1c;
+  font:800 12.5px/1.2 var(--serif,serif);letter-spacing:.14em;text-shadow:0 0 2px rgba(var(--ttm),1),0 0 5px rgba(var(--ttm),.95),0 0 9px rgba(var(--ttm),.8);transition:box-shadow .2s,color .2s}
+.tabbar.tb-ink.tt-mist button .ic{width:32px;height:32px}
+.tabbar.tb-ink.tt-mist button .ic img{filter:drop-shadow(0 0 2px rgba(var(--ttm),.95)) drop-shadow(0 0 4px rgba(var(--ttm),.8)) saturate(.8)}
+.tabbar.tb-ink.tt-mist button.on{color:#b0301c;background:radial-gradient(70% 80% at 50% 45%,rgba(255,246,222,.55),rgba(255,246,222,0) 78%);box-shadow:inset 0 0 0 1.5px rgba(190,150,72,.75),0 0 8px rgba(214,176,92,.4)}
+.tabbar.tb-ink.tt-mist button.on .ic img{filter:drop-shadow(0 0 2px rgba(255,236,190,.95)) drop-shadow(0 0 5px rgba(214,176,92,.7))}
+.tabbar.tb-ink.tt-mist.tt-night button,.tabbar.tb-ink.tt-mist.tb-dark button{color:#f1e4c6;text-shadow:0 0 2px rgba(var(--ttm),1),0 0 5px rgba(var(--ttm),.95),0 0 9px rgba(var(--ttm),.8)}
+.tabbar.tb-ink.tt-mist.tt-night button.on,.tabbar.tb-ink.tt-mist.tb-dark button.on{color:#ff8f6e;background:radial-gradient(70% 80% at 50% 45%,rgba(214,176,92,.18),rgba(214,176,92,0) 78%);box-shadow:inset 0 0 0 1.5px rgba(214,176,92,.7),0 0 8px rgba(214,176,92,.35)}
+.tabbar.tt-mist button:focus-visible{outline:2px solid #b0301c;outline-offset:-3px}
+body.tt-on.tt-mode-mist #view{padding-bottom:var(--ttH,0px)}
 #view.tt-fillx{overflow-x:hidden}
 .tt-tube{position:fixed;right:calc(6px + env(safe-area-inset-right,0px));bottom:calc(8px + var(--safeB,0px) + var(--ttUp,0px));z-index:940;width:46px;height:100px;border:0;padding:0;margin:0;
   background:url("data/tabtube/tube.webp?v=${TT_IMGV}") center bottom/contain no-repeat;cursor:pointer;-webkit-tap-highlight-color:transparent;transform-origin:50% 92%;
@@ -12700,7 +12723,7 @@ function ttCss(){if(document.getElementById("ttCss"))return;const s=document.cre
 @keyframes ttTip{0%{opacity:0;transform:translateX(6px)}12%,80%{opacity:1;transform:none}100%{opacity:0}}
 body.tt-on #topRight .ib[aria-label="回首頁"]{display:none}   /* 回饋 830：籤筒在時，頂欄的 🏠 跟「首頁」竹籤重複，藏起來；籤筒藏著的頁（渡口、對局…）照舊有 🏠 */
 .tt-dup{display:none!important}
-body.tt-on #sndPill{right:calc(60px + env(safe-area-inset-right,0px))}
+body.tt-on.tt-mode-tube #sndPill{right:calc(60px + env(safe-area-inset-right,0px))}
 @media (prefers-reduced-motion:reduce){.tt-tube.wig{animation:none}.tt-s{transition:none}.tt-tip{animation:none}}`;document.head.append(s)}
 function ttEls(){let t=document.getElementById("ttTube");if(t)return t;ttCss();
   t=document.createElement("button");t.type="button";t.id="ttTube";t.className="tt-tube";t.hidden=true;t.setAttribute("aria-label","籤筒：換地方（首頁、線上、棋譜、設定）");t.setAttribute("aria-expanded","false");
@@ -12712,9 +12735,14 @@ function ttEls(){let t=document.getElementById("ttTube");if(t)return t;ttCss();
   /* 從畫面右邊緣往內滑＝打開 */
   let sx=null,sy=0;addEventListener("pointerdown",e=>{sx=TT_SHOW&&e.clientX>innerWidth-18?e.clientX:null;sy=e.clientY},true);
   addEventListener("pointermove",e=>{if(sx==null)return;if(sx-e.clientX>34&&Math.abs(e.clientY-sy)<40){sx=null;ttFan(true)}},true);addEventListener("pointerup",()=>{sx=null},true);
-  const re=()=>{try{ttDedupe()}catch(e){}ttFill();ttAvoid()};addEventListener("resize",()=>{clearTimeout(re.t);re.t=setTimeout(re,120)});addEventListener("hashchange",()=>{ttFan(false,1);setTimeout(re,350);setTimeout(re,1300)});
-  {const V=document.getElementById("view");if(V){new MutationObserver(()=>{clearTimeout(re.m);re.m=setTimeout(re,200)}).observe(V,{childList:true});V.addEventListener("scroll",()=>{clearTimeout(re.s);re.s=setTimeout(ttAvoid,180)},{passive:true})}}   /* 圖比畫面高要捲的頁：捲完才重算讓位，不跟著捲動一直跳 */
   return t}
+function ttHooks(){if(ttHooks.on)return;ttHooks.on=1;const re=()=>{try{ttDedupe();ttNight()}catch(e){}ttH();ttFill();ttAvoid()};addEventListener("resize",()=>{clearTimeout(re.t);re.t=setTimeout(re,120)});addEventListener("hashchange",()=>{ttFan(false,1);setTimeout(re,350);setTimeout(re,1300)});
+  {const V=document.getElementById("view");if(V){new MutationObserver(()=>{clearTimeout(re.m);re.m=setTimeout(re,200)}).observe(V,{childList:true});V.addEventListener("scroll",()=>{clearTimeout(re.s);re.s=setTimeout(ttAvoid,180)},{passive:true})}}   /* 圖比畫面高要捲的頁：捲完才重算讓位，不跟著捲動一直跳 */
+  try{const tb=document.getElementById("tabbar");if(tb&&window.ResizeObserver)new ResizeObserver(()=>ttH()).observe(tb)}catch(e){}}
+/* 雲霧底欄的高度（雲霧下面那排入口，含 safe-area）→ --ttH：#view 底下留這麼多，圖上的東西不會被擋 */
+/* 夜景圖（網址有 _night、頁面 class 有 -night）時雲霧換墨色、字換淺色，跟夜裡的圖接得上 */
+function ttNight(){const tb=document.getElementById("tabbar"),V=document.getElementById("view");if(!tb||!V)return;const P=V.querySelector(".shp-page"),im=P&&P.querySelector("img");tb.classList.toggle("tt-night",!!P&&(/(^|\s)[\w-]*-night(\s|$)/.test(P.className)||!!(im&&/_night/.test(im.currentSrc||im.src||""))))}
+function ttH(){const tb=document.getElementById("tabbar"),R=document.documentElement;const on=TT_MODE==="mist"&&tb&&!tb.hidden&&tb.getClientRects().length>0;R.style.setProperty("--ttH",on?Math.round(tb.getBoundingClientRect().height)+"px":"0px")}
 function ttPaint(){const fan=document.getElementById("ttFan");if(!fan)return;const tb=document.getElementById("tabbar");
   fan.querySelectorAll(".tt-s").forEach(b=>{const on=b.dataset.go===TT_AT,t2=b.querySelector(".tx").textContent;let s=b.querySelector(".seal");
     if(on&&!s){s=document.createElement("i");s.className="seal";s.setAttribute("aria-hidden","true");s.textContent="在";b.append(s)}else if(!on&&s)s.remove();
@@ -12731,7 +12759,7 @@ function ttFan(open,quiet){const fan=document.getElementById("ttFan"),sc=documen
    圖比畫面高（小手機、iPad）照舊照寬度放、可以往下捲。座標都是圖的百分比，走路、出口、桌面跳躍、面板都跟著圖，不會錯位 */
 function ttFill(){const V=document.getElementById("view");if(!V)return;const P=V.querySelector(".shp-page.cq");if(!P){V.classList.remove("tt-fillx");return}const im=P.querySelector(":scope>img");if(!im)return;
   const go=()=>{if(!P.isConnected)return;P.style.width="";P.style.marginLeft="";P.style.maxWidth="";V.classList.remove("tt-fillx");P.querySelectorAll(".shp-spot,.po-sight").forEach(b=>{if(b.dataset.ttL!=null)b.style.left=b.dataset.ttL});
-    if(!TABTUBE_ON)return;const vr=V.getBoundingClientRect(),pr=P.getBoundingClientRect(),av=vr.bottom-pr.top,nw=im.naturalWidth||768,nh=im.naturalHeight||1376,W=pr.width,H=W*nh/nw;
+    if(!TABTUBE_ON)return;const vr=V.getBoundingClientRect(),pr=P.getBoundingClientRect(),av=vr.top+V.clientHeight-(parseFloat(getComputedStyle(V).paddingBottom)||0)-pr.top,nw=im.naturalWidth||768,nh=im.naturalHeight||1376,W=pr.width,H=W*nh/nw;
     if(!W||av-H<2||av>H*1.25)return;const set=h=>{const w=Math.round(h*nw/nh);Object.assign(P.style,{maxWidth:"none",width:w+"px",marginLeft:Math.round((W-w)/2)+"px"})};V.classList.add("tt-fillx");set(av);
     {const ex=V.scrollHeight-V.clientHeight;if(ex>0&&ex<40)set(av-ex)}   /* 圖下還有一點邊距（.pad 之類）就扣掉，免得多出幾 px 可以捲 */
     requestAnimationFrame(()=>P.querySelectorAll(".shp-spot,.po-sight").forEach(b=>{if(b.dataset.ttL==null)b.dataset.ttL=b.style.left;const q=b.getBoundingClientRect(),m=6;let d=0;if(q.left<vr.left+m)d=vr.left+m-q.left;else if(q.right>vr.right-m)d=vr.right-m-q.right;if(d)b.style.left="calc("+b.dataset.ttL+" + "+Math.round(d)+"px)"}))};
@@ -12754,7 +12782,9 @@ function ttAvoid(){const t=document.getElementById("ttTube");if(!t||t.hidden)ret
   try{if(typeof SHW_XR!=="undefined"&&(typeof shwExitOn!=="function"||shwExitOn()))for(const x of SHW_XR){if(!x.f.isConnected||!V.contains(x.f))continue;const f=x.f.getBoundingClientRect(),r=x.r;ob.push({left:f.left+f.width*r[0]/100,right:f.left+f.width*r[2]/100,top:f.top+f.height*r[1]/100,bottom:f.top+f.height*r[3]/100})}}catch(e){}
   const b0=t.getBoundingClientRect(),hit=u=>ob.some(r=>r.left<b0.right-4&&r.right>b0.left+4&&r.top<b0.bottom-u-4&&r.bottom>b0.top-u+4);
   let u=0;const mx=innerHeight*.4;while(hit(u)&&u<mx)u+=8;R.style.setProperty("--ttUp",(u<mx?u:0)+"px")}
-function ttSync(){if(!TABTUBE_ON)return;const tb=document.getElementById("tabbar");if(!tb||!document.body)return;const t=ttEls();tb.classList.add("tt-gone");
+function ttSync(){if(!TABTUBE_ON)return;const tb=document.getElementById("tabbar");if(!tb||!document.body)return;ttCss();ttHooks();document.body.classList.toggle("tt-mode-mist",TT_MODE==="mist");document.body.classList.toggle("tt-mode-tube",TT_MODE!=="mist");
+  if(TT_MODE==="mist"){tb.classList.remove("tt-gone");tb.classList.add("tt-mist");{const t0=document.getElementById("ttTube");if(t0)t0.hidden=true}document.body.classList.toggle("tt-on",TT_SHOW);ttH();setTimeout(()=>{ttH();ttFill()},60);return}
+  const t=ttEls();tb.classList.add("tt-gone");tb.classList.remove("tt-mist");
   t.hidden=!TT_SHOW;document.body.classList.toggle("tt-on",TT_SHOW);if(!TT_SHOW)ttFan(false,1);ttPaint();setTimeout(ttAvoid,60);
   if(TT_SHOW)ttFirst()}
 /* 第一次看到才提示：籤筒真的露在最上層（沒被開頭畫面、載入畫面、小卡蓋住）才晃＋說一句，記 ttSeen；被蓋住就 2 秒後再看 */
