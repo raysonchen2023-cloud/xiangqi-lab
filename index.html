@@ -1370,7 +1370,7 @@ html[data-hicon] .tabbar button.on{box-shadow:inset 0 -3px 0 currentColor}
       if(!window.caches)return go();caches.keys().then(function(ks){return Promise.all(ks.filter(function(k){return k.indexOf("xqlab-app-")===0}).map(function(k){return caches.delete(k)}))})
         .then(function(){return navigator.serviceWorker&&navigator.serviceWorker.getRegistration()}).then(function(r){return r&&r.update()}).catch(function(){}).then(go)}};setTimeout(chk,4000)})();
 </script>
-<script>window.XQ_OFFLINE=true;window.XQ_BUILD="20261110-1330";</script>
+<script>window.XQ_OFFLINE=true;window.XQ_BUILD="20261110-1345";</script>
 <script src="core.js"></script>
 <script src="engine.js"></script>
 <script src="local.js"></script>
@@ -8199,6 +8199,10 @@ function homeRecBind(v){const b=v&&v.querySelector("#hRec");if(!b)return;let R={
   set(pick(null,onl));mainDoneBind(v);
   b.onclick=async e=>{e.stopPropagation();vibrate(5);if(R.sw)try{await api("/play/switch",{kind:R.sw})}catch(err){}if(R.park)store.set("park3d",true);location.hash=R.go};
   Promise.all([api("/play/state").catch(()=>null),typeof cjData==="function"?cjData().then(D=>{try{cjToday(D,cjState())}catch(e){}}).catch(()=>null):null,homeRecShipK()?shipBank().catch(()=>null):null]).then(([st])=>set(pick(st,onl))).catch(()=>{})}
+/* 11/10 開發者（渡口「黃山」「石牌坊」「馬頭牆」小旗）：「這樣破壞畫面美感了，玩家自己點再出現說明就好，不用一開始就標好物件」——
+   渡口的景點（.po-sight[data-ps]，只是看說明、不是入口）平常完全看不見，留一塊比原本大的透明點擊範圍，點到那一帶才跳出說明（portSight，角色照舊走過去）。
+   驛站的 .po-sight 是入口（旅人、秘境棋友、信箱…），照舊顯示 */
+(()=>{try{const s=document.createElement("style");s.id="poSightHide";s.textContent=".po-sight[data-ps]{opacity:0!important;min-width:20cqw;min-height:12cqw;border:0!important;box-shadow:none!important;background:transparent!important;color:transparent!important;animation:none!important}";document.head.append(s)}catch(e){}})();
 /* ================= ♟ 石桌續局（意見回饋 762 第一版，開發者 11/8 定案；規劃 xiangqi-db/story/千秋殘局續闖_規劃.md）=================
    本站 3 題都解開（學會了）以後，千秋殘局頁 #/ship/pz 的三團星光換成「續局」：每站 2 組、每組 3 題（續一＝同難度，續二＝難半階到一階），兩組都解開＝「全譜」，
    全譜以後石桌改成「🎲 隨手一局」（不計點）。續局不是起航條件，也不影響「學會了」（學會照舊只看本站 3 題，07f-ship.js shipMark）。
