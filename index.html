@@ -1294,6 +1294,35 @@ html[data-era=qin] .tile .ic:has(.eic),html[data-era=wudai] .tile .ic:has(.eic){
 html[data-era=wudai] .card,html[data-era=wudai] .tile{border-radius:16px}html[data-era=qin] .item,html[data-era=wudai] .item{border-radius:14px;border-color:var(--line)}
 html[data-era=qin] .hrec,html[data-era=wudai] .hrec,html[data-era=wudai] .instc{border-radius:16px}html[data-era=qin] .rd-gist,html[data-era=wudai] .rd-gist{border-radius:12px}
 html[data-era=qin] .view:has(>.shp-rd),html[data-era=wudai] .view:has(>.shp-rd){background:none}
+/* 回饋 846（開發者 11/9 選：字級放大）：html[data-fz] 只在不是「標準」時才有，標準字級完全照舊。
+   面板（sheet、xqSheet、結果視窗）、小說、設定頁用 zoom 整塊等比放大（寬度會自己縮回框內、換行，不會水平捲動）；
+   面板的捲動框本身不放大、只放大裡面的東西，捲動位置才不會算錯。對局畫面只放大字（頭像、按鈕圖示、棋盤不動）。 */
+html[data-fz] .sheet .sh-t,html[data-fz] .sheet .sh-b>*,html[data-fz] .xqs-h,html[data-fz] .xqs-c,html[data-fz] .xqs-b>*,html[data-fz] .modal .box{zoom:var(--fz)}
+html[data-fz] .view>.shp-rd,html[data-fz] .pad.home:has(>#sgTabs){zoom:var(--fz)}
+html[data-fz] .topbar h1{font-size:calc(18px * var(--fz))}
+html[data-fz] .toast{font-size:calc(14px * var(--fz))}
+html[data-fz] .player .nm b{font-size:calc(15px * var(--fz))}html[data-fz] .player .nm span{font-size:calc(12px * var(--fz))}html[data-fz] .player .clk{font-size:calc(18px * var(--fz))}
+html[data-fz] .status{font-size:calc(13px * var(--fz))}html[data-fz] .note{font-size:calc(13px * var(--fz))}
+html[data-fz] .strip .chip{font-size:calc(14px * var(--fz))}html[data-fz] .actions button{font-size:calc(11px * var(--fz))}
+/* 字放大了，行高收緊一點：對局畫面上下加起來的高度跟標準差不多，矮手機（375×667）上的棋盤才不會被擠小 */
+html[data-fz] .player .nm,html[data-fz] .status,html[data-fz] .actions button{line-height:1.22}html[data-fz] .strip .chip{line-height:1.2}
+/* 金框入口標籤只放大一半（--fzL 最多 1.15 倍），而且只放大大字（b），內距、小字不動。
+   05-settings.js 的 fzFit 會量：放大後跟別的標籤或出口疊到、標準字級時沒疊到的那幾個，加 fz-no 不放大（.fz-base＝量標準大小時暫時套用）。
+   星槎上的小木牌（.shp-hs，單行）整顆以中心放大（transform-origin 0 0 配 translate(-50%,-50%)＝中心不動） */
+html[data-fz] .shp-spot>b{zoom:var(--fzL)}
+html[data-fz] .fz-base .shp-spot>b,html[data-fz] .shp-spot.fz-no>b{zoom:1}
+html[data-fz] .shp-hs{scale:var(--fzL);transform-origin:0 0}html[data-fz] .fz-base .shp-hs,html[data-fz] .shp-hs.fz-no{scale:none}
+/* 棋話一頁：字寫在船上那塊告示板（.shl-board，字級跟圖寬走）。放大時告示板變寬、高度跟著字長，以原本告示板的中心為準，墊一層紙底，字超出畫上的板子也看得清楚 */
+html[data-fz=l] .shl-board,html[data-fz=xl] .shl-board{font-size:calc(2.4cqw * var(--fz));left:21%;width:58%;height:auto;min-height:18.4%;top:49.6%;transform:translateY(-50%);padding:1.2cqw 1.8cqw;box-sizing:border-box;background:rgba(246,236,214,.95);border-radius:1cqw;box-shadow:0 0 0 .4cqw rgba(90,64,36,.45)}
+html[data-fz=l] .shl-board b,html[data-fz=xl] .shl-board b{font-size:calc(3.8cqw * var(--fz))}
+/* 回饋 847（讀螢幕盲棋）：只給讀螢幕看的元素（播報區、讀出盤面、改用平面棋盤）；用鍵盤 Tab 到時才現出來 */
+.ax-sr{position:absolute!important;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0 0 0 0);clip-path:inset(50%);white-space:nowrap;border:0}
+button.ax-sr:focus-visible{width:auto;height:auto;margin:0;clip:auto;clip-path:none;left:8px;top:8px;z-index:20;padding:6px 12px;border-radius:10px;background:var(--card);color:var(--ink);border:2px solid var(--accent);font-size:14px}
+.ax-sq rect{outline:none}.ax-sq rect:focus-visible{stroke:#0B5CD5;stroke-width:5}
+/* 回饋 848（色盲高對比）：設定的「高對比棋子」打開時（html[data-hicon]），只靠朱紅色表示「推薦／該去」的金框標籤，右上角多一個黃底黑字「！」；
+   舊底欄目前那一格多一條底線（竹籤筒本來就有「在」字朱印，不用補） */
+html[data-hicon] .shp-spot.hot::before,html[data-hicon] .shp-hs.hot::before{content:"！";position:absolute;right:-9px;top:-9px;width:20px;height:20px;border-radius:50%;background:#FFD400;color:#111;border:2px solid #111;font:900 13px/16px var(--sans,sans-serif);text-align:center;letter-spacing:0;box-sizing:border-box}
+html[data-hicon] .tabbar button.on{box-shadow:inset 0 -3px 0 currentColor}
 </style></head><body>
 <div class="app">
  <div class="topbar" id="topbar"><button class="ib" id="back" hidden><b>‹</b>返回</button><h1 id="title">象棋千秋</h1><span id="topRight"></span></div>
@@ -1341,7 +1370,7 @@ html[data-era=qin] .view:has(>.shp-rd),html[data-era=wudai] .view:has(>.shp-rd){
       if(!window.caches)return go();caches.keys().then(function(ks){return Promise.all(ks.filter(function(k){return k.indexOf("xqlab-app-")===0}).map(function(k){return caches.delete(k)}))})
         .then(function(){return navigator.serviceWorker&&navigator.serviceWorker.getRegistration()}).then(function(r){return r&&r.update()}).catch(function(){}).then(go)}};setTimeout(chk,4000)})();
 </script>
-<script>window.XQ_OFFLINE=true;window.XQ_BUILD="20261109-2015";</script>
+<script>window.XQ_OFFLINE=true;window.XQ_BUILD="20261109-2030";</script>
 <script src="core.js"></script>
 <script src="engine.js"></script>
 <script src="local.js"></script>
@@ -1573,7 +1602,7 @@ addEventListener("popstate",()=>{const s1=history.state||{},d0=NAV_D;if(typeof s
 function modal(html,buttons,cls){if(Date.now()<MODAL_HOLD){const rn=ROUTE_N,go=()=>{const i=MODAL_Q.indexOf(go);if(i<0)return;MODAL_Q.splice(i,1);if(rn===ROUTE_N)modal(html,buttons,cls)};MODAL_Q.push(go);setTimeout(go,MODAL_HOLD-Date.now()+30);return null}
   const m=document.createElement("div");m.className="modal"+(cls?" "+cls:"")+(document.querySelector(".kx,.kx-dim")?" ovk":"");m.innerHTML=`<div class="box">${html}<div class="mb"></div></div>`;
   for(const[label,fn,ghost]of buttons){const b=document.createElement("button");b.className="btn"+(ghost?" ghost":"")+(typeof ghost==="string"?" "+ghost:"");b.textContent=label;b.onclick=()=>{m.remove();fn&&fn()};m.querySelector(".mb").append(b)}
-  document.body.append(m);return m}
+  document.body.append(m);m.setAttribute("role","dialog");try{if(typeof axSay==="function")axSay(m.querySelector(".box").innerText.replace(/\s+/g," ").trim().slice(0,160))}catch(e){}return m}   /* 回饋 847（讀螢幕盲棋）：結果視窗（贏了、輸了、和棋）跳出來時讀出來 */
 /* 意見回饋 607：點一下跳過殺棋動畫：等著的結果視窗馬上出來 */
 function modalSkip(){MODAL_HOLD=0;MODAL_Q.slice().forEach(f=>{try{f()}catch(e){}})}
 /* 回饋 835（開發者 11/9 選：過場點兩下跳過）：不擋手的大動畫——蓋印（stampFx、本命星 chdSealFx）、開局大字、將軍、開局名——本來就 pointer-events:none、點得到底下，
@@ -1685,6 +1714,11 @@ function applyEra(){try{icoEra()}catch(e){}try{if(typeof bgmSync==="function"&&t
 applyEra();
 const boardTheme=k=>{k=k||store.get("boardTheme","wood3d");if(k==="auto"&&boardEraE())return boardEraE().b;return(BOARD_THEMES.find(t=>t[0]===k)||BOARD_THEMES[0])[2]};
 let boardN=0;
+/* 回饋 847（讀螢幕盲棋）：讀螢幕的播報區（aria-live）。每句話各自一行加進去（只留最後 4 行），連著兩句（自己走、對手馬上回）才不會互相蓋掉 */
+const AX_CN=["","一","二","三","四","五","六","七","八","九","十"];
+function axSay(t){if(!t||!document.body)return;let r=document.getElementById("axLive");
+  if(!r){r=document.createElement("div");r.id="axLive";r.className="ax-sr";r.setAttribute("role","status");r.setAttribute("aria-live","polite");r.setAttribute("aria-atomic","false");document.body.append(r)}
+  setTimeout(()=>{const d=document.createElement("div");d.textContent=t;r.append(d);while(r.children.length>4)r.firstChild.remove()},50)}
 // 走棋音效：用 WebAudio 合成木頭棋子的「叩」聲（吃子比較重），設定裡可以關
 let AC=null;
 // iPhone 主畫面 App 的聲音（rootcause：切到背景／鎖螢幕回來後，AudioContext 常常顯示 running 但其實已經不出聲，resume 也救不回來）
@@ -2164,6 +2198,36 @@ function Board(onTap,onSwipe){
   let flip=false;
   const vc=i=>flip?8-i%9:i%9,vr=i=>flip?9-(i/9|0):(i/9|0),X=i=>X0+vc(i)*S,Y=i=>Y0+vr(i)*S;
   let prevB=null,lastBoard=null,lastO={},pieceEls={},dropNoAnim=false;const uid=++boardN;
+  /* 回饋 847（讀螢幕盲棋）：可以點的棋盤（onTap 有參數）在 SVG 最底下疊一層 90 個透明格子（role=button、aria-label「紅俥，九路，第一排」），
+     照畫面上的順序排（上到下、左到右）；格子 pointer-events:none，一般玩家的點擊、拖曳照舊落在棋盤上，只有 VoiceOver 點兩下／鍵盤 Enter 才會送到格子。
+     重畫棋盤時這層不拿掉（焦點才不會跑掉）；其他畫出來的東西一律 aria-hidden。展示用的棋盤（沒有點擊）整個當一張圖「棋盤」 */
+  const AXI=!!onTap&&onTap.length>0;let axG=null,axRB=null,axSel=-1,axLastPU=0,axLab=[];
+  if(AXI){axG=el("g",{class:"ax-sq",role:"group","aria-label":"棋盤，每一格可以點選"});axG.setAttribute("style","pointer-events:none");
+    for(let k=0;k<90;k++){const q=el("rect",{x:X0+(k%9)*S-S/2,y:Y0+(k/9|0)*S-S/2,width:S,height:S,fill:"transparent",role:"button",tabindex:k===85?"0":"-1","data-k":k});axG.append(q)}
+    svg.append(axG);
+    axG.addEventListener("click",e=>{const q=e.target&&e.target.closest&&e.target.closest("[data-k]");if(!q)return;e.stopPropagation();if(Date.now()-axLastPU<500)return;const sq=flip?89-(+q.dataset.k):+q.dataset.k;onTap(sq)});
+    axG.addEventListener("keydown",e=>{const q=e.target&&e.target.closest&&e.target.closest("[data-k]");if(!q)return;let k=+q.dataset.k;
+      if(e.key==="Enter"||e.key===" "){e.preventDefault();q.dispatchEvent(new MouseEvent("click",{bubbles:true}));return}
+      const d={ArrowLeft:-1,ArrowRight:1,ArrowUp:-9,ArrowDown:9}[e.key];if(d==null)return;e.preventDefault();
+      if((d===-1&&k%9===0)||(d===1&&k%9===8)||k+d<0||k+d>89)return;k+=d;
+      axG.querySelectorAll("[data-k]").forEach(r=>r.setAttribute("tabindex",+r.dataset.k===k?"0":"-1"));const n=axG.querySelector(`[data-k="${k}"]`);if(n)n.focus()});
+    axRB=document.createElement("button");axRB.type="button";axRB.className="ax-sr ax-rb";axRB.textContent="讀出盤面";axRB.onclick=()=>axSay(axBoardText(lastBoard))}
+  else{svg.setAttribute("role","img");svg.setAttribute("aria-label","棋盤")}
+  const axPos=sq=>{const k=flip?89-sq:sq;return[AX_CN[9-k%9]+"路",AX_CN[10-(k/9|0)]+"排"]};
+  const axPc=p=>(sideOf(p)==="r"?"紅":"黑")+NAMES[sideOf(p)][p.toUpperCase()];
+  function axBoardText(b){if(!b)return"還沒有擺棋子";const out=[];
+    for(const s of["r","b"]){const grp=[];let n=0;for(const P of"KARNBCP"){const at=[];b.forEach((p,i)=>{if(p&&sideOf(p)===s&&p.toUpperCase()===P){const[f,r]=axPos(i);at.push(f+"第"+r)}});
+        if(at.length){n+=at.length;grp.push(NAMES[s][P]+"在"+at.join("、"))}}
+      out.push((s==="r"?"紅方":"黑方")+(n?n+"子："+grp.join("；"):"沒有棋子"))}
+    return out.join("。")+"。"}
+  function axSync(board,o){if(!AXI)return;
+    if(axRB&&svg.parentNode&&axRB.nextSibling!==svg)svg.before(axRB);
+    const tg=new Set(o.targets||[]),L=o.last||{};
+    axG.querySelectorAll("[data-k]").forEach(r=>{const k=+r.dataset.k,sq=flip?89-k:k,p=board[sq],[f,rk]=axPos(sq);
+      let t=p?axPc(p)+"，"+f+"，第"+rk:f+rk+"，空";
+      if(sq===o.sel)t+="，已選取";if(tg.has(sq))t+=p?"，可以吃":"，可以走到這裡";if(sq===o.check)t+="，被將軍";else if(sq===L.t&&L.f!==L.t&&p)t+="，剛走到這裡";
+      if(axLab[k]!==t){axLab[k]=t;r.setAttribute("aria-label",t)}});
+    for(const c of svg.children)if(c!==axG&&!c.hasAttribute("aria-hidden"))c.setAttribute("aria-hidden","true")}
   // 一顆棋子（傳統：米色棋子＋紅黑字；實心：紅黑棋子＋白字）
   // 每顆棋子都是「厚圓餅」：桌面上的柔和落影（徑向漸層橢圓，不用 filter）→ 側邊（往下錯開、較深的一圈＝厚度）→ 頂面（中間微隆的漸層）→ 倒角亮邊 → 刻字
   // 拿起來（選中）時整顆往上抬、影子變大變遠
@@ -2192,8 +2256,9 @@ function Board(onTap,onSwipe){
   function piece(p,i,dy,T,PS,up){const s=sideOf(p),col=s==="r"?T.r:T.b,g=el("g",{}),x=X(i),y=Y(i),yt=y+dy,ch=NAMES[s][p.toUpperCase()];
     const txt=(c,o,a)=>el("text",Object.assign({x,y:yt+10+o,"text-anchor":"middle","font-family":"var(--serif)","font-weight":900,"font-size":28,fill:c},a||{}),ch);
     g.append(el("ellipse",up?{cx:x+5,cy:y+13,rx:34,ry:31,fill:`url(#psh${uid})`}:{cx:x+2,cy:y+7,rx:31,ry:29.5,fill:`url(#psh${uid})`}));
-    if(store.get("hiCon",false)){const hc=s==="r"?"#C8102E":"#111111";g.append(el("circle",{cx:x,cy:yt,r:28.5,fill:"#FFFFFF",stroke:hc,"stroke-width":4}));g.append(el("circle",{cx:x,cy:yt,r:22.5,fill:"none",stroke:hc,"stroke-width":1.6}));
-      g.append(txt(hc,2,{"font-size":35,"font-family":"\"Noto Sans TC\",\"PingFang TC\",\"Microsoft JhengHei\",sans-serif"}));if(up)g.append(el("circle",{cx:x,cy:yt,r:31,fill:"none",stroke:T.mv,"stroke-width":4}));return g}   /* 高對比棋子 */
+    if(store.get("hiCon",false)){const hc=s==="r"?"#C8102E":"#111111",inv=s!=="r";   /* 回饋 848（色盲高對比）：黑子改成黑底白字（紅子照舊白底紅字），紅綠色盲不用分紅黑也看得出是哪一方 */
+      g.append(el("circle",{cx:x,cy:yt,r:28.5,fill:inv?"#111111":"#FFFFFF",stroke:inv?"#FFFFFF":hc,"stroke-width":inv?2:4}));if(inv)g.append(el("circle",{cx:x,cy:yt,r:29.5,fill:"none",stroke:"#111111","stroke-width":1.5}));g.append(el("circle",{cx:x,cy:yt,r:22.5,fill:"none",stroke:inv?"#FFFFFF":hc,"stroke-width":1.6}));
+      g.append(txt(inv?"#FFFFFF":hc,2,{"font-size":35,"font-family":"\"Noto Sans TC\",\"PingFang TC\",\"Microsoft JhengHei\",sans-serif"}));if(up)g.append(el("circle",{cx:x,cy:yt,r:31,fill:"none",stroke:T.mv,"stroke-width":4}));return g}   /* 高對比棋子 */
     if(curPK&&PSET.has(curPK)){g.append(el("image",{href:(typeof chdPieceHref==="function"&&chdPieceHref(s,p,lastO))||`data/pset/${curPK}/${s}${p.toUpperCase()}.webp`,x:x-30,y:yt-30,width:60,height:60}));   /* 意見回饋 399：整顆棋子（字已經畫在上面）的朝代圖 */
       if(up)g.append(el("circle",{cx:x,cy:yt,r:29,fill:"none",stroke:T.mv,"stroke-width":4}));return g}
     // 朝代棋子底圖（使用者用 Gemini 做的，data/pieces/<朝代>-r/b.webp）：立體樣式才用；字的顏色依底色，再描一圈反差邊
@@ -2235,9 +2300,10 @@ function Board(onTap,onSwipe){
   function draw(board,o){o=o||{};if(!o._mvt){svg._b=board;svg._o=o}   /* 意見回饋 693：記住最後畫的盤面，點文字裡的走法時才能補畫箭頭 */
     // 跟上一次畫的完全一樣（盤面、選子、箭頭、風格都沒變）就不重畫：對戰畫面每秒更新，重畫整個棋盤在手機上會卡、會閃
     const key=board.join(",")+"|"+JSON.stringify(o)+"|"+[store.get("boardTheme",""),store.get("pieceStyle",""),store.get("mvArrow",true),store.get("pageTheme",""),store.get("era",""),store.get("boardEra",""),store.get("hiCon",false),PSET.size].join(",");
-    if(key===lastKey&&svg.firstChild)return;lastKey=key;
-    flip=!!o.flip;svg.innerHTML="";
-    const T=boardTheme(o.theme),PS=o.pstyle||store.get("pieceStyle","3d");
+    if(key===lastKey&&svg.childNodes.length>(axG?1:0))return;lastKey=key;
+    flip=!!o.flip;if(axG){for(const c of[...svg.childNodes])if(c!==axG)c.remove()}else svg.innerHTML="";   /* 回饋 847（讀螢幕盲棋）：讀螢幕格子那層留著，焦點才不會跑掉 */
+    const HC=!!store.get("hiCon",false);   /* 回饋 848（色盲高對比）：高對比時上一步改用藍色（紅綠色盲也分得出），朝代箭頭也換回一般箭頭 */
+    const T=HC?Object.assign({},boardTheme(o.theme),{mv:"#0B5CD5"}):boardTheme(o.theme),PS=o.pstyle||store.get("pieceStyle","3d");
     // 朝代：楚河漢界的字體跟著目前朝代；邊框紋飾只有棋盤用「跟著頁面風格」（＝朝代配色）時才加
     const eR=boardEraE(),eD=(o.theme||store.get("boardTheme","wood3d"))==="auto"?eR:null,bk=JSON.stringify(T)+"|"+(eR?eR.k:"")+"|"+(eD?1:0)+"|"+flip+"|"+[...PSET].join("");
     const tk=o.theme||store.get("boardTheme","wood3d"),imgK=eD?eD.k:(!eR&&tk==="wood3d"?"classic":null);
@@ -2251,13 +2317,23 @@ function Board(onTap,onSwipe){
       svg.append(el("circle",{cx:X(L.f),cy:Y(L.f),r:24,fill:"none",stroke:T.mv,"stroke-width":3,"stroke-dasharray":"6 5",opacity:.9}));
       if(o.forceArrow||(o.arrow!==false&&store.get("mvArrow",true))){   /* 意見回饋 484：猜著法的預覽一定畫箭頭（不管設定有沒有關掉走棋箭頭） */
         const x1=X(L.f),y1=Y(L.f),x2=X(L.t),y2=Y(L.t),len=Math.hypot(x2-x1,y2-y1),ux=(x2-x1)/len,uy=(y2-y1)/len;
-        const ex=x2-ux*31,ey=y2-uy*31,hx=ex-ux*22,hy=ey-uy*22,nx=-uy*17,ny=ux*17,ar=el("g",{opacity:.85}),EA=eR&&ERA_ARROW[eR.k];
+        const ex=x2-ux*31,ey=y2-uy*31,hx=ex-ux*22,hy=ey-uy*22,nx=-uy*17,ny=ux*17,ar=el("g",{opacity:.85}),EA=!HC&&eR&&ERA_ARROW[eR.k];
         if(EA)mvArr=eraArrow(EA,x1+ux*14,y1+uy*14,ex,ey,ux,uy);else{
         ar.append(el("line",{x1:x1+ux*14,y1:y1+uy*14,x2:hx,y2:hy,stroke:T.mv,"stroke-width":11,"stroke-linecap":"round"}));
         ar.append(el("polygon",{points:`${ex},${ey} ${hx+nx},${hy+ny} ${hx-nx},${hy-ny}`,fill:T.mv}));mvArr=ar}}}
     if(o.hint)for(const q of o.hint)svg.append(el("rect",{x:X(q)-29,y:Y(q)-29,width:58,height:58,rx:9,fill:"none",stroke:"#E39B0F","stroke-width":4,"stroke-dasharray":"7 5"}));
     // 走棋動畫：跟上一次畫的盤面比，棋子從原位滑到新位置；被吃的棋子淡出
     const fresh=L&&prevB&&prevB[L.f]&&prevB[L.f]===board[L.t]&&!board[L.f]&&prevB[L.t]!==board[L.t];
+    /* 回饋 847（讀螢幕盲棋）：每走一步（自己或對手）都讀出來：「紅方，炮二平五」，吃子、將軍、將死接在後面；選子、取消選子也讀 */
+    if(svg.isConnected){let say="";
+      if(fresh){const s=sideOf(board[L.t]);let cn="";try{cn=window.XQCore&&XQCore.notate?XQCore.notate(prevB,L.f,L.t):""}catch(e){}
+        if(!cn){const[f,r]=axPos(L.t);cn=NAMES[s][board[L.t].toUpperCase()]+"走到"+f+"第"+r}
+        say=(s==="r"?"紅方，":"黑方，")+cn+(prevB[L.t]?"，吃"+axPc(prevB[L.t]):"");
+        if(o.check>=0){let mt=false;try{mt=window.XQCore&&XQCore.legal&&XQCore.legal(board,sideOf(board[o.check])).length===0}catch(e){}say+=mt?"，將死":"，將軍"}}
+      else if(AXI&&o.sel>=0&&o.sel!==axSel&&board[o.sel]){const[f,r]=axPos(o.sel),n=(o.targets||[]).length;say="選了"+axPc(board[o.sel])+"，"+f+"第"+r+(n?"，可以走 "+n+" 個位置":"，沒有地方可以走")}
+      else if(AXI&&axSel>=0&&!(o.sel>=0))say="取消選取";
+      if(say)axSay(say)}
+    axSel=o.sel>=0?o.sel:-1;
     if(fresh&&o.anim!==false){moveSound(!!prevB[L.t]);if(o.check>=0)setTimeout(()=>sayCall("將軍"),120);else if(prevB[L.t])setTimeout(()=>sayCall("吃"),120)}
     if(fresh&&o.fx&&o.check>=0){const ms=board[o.check]==="K"?"r":"b",mate=window.XQCore&&XQCore.legal&&XQCore.legal(board,ms).length===0;
       if(mate)setTimeout(()=>{if(Date.now()-LAST_KFX>1500&&store.get("ckFx",true))killFx(svg,true,"將死",o.check,flip,{side:ms==="r"?"b":"r",cap:"　"})},200);
@@ -2286,8 +2362,14 @@ function Board(onTap,onSwipe){
           badges.append(el("text",{x:cx,y:cy+5.5,"text-anchor":"middle","font-size":15,"font-weight":900,fill:SG,"font-family":"var(--sans)"},String(k+1)))}});
       svg.append(arrows,badges)}
     prevB=board.slice();
-    for(const t of o.targets||[])svg.append(el("circle",{cx:X(t),cy:Y(t),r:board[t]?30:10,fill:board[t]?"none":"var(--accent2)",stroke:"var(--accent2)","stroke-width":4,opacity:.85}));
-    if(o.check>=0)svg.append(el("circle",{cx:X(o.check),cy:Y(o.check),r:31,fill:"none",stroke:"var(--red)","stroke-width":4,"stroke-dasharray":"7 4"}));
+    /* 回饋 848（色盲高對比）：高對比時，可以走的空格＝黃點黑邊（不靠綠色）；可以吃的子＝四角瞄準框（形狀跟「上一步」的圓圈不一樣）；被將軍的將帥右上角加「將」字黃牌 */
+    for(const t of o.targets||[]){if(HC){const x=X(t),y=Y(t);if(board[t]){const a=31,b=12,d=`M${x-a} ${y-a+b}V${y-a}H${x-a+b}M${x+a-b} ${y-a}H${x+a}V${y-a+b}M${x+a} ${y+a-b}V${y+a}H${x+a-b}M${x-a+b} ${y+a}H${x-a}V${y+a-b}`;
+        svg.append(el("path",{d,fill:"none",stroke:"#FFFFFF","stroke-width":8,"stroke-linecap":"square"}),el("path",{d,fill:"none",stroke:"#111111","stroke-width":4.5,"stroke-linecap":"square"}))}
+      else svg.append(el("circle",{cx:x,cy:y,r:11,fill:"#FFD400",stroke:"#111111","stroke-width":3}));continue}
+      svg.append(el("circle",{cx:X(t),cy:Y(t),r:board[t]?30:10,fill:board[t]?"none":"var(--accent2)",stroke:"var(--accent2)","stroke-width":4,opacity:.85}))}
+    if(o.check>=0){svg.append(el("circle",{cx:X(o.check),cy:Y(o.check),r:31,fill:"none",stroke:"var(--red)","stroke-width":4,"stroke-dasharray":"7 4"}));
+      if(HC){const x=X(o.check)+24,y=Y(o.check)-24;svg.append(el("circle",{cx:x,cy:y,r:14,fill:"#FFD400",stroke:"#111111","stroke-width":2.5}),el("text",{x,y:y+6,"text-anchor":"middle","font-size":17,"font-weight":900,fill:"#111111","font-family":"var(--sans)"},"將"))}}
+    axSync(board,o);   /* 回饋 847（讀螢幕盲棋） */
   }
   // 點擊、左右滑動、拖曳：可以點一下再點目的地，也可以把棋子「拿起來」拖到要去的位置放下
   // （有 onSwipe 的棋盤＝看棋譜，左右滑動換步，不開拖曳）
@@ -2307,7 +2389,7 @@ function Board(onTap,onSwipe){
     const q=svgPt(e);p0.drag.cl.style.transform=`translate(${q.x-X(p0.sq)}px,${q.y-Y(p0.sq)-14}px) scale(1.22)`});   // 拿在手上：放大、浮起來、陰影
   const endDrag=e=>{const d=p0.drag;d.cl.remove();d.orig.style.opacity="";const t=sqAt(e);p0=null;if(t>=0&&t!==lastO.sel){dropNoAnim=true;onTap(t);setTimeout(()=>{dropNoAnim=false},3000)}};
   svg.addEventListener("pointercancel",()=>{if(p0&&p0.drag){p0.drag.cl.remove();p0.drag.orig.style.opacity=""}p0=null});
-  svg.addEventListener("pointerup",e=>{if(!p0)return;if(p0.drag)return endDrag(e);const dx=e.clientX-p0.x,dy=e.clientY-p0.y;
+  svg.addEventListener("pointerup",e=>{axLastPU=Date.now();if(!p0)return;if(p0.drag)return endDrag(e);   /* 回饋 847：記下一般點擊的時間，讀螢幕格子那層才不會同一下又點一次 */const dx=e.clientX-p0.x,dy=e.clientY-p0.y;
     if(onSwipe&&Math.abs(dx)>45&&Math.abs(dx)>Math.abs(dy)*1.3){onSwipe(dx<0?1:-1);p0=null;return}
     if(Math.abs(dx)<12&&Math.abs(dy)<12&&onTap){const sq=sqAt(e);if(sq>=0)onTap(sq)}p0=null});
   svg._draw=draw;
@@ -4113,6 +4195,30 @@ function aboutUsage(el){try{if(!navigator.storage||!navigator.storage.estimate){
 /* 意見回饋 531：檢查更新（設定 → 系統 → 關於） */
 async function updCheck(b){b.disabled=true;b.textContent="檢查中…";const r=window.XQ_checkUpdate?await XQ_checkUpdate():{};
   if(!r.n){b.textContent="沒有網路";b.disabled=false;return}if(r.a===r.n){b.textContent="✓ 已是最新版";return}b.textContent="下載新版中…";setTimeout(()=>location.reload(),6000)}
+/* 回饋 846（開發者 11/9 選：字級放大）：App 內字級 小／標準／大／特大＝0.9／1／1.15／1.3 倍。
+   html 上掛 data-fz 和 --fz（標準就拿掉 data-fz，畫面跟以前一模一樣）；m.css 照 --fz 放大面板、卡片、對局文字、小說、設定頁、頂欄標題，
+   滿版圖上的金框標籤只跟著放大一半（--fzL：0.95／1／1.075／1.15），免得壓到別的標籤；棋盤上的棋子字不跟著變 */
+const FZ_STEPS=[["s","小",.9],["n","標準",1],["l","大",1.15],["xl","特大",1.3]];
+function fzApply(){const r=document.documentElement,k=store.get("fontSize","n"),z=(FZ_STEPS.find(x=>x[0]===k)||FZ_STEPS[1])[2];
+  if(z===1){delete r.dataset.fz;r.style.removeProperty("--fz");r.style.removeProperty("--fzL")}else{r.dataset.fz=k;r.style.setProperty("--fz",String(z));r.style.setProperty("--fzL",String(Math.round((1+(z-1)/2)*1000)/1000))}setTimeout(()=>{try{fzFit()}catch(e){}},60)}
+fzApply();
+/* 回饋 846（開發者 11/9 選：字級放大）：滿版圖上的金框標籤放大後，有的本來就貼得很近（375 寬的設定房間、驛站、棋譜庫、錯棋重練），會疊到。
+   fzFit 每一頁量一次：先暫時用標準大小量（.fz-base），再量放大後；放大後疊到別的標籤或出口、標準時沒疊到的，那幾個標籤加 fz-no 不放大。
+   換頁（畫面有新節點）、轉向、圖載入完都會重量；最多每 0.4 秒一次。角色（shw-me）和它頭上的提示不算出口 */
+function fzFit(){const r=document.documentElement;if(r.dataset.fz!=="l"&&r.dataset.fz!=="xl"){document.querySelectorAll(".fz-no").forEach(e=>e.classList.remove("fz-no"));return}
+  const LS=".shp-spot,.shp-hs",sep=(a,b)=>Math.max(Math.max(a.left,b.left)-Math.min(a.right,b.right),Math.max(a.top,b.top)-Math.min(a.bottom,b.bottom));   /* 兩個框的間隔（負的＝疊到）；放大後間隔不到 2px、又比標準字級時更近，就算疊到 */
+  document.querySelectorAll(".shp-page").forEach(P=>{const L=[...P.querySelectorAll(LS)].filter(e=>e.getClientRects().length);if(!L.length)return;
+    const O=[...P.querySelectorAll("button,a,[role=button]")].filter(e=>!e.matches(LS+",.po-sight,.shw-me,.shw-hint")&&!e.closest(LS+",.shw-me")&&e.getClientRects().length),all=L.concat(O);
+    L.forEach(e=>e.classList.remove("fz-no"));P.classList.add("fz-base");const b0=new Map(all.map(e=>[e,e.getBoundingClientRect()]));P.classList.remove("fz-base");
+    for(let n=0;n<5;n++){let ch=false;const R=new Map(all.map(e=>[e,e.getBoundingClientRect()]));
+      L.forEach((A,i)=>{for(const B of L.slice(i+1).concat(O)){const s=sep(R.get(A),R.get(B));if(s<2&&s<sep(b0.get(A),b0.get(B))-.5)for(const x of[A,B])if(L.includes(x)&&!x.classList.contains("fz-no")){x.classList.add("fz-no");ch=true}}});
+      if(!ch)break}})}
+{let t=0;const go=()=>{if(t||!document.documentElement.dataset.fz)return;t=setTimeout(()=>{t=0;try{fzFit()}catch(e){}},400)};
+  new MutationObserver(go).observe(document.documentElement,{childList:true,subtree:true});addEventListener("resize",go);
+  document.addEventListener("load",e=>{if(e.target&&e.target.tagName==="IMG"&&e.target.closest&&e.target.closest(".shp-page"))go()},true)}
+/* 回饋 848（色盲高對比）：高對比棋子打開時 html 掛 data-hicon，m.css 給只靠顏色的地方（朱紅推薦標籤、底欄目前那一格）加形狀 */
+function hcApply(){document.documentElement.toggleAttribute("data-hicon",!!store.get("hiCon",false))}
+hcApply();
 function Settings(v){
   setTop("設定",false,OFF&&DEVMODE()?[["📋",openFbAdmin,"意見回饋管理"]]:[]);   /* 意見回饋 570：意見回饋管理放設定頁右上角 */setTabs(true,"#/settings");
   // 設定分成四個分頁，一次只看一類（意見回饋 141）
@@ -4131,8 +4237,9 @@ function Settings(v){
     <details class="card" style="padding:10px 12px;margin-top:14px"><summary style="font-weight:700;cursor:pointer">⚙ 更多設定</summary>   <!-- 意見回饋 576（開發者）：只留「更多設定」，後面的說明拿掉 -->   <!-- 意見回饋 537：不常改的收在這裡 -->
     <div class="sec-t">深淺色</div><div class="opt" id="pt"></div><p class="muted" id="ptN" style="display:none"></p>${typeof sw7SetRow==="function"?sw7SetRow():""}
     <div class="sec-t">字體</div><div class="opt" id="ftM"></div>
+    <div class="sec-t" id="fzT">字級</div><div class="opt" id="fzM" role="group" aria-labelledby="fzT"></div><p class="muted" id="fzN" style="font-size:12.5px;margin:4px 2px 0">面板、對局文字、小說都跟著放大；棋盤上的棋子不變。</p>   <!-- 回饋 846（開發者 11/9 選：字級放大） -->
     <div class="sec-t">文字</div><div class="opt" id="zhO" data-nocc>${[["tw","繁體中文"],["cn","简体中文"]].map(([k,l])=>`<button data-zh="${k}"${((window.XQ_ZH&&XQ_ZH.mode())||"tw")===k?' class="on"':""}>${l}</button>`).join("")}</div>   <!-- 意見回饋 518：繁簡切換（zh.js） -->
-    <label class="row" style="justify-content:space-between;padding:8px 2px"><span><b>高對比棋子</b></span><input type="checkbox" class="sw" id="hiCon"></label>${typeof chdFormRow==="function"?chdFormRow():""}
+    <label class="row" style="justify-content:space-between;padding:8px 2px"><span><b>高對比棋子</b><br><span class="muted" style="font-size:12.5px">黑子反白、提示加形狀，色弱也分得清</span></span><input type="checkbox" class="sw" id="hiCon" aria-label="高對比棋子（色弱也分得清）"></label>   <!-- 回饋 848（色盲高對比） -->${typeof chdFormRow==="function"?chdFormRow():""}
     <div class="sec-t">走棋顯示與特效</div><div class="card sgc" id="mv"></div></details></div>
     <div data-pane="sound">   <!-- 意見回饋 541：聲音頁分成三張卡片：棋子聲、語音、氛圍 -->
       <div class="sec-t" style="margin-top:4px">${ETIMG("t_sound","","♟")} 棋子聲</div><div class="card sgc" id="snd"></div>
@@ -4228,7 +4335,7 @@ function Settings(v){
      if(store.get("setFocus","")==="name"&&nl){store.set("setFocus","");setTimeout(()=>{const c=nl.closest(".card");c.scrollIntoView({block:"center",behavior:"smooth"});c.style.transition="box-shadow .3s";c.style.boxShadow="0 0 0 3px var(--accent,#B3261E)";setTimeout(()=>{c.style.boxShadow="";nameSheet(false)},700)},120)}}   /* 意見回饋 498：改名字只放在外觀這裡 */
     {const p3=v.querySelector("#p3d");if(p3){p3.checked=!!store.get("park3d",true);p3.onchange=()=>{vibrate(5);store.set("park3d",p3.checked);toast(p3.checked?"下棋時會在 3D 園子裡":"下棋時用平面棋盤")}}}
     if(typeof chdFormBind==="function")chdFormBind(v);   /* 意見回饋 774 本命化形開關（07q-chardiff.js） */
-    {const hcI=v.querySelector("#hiCon");if(hcI){hcI.checked=!!store.get("hiCon",false);hcI.onchange=()=>{store.set("hiCon",hcI.checked);vibrate(5);try{if(PARK){PARK.v.destroy();PARK=null}}catch(e){}show(true)}}}
+    {const hcI=v.querySelector("#hiCon");if(hcI){hcI.checked=!!store.get("hiCon",false);hcI.onchange=()=>{store.set("hiCon",hcI.checked);hcApply();/* 回饋 848（色盲高對比） */vibrate(5);try{if(PARK){PARK.v.destroy();PARK=null}}catch(e){}show(true)}}}
     v.querySelector("#ps").innerHTML=[["classic","傳統"],["solid","實心"],["3d","立體"]].map(([k,l])=>`<button data-p="${k}" class="${ps===k?"on":""}">${l}</button>`).join("");
     v.querySelectorAll("[data-p]").forEach(x=>x.onclick=()=>{store.set("pieceStyle",x.dataset.p);paint();show(false)});
     const pt=store.get("pageTheme","auto");v.querySelector("#pt").innerHTML=[["auto","跟著手機"],["light","☀ 淺色"],["dark","🌙 深色"]].map(([k,l])=>`<button data-m="${k}" class="${pt===k?"on":""}">${l}</button>`).join("");
@@ -4236,6 +4343,9 @@ function Settings(v){
     /* 意見回饋 611：字體跟著朝代（每個朝代一套書法或刻本字）或跟著手機（手機內建字體） */
     {const fm=store.get("fontMode","era"),fb=v.querySelector("#ftM");if(fb){fb.innerHTML=[["era","跟著朝代"],["sys","跟著手機"]].map(([k,l])=>`<button data-ft="${k}" class="${fm===k?"on":""}">${l}</button>`).join("");
       fb.querySelectorAll("[data-ft]").forEach(x=>x.onclick=()=>{store.set("fontMode",x.dataset.ft);fontModeApply();paint()})}}
+    /* 回饋 846（開發者 11/9 選：字級放大）：四個按鈕，按了馬上套用（不用重開） */
+    {const fz=v.querySelector("#fzM");if(fz){const pf=()=>{const cur=store.get("fontSize","n");fz.innerHTML=FZ_STEPS.map(([k,l,z])=>`<button data-fz="${k}" class="${cur===k?"on":""}" aria-pressed="${cur===k}" style="font-size:${Math.round(15*z)}px">${l}</button>`).join("");
+        fz.querySelectorAll("[data-fz]").forEach(x=>x.onclick=()=>{vibrate(5);store.set("fontSize",x.dataset.fz);fzApply();pf();toast("字級："+x.textContent)})};pf()}}
     const ce=store.get("boardEra",null)==null?"":store.get("boardEra");v.querySelector("#ptN").textContent=curEra()?"朝代風格有自己的配色；選「經典」才會用到深淺色":"";
     v.querySelector("#era").innerHTML=`<button data-e="" class="${ce===""?"on":""} cl" style="--b:#3B2A1A;--g:#F3EDE2;--t:#E2D6C3;--a:#B5452B;--i:#2A1F15"><i></i><b>⛵ 跟著星槎</b><small>停靠哪一朝就用哪一朝</small></button>`+ERAS.map(e=>{const c=e.c,st=c?`--b:${c.bar};--bi:${c.barink};--g:${c.bg};--cd:${c.card};--t:${c.trim};--a:${c.accent};--i:${c.ink};background-image:${eraMotif(e.m,c.ink,e.dark?.09:.07)}`:"--b:#3B2A1A;--g:#F3EDE2;--t:#E2D6C3;--a:#B5452B;--i:#2A1F15";
       const lk=eraLocked(e.k);return`<button data-e="${e.k}" class="${ce===e.k?"on":""}${c?"":" cl"}${lk?" elk":""}" style="${st}"><i style="${c?`background-image:${eraMotif(e.m,c.barink,.3)}`:""}"></i><b>${esc(e.n)}</b><small>${lk?"🔒 星槎還沒停靠":esc(e.s)}</small></button>`}).join("");   /* 意見回饋 673：還沒解鎖的朝代鎖住 */
@@ -5242,7 +5352,7 @@ function parkUi(host,pv){let b=host.querySelector(".pkview");if(!b){b=document.c
   if(typeof yuHintMaybe==="function")yuHintMaybe(host)}   /* 意見回饋 658（B 輿圖遊歷）：第一次在石桌往事的園子裡，提示地圖可以點（07e-garden2.js） */
 function parkDraw(host,bd,board,o,ex){
   // 關掉公園：同一個棋盤的公園只藏起來（意見回饋 244：來回切換不用每次重建 3D 場景，比較順）
-  {const tg=host.querySelector(".pkname");if(tg)tg.hidden=!parkOn();const pv0=host.querySelector(".pkview");if(pv0)pv0.hidden=!parkOn()}
+  {const tg=host.querySelector(".pkname");if(tg)tg.hidden=!parkOn();const pv0=host.querySelector(".pkview");if(pv0)pv0.hidden=!parkOn();const ap=host.querySelector(".ax-park");if(ap)ap.hidden=!parkOn()}   /* 回饋 847：平面棋盤時收起「改用平面棋盤」 */
   if(!parkOn()){if(PARK&&PARK.host===host){if(PARK.v.hide)PARK.v.hide();else{PARK.v.destroy();PARK=null}}bd.svg.style.display="";botVis(true);return}
   // 意見回饋 270：載入完還是沒有 XQPark3D（例如程式出錯）就停下來改用棋盤模式，不能一直重試（之前會無限循環、整個 App 卡死）
   if(!window.XQPark3D){bd.svg.style.display="";parkLoad().then(()=>{if(!window.XQPark3D)throw new Error("park3d 沒有載入成功");if(document.body.contains(host))parkDraw(host,bd,board,o,ex)}).catch(()=>{toast("園子 3D 棋盤載入失敗，先用棋盤模式");store.set("park3d",false)});return}
@@ -5253,6 +5363,9 @@ function parkDraw(host,bd,board,o,ex){
     if(!pv){toast("這台裝置沒辦法顯示 3D，先用棋盤模式");store.set("park3d",false);return}PARK={host,v:pv,era:store.get("era","classic"),bg:ex.bg||null};parkUi(host,pv);setTimeout(()=>{try{pv.say(`我是${BOTN()}，幫你加油！`,2.6);if(ex.oppHello)setTimeout(()=>pv.oppSay(ex.oppHello,2.6),1400)}catch(e){}},700)}
   /* 意見回饋 417：園子上方標出朝代和那個朝代對園子的叫法（例如「唐朝・園林」「漢朝・苑囿」） */
   {let tg=host.querySelector(".pkname");if(!tg){tg=document.createElement("div");tg.className="pkname";if(getComputedStyle(host).position==="static")host.style.position="relative";host.append(tg)}const k=store.get("era","classic");tg.textContent=ex.bgName||((k==="classic"?"經典":eraLabel(k))+"・"+(PW[k]||"園子"));tg.hidden=false}
+  /* 回饋 847（讀螢幕盲棋）：3D 園子沒辦法逐格讀；給讀螢幕的人一顆看不見的按鈕，按了跟頂欄「回棋盤模式」一樣，換回可以逐格點選的平面棋盤 */
+  if(!host.querySelector(".ax-park")){const ab=document.createElement("button");ab.type="button";ab.className="ax-sr ax-park";ab.textContent="改用平面棋盤，讀螢幕可以逐格點選";
+    ab.onclick=()=>{const tb=document.querySelector('#topRight button[aria-label="回棋盤模式"]');if(tb)tb.click();else{store.set("park3d",false);toast("回到棋盤模式")}};host.prepend(ab)}
   if(PARK.v.show)PARK.v.show();bd.svg.style.display="none";botVis(false);ex.look=parkLook();if(ex.opp)ex.opp=oppFig(remoteLook(ex.opp));if(ex.mateLook&&ex.mateLook.sx)ex.mateLook=oppFig(remoteLook(ex.mateLook));if(!ex.mateLook)ex.mateLook=myLook();
   if(Array.isArray(ex.watchers))ex.watchers=ex.watchers.map(w=>w&&w.bot&&w.bot.sx?{...w,bot:oppFig(remoteLook(w.bot))}:w);PARK.last={board,o,ex};PARK.v.draw(board,o,ex)}
 // 意見回饋 241：在公園裡按鈕換成「▦」（回棋盤模式），在棋盤模式是「🌳」（去公園）
@@ -13109,7 +13222,7 @@ const SM_SPOTS=[
    內容是從 05-settings 原本畫好、綁好的設定「整塊搬」過來的同一批節點（事件、即時生效、存檔都照舊），收起時原封不動搬回原位（留一個註解節點當書籤）。
    SM_EP［入口］＝要搬的區塊：sec:選擇器＝那一格所在的整段（往上含標題 .sec-t、往下到下一個標題前）；head:＝只要標題＋那一格；el:＝只要那一格；title:文字＝標題正好是這幾個字的那一段；btn:＝單獨一顆按鈕。
    沒有列在這裡的入口照舊：菱花鏡＝看 3D 立繪、信插／手札＝意見回饋頁、文牒／書箱＝07s4 的換手機面板。整卷畫軸（四個分頁全部設定）留著，入口改成頂欄的「📜 全部設定」。 */
-const SM_EP={smFan:["sec:#era"],smWin:["sec:#pt"],smBoard:["el:#pv","sec:#th","el:#hiCon","sec:#mv"],smBrush:["head:#ftM","head:#zhO"],
+const SM_EP={smFan:["sec:#era"],smWin:["sec:#pt"],smBoard:["el:#pv","sec:#th","el:#hiCon","sec:#mv"],smBrush:["head:#ftM","sec:#fzM","head:#zhO"],
   smKnife:["sec:.bpc","el:#chdForm"],smRobe:["sec:#meFig","sec:#botT","sec:#epSw"],smTag:["title:官階"],
   smInc:["sec:#snd3"],smQin:["sec:#snd2"],smBell:["sec:#snd"],smLock:["btn:#sh","btn:#a2h","sec:#fmSet","title:隱私","title:進階"]};   /* 11/9：小鎖匣加家長與護眼（843，07m5）；線上大廳的名字與封鎖名單（841／842，07x4）接在「我的角色」卡後面，跟著衣帽架一起出現 */
 const SM_EPT={smBoard:"♟ 棋盤與走棋特效",smRobe:"👘 我的角色",smLock:"🔒 系統・隱私・家長"};
