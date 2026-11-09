@@ -1370,7 +1370,7 @@ html[data-hicon] .tabbar button.on{box-shadow:inset 0 -3px 0 currentColor}
       if(!window.caches)return go();caches.keys().then(function(ks){return Promise.all(ks.filter(function(k){return k.indexOf("xqlab-app-")===0}).map(function(k){return caches.delete(k)}))})
         .then(function(){return navigator.serviceWorker&&navigator.serviceWorker.getRegistration()}).then(function(r){return r&&r.update()}).catch(function(){}).then(go)}};setTimeout(chk,4000)})();
 </script>
-<script>window.XQ_OFFLINE=true;window.XQ_BUILD="20261110-1030";</script>
+<script>window.XQ_OFFLINE=true;window.XQ_BUILD="20261110-1100";</script>
 <script src="core.js"></script>
 <script src="engine.js"></script>
 <script src="local.js"></script>
@@ -19543,7 +19543,7 @@ route();
      協定核心 coopLobbyCore(io) 不碰畫面，tools/coop_lobby_sim.js 在記憶體裡跑兩個假客戶端（不連真的 MQTT）。
    規則（coopRules）、題目資料、協定核心夾在 COOP-DATA／COOP-CORE 標記中間，給驗證、模擬腳本抽出來跑；改的時候標記要留著。前綴 cpd（同桌）、cpl（大廳） */
 const COOP_DESK_ON=true;
-const COOP_LOBBY_ON=false;   /* 開發者測過再開；false 時只有測試房能進殘篇閣 */
+const COOP_LOBBY_ON=true;   /* 開發者 11/10 測試房試過：「可以開」 */
 /* 殘篇閣開門時段：每天 8:00～21:59、每小時 0～29 分；測試房一律開門 */
 const COOP_LOBBY_OPEN={h0:8,h1:21,m0:0,m1:29};
 /*COOP-DATA-BEGIN*/
