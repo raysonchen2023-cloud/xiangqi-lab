@@ -1379,7 +1379,7 @@ html[data-hicon] .tabbar button.on{box-shadow:inset 0 -3px 0 currentColor}
       if(!window.caches)return go();caches.keys().then(function(ks){return Promise.all(ks.filter(function(k){return k.indexOf("xqlab-app-")===0}).map(function(k){return caches.delete(k)}))})
         .then(function(){return navigator.serviceWorker&&navigator.serviceWorker.getRegistration()}).then(function(r){return r&&r.update()}).catch(function(){}).then(go)}};setTimeout(chk,4000)})();
 </script>
-<script>window.XQ_OFFLINE=true;window.XQ_BUILD="20261111-0230";</script>
+<script>window.XQ_OFFLINE=true;window.XQ_BUILD="20261111-0245";</script>
 <script src="core.js"></script>
 <script src="engine.js"></script>
 <script src="local.js"></script>
@@ -16486,9 +16486,9 @@ function stmCss(){if(document.getElementById("stmCss"))return;const s=document.c
 #stmOv .list h3{margin:12px 0 6px;font:900 15px var(--serif,serif)}#stmOv .list ul{list-style:none;margin:0;padding:0;display:flex;flex-wrap:wrap;gap:8px}
 #stmOv .none{color:var(--muted,#777);font-size:14px;margin:8px 0}
 @media (prefers-reduced-motion:reduce){#stmOv{transition:none}}`;document.head.append(s)}
-/* 頂欄的「🗺 找地方」：每次 setTop 重畫頂欄後補上（放在 #topRight 最後＝角色頭像左邊） */
+/* 頂欄的 🗺 地圖鈕（11/11 起只有圖示）：每次 setTop 重畫頂欄後補上（放在 #topRight 最後＝角色頭像左邊） */
 function stmBtn(){if(!SITEMAP_ON)return;const tr=document.getElementById("topRight");if(!tr||tr.querySelector(".stm-btn"))return;stmCss();
-  const b=document.createElement("button");b.type="button";b.className="ib stm-btn";b.setAttribute("aria-label","找地方：打開全站地圖");b.title="找地方";b.innerHTML="<b aria-hidden=\"true\">🗺</b><small>找地方</small>";
+  const b=document.createElement("button");b.type="button";b.className="ib stm-btn";b.setAttribute("aria-label","地圖：打開全站地圖");b.title="地圖";b.innerHTML="<b aria-hidden=\"true\">🗺</b>";   /* 開發者 11/11：拿掉「找地方」三個字，只留地圖圖示 */
   b.onclick=()=>{try{vibrate(5)}catch(e){}stmOpen()};tr.append(b)}
 if(SITEMAP_ON&&typeof setTop==="function"){const stmTop0=setTop;setTop=function(){const r=stmTop0.apply(this,arguments);try{stmBtn()}catch(e){}return r}}
 let stmLast=null;
