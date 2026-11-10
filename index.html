@@ -1379,7 +1379,7 @@ html[data-hicon] .tabbar button.on{box-shadow:inset 0 -3px 0 currentColor}
       if(!window.caches)return go();caches.keys().then(function(ks){return Promise.all(ks.filter(function(k){return k.indexOf("xqlab-app-")===0}).map(function(k){return caches.delete(k)}))})
         .then(function(){return navigator.serviceWorker&&navigator.serviceWorker.getRegistration()}).then(function(r){return r&&r.update()}).catch(function(){}).then(go)}};setTimeout(chk,4000)})();
 </script>
-<script>window.XQ_OFFLINE=true;window.XQ_BUILD="20261110-2045";</script>
+<script>window.XQ_OFFLINE=true;window.XQ_BUILD="20261110-2100";</script>
 <script src="core.js"></script>
 <script src="engine.js"></script>
 <script src="local.js"></script>
@@ -13526,8 +13526,11 @@ const HB_ERAS={learn:"qin han sanguo weijin nanbei sui tang wudai yuan ming qing
 function hbDockEra(){try{return typeof shipAt==="function"&&typeof shipDockList==="function"&&shipDockList()?shipAt()||"":""}catch(x){return""}}
 /* 11/10 經典世界（Gemini 71 比例 C，開發者選）：還沒登船、或星槎停在經典時，學習、對戰換成千秋時光之苑版（learn_classic、battle_classic）；宋朝照舊用原本那套 */
 const HB_CLASSIC_ON=true;
+/* 經典世界的子頁面（盤查 story/經典世界子頁面盤查_1110.md）：這些頁的底圖網址包一層 xqClImg，經典世界時 xxx_day／xxx_night（含朝代組別後綴）換成 xxx_day_classic／xxx_night_classic；其他朝代照舊 */
+const XQ_CL_DIRS=new RegExp("data/(todaymap|canjumap|cupmap|deskmap|rostermap|campmap|exammap|termsmap|thememap|redomap|statmap|openmap|gmmap|cpuroom|studymap|passmap|setmap)/");
+function xqClImg(u){try{if(!hbIsCl()||!XQ_CL_DIRS.test(u))return u;return u.replace(/\/([a-z]+_(?:day|night))(?:_[a-z]+)?\.webp/,"/$1_classic.webp")}catch(e){return u}}
 function hbIsCl(){if(!HB_CLASSIC_ON)return false;const e=hbDockEra();return !e||e==="classic"}
-const hbImg=(base,hub)=>{if((base==="learn"||base==="battle")&&hbIsCl())return base+"_classic";const e=hbDockEra();return base+((HB_ERAS[hub]||[]).includes(e)?"_"+e:"")};
+const hbImg=(base,hub)=>{const nt=(base==="learn"||base==="battle")&&typeof sw7NightNow==="function"&&sw7NightNow()?"_night":"";if((base==="learn"||base==="battle")&&hbIsCl())return base+"_classic"+nt;const e=hbDockEra();return base+((HB_ERAS[hub]||[]).includes(e)?"_"+e:"")+nt};   /* 11/10 日落後換夜景圖 <名>_night（07w7 sw7NightNow） */
 /* 11/10 開發者「同桌對弈不應該出現走去園子過場」「挑戰電腦有景點了，不該再出現茅廬」：茶樓裡開的棋（挑戰電腦、同桌對弈），載入畫面用這一朝的對戰茶樓圖＋茶樓名稱，不再是小帥走去園子、茅廬臥龍 */
 /* 11/10 開發者「原本在茶坊，場景卻跑到了園子」（Gemini 61 號，開發者選：後花園＋月洞門過場圖、小二招呼、線上對戰一起套）：
    茶坊這邊開的棋（挑戰電腦、同桌對弈、天井配對的線上對局）都在「茶坊的後園」下——載入畫面是穿過月洞門往後園石台走（data/parkgate/yard*.webp），
@@ -13649,7 +13652,7 @@ function hubMap(v,hub){const D=HUB_DEF[hub],home=v.querySelector(".home");if(!D|
   const fresh=!store.get("campSeen",false)&&!Object.keys(campStars()).length&&!Object.keys(store.get("record",{})).length;
   const CL=hbIsCl()&&HUB_CL_SPOTS[hub],sp=D.spots.map(([id,sel,x,y])=>{const c=hbCard(v,sel);if(CL&&CL[id])[x,y]=CL[id];return c?{id,c,x,y}:null}).filter(Boolean);
   const d=document.createElement("div");
-  d.innerHTML=`<div class="shp-page cq hub-page"><img src="data/hubmap/${hbImg(D.img,hub)}.webp?v=${HB_IMGV}" alt="${esc(D.cap)}"><div class="hb-fx" aria-hidden="true"></div>${sp.map(o=>`<button class="shp-spot${hbHot(o.c)||(fresh&&(o.id==="hbCamp"||o.id==="hbTerms"))?" hot":""}" id="${o.id}" style="left:${o.x}%;top:${o.y}%"><b>${esc(hbEraWord(hbTitle(o.c)))}</b></button>`).join("")}</div>`;
+  d.innerHTML=`<div class="shp-page cq hub-page"><img src="data/hubmap/${hbImg(D.img,hub)}.webp?v=${HB_IMGV}" alt="${esc(D.cap)}" onerror="this.onerror=null;this.src=this.src.replace('_night.','.')"><div class="hb-fx" aria-hidden="true"></div>${sp.map(o=>`<button class="shp-spot${hbHot(o.c)||(fresh&&(o.id==="hbCamp"||o.id==="hbTerms"))?" hot":""}" id="${o.id}" style="left:${o.x}%;top:${o.y}%"><b>${esc(hbEraWord(hbTitle(o.c)))}</b></button>`).join("")}</div>`;
   const P=d.firstElementChild;v.insertBefore(P,home);home.classList.add("hb-hidden");
   for(const o of sp){const b=P.querySelector("#"+o.id);if(!b)continue;b.onclick=()=>o.c.click();
     const upd=()=>{if(!b.isConnected){mo.disconnect();return}const h=hbHot(o.c)||(fresh&&(o.id==="hbCamp"||o.id==="hbTerms"));if(b.classList.contains("hot")!==h)b.classList.toggle("hot",h)};
@@ -14030,7 +14033,7 @@ function mfWrap(v){const dw=v.querySelector(".lm-dw"),lb=v.querySelector("#lb"),
   const hd=dw.querySelector(".lm-dw-h");if(hd&&hd.firstChild&&hd.firstChild.nodeType===3)hd.firstChild.textContent="名冊";
   const pct=(x,y)=>`left:${(x/7.68).toFixed(2)}%;top:${(y/13.76).toFixed(2)}%`;
   const sc=document.createElement("div");sc.className="mf-sc";
-  sc.innerHTML=`<div class="mf-fr"><img class="mf-bg" src="data/rostermap/${dk?"roster_night":"roster_day"}${mfG()?"_"+mfG():""}.webp?v=${MF_IMGV}" alt="${mfG()?"門房的迎客案：水牌、客簿、名帖、漆盒":"茶樓門房的櫃台案：水牌、客簿、名帖、拜匣"}">
+  sc.innerHTML=`<div class="mf-fr"><img class="mf-bg" src="${xqClImg(`data/rostermap/${dk?"roster_night":"roster_day"}${mfG()?"_"+mfG():""}.webp?v=${MF_IMGV}`)}" alt="${mfG()?"門房的迎客案：水牌、客簿、名帖、漆盒":"茶樓門房的櫃台案：水牌、客簿、名帖、拜匣"}">
     <div class="mf-bd" style="left:${(MF_BD[0]/7.68).toFixed(2)}%;top:${(MF_BD[1]/13.76).toFixed(2)}%;width:${((MF_BD[2]-MF_BD[0])/7.68).toFixed(2)}%;height:${((MF_BD[3]-MF_BD[1])/13.76).toFixed(2)}%"></div>
     <div class="mf-q mf-p" data-p="0"><div class="mf-g"></div></div><div class="mf-q mf-p" data-p="1"><div class="mf-g"></div></div>
     <button type="button" class="mf-q mf-me" id="mfMe"></button>
@@ -14371,8 +14374,8 @@ const smMute=()=>!store.get("mvSound",false)&&!store.get("voiceCall",true)&&!sto
 const smAt=(u,v)=>{const[a,b,c,d]=SM_BOARD.q;return[a[0]*(1-u)*(1-v)+b[0]*u*(1-v)+c[0]*u*v+d[0]*(1-u)*v,a[1]*(1-u)*(1-v)+b[1]*u*(1-v)+c[1]*u*v+d[1]*(1-u)*v]};
 function smScene(P){const fx=P.querySelector(".sm-fx"),img=P.querySelector(":scope>img");if(!fx||!img)return;const W=768,H=1376,pc=([x,y])=>[x/W*100,y/H*100];
   const dk=smDark();let night=false;
-  if(dk){const im=new Image();im.onload=()=>{if(img.isConnected&&smDark()){img.src=im.src;night=true;const n=fx.querySelector(".sm-night");if(n)n.remove();fx.querySelectorAll(".sm-lamp").forEach(x=>x.remove())}};im.src=`data/setmap/set_night.webp?v=${SM_IMGV}`}
-  else if(!/set_day/.test(img.src))img.src=`data/setmap/set_day.webp?v=${SM_IMGV}`;
+  if(dk){const im=new Image();im.onload=()=>{if(img.isConnected&&smDark()){img.src=im.src;night=true;const n=fx.querySelector(".sm-night");if(n)n.remove();fx.querySelectorAll(".sm-lamp").forEach(x=>x.remove())}};im.src=xqClImg(`data/setmap/set_night.webp?v=${SM_IMGV}`)}
+  else if(!/set_day/.test(img.src))img.src=xqClImg(`data/setmap/set_day.webp?v=${SM_IMGV}`);
   let h="";
   if(dk&&!night)h+='<i class="sm-night"></i><i class="sm-lamp" style="left:80%;top:30%"></i><i class="sm-lamp" style="left:55%;top:46%;width:22%"></i><i class="sm-lamp" style="left:56%;top:51%;width:14%"></i>';
   if(smMute())h+='<i class="sm-bag" title="琴囊"></i>';
@@ -14384,7 +14387,7 @@ function smScene(P){const fx=P.querySelector(".sm-fx"),img=P.querySelector(":sco
   fx.innerHTML=h}
 function setMap(v){const root=v.querySelector(".pad.home");if(!root||v.querySelector(".set-page"))return;smCss();
   const d=document.createElement("div");
-  d.innerHTML=`<div class="shp-page cq set-page"><img src="data/setmap/set_day.webp?v=${SM_IMGV}" alt="天字客房"><div class="sm-fx" aria-hidden="true"></div>${SM_SPOTS.map(([id,x,y,t])=>`<button class="shp-spot" id="${id}" style="left:${x}%;top:${y}%"><b>${esc(t)}</b></button>`).join("")}</div>`;
+  d.innerHTML=`<div class="shp-page cq set-page"><img src="${xqClImg(`data/setmap/set_day.webp?v=${SM_IMGV}`)}" alt="天字客房"><div class="sm-fx" aria-hidden="true"></div>${SM_SPOTS.map(([id,x,y,t])=>`<button class="shp-spot" id="${id}" style="left:${x}%;top:${y}%"><b>${esc(t)}</b></button>`).join("")}</div>`;
   const P=d.firstElementChild;v.insertBefore(P,root);
   /* 宣紙畫軸：原本的設定整包搬進來（還在 v 裡面，原本綁的按鈕、paint() 都照常） */
   const dw=document.createElement("div");dw.className="sm-dw";dw.innerHTML='<div class="sm-dw-h">📜 設定<button type="button" aria-label="收起畫軸">✕</button></div><div class="sm-dw-b"></div>';
@@ -14972,7 +14975,7 @@ function hqOpen(v,focus){const root=v.querySelector(".pad.home");if(!root)return
   pn._fit();pn._paint();const el=pn.querySelector(focus==="about"?".hq-doc":".hq-q");if(el){el.classList.remove("hq-flash");void el.offsetWidth;el.classList.add("hq-flash")}}
 function hqBuild(v,root){const dk=hqDark(),pn=document.createElement("div");pn.className="hq-pn"+(dk?" hq-dk":"");
   const pct=(x,y)=>`left:${(x/7.68).toFixed(2)}%;top:${(y/13.76).toFixed(2)}%`,box=(r)=>`left:${(r[0]/7.68).toFixed(2)}%;top:${(r[1]/13.76).toFixed(2)}%;width:${((r[2]-r[0])/7.68).toFixed(2)}%;height:${((r[3]-r[1])/13.76).toFixed(2)}%`;
-  pn.innerHTML=`<div class="hq-sc"><div class="hq-fr"><img class="hq-bg" src="data/passmap/${dk?"pass_night":"pass_day"}.webp?v=${HQ_IMGV}" alt="客房窗下的書案：攤開的文牒、剖成兩半的驛券、香插、書笈和包袱">
+  pn.innerHTML=`<div class="hq-sc"><div class="hq-fr"><img class="hq-bg" src="${xqClImg(`data/passmap/${dk?"pass_night":"pass_day"}.webp?v=${HQ_IMGV}`)}" alt="客房窗下的書案：攤開的文牒、剖成兩半的驛券、香插、書笈和包袱">
       <div class="hq-doc" style="${box(HQ_DOC)}"></div>
       <div class="hq-ink" style="${pct(HQ_CEN[0],HQ_CEN[1])};height:7.5%"><i></i><b></b><em></em></div>
       <div class="hq-q" style="${box(HQ_Q)}"><img class="il" src="data/passmap/hq_quan_l.webp?v=${HQ_IMGV}" alt=""><img class="ir" src="data/passmap/hq_quan_r.webp?v=${HQ_IMGV}" alt=""><i class="hq-seal"></i>
@@ -15070,7 +15073,7 @@ function campMap(v){if(v.querySelector(".camp-page"))return;const pad=v.querySel
   const S=campStars(),done=n=>(S[n]||0)>0,open=n=>n===1||done(n-1);let cur=1;while(cur<=12&&done(cur))cur++;
   const got=CAMP.filter(c=>done(c.n)).length;
   const P=document.createElement("div");P.className="shp-page cq camp-page";
-  P.innerHTML=`<img src="data/campmap/${cpDark()?"camp_night":"camp_day"}.webp?v=${CP_IMGV}" alt="沙盤兵推圖"><span class="cp-cap">${got>=12?"🎉 十二課全部結業":`第 ${Math.min(cur,12)} 課・${esc((CAMP[Math.min(cur,12)-1]||{}).name||"")}`}</span>`+
+  P.innerHTML=`<img src="${xqClImg(`data/campmap/${cpDark()?"camp_night":"camp_day"}.webp?v=${CP_IMGV}`)}" alt="沙盤兵推圖"><span class="cp-cap">${got>=12?"🎉 十二課全部結業":`第 ${Math.min(cur,12)} 課・${esc((CAMP[Math.min(cur,12)-1]||{}).name||"")}`}</span>`+
     CP_FLAGS.map(([x,y],i)=>{const n=i+1,[a,b]=cpPc(x,y),k=S[n]||0,st=done(n)?"done":open(n)?"cur":"lock";
       return`<button type="button" class="shp-spot cp-flag ${st}" id="cpF${n}" data-nolift="1" style="left:${a.toFixed(2)}%;top:${b.toFixed(2)}%" aria-label="${esc(`第 ${n} 課・${(CAMP[i]||{}).name||""}${st==="lock"?"（還沒開）":k?`（${k} 顆星）`:""}`)}"><b>${st==="lock"?"":CP_GLYPH[i]}</b>${k?`<i>${"<u></u>".repeat(Math.min(3,k))}</i>`:""}</button>`}).join("");
   v.insertBefore(P,pad);
@@ -15147,7 +15150,7 @@ function canjuMap(v){if(v.querySelector(".cjm-page"))return;const wrap=v.querySe
     fx+=`<span class="cjm-steam${k==="cup"&&all&&g==="weijin"?" thick":""}" style="left:${a.toFixed(2)}%;top:${(b-1).toFixed(2)}%;width:${k==="cup"?(all&&g==="weijin"?13:9):6}%"><i></i><i></i><i></i></span>`}
   const[lfN,lfC,lfK]=cjmLeaf();fx+=`<span class="cjm-leaf" title="${esc(lfN)}" style="left:62%;top:58%">${cjmLeafSvg(lfC,lfK)}</span>`;
   const NM={sip:"一口",cup:"一盞",pot:"一壺"};
-  P.innerHTML=`<img src="data/canjumap/${cjmDark()?"canju_night":"canju_day"}${g?"_"+g:""}.webp?v=${CJM_IMGV}" alt="${g==="weijin"?"煮茶席":g==="tang"?"煎茶席":"宋代點茶席"}"><div class="cjm-fx" aria-hidden="true">${fx}</div>`+
+  P.innerHTML=`<img src="${xqClImg(`data/canjumap/${cjmDark()?"canju_night":"canju_day"}${g?"_"+g:""}.webp?v=${CJM_IMGV}`)}" alt="${g==="weijin"?"煮茶席":g==="tang"?"煎茶席":"宋代點茶席"}"><div class="cjm-fx" aria-hidden="true">${fx}</div>`+
     VES.map(([k,,,,,hx,hy,w,h])=>{const[a,b]=pc(hx,hy),it=bySlot[k];return`<button type="button" class="cjm-hit" data-id="${esc(it.id)}" style="left:${a.toFixed(2)}%;top:${b.toFixed(2)}%;width:${(w/7.68).toFixed(2)}%;height:${(h/13.76).toFixed(2)}%" aria-label="${NM[k]}"></button>`}).join("")+
     VES.map(([k,mx,my])=>{const[a,b]=pc(mx,my-(k==="cup"?62:k==="pot"?40:44)),it=bySlot[k];return`<button class="shp-spot cjm-tag${solved(k)?" done":""}" id="cjm_${k}" data-id="${esc(it.id)}" style="left:${a.toFixed(2)}%;top:${b.toFixed(2)}%"><b>${NM[k]}</b></button>`}).join("");
   v.insertBefore(P,wrap);
@@ -15218,7 +15221,7 @@ function themeMap(v){if(v.querySelector(".tm-page"))return;const pad=v.querySele
   const tas='<svg viewBox="0 0 10 40"><path d="M5 0V10" stroke="#8a2a1a" stroke-width="1"/><circle cx="5" cy="11.5" r="2.2" fill="#b23a26"/><path d="M5 13C2 20 2 30 3 38M5 13C5 22 5 30 5 39M5 13C8 20 8 30 7 38" stroke="#c0402a" stroke-width="1.6" fill="none"/></svg>';
   const sw='<svg viewBox="0 0 40 20"><path d="M2 12C10 6 16 7 20 10C24 7 30 4 38 2C32 8 26 11 22 12L20 14L18 12C12 12 6 13 2 12Z" fill="#2a2420"/></svg>';
   let fx="";TM_Q.forEach((q,i)=>{if(stOf(TM_EX[i][0])!=="full")return;const[x,y]=tmPc((q[2][0]+q[3][0])/2,(q[2][1]+q[3][1])/2);fx+=`<span class="tm-tas" style="left:${x.toFixed(2)}%;top:${y.toFixed(2)}%">${tas}</span>`});
-  P.innerHTML=`<img src="data/thememap/${tmDark()?"theme_night":"theme_day"}.webp?v=${TM_IMGV}" alt="演武迴廊"><div class="tm-fx" aria-hidden="true">${fx}<span class="tm-swallow">${sw}</span></div>`+
+  P.innerHTML=`<img src="${xqClImg(`data/thememap/${tmDark()?"theme_night":"theme_day"}.webp?v=${TM_IMGV}`)}" alt="演武迴廊"><div class="tm-fx" aria-hidden="true">${fx}<span class="tm-swallow">${sw}</span></div>`+
     TM_Q.map((q,i)=>{const k=TM_EX[i][0];return`<button type="button" class="tm-face ${stOf(k)}" data-i="${i}" aria-label="${esc(k)}"><span class="tm-bd"></span></button>`}).join("")+
     TM_Q.map((q,i)=>{const k=TM_EX[i][0],top=TM_TAGAT[i]==="t",[x,y]=tmPc((q[0][0]+q[1][0])/2,top?Math.min(q[0][1],q[1][1])-16:Math.max(q[2][1],q[3][1])+16);
       return`<button class="shp-spot tm-tag" id="tmT${i}" data-i="${i}" style="left:${x.toFixed(2)}%;top:${y.toFixed(2)}%"><b>${esc(k)}</b></button>`}).join("");
@@ -15303,7 +15306,7 @@ function termsMap(v){if(v.querySelector(".tb-page"))return;const tabs=v.querySel
     if(!RD[k])fx+=`<span class="tb-moss" style="left:${(a-1).toFixed(2)}%;top:${b.toFixed(2)}%;width:${(c-a+2).toFixed(2)}%;height:${(d-b).toFixed(2)}%"></span>`;
 }
   fx+=`<span class="tb-leaf" style="left:70%;top:62%">${leaf}</span>`;
-  P.innerHTML=`<img src="data/termsmap/${tb2Dark()?"terms_night":"terms_day"}.webp?v=${TB2_IMGV}" alt="書院碑林"><div class="tb-fx" aria-hidden="true">${fx}</div>`+
+  P.innerHTML=`<img src="${xqClImg(`data/termsmap/${tb2Dark()?"terms_night":"terms_day"}.webp?v=${TB2_IMGV}`)}" alt="書院碑林"><div class="tb-fx" aria-hidden="true">${fx}</div>`+
     TB_STELE.map(([k,t,x0,y0,x1,y1])=>{const[a,b]=pc(x0,y0),[c,d]=pc(x1,y1);return`<button type="button" class="tb-face" data-k="${k}" style="left:${a.toFixed(2)}%;top:${b.toFixed(2)}%;width:${(c-a).toFixed(2)}%;height:${(d-b).toFixed(2)}%" aria-label="${t}碑"></button>`}).join("")+
     TB_STELE.map(([k,t,,,,,,,,,lx,ly])=>{const[a,b]=pc(lx,ly);return`<button class="shp-spot tb-tag" id="tbT_${k}" data-k="${k}" style="left:${a.toFixed(2)}%;top:${b.toFixed(2)}%"><b>${t}</b></button>`}).join("");
   v.insertBefore(P,tabs);
@@ -15464,7 +15467,7 @@ function tdWeather(term){const n=term==="春分"?"pet":term==="秋分"?"leaf":""
 function TodayPage(v){tdCss();setTop("📜 今日推薦","#/");if(typeof setTabs==="function")setTabs(true,"#/");v.className="view";
   const term=tdTerm(),P=document.createElement("div");P.className="shp-page cq td-page"+(tdDarkNow()?" td-night":"");v.innerHTML="";v.append(P);
   const[tx,ty]=tdPc(...TD_TERM_AT);
-  const tg=tdG();P.innerHTML=`<img src="data/todaymap/${tdDarkNow()?"today_night":"today_day"}${tg?"_"+tg:""}.webp?v=${TD_IMGV}" alt="橋頭榜文牌"><div class="td-fx" aria-hidden="true">${tdShadow()}${tdIncense()}${tdWeather(term)}<span class="td-term" style="left:${tx.toFixed(2)}%;top:${ty.toFixed(2)}%">${esc(tdTermTag())}</span></div><div class="td-ns"></div>`;
+  const tg=tdG();P.innerHTML=`<img src="${xqClImg(`data/todaymap/${tdDarkNow()?"today_night":"today_day"}${tg?"_"+tg:""}.webp?v=${TD_IMGV}`)}" alt="橋頭榜文牌"><div class="td-fx" aria-hidden="true">${tdShadow()}${tdIncense()}${tdWeather(term)}<span class="td-term" style="left:${tx.toFixed(2)}%;top:${ty.toFixed(2)}%">${esc(tdTermTag())}</span></div><div class="td-ns"></div>`;
   let N=[],onl=null;
   const go=async x=>{if(typeof vibrate==="function")vibrate(5);if(x.sw)try{await api("/play/switch",{kind:x.sw})}catch(e){}if(x.park)store.set("park3d",true);location.hash=x.go};
   const fit=()=>{const k=P.clientWidth/768;if(!k)return;P.querySelectorAll(".td-note").forEach(f=>{const q=TD_NOTES[+f.dataset.i].map(([x,y])=>[x*k,y*k]);f.style.transform=tdM3(100,160,q)})};
@@ -15507,7 +15510,7 @@ const GM2_IMGV="2360";
 const GM2_HEARTS=["gh_shan","gh_zhu","gh_mei","gh_lan","gh_yun","gh_lin"];
 const GM2_GRP={qin:"han",han:"han",sanguo:"han",weijin:"weijin",nanbei:"weijin",sui:"weijin",tang:"weijin",wudai:"weijin"};
 const gm2Grp=()=>{let e="";try{e=typeof hbDockEra==="function"?hbDockEra():typeof sciDock==="function"?sciDock():""}catch(x){}return GM2_GRP[e]||""};
-const gm2Img=(dk,g)=>`data/gmmap/${dk?"gm_night":"gm_day"}${g?"_"+g:""}.webp?v=${GM2_IMGV}`;
+const gm2Img=(dk,g)=>xqClImg(`data/gmmap/${dk?"gm_night":"gm_day"}${g?"_"+g:""}.webp?v=${GM2_IMGV}`);
 const gm2Hearts=g=>g?["gh_shan","gh_yun"]:GM2_HEARTS;
 /* 牆上六軸畫心的四角（像素 768×1376；左上、右上、右下、左下） */
 const GM2_Q=[[[89,316],[176,382],[176,862],[89,911]],[[251,441],[295,477],[295,762],[251,795]],[[339,509],[363,524],[363,720],[339,735]],
@@ -15678,7 +15681,7 @@ const CUP_MAP_ON=true;
 const CP2_IMGV="2370";
 const CP2_GRP={qin:"han",han:"han",sanguo:"han",weijin:"weijin",nanbei:"weijin",sui:"weijin",tang:"tang",wudai:"tang"};
 const cp2Grp=()=>{let e="";try{e=typeof hbDockEra==="function"?hbDockEra():typeof sciDock==="function"?sciDock():""}catch(x){}return CP2_GRP[e]||""};
-const cp2Img=(dk,g)=>`data/cupmap/${dk?"cup_night":"cup_day"}${g?"_"+g:""}.webp?v=${CP2_IMGV}`;
+const cp2Img=(dk,g)=>xqClImg(`data/cupmap/${dk?"cup_night":"cup_day"}${g?"_"+g:""}.webp?v=${CP2_IMGV}`);
 /* 圖上各物的四角（像素 768×1376；左上、右上、右下、左下） */
 const CP2_SCR=[[[192,484],[258,487],[258,742],[192,738]],[[276,472],[494,472],[494,660],[276,660]],[[518,487],[583,484],[583,738],[518,742]]];
 const CP2_BRD=[[575,562],[675,570],[674,800],[577,787]];
@@ -15910,7 +15913,7 @@ function rd2Next(){const D=store.get("redoDone",{})||{},now=Date.now();let t=nul
 function rd2Wrap(v,R){if(!REDO_MAP_ON||!v.querySelector("#rf"))return R;rd2Css();
   const dk=rd2Dark(),P=document.createElement("div");P.className="shp-page cq rd2-page"+(dk?" rd2-night":"");
   const sp=(id,x,y,t,cl)=>{const[a,b]=rd2Pc(x,y);return`<button class="shp-spot rd2-tag${cl?" "+cl:""}" id="${id}" style="left:${a}%;top:${b}%"><b>${t}</b></button>`};
-  P.innerHTML=`<img src="data/redomap/${dk?"redo_night":"redo_day"}.webp?v=${RD2_IMGV}" alt="洗墨池邊的臨水書案">
+  P.innerHTML=`<img src="${xqClImg(`data/redomap/${dk?"redo_night":"redo_day"}.webp?v=${RD2_IMGV}`)}" alt="洗墨池邊的臨水書案">
     <div class="rd2-fx" aria-hidden="true"><div class="rd2-pond">${rd2Season()}</div><div class="rd2-stack"></div><div class="rd2-pole"></div><div class="rd2-ctxt"></div><div class="rd2-cen"></div></div>
     ${sp("rd2Book",RD2_BOOK[0],RD2_BOOK[1]-70,"📅 該複習")}${sp("rd2Stack",RD2_STACK[0]-20,RD2_STACK[1]-75,"還沒練會")}${sp("rd2Pole",610,370,"✅ 練會了")}${sp("rd2All",RD2_ALL[0],RD2_ALL[1],"全部","rd2-small")}`;
   v.insertBefore(P,v.firstChild);
@@ -15996,7 +15999,7 @@ function ex2Mount(v){if(!EXAM_MAP_ON||v.querySelector(".ex2-page"))return;const 
   const dk=ex2Dark(),P=document.createElement("div");P.className="shp-page cq ex2-page"+(dk?" ex2-night":"");
   const sp=(id,x,y,t,cl,hide)=>{const[a,b]=ex2Pc(x,y);return`<button class="shp-spot ex2-tag${cl?" "+cl:""}" id="${id}" style="left:${a}%;top:${b}%${hide?";display:none":""}"><b>${t}</b></button>`};
   const[bl,bt,br,bb]=EX2_BOARD;
-  P.innerHTML=`<img src="data/exammap/${dk?"exam_night":"exam_day"}.webp?v=${EX2_IMGV}" alt="書院講堂的考桌和題名榜">
+  P.innerHTML=`<img src="${xqClImg(`data/exammap/${dk?"exam_night":"exam_day"}.webp?v=${EX2_IMGV}`)}" alt="書院講堂的考桌和題名榜">
     <div class="ex2-fx"><div class="ex2-board" style="left:${(bl/7.68).toFixed(2)}%;top:${(bt/13.76).toFixed(2)}%;width:${((br-bl)/7.68).toFixed(2)}%;height:${((bb-bt)/13.76).toFixed(2)}%">${ex2BoardSVG()}</div></div>
     ${intro?EX2_SCROLL.map(([id,sel,,,lx,ly,t])=>sp(id,lx,ly,t,"",!v.querySelector(sel))).join(""):""}${sp("ex2Book",195,640,"📚 題源","ex2-small")}`;
   const pad=v.querySelector(".pad");v.insertBefore(P,pad||v.firstChild);
@@ -16067,7 +16070,7 @@ function jz2Wrap(v,R0){if(!STAT_MAP_ON||!v.querySelector("#sTabs"))return R0;jz2
   const dk=jz2Dark(),P=document.createElement("div");P.className="shp-page cq jz2-page"+(dk?" jz2-night":"");
   const sp=(id,x,y,t)=>{const[a,b]=jz2Pc(x,y);return`<button class="shp-spot jz2-tag" id="${id}" style="left:${a}%;top:${b}%"><b>${t}</b></button>`},[bl,bt,br,bb]=JZ2_BOARD;
   const NET=!!(OFF&&window.XQNet);
-  P.innerHTML=`<img src="data/statmap/${dk?"stat_night":"stat_day"}.webp?v=${JZ2_IMGV}" alt="書院廊下的朱紅榜">
+  P.innerHTML=`<img src="${xqClImg(`data/statmap/${dk?"stat_night":"stat_day"}.webp?v=${JZ2_IMGV}`)}" alt="書院廊下的朱紅榜">
     <div class="jz2-fx"><div class="jz2-board" style="left:${(bl/7.68).toFixed(2)}%;top:${(bt/13.76).toFixed(2)}%;width:${((br-bl)/7.68).toFixed(2)}%;height:${((bb-bt)/13.76).toFixed(2)}%"></div><div class="jz2-tq"></div><div class="jz2-lw"></div></div>
     <button type="button" class="jz2-hit" data-to="jz2Rank" aria-label="朱紅榜：段位、進度、五邊形" style="left:${(bl/7.68).toFixed(2)}%;top:${(bt/13.76).toFixed(2)}%;width:${((br-bl)/7.68).toFixed(2)}%;height:${((bb-bt)/13.76).toFixed(2)}%"></button><button type="button" class="jz2-hit" data-to="jz2Tbl" aria-label="棋桌：電腦" style="left:74.7%;top:71.5%;width:24.2%;height:7.8%"></button>
     ${sp("jz2Rank",354,330,"📋 總覽")}${sp("jz2Book",JZ2_BOOK[0],JZ2_BOOK[1]-48,"課簿・對局紀錄")}${sp("jz2Scroll",JZ2_SCROLL[0],JZ2_SCROLL[1]-48,"手卷・我的成長")}${sp("jz2Tbl",665,950,"棋桌・電腦")}${NET?sp("jz2Lamp",632,230,"紗燈・線上"):""}`;
@@ -16164,7 +16167,7 @@ async function kj2Data(){const gs=(await myGames(150)).filter(g=>!g.it.mid&&isSt
 function kj2Wrap(v,R0){if(!OPEN_MAP_ON||!v.querySelector("#ob"))return R0;kj2Css();
   const dk=kj2Dark(),P=document.createElement("div");P.className="shp-page cq kj2-page"+(dk?" kj2-night":"");
   const sp=(id,x,y,t)=>{const[a,b]=kj2Pc(x,y);return`<button class="shp-spot kj2-tag" id="${id}" style="left:${a}%;top:${b}%"><b>${t}</b></button>`};
-  P.innerHTML=`<img src="data/openmap/${dk?"open_night":"open_day"}.webp?v=${KJ2_IMGV}" alt="書齋矮几上的棋枰和紅黑兩冊譜">
+  P.innerHTML=`<img src="${xqClImg(`data/openmap/${dk?"open_night":"open_day"}.webp?v=${KJ2_IMGV}`)}" alt="書齋矮几上的棋枰和紅黑兩冊譜">
     <div class="kj2-fx"><div class="kj2-q" data-q="b" style="width:300px;height:330px"></div><div class="kj2-q" data-q="s" style="width:280px;height:64px"></div><div class="kj2-mk"></div></div>
     ${sp("kj2Brd",387,385,"招牌開局")}${sp("kj2Red",KJ2_RED[0],KJ2_RED[1]-112,"執紅開局")}${sp("kj2Blk",KJ2_BLK[0],KJ2_BLK[1]-112,"執黑應法")}${sp("kj2Slip",388,818,"中局著法")}${sp("kj2Scr",600,372,"推薦對局")}`;
   v.insertBefore(P,v.firstChild);
@@ -16302,7 +16305,7 @@ function mzItemSheet(k){const T=(f,d)=>{try{return f()}catch(e){return d}};const
 /* 打開千秋印譜：有 sealBook 就用；沒有就退回舊的集章簿，再不行開千秋大百科 */
 function mzSealOpen(){if(typeof sealBook==="function")return sealBook();if(typeof stampBook==="function")return stampBook();location.hash="#/codex"}
 function mzWall(v){const pad=v.querySelector(".pad"),me2=pad&&pad.querySelector(".me2");if(!me2||pad.querySelector(".mz-wall"))return;mzCss();
-  const dk=mzDark(),src=`data/studymap/${dk?"study_night":"study_day"}.webp?v=${MZ_IMGV}`,pc=(a,b)=>((a/b)*100).toFixed(2)+"%",
+  const dk=mzDark(),src=xqClImg(`data/studymap/${dk?"study_night":"study_day"}.webp?v=${MZ_IMGV}`),pc=(a,b)=>((a/b)*100).toFixed(2)+"%",
     R4=r=>`left:${pc(r[0],MZ_W)};top:${pc(r[1],MZ_H)};width:${pc(r[2]-r[0],MZ_W)};height:${pc(r[3]-r[1],MZ_H)}`;
   /* 原本的東西：藏起來、留著給牆上的東西按 */
   const q=s=>pad.querySelector(s),hide=e=>{if(e)e.style.display="none"};
@@ -16438,7 +16441,7 @@ async function crStart(){const rk=crRanked(),lv=crLevel(),sd=crSide();
 function CpuRoom(v){setTop("挑戰電腦","#/hub/battle");setTabs(true,"#/hub/battle");v.className="view";crCss();
   const g=crEra(),P=document.createElement("div");P.className="shp-page cq cr-page";
   const sp=(id,t)=>{const[x,y]=CR_SPOT[id];return`<button type="button" class="shp-spot" id="${id}" style="${crPc(x,y)}"><b>${t}</b></button>`};
-  P.innerHTML=`<img src="data/cpuroom/cpuroom_day${g?"_"+g:""}.webp?v=${CR_IMGV}" alt="茶坊深處的對弈雅間：棋桌、戰帖、棋譜、棋罐、茶爐">
+  P.innerHTML=`<img src="${xqClImg(`data/cpuroom/cpuroom_day${g?"_"+g:""}.webp?v=${CR_IMGV}`)}" alt="茶坊深處的對弈雅間：棋桌、戰帖、棋譜、棋罐、茶爐">
     <div class="cr-ghost${g==="han"?" han":""}" aria-hidden="true"><img src="${typeof PIKA_DIR==="function"?PIKA_DIR():"data/pika2/"}idle.webp" alt=""><i><b>${crSide()==="b"?"帥":"將"}</b></i></div><span class="cr-name">幻影棋客</span>
     ${sp("crRank","🏅 段位")}${sp("crScroll","📜 選難度")}${OFF?sp("crRankT","🥇 晉級賽"):""}${sp("crFree","📚 練功房")}${sp("crRed","🔴 執紅")}${sp("crBlack","⚫ 執黑")}${sp("crGo",g==="han"?"🍶 開局":"🍵 開局")}
     <div class="cr-card"></div>`;
@@ -19896,7 +19899,7 @@ function sjWrap(v){const pn=v.querySelector(".lb-pn"),root=pn&&pn.querySelector(
   const hd=pn.querySelector(".lb-pn-h");if(hd&&hd.firstChild&&hd.firstChild.nodeType===3)hd.firstChild.textContent="";   /* 拿掉標題前的 📜 */
   const sc=document.createElement("div");sc.className="sj-sc";
   const pct=(x,y)=>`left:${(x/7.68).toFixed(2)}%;top:${(y/13.76).toFixed(2)}%`;
-  sc.innerHTML=`<div class="sj-fr"><img class="sj-bg" src="data/deskmap/${dk?"desk_night":"desk_day"}.webp?v=${SJ_IMGV}" alt="崇文書閣窗下的書案，上面攤著一部書"><img class="sj-ti" alt="" style="${pct(SJ_TI[0],SJ_TI[1])}">
+  sc.innerHTML=`<div class="sj-fr"><img class="sj-bg" src="${xqClImg(`data/deskmap/${dk?"desk_night":"desk_day"}.webp?v=${SJ_IMGV}`)}" alt="崇文書閣窗下的書案，上面攤著一部書"><img class="sj-ti" alt="" style="${pct(SJ_TI[0],SJ_TI[1])}">
     <div class="sj-p" data-p="0"><div class="sj-hd"></div><div class="sj-rows"></div></div><div class="sj-p" data-p="1"><div class="sj-rows"></div><div class="sj-ft"><button type="button" data-t="-1">‹ 上一頁</button><span></span><button type="button" data-t="1">下一頁 ›</button></div></div>
     <div class="sj-slips"></div><button type="button" class="sj-lamp" style="${pct(SJ_LAMP[0],SJ_LAMP[1])}" aria-label="搜尋"><span>搜尋</span></button></div>`;
   pn.insertBefore(sc,pn.firstChild);
