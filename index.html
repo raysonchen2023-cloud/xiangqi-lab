@@ -1379,7 +1379,7 @@ html[data-hicon] .tabbar button.on{box-shadow:inset 0 -3px 0 currentColor}
       if(!window.caches)return go();caches.keys().then(function(ks){return Promise.all(ks.filter(function(k){return k.indexOf("xqlab-app-")===0}).map(function(k){return caches.delete(k)}))})
         .then(function(){return navigator.serviceWorker&&navigator.serviceWorker.getRegistration()}).then(function(r){return r&&r.update()}).catch(function(){}).then(go)}};setTimeout(chk,4000)})();
 </script>
-<script>window.XQ_OFFLINE=true;window.XQ_BUILD="20261110-2245";</script>
+<script>window.XQ_OFFLINE=true;window.XQ_BUILD="20261110-2300";</script>
 <script src="core.js"></script>
 <script src="engine.js"></script>
 <script src="local.js"></script>
@@ -5518,7 +5518,7 @@ const PARK_Q={
     ["帝制象經成，集百僚講說。","北周武帝","《周書・武帝紀》","天和四年（569 年），北周武帝寫成《象經》，召集百官來聽他講解"]],
   sui:[["若叩洪鐘，如懸明鏡。","庾信","〈象戲賦〉","寫北周武帝的象戲；庾信由北周入隋，隋開皇元年（581）去世"],
     ["於是綠簡既開，丹局直正，理洞研機，原窮作聖。","庾信","〈象戲賦〉",""]],
-  tang:[["天馬斜飛度三止，上將橫行擊四方。輜車直入無回翔，六甲次第不乖行。","牛僧孺","《玄怪錄・岑順》（《全唐詩》卷八六七）","岑順夢見兩軍在棋盤上開戰，是唐代象棋的珍貴記載"]],
+  tang:[["天馬斜飛度三止，上將橫行擊四方。輜車直入無回翔，六甲次第不乖行。","牛僧孺","《玄怪錄・岑順》（《全唐詩》卷八六七）","岑順夢見兩軍在棋盤上開戰，是唐人小說裡寫象戲的珍貴文字"]],
   wudai:[],
   song:[["大都博弈皆戲劇，象戲翻能學用兵。","程顥","〈象戲〉",""],
     ["中軍八面將軍重，河外尖斜步卒輕。","程顥","〈象戲〉","寫的已經是有九宮、有河界的象棋"],
@@ -7216,7 +7216,7 @@ async function npcAskSheet(N){let D;try{D=await api("/quiz/data")}catch(e){retur
 function npcBondUp(N){const D=NPC_BOND[N.id];if(!D)return;const M=npcBonds(),B=M[N.id]||(M[N.id]={m:Date.now(),n:0});if(B.n>=3)return;B.n++;if(!B.m)B.m=Date.now();store.set("npcBond",M);addXP(10,"羈絆",`bond:${N.id}:${B.n}`);
   sheet(`🌸 和${N.name}的羈絆 ${bondHearts(B.n)}`,b=>{b.innerHTML=`<p class="gd-say">「${esc(D.l[B.n-1])}」</p>${npcIdCard(N,B.n-1)}<p class="muted" style="font-size:13px">羈絆第 ${B.n} 級（共 3 級）・修為 +10</p>${B.n>=3?`<p>💌 ${esc(N.name)}說要寫一封信給你，寄到驛站的「📮 信箱」。</p>`:""}<div class="cj-row"><button class="btn ghost" id="gdBk">羈絆冊</button><button class="btn" id="gdOk">好</button></div>`;
     b.querySelector("#gdOk").onclick=closeSheet;b.querySelector("#gdBk").onclick=()=>npcBondBook()})}
-function npcIdCard(N,i){const D=NPC_BOND[N.id];return`<div class="gd-id"><div class="gd-idh"><b>📇 身分小卡 ${i+1}／3</b><span>${esc(eraLabel(N.era))}${D.tale?"・📖 說書人筆下的身分":""}</span></div><p>${esc(D.c[i])}</p></div>`}
+function npcIdCard(N,i){const D=NPC_BOND[N.id];return`<div class="gd-id"><div class="gd-idh"><b>📇 身分小卡 ${i+1}／3</b><span>${esc(eraLabel(N.era))}的背景${D.tale?"・📖 說書人筆下的身分":""}</span></div><p>${esc(D.c[i])}</p></div>`}
 /* 回饋 856：等級（06-cpu.js npcRk）、框色（07-legend.js RELIC_RK）、小印（稀、傳；普通不蓋） */
 const NPC_RK_SEAL={rare:"稀",legend:"傳"},NPC_RK_HOW={common:"常遇到",rare:"少遇到",legend:"很難得遇到"};
 const npcRkOf=n=>typeof npcRk==="function"?npcRk(n):"common",npcRkC=r=>((typeof RELIC_RK!=="undefined"&&RELIC_RK[r])||{common:["普通","#8A7A66"],rare:["稀有","#2F6FB5"],legend:["傳說","#C8962E"]}[r]||["普通","#8A7A66"]);
@@ -7235,22 +7235,25 @@ function npcRkTop(L,M){const cnt=r=>{const A=L.filter(n=>npcRkOf(n)===r);return`
   return`<div class="rd-key npc-key muted"><div class="rd-kt">頭像外框的顏色，代表她有多難遇到：</div>${["common","rare","legend"].map(r=>{const[t,c]=npcRkC(r);return`<span class="rd-k"><i class="rd-tile" style="border-color:${c}">🌸${npcSeal(r)}</i><span><b style="color:${c}">${esc(t)}</b><small>${NPC_RK_HOW[r]}・遇過 ${cnt(r)}</small></span></span>`}).join("")}</div>`}
 /* 羈絆冊：20 位，沒遇過的顯示「？」；回饋 856：頭像框用等級框色，稀有、傳說蓋小印（沒遇過的也露框色和小印，不露名字） */
 function npcBondBook(){const L=NPC_W(),M=npcBonds(),met=L.filter(n=>M[n.id]&&M[n.id].m).length;npcRkCss();
-  sheet(`🌸 園子棋友的羈絆（遇過 ${met}／${L.length}）`,b=>{b.innerHTML=`<p class="muted" style="font-size:13px;margin:0 0 8px">石桌往事的園子裡，女棋手偶爾會請你看一盤棋；幫她解開，羈絆就多一級。她們大多在自己家鄉的朝代出現。</p>${npcRkTop(L,M)}<div class="gd-grid">${L.map(n=>{const x=M[n.id]||{},r=npcRkOf(n),c=npcRkC(r)[1],rc=r==="common"?"":` rk-${r}`;return x.m?`<button class="gd-nc rk${rc}" style="--rk:${c}" data-w="${n.id}"><img src="data/npc/${n.id}.webp" alt="" onerror="this.remove()">${npcSeal(r)}<b>${esc(n.name)}</b><small>${esc(eraLabel(n.era))}・<span class="gd-h">${bondHearts(x.n||0)}</span></small></button>`:`<div class="gd-nc off${r==="common"?"":" rk"+rc}" style="--rk:${c}"><span class="q">？</span>${npcSeal(r)}<b>？？？</b><small>還沒遇過</small></div>`}).join("")}</div>`;
+  sheet(`🌸 園子棋友的羈絆（遇過 ${met}／${L.length}）`,b=>{b.innerHTML=`<p class="muted" style="font-size:13px;margin:0 0 8px">石桌往事的園子裡，女棋手偶爾會請你看一盤棋；幫她解開，羈絆就多一級。她們大多在自己家鄉的朝代出現。<br>她們都是這個遊戲編出來的棋友；身分小卡寫的是她那個朝代的文化背景，不是她本人的史料。「稀有」「傳說」只表示多難遇到。</p>${npcRkTop(L,M)}<div class="gd-grid">${L.map(n=>{const x=M[n.id]||{},r=npcRkOf(n),c=npcRkC(r)[1],rc=r==="common"?"":` rk-${r}`;return x.m?`<button class="gd-nc rk${rc}" style="--rk:${c}" data-w="${n.id}"><img src="data/npc/${n.id}.webp" alt="" onerror="this.remove()">${npcSeal(r)}<b>${esc(n.name)}</b><small>${esc(eraLabel(n.era))}・<span class="gd-h">${bondHearts(x.n||0)}</span></small></button>`:`<div class="gd-nc off${r==="common"?"":" rk"+rc}" style="--rk:${c}"><span class="q">？</span>${npcSeal(r)}<b>？？？</b><small>還沒遇過</small></div>`}).join("")}</div>`;
     b.querySelectorAll("[data-w]").forEach(y=>y.onclick=()=>{vibrate(5);const n=PARK_NPC.find(z=>z.id===y.dataset.w);if(n)npcBondSheet(n)})})}
 function npcBondSheet(n){const D=NPC_BOND[n.id],x=bondOf(n.id),age=(typeof AGE!=="undefined"&&AGE["n:"+n.id])||"";
   npcRkCss();const rk=npcRkOf(n),[rkt,rkc]=npcRkC(rk);   /* 回饋 856：頭像框、等級小章 */
-  sheet(`🌸 ${n.name}`,b=>{b.innerHTML=`<div class="gd-who"><img src="data/npc/${n.id}.webp" alt="" onerror="this.remove()" style="box-shadow:0 0 0 2.5px ${rkc}"><div><div>家鄉：<b>${esc(eraLabel(n.era))}</b>${age?`・${esc(age)}`:""}<span class="gd-rk-pill" style="background:${rkc}">${esc(rkt)}</span></div><div>羈絆 <span class="gd-h">${bondHearts(x.n)}</span>（${x.n}／3）</div><div class="muted" style="font-size:13px">「${esc(n.say)}」</div></div></div>
+  sheet(`🌸 ${n.name}`,b=>{b.innerHTML=`<div class="gd-who"><img src="data/npc/${n.id}.webp" alt="" onerror="this.remove()" style="box-shadow:0 0 0 2.5px ${rkc}"><div><div>家鄉：<b>${esc(eraLabel(n.era))}</b>${age?`・${esc(age)}`:""}・原創棋友<span class="gd-rk-pill" style="background:${rkc}">${esc(rkt)}</span></div><div>羈絆 <span class="gd-h">${bondHearts(x.n)}</span>（${x.n}／3）</div><div class="muted" style="font-size:13px">「${esc(n.say)}」</div></div></div>
     ${[0,1,2].map(i=>i<x.n?npcIdCard(n,i)+`<p class="gd-line">💬「${esc(D.l[i])}」</p>`:`<div class="gd-id off"><div class="gd-idh"><b>🔒 身分小卡 ${i+1}／3</b><span>羈絆第 ${i+1} 級解開</span></div></div>`).join("")}
     ${x.n>=3?`<button class="btn" id="gdMail" style="width:100%">💌 讀她寄來的信</button>`:""}<button class="btn ghost" id="gdBack" style="width:100%">回羈絆冊</button>`;
     const m=b.querySelector("#gdMail");if(m)m.onclick=()=>npcMail(n);b.querySelector("#gdBack").onclick=()=>npcBondBook()})}
+/* 宋朝以前的棋友：信裡的棋是旅人帶去的今天的象棋，不是當朝棋法（史實盤查 H01，11/10） */
+const ERA_PRE_XQ={qin:"六博",han:"六博",sanguo:"六博",weijin:"六博、塞戲",nanbei:"六博、北周的象戲",sui:"北周傳下來的象戲",tang:"寶應象戲那一類沒有炮的象戲",wudai:"象戲（炮什麼時候加進來，還沒有定論）"};
+const eraXqNote=era=>ERA_PRE_XQ[era]?`<p class="muted" style="font-size:13px;margin:0 0 10px">📜 這是星槎棋友的信。信裡的棋，是你帶去教她的今天的象棋；${esc(eraLabel(era))}當時的人玩的是${ERA_PRE_XQ[era]}。</p>`:"";
 /* 信：滿級才有，讀過就不再標「新」 */
 function npcMail(n,after){const D=NPC_BOND[n.id];if(!D||bondOf(n.id).n<3)return;const M=npcBonds();if(M[n.id]&&!M[n.id].r){M[n.id].r=Date.now();store.set("npcBond",M)}
-  sheet(`💌 ${n.name}的信`,b=>{b.innerHTML=`<div class="gd-mail">${esc(D.mail)}</div><button class="btn" id="gdOk" style="width:100%">收好</button>`;b.querySelector("#gdOk").onclick=()=>{closeSheet();if(after)setTimeout(after,260)}})}
+  sheet(`💌 ${n.name}的信`,b=>{b.innerHTML=`<div class="gd-mail">${esc(D.mail)}</div>${eraXqNote(n.era)}<button class="btn" id="gdOk" style="width:100%">收好</button>`;b.querySelector("#gdOk").onclick=()=>{closeSheet();if(after)setTimeout(after,260)}})}
 const npcLetters=()=>NPC_W().filter(n=>bondOf(n.id).n>=3);
 
 /* ---------- C．象棋從哪裡來：13 朝的棋史卡（照史實；年代有爭議寫「大約」，小說寫明是小說）＋3 題古法殘局（canju-set.json 的題號） ---------- */
-/* 唐以前（秦～隋）和五代：挑沒有炮、子最少的驗證題；唐：盡量只有將車馬卒（寶應象戲）；宋：要用到炮；元：《夢入神機》；明：《適情雅趣》《橘中秘》；清：《竹香齋》《心武殘編》；經典：明、清古譜和現代大師各一局 */
-const HIST_NOC="這個時代還沒有今天的象棋，更沒有炮。下面挑的是不用炮、棋子最少的殘局（題目出自明清古譜，都經過 Pikafish 驗證）。";
+/* 唐以前（秦～隋）和五代：挑沒有炮、子最少的驗證題；唐：盡量只有將車馬卒（寶應象戲）；宋：要用到炮；元：明代殘本《夢入神機》（找不到確定是元朝的殘局譜）；明：《適情雅趣》《橘中秘》；清：《竹香齋》《心武殘編》；經典：明、清古譜和現代大師各一局 */
+const HIST_NOC="這個時代還沒有今天的象棋，更沒有炮。下面是今天的象棋練習，不是當時的下法：挑的是不用炮、棋子最少的殘局（題目出自明清古譜，都經過 Pikafish 驗證）。";
 const HIST={
   classic:{t:"象棋的故事",x:"象棋不是一個人、一天發明的。有人把它的源頭追到先秦的博戲；北周武帝寫過《象經》，唐朝有「寶應象戲」；大約到了宋朝，才有了河界和炮，跟今天的樣子差不多。明清兩代的棋譜，像《橘中秘》、《梅花譜》，到今天還有人在讀。",
     qn:"從明朝古譜、清朝古譜到今天特級大師的實戰，各挑一局（都經過 Pikafish 驗證）。",q:["sq235","jz019","gm2008-4BA33K1C39r"]},
@@ -7258,23 +7261,23 @@ const HIST={
     qn:HIST_NOC,q:["jc054","jc133c5","jc131c4"]},
   han:{t:"鴻溝：楚河漢界的典故",x:"「楚河漢界」的典故，來自秦朝滅亡後的楚漢相爭。《史記．項羽本紀》記載項羽和劉邦約定「中分天下，割鴻溝以西者為漢，鴻溝而東者為楚」。不過漢朝人還沒下今天的象棋，他們愛玩的是六博；棋盤上寫「楚河漢界」，是很久以後的事。",
     qn:HIST_NOC,q:["zx078","jc130c6","sq429c8"]},
-  sanguo:{t:"三國：還沒有象棋",x:"三國時還沒有今天的象棋。從戰國玩到漢魏的六博還很常見，東吳的韋曜還寫過〈博弈論〉。戰國的《韓非子．外儲說左下》說：「博貴梟，勝者必殺梟。」六博裡最重要的棋子叫「梟」，要贏就得吃掉對方的梟——就像今天下象棋，要將死對方的將帥。",
+  sanguo:{t:"三國：還沒有象棋",x:"三國時還沒有今天的象棋。從戰國到漢魏，六博一直是常見的博戲，東吳的韋曜還寫過〈博弈論〉。戰國的《韓非子．外儲說左下》有一句「博貴梟，勝者必殺梟」，可見「梟」是六博裡很要緊的棋子。不過六博完整的下法，學者到今天還在拼湊，也不能說它就是今天象棋的祖先。",
     qn:HIST_NOC,q:["jc002","mr022c4","jc036"]},
   weijin:{t:"等待象戲",x:"魏晉時也還沒有今天的象棋。要等到南北朝，北周武帝在天和四年（569 年）寫成《象經》，是史書明確記載的第一部象戲專書；再過約兩百年，唐朝《玄怪錄》裡的象戲才有了將、馬、車、卒，棋子還和今天不完全一樣。",
     qn:HIST_NOC,q:["sq388","sq261c5","jz039c6"]},
   nanbei:{t:"周武帝的《象經》",x:"《周書．武帝紀》記載，天和四年（569 年），北周武帝寫成《象經》，召集百官來聽他講解，這是正史裡很明確的一筆「象戲」記載。可惜《象經》的規則已經失傳；從王褒的〈象經序〉看，它講究天文、陰陽、時令，跟今天的象棋差很多。",
     qn:HIST_NOC,q:["jc048","lk249c4","lk236"]},
-  sui:{t:"隋朝人讀《象經》",x:"隋朝很短，只有三十多年，沒有留下象戲的棋譜。《隋書．經籍志》還記著周武帝的《象經》和替它作的注解，可見隋朝人還在讀這套棋經；可惜這些書後來都失傳了。",
+  sui:{t:"《隋書》記下的《象經》",x:"隋朝很短，只有三十多年，沒有留下象戲的棋譜。唐朝人修成的《隋書．經籍志》，還著錄了周武帝的《象經》和幾種注本，可見這套棋經一直有書傳到隋唐；可惜這些書後來都失傳了。",
     qn:HIST_NOC,q:["sq434","sq254","mr112c8"]},
-  tang:{t:"寶應象戲：天馬斜飛",x:"唐朝牛僧孺的小說集《玄怪錄》裡有一篇〈岑順〉，寫寶應年間，岑順夢見兩國交兵，軍師說「天馬斜飛度三止」、「輜車直入無回翔」，醒來在屋下挖出一座古墓，裡面擺著一副金銅做的象戲。這是小說，但可以看出唐朝的象戲已經有將、馬、車、卒，還沒有炮。",
+  tang:{t:"寶應象戲：天馬斜飛",x:"唐朝牛僧孺的小說集《玄怪錄》裡有一篇〈岑順〉，寫寶應年間，岑順夢見兩國交兵，軍師說「天馬斜飛度三止」、「輜車直入無回翔」，醒來在屋下挖出一座古墓，裡面擺著一副金銅做的象戲。這是小說。篇中寫到將、馬、車、卒，沒有提到炮；不過單憑一篇小說，還拼不出唐朝象戲完整的下法。",
     qn:"寶應象戲有將、馬、車、卒，沒有炮。下面盡量挑只用這幾種棋子的殘局（題目出自明清古譜，都經過 Pikafish 驗證；最後一局要五步，比較難）。",q:["sq439","lk020c5","jc106"]},
   wudai:{t:"象戲慢慢在改變",x:"五代十國戰亂不斷，留下來的象棋記載很少。大約從唐朝後期到北宋，象戲一點一點改變，加進了「砲」等新的棋子；但是哪一年、誰改的，學者到今天還沒有定論。",
     qn:"炮是什麼時候加進來的還沒有定論，這裡先挑不用炮的殘局（題目出自明清古譜，都經過 Pikafish 驗證）。",q:["sq435","sq368","sq257"]},
-  song:{t:"宋朝：河界與炮",x:"宋朝是象棋定型的時代。北宋司馬光設計過《七國象戲》，讓七個人各帶一國兵馬一起下，是書齋裡的新玩法。到了南宋，陳元靚《事林廣記》裡的象棋圖已經有河界、也有炮，跟今天的象棋幾乎一樣。",
+  song:{t:"宋朝：河界與炮",x:"一般認為，宋朝是象棋大致定型的時代。北宋司馬光設計過《七國象戲》，讓七個人各帶一國兵馬一起下，是書齋裡的新玩法。南宋陳元靚編了《事林廣記》；今天看得到的版本多是元朝刻印的，書裡的象棋圖已經有河界、也有炮，跟今天的象棋幾乎一樣。",
     qn:"宋朝的象棋已經有炮了，下面三局都用得到炮（題目出自明清古譜，都經過 Pikafish 驗證）。",q:["sq460","lk156","lk233c6"]},
   yuan:{t:"靠刻本留下來的棋",x:"元朝人照樣下象棋。南宋陳元靚編的《事林廣記》，今天看得到最早的版本大多是元朝刻印的，書裡的象棋圖就是靠這些刻本才留了下來。",
-    qn:"今天找不到確定是元朝的殘局譜，下面三局出自古譜《夢入神機》（都經過 Pikafish 驗證）。",q:["mr040","mr118","mr088c5"]},
-  ming:{t:"古譜最多的時代",x:"明朝是象棋古譜最多的時代。徐芝編的《適情雅趣》（1570 年）收了五百多局殘局；朱晉楨的《橘中秘》（1632 年）講開局和殺法，到今天還是學棋的人愛讀的書。",
+    qn:"今天找不到確定是元朝的殘局譜。下面三局出自明代的殘局譜《夢入神機》，是今天的象棋練習（都經過 Pikafish 驗證）。",q:["mr040","mr118","mr088c5"]},
+  ming:{t:"明朝的重要古譜",x:"明朝留下了幾部重要的象棋古譜。徐芝編的《適情雅趣》（1570 年）收了五百多局殘局；朱晉楨的《橘中秘》（1632 年）講開局和殺法，到今天還是學棋的人愛讀的書。",
     qn:"下面是《適情雅趣》和《橘中秘》裡的局（都經過 Pikafish 驗證）。",q:["sq442","jc006c8","jc111"]},
   qing:{t:"梅花譜與竹香齋",x:"清朝的象棋更普及了。清初王再越的《梅花譜》專講屏風馬怎麼對付當頭炮，是古譜裡的經典；清朝中期張喬棟編的《竹香齋象戲譜》收了許多精巧的殘局，很多題目流傳到今天。",
     qn:"下面是《竹香齋》和《心武殘編》裡的局；《梅花譜》講的是開局，所以沒有殘局題（都經過 Pikafish 驗證）。",q:["zx161","zx172","xw040"]}};
@@ -8921,7 +8924,7 @@ const QQ_TELLER={
     {q:"照《史記》的約定，鴻溝以西歸誰？",o:["漢","楚","秦"],w:"「割鴻溝以西者為漢，鴻溝而東者為楚」。",c:"《史記．項羽本紀》"},
     {q:"漢朝人最愛玩的是哪一種棋？",o:["六博","今天的象棋","七國象戲"],w:"漢朝人還沒下今天的象棋，他們愛玩的是六博。"}],
   sanguo:[{q:"三國時代，今天這種象棋出現了嗎？",o:["還沒有","已經很流行","只有皇帝能下"],w:"還沒有。三國時人們玩的是六博這一類博戲；象棋的炮這些棋子，要到宋朝前後才有，今天這種象棋大約也在那時定型。"},
-    {q:"《韓非子》說玩六博「貴梟」，「梟」是什麼？",o:["六博裡最重要的一枚棋子","一種鳥做的獎品","棋盤中間的河"],w:"梟是六博最重要的棋子。「博貴梟，勝者必殺梟」——要贏就得吃掉對方的梟，就像象棋要將死對方的將帥。",c:"《韓非子．外儲說左下》"},
+    {q:"《韓非子》說玩六博「貴梟」，「梟」是什麼？",o:["六博裡最重要的一枚棋子","一種鳥做的獎品","棋盤中間的河"],w:"《韓非子》說「博貴梟，勝者必殺梟」，可見梟是六博裡最要緊的棋子。六博完整的下法，學者到今天還在拼湊。",c:"《韓非子．外儲說左下》"},
     {q:"六博、象戲、今天的象棋，哪一個最早出現？",o:["六博","象戲","今天的象棋"],w:"最早的是六博（戰國就有），接著是南北朝北周的象戲（《象經》），今天的象棋大約到宋朝才定型。"}],
   weijin:[{q:"魏晉時代，今天的象棋有「炮」嗎？",o:["還沒有象棋，也沒有炮","有炮","有炮也有楚河漢界"],w:"魏晉時還沒有今天的象棋；炮大約到宋朝前後才加進來。"},
     {q:"北周武帝親自寫成的象戲專書《象經》，是魏晉之後哪個時代？",o:["南北朝","秦朝","三國"],w:"南北朝的北周武帝在天和四年（569 年）寫成《象經》，是史書明確記載的第一部象戲專書。",c:"《周書．武帝紀》"},
@@ -8930,21 +8933,21 @@ const QQ_TELLER={
     {q:"周武帝寫成《象經》，是在哪一年？",o:["569 年","1570 年","1632 年"],w:"天和四年（569 年），北周武帝寫成《象經》。",c:"《周書．武帝紀》"},
     {q:"從王褒的〈象經序〉看，《象經》講究的是什麼？",o:["天文、陰陽、時令","當頭炮和屏風馬","河界和炮"],w:"它講究天文、陰陽、時令，跟今天的象棋差很多。",c:"王褒〈象經序〉"}],
   sui:[{q:"隋朝大約有多長？",o:["三十多年","三百多年","一千年"],w:"隋朝很短，只有三十多年。"},
-    {q:"哪一部書還記著周武帝的《象經》和替它作的注解？",o:["《隋書．經籍志》","《史記》","《事林廣記》"],w:"《隋書．經籍志》還記著周武帝的《象經》。",c:"《隋書．經籍志》"},
+    {q:"唐朝人修成的哪一部史書，著錄了周武帝的《象經》和幾種注本？",o:["《隋書．經籍志》","《史記》","《事林廣記》"],w:"唐朝人修成的《隋書．經籍志》，著錄了周武帝的《象經》和幾種注本。",c:"《隋書．經籍志》"},
     {q:"隋朝有沒有留下象戲的棋譜？",o:["沒有","有，叫《梅花譜》","有，叫《橘中秘》"],w:"隋朝沒有留下象戲的棋譜。"}],
   tang:[{q:"〈岑順〉這篇小說，收在誰的《玄怪錄》裡？",o:["牛僧孺","司馬光","王再越"],w:"唐朝牛僧孺的小說集《玄怪錄》裡有一篇〈岑順〉。",c:"《玄怪錄．岑順》"},
-    {q:"照〈岑順〉看，唐朝的象戲還沒有哪一種棋子？",o:["炮","馬","車"],w:"唐朝的象戲已經有將、馬、車、卒，還沒有炮。",c:"《玄怪錄．岑順》"},
+    {q:"〈岑順〉這篇小說寫到的棋子裡，沒有提到哪一種？",o:["炮","馬","車"],w:"篇中寫到將、馬、車、卒，沒有提到炮。單憑一篇小說，還拼不出唐朝象戲完整的下法。",c:"《玄怪錄．岑順》"},
     {q:"岑順醒來，在屋下挖出了什麼？",o:["一座古墓，擺著金銅做的象戲","一箱棋譜","一塊刻著字的石碑"],w:"他挖出一座古墓，裡面擺著一副金銅做的象戲。",c:"《玄怪錄．岑順》"}],
   wudai:[{q:"大約從唐朝後期到北宋，象戲加進了哪一種新棋子？",o:["砲","馬","車"],w:"象戲一點一點改變，加進了「砲」等新的棋子。"},
     {q:"炮是哪一年、誰加進象棋的？",o:["學者到今天還沒有定論","北周武帝","曹操"],w:"哪一年、誰改的，學者到今天還沒有定論。"},
     {q:"五代十國留下來的象棋記載，多還是少？",o:["很少","很多","有整套棋譜"],w:"五代十國戰亂不斷，留下來的象棋記載很少。"}],
   song:[{q:"北宋司馬光設計過哪一種象戲？",o:["《七國象戲》","寶應象戲","《象經》"],w:"司馬光設計過《七國象戲》，是書齋裡的新玩法。"},
     {q:"司馬光的《七國象戲》，要幾個人一起下？",o:["七個人","兩個人","四個人"],w:"讓七個人各帶一國兵馬一起下。"},
-    {q:"南宋陳元靚的哪一部書裡，象棋圖已經有河界、也有炮？",o:["《事林廣記》","《玄怪錄》","《世說新語》"],w:"陳元靚《事林廣記》裡的象棋圖，已經有河界、也有炮。",c:"《事林廣記》"}],
+    {q:"南宋陳元靚編的哪一部書，傳下來的刻本裡有河界、也有炮的象棋圖？",o:["《事林廣記》","《玄怪錄》","《世說新語》"],w:"陳元靚編的《事林廣記》，今天看得到的多是元朝刻本，裡面的象棋圖已經有河界、也有炮。",c:"《事林廣記》"}],
   yuan:[{q:"今天看得到最早的《事林廣記》，大多是哪一朝刻印的？",o:["元朝","唐朝","秦朝"],w:"最早的版本大多是元朝刻印的。",c:"《事林廣記》"},
     {q:"《事林廣記》是誰編的？",o:["陳元靚","徐芝","朱晉楨"],w:"南宋陳元靚編的《事林廣記》。",c:"《事林廣記》"},
     {q:"《事林廣記》裡的象棋圖，是靠什麼才留下來的？",o:["刻本","石碑","口耳相傳"],w:"書裡的象棋圖，就是靠這些刻本才留了下來。"}],
-  ming:[{q:"象棋古譜最多的，是哪一朝？",o:["明朝","秦朝","三國"],w:"明朝是象棋古譜最多的時代。"},
+  ming:[{q:"《適情雅趣》和《橘中秘》，是哪一朝的象棋古譜？",o:["明朝","秦朝","三國"],w:"兩部都是明朝的重要古譜：《適情雅趣》1570 年，《橘中秘》1632 年。"},
     {q:"徐芝編的《適情雅趣》，收了大約多少局殘局？",o:["五百多局","五十多局","五千多局"],w:"《適情雅趣》（1570 年）收了五百多局殘局。",c:"《適情雅趣》"},
     {q:"朱晉楨的《橘中秘》成書於哪一年？",o:["1632 年","1570 年","569 年"],w:"朱晉楨的《橘中秘》成書於 1632 年；1570 年是《適情雅趣》。",c:"《橘中秘》"},
     {q:"《橘中秘》講的是什麼？",o:["開局和殺法","茶藝","六博"],w:"《橘中秘》講開局和殺法，到今天還是學棋的人愛讀的書。",c:"《橘中秘》"}],
@@ -11758,7 +11761,7 @@ const wmPgUnread=k=>wmPgList(k).filter(o=>!o.x.r).length;
 function wmPgRows(k){return wmPgList(k).map(o=>`<button class="item" data-wmpg="${o.s}:${o.i}"><span class="lb" style="font-size:22px">🕊</span><span class="tx"><b>${esc(o.n.name)}的飛鴿信（${o.i+1}／3）${o.x.r?"":" 🆕"}${o.x.ok?" ✅":""}</b><span>寄自${esc(eraLabel(o.n.era))}・${o.x.ok?"已回信":"附一局殘棋"}</span></span><span class="muted">›</span></button>`).join("")}
 function wmPgBind(box,after){box.querySelectorAll("[data-wmpg]").forEach(y=>y.onclick=()=>{vibrate(5);const[s,i]=y.dataset.wmpg.split(":");wmPgOpen(s,+i,after)})}
 function wmPgOpen(s,i,after){const n=wmN(s),D=WM_PG[s],S=wmPgSt(),x=S[s]&&S[s].L[i];if(!n||!D||!x)return;if(!x.r){x.r=Date.now();store.set("wmPg",S)}wmCss();
-  sheet(`🕊 ${n.name}的飛鴿信（${i+1}／3）`,b=>{b.innerHTML=`<div class="gd-mail">${esc(D[i][0])}</div>${x.ok?`<p class="gd-say">✅ 已回信。${esc(n.name)}：「${esc(D[i][2])}」</p><button class="btn" id="wmOk" style="width:100%">收好</button>`:`<button class="btn" id="wmGo" style="width:100%">♟ 看看附來的殘局</button><p class="muted" style="font-size:13px;margin:8px 0 0">不看答案解開，就能回信（修為 +15）。</p>`}`;
+  sheet(`🕊 ${n.name}的飛鴿信（${i+1}／3）`,b=>{b.innerHTML=`<div class="gd-mail">${esc(D[i][0])}</div>${eraXqNote(n.era)}${x.ok?`<p class="gd-say">✅ 已回信。${esc(n.name)}：「${esc(D[i][2])}」</p><button class="btn" id="wmOk" style="width:100%">收好</button>`:`<button class="btn" id="wmGo" style="width:100%">♟ 看看附來的殘局</button><p class="muted" style="font-size:13px;margin:8px 0 0">不看答案解開，就能回信（修為 +15）。</p>`}`;
     const ok=b.querySelector("#wmOk");if(ok)ok.onclick=()=>{closeSheet();if(after)setTimeout(after,260)};
     const go=b.querySelector("#wmGo");if(go)go.onclick=()=>{go.disabled=true;go.textContent="攤開信紙…";wmPgPz(s,i,after).catch(e=>{toast(e.message||"題目載入失敗");go.disabled=false;go.textContent="♟ 看看附來的殘局"})}})}
 async function wmPgPz(s,i,after){const n=wmN(s),D=WM_PG[s],S=wmPgSt(),x=S[s].L[i];
@@ -11820,7 +11823,7 @@ const WM_SCR={
     ok2:"師父說得對，你就是那個人。下卷給你——三卷合在一起，就是一整盤棋了。",
     hint:["去漢朝的園子，等抱琴的女琴師羈絆滿 3 級","帶著上卷，去唐朝的園子找長安的牡丹娘子","帶著中卷，去明朝的園子找秦淮琵琶女"],
     full:"三卷帛書拼在一起，一整盤棋終於完整了。帛的邊上寫著幾個小字：「千秋殘譜・清弦」。",
-    done:"這一局，後來也收進了明朝徐芝編的《適情雅趣》（1570 年），叫〈路隔星河〉。帛書收進珍品冊：🎼 清弦帛書。",
+    done:"三卷合成的這一局，是明朝徐芝編的《適情雅趣》（1570 年）裡的〈路隔星河〉。清弦帛書和它跨朝代流傳的經過，是這個遊戲編的故事，不是史書記載。帛書收進珍品冊：🎼 清弦帛書。",
     hold:{name:"清弦圖・中卷：單車來攻",fen:"4k4/9/9/9/9/2r6/9/4B4/9/3AKAB2",keep:["A","B"],
       skill:"單車難破士象全：仕、相連在一起，帥不亂走，車就找不到破口",say:"敵人一輛車來攻。你只有帥、仕、相——仕相連成一氣，誰也進不來。"}},
   b:{nm:"千秋殘譜・蘆花圖",parts:["上段","中段","下段"],w:["w07","w14","w08"],fin:"xw077",rel:"蘆花繡帕",ic:"🪡",
@@ -11831,7 +11834,7 @@ const WM_SCR={
     ok2:"守住了。帕子給你，背面的線頭我都收好了。",
     hint:["去宋朝的園子，等水鄉漁家女羈絆滿 3 級","帶著上段，去元朝的園子找畫青花的女工","帶著中段，去清朝的園子找蘇州繡娘"],
     full:"木板、碗底、繡帕拼在一起，一整盤棋終於完整了。帕子的邊上繡著幾個小字：「千秋殘譜・蘆花」。",
-    done:"這一局，後來也收進了清朝的殘局譜《心武殘編》，叫〈四季落花〉。繡帕收進珍品冊：🪡 蘆花繡帕。",
+    done:"三段合成的這一局，是殘局譜《心武殘編》裡的〈四季落花〉。蘆花木板、碗底和繡帕一路傳下來的經過，是這個遊戲編的故事，不是史書記載。繡帕收進珍品冊：🪡 蘆花繡帕。",
     hold:{name:"蘆花圖・下段：馬卒來攻",fen:"4k4/9/9/9/9/9/2n3p2/4B4/9/3AKAB2",keep:["A","B"],
       skill:"馬卒對士象全多半是和棋：仕、相連在一起，別讓卒子貼進九宮、別讓馬踩到落單的子",say:"敵人的馬帶著一個過河的卒來攻。你只有帥、仕、相——一針一線，守住。"}}};
 /* 中卷（a）是守局、下段（b）是守局；另一步是解一題（b 的中段要一步都不錯） */
