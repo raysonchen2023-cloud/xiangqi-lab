@@ -37,7 +37,7 @@
       for(let c=0;c<9;c++){g.beginPath();if(c===0||c===8){g.moveTo(X(c),Y(0));g.lineTo(X(c),Y(9))}else{g.moveTo(X(c),Y(0));g.lineTo(X(c),Y(4));g.moveTo(X(c),Y(5));g.lineTo(X(c),Y(9))}g.stroke()}
       for(const r0 of[0,7]){g.beginPath();g.moveTo(X(3),Y(r0));g.lineTo(X(5),Y(r0+2));g.moveTo(X(5),Y(r0));g.lineTo(X(3),Y(r0+2));g.stroke()}
       // 楚河漢界（意見回饋：朝代棋盤上不見了）：用格線色、粗明體；外圈一道淡淡的反差邊，深色的朝代棋盤上也讀得出來
-      {const ry=(Y(4)+Y(5))/2,dark=lum(G.length>=7?G:"#3A1D0A")<.5;g.font=`900 ${.62*u}px ${SERIF}`;g.textAlign="center";g.textBaseline="middle";g.lineJoin="round";
+      if(!L.riverDone){const ry=(Y(4)+Y(5))/2,dark=lum(G.length>=7?G:"#3A1D0A")<.5;   /* 11/10：底圖已經有楚河漢界（朝代橫幅、朝代字形）就不再寫，免得兩層字疊在一起 */g.font=`900 ${.62*u}px ${SERIF}`;g.textAlign="center";g.textBaseline="middle";g.lineJoin="round";
         g.strokeStyle=dark?"rgba(255,246,225,.55)":"rgba(20,10,5,.55)";g.lineWidth=.06*u;g.fillStyle=G;
         for(const[t,c]of[["楚",1.2],["河",2.6],["漢",5.4],["界",6.8]]){g.strokeText(t,X(c),ry);g.fillText(t,X(c),ry)}}
       return}

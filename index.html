@@ -1370,7 +1370,7 @@ html[data-hicon] .tabbar button.on{box-shadow:inset 0 -3px 0 currentColor}
       if(!window.caches)return go();caches.keys().then(function(ks){return Promise.all(ks.filter(function(k){return k.indexOf("xqlab-app-")===0}).map(function(k){return caches.delete(k)}))})
         .then(function(){return navigator.serviceWorker&&navigator.serviceWorker.getRegistration()}).then(function(r){return r&&r.update()}).catch(function(){}).then(go)}};setTimeout(chk,4000)})();
 </script>
-<script>window.XQ_OFFLINE=true;window.XQ_BUILD="20261110-1445";</script>
+<script>window.XQ_OFFLINE=true;window.XQ_BUILD="20261110-1500";</script>
 <script src="core.js"></script>
 <script src="engine.js"></script>
 <script src="local.js"></script>
@@ -5319,7 +5319,7 @@ const innActor=j=>{if(!String(j||"").startsWith("inn:"))return null;const x=INN.
 const cssVarOut=t=>{const cs=getComputedStyle(document.documentElement);return String(t).replace(/var\((--[\w-]+)(?:,\s*([^()]*))?\)/g,(m,n,d)=>cs.getPropertyValue(n).trim()||(d||"").trim()||"#C8A06A")};   /* 圖片裡的 SVG 讀不到 CSS 變數，先換成實際顏色 */
 function parkLook(){const o=parkLook0();if(o.img||o.hc)return o;try{const tk=store.get("boardTheme","wood3d"),e=curEra(),T0=JSON.parse(cssVarOut(JSON.stringify(boardTheme(tk))));
   const svg=cssVarOut(`<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 560 620" width="1120" height="1240">${boardBG(T0,e,tk==="auto"?e:null,"pk",false,null)}</svg>`);
-  o.img="data:image/svg+xml;charset=utf-8,"+encodeURIComponent(svg.replace(/<text[^]*?<\/text>/g,"").replace(/font-family=""[^=<>]*?"(?=\s|\/?>)/g,'font-family="serif"'));   /* 楚河漢界由 3D 園子自己寫；SVG 裡字型名稱的雙層引號做成圖片會解析失敗，連同文字一起拿掉 */o.rect=[0,0,560,620];o.grid=T0.grid||o.grid;
+  o.img="data:image/svg+xml;charset=utf-8,"+encodeURIComponent(svg.replace(/<text[^]*?<\/text>/g,"").replace(/font-family=""[^=<>]*?"(?=\s|\/?>)/g,'font-family="serif"'));   /* 楚河漢界由 3D 園子自己寫；SVG 裡字型名稱的雙層引號做成圖片會解析失敗，連同文字一起拿掉 */o.rect=[0,0,560,620];o.grid=T0.grid||o.grid;try{o.riverDone=!!(e&&((typeof RIVER_IMG!=="undefined"&&RIVER_IMG[RIVER_IMG_OF[e.k]])||(typeof RIVER_ERA!=="undefined"&&RIVER_ERA[e.k])))}catch(x){}   /* 11/10 開發者「每個字都有兩個 overlap 在一起」：這張圖已經有朝代橫幅或朝代字形的楚河漢界，3D 園子就不要再寫一次 */
   if(!o.pset&&!o.pieces){o.pieceBg=T0.piece;o.ink=o.ink||{r:T0.r,b:T0.b}}}catch(x){}return o}
 /* 意見回饋 438、439（開發者：同一個朝代，平面和 3D 的棋盤、棋子不能不一樣）：這裡的判斷跟平面棋盤（Board 的 draw）一模一樣——
    棋盤：設定選「跟著朝代」才用朝代棋盤圖，經典＋木紋用經典圖，其他風格用那個風格的格線色；棋子：整套圖 → 朝代底圖（立體樣式才用）→ 程式畫的 */
