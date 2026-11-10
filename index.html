@@ -1379,7 +1379,7 @@ html[data-hicon] .tabbar button.on{box-shadow:inset 0 -3px 0 currentColor}
       if(!window.caches)return go();caches.keys().then(function(ks){return Promise.all(ks.filter(function(k){return k.indexOf("xqlab-app-")===0}).map(function(k){return caches.delete(k)}))})
         .then(function(){return navigator.serviceWorker&&navigator.serviceWorker.getRegistration()}).then(function(r){return r&&r.update()}).catch(function(){}).then(go)}};setTimeout(chk,4000)})();
 </script>
-<script>window.XQ_OFFLINE=true;window.XQ_BUILD="20261110-2130";</script>
+<script>window.XQ_OFFLINE=true;window.XQ_BUILD="20261110-2145";</script>
 <script src="core.js"></script>
 <script src="engine.js"></script>
 <script src="local.js"></script>
@@ -7819,13 +7819,13 @@ function ShipLv(v,k,id,rd){const T=SHIP_STOP[k],Pl=SHIP_PLAN[k]||{},Ls=SHIP_LESS
     const slot=isX?"熱身・選做（不計點、不給修為）":`第 ${i+1} 題・${String(shipSlotName(k,i,P)).replace(/<[^>]+>/g,"")}`;
     jLevel(v,{id:"ship:"+k+":"+id+":"+diffNow(),name:shipShort(k)+"・"+(G.name||"")},{G,rk:"jRunS",icon:"⛵",back,title:`${shipShort(k)}・${Ls.t||T.place}・${slot}`,
       done:(stars,R)=>{const o={hint:!!(R&&R.hint),perfect:stars>=3};res=isX?shipGalMark(k,id,o):shipMark(k,id,o);
-        if(res&&res.learned&&Ls.done&&k!=="finale")G.outro=(G.outro?G.outro+"　":"")+`✅ 學會了：${Ls.t||""}。${W.n}：「${Ls.done}」`;if(res&&res.learned&&k==="finale")setTimeout(shipFinaleCard,1200);if(res&&res.learned&&k!=="finale"&&typeof qpPlay==="function")setTimeout(()=>qpPlay(k),900);return stars},
+        if(res&&res.learned&&Ls.done&&k!=="finale")G.outro=(G.outro?G.outro+"　":"")+`✅ 學會了：${Ls.t||""}。${W.n}：「${Ls.done}」`;if(res&&res.learned&&k==="finale")setTimeout(()=>typeof qxPlay==="function"?qxPlay(shipFinaleCard):shipFinaleCard(),900);if(res&&res.learned&&k!=="finale"&&typeof qpPlay==="function")setTimeout(()=>qpPlay(k),900);return stars},
       line:()=>!res?"":isX?"🔥 熱身做完了（選做）":k==="finale"?"✅ 千秋歸位・石桌補全了":res.learned?`✅ 學會了：${Ls.t||""}`:`⛵ ${shipShort(k)}・解開 ${res.n}／${res.all}${res.h?"（用過提示，空心點）":""}`,
       get next(){if(rd)return[`📖 回到第${CNUM(Pl.ch||1)}章`,()=>{location.hash="#/ship/read/"+k+"/after"}];if(isX)return["回千秋殘局",()=>goUp("#/ship/pz")];
         if(k==="finale")return["⛵ 回起航頁",()=>goUp("#/ship/sail")];const x=nx();return x?["下一題 ›",()=>{location.hash=shipHref(k,x)}]:shipSailTo(k)?["⛵ 起航去"+shipShort(shipSailTo(k)),()=>goUp("#/ship/sail")]:["回星槎",()=>goUp("#/adventure")]}})}).catch(e=>bad(e&&e.message||"題庫載入失敗"));
   return{}}
 /* 終章過關：石桌補全的收尾卡（第 14 章：青石嵌回缺槽、刻痕的光連成一片） */
-function shipFinaleCard(){try{modal(`<img src="data/actors/teller.webp" alt="" onerror="this.remove()"><h2>🪨 石桌補全了</h2><p style="line-height:1.8">青石嵌回缺槽，河界的刻線依然清楚，刻痕的青玉色光連成一片。《千秋棋話》的書頁翻到了最後。</p><p class="pl-say">說書人：「不是每盤殘局都能贏。可人常把一時的難，當作往後再也沒有路。」</p>`,[["好",null]],"prolog")}catch(e){}}
+function shipFinaleCard(){try{modal(`<img src="data/actors/teller.webp" alt="" onerror="this.remove()"><h2>🪨 石桌補全了</h2><p style="line-height:1.8">青石嵌回缺槽，河界的刻線依然清楚，刻痕的青玉色光連成一片。《千秋棋話》的書頁翻到了最後。</p><p class="pl-say">說書人：「不是每盤殘局都能贏。可人常把一時的難，當作往後再也沒有路。」</p>`,[["▶ 再看一次七星連珠",()=>setTimeout(()=>qxPlay(shipFinaleCard),250)],["好",null]],"prolog")}catch(e){}}
 /* 選做的題解開了：記在 shipGal（不計解題點、不給修為） */
 function shipGalMark(k,id,o){const G=store.get("shipGal",{})||{},first=!G[id];G[id]={at:Date.now(),h:o&&o.hint?1:0};store.set("shipGal",G);return{gal:1,first,h:G[id].h,stale1:shipStale1(id)}}
 /* 第一次解開困斃題：說書人補一句規則 */
@@ -8333,7 +8333,7 @@ function phDone(k,pid){const S=phGet(),N=S.need;if(!N)return;const before=phSoli
    自己解開一站 3 題＝學會了（shipMark learned），播「古籍修復」：泛黃殘頁從四角水墨暈開，浮出這一朝的水墨小品插畫（data/qpage/qp_<朝代>.webp），
    程式疊上棋理標題＋口訣（SHIP_LESSON），朱印（篆書朝代字）蓋下，書頁縮小飛向書架。點一下跳過。之後在書架《千秋棋話》翻這一頁再看。
    補頁插圖：xiangqi-db/park/qpage（art_qpage1～3.json，13 朝各一件那一朝的器物或風景，照那一站的棋理畫）→ data/qpage/qp_<朝代>.webp。
-   之後在「📘 棋話一頁」學會的那一站，下面會有這張圖和「▶ 再看一次補頁」。終章「七星連珠」還沒做（之後另外接）。 */
+   之後在「📘 棋話一頁」學會的那一站，下面會有這張圖和「▶ 再看一次補頁」。終章「七星連珠」見下面 qxPlay（11/10）。 */
 const QP_ON=true,QP_IMGV="1940";   /* 圖的版本：同檔名換圖時改掉（11/10 史學顧問：宋改人力砲車、經典棋子紅黑、明拿掉天窗、唐鞍、元鞍） */
 const QP_SEAL={classic:"雲河",qin:"秦",han:"漢",sanguo:"三國",weijin:"魏晉",nanbei:"南北朝",sui:"隋",tang:"唐",wudai:"五代",song:"宋",yuan:"元",ming:"明",qing:"清"};
 function qpCss(){if(document.getElementById("qpCss"))return;const s=document.createElement("style");s.id="qpCss";s.textContent=`
@@ -8367,6 +8367,52 @@ function qpPlay(k,done){if(!QP_ON||!["classic","qin","han","sanguo","weijin","na
     tm.push(setTimeout(()=>{if(dead)return;pg.classList.add("fly");pg.style.transform="translate(40vw,-42vh) scale(.12) rotate(12deg)";pg.style.opacity="0";ov.querySelector(".qp-cap").classList.remove("on")},4200));
     tm.push(setTimeout(fin,5300))})}
 function qpCardHTML(k){return`<div class="card qp-card" style="text-align:center"><img src="data/qpage/qp_${k}.webp?v=${QP_IMGV}" alt="" loading="lazy" style="width:min(240px,70%);border-radius:4px;box-shadow:0 4px 12px rgba(0,0,0,.18)" onerror="this.remove()"><p class="muted" style="margin:6px 0">《千秋棋話》補上的這一頁</p><button class="btn ghost" id="qpReplay" style="width:auto;margin:0 auto">▶ 再看一次補頁</button></div>`}
+/* ================= ✨ 終章「七星連珠・千秋歸位」（Gemini 68 方案 10，開發者 11/10「終章」）=================
+   學會終章 xl-finale 後先播這段，再出原本的結尾卡（shipFinaleCard）。全程式畫，不另外出圖：夜色裡浮出千秋石桌（桌面淡刻棋盤），
+   七個空位排成北斗七星（天樞→搖光）；七位旅伴依序出現（立繪 data/xs/prev_x_*.webp＋一句照各自身世寫的話），對應的紅子落進空位，那顆星亮起、金線連成北斗；
+   七子到齊，石桌金光沖天，說書人：「七子歸位，千秋局成！」。點一下跳過；結尾卡有「▶ 再看一次」。紅子順序跟歸位之兆 PH_PC 一樣：俥傌相仕帥炮兵 */
+const QX_ON=true;
+const QX_P=[[76,30],[78,54],[56,64],[52,42],[36,36],[22,30],[12,44]];   /* 北斗七星在石桌上的位置（%）：天樞、天璇、天璣、天權、玉衡、開陽、搖光 */
+const QX_STAR=["天樞","天璇","天璣","天權","玉衡","開陽","搖光"];
+const QX_WHO=[["x_swordboy","阿轍","直道走到底，就是回家的路——俥，歸位！"],["x_miaogirl","小梅","跑多遠，大家都看得見我——傌，回來囉！"],["x_spiritgirl","燕子","我一直守著的家，原來就在這裡——相，歸位。"],
+  ["x_shi","城子","這一次，我不只是盾牌，我也走到遠方了——仕，歸位。"],["x_shuai","方庭","我真的走出那道門了——帥，歸位！"],["x_martialgirl","花兒","爺爺，你聽見了嗎？炮——歸位啦！"],["x_bing","溪兒","這一次，我敢回頭看了——兵，歸位。"]];
+const QX_LINES=[[0,1],[1,2],[2,3],[3,0],[3,4],[4,5],[5,6]];   /* 北斗連線：斗（天樞～天權圍一圈）＋柄（天權→搖光） */
+function qxCss(){if(document.getElementById("qxCss"))return;const s=document.createElement("style");s.id="qxCss";s.textContent=`
+.qx-ov{position:fixed;inset:0;z-index:974;background:radial-gradient(ellipse at 50% 40%,#1d2a48 0%,#0d1428 60%,#070b18 100%);display:flex;flex-direction:column;align-items:center;justify-content:center;opacity:0;transition:opacity .5s;overflow:hidden}.qx-ov.on{opacity:1}
+.qx-ttl{color:#f2d58a;font:900 22px var(--serif,serif);letter-spacing:.3em;text-shadow:0 0 12px rgba(242,201,76,.6);margin-bottom:14px;opacity:0;transition:opacity .8s}.qx-ttl.on{opacity:1}
+.qx-tb{position:relative;width:min(300px,76vw);aspect-ratio:1;border-radius:50%;background:radial-gradient(circle at 42% 38%,#a9b4ad,#7d8a84 60%,#5d6863);box-shadow:0 0 0 6px #6b7670,0 0 0 9px #4e5853,0 18px 40px rgba(0,0,0,.6),inset 0 0 30px rgba(0,0,0,.35)}
+.qx-tb svg{position:absolute;inset:0;width:100%;height:100%}
+.qx-slot{position:absolute;width:12%;aspect-ratio:1;border-radius:50%;transform:translate(-50%,-50%);border:2px dashed rgba(242,213,138,.65);animation:qxBlink 1.2s ease-in-out infinite}
+@keyframes qxBlink{50%{border-color:rgba(242,213,138,.2)}}
+.qx-pc{position:absolute;width:12%;aspect-ratio:1;border-radius:50%;transform:translate(-50%,-50%);display:flex;align-items:center;justify-content:center;font:900 clamp(13px,4.2vw,19px)/1 var(--serif,serif);color:#b3141b;background:radial-gradient(circle at 40% 35%,#fff7e6,#e8d2a8 70%,#cdb07a);box-shadow:inset 0 0 0 2px #b3141b,0 3px 5px rgba(0,0,0,.45);opacity:0}
+.qx-pc.drop{animation:qxDrop .55s cubic-bezier(.5,0,.75,0) forwards}@keyframes qxDrop{0%{opacity:0;transform:translate(-50%,-260%) scale(1.5)}80%{opacity:1;transform:translate(-50%,-50%) scale(.92)}100%{opacity:1;transform:translate(-50%,-50%) scale(1)}}
+.qx-pc.lit{box-shadow:inset 0 0 0 2px #b3141b,0 0 14px 4px rgba(242,201,76,.85),0 3px 5px rgba(0,0,0,.45)}
+.qx-ln{stroke:#f2d58a;stroke-width:.9;stroke-linecap:round;filter:drop-shadow(0 0 1.5px #f2c94c);stroke-dasharray:60;stroke-dashoffset:60;transition:stroke-dashoffset .6s}.qx-ln.on{stroke-dashoffset:0}
+.qx-who{display:flex;align-items:center;gap:10px;min-height:96px;margin-top:16px;padding:0 18px;max-width:460px;opacity:0;transform:translateY(8px);transition:opacity .35s,transform .35s}.qx-who.on{opacity:1;transform:none}
+.qx-who img{width:72px;height:96px;object-fit:contain;flex:none;filter:drop-shadow(0 0 6px rgba(242,201,76,.5))}
+.qx-who b{display:block;color:#f2d58a;font:900 15px var(--serif,serif)}.qx-who p{margin:2px 0 0;color:#f6ead2;font:600 15px/1.55 var(--serif,serif)}
+.qx-burst{position:absolute;left:50%;top:50%;width:10px;height:10px;border-radius:50%;transform:translate(-50%,-50%);background:radial-gradient(circle,rgba(255,236,170,.95),rgba(242,201,76,.5) 40%,transparent 70%);opacity:0;pointer-events:none}
+.qx-burst.on{animation:qxBurst 1.8s ease-out forwards}@keyframes qxBurst{0%{opacity:0;width:10px;height:10px}25%{opacity:1}100%{opacity:0;width:240vmax;height:240vmax}}
+.qx-tip{position:fixed;right:14px;bottom:5%;color:rgba(246,234,210,.65);font:600 12px sans-serif}
+@media (prefers-reduced-motion:reduce){.qx-slot,.qx-pc.drop,.qx-burst.on{animation:none}.qx-pc.drop{opacity:1}.qx-ln{transition:none}}`;document.head.append(s)}
+function qxPlay(done){if(!QX_ON){done&&done();return}qxCss();const ov=document.createElement("div");ov.className="qx-ov";
+  const svg=`<svg viewBox="0 0 100 100" aria-hidden="true"><g stroke="rgba(40,48,46,.35)" stroke-width=".45" fill="none">${[...Array(10)].map((_,r)=>`<line x1="22" x2="78" y1="${18+r*7.1}" y2="${18+r*7.1}"/>`).join("")}${[...Array(9)].map((_,c)=>`<line y1="18" y2="${c===0||c===8?82:50}" x1="${22+c*7}" x2="${22+c*7}"/>${c===0||c===8?"":`<line y1="57.1" y2="82" x1="${22+c*7}" x2="${22+c*7}"/>`}`).join("")}<path d="M43 18L57 32.2M57 18L43 32.2M43 67.8L57 82M57 67.8L43 82"/></g>${QX_LINES.map(([a,b],i)=>`<line class="qx-ln" data-l="${i}" x1="${QX_P[a][0]}" y1="${QX_P[a][1]}" x2="${QX_P[b][0]}" y2="${QX_P[b][1]}"/>`).join("")}</svg>`;
+  ov.innerHTML=`<div class="qx-ttl">終章・七星連珠</div><div class="qx-tb">${svg}${QX_P.map(([x,y],i)=>`<i class="qx-slot" style="left:${x}%;top:${y}%"></i><span class="qx-pc" data-i="${i}" style="left:${x}%;top:${y}%">${PH_PC[i]}</span>`).join("")}<i class="qx-burst"></i></div><div class="qx-who"><img alt=""><div><b></b><p></p></div></div><span class="qx-tip">點一下跳過 ›</span>`;
+  document.body.append(ov);let dead=false;const tm=[],at=(ms,f)=>tm.push(setTimeout(()=>{if(!dead)f()},ms));
+  const fin=()=>{if(dead)return;dead=true;tm.forEach(clearTimeout);ov.classList.remove("on");setTimeout(()=>{ov.remove();done&&done()},500)};
+  ov.addEventListener("pointerdown",fin,{once:true});
+  const who=ov.querySelector(".qx-who"),wi=who.querySelector("img"),wb=who.querySelector("b"),wp=who.querySelector("p"),pcs=ov.querySelectorAll(".qx-pc"),slots=ov.querySelectorAll(".qx-slot"),lns=ov.querySelectorAll(".qx-ln");
+  QX_WHO.forEach(([w])=>{const im=new Image();im.src=`data/xs/prev_${w}.webp`});
+  requestAnimationFrame(()=>ov.classList.add("on"));at(300,()=>ov.querySelector(".qx-ttl").classList.add("on"));
+  const T0=1300,DT=1500;
+  QX_WHO.forEach(([w,nk,say],i)=>{const t=T0+i*DT;
+    at(t,()=>{who.classList.remove("on");setTimeout(()=>{if(dead)return;wi.src=`data/xs/prev_${w}.webp`;wb.textContent=`${nk}・${QX_STAR[i]}`;wp.textContent=say;who.classList.add("on")},180)});
+    at(t+450,()=>{pcs[i].classList.add("drop");slots[i].style.display="none";try{if(typeof vibrate==="function")vibrate(12)}catch(e){}});
+    at(t+1000,()=>{pcs[i].classList.add("lit");QX_LINES.forEach(([a,b],j)=>{if(Math.max(a,b)===i)lns[j].classList.add("on")})})});
+  const TE=T0+7*DT;
+  at(TE,()=>{who.classList.remove("on");ov.querySelector(".qx-burst").classList.add("on")});
+  at(TE+700,()=>{wi.src="data/actors/teller.webp";wb.textContent="說書人";wp.textContent="「七子歸位，千秋局成！」";who.classList.add("on")});
+  at(TE+3600,fin)}
 /* ================= ♟ 石桌續局（意見回饋 762 第一版，開發者 11/8 定案；規劃 xiangqi-db/story/千秋殘局續闖_規劃.md）=================
    本站 3 題都解開（學會了）以後，千秋殘局頁 #/ship/pz 的三團星光換成「續局」：每站 2 組、每組 3 題（續一＝同難度，續二＝難半階到一階），兩組都解開＝「全譜」，
    全譜以後石桌改成「🎲 隨手一局」（不計點）。續局不是起航條件，也不影響「學會了」（學會照舊只看本站 3 題，07f-ship.js shipMark）。
