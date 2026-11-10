@@ -1379,7 +1379,7 @@ html[data-hicon] .tabbar button.on{box-shadow:inset 0 -3px 0 currentColor}
       if(!window.caches)return go();caches.keys().then(function(ks){return Promise.all(ks.filter(function(k){return k.indexOf("xqlab-app-")===0}).map(function(k){return caches.delete(k)}))})
         .then(function(){return navigator.serviceWorker&&navigator.serviceWorker.getRegistration()}).then(function(r){return r&&r.update()}).catch(function(){}).then(go)}};setTimeout(chk,4000)})();
 </script>
-<script>window.XQ_OFFLINE=true;window.XQ_BUILD="20261110-1845";</script>
+<script>window.XQ_OFFLINE=true;window.XQ_BUILD="20261110-1900";</script>
 <script src="core.js"></script>
 <script src="engine.js"></script>
 <script src="local.js"></script>
@@ -15393,8 +15393,10 @@ function tdIncense(){const d=new Date(),f=(d.getHours()*60+d.getMinutes())/1440,
     <path d="${path(pts.slice(0,k+1))}" fill="none" stroke="rgba(236,232,224,.95)" vector-effect="non-scaling-stroke" style="stroke-width:1.8px"/>
     <ellipse cx="${(ex/7.68).toFixed(3)}" cy="${(ey/13.76).toFixed(3)}" rx=".45" ry=".25" fill="#ff7a2a" style="filter:drop-shadow(0 0 .4px #ffb070)"/></svg>
     <span class="td-smoke" style="left:${(ex/7.68).toFixed(2)}%;top:${(ey/13.76).toFixed(2)}%"><i></i></span>`}
-/* 節氣疊圖：冬至下雪、清明細雨、春分桃花、秋分落葉 */
-function tdWeather(term){const n=term==="冬至"||term==="小寒"?"snow":term==="清明"?"rain":term==="春分"?"pet":term==="秋分"?"leaf":"";if(!n)return"";
+/* 節氣疊圖：春分桃花、秋分落葉。11/10 開發者 hspx「同個朝代不同場景天氣一致還是沒修好」：這裡原本冬至、小寒整天下雪，清明整天下雨，跟別頁共用的天氣（07w7 sw7Precip）對不上；
+   雨雪改由 07w7 照共用天氣畫，這裡只留季節點綴（那天真的在下雨雪時，07w7 會蓋掉點綴） */
+function tdWeather(term){const n=term==="春分"?"pet":term==="秋分"?"leaf":"";if(!n)return"";
+  try{if(typeof sw7On==="function"&&sw7On()){const o=SW7_PAGES.find(x=>x.k==="today");if(o&&sw7Precip(term,sw7Rg(o)))return""}}catch(e){}
   let h="";for(let i=0;i<(n==="rain"?36:18);i++){const l=(i*53%100),dl=-(i*.37%6).toFixed(2),du=(n==="rain"?1.1:6)+(i%5)*(n==="rain"?.2:1.2);
     h+=`<i style="left:${l}%;animation-duration:${du}s;animation-delay:${dl}s${n==="leaf"?";--pc:#c8642c":""}"></i>`}
   return`<span class="${n==="snow"?"td-snow":n==="rain"?"td-rain":"td-pet"}" style="position:absolute;inset:0">${h}</span>`}
@@ -17698,7 +17700,7 @@ function sw7HomeNightA(d,sea){d=d||new Date();const h=d.getHours()+d.getMinutes(
 function sw7HomeTod(d,sea){d=d||new Date();const h=d.getHours()+d.getMinutes()/60,w=SW7_TODW[sea]||SW7_TODW.autumn;return h>=w[0]&&h<w[1]?"dawn":h>=w[2]&&h<w[3]?"dusk":""}
 function sw7HomeWx(){if(!sw7On())return"";try{const o=SW7_PAGES.find(x=>x.k==="home"),t=sw7TermFor(null,o),p=sw7Precip(t,sw7Rg(o)),sea=SW7_HSEA[t]||"";
   const era=sw7HomeEra(),s2=sea||"spring",td=sw7HomeTod(null,s2);if(era){const k=era+"_"+s2;return SW7_HTOD.has(k)&&td?k+"_"+td:k}
-  if(t==="大雪"||(p&&p.t==="snow"&&SW7_SNOWY.has(t)))return"snow";if(p&&p.t==="rain"&&(!sea||sea==="spring"||sea==="summer"))return"rain";return sea&&td&&SW7_HTOD.has(sea)?sea+"_"+td:sea}catch(e){}return""}
+  if(p&&p.t==="snow"&&SW7_SNOWY.has(t))return"snow";   /* 11/10 原本「大雪」節氣整段都換積雪圖，跟別頁那天沒下雪對不上；改成真的在下雪才換 */if(p&&p.t==="rain"&&(!sea||sea==="spring"||sea==="summer"))return"rain";return sea&&td&&SW7_HTOD.has(sea)?sea+"_"+td:sea}catch(e){}return""}
 const sw7PolyCss=(q,IW,IH)=>`polygon(${q.map(([x,y])=>(x/IW*100).toFixed(2)+"% "+(y/IH*100).toFixed(2)+"%").join(",")})`;
 
 /* ---------- ① 雨雪本體：每種效果一組 mk（生一顆）＋ draw（畫一格），要換畫法整組換掉 ----------
@@ -17784,7 +17786,7 @@ function sw7ImgOk(R){const im=R.img;if(im.complete&&im.naturalWidth>0)return tru
 function sw7Fill(R){const P=R.P,box=R.box,on=sw7On(),img=R.img,src=img.getAttribute("src")||"",o=sw7Page(src),hn=o&&/^(home|homeAlt|learn|battle|lobby)$/.test(o.k)&&!/_(dawn|dusk)./.test(src)&&sw7ImgOk(R)?sw7HomeNightA(null,SW7_HSEA[sw7TermFor(P,o)]||""):0,night=/night/i.test(src)||P.classList.contains("td-night")||hn>0,
     td=P.classList.contains("td-page"),ov=P.dataset.sw7Term||"",out=on&&o&&o.m!=="in",term=sw7TermFor(P,o),rm=sw7RM(),
     pw=out?(ov?(term==="冬至"?{t:"snow",a:.8}:null):sw7WxFor(P,o)):null,A0=out&&!pw?SW7_AMB[term]||null:null,tone=ov?sw7SeaOf(term):"";
-  let k=pw?pw.t:A0?A0[0]:"";if(td&&sw7TdHas(term))k="";
+  let k=pw?pw.t:A0?A0[0]:"";if(td&&!pw&&sw7TdHas(term))k="";
   if(k==="fly"&&!night)k="";if(rm&&k&&k!=="fog"&&!(SW7_KIND[k]&&SW7_KIND[k].still))k="";
   const tn=on&&!night&&!td&&!/_(dawn|dusk)\./.test(src)?sw7Tint():null,sky=o&&o.m==="semi"?o.sky||null:null,IW=o&&o.W||768,IH=o&&o.H||1376,
     sig=[k,night,rm,tn?tn.c:"",term,src,pw?pw.a.toFixed(2):"",on,ov,hn.toFixed(1)].join("|");

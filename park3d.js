@@ -1261,6 +1261,8 @@
        貓咪佔位：開局 40 秒後（七成的盤），一隻狸花貓蜷在右邊宮燈底下睡覺；30 秒沒人走棋就伸個懶腰；這盤下完才走。
        市井煙火：石台後方小徑每 1～2 分鐘有一位小販從右往左走過、中途停下吆喝（秦～南北朝挑柴農夫、隋唐胡商牽駱駝、五代宋元搖鼓貨郎、明清豆花擔）。
        近處加進來的 3D 人最多 1 位；被將軍、按著棋子時不生新的人 */
+    /* 11/10 開發者「這完全不是我要的，畫面變得很冗，看能怎麼改進或直接拿掉」（截圖：挑擔小販從棋桌正前方走過）：七星來訪、貓、小販整套先關掉，後園只留對手和觀戰棋友 */
+    const CR_ON=false;
     const CR={D:null,gT:0,idle:0,chk:null,vis:null,visDone:false,visPre:null,cat:null,catAt:40+Math.random()*20,catOn:Math.random()<.7,ven:null,venAt:25+Math.random()*20,wb:null,wbT:0,ended:false,tx:{},ms:null};
     const CR_VK={qin:"han",han:"han",sanguo:"han",weijin:"han",nanbei:"han",sui:"tang",tang:"tang",wudai:"song",song:"song",yuan:"song"},CR_CRY={han:["賣柴喲——","新摘的菜——"],tang:["西域香料——","好絲綢——"],song:["搖鼓兒——針線玩意兒","貨郎來囉——"],ming:["熱豆花喲——","豆腐腦，熱乎的——"]};
     const crPick=a=>a&&a.length?a[Math.random()*a.length|0]:"";
@@ -1297,7 +1299,7 @@
       V.m.position.set(x,y+(walk?Math.abs(Math.sin(V.t*6))*.18:0),z);V.m.rotation.y=Math.atan2(cam.position.x-x,cam.position.z-z);V.m.rotation.z=walk?Math.sin(V.t*6)*.025:0;
       if(!walk&&!V.said){V.said=true;crSay(V.bub,crPick(CR_CRY[V.k]),2.4)}V.bub.position.set(x,y+(V.k==="tang"?12.5:11),z);if(V.bub.userData.t>0){V.bub.userData.t-=t;if(V.bub.userData.t<=0)V.bub.visible=false}};
     /* 每格 */
-    CR.tick=(t,now)=>{if(!CR.D)return;CR.gT+=t*(window.__crowdFast?12:1);   /* __crowdFast：只給測試快轉 */CR.idle+=t;const busy=!!CR.chk||selI>=0;
+    CR.tick=(t,now)=>{if(!CR_ON||!CR.D)return;CR.gT+=t*(window.__crowdFast?12:1);   /* __crowdFast：只給測試快轉 */CR.idle+=t;const busy=!!CR.chk||selI>=0;
       if(CR.wbT>0){CR.wbT-=t;if(CR.wbT<=0&&CR.wb)CR.wb.visible=false}
       if(!CR.ended){if(!CR.visDone&&CR.D.vis&&CR.gT>80)crVisPrep();if(!CR.visDone&&!CR.vis&&CR.gT>90&&!busy)crVisGo();
         if(CR.catOn&&!CR.cat&&CR.gT>CR.catAt&&!busy)crCatGo()}
