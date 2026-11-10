@@ -1379,7 +1379,7 @@ html[data-hicon] .tabbar button.on{box-shadow:inset 0 -3px 0 currentColor}
       if(!window.caches)return go();caches.keys().then(function(ks){return Promise.all(ks.filter(function(k){return k.indexOf("xqlab-app-")===0}).map(function(k){return caches.delete(k)}))})
         .then(function(){return navigator.serviceWorker&&navigator.serviceWorker.getRegistration()}).then(function(r){return r&&r.update()}).catch(function(){}).then(go)}};setTimeout(chk,4000)})();
 </script>
-<script>window.XQ_OFFLINE=true;window.XQ_BUILD="20261111-0415";</script>
+<script>window.XQ_OFFLINE=true;window.XQ_BUILD="20261111-0430";</script>
 <script src="core.js"></script>
 <script src="engine.js"></script>
 <script src="local.js"></script>
@@ -3936,7 +3936,7 @@ async function talentReport(box){
     <div id="rdMap"></div>
     ${chart?`<div class="sec-t">成長軌跡與預測</div><div class="card">${chart}<div class="muted" style="font-size:12px;margin-top:2px">● 灰點＝每一盤　━ 線＝照你的進步速度預測　▒ 淺色＝大概範圍</div>${ms?`<p style="margin:8px 0 0;font-size:14px;line-height:1.6">${ms.med==null||ms.pNever>=.5?(M.A.m>=ms.cur+1?`📌 照目前的練法，每步準確度大概會停在 <b>${f0(M.A.m)}</b> 分上下；回「我的棋力」照建議先練最弱的那一項，天花板才會往上。`:`📌 目前已接近模型估的上限，再多下幾盤才看得出能不能再上去；回「我的棋力」照建議先練最弱的那一項。`):`📌 再練約 <b>${f0(ms.med)}</b> 盤，每步準確度可以到 <b>${ms.goal}</b> 分。`}</p>`:""}</div>`:""}
     ${redoPowerHTML()}
-    <details class="tdet"><summary>📊 詳細數字<small class="muted" style="font-weight:400;font-size:12px;display:block;margin-top:2px">進步速度、每步準確度、題目功力、棋路底子、殘局功夫</small></summary>
+    <details class="tdet"><summary>📊 詳細數字<br><small class="muted" style="font-weight:400;font-size:12px">進步速度、每步準確度、題目功力、棋路底子、殘局功夫</small></summary>
     <div class="sec-t" style="margin-top:4px">進步速度</div><div class="card" style="line-height:1.6">${/* 意見回饋 354、357：表格；進步速度和進步很快合併成一列 */""}<div class="muted" style="font-size:13px;margin-bottom:6px">同樣多的練習，你的每步準確度漲得多快；數字是「勝過多少學棋者」，不是分數。</div>
       ${M?`<table class="ttab"><tr><th>項目</th><th>數值</th><th>說明</th></tr>
       <tr><td>進步速度</td><td><span class="big">${M.N<5?"?":M.rPct}</span> %</td><td>${esc(lab)}・勝過 ${M.N<5?"?":M.rPct}% 的學棋者；有 ${pc(M.top25)} 機會是「進步很快」的人（每 4 人最快的 1 個）</td></tr>
@@ -4022,6 +4022,10 @@ function Stats(v){
   }
   v.querySelectorAll("#sTabs button").forEach(b=>b.onclick=()=>{vibrate(5);tab=b.dataset.k;store.set("statsTab",tab);paint()});
   paint();return{}}
+/* hspx 11/11「詳細數字這邊無法展開」（iPhone，手卷裡）：電腦版瀏覽器正常、iPhone Safari 點了不開。
+   改由程式切換開合（不靠瀏覽器原生 details 的點擊），打開後讓手卷的捲動區重算高度；標題裡的小字改成一般換行，不用獨立的區塊 */
+document.addEventListener("click",e=>{const s=e.target&&e.target.closest&&e.target.closest("details.tdet>summary");if(!s)return;e.preventDefault();const d=s.parentElement;d.open=!d.open;
+  const sc=d.closest(".xqs-b");if(sc){const y=sc.scrollTop;sc.style.overflow="hidden";void sc.offsetHeight;sc.style.overflow="";sc.scrollTop=y}},true);
 
 
 /* 家長學習週報（Gemini 遊玩樂趣評估，開發者 11/8 核准）：#/weekly，入口在「我的成長」最上面和設定的「角色」分頁
