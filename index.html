@@ -1379,7 +1379,7 @@ html[data-hicon] .tabbar button.on{box-shadow:inset 0 -3px 0 currentColor}
       if(!window.caches)return go();caches.keys().then(function(ks){return Promise.all(ks.filter(function(k){return k.indexOf("xqlab-app-")===0}).map(function(k){return caches.delete(k)}))})
         .then(function(){return navigator.serviceWorker&&navigator.serviceWorker.getRegistration()}).then(function(r){return r&&r.update()}).catch(function(){}).then(go)}};setTimeout(chk,4000)})();
 </script>
-<script>window.XQ_OFFLINE=true;window.XQ_BUILD="20261111-0245";</script>
+<script>window.XQ_OFFLINE=true;window.XQ_BUILD="20261111-0300";</script>
 <script src="core.js"></script>
 <script src="engine.js"></script>
 <script src="local.js"></script>
@@ -5580,7 +5580,7 @@ function BookChapter(v,b,n,tab){b=b===2?2:1;n=Math.max(1,+n|0);const game=tab===
     const on=(q,fn)=>{const e=v.querySelector(q);if(e)e.onclick=()=>{vibrate(5);fn()}},base="#/shelf/"+b+"/"+n;
     v.querySelectorAll("[data-tab]").forEach(x=>x.onclick=()=>{vibrate(5);navReplace(base+(x.dataset.tab?"/"+x.dataset.tab:""))});
     on("#cpG",()=>navReplace(base+"/game"));on("#cpRd",()=>navReplace(base));
-    on("#cpP",()=>navReplace("#/shelf/"+b+"/"+(n-1)));on("#cpN",()=>{if(nextOk)navReplace("#/shelf/"+b+"/"+(n+1))});on("#cpB2",()=>{location.hash="#/ship/shelf"});
+    on("#cpP",()=>navReplace("#/shelf/"+b+"/"+(n-1)));on("#cpN",()=>{if(nextOk)navReplace("#/shelf/"+b+"/"+(n+1))});on("#cpB2",()=>{goUp("#/ship/shelf")});
     on("#cpGo",()=>{if(s.t==="lv"){jRunSet({id:s.id,k:0,miss:0,hint:false,intro:1});location.hash="#/journey/"+s.id}else if(s.t==="puz")location.hash="#/journey/"+s.id;else jPlay(s)});   /* 說明已經在棋局頁籤看過，按開始直接進第一步 */
     on("#cpCt",()=>{location.hash="#/journey/"+s.id});on("#cpHd",()=>{jRunSet(null);location.hash="#/journey/"+s.id+"~v"});
     v.querySelectorAll("[data-sc]").forEach(x=>x.onclick=()=>{vibrate(5);location.hash="#/legend/"+x.dataset.sc});
@@ -6538,7 +6538,7 @@ function jLevel(v,s,src){prevData();const BKP=jChapterHref(s);setTop((src&&src.i
   const stop=()=>{if(inc){inc.stop();inc=null}onTap=null};
   const next=()=>{stop();R.k++;delete R.si;save();run()};   /* 回饋 838（開發者 11/9 選：全模式中斷接續）：換下一步，清掉這一步的進度 */
   const miss=why=>{R.miss++;save();vibrate([20,40,20]);if(why)toast(why);const h=v.querySelector(".lvh span");if(h)h.textContent=`第 ${Math.min(R.k+1,N)}／${N} 步・失誤 ${R.miss}${R.hint?"・用過提示":""}`};
-  const failCard=msg=>{stop();if(R.si){delete R.si;save()}   /* 回饋 838（開發者 11/9 選：全模式中斷接續）：這一步沒過、要重來，進度從頭 */if(src&&src.onFail)return src.onFail(msg,run);v.className="view";v.innerHTML=`<div class="pad">${hdr()}<div class="card" style="text-align:center;line-height:1.8"><div style="font-size:40px">💪</div><p>${esc(msg)}</p><button class="btn" id="lvR" style="width:100%">再試這一步</button><button class="btn ghost" id="lvB" style="width:100%;margin-top:6px">${src?"回上一頁":s.book===2?"回第二集":"回"+ROAD_NAME}</button></div></div>`;
+  const failCard=msg=>{stop();if(R.si){delete R.si;save()}   /* 回饋 838（開發者 11/9 選：全模式中斷接續）：這一步沒過、要重來，進度從頭 */if(src&&src.onFail)return src.onFail(msg,run);v.className="view";v.innerHTML=`<div class="pad">${hdr()}<div class="card" style="text-align:center;line-height:1.8"><div style="font-size:40px">💪</div><p>${esc(msg)}</p><button class="btn" id="lvR" style="width:100%">再試這一步</button><button class="btn ghost" id="lvB" style="width:100%;margin-top:6px">${src?(src.backLabel||"回上一頁"):s.book===2?"回第二集":"回"+ROAD_NAME}</button></div></div>`;
     (v.querySelector("#lvR")||{}).onclick=run;(v.querySelector("#lvB")||{}).onclick=()=>goBack(src?src.back:BKP)};
   const sayBox=t=>t?`<div class="card lvsay">${esc(t)}</div>`:"";
   const blank=b=>b.map(()=>null);
@@ -6649,7 +6649,7 @@ function jLevel(v,s,src){prevData();const BKP=jChapterHref(s);setTop((src&&src.i
     const Ls=src?[]:s.book===2?jStages2():jStages(),more=!src&&s.n<Ls.length;v.className="view";
     v.innerHTML=`<div class="pad"><div class="card" style="text-align:center"><div style="font-size:44px">🎉</div><h2 style="margin:4px 0">過關！</h2>${src&&src.line?`<div style="font-size:20px;color:var(--accent);margin:6px 0">${esc(src.line(stars))}</div>`:(src?`<div style="font-size:30px;color:var(--accent)">${"★".repeat(stars)}${"☆".repeat(3-stars)}</div>`:`<div style="margin:8px 0 4px">${ziHTML(stars,false,true)}</div><p class="muted" style="margin:0">${jarLine()}</p>`)}
       <p class="muted">失誤 ${R.miss} 次${R.hint&&!(src&&src.hid)?(src?"・用了提示（最多 ★★）":"・用了提示（最多收到馬）"):R.hint?"・用了提示":""}${best>stars?`・這關最好成績 ${src?"★".repeat(best):ziStr(best)}`:""}</p>${G.outro?`<p style="line-height:1.8;text-align:left">${esc(G.outro)}</p>`:""}${G.reward?`<p class="muted" style="font-size:13px">🎁 ${esc(G.reward)}</p>`:""}${needV?`<div class="card" style="text-align:left;margin:10px 0 6px;line-height:1.75;font-size:14px">${HIDN.ic} <b>石桌底下壓著一張殘譜……</b>（${hid.k==="hard"?"困難：零失誤、不用提示棋，局面還會翻過來":"簡單：過關就好"}）<br>解開這個隱藏殘局，得一枚 ${HIDN.ic} 將令，可以拿去驛站的點將台換提示棋、悔棋符、預習卷。現在不想玩也沒關係，之後在這一關的說明裡還找得到。</div><button class="btn" id="lvV">${HIDN.ic} 進入${HIDN.lv}</button>`:""}
-      ${more?`<button class="btn" id="lvNx">📖 讀第${CNUM(s.n+1)}回</button>`:""}${src&&src.next?`<button class="btn" id="lvCn">${esc(src.next[0])}</button>`:""}${src&&src.solo?"":`<button class="btn ghost" id="lvBk" style="margin-top:6px">${src?"回上一頁":s.book===2?"回第二集":"回"+ROAD_NAME}</button><button class="btn ghost" id="lvAg" style="margin-top:6px">再挑戰一次</button>`}</div></div>`;   /* solo＝千秋穿梭突發事件：只有「繼續開往」，不能回頭、不能重打 */
+      ${more?`<button class="btn" id="lvNx">📖 讀第${CNUM(s.n+1)}回</button>`:""}${src&&src.next?`<button class="btn" id="lvCn">${esc(src.next[0])}</button>`:""}${src&&src.solo?"":`<button class="btn ghost" id="lvBk" style="margin-top:6px">${src?(src.backLabel||"回上一頁"):s.book===2?"回第二集":"回"+ROAD_NAME}</button><button class="btn ghost" id="lvAg" style="margin-top:6px">再挑戰一次</button>`}</div></div>`;   /* solo＝千秋穿梭突發事件：只有「繼續開往」，不能回頭、不能重打 */
     {const vb=v.querySelector("#lvV");if(vb)vb.onclick=()=>{jRunSet(null,RK);location.hash="#/journey/"+s.id+"~v"}}
     const nb=v.querySelector("#lvNx");if(nb)nb.onclick=()=>{if(s.book===2)store.set("legBook",2);goUp(SHELF(s.book===2?2:1),()=>s.book===2?legendRead2(s.n+1):legendRead(s.n+1))};   /* 意見回饋 607：退回冒險頁那一層再打開下一回（不往前推一頁） */
     {const cn=v.querySelector("#lvCn");if(cn)cn.onclick=src.next[1]}(v.querySelector("#lvBk")||{}).onclick=()=>goUp(src?src.back:BKP);/* 意見回饋 607：退回雲河棋路那一層 */(v.querySelector("#lvAg")||{}).onclick=()=>{jRunSet(null,RK);route()}}
@@ -6686,7 +6686,7 @@ const CAMP=[{"n":1,"name":"認識棋盤・帥","intro":"先認識棋盤，再學
 const campStars=()=>store.get("campStars",{});
 function Camp(v,n){setTabs(n?false:true,"#/");store.set("campSeen",true);const S=campStars();
   if(n){const G=CAMP[n-1];if(!G){navReplace("#/camp");return{}}
-    return jLevel(v,{id:"camp"+n,n,name:`第 ${n} 課・${G.name}`,lvName:G.name},{G,rk:"jRunC",title:"🔰 新手訓練營",back:"#/camp",icon:"🔰",   /* 回饋 838（開發者 11/9 選：全模式中斷接續）：新手訓練營用自己的 jRunC，不再洗掉石桌往事玩到一半的關卡（jRun） */
+    return jLevel(v,{id:"camp"+n,n,name:`第 ${n} 課・${G.name}`,lvName:G.name},{G,rk:"jRunC",title:"🔰 新手訓練營",back:"#/camp",backLabel:"🔰 回新手訓練營",icon:"🔰",   /* 回饋 838（開發者 11/9 選：全模式中斷接續）：新手訓練營用自己的 jRunC，不再洗掉石桌往事玩到一半的關卡（jRun） */
       done:st=>{const A=campStars(),b=Math.max(st,A[n]||0);if(!A[n])addXP(10,"新手訓練營","camp:"+n);A[n]=b;store.set("campStars",A);return b},
       next:n<CAMP.length?["下一課：「"+CAMP[n].name+"」 ›",()=>{jRunSet(null,"jRunC");location.hash="#/camp/"+(n+1)}]:null})}
   setTop("🔰 新手訓練營","#/hub/learn");v.className="view";const got=CAMP.filter(c=>S[c.n]).length;
@@ -6999,7 +6999,7 @@ function CanjuPlay(v,id){cjCSS();const H0=location.hash,here=()=>v.isConnected&&
       <div class="cj-row">${trap?`<button class="btn ghost" id="cjTrap">如果走 ${esc(C.notate(C.parseFen(P.fen),...sq(trap.mv)))}？</button>`:""}${s.db?`<button class="btn ghost" id="cjBook">看整局</button>`:""}</div>
       <div class="cj-row"><button class="btn ghost" id="cjBack">${Z?"回珍品冊":HS||XM?"回去":"回茶單"}</button><button class="btn" id="cjNext">${nxL()}</button></div></div>`;
       const on=(q,f)=>{const e=bx.querySelector(q);if(e)e.onclick=f};
-      on("#cjTrap",()=>{closeSheet();trapDemo(o)});on("#cjBook",()=>{closeSheet();location.hash="#/db/"+s.db});on("#cjBack",()=>{closeSheet();location.hash=BK});on("#cjNext",()=>{closeSheet();next()});cjZBind(bx)})}
+      on("#cjTrap",()=>{closeSheet();trapDemo(o)});on("#cjBook",()=>{closeSheet();location.hash="#/db/"+s.db});on("#cjBack",()=>{closeSheet();goUp(BK)});on("#cjNext",()=>{closeSheet();next()});cjZBind(bx)})}
   function trapDemo(o){const tr=P.trap,b0=C.parseFen(P.fen);stat(`如果走 ${C.notate(b0,...sq(tr.mv))}？`);note("");const acc=[];
     actionBar($("#acts"),[["card","🍵","回解完卡",()=>{tok++;card(o)}]]);
     anim([tr.mv].concat(tr.line||[]),b0,(tx,i)=>{acc.push(tx);note(acc.join("　"))},()=>note(acc.join("　")+"\n"+cjWhy(P,tr.code)),true)}
@@ -8116,7 +8116,7 @@ function ShipRead(v,k,at){setTabs(false);v.className="view";v.innerHTML='<div cl
     rdBind(v.querySelector(".shp-rd"),RA,"yh");const on=(q,fn)=>{const e=v.querySelector(q);if(e)e.onclick=()=>{vibrate(5);fn()}},to=(q,blk)=>{const e=v.querySelector(q);if(e)try{e.scrollIntoView({block:blk||"start",behavior:"smooth"})}catch(x){e.scrollIntoView()}};
     on("#rdGo",()=>{location.hash=shipHref(k,m.id,true)});on("#rdOrig",()=>{store.set("yunheOrig",!org);route()});on("#rdSkip",()=>to("#rdAfter"));
     on("#rdKl",()=>{const o=!yunheKLon(),b=v.querySelector("#rdKl"),r=v.querySelector(".shp-rd");store.set("yunheKL",o);if(r)r.classList.toggle("kl-off",!o);if(b){b.textContent=klT(o);b.setAttribute("aria-pressed",String(o))}});
-    on("#rdP",()=>{location.hash="#/ship/read/"+pv.k});on("#rdN",()=>{location.hash="#/ship/read/"+nx.k});on("#rdShip",()=>{location.hash="#/adventure"});
+    on("#rdP",()=>{location.hash="#/ship/read/"+pv.k});on("#rdN",()=>{location.hash="#/ship/read/"+nx.k});on("#rdShip",()=>{goUp("#/adventure")});
     if(at==="mark")setTimeout(()=>to("#rdMk","center"),60);else if(at==="after")setTimeout(()=>to("#rdAfter"),60)}).catch(e=>{if(v.isConnected)v.innerHTML=`<div class="pad"><div class="card muted">${esc(e.message||String(e))}<br>正文要先下載才能讀（連上網路再打開一次）。</div></div>`});
   return{}}
 
