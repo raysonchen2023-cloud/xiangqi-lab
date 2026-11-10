@@ -1370,7 +1370,7 @@ html[data-hicon] .tabbar button.on{box-shadow:inset 0 -3px 0 currentColor}
       if(!window.caches)return go();caches.keys().then(function(ks){return Promise.all(ks.filter(function(k){return k.indexOf("xqlab-app-")===0}).map(function(k){return caches.delete(k)}))})
         .then(function(){return navigator.serviceWorker&&navigator.serviceWorker.getRegistration()}).then(function(r){return r&&r.update()}).catch(function(){}).then(go)}};setTimeout(chk,4000)})();
 </script>
-<script>window.XQ_OFFLINE=true;window.XQ_BUILD="20261110-1630";</script>
+<script>window.XQ_OFFLINE=true;window.XQ_BUILD="20261110-1645";</script>
 <script src="core.js"></script>
 <script src="engine.js"></script>
 <script src="local.js"></script>
@@ -5386,6 +5386,19 @@ function parkUi(host,pv){let b=host.querySelector(".pkview");if(!b){b=document.c
   if(!store.get("parkHint",false)){const go=()=>{if(!host.isConnected)return;if(fxBusy()||document.querySelector(".kjfx"))return setTimeout(go,500);store.set("parkHint",true);const h=document.createElement("div");h.className="pkhint";h.innerHTML='<div class="pkh-hand">👆</div><b>拖曳轉身看四周</b><span>兩指捏合縮放・點兩下回到原本的角度</span>';host.append(h);setTimeout(()=>{h.classList.add("out");setTimeout(()=>h.remove(),500)},3000)};
     if(pv.whenShown)pv.whenShown(()=>setTimeout(go,300));else setTimeout(go,1200)}
   if(typeof yuHintMaybe==="function")yuHintMaybe(host)}   /* 意見回饋 658（B 輿圖遊歷）：第一次在石桌往事的園子裡，提示地圖可以點（07e-garden2.js） */
+/* 11/10 開發者「園子熱鬧」（Gemini 62）七星打氣：每次開園子挑一位沒上場的雲河七星來看棋（同一朝的優先），3D 園子 park3d 的 CR 模組負責走位、動作、泡泡。
+   台詞照各人的個性（WX_CHARS）：阿轍只走直路、燕子守江邊茶棚、花兒做煙火、小梅在驛站拐彎、方庭氣喘的少爺、城子護著少爺、溪兒跑腿往前衝 */
+const PARK_VIS={
+  x_swordboy:{hi:["我路過，看一盤再走！"],cheer:["直直衝過去，吃得好！","這一車開得痛快！"],chk:["將軍了！快把路擋住！"],jiang:["將軍！一路直搗黃龍！"],bye:["我還有車要趕，先走啦！"]},
+  x_spiritgirl:{hi:["茶棚歇工，我來看看。"],cheer:["這步走得穩！","吃得好，不急不躁！"],chk:["哎呀，將軍了！先守住！"],jiang:["將軍！這步漂亮！"],bye:["江風起了，我回茶棚去。"]},
+  x_martialgirl:{hi:["花兒來湊熱鬧啦！"],cheer:["砰！這一下打得響！","隔山打牛，吃到了！"],chk:["將軍！火藥味好重！"],jiang:["將軍！炸得他沒地方躲！"],bye:["作坊還有煙火要紮，走啦！"]},
+  x_miaogirl:{hi:["小梅繞個彎過來看棋！"],cheer:["拐得漂亮，吃到了！","這一跳真妙！"],chk:["哇，將軍了！快跳開！"],jiang:["將軍！他拐不出去啦！"],bye:["驛站的馬該餵了，我先走！"]},
+  x_shuai:{hi:["我出院子透透氣，看你下。"],cheer:["好棋！這一子划算！"],chk:["將軍了……我心都提起來了。"],jiang:["將軍！穩穩的。"],bye:["城子在找我了，先回去。"]},
+  x_shi:{hi:["少爺在附近，我順道來看看。"],cheer:["穩紮穩打，吃得好！"],chk:["將軍！九宮要護好！"],jiang:["將軍！守得住才攻得出去。"],bye:["我得回少爺身邊了。"]},
+  x_bing:{hi:["送貨路過，看兩步！"],cheer:["衝得好！吃掉了！"],chk:["將軍了！快想辦法！"],jiang:["將軍！一步一步往前衝！"],bye:["貨還沒送完，我跑啦！"]}};
+function parkCrowd(){try{const era=store.get("era","classic"),me=typeof myChar==="function"?myChar():null,C=Object.keys(PARK_VIS).filter(c=>c!==me&&typeof TRIPO!=="undefined"&&TRIPO[c]&&WX_CHARS[c]);if(!C.length)return{};
+  const same=C.filter(c=>typeof CHAR_ERA!=="undefined"&&CHAR_ERA[c]===era),c=(same.length?same:C)[Math.random()*(same.length||C.length)|0],W=WX_CHARS[c];
+  return{vis:Object.assign({c,nk:W.nk||W.n,look:{p:W.pc||"兵",e:era,g:9,glb:`data/tripo_app/${c}.glb`,ring:TRIPO[c]}},PARK_VIS[c])}}catch(e){return{}}}
 function parkDraw(host,bd,board,o,ex){
   // 關掉公園：同一個棋盤的公園只藏起來（意見回饋 244：來回切換不用每次重建 3D 場景，比較順）
   {const tg=host.querySelector(".pkname");if(tg)tg.hidden=!parkOn();const pv0=host.querySelector(".pkview");if(pv0)pv0.hidden=!parkOn();const ap=host.querySelector(".ax-park");if(ap)ap.hidden=!parkOn()}   /* 回饋 847：平面棋盤時收起「改用平面棋盤」 */
@@ -5403,7 +5416,7 @@ function parkDraw(host,bd,board,o,ex){
   if(!host.querySelector(".ax-park")){const ab=document.createElement("button");ab.type="button";ab.className="ax-sr ax-park";ab.textContent="改用平面棋盤，讀螢幕可以逐格點選";
     ab.onclick=()=>{const tb=document.querySelector('#topRight button[aria-label="回棋盤模式"]');if(tb)tb.click();else{store.set("park3d",false);toast("回到棋盤模式")}};host.prepend(ab)}
   if(PARK.v.show)PARK.v.show();bd.svg.style.display="none";botVis(false);ex.look=parkLook();if(ex.opp)ex.opp=oppFig(remoteLook(ex.opp));if(ex.mateLook&&ex.mateLook.sx)ex.mateLook=oppFig(remoteLook(ex.mateLook));if(!ex.mateLook)ex.mateLook=myLook();
-  if(Array.isArray(ex.watchers))ex.watchers=ex.watchers.map(w=>w&&w.bot&&w.bot.sx?{...w,bot:oppFig(remoteLook(w.bot))}:w);PARK.last={board,o,ex};PARK.v.draw(board,o,ex)}
+  if(!PARK.crowd)PARK.crowd=parkCrowd();ex.crowd=PARK.crowd;if(Array.isArray(ex.watchers))ex.watchers=ex.watchers.map(w=>w&&w.bot&&w.bot.sx?{...w,bot:oppFig(remoteLook(w.bot))}:w);PARK.last={board,o,ex};PARK.v.draw(board,o,ex)}
 // 意見回饋 241：在公園裡按鈕換成「▦」（回棋盤模式），在棋盤模式是「🌳」（去公園）
 const parkIcon=()=>parkOn()?"▦":"🌳",parkLabel=()=>parkOn()?"回棋盤模式":"去園子下棋（3D）";
 const parkBtn=redraw=>[parkIcon(),e=>{store.set("park3d",!parkOn());vibrate(8);toast(parkOn()?`🌳 園子 3D 棋盤：${BOTN()}坐在對面跟你下（拖曳可以看四周）`:"回到棋盤模式");

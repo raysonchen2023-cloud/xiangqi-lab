@@ -1254,6 +1254,64 @@
       if(mate.B&&mate.B.glbP)mate.B.glbP.then(ok=>{if(!ok||mateKey!==k||!mate.B||!mate.B.glb)return;try{mate.g.updateMatrixWorld(true);const b=new T.Box3().setFromObject(mate.B.glb),H=b.max.y-b.min.y;mate.g.position.y-=b.min.y-(MSEAT-H*.27);mate.g.userData.y0=null}catch(e){}}).catch(()=>{})};   // 坐在自己的椅子上（座面 y=MSEAT）
     setMate(null);
     const say=(t,d)=>mate.say(t,d);
+    /* ---------- 11/10 開發者「園子熱鬧、人來人往」（Gemini 62；開發者選 4 貓咪佔位、2 絕殺驚呼、3 市井煙火、1 七星打氣；小販、貓經史學顧問核過）----------
+       七星打氣：每盤最多一次，開局約 90 秒後（沒人被將軍、沒按著棋子時），一位沒上場的雲河七星（App 給 ex.crowd.vis）從石台邊走到空的觀戰點看 25 秒左右：
+         打招呼、你吃到車馬炮時歡呼、將軍時驚呼，走前揮手再走開。
+       絕殺驚呼：有人被將軍時，觀戰的人（線上真人觀眾、來訪的七星）舉手往前傾，其中一位冒一句。
+       貓咪佔位：開局 40 秒後（七成的盤），一隻狸花貓蜷在右邊宮燈底下睡覺；30 秒沒人走棋就伸個懶腰；這盤下完才走。
+       市井煙火：石台後方小徑每 1～2 分鐘有一位小販從右往左走過、中途停下吆喝（秦～南北朝挑柴農夫、隋唐胡商牽駱駝、五代宋元搖鼓貨郎、明清豆花擔）。
+       近處加進來的 3D 人最多 1 位；被將軍、按著棋子時不生新的人 */
+    const CR={D:null,gT:0,idle:0,chk:null,vis:null,visDone:false,visPre:null,cat:null,catAt:40+Math.random()*20,catOn:Math.random()<.7,ven:null,venAt:25+Math.random()*20,wb:null,wbT:0,ended:false,tx:{},ms:null};
+    const CR_VK={qin:"han",han:"han",sanguo:"han",weijin:"han",nanbei:"han",sui:"tang",tang:"tang",wudai:"song",song:"song",yuan:"song"},CR_CRY={han:["賣柴喲——","新摘的菜——"],tang:["西域香料——","好絲綢——"],song:["搖鼓兒——針線玩意兒","貨郎來囉——"],ming:["熱豆花喲——","豆腐腦，熱乎的——"]};
+    const crPick=a=>a&&a.length?a[Math.random()*a.length|0]:"";
+    const crTex=(n,cb)=>{const src="data/crowd/"+n+".webp";if(CR.tx[n]){cb(CR.tx[n]);return}const go=()=>{const im=imgCache[src];if(!im||!im.naturalWidth||CR.tx[n])return;const t=srgb(new T.Texture(im));t.anisotropy=ANI;t.needsUpdate=true;CR.tx[n]={t,a:im.naturalWidth/im.naturalHeight};cb(CR.tx[n])};if(loadImg(src,go))go()};
+    const crCard=(tx,h)=>{const w=h*tx.a,geo=new T.PlaneGeometry(w,h);geo.translate(0,h/2,0);const m=new T.Mesh(geo,new T.MeshBasicMaterial({map:tx.t,transparent:true,alphaTest:.05,toneMapped:false,side:T.DoubleSide,depthWrite:true}));m.renderOrder=3;sc.add(m);return m};
+    const crSay=(b,txt,d)=>{const m=b.material;if(m.map)m.map.dispose();m.map=bubbleTex(txt);m.needsUpdate=true;b.visible=true;b.userData.t=d||2.4};
+    const crFloor=(x,z)=>{try{if(!CR.ms){CR.ms=[];sc.traverse(o=>{if(o.isMesh&&o.visible&&!(o.material&&o.material.transparent))CR.ms.push(o)})}
+      const rc=new T.Raycaster(new T.Vector3(x,30,z),new T.Vector3(0,-1,0));for(const h of rc.intersectObjects(CR.ms,false))if(h.point.y<-1)return h.point.y}catch(e){}return FL};
+    const crPlay=(B,k)=>{if(!B||!B.mixer||!B.clips)return;if(!B.clips[k])k="idle";if(!B.clips[k]||B.animCur===k)return;const n=B.clips[k];n.reset().fadeIn(.25).play();const o0=B.clips[B.animCur];if(o0)o0.fadeOut(.25);B.animCur=k};
+    /* 七星來訪 */
+    const crVisPrep=()=>{const V=CR.D&&CR.D.vis;if(!V||CR.visPre||!window.XQBot3D)return;let B;try{B=XQBot3D.figure(V.look)}catch(e){return}CR.visPre={B,V,ok:!B.glbP};if(B.glbP)B.glbP.then(ok=>{if(CR.visPre&&CR.visPre.B===B)CR.visPre.ok=!!ok}).catch(()=>{})};
+    const crVisGo=()=>{const P=CR.visPre;if(!P||!P.ok)return false;const i=watchers.length;if(i>=SPOTS.length)return false;const a=SPOTS[i],g=new T.Group();g.add(P.B.bot);P.B.bot.traverse(o=>{if(o.isMesh)o.castShadow=true});g.scale.setScalar(3.1);sc.add(g);
+      const y19=crFloor(Math.sin(a)*19,-Math.cos(a)*19),y24=crFloor(Math.sin(a)*24,-Math.cos(a)*24);
+      CR.vis={g,B:P.B,V:P.V,a,y19,y24,ph:"in",t:0,act:0,hop:0,bub:mkBub(0,0,0,5.6)};CR.visPre=null;CR.visDone=true;crPlay(P.B,"walk");return true};
+    const crVisPos=(V,r)=>{const x=Math.sin(V.a)*r,z=-Math.cos(V.a)*r,y=V.y19+(V.y24-V.y19)*Math.max(0,Math.min(1,(r-19)/5));V.g.position.set(x,y+V.hop,z);V.bub.position.set(x*.55,y+6.2,z*.8)};
+    const crVisBye=()=>{const V=CR.vis;if(!V||V.ph==="bye"||V.ph==="out")return;V.ph="bye";V.t=0;crPlay(V.B,"wave_goodbye_01");crSay(V.bub,crPick(V.V.bye)||"我先走囉！",2.2)};
+    const crVisTick=t=>{const V=CR.vis;if(!V)return;V.t+=t;if(V.B.mixer)V.B.mixer.update(t);if(V.bub.userData.t>0){V.bub.userData.t-=t;if(V.bub.userData.t<=0)V.bub.visible=false}
+      if(V.act>0){V.act-=t;if(V.act<=0)crPlay(V.B,"idle")}if(V.hop>0)V.hop=Math.max(0,V.hop-t*3);
+      if(V.ph==="in"){const u=Math.min(1,V.t/2.2);V.g.rotation.y=Math.atan2(-Math.sin(V.a),Math.cos(V.a));crVisPos(V,24-5*u);if(u>=1){V.ph="hi";V.t=0;crPlay(V.B,"wave_goodbye_01");V.act=1.6;crSay(V.bub,crPick(V.V.hi)||"我來看看！",2.6)}}
+      else if(V.ph==="hi"||V.ph==="stay"){crVisPos(V,19);if(V.ph==="hi"&&V.t>1.6){V.ph="stay";V.t=0}if(V.ph==="stay"&&V.t>24)crVisBye()}
+      else if(V.ph==="bye"){crVisPos(V,19);if(V.t>1.6){V.ph="out";V.t=0;crPlay(V.B,"walk")}}
+      else if(V.ph==="out"){const u=Math.min(1,V.t/2.2);V.g.rotation.y=Math.atan2(Math.sin(V.a),-Math.cos(V.a));crVisPos(V,19+5*u);if(u>=1){sc.remove(V.g);sc.remove(V.bub);CR.vis=null}}};
+    /* 貓 */
+    const crCatGo=()=>{crTex("cat_sleep",tx=>{if(CR.cat||CR.ended)return;const x=11.2,z=-14.6,y=crFloor(x,z),m=crCard(tx,2.1);m.position.set(x,y+.02,z);m.material.opacity=0;CR.cat={m,x,z,y,op:0,str:0,last:-99,out:false}});crTex("cat_stretch",()=>{})};
+    const crCatTick=(t,now)=>{const C=CR.cat;if(!C)return;C.m.rotation.y=Math.atan2(cam.position.x-C.x,cam.position.z-C.z);
+      if(C.out){C.op=Math.max(0,C.op-t*.8);if(C.op<=0){sc.remove(C.m);CR.cat=null;return}}else C.op=Math.min(1,C.op+t*.7);C.m.material.opacity=C.op;
+      if(C.str>0){C.str-=t;if(C.str<=0)crTex("cat_sleep",tx=>{C.m.material.map=tx.t;C.m.scale.set(1,1,1)})}
+      else if(CR.idle>30&&CR.gT-C.last>45){C.last=CR.gT;C.str=2.8;crTex("cat_stretch",tx=>{const s=CR.tx.cat_sleep;C.m.material.map=tx.t;if(s){C.m.scale.set(tx.a/s.a*1.15,1.15,1)}})}};
+    /* 小販 */
+    const crVenGo=()=>{const k=CR_VK[EK]||"ming";crTex("vend_"+k,tx=>{if(CR.ven)return;const pts=[];for(let i=0;i<=24;i++){const x=30-60*i/24,z=-21.5;pts.push([x,crFloor(x,z),z])}   /* 石台後緣、宮燈後面，從右走到左（預設視角左右上角看得到） */
+      const m=crCard(tx,k==="tang"?10.5:9);CR.ven={m,pts,k,t:0,said:false,bub:mkBub(0,0,0,6)}})};
+    const crVenTick=t=>{const V=CR.ven;if(!V)return;V.t+=t;const D=22,P=2.6,mid=D/3;   /* 走到右邊宮燈旁停下吆喝 */let u=V.t<mid?V.t/D:V.t<mid+P?mid/D:(V.t-P)/D;if(u>=1){sc.remove(V.m);sc.remove(V.bub);CR.ven=null;CR.venAt=CR.gT+60+Math.random()*60;return}
+      const f=u*24,i=Math.min(23,Math.floor(f)),q=f-i,A=V.pts[i],B=V.pts[i+1],x=A[0]+(B[0]-A[0])*q,y=A[1]+(B[1]-A[1])*q,z=A[2]+(B[2]-A[2])*q,walk=!(V.t>=mid&&V.t<mid+P);
+      V.m.position.set(x,y+(walk?Math.abs(Math.sin(V.t*6))*.18:0),z);V.m.rotation.y=Math.atan2(cam.position.x-x,cam.position.z-z);V.m.rotation.z=walk?Math.sin(V.t*6)*.025:0;
+      if(!walk&&!V.said){V.said=true;crSay(V.bub,crPick(CR_CRY[V.k]),2.4)}V.bub.position.set(x,y+(V.k==="tang"?12.5:11),z);if(V.bub.userData.t>0){V.bub.userData.t-=t;if(V.bub.userData.t<=0)V.bub.visible=false}};
+    /* 每格 */
+    CR.tick=(t,now)=>{if(!CR.D)return;CR.gT+=t*(window.__crowdFast?12:1);   /* __crowdFast：只給測試快轉 */CR.idle+=t;const busy=!!CR.chk||selI>=0;
+      if(CR.wbT>0){CR.wbT-=t;if(CR.wbT<=0&&CR.wb)CR.wb.visible=false}
+      if(!CR.ended){if(!CR.visDone&&CR.D.vis&&CR.gT>80)crVisPrep();if(!CR.visDone&&!CR.vis&&CR.gT>90&&!busy)crVisGo();
+        if(CR.catOn&&!CR.cat&&CR.gT>CR.catAt&&!busy)crCatGo()}
+      if(!CR.ven&&CR.gT>CR.venAt&&!busy)crVenGo();
+      crVisTick(t);crCatTick(t,now);crVenTick(t)};
+    /* 棋局事件：開新局、將軍、走子吃子、分勝負 */
+    CR.data=(D,o,ex)=>{CR.D=D;if(window.__crowdFast)window.__CR=CR;if(!D)return;const fresh=!(o&&o.last)&&!ex.result;if(o&&o.last)CR.had=true;
+      if(fresh&&(CR.ended||CR.had)){CR.had=false;CR.gT=0;CR.idle=0;CR.ended=false;CR.visDone=false;CR.catAt=40+Math.random()*20;CR.catOn=Math.random()<.7;if(CR.cat)CR.cat.out=true}
+      if(ex.result&&!CR.ended){CR.ended=true;if(CR.vis){const V=CR.vis;if(ex.result===mySide&&V.ph==="stay"){crPlay(V.B,"cheer");crSay(V.bub,crPick(V.V.cheer)||"贏了！",2.2);setTimeout(crVisBye,2200)}else crVisBye()}if(CR.cat)CR.cat.out=true}};
+    CR.chkSet=side=>{if(side&&side!==CR.chk){watchers.forEach(W=>{W.react=1.5});
+        if(watchers.length){const W=watchers[Math.random()*watchers.length|0],p=W.B.bot.parent&&W.B.bot.parent.position;if(p){if(!CR.wb)CR.wb=mkBub(0,0,0,4.6);CR.wb.position.set(p.x,p.y+9.5,p.z);crSay(CR.wb,crPick(["哇！將軍！","危險！","這步厲害！","小心老將！"]),2);CR.wbT=2}}
+        const V=CR.vis;if(V&&(V.ph==="stay"||V.ph==="hi")){V.hop=.8;crSay(V.bub,side===mySide?crPick(V.V.chk)||"小心，被將軍了！":crPick(V.V.jiang)||"將軍！好棋！",2.2);if(side!==mySide){crPlay(V.B,"cheer");V.act=1.6}}}
+      CR.chk=side||null};
+    CR.move=(by,cap)=>{CR.idle=0;const V=CR.vis;if(cap&&V&&V.ph==="stay"&&V.act<=0&&by===mySide&&"RNCrnc".includes(cap)){crPlay(V.B,"cheer");V.act=1.8;crSay(V.bub,crPick(V.V.cheer)||"吃得好！",2)}};
     // 意見回饋 248：分出勝負時兩邊都有 5 秒的勝負動畫（endT 倒數；oppRes／mateRes＝win、lose、draw）
     let endT=0,oppRes=null,mateRes=null;const END=5;
     let reach=0,reachT=0,thinking=false,mood=null,glanceT=3,glance=0,mySide="r",oppName="";
@@ -1307,6 +1365,7 @@
         anims.push({t:0,d:.42,f:p=>{const e=ease(p);g.position.set(x0+(x1-x0)*e,TOP+Math.sin(p*PI)*1.1,z0+(z1-z0)*e)},end:()=>at(g,L.t)});
         if(botSide&&by===botSide){reach=1;reachT=0;opp.setFace(cap?"happy":"smile",1.4);if(cap){mate.setFace("open",1.6);mate.say(["小心！","哎呀，被吃了","沒關係，扳回來！"][Math.random()*3|0],2)}}
         else if(cap){mate.setFace("happy",1.6);mate.say(["吃得好！","漂亮！","好棋！"][Math.random()*3|0],1.8);if(botSide){opp.setFace("open",1.4);if((opp.B||oppSpr)&&Math.random()<.5)opp.say(["哎呀！","被吃了…","好棋！"][Math.random()*3|0])}}
+        try{CR.move(by,prevB[L.t]||null)}catch(e){}
         // 棋盤其他地方若對不上（例如悔棋），整盤重排
         const exp=prevB.slice();exp[L.t]=exp[L.f];exp[L.f]=null;if(exp.join(",")!==board.join(","))sync(board)}
       else if(!prevB||board.join(",")!==prevB.join(","))sync(board);
@@ -1317,8 +1376,9 @@
       selI=o.sel!=null&&o.sel>=0?o.sel:-1;
       (o.targets||[]).forEach(i=>{if(board[i])ring(i,0xD7263D,.56,.09,.95);else disc(i,0x2F9E5A,.19,.9)});
       if(typeof o.check==="number"&&o.check>=0&&board[o.check])checkRing=ring(o.check,0xFF2A2A,.62,.12,.9);
+      try{CR.chkSet(typeof o.check==="number"&&o.check>=0&&board[o.check]?sideOf(board[o.check]):null)}catch(e){}
       if(ex.hint&&ex.hint.length===2){ring(ex.hint[0],0xF2B233,.5,.07,.9);ring(ex.hint[1],0xF2B233,.5,.07,.9)}
-      thinking=!!ex.thinking;setOpp(ex.opp||null);setMate(ex.mateLook||null);setWatchers(ex.watchers);mySide=ex.botSide?(ex.botSide==="r"?"b":"r"):"r";
+      thinking=!!ex.thinking;setOpp(ex.opp||null);setMate(ex.mateLook||null);setWatchers(ex.watchers);mySide=ex.botSide?(ex.botSide==="r"?"b":"r"):"r";try{CR.data(ex.crowd||null,o,ex)}catch(e){}
       if(ex.result&&ex.result!==mood){mood=ex.result;const b=ex.botSide;endT=END;
         oppRes=mood==="draw"||!b?"draw":mood===b?"win":"lose";mateRes=oppRes==="win"?"lose":oppRes==="lose"?"win":"draw";
         if(mood==="draw"){opp.setFace("flat",99);mate.setFace("flat",99);mate.say("和棋，不錯喔！",3)}
@@ -1492,6 +1552,7 @@
       if(WX)try{WX.tick(t,now)}catch(e){WX=null}   /* 11/10 下雨下雪、積雪 */
       if(CANO)try{CANO.tick(t,cam.position.y)}catch(e){CANO=null}   /* 11/10 對弈遮篷 */
       try{mhTick(t)}catch(e){}   /* 11/10 引導拉遠看朝代地圖 */
+      try{CR.tick(t,now)}catch(e){if(!CR.err){CR.err=1;console.warn("crowd",e)}}   /* 11/10 園子熱鬧 */
       falling.forEach(l=>{const u=l.userData;u.y-=t*1.6*u.s;if(u.y<-2){u.y=28;u.x=(Math.random()-.5)*50}l.position.set(u.x+Math.sin(now/900+u.ph)*2.5,GY+u.y,u.z);l.rotation.set(now/700*u.s+u.ph,now/500,now/800)});
       if(endT>0)endT=Math.max(0,endT-t);const EP=1-endT/END,ON=endT>0;   // 勝負動畫的進度 0→1
       // 3D 人物（線上對手的小帥、我的小帥）的勝負動畫：贏＝跳起來、中段轉一圈、雙手歡呼；輸＝垂頭、搖頭、雙手下垂；和＝拱手點頭
@@ -1527,6 +1588,7 @@
       watchers.forEach(W=>{const B=W.B,ph=W.ph;if(B.torso.userData.y0==null)B.torso.userData.y0=B.torso.position.y;B.torso.position.y=B.torso.userData.y0+.015*Math.sin(s*1.7+ph);
         B.bot.rotation.z=.03*Math.sin(s*.6+ph);R(B,0,.35,0,-.15);R(B,1,.35,0,.15);if(W.chin)R(B,1,-2.2,-.45,.7);
         lerp(B.head.rotation,"x",.42+.06*Math.sin(s*.5+ph));lerp(B.head.rotation,"y",.15*Math.sin(s*.3+ph));
+        if(W.react>0){W.react-=t;R(B,0,-.5,0,-1.3);R(B,1,-.5,0,1.3);B.bot.rotation.x=-.14*Math.min(1,W.react*2)}else if(B.bot.rotation.x)B.bot.rotation.x=0;   /* 11/10 絕殺驚呼：被將軍時舉手往前傾 */
         W.blinkT-=t;const bl=W.blinkT<0;if(W.blinkT<-.12)W.blinkT=2+Math.random()*3;try{XQBot3D.faceApply(B,W.chin?"flat":"smile",bl,false)}catch(e){}});
       if(mate.B){const B=mate.B;B.torso.position.y=B.torso.userData.y0==null?(B.torso.userData.y0=B.torso.position.y):B.torso.userData.y0+.02*Math.sin(s*2.4+1);
         // 小帥坐在桌角：看棋盤、偶爾轉頭看你；你吃子或贏棋時舉手歡呼
