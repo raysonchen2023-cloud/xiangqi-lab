@@ -1379,7 +1379,7 @@ html[data-hicon] .tabbar button.on{box-shadow:inset 0 -3px 0 currentColor}
       if(!window.caches)return go();caches.keys().then(function(ks){return Promise.all(ks.filter(function(k){return k.indexOf("xqlab-app-")===0}).map(function(k){return caches.delete(k)}))})
         .then(function(){return navigator.serviceWorker&&navigator.serviceWorker.getRegistration()}).then(function(r){return r&&r.update()}).catch(function(){}).then(go)}};setTimeout(chk,4000)})();
 </script>
-<script>window.XQ_OFFLINE=true;window.XQ_BUILD="20261110-2015";</script>
+<script>window.XQ_OFFLINE=true;window.XQ_BUILD="20261110-2030";</script>
 <script src="core.js"></script>
 <script src="engine.js"></script>
 <script src="local.js"></script>
@@ -13524,7 +13524,10 @@ const HB_IMGV="0700";   /* 圖的版本：data/hubmap 存在不跟版本走的�
    檔名 learn_<朝>、battle_<朝>、battle_red_<朝>、battle_curtain_<朝>：preload-list.js 的 ERA_RE 認得「_<朝>.」，跟著各朝分批下載 */
 const HB_ERAS={learn:"qin han sanguo weijin nanbei sui tang wudai yuan ming qing".split(" "),battle:"qin han sanguo weijin nanbei sui tang wudai song yuan qing".split(" ")};
 function hbDockEra(){try{return typeof shipAt==="function"&&typeof shipDockList==="function"&&shipDockList()?shipAt()||"":""}catch(x){return""}}
-const hbImg=(base,hub)=>{const e=hbDockEra();return base+((HB_ERAS[hub]||[]).includes(e)?"_"+e:"")};
+/* 11/10 經典世界（Gemini 71 比例 C，開發者選）：還沒登船、或星槎停在經典時，學習、對戰換成千秋時光之苑版（learn_classic、battle_classic）；宋朝照舊用原本那套 */
+const HB_CLASSIC_ON=true;
+function hbIsCl(){if(!HB_CLASSIC_ON)return false;const e=hbDockEra();return !e||e==="classic"}
+const hbImg=(base,hub)=>{if((base==="learn"||base==="battle")&&hbIsCl())return base+"_classic";const e=hbDockEra();return base+((HB_ERAS[hub]||[]).includes(e)?"_"+e:"")};
 /* 11/10 開發者「同桌對弈不應該出現走去園子過場」「挑戰電腦有景點了，不該再出現茅廬」：茶樓裡開的棋（挑戰電腦、同桌對弈），載入畫面用這一朝的對戰茶樓圖＋茶樓名稱，不再是小帥走去園子、茅廬臥龍 */
 /* 11/10 開發者「原本在茶坊，場景卻跑到了園子」（Gemini 61 號，開發者選：後花園＋月洞門過場圖、小二招呼、線上對戰一起套）：
    茶坊這邊開的棋（挑戰電腦、同桌對弈、天井配對的線上對局）都在「茶坊的後園」下——載入畫面是穿過月洞門往後園石台走（data/parkgate/yard*.webp），
@@ -13549,6 +13552,10 @@ const HUB_DEF={
     ["hbNet",'[data-go="#/lobby"],[data-go="#/watch/ai"]',50,48.5],["hbCpu",'[data-go="#/cpu"]',19,58],
     ["hbCup",'[data-go="#/cup"]',36,21.5],["hbCar",'[data-go="#/garage"]',80,67],
     ["hbPvp",'[data-go="#/pvp"]',18,72.5]]}};   /* 11/10 開發者：拿掉右邊「朝代擂台」入口（擂台走渡口那邊）。回饋 840：同桌對弈＝左邊房間下面那張放棋盒、有凳子的桌子（上面那張擺棋盤的是挑戰電腦） */
+/* 經典版學習頁（藏譜石窟，learn_classic）：構圖跟書院不同，入口另外量（768×1376）：
+   猜著法＝最上方石窟小亭、棋譜庫＝飄著古籍的洞口、我的戰績／我的開局＝左右兩幅垂掛長卷、棋力測驗＝白玉講台、錯棋重練＝墨池、主題訓練＝右側墨瀑、
+   新手訓練營＝左邊大石、一盞茶殘局＝左前方星紋紙台、象棋規則＝最前面攤開的大長卷。燈籠、矮几棋盤、熱氣、洗墨池這些書院才有的疊圖不放 */
+const HUB_CL_SPOTS={learn:{hbTerms:[50,72.5],hbCamp:[13,61],hbCanju:[25,77],hbRedo:[69,58.5],hbTheme:[87,44.5],hbQuiz:[50,47.5],hbStats:[24,36],hbOpen:[76,36],hbGuess:[50,14],hbDb:[50,31.5]}};
 /* 學習頁 12 盞燈籠（由近到遠，照課數點亮）、點茶桌熱氣、洗墨池水面；對戰頁的燈籠 */
 const HUB_LAMP={learn:[[1.7,39],[98.3,39],[21.7,40.5],[38.7,40.5],[61.7,40.5],[78.7,40.5],[12.5,33.7],[87.5,33.7],[21.7,28.8],[78.7,28.8],[38.3,16.5],[61.7,16.5]],
   battle:[[3,30.5],[22.5,29],[50,26.5],[65,25.5],[26.5,42.5],[51,39],[91,64.5],[62,72]]};
@@ -13577,6 +13584,13 @@ const SHW_HUB={
     N:{home:[80,88],th:[80,76],arena:[73,56],n:[65,53.5],bt:[50,49],tlb:[38,49.3],cpu:[35,52.5],sf:[58,48.2],s1:[64,43.3],sl:[69.5,39.3],s2:[66.2,36.3],st:[59.5,31.6],gal:[53,32.5],stage:[44.5,32.8]},
     E:"home-th th-arena arena-n n-bt n-sf bt-sf bt-tlb tlb-cpu sf-s1 s1-sl sl-s2 s2-st st-gal gal-stage",
     HS:{hbNet:["n",52,53,"bow"],hbCpu:["cpu",15,64,"bow"],hbCup:["stage",35,32,"bow"],hbCar:["th",84,72,"wave"],hbPvp:["cpu",9,80,"bow"]}}};
+/* 經典版學習頁的走路：從前面大長卷走上中庭、講台前；進洞口（隱身）再從上方小亭出來；左邊大石、星紋紙台，右邊長卷、墨瀑沿墨池上緣繞過去 */
+const SHW_HUB_CL={learn:{el:45,h:[.033,29,.0007],look0:[50,99],hide:[[38,62,30,46]],
+    N:{home:[50,95],g:[50,80],c:[50,66],redo:[56,65],t1:[50,58.5],exam:[50,54],door:[50,47.5],hb:[50,40],guess:[50,27.5],
+      lc:[36,60],stats:[27,58.5],camp:[22,72],canju:[26,81],rc:[64,58],open:[73,58.5],theme:[84,60]},
+    E:"home-g g-c c-redo c-t1 t1-exam exam-door door-hb hb-guess t1-lc lc-stats lc-camp camp-canju t1-rc rc-open open-theme",
+    HS:{hbTerms:["g",50,74,"bow"],hbCamp:["camp",14,66,"wave"],hbCanju:["canju",24,82,"bow"],hbRedo:["redo",68,65,"wave"],hbTheme:["theme",90,55,"wave"],
+      hbQuiz:["exam",50,50,"bow"],hbStats:["stats",27,46,"wave"],hbOpen:["open",73,46,"wave"],hbGuess:["guess",50,20,"wave"],hbDb:["door",50,40,"bow"]}}};
 /* 角色走進 hide 範圍（穿過門樓、講堂裡面）就淡出，走出來再出現：看 07w 每格寫的 translate 換成百分比 */
 function hbHide(P,Z){const b=P.querySelector(".shw");if(!b||!Z||!Z.length)return;b.style.transition="opacity .18s";
   const mo=new MutationObserver(()=>{if(!b.isConnected){mo.disconnect();return}const m=/translate\(([-\d.]+)px,\s*([-\d.]+)px\)/.exec(b.style.transform),W=P.clientWidth,H=P.clientHeight;if(!m||!W||!H)return;
@@ -13616,7 +13630,7 @@ async function hbRedoN(){if(HB_REDO&&Date.now()-HB_REDO.at<6e4)return HB_REDO.n;
   try{const gs=await myGames(120),done=store.get("redoDone",{})||{},now=Date.now();
     for(const g of gs){if(!isStdStart(g.it.board))continue;g.moves.forEach((m,i)=>{if(m.by===g.side&&QBAD.includes(qNow(m))){const d=done[g.c+"/"+g.id+"/"+(i+1)];if(!d||!d.ok||(d.due&&d.due<=now))n++}})}}catch(e){return null}
   HB_REDO={n,at:Date.now()};return n}
-function hbFxLearn(P){const fx=P.querySelector(".hb-fx");if(!fx)return;
+function hbFxLearn(P){const fx=P.querySelector(".hb-fx");if(!fx||hbIsCl())return;
   let lit=0;try{lit=Object.keys(campStars()).length}catch(e){}lit=Math.max(0,Math.min(12,lit));
   fx.insertAdjacentHTML("beforeend",HUB_LAMP.learn.map((p,i)=>`<i class="hb-lamp${i<lit?" on":""}" style="left:${p[0]}%;top:${p[1]}%"></i>`).join(""));
   let tea=false;try{const S=cjState(),L=S.day===cjDay()?S.list:null;tea=!cjCleared(L)}catch(e){}
@@ -13627,13 +13641,13 @@ function hbFxLearn(P){const fx=P.querySelector(".hb-fx");if(!fx)return;
   hbRedoN().then(n=>{if(n==null||!pond.isConnected)return;pond.innerHTML=n>0?`<i class="hb-ink" style="opacity:${Math.min(.85,.3+n*.06).toFixed(2)}"></i>`:'<i class="hb-clear"></i>'})}
 function hbFxBattle(P,img){let ph="";try{const S=window.XQNet&&XQNet.cup&&XQNet.cup();ph=S&&S.ph||""}catch(e){}
   const alt=ph==="reg"||ph==="wait"?"battle_red":ph==="ck"||ph==="play"?"battle_curtain":"";
-  if(alt){const im=new Image();im.onload=()=>{if(img.isConnected)img.src=im.src};im.src="data/hubmap/"+hbImg(alt,"battle")+".webp?v="+HB_IMGV}   /* 換圖前先載好，載不到就留原圖 */
+  if(alt&&!hbIsCl()){const im=new Image();im.onload=()=>{if(img.isConnected)img.src=im.src};im.src="data/hubmap/"+hbImg(alt,"battle")+".webp?v="+HB_IMGV}   /* 換圖前先載好，載不到就留原圖 */
   const fx=P.querySelector(".hb-fx");if(!fx)return;
   if(alt==="battle_curtain")fx.insertAdjacentHTML("beforeend",HUB_LAMP.battle.map(p=>`<i class="hb-lamp on" style="left:${p[0]}%;top:${p[1]}%"></i>`).join(""));
   if(ph==="done")fx.insertAdjacentHTML("beforeend",[[64,14,0],[81,11,-.9],[95,15,-1.7],[72,18,-.4],[57,12,-2.2]].map(([x,y,d])=>`<i class="hb-fw" style="left:${x}%;top:${y}%;animation-delay:${d}s"></i>`).join(""))}
 function hubMap(v,hub){const D=HUB_DEF[hub],home=v.querySelector(".home");if(!D||!home||v.querySelector(".hub-page"))return;hbCss();
   const fresh=!store.get("campSeen",false)&&!Object.keys(campStars()).length&&!Object.keys(store.get("record",{})).length;
-  const sp=D.spots.map(([id,sel,x,y])=>{const c=hbCard(v,sel);return c?{id,c,x,y}:null}).filter(Boolean);
+  const CL=hbIsCl()&&HUB_CL_SPOTS[hub],sp=D.spots.map(([id,sel,x,y])=>{const c=hbCard(v,sel);if(CL&&CL[id])[x,y]=CL[id];return c?{id,c,x,y}:null}).filter(Boolean);
   const d=document.createElement("div");
   d.innerHTML=`<div class="shp-page cq hub-page"><img src="data/hubmap/${hbImg(D.img,hub)}.webp?v=${HB_IMGV}" alt="${esc(D.cap)}"><div class="hb-fx" aria-hidden="true"></div>${sp.map(o=>`<button class="shp-spot${hbHot(o.c)||(fresh&&(o.id==="hbCamp"||o.id==="hbTerms"))?" hot":""}" id="${o.id}" style="left:${o.x}%;top:${o.y}%"><b>${esc(hbEraWord(hbTitle(o.c)))}</b></button>`).join("")}</div>`;
   const P=d.firstElementChild;v.insertBefore(P,home);home.classList.add("hb-hidden");
@@ -13642,7 +13656,7 @@ function hubMap(v,hub){const D=HUB_DEF[hub],home=v.querySelector(".home");if(!D|
     const mo=new MutationObserver(upd);mo.observe(o.c,{subtree:true,childList:true,characterData:true})}
   try{(hub==="learn"?hbFxLearn:hbFxBattle)(P,P.querySelector(":scope>img"))}catch(e){}
   if(typeof shpFit==="function")shpFit(v);
-  try{if(typeof shwPage==="function"&&SHIP_WALK_ON&&SHW_HUB[hub]){shwPage(v,Object.assign({},SHW_PG0,SHW_HUB[hub]),"hub:"+hub);hbHide(P,SHW_HUB[hub].hide)}}catch(e){}
+  try{const SW=hbIsCl()&&SHW_HUB_CL[hub]||SHW_HUB[hub];if(typeof shwPage==="function"&&SHIP_WALK_ON&&SW){shwPage(v,Object.assign({},SHW_PG0,SW),"hub:"+hub+(SW===SHW_HUB[hub]?"":":cl"));hbHide(P,SW.hide)}}catch(e){}
   try{if(typeof zmPage==="function")zmPage(v)}catch(e){}}
 if(typeof Home==="function"){const f0=Home;Home=function(v,hub){const r=f0.apply(this,arguments);try{if(HUB_MAP_ON&&(hub==="learn"||hub==="battle"))hubMap(v,hub)}catch(e){}return r}}
 /* ================= 🏞 首頁滿版水墨圖「楚河渡口棋鎮」（開發者 11/8 定案：Gemini 方案 1＋2 合體，史學顧問核過）=================
@@ -13663,9 +13677,9 @@ const HM_IMGV="1910";   /* 圖的版本：同檔名換圖時改掉，手機才�
 /* 開發者 11/9「把首頁的學習和對戰用不同朝代的詞彙來表示」：照星槎停靠的朝代換說法（學習頁、對戰頁頂欄標題也用這個）；還沒登船、在雲河＝學習、對戰。
    學：秦學室（睡虎地秦簡）、漢與三國太學、魏晉國子學（西晉咸寧二年）、南北朝國學、隋國子寺、唐五代國子監、宋以後書院；
    弈：秦漢三國酒肆、魏晉酒壚（《世說新語》黃公酒壚）、南北朝隋酒肆、唐旗亭（旗亭畫壁）、五代茶肆、宋茶坊（《東京夢華錄》）、元茶肆、明茶樓、清茶館 */
-const HUB_NAME={learn:{qin:"學室",han:"太學",sanguo:"太學",weijin:"國子學",nanbei:"國學",sui:"國子寺",tang:"國子監",wudai:"國子監",song:"書院",yuan:"書院",ming:"書院",qing:"書院"},
+const HUB_NAME={learn:{classic:"藏譜石窟",qin:"學室",han:"太學",sanguo:"太學",weijin:"國子學",nanbei:"國學",sui:"國子寺",tang:"國子監",wudai:"國子監",song:"書院",yuan:"書院",ming:"書院",qing:"書院"},
   quick:{qin:"博一局",han:"博一局",sanguo:"弈一局",weijin:"手談一局",nanbei:"坐隱一局",sui:"弈一局",tang:"象戲一局",wudai:"象戲一局",song:"著一局",yuan:"著一盤",ming:"下一盤",qing:"殺一盤"},   /* 11/9 開發者：「下一盤」也照朝代：秦漢六博叫「博」；魏晉「手談」（支遁）、「坐隱」（王坦之），見《世說新語》；唐牛僧孺《玄怪錄》寶應象戲；宋元「著棋」；清俗話「殺一盤」 */
-    battle:{qin:"酒肆",han:"酒肆",sanguo:"酒肆",weijin:"酒壚",nanbei:"酒肆",sui:"酒肆",tang:"旗亭",wudai:"茶肆",song:"茶坊",yuan:"茶肆",ming:"茶樓",qing:"茶館"}};
+    battle:{classic:"觀星閣",qin:"酒肆",han:"酒肆",sanguo:"酒肆",weijin:"酒壚",nanbei:"酒肆",sui:"酒肆",tang:"旗亭",wudai:"茶肆",song:"茶坊",yuan:"茶肆",ming:"茶樓",qing:"茶館"}};
 function xqHubName(k){let e="";try{e=typeof shipAt==="function"&&typeof shipDockList==="function"&&shipDockList()?shipAt():""}catch(x){}const n=(HUB_NAME[k]||{})[e];return(k==="quick"?"♟ ":k==="battle"?"⚔ ":"📚 ")+(n||(k==="quick"?"下一盤":k==="battle"?"對戰":"學習"))}
 /* 11/9 開發者：「下一盤」前面的閃電跟水墨圖示融合不了，換成 ♟（e_piece 手繪棋子圖示） */
 const HM_SPOTS=[["hmShip",52,15,"⛵ 雲河星槎"],["hmBattle",14,25.5,"⚔ 對戰"],["hmLearn",86,26.5,"📚 學習"],["hmRec",12,44,"📜 今日推薦"],["hmQuick",52,47.5,"♟ 下一盤"]];
@@ -13704,7 +13718,7 @@ function homeMap(v){const home=v.querySelector(".home");if(!home||v.querySelecto
   const nw=hmNew(),standalone=matchMedia("(display-mode: standalone)").matches||navigator.standalone,inst=OFF&&!standalone&&!(store.get("instAsk",null)||{}).no;
   const lab=id=>id==="hmQuick"&&nw?"🔰 第一次下象棋？":id==="hmLearn"?xqHubName("learn"):id==="hmBattle"?xqHubName("battle"):id==="hmQuick"?xqHubName("quick"):HM_SPOTS.find(s=>s[0]===id)[3];
   const d=document.createElement("div");
-  d.innerHTML=`<div class="shp-page cq home-page"><img src="data/homemap/home.webp?v=${HM_IMGV}" alt="楚河渡口棋鎮"><div class="hm-fx" aria-hidden="true">${nw?'<i class="hm-sky"></i>':""}</div>${HM_SPOTS.map(([id,x,y])=>`<button class="shp-spot${id==="hmQuick"&&nw?" hot":""}" id="${id}" style="left:${x}%;top:${y}%"><b>${esc(lab(id))}</b></button>`).join("")}${inst?'<button class="hm-inst" id="hmInst">📲 加到主畫面</button>':""}</div>`;
+  d.innerHTML=`<div class="shp-page cq home-page"><img src="data/homemap/${typeof hbIsCl==="function"&&hbIsCl()?"home_classic":"home"}.webp?v=${HM_IMGV}" alt="${typeof hbIsCl==="function"&&hbIsCl()?"千秋時光之苑":"楚河渡口棋鎮"}"><div class="hm-fx" aria-hidden="true">${nw?'<i class="hm-sky"></i>':""}</div>${HM_SPOTS.map(([id,x,y])=>`<button class="shp-spot${id==="hmQuick"&&nw?" hot":""}" id="${id}" style="left:${x}%;top:${y}%"><b>${esc(lab(id))}</b></button>`).join("")}${inst?'<button class="hm-inst" id="hmInst">📲 加到主畫面</button>':""}</div>`;
   const P=d.firstElementChild;v.insertBefore(P,home);home.classList.add("hb-hidden");if(typeof hbCss==="function")hbCss();else home.style.display="none";
   {const wv=typeof sw7HomeWx==="function"?sw7HomeWx():"",im0=P.querySelector(":scope>img");if(wv&&im0){const pre=new Image();pre.onload=()=>{if(!im0.isConnected)return;try{if(typeof sw7SeaTurn==="function"&&sw7SeaTurn(P,im0,pre.src))return}catch(e){}im0.src=pre.src};pre.src="data/homemap/home_"+wv+".webp?v="+HM_IMGV}}   /* 回饋 811：下雪、下雨天換積雪版 home_snow／雨景版 home_rain（07w7-seasons.js 判斷；先載好再換，載不到留原圖） */
   const GO={hmShip:"#/adventure",hmBattle:"#/hub/battle",hmLearn:"#/hub/learn"};
@@ -17746,7 +17760,8 @@ const SW7_TODW={spring:[5.25,7.25,17.25,19],summer:[4.75,6.75,18,19.75],autumn:[
 function sw7HomeNightA(d,sea){d=d||new Date();const h=d.getHours()+d.getMinutes()/60,w=SW7_TODW[sea]||SW7_TODW.autumn;if(h>=w[3])return Math.min(1,.7+(h-w[3])*.6);if(h<w[0])return w[0]-h<.5?.7+(w[0]-h)*.6:1;return 0}
 function sw7HomeTod(d,sea){d=d||new Date();const h=d.getHours()+d.getMinutes()/60,w=SW7_TODW[sea]||SW7_TODW.autumn;return h>=w[0]&&h<w[1]?"dawn":h>=w[2]&&h<w[3]?"dusk":""}
 function sw7HomeWx(){if(!sw7On())return"";try{const o=SW7_PAGES.find(x=>x.k==="home"),t=sw7TermFor(null,o),p=sw7Precip(t,sw7Rg(o)),sea=SW7_HSEA[t]||"";
-  const era=sw7HomeEra(),s2=sea||"spring",td=sw7HomeTod(null,s2);if(era){const k=era+"_"+s2;return SW7_HTOD.has(k)&&td?k+"_"+td:k}
+  const era=sw7HomeEra(),s2=sea||"spring",td=sw7HomeTod(null,s2);if(typeof hbIsCl==="function"&&hbIsCl())return"classic_"+s2;   /* 11/10 經典世界首頁：只換千秋樹的季節色，晨昏用程式調色、不另外換雨雪圖 */
+  if(era){const k=era+"_"+s2;return SW7_HTOD.has(k)&&td?k+"_"+td:k}
   if(p&&p.t==="snow"&&SW7_SNOWY.has(t))return"snow";   /* 11/10 原本「大雪」節氣整段都換積雪圖，跟別頁那天沒下雪對不上；改成真的在下雪才換 */if(p&&p.t==="rain"&&(!sea||sea==="spring"||sea==="summer"))return"rain";return sea&&td&&SW7_HTOD.has(sea)?sea+"_"+td:sea}catch(e){}return""}
 const sw7PolyCss=(q,IW,IH)=>`polygon(${q.map(([x,y])=>(x/IW*100).toFixed(2)+"% "+(y/IH*100).toFixed(2)+"%").join(",")})`;
 
@@ -18256,14 +18271,14 @@ function exSync(){if(!EXIT_ON)return;clearTimeout(EX_T);const k=exKey(),t0=Date.
       if(!box){if(Date.now()-t0<4000)EX_T=setTimeout(go,150);return}exCss();
       const mk=(cls,x,y,t,fn)=>{if(box.querySelector("."+cls))return;const s=document.createElement("button");s.type="button";s.className=sp.className.split(" ")[0]+" "+cls;s.style.left=x+"%";s.style.top=y+"%";s.textContent=t;s.onclick=e=>{e.stopPropagation();try{vibrate(5)}catch(z){}fn()};box.append(s)};
       mk("ex-set",SHIP_SET[0],SHIP_SET[1],SHIP_SET[2],()=>{location.hash="#/settings"});   /* 星槎中間艙房門口＝天字客房（設定） */
-      if(b&&!b.hidden&&typeof b.onclick==="function"){mk("ex-home",62,92,"🏘 回棋鎮",()=>{const bb=document.getElementById("back");if(bb&&typeof bb.onclick==="function")bb.onclick()});exCls("add")}   /* 右下下船石階＝回首頁 */
+      if(b&&!b.hidden&&typeof b.onclick==="function"){mk("ex-home",62,92,typeof hbIsCl==="function"&&hbIsCl()?"🏘 回時光之苑":"🏘 回棋鎮",()=>{const bb=document.getElementById("back");if(bb&&typeof bb.onclick==="function")bb.onclick()});exCls("add")}   /* 右下下船石階＝回首頁 */
       return}
     if(!P){exCls("remove");if(Date.now()-t0<4000)EX_T=setTimeout(go,150);return}
     exCss();const E=exFind(k),hasBack=b&&!b.hidden&&typeof b.onclick==="function";
     if(k==="/port"){if(!P.querySelector(".ex-bow")){const sp=[...P.querySelectorAll(".shp-spot")].find(x=>/上星槎/.test(x.textContent));if(sp){const w=document.createElement("button");w.type="button";w.className="ex-bow";w.setAttribute("aria-label","上星槎（船頭）");w.onclick=e=>{e.stopPropagation();try{vibrate(5)}catch(x){}sp.click()};P.append(w)}}
       if(hasBack)exCls("add");return}
     if(!E||!hasBack){exCls("remove");return}
-    if(!P.querySelector(".ex-spot")){const s=document.createElement("button");s.type="button";s.className="shp-spot ex-spot";s.style.left=E[0]+"%";s.style.top=E[1]+"%";let lb=E[2];try{if((k==="/hub/learn"||k==="/hub/battle")&&typeof xqHubName==="function")lb="🚪 出"+xqHubName(k.slice(5)).split(" ").slice(1).join(" ")+"・回棋鎮";else if((k==="/lobby"||k==="/db")&&typeof xqHubName==="function"&&typeof shipAt==="function"&&typeof shipDockList==="function"&&shipDockList())lb="↩ 回"+xqHubName(k==="/lobby"?"battle":"learn").split(" ").slice(1).join(" ");else if(k==="/cup"&&typeof xqHubName==="function")lb="↩ 下樓・回"+xqHubName("battle").split(" ").slice(1).join(" ");else if(k==="/cpuroom"&&typeof xqHubName==="function")lb="↩ 掀簾・回"+xqHubName("battle").split(" ").slice(1).join(" ");else if(/書院/.test(lb)&&typeof xqHubName==="function"&&typeof shipAt==="function"&&typeof shipDockList==="function"&&shipDockList())lb=lb.replace(/學習書院|書院/,xqHubName("learn").split(" ").slice(1).join(" "))}catch(x){}s.innerHTML="<b>"+lb+"</b>";   /* 出口跟著朝代叫法：出國子監・回棋鎮 */
+    if(!P.querySelector(".ex-spot")){const s=document.createElement("button");s.type="button";s.className="shp-spot ex-spot";s.style.left=E[0]+"%";s.style.top=E[1]+"%";let lb=E[2];try{if((k==="/hub/learn"||k==="/hub/battle")&&typeof xqHubName==="function")lb="🚪 出"+xqHubName(k.slice(5)).split(" ").slice(1).join(" ")+"・回棋鎮";else if((k==="/lobby"||k==="/db")&&typeof xqHubName==="function"&&typeof shipAt==="function"&&typeof shipDockList==="function"&&shipDockList())lb="↩ 回"+xqHubName(k==="/lobby"?"battle":"learn").split(" ").slice(1).join(" ");else if(k==="/cup"&&typeof xqHubName==="function")lb="↩ 下樓・回"+xqHubName("battle").split(" ").slice(1).join(" ");else if(k==="/cpuroom"&&typeof xqHubName==="function")lb="↩ 掀簾・回"+xqHubName("battle").split(" ").slice(1).join(" ");else if(/書院/.test(lb)&&typeof xqHubName==="function"&&typeof shipAt==="function"&&typeof shipDockList==="function"&&shipDockList())lb=lb.replace(/學習書院|書院/,xqHubName("learn").split(" ").slice(1).join(" "))}catch(x){}if(typeof hbIsCl==="function"&&hbIsCl())lb=lb.replace("回棋鎮","回時光之苑");s.innerHTML="<b>"+lb+"</b>";   /* 出口跟著朝代叫法：出國子監・回棋鎮 */
       s.onclick=e=>{e.stopPropagation();try{vibrate(5)}catch(x){}if(E[3]){if(E[3]==="#/"&&typeof goHome==="function"){goHome();return}if(typeof goUp==="function")goUp(E[3]);else location.hash=E[3];return}   /* 11/10 開發者「會跑到象棋規則」：回書院改用 goUp（退回紀錄裡的書院那一層，不多疊一頁），出書院／出茶樓直接回首頁，不再「上一頁」退回剛剛的子頁 */const bb=document.getElementById("back");if(bb&&typeof bb.onclick==="function")bb.onclick()};P.append(s)}   /* E[3]＝直接去那一頁（回饋 849：意見回饋頁回星槎） */
     exCls("add")};
   exCls("remove");EX_T=setTimeout(go,60)}
@@ -19697,11 +19712,16 @@ const LB_IMGV="0700";   /* 11/9 修圖：驚燕改從天頭垂下 */
 /* 開發者 11/9：書閣照星槎停靠的朝代換圖 lib_<朝>（史學顧問 11/9 核過；書櫥格子、木箱封條、標籤、迷你棋盤、走路節點的座標都不變）。
    有停靠才算（跟 07y hbDockEra、07z xqHubName 同一個判斷）；沒停靠、宋用原圖 lib */
 const LB_ERAS="qin han sanguo weijin nanbei sui tang wudai yuan ming qing".split(" ");
-function lbImg(){let e="";try{e=typeof hbDockEra==="function"?hbDockEra():typeof shipAt==="function"&&typeof shipDockList==="function"&&shipDockList()?shipAt():""}catch(x){}return LB_ERAS.includes(e)?"lib_"+e:"lib"}
+function lbImg(){let e="";try{e=typeof hbDockEra==="function"?hbDockEra():typeof shipAt==="function"&&typeof shipDockList==="function"&&shipDockList()?shipAt():""}catch(x){}if(typeof hbIsCl==="function"&&hbIsCl())return"lib_classic";   /* 11/10 經典世界：石窟最深處（構圖跟書樓一樣，入口照舊） */
+  return LB_ERAS.includes(e)?"lib_"+e:"lib"}
 const LB_OLD=[["shiqingyaqu","適情","適情雅趣"],["juzhongmi","橘中","橘中秘"],["meihuapu","梅花","梅花譜"],["kaiju","開局","古典開局譜"],["canju","殘局","古典殘局譜"],["brilliant","妙棋","妙棋精選"]];   /* [書, 書櫥格子上的短名, 全名] */
 /* 6 格書櫥的位置（格子中心，%；上下三層、每層兩格） */
 const LB_CELLS=[[10,55.5],[21,54],[10,60],[21,58.5],[10,64.5],[21,62.5]];
-const LB_BOX=[[71.5,30],[83.5,30.5],[94.5,31]];   /* 3 口樟木箱（封條中心） */
+const LB_BOX=[[71.5,30],[83.5,30.5],[94.5,31]];
+/* 11/10 經典世界（lib_classic，藏譜石窟最深處）：沒有書櫥和樟木箱。左上一排 9 片白玉冊：左邊 3 片＝特級大師、右邊 6 片各是一本古譜（字直排）；
+   3 箱比賽對局改落在右上那捆竹簡上；木案上的最近對局小棋盤不放 */
+const LB_CL={cells:[[18.9,25],[23.2,25],[26.8,25],[30.6,25],[34.1,25],[37.2,25]],box:[[82,30.5],[87,31.5],[92,32.5]],spots:{lbBio:[10,17]}};
+const lbCl=()=>typeof hbIsCl==="function"&&hbIsCl();   /* 3 口樟木箱（封條中心） */
 const LB_SPOTS=[["lbGm",84,51.5,"🏆 大師對局"],["lbBio",33,12,"🖼 特級大師"],["lbTour",84,24.5,"📦 比賽對局"],["lbRead",51,77.5,"📖 繼續研究"],["lbMine",80,75.5,"📒 我的對局"]];   /* 回饋 846（開發者 11/9「搜尋的功能好像冗餘了，拿掉吧」）：燈檠上的「🔍 搜尋」拿掉；每部書的清單裡本來就有搜尋框 */
 let LB_OPEN=null;   /* 換頁到 #/db/<書> 之後要不要直接打開面板（"list"／"q"） */
 /* 07w 的座標表：一樓在大案後面的地板上走；書櫥前、卷宗櫥前；中央樓梯上二樓，畫軸前、木箱前 */
@@ -19717,6 +19737,7 @@ const SHW_LIBMAP={el:40,h:y=>y>=64?.09+(y-74)*.0012:.078-(64-y)*.00059,look0:[50
 function lbCss(){if(document.getElementById("lbCss"))return;const s=document.createElement("style");s.id="lbCss";s.textContent=`
 .lib-page{margin:0 0 6px}.lib-page .shp-spot{max-width:44%;padding:4px 10px;z-index:3}.lib-page .shp-spot b{white-space:nowrap;font-size:13.5px}
 .lb-fx{position:absolute;inset:0;pointer-events:none}
+.lib-page.cl .lb-cell{width:3.4%!important;height:7.5%!important}.lib-page.cl .lb-cell span{writing-mode:vertical-rl;top:50%;transform:translate(-50%,-50%);padding:3px 1px;letter-spacing:1px}.lib-page.cl .lb-mini{display:none}
 .lb-cell{position:absolute;width:10.4%;height:4%;transform:translate(-50%,-50%);border:0;padding:0;background:none;cursor:pointer;pointer-events:auto;z-index:2}
 .lb-cell span{position:absolute;left:50%;top:0;transform:translate(-50%,-55%);background:#f3ead2;border:1px solid #8a6a3a;color:#3a2618;border-radius:3px;font:800 10.5px/1 var(--serif,serif);padding:2px 3px;writing-mode:horizontal-tb;white-space:nowrap;box-shadow:0 1px 2px rgba(0,0,0,.25)}
 .lb-box{position:absolute;width:10.5%;height:6%;transform:translate(-50%,-50%);border:0;padding:0;background:none;cursor:pointer;pointer-events:auto;z-index:2}
@@ -19738,10 +19759,10 @@ function lbMini(fen){let b=null;try{b=parseFen(fen||START)}catch(e){}const G=[];
   return`<svg class="lb-mini" viewBox="-.6 -.6 9.2 10.2" aria-hidden="true"><g stroke="#7a5a3a" stroke-width=".07" fill="none">${G.join("")}</g>${P}</svg>`}
 function libMap(v,c0){const root=v.querySelector(".lib");if(!root||v.querySelector(".lib-page"))return;lbCss();
   const d=document.createElement("div");
-  d.innerHTML=`<div class="shp-page cq lib-page"><img src="data/libmap/${lbImg()}.webp?v=${LB_IMGV}" alt="崇文書閣"><div class="lb-fx"></div>
-    ${LB_OLD.map(([k,n,f],i)=>`<button class="lb-cell" id="lbC${i}" data-c="${k}" style="left:${LB_CELLS[i][0]}%;top:${LB_CELLS[i][1]}%" aria-label="${esc(f)}"><span>${esc(n)}</span></button>`).join("")}
-    ${LB_BOX.map(([x,y],i)=>`<button class="lb-box" data-i="${i}" style="left:${x}%;top:${y}%" aria-label="比賽對局第 ${i+1} 箱"><i></i></button>`).join("")}
-    ${LB_SPOTS.map(([id,x,y,t])=>`<button class="shp-spot" id="${id}" style="left:${x}%;top:${y}%"><b>${esc(t)}</b></button>`).join("")}</div>`;
+  const CLB=lbCl();d.innerHTML=`<div class="shp-page cq lib-page${CLB?" cl":""}"><img src="data/libmap/${lbImg()}.webp?v=${LB_IMGV}" alt="崇文書閣"><div class="lb-fx"></div>
+    ${LB_OLD.map(([k,n,f],i)=>`<button class="lb-cell" id="lbC${i}" data-c="${k}" style="left:${(CLB?LB_CL.cells:LB_CELLS)[i][0]}%;top:${(CLB?LB_CL.cells:LB_CELLS)[i][1]}%" aria-label="${esc(f)}"><span>${esc(n)}</span></button>`).join("")}
+    ${(CLB?LB_CL.box:LB_BOX).map(([x,y],i)=>`<button class="lb-box" data-i="${i}" style="left:${x}%;top:${y}%" aria-label="比賽對局第 ${i+1} 箱"><i></i></button>`).join("")}
+    ${LB_SPOTS.map(([id,x,y,t])=>{if(CLB&&LB_CL.spots[id])[x,y]=LB_CL.spots[id];return`<button class="shp-spot" id="${id}" style="left:${x}%;top:${y}%"><b>${esc(t)}</b></button>`}).join("")}</div>`;
   const P=d.firstElementChild;v.insertBefore(P,root);
   const pn=document.createElement("div");pn.className="lb-pn";pn.innerHTML='<div class="lb-pn-h">📜 <span id="lbT">書目</span><button type="button" aria-label="回到書閣">✕</button></div><div class="lb-pn-b"></div>';
   const sc=document.createElement("div");sc.className="lb-scrim";v.append(sc,pn);pn.querySelector(".lb-pn-b").append(root);
