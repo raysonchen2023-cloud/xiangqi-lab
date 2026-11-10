@@ -1379,7 +1379,7 @@ html[data-hicon] .tabbar button.on{box-shadow:inset 0 -3px 0 currentColor}
       if(!window.caches)return go();caches.keys().then(function(ks){return Promise.all(ks.filter(function(k){return k.indexOf("xqlab-app-")===0}).map(function(k){return caches.delete(k)}))})
         .then(function(){return navigator.serviceWorker&&navigator.serviceWorker.getRegistration()}).then(function(r){return r&&r.update()}).catch(function(){}).then(go)}};setTimeout(chk,4000)})();
 </script>
-<script>window.XQ_OFFLINE=true;window.XQ_BUILD="20261110-2300";</script>
+<script>window.XQ_OFFLINE=true;window.XQ_BUILD="20261110-2315";</script>
 <script src="core.js"></script>
 <script src="engine.js"></script>
 <script src="local.js"></script>
@@ -2910,14 +2910,14 @@ function Home(v,hub){   /* hub：沒有＝首頁三張大卡；"battle"＝對戰
    ${RI?'<div class="card hstat" id="hStatus"><span class="muted">檢查中…</span></div>':""}
    <!-- 首頁三張大卡；對戰、學習各一頁（裡面還是原本那些長條） -->
    ${!hub&&OFF&&!standalone&&!(store.get("instAsk",null)||{}).no?`<button class="card instc" id="hInst2"><span class="ii">📲</span><span class="tx"><b>加到主畫面</b><small>全螢幕・沒網路也能下</small></span><b class="go">›</b></button>`:""}
-   ${!hub&&!store.get("campSeen",false)&&!Object.keys(store.get("record",{})).length?`<button class="card instc" data-go="#/camp"><span class="ii">🔰</span><span class="tx"><b>第一次下象棋？</b><small>12 堂小課・一課一步</small></span><b class="go">›</b></button>`:""}
-   ${!hub&&OFF?(typeof homePathHTML==="function"?homePathHTML():typeof homeRecHTML==="function"?homeRecHTML():""):""}
-   ${!hub?`<div class="hub3">
-     ${OFF&&typeof homePathHTML!=="function"?(typeof shipHomeHTML==="function"?shipHomeHTML():(()=>{const L=legendState(),J=jStages(),I=xpInfo();return`<button class="tile hubc ha" data-go="#/adventure"><span class="hi">🪨</span><span class="tx"><span class="t">冒險</span><span class="s" id="hLegend">故事 ${L.n}／36 回・棋路 ${L.pass||0}／${J.length} 關・Lv ${I.L}</span></span><b class="go">›</b></button>`})()):""}
-     <!-- 意見回饋 674：「冒險」換成「⛵ 雲河星槎」放最上面（07f-ship.js 的 shipHomeHTML）；對戰卡右邊的「⚡ 下一盤」直接進挑戰電腦（沒下完就接著下，下完了就照上次的設定開新局） -->
-     <button class="tile hubc hb" data-go="#/hub/battle"><span class="hi">⚔</span><span class="tx"><span class="t">對戰</span><span class="s" id="hNet">電腦・線上・比賽</span></span><span class="qk" id="hQuick" role="button" tabindex="0" aria-label="下一盤：直接挑戰電腦">⚡ 下一盤</span></button>
-     <button class="tile hubc hl" data-go="#/hub/learn"><span class="hi">📚</span><span class="tx"><span class="t">學習</span><span class="s">訓練營・測驗・棋譜</span></span><b class="go">›</b></button>
-   </div>`:""}
+    <!-- ChatGPT 接手改善 2026-11-10：棋盤、練習、研究優先；探索由玩家主動展開。 -->
+    ${!hub?`<div class="hub3" aria-label="下棋與研究">
+      <button class="tile hubc hb" data-go="#/cpu"><span class="hi">♟</span><span class="tx"><span class="t">直接下棋</span><span class="s" id="hCpu">挑戰電腦・接著下未完的一盤</span></span><b class="go">下棋 ›</b></button>
+      <button class="tile hubc hl" data-go="#/hub/learn"><span class="hi">📚</span><span class="tx"><span class="t">學棋解題</span><span class="s">新手訓練・錯棋重練・每日殘局</span></span><b class="go">練習 ›</b></button>
+      <button class="tile hubc hl" data-go="#/db"><span class="hi">📜</span><span class="tx"><span class="t">古譜研究</span><span class="s">古譜・大師名局・我的對局與複盤</span></span><b class="go">研究 ›</b></button>
+    </div><div class="hero strips">${T("k2","#/hub/battle","👥","與人對弈","hNet","線上棋友・同桌對弈・每週比賽")}</div>`:""}
+    ${!hub&&!store.get("campSeen",false)&&!Object.keys(store.get("record",{})).length?`<button class="card instc" data-go="#/camp"><span class="ii">🔰</span><span class="tx"><b>第一次下象棋？</b><small>${CAMP.length} 堂小課・一課一步</small></span><b class="go">›</b></button>`:""}
+    ${!hub&&OFF?`<details class="card home-explore"><summary style="cursor:pointer;font-weight:700;min-height:44px;align-content:center">故事與探索（選看）</summary><p class="muted">想換個心情時再出發；下棋與研究不需要先完成故事。</p>${typeof homePathHTML==="function"?homePathHTML():typeof homeRecHTML==="function"?homeRecHTML():typeof shipHomeHTML==="function"?shipHomeHTML():`<button class="tile strip" data-go="#/adventure"><span class="tx"><span class="t">雲河星槎</span><span class="s">故事、戰役與角色探索</span></span><b class="go">›</b></button>`}</details>`:""}
    ${!hub&&OFF&&typeof canjuCardHTML==="function"&&typeof homePathHTML!=="function"?canjuCardHTML():""}
    ${hub==="battle"?`<div class="sec-t" style="margin-top:4px">實戰</div>
    <div class="hero strips">
@@ -2933,7 +2933,7 @@ ${OFF?(()=>{const n=Object.keys(arenaStamps()).length,t=arenaTitle();return`<but
    </div>`:""}`:""}
    ${hub==="learn"?`<div class="sec-t">學習</div>
    <div class="hero strips">
-    ${T("k2","#/camp","🔰","新手訓練營","",(()=>{const n=Object.keys(campStars()).length;return n?`已上完 ${n}／${CAMP.length} 課`:"第一次下象棋？12 堂小課，親手走一步學一招"})())}
+    ${T("k2","#/camp","🔰","新手訓練營","",(()=>{const n=Object.keys(campStars()).length;return n?`已上完 ${n}／${CAMP.length} 課`:`第一次下象棋？${CAMP.length} 堂小課，親手走一步學一招`})())}
     ${T("k1","#/stats","🏅","我的戰績","","勝負・段位・🎯 我的棋力")}
     ${T("k3","#/openings","📊","我的開局","","你常用的開局・勝率・中局正招")}
     ${T("k2","#/redo","🔁","錯棋重練","","從下錯的那一步再下一次，練到對")}
@@ -6342,6 +6342,19 @@ const b2EvalBar=v=>{if(v==null)return"";const p=Math.abs(v)>=29000?(v>0?100:0):M
   return`<div style="display:flex;align-items:center;gap:8px;margin:6px 2px"><div style="flex:1;height:10px;border-radius:5px;background:#1E1A16;overflow:hidden"><i style="display:block;height:100%;width:${p}%;background:#C8322A"></i></div><b style="font-size:13px;white-space:nowrap">${b2EvalWord(v)}</b></div>`};
 /* 審稿 592：故事關卡不給玩家看引擎分數，評估條旁邊改寫白話 */
 const b2EvalWord=v=>{const a=Math.abs(v),s=v>0?"紅方":"黑方";return a>=29000?s+"有殺":a<60?"差不多":a<200?s+"稍好":a<500?s+"好":s+"大優"};
+/* 新手訓練營結業對局：對手顯示成玩家的旅伴（雲河七星），沒選旅伴就用小帥 */
+function gradBuddy(){try{const c=typeof myChar==="function"&&myChar();if(c&&typeof WX_CHARS!=="undefined"&&WX_CHARS[c]){const W=WX_CHARS[c],nk=W.nk||W.n;
+    return{nk,img:"data/xs/prev_"+c+".webp",win:"你出師了！這一盤，我是真的被你將死的。",draw:"四十回合不分勝負，你守得真穩，算你過關！",lose:"別急，再來一盤，我陪你。"}}}catch(e){}
+  const nm=typeof BOTN==="function"?BOTN():"小帥";
+  return{nk:nm,img:"",win:"你出師了！這一盤我輸得心服口服。",draw:"四十回合守得真穩，算你過關！",lose:"別急，再來一盤，我陪你。"}}
+/* 結業過關的水墨煙火（蓋在棋盤上，2.6 秒後移除） */
+function gradFx(host){if(!host)return;try{if(!document.getElementById("gradFxCss")){const s=document.createElement("style");s.id="gradFxCss";
+    s.textContent=`.grad-opp{display:flex;align-items:center;gap:8px;margin:4px 2px;font-size:13px;color:var(--muted,#8a7a66)}.grad-opp img{width:30px;height:36px;object-fit:contain;border-radius:4px}`+
+    `.gradfx{position:absolute;inset:0;pointer-events:none;overflow:hidden;z-index:5}.gradfx b{position:absolute;font-size:22px;animation:gradPop 1.2s ease-out forwards}`+
+    `@keyframes gradPop{0%{transform:scale(.2);opacity:0}30%{opacity:1}100%{transform:scale(1.5) translateY(-22px);opacity:0}}`;document.head.append(s)}
+  const box=document.createElement("div");box.className="gradfx";const ic=["🎆","🎇","✨","🏮","🀄"];
+  for(let i=0;i<16;i++){const b=document.createElement("b");b.textContent=ic[i%ic.length];b.style.left=(8+Math.random()*84)+"%";b.style.top=(8+Math.random()*70)+"%";b.style.animationDelay=(Math.random()*.6)+"s";box.append(b)}
+  if(getComputedStyle(host).position==="static")host.style.position="relative";host.append(box);setTimeout(()=>box.remove(),2600)}catch(e){}}
 function jStepsB2(X){const C=window.XQCore,{v,bd}=X,$=q=>v.querySelector(q);
   const stat=t=>{const e=$("#stat");if(e)e.textContent=t},note=t=>{const e=$("#note");if(e)e.textContent=t},O=h=>{const e=$("#lvO");if(e)e.innerHTML=h},acts=a=>actionBar($("#acts"),a);
   const flipOf=st=>(st.human||st.side||(st.start&&st.start.turn))==="b";
@@ -6495,7 +6508,55 @@ function jStepsB2(X){const C=window.XQCore,{v,bd}=X,$=q=>v.querySelector(q);
       sel=L.some(([f])=>f===x)?x:-1;draw(sel>=0?{sel,targets:L.filter(([f])=>f===sel).map(z=>z[1])}:null)}
     function fin(r){X.stop();X.flag("sync",sync);X.sflag(r==="win"?{sync,win:true,mine}:{retried:true});if(r==="win"){X.flag("win",true);stat("✔ 贏了！");note(`默契 ${sync} 次`);return acts([["next","›","繼續",X.next,true]])}
       X.failCard(r==="slow"?"太慢了，這盤判負。":r==="limit"?`${st.limit} 步內沒有贏，再試一次。`:"這盤輸了，再跟搭檔試一次。")}}
-  return{judge,audit,simul,arrange,relay,duet}}
+  /* ---- tapPt：認識棋盤——點亮發光的交叉點（教交叉點、九宮） ---- */
+  function tapPt(st){const flip=!!st.flip,pos=st.start?lvBoard(st.start):{b:C.parseFen("9/9/9/9/9/9/9/9/9/9")};
+    const lit=(st.lit||[]).map(u=>C.parseSq(u));let rem=lit.slice();const got=[];X.boardPage(st);
+    const draw=()=>bd.draw(pos.b,{flip,hint:rem,targets:got});
+    note(st.say||"");stat(st.ask||"點一點發光的地方");draw();acts([]);
+    X.setTap(x=>{const k=rem.indexOf(x);if(k<0){X.miss(st.wrong||"要點在亮起來的交叉點上");return}
+      rem.splice(k,1);got.push(x);vibrate(15);draw();
+      if(!rem.length){X.setTap(null);stat(st.done||"✔ 全部找到了！");note(st.note||st.say||"");acts([["next","›","繼續",X.next,true]])}
+      else stat(`還差 ${rem.length} 個`)})}
+  /* ---- place：點選把棋子擺到開局位置（每課後擺子、累積紅方） ---- */
+  function place(st){const flip=!!st.flip,pc=st.pc,b=C.parseFen(st.baseFen||"9/9/9/9/9/9/9/9/9/9");
+    let rem=(st.sqs||[]).map(u=>C.parseSq(u));X.boardPage(st);
+    const draw=()=>bd.draw(b,{flip,hint:rem});
+    note(st.say||"");stat(st.ask||`點亮著的點，把「${B2_CN[pc]}」放上去`);draw();acts([]);
+    X.setTap(x=>{const k=rem.indexOf(x);if(k<0){X.miss(st.wrong||"放到亮著的點上");return}
+      rem.splice(k,1);b[x]=pc;vibrate(15);draw();
+      if(!rem.length){X.setTap(null);stat(st.done||`✔ ${B2_CN[pc]}擺好了！`);note(st.note||st.say||"");acts([["next","›","繼續",X.next,true]])}
+      else stat(`還要放 ${rem.length} 顆`)})}
+  /* ---- grad：結業對局（旅伴當對手、讓雙傌雙炮＋一俥、被將軍亮解將、無限悔棋、40 回合算和） ---- */
+  function grad(st){const me="r",flip=false,maxMv=st.drawMoves||40,ai=st.ai||1;
+    let pos=lvBoard({fen:st.fen,turn:"r"}),sel=-1,last=null,moveNo=0,busy=false;const stack=[];
+    const bud=gradBuddy();X.boardPage(st);
+    const chk=()=>C.inCheck(pos.b,me);
+    const banner=()=>{const n=$("#lvT");if(n)n.innerHTML=`<div class="grad-opp">${bud.img?`<img src="${bud.img}" alt="" onerror="this.remove()">`:""}<span><b>${esc(bud.nk)}</b> 讓了雙傌、雙炮和一俥<br><small>第 ${moveNo}／${maxMv} 回合${chk()?"・你被將軍了，亮著的子可以解圍":moveNo>=maxMv?"・可以平手過關了":""}</small></span></div>`};
+    const say=t=>{stat(t);banner()};
+    const draw=()=>{const o={flip,last};if(sel>=0){o.sel=sel;o.targets=C.legal(pos.b,me).filter(([f])=>f===sel).map(z=>z[1])}
+      if(chk()){o.check=pos.b.indexOf("K");if(sel<0)o.hint=[...new Set(C.legal(pos.b,me).map(([f])=>f))]}bd.draw(pos.b,o)};
+    const mkMove=(f,t)=>{pos={b:C.make(pos.b,f,t),turn:pos.turn==="r"?"b":"r"};last={f,t}};
+    const bar=()=>acts([["undo","↶","悔棋",undo,false]]);
+    function undo(){if(!stack.length){X.miss("還沒有可以悔的棋");return}const s=stack.pop();pos={b:s.b.slice(),turn:"r"};last=s.last;moveNo=s.moveNo;sel=-1;draw();say("↶ 悔了一步，再想想");bar();X.setTap(tap)}
+    function fin(r){X.setTap(null);
+      if(r==="lose")return X.failCard(`被將死了。${bud.nk}說：「${bud.lose}」再擺一盤，你一定下得完。`);
+      const win=r==="win";stat(win?"🎆 將死對方，你出師了！":"🎆 四十回合守和，過關！");
+      const nn=$("#note");if(nn)nn.textContent=`${bud.nk}：「${win?bud.win:bud.draw}」\n🀄 恭喜結業，獲得〈新手結業方印〉。`;
+      banner();gradFx($("#bbox"));acts([["next","🀄","領取結業方印",X.next,true]])}
+    async function afterMove(){
+      if(!C.legal(pos.b,"b").length)return fin("win");
+      if(moveNo>=maxMv)return fin("draw");
+      busy=true;say(`${bud.nk} 思考中…`);acts([]);const m=await b2Eng(pos.b,"b",ai);busy=false;if(!alive())return;
+      if(m)mkMove(m.f,m.t);moveNo++;draw();
+      if(!C.legal(pos.b,"r").length)return fin("lose");
+      if(moveNo>=maxMv&&!chk())return fin("draw");
+      say(chk()?"你被將軍了！亮著的子可以解圍":"輪到你");bar();X.setTap(tap)}
+    function tap(x){if(busy||pos.turn!==me)return;const L=C.legal(pos.b,me);
+      if(sel>=0&&L.some(([f,t])=>f===sel&&t===x)){stack.push({b:pos.b.slice(),last,moveNo});mkMove(sel,x);sel=-1;vibrate(10);draw();afterMove();return}
+      sel=L.some(([f])=>f===x)?x:-1;if(sel>=0)vibrate(5);draw()}
+    note(st.say||"把對方將死，或守滿四十回合就結業。被將軍時棋盤會亮出能解圍的子，悔棋隨你用。");
+    draw();say("輪到你");bar();X.setTap(tap)}
+  return{judge,audit,simul,arrange,relay,duet,tapPt,place,grad}}
 /* 三星的機器判定（story/book2/levels_schema_b2.md 的 stars／star）：條件不滿足最多兩顆星；不認得的條件當作過 */
 function b2StarOk(G,R){const FS=R.fs||{},F=R.f||{},at=c=>c.step!=null?(FS[c.step]||{}):F,FO=R.fo||{};
   const fromStep=(G.steps||[]).flatMap((st,i)=>{const z=st&&st.star;if(!z||typeof z!=="object")return[];const o=[];if(z.win)o.push({k:"win",step:i});if(z.orDraw)o.push({k:"winOrDraw",step:i});if(z.winWithin)o.push({k:"winWithin",step:i,n:z.winWithin});return o});   /* 第 19～36 回把三星條件寫在對局步驟的 star 裡 */
@@ -6769,7 +6830,7 @@ function Theme(v,tag){if(tag){const T=THEMES.find(x=>x[0]===tag);if(!T){navRepla
     v.querySelectorAll("[data-t]").forEach(b=>b.onclick=()=>{vibrate(5);location.hash="#/theme/"+encodeURIComponent(b.dataset.t)})}).catch(e=>{v.innerHTML='<div class="pad"><div class="card muted">'+esc(e.message)+'</div></div>'});return{}}
 /* ================= 🔰 新手訓練營 =================
    開發者決定（Gemini 象棋教學審閱）：每種棋子怎麼走、蹩馬腿、將軍、解將、雙車錯、馬後炮，一課走一步；局面都用規則程式驗過（將死的真的將死） */
-const CAMP=[{"n":1,"name":"帥","intro":"帥（將）只能在九宮裡走，一次一格。","pass":"走對這一步","star3":"一次就走對、不用提示","rules":{"maxMistakes3":0,"maxMistakes2":1},"outro":"對！帥永遠出不了九宮。","steps":[{"t":"puzzle","items":[{"start":{"fen":"3k5/9/9/9/9/9/9/9/9/4K4","turn":"r"},"line":["e0e1"],"ask":"把帥往前走一格。","note":"對！帥永遠出不了九宮。"}]}]},{"n":2,"name":"仕","intro":"仕（士）只能斜走一格，也出不了九宮。","pass":"走對這一步","star3":"一次就走對、不用提示","rules":{"maxMistakes3":0,"maxMistakes2":1},"outro":"仕是帥的貼身保鑣。","steps":[{"t":"puzzle","items":[{"start":{"fen":"3k5/9/9/9/9/9/9/9/9/3AK4","turn":"r"},"line":["d0e1"],"ask":"把仕斜走到九宮正中間。","note":"仕是帥的貼身保鑣。"}]}]},{"n":3,"name":"相","intro":"相（象）走「田」字，一次斜走兩格，而且不能過河。","pass":"走對這一步","star3":"一次就走對、不用提示","rules":{"maxMistakes3":0,"maxMistakes2":1},"outro":"相只在自己這半邊守家。","steps":[{"t":"puzzle","items":[{"start":{"fen":"3k5/9/9/9/9/9/9/9/9/2B1K4","turn":"r"},"line":["c0e2"],"alt":{"0":["c0a2"]},"ask":"把相飛到田字的另一角。","note":"相只在自己這半邊守家。"}]}]},{"n":4,"name":"傌","intro":"傌（馬）走「日」字：先直走一格，再斜走一格。","pass":"走對這一步","star3":"一次就走對、不用提示","rules":{"maxMistakes3":0,"maxMistakes2":1},"outro":"馬八進七，最常見的出馬。","steps":[{"t":"puzzle","items":[{"start":{"fen":"3k5/9/9/9/9/9/9/9/9/1N2K4","turn":"r"},"line":["b0c2"],"alt":{"0":["b0a2","b0d1"]},"ask":"把傌跳出來。","note":"馬八進七，最常見的出馬。"}]}]},{"n":5,"name":"蹩馬腿","intro":"傌往前跳的那一格被擋住，就跳不過去，這叫「蹩馬腿」。","pass":"走對這一步","star3":"一次就走對、不用提示","rules":{"maxMistakes3":0,"maxMistakes2":1},"outro":"被擋住的方向不能跳，只能往沒擋住的地方跳。","steps":[{"t":"puzzle","items":[{"start":{"fen":"3k5/9/9/9/9/9/9/9/1C7/1N2K4","turn":"r"},"line":["b0d1"],"ask":"前面被炮擋住了，找出傌現在唯一能跳的那一步。","note":"被擋住的方向不能跳，只能往沒擋住的地方跳。"}]}]},{"n":6,"name":"俥","intro":"俥（車）走直線，橫豎都行，一次可以走很多格，前面沒擋就一直走。","pass":"走對這一步","star3":"一次就走對、不用提示","rules":{"maxMistakes3":0,"maxMistakes2":1},"outro":"車是最厲害的子，「一車十子寒」。","steps":[{"t":"puzzle","items":[{"start":{"fen":"3k5/9/9/p8/9/9/9/9/9/R3K4","turn":"r"},"line":["a0a6"],"ask":"用俥吃掉對方的卒。","note":"車是最厲害的子，「一車十子寒」。"}]}]},{"n":7,"name":"炮","intro":"炮平常走法跟車一樣，但要吃子時，中間一定要隔一顆子（叫「炮架」）。","pass":"走對這一步","star3":"一次就走對、不用提示","rules":{"maxMistakes3":0,"maxMistakes2":1},"outro":"中間的兵就是炮架。","steps":[{"t":"puzzle","items":[{"start":{"fen":"3k5/9/9/n8/9/9/P8/9/9/C3K4","turn":"r"},"line":["a0a6"],"ask":"隔著自己的兵，用炮吃掉對方的馬。","note":"中間的兵就是炮架。"}]}]},{"n":8,"name":"兵","intro":"兵（卒）只能往前一格；過了河以後，也可以橫著走。","pass":"走對這一步","star3":"一次就走對、不用提示","rules":{"maxMistakes3":0,"maxMistakes2":1},"outro":"過河的兵像小車，越靠近對方九宮越有用。","steps":[{"t":"puzzle","items":[{"start":{"fen":"3k5/9/9/9/4P4/9/9/9/9/4K4","turn":"r"},"line":["e5d5"],"ask":"這個兵已經過河了，把它往左橫走一格。","note":"過河的兵像小車，越靠近對方九宮越有用。"}]}]},{"n":9,"name":"將軍","intro":"走一步直接攻擊對方的將，叫「將軍」。被將軍的一方一定要先解。","pass":"走對這一步","star3":"一次就走對、不用提示","rules":{"maxMistakes3":0,"maxMistakes2":1},"outro":"將軍！對方要躲開才行。","steps":[{"t":"puzzle","items":[{"start":{"fen":"4k4/9/9/9/9/9/9/9/9/R2K5","turn":"r"},"line":["a0a9"],"ask":"把俥沉到對方底線將軍。","note":"將軍！對方要躲開才行。"}]}]},{"n":10,"name":"解將","intro":"被將軍時要馬上解：躲開、擋住，或吃掉將你的子。","pass":"走對這一步","star3":"一次就走對、不用提示","rules":{"maxMistakes3":0,"maxMistakes2":1},"outro":"吃掉將軍的子，是最乾脆的解法。","steps":[{"t":"puzzle","items":[{"start":{"fen":"3k5/9/9/9/R3r4/9/9/9/9/4K4","turn":"r"},"line":["a5e5"],"ask":"你的帥被車將軍了！用俥把那個車吃掉。","note":"吃掉將軍的子，是最乾脆的解法。"}]}]},{"n":11,"name":"雙車錯","intro":"兩個車一個封住一排、一個沉底將軍，將就沒地方躲，這叫「雙車錯」。","pass":"走對這一步","star3":"一次就走對、不用提示","rules":{"maxMistakes3":0,"maxMistakes2":1},"outro":"將死了！上面那排被封住，將無路可走。","steps":[{"t":"puzzle","items":[{"start":{"fen":"4k4/R8/9/9/9/9/9/9/9/1R1K5","turn":"r"},"line":["b0b9"],"ask":"一步殺：用另一個俥沉底將死。","note":"將死了！上面那排被封住，將無路可走。"}]}]},{"n":12,"name":"馬後炮","intro":"馬守住將旁邊的格子，炮在馬後面將軍，這叫「馬後炮」。","pass":"走對這一步","star3":"一次就走對、不用提示","rules":{"maxMistakes3":0,"maxMistakes2":1},"outro":"馬後炮，將死了！","steps":[{"t":"puzzle","items":[{"start":{"fen":"4k4/9/4N4/9/9/9/9/9/9/C4K3","turn":"r"},"line":["a0e0"],"ask":"一步殺：把炮平到馬的正後方將死。","note":"馬後炮，將死了！"}]}]}];
+const CAMP=[{"n":1,"name":"認識棋盤・帥","intro":"先認識棋盤，再學第一顆棋子「帥」怎麼走。","pass":"認識棋盤，走對帥這一步","star3":"沒有亂點、不用提示","rules":{"maxMistakes3":2,"maxMistakes2":5},"outro":"對！帥永遠出不了九宮。","steps":[{"t":"tapPt","say":"象棋的棋子都下在「線和線交叉的十字路口」上，不是放在方格裡。","ask":"點亮三個發光的交叉點","lit":["a0","e4","i9"],"wrong":"要點在亮起來的交叉點上喔","done":"對了！棋子就是下在這種交叉點上。"},{"t":"talk","say":"棋盤中間那條河叫「楚河漢界」。它來自兩千多年前楚漢相爭，項羽和劉邦隔著鴻溝分地盤（《史記・項羽本紀》）。河這邊是你的紅方，對面是對手。","start":{"fen":"rnbakabnr/9/1c5c1/p1p1p1p1p/9/9/P1P1P1P1P/1C5C1/9/RNBAKABNR","turn":"r"},"choices":[{"label":"我知道了","ok":true,"reply":"你執紅棋，從下面往上攻。"}]},{"t":"tapPt","say":"棋盤最下面正中間那個「井」字格叫九宮，是帥（將）和仕（士）的家，他們出不了九宮。","ask":"點亮紅方九宮的四個角","lit":["d0","f0","d2","f2"],"wrong":"九宮在棋盤最下面正中間，點那四個發光的角","done":"這就是紅方的九宮，帥的家。"},{"t":"place","baseFen":"9/9/9/9/9/9/9/9/9/9","pc":"K","sqs":["e0"],"say":"開局時，帥就站在九宮底線的正中間。","ask":"把帥放到發光的那個點（九宮底線正中間）","done":"帥擺好了！現在來看看它怎麼走。"},{"t":"puzzle","items":[{"start":{"fen":"3k5/9/9/9/9/9/9/9/9/4K4","turn":"r"},"line":["e0e1"],"ask":"把帥往前走一格。","note":"對！帥永遠出不了九宮。"}]}]},{"n":2,"name":"仕","intro":"仕（士）只能斜走一格，也出不了九宮。","pass":"走對這一步","star3":"一次就走對、不用提示","rules":{"maxMistakes3":0,"maxMistakes2":1},"outro":"仕是帥的貼身保鑣。","steps":[{"t":"puzzle","items":[{"start":{"fen":"3k5/9/9/9/9/9/9/9/9/3AK4","turn":"r"},"line":["d0e1"],"ask":"把仕斜走到九宮正中間。","note":"仕是帥的貼身保鑣。"}]},{"t":"place","baseFen":"9/9/9/9/9/9/9/9/9/4K4","pc":"A","sqs":["d0","f0"],"say":"仕就站在帥的兩邊，貼身守著帥。","ask":"把兩顆仕放到帥兩旁發光的點","done":"兩顆仕擺好了！"}]},{"n":3,"name":"相","intro":"相（象）走「田」字，一次斜走兩格，而且不能過河。","pass":"走對這一步","star3":"一次就走對、不用提示","rules":{"maxMistakes3":0,"maxMistakes2":1},"outro":"相只在自己這半邊守家。","steps":[{"t":"puzzle","items":[{"start":{"fen":"3k5/9/9/9/9/9/9/9/9/2B1K4","turn":"r"},"line":["c0e2"],"alt":{"0":["c0a2"]},"ask":"把相飛到田字的另一角。","note":"相只在自己這半邊守家。"}]},{"t":"place","baseFen":"9/9/9/9/9/9/9/9/9/3AKA3","pc":"B","sqs":["c0","g0"],"say":"相站在仕的外側，守著自己這半邊。","ask":"把兩顆相放到發光的點","done":"兩顆相擺好了！"}]},{"n":4,"name":"傌","intro":"傌（馬）走「日」字：先直走一格，再斜走一格。","pass":"走對這一步","star3":"一次就走對、不用提示","rules":{"maxMistakes3":0,"maxMistakes2":1},"outro":"馬八進七，最常見的出馬。","steps":[{"t":"puzzle","items":[{"start":{"fen":"3k5/9/9/9/9/9/9/9/9/1N2K4","turn":"r"},"line":["b0c2"],"alt":{"0":["b0a2","b0d1"]},"ask":"把傌跳出來。","note":"馬八進七，最常見的出馬。"}]},{"t":"place","baseFen":"9/9/9/9/9/9/9/9/9/2BAKAB2","pc":"N","sqs":["b0","h0"],"say":"傌站在相的外側。","ask":"把兩顆傌放到發光的點","done":"兩顆傌擺好了！"}]},{"n":5,"name":"蹩馬腿","intro":"傌往前跳的那一格被擋住，就跳不過去，這叫「蹩馬腿」。","pass":"走對這一步","star3":"一次就走對、不用提示","rules":{"maxMistakes3":0,"maxMistakes2":1},"outro":"被擋住的方向不能跳，只能往沒擋住的地方跳。","steps":[{"t":"puzzle","items":[{"start":{"fen":"3k5/9/9/9/9/9/9/9/1C7/1N2K4","turn":"r"},"line":["b0d1"],"ask":"前面被炮擋住了，找出傌現在唯一能跳的那一步。","note":"被擋住的方向不能跳，只能往沒擋住的地方跳。"}]}]},{"n":6,"name":"俥","intro":"俥（車）走直線，橫豎都行，一次可以走很多格，前面沒擋就一直走。","pass":"走對這一步","star3":"一次就走對、不用提示","rules":{"maxMistakes3":0,"maxMistakes2":1},"outro":"車是最厲害的子，「一車十子寒」。","steps":[{"t":"puzzle","items":[{"start":{"fen":"3k5/9/9/p8/9/9/9/9/9/R3K4","turn":"r"},"line":["a0a6"],"ask":"用俥吃掉對方的卒。","note":"車是最厲害的子，「一車十子寒」。"}]},{"t":"place","baseFen":"9/9/9/9/9/9/9/9/9/1NBAKABN1","pc":"R","sqs":["a0","i0"],"say":"俥站在最外側的兩個角，底線就排滿了。","ask":"把兩顆俥放到兩個角發光的點","done":"底線九顆排滿了！"}]},{"n":7,"name":"炮","intro":"炮平常走法跟車一樣，但要吃子時，中間一定要隔一顆子（叫「炮架」）。","pass":"走對這一步","star3":"一次就走對、不用提示","rules":{"maxMistakes3":0,"maxMistakes2":1},"outro":"中間的兵就是炮架。","steps":[{"t":"puzzle","items":[{"start":{"fen":"3k5/9/9/n8/9/9/P8/9/9/C3K4","turn":"r"},"line":["a0a6"],"ask":"隔著自己的兵，用炮吃掉對方的馬。","note":"中間的兵就是炮架。"}]},{"t":"place","baseFen":"9/9/9/9/9/9/9/9/9/RNBAKABNR","pc":"C","sqs":["b2","h2"],"say":"兩顆炮站在傌的前面，中間隔著一條線。","ask":"把兩顆炮放到發光的點","done":"兩顆炮擺好了！"}]},{"n":8,"name":"兵","intro":"兵（卒）只能往前一格；過了河以後，也可以橫著走。","pass":"走對這一步","star3":"一次就走對、不用提示","rules":{"maxMistakes3":0,"maxMistakes2":1},"outro":"過河的兵像小車，越靠近對方九宮越有用。","steps":[{"t":"puzzle","items":[{"start":{"fen":"3k5/9/9/9/4P4/9/9/9/9/4K4","turn":"r"},"line":["e5d5"],"ask":"這個兵已經過河了，把它往左橫走一格。","note":"過河的兵像小車，越靠近對方九宮越有用。"}]},{"t":"place","baseFen":"9/9/9/9/9/9/9/1C5C1/9/RNBAKABNR","pc":"P","sqs":["a3","c3","e3","g3","i3"],"say":"最前排是五顆兵，站在自己的河邊。","ask":"把五顆兵一顆一顆放到發光的點","done":"紅方十六顆全擺好了！對面的黑方也是一樣的鏡像擺法。","note":"紅方十六顆棋子，全部擺好了！對面的黑方也是一樣的鏡像擺法。"}]},{"n":9,"name":"將軍","intro":"走一步直接攻擊對方的將，叫「將軍」。被將軍的一方一定要先解。","pass":"走對這一步","star3":"一次就走對、不用提示","rules":{"maxMistakes3":0,"maxMistakes2":1},"outro":"將軍！對方要躲開才行。","steps":[{"t":"puzzle","items":[{"start":{"fen":"4k4/9/9/9/9/9/9/9/9/R2K5","turn":"r"},"line":["a0a9"],"ask":"把俥沉到對方底線將軍。","note":"將軍！對方要躲開才行。"}]}]},{"n":10,"name":"解將","intro":"被將軍時要馬上解：躲開、擋住，或吃掉將你的子。","pass":"走對這一步","star3":"一次就走對、不用提示","rules":{"maxMistakes3":0,"maxMistakes2":1},"outro":"吃掉將軍的子，是最乾脆的解法。","steps":[{"t":"puzzle","items":[{"start":{"fen":"3k5/9/9/9/R3r4/9/9/9/9/4K4","turn":"r"},"line":["a5e5"],"ask":"你的帥被車將軍了！用俥把那個車吃掉。","note":"吃掉將軍的子，是最乾脆的解法。"}]}]},{"n":11,"name":"雙車錯","intro":"兩個車一個封住一排、一個沉底將軍，將就沒地方躲，這叫「雙車錯」。","pass":"走對這一步","star3":"一次就走對、不用提示","rules":{"maxMistakes3":0,"maxMistakes2":1},"outro":"將死了！上面那排被封住，將無路可走。","steps":[{"t":"puzzle","items":[{"start":{"fen":"4k4/R8/9/9/9/9/9/9/9/1R1K5","turn":"r"},"line":["b0b9"],"ask":"一步殺：用另一個俥沉底將死。","note":"將死了！上面那排被封住，將無路可走。"}]}]},{"n":12,"name":"馬後炮","intro":"馬守住將旁邊的格子，炮在馬後面將軍，這叫「馬後炮」。","pass":"走對這一步","star3":"一次就走對、不用提示","rules":{"maxMistakes3":0,"maxMistakes2":1},"outro":"馬後炮，將死了！","steps":[{"t":"puzzle","items":[{"start":{"fen":"4k4/9/4N4/9/9/9/9/9/9/C4K3","turn":"r"},"line":["a0e0"],"ask":"一步殺：把炮平到馬的正後方將死。","note":"馬後炮，將死了！"}]}]},{"n":13,"name":"結業對局","intro":"十二課都學會了！現在跟旅伴下一盤真正的棋。把對方將死，或守滿四十回合就結業。","pass":"將死對方，或守滿四十回合","star3":"一盤就過關、沒用悔棋","rules":{"maxMistakes3":0,"maxMistakes2":3},"outro":"恭喜你從新手訓練營結業！接下來可以去「挑戰電腦」真正下一盤，或搭星槎到各朝代闖關。","reward":"新手結業方印","steps":[{"t":"grad","fen":"2bakab1r/9/9/p1p1p1p1p/9/9/P1P1P1P1P/1C5C1/9/RNBAKABNR","ai":1,"drawMoves":40,"say":"旅伴讓了雙傌、雙炮和一隻俥，換你執紅先走。把對方將死，或守滿四十回合就過關。被將軍時棋盤會亮出能解圍的子，悔棋隨你用。"}]}];
 const campStars=()=>store.get("campStars",{});
 function Camp(v,n){setTabs(n?false:true,"#/");store.set("campSeen",true);const S=campStars();
   if(n){const G=CAMP[n-1];if(!G){navReplace("#/camp");return{}}
@@ -6777,9 +6838,9 @@ function Camp(v,n){setTabs(n?false:true,"#/");store.set("campSeen",true);const S
       done:st=>{const A=campStars(),b=Math.max(st,A[n]||0);if(!A[n])addXP(10,"新手訓練營","camp:"+n);A[n]=b;store.set("campStars",A);return b},
       next:n<CAMP.length?["下一課：「"+CAMP[n].name+"」 ›",()=>{jRunSet(null,"jRunC");location.hash="#/camp/"+(n+1)}]:null})}
   setTop("🔰 新手訓練營","#/hub/learn");v.className="view";const got=CAMP.filter(c=>S[c.n]).length;
-  v.innerHTML=`<div class="pad"><div class="card" style="line-height:1.8"><b>第一次下象棋？從這裡開始。</b><br><span class="muted" style="font-size:13.5px">每一課${BOTN()}說一句話，你親手走一步：先認識每種棋子怎麼走，再學將軍、解將，最後學兩種最基本的殺法。全部 ${CAMP.length} 課、大約 5 分鐘。</span></div>
+  v.innerHTML=`<div class="pad"><div class="card" style="line-height:1.8"><b>第一次下象棋？從這裡開始。</b><br><span class="muted" style="font-size:13.5px">每一課${BOTN()}說一句話，你親手走一步：先認識棋盤、把每顆棋子擺上去，學每種棋子怎麼走，再學將軍、解將、基本殺法，最後跟旅伴下一盤結業。全部 ${CAMP.length} 課、大約 8 分鐘。</span></div>
     <div class="sec-t">課程（${got}／${CAMP.length}）</div><div class="items" style="padding:0">${CAMP.map(c=>{const k=S[c.n]||0,open=c.n===1||S[c.n-1];return`<button class="item" data-c="${c.n}" ${open?"":"disabled"}><span class="lb">${open?(k?"✅":"🔰"):"🔒"}</span><span class="tx"><b>第 ${c.n} 課・${esc(c.name)}</b><span>${k?"★".repeat(k)+"☆".repeat(3-k):open?esc(c.intro.slice(0,28))+"…":"先上完前一課"}</span></span><span class="muted">›</span></button>`}).join("")}</div>
-    ${got>=CAMP.length?'<div class="card" style="margin-top:10px;text-align:center">🎉 訓練營全部結業！去「挑戰電腦」第 1 級試試身手吧。<br><button class="btn" id="cGo" style="margin-top:8px">去挑戰電腦 ›</button></div>':""}</div>`;
+    ${got>=CAMP.length?'<div class="card" style="margin-top:10px;text-align:center">🎉 恭喜從新手訓練營結業！去「挑戰電腦」或搭星槎到各朝代闖關吧。<br><button class="btn" id="cGo" style="margin-top:8px">去挑戰電腦 ›</button></div>':""}</div>`;
   v.querySelectorAll("[data-c]").forEach(b=>b.onclick=()=>{vibrate(5);jRunSet(null,"jRunC");location.hash="#/camp/"+b.dataset.c});   /* 回饋 838（開發者 11/9 選：全模式中斷接續） */
   {const g=v.querySelector("#cGo");if(g)g.onclick=()=>{store.set("cpuLevel",1);location.hash="#/cpu"}}return{}}
 /* ================= 🍵 一盞茶殘局（第一版）=================
@@ -15096,9 +15157,9 @@ if(typeof setMap==="function"){const f0=setMap;setMap=function(v){const r=f0.app
    包一層 Camp(v,n)（只換課程清單那一頁，原本的說明和清單留在圖下面）；接 07w 走路（SHW_CAMP）、07x 縮放。開關 CAMP_MAP_ON；圖片網址帶 CP_IMGV */
 const CAMP_MAP_ON=true;
 const CP_IMGV="2320";
-const CP_GLYPH=["帥","仕","相","傌","蹩","俥","炮","兵","將","解","錯","殺"];
-/* 12 面旗的旗面中心（像素，768×1376） */
-const CP_FLAGS=[[377,815],[304,789],[182,721],[227,675],[294,650],[373,629],[531,561],[406,493],[364,411],[574,356],[526,327],[477,314]];
+const CP_GLYPH=["帥","仕","相","傌","蹩","俥","炮","兵","將","解","錯","殺","證"];
+/* 旗面中心（像素，768×1376）；最後一面＝結業對局，擺在敵方營門前 */
+const CP_FLAGS=[[377,815],[304,789],[182,721],[227,675],[294,650],[373,629],[531,561],[406,493],[364,411],[574,356],[526,327],[477,314],[400,268]];
 /* 小路上的走路節點（像素）：0＝我方營門 … 8＝木板橋 … 16＝敵方營門 */
 const CP_PATH=[[380,930],[264,879],[200,814],[207,750],[279,711],[421,696],[500,650],[436,593],[414,571],[336,529],[257,496],[314,464],[486,450],[543,414],[514,371],[421,350],[393,304]];
 const CP_NODE=CP_FLAGS.map(([x,y])=>{const bx=x-12,by=y+45;let k=0,d=1e9;CP_PATH.forEach(([px,py],i)=>{const e=(px-bx)**2+(py-by)**2;if(e<d){d=e;k=i}});return k});
@@ -15122,10 +15183,10 @@ function cpCss(){if(document.getElementById("cpCss"))return;const s=document.cre
 .cp-cap{position:absolute;left:50%;top:2.2%;transform:translateX(-50%);z-index:4;background:rgba(30,24,18,.72);color:#f6e7c8;font:800 13px/1 var(--serif,serif);padding:6px 12px;border-radius:999px;white-space:nowrap;pointer-events:none}
 @media (prefers-reduced-motion:reduce){.camp-page .cp-flag.cur{animation:none}}`;document.head.append(s)}
 function campMap(v){if(v.querySelector(".camp-page"))return;const pad=v.querySelector(".pad");if(!pad)return;cpCss();
-  const S=campStars(),done=n=>(S[n]||0)>0,open=n=>n===1||done(n-1);let cur=1;while(cur<=12&&done(cur))cur++;
+  const S=campStars(),done=n=>(S[n]||0)>0,open=n=>n===1||done(n-1);let cur=1;while(cur<=CAMP.length&&done(cur))cur++;
   const got=CAMP.filter(c=>done(c.n)).length;
   const P=document.createElement("div");P.className="shp-page cq camp-page";
-  P.innerHTML=`<img src="${xqClImg(`data/campmap/${cpDark()?"camp_night":"camp_day"}.webp?v=${CP_IMGV}`)}" alt="沙盤兵推圖"><span class="cp-cap">${got>=12?"🎉 十二課全部結業":`第 ${Math.min(cur,12)} 課・${esc((CAMP[Math.min(cur,12)-1]||{}).name||"")}`}</span>`+
+  P.innerHTML=`<img src="${xqClImg(`data/campmap/${cpDark()?"camp_night":"camp_day"}.webp?v=${CP_IMGV}`)}" alt="沙盤兵推圖"><span class="cp-cap">${got>=CAMP.length?"🎉 全部結業":`第 ${Math.min(cur,CAMP.length)} 課・${esc((CAMP[Math.min(cur,CAMP.length)-1]||{}).name||"")}`}</span>`+
     CP_FLAGS.map(([x,y],i)=>{const n=i+1,[a,b]=cpPc(x,y),k=S[n]||0,st=done(n)?"done":open(n)?"cur":"lock";
       return`<button type="button" class="shp-spot cp-flag ${st}" id="cpF${n}" data-nolift="1" style="left:${a.toFixed(2)}%;top:${b.toFixed(2)}%" aria-label="${esc(`第 ${n} 課・${(CAMP[i]||{}).name||""}${st==="lock"?"（還沒開）":k?`（${k} 顆星）`:""}`)}"><b>${st==="lock"?"":CP_GLYPH[i]}</b>${k?`<i>${"<u></u>".repeat(Math.min(3,k))}</i>`:""}</button>`}).join("");
   v.insertBefore(P,pad);
