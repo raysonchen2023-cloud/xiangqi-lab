@@ -1379,7 +1379,7 @@ html[data-hicon] .tabbar button.on{box-shadow:inset 0 -3px 0 currentColor}
       if(!window.caches)return go();caches.keys().then(function(ks){return Promise.all(ks.filter(function(k){return k.indexOf("xqlab-app-")===0}).map(function(k){return caches.delete(k)}))})
         .then(function(){return navigator.serviceWorker&&navigator.serviceWorker.getRegistration()}).then(function(r){return r&&r.update()}).catch(function(){}).then(go)}};setTimeout(chk,4000)})();
 </script>
-<script>window.XQ_OFFLINE=true;window.XQ_BUILD="20261111-0100";</script>
+<script>window.XQ_OFFLINE=true;window.XQ_BUILD="20261111-0115";</script>
 <script src="core.js"></script>
 <script src="engine.js"></script>
 <script src="local.js"></script>
@@ -6347,11 +6347,14 @@ function gradBuddy(){try{const c=typeof myChar==="function"&&myChar();if(c&&type
     return{nk,img:"data/xs/prev_"+c+".webp",win:"你出師了！這一盤，我是真的被你將死的。",draw:"四十回合不分勝負，你守得真穩，算你過關！",lose:"別急，再來一盤，我陪你。"}}}catch(e){}
   const nm=typeof BOTN==="function"?BOTN():"小帥";
   return{nk:nm,img:"",win:"你出師了！這一盤我輸得心服口服。",draw:"四十回合守得真穩，算你過關！",lose:"別急，再來一盤，我陪你。"}}
+/* 結業對局的樣式（旅伴小頭像列＋過關水墨煙火）：對局一開就注入，圖片才不會用原尺寸撐滿、把棋盤擠小 */
+function gradCss(){if(document.getElementById("gradCss"))return;const s=document.createElement("style");s.id="gradCss";
+  s.textContent=`.grad-opp{display:flex;align-items:center;gap:7px;margin:2px 2px 4px;font-size:12.5px;line-height:1.3;color:var(--muted,#8a7a66)}`+
+  `.grad-opp img{width:26px;height:32px;object-fit:contain;object-position:top center;border-radius:4px;flex:none}.grad-opp b{color:var(--ink,#2a1d12)}`+
+  `.gradfx{position:absolute;inset:0;pointer-events:none;overflow:hidden;z-index:5}.gradfx b{position:absolute;font-size:22px;animation:gradPop 1.2s ease-out forwards}`+
+  `@keyframes gradPop{0%{transform:scale(.2);opacity:0}30%{opacity:1}100%{transform:scale(1.5) translateY(-22px);opacity:0}}`;document.head.append(s)}
 /* 結業過關的水墨煙火（蓋在棋盤上，2.6 秒後移除） */
-function gradFx(host){if(!host)return;try{if(!document.getElementById("gradFxCss")){const s=document.createElement("style");s.id="gradFxCss";
-    s.textContent=`.grad-opp{display:flex;align-items:center;gap:8px;margin:4px 2px;font-size:13px;color:var(--muted,#8a7a66)}.grad-opp img{width:30px;height:36px;object-fit:contain;border-radius:4px}`+
-    `.gradfx{position:absolute;inset:0;pointer-events:none;overflow:hidden;z-index:5}.gradfx b{position:absolute;font-size:22px;animation:gradPop 1.2s ease-out forwards}`+
-    `@keyframes gradPop{0%{transform:scale(.2);opacity:0}30%{opacity:1}100%{transform:scale(1.5) translateY(-22px);opacity:0}}`;document.head.append(s)}
+function gradFx(host){if(!host)return;try{gradCss();
   const box=document.createElement("div");box.className="gradfx";const ic=["🎆","🎇","✨","🏮","🀄"];
   for(let i=0;i<16;i++){const b=document.createElement("b");b.textContent=ic[i%ic.length];b.style.left=(8+Math.random()*84)+"%";b.style.top=(8+Math.random()*70)+"%";b.style.animationDelay=(Math.random()*.6)+"s";box.append(b)}
   if(getComputedStyle(host).position==="static")host.style.position="relative";host.append(box);setTimeout(()=>box.remove(),2600)}catch(e){}}
@@ -6529,9 +6532,10 @@ function jStepsB2(X){const C=window.XQCore,{v,bd}=X,$=q=>v.querySelector(q);
   /* ---- grad：結業對局（旅伴當對手、讓雙傌雙炮＋一俥、被將軍亮解將、無限悔棋、40 回合算和） ---- */
   function grad(st){const me="r",flip=false,maxMv=st.drawMoves||40,ai=st.ai||1;
     let pos=lvBoard({fen:st.fen,turn:"r"}),sel=-1,last=null,moveNo=0,busy=false;const stack=[];
-    const bud=gradBuddy();X.boardPage(st);
+    const bud=gradBuddy();X.boardPage(st);gradCss();
     const chk=()=>C.inCheck(pos.b,me);
-    const banner=()=>{const n=$("#lvT");if(n)n.innerHTML=`<div class="grad-opp">${bud.img?`<img src="${bud.img}" alt="" onerror="this.remove()">`:""}<span><b>${esc(bud.nk)}</b> 讓了雙傌、雙炮和一俥<br><small>第 ${moveNo}／${maxMv} 回合${chk()?"・你被將軍了，亮著的子可以解圍":moveNo>=maxMv?"・可以平手過關了":""}</small></span></div>`};
+    const banner=()=>{const n=$("#lvT");if(!n)return;const extra=chk()?" · 被將軍了，亮著的子能解圍":moveNo>=maxMv?" · 可以平手過關了":"";
+      n.innerHTML=`<div class="grad-opp">${bud.img?`<img src="${bud.img}" alt="" style="width:26px;height:32px;object-fit:contain;object-position:top center;flex:none" onerror="this.remove()">`:""}<span><b>${esc(bud.nk)}</b>：讓了雙傌、雙炮和一俥 · 第 ${moveNo}／${maxMv} 回合${extra}</span></div>`};
     const say=t=>{stat(t);banner()};
     const draw=()=>{const o={flip,last};if(sel>=0){o.sel=sel;o.targets=C.legal(pos.b,me).filter(([f])=>f===sel).map(z=>z[1])}
       if(chk()){o.check=pos.b.indexOf("K");if(sel<0)o.hint=[...new Set(C.legal(pos.b,me).map(([f])=>f))]}bd.draw(pos.b,o)};
