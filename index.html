@@ -1379,7 +1379,7 @@ html[data-hicon] .tabbar button.on{box-shadow:inset 0 -3px 0 currentColor}
       if(!window.caches)return go();caches.keys().then(function(ks){return Promise.all(ks.filter(function(k){return k.indexOf("xqlab-app-")===0}).map(function(k){return caches.delete(k)}))})
         .then(function(){return navigator.serviceWorker&&navigator.serviceWorker.getRegistration()}).then(function(r){return r&&r.update()}).catch(function(){}).then(go)}};setTimeout(chk,4000)})();
 </script>
-<script>window.XQ_OFFLINE=true;window.XQ_BUILD="20261110-1925";</script>
+<script>window.XQ_OFFLINE=true;window.XQ_BUILD="20261110-1940";</script>
 <script src="core.js"></script>
 <script src="engine.js"></script>
 <script src="local.js"></script>
@@ -8331,7 +8331,7 @@ function phDone(k,pid){const S=phGet(),N=S.need;if(!N)return;const before=phSoli
    程式疊上棋理標題＋口訣（SHIP_LESSON），朱印（篆書朝代字）蓋下，書頁縮小飛向書架。點一下跳過。之後在書架《千秋棋話》翻這一頁再看。
    補頁插圖：xiangqi-db/park/qpage（art_qpage1～3.json，13 朝各一件那一朝的器物或風景，照那一站的棋理畫）→ data/qpage/qp_<朝代>.webp。
    之後在「📘 棋話一頁」學會的那一站，下面會有這張圖和「▶ 再看一次補頁」。終章「七星連珠」還沒做（之後另外接）。 */
-const QP_ON=true;
+const QP_ON=true,QP_IMGV="1940";   /* 圖的版本：同檔名換圖時改掉（11/10 史學顧問：宋改人力砲車、經典棋子紅黑、明拿掉天窗、唐鞍、元鞍） */
 const QP_SEAL={classic:"雲河",qin:"秦",han:"漢",sanguo:"三國",weijin:"魏晉",nanbei:"南北朝",sui:"隋",tang:"唐",wudai:"五代",song:"宋",yuan:"元",ming:"明",qing:"清"};
 function qpCss(){if(document.getElementById("qpCss"))return;const s=document.createElement("style");s.id="qpCss";s.textContent=`
 .qp-ov{position:fixed;inset:0;z-index:974;background:rgba(20,14,8,.55);display:flex;align-items:center;justify-content:center;padding:20px;opacity:0;transition:opacity .4s}.qp-ov.on{opacity:1}
@@ -8349,7 +8349,7 @@ function qpCss(){if(document.getElementById("qpCss"))return;const s=document.cre
 @media (prefers-reduced-motion:reduce){.qp-pg.fly,.qp-art,.qp-ttl,.qp-k,.qp-cap{transition:none}.qp-seal.stamp{animation:none;opacity:1;transform:translateX(-50%) rotate(-6deg)}}`;document.head.append(s)}
 function qpPlay(k,done){if(!QP_ON||!["classic","qin","han","sanguo","weijin","nanbei","sui","tang","wudai","song","yuan","ming","qing"].includes(k)){done&&done();return}
   qpCss();const Ls=SHIP_LESSON[k]||{},sealTxt=QP_SEAL[k]||"",ov=document.createElement("div");ov.className="qp-ov";
-  ov.innerHTML=`<div class="qp-pg"><div class="qp-art" style="background-image:url('data/qpage/qp_${k}.webp')"></div><div class="qp-ttl">${esc(Ls.t||"")}</div><div class="qp-k">${esc(Ls.k||"")}</div><div class="qp-seal${sealTxt.length>=3?" two":""}">${esc(sealTxt)}</div></div><div class="qp-cap">墨痕重連，《千秋棋話》補上了${esc(shipShort(k))}這一頁！</div><span class="qp-tip">點一下跳過 ›</span>`;
+  ov.innerHTML=`<div class="qp-pg"><div class="qp-art" style="background-image:url('data/qpage/qp_${k}.webp?v=${QP_IMGV}')"></div><div class="qp-ttl">${esc(Ls.t||"")}</div><div class="qp-k">${esc(Ls.k||"")}</div><div class="qp-seal${sealTxt.length>=3?" two":""}">${esc(sealTxt)}</div></div><div class="qp-cap">墨痕重連，《千秋棋話》補上了${esc(shipShort(k))}這一頁！</div><span class="qp-tip">點一下跳過 ›</span>`;
   document.body.append(ov);const pg=ov.querySelector(".qp-pg"),art=ov.querySelector(".qp-art");let dead=false;const tm=[];
   const fin=()=>{if(dead)return;dead=true;tm.forEach(clearTimeout);ov.classList.remove("on");setTimeout(()=>{ov.remove();done&&done()},400)};
   ov.addEventListener("pointerdown",fin,{once:true});
@@ -8363,7 +8363,7 @@ function qpPlay(k,done){if(!QP_ON||!["classic","qin","han","sanguo","weijin","na
     tm.push(setTimeout(()=>{if(!dead)ov.querySelector(".qp-cap").classList.add("on")},2500));
     tm.push(setTimeout(()=>{if(dead)return;pg.classList.add("fly");pg.style.transform="translate(40vw,-42vh) scale(.12) rotate(12deg)";pg.style.opacity="0";ov.querySelector(".qp-cap").classList.remove("on")},4200));
     tm.push(setTimeout(fin,5300))})}
-function qpCardHTML(k){return`<div class="card qp-card" style="text-align:center"><img src="data/qpage/qp_${k}.webp" alt="" loading="lazy" style="width:min(240px,70%);border-radius:4px;box-shadow:0 4px 12px rgba(0,0,0,.18)" onerror="this.remove()"><p class="muted" style="margin:6px 0">《千秋棋話》補上的這一頁</p><button class="btn ghost" id="qpReplay" style="width:auto;margin:0 auto">▶ 再看一次補頁</button></div>`}
+function qpCardHTML(k){return`<div class="card qp-card" style="text-align:center"><img src="data/qpage/qp_${k}.webp?v=${QP_IMGV}" alt="" loading="lazy" style="width:min(240px,70%);border-radius:4px;box-shadow:0 4px 12px rgba(0,0,0,.18)" onerror="this.remove()"><p class="muted" style="margin:6px 0">《千秋棋話》補上的這一頁</p><button class="btn ghost" id="qpReplay" style="width:auto;margin:0 auto">▶ 再看一次補頁</button></div>`}
 /* ================= ♟ 石桌續局（意見回饋 762 第一版，開發者 11/8 定案；規劃 xiangqi-db/story/千秋殘局續闖_規劃.md）=================
    本站 3 題都解開（學會了）以後，千秋殘局頁 #/ship/pz 的三團星光換成「續局」：每站 2 組、每組 3 題（續一＝同難度，續二＝難半階到一階），兩組都解開＝「全譜」，
    全譜以後石桌改成「🎲 隨手一局」（不計點）。續局不是起航條件，也不影響「學會了」（學會照舊只看本站 3 題，07f-ship.js shipMark）。
