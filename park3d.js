@@ -924,7 +924,7 @@
     hint.textContent="點棋子走棋・點物件看介紹・拖曳轉頭・兩指縮放";el.append(hint);if(veil._qmin)hint.style.opacity=0;else setTimeout(()=>hint.style.opacity=0,4500);   /* 有名言的過場：操作提示等過場收掉才出現 */
     const EK=eraKey(),E=ERA[EK];
     el.style.background=E.mist;
-    let MAPL=null,PANM=null,PANDH=0,PANROT=0,PSPOTS=null,MAPM=null,HILL=null,lastKf=-1,MAPO=[],MAPOK="",MAPP=null,MAPMN=0,RON=(()=>{try{return JSON.parse(localStorage.getItem("m_eramapRealm")||"true")!==false}catch(e){return true}})();   /* 地圖上的地名：[名字, x%, y%, 種類]；長卷的網格、圖高、地標（意見回饋 517、525） */
+    let WX=null,MAPL=null,PANM=null,PANDH=0,PANROT=0,PSPOTS=null,MAPM=null,HILL=null,lastKf=-1,MAPO=[],MAPOK="",MAPP=null,MAPMN=0,RON=(()=>{try{return JSON.parse(localStorage.getItem("m_eramapRealm")||"true")!==false}catch(e){return true}})();   /* 地圖上的地名：[名字, x%, y%, 種類]；長卷的網格、圖高、地標（意見回饋 517、525） */
     let RTF=null,RTK="",RTS=null,RTP=null,RTT=0,RTA=0;   /* 意見回饋 658（B 輿圖遊歷）：路線圖層的重畫函式、目前畫的版本、各站位置（點得到）、左下角的提示、上次檢查的時間、上一格地圖的透明度 */
     const sc=new T.Scene(),FARHIDE=[];sc.fog=new T.Fog(new T.Color(E.mist),70,320);sc.background=new T.Color(E.mist);   /* 意見回饋 486：環景沒畫到的地方顯示朝代的霧色，不會一片黑 */
     const cam=new T.PerspectiveCamera(50,1,.5,700);try{if(localStorage.getItem("xq_dbg3d"))window.__PK={sc,cam}}catch(e){}   /* 除錯用：localStorage 設 xq_dbg3d 才打開 */
@@ -968,6 +968,34 @@
     {const pts=[[TR-.2,FL-.06],[TR+4,FL-.9],[TR+12,FL-3.6],[TR+26,FL-9],[TR+46,FL-18],[TR+76,FL-32],[TR+120,FL-52]].map(([r,y])=>new T.Vector2(r,y));
       const hg=new T.LatheGeometry(pts,96),hb="#"+new T.Color(E.mist).lerp(new T.Color(EK==="yuan"?"#7E8F45":"#4A7A35"),.72).getHexString(),hm=M(0xffffff,{map:grassTex(hb,E.ink,10),roughness:.95});
       const hill=new T.Mesh(hg,hm);hill.material.side=T.DoubleSide;hill.receiveShadow=true;sc.add(hill);
+      /* 11/10 開發者「如果當時有下雨或下雪，對戰的時候也會出現，甚至讓畫面積雪」：開場問 App（07w7 window.XQ_PARKWX，跟渡口、棋鎮同一份天氣）這一朝現在下不下——
+         雨＝斜斜的細雨絲落到石台、地面稍微變暗像濕了；雪＝雪花慢慢飄、左右晃，石台和外圍山坡從一層薄雪開始，下得越久積得越白（約兩分半到最厚）。
+         手機減少動態效果＝只留積雪／濕地，不下粒子。粒子都在石台四周一個大盒子裡循環，不吃霧、不寫深度 */
+      try{const WI=typeof window.XQ_PARKWX==="function"?window.XQ_PARKWX(EK):null;if(WI&&(WI.t==="rain"||WI.t==="snow")){
+        const snow=WI.t==="snow",A=Math.max(.55,Math.min(1,WI.a||1)),RM=(()=>{try{return matchMedia("(prefers-reduced-motion: reduce)").matches}catch(e){return false}})();
+        const BX=17,Y0=FL,Y1=FL+24,N=RM?0:Math.round((snow?(MOB?1100:1800):(MOB?900:1400))*A),objs=[];
+        /* 地面：雪＝白色斑駁的積雪片（石台＋山坡各一層，跟著時間變厚）；雨＝一層淡淡的深色（濕地） */
+        const blot=cv(512,512,(g,w,h)=>{g.clearRect(0,0,w,h);for(let i=0;i<snow*900+(1-snow)*140;i++){const x=Math.random()*w,y=Math.random()*h,r=snow?10+Math.random()*50:20+Math.random()*70,gr=g.createRadialGradient(x,y,0,x,y,r);
+          gr.addColorStop(0,snow?`rgba(255,255,255,${.75+Math.random()*.25})`:`rgba(30,38,46,${.25+Math.random()*.25})`);gr.addColorStop(1,"rgba(255,255,255,0)");g.fillStyle=gr;g.fillRect(x-r,y-r,2*r,2*r)}});
+        blot.wrapS=blot.wrapT=T.RepeatWrapping;blot.repeat.set(3,3);
+        const lay=(geo,y,rot)=>{const m=new T.Mesh(geo,new T.MeshBasicMaterial({map:blot,color:snow?0xffffff:0x223040,transparent:true,opacity:0,depthWrite:false,fog:true,polygonOffset:true,polygonOffsetFactor:-1,polygonOffsetUnits:-2}));
+          if(rot)m.rotation.x=-PI/2;m.position.y=y;m.renderOrder=1;sc.add(m);objs.push(m);return m};
+        const L1=lay(new T.CircleGeometry(TR,64),FL+.015,true),L2=lay(hg,.02,false);L2.material.side=T.DoubleSide;
+        let acc=snow?.4:.0,wet=0;
+        /* 粒子：雨＝線段（每滴兩個點），雪＝圓點 */
+        let pts=null,pos=null,vel=null;
+        if(N){if(snow){const g=new T.BufferGeometry();pos=new Float32Array(N*3);vel=new Float32Array(N*2);for(let i=0;i<N;i++){pos[i*3]=(Math.random()*2-1)*BX;pos[i*3+1]=Y0+Math.random()*(Y1-Y0);pos[i*3+2]=(Math.random()*2-1)*BX;vel[i*2]=1.6+Math.random()*1.4;vel[i*2+1]=Math.random()*TAU}
+            g.setAttribute("position",new T.BufferAttribute(pos,3));const dot=cv(64,64,(c,w,h)=>{const gr=c.createRadialGradient(32,32,0,32,32,30);gr.addColorStop(0,"rgba(255,255,255,1)");gr.addColorStop(.5,"rgba(255,255,255,.75)");gr.addColorStop(1,"rgba(255,255,255,0)");c.fillStyle=gr;c.fillRect(0,0,w,h)});
+            pts=new T.Points(g,new T.PointsMaterial({map:dot,size:MOB?.62:.5,sizeAttenuation:true,transparent:true,opacity:.95,depthWrite:false,fog:false}))}
+          else{const g=new T.BufferGeometry();pos=new Float32Array(N*6);vel=new Float32Array(N);for(let i=0;i<N;i++){const x=(Math.random()*2-1)*BX,y=Y0+Math.random()*(Y1-Y0),z=(Math.random()*2-1)*BX;pos.set([x,y,z,x+.35,y+1.5,z],i*6);vel[i]=30+Math.random()*12}
+            g.setAttribute("position",new T.BufferAttribute(pos,3));pts=new T.LineSegments(g,new T.LineBasicMaterial({color:0xC9D3DA,transparent:true,opacity:.42*A+.1,depthWrite:false,fog:false}))}
+          pts.frustumCulled=false;pts.renderOrder=3;sc.add(pts);objs.push(pts)}
+        WX={tick(dt,now){if(snow){acc=Math.min(.9,acc+dt*.006*A);L1.material.opacity=acc;L2.material.opacity=acc*.92}else{wet=Math.min(.32,wet+dt*.08);L1.material.opacity=wet;L2.material.opacity=wet*.8}
+          if(!pts)return;const p=pts.geometry.attributes.position;
+          if(snow){for(let i=0;i<N;i++){const j=i*3;pos[j+1]-=vel[i*2]*dt;pos[j]+=Math.sin(now/900+vel[i*2+1])*dt*.6;if(pos[j+1]<Y0){pos[j+1]=Y1;pos[j]=(Math.random()*2-1)*BX;pos[j+2]=(Math.random()*2-1)*BX}}}
+          else{for(let i=0;i<N;i++){const j=i*6,d=vel[i]*dt;pos[j+1]-=d;pos[j+4]-=d;pos[j]-=d*.23;pos[j+3]-=d*.23;if(pos[j+1]<Y0){const x=(Math.random()*2-1)*BX,z=(Math.random()*2-1)*BX;pos.set([x,Y1,z,x+.35,Y1+1.5,z],j)}}}
+          p.needsUpdate=true},
+          dispose(){for(const o of objs){try{sc.remove(o);o.geometry!==hg&&o.geometry.dispose();o.material.dispose()}catch(e){}}}}}}catch(e){console.warn(e)}
       /* 開發者 11/4：石台底下鋪一張「當朝代的中國大地圖」（Gemini 水墨古地圖，有疆界和地名），畫面拉遠就看得到；地圖載好就換掉山坡，載不到就留著山坡 */
       /* 意見回饋 647（開發者 11/6 選「在現有手繪地圖上描邊」）：地圖上疊一層「最鼎盛時期的疆域」（半透明色塊＋粗邊界，左上角可開關、附圖例），
          地名也改由這裡寫上去（主要的一直顯示，次要的拉近才顯示、字小一點）；資料在 data/eramap/realms.json、labels.json（由 xiangqi-db/tools/eramap_geo.py 從經緯度換算） */
@@ -1370,6 +1398,7 @@
       if(selI>=0&&pieces[selI]){const g=pieces[selI];g.position.y=TOP+.32+Math.sin(now/180)*.06}
       Object.entries(pieces).forEach(([i,g])=>{if(+i!==selI&&!anims.length&&g.position.y!==TOP)g.position.y+=(TOP-g.position.y)*Math.min(1,t*12)});
       if(checkRing)checkRing.material.opacity=.55+.4*Math.sin(now/140);
+      if(WX)try{WX.tick(t,now)}catch(e){WX=null}   /* 11/10 下雨下雪、積雪 */
       falling.forEach(l=>{const u=l.userData;u.y-=t*1.6*u.s;if(u.y<-2){u.y=28;u.x=(Math.random()-.5)*50}l.position.set(u.x+Math.sin(now/900+u.ph)*2.5,GY+u.y,u.z);l.rotation.set(now/700*u.s+u.ph,now/500,now/800)});
       if(endT>0)endT=Math.max(0,endT-t);const EP=1-endT/END,ON=endT>0;   // 勝負動畫的進度 0→1
       // 3D 人物（線上對手的小帥、我的小帥）的勝負動畫：贏＝跳起來、中段轉一圈、雙手歡呼；輸＝垂頭、搖頭、雙手下垂；和＝拱手點頭
@@ -1422,7 +1451,7 @@
     const waitShow=()=>{if(stopped||shown)return;const mn=veil._qskip?1200:Math.max(1200,veil._qmin||0),dt=performance.now()-t0;if((drawn&&!inflight.size&&dt>mn)||dt>Math.max(6000,veil._qskip?0:mn+2000)){requestAnimationFrame(()=>requestAnimationFrame(reveal));return}setTimeout(waitShow,80)};
     fit();placeCam();requestAnimationFrame(frame);setTimeout(waitShow,80);
     const onRs=()=>{if(el.style.display!=="none")fit()};window.addEventListener("resize",onRs);
-    function destroy(){if(stopped)return;stopped=true;window.removeEventListener("resize",onRs);
+    function destroy(){if(stopped)return;stopped=true;try{if(WX)WX.dispose()}catch(e){}WX=null;window.removeEventListener("resize",onRs);
       try{sc.traverse(o=>{const ms=o.material?(Array.isArray(o.material)?o.material:[o.material]):[];for(const m of ms){if(m&&m.map)freeTex(m.map);m&&m.dispose&&m.dispose()}if(o.geometry)o.geometry.dispose()});for(const k in faceCache){freeTex(faceCache[k]);delete faceCache[k]}}catch(e){}
       try{rd.dispose();rd.forceContextLoss()}catch(e){}el.remove();opt.onDestroy&&opt.onDestroy()}
     // 意見回饋 244：切回平面棋盤時只藏起來、暫停繪製（不拆掉 3D 場景），再切回公園就直接顯示，不用重新載入
