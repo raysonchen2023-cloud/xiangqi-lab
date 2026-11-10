@@ -1379,7 +1379,7 @@ html[data-hicon] .tabbar button.on{box-shadow:inset 0 -3px 0 currentColor}
       if(!window.caches)return go();caches.keys().then(function(ks){return Promise.all(ks.filter(function(k){return k.indexOf("xqlab-app-")===0}).map(function(k){return caches.delete(k)}))})
         .then(function(){return navigator.serviceWorker&&navigator.serviceWorker.getRegistration()}).then(function(r){return r&&r.update()}).catch(function(){}).then(go)}};setTimeout(chk,4000)})();
 </script>
-<script>window.XQ_OFFLINE=true;window.XQ_BUILD="20261110-1910";</script>
+<script>window.XQ_OFFLINE=true;window.XQ_BUILD="20261110-1925";</script>
 <script src="core.js"></script>
 <script src="engine.js"></script>
 <script src="local.js"></script>
@@ -7816,7 +7816,7 @@ function ShipLv(v,k,id,rd){const T=SHIP_STOP[k],Pl=SHIP_PLAN[k]||{},Ls=SHIP_LESS
     const slot=isX?"熱身・選做（不計點、不給修為）":`第 ${i+1} 題・${String(shipSlotName(k,i,P)).replace(/<[^>]+>/g,"")}`;
     jLevel(v,{id:"ship:"+k+":"+id+":"+diffNow(),name:shipShort(k)+"・"+(G.name||"")},{G,rk:"jRunS",icon:"⛵",back,title:`${shipShort(k)}・${Ls.t||T.place}・${slot}`,
       done:(stars,R)=>{const o={hint:!!(R&&R.hint),perfect:stars>=3};res=isX?shipGalMark(k,id,o):shipMark(k,id,o);
-        if(res&&res.learned&&Ls.done&&k!=="finale")G.outro=(G.outro?G.outro+"　":"")+`✅ 學會了：${Ls.t||""}。${W.n}：「${Ls.done}」`;if(res&&res.learned&&k==="finale")setTimeout(shipFinaleCard,1200);return stars},
+        if(res&&res.learned&&Ls.done&&k!=="finale")G.outro=(G.outro?G.outro+"　":"")+`✅ 學會了：${Ls.t||""}。${W.n}：「${Ls.done}」`;if(res&&res.learned&&k==="finale")setTimeout(shipFinaleCard,1200);if(res&&res.learned&&k!=="finale"&&typeof qpPlay==="function")setTimeout(()=>qpPlay(k),900);return stars},
       line:()=>!res?"":isX?"🔥 熱身做完了（選做）":k==="finale"?"✅ 千秋歸位・石桌補全了":res.learned?`✅ 學會了：${Ls.t||""}`:`⛵ ${shipShort(k)}・解開 ${res.n}／${res.all}${res.h?"（用過提示，空心點）":""}`,
       get next(){if(rd)return[`📖 回到第${CNUM(Pl.ch||1)}章`,()=>{location.hash="#/ship/read/"+k+"/after"}];if(isX)return["回千秋殘局",()=>goUp("#/ship/pz")];
         if(k==="finale")return["⛵ 回起航頁",()=>goUp("#/ship/sail")];const x=nx();return x?["下一題 ›",()=>{location.hash=shipHref(k,x)}]:shipSailTo(k)?["⛵ 起航去"+shipShort(shipSailTo(k)),()=>goUp("#/ship/sail")]:["回星槎",()=>goUp("#/adventure")]}})}).catch(e=>bad(e&&e.message||"題庫載入失敗"));
@@ -7964,9 +7964,10 @@ function ShipLesson(v){setTop("📘 棋話一頁","#/adventure");setTabs(false);
     ${(L=>L?`<div class="card shl-lore"><b>🌌 星槎小知識・${esc(L[0])}</b><p>${esc(L[1])}</p></div>`:"")(SHIP_LORE[Math.max(0,SHIP_ROUTE.indexOf(k))%SHIP_LORE.length])}
     ${SHIP_OLD.has(k)?'<p class="muted shp-old">這一朝還沒有今天的象棋；星槎石桌上的千秋殘局，題目出自明清古譜。</p>':""}
     <p class="muted shp-pzhint">${lrn?"✅ 這站的 3 題千秋殘局都解開了":"千秋殘局 3 題都自己解開，就算學會這一頁棋話"}</p>${typeof shipMoreLesson==="function"?shipMoreLesson(k):""}
+    ${lrn&&typeof qpCardHTML==="function"?qpCardHTML(k):""}
     ${lrn&&Ls.theme?`<button class="lk" id="slTheme">想多練？主題訓練・${esc(Ls.theme)} 10 題 ›</button>`:""}</div>`;
   shpOn(v,"#slDemo",()=>shipDemo(k));shpOn(v,"#slHist",()=>{if(typeof histCard==="function")histCard(k)});shpOn(v,"#slRead",()=>{SHIP_RD_BACK="#/ship/lesson";location.hash="#/ship/read/"+k});
-  shpOn(v,"#slTheme",()=>{location.hash="#/theme/"+encodeURIComponent(Ls.theme)});shpFit(v);return{}}
+  shpOn(v,"#slTheme",()=>{location.hash="#/theme/"+encodeURIComponent(Ls.theme)});shpOn(v,"#qpReplay",()=>{if(typeof qpPlay==="function")qpPlay(k)});shpFit(v);return{}}
 /* 書架 #/ship/shelf：船艙書架特寫，三本書＝石桌往事、紙譜新局（第一集都過了才開）、雲河七星合集 */
 function ShipShelf(v){setTop("📚 書架","#/adventure");setTabs(false);v.className="view";const L=legendState(),S=jStars(),J=jStages(),J2=jStages2(),b1=book1Done(),p1=J.filter(x=>S[x.id]).length,p2=J2.filter(x=>S[x.id]).length;
   v.innerHTML=shpPage("page_shelf","📚 船艙書架","說書人講的故事",[
@@ -8324,6 +8325,45 @@ function phXM(k,pid){const S=phGet(),N=S.need,back=()=>"#/ship/phantom";if(!N||N
     next:()=>"#/ship/phantom",nextL:()=>"回千秋石桌"}}
 function phDone(k,pid){const S=phGet(),N=S.need;if(!N)return;const before=phSolid().filter(s=>s>=1).length;S.cards[k]={kill:N.kill,at:Date.now()};S.helps=(S.helps|0)+1;S.used=[...S.used,pid].slice(-200);S.lastK=k;S.lastId=N.id;delete S.need;S.wrong[k+"/"+N.id]=0;store.set("phState",S);
   const after=phSolid();let g=after.findIndex(s=>s<1);if(g<0)g=6;const T=phGet();T.glow=after.filter(s=>s>=1).length>before?after.filter(s=>s>=1).length-1:g;store.set("phState",T);return null}
+
+/* ================= 📖 千秋棋話補頁動畫（開發者 11/10 hspx；Gemini 68 定案：方案 1 古籍修復＋方案 10 終章七星連珠）=================
+   自己解開一站 3 題＝學會了（shipMark learned），播「古籍修復」：泛黃殘頁從四角水墨暈開，浮出這一朝的水墨小品插畫（data/qpage/qp_<朝代>.webp），
+   程式疊上棋理標題＋口訣（SHIP_LESSON），朱印（篆書朝代字）蓋下，書頁縮小飛向書架。點一下跳過。之後在書架《千秋棋話》翻這一頁再看。
+   補頁插圖：xiangqi-db/park/qpage（art_qpage1～3.json，13 朝各一件那一朝的器物或風景，照那一站的棋理畫）→ data/qpage/qp_<朝代>.webp。
+   之後在「📘 棋話一頁」學會的那一站，下面會有這張圖和「▶ 再看一次補頁」。終章「七星連珠」還沒做（之後另外接）。 */
+const QP_ON=true;
+const QP_SEAL={classic:"雲河",qin:"秦",han:"漢",sanguo:"三國",weijin:"魏晉",nanbei:"南北朝",sui:"隋",tang:"唐",wudai:"五代",song:"宋",yuan:"元",ming:"明",qing:"清"};
+function qpCss(){if(document.getElementById("qpCss"))return;const s=document.createElement("style");s.id="qpCss";s.textContent=`
+.qp-ov{position:fixed;inset:0;z-index:974;background:rgba(20,14,8,.55);display:flex;align-items:center;justify-content:center;padding:20px;opacity:0;transition:opacity .4s}.qp-ov.on{opacity:1}
+.qp-pg{position:relative;width:min(360px,86vw);aspect-ratio:1/1.04;background:#efe3c6 url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='120' height='120'%3E%3Cfilter id='n'%3E%3CfeTurbulence baseFrequency='.8' numOctaves='2'/%3E%3CfeColorMatrix values='0 0 0 0 .5 0 0 0 0 .4 0 0 0 0 .28 0 0 0 .06 0'/%3E%3C/filter%3E%3Crect width='120' height='120' filter='url(%23n)'/%3E%3C/svg%3E");border-radius:3px;box-shadow:0 14px 34px rgba(0,0,0,.45),inset 0 0 36px rgba(140,100,50,.3),inset 0 0 0 1px rgba(120,80,40,.3);overflow:hidden}
+.qp-pg.fly{transition:transform 1s cubic-bezier(.6,0,.9,.5),opacity 1s}
+.qp-art{position:absolute;inset:14% 10% 25%;background:center/contain no-repeat;mix-blend-mode:multiply;-webkit-mask:radial-gradient(circle at 50% 46%,#000 0,#000 var(--r,0%),transparent calc(var(--r,0%) + 14%));mask:radial-gradient(circle at 50% 46%,#000 0,#000 var(--r,0%),transparent calc(var(--r,0%) + 14%))}
+.qp-ttl{position:absolute;left:0;right:0;top:7%;text-align:center;font:900 20px var(--serif,serif);color:#3a2618;letter-spacing:.12em;opacity:0}
+.qp-k{position:absolute;left:0;right:0;bottom:15%;text-align:center;font:700 14.5px var(--serif,serif);color:#5a3a20;opacity:0}
+.qp-ttl.on,.qp-k.on{opacity:1;transition:opacity .6s}
+.qp-seal{position:absolute;left:50%;bottom:3%;transform:translateX(-50%) scale(2.4);opacity:0;width:38px;height:38px;border:2.5px solid #a4331f;color:#a4331f;border-radius:4px;display:flex;align-items:center;justify-content:center;font:900 15px/1 var(--serif,serif);background:rgba(246,236,214,.5);box-shadow:0 1px 3px rgba(0,0,0,.3)}
+.qp-seal.stamp{animation:qpStamp .5s ease forwards}@keyframes qpStamp{0%{opacity:0;transform:translateX(-50%) scale(2.4) rotate(-14deg)}60%{opacity:1;transform:translateX(-50%) scale(.92) rotate(-8deg)}100%{opacity:1;transform:translateX(-50%) scale(1) rotate(-6deg)}}
+.qp-seal.two{font-size:11px;line-height:1.05}
+.qp-cap{position:fixed;left:0;right:0;bottom:12%;text-align:center;color:#f6ead2;font:600 15px/1.6 var(--serif,serif);padding:0 24px;opacity:0;z-index:975;text-shadow:0 2px 8px rgba(0,0,0,.7)}.qp-cap.on{opacity:1;transition:opacity .5s}
+.qp-tip{position:fixed;right:14px;bottom:5%;color:rgba(246,234,210,.7);font:600 12px sans-serif;z-index:975}
+@media (prefers-reduced-motion:reduce){.qp-pg.fly,.qp-art,.qp-ttl,.qp-k,.qp-cap{transition:none}.qp-seal.stamp{animation:none;opacity:1;transform:translateX(-50%) rotate(-6deg)}}`;document.head.append(s)}
+function qpPlay(k,done){if(!QP_ON||!["classic","qin","han","sanguo","weijin","nanbei","sui","tang","wudai","song","yuan","ming","qing"].includes(k)){done&&done();return}
+  qpCss();const Ls=SHIP_LESSON[k]||{},sealTxt=QP_SEAL[k]||"",ov=document.createElement("div");ov.className="qp-ov";
+  ov.innerHTML=`<div class="qp-pg"><div class="qp-art" style="background-image:url('data/qpage/qp_${k}.webp')"></div><div class="qp-ttl">${esc(Ls.t||"")}</div><div class="qp-k">${esc(Ls.k||"")}</div><div class="qp-seal${sealTxt.length>=3?" two":""}">${esc(sealTxt)}</div></div><div class="qp-cap">墨痕重連，《千秋棋話》補上了${esc(shipShort(k))}這一頁！</div><span class="qp-tip">點一下跳過 ›</span>`;
+  document.body.append(ov);const pg=ov.querySelector(".qp-pg"),art=ov.querySelector(".qp-art");let dead=false;const tm=[];
+  const fin=()=>{if(dead)return;dead=true;tm.forEach(clearTimeout);ov.classList.remove("on");setTimeout(()=>{ov.remove();done&&done()},400)};
+  ov.addEventListener("pointerdown",fin,{once:true});
+  requestAnimationFrame(()=>{ov.classList.add("on");
+    const reduce=(()=>{try{return matchMedia("(prefers-reduced-motion: reduce)").matches}catch(e){return false}})();
+    if(reduce){art.style.setProperty("--r","120%");ov.querySelector(".qp-ttl").classList.add("on");ov.querySelector(".qp-k").classList.add("on");ov.querySelector(".qp-seal").classList.add("stamp","on");ov.querySelector(".qp-cap").classList.add("on");tm.push(setTimeout(fin,2600));return}
+    let r=0;const grow=()=>{if(dead)return;r+=3.2;art.style.setProperty("--r",r+"%");if(r<120)requestAnimationFrame(grow)};tm.push(setTimeout(grow,350));
+    tm.push(setTimeout(()=>{if(!dead)ov.querySelector(".qp-ttl").classList.add("on")},900));
+    tm.push(setTimeout(()=>{if(!dead)ov.querySelector(".qp-k").classList.add("on")},1400));
+    tm.push(setTimeout(()=>{if(!dead){ov.querySelector(".qp-seal").classList.add("stamp","on");try{vibrate(12)}catch(e){}}},2100));
+    tm.push(setTimeout(()=>{if(!dead)ov.querySelector(".qp-cap").classList.add("on")},2500));
+    tm.push(setTimeout(()=>{if(dead)return;pg.classList.add("fly");pg.style.transform="translate(40vw,-42vh) scale(.12) rotate(12deg)";pg.style.opacity="0";ov.querySelector(".qp-cap").classList.remove("on")},4200));
+    tm.push(setTimeout(fin,5300))})}
+function qpCardHTML(k){return`<div class="card qp-card" style="text-align:center"><img src="data/qpage/qp_${k}.webp" alt="" loading="lazy" style="width:min(240px,70%);border-radius:4px;box-shadow:0 4px 12px rgba(0,0,0,.18)" onerror="this.remove()"><p class="muted" style="margin:6px 0">《千秋棋話》補上的這一頁</p><button class="btn ghost" id="qpReplay" style="width:auto;margin:0 auto">▶ 再看一次補頁</button></div>`}
 /* ================= ♟ 石桌續局（意見回饋 762 第一版，開發者 11/8 定案；規劃 xiangqi-db/story/千秋殘局續闖_規劃.md）=================
    本站 3 題都解開（學會了）以後，千秋殘局頁 #/ship/pz 的三團星光換成「續局」：每站 2 組、每組 3 題（續一＝同難度，續二＝難半階到一階），兩組都解開＝「全譜」，
    全譜以後石桌改成「🎲 隨手一局」（不計點）。續局不是起航條件，也不影響「學會了」（學會照舊只看本站 3 題，07f-ship.js shipMark）。
