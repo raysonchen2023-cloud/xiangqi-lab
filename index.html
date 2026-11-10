@@ -1379,7 +1379,7 @@ html[data-hicon] .tabbar button.on{box-shadow:inset 0 -3px 0 currentColor}
       if(!window.caches)return go();caches.keys().then(function(ks){return Promise.all(ks.filter(function(k){return k.indexOf("xqlab-app-")===0}).map(function(k){return caches.delete(k)}))})
         .then(function(){return navigator.serviceWorker&&navigator.serviceWorker.getRegistration()}).then(function(r){return r&&r.update()}).catch(function(){}).then(go)}};setTimeout(chk,4000)})();
 </script>
-<script>window.XQ_OFFLINE=true;window.XQ_BUILD="20261110-1815";</script>
+<script>window.XQ_OFFLINE=true;window.XQ_BUILD="20261110-1830";</script>
 <script src="core.js"></script>
 <script src="engine.js"></script>
 <script src="local.js"></script>
@@ -1826,9 +1826,9 @@ function bgmList(){return BGM.list||(BGM.list=fetch("data/bgm/index.json").then(
 /* 意見回饋 687：iPhone 只准在點擊的當下開始播放；清單已經載好就不要 await，直接同步呼叫 play()，免得等下載完那一下點擊已經「過期」 */
 async function bgmSync(next){const on=!!store.get("bgm",true)&&!document.hidden,era=store.get("era","classic");
   if(!on){if(BGM.a)BGM.a.pause();return}const L=((BGM.L||await bgmList())||{})[era]||[];if(!L.length){if(BGM.a)BGM.a.pause();return}
-  if(!BGM.a){BGM.a=new Audio();BGM.a.volume=.35;BGM.a.preload="auto";BGM.a.onended=()=>bgmSync(true);BGM.a.onplay=BGM.a.onpause=()=>bgmNow();BGM.a.onerror=()=>{const x=BGM.a&&BGM.a.error;BGM.err="media"+(x?x.code:"")}}
-  if(next||BGM.era!==era||!BGM.src){BGM.era=era;let n=Math.floor(Math.random()*L.length);if(L.length>1&&n===BGM.last)n=(n+1)%L.length;BGM.last=n;BGM.src=`data/bgm/${era}/${L[n]}`;BGM.a.src=BGM.src}
-  if(BGM.a.paused){BGM.tries=(BGM.tries||0)+1;try{const p=BGM.a.play();if(p&&p.then)p.then(()=>{BGM.err="";BGM.ok=(BGM.ok||0)+1},e=>{BGM.err=(e&&e.name)||"err"})}catch(e){BGM.err="throw"}}}
+  if(!BGM.a){BGM.a=new Audio();BGM.a.volume=.5;BGM.a.preload="auto";BGM.a.onended=()=>bgmSync(true);BGM.a.onplay=BGM.a.onpause=()=>bgmNow();BGM.a.onerror=()=>{const a=BGM.a;if(!a)return;const x=a.error;BGM.err="media"+(x?x.code:"");const r=(typeof xqCdnRel==="function")&&xqCdnRel(a.currentSrc||a.src||"");if(r&&!a._cdn){a._cdn=1;a.src=XQ_CDN+r;if(store.get("bgm",true)){try{const q=a.play();if(q&&q.then)q.then(()=>{BGM.err=""},()=>{})}catch(e){}}}}}
+  if(next||BGM.era!==era||!BGM.src){BGM.era=era;let n=Math.floor(Math.random()*L.length);if(L.length>1&&n===BGM.last)n=(n+1)%L.length;BGM.last=n;BGM.src=`data/bgm/${era}/${L[n]}`;BGM.a._cdn=0;BGM.a.src=BGM.src}
+  if(BGM.a.paused){BGM.tries=(BGM.tries||0)+1;try{const p=BGM.a.play();if(p&&p.then)p.then(()=>{BGM.err="";BGM.ok=(BGM.ok||0)+1;if(!BGM.hint&&!store.get("bgmHint",false)){BGM.hint=1;try{store.set("bgmHint",true)}catch(e){}try{toast("♪ 背景音樂已開始播放，可到設定→聲音調整")}catch(e){}}},e=>{BGM.err=(e&&e.name)||"err"})}catch(e){BGM.err="throw"}}}
 /* 意見回饋 689：iPhone 還是沒背景音樂，回饋單（開發者）和設定 → 聲音附上播放器狀態，才知道卡在哪一步 */
 function bgmDiag(){try{const a=BGM.a,L=(BGM.L||{})[store.get("era","classic")]||[];return`bgm:${store.get("bgm",true)?"開":"關"}/${store.get("era","classic")}/清單${BGM.L?L.length:"未載"}/${a?(a.paused?"停":"播")+"/rs"+a.readyState+"/ns"+a.networkState+"/t"+(a.currentTime||0).toFixed(1):"無播放器"}/試${BGM.tries||0}成${BGM.ok||0}${BGM.err?"/錯"+BGM.err:""}/AC:${typeof AC!=="undefined"&&AC?AC.state:"無"}/sess:${navigator.audioSession?navigator.audioSession.type:"無"}/sw:${navigator.serviceWorker&&navigator.serviceWorker.controller?"有":"無"}`}catch(e){return"bgm:診斷失敗"}}
 document.addEventListener("visibilitychange",()=>{if(document.hidden){BGM.wake=1}bgmSync()});
@@ -2432,6 +2432,8 @@ function mvtWrap(root){if(!root||!document.querySelector("svg")||!window.XQCore)
     fr.append(s.slice(last));n.replaceWith(fr)}}
 let mvtT=0;new MutationObserver(()=>{if(mvtT)return;mvtT=setTimeout(()=>{mvtT=0;try{mvtWrap(document.body)}catch(e){}},250)}).observe(document.documentElement,{childList:true,subtree:true,characterData:true});
 document.addEventListener("click",e=>{const x=e.target&&e.target.closest&&e.target.closest(".mvt");if(!x)return;e.preventDefault();e.stopPropagation();mvtShow(x.dataset.mv,x)},true);
+
+
 
 
 // ================= 版面骨架與路由 =================
