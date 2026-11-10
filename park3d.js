@@ -991,7 +991,9 @@
         if(G===1){const g=new T.CylinderGeometry(Math.SQRT1_2*.55,Math.SQRT1_2,1,4,1,false);g.rotateY(PI/4);g.scale(W2*2,3.2,D2*2);roof(g,[0,EY+1.7,0])}   /* 史學顧問 11/10：漢代斗帳是覆斗頂（四面斜收、上面平） */
         else if(G===2){const r=Math.hypot(W2,D2),g=new T.ConeGeometry(r,6,4,1,true);g.rotateY(PI/4);g.scale(W2/(r*Math.SQRT1_2),1,D2/(r*Math.SQRT1_2));roof(g,[0,EY+3.2,0]);
           for(const sx of[-1,1])for(const sz of[-1,1]){const t=new T.Mesh(new T.ConeGeometry(.35,1.6,8),M(new T.Color(C.trim)));t.position.set(sx*W2,EY-.6,sz*D2);t.rotation.x=PI;CG.add(t)}}
-        else if(G===3){const a=.32,L=W2/Math.cos(a);for(const sx of[-1,1])roof(new T.PlaneGeometry(L,D2*2),[sx*W2/2,EY+.4+Math.tan(a)*W2/2,0],[-PI/2,0,0]).rotation.set(-PI/2,sx*a,0,"YXZ")}
+        /* 11/10 開發者 hspx「涼亭上面看起來怪怪的」：人字頂原本先放平再「繞垂直軸」轉（等於只是在水平面上歪一邊），兩片疊成蝴蝶結，墨線框還留在轉之前的位置；
+           改成放平後繞前後方向（z 軸）往外側斜下，旋轉在 roof() 裡一次設好，墨線跟著同一個角度 */
+        else if(G===3){const a=.32,L=W2/Math.cos(a);for(const sx of[-1,1])roof(new T.PlaneGeometry(L,D2*2),[sx*W2/2,EY+.4+Math.tan(a)*W2/2,0],[-PI/2,0,-sx*a,"ZXY"])}
         else if(G===4){const g=new T.SphereGeometry(1,24,8,0,TAU,0,PI/2);g.scale(W2*1.05,3.2,D2*1.05);roof(g,[0,EY+.2,0]);const band=new T.Mesh(new T.CylinderGeometry(1,1,1.1,32,1,true),new T.MeshStandardMaterial({color:new T.Color(C.trim),side:T.DoubleSide,transparent:true,opacity:.9,depthWrite:false}));band.scale.set(W2*1.05,1,D2*1.05);band.position.set(0,EY-.2,0);CG.add(band);RF.push(band)}
         else{const g=new T.CylinderGeometry(W2,W2,D2*2,24,1,true,-PI/2,PI);g.rotateX(PI/2);g.scale(1,.32,1);roof(g,[0,EY+.3,0])}
         /* 垂邊（簷下一圈短布） */
