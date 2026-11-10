@@ -1379,7 +1379,7 @@ html[data-hicon] .tabbar button.on{box-shadow:inset 0 -3px 0 currentColor}
       if(!window.caches)return go();caches.keys().then(function(ks){return Promise.all(ks.filter(function(k){return k.indexOf("xqlab-app-")===0}).map(function(k){return caches.delete(k)}))})
         .then(function(){return navigator.serviceWorker&&navigator.serviceWorker.getRegistration()}).then(function(r){return r&&r.update()}).catch(function(){}).then(go)}};setTimeout(chk,4000)})();
 </script>
-<script>window.XQ_OFFLINE=true;window.XQ_BUILD="20261111-0315";</script>
+<script>window.XQ_OFFLINE=true;window.XQ_BUILD="20261111-0330";</script>
 <script src="core.js"></script>
 <script src="engine.js"></script>
 <script src="local.js"></script>
@@ -16493,8 +16493,10 @@ const STM_IMGV="1111c";
 const STM_MAP={ship:{hit:[0,0,50,34],card:[4.5,5,12,16]},tea:{hit:[50,4,100,37],card:[51,11,58,22]},lib:{hit:[0,34,48,64],card:[3.5,35,11,46]},
   acad:{hit:[48,37,100,64],card:[89,38,96,48.5]},yard:{hit:[0,64,55,100],card:[3.5,66,11,77]},svc:{hit:[55,64,100,100],card:[86.5,59.5,94,70],paper:1}};
 /* 現在在哪：最長的網址前綴對得上的那一個入口 */
-function stmHere(){const h=location.hash||"#/";let best=null,bl=-1;
-  for(const A of STM_AREAS)for(const e of A[4]){const r=e[1];const hit=r==="#/"?(h==="#/"||h===""||h==="#"):(h===r||h.startsWith(r+"/"));if(hit&&r.length>bl){best=[A,e];bl=r.length}}
+/* 開發者 11/11：在首頁時顯示「首頁」，不要說成「服務亭｜回首頁」（「回首頁」是按鈕，不是地方），服務亭也不標 📍 */
+const stmAtHome=h=>h==="#/"||h===""||h==="#";
+function stmHere(){const h=location.hash||"#/";if(stmAtHome(h))return"首頁";let best=null,bl=-1;
+  for(const A of STM_AREAS)for(const e of A[4]){const r=e[1];const hit=r!=="#/"&&(h===r||h.startsWith(r+"/"));if(hit&&r.length>bl){best=[A,e];bl=r.length}}
   if(best)return best[0][2]+"｜"+best[1][0];const t=document.getElementById("title");return(t&&t.textContent.trim())||"象棋千秋"}
 const stmBusy=()=>/^#\/(cpu|arena|pvp|journey\/play|redo\/play)(\/|$)|^#\/battle\/[a-z]+\/\d+|^#\/canju\/.+|^#\/theme\/.+/.test(location.hash);
 const stmOnline=()=>{try{return !!(window.XQNet&&XQNet.playing&&XQNet.playing())}catch(e){return false}};
@@ -16549,7 +16551,7 @@ function stmGo(name,route){const go=()=>{stmClose();if(route==="#/"&&typeof goHo
   if(stmOnline())return confirmBox(`線上這盤還沒下完，離開可能會算輸。確定要去「${name}」嗎？`,go,"確定前往");
   if(stmBusy())return confirmBox(`要離開這盤棋，去「${name}」嗎？`,go,"確定前往");go()}
 function stmOpen(){if(document.getElementById("stmOv"))return;stmCss();stmLast=document.activeElement;
-  const here=stmHere(),h=location.hash||"#/",net=navigator.onLine!==false,cur=r=>r==="#/"?(h==="#/"||h==="#"||h===""):(h===r||h.startsWith(r+"/"));
+  const here=stmHere(),h=location.hash||"#/",net=navigator.onLine!==false,cur=r=>r!=="#/"&&(h===r||h.startsWith(r+"/"));
   const o=document.createElement("div");o.id="stmOv";o.setAttribute("role","dialog");o.setAttribute("aria-modal","true");o.setAttribute("aria-label","象棋千秋總覽");
   const entry=e=>{const off=e[1]==="#/lobby"&&!net;return`<button class="go${cur(e[1])?" cur":""}" data-r="${esc(e[1])}" data-n="${esc(e[0])}"${off?" disabled":""}>${esc(e[0])}${off?"（要連網路）":""}</button>`};
   o.innerHTML=`<div class="in"><div class="hd"><button class="x" id="stmX">✕ 關閉地圖</button><h2>象棋千秋總覽</h2><span style="min-width:44px"></span></div>
