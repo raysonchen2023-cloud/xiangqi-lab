@@ -1379,7 +1379,7 @@ html[data-hicon] .tabbar button.on{box-shadow:inset 0 -3px 0 currentColor}
       if(!window.caches)return go();caches.keys().then(function(ks){return Promise.all(ks.filter(function(k){return k.indexOf("xqlab-app-")===0}).map(function(k){return caches.delete(k)}))})
         .then(function(){return navigator.serviceWorker&&navigator.serviceWorker.getRegistration()}).then(function(r){return r&&r.update()}).catch(function(){}).then(go)}};setTimeout(chk,4000)})();
 </script>
-<script>window.XQ_OFFLINE=true;window.XQ_BUILD="20261110-1940";</script>
+<script>window.XQ_OFFLINE=true;window.XQ_BUILD="20261110-1950";</script>
 <script src="core.js"></script>
 <script src="engine.js"></script>
 <script src="local.js"></script>
@@ -13726,7 +13726,7 @@ if(typeof Home==="function"){const f0=Home;Home=function(v,hub){const r=f0.apply
    標籤只有大字。接 07w 走路（SHW_LOBBY）、07x 兩指縮放。圖片網址帶 LM_IMGV（data/lobbymap 在不跟版本走的快取裡，換圖要改這個數字）。
    開關 LOBBY_MAP_ON（false＝照舊清單）；樣式在 lmCss */
 const LOBBY_MAP_ON=true;   /* 開發者 11/8 說打開 */
-const LM_IMGV="0700";
+const LM_IMGV="1950";
 const LM_IMG=n=>`data/lobbymap/${n}.webp?v=${LM_IMGV}`;
 /* 開發者 11/9：照星槎停靠的朝代換圖（story/朝代場景計畫.md；考究說明 park/lobbymap/考究說明_各朝大廳_1109.md）。構圖、入口、棋桌、燈、走路節點的座標都不變。
    有停靠才算（判斷跟 07y hbDockEra() 一樣）；沒停靠、明朝用原圖和原素材。各朝檔名一律帶朝代（同一組時代的內容一樣），preload-list.js 的 ERA_RE 才分得到各朝：
@@ -13750,11 +13750,12 @@ const LM_LAMP_SVG='<svg width="0" height="0" style="position:absolute" aria-hidd
 const LM_TBL={};   /* 對局 gid → 桌子的位置（同一盤一直坐同一張桌，直到下完） */
 /* 入口標籤：[id, 左%, 上%, 大字]（量 768×1376 的 lobby_v4，標籤放在東西上方） */
 /* 11/10 開發者：拿掉「千秋盃」（只留茶坊二樓那個入口）、「我的戰績」（跟學習書院的重複）；「挑戰電腦」不放在線上對戰天井（只有開發者的 📺 AI 對戰才出現） */
-const LM_SPOTS=[["lmGong",50,50.5,"🎲 隨機配對"],["lmList",13,46.5,"📜 名冊"],["lmAi",16,68.5,"📺 AI 對戰"]];
+/* 11/10 天井照茶坊重畫（lobby_re3：右牆黑板、兩面紅旗、左邊白牆廂房、門口兩盆松；art_lobbyre*.json、史學顧問核過）：名冊改到右牆黑板、AI 對戰改到一樓左廂門口 */
+const LM_SPOTS=[["lmGong",50,50.5,"🎲 隨機配對"],["lmList",88,27,"📜 名冊"],["lmAi",25,42.5,"📺 AI 對戰"]];
 /* 11/10 開發者「按下隨機配對，做一個敲鑼的動畫」：天井中央那面鑼（秦～五代的圖畫的是鼓）被敲一下——
    鑼槌從角色那邊揮過去，鑼面（從同一張圖切出來的圓）晃動、金色聲波一圈圈散開，配 01-board 合成的鑼聲；鼓就敲兩下「咚、咚」、鼓面一彈一彈。
    位置是 12 張大廳圖量出來的：中心 50.3%、59.6%，直徑約圖寬 10.5%；有沒有開「過場鼓聲」照 XQ_DRUM 的設定 */
-const LM_GONG={x:50.3,y:59.6,d:10.5,drum:["qin","han","sanguo","weijin","nanbei","sui","tang","wudai"]};
+const LM_GONG={x:50.6,y:59,d:10.5,drum:["qin","han","sanguo","weijin","nanbei","sui","tang","wudai"]};
 function lmGongCss(){if(document.getElementById("lmGongCss"))return;const s=document.createElement("style");s.id="lmGongCss";s.textContent=`
 .lm-hit{position:absolute;pointer-events:none;z-index:2;transform:translate(-50%,-50%)}
 .lm-hit .gd{position:absolute;inset:0;border-radius:50%;background-repeat:no-repeat;transform-origin:50% 0}
@@ -13779,19 +13780,22 @@ function lmGongHit(P){try{const im=P&&P.querySelector(":scope>img");if(!im)retur
   P.append(h);setTimeout(()=>h.remove(),2400);
   if(store.get("gateDrum",true)&&typeof withAudio==="function"){try{unlockAudio()}catch(x){}withAudio(()=>{const t=AC.currentTime+.24;if(drum){drumHit(t,1.1,58);drumHit(t+.34,1,58)}else gongHit(t,150,2.6,true)})}}catch(x){}}
 /* 八張棋桌的位置（桌子中心，%）：左兩張、右四張、銅鑼前兩張，中軸和兩側走道都空著（角色不會穿過桌子） */
-const LM_TABLES=[[22,57],[78,57],[22,66],[78,66],[78,75],[37,78],[63,78],[78,84]];
-/* 50 盞燈：[左%, 上%, 層]（2＝二樓迴廊，有剪影；1＝一樓簷下） */
+/* 11/10 新天井：右邊有紅旗、門口兩盆松，右排往內收、前排改成左右各一＋門內兩張 */
+const LM_TABLES=[[24,56],[73,58],[24,66],[73,68],[29,76.5],[71,76.5],[37,85],[63,85]];
+/* 44 盞燈：[左%, 上%, 層, 剪影]（層 2＝二樓、1＝一樓簷下；剪影 1＝亮燈時燈下站一個人影，只放在有地板站得住的地方）
+   11/10 新天井：左邊是白牆廂房（燈掛在一二樓之間的斜橫樑、一樓牆邊），右牆有黑板和紅旗（燈改掛右牆頂、紅旗下方） */
 const LM_LAMPS=(()=>{const L=[];
-  for(const x of[2,6,10,14,18])L.push([x,22.5,2]);for(const x of[82,86,90,94,98])L.push([x,22.5,2]);
-  for(const x of[22.5,25.5,28.5,31.5,34.5,65.5,68.5,71.5,74.5,77.5])L.push([x,20.5,2]);L.push([36.2,21.5,2],[63.8,21.5,2]);
-  for(let i=0;i<14;i++)L.push([23.5+i*4,37.8,1]);
-  for(const y of[40,45,50,55,60,65,70])L.push([9.5,y,1]);for(const y of[40,45,50,55,60,65,70])L.push([90.5,y,1]);return L})();
+  for(const x of[22.5,25.5,28.5,31.5,34.5,65.5,68.5,71.5,74.5,77.5])L.push([x,20.5,2,1]);L.push([36.2,21.5,2,1],[63.8,21.5,2,1]);
+  for(let i=0;i<14;i++)L.push([+(22+i*3.2).toFixed(1),37.8,1,0]);
+  for(const x of[3,7,11,15,19])L.push([x,+(34.7-x/20.7*5).toFixed(1),2,0]);
+  for(const y of[40,45,50,55,60,65,70])L.push([9.5,y,1,y>=60?1:0]);
+  for(const x of[86,90,94,98])L.push([x,22,2,0]);for(const y of[67,72])L.push([91.5,y,1,1]);return L})();
 /* 07w 的座標表：從入口進來；銅鑼前、左右走道；上二樓：樓梯腳→下段→轉角平台→上段→樓梯頂→二樓遠側→說書台旁；樓上身高照樓梯腳算 */
 const SHW_LOBBY={el:40,h:y=>.06+(Math.max(y,53)-80)*.0008,look0:[50,60],
-  N:{home:[50,93],c:[50,80],g:[50,71.5],l0:[38,64],l1:[36,52],scr:[15,53],r0:[62,64],r1:[64,52],sgn:[87,51],ai:[31,86],
+  N:{home:[50,93],c:[50,80],g:[50,71.5],l0:[38,64],l1:[36,52],ai:[26,49],r0:[62,64],r1:[64,52],sgn:[83,51],
     sf:[66,53],s1:[72,48],sl:[82,44],s2:[78,37],st:[74,31.5],gal:[67,31],stage:[59,31.5]},
-  E:"home-c c-g g-l0 l0-l1 l1-scr g-r0 r0-r1 r1-sgn r1-sf home-ai sf-s1 s1-sl sl-s2 s2-st st-gal gal-stage",
-  HS:{lmGong:["g",50,62,"cheer"],lmList:["scr",10,51,"bow"],lmAi:["ai",14,79,"bow"]}};
+  E:"home-c c-g g-l0 l0-l1 l1-ai g-r0 r0-r1 r1-sgn r1-sf sf-s1 s1-sl sl-s2 s2-st st-gal gal-stage",
+  HS:{lmGong:["g",50,62,"cheer"],lmList:["sgn",92,36,"bow"],lmAi:["ai",25,44,"bow"]}};
 function lmCss(){if(document.getElementById("lmCss"))return;const s=document.createElement("style");s.id="lmCss";s.textContent=`
 .lobby-page{margin:0 0 6px}.lobby-page .shp-spot{max-width:46%;padding:4px 11px;z-index:3}.lobby-page .shp-spot b{white-space:nowrap;font-size:14px}.lobby-page .shp-spot.hot{padding:5px 13px}.lobby-page .shp-spot.hot b{font-size:15px}
 .lm-l{position:absolute;inset:0;pointer-events:none}
@@ -13856,7 +13860,7 @@ function lmPaint(v,P){const lay=P.querySelector(".lm-l");if(!lay||!window.XQNet)
   const FIG=["fig_sit","fig_lean","fig_fan"].map(n=>lmN(n,E));
   lay.innerHTML=T.slice(0,8).map((t,i)=>{const[x,y]=LM_TABLES[i];const nm=t.l?t.l.map(p=>p.name).join(" 對 "):"";
       return`<button class="lm-t${t.mine?" mine":""}${t.empty?" empty":""}" ${t.gid?`data-g="${esc(t.gid)}"`:""}${t.mine?' data-mine="1"':""} style="left:${x}%;top:${y}%;z-index:${Math.round(y)}" aria-label="${esc(t.mine?"我的對局":t.empty?"空桌":nm+"・觀戰")}" tabindex="${t.empty?-1:0}"><img src="${LM_IMG(lmN(t.empty?"table_empty":"table_game",E))}" alt=""></button>`}).join("")+
-    LM_LAMPS.map(([x,y,f],i)=>{const o=lit[i];const fig=o&&(f===2||x<15||x>85)?`<img class="lm-fig" src="${LM_IMG(FIG[i%3])}" alt="" style="left:${x}%;top:${y+(f===2?10.5:7.5)}%">`:"";
+    LM_LAMPS.map(([x,y,f,g],i)=>{const o=lit[i];const fig=o&&g?`<img class="lm-fig" src="${LM_IMG(FIG[i%3])}" alt="" style="left:${x}%;top:${y+(f===2?10.5:7.5)}%">`:"";
       return`${fig}<button class="lm-lp f${f}${GU?" gu":LM_INK_LAMP?" ink"+(PALE?" pale":""):""}${o?" on"+o.cls:""}" ${o?(o.jc?`data-jc="${esc(o.jc)}"`:`data-p="${esc(o.id)}"`):""} style="left:${x}%;top:${y}%" aria-label="${o?esc(o.name):"空著的燈"}" tabindex="${o?0:-1}">${LM_INK_LAMP&&!GU?'<svg viewBox="0 0 20 46"><use href="#lmLamp"/></svg>':`<img src="${LM_IMG(lmN(o?"lantern_on":"lantern_off",E))}" alt="">`}${o&&/fam|story/.test(o.cls)?"<i></i>":""}</button>`}).join("")+
     (XQNet.seeking&&XQNet.seeking()?'<span class="lm-wave"><i></i><i></i><i></i></span>':"")+
     (extra>0?`<button type="button" class="lm-more" data-more="p" style="left:88%;top:30.5%">＋${extra} 人</button>`:"")+
@@ -18091,8 +18095,10 @@ const CLK_SKY=[[0,"#121a35","#26335c","#f3ead2",1],[4.5,"#141c3a","#2b3864","#f3
   [16.5,"#acc4d0","#d9e4e2","#22201d",0],[17.6,"#e9b98a","#f3dcc0","#3a2618",0],[18.8,"#4a4a78","#c98b74","#fff1dc",.4],[19.6,"#141c3a","#2b3864","#f3ead2",1],[24,"#121a35","#26335c","#f3ead2",1]];
 function clkSky(h){const mix=(a,b,t)=>{const p=x=>[1,3,5].map(i=>parseInt(x.slice(i,i+2),16)),A=p(a),B=p(b);return"#"+A.map((v,i)=>Math.round(v+(B[i]-v)*t).toString(16).padStart(2,"0")).join("")};
   for(let i=0;i<CLK_SKY.length-1;i++){const a=CLK_SKY[i],b=CLK_SKY[i+1];if(h>=a[0]&&h<=b[0]){const t=(h-a[0])/(b[0]-a[0]||1),tt=t<.5?0:1;return{c1:mix(a[1],b[1],t),c2:mix(a[2],b[2],t),ink:(tt?b:a)[3],st:a[4]+(b[4]-a[4])*t}}}return{c1:"#d6e4ec",c2:"#eef0e8",ink:"#2b2a28",st:0}}
-/* 回饋 840b：完整小圓盤。圓心 (30,30)、半徑 28；地支照順時針排、子在正上方（i 的角度＝-90＋30i 度），指針照現在的時刻轉（-90＋15×小時；0 點指子的正中間） */
-const CLK_C=[30,30],CLK_R=28;
+/* 回饋 840b：完整小圓盤。圓心 (30,30)、半徑 28；地支照順時針排，指針照現在的時刻轉（0 點指子的正中間）。
+   11/10 開發者「午應該是正上方，子應該是正下方」：改成傳統坐北朝南、南方在上的盤面——子在正下方、卯在左（東）、午在正上方、酉在右（西），仍是順時針；
+   CLK_A0＝子的角度（90＝正下方），第 i 個地支在 CLK_A0＋30i 度，指針多轉 CLK_A0＋90 度 */
+const CLK_C=[30,30],CLK_R=28,CLK_A0=90;
 function clkStars(){let a=20251109;const R=()=>(a=(a*1103515245+12345)&0x7fffffff)/0x7fffffff,[cx,cy]=CLK_C,o=[];
   for(let i=0;i<46;i++){const r=Math.sqrt(R())*(CLK_R-2),t=R()*360,[x,y]=clkP(cx,cy,r,t),s=(.3+R()*.55).toFixed(2);o.push(`<circle cx="${x}" cy="${y}" r="${s}" fill="#fff6dc" opacity="${(.45+R()*.5).toFixed(2)}"${i%6===0?' class="clk-tw"':""}/>`)}
   /* 星官大意：北斗七星、牽牛三星、織女三星（極座標 [半徑, 角度]） */
@@ -18102,7 +18108,7 @@ function clkStars(){let a=20251109;const R=()=>(a=(a*1103515245+12345)&0x7ffffff
     o.push(P.map(([x,y])=>`<circle cx="${x}" cy="${y}" r=".9" fill="#ffe7a8"/>`).join(""))});
   return o.join("")}
 function clkDialSvg(){const[cx,cy]=CLK_C,R=CLK_R,ns="http://www.w3.org/2000/svg",lab=[],tk=[];
-  for(let i=0;i<12;i++){const a=-90+30*i,[x,y]=clkP(cx,cy,R-6.6,a);lab.push(`<text class="clk-z" data-i="${i}" x="${x}" y="${y}" text-anchor="middle" dominant-baseline="central">${CLK_ZHI[i]}</text>`);
+  for(let i=0;i<12;i++){const a=CLK_A0+30*i,[x,y]=clkP(cx,cy,R-6.6,a);lab.push(`<text class="clk-z" data-i="${i}" x="${x}" y="${y}" text-anchor="middle" dominant-baseline="central">${CLK_ZHI[i]}</text>`);
     const[b1,b2]=[clkP(cx,cy,R-.8,a+15),clkP(cx,cy,R-3.2,a+15)];tk.push(`<line x1="${b1[0]}" y1="${b1[1]}" x2="${b2[0]}" y2="${b2[1]}"/>`)}
   return`<svg xmlns="${ns}" viewBox="0 0 60 60" aria-hidden="true" focusable="false"><defs><clipPath id="clkClip"><circle cx="${cx}" cy="${cy}" r="${R}"/></clipPath>
     <radialGradient id="clkSkyG" cx=".5" cy=".38" r=".7"><stop class="s2" offset="0"/><stop class="s1" offset="1"/></radialGradient>
@@ -18126,7 +18132,7 @@ function clkPaint(){const b=CLK.el;if(!b)return;const N=new Date(),h=clkHr(N),i=
   q(".clk-zs").setAttribute("fill",S.ink);q(".clk-tk").setAttribute("stroke",S.ink);q(".clk-in").setAttribute("stroke",S.ink);q(".clk-in").setAttribute("stroke-opacity",".35");
   b.querySelectorAll(".clk-z").forEach(t=>{const on=+t.dataset.i===i;t.setAttribute("font-size",on?"9.6":"7.6");t.setAttribute("fill",on?(S.st>.5?"#ffd978":"#a3361f"):S.ink)});
   const big=q(".clk-big");big.textContent=CLK_ZHI[i]+"時";big.setAttribute("fill",S.ink);q(".clk-ptr").setAttribute("fill",S.st>.5?"#ffd978":"#a3361f");
-  {let a=15*h;if(CLK.rot!=null)a+=Math.round((CLK.rot-a)/360)*360;CLK.rot=a;q(".clk-rot").style.transform=`rotate(${a.toFixed(2)}deg)`;const hb=q(".clk-hub");if(hb)hb.setAttribute("fill",S.st>.5?"#ffd978":"#a3361f")}   /* 指針朝上＝0 點；過半夜不倒轉一圈 */   /* 過半夜不倒轉一圈 */
+  {let a=15*h+CLK_A0+90;if(CLK.rot!=null)a+=Math.round((CLK.rot-a)/360)*360;CLK.rot=a;q(".clk-rot").style.transform=`rotate(${a.toFixed(2)}deg)`;const hb=q(".clk-hub");if(hb)hb.setAttribute("fill",S.st>.5?"#ffd978":"#a3361f")}   /* 指針指著子＝0 點（子在正下方）；過半夜不倒轉一圈 */
   const bn=typeof sw7Born==="function"?sw7Born():0,tm=typeof sw7Term==="function"?sw7Term(N):"",day=bn&&typeof sw7OnDay==="function"?sw7OnDay(bn,N):0;
   if(CLK.sm){const B=CLK.sm.querySelector(".clk-sl>b"),L=CLK.sm.querySelectorAll(".clk-sl>span");if(B)B.textContent=CLK_ZHI[i]+"時";L[0].textContent=(day?`⛵ ${clkEraZh()}第 ${day} 天`:"⛵ 還沒登船")+(tm?"・"+tm:"");if(L[1])L[1].textContent=""}
   b.setAttribute("aria-label",ship?"雲河無歲月：在星槎上，時辰不走。點了看船齡":`現在是${CLK_ZHI[i]}時（${k[0]}，${clkHH(i)[0]} 點到 ${clkHH(i)[1]} 點）${tm?"，節氣"+tm:""}。點了看船齡和十二時辰`)}
@@ -18156,17 +18162,17 @@ if(CLK_SND_ON&&typeof bgmSync==="function"){const b0=bgmSync;bgmSync=function(){
 /* ---------- ② 船齡卡裡的十二時辰香篆鐘 ---------- */
 /* 香篆：12 段回紋，第 k 段（子＝0，在正上方，順時針）＝內圈短弧 → 往外 → 外圈長弧 → 往內 → 內圈短弧；尺寸照 viewBox 320 */
 const XZ={c:160,ri:58,ro:122,g:5,rim0:134,rim1:155};
-function xzSeg(k){const{c,ri,ro,g}=XZ,f=-90+30*k,a=f-15,a1=f-15+g,a2=f+15-g,b=f+15,P=(r,t)=>clkP(c,c,r,t).join(" ");
+function xzSeg(k){const{c,ri,ro,g}=XZ,f=CLK_A0+30*k,a=f-15,a1=f-15+g,a2=f+15-g,b=f+15,P=(r,t)=>clkP(c,c,r,t).join(" ");
   return`M${P(ri,a)} A${ri} ${ri} 0 0 1 ${P(ri,a1)} L${P(ro,a1)} A${ro} ${ro} 0 0 1 ${P(ro,a2)} L${P(ri,a2)} A${ri} ${ri} 0 0 1 ${P(ri,b)}`}
 /* 段長與沿段 s 長度的點（給火光定位、燒到一半的虛線長度） */
 function xzLen(){const{ri,ro,g}=XZ,d=Math.PI/180;return[ri*g*d,ro-ri,ro*(30-2*g)*d,ro-ri,ri*g*d]}
-function xzAt(k,s){const{c,ri,ro,g}=XZ,f=-90+30*k,L=xzLen(),d=Math.PI/180;let i=0;while(i<4&&s>L[i]){s-=L[i];i++}s=Math.min(s,L[i]);
+function xzAt(k,s){const{c,ri,ro,g}=XZ,f=CLK_A0+30*k,L=xzLen(),d=Math.PI/180;let i=0;while(i<4&&s>L[i]){s-=L[i];i++}s=Math.min(s,L[i]);
   if(i===0)return clkP(c,c,ri,f-15+s/ri/d);if(i===1)return clkP(c,c,ri+s,f-15+g);if(i===2)return clkP(c,c,ro,f-15+g+s/ro/d);if(i===3)return clkP(c,c,ro-s,f+15-g);return clkP(c,c,ri,f+15-g+s/ri/d)}
 function clkXz(N){N=N||new Date();const{c,ri,ro,rim0,rim1}=XZ,h=clkHr(N),cur=clkIdx(N),f=(((h-(cur*2-1))%24)+24)%24/2,L=xzLen().reduce((a,b)=>a+b,0);
   const seg=[],lab=[],tm=[],wd=[];
   for(let k=0;k<12;k++){const d=xzSeg(k),st=k<cur?"b":k===cur?"c":"u";
     seg.push(st==="c"?`<path d="${d}" stroke="#c9a46e"/><path d="${d}" stroke="#77716a" stroke-dasharray="${(L*f).toFixed(1)} ${L.toFixed(1)}"/>`:`<path d="${d}" stroke="${st==="b"?"#77716a":"#c9a46e"}"/>`);
-    const fa=-90+30*k,[x,y]=clkP(c,c,(ri+ro)/2+6,fa),[tx,ty]=clkP(c,c,(rim0+rim1)/2,fa),[s0,s1]=clkHH(k);
+    const fa=CLK_A0+30*k,[x,y]=clkP(c,c,(ri+ro)/2+6,fa),[tx,ty]=clkP(c,c,(rim0+rim1)/2,fa),[s0,s1]=clkHH(k);
     lab.push(`<text x="${x}" y="${y}" text-anchor="middle" dominant-baseline="central" font-size="19" font-weight="900" fill="${k===cur?"#8a2a14":"#4a3420"}">${CLK_ZHI[k]}</text>`);
     tm.push(`<text x="${tx}" y="${ty}" text-anchor="middle" dominant-baseline="central" font-size="11" font-weight="700" fill="#fff4dc">${s0}–${s1}</text>`);
     const p1=clkP(c,c,46,fa-15),p2=clkP(c,c,rim1,fa-15),p3=clkP(c,c,rim1,fa+15),p4=clkP(c,c,46,fa+15);
