@@ -1379,7 +1379,7 @@ html[data-hicon] .tabbar button.on{box-shadow:inset 0 -3px 0 currentColor}
       if(!window.caches)return go();caches.keys().then(function(ks){return Promise.all(ks.filter(function(k){return k.indexOf("xqlab-app-")===0}).map(function(k){return caches.delete(k)}))})
         .then(function(){return navigator.serviceWorker&&navigator.serviceWorker.getRegistration()}).then(function(r){return r&&r.update()}).catch(function(){}).then(go)}};setTimeout(chk,4000)})();
 </script>
-<script>window.XQ_OFFLINE=true;window.XQ_BUILD="20261110-1830";</script>
+<script>window.XQ_OFFLINE=true;window.XQ_BUILD="20261110-1845";</script>
 <script src="core.js"></script>
 <script src="engine.js"></script>
 <script src="local.js"></script>
@@ -1823,17 +1823,27 @@ async function bgmNow(){const el=document.getElementById("bgmNow");if(!el)return
   el.innerHTML=`<span style="flex:1;min-width:0">♪ 正在播放${t?`《${esc(t)}》`:""}${ins?`・${ins}`:""}</span><button class="btn ghost" id="bgmNext" style="flex:none;width:auto;margin:0;padding:4px 12px;font-size:13px;white-space:nowrap">換一首</button>`;
   el.querySelector("#bgmNext").onclick=()=>{vibrate(5);bgmSync(true)}}
 function bgmList(){return BGM.list||(BGM.list=fetch("data/bgm/index.json").then(r=>r.ok?r.json():{}).catch(()=>({}))).then(j=>{BGM.L=j;return j})}
-/* 意見回饋 687：iPhone 只准在點擊的當下開始播放；清單已經載好就不要 await，直接同步呼叫 play()，免得等下載完那一下點擊已經「過期」 */
+/* 意見回饋 687：iPhone 只准在點擊的當下開始播放；清單已經載好就不要 await，直接同步呼叫 play()，免得等下載完那一下點擊已經「過期」
+   11/10 開發者「網頁版還是沒有 bgm」：mp3 只放 CDN（GitHub 上 404），而 CDN 不支援分段下載（Range 回 200 整檔），iPhone 的 audio 一定要分段才肯播（media 錯誤 4）。
+   改成先把整首抓成 Blob、給播放器 blob: 網址（不用伺服器支援分段）；網頁版直接向 CDN 要，本機和其他網址照原路徑（fetch 404 會自己轉 CDN）。
+   清單一載好就先選好曲子、預先下載，第一次點畫面時已經下載好，就能在點擊當下同步播放；還沒下載好就等好了再播，iPhone 不准的話下一次點畫面會播 */
+const BGM_BASE=/\.github\.io$/.test(location.hostname)?XQ_CDN:"";
+function bgmBlob(rel){const U=BGM.u||(BGM.u={});if(U[rel])return Promise.resolve(U[rel]);
+  return U[rel]=fetch(BGM_BASE+rel,BGM_BASE?{mode:"cors",credentials:"omit"}:undefined).then(r=>{if(!r.ok)throw new Error("http"+r.status);return r.blob()}).then(b=>U[rel]=URL.createObjectURL(b)).catch(e=>{delete U[rel];BGM.err="下載"+((e&&e.message)||"");return null})}
+function bgmPick(era,L,next){if(!next&&BGM.era===era&&BGM.src)return;BGM.era=era;let n=Math.floor(Math.random()*L.length);if(L.length>1&&n===BGM.last)n=(n+1)%L.length;BGM.last=n;BGM.src=`data/bgm/${era}/${L[n]}`;
+  const U=BGM.u||{};for(const k of Object.keys(U))if(k!==BGM.src&&typeof U[k]==="string"&&U[k]!==BGM.cur){try{URL.revokeObjectURL(U[k])}catch(e){}delete U[k]}bgmBlob(BGM.src)}
 async function bgmSync(next){const on=!!store.get("bgm",true)&&!document.hidden,era=store.get("era","classic");
   if(!on){if(BGM.a)BGM.a.pause();return}const L=((BGM.L||await bgmList())||{})[era]||[];if(!L.length){if(BGM.a)BGM.a.pause();return}
-  if(!BGM.a){BGM.a=new Audio();BGM.a.volume=.5;BGM.a.preload="auto";BGM.a.onended=()=>bgmSync(true);BGM.a.onplay=BGM.a.onpause=()=>bgmNow();BGM.a.onerror=()=>{const a=BGM.a;if(!a)return;const x=a.error;BGM.err="media"+(x?x.code:"");const r=(typeof xqCdnRel==="function")&&xqCdnRel(a.currentSrc||a.src||"");if(r&&!a._cdn){a._cdn=1;a.src=XQ_CDN+r;if(store.get("bgm",true)){try{const q=a.play();if(q&&q.then)q.then(()=>{BGM.err=""},()=>{})}catch(e){}}}}}
-  if(next||BGM.era!==era||!BGM.src){BGM.era=era;let n=Math.floor(Math.random()*L.length);if(L.length>1&&n===BGM.last)n=(n+1)%L.length;BGM.last=n;BGM.src=`data/bgm/${era}/${L[n]}`;BGM.a._cdn=0;BGM.a.src=BGM.src}
+  if(!BGM.a){BGM.a=new Audio();BGM.a.volume=.55;BGM.a.preload="auto";BGM.cur="";BGM.a.onended=()=>bgmSync(true);BGM.a.onplay=BGM.a.onpause=()=>bgmNow();BGM.a.onerror=()=>{const x=BGM.a&&BGM.a.error;BGM.err="media"+(x?x.code:"")}}
+  bgmPick(era,L,next);const u=(BGM.u||{})[BGM.src];
+  if(typeof u!=="string"){const want=BGM.src;bgmBlob(want).then(x=>{if(x&&BGM.src===want&&store.get("bgm",true))bgmSync()});return}
+  if(BGM.cur!==u){const old=BGM.cur;BGM.cur=u;BGM.a.src=u;if(old&&old!==u&&!Object.values(BGM.u||{}).includes(old)){try{URL.revokeObjectURL(old)}catch(e){}}}
   if(BGM.a.paused){BGM.tries=(BGM.tries||0)+1;try{const p=BGM.a.play();if(p&&p.then)p.then(()=>{BGM.err="";BGM.ok=(BGM.ok||0)+1;if(!BGM.hint&&!store.get("bgmHint",false)){BGM.hint=1;try{store.set("bgmHint",true)}catch(e){}try{toast("♪ 背景音樂已開始播放，可到設定→聲音調整")}catch(e){}}},e=>{BGM.err=(e&&e.name)||"err"})}catch(e){BGM.err="throw"}}}
 /* 意見回饋 689：iPhone 還是沒背景音樂，回饋單（開發者）和設定 → 聲音附上播放器狀態，才知道卡在哪一步 */
-function bgmDiag(){try{const a=BGM.a,L=(BGM.L||{})[store.get("era","classic")]||[];return`bgm:${store.get("bgm",true)?"開":"關"}/${store.get("era","classic")}/清單${BGM.L?L.length:"未載"}/${a?(a.paused?"停":"播")+"/rs"+a.readyState+"/ns"+a.networkState+"/t"+(a.currentTime||0).toFixed(1):"無播放器"}/試${BGM.tries||0}成${BGM.ok||0}${BGM.err?"/錯"+BGM.err:""}/AC:${typeof AC!=="undefined"&&AC?AC.state:"無"}/sess:${navigator.audioSession?navigator.audioSession.type:"無"}/sw:${navigator.serviceWorker&&navigator.serviceWorker.controller?"有":"無"}`}catch(e){return"bgm:診斷失敗"}}
+function bgmDiag(){try{const a=BGM.a,L=(BGM.L||{})[store.get("era","classic")]||[];return`bgm:${store.get("bgm",true)?"開":"關"}/${store.get("era","classic")}/清單${BGM.L?L.length:"未載"}/${a?(a.paused?"停":"播")+"/rs"+a.readyState+"/ns"+a.networkState+"/t"+(a.currentTime||0).toFixed(1):"無播放器"}/檔${typeof (BGM.u||{})[BGM.src]==="string"?"好":BGM.src?"載":"無"}${BGM_BASE?"CDN":"本站"}/試${BGM.tries||0}成${BGM.ok||0}${BGM.err?"/錯"+BGM.err:""}/AC:${typeof AC!=="undefined"&&AC?AC.state:"無"}/sess:${navigator.audioSession?navigator.audioSession.type:"無"}/sw:${navigator.serviceWorker&&navigator.serviceWorker.controller?"有":"無"}`}catch(e){return"bgm:診斷失敗"}}
 document.addEventListener("visibilitychange",()=>{if(document.hidden){BGM.wake=1}bgmSync()});
-for(const ev of["pointerdown","touchend"])document.addEventListener(ev,()=>{if(!store.get("bgm",true))return;if(BGM.a&&BGM.wake&&BGM.a.paused){try{BGM.a.pause()}catch(e){}BGM.a=null;BGM.src=""}BGM.wake=0;if(!BGM.a||BGM.a.paused)bgmSync()},{passive:true,capture:true});   /* 手機要先點一下畫面才准出聲；意見回饋 687：改成最先收到點擊（別的按鈕擋不掉），從背景回來、音樂停著就重建播放器 */
-setTimeout(()=>{try{bgmList()}catch(e){}},300);   /* 先把清單載好 */
+for(const ev of["pointerdown","touchend"])document.addEventListener(ev,()=>{if(!store.get("bgm",true))return;if(BGM.a&&BGM.wake&&BGM.a.paused){try{BGM.a.pause()}catch(e){}BGM.a=null}BGM.wake=0;if(!BGM.a||BGM.a.paused)bgmSync()},{passive:true,capture:true});   /* 手機要先點一下畫面才准出聲；意見回饋 687：改成最先收到點擊（別的按鈕擋不掉），從背景回來、音樂停著就重建播放器 */
+setTimeout(()=>{try{bgmList().then(j=>{const L=(j||{})[store.get("era","classic")]||[];if(store.get("bgm",true)&&L.length)bgmPick(store.get("era","classic"),L)})}catch(e){}},300);   /* 先把清單載好，並先選好曲子預先下載 */
 document.addEventListener("change",e=>{const t=e.target;if(t&&t.dataset&&t.dataset.t==="bgm")setTimeout(()=>bgmSync(),60)});
 window.XQ_DRUM=(era,kind)=>{if(!store.get("gateDrum",true))return;try{unlockAudio()}catch(e){}
   withAudio(()=>{const pat=DRUM_PAT[era]||DRUM_PAT.classic,t0=AC.currentTime+.08,sp=kind==="path"?1.15:1;
@@ -2432,6 +2442,8 @@ function mvtWrap(root){if(!root||!document.querySelector("svg")||!window.XQCore)
     fr.append(s.slice(last));n.replaceWith(fr)}}
 let mvtT=0;new MutationObserver(()=>{if(mvtT)return;mvtT=setTimeout(()=>{mvtT=0;try{mvtWrap(document.body)}catch(e){}},250)}).observe(document.documentElement,{childList:true,subtree:true,characterData:true});
 document.addEventListener("click",e=>{const x=e.target&&e.target.closest&&e.target.closest(".mvt");if(!x)return;e.preventDefault();e.stopPropagation();mvtShow(x.dataset.mv,x)},true);
+
+
 
 
 
@@ -18093,7 +18105,7 @@ if(CLK_ON){addEventListener("hashchange",()=>setTimeout(()=>{try{clkSync()}catch
 if(CLK_ON&&typeof qianqiu==="function"){const q0=qianqiu;qianqiu=function(){const r=q0.apply(this,arguments);setTimeout(()=>{try{clkSnd(true);if(CLK.box&&CLK.box.isConnected){CLK.mode="ship";clkMode("ship")}}catch(e){}},0);return r}}
 
 /* ---------- ⑤ 上下船：背景音樂淡出淡入（約 1 秒） ---------- */
-function clkSnd(ship){if(!CLK_SND_ON||typeof BGM==="undefined")return;const tg=ship?.15:.35,a=BGM.a;if(CLK.vt===tg&&CLK.va===a)return;const first=CLK.vt==null||CLK.va!==a;CLK.vt=tg;CLK.va=a;clearInterval(CLK.vi);if(!a)return;
+function clkSnd(ship){if(!CLK_SND_ON||typeof BGM==="undefined")return;const tg=ship?.25:.55,a=BGM.a;if(CLK.vt===tg&&CLK.va===a)return;const first=CLK.vt==null||CLK.va!==a;CLK.vt=tg;CLK.va=a;clearInterval(CLK.vi);if(!a)return;
   if(first&&a.paused){try{a.volume=tg}catch(e){}return}
   const v0=a.volume,t0=performance.now();CLK.vi=setInterval(()=>{const p=Math.min(1,(performance.now()-t0)/1000);try{a.volume=Math.max(0,Math.min(1,v0+(tg-v0)*p))}catch(e){}if(p>=1)clearInterval(CLK.vi)},50)}
 /* 背景音樂元素是第一次點擊才建的（iOS 規定），建好後套上現在該有的音量 */
