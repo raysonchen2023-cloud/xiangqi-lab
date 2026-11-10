@@ -1379,7 +1379,7 @@ html[data-hicon] .tabbar button.on{box-shadow:inset 0 -3px 0 currentColor}
       if(!window.caches)return go();caches.keys().then(function(ks){return Promise.all(ks.filter(function(k){return k.indexOf("xqlab-app-")===0}).map(function(k){return caches.delete(k)}))})
         .then(function(){return navigator.serviceWorker&&navigator.serviceWorker.getRegistration()}).then(function(r){return r&&r.update()}).catch(function(){}).then(go)}};setTimeout(chk,4000)})();
 </script>
-<script>window.XQ_OFFLINE=true;window.XQ_BUILD="20261111-0330";</script>
+<script>window.XQ_OFFLINE=true;window.XQ_BUILD="20261111-0345";</script>
 <script src="core.js"></script>
 <script src="engine.js"></script>
 <script src="local.js"></script>
@@ -1642,6 +1642,18 @@ function goUp(h,after){navClear();const k=navKey(h);
   for(let i=NAV_D-1;i>=0&&NAV_D-i<history.length;i--){const x=NAV_H[i];if(typeof x==="string"&&x[0]!=="~"&&navKey(x)===k){   /* 超過瀏覽器留著的紀錄就不往回找 */const d0=NAV_D,h0=location.hash;history.go(i-NAV_D);setTimeout(()=>{if(NAV_D===d0&&location.hash===h0)navReplace(h)},1500);return}}
   navReplace(h)}
 function confirmBox(text,yes,label){modal(`<h2 style="font-size:19px">${esc(text)}</h2>`,[[label||"確定",yes],["取消",null,true]])}
+
+
+// ChatGPT 接手改善：讓玩家能查到實際適用範圍，而不是宣稱完整競賽裁判。
+function ruleNote(v,st){
+  if(!st.rules)return;const stat=v.querySelector("#stat");if(!stat)return;
+  let note=v.querySelector(".rule-note");if(!note){note=document.createElement("details");note.className="rule-note muted";note.style.cssText="font-size:12px;padding:2px 8px";
+    const summary=document.createElement("summary");summary.textContent="棋規：亞洲棋例（直接捉子）";summary.style.cssText="cursor:pointer;min-height:24px";
+    const p=document.createElement("p");p.textContent="同局面第三次出現時檢查循環；單方長將、直接長捉同一子判負。一將一捉不直接判負。特殊互捉、同類牽制待核，可變著或提和；計時照常。遊戲限著為連續60回合未吃子，並非完整正式賽例裁判。";
+    note.append(summary,p);stat.after(note)}
+}
+
+addEventListener("xq-rules-mismatch",()=>toast("雙方棋規版本不同，請一起更新遊戲後再開新局。"));
 
 // ================= 棋盤 =================
 // opts：flip, last{f,t}, sel, targets[], hint[f,t], check
