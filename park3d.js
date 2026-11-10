@@ -924,7 +924,7 @@
     hint.textContent="點棋子走棋・點物件看介紹・拖曳轉頭・兩指縮放";el.append(hint);if(veil._qmin)hint.style.opacity=0;else setTimeout(()=>hint.style.opacity=0,4500);   /* 有名言的過場：操作提示等過場收掉才出現 */
     const EK=eraKey(),E=ERA[EK];
     el.style.background=E.mist;
-    let WX=null,MAPL=null,PANM=null,PANDH=0,PANROT=0,PSPOTS=null,MAPM=null,HILL=null,lastKf=-1,MAPO=[],MAPOK="",MAPP=null,MAPMN=0,RON=(()=>{try{return JSON.parse(localStorage.getItem("m_eramapRealm")||"true")!==false}catch(e){return true}})();   /* 地圖上的地名：[名字, x%, y%, 種類]；長卷的網格、圖高、地標（意見回饋 517、525） */
+    let WX=null,CANO=null,MAPL=null,PANM=null,PANDH=0,PANROT=0,PSPOTS=null,MAPM=null,HILL=null,lastKf=-1,MAPO=[],MAPOK="",MAPP=null,MAPMN=0,RON=(()=>{try{return JSON.parse(localStorage.getItem("m_eramapRealm")||"true")!==false}catch(e){return true}})();   /* 地圖上的地名：[名字, x%, y%, 種類]；長卷的網格、圖高、地標（意見回饋 517、525） */
     let RTF=null,RTK="",RTS=null,RTP=null,RTT=0,RTA=0;   /* 意見回饋 658（B 輿圖遊歷）：路線圖層的重畫函式、目前畫的版本、各站位置（點得到）、左下角的提示、上次檢查的時間、上一格地圖的透明度 */
     const sc=new T.Scene(),FARHIDE=[];sc.fog=new T.Fog(new T.Color(E.mist),70,320);sc.background=new T.Color(E.mist);   /* 意見回饋 486：環景沒畫到的地方顯示朝代的霧色，不會一片黑 */
     const cam=new T.PerspectiveCamera(50,1,.5,700);try{if(localStorage.getItem("xq_dbg3d"))window.__PK={sc,cam}}catch(e){}   /* 除錯用：localStorage 設 xq_dbg3d 才打開 */
@@ -968,6 +968,45 @@
     {const pts=[[TR-.2,FL-.06],[TR+4,FL-.9],[TR+12,FL-3.6],[TR+26,FL-9],[TR+46,FL-18],[TR+76,FL-32],[TR+120,FL-52]].map(([r,y])=>new T.Vector2(r,y));
       const hg=new T.LatheGeometry(pts,96),hb="#"+new T.Color(E.mist).lerp(new T.Color(EK==="yuan"?"#7E8F45":"#4A7A35"),.72).getHexString(),hm=M(0xffffff,{map:grassTex(hb,E.ink,10),roughness:.95});
       const hill=new T.Mesh(hg,hm);hill.material.side=T.DoubleSide;hill.receiveShadow=true;sc.add(hill);
+      /* 11/10 開發者「對戰的位置上頭搭一個朝代的遮篷，即使不下雨也會用；下雨時雨照樣下，但篷子下面淋不到」（Gemini 59 號，開發者選：程式畫＋水墨描邊、下雨布幔垂下、五組一次做完）
+         五組：秦～南北朝 帷幄（原木柱、平頂黑褐幄、朱紅垂邊）；隋唐 涼棚（朱漆柱、青布四角攢尖、金流蘇；顧問：「華蓋」是帝王傘蓋，不用這個名）；五代宋＋棋鎮 竹竿布棚（竹竿、米白麻布人字頂）；
+         元 氈帳（粗木柱、灰白氈微圓頂、藍邊）；明清 捲棚（方木柱、黃褐油布捲棚頂）。柱子用一般材質（後面的水墨處理會加墨線），篷頂、布幔另描一圈墨線。
+         篷頂在鏡頭上方以外（預設斜上方、俯視）都淡成半透明，棋盤和對手一定看得清楚；平視（鏡頭低於簷口）才是實的。
+         晴天：左右和後面的布幔捲成一捆綁在簷下；下雨：開場約一秒後繩子一鬆「唰」地垂下一半（前面朝鏡頭那一面不放，免得擋棋盤）。CANO 給雨雪用：篷子底下不下 */
+      try{const G=["qin","han","sanguo","weijin","nanbei"].includes(EK)?1:["sui","tang"].includes(EK)?2:EK==="yuan"?4:["ming","qing"].includes(EK)?5:3;
+        const PX=12.5,PZ=18.5,EY=FL+17.5,CG=new T.Group();CG.name="canopy";
+        const C={1:{post:"#4a3324",roof:"#3a2c27",trim:"#7a2418",cloth:"#6e2a20",postR:.42,sq:0},2:{post:"#a63a24",roof:"#2f5c66",trim:"#c9a43a",cloth:"#3c6a72",postR:.45,sq:0},
+          3:{post:"#b9a46c",roof:"#d6cdb4",trim:"#9a8a66",cloth:"#cfc5aa",postR:.3,sq:0},4:{post:"#6a4a30",roof:"#e3ddcf",trim:"#2f4f7a",cloth:"#d8d1c1",postR:.55,sq:0},5:{post:"#4a2e1c",roof:"#a8803e",trim:"#6a4a22",cloth:"#b08b4a",postR:.45,sq:1}}[G];
+        const pm=M(new T.Color(C.post),{roughness:.85});
+        for(const sx of[-1,1])for(const sz of[-1,1]){const h=EY-FL,geo=C.sq?new T.BoxGeometry(C.postR*2,h,C.postR*2):new T.CylinderGeometry(C.postR,C.postR*1.08,h,G===3?8:12);const m=new T.Mesh(geo,pm);m.position.set(sx*PX,FL+h/2,sz*PZ);m.castShadow=true;m.receiveShadow=true;CG.add(m);
+          if(G===3)for(let k=1;k<5;k++){const n=new T.Mesh(new T.TorusGeometry(C.postR*1.05,.06,6,12),M(new T.Color("#8a7444")));n.rotation.x=PI/2;n.position.set(sx*PX,FL+k*h/5,sz*PZ);CG.add(n)}}   /* 竹節 */
+        /* 簷下橫樑 */
+        const bm=M(new T.Color(C.post),{roughness:.85}),fbm=new T.MeshStandardMaterial({color:new T.Color(C.post),roughness:.85,transparent:true,opacity:1});for(const sz of[-1,1]){const b=new T.Mesh(new T.BoxGeometry(PX*2+1,.5,.5),sz>0?fbm:bm);b.position.set(0,EY,sz*PZ);CG.add(b)}   /* 前面（玩家這一側）那根橫樑會橫在畫面上，跟篷頂一起淡 */for(const sx of[-1,1]){const b=new T.Mesh(new T.BoxGeometry(.5,.5,PZ*2+1),bm);b.position.set(sx*PX,EY,0);CG.add(b)}
+        /* 篷頂（半透明＋墨線） */
+        const rm=new T.MeshStandardMaterial({color:new T.Color(C.roof),roughness:.9,transparent:true,opacity:.9,side:T.DoubleSide,depthWrite:false}),ink=new T.LineBasicMaterial({color:0x2a2018,transparent:true,opacity:.85}),RF=[];
+        const roof=(geo,pos,rot)=>{const m=new T.Mesh(geo,rm);m.position.set(...pos);if(rot)m.rotation.set(...rot);m.renderOrder=2;CG.add(m);RF.push(m);const e=new T.LineSegments(new T.EdgesGeometry(geo,25),ink);e.position.copy(m.position);e.rotation.copy(m.rotation);e.renderOrder=2;CG.add(e);RF.push(e);return m};
+        const W2=PX+1.2,D2=PZ+1.2;
+        if(G===1){const g=new T.CylinderGeometry(Math.SQRT1_2*.55,Math.SQRT1_2,1,4,1,false);g.rotateY(PI/4);g.scale(W2*2,3.2,D2*2);roof(g,[0,EY+1.7,0])}   /* 史學顧問 11/10：漢代斗帳是覆斗頂（四面斜收、上面平） */
+        else if(G===2){const r=Math.hypot(W2,D2),g=new T.ConeGeometry(r,6,4,1,true);g.rotateY(PI/4);g.scale(W2/(r*Math.SQRT1_2),1,D2/(r*Math.SQRT1_2));roof(g,[0,EY+3.2,0]);
+          for(const sx of[-1,1])for(const sz of[-1,1]){const t=new T.Mesh(new T.ConeGeometry(.35,1.6,8),M(new T.Color(C.trim)));t.position.set(sx*W2,EY-.6,sz*D2);t.rotation.x=PI;CG.add(t)}}
+        else if(G===3){const a=.32,L=W2/Math.cos(a);for(const sx of[-1,1])roof(new T.PlaneGeometry(L,D2*2),[sx*W2/2,EY+.4+Math.tan(a)*W2/2,0],[-PI/2,0,0]).rotation.set(-PI/2,sx*a,0,"YXZ")}
+        else if(G===4){const g=new T.SphereGeometry(1,24,8,0,TAU,0,PI/2);g.scale(W2*1.05,3.2,D2*1.05);roof(g,[0,EY+.2,0]);const band=new T.Mesh(new T.CylinderGeometry(1,1,1.1,32,1,true),new T.MeshStandardMaterial({color:new T.Color(C.trim),side:T.DoubleSide,transparent:true,opacity:.9,depthWrite:false}));band.scale.set(W2*1.05,1,D2*1.05);band.position.set(0,EY-.2,0);CG.add(band);RF.push(band)}
+        else{const g=new T.CylinderGeometry(W2,W2,D2*2,24,1,true,-PI/2,PI);g.rotateX(PI/2);g.scale(1,.32,1);roof(g,[0,EY+.3,0])}
+        /* 垂邊（簷下一圈短布） */
+        const vm=new T.MeshStandardMaterial({color:new T.Color(C.trim),roughness:.9,transparent:true,opacity:.92,side:T.DoubleSide,depthWrite:false});
+        const vs=M(new T.Color(C.trim),{roughness:.9,side:T.DoubleSide});   /* 兩側和後面的垂邊是實的（篷子的輪廓靠它們），只有前面那一圈跟篷頂一起淡 */
+        for(const sz of[-1,1]){const v=new T.Mesh(new T.PlaneGeometry(W2*2,1.2),sz>0?vm:vs);v.position.set(0,EY-.5,sz*D2);CG.add(v);if(sz>0)RF.push(v)}for(const sx of[-1,1]){const v=new T.Mesh(new T.PlaneGeometry(D2*2,1.2),vs);v.rotation.y=PI/2;v.position.set(sx*W2,EY-.5,0);CG.add(v)}
+        /* 布幔：左右、後面三面；晴天捲成一捆，下雨垂下一半 */
+        const cm=new T.MeshStandardMaterial({color:new T.Color(C.cloth),roughness:.95,transparent:true,opacity:.88,side:T.DoubleSide,depthWrite:false}),CUR=[],CH=(EY-FL)*.48;
+        const cur=(w,pos,ry)=>{const g=new T.PlaneGeometry(w,CH);g.translate(0,-CH/2,0);const m=new T.Mesh(g,cm);m.position.set(...pos);m.rotation.y=ry;m.scale.y=.04;CG.add(m);
+          const roll=new T.Mesh(new T.CylinderGeometry(.45,.45,w,10),M(new T.Color(C.cloth)));roll.rotation.z=PI/2;roll.rotation.y=ry;roll.position.set(pos[0],pos[1]-.4,pos[2]);CG.add(roll);CUR.push({m,roll})};
+        cur(PX*2,[0,EY-.9,-PZ-.05],0);cur(PZ*2,[-PX-.05,EY-.9,0],PI/2);cur(PZ*2,[PX+.05,EY-.9,0],PI/2);
+        sc.add(CG);
+        CANO={x:PX*.9,z:PZ*.9,y:EY,rm,vm,cm,ink,fbm,RF,CUR,down:0,want:0,wet:0,snow:0,c0:new T.Color(C.roof),
+          tick(dt,cy){const above=cy>EY+1.5,op=above?.12:.9;rm.opacity+=(op-rm.opacity)*Math.min(1,dt*4);vm.opacity=Math.min(.92,rm.opacity+.06);ink.opacity=above?.1:.85;cm.opacity=above?.6:.88;fbm.opacity=above?.3:1;fbm.depthWrite=!above;
+            if(this.want>this.down)this.down=Math.min(this.want,this.down+dt*2.4);else if(this.want<this.down)this.down=Math.max(this.want,this.down-dt*1.2);
+            for(const c of CUR){c.m.scale.y=.04+.96*this.down;c.roll.visible=this.down<.15}
+            const col=this.c0.clone();if(this.wet)col.multiplyScalar(1-.15*this.wet);if(this.snow)col.lerp(new T.Color(1,1,1),this.snow);rm.color.copy(col)}}}catch(e){console.warn(e)}
       /* 11/10 開發者「如果當時有下雨或下雪，對戰的時候也會出現，甚至讓畫面積雪」：開場問 App（07w7 window.XQ_PARKWX，跟渡口、棋鎮同一份天氣）這一朝現在下不下——
          雨＝斜斜的細雨絲落到石台、地面稍微變暗像濕了；雪＝雪花慢慢飄、左右晃，石台和外圍山坡從一層薄雪開始，下得越久積得越白（約兩分半到最厚）。
          手機減少動態效果＝只留積雪／濕地，不下粒子。粒子都在石台四周一個大盒子裡循環，不吃霧、不寫深度 */
@@ -990,10 +1029,10 @@
           else{const g=new T.BufferGeometry();pos=new Float32Array(N*6);vel=new Float32Array(N);for(let i=0;i<N;i++){const x=(Math.random()*2-1)*BX,y=Y0+Math.random()*(Y1-Y0),z=(Math.random()*2-1)*BX;pos.set([x,y,z,x+.35,y+1.5,z],i*6);vel[i]=30+Math.random()*12}
             g.setAttribute("position",new T.BufferAttribute(pos,3));pts=new T.LineSegments(g,new T.LineBasicMaterial({color:0xC9D3DA,transparent:true,opacity:.42*A+.1,depthWrite:false,fog:false}))}
           pts.frustumCulled=false;pts.renderOrder=3;sc.add(pts);objs.push(pts)}
-        WX={tick(dt,now){if(snow){acc=Math.min(.9,acc+dt*.006*A);L1.material.opacity=acc;L2.material.opacity=acc*.92}else{wet=Math.min(.32,wet+dt*.08);L1.material.opacity=wet;L2.material.opacity=wet*.8}
+        let wt=0;WX={tick(dt,now){wt+=dt;if(snow){acc=Math.min(.9,acc+dt*.006*A);L1.material.opacity=acc;L2.material.opacity=acc*.92;if(CANO)CANO.snow=Math.min(.85,acc)}else{wet=Math.min(.32,wet+dt*.08);L1.material.opacity=wet;L2.material.opacity=wet*.8;if(CANO){CANO.wet=Math.min(1,wet/.32);if(wt>1)CANO.want=1}}
           if(!pts)return;const p=pts.geometry.attributes.position;
-          if(snow){for(let i=0;i<N;i++){const j=i*3;pos[j+1]-=vel[i*2]*dt;pos[j]+=Math.sin(now/900+vel[i*2+1])*dt*.6;if(pos[j+1]<Y0){pos[j+1]=Y1;pos[j]=(Math.random()*2-1)*BX;pos[j+2]=(Math.random()*2-1)*BX}}}
-          else{for(let i=0;i<N;i++){const j=i*6,d=vel[i]*dt;pos[j+1]-=d;pos[j+4]-=d;pos[j]-=d*.23;pos[j+3]-=d*.23;if(pos[j+1]<Y0){const x=(Math.random()*2-1)*BX,z=(Math.random()*2-1)*BX;pos.set([x,Y1,z,x+.35,Y1+1.5,z],j)}}}
+          if(snow){for(let i=0;i<N;i++){const j=i*3;pos[j+1]-=vel[i*2]*dt;pos[j]+=Math.sin(now/900+vel[i*2+1])*dt*.6;if(pos[j+1]<Y0||CANO&&pos[j+1]<CANO.y&&Math.abs(pos[j])<CANO.x&&Math.abs(pos[j+2])<CANO.z){pos[j+1]=Y1;pos[j]=(Math.random()*2-1)*BX;pos[j+2]=(Math.random()*2-1)*BX}}}
+          else{for(let i=0;i<N;i++){const j=i*6,d=vel[i]*dt;pos[j+1]-=d;pos[j+4]-=d;pos[j]-=d*.23;pos[j+3]-=d*.23;if(pos[j+1]<Y0||CANO&&pos[j+1]<CANO.y&&Math.abs(pos[j])<CANO.x&&Math.abs(pos[j+2])<CANO.z){const x=(Math.random()*2-1)*BX,z=(Math.random()*2-1)*BX;pos.set([x,Y1,z,x+.35,Y1+1.5,z],j)}}}
           p.needsUpdate=true},
           dispose(){for(const o of objs){try{sc.remove(o);o.geometry!==hg&&o.geometry.dispose();o.material.dispose()}catch(e){}}}}}}catch(e){console.warn(e)}
       /* 開發者 11/4：石台底下鋪一張「當朝代的中國大地圖」（Gemini 水墨古地圖，有疆界和地名），畫面拉遠就看得到；地圖載好就換掉山坡，載不到就留著山坡 */
@@ -1389,6 +1428,56 @@
     // ---------- 動畫迴圈 ----------
     let stopped=false,last=performance.now(),roomN=0;
     const R=(B,i,x,y,z)=>{B.arms[i].rotation.set(x,y,z)};
+    /* 11/10 開發者「玩家可能不知道縮小會有朝代地圖，引誘玩家在對戰過程中、不影響對戰的情況下去看大地圖」（Gemini 60 號，開發者選第 3、2、5 案＋第一次拉遠的驚喜全做）：
+       ① 電腦想棋超過 1.2 秒：畫面上方飄一條竹簡「幻影棋客：此步容我深思，你先退一步賞景？」（電腦一下完就收）；
+       ② 一盤下完、結果視窗關掉以後：小帥說「咦？這圓石台底下好像畫著什麼？」；
+       ③ 剛進這一朝的園子：右下角「－」輕輕發亮，旁邊小紙條「〇〇到〇〇有多遠？往外看就知道！」（各朝名城，史學顧問核）；
+       被將軍、玩家選著棋子、電腦以外的對局（線上、同桌）不跳 ①；每種提示 6 秒自己淡掉、點一下就收；這一朝拉遠看過地圖一次，就再也不提示。
+       第一次拉遠看到地圖：一枚朱印「啪」地蓋在這一朝的京城，旁邊寫「原來我們在這裡」，一條虛線一路畫到另一座名城（就是 ③ 問的那兩座），約 7 秒後淡去。
+       看過的朝代記在 localStorage m_mapSeen（不進雲端存檔，換手機會再提示一次，無妨） */
+    /* 名城：[顯示的名字, 地圖上的標籤名]（史學顧問 11/10 核：唐改長安到揚州、五代汴州改開封、宋杭州改臨安；地圖沒有這個字的借同地的標籤位置） */
+    const MH_CITY={qin:[["咸陽"],["邯鄲"]],han:[["長安"],["洛陽"]],sanguo:[["許昌"],["成都"]],weijin:[["洛陽"],["建康"]],nanbei:[["建康"],["平城"]],sui:[["大興"],["江都"]],tang:[["長安"],["揚州"]],wudai:[["開封","汴梁"],["金陵"]],song:[["汴京"],["臨安","杭州"]],yuan:[["大都"],["杭州"]],ming:[["南京"],["北京"]],qing:[["北京"],["江寧","江南"]]};
+    const mhNm=c=>c[0],mhKey=c=>c[1]||c[0];
+    const MH={seen:(()=>{try{return(JSON.parse(localStorage.getItem("m_mapSeen")||"{}")||{})[EK]}catch(e){return false}})(),box:null,cur:null,curT:0,thinkT:0,did:{},endWait:0,pulse:null,cer:null,L:null};
+    if(!MH.seen&&MH_CITY[EK])fetch("data/eramap/labels.json").then(r=>r.ok?r.json():null).then(J=>{if(J&&Array.isArray(J[EK]))MH.L=J[EK]}).catch(()=>{});
+    const mhCss=()=>{if(document.getElementById("mhCss"))return;const s=document.createElement("style");s.id="mhCss";s.textContent=`
+.mh-tip{position:absolute;z-index:4;pointer-events:auto;cursor:pointer;opacity:0;transition:opacity .4s,transform .4s;font:700 13.5px/1.45 var(--serif,serif);color:#2a1f15}
+.mh-tip.on{opacity:1}.mh-tip small{display:block;font-weight:600;font-size:12.5px;color:#5a4630;margin-top:2px}
+.mh-top{left:50%;top:44px;transform:translate(-50%,-8px);max-width:86%;padding:7px 14px;background:linear-gradient(90deg,#d9c79c,#f3e9cf 8%,#f3e9cf 92%,#d9c79c);border:1px solid #8a6a3a;border-radius:3px;box-shadow:0 2px 8px rgba(0,0,0,.25);text-align:center}.mh-top.on{transform:translate(-50%,0)}
+.mh-say{left:50%;bottom:62px;transform:translate(-50%,6px);max-width:80%;padding:8px 12px;background:#fffaf0;border:1.5px solid #3a2618;border-radius:14px;box-shadow:0 2px 8px rgba(0,0,0,.25);text-align:center}.mh-say.on{transform:translate(-50%,0)}
+.mh-say::after{content:"";position:absolute;left:50%;bottom:-8px;margin-left:-7px;border:7px solid transparent;border-top-color:#3a2618;border-bottom:0}
+.mh-note{right:56px;bottom:14px;transform:translateX(6px);max-width:62%;padding:6px 10px;background:#fbf3df;border:1px solid #c8961e;border-radius:8px;box-shadow:0 2px 6px rgba(0,0,0,.22)}.mh-note.on{transform:none}
+.mh-glow{animation:mhGlow 1.3s ease-in-out infinite}@keyframes mhGlow{0%,100%{box-shadow:0 0 0 0 rgba(242,180,40,.0)}50%{box-shadow:0 0 0 7px rgba(242,180,40,.55)}}
+.mh-cer{position:absolute;inset:0;z-index:4;pointer-events:none;transition:opacity .8s}.mh-cer svg{position:absolute;inset:0;width:100%;height:100%}
+.mh-seal{position:absolute;width:40px;height:40px;margin:-20px 0 0 -20px;background:#a3241a;color:#f6e6cc;border:2px solid #f6e6cc;box-shadow:0 0 0 2px #a3241a,0 3px 8px rgba(0,0,0,.35);border-radius:4px;display:flex;align-items:center;justify-content:center;font:900 15px/1.05 var(--kai,var(--serif,serif));text-align:center;animation:mhStamp .45s cubic-bezier(.2,1.6,.4,1) both}
+@keyframes mhStamp{0%{transform:scale(2.6) rotate(-12deg);opacity:0}60%{opacity:1}100%{transform:scale(1) rotate(-4deg);opacity:1}}
+.mh-lab{position:absolute;transform:translate(-50%,0);margin-top:24px;white-space:nowrap;font:800 13.5px/1.2 var(--kai,var(--serif,serif));color:#3a1a10;background:rgba(251,243,223,.92);border:1px solid #8a6a3a;border-radius:3px;padding:3px 7px}
+@media (prefers-reduced-motion:reduce){.mh-glow{animation:none}.mh-seal{animation:none}}`;document.head.append(s)};
+    const mhShow=(cls,html,ms)=>{if(MH.cur)return false;mhCss();const d=document.createElement("div");d.className="mh-tip "+cls;d.innerHTML=html;el.append(d);requestAnimationFrame(()=>d.classList.add("on"));
+      const close=()=>{if(MH.cur!==d)return;MH.cur=null;d.classList.remove("on");setTimeout(()=>d.remove(),450)};d.onclick=e=>{e.stopPropagation();close()};d._close=close;MH.cur=d;MH.curT=ms/1000;return true};
+    const mhClose=()=>{if(MH.cur&&MH.cur._close)MH.cur._close()};
+    const mhSeen=()=>{MH.seen=true;mhClose();if(MH.pulse){MH.pulse.classList.remove("mh-glow");MH.pulse=null}try{const o=JSON.parse(localStorage.getItem("m_mapSeen")||"{}")||{};o[EK]=1;localStorage.setItem("m_mapSeen",JSON.stringify(o))}catch(e){}};
+    /* 第一次拉遠：朱印＋虛線（地圖座標 x%、y% → 地面 → 鏡頭投影到畫面） */
+    const mhPt=(nm)=>{const r=MH.L&&MH.L.find(q=>q[0]===nm);return r?[(r[1]/50-1)*ERAMAP_R,(r[2]/50-1)*ERAMAP_R]:null};
+    const mhScr=([x,z])=>{const v=new T.Vector3(x,FL,z).project(cam);return[(v.x+1)/2*el.clientWidth,(1-v.y)/2*el.clientHeight]};
+    function mhCeremony(){const C0=MH_CITY[EK];if(!C0)return;const C=[mhNm(C0[0]),mhNm(C0[1])],A=mhPt(mhKey(C0[0])),B=mhPt(mhKey(C0[1]));if(!A)return;mhCss();const d=document.createElement("div");d.className="mh-cer";
+      d.innerHTML=`<svg aria-hidden="true"><path fill="none" stroke="#a3241a" stroke-width="3" stroke-dasharray="7 6" stroke-linecap="round"/></svg><div class="mh-seal">${C[0].length<=2?C[0].split("").join("<br>"):"印"}</div><div class="mh-lab">原來我們在這裡・${C[0]}</div>${B?`<div class="mh-lab mh-lab2">${C[1]}</div>`:""}`;
+      el.append(d);MH.cer={d,A,B,t:0,path:d.querySelector("path"),seal:d.querySelector(".mh-seal"),lab:d.querySelector(".mh-lab"),lab2:d.querySelector(".mh-lab2")}}
+    function mhTick(dt){
+      if(MH.cer){const c=MH.cer;c.t+=dt;const[a1,a2]=mhScr(c.A);c.seal.style.left=a1+"px";c.seal.style.top=a2+"px";c.lab.style.left=a1+"px";c.lab.style.top=a2+"px";
+        if(c.B){const[b1,b2]=mhScr(c.B),k=Math.min(1,Math.max(0,(c.t-.6)/2.2)),x=a1+(b1-a1)*k,y=a2+(b2-a2)*k;c.path.setAttribute("d",`M${a1},${a2} L${x},${y}`);if(c.lab2){c.lab2.style.left=b1+"px";c.lab2.style.top=(b2-30)+"px";c.lab2.style.opacity=k>=1?1:0}}
+        if(c.t>7.5)c.d.style.opacity=0;if(c.t>8.5){c.d.remove();MH.cer=null}}
+      if(MH.cur){MH.curT-=dt;if(MH.curT<=0||MH.cur.classList.contains("mh-top")&&!thinking)mhClose()}
+      if(lastKf>.55&&!MH.seen){mhSeen();mhCeremony();return}
+      if(MH.seen||lastKf>.05)return;
+      const busy=selI>=0||!!checkRing||document.querySelector(".modal,#sheet.show");
+      /* ③ 剛進園子：－ 鈕發亮＋小紙條（每座園子一次） */
+      if(!MH.did.n&&MH_CITY[EK]){MH.did.n=1;setTimeout(()=>{if(MH.seen||stopped)return;const z=el.querySelector(".pzoom"),bs=z?z.querySelectorAll("button"):[],mi=bs[bs.length-1];if(mi){mi.classList.add("mh-glow");MH.pulse=mi;setTimeout(()=>{if(MH.pulse===mi){mi.classList.remove("mh-glow");MH.pulse=null}},9000)}
+        const C=MH_CITY[EK].map(mhNm);mhShow("mh-note",`${C[0]}到${C[1]}有多遠？往外看就知道！<small>一直按右下角的「－」</small>`,7000)},4000)}
+      /* ① 電腦想棋 */
+      if(thinking&&!busy){MH.thinkT+=dt;if(MH.thinkT>1.2&&!MH.did.t){if(mhShow("mh-top",`幻影棋客：「此步容我深思，你先退一步賞景？」<small>按右下角「－」，到天上看看天下大勢</small>`,6000))MH.did.t=1}}else MH.thinkT=0;
+      /* ② 一盤下完、結果視窗關掉 */
+      if(mood&&!MH.did.e){if(busy)MH.endWait=0;else{MH.endWait+=dt;if(MH.endWait>1.5&&mhShow("mh-say",`小帥：「咦？這圓石台底下好像畫著什麼？」<small>一直按「－」看看</small>`,6000))MH.did.e=1}}}
     function frame(now){if(stopped)return;if(!document.body.contains(el)){destroy();return}requestAnimationFrame(frame);
       if(document.hidden||el.style.display==="none"){last=now;return}const t=Math.min(.05,(now-last)/1000);last=now;
       if(el.clientWidth&&Math.abs(el.clientWidth-W)>1)fit();
@@ -1399,6 +1488,8 @@
       Object.entries(pieces).forEach(([i,g])=>{if(+i!==selI&&!anims.length&&g.position.y!==TOP)g.position.y+=(TOP-g.position.y)*Math.min(1,t*12)});
       if(checkRing)checkRing.material.opacity=.55+.4*Math.sin(now/140);
       if(WX)try{WX.tick(t,now)}catch(e){WX=null}   /* 11/10 下雨下雪、積雪 */
+      if(CANO)try{CANO.tick(t,cam.position.y)}catch(e){CANO=null}   /* 11/10 對弈遮篷 */
+      try{mhTick(t)}catch(e){}   /* 11/10 引導拉遠看朝代地圖 */
       falling.forEach(l=>{const u=l.userData;u.y-=t*1.6*u.s;if(u.y<-2){u.y=28;u.x=(Math.random()-.5)*50}l.position.set(u.x+Math.sin(now/900+u.ph)*2.5,GY+u.y,u.z);l.rotation.set(now/700*u.s+u.ph,now/500,now/800)});
       if(endT>0)endT=Math.max(0,endT-t);const EP=1-endT/END,ON=endT>0;   // 勝負動畫的進度 0→1
       // 3D 人物（線上對手的小帥、我的小帥）的勝負動畫：贏＝跳起來、中段轉一圈、雙手歡呼；輸＝垂頭、搖頭、雙手下垂；和＝拱手點頭
