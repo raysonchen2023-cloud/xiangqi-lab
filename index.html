@@ -1379,7 +1379,7 @@ html[data-hicon] .tabbar button.on{box-shadow:inset 0 -3px 0 currentColor}
       if(!window.caches)return go();caches.keys().then(function(ks){return Promise.all(ks.filter(function(k){return k.indexOf("xqlab-app-")===0}).map(function(k){return caches.delete(k)}))})
         .then(function(){return navigator.serviceWorker&&navigator.serviceWorker.getRegistration()}).then(function(r){return r&&r.update()}).catch(function(){}).then(go)}};setTimeout(chk,4000)})();
 </script>
-<script>window.XQ_OFFLINE=true;window.XQ_BUILD="20261110-2316";</script>
+<script>window.XQ_OFFLINE=true;window.XQ_BUILD="20261111-0100";</script>
 <script src="core.js"></script>
 <script src="engine.js"></script>
 <script src="local.js"></script>
@@ -7910,7 +7910,7 @@ const PORT_SPOT={_:[[25,58],[73,50],[50,30]],classic:[[22,56],[76,57],[44,36]],q
 const PORT_SIGHT={"qin":[["萬里長城",32,22,"秦始皇統一六國後，派蒙恬把燕、趙、秦原本各自修的長城連起來，西起臨洮、東到遼東，用來擋匈奴。秦長城多用黃土一層層夯實，山上就地堆石塊，沒有磚砌的城垛和敵樓；我們常看到的磚長城，大多是明朝修的。"],["烽火台",82,26,"長城沿線每隔一段路就有一座烽火台。白天燒柴冒煙、晚上點火，敵人一來，一台接一台傳下去，邊關的消息很快就能傳到遠方。"],["秦直道",75,36,"秦始皇命大將蒙恬修的軍用大道，從咸陽北邊的雲陽一路往北通到九原（今天內蒙古包頭一帶），長七百多公里，又寬又直，大軍可以很快開到北方邊境。"]],"han":[["漢代烽燧",17,27,"漢朝在河西走廊和往西域的路上修了許多烽燧，也就是守望台，士兵在上面守望、傳遞軍情。考古學家在這些遺址挖出大量木簡，叫「漢簡」，記下了戍守士兵的日常生活。"],["玉門關",86,27,"漢武帝時設在敦煌西北的關口，是河西走廊通往西域的大門。相傳西域的美玉從這裡運進中原，所以叫玉門關。漢代的關城是黃土夯成的方形小城，出了關就是大漠，是絲綢之路上的重要關卡。"]],"sanguo":[["火燒戰船",38,28,"曹操的戰船首尾相連，吳將黃蓋假裝投降，帶著裝滿乾柴、澆了油的船衝向曹營，順著東南風點火，戰船燒成一片。這就是有名的「火燒赤壁」。"],["赤壁",80,24,"西元 208 年，孫權和劉備的聯軍在長江赤壁一帶大敗曹操。這一仗之後，魏、蜀、吳三分天下的局面慢慢成形。"],["北岸營寨",86,46,"曹操大軍駐紮在長江北岸，孫劉聯軍在南岸。北方來的士兵不習慣坐船打仗，軍中又流行疾病，這些都是曹軍戰敗的原因。"]],"weijin":[["竹林",12,28,"魏晉之際，嵇康、阮籍、山濤等七位名士常在竹林下喝酒、彈琴、談天說理，被稱為「竹林七賢」。他們不愛官場的規矩，嚮往自然自在的生活。"],["曲水",42,31,"東晉永和九年（353 年），王羲之和朋友在蘭亭的溪邊玩「曲水流觴」：酒杯順著彎彎的溪水漂，停在誰面前，誰就要作詩。王羲之為這些詩寫的序，就是有名的〈蘭亭集序〉。"]],"nanbei":[["棲霞山千佛崖",24,30,"南京棲霞山的石窟，從南朝開始在山崖上鑿佛龕，最大的一龕是無量壽佛，兩旁站著菩薩。北方有雲岡、龍門那樣的大石窟，南方的石窟很少，棲霞山是南朝留下來最重要的一處，就在長江邊上。"],["山寺佛塔",56,23,"南朝的皇帝和貴族很信佛，梁武帝甚至幾次捨身出家。杜牧寫「南朝四百八十寺」，說的就是當年建康城一帶寺廟林立的樣子。"],["長江",72,75,"南北朝時，南方和北方的政權大致隔著長江、淮河對峙了一百多年。長江又寬又急，北方的大軍很難渡江南下。"]],"sui":[["隋煬帝的龍舟",24,31,"運河開通後，隋煬帝坐著四層高的大龍舟南下江都（今天的揚州）巡遊，跟隨的船隊前後連綿兩百多里。這樣勞民傷財，也是隋朝很快滅亡的原因之一。"],["大運河",62,22,"隋煬帝動員上百萬民工，以洛陽為中心開鑿運河，北到涿郡、南到餘杭，把海河、黃河、淮河、長江、錢塘江五大水系連在一起。從此南方的糧食可以用船運到北方。"]],"tang":[["長安城門",28,16,"唐代的長安是當時世界上最大的城市之一，四周有高大的城牆。城裡的大街像棋盤一樣橫平豎直，劃分成一百多個「坊」。"],["大雁塔",79,14,"玄奘從天竺取經回來後，在長安的慈恩寺建了這座塔，收藏他帶回來的經書和佛像。新考上的進士會到塔下題名，叫「雁塔題名」。"],["西市",88,33,"長安有東市和西市。西市靠近絲綢之路的起點，西域來的胡商很多，賣珠寶、香料、胡餅。據說我們說「買東西」，就是從逛東市、西市來的。"]],"wudai":[["遠方的戰火",15,18,"五代只有短短五十多年，中原就換了後梁、後唐、後晉、後漢、後周五個朝代，戰爭幾乎沒有停過。遠方常常看得見村子被戰火燒起的黑煙，百姓只好扶老攜幼逃難。"],["荒村",12,56,"連年打仗，許多百姓離開家鄉逃難，田地荒廢、村子成了廢墟。直到宋太祖趙匡胤建立宋朝，天下才慢慢安定下來。"]],"song":[["雷峰塔",30,17,"吳越國王錢俶在西湖邊建的塔，因為蓋在雷峰上而得名。後來流傳的《白蛇傳》裡，白娘子就被法海壓在雷峰塔下。"],["斷橋",32,24,"西湖白堤東頭的石拱橋。冬天下雪後，橋面向陽的雪先融化，遠看橋像斷了一樣，叫「斷橋殘雪」，南宋時就列入西湖十景。《白蛇傳》裡許仙和白娘子也在這裡相遇。"],["元宵花燈",88,38,"宋朝的元宵節非常熱鬧，臨安城家家掛燈，街上有燈山、煙火和舞隊，一連好幾夜。辛棄疾寫「東風夜放花千樹」，寫的就是元宵夜的燈火。"]],"yuan":[["蒙古包",29,44,"蒙古人跟著水草放牧遷徙，住的是可以拆開、搬走的圓形氈帳。元朝人叫它「穹廬」或「氈帳」，「蒙古包」是清朝以後才有的叫法。元朝的皇帝每年夏天也會到草原上的上都避暑。"],["站赤",87,46,"元朝在全國設了一千多處驛站，蒙古話叫「站赤」。官員和信使拿著牌子，就能在驛站換馬、吃住，消息可以從大都一路傳到很遠的地方。馬可・波羅的遊記也寫到這套驛站制度。"]],"ming":[["馬頭牆",12,30,"徽州民居的白牆高出屋頂，一層一層像昂起的馬頭，所以叫馬頭牆。房子挨得很近，高牆可以擋住火勢，又叫「封火牆」。明朝徽商在外做生意致富，回鄉蓋起這樣的大宅。"],["石牌坊",68,29,"徽州的村口常立著石牌坊，表彰考上功名的讀書人，或是孝順、守節的人。歙縣棠樾村有一整排的牌坊群。"],["黃山",78,16,"徽州境內的名山，以奇松、怪石、雲海出名。明朝的旅行家徐霞客兩次登上黃山，留下了遊記。"]],"qing":[["文峰塔",86,18,"揚州城南古運河邊的八角七層寶塔，明朝萬曆十年（1582 年）建造。塔名「文峰」，是希望地方文風興盛、多出讀書人。運河上的船老遠就能看到它，像是揚州的路標。"],["瘦西湖",22,20,"揚州城西北細長的湖，兩岸是鹽商修的園林。乾隆皇帝南巡時來過，湖上有五座亭子的五亭橋（1757 年）和像寶瓶一樣的白塔（1784 年），都是乾隆年間鹽商出錢修的。"],["漕運糧船",84,82,"清朝每年要從江南用船把幾百萬石糧食，經過大運河運到北京，叫「漕運」。揚州正好在運河和長江交會的地方，糧船、鹽商都聚在這裡，城市非常繁華。"]]};
 function portSight(k,i){const s=(PORT_SIGHT[k]||[])[i];if(!s)return;vibrate(5);(typeof relicSightDrop==="function"?relicSightDrop("p",k,s[0]):relicDrop(k,.15)).then(got=>{if(got)return;const T=SHIP_STOP[k]||{};sheet("📍 "+s[0],b=>{b.innerHTML=`<div class="muted" style="margin:-4px 0 8px">${esc(eraLabel(k))}・${esc(T.place||"")}</div><p style="line-height:1.8;margin:0;font-size:16px">${esc(s[3])}</p>`})}).catch(()=>{})}
 function Port(v){const k=shipHere(),T=SHIP_STOP[k]||SHIP_STOP.classic,Ls=SHIP_LESSON[k]||{},ap=shipAppr(),AS=typeof arenaStamps==="function"?arenaStamps():{},A=ARENA[k]||{},lrn=shipLearned(k);
-  setTop("⚓ "+portName(k),"^#/adventure",[["⛵",()=>goUp("#/adventure"),"回星槎"]]);setTabs(false);v.className="view";
+  setTop("⚓ "+portName(k),"^#/adventure");   /* hspx 11/11：標題列右上的 ⛵ 拿掉，回星槎走圖上的「⛵ 上星槎／回星槎」（07w4 PH4_PIER） */setTabs(false);v.className="view";
   const byT=ap||!Ls.open,W=byT?shipWho(k,"teller"):shipWho(k,lrn&&Ls.done?Ls.doneBy:Ls.openBy),say=byT?shipQuote():lrn&&Ls.done?Ls.done:Ls.open;
   const Q=PORT_SPOT[k]||PORT_SPOT._;   /* 意見回饋 709：渡口上方＝那一朝的滿版水墨圖（data/shipmap/port_<朝代>.webp），三扇門是圖上的金色入口 */
   v.innerHTML=shpPage("port_"+k,"⚓ "+esc(portName(k)),(k==="classic"?"雲河星槎":esc(eraLabel(k)))+"・"+esc(T.place),[["poPark",Q[0][0],Q[0][1],"🌳 "+esc(parkName(k)),"路人棋友"],["poInn",Q[1][0],Q[1][1],"🏮 "+esc(innName(k)),"旅人・秘境棋友"],["poArena",Q[2][0],Q[2][1],"🏯 "+esc(A.name||"擂主")+(AS[k]?" ✓":""),"擂台"],...(k==="classic"?[["poPh",47,65,"🀄 千秋石桌","幻影指導局"]]:[["poBattle",Q[2][0],Math.min(90,Q[2][1]+11),"⚔ 古戰場"+((typeof sealSideOn==="function"?sealSideOn(k,"battle"):(store.get("battleTitle",{})||{})[k])?" ✓":""),""]])],   /* 意見回饋 725：擂台旁的「⚔ 古戰場」（07g-battle.js），船艙沒有 */(PORT_SIGHT[k]||[]).map((s,i)=>`<button class="po-sight" data-ps="${i}" style="left:${s[1]}%;top:${s[2]}%">📍 ${esc(s[0])}</button>`).join(""))+`<div class="pad port">
@@ -12818,7 +12818,7 @@ async function ph4Load(P,box,hit,say,C,k,cid){
 /* 回饋 806（開發者 11/9「角色可以直接走到星槎上船處返回星槎」）：每一朝渡口的碼頭盡頭（靠船的地方）加一個金色標籤「⛵ 上星槎」，
    取代 805 藏起來的大按鈕。點標籤、或點碼頭盡頭那一塊空地：角色沿路走到碼頭盡頭、朝船揮手，再回星槎（#/adventure）。標題列的 ⛵ 照舊是捷徑。
    PH4_PIER[朝代]＝{N:新路點（腳底位置，照每張渡口圖量的，走在地面和碼頭木板上）, E:接到原本路網的邊, at:標籤位置, boat:面向的船}；併進 SHW_PSX（07w 掛路網時會一起讀）。
-   船艙（classic）本來就在星槎上，沒有碼頭，不加 */
+   船艙（classic）本來就在星槎上：11/11 起也加，標籤寫「⛵ 回星槎」，走到纜繩木樁。標題列的 ⛵ 同日拿掉（07f Port） */
 const PH4_PIER={
   qin:{N:{pq1:[46,72],pier:[17,82]},E:"home-pq1 pq1-pier",at:[19,76],boat:[5,93]},
   han:{N:{pier:[32,83]},E:"home-pier",at:[31,77],boat:[30,91]},
@@ -12831,10 +12831,12 @@ const PH4_PIER={
   song:{N:{pq1:[48,79],pier:[15,88]},E:"home-pq1 pq1-pier",at:[17,82.5],boat:[8,94]},
   yuan:{N:{pier:[25,80.5]},E:"home-pier",at:[12,81],boat:[10,92]},
   ming:{N:{pq1:[36,73],pier:[15,76]},E:"home-pq1 pq1-pier",at:[10,82],boat:[20,90]},
-  qing:{N:{pq1:[40,71],pier:[9,80]},E:"dock-pq1 pq1-pier",at:[12,74.5],boat:[18,92]}};
+  qing:{N:{pq1:[40,71],pier:[9,80]},E:"dock-pq1 pq1-pier",at:[12,74.5],boat:[18,92]},
+  /* hspx 11/11「拿掉右上角的入口，回星槎的入口在圖上，跟其他朝代一樣」：船艙左下那艘船的纜繩繫在右下石階旁的木樁；角色走下石階到木樁、朝船揮手 */
+  classic:{N:{st1:[77,88],pier:[69,96]},E:"home-st1 st1-pier",at:[20,82],boat:[15,88],nm:"⛵ 回星槎"}};
 if(typeof SHW_PSX!=="undefined")for(const k in PH4_PIER){const A=PH4_PIER[k],X=SHW_PSX[k]||(SHW_PSX[k]={N:{},E:"",HS:{}});X.N=Object.assign({},X.N,A.N);X.E=(X.E?X.E+" ":"")+A.E;X.HS=Object.assign({},X.HS,{poBoard:["pier",A.boat[0],A.boat[1],"wave"]})}
 function ph4Pier(v,k){const A=PH4_PIER[k],P=v&&v.querySelector(".shp-page.cq");if(!A||!P||P.querySelector("#poBoard"))return;ph4Css();
-  const b=document.createElement("button");b.className="shp-spot";b.id="poBoard";b.style.left=A.at[0]+"%";b.style.top=A.at[1]+"%";b.innerHTML="<b>⛵ 上星槎</b>";b.setAttribute("aria-label","走到碼頭上星槎");
+  const b=document.createElement("button");b.className="shp-spot";b.id="poBoard";b.style.left=A.at[0]+"%";b.style.top=A.at[1]+"%";b.innerHTML="<b>"+(A.nm||"⛵ 上星槎")+"</b>";b.setAttribute("aria-label",A.nm?"回星槎":"走到碼頭上星槎");
   b.onclick=()=>{if(typeof vibrate==="function")vibrate(5);goUp("#/adventure")};
   const z=document.createElement("button");z.type="button";z.className="ph4-pz";z.setAttribute("aria-hidden","true");z.tabIndex=-1;const e=A.N.pier;Object.assign(z.style,{left:(e[0]-9)+"%",top:(e[1]-4.5)+"%",width:"18%",height:"7%"});
   z.onclick=ev=>{ev.stopPropagation();b.click()};
