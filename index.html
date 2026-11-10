@@ -1379,7 +1379,7 @@ html[data-hicon] .tabbar button.on{box-shadow:inset 0 -3px 0 currentColor}
       if(!window.caches)return go();caches.keys().then(function(ks){return Promise.all(ks.filter(function(k){return k.indexOf("xqlab-app-")===0}).map(function(k){return caches.delete(k)}))})
         .then(function(){return navigator.serviceWorker&&navigator.serviceWorker.getRegistration()}).then(function(r){return r&&r.update()}).catch(function(){}).then(go)}};setTimeout(chk,4000)})();
 </script>
-<script>window.XQ_OFFLINE=true;window.XQ_BUILD="20261110-2030";</script>
+<script>window.XQ_OFFLINE=true;window.XQ_BUILD="20261110-2045";</script>
 <script src="core.js"></script>
 <script src="engine.js"></script>
 <script src="local.js"></script>
@@ -13743,7 +13743,7 @@ if(typeof Home==="function"){const f0=Home;Home=function(v,hub){const r=f0.apply
    標籤只有大字。接 07w 走路（SHW_LOBBY）、07x 兩指縮放。圖片網址帶 LM_IMGV（data/lobbymap 在不跟版本走的快取裡，換圖要改這個數字）。
    開關 LOBBY_MAP_ON（false＝照舊清單）；樣式在 lmCss */
 const LOBBY_MAP_ON=true;   /* 開發者 11/8 說打開 */
-const LM_IMGV="1950";
+const LM_IMGV="1950";   /* 11/10 經典世界（還沒登船或停在經典）用觀星閣的天井 lobby_classic；明朝照舊用 lobby（明清徽州茶樓），構圖相同、座標共用 */
 const LM_IMG=n=>`data/lobbymap/${n}.webp?v=${LM_IMGV}`;
 /* 開發者 11/9：照星槎停靠的朝代換圖（story/朝代場景計畫.md；考究說明 park/lobbymap/考究說明_各朝大廳_1109.md）。構圖、入口、棋桌、燈、走路節點的座標都不變。
    有停靠才算（判斷跟 07y hbDockEra() 一樣）；沒停靠、明朝用原圖和原素材。各朝檔名一律帶朝代（同一組時代的內容一樣），preload-list.js 的 ERA_RE 才分得到各朝：
@@ -13894,7 +13894,7 @@ function lmPaint(v,P){const lay=P.querySelector(".lm-l");if(!lay||!window.XQNet)
   const ai=P.querySelector("#lmAi");if(ai){const aw=!!(lb&&lb.querySelector("#aiw"));ai.querySelector("b").textContent="📺 AI 對戰";ai.style.display=aw?"":"none"}}
 function lobbyMap(v){const lb=v.querySelector("#lb");if(!lb||v.querySelector(".lobby-page"))return;lmCss();
   const d=document.createElement("div");
-  d.innerHTML=`<div class="shp-page cq lobby-page"><img src="${LM_IMG(lmN("lobby",lmEra()))}" alt="千燈天井"><div class="lm-l"></div>${LM_INK_LAMP?LM_LAMP_SVG:""}${LM_SPOTS.map(([id,x,y,t])=>`<button class="shp-spot" id="${id}" style="left:${x}%;top:${y}%"><b>${esc(t)}</b></button>`).join("")}</div>`;
+  d.innerHTML=`<div class="shp-page cq lobby-page"><img src="${LM_IMG(typeof hbIsCl==="function"&&hbIsCl()?"lobby_classic":lmN("lobby",lmEra()))}" alt="千燈天井"><div class="lm-l"></div>${LM_INK_LAMP?LM_LAMP_SVG:""}${LM_SPOTS.map(([id,x,y,t])=>`<button class="shp-spot" id="${id}" style="left:${x}%;top:${y}%"><b>${esc(t)}</b></button>`).join("")}</div>`;
   const P=d.firstElementChild;v.insertBefore(P,lb);
   /* 名冊抽屜：原本的清單整個搬進來（還在 v 裡面，paint() 照樣找得到 #lb） */
   const dw=document.createElement("div");dw.className="lm-dw";dw.innerHTML='<div class="lm-dw-h">📜 名冊<button type="button" aria-label="關上名冊">✕</button></div><div class="lm-dw-b"></div>';
