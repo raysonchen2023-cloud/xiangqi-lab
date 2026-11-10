@@ -1379,7 +1379,7 @@ html[data-hicon] .tabbar button.on{box-shadow:inset 0 -3px 0 currentColor}
       if(!window.caches)return go();caches.keys().then(function(ks){return Promise.all(ks.filter(function(k){return k.indexOf("xqlab-app-")===0}).map(function(k){return caches.delete(k)}))})
         .then(function(){return navigator.serviceWorker&&navigator.serviceWorker.getRegistration()}).then(function(r){return r&&r.update()}).catch(function(){}).then(go)}};setTimeout(chk,4000)})();
 </script>
-<script>window.XQ_OFFLINE=true;window.XQ_BUILD="20261111-0130";</script>
+<script>window.XQ_OFFLINE=true;window.XQ_BUILD="20261111-0145";</script>
 <script src="core.js"></script>
 <script src="engine.js"></script>
 <script src="local.js"></script>
@@ -5769,7 +5769,7 @@ function xpSheet(){const I=xpInfo();sheet("🀄 棋道修行",b=>{b.innerHTML=`<
       <!-- 意見回饋 609：只寫怎麼用，不寫掉落規則 -->
       <p style="margin:0 0 8px"><b>💡 提示棋</b>：輪到你時用，Pikafish 會指出關鍵的那顆子。用過的那盤不算進我的棋力。</p>
       <p style="margin:0 0 8px"><b>↶ 悔棋符</b>：現在有 <b>${undoLeft()}</b> 張。用 1 張可以退回你的上一步。</p>
-      <p class="muted" style="margin:0;font-size:13px">對局時按「🎒 寶物」就能用：挑戰電腦、擂台、故事都可以；線上對戰、積分挑戰、獎勵模式比真實力，不能用。</p></div>
+      <p class="muted" style="margin:0;font-size:13px">對局時按「🎒 寶物」就能用：挑戰電腦、擂台、故事都可以；線上對戰、積分挑戰比真實力，不能用。</p></div>
     <div style="height:14px"></div>
     <button class="btn" id="xj" style="width:100%">🪨 去石桌往事闖關</button>`;b.querySelector("#xj").onclick=()=>{closeSheet();location.hash="#/shelf/1"}})}
 
@@ -5784,7 +5784,7 @@ function useHint(){const H=hintInfo();if(H.left>0){store.set("hintUse",{d:H.day,
 /* 意見回饋 594／595（開發者）：悔棋改成寶物「悔棋符」。跟電腦下、故事裡下，要用 1 張悔棋符才能悔一步；線上對戰不能悔棋也不能提示。
    練習（擺盤、錯棋重練）照樣隨便退。掉落規則見下面 itemDrop（意見回饋 597） */
 /* 意見回饋 597：哪些對局不能用寶物（提示棋、悔棋符）——回傳原因，可以用就回傳空字串。線上對戰另外在對戰頁就沒有寶物 */
-const itemBlock=st=>!st?"":(st.kind||(st.practice?"practice":st.journey?"journey":st.arena?"arena":"cpu"))==="cpu"?"跟幻影棋客下棋要比真實力，不能用寶物":st.ranked?"積分挑戰要比真實力，不能用寶物":st.reward?"獎勵模式贏的是點數，不能用寶物":st.practice?"練習可以直接退，不用寶物":"";
+const itemBlock=st=>!st?"":(st.kind||(st.practice?"practice":st.journey?"journey":st.arena?"arena":"cpu"))==="cpu"?"跟幻影棋客下棋要比真實力，不能用寶物":st.ranked?"積分挑戰要比真實力，不能用寶物":st.practice?"練習可以直接退，不用寶物":"";
 /* 意見回饋 597（開發者選「強度＋保底」）：每盤結束（自己走 10 步以上）💡 提示棋、↶ 悔棋符各抽一次，線上對戰也算。
    機率＝對手強度 N%（電腦第 N 級；線上照對手段位換成同級電腦；積分挑戰照那一段），贏了再 +2%，最高 20%。
    哪一樣連 15 盤沒掉，下一盤那一樣一定掉。同一盤只抽一次 */
@@ -5989,7 +5989,7 @@ const jPlace=j=>String(j||"").startsWith("bt:")?"古戰場":j==="park"?"渡口":
 async function jStart(id,b,go,force){let st;try{st=await api("/play/state")}catch(e){toast(e.message);return}
   const cur=st.journey&&!st.result&&st.moves&&st.moves.length?{journey:st.journey,n:st.moves.length}:null,o=(st.others||[]).find(z=>z.kind==="journey");let g=cur||(o?{journey:o.journey,n:o.n}:null);
   if(g&&typeof rsFinGame==="function"&&rsFinGame(rsJId(st)))g=null;   /* 回饋 838（開發者 11/9 選：全模式中斷接續）：「撐過 N 步」已經過關的那盤，不問、直接開新的 */
-  const fresh=async()=>{try{store.set("cpuRanked",false);store.set("cpuCar",false);const ez=id==="park"&&typeof qqParkEasy==="function"?qqParkEasy():null;   /* 贖回攔路棋客押走的東西：那一盤低一級（07h-qqev.js） */const s=await api("/play/new",{...b,dx:typeof diffDx==="function"?diffDx():0,...(ez||{})});if(id==="park")parkNpcNew(s.id,ez?ez.level:b.level);   /* 意見回饋 675：照航行難度加減幾段（園子、驛站、秘境棋友、章回棋路對弈關都從這裡開） */store.set("jPending",id==="park"?null:{id,game:s.id});go(true)}catch(e){toast(e.message)}};
+  const fresh=async()=>{try{store.set("cpuRanked",false);const ez=id==="park"&&typeof qqParkEasy==="function"?qqParkEasy():null;   /* 贖回攔路棋客押走的東西：那一盤低一級（07h-qqev.js） */const s=await api("/play/new",{...b,dx:typeof diffDx==="function"?diffDx():0,...(ez||{})});if(id==="park")parkNpcNew(s.id,ez?ez.level:b.level);   /* 意見回饋 675：照航行難度加減幾段（園子、驛站、秘境棋友、章回棋路對弈關都從這裡開） */store.set("jPending",id==="park"?null:{id,game:s.id});go(true)}catch(e){toast(e.message)}};
   if(force||!g)return fresh();
   if(g.journey===id)return go(false);
   modal(`<div class="em">🪨</div><h2>石桌往事還有一盤沒下完</h2><p class="muted">「${esc(jName(g.journey))}」下到第 ${Math.ceil(g.n/2)} 回合。石桌往事一次只留一盤，開新的，那一盤就不留了。</p>`,
