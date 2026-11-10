@@ -1370,7 +1370,7 @@ html[data-hicon] .tabbar button.on{box-shadow:inset 0 -3px 0 currentColor}
       if(!window.caches)return go();caches.keys().then(function(ks){return Promise.all(ks.filter(function(k){return k.indexOf("xqlab-app-")===0}).map(function(k){return caches.delete(k)}))})
         .then(function(){return navigator.serviceWorker&&navigator.serviceWorker.getRegistration()}).then(function(r){return r&&r.update()}).catch(function(){}).then(go)}};setTimeout(chk,4000)})();
 </script>
-<script>window.XQ_OFFLINE=true;window.XQ_BUILD="20261110-1515";</script>
+<script>window.XQ_OFFLINE=true;window.XQ_BUILD="20261110-1530";</script>
 <script src="core.js"></script>
 <script src="engine.js"></script>
 <script src="local.js"></script>
@@ -2801,7 +2801,7 @@ const APP_HOME="https://raysonchen2023-cloud.github.io/xiangqi-lab/";
 const DEVMODE=()=>!OFF||!!store.get("devMode",false);
 // 開發者登入：在 App 裡檢查（只放「帳號＋密碼」的雜湊值，不放明碼）。這只是畫面開關；
 // 回饋資料放在 Google 的意見回饋管理頁，只有登入開發者 Google 帳號才打得開，那才是真正的保護。
-const DEV_HASH="4e72cb09c4ef78623b6da77400fb8f31c53bf87f847fd4659e8e1c4c4c1a48ed";
+const DEV_HASH="81c6d32f5f50f465602de00d0b4896216b2f5ccb497c57809486282d9cca0779";
 async function devHash(u,p){const d=await crypto.subtle.digest("SHA-256",new TextEncoder().encode("xqlab-dev:"+u+":"+p));return[...new Uint8Array(d)].map(x=>x.toString(16).padStart(2,"0")).join("")}
 function devLogin(ok){sheet("🔒 開發者登入",b=>{const inp='width:100%;padding:12px;border:1px solid var(--line);border-radius:12px;background:var(--card);color:inherit;margin:4px 0 10px;-webkit-user-select:text;user-select:text';
   b.innerHTML=`<p class="muted">開發者模式要輸入帳號和密碼。一般玩家不用打開。</p>
@@ -2868,6 +2868,7 @@ async function deviceQR(base,key){
   sheet("讓另一台裝置連到電腦",b=>{b.innerHTML=`<p style="text-align:center">用另一台手機／平板的相機掃這個 QR code，打開後就會連到你的電腦。</p><div class="qrbox" id="qrc"></div>
     <p class="muted" style="text-align:center">⚠ 含存取碼：掃到的人能操作電腦上的對局。只給自己的裝置或信任的人。</p>`;
     new QRCode(b.querySelector("#qrc"),{text:u,width:220,height:220,correctLevel:QRCode.CorrectLevel.L})})}
+
 
 
 // ================= 首頁 =================
@@ -13371,7 +13372,7 @@ const HB_YARD_G=e=>["qin","han","sanguo","weijin","nanbei","sui","tang"].include
 function hbYardGate(kind){const h=hbHubN();let e="";try{e=hbDockEra()}catch(x){}const k=store.get("era","classic"),p=(typeof PW!=="undefined"&&PW[k])||"園子",g=HB_YARD_G(e||k);
   const T={cpu:["移步後園",`客官請移步，${h}後方的${p}風景正好！`],pvp:["移步後園","裡頭太擠，咱們去後頭寬敞處切磋！"],net:["移步後園",`棋友到了，雙方移步${h}後院石台`]}[kind]||["移步後園",""];
   let n="battle";try{n=hbImg("battle","battle")}catch(x){}
-  return{img:["data/parkgate/yard"+g+".webp","data/parkgate/yard.webp","data/hubmap/"+n+".webp"],icon:"🚪",title:T[0],sub:T[1],bg:"#1f2a22"}}
+  return{img:["data/parkgate/yard"+g+".webp","data/parkgate/yard.webp","data/hubmap/"+n+".webp"],icon:"🚪",title:T[0],sub:T[1],bg:"#1f2a22",walk:3800}}   /* 開發者「過場太快、沒有味道」：停 3.8 秒、慢慢走進門洞（park3d 的 G.walk） */
 function hbGate(icon,title,sub){let n="battle",h="";try{n=hbImg("battle","battle")}catch(e){}try{h=typeof xqHubName==="function"?xqHubName("battle").replace(/^\S+\s/,""):""}catch(e){}return{img:["data/hubmap/"+n+".webp","data/hubmap/battle.webp"],icon,title,sub:(h?h+"・":"")+sub,bg:"#1f2a22"}}
 /* 入口：[標籤 id（也是 07w 的入口代號）, 卡片的選擇器, 標籤左%, 上%]（量 768×1376 的定稿圖，標籤放在東西上方，角色站在東西前面） */
 const HUB_DEF={
@@ -14621,7 +14622,7 @@ function FeedbackPage(v,sub){fbpCss();setTop("💬 意見回饋","#/settings");i
       if(!F){fl.innerHTML='<p class="fbp-bw-m">讀不到修正紀錄</p>';return}
       FX=F;cap.textContent=F.dev?"全部的修正，最新的在最上面":"你回報、已經修好的問題";fl.innerHTML="";if(F.items.length)more();else fl.innerHTML=fixList([],F.dev);
       const top=F.items.slice(0,3);P.querySelectorAll(".fbp-slip").forEach((e,i)=>{const x=top[i];if(!x)return;e.style.display="";fbpSlipFit(e,String(x.n||"已修正").replace(/^[✅\s]+/,""))});
-      {const n=P.querySelector(".fbp-slipn");if(F.items.length>3){n.textContent=`共 ${F.items.length} 張`;n.classList.add("on")}}}).catch(()=>{if(v.isConnected)fl.innerHTML='<p class="fbp-bw-m">讀不到修正紀錄</p>'});
+      /* 回饋 861（開發者 11/10）「不用把張數寫出來」：告示榜不再標「共 N 張」 */}).catch(()=>{if(v.isConnected)fl.innerHTML='<p class="fbp-bw-m">讀不到修正紀錄</p>'});
     if(sub==="fixes"){sub="";setTimeout(openB,60)}
     paint();
     try{if(typeof shwPage==="function"&&typeof SHIP_WALK_ON!=="undefined"&&SHIP_WALK_ON)shwPage(v,Object.assign({},SHW_PG0,SHW_FBP),"fbp")}catch(e){}
@@ -17430,7 +17431,7 @@ function sw7Page(src){for(const o of SW7_PAGES)if(o.re.test(src))return o;return
 function sw7TermFor(P,o){return P&&P.dataset&&P.dataset.sw7Term||sw7Term()}   /* ⑥ 四時風物匣點了某一季＝這一頁 data-sw7-term 暫時覆寫，離開這頁就沒了 */
 /* 11/10 開發者「同一個朝代某個場景下雨，其他場景也要統一下雨」：棋鎮各頁（首頁、書院、茶坊、天井…）原本固定算南方 "s"，渡口、驛站照那一朝自己的地區算，停在唐、五代時會一邊下一邊晴；
    停靠某一朝時，棋鎮各頁改用那一朝渡口的地區，同一天同一時段的雨雪就一致（沒停靠照舊 "s"） */
-const SW7_TOWN=/^(home|homeAlt|today|todayN|learn|battle|lobby|canju|terms|redo|theme)$/;
+const SW7_TOWN=/^(home|homeAlt|today|todayN|learn|battle|lobby|canju|terms|redo|theme|shipMap|shipDeck)$/;   /* 回饋 858（開發者 11/10）「兩邊場景的天氣不同」：星槎航線圖、甲板也跟著停靠那一朝渡口的天氣（停在船艙＝雲河自己的天氣） */
 function sw7Rg(o){if(!o||!o.rg)return"";if(!SW7_TOWN.test(o.k||""))return o.rg;let e="";try{e=typeof hbDockEra==="function"?hbDockEra():""}catch(x){}const q=e&&SW7_PAGES.find(x=>x.k==="port_"+e);return q&&q.rg||o.rg}
 function sw7WxFor(P,o){if(!o||o.m==="in"||!o.rg)return null;return sw7Precip(sw7TermFor(P,o),sw7Rg(o))}
 /* 首頁換底圖（07z-homemap.js 問這裡）：大雪節氣那幾天、或小雪～大寒正在下雪＝積雪版 snow；正在下雨＝雨景版 rain；其他＝""（原圖）；設定關掉也是 "" */
