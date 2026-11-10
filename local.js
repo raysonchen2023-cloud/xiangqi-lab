@@ -165,11 +165,14 @@ var XQ=(function(){
     if(P.styleOn==null)P.styleOn=Math.random()<.9;if(!P.styleOn)return null;
     const list=(S[P.turn]||[])[Math.floor(P.moves.length/2)];if(!list)return null;const L=legal(P.board,P.turn);
     for(const u of list){const f=parseSq(u.slice(0,2)),t=parseSq(u.slice(2,4));if(L.some(([a,b])=>a===f&&b===t))return[f,t]}return null}
+  const CPU_MIN_MS=1000;
   async function playEngine(){
     if(!P||P.result||P.turn===P.human||playBusy)return;
     {const sm=styleMove();if(sm){playBusy=true;setTimeout(()=>{try{if(P&&!P.result&&P.turn!==P.human)playApply(sm[0],sm[1])}finally{playBusy=false;setTimeout(playEngine,0)}},700);return}}
     playBusy=true;const id=P.id,n=P.moves.length,lv=P.ranked?RLV[P.rk]||RLV[0]:P.rlv!=null?RLV[P.rlv]||RLV[0]:LEVELS[P.level-1]||LEVELS[2];   /* 意見回饋 548：驛站旅人用段位強度 rlv 浮動 */
+    const t0=Date.now();   /* 11/10 開發者「我剛走完一步，電腦就馬上落子」：低等級用淺層深度幾毫秒就算完，至少等 1～1.5 秒再落子，讓玩家看清自己那一步 */
     try{const r=await XQEngine.search({moves:ucis()},lv.movetime?{movetime:lv.movetime}:{depth:lv.depth},lv.multipv||1);
+      {const w=CPU_MIN_MS+Math.random()*500-(Date.now()-t0);if(w>0)await new Promise(z=>setTimeout(z,w))}
       if(!P||P.id!==id||P.moves.length!==n||P.result)return;
       const mv=pickMove(r,lv),f=parseSq(mv.slice(0,2)),t=parseSq(mv.slice(2,4));
       if(!legal(P.board,P.turn).some(([a,b])=>a===f&&b===t))throw new Error("引擎給出不合法著法 "+mv);

@@ -1379,7 +1379,7 @@ html[data-hicon] .tabbar button.on{box-shadow:inset 0 -3px 0 currentColor}
       if(!window.caches)return go();caches.keys().then(function(ks){return Promise.all(ks.filter(function(k){return k.indexOf("xqlab-app-")===0}).map(function(k){return caches.delete(k)}))})
         .then(function(){return navigator.serviceWorker&&navigator.serviceWorker.getRegistration()}).then(function(r){return r&&r.update()}).catch(function(){}).then(go)}};setTimeout(chk,4000)})();
 </script>
-<script>window.XQ_OFFLINE=true;window.XQ_BUILD="20261110-2230";</script>
+<script>window.XQ_OFFLINE=true;window.XQ_BUILD="20261110-2245";</script>
 <script src="core.js"></script>
 <script src="engine.js"></script>
 <script src="local.js"></script>
@@ -6333,7 +6333,8 @@ function jPuzzle(v,s){setTop(s.theme?"🧠 "+s.name:ROAD_NAME+"・"+s.name,s.the
 const B2_CN={K:"帥",A:"仕",B:"相",N:"傌",R:"俥",C:"炮",P:"兵",k:"將",a:"士",b:"象",n:"馬",r:"車",c:"砲",p:"卒"};
 /* 電腦走一步：用挑戰電腦同一套等級（LEVELS）和挑選方式（pickMove）；引擎出錯就隨便走一步合法的 */
 async function b2Eng(b,turn,ai,full){const C=window.XQCore,lv=C.LEVELS[Math.max(1,Math.min(8,ai||3))-1]||C.LEVELS[2];
-  try{const r=await XQEngine.search({fen:C.fen(b,turn)},lv.movetime?{movetime:lv.movetime}:{depth:lv.depth},lv.multipv||1);const mv=C.pickMove(r,lv),f=C.parseSq(mv.slice(0,2)),t=C.parseSq(mv.slice(2,4));
+  const t0=Date.now();   /* 11/10 開發者「我剛走完一步，電腦就馬上落子」：至少想 0.9～1.3 秒再落子 */
+  try{const r=await XQEngine.search({fen:C.fen(b,turn)},lv.movetime?{movetime:lv.movetime}:{depth:lv.depth},lv.multipv||1);{const w=900+Math.random()*400-(Date.now()-t0);if(w>0)await new Promise(z=>setTimeout(z,w))}const mv=C.pickMove(r,lv),f=C.parseSq(mv.slice(0,2)),t=C.parseSq(mv.slice(2,4));
     if(C.legal(b,turn).some(([a,z])=>a===f&&z===t))return full?{f,t,mv,r}:{f,t,mv}}catch(e){}
   const L=C.legal(b,turn);if(!L.length)return null;const[f,t]=L[Math.floor(Math.random()*L.length)];return{f,t,mv:C.iccs(f,t)}}
 const b2EvalTxt=v=>v==null?"":Math.abs(v)>=29000?`${v>0?"紅方":"黑方"} ${Math.max(1,Math.ceil((30000-Math.abs(v))/2))} 步殺`:`紅方 ${v>=0?"+":""}${(v/100).toFixed(2)}`;
