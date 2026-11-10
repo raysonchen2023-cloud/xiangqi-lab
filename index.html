@@ -1370,7 +1370,7 @@ html[data-hicon] .tabbar button.on{box-shadow:inset 0 -3px 0 currentColor}
       if(!window.caches)return go();caches.keys().then(function(ks){return Promise.all(ks.filter(function(k){return k.indexOf("xqlab-app-")===0}).map(function(k){return caches.delete(k)}))})
         .then(function(){return navigator.serviceWorker&&navigator.serviceWorker.getRegistration()}).then(function(r){return r&&r.update()}).catch(function(){}).then(go)}};setTimeout(chk,4000)})();
 </script>
-<script>window.XQ_OFFLINE=true;window.XQ_BUILD="20261110-1745";</script>
+<script>window.XQ_OFFLINE=true;window.XQ_BUILD="20261110-1800";</script>
 <script src="core.js"></script>
 <script src="engine.js"></script>
 <script src="local.js"></script>
@@ -7871,7 +7871,7 @@ function Port(v){const k=shipHere(),T=SHIP_STOP[k]||SHIP_STOP.classic,Ls=SHIP_LE
   setTop("⚓ "+portName(k),"^#/adventure",[["⛵",()=>goUp("#/adventure"),"回星槎"]]);setTabs(false);v.className="view";
   const byT=ap||!Ls.open,W=byT?shipWho(k,"teller"):shipWho(k,lrn&&Ls.done?Ls.doneBy:Ls.openBy),say=byT?shipQuote():lrn&&Ls.done?Ls.done:Ls.open;
   const Q=PORT_SPOT[k]||PORT_SPOT._;   /* 意見回饋 709：渡口上方＝那一朝的滿版水墨圖（data/shipmap/port_<朝代>.webp），三扇門是圖上的金色入口 */
-  v.innerHTML=shpPage("port_"+k,"⚓ "+esc(portName(k)),(k==="classic"?"雲河星槎":esc(eraLabel(k)))+"・"+esc(T.place),[["poPark",Q[0][0],Q[0][1],"🌳 "+esc(parkName(k)),"路人棋友"],["poInn",Q[1][0],Q[1][1],"🏮 "+esc(innName(k)),"旅人・秘境棋友"],["poArena",Q[2][0],Q[2][1],"🏯 "+esc(A.name||"擂主")+(AS[k]?" ✓":""),"擂台"],...(k==="classic"?[["poPh",59,57.5,"🀄 千秋石桌","幻影指導局"]]:[["poBattle",Q[2][0],Math.min(90,Q[2][1]+11),"⚔ 古戰場"+((typeof sealSideOn==="function"?sealSideOn(k,"battle"):(store.get("battleTitle",{})||{})[k])?" ✓":""),""]])],   /* 意見回饋 725：擂台旁的「⚔ 古戰場」（07g-battle.js），船艙沒有 */(PORT_SIGHT[k]||[]).map((s,i)=>`<button class="po-sight" data-ps="${i}" style="left:${s[1]}%;top:${s[2]}%">📍 ${esc(s[0])}</button>`).join(""))+`<div class="pad port">
+  v.innerHTML=shpPage("port_"+k,"⚓ "+esc(portName(k)),(k==="classic"?"雲河星槎":esc(eraLabel(k)))+"・"+esc(T.place),[["poPark",Q[0][0],Q[0][1],"🌳 "+esc(parkName(k)),"路人棋友"],["poInn",Q[1][0],Q[1][1],"🏮 "+esc(innName(k)),"旅人・秘境棋友"],["poArena",Q[2][0],Q[2][1],"🏯 "+esc(A.name||"擂主")+(AS[k]?" ✓":""),"擂台"],...(k==="classic"?[["poPh",47,65,"🀄 千秋石桌","幻影指導局"]]:[["poBattle",Q[2][0],Math.min(90,Q[2][1]+11),"⚔ 古戰場"+((typeof sealSideOn==="function"?sealSideOn(k,"battle"):(store.get("battleTitle",{})||{})[k])?" ✓":""),""]])],   /* 意見回饋 725：擂台旁的「⚔ 古戰場」（07g-battle.js），船艙沒有 */(PORT_SIGHT[k]||[]).map((s,i)=>`<button class="po-sight" data-ps="${i}" style="left:${s[1]}%;top:${s[2]}%">📍 ${esc(s[0])}</button>`).join(""))+`<div class="pad port">
     <div class="card port-say"><img src="${W.img}" alt="" onerror="this.remove()"><p><b>${esc(W.n)}</b>「${esc(say)}」</p></div>
     <div id="poRes"></div>${typeof sealDraw==="function"?(()=>{const S=sealOf(k);return`<button class="card qs-port" id="poSeal">${sealDraw(k)}<span style="flex:1;min-width:0"><b>🏮 ${esc(sealNm(k))}</b><br><span class="muted" style="font-size:13px">${S.gold?"已鑄成金印":`亮了 ${S.n}／${S.N} 邊：${S.need.map(s=>SEAL_SIDE[s][1]+(S.on[s]?"✔":"・")).join(" ")}`}</span></span><span class="muted">›</span></button>`})():""}
     <button class="btn ghost" id="poShip" style="width:100%;margin-top:12px">⛵ 回星槎</button></div>`;
@@ -13909,7 +13909,7 @@ function mfCss(){if(document.getElementById("mfCss"))return;const s=document.cre
 .mf-hs span{position:absolute;left:50%;top:0;transform:translate(-50%,-100%);background:#f3ead2;border:1px solid #8a6a3a;color:#3a2618;border-radius:3px;font:800 13px/1.25 var(--kai,var(--serif,serif));padding:2px 6px;white-space:nowrap;box-shadow:0 1px 2px rgba(0,0,0,.3);pointer-events:auto;cursor:pointer}
 /* 回饋 834（開發者 11/9：棋史卡沒反應、盤查入口點擊）：千秋盃、拜匣（路過的人物）、回天井的標籤畫在熱區外面（上方／右邊），原本 pointer-events:none，點標籤會穿過去沒反應；標籤是按鈕的子元素，改成可以點 */
 .mf-hs[hidden]{display:none}
-#mfBox span{left:50%;top:-50%;transform:translate(-50%,-100%)}   /* 11/10「有點亂」：路過的人物標籤移到名帖（少年阿古那幾張）上面，不再壓到客簿 */
+#mfBox span{left:50%;top:-90%;transform:translate(-50%,-100%)}   /* 11/10「有點亂」：路過的人物標籤移到名帖（少年阿古那幾張）上面，不再壓到客簿 */
 .mf-jc{position:absolute;transform:translate(-50%,-100%) rotate(var(--r,0deg));transform-origin:50% 100%;border:1px solid #6a1a10;background:#c4472f;color:#fbeee0;border-radius:1px;padding:5px 4px;font:800 13px/1.1 var(--kai,var(--serif,serif));writing-mode:vertical-rl;cursor:pointer;box-shadow:1px 1px 2px rgba(0,0,0,.35)}
 .mf-nav{position:absolute;left:0;right:0;bottom:14px;z-index:7;display:none;justify-content:center;align-items:center;gap:8px;padding:0 12px}
 .mf-z .mf-nav{display:flex}
@@ -18155,7 +18155,7 @@ const EXIT_ON=true;
 const EXITS={"/hub/learn":[52,86,"🚪 出書院・回棋鎮","#/"],"/hub/battle":[78,87,"🚪 出茶樓・回棋鎮","#/"],
   "/camp":[50,87,"↩ 回書院"],"/theme":[50,87,"↩ 走回書院"],"/canju":[22,87,"↩ 回書院"],"/terms":[50,87,"↩ 回書院","#/hub/learn"],
   "/cup":[50,87,"↩ 下樓・回茶坊","#/hub/battle"],"/cpuroom":[50,96,"↩ 掀簾・回茶坊","#/hub/battle"],"/redo":[24,87,"↩ 回書院","#/hub/learn"],"/stats":[50,87,"↩ 回書院","#/hub/learn"],"/openings":[50,87,"↩ 回書院","#/hub/learn"],
-  "/journey/inn":[18,86,"⛵ 回渡口"],"/ship/lesson":[50,87,"⛵ 回星槎"],"/ship/pz":[50,87,"⛵ 回星槎"],"/ship/shelf":[50,87,"⛵ 回星槎"],"/ship/bag":[50,87,"⛵ 回星槎"],
+  "/journey/inn":[18,86,"⛵ 回渡口"],"/ship/lesson":[16,90,"⛵ 回星槎"],"/ship/pz":[16,90,"⛵ 回星槎"],"/ship/shelf":[16,90,"⛵ 回星槎"],"/ship/bag":[16,90,"⛵ 回星槎"],
   "/feedback":[20,74,"⛵ 回星槎","#/adventure"],"/me":[50,87,"🏘 回棋鎮"],"/today":[30,87,"🏘 回棋鎮"],"/gm":[50,87,"↩ 回棋譜庫"],"/quiz":[50,87,"↩ 回書院","#/hub/learn"],
   "/lobby":[18,88,"↩ 回對戰茶樓"],"/db":[20,88,"↩ 回學習書院"],"/settings":[14,90,"⛵ 回星槎"]};
 /* 開發者 11/9「拿掉頁面右下角的設定，以後統一到星槎裡面開啟設定」「移除頁面底下的首頁／線上／棋譜入口，整頁滿版」「進到 App 只會看到首頁的樣子」：
