@@ -120,7 +120,7 @@ var XQNet=(function(){
   const rankOf=p=>RANKS[rankIdx(p)][0];
   const rec=()=>ls.get("rate",null)||{pts:0,w:0,l:0,d:0,hist:[]};
   const myPts=()=>rec().pts;
-  function record(){if(!G||!G.result||G.result.abort||G.result.forfeit||(G.moves.length<2&&!G.result.timeout))return;   // 超時判負一定計分   // 雙方都還沒走就結束：不計分
+  function record(){if(!G||badG.has(G.gid)||!G.result||G.result.abort||G.result.forfeit||(G.moves.length<2&&!G.result.timeout))return;   // 超時判負一定計分   // 雙方都還沒走就結束：不計分
     const s=side();if(!s)return;const R=rec();if(R.hist.some(h=>h.gid===G.gid&&(!h.rid||h.rid===G.id)))return;   /* 意見回饋 619：「再來一局」沿用同一個 gid，改用 gid＋這盤的 id 判斷有沒有記過，第二盤以後才會記進戰績 */
     const o=s==="r"?G.black:G.red,op=o.pts!=null?o.pts:(people[o.id]&&people[o.id].pts)||0;
     /* 意見回饋 段位失準：原本贏 +20、輸 −15 會停在勝率 43% 那一階、而且越下越高（每盤淨增 5 分）。
@@ -213,13 +213,17 @@ var XQNet=(function(){
       else if(x.type==="cancel"&&!blk(x.from.id))emit("cancel",x);
       return}
     if(p[0]==="g"&&cur&&p[1]===cur.gid){
-      if(p[2]==="s"){if(!msg)return;let x;try{x=JSON.parse(msg)}catch(e){return}if(!x||x.gid!==p[1]||!Array.isArray(x.moves)||!x.red||!x.black)return;if(!G||x.rev>G.rev||x.gid!==G.gid){if(G&&x.gid===G.gid&&side()&&!okNext(G,x))return;seenAt=Date.now();const before=side(),wasEnd=!!(G&&G.result);if(!G||x.gid!==G.gid||x.moves.length!==G.moves.length)arr={n:x.moves.length,t:Date.now()};G=x;dirty=false;if(side()!==before||!!G.result!==wasEnd)presence();record();emit("game")}
+      if(p[2]==="s"){if(!msg)return;let x;try{x=JSON.parse(msg)}catch(e){return}if(!x||x.gid!==p[1]||!Array.isArray(x.moves)||!x.red||!x.black)return;if(!G||x.rev>G.rev||x.gid!==G.gid){if(G&&x.gid===G.gid&&side()&&!okNext(G,x)){badCheck(x);return}seenAt=Date.now();const before=side(),wasEnd=!!(G&&G.result);if(!G||x.gid!==G.gid||x.moves.length!==G.moves.length)arr={n:x.moves.length,t:Date.now()};G=x;dirty=false;if(side()!==before||!!G.result!==wasEnd)presence();record();emit("game")}
         else if(dirty&&G&&x.rev<G.rev)pubGame()}
       else if(p[2]==="e"){try{const x=JSON.parse(msg),sid=G&&(x.by==="r"||x.by==="b")?(x.by==="r"?G.red.id:G.black.id):String(x.id||"");   /* 回饋 841：記下是誰傳的（照紅黑方對到對局裡的代號；新版也會附上 id），讀的時候濾掉封鎖的人 */
         emos.push({id:++emoN,by:x.by,sid,e:String(x.e||"").slice(0,12),text:String(x.text||"").slice(0,80),name:sid&&sid===me().id?realNm().slice(0,16):String(x.name||"").slice(0,16),at:Date.now()});   /* 回饋 842：自己的聊天在自己畫面顯示自己取的名字 */
         emos=emos.slice(-40);emit("game")}catch(e){}}}}
   /* QA P1-1：公開伺服器上誰都能發對局狀態。自己在下這盤時，只接受合理的下一步：紅黑雙方不變；只多出對方的一步（或對方悔掉他自己的一步），而且整盤棋步都合法；
      判對方贏的結果要站得住（將死等規則判得出來，或自己真的超時）；判和要自己先提和、或規則判和 */
+  /* 開發者 11/11（大廳規劃書票 2.2）：對手送來的棋步重演起來不合法（連走兩步、馬走田…）＝擋下、這盤只算友誼賽不計分，通知畫面一次。
+     只看「棋步本身不合法」，不看網路延遲造成的少一步、多一步（那些照舊默默忽略，免得誤判） */
+  const badG=new Set();
+  function badCheck(x){try{if(!x||!G||badG.has(G.gid)||!window.XQ_netCheck)return;const v=window.XQ_netCheck(x.moves);if(v&&v.ok)return;badG.add(G.gid);emit("abnormal",{gid:G.gid,why:"illegal"})}catch(e){}}
   const tmOf=g=>g.moves.length%2?"b":"r";
   function okNext(a,b){const me=side();try{
     if(a.result&&!b.result)return b.red.id===a.black.id&&b.black.id===a.red.id&&!b.moves.length;

@@ -1379,7 +1379,7 @@ html[data-hicon] .tabbar button.on{box-shadow:inset 0 -3px 0 currentColor}
       if(!window.caches)return go();caches.keys().then(function(ks){return Promise.all(ks.filter(function(k){return k.indexOf("xqlab-app-")===0}).map(function(k){return caches.delete(k)}))})
         .then(function(){return navigator.serviceWorker&&navigator.serviceWorker.getRegistration()}).then(function(r){return r&&r.update()}).catch(function(){}).then(go)}};setTimeout(chk,4000)})();
 </script>
-<script>window.XQ_OFFLINE=true;window.XQ_BUILD="20261111-0215";</script>
+<script>window.XQ_OFFLINE=true;window.XQ_BUILD="20261111-0230";</script>
 <script src="core.js"></script>
 <script src="engine.js"></script>
 <script src="local.js"></script>
@@ -2812,6 +2812,7 @@ if(OFF&&window.XQNet){XQNet.start();
       [["接受",acc],["婉拒",()=>XQNet.respond(x,false),true],...(typeof lbsInviteBtn==="function"?[lbsInviteBtn(x)]:[])],"keep")});
   XQNet.on("tcwait",x=>{const o=(x.list||[]).filter(z=>z.tc).map(z=>`${z.name}（${z.tc} 分）`).slice(0,3).join("、");if(o)toast(`⏱ 大廳裡 ${o} 也在找對手，但時制跟你（${x.tc} 分）不一樣。點他的名字邀請，講好時制再開局`)});
   XQNet.on("cancel",x=>toast(`${x.from.name} 取消了邀請`));
+  XQNet.on("abnormal",()=>{try{modal(`<div class="em">⚠️</div><h2>對手送來不合規則的棋步</h2><p class="muted">已經擋下來了，你的棋盤沒有被改。這盤改成友誼賽，不計分。如果一直等不到對方，可以先離開這盤。</p>`,[["知道了",null]])}catch(e){toast("⚠ 對手送來不合規則的棋步，已擋下；這盤改成友誼賽，不計分")}});   /* 開發者 11/11 選大廳規劃書票 2.2 */
   XQNet.on("rated",x=>{try{window.dispatchEvent(new CustomEvent("xq-result",{detail:x.res==="w"?"win":x.res==="l"?"lose":"draw"}))}catch(e){}});
   XQNet.on("rated",x=>setTimeout(()=>toast(`${x.res==="w"?"🏆 贏了":x.res==="l"?"輸了":"和棋"}　積分 ${x.d>0?"+"+x.d:x.d<0?x.d:"±0"}　→ ${x.pts} 分`+(x.rank!==x.was?`（${x.d>0?"升":"降"}為 ${x.rank}）`:"")),1200));
   XQNet.on("start",()=>{closeSheet();toast("對方接受了！"+(XQNet.side()==="b"?"你執黑，對方先走":"你執紅先走"));goGame()});
@@ -2891,6 +2892,7 @@ async function deviceQR(base,key){
   sheet("讓另一台裝置連到電腦",b=>{b.innerHTML=`<p style="text-align:center">用另一台手機／平板的相機掃這個 QR code，打開後就會連到你的電腦。</p><div class="qrbox" id="qrc"></div>
     <p class="muted" style="text-align:center">⚠ 含存取碼：掃到的人能操作電腦上的對局。只給自己的裝置或信任的人。</p>`;
     new QRCode(b.querySelector("#qrc"),{text:u,width:220,height:220,correctLevel:QRCode.CorrectLevel.L})})}
+
 
 
 
@@ -5414,10 +5416,10 @@ function cupTitle(){try{const c=window.XQNet&&XQNet.cupChamp&&XQNet.cupChamp();i
 /* 大廳名字旁的🏆：只認裁判台簽名的擂主碑（自己改 App 改不出來） */
 /* Gemini 評估 11/8（開發者核准）：常駐棋友不再偽裝成真人——人人都看得到「☁ 雲遊棋客」小標籤，名字照舊；大廳名單、千秋盃對陣表、對局名牌、棋友資料都用這一個。
    滑過看 title、點一下跳說明（點標籤不會同時打開棋友資料） */
-function cloudTip(){return"星槎上的雲遊棋客，隨時陪你下棋"}
+function cloudTip(){return"雲遊棋客是星槎上的電腦棋友，隨時陪你下棋"}
 /* 意見回饋 750：名單、對戰卡、對陣表只放一個小「☁」緊貼名字（滑過、點一下才有說明）；整顆「☁ 雲遊棋客」膠囊只在棋友資料卡（full）；區塊標題旁用 cloudLegend() 放一次圖例 */
-function cloudTag(on,full){return on?'<span class="cloudtag'+(full?" full":"")+'" role="note" tabindex="0" title="'+cloudTip()+'" aria-label="雲遊棋客：'+cloudTip()+'">'+(full?"☁ 雲遊棋客":"☁")+"</span>":""}
-function cloudLegend(on){return on?'<span class="cloudleg">☁＝雲遊棋客</span>':""}
+function cloudTag(on,full){return on?'<span class="cloudtag'+(full?" full":"")+'" role="note" tabindex="0" title="'+cloudTip()+'" aria-label="雲遊棋客・電腦：'+cloudTip()+'">'+(full?"☁ 雲遊棋客・電腦":"☁電腦")+"</span>":""}
+function cloudLegend(on){return on?'<span class="cloudleg">☁電腦＝雲遊棋客（電腦棋友）</span>':""}   /* 開發者 11/11 選大廳規劃書案 01：名冊、棋桌名牌直接寫出「電腦」，不用點才知道 */
 function isCloud(id){try{return!!(id&&window.XQNet&&XQNet.isBot&&XQNet.isBot(id))}catch(e){return false}}
 function devBotTag(id){return cloudTag(isCloud(id))}
 document.addEventListener("click",e=>{const t=e.target&&e.target.closest&&e.target.closest(".cloudtag");if(!t)return;e.stopPropagation();e.preventDefault();toast("☁ "+cloudTip())},true);
@@ -13845,7 +13847,7 @@ function lmPaint(v,P){const lay=P.querySelector(".lm-l");if(!lay||!window.XQNet)
   lay.innerHTML=T.slice(0,8).map((t,i)=>{const[x,y]=LM_TABLES[i];const nm=t.l?t.l.map(p=>p.name).join(" 對 "):"";
       return`<button class="lm-t${t.mine?" mine":""}${t.empty?" empty":""}" ${t.gid?`data-g="${esc(t.gid)}"`:""}${t.mine?' data-mine="1"':""} style="left:${x}%;top:${y}%;z-index:${Math.round(y)}" aria-label="${esc(t.mine?"我的對局":t.empty?"空桌":nm+"・觀戰")}" tabindex="${t.empty?-1:0}"><img src="${LM_IMG(lmN(t.empty?"table_empty":"table_game",E))}" alt=""></button>`}).join("")+
     LM_LAMPS.map(([x,y,f,g],i)=>{const o=lit[i];const fig=o&&g?`<img class="lm-fig" src="${LM_IMG(FIG[i%3])}" alt="" style="left:${x}%;top:${y+(f===2?10.5:7.5)}%">`:"";
-      return`${fig}<button class="lm-lp f${f}${GU?" gu":LM_INK_LAMP?" ink"+(PALE?" pale":""):""}${o?" on"+o.cls:""}" ${o?(o.jc?`data-jc="${esc(o.jc)}"`:`data-p="${esc(o.id)}"`):""} style="left:${x}%;top:${y}%" aria-label="${o?esc(o.name):"空著的燈"}" tabindex="${o?0:-1}">${LM_INK_LAMP&&!GU?'<svg viewBox="0 0 20 46"><use href="#lmLamp"/></svg>':`<img src="${LM_IMG(lmN(o?"lantern_on":"lantern_off",E))}" alt="">`}${o&&/fam|story/.test(o.cls)?"<i></i>":""}</button>`}).join("")+
+      return`${fig}<button class="lm-lp f${f}${GU?" gu":LM_INK_LAMP?" ink"+(PALE?" pale":""):""}${o?" on"+o.cls:""}" ${o?(o.jc?`data-jc="${esc(o.jc)}"`:`data-p="${esc(o.id)}"`):""} style="left:${x}%;top:${y}%" aria-label="${o?esc(o.name)+(/ bot/.test(o.cls)?"（雲遊棋客・電腦）":""):"空著的燈"}" tabindex="${o?0:-1}">${LM_INK_LAMP&&!GU?'<svg viewBox="0 0 20 46"><use href="#lmLamp"/></svg>':`<img src="${LM_IMG(lmN(o?"lantern_on":"lantern_off",E))}" alt="">`}${o&&/fam|story/.test(o.cls)?"<i></i>":""}</button>`}).join("")+
     (XQNet.seeking&&XQNet.seeking()?'<span class="lm-wave"><i></i><i></i><i></i></span>':"")+
     (extra>0?`<button type="button" class="lm-more" data-more="p" style="left:88%;top:30.5%">＋${extra} 人</button>`:"")+
     (moreG>0?`<button type="button" class="lm-more" data-more="g" style="left:67%;top:90%">更多棋局 ＋${moreG}</button>`:"")+
@@ -14166,7 +14168,7 @@ function lbsInviteBtn(x){return["🚫 婉拒並封鎖",()=>{try{XQNet.respond(x,
 function lbsWhere(id){let s="";try{const G=XQNet.game&&XQNet.game();if(G&&G.red&&G.black&&(G.red.id===id||G.black.id===id))s=(XQNet.side&&XQNet.side()?"對局中（他是我的對手）":"觀戰中（他在下這盤）")+"・對局代號 "+(G.gid||"")+"・第 "+(G.moves?G.moves.length:0)+" 步"}catch(e){}
   const h=location.hash||"#/";return(s||(/^#\/lobby/.test(h)?"線上大廳":/^#\/watch/.test(h)?"觀戰列表":/^#\/db/.test(h)?"棋譜":"其他頁"))+"（"+h+"）"}
 function lbsReport(p){if(!p||!p.id)return;const R=store.get("lbRep",{})||{},last=+R[p.id]||0;
-  if(Date.now()-last<LBS_REP_GAP)return toast(`${Math.max(1,Math.round((Date.now()-last)/60000))} 分鐘前已經檢舉過 ${p.name||"他"}，開發者會看到，不用再送`);
+  if(Date.now()-last<LBS_REP_GAP)return toast(`${Math.max(1,Math.round((Date.now()-last)/60000))} 分鐘前已經檢舉過 ${p.name||"他"}，報告已經記在手機裡，不用再送`);
   sheet("🚩 檢舉",b=>{let why="";
     b.innerHTML=`<p style="margin:0 0 8px">檢舉 <b>${esc(p.name||"棋友")}</b></p><p class="muted" style="font-size:13px;margin:0 0 10px">開發者會收到他的代號、名字和你選的原因。他不會知道是誰檢舉的。</p>
       <div class="items lbs-why" style="padding:0">${LBS_REASONS.map(([k,t,h])=>`<button class="item" data-why="${k}"><span class="lb">⚪</span><span class="tx"><b>${t}</b><span>${h}</span></span></button>`).join("")}</div>
@@ -14185,7 +14187,7 @@ function lbsReport(p){if(!p||!p.id)return;const R=store.get("lbRep",{})||{},last
         chat.length?"對方最近的聊天：\n"+chat.join("\n"):"",also?"（檢舉的人同時封鎖了他）":""].filter(Boolean).join("\n");
       let ok=false;try{const info=await feedbackInfo();ok=await sendRecord(Object.assign({},info,{type:"🚩 檢舉",text,contact:""}))}catch(err){ok=false}
       const R3=store.get("lbRep",{})||{};R3[p.id]=Date.now();for(const k in R3)if(Date.now()-R3[k]>864e5)delete R3[k];store.set("lbRep",R3);
-      closeSheet();if(also)lbsBlock(p);setTimeout(()=>toast(ok?"🚩 已送出檢舉，謝謝你。開發者會查看":"🚩 檢舉先存在手機裡，有網路時會自動送出"),also?2300:0)}})}
+      closeSheet();if(also)lbsBlock(p);setTimeout(()=>toast(ok?"🚩 你的報告已經記在手機裡，正在送給星槎管理處。謝謝你！":"🚩 你的報告已經記在手機裡，有網路時會自動送給星槎管理處")   /* 開發者 11/11 選大廳規劃書案 01：表單送不回收件確認，不說「已送出」 */,also?2300:0)}})}
 
 /* ---------- 回饋 841：資料卡加按鈕（包一層 oppCard；07x3-rostermap.js 的名帖外觀也包在裡面） ---------- */
 function lbsCss(){if(document.getElementById("lbsCss"))return;const s=document.createElement("style");s.id="lbsCss";
@@ -16427,7 +16429,7 @@ if(typeof hubMap==="function"){const f0=hubMap;hubMap=function(v,hub){const r=f0
    六個區：對弈茶樓、練棋書院、藏書閣、雲河渡口、個人小院、服務亭；點區塊展開那一區的入口，點入口才換頁。
    最下面「≡ 全部入口清單」是文字版（讀屏軟體、不愛看圖的人用），上面的搜尋框打「規則」「殘局」就篩出來。
    下棋下到一半（挑戰電腦、擂台、同桌、雲河棋路、殘局、古戰場、線上對局）要換頁，先問一句；線上對局特別提醒可能算輸。
-   底圖之後請 Gemini 畫（規劃書第 5 節），現在先用水墨色塊。開關 SITEMAP_ON；前綴 sm */
+   底圖之後請 Gemini 畫（規劃書第 5 節），現在先用水墨色塊。開關 SITEMAP_ON；前綴 stm */
 const SITEMAP_ON=true;
 /* [區代號, 圖示, 區名, 一句說明, 入口[[名字, 網址, 搜尋關鍵字]]] */
 const STM_AREAS=[
@@ -16437,6 +16439,12 @@ const STM_AREAS=[
   ["ship","☁️","雲河渡口","星槎、故事、朝代",[["雲河星槎","#/adventure","星槎 冒險 故事 船"],["雲河棋路","#/journey","棋路 關卡 闖關"],["朝代渡口","#/port","渡口 園子 驛站 下船"],["古戰場","#/battle","戰役 戰場"],["星槎書架","#/ship/shelf","小說 書架 書"],["繼續閱讀","#/ship/read","閱讀 小說 章"],["起航","#/ship/sail","起航 換朝代 開船"]]],
   ["yard","🏡","個人小院","角色、戰績、收藏",[["我的角色","#/me","角色 頭像 官階 修為"],["我的戰績","#/stats","戰績 勝率 成長"],["學習週報","#/weekly","週報 一週"],["行囊","#/ship/bag","行囊 寶物 收藏"],["珍品冊","#/me/relics","珍品 收藏"],["千秋大百科","#/codex","百科 文化 圖鑑"],["九九消寒圖","#/xiaohan","消寒 節氣 冬天"]]],
   ["svc","⚙️","服務亭","設定、回首頁",[["回首頁","#/","首頁 回家"],["設定","#/settings","設定 家長 回饋 存檔 字級 隱私 音樂"]]]];
+/* hspx 11/11「地圖底圖請找 gemini 繪製」：data/sitemap/sitemap.webp（768×1376，park/sitemap/sitemap_a.png）。
+   hit＝點得到的範圍、card＝圖上那張空白直條紙籤（地名直書貼在上面），單位都是圖寬／圖高的 %，照圖量的；paper＝圖上沒有紙籤（修圖時被燈籠杆取代），標籤自己帶宣紙底。
+   史學顧問 11/11 必改 4 項修過兩輪：日式石燈籠→木杆紅燈籠、泳池→湖石池、茶樓／書院／小院棋盤照 9 直 10 橫＋河界重畫；書院牆上那面最後用程式貼一面乾淨的象棋盤（park/sitemap/sitemap_a_fix3.png） */
+const STM_IMGV="1111c";
+const STM_MAP={ship:{hit:[0,0,50,34],card:[4.5,5,12,16]},tea:{hit:[50,4,100,37],card:[51,11,58,22]},lib:{hit:[0,34,48,64],card:[3.5,35,11,46]},
+  acad:{hit:[48,37,100,64],card:[89,38,96,48.5]},yard:{hit:[0,64,55,100],card:[3.5,66,11,77]},svc:{hit:[55,64,100,100],card:[86.5,59.5,94,70],paper:1}};
 /* 現在在哪：最長的網址前綴對得上的那一個入口 */
 function stmHere(){const h=location.hash||"#/";let best=null,bl=-1;
   for(const A of STM_AREAS)for(const e of A[4]){const r=e[1];const hit=r==="#/"?(h==="#/"||h===""||h==="#"):(h===r||h.startsWith(r+"/"));if(hit&&r.length>bl){best=[A,e];bl=r.length}}
@@ -16460,7 +16468,18 @@ function stmCss(){if(document.getElementById("stmCss"))return;const s=document.c
 #stmOv .ar i{font-style:normal;font-size:30px;line-height:1.1}#stmOv .ar b{font:900 17px/1.3 var(--serif,serif);letter-spacing:.06em}#stmOv .ar small{color:var(--muted,#777);font-size:12.5px}
 #stmOv .ar.on{border-color:var(--accent,#a33);box-shadow:0 0 0 2px color-mix(in srgb,var(--accent,#a33) 30%,transparent)}
 #stmOv .ar.cur{background:color-mix(in srgb,var(--accent,#a33) 8%,var(--card,#fff))}
-#stmOv .sub{grid-column:1/-1;padding:10px;border-radius:14px;border:1.5px dashed var(--line,#cbb);display:flex;flex-wrap:wrap;gap:8px}
+#stmOv .sub{margin-top:10px;padding:10px;border-radius:14px;border:1.5px dashed var(--line,#cbb);display:flex;flex-wrap:wrap;gap:8px;background:var(--card)}
+#stmOv .sub .st{width:100%;font:900 16px var(--serif,serif);letter-spacing:.06em}
+#stmOv .mp{position:relative;container-type:inline-size;border-radius:14px;overflow:hidden;box-shadow:0 2px 10px rgba(60,40,20,.18);user-select:none;-webkit-user-select:none}
+#stmOv .mp[hidden],#stmOv .grid[hidden]{display:none}
+#stmOv .mp img{display:block;width:100%;height:auto}
+#stmOv .hs{position:absolute;background:transparent;border:0;padding:0;cursor:pointer;-webkit-tap-highlight-color:transparent;border-radius:12px}
+#stmOv .hs:focus-visible{outline:3px solid var(--accent);outline-offset:-3px}
+#stmOv .hs.on{background:radial-gradient(closest-side,rgba(255,236,190,.0),rgba(255,226,160,.22))}
+#stmOv .lb{position:absolute;display:flex;align-items:center;justify-content:center;writing-mode:vertical-rl;text-orientation:upright;pointer-events:none;
+  font:900 4.1cqw/1.05 var(--serif,serif);letter-spacing:.06em;color:#2a2018;border-radius:4px;box-sizing:border-box;transition:color .2s,box-shadow .2s}
+#stmOv .lb.pp{background:#F6EFE2;border:1px solid #d8c8b0;box-shadow:0 1px 3px rgba(60,40,20,.18)}#stmOv .lb.cur{color:var(--accent)}#stmOv .lb.cur::after{content:"📍";position:absolute;top:-3.4cqw;font-size:3.4cqw;writing-mode:horizontal-tb}
+#stmOv .lb.on{box-shadow:0 0 0 2px var(--accent),0 0 12px rgba(168,50,42,.45);color:var(--accent)}
 #stmOv .go{min-height:44px;padding:8px 14px;border-radius:12px;border:1.5px solid var(--line,#cbb);background:var(--card,#fff);color:inherit;font:700 15px/1.2 var(--sans,sans-serif);cursor:pointer}
 #stmOv .go.cur{border-color:var(--accent,#a33);color:var(--accent,#a33)}#stmOv .go[disabled]{opacity:.5}
 #stmOv .all{width:100%;min-height:44px;margin:14px 0 6px;border-radius:12px;border:1.5px solid var(--line,#cbb);background:transparent;color:inherit;font:700 15px var(--sans,sans-serif)}
@@ -16491,16 +16510,23 @@ function stmOpen(){if(document.getElementById("stmOv"))return;stmCss();stmLast=d
     <p class="tip">點地圖上的地方，馬上帶你過去！</p>
     <div class="here">📍 你現在在：<b>${esc(here)}</b></div>
     ${stmOnline()?'<div class="warn">⚠ 線上對局進行中：看地圖不會停下時鐘，換頁可能算輸。</div>':stmBusy()?'<div class="warn">⚠ 這盤棋還沒下完：看地圖沒關係，換頁前會先問你。</div>':""}
-    <div class="grid" id="stmG" aria-hidden="false">${STM_AREAS.map(A=>`<button class="ar${A[4].some(e=>cur(e[1]))?" cur":""}" data-a="${A[0]}" aria-expanded="false"><i aria-hidden="true">${A[1]}</i><b>${esc(A[2])}</b><small>${esc(A[3])}</small></button>`).join("")}</div>
+    <div class="mp" id="stmM"><img src="data/sitemap/sitemap.webp?v=${STM_IMGV}" alt="" aria-hidden="true" draggable="false">${STM_AREAS.map(A=>{const M=STM_MAP[A[0]],h=M.hit,c=M.card,on=A[4].some(e=>cur(e[1]));
+      return`<button class="hs" data-a="${A[0]}" aria-expanded="false" aria-label="${esc(A[2]+"："+A[3])}${on?"（你在這裡）":""}" style="left:${h[0]}%;top:${h[1]}%;width:${h[2]-h[0]}%;height:${h[3]-h[1]}%"></button><span class="lb${on?" cur":""}${M.paper?" pp":""}" data-l="${A[0]}" aria-hidden="true" style="left:${c[0]}%;top:${c[1]}%;width:${c[2]-c[0]}%;height:${c[3]-c[1]}%">${esc(A[2])}</span>`}).join("")}</div>
+    <div class="grid" id="stmG">${STM_AREAS.map(A=>`<button class="ar${A[4].some(e=>cur(e[1]))?" cur":""}" data-a="${A[0]}" aria-expanded="false"><i aria-hidden="true">${A[1]}</i><b>${esc(A[2])}</b><small>${esc(A[3])}</small></button>`).join("")}</div>
+    <div id="stmSub"></div>
     <button class="all" id="stmAll" aria-expanded="false">≡ 顯示全部入口清單</button>
     <div class="list" id="stmL" hidden>${STM_AREAS.map(A=>`<section data-a="${A[0]}"><h3>${A[1]} ${esc(A[2])}</h3><ul>${A[4].map(e=>`<li data-k="${esc((e[0]+" "+e[2]+" "+A[2]).toLowerCase())}">${entry(e)}</li>`).join("")}</ul></section>`).join("")}<p class="none" id="stmNone" hidden>找不到這個入口，換個字試試看。</p></div></div>`;
   document.body.append(o);requestAnimationFrame(()=>o.classList.add("on"));
   const G=o.querySelector("#stmG"),L=o.querySelector("#stmL"),Q=o.querySelector("#stmQ"),AL=o.querySelector("#stmAll");
   const bind=root=>root.querySelectorAll(".go[data-r]").forEach(b=>b.onclick=()=>{try{vibrate(5)}catch(e){}stmGo(b.dataset.n,b.dataset.r)});
-  /* 點區塊：在那一列下面展開那一區的入口（再點一次收起） */
-  G.querySelectorAll(".ar").forEach(b=>b.onclick=()=>{try{vibrate(5)}catch(e){}const was=b.classList.contains("on");G.querySelectorAll(".sub").forEach(x=>x.remove());G.querySelectorAll(".ar").forEach(x=>{x.classList.remove("on");x.setAttribute("aria-expanded","false")});if(was)return;
-    const A=STM_AREAS.find(x=>x[0]===b.dataset.a);b.classList.add("on");b.setAttribute("aria-expanded","true");const s=document.createElement("div");s.className="sub";s.setAttribute("role","group");s.setAttribute("aria-label",A[2]);s.innerHTML=A[4].map(entry).join("");
-    const i=[...G.children].indexOf(b),after=G.children[i%2===0?Math.min(i+1,G.children.length-1):i];after.after(s);bind(s);const f=s.querySelector(".go:not([disabled])");if(f)f.focus({preventScroll:true});s.scrollIntoView({block:"nearest",behavior:"smooth"})});
+  /* 底圖載得到＝點圖上的地方；載不到（離線、CDN 慢）＝退回色塊卡片。點了在圖下方展開那一區的入口（再點一次收起） */
+  const MP=o.querySelector("#stmM"),IM=MP.querySelector("img"),SB=o.querySelector("#stmSub");
+  const useImg=ok=>{MP.hidden=!ok;G.hidden=ok};useImg(false);IM.onload=()=>useImg(true);IM.onerror=()=>useImg(false);if(IM.complete&&IM.naturalWidth)useImg(true);
+  o.querySelectorAll("[data-a]").forEach(b=>b.onclick=()=>{try{vibrate(5)}catch(e){}const k=b.dataset.a,was=b.classList.contains("on");SB.innerHTML="";
+    o.querySelectorAll("[data-a]").forEach(x=>{x.classList.remove("on");x.setAttribute("aria-expanded","false")});o.querySelectorAll(".lb").forEach(x=>x.classList.remove("on"));if(was)return;
+    const A=STM_AREAS.find(x=>x[0]===k);o.querySelectorAll(`[data-a="${k}"]`).forEach(x=>{x.classList.add("on");x.setAttribute("aria-expanded","true")});const lb=o.querySelector(`.lb[data-l="${k}"]`);if(lb)lb.classList.add("on");
+    SB.innerHTML=`<div class="sub" role="group" aria-label="${esc(A[2])}"><b class="st">${A[1]} ${esc(A[2])}</b>${A[4].map(entry).join("")}</div>`;bind(SB);
+    const f=SB.querySelector(".go:not([disabled])");if(f)f.focus({preventScroll:true});SB.scrollIntoView({block:"nearest",behavior:"smooth"})});
   const showList=on=>{L.hidden=!on;AL.setAttribute("aria-expanded",String(on));AL.textContent=on?"≡ 收起全部入口清單":"≡ 顯示全部入口清單"};
   AL.onclick=()=>showList(L.hidden);bind(L);
   Q.oninput=()=>{const k=Q.value.trim().toLowerCase();if(k)showList(true);let n=0;L.querySelectorAll("li").forEach(li=>{const ok=!k||k.split(/\s+/).every(w=>li.dataset.k.includes(w));li.hidden=!ok;if(ok)n++});
@@ -19334,7 +19360,7 @@ function PvpGame(v){
       const lp=o.id===meInfo().id?XQNet.rating().pts:(XQNet.people().find(q=>q.id===o.id)||{}).pts,pt=lp!=null?lp:o.pts;return pt==null?"":"・🏅 "+XQNet.rankOf(pt)+" "+pt+" 分"}catch(e){return""}};
     /* 意見回饋 285：線上對戰每人兩個時鐘：上面是總時間，下面是這一步還能想多久（每步 3 分鐘） */
     /* Gemini 評估 11/8：對手是常駐棋友就在名牌標「☁ 雲遊棋客」（大廳、千秋盃同一個說法） */
-    const cl=x=>{if(!NET||!window.XQNet)return"";try{const G=XQNet.game(),o=G&&(x==="r"?G.red:G.black);return o&&isCloud(o.id)?"・☁ 雲遊棋客":""}catch(e){return""}};
+    const cl=x=>{if(!NET||!window.XQNet)return"";try{const G=XQNet.game(),o=G&&(x==="r"?G.red:G.black);return o&&isCloud(o.id)?"・☁ 雲遊棋客・電腦":""}catch(e){return""}};
     const strip=(x)=>{const h=playerHTML(x,nm(x),sub(x)+cl(x)+rk(x),st.clocks?"":null);return NET&&st.clocks?h.replace('<div class="clk"></div>',`<div class="clkw"><div class="clk" id="ck_${x}"></div><div class="clk2" id="mk_${x}">每步 3:00</div></div>`):h.replace('<div class="clk">',`<div class="clk" id="ck_${x}">`)};
     v.querySelector("#pTop").innerHTML=strip(top);v.querySelector("#pBot").innerHTML=strip(bot);
     for(const[el,x]of[[v.querySelector("#pTop"),top],[v.querySelector("#pBot"),bot]]){el.style.cursor="pointer";el.onclick=e=>{if(e.target.closest(".clk"))return;
@@ -19344,9 +19370,10 @@ function PvpGame(v){
     /* 意見回饋 330：下棋的兩個人看不到紅黑條（形勢），只有觀戰的人看得到；下完再顯示 */
     const hideEv=seat&&seat!=="w"&&!st.result;v.querySelector(".evline").style.visibility=hideEv?"hidden":"";
     v.querySelector("#evf").style.width=evPct(hideEv?null:st.eval&&st.eval.v)+"%";
+    ruleNote(v,st);
     const s2=v.querySelector("#stat");s2.classList.toggle("hot",st.check>=0&&!st.result);
     /* Gemini 評估 11/8（介面圖示化）：狀態列短字加圖示（觀戰中寫在標題，這裡不重複） */
-    s2.textContent=st.waiting?"⏳ 等對方進來…":st.result?st.result.why:seat==="w"?`輪到${PLAYER[st.turn]}（${nm(st.turn)}）`+(st.check>=0?"・被將軍！":"")+(st.moves.length&&qTag(st.moves.length-1)?`・上一步${qTag(st.moves.length-1)}`:""):seat?(st.turn===seat?(()=>{const L=st.moves[st.moves.length-1];return L&&L.by&&L.by!==seat&&L.cn?`👉 輪到你（對方：${L.cn}）`:"👉 輪到你"})():"⏳ 等對方走…")+(st.check>=0&&st.turn===seat?"・⚠ 被將軍！":"")+(st.draw===seat?"・已提和":"")
+    s2.textContent=!st.result&&st.repetition&&st.repetition.pending?st.repetition.why:st.waiting?"⏳ 等對方進來…":st.result?st.result.why:seat==="w"?`輪到${PLAYER[st.turn]}（${nm(st.turn)}）`+(st.check>=0?"・被將軍！":"")+(st.moves.length&&qTag(st.moves.length-1)?`・上一步${qTag(st.moves.length-1)}`:""):seat?(st.turn===seat?(()=>{const L=st.moves[st.moves.length-1];return L&&L.by&&L.by!==seat&&L.cn?`👉 輪到你（對方：${L.cn}）`:"👉 輪到你"})():"⏳ 等對方走…")+(st.check>=0&&st.turn===seat?"・⚠ 被將軍！":"")+(st.draw===seat?"・已提和":"")
       :`輪到${PLAYER[st.turn]}（${nm(st.turn)}）`+(st.check>=0?"・被將軍！":"")+(st.eval?`・${evt(st.eval.v)}`:"");
     if(NET&&st.watchers)s2.textContent+=`・👀 ${st.watchers} 人看`;
     // 每步限時 3 分鐘：剩 1 分鐘以內顯示倒數
@@ -19391,6 +19418,7 @@ function PvpGame(v){
   // 網路對局：對方的棋一到就馬上畫出來（原本要等最多 1 秒的輪詢）
   const offG=OFF&&window.XQNet?XQNet.on("game",()=>{if(XQNet.active())refresh()}):null;
   return{stop:()=>{stop();clearInterval(ckT);if(offG)offG()}}}
+
 
 
 
