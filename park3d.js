@@ -1052,15 +1052,24 @@
           for(const r of RE.realms)for(const p of r.p){path(p);g.globalAlpha=r.d?.16:.24;g.fillStyle=r.c;g.fill()}
           for(const r of RE.realms)for(const p of r.p){path(p);if(r.d){g.setLineDash([S/90,S/160]);g.lineWidth=Math.max(2,S/300);g.strokeStyle=r.c;g.globalAlpha=.9;g.stroke();g.setLineDash([])}
             else{g.globalAlpha=.75;g.lineWidth=Math.max(4,S/115);g.strokeStyle="#FAF4E6";g.stroke();g.globalAlpha=.95;g.lineWidth=Math.max(2,S/260);g.strokeStyle=r.c;g.stroke()}}
+          /* 11/10 經典園子（Gemini 69 方案 3＋1）：realms.json 的 classic 改放 stars（北斗七星）和 lines（連線），不畫疆域；
+             end＝終章「千秋歸位」完成才亮的星（開陽、搖光），問 App 的 window.XQ_FINALE()；前五顆的名字由路線那層寫，這裡只寫 end 的星名 */
+          if(Array.isArray(RE.stars)){let fin=false;try{fin=typeof window.XQ_FINALE==="function"&&!!window.XQ_FINALE()}catch(e){}
+            const ST=RE.stars,on=q=>!q.end||fin,Q=i=>[P(ST[i].x),P(ST[i].y)],R0=S/75;
+            for(const[a,b]of RE.lines||[]){const A=Q(a),B=Q(b),lit=on(ST[a])&&on(ST[b]);g.globalAlpha=lit?.85:.35;g.strokeStyle=lit?"#E2B64A":"#C9C1B1";g.lineWidth=Math.max(2,S/300);
+              g.setLineDash(lit?[]:[S/110,S/140]);g.beginPath();g.moveTo(A[0],A[1]);g.lineTo(B[0],B[1]);g.stroke()}g.setLineDash([]);
+            for(const q of ST){const X=P(q.x),Y=P(q.y),lit=on(q),gr=g.createRadialGradient(X,Y,0,X,Y,R0*2.8);gr.addColorStop(0,lit?"rgba(255,228,140,.95)":"rgba(210,205,195,.55)");gr.addColorStop(1,"rgba(255,228,140,0)");
+              g.globalAlpha=1;g.fillStyle=gr;g.beginPath();g.arc(X,Y,R0*2.8,0,2*PI);g.fill();g.fillStyle=lit?"#FFF4CC":"#D8D1C3";g.beginPath();g.arc(X,Y,R0*.6,0,2*PI);g.fill();
+              if(q.end){const sz=Math.round(50*k);g.font=sz+"px "+FF;g.textAlign="center";g.textBaseline="middle";g.lineWidth=Math.max(3,sz/4.5);g.strokeStyle="rgba(250,244,230,.92)";g.strokeText(q.n,X,Y-R0*1.6-sz*.5);g.fillStyle=lit?"#7A4A0A":"#8C857A";g.fillText(q.n,X,Y-R0*1.6-sz*.5)}}}
           g.globalAlpha=1;fadeC(g);add(c,1,"r");
           /* 左上角：疆域開關＋圖例（拉遠看到地圖時才出現） */
           const pn=document.createElement("div");pn.style.cssText="position:absolute;left:8px;top:8px;z-index:3;display:none;max-width:64%;font:600 12px/1.4 system-ui,sans-serif;color:#3a2a1c";
           const bt=document.createElement("button");bt.type="button";bt.style.cssText="border-radius:99px;border:1px solid rgba(0,0,0,.18);background:rgba(255,255,255,.86);color:#3a2a1c;font:700 13px/1 system-ui,sans-serif;padding:7px 12px;box-shadow:0 1px 4px rgba(0,0,0,.2);cursor:pointer";
           const lg=document.createElement("div");lg.style.cssText="margin-top:6px;background:rgba(250,244,230,.9);border:1px solid rgba(120,90,60,.45);border-radius:10px;padding:5px 9px";
-          {const h=document.createElement("div");h.style.cssText="font-weight:800;margin-bottom:2px";h.textContent="最鼎盛時的疆域";lg.append(h)}
+          {const h=document.createElement("div");h.style.cssText="font-weight:800;margin-bottom:2px";h.textContent=RE.title||"最鼎盛時的疆域";lg.append(h)}
           for(const it of RE.legend||[]){const row=document.createElement("div");row.style.cssText="display:flex;align-items:center;gap:6px";const sw=document.createElement("span");
             sw.style.cssText=`flex:none;width:14px;height:10px;border-radius:2px;background:${it.c}55;border:2px ${it.d?"dashed":"solid"} ${it.c}`;const tx=document.createElement("span");tx.textContent=it.g;row.append(sw,tx);lg.append(row)}
-          const sync=()=>{bt.textContent=RON?"疆域：開":"疆域：關";bt.setAttribute("aria-pressed",RON?"true":"false");lg.style.display=RON?"block":"none";MAPOK=""};
+          const sync=()=>{bt.textContent=(RE.btn||"疆域")+(RON?"：開":"：關");bt.setAttribute("aria-pressed",RON?"true":"false");lg.style.display=RON?"block":"none";MAPOK=""};
           for(const ev of["pointerdown","pointerup"])pn.addEventListener(ev,e=>e.stopPropagation());
           bt.onclick=e=>{e.stopPropagation();RON=!RON;try{localStorage.setItem("m_eramapRealm",JSON.stringify(RON))}catch(_){}sync()};
           sync();pn.append(bt,lg);el.append(pn);MAPP=pn}
