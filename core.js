@@ -50,17 +50,87 @@ function notate(b,f,t){
   if(fr===tr){act="平";dest=num(file(tc))}else{act=fwd>0?"進":"退";dest="NBA".includes(T)?num(file(tc)):num(Math.abs(fr-tr))}
   return head+act+dest}
 function crossed(p,sq){const r=sq/9|0;return sideOf(p)==="r"?r<=4:r>=5}
-// 「捉」：mover 對對方子的有效攻擊（非將帥/兵卒發起；目標非將帥、非未過河兵卒；無根或以小攻大）
+// 分析提示沿用座標配對；勝負裁判另以實體棋子ID重播，不能採信這個差集。
 function chasePairs(b,s){
-  const out=new Set();
-  for(let i=0;i<90;i++){const p=b[i];if(!p||sideOf(p)!==s)continue;const T=p.toUpperCase();if(T==="K"||T==="P")continue;
-    for(const t of pseudo(b,i)){const q=b[t];if(!q||sideOf(q)===s)continue;const Q=q.toUpperCase();if(Q==="K")continue;if(Q==="P"&&!crossed(q,t))continue;
-      if(!legalOk(b,i,t))continue;
-      const n=make(b,i,t);let prot=false;const o=opp(s);
-      for(let j=0;j<90&&!prot;j++){const x=n[j];if(x&&sideOf(x)===o&&pseudo(n,j).includes(t)&&legalOk(n,j,t))prot=true}
-      if(!prot||VAL[T]<VAL[Q])out.add(i+">"+t)}}
-  return out}
+  return new Set([...attackMap(b,b.map((_,i)=>i),s)]
+    .filter(([,a])=>!a.exempt&&!a.uncertain).map(([key])=>key))}
 function hasAttackers(b,s){return b.some(p=>p&&sideOf(p)===s&&"RNCP".includes(p.toUpperCase()))}
+
+// ChatGPT 接手改善（2026-11-10）：亞洲棋例的可追溯裁判。
+// 本版只自動裁定直接捉子；複合交換、同類牽制等未覆蓋棋例明示待核，不能當和局。
+const REP_RULES=Object.freeze({id:"asian-direct-v2",name:"亞洲棋例（直接捉子）",occurrences:3});
+function captureLegal(b,f,t){return !!b[f]&&!!b[t]&&sideOf(b[f])!==sideOf(b[t])&&pseudo(b,f).includes(t)&&legalOk(b,f,t)}
+function attackMap(b,ids,s){
+  const a=new Map();
+  for(let f=0;f<90;f++)if(b[f]&&sideOf(b[f])===s)for(const t of pseudo(b,f)){
+    if(!b[t]||sideOf(b[t])===s||b[t].toUpperCase()==="K"||!legalOk(b,f,t))continue;
+    const p=b[f].toUpperCase(),q=b[t].toUpperCase(),n=make(b,f,t);
+    const rooted=n.some((x,j)=>x&&sideOf(x)===opp(s)&&captureLegal(n,j,t));
+    const exchange=captureLegal(b,t,f);
+    // 不以 VAL 的浮點子值推導棋規。亞洲規則的有根車例外僅限馬／炮。
+    const exempt=p==="K"||p==="P"||exchange||(rooted&&!(q==="R"&&(p==="N"||p==="C")));
+    const uncertain=!exempt&&p===q&&p!=="N";
+    a.set(ids[f]+">"+ids[t],{attacker:ids[f],target:ids[t],from:f,to:t,piece:p,victim:q,rooted,exchange,exempt,uncertain});
+  }
+  return a}
+function repetitionTrace(S,from){
+  let b=parseFen(S.start||START),ids=b.map((p,i)=>p?i:null),s=S.startTurn||"r",cycleIds=null,identityStable=true;const trace=[];
+  for(let i=0;i<S.moves.length;i++){
+    if(i===from)cycleIds=ids.slice();
+    const m=S.moves[i],before=i>=from?attackMap(b,ids,s):null;
+    b=make(b,m.f,m.t);ids=ids.slice();ids[m.t]=ids[m.f];ids[m.f]=null;
+    if(i>=from&&fen(b,opp(s))===S.pos[from]&&ids.some((id,j)=>id!==cycleIds[j]))identityStable=false;
+    if(i>=from){const after=attackMap(b,ids,s);trace.push({ply:i+1,by:s,check:inCheck(b,opp(s)),
+      attacks:[...after].filter(([key])=>!before.has(key)).map(([,a])=>a),board:b,ids});}
+    s=opp(s);
+  }
+  // 只有對手逃子或直接消解該捉，才列入直接長捉；不能把長獻當長捉。
+  return {identityStable,trace:trace.map((e,i)=>{const reply=trace[(i+1)%trace.length];return{ply:e.ply,by:e.by,check:e.check,
+    attacks:e.attacks.filter(a=>{const f=reply.ids.indexOf(a.attacker),t=reply.ids.indexOf(a.target);
+      return f<0||t<0||!captureLegal(reply.board,f,t)})}})}}
+/* 從開局重播到第 to 手，記下第 from 手以後每一步是誰走、有沒有將軍（不信任存檔裡的 ck 標記） */
+function checksSpan(S,from,to){let b=parseFen(S.start||START),s=S.startTurn||"r";const out=[];for(let i=0;i<to;i++){const m=S.moves[i];b=make(b,m.f,m.t);if(i>=from)out.push({by:s,check:inCheck(b,opp(s))});s=opp(s)}return out}
+function repetitionVerdict(S){
+  const n=S.moves.length,key=S.pos&&S.pos[n],idx=[];
+  if(!key)return null;
+  S.pos.forEach((p,i)=>{if(i<=n&&p===key)idx.push(i)});
+  if(idx.length<REP_RULES.occurrences)return null;
+  const points=idx.slice(-REP_RULES.occurrences),from=points[0],len=points[1]-from;
+  const evidence={rules:REP_RULES.id,occurrences:points,fromPly:from+1,toPly:n};
+  // 兩段必須是同一完整循環，不混用早先走過的局面或不同長度的路徑。
+  const same=points[2]-points[1]===len&&S.moves.slice(from,points[1]).every((m,i)=>{
+    const z=S.moves[points[1]+i];return z&&m.f===z.f&&m.t===z.t});
+  /* Claude 11/11（開發者選「先修再上線」）：路線不同但某一方兩輪循環裡每步都將軍＝長將，照判；其他路線不同的循環照舊待核 */
+  if(!same){const sp=checksSpan(S,from,n),rc=sp.filter(x=>x.by==="r"),bc=sp.filter(x=>x.by==="b"),rC=rc.length>0&&rc.every(x=>x.check),bC=bc.length>0&&bc.every(x=>x.check);
+    if(rC&&bC)return{...evidence,w:null,why:"雙方長將，判和"};
+    if(rC)return{...evidence,w:"b",why:"紅方長將判負（循環路線不同，但每步都將軍）"};
+    if(bC)return{...evidence,w:"r",why:"黑方長將判負（循環路線不同，但每步都將軍）"};
+    return{...evidence,pending:true,why:"重複路徑不同，棋例待核；可變著或提和，不自動判和／判負"}}
+  const replay=repetitionTrace(S,from),trace=replay.trace;evidence.trace=trace;
+  if(!replay.identityStable)return{...evidence,pending:true,why:"同類棋子交換位置的循環待核；可變著或提和，不自動判和／判負"};
+  function side(s){
+    const ms=trace.filter(m=>m.by===s),check=ms.length>0&&ms.every(m=>m.check);
+    let targets=null,uncertain=false;
+    for(const m of ms){
+      const a=m.check?[]:m.attacks.filter(a=>!a.exempt);
+      uncertain=uncertain||a.some(a=>a.uncertain);
+      const ts=new Set(a.filter(a=>!a.uncertain).map(a=>a.target));
+      targets=targets===null?ts:new Set([...targets].filter(t=>ts.has(t)));
+    }
+    // 將帥／兵卒本身參與捉同一子時，不能只刪除它的攻擊再誤判其他子的長捉。
+    const pawnOrKing=ms.some(m=>m.attacks.some(a=>(a.piece==="K"||a.piece==="P")&&targets&&targets.has(a.target)));
+    return{check,chase:!!(targets&&targets.size)&&!pawnOrKing,targets:targets?[...targets]:[],uncertain};
+  }
+  const r=side("r"),b=side("b");evidence.red=r;evidence.black=b;
+  const result=(w,why)=>({...evidence,w,why});
+  if(r.check&&b.check)return result(null,"雙方長將，判和");
+  if(r.check)return result("b","紅方長將判負");
+  if(b.check)return result("r","黑方長將判負");
+  if(r.uncertain||b.uncertain)return{...evidence,pending:true,why:"涉及同類子牽制的特殊棋例待核；可變著或提和，不自動判和／判負"};
+  if(r.chase&&b.chase)return{...evidence,pending:true,why:"雙方互捉的責任棋例待核；可變著或提和，不自動判和／判負"};
+  if(r.chase)return result("b","紅方長捉同一子判負");
+  if(b.chase)return result("r","黑方長捉同一子判負");
+  return result(null,"亞洲棋例：循環未構成單方長將或直接長捉，判和")}
 
 
 
@@ -98,27 +168,23 @@ const LEVELS=[
   {n:8,name:"全力",desc:"每步想 6 秒（約算 25 步以上），人類幾乎贏不了",movetime:6000}];
 // ===== 走子與裁判 =====
 function stateApply(S,f,t){
-  const mover=S.turn,chB=chasePairs(S.board,mover);
+  S.repetition=null;const mover=S.turn,chB=chasePairs(S.board,mover);
   const m={f,t,by:mover};m.cn=notate(S.board,f,t);m.cap=S.board[t];
   S.board=make(S.board,f,t);S.turn=opp(S.turn);S.pos.push(fen(S.board,S.turn));m.ck=inCheck(S.board,S.turn);
   m.ch=[...chasePairs(S.board,mover)].some(x=>!chB.has(x));
   S.moves.push(m);return m}
 function stateRebuild(S){const old=S.moves||[];S.moves=[];S.board=parseFen(S.start||START);S.turn=S.startTurn||"r";S.pos=[fen(S.board,S.turn)];
-  for(const o of old){const m=stateApply(S,o.f,o.t);for(const k of["q","loss","ev","bc","bm","bp"])if(o[k]!==undefined)m[k]=o[k]}}
+  for(const o of old){const m=stateApply(S,o.f,o.t);for(const k of["q","loss","ev","bc","bm","bp"])if(o[k]!==undefined)m[k]=o[k]}S.repetition=repetitionVerdict(S)}
 function judgeState(S){
-  const n=S.moves.length,mover=S.moves[n-1].by,other=opp(mover);
+  const n=S.moves.length;S.repetition=null;if(!n)return null;
+  const mover=S.moves[n-1].by,other=opp(mover);
   if(legal(S.board,other).length===0)return{w:mover,why:inCheck(S.board,other)?"將死":"困斃"};
+  // 長將／長捉先於自然限著，不能以未吃子和局覆蓋違例。
+  const rep=repetitionVerdict(S);S.repetition=rep;
+  if(rep){if(rep.pending)return null;return{w:rep.w,why:rep.why,adjudication:rep}}
   if(!hasAttackers(S.board,"r")&&!hasAttackers(S.board,"b"))return{w:null,why:"雙方均無進攻子力"};
   let since=0;for(let i=n-1;i>=0;i--){if(S.moves[i].cap)break;since++}
-  if(since>=120)return{w:null,why:"60 回合未吃子"};
-  const key=S.pos[n],idx=[];S.pos.forEach((p,i)=>{if(p===key)idx.push(i)});
-  if(idx.length>=3){const seg=S.moves.slice(idx[0]);
-    const hit=s=>{const ms=seg.filter(m=>m.by===s);return{all:ms.length>0&&ms.every(m=>m.ck||m.ch),chk:ms.length>0&&ms.every(m=>m.ck)}};
-    const R=hit("r"),B=hit("b");
-    if(R.all&&!B.all)return{w:"b",why:"紅方"+(R.chk?"長將":"長捉")+"判負"};
-    if(B.all&&!R.all)return{w:"r",why:"黑方"+(B.chk?"長將":"長捉")+"判負"};
-    if(R.all&&B.all){if(R.chk&&!B.chk)return{w:"b",why:"紅方長將、黑方長捉，長將方判負"};if(B.chk&&!R.chk)return{w:"r",why:"黑方長將、紅方長捉，長將方判負"};return{w:null,why:"雙方長打，判和"}}
-    return{w:null,why:"同一局面三次重複，判和"}}
+  if(since>=120)return{w:null,why:"遊戲自然限著：60 回合未吃子"};
   return null}
 function pickMove(r,lv){
   if(!lv.margin||r.lines.length<2)return r.best;
@@ -139,6 +205,6 @@ async function classifyRaw(b,s,f,t,ms,lt){   /* lt：對方上一步落在哪一
   else q=gradeLoss(loss);
   const bf=parseSq(best.mv.slice(0,2)),bt=parseSq(best.mv.slice(2,4));
   return{q,loss,gap,ev:s==="r"?played:-played,bc:notate(b,bf,bt),bm:best.mv,bp:(best.pv||[]).slice(0,3)}}   // bp：Pikafish 建議的前 3 步（賽後在棋盤上畫箭頭）
-return{START,NAMES,CN,VAL,sideOf,opp,parseFen,fen,legal,legalOk,inCheck,kingSq,make,iccs,parseSq,notate,chasePairs,hasAttackers,PLAYER,annotate,summary,fullItem,gameItem,LEVELS,stateApply,stateRebuild,judgeState,pickMove,ANALYZE_MS,clampV,gradeLoss,qName,classifyRaw};
+return{START,NAMES,CN,VAL,sideOf,opp,parseFen,fen,legal,legalOk,inCheck,kingSq,make,iccs,parseSq,notate,chasePairs,hasAttackers,REP_RULES,repetitionVerdict,PLAYER,annotate,summary,fullItem,gameItem,LEVELS,stateApply,stateRebuild,judgeState,pickMove,ANALYZE_MS,clampV,gradeLoss,qName,classifyRaw};
 })();
 if(typeof module!=="undefined")module.exports=XQCore;

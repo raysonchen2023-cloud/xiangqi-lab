@@ -9,6 +9,9 @@
 //   ROOT/sys/online       大廳角色程式數的在線人數（保留；首頁「N 人在線上」用，不用為了數人頭去收整份名單）
 "use strict";
 var XQNet=(function(){
+  // ChatGPT：新局必須雙方使用相同裁判，避免一端判和、一端判負。
+  const RULE_ID=XQCore.REP_RULES.id;
+  const ruleMismatch=()=>window.dispatchEvent(new CustomEvent("xq-rules-mismatch"));
   /* 回饋 854（開發者 11/9：專用 MQTT 伺服器、降流量）：伺服器網址和帳密集中在 MQ，搬到專用伺服器時只改這裡（電腦上的程式讀 tools/mqtt-config.json）。
      帳密會跟著 App 程式公開，所以這裡只能放「權限最小」的帳號（只准用 xqlab-… 開頭的頻道）。
      測試房間（xq_netRoot 有設）可以在 localStorage 的 xq_mqtt 放 {"url":"wss://…","user":"…","pass":"…"}，先用測試房間試新伺服器；正式大廳不看 xq_mqtt */
@@ -120,7 +123,7 @@ var XQNet=(function(){
   const rankOf=p=>RANKS[rankIdx(p)][0];
   const rec=()=>ls.get("rate",null)||{pts:0,w:0,l:0,d:0,hist:[]};
   const myPts=()=>rec().pts;
-  function record(){if(!G||badG.has(G.gid)||!G.result||G.result.abort||G.result.forfeit||(G.moves.length<2&&!G.result.timeout))return;   // 超時判負一定計分   // 雙方都還沒走就結束：不計分
+  function record(){if(!G||badG.has(G.gid)||G.rules!==RULE_ID||!G.result||G.result.abort||G.result.forfeit||(G.moves.length<2&&!G.result.timeout))return;   // 超時判負一定計分   // 雙方都還沒走就結束：不計分
     const s=side();if(!s)return;const R=rec();if(R.hist.some(h=>h.gid===G.gid&&(!h.rid||h.rid===G.id)))return;   /* 意見回饋 619：「再來一局」沿用同一個 gid，改用 gid＋這盤的 id 判斷有沒有記過，第二盤以後才會記進戰績 */
     const o=s==="r"?G.black:G.red,op=o.pts!=null?o.pts:(people[o.id]&&people[o.id].pts)||0;
     /* 意見回饋 段位失準：原本贏 +20、輸 −15 會停在勝率 43% 那一階、而且越下越高（每盤淨增 5 分）。
@@ -171,7 +174,7 @@ var XQNet=(function(){
     if(!c.length||c[0].id<i)return;   // 有人代號比我小：等他來邀請
     sendInvite(c[0],true)}
   function sendInvite(to,auto){if(selfBan())return null;const m=me(),   /* 回饋 852：停權中不能邀請 */gid=Math.random().toString(36).slice(2,10)+Date.now().toString(36);pending={gid,to:to.id,name:to.name,auto};
-    cli&&cli.pub(`${ROOT}/i/${to.id}`,JSON.stringify({type:"invite",gid,auto:!!auto,from:{id:m.id,name:m.name,pts:myPts(),tc:tcPref()},at:Date.now()}));
+    cli&&cli.pub(`${ROOT}/i/${to.id}`,JSON.stringify({type:"invite",gid,auto:!!auto,from:{id:m.id,name:m.name,pts:myPts(),tc:tcPref(),rules:RULE_ID},at:Date.now()}));
     clearTimeout(pendT);if(auto)pendT=setTimeout(()=>{if(pending&&pending.gid===gid){pending=null;tryMatch()}},8000);return gid}
   function connect(){if(cli||!want)return;const m=me();
     cli=mqtt(URLS[urlI],{clientId:"xq"+m.id.slice(0,12)+Math.random().toString(36).slice(2,8),keepalive:30,will:{topic:`${ROOT}/u/${m.id}`,payload:"",retain:true},user:MQA.user,pass:MQA.pass});
@@ -199,15 +202,18 @@ var XQNet=(function(){
       else{try{const x=JSON.parse(msg);if(x&&x.id===id){if(x.v>=2)x.at=Math.min(Date.now(),+x.ts||Date.now());people[id]=x;sweep(id,x,retain)}}catch(e){}}   /* 回饋 854：新版的 at 是「現在＋32 分鐘」給舊版看的，存起來前換回更新時間（資料卡「幾分鐘前更新」用） */
       emit("people");tryMatch();return}
     if(p[0]==="i"){let x;try{x=JSON.parse(msg)}catch(e){return}if(!x||!x.from||Date.now()-(x.at||0)>120000)return;
+      if((x.type==="invite"||x.type==="accept")&&x.from.rules!==RULE_ID){
+        ruleMismatch();const m=me();cli&&cli.pub(`${ROOT}/i/${x.from.id}`,JSON.stringify({type:"decline",gid:x.gid,from:{id:m.id,name:m.name,rules:RULE_ID},at:Date.now()}));
+        if(pending&&pending.gid===x.gid){pending=null;clearTimeout(pendT)}return;}
       if(x.from.bot&&typeof x.from.id==="string")botMem[x.from.id]=1;   /* 回饋 854：角色的邀請會註明 bot（不在大廳頁、沒收名單時也認得出來，不跳「時制不一樣」） */
       if(x.type==="invite"&&x.auto){   // 隨機配對來的：還在找就自動接受，不然婉拒
-        const m=me();const ok=!!seeking&&!playing()&&!pending&&tcOk(x.from)&&!blk(x.from.id)&&!selfBan();cli&&cli.pub(`${ROOT}/i/${x.from.id}`,JSON.stringify({type:ok?"accept":"decline",gid:x.gid,from:{id:m.id,name:m.name,pts:myPts(),tc:tcPref()},at:Date.now()}));
+        const m=me();const ok=!!seeking&&!playing()&&!pending&&tcOk(x.from)&&!blk(x.from.id)&&!selfBan();cli&&cli.pub(`${ROOT}/i/${x.from.id}`,JSON.stringify({type:ok?"accept":"decline",gid:x.gid,from:{id:m.id,name:m.name,pts:myPts(),tc:tcPref(),rules:RULE_ID},at:Date.now()}));
         if(ok){seeking=0;G=null;enter(x.gid);waitGame(x.gid,true);emit("matched",{name:x.from.name})}}
-      else if(x.type==="invite"){if(blk(x.from.id)||selfBan()){const m=me();cli&&cli.pub(`${ROOT}/i/${x.from.id}`,JSON.stringify({type:"decline",gid:x.gid,from:{id:m.id,name:m.name,pts:myPts(),tc:tcPref()},at:Date.now()}))}else emit("invite",x)}   /* 回饋 841：封鎖的人送來的邀請，不跳視窗、直接婉拒 */
+      else if(x.type==="invite"){if(blk(x.from.id)||selfBan()){const m=me();cli&&cli.pub(`${ROOT}/i/${x.from.id}`,JSON.stringify({type:"decline",gid:x.gid,from:{id:m.id,name:m.name,pts:myPts(),tc:tcPref(),rules:RULE_ID},at:Date.now()}))}else emit("invite",x)}   /* 回饋 841：封鎖的人送來的邀請，不跳視窗、直接婉拒 */
       else if(x.type==="accept"&&pending&&pending.gid===x.gid){const m=me(),auto=pending.auto;pending=null;clearTimeout(pendT);seeking=0;
         let red={id:m.id,name:m.name,pts:myPts()},black={id:x.from.id,name:x.from.name,pts:+x.from.pts||0};if(Math.random()<.5)[red,black]=[black,red];   // 紅黑一律隨機（意見回饋 191）
         const tc=tcPref(),now=Date.now();
-        G={gid:x.gid,id:new Date().toISOString().replace(/[:.]/g,"-").slice(0,19),rev:1,red,black,moves:[],result:null,draw:null,at:now,tc,clk:{r:tc*60000,b:tc*60000},tk:now,tkN:0};
+        G={rules:RULE_ID,gid:x.gid,id:new Date().toISOString().replace(/[:.]/g,"-").slice(0,19),rev:1,red,black,moves:[],result:null,draw:null,at:now,tc,clk:{r:tc*60000,b:tc*60000},tk:now,tkN:0};
         enter(x.gid);pubGame();emit(auto?"matched":"start",{gid:x.gid,name:x.from.name})}
       else if(x.type==="decline"&&pending&&pending.gid===x.gid){const auto=pending.auto;pending=null;clearTimeout(pendT);if(auto){nope[x.from.id]=Date.now();tryMatch()}else emit("reply",{ok:false,name:x.from.name})}   /* 回饋 841：記下誰婉拒了隨機配對 */
       else if(x.type==="cancel"&&!blk(x.from.id))emit("cancel",x);
@@ -226,6 +232,7 @@ var XQNet=(function(){
   function badCheck(x){try{if(!x||!G||badG.has(G.gid)||!window.XQ_netCheck)return;const v=window.XQ_netCheck(x.moves);if(v&&v.ok)return;badG.add(G.gid);emit("abnormal",{gid:G.gid,why:"illegal"})}catch(e){}}
   const tmOf=g=>g.moves.length%2?"b":"r";
   function okNext(a,b){const me=side();try{
+    if(a.rules!==b.rules)return false;
     if(a.result&&!b.result)return b.red.id===a.black.id&&b.black.id===a.red.id&&!b.moves.length;
     if(b.red.id!==a.red.id||b.black.id!==a.black.id||a.result)return false;
     const o=oppOf(me),A=a.moves,B=b.moves,n=Math.min(A.length,B.length);
@@ -249,14 +256,14 @@ var XQNet=(function(){
   // 每步限時：輪到的一方超過 3 分鐘沒走（離開、斷線、關掉 App），由等待的一方判他超時負，比賽自動結束並計分
   const TURN_MS=3*60000;
   const toMove=()=>G?(G.moves.length%2?"b":"r"):null;
-  function timeoutCheck(){if(!playing()||!cli||!cli.up)return;const t=toMove(),me=side();if(!t||t===me)return;
+  function timeoutCheck(){if(!G||G.rules!==RULE_ID||!playing()||!cli||!cli.up)return;const t=toMove(),me=side();if(!t||t===me)return;
     if(G.clk&&clockLeft(G,t)<=0)return setResult({w:me,timeout:true,why:PL[t]+"時間用完，超時判負"});
     if(Date.now()-turnAt(G)>TURN_MS)setResult({w:me,timeout:true,why:PL[t]+"超過 3 分鐘沒走，超時判負"})}
   setInterval(()=>{timeoutCheck();syncRoster()},2000);   /* 回饋 854：順便看要不要訂、收整份名單 */
   function staleCheck(){if(!playing()||!cli||!cli.up||G.cup)return;   /* 擂台比賽沒有「中止」：斷線的人時間照走 */const o=oppOf(side()),oid=o==="r"?G.red.id:G.black.id;
     if(!onl(oid)&&Date.now()-seenAt>10*60000)setResult({w:null,abort:true,why:"對方離線太久，對局中止"})}
   // 自己離開一盤還沒下完的棋：對方還在線上就算自己認輸；對方已經離線就直接中止
-  function endOnLeave(){if(!playing()||G.cup)return;   /* 擂台比賽離開畫面不算認輸（小朋友常誤觸），回來可以接著下 */const s=side(),o=oppOf(s),oid=o==="r"?G.red.id:G.black.id;
+  function endOnLeave(){if(!playing()||G.cup)return;if(G.rules!==RULE_ID)return setResult({w:null,abort:true,why:"棋規版本不同，舊局中止（不計分）"});   /* 擂台比賽離開畫面不算認輸（小朋友常誤觸），回來可以接著下 */const s=side(),o=oppOf(s),oid=o==="r"?G.red.id:G.black.id;
     setResult(onl(oid)&&G.moves.length?{w:o,why:PL[s]+"離開對局"}:{w:null,abort:true,why:onl(oid)?"對局取消":"對方離線，對局中止"})}
   // 接受後 12 秒還沒收到對局（對方剛好關掉 App）：取消，隨機配對的話繼續找
   function waitGame(gid,auto){setTimeout(()=>{if(!cur||cur.gid!==gid||G)return;if(cli&&cli.up)cli.unsub(gt(gid));cur=null;ls.set("net",null);
@@ -298,7 +305,7 @@ var XQNet=(function(){
     seeking:()=>!!seeking,
     seekers(){const now=Date.now(),i=me().id;return Object.values(people).filter(x=>x.st==="seeking"&&x.id!==i&&fresh(x,now)&&!blk(x.id)).length},   /* 回饋 841：不算封鎖的人 */
     cancelInvite(){if(!pending)return;const m=me();cli&&cli.pub(`${ROOT}/i/${pending.to}`,JSON.stringify({type:"cancel",gid:pending.gid,from:{id:m.id,name:m.name},at:Date.now()}));pending=null},
-    respond(x,ok){const m=me();if(ok)endOnLeave();cli&&cli.pub(`${ROOT}/i/${x.from.id}`,JSON.stringify({type:ok?"accept":"decline",gid:x.gid,from:{id:m.id,name:m.name,pts:myPts(),tc:tcPref()},at:Date.now()}));
+    respond(x,ok){const m=me();if(ok)endOnLeave();cli&&cli.pub(`${ROOT}/i/${x.from.id}`,JSON.stringify({type:ok?"accept":"decline",gid:x.gid,from:{id:m.id,name:m.name,pts:myPts(),tc:tcPref(),rules:RULE_ID},at:Date.now()}));
       if(ok){G=null;enter(x.gid);waitGame(x.gid,false)}},
     watch(gid){endOnLeave();G=null;enter(gid)},
     tc:()=>tcPref(),tcs:TCS,tcOf,isBot,tcOk:f=>tcOk(f),setTc(v){if(TCS.includes(+v)){ls.set("tc",+v);presence();emit("people")}},

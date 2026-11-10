@@ -120,7 +120,7 @@ var XQ=(function(){
     stateRebuild(P);if(P.practice&&P.turn!==human)throw new Error("這步不是你走的");savePlay()}
   function playApply(f,t){stateApply(P,f,t);P.hint=null;let r=judgeState(P);if(r&&P.noPerp&&/長將|長捉|長打/.test(r.why))r=null;if(r)playEnd(r.w,r.why);savePlay();setTimeout(analyzePlay,0);
     try{window.dispatchEvent(new Event("xq-play"))}catch(e){}}   // 通知畫面馬上更新，不用等下一次輪詢
-  function playEnd(w,why){P.result={w,why};const res=!w?"d":w===P.human?"w":"l";
+  function playEnd(w,why){P.result={w,why,...(P.repetition&&!P.repetition.pending?{adjudication:P.repetition}:{})};const res=!w?"d":w===P.human?"w":"l";
     if(P.practice){savePlay();return}   // 錯棋重練：不算戰績、不存進對局紀錄
     if(P.ranked){if(P.moves.length>=2)cpuRateApply(res)}   // 雙方都還沒走就結束不計分
     if(P.arena&&!P.journey&&res==="w"&&P.moves.length>=2){const S=ls.get("arenaStamps",{}),first=!S[P.arena];if(first)S[P.arena]={at:new Date().toISOString(),lv:P.level,n:P.moves.length};ls.set("arenaStamps",S);
@@ -159,7 +159,7 @@ var XQ=(function(){
   function playState(){ensureP();
     const CR=cpuRate(),ci=rankIdx(CR.pts),nx=RANKS[ci+1];
     const SA=stashAll(),others=Object.values(SA).filter(g=>kindOf(g)!==kindOf(P)).map(g=>({kind:kindOf(g),arena:g.arena||null,journey:g.journey||null,ranked:!!g.ranked,reward:!!g.reward,level:g.level,n:g.moves.length,human:g.human}));
-    return{kind:kindOf(P),others,other:others[0]||null,journey:P.journey||null,start:P.start||null,startTurn:P.startTurn||"r",id:P.id,board:P.board,turn:P.turn,human:P.human,level:P.level,ranked:!!P.ranked,reward:!!P.reward,arena:P.arena||null,stamp:P.stamp||null,prize:P.prize||null,rkName:P.ranked?RANKS[P.rk][0]:null,rate:P.rate||null,
+    return{rules:C.REP_RULES,repetition:P.repetition||null,kind:kindOf(P),others,other:others[0]||null,journey:P.journey||null,start:P.start||null,startTurn:P.startTurn||"r",id:P.id,board:P.board,turn:P.turn,human:P.human,level:P.level,ranked:!!P.ranked,reward:!!P.reward,arena:P.arena||null,stamp:P.stamp||null,prize:P.prize||null,rkName:P.ranked?RANKS[P.rk][0]:null,rate:P.rate||null,
       cpuRate:{pts:CR.pts,rank:RANKS[ci][0],w:CR.w,l:CR.l,d:CR.d,next:nx?nx[0]:null,toNext:nx?nx[1]-CR.pts:0,lo:RANKS[ci][1],hi:nx?nx[1]:null,hist:CR.hist},
       levels:LEVELS.map(l=>({n:l.n,name:l.name,desc:l.desc})),record:ls.get("record",{}),
       moves:P.moves.map(moveOut),result:P.result,practice:P.practice||null,thinking:playBusy&&P.turn!==P.human,msg:playMsg,eval:lastEv(P.moves),hint:P.hint,
@@ -182,6 +182,10 @@ var XQ=(function(){
       const r=await XQEngine.search({moves:ucis()},{movetime:1500},1),f=parseSq(r.best.slice(0,2)),t=parseSq(r.best.slice(2,4));P.hint={f,t,cn:notate(P.board,f,t)};P.hintN=(P.hintN||0)+1;savePlay()}
     else if(p==="/play/hintmark"){if(!P.result){P.hintN=(P.hintN||0)+1;savePlay()}}   /* 意見回饋 415：雲河棋路的提示棋在畫面那邊算，這裡只記「這盤用過提示」 */
     else if(p==="/play/resign"){if(!P.result)playEnd(opp(P.human),"你認輸")}
+    /* 開發者 11/11 選「人機遇待核給和局／悔棋」：裁判判循環「待核」時（亞洲棋例沒辦法自動判的循環），跟電腦下的人可以直接選和局，或退回自己上一步之前變著（不算悔棋次數） */
+    else if(p==="/play/repdraw"){if(P.result||!(P.repetition&&P.repetition.pending))throw new Error("現在沒有待核的循環");playEnd(null,"循環待核，同意和局")}
+    else if(p==="/play/repundo"){if(P.result||!(P.repetition&&P.repetition.pending))throw new Error("現在沒有待核的循環");const floor=P.practice?P.practice.base:0;if(!P.moves.slice(floor).some(m=>m.by===P.human))throw new Error("沒有可以退回的棋");
+      while(P.moves.length>floor){const m=P.moves.pop();if(m.by===P.human)break}P.result=null;P.hint=null;stateRebuild(P);savePlay();setTimeout(playEngine,0)}
     return playState()}
 
   // ---------- 雙人對戰（同一支手機） ----------
@@ -195,11 +199,11 @@ var XQ=(function(){
   const pvpLeft=s=>!V.clocks?null:V.clocks[s]-(V.tick!=null&&V.turn===s&&!V.result?Date.now()-V.tick:0);
   function pvpClock(){if(!V||!V.tc||V.result||V.tick==null)return;if(pvpLeft(V.turn)<=0){V.clocks[V.turn]=0;const s=V.turn;V.tick=null;pvpEnd(opp(s),PLAYER[s]+"超時判負")}}
   setInterval(pvpClock,250);
-  function pvpEnd(w,why){if(V.tick!=null&&V.clocks)V.clocks[V.turn]=Math.max(0,pvpLeft(V.turn));V.result={w,why};V.tick=null;V.draw=null;
+  function pvpEnd(w,why){if(V.tick!=null&&V.clocks)V.clocks[V.turn]=Math.max(0,pvpLeft(V.turn));V.result={w,why,...(V.repetition&&!V.repetition.pending?{adjudication:V.repetition}:{})};V.tick=null;V.draw=null;
     pushGame("pvp",{id:V.id,date:V.id.slice(0,10),red:V.red,black:V.black,tc:V.tcKey,result:V.result,moves:saveMoves(V.moves)});saveV()}
   async function analyzePvp(){if(vaBusy||!V)return;vaBusy=true;try{await analyzeList(V,saveV)}finally{vaBusy=false}}
   function pvpState(){ensureV();pvpClock();
-    return{id:V.id,red:V.red,black:V.black,board:V.board,turn:V.turn,moves:V.moves.map(moveOut),result:V.result,draw:V.draw,tcKey:V.tcKey,
+    return{rules:C.REP_RULES,repetition:V.repetition||null,id:V.id,red:V.red,black:V.black,board:V.board,turn:V.turn,moves:V.moves.map(moveOut),result:V.result,draw:V.draw,tcKey:V.tcKey,
       clocks:V.clocks?{r:pvpLeft("r"),b:pvpLeft("b")}:null,running:V.tick!=null,legal:V.result?[]:legal(V.board,V.turn),
       check:!V.result&&inCheck(V.board,V.turn)?kingSq(V.board,V.turn):-1,eval:lastEv(V.moves),engine:true}}
   async function pvpPost(p,b){ensureV();const side=b.side==="b"?"b":"r";
@@ -240,14 +244,15 @@ var XQ=(function(){
     if(!nb)return{id:"wait",red:"等待中…",black:"等待中…",board:parseFen(START),turn:"r",moves:[],result:null,draw:null,tcKey:"none",clocks:null,running:false,legal:[],check:-1,eval:null,
       engine:true,online:{r:false,b:false},who:{r:"",b:""},emotes:[],net:true,mySide:sd||"w",watchers:XQNet.watchers(),waiting:true,link:XQNet.status()};
     const{S,g}=nb;
-    return{id:g.id,red:g.red.name,black:g.black.name,board:S.board,turn:S.turn,moves:S.moves.map(moveOut),result:g.result,draw:g.draw,tcKey:g.tc?"net"+g.tc:"none",tc:g.tc||null,clocks:XQNet.clocks?XQNet.clocks():null,running:!!g.clk&&!g.result,
-      legal:g.result?[]:legal(S.board,S.turn),check:!g.result&&inCheck(S.board,S.turn)?kingSq(S.board,S.turn):-1,eval:null,engine:true,
+    return{rules:C.REP_RULES,repetition:g.rules===C.REP_RULES.id?(S.repetition||null):{pending:true,why:"這盤使用舊版棋規，保留棋譜供閱讀；請雙方更新後回大廳另開新局，不以新版改判舊局。"},id:g.id,red:g.red.name,black:g.black.name,board:S.board,turn:S.turn,moves:S.moves.map(moveOut),result:g.result,draw:g.draw,tcKey:g.tc?"net"+g.tc:"none",tc:g.tc||null,clocks:XQNet.clocks?XQNet.clocks():null,running:!!g.clk&&!g.result,
+      legal:g.result||g.rules!==C.REP_RULES.id?[]:legal(S.board,S.turn),check:!g.result&&inCheck(S.board,S.turn)?kingSq(S.board,S.turn):-1,eval:null,engine:true,
       online:{r:XQNet.isOn(g.red.id),b:XQNet.isOn(g.black.id)},who:{r:g.red.name,b:g.black.name},emotes:XQNet.emotes(),net:true,mySide:sd||"w",watchers:XQNet.watchers(),link:XQNet.status(),unsent:XQNet.pendingSend()}}
   async function netPvp(p,b){if(p==="/pvp/state")return netState();
     const sd=XQNet.side();if(!sd)throw new Error("你在觀戰，不能下棋");
     if(p==="/pvp/emote"){XQNet.emote(sd,b.e);return netState()}
     if(p==="/pvp/chat"){XQNet.say(sd,b.text);return netState()}
     const nb=netBuild();if(!nb)throw new Error("還在等對局資料，稍等一下");const{S,g}=nb;
+    if(g.rules!==C.REP_RULES.id)throw new Error("這盤棋規版本不同，請回大廳另開新局；原棋譜仍保留。 ");
     if(p==="/pvp/move"){const f=+b.f,t=+b.t;if(g.result)throw new Error("這局已經結束");if(S.turn!==sd)throw new Error("還沒輪到你");
       if(!legal(S.board,S.turn).some(([x,y])=>x===f&&y===t))throw new Error("這步不合法");
       const T={moves:g.moves.map(([a,z])=>({f:a,t:z}))};stateRebuild(T);stateApply(T,f,t);const r=judgeState(T);

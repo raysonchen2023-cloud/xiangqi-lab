@@ -1379,7 +1379,7 @@ html[data-hicon] .tabbar button.on{box-shadow:inset 0 -3px 0 currentColor}
       if(!window.caches)return go();caches.keys().then(function(ks){return Promise.all(ks.filter(function(k){return k.indexOf("xqlab-app-")===0}).map(function(k){return caches.delete(k)}))})
         .then(function(){return navigator.serviceWorker&&navigator.serviceWorker.getRegistration()}).then(function(r){return r&&r.update()}).catch(function(){}).then(go)}};setTimeout(chk,4000)})();
 </script>
-<script>window.XQ_OFFLINE=true;window.XQ_BUILD="20261111-0400";</script>
+<script>window.XQ_OFFLINE=true;window.XQ_BUILD="20261111-0415";</script>
 <script src="core.js"></script>
 <script src="engine.js"></script>
 <script src="local.js"></script>
@@ -1648,11 +1648,13 @@ function confirmBox(text,yes,label){modal(`<h2 style="font-size:19px">${esc(text
 function ruleNote(v,st){
   if(!st.rules)return;const stat=v.querySelector("#stat");if(!stat)return;
   let note=v.querySelector(".rule-note");if(!note){note=document.createElement("details");note.className="rule-note muted";note.style.cssText="font-size:12px;padding:2px 8px";
-    const summary=document.createElement("summary");summary.textContent="棋規：亞洲棋例（直接捉子）";summary.style.cssText="cursor:pointer;min-height:24px";
-    const p=document.createElement("p");p.textContent="同局面第三次出現時檢查循環；單方長將、直接長捉同一子判負。一將一捉不直接判負。特殊互捉、同類牽制待核，可變著或提和；計時照常。遊戲限著為連續60回合未吃子，並非完整正式賽例裁判。";
+    const summary=document.createElement("summary");summary.textContent="📜 本局棋規："+((st.rules&&st.rules.name)||"亞洲棋例（直接捉子）");summary.style.cssText="cursor:pointer;min-height:24px;display:inline-block;padding:1px 10px;border-radius:99px;border:1px solid var(--line);background:var(--card)";   /* 開發者 11/11 選「對局角落加棋規徽章」 */
+    const p=document.createElement("p");p.textContent="這盤開局時就定好用這一版，中途不能改。同局面第三次出現時檢查循環；單方長將（繞不同路線也算）、直接長捉同一子判負。一將一捉不直接判負。特殊互捉、同類牽制待核，可變著或提和；計時照常。遊戲限著為連續60回合未吃子，並非完整正式賽例裁判。";
     note.append(summary,p);stat.after(note)}
 }
 
+/* 開發者 11/11 選「邀請時顯示棋規」：邀請框寫出本局採用哪一版（版本不同的邀請 net.js 會先擋掉，看得到邀請＝同一版） */
+function ruleLine(){try{const R=window.XQCore&&XQCore.REP_RULES;return R?`<p class="muted" style="font-size:13px;margin:6px 0 0">📜 本局採用：${esc(R.name)}（點對局畫面上的棋規徽章可以看說明）</p>`:""}catch(e){return""}}
 addEventListener("xq-rules-mismatch",()=>toast("雙方棋規版本不同，請一起更新遊戲後再開新局。"));
 
 // ================= 棋盤 =================
@@ -2833,9 +2835,9 @@ if(OFF&&window.XQNet){XQNet.start();
     const acc=()=>{const go=()=>{XQNet.respond(x,true);goGame()};if(XQNet.active()&&XQNet.game()&&!XQNet.game().result&&XQNet.side())XQNet.leave();go()};
     const ft=XQNet.tcOf(x.from),mt=XQNet.tc(),diff=ft&&!XQNet.isBot(x.from.id)&&ft!==mt;
     /* 意見回饋 328：時制不一樣不能直接開局，要先同意改成一樣 */
-    if(diff)modal(`<div class="em">⚔</div><h2>${esc(x.from.name)} 邀請你下一盤</h2><p>⏱ 時制不一樣：對方每方 <b>${ft} 分鐘</b>，你設每方 <b>${mt} 分鐘</b>。<br>要改成一樣才能開局。</p>`,
+    if(diff)modal(`<div class="em">⚔</div><h2>${esc(x.from.name)} 邀請你下一盤</h2><p>⏱ 時制不一樣：對方每方 <b>${ft} 分鐘</b>，你設每方 <b>${mt} 分鐘</b>。<br>要改成一樣才能開局。</p>${typeof ruleLine==="function"?ruleLine():""}`,
       [[`改成 ${ft} 分鐘並接受`,()=>{XQNet.setTc(ft);acc()}],["婉拒",()=>XQNet.respond(x,false),true],...(typeof lbsInviteBtn==="function"?[lbsInviteBtn(x)]:[])],"keep");   /* 意見回饋 607：對戰邀請換頁也不關 */   /* 回饋 841（開發者 11/9 選：大廳檢舉封鎖）：多一顆「🚫 婉拒並封鎖」（m/07x4-lobbysafe.js） */
-    else modal(`<div class="em">⚔</div><h2>${esc(x.from.name)} 邀請你下一盤</h2><p class="muted">每方 ${ft||mt} 分鐘。接受後紅黑隨機決定，紅方先走。</p>`,
+    else modal(`<div class="em">⚔</div><h2>${esc(x.from.name)} 邀請你下一盤</h2><p class="muted">每方 ${ft||mt} 分鐘。接受後紅黑隨機決定，紅方先走。</p>${typeof ruleLine==="function"?ruleLine():""}`,
       [["接受",acc],["婉拒",()=>XQNet.respond(x,false),true],...(typeof lbsInviteBtn==="function"?[lbsInviteBtn(x)]:[])],"keep")});
   XQNet.on("tcwait",x=>{const o=(x.list||[]).filter(z=>z.tc).map(z=>`${z.name}（${z.tc} 分）`).slice(0,3).join("、");if(o)toast(`⏱ 大廳裡 ${o} 也在找對手，但時制跟你（${x.tc} 分）不一樣。點他的名字邀請，講好時制再開局`)});
   XQNet.on("cancel",x=>toast(`${x.from.name} 取消了邀請`));
@@ -2919,6 +2921,7 @@ async function deviceQR(base,key){
   sheet("讓另一台裝置連到電腦",b=>{b.innerHTML=`<p style="text-align:center">用另一台手機／平板的相機掃這個 QR code，打開後就會連到你的電腦。</p><div class="qrbox" id="qrc"></div>
     <p class="muted" style="text-align:center">⚠ 含存取碼：掃到的人能操作電腦上的對局。只給自己的裝置或信任的人。</p>`;
     new QRCode(b.querySelector("#qrc"),{text:u,width:220,height:220,correctLevel:QRCode.CorrectLevel.L})})}
+
 
 
 
@@ -18579,6 +18582,7 @@ function CpuGame(v,practicePage,mode){
     if(e.target.closest(".av")){const o=oppInfo();if(!o)return;vibrate(5);figView(oppArt()&&o.img?null:oppFig(o.look),"👤 "+o.name,`<p style="font-size:16px;line-height:1.8;margin:0 0 4px">「${esc(o.say)}」</p>${ageLine(o.age)}`,[["關閉",()=>closeSheet(),true]],o.img)}};   /* 意見回饋 445：跟坐在位子上的同一個形象（立繪就看立繪、3D 就看 3D） */
   const acts=actionBar(v.querySelector("#acts"),[["bag","🎒","寶物",()=>bagSheet()],["undo","↶","悔棋",()=>undoAsk()],
     ["new","＋","新局",()=>newSheet(),true],["resign","🏳","認輸",()=>confirmBox("確定認輸？",()=>post("/play/resign"),"認輸")],["review","📖","檢討",()=>review(false,st&&st.id)],["setup","🧪","擺盤",()=>st&&setupSheet(st.board,st.turn,st.human==="b",!st.ranked)]]);
+  let repAsked=null;   /* 這盤這一手已經問過待核了 */
   async function post(u,b){if(busy)return false;busy=true;try{render(await api(u,b||{}));return true}catch(e){toast(e.message);return false}finally{busy=false}}
   /* 意見回饋 594：悔棋要用悔棋符（練習不用） */
   function undoAsk(){if(!st)return;if(st.practice)return post("/play/undo");{const no=itemBlock(st);if(no)return toast(no)}const n=undoLeft();
@@ -18647,7 +18651,8 @@ function CpuGame(v,practicePage,mode){
     /* 意見回饋 749（開發者）：錯棋重練的狀態列一直閃——每次輪詢（1.5 秒）都重寫 #stat 的文字，「」裡的著法（藍色可點的 .mvt，250 毫秒後才由 mvtWrap 加回）和 🔁 圖示（emoWalk）被洗掉又加回。
        改成先在 S2 算好要顯示的文字和 hot／wrap，跟上次寫進去的一樣就不動 DOM */
     const s2=v.querySelector("#stat"),S2={textContent:"",cls:{},classList:{add:(...a)=>a.forEach(k=>{S2.cls[k]=1}),toggle:(k,on)=>{if(on)S2.cls[k]=1;else delete S2.cls[k]}},after:x=>s2.after(x)};{const pa=v.querySelector("#pAct");if(pa&&!st.practice&&!pa.hidden)pa.hidden=true}
-    if(!st.result&&st.repetition&&st.repetition.pending)S2.textContent=st.repetition.why;else if(st.msg)S2.textContent=st.msg;else if(st.result)S2.textContent=st.result.why;
+    if(!st.result&&st.repetition&&st.repetition.pending){S2.textContent=st.repetition.why;const pk=(st.id||"")+"|"+st.moves.length;if(repAsked!==pk){repAsked=pk;setTimeout(()=>{if(!st||st.result||!(st.repetition&&st.repetition.pending))return;   /* 開發者 11/11 選「人機遇待核給和局／悔棋」 */
+      modal(`<div class="em">⚖️</div><h2>循環待核</h2><p>${esc(st.repetition.why||"這個循環裁判沒辦法自動判。")}</p><p class="muted" style="font-size:13px">跟電腦下沒有人工裁判，你可以直接選和局，或退回你上一步之前換一步走。</p>`,[["🤝 同意和局",()=>post("/play/repdraw")],["↶ 悔一步變著",()=>post("/play/repundo")],["繼續下",null]])},500)}}else if(st.msg)S2.textContent=st.msg;else if(st.result)S2.textContent=st.result.why;
     else if(st.thinking)S2.textContent="🤔 思考中…";   /* Gemini 評估 11/8（介面圖示化）：狀態列短字加圖示；誰在想看上面那排亮起來的頭像 */
     else{S2.textContent=st.check>=0?"⚠ 被將軍！":st.hint?"💡 提示："+st.hint.cn:"👉 輪到你"+(st.eval?`・${evt(st.eval.v)}`:"");S2.classList.toggle("hot",st.check>=0||!!st.hint)}
     if(st.practice&&!st.result&&!st.msg&&!(st.repetition&&st.repetition.pending))practiceBar(S2);
@@ -18836,16 +18841,20 @@ window.addEventListener("xq-bot-hide",()=>{store.set("bot3d",false);syncBot();to
 async function syncBot(){if(botBusy)return;botBusy=true;try{if(botOn()&&!BOT){await loadScript(OFF?"three.min.js":"/m/three.min.js");await loadScript((OFF?"bot3d.js":"/m/bot3d.js")+"?v="+encodeURIComponent(window.XQ_BUILD||""));if(botOn()&&window.XQBot3D)BOT=window.XQBot3D.start()}
   else if(!botOn()&&BOT){BOT.stop();BOT=null}}catch(e){}botBusy=false}
 setTimeout(syncBot,0);   // 意見回饋 164：一打開就載入，不要等
-/* 開發者 11/11 選規劃書方案 01：長將／長捉先提示。裁判規則不動（core judgeState：同一局面第三次出現時，一直將軍或捉子的一方判負），
-   只在「輪到你、眼前這個局面已經是第二次出現、你這一段每一步都在將軍或捉子」時先跳「著法待確認」，叫你換一步；同一盤 8 手內只提醒一次。
-   draw＝有提和的對局（同桌、線上）多一顆「提議和局」 */
-const REPW_SEEN=new Map();   /* 對局代號 → 上次提醒時的手數：同一盤 8 手內只提醒一次 */
-function repWarn(st,me,draw){try{const C=window.XQCore;if(!C||!C.stateRebuild||!st||st.result||!me||st.turn!==me||!st.moves||st.moves.length<4)return;
-  const S={start:st.start||null,startTurn:st.startTurn||"r",moves:st.moves.map(m=>({f:m.f,t:m.t}))};C.stateRebuild(S);
+/* 開發者 11/11 選規劃書方案 01：長將／長捉先提示；同日開發者選「提示改成直接問裁判」——不再自己用每步的將軍／捉子標記推輸贏
+   （會跟亞洲棋例的裁判不一致，例如一將一捉），改成：輪到你、眼前這個局面已經第二次出現時，模擬「你照上一輪的走法再走一圈」，
+   每一步都交給 core 的 judgeState 判；裁判說你會輸才警告，警告照抄裁判的判詞；裁判說待核就提醒可以提和或變著；判和或不判就不打擾。
+   同一盤 8 手內只提醒一次。draw＝有提和的對局（同桌、線上）多一顆「提議和局」 */
+const REPW_SEEN=new Map();   /* 對局代號 → 上次提醒時的手數 */
+function repWarn(st,me,draw){try{const C=window.XQCore;if(!C||!C.stateRebuild||!C.judgeState||!st||st.result||!me||st.turn!==me||!st.moves||st.moves.length<4)return;
+  const base={start:st.start||null,startTurn:st.startTurn||"r",moves:st.moves.map(m=>({f:m.f,t:m.t}))},S={...base,moves:base.moves.slice()};C.stateRebuild(S);
   const n=S.moves.length,key=S.pos[n],idx=[];S.pos.forEach((p,i)=>{if(p===key)idx.push(i)});if(idx.length!==2)return;
-  const mine=S.moves.slice(idx[0]).filter(m=>m.by===me);if(!mine.length||!mine.every(m=>m.ck||m.ch))return;
-  const id=st.id||"",last=REPW_SEEN.get(id);if(last!=null&&n-last<8&&n>=last)return;REPW_SEEN.set(id,n);const chk=mine.every(m=>m.ck);
-  modal(`<div class="em">⚠️</div><h2>著法待確認</h2><p>這個局面已經重複出現，你這一段一直在${chk?"將軍":"捉子"}。照象棋規則，<b>再走回同一個局面，${chk?"長將":"長捉"}的一方判負</b>。請換一步不一樣的棋${draw?"，或向對方提議和局":""}。</p><p class="muted" style="font-size:13px">時間照常在走。</p>`,[...(draw?[["🤝 提議和局",draw]]:[]),["我來變著",null]])}catch(e){}}
+  const cyc=base.moves.slice(idx[0],idx[1]);let v=null;
+  for(let k=1;k<=cyc.length&&!v;k++){const T={...base,moves:base.moves.concat(cyc.slice(0,k))};C.stateRebuild(T);const j=C.judgeState(T);if(j)v=j}
+  if(!v||(!v.pending&&v.w!==(me==="r"?"b":"r")))return;
+  const id=st.id||"",last=REPW_SEEN.get(id);if(last!=null&&n-last<8&&n>=last)return;REPW_SEEN.set(id,n);
+  if(v.pending)modal(`<div class="em">🔁</div><h2>局面在重複</h2><p>照上一輪再走一圈，裁判會判「待核」：${esc(v.why||"")}</p><p class="muted" style="font-size:13px">時間照常在走。可以換一步不一樣的棋${draw?"，或向對方提議和局":""}。</p>`,[...(draw?[["🤝 提議和局",draw]]:[]),["我來變著",null]]);
+  else modal(`<div class="em">⚠️</div><h2>著法待確認</h2><p>這個局面已經重複出現。照上一輪再走一圈，裁判會判：<b>${esc(v.why||"")}</b>。請換一步不一樣的棋${draw?"，或向對方提議和局":""}。</p><p class="muted" style="font-size:13px">時間照常在走。</p>`,[...(draw?[["🤝 提議和局",draw]]:[]),["我來變著",null]])}catch(e){}}
 // ================= 問小帥（意見回饋 167）：點小人三下發問；用 App 裡的術語、開局、特級大師資料和常見問題回答，能示範的直接帶去棋盤 =================
 const BOT_SAID=[];window.addEventListener("xq-bot-said",e=>{const s=e.detail;if(s&&!BOT_SAID.includes(s)){BOT_SAID.unshift(s);BOT_SAID.length=Math.min(BOT_SAID.length,6)}});
 window.addEventListener("xq-bot-ask",()=>askSheet());
