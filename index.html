@@ -1370,7 +1370,7 @@ html[data-hicon] .tabbar button.on{box-shadow:inset 0 -3px 0 currentColor}
       if(!window.caches)return go();caches.keys().then(function(ks){return Promise.all(ks.filter(function(k){return k.indexOf("xqlab-app-")===0}).map(function(k){return caches.delete(k)}))})
         .then(function(){return navigator.serviceWorker&&navigator.serviceWorker.getRegistration()}).then(function(r){return r&&r.update()}).catch(function(){}).then(go)}};setTimeout(chk,4000)})();
 </script>
-<script>window.XQ_OFFLINE=true;window.XQ_BUILD="20261110-1700";</script>
+<script>window.XQ_OFFLINE=true;window.XQ_BUILD="20261110-1715";</script>
 <script src="core.js"></script>
 <script src="engine.js"></script>
 <script src="local.js"></script>
@@ -4195,7 +4195,7 @@ function onboard(){if(journey())journeyLock();else titleScreen({})}
 // ================= 設定：棋盤風格、棋子樣式、走棋顯示 =================
 const SAMPLE_FEN0="rnbakabnr/9/1c5c1/p1p1p1p1p/9/9/P1P1P1P1P/1C5C1/9/RNBAKABNR",SAMPLE_FEN1="rnbakabnr/9/1c5c1/p1p1p1p1p/9/9/P1P1P1P1P/1C2C4/9/RNBAKABNR",SAMPLE_LAST={f:70,t:67};
 /* 意見回饋 661：關於頁顯示整包遊戲要多大空間。XQ_SIZES 由 build-site.js 建置時填入（開發中的 m.html 是 null，就不顯示） */
-const XQ_SIZES={"pre":272143041,"code":14023701,"eng":51511005,"gm":33668932,"bgm":259516351,"opt":[["比賽對局 1956–2010",21765744],["比賽對局 2011–2014",25596413],["比賽對局 2015–2019",24821916]],"all":720256003,"other":17208900};
+const XQ_SIZES=/*__SIZES__*/null;
 const szMB=b=>b>=1073741824?(b/1073741824).toFixed(1)+" GB":Math.max(1,Math.round(b/1048576))+" MB";
 function aboutSizes(){const S=XQ_SIZES;if(!S)return"";const opt=S.opt||[];   /* 意見回饋 662：玩家只看總數，細項只在開發者模式顯示 */
   return `<div class="row" style="justify-content:space-between"><span class="muted">整包下載</span><b>約 ${szMB(S.all)}</b></div>
@@ -4440,7 +4440,7 @@ function sndPicker(){const on=store.get("mvSound",false),cur=store.get("sndStyle
 // 玩家打開 App 會看到自己回報、已修好的問題；開發者看到每一次的修正回報。設定 → 其他 →「修正紀錄」可以再看
 async function fixHash(id){const d=await crypto.subtle.digest("SHA-256",new TextEncoder().encode("xqfix:"+id));return[...new Uint8Array(d)].map(x=>x.toString(16).padStart(2,"0")).join("").slice(0,12)}
 async function myFixes(){let d;try{d=await fetch("data/fixes.json?v="+encodeURIComponent(window.XQ_BUILD||"")).then(r=>r.json())}catch(e){return null}
-  const dev=DEVMODE(),id=meInfo().id||"",h=id?await fixHash(id):"";return{dev,items:(d.items||[]).filter(x=>dev||(h&&x.h===h)).sort((a,b)=>b.r-a.r)}}
+  const dev=DEVMODE(),id=meInfo().id||"",h=id?await fixHash(id):"";return{dev,items:(d.items||[]).filter(x=>!x.no&&(dev||(h&&x.h===h))).sort((a,b)=>b.r-a.r)}}
 function fixList(items,dev){const fmtV=v=>v?v.replace(/^(\d{4})(\d\d)(\d\d)-(\d\d)(\d\d)$/,"$2/$3 $4:$5"):"";
   return items.length?items.map(x=>`<div class="card" style="margin-bottom:8px"><div class="row" style="justify-content:space-between;gap:6px;flex-wrap:wrap"><b>${esc(x.ty||"")}${dev?`<span class="muted" style="font-weight:400;font-size:12px">　第 ${x.r} 列</span>`:""}</b><span class="muted" style="font-size:12px">${esc(x.at||"")} 回報</span></div>
     ${x.q?`<div class="muted" style="font-size:13px;margin:4px 0;white-space:pre-wrap;max-height:4.5em;overflow:hidden">「${esc(x.q)}」</div>`:""}
@@ -4503,6 +4503,7 @@ function feedbackSheet(){let type="🐞 錯誤";
 
 📎 附件 ${a.name}
 `+a.text).join(""),CAP=44000,more=[];for(let k=CAP;k<full.length;k+=40000)more.push(full.slice(k,k+40000));
+      try{const L=store.get("fbMine",[])||[];L.push({at:Date.now(),ty:type,t:String(t||"").slice(0,80)});store.set("fbMine",L.slice(-60))}catch(e){}   /* 修好回信要引用「你上次告訴我們」：寄出時在這支手機記一份（只存本機） */
       let ok=await sendRecord(Object.assign({},info,{type,text:full.slice(0,CAP),contact,img:imgs[0]||""}));
       for(let i=1;i<N;i++)ok=(await sendRecord(Object.assign({},info,{type,text:`（接上一則的第 ${i+1}/${N} 張截圖）${t.slice(0,60)}`,contact,img:imgs[i]})))&&ok;
       for(let k=0;k<more.length;k++)ok=(await sendRecord(Object.assign({},info,{type,text:`📎 附件續（第 ${k+2}/${more.length+1} 段，接上一則：${t.slice(0,40)}）
@@ -4613,6 +4614,7 @@ function reportSheet(rep,opts){let s=opts.side||"r";
     b.querySelectorAll("[data-sd]").forEach(x=>x.onclick=()=>{s=x.dataset.sd;paint()});
     if(opts.goto)b.querySelectorAll("[data-p]").forEach(x=>x.onclick=()=>{closeSheet();opts.goto(+x.dataset.p)})};paint()})}
 
+
 /* ================= 💾 開頭畫面、存檔、選角鎖定（意見回饋 668，開發者 11/6 核准 RPG 設計師提案第一期）=================
    開頭畫面：每次冷啟動（這個分頁第一次打開）蓋在首頁上、藏在載入畫面底下，載入畫面淡出就看到；網址是深連結（#/canju/… 等）就跳過。
    存檔：3 格，放在 IndexedDB「xqlab-slots」（不放 localStorage：免得被 XQSave 再備份一份，也不佔那 5 MB）。
@@ -4629,7 +4631,11 @@ const SHIP_ROUTE=["classic","qin","han","sanguo","weijin","nanbei","sui","tang",
    已停靠的站記在旅程鍵 shipDock（照停靠先後）；新旅程一開始是［船艙、家鄉］。舊旅程第一次讀到時，照 674 版的舊規則（shipLegacyN）把已經停靠的站算出來存進去，一站都不收回。
    eraOpen 是 674 版「蓋了站章的站」，現在只在換算舊旅程時讀 */
 /* 意見回饋 674（開發者 11/6）：經典園子＝星槎的船艙，每個角色一開始就能去（航線第一站固定是船艙，第二站才是家鄉朝代） */
-function shipOrder(){const J=store.get("journey",null),home=J&&CHAR_ERA[J.c];return home?["classic",home,...SHIP_ROUTE.filter(e=>e!==home&&e!=="classic")]:SHIP_ROUTE.slice()}
+/* hspx 11/10：開新旅程時，從角色的兩個主場（星槎航線上他當主場的站）隨機抽一個當起點，存在 journey.home；阿轍只有秦一站。舊旅程沒有 home 就照 CHAR_ERA */
+const CHAR_HOMES={x_swordboy:["qin"],x_spiritgirl:["weijin","nanbei"],x_martialgirl:["wudai","song"],x_miaogirl:["han","yuan"],x_shuai:["sanguo","ming"],x_shi:["tang","ming"],x_bing:["sui","qing"]};
+const jHomePick=c=>{const L=CHAR_HOMES[c]||(CHAR_ERA[c]?[CHAR_ERA[c]]:[]);return L.length?L[Math.random()*L.length|0]:null};
+const jHome=J=>J?((J.home&&(CHAR_HOMES[J.c]||[]).includes(J.home))?J.home:CHAR_ERA[J.c]):null;
+function shipOrder(){const J=store.get("journey",null),home=jHome(J);return home?["classic",home,...SHIP_ROUTE.filter(e=>e!==home&&e!=="classic")]:SHIP_ROUTE.slice()}
 function shipLegacyN(){const O=shipOrder(),C=store.get("eraOpen",[])||[];let n=2,L=1;try{L=xpInfo().L||1}catch(e){}n=Math.max(n,L+1);O.forEach((e,i)=>{if(C.includes(e))n=Math.max(n,i+2)});return Math.min(O.length,n)}
 function shipDockList(){const J=store.get("journey",null);if(!J||!WX_CHARS[J.c]||!CHAR_ERA[J.c])return null;const O=shipOrder();let D=store.get("shipDock",null);
   if(!Array.isArray(D)||!D.length){D=O.slice(0,shipLegacyN());for(const e of store.get("eraOpen",[])||[])if(O.includes(e)&&!D.includes(e))D.push(e);store.set("shipDock",D)}
@@ -4727,12 +4733,12 @@ function prologue(){const c=myChar();if(!c)return;const C=WX_CHARS[c],era=store.
 async function journeyStart(n,c,nm,df){const C=WX_CHARS[c];if(!C)return;fnStep("pick");const had=!!journey(),cur=curSlot();
   if(had&&cur&&cur!==n)await saveNow(true);SAVE_LOCK=true;
   store.set("slotCur",n);{const fw=localStorage.getItem("m_firstWin");saveApply({});if(fw!=null)localStorage.setItem("m_firstWin",fw)}   /* 新手秒開局的旗標跟著新旅程存進這一格 */
-  store.set("pChar",c);store.set("pSex",C.sx);store.set("pStyle","real");store.set("botPiece",C.pc);store.set("onboard1",true);store.set("journey",{c,sx:C.sx,born:Date.now(),v:1,era:2});if(CHAR_ERA[c]){store.set("era",CHAR_ERA[c]);store.set("eraUser",null);try{applyEra()}catch(e){}}store.set("playSec",0);store.set("diff",df>=1&&df<=5?df|0:2);if(CHAR_ERA[c])store.set("shipDock",["classic",CHAR_ERA[c]]);   /* 意見回饋 675：新旅程的難度、一開始停靠船艙和家鄉 */
+  store.set("pChar",c);store.set("pSex",C.sx);store.set("pStyle","real");store.set("botPiece",C.pc);store.set("onboard1",true);const hm=jHomePick(c);store.set("journey",{c,sx:C.sx,born:Date.now(),v:1,era:2,home:hm});if(hm){store.set("era",hm);store.set("eraUser",null);try{applyEra()}catch(e){}}store.set("playSec",0);store.set("diff",df>=1&&df<=5?df|0:2);if(hm)store.set("shipDock",["classic",hm]);   /* 意見回饋 675：新旅程的難度、一開始停靠船艙和家鄉 */
   if(store.get("oppLook",null)==null)store.set("oppLook","real");if(nm){try{setMyName(nm)}catch(e){}}
   SAVE_LOCK=false;await saveNow(true);
   if(had){SAVE_LOCK=true;saveReload({xqPrologue:"1"});return}
   try{window.dispatchEvent(new Event("xq-look"))}catch(e){}titleClose();try{route()}catch(e){}setTimeout(prologue,500)}
-function journeyRepick(c){const C=WX_CHARS[c],J=journey();if(!C||!J||J.re!==1)return;store.set("pChar",c);store.set("pSex",C.sx);store.set("botPiece",C.pc);store.set("journey",{...J,c,sx:C.sx,re:2,era:2});store.set("shipDock",null);   /* 意見回饋 675：換了角色＝家鄉換了，已停靠的站照舊規則重算一次（不會變少） */if(CHAR_ERA[c]){store.set("era",CHAR_ERA[c]);store.set("eraUser",null);try{applyEra()}catch(e){}}
+function journeyRepick(c){const C=WX_CHARS[c],J=journey();if(!C||!J||J.re!==1)return;store.set("pChar",c);store.set("pSex",C.sx);store.set("botPiece",C.pc);const hm=jHomePick(c);store.set("journey",{...J,c,sx:C.sx,re:2,era:2,home:hm});store.set("shipDock",null);   /* 意見回饋 675：換了角色＝家鄉換了，已停靠的站照舊規則重算一次（不會變少） */if(hm){store.set("era",hm);store.set("eraUser",null);try{applyEra()}catch(e){}}
   try{window.dispatchEvent(new Event("xq-look"))}catch(e){}saveNow(true);toast("換好了："+C.n+"（之後就鎖定了）")}
 async function slotLoad(n){let S=null;try{S=await slotGet(n)}catch(e){}
   if(!S||!S.data){const M=slotMetaAll();delete M[n];store.set("slotMeta",M);return toast("這格讀不到資料")}
@@ -14700,6 +14706,62 @@ function FeedbackPage(v,sub){fbpCss();setTop("💬 意見回饋","#/settings");i
 if(typeof feedbackSheet==="function"){FBP_F0=feedbackSheet;feedbackSheet=function(){if(FEEDBACK_PAGE_ON){location.hash="#/feedback";return}return FBP_F0.apply(this,arguments)}}
 if(typeof fixHistory==="function"){FBP_FX0=fixHistory;fixHistory=function(){if(FEEDBACK_PAGE_ON){location.hash="#/feedback/fixes";return}return FBP_FX0.apply(this,arguments)}}
 if(typeof Home==="function"){const f0=Home;Home=function(v,hub){if(FEEDBACK_PAGE_ON&&!hub&&/^#\/feedback(\/|$)/.test(location.hash))return FeedbackPage(v,location.hash.split("/")[2]||"");return f0.apply(this,arguments)}}
+
+/* ================= 🕊 修好回信（開發者 11/10；Gemini 65 方案 1「小帥肩上的小夥伴」，開發者選「不處理的也寄信」）=================
+   玩家自己回報的問題修好了（或開發者決定先不處理），下次回到首頁（棋鎮）時，一隻信鴿（秦～隋是大雁）從右上飛來，停在玩家角色的肩上，頭上冒 ✉️；
+   點鳥或角色就打開一封「綜合回信」：玩家上次寫的那一句（手機上自己存的 fbMine，寄出時記下，只在這支手機）、開發者怎麼修的（回饋表 N 欄，去掉版本號）。
+   資料：data/fixes.json（只放線上 ID 的雜湊，不放玩家原文）；開發者自己寫的（d:1）不寄；不處理的（no:1）寫「好點子收進百寶箱」。
+   規則：開 App 5 秒內、有面板或彈窗、不在首頁時不飛來；一次只來一隻、一封信列全部；沒點的話 12 秒後飛走，下次回首頁再來；第一次啟用時，3 天前的舊回信算看過 */
+const FBL_ON=true;let FBL_BUSY=false,FBL_T0=Date.now();
+const fblKey=x=>x.at+"|"+x.ty+"|"+(x.no?"n":"f");
+function fblAtMs(s){const m=String(s||"").match(/(\d+)\/(\d+)\/(\d+)\s*(上午|下午)?\s*(\d+):(\d+)/);if(!m)return 0;let h=+m[5]%12;if(m[4]==="下午")h+=12;return new Date(+m[1],+m[2]-1,+m[3],h,+m[6]).getTime()}
+function fblQuote(x){try{const t=fblAtMs(x.at);if(!t)return"";const L=store.get("fbMine",[])||[];let best=null,bd=4*60e3;for(const e of L){const d=Math.abs(e.at-t);if(d<bd){bd=d;best=e}}return best?best.t:""}catch(e){return""}}
+function fblNote(n){n=String(n||"").replace(/^(進度\s*)?\d{8}-\d{4}\s*(已完成)?[：:（(]?\s*/,"");const s=n.split(/[。；]/)[0];return s.length>60?s.slice(0,58)+"…":s}
+async function fblPending(){if(typeof fixHash!=="function"||typeof meInfo!=="function")return[];const id=(meInfo()||{}).id;if(!id)return[];const h=await fixHash(id);
+  const d=await fetch("data/fixes.json?v="+encodeURIComponent(window.XQ_BUILD||"")).then(r=>r.json()).catch(()=>null);if(!d)return[];
+  const mine=(d.items||[]).filter(x=>x.h===h&&!x.d),seen=new Set(store.get("fbLetterSeen",[])||[]);
+  if(!store.get("fbLetterInit",false)){const old=Date.now()-3*864e5;mine.forEach(x=>{if(fblAtMs(x.at)<old)seen.add(fblKey(x))});store.set("fbLetterSeen",[...seen].slice(-800));store.set("fbLetterInit",true)}
+  return mine.filter(x=>!seen.has(fblKey(x)))}
+function fblCss(){if(document.getElementById("fblCss"))return;const s=document.createElement("style");s.id="fblCss";s.textContent=`
+.fbl-bird{position:fixed;left:0;top:0;z-index:960;pointer-events:auto;cursor:pointer;height:auto;filter:drop-shadow(0 3px 3px rgba(0,0,0,.25))}
+.fbl-tag{position:fixed;z-index:961;transform:translate(-50%,-100%);font-size:20px;pointer-events:none;animation:fblBob 1s ease-in-out infinite alternate}@keyframes fblBob{to{transform:translate(-50%,-125%)}}
+.fbl-say{position:fixed;z-index:961;transform:translate(-50%,-100%);background:rgba(255,250,240,.95);color:#3a2618;border-radius:999px;padding:3px 10px;font:800 13px var(--serif,serif);white-space:nowrap;box-shadow:0 2px 6px rgba(0,0,0,.2);pointer-events:none}
+.fbl-bg{position:fixed;inset:0;z-index:970;background:rgba(20,14,8,.45);display:flex;align-items:center;justify-content:center;padding:18px}
+.fbl-paper{max-width:380px;width:100%;max-height:80vh;overflow:auto;background:#f6ead2;color:#3a2618;border-radius:6px;padding:20px 18px 14px;font:500 15px/1.75 var(--serif,serif);box-shadow:0 12px 30px rgba(0,0,0,.4),inset 0 0 0 1px rgba(120,80,40,.25);animation:fblOpen .45s ease}
+@keyframes fblOpen{from{transform:scaleY(.2);opacity:0}to{transform:none;opacity:1}}
+.fbl-paper h3{margin:0 0 6px;font:900 17px var(--serif,serif)}.fbl-paper .q{color:#7a4a2a}.fbl-paper .it{border-top:1px dashed rgba(120,80,40,.35);padding:8px 0}
+.fbl-paper .sig{text-align:right;margin-top:6px}.fbl-paper .seal{display:inline-block;margin-left:6px;width:30px;height:30px;line-height:30px;text-align:center;border:2px solid #a63a24;color:#a63a24;border-radius:4px;font-weight:900;transform:rotate(-6deg)}
+.fbl-paper .btn{width:100%;margin-top:10px}`;document.head.append(s)}
+function fblOpen(L,done){fblCss();const nm=(typeof meName==="function"&&meName())||"棋手",bg=document.createElement("div");bg.className="fbl-bg";
+  const it=L.map(x=>{const q=fblQuote(x),n=fblNote(x.n),bug=/錯誤/.test(x.ty);
+    return'<div class="it">'+(q?'你上次告訴我們：<span class="q">「'+esc(q)+'」</span><br>':'你之前回報的'+esc(x.ty||"意見")+'（'+esc((x.at||"").split(" ")[0])+'）<br>')+
+      (x.no?'我們仔細研究了你的建議，目前會先保持原樣，但你的好點子我們收進百寶箱囉！':(bug?'我們已經抓到這隻蟲子啦！':'你的好點子，我們做出來囉！')+(n?'<br><span class="muted">（開發者：'+esc(n)+'）</span>':''))+'</div>'}).join("");
+  bg.innerHTML='<div class="fbl-paper" role="dialog" aria-label="回信"><h3>給聰明的棋手 '+esc(nm)+'：</h3>'+(L.length>1?'<p style="margin:0">你真是抓蟲大師！你回報的幾件事，我們都處理好了：</p>':'')+it+
+    '<p style="margin:8px 0 0">謝謝你讓這個世界變得更好！</p><div class="sig">── 象棋千秋開發者<span class="seal">兵</span></div><button class="btn" type="button">收到啦！</button></div>';
+  document.body.append(bg);const close=()=>{bg.remove();done&&done()};bg.querySelector(".btn").onclick=()=>{vibrate(8);close()};bg.onclick=e=>{if(e.target===bg)close()}}
+const fblBusyUI=()=>!!document.querySelector("#sheet,.fbl-bg,.modal,#fmOv,.fm-ov,.qq-ov,.title-ov,#titleOv");   /* 有面板、彈窗（含護眼提醒 #fmOv）時不飛來 */
+async function fblCheck(){if(!FBL_ON||FBL_BUSY||Date.now()-FBL_T0<5000)return;if(!["","#","#/","#/home"].includes(location.hash))return;
+  if(fblBusyUI())return;const me=document.querySelector(".shw-me");if(!me)return;
+  FBL_BUSY=true;let L=[];try{L=await fblPending()}catch(e){}if(!L.length||!document.contains(me)||!["","#","#/","#/home"].includes(location.hash)){FBL_BUSY=false;return}
+  fblCss();const K=typeof fbpBirdK==="function"?fbpBirdK():"pigeon",src=p=>"data/feedback/bird_"+K+"_"+p+".webp",b=document.createElement("img"),tag=document.createElement("span"),say=document.createElement("span");
+  b.className="fbl-bird";b.alt="回信";tag.className="fbl-tag";tag.textContent="✉️";say.className="fbl-say";say.textContent=K==="goose"?"嘎！有你的專屬回信喔！":"咕咕！有你的專屬回信喔！";
+  document.body.append(b);const W=innerWidth,H=innerHeight,SEQ=["up","up","dn","fold","fold","dn"],step=K==="goose"?80:55;let t0=0,ph="in",tOut=0,end=false,opened=false;
+  const target=()=>{const r=me.getBoundingClientRect();return K==="goose"?[r.left+r.width*1.1,r.bottom-2]:[r.left+r.width*.62,r.top+r.height*.28]};
+  const fin=()=>{if(end)return;end=true;b.remove();tag.remove();say.remove();FBL_BUSY=false};
+  const leave=()=>{if(ph==="out")return;ph="out";tOut=0;tag.remove();say.remove()};
+  const open=()=>{if(opened)return;opened=true;vibrate(10);leave();fblOpen(L,()=>{const S=new Set(store.get("fbLetterSeen",[])||[]);L.forEach(x=>S.add(fblKey(x)));store.set("fbLetterSeen",[...S].slice(-800))})};
+  b.onclick=open;const meClick=e=>{if(ph==="perch"){e.stopPropagation();e.preventDefault();open()}};me.addEventListener("click",meClick,true);
+  const off=()=>{removeEventListener("hashchange",off);me.removeEventListener("click",meClick,true);fin()};addEventListener("hashchange",off);
+  const fw=K==="goose"?150:110,sw=K==="goose"?54:40;
+  const tick=now=>{if(end)return;if(!t0)t0=now;const t=now-t0,[tx,ty]=target();let x,y,w,s,flip=true,ay=75;
+    if(ph!=="out"&&fblBusyUI()&&!opened){leave()}
+    if(ph==="in"){const u=Math.min(1,t/1600),e=1-Math.pow(1-u,2.2);x=W+80+(tx-W-80)*e;y=-60+(ty-(-60))*e-Math.sin(u*Math.PI)*60;w=fw*(1-.45*u);s=src(SEQ[Math.floor(t/step)%6]);if(u>=1){ph="perch";t0=now;document.body.append(tag,say)}}
+    else if(ph==="perch"){x=tx;y=ty;w=sw;s=src("stand");ay=100;flip=K!=="goose";if(t>12000)leave()}
+    else{tOut+=16;const u=Math.min(1,tOut/1300);x=tx+(W+100-tx)*u*u;y=ty-(ty+80)*u;w=fw*(.55+.3*u);s=src(SEQ[Math.floor(now/step)%6]);flip=false;if(u>=1){me.removeEventListener("click",meClick,true);removeEventListener("hashchange",off);fin();return}}
+    if(b.dataset.s!==s){b.src=s;b.dataset.s=s}Object.assign(b.style,{width:w+"px",transform:"translate("+(x-w/2)+"px,"+(y)+"px) translate(0,-"+ay+"%)"+(flip?" scaleX(-1)":"")});
+    if(ph==="perch"){tag.style.left=x+"px";tag.style.top=(y-w*1.05)+"px";say.style.left=Math.min(W-90,Math.max(90,x))+"px";say.style.top=(y-w*1.05-26)+"px"}
+    requestAnimationFrame(tick)};requestAnimationFrame(tick)}
+if(FBL_ON){addEventListener("hashchange",()=>setTimeout(fblCheck,2200));setTimeout(fblCheck,6000)}
 /* ================= 📜 關於＋換手機「書案合券＋一炷香」（42 案第 7 頁：Gemini 方案 1＋2，Claude 依考究清單修正；考究說明 park/passmap/考究說明.md）=================
    圖：park/passmap/pass_day_v2.png（Gemini 第一張＋宣紙濾鏡 0.6）、夜版 pass_night_v2.png（窗外夜色、案上一盞明式小油燈；Gemini 把燈放在券的位置，程式把燈移到香插旁邊）
        → art/passmap/。小素材 3 件（綠幕去背）：hq_quan_l／hq_quan_r 剖成兩半的驛券（鋸齒切口相合）、hq_seal 空白封條。
