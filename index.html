@@ -1379,7 +1379,7 @@ html[data-hicon] .tabbar button.on{box-shadow:inset 0 -3px 0 currentColor}
       if(!window.caches)return go();caches.keys().then(function(ks){return Promise.all(ks.filter(function(k){return k.indexOf("xqlab-app-")===0}).map(function(k){return caches.delete(k)}))})
         .then(function(){return navigator.serviceWorker&&navigator.serviceWorker.getRegistration()}).then(function(r){return r&&r.update()}).catch(function(){}).then(go)}};setTimeout(chk,4000)})();
 </script>
-<script>window.XQ_OFFLINE=true;window.XQ_BUILD="20261110-2200";</script>
+<script>window.XQ_OFFLINE=true;window.XQ_BUILD="20261110-2215";</script>
 <script src="core.js"></script>
 <script src="engine.js"></script>
 <script src="local.js"></script>
@@ -13735,7 +13735,7 @@ if(typeof Home==="function"){const f0=Home;Home=function(v,hub){const r=f0.apply
    還沒學會那一站＝很淡（15%）；學會了＝清楚（70%）＋淡金光。點一下說是哪一朝的什麼。夜景圖時改淡白色。
    四頁照朝代順序分：首頁（經典、秦、漢、三國）、觀星閣窗外（魏晉、南北朝、隋）、藏譜石窟（唐、五代、宋）、棋譜庫（元、明、清）。
    位置＝[朝代, 左%, 上%, 寬%]（量 768×1376 的定稿圖，只放在天空、洞口、岩壁，不壓入口標籤）。用 MutationObserver 找頁面，不用改各頁的程式 */
-const CY_ON=true,CY_V="1120";
+const CY_ON=true,CY_V="2215";
 const CY_SPOT={home:[["classic",8,6,12],["qin",21,3,11],["han",34,6.5,11],["sanguo",47,3,10]],battle:[["weijin",11,5,13],["nanbei",81,5,13],["sui",93,16,10]],
   learn:[["tang",10,6,13],["wudai",50,3.5,9],["song",89,6,13]],lib:[["yuan",71,12,11],["ming",14,34,13],["qing",89,47,11]]};
 const CY_NM={classic:"千秋石桌與古松",qin:"秦長城與烽火台",han:"漢闕",sanguo:"赤壁樓船",weijin:"竹林茅亭",nanbei:"雲岡石窟",sui:"趙州橋",tang:"大雁塔",wudai:"山水座屏",song:"水轉筒車",yuan:"草原大帳",ming:"紫禁城角樓",qing:"古戲台"};
@@ -13768,7 +13768,7 @@ if(CY_ON&&typeof MutationObserver==="function"){let q=0;new MutationObserver(()=
    接 07w 走路（座標表 SHW_HOMEMAP）、07x 兩指縮放。圖片網址帶 HM_IMGV（data/homemap 在不跟版本走的快取裡，換圖要改這個數字）。
    開關 HOME_MAP_ON（false＝照舊卡片首頁）；樣式在 hmCss */
 const HOME_MAP_ON=true;   /* 開發者 11/8 說打開 */
-const HM_IMGV="1910";   /* 圖的版本：同檔名換圖時改掉，手機才會重抓 */
+const HM_IMGV="2215";   /* 圖的版本：同檔名換圖時改掉，手機才會重抓 */
 /* 入口：[標籤 id（也是 07w 的入口代號）, 標籤左%, 上%, 大字]（量 768×1376 的 home_v5，標籤放在東西上方） */
 /* 開發者 11/9「把首頁的學習和對戰用不同朝代的詞彙來表示」：照星槎停靠的朝代換說法（學習頁、對戰頁頂欄標題也用這個）；還沒登船、在雲河＝學習、對戰。
    學：秦學室（睡虎地秦簡）、漢與三國太學、魏晉國子學（西晉咸寧二年）、南北朝國學、隋國子寺、唐五代國子監、宋以後書院；
@@ -13839,7 +13839,7 @@ if(typeof Home==="function"){const f0=Home;Home=function(v,hub){const r=f0.apply
    標籤只有大字。接 07w 走路（SHW_LOBBY）、07x 兩指縮放。圖片網址帶 LM_IMGV（data/lobbymap 在不跟版本走的快取裡，換圖要改這個數字）。
    開關 LOBBY_MAP_ON（false＝照舊清單）；樣式在 lmCss */
 const LOBBY_MAP_ON=true;   /* 開發者 11/8 說打開 */
-const LM_IMGV="1950";   /* 11/10 經典世界（還沒登船或停在經典）用觀星閣的天井 lobby_classic；明朝照舊用 lobby（明清徽州茶樓），構圖相同、座標共用 */
+const LM_IMGV="2215";   /* 11/10 經典世界（還沒登船或停在經典）用觀星閣的天井 lobby_classic；明朝照舊用 lobby（明清徽州茶樓），構圖相同、座標共用 */
 const LM_IMG=n=>`data/lobbymap/${n}.webp?v=${LM_IMGV}`;
 /* 開發者 11/9：照星槎停靠的朝代換圖（story/朝代場景計畫.md；考究說明 park/lobbymap/考究說明_各朝大廳_1109.md）。構圖、入口、棋桌、燈、走路節點的座標都不變。
    有停靠才算（判斷跟 07y hbDockEra() 一樣）；沒停靠、明朝用原圖和原素材。各朝檔名一律帶朝代（同一組時代的內容一樣），preload-list.js 的 ERA_RE 才分得到各朝：
@@ -18363,9 +18363,9 @@ function lkCard(){if(typeof vibrate==="function")vibrate(5);
   sheet("♟ 懸在半空的棋子",B=>{B.innerHTML=`<div class="lk-card"><div class="muted" style="margin:-4px 0 8px">雲河星槎・爛柯的故事</div>
     <p>晉朝有個砍柴的人叫王質，走進石室山，看見幾個孩子一邊下棋、一邊唱歌，就站在旁邊看。孩子給他一顆像棗核的東西，含在嘴裡就不覺得餓。</p>
     <p>過了一會兒，孩子說：「你怎麼還不走？」王質起身一看，斧頭的木柄（古時候叫「柯」）已經爛光了。回到村裡，認識的人一個都不在了——人間早就過了好多好多年。</p>
-    <p>後來大家把那座山叫「爛柯山」（在今天的浙江衢州），「爛柯」也成了圍棋的別名。</p>
+    <p>後來大家把那座山叫「爛柯山」（在今天的浙江衢州），「爛柯」也成了「下棋下到忘了時間」的代稱。</p>
     <p class="ship">在星槎上沒有時間，這顆棋子懸在這裡，誰也不知道多久了。</p>
-    <p class="src">出處：舊題南朝梁任昉《述異記》卷上（這本書的作者有爭議，清代《四庫全書總目》認為是後人借任昉的名字寫的）。更早的東晉虞喜《志林》也記了王質看兩個童子下棋，原書已經失傳，靠後人轉引。北魏酈道元《水經注・漸江水》引《東陽記》也有這個故事，不過那裡的童子是「彈琴而歌」，不是下棋。照時代來看，王質看的是圍棋；船上這顆是素面的棋子，沒有刻字。</p></div>`});
+    <p class="src">出處：舊題南朝梁任昉《述異記》卷上（這本書的作者有爭議，清代《四庫全書總目》認為是後人借任昉的名字寫的）。更早的東晉虞喜《志林》也記了王質看兩個童子下棋，原書已經失傳，靠後人轉引。北魏酈道元《水經注・漸江水》引《東陽記》也有這個故事，不過那裡的童子是「彈琴而歌」，不是下棋。古書只寫「棋」，那時候的棋跟今天的象棋還不一樣；船上這顆是素面的棋子，沒有刻字。</p></div>`});
   try{if(typeof SCI_REG!=="undefined"&&typeof sciMark==="function"){const R=SCI_REG.find(r=>r.D&&r.D.k==="sp2"),x=R&&R.D.it.find(y=>y.n==="懸在半空的棋子");if(x)sciMark(R.D,x)}}catch(e){}}
 if(LK_ON){let lkq=0;const kick=()=>{if(lkq)return;lkq=1;setTimeout(()=>{lkq=0;try{if(clkKey()==="/adventure")lkMount()}catch(e){}},250)};
   const init=()=>{try{new MutationObserver(kick).observe(document.body,{childList:true,subtree:true})}catch(e){}addEventListener("hashchange",kick);kick()};
