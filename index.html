@@ -1379,7 +1379,7 @@ html[data-hicon] .tabbar button.on{box-shadow:inset 0 -3px 0 currentColor}
       if(!window.caches)return go();caches.keys().then(function(ks){return Promise.all(ks.filter(function(k){return k.indexOf("xqlab-app-")===0}).map(function(k){return caches.delete(k)}))})
         .then(function(){return navigator.serviceWorker&&navigator.serviceWorker.getRegistration()}).then(function(r){return r&&r.update()}).catch(function(){}).then(go)}};setTimeout(chk,4000)})();
 </script>
-<script>window.XQ_OFFLINE=true;window.XQ_BUILD="20261111-0200";</script>
+<script>window.XQ_OFFLINE=true;window.XQ_BUILD="20261111-0215";</script>
 <script src="core.js"></script>
 <script src="engine.js"></script>
 <script src="local.js"></script>
@@ -16430,7 +16430,7 @@ if(typeof hubMap==="function"){const f0=hubMap;hubMap=function(v,hub){const r=f0
    底圖之後請 Gemini 畫（規劃書第 5 節），現在先用水墨色塊。開關 SITEMAP_ON；前綴 sm */
 const SITEMAP_ON=true;
 /* [區代號, 圖示, 區名, 一句說明, 入口[[名字, 網址, 搜尋關鍵字]]] */
-const SM_AREAS=[
+const STM_AREAS=[
   ["tea","🍵","對弈茶樓","真人、電腦、擂台",[["對戰總覽","#/hub/battle","下棋 對戰"],["挑戰電腦","#/cpu","電腦 AI 人機 練功房 晉級賽"],["同桌對弈","#/pvp","兩人 雙人 面對面 家人"],["線上大廳","#/lobby","真人 網路 連線 觀戰 線上"],["千秋盃","#/cup","比賽 盃賽 週六"],["朝代擂台","#/arena","擂主 擂台"],["同桌合作殘譜","#/coop","合作 一起"]]],
   ["acad","🎍","練棋書院","新手、殘局、測驗",[["學習總覽","#/hub/learn","學棋 學習"],["新手訓練營","#/camp","新手 入門 教學 第一次 怎麼走"],["棋力測驗","#/quiz","測驗 考試 程度"],["一盞茶殘局","#/canju","每日 殘局 解題"],["千秋殘局","#/ship/pz","殘局 解題 星槎"],["猜著法","#/guess","猜 大師"],["主題訓練","#/theme","主題 殺法 練習"],["錯棋重練","#/redo","錯題 複習 重練"],["象棋規則與術語","#/terms","規則 術語 走法 怎麼下 名詞"],["這站棋理","#/ship/lesson","棋理 這一站"]]],
   ["lib","📚","藏書閣","古譜、大師、棋譜",[["棋譜庫","#/db","古譜 大師 棋譜 對局 比賽 研究"],["我的開局","#/openings","開局 布局"]]],
@@ -16438,75 +16438,75 @@ const SM_AREAS=[
   ["yard","🏡","個人小院","角色、戰績、收藏",[["我的角色","#/me","角色 頭像 官階 修為"],["我的戰績","#/stats","戰績 勝率 成長"],["學習週報","#/weekly","週報 一週"],["行囊","#/ship/bag","行囊 寶物 收藏"],["珍品冊","#/me/relics","珍品 收藏"],["千秋大百科","#/codex","百科 文化 圖鑑"],["九九消寒圖","#/xiaohan","消寒 節氣 冬天"]]],
   ["svc","⚙️","服務亭","設定、回首頁",[["回首頁","#/","首頁 回家"],["設定","#/settings","設定 家長 回饋 存檔 字級 隱私 音樂"]]]];
 /* 現在在哪：最長的網址前綴對得上的那一個入口 */
-function smHere(){const h=location.hash||"#/";let best=null,bl=-1;
-  for(const A of SM_AREAS)for(const e of A[4]){const r=e[1];const hit=r==="#/"?(h==="#/"||h===""||h==="#"):(h===r||h.startsWith(r+"/"));if(hit&&r.length>bl){best=[A,e];bl=r.length}}
+function stmHere(){const h=location.hash||"#/";let best=null,bl=-1;
+  for(const A of STM_AREAS)for(const e of A[4]){const r=e[1];const hit=r==="#/"?(h==="#/"||h===""||h==="#"):(h===r||h.startsWith(r+"/"));if(hit&&r.length>bl){best=[A,e];bl=r.length}}
   if(best)return best[0][2]+"｜"+best[1][0];const t=document.getElementById("title");return(t&&t.textContent.trim())||"象棋千秋"}
-const smBusy=()=>/^#\/(cpu|arena|pvp|journey\/play|redo\/play)(\/|$)|^#\/battle\/[a-z]+\/\d+|^#\/canju\/.+|^#\/theme\/.+/.test(location.hash);
-const smOnline=()=>{try{return !!(window.XQNet&&XQNet.playing&&XQNet.playing())}catch(e){return false}};
-function smCss(){if(document.getElementById("smCss"))return;const s=document.createElement("style");s.id="smCss";s.textContent=`
-#topRight .sm-btn{display:flex;flex-direction:column;align-items:center;justify-content:center;min-width:44px;min-height:44px;padding:2px 4px;line-height:1}
-#topRight .sm-btn b{font-size:20px;font-weight:400}#topRight .sm-btn small{font-size:10.5px;margin-top:1px;white-space:nowrap;letter-spacing:.02em}
-#smOv{--text:#2a2018;--muted:#6f5f4c;--card:#FFF9EE;--line:#d8c8b0;--accent:#A8322A;position:fixed;inset:0;z-index:9000;background:#F4EDE0;color:var(--text);overflow:auto;-webkit-overflow-scrolling:touch;opacity:0;transition:opacity .2s;padding:max(8px,env(safe-area-inset-top)) 14px calc(24px + env(safe-area-inset-bottom))}
-#smOv.on{opacity:1}#smOv .in{max-width:600px;margin:0 auto}
-#smOv .hd{display:flex;align-items:center;gap:8px;position:sticky;top:calc(-1 * max(8px,env(safe-area-inset-top)));background:#F4EDE0;padding:6px 0;z-index:2}
-#smOv .hd h2{flex:1;margin:0;font:900 20px/1.2 var(--serif,serif);text-align:center;letter-spacing:.08em}
-#smOv .x{min-height:44px;min-width:44px;padding:0 10px;border-radius:10px;border:1.5px solid var(--line,#cbb);background:var(--card,#fff);color:inherit;font:700 14px/1 var(--sans,sans-serif)}
-#smOv .q{width:100%;box-sizing:border-box;min-height:44px;margin:6px 0 4px;padding:8px 12px;border-radius:12px;border:1.5px solid var(--line,#cbb);background:var(--card,#fff);color:inherit;font:16px var(--sans,sans-serif)}
-#smOv .tip{margin:2px 0;color:var(--muted,#777);font-size:13.5px;text-align:center}
-#smOv .here{margin:8px 0 12px;padding:8px 12px;border-radius:12px;background:color-mix(in srgb,var(--accent,#a33) 10%,transparent);font-size:14.5px}
-#smOv .warn{margin:0 0 10px;padding:8px 12px;border-radius:12px;background:#FFF3C4;color:#5A4300;font-size:14px;border:1px solid #E8C860}
-#smOv .grid{display:grid;grid-template-columns:1fr 1fr;gap:10px}
-#smOv .ar{display:flex;flex-direction:column;align-items:center;gap:2px;min-height:96px;padding:12px 8px;border-radius:16px;border:2px solid var(--line,#cbb);background:var(--card,#fff);color:inherit;font:inherit;cursor:pointer;box-shadow:0 2px 0 rgba(0,0,0,.06)}
-#smOv .ar i{font-style:normal;font-size:30px;line-height:1.1}#smOv .ar b{font:900 17px/1.3 var(--serif,serif);letter-spacing:.06em}#smOv .ar small{color:var(--muted,#777);font-size:12.5px}
-#smOv .ar.on{border-color:var(--accent,#a33);box-shadow:0 0 0 2px color-mix(in srgb,var(--accent,#a33) 30%,transparent)}
-#smOv .ar.cur{background:color-mix(in srgb,var(--accent,#a33) 8%,var(--card,#fff))}
-#smOv .sub{grid-column:1/-1;padding:10px;border-radius:14px;border:1.5px dashed var(--line,#cbb);display:flex;flex-wrap:wrap;gap:8px}
-#smOv .go{min-height:44px;padding:8px 14px;border-radius:12px;border:1.5px solid var(--line,#cbb);background:var(--card,#fff);color:inherit;font:700 15px/1.2 var(--sans,sans-serif);cursor:pointer}
-#smOv .go.cur{border-color:var(--accent,#a33);color:var(--accent,#a33)}#smOv .go[disabled]{opacity:.5}
-#smOv .all{width:100%;min-height:44px;margin:14px 0 6px;border-radius:12px;border:1.5px solid var(--line,#cbb);background:transparent;color:inherit;font:700 15px var(--sans,sans-serif)}
-#smOv .list h3{margin:12px 0 6px;font:900 15px var(--serif,serif)}#smOv .list ul{list-style:none;margin:0;padding:0;display:flex;flex-wrap:wrap;gap:8px}
-#smOv .none{color:var(--muted,#777);font-size:14px;margin:8px 0}
-@media (prefers-reduced-motion:reduce){#smOv{transition:none}}`;document.head.append(s)}
+const stmBusy=()=>/^#\/(cpu|arena|pvp|journey\/play|redo\/play)(\/|$)|^#\/battle\/[a-z]+\/\d+|^#\/canju\/.+|^#\/theme\/.+/.test(location.hash);
+const stmOnline=()=>{try{return !!(window.XQNet&&XQNet.playing&&XQNet.playing())}catch(e){return false}};
+function stmCss(){if(document.getElementById("stmCss"))return;const s=document.createElement("style");s.id="stmCss";s.textContent=`
+#topRight .stm-btn{display:flex;flex-direction:column;align-items:center;justify-content:center;min-width:44px;min-height:44px;padding:2px 4px;line-height:1}
+#topRight .stm-btn b{font-size:20px;font-weight:400}#topRight .stm-btn small{font-size:10.5px;margin-top:1px;white-space:nowrap;letter-spacing:.02em}
+#stmOv{--text:#2a2018;--muted:#6f5f4c;--card:#FFF9EE;--line:#d8c8b0;--accent:#A8322A;position:fixed;inset:0;z-index:9000;background:#F4EDE0;color:var(--text);overflow:auto;-webkit-overflow-scrolling:touch;opacity:0;transition:opacity .2s;padding:max(8px,env(safe-area-inset-top)) 14px calc(24px + env(safe-area-inset-bottom))}
+#stmOv.on{opacity:1}#stmOv .in{max-width:600px;margin:0 auto}
+#stmOv .hd{display:flex;align-items:center;gap:8px;position:sticky;top:calc(-1 * max(8px,env(safe-area-inset-top)));background:#F4EDE0;padding:6px 0;z-index:2}
+#stmOv .hd h2{flex:1;margin:0;font:900 20px/1.2 var(--serif,serif);text-align:center;letter-spacing:.08em}
+#stmOv .x{min-height:44px;min-width:44px;padding:0 10px;border-radius:10px;border:1.5px solid var(--line,#cbb);background:var(--card,#fff);color:inherit;font:700 14px/1 var(--sans,sans-serif)}
+#stmOv .q{width:100%;box-sizing:border-box;min-height:44px;margin:6px 0 4px;padding:8px 12px;border-radius:12px;border:1.5px solid var(--line,#cbb);background:var(--card,#fff);color:inherit;font:16px var(--sans,sans-serif)}
+#stmOv .tip{margin:2px 0;color:var(--muted,#777);font-size:13.5px;text-align:center}
+#stmOv .here{margin:8px 0 12px;padding:8px 12px;border-radius:12px;background:color-mix(in srgb,var(--accent,#a33) 10%,transparent);font-size:14.5px}
+#stmOv .warn{margin:0 0 10px;padding:8px 12px;border-radius:12px;background:#FFF3C4;color:#5A4300;font-size:14px;border:1px solid #E8C860}
+#stmOv .grid{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+#stmOv .ar{display:flex;flex-direction:column;align-items:center;gap:2px;min-height:96px;padding:12px 8px;border-radius:16px;border:2px solid var(--line,#cbb);background:var(--card,#fff);color:inherit;font:inherit;cursor:pointer;box-shadow:0 2px 0 rgba(0,0,0,.06)}
+#stmOv .ar i{font-style:normal;font-size:30px;line-height:1.1}#stmOv .ar b{font:900 17px/1.3 var(--serif,serif);letter-spacing:.06em}#stmOv .ar small{color:var(--muted,#777);font-size:12.5px}
+#stmOv .ar.on{border-color:var(--accent,#a33);box-shadow:0 0 0 2px color-mix(in srgb,var(--accent,#a33) 30%,transparent)}
+#stmOv .ar.cur{background:color-mix(in srgb,var(--accent,#a33) 8%,var(--card,#fff))}
+#stmOv .sub{grid-column:1/-1;padding:10px;border-radius:14px;border:1.5px dashed var(--line,#cbb);display:flex;flex-wrap:wrap;gap:8px}
+#stmOv .go{min-height:44px;padding:8px 14px;border-radius:12px;border:1.5px solid var(--line,#cbb);background:var(--card,#fff);color:inherit;font:700 15px/1.2 var(--sans,sans-serif);cursor:pointer}
+#stmOv .go.cur{border-color:var(--accent,#a33);color:var(--accent,#a33)}#stmOv .go[disabled]{opacity:.5}
+#stmOv .all{width:100%;min-height:44px;margin:14px 0 6px;border-radius:12px;border:1.5px solid var(--line,#cbb);background:transparent;color:inherit;font:700 15px var(--sans,sans-serif)}
+#stmOv .list h3{margin:12px 0 6px;font:900 15px var(--serif,serif)}#stmOv .list ul{list-style:none;margin:0;padding:0;display:flex;flex-wrap:wrap;gap:8px}
+#stmOv .none{color:var(--muted,#777);font-size:14px;margin:8px 0}
+@media (prefers-reduced-motion:reduce){#stmOv{transition:none}}`;document.head.append(s)}
 /* 頂欄的「🗺 找地方」：每次 setTop 重畫頂欄後補上（放在 #topRight 最後＝角色頭像左邊） */
-function smBtn(){if(!SITEMAP_ON)return;const tr=document.getElementById("topRight");if(!tr||tr.querySelector(".sm-btn"))return;smCss();
-  const b=document.createElement("button");b.type="button";b.className="ib sm-btn";b.setAttribute("aria-label","找地方：打開全站地圖");b.title="找地方";b.innerHTML="<b aria-hidden=\"true\">🗺</b><small>找地方</small>";
-  b.onclick=()=>{try{vibrate(5)}catch(e){}smOpen()};tr.append(b)}
-if(SITEMAP_ON&&typeof setTop==="function"){const smTop0=setTop;setTop=function(){const r=smTop0.apply(this,arguments);try{smBtn()}catch(e){}return r}}
-let smLast=null;
-function smClose(){const o=document.getElementById("smOv");if(!o)return;o.classList.remove("on");removeEventListener("hashchange",smClose);document.removeEventListener("keydown",smKey,true);setTimeout(()=>o.remove(),200);if(smLast&&smLast.isConnected)try{smLast.focus()}catch(e){}smLast=null}
-function smKey(e){const o=document.getElementById("smOv");if(!o)return;if(e.key==="Escape"){e.preventDefault();smClose();return}
+function stmBtn(){if(!SITEMAP_ON)return;const tr=document.getElementById("topRight");if(!tr||tr.querySelector(".stm-btn"))return;stmCss();
+  const b=document.createElement("button");b.type="button";b.className="ib stm-btn";b.setAttribute("aria-label","找地方：打開全站地圖");b.title="找地方";b.innerHTML="<b aria-hidden=\"true\">🗺</b><small>找地方</small>";
+  b.onclick=()=>{try{vibrate(5)}catch(e){}stmOpen()};tr.append(b)}
+if(SITEMAP_ON&&typeof setTop==="function"){const stmTop0=setTop;setTop=function(){const r=stmTop0.apply(this,arguments);try{stmBtn()}catch(e){}return r}}
+let stmLast=null;
+function stmClose(){const o=document.getElementById("stmOv");if(!o)return;o.classList.remove("on");removeEventListener("hashchange",stmClose);document.removeEventListener("keydown",stmKey,true);setTimeout(()=>o.remove(),200);if(stmLast&&stmLast.isConnected)try{stmLast.focus()}catch(e){}stmLast=null}
+function stmKey(e){const o=document.getElementById("stmOv");if(!o)return;if(e.key==="Escape"){e.preventDefault();stmClose();return}
   if(e.key==="Tab"){const f=[...o.querySelectorAll("button,input")].filter(x=>!x.disabled&&x.offsetParent!==null);if(!f.length)return;const a=f[0],z=f[f.length-1];
     if(e.shiftKey&&document.activeElement===a){e.preventDefault();z.focus()}else if(!e.shiftKey&&document.activeElement===z){e.preventDefault();a.focus()}}}
 /* 換頁：下棋下到一半先問 */
-function smGo(name,route){const go=()=>{smClose();if(route==="#/"&&typeof goHome==="function")goHome();else location.hash=route};
-  const h=location.hash||"#/";if(h===route||(route!=="#/"&&h.startsWith(route+"/")&&!smBusy())){smClose();return}
-  if(smOnline())return confirmBox(`線上這盤還沒下完，離開可能會算輸。確定要去「${name}」嗎？`,go,"確定前往");
-  if(smBusy())return confirmBox(`要離開這盤棋，去「${name}」嗎？`,go,"確定前往");go()}
-function smOpen(){if(document.getElementById("smOv"))return;smCss();smLast=document.activeElement;
-  const here=smHere(),h=location.hash||"#/",net=navigator.onLine!==false,cur=r=>r==="#/"?(h==="#/"||h==="#"||h===""):(h===r||h.startsWith(r+"/"));
-  const o=document.createElement("div");o.id="smOv";o.setAttribute("role","dialog");o.setAttribute("aria-modal","true");o.setAttribute("aria-label","象棋千秋總覽");
+function stmGo(name,route){const go=()=>{stmClose();if(route==="#/"&&typeof goHome==="function")goHome();else location.hash=route};
+  const h=location.hash||"#/";if(h===route||(route!=="#/"&&h.startsWith(route+"/")&&!stmBusy())){stmClose();return}
+  if(stmOnline())return confirmBox(`線上這盤還沒下完，離開可能會算輸。確定要去「${name}」嗎？`,go,"確定前往");
+  if(stmBusy())return confirmBox(`要離開這盤棋，去「${name}」嗎？`,go,"確定前往");go()}
+function stmOpen(){if(document.getElementById("stmOv"))return;stmCss();stmLast=document.activeElement;
+  const here=stmHere(),h=location.hash||"#/",net=navigator.onLine!==false,cur=r=>r==="#/"?(h==="#/"||h==="#"||h===""):(h===r||h.startsWith(r+"/"));
+  const o=document.createElement("div");o.id="stmOv";o.setAttribute("role","dialog");o.setAttribute("aria-modal","true");o.setAttribute("aria-label","象棋千秋總覽");
   const entry=e=>{const off=e[1]==="#/lobby"&&!net;return`<button class="go${cur(e[1])?" cur":""}" data-r="${esc(e[1])}" data-n="${esc(e[0])}"${off?" disabled":""}>${esc(e[0])}${off?"（要連網路）":""}</button>`};
-  o.innerHTML=`<div class="in"><div class="hd"><button class="x" id="smX">✕ 關閉地圖</button><h2>象棋千秋總覽</h2><span style="min-width:44px"></span></div>
-    <input class="q" id="smQ" type="search" placeholder="🔍 搜尋入口，例如「規則」「殘局」" aria-label="搜尋入口" enterkeyhint="search">
+  o.innerHTML=`<div class="in"><div class="hd"><button class="x" id="stmX">✕ 關閉地圖</button><h2>象棋千秋總覽</h2><span style="min-width:44px"></span></div>
+    <input class="q" id="stmQ" type="search" placeholder="🔍 搜尋入口，例如「規則」「殘局」" aria-label="搜尋入口" enterkeyhint="search">
     <p class="tip">點地圖上的地方，馬上帶你過去！</p>
     <div class="here">📍 你現在在：<b>${esc(here)}</b></div>
-    ${smOnline()?'<div class="warn">⚠ 線上對局進行中：看地圖不會停下時鐘，換頁可能算輸。</div>':smBusy()?'<div class="warn">⚠ 這盤棋還沒下完：看地圖沒關係，換頁前會先問你。</div>':""}
-    <div class="grid" id="smG" aria-hidden="false">${SM_AREAS.map(A=>`<button class="ar${A[4].some(e=>cur(e[1]))?" cur":""}" data-a="${A[0]}" aria-expanded="false"><i aria-hidden="true">${A[1]}</i><b>${esc(A[2])}</b><small>${esc(A[3])}</small></button>`).join("")}</div>
-    <button class="all" id="smAll" aria-expanded="false">≡ 顯示全部入口清單</button>
-    <div class="list" id="smL" hidden>${SM_AREAS.map(A=>`<section data-a="${A[0]}"><h3>${A[1]} ${esc(A[2])}</h3><ul>${A[4].map(e=>`<li data-k="${esc((e[0]+" "+e[2]+" "+A[2]).toLowerCase())}">${entry(e)}</li>`).join("")}</ul></section>`).join("")}<p class="none" id="smNone" hidden>找不到這個入口，換個字試試看。</p></div></div>`;
+    ${stmOnline()?'<div class="warn">⚠ 線上對局進行中：看地圖不會停下時鐘，換頁可能算輸。</div>':stmBusy()?'<div class="warn">⚠ 這盤棋還沒下完：看地圖沒關係，換頁前會先問你。</div>':""}
+    <div class="grid" id="stmG" aria-hidden="false">${STM_AREAS.map(A=>`<button class="ar${A[4].some(e=>cur(e[1]))?" cur":""}" data-a="${A[0]}" aria-expanded="false"><i aria-hidden="true">${A[1]}</i><b>${esc(A[2])}</b><small>${esc(A[3])}</small></button>`).join("")}</div>
+    <button class="all" id="stmAll" aria-expanded="false">≡ 顯示全部入口清單</button>
+    <div class="list" id="stmL" hidden>${STM_AREAS.map(A=>`<section data-a="${A[0]}"><h3>${A[1]} ${esc(A[2])}</h3><ul>${A[4].map(e=>`<li data-k="${esc((e[0]+" "+e[2]+" "+A[2]).toLowerCase())}">${entry(e)}</li>`).join("")}</ul></section>`).join("")}<p class="none" id="stmNone" hidden>找不到這個入口，換個字試試看。</p></div></div>`;
   document.body.append(o);requestAnimationFrame(()=>o.classList.add("on"));
-  const G=o.querySelector("#smG"),L=o.querySelector("#smL"),Q=o.querySelector("#smQ"),AL=o.querySelector("#smAll");
-  const bind=root=>root.querySelectorAll(".go[data-r]").forEach(b=>b.onclick=()=>{try{vibrate(5)}catch(e){}smGo(b.dataset.n,b.dataset.r)});
+  const G=o.querySelector("#stmG"),L=o.querySelector("#stmL"),Q=o.querySelector("#stmQ"),AL=o.querySelector("#stmAll");
+  const bind=root=>root.querySelectorAll(".go[data-r]").forEach(b=>b.onclick=()=>{try{vibrate(5)}catch(e){}stmGo(b.dataset.n,b.dataset.r)});
   /* 點區塊：在那一列下面展開那一區的入口（再點一次收起） */
   G.querySelectorAll(".ar").forEach(b=>b.onclick=()=>{try{vibrate(5)}catch(e){}const was=b.classList.contains("on");G.querySelectorAll(".sub").forEach(x=>x.remove());G.querySelectorAll(".ar").forEach(x=>{x.classList.remove("on");x.setAttribute("aria-expanded","false")});if(was)return;
-    const A=SM_AREAS.find(x=>x[0]===b.dataset.a);b.classList.add("on");b.setAttribute("aria-expanded","true");const s=document.createElement("div");s.className="sub";s.setAttribute("role","group");s.setAttribute("aria-label",A[2]);s.innerHTML=A[4].map(entry).join("");
+    const A=STM_AREAS.find(x=>x[0]===b.dataset.a);b.classList.add("on");b.setAttribute("aria-expanded","true");const s=document.createElement("div");s.className="sub";s.setAttribute("role","group");s.setAttribute("aria-label",A[2]);s.innerHTML=A[4].map(entry).join("");
     const i=[...G.children].indexOf(b),after=G.children[i%2===0?Math.min(i+1,G.children.length-1):i];after.after(s);bind(s);const f=s.querySelector(".go:not([disabled])");if(f)f.focus({preventScroll:true});s.scrollIntoView({block:"nearest",behavior:"smooth"})});
   const showList=on=>{L.hidden=!on;AL.setAttribute("aria-expanded",String(on));AL.textContent=on?"≡ 收起全部入口清單":"≡ 顯示全部入口清單"};
   AL.onclick=()=>showList(L.hidden);bind(L);
   Q.oninput=()=>{const k=Q.value.trim().toLowerCase();if(k)showList(true);let n=0;L.querySelectorAll("li").forEach(li=>{const ok=!k||k.split(/\s+/).every(w=>li.dataset.k.includes(w));li.hidden=!ok;if(ok)n++});
-    L.querySelectorAll("section").forEach(s=>s.hidden=![...s.querySelectorAll("li")].some(li=>!li.hidden));o.querySelector("#smNone").hidden=n>0};
+    L.querySelectorAll("section").forEach(s=>s.hidden=![...s.querySelectorAll("li")].some(li=>!li.hidden));o.querySelector("#stmNone").hidden=n>0};
   Q.onkeydown=e=>{if(e.key==="Enter"){const f=L.querySelector("li:not([hidden]) .go:not([disabled])");if(f)f.click()}};
-  o.querySelector("#smX").onclick=smClose;addEventListener("hashchange",smClose);document.addEventListener("keydown",smKey,true);setTimeout(()=>{try{o.querySelector("#smX").focus()}catch(e){}},30)}
+  o.querySelector("#stmX").onclick=stmClose;addEventListener("hashchange",stmClose);document.addEventListener("keydown",stmKey,true);setTimeout(()=>{try{o.querySelector("#stmX").focus()}catch(e){}},30)}
 /* ================= 🔎 滿版圖「點畫裡的東西看說明」（開發者回饋 818：「對所有繪製的圖可以讓玩家點選物件，然後跳出顯示相關文件說明，就像在環景圖或對戰時點桌子上的物件那樣……不要把物件名稱直接寫上去，會太累亂，玩家點了再顯示」）=================
    圖上平常什麼都不標；點到登記過的東西＝跳出小卡（名稱＋兩三句白話介紹，跟 06-cpu.js 的 parkInfo 同一個 sheet 樣式），07w 的角色照舊走過去、轉身看那個東西。
    點擊順序：入口標籤／告示紙等按鈕（07w 先攔、或按鈕自己處理）＞這裡登記的物件＞空地（07w 走路）。只在點到「圖本身」時才判斷，按鈕、連結、角色身上的透明按鈕一律不碰；
