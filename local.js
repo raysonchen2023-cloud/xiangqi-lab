@@ -55,7 +55,6 @@ var XQ=(function(){
   const dxOf=b=>{const d=Math.round(+((b||{}).dx));return Number.isFinite(d)?Math.max(-6,Math.min(6,d)):0},lvAdj=(b,n)=>{const d=dxOf(b);return !d?n:d>0?Math.min(Math.max(n,17),n+d):Math.max(1,n+d)};
   (function lvMig(){if(ls.get("lvFine",0))return;try{
     const R=ls.get("record",null);if(R){const R2={};for(const[k,v]of Object.entries(R)){const o=R2[lvOld(k)]||(R2[lvOld(k)]={w:0,l:0,d:0});for(const z of["w","l","d"])o[z]+=(v&&v[z])||0}ls.set("record",R2)}
-    const B=ls.get("carBank",null);if(B){(B.hist||[]).forEach(h=>{if(h&&h.lv)h.lv=lvOld(h.lv)});if(B.byLv){const N={};for(const[k,v]of Object.entries(B.byLv)){const o=N[lvOld(k)]||(N[lvOld(k)]={w:0,l:0,d:0,pts:0});for(const z of["w","l","d","pts"])o[z]+=(v&&v[z])||0}B.byLv=N}ls.set("carBank",B)}
     const p=ls.get("play",null);if(p&&p.level){p.level=lvOld(p.level);ls.set("play",p)}
     const s2=ls.get("play2",null);if(s2){if(s2.moves){if(s2.level)s2.level=lvOld(s2.level)}else for(const g of Object.values(s2))if(g&&g.level)g.level=lvOld(g.level);ls.set("play2",s2)}
     try{const c=localStorage.getItem("m_cpuLevel");if(c!=null)localStorage.setItem("m_cpuLevel",JSON.stringify(lvOld(JSON.parse(c))))}catch(e){}
@@ -68,27 +67,6 @@ var XQ=(function(){
     let d=Math.round(K*((res==="w"?1:res==="d"?.5:0)-E));if(res==="w"&&d<1)d=1;if(res==="l"&&d>-1)d=-1;R.pts=Math.max(0,R.pts+d);d=R.pts-before;R[res]++;
     R.hist.unshift({id:P.id,res,d,pts:R.pts,rk:RANKS[P.rk][0],n:P.moves.length,why:P.result?P.result.why:"",at:Date.now()});R.hist=R.hist.slice(0,100);ls.set("cpuRate",R);
     P.rate={res,d,pts:R.pts,rank:RANKS[rankIdx(R.pts)][0],was:RANKS[rankIdx(before)][0]}}
-  // 獎勵模式：贏棋拿點數（一點＝台幣一萬），存起來到車庫換車款模型；和棋拿四成，輸了 0 點
-  const CAR_PTS=[1,2,3,4,6,8,10,12,15,22,30,38,45,52,60,120,180,250];   /* 590：18 級的獎勵點數（舊的 8 級那幾階照原本的點數） */
-  const carBank=()=>ls.get("carBank",null)||{pts:0,earned:0,w:0,l:0,d:0,owned:{},hist:[]};
-  function carApply(res){const B=carBank(),full=CAR_PTS[P.level-1]||0,d=res==="w"?full:res==="d"?Math.round(full*.4):0;
-    B.pts+=d;B.earned+=d;B[res]++;const lv=(B.byLv=B.byLv||{})[P.level]||(B.byLv[P.level]={w:0,l:0,d:0,pts:0});lv[res]++;lv.pts+=d;   // 各難度的勝負和拿到的點數
-    B.hist.unshift({id:P.id,res,d,lv:P.level,at:Date.now()});B.hist=B.hist.slice(0,100);ls.set("carBank",B);P.prize={res,d,pts:B.pts}}
-  function carState(){const B=carBank();
-    // 各難度統計是後來才加的：第一次用對局紀錄（最近 100 盤）重算一次存起來，之前漏算的盤數補回來
-    if(B.byLvV!==2){const byLv={};for(const h of B.hist){if(!h.lv||!h.res)continue;const x=byLv[h.lv]||(byLv[h.lv]={w:0,l:0,d:0,pts:0});x[h.res]++;x.pts+=h.d||0}B.byLv=byLv;B.byLvV=2;ls.set("carBank",B)}
-    // 還是對不上的（很舊、沒記難度的盤）放進「難度未記錄」，讓上下的總數一致
-    const byLv=B.byLv,sum={w:0,l:0,d:0};for(const x of Object.values(byLv))for(const k of["w","l","d"])sum[k]+=x[k]||0;
-    const unk={w:Math.max(0,B.w-sum.w),l:Math.max(0,B.l-sum.l),d:Math.max(0,B.d-sum.d)};
-    return{pts:B.pts,earned:B.earned,w:B.w,l:B.l,d:B.d,owned:B.owned,hist:B.hist.slice(0,20),table:CAR_PTS,byLv,unk,sold:B.sold||0}}
-  async function carRedeem(b){const d=await (await fetch("data/cars.json")).json(),c=d.cars.find(x=>x.id===b.id);if(!c)throw new Error("找不到這台車");
-    const B=carBank();if(B.owned[c.id])throw new Error("這台已經換過了");if(B.pts<c.cost)throw new Error("點數不夠，還差 "+(c.cost-B.pts)+" 點");
-    B.pts-=c.cost;B.owned[c.id]={at:Date.now(),cost:c.cost};ls.set("carBank",B);return carState()}
-  // 賣車：用現在 8891 的新車價（cars.json 裡的最低售價）打折舊——落地先折 15%，之後每個月再折 1%，最低剩 45%
-  const carValue=(c,at)=>{const mo=Math.max(0,(Date.now()-at)/(30*864e5)),k=Math.max(.45,.85*Math.pow(.99,mo));return{k,mo,v:Math.floor(c.lo*k)}};
-  async function carSell(b){const d=await (await fetch("data/cars.json")).json(),c=d.cars.find(x=>x.id===b.id);if(!c)throw new Error("找不到這台車");
-    const B=carBank(),own=B.owned[c.id];if(!own)throw new Error("你沒有這台車");const{v}=carValue(c,own.at);
-    delete B.owned[c.id];B.pts+=v;B.sold=(B.sold||0)+1;B.hist.unshift({sell:c.id,d:v,at:Date.now()});B.hist=B.hist.slice(0,100);ls.set("carBank",B);return{...carState(),gain:v}}
   /* 意見回饋 415：這盤用過幾次提示（/play/hint、雲河棋路的提示棋 /play/hintmark）、悔過幾次棋（/play/undo）。
      存檔時一起寄進對局紀錄，我的戰績算棋力、成長時把這種盤排除，才公平；舊存檔沒有這兩欄就照算 */
   const assist=G=>({...(G&&G.hintN?{hintN:G.hintN}:{}),...(G&&G.undoN?{undoN:G.undoN}:{})});
@@ -124,7 +102,7 @@ var XQ=(function(){
     P=null;
     if(k==="arena")playNew("r",lv(3),false,null,false,era||"classic",true);
     else if(k==="journey")playNew("r",lv(1),false,null,false,era,true,jid(b.journey));
-    else playNew(b.human==="b"?"b":"r",lv(3),!!b.ranked,null,!!b.reward,null,true)}
+    else playNew(b.human==="b"?"b":"r",lv(3),!!b.ranked,null,false,null,true)}
   /* 石桌往事的特製關卡（levels.json 的 play 步驟）：從指定局面開始、讓子（拿掉幾顆）、關掉長將判負。棋盤 90 格要合法、兩邊都有將帥才接受 */
   function lvStart(lv){if(!lv||typeof lv!=="object")return null;let b;try{b=parseFen(typeof lv.fen==="string"&&lv.fen?lv.fen:START)}catch(e){return null}
     if(!Array.isArray(b)||b.length!==90)return null;for(const q of Array.isArray(lv.remove)?lv.remove.slice(0,16):[]){const i=parseSq(String(q));if(Number.isInteger(i)&&i>=0&&i<90&&b[i]&&!/[kK]/.test(b[i]))b[i]=null}
@@ -145,7 +123,6 @@ var XQ=(function(){
   function playEnd(w,why){P.result={w,why};const res=!w?"d":w===P.human?"w":"l";
     if(P.practice){savePlay();return}   // 錯棋重練：不算戰績、不存進對局紀錄
     if(P.ranked){if(P.moves.length>=2)cpuRateApply(res)}   // 雙方都還沒走就結束不計分
-    else if(P.reward){if(P.moves.length>=2)carApply(res)}
     if(P.arena&&!P.journey&&res==="w"&&P.moves.length>=2){const S=ls.get("arenaStamps",{}),first=!S[P.arena];if(first)S[P.arena]={at:new Date().toISOString(),lv:P.level,n:P.moves.length};ls.set("arenaStamps",S);
       P.stamp={era:P.arena,first,total:Object.keys(S).length}}
     else if(kindOf(P)==="cpu"){const rec=ls.get("record",{}),L=rec[P.level]||(rec[P.level]={w:0,l:0,d:0});L[res]++;ls.set("record",rec)}
@@ -182,13 +159,13 @@ var XQ=(function(){
   function playState(){ensureP();
     const CR=cpuRate(),ci=rankIdx(CR.pts),nx=RANKS[ci+1];
     const SA=stashAll(),others=Object.values(SA).filter(g=>kindOf(g)!==kindOf(P)).map(g=>({kind:kindOf(g),arena:g.arena||null,journey:g.journey||null,ranked:!!g.ranked,reward:!!g.reward,level:g.level,n:g.moves.length,human:g.human}));
-    return{kind:kindOf(P),others,other:others[0]||null,journey:P.journey||null,start:P.start||null,startTurn:P.startTurn||"r",id:P.id,board:P.board,turn:P.turn,human:P.human,level:P.level,ranked:!!P.ranked,reward:!!P.reward,arena:P.arena||null,stamp:P.stamp||null,prize:P.prize||null,car:P.reward?carState():null,rkName:P.ranked?RANKS[P.rk][0]:null,rate:P.rate||null,
+    return{kind:kindOf(P),others,other:others[0]||null,journey:P.journey||null,start:P.start||null,startTurn:P.startTurn||"r",id:P.id,board:P.board,turn:P.turn,human:P.human,level:P.level,ranked:!!P.ranked,reward:!!P.reward,arena:P.arena||null,stamp:P.stamp||null,prize:P.prize||null,rkName:P.ranked?RANKS[P.rk][0]:null,rate:P.rate||null,
       cpuRate:{pts:CR.pts,rank:RANKS[ci][0],w:CR.w,l:CR.l,d:CR.d,next:nx?nx[0]:null,toNext:nx?nx[1]-CR.pts:0,lo:RANKS[ci][1],hi:nx?nx[1]:null,hist:CR.hist},
       levels:LEVELS.map(l=>({n:l.n,name:l.name,desc:l.desc})),record:ls.get("record",{}),
       moves:P.moves.map(moveOut),result:P.result,practice:P.practice||null,thinking:playBusy&&P.turn!==P.human,msg:playMsg,eval:lastEv(P.moves),hint:P.hint,
       legal:!P.result&&P.turn===P.human?legal(P.board,P.turn):[],check:!P.result&&inCheck(P.board,P.turn)?kingSq(P.board,P.turn):-1,engine:true}}
   async function playPost(p,b){ensureP();
-    if(p==="/play/new"){playNew(b.human==="b"?"b":"r",lvAdj(b,lvIn(b)),!b.pre&&!!b.ranked,b.pre||null,!!b.reward,typeof b.arena==="string"&&/^[a-z]{2,8}$/.test(b.arena)?b.arena:null,false,jid(b.journey),b.lv);if(P&&!P.ranked&&b.rlv!=null&&Number.isInteger(+b.rlv)){P.rlv=Math.max(0,Math.min(RLV.length-1,+b.rlv+dxOf(b)));savePlay()}playMsg="";setTimeout(playEngine,0)}
+    if(p==="/play/new"){playNew(b.human==="b"?"b":"r",lvAdj(b,lvIn(b)),!b.pre&&!!b.ranked,b.pre||null,false,typeof b.arena==="string"&&/^[a-z]{2,8}$/.test(b.arena)?b.arena:null,false,jid(b.journey),b.lv);if(P&&!P.ranked&&b.rlv!=null&&Number.isInteger(+b.rlv)){P.rlv=Math.max(0,Math.min(RLV.length-1,+b.rlv+dxOf(b)));savePlay()}playMsg="";setTimeout(playEngine,0)}
     else if(p==="/play/bonus"){   /* 意見回饋 313：石桌往事「回到當年」答對轉折加段位積分；每個轉折只能領一次 */
       const key=String(b.key||"").slice(0,80),pts=Math.max(1,Math.min(20,Math.round(+b.pts)||0)),K=ls.get("bonusKeys",{});
       if(!key)throw new Error("缺少題目代號");const R=cpuRate();
@@ -198,7 +175,7 @@ var XQ=(function(){
     else if(p==="/play/switch"||p==="/play/open"){playOpen(b);playMsg="";setTimeout(playEngine,0)}
     else if(p==="/play/move"){const f=+b.f,t=+b.t;if(P.result)throw new Error("這局已經結束");if(P.turn!==P.human)throw new Error("還沒輪到你");
       if(!legal(P.board,P.turn).some(([x,y])=>x===f&&y===t))throw new Error("這步不合法");playApply(f,t);setTimeout(playEngine,0)}
-    else if(p==="/play/undo"){if(P.ranked)throw new Error("積分挑戰不能悔棋");if(P.reward)throw new Error("獎勵模式不能悔棋");/* 意見回饋 651：開發者 597 決定擂台也能用悔棋符，這裡原本還擋著（382 的舊規則），App 先扣了悔棋符、悔棋卻失敗——拿掉 *//* 意見回饋 380：電腦（擂主）還在想的時候也能悔棋——引擎算完會發現步數變了、自動丟掉那步 */
+    else if(p==="/play/undo"){if(P.ranked)throw new Error("積分挑戰不能悔棋");/* 意見回饋 651：開發者 597 決定擂台也能用悔棋符，這裡原本還擋著（382 的舊規則），App 先扣了悔棋符、悔棋卻失敗——拿掉 *//* 意見回饋 380：電腦（擂主）還在想的時候也能悔棋——引擎算完會發現步數變了、自動丟掉那步 */
       const floor=P.practice?P.practice.base:0;if(P.moves.length<=floor)throw new Error(P.practice?"已經回到練習的起點":"你還沒走棋，不用悔棋");if(!P.moves.slice(floor).some(m=>m.by===P.human))throw new Error("你還沒走棋，不用悔棋");
       while(P.moves.length>floor){const m=P.moves.pop();if(m.by===P.human)break}P.undoN=(P.undoN||0)+1;P.result=null;P.hint=null;stateRebuild(P);savePlay();setTimeout(playEngine,0)}
     else if(p==="/play/hint"){throw new Error("挑戰電腦不提供提示，要靠自己");if(P.result||P.turn!==P.human)throw new Error("現在不能提示");
@@ -424,9 +401,6 @@ var XQ=(function(){
       if(p==="/quiz/data")try{const c=await (await fetch("data/quiz-calib.json")).json();for(const it of d.items){const k=c.items&&c.items[it.id];if(k){it.ca=k.a;it.cb=k.b}}}catch(e){}
       return d}
     if(p==="/play/state")return playState();
-    if(p==="/car/state")return carState();
-    if(p==="/car/redeem")return carRedeem(b||{});
-    if(p==="/car/sell")return carSell(b||{});
     if(p.startsWith("/play/"))return playPost(p,b||{});
     // 線上大廳的網路對局（不用電腦）
     if(p.startsWith("/pvp/")&&window.XQNet&&XQNet.active())return netPvp(p,b||{});
