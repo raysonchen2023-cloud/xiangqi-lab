@@ -1370,7 +1370,7 @@ html[data-hicon] .tabbar button.on{box-shadow:inset 0 -3px 0 currentColor}
       if(!window.caches)return go();caches.keys().then(function(ks){return Promise.all(ks.filter(function(k){return k.indexOf("xqlab-app-")===0}).map(function(k){return caches.delete(k)}))})
         .then(function(){return navigator.serviceWorker&&navigator.serviceWorker.getRegistration()}).then(function(r){return r&&r.update()}).catch(function(){}).then(go)}};setTimeout(chk,4000)})();
 </script>
-<script>window.XQ_OFFLINE=true;window.XQ_BUILD="20261110-1530";</script>
+<script>window.XQ_OFFLINE=true;window.XQ_BUILD="20261110-1545";</script>
 <script src="core.js"></script>
 <script src="engine.js"></script>
 <script src="local.js"></script>
@@ -13372,7 +13372,7 @@ const HB_YARD_G=e=>["qin","han","sanguo","weijin","nanbei","sui","tang"].include
 function hbYardGate(kind){const h=hbHubN();let e="";try{e=hbDockEra()}catch(x){}const k=store.get("era","classic"),p=(typeof PW!=="undefined"&&PW[k])||"園子",g=HB_YARD_G(e||k);
   const T={cpu:["移步後園",`客官請移步，${h}後方的${p}風景正好！`],pvp:["移步後園","裡頭太擠，咱們去後頭寬敞處切磋！"],net:["移步後園",`棋友到了，雙方移步${h}後院石台`]}[kind]||["移步後園",""];
   let n="battle";try{n=hbImg("battle","battle")}catch(x){}
-  return{img:["data/parkgate/yard"+g+".webp","data/parkgate/yard.webp","data/hubmap/"+n+".webp"],icon:"🚪",title:T[0],sub:T[1],bg:"#1f2a22",walk:3800}}   /* 開發者「過場太快、沒有味道」：停 3.8 秒、慢慢走進門洞（park3d 的 G.walk） */
+  return{img:["data/parkgate/yard"+g+".webp","data/parkgate/yard.webp","data/hubmap/"+n+".webp"],icon:"🚪",title:T[0],sub:T[1],bg:"#1f2a22",walk:3800,qk:(e||k)}}   /* hspx 11/10：過場也像以前一樣抽一句那一朝跟象棋有關的詩詞（06-cpu parkQuote） */   /* 開發者「過場太快、沒有味道」：停 3.8 秒、慢慢走進門洞（park3d 的 G.walk） */
 function hbGate(icon,title,sub){let n="battle",h="";try{n=hbImg("battle","battle")}catch(e){}try{h=typeof xqHubName==="function"?xqHubName("battle").replace(/^\S+\s/,""):""}catch(e){}return{img:["data/hubmap/"+n+".webp","data/hubmap/battle.webp"],icon,title,sub:(h?h+"・":"")+sub,bg:"#1f2a22"}}
 /* 入口：[標籤 id（也是 07w 的入口代號）, 卡片的選擇器, 標籤左%, 上%]（量 768×1376 的定稿圖，標籤放在東西上方，角色站在東西前面） */
 const HUB_DEF={
