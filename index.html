@@ -1379,7 +1379,7 @@ html[data-hicon] .tabbar button.on{box-shadow:inset 0 -3px 0 currentColor}
       if(!window.caches)return go();caches.keys().then(function(ks){return Promise.all(ks.filter(function(k){return k.indexOf("xqlab-app-")===0}).map(function(k){return caches.delete(k)}))})
         .then(function(){return navigator.serviceWorker&&navigator.serviceWorker.getRegistration()}).then(function(r){return r&&r.update()}).catch(function(){}).then(go)}};setTimeout(chk,4000)})();
 </script>
-<script>window.XQ_OFFLINE=true;window.XQ_BUILD="20261111-0445";</script>
+<script>window.XQ_OFFLINE=true;window.XQ_BUILD="20261111-0500";</script>
 <script src="core.js"></script>
 <script src="engine.js"></script>
 <script src="local.js"></script>
@@ -4008,7 +4008,7 @@ function Stats(v){
         el.innerHTML=a?`<b style="color:${gradeFor(a.v)[2]}">${a.v} ${gradeFor(a.v)[0]}</b><span>每步準確度</span><small>最近 ${a.g} 盤・${a.n} 步</small>`:`<b>—</b><span>每步準確度</span><small>還沒評過等</small>`;
         if(HL&&HL.paint)HL.paint()}).catch(e=>{const b=box.querySelector("#sPent");if(b)b.innerHTML=`<span class="muted">⚠ ${esc(e.message)}</span>`;const el=box.querySelector("#sAcc");if(el)el.innerHTML=`<b>—</b><span>每步準確度</span><small>算不出來</small>`})}
     else if(tab==="talent"){box.innerHTML='<div class="card muted" style="text-align:center;margin-top:4px">Pikafish 正在看你的每一盤棋…</div>';
-      talentReport(box).then(()=>{if(box.isConnected&&tab!=="talent")paint()}).catch(e=>{if(box.isConnected&&tab==="talent")box.innerHTML=`<div class="card muted">⚠ ${esc(e.message)}</div>`;else if(box.isConnected)paint()})}   /* hspx 11/11「紗燈・線上、棋桌・電腦打開跟我的成長一模一樣」：我的成長算得慢（手機、資料多），算完會蓋掉已經換過去的分頁；算完發現已經換頁，就重畫目前那一頁 */
+      talentReport(box).then(()=>{if(box.isConnected&&tab!=="talent")paint();else{const d=box.querySelector("details.tdet");if(d&&window.__tdetOpen)d.open=true}}).catch(e=>{if(box.isConnected&&tab==="talent")box.innerHTML=`<div class="card muted">⚠ ${esc(e.message)}</div>`;else if(box.isConnected)paint()})}   /* hspx 11/11「紗燈・線上、棋桌・電腦打開跟我的成長一模一樣」：我的成長算得慢（手機、資料多），算完會蓋掉已經換過去的分頁；算完發現已經換頁，就重畫目前那一頁 */
     else if(tab==="cpu"){await ld;if(!v.isConnected||tab!=="cpu")return;
       if(!ST){box.innerHTML='<div class="card muted">載入失敗</div>';return}
       const CR=ST.cpuRate;
@@ -4024,7 +4024,9 @@ function Stats(v){
   paint();return{}}
 /* hspx 11/11「詳細數字這邊無法展開」（iPhone，手卷裡）：電腦版瀏覽器正常、iPhone Safari 點了不開。
    改由程式切換開合（不靠瀏覽器原生 details 的點擊），打開後讓手卷的捲動區重算高度；標題裡的小字改成一般換行，不用獨立的區塊 */
-document.addEventListener("click",e=>{const s=e.target&&e.target.closest&&e.target.closest("details.tdet>summary");if(!s)return;e.preventDefault();const d=s.parentElement;d.open=!d.open;
+/* hspx 11/11「按下去展開後又會瞬間收起來」（iPhone）：一次觸碰被切換了兩次。點開後 0.6 秒內再來的點擊不理，這段時間內收合區被別的原因切換也改回使用者要的狀態 */
+document.addEventListener("toggle",e=>{const d=e.target;if(!d||!d.classList||!d.classList.contains("tdet")||d._tgAt==null)return;if(Date.now()-d._tgAt<600&&d.open!==d._tgWant)d.open=d._tgWant},true);
+document.addEventListener("click",e=>{const s=e.target&&e.target.closest&&e.target.closest("details.tdet>summary");if(!s)return;e.preventDefault();const d=s.parentElement;if(d._tgAt!=null&&Date.now()-d._tgAt<600)return;d._tgWant=!d.open;d._tgAt=Date.now();d.open=d._tgWant;window.__tdetOpen=d._tgWant;   /* 內容被重畫時記得重新打開 */
   const sc=d.closest(".xqs-b");if(sc){const y=sc.scrollTop;sc.style.overflow="hidden";void sc.offsetHeight;sc.style.overflow="";sc.scrollTop=y}},true);
 
 
