@@ -170,7 +170,7 @@
   // top＝桌面圖上圓桌面的圓心 x、y、半徑（像素，1024 的圖）
   // lamp＝燈籠怎麼擺：stand＝自己有燈座，立在地上（h＝高度）；hang＝吊著的燈籠，另外做一根立柱和橫桿吊起來；glow＝燭光在圖上的高度（由下往上 0～1）
   const PROP_IMG={tang:{top:[511,510,489]},
-    classic:{lamp:{hang:1,h:7.5,glow:.45}},qin:{lamp:{h:8,glow:.85}},han:{lamp:{h:7.5,glow:.62}},sanguo:{lamp:{h:10,glow:.6}},
+    classic:{lamp:{hang:1,h:7.5,glow:.5}},qin:{lamp:{h:8,glow:.85}},han:{lamp:{h:7.5,glow:.62}},sanguo:{lamp:{h:10,glow:.6}},
     weijin:{lamp:{h:7,glow:.5}},nanbei:{lamp:{h:8,glow:.55}},sui:{lamp:{hang:1,h:8,glow:.5}},wudai:{lamp:{hang:1,h:8,glow:.5}},
     song:{lamp:{h:11,glow:.7}},yuan:{lamp:{h:11,glow:.7}},ming:{lamp:{h:9,glow:.7}},qing:{lamp:{h:10,glow:.72}}};
   // 原圖前處理（每張圖只做一次）：每一列的宣紙色、墨色加深一點、找出太陽並另做一份「沒有太陽」的（正面以外的段落用，一圈才不會有好幾個太陽）
@@ -505,17 +505,21 @@
       glow(x,y+s*.7,z,s*5,.75,1)};
     const F={};
     // ---- 經典：灰色花崗岩圓桌、石凳；公園木條長椅；紅紙燈籠 ----
-    F.classic=()=>{const st=X.stone,s2=X.stone2,ir=X.iron,pl=mm(woodT("#8E5326","#4A2410",{n:90},1),{roughness:.65}),
-      red=lit(lanT("#C8221C",{edge:"#7A100C",ribs:14,rc:"#6A0E0A",draw:chT("福","#F2C14E",.5)}),.6,{roughness:.6}),gd=gold();
-      return{frame:0x5C3418,
+    /* 11/10 經典世界（千秋時光之苑，Gemini 72＋史學顧問）：原本是鐵架公園長椅＋紅紙「福」字燈籠，跟紙墨世界不搭——
+       改成素木長榻＋宣紙小屏風、白玉鼓凳、素木燈柱吊竹骨宣紙燈（不寫字，白天只微微透暖光）；桌子照舊 */
+    F.classic=()=>{const st=X.stone,s2=X.stone2,pl=mm(woodT("#B48C5E","#7C5A36",{n:90},1),{roughness:.7}),dk=mm(woodT("#8A6640","#5A3E22",{n:60},1),{roughness:.7}),
+      jade=M(0xE8EDE6,{roughness:.3}),jade2=M(0xD6DED6,{roughness:.35}),paper=M(0xF2E8CC,{roughness:.95}),
+      lan=lit(lanT("#F3E6C2",{edge:"#B89A66",ribs:12,rc:"#9C7C4C"}),.45,{roughness:.8}),gd=gold();
+      return{frame:0x7C5A36,
         table(){roundTop(8.2,.9,st,st);tor(st,0,-.04,0,8.1,.18,TAU,null,96);ct(s2,0,GY+9-.9,0,2.3,3.2,18,40);ct(s2,0,GY+.6,0,4.2,4.6,1.2,40);tor(s2,0,-1.9,0,2.36,.22,TAU,null,40);tor(s2,0,GY+1.35,0,3.2,.25,TAU,null,40)},
-        bench(){for(let i=0;i<4;i++)bx(pl,0,SY,BZ+1.8-i*1.2,BL,.45,1.1,null,6);
-          for(let i=0;i<3;i++)bx(pl,0,SY+3.6+i*1.4,BZ-2.6-i*.25,BL,.45,1.0,[-.18,0,0],6);
-          for(const x of[-BL/2+1,BL/2-1]){bx(ir,x,(SY+GY)/2,BZ+1.8,.6,SY-GY,.6);bx(ir,x,(SY+GY+5.2)/2,BZ-2.6,.6,SY-GY+5.2,.6);bx(ir,x,SY-.4,BZ-.4,.5,.5,5);
-            bx(ir,x,SY+3.2,BZ,.5,.5,4.4,[.05,0,0]);tor(ir,x,SY+2.5,BZ+2.0,.65,.13,PI*1.5,[0,PI/2,0],16);tor(ir,x,GY+.4,BZ-.4,2.2,.16,PI,[0,PI/2,0],16)}},
-        stool(){ct(st,0,GY+13.3,0,2.4,2.2,1.4,36);ct(s2,0,GY+6.3,0,1.5,2.3,12.6,36);tor(s2,0,GY+12.5,0,1.62,.15,TAU,null,32)},
-        lamp(sx){const px=sx*1.9,Y=-4.6;cy(ir,px,(GY+Y+2.6)/2,0,.25,Y+2.6-GY,8);ct(ir,px,GY+.4,0,.5,.8,.8,8);sp(gd,px,Y+2.75,0,.32);bx(ir,px/2,Y+2.0,0,2.4,.22,.22);tor(ir,px*.62,Y+1.4,0,.5,.07,PI*1.5,[0,0,sx>0?0:PI],12);
-          cy(ir,0,Y+1.5,0,.05,.6,6);sp(red,0,Y,0,1.05,1.24,1.05);for(const y of[Y+1.3,Y-1.3])cy(gd,0,y,0,.5,.24,14);cy(red,0,Y-2.2,0,.1,1.5,6);sp(gd,0,Y-1.45,0,.17);glow(0,Y,0,4.6,.45)}}};
+        bench(){bx(pl,0,SY-.25,BZ,BL,.5,4.6);bx(dk,0,SY-.62,BZ,BL-.4,.25,4.2);
+          for(const x of[-BL/2+.5,BL/2-.5])for(const z of[BZ-1.9,BZ+1.9])bx(dk,x,(SY-.5+GY)/2,z,.55,SY-.5-GY,.55);
+          const zs=BZ-2.45,H=5.6;for(const x of[-BL/2+.25,-BL/6,BL/6,BL/2-.25])bx(dk,x,SY+H/2,zs,.35,H,.35);
+          bx(dk,0,SY+H,zs,BL+.2,.35,.45);bx(dk,0,SY+.25,zs,BL,.3,.4);bx(paper,0,SY+H/2+.1,zs,BL-.5,H-.6,.08)},
+        stool(){ct(jade,0,GY+13.3,0,2.3,2.3,1.2,36);ct(jade2,0,GY+6.6,0,2.0,2.4,12.2,36);for(const y of[GY+11.6,GY+1.6])tor(jade,0,y,0,2.25,.18,TAU,null,32)},
+        lamp(sx){const px=sx*1.9,Y=-4.6;cy(dk,px,(GY+Y+2.6)/2,0,.25,Y+2.6-GY,8);ct(dk,px,GY+.4,0,.55,.8,.8,8);bx(dk,px/2,Y+2.0,0,2.4,.22,.22);
+          cy(dk,0,Y+1.5,0,.05,.6,6);cy(lan,0,Y,0,1.0,2.4,6);for(const y of[Y+1.25,Y-1.25])cy(pl,0,y,0,1.08,.18,6);cy(dk,0,Y+1.5,0,.6,.22,6);
+          cy(M(0xC2504A,{roughness:.8}),0,Y-1.9,0,.07,.9,6);glow(0,Y,0,3.4,.28)}}};
     // ---- 秦：黑漆朱邊、青銅飾件；青銅豆形燈 ----
     F.qin=()=>{const RD="#A8281C",bk=mm(lacqT("#15110F","#3A2A22"),{roughness:.28}),bz=bronze(),
       top=mm(topT(g=>{g.fillStyle="#15110F";g.fillRect(0,0,1024,1024);noise(g,1024,1024,3000,"60,40,30",.08)},{ring:[[.965,16,RD],[.9,5,RD]],m:(g,s)=>MO.lozenge(g,s,RD),n:9,mr:.932,s:.026}),{roughness:.25}),
@@ -815,6 +819,36 @@
           glow(x+nx*.4,LY,z+nz*.4,4.6,.5)}});
       // 樹：牡丹樹、松樹輪流，站在平台邊上，轉頭時當畫面的框
       [[-14.8,-13.2,"tree2",17],[17.8,-8.2,"tree1",14.5],[-18.2,3.4,"tree1",12.5]].forEach(([x,z,n,h])=>use(n,im=>{const c=card(im,{x,y:GY,z,h,tilt:.12,info:n});blob(x,GY+.03,z,c.w*.32,c.w*.2,.35,c.ry);if(X.fades)X.fades.push(c.m)}));
+      /* 11/10 經典世界（Gemini 70／71，開發者選「補齊 Gemini 的元素」）：空中兩卷懸浮畫卷（緩緩上下漂），石台外兩位淡墨幻影棋客（半透明、像呼吸一樣忽濃忽淡） */
+      if(EK==="classic"){const lastB=c=>{const b=X.bills&&X.bills[X.bills.length-1];return b&&b.m===c.m?b:null};
+        use("scroll",im=>[[-11.5,10.5,-16,3.6,0],[12.5,12.5,-14.5,3,1]].forEach(([x,y,z,h,mi],i)=>{const c=card(im,{x,y:GY+y,z,h,mirror:!!mi}),b=lastB(c);if(b)b.bob=[2.1,i*2.1,.4]}));   /* Gemini 72：畫卷 3 秒一週期上下漂、幻影 4 秒一週期呼吸 */
+        use("ghost",im=>[[-23,-19,11,0],[24,-16,10.5,1]].forEach(([x,z,h,mi],i)=>{const c=card(im,{x,y:GY,z,h,mirror:!!mi,tilt:.08});c.m.material.opacity=.3;c.m.material.depthWrite=false;const b=lastB(c);if(b)b.br=[1.57,i*1.7,.3,.08]}));
+        /* Gemini 72（開發者選「兩個都要」）：石台地上用淡金細虛線刻一張大楚河漢界棋盤（9 直 10 橫、河界、九宮斜線，程式畫保證正確），
+           右側刻北斗七星連線，天樞到玉衡五顆（五站）微微發光；只畫在石台圓面裡 */
+        {const PS=40,PX=1024,k=PX/PS,cx=x=>(x+PS/2)*k,cz=z=>(z+PS/2)*k,BWg=20,BHg=22.5,c0=-BWg/2,r0=-BHg/2,cs=BWg/8;
+          const DIP=[[12.5,2],[16.3,2],[16.9,-1.8],[13.1,-2.2],[11.2,-5.2],[10.4,-7.9],[11.6,-10.7]];   /* 天樞、天璇、天璣、天權、玉衡、開陽、搖光 */
+          const tx=cv(PX,PX,(g,w,h)=>{g.clearRect(0,0,w,h);g.save();g.beginPath();g.arc(w/2,h/2,(21-.6)*k,0,TAU);g.clip();
+            g.strokeStyle="rgba(214,182,104,.5)";g.lineWidth=3;g.setLineDash([14,9]);const L=(x1,z1,x2,z2)=>{g.beginPath();g.moveTo(cx(x1),cz(z1));g.lineTo(cx(x2),cz(z2));g.stroke()};
+            for(let r=0;r<10;r++)L(c0,r0+r*cs,c0+BWg,r0+r*cs);
+            for(let c=0;c<9;c++){if(c===0||c===8)L(c0+c*cs,r0,c0+c*cs,r0+9*cs);else{L(c0+c*cs,r0,c0+c*cs,r0+4*cs);L(c0+c*cs,r0+5*cs,c0+c*cs,r0+9*cs)}}
+            for(const r of[0,7]){L(c0+3*cs,r0+r*cs,c0+5*cs,r0+(r+2)*cs);L(c0+5*cs,r0+r*cs,c0+3*cs,r0+(r+2)*cs)}
+            g.setLineDash([6,8]);g.strokeStyle="rgba(232,206,136,.6)";g.lineWidth=2.5;g.beginPath();[0,1,2,3,0].forEach((i,j)=>g[j?"lineTo":"moveTo"](cx(DIP[i][0]),cz(DIP[i][1])));g.stroke();
+            g.beginPath();[3,4,5,6].forEach((i,j)=>g[j?"lineTo":"moveTo"](cx(DIP[i][0]),cz(DIP[i][1])));g.stroke();g.setLineDash([]);
+            DIP.forEach(([x,z],i)=>{g.fillStyle=i<5?"rgba(255,244,214,.95)":"rgba(226,200,140,.7)";g.beginPath();g.arc(cx(x),cz(z),i<5?7:5,0,TAU);g.fill()});g.restore()});
+          const gm=new T.Mesh(new T.PlaneGeometry(PS,PS),new T.MeshBasicMaterial({map:tx,transparent:true,depthWrite:false,toneMapped:false,polygonOffset:true,polygonOffsetFactor:-2,polygonOffsetUnits:-3}));
+          gm.rotation.x=-PI/2;gm.position.set(0,GY+.03,0);gm.renderOrder=1;root.add(gm);
+          DIP.slice(0,5).forEach(([x,z])=>glow(x,GY+.25,z,1.8,.4))}
+        /* hspx 11/10「讓經典世界的雲有流動的視覺效果」：石台外圍一圈大片淡雲，慢慢繞著石台飄（遠近、高低、快慢各不同） */
+        {const ct=cv(256,128,(g,w,h)=>{g.clearRect(0,0,w,h);const P=[[64,82,34],[104,66,40],[150,62,44],[192,80,32],[128,90,36]];   /* 水墨雲朵：幾團圓疊成一朵，淡灰墨邊、底部一點陰影 */
+            const blob=()=>{g.beginPath();for(const[x,y,r]of P){g.moveTo(x+r,y);g.arc(x,y,r,0,TAU)}};g.save();g.beginPath();g.rect(0,0,w,h-14);g.clip();
+            blob();g.lineWidth=5;g.strokeStyle="rgba(110,120,140,.42)";g.stroke();   /* 先描粗線、再填白：裡面的線被蓋掉，只留外輪廓 */
+            blob();const gr=g.createLinearGradient(0,20,0,h-14);gr.addColorStop(0,"rgba(255,255,255,1)");gr.addColorStop(.7,"rgba(246,248,251,1)");gr.addColorStop(1,"rgba(206,213,226,1)");g.fillStyle=gr;g.fill();
+            g.fillStyle="rgba(110,120,140,.35)";g.fillRect(14,h-16,w-28,2);g.restore()});
+          for(let i=0;i<12;i++){const op=.55+Math.random()*.25,s=new T.Sprite(new T.SpriteMaterial({map:ct,transparent:true,opacity:op,depthWrite:false,toneMapped:false,fog:false}));s.renderOrder=4;
+            const r=21+Math.random()*8,y=GY+.5+Math.random()*3,sz=10+Math.random()*10;s.scale.set(sz*1.4,sz*.7,1);root.add(s);if(X.bills)X.bills.push({m:s,y,tilt:0,orb:[r,i/12*TAU+Math.random()*.4,(.006+Math.random()*.008)*(i%3?1:-1),y,op]})}}
+        /* 桌角一個青瓷小香爐（茶杯的對角），爐頂飄淡淡的白煙（程式畫、會往上飄散） */
+        use("censer",im=>{const x=5.9,z=-4.4,c=card(im,{x,y:.015,z,h:1.5,tilt:.3}),b=lastB(c);if(b)Object.assign(b,{cup:[x,z],hb:0});
+          const st=radial("rgba(255,255,255,.85)","rgba(255,255,255,.35)");for(let i=0;i<4;i++){const s=new T.Sprite(new T.SpriteMaterial({map:st,transparent:true,opacity:0,depthWrite:false,toneMapped:false,fog:false}));root.add(s);if(X.bills)X.bills.push({m:s,y:0,tilt:0,smk:[x,1.25,z,i/4]})}})}
       // 茶杯：從斜上方看的手繪茶碗，立牌整張正對鏡頭、下緣貼著杯托前緣（Pikafish 一杯、我一杯，位置跟原本一樣）
       /* 意見回饋 423：茶杯看起來沒有平放——原本立牌的下緣往「舊的鏡頭位置 (0,16,9.2)」挪，鏡頭拉高、繞桌轉之後杯子就歪、浮、滑到杯影外面。
          改成：找出圖上杯托最寬的那一列（＝杯托圓心，杯子真正落在桌上的點）當轉軸，每一格都讓這個點落在鏡頭看向杯位的那條視線上、
@@ -1017,26 +1051,28 @@
       try{const WI=typeof window.XQ_PARKWX==="function"?window.XQ_PARKWX(EK):null;if(WI&&(WI.t==="rain"||WI.t==="snow")){
         const snow=WI.t==="snow",A=Math.max(.55,Math.min(1,WI.a||1)),RM=(()=>{try{return matchMedia("(prefers-reduced-motion: reduce)").matches}catch(e){return false}})();
         const BX=17,Y0=FL,Y1=FL+24,N=RM?0:Math.round((snow?(MOB?1100:1800):(MOB?900:1400))*A),objs=[];
+        /* 11/10 經典世界（紙墨世界，Gemini 71 作法 2）：雨換成直直落下的短墨滴、雪換成碎宣紙片、積雪是淡紙色 */
+        const CL=EK==="classic",DX=CL?0:.35,LN=CL?.7:1.5,SL=CL?0:.23;
         /* 地面：雪＝白色斑駁的積雪片（石台＋山坡各一層，跟著時間變厚）；雨＝一層淡淡的深色（濕地） */
         const blot=cv(512,512,(g,w,h)=>{g.clearRect(0,0,w,h);for(let i=0;i<snow*900+(1-snow)*140;i++){const x=Math.random()*w,y=Math.random()*h,r=snow?10+Math.random()*50:20+Math.random()*70,gr=g.createRadialGradient(x,y,0,x,y,r);
           gr.addColorStop(0,snow?`rgba(255,255,255,${.75+Math.random()*.25})`:`rgba(30,38,46,${.25+Math.random()*.25})`);gr.addColorStop(1,"rgba(255,255,255,0)");g.fillStyle=gr;g.fillRect(x-r,y-r,2*r,2*r)}});
         blot.wrapS=blot.wrapT=T.RepeatWrapping;blot.repeat.set(3,3);
-        const lay=(geo,y,rot)=>{const m=new T.Mesh(geo,new T.MeshBasicMaterial({map:blot,color:snow?0xffffff:0x223040,transparent:true,opacity:0,depthWrite:false,fog:true,polygonOffset:true,polygonOffsetFactor:-1,polygonOffsetUnits:-2}));
+        const lay=(geo,y,rot)=>{const m=new T.Mesh(geo,new T.MeshBasicMaterial({map:blot,color:snow?(CL?0xF3E8CC:0xffffff):0x223040,transparent:true,opacity:0,depthWrite:false,fog:true,polygonOffset:true,polygonOffsetFactor:-1,polygonOffsetUnits:-2}));
           if(rot)m.rotation.x=-PI/2;m.position.y=y;m.renderOrder=1;sc.add(m);objs.push(m);return m};
         const L1=lay(new T.CircleGeometry(TR,64),FL+.015,true),L2=lay(hg,.02,false);L2.material.side=T.DoubleSide;
         let acc=snow?.4:.0,wet=0;
         /* 粒子：雨＝線段（每滴兩個點），雪＝圓點 */
         let pts=null,pos=null,vel=null;
         if(N){if(snow){const g=new T.BufferGeometry();pos=new Float32Array(N*3);vel=new Float32Array(N*2);for(let i=0;i<N;i++){pos[i*3]=(Math.random()*2-1)*BX;pos[i*3+1]=Y0+Math.random()*(Y1-Y0);pos[i*3+2]=(Math.random()*2-1)*BX;vel[i*2]=1.6+Math.random()*1.4;vel[i*2+1]=Math.random()*TAU}
-            g.setAttribute("position",new T.BufferAttribute(pos,3));const dot=cv(64,64,(c,w,h)=>{const gr=c.createRadialGradient(32,32,0,32,32,30);gr.addColorStop(0,"rgba(255,255,255,1)");gr.addColorStop(.5,"rgba(255,255,255,.75)");gr.addColorStop(1,"rgba(255,255,255,0)");c.fillStyle=gr;c.fillRect(0,0,w,h)});
+            g.setAttribute("position",new T.BufferAttribute(pos,3));const dot=CL?cv(64,64,(c,w,h)=>{c.clearRect(0,0,w,h);c.fillStyle="rgba(248,240,214,.95)";c.fillRect(16,22,32,22);c.strokeStyle="rgba(120,100,70,.5)";c.lineWidth=2;c.strokeRect(16,22,32,22)}):cv(64,64,(c,w,h)=>{const gr=c.createRadialGradient(32,32,0,32,32,30);gr.addColorStop(0,"rgba(255,255,255,1)");gr.addColorStop(.5,"rgba(255,255,255,.75)");gr.addColorStop(1,"rgba(255,255,255,0)");c.fillStyle=gr;c.fillRect(0,0,w,h)});
             pts=new T.Points(g,new T.PointsMaterial({map:dot,size:MOB?.62:.5,sizeAttenuation:true,transparent:true,opacity:.95,depthWrite:false,fog:false}))}
-          else{const g=new T.BufferGeometry();pos=new Float32Array(N*6);vel=new Float32Array(N);for(let i=0;i<N;i++){const x=(Math.random()*2-1)*BX,y=Y0+Math.random()*(Y1-Y0),z=(Math.random()*2-1)*BX;pos.set([x,y,z,x+.35,y+1.5,z],i*6);vel[i]=30+Math.random()*12}
-            g.setAttribute("position",new T.BufferAttribute(pos,3));pts=new T.LineSegments(g,new T.LineBasicMaterial({color:0xC9D3DA,transparent:true,opacity:.42*A+.1,depthWrite:false,fog:false}))}
+          else{const g=new T.BufferGeometry();pos=new Float32Array(N*6);vel=new Float32Array(N);for(let i=0;i<N;i++){const x=(Math.random()*2-1)*BX,y=Y0+Math.random()*(Y1-Y0),z=(Math.random()*2-1)*BX;pos.set([x,y,z,x+DX,y+LN,z],i*6);vel[i]=CL?20+Math.random()*6:30+Math.random()*12}
+            g.setAttribute("position",new T.BufferAttribute(pos,3));pts=new T.LineSegments(g,new T.LineBasicMaterial({color:CL?0x2E333C:0xC9D3DA,transparent:true,opacity:(CL?.5:.42)*A+.1,depthWrite:false,fog:false}))}
           pts.frustumCulled=false;pts.renderOrder=3;sc.add(pts);objs.push(pts)}
         let wt=0;WX={tick(dt,now){wt+=dt;if(snow){acc=Math.min(.9,acc+dt*.006*A);L1.material.opacity=acc;L2.material.opacity=acc*.92;if(CANO)CANO.snow=Math.min(.85,acc)}else{wet=Math.min(.32,wet+dt*.08);L1.material.opacity=wet;L2.material.opacity=wet*.8;if(CANO){CANO.wet=Math.min(1,wet/.32);if(wt>1)CANO.want=1}}
           if(!pts)return;const p=pts.geometry.attributes.position;
           if(snow){for(let i=0;i<N;i++){const j=i*3;pos[j+1]-=vel[i*2]*dt;pos[j]+=Math.sin(now/900+vel[i*2+1])*dt*.6;if(pos[j+1]<Y0||CANO&&pos[j+1]<CANO.y&&Math.abs(pos[j])<CANO.x&&Math.abs(pos[j+2])<CANO.z){pos[j+1]=Y1;pos[j]=(Math.random()*2-1)*BX;pos[j+2]=(Math.random()*2-1)*BX}}}
-          else{for(let i=0;i<N;i++){const j=i*6,d=vel[i]*dt;pos[j+1]-=d;pos[j+4]-=d;pos[j]-=d*.23;pos[j+3]-=d*.23;if(pos[j+1]<Y0||CANO&&pos[j+1]<CANO.y&&Math.abs(pos[j])<CANO.x&&Math.abs(pos[j+2])<CANO.z){const x=(Math.random()*2-1)*BX,z=(Math.random()*2-1)*BX;pos.set([x,Y1,z,x+.35,Y1+1.5,z],j)}}}
+          else{for(let i=0;i<N;i++){const j=i*6,d=vel[i]*dt;pos[j+1]-=d;pos[j+4]-=d;pos[j]-=d*SL;pos[j+3]-=d*SL;if(pos[j+1]<Y0||CANO&&pos[j+1]<CANO.y&&Math.abs(pos[j])<CANO.x&&Math.abs(pos[j+2])<CANO.z){const x=(Math.random()*2-1)*BX,z=(Math.random()*2-1)*BX;pos.set([x,Y1,z,x+DX,Y1+LN,z],j)}}}
           p.needsUpdate=true},
           dispose(){for(const o of objs){try{sc.remove(o);o.geometry!==hg&&o.geometry.dispose();o.material.dispose()}catch(e){}}}}}}catch(e){console.warn(e)}
       /* 開發者 11/4：石台底下鋪一張「當朝代的中國大地圖」（Gemini 水墨古地圖，有疆界和地名），畫面拉遠就看得到；地圖載好就換掉山坡，載不到就留著山坡 */
@@ -1433,6 +1469,9 @@
       for(const b of bills){const m=b.m;if(b.cup){const[fx,fz]=b.cup,cx=cam.position.x-fx,cy=cam.position.y-.015,cz=cam.position.z-fz,e=Math.atan2(cy,Math.hypot(cx,cz)),t=clamp((b.hb*Math.cos(e)+.03)/Math.max(cy,.5),0,.5);
           m.position.set(fx+cx*t,.015+cy*t,fz+cz*t)}
         else if(b.anchor){const dx0=cam.position.x-b.anchor[0],dz0=cam.position.z-b.anchor[1],d0=Math.hypot(dx0,dz0)||1;m.position.set(b.anchor[0]-dx0/d0*b.back,b.y,b.anchor[1]-dz0/d0*b.back)}
+        if(b.orb){const[r,a0,sp,y,op]=b.orb,a=a0+performance.now()/1000*sp,z=Math.sin(a)*r;m.position.set(Math.cos(a)*r,y,z);m.material.opacity=op*clamp((16-z)/10,0,1);continue}   /* 經典世界繞著飄的雲；飄到鏡頭這一側（z 大）就淡掉，不擋畫面 */
+        if(b.smk){const[x0,y0,z0,ph]=b.smk,u=(performance.now()/1000*.33+ph)%1;m.position.set(x0+Math.sin(u*5+ph*9)*.18,y0+u*2.4,z0);m.material.opacity=.3*Math.sin(Math.PI*u);m.scale.setScalar(.35+u*1.1);continue}   /* 香爐的煙 */
+        if(b.bob||b.br){const ts=performance.now()/1000;if(b.bob)m.position.y=b.y+Math.sin(ts*b.bob[0]+b.bob[1])*b.bob[2];if(b.br)m.material.opacity=b.br[2]+Math.sin(ts*b.br[0]+b.br[1])*b.br[3]}   /* 經典世界的懸浮畫卷、幻影棋客 */
         const wp=m.getWorldPosition(BILLV),dx=cam.position.x-wp.x,dz=cam.position.z-wp.z;m.rotation.set(-b.tilt*Math.atan2(cam.position.y-wp.y,Math.hypot(dx,dz)),Math.atan2(dx,dz),0)}
       if(fades.length){const fx=PIV.x-cam.position.x,fz=PIV.z-cam.position.z,fd=Math.hypot(fx,fz)||1;   /* 桌子後面、離畫面中線 9～21 度以內的樹慢慢變淡（最淡 0.28） */
         for(const m of fades){const wp=m.getWorldPosition(FADEV),vx=wp.x-cam.position.x,vz=wp.z-cam.position.z,vd=Math.hypot(vx,vz)||1,dot=(vx*fx+vz*fz)/fd;

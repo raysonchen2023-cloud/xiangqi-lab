@@ -1379,7 +1379,7 @@ html[data-hicon] .tabbar button.on{box-shadow:inset 0 -3px 0 currentColor}
       if(!window.caches)return go();caches.keys().then(function(ks){return Promise.all(ks.filter(function(k){return k.indexOf("xqlab-app-")===0}).map(function(k){return caches.delete(k)}))})
         .then(function(){return navigator.serviceWorker&&navigator.serviceWorker.getRegistration()}).then(function(r){return r&&r.update()}).catch(function(){}).then(go)}};setTimeout(chk,4000)})();
 </script>
-<script>window.XQ_OFFLINE=true;window.XQ_BUILD="20261110-2100";</script>
+<script>window.XQ_OFFLINE=true;window.XQ_BUILD="20261110-2115";</script>
 <script src="core.js"></script>
 <script src="engine.js"></script>
 <script src="local.js"></script>
@@ -9891,6 +9891,8 @@ ifxStart();
    各朝驛站：旅人、秘境棋友、這一朝寄來的信（PARK_NPC 的 era），加一個史實小牌 YZ_SIGHT（點了 15% 撿那一朝的珍品，跟渡口景點一樣，沒撿到看介紹）。
    旅人、秘境棋友的小窗只是轉給清單上原本的按鈕（data-inn），下棋流程完全不變。
    YZ_ON＝總開關；YZ_READY＝定稿、可以上的圖（沒列的朝代照舊用橫幅）；YZ_SPOT／YZ_ROAD／YZ_SIGHT 的位置照每張圖量的（左%、上%）。樣式在 yzCss()（m.css 有別人在改，先放這裡）。 */
+/* 開發者 11/10：經典世界的驛站不該有往各朝代的入口，一律從星槎的千秋石枰去——拿掉「千秋驛路」12 個朝代小圓印（圖也重畫成沒有各朝小島的天空） */
+const YZ_ROAD_ON=false,YZ_CLV="1115";   /* 經典驛站圖 11/10 重畫（同檔名換圖，網址帶版本，手機才會重抓） */
 const YZ_ON=true;   /* 開發者 11/8：史學顧問核過，打開 */
 const YZ_IMG="_f";   /* 意見回饋 773：全彩水墨版 <朝代>_f.webp；載不到退回淡彩 _c（img 的 onerror） */
 const YZ_READY=new Set(["classic","qin","han","sanguo","weijin","nanbei","sui","tang","wudai","song","yuan","ming","qing"]);
@@ -9964,11 +9966,11 @@ function yzInn(v,k){if(!YZ_ON||!YZ_READY.has(k))return;const S=YZ_SPOT[k],pad=v.
   const T=SHIP_STOP[k]||{},nu=yzUnread(k),Sx=jSecrets();
   const sp=[["yzTr",S.tr,"🏮 路過的旅人",(YZ_NOLIST_ON?"Lv "+xpInfo().L+"・":"")+(INN.length+(typeof igCount==="function"?igCount(k):0))+" 位・下棋練等","hot"],["yzSec",S.sec,"🗝 秘境棋友","找到 "+Object.keys(Sx).length+"／"+SECRETS.length],["yzMail",S.mail,k==="classic"?"📮 信箱":"📮 這一朝的信",nu?"🆕 "+nu+" 封新信":"書信往來"]];
   if(S.ling)sp.push(["yzLing",S.ling,"🏯 點將台","將令 "+lingN()+" 枚"]);
-  const road=k!=="classic"?"":SHIP_ROUTE.filter(e=>e!=="classic"&&YZ_ROAD[e]).map(e=>{const p=YZ_ROAD[e],lk=eraLocked(e),SS=typeof sealOf==="function"?(sealCss(),sealOf(e)):null,ln=!lk&&(SS?SS.n>0:shipLearned(e)),gd=ln&&SS&&SS.gold,u=!lk&&yzUnread(e),t=YZ_SEAL[e]||eraLabel(e);
+  const road=k!=="classic"||!YZ_ROAD_ON?"":SHIP_ROUTE.filter(e=>e!=="classic"&&YZ_ROAD[e]).map(e=>{const p=YZ_ROAD[e],lk=eraLocked(e),SS=typeof sealOf==="function"?(sealCss(),sealOf(e)):null,ln=!lk&&(SS?SS.n>0:shipLearned(e)),gd=ln&&SS&&SS.gold,u=!lk&&yzUnread(e),t=YZ_SEAL[e]||eraLabel(e);
     return(lk?`<i class="yz-fog" style="left:${p[0]}%;top:${p[1]-3.5}%"></i>`:"")+`<button class="yz-seal${lk?" lk":ln?" ln":""}${gd?" gd":""}${t.length>1?" w2":""}" data-yze="${e}" style="left:${p[0]}%;top:${p[1]}%" aria-label="${esc(innName(e))}${lk?"（星槎還沒停靠）":gd?"（千秋印鑄成金印了）":ln?`（千秋印亮了 ${SS?SS.n+"／"+SS.N:""} 邊）`:""}${u?"，有新信":""}">${esc(t)}${u?"<i></i>":""}</button>`}).join("");
-  const sub=k==="classic"?"旅人歇腳、書信往來；千秋驛路通往各朝驛站":esc((k==="classic"?"":eraLabel(k)+"・")+(T.place||"")),si=YZ_SIGHT[k]&&S.sight;
+  const sub=k==="classic"?(YZ_ROAD_ON?"旅人歇腳、書信往來；千秋驛路通往各朝驛站":"旅人歇腳、書信往來；要去各朝，從星槎的千秋石枰啟程"):esc((k==="classic"?"":eraLabel(k)+"・")+(T.place||"")),si=YZ_SIGHT[k]&&S.sight;
   const d=document.createElement("div");
-  d.innerHTML=`<div class="shp-page cq yz-page"><img src="data/yizhan/${k}${YZ_IMG}.webp" alt="${esc(innName(k))}" onerror="if(!this.dataset.fb){this.dataset.fb=1;this.src='data/yizhan/${k}_c.webp'}">${road}<div class="shp-cap"><b>🏮 ${esc(innName(k))}</b><small>${sub}</small></div>${sp.map(([id,p,b,sm,cl])=>`<button class="shp-spot${cl?" "+cl:""}" id="${id}" style="left:${p[0]}%;top:${p[1]}%"><b>${b}</b>${sm?`<small>${sm}</small>`:""}</button>`).join("")}${si?`<button class="po-sight" id="yzSight" style="left:${S.sight[0]}%;top:${S.sight[1]}%">📍 ${esc(YZ_SIGHT[k][0])}</button>`:""}</div>`;
+  d.innerHTML=`<div class="shp-page cq yz-page"><img src="data/yizhan/${k}${YZ_IMG}.webp${k==="classic"?"?v="+YZ_CLV:""}" alt="${esc(innName(k))}" onerror="if(!this.dataset.fb){this.dataset.fb=1;this.src='data/yizhan/${k}_c.webp'}">${road}<div class="shp-cap"><b>🏮 ${esc(innName(k))}</b><small>${sub}</small></div>${sp.map(([id,p,b,sm,cl])=>`<button class="shp-spot${cl?" "+cl:""}" id="${id}" style="left:${p[0]}%;top:${p[1]}%"><b>${b}</b>${sm?`<small>${sm}</small>`:""}</button>`).join("")}${si?`<button class="po-sight" id="yzSight" style="left:${S.sight[0]}%;top:${S.sight[1]}%">📍 ${esc(YZ_SIGHT[k][0])}</button>`:""}</div>`;
   const pg=d.firstElementChild;v.insertBefore(pg,pad);const ab=pad.querySelector(".abn");if(ab)ab.remove();
   if(YZ_NOLIST_ON){pad.classList.add("yz-nolist");if(YZ_MORE_ON)pg.insertAdjacentHTML("beforeend",'<button class="yz-more" id="yzMore" aria-label="其他入口：羈絆、棋史卡冊、輿圖、消寒圖、點將台、走去園子和擂台">☰ 其他</button>')}
   const on=(q,fn)=>{const e=pg.querySelector(q);if(e)e.onclick=()=>{vibrate(5);fn()}};
@@ -12162,6 +12164,11 @@ const SHW_SHIP={W:896,H:1200,el:35,h:y=>.088+(y-66)*.001,home:"home",look0:[50,8
    遠方的景點（城樓、塔、山、河上的船）走到最靠近那個方向的空地，轉身看過去。擂台在對岸的（明）走到岸邊。 */
 const SHW_PG0={W:768,H:1376,el:38,home:"home",look0:[45,90],h:[.045,60,.0009]};
 const SHW_PORT={
+  /* hspx 11/10「3D 小人不見了」：經典世界的渡口（port_classic，千秋石桌那一頁）原本沒有座標表，只出現平面小帥。
+     起點在右下石階頂，木板橋上到中間石島（千秋石桌），左邊過石拱橋到老松下的石桌（經典園子），再沿石階上擂台；右邊走木棧道到雲河驛站門口 */
+  classic:{N:{home:[82,80],pl:[70,74.5],cen:[54,71],c1:[44,67],br1:[50,63.5],br2:[40,58.5],br3:[30.5,58.5],l1:[26,55.5],lp:[34,47.5],ar:[46,37.5],in1:[60,62],in2:[68,58.5],inn:[75,56.5]},
+    E:"home-pl pl-cen cen-c1 c1-br1 br1-br2 br2-br3 br3-l1 l1-lp lp-ar br1-in1 in1-in2 in2-inn",
+    HS:{poPark:["l1",22,50,"wave"],poInn:["inn",84,52,"bow"],poArena:["ar",56,30,"cheer"],poPh:["cen",57,66,"bow"]}},
   qin:{N:{home:[51,67],p1:[50,60.5],park:[31,61],inn:[76,63.5],i1:[64,63.5],battle:[55,51],arena:[52,43],s2:[64,44.5]},E:"home-p1 p1-park home-i1 p1-i1 i1-inn p1-battle battle-arena battle-s2 arena-s2",
     HS:{poPark:["park",29,56,"wave"],poInn:["inn",77.5,58,"bow"],poArena:["arena",52,35,"cheer"],poBattle:["battle",58,40,"wave"],ps0:["park",32,22,"wave"],ps1:["s2",82,26,"wave"],ps2:["s2",75,36,"wave"]}},
   han:{h:[.045,62,.0009],N:{home:[48,71],c:[45,62],park:[27,59.5],i1:[62,68],inn:[75.5,64.5],battle:[49,52],arena:[50,38],n0:[30,45],n1:[68,37]},E:"home-c c-park home-i1 c-i1 i1-inn c-battle battle-arena c-n0 arena-n1",
@@ -13683,7 +13690,7 @@ const HM_IMGV="1910";   /* 圖的版本：同檔名換圖時改掉，手機才�
 const HUB_NAME={learn:{classic:"藏譜石窟",qin:"學室",han:"太學",sanguo:"太學",weijin:"國子學",nanbei:"國學",sui:"國子寺",tang:"國子監",wudai:"國子監",song:"書院",yuan:"書院",ming:"書院",qing:"書院"},
   quick:{qin:"博一局",han:"博一局",sanguo:"弈一局",weijin:"手談一局",nanbei:"坐隱一局",sui:"弈一局",tang:"象戲一局",wudai:"象戲一局",song:"著一局",yuan:"著一盤",ming:"下一盤",qing:"殺一盤"},   /* 11/9 開發者：「下一盤」也照朝代：秦漢六博叫「博」；魏晉「手談」（支遁）、「坐隱」（王坦之），見《世說新語》；唐牛僧孺《玄怪錄》寶應象戲；宋元「著棋」；清俗話「殺一盤」 */
     battle:{classic:"觀星閣",qin:"酒肆",han:"酒肆",sanguo:"酒肆",weijin:"酒壚",nanbei:"酒肆",sui:"酒肆",tang:"旗亭",wudai:"茶肆",song:"茶坊",yuan:"茶肆",ming:"茶樓",qing:"茶館"}};
-function xqHubName(k){let e="";try{e=typeof shipAt==="function"&&typeof shipDockList==="function"&&shipDockList()?shipAt():""}catch(x){}const n=(HUB_NAME[k]||{})[e];return(k==="quick"?"♟ ":k==="battle"?"⚔ ":"📚 ")+(n||(k==="quick"?"下一盤":k==="battle"?"對戰":"學習"))}
+function xqHubName(k){let e="";try{e=typeof shipAt==="function"&&typeof shipDockList==="function"&&shipDockList()?shipAt():""}catch(x){}try{if(!e&&typeof hbIsCl==="function"&&hbIsCl())e="classic"}catch(x){}const n=(HUB_NAME[k]||{})[e];   /* 11/10：還沒登船也是經典世界，頁名用藏譜石窟、觀星閣（原本顯示學習、對戰） */return(k==="quick"?"♟ ":k==="battle"?"⚔ ":"📚 ")+(n||(k==="quick"?"下一盤":k==="battle"?"對戰":"學習"))}
 /* 11/9 開發者：「下一盤」前面的閃電跟水墨圖示融合不了，換成 ♟（e_piece 手繪棋子圖示） */
 const HM_SPOTS=[["hmShip",52,15,"⛵ 雲河星槎"],["hmBattle",14,25.5,"⚔ 對戰"],["hmLearn",86,26.5,"📚 學習"],["hmRec",12,44,"📜 今日推薦"],["hmQuick",52,47.5,"♟ 下一盤"]];
 /* 07w 的座標表（腳底的位置）：起點在橋中央廣場（石桌左前方）；石桌四周繞著走，不穿過桌子；往後經廣場後緣走木棧道到星槎跳板；
@@ -13819,6 +13826,7 @@ const SHW_LOBBY={el:40,h:y=>.06+(Math.max(y,53)-80)*.0008,look0:[50,60],
 function lmCss(){if(document.getElementById("lmCss"))return;const s=document.createElement("style");s.id="lmCss";s.textContent=`
 .lobby-page{margin:0 0 6px}.lobby-page .shp-spot{max-width:46%;padding:4px 11px;z-index:3}.lobby-page .shp-spot b{white-space:nowrap;font-size:14px}.lobby-page .shp-spot.hot{padding:5px 13px}.lobby-page .shp-spot.hot b{font-size:15px}
 .lm-l{position:absolute;inset:0;pointer-events:none}
+.lobby-page.nt .lm-t>img,.lobby-page.nt .lm-fig{filter:brightness(.55) saturate(.7)}
 .lm-t{position:absolute;width:18%;transform:translate(-50%,-50%);padding:0;border:0;background:none;pointer-events:auto;cursor:pointer;z-index:1}
 .lm-t img{display:block;width:100%;height:auto;filter:drop-shadow(0 2px 2px rgba(40,30,20,.35))}
 .lm-t.mine img{filter:drop-shadow(0 0 4px #f2c94c) drop-shadow(0 0 2px #f2c94c)}.lm-t.empty{pointer-events:none}
@@ -13897,7 +13905,8 @@ function lmPaint(v,P){const lay=P.querySelector(".lm-l");if(!lay||!window.XQNet)
   const ai=P.querySelector("#lmAi");if(ai){const aw=!!(lb&&lb.querySelector("#aiw"));ai.querySelector("b").textContent="📺 AI 對戰";ai.style.display=aw?"":"none"}}
 function lobbyMap(v){const lb=v.querySelector("#lb");if(!lb||v.querySelector(".lobby-page"))return;lmCss();
   const d=document.createElement("div");
-  d.innerHTML=`<div class="shp-page cq lobby-page"><img src="${LM_IMG(typeof hbIsCl==="function"&&hbIsCl()?"lobby_classic":lmN("lobby",lmEra()))}" alt="千燈天井"><div class="lm-l"></div>${LM_INK_LAMP?LM_LAMP_SVG:""}${LM_SPOTS.map(([id,x,y,t])=>`<button class="shp-spot" id="${id}" style="left:${x}%;top:${y}%"><b>${esc(t)}</b></button>`).join("")}</div>`;
+  const lmNt=typeof sw7NightNow==="function"&&sw7NightNow();   /* 11/10 日落後換夜景圖 lobby_<朝>_night；棋桌、茶客小圖跟著調暗（.nt），燈照樣亮 */
+  d.innerHTML=`<div class="shp-page cq lobby-page${lmNt?" nt":""}"><img src="${LM_IMG((typeof hbIsCl==="function"&&hbIsCl()?"lobby_classic":lmN("lobby",lmEra()))+(lmNt?"_night":""))}" alt="千燈天井" onerror="this.onerror=null;this.src=this.src.replace('_night.','.');this.parentNode.classList.remove('nt')"><div class="lm-l"></div>${LM_INK_LAMP?LM_LAMP_SVG:""}${LM_SPOTS.map(([id,x,y,t])=>`<button class="shp-spot" id="${id}" style="left:${x}%;top:${y}%"><b>${esc(t)}</b></button>`).join("")}</div>`;
   const P=d.firstElementChild;v.insertBefore(P,lb);
   /* 名冊抽屜：原本的清單整個搬進來（還在 v 裡面，paint() 照樣找得到 #lb） */
   const dw=document.createElement("div");dw.className="lm-dw";dw.innerHTML='<div class="lm-dw-h">📜 名冊<button type="button" aria-label="關上名冊">✕</button></div><div class="lm-dw-b"></div>';
@@ -17606,6 +17615,12 @@ function sw7Css(){if(document.getElementById("sw7Css"))return;const s=document.c
 .sw7-fg>b,.sw7-fg>canvas{position:absolute;left:0;top:0;width:100%;height:100%;display:block;background:0 0/100% 100% no-repeat}
 .sw7-tint{position:absolute;inset:0;mix-blend-mode:multiply;transition:opacity 2s}
 .sw7-night{position:absolute;inset:0;transition:opacity 2s;background:linear-gradient(180deg,rgba(12,18,52,.62) 0%,rgba(16,24,58,.52) 45%,rgba(10,14,40,.6) 100%)}   /* 11/9 iPhone 上 multiply 混色沒作用，不透明的藍整片蓋住圖；改成半透明深藍、不靠混色 */
+.sw7-cl{position:absolute;left:0;width:200%;background-image:var(--sw7cl);background-repeat:repeat-x;background-size:50% 100%;will-change:transform;animation:sw7cl 110s linear infinite}
+.sw7-cl.a{top:60%;height:44%;opacity:.5}.sw7-cl.b{top:74%;height:30%;opacity:.38;animation-duration:70s}.sw7-cl.c{top:-6%;height:24%;opacity:.28;animation-duration:150s}
+.sw7-cl.nt{filter:brightness(.5) saturate(.7)}
+.sw7-cl.c.k-learn{top:8%;height:20%;opacity:.62}   /* hspx 11/10：藏譜石窟的山頭畫到一半就淡進天空，用一條雲帶包住山頂 */
+@keyframes sw7cl{from{transform:translateX(0)}to{transform:translateX(-50%)}}
+@media (prefers-reduced-motion:reduce){.sw7-cl{animation:none}}
 .sw7-moon{position:absolute;inset:0;transition:opacity 2s;background:radial-gradient(30% 16% at 80% 9%,rgba(200,210,240,.28),rgba(200,210,240,0) 70%)}
 .sw7-tint.dawn{background:linear-gradient(180deg,rgba(112,166,196,.24),rgba(140,186,198,.14) 55%,rgba(160,196,204,.1))}
 .sw7-tint.dusk{background:linear-gradient(200deg,rgba(255,150,72,.26),rgba(255,176,104,.15) 55%,rgba(226,146,108,.1))}
@@ -17656,7 +17671,7 @@ const SW7_PAGES=[
   {k:"todayN",re:/data\/todaymap\//,m:"out",rg:"s"},
   {k:"learn",re:/data\/hubmap\/learn/,m:"semi",rg:"s",sky:[[[0,0],[768,0],[768,300],[560,300],[480,331],[300,320],[180,331],[0,291]],[[131,720],[627,720],[660,800],[651,1000],[560,963],[380,949],[213,965],[140,1000],[115,800]]]},
   {k:"battle",re:/data\/hubmap\/battle/,m:"semi",rg:"s",sky:[[[0,0],[768,0],[768,253],[693,253],[587,200],[507,160],[400,160],[400,200],[0,240]],[[213,633],[547,633],[560,667],[747,667],[747,760],[440,853],[440,920],[320,933],[267,800],[200,693]],[[533,1133],[693,1107],[768,1147],[768,1376],[560,1376]]],fg:[[[440,816],[627,787],[696,803],[700,867],[627,927],[507,933],[447,880]]]},
-  {k:"lobby",re:/data\/lobbymap\/lobby(_[a-z]+)?\.webp/,m:"semi",rg:"s",sky:[[[47,51],[720,51],[627,167],[627,640],[707,747],[753,1040],[753,1227],[13,1227],[53,747],[147,627],[147,167]]],fg:[[[0,0],[768,0],[768,53],[0,53]],[[0,1220],[768,1220],[768,1280],[0,1280]],[[200,1187],[273,1187],[273,1376],[200,1376]],[[493,1187],[573,1187],[573,1376],[493,1376]]]},
+  {k:"lobby",re:/data\/lobbymap\/lobby(_[a-z]+)*\.webp/,m:"semi",rg:"s",sky:[[[47,51],[720,51],[627,167],[627,640],[707,747],[753,1040],[753,1227],[13,1227],[53,747],[147,627],[147,167]]],fg:[[[0,0],[768,0],[768,53],[0,53]],[[0,1220],[768,1220],[768,1280],[0,1280]],[[200,1187],[273,1187],[273,1376],[200,1376]],[[493,1187],[573,1187],[573,1376],[493,1376]]]},
   {k:"canju",re:/data\/canjumap\//,m:"semi",rg:"s",sky:[[[0,0],[187,0],[187,247],[0,260]],[[267,0],[768,0],[768,313],[267,240]]],fg:[[[187,0],[267,0],[267,400],[187,400]]]},
   {k:"terms",re:/data\/termsmap\//,m:"semi",rg:"s",sky:[[[0,0],[768,0],[768,1376],[0,1376]]]},
   {k:"redo",re:/data\/redomap\/redo_/,m:"semi",rg:"s",sky:[[[77,53],[731,144],[731,920],[80,813]]],fg:[[[60,633],[731,853],[731,891],[60,667]],[[80,713],[731,920],[731,945],[80,740]],[[60,640],[95,640],[95,811],[60,811]],[[296,700],[320,700],[320,793],[296,793]],[[516,760],[540,760],[540,860],[516,860]],[[0,53],[731,127],[731,153],[0,80]]],tr:[[[80,140],[149,100],[260,105],[360,100],[409,160],[400,300],[300,300],[149,305],[80,289]],[[425,140],[529,140],[529,189],[425,189]]]},
@@ -17761,10 +17776,12 @@ const SW7_TODW={spring:[5.25,7.25,17.25,19],summer:[4.75,6.75,18,19.75],autumn:[
 /* 11/9 開發者「已經亥時但還是很亮」：首頁沒有夜景圖，日落後（夕陽時段結束）到日出前，整頁蓋一層月夜的深藍；剛入夜、天快亮時淡一點 */
 /* 11/9 開發者「對戰和學習還是亮著」：學習、對戰、線上大廳（露天庭院）也套同一層月夜；棋譜庫在室內不套 */
 function sw7HomeNightA(d,sea){d=d||new Date();const h=d.getHours()+d.getMinutes()/60,w=SW7_TODW[sea]||SW7_TODW.autumn;if(h>=w[3])return Math.min(1,.7+(h-w[3])*.6);if(h<w[0])return w[0]-h<.5?.7+(w[0]-h)*.6:1;return 0}
+/* 11/10 開發者「其他朝代的夜景也用 Gemini 重畫，後置的夜晚效果不好」：首頁、學習、對戰、天井日落後換畫好的夜景圖（<名>_night），不再整頁蓋月夜深藍；沒換到夜景圖（載不到、雨雪圖、設定關掉）才照舊蓋 */
+function sw7NightNow(){try{return sw7HomeNightA(null,sw7SeaNow())>0}catch(e){return false}}
 function sw7HomeTod(d,sea){d=d||new Date();const h=d.getHours()+d.getMinutes()/60,w=SW7_TODW[sea]||SW7_TODW.autumn;return h>=w[0]&&h<w[1]?"dawn":h>=w[2]&&h<w[3]?"dusk":""}
 function sw7HomeWx(){if(!sw7On())return"";try{const o=SW7_PAGES.find(x=>x.k==="home"),t=sw7TermFor(null,o),p=sw7Precip(t,sw7Rg(o)),sea=SW7_HSEA[t]||"";
-  const era=sw7HomeEra(),s2=sea||"spring",td=sw7HomeTod(null,s2);if(typeof hbIsCl==="function"&&hbIsCl())return"classic_"+s2;   /* 11/10 經典世界首頁：只換千秋樹的季節色，晨昏用程式調色、不另外換雨雪圖 */
-  if(era){const k=era+"_"+s2;return SW7_HTOD.has(k)&&td?k+"_"+td:k}
+  const era=sw7HomeEra(),s2=sea||"spring",td=sw7HomeTod(null,s2),nt=sw7NightNow()?"_night":"";if(typeof hbIsCl==="function"&&hbIsCl())return"classic_"+s2+nt;   /* 11/10 經典世界首頁：只換千秋樹的季節色，晨昏用程式調色、不另外換雨雪圖 */
+  if(era){const k=era+"_"+s2;return nt?k+nt:SW7_HTOD.has(k)&&td?k+"_"+td:k}if(nt)return s2+nt;
   if(p&&p.t==="snow"&&SW7_SNOWY.has(t))return"snow";   /* 11/10 原本「大雪」節氣整段都換積雪圖，跟別頁那天沒下雪對不上；改成真的在下雪才換 */if(p&&p.t==="rain"&&(!sea||sea==="spring"||sea==="summer"))return"rain";return sea&&td&&SW7_HTOD.has(sea)?sea+"_"+td:sea}catch(e){}return""}
 const sw7PolyCss=(q,IW,IH)=>`polygon(${q.map(([x,y])=>(x/IW*100).toFixed(2)+"% "+(y/IH*100).toFixed(2)+"%").join(",")})`;
 
@@ -17795,8 +17812,37 @@ function sw7FlyMk(p,W,H){p.x=Math.random()*W;p.y=H*(.4+Math.random()*.55);p.vx=(
 function sw7FlyDraw(c,R,dt,t){for(const p of R.A){p.vx=Math.max(-12,Math.min(12,p.vx+(Math.random()-.5)*24*dt));p.vy=Math.max(-8,Math.min(8,p.vy+(Math.random()-.5)*16*dt));p.x+=p.vx*dt;p.y+=p.vy*dt;
     if(p.x<0||p.x>R.W)p.vx*=-1;if(p.y<R.H*.35||p.y>R.H)p.vy*=-1;const a=Math.sin(t*1.3+p.ph);if(a<.06)continue;
     const g=c.createRadialGradient(p.x,p.y,0,p.x,p.y,6);g.addColorStop(0,`rgba(232,255,150,${(.85*a).toFixed(2)})`);g.addColorStop(1,"rgba(200,255,120,0)");c.fillStyle=g;c.fillRect(p.x-6,p.y-6,12,12)}}
+/* 11/10 Gemini 71 作法 2（開發者選）：經典世界（千秋時光之苑，紙墨世界）的雨雪換樣子——雨是淡墨滴、落地暈開一圈；雪是飄落的碎宣紙片，夾著幾點淡金星光。
+   哪一天、哪個時段下雨下雪照全 App 共用的天氣（sw7Precip），只換畫法 */
+/* 經典世界的頁才換（各朝的港口、驛站圖照舊下真的雨雪） */
+function sw7ClWx(o){try{return typeof hbIsCl==="function"&&hbIsCl()&&!(o&&/^(port_|yz_)/.test(o.k))}catch(e){return false}}
+/* hspx 11/10「讓經典世界的雲有流動的視覺效果」：經典世界的首頁、觀星閣、藏譜石窟、天井（雲海在畫面下半、天上有淡雲），
+   疊三條程式畫的淡雲帶（下方兩條快慢不同、上方一條很淡），慢慢往左飄；雲的紋理是一張左右接得起來的軟雲圖，只畫一次 */
+function sw7ClCloud(o,src){if(!o||!/^(home|homeAlt|learn|battle|lobby)$/.test(o.k)||!/classic/.test(src)||!sw7ClWx(o))return false;
+  if(!SW7.clT){try{const W=1024,H=256,c=document.createElement("canvas");c.width=W;c.height=H;const g=c.getContext("2d");
+    for(let i=0;i<70;i++){const x=Math.random()*W,y=H*(.25+Math.random()*.6),rx=40+Math.random()*120,ry=rx*(.28+Math.random()*.2),a=.18+Math.random()*.32;
+      for(const dx of[-W,0,W]){const gr=g.createRadialGradient(x+dx,y,0,x+dx,y,rx);gr.addColorStop(0,`rgba(255,255,255,${a})`);gr.addColorStop(.6,`rgba(250,250,248,${a*.45})`);gr.addColorStop(1,"rgba(255,255,255,0)");
+        g.save();g.translate(x+dx,y);g.scale(1,ry/rx);g.translate(-(x+dx),-y);g.fillStyle=gr;g.beginPath();g.arc(x+dx,y,rx,0,6.283);g.fill();g.restore()}}
+    SW7.clT=1;document.documentElement.style.setProperty("--sw7cl",`url(${c.toDataURL("image/png")})`)}catch(e){return false}}
+  return true}
+function sw7InkMk(p,W,H){const r=Math.random;p.v=240+r()*150;p.l=5+r()*5;p.gy=H*(.45+r()*.55);p.sp=0}
+function sw7InkDraw(c,R,dt){const z=R.z||1,k=dt/z,ink=R.night?"236,230,214":"34,36,44";
+  c.fillStyle=`rgba(${ink},${R.night?.5:.5})`;c.beginPath();
+  for(const p of R.A){if(p.sp){p.sp+=dt;if(p.sp>.7)sw7Re(R,p);continue}p.y+=p.v*k;if(p.y>=p.gy){p.sp=1e-4;continue}
+    c.moveTo(p.x,p.y);c.ellipse(p.x,p.y,1.4/z,p.l*.5/z,0,0,6.283)}
+  c.fill();
+  for(const p of R.A){if(!p.sp)continue;const u=p.sp/.7,rr=(2+u*15)/z,a=(1-u);
+    c.fillStyle=`rgba(${ink},${(.12*a).toFixed(3)})`;c.beginPath();c.ellipse(p.x,p.y,rr*.8,rr*.3,0,0,6.283);c.fill();
+    c.lineWidth=1/z;c.strokeStyle=`rgba(${ink},${(.45*a).toFixed(3)})`;c.beginPath();c.ellipse(p.x,p.y,rr,rr*.36,0,0,6.283);c.stroke()}}
+function sw7PaperMk(p){const r=Math.random;p.w=3.6+r()*3.4;p.h=p.w*(.55+r()*.5);p.v=16+r()*24;p.d=(r()-.5)*12;p.rot=r()*6.283;p.vr=(r()-.5)*2.4;p.g=r()<.22}
+function sw7PaperDraw(c,R,dt,t){const z=R.z||1,k=dt/z;
+  for(const p of R.A){p.y+=p.v*k;p.x+=(p.d+Math.sin(t*.9+p.ph)*9)*k;p.rot+=p.vr*dt;if(p.y>R.H+10||p.x<-10||p.x>R.W+10){sw7Re(R,p);continue}
+    if(p.g){const a=.55+.35*Math.sin(t*2+p.ph),rr=5/z,g=c.createRadialGradient(p.x,p.y,0,p.x,p.y,rr);g.addColorStop(0,`rgba(255,236,170,${a.toFixed(2)})`);g.addColorStop(1,"rgba(240,205,120,0)");c.fillStyle=g;c.fillRect(p.x-rr,p.y-rr,rr*2,rr*2);continue}
+    c.save();c.translate(p.x,p.y);c.rotate(p.rot);c.scale(1/z,(.35+.65*Math.abs(Math.cos(t*1.4+p.ph)))/z);
+    c.fillStyle=R.night?"rgba(238,230,206,.78)":"rgba(246,232,190,.97)";c.fillRect(-p.w/2,-p.h/2,p.w,p.h);
+    if(!R.night){c.lineWidth=.8;c.strokeStyle="rgba(110,88,56,.5)";c.strokeRect(-p.w/2,-p.h/2,p.w,p.h)}c.restore()}}
 /* n＝基準粒子數；still＝prefers-reduced-motion 時能不能畫成一張靜止的（螢火不行，就不顯示） */
-const SW7_KIND={rain:{mk:sw7RainMk,draw:sw7RainDraw,n:120,still:true},snow:{mk:sw7SnowMk,draw:sw7SnowDraw,n:100,still:true},fluff:{mk:sw7FluffMk,draw:sw7FluffDraw,still:true},
+const SW7_KIND={rain:{mk:sw7RainMk,draw:sw7RainDraw,n:120,still:true},snow:{mk:sw7SnowMk,draw:sw7SnowDraw,n:100,still:true},inkr:{mk:sw7InkMk,draw:sw7InkDraw,n:70,still:true},paper:{mk:sw7PaperMk,draw:sw7PaperDraw,n:80,still:true},fluff:{mk:sw7FluffMk,draw:sw7FluffDraw,still:true},
   petal:{mk:sw7FallMk,draw:sw7FallDraw,still:true},leaf:{mk:sw7FallMk,draw:sw7FallDraw,still:true},fly:{mk:sw7FlyMk,draw:sw7FlyDraw,still:false}};
 function sw7P(k,W,H,init){const r=Math.random,p={k,x:r()*W*(k==="fluff"?1:1.25),y:init?r()*H:-8-r()*60,ph:r()*6.283},K=SW7_KIND[k];if(K)K.mk(p,W,H,H/700,init);return p}
 function sw7Re(R,p){Object.assign(p,sw7P(R.k,R.W,R.H,false))}
@@ -17848,17 +17894,18 @@ function sw7Leaf(R,o,src){const t=sw7TermFor(R.P,o),par=o&&o.tr&&o.tr.length&&(s
 /* 照現在的設定、節氣、天氣、時辰把這一頁的疊層排好；沒變就只更新晨昏色的濃淡 */
 /* 11/9 開發者截圖：圖還沒下載完（剛換版要重抓）時，月夜層會把空白頁塗成一片藍；圖載好才蓋，載好再補畫一次 */
 function sw7ImgOk(R){const im=R.img;if(im.complete&&im.naturalWidth>0)return true;if(!R.wl){R.wl=1;im.addEventListener("load",()=>{R.wl=0;R.sig="";try{sw7Fill(R)}catch(e){}},{once:true})}return false}
-function sw7Fill(R){const P=R.P,box=R.box,on=sw7On(),img=R.img,src=img.getAttribute("src")||"",o=sw7Page(src),hn=o&&/^(home|homeAlt|learn|battle|lobby)$/.test(o.k)&&!/_(dawn|dusk)./.test(src)&&sw7ImgOk(R)?sw7HomeNightA(null,SW7_HSEA[sw7TermFor(P,o)]||""):0,night=/night/i.test(src)||P.classList.contains("td-night")||hn>0,
+function sw7Fill(R){const P=R.P,box=R.box,on=sw7On(),img=R.img,src=img.getAttribute("src")||"",o=sw7Page(src),hn=o&&/^(home|homeAlt|learn|battle|lobby)$/.test(o.k)&&!/_(dawn|dusk|night)\./.test(src)&&sw7ImgOk(R)?sw7HomeNightA(null,SW7_HSEA[sw7TermFor(P,o)]||""):0,night=/night/i.test(src)||P.classList.contains("td-night")||hn>0,
     td=P.classList.contains("td-page"),ov=P.dataset.sw7Term||"",out=on&&o&&o.m!=="in",term=sw7TermFor(P,o),rm=sw7RM(),
     pw=out?(ov?(term==="冬至"?{t:"snow",a:.8}:null):sw7WxFor(P,o)):null,A0=out&&!pw?SW7_AMB[term]||null:null,tone=ov?sw7SeaOf(term):"";
   let k=pw?pw.t:A0?A0[0]:"";if(td&&!pw&&sw7TdHas(term))k="";
+  if((k==="rain"||k==="snow")&&sw7ClWx(o))k=k==="rain"?"inkr":"paper";   /* 經典世界：墨滴雨、碎紙雪 */
   if(k==="fly"&&!night)k="";if(rm&&k&&k!=="fog"&&!(SW7_KIND[k]&&SW7_KIND[k].still))k="";
   const tn=on&&!night&&!td&&!/_(dawn|dusk)\./.test(src)?sw7Tint():null,sky=o&&o.m==="semi"?o.sky||null:null,IW=o&&o.W||768,IH=o&&o.H||1376,
-    sig=[k,night,rm,tn?tn.c:"",term,src,pw?pw.a.toFixed(2):"",on,ov,hn.toFixed(1)].join("|");
+    cl=sw7ClCloud(o,src),sig=[k,night,rm,tn?tn.c:"",term,src,pw?pw.a.toFixed(2):"",on,ov,hn.toFixed(1),cl].join("|");
   if(sig!==R.sig){R.sig=sig;if(R.cv&&SW7.io)SW7.io.unobserve(R.cv);R.cv=R.cx=null;R.A=[];R.W=R.H=0;R.k=k;R.night=night;R.run=false;R.amt=pw?pw.a:1;
     R.col=A0&&A0[2]||"";R.n=A0&&A0[1]||0;R.sky=sky;R.IW=IW;R.IH=IH;R.lk="";
     const fog=`<i class="sw7-fog${k==="fog"&&A0&&A0[1]?" frost":""}${night?" nt":""}${rm?" still":""}"></i>`,cp=q=>`clip-path:${sw7PolyCss(q,IW,IH)};-webkit-clip-path:${sw7PolyCss(q,IW,IH)}`;
-    box.innerHTML=(hn?`<i class="sw7-night" style="opacity:${hn.toFixed(2)}"></i><i class="sw7-moon" style="opacity:${hn.toFixed(2)}"></i>`:"")+(tone?`<i class="sw7-tone ${tone}"></i>`:"")+(tn?`<i class="sw7-tint ${tn.c}"></i>`:"")+(pw?`<i class="sw7-mist ${pw.t}${night?" nt":""}" style="opacity:${(.5+.5*pw.a).toFixed(2)}"></i>`:"")
+    box.innerHTML=(cl?["a","b","c"].map(c=>`<i class="sw7-cl ${c} k-${o.k}${night?" nt":""}"></i>`).join(""):"")+(hn?`<i class="sw7-night" style="opacity:${hn.toFixed(2)}"></i><i class="sw7-moon" style="opacity:${hn.toFixed(2)}"></i>`:"")+(tone?`<i class="sw7-tone ${tone}"></i>`:"")+(tn?`<i class="sw7-tint ${tn.c}"></i>`:"")+(pw?`<i class="sw7-mist ${pw.t}${night?" nt":""}" style="opacity:${(.5+.5*pw.a).toFixed(2)}"></i>`:"")
       +(k==="fog"?(sky?sky.map(q=>`<i class="sw7-fogw" style="${cp(q)}">${fog}</i>`).join(""):fog):"")+(k&&k!=="fog"?'<canvas class="sw7-cv"></canvas>':"")
       +(k&&k!=="fog"&&o&&o.fg?o.fg.map(q=>`<i class="sw7-fg" style="${cp(q)}"><b style="background-image:url(&quot;${esc(src)}&quot;)"></b></i>`).join(""):"");
     const cv=box.querySelector("canvas");if(cv){R.cv=cv;R.cx=cv.getContext("2d");cv._sw7=R;R.run=!rm;R.vis=true;R.z=1;if(SW7.io)SW7.io.observe(cv)}
@@ -19684,7 +19731,7 @@ function Viewer(v,c,id){
     const rep=gameReport(it.board,moves),names={r:it.red||"紅方",b:it.black||"黑方"},ms=mySide(),side=ms||"r";
     if((c==="play"||c==="pvp")&&ms&&rep.sides[ms]&&rep.sides[ms].score!=null){const all=store.get("reports",{}),R=rep.sides[ms];
       all[id]={score:R.score,grade:R.grade[0],side:ms,ph:{open:R.phases.open&&R.phases.open.score,mid:R.phases.mid&&R.phases.mid.score,end:R.phases.end&&R.phases.end.score},at:Date.now()};store.set("reports",all)}
-    reportSheet(rep,{title:"賽後報告・"+title(),side,names,goto:p=>go(p)})}
+    reportSheet(rep,{title:"賽後報告",side,names,goto:p=>go(p)})}   /* hspx 11/10「不要換行」：標題只寫賽後報告，雙方名字本來就在下面的名牌上 */
   function info(){if(!it)return;sheet(title(),b=>{
     b.innerHTML=[it.red||it.black?`<p><span style="color:var(--red);font-weight:700">紅方 ${esc(it.red||"？")}</span>　對　<b>黑方 ${esc(it.black||"？")}</b></p>`:"",
       it.event?`<p class="muted">${esc(it.event)}${it.date?"　"+esc(it.date):""}</p>`:"",it.result?`<p>結果：${esc(it.result)}</p>`:"",it.open?`<p>開局：${esc(it.open.replace(/^[A-E]\d\d\s*/,""))}</p>`:"",
@@ -19700,6 +19747,7 @@ function Viewer(v,c,id){
     show();remember();if(typeof rdOpen==="function")rdOpen(c,id);   /* 意見回饋 737 第二期：記下打開讀過這盤（只存 id） */
     loadGrades().then(()=>{if(store.get("openReport")===c+"/"+id){store.set("openReport",null);report(true)}})}).catch(e=>{v.querySelector("#note").textContent="⚠ "+e.message});
   return self}
+
 
 /* ================= 📜 棋譜庫滿版水墨圖「崇文書閣」（開發者 11/8 定案：Gemini 方案 1＋8＋考究修正；史學顧問核圖中）=================
    規劃：story/gemini_app/38 號 md；圖：park/libmap/lib_v4.png（史學顧問 11/8：照宋式鉤闌、直櫺窗、灰藍方磚整張重出 lib_v3，再局部修：書冊平放、卷軸包書帙掛牙籤、畫軸無題款加驚燕、燈檠蓮瓣油盞（白天不點）、攤平的蝴蝶裝；宣紙後製）→ art/libmap/lib.webp。
