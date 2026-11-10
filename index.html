@@ -1379,7 +1379,7 @@ html[data-hicon] .tabbar button.on{box-shadow:inset 0 -3px 0 currentColor}
       if(!window.caches)return go();caches.keys().then(function(ks){return Promise.all(ks.filter(function(k){return k.indexOf("xqlab-app-")===0}).map(function(k){return caches.delete(k)}))})
         .then(function(){return navigator.serviceWorker&&navigator.serviceWorker.getRegistration()}).then(function(r){return r&&r.update()}).catch(function(){}).then(go)}};setTimeout(chk,4000)})();
 </script>
-<script>window.XQ_OFFLINE=true;window.XQ_BUILD="20261110-2115";</script>
+<script>window.XQ_OFFLINE=true;window.XQ_BUILD="20261110-2130";</script>
 <script src="core.js"></script>
 <script src="engine.js"></script>
 <script src="local.js"></script>
@@ -13669,6 +13669,32 @@ function hubMap(v,hub){const D=HUB_DEF[hub],home=v.querySelector(".home");if(!D|
   try{const SW=hbIsCl()&&SHW_HUB_CL[hub]||SHW_HUB[hub];if(typeof shwPage==="function"&&SHIP_WALK_ON&&SW){shwPage(v,Object.assign({},SHW_PG0,SW),"hub:"+hub+(SW===SHW_HUB[hub]?"":":cl"));hbHide(P,SW.hide)}}catch(e){}
   try{if(typeof zmPage==="function")zmPage(v)}catch(e){}}
 if(typeof Home==="function"){const f0=Home;Home=function(v,hub){const r=f0.apply(this,arguments);try{if(HUB_MAP_ON&&(hub==="learn"||hub==="battle"))hubMap(v,hub)}catch(e){}return r}}
+
+/* ================= 🏯 十三朝殘影（Gemini 71 比例 C「殘影為星」，開發者 11/10 選分散四頁、學會變清楚＋淡金光）=================
+   經典世界的首頁、觀星閣、藏譜石窟、棋譜庫，天上（棋譜庫是洞口和岩壁）淡淡浮著那一朝的地標剪影（data/canying/<朝代>.webp，白底水墨轉成透明）：
+   還沒學會那一站＝很淡（15%）；學會了＝清楚（70%）＋淡金光。點一下說是哪一朝的什麼。夜景圖時改淡白色。
+   四頁照朝代順序分：首頁（經典、秦、漢、三國）、觀星閣窗外（魏晉、南北朝、隋）、藏譜石窟（唐、五代、宋）、棋譜庫（元、明、清）。
+   位置＝[朝代, 左%, 上%, 寬%]（量 768×1376 的定稿圖，只放在天空、洞口、岩壁，不壓入口標籤）。用 MutationObserver 找頁面，不用改各頁的程式 */
+const CY_ON=true,CY_V="1120";
+const CY_SPOT={home:[["classic",8,6,12],["qin",21,3,11],["han",34,6.5,11],["sanguo",47,3,10]],battle:[["weijin",11,5,13],["nanbei",81,5,13],["sui",93,16,10]],
+  learn:[["tang",10,6,13],["wudai",50,3.5,9],["song",89,6,13]],lib:[["yuan",71,12,11],["ming",14,34,13],["qing",89,47,11]]};
+const CY_NM={classic:"千秋石桌與古松",qin:"秦長城與烽火台",han:"漢闕",sanguo:"赤壁樓船",weijin:"竹林茅亭",nanbei:"雲岡石窟",sui:"趙州橋",tang:"大雁塔",wudai:"山水座屏",song:"水轉筒車",yuan:"草原大帳",ming:"紫禁城角樓",qing:"古戲台"};
+function cyCss(){if(document.getElementById("cyCss"))return;const s=document.createElement("style");s.id="cyCss";s.textContent=`.cy-l{position:absolute;inset:0;pointer-events:none;z-index:1}
+.cy{position:absolute;transform:translate(-50%,-50%);pointer-events:auto;background:none;border:0;padding:0;margin:0;opacity:.15;transition:opacity 1.2s;animation:cyF 7s ease-in-out infinite}
+.cy img{width:100%;display:block}.cy.ln{opacity:.7}.cy.ln img{filter:drop-shadow(0 0 3px rgba(240,200,110,.95)) drop-shadow(0 0 9px rgba(240,200,110,.55))}
+.cy-l.nt .cy img{filter:invert(1) brightness(.9)}.cy-l.nt .cy.ln img{filter:invert(1) brightness(.95) drop-shadow(0 0 4px rgba(240,200,110,.9))}
+@keyframes cyF{0%,100%{margin-top:0}50%{margin-top:-.6%}}@media (prefers-reduced-motion:reduce){.cy{animation:none}}`;document.head.append(s)}
+function cyPage(src){return/homemap\/home_classic/.test(src)?"home":/hubmap\/battle_classic/.test(src)?"battle":/hubmap\/learn_classic/.test(src)?"learn":/libmap\/lib_classic/.test(src)?"lib":""}
+function cyMount(P,img){const src=img.getAttribute("src")||"",pg=cyPage(src),nt=/_night/.test(src);let L=P.querySelector(":scope>.cy-l");
+  if(!pg||!(typeof hbIsCl==="function"&&hbIsCl())){if(L)L.remove();return}
+  const key=pg+"|"+nt;if(L&&L.dataset.k===key)return;cyCss();
+  if(!L){L=document.createElement("div");L.className="cy-l";img.after(L)}L.dataset.k=key;L.classList.toggle("nt",nt);
+  L.innerHTML=CY_SPOT[pg].map(([e,x,y,w],i)=>{let ln=false;try{ln=typeof shipLearned==="function"&&shipLearned(e)}catch(x){}
+    return`<button class="cy${ln?" ln":""}" data-cy="${e}" style="left:${x}%;top:${y}%;width:${w}%;animation-delay:${-i*1.7}s" aria-label="${esc(CY_NM[e])}"><img src="data/canying/${e}.webp?v=${CY_V}" alt=""></button>`}).join("");
+  L.querySelectorAll("[data-cy]").forEach(b=>b.onclick=ev=>{ev.stopPropagation();const e=b.dataset.cy,ln=b.classList.contains("ln");let nm=e;try{nm=eraLabel(e)}catch(x){}
+    toast(`🏯 ${nm}的殘影・${CY_NM[e]}：${ln?"這一站學會了，殘影清楚起來了":"在雲河裡學會這一站，殘影就會變清楚"}`)})}
+function cyScan(){if(!CY_ON)return;try{document.querySelectorAll(".shp-page.cq>img").forEach(img=>cyMount(img.parentElement,img))}catch(e){}}
+if(CY_ON&&typeof MutationObserver==="function"){let q=0;new MutationObserver(()=>{if(q)return;q=requestAnimationFrame(()=>{q=0;cyScan()})}).observe(document.documentElement,{childList:true,subtree:true,attributes:true,attributeFilter:["src"]})}
 /* ================= 🏞 首頁滿版水墨圖「楚河渡口棋鎮」（開發者 11/8 定案：Gemini 方案 1＋2 合體，史學顧問核過）=================
    規劃：story/gemini_app/36 號 md；圖：park/homemap/home_v5.png（Gemini 水墨重畫＋程式宣紙後製、石桌程式畫完整開局、左下西式小船抹掉）→ art/homemap/home.webp → data/homemap/。
    包一層 Home(v)（沒有 hub 的那一種）：原本的首頁照舊畫出來（今天的路、對戰卡的即時段位、新手卡…都照舊），只是藏起來；上面換成一張滿版圖：
