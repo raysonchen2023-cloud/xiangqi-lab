@@ -1379,7 +1379,7 @@ html[data-hicon] .tabbar button.on{box-shadow:inset 0 -3px 0 currentColor}
       if(!window.caches)return go();caches.keys().then(function(ks){return Promise.all(ks.filter(function(k){return k.indexOf("xqlab-app-")===0}).map(function(k){return caches.delete(k)}))})
         .then(function(){return navigator.serviceWorker&&navigator.serviceWorker.getRegistration()}).then(function(r){return r&&r.update()}).catch(function(){}).then(go)}};setTimeout(chk,4000)})();
 </script>
-<script>window.XQ_OFFLINE=true;window.XQ_BUILD="20261111-2015";</script>
+<script>window.XQ_OFFLINE=true;window.XQ_BUILD="20261111-2030";</script>
 <script src="core.js"></script>
 <script src="engine.js"></script>
 <script src="local.js"></script>
@@ -4503,15 +4503,23 @@ function wipeAsk(){
   if(window.XQNet&&XQNet.playing&&XQNet.playing())return modal(`<div class="em">⏳</div><h2>對局還在進行</h2><p>線上對局下完（或認輸）之後，才能刪除資料。</p>`,[["好",null]]);
   modal(`<div class="em">🗑</div><h2>刪除這支手機的全部資料？</h2><p>會刪掉：全部對局紀錄和棋譜、解題和故事進度、每一格存檔、角色與收藏、設定、暱稱和線上積分。</p><p class="muted" style="font-size:13px">只刪這支手機裡的。已經送出的意見回饋、檢舉和玩家登記，還有別人手機上留著的對局紀錄，這裡刪不到。下載過的棋譜庫和引擎會留著，不用重新下載。</p>`,[["下一步",()=>setTimeout(wipeAsk2,120)],["不要刪",null,true]])}
 function wipeAsk2(){modal(`<div class="em">⚠️</div><h2>真的要刪除嗎？</h2><p><b>刪掉就救不回來。</b></p><p class="muted" style="font-size:13px">想留著，先按「不要刪」，到設定用「📱 換手機」把存檔搬到別支手機。</p>`,[["🗑 全部刪除",wipeAllData],["不要刪",null,true]])}
-function wipeDb(n){return new Promise(res=>{let done=false;const fin=()=>{if(!done){done=true;res()}};setTimeout(fin,4000);
-  try{const q=indexedDB.open(n);q.onupgradeneeded=()=>{try{q.transaction.abort()}catch(e){}};q.onerror=q.onblocked=fin;   /* 本來就沒有這個資料庫：取消建立，不留空殼 */
-    q.onsuccess=()=>{const db=q.result;try{const names=[...db.objectStoreNames];if(!names.length){db.close();return fin()}
-      const tx=db.transaction(names,"readwrite");names.forEach(s=>tx.objectStore(s).clear());tx.oncomplete=tx.onerror=tx.onabort=()=>{try{db.close()}catch(e){}fin()}}catch(e){try{db.close()}catch(_){}fin()}}}catch(e){fin()}})}
+/* v5 改善單 R06：原本完成、出錯、被擋、逾時都走同一個結束，失敗了 App 照樣重開、看起來像刪好了。
+   改成回報每個資料庫的結果 st：done 清空了、empty 本來就沒有表、none 本來就沒有這個資料庫、error 清的時候出錯、blocked 被別的連線擋住、timeout 超過 ms 毫秒沒回應 */
+function wipeDb(n,ms){return new Promise(res=>{let done=false,fresh=false;const fin=(st,msg)=>{if(!done){done=true;res({n,st,msg:msg||""})}};setTimeout(()=>fin("timeout"),ms||4000);
+  try{const q=indexedDB.open(n);q.onupgradeneeded=()=>{fresh=true;try{q.transaction.abort()}catch(e){}};   /* 本來就沒有這個資料庫：取消建立，不留空殼 */
+    q.onerror=()=>fin(fresh?"none":"error",q.error&&q.error.name);q.onblocked=()=>fin("blocked");
+    q.onsuccess=()=>{const db=q.result;try{const names=[...db.objectStoreNames];if(!names.length){db.close();return fin("empty")}
+      const tx=db.transaction(names,"readwrite");names.forEach(s=>tx.objectStore(s).clear());
+      tx.oncomplete=()=>{try{db.close()}catch(e){}fin("done")};tx.onerror=tx.onabort=()=>{try{db.close()}catch(e){}fin("error",tx.error&&tx.error.name)}}catch(e){try{db.close()}catch(_){}fin("error",e.name)}}}catch(e){fin("error",e.name)}})}
+const WIPE_NAME={"xqlab":"對局紀錄和棋譜","xqlab-save":"目前的進度","xqlab-slots":"存檔格"},WIPE_WHY={error:"刪的時候出錯",blocked:"被另一個開著的 App 分頁擋住",timeout:"手機太久沒回應"};
 async function wipeAllData(){toast("正在刪除這支手機的資料…");
   try{window.XQNet&&XQNet.forget&&XQNet.forget()}catch(e){}await new Promise(r=>setTimeout(r,500));   /* 伺服器上保留的在線狀態、戰績摘要先清掉 */
   try{Storage.prototype.setItem=function(){}}catch(e){}
   for(const S of[localStorage,sessionStorage])try{Object.keys(S).filter(k=>/^(m_|xq|rsAsked|rsBoot|btAt|pq_)/.test(k)).forEach(k=>S.removeItem(k))}catch(e){}
-  for(const n of["xqlab","xqlab-save","xqlab-slots"])await wipeDb(n);
+  const R=[];for(const n of["xqlab","xqlab-save","xqlab-slots"])R.push(await wipeDb(n));
+  /* R06：有任何一個沒刪成，就不要重開假裝刪好了；講清楚哪一份、為什麼，可以再試一次（文字設定已經清掉，再試只會補刪資料庫） */
+  const bad=R.filter(r=>!/^(done|empty|none)$/.test(r.st));
+  if(bad.length)return modal(`<div class="em">⚠️</div><h2>有些資料還沒刪掉</h2><p>${bad.map(r=>`・${esc(WIPE_NAME[r.n]||r.n)}：${esc(WIPE_WHY[r.st]||r.st)}`).join("<br>")}</p><p class="muted" style="font-size:13px">先把其他開著這個 App 的分頁或視窗關掉，再按「再試一次」。</p>`,[["🗑 再試一次",wipeAllData],["先這樣",()=>{try{history.replaceState(null,"",location.pathname+"#/")}catch(e){}location.reload()},true]]);
   try{IDBObjectStore.prototype.put=IDBObjectStore.prototype.add=function(){throw new Error("資料刪除中")}}catch(e){}
   try{history.replaceState(null,"",location.pathname+"#/")}catch(e){}location.reload()}
 /* 意見回饋 531：檢查更新（設定 → 系統 → 關於） */
