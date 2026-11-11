@@ -455,6 +455,8 @@ var XQ=(function(){
     smBusy=true;const id=SM.id,n=t.moves.length,lv=LEVELS[t.level-1]||LEVELS[2];
     try{const r=await XQEngine.search({moves:t.moves.map(m=>iccs(m.f,m.t))},lv.movetime?{movetime:Math.min(lv.movetime,3000)}:{depth:lv.depth},lv.multipv||1);
       if(!SM||SM.id!==id||t.moves.length!==n||t.result)return;
+      /* 開發者 11/11「車輪戰對方要等我落子後緩衝時間後再下，不然像是在同步下」：玩家落子時記下 t.until（1.8～3.5 秒後），引擎照樣馬上開始想，但時間沒到不落子 */
+      {const w=(t.until||0)-Date.now();if(w>0){await new Promise(z=>setTimeout(z,w));if(!SM||SM.id!==id||t.moves.length!==n||t.result)return}}
       const mv=pickMove(r,lv),f=parseSq(mv.slice(0,2)),to=parseSq(mv.slice(2,4));if(!legal(t.board,t.turn).some(([a,b])=>a===f&&b===to))throw new Error("引擎給出不合法著法 "+mv);
       smApply(t,f,to);smFail=0}
     catch(e){smFail++}
@@ -467,7 +469,7 @@ var XQ=(function(){
       const n=[3,5,10].includes(+b.n)?+b.n:5,lx=Math.max(1,Math.min(18,Math.round(+b.lx||5)));
       SM={id:gameId(),n,lx,at:Date.now(),done:null,tb:smLv(n,lx).map((level,i)=>{const S={i,level,moves:[],result:null};stateRebuild(S);return S})};smSave()}
     else if(p==="/simul/move"){const t=T(b.i),f=+b.f,to=+b.t;if(t.result)throw new Error("這桌已經下完");if(t.turn!=="r")throw new Error("還沒輪到你");
-      if(!legal(t.board,"r").some(([x,y])=>x===f&&y===to))throw new Error("這步不合法");smApply(t,f,to)}
+      if(!legal(t.board,"r").some(([x,y])=>x===f&&y===to))throw new Error("這步不合法");t.until=Date.now()+1800+Math.random()*1700;smApply(t,f,to)}
     else if(p==="/simul/resign"){const t=T(b.i);if(!t.result){smEnd(t,"b","你認輸");smSave()}}
     else if(p==="/simul/resignall"){if(smLoad()){for(const t of SM.tb)if(!t.result)smEnd(t,"b","你認輸");smSave()}}
     else if(p==="/simul/clear"){if(smLoad()&&!SM.done)throw new Error("車輪戰還沒下完");SM=null;ls.set("simul",null)}
