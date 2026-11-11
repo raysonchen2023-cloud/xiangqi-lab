@@ -540,26 +540,56 @@
     const bounds=()=>({x0:0,x1:innerWidth-W,y0:20,y1:innerHeight-H});
     const sp=store.get("botPos",null);let parked=!!sp,x=sp?sp.x*innerWidth:Math.max(4,innerWidth-W-16),y=sp?sp.y*innerHeight:Math.max(70,innerHeight-H-90);
     let quietT=0,tx=x,ty=y,face=0,act=null,actT=0,next=1.5,bubT=0,stopped=false,last=performance.now(),acc=0,blinkT=2,talk=0,drag=null,taps=0,tapT=0,deck=[],boardMode=false,boardDrag=false,sheetMode=false;
+    /* 11/11 模擬玩家問題 2（AI 模擬玩家 5/5 都被小帥擋到）：小帥和泡泡不能蓋到可點的東西、棋盤、說明文字。
+       KO＝「禁區」清單（畫面座標的長方形，每 0.5 秒量一次，見 koScan）；小帥站的位置、泡泡放哪一邊都用它算重疊面積。
+       hid＝找不到空位、暫時藏起來（點擊穿過去）；dim＝玩家自己拖到這裡（這一頁照放）但蓋到東西＝變淡、點擊穿過去；szK＝空位不夠時縮小（0.6 倍）貼到角落；
+       dodge＝正在快步閃開（停放的小帥也會走）；userHold＝玩家在這一頁拖放過，換頁才再自動閃。quietTxt＝畫面上有說明文字或棋盤（冷知識、將軍等自動台詞不冒泡泡） */
+    let KO=[],quietTxt=false,hid=false,dim=false,szK=1,dodge=false,userHold=false;
+    const KO_C='button,a[href],input,select,textarea,label,summary,.chip,.btn,[role=button],[onclick],.shp-spot,.shp-hs,.po-sight,[data-hs],#sndPill,#topbar,#acts,#pTop,#pBot,h1,h2,h3',
+      KO_B='#bbox,.boardbox,svg[viewBox="0 0 560 620"]',KO_T='.note,.lsn-note,.card,.status,#stat,.evline,.modal .box,#sheet,.sheet,p,.muted,.cr-sec,[data-bot-avoid]';   /* KO_C 只當禁區；KO_B（棋盤）、KO_T（說明文字）也當禁區，而且畫面上有它們＝安靜（自動台詞不冒泡泡）。標題列的 h1 放 KO_C，不然每頁都算安靜 */
+    const koVis=e=>{try{if(e.checkVisibility)return e.checkVisibility({opacityProperty:true,visibilityProperty:true});const s=getComputedStyle(e);return s.visibility!=="hidden"&&s.opacity!=="0"}catch(_){return true}};   /* 舊版 Safari 沒有 checkVisibility：只看自己的 visibility／opacity */
+    const bVis=()=>{try{return box.checkVisibility?box.checkVisibility({visibilityProperty:true}):getComputedStyle(box).visibility!=="hidden"}catch(_){return true}};
+    const koScan=()=>{const vw=innerWidth,vh=innerHeight,A=vw*vh,o=[];let q=false;
+      const add=(sel,k)=>{let L;try{L=document.querySelectorAll(sel)}catch(_){return}for(const e of L){if(e.closest(".xqbot"))continue;const r=e.getBoundingClientRect();if(r.width<2||r.height<2||r.right<=0||r.bottom<=0||r.left>=vw||r.top>=vh)continue;
+        const l=Math.max(0,r.left),t=Math.max(0,r.top),R=Math.min(vw,r.right),B=Math.min(vh,r.bottom);if(k==="c"&&(R-l)*(B-t)>A*.6)continue;if(!koVis(e))continue;o.push([l-4,t-4,R+4,B+4]);if(k!=="c")q=true}};   /* 可點的東西超過畫面 6 成（整頁的點擊層）不算禁區，不然永遠沒地方站 */
+      add(KO_B,"b");add(KO_T,"t");add(KO_C,"c");KO=o;quietTxt=q};
+    const koCost=(l,t,r,b)=>{let c=0;for(const q of KO){const ix=Math.min(r,q[2])-Math.max(l,q[0]),iy=Math.min(b,q[3])-Math.max(t,q[1]);if(ix>0&&iy>0)c+=ix*iy}return c};
+    const bodyCost=(bx,by,w,h)=>koCost(bx+w*.19,by+h*.08,bx+w*.81,by+h*.98);   /* 小人身體大約佔框的中間 62%、上面留 8% */
     // 泡泡不超出畫面左右（小帥站在邊邊時往內移）；小帥會走動，所以泡泡顯示期間每幾格重新算
-    let bubDx=0,fitN=0;const fitBub=()=>{try{const r=bub.getBoundingClientRect(),W=window.innerWidth,cur=r.left-bubDx,w=r.width,dx=Math.min(0,W-6-(cur+w))+Math.max(0,6-cur);
-      if(Math.abs(dx-bubDx)>.5){bubDx=dx;bub.style.transform=`translate(calc(-50% + ${Math.round(dx)}px),-100%)`}}catch(e){}};
-    const say=(s,d,lbl)=>{s=String(s).replace(/小帥/g,BNAME()).replace("身體是一顆帥","身體是一顆"+BP());bub.textContent=s;bub.style.opacity=1;fitBub();bubT=d||2;talk=Math.min(1.2,.25+s.length*.08);if(!lbl)try{window.dispatchEvent(new CustomEvent("xq-bot-said",{detail:s}))}catch(e){}};   /* 回饋 804：動作本身的小標（♪ 舞名、嗨！之類）只在小帥自己的泡泡閃一下，不送出 xq-bot-said（走路角色的泡泡、問答記錄只收真正的話：提示、棋語、冷知識） */
-    const doAct=a=>{if(typeof a==="string")a=ACTS[a];if(!a)return;act=a;actT=0;tx=x;ty=y;const lbl=!(Object.getOwnPropertyDescriptor(a,"say")||{}).get,w=a.say;if(w)say(w,w.length>26?Math.min(10,w.length*.17+.8):Math.max(1.8,Math.min(6,w.length*.16+.6,a.d+3)),lbl)};
+    /* 11/11 問題 2：泡泡依序試 頭上、頭上偏左／偏右、身體左邊、右邊、腳下，挑第一個不蓋到禁區的；都蓋到就挑蓋得最少的（c＝重疊面積） */
+    let bubDx=0,bubDy=0,fitN=0;
+    const bubPlace=()=>{const bw=bub.offsetWidth,bh=bub.offsetHeight,vw=innerWidth,vh=innerHeight;if(!bw||!bh)return{dx:0,dy:0,c:0};let best=null;
+      for(const[d0,dy]of[[0,0],[-bw/3,0],[bw/3,0],[-(W*.32+bw/2),bh+H*.25],[W*.32+bw/2,bh+H*.25],[0,bh+H+8]]){const L=Math.max(6,Math.min(vw-6-bw,x+W/2+d0-bw/2)),T=y-4-bh+dy;if(T<4||T+bh>vh-4)continue;
+        const c=koCost(L,T,L+bw,T+bh),dx=L+bw/2-(x+W/2);if(!best||c<best.c)best={dx,dy,c};if(!c)break}
+      return best||{dx:0,dy:0,c:1e9}};
+    const fitBub=()=>{try{const p=bubPlace();if(Math.abs(p.dx-bubDx)>.5||Math.abs(p.dy-bubDy)>.5){bubDx=p.dx;bubDy=p.dy;bub.style.transform=`translate(calc(-50% + ${Math.round(p.dx)}px),calc(-100% + ${Math.round(p.dy)}px))`}return p}catch(e){return{c:0}}};
+    /* auto：1＝自己冒的話（閒聊、冷知識、將軍／吃子反應）——畫面上有說明文字、棋盤，或泡泡放哪都會蓋到東西，就不冒；2＝勝負、第一次打招呼——只看泡泡放不放得下。
+       ext＝別的模組叫 BOT.say（提示、問答、提醒）：一定要讓玩家看到；小帥正暫時藏起來時改用 toast。回傳有沒有真的說出來 */
+    const say=(s,d,lbl,auto,ext)=>{s=String(s).replace(/小帥/g,BNAME()).replace("身體是一顆帥","身體是一顆"+BP());const vis=bVis();
+      if(auto){if(!vis)koScan();if(auto===1&&(boardMode||quietTxt))return false;if(vis&&hid)return false}
+      if(vis&&hid&&ext){try{if(typeof toast==="function")toast(s)}catch(e){}if(!lbl)try{window.dispatchEvent(new CustomEvent("xq-bot-said",{detail:s}))}catch(e){}return true}
+      const old=bub.textContent;bub.textContent=s;const p=vis?fitBub():{c:0};if(auto&&p.c>0){bub.textContent=old;if(bubT>0)fitBub();return false}
+      bub.style.opacity=1;bubT=d||2;talk=Math.min(1.2,.25+s.length*.08);if(!lbl)try{window.dispatchEvent(new CustomEvent("xq-bot-said",{detail:s}))}catch(e){}return true};   /* 回饋 804：動作本身的小標（♪ 舞名、嗨！之類）只在小帥自己的泡泡閃一下，不送出 xq-bot-said（走路角色的泡泡、問答記錄只收真正的話：提示、棋語、冷知識） */
+    const doAct=(a,auto)=>{if(typeof a==="string")a=ACTS[a];if(!a)return;act=a;actT=0;tx=x;ty=y;dodge=false;const lbl=!(Object.getOwnPropertyDescriptor(a,"say")||{}).get,w=auto===1&&(boardMode||quietTxt||hid)?null:a.say;   /* 不會冒泡泡時先不抽台詞，冷知識不會白白用掉 */if(w)say(w,w.length>26?Math.min(10,w.length*.17+.8):Math.max(1.8,Math.min(6,w.length*.16+.6,a.d+3)),lbl,auto)};
     // 抽牌：300 種組合＋招牌動作洗牌後輪流出，不會一直重複
     const randAct=()=>{if(!deck.length){deck=[...COMBO.keys(),...SIGNATURE];for(let i=deck.length-1;i>0;i--){const j=Math.random()*(i+1)|0;[deck[i],deck[j]]=[deck[j],deck[i]]}}const k=deck.pop();return typeof k==="number"?comboAct(k):ACTS[k]};
-    const wander=()=>{if(parked||boardMode||sheetMode)return;const b=bounds();tx=b.x0+Math.random()*Math.max(0,b.x1-b.x0);ty=Math.max(70,b.y0)+Math.random()*Math.max(0,b.y1-Math.max(70,b.y0))};
+    const wander=()=>{if(parked||boardMode||sheetMode||hid)return;const L=spots(W,H);if(!L.length)return;const f=L[Math.random()*L.length|0];tx=f[0];ty=f[1]};   /* 11/11 問題 2：散步只挑不蓋到禁區的地方 */
+    /* 不蓋到禁區的站位（框左上角）：整個畫面每隔 1/3 個小人掃一遍 */
+    const spots=(w,h)=>{const vw=innerWidth,vh=innerHeight,x1=Math.max(0,vw-w),y0=20,y1=Math.max(y0,vh-h),sx=Math.max(12,w/3),sy=Math.max(12,h/3),P=[];
+      for(let yy=y1;yy>=y0;yy-=sy)for(let xx=x1;xx>=0;xx-=sx)if(!bodyCost(xx,yy,w,h))P.push([xx,yy]);for(const p of[[0,y1],[x1,y0],[0,y0]])if(!bodyCost(p[0],p[1],w,h))P.push(p);return P};
+    const nearest=(L,px,py)=>{let b=null,bd=1e18;for(const p of L){const d=(p[0]-px)*(p[0]-px)+(p[1]-py)*(p[1]-py);if(d<bd){bd=d;b=p}}return b};
     const reset=()=>{root.position.y=0;root.position.x=0;P.bot.rotation.set(0,0,0);P.hat.position.set(0,0,0);P.hat.rotation.set(0,0,0);P.torso.scale.y=1;root.rotation.set(0,face,0);P.torso.position.y=1.02;P.torso.rotation.set(0,0,0);P.head.rotation.set(0,0,0);B.closed=0;B.face="smile";
       R(B,0,0,0,-.3);R(B,1,0,0,.3);P.legs[0].rotation.set(0,0,0);P.legs[1].rotation.set(0,0,0)};
     function frame(now){if(stopped)return;requestAnimationFrame(frame);if(document.hidden){last=now;return}
       const dt=Math.min(.1,(now-last)/1000);last=now;acc+=dt;if(acc<1/30)return;const t=acc;acc=0;
-      reset();const dx=tx-x,dy=ty-y,dist=Math.hypot(dx,dy);let walking=false;
+      reset();const dx=tx-x,dy=ty-y,dist=Math.hypot(dx,dy);let walking=false;if(dist<=2)dodge=false;
       if(drag){ACTS.carry.f(0,B,now/1000)}
       else if(act){actT+=t;const p=Math.min(1,actT/act.d);act.f(p,B,now/1000);if(p>=1){act=null;next=2+Math.random()*4}}
-      else if(dist>2&&(!parked||boardMode||sheetMode||celeb)){walking=true;const s=(celeb?900:sheetMode?480:70)*t,k=Math.min(1,s/dist);x+=dx*k;y+=dy*k;
+      else if(dist>2&&(!parked||boardMode||sheetMode||celeb||dodge)){walking=true;const s=(celeb?900:sheetMode||dodge?480:70)*t,k=Math.min(1,s/dist);x+=dx*k;y+=dy*k;
         const want=Math.abs(dx)>4?(dx>0?.9:-.9):0;face+=(want-face)*Math.min(1,t*6);root.rotation.y=face;
         const w=Math.sin(now/110);P.legs[0].rotation.x=.6*w;P.legs[1].rotation.x=-.6*w;R(B,0,-.5*w);R(B,1,.5*w);root.position.y=Math.abs(Math.cos(now/110))*.08}
       else{face+=(0-face)*Math.min(1,t*4);root.rotation.y=face;P.torso.position.y=1.02+.015*Math.sin(now/500);
-        next-=t;if(next<=0){if(!parked&&Math.random()<.4){wander();next=1}else if(now<quietT)next=2;else doAct(randAct())}}
+        next-=t;if(next<=0){if(!parked&&Math.random()<.4){wander();next=1}else if(now<quietT)next=2;else doAct(randAct(),1)}}
       // 表情：眨眼、閉眼、眨單眼、講話時嘴巴開合
       blinkT-=t;const bl=blinkT<0;if(blinkT<-.12)blinkT=2+Math.random()*3;
       const F=B.face;P.eyes.forEach((e,i)=>{e.g.scale.y=B.closed||F==="happy"||(F==="wink"&&i===1)?.12:bl?.1:1;e.brow.position.y=.15+(F==="open"||F==="happy"?.03:0);
@@ -574,7 +604,7 @@
         if(B.animCur!==k&&B.clips[k]){const n=B.clips[k];n.reset().fadeIn(.25).play();const o0=B.clips[B.animCur];if(o0)o0.fadeOut(.25);B.animCur=k}B.mixer.update(t)}
       if(XS.on){const pose=drag?"xs_surprise":act?xsPose(act,now):walking?"walk_"+(1+Math.floor(now/120)%8):"xs_idle",bob=act?Math.abs(Math.sin(actT*7))*H*.03:walking?0:Math.sin(now/500)*H*.006;xsDraw(pose,bob,false)}else rd.render(sc,cam)}
     requestAnimationFrame(frame);
-    if(!store.get("botHint",false)){store.set("botHint",true);setTimeout(()=>{if(!stopped){doAct("wave");say(window.XQ_MELINE&&window.XQ_MELINE("me")?"嗨！我是"+window.XQ_MELINE("me")+"。長按我，可以問小帥任何象棋問題！":"嗨！我是小帥。長按我，可以問我任何象棋問題！",5)}},1800)}
+    if(!store.get("botHint",false)){setTimeout(()=>{if(!stopped){doAct("wave",2);if(say(window.XQ_MELINE&&window.XQ_MELINE("me")?"嗨！我是"+window.XQ_MELINE("me")+"。長按我，可以問小帥任何象棋問題！":"嗨！我是小帥。長按我，可以問我任何象棋問題！",5,0,2))store.set("botHint",true)}},1800)}   /* 11/11 問題 2：泡泡放不下（畫面滿是說明、按鈕）就先不打招呼，下次開 App 再說 */
     // 點／拖小人：事件只給小人，不會穿到後面的按鈕
     const stop=e=>{e.stopPropagation();if(e.cancelable)e.preventDefault()};
     hit.addEventListener("pointerdown",e=>{stop(e);try{hit.setPointerCapture(e.pointerId)}catch(_){}drag={sx:e.clientX,sy:e.clientY,ox:x,oy:y,moved:false,touch:e.pointerType==="touch"};act=null;
@@ -585,7 +615,7 @@
     // iPhone 長按時系統會先送 pointercancel（意見回饋 173）：還沒拖動就不當成放開，等手指真的離開（touchend）
     const up=e=>{if(!drag)return;if(e.type==="pointercancel"&&!drag.moved)return;stop(e);const d=drag;drag=null;hit.style.cursor="grab";clearTimeout(d.lp);if(d.long)return;
       if(d.moved&&boardMode){const b=bounds();x=Math.min(Math.max(x,b.x0),b.x1);y=Math.min(Math.max(y,b.y0),b.y1);tx=x;ty=y;boardDrag=true;say("好，我待在這裡看",1.8);next=4;return}
-      if(d.moved){const b=bounds();x=Math.min(Math.max(x,b.x0),b.x1);y=Math.min(Math.max(y,b.y0),b.y1);tx=x;ty=y;parked=true;store.set("botPos",{x:x/innerWidth,y:y/innerHeight});say("我在這裡等你（點兩下我會去散步）",2.6);next=4;return}
+      if(d.moved){const b=bounds();x=Math.min(Math.max(x,b.x0),b.x1);y=Math.min(Math.max(y,b.y0),b.y1);tx=x;ty=y;parked=true;userHold=true;store.set("botPos",{x:x/innerWidth,y:y/innerHeight});say("我在這裡等你（點兩下我會去散步）",2.6);next=4;return}
       // 點一下＝表演、點兩下＝去散步（停放時）；長按＝問問題
       taps++;clearTimeout(tapT);tapT=setTimeout(()=>{const n=taps;taps=0;
         if(n>=3){doAct("bow");say("我先去休息囉～",1.4);setTimeout(()=>{try{window.dispatchEvent(new CustomEvent("xq-bot-hide"))}catch(e){}},900);return}   /* 意見回饋 401：點三下隱藏小帥 */
@@ -604,38 +634,51 @@
     window.addEventListener("pointerup",pUp,true);window.addEventListener("pointercancel",pUp,true);
     for(const ev of["click","dblclick","touchstart","mousedown","mouseup","contextmenu","selectstart"])hit.addEventListener(ev,stop,{passive:false});
     hit.addEventListener("touchend",e=>{stop(e);if(drag)up(e)},{passive:false});hit.addEventListener("touchcancel",e=>{if(drag&&!drag.moved&&!drag.long){clearTimeout(drag.lp);drag=null}},{passive:true});
-    const onCall=e=>{const s=e.detail;if(s==="將軍")doAct("shock");else if(s==="吃"){doAct("cheer");say("吃！",1.4)}};
+    const onCall=e=>{const s=e.detail;if(s==="將軍")doAct("shock",1);else if(s==="吃"){doAct("cheer",1);say("吃！",1.4,0,1)}};   /* 11/11 問題 2：將軍、吃子是對局中自動冒的話：有棋盤就只做動作、不冒泡泡 */
     window.addEventListener("xq-call",onCall);
     // 勝負：贏了開心跳、輸了難過掉眼淚、和棋聳聳肩
     const pick=a=>a[Math.random()*a.length|0],ML=k=>{try{return window.XQ_MELINE?window.XQ_MELINE(k):null}catch(e){return null}};   /* 意見回饋 668：扮演雲河七星時，贏輸和說自己的台詞 */
-    const onResult=e=>{const r=e.detail;quietT=performance.now()+20000;setTimeout(()=>{if(r==="win"){doAct("win");say(ML("win")||pick(["我們贏了！🏆","太厲害了！","勝利！耶～","你是冠軍！","贏啦贏啦！"]),5)}
-      else if(r==="lose"){doAct("lose");say(ML("lose")||pick(["嗚嗚…輸了","好可惜…","沒關係，再來一盤！","下次一定贏！","我陪你複盤吧"]),5)}
-      else{doAct("draw");say(ML("draw")||pick(["和棋～勢均力敵","握手言和！","平分秋色","不分勝負！"]),5)}},400)};
+    const onResult=e=>{const r=e.detail;quietT=performance.now()+20000;setTimeout(()=>{if(r==="win"){doAct("win",2);say(ML("win")||pick(["我們贏了！🏆","太厲害了！","勝利！耶～","你是冠軍！","贏啦贏啦！"]),5,0,2)}
+      else if(r==="lose"){doAct("lose",2);say(ML("lose")||pick(["嗚嗚…輸了","好可惜…","沒關係，再來一盤！","下次一定贏！","我陪你複盤吧"]),5,0,2)}
+      else{doAct("draw",2);say(ML("draw")||pick(["和棋～勢均力敵","握手言和！","平分秋色","不分勝負！"]),5,0,2)}},400)};
     window.addEventListener("xq-result",onResult);
     // 有棋盤的畫面（看棋譜、對戰、練習）：自動走到右下角，不擋棋盤（意見回饋 168）；在這個畫面拖過就照使用者放的位置
-    const bigBoard=()=>{let best=null;for(const e of document.querySelectorAll('svg[viewBox="0 0 560 620"]')){if(e.closest(".xqbot"))continue;const r=e.getBoundingClientRect();
+    const bigBoard=()=>{let best=null;for(const e of document.querySelectorAll(KO_B)){if(e.closest(".xqbot"))continue;const r=e.getBoundingClientRect();
       if(r.width>220&&r.bottom>40&&r.top<innerHeight-40&&(!best||r.width>best.width))best=r}return best};
     // 有對話框（意見回饋、問小帥…）打開時：閃到對話框上方；上面空間不夠就先躲起來（意見回饋 177）
     const sheetRect=()=>{const e=document.querySelector("#sheet,.modal .box");if(!e)return null;const r=e.getBoundingClientRect();return r.height&&r.top<innerHeight-30?r:null};
-    /* QA P2-2：小帥常蓋住按鈕、棋盤、對話框。檢查小帥身上幾個點底下是不是按鈕、連結、棋盤、棋步；是的話換個空地方站，找不到空位就變淡、讓點擊穿過去 */
-    const HOT='button,a,input,select,textarea,label,summary,.chip,.btn,[role=button],[onclick],svg[viewBox="0 0 560 620"],h1,h2,h3';
-    const busyAt=(px,py)=>{if(px<0||py<0||px>innerWidth||py>innerHeight)return false;for(const e of document.elementsFromPoint(px,py)){if(e.closest(".xqbot"))continue;return!!e.closest(HOT)}return false};
-    const covers=(bx,by)=>[[.5,.45],[.3,.22],[.7,.22],[.3,.85],[.7,.85]].some(([u,v])=>busyAt(bx+u*W,by+v*H));
-    const freeSpot=()=>{const b=bounds();for(let i=0;i<30;i++){const px=b.x0+Math.random()*Math.max(0,b.x1-b.x0),py=Math.max(70,b.y0)+Math.random()*Math.max(0,b.y1-Math.max(70,b.y0));if(!covers(px,py))return[px,py]}return null};
-    let dodgeN=0,dim=false,boardSpot=null;
-    const setDim=on=>{if(on===dim)return;dim=on;hit.style.pointerEvents=on?"none":"auto";if(!on&&!boardMode)box.style.opacity=""};
+    /* QA P2-2：小帥常蓋住按鈕、棋盤、對話框。
+       11/11 模擬玩家問題 2 改寫（原本只抽查身上 5 個點底下是不是按鈕，點到的若是透明的上層、說明文字、平面棋盤的棋子層就當成空地，所以會站在棋盤、實驗說明、練功房標籤上）：
+       改用禁區長方形（koScan）算整個身體的重疊面積。每 0.5 秒：想站的地方（停放位置／有棋盤時的右下角／正要走去的點）不蓋到禁區就照舊；
+       蓋到了就快步走到最近的空位；整張畫面都沒有空位就縮成 0.6 倍、貼到離右下角最近的空位；還是沒有就暫時藏起來（點擊穿過去），有空位了再出現。
+       玩家在這一頁自己拖過去放的（userHold、boardDrag）照放，只是蓋到東西時變淡、點擊穿過去，換頁後才再自動閃。 */
+    let dodgeN=0;
+    const baseK=()=>boardMode?.6:1;
+    const setK=k=>{if(k===szK)return;szK=k;shrink=baseK()*k;applySize()};
+    const dodgeTick=()=>{if(!bVis()){hid=false;dim=false;return}koScan();if(drag)return;
+      if(userHold||boardDrag){hid=false;dim=bodyCost(x,y,W,H)>0;return}dim=false;
+      const k0=baseK(),w0=W0*SC*k0,h0=H0*SC*k0,vw=innerWidth,vh=innerHeight;let want=null;
+      if(boardMode)want=[vw-w0-2,vh-h0-64];else if(parked){const p=store.get("botPos",null);if(p)want=[p.x*vw,p.y*vh]}
+      if(!want)want=Math.hypot(tx-x,ty-y)>2?[tx,ty]:[x,y];
+      want=[Math.min(Math.max(0,want[0]),Math.max(0,vw-w0)),Math.min(Math.max(20,want[1]),Math.max(20,vh-h0))];
+      let k=1,p=null;
+      if(!bodyCost(want[0],want[1],w0,h0))p=want;
+      else{const L=spots(w0,h0);if(L.length)p=nearest(L,want[0],want[1]);else{const L2=spots(w0*.6,h0*.6);if(L2.length){k=.6;p=nearest(L2,vw,vh)}}}
+      if(!p){if(!hid){hid=true;bub.style.opacity=0;bubT=0}return}
+      const was=hid;hid=false;setK(k);
+      if(was){x=tx=p[0];y=ty=p[1];dodge=false;return}   /* 藏著的時候直接換位置，不要從禁區上走過去 */
+      if(Math.hypot(p[0]-tx,p[1]-ty)>2){tx=p[0];ty=p[1];dodge=Math.hypot(p[0]-x,p[1]-y)>2;if(dodge&&!celeb)act=null}};
     const isModal=()=>!!document.querySelector(".modal .box");
     const boardT=setInterval(()=>{if(celeb)return;const sr=sheetRect();
       if(sr){sheetMode=true;act=null;if(isModal()||sr.top-6<H+40){box.style.opacity="0";hit.style.pointerEvents="none"}else{box.style.opacity="";hit.style.pointerEvents="auto";if(!drag){tx=bounds().x1-4;ty=Math.max(0,sr.top-H)}}return}
       if(sheetMode){sheetMode=false;box.style.opacity="";hit.style.pointerEvents="auto";if(!boardMode){if(parked){const p=store.get("botPos",null);if(p){tx=p.x*innerWidth;ty=p.y*innerHeight}}else wander()}}
       const r=bigBoard();
-      if(r&&!boardMode){boardMode=true;boardDrag=false;boardSpot=null;act=null;shrink=.6;applySize()}
-      else if(!r&&boardMode){boardMode=false;boardDrag=false;shrink=1;applySize();box.style.opacity="";if(parked){const p=store.get("botPos",null);if(p){tx=p.x*innerWidth;ty=p.y*innerHeight}}else wander()}
-      if(boardMode&&!boardDrag&&!drag){const b=bounds(),hx=b.x1-2,hy=Math.max(b.y0,innerHeight-H-64);
-        if(!boardSpot||(dodgeN&3)===0&&covers(boardSpot[0],boardSpot[1])){boardSpot=!covers(hx,hy)?[hx,hy]:(freeSpot()||[hx,hy])}tx=boardSpot[0];ty=boardSpot[1]}
-      if(!drag&&!sheetMode&&(++dodgeN&3)===0&&Math.hypot(tx-x,ty-y)<3){
-        if(covers(x,y)){const f=(parked&&!boardMode)||boardDrag?null:freeSpot();if(f){if(boardMode)boardSpot=f;tx=f[0];ty=f[1];setDim(false)}else setDim(true)}else setDim(false)}
-      if(boardMode&&!sheetMode)box.style.opacity=dim?".2":(act||drag||bubT>0)?"":".45";else if(dim&&!sheetMode)box.style.opacity=".25"},250);
+      if(r&&!boardMode){boardMode=true;boardDrag=false;act=null;shrink=.6*szK;applySize()}
+      else if(!r&&boardMode){boardMode=false;boardDrag=false;shrink=szK;applySize();box.style.opacity="";if(parked){const p=store.get("botPos",null);if(p){tx=p.x*innerWidth;ty=p.y*innerHeight}}else wander()}
+      if(!(++dodgeN&1))dodgeTick();
+      hit.style.pointerEvents=hid||dim?"none":"auto";
+      box.style.opacity=hid?"0":dim?(boardMode?".2":".25"):boardMode&&!(act||drag||bubT>0)?".45":""},250);
+    const onHash=()=>{userHold=false;boardDrag=false};window.addEventListener("hashchange",onHash);
     // 換朝代：重做造型（字形還沒下載就先下載，好了再換一次）
     const rebuild=()=>{curK=eraK();curP=BP();root.remove(B.bot);Object.assign(B,buildMe(curK,grade()),{glb:null});root.add(B.bot);try{xsLoad();xsMode()}catch(e){}};
     // 升官慶祝（意見回饋 236）：小帥放大走到畫面正中央，金光、彩帶、「升官」字樣，約 5 秒後回原位
@@ -657,7 +700,7 @@
       shrink=2;applySize();tx=Math.max(0,(innerWidth-W)/2);ty=Math.max(20,innerHeight*.56-H/2);act=null;
       try{navigator.vibrate&&navigator.vibrate([60,40,60,40,120])}catch(e){}
       setTimeout(()=>{doAct("cheer");say(`升官了！我現在是${RK(g)}！`,4.2)},350);setTimeout(()=>doAct("jump"),2300);setTimeout(()=>doAct("cheer"),3400);   // 勝利動作改成 5 秒後太長，升官慶祝（約 5 秒）最後一段改用歡呼
-      setTimeout(()=>{ov.classList.add("out");setTimeout(()=>ov.remove(),520);shrink=boardMode?.6:1;applySize();celeb=0;box.style.visibility=vis;box.style.opacity=op;hit.style.pointerEvents="auto";
+      setTimeout(()=>{ov.classList.add("out");setTimeout(()=>ov.remove(),520);shrink=(boardMode?.6:1)*szK;applySize();celeb=0;box.style.visibility=vis;box.style.opacity=op;hit.style.pointerEvents="auto";
         if(ps.parked){tx=ps.x;ty=ps.y}else wander()},5200)};
     let curG=grade(),curL=meSex()+meReal();xsLoad();
     const onLook=()=>{if(meSex()+meReal()!==curL){curL=meSex()+meReal();XS.cur="";rebuild()}else{XS.sex=null;xsLoad()}};window.addEventListener("xq-look",onLook);   /* 意見回饋 497：選完角色馬上換，不等計時器 */
@@ -668,8 +711,8 @@
     let shrink=1;const applySize=()=>{const k=SC*shrink;W=W0*k;H=H0*k;box.style.width=W+"px";box.style.height=H+"px";rd.setSize(W,H)};
     const setScale=v=>{SC=Math.min(2,Math.max(.6,+v||1));store.set("botSize",SC);applySize();XS.cur=""};
     const onResize=()=>{const b=bounds();x=Math.min(x,b.x1);y=Math.min(y,b.y1);tx=Math.min(tx,b.x1);ty=Math.min(ty,b.y1)};window.addEventListener("resize",onResize);
-    return{act:k=>doAct(typeof k==="number"?comboAct(k):k),say,setScale,rebuild,count:COMBO.length,lines:LINES.length,
-      stop(){stopped=true;window.removeEventListener("pointerdown",pDown,true);window.removeEventListener("pointermove",pMove,true);window.removeEventListener("pointerup",pUp,true);window.removeEventListener("pointercancel",pUp,true);clearInterval(eraT);clearInterval(boardT);window.removeEventListener("xq-look",onLook);window.removeEventListener("xq-call",onCall);window.removeEventListener("xq-result",onResult);window.removeEventListener("resize",onResize);try{rd.dispose()}catch(e){}box.remove()}}}
+    return{act:k=>doAct(typeof k==="number"?comboAct(k):k),say:(s,d,o)=>say(s,d,false,o&&o.auto?1:0,true),setScale,   /* 11/11 問題 2：BOT.say(字, 秒, {auto:1})＝這句是對局中的閒話，有說明文字或棋盤時就不冒 */rebuild,count:COMBO.length,lines:LINES.length,
+      stop(){stopped=true;window.removeEventListener("pointerdown",pDown,true);window.removeEventListener("pointermove",pMove,true);window.removeEventListener("pointerup",pUp,true);window.removeEventListener("pointercancel",pUp,true);clearInterval(eraT);clearInterval(boardT);window.removeEventListener("xq-look",onLook);window.removeEventListener("xq-call",onCall);window.removeEventListener("xq-result",onResult);window.removeEventListener("resize",onResize);window.removeEventListener("hashchange",onHash);try{rd.dispose()}catch(e){}box.remove()}}}
   // 瘦長版（公園 3D 棋盤的 Pikafish）：身體窄、高，手腳往內收，戴圓眼鏡
   function thinify(B,noGlass){const tz=B.torso;tz.children.forEach(o=>{if(o===B.head||B.arms.includes(o))return;o.scale.x*=.6;o.scale.y*=1.18;o.position.y*=1.18});
     B.arms.forEach(a=>{a.position.x*=.62;a.scale.set(.85,1.1,.85)});B.legs.forEach(l=>{l.position.x*=.7;l.scale.set(.8,1.25,.8)});B.head.scale.set(.88,1.02,.9);B.head.position.y+=.08;tz.position.y+=.1;
