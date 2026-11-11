@@ -1379,7 +1379,7 @@ html[data-hicon] .tabbar button.on{box-shadow:inset 0 -3px 0 currentColor}
       if(!window.caches)return go();caches.keys().then(function(ks){return Promise.all(ks.filter(function(k){return k.indexOf("xqlab-app-")===0}).map(function(k){return caches.delete(k)}))})
         .then(function(){return navigator.serviceWorker&&navigator.serviceWorker.getRegistration()}).then(function(r){return r&&r.update()}).catch(function(){}).then(go)}};setTimeout(chk,4000)})();
 </script>
-<script>window.XQ_OFFLINE=true;window.XQ_BUILD="20261111-1800";</script>
+<script>window.XQ_OFFLINE=true;window.XQ_BUILD="20261111-1815";</script>
 <script src="core.js"></script>
 <script src="engine.js"></script>
 <script src="local.js"></script>
@@ -14125,14 +14125,17 @@ const HUB_NAME={learn:{classic:"藏譜石窟",qin:"學室",han:"太學",sanguo:"
     battle:{classic:"觀星閣",qin:"酒肆",han:"酒肆",sanguo:"酒肆",weijin:"酒壚",nanbei:"酒肆",sui:"酒肆",tang:"旗亭",wudai:"茶肆",song:"茶坊",yuan:"茶肆",ming:"茶樓",qing:"茶館"}};
 function xqHubName(k){let e="";try{e=typeof shipAt==="function"&&typeof shipDockList==="function"&&shipDockList()?shipAt():""}catch(x){}try{if(!e&&typeof hbIsCl==="function"&&hbIsCl())e="classic"}catch(x){}const n=(HUB_NAME[k]||{})[e];   /* 11/10：還沒登船也是經典世界，頁名用藏譜石窟、觀星閣（原本顯示學習、對戰） */return(k==="quick"?"♟ ":k==="battle"?"⚔ ":"📚 ")+(n||(k==="quick"?"下一盤":k==="battle"?"對戰":"學習"))}
 /* 11/9 開發者：「下一盤」前面的閃電跟水墨圖示融合不了，換成 ♟（e_piece 手繪棋子圖示） */
-const HM_SPOTS=[["hmShip",52,15,"⛵ 雲河星槎"],["hmBattle",14,25.5,"⚔ 對戰"],["hmLearn",86,26.5,"📚 學習"],["hmRec",12,44,"📜 今日推薦"],["hmQuick",52,47.5,"👥 身邊同桌"]];
+const HM_SPOTS=[["hmShip",52,15,"⛵ 雲河星槎"],["hmBattle",14,25.5,"⚔ 對戰"],["hmLearn",86,26.5,"📚 學習"],["hmRec",12,44,"📜 今日推薦"],["hmQuick",52,47.5,"👥 身邊同桌"],["hmDb",86,45,"📜 看棋譜"]];
+/* 開發者 11/11 選 ChatGPT 77 號方案一「地圖主路收斂版」（主張「看懂一步，敢下一盤」）：三條主路＝底部大按鈕快下一盤、地圖「🧩 練一題」（原本的學習書院入口，進去頁名照舊）、
+   新加的「📜 看棋譜」（直接進棋譜庫，畫面上落在藏譜石窟洞口下的書冊平台／書院山門石階）。標籤照舊只放大字；雲河星槎的標籤貼在畫上的船，不移。
+   地圖上方一條宣紙主張紙條：完全沒下過棋的新手一直顯示；其他人每天第一次進首頁顯示 3 秒後淡出，之後當天不再出現 */
 /* 07w 的座標表（腳底的位置）：起點在橋中央廣場（石桌左前方）；石桌四周繞著走，不穿過桌子；往後經廣場後緣走木棧道到星槎跳板；
    左右各從拱橋兩端的石階下到碼頭步道：左岸沿河岸步道上去到牌坊前、橋頭告示牌前；右岸過草地到書院山門石階下 */
 const SHW_HOMEMAP={el:40,h:[.05,60,.0008],look0:[50,99],
   N:{home:[44,60.5],tbl:[44.5,58],pl:[33,55],plc:[37,51.6],pb:[51,50.5],pr:[67,55],prc:[64,51.6],j1:[52.5,44.5],ship:[60,38.5],
     ls:[22,57],brd:[13,56],lq:[24,47],arch:[18,41.5],rs:[78,57],rq:[80,49],gate:[84,45]},
   E:"home-tbl home-pl home-pr pl-plc plc-pb pr-prc prc-pb pb-j1 j1-ship pl-ls ls-brd ls-lq lq-arch pr-rs rs-rq rq-gate",
-  HS:{hmShip:["ship",62,30,"wave"],hmBattle:["arch",12,36,"bow"],hmLearn:["gate",87,38,"bow"],hmRec:["brd",12,50,"wave"],hmQuick:["tbl",52,54,"bow"]}};
+  HS:{hmShip:["ship",62,30,"wave"],hmBattle:["arch",12,36,"bow"],hmLearn:["gate",87,38,"bow"],hmRec:["brd",12,50,"wave"],hmQuick:["tbl",52,54,"bow"],hmDb:["gate",86,49,"bow"]}};
 function hmCss(){if(document.getElementById("hmCss"))return;const s=document.createElement("style");s.id="hmCss";s.textContent=`
 .home-page{margin:0 0 6px}.home-page .shp-spot{max-width:46%;padding:4px 11px}.home-page .shp-spot b{white-space:nowrap;font-size:14px}.home-page .shp-spot.hot{padding:5px 13px}.home-page .shp-spot.hot b{font-size:15px}
 .hm-fx{position:absolute;inset:0;pointer-events:none;overflow:hidden}
@@ -14141,7 +14144,8 @@ function hmCss(){if(document.getElementById("hmCss"))return;const s=document.cre
 @keyframes hmSky{0%,100%{opacity:.75}50%{opacity:1}}
 .hm-me{position:absolute;z-index:3;background:transparent;border:0;padding:0;border-radius:40%;cursor:pointer;-webkit-tap-highlight-color:transparent}
 .hm-go-bar{position:fixed;left:50%;bottom:calc(14px + env(safe-area-inset-bottom));transform:translateX(-50%);z-index:30;display:flex;flex-direction:column;align-items:center;gap:8px;width:max-content;max-width:calc(100vw - 32px);pointer-events:none}
-.hm-go-bar>*{pointer-events:auto}.hm-go-bar .hm-inst{position:static;transform:none}.hm-pills{display:flex;gap:8px;justify-content:center;flex-wrap:wrap}.hm-fb{font-size:14px;padding:8px 16px}
+.hm-go-bar>*{pointer-events:auto}.hm-go-bar .hm-inst{position:static;transform:none}.hm-slogan{position:absolute;left:50%;top:1.4%;transform:translateX(-50%);z-index:5;padding:6px 18px;border-radius:6px;border:1px solid rgba(90,58,26,.35);background:rgba(246,238,220,.92);box-shadow:0 2px 10px rgba(0,0,0,.18);color:#3b2a1a;font:900 17px/1.3 var(--serif,serif);letter-spacing:.18em;white-space:nowrap;pointer-events:none;transition:opacity .8s}.hm-slogan.out{opacity:0}
+.hm-pills{display:flex;gap:8px;justify-content:center;flex-wrap:wrap}.hm-fb{font-size:14px;padding:8px 16px}
 .hm-go{display:flex;flex-direction:column;align-items:center;gap:2px;min-width:220px;max-width:100%;min-height:52px;padding:9px 26px;border:2px solid #f2c94c;border-radius:999px;background:linear-gradient(180deg,#b3261e,#7d1611);color:#fff6dc;box-shadow:0 4px 14px rgba(0,0,0,.38),inset 0 1px 0 rgba(255,255,255,.25);font:900 19px/1.15 var(--serif,serif);letter-spacing:.06em;cursor:pointer;-webkit-tap-highlight-color:transparent}
 .hm-go small{font:700 12px/1.2 var(--serif,serif);letter-spacing:0;color:#ffe08a;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:100%}.hm-go small:empty{display:none}
 .hm-go:active{transform:translateY(1px);filter:brightness(.95)}
@@ -14152,6 +14156,14 @@ ${typeof WALK_BOT_MERGE!=="undefined"&&WALK_BOT_MERGE?"":"body.hm-on.shw-on .xqb
    平常＝「♟ 立即對局」直接挑戰電腦（跟石桌一樣 #/cpu）；有下到一半的棋＝「▶ 接著下」＋小字哪一盤、第幾手（判斷跟今日推薦同一個 homeRecGame，線上對局優先）；
    完全沒下過棋＝「🔰 立即開始」進新手訓練營（跟石桌一樣）。「📲 加到主畫面」原本在圖的底部，有這顆按鈕時搬進同一條，疊在上面不互相擋。
    按鈕放在 .home-page 裡（position:fixed），離開首頁跟著頁面一起拿掉 */
+/* v5 改善單 R07（小標籤）：窄手機（390 寬）時滿版地圖比畫面寬、左右各裁掉約 20px，貼邊的標籤（觀星閣、今日推薦、練一題、看棋譜）會被切掉一截；
+   畫好後把超出畫面的標籤往內推回 8px（只動 marginLeft，不改座標表），轉向、縮放時重算 */
+function hmClamp(P){const vw=document.documentElement.clientWidth,pad=8;P.querySelectorAll(".shp-spot").forEach(b=>{b.style.marginLeft="";const r=b.getBoundingClientRect();if(!r.width)return;
+  const dx=r.left<pad?pad-r.left:r.right>vw-pad?vw-pad-r.right:0;if(dx)b.style.marginLeft=Math.round(dx)+"px"})}
+/* 首頁主張紙條（ChatGPT 77 號方案一）：新手一直顯示；其他人每天第一次 3 秒後淡出（store hmSloganDay）；不能點、不擋地圖標籤 */
+function hmSlogan(P,nw){const d=typeof localDay==="function"?localDay():new Date().toDateString();if(!nw&&store.get("hmSloganDay","")===d)return;
+  const s=document.createElement("div");s.className="hm-slogan";s.setAttribute("role","note");s.textContent="看懂一步，敢下一盤";P.append(s);if(nw)return;
+  store.set("hmSloganDay",d);setTimeout(()=>{s.classList.add("out");setTimeout(()=>s.remove(),900)},3000)}
 function hmGoBar(P,nw){const bar=document.createElement("div");bar.className="hm-go-bar";const b=document.createElement("button");b.type="button";b.className="hm-go";b.id="hmGo";
   /* 開發者 11/11 選 ChatGPT 13 號方案 1「快下 vs 選場」：平常寫「♟ 快速對局」；上一盤是挑戰電腦而且下完了＝小字「用上次難度，馬上跟電腦下」，
      點了直接用那盤的等級和模式（晉級賽／練功房）開新局（fresh）——原本只會打開那盤已經結束的棋，要再按新局，不算「馬上」 */
@@ -14187,16 +14199,17 @@ function homeMap(v){const home=v.querySelector(".home");if(!home||v.querySelecto
   const nw=hmNew(),standalone=matchMedia("(display-mode: standalone)").matches||navigator.standalone,inst=OFF&&!standalone&&!(store.get("instAsk",null)||{}).no;
   /* 開發者 11/11（截圖圈出石桌「著一盤」和底部「立即對局」重複，選「石桌改成同桌對弈」）：石桌旁本來就擺兩張石凳＝兩人面對面下（#/pvp）；
      跟電腦下、接著下、新手第一次都交給底部大按鈕（hmGoBar），石桌不再有新手天光和「第一次下象棋？」 */
-  const lab=id=>id==="hmQuick"?"👥 身邊同桌":id==="hmLearn"?xqHubName("learn"):id==="hmBattle"?xqHubName("battle"):HM_SPOTS.find(s=>s[0]===id)[3];
+  const lab=id=>id==="hmQuick"?"👥 身邊同桌":id==="hmLearn"?"🧩 練一題":id==="hmBattle"?xqHubName("battle"):HM_SPOTS.find(s=>s[0]===id)[3];
   const d=document.createElement("div");
   d.innerHTML=`<div class="shp-page cq home-page"><img src="data/homemap/${typeof hbIsCl==="function"&&hbIsCl()?"home_classic":"home"}.webp?v=${HM_IMGV}" alt="${typeof hbIsCl==="function"&&hbIsCl()?"千秋時光之苑":"楚河渡口棋鎮"}"><div class="hm-fx" aria-hidden="true"></div>${HM_SPOTS.map(([id,x,y])=>`<button class="shp-spot" id="${id}" style="left:${x}%;top:${y}%"><b>${esc(lab(id))}</b></button>`).join("")}${inst?'<button class="hm-inst" id="hmInst">📲 加到主畫面</button>':""}</div>`;
   const P=d.firstElementChild;v.insertBefore(P,home);home.classList.add("hb-hidden");if(typeof hbCss==="function")hbCss();else home.style.display="none";
   {const wv=typeof sw7HomeWx==="function"?sw7HomeWx():"",im0=P.querySelector(":scope>img");if(wv&&im0){const pre=new Image();pre.onload=()=>{if(!im0.isConnected)return;try{if(typeof sw7SeaTurn==="function"&&sw7SeaTurn(P,im0,pre.src))return}catch(e){}im0.src=pre.src};pre.src="data/homemap/home_"+wv+".webp?v="+HM_IMGV}}   /* 回饋 811：下雪、下雨天換積雪版 home_snow／雨景版 home_rain（07w7-seasons.js 判斷；先載好再換，載不到留原圖） */
-  const GO={hmShip:"#/adventure",hmBattle:"#/hub/battle",hmLearn:"#/hub/learn"};
+  const GO={hmShip:"#/adventure",hmBattle:"#/hub/battle",hmLearn:"#/hub/learn",hmDb:"#/db"};
   for(const[id]of HM_SPOTS){const b=P.querySelector("#"+id);if(!b)continue;
-    b.onclick=()=>{vibrate(5);if(GO[id]){location.hash=GO[id];return}if(id==="hmRec"){if(typeof TODAY_MAP_ON!=="undefined"&&TODAY_MAP_ON){location.hash="#/today";return}hmRecSheet();return}if(id==="hmQuick"){try{sessionStorage.setItem("xqFromHome","1")}catch(e){}location.hash="#/pvp"}}}   /* 11/11：記下從首頁進來（07y hbFromHome：回首頁、不走後園） */
+    b.onclick=()=>{vibrate(5);if(id==="hmDb")try{sessionStorage.setItem("xqDbFrom","#/")}catch(e){}if(GO[id]){location.hash=GO[id];return}if(id==="hmRec"){if(typeof TODAY_MAP_ON!=="undefined"&&TODAY_MAP_ON){location.hash="#/today";return}hmRecSheet();return}if(id==="hmQuick"){try{sessionStorage.setItem("xqFromHome","1")}catch(e){}location.hash="#/pvp"}}}   /* 11/11：記下從首頁進來（07y hbFromHome：回首頁、不走後園） */
   {const ib=P.querySelector("#hmInst");if(ib)ib.onclick=e=>{e.stopPropagation();vibrate(5);installGuide(true)}}
-  hmGoBar(P,nw);
+  hmGoBar(P,nw);try{hmSlogan(P,nw)}catch(e){}
+  {const cl=()=>{if(!P.isConnected){removeEventListener("resize",cl);return}try{hmClamp(P)}catch(e){}};addEventListener("resize",cl);setTimeout(cl,60);setTimeout(cl,700);const im=P.querySelector(":scope>img");if(im)im.addEventListener("load",cl)}
   if(typeof shpFit==="function")shpFit(v);
   try{if(typeof shwPage==="function"&&SHIP_WALK_ON){shwPage(v,Object.assign({},SHW_PG0,SHW_HOMEMAP),"home");hmMe(P)}}catch(e){}
   try{if(typeof zmPage==="function")zmPage(v)}catch(e){}
@@ -18898,7 +18911,9 @@ const FIXBACK=[[new RegExp("^/lobby$"),"^#/hub/battle"],[new RegExp("^/db(/[^/]+
 const SHIP_SET=[54,37,"🛏 天字客房"];   /* 回饋 851（開發者 11/9）：拿掉「設定」兩字 */
 function exFind(k){return EXITS[k]||(new RegExp("^/db/[^/]+$").test(k)?EXITS["/db"]:null)}
 /* 開發者 11/11 hspx「從哪來就從哪回去」：信房（#/feedback）的出口照「從哪一頁進來」（07s3 記的 xqFbFrom）顯示和回去：首頁＝回棋鎮、星槎＝回星槎、設定＝回天字客房、其他＝回那一頁；不知道從哪來才用原本的「⛵ 回星槎」 */
-function exDyn(k){if(k!=="/feedback")return null;let f="";try{f=sessionStorage.getItem("xqFbFrom")||""}catch(e){}if(!f)return null;const E0=EXITS["/feedback"]||[20,74];let p="";try{p=typeof usePlace==="function"?usePlace(f):""}catch(e){}
+/* 首頁方案一（開發者 11/11）：首頁「📜 看棋譜」直接進棋譜庫；從首頁進來的，出口寫「回棋鎮」、回首頁（07z 點標籤時記 xqDbFrom，其他入口進棋譜庫時清掉）；其他照舊回學習書院 */
+addEventListener("hashchange",e=>{try{const oh=new URL(e.oldURL).hash||"#/";if(/^#\/db\/?$/.test(location.hash)&&!/^#\/db(\/|$)/.test(oh)&&!/^#\/?$/.test(oh))sessionStorage.removeItem("xqDbFrom")}catch(x){}});
+function exDyn(k){if(k==="/db"){let f="";try{f=sessionStorage.getItem("xqDbFrom")||""}catch(e){}if(f!=="#/")return null;const E1=EXITS["/db"]||[20,88];return[E1[0],E1[1],"🏘 回棋鎮","#/"]}if(k!=="/feedback")return null;let f="";try{f=sessionStorage.getItem("xqFbFrom")||""}catch(e){}if(!f)return null;const E0=EXITS["/feedback"]||[20,74];let p="";try{p=typeof usePlace==="function"?usePlace(f):""}catch(e){}
   const lb=/^#\/?$/.test(f)?"🏘 回棋鎮":/^#\/(adventure|ship)(\/|$)/.test(f)?"⛵ 回星槎":/^#\/settings(\/|$)/.test(f)?"↩ 回天字客房":p&&!/^[\x00-\x7f]+$/.test(p)?"↩ 回"+p:"↩ 回上一頁";return[E0[0],E0[1],lb,/^#\/?$/.test(f)?"#/":f]}
 function exKey(){return(location.hash||"#/").slice(1).split("?")[0].replace(/\/+$/,"")||"/"}
 function exCss(){if(document.getElementById("exCss"))return;const s=document.createElement("style");s.id="exCss";s.textContent=`
