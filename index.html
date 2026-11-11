@@ -1379,7 +1379,7 @@ html[data-hicon] .tabbar button.on{box-shadow:inset 0 -3px 0 currentColor}
       if(!window.caches)return go();caches.keys().then(function(ks){return Promise.all(ks.filter(function(k){return k.indexOf("xqlab-app-")===0}).map(function(k){return caches.delete(k)}))})
         .then(function(){return navigator.serviceWorker&&navigator.serviceWorker.getRegistration()}).then(function(r){return r&&r.update()}).catch(function(){}).then(go)}};setTimeout(chk,4000)})();
 </script>
-<script>window.XQ_OFFLINE=true;window.XQ_BUILD="20261111-1930";</script>
+<script>window.XQ_OFFLINE=true;window.XQ_BUILD="20261111-2000";</script>
 <script src="core.js"></script>
 <script src="engine.js"></script>
 <script src="local.js"></script>
@@ -1780,7 +1780,23 @@ const unlockAudio=()=>{primeVoice();try{if(navigator.audioSession&&navigator.aud
     if(!AC._primed){const b=AC.createBuffer(1,1,22050),src=AC.createBufferSource();src.buffer=b;src.connect(AC.destination);src.start(0);AC._primed=1}}catch(e){}};
 const sndOn=()=>{try{return store.get("capSound",true)||store.get("mvSound",false)||store.get("voiceCall",true)}catch(e){return false}};
 function sndPill(show){let p=document.getElementById("sndPill");if(!show){if(p)p.remove();return}if(p||!sndOn())return;
-  p=document.createElement("div");p.id="sndPill";p.textContent="🔇 點任意處喚醒聲音";document.body.append(p);setTimeout(()=>{if(p.isConnected)p.remove()},8000)}
+  p=document.createElement("div");p.id="sndPill";p.textContent="🔇 點任意處喚醒聲音";document.body.append(p);setTimeout(()=>{if(p.isConnected)p.remove()},8000);
+  sndPillAt();setTimeout(sndPillAt,300);setTimeout(sndPillAt,1500)}
+/* v5 改善單 R07（聲音提示避讓）：頂欄下置中的位置在對局頁正好壓在對手（黑方）那一條上——直式蓋到對手名字，橫放（左棋盤、右資訊欄）蓋到右欄最上面的黑方資訊。
+   對局頁（有 gameLayout 的 #pTop）才挪：依序試 ①原位置 ②工具列正下方（橫放時右欄工具列下面那片空白）③工具列正上方（直式時狀態列和工具列之間的空白）
+   ④棋盤左邊空白 ⑤棋盤右邊空白 ⑥狀態列下方 ⑦右下角；第一個完全不碰頂欄、雙方資訊、棋盤、狀態、著法條、工具列、小帥的就用它，都碰到就挑碰到面積最小的。
+   其他頁照舊在頂欄下置中。換頁、轉向時重算（提示只活 8 秒） */
+function sndPillAt(){const p=document.getElementById("sndPill");if(!p)return;p.style.left="";p.style.top="";p.style.transform="";
+  if(!document.getElementById("pTop"))return;
+  const r=p.getBoundingClientRect(),w=r.width,h=r.height,vw=innerWidth,vh=innerHeight,m=8;if(!w||!h)return;
+  const R=s=>{const e=document.querySelector(s);if(!e||!e.getClientRects().length)return null;const b=e.getBoundingClientRect();return b.width>1&&b.height>1?b:null};
+  const ob=["#topbar","#pTop","#pBot","#bbox","#stat","#strip",".evline","#acts",".xqbot"].map(R).filter(Boolean),A=R("#acts"),Bx=R("#bbox"),S=R("#stat");
+  const C=[[r.left,r.top]];if(A){const x=A.left+A.width/2-w/2;C.push([x,A.bottom+8],[x,A.top-h-8])}
+  if(Bx)C.push([(Bx.left-w)/2,Bx.top+8],[Bx.right+(vw-Bx.right-w)/2,Bx.top+8]);if(S)C.push([S.left+S.width/2-w/2,S.bottom+8]);C.push([vw-w-12,vh-h-12]);
+  const cost=([x,y])=>{if(x<m||y<m||x+w>vw-m||y+h>vh-m)return 1e12;let c=0;for(const b of ob){const ix=Math.min(x+w,b.right+4)-Math.max(x,b.left-4),iy=Math.min(y+h,b.bottom+4)-Math.max(y,b.top-4);if(ix>0&&iy>0)c+=ix*iy}return c};
+  let best=C[0],bc=Infinity;for(const c of C){const k=cost(c);if(k<bc){bc=k;best=c}if(k===0)break}
+  if(best!==C[0])Object.assign(p.style,{left:Math.round(best[0])+"px",top:Math.round(best[1])+"px",transform:"none"})}
+addEventListener("resize",()=>setTimeout(sndPillAt,200));addEventListener("hashchange",()=>{setTimeout(sndPillAt,400);setTimeout(sndPillAt,1500)});
   /* 開發者 11/11 選 ChatGPT UI 報告 UI-05：聲音提示原本一直閃在右下角，蓋在設定、首頁底部按鈕和小帥上；改成頂欄正下方置中、不閃，8 秒後自己收起（點任何地方也會收起） */
   (()=>{try{const s=document.createElement("style");s.id="sndPillPos";s.textContent="#sndPill{right:auto!important;bottom:auto!important;left:50%;top:calc(env(safe-area-inset-top,0px) + 64px);transform:translateX(-50%);animation:none!important;opacity:.9;font-size:12.5px}";document.head.append(s)}catch(e){}})();
 for(const ev of["pointerdown","touchend","click","keydown"])document.addEventListener(ev,()=>{unlockAudio();sndPill(false)},{passive:true,capture:true});
@@ -2512,6 +2528,8 @@ function mvtWrap(root){if(!root)return;
     fr.append(s.slice(last));n.replaceWith(fr)}}
 let mvtT=0;new MutationObserver(()=>{if(mvtT)return;mvtT=setTimeout(()=>{mvtT=0;try{mvtWrap(document.body)}catch(e){}},250)}).observe(document.documentElement,{childList:true,subtree:true,characterData:true});
 document.addEventListener("click",e=>{const x=e.target&&e.target.closest&&e.target.closest(".mvt");if(!x)return;e.preventDefault();e.stopPropagation();mvtShow(x.dataset.mv,x)},true);
+
+
 
 
 
@@ -14196,8 +14214,10 @@ ${typeof WALK_BOT_MERGE!=="undefined"&&WALK_BOT_MERGE?"":"body.hm-on.shw-on .xqb
    按鈕放在 .home-page 裡（position:fixed），離開首頁跟著頁面一起拿掉 */
 /* v5 改善單 R07（小標籤）：窄手機（390 寬）時滿版地圖比畫面寬、左右各裁掉約 20px，貼邊的標籤（觀星閣、今日推薦、右邊的學習入口）會被切掉一截；
    畫好後把超出畫面的標籤往內推回 8px（只動 marginLeft，不改座標表），轉向、縮放時重算 */
-function hmClamp(P){const vw=document.documentElement.clientWidth,pad=8;P.querySelectorAll(".shp-spot").forEach(b=>{b.style.marginLeft="";const r=b.getBoundingClientRect();if(!r.width)return;
-  const dx=r.left<pad?pad-r.left:r.right>vw-pad?vw-pad-r.right:0;if(dx)b.style.marginLeft=Math.round(dx)+"px"})}
+/* v5 改善單 R07（桌面／矮螢幕）：寬螢幕時 07t3 r07Wide 把地圖限寬置中（或靠左＋側欄選單），圖比畫面窄，貼邊標籤要推回「圖和畫面重疊的那一塊」裡（圖的框 overflow:hidden，推到畫面內還是會被圖切掉）；
+   手機直向圖比畫面寬（左右各裁約 20px），重疊那一塊就是畫面本身，結果跟原本一樣。推完通知 r07HitSoon 重算點擊範圍 */
+function hmClamp(P){const vw=document.documentElement.clientWidth,pad=8,pr=P.getBoundingClientRect(),L=Math.max(pad,pr.left+pad),R=Math.min(vw-pad,pr.right-pad);P.querySelectorAll(".shp-spot").forEach(b=>{b.style.marginLeft="";const r=b.getBoundingClientRect();if(!r.width)return;
+  const dx=r.left<L?L-r.left:r.right>R?R-r.right:0;if(dx)b.style.marginLeft=Math.round(dx)+"px"});if(typeof r07HitSoon==="function")r07HitSoon()}
 /* 首頁主張紙條（ChatGPT 77 號方案一）：新手一直顯示；其他人每天第一次 3 秒後淡出（store hmSloganDay）；不能點、不擋地圖標籤 */
 function hmSlogan(P,nw){const d=typeof localDay==="function"?localDay():new Date().toDateString();if(!nw&&store.get("hmSloganDay","")===d)return;
   const s=document.createElement("div");s.className="hm-slogan";s.setAttribute("role","note");s.textContent="看懂一步，敢下一盤";P.append(s);if(nw)return;
@@ -14247,7 +14267,8 @@ function homeMap(v){const home=v.querySelector(".home");if(!home||v.querySelecto
     b.onclick=()=>{vibrate(5);if(GO[id]){location.hash=GO[id];return}if(id==="hmRec"){if(typeof TODAY_MAP_ON!=="undefined"&&TODAY_MAP_ON){location.hash="#/today";return}hmRecSheet();return}if(id==="hmQuick"){try{sessionStorage.setItem("xqFromHome","1")}catch(e){}location.hash="#/pvp"}}}   /* 11/11：記下從首頁進來（07y hbFromHome：回首頁、不走後園） */
   {const ib=P.querySelector("#hmInst");if(ib)ib.onclick=e=>{e.stopPropagation();vibrate(5);installGuide(true)}}
   hmGoBar(P,nw);try{hmSlogan(P,nw)}catch(e){}
-  {const cl=()=>{if(!P.isConnected){removeEventListener("resize",cl);return}try{hmClamp(P)}catch(e){}};addEventListener("resize",cl);setTimeout(cl,60);setTimeout(cl,700);const im=P.querySelector(":scope>img");if(im)im.addEventListener("load",cl)}
+  /* v5 改善單 R07：轉向／縮放時 07t3 ttFill 要 120ms 後才重排圖的寬度，這裡等 300ms 再推標籤（原本 resize 當下就推，量到的是還沒重排的舊圖） */
+  {const cl=()=>{if(!P.isConnected)return;try{hmClamp(P)}catch(e){}},rs=()=>{if(!P.isConnected){removeEventListener("resize",rs);return}setTimeout(cl,300)};addEventListener("resize",rs);setTimeout(cl,60);setTimeout(cl,700);const im=P.querySelector(":scope>img");if(im)im.addEventListener("load",cl)}
   if(typeof shpFit==="function")shpFit(v);
   try{if(typeof shwPage==="function"&&SHIP_WALK_ON){shwPage(v,Object.assign({},SHW_PG0,SHW_HOMEMAP),"home");hmMe(P)}}catch(e){}
   try{if(typeof zmPage==="function")zmPage(v)}catch(e){}
@@ -14255,7 +14276,61 @@ function homeMap(v){const home=v.querySelector(".home");if(!home||v.querySelecto
 if(typeof Home==="function"){const f0=Home;Home=function(v,hub){const r=f0.apply(this,arguments);try{if(HOME_MAP_ON&&!hub)homeMap(v)}catch(e){}return r}}
 /* 開發者 11/11 選 ChatGPT UI 報告 UI-03：所有場景標籤（首頁、學習、對戰、設定、渡口…的 .shp-spot）上下各多 9px、左右各多 4px 的透明點擊範圍，
    看起來一樣大，手指點偏一點也點得到（設定頁的小標籤原本只有約 24px 高）；::after 已經拿去做呼吸光，這裡用 ::before */
-(()=>{try{const s=document.createElement("style");s.id="spotHit";s.textContent=".shp-spot::before{content:\"\";position:absolute;inset:-9px -4px;border-radius:inherit}";document.head.append(s)}catch(e){}})();
+/* v5 改善單 R07（有效命中區）：上面那條「上下 9px、左右 4px」量出來不夠——::before 是從框線內緣往外擴，設定頁 23.6px 高的小標籤實際只有約 38.6px 高，也沒有管相鄰標籤的點擊範圍會不會疊到。改成：
+   ① 樣式（JS 還沒算之前的底線）：每個方向至少擴 4px，而且整塊至少 44×44（min() 算出要擴多少）；::before 不再跟著圓角（圓角的角落點不到），是方的。
+   ② r07Hit：每頁標籤畫好、圖重排、字級改變、換頁後，量出同一個框裡所有場景標籤（首頁、學習、對戰、設定、棋譜庫、渡口的 .shp-spot，星槎的 .shp-hs，渡口景點 .po-sight），
+      用 r07Solve 算每個標籤的點擊範圍：先以標籤為中心擴成至少 44×44（每邊至少多 4px），超出圖（或畫面左右）就往內挪；兩個標籤的點擊範圍疊到＝在兩個標籤之間的空隙正中間切開，
+      切完不到 44 就往另一邊補；最後一輪只切不補，保證相鄰點擊範圍不重疊。算好寫進每個標籤的 --r7l／--r7r／--r7t／--r7b。
+      標籤本身就疊在一起、或兩個標籤中間空隙不夠各分 44 的，記在 r07HitReport()（瀏覽器主控台打 r07HitReport() 可以看這一頁每個標籤的點擊範圍大小和問題）。
+   ③ 高對比圖示（html[data-hicon]）的 .hot 標籤 ::before 是右上角的「！」徽章，原本被這裡的 inset 拉到左上角；這種標籤讓給徽章（left、bottom 改回 auto），不擴點擊範圍。
+   r07Solve 是純計算，tools/r07-hitcheck.js（工作區 r07\tools）用同一段程式在 390×844、375×667 換算各頁座標表檢查重疊；改這段要保留 R07SOLVE 標記 */
+const R07_HIT_ON=true;
+const R07_HIT_SEL=".shp-spot,.shp-hs,.po-sight";
+/*R07SOLVE{*/
+function r07Solve(L,o){o=o||{};const M=o.min||44,pd=o.pad==null?4:o.pad,B=o.b||{l:-1e9,t:-1e9,r:1e9,b:1e9},iss=[];
+  const H=L.map(a=>{const w=Math.max(a.w+2*pd,M),h=Math.max(a.h+2*pd,M),cx=a.x+a.w/2,cy=a.y+a.h/2,q={l:cx-w/2,r:cx+w/2,t:cy-h/2,b:cy+h/2};
+    if(q.l<B.l){const d=Math.max(0,Math.min(B.l-q.l,a.x-q.l));q.l+=d;q.r+=d}else if(q.r>B.r){const d=Math.max(0,Math.min(q.r-B.r,q.r-a.x-a.w));q.l-=d;q.r-=d}
+    if(q.t<B.t){const d=Math.max(0,Math.min(B.t-q.t,a.y-q.t));q.t+=d;q.b+=d}else if(q.b>B.b){const d=Math.max(0,Math.min(q.b-B.b,q.b-a.y-a.h));q.t-=d;q.b-=d}
+    return q});
+  const ov=(p,q)=>Math.min(p.r,q.r)-Math.max(p.l,q.l)>.5&&Math.min(p.b,q.b)-Math.max(p.t,q.t)>.5,bad=new Set();
+  const split=(i,j,grow)=>{const a=L[i],b=L[j],gx=Math.max(b.x-a.x-a.w,a.x-b.x-b.w),gy=Math.max(b.y-a.y-a.h,a.y-b.y-b.h);
+    if(gx<-.5&&gy<-.5){bad.add(i+","+j);return false}   /* 兩個標籤本身疊超過半個像素：切不開，留給報告 */
+    if(gx>=gy){const[p,A,q,C]=a.x<b.x?[H[i],a,H[j],b]:[H[j],b,H[i],a],m=(A.x+A.w+C.x)/2;p.r=Math.min(p.r,m);q.l=Math.max(q.l,m);
+      if(grow){if(p.r-p.l<M)p.l=Math.max(B.l,p.r-M);if(q.r-q.l<M)q.r=Math.min(B.r,q.l+M)}}
+    else{const[p,A,q,C]=a.y<b.y?[H[i],a,H[j],b]:[H[j],b,H[i],a],m=(A.y+A.h+C.y)/2;p.b=Math.min(p.b,m);q.t=Math.max(q.t,m);
+      if(grow){if(p.b-p.t<M)p.t=Math.max(B.t,p.b-M);if(q.b-q.t<M)q.b=Math.min(B.b,q.t+M)}}
+    return true};
+  for(let it=0;it<10;it++){let ch=false;for(let i=0;i<L.length;i++)for(let j=i+1;j<L.length;j++)if(ov(H[i],H[j])&&split(i,j,it<7))ch=true;if(!ch&&it>=7)break;if(!ch&&it<7)it=6}
+  for(let i=0;i<L.length;i++)for(let j=i+1;j<L.length;j++){if(bad.has(i+","+j))iss.push({t:"label",i,j});else if(ov(H[i],H[j]))iss.push({t:"overlap",i,j})}
+  H.forEach((q,i)=>{const w=Math.min(q.r,B.r)-Math.max(q.l,B.l),h=Math.min(q.b,B.b)-Math.max(q.t,B.t);if(w<M-.5||h<M-.5)iss.push({t:"small",i,w:Math.round(w*10)/10,h:Math.round(h*10)/10})});
+  return{H,iss}}
+/*}R07SOLVE*/
+let R07_LAST=[];
+function r07Hit(){if(!R07_HIT_ON)return;const G=new Map(),V=document.getElementById("view"),vr=V?V.getBoundingClientRect():null;R07_LAST=[];
+  document.querySelectorAll(R07_HIT_SEL).forEach(e=>{if(!e.getClientRects().length||!e.offsetWidth)return;const C=e.offsetParent;if(!C)return;if(!G.has(C))G.set(C,[]);G.get(C).push(e)});
+  G.forEach((E,C)=>{const cr=C.getBoundingClientRect(),k=C.offsetWidth?cr.width/C.offsetWidth:1;if(!k||!cr.width)return;
+    const E2=E.filter(e=>getComputedStyle(e).visibility!=="hidden");if(!E2.length)return;
+    const clip=getComputedStyle(C).overflowX!=="visible",W=cr.width/k,Hh=cr.height/k;let l=clip?0:-1e9,r=clip?W:1e9;
+    if(vr&&V.contains(C)){l=Math.max(l,(vr.left-cr.left)/k);r=Math.min(r,(vr.right-cr.left)/k)}
+    const L=E2.map(e=>{const q=e.getBoundingClientRect();return{x:(q.left-cr.left)/k,y:(q.top-cr.top)/k,w:q.width/k,h:q.height/k}});
+    const S=r07Solve(L,{b:{l,r,t:clip?0:-1e9,b:clip?Hh:1e9}});
+    E2.forEach((e,i)=>{const a=L[i],q=S.H[i],cs=getComputedStyle(e),own=a.w/(e.offsetWidth||a.w)||1,bl=parseFloat(cs.borderLeftWidth)||0,br=parseFloat(cs.borderRightWidth)||0,bt=parseFloat(cs.borderTopWidth)||0,bb=parseFloat(cs.borderBottomWidth)||0;
+      const f=v=>(Math.round(v*10)/10)+"px";e.style.setProperty("--r7l",f((q.l-a.x)/own-bl));e.style.setProperty("--r7r",f((a.x+a.w-q.r)/own-br));e.style.setProperty("--r7t",f((q.t-a.y)/own-bt));e.style.setProperty("--r7b",f((a.y+a.h-q.b)/own-bb))});
+    const nm=i=>(E2[i].textContent||E2[i].id||"").trim().slice(0,16);
+    R07_LAST.push({box:C.className||C.id,hit:S.H.map((q,i)=>({label:nm(i),w:Math.round(Math.min(q.r,r)-Math.max(q.l,l)),h:Math.round(Math.min(q.b,clip?Hh:1e9)-Math.max(q.t,clip?0:-1e9))})),
+      issues:S.iss.map(z=>z.t==="small"?{t:"不足44",label:nm(z.i),w:z.w,h:z.h}:{t:z.t==="label"?"標籤本身相疊":"點擊範圍相疊",a:nm(z.i),b:nm(z.j)})})});
+  try{if(typeof r07MenuSync==="function")r07MenuSync()}catch(e){}}
+function r07HitReport(){try{r07Hit()}catch(e){}return R07_LAST}
+function r07HitSoon(d){if(r07HitSoon.t)return;r07HitSoon.t=setTimeout(()=>{r07HitSoon.t=0;requestAnimationFrame(()=>{try{r07Hit()}catch(e){}})},d||150)}
+(()=>{try{const s=document.createElement("style");s.id="spotHit";s.textContent=`.shp-spot::before,.shp-hs::before,.po-sight::before{content:"";position:absolute;
+  left:var(--r7l,min(-4px,calc((100% - 44px) / 2)));right:var(--r7r,min(-4px,calc((100% - 44px) / 2)));top:var(--r7t,min(-4px,calc((100% - 44px) / 2)));bottom:var(--r7b,min(-4px,calc((100% - 44px) / 2)))}
+html[data-hicon] .shp-spot.hot::before,html[data-hicon] .shp-hs.hot::before{left:auto;bottom:auto}`;document.head.append(s)}catch(e){}
+  try{if(!R07_HIT_ON)return;const go=()=>r07HitSoon();addEventListener("resize",()=>r07HitSoon(300));addEventListener("hashchange",()=>{r07HitSoon(450);setTimeout(go,1500);setTimeout(go,4500)});
+    addEventListener("pointerup",()=>r07HitSoon(300),true);addEventListener("click",()=>r07HitSoon(300),true);
+    document.addEventListener("load",e=>{if(e.target&&e.target.tagName==="IMG")r07HitSoon()},true);
+    const V=document.getElementById("view");if(V)new MutationObserver(ms=>{for(const m of ms)for(const n of m.addedNodes)if(n.nodeType===1&&(n.matches(R07_HIT_SEL)||n.querySelector(R07_HIT_SEL))){r07HitSoon();return}}).observe(V,{childList:true,subtree:true});
+    new MutationObserver(go).observe(document.documentElement,{attributes:true,attributeFilter:["data-fz","data-hicon","class"]});
+    if(document.fonts&&document.fonts.ready)document.fonts.ready.then(go);go()}catch(e){}})();
 /* ================= 🏮 線上大廳滿版水墨圖「千燈天井」（開發者 11/8 定案：Gemini 方案 1＋9 精簡版；史學顧問核過，必改的素材另外換圖）=================
    規劃：story/gemini_app/37 號 md；圖：park/lobbymap/lobby_v4.png（AI 桌的棋盤程式畫完整開局）＋綠幕素材（棋桌、燈籠亮暗、茶客剪影）→ art/lobbymap/ → data/lobbymap/。
    包一層 Lobby(v)：原本的大廳清單（#lb，paint() 每 15 秒和有人進出時重畫）照舊畫、照舊綁好所有按鈕，只是收進「📜 名冊」抽屜（點竹簡從下方拉出來）；
@@ -15094,13 +15169,61 @@ function ttFan(open,quiet){const fan=document.getElementById("ttFan"),sc=documen
   else if(TT_UN){const u=TT_UN;TT_UN=null;if(!quiet)u()}}
 /* 滿版到底：沒有底欄後，圖（照寬度放）比畫面矮時，整張圖等比放大到剛好碰到畫面底（左右各裁掉一點，最多放大 25%），入口標籤若被裁到邊就往內推；
    圖比畫面高（小手機、iPad）照舊照寬度放、可以往下捲。座標都是圖的百分比，走路、出口、桌面跳躍、面板都跟著圖，不會錯位 */
-function ttFill(){const V=document.getElementById("view");if(!V)return;const P=V.querySelector(".shp-page.cq");if(!P){V.classList.remove("tt-fillx");return}const im=P.querySelector(":scope>img");if(!im)return;
+function ttFill(){const V=document.getElementById("view");if(!V)return;const P=V.querySelector(".shp-page.cq");if(!P){V.classList.remove("tt-fillx");try{r07Off(V)}catch(e){}return}const im=P.querySelector(":scope>img");if(!im)return;
   const go=()=>{if(!P.isConnected)return;P.style.width="";P.style.marginLeft="";P.style.maxWidth="";V.classList.remove("tt-fillx");P.querySelectorAll(".shp-spot,.po-sight").forEach(b=>{if(b.dataset.ttL!=null)b.style.left=b.dataset.ttL});
     if(!TABTUBE_ON)return;const vr=V.getBoundingClientRect(),pr=P.getBoundingClientRect(),av=vr.top+V.clientHeight-(parseFloat(getComputedStyle(V).paddingBottom)||0)-pr.top,nw=im.naturalWidth||768,nh=im.naturalHeight||1376,W=pr.width,H=W*nh/nw;
+    try{if(r07Wide(V,P,vr,pr,nw,nh))return}catch(e){}   /* v5 改善單 R07：寬螢幕、橫放的矮螢幕另外排（見 r07Wide）；手機直向不會進去 */
     if(!W||av-H<2||av>H*1.25)return;const set=h=>{const w=Math.round(h*nw/nh);Object.assign(P.style,{maxWidth:"none",width:w+"px",marginLeft:Math.round((W-w)/2)+"px"})};V.classList.add("tt-fillx");set(av);
     {const ex=V.scrollHeight-V.clientHeight;if(ex>0&&ex<40)set(av-ex)}   /* 圖下還有一點邊距（.pad 之類）就扣掉，免得多出幾 px 可以捲 */
     requestAnimationFrame(()=>P.querySelectorAll(".shp-spot,.po-sight").forEach(b=>{if(b.dataset.ttL==null)b.dataset.ttL=b.style.left;const q=b.getBoundingClientRect(),m=6;let d=0;if(q.left<vr.left+m)d=vr.left+m-q.left;else if(q.right>vr.right-m)d=vr.right-m-q.right;if(d)b.style.left="calc("+b.dataset.ttL+" + "+Math.round(d)+"px)"}))};
   if(im.complete&&im.naturalWidth)go();else im.addEventListener("load",go,{once:true})}
+/* v5 改善單 R07（桌面／矮螢幕）：評測 1440×900 首頁內容約 2586px 高、844×390 場景頁約 1518px——滿版圖照畫面寬度放，寬螢幕就變成要先往下捲一大片背景才找得到入口。
+   只在「畫面比可用高度寬」或「寬 600px 以上」、而且圖照寬度放會比可用高度高時才處理；手機直向（寬 390～440、比高度窄）永遠不進來，版面跟原本一模一樣。
+   ① 限寬置中（fit）：圖縮到剛好等於可用高度（桌面 1440×900 約 463px 寬、左右各留約 490px），放在畫面正中間，整張圖一眼看完、不用捲；入口標籤、走路角色、出口都是圖的百分比，跟著圖走。
+   ② 側欄（side）：橫放手機這種矮螢幕，圖縮到等高只剩不到 320px 寬（844×390 只有約 182px），標籤會擠成一團；改成圖照手機寬（畫面一半、320～420px）靠左、可以往下捲著看，
+      右邊空出來的地方放一份「這一頁的入口」大按鈕（每顆至少 48px 高、只放標籤上的大字，點了＝點圖上那個標籤，從哪來回哪去的出口也在），快速功能不用先捲背景；
+      首頁底部的「快下一盤」大按鈕跟著移到側欄底下置中。
+   換頁、轉向、縮放時 ttFill 會重跑：不符合條件就整個還原（r07Off）。開關 R07_WIDE_ON */
+const R07_WIDE_ON=true,R07_MINW=320,R07_SIDEW=420;
+function r07Css(){if(document.getElementById("r07Css"))return;const s=document.createElement("style");s.id="r07Css";s.textContent=`
+#view.r07-fit .shp-page.cq,#view.r07-side .shp-page.cq{box-shadow:0 0 22px rgba(40,26,14,.22)}
+.r07-menu{position:fixed;z-index:26;display:grid;grid-template-columns:repeat(auto-fill,minmax(124px,1fr));gap:8px;align-content:start;overflow-y:auto;overscroll-behavior:contain;padding:2px;box-sizing:border-box;-webkit-overflow-scrolling:touch}
+body:not(.r07-side) .r07-menu{display:none}
+.r07-mi{min-height:48px;margin:0;padding:8px 12px;border-radius:14px;border:1.5px solid #f2c94c;background:rgba(20,16,12,.8);color:#ffe08a;font:800 15px/1.25 var(--serif,serif);letter-spacing:.04em;text-align:center;cursor:pointer;box-shadow:0 2px 8px rgba(0,0,0,.22);-webkit-tap-highlight-color:transparent}
+.r07-mi img{height:1.15em;width:auto;vertical-align:-.18em}.r07-mi:active{transform:scale(.97)}.r07-mi:focus-visible{outline:2px solid #b0301c;outline-offset:2px}`;document.head.append(s)}
+function r07Off(V){if(V)V.classList.remove("r07-fit","r07-side");if(document.body)document.body.classList.remove("r07-side");const M=document.getElementById("r07Menu");if(M)M.remove();
+  const b=document.querySelector(".hm-go-bar[data-r07]");if(b){b.style.left="";b.removeAttribute("data-r07")}}
+/* 寬螢幕模式下把貼邊的標籤推回「圖和畫面重疊的那一塊」（原本的推法量的是畫面，圖變窄以後要量圖） */
+function r07Push(V,P){requestAnimationFrame(()=>{if(!P.isConnected)return;const q0=P.getBoundingClientRect(),v0=V.getBoundingClientRect(),L=Math.max(q0.left,v0.left)+6,R=Math.min(q0.right,v0.right)-6;
+  P.querySelectorAll(".shp-spot,.po-sight").forEach(b=>{if(b.dataset.ttL==null)b.dataset.ttL=b.style.left;const q=b.getBoundingClientRect();if(!q.width)return;let d=0;if(q.left<L)d=L-q.left;else if(q.right>R)d=R-q.right;if(d)b.style.left="calc("+b.dataset.ttL+" + "+Math.round(d)+"px)"});
+  if(typeof r07HitSoon==="function")r07HitSoon()})}
+function r07Wide(V,P,vr,pr,nw,nh){if(!R07_WIDE_ON){r07Off(V);return false}
+  const pb=parseFloat(getComputedStyle(V).paddingBottom)||0,av=V.clientHeight-pb-(pr.top-vr.top+V.scrollTop),W=pr.width,H=W*nh/nw,vw=V.clientWidth;   /* 可用高度照「圖在捲動內容裡的位置」算，捲到一半轉向也對 */
+  if(!W||av<120||H-av<2||!(vw>=600||vw>av)){r07Off(V);return false}
+  r07Css();const fit=Math.floor(av*nw/nh);
+  if(fit>=R07_MINW){r07Off(V);const set=w=>Object.assign(P.style,{maxWidth:"none",width:w+"px",marginLeft:Math.round((W-w)/2)+"px"});set(fit);V.classList.add("r07-fit");
+    {const ex=V.scrollHeight-V.clientHeight;if(ex>0&&ex<60)set(Math.floor((av-ex)*nw/nh))}   /* 圖下還有幾 px 外距（.home-page 的 6px）就扣掉，免得多出一點可以捲 */
+    r07Push(V,P);return true}
+  const col=Math.round(Math.min(R07_SIDEW,Math.max(R07_MINW,W*.5)));if(W-col<200){r07Off(V);return false}
+  Object.assign(P.style,{maxWidth:"none",width:col+"px",marginLeft:"0px"});V.classList.remove("r07-fit");V.classList.add("r07-side");document.body.classList.add("r07-side");
+  r07Menu(V,P,col,pb);r07Push(V,P);return true}
+/* 側欄選單：放在 .app 裡（跟籤筒一樣，不放進 #view，免得被 07w 當成「圖下面的內容」搬進面板），位置照 #view 算 */
+function r07Menu(V,P,col,pb){let M=document.getElementById("r07Menu");
+  if(!M){M=document.createElement("nav");M.id="r07Menu";M.className="r07-menu";M.setAttribute("aria-label","這一頁的入口");const tb=document.getElementById("tabbar");(tb&&tb.parentNode||document.body).append(M)}
+  M._P=P;r07MenuFill(M,P);
+  const vr=V.getBoundingClientRect(),x0=Math.round(vr.left+col+12),x1=Math.round(vr.right-8-(parseFloat(getComputedStyle(document.documentElement).getPropertyValue("--safeR"))||0)),top=Math.round(vr.top+8);let bot=Math.round(vr.top+V.clientHeight-pb-8);
+  const bar=P.querySelector(".hm-go-bar");
+  if(bar){const cx=Math.round((x0+x1)/2);bar.setAttribute("data-r07","1");bar.style.left=cx+"px";const r1=bar.getBoundingClientRect(),d=cx-(r1.left+r1.width/2);if(Math.abs(d)>1)bar.style.left=Math.round(cx+d)+"px";   /* 包含區塊不一定是畫面：量一次、差多少補多少 */
+    const r2=bar.getBoundingClientRect();if(r2.height)bot=Math.min(bot,Math.round(r2.top-8))}
+  Object.assign(M.style,{left:x0+"px",top:top+"px",width:Math.max(0,x1-x0)+"px",maxHeight:Math.max(52,bot-top)+"px"})}
+/* 選單內容＝這一頁看得到的場景標籤（.shp-spot）和標了 data-r07m 的點擊區（例如棋譜庫的古譜書櫥），出口排最後；字和小圖示照抄標籤上的大字，點了＝點那個標籤 */
+function r07MenuFill(M,P){const E=[...P.querySelectorAll(".shp-spot,[data-r07m]")].filter(e=>e.getClientRects().length&&getComputedStyle(e).visibility!=="hidden");
+  E.sort((a,b)=>(a.classList.contains("ex-spot")?1:0)-(b.classList.contains("ex-spot")?1:0));
+  const lab=e=>e.dataset.r07m?esc(e.dataset.r07m):(e.querySelector(":scope>b")||e).innerHTML,k=E.map(lab).join("\n");M._E=E;if(M.dataset.k===k)return;M.dataset.k=k;
+  M.innerHTML=E.map((e,i)=>`<button type="button" class="r07-mi" data-i="${i}">${lab(e)}</button>`).join("");
+  M.querySelectorAll(".r07-mi").forEach(b=>b.onclick=()=>{const e=(M._E||[])[+b.dataset.i];if(e&&e.isConnected)e.click()})}
+/* 標籤晚到（07w9 出口最多等 4 秒才放、07w4 碼頭）：07z r07Hit 每次重算點擊範圍時順便更新選單 */
+function r07MenuSync(){const M=document.getElementById("r07Menu");if(!M||!M._P)return;if(!M._P.isConnected){r07Off(document.getElementById("view"));return}r07MenuFill(M,M._P)}
 /* 回饋 830（開發者 11/9「修正冗餘重複功能」）：同一件事只留一個入口。這裡在換頁後統一收掉「頂欄已經有」的重複：
    ① 滿版圖上方的標題條（.shp-cap）大字跟頂欄頁名一樣＝藏大字（有小字說明就留小字一行）；大字是「頁名・朝代」＝只留後半；
    ② 頁面最上面的 h1／h2 跟頂欄頁名一字不差＝藏起來（例如猜著法）；③ 渡口圖上已有「⛵ 上星槎」標籤時，頂欄的 ⛵ 回星槎藏起來。
@@ -20725,7 +20848,10 @@ function libMap(v,c0){const root=v.querySelector(".lib");if(!root||v.querySelect
   P.querySelectorAll(".lb-cell").forEach(b=>b.onclick=()=>{vibrate(5);book(b.dataset.c,b.getAttribute("aria-label"))});
   /* 開發者 11/11 選 ChatGPT UI 報告 UI-03：經典世界的書櫥是 6 根直書書籤，每根寬不到 15px、彼此貼著，手指很難點準。
      整排書櫥上面蓋一塊透明點擊區，點了先跳「選一本棋譜」清單，每本一顆大按鈕；書籤本身照舊（讀螢幕、鍵盤一樣可以直接點書籤） */
-  if(CLB){const sh=document.createElement("button");sh.type="button";sh.className="lb-shelf";sh.setAttribute("aria-hidden","true");sh.tabIndex=-1;P.append(sh);
+  /* v5 改善單 R07（古譜窄書籤）：朝代書閣（不是經典世界）的 6 格書櫥一樣窄——每格約 45×31px、格子名只有 10.5px 字，上下左右貼著，一樣點不準；
+     改成兩個世界都蓋透明點擊區、點了跳同一張「選一本棋譜」大按鈕清單（每本一顆，至少 52px 高）。書閣的點擊區蓋住 6 格書櫥和格子名（左 4.2%～26.8%、上 50.8%～67%，圖上這一塊沒有別的入口）。
+     點擊區標 data-r07m：橫放矮螢幕的側欄入口選單（07t3 r07Menu）也會列出「📚 古譜」這一項 */
+  {const sh=document.createElement("button");sh.type="button";sh.className="lb-shelf";sh.setAttribute("aria-hidden","true");sh.tabIndex=-1;sh.dataset.r07m="📚 古譜";if(!CLB)Object.assign(sh.style,{left:"4.2%",top:"50.8%",width:"22.6%",height:"16.2%"});P.append(sh);
     sh.onclick=()=>{vibrate(5);sheet("📚 選一本棋譜",b=>{b.innerHTML=`<div class="lb-pick">${LB_OLD.map(([k,n,f])=>`<button type="button" data-c="${esc(k)}" data-f="${esc(f)}">${esc(n)}${f&&f!==n?`<small>${esc(f)}</small>`:""}</button>`).join("")}</div>`;
       b.querySelectorAll("[data-c]").forEach(x=>x.onclick=()=>{vibrate(5);closeSheet();book(x.dataset.c,x.dataset.f)})})}}
   const GO={lbGm:()=>book("gmgames","大師對局"),lbMine:()=>book("play","我的對局",false,"mine"),lbFind:()=>open("搜尋",true),
