@@ -263,7 +263,9 @@ var XQ=(function(){
       levels:LEVELS.map(l=>({n:l.n,name:l.name,desc:l.desc})),record:ls.get("record",{}),
       moves:P.moves.map(moveOut),result:P.result,practice:P.practice||null,thinking:playBusy&&P.turn!==P.human,msg:playMsg,eval:lastEv(P.moves),hint:P.hint,hintN:P.hintN||0,undoN:P.undoN||0,   /* 開發者 11/11 選 v3 規劃書 B03：這盤用過幾次提示、悔棋，給畫面標示用 */
       legal:!P.result&&P.turn===P.human?legal(P.board,P.turn):[],check:!P.result&&inCheck(P.board,P.turn)?kingSq(P.board,P.turn):-1,engine:true}}
-  async function playPost(p,b){if(ensureP()&&PLAY_MUT.has(p)){saveLog("clash",P);try{window.dispatchEvent(new CustomEvent("xq-play-newer",{detail:{id:P.id}}))}catch(e){}return playState()}   /* 評比循環第 2 輪：畫面上那盤已經被另一個分頁下過＝這一下不算，改看最新的 */
+  /* 評比循環第 3 輪（兩分頁同一瞬間寫入）：會改盤面的動作（PLAY_MUT）用 Web Locks 排隊，同一時間只有一個分頁在改；鎖裡面 ensureP 先重讀最新版，再照版本檢查決定接受或提示「已切換到最新」。不支援 Web Locks 的瀏覽器照舊只靠版本號 */
+  function playPost(p,b){try{if(PLAY_MUT.has(p)&&typeof navigator!=="undefined"&&navigator.locks&&navigator.locks.request)return navigator.locks.request("xq-play-write",()=>playPostIn(p,b))}catch(e){}return playPostIn(p,b)}
+  async function playPostIn(p,b){if(ensureP()&&PLAY_MUT.has(p)){saveLog("clash",P);try{window.dispatchEvent(new CustomEvent("xq-play-newer",{detail:{id:P.id}}))}catch(e){}return playState()}   /* 評比循環第 2 輪：畫面上那盤已經被另一個分頁下過＝這一下不算，改看最新的 */
     if(p==="/play/new"){playNew(b.human==="b"?"b":"r",lvAdj(b,lvIn(b)),!b.pre&&!!b.ranked,b.pre||null,false,typeof b.arena==="string"&&/^[a-z]{2,8}$/.test(b.arena)?b.arena:null,false,jid(b.journey),b.lv);
       /* 開發者 11/11：茶肆盲棋（練功房的級數、看不到棋子）。對局編號結尾加 -b 當記號（存檔、收起來、換盤都帶著）：不記練功房戰績、不算我的棋力（04-stats skillRows） */
       if(b.blind&&P&&!P.ranked&&kindOf(P)==="cpu"&&!/-b$/.test(P.id)){P.id+="-b";savePlay()}if(P&&!P.ranked&&b.rlv!=null&&Number.isInteger(+b.rlv)){P.rlv=Math.max(0,Math.min(RLV.length-1,+b.rlv+dxOf(b)));savePlay()}playMsg="";setTimeout(playEngine,0)}
