@@ -1379,7 +1379,7 @@ html[data-hicon] .tabbar button.on{box-shadow:inset 0 -3px 0 currentColor}
       if(!window.caches)return go();caches.keys().then(function(ks){return Promise.all(ks.filter(function(k){return k.indexOf("xqlab-app-")===0}).map(function(k){return caches.delete(k)}))})
         .then(function(){return navigator.serviceWorker&&navigator.serviceWorker.getRegistration()}).then(function(r){return r&&r.update()}).catch(function(){}).then(go)}};setTimeout(chk,4000)})();
 </script>
-<script>window.XQ_OFFLINE=true;window.XQ_BUILD="20261111-1345";</script>
+<script>window.XQ_OFFLINE=true;window.XQ_BUILD="20261111-1415";</script>
 <script src="core.js"></script>
 <script src="engine.js"></script>
 <script src="local.js"></script>
@@ -18733,7 +18733,7 @@ function CpuGame(v,practicePage,mode){
     /* 意見回饋 335：錯棋重練是自己的頁面——標題寫「錯棋重練」，上面沒有積分／自選／擂台／公園，返回回到錯棋清單 */
     /* 意見回饋 349：朝代擂台（和石桌往事）的上方不放積分／自選，只寫是哪裡 */
     setTop(pr?(st.practice.drill?"🎯 "+(st.practice.title||"練習"):"🔁 錯棋重練"):MODE==="arena"?"🏯 朝代擂台":MODE==="journey"?(st&&st.journey==="park"?"🌳 "+parkName(store.get("era","classic")):(String(st&&st.journey||"").startsWith("bt:")?"⚔ ":"🪨 ")+jName(st&&st.journey)):"挑戰電腦",pr?(st.practice.drill?"#/":"#/redo"):MODE==="journey"?(st&&st.journey==="park"?"^#/port":st&&st.journey?jBack(st.journey):"#/adventure"):MODE==="arena"?"^#/port":(typeof CPUROOM_ON!=="undefined"&&CPUROOM_ON?"#/cpuroom":"#/"),   /* 意見回饋 697：園子、擂台的「‹」回這一朝的渡口 */pr?[]:[/* 意見回饋 346：挑戰電腦看不到擂台、驛站的入口——🏯 只在擂台那盤出現（換擂主）、🏮 只在石桌往事的公園出現 */...(MODE==="arena"?[arenaBtn]:[]),...(MODE==="journey"&&OFF&&st&&st.journey==="park"?[["🏮",()=>walk("inn",()=>navReplace("#/journey/inn")),"走去驛站"]]:[]),...(lk?[]:[parkBtn(()=>{draw();topBar()})]),...(MODE==="arena"||(MODE==="journey"&&st&&/^(park$|inn:)/.test(String(st.journey||"")))?[["⛵",()=>goUp("#/adventure"),"回星槎"]]:[])].concat(vcOn()?[["🎤",()=>voiceMove(()=>!st||st.result?{why:"這盤已經結束"}:st.turn!==st.human||st.thinking?{why:"還沒輪到你"}:{board:st.board,legal:st.legal,play:(f,t)=>{sel=-1;post("/play/move",{f,t})}}),"聲控走棋"]]:[]));
-    try{if(seg&&MODE==="cpu"){const t=$("#title");t.textContent="";t.append(seg)}}catch(e){}
+    try{if(seg&&MODE==="cpu"){const t=$("#title");t.textContent="";if(typeof hbFromHome==="function"&&hbFromHome())t.textContent="♟ 快速對局";else t.append(seg)}}catch(e){}   /* 11/11：橋上快速對局不放晉級賽／練功房分頁 */
     try{if(MODE==="cpu"&&!pr&&typeof CPUROOM_ON!=="undefined"&&CPUROOM_ON){const b=$("#back");if(b)b.innerHTML="<b>‹</b>走回雅間"}}catch(e){}if(typeof hbHomeBack==="function")hbHomeBack()};   /* 11/11：從首頁石桌／立即對局進來的，返回回首頁（07y hbHomeBack） */   /* 11/10：從茶坊後園走回雅間 */   /* 第一次呼叫時 seg 還沒建立 */
   topBar();
   /* 意見回饋 276、403、413：首頁「🏯 朝代擂台」改走 #/arena，進頁時 /play/open 先換到擂台那一盤（沒有就開目前朝代的），還沒開始才打開擂主卡；不再用 openArena 計時 */
@@ -18897,7 +18897,7 @@ function CpuGame(v,practicePage,mode){
               return nx?resBtns(["📖 下一回 ›",()=>{if(nx.book===2)store.set("legBook",2);goUp(SHELF(nx.book===2?2:1),()=>nx.book===2?legendRead2(nx.n):legendRead(nx.n))}],bk):resBtns(bk)}
             return resBtns(again,bk)})(),"res");return}
       modal(`<div class="em">${win?"🏆":draw0?"🤝":"💪"}</div><h2>${win?"你贏了！":draw0?"和局":"這盤輸了"}</h2><p class="muted">${esc(st.result.why)}・${st.journey?`🪨 ${esc(jName(st.journey))}`:`對手第 ${st.level} 級「${esc(lv.name||"")}」`}</p>`+XPL,
-        resBtns([win&&st.level<18?"挑戰下一級 ›":"再來一局",()=>api("/play/new",{human:st.human,lx:win&&st.level<18?st.level+1:st.level})   /* 開發者 11/6 修：等級是細分的 1～18 級，用 lx 傳、上限 18；原本傳 level 會被再換算一次，難度暴跳 */.then(render).catch(e=>toast(e.message))]),"res")}}
+        resBtns([win&&st.level<18&&!FH()?"挑戰下一級 ›":"再來一局",()=>api("/play/new",{human:st.human,lx:win&&st.level<18&&!FH()?st.level+1:st.level})   /* 開發者 11/6 修：等級是細分的 1～18 級，用 lx 傳、上限 18；原本傳 level 會被再換算一次，難度暴跳 */.then(render).catch(e=>toast(e.message))]),"res")}}
   // 賽後報告：用這一盤自己的編號打開（意見回饋 234：以前拿存檔清單第一筆，存檔還沒寫完或順序不同時會開到別盤）
 async function review(rep,id,at){let it=null;for(let k=0;k<12&&!it;k++){try{const d=await api("/db/items?c=play");it=id?d.items.find(x=>x.id===id):d.items[0]}catch(e){}if(!it)await new Promise(r=>setTimeout(r,250))}
   if(!it)return toast("找不到這盤的存檔");if(rep)store.set("openReport","play/"+it.id);if(at)store.set("openAt",{c:"play",id:it.id,ply:at.ply,why:at.why});REVIEW_BACK={id:it.id,h:location.hash};location.hash="#/db/play/"+encodeURIComponent(it.id)}   /* 意見回饋 607：記下從哪一盤去看報告，回來時不要自動開新局 */
@@ -18967,7 +18967,14 @@ async function review(rep,id,at){let it=null;for(let k=0;k<12&&!it;k++){try{cons
   function jNewSheet(){const j=st.journey,s0=jFindStage(j),live=!st.result&&st.moves.length>=2;
     modal(`<div class="em">🪨</div><h2>${esc(jName(j))}</h2><p class="muted">${live?"這盤還沒下完，重下就會放棄這一盤。":"跟同一位對手再下一盤，或回去換一位。"}</p>`,
       [["⚔ 重下這一盤",()=>{shownResult=null;sel=-1;if(s0)jPlay(s0,true);else jAgain(st).then(render).catch(e=>toast(e.message))}],["‹ 回"+jPlace(j),()=>goUp(jBack(j))],["取消",null,true]])}   /* 意見回饋 607：退回那一層 */
-  function newSheet(){if(!st)return;if(MODE==="arena")return arenaSheet(ARENA[st.arena]?st.arena:store.get("era","classic"),arenaStart);if(MODE==="journey")return jNewSheet();   /* 意見回饋 396：擂台裡按「新局」只出現挑戰擂台（再挑戰擂主、集章簿），不出現自選難度 */
+  /* 開發者 11/11（截圖：橋上快速對局也能選難度、切晉級賽）：從首頁快速對局進來的（07y hbFromHome），新局、等級按鈕只給「再來一盤（同樣難度）」，
+   想換難度、打晉級賽就去茶肆（快局的價值是快，選難度留給茶肆）；頂欄不放晉級賽／練功房分頁，結算視窗也不給「挑戰下一級」 */
+  const FH=()=>MODE==="cpu"&&typeof hbFromHome==="function"&&hbFromHome();
+  function quickSheet(){const hub=typeof hbHubN==="function"?hbHubN():"茶肆";sheet("♟ 快速對局",b=>{b.innerHTML=`<p class="muted" style="margin:0 0 10px">快速對局用上一盤的難度（第 ${st.level} 級）。想換難度、打晉級賽，請到${esc(hub)}。</p>
+      <button class="btn" id="qkAgain" style="width:100%;margin:0 0 8px">♟ 再來一盤（同樣難度）</button><button class="btn ghost" id="qkHub" style="width:100%;margin:0">⚔ 去${esc(hub)}選難度、打晉級賽</button>`;
+    b.querySelector("#qkAgain").onclick=()=>{closeSheet();const go=()=>api("/play/new",{human:st.human,lx:st.level,ranked:!!st.ranked}).then(render).catch(e=>toast(e.message));if(!st.result&&st.moves.length>=2)confirmBox(st.ranked?"這盤晉級賽還沒下完，重開會算輸，確定？":"這盤還沒下完，確定重開一盤？",go,"再來一盤");else go()};
+    b.querySelector("#qkHub").onclick=()=>{closeSheet();location.hash="#/hub/battle"}})}
+  function newSheet(){if(!st)return;if(FH())return quickSheet();if(MODE==="arena")return arenaSheet(ARENA[st.arena]?st.arena:store.get("era","classic"),arenaStart);if(MODE==="journey")return jNewSheet();   /* 意見回饋 396：擂台裡按「新局」只出現挑戰擂台（再挑戰擂主、集章簿），不出現自選難度 */
     let side=st.human,level=st.level||store.get("cpuLevel",6);const ranked=OFF&&!!st.ranked;
     const sh=sheet(ranked?"🥇 晉級賽・開新局":"📚 練功房・開新局",b=>{const rec=st.record||{},CR=st.cpuRate||{};
       const paint=()=>{const span=CR.hi!=null?CR.hi-CR.lo:0,pct=span?Math.round(100*(CR.pts-CR.lo)/span):100;
