@@ -399,6 +399,45 @@ var XQ=(function(){
 
   // ---------- 路由：同樣的網址，該在手機處理的就在手機處理 ----------
   const REMOTE=new Set(["/state","/start","/pause","/new","/an/explain","/remote","/clients"]);
+  /* ---------- 開發者 11/11 hspx「車輪戰」：一個人同時跟 3／5／10 位電腦棋客下（全部執紅先走），級數以中心級為準由弱到強排一圈（每桌差一級）。
+     狀態存在 ls「simul」（每桌只存著法，載入時重建盤面）；電腦輪流替「輪到它」的桌子出棋（XQEngine.search 本身會排隊），高級數每步最多想 3 秒，不然十桌會等太久。
+     每桌下完存進人機對局（一步都沒下的桌子不存；id＝開賽時間-s桌號；不算段位、不記各級戰績，也不算進「我的棋力」：04-stats skillRows 認 -s 結尾排除）；
+     全部下完記各盤數的最佳紀錄 simulBest（得分最高，同分比中心級數）、累計戰績 simulRec。
+     重開一場時，已經走過棋、還沒下完的桌子算輸（跟晉級賽中途離開一樣） ---------- */
+  let SM=null,smBusy=false,smFail=0;
+  const smLv=(n,lx)=>{const a=Math.max(1,Math.min(lx-Math.floor((n-1)/2),19-n));return Array.from({length:n},(_,i)=>a+i)};   /* 統計複查：靠近 1 或 18 級時整段往內移，每桌還是差一級 */
+  function smLoad(){if(SM)return SM;const s=ls.get("simul",null);if(!s||!Array.isArray(s.tb))return null;
+    SM={...s,tb:s.tb.map(t=>{const S={...t,moves:(t.moves||[]).slice()};stateRebuild(S);return S})};return SM}
+  function smSave(){if(SM)ls.set("simul",{id:SM.id,n:SM.n,lx:SM.lx,at:SM.at,done:SM.done||null,tb:SM.tb.map(t=>({i:t.i,level:t.level,result:t.result||null,saved:!!t.saved,moves:t.moves.map(m=>({f:m.f,t:m.t,by:m.by}))}))});
+    try{window.dispatchEvent(new Event("xq-simul"))}catch(e){}}
+  function smEnd(t,w,why){t.result={w,why};
+    if(!t.saved){t.saved=true;if(t.moves.some(m=>m.by==="r"))pushGame("play",{id:SM.id+"-s"+(t.i+1),date:SM.id.slice(0,10),level:t.level,ranked:false,human:"r",result:t.result,simul:{n:SM.n,i:t.i+1},moves:saveMoves(t.moves)})}
+    if(SM.tb.every(x=>x.result)&&!SM.done){const s={w:0,d:0,l:0};for(const x of SM.tb)s[!x.result.w?"d":x.result.w==="r"?"w":"l"]++;SM.done={...s,pts:s.w+s.d/2,at:Date.now()};
+      const B=ls.get("simulBest",{}),k=String(SM.n),o=B[k];if(!o||SM.done.pts>o.pts||(SM.done.pts===o.pts&&SM.lx>o.lx))B[k]={pts:SM.done.pts,w:s.w,d:s.d,l:s.l,lx:SM.lx,at:SM.done.at};ls.set("simulBest",B);
+      const C=ls.get("simulRec",{}),c=C[k]||(C[k]={plays:0,w:0,d:0,l:0,perfect:0});c.plays++;c.w+=s.w;c.d+=s.d;c.l+=s.l;if(s.w===SM.n)c.perfect++;ls.set("simulRec",C)}}
+  function smApply(t,f,to){stateApply(t,f,to);const r=judgeState(t);if(r)smEnd(t,r.w,r.why);smSave()}
+  async function smEngine(){if(smBusy||!smLoad())return;const t=SM.tb.find(x=>!x.result&&x.turn!=="r");if(!t)return;
+    smBusy=true;const id=SM.id,n=t.moves.length,lv=LEVELS[t.level-1]||LEVELS[2];
+    try{const r=await XQEngine.search({moves:t.moves.map(m=>iccs(m.f,m.t))},lv.movetime?{movetime:Math.min(lv.movetime,3000)}:{depth:lv.depth},lv.multipv||1);
+      if(!SM||SM.id!==id||t.moves.length!==n||t.result)return;
+      const mv=pickMove(r,lv),f=parseSq(mv.slice(0,2)),to=parseSq(mv.slice(2,4));if(!legal(t.board,t.turn).some(([a,b])=>a===f&&b===to))throw new Error("引擎給出不合法著法 "+mv);
+      smApply(t,f,to);smFail=0}
+    catch(e){smFail++}
+    finally{smBusy=false;setTimeout(smEngine,smFail?Math.min(30000,1500*2**Math.min(smFail,5)):0)}}
+  function smState(){const best=ls.get("simulBest",{});if(!smLoad())return{none:true,best};
+    return{id:SM.id,n:SM.n,lx:SM.lx,done:SM.done||null,best,rec:ls.get("simulRec",{}),busy:smBusy,engFail:smFail,tb:SM.tb.map(t=>({i:t.i,level:t.level,name:(L=>L.movetime>3000?String(L.name||"").replace("・全力","")+"（每步 3 秒）":L.name||"")(LEVELS[t.level-1]||{}),board:t.board,turn:t.turn,result:t.result||null,
+      moves:t.moves.map(m=>({f:m.f,t:m.t,by:m.by,cn:m.cn,ck:!!m.ck,cap:m.cap?1:0})),check:!t.result&&inCheck(t.board,t.turn)?kingSq(t.board,t.turn):-1,legal:t.result||t.turn!=="r"?[]:legal(t.board,"r")}))}}
+  function simulApi(p,b){const T=i=>{if(!smLoad())throw new Error("還沒開始車輪戰");const t=SM.tb[+i];if(!t)throw new Error("沒有這一桌");return t};
+    if(p==="/simul/new"){if(smLoad()&&!SM.done)for(const t of SM.tb)if(!t.result&&t.moves.some(m=>m.by==="r"))smEnd(t,"b","重開車輪戰，算輸");
+      const n=[3,5,10].includes(+b.n)?+b.n:5,lx=Math.max(1,Math.min(18,Math.round(+b.lx||5)));
+      SM={id:gameId(),n,lx,at:Date.now(),done:null,tb:smLv(n,lx).map((level,i)=>{const S={i,level,moves:[],result:null};stateRebuild(S);return S})};smSave()}
+    else if(p==="/simul/move"){const t=T(b.i),f=+b.f,to=+b.t;if(t.result)throw new Error("這桌已經下完");if(t.turn!=="r")throw new Error("還沒輪到你");
+      if(!legal(t.board,"r").some(([x,y])=>x===f&&y===to))throw new Error("這步不合法");smApply(t,f,to)}
+    else if(p==="/simul/resign"){const t=T(b.i);if(!t.result){smEnd(t,"b","你認輸");smSave()}}
+    else if(p==="/simul/resignall"){if(smLoad()){for(const t of SM.tb)if(!t.result)smEnd(t,"b","你認輸");smSave()}}
+    else if(p==="/simul/clear"){if(smLoad()&&!SM.done)throw new Error("車輪戰還沒下完");SM=null;ls.set("simul",null)}
+    else if(p!=="/simul/state")throw new Error("找不到 "+p);
+    setTimeout(smEngine,0);return smState()}
   async function api(u,b){
     const url=new URL(u,"http://x"),p=url.pathname,c=url.searchParams.get("c");
     if(REMOTE.has(p)||((p==="/db/items"||p==="/db/item")&&c==="ai"))return remote(u,b);
@@ -409,6 +448,7 @@ var XQ=(function(){
       /* 意見回饋 301：有校正檔就把每題校正過的鑑別度 a、難度 b 加上去 */
       if(p==="/quiz/data")try{const c=await (await fetch("data/quiz-calib.json")).json();for(const it of d.items){const k=c.items&&c.items[it.id];if(k){it.ca=k.a;it.cb=k.b}}}catch(e){}
       return d}
+    if(p.startsWith("/simul/"))return simulApi(p,b||{});   /* 11/11 車輪戰 */
     if(p==="/play/state")return playState();
     if(p.startsWith("/play/"))return playPost(p,b||{});
     // 線上大廳的網路對局（不用電腦）
