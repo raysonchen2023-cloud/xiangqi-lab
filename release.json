@@ -1,8 +1,8 @@
 {
- "version": "20261112-0640",
- "checkedAt": "2026-11-11T22:31:13.831Z",
- "html": "46b60bf1bfb8",
- "sw": "32ef85b5a124",
+ "version": "20261112-0650",
+ "checkedAt": "2026-11-11T22:44:40.680Z",
+ "html": "62349e946290",
+ "sw": "726997db6798",
  "scripts": 4,
  "modules": {
   "00-util.js": "71f9b90aae94",
@@ -50,7 +50,7 @@
   "07x2-lobbymap.js": "fadf48e172f6",
   "07x3-rostermap.js": "4345d66fb94a",
   "07x4-lobbysafe.js": "14939d1b5dac",
-  "07s2-setmap.js": "2d3c12a5770a",
+  "07s2-setmap.js": "e70593dea95c",
   "07t2-tabink.js": "1dddba96e53c",
   "07t3-tabtube.js": "c66564be2655",
   "07s3-feedback.js": "172fb5d2ecff",
@@ -88,7 +88,7 @@
   "10d-coach.js": "63b7bbfef7f0",
   "11-watch.js": "020277592a67",
   "07q2-coop.js": "8b666670e73c",
-  "11b-a11y.js": "1f75cc7af481",
+  "11b-a11y.js": "94b711a5546a",
   "11c-a11ysnd.js": "45e5216c18b2"
  },
  "differsFromSource": [

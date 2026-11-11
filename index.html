@@ -1527,7 +1527,7 @@ html[data-hct] .player.on .clk{background:#00563B;color:#FFFFFF;border-color:#00
       if(!window.caches)return go();caches.keys().then(function(ks){return Promise.all(ks.filter(function(k){return k.indexOf("xqlab-app-")===0}).map(function(k){return caches.delete(k)}))})
         .then(function(){return navigator.serviceWorker&&navigator.serviceWorker.getRegistration()}).then(function(r){return r&&r.update()}).catch(function(){}).then(go)}};setTimeout(chk,4000)})();
 </script>
-<script>window.XQ_OFFLINE=true;window.XQ_BUILD="20261112-0640";</script>
+<script>window.XQ_OFFLINE=true;window.XQ_BUILD="20261112-0650";</script>
 <script src="core.js"></script>
 <script src="engine.js"></script>
 <script src="local.js"></script>
@@ -15960,7 +15960,7 @@ const SM_SPOTS=[
    沒有列在這裡的入口照舊：菱花鏡＝看 3D 立繪、信插／手札＝意見回饋頁、文牒／書箱＝07s4 的換手機面板。整卷畫軸（四個分頁全部設定）留著，入口改成頂欄的「📜 全部設定」。 */
 const SM_EP={smFan:["sec:#era"],smWin:["sec:#pt"],smBoard:["el:#pv","sec:#th","el:#hiCon","sec:#mv"],smBrush:["head:#ftM","sec:#fzM","head:#zhO"],
   smKnife:["sec:.bpc","el:#chdForm"],smRobe:["sec:#meFig","sec:#botT","sec:#epSw"],smTag:["title:官階"],
-  smInc:["sec:#snd3"],smQin:["sec:#snd2"],smBell:["sec:#snd"],smLock:["btn:#sh","btn:#a2h","sec:#fmSet","title:隱私","title:進階"]};   /* 11/9：小鎖匣加家長與護眼（843，07m5）；線上大廳的名字與封鎖名單（841／842，07x4）接在「我的角色」卡後面，跟著衣帽架一起出現 */
+  smInc:["sec:#snd3"],smQin:["sec:#snd2"],smBell:["sec:#snd"],smLock:["sec:#axmSw","btn:#sh","btn:#a2h","sec:#fmSet","title:隱私","title:進階"]};   /* 11/12：♿ 無障礙（讀屏與鍵盤模式、高對比、測試與證據，11b-a11y.js axmSetRows）原本在設定房間沒有入口，放在小鎖匣最上面 */   /* 11/9：小鎖匣加家長與護眼（843，07m5）；線上大廳的名字與封鎖名單（841／842，07x4）接在「我的角色」卡後面，跟著衣帽架一起出現 */
 /* 11/12 ChatGPT UI 冗餘盤查（story/104 號）第 7 項：棋盤外觀三個入口照「點了會改什麼」命名——摺扇＝朝代配色、支摘窗＝淺色／深色、炕桌＝試看棋盤（預覽、試走、材質、特效）；
    面板裡 05-settings 畫的小節標題（棋盤的朝代樣式、棋盤風格、深淺色）在這裡換成同一套字（SM_SECNM，只換畫面上的字，不動設定值與存檔），從場景點進去看到的面板標題、小節標題一致。
    木紋、石板、宣紙…那一組（BOARD_THEMES）標成「棋盤材質」 */
@@ -23835,7 +23835,7 @@ function axmSetRows(){const R=(id,t,d,on,lb)=>`<label class="row" style="justify
     +R("axmSw","♿ 讀屏與鍵盤模式","下棋一律用平面棋盤（3D 園子改用地點清單），每一格都念得出來；方向鍵移動、Enter 選子落子；每一步念出來；關掉裝飾動畫",axmOn(),"讀屏與鍵盤模式")
     +(typeof axsSetRow==="function"?axsSetRow():"")
     +R("hctSw","高對比主題（低視力）","白底黑字、黑色棋盤線；主要文字和棋子字對比 7 比 1 以上（圖片上的字另外檢查）；提示用形狀加顏色",axmHct(),"高對比主題")
-    +`<p class="muted" style="font-size:12.5px;margin:6px 2px 8px">字級可以到「最大」2 倍，也可以跟著手機的字級：在「棋盤 → 更多設定 → 字級」。鍵盤：B 棋盤、R 讀盤面、S 狀態、M 上一步、W 我在哪、? 說明。</p>`
+    +`<p class="muted" style="font-size:12.5px;margin:6px 2px 8px">字級可以到「最大」2 倍，預設跟著手機的字級：在設定房間的「🖌 字體」。鍵盤：B 棋盤、R 讀盤面、S 狀態、M 上一步、W 我在哪、? 說明。</p>`
     +`<div class="row" style="gap:8px;flex-wrap:wrap;padding:0 2px 10px"><button type="button" class="btn ghost" data-xqdoc="a11y" style="width:auto;margin:0;padding:6px 12px;font-size:13.5px;min-height:44px">📋 測試與證據</button></div></div>`}   /* 第 5 輪：P16.3～P16.5 怎麼驗證（art/docs/a11y.md，XQDOC.a11y） */
 function axmFzSysRow(){let on=false;try{on=fzSysOn()}catch(e){}
   return`<label class="row" style="justify-content:space-between;padding:6px 2px;gap:10px"><span style="min-width:0"><b>跟著系統字級</b><br><span class="muted" style="font-size:12.5px">盡量跟著手機設定的文字大小，實際效果依手機與瀏覽器而定（iPhone：設定 → 輔助使用 → 顯示與文字大小 → 更大的文字）</span></span><input type="checkbox" class="sw" id="fzSysSw"${on?" checked":""} aria-label="跟著系統字級"></label>`}
