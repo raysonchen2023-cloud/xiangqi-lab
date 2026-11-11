@@ -162,7 +162,7 @@ var XQ=(function(){
     return{rules:C.REP_RULES,repetition:P.repetition||null,kind:kindOf(P),others,other:others[0]||null,journey:P.journey||null,start:P.start||null,startTurn:P.startTurn||"r",id:P.id,board:P.board,turn:P.turn,human:P.human,level:P.level,ranked:!!P.ranked,reward:!!P.reward,arena:P.arena||null,stamp:P.stamp||null,prize:P.prize||null,rkName:P.ranked?RANKS[P.rk][0]:null,rate:P.rate||null,
       cpuRate:{pts:CR.pts,rank:RANKS[ci][0],w:CR.w,l:CR.l,d:CR.d,next:nx?nx[0]:null,toNext:nx?nx[1]-CR.pts:0,lo:RANKS[ci][1],hi:nx?nx[1]:null,hist:CR.hist},
       levels:LEVELS.map(l=>({n:l.n,name:l.name,desc:l.desc})),record:ls.get("record",{}),
-      moves:P.moves.map(moveOut),result:P.result,practice:P.practice||null,thinking:playBusy&&P.turn!==P.human,msg:playMsg,eval:lastEv(P.moves),hint:P.hint,
+      moves:P.moves.map(moveOut),result:P.result,practice:P.practice||null,thinking:playBusy&&P.turn!==P.human,msg:playMsg,eval:lastEv(P.moves),hint:P.hint,hintN:P.hintN||0,undoN:P.undoN||0,   /* 開發者 11/11 選 v3 規劃書 B03：這盤用過幾次提示、悔棋，給畫面標示用 */
       legal:!P.result&&P.turn===P.human?legal(P.board,P.turn):[],check:!P.result&&inCheck(P.board,P.turn)?kingSq(P.board,P.turn):-1,engine:true}}
   async function playPost(p,b){ensureP();
     if(p==="/play/new"){playNew(b.human==="b"?"b":"r",lvAdj(b,lvIn(b)),!b.pre&&!!b.ranked,b.pre||null,false,typeof b.arena==="string"&&/^[a-z]{2,8}$/.test(b.arena)?b.arena:null,false,jid(b.journey),b.lv);if(P&&!P.ranked&&b.rlv!=null&&Number.isInteger(+b.rlv)){P.rlv=Math.max(0,Math.min(RLV.length-1,+b.rlv+dxOf(b)));savePlay()}playMsg="";setTimeout(playEngine,0)}
