@@ -1075,7 +1075,8 @@
          元 氈帳（粗木柱、灰白氈微圓頂、藍邊）；明清 捲棚（方木柱、黃褐油布捲棚頂）。柱子用一般材質（後面的水墨處理會加墨線），篷頂、布幔另描一圈墨線。
          篷頂在鏡頭上方以外（預設斜上方、俯視）都淡成半透明，棋盤和對手一定看得清楚；平視（鏡頭低於簷口）才是實的。
          晴天：左右和後面的布幔捲成一捆綁在簷下；下雨：開場約一秒後繩子一鬆「唰」地垂下一半（前面朝鏡頭那一面不放，免得擋棋盤）。CANO 給雨雪用：篷子底下不下 */
-      try{const G=["qin","han","sanguo","weijin","nanbei"].includes(EK)?1:["sui","tang"].includes(EK)?2:EK==="yuan"?4:["ming","qing"].includes(EK)?5:3;
+      /* 11/12 開發者「在茶肆內車輪戰就不需要篷子了，也不應該下雨下雪」：室內（opt.indoor）不搭遮篷、不下雨雪 */
+      if(!opt.indoor)try{const G=["qin","han","sanguo","weijin","nanbei"].includes(EK)?1:["sui","tang"].includes(EK)?2:EK==="yuan"?4:["ming","qing"].includes(EK)?5:3;
         const PX=12.5,PZ=18.5,EY=FL+17.5,CG=new T.Group();CG.name="canopy";
         const C={1:{post:"#4a3324",roof:"#3a2c27",trim:"#7a2418",cloth:"#6e2a20",postR:.42,sq:0},2:{post:"#a63a24",roof:"#2f5c66",trim:"#c9a43a",cloth:"#3c6a72",postR:.45,sq:0},
           3:{post:"#b9a46c",roof:"#d6cdb4",trim:"#9a8a66",cloth:"#cfc5aa",postR:.3,sq:0},4:{post:"#6a4a30",roof:"#e3ddcf",trim:"#2f4f7a",cloth:"#d8d1c1",postR:.55,sq:0},5:{post:"#4a2e1c",roof:"#a8803e",trim:"#6a4a22",cloth:"#b08b4a",postR:.45,sq:1}}[G];
@@ -1114,7 +1115,7 @@
       /* 11/10 開發者「如果當時有下雨或下雪，對戰的時候也會出現，甚至讓畫面積雪」：開場問 App（07w7 window.XQ_PARKWX，跟渡口、棋鎮同一份天氣）這一朝現在下不下——
          雨＝斜斜的細雨絲落到石台、地面稍微變暗像濕了；雪＝雪花慢慢飄、左右晃，石台和外圍山坡從一層薄雪開始，下得越久積得越白（約兩分半到最厚）。
          手機減少動態效果＝只留積雪／濕地，不下粒子。粒子都在石台四周一個大盒子裡循環，不吃霧、不寫深度 */
-      try{const WI=typeof window.XQ_PARKWX==="function"?window.XQ_PARKWX(EK):null;if(WI&&(WI.t==="rain"||WI.t==="snow")){
+      try{const WI=typeof window.XQ_PARKWX==="function"&&!opt.indoor?window.XQ_PARKWX(EK):null;if(WI&&(WI.t==="rain"||WI.t==="snow")){
         const snow=WI.t==="snow",A=Math.max(.55,Math.min(1,WI.a||1)),RM=(()=>{try{return matchMedia("(prefers-reduced-motion: reduce)").matches}catch(e){return false}})();
         const BX=17,Y0=FL,Y1=FL+24,N=RM?0:Math.round((snow?(MOB?1100:1800):(MOB?900:1400))*A),objs=[];
         /* 11/10 經典世界（紙墨世界，Gemini 71 作法 2）：雨換成直直落下的短墨滴、雪換成碎宣紙片、積雪是淡紙色 */

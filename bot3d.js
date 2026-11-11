@@ -338,6 +338,8 @@
     cl.duration=P;cl.xqT0=IDLE_T0}
   function attachGLB(B,o){if(!window.XQGLB)return;const meId=(String(o.glb||"").match(/\/(\w+)\.glb/)||[])[1],meCh=PC(),meK=eraK();const box0=new T.Box3().setFromObject(B.bot),h0=box0.max.y-box0.min.y,y0=box0.min.y;
     const face=B.torso.children.find(m=>m.isMesh&&m.geometry&&m.geometry.type==="CircleGeometry");
+    /* hspx（開發者 11/12「車輪戰一開始切換棋客時，會先閃爍小帥的舊圖才變成 3D 角」）：要換真實模型時，Q 版先藏起來，模型載不到才放回來（原本 Q 版先露面、模型到了才藏） */
+    const q0=[...B.bot.children];q0.forEach(ch=>{ch.visible=false});
     B.glbP=window.XQGLB(o.glb).catch(()=>window.XQGLB(o.glb)).then(sc=>{if(!sc)throw new Error("empty");   /* 意見回饋 505：失敗自動重試一次；結果交給畫面顯示「載入中／失敗」 */const g=sc.clone(true);B.glbRoot=g;try{const rb=new T.Box3().setFromObject(g);B.glbRaw={min:rb.min.clone(),max:rb.max.clone()}}catch(e){}g.rotation.y=-Math.PI/2;g.updateMatrixWorld(true);   /* 意見回饋 679：點角色身上的物件，用模型原本的範圍換算位置（glbRoot、glbRaw） */
       /* 開發者 11/5：武俠角色的模型有 Tripo 綁的骨架和動作（待機、走路、揮手、歡呼、鞠躬）。clone 不會把骨架接到複製的骨頭上，照骨頭名字重接；
          先擺成待機的第一格（沒有每格更新動畫的畫面，也不會停在張開手臂的骨架原始姿勢） */
@@ -361,7 +363,7 @@
         let pz=-1e9;const rc=new T.Raycaster();for(const[dx,dy]of[[0,0],[.75,0],[-.75,0],[0,.75],[0,-.75],[.53,.53],[-.53,.53],[.53,-.53],[-.53,-.53]]){rc.set(new T.Vector3(px+dx*rad,py+dy*rad,R.back?bb.min.z-sz.z-1:bb.max.z+sz.z+1),new T.Vector3(0,0,R.back?1:-1));const hit=rc.intersectObject(g,true)[0];const hz=hit?(R.back?-hit.point.z:hit.point.z):-1e9;if(hz>pz)pz=hz}if(pz<-1e8)pz=R.back?-bb.min.z:bb.max.z;if(R.back)pz=-pz;   /* 開發者 11/6：齊轍的棋子揹在背後，圓牌貼在背面（ring3d.json 第 5 個值＝1） */if(R.z!=null)pz=bb.min.z+R.z*sz.z;   /* 意見回饋 665：少年阿古拉手上捧著棋盤，打點量到的是棋盤表面，圓片浮在胸口前面、一轉就偏到旁邊；ring3d.json 第 4 個值是校正量到的圓面深度 */
         const d=new T.Mesh(new T.CircleGeometry(rad,48),new T.MeshBasicMaterial({map:glyTex(meCh,meK),color:0xEDE6D8,transparent:true,depthWrite:false,toneMapped:false}));d.name="meGly";{const _p=new T.Vector3(),_n=new T.Vector3(),_v=new T.Vector3();d.onBeforeRender=(rn,s2,cam)=>{try{d.getWorldPosition(_p);_n.set(0,0,1).transformDirection(d.matrixWorld);_v.copy(cam.position).sub(_p).normalize();d.material.opacity=Math.max(0,Math.min(1,(_n.dot(_v)-.3)/.3))}catch(e){}}}   /* 584：轉到側面時字面淡掉，不會看到一片紙浮在身上 */   /* 577：整面棋子、不受燈光影響（背光時不會變成深褐），顏色稍微壓暗一點才不會比身體亮太多 */
         d.position.set(px-c.x,py-bb.min.y,pz-c.z+(R.back?-1:1)*sz.y*.006);if(R.back)d.rotation.y=Math.PI;hold.add(d)}catch(e){}}
-      for(const ch of B.bot.children)ch.visible=false;B.bot.add(hold);B.glb=hold;return true});B.glbP.catch(()=>{})}
+      for(const ch of B.bot.children)ch.visible=false;B.bot.add(hold);B.glb=hold;return true});B.glbP.catch(()=>{q0.forEach(ch=>{ch.visible=true})})}
 
   // ---------- 招牌動作 ----------
   const lie=(p,B)=>{const L=p<.15?ease(p/.15):p>.85?ease((1-p)/.15):1;B.root.rotation.z=PI/2*L;B.root.position.x=1.2*L;B.root.position.y=.8*L};

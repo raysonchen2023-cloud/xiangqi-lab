@@ -1531,7 +1531,7 @@ html[data-hct] .player.on .clk{background:#00563B;color:#FFFFFF;border-color:#00
       if(!window.caches)return go();caches.keys().then(function(ks){return Promise.all(ks.filter(function(k){return k.indexOf("xqlab-app-")===0}).map(function(k){return caches.delete(k)}))})
         .then(function(){return navigator.serviceWorker&&navigator.serviceWorker.getRegistration()}).then(function(r){return r&&r.update()}).catch(function(){}).then(go)}};setTimeout(chk,4000)})();
 </script>
-<script>window.XQ_OFFLINE=true;window.XQ_BUILD="20261112-0800";</script>
+<script>window.XQ_OFFLINE=true;window.XQ_BUILD="20261112-0810";</script>
 <script src="core.js"></script>
 <script src="engine.js"></script>
 <script src="local.js"></script>
@@ -4932,7 +4932,9 @@ function fzUnpull(e){e.classList.remove("fz-sh");e.style.marginLeft="";e.style.m
 function fzPull(L,P){const pr=P.getBoundingClientRect(),l=Math.max(pr.left,0)+2,rr=Math.min(pr.right,innerWidth)-2,t=pr.top+2,b=pr.bottom-2;
   L.forEach(e=>{fzUnpull(e);const q=e.getBoundingClientRect(),dx=q.left<l?l-q.left:q.right>rr?rr-q.right:0,dy=q.top<t?t-q.top:q.bottom>b?b-q.bottom:0;
     if(Math.abs(dx)>=1||Math.abs(dy)>=1){e.classList.add("fz-sh");e.style.marginLeft=Math.round(dx)+"px";e.style.marginTop=Math.round(dy)+"px"}})}
-function fzFit(){const r=document.documentElement;if(!["l","xl","xxl","max"].includes(r.dataset.fz)){document.querySelectorAll(".fz-no").forEach(e=>e.classList.remove("fz-no"));document.querySelectorAll(".fz-sh").forEach(fzUnpull);return}
+/* 評比第 5 輪（截圖 B10、Gemini 改善清單第 1 項）：440 寬的練功房，段位牌在標準字級就被畫面左邊切掉。場景圖比畫面寬時，貼邊的標籤一律推回看得到的範圍（不只放大字級時）；標準字級只推回、不縮字 */
+function fzFit(){const r=document.documentElement;if(!["l","xl","xxl","max"].includes(r.dataset.fz)){document.querySelectorAll(".fz-no").forEach(e=>e.classList.remove("fz-no"));
+    document.querySelectorAll(".shp-page").forEach(P=>{const L=[...P.querySelectorAll(".shp-spot,.shp-hs")].filter(e=>e.getClientRects().length);if(L.length)fzPull(L,P)});return}
   const LS=".shp-spot,.shp-hs",sep=(a,b)=>Math.max(Math.max(a.left,b.left)-Math.min(a.right,b.right),Math.max(a.top,b.top)-Math.min(a.bottom,b.bottom));   /* 兩個框的間隔（負的＝疊到）；放大後間隔不到 2px、又比標準字級時更近，就算疊到 */
   document.querySelectorAll(".shp-page").forEach(P=>{const L=[...P.querySelectorAll(LS)].filter(e=>e.getClientRects().length);if(!L.length)return;
     const O=[...P.querySelectorAll("button,a,[role=button]")].filter(e=>!e.matches(LS+",.po-sight,.shw-me,.shw-hint")&&!e.closest(LS+",.shw-me")&&e.getClientRects().length),all=L.concat(O);
@@ -4941,7 +4943,7 @@ function fzFit(){const r=document.documentElement;if(!["l","xl","xxl","max"].inc
       L.forEach((A,i)=>{for(const B of L.slice(i+1).concat(O)){const s=sep(R.get(A),R.get(B));if(s<2&&s<sep(b0.get(A),b0.get(B))-.5)for(const x of[A,B])if(L.includes(x)&&!x.classList.contains("fz-no")){x.classList.add("fz-no");ch=true}}});
       if(!ch)break}
     fzPull(L,P)})}
-{let t=0;const go=()=>{if(t||!document.documentElement.dataset.fz)return;t=setTimeout(()=>{t=0;try{fzFit()}catch(e){}},400)};
+{let t=0;const go=()=>{if(t)return;t=setTimeout(()=>{t=0;try{fzFit()}catch(e){}},400)};
   new MutationObserver(go).observe(document.documentElement,{childList:true,subtree:true});addEventListener("resize",go);
   document.addEventListener("load",e=>{if(e.target&&e.target.tagName==="IMG"&&e.target.closest&&e.target.closest(".shp-page"))go()},true)}
 /* 回饋 848（色盲高對比）：高對比棋子打開時 html 掛 data-hicon，m.css 給只靠顏色的地方（朱紅推薦標籤、底欄目前那一格）加形狀 */
@@ -5282,7 +5284,7 @@ const useFmt=ms=>{const m=Math.round(ms/60000);return m>=60?`${Math.floor(m/60)}
 function useSummary(){const S=store.get("useStat",null);if(!S||!S.t)return"";const P={...(S.p||{})};if(P.ship){P["雲河星槎"]=(P["雲河星槎"]||0)+P.ship;delete P.ship}   /* 意見回饋 724：星槎新頁（#/ship/...）以前記成 ship，併進雲河星槎 */
   const top=Object.entries(P).sort((a,b)=>b[1]-a[1]).slice(0,3).map(([k,v])=>`${k} ${useFmt(v)}`);return`總共用了 ${useFmt(S.t)}・最常待：${top.join("、")}`}
 // 線上 ID 登記：名字或段位有變、或超過 7 天，就送一筆「玩家」紀錄到同一個表單（意見回饋 708：多用了 30 分鐘以上、距離上次超過一天也送，時間才跟得上）
-async function reportPlayer(){if(!OFF||!FEEDBACK_FORM.action)return;if(navigator.webdriver)return;   /* 意見回饋 652：自動化測試（Playwright 等）開的 App 不送玩家登記，名單才分得清真人 */if(/^(localhost|127\.|\[::1\])/.test(location.hostname))return;   /* 電腦本機測試不送玩家紀錄（第 502、504 列是測試時誤送的） */if(store.get("repOff",false)||(typeof fmNetOff==="function"&&fmNetOff()))return;   /* 上架隱私整理 11/10：玩家可以在設定關掉登記，家長關掉線上大廳時也不送 */const i=await feedbackInfo();try{const pn=typeof window.XQ_PUBNAME==="function"?window.XQ_PUBNAME(meInfo()):"";if(pn)i.name=pn}catch(e){}i.page="";   /* 登記只送大廳對外的名字（選稱號就是稱號），不送玩家自取的名字，也不送目前在哪一頁 */const key=i.id+"|"+i.name+"|"+i.rank.split(" ")[0],last=store.get("playerRep",null);
+async function reportPlayer(){if(!OFF||!FEEDBACK_FORM.action)return;if(navigator.webdriver)return;if(typeof fnTest==="function"&&fnTest())return;   /* 11/12：Claude 在內建瀏覽器設了測試房（xq_netRoot）拍截圖，還是送出玩家登記「棋友28AB」被當成真人；設了測試房或本機就不送 */   /* 意見回饋 652：自動化測試（Playwright 等）開的 App 不送玩家登記，名單才分得清真人 */if(/^(localhost|127\.|\[::1\])/.test(location.hostname))return;   /* 電腦本機測試不送玩家紀錄（第 502、504 列是測試時誤送的） */if(store.get("repOff",false)||(typeof fmNetOff==="function"&&fmNetOff()))return;   /* 上架隱私整理 11/10：玩家可以在設定關掉登記，家長關掉線上大廳時也不送 */const i=await feedbackInfo();try{const pn=typeof window.XQ_PUBNAME==="function"?window.XQ_PUBNAME(meInfo()):"";if(pn)i.name=pn}catch(e){}i.page="";   /* 登記只送大廳對外的名字（選稱號就是稱號），不送玩家自取的名字，也不送目前在哪一頁 */const key=i.id+"|"+i.name+"|"+i.rank.split(" ")[0],last=store.get("playerRep",null);
   const ut=((store.get("useStat",null)||{}).t)||0;if(last&&last.k===key&&Date.now()-last.at<7*864e5&&!(Date.now()-last.at>864e5&&ut-(last.u||0)>=18e5))return;
   if(await sendRecord(Object.assign(i,{type:"👤 玩家",text:useSummary(),contact:""})))store.set("playerRep",{k:key,at:Date.now(),u:ut})}
 setTimeout(()=>{flushFeedback();reportPlayer()},8000);window.addEventListener("online",()=>setTimeout(flushFeedback,2000));
@@ -6433,7 +6435,8 @@ function pkSwUi(host){try{if(!host)return;const tb=pkSwTb(),on=parkOn(),on3=on&&
     b.onclick=e=>{e.stopPropagation();vibrate(5);const t=pkSwTb();if(t)t.click()};if(getComputedStyle(host).position==="static")host.style.position="relative";host.append(b)}
   if(b)b.hidden=!(on3&&tb);if(!(on3&&tb)){const tp=host.querySelector(".pk2d-tip");if(tp)tp.remove()}
   const vw=host.closest(".view"),st=vw&&vw.querySelector("#stat");let r=vw&&vw.querySelector(".pk3d-back");const fl=!on&&!PARK_OFF&&!focusOn()&&!!tb&&!!st;
-  if(fl&&!r){r=document.createElement("div");r.className="pk3d-back";r.innerHTML='<button type="button" aria-label="回到 3D 園子下棋"><span aria-hidden="true">🌳</span> 回園子</button>';
+  /* 11/12 開發者「「回園子」這三個字用其他方式表示」：車輪戰在茶肆棋館、不是園子，改成跟「▦ 平面棋盤」成對的「🧊 3D 場景」 */
+  if(fl&&!r){r=document.createElement("div");r.className="pk3d-back";r.innerHTML='<button type="button" aria-label="切回 3D 場景下棋"><span aria-hidden="true">🧊</span> 3D 場景</button>';
     r.querySelector("button").onclick=()=>{vibrate(5);const t=pkSwTb();if(t)t.click()};(vw.querySelector(".rule-note")||st).after(r)}
   if(r)r.hidden=!fl}catch(e){}}
 let PKSW_T=0;
@@ -18108,7 +18111,7 @@ function crCss(){if(document.getElementById("crCss"))return;const s=document.cre
 button.cr-name{pointer-events:auto;cursor:pointer;font-size:14px;padding:5px 10px}
 .cr-ghost .cr-zg{display:none}.cr-ghost.zg{filter:none;opacity:.96;-webkit-mask-image:none;mask-image:none;animation:none}.cr-ghost.zg>img,.cr-ghost.zg>i{display:none}
 .cr-ghost.zg .cr-zg{display:flex;position:absolute;left:50%;top:44%;transform:translate(-50%,-50%);width:58%;aspect-ratio:1;border-radius:50%;align-items:center;justify-content:center;font:900 normal min(16cqw,64px)/1 var(--kai,var(--serif,serif));color:#5a1806;background:radial-gradient(circle at 35% 30%,#f7d98a,#d0843a 62%,#93461a);border:3px solid #8a3e12;box-shadow:0 2px 10px rgba(0,0,0,.35)}
-.cr-ghost .cr-zgimg{display:none}.cr-ghost.zg .cr-zgimg{display:block;position:absolute;inset:0;width:100%;height:100%;object-fit:contain;object-position:50% 100%;-webkit-mask-image:linear-gradient(#000 70%,rgba(0,0,0,.25));mask-image:linear-gradient(#000 70%,rgba(0,0,0,.25))}.cr-ghost.zg.zgimg .cr-zg{display:none}
+.cr-ghost .cr-zgimg{display:none}.cr-ghost.zg .cr-zgimg{display:block;position:absolute;inset:0;width:100%;height:100%;-webkit-mask-size:100% 100%;mask-size:100% 100%}.cr-ghost.zg.g-def .cr-zgimg{-webkit-mask-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100' preserveAspectRatio='none'%3E%3Cpath fill-rule='evenodd' d='M0 0H100V100H0Z M28 93 L38 91.5 L45 89.5 L55 89.5 L62 91.5 L72 93 L72 100 L28 100Z'/%3E%3C/svg%3E");mask-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100' preserveAspectRatio='none'%3E%3Cpath fill-rule='evenodd' d='M0 0H100V100H0Z M28 93 L38 91.5 L45 89.5 L55 89.5 L62 91.5 L72 93 L72 100 L28 100Z'/%3E%3C/svg%3E")}.cr-ghost.zg.g-classic .cr-zgimg{-webkit-mask-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100' preserveAspectRatio='none'%3E%3Cpath fill-rule='evenodd' d='M0 0H100V100H0Z M28 93 L38 91.5 L45 89.5 L55 89.5 L62 91.5 L72 93 L72 100 L28 100Z'/%3E%3C/svg%3E");mask-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100' preserveAspectRatio='none'%3E%3Cpath fill-rule='evenodd' d='M0 0H100V100H0Z M28 93 L38 91.5 L45 89.5 L55 89.5 L62 91.5 L72 93 L72 100 L28 100Z'/%3E%3C/svg%3E")}.cr-ghost.zg.g-han .cr-zgimg{-webkit-mask-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100' preserveAspectRatio='none'%3E%3Cpath fill-rule='evenodd' d='M0 0H100V100H0Z M34 86 L40 82.5 L48 81 L58 82.5 L66 86 L80 92 L80 100 L34 100Z'/%3E%3C/svg%3E");mask-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100' preserveAspectRatio='none'%3E%3Cpath fill-rule='evenodd' d='M0 0H100V100H0Z M34 86 L40 82.5 L48 81 L58 82.5 L66 86 L80 92 L80 100 L34 100Z'/%3E%3C/svg%3E")}.cr-ghost.zg.g-song .cr-zgimg{-webkit-mask-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100' preserveAspectRatio='none'%3E%3Cpath fill-rule='evenodd' d='M0 0H100V100H0Z M54.5 71.5 L57.5 72.5 L58 85 L64.5 88 L66 100 L43 100 L43 92 L29 80.5 L25.5 78 L29.5 79 L43 88.5 L51.5 85 L52 73Z'/%3E%3C/svg%3E");mask-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100' preserveAspectRatio='none'%3E%3Cpath fill-rule='evenodd' d='M0 0H100V100H0Z M54.5 71.5 L57.5 72.5 L58 85 L64.5 88 L66 100 L43 100 L43 92 L29 80.5 L25.5 78 L29.5 79 L43 88.5 L51.5 85 L52 73Z'/%3E%3C/svg%3E")}.cr-ghost.zg.zgimg .cr-zg{display:none}
 @media (prefers-reduced-motion:reduce){.cr-ghost{animation:none}}`;document.head.append(s)}
 /* 段位資料、目前這盤：/play/state（local.js playState） */
 let CR_ST=null;
@@ -18121,6 +18124,7 @@ const crPassed=n=>!!(((CR_ST&&CR_ST.record)||{})[n]||{}).w;
 function crGrpDim(i){if(i<2)return false;const[a,b]=CR_LV[i-1];for(let n=a;n<=b;n++)if(crPassed(n))return false;return true}
 function crLvName(n){const L=(CR_ST&&CR_ST.levels||[])[n-1];return L?L.name:""}
 function crLive(){const s=CR_ST;return!!(s&&s.kind==="cpu"&&!s.result&&(s.moves||[]).length>=2)}
+/* hspx（開發者 11/12 07:39「這邊視覺怪怪的，掌櫃不應該透明」）：改用上半身圖 data/zhanggui/seat.webp（坐在椅子上、下半身在桌子後面），不透明；四種場景（明清／經典／秦～五代／宋元）的壺具用 SVG 輪廓遮罩，壺留在他前面（座位框百分比座標，tools 端 zgbust.py 同一組） */
 /* hspx（開發者 11/12「沒有換到 3D 角色」）：選笑面掌櫃時，對面座位原本只放「掌」字圓牌；改放掌櫃立繪 data/zhanggui/idle.webp（Gemini 畫、開發者看過，也是 3D k_zg 的來源），圖載不到才退回圓牌 */
 /* 11/11 笑面掌櫃：練功房、盲棋可以選對手（store cpuOpp）；晉級賽固定幻影棋客 */
 const crOpp=()=>crRanked()?"km":cpuOppPref();
@@ -18164,7 +18168,7 @@ function CpuRoom(v){setTop("挑戰電腦","#/hub/battle");setTabs(true,"#/hub/ba
   const g=crEra(),P=document.createElement("div");P.className="shp-page cq cr-page";
   const sp=(id,t)=>{const[x,y]=CR_SPOT[id];return`<button type="button" class="shp-spot" id="${id}" style="${crPc(x,y)}"><b>${t}</b></button>`};
   P.innerHTML=`<img src="${xqClImg(`data/cpuroom/cpuroom_day${g?"_"+g:""}.webp?v=${CR_IMGV}`)}" alt="茶坊深處的對弈雅間：棋桌、戰帖、棋譜、棋罐、茶爐">
-    <div class="cr-ghost${g==="han"?" han":""}" aria-hidden="true"><img src="${typeof PIKA_DIR==="function"?PIKA_DIR():"data/pika2/"}idle.webp" alt=""><i><b>${crSide()==="b"?"帥":"將"}</b></i><span class="cr-zg">掌</span><img class="cr-zgimg" src="data/zhanggui/idle.webp" alt="" onload="this.parentNode.classList.add('zgimg')" onerror="this.remove()"></div><button type="button" class="cr-name" id="crOpp">👤 幻影棋客</button>
+    <div class="cr-ghost${g==="han"?" han":""} g-${g||"def"}" aria-hidden="true"><img src="${typeof PIKA_DIR==="function"?PIKA_DIR():"data/pika2/"}idle.webp" alt=""><i><b>${crSide()==="b"?"帥":"將"}</b></i><span class="cr-zg">掌</span><img class="cr-zgimg" src="data/zhanggui/seat.webp" alt="" onload="this.parentNode.classList.add('zgimg')" onerror="this.remove()"></div><button type="button" class="cr-name" id="crOpp">👤 幻影棋客</button>
     ${sp("crRank","🏅 段位")}${sp("crScroll","📜 選難度")}${OFF?sp("crRankT","🥇 晉級賽"):""}${sp("crFree","📚 練功房")}${sp("crBlind","🙈 盲棋")}${sp("crRed","🔴 執紅")}${sp("crBlack","⚫ 執黑")}${sp("crGo",(g==="han"?"🍶 ":"🍵 ")+CR_GO[crMode()])}
     <div class="cr-card" data-bot-avoid></div>`;
   v.append(P);
