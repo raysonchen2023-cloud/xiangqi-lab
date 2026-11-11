@@ -1379,7 +1379,7 @@ html[data-hicon] .tabbar button.on{box-shadow:inset 0 -3px 0 currentColor}
       if(!window.caches)return go();caches.keys().then(function(ks){return Promise.all(ks.filter(function(k){return k.indexOf("xqlab-app-")===0}).map(function(k){return caches.delete(k)}))})
         .then(function(){return navigator.serviceWorker&&navigator.serviceWorker.getRegistration()}).then(function(r){return r&&r.update()}).catch(function(){}).then(go)}};setTimeout(chk,4000)})();
 </script>
-<script>window.XQ_OFFLINE=true;window.XQ_BUILD="20261111-1615";</script>
+<script>window.XQ_OFFLINE=true;window.XQ_BUILD="20261111-1630";</script>
 <script src="core.js"></script>
 <script src="engine.js"></script>
 <script src="local.js"></script>
@@ -2470,27 +2470,50 @@ function Board(onTap,onSwipe){
   return{svg,draw}}
 /* 意見回饋 693（開發者）：新手看不懂「傌八進七」這種文字走法。
    畫面上用「」框起來的走法自動變成可以點的字（虛線底線＋➚），點了就在同一頁的棋盤上畫藍色箭頭。
-   只認「」裡的：棋譜清單裡的著法是別的局面，不加，免得畫錯。在目前局面走不出這一步就提示一下。 */
-const MVT_RE=/「((?:[前後中][帥將仕士相象俥車傌馬炮砲兵卒]|[帥將仕士相象俥車傌馬炮砲兵卒][一二三四五六七八九１２３４５６７８９1-9])[進退平][一二三四五六七八九１２３４５６７８９1-9])」/g;
-const mvtNorm=s=>String(s).replace(/[1-9]/g,d=>String.fromCharCode(0xFF10+ +d));
+   （11/11 起改成下面 hspx 的規則：不用「」也認、點了先講白話） */
+/* 開發者 11/11 hspx「盤查所有專業術語都能正確的顯示箭頭標記」（真人玩家回報看不懂「兵五進一」）：
+   ① 不用「」框也認：提示、講解、「電腦走 炮二平五」這種直接寫的都算；簡體（进、车、马、帅、将、后）也認。按鈕、輸入框、連結、著法條（.chip）、可點的卡片（role／tabindex）照舊不包，免得搶走原本的點擊。
+   ② 點了一定先講白話（mvtSay：哪一方、第幾路、哪顆子、往哪走幾格）。
+   ③ 箭頭：這一步剛走完（棋盤上的最後一手）→ 畫這一手；目前局面走得出來 → 照畫；都不行 → 跳小卡片，用開局擺法示範，開局也走不出來就只講白話。 */
+const MVT_PC="帥帅將将仕士相象俥車车傌馬马炮砲兵卒",MVT_NUM="一二三四五六七八九",
+  MVT_RE=new RegExp(`(?:[前後后中][${MVT_PC}]|[一二三四五][兵卒]|[${MVT_PC}][${MVT_NUM}１-９1-9])[進进退平][${MVT_NUM}１-９1-9]`,"g"),
+  MVT_CN={"帅":"帥","将":"將","车":"車","马":"馬","进":"進","后":"後"};
+const mvtTw=s=>String(s).replace(/[帅将车马进后]/g,c=>MVT_CN[c]);
+/* 比對用：紅黑由數字分（紅＝中文數字、黑＝阿拉伯數字），棋子字只看種類（俥／車、傌／馬、炮／砲… 都算同一種） */
+const mvtNorm=s=>mvtTw(s).replace(/[1-9]/g,d=>String.fromCharCode(0xFF10+ +d)).replace(/[俥車]/g,"車").replace(/[傌馬]/g,"馬").replace(/[炮砲]/g,"炮").replace(/[帥將]/g,"將").replace(/[仕士]/g,"士").replace(/[相象]/g,"象").replace(/[兵卒]/g,"卒");
+function mvtSay(cn){const a=[...mvtTw(cn)],n=c=>{const i=MVT_NUM.indexOf(c);if(i>=0)return i+1;const k=c.charCodeAt(0);return+String.fromCharCode(k>0xFF00?k-0xFEE0:k)},
+  red=MVT_NUM.includes(a[3]),sd=red?"紅方":"黑方",pre="前後中".includes(a[0])||(MVT_NUM.includes(a[0])&&"兵卒".includes(a[1])),pc=pre?a[1]:a[0],k=n(a[3]),
+  who=pre?("前後中".includes(a[0])?`${sd}同一條直線上有好幾個${pc}，${{前:"最前面",後:"最後面",中:"中間"}[a[0]]}那個${pc}`:`${sd}同一條直線上從前面數來第 ${n(a[0])} 個${pc}`):`${sd}第 ${n(a[1])} 路的${pc}`,
+  fw=a[2]==="進"?"往前":"往後",act=a[2]==="平"?`橫著走到第 ${k} 路`:"傌馬相象仕士".includes(pc)?`${fw}${"傌馬".includes(pc)?"跳":"斜走"}到第 ${k} 路`:`${fw}走 ${k} 格`;
+  return{t:`「${mvtTw(cn)}」＝${who}，${act}`,g:`「路」是棋盤上的直線：從${sd}自己的右手邊往左數，第 1 到第 9 路（${red?"紅方寫一到九":"黑方寫 1 到 9"}）。「進」往對方那邊、「退」往自己這邊、「平」橫著走；最後一個數字：直著走的子是走幾格，馬、相、仕是走到第幾路。`}}
 function mvtBoards(el){const all=[...document.querySelectorAll("svg")].filter(s=>s._b&&s.isConnected&&s.getBoundingClientRect().width>40);
   const box=el&&el.closest(".sheet-body,.sheet,.view,#view,main");const near=box?all.filter(s=>box.contains(s)):[];return near.length?near:all}
-function mvtShow(cn,el){const C=window.XQCore;if(!C)return;const want=mvtNorm(cn);
-  for(const s of mvtBoards(el)){const b=s._b;if(!b||!b.length)continue;
-    for(const side of["r","b"]){let L=[];try{L=C.legal(b,side)}catch(e){}
-      for(const[f,t]of L){let n="";try{n=C.notate(b,f,t)}catch(e){}if(mvtNorm(n)===want){
-        try{const o=Object.assign({},s._o||{},{sugg:[{f,t}],_mvt:1});if(s._draw)s._draw(b,o)}catch(e){}
-        try{s.scrollIntoView({block:"nearest",behavior:"smooth"})}catch(e){}vibrate(5);return}}}}
-  toast("「"+cn+"」要在當時的局面才走得出來，這個盤面畫不出箭頭")}
-function mvtWrap(root){if(!root||!document.querySelector("svg")||!window.XQCore)return;
-  const tw=document.createTreeWalker(root,NodeFilter.SHOW_TEXT,{acceptNode:n=>{if(!n.nodeValue||n.nodeValue.indexOf("「")<0)return NodeFilter.FILTER_REJECT;
-    const p=n.parentElement;if(!p||p.closest("svg,button,input,textarea,select,option,[contenteditable],.mvt,script,style"))return NodeFilter.FILTER_REJECT;MVT_RE.lastIndex=0;return MVT_RE.test(n.nodeValue)?NodeFilter.FILTER_ACCEPT:NodeFilter.FILTER_REJECT}});
+function mvtFind(b,want){const C=window.XQCore;if(!C||!b||!b.length)return null;
+  for(const side of["r","b"]){let L=[];try{L=C.legal(b,side)}catch(e){}for(const[f,t]of L){let n="";try{n=C.notate(b,f,t)}catch(e){}if(mvtNorm(n)===want)return{f,t}}}return null}
+function mvtTip(S){toast(S.t);clearTimeout(toastT);toastT=setTimeout(()=>{const t=$("#toast");if(t)t.hidden=true},4500)}
+function mvtShow(cn,el){const S=mvtSay(cn),want=mvtNorm(cn),C=window.XQCore;
+  for(const s of mvtBoards(el)){const b=s._b;if(!b||!b.length)continue;const L0=(s._o||{}).last;let hit=null;
+    if(C&&L0&&L0.f!=null&&L0.t!=null&&b[L0.t]&&!b[L0.f]){const pb=b.slice();pb[L0.f]=b[L0.t];pb[L0.t]=null;let n="";try{n=C.notate(pb,L0.f,L0.t)}catch(e){}if(mvtNorm(n)===want)hit={f:L0.f,t:L0.t}}   /* 剛走完的那一手（「電腦走 炮二平五」） */
+    hit=hit||mvtFind(b,want);if(!hit)continue;
+    try{const o=Object.assign({},s._o||{},{sugg:[hit],_mvt:1});if(s._draw)s._draw(b,o)}catch(e){}
+    try{s.scrollIntoView({block:"nearest",behavior:"smooth"})}catch(e){}vibrate(5);mvtTip(S);return}
+  mvtCard(S,want)}
+function mvtCard(S,want){vibrate(5);sheet("📖 看懂這一步",bx=>{const p=(t,css)=>{const e=document.createElement("p");e.style.cssText=css;e.textContent=t;bx.append(e);return e};
+  p(S.t,"font-size:17px;font-weight:800;line-height:1.6;margin:4px 0 8px");p(S.g,"font-size:14px;line-height:1.7;margin:0 0 10px;opacity:.8");
+  const b0=parseFen(START),hit=mvtFind(b0,want);
+  if(hit){const w=document.createElement("div");w.style.cssText="max-width:320px;margin:0 auto";const bd=Board(null);w.append(bd.svg);bx.append(w);bd.draw(b0,{sugg:[hit]});p("用開局的擺法示範（藍色箭頭）","text-align:center;font-size:13px;margin:6px 0 0;opacity:.7")}
+  else p("這一步要在當時的局面才走得出來，這裡先看上面的文字說明。","font-size:13px;margin:0;opacity:.7")})}
+function mvtWrap(root){if(!root)return;
+  const tw=document.createTreeWalker(root,NodeFilter.SHOW_TEXT,{acceptNode:n=>{const v=n.nodeValue;if(!v||!/[進进退平]/.test(v))return NodeFilter.FILTER_REJECT;
+    const p=n.parentElement;if(!p||p.closest("svg,button,input,textarea,select,option,label,a,[contenteditable],[role=button],[role=link],[role=tab],[role=option],[tabindex],[data-nomvt],.chip,.mvt,script,style"))return NodeFilter.FILTER_REJECT;MVT_RE.lastIndex=0;return MVT_RE.test(v)?NodeFilter.FILTER_ACCEPT:NodeFilter.FILTER_REJECT}});
   const hits=[];while(tw.nextNode())hits.push(tw.currentNode);
   for(const n of hits){const s=n.nodeValue,fr=document.createDocumentFragment();let last=0;MVT_RE.lastIndex=0;let m;
-    while((m=MVT_RE.exec(s))){fr.append(s.slice(last,m.index)+"「");const sp=document.createElement("span");sp.className="mvt";sp.textContent=m[1];sp.dataset.mv=m[1];sp.setAttribute("role","button");sp.title="在棋盤上看這一步";fr.append(sp,"」");last=m.index+m[0].length}
+    while((m=MVT_RE.exec(s))){fr.append(s.slice(last,m.index));const sp=document.createElement("span");sp.className="mvt";sp.textContent=m[0];sp.dataset.mv=m[0];sp.setAttribute("role","button");sp.title="看懂這一步";fr.append(sp);last=m.index+m[0].length}
     fr.append(s.slice(last));n.replaceWith(fr)}}
 let mvtT=0;new MutationObserver(()=>{if(mvtT)return;mvtT=setTimeout(()=>{mvtT=0;try{mvtWrap(document.body)}catch(e){}},250)}).observe(document.documentElement,{childList:true,subtree:true,characterData:true});
 document.addEventListener("click",e=>{const x=e.target&&e.target.closest&&e.target.closest(".mvt");if(!x)return;e.preventDefault();e.stopPropagation();mvtShow(x.dataset.mv,x)},true);
+
+
 
 
 
@@ -13903,7 +13926,7 @@ function hmCss(){if(document.getElementById("hmCss"))return;const s=document.cre
 @keyframes hmSky{0%,100%{opacity:.75}50%{opacity:1}}
 .hm-me{position:absolute;z-index:3;background:transparent;border:0;padding:0;border-radius:40%;cursor:pointer;-webkit-tap-highlight-color:transparent}
 .hm-go-bar{position:fixed;left:50%;bottom:calc(14px + env(safe-area-inset-bottom));transform:translateX(-50%);z-index:30;display:flex;flex-direction:column;align-items:center;gap:8px;width:max-content;max-width:calc(100vw - 32px);pointer-events:none}
-.hm-go-bar>*{pointer-events:auto}.hm-go-bar .hm-inst{position:static;transform:none}
+.hm-go-bar>*{pointer-events:auto}.hm-go-bar .hm-inst{position:static;transform:none}.hm-pills{display:flex;gap:8px;justify-content:center;flex-wrap:wrap}.hm-fb{font-size:14px;padding:8px 16px}
 .hm-go{display:flex;flex-direction:column;align-items:center;gap:2px;min-width:220px;max-width:100%;min-height:52px;padding:9px 26px;border:2px solid #f2c94c;border-radius:999px;background:linear-gradient(180deg,#b3261e,#7d1611);color:#fff6dc;box-shadow:0 4px 14px rgba(0,0,0,.38),inset 0 1px 0 rgba(255,255,255,.25);font:900 19px/1.15 var(--serif,serif);letter-spacing:.06em;cursor:pointer;-webkit-tap-highlight-color:transparent}
 .hm-go small{font:700 12px/1.2 var(--serif,serif);letter-spacing:0;color:#ffe08a;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:100%}.hm-go small:empty{display:none}
 .hm-go:active{transform:translateY(1px);filter:brightness(.95)}
@@ -13919,7 +13942,10 @@ function hmGoBar(P,nw){const bar=document.createElement("div");bar.className="hm
      點了直接用那盤的等級和模式（晉級賽／練功房）開新局（fresh）——原本只會打開那盤已經結束的棋，要再按新局，不算「馬上」 */
   let R=nw?{go:"#/camp",t:"🔰 立即開始",s:"第一次下象棋，從這裡學"}:{go:"#/cpu",t:"♟ 快下一盤",s:"不用選・不算段位",fresh:{human:"r",lx:3,ranked:false}};   /* 11/11 方案 1：沒有下到一半的棋＝一律開一盤不算分的新局（原本會打開預設的晉級賽） */
   const set=r=>{R=r;b.innerHTML=`<span>${esc(r.t)}</span><small>${esc(r.s||"")}</small>`;b.setAttribute("aria-label",r.t+(r.s?"："+r.s:""))};set(R);
-  const ib=P.querySelector("#hmInst");if(ib)bar.append(ib);bar.append(b);P.append(bar);
+  const row=document.createElement("div");row.className="hm-pills";const ib=P.querySelector("#hmInst");if(ib)row.append(ib);
+  /* 開發者 11/11「把意見回饋放在明顯的首頁地方，讓玩家一眼看出可以回報問題」：大按鈕正上方固定一顆「💬 回報問題」（原本只在設定頁裡） */
+  const fb=document.createElement("button");fb.type="button";fb.className="hm-inst hm-fb";fb.id="hmFb";fb.textContent="💬 回報問題";fb.onclick=e=>{e.stopPropagation();vibrate(5);if(typeof feedbackSheet==="function")feedbackSheet();else location.hash="#/settings"};row.append(fb);
+  bar.append(row);bar.append(b);P.append(bar);
   b.onclick=async e=>{e.stopPropagation();vibrate(5);if(R.fresh)try{await api("/play/new",R.fresh)}catch(err){}if(R.sw)try{await api("/play/switch",{kind:R.sw})}catch(err){}if(R.park)store.set("park3d",true);try{sessionStorage.setItem("xqFromHome","1")}catch(err){}location.hash=R.go};   /* 11/11：記下從首頁進來（07y hbFromHome） */
   if(nw)return;
   try{if(window.XQNet&&XQNet.playing&&XQNet.playing())return set({go:"#/pvp",t:"▶ 接著下",s:"線上對局"})}catch(e){}
@@ -19170,6 +19196,7 @@ function simCss(){if(document.getElementById("simCss"))return;const s=document.c
 .sim-stage{position:relative;width:min(100vw,calc(100vh*1200/896));aspect-ratio:1200/896;overflow:hidden;transition:transform .6s ease-in}.sim-stage.zoom{transform:scale(2.2)}.sim-stage>img{position:absolute;inset:0;width:100%;height:100%;display:block}
 .sim-fig{position:absolute}.sim-fig>img{width:100%;display:block}.sim-fig>img.sim-bk{position:absolute;left:0;top:0}.sim-fig.mir>img{transform:scaleX(-1)}.sim-fig.back .sim-no{top:19%}.sim-fig.mir .sim-no{left:50.5%}.sim-bdw{position:absolute;left:0;top:0;width:1024px;height:1024px;transform-origin:0 0;pointer-events:none}.sim-bd{position:absolute;left:0;top:0;width:560px;height:620px;transform-origin:0 0}
 .sim-no{position:absolute;left:49.5%;top:4%;transform:translateX(-50%);min-width:1.7em;padding:1px 4px;border-radius:999px;background:rgba(20,16,12,.55);color:#bfae8e;font:900 clamp(10px,2.6vw,16px)/1.4 var(--serif,serif);text-align:center;transition:background .25s,color .25s,box-shadow .25s}
+.sim-pl{position:absolute;left:0;top:0;width:200px;height:200px;transform-origin:0 0}.sim-pl svg{width:200px;height:200px;display:block}
 .sim-fig.lit .sim-no{background:#C8102E;color:#fff3c4;box-shadow:0 0 10px 3px rgba(255,200,90,.75)}
 .sim-cap{position:absolute;left:50%;top:max(14px,env(safe-area-inset-top));transform:translateX(-50%);padding:6px 16px;border-radius:999px;border:1.5px solid #f2c94c;background:rgba(20,16,12,.72);color:#ffe08a;font:900 17px/1.35 var(--serif,serif);white-space:nowrap}
 @media (prefers-reduced-motion:reduce){.sim-stage{transition:none}.sim-stage.zoom{transform:none}}`;document.head.append(s)}
@@ -19179,7 +19206,9 @@ function simCss(){if(document.getElementById("simCss"))return;const s=document.c
    每場由 simCast 隨機挑、不重複、男女各半（單數盤多的那一位隨機）；學童、茶客沒有背影圖，10 盤時只排上半圈。
    Gemini 畫的棋盤棋子數不對（開發者：「棋子數量記得改正確」）→ 程式把真實棋盤用四點透視貼在畫上的棋盤上（立牌 1024 圖上四角 SIM_Q），每桌就是那一桌現在的局面。
    排法：3、5 盤一排；10 盤圍成橢圓一圈，十位棋客都面向圓心（開發者 11/11「角度不對，10 個人要面向圓心」）：上半圈五桌用正面立牌，下半圈五桌是背影 →「空桌 simul_table.webp ＋ 程式棋盤 ＋ 背影 simul_b3～b11.webp」三層（背影蓋在棋盤上面），
-   左上兩桌、右下兩桌把圖左右鏡像（棋盤四角跟著換，字不會反）。背影圖由 tools/simul_back.py 對位。桌號依序亮起 → 鏡頭推向第 1 桌 → 進對局；點一下跳過。圖載不到就直接進對局 */
+   左上兩桌、右下兩桌把圖左右鏡像（棋盤四角跟著換，字不會反）。
+   棋牌（開發者 11/11 照 Claude 建議選「背牌＋桌前棋位牌」，story/gemini_app/74_車輪戰棋客造型評估*）：每位棋客有自己的棋子 SIM_PC（字照 ChatGPT 的分配表），
+   背影位＝上背一面木棋子背牌、正面位＝靠鏡頭那一側桌沿一面小棋位牌，都是程式畫的木棋子（雲河七星同款木色、雙圈），仿射貼到 1024 座標上；背牌位置量自 tools 校正圖 cal_back。背影圖由 tools/simul_back.py 對位。桌號依序亮起 → 鏡頭推向第 1 桌 → 進對局；點一下跳過。圖載不到就直接進對局 */
 const SIM_Q={T:[430,328],R:[765,425],B:[560,593],L:[248,488]},SIM_CN={K:"帥",A:"仕",B:"相",N:"傌",R:"俥",C:"炮",P:"兵",k:"將",a:"士",b:"象",n:"馬",r:"車",c:"砲",p:"卒"};
 function simHomo(W,H,d){const[x0,y0]=d[0],[x1,y1]=d[1],[x2,y2]=d[2],[x3,y3]=d[3],dx1=x1-x2,dx2=x3-x2,dy1=y1-y2,dy2=y3-y2,sx=x0-x1+x2-x3,sy=y0-y1+y2-y3,den=dx1*dy2-dx2*dy1,
   g=(sx*dy2-dx2*sy)/den,h=(dx1*sy-sx*dy1)/den,a=x1-x0+g*x1,b=x3-x0+h*x3,dd=y1-y0+g*y1,e=y3-y0+h*y3;
@@ -19191,6 +19220,13 @@ function simBoardSvg(bd){let s='<svg xmlns="http://www.w3.org/2000/svg" viewBox=
   (bd||[]).forEach((p,k)=>{if(!p)return;const red=p===p.toUpperCase(),c=red?"#b3261e":"#222",x=40+(k%9)*60,y=40+(k/9|0)*60;
     s+=`<circle cx="${x}" cy="${y+3}" r="26" fill="rgba(0,0,0,.35)"/><circle cx="${x}" cy="${y}" r="26" fill="#f6e7c8" stroke="${c}" stroke-width="4"/><text x="${x}" y="${y+11}" font-size="30" font-weight="900" text-anchor="middle" fill="${c}" font-family="serif">${SIM_CN[p]||""}</text>`});
   return s+"</svg>"}
+const SIM_PC={1:"P",2:"n",3:"B",4:"r",5:"k",6:"C",7:"p",8:"R",9:"A",10:"a",11:"c"};   /* 學童紅兵、茶客黑馬、書生紅相、中年棋手黑車、老隱士黑將、女棋客紅炮、少女黑卒、老闆娘紅俥、道姑紅仕、白髮老婦黑士、商賈黑砲 */
+/* 一面木棋牌：c＝圓心、u／v＝棋子水平／垂直半徑對到 1024 座標的向量、th＝側邊厚度往哪邊露出（鏡像時 u 的 y 反號、厚度 x 反號，字不會反） */
+function simPlate(p,c,u,v,th){const col=p===p.toUpperCase()?"#b3261e":"#1e1a18",m=(dx,dy)=>`matrix(${u[0]/100},${u[1]/100},${v[0]/100},${v[1]/100},${c[0]-u[0]-v[0]+dx},${c[1]-u[1]-v[1]+dy})`;
+  return`<div class="sim-pl" style="transform:${m(th[0],th[1])}"><svg viewBox="0 0 200 200"><circle cx="100" cy="100" r="98" fill="#4a2c14"/></svg></div><div class="sim-pl" style="transform:${m(0,0)}"><svg viewBox="0 0 200 200"><circle cx="100" cy="100" r="98" fill="#5c3a1e"/><circle cx="100" cy="100" r="91" fill="#d6ac74"/><circle cx="100" cy="100" r="74" fill="none" stroke="${col}" stroke-width="4.5"/><circle cx="100" cy="100" r="66" fill="none" stroke="${col}" stroke-width="1.8"/><text x="100" y="134" font-size="96" font-weight="700" text-anchor="middle" fill="${col}" font-family="BiauKai,DFKai-SB,KaiTi,STKaiti,serif">${SIM_CN[p]||""}</text></svg></div>`}
+function simPlates(o,fk){const p=SIM_PC[fk]||"P",X=x=>o.mir?1024-x:x,s=o.mir?-1:1;
+  if(o.back){const R=115;return simPlate(p,[X(300),488],[.67*R,-.43*R*s],[0,R],[-10*s,-4])}
+  const r=60;return simPlate(p,[X(300),640],[.95*r,.32*r*s],[0,r],[4*s,3])}
 function simSpots(n){if(n===10)return Array.from({length:10},(_,i)=>{const a=(24+33*(i%5))*Math.PI/180,k=i<5?-1:1,cx=.5+k*.36*Math.cos(a),cy=.59+k*.21*Math.sin(a);return{cx,cy,s:.17*(.8+.45*(cy-.38)/.34),back:i>4,mir:i<2||i===5||i===6}});
   if(n===3)return[.22,.5,.78].map(cx=>({cx,cy:.52,s:.33}));return Array.from({length:n},(_,i)=>({cx:.158+i*.179,cy:.52,s:.25}))}
 const SIM_M=[1,2,3,4,5,11],SIM_F=[6,7,8,9,10];
@@ -19202,7 +19238,7 @@ function simIntro(S,done){let fin=false;const end=()=>{if(fin)return;fin=true;tr
   const sp=simSpots(S.n),cast=simCast(sp),fx=p=>[1024-p[0],p[1]],{T,R,B,L}=SIM_Q,quad=o=>o.back?(o.mir?[L,B,R,T].map(fx):[B,L,T,R]):(o.mir?[R,T,L,B].map(fx):[T,R,B,L]);
   const tbs=S.tb.map((t,i)=>{const o=sp[i],fk=cast[i],el=document.createElement("div");el.className="sim-fig"+(o.mir?" mir":"")+(o.back?" back":"");
     el.style.cssText=`left:${(o.cx-(o.mir?.505:.495)*o.s)*100}%;top:calc(${o.cy*100}% - ${.45*o.s*100*1200/896}%);width:${o.s*100}%;z-index:${Math.round(o.cy*100)}`;
-    el.innerHTML=`<img src="data/simul/simul_${o.back?"table":"f"+fk}.webp" alt=""><div class="sim-bdw"><div class="sim-bd" style="transform:${simHomo(560,620,quad(o))}">${simBoardSvg(t.board)}</div></div>${o.back?`<img class="sim-bk" src="data/simul/simul_b${fk}.webp" alt="">`:""}<b class="sim-no">${i+1}</b>`;st.append(el);return el});
+    el.innerHTML=`<img src="data/simul/simul_${o.back?"table":"f"+fk}.webp" alt=""><div class="sim-bdw"><div class="sim-bd" style="transform:${simHomo(560,620,quad(o))}">${simBoardSvg(t.board)}</div></div>${o.back?`<img class="sim-bk" src="data/simul/simul_b${fk}.webp" alt="">`:""}<div class="sim-bdw">${simPlates(o,fk)}</div><b class="sim-no">${i+1}</b>`;st.append(el);return el});
   const cap=document.createElement("div");cap.className="sim-cap";cap.textContent=`🀄 車輪戰・${S.n} 盤`;ov.append(cap);
   ov.onclick=end;document.body.append(ov);
   const fit=()=>{const w=st.clientWidth;st.querySelectorAll(".sim-bdw").forEach(b=>b.style.transform=`scale(${w*parseFloat(b.parentElement.style.width)/100/1024})`)};
