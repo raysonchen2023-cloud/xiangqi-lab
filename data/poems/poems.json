@@ -1,0 +1,371 @@
+{
+  "version": 1,
+  "note": "場景物件詩詞資料。每首逐字查證於維基文庫 zh.wikisource.org（少數標明中國哲學書電子化計劃），正體字，皆為公有領域（作者歿逾七十年）。異文一律照所引底本或最通行版本，並於 textNote 記來源。『當代』＝該場景所屬朝代；經典世界（classic）可跨朝代。每物件每朝代至少三首，點擊輪播、一輪內不重複同一首。製作：Claude，2026-11-12。",
+  "eraLabel": {
+    "qin": "先秦",
+    "han": "漢",
+    "sanguo": "三國",
+    "weijin": "魏晉",
+    "nanbei": "南北朝",
+    "sui": "隋",
+    "tang": "唐",
+    "wudai": "五代",
+    "song": "宋",
+    "yuan": "元",
+    "ming": "明",
+    "qing": "清",
+    "classic": "歷代"
+  },
+  "objects": {
+    "moon": {
+      "name": "月亮",
+      "labelTpl": "月亮：聽一首{eraLabel}詩",
+      "scenes": "首頁「楚河渡口棋鎮」夜景（home_*_night）左上角那彎新月；十二朝與四季夜景構圖對齊，月亮都在同一處。白天無月，不登記。",
+      "note": "朝代依圖網址判定：home_<朝>_<季>_night＝該朝；無朝代前綴（home_<季>_night）＝宋（原圖）；home_classic_*_night＝經典世界，用跨朝代 classic 池。隋（sui）、元（yuan）、明（ming）暫無足夠逐字查證來源，先不登記，月亮在那幾朝夜景暫不可點。"
+    }
+  },
+  "poems": {
+    "moon": {
+      "qin": [
+        {
+          "poet": "《詩經·陳風》",
+          "dynasty": "先秦",
+          "title": "月出",
+          "text": "月出皎兮，佼人僚兮。舒窈糾兮，勞心悄兮。",
+          "excerpt": true,
+          "source": "《詩經·陳風·月出》（三章，此為首章）",
+          "ref": "https://zh.wikisource.org/wiki/詩經/月出",
+          "textNote": "全篇三章，此錄首章。"
+        },
+        {
+          "poet": "屈原",
+          "dynasty": "先秦（戰國）",
+          "title": "天問",
+          "text": "夜光何德，死則又育？厥利維何，而顧菟在腹？",
+          "excerpt": true,
+          "source": "《楚辭·天問》",
+          "ref": "https://zh.wikisource.org/wiki/天問",
+          "textNote": "節錄問月二句。『夜光』指月，『顧菟』即月中蟾兔。"
+        },
+        {
+          "poet": "《詩經·小雅》",
+          "dynasty": "先秦",
+          "title": "天保",
+          "text": "如月之恆，如日之升。如南山之壽，不騫不崩。",
+          "excerpt": true,
+          "source": "《詩經·小雅·天保》",
+          "ref": "https://zh.wikisource.org/wiki/詩經/天保",
+          "textNote": "節錄祝頌四句，以上弦月漸滿為喻。"
+        }
+      ],
+      "han": [
+        {
+          "poet": "《古詩十九首》（佚名）",
+          "dynasty": "漢",
+          "title": "明月何皎皎",
+          "text": "明月何皎皎，照我羅床幃。憂愁不能寐，攬衣起徘徊。",
+          "excerpt": true,
+          "source": "《古詩十九首》（《文選》卷二十九）",
+          "ref": "https://zh.wikisource.org/wiki/古詩十九首",
+          "textNote": "全篇十句，此錄前四句。維基文庫底本作『羅牀幃』『覽衣』，此從通行作『床』『攬』。"
+        },
+        {
+          "poet": "班婕妤",
+          "dynasty": "漢",
+          "title": "怨歌行",
+          "text": "新裂齊紈素，鮮潔如霜雪。裁為合歡扇，團團似明月。",
+          "excerpt": true,
+          "source": "《怨歌行》（又題〈團扇〉《文選》卷二十七）",
+          "ref": "https://zh.wikisource.org/wiki/怨歌行_(班倢伃)",
+          "textNote": "全篇十句，此錄前四句，以團扇喻圓月。維基文庫底本作『鮮潔』，一作『皎潔』。"
+        },
+        {
+          "poet": "《古詩十九首》（佚名）",
+          "dynasty": "漢",
+          "title": "明月皎夜光",
+          "text": "明月皎夜光，促織鳴東壁。玉衡指孟冬，眾星何歷歷。",
+          "excerpt": true,
+          "source": "《古詩十九首》（《文選》卷二十九）",
+          "ref": "https://zh.wikisource.org/wiki/古詩十九首",
+          "textNote": "節錄前四句。"
+        }
+      ],
+      "sanguo": [
+        {
+          "poet": "曹操",
+          "dynasty": "三國（魏）",
+          "title": "短歌行",
+          "text": "月明星稀，烏鵲南飛。繞樹三匝，何枝可依？",
+          "excerpt": true,
+          "source": "《短歌行》（對酒當歌）",
+          "ref": "https://zh.wikisource.org/wiki/短歌行_(曹操)",
+          "textNote": "節錄。『何枝』一作『無枝』。"
+        },
+        {
+          "poet": "曹植",
+          "dynasty": "三國（魏）",
+          "title": "七哀詩",
+          "text": "明月照高樓，流光正徘徊。上有愁思婦，悲歎有餘哀。",
+          "excerpt": true,
+          "source": "《七哀詩》（《文選》卷二十三）",
+          "ref": "https://zh.wikisource.org/wiki/七哀詩_(曹子建)",
+          "textNote": "節錄開頭四句。"
+        },
+        {
+          "poet": "曹丕",
+          "dynasty": "三國（魏）",
+          "title": "燕歌行",
+          "text": "明月皎皎照我床，星漢西流夜未央。",
+          "excerpt": true,
+          "source": "《燕歌行》（秋風蕭瑟天氣涼）",
+          "ref": "https://zh.wikisource.org/wiki/燕歌行_(曹丕)",
+          "textNote": "節錄二句。現存最早完整的七言詩之一。"
+        }
+      ],
+      "weijin": [
+        {
+          "poet": "陶淵明",
+          "dynasty": "魏晉（東晉）",
+          "title": "雜詩",
+          "text": "白日淪西阿，素月出東嶺。遙遙萬里輝，蕩蕩空中景。",
+          "excerpt": true,
+          "source": "《雜詩·其二》",
+          "ref": "https://zh.wikisource.org/wiki/雜詩_(陶淵明)",
+          "textNote": "節錄前四句。維基文庫底本作『萬里輝』，一作『萬里暉』。"
+        },
+        {
+          "poet": "阮籍",
+          "dynasty": "魏晉（三國魏末）",
+          "title": "詠懷詩",
+          "text": "夜中不能寐，起坐彈鳴琴。薄帷鑑明月，清風吹我衿。",
+          "excerpt": true,
+          "source": "《詠懷詩·其一》（《文選》卷二十三）",
+          "ref": "https://zh.wikisource.org/wiki/詠懷詩_(夜中不能寐)",
+          "textNote": "節錄前四句。《文選》作『鑑』『衿』，一作『鑒』『襟』。"
+        },
+        {
+          "poet": "陶淵明",
+          "dynasty": "魏晉（東晉）",
+          "title": "歸園田居",
+          "text": "種豆南山下，草盛豆苗稀。晨興理荒穢，帶月荷鋤歸。",
+          "excerpt": true,
+          "source": "《歸園田居·其三》",
+          "ref": "https://zh.wikisource.org/wiki/歸園田居",
+          "textNote": "節錄前四句。『帶月』一作『戴月』。"
+        }
+      ],
+      "nanbei": [
+        {
+          "poet": "謝莊",
+          "dynasty": "南北朝（南朝宋）",
+          "title": "月賦",
+          "text": "美人邁兮音塵闕，隔千里兮共明月。",
+          "excerpt": true,
+          "source": "《月賦》（《文選》卷十三）",
+          "ref": "https://zh.wikisource.org/wiki/月賦",
+          "textNote": "節錄賦末歌辭二句。"
+        },
+        {
+          "poet": "何遜",
+          "dynasty": "南北朝（南朝梁）",
+          "title": "望新月示同羈",
+          "text": "初宿長淮上，破鏡出雲明。",
+          "excerpt": true,
+          "source": "《望新月示同羈》",
+          "ref": "https://zh.wikisource.org/wiki/望新月示同羈",
+          "textNote": "節錄開頭二句。『破鏡』喻新月。"
+        },
+        {
+          "poet": "徐陵",
+          "dynasty": "南北朝（南朝陳）",
+          "title": "關山月",
+          "text": "關山三五月，客子憶秦川。",
+          "excerpt": true,
+          "source": "《關山月》",
+          "ref": "https://zh.wikisource.org/wiki/關山月_(徐陵)",
+          "textNote": "節錄開頭二句。原頁無標點，標點依通行。『三五月』即十五圓月。"
+        }
+      ],
+      "tang": [
+        {
+          "poet": "李白",
+          "dynasty": "唐",
+          "title": "靜夜思",
+          "text": "床前明月光，疑是地上霜。舉頭望明月，低頭思故鄉。",
+          "excerpt": false,
+          "source": "《靜夜思》（《唐詩三百首》）",
+          "ref": "https://zh.wikisource.org/wiki/靜夜思",
+          "textNote": "《唐詩三百首》通行本。《全唐詩》《李太白全集》作『床前看月光』『舉頭望山月』。"
+        },
+        {
+          "poet": "杜甫",
+          "dynasty": "唐",
+          "title": "月夜",
+          "text": "今夜鄜州月，閨中只獨看。遙憐小兒女，未解憶長安。",
+          "excerpt": true,
+          "source": "《月夜》",
+          "ref": "https://zh.wikisource.org/wiki/月夜_(杜甫)",
+          "textNote": "全篇八句，此錄前四句。"
+        },
+        {
+          "poet": "張九齡",
+          "dynasty": "唐",
+          "title": "望月懷遠",
+          "text": "海上生明月，天涯共此時。情人怨遙夜，竟夕起相思。",
+          "excerpt": true,
+          "source": "《望月懷遠》",
+          "ref": "https://zh.wikisource.org/wiki/望月懷遠",
+          "textNote": "全篇八句，此錄前四句。"
+        }
+      ],
+      "wudai": [
+        {
+          "poet": "李煜",
+          "dynasty": "五代（南唐）",
+          "title": "虞美人",
+          "text": "春花秋月何時了，往事知多少。小樓昨夜又東風，故國不堪回首月明中。",
+          "excerpt": true,
+          "source": "《虞美人》（春花秋月何時了）",
+          "ref": "https://zh.wikisource.org/wiki/虞美人_(春花秋月何時了)",
+          "textNote": "節錄上片四句。"
+        },
+        {
+          "poet": "韋莊",
+          "dynasty": "五代（前蜀；由唐入蜀）",
+          "title": "菩薩蠻",
+          "text": "壚邊人似月，皓腕凝霜雪。",
+          "excerpt": true,
+          "source": "《菩薩蠻·其二》（人人盡說江南好）",
+          "ref": "https://zh.wikisource.org/wiki/菩薩蠻_(人人盡說江南好)",
+          "textNote": "節錄下片二句，以月喻人。"
+        },
+        {
+          "poet": "李煜",
+          "dynasty": "五代（南唐）",
+          "title": "相見歡",
+          "text": "無言獨上西樓，月如鉤。寂寞梧桐深院鎖清秋。",
+          "excerpt": true,
+          "source": "《相見歡》（一作《烏夜啼》）",
+          "ref": "https://zh.wikisource.org/wiki/相見歡_(無言獨上西樓,_李煜)",
+          "textNote": "節錄上片。"
+        }
+      ],
+      "song": [
+        {
+          "poet": "蘇軾",
+          "dynasty": "宋（北宋）",
+          "title": "水調歌頭",
+          "text": "明月幾時有？把酒問青天。不知天上宮闕，今夕是何年。",
+          "excerpt": true,
+          "source": "《水調歌頭·丙辰中秋》",
+          "ref": "https://zh.wikisource.org/wiki/水調歌頭_(明月幾時有)",
+          "textNote": "節錄上片開頭。"
+        },
+        {
+          "poet": "王安石",
+          "dynasty": "宋（北宋）",
+          "title": "泊船瓜洲",
+          "text": "京口瓜洲一水間，鍾山只隔數重山。春風又綠江南岸，明月何時照我還。",
+          "excerpt": false,
+          "source": "《泊船瓜洲》",
+          "ref": "https://zh.wikisource.org/wiki/泊船瓜洲",
+          "textNote": "此從通行本。《王臨川集》底本作『鐘山』『春風自綠江南岸』，『又綠』為最通行之異文（洪邁《容齋續筆》記王安石煉字事）。"
+        },
+        {
+          "poet": "李清照",
+          "dynasty": "宋（兩宋之際）",
+          "title": "一剪梅",
+          "text": "雲中誰寄錦書來？雁字回時，月滿西樓。",
+          "excerpt": true,
+          "source": "《一剪梅·紅藕香殘玉簟秋》",
+          "ref": "https://zh.wikisource.org/wiki/一剪梅_(李清照)",
+          "textNote": "節錄上片後三句。『寄』一作『不見』，『回』一作『來』。"
+        }
+      ],
+      "qing": [
+        {
+          "poet": "納蘭性德",
+          "dynasty": "清",
+          "title": "蝶戀花",
+          "text": "辛苦最憐天上月，一夕如環，夕夕都成玦。",
+          "excerpt": true,
+          "source": "《蝶戀花》（辛苦最憐天上月）",
+          "ref": "https://zh.wikisource.org/wiki/蝶戀花_(辛苦最憐天上月)",
+          "textNote": "節錄上片三句。維基文庫底本作『一夕如環，夕夕都成玦』，一作『一昔如環，昔昔都成玦』。"
+        },
+        {
+          "poet": "查慎行",
+          "dynasty": "清",
+          "title": "舟夜書所見",
+          "text": "月黑見漁燈，孤光一點螢。微微風簇浪，散作滿河星。",
+          "excerpt": false,
+          "source": "《舟夜書所見》（《他山詩鈔》）",
+          "ref": "https://zh.wikisource.org/wiki/舟夜書所見",
+          "textNote": "全詩。"
+        },
+        {
+          "poet": "曹雪芹",
+          "dynasty": "清",
+          "title": "口號一絕（中秋詠月）",
+          "text": "時逢三五便團圓，滿把晴光護玉欄。天上一輪才捧出，人間萬姓仰頭看。",
+          "excerpt": false,
+          "source": "《紅樓夢》第一回（賈雨村中秋口占一絕）",
+          "ref": "https://zh.wikisource.org/wiki/紅樓夢/第001回",
+          "textNote": "小說中人物賈雨村所吟，作者曹雪芹。"
+        }
+      ],
+      "classic": [
+        {
+          "poet": "李白",
+          "dynasty": "唐",
+          "title": "靜夜思",
+          "text": "床前明月光，疑是地上霜。舉頭望明月，低頭思故鄉。",
+          "excerpt": false,
+          "source": "《靜夜思》（《唐詩三百首》）",
+          "ref": "https://zh.wikisource.org/wiki/靜夜思",
+          "textNote": "經典世界跨朝代選詩。"
+        },
+        {
+          "poet": "蘇軾",
+          "dynasty": "宋（北宋）",
+          "title": "水調歌頭",
+          "text": "人有悲歡離合，月有陰晴圓缺，此事古難全。但願人長久，千里共嬋娟。",
+          "excerpt": true,
+          "source": "《水調歌頭·丙辰中秋》",
+          "ref": "https://zh.wikisource.org/wiki/水調歌頭_(明月幾時有)",
+          "textNote": "節錄下片結句。"
+        },
+        {
+          "poet": "《詩經·陳風》",
+          "dynasty": "先秦",
+          "title": "月出",
+          "text": "月出皎兮，佼人僚兮。舒窈糾兮，勞心悄兮。",
+          "excerpt": true,
+          "source": "《詩經·陳風·月出》（首章）",
+          "ref": "https://zh.wikisource.org/wiki/詩經/月出",
+          "textNote": "現存最早詠月名篇之一。"
+        },
+        {
+          "poet": "張九齡",
+          "dynasty": "唐",
+          "title": "望月懷遠",
+          "text": "海上生明月，天涯共此時。情人怨遙夜，竟夕起相思。",
+          "excerpt": true,
+          "source": "《望月懷遠》",
+          "ref": "https://zh.wikisource.org/wiki/望月懷遠",
+          "textNote": "節錄前四句。"
+        },
+        {
+          "poet": "李煜",
+          "dynasty": "五代（南唐）",
+          "title": "相見歡",
+          "text": "無言獨上西樓，月如鉤。寂寞梧桐深院鎖清秋。",
+          "excerpt": true,
+          "source": "《相見歡》（一作《烏夜啼》）",
+          "ref": "https://zh.wikisource.org/wiki/相見歡_(無言獨上西樓,_李煜)",
+          "textNote": "節錄上片。"
+        }
+      ]
+    }
+  }
+}

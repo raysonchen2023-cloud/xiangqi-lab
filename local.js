@@ -3,9 +3,15 @@
 "use strict";
 var XQ=(function(){
   const C=XQCore,BASE=new URL("./",location.href).href;
-  const{START,parseFen,fen,legal,inCheck,kingSq,iccs,parseSq,notate,opp,LEVELS:LEVELS8,stateApply,stateRebuild,judgeState,pickMove,ANALYZE_MS,classifyRaw,gradeLoss,qName,PLAYER,summary,fullItem,gameItem}=C;
+  const{START,parseFen,fen,legal,inCheck,kingSq,iccs,parseSq,notate,opp,LEVELS:LEVELS8,stateApply,judgeState,pickMove,ANALYZE_MS,classifyRaw,gradeLoss,qName,PLAYER,summary,fullItem,gameItem}=C;
   const gameId=()=>new Date().toISOString().replace(/[:.]/g,"-").slice(0,19);
+  /* 棋規設定（11/11 Gemini 架構報告第一項；註冊表在 xiangqi-referee.js 的 RULESETS）：每次重放都先把這盤的 rc 整理好再交給裁判——
+     舊存檔沒有 rc 就補預設（千秋休閒規則＋目前裁判版本）；有 rc 就沿用開局時那份，開局後改設定不影響這盤 */
+  const stateRebuild=S=>{S.rc=C.ruleConfigOf(S);return C.stateRebuild(S)};
   const ls={get(k,d){try{const v=localStorage.getItem("xq_"+k);return v==null?d:JSON.parse(v)}catch(e){return d}},set(k,v){try{localStorage.setItem("xq_"+k,JSON.stringify(v))}catch(e){}}};
+  /* 設定頁的「棋規」：只影響之後新開的自由對局（挑戰電腦非晉級賽、同機對下、車輪戰、線上邀請）；晉級賽、擂台、石桌往事、錯棋重練一律千秋休閒規則 */
+  const rulePref=()=>{const v=ls.get("ruleset",C.RULESET_DEFAULT);return C.RULESETS[v]?v:C.RULESET_DEFAULT};
+  window.XQ_rulePref=rulePref;window.XQ_setRulePref=id=>{ls.set("ruleset",C.RULESETS[id]?id:C.RULESET_DEFAULT);return rulePref()};
 
   // ---------- 手機裡的資料庫（IndexedDB）：同步來的棋譜、下完的棋局、分析快取 ----------
   const idb=(()=>{let dbp=null;
@@ -59,14 +65,97 @@ var XQ=(function(){
   // 積分挑戰：跟線上對戰一樣的段位（新手～專2-2），但分開記分。電腦的強度跟著你目前的段位走，段位越高越難。
   const RANKS=[["新手",0],["入門1",50],["入門2",100],["入門3",150],["業1",200],["業2",300],["業3",400],["業4",500],["業5",600],["業6",700],["業7",800],["業8",900],["業9",1000],["專1-1",1150],["專1-2",1300],["專2-1",1500],["專2-2",1700]];
   const rankIdx=p=>{let i=0;for(let k=0;k<RANKS.length;k++)if((p||0)>=RANKS[k][1])i=k;return i};
+  /* HUMANPICK:BEGIN */
+  /* 低段電腦擬人選步（評審 P17.3 AI 擬真與分級、P05.4 難度與挫折控制、P20.4 挫折容忍，11/11）：
+     新手～業1（RLV 帶 hm 的五級）不再「margin 內平均亂抽」（會平白把車送給你、也會突然下出好棋），改成模擬人類新手的「看法」。
+     說明、參數表、改前改後數據：xiangqi-db/story/98_低段電腦擬人.md；測試：xiangqi-lab/tools/test-human-ai.js；對戰統計：xiangqi-lab/tools/human-ai-match.js
+     純函式區塊（只用 C＝XQCore，不碰存檔、畫面、引擎、Math.random），測試與統計工具把 BEGIN～END 切出來跑：
+       const HP=HUMANPICK(C)；HP.on(lv)＝這一級用不用擬人；HP.mpvOf(lv)＝要引擎給幾條候選；HP.pick(r,lv,board,side,rnd)→{mv,why,…}（rnd 可注入固定亂數）
+     做法：引擎（淺層、MultiPV 多條）給每個候選的分數 v（走方視角厘兵）；再用規則算「這步走完，對方吃得到我哪幾顆子、各淨虧多少」（吃了我吃得回來就扣掉），
+     每個威脅照等級的機率決定「有沒有看到」：
+       old＝本來就被捉的子（漏看你的威脅）、disc＝這步移開擋子才露出來的、maj／min＝剛走過去那顆（大子車馬炮／小子；車沒注意的機率再除以 3）、recap＝吃子後被吃回（貪吃）；
+       see＝自己可以吃的子有沒有看到、mate＝自己一步殺有沒有看到、mated＝這步走完會被殺有沒有看到；
+     沒看到的虧損加回分數（以為沒事），看到的照引擎；吃子（有看到）再加貪吃分 greed；常用子（車馬炮）小加分、士象帥小扣分；
+     最後加 Gumbel 雜訊（溫度 T 厘兵）挑最高。只看局面、不看比分：不會因為你快輸了就突然變強或變弱 */
+  const HUMANPICK=function(C){
+    const U={K:0,R:9,C:4.5,N:4,B:2,A:2,P:1},CPU=130;   /* CPU：1 個兵約多少厘兵（Pikafish 淺層實測：炮 4.5 兵≈600 厘兵） */
+    const PROF=[
+      {name:"新手",mpv:40,old:.45,maj:.97,min:.85,disc:.30,recap:.35,see:.70,greed:.50,mate:.55,mated:.50,T:110},
+      {name:"入門1",mpv:36,old:.56,maj:.975,min:.88,disc:.35,recap:.48,see:.78,greed:.40,mate:.70,mated:.60,T:90},
+      {name:"入門2",mpv:32,old:.64,maj:.98,min:.90,disc:.47,recap:.60,see:.86,greed:.30,mate:.80,mated:.72,T:75},
+      {name:"入門3",mpv:28,old:.78,maj:.99,min:.94,disc:.62,recap:.74,see:.92,greed:.22,mate:.90,mated:.84,T:60},
+      {name:"業1",mpv:24,old:.88,maj:.995,min:.97,disc:.75,recap:.85,see:.96,greed:.15,mate:.96,mated:.92,T:45}];
+    const DESC=["只看一步，常漏看你的威脅、見子就吃","只看一步，會漏看威脅、愛吃子","往後算 2 步，偶爾漏看、有時貪吃","往後算 2 步，偶爾漏看","往後算 3 步，偶有失誤"];
+    const PREF={R:10,C:15,N:15,P:5,B:-15,A:-20,K:-35};
+    const up=p=>p.toUpperCase(),rowOf=i=>i/9|0,inb=(r,c)=>r>=0&&r<10&&c>=0&&c<9;
+    const D4=[[1,0],[-1,0],[0,1],[0,-1]],DG=[[1,1],[1,-1],[-1,1],[-1,-1]],NJ=[[-2,-1,-1,0],[-2,1,-1,0],[2,-1,1,0],[2,1,1,0],[-1,-2,0,-1],[1,-2,0,-1],[-1,2,0,1],[1,2,0,1]];
+    /* 子力：兵過河算 2 */
+    function val(p,sq){const t=up(p);if(t!=="P")return U[t];return(C.sideOf(p)==="r"?rowOf(sq)<=4:rowOf(sq)>=5)?2:1}
+    /* 一顆子走得到的格子（跟 core.js 的 pseudo 同一套規則；不檢查送將，送將由 C.legalOk 擋） */
+    function reach(b,sq){const p=b[sq],r=rowOf(sq),c=sq%9,s=C.sideOf(p),t=up(p),out=[];
+      const add=(rr,cc)=>{if(!inb(rr,cc))return;const q=b[rr*9+cc];if(!q||C.sideOf(q)!==s)out.push(rr*9+cc)};
+      const pal=(rr,cc)=>cc>=3&&cc<=5&&(s==="r"?rr>=7&&rr<=9:rr>=0&&rr<=2);
+      if(t==="K"){for(const[a,d]of D4)if(pal(r+a,c+d))add(r+a,c+d)}
+      else if(t==="A"){for(const[a,d]of DG)if(pal(r+a,c+d))add(r+a,c+d)}
+      else if(t==="B"){for(const[a,d]of DG){const rr=r+2*a,cc=c+2*d;if(!inb(rr,cc)||(s==="r"?rr<5:rr>4)||b[(r+a)*9+c+d])continue;add(rr,cc)}}
+      else if(t==="N"){for(const[a,d,la,ld]of NJ){const rr=r+a,cc=c+d;if(!inb(rr,cc)||b[(r+la)*9+c+ld])continue;add(rr,cc)}}
+      else if(t==="R"||t==="C"){for(const[a,d]of D4){let rr=r+a,cc=c+d,jumped=false;while(inb(rr,cc)){const q=b[rr*9+cc];
+          if(t==="R"){if(!q)out.push(rr*9+cc);else{if(C.sideOf(q)!==s)out.push(rr*9+cc);break}}
+          else if(!jumped){if(!q)out.push(rr*9+cc);else jumped=true}else if(q){if(C.sideOf(q)!==s)out.push(rr*9+cc);break}
+          rr+=a;cc+=d}}}
+      else if(t==="P"){const f=s==="r"?-1:1;add(r+f,c);if(s==="r"?r<=4:r>=5){add(r,c-1);add(r,c+1)}}
+      return out}
+    /* by 方有沒有子能合法吃到 sq */
+    function canHit(b,sq,by){for(let i=0;i<90;i++){const p=b[i];if(p&&C.sideOf(p)===by&&reach(b,i).includes(sq)&&C.legalOk(b,i,sq))return true}return false}
+    /* 輪到對方走時，s 方哪些子被吃、各淨虧幾個兵：{格: 淨虧}；吃了我吃得回來＝扣掉吃子那顆的價值，淨虧 ≤0 不算威脅（帥將不算，將軍由合法著法處理） */
+    function threats(b,s){const o=C.opp(s),hit={},out={};
+      for(let i=0;i<90;i++){const p=b[i];if(!p||C.sideOf(p)!==o)continue;for(const t of reach(b,i)){const q=b[t];if(q&&C.sideOf(q)===s&&up(q)!=="K")(hit[t]||(hit[t]=[])).push(i)}}
+      for(const k in hit){const t=+k,v=val(b[t],t);let worst=0;
+        for(const f of hit[k]){if(!C.legalOk(b,f,t))continue;const back=canHit(C.make(b,f,t),t,s),l=v-(back?val(b[f],t):0);if(l>worst)worst=l}
+        if(worst>0)out[t]=worst}
+      return out}
+    const maxOf=o=>{let m=0;for(const k in o)if(o[k]>m)m=o[k];return m};
+    const on=lv=>!!lv&&!lv.movetime&&Number.isInteger(lv.hm)&&!!PROF[lv.hm];
+    const profOf=lv=>on(lv)?PROF[lv.hm]:null;
+    const mpvOf=lv=>{const P=profOf(lv),n=+(lv&&lv.multipv)||1;return P?Math.max(P.mpv,n):n};
+    const gum=R=>{const u=Math.min(1-1e-12,Math.max(1e-12,R()));return-Math.log(-Math.log(u))};
+    /* 一個候選的特徵：real＝走完實際淨虧（最大的那個威脅）、felt＝有看到的淨虧、cap＝吃到的子力 */
+    /* 「有沒有看到」每一步只抽一次（不是每個候選各抽）：這一步有沒有留意走過去那格、有沒有留意移開後露出來的、吃子後會不會被吃回；
+       本來就被捉的子每顆各抽一次。這樣「沒注意」的機率就是這一步真的犯錯的上限，不會因為候選多就放大 */
+    function look(b,s,x,before,seen){const f=C.parseSq(x.mv.slice(0,2)),t=C.parseSq(x.mv.slice(2,4)),p=b[f],q=b[t];
+      const th=threats(C.make(b,f,t),s);let real=0,felt=0;
+      for(const k in th){const sq=+k,l=th[k],kind=sq===t?(q?"recap":up(p)==="R"?"rook":"RNC".includes(up(p))?"maj":"min"):before[sq]!=null?"old":"disc";
+        const ok=kind==="old"?seen.old[sq]:seen[kind];
+        if(l>real)real=l;if(ok&&l>felt)felt=l}
+      return{f,t,p,q,cap:q?val(q,t):0,real,felt}}
+    function pick(r,lv,b,s,rnd){const P=profOf(lv),R=rnd||Math.random,lines=((r&&r.lines)||[]).filter(x=>x&&typeof x.mv==="string"&&/^[a-i]\d[a-i]\d$/.test(x.mv)&&b[C.parseSq(x.mv.slice(0,2))]);
+      if(!P||lines.length<2)return{mv:(lines[0]&&lines[0].mv)||r.best,why:"single"};
+      const before=threats(b,s),seen={old:{}};for(const k of Object.keys(before).map(Number).sort((x,y)=>x-y))seen.old[k]=R()<P.old;
+      for(const k of["maj","min","disc","recap"])seen[k]=R()<P[k];
+      seen.rook=seen.maj||R()<2/3;   /* 車走到被吃的格子：沒注意的機率只有大子的三分之一（平白送車最傷玩家的感受） */
+      const seeMate=R()<P.mate,seeMated=R()<P.mated,capSeen={};
+      const qv=lines.filter(x=>x.mate==null).map(x=>x.v).sort((x,y)=>x-y),med=qv.length?qv[qv.length>>1]:0;
+      let best=null;
+      for(const x of lines){const F=look(b,s,x,before,seen);
+        const v=x.mate!=null?(x.mate>0?(seeMate?3000:med):(seeMated?-3000:med)):Math.max(-2500,Math.min(2500,x.v));
+        let sc=v+(F.real-F.felt)*CPU;
+        if(F.cap){if(capSeen[F.t]==null)capSeen[F.t]=R()<P.see;sc+=capSeen[F.t]?P.greed*F.cap*CPU:-F.cap*CPU}
+        sc+=PREF[up(F.p)]||0;const z=sc+P.T*gum(R);
+        if(!best||z>best.z)best={x,F,sc,z}}
+      const F=best.F;
+      return{mv:best.x.mv,why:F.real>F.felt?(F.q?"greedy":"blind"):F.cap?"capture":"move",v:best.x.v,top:lines[0].v,real:F.real,felt:F.felt,cap:F.cap}}
+    return{U,CPU,PROF,DESC,PREF,val,reach,canHit,threats,maxOf,on,profOf,mpvOf,look,pick}};
+  /* HUMANPICK:END */
+  const HP=HUMANPICK(C);
   // 每個段位對應的電腦強度：算幾步（depth）、從前幾名著法裡挑（multipv）、可以比最好的差多少分（margin，越大越會失誤）
-  const RLV=[{depth:1,multipv:10,margin:700},{depth:1,multipv:10,margin:500},{depth:2,multipv:8,margin:350},{depth:2,multipv:8,margin:260},
-    {depth:3,multipv:6,margin:200},{depth:4,multipv:6,margin:150},{depth:5,multipv:5,margin:120},{depth:6,multipv:4,margin:90},{depth:7,multipv:4,margin:70},
+  //   hm＝低段擬人選步的等級（HUMANPICK 的 PROF；有 hm 就不用 margin 平均亂抽，multipv 改用 HP.mpvOf）；margin 留著給笑面掌櫃（STYLEPICK）當基準
+  const RLV=[{depth:1,multipv:10,margin:700,hm:0},{depth:1,multipv:10,margin:500,hm:1},{depth:2,multipv:8,margin:350,hm:2},{depth:2,multipv:8,margin:260,hm:3},
+    {depth:3,multipv:6,margin:200,hm:4},{depth:4,multipv:6,margin:150},{depth:5,multipv:5,margin:120},{depth:6,multipv:4,margin:90},{depth:7,multipv:4,margin:70},
     {depth:8,multipv:3,margin:50},{depth:9,multipv:3,margin:35},{depth:10,multipv:3,margin:25},{depth:12,multipv:2,margin:15},
     {movetime:300},{movetime:500},{movetime:1200},{movetime:3000}];
   /* 意見回饋 590（開發者：電腦的級數再細分，照 新手／入門×N／業×N／專×N）：挑戰電腦改成 18 級，名字和強度跟積分挑戰的段位一樣，最上面多一級「專3・全力」。
      舊的 1～8 級（石桌往事、擂台、園子路人傳來的 level，還有以前存的紀錄）照強度換算：1→入門1、2→入門3、3→業2、4→業5、5→業7、6→專1-2、7→專2-1、8→專3 */
-  const LVDESC=x=>x.movetime?`每步想 ${x.movetime/1000} 秒，不放水`:`往後算 ${x.depth} 步，`+(x.margin>=500?"常常亂走":x.margin>=250?"會漏子":x.margin>=150?"偶有失誤":x.margin>=70?"小失誤":x.margin>=35?"很少失誤":"幾乎不失誤");
+  const LVDESC=x=>x.movetime?`每步想 ${x.movetime/1000} 秒，不放水`:HP.on(x)?HP.DESC[x.hm]:`往後算 ${x.depth} 步，`+(x.margin>=500?"常常亂走":x.margin>=250?"會漏子":x.margin>=150?"偶有失誤":x.margin>=70?"小失誤":x.margin>=35?"很少失誤":"幾乎不失誤");
   const LEVELS=[...RLV,{movetime:6000}].map((x,i)=>({...x,n:i+1,name:i<RANKS.length?RANKS[i][0]:"專3・全力",desc:i===RLV.length?"每步想 6 秒，人類幾乎贏不了":LVDESC(x)}));
   const OLD2FINE=[6,2,4,6,9,11,15,16,18],lvOld=n=>OLD2FINE[Math.max(1,Math.min(8,Math.round(+n)||3))];
   const lvIn=b=>b&&b.lx!=null&&Number.isFinite(+b.lx)?Math.max(1,Math.min(LEVELS.length,Math.round(+b.lx))):lvOld(b&&b.level);
@@ -97,7 +186,7 @@ var XQ=(function(){
   /* 意見回饋 415：這盤用過幾次提示（/play/hint、雲河棋路的提示棋 /play/hintmark）、悔過幾次棋（/play/undo）。
      存檔時一起寄進對局紀錄，我的戰績算棋力、成長時把這種盤排除，才公平；舊存檔沒有這兩欄就照算 */
   const assist=G=>({...(G&&G.hintN?{hintN:G.hintN}:{}),...(G&&G.undoN?{undoN:G.undoN}:{})});
-  const keepStart=G=>({...(G&&G.start?{start:G.start,startTurn:G.startTurn||"r"}:{}),...(G&&G.noPerp?{noPerp:true}:{}),...(G&&G.styleOn!=null?{styleOn:G.styleOn}:{})});   /* 對局中途可接續（開發者 11/9）：殘局起手、讓子的關（start）關掉 App 再打開或收起來再拿出來，要從同一個起始局面重建，不然盤面會錯 */
+  const keepStart=G=>({...(G&&G.start?{start:G.start,startTurn:G.startTurn||"r"}:{}),...(G&&G.noPerp?{noPerp:true}:{}),...(G&&G.styleOn!=null?{styleOn:G.styleOn}:{}),...(G&&G.opp==="zhanggui"?{opp:"zhanggui"}:{})});   /* 對局中途可接續（開發者 11/9）：殘局起手、讓子的關（start）關掉 App 再打開或收起來再拿出來，要從同一個起始局面重建，不然盤面會錯 */
   /* ---------- 存檔版本號、保存紀錄（評比循環第 2 輪 ChatGPT：續局與分頁衝突的可視化復原紀錄；各鍵的格式見 story/88 第 8 節）----------
      xq_play 最前面多兩欄：seq＝第幾版（每次寫 +1）、tab＝寫的那個分頁的代號（sessionStorage xqTab，同一個分頁重新整理不變）。VER＝這個分頁「知道的那一版」（讀進來的或自己寫的）。
      savePlay 寫之前先看 localStorage 裡現在是哪一版：跟 VER 不一樣＝另一個分頁在這之後寫過 → 不覆蓋，丟掉記憶體那份（下次 ensureP 重讀最新的），發 xq-play-newer（畫面提示）。
@@ -118,7 +207,7 @@ var XQ=(function(){
     if(h&&LOG_MERGE[ev]&&h.ev===ev&&h.id===o.id){h.at=o.at;h.n=o.n;h.c=(h.c||1)+1;h.tab=TAB;if(o.end)h.end=1}
     else if(ev==="swap"&&A.slice(0,5).some(y=>y.ev==="swap"&&y.id===o.id&&y.to===o.to))return;
     else A.unshift(o);ls.set("saveLog",A.slice(0,LOG_N))}catch(e){}}
-  const playOut=()=>({id:P.id,human:P.human,level:P.level,rlv:P.rlv==null?null:P.rlv,ranked:!!P.ranked,reward:!!P.reward,arena:P.arena||null,journey:P.journey||null,stamp:P.stamp||null,prize:P.prize||null,rk:P.rk,rate:P.rate||null,result:P.result,practice:P.practice||null,...assist(P),...keepStart(P),moves:saveMoves(P.moves)});
+  const playOut=()=>({id:P.id,rc:P.rc||null,human:P.human,level:P.level,rlv:P.rlv==null?null:P.rlv,ranked:!!P.ranked,reward:!!P.reward,arena:P.arena||null,journey:P.journey||null,stamp:P.stamp||null,prize:P.prize||null,rk:P.rk,rate:P.rate||null,result:P.result,practice:P.practice||null,...assist(P),...keepStart(P),moves:saveMoves(P.moves)});
   function playWrite(prev){if(!P)return false;const raw=lsRaw(),v=verOf(raw),h=headOf(raw);
     if(VER!=null&&v!==VER){const G=P;P=null;VER=null;saveLog("clash",G);try{window.dispatchEvent(new CustomEvent("xq-play-newer",{detail:{id:G.id}}))}catch(e){}return false}
     const seq=(h?h.seq:0)+1,take=!!(h&&h.tab&&h.tab!==TAB&&h.id===P.id);
@@ -174,7 +263,7 @@ var XQ=(function(){
   // 積分挑戰下到一半就丟掉（開同一種的新局）：算輸，不然輸棋前開新局就能躲掉扣分
   function forfeit(G){if(!G||!G.ranked||G.result||G.moves.length<2)return;const keep=P;P=G;
     P.result={w:opp(P.human),why:"中途離開，算輸"};cpuRateApply("l");pushGame("play",{id:P.id,date:P.id.slice(0,10),level:0,ranked:true,rk:P.rk,human:P.human,result:P.result,...assist(P),moves:saveMoves(P.moves)});P=keep}
-  const stashOut=G=>({id:G.id,human:G.human,level:G.level,rlv:G.rlv==null?null:G.rlv,ranked:!!G.ranked,reward:!!G.reward,arena:G.arena||null,journey:G.journey||null,rk:G.rk,result:null,practice:G.practice||null,...assist(G),...keepStart(G),moves:saveMoves(G.moves)});
+  const stashOut=G=>({id:G.id,rc:G.rc||null,human:G.human,level:G.level,rlv:G.rlv==null?null:G.rlv,ranked:!!G.ranked,reward:!!G.reward,arena:G.arena||null,journey:G.journey||null,rk:G.rk,result:null,practice:G.practice||null,...assist(G),...keepStart(G),moves:saveMoves(G.moves)});
   // play2：收起來的棋，每一種一盤 {cpu,arena,journey}（舊版只存一盤，讀的時候換成新格式）
   function stashAll(){let s=ls.get("play2",null);if(s&&s.moves)s={[kindOf(s)]:s};const o={};
     for(const k of["cpu","arena","journey","practice"]){const g=s&&s[k];if(g&&g.moves&&g.moves.length&&!g.result)o[k]=g}return o}
@@ -194,7 +283,7 @@ var XQ=(function(){
     P=null;
     if(k==="arena")playNew("r",lv(3),false,null,false,era||"classic",true);
     else if(k==="journey")playNew("r",lv(1),false,null,false,era,true,jid(b.journey));
-    else playNew(b.human==="b"?"b":"r",lv(3),!!b.ranked,null,false,null,true)}
+    else{playNew(b.human==="b"?"b":"r",lv(3),!!b.ranked,null,false,null,true);zgSet(b)}}
   /* 石桌往事的特製關卡（levels.json 的 play 步驟）：從指定局面開始、讓子（拿掉幾顆）、關掉長將判負。棋盤 90 格要合法、兩邊都有將帥才接受 */
   function lvStart(lv){if(!lv||typeof lv!=="object")return null;let b;try{b=parseFen(typeof lv.fen==="string"&&lv.fen?lv.fen:START)}catch(e){return null}
     if(!Array.isArray(b)||b.length!==90)return null;for(const q of Array.isArray(lv.remove)?lv.remove.slice(0,16):[]){const i=parseSq(String(q));if(Number.isInteger(i)&&i>=0&&i<90&&b[i]&&!/[kK]/.test(b[i]))b[i]=null}
@@ -209,17 +298,18 @@ var XQ=(function(){
     const pm=pre&&Array.isArray(pre.moves)?pre.moves.filter(m=>Number.isInteger(m.f)&&Number.isInteger(m.t)).slice(0,300):[];
     P={id:gameId(),human,level:ranked?0:level,ranked:!!ranked,rk:ranked?heldIdx(cpuRate()):null,moves:pm,result:null,hint:null,practice:pre?{...(pre.info||{}),base:pm.length}:null,reward:!ranked&&!pre&&!!reward,arena:!ranked&&!pre&&!reward&&arena||null,journey:nk==="journey"?journey:null};   /* 數學修正 11/11：對手照顯示的段位（遲滯後） */
     {const L=nk==="journey"?lvStart(lv):null;if(L){P.start=L.start;P.startTurn=L.startTurn;if(L.noPerp)P.noPerp=true}}
+    P.rc=C.ruleConfig(nk==="cpu"&&!ranked&&!reward?rulePref():C.RULESET_DEFAULT,ranked?"ranked":pre?"puzzle":"casual");   /* 晉級賽一律千秋休閒規則（積分只認這一套） */
     stateRebuild(P);if(P.practice&&P.turn!==human)throw new Error("這步不是你走的");savePlay()}
   function playApply(f,t){stateApply(P,f,t);P.hint=null;let r=judgeState(P);if(r&&P.noPerp&&/長將|長捉|長打/.test(r.why))r=null;if(r)playEnd(r.w,r.why);savePlay();setTimeout(analyzePlay,0);
     try{window.dispatchEvent(new Event("xq-play"))}catch(e){}}   // 通知畫面馬上更新，不用等下一次輪詢
   function playEnd(w,why){P.result={w,why,...(P.repetition&&!P.repetition.pending?{adjudication:P.repetition}:{})};const res=!w?"d":w===P.human?"w":"l";
     if(P.practice){savePlay();return}   // 錯棋重練：不算戰績、不存進對局紀錄
-    if(P.ranked){if(P.moves.length>=2)cpuRateApply(res)}   // 雙方都還沒走就結束不計分
+    if(P.ranked&&C.ruleRated(P.rc)&&P.rc.mode==="ranked"){if(P.moves.length>=2)cpuRateApply(res)}   /* 原型棋規、或棋規設定不是 ranked 的不計分 */   // 雙方都還沒走就結束不計分
     if(P.arena&&!P.journey&&res==="w"&&P.moves.length>=2){const S=ls.get("arenaStamps",{}),first=!S[P.arena];if(first)S[P.arena]={at:new Date().toISOString(),lv:P.level,n:P.moves.length};ls.set("arenaStamps",S);
       P.stamp={era:P.arena,first,total:Object.keys(S).length}}
     else if(kindOf(P)==="cpu"&&!/-b$/.test(String(P.id))){const rec=ls.get("record",{}),L=rec[P.level]||(rec[P.level]={w:0,l:0,d:0});L[res]++;ls.set("record",rec)}
     /* 意見回饋 594：石桌往事從中局開始的關也存（記起始局面），我的成長才算得到故事裡下的棋 */
-    pushGame("play",{id:P.id,date:P.id.slice(0,10),level:P.level,ranked:!!P.ranked,reward:!!P.reward,rk:P.rk,human:P.human,result:P.result,...(P.start?{start:P.start,startTurn:P.startTurn||"r"}:{}),...(P.journey?{journey:P.journey}:{}),...assist(P),moves:saveMoves(P.moves)});savePlay()}
+    pushGame("play",{id:P.id,rc:P.rc||null,date:P.id.slice(0,10),level:P.level,ranked:!!P.ranked,reward:!!P.reward,rk:P.rk,human:P.human,result:P.result,...(P.start?{start:P.start,startTurn:P.startTurn||"r"}:{}),...(P.journey?{journey:P.journey}:{}),...(zgOn(P)?{opp:"zhanggui"}:{}),...assist(P),moves:saveMoves(P.moves)});savePlay()}
   async function analyzePlay(){if(paBusy||!P)return;paBusy=true;const S=P;try{await analyzeList(S,()=>{if(P===S)savePlay()},()=>P!==S||(!P.result&&P.turn!==P.human))}finally{paBusy=false}   /* 多分頁：另一個分頁改了桌上那盤（playSync 把 P 換掉）就停下、不把舊的那份寫回去 */
     /* ChatGPT 評審 11/11（未評完的狀態）：下完的那盤，背景評好的補進存檔（gamePatch）；還有缺 PV 沒評到的，5 秒後再評，同一盤最多再試 3 次 */
     if(S&&S.result&&!S.practice&&S.id){gamePatch("play",S.id,movesG(S.moves));if(S===P&&S.moves.some(m=>!m.q)&&(paRetry[S.id]=(paRetry[S.id]||0)+1)<=3)setTimeout(analyzePlay,5000)}}
@@ -237,16 +327,103 @@ var XQ=(function(){
     if(P.styleOn==null)P.styleOn=Math.random()<.9;if(!P.styleOn)return null;
     const list=(S[P.turn]||[])[Math.floor(P.moves.length/2)];if(!list)return null;const L=legal(P.board,P.turn);
     for(const u of list){const f=parseSq(u.slice(0,2)),t=parseSq(u.slice(2,4));if(L.some(([a,b])=>a===f&&b===t))return[f,t]}return null}
+  /* STYLEPICK:BEGIN */
+  /* 笑面掌櫃的棋風選步（開發者 11/11；說明 xiangqi-db/story/97_笑面掌櫃實作.md）。
+     純函式：不碰 P、localStorage、畫面、引擎；只吃 XQCore（C）和傳進來的資料。xiangqi-db/tools/style_loop 的 Node 訓練循環會把 BEGIN～END 這一段原封不動抽出去共用，
+     所以這一段裡不能用到 local.js 其他地方的變數。用法：const SP=STYLEPICK(XQCore)；SP.bookPick(book,board,side,rnd)；SP.pick(r,lv,board,side,rnd,params)。
+     r＝XQEngine.search 的結果 {best,lines:[{mv,v,mate,pv}]}，v＝走棋那一方的厘兵（跟 core.js pickMove 同一個視角）；lv＝LEVELS／RLV 的一級 {depth|movetime,multipv,margin}。 */
+  const STYLEPICK=function(C){
+    const DEF={
+      bookTemp:1,        /* 開局庫抽樣溫度：權重＝次數^(1/溫度)；1＝照次數比例，越大越平均，越小越只走最常見的 */
+      bookMaxPly:20,     /* 前幾手（半回合）查開局庫 */
+      mpvMin:3,          /* 掌櫃至少要引擎給 3 條候選（幻影棋客高等級只要 1 條） */
+      gateMin:30,gateMax:60,gateK:0.5,   /* 候選門檻：跟「幻影棋客會走的那步」差 ≤ 門檻；門檻＝等級的 margin×0.5，夾在 30～60 厘兵；沒有 margin（全力級）＝30 */
+      evenCp:150,        /* |評分| < 150＝均勢；≥ 150＝領先；≤ −150＝落後 */
+      exLevel:20,        /* 均勢時兌子加分（厘兵） */
+      exAhead:-15,       /* 領先時兌子扣分 */
+      exBehind:0,        /* 落後時兌子不加不扣 */
+      exTol:1,           /* 兌子＝兩邊子力差 ≤ 1 分（車換車、馬換炮都算），而且不是兵卒互換 */
+      sac:-40,           /* 棄子扣分：照引擎主變走 6 手，子力淨少 ≥ sacMin 分 */
+      sacMin:3,
+      sacPly:6,
+      checkRun:2,        /* 主變裡自己連續將軍 ≥ 2 次＝連將攻殺，不算棄子 */
+      king:-8,           /* 沒被將軍就動帥（將）扣分 */
+      cannon:3,          /* 走炮小加分 */
+      dev:1,             /* 偏離「幻影棋客那步」每 1 厘兵扣 1 分（往上往下都扣，平均下來強度不變） */
+      jitter:3,          /* 同分時的小亂數 */
+      endMajors:4        /* 雙方車馬炮合計 ≤ 4＝殘局：不加棋風，照幻影棋客的選法 */
+    };
+    const UP=p=>p?p.toUpperCase():"",val=p=>p?(C.VAL[UP(p)]||0):0,red=p=>!!p&&p===UP(p);
+    const mine=(p,s)=>!!p&&(s==="r")===red(p);
+    function material(b,s){let m=0;for(const p of b)if(p&&UP(p)!=="K")m+=mine(p,s)?val(p):-val(p);return m}
+    function majors(b){let n=0;for(const p of b)if(p&&"RNC".includes(UP(p)))n++;return n}
+    const mvOf=u=>[C.parseSq(u.slice(0,2)),C.parseSq(u.slice(2,4))];
+    const mirSq=i=>Math.floor(i/9)*9+(8-i%9);
+    const mirMv=u=>u.replace(/[a-i]/g,c=>String.fromCharCode(202-c.charCodeAt(0)));
+    function mirBoard(b){const o=new Array(90);for(let i=0;i<90;i++)o[mirSq(i)]=b[i];return o}
+    /* 開局庫：檔案格式 {maxPly,pos:{"<XQCore.fen(盤面,走方)>":"h2e2:422,g0e2:209,c3c4:240,…"}}（次數 1 省略「:1」）→ {maxPly,pos:{key:[[uci,n],…]}} */
+    function bookParse(j){const pos={};for(const[k,s]of Object.entries((j&&j.pos)||{}))pos[k]=String(s).split(",").filter(Boolean).map(x=>{const[u,n]=x.split(":");return[u,Math.max(1,+n||1)]});
+      return{maxPly:+(j&&j.maxPly)||DEF.bookMaxPly,pos}}
+    /* 照次數加權抽一步（只抽合法的）；這個局面不在庫裡就查左右鏡像，抽到再鏡像回來；都沒有回 null */
+    function bookPick(B,b,s,rnd,temp){if(!B||!B.pos)return null;const L=C.legal(b,s),ok=u=>{const[f,t]=mvOf(u);return L.some(([x,y])=>x===f&&y===t)};
+      const T=temp||DEF.bookTemp,draw=ms=>{const c=ms.filter(([u])=>ok(u));if(!c.length)return null;const w=c.map(([,n])=>Math.pow(n,1/T)),tot=w.reduce((a,x)=>a+x,0);let y=(rnd||Math.random)()*tot;
+        for(let i=0;i<c.length;i++){y-=w[i];if(y<0)return c[i][0]}return c[c.length-1][0]};
+      const a=B.pos[C.fen(b,s)];if(a){const u=draw(a);if(u)return u}
+      const m=B.pos[C.fen(mirBoard(b),s)];if(m){const u=draw(m.map(([u,n])=>[mirMv(u),n]));if(u)return u}
+      return null}
+    /* 一條候選的特徵：兌子、棄子（主變裡子力淨少，除非連將）、動帥、走炮 */
+    function feats(b,s,line){const pv=(line.pv&&line.pv.length?line.pv:[line.mv]).filter(u=>typeof u==="string"&&u.length>=4),o=C.opp(s);
+      const[f,t]=mvOf(pv[0]||line.mv),pc=b[f],cap=b[t],b1=C.make(b,f,t),F={exchange:false,sac:false,checkRun:0,king:false,cannon:UP(pc)==="C",capture:!!cap};
+      F.king=UP(pc)==="K"&&!C.inCheck(b,s);
+      if(cap&&val(cap)>=2&&Math.abs(val(cap)-val(pc))<=DEF.exTol&&C.legal(b1,o).some(([,y])=>y===t))F.exchange=true;
+      else if(!cap&&pv.length>=3&&val(pc)>=2){const[f1,t1]=mvOf(pv[1]),[,t2]=mvOf(pv[2]),q=b1[f1];if(t1===t&&t2===t&&q&&Math.abs(val(q)-val(pc))<=DEF.exTol)F.exchange=true}
+      let bb=b,run=0,best=0,n=Math.min(pv.length,DEF.sacPly);if(n%2)n--;
+      for(let i=0;i<n;i++){const[x,y]=mvOf(pv[i]);if(!bb[x])break;bb=C.make(bb,x,y);if(i%2===0){if(C.inCheck(bb,o)){run++;best=Math.max(best,run)}else run=0}}
+      F.checkRun=Math.max(best,C.inCheck(b1,o)?1:0);
+      F.loss=n>=2?material(b,s)-material(bb,s):0;
+      F.sac=F.loss>=DEF.sacMin&&!(line.mate!=null&&line.mate>0)&&F.checkRun<DEF.checkRun;
+      return F}
+    const stateOf=(v,p)=>v>=p.evenCp?"ahead":v<=-p.evenCp?"behind":"level";
+    function bonus(F,st,p){let x=0;if(F.exchange)x+=st==="level"?p.exLevel:st==="ahead"?p.exAhead:p.exBehind;if(F.sac)x+=p.sac;if(F.king)x+=p.king;if(F.cannon)x+=p.cannon;return x}
+    const gateOf=(lv,p)=>{p=p||DEF;const m=+(lv&&lv.margin)||0;return m?Math.max(p.gateMin,Math.min(p.gateMax,Math.round(m*p.gateK))):p.gateMin};
+    const mpvOf=(lv,p)=>Math.max(+(lv&&lv.multipv)||1,(p||DEF).mpvMin);
+    /* 選一步：先照幻影棋客的規則抽「基準步」ref（margin 內隨機；全力級＝最佳），殘局、有殺棋就直接用 ref；
+       不然在「跟 ref 差 ≤ 門檻、也不比最佳差超過 max(margin,門檻)」的候選裡，算 棋風加分 − |跟 ref 的分差|×dev，最高的那步 */
+    function pick(r,lv,b,s,rnd,params){const p={...DEF,...(params||{})},R=rnd||Math.random,lines=((r&&r.lines)||[]).filter(x=>x&&typeof x.mv==="string"&&x.mv.length>=4);
+      if(lines.length<2)return{mv:(lines[0]&&lines[0].mv)||r.best,why:"single"};
+      const top=lines[0].v,margin=+(lv&&lv.margin)||0,pool=lines.filter(x=>x.v>=top-margin),ref=pool[Math.floor(R()*pool.length)]||lines[0];
+      if(majors(b)<=p.endMajors)return{mv:ref.mv,why:"endgame",ref:ref.mv};
+      if(lines.some(x=>x.mate!=null))return{mv:ref.mv,why:"mate",ref:ref.mv};
+      const G=gateOf(lv,p),st=stateOf(top,p),floor=top-Math.max(margin,G);
+      let best=null;for(const x of lines){if(x.v<floor||Math.abs(x.v-ref.v)>G)continue;const F=feats(b,s,x),sc=bonus(F,st,p)-Math.abs(x.v-ref.v)*p.dev+(R()*2-1)*p.jitter+(x===ref?0.001:0);
+        if(!best||sc>best.sc)best={x,F,sc}}
+      if(!best)return{mv:ref.mv,why:"ref",ref:ref.mv};
+      return{mv:best.x.mv,why:best.x===ref?"ref":"style",ref:ref.mv,state:st,gate:G,feats:best.F,score:best.sc}}
+    return{DEF,bookParse,bookPick,feats,bonus,stateOf,gateOf,mpvOf,pick,material,majors,mirBoard,mirMv}};
+  /* STYLEPICK:END */
+  const SP=STYLEPICK(C);
+  /* 笑面掌櫃（opp:"zhanggui"）：只在練功房、快速對局、盲棋（kind cpu、不是晉級賽）；舊存檔沒有 opp＝幻影棋客。開局庫第一次輪到掌櫃走時才下載（data/xyc/xyc_book.json，約 130 KB），下載不到就直接叫引擎 */
+  const zgOn=G=>!!(G&&G.opp==="zhanggui"&&!G.ranked&&!G.practice&&!G.journey&&!G.arena&&!G.reward);
+  let zgBookP=null;
+  /* /play/new、/play/open 帶 opp:"zhanggui"：剛開的這盤是一般挑戰電腦（練功房、快速對局、盲棋）才記上；晉級賽、練習、石桌往事、擂台一律幻影棋客。記上以後先在背景下載開局庫 */
+  function zgSet(b){if(!P||!b||b.opp!=="zhanggui"||P.result||kindOf(P)!=="cpu"||P.ranked||P.practice||P.reward)return;P.opp="zhanggui";savePlay();zgBookLoad()}
+  const zgBookLoad=()=>zgBookP||(zgBookP=fetch(BASE+"data/xyc/xyc_book.json").then(r=>{if(!r.ok)throw new Error("開局庫 "+r.status);return r.json()}).then(j=>SP.bookParse(j)).catch(()=>{zgBookP=null;return null}));
   const CPU_MIN_MS=1000;
   async function playEngine(){
     if(!P||P.result||P.turn===P.human||playBusy)return;
     {const sm=styleMove();if(sm){playBusy=true;setTimeout(()=>{try{if(P&&!P.result&&P.turn!==P.human)playApply(sm[0],sm[1])}finally{playBusy=false;setTimeout(playEngine,0)}},700);return}}
     playBusy=true;const id=P.id,n=P.moves.length,lv=P.ranked?RLV[P.rk]||RLV[0]:P.rlv!=null?RLV[P.rlv]||RLV[0]:LEVELS[P.level-1]||LEVELS[2];   /* 意見回饋 548：驛站旅人用段位強度 rlv 浮動 */
     const t0=Date.now();   /* 11/10 開發者「我剛走完一步，電腦就馬上落子」：低等級用淺層深度幾毫秒就算完，至少等 1～1.5 秒再落子，讓玩家看清自己那一步 */
-    try{const r=await XQEngine.search({moves:ucis()},lv.movetime?{movetime:lv.movetime}:{depth:lv.depth},lv.multipv||1);
+    const zg=zgOn(P);   /* 笑面掌櫃：前 20 手先查開局庫（照次數加權抽，不叫引擎）；出庫後引擎多給幾條候選，STYLEPICK 照棋風挑 */
+    try{if(zg&&!P.start&&n<SP.DEF.bookMaxPly){const B=await zgBookLoad(),u=B&&n<B.maxPly?SP.bookPick(B,P.board,P.turn,Math.random):null;
+        if(u){const w=CPU_MIN_MS+Math.random()*500-(Date.now()-t0);if(w>0)await new Promise(z=>setTimeout(z,w));
+          if(!P||P.id!==id||P.moves.length!==n||P.result)return;
+          const f=parseSq(u.slice(0,2)),t=parseSq(u.slice(2,4));if(legal(P.board,P.turn).some(([a,b])=>a===f&&b===t)){playApply(f,t);playMsg="";engFail=0;return}}}
+      const hp=!zg&&HP.on(lv);   /* 低段（新手～業1）擬人選步：見上面 HUMANPICK */
+      const r=await XQEngine.search({moves:ucis()},lv.movetime?{movetime:lv.movetime}:{depth:lv.depth},zg?SP.mpvOf(lv):hp?HP.mpvOf(lv):lv.multipv||1);
       {const w=CPU_MIN_MS+Math.random()*500-(Date.now()-t0);if(w>0)await new Promise(z=>setTimeout(z,w))}
       if(!P||P.id!==id||P.moves.length!==n||P.result)return;
-      const mv=pickMove(r,lv),f=parseSq(mv.slice(0,2)),t=parseSq(mv.slice(2,4));
+      const mv=zg?SP.pick(r,lv,P.board,P.turn,Math.random).mv:hp?HP.pick(r,lv,P.board,P.turn,Math.random).mv:pickMove(r,lv),f=parseSq(mv.slice(0,2)),t=parseSq(mv.slice(2,4));
       if(!legal(P.board,P.turn).some(([a,b])=>a===f&&b===t))throw new Error("引擎給出不合法著法 "+mv);
       playApply(f,t);playMsg="";engFail=0}
     /* 開發者 11/11（離線盤查）：引擎載不到（沒網路、手機裡還沒有引擎檔、還沒進多執行緒模式）原本立刻重試、無限循環——
@@ -257,8 +434,8 @@ var XQ=(function(){
     finally{playBusy=false;if(!engFail)setTimeout(playEngine,0);else if(!engWait)setTimeout(playEngine,Math.min(60000,1500*2**Math.min(engFail,6)))}}
   function playState(){ensureP();
     const CR=cpuRate(),ci=heldIdx(CR),nx=RANKS[ci+1];
-    const SA=stashAll(),others=Object.values(SA).filter(g=>kindOf(g)!==kindOf(P)).map(g=>({kind:kindOf(g),arena:g.arena||null,journey:g.journey||null,ranked:!!g.ranked,reward:!!g.reward,level:g.level,n:g.moves.length,human:g.human}));
-    return{rules:C.REP_RULES,repetition:P.repetition||null,kind:kindOf(P),others,other:others[0]||null,journey:P.journey||null,noPerp:!!P.noPerp,start:P.start||null,startTurn:P.startTurn||"r",id:P.id,blind:/-b$/.test(String(P.id)),board:P.board,turn:P.turn,human:P.human,level:P.level,ranked:!!P.ranked,reward:!!P.reward,arena:P.arena||null,stamp:P.stamp||null,prize:P.prize||null,rkName:P.ranked?RANKS[P.rk][0]:null,rate:P.rate||null,
+    const SA=stashAll(),others=Object.values(SA).filter(g=>kindOf(g)!==kindOf(P)).map(g=>({kind:kindOf(g),opp:zgOn(g)?"zhanggui":null,arena:g.arena||null,journey:g.journey||null,ranked:!!g.ranked,reward:!!g.reward,level:g.level,n:g.moves.length,human:g.human}));
+    return{rules:C.REP_RULES,rc:P.rc||null,repetition:P.repetition||null,kind:kindOf(P),opp:zgOn(P)?"zhanggui":null,others,other:others[0]||null,journey:P.journey||null,noPerp:!!P.noPerp,start:P.start||null,startTurn:P.startTurn||"r",id:P.id,blind:/-b$/.test(String(P.id)),board:P.board,turn:P.turn,human:P.human,level:P.level,ranked:!!P.ranked,reward:!!P.reward,arena:P.arena||null,stamp:P.stamp||null,prize:P.prize||null,rkName:P.ranked?RANKS[P.rk][0]:null,rate:P.rate||null,
       cpuRate:{pts:CR.pts,rank:RANKS[ci][0],w:CR.w,l:CR.l,d:CR.d,next:nx?nx[0]:null,toNext:nx?nx[1]-CR.pts:0,lo:RANKS[ci][1],hi:nx?nx[1]:null,hist:CR.hist},
       levels:LEVELS.map(l=>({n:l.n,name:l.name,desc:l.desc})),record:ls.get("record",{}),
       moves:P.moves.map(moveOut),result:P.result,practice:P.practice||null,thinking:playBusy&&P.turn!==P.human,msg:playMsg,eval:lastEv(P.moves),hint:P.hint,hintN:P.hintN||0,undoN:P.undoN||0,   /* 開發者 11/11 選 v3 規劃書 B03：這盤用過幾次提示、悔棋，給畫面標示用 */
@@ -268,7 +445,7 @@ var XQ=(function(){
   async function playPostIn(p,b){if(ensureP()&&PLAY_MUT.has(p)){saveLog("clash",P);try{window.dispatchEvent(new CustomEvent("xq-play-newer",{detail:{id:P.id}}))}catch(e){}return playState()}   /* 評比循環第 2 輪：畫面上那盤已經被另一個分頁下過＝這一下不算，改看最新的 */
     if(p==="/play/new"){playNew(b.human==="b"?"b":"r",lvAdj(b,lvIn(b)),!b.pre&&!!b.ranked,b.pre||null,false,typeof b.arena==="string"&&/^[a-z]{2,8}$/.test(b.arena)?b.arena:null,false,jid(b.journey),b.lv);
       /* 開發者 11/11：茶肆盲棋（練功房的級數、看不到棋子）。對局編號結尾加 -b 當記號（存檔、收起來、換盤都帶著）：不記練功房戰績、不算我的棋力（04-stats skillRows） */
-      if(b.blind&&P&&!P.ranked&&kindOf(P)==="cpu"&&!/-b$/.test(P.id)){P.id+="-b";savePlay()}if(P&&!P.ranked&&b.rlv!=null&&Number.isInteger(+b.rlv)){P.rlv=Math.max(0,Math.min(RLV.length-1,+b.rlv+dxOf(b)));savePlay()}playMsg="";setTimeout(playEngine,0)}
+      if(b.blind&&P&&!P.ranked&&kindOf(P)==="cpu"&&!/-b$/.test(P.id)){P.id+="-b";savePlay()}if(P&&!P.ranked&&b.rlv!=null&&Number.isInteger(+b.rlv)){P.rlv=Math.max(0,Math.min(RLV.length-1,+b.rlv+dxOf(b)));savePlay()}zgSet(b);playMsg="";setTimeout(playEngine,0)}
     else if(p==="/play/bonus"){   /* 意見回饋 313：石桌往事「回到當年」答對轉折加段位積分；每個轉折只能領一次 */
       const key=String(b.key||"").slice(0,80),pts=Math.max(1,Math.min(20,Math.round(+b.pts)||0)),K=ls.get("bonusKeys",{});
       if(!key)throw new Error("缺少題目代號");const R=cpuRate();
@@ -302,20 +479,20 @@ var XQ=(function(){
      ② 悔棋：每走一手先存雙方鐘的快照 cs（走方扣掉這手想的時間、還沒加秒；對方的鐘本來就沒在走），悔棋時恢復成那一手之前的快照，不保留那手拿到的加秒；
         走這手到按悔棋之間的時間不算任何一方的（兩邊回到那一手之前的樣子），鐘從按悔棋那一刻重新開始走。舊存檔沒有 cs 的那幾手照舊做法（只把對方用掉的時間扣掉）。
      ③ 起鐘規則照舊：第一手（紅方開局）不計時、不加秒，第一手走完才開始計時；存檔重新載入（App 重開）後鐘先停，續局的第一手同樣不扣時、不加秒，走完才繼續計時。 */
-  const saveV=()=>ls.set("pvp",{id:V.id,red:V.red,black:V.black,tcKey:V.tcKey,tc:V.tc,clocks:V.clocks,cs:V.cs||[],result:V.result,moves:saveMoves(V.moves)});
+  const saveV=()=>ls.set("pvp",{id:V.id,rc:V.rc||null,red:V.red,black:V.black,tcKey:V.tcKey,tc:V.tc,clocks:V.clocks,cs:V.cs||[],result:V.result,moves:saveMoves(V.moves)});
   function ensureV(){if(V)return;const s=ls.get("pvp",null);if(s&&s.moves){V=s;V.tick=null;V.draw=null;stateRebuild(V)}else pvpNew({})}
   function pvpNew(o){const tc=TCS[o.tc]||null;V={id:gameId(),red:nameOf(o.red,"紅方"),black:nameOf(o.black,"黑方"),tcKey:tc?o.tc:"none",tc,
-    clocks:tc?{r:tc.min*60000,b:tc.min*60000}:null,cs:[],tick:null,draw:null,moves:[],result:null};stateRebuild(V);saveV()}
+    clocks:tc?{r:tc.min*60000,b:tc.min*60000}:null,cs:[],tick:null,draw:null,moves:[],result:null,rc:C.ruleConfig(rulePref(),"casual")};stateRebuild(V);saveV()}
   const pvpLeft=(s,now)=>!V.clocks?null:V.clocks[s]-(V.tick!=null&&V.turn===s&&!V.result?(now==null?Date.now():now)-V.tick:0);
   function pvpFlag(now){if(!V||!V.tc||V.result||V.tick==null||pvpLeft(V.turn,now)>0)return false;const s=V.turn;V.clocks[s]=0;V.tick=null;pvpEnd(opp(s),PLAYER[s]+"超時判負");return true}
   function pvpClock(){pvpFlag(Date.now())}
   setInterval(pvpClock,250);
   function pvpEnd(w,why,now){if(V.tick!=null&&V.clocks)V.clocks[V.turn]=Math.max(0,pvpLeft(V.turn,now));V.result={w,why,...(V.repetition&&!V.repetition.pending?{adjudication:V.repetition}:{})};V.tick=null;V.draw=null;
-    pushGame("pvp",{id:V.id,date:V.id.slice(0,10),red:V.red,black:V.black,tc:V.tcKey,result:V.result,moves:saveMoves(V.moves)});saveV()}
+    pushGame("pvp",{id:V.id,rc:V.rc||null,date:V.id.slice(0,10),red:V.red,black:V.black,tc:V.tcKey,result:V.result,moves:saveMoves(V.moves)});saveV()}
   async function analyzePvp(){if(vaBusy||!V)return;vaBusy=true;const S=V;try{await analyzeList(V,saveV)}finally{vaBusy=false}
     if(S&&S.result&&S.id)gamePatch("pvp",S.id,movesG(S.moves))}   /* ChatGPT 評審 11/11：下完後評好的補進存檔（見 gamePatch） */
   function pvpState(){ensureV();pvpClock();
-    return{rules:C.REP_RULES,repetition:V.repetition||null,id:V.id,red:V.red,black:V.black,board:V.board,turn:V.turn,moves:V.moves.map(moveOut),result:V.result,draw:V.draw,tcKey:V.tcKey,
+    return{rules:C.REP_RULES,rc:V.rc||null,repetition:V.repetition||null,id:V.id,red:V.red,black:V.black,board:V.board,turn:V.turn,moves:V.moves.map(moveOut),result:V.result,draw:V.draw,tcKey:V.tcKey,
       clocks:V.clocks?{r:pvpLeft("r"),b:pvpLeft("b")}:null,running:V.tick!=null,legal:V.result?[]:legal(V.board,V.turn),
       check:!V.result&&inCheck(V.board,V.turn)?kingSq(V.board,V.turn):-1,eval:lastEv(V.moves),engine:true}}
   async function pvpPost(p,b){ensureV();const side=b.side==="b"?"b":"r",now=Date.now();
@@ -335,10 +512,10 @@ var XQ=(function(){
   // ---------- 線上大廳的網路對局：畫面跟雙人對戰一樣，狀態放在 XQNet（公開 MQTT 伺服器）上同步 ----------
   let NB=null;const netSaved=new Set(ls.get("netSaved",[]));
   function netBuild(){const g=XQNet.game();if(!g)return null;if(NB&&NB.key===g.gid+"|"+g.rev)return NB;
-    const S={moves:g.moves.map(([f,t])=>({f,t}))};stateRebuild(S);NB={key:g.gid+"|"+g.rev,S,g};
+    const S={moves:g.moves.map(([f,t])=>({f,t})),rc:g.rc||null};stateRebuild(S);NB={key:g.gid+"|"+g.rev,S,g};   /* g.rc：邀請握手時定的棋規（net.js），沒有＝舊版對局，千秋休閒規則 */
     // 下完的網路對局存到「真人對局」，之後可以看賽後報告
     if(g.result&&!netSaved.has(g.id)&&XQNet.side()){netSaved.add(g.id);ls.set("netSaved",[...netSaved].slice(-200));
-      pushGame("pvp",{id:g.id,date:g.id.slice(0,10),red:g.red.name,black:g.black.name,tc:"none",result:g.result,moves:saveMoves(S.moves),net:true,mine:XQNet.side()}).catch(()=>{netSaved.delete(g.id);ls.set("netSaved",[...netSaved].slice(-200))})}   /* 意見回饋 619：沒存成功就拿掉「已存」記號，下次再存 */   /* 意見回饋（開發者 11/6 分數審查）：多存 mine＝我是紅還是黑，戰績頁認自己用 */
+      pushGame("pvp",{id:g.id,rc:S.rc,date:g.id.slice(0,10),red:g.red.name,black:g.black.name,tc:"none",result:g.result,moves:saveMoves(S.moves),net:true,mine:XQNet.side()}).catch(()=>{netSaved.delete(g.id);ls.set("netSaved",[...netSaved].slice(-200))})}   /* 意見回饋 619：沒存成功就拿掉「已存」記號，下次再存 */   /* 意見回饋（開發者 11/6 分數審查）：多存 mine＝我是紅還是黑，戰績頁認自己用 */
     return NB}
   /* 補存：伺服器抓回來的已結束網路對局，還沒存過就存進「真人對局」 */
   window.XQ_saveNetGame=async g=>{if(!g||!g.result||!g.id||!Array.isArray(g.moves))return false;const list=(await idb.get("games:pvp"))||[];if(list.some(x=>x.id===g.id))return true;
@@ -352,14 +529,14 @@ var XQ=(function(){
   /* 線上對局前幾步的中文記譜（給戰績分析看開局用） */
   window.XQ_netMovesCn=(g,n)=>{try{const S={moves:g.moves.slice(0,n||6).map(([f,t])=>({f,t}))};stateRebuild(S);return S.moves.map(m=>m.cn)}catch(e){return[]}};
   /* QA P1-1：收到別人發的對局狀態時，從頭重走一遍檢查每步都合法，順便用規則判這盤是不是已經分出勝負（給 net.js 的 okNext 用） */
-  window.XQ_netCheck=mv=>{try{const S={moves:[]};stateRebuild(S);for(const[f,t]of mv){if(!legal(S.board,S.turn).some(([x,y])=>x===f&&y===t))return{ok:false};stateApply(S,f,t)}return{ok:true,res:judgeState(S)}}catch(e){return{ok:false}}};
+  window.XQ_netCheck=(mv,rc)=>{try{const S={moves:[],rc:rc||null};stateRebuild(S);for(const[f,t]of mv){if(!legal(S.board,S.turn).some(([x,y])=>x===f&&y===t))return{ok:false};stateApply(S,f,t)}return{ok:true,res:judgeState(S)}}catch(e){return{ok:false}}};
   /* 對局結束時就算不在對局畫面（切到別頁、對方認輸、離開）也要存棋譜（意見回饋 275） */
   setTimeout(function hookNet(){if(window.XQNet&&XQNet.on)XQNet.on("game",()=>{try{netBuild()}catch(e){}});else setTimeout(hookNet,500)},0);
   function netState(){const nb=netBuild(),sd=XQNet.side(),em=[];
     if(!nb)return{id:"wait",red:"等待中…",black:"等待中…",board:parseFen(START),turn:"r",moves:[],result:null,draw:null,tcKey:"none",clocks:null,running:false,legal:[],check:-1,eval:null,
       engine:true,online:{r:false,b:false},who:{r:"",b:""},emotes:[],net:true,mySide:sd||"w",watchers:XQNet.watchers(),waiting:true,link:XQNet.status()};
     const{S,g}=nb;
-    return{rules:C.REP_RULES,repetition:g.rules===C.REP_RULES.id?(S.repetition||null):{pending:true,why:"這盤使用舊版棋規，保留棋譜供閱讀；請雙方更新後回大廳另開新局，不以新版改判舊局。"},id:g.id,red:g.red.name,black:g.black.name,board:S.board,turn:S.turn,moves:S.moves.map(moveOut),result:g.result,draw:g.draw,tcKey:g.tc?"net"+g.tc:"none",tc:g.tc||null,clocks:XQNet.clocks?XQNet.clocks():null,running:!!g.clk&&!g.result,
+    return{rules:C.REP_RULES,rc:S.rc,repetition:g.rules===C.REP_RULES.id?(S.repetition||null):{pending:true,why:"這盤使用舊版棋規，保留棋譜供閱讀；請雙方更新後回大廳另開新局，不以新版改判舊局。"},id:g.id,red:g.red.name,black:g.black.name,board:S.board,turn:S.turn,moves:S.moves.map(moveOut),result:g.result,draw:g.draw,tcKey:g.tc?"net"+g.tc:"none",tc:g.tc||null,clocks:XQNet.clocks?XQNet.clocks():null,running:!!g.clk&&!g.result,
       legal:g.result||g.rules!==C.REP_RULES.id?[]:legal(S.board,S.turn),check:!g.result&&inCheck(S.board,S.turn)?kingSq(S.board,S.turn):-1,eval:null,engine:true,
       online:{r:XQNet.isOn(g.red.id),b:XQNet.isOn(g.black.id)},who:{r:g.red.name,b:g.black.name},emotes:XQNet.emotes(),net:true,mySide:sd||"w",watchers:XQNet.watchers(),link:XQNet.status(),unsent:XQNet.pendingSend()}}
   async function netPvp(p,b){if(p==="/pvp/state")return netState();
@@ -370,7 +547,7 @@ var XQ=(function(){
     if(g.rules!==C.REP_RULES.id)throw new Error("這盤棋規版本不同，請回大廳另開新局；原棋譜仍保留。 ");
     if(p==="/pvp/move"){const f=+b.f,t=+b.t;if(g.result)throw new Error("這局已經結束");if(S.turn!==sd)throw new Error("還沒輪到你");
       if(!legal(S.board,S.turn).some(([x,y])=>x===f&&y===t))throw new Error("這步不合法");
-      const T={moves:g.moves.map(([a,z])=>({f:a,t:z}))};stateRebuild(T);stateApply(T,f,t);const r=judgeState(T);
+      const T={moves:g.moves.map(([a,z])=>({f:a,t:z})),rc:g.rc||null};stateRebuild(T);stateApply(T,f,t);const r=judgeState(T);
       XQNet.update(n=>{if(XQNet.tickMove&&XQNet.tickMove(n,sd)===false)return;n.moves.push([f,t]);n.draw=null;if(r)n.result=r})}   /* ChatGPT 數值盤查 11/11 P1 棋鐘：tickMove 用同一個時間戳先裁決逾時，回 false＝自己已經落旗（tickMove 已把結果寫成超時判負），這步不下、不加秒 */
     else if(p==="/pvp/undo"){if(g.result)throw new Error("這局已經結束，不能悔棋");if(g.cup)throw new Error("擂台比賽落子無悔，不能悔棋");const last=S.moves[S.moves.length-1];
       if(!last||last.by!==sd)throw new Error("對方已經走了，不能悔棋");XQNet.update(n=>{n.moves.pop();n.draw=null})}
@@ -390,7 +567,7 @@ var XQ=(function(){
     else{const s=await idb.get("col:"+key);if(s)d=JSON.parse(s)}
     if(!d)return null;d.byId=new Map(d.items.map(x=>[x.id,x]));return bookCache[key]=d}
   async function gameItems(kind){const list=(await idb.get("games:"+kind))||[];
-    return list.slice().reverse().map(g=>{if(Array.isArray(g.moves)&&g.moves.some(m=>m&&m.q&&qName(m.q)!==m.q))g={...g,moves:g.moves.map(m=>m&&m.q?{...m,q:qName(m.q)}:m)};if(kind==="play"){const lv=LEVELS[g.level-1]||{name:"?"},bot=g.ranked?"Pikafish 積分挑戰（"+(RANKS[g.rk]||["?"])[0]+"）":(g.journey?"石桌往事・":"")+"Pikafish 第"+g.level+"級「"+lv.name+"」"+(g.reward?"・🚗獎勵":"");g={...g,red:g.human==="r"?"你":bot,black:g.human==="b"?"你":bot}}
+    return list.slice().reverse().map(g=>{if(Array.isArray(g.moves)&&g.moves.some(m=>m&&m.q&&qName(m.q)!==m.q))g={...g,moves:g.moves.map(m=>m&&m.q?{...m,q:qName(m.q)}:m)};if(kind==="play"){const lv=LEVELS[g.level-1]||{name:"?"},bot=g.ranked?"Pikafish 積分挑戰（"+(RANKS[g.rk]||["?"])[0]+"）":(g.journey?"石桌往事・":zgOn(g)?"笑面掌櫃・":"")+"Pikafish 第"+g.level+"級「"+lv.name+"」"+(g.reward?"・🚗獎勵":"");g={...g,red:g.human==="r"?"你":bot,black:g.human==="b"?"你":bot}}
       return{...gameItem(g,false),...assist(g),...(g.mine==="r"||g.mine==="b"?{mine:g.mine}:{})}})}   /* 意見回饋（開發者 11/6 分數審查）：線上對局帶出 mine */
   async function dbBooks(){const out=[];for(const b of await publicBooks())out.push({key:b.key,name:b.name,count:b.count});
     for(const b of await syncedBooks())if(out.some(x=>x.key===b.key))unsync(b.key);else out.push({key:b.key,name:b.name,count:b.count,synced:b.at});   // 以前從電腦同步過、現在已內建的，不要出現兩份
@@ -518,11 +695,11 @@ var XQ=(function(){
   let SM=null,smBusy=false,smFail=0;
   const smLv=(n,lx)=>{const a=Math.max(1,Math.min(lx-Math.floor((n-1)/2),19-n));return Array.from({length:n},(_,i)=>a+i)};   /* 統計複查：靠近 1 或 18 級時整段往內移，每桌還是差一級 */
   function smLoad(){if(SM)return SM;const s=ls.get("simul",null);if(!s||!Array.isArray(s.tb))return null;
-    SM={...s,tb:s.tb.map(t=>{const S={...t,moves:(t.moves||[]).slice()};stateRebuild(S);return S})};return SM}
-  function smSave(){if(SM)ls.set("simul",{id:SM.id,n:SM.n,lx:SM.lx,at:SM.at,done:SM.done||null,tb:SM.tb.map(t=>({i:t.i,level:t.level,result:t.result||null,saved:!!t.saved,moves:t.moves.map(m=>({f:m.f,t:m.t,by:m.by}))}))});
+    const rc=C.ruleConfigOf({rc:s.rc});SM={...s,rc,tb:s.tb.map(t=>{const S={...t,rc,moves:(t.moves||[]).slice()};stateRebuild(S);return S})};return SM}
+  function smSave(){if(SM)ls.set("simul",{id:SM.id,rc:SM.rc||null,n:SM.n,lx:SM.lx,at:SM.at,done:SM.done||null,tb:SM.tb.map(t=>({i:t.i,level:t.level,result:t.result||null,saved:!!t.saved,moves:t.moves.map(m=>({f:m.f,t:m.t,by:m.by}))}))});
     try{window.dispatchEvent(new Event("xq-simul"))}catch(e){}}
   function smEnd(t,w,why){t.result={w,why};
-    if(!t.saved){t.saved=true;if(t.moves.some(m=>m.by==="r"))pushGame("play",{id:SM.id+"-s"+(t.i+1),date:SM.id.slice(0,10),level:t.level,ranked:false,human:"r",result:t.result,simul:{n:SM.n,i:t.i+1},moves:saveMoves(t.moves)})}
+    if(!t.saved){t.saved=true;if(t.moves.some(m=>m.by==="r"))pushGame("play",{id:SM.id+"-s"+(t.i+1),rc:SM.rc||null,date:SM.id.slice(0,10),level:t.level,ranked:false,human:"r",result:t.result,simul:{n:SM.n,i:t.i+1},moves:saveMoves(t.moves)})}
     if(SM.tb.every(x=>x.result)&&!SM.done){const s={w:0,d:0,l:0};for(const x of SM.tb)s[!x.result.w?"d":x.result.w==="r"?"w":"l"]++;SM.done={...s,pts:s.w+s.d/2,at:Date.now()};
       const B=ls.get("simulBest",{}),k=String(SM.n),o=B[k];if(!o||SM.done.pts>o.pts||(SM.done.pts===o.pts&&SM.lx>o.lx))B[k]={pts:SM.done.pts,w:s.w,d:s.d,l:s.l,lx:SM.lx,at:SM.done.at};ls.set("simulBest",B);
       const C=ls.get("simulRec",{}),c=C[k]||(C[k]={plays:0,w:0,d:0,l:0,perfect:0});c.plays++;c.w+=s.w;c.d+=s.d;c.l+=s.l;if(s.w===SM.n)c.perfect++;ls.set("simulRec",C);
@@ -539,21 +716,22 @@ var XQ=(function(){
      改成誰先落子先回誰（t.until 小的先）。想好了但緩衝時間還沒到的桌子標 t.pend，先放開引擎去想下一桌，時間到再落子 */
   async function smEngine(){if(smBusy||!smLoad())return;const ws=SM.tb.filter(x=>!x.result&&x.turn!=="r"&&!x.pend);if(!ws.length)return;const t=ws.reduce((a,b)=>(a.until||0)<=(b.until||0)?a:b);
     smBusy=true;const id=SM.id,n=t.moves.length,lv=LEVELS[t.level-1]||LEVELS[2];
-    try{const r=await XQEngine.search({moves:t.moves.map(m=>iccs(m.f,m.t))},lv.movetime?{movetime:Math.min(lv.movetime,3000)}:{depth:lv.depth},lv.multipv||1);
+    const hp=HP.on(lv);   /* 低段擬人選步（HUMANPICK），跟挑戰電腦同一套 */
+    try{const r=await XQEngine.search({moves:t.moves.map(m=>iccs(m.f,m.t))},lv.movetime?{movetime:Math.min(lv.movetime,3000)}:{depth:lv.depth},hp?HP.mpvOf(lv):lv.multipv||1);
       if(!SM||SM.id!==id||t.moves.length!==n||t.result)return;
       /* 開發者 11/11「車輪戰對方要等我落子後緩衝時間後再下，不然像是在同步下」：玩家落子時記下 t.until（1.8～3.5 秒後），引擎照樣馬上開始想，但時間沒到不落子 */
-      const mv=pickMove(r,lv),f=parseSq(mv.slice(0,2)),to=parseSq(mv.slice(2,4));if(!legal(t.board,t.turn).some(([a,b])=>a===f&&b===to))throw new Error("引擎給出不合法著法 "+mv);
+      const mv=hp?HP.pick(r,lv,t.board,t.turn,Math.random).mv:pickMove(r,lv),f=parseSq(mv.slice(0,2)),to=parseSq(mv.slice(2,4));if(!legal(t.board,t.turn).some(([a,b])=>a===f&&b===to))throw new Error("引擎給出不合法著法 "+mv);
       const w=(t.until||0)-Date.now();
       if(w>0){t.pend=1;setTimeout(()=>{t.pend=0;if(!SM||SM.id!==id||t.moves.length!==n||t.result)return;smApply(t,f,to);setTimeout(smEngine,0)},w)}else smApply(t,f,to);smFail=0}
     catch(e){smFail++}
     finally{smBusy=false;setTimeout(smEngine,smFail?Math.min(30000,1500*2**Math.min(smFail,5)):0)}}
   function smState(){const best=ls.get("simulBest",{});if(!smLoad())return{none:true,best,rec:ls.get("simulRec",{}),ach:ls.get("simulAch",{})};
-    return{id:SM.id,n:SM.n,lx:SM.lx,done:SM.done||null,best,rec:ls.get("simulRec",{}),ach:ls.get("simulAch",{}),busy:smBusy,engFail:smFail,tb:SM.tb.map(t=>({i:t.i,level:t.level,name:(L=>L.movetime>3000?String(L.name||"").replace("・全力","")+"（每步 3 秒）":L.name||"")(LEVELS[t.level-1]||{}),board:t.board,turn:t.turn,result:t.result||null,
+    return{id:SM.id,rc:SM.rc||null,n:SM.n,lx:SM.lx,done:SM.done||null,best,rec:ls.get("simulRec",{}),ach:ls.get("simulAch",{}),busy:smBusy,engFail:smFail,tb:SM.tb.map(t=>({i:t.i,level:t.level,name:(L=>L.movetime>3000?String(L.name||"").replace("・全力","")+"（每步 3 秒）":L.name||"")(LEVELS[t.level-1]||{}),board:t.board,turn:t.turn,result:t.result||null,
       moves:t.moves.map(m=>({f:m.f,t:m.t,by:m.by,cn:m.cn,ck:!!m.ck,cap:m.cap?1:0})),check:!t.result&&inCheck(t.board,t.turn)?kingSq(t.board,t.turn):-1,legal:t.result||t.turn!=="r"?[]:legal(t.board,"r")}))}}
   function simulApi(p,b){const T=i=>{if(!smLoad())throw new Error("還沒開始車輪戰");const t=SM.tb[+i];if(!t)throw new Error("沒有這一桌");return t};
     if(p==="/simul/new"){if(smLoad()&&!SM.done)for(const t of SM.tb)if(!t.result&&t.moves.some(m=>m.by==="r"))smEnd(t,"b","重開車輪戰，算輸");
       const n=[3,5,10].includes(+b.n)?+b.n:5,lx=Math.max(1,Math.min(18,Math.round(+b.lx||5)));
-      SM={id:gameId(),n,lx,at:Date.now(),done:null,tb:smLv(n,lx).map((level,i)=>{const S={i,level,moves:[],result:null};stateRebuild(S);return S})};smSave()}
+      const rc=C.ruleConfig(rulePref(),"casual");SM={id:gameId(),rc,n,lx,at:Date.now(),done:null,tb:smLv(n,lx).map((level,i)=>{const S={i,level,rc,moves:[],result:null};stateRebuild(S);return S})};smSave()}
     else if(p==="/simul/move"){const t=T(b.i),f=+b.f,to=+b.t;if(t.result)throw new Error("這桌已經下完");if(t.turn!=="r")throw new Error("還沒輪到你");
       if(!legal(t.board,"r").some(([x,y])=>x===f&&y===to))throw new Error("這步不合法");t.until=Date.now()+1800+Math.random()*1700;smApply(t,f,to)}
     else if(p==="/simul/resign"){const t=T(b.i);if(!t.result){smEnd(t,"b","你認輸");smSave()}}

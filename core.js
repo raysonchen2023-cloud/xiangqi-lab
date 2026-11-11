@@ -132,6 +132,52 @@ function repetitionVerdict(S){
   if(b.chase)return result("r","黑方長捉同一子判負");
   return result(null,"亞洲棋例：循環未構成單方長將或直接長捉，判和")}
 
+/* 棋規註冊表與棋規設定（開發者 11/11 評比循環 F3「多棋規與臺灣棋規可切換原型」；Gemini 架構報告第一項，查證後實作，見 story/100_Gemini架構報告處理.md）
+   真正實作、可以計積分的只有 qiqiu_casual（上面 REP_RULES 的亞洲棋例直接捉子子集＋App 自訂限著）。
+   tw_proto 只是原型：資料結構和切換先有；判法只改「規程查得到依據」的那一條——新竹市 114 年市長盃規程寫長將／長捉要「經裁判裁決仍不變著」才判負，
+   App 沒有現場裁判，所以循環到第 3 次改成提示、交雙方協議（待核），不自動判；查不到條文的照實標「未查證」，暫時沿用千秋休閒規則，不編條文。
+   每盤棋開局時寫一份 rc（ruleConfig），之後改設定也不影響這盤；舊存檔沒有 rc 就補預設 qiqiu_casual。 */
+const RULESET_DEFAULT="qiqiu_casual";
+const RULESETS=Object.freeze({
+  qiqiu_casual:Object.freeze({id:"qiqiu_casual",name:"千秋休閒規則",short:"千秋休閒",edition:"2026-11",status:"implemented",rated:true,unresolvedPolicy:"pending_review",
+    basis:"亞洲棋例（直接捉子）的子集，循環裁判版本 "+REP_RULES.id+"；60 回合限著是 App 自訂",
+    covers:["將死","困斃","長將判負","直接長捉同一子判負","一將一捉判和","閒著循環判和","60 回合未吃子判和","雙方無進攻子力判和","超時判負"],
+    pending:["路線不同的循環（不是每步將軍）","同類棋子換位","雙方互捉","同類子牽制"],diffs:[]}),
+  tw_proto:Object.freeze({id:"tw_proto",name:"臺灣比賽規程（原型）",short:"臺灣規程・原型",edition:"依比賽規程引用的《中華民國象棋規則》96 年修訂版；條文原文未取得",status:"prototype",rated:false,unresolvedPolicy:"prompt_agree",
+    basis:"新竹市 114 年市長盃競賽規程（引用《中華民國象棋規則》96 年修訂版）；條文原文未取得",
+    covers:["將死","困斃","雙方無進攻子力判和（沿用，未查證）","60 回合未吃子判和（沿用，未查證）","超時判負（沿用）"],pending:["所有循環：提示後交雙方協議"],
+    diffs:[{rule:"長將",tw:"單方長將循環三回合後，經裁判裁決長將方仍不變著判負（規程原文）",app:"第 3 次重複改成提示、交雙方協議，不自動判負",verified:true},
+      {rule:"長捉",tw:"長捉無根子循環三回合後，經裁判裁決仍不變著判負（規程原文）",app:"同上",verified:true},
+      {rule:"一將一捉、互捉、閒著循環",tw:"未查證",app:"提示、交雙方協議，不自動判和",verified:false},
+      {rule:"60 回合限著",tw:"未查證",app:"暫時沿用千秋休閒規則",verified:false},
+      {rule:"超時、子力不足",tw:"未查證",app:"暫時沿用千秋休閒規則（時間用完一律判負）",verified:false}]})});
+const RC_MODES=["casual","ranked","puzzle"];
+function ruleConfig(id,mode){const R=RULESETS[id]||RULESETS[RULESET_DEFAULT],m=RC_MODES.includes(mode)?mode:"casual";
+  return Object.freeze({rulesetId:R.id,edition:R.edition,implementationVersion:REP_RULES.id,mode:m==="ranked"&&!R.rated?"casual":m,unresolvedPolicy:R.unresolvedPolicy})}
+/* 讀回的棋規設定一律重新整理：不認得的棋規→預設；原型棋規不能是 ranked（防手改存檔）；implementationVersion 照存檔留著當紀錄（指紋） */
+function ruleConfigOf(S){const o=S&&S.rc,R=o&&RULESETS[o.rulesetId];
+  if(!R)return ruleConfig(RULESET_DEFAULT,S&&S.ranked?"ranked":S&&S.practice?"puzzle":"casual");
+  const m=RC_MODES.includes(o.mode)?o.mode:"casual";
+  return Object.freeze({rulesetId:R.id,edition:R.edition,implementationVersion:typeof o.implementationVersion==="string"?o.implementationVersion.slice(0,40):REP_RULES.id,mode:m==="ranked"&&!R.rated?"casual":m,unresolvedPolicy:R.unresolvedPolicy})}
+function ruleRated(rc){const R=rc&&RULESETS[rc.rulesetId];return !!R&&R.rated}
+/* 依這盤的棋規調整循環裁決。qiqiu_casual（或沒有 rc）原樣；tw_proto 把判負／判和改成待核提示，原本的判決留在 base 供追溯 */
+function rulesetVerdict(rep,S){
+  if(!rep||rep.pending)return rep;const rc=S&&S.rc;if(!rc||rc.rulesetId!=="tw_proto")return rep;
+  const loss=rep.w!=null,who=String(rep.why||"").replace(/判負.*$/,"");
+  const{w,...rest}=rep;return{...rest,pending:true,policy:"prompt_agree",ruleset:"tw_proto",base:{w,why:rep.why},
+    why:loss?"臺灣規程（原型）："+who+"，規程寫「經裁判裁決仍不變著」才判負；App 沒有現場裁判，先提醒：請變著，或雙方協議和棋":"臺灣規程（原型）：這種循環怎麼判，條文未查證；請變著，或雙方協議和棋"}}
+/* 循環預警（預警與判決分離）：輪到 me、眼前局面第二次出現時，模擬「照上一輪再走一圈」，每一步都交給 judgeState 判；
+   回傳警告事件 {type,kind:"loss"|"review",side,why,ply,verdict}，或 null（判和、不判、輪不到、這關不判長將長捉）。畫面只照事件顯示，不自己推輸贏 */
+function repetitionWarning(st,me){
+  if(!st||st.result||!me||st.turn!==me||!st.moves||st.moves.length<4)return null;
+  const base={start:st.start||null,startTurn:st.startTurn||"r",moves:st.moves.map(m=>({f:m.f,t:m.t}))};if(st.rc)base.rc=st.rc;
+  const S={...base,moves:base.moves.slice()};stateRebuild(S);
+  const n=S.moves.length,key=S.pos[n],idx=[];S.pos.forEach((p,i)=>{if(p===key)idx.push(i)});if(idx.length!==2)return null;
+  const cyc=base.moves.slice(idx[0],idx[1]);let v=null;
+  for(let k=1;k<=cyc.length&&!v;k++){const T={...base,moves:base.moves.concat(cyc.slice(0,k))};stateRebuild(T);const j=judgeState(T);if(j)v=j;else if(T.repetition&&T.repetition.pending)v=T.repetition}
+  if(!v||(!v.pending&&v.w!==opp(me)))return null;
+  if(st.noPerp&&!v.pending&&/長將|長捉|長打/.test(v.why||""))return null;
+  return{type:"repetition-warning",kind:v.pending?"review":"loss",side:me,why:v.why||"",ply:n,verdict:v}}
 
 
 const PLAYER={r:"紅方",b:"黑方"};
@@ -175,13 +221,13 @@ function stateApply(S,f,t){
   m.ch=[...chasePairs(S.board,mover)].some(x=>!chB.has(x));
   S.moves.push(m);return m}
 function stateRebuild(S){const old=S.moves||[];S.moves=[];S.board=parseFen(S.start||START);S.turn=S.startTurn||"r";S.pos=[fen(S.board,S.turn)];
-  for(const o of old){const m=stateApply(S,o.f,o.t);for(const k of["q","loss","ev","bv","bmt","pmt","rr","bc","bm","bp"])if(o[k]!==undefined)m[k]=o[k]}S.repetition=repetitionVerdict(S)}   /* bv：開發者 11/11 影子模式，見 classifyRaw；bmt、pmt：ChatGPT 數值盤查 11/11 殺棋訊號（走方視角），見 classifyRaw */
+  for(const o of old){const m=stateApply(S,o.f,o.t);for(const k of["q","loss","ev","bv","bmt","pmt","rr","bc","bm","bp"])if(o[k]!==undefined)m[k]=o[k]}S.repetition=rulesetVerdict(repetitionVerdict(S),S)}   /* bv：開發者 11/11 影子模式，見 classifyRaw；bmt、pmt：ChatGPT 數值盤查 11/11 殺棋訊號（走方視角），見 classifyRaw */
 function judgeState(S){
   const n=S.moves.length;S.repetition=null;if(!n)return null;
   const mover=S.moves[n-1].by,other=opp(mover);
   if(legal(S.board,other).length===0)return{w:mover,why:inCheck(S.board,other)?"將死":"困斃"};
   // 長將／長捉先於自然限著，不能以未吃子和局覆蓋違例。
-  const rep=repetitionVerdict(S);S.repetition=rep;
+  const rep=rulesetVerdict(repetitionVerdict(S),S);S.repetition=rep;   /* rulesetVerdict：依這盤的棋規（S.rc）調整；沒有 rc＝千秋休閒規則，原樣 */
   if(rep){if(rep.pending)return null;return{w:rep.w,why:rep.why,adjudication:rep}}
   if(!hasAttackers(S.board,"r")&&!hasAttackers(S.board,"b"))return{w:null,why:"雙方均無進攻子力"};
   let since=0;for(let i=n-1;i>=0;i--){if(S.moves[i].cap)break;since++}
@@ -229,6 +275,6 @@ async function classifyRaw(b,s,f,t,ms,lt){   /* lt：對方上一步落在哪一
      bmt＝最佳著法的殺棋步數（正＝走方 N 步殺對方、負＝走方被殺、null＝沒有殺棋）；pmt＝實際這步走完的殺棋步數（同樣正負；這步直接將死或困斃對方＝1）。
      新版一定有這兩個欄位（沒有殺棋就是 null），舊存檔、舊快取沒有（undefined）；q、loss、ev、bv 完全照舊 */
   return{q,loss,gap,ev:s==="r"?played:-played,bv:s==="r"?best.v:-best.v,bmt:best.mate==null?null:best.mate,pmt:pmt==null?null:pmt,rr,bc:notate(b,bf,bt),bm:best.mv,bp:(best.pv||[]).slice(0,3)}}   // bp：Pikafish 建議的前 3 步（賽後在棋盤上畫箭頭）
-return{START,NAMES,CN,VAL,sideOf,opp,parseFen,fen,legal,legalOk,inCheck,kingSq,make,iccs,parseSq,notate,chasePairs,hasAttackers,REP_RULES,repetitionVerdict,PLAYER,annotate,summary,fullItem,gameItem,LEVELS,stateApply,stateRebuild,judgeState,pickMove,ANALYZE_MS,clampV,gradeLoss,qName,classifyRaw};
+return{START,NAMES,CN,VAL,sideOf,opp,parseFen,fen,legal,legalOk,inCheck,kingSq,make,iccs,parseSq,notate,chasePairs,hasAttackers,REP_RULES,repetitionVerdict,RULESET_DEFAULT,RULESETS,ruleConfig,ruleConfigOf,ruleRated,rulesetVerdict,repetitionWarning,PLAYER,annotate,summary,fullItem,gameItem,LEVELS,stateApply,stateRebuild,judgeState,pickMove,ANALYZE_MS,clampV,gradeLoss,qName,classifyRaw};
 })();
 if(typeof module!=="undefined")module.exports=XQCore;

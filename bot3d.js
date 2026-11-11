@@ -745,5 +745,10 @@
   const faceApply=(P,F,blink,mOpen)=>{P.eyes.forEach((e,i)=>{e.g.scale.y=(P.stern&&F==="happy")?.7:F==="happy"||(F==="wink"&&i===1)?.12:blink?.1:1;e.brow.position.y=.15+(F==="open"||F==="happy"?.03:0);e.brow.rotation.z=PI/2+(F==="sad"?-.45*e.s:0)+(P.stern&&F!=="sad"?.28*e.s:0)});
     const o=P.stern?F==="open"&&!mOpen?false:!!mOpen:(mOpen||F==="open"||F==="happy");P.mouth.open.visible=o;P.mouth.smile.visible=!o;P.mouth.smile.rotation.z=F==="sad"?0:PI;P.mouth.smile.scale.y=F==="flat"||(P.stern&&F!=="happy")?.2:P.stern?.45:1;P.mouth.smile.position.y=F==="sad"?-.06:0;P.tear.visible=F==="sad"};
   window.XQBot3D={start,acts:Object.keys(ACTS),combos:COMBO.length,lines:LINES.length,figure:o=>{o=o||{};PCO=typeof o.p==="string"&&o.p.length===1&&"帥仕相俥傌炮兵將士象車馬砲卒".includes(o.p)?o.p:null;
-    try{const B=build(TH[o.e]?o.e:eraK(),o.g>=1&&o.g<=9?o.g:grade(),(C=>o.npc||C?{hat:C&&C.hat||o.hat,hc:C&&C.hc||o.hc,robe:C&&C.ring||o.robe,band:C&&C.band||o.band,acc:o.acc,shoe:C&&C.shoe||o.shoe,belt:C&&C.belt||o.belt,skin:C&&C.skin,top:C&&C.top,pin:C&&C.pin,band2:C&&C.band2,cus:C}:null)(typeof o.cus==="string"?CUS[o.cus]:o.cus));if(o.thin)thinify(B,!!o.wl);if(o.wl)wolongify(B);if(o.glb)attachGLB(B,o);return B}finally{PCO=null}},faceApply,name:()=>BNAME()};
+    try{const B=build(TH[o.e]?o.e:eraK(),o.g>=1&&o.g<=9?o.g:grade(),(C=>o.npc||C?{hat:C&&C.hat||o.hat,hc:C&&C.hc||o.hc,robe:C&&C.ring||o.robe,band:C&&C.band||o.band,acc:o.acc,shoe:C&&C.shoe||o.shoe,belt:C&&C.belt||o.belt,skin:C&&C.skin,top:C&&C.top,pin:C&&C.pin,band2:C&&C.band2,cus:C}:null)(typeof o.cus==="string"?CUS[o.cus]:o.cus));if(o.thin)thinify(B,!!o.wl);if(o.wl)wolongify(B);if(o.glb)attachGLB(B,o);return B}finally{PCO=null}},
+    /* 開發者 11/11：車輪戰真實 3D 棋客的桌上棋位牌（一面立著的木棋子，字面朝 +Z；r＝半徑），park3d 放在桌上對面那一角 */
+    plate:(ch,r)=>{r=r||.75;const G=new T.Group(),wood=new T.MeshStandardMaterial({color:0x7A5230,roughness:.7}),c=new T.Mesh(new T.CylinderGeometry(r,r,r*.3,40),wood);c.rotation.x=PI/2;c.position.y=r*1.1;G.add(c);
+      const f=new T.Mesh(new T.CircleGeometry(r*.95,40),new T.MeshBasicMaterial({map:glyTex(ch,eraK()),toneMapped:false}));f.position.set(0,r*1.1,r*.152);G.add(f);
+      const b=new T.Mesh(new T.BoxGeometry(r*1.2,r*.16,r*.6),wood);b.position.y=r*.08;G.add(b);G.traverse(m=>{if(m.isMesh)m.castShadow=true});return G},
+    faceApply,name:()=>BNAME()};
 })();

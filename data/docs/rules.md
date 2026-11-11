@@ -6,16 +6,17 @@
 
 ## 一、先說結論
 
-- App 只用一套棋規：**亞洲棋例（直接捉子）**，規則版本代號 `asian-direct-v2`（程式裡的 `REP_RULES`）。
+- App 真正實作、可以計積分的只有一套：**千秋休閒規則**（代號 `qiqiu_casual`）＝**亞洲棋例（直接捉子）的子集**，循環裁判版本代號 `asian-direct-v2`（程式裡的 `REP_RULES`），加上 App 自訂的 60 回合限著。
+- 設定頁「棋規」另外有一個 **臺灣比賽規程（原型）**（代號 `tw_proto`）：只有資料結構和切換介面，判法只改了一條（見第六節），**不計積分**。
 - 電腦自動裁定常見情形：將死、困斃、長將、直接長捉、一將一捉、閒著循環、60 回合未吃子、雙方無進攻子力、超時。
 - 比較複雜的循環，App **不自動判和、也不判負**，會顯示「棋例待核」，請變著或提和。
-- 線上對局要雙方的規則版本一樣才能開局，下到一半版本變了也不接受。
+- 線上對局要雙方的規則版本一樣才能開局，下到一半版本變了也不接受；版本一樣、但棋規設定不一樣（或用了原型），照樣開局，只算友誼賽、不計積分。
 
 ## 二、程式和測試在哪裡
 
 - 規則核心：`xiangqi-referee.js`。建置時產生 `site/core.js`，App、線上大廳、比賽裁判台都用同一份。
 - 主要自動測試：`xiangqi-lab/tools/test-asian-rules.js`（30 項）。
-- 相關測試：`test-repwarn.js`（重複局面的提醒，13 項）、`test-clock-pv.js`（棋鐘）、`test-rule-handshake.js`（線上規則版本）。
+- 相關測試：`test-repwarn.js`（重複局面的提醒，13 項）、`test-clock-pv.js`（棋鐘）、`test-rule-handshake.js`（線上規則版本）、`test-ruleset.js`（棋規註冊表、臺灣原型、預警事件、各模式的棋規設定，22 項）。
 - 2026 年 11 月 11 日跑 `node --test tools/test-asian-rules.js tools/test-repwarn.js`：43 項全部通過。
 
 ## 三、裁判怎麼判（順序）
@@ -23,7 +24,7 @@
 每走一步，`judgeState` 依序檢查：
 
 1. 輪到的一方有沒有合法的著法？沒有 → 將死或困斃，剛走的一方勝。
-2. 局面有沒有重複到第 3 次？有 → 交給 `repetitionVerdict` 判循環。
+2. 局面有沒有重複到第 3 次？有 → 交給 `repetitionVerdict` 判循環，再交給 `rulesetVerdict` 照這盤的棋規調整（千秋休閒規則原樣；臺灣原型改成提示，見第六節）。
 3. 雙方都沒有車、馬、炮、兵？→ 和棋。
 4. 連續 120 步（60 回合）沒有吃子？→ 和棋。
 
@@ -72,14 +73,14 @@
 - 雙方互捉。
 - 同類棋子互相牽制的特殊情形（例如炮捉炮但不是兌子）。
 - 只要有一方變著、跳出循環，待核就自動消失。
-- **程式：** `repetitionVerdict` 回傳 `pending:true`；`judgeState` 遇到待核就不結束對局。提醒在 `m/08b-cpugame.js` 的 `repWarn`（第 403 行）。
+- **程式：** `repetitionVerdict` 回傳 `pending:true`；`judgeState` 遇到待核就不結束對局。提醒的判斷在 `xiangqi-referee.js` 的 `repetitionWarning`（第 256 行起），畫面 `m/08b-cpugame.js` 的 `repWarn`（第 407 行）只照它回的警告事件顯示。
 - **測試：** `different repeated paths request review, not a forced draw/loss`、`different routes with idle moves on one side stay pending`、`identical piece types swapping squares are not mistaken for stable identities`、`mutual chase goes to review, not an automatic draw or loss`、`breaking the cycle clears pending adjudication`；提醒：`雙方互捉（裁判會判待核）…`、`雙方互捉：另一方輪到時也會收到待核提醒`。
 - **還缺：** 「同類子牽制」那一種沒有專門的測試。
 
 ### 60 回合限著
 
 - **判法：** 連續 120 步（紅黑各 60 步）沒有吃子 → 和棋。第 119 步還不判。
-- **程式：** `judgeState`（第 487 行起，`since>=120`）。
+- **程式：** `judgeState`（第 533 行起，`since>=120`）。
 - **測試：** `120 plies without a capture is a draw`、`119 plies without a capture is not yet a draw`、`no-capture limit cannot overwrite perpetual-check loss`。
 - **注意：** 這是本 App 的設定（程式裡叫「遊戲自然限著」）。各地比賽的限著規定，本次沒有查到可以引用的條文，見第五節。
 
@@ -102,18 +103,19 @@
 - 同一支手機兩人對下：可選 10+5、20+10、60+30（分鐘＋每步加秒），時間用完判負；剩 0 毫秒就算落旗。判超時以後再認輸、提和、悔棋、落子，結果都不變。
 - 跟電腦下：沒有棋鐘，不會超時。
 - 時間用完一律判負，**不看對方還有沒有能將死你的子力**。
-- **程式：** `xiangqi-lab/src/net.js` 的 `timeoutCheck`（第 292 行起，`TURN_MS`＝3 分鐘）和 `tickMove`；`src/local.js` 的 `pvpFlag`（第 310 行）。
+- **程式：** `xiangqi-lab/src/net.js` 的 `timeoutCheck`（第 292 行起，`TURN_MS`＝3 分鐘）和 `tickMove`；`src/local.js` 的 `pvpFlag`（第 487 行）。
 - **測試：** `test-clock-pv.js`：`同機棋鐘：黑方剩 +1 ms 落子＝及時，這手算數、拿到 5 秒加秒`、`同機棋鐘：每 250 ms 的檢查、讀狀態也用同一條界線（+1 ms 還在走，0 ms 落旗）`、`同機棋鐘：已經判超時後再認輸、提和、悔棋、落子，結果不變`、`同機重開：超時判負的棋局讀回後，結果、雙鐘、著數不變，也不能再落子或悔棋`、`線上棋鐘 tickMove：紅方同樣的邊界；沒有棋鐘的對局不判逾時`。`test-rule-handshake.js`：`new client does not timeout or rate a resumed legacy game`。
 
 ### 例外：不判長將長捉的關卡
 
 - 石桌往事有幾關設了 `noPerpetual`：這些關**不判長將、長捉**（局面重複也不判和），畫面會寫明。將死、困斃、60 回合、無進攻子力照常判。
-- **程式：** `src/local.js` 的 `playApply`（第 213 行）；說明文字在 `m/00-util.js` 第 298 行起。
+- **程式：** `src/local.js` 的 `playApply`（第 303 行）；說明文字在 `m/00-util.js` 第 298 行起。
 - **測試：** `不判長將長捉的關（noPerp）：長將、長捉都不警告會判負`、`不判長將長捉的關（noPerp）：待核照樣提醒`。
 
 ### 線上規則版本
 
 - 邀請、接受邀請都要帶規則版本；版本不同就不開局，下到一半變了也拒絕。
+- 另外帶上自己設定的棋規（`rs`，舊版沒帶就當千秋休閒規則）。開局的一方把這盤的棋規設定寫進對局（`rc`）：雙方都是千秋休閒規則 → `ranked`，照常計分；不一樣、或雙方都選原型 → `casual`（友誼賽），雙方各跳一次提示，結束不計分。下到一半 `rc` 被換掉也拒收。程式在 `src/net.js` 的 `netRc`、`rcRated`、`okNext`、`record`。
 - **測試：** `old rule version invitation is declined before a game starts`、`other rule version acceptance cannot start a game`、`new invitations publish the exact adjudicator version`、`matching version invitation reaches the normal invite handler`、`mid-game rule version changes are rejected`。
 
 ## 五、和臺灣常見規則的差異
@@ -174,8 +176,22 @@
 - 【民間習慣】朋友間下棋，對長將、長捉、重複幾次算和，各地說法差很多；這次**沒有找到可以引用的調查資料**，所以不列具體說法。
 - 「長打」：一般用來統稱長將、長捉這類一直攻擊的走法；本次沒有找到正式條文中的定義。
 
-## 六、目前只支援一套
+## 六、棋規註冊表與臺灣原型
 
-《象棋千秋》目前只支援「亞洲棋例（直接捉子）」一套。
+《象棋千秋》真正實作的只有「千秋休閒規則」一套。為了以後能接上別的棋規，2026 年 11 月 11 日先把資料結構做好：
 
-要加上其他地區的棋規（例如《中華民國象棋規則》、中國象棋協會規則、世界象棋聯合會規則），需要先拿到**條文原文**，再請懂棋規的專人**逐條核對**、每一條都寫好自動測試，才能上線。在那之前，App 不會假裝支援別的規則。
+- **註冊表：** `xiangqi-referee.js` 的 `RULESETS`（第 226 行起），每一套寫明名稱、版本、狀態（`implemented` 已實作／`prototype` 原型）、能不能計積分、依據、涵蓋哪些情形、哪些待核、和千秋休閒規則差在哪（每條註明有沒有查證）。
+- **每盤的棋規設定（`rc`）：** 開局時寫一份 `{rulesetId, edition, implementationVersion, mode, unresolvedPolicy}`，跟著存檔走，之後改設定也不影響這盤。`implementationVersion` 是開局當時的裁判版本，當作這盤的「棋規指紋」。舊存檔沒有 `rc`，讀回來補千秋休閒規則＋目前裁判版本（`ruleConfigOf`）。原型棋規就算存檔被改成 `ranked`，讀回來也只給 `casual`。
+- **哪些模式有 `rc`：** 挑戰電腦、同機對下、車輪戰、線上對局、殘局（殘局照題目的解答樹判，固定千秋休閒規則、`puzzle`）。
+- **設定頁「棋規」只影響之後新開的自由對局：** 挑戰電腦（非晉級賽）、同機對下、車輪戰、線上邀請。晉級賽、朝代擂台、石桌往事、錯棋重練一律千秋休閒規則。晉級賽只認千秋休閒規則的 `ranked` 才計分。
+- **預警和判決分開：** 「照上一輪再走一圈會怎麼判」由 `repetitionWarning` 交給 `judgeState` 判，回傳警告事件（`loss` 或 `review`）；畫面只照事件顯示，不自己用每步的將軍、捉子標記推輸贏。
+
+### 臺灣比賽規程（原型，`tw_proto`）
+
+- **改了的那一條（有規程原文）：** 長將、長捉循環到第 3 次重複，**不自動判負**，改成待核提示：「規程寫『經裁判裁決仍不變著』才判負；App 沒有現場裁判，先提醒：請變著，或雙方協議和棋」。原本千秋休閒規則的判決留在 `base` 欄位，可以追溯。
+- **未查證、改成提示的：** 一將一捉、閒著循環、互捉——臺灣規則怎麼判沒查到，不自動判和，也是提示、交雙方協議。
+- **未查證、暫時沿用千秋休閒規則的：** 60 回合限著、雙方無進攻子力、超時（時間用完一律判負）。
+- **沒做的：** 「裁判裁決以後仍不變著才判負」的第二階段、循環三回合的算法——條文原文沒拿到、也沒有現場裁判，不做。
+- **不計積分**：對局畫面會標「⚖️ 臺灣比賽規程（原型）・不計積分」。
+
+要讓原型變成正式支援，需要先拿到**條文原文**，再請懂棋規的專人**逐條核對**、每一條都寫好自動測試。在那之前，App 不會假裝支援別的規則。

@@ -1021,7 +1021,7 @@
       if(G.quote&&G.quote.q){const Q=G.quote;veil.querySelector(".gt-qt").textContent="「"+Q.q+"」";veil.querySelector(".gt-qw").textContent="── "+(Q.who||"")+(Q.src?"　"+Q.src:"");veil.querySelector(".gt-qn").textContent=Q.n||"";
         veil._qmin=Math.min(9000,Math.max(4800,3200+String(Q.q).length*120));veil.style.pointerEvents="auto";veil.addEventListener("pointerdown",()=>{veil._qskip=true},{once:true})}
       const bg=veil.querySelector(".gt-bg");(function tryI(i){if(i>=imgs.length)return;const im=new Image();im.onload=()=>{bg.style.backgroundImage="url("+imgs[i]+")"};im.onerror=()=>tryI(i+1);im.src=imgs[i]})(0)}
-    el.append(veil);try{if(veil.querySelector(".gt-t,.ag-t")&&window.XQ_DRUM)window.XQ_DRUM(eraKey(),opt.arena?"arena":"gate")}catch(e){}   /* 意見回饋 499：過場敲一段朝代的鼓和鑼 */
+    el.append(veil);try{if(veil.querySelector(".gt-t,.ag-t")&&window.XQ_DRUM&&!(opt.gate&&opt.gate.quiet))window.XQ_DRUM(eraKey(),opt.arena?"arena":"gate")}catch(e){}   /* 意見回饋 499：過場敲一段朝代的鼓和鑼；gate.quiet（回饋 871 車輪戰棋館的載入畫面）不敲 */
     hint.textContent="點棋子走棋・點物件看介紹・拖曳轉頭・兩指縮放";el.append(hint);if(veil._qmin)hint.style.opacity=0;else setTimeout(()=>hint.style.opacity=0,4500);   /* 有名言的過場：操作提示等過場收掉才出現 */
     /* 開發者 11/11 hspx「讓車輪戰也能有對戰的環景切換功能」：opt.era＝指定朝代（車輪戰在江南棋館，用明朝的家具和配色）；opt.indoor＝室內（不放樹、手繪道具、落葉、長榻和燈，只有木桌和兩張木凳） */
     const EK=opt.era&&ERA[opt.era]?opt.era:eraKey(),E=ERA[EK];
@@ -1351,9 +1351,11 @@
         const geo=new T.PlaneGeometry(H*meta.w/meta.h,H);geo.translate(0,H/2,0);const sp=new T.Mesh(geo,mat);sp.renderOrder=2;
         const y0=SPR_Y;sp.position.set(0,y0,SPR_Z);sp.rotation.x=SPR_TILT;sc.add(sp);oppSpr={sp,tex,pose:"idle",y0};opp.g.visible=false};
       for(const ps of POSES){const src=base+((look.spriteMap&&look.spriteMap[ps])||ps)+".webp",   /* 擂主只有 idle、think、move、win、lose：用 spriteMap 對到 Pikafish 的六種姿勢 */im=loadImg(src,()=>{ims[ps]=imgCache[src];done()});if(im){ims[ps]=im;done()}}};
-    const setOpp=look=>{const k=JSON.stringify(look||null);if(k===oppKey)return;oppKey=k;killSpr();if(!look){opp.g.clear();opp.B=null;return}if(look.flat&&look.sprite&&look.spriteMeta){opp.g.clear();opp.B=null;makeSpr(look);return}buildActor(opp,look);opp.g.visible=true;opp.g.position.y=SY-.9;opp.g.userData.y0=null;
+    /* 開發者 11/11：車輪戰的真實 3D 棋客（look.stool，08s-simul.js SIM_SEAT）是坐在木凳上的靜態模型：凳面對齊座高 SY、凳腳落在地面 FL；桌上對面右角立一面這位棋客的棋位牌（XQBot3D.plate）。換人時拿掉 */
+    let oppPl=null;const oppPlate=look=>{if(oppPl){sc.remove(oppPl);oppPl=null}if(!look||!window.XQBot3D||!XQBot3D.plate)return;try{oppPl=XQBot3D.plate(look.p,.7);oppPl.position.set(6.3,.02,-6.75);sc.add(oppPl)}catch(e){oppPl=null}};
+    const setOpp=look=>{const k=JSON.stringify(look||null);if(k===oppKey)return;oppKey=k;killSpr();oppPlate(null);if(!look){opp.g.clear();opp.B=null;return}if(look.flat&&look.sprite&&look.spriteMeta){opp.g.clear();opp.B=null;makeSpr(look);return}buildActor(opp,look);opp.g.visible=true;opp.g.position.y=SY-.9;opp.g.userData.y0=null;
       /* 意見回饋 577：對手用真實 3D（站姿模型）時一樣改成坐著：臀部落在長榻的座面（SY），腿沉進座位裡 */
-      if(opp.B&&opp.B.glbP)opp.B.glbP.then(ok=>{if(!ok||oppKey!==k||!opp.B||!opp.B.glb)return;try{opp.g.updateMatrixWorld(true);const b=new T.Box3().setFromObject(opp.B.glb),H=b.max.y-b.min.y;opp.g.position.y-=b.min.y-(SY-H*.27);opp.g.userData.y0=null}catch(e){}}).catch(()=>{})};   /* 開發者：園子的路人棋友、故事人物用 Gemini 畫好的形象（平面立牌） */   /* 意見回饋 377：對手（Pikafish、擂主）一律用 3D 立體的，繞著桌子轉也是立體的 */
+      if(opp.B&&opp.B.glbP)opp.B.glbP.then(ok=>{if(!ok||oppKey!==k||!opp.B||!opp.B.glb)return;try{opp.g.updateMatrixWorld(true);let b=new T.Box3().setFromObject(opp.B.glb),H=b.max.y-b.min.y;if(Array.isArray(look.stool)&&look.stool[0]>0){opp.B.glb.scale.multiplyScalar((SY-FL)/(look.stool[0]*H));opp.g.updateMatrixWorld(true);b=new T.Box3().setFromObject(opp.B.glb);opp.g.position.y-=b.min.y-FL;oppPlate(look)}else opp.g.position.y-=b.min.y-(SY-H*.27);opp.g.userData.y0=null}catch(e){}}).catch(()=>{})};   /* 開發者：園子的路人棋友、故事人物用 Gemini 畫好的形象（平面立牌） */   /* 意見回饋 377：對手（Pikafish、擂主）一律用 3D 立體的，繞著桌子轉也是立體的 */
     // 我這一側的小帥：平常是自己的；觀戰時換成棋盤近端那一方玩家的小帥（意見回饋 259）
     /* 意見回饋 551：小帥坐在鼓凳上，可是腿往正前方伸、被圓牌身體整個擋住，從背後的鏡頭看像站在凳子上。
        改成兩腿往左右張開、伸出圓牌外（髖部也往外挪），身體稍微往後靠，從背後看得到兩隻腳掛在凳子邊 */
