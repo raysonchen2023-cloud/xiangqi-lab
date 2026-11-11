@@ -195,7 +195,12 @@ function pickMove(r,lv){
 const ANALYZE_MS=400;
 const clampV=v=>Math.max(-2000,Math.min(2000,v));const gradeLoss=l=>l<30?"正著":l<=60?"穩著":l<=150?"緩著":l<=400?"失著":"敗著";   /* 開發者 11/6（第二裁判：同一個 Pikafish 深算 2258 步對照）：手機只算 0.4 秒，分數本身就會跳 20～30 分，舊的 10／40／100／300 分界線比雜訊還細；放寬成 30／60／150／400，跟深算的一致率 83%→90% */const qName=q=>({"妙手":"妙著","正手":"正著","優著":"穩著","良著":"緩著","錯著":"失著","露著":"敗著"})[q]||q;   /* 開發者 11/6（意見回饋 659）：評語改用傳統棋評用語；舊存檔、舊快取裡的舊名字讀取時翻成新的 */
 async function classifyRaw(b,s,f,t,ms,lt){   /* lt：對方上一步落在哪一格（判斷「回吃」，可省略） */
-  const r=await evalPos(b,s,ms,2);if(r.dead||!r.lines.length)return null;
+  let r=await evalPos(b,s,ms,2);if(r.dead)return null;
+  /* ChatGPT 數值盤查 11/11 P1 引擎空結果（第一查）：走之前的局面不是終局、卻一條 PV 都沒有時，舊版回 null，analyzeList 就把這步寫成「—」、之後永遠不再評。
+     比照第二查：先用兩倍時間重查一次，還是空就丟可重試的錯誤（e.retry），這步保持「未評」（tools/test-clock-pv.js 驗收） */
+  if(!(r.lines&&r.lines.length))r=await evalPos(b,s,(ms||ANALYZE_MS)*2,2);
+  if(r.dead)return null;
+  if(!(r.lines&&r.lines.length)){const e=new Error("Pikafish 沒有算出這個局面（缺 PV），這步先不評，稍後自動再評");e.retry=true;e.code="XQ_NO_PV";throw e}
   const best=r.lines[0],second=r.lines[1],mv=iccs(f,t);
   let played,pmt;
   if(best.mv===mv){played=best.v;pmt=best.mate}

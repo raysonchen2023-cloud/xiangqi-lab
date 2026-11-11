@@ -1363,6 +1363,30 @@ body:has(> .modal) > .toast{z-index:9995}
 /* 11/11 模擬玩家問題 2：有走路角色的場景頁，圖上出口標籤（07w9 .ex-spot 原本 z-index 4）要在角色和角色的透明按鈕（.shw-me z 150）上面，
    不然 #/theme「↩ 走回書院」會被角色蓋住、點了變成開「問問題／聽棋語／我的角色」；比角色的話泡泡（210）、小選單（211）低 */
 .shw-iso.shw-iso .shp-spot.ex-spot{z-index:205}
+/* ===== 11/11 v6 第 3 點（ChatGPT 十視角重評：術語白話、3D↔平面切換） =====
+   .tmx-bub：術語白話小泡泡（01-board.js tmxBub）；比底部選單（.sheet 51）高、比確認框（.modal 60）和吐司（70）低
+   .pk2d／.pk2d-tip：3D 園子左下角「▦ 平面棋盤」和點偏時的提示（06-cpu.js pkSwUi／pkSwTap）；.pk3d-back：平面棋盤時狀態列下面的「🌳 回園子」 */
+.tmx-bub{position:fixed;z-index:55;max-width:min(300px,calc(100vw - 16px));box-sizing:border-box;padding:9px 12px;border-radius:12px;background:#fffaf0;color:#3a2618;border:1.5px solid #c8961e;box-shadow:0 6px 18px rgba(0,0,0,.22);font-size:14.5px;line-height:1.6;text-align:left;transition:opacity .3s}
+.tmx-bub b{color:#8a3b12}
+.tmx-bub small{display:block;font-size:12px;opacity:.75;margin-top:3px}
+.tmx-bub::after{content:"";position:absolute;left:var(--ax,50%);margin-left:-7px;border:7px solid transparent}
+.tmx-bub.up::after{top:100%;border-top-color:#c8961e}
+.tmx-bub.dn::after{bottom:100%;border-bottom-color:#c8961e}
+.tmx-bub.out{opacity:0}
+.chip .q[data-tq]{text-decoration:underline dotted 1px;text-underline-offset:3px;cursor:help}
+.pk2d{position:absolute;left:calc(10px + env(safe-area-inset-left,0px));bottom:10px;z-index:6;border:none;border-radius:99px;padding:7px 14px;min-height:38px;font:inherit;font-size:14px;font-weight:800;color:#3a2618;background:rgba(255,248,232,.94);box-shadow:0 2px 8px rgba(0,0,0,.32);cursor:pointer}
+.pk2d.pulse{animation:pk2dPulse .9s ease-in-out 4}
+@keyframes pk2dPulse{50%{transform:scale(1.1);box-shadow:0 0 0 7px rgba(200,150,30,.5)}}
+.pk2d-tip{position:absolute;left:calc(10px + env(safe-area-inset-left,0px));bottom:58px;z-index:7;max-width:min(260px,calc(100% - 20px));box-sizing:border-box;padding:8px 11px;border-radius:10px;background:#fffaf0;color:#3a2618;border:1.5px solid #c8961e;font-size:13.5px;line-height:1.55;box-shadow:0 4px 12px rgba(0,0,0,.25);pointer-events:none;transition:opacity .4s}
+.pk2d-tip::after{content:"";position:absolute;left:28px;top:100%;border:7px solid transparent;border-top-color:#c8961e}
+.pk2d-tip.out{opacity:0}
+.pk-hinting .pk2d-tip{visibility:hidden}
+.pk3d-back{flex:none;display:flex;justify-content:flex-end;padding:0 10px;margin:2px 0}
+.pk3d-back[hidden]{display:none}
+.rule-note+.pk3d-back{margin-top:-30px;position:relative;z-index:1;pointer-events:none}   /* 跟「📜 本局棋規」同一行、靠右 */
+.pk3d-back button{pointer-events:auto;border:1px solid var(--line);border-radius:99px;background:var(--card);color:var(--ink);font:inherit;font-size:13px;font-weight:700;padding:3px 12px;min-height:30px;cursor:pointer}
+@media (orientation:landscape) and (max-height:600px){.rule-note+.pk3d-back{margin-top:2px}}
+@media (prefers-reduced-motion:reduce){.pk2d.pulse{animation:none}}
 </style></head><body>
 <div class="app">
  <div class="topbar" id="topbar"><button class="ib" id="back" hidden><b>‹</b>返回</button><h1 id="title">象棋千秋</h1><span id="topRight"></span></div>
@@ -1410,7 +1434,7 @@ body:has(> .modal) > .toast{z-index:9995}
       if(!window.caches)return go();caches.keys().then(function(ks){return Promise.all(ks.filter(function(k){return k.indexOf("xqlab-app-")===0}).map(function(k){return caches.delete(k)}))})
         .then(function(){return navigator.serviceWorker&&navigator.serviceWorker.getRegistration()}).then(function(r){return r&&r.update()}).catch(function(){}).then(go)}};setTimeout(chk,4000)})();
 </script>
-<script>window.XQ_OFFLINE=true;window.XQ_BUILD="20261111-2200";</script>
+<script>window.XQ_OFFLINE=true;window.XQ_BUILD="20261111-2230";</script>
 <script src="core.js"></script>
 <script src="engine.js"></script>
 <script src="local.js"></script>
@@ -1436,7 +1460,13 @@ function parseFen(f){const b=Array(90).fill(null);let r=0,c=0;for(const ch of f)
 const fenC=(b,s)=>{const rows=[];for(let r=0;r<10;r++){let row="",e=0;for(let c=0;c<9;c++){const p=b[r*9+c];if(!p)e++;else{if(e){row+=e;e=0}row+=p}}if(e)row+=e;rows.push(row)}return rows.join("/")+" "+(s==="r"?"w":"b")};
 const iccsC=(f,t)=>String.fromCharCode(97+f%9)+(9-(f/9|0))+String.fromCharCode(97+t%9)+(9-(t/9|0));
 const sqI=s=>(9-(+s[1]))*9+(s.charCodeAt(0)-97);
-const evt=v=>v==null?"":Math.abs(v)>=20000?(v>0?"紅方":"黑方")+"有殺":Math.abs(v)<30?"均勢":(v>0?"紅優 ":"黑優 ")+(Math.abs(v)/100).toFixed(1);
+/* 11/11 v6 第 3 點（ChatGPT 十視角重評、AI 模擬玩家報告問題 5）：局勢評語一律白話，數字換成「約領先幾個兵」。原本寫「黑優 0.5」「紅優 2.1」，新手看不懂。
+   v＝紅方視角的分數（100＝1 個兵）。分界：不到 0.3 兵＝均勢；不到 1.5 兵＝稍好（跟 10-db 和棋說明、賽後報告「翻盤」的 1.5 兵一致）；不到 3 兵＝明顯好；再多＝大占上風。
+   s 有值＝只要「約領先幾個兵」那半句（前面已經寫了誰比較好的句子用，免得「紅方稍好（紅方稍好…）」重複） */
+const evt=(v,s)=>{if(v==null)return"";const a=Math.abs(v),sd=v>0?"紅方":"黑方";if(a>=20000)return sd+"有殺（能將死對方）";if(a<30)return"均勢，雙方差不多";
+  const p=a/100,amt=p>=20?"領先非常多":"約領先"+(p<.75?"半個兵":" "+(+p.toFixed(1))+" 個兵");return s?sd+amt:sd+(a<150?"稍好":a<300?"明顯好":"大占上風")+"，"+amt};
+/* 11/11 v6 第 3 點：段位簡稱「業2」新手看不懂，畫面上寫成「業餘2級」（資料裡的名字不變，只改顯示；08b 對局頁右上的難度鈕用） */
+const rkTw=s=>String(s==null?"":s).replace(/^業(\d)$/,"業餘$1級");
 const evPct=v=>v==null?50:50+50*Math.tanh(v/600);
 /* 開發者 11/11 選 ChatGPT UI 報告 UI-11：局勢條沒有評分時原本停在正中間，看起來像「雙方均勢」；改成淡色虛線＝還沒評分，說明寫清楚是誰的視角 */
 function evMark(v,val){try{const e=v.querySelector(".evline");if(!e)return;const no=val==null;e.classList.toggle("noev",no);const t=no?"局勢條：電腦還沒評這一步":"局勢條：紅色越長＝紅方越占優（電腦評分）";e.title=t;e.setAttribute("aria-label",t);e.setAttribute("role","img");
@@ -2575,8 +2605,52 @@ function mvtWrap(root){if(!root)return;
   for(const n of hits){const s=n.nodeValue,fr=document.createDocumentFragment();let last=0;MVT_RE.lastIndex=0;let m;
     while((m=MVT_RE.exec(s))){fr.append(s.slice(last,m.index));const sp=document.createElement("span");sp.className="mvt";sp.textContent=m[0];sp.dataset.mv=m[0];sp.setAttribute("role","button");sp.title="看懂這一步";fr.append(sp);last=m.index+m[0].length}
     fr.append(s.slice(last));n.replaceWith(fr)}}
-let mvtT=0;new MutationObserver(()=>{if(mvtT)return;mvtT=setTimeout(()=>{mvtT=0;try{mvtWrap(document.body)}catch(e){}},250)}).observe(document.documentElement,{childList:true,subtree:true,characterData:true});
+let mvtT=0;new MutationObserver(()=>{if(mvtT)return;mvtT=setTimeout(()=>{mvtT=0;try{mvtWrap(document.body)}catch(e){}try{tmxMvtHint()}catch(e){}},250)}).observe(document.documentElement,{childList:true,subtree:true,characterData:true});   /* 11/11 v6 第 3 點：第一次看到可點的記譜，提示一次（tmxMvtHint 在下面） */
 document.addEventListener("click",e=>{const x=e.target&&e.target.closest&&e.target.closest(".mvt");if(!x)return;e.preventDefault();e.stopPropagation();mvtShow(x.dataset.mv,x)},true);
+/* ================= 11/11 v6 第 3 點（ChatGPT 十視角重評、AI 模擬玩家報告問題 5）：術語第一次出現就有白話（前綴 tmx） =================
+   ① 評等字（妙著、正著、穩著、緩著、失著、敗著）：著法條（05-settings.js renderStrip，那支不改，這裡包一層）第一次出現某個評等字，旁邊冒一個小泡泡講白話，
+      有 loss 就換算成「約幾個兵」；之後點著法條上的評等字、賽後報告的評等統計，也會再講一次（點評等字只講白話，不跳步）。
+   ② 對局頁的著法條原本點了沒反應（沒有 onPick）：改成點一下講這一步的白話（mvtSay 念記譜＋評等）。
+   ③ 畫面第一次出現可以點的記譜（.mvt）：泡泡提示「點一下就會在棋盤上畫箭頭」。
+   store：tmxSeen＝講過白話的評等字；tmxMvt＝記譜提示出過了。泡泡掛 data-nomvt，裡面的記譜不再被 mvtWrap 包成可點的字 */
+const TMX_QS=["妙著","正著","穩著","緩著","失著","敗著"];let TMX_T=0,TMX_MV=!!store.get("tmxMvt",false),TMX_MVT=0;
+function tmxPawn(l){const p=Math.abs(+l||0)/100;return p<.75?"約半個兵":"約 "+(+p.toFixed(1))+" 個兵"}
+function tmxPlain(q,loss){const l=+loss,L=loss!=null&&loss!==""&&isFinite(l)&&l>=30&&l<2000&&!(q==="失著"&&l<=150)&&!(q==="敗著"&&l<=400)?tmxPawn(l):"";   /* 跟殺棋有關的評等（05-settings mxGrade）loss 不照兵算，就不寫幾個兵 */
+  const x={妙著:"好棋！只有這步最好，其他走法都差很多",正著:"最好的走法（或跟最好的幾乎一樣）",穩著:"不錯，只比最好的走法差一點點",
+    緩著:"不算錯，但有更好的走法"+(L?`（少了${L}的價值）`:""),失著:L?`走錯了：比最好的走法少了${L}的價值`:"走錯了，局面明顯變差",
+    敗著:L?`大錯：比最好的走法少了${L}的價值，很可能因此輸棋`:"大錯，很可能因此輸棋"}[q];return x?`「${q}」＝${x}。`:""}
+/* 小泡泡：指著 el（在上面放不下就放下面），ms 毫秒後或點畫面任何地方就收；成功顯示回 true */
+function tmxBub(el,html,ms){try{document.querySelectorAll(".tmx-bub").forEach(x=>x.remove());if(!el||!el.isConnected)return false;const r=el.getBoundingClientRect();if(!r.width||r.bottom<0||r.top>innerHeight)return false;
+  const b=document.createElement("div");b.className="tmx-bub";b.dataset.nomvt="1";b.setAttribute("role","status");b.innerHTML=html;document.body.append(b);
+  const w=b.offsetWidth,h=b.offsetHeight,x=Math.max(8,Math.min(innerWidth-w-8,r.left+r.width/2-w/2)),up=r.top-h-12>8;
+  b.style.left=x+"px";b.style.top=(up?r.top-h-10:r.bottom+10)+"px";b.classList.add(up?"up":"dn");b.style.setProperty("--ax",Math.max(14,Math.min(w-14,r.left+r.width/2-x))+"px");
+  let t=0;const kill=()=>{clearTimeout(t);removeEventListener("pointerdown",kill,true);b.classList.add("out");setTimeout(()=>b.remove(),300)};t=setTimeout(kill,ms||6000);setTimeout(()=>{if(b.isConnected)addEventListener("pointerdown",kill,true)},60);return true}catch(e){return false}}
+addEventListener("hashchange",()=>document.querySelectorAll(".tmx-bub").forEach(x=>x.remove()));
+/* 包住 renderStrip：每次著法條換內容才做一次（box.dataset.k 是 renderStrip 自己記的內容鍵） */
+function tmxStrip(box,moves,onPick){if(!box||!moves)return;const k=box.dataset.k||"";if(box.dataset.tmx===k)return;box.dataset.tmx=k;
+  [...box.children].forEach((c,i)=>{const m=moves[i];if(!m)return;const q=c.querySelector(".q");
+    if(q&&TMX_QS.includes(q.textContent)){q.dataset.tq=q.textContent;if(m.loss!=null)q.dataset.tl=m.loss;q.setAttribute("aria-label",tmxPlain(q.textContent,m.loss))}
+    if(!onPick)c.onclick=()=>tmxMove(c,m,i)});
+  setTimeout(()=>{try{tmxFirst(box)}catch(e){}},400)}
+function tmxFirst(box){if(!box.isConnected||!box.offsetParent||document.querySelector(".tmx-bub")||Date.now()-TMX_T<3000)return;
+  const seen=store.get("tmxSeen",[])||[],br=box.getBoundingClientRect(),on=box.querySelector(".chip.on")||box.lastElementChild,oc=on?on.getBoundingClientRect():br,cx=oc.left+oc.width/2;let best=null,bd=1e9;
+  box.querySelectorAll(".q[data-tq]").forEach(q=>{if(seen.includes(q.dataset.tq))return;const r=q.getBoundingClientRect();if(!r.width||r.left<br.left-2||r.right>br.right+2)return;const d=Math.abs(r.left+r.width/2-cx);if(d<bd){bd=d;best=q}});
+  if(!best)return;const g=best.dataset.tq;
+  if(tmxBub(best,`${esc(tmxPlain(g,best.dataset.tl))}<small>著法條上的評等字，點一下可以再看說明</small>`,7000)){seen.push(g);store.set("tmxSeen",seen);TMX_T=Date.now()}}
+function tmxMove(c,m,i){vibrate(5);let s="";try{MVT_RE.lastIndex=0;if(m.cn&&MVT_RE.test(m.cn))s=mvtSay(m.cn).t}catch(e){}MVT_RE.lastIndex=0;
+  const g=m.q&&TMX_QS.includes(m.q)?tmxPlain(m.q,m.loss):"";
+  tmxBub(c,`<b>第 ${i+1} 步　${esc(m.cn||"")}</b>${s?"<br>"+esc(s):""}${g?"<br>"+esc(g):""}`,7000)}
+if(typeof renderStrip==="function"){const f0=renderStrip;renderStrip=function(box,moves,curIdx,onPick){const r=f0.apply(this,arguments);try{tmxStrip(box,moves,onPick)}catch(e){}return r}}
+document.addEventListener("click",e=>{const t=e.target;if(!t||!t.closest)return;
+  const q=t.closest(".chip .q[data-tq]");if(q){e.preventDefault();e.stopPropagation();vibrate(5);TMX_T=Date.now();tmxBub(q,esc(tmxPlain(q.dataset.tq,q.dataset.tl)),6000);return}
+  const r=t.closest(".rp-q > span");if(r){const g=TMX_QS.find(k=>r.textContent.includes(k));if(g){vibrate(5);tmxBub(r,esc(tmxPlain(g)),6000)}}},true);
+/* ③ 記譜提示：畫面上（不在泡泡、吐司裡）第一次出現看得到的 .mvt，等 1.5 秒（過場、蓋章動畫先收）再指著它講一次 */
+const tmxVis=el=>{if(!el||!el.offsetParent||el.closest(".tmx-bub"))return false;const r=el.getBoundingClientRect();return r.width>0&&r.top>=50&&r.bottom<=innerHeight-60&&r.left>=0&&r.right<=innerWidth};
+function tmxMvtHint(){if(TMX_MV||TMX_MVT)return;if(![...document.querySelectorAll(".mvt")].some(tmxVis))return;
+  TMX_MVT=setTimeout(()=>{TMX_MVT=0;if(TMX_MV||document.querySelector(".tmx-bub,.kjfx,.pkhint")||fxBusy())return;const y=[...document.querySelectorAll(".mvt")].find(tmxVis);if(!y)return;
+    if(tmxBub(y,`💡 藍色虛線的走法（像「${esc(y.dataset.mv)}」）<b>點一下</b>，就會在棋盤上畫箭頭，還會用白話說它怎麼走。`,8000)){TMX_MV=true;store.set("tmxMvt",true);TMX_T=Date.now()}},1500)}
+
+
 
 
 
@@ -5081,7 +5155,7 @@ function talk(s,plies,graded,ph,score){if(score==null)return[];const sg=s==="r"?
      改成只看引擎的殺棋訊號 talkMate(m)：新存檔有 bmt／pmt（core.js classifyRaw，走方視角）；今天稍早的存檔有 bv（最佳評估原值，跟影子模式 mxEv 同一個欄位、同一個殺棋分界 MXS.mate）。
      有訊號：最佳著法是殺棋、實際這步不是 → 「錯過殺棋」。沒有訊號的舊存檔：原本會被推定成殺棋的那種（最佳 ≥ 1900、走完 < 1900）改說「錯失明顯優勢」，不再說有殺 */
   for(const m of bad){const after=sg*(m.ev||0),best=after+m.loss,ms=talkMate(m),missMate=!!ms&&ms.b&&!ms.p,bigLead=!ms&&best>=1900&&after<1900;
-    T.push({t:missMate?"錯過殺棋":bigLead?"錯失明顯優勢":m.q,ply:m.ply,bad:1,x:`第 ${rnd(m.ply)} 回合 ${m.cn}：${missMate?"這時已經有殺棋":bigLead?"這時原本有明顯優勢，比最佳著法少了 "+(m.loss/100).toFixed(1)+" 兵":"比最佳著法少了 "+(m.loss/100).toFixed(1)+" 兵"}`+(m.bc?`，Pikafish 建議 ${m.bc}`:"")+`。走完之後${evt(m.ev)}。`})}
+    T.push({t:missMate?"錯過殺棋":bigLead?"錯失明顯優勢":m.q,ply:m.ply,bad:1,x:`第 ${rnd(m.ply)} 回合 ${m.cn}：${missMate?"這時已經有殺棋":bigLead?"這時原本有明顯優勢，比最好的走法少了約 "+(m.loss/100).toFixed(1)+" 個兵的價值":"比最好的走法少了約 "+(m.loss/100).toFixed(1)+" 個兵的價值"}`+(m.bc?`，Pikafish 建議 ${m.bc}`:"")+`。走完之後${evt(m.ev)}。`})}
   for(const m of graded.filter(m=>m.q==="妙著").slice(0,3))T.push({t:"妙著",ply:m.ply,good:1,x:`第 ${rnd(m.ply)} 回合 ${m.cn}：其他走法都差 1.5 兵以上，只有這步最好。`});
   if(!bad.length&&graded.length>=10)T.push({t:"亮點",x:"整盤沒有失著或敗著，防守很紮實。"});
   return T.sort((a,b)=>(a.ply||0)-(b.ply||0))}
@@ -5929,14 +6003,14 @@ function pkGateEat(){const v=PK_GV;if(!v)return false;if(v.isConnected&&v.style.
   if(Date.now()-PK_GT>3000){PK_GV=null;return false}return(PK_PD||Date.now())<PK_GT+600}
 function parkDraw(host,bd,board,o,ex){
   // 關掉公園：同一個棋盤的公園只藏起來（意見回饋 244：來回切換不用每次重建 3D 場景，比較順）
-  {const tg=host.querySelector(".pkname");if(tg)tg.hidden=!parkOn();const pv0=host.querySelector(".pkview");if(pv0)pv0.hidden=!parkOn();const ap=host.querySelector(".ax-park");if(ap)ap.hidden=!parkOn()}   /* 回饋 847：平面棋盤時收起「改用平面棋盤」 */
+  {const tg=host.querySelector(".pkname");if(tg)tg.hidden=!parkOn();const pv0=host.querySelector(".pkview");if(pv0)pv0.hidden=!parkOn();const ap=host.querySelector(".ax-park");if(ap)ap.hidden=!parkOn();pkSwUi(host)}   /* 回饋 847：平面棋盤時收起「改用平面棋盤」 */   /* 11/11 v6 第 3 點：「▦ 平面棋盤」／「🌳 回園子」（pkSwUi 在下面） */
   if(!parkOn()){if(PARK&&PARK.host===host){if(PARK.v.hide)PARK.v.hide();else{PARK.v.destroy();PARK=null}}bd.svg.style.display="";botVis(true);return}
   // 意見回饋 270：載入完還是沒有 XQPark3D（例如程式出錯）就停下來改用棋盤模式，不能一直重試（之前會無限循環、整個 App 卡死）
   if(!window.XQPark3D){bd.svg.style.display="";parkLoad().then(()=>{if(!window.XQPark3D)throw new Error("park3d 沒有載入成功");if(document.body.contains(host))parkDraw(host,bd,board,o,ex)}).catch(()=>{toast("園子 3D 棋盤載入失敗，先用棋盤模式");store.set("park3d",false)});return}
   if(PARK&&(PARK.era!==store.get("era","classic")||(PARK.bg||null)!==(ex.bg||null))){PARK.v.destroy();PARK=null}   // 換了朝代（例如從集章簿換過去）：公園重建
   if(!PARK||PARK.host!==host||!document.body.contains(PARK.v.el)){if(PARK)PARK.v.destroy();
     if(ex.gate&&ex.gate.qk)ex.gate=Object.assign({},ex.gate,{quote:parkQuote(ex.gate.qk)});   /* 名言只在真的建公園、要顯示過場時才抽，不然每次重畫都抽一次，會跟上次重複 */
-    const pv=XQPark3D.create(host,{arena:ex.arena||null,gate:ex.gate||null,bg:ex.bg||null,bridge:!!ex.bridge,ground:ex.ground||null,era:ex.era||null,indoor:!!ex.indoor,   /* 11/11：車輪戰棋館＝明朝家具、室內（不放園子的樹和道具） */   /* 11/11：首頁橋上石桌（07y hbBridge）＝橋上家具＋橋面地面；換場景靠 bg 不同就會重建 */onTap:i=>{if(!pkGateEat())ex.tap(i)},onInfo:k=>{if(!pkGateEat())parkInfo(k)},onDestroy:()=>{if(PARK&&PARK.v===pv){PARK=null;botVis(true)}}});
+    const pv=XQPark3D.create(host,{arena:ex.arena||null,gate:ex.gate||null,bg:ex.bg||null,bridge:!!ex.bridge,ground:ex.ground||null,era:ex.era||null,indoor:!!ex.indoor,   /* 11/11：車輪戰棋館＝明朝家具、室內（不放園子的樹和道具） */   /* 11/11：首頁橋上石桌（07y hbBridge）＝橋上家具＋橋面地面；換場景靠 bg 不同就會重建 */onTap:i=>{if(!pkGateEat())pkSwTap(ex,i)},onInfo:k=>{if(!pkGateEat())parkInfo(k)},onDestroy:()=>{if(PARK&&PARK.v===pv){PARK=null;botVis(true)}}});
     if(!pv){toast("這台裝置沒辦法顯示 3D，先用棋盤模式");store.set("park3d",false);return}PARK={host,v:pv,era:store.get("era","classic"),bg:ex.bg||null};try{pkGateWatch(pv)}catch(e){}parkUi(host,pv);setTimeout(()=>{try{pv.say(`我是${BOTN()}，幫你加油！`,2.6);if(ex.oppHello)setTimeout(()=>pv.oppSay(ex.oppHello,2.6),1400)}catch(e){}},700)}
   /* 意見回饋 417：園子上方標出朝代和那個朝代對園子的叫法（例如「唐朝・園林」「漢朝・苑囿」） */
   {let tg=host.querySelector(".pkname");if(!tg){tg=document.createElement("div");tg.className="pkname";if(getComputedStyle(host).position==="static")host.style.position="relative";host.append(tg)}const k=store.get("era","classic");tg.textContent=ex.bgName||((k==="classic"?"經典":eraLabel(k))+"・"+(PW[k]||"園子"));tg.hidden=false}
@@ -5944,7 +6018,30 @@ function parkDraw(host,bd,board,o,ex){
   if(!host.querySelector(".ax-park")){const ab=document.createElement("button");ab.type="button";ab.className="ax-sr ax-park";ab.textContent="改用平面棋盤，讀螢幕可以逐格點選";
     ab.onclick=()=>{const tb=document.querySelector('#topRight button[aria-label="回棋盤模式"]');if(tb)tb.click();else{store.set("park3d",false);toast("回到棋盤模式")}};host.prepend(ab)}
   if(PARK.v.show)PARK.v.show();bd.svg.style.display="none";botVis(false);ex.look=parkLook();if(ex.opp)ex.opp=oppFig(remoteLook(ex.opp));if(ex.mateLook&&ex.mateLook.sx)ex.mateLook=oppFig(remoteLook(ex.mateLook));if(!ex.mateLook)ex.mateLook=myLook();
-  if(!PARK.crowd)PARK.crowd=parkCrowd();ex.crowd=PARK.crowd;if(Array.isArray(ex.watchers))ex.watchers=ex.watchers.map(w=>w&&w.bot&&w.bot.sx?{...w,bot:oppFig(remoteLook(w.bot))}:w);PARK.last={board,o,ex};PARK.v.draw(board,o,ex)}
+  if(!PARK.crowd)PARK.crowd=parkCrowd();ex.crowd=PARK.crowd;if(Array.isArray(ex.watchers))ex.watchers=ex.watchers.map(w=>w&&w.bot&&w.bot.sx?{...w,bot:oppFig(remoteLook(w.bot))}:w);PARK.last={board,o,ex};PARK.v.draw(board,o,ex);pkSwUi(host)}
+/* ================= 11/11 v6 第 3 點（ChatGPT 十視角重評、AI 模擬玩家報告問題 4）：3D 園子 ↔ 平面棋盤 好找、好點（前綴 pkSw） =================
+   ① 3D 園子左下角一顆「▦ 平面棋盤」（右上是俯視／平視、右下是 park3d 的 ＋／－）；平面棋盤時，狀態列下面靠右一顆「🌳 回園子」（在棋盤框外，不蓋棋子）。
+      兩顆都只是去按頂欄（手機收在「⋯」裡）原本那顆 parkBtn（回棋盤模式／去園子下棋（3D）），行為、記住的設定（park3d）都跟原本一樣；
+      頂欄沒有那顆（擂台下到一半、練習、盲棋）就不出現；專注棋盤模式開著也不出「回園子」。
+   ② 3D 裡點了卻只是「取消選取」或什麼都沒選到（點空、點偏、點到對方的子）：前 3 次冒一句提示，指著 ① 那顆按鈕（store pkSwMiss＝提示過幾次）。
+   判斷法：點之前記下 PARK.last；點完畫面有重畫（PARK.last 換了）而且沒有選到子、也不是再點一次同一顆子＝點偏。走成一步的會等伺服器回來才重畫，不會被算成點偏 */
+const pkSwTb=()=>document.querySelector('#topRight button[aria-label="回棋盤模式"],#topRight button[aria-label="去園子下棋（3D）"]');
+function pkSwUi(host){try{if(!host)return;const tb=pkSwTb(),on=parkOn(),on3=on&&!!(PARK&&PARK.host===host);
+  let b=host.querySelector(".pk2d");
+  if(on3&&tb&&!b){b=document.createElement("button");b.type="button";b.className="pk2d";b.innerHTML='<span aria-hidden="true">▦</span> 平面棋盤';b.setAttribute("aria-label","換成平面棋盤：棋子比較大、比較好點");
+    b.onclick=e=>{e.stopPropagation();vibrate(5);const t=pkSwTb();if(t)t.click()};if(getComputedStyle(host).position==="static")host.style.position="relative";host.append(b)}
+  if(b)b.hidden=!(on3&&tb);if(!(on3&&tb)){const tp=host.querySelector(".pk2d-tip");if(tp)tp.remove()}
+  const vw=host.closest(".view"),st=vw&&vw.querySelector("#stat");let r=vw&&vw.querySelector(".pk3d-back");const fl=!on&&!PARK_OFF&&!focusOn()&&!!tb&&!!st;
+  if(fl&&!r){r=document.createElement("div");r.className="pk3d-back";r.innerHTML='<button type="button" aria-label="回到 3D 園子下棋"><span aria-hidden="true">🌳</span> 回園子</button>';
+    r.querySelector("button").onclick=()=>{vibrate(5);const t=pkSwTb();if(t)t.click()};(vw.querySelector(".rule-note")||st).after(r)}
+  if(r)r.hidden=!fl}catch(e){}}
+let PKSW_T=0;
+function pkSwTap(ex,i){const L0=PARK&&PARK.last,s0=L0&&L0.o&&L0.o.sel>=0?L0.o.sel:-1;ex.tap(i);
+  try{const L1=PARK&&PARK.last;if(!L1||L1===L0||i===s0||(L1.o&&L1.o.sel>=0))return;
+    const n=+store.get("pkSwMiss",0)||0,host=PARK.host,b=host&&host.querySelector(".pk2d");if(n>=3||Date.now()-PKSW_T<8000||!b||b.hidden)return;
+    PKSW_T=Date.now();store.set("pkSwMiss",n+1);let tp=host.querySelector(".pk2d-tip");if(tp)tp.remove();
+    tp=document.createElement("div");tp.className="pk2d-tip";tp.setAttribute("role","status");tp.innerHTML="先點<b>你的棋子</b>，再點<b>綠點</b>走過去。<br>看不清楚？按下面「▦ 平面棋盤」，棋子比較大。";host.append(tp);
+    b.classList.remove("pulse");void b.offsetWidth;b.classList.add("pulse");setTimeout(()=>{tp.classList.add("out");b.classList.remove("pulse");setTimeout(()=>tp.remove(),450)},5000)}catch(e){}}
 // 意見回饋 241：在公園裡按鈕換成「▦」（回棋盤模式），在棋盤模式是「🌳」（去公園）
 const parkIcon=()=>parkOn()?"▦":"🌳",parkLabel=()=>parkOn()?"回棋盤模式":"去園子下棋（3D）";
 const parkBtn=redraw=>[parkIcon(),e=>{const fo=focusOn()&&!PARK_LK&&!PARK_OFF;   /* 專注棋盤模式開著又按「去園子」：等於把專注模式關掉 */
@@ -10862,6 +10959,8 @@ function rsBoot(){if(!RS_ON)return;try{if(sessionStorage.getItem("rsBoot"))retur
 /* 對局頁第一次打開（08b-cpugame.js）：這盤 10 分鐘以上沒動、這次打開 App 還沒問過，就問一次；放棄後 back() 決定畫面去哪 */
 function rsEntry(s,mode,back){if(!RS_ON||!rsUnf(s)||!s.id)return;const g=rsGames().find(x=>x.id===s.id);if(!g||g.k!==mode||rsAsked().includes(g.id))return;
   if(Date.now()-rsLast(g)<RS_IDLE)return;rsAsk(g.id);
+  /* 11/11：剛在首頁按了「▶ 接著下」（07z hmGoBar 寫的一次性記號）＝已經表態要繼續，不再問一次 */
+  try{if(sessionStorage.getItem("rsGoOnce")){sessionStorage.removeItem("rsGoOnce");return}}catch(e){}
   modal(rsCardHTML(g),g.ranked?[["▶ 繼續",null],["先不要",()=>{location.hash="#/"},true]]:[["▶ 繼續",null],["放棄這盤",()=>rsDrop(g).then(()=>{toast("好，這盤不算，已經收掉了");back&&back()}).catch(e=>toast(e.message)),true]])}
 rsBoot();
 /* ================= 👁 護眼提醒＋👪 家長時段（回饋 843（開發者 11/9 選：護眼提醒＋家長時段））=================
@@ -14439,14 +14538,14 @@ function hmGoBar(P,nw){const bar=document.createElement("div");bar.className="hm
   /* ChatGPT 改善單 T01（開發者 11/11 核准）安全接續：按鈕一開始是「快下一盤」（fresh＝開新局），問完 /play/state 才知道有沒有下到一半的棋要改成「▶ 接著下」。
      這中間就按下去，/play/new 會把桌上那盤沒下完的挑戰電腦換掉（晉級賽還會算輸）——所以先等那一問（RD，最多 1.5 秒）再照最新的 R 走 */
   let RD=Promise.resolve();
-  b.onclick=async e=>{e.stopPropagation();vibrate(5);try{await Promise.race([RD,new Promise(z=>setTimeout(z,1500))])}catch(err){}if(R.fresh)try{await api("/play/new",R.fresh)}catch(err){}if(R.sw)try{await api("/play/switch",{kind:R.sw})}catch(err){}if(R.park)store.set("park3d",true);try{sessionStorage.setItem("xqFromHome","1")}catch(err){}location.hash=R.go};   /* 11/11：記下從首頁進來（07y hbFromHome） */
-  if(nw)return;
+  b.onclick=async e=>{e.stopPropagation();vibrate(5);try{await Promise.race([RD,new Promise(z=>setTimeout(z,1500))])}catch(err){}if(R.fresh)try{await api("/play/new",R.fresh)}catch(err){}if(R.sw)try{await api("/play/switch",{kind:R.sw})}catch(err){}if(R.park)store.set("park3d",true);try{sessionStorage.setItem("xqFromHome","1");if(/接著下/.test(R.t))sessionStorage.setItem("rsGoOnce","1")}catch(err){}location.hash=R.go};   /* 11/11：記下從首頁進來（07y hbFromHome） */
+  /* 11/11 AI 模擬玩家：新手（還沒下完過一盤）也要先查有沒有下到一半的棋——原本新手直接 return，晉級賽、練功房下到一半重開網頁，首頁還是「立即開始」 */
   try{if(window.XQNet&&XQNet.playing&&XQNet.playing())return set({go:"#/pvp",t:"▶ 接著下",s:"線上對局"})}catch(e){}
   if(typeof homeRecGame!=="function")return;
   RD=api("/play/state").then(st=>{const g=homeRecGame(st);if(!b.isConnected)return;
     /* 開發者 11/11 選 ChatGPT 14 號方案 1「快局不留名、茶肆才算帳」：快局一律不算段位分（上一盤是晉級賽也一樣，只沿用它的強度）；算分、選級數都在茶肆 */
     /* ChatGPT 改善單 T01：主流程的「從這步重下」（練習，practice.t01）還沒下完＝「▶ 接著下」回那盤；下完了＝快下一盤沿用原本那盤的難度（不是預設第 3 級） */
-    if(!g){const T1=st&&st.kind==="practice"&&st.practice&&st.practice.t01;
+    if(!g){if(nw)return;const T1=st&&st.kind==="practice"&&st.practice&&st.practice.t01;
       if(T1&&!st.result&&(st.moves||[]).length)return set({go:"#/redo/play",t:"▶ 接著下",s:`從這步重下・第 ${st.moves.length} 手`});
       if(st&&st.kind==="cpu"&&st.result&&!st.practice)set({go:"#/cpu",t:"♟ 快下一盤",s:"沿用上次難度・不算段位",fresh:{human:st.human||"r",lx:st.level,ranked:false}});
       else if(T1&&T1.lx)set({go:"#/cpu",t:"♟ 快下一盤",s:"沿用上次難度・不算段位",fresh:{human:st.human||"r",lx:T1.lx,ranked:false}});return}const o=g.sw&&(st.others||[]).find(z=>z&&z.kind===g.sw),n=o?+o.n:st&&st.moves?st.moves.length:0;
@@ -17705,7 +17804,7 @@ function GrbLab(v){const C=window.XQCore;if(!C){navReplace("#/theme");return{}}
         <tr><th>結果</th><td class="${deadG||mN?"bad":""}">${esc(resG)}</td><td class="${winS?"good":deadS?"bad":""}">${esc(resS)}</td></tr>
         <tr><th>子力<br><span class="muted">跟現在比</span></th><td>${grbFmt(dG)}</td><td>${grbFmt(dS)}</td></tr></tbody></table>
         <p class="grb-con">${esc(con)}</p>${X.cmt?`<p class="muted">🐟 Pikafish：${esc(X.cmt)}</p>`:""}
-        <p class="muted">子力以兵計：車 9、炮 4.5、馬 4、相仕 2、兵 1。</p>
+        <p class="muted">「子力」＝棋子值多少，用兵來算：車 9、炮 4.5、馬 4、相仕 2、兵 1。表上是走完以後，你跟對方的差距比現在多了還是少了。</p>
         <div class="grb-row"><button class="btn ghost" id="gbR">再看一次</button><button class="btn" id="gbNx">${i+1<N?"下一題 ›":"看總結 ›"}</button></div>`;
       const card=()=>sheet("⚖️ 兩條路比一比",bx=>{bx.innerHTML=html;bx.querySelector("#gbR").onclick=()=>{closeSheet();item(i)};bx.querySelector("#gbNx").onclick=()=>{closeSheet();item(i+1)}});
       stat("兩條路都走完了");note(con);acts([["cmp","📊","比較",card],["nx","›",i+1<N?"下一題":"看總結",()=>item(i+1),true]]);card()}
@@ -19780,7 +19879,7 @@ function CpuGame(v,practicePage,mode){
     const CR=st.cpuRate||{};paintSeg(modeOf(st));if(!st.ranked&&st.level&&!st.practice)store.set("cpuLevel",st.level);
     // 對手列右邊：目前的段位／難度，點了開「開新局」選單（換難度、換紅黑）
     const JP=(()=>{const L=lvPlayOf(st),k=(L&&L.lvp.opp)||(String(st.journey||"").startsWith("char:")?st.journey.slice(5):null);return k&&JCHAR[k]?{...JCHAR[k],say:JCHAR[k].hi,img:`data/journey/char_${k}_idle.webp`}:innAnyAct(st.journey)})(),NP=parkNpcOf(st)||JP,top=(NP?npcHTML(bot,NP,(JP&&NP===JP?(NP.name&&NP.name===(innAnyAct(st.journey)||{}).name?"驛站的棋友・":"石桌往事・"):"園子裡的路人棋友・")+(lv.desc||""))   /* 意見回饋 530：驛站的對手不是「石桌往事」 */:playerHTML(bot,st.arena&&ARENA[st.arena]?`🏯 ${ARENA[st.arena].name}`:"幻影棋客",st.arena&&ARENA[st.arena]?`${eraLabel(st.arena)}擂主${st.arena==="classic"?"・職業頂尖":""}`:st.ranked?"🥇 晉級賽":lv.desc||"練功房"))   /* 11/10 開發者：電腦對手叫「幻影棋客」，不再顯示 Pikafish */+
-      `<button class="cpu-chip${st.ranked?" rk":""}" aria-label="${st.ranked?"段位與開新局":"換難度"}"><span><b>${st.ranked?"🏅 "+esc(st.rkName||CR.rank||""):"第 "+st.level+" 級"}</b><small>${st.ranked?(CR.pts||0)+" 分":esc(lv.name||"")}</small></span><i>›</i></button>`;
+      `<button class="cpu-chip${st.ranked?" rk":""}" aria-label="${st.ranked?"段位與開新局":"換難度"}"><span><b>${st.ranked?"🏅 "+esc(rkTw(st.rkName||CR.rank||"")):"第 "+st.level+" 級"}</b><small>${st.ranked?(CR.pts||0)+" 分":esc(rkTw(lv.name||""))}</small></span><i>›</i></button>`;
     const pT=v.querySelector("#pTop");if(pT.dataset.h!==top){pT.dataset.h=top;pT.innerHTML=top}
     const bt=playerHTML(me,meCall(),PLAYER[me]+(st.ranked&&CR.next?`・再 ${CR.toNext} 分升 ${CR.next}`:""));
     const pB=v.querySelector("#pBot");if(pB.dataset.h!==bt){pB.dataset.h=bt;pB.innerHTML=bt}
@@ -19848,7 +19947,8 @@ function CpuGame(v,practicePage,mode){
         return`<div class="resgrow" style="width:100%;max-width:300px;box-sizing:border-box;margin:8px auto 2px;padding:8px 12px;border:1px solid var(--line);border-radius:12px;font-size:14px;line-height:1.7;text-align:left">${rec}<div class="rg-sk muted">📈 Pikafish 正在評這盤，評完就知道棋力變化…</div><button type="button" class="rg-go" style="display:block;margin:2px 0 0 auto;padding:2px 0;border:0;background:none;color:var(--accent);font:inherit;font-size:13.5px;font-weight:900;cursor:pointer">看我的棋力 ›</button></div>`};
       /* ChatGPT 改善單 T01（開發者 11/11 核准）：首頁「快下一盤」（FH，不算段位的快局）下完、我方走過 3 步以上——結算視窗的主要按鈕改成「🔎 看懂這盤最關鍵的一步」（mflOpen），
          上面那顆「這盤先看這一步」小鈕就不重複放；「再來一局」「去茶肆正式上桌」退成次要。從首頁接著下的晉級賽、盲棋、其他模式照舊 */
-      const MF=FH()&&!st.ranked&&!st.practice&&!st.blind&&st.moves.filter(m=>m.by===st.human).length>=3;
+      /* ChatGPT v6 重評（11/11）：一般挑戰電腦（含晉級賽、練功房）結算也要一鍵看關鍵著——不再限首頁快局；盲棋、練習、故事、擂台照舊 */
+      const MF=!st.practice&&!st.blind&&!st.journey&&!st.arena&&st.moves.filter(m=>m.by===st.human).length>=3;
       const RLK=MF?"":resLook(),RGW=resGrow(),XPL=XPR+RLK+RGW;
       /* 開發者 11/11 選 ChatGPT 14 號方案 9「快局結算給下一步」：橋上快局下完，結算視窗用一句話邀請去茶肆（贏了打晉級賽、輸了去練功房挑級數），配一顆可以不理的「去茶肆」；不另外跳視窗 */
       const QKH=typeof hbHubN==="function"?hbHubN():"茶肆",QKN=FH()?`<p style="font-size:14px;margin:8px 0 2px">${st.result.w===st.human?`手感不錯！要不要去${esc(QKH)}打晉級賽，讓這股氣勢算進段位？`:!st.result.w?`要不要去${esc(QKH)}挑個剛好的對手，再來一盤？`:`這盤有點可惜。要不要去${esc(QKH)}練功房，挑剛好的級數再戰？`}</p><p class="muted" style="font-size:12.5px;margin:0">這盤是橋上快局，不算段位分。</p>`:"";
@@ -21135,7 +21235,7 @@ function Viewer(v,c,id){
          先用規則判斷最後局面：輪到的一方沒有合法著＝已經分出勝負（被將軍＝將死，沒被將軍＝困斃，象棋無子可動也算輸），直接這樣寫，也不再提「讓 Pikafish 接著下」 */
       let term="";try{const XC=window.XQCore,sd=pos.side;if(XC&&sd&&!XC.legal(pos.board,sd).length)term=XC.inCheck(pos.board,sd)?"mate":"stuck"}catch(e){}
       const tLose=pos.side==="r"?"紅方":"黑方",tWin=pos.side==="r"?"黑方":"紅方";
-      const evNote=cz=>a>=20000?`當時 Pikafish 算出${who}已經有殺棋。`:a<80?`當時局面還算平衡（${evt(ev)}），勝負是規則決定的，不是棋下輸了。`:who===wS?`當時局面 Pikafish 也認為${wS}較好（${evt(ev)}）。`:`其實當時 Pikafish 認為${lS}還佔上風（${evt(ev)}），可惜${cz}，還是算輸。`;
+      const evNote=cz=>a>=20000?`當時 Pikafish 算出${who}已經有殺棋。`:a<80?`當時局面還算平衡（${Math.abs(ev)<30?"均勢":evt(ev,1)}），勝負是規則決定的，不是棋下輸了。`:who===wS?`當時局面 Pikafish 也認為${wS}較好（${evt(ev,1)}）。`:`其實當時 Pikafish 認為${lS}還佔上風（${evt(ev,1)}），可惜${cz}，還是算輸。`;
       if(term)why.push(term==="mate"?`${tLose}已經被將死：${tWin}正在將軍，${tLose}不管怎麼走都躲不掉，所以${tWin}勝。`:`${tLose}已經無路可走（困斃）：雖然沒有被將軍，但每一步都走不了；照象棋規則，無子可動就算輸，所以${tWin}勝。`);
       else if(kind!=="d"&&wS&&/超時|時間用完|沒走/.test(rs)){why.push(`${lS}${/時間用完/.test(rs)?"的總時間用完了":"超過 3 分鐘沒有走下一步"}（可能是想太久、斷線或離開了 App），依照比賽規則判${lS}負、${wS}勝。`);why.push(evNote("沒在時間內走棋"))}
       else if(kind!=="d"&&wS&&/離開|斷線|離線/.test(rs)){why.push(`${lS}在對局中離開了（關掉對局畫面、離開 App 或斷線太久），依照規則算${lS}輸。`);why.push(evNote("中途離開"))}
@@ -21143,14 +21243,14 @@ function Viewer(v,c,id){
       else if(a>=20000)why.push(`Pikafish 算出 ${who}已經有殺棋，所以另一方認輸。`);
       else if(kind==="d"){
         if(a<40)why.push(`Pikafish 的評分幾乎是 0（${evt(ev)}）：局面平衡${L.length>1&&spread<60?"，連 Pikafish 想到的前幾種走法也都差不多":""}，誰都找不到能贏的突破點。`);
-        else if(a<150)why.push(`Pikafish 認為${who}稍好（${evt(ev)}），但優勢不到 1.5 個兵。高手防守很穩，這點優勢通常贏不下來，硬攻反而可能出錯。`);
-        else why.push(`Pikafish 認為${who}明顯較好（${evt(ev)}）。這盤選擇和棋可能另有原因，例如比賽名次（和棋就夠出線）、時間不夠，或${who}自己沒看出贏法。`);
+        else if(a<150)why.push(`Pikafish 認為${who}稍好（${evt(ev,1)}），但優勢不到 1.5 個兵。高手防守很穩，這點優勢通常贏不下來，硬攻反而可能出錯。`);
+        else why.push(`Pikafish 認為${who}明顯較好（${evt(ev,1)}）。這盤選擇和棋可能另有原因，例如比賽名次（和棋就夠出線）、時間不夠，或${who}自己沒看出贏法。`);
         if(!m.atkR&&!m.atkB)why.push("雙方都沒有車、馬、炮可以進攻，剩下的子力殺不了對方的將帥。");
         else if(Math.abs(m.diff)<1.5)why.push("雙方子力幾乎一樣多，沒有誰多出能決勝的子。");
         if(pos.board.filter(Boolean).length<=12)why.push("棋盤上的子已經不多，進入殘局後很多組合在理論上就是和棋。")}
       else if(a<150)why.push(`Pikafish 評分 ${evt(ev)}，局面其實還沒分出明顯優劣；可能是時間不夠、或輸的一方看錯了才認輸。`);
-      else if(wS&&who!==wS)why.push(`Pikafish 其實認為${who}佔優（${evt(ev)}），結果卻是${wS}勝；可能是${who}看錯局面、時間不夠而認輸。`);
-      else why.push(`Pikafish 認為${who}大優（${evt(ev)}），${lS||"另一方"}再下去也很難守住，所以提早認輸。`);
+      else if(wS&&who!==wS)why.push(`Pikafish 其實認為${who}佔優（${evt(ev,1)}），結果卻是${wS}勝；可能是${who}看錯局面、時間不夠而認輸。`);
+      else why.push(`Pikafish 認為${who}大優（${evt(ev,1)}），${lS||"另一方"}再下去也很難守住，所以提早認輸。`);
       b.innerHTML=`<div class="card" style="margin-bottom:10px"><div class="muted">最後局面（第 ${ply} 步後）・比賽結果：${esc(it.result||"")}</div>
         <div style="margin-top:6px"><span class="rn">紅方</span>：${esc(m.r)}<br>黑方：${esc(m.b)}</div></div>
         ${why.map(t=>`<p style="line-height:1.7;margin:0 0 8px">${esc(t)}</p>`).join("")}
@@ -21187,7 +21287,8 @@ function Viewer(v,c,id){
     return mkC={key,p,m,g,q,b0,side,best,bcn,tk,why:W.say,tag:W.tag||(typeof weakTheme==="function"?weakTheme():"將軍")}}
   function mkNote(K){const L=+K.g.loss||0;
     return[`🔎 這盤最關鍵的一步：第 ${K.p} 步你走「${K.m.cn}」${K.q?`【${K.q}】`:""}`,
-      K.tk?"Pikafish 評語："+K.tk:`比 Pikafish 的首選少了 ${(L/100).toFixed(1)} 兵`+(K.bcn?`，建議「${K.bcn}」`:"")+"。",
+      K.q&&typeof tmxPlain==="function"?tmxPlain(K.q):"",   /* 11/11 v6 第 3 點：評等字第一次就有白話（01-board.js tmxPlain）；「少了 2.1 兵」改成「少了約 2.1 個兵的價值」 */
+      K.tk?"Pikafish 評語："+String(K.tk).replace(/少了 ([\d.]+) 兵/g,"少了約 $1 個兵的價值"):`比 Pikafish 的首選少了約 ${(L/100).toFixed(1)} 個兵的價值`+(K.bcn?`，建議「${K.bcn}」`:"")+"。",
       K.best?`藍色直線箭頭＝Pikafish 建議的走法；${mvArrowName()}＝你實際走的。`:"",
       "💡 "+(K.why||"想知道為什麼不好？按下面 🔍 分析，看對方最好怎麼應。"),
       "按 ▶ 看你走完以後的局面；想換一步試試，按「↻ 從這步重下」。"].filter(Boolean).join("\n")}
@@ -21219,7 +21320,7 @@ function Viewer(v,c,id){
     if(FREE)st.textContent=`🔭 ${FREE.src||"自由走棋"}・${FREE.cur}／${FREE.all.length}`+(ev!=null?"・"+evt(ev):"");
     else if(KM){st.classList.add("hot");st.textContent=`🔎 最關鍵的一步・第 ${KM.p} 步之前，輪到${PLAYER[KM.side]}走`}   /* T01 關鍵步模式 */
     else{const g=ply>0&&gradeOf(ply);st.textContent=ply===0?"開局局面・左右滑棋盤可換步":`${ply<maxPly(line)?"📖 回顧中・":""}第 ${ply}／${maxPly(line)} 步 ${s[ply-1].cn}`+(g?`【${g.q}】`:"")+(ev!=null?"・"+evt(ev):"")}
-    const moves=FREE?FREE.all.map(m=>({...m,q:m.g&&m.g.q})):seq(line,endPly(line)).map((m,i)=>{const g=gradeOf(i+1);return{...m,by:moverAt(i+1),q:g&&g.q}});
+    const moves=FREE?FREE.all.map(m=>({...m,q:m.g&&m.g.q,loss:m.g&&m.g.loss})):seq(line,endPly(line)).map((m,i)=>{const g=gradeOf(i+1);return{...m,by:moverAt(i+1),q:g&&g.q,loss:g&&g.loss}});   /* 11/11 v6 第 3 點：帶 loss，點評等字時能說「少了約幾個兵」 */
     renderStrip(v.querySelector("#strip"),moves,FREE?FREE.cur-1:ply-1,FREE?i=>go(i+1):i=>go(i+1));
     // 變著；推演中則改放推演用的按鈕
     const ab=v.querySelector("#alts");ab.innerHTML="";
@@ -21312,6 +21413,7 @@ function Viewer(v,c,id){
     show();remember();if(typeof rdOpen==="function")rdOpen(c,id);   /* 意見回饋 737 第二期：記下打開讀過這盤（只存 id） */
     loadGrades().then(()=>{if(store.get("openReport")===c+"/"+id){store.set("openReport",null);report(true)}})}).catch(e=>{v.querySelector("#note").textContent="⚠ "+e.message});
   return self}
+
 
 
 
