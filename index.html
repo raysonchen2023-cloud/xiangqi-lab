@@ -1379,7 +1379,7 @@ html[data-hicon] .tabbar button.on{box-shadow:inset 0 -3px 0 currentColor}
       if(!window.caches)return go();caches.keys().then(function(ks){return Promise.all(ks.filter(function(k){return k.indexOf("xqlab-app-")===0}).map(function(k){return caches.delete(k)}))})
         .then(function(){return navigator.serviceWorker&&navigator.serviceWorker.getRegistration()}).then(function(r){return r&&r.update()}).catch(function(){}).then(go)}};setTimeout(chk,4000)})();
 </script>
-<script>window.XQ_OFFLINE=true;window.XQ_BUILD="20261111-1330";</script>
+<script>window.XQ_OFFLINE=true;window.XQ_BUILD="20261111-1345";</script>
 <script src="core.js"></script>
 <script src="engine.js"></script>
 <script src="local.js"></script>
@@ -14419,7 +14419,7 @@ function lbsReport(p){if(!p||!p.id)return;const R=store.get("lbRep",{})||{},last
         chat.length?"對方最近的聊天：\n"+chat.join("\n"):"",also?"（檢舉的人同時封鎖了他）":""].filter(Boolean).join("\n");
       let ok=false;try{const info=await feedbackInfo();ok=await sendRecord(Object.assign({},info,{type:"🚩 檢舉",text,contact:""}))}catch(err){ok=false}
       const R3=store.get("lbRep",{})||{};R3[p.id]=Date.now();for(const k in R3)if(Date.now()-R3[k]>864e5)delete R3[k];store.set("lbRep",R3);
-      closeSheet();if(also)lbsBlock(p);setTimeout(()=>toast(ok?"🚩 你的報告已經記在手機裡，正在送給星槎管理處。謝謝你！":"🚩 你的報告已經記在手機裡，有網路時會自動送給星槎管理處")   /* 開發者 11/11 選大廳規劃書案 01：表單送不回收件確認，不說「已送出」 */,also?2300:0)}})}
+      closeSheet();if(also)lbsBlock(p);setTimeout(()=>toast(ok?"🚩 檢舉已經送出了，謝謝你！管理員會在後台看到，對方不會知道是誰檢舉的。":"🚩 你的報告已經記在手機裡，有網路時會自動送給星槎管理處")   /* 開發者 11/11 選 ChatGPT UI-13：送出成功時手機並沒有留這份報告（只記剛檢舉過誰，防重複），不能說「記在手機裡」；沒網路時才真的排在手機裡（fbQueue，開 App、恢復連線時補送） */   /* 開發者 11/11 選大廳規劃書案 01：表單送不回收件確認，不說「已送出」 */,also?2300:0)}})}
 
 /* ---------- 回饋 841：資料卡加按鈕（包一層 oppCard；07x3-rostermap.js 的名帖外觀也包在裡面） ---------- */
 function lbsCss(){if(document.getElementById("lbsCss"))return;const s=document.createElement("style");s.id="lbsCss";
@@ -16733,8 +16733,10 @@ function stmKey(e){const o=document.getElementById("stmOv");if(!o)return;if(e.ke
 /* 換頁：下棋下到一半先問 */
 function stmGo(name,route){const go=()=>{stmClose();if(route==="#/"&&typeof goHome==="function")goHome();else location.hash=route};
   const h=location.hash||"#/";if(h===route||(route!=="#/"&&h.startsWith(route+"/")&&!stmBusy())){stmClose();return}
-  if(stmOnline())return confirmBox(`線上這盤還沒下完，離開可能會算輸。確定要去「${name}」嗎？`,go,"確定前往");
-  if(stmBusy())return confirmBox(`要離開這盤棋，去「${name}」嗎？`,go,"確定前往");go()}
+  /* 開發者 11/11 選 ChatGPT UI-13：照模式說清楚離開的後果——跟電腦下、擂台、同桌、雲河棋路、殘局、古戰場都一步一存（07m4-resume.js），回來接著下、不算輸；
+     線上對戰對方那邊時鐘照走，時間到會判負 */
+  if(stmOnline())return confirmBox(`線上這盤還沒下完：對方那邊時鐘照走，時間到會判你輸。確定要去「${name}」嗎？`,go,"確定前往");
+  if(stmBusy())return confirmBox(`這盤會先存起來，回來可以接著下。要去「${name}」嗎？`,go,"確定前往");go()}
 function stmOpen(){if(document.getElementById("stmOv"))return;stmCss();stmLast=document.activeElement;
   const here=stmHere(),h=location.hash||"#/",net=navigator.onLine!==false,cur=r=>r!=="#/"&&(h===r||h.startsWith(r+"/"));
   const o=document.createElement("div");o.id="stmOv";o.setAttribute("role","dialog");o.setAttribute("aria-modal","true");o.setAttribute("aria-label","象棋千秋總覽");
@@ -18828,7 +18830,7 @@ function CpuGame(v,practicePage,mode){
        改成先在 S2 算好要顯示的文字和 hot／wrap，跟上次寫進去的一樣就不動 DOM */
     const s2=v.querySelector("#stat"),S2={textContent:"",cls:{},classList:{add:(...a)=>a.forEach(k=>{S2.cls[k]=1}),toggle:(k,on)=>{if(on)S2.cls[k]=1;else delete S2.cls[k]}},after:x=>s2.after(x)};{const pa=v.querySelector("#pAct");if(pa&&!st.practice&&!pa.hidden)pa.hidden=true}
     if(!st.result&&st.repetition&&st.repetition.pending){S2.textContent=st.repetition.why;const pk=(st.id||"")+"|"+st.moves.length;if(repAsked!==pk){repAsked=pk;setTimeout(()=>{if(!st||st.result||!(st.repetition&&st.repetition.pending))return;   /* 開發者 11/11 選「人機遇待核給和局／悔棋」 */
-      modal(`<div class="em">⚖️</div><h2>循環待核</h2><p>${esc(st.repetition.why||"這個循環裁判沒辦法自動判。")}</p><p class="muted" style="font-size:13px">跟電腦下沒有人工裁判，你可以直接選和局，或退回你上一步之前換一步走。</p>`,[["🤝 同意和局",()=>post("/play/repdraw")],["↶ 悔一步變著",()=>post("/play/repundo")],["繼續下",null]])},500)}}else if(st.msg)S2.textContent=st.msg;else if(st.result)S2.textContent=st.result.why;
+      modal(`<div class="em">⚖️</div><h2>循環待核</h2><p>${esc(st.repetition.why||"這個循環裁判沒辦法自動判。")}</p><p class="muted" style="font-size:13px">跟電腦下沒有人工裁判，你可以直接選和局，或退回你上一步之前換一步走。</p><p style="font-size:13.5px;text-align:left;line-height:1.7">🤝 同意和局：這盤記一盤和局${st.ranked?"（晉級賽照和局算分）":""}。<br>↶ 悔一步變著：退回你上一步再換一步，不算用悔棋，也不影響「我的棋力」。</p>`   /* 開發者 11/11 選 ChatGPT UI-13：寫清楚兩個選擇的後果（local.js /play/repdraw＝playEnd 和局、晉級賽 cpuRateApply；/play/repundo 不加 undoN） */,[["🤝 同意和局",()=>post("/play/repdraw")],["↶ 悔一步變著",()=>post("/play/repundo")],["繼續下",null]])},500)}}else if(st.msg)S2.textContent=st.msg;else if(st.result)S2.textContent=st.result.why;
     else if(st.thinking)S2.textContent="🤔 思考中…";   /* Gemini 評估 11/8（介面圖示化）：狀態列短字加圖示；誰在想看上面那排亮起來的頭像 */
     else{S2.textContent=st.check>=0?"⚠ 被將軍！":st.hint?"💡 提示："+st.hint.cn:"👉 輪到你"+(st.eval?`・${evt(st.eval.v)}`:"");S2.classList.toggle("hot",st.check>=0||!!st.hint)}
     if(st.practice&&!st.result&&!st.msg&&!(st.repetition&&st.repetition.pending))practiceBar(S2);
@@ -19035,15 +19037,15 @@ setTimeout(syncBot,0);   // 意見回饋 164：一打開就載入，不要等
    每一步都交給 core 的 judgeState 判；裁判說你會輸才警告，警告照抄裁判的判詞；裁判說待核就提醒可以提和或變著；判和或不判就不打擾。
    同一盤 8 手內只提醒一次。draw＝有提和的對局（同桌、線上）多一顆「提議和局」 */
 const REPW_SEEN=new Map();   /* 對局代號 → 上次提醒時的手數 */
-function repWarn(st,me,draw){try{const C=window.XQCore;if(!C||!C.stateRebuild||!C.judgeState||!st||st.result||!me||st.turn!==me||!st.moves||st.moves.length<4)return;
+function repWarn(st,me,draw){try{const CLK=!!st.clocks;   /* 開發者 11/11 選 ChatGPT UI-13：跟電腦下沒有時鐘、同桌沒設時制也沒有，只有真的有時鐘才寫「時間照常在走」 */const C=window.XQCore;if(!C||!C.stateRebuild||!C.judgeState||!st||st.result||!me||st.turn!==me||!st.moves||st.moves.length<4)return;
   const base={start:st.start||null,startTurn:st.startTurn||"r",moves:st.moves.map(m=>({f:m.f,t:m.t}))},S={...base,moves:base.moves.slice()};C.stateRebuild(S);
   const n=S.moves.length,key=S.pos[n],idx=[];S.pos.forEach((p,i)=>{if(p===key)idx.push(i)});if(idx.length!==2)return;
   const cyc=base.moves.slice(idx[0],idx[1]);let v=null;
   for(let k=1;k<=cyc.length&&!v;k++){const T={...base,moves:base.moves.concat(cyc.slice(0,k))};C.stateRebuild(T);const j=C.judgeState(T);if(j)v=j}
   if(!v||(!v.pending&&v.w!==(me==="r"?"b":"r")))return;
   const id=st.id||"",last=REPW_SEEN.get(id);if(last!=null&&n-last<8&&n>=last)return;REPW_SEEN.set(id,n);
-  if(v.pending)modal(`<div class="em">🔁</div><h2>局面在重複</h2><p>照上一輪再走一圈，裁判會判「待核」：${esc(v.why||"")}</p><p class="muted" style="font-size:13px">時間照常在走。可以換一步不一樣的棋${draw?"，或向對方提議和局":""}。</p>`,[...(draw?[["🤝 提議和局",draw]]:[]),["我來變著",null]]);
-  else modal(`<div class="em">⚠️</div><h2>著法待確認</h2><p>這個局面已經重複出現。照上一輪再走一圈，裁判會判：<b>${esc(v.why||"")}</b>。請換一步不一樣的棋${draw?"，或向對方提議和局":""}。</p><p class="muted" style="font-size:13px">時間照常在走。</p>`,[...(draw?[["🤝 提議和局",draw]]:[]),["我來變著",null]])}catch(e){}}
+  if(v.pending)modal(`<div class="em">🔁</div><h2>局面在重複</h2><p>照上一輪再走一圈，裁判會判「待核」：${esc(v.why||"")}</p><p class="muted" style="font-size:13px">${CLK?"時間照常在走。":""}可以換一步不一樣的棋${draw?"，或向對方提議和局":""}。</p>`,[...(draw?[["🤝 提議和局",draw]]:[]),["我來變著",null]]);
+  else modal(`<div class="em">⚠️</div><h2>著法待確認</h2><p>這個局面已經重複出現。照上一輪再走一圈，裁判會判：<b>${esc(v.why||"")}</b>。請換一步不一樣的棋${draw?"，或向對方提議和局":""}。</p>${CLK?'<p class="muted" style="font-size:13px">時間照常在走。</p>':""}`,[...(draw?[["🤝 提議和局",draw]]:[]),["我來變著",null]])}catch(e){}}
 // ================= 問小帥（意見回饋 167）：點小人三下發問；用 App 裡的術語、開局、特級大師資料和常見問題回答，能示範的直接帶去棋盤 =================
 const BOT_SAID=[];window.addEventListener("xq-bot-said",e=>{const s=e.detail;if(s&&!BOT_SAID.includes(s)){BOT_SAID.unshift(s);BOT_SAID.length=Math.min(BOT_SAID.length,6)}});
 window.addEventListener("xq-bot-ask",()=>askSheet());
