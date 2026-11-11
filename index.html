@@ -1379,7 +1379,7 @@ html[data-hicon] .tabbar button.on{box-shadow:inset 0 -3px 0 currentColor}
       if(!window.caches)return go();caches.keys().then(function(ks){return Promise.all(ks.filter(function(k){return k.indexOf("xqlab-app-")===0}).map(function(k){return caches.delete(k)}))})
         .then(function(){return navigator.serviceWorker&&navigator.serviceWorker.getRegistration()}).then(function(r){return r&&r.update()}).catch(function(){}).then(go)}};setTimeout(chk,4000)})();
 </script>
-<script>window.XQ_OFFLINE=true;window.XQ_BUILD="20261111-1115";</script>
+<script>window.XQ_OFFLINE=true;window.XQ_BUILD="20261111-1130";</script>
 <script src="core.js"></script>
 <script src="engine.js"></script>
 <script src="local.js"></script>
@@ -2456,7 +2456,7 @@ function Board(onTap,onSwipe){
       cl.style.cssText="transform-box:fill-box;transform-origin:center;pointer-events:none;filter:drop-shadow(0 12px 10px rgba(0,0,0,.45))";svg.append(cl);
       p0.drag={cl,orig};vibrate(8)}
     const q=svgPt(e);p0.drag.cl.style.transform=`translate(${q.x-X(p0.sq)}px,${q.y-Y(p0.sq)-14}px) scale(1.22)`});   // 拿在手上：放大、浮起來、陰影
-  const endDrag=e=>{const d=p0.drag;d.cl.remove();d.orig.style.opacity="";const t=sqAt(e);p0=null;if(t>=0&&t!==lastO.sel){dropNoAnim=true;onTap(t);setTimeout(()=>{dropNoAnim=false},3000)}};
+  const endDrag=e=>{const d=p0.drag;d.cl.remove();d.orig.style.opacity="";const t=sqAt(e);p0=null;if(t>=0&&t!==lastO.sel){dropNoAnim=true;tapGo(t);setTimeout(()=>{dropNoAnim=false},3000)}};   /* 開發者 11/11 選 ChatGPT UI 報告 UI-07：拖曳放下也走 tapGo——開了「落子前再確認」就先只預定（棋子回原位、落點標出來），再點一次同一點才走；沒開照舊直接走 */
   svg.addEventListener("pointercancel",()=>{if(p0&&p0.drag){p0.drag.cl.remove();p0.drag.orig.style.opacity=""}p0=null});
   svg.addEventListener("pointerup",e=>{axLastPU=Date.now();if(!p0)return;if(p0.drag)return endDrag(e);   /* 回饋 847：記下一般點擊的時間，讀螢幕格子那層才不會同一下又點一次 */const dx=e.clientX-p0.x,dy=e.clientY-p0.y;
     if(onSwipe&&Math.abs(dx)>45&&Math.abs(dx)>Math.abs(dy)*1.3){onSwipe(dx<0?1:-1);p0=null;return}
@@ -2486,6 +2486,8 @@ function mvtWrap(root){if(!root||!document.querySelector("svg")||!window.XQCore)
     fr.append(s.slice(last));n.replaceWith(fr)}}
 let mvtT=0;new MutationObserver(()=>{if(mvtT)return;mvtT=setTimeout(()=>{mvtT=0;try{mvtWrap(document.body)}catch(e){}},250)}).observe(document.documentElement,{childList:true,subtree:true,characterData:true});
 document.addEventListener("click",e=>{const x=e.target&&e.target.closest&&e.target.closest(".mvt");if(!x)return;e.preventDefault();e.stopPropagation();mvtShow(x.dataset.mv,x)},true);
+
+
 
 
 
@@ -4503,7 +4505,7 @@ function Settings(v){
     {const ew=v.querySelector("#era"),on=ew&&ew.querySelector(".on");if(ew){ew._quiet=true;if(on)ew.scrollLeft=Math.max(0,on.offsetLeft-12);setTimeout(()=>{ew._quiet=false},250);
       ew.onscroll=()=>{return;if(ew._quiet)return;clearTimeout(ew._t);ew._t=setTimeout(()=>{const mid=ew.scrollLeft+ew.clientWidth/2;let best=null,bd=1e9;for(const x of ew.querySelectorAll("[data-e]")){const d=Math.abs(x.offsetLeft+x.offsetWidth/2-mid);if(d<bd){bd=d;best=x}}if(best&&best.dataset.e!==store.get("era","classic"))best.click()},170)}}}
     const tg=(k,label,sub)=>`<label class="row" style="justify-content:space-between;padding:6px 0"><span><b>${label}</b><br><span class="muted">${sub}</span></span><input type="checkbox" class="sw" data-t="${k}" ${store.get(k,k!=="mvSound"&&k!=="mvConfirm")?"checked":""}></label>`;
-    v.querySelector("#mv").innerHTML=tg("mvArrow","箭頭","從原來位置畫箭頭指到新位置")+'<div style="border-top:1px solid var(--line)"></div>'+tg("mvAnim","動畫","棋子滑過去，被吃的棋子淡出")+'<div style="border-top:1px solid var(--line)"></div>'+tg("mvConfirm","落子前再確認","點了落點先標出來，同一點再點一次才走，不怕手滑點錯（拖曳放下不用確認）")+'<div style="border-top:1px solid var(--line)"></div>'+tg("capSound","吃子音效","吃子時重重「啪」一聲、將軍時「鏘」一聲")+'<div style="border-top:1px solid var(--line)"></div>'+tg("gateDrum","🥁 過場鼓聲","進園子、上擂台、千秋穿梭時，敲一段那個朝代戰場上的鼓和鑼")+'<div style="border-top:1px solid var(--line)"></div>'+tg("bgm","🎵 背景音樂","")+'<div style="border-top:1px solid var(--line)"></div>'+`<div style="padding:6px 0" id="vcRow"><b>語音報「吃」「將軍」</b><br><span class="muted">吃子喊「吃！」、將軍喊「將軍！」；點一下可以試聽；可調語速</span><div class="st-res" style="margin:8px 0 0">${[["off","關"],["m","男聲"],["f","女聲"]].map(([k,l])=>`<button data-vc="${k}" class="${(store.get("voiceCall",true)?store.get("voiceSex","m"):"off")===k?"on":""}">${l}</button>`).join("")}</div><div class="st-res" style="margin:8px 0 0;align-items:center"><span class="muted" style="font-size:13px">語速</span>${[["s","慢"],["n","中"],["f","快"]].map(([k,l])=>`<button data-vr="${k}" class="${store.get("voiceRate","n")===k?"on":""}">${l}</button>`).join("")}</div></div>`+'<div style="border-top:1px solid var(--line)"></div>'+sndPicker()+'<div style="border-top:1px solid var(--line)"></div>'+tg("ckFx","將軍特效","被將軍或將對方軍時，棋盤上蓋「將軍！」字樣")+'<div style="border-top:1px solid var(--line)"></div>'+tg("capFx","吃子特效","吃子時被吃的那格蓋一個水墨「吃」字")+'<div style="border-top:1px solid var(--line)"></div>'+'<div style="border-top:1px solid var(--line)"></div>'+tg("voiceMove","🎤 聲控走棋","下棋時右上角多一個 🎤，按下去說「馬八進七」「炮二平五」就會走"+(vcOK()?"":"（這個瀏覽器不支援語音辨識）"))+'<div style="border-top:1px solid var(--line)"></div>'+tg("opFx","開局名稱動畫","走出中炮、仙人指路、屏風馬…時，棋盤上展開卷軸寫出開局名");
+    v.querySelector("#mv").innerHTML=tg("mvArrow","箭頭","從原來位置畫箭頭指到新位置")+'<div style="border-top:1px solid var(--line)"></div>'+tg("mvAnim","動畫","棋子滑過去，被吃的棋子淡出")+'<div style="border-top:1px solid var(--line)"></div>'+tg("mvConfirm","落子前再確認","點了落點（或拖過去放下）先標出來，同一點再點一次才走，不怕手滑點錯")+'<div style="border-top:1px solid var(--line)"></div>'+tg("capSound","吃子音效","吃子時重重「啪」一聲、將軍時「鏘」一聲")+'<div style="border-top:1px solid var(--line)"></div>'+tg("gateDrum","🥁 過場鼓聲","進園子、上擂台、千秋穿梭時，敲一段那個朝代戰場上的鼓和鑼")+'<div style="border-top:1px solid var(--line)"></div>'+tg("bgm","🎵 背景音樂","")+'<div style="border-top:1px solid var(--line)"></div>'+`<div style="padding:6px 0" id="vcRow"><b>語音報「吃」「將軍」</b><br><span class="muted">吃子喊「吃！」、將軍喊「將軍！」；點一下可以試聽；可調語速</span><div class="st-res" style="margin:8px 0 0">${[["off","關"],["m","男聲"],["f","女聲"]].map(([k,l])=>`<button data-vc="${k}" class="${(store.get("voiceCall",true)?store.get("voiceSex","m"):"off")===k?"on":""}">${l}</button>`).join("")}</div><div class="st-res" style="margin:8px 0 0;align-items:center"><span class="muted" style="font-size:13px">語速</span>${[["s","慢"],["n","中"],["f","快"]].map(([k,l])=>`<button data-vr="${k}" class="${store.get("voiceRate","n")===k?"on":""}">${l}</button>`).join("")}</div></div>`+'<div style="border-top:1px solid var(--line)"></div>'+sndPicker()+'<div style="border-top:1px solid var(--line)"></div>'+tg("ckFx","將軍特效","被將軍或將對方軍時，棋盤上蓋「將軍！」字樣")+'<div style="border-top:1px solid var(--line)"></div>'+tg("capFx","吃子特效","吃子時被吃的那格蓋一個水墨「吃」字")+'<div style="border-top:1px solid var(--line)"></div>'+'<div style="border-top:1px solid var(--line)"></div>'+tg("voiceMove","🎤 聲控走棋","下棋時右上角多一個 🎤，按下去說「馬八進七」「炮二平五」就會走"+(vcOK()?"":"（這個瀏覽器不支援語音辨識）"))+'<div style="border-top:1px solid var(--line)"></div>'+tg("opFx","開局名稱動畫","走出中炮、仙人指路、屏風馬…時，棋盤上展開卷軸寫出開局名");
     {const mvB=v.querySelector("#mv"),sdB=v.querySelector("#snd");sdB.innerHTML="";mvB.querySelectorAll(":scope>div[style*='border-top']").forEach(x=>x.remove());
       const st=mvB.querySelector("#sndSt");if(st)sdB.append(st.parentElement);
       {const x=mvB.querySelector('[data-t="capSound"]');if(x)sdB.append(x.closest("label"))}
@@ -13814,7 +13816,7 @@ const HUB_NAME={learn:{classic:"藏譜石窟",qin:"學室",han:"太學",sanguo:"
     battle:{classic:"觀星閣",qin:"酒肆",han:"酒肆",sanguo:"酒肆",weijin:"酒壚",nanbei:"酒肆",sui:"酒肆",tang:"旗亭",wudai:"茶肆",song:"茶坊",yuan:"茶肆",ming:"茶樓",qing:"茶館"}};
 function xqHubName(k){let e="";try{e=typeof shipAt==="function"&&typeof shipDockList==="function"&&shipDockList()?shipAt():""}catch(x){}try{if(!e&&typeof hbIsCl==="function"&&hbIsCl())e="classic"}catch(x){}const n=(HUB_NAME[k]||{})[e];   /* 11/10：還沒登船也是經典世界，頁名用藏譜石窟、觀星閣（原本顯示學習、對戰） */return(k==="quick"?"♟ ":k==="battle"?"⚔ ":"📚 ")+(n||(k==="quick"?"下一盤":k==="battle"?"對戰":"學習"))}
 /* 11/9 開發者：「下一盤」前面的閃電跟水墨圖示融合不了，換成 ♟（e_piece 手繪棋子圖示） */
-const HM_SPOTS=[["hmShip",52,15,"⛵ 雲河星槎"],["hmBattle",14,25.5,"⚔ 對戰"],["hmLearn",86,26.5,"📚 學習"],["hmRec",12,44,"📜 今日推薦"],["hmQuick",52,47.5,"♟ 下一盤"]];
+const HM_SPOTS=[["hmShip",52,15,"⛵ 雲河星槎"],["hmBattle",14,25.5,"⚔ 對戰"],["hmLearn",86,26.5,"📚 學習"],["hmRec",12,44,"📜 今日推薦"],["hmQuick",52,47.5,"👥 同桌對弈"]];
 /* 07w 的座標表（腳底的位置）：起點在橋中央廣場（石桌左前方）；石桌四周繞著走，不穿過桌子；往後經廣場後緣走木棧道到星槎跳板；
    左右各從拱橋兩端的石階下到碼頭步道：左岸沿河岸步道上去到牌坊前、橋頭告示牌前；右岸過草地到書院山門石階下 */
 const SHW_HOMEMAP={el:40,h:[.05,60,.0008],look0:[50,99],
@@ -13867,14 +13869,16 @@ function hmMe(P){if(typeof WALK_BOT_MERGE!=="undefined"&&WALK_BOT_MERGE)return; 
   const mo=new MutationObserver(upd);mo.observe(box,{attributes:true,attributeFilter:["style","class"]});upd()}
 function homeMap(v){const home=v.querySelector(".home");if(!home||v.querySelector(".home-page"))return;hmCss();
   const nw=hmNew(),standalone=matchMedia("(display-mode: standalone)").matches||navigator.standalone,inst=OFF&&!standalone&&!(store.get("instAsk",null)||{}).no;
-  const lab=id=>id==="hmQuick"&&nw?"🔰 第一次下象棋？":id==="hmLearn"?xqHubName("learn"):id==="hmBattle"?xqHubName("battle"):id==="hmQuick"?xqHubName("quick"):HM_SPOTS.find(s=>s[0]===id)[3];
+  /* 開發者 11/11（截圖圈出石桌「著一盤」和底部「立即對局」重複，選「石桌改成同桌對弈」）：石桌旁本來就擺兩張石凳＝兩人面對面下（#/pvp）；
+     跟電腦下、接著下、新手第一次都交給底部大按鈕（hmGoBar），石桌不再有新手天光和「第一次下象棋？」 */
+  const lab=id=>id==="hmQuick"?"👥 同桌對弈":id==="hmLearn"?xqHubName("learn"):id==="hmBattle"?xqHubName("battle"):HM_SPOTS.find(s=>s[0]===id)[3];
   const d=document.createElement("div");
-  d.innerHTML=`<div class="shp-page cq home-page"><img src="data/homemap/${typeof hbIsCl==="function"&&hbIsCl()?"home_classic":"home"}.webp?v=${HM_IMGV}" alt="${typeof hbIsCl==="function"&&hbIsCl()?"千秋時光之苑":"楚河渡口棋鎮"}"><div class="hm-fx" aria-hidden="true">${nw?'<i class="hm-sky"></i>':""}</div>${HM_SPOTS.map(([id,x,y])=>`<button class="shp-spot${id==="hmQuick"&&nw?" hot":""}" id="${id}" style="left:${x}%;top:${y}%"><b>${esc(lab(id))}</b></button>`).join("")}${inst?'<button class="hm-inst" id="hmInst">📲 加到主畫面</button>':""}</div>`;
+  d.innerHTML=`<div class="shp-page cq home-page"><img src="data/homemap/${typeof hbIsCl==="function"&&hbIsCl()?"home_classic":"home"}.webp?v=${HM_IMGV}" alt="${typeof hbIsCl==="function"&&hbIsCl()?"千秋時光之苑":"楚河渡口棋鎮"}"><div class="hm-fx" aria-hidden="true"></div>${HM_SPOTS.map(([id,x,y])=>`<button class="shp-spot" id="${id}" style="left:${x}%;top:${y}%"><b>${esc(lab(id))}</b></button>`).join("")}${inst?'<button class="hm-inst" id="hmInst">📲 加到主畫面</button>':""}</div>`;
   const P=d.firstElementChild;v.insertBefore(P,home);home.classList.add("hb-hidden");if(typeof hbCss==="function")hbCss();else home.style.display="none";
   {const wv=typeof sw7HomeWx==="function"?sw7HomeWx():"",im0=P.querySelector(":scope>img");if(wv&&im0){const pre=new Image();pre.onload=()=>{if(!im0.isConnected)return;try{if(typeof sw7SeaTurn==="function"&&sw7SeaTurn(P,im0,pre.src))return}catch(e){}im0.src=pre.src};pre.src="data/homemap/home_"+wv+".webp?v="+HM_IMGV}}   /* 回饋 811：下雪、下雨天換積雪版 home_snow／雨景版 home_rain（07w7-seasons.js 判斷；先載好再換，載不到留原圖） */
   const GO={hmShip:"#/adventure",hmBattle:"#/hub/battle",hmLearn:"#/hub/learn"};
   for(const[id]of HM_SPOTS){const b=P.querySelector("#"+id);if(!b)continue;
-    b.onclick=()=>{vibrate(5);if(GO[id]){location.hash=GO[id];return}if(id==="hmRec"){if(typeof TODAY_MAP_ON!=="undefined"&&TODAY_MAP_ON){location.hash="#/today";return}hmRecSheet();return}if(id==="hmQuick")location.hash=hmNew()?"#/camp":"#/cpu"}}
+    b.onclick=()=>{vibrate(5);if(GO[id]){location.hash=GO[id];return}if(id==="hmRec"){if(typeof TODAY_MAP_ON!=="undefined"&&TODAY_MAP_ON){location.hash="#/today";return}hmRecSheet();return}if(id==="hmQuick")location.hash="#/pvp"}}
   {const ib=P.querySelector("#hmInst");if(ib)ib.onclick=e=>{e.stopPropagation();vibrate(5);installGuide(true)}}
   hmGoBar(P,nw);
   if(typeof shpFit==="function")shpFit(v);
@@ -13882,6 +13886,9 @@ function homeMap(v){const home=v.querySelector(".home");if(!home||v.querySelecto
   try{if(typeof zmPage==="function")zmPage(v)}catch(e){}
   document.body.classList.add("hm-on");const t=setInterval(()=>{if(!P.isConnected){clearInterval(t);if(!document.querySelector(".home-page"))document.body.classList.remove("hm-on")}},800)}
 if(typeof Home==="function"){const f0=Home;Home=function(v,hub){const r=f0.apply(this,arguments);try{if(HOME_MAP_ON&&!hub)homeMap(v)}catch(e){}return r}}
+/* 開發者 11/11 選 ChatGPT UI 報告 UI-03：所有場景標籤（首頁、學習、對戰、設定、渡口…的 .shp-spot）上下各多 9px、左右各多 4px 的透明點擊範圍，
+   看起來一樣大，手指點偏一點也點得到（設定頁的小標籤原本只有約 24px 高）；::after 已經拿去做呼吸光，這裡用 ::before */
+(()=>{try{const s=document.createElement("style");s.id="spotHit";s.textContent=".shp-spot::before{content:\"\";position:absolute;inset:-9px -4px;border-radius:inherit}";document.head.append(s)}catch(e){}})();
 /* ================= 🏮 線上大廳滿版水墨圖「千燈天井」（開發者 11/8 定案：Gemini 方案 1＋9 精簡版；史學顧問核過，必改的素材另外換圖）=================
    規劃：story/gemini_app/37 號 md；圖：park/lobbymap/lobby_v4.png（AI 桌的棋盤程式畫完整開局）＋綠幕素材（棋桌、燈籠亮暗、茶客剪影）→ art/lobbymap/ → data/lobbymap/。
    包一層 Lobby(v)：原本的大廳清單（#lb，paint() 每 15 秒和有人進出時重畫）照舊畫、照舊綁好所有按鈕，只是收進「📜 名冊」抽屜（點竹簡從下方拉出來）；
@@ -16707,7 +16714,7 @@ function stmOpen(){if(document.getElementById("stmOv"))return;stmCss();stmLast=d
   const bind=root=>root.querySelectorAll(".go[data-r]").forEach(b=>b.onclick=()=>{try{vibrate(5)}catch(e){}stmGo(b.dataset.n,b.dataset.r)});
   /* 底圖載得到＝點圖上的地方；載不到（離線、CDN 慢）＝退回色塊卡片。點了在圖下方展開那一區的入口（再點一次收起） */
   const MP=o.querySelector("#stmM"),IM=MP.querySelector("img"),SB=o.querySelector("#stmSub");
-  const useImg=ok=>{MP.hidden=!ok;G.hidden=ok};useImg(false);IM.onload=()=>useImg(true);IM.onerror=()=>useImg(false);if(IM.complete&&IM.naturalWidth)useImg(true);
+  let imgOk=false,qOn=false;const useImg=ok=>{imgOk=ok;MP.hidden=!ok||qOn;G.hidden=ok||qOn};useImg(false);IM.onload=()=>useImg(true);IM.onerror=()=>useImg(false);if(IM.complete&&IM.naturalWidth)useImg(true);
   o.querySelectorAll("[data-a]").forEach(b=>b.onclick=()=>{try{vibrate(5)}catch(e){}const k=b.dataset.a,was=b.classList.contains("on");SB.innerHTML="";
     o.querySelectorAll("[data-a]").forEach(x=>{x.classList.remove("on");x.setAttribute("aria-expanded","false")});o.querySelectorAll(".lb").forEach(x=>x.classList.remove("on"));if(was)return;
     const A=STM_AREAS.find(x=>x[0]===k);o.querySelectorAll(`[data-a="${k}"]`).forEach(x=>{x.classList.add("on");x.setAttribute("aria-expanded","true")});const lb=o.querySelector(`.lb[data-l="${k}"]`);if(lb)lb.classList.add("on");
@@ -16715,9 +16722,16 @@ function stmOpen(){if(document.getElementById("stmOv"))return;stmCss();stmLast=d
     const f=SB.querySelector(".go:not([disabled])");if(f)f.focus({preventScroll:true});SB.scrollIntoView({block:"nearest",behavior:"smooth"})});
   const showList=on=>{L.hidden=!on;AL.setAttribute("aria-expanded",String(on));AL.textContent=on?"≡ 收起全部入口清單":"≡ 顯示全部入口清單"};
   AL.onclick=()=>showList(L.hidden);bind(L);
-  Q.oninput=()=>{const k=Q.value.trim().toLowerCase();if(k)showList(true);let n=0;L.querySelectorAll("li").forEach(li=>{const ok=!k||k.split(/\s+/).every(w=>li.dataset.k.includes(w));li.hidden=!ok;if(ok)n++});
-    L.querySelectorAll("section").forEach(s=>s.hidden=![...s.querySelectorAll("li")].some(li=>!li.hidden));o.querySelector("#stmNone").hidden=n>0};
-  Q.onkeydown=e=>{if(e.key==="Enter"){const f=L.querySelector("li:not([hidden]) .go:not([disabled])");if(f)f.click()}};
+  /* 開發者 11/11 選 ChatGPT UI 報告 UI-04：搜尋有字時，地圖、說明、區域卡、展開的入口、「顯示全部」都先收起來，結果直接接在搜尋框下面，上面寫「找到 N 個入口」；
+     清空就照原樣放回（清單原本開著就開著）。Enter 只有剛好一個結果才直接過去，好幾個就把焦點移到第一個，讓玩家自己選 */
+  const QH=[...o.querySelectorAll(".tip,.here,.warn"),SB,AL],QC=document.createElement("p");QC.className="tip";QC.id="stmCnt";QC.setAttribute("aria-live","polite");QC.hidden=true;L.before(QC);let listWas=false;
+  Q.oninput=()=>{const k=Q.value.trim().toLowerCase();
+    if(k&&!qOn){qOn=true;listWas=!L.hidden;QH.forEach(x=>x.hidden=true);useImg(imgOk);showList(true);o.scrollTop=0}
+    else if(!k&&qOn){qOn=false;QH.forEach(x=>x.hidden=false);useImg(imgOk);showList(listWas)}
+    let n=0;L.querySelectorAll("li").forEach(li=>{const ok=!k||k.split(/\s+/).every(w=>li.dataset.k.includes(w));li.hidden=!ok;if(ok)n++});
+    L.querySelectorAll("section").forEach(s=>s.hidden=![...s.querySelectorAll("li")].some(li=>!li.hidden));o.querySelector("#stmNone").hidden=n>0;
+    QC.hidden=!k||!n;QC.textContent=n?`找到 ${n} 個入口，點一下就過去`:""};
+  Q.onkeydown=e=>{if(e.key==="Enter"){const F=[...L.querySelectorAll("li:not([hidden]) .go:not([disabled])")];if(F.length===1)F[0].click();else if(F.length)F[0].focus()}};
   o.querySelector("#stmX").onclick=stmClose;addEventListener("hashchange",stmClose);document.addEventListener("keydown",stmKey,true);setTimeout(()=>{try{o.querySelector("#stmX").focus()}catch(e){}},30)}
 /* ================= 🔎 滿版圖「點畫裡的東西看說明」（開發者回饋 818：「對所有繪製的圖可以讓玩家點選物件，然後跳出顯示相關文件說明，就像在環景圖或對戰時點桌子上的物件那樣……不要把物件名稱直接寫上去，會太累亂，玩家點了再顯示」）=================
    圖上平常什麼都不標；點到登記過的東西＝跳出小卡（名稱＋兩三句白話介紹，跟 06-cpu.js 的 parkInfo 同一個 sheet 樣式），07w 的角色照舊走過去、轉身看那個東西。
@@ -19427,7 +19441,7 @@ async function preloadAll(){if(!OFF||!("caches" in window))return PRE_FIRST_OK()
       <div class="pre-in"><div class="pre-t">象棋千秋</div><div class="pre-s">檢查手機裡的棋盤、園子和故事…</div>
       <div class="pre-bar"><i></i></div><div class="pre-n">檢查中…</div><div class="pre-h">先把開局要用的搬進手機就進首頁；其他朝代和故事的圖在背景慢慢下載。</div><button class="pre-skip" type="button" hidden>先進去逛（背景繼續下載）</button></div>`;
     document.body.append(ov);bar=ov.querySelector(".pre-bar i");txt=ov.querySelector(".pre-n");ldShow(ov);
-    setTimeout(()=>{const k=ov&&ov.querySelector(".pre-skip");if(k){k.hidden=false;k.onclick=()=>{ov.remove();ov=null;PRE_FIRST_OK()}}},20000)};ovMake();
+    setTimeout(()=>{const k=ov&&ov.querySelector(".pre-skip");if(k){k.hidden=false;k.onclick=()=>{ov.remove();ov=null;PRE_FIRST_OK()}}},4000)};ovMake();   /* 開發者 11/11 選 ChatGPT UI 報告 UI-12：「先進去逛」原本 20 秒後才出現，慢網路的人要乾等；改成 4 秒（網路快的人通常已經載完、看不到這顆） */
   const abs=preAbs;
   const PH=store.get("preH",{}),NH={},miss=[];   /* 換過的圖（檔名一樣、內容不同）也要重新下載：秦、漢黑棋換新圖後手機一直是舊的 */
   /* 意見回饋 605（網路專家建議）：一次拿出快取裡全部的網址，比逐檔 match 快很多；有記內容雜湊的直接比對，沒記的才打開看大小 */
@@ -19636,6 +19650,7 @@ function PvpGame(v){
   // 網路對局：對方的棋一到就馬上畫出來（原本要等最多 1 秒的輪詢）
   const offG=OFF&&window.XQNet?XQNet.on("game",()=>{if(XQNet.active())refresh()}):null;
   return{stop:()=>{stop();clearInterval(ckT);if(offG)offG()}}}
+
 
 
 
@@ -20073,6 +20088,9 @@ function lbCss(){if(document.getElementById("lbCss"))return;const s=document.cre
 .lib-page.cl .lb-cell{width:3.4%!important;height:7.5%!important}.lib-page.cl .lb-cell span{writing-mode:vertical-rl;top:50%;transform:translate(-50%,-50%);padding:3px 1px;letter-spacing:1px}.lib-page.cl .lb-mini{display:none}
 .lb-cell{position:absolute;width:10.4%;height:4%;transform:translate(-50%,-50%);border:0;padding:0;background:none;cursor:pointer;pointer-events:auto;z-index:2}
 .lb-cell span{position:absolute;left:50%;top:0;transform:translate(-50%,-55%);background:#f3ead2;border:1px solid #8a6a3a;color:#3a2618;border-radius:3px;font:800 10.5px/1 var(--serif,serif);padding:2px 3px;writing-mode:horizontal-tb;white-space:nowrap;box-shadow:0 1px 2px rgba(0,0,0,.25)}
+.lb-shelf{position:absolute;left:16.6%;top:20.4%;width:22.9%;height:9.2%;border:0;padding:0;background:none;cursor:pointer;z-index:3;-webkit-tap-highlight-color:transparent}
+.lb-pick{display:grid;grid-template-columns:1fr 1fr;gap:8px}.lb-pick button{min-height:52px;padding:8px 10px;border-radius:12px;border:1.5px solid #8a6a3a;background:#f3ead2;color:#3a2618;font:800 15px/1.25 var(--serif,serif);text-align:left;cursor:pointer}
+.lb-pick button small{display:block;font:500 12px/1.3 var(--sans,sans-serif);color:#6f5f4c;margin-top:2px}
 .lb-box{position:absolute;width:10.5%;height:6%;transform:translate(-50%,-50%);border:0;padding:0;background:none;cursor:pointer;pointer-events:auto;z-index:2}
 .lb-box i{position:absolute;left:38%;top:12%;width:24%;height:76%;border-radius:1px;opacity:0}
 .lb-box.dl i{opacity:1;background:linear-gradient(90deg,rgba(255,215,90,.0),rgba(255,226,120,.85),rgba(255,215,90,0));background-size:200% 100%;animation:lbShine 1.2s linear infinite;mix-blend-mode:screen}
@@ -20108,6 +20126,11 @@ function libMap(v,c0){const root=v.querySelector(".lib");if(!root||v.querySelect
   /* 開某一部書：已經是這部就直接打開面板；不是就換到 #/db/<書>（原本的 Library 會載好那部），進來後自動打開 */
   const book=(k,t,q,m)=>{if(k&&k!==libState.c){LB_OPEN={t,q,m};libState.q="";libState.player="";location.hash="#/db/"+encodeURIComponent(k);return}open(t,q,m)};
   P.querySelectorAll(".lb-cell").forEach(b=>b.onclick=()=>{vibrate(5);book(b.dataset.c,b.getAttribute("aria-label"))});
+  /* 開發者 11/11 選 ChatGPT UI 報告 UI-03：經典世界的書櫥是 6 根直書書籤，每根寬不到 15px、彼此貼著，手指很難點準。
+     整排書櫥上面蓋一塊透明點擊區，點了先跳「選一本棋譜」清單，每本一顆大按鈕；書籤本身照舊（讀螢幕、鍵盤一樣可以直接點書籤） */
+  if(CLB){const sh=document.createElement("button");sh.type="button";sh.className="lb-shelf";sh.setAttribute("aria-hidden","true");sh.tabIndex=-1;P.append(sh);
+    sh.onclick=()=>{vibrate(5);sheet("📚 選一本棋譜",b=>{b.innerHTML=`<div class="lb-pick">${LB_OLD.map(([k,n,f])=>`<button type="button" data-c="${esc(k)}" data-f="${esc(f)}">${esc(n)}${f&&f!==n?`<small>${esc(f)}</small>`:""}</button>`).join("")}</div>`;
+      b.querySelectorAll("[data-c]").forEach(x=>x.onclick=()=>{vibrate(5);closeSheet();book(x.dataset.c,x.dataset.f)})})}}
   const GO={lbGm:()=>book("gmgames","大師對局"),lbMine:()=>book("play","我的對局",false,"mine"),lbFind:()=>open("搜尋",true),
     lbRead:()=>{const r=store.get("recent",[])[0];if(r)location.hash=`#/db/${encodeURIComponent(r.c)}/${encodeURIComponent(r.id)}`;else book("shiqingyaqu","適情雅趣")},
     lbBio:()=>lbBios(book),lbTour:()=>lbTours(P,book)};
