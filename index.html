@@ -1527,7 +1527,7 @@ html[data-hct] .player.on .clk{background:#00563B;color:#FFFFFF;border-color:#00
       if(!window.caches)return go();caches.keys().then(function(ks){return Promise.all(ks.filter(function(k){return k.indexOf("xqlab-app-")===0}).map(function(k){return caches.delete(k)}))})
         .then(function(){return navigator.serviceWorker&&navigator.serviceWorker.getRegistration()}).then(function(r){return r&&r.update()}).catch(function(){}).then(go)}};setTimeout(chk,4000)})();
 </script>
-<script>window.XQ_OFFLINE=true;window.XQ_BUILD="20261112-0650";</script>
+<script>window.XQ_OFFLINE=true;window.XQ_BUILD="20261112-0710";</script>
 <script src="core.js"></script>
 <script src="engine.js"></script>
 <script src="local.js"></script>
@@ -4849,8 +4849,9 @@ function rsOpts(){const RS=(window.XQCore&&XQCore.RULESETS)||{},cur=rsCur();retu
 function rsNote(){const R=window.XQCore&&XQCore.RULESETS&&XQCore.RULESETS[rsCur()];
   if(!R||R.status!=="prototype")return'亞洲棋例（直接捉子）的子集。晉級賽、線上積分都用這一套。 <button type="button" class="lk" data-xqdoc="rules">⚖️ 怎麼判</button>';
   return'⚠ <b>原型，不計積分</b>：只改了「長將、長捉循環到第 3 次先提醒、交雙方協議」這一條；其他照千秋休閒規則，臺灣條文<b>未查證</b>。只用在之後新開的挑戰電腦（非晉級賽）、同機對下、車輪戰、線上邀請；晉級賽照舊用千秋休閒規則。 <button type="button" class="lk" data-xqdoc="rules">⚖️ 差在哪</button>'}
-const XQDOC={privacy:["privacy","🔒 隱私與資料使用"],family:["family","👨‍👩‍👧 家長與兒童模式"],credits:["credits","🎨 素材與授權"],release:["release-notes","🏷 版本與差異"],limits:["limits","⚠️ 已知限制"],evidence:["evidence","✅ 驗證紀錄（自動測試）"],history:["history","📜 文史考據"],rules:["rules","⚖️ 棋規與裁決追溯"],architecture:["architecture","🌐 連線與資料架構"],tour:["a11y-tour","🧭 空間導覽（無障礙）"],a11y:["a11y","📋 無障礙測試與證據"]};   /* 11/12 無障礙第 5 輪：設定 → ♿ 無障礙「📋 測試與證據」（a11y.md＝92 號稽核報告的副本，開頭是 P16.3～P16.5 怎麼驗證） */   /* 11/12 無障礙第 4 輪 P16.5：給看不到畫面的人在腦中建地圖（11c-a11ysnd.js 的 ? 說明卡、G 鍵也開這份） */
-function xqDocBtns(){return`<div style="display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-top:10px">${Object.keys(XQDOC).map(k=>`<button type="button" class="btn ghost" data-xqdoc="${k}" style="font-size:13.5px;padding:8px 6px">${XQDOC[k][1]}</button>`).join("")}</div>`}
+const XQDOC={privacy:["privacy","🔒 隱私與資料使用"],family:["family","👨‍👩‍👧 家長與兒童模式"],credits:["credits","🎨 素材與授權"],release:["release-notes","🏷 版本與差異"],limits:["limits","⚠️ 已知限制"],evidence:["evidence","✅ 自動測試紀錄"],history:["history","📜 文史考據"],rules:["rules","⚖️ 棋規與裁決"],architecture:["architecture","🌐 連線與資料"],tour:["a11y-tour","🧭 空間導覽"],a11y:["a11y","📋 無障礙證據"]};   /* 回饋 875（開發者 11/12「盤查類似的 不要換行」）：按鈕字縮到 7 字內，xqDocBtns 一格至少 9em、放不下就自動改一欄，按鈕不換行 */   /* 11/12 無障礙第 5 輪：設定 → ♿ 無障礙「📋 測試與證據」（a11y.md＝92 號稽核報告的副本，開頭是 P16.3～P16.5 怎麼驗證） */   /* 11/12 無障礙第 4 輪 P16.5：給看不到畫面的人在腦中建地圖（11c-a11ysnd.js 的 ? 說明卡、G 鍵也開這份） */
+function xqDocBtns(){return`<div class="xqd-g" style="margin-top:10px">${Object.keys(XQDOC).map(k=>`<button type="button" class="btn ghost" data-xqdoc="${k}" style="font-size:13.5px;padding:8px 6px">${XQDOC[k][1]}</button>`).join("")}</div>`}
+{const s=document.createElement("style");s.textContent=".xqd-g{display:grid;grid-template-columns:repeat(auto-fit,minmax(9em,1fr));gap:6px}.xqd-g>button{white-space:nowrap;margin:0;width:auto;min-width:0}";document.head.append(s)}
 function xqDocIn(s){return provDoc(esc(s)).replace(/\*\*([^*]+)\*\*/g,"<b>$1</b>").replace(/`([^`]+)`/g,"<code>$1</code>").replace(/\[([^\]]+)\]\((https:\/\/[^)\s]+)\)/g,(m,t,u)=>`<a href="${u}" target="_blank" rel="noopener">${t}</a>`)}
 /* 11/12 無障礙第 5 輪 P16.5：文件改成真的標題階層——# ＝h1（卡片標題已經寫了，所以只給讀屏）、## ＝h2（每一段包成 section，讀螢幕可以用標題、地標跳）、### ＝h3；
    | 表格 | 轉成 table（th scope=col，窄螢幕在表格裡左右捲，不會整頁橫捲）；> 引言照一般段落 */
@@ -11731,7 +11732,7 @@ function fmSetBody(){const c=fmCfg(),u=Math.round(fmUsed()),L=fmLeft();
     <div class="fm-row"><span class="muted">今天玩了</span><b>${u} 分鐘${L!=null?(L>0?`・還可以玩 ${Math.floor(L)} 分鐘`:"・今天的時間到了"):""}</b></div>
     <button class="btn fm-kidb" id="fmKidB">${c.kid?"👧 兒童模式設定（家長）":"👧 開啟兒童模式（家長）"}</button>
     <button class="btn ghost" id="fmEdit" style="width:100%;margin-top:8px">🔒 家長修改</button>
-    <div style="display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-top:8px"><button type="button" class="btn ghost" data-xqdoc="family" style="font-size:13px;padding:8px 6px">👨‍👩‍👧 家長與兒童模式說明</button><button type="button" class="btn ghost" id="fmLbI" style="font-size:13px;padding:8px 6px">🛡 線上大廳安全須知</button></div>
+    <div class="xqd-g" style="margin-top:8px"><button type="button" class="btn ghost" data-xqdoc="family" style="font-size:13px;padding:8px 6px">👨‍👩‍👧 兒童模式說明</button><button type="button" class="btn ghost" id="fmLbI" style="font-size:13px;padding:8px 6px">🛡 大廳安全須知</button></div>
     <p class="muted" style="font-size:12.5px;line-height:1.7;margin:8px 0 0">時間到了，正在下的那盤可以下完，下完就回首頁休息；明天自動重新算。家長答對確認題，可以再加 15 或 30 分鐘。遊玩時間＝App 畫面開著的時間。</p>`}
 function fmSetFill(card){card.innerHTML=fmSetBody();card.querySelector("#fmEdit").onclick=()=>{vibrate(5);fmGate("修改「家長與護眼」設定前，請家長先答一題。",()=>fmEdit(card))};
   card.querySelector("#fmKidB").onclick=()=>{vibrate(5);fmGate(fmKid()?"修改或關閉兒童模式前，請家長先答一題。":"開啟兒童模式前，請家長先答一題。",()=>fmKidEdit(card))};
