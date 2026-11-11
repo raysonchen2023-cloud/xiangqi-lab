@@ -1379,7 +1379,7 @@ html[data-hicon] .tabbar button.on{box-shadow:inset 0 -3px 0 currentColor}
       if(!window.caches)return go();caches.keys().then(function(ks){return Promise.all(ks.filter(function(k){return k.indexOf("xqlab-app-")===0}).map(function(k){return caches.delete(k)}))})
         .then(function(){return navigator.serviceWorker&&navigator.serviceWorker.getRegistration()}).then(function(r){return r&&r.update()}).catch(function(){}).then(go)}};setTimeout(chk,4000)})();
 </script>
-<script>window.XQ_OFFLINE=true;window.XQ_BUILD="20261111-2000";</script>
+<script>window.XQ_OFFLINE=true;window.XQ_BUILD="20261111-2015";</script>
 <script src="core.js"></script>
 <script src="engine.js"></script>
 <script src="local.js"></script>
@@ -5020,13 +5020,60 @@ function reportSheet(rep,opts){let s=opts.side||"r";
     if(opts.retry)b.querySelectorAll("[data-re]").forEach(x=>x.onclick=e=>{e.stopPropagation();vibrate(8);opts.retry.go(+x.dataset.re)})};paint()})}
 /* 開發者 11/11 選「複盤錯著重下」（規劃書 D01）：看完報告，在失著／敗著那一條直接按「↻ 從這步再下一次」，從那一步之前的局面跟電腦（第 16 級）重下，
    不用回首頁再去「錯棋重練」找。開局方式、題目代號（對局／第幾步）跟錯棋重練（04-stats.js 的 start）一樣，所以練會了那邊也會打勾、照樣排複習 */
+/* ChatGPT 改善單 T01（開發者 11/11 核准）：主流程的「從這步重下」也走這裡——o.lx＝用原本那盤的難度（沒給才照舊第 16 級）；o.t01＝主流程的記號（回哪一頁、難度、棋理），
+   存進練習那盤的 practice.t01（local.js 原樣保存），練習頁的標題、返回、結算視窗才知道要接回主流程。練習一樣不算戰績、不算段位、不進對局紀錄（local.js playEnd 遇到 practice 直接 return） */
 async function rpRetry(o,ply){const m=o.moves[ply-1];if(!m)return;
   const go=async()=>{try{const pre={moves:o.moves.slice(0,ply-1).map(m=>({f:m.f,t:m.t,q:m.q,loss:m.loss,ev:m.ev,bc:m.bc,bm:m.bm,bp:m.bp})),
-      info:{key:o.c+"/"+o.id+"/"+ply,ply,cn:m.cn,q:m.q,loss:m.loss,bc:m.bc||"",opp:o.opp||"",date:String(o.id).slice(0,10)}};
-    await api("/play/new",{human:o.side,lx:16,pre});closeSheet();toast(`↻ 回到第 ${ply} 步之前，換一步試試看`);if(location.hash==="#/redo/play")route();else location.hash="#/redo/play"}catch(e){toast(e.message)}};
+      info:{key:o.c+"/"+o.id+"/"+ply,ply,cn:m.cn,q:m.q,loss:m.loss,bc:m.bc||"",opp:o.opp||"",date:String(o.id).slice(0,10),...(o.t01?{t01:o.t01}:{})}};
+    await api("/play/new",{human:o.side,lx:o.lx||16,pre});closeSheet();toast(`↻ 回到第 ${ply} 步之前，換一步試試看`);if(location.hash==="#/redo/play")route();else location.hash="#/redo/play"}catch(e){toast(e.message)}};
   let s=null;try{s=await api("/play/state")}catch(e){}
   if(s&&s.ranked&&!s.result&&s.moves.length>=2)confirmBox("積分挑戰還沒下完，開始練習會算輸，確定？",go,"開始練習");
   else if(s&&!s.ranked&&!s.practice&&!s.result&&s.moves.length>=2)confirmBox("挑戰電腦還有一盤沒下完，開始練習會蓋掉它，確定？",go,"開始練習");else go()}
+/* ================= ChatGPT 改善單 T01＋G01（開發者 11/11 核准）：一條完整主流程（前綴 mfl＝main flow）=================
+   首頁「快下一盤」→ 下完（或中途離開再「▶ 接著下」）→ 結算視窗「🔎 看懂這盤最關鍵的一步」→ 檢討頁停在那一步之前（10-db.js 的關鍵步模式）
+   →「↻ 從這步重下」（rpRetry，同一個難度、練習模式、不算段位）或「🧠 練一題同樣的棋理」（G01：07-legend.js jPuzzle 的示範模式，#/theme/<棋理>/try）。
+   領獎、角色對話、故事都不是必經；示範練習不記正確率、不加修為、不算段位和「我的棋力」。
+   store：mflKey＝最關鍵的一步 {c,id,ply,side,lx,cn,q,loss,bc,bm,at}（檢討頁看到這一盤就進關鍵步模式）；mflDemo＝示範練習從哪來 {tag,back,at} */
+/* 最關鍵的一步：我方有評等的著法裡少最多分（loss 最大）的那一步，同分取前面的；少不到 30 分（正著、妙著）不算錯著。
+   評語照 qNow（跟賽後報告、錯棋重練同一套分界）。回 {b:{ply 第幾步,cn,q,loss,bc,bm}｜null, all 我方每步都評完了沒, n 評好幾步, need 我方共幾步} */
+function mflPick(moves,side){let b=null,all=true,n=0,need=0;
+  (moves||[]).forEach((m,i)=>{if(!m||m.by!==side)return;need++;const q=qNow(m);if(!q){all=false;return}if(q==="—")return;n++;const l=+m.loss;
+    if(!isFinite(l)||l<30||q==="妙著"||q==="正著")return;if(!b||l>b.loss)b={ply:i+1,cn:m.cn||"",q,loss:l,bc:m.bc||"",bm:m.bm||""}});
+  return{b,all,n,need}}
+/* 一句白話的「為什麼」＋對應的棋理（THEMES 的名字；看不出來回 null，由呼叫的人用 weakTheme 補）。
+   b0＝走這步之前的盤面、side＝誰走、m＝實際走的 {f,t,cn}、g＝這步的評等 {q,loss,ev,bv,bmt,pmt,bc,bm}。
+   只用 XQCore 現成的規則函式（legal／make／inCheck／VAL／NAMES）看盤面，不另做規則引擎；順序：錯過殺棋 → 走進殺棋 → 白送子／沒處理對方的捉子 → 錯過吃子 → 錯過捉雙 → 錯過將軍 → 照評等說少幾兵 */
+function mflWhy(b0,side,m,g){const C=window.XQCore;g=g||{};if(!C||!b0||!m||!b0[m.f])return{say:"",tag:null};
+  try{const os=side==="r"?"b":"r",sg=side==="r"?1:-1,V=x=>x?(C.VAL[x.toUpperCase()]||0):0,N=x=>x?C.NAMES[C.sideOf(x)][x.toUpperCase()]:"",
+      bm=g.bm&&/^[a-i]\d[a-i]\d$/.test(g.bm)?{f:sqI(g.bm.slice(0,2)),t:sqI(g.bm.slice(2,4))}:g.bc?bcMove(b0,side,g.bc):null,
+      okB=!!(bm&&b0[bm.f]&&C.sideOf(b0[bm.f])===side&&!(bm.f===m.f&&bm.t===m.t)),bcn=okB?C.notate(b0,bm.f,bm.t):(g.bc||""),SAY=s=>bcn?s:"",after=C.make(b0,m.f,m.t),loss=+g.loss||0,
+      /* 對方（s）在盤面 bd 上吃哪一顆子最划算：吃完我方換得回來就扣掉吃子那顆的價值；淨賺 ≥ 1.5（比一個兵多）才算 */
+      lose=(bd,s)=>{let w=null;for(const[f,t]of C.legal(bd,s)){const p=bd[t];if(!p||C.sideOf(p)===s||/[kK]/.test(p))continue;const nb=C.make(bd,f,t),re=C.legal(nb,C.opp(s)).some(x=>x[1]===t),gain=re?V(p)-V(bd[f]):V(p);
+        if(gain>=1.5&&(!w||gain>w.gain))w={f,t,gain,pc:p,by:bd[f]}}return w};
+    const ms=typeof talkMate==="function"?talkMate({...g,by:side}):null;
+    if(ms&&ms.b&&!ms.p)return{say:`這時你已經有殺棋${bcn?`：從「${bcn}」開始一路將下去就能贏`:""}，這步讓對方逃掉了。`,tag:"殺棋"};
+    const walk=g.pmt!==undefined?(g.pmt!=null&&g.pmt<0&&!(g.bmt!=null&&g.bmt<0)):(g.ev!=null&&sg*g.ev<=-MXS.mate&&(g.bv!=null?sg*g.bv>-MXS.mate:mxClamp(sg*g.ev)+loss>-2000));
+    if(walk)return{say:"走完這步，對方就有一套連續將軍的殺法。走之前先看看：對方下一步能不能將你？",tag:"殺棋"};
+    if(loss>=100){const L1=lose(after,os);if(L1){const L0=lose(b0,os);
+      if(L0&&L0.t===L1.t&&L1.t!==m.t)return{say:`對方本來就在捉你的「${N(L1.pc)}」，這步沒有先處理（逃開或保護），讓對方的「${N(L1.by)}」白白吃掉。`,tag:null};
+      if(L1.t===m.t)return{say:`你走過去的「${N(L1.pc)}」，對方的「${N(L1.by)}」吃得到，而且你換不回來，等於白送。`,tag:null};
+      return{say:`這步走完，你的「${N(L1.pc)}」沒人保護了，對方的「${N(L1.by)}」可以吃掉它。`,tag:null}}}
+    if(okB){const cap=b0[bm.t],ab=C.make(b0,bm.f,bm.t),chk=C.inCheck(ab,os),
+        fork=C.legal(ab,side).filter(([f,t])=>f===bm.t&&ab[t]&&C.sideOf(ab[t])===os&&!/[kK]/.test(ab[t])&&V(ab[t])>=4).map(([,t])=>ab[t]);   /* 捉的是車馬炮（將帥另外看 chk） */
+      if(cap&&C.sideOf(cap)===os&&V(cap)>=2&&V(cap)>V(b0[m.t])+1)return{say:`Pikafish 建議的「${bcn}」可以吃掉對方的「${N(cap)}」，這步錯過了。`,tag:chk?"將軍":null};
+      if(fork.length>=2||(chk&&fork.length>=1))return{say:`Pikafish 建議的「${bcn}」一步同時威脅對方的${chk?"將（將軍）和":""}「${N(fork[0])}」${fork[1]?`和「${N(fork[1])}」`:""}，對方只能顧一邊（捉雙）。`,tag:"捉雙"};
+      if(chk)return{say:`Pikafish 建議的「${bcn}」是將軍，先逼對方應將，你就能掌握主動。`,tag:"將軍"}}
+    return{say:SAY(`這步比 Pikafish 建議的「${bcn}」少了約 ${(loss/100).toFixed(1)} 個兵的價值`)+(bcn&&g.ev!=null?`，走完以後${evt(g.ev)}`:"")+(bcn?"。":""),tag:null}}catch(e){return{say:"",tag:null}}}
+/* G01 示範練習：記下從哪一頁來（回去用），換到 #/theme/<棋理>/try（07-legend.js Theme 認得 /try＝示範模式：先看棋理和古譜例子、親手走一步、看回饋、再換一題） */
+function mflDemo(tag,back){const T=typeof THEMES!=="undefined"&&THEMES.some(x=>x[0]===tag)?tag:(typeof weakTheme==="function"?weakTheme():"將軍");
+  store.set("mflDemo",{tag:T,back:back||location.hash||"#/",at:Date.now()});vibrate(5);location.hash="#/theme/"+encodeURIComponent(T)+"/try"}
+function mflDemoBack(){const d=store.get("mflDemo",null);return d&&d.back&&!/^#\/theme\//.test(d.back)?d.back:"#/"}
+/* 主流程的「再下一盤快局」：桌上或收著還有一盤沒下完的挑戰電腦，就接那盤（不開新局蓋掉它，積分局也不會被算輸）；沒有才開一盤不算段位的新局，用 lx 那一級。
+   跟首頁大按鈕一樣記 sessionStorage xqFromHome（07y hbFromHome：橋上快局、不放晉級賽分頁、返回回首頁） */
+async function mflQuick(human,lx){let st=null;try{st=await api("/play/state")}catch(e){}
+  const cur=!!(st&&st.kind==="cpu"&&!st.result&&(st.moves||[]).length),oc=!cur&&st&&(st.others||[]).some(z=>z&&z.kind==="cpu"&&z.n);
+  try{if(oc)await api("/play/switch",{kind:"cpu"});else if(!cur)await api("/play/new",{human:human==="b"?"b":"r",lx:Math.max(1,Math.min(18,+lx||3)),ranked:false})}catch(e){toast(e.message);return}
+  if(cur||oc)toast("♟ 你還有一盤沒下完，先接著下");try{sessionStorage.setItem("xqFromHome","1")}catch(e){}if(location.hash==="#/cpu")route();else location.hash="#/cpu"}
 /* 開發者 11/11 選「離線提示」（規劃書 A01）：手機確定沒有網路時，頂部列掛一顆「📴 離線」小牌（每一頁都看得到，不蓋住畫面），點了說明哪些照常能用、哪些要等網路；
    線上大廳直接寫「目前沒有網路」而不是一直「連線中…」；網路回來自動收掉。只認 navigator.onLine===false——它說「有網路」不一定真的通，那種情況大廳照舊顯示連線中 */
 function offNow(){try{return navigator.onLine===false}catch(e){return false}}
@@ -6654,20 +6701,35 @@ async function jBattleHint(st,show){const P=store.get("jPending",null),inJ=!!(P&
 /* 回到當年的結果回寫到闖關（LegendScene 判定後呼叫） */
 function jSceneDone(key,stars){const id=store.get("jScene",null),s=jStages().find(x=>x.id===id);const any=jStages().filter(x=>x.t==="scene"&&x.scene===key);for(const x of any)jSet(x.id,stars,"回到當年");if(s)store.set("jScene",null)}
 /* 解題關：5 題，難度照這一站的等級。意見回饋 429：每次挑戰都換新題目——這一關做過的題先不出，同難度的題都輪過一遍才重來 */
-function jPuzzle(v,s){setTop(s.theme?"🧠 "+s.name:ROAD_NAME+"・"+s.name,s.theme?"#/theme":jChapterHref(s));let D=null,Q=[],k=0,ok=0,board=null,sel=-1,LEGAL=[],done=false,hk=null,usedHint=false,RHK=null;const bd=Board(x=>tap(x));
+/* ChatGPT 改善單 G01（開發者 11/11 核准）：s.demo＝主流程的「練一題同樣的棋理」示範模式（#/theme/<棋理>/try，05-settings mflDemo 帶進來）：
+   先看棋理＋古譜例子（07y3 的 TM_EX，藍色箭頭是妙手）→ 親手走一步 → 看回饋（對錯、正解、Pikafish 後續、這題的棋理）→ 換一題證明理解，共 2 題（約 3～5 分鐘，設計目標、沒量測）。
+   示範不記進度：不寫 jpRun（不會蓋掉做到一半的主題訓練）、不記做過的題（jpSeen）、不記正確率（themeStat）、不加修為、不算段位和「我的棋力」；返回＝回到從哪來的那一頁（mflDemoBack） */
+function jPuzzle(v,s){setTop(s.demo?"🧠 練一題・"+s.tag:s.theme?"🧠 "+s.name:ROAD_NAME+"・"+s.name,s.demo?mflDemoBack():s.theme?"#/theme":jChapterHref(s));let D=null,Q=[],k=0,ok=0,board=null,sel=-1,LEGAL=[],done=false,hk=null,usedHint=false,RHK=null;const bd=Board(x=>tap(x));
   /* 回饋 838（開發者 11/9 選：全模式中斷接續）：存這一組做到哪裡（jpRun），順便記進接續小卡（07m4-resume.js rsPg 的 tm） */
-  const H0=location.hash,jpSave=x=>{const o={id:s.id,ids:Q.map(q=>q.id),k:x&&x.k!=null?x.k:k,ok,uh:usedHint?1:0,...(x&&x.hk?{hk:x.hk}:{}),at:Date.now()};store.set("jpRun",o);if(typeof rsPg==="function")try{rsPg("tm","jpRun",s.id,H0,s.tag||s.name,o.k,Q.length)}catch(e){}};
+  const H0=location.hash,jpSave=x=>{if(s.demo)return;const o={id:s.id,ids:Q.map(q=>q.id),k:x&&x.k!=null?x.k:k,ok,uh:usedHint?1:0,...(x&&x.hk?{hk:x.hk}:{}),at:Date.now()};store.set("jpRun",o);if(typeof rsPg==="function")try{rsPg("tm","jpRun",s.id,H0,s.tag||s.name,o.k,Q.length)}catch(e){}};
   (async()=>{try{D=await api("/quiz/data")}catch(e){v.innerHTML=`<div class="pad"><div class="card muted">${esc(e.message)}</div></div>`;return}
     let pool=s.tag?D.items.filter(q=>(q.tags||[]).includes(s.tag)):D.items.filter(q=>q.tier>=s.lo&&q.tier<=s.hi&&(!s.cats||s.cats.includes(qzCat(q))));if(pool.length<5&&!s.tag)pool=D.items.filter(q=>q.tier>=s.lo&&q.tier<=s.hi);
     /* 回饋 838（開發者 11/9 選：全模式中斷接續）：做到一半的那一組（store jpRun＝{id,ids 這組題號,k 做到第幾題,ok,uh 用過提示,hk 這題的提示框,at}）：同一組、同一題接著做，不重抽、不再記 jpSeen */
-    const JR=store.get("jpRun",null),JQ=JR&&JR.id===s.id&&Array.isArray(JR.ids)&&JR.k<JR.ids.length?JR.ids.map(id=>D.items.find(q=>String(q.id)===String(id))).filter(Boolean):null;
-    if(JQ&&JQ.length===JR.ids.length){Q=JQ;k=JR.k|0;ok=JR.ok|0;usedHint=!!JR.uh;RHK=JR.hk&&JR.hk.k===k?JR.hk.v:null}else{
+    const JR=s.demo?null:store.get("jpRun",null),JQ=JR&&JR.id===s.id&&Array.isArray(JR.ids)&&JR.k<JR.ids.length?JR.ids.map(id=>D.items.find(q=>String(q.id)===String(id))).filter(Boolean):null;
+    if(JQ&&JQ.length===JR.ids.length){Q=JQ;k=JR.k|0;ok=JR.ok|0;usedHint=!!JR.uh;RHK=JR.hk&&JR.hk.k===k?JR.hk.v:null}
+    else if(s.demo){const E=pool.slice().sort((a,b)=>(a.tier||0)-(b.tier||0)),fr=E.slice(0,Math.max(6,Math.ceil(E.length/2)));while(Q.length<(s.count||2)&&fr.length)Q.push(fr.splice(Math.floor(Math.random()*fr.length),1)[0])}   /* G01 示範：從這個棋理比較簡單的一半題目裡隨機抽，不記 jpSeen */
+    else{
     const SEEN=store.get("jpSeen",{}),seen=new Set(SEEN[s.id]||[]);let fresh=pool.filter(q=>!seen.has(String(q.id)));
     if(fresh.length<(s.count||5)){seen.clear();fresh=pool.slice()}
     while(Q.length<(s.count||5)&&fresh.length)Q.push(fresh.splice(Math.floor(Math.random()*fresh.length),1)[0]);
     for(const q of Q)seen.add(String(q.id));SEEN[s.id]=[...seen].slice(-400);store.set("jpSeen",SEEN);jpSave()}
     v.className="view fixed";v.innerHTML=`<div class="status" id="qh" style="margin-top:6px"></div><div class="boardbox" id="bbox"></div><div class="status" id="stat"></div><div class="note" id="note" style="white-space:pre-wrap"></div><div style="flex:1"></div><div class="actions" id="acts"></div>`;
-    v.querySelector("#bbox").append(bd.svg);show()})();
+    v.querySelector("#bbox").append(bd.svg);
+    if(s.demo&&!Q.length){v.querySelector("#note").textContent="這個棋理目前沒有題目，先回去吧。";actionBar(v.querySelector("#acts"),[["back","‹","回去",()=>goBack(mflDemoBack()),true]]);return}
+    if(s.demo)mflIntro();else show()})();   /* G01 示範：先看棋理再出題 */
+  /* G01 示範：先看一個棋理——THEMES 的一句說明＋07y3-thememap.js 的古譜例局（TM_EX，藍色箭頭＝妙手；沒有例局就直接用第 1 題的盤面），按「換你走一步」才開始第 1 題 */
+  function mflIntro(){const T=THEMES.find(x=>x[0]===s.tag)||[s.tag,""],EX=typeof TM_EX!=="undefined"?TM_EX.find(x=>x[0]===s.tag):null;let eb=null,mv=null;
+    if(EX){try{eb=String(EX[4]).split(",").map(x=>x||null);if(eb.length!==90)eb=null;else mv=bcMove(eb,EX[5],EX[6])}catch(e){eb=null}}
+    v.querySelector("#qh").innerHTML=`<b>🧠 先看棋理：${esc(T[0])}</b>　<span class="muted">看懂了換你走（共 ${Q.length} 題）</span>`;
+    v.querySelector("#stat").textContent=T[1]?`${T[0]}：${T[1]}`:T[0];
+    v.querySelector("#note").textContent=(EX?`古譜例子：${EX[2]}${EX[3]?"・"+EX[3]:""}（${EX[5]==="r"?"紅先":"黑先"}）。妙手是「${EX[6]}」${mv?"（藍色箭頭）":""}。\n`:"")+"接下來換你：用同樣的棋理，親手走一步。";
+    if(eb)bd.draw(eb,{flip:EX[5]==="b",...(mv?{sugg:[mv]}:{})});else bd.draw(Q[0].board.split(",").map(x=>x||null),{flip:Q[0].side==="b"});
+    actionBar(v.querySelector("#acts"),[["back","‹","先不練",()=>goBack(mflDemoBack())],["go","▶","換你走一步",()=>{vibrate(5);show()},true]])}
   function show(){const q=Q[k];board=q.board.split(",").map(x=>x||null);sel=-1;done=false;hk=RHK;RHK=null;   /* 回饋 838（開發者 11/9 選：全模式中斷接續）：RHK＝關掉 App 前這題已經用掉的提示框 */
     v.querySelector("#qh").innerHTML=`<b>第 ${k+1} / ${Q.length} 題</b>・${esc(qzCat(q))}・${esc(q.rank||"")}　<span class="muted">答對 ${ok} 題</span>`;
     v.querySelector("#stat").textContent=`${PLAYER[q.side]}走，找出最好的一步`;v.querySelector("#note").textContent="";
@@ -6677,11 +6739,19 @@ function jPuzzle(v,s){setTop(s.theme?"🧠 "+s.name:ROAD_NAME+"・"+s.name,s.the
     v.querySelector("#stat").textContent=H.full?"💡 提示：黃色標記是要動的子和要去的位置":"💡 提示：黃色標記的這顆子就是關鍵（Lv 20 起會連落點一起指出）"/* 意見回饋 607 */;
     actionBar(v.querySelector("#acts"),[["hint","💡",hintLabel(),hint],["skip","⏭","不會，看答案",()=>judge(-1,-1)]]);draw()}
   function tap(x){if(done||!LEGAL.length)return;if(sel>=0&&LEGAL.some(([f,t])=>f===sel&&t===x)){const f=sel;sel=-1;return judge(f,x)}sel=LEGAL.some(([f])=>f===x)?x:-1;if(sel>=0)vibrate(5);draw()}
-  function judge(f,t){if(done)return;done=true;const q=Q[k],hit=f===q.f&&t===q.t;if(hit){ok++;addXP(5,"解題",`jp:${s.id}:${q.id}`)}vibrate(hit?15:[20,40,20]);jpSave({k:k+1});   /* 回饋 838（開發者 11/9 選：全模式中斷接續）：答完就記成下一題，關掉再打開不會重答這題 */
+  function judge(f,t){if(done)return;done=true;const q=Q[k],hit=f===q.f&&t===q.t;if(hit){ok++;if(!s.demo)addXP(5,"解題",`jp:${s.id}:${q.id}`)}vibrate(hit?15:[20,40,20]);jpSave({k:k+1});   /* 回饋 838（開發者 11/9 選：全模式中斷接續）：答完就記成下一題，關掉再打開不會重答這題 */
     const nb=board.slice();nb[q.t]=nb[q.f];nb[q.f]=null;draw({board:nb,last:{f:q.f,t:q.t},sel:-1,targets:[]});
-    v.querySelector("#stat").textContent=hit?"✔ 答對了！":f<0?"正解如下":"✘ 不是這步";v.querySelector("#note").textContent=`正解：${q.cn}${q.mate?`，${q.mate} 步內殺棋`:""}\nPikafish 的後續：${(q.pv||[]).join(" ")}`;
-    actionBar(v.querySelector("#acts"),[["next","›",k+1<Q.length?"下一題":"看結果",()=>{k++;if(k<Q.length)show();else result()},true]])}
-  function result(){store.set("jpRun",null);if(typeof rsPgClear==="function")rsPgClear("tm",s.id);   /* 回饋 838（開發者 11/9 選：全模式中斷接續）：做完了，清掉進度 */const N=Q.length||5,r=ok/N,stars=Math.min(usedHint?2:3,r>=.999?3:r>=.8?2:r>=.6?1:0);let best;if(s.theme){const TS=store.get("themeStat",{}),x=TS[s.tag]||{n:0,ok:0};x.n+=N;x.ok+=ok;x.at=Date.now();TS[s.tag]=x;store.set("themeStat",TS);best=stars}else best=stars?jSet(s.id,stars,"闖關"):(jStars()[s.id]||0);v.className="view";
+    v.querySelector("#stat").textContent=hit?"✔ 答對了！":f<0?"正解如下":"✘ 不是這步";v.querySelector("#note").textContent=`正解：${q.cn}${q.mate?`，${q.mate} 步內殺棋`:""}\nPikafish 的後續：${(q.pv||[]).join(" ")}`+(s.demo?`\n🧠 這題的棋理：${s.tag}——${(THEMES.find(x=>x[0]===s.tag)||["",""])[1]}`:"");   /* G01 示範：回饋多一行棋理 */
+    actionBar(v.querySelector("#acts"),[["next","›",k+1<Q.length?(s.demo?"換一題，證明你懂了":"下一題"):"看結果",()=>{k++;if(k<Q.length)show();else result()},true]])}
+  /* G01 示範的結果：不寫 jpRun、themeStat、闖關星數；主要「♟ 用這個觀念下一盤」（05-settings mflQuick：快局、同一個難度、不算段位），次要回到剛才的地方、想多練就進一般的主題訓練 10 題 */
+  function mflEnd(){const N=Q.length,T=THEMES.find(x=>x[0]===s.tag)||[s.tag,""];v.className="view";
+    v.innerHTML=`<div class="pad"><div class="card" style="text-align:center"><div style="font-size:44px">${ok===N?"🎉":ok?"👍":"💪"}</div><h2 style="margin:4px 0">${ok===N?"都答對了，你懂了！":ok?`答對 ${ok} / ${N} 題，差一點`:"再看一次例子就會了"}</h2>
+      <p style="line-height:1.7">棋理「${esc(T[0])}」：${esc(T[1])}</p><p class="muted" style="font-size:13px">這是示範練習：不記正確率、不加修為，也不算段位和「我的棋力」。</p>
+      <button class="btn" id="mfQ" style="width:100%">♟ 用這個觀念下一盤</button><button class="btn ghost" id="mfB" style="width:100%">‹ 回到剛才的地方</button><button class="btn ghost" id="mfM" style="width:100%">🧠 想多練：主題訓練「${esc(T[0])}」10 題</button></div></div>`;
+    v.querySelector("#mfQ").onclick=()=>{vibrate(5);const K=store.get("mflKey",null);mflQuick(K&&K.side||"r",K&&K.lx||3)};
+    v.querySelector("#mfB").onclick=()=>{vibrate(5);goBack(mflDemoBack())};
+    v.querySelector("#mfM").onclick=()=>{vibrate(5);navReplace("#/theme/"+encodeURIComponent(s.tag))}}
+  function result(){if(s.demo)return mflEnd();store.set("jpRun",null);if(typeof rsPgClear==="function")rsPgClear("tm",s.id);   /* 回饋 838（開發者 11/9 選：全模式中斷接續）：做完了，清掉進度 */const N=Q.length||5,r=ok/N,stars=Math.min(usedHint?2:3,r>=.999?3:r>=.8?2:r>=.6?1:0);let best;if(s.theme){const TS=store.get("themeStat",{}),x=TS[s.tag]||{n:0,ok:0};x.n+=N;x.ok+=ok;x.at=Date.now();TS[s.tag]=x;store.set("themeStat",TS);best=stars}else best=stars?jSet(s.id,stars,"闖關"):(jStars()[s.id]||0);v.className="view";
     v.innerHTML=`<div class="pad"><div class="card" style="text-align:center"><div style="font-size:44px">${stars?"🎉":"💪"}</div><h2 style="margin:4px 0">${stars?"過關！":"差一點"}</h2>
       <div style="margin:8px 0 4px">${ziHTML(stars,false,true)}</div><p>答對 <b>${ok}</b> / ${Q.length} 題${stars?"":`（答對 ${Math.ceil(N*.6)} 題才過關）`}${usedHint&&ok>=5?"（用了提示，最多收到馬）":""}</p>${best>stars?`<p class="muted">這關最好成績 ${ziStr(best)}</p>`:""}
       <button class="btn" id="back">${s.theme?"回主題訓練":"回第"+CNUM(s.n)+"回"}</button><button class="btn ghost" id="again">再挑戰一次</button></div></div>`;
@@ -7189,6 +7259,8 @@ function lvWatch(st,v){const P=lvPlayOf(st);
 const THEMES=[["將軍","走一步就將軍，逼對方先解"],["殺棋","幾步之內把對方將死"],["抽將","讓開一顆子露出將軍，順手吃子"],["捉雙","一步同時捉住兩顆大子"],["閃擊","移開一顆子，讓後面的子捉到大子"],["牽制","釘住對方的子，讓它不敢動"],["引離","送子把對方的守子引開"],["悶宮","將被自己的子堵死"]];
 function weakTheme(){const TS=store.get("themeStat",{});const L=THEMES.map(([k])=>[k,TS[k]]);const un=L.find(([,x])=>!x||x.n<5);if(un)return un[0];return L.sort((a,b)=>a[1].ok/a[1].n-b[1].ok/b[1].n)[0][0]}
 function Theme(v,tag){if(tag){const T=THEMES.find(x=>x[0]===tag);if(!T){navReplace("#/theme");return{}}
+    /* ChatGPT 改善單 G01（開發者 11/11 核准）：#/theme/<棋理>/try＝主流程的「練一題同樣的棋理」示範（2 題、不記進度；jPuzzle 的 demo 模式），標題、返回由 jPuzzle 設 */
+    if(/^#\/theme\/[^/]+\/try$/.test(location.hash)){setTabs(false);return jPuzzle(v,{id:"mfl-"+tag,t:"puz",name:"練一題・"+tag,lo:0,hi:99,tag,count:2,theme:true,demo:true})}
     setTop("🧠 主題訓練・"+tag,"#/theme");setTabs(false);return jPuzzle(v,{id:"tm-"+tag,t:"puz",name:"主題訓練・"+tag,lo:0,hi:99,tag,count:10,theme:true})}
   setTop("🧠 主題訓練","#/hub/learn");setTabs(true,"#/");v.className="view";v.innerHTML='<div class="pad muted">載入中…</div>';
   api("/quiz/data").then(D=>{const TS=store.get("themeStat",{}),cnt=k=>D.items.filter(q=>(q.tags||[]).includes(k)).length,w=weakTheme();
@@ -14231,13 +14303,20 @@ function hmGoBar(P,nw){const bar=document.createElement("div");bar.className="hm
   /* 開發者 11/11「把意見回饋放在明顯的首頁地方，讓玩家一眼看出可以回報問題」：大按鈕正上方固定一顆「💬 回報問題」（原本只在設定頁裡） */
   const fb=document.createElement("button");fb.type="button";fb.className="hm-inst hm-fb";fb.id="hmFb";fb.textContent="💬 回報問題";fb.onclick=e=>{e.stopPropagation();vibrate(5);if(typeof feedbackSheet==="function")feedbackSheet();else location.hash="#/settings"};row.append(fb);
   bar.append(row);bar.append(b);P.append(bar);
-  b.onclick=async e=>{e.stopPropagation();vibrate(5);if(R.fresh)try{await api("/play/new",R.fresh)}catch(err){}if(R.sw)try{await api("/play/switch",{kind:R.sw})}catch(err){}if(R.park)store.set("park3d",true);try{sessionStorage.setItem("xqFromHome","1")}catch(err){}location.hash=R.go};   /* 11/11：記下從首頁進來（07y hbFromHome） */
+  /* ChatGPT 改善單 T01（開發者 11/11 核准）安全接續：按鈕一開始是「快下一盤」（fresh＝開新局），問完 /play/state 才知道有沒有下到一半的棋要改成「▶ 接著下」。
+     這中間就按下去，/play/new 會把桌上那盤沒下完的挑戰電腦換掉（晉級賽還會算輸）——所以先等那一問（RD，最多 1.5 秒）再照最新的 R 走 */
+  let RD=Promise.resolve();
+  b.onclick=async e=>{e.stopPropagation();vibrate(5);try{await Promise.race([RD,new Promise(z=>setTimeout(z,1500))])}catch(err){}if(R.fresh)try{await api("/play/new",R.fresh)}catch(err){}if(R.sw)try{await api("/play/switch",{kind:R.sw})}catch(err){}if(R.park)store.set("park3d",true);try{sessionStorage.setItem("xqFromHome","1")}catch(err){}location.hash=R.go};   /* 11/11：記下從首頁進來（07y hbFromHome） */
   if(nw)return;
   try{if(window.XQNet&&XQNet.playing&&XQNet.playing())return set({go:"#/pvp",t:"▶ 接著下",s:"線上對局"})}catch(e){}
   if(typeof homeRecGame!=="function")return;
-  api("/play/state").then(st=>{const g=homeRecGame(st);if(!b.isConnected)return;
+  RD=api("/play/state").then(st=>{const g=homeRecGame(st);if(!b.isConnected)return;
     /* 開發者 11/11 選 ChatGPT 14 號方案 1「快局不留名、茶肆才算帳」：快局一律不算段位分（上一盤是晉級賽也一樣，只沿用它的強度）；算分、選級數都在茶肆 */
-    if(!g){if(st&&st.kind==="cpu"&&st.result&&!st.practice)set({go:"#/cpu",t:"♟ 快下一盤",s:"沿用上次難度・不算段位",fresh:{human:st.human||"r",lx:st.level,ranked:false}});return}const o=g.sw&&(st.others||[]).find(z=>z&&z.kind===g.sw),n=o?+o.n:st&&st.moves?st.moves.length:0;
+    /* ChatGPT 改善單 T01：主流程的「從這步重下」（練習，practice.t01）還沒下完＝「▶ 接著下」回那盤；下完了＝快下一盤沿用原本那盤的難度（不是預設第 3 級） */
+    if(!g){const T1=st&&st.kind==="practice"&&st.practice&&st.practice.t01;
+      if(T1&&!st.result&&(st.moves||[]).length)return set({go:"#/redo/play",t:"▶ 接著下",s:`從這步重下・第 ${st.moves.length} 手`});
+      if(st&&st.kind==="cpu"&&st.result&&!st.practice)set({go:"#/cpu",t:"♟ 快下一盤",s:"沿用上次難度・不算段位",fresh:{human:st.human||"r",lx:st.level,ranked:false}});
+      else if(T1&&T1.lx)set({go:"#/cpu",t:"♟ 快下一盤",s:"沿用上次難度・不算段位",fresh:{human:st.human||"r",lx:T1.lx,ranked:false}});return}const o=g.sw&&(st.others||[]).find(z=>z&&z.kind===g.sw),n=o?+o.n:st&&st.moves?st.moves.length:0;
     set({go:g.go,sw:g.sw,park:g.park,t:"▶ 接著下",s:String(g.t).replace(/^.*：/,"")+(n>0?`・第 ${n} 手`:"")})}).catch(()=>{})}
 /* 完全沒下過棋（跟原本首頁「🔰 第一次下象棋？」卡同一個判斷） */
 const hmNew=()=>!store.get("campSeen",false)&&!Object.keys(store.get("record",{})).length;
@@ -19192,7 +19271,8 @@ function CpuGame(v,practicePage,mode){
   const topBar=()=>{const lk=!!(typeof st!=="undefined"&&st&&st.arena&&!st.result),pr=!!(st&&st.practice);
     /* 意見回饋 335：錯棋重練是自己的頁面——標題寫「錯棋重練」，上面沒有積分／自選／擂台／公園，返回回到錯棋清單 */
     /* 意見回饋 349：朝代擂台（和石桌往事）的上方不放積分／自選，只寫是哪裡 */
-    setTop(pr?(st.practice.drill?"🎯 "+(st.practice.title||"練習"):"🔁 錯棋重練"):MODE==="arena"?"🏯 朝代擂台":MODE==="journey"?(st&&st.journey==="park"?"🌳 "+parkName(store.get("era","classic")):(String(st&&st.journey||"").startsWith("bt:")?"⚔ ":"🪨 ")+jName(st&&st.journey)):"挑戰電腦",pr?(st.practice.drill?"#/":"#/redo"):MODE==="journey"?(st&&st.journey==="park"?"^#/port":st&&st.journey?jBack(st.journey):"#/adventure"):MODE==="arena"?"^#/port":(typeof CPUROOM_ON!=="undefined"&&CPUROOM_ON?"#/cpuroom":"#/"),   /* 意見回饋 697：園子、擂台的「‹」回這一朝的渡口 */pr?[]:[/* 意見回饋 346：挑戰電腦看不到擂台、驛站的入口——🏯 只在擂台那盤出現（換擂主）、🏮 只在石桌往事的公園出現 */...(MODE==="arena"?[arenaBtn]:[]),...(MODE==="journey"&&OFF&&st&&st.journey==="park"?[["🏮",()=>walk("inn",()=>navReplace("#/journey/inn")),"走去驛站"]]:[]),...(lk?[]:[parkBtn(()=>{draw();topBar()})]),...(MODE==="arena"||(MODE==="journey"&&st&&/^(park$|inn:)/.test(String(st.journey||"")))?[["⛵",()=>goUp("#/adventure"),"回星槎"]]:[])].concat(vcOn()?[["🎤",()=>voiceMove(()=>!st||st.result?{why:"這盤已經結束"}:st.turn!==st.human||st.thinking?{why:"還沒輪到你"}:{board:st.board,legal:st.legal,play:(f,t)=>{sel=-1;post("/play/move",{f,t})}}),"聲控走棋"]]:[]));
+    /* ChatGPT 改善單 T01（開發者 11/11 核准）：主流程來的練習（practice.t01）標題寫「↻ 從這步重下」，返回回到剛才那一步（關鍵步那一頁），不是錯棋列表 */
+    setTop(pr?(st.practice.drill?"🎯 "+(st.practice.title||"練習"):st.practice.t01?"↻ 從這步重下":"🔁 錯棋重練"):MODE==="arena"?"🏯 朝代擂台":MODE==="journey"?(st&&st.journey==="park"?"🌳 "+parkName(store.get("era","classic")):(String(st&&st.journey||"").startsWith("bt:")?"⚔ ":"🪨 ")+jName(st&&st.journey)):"挑戰電腦",pr?(st.practice.drill?"#/":st.practice.t01&&st.practice.t01.back||"#/redo"):MODE==="journey"?(st&&st.journey==="park"?"^#/port":st&&st.journey?jBack(st.journey):"#/adventure"):MODE==="arena"?"^#/port":(typeof CPUROOM_ON!=="undefined"&&CPUROOM_ON?"#/cpuroom":"#/"),   /* 意見回饋 697：園子、擂台的「‹」回這一朝的渡口 */pr?[]:[/* 意見回饋 346：挑戰電腦看不到擂台、驛站的入口——🏯 只在擂台那盤出現（換擂主）、🏮 只在石桌往事的公園出現 */...(MODE==="arena"?[arenaBtn]:[]),...(MODE==="journey"&&OFF&&st&&st.journey==="park"?[["🏮",()=>walk("inn",()=>navReplace("#/journey/inn")),"走去驛站"]]:[]),...(lk?[]:[parkBtn(()=>{draw();topBar()})]),...(MODE==="arena"||(MODE==="journey"&&st&&/^(park$|inn:)/.test(String(st.journey||"")))?[["⛵",()=>goUp("#/adventure"),"回星槎"]]:[])].concat(vcOn()?[["🎤",()=>voiceMove(()=>!st||st.result?{why:"這盤已經結束"}:st.turn!==st.human||st.thinking?{why:"還沒輪到你"}:{board:st.board,legal:st.legal,play:(f,t)=>{sel=-1;post("/play/move",{f,t})}}),"聲控走棋"]]:[]));
     try{if(seg&&MODE==="cpu"){const t=$("#title");t.textContent="";if(typeof hbFromHome==="function"&&hbFromHome())t.textContent="♟ 快速對局";else if(st&&st.blind)t.textContent="🙈 盲棋";else t.append(seg)}}catch(e){}   /* 11/11：橋上快速對局不放晉級賽／練功房分頁 */
     try{if(MODE==="cpu"&&!pr&&typeof CPUROOM_ON!=="undefined"&&CPUROOM_ON){const b=$("#back");if(b)b.innerHTML="<b>‹</b>走回雅間"}}catch(e){}if(typeof hbHomeBack==="function")hbHomeBack()};   /* 11/11：從首頁石桌／立即對局進來的，返回回首頁（07y hbHomeBack） */   /* 11/10：從茶坊後園走回雅間 */   /* 第一次呼叫時 seg 還沒建立 */
   topBar();
@@ -19318,12 +19398,12 @@ function CpuGame(v,practicePage,mode){
       /* 開發者 11/11 選 v3 規劃書 B08：結算視窗多一行「這盤先看這一步」——挑我方評語是失著／敗著裡掉最多分的那一步，點了直接打開這盤棋譜停在那一步。
          評語是背景慢慢算的，視窗先留一個空位（hidden），每 1.5 秒問一次 /play/state；全部算完、或等了 6 秒就顯示目前最嚴重的一步，之後算出更嚴重的再換。
          沒有失著、敗著就什麼都不顯示（不硬湊一步）；練習題、錯棋重練、劇情對決的結算視窗不放 */
-      const resLook=()=>{if(st.practice||!st.id)return"";const gid=st.id,hu=st.human;let n=0,seen=false;
-        const pick=ms=>{let b=null,all=true;ms.forEach((m,i)=>{if(m.by!==hu)return;const q=qNow(m);if(!q)all=false;if((q==="失著"||q==="敗著")&&(!b||(+m.loss||0)>b.loss))b={ply:i+1,cn:m.cn||"",q,loss:+m.loss||0}});return{b,all}};
+      const resLook=()=>{if(st.practice||!st.id)return"";const gid=st.id,hu=st.human,lxNow=mflLx(st);let n=0,seen=false;   /* lxNow：ChatGPT 改善單 T01「從這步重下」用同一個難度 */
+        const pick=ms=>{let b=null,all=true;ms.forEach((m,i)=>{if(m.by!==hu)return;const q=qNow(m);if(!q)all=false;if((q==="失著"||q==="敗著")&&(!b||(+m.loss||0)>b.loss))b={ply:i+1,cn:m.cn||"",q,loss:+m.loss||0,bc:m.bc||"",bm:m.bm||""}});return{b,all}};
         const show=b=>{const e=document.querySelector(".modal.res .reslook");if(!e)return false;seen=true;if(+e.dataset.ply===b.ply)return true;e.dataset.ply=b.ply;
           e.innerHTML=`<span>🔎 這盤先看這一步：<b>第 ${b.ply} 步${b.cn?"「"+esc(b.cn)+"」":""}</b>（${b.q}）</span><span style="flex:none;color:var(--accent);font-weight:900">看 ›</span>`;
           e.style.cssText="display:flex;align-items:center;justify-content:space-between;gap:8px;width:100%;max-width:260px;margin:10px auto 4px;padding:10px 12px;border:1px solid var(--accent);border-radius:12px;background:var(--bg);color:inherit;font:inherit;font-size:14.5px;line-height:1.5;text-align:left;cursor:pointer";e.hidden=false;
-          e.onclick=()=>{const m=e.closest(".modal");if(m)m.remove();vibrate(5);review(false,gid,{ply:b.ply,why:"這盤先看這一步（"+b.q+"）"})};return true};
+          e.onclick=()=>{const m=e.closest(".modal");if(m)m.remove();vibrate(5);mflKeySet(gid,hu,b,lxNow);review(false,gid,{ply:b.ply-1,why:"這盤先看這一步（"+b.q+"）",mfl:1})};return true};   /* ChatGPT 改善單 T01：跟主流程同一個關鍵步模式（停在那一步之前、兩條箭頭、白話為什麼、從這步重下） */
         const tick=()=>{n++;const has=!!document.querySelector(".modal.res .reslook");if(has)seen=true;if((seen&&!has)||(!seen&&n>5))return;
           api("/play/state").then(s=>{if(!s||s.id!==gid)return;const r=pick(s.moves||[]);if(r.b&&(r.all||n>=4))show(r.b);if(n<14&&!(r.all&&(!r.b||seen)))setTimeout(tick,1500)}).catch(()=>{})};
         setTimeout(tick,300);return`<button type="button" class="reslook" hidden></button>`};
@@ -19353,7 +19433,10 @@ function CpuGame(v,practicePage,mode){
             if(mine.every(m=>qNow(m)))return skillDiff(gid).then(d=>paint(d,null,ngCount(s.moves,hu))).catch(()=>paint(null));if(n<45)setTimeout(tick,2000);else paint(null)}).catch(()=>{})};
         setTimeout(tick,600);
         return`<div class="resgrow" style="width:100%;max-width:300px;box-sizing:border-box;margin:8px auto 2px;padding:8px 12px;border:1px solid var(--line);border-radius:12px;font-size:14px;line-height:1.7;text-align:left">${rec}<div class="rg-sk muted">📈 Pikafish 正在評這盤，評完就知道棋力變化…</div><button type="button" class="rg-go" style="display:block;margin:2px 0 0 auto;padding:2px 0;border:0;background:none;color:var(--accent);font:inherit;font-size:13.5px;font-weight:900;cursor:pointer">看我的棋力 ›</button></div>`};
-      const RLK=resLook(),RGW=resGrow(),XPL=XPR+RLK+RGW;
+      /* ChatGPT 改善單 T01（開發者 11/11 核准）：首頁「快下一盤」（FH，不算段位的快局）下完、我方走過 3 步以上——結算視窗的主要按鈕改成「🔎 看懂這盤最關鍵的一步」（mflOpen），
+         上面那顆「這盤先看這一步」小鈕就不重複放；「再來一局」「去茶肆正式上桌」退成次要。從首頁接著下的晉級賽、盲棋、其他模式照舊 */
+      const MF=FH()&&!st.ranked&&!st.practice&&!st.blind&&st.moves.filter(m=>m.by===st.human).length>=3;
+      const RLK=MF?"":resLook(),RGW=resGrow(),XPL=XPR+RLK+RGW;
       /* 開發者 11/11 選 ChatGPT 14 號方案 9「快局結算給下一步」：橋上快局下完，結算視窗用一句話邀請去茶肆（贏了打晉級賽、輸了去練功房挑級數），配一顆可以不理的「去茶肆」；不另外跳視窗 */
       const QKH=typeof hbHubN==="function"?hbHubN():"茶肆",QKN=FH()?`<p style="font-size:14px;margin:8px 0 2px">${st.result.w===st.human?`手感不錯！要不要去${esc(QKH)}打晉級賽，讓這股氣勢算進段位？`:!st.result.w?`要不要去${esc(QKH)}挑個剛好的對手，再來一盤？`:`這盤有點可惜。要不要去${esc(QKH)}練功房，挑剛好的級數再戰？`}</p><p class="muted" style="font-size:12.5px;margin:0">這盤是橋上快局，不算段位分。</p>`:"";
       const win=st.result.w===st.human,draw0=!st.result.w;vibrate([30,40,30]);if(draw0&&parkOn()&&PARK&&PARK.host===v.querySelector("#bbox")){const dl=oppTalk(st,optJk(st),parkNpcOf(st)).draw;setTimeout(()=>{try{PARK.v.oppSay(dl,3)}catch(e){}},1600)}   /* 826 追加：和棋時對面的人也說一句（園子 3D 原本只有我方說「和棋，不錯喔！」） */
@@ -19364,7 +19447,12 @@ function CpuGame(v,practicePage,mode){
       if(st.practice&&st.practice.drill){const P0=st.practice;
         modal(`<div class="em">${win?"🎯":draw0?"🤝":"💪"}</div><h2>${win?"練習成功！":draw0?"和局":"這題沒下贏"}</h2><p class="muted">${esc(P0.title)}（局面取自 ${esc(P0.date||"")} ${esc(P0.opp||"")}）・不算戰績</p>`,
           resBtns(["再練一題 ›",()=>startDrill(P0.kind,P0.lv)]),"res");return}
-      if(st.practice){const d=store.get("redoDone",{})[st.practice.key];
+      if(st.practice){const d=store.get("redoDone",{})[st.practice.key],T1=st.practice.t01;
+        /* ChatGPT 改善單 T01／G01（開發者 11/11 核准）：主流程的「從這步重下」下完——主要按鈕「🧠 練一題同樣的棋理」（G01 示範，回來還是這一頁），
+           次要「♟ 再下一盤快局」（同一個難度、不算段位；有沒下完的挑戰電腦就先接那盤）、「‹ 回到剛才那一步」（關鍵步那一頁）。按「練會了，結束這題」也落在這裡 */
+        if(T1){const ok=!!(d&&d.ok),why=ok&&/認輸/.test(st.result.why||"")?"":esc(st.result.why)+"・";
+          modal(`<div class="em">${ok?"✅":win?"🏆":draw0?"🤝":"💪"}</div><h2>${ok?"這步練會了！":win?"你贏了！":draw0?"和局":"這盤輸了"}</h2><p class="muted">${why}從這步重下（不算段位，也不算進「我的棋力」）</p>${ok?"":'<p style="font-size:14px">沒關係，回去再看一次那一步，或先練一題同樣的棋理。</p>'}`,
+            resBtns(["🧠 練一題同樣的棋理 ›",()=>mflDemo(T1.tag,"#/redo/play")],["♟ 再下一盤快局",()=>mflQuick(st.human,T1.lx)],true,T1.back?["‹ 回到剛才那一步",()=>goUp(T1.back)]:null),"res");return}
         modal(`<div class="em">${win?"🏆":draw0?"🤝":"💪"}</div><h2>${win?"你贏了！":draw0?"和局":"這盤輸了"}</h2><p class="muted">${esc(st.result.why)}・錯棋重練（不算戰績）</p>${d&&d.ok?'<p>✅ 這步已經練會了</p>':""}`,
           resBtns(["回到錯棋列表 ›",()=>goUp("#/redo")],null,true),"res");return}   /* 意見回饋 607：退回錯棋列表那一層，不往前推一頁 */
       if(st.ranked){const R=st.rate;
@@ -19394,10 +19482,26 @@ function CpuGame(v,practicePage,mode){
               return nx?resBtns(["📖 下一回 ›",()=>{if(nx.book===2)store.set("legBook",2);goUp(SHELF(nx.book===2?2:1),()=>nx.book===2?legendRead2(nx.n):legendRead(nx.n))}],bk):resBtns(bk)}
             return resBtns(again,bk)})(),"res");return}
       modal(`<div class="em">${win?"🏆":draw0?"🤝":"💪"}</div><h2>${win?"你贏了！":draw0?"和局":"這盤輸了"}</h2><p class="muted">${esc(st.result.why)}・${st.journey?`🪨 ${esc(jName(st.journey))}`:`對手第 ${st.level} 級「${esc(lv.name||"")}」`}</p>`+XPL+QKN+(st.blind?`<p style="font-size:14px;margin:8px 0 2px">${win?"你在看不見的棋盤上，走出了一盤清清楚楚的勝局。":draw0?"看不見棋子也守成和局，記盤功力不錯。":"這盤棋沒守住，但你已經把棋盤放進心裡了一步。"}</p><p class="muted" style="font-size:12.5px;margin:0">盲棋不算段位、不記通關，也不算進「我的棋力」。</p>`:""),
-        resBtns([win&&st.level<18&&!FH()?"挑戰下一級 ›":"再來一局",()=>api("/play/new",{human:st.human,lx:win&&st.level<18&&!FH()?st.level+1:st.level,...(FH()?{ranked:false}:{}),...(st.blind?{blind:true}:{})})   /* 開發者 11/6 修：等級是細分的 1～18 級，用 lx 傳、上限 18；原本傳 level 會被再換算一次，難度暴跳 */.then(render).catch(e=>toast(e.message))],FH()?["⚔ 去"+QKH+"正式上桌",()=>{location.hash="#/hub/battle"}]:null),"res")}}
+        (()=>{const nx=[win&&st.level<18&&!FH()?"挑戰下一級 ›":"再來一局",()=>api("/play/new",{human:st.human,lx:win&&st.level<18&&!FH()?st.level+1:st.level,...(FH()?{ranked:false}:{}),...(st.blind?{blind:true}:{})})   /* 開發者 11/6 修：等級是細分的 1～18 級，用 lx 傳、上限 18；原本傳 level 會被再換算一次，難度暴跳 */.then(render).catch(e=>toast(e.message))],hub=FH()?["⚔ 去"+QKH+"正式上桌",()=>{location.hash="#/hub/battle"}]:null;
+          /* ChatGPT 改善單 T01：快局的主要按鈕＝看懂最關鍵的一步（這盤的編號、執哪一方、難度先記下來，按的時候 st 可能已經換了） */
+          if(MF){const gid=st.id,hu=st.human,lx=mflLx(st);return resBtns(["🔎 看懂這盤最關鍵的一步 ›",()=>mflOpen(gid,hu,lx)],["♟ "+nx[0],nx[1]],false,hub)}
+          return resBtns(nx,hub)})(),"res")}}
+  /* ================= ChatGPT 改善單 T01（開發者 11/11 核准）：結算視窗 →「看懂這盤最關鍵的一步」=================
+     mflLx：重下用的難度＝這盤的級數（晉級賽照段位名找回同強度的級數；找不到才用錯棋重練原本的第 16 級）。
+     mflKeySet：把最關鍵的一步記在 store mflKey，檢討頁（10-db.js）看到這一盤、停在那一步之前就進關鍵步模式。
+     mflOpen：等 Pikafish 把我方每步評完（最多約 9 秒，邊等邊提示），用 05-settings mflPick 挑少最多分的那一步，打開這盤的檢討頁停在那一步之前；
+       這盤沒有明顯的錯著（都是正著、妙著）就直接打開整盤的賽後報告；換頁了就不跳過去 */
+  function mflLx(s){if(!s)return 16;if(s.ranked){const i=(s.levels||[]).findIndex(l=>l.name===s.rkName);return i>=0?i+1:16}return s.level||16}
+  function mflKeySet(gid,hu,b,lx){store.set("mflKey",{c:"play",id:gid,ply:b.ply,side:hu,lx,cn:b.cn||"",q:b.q,loss:b.loss,bc:b.bc||"",bm:b.bm||"",at:Date.now()})}
+  async function mflOpen(gid,hu,lx){const rn=ROUTE_N;let r=null;
+    for(let k=0;k<8;k++){let s=null;try{s=await api("/play/state")}catch(e){}if(!s||s.id!==gid)break;r=mflPick(s.moves,hu);if(r.all)break;
+      if(!k)toast("🔎 Pikafish 正在評這盤的每一步，馬上好…");await new Promise(z=>setTimeout(z,1200));if(rn!==ROUTE_N)return}
+    if(rn!==ROUTE_N)return;
+    if(r&&r.b){mflKeySet(gid,hu,r.b,lx);review(false,gid,{ply:r.b.ply-1,why:"這盤最關鍵的一步",mfl:1});return}
+    if(r&&r.all&&r.n)toast("👍 這盤沒有明顯的錯著，帶你看整盤的賽後報告");review(true,gid)}
   // 賽後報告：用這一盤自己的編號打開（意見回饋 234：以前拿存檔清單第一筆，存檔還沒寫完或順序不同時會開到別盤）
 async function review(rep,id,at){let it=null;for(let k=0;k<12&&!it;k++){try{const d=await api("/db/items?c=play");it=id?d.items.find(x=>x.id===id):d.items[0]}catch(e){}if(!it)await new Promise(r=>setTimeout(r,250))}
-  if(!it)return toast("找不到這盤的存檔");if(rep)store.set("openReport","play/"+it.id);if(at)store.set("openAt",{c:"play",id:it.id,ply:at.ply,why:at.why});REVIEW_BACK={id:it.id,h:location.hash};location.hash="#/db/play/"+encodeURIComponent(it.id)}   /* 意見回饋 607：記下從哪一盤去看報告，回來時不要自動開新局 */
+  if(!it)return toast("找不到這盤的存檔");if(rep)store.set("openReport","play/"+it.id);if(at)store.set("openAt",{c:"play",id:it.id,ply:at.ply,why:at.why,...(at.mfl?{mfl:1}:{})});   /* ChatGPT 改善單 T01：mfl＝關鍵步模式（10-db.js 不另跳「從第 N 步開始」的小提示） */REVIEW_BACK={id:it.id,h:location.hash};location.hash="#/db/play/"+encodeURIComponent(it.id)}   /* 意見回饋 607：記下從哪一盤去看報告，回來時不要自動開新局 */
   // 錯棋重練：在狀態列提示上次走了什麼，評等出來後告訴你這次有沒有進步（評過的結果記在 redoDone）
   // 錯棋重練：練習起點的盤面（重練開始前的著法擺好）
   function practiceBoard(){const b=parseFen(START);for(const m of st.moves.slice(0,st.practice.base)){b[m.t]=b[m.f];b[m.f]=null}return b}
@@ -19426,7 +19530,9 @@ async function review(rep,id,at){let it=null;for(let k=0;k<12&&!it;k++){try{cons
     if(!m){s2.textContent=`🔁 第 ${P0.ply} 步：上次你走「${P0.cn}」是${P0.q}，這次呢？`;return}
     if(!m.q){s2.textContent=`這次走「${m.cn}」，Pikafish 評分中…`;return}
     const all=store.get("redoDone",{}),d=all[P0.key]||{n:0,ok:false},sig=st.moves.length>P0.base?m.f+"-"+m.t:"";
-    const good=["妙著","正著"].includes(m.q),ok=["穩著","緩著"].includes(m.q);
+    /* ChatGPT 改善單 T01（開發者 11/11 核准）／v5 R08（錯著重下跟完成標記一致）：「比上次好」要真的比原本那步的評語好才算練會（d.ok）。
+       錯棋重練的題目原本都是失著、敗著，穩著、緩著一定比較好，照舊；主流程的最關鍵一步可能本來就是緩著、穩著，再走一樣的不能算練會。原本評語認不得（舊名稱）就照舊 */
+    const QO=["妙著","正著","穩著","緩著","失著","敗著"],qi=x=>{const i=QO.indexOf(x);return i<0?9:i},good=["妙著","正著"].includes(m.q),ok=["穩著","緩著"].includes(m.q)&&qi(m.q)<qi(P0.q);
     // 每走一個不同的著法算一次；不是正著、妙著的都算一次「沒找到」
     let nz=false;   /* 卡關主動提示（07c-canju.js stuckNudge）：第 3 次沒找到時，小帥冒出來講一句（黃框照原本第 2 次就亮） */
     if(sig&&d.last!==sig){d.last=sig;d.n++;if(!good){d.fail=(d.fail||0)+1;nz=typeof STUCK_N!=="undefined"&&d.fail===STUCK_N}if(good||ok)d.ok=true;
@@ -19437,13 +19543,14 @@ async function review(rep,id,at){let it=null;for(let k=0;k<12&&!it;k++){try{cons
     if(good){s2.textContent=`✅ 「${m.cn}」是${m.q}！比上次的${P0.q}進步了，這題練會了。可以繼續跟電腦下完，也可以直接結束這題`;
       /* 意見回饋 648（開發者）：練會了，這盤就不該再被「還有一題沒下完」催——給一顆結束鈕；錯棋重練頁看到這盤已練會，也只淡淡提醒 */
       pa.hidden=false;if(pa.dataset.k!=="end"){pa.dataset.k="end";   /* 意見回饋 749：按鈕一樣就不重畫（每次輪詢重畫會閃、也可能吃掉正在按的那一下） */
-        pa.innerHTML='<button class="pill" id="pEnd">✅ 練會了，結束這題</button>';pa.querySelector("#pEnd").onclick=()=>{vibrate(5);post("/play/resign").catch(()=>{}).finally(()=>{toast("✅ 這題練會了");location.hash="#/redo"})}}return}
+        pa.innerHTML='<button class="pill" id="pEnd">✅ 練會了，結束這題</button>';pa.querySelector("#pEnd").onclick=()=>{vibrate(5);post("/play/resign").catch(()=>{}).finally(()=>{toast("✅ 這題練會了");if(!P0.t01)location.hash="#/redo"})}}return}   /* ChatGPT 改善單 T01：主流程來的練習留在這頁，結算視窗接著給「練一題同樣的棋理」 */
     const HB=practiceBoard(),HM=bc?bcMove(HB,st.human,bc):null,C0=window.XQCore;let say="";
     if(HM&&fail>=3&&C0){const pc=HB[HM.f],cap=HB[HM.t],after=C0.make(HB,HM.f,HM.t),ck=C0.inCheck(after,opp(st.human)),nm=x=>C0.NAMES[C0.sideOf(x)][x.toUpperCase()];
       say=`動你的「${nm(pc)}」`+(cap?`，可以吃掉對方的「${nm(cap)}」`:"")+(ck?"，走了就是將軍":"")+(!cap&&!ck?"，先把它調到更好的位置，看看能威脅到什麼":"")}
     if(HM&&fail>=2){if(!d.hint){d.hint=true;all[P0.key]=d;store.set("redoDone",all)}const want=fail>=4?{f:HM.f,t:HM.t,n:P0.base}:{f:HM.f,t:null,n:P0.base};if(!pHint||pHint.t!==want.t||pHint.f!==want.f){pHint=want;setTimeout(draw,0)}}
     if(nz&&HM&&typeof stuckNudge==="function")setTimeout(()=>stuckNudge(`卡住了嗎？${say?say+"。":""}黃框那顆子就是關鍵，按 ↶ 悔棋再試一次！`),300);
-    s2.textContent=(ok?`👍 「${m.cn}」是${m.q}，比上次好；按 ↶ 悔棋再挑戰正著`:`❌ 「${m.cn}」還是${m.q}，按 ↶ 悔棋再想一次`)+`（第 ${fail} 次）`+
+    /* v5 R08：比上次好＝已經記成練會（d.ok，錯棋列表會打勾），這裡也照說；穩著、緩著但沒比原本好的，直接說沒有比上次好 */
+    s2.textContent=(ok?`👍 「${m.cn}」是${m.q}，比上次的${P0.q}好，這題算練會了；想挑戰正著，按 ↶ 悔棋再試`:`❌ 「${m.cn}」${m.q===P0.q||(qi(P0.q)>=4&&qi(m.q)>=4)||qi(m.q)>=9?"還是"+m.q:`是${m.q}，沒有比上次的${P0.q}好`}，按 ↶ 悔棋再想一次`)+`（第 ${fail} 次）`+
       (!HM?"":fail>=4?`\n💡 提示三：黃色標記是建議的落點（Pikafish 建議走「${bc}」）`:fail>=3?`\n💡 提示二：${say}（黃色標記是該動的子）`:fail>=2?"\n💡 提示一：黃色標記的這顆子就是關鍵":"・再錯一次就給提示");
     if(fail>=4&&bc&&pa.dataset.k===P0.key+"|"+bc)pa.hidden=false;
     else if(fail>=4&&bc){pa.hidden=false;pa.dataset.k=P0.key+"|"+bc;pa.innerHTML='<button class="pill" id="pHn">💡 在棋盤上看建議</button><button class="pill" id="pPv">▶ 推演後面</button>';
@@ -20651,8 +20758,31 @@ function Viewer(v,c,id){
         try{await api("/an/study-save",{board:FREE.start.board,side:FREE.start.side,moves:FREE.all.map(m=>[m.f,m.t]),title:b.querySelector("#sn").value,src:FREE.src,comments});
           closeSheet();toast("💾 已存到「我的研究」")}catch(e){toast(e.message)}}})}
   let vwPly=null,vwLine=null;const maxPly=lid=>{const l=L.get(lid);return l?l.start+l.moves.length-1:0};
+  /* ChatGPT 改善單 T01（開發者 11/11 核准）：「看懂這盤最關鍵的一步」的關鍵步模式。store mflKey 指的是這一盤（08b-cpugame.js 結算視窗寫的），主線停在那一步之前（ply＝K.ply−1）時：
+     棋盤畫你實際走的（上一步那種箭頭）和 Pikafish 建議的（藍色直線箭頭，只畫第一步）；狀態列寫「最關鍵的一步」；評註＝賽後報告那一步的評語（gameReport 的 talk，沒有就照評等）＋一句白話為什麼（05-settings mflWhy）；
+     下面一排「↻ 從這步重下」（rpRetry：同一個難度、練習模式、不算段位；練會了錯棋重練那邊也打勾）、「🧠 練一題「棋理」」（G01，mflDemo）。往前、往後走開就是一般的檢討畫面，走回這一步又出現 */
+  const MK=(()=>{const k=store.get("mflKey",null);return k&&k.c===c&&k.id===id&&k.ply>0?k:null})();
+  let mkC=null;
+  const mkOn=()=>!!(MK&&!FREE&&it&&line===0&&ply===MK.ply-1&&endPly(0)>=MK.ply);
+  function mkData(){const p=MK.ply,m=seq(0,p)[p-1];if(!m)return null;const g=gradeOf(p)||{q:MK.q,loss:MK.loss,bc:MK.bc,bm:MK.bm},q=qNow(g)||g.q||"",key=p+"|"+q+"|"+g.loss;
+    if(mkC&&mkC.key===key)return mkC;const b0=boardAt(0,p-1),side=moverAt(p),W=mflWhy(b0,side,m,g);let best=null,bcn="",tk="";
+    try{best=g.bm&&/^[a-i]\d[a-i]\d$/.test(g.bm)?{f:sqI(g.bm.slice(0,2)),t:sqI(g.bm.slice(2,4))}:g.bc?bcMove(b0,side,g.bc):null;if(best&&(!b0[best.f]||(best.f===m.f&&best.t===m.t)))best=null;if(best)bcn=XQCore.notate(b0,best.f,best.t)}catch(e){best=null}
+    try{const mv=seq(0,endPly(0)).map((x,i)=>{const r=gradeOf(i+1)||{};return{f:x.f,t:x.t,cn:x.cn,by:moverAt(i+1),q:r.q,loss:r.loss,ev:r.ev,bv:r.bv,bmt:r.bmt,pmt:r.pmt,bc:r.bc,bm:r.bm,bp:r.bp,ck:x.ck}}),
+      R=gameReport(it.board,mv).sides[side],t=R&&R.talk.find(x=>x.ply===p&&x.bad);if(t)tk=String(t.x).replace(/^第 \d+ 回合 [^：]*：/,"")}catch(e){}
+    return mkC={key,p,m,g,q,b0,side,best,bcn,tk,why:W.say,tag:W.tag||(typeof weakTheme==="function"?weakTheme():"將軍")}}
+  function mkNote(K){const L=+K.g.loss||0;
+    return[`🔎 這盤最關鍵的一步：第 ${K.p} 步你走「${K.m.cn}」${K.q?`【${K.q}】`:""}`,
+      K.tk?"Pikafish 評語："+K.tk:`比 Pikafish 的首選少了 ${(L/100).toFixed(1)} 兵`+(K.bcn?`，建議「${K.bcn}」`:"")+"。",
+      K.best?`藍色直線箭頭＝Pikafish 建議的走法；${mvArrowName()}＝你實際走的。`:"",
+      "💡 "+(K.why||"想知道為什麼不好？按下面 🔍 分析，看對方最好怎麼應。"),
+      "按 ▶ 看你走完以後的局面；想換一步試試，按「↻ 從這步重下」。"].filter(Boolean).join("\n")}
+  function mkRetry(){const end=endPly(0),ms=mySide(),opp=ms==="r"?it.black:it.red,
+      moves=seq(0,end).map((x,i)=>{const g=gradeOf(i+1)||{};return{f:x.f,t:x.t,cn:x.cn,by:moverAt(i+1),q:qNow(g)||g.q,loss:g.loss,ev:g.ev,bc:g.bc,bm:g.bm,bp:g.bp}}),
+      lx=MK.lx||(c==="play"&&typeof tlOppLv==="function"?tlOppLv(opp):null)||16;
+    rpRetry({c,id,side:ms,opp,moves,lx,t01:{back:location.hash,lx,tag:mkC?mkC.tag:null,ply:MK.ply}},MK.ply)}
   function show(){if(!it)return;const s=seq(line,ply),pos=curPos();
-    const last=FREE?freeLast():s[s.length-1];
+    const KM=mkOn()?mkData():null;   /* T01 關鍵步模式（上面 mkOn） */
+    const last=KM?{f:KM.m.f,t:KM.m.t}:FREE?freeLast():s[s.length-1];
     const hint=AN&&AN.k===posKey(pos)&&AN.lines&&AN.lines[0]?[sqI(AN.lines[0].mv.slice(0,2)),sqI(AN.lines[0].mv.slice(2,4))]:null;
     // 棋譜也有將軍／吃子／開局動畫和音效，小人也會反應（意見回饋 166）：只在「往前一步」時觸發，跳步或倒退不放
     const ckSq=FREE?(last&&last.ck?pos.board.indexOf(pos.side==="r"?"K":"k"):-1):(window.XQCore&&XQCore.inCheck&&XQCore.inCheck(pos.board,pos.side)?pos.board.indexOf(pos.side==="r"?"K":"k"):-1);
@@ -20660,22 +20790,28 @@ function Viewer(v,c,id){
     if(stepFwd&&s.length&&s.every(m=>m&&m.cn)){const cue=openingCue(s);if(cue)setTimeout(()=>openFx(bd.svg,cue[1],cue[0]),350)}
     if(stepFwd&&typeof BOT!=="undefined"&&BOT&&ply===maxPly(line)&&ply>10)setTimeout(()=>{BOT.act("clap");BOT.say("精彩的一盤！",2.4)},900);
     // 這步不是好棋：把 Pikafish 建議的走法（最多 3 步）畫成藍色箭頭
-    let sugg=null;if(!FREE&&ply>0){   // 開著 🔍 分析（橘色虛線框）時也要畫建議箭頭
+    let sugg=null;if(KM)sugg=KM.best?[KM.best]:null;   /* T01 關鍵步模式：只畫 Pikafish 建議的第一步 */
+    else if(!FREE&&ply>0){   // 開著 🔍 分析（橘色虛線框）時也要畫建議箭頭
       const g=gradeOf(ply);if(g&&g.q&&!["正著","妙著","—"].includes(g.q)&&(g.bp&&g.bp.length||g.bm))
       sugg=(g.bp&&g.bp.length?g.bp:[g.bm]).slice(0,3).map(u=>({f:sqI(u.slice(0,2)),t:sqI(u.slice(2,4))}))
       else if(g&&g.bc&&g.q&&!["正著","妙著","—"].includes(g.q)){const m=bcMove(boardAt(line,ply-1),moverAt(ply),g.bc);if(m)sugg=[m]}}
-    players();bd.draw(pos.board,{flip:!!vFlip,last,sel,targets:sel>=0&&LEGAL?LEGAL.list.filter(([f])=>f===sel).map(x=>x[1]):[],hint,check:ckSq,sugg,fx:stepFwd||!!FREE,forceArrow:!!(sugg&&sugg.length)});   /* 意見回饋 607：有建議箭頭時，實際走的那條一定畫（說明寫了「…是實際走的」，設定裡關掉走棋箭頭也要畫） */
+    players();bd.draw(pos.board,{flip:!!vFlip,last,sel,targets:sel>=0&&LEGAL?LEGAL.list.filter(([f])=>f===sel).map(x=>x[1]):[],hint,check:ckSq,sugg,fx:stepFwd||!!FREE,forceArrow:!!(sugg&&sugg.length)||!!KM});   /* 意見回饋 607：有建議箭頭時，實際走的那條一定畫（說明寫了「…是實際走的」，設定裡關掉走棋箭頭也要畫） */
     // 優勢條：分析結果優先，其次是上一步的評等
     let ev=AN&&AN.k===posKey(pos)&&AN.lines&&AN.lines[0]?AN.lines[0].vr:null;
     if(ev==null){const g=FREE?(last&&last.g):ply>0&&gradeOf(ply);if(g&&g.ev!=null)ev=g.ev}
     v.querySelector("#evf").style.width=evPct(ev)+"%";
     const st=v.querySelector("#stat");st.classList.toggle("hot",!!FREE);
     if(FREE)st.textContent=`🔭 ${FREE.src||"自由走棋"}・${FREE.cur}／${FREE.all.length}`+(ev!=null?"・"+evt(ev):"");
+    else if(KM){st.classList.add("hot");st.textContent=`🔎 最關鍵的一步・第 ${KM.p} 步之前，輪到${PLAYER[KM.side]}走`}   /* T01 關鍵步模式 */
     else{const g=ply>0&&gradeOf(ply);st.textContent=ply===0?"開局局面・左右滑棋盤可換步":`${ply<maxPly(line)?"📖 回顧中・":""}第 ${ply}／${maxPly(line)} 步 ${s[ply-1].cn}`+(g?`【${g.q}】`:"")+(ev!=null?"・"+evt(ev):"")}
     const moves=FREE?FREE.all.map(m=>({...m,q:m.g&&m.g.q})):seq(line,endPly(line)).map((m,i)=>{const g=gradeOf(i+1);return{...m,by:moverAt(i+1),q:g&&g.q}});
     renderStrip(v.querySelector("#strip"),moves,FREE?FREE.cur-1:ply-1,FREE?i=>go(i+1):i=>go(i+1));
     // 變著；推演中則改放推演用的按鈕
     const ab=v.querySelector("#alts");ab.innerHTML="";
+    /* T01 關鍵步模式：「↻ 從這步重下」（標準開局擺起、是自己那一方才有，跟賽後報告的 retry 同一個條件）、「🧠 練一題「棋理」」（G01） */
+    if(KM){const mk=(t,fn,main)=>{const b=document.createElement("button");b.className="chip";b.style.cssText="font-family:var(--sans);font-weight:800"+(main?";border-color:var(--accent);color:var(--accent)":"");b.textContent=t;b.onclick=()=>{vibrate(5);fn()};ab.append(b)};
+      if((c==="play"||c==="pvp")&&isStdStart(it.board)&&mySide()===KM.side)mk("↻ 從這步重下",mkRetry,true);
+      mk("🧠 練一題「"+KM.tag+"」",()=>mflDemo(KM.tag,location.hash))}
     if(FREE){for(const[t,fn]of[["⏩ 繼續推演",contLine],["💾 存成棋譜",saveLine],["✕ 回到棋譜",()=>{FREE=null;AN=null;sel=-1;show()}]]){const b=document.createElement("button");b.className="chip";b.style.fontFamily="var(--sans)";b.textContent=t;b.onclick=()=>{vibrate(5);fn()};ab.append(b)}}
     if(!FREE){const alts=alternatives(ply+1);if(alts.length>1){const lb=document.createElement("span");lb.className="muted";lb.style.cssText="flex:none;align-self:center;font-size:12px";lb.textContent="下一步變著：";ab.append(lb);
       for(const g of alts){const mine=g.ids.includes(line),b=document.createElement("button");b.className="chip var"+(mine?" on":"");b.textContent=g.m.cn;b.onclick=()=>go(ply+1,mine?line:g.ids[0]);ab.append(b)}}}
@@ -20688,6 +20824,7 @@ function Viewer(v,c,id){
       note.textContent=!m?`起點局面（第 ${FREE.base} 步之後）。按 ▶ 或往左滑，一步一步看${FREE.src&&FREE.src.startsWith("Pikafish")?" Pikafish 怎麼預判、在哪裡埋伏":""}；點棋子可以自己改走。`
         :`${FREE.base+FREE.cur}. ${PLAYER[m.by]} ${m.cn}`+(m.tags&&m.tags.length?`【${m.tags.join("、")}】`:"")+(g&&g.q&&g.q!=="—"?`　${g.q}`:"")
          +(g&&g.q&&g.q!=="正著"&&g.q!=="妙著"&&g.bc?`\nPikafish 認為更好的是：${g.bc}`:"")}
+    else if(KM)note.textContent=mkNote(KM);   /* T01 關鍵步模式 */
     else{const ck=owner(line,ply)+"_"+ply,g=ply>0&&gradeOf(ply);
       note.textContent=[ply===0?(it.comments["0_0"]||it.note||""):it.comments[ck]||"",ply>0?gradeNote(g,boardAt(line,ply-1)):""].filter(Boolean).join("\n")||(ply===0?"點棋子可以自由走棋；按 🔍 看 Pikafish 分析。":"")}
     if(FREE){acts.first.disabled=acts.prev.disabled=FREE.cur===0;acts.next.disabled=acts.last.disabled=FREE.cur>=FREE.all.length}
@@ -20756,10 +20893,11 @@ function Viewer(v,c,id){
     {const oh=c==="pvp"?oppHist().find(h=>h.rid===id):null;
     setTop(title(),dbBack,[["🔄",()=>{vFlip=!vFlip;vibrate(5);show()},"翻轉棋盤"],...(oh?[["👤",()=>oppCard(oh.oid,oh.opp),"對手資料"]]:[]),["📊",()=>report(),"賽後報告"],["ℹ",()=>info(),"棋局資訊"]])}
     const r=store.get("recent",[]).find(x=>x.c===c&&x.id===id);ply=r&&r.ply?Math.min(r.ply,endPly(0)):it.jump?Math.min(+it.jump||0,endPly(0)):0;   /* 意見回饋 310：妙棋精選第一次打開就停在妙棋那一步 */
-    const oa=store.get("openAt",null);if(oa&&oa.c===c&&oa.id===id){store.set("openAt",null);ply=Math.min(oa.ply,endPly(0));setTimeout(()=>toast(`從第 ${ply} 步開始：${oa.why}（可以往前看）`),400)}
+    const oa=store.get("openAt",null);if(oa&&oa.c===c&&oa.id===id){store.set("openAt",null);ply=Math.min(oa.ply,endPly(0));if(!oa.mfl)setTimeout(()=>toast(`從第 ${ply} 步開始：${oa.why}（可以往前看）`),400)}
     show();remember();if(typeof rdOpen==="function")rdOpen(c,id);   /* 意見回饋 737 第二期：記下打開讀過這盤（只存 id） */
     loadGrades().then(()=>{if(store.get("openReport")===c+"/"+id){store.set("openReport",null);report(true)}})}).catch(e=>{v.querySelector("#note").textContent="⚠ "+e.message});
   return self}
+
 
 
 
