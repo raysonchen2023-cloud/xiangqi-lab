@@ -1379,7 +1379,7 @@ html[data-hicon] .tabbar button.on{box-shadow:inset 0 -3px 0 currentColor}
       if(!window.caches)return go();caches.keys().then(function(ks){return Promise.all(ks.filter(function(k){return k.indexOf("xqlab-app-")===0}).map(function(k){return caches.delete(k)}))})
         .then(function(){return navigator.serviceWorker&&navigator.serviceWorker.getRegistration()}).then(function(r){return r&&r.update()}).catch(function(){}).then(go)}};setTimeout(chk,4000)})();
 </script>
-<script>window.XQ_OFFLINE=true;window.XQ_BUILD="20261111-1900";</script>
+<script>window.XQ_OFFLINE=true;window.XQ_BUILD="20261111-1915";</script>
 <script src="core.js"></script>
 <script src="engine.js"></script>
 <script src="local.js"></script>
@@ -5775,7 +5775,7 @@ function parkDraw(host,bd,board,o,ex){
   if(PARK&&(PARK.era!==store.get("era","classic")||(PARK.bg||null)!==(ex.bg||null))){PARK.v.destroy();PARK=null}   // 換了朝代（例如從集章簿換過去）：公園重建
   if(!PARK||PARK.host!==host||!document.body.contains(PARK.v.el)){if(PARK)PARK.v.destroy();
     if(ex.gate&&ex.gate.qk)ex.gate=Object.assign({},ex.gate,{quote:parkQuote(ex.gate.qk)});   /* 名言只在真的建公園、要顯示過場時才抽，不然每次重畫都抽一次，會跟上次重複 */
-    const pv=XQPark3D.create(host,{arena:ex.arena||null,gate:ex.gate||null,bg:ex.bg||null,onTap:i=>ex.tap(i),onInfo:k=>parkInfo(k),onDestroy:()=>{if(PARK&&PARK.v===pv){PARK=null;botVis(true)}}});
+    const pv=XQPark3D.create(host,{arena:ex.arena||null,gate:ex.gate||null,bg:ex.bg||null,bridge:!!ex.bridge,ground:ex.ground||null,era:ex.era||null,indoor:!!ex.indoor,   /* 11/11：車輪戰棋館＝明朝家具、室內（不放園子的樹和道具） */   /* 11/11：首頁橋上石桌（07y hbBridge）＝橋上家具＋橋面地面；換場景靠 bg 不同就會重建 */onTap:i=>ex.tap(i),onInfo:k=>parkInfo(k),onDestroy:()=>{if(PARK&&PARK.v===pv){PARK=null;botVis(true)}}});
     if(!pv){toast("這台裝置沒辦法顯示 3D，先用棋盤模式");store.set("park3d",false);return}PARK={host,v:pv,era:store.get("era","classic"),bg:ex.bg||null};parkUi(host,pv);setTimeout(()=>{try{pv.say(`我是${BOTN()}，幫你加油！`,2.6);if(ex.oppHello)setTimeout(()=>pv.oppSay(ex.oppHello,2.6),1400)}catch(e){}},700)}
   /* 意見回饋 417：園子上方標出朝代和那個朝代對園子的叫法（例如「唐朝・園林」「漢朝・苑囿」） */
   {let tg=host.querySelector(".pkname");if(!tg){tg=document.createElement("div");tg.className="pkname";if(getComputedStyle(host).position==="static")host.style.position="relative";host.append(tg)}const k=store.get("era","classic");tg.textContent=ex.bgName||((k==="classic"?"經典":eraLabel(k))+"・"+(PW[k]||"園子"));tg.hidden=false}
@@ -19527,7 +19527,9 @@ function SimulPage(v){
   {const ev=v.querySelector(".evline");if(ev)ev.style.display="none"}
   let S=null,cur=0,sel=-1,busy=false,shownDone=null,live=true,pinAt=0,holdAt=0,setupShown=false;
   const bd=Board(i=>tap(i));v.querySelector("#bbox").append(bd.svg);v.querySelector("#bbox").style.position="relative";
-  setTop("🀄 車輪戰","#/hub/battle",[["＋",()=>setup(),"重開一場"]]);
+  /* 開發者 11/11 hspx「讓車輪戰也能有對戰的環景切換功能」：標題列加一般對局那顆 🌳／▦（共用 park3d 設定），3D 時在棋館二樓大廳下（環景 data/park/simul_360.webp、木地板 data/pano/simul_ground.webp）；
+     3D 棋客（Tripo）還沒做好，對手先由 3D 場景預設 */
+  setTop("🀄 車輪戰","#/hub/battle",[["＋",()=>setup(),"重開一場"],...(typeof parkBtn==="function"?[parkBtn(()=>paint())]:[])]);
   const acts=actionBar(v.querySelector("#acts"),[["new","＋","重開",()=>setup(),true],
     ["resign","🏳","這桌認輸",()=>{const t=T();if(!t||t.result)return toast("這桌已經下完");confirmBox(`第 ${cur+1} 桌認輸？`,()=>post("/simul/resign",{i:cur}),"認輸")}],
     ["all","⏹","全部結束",()=>{if(!S||S.none||S.done)return toast("這一場已經下完");confirmBox("還沒下完的桌子都算認輸，確定結束這一場？",()=>post("/simul/resignall"),"結束")}]]);
@@ -19574,7 +19576,8 @@ function SimulPage(v){
     tabs.querySelectorAll("[data-i]").forEach(b=>b.onclick=()=>{vibrate(5);pinAt=Date.now();cur=+b.dataset.i;sel=-1;paint()});
     {const on=tabs.querySelector(".on");if(on&&on.scrollIntoView)try{on.scrollIntoView({block:"nearest",inline:"nearest"})}catch(e){}}
     const t=T(),done=S.tb.filter(x=>x.result).length,c={w:0,d:0,l:0};for(const x of S.tb){const r=resOf(x);if(r)c[r]++}
-    bd.draw(t.board,{last:t.moves[t.moves.length-1],sel,targets:sel>=0?t.legal.filter(([f])=>f===sel).map(x=>x[1]):[],check:t.check,fx:true});
+    {const o={last:t.moves[t.moves.length-1],sel,targets:sel>=0?t.legal.filter(([f])=>f===sel).map(x=>x[1]):[],check:t.check,fx:true};bd.draw(t.board,o);
+      if(typeof parkDraw==="function")try{parkDraw(v.querySelector("#bbox"),bd,t.board,o,{tap:i=>tap(i),bg:"data/park/simul_360.webp",ground:"data/pano/simul_ground.webp",bgName:"🀄 車輪戰・棋館",era:"ming",indoor:true})}catch(e){}}
     v.querySelector("#pTop").innerHTML=playerHTML("b",`第 ${t.i+1} 桌・${t.name||"棋客"}`,`第 ${t.level} 級棋客`);
     v.querySelector("#pBot").innerHTML=playerHTML("r",meName(),`車輪戰 ${S.n} 盤・下完 ${done}／${S.n}${done?`・${c.w} 勝 ${c.d} 和 ${c.l} 負`:""}`);
     const r=resOf(t);v.querySelector("#stat").textContent=r?`第 ${t.i+1} 桌：${RES[r]}（${t.result.why}）`:t.turn==="r"?(t.check>=0?`⚠ 第 ${t.i+1} 桌被將軍！`:`👉 第 ${t.i+1} 桌輪到你`):S.engFail?"電腦棋手還沒準備好，稍後自動再試…":"🤔 棋客在想…可以先去別桌";

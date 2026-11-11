@@ -766,11 +766,20 @@
     const f=(F[EK]||F.classic)();
     let F3D=false;   /* 意見回饋 559：已經做了 3D 長椅、石凳（地面抬高的朝代），就不要再疊手繪的長椅、鼓凳圖，兩個擠在同一個位置看起來像破圖 */
     const PP=PROP_IMG[EK],STOOLS=[[-14.5,1.5],[14.5,-1.5]],LAMPS=[-1,1].map(sx=>[sx,sx*8.1,-17.5]),DT=-9.35;   // DT＝手繪長榻的台座頂面高度
-    f.table();
-    if(PP&&X.FL==null){if(f.dais)f.dais(DT,15,5.4);else bx(X.stone2,0,(GY+DT)/2,BZ,15,DT-GY,5.4,null,4)}   /* 地面抬高後長榻直接放在地上，不用台座 */
+    if(X.bridge)F.classic().table();else f.table();
+    /* 室內（車輪戰棋館）：桌子照這一朝（車輪戰指定明朝＝木方桌），兩張木凳；不放長榻、燈、手繪道具 */
+    if(X.indoor){F3D=true;for(const[x,z]of STOOLS){K.at(x,0,z);OX=x;OZ=z;f.stool()}}   /* 11/11：橋上用圓石桌（首頁橋上畫的是圓石桌），不用這一朝花園的木桌 */
+    /* 開發者 11/11（首頁橋上石桌，Gemini 75 方案 A「溯江望槎」）：X.bridge＝在渡口青石拱橋中央下——只有石桌和兩張青石鼓凳，左右各一道宋式素面矮石欄（尋杖欄板），
+       不放這一朝花園的長榻、燈、手繪道具和樹（那些是後園的東西） */
+    if(X.indoor){}
+    else if(X.bridge){F3D=true;const FY=X.FL!=null?X.FL:GY;
+      for(const[x,z]of STOOLS){K.at(x,0,z);OX=x;OZ=z;ct(X.stone,0,GY+6.7,0,1.9,2.25,13.4,28);for(const y of[FY+1.2,GY+12.2])tor(X.stone2,0,y,0,2.2,.16,TAU,null,32)}
+      K.at();OX=OZ=0;for(const sx of[-1,1]){const x=sx*21;bx(X.stone2,x,FY+4.6,-3,.7,.7,34,null,4);bx(X.stone,x,FY+2.3,-3,.45,3.6,34,null,4);
+        for(let z=-19;z<=13;z+=8)bx(X.stone2,x,FY+2.6,z,1.3,5.2,1.3,null,4)}}
+    else if(PP&&X.FL==null){if(f.dais)f.dais(DT,15,5.4);else bx(X.stone2,0,(GY+DT)/2,BZ,15,DT-GY,5.4,null,4)}   /* 地面抬高後長榻直接放在地上，不用台座 */
     else{F3D=true;f.bench();for(const[x,z]of STOOLS){K.at(x,0,z);OX=x;OZ=z;f.stool()}for(const[sx,x,z]of LAMPS){OX=x;OZ=z;K.at(OX,0,OZ);f.lamp(sx)}}
     K.at();K.build(root);OX=OZ=0;
-    if(PP)paint();
+    if(PP&&!X.bridge&&!X.indoor)paint();
     // ---- 手繪道具立牌：一張去背圖貼在平面上，轉向座位（鏡頭只在座位上轉頭，不會走動，所以永遠看到正面）；
     // tilt＝往後仰多少（0＝直立、1＝整張正對鏡頭），下緣貼地／貼桌；不投影（平的，影子會穿幫），腳下改放一團柔和的接觸陰影
     function paint(){const base="data/park3d/"+EK+"/",CAMP=new T.Vector3(0,16,9.2),GY=X.FL!=null?X.FL:X.GY,BS=X.FL!=null?Math.max(.4,(SY-X.FL)/(SY-DT)):1;   /* BS＝地面抬高後凳子、長榻跟著縮小的比例（坐的高度不變） */   /* 道具都站在（抬高後的）地面上 */
@@ -958,7 +967,8 @@
       const bg=veil.querySelector(".gt-bg");(function tryI(i){if(i>=imgs.length)return;const im=new Image();im.onload=()=>{bg.style.backgroundImage="url("+imgs[i]+")"};im.onerror=()=>tryI(i+1);im.src=imgs[i]})(0)}
     el.append(veil);try{if(veil.querySelector(".gt-t,.ag-t")&&window.XQ_DRUM)window.XQ_DRUM(eraKey(),opt.arena?"arena":"gate")}catch(e){}   /* 意見回饋 499：過場敲一段朝代的鼓和鑼 */
     hint.textContent="點棋子走棋・點物件看介紹・拖曳轉頭・兩指縮放";el.append(hint);if(veil._qmin)hint.style.opacity=0;else setTimeout(()=>hint.style.opacity=0,4500);   /* 有名言的過場：操作提示等過場收掉才出現 */
-    const EK=eraKey(),E=ERA[EK];
+    /* 開發者 11/11 hspx「讓車輪戰也能有對戰的環景切換功能」：opt.era＝指定朝代（車輪戰在江南棋館，用明朝的家具和配色）；opt.indoor＝室內（不放樹、手繪道具、落葉、長榻和燈，只有木桌和兩張木凳） */
+    const EK=opt.era&&ERA[opt.era]?opt.era:eraKey(),E=ERA[EK];
     el.style.background=E.mist;
     let WX=null,CANO=null,MAPL=null,PANM=null,PANDH=0,PANROT=0,PSPOTS=null,MAPM=null,HILL=null,lastKf=-1,MAPO=[],MAPOK="",MAPP=null,MAPMN=0,RON=(()=>{try{return JSON.parse(localStorage.getItem("m_eramapRealm")||"true")!==false}catch(e){return true}})();   /* 地圖上的地名：[名字, x%, y%, 種類]；長卷的網格、圖高、地標（意見回饋 517、525） */
     let RTF=null,RTK="",RTS=null,RTP=null,RTT=0,RTA=0;   /* 意見回饋 658（B 輿圖遊歷）：路線圖層的重畫函式、目前畫的版本、各站位置（點得到）、左下角的提示、上次檢查的時間、上一格地圖的透明度 */
@@ -995,7 +1005,7 @@
     const stone=M(0xffffff,{map:stoneTex("#8C8478",2),roughness:.85}),stone2=M(0xffffff,{map:stoneTex("#776F64",2),roughness:.9});
     const pave=new T.Mesh(new T.CircleGeometry(TR,64),M(0xffffff,{map:paveTex(),roughness:.95}));pave.rotation.x=-PI/2;pave.position.y=FL;pave.receiveShadow=true;sc.add(pave);
     /* 意見回饋 359：朝代的地面（data/pano/<朝代>_ground.webp，Gemini 畫的俯視地面）鋪在石板平台上；頭頂加一個天頂圓（_sky.webp，魚眼天空、邊緣淡出），鏡頭壓低往上看也是畫的天空 */
-    {const gs="data/pano/"+EK+"_ground.webp",gp=()=>{const im=imgCache[gs];if(!im||!im.naturalWidth||!el.isConnected)return;const t=srgb(new T.Texture(im));t.anisotropy=ANI;t.needsUpdate=true;pave.material.map=t;pave.material.needsUpdate=true};if(loadImg(gs,gp))setTimeout(gp,0);
+    {const gs=typeof opt.ground==="string"&&/^data\/[\w\/.-]+\.webp$/.test(opt.ground)?opt.ground:"data/pano/"+EK+"_ground.webp",   /* 11/11：opt.ground＝指定地面（首頁橋上石桌＝橋面條石） */gp=()=>{const im=imgCache[gs];if(!im||!im.naturalWidth||!el.isConnected)return;const t=srgb(new T.Texture(im));t.anisotropy=ANI;t.needsUpdate=true;pave.material.map=t;pave.material.needsUpdate=true};if(loadImg(gs,gp))setTimeout(gp,0);
       const ss="data/pano/"+EK+"_sky.webp",sp=()=>{const im=imgCache[ss];if(!im||!im.naturalWidth||!el.isConnected)return;const TM=1.3,   /* 意見回饋 421：長卷抬高後，天頂圓淡出的那圈收到長卷上緣以上（原本 1.75 會蓋到山頭） */R0=PAN.r-6,g=new T.SphereGeometry(R0,64,24,0,TAU,0,TM),P=g.attributes.position,U=g.attributes.uv;
         for(let i=0;i<P.count;i++){const x=P.getX(i),y=P.getY(i),z=P.getZ(i),th=Math.acos(clamp(y/R0,-1,1)),ph=Math.atan2(z,x),k=th/TM*.5;U.setXY(i,.5+k*Math.cos(ph),.5+k*Math.sin(ph))}U.needsUpdate=true;
         const t=srgb(new T.Texture(im));t.needsUpdate=true;const cap=new T.Mesh(g,new T.MeshBasicMaterial({map:t,side:T.BackSide,transparent:true,depthWrite:false,fog:false,toneMapped:false}));cap.renderOrder=-.5;sc.add(cap);FARHIDE.push(cap)};if(loadImg(ss,sp))setTimeout(sp,0)}
@@ -1158,7 +1168,7 @@
     const infos=[];   // 意見回饋 240：點得到、會跳說明的物件
     const bills=[];   // 意見回饋 375：鏡頭可以繞著桌子轉，貼圖（道具、座椅）每一格都轉向鏡頭
     const fades=[];   /* 意見回饋 421：轉頭時剛好擋在畫面正中間、桌子後面的樹，淡成水墨的薄影，讓遠景透出來 */
-    const furn=buildFurn(EK,E,{sc,M,GY,FL,SY,BZ,BL,stone,stone2,iron,infos,bills,fades});
+    const furn=buildFurn(EK,E,{sc,M,GY,FL,SY,BZ,BL,stone,stone2,iron,infos,bills,fades,bridge:!!opt.bridge,indoor:!!opt.indoor});
     // 木棋盤嵌在桌上：深色實木框，和灰色石桌對比清楚
     const wood=M(furn.frame,{roughness:.55});mesh(new T.BoxGeometry(BW+.5,.6,BH+.5),wood,[0,.24,0]);mesh(new T.BoxGeometry(BW+.62,.08,BH+.62),wood,[0,-.0,0]);   // 厚木棋盤＋底座線腳（意見回饋 215）
     const btex=boardTex(()=>{try{btex.image.getContext("2d").clearRect(0,0,1,1);drawBoard(btex.image.getContext("2d"),btex.image.width,btex.image.height,null);btex.needsUpdate=true}catch(e){}});const bplane=new T.Mesh(new T.PlaneGeometry(BW,BH),new T.MeshStandardMaterial({map:btex,roughness:.6}));bplane.rotation.x=-PI/2;bplane.position.y=TOP-.02+.03;bplane.receiveShadow=true;sc.add(bplane);
@@ -1168,11 +1178,11 @@
       const tea=new T.Mesh(new T.CircleGeometry(.47,32),M(0x9C6B1E,{roughness:.1}));tea.rotation.x=-PI/2;tea.position.y=.66;cup.add(tea);cup.traverse(o=>{if(o.isMesh){o.castShadow=true;o.receiveShadow=true;o.userData.info="cup";infos.push(o)}});return cup};   /* 意見回饋 348：3D 茶杯也點得到 */
     teaCup(0,-6.85);teaCup(.4,7.0);   // 意見回饋 219：Pikafish 的茶在它面前正中間、我的茶在我面前正中間
     // 平台上的樹（依朝代：松、柳、竹）：水墨畫的看板（兩種筆法輪流），放在兩側，轉頭時當前景框；不投影（畫是平的，影子會穿幫）
-    if(!PROP_IMG[EK]){const seat=new T.Vector3(0,16,9.2),barkM=M(0xffffff,{map:barkTex(E,E.tree),roughness:.95}),folM=new T.MeshBasicMaterial({map:foliageTex(E,E.tree,EK.length*131+7),transparent:true,alphaTest:.02,depthWrite:false,side:T.DoubleSide,toneMapped:false});
+    if(!PROP_IMG[EK]&&!opt.bridge&&!opt.indoor){const seat=new T.Vector3(0,16,9.2),barkM=M(0xffffff,{map:barkTex(E,E.tree),roughness:.95}),folM=new T.MeshBasicMaterial({map:foliageTex(E,E.tree,EK.length*131+7),transparent:true,alphaTest:.02,depthWrite:false,side:T.DoubleSide,toneMapped:false});
       // 位置（意見回饋 233）：放在平台邊、斜後方，當轉頭時畫面的框，不再一棵大樹擋住整個側面
       [[-14.8,-13.2,.95,11],[17.8,-8.2,.9,29],[-19.2,3.2,.72,53]].forEach(([x,z,k,sd])=>sc.add(inkTree3D(E,E.tree,EK.length*97+sd,new T.Vector3(x,GY,z),seat,k,barkM,folM)))}
     // 落葉（朝代色系的花瓣／葉子），在畫面外圍飄
-    const falling=[];{const lg=new T.PlaneGeometry(.5,.34),cols=[E.acc2,0xD9A548,0xC98A3A];for(let i=0;i<8;i++){const l=new T.Mesh(lg,new T.MeshStandardMaterial({color:new T.Color(cols[i%3]),side:T.DoubleSide,roughness:1}));
+    const falling=[];{const lg=new T.PlaneGeometry(.5,.34),cols=[E.acc2,0xD9A548,0xC98A3A];for(let i=0;i<(opt.indoor?0:8);i++){const l=new T.Mesh(lg,new T.MeshStandardMaterial({color:new T.Color(cols[i%3]),side:T.DoubleSide,roughness:1}));
       l.userData={x:(Math.random()-.5)*40,z:-12-Math.random()*20,y:Math.random()*30,s:.6+Math.random()*.8,ph:Math.random()*TAU};sc.add(l);falling.push(l)}}
 
     /* 開發者 11/8（畫風盤點第 3 條：園子的道具、地面是寫實貼圖，跟水墨小人、水墨長卷打架）：園子也套小人那套水墨材質（A 版）。

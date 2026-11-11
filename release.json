@@ -1,8 +1,8 @@
 {
- "version": "20261111-1900",
- "checkedAt": "2026-11-11T08:38:37.782Z",
- "html": "033ec5f6c881",
- "sw": "649a49cfdaa0",
+ "version": "20261111-1915",
+ "checkedAt": "2026-11-11T08:48:14.101Z",
+ "html": "ee32659e3636",
+ "sw": "cdc05f370984",
  "scripts": 4,
  "modules": {
   "00-util.js": "126bc94fef49",
@@ -13,7 +13,7 @@
   "04c-weekly.js": "326899d53f7b",
   "05-settings.js": "6f9372e7e6bd",
   "05b-save.js": "d094a7b19433",
-  "06-cpu.js": "ef6ed708d62a",
+  "06-cpu.js": "17518198f48c",
   "06c-cup.js": "892d1ff0445e",
   "07-legend.js": "747368599376",
   "07c-canju.js": "b5814e42c038",
@@ -76,7 +76,7 @@
   "07w9-exits.js": "c4bdeaba272f",
   "08-scene.js": "a96e78c130fc",
   "08b-cpugame.js": "ce4d775085fd",
-  "08s-simul.js": "1be93bdcd0bb",
+  "08s-simul.js": "6b24a75f36ca",
   "09-askbot.js": "c9ffd49177d5",
   "09b-preload.js": "2df208d2b018",
   "10-db.js": "6950a4940c20",
@@ -86,11 +86,6 @@
   "07q2-coop.js": "8b666670e73c"
  },
  "differsFromSource": [
-  {
-   "module": "06-cpu.js",
-   "lines": 1,
-   "sourceModified": "2026-11-11T05:08:57.269Z"
-  },
   {
    "module": "07y-hubmap.js",
    "lines": 5,
