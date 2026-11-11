@@ -1,8 +1,8 @@
 {
- "version": "20261111-1815",
- "checkedAt": "2026-11-11T08:13:12.600Z",
- "html": "4f209c2e7dbf",
- "sw": "edd30e65dd2d",
+ "version": "20261111-1830",
+ "checkedAt": "2026-11-11T08:29:11.921Z",
+ "html": "1330653ec674",
+ "sw": "db5b207d36b5",
  "scripts": 4,
  "modules": {
   "00-util.js": "126bc94fef49",
@@ -79,7 +79,7 @@
   "08s-simul.js": "1be93bdcd0bb",
   "09-askbot.js": "c9ffd49177d5",
   "09b-preload.js": "2df208d2b018",
-  "10-db.js": "10823cc6e20f",
+  "10-db.js": "6950a4940c20",
   "10b-libmap.js": "82886e7ab142",
   "10c-deskmap.js": "0fbcb6b36d55",
   "11-watch.js": "080d7fb62340",

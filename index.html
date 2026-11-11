@@ -1379,7 +1379,7 @@ html[data-hicon] .tabbar button.on{box-shadow:inset 0 -3px 0 currentColor}
       if(!window.caches)return go();caches.keys().then(function(ks){return Promise.all(ks.filter(function(k){return k.indexOf("xqlab-app-")===0}).map(function(k){return caches.delete(k)}))})
         .then(function(){return navigator.serviceWorker&&navigator.serviceWorker.getRegistration()}).then(function(r){return r&&r.update()}).catch(function(){}).then(go)}};setTimeout(chk,4000)})();
 </script>
-<script>window.XQ_OFFLINE=true;window.XQ_BUILD="20261111-1815";</script>
+<script>window.XQ_OFFLINE=true;window.XQ_BUILD="20261111-1830";</script>
 <script src="core.js"></script>
 <script src="engine.js"></script>
 <script src="local.js"></script>
@@ -20445,8 +20445,13 @@ function Viewer(v,c,id){
       const why=[];
       /* 意見回饋 284：先看棋局是怎麼結束的（超時、斷線、離開、認輸…），再用當時局面補充，不要硬說成認輸 */
       const R=String(it.result||""),wS=/^紅/.test(R)?"紅方":/^黑/.test(R)?"黑方":null,lS=wS==="紅方"?"黑方":wS==="黑方"?"紅方":null,rs=(R.match(/（(.*)）/)||[])[1]||"";
+      /* 開發者 11/11 截圖（夢入神機第 1 局，紅傌已將死黑將，卻寫「Pikafish 評分均勢，可能看錯才認輸」）：殺棋局面輪到的一方沒有著法，引擎回不出分數就被當成 0＝均勢。
+         先用規則判斷最後局面：輪到的一方沒有合法著＝已經分出勝負（被將軍＝將死，沒被將軍＝困斃，象棋無子可動也算輸），直接這樣寫，也不再提「讓 Pikafish 接著下」 */
+      let term="";try{const XC=window.XQCore,sd=pos.side;if(XC&&sd&&!XC.legal(pos.board,sd).length)term=XC.inCheck(pos.board,sd)?"mate":"stuck"}catch(e){}
+      const tLose=pos.side==="r"?"紅方":"黑方",tWin=pos.side==="r"?"黑方":"紅方";
       const evNote=cz=>a>=20000?`當時 Pikafish 算出${who}已經有殺棋。`:a<80?`當時局面還算平衡（${evt(ev)}），勝負是規則決定的，不是棋下輸了。`:who===wS?`當時局面 Pikafish 也認為${wS}較好（${evt(ev)}）。`:`其實當時 Pikafish 認為${lS}還佔上風（${evt(ev)}），可惜${cz}，還是算輸。`;
-      if(kind!=="d"&&wS&&/超時|時間用完|沒走/.test(rs)){why.push(`${lS}${/時間用完/.test(rs)?"的總時間用完了":"超過 3 分鐘沒有走下一步"}（可能是想太久、斷線或離開了 App），依照比賽規則判${lS}負、${wS}勝。`);why.push(evNote("沒在時間內走棋"))}
+      if(term)why.push(term==="mate"?`${tLose}已經被將死：${tWin}正在將軍，${tLose}不管怎麼走都躲不掉，所以${tWin}勝。`:`${tLose}已經無路可走（困斃）：雖然沒有被將軍，但每一步都走不了；照象棋規則，無子可動就算輸，所以${tWin}勝。`);
+      else if(kind!=="d"&&wS&&/超時|時間用完|沒走/.test(rs)){why.push(`${lS}${/時間用完/.test(rs)?"的總時間用完了":"超過 3 分鐘沒有走下一步"}（可能是想太久、斷線或離開了 App），依照比賽規則判${lS}負、${wS}勝。`);why.push(evNote("沒在時間內走棋"))}
       else if(kind!=="d"&&wS&&/離開|斷線|離線/.test(rs)){why.push(`${lS}在對局中離開了（關掉對局畫面、離開 App 或斷線太久），依照規則算${lS}輸。`);why.push(evNote("中途離開"))}
       else if(/中止|取消/.test(R)){why.push("這盤在雙方還沒分出勝負前就中止了（例如對方離線太久），不計勝負、也不計分。")}
       else if(a>=20000)why.push(`Pikafish 算出 ${who}已經有殺棋，所以另一方認輸。`);
@@ -20463,9 +20468,9 @@ function Viewer(v,c,id){
       b.innerHTML=`<div class="card" style="margin-bottom:10px"><div class="muted">最後局面（第 ${ply} 步後）・比賽結果：${esc(it.result||"")}</div>
         <div style="margin-top:6px"><span class="rn">紅方</span>：${esc(m.r)}<br>黑方：${esc(m.b)}</div></div>
         ${why.map(t=>`<p style="line-height:1.7;margin:0 0 8px">${esc(t)}</p>`).join("")}
-        <p class="muted" style="font-size:13px">想親眼看：讓 Pikafish 幫雙方接著下，看局面會不會有變化。</p>
-        <button class="btn" id="wgo">▶ 讓 Pikafish 雙方接著下 30 步</button>`;
-      b.querySelector("#wgo").onclick=async()=>{const bt=b.querySelector("#wgo");bt.disabled=true;bt.textContent="Pikafish 推演中…（約 20 秒）";
+        ${term?"":`<p class="muted" style="font-size:13px">想親眼看：讓 Pikafish 幫雙方接著下，看局面會不會有變化。</p>
+        <button class="btn" id="wgo">▶ 讓 Pikafish 雙方接著下 30 步</button>`}`;
+      if(b.querySelector("#wgo"))b.querySelector("#wgo").onclick=async()=>{const bt=b.querySelector("#wgo");bt.disabled=true;bt.textContent="Pikafish 推演中…（約 20 秒）";
         try{FREE={start:pos,all:[],cur:0,base:ply,src:"Pikafish 雙方接著下"};AN=null;sel=-1;
           await extendLine(30);if(!FREE)return;FREE.all=FREE.all.slice(0,30);const n=FREE.all.length;FREE.cur=0;closeSheet();show();gradeFree();
           let tail="";try{const e2=await api("/an/engine",{...freeAt(FREE.all.length),ms:1500,multipv:1});const v2=e2.lines&&e2.lines[0]?e2.lines[0].vr:null;
@@ -20591,6 +20596,7 @@ function Viewer(v,c,id){
     show();remember();if(typeof rdOpen==="function")rdOpen(c,id);   /* 意見回饋 737 第二期：記下打開讀過這盤（只存 id） */
     loadGrades().then(()=>{if(store.get("openReport")===c+"/"+id){store.set("openReport",null);report(true)}})}).catch(e=>{v.querySelector("#note").textContent="⚠ "+e.message});
   return self}
+
 
 
 
