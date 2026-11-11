@@ -319,6 +319,8 @@ var XQNet=(function(){
     playerBot(sd){if(!G)return null;const x=people[sd==="r"?G.red.id:G.black.id];return x&&x.bot||null},
     oppOnline(){if(!G||!side())return false;const o=oppOf(side());return onl(o==="r"?G.red.id:G.black.id)},
     leave(){endOnLeave();if(cur&&cli&&cli.up)cli.unsub(gt(cur.gid));cur=null;G=null;ls.set("net",null);presence()},
+    /* 開發者 11/11 選「刪除本機資料按鈕」：刪資料前，把伺服器上保留的戰績摘要和在線狀態清掉（送空的保留訊息） */
+    forget(){try{if(cli&&cli.up){const m=me();cli.pub(`${ROOT}/h/${m.id}`,"",true);cli.pub(`${ROOT}/u/${m.id}`,"",true);return true}}catch(e){}return false},
     // 對局有變化：發布新狀態（rev 越大越新）
     update(fn){if(!G)throw new Error("還在等對局資料，稍等一下");const wasEnd=!!G.result,n=JSON.parse(JSON.stringify(G));fn(n);n.rev=G.rev+1;n.at=Date.now();if(n.moves.length!==G.moves.length||n.gid!==G.gid)arr={n:n.moves.length,t:n.at};seenAt=n.at;G=n;pubGame();if(!!G.result!==wasEnd)presence();record();emit("game");return G},
     rating(){const R=rec(),i=rankIdx(R.pts),nx=RANKS[i+1];return{pts:R.pts,rank:RANKS[i][0],w:R.w,l:R.l,d:R.d,next:nx?nx[0]:null,toNext:nx?nx[1]-R.pts:0,lo:RANKS[i][1],hi:nx?nx[1]:null,hist:R.hist}},
