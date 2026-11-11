@@ -1379,7 +1379,7 @@ html[data-hicon] .tabbar button.on{box-shadow:inset 0 -3px 0 currentColor}
       if(!window.caches)return go();caches.keys().then(function(ks){return Promise.all(ks.filter(function(k){return k.indexOf("xqlab-app-")===0}).map(function(k){return caches.delete(k)}))})
         .then(function(){return navigator.serviceWorker&&navigator.serviceWorker.getRegistration()}).then(function(r){return r&&r.update()}).catch(function(){}).then(go)}};setTimeout(chk,4000)})();
 </script>
-<script>window.XQ_OFFLINE=true;window.XQ_BUILD="20261111-1130";</script>
+<script>window.XQ_OFFLINE=true;window.XQ_BUILD="20261111-1200";</script>
 <script src="core.js"></script>
 <script src="engine.js"></script>
 <script src="local.js"></script>
@@ -4676,6 +4676,17 @@ function gameLayout(v){
   v.className="view fixed";
   v.innerHTML=`<div class="player" id="pTop"></div><div class="evline"><div id="evf"></div></div><div class="boardbox" id="bbox"></div>
    <div class="player" id="pBot"></div><div class="status" id="stat"></div><div class="strip" id="strip"></div><div style="flex:1"></div><div class="actions" id="acts"></div>`;}
+/* 開發者 11/11 選 ChatGPT UI 報告 UI-01：手機橫放（高度不到 600px）時，對局畫面原本照直式上下排，棋盤被擠成每格約 11px 的小圖。
+   改成左右兩欄：左邊整個高度給棋盤（寬＝高×560/615，最多佔畫面 62%），右邊依序放玩家、狀態、棋譜、工具列，右欄自己可以捲。
+   只認 gameLayout 畫出來的對局頁（裡面有 #bbox 和 #acts）；直式、平板、電腦都不受影響 */
+(()=>{try{const s=document.createElement("style");s.id="glLand";s.textContent=`@media (orientation:landscape) and (max-height:600px){
+.view.fixed:has(>#bbox):has(>#acts){display:grid;grid-template-columns:min(62vw,calc((100dvh - 64px) * 560 / 615)) minmax(0,1fr);grid-template-rows:repeat(12,min-content) 1fr;grid-auto-rows:min-content;column-gap:4px;overflow-y:auto;padding-left:env(safe-area-inset-left);padding-right:env(safe-area-inset-right)}
+.view.fixed:has(>#bbox):has(>#acts)>*{grid-column:2;min-width:0}
+.view.fixed:has(>#bbox):has(>#acts)>#bbox{grid-column:1;grid-row:1/-1;position:sticky;top:0;align-self:start;height:calc(100dvh - 64px);max-height:100%;min-height:0;padding:2px 2px 2px 6px;box-sizing:border-box}
+.view.fixed:has(>#bbox):has(>#acts)>#bbox svg{height:100%;width:auto;max-width:100%;max-height:100%}
+.view.fixed:has(>#bbox):has(>#acts)>#bbox canvas{max-width:100%;max-height:100%}
+.view.fixed:has(>#bbox):has(>#acts)>.evline{margin:4px 8px}
+.view.fixed:has(>#bbox):has(>#acts)>.actions{position:sticky;bottom:0;flex-wrap:wrap;background:var(--bg)}}`;document.head.append(s)}catch(e){}})();
 /* 開發者 11/6：選了雲河七星的玩家，對局下方的頭像寫自己的本命子、放自己的角色（原本一律寫帥／將） */
 function playerHTML(side,name,sub,clock){let pc=side==="r"?"帥":"將",im="";try{const c=myChar(),C=c&&WX_CHARS[c];if(C&&name===meName()){const R2B={帥:"將",仕:"士",相:"象",俥:"車",傌:"馬",炮:"砲",兵:"卒"},B2R={};for(const k in R2B)B2R[R2B[k]]=k;pc=side==="r"?(B2R[C.pc]||C.pc):(R2B[C.pc]||C.pc);im=`<img src="data/xs/prev_${c}.webp" alt="" onerror="this.remove()">`}}catch(e){}return`<div class="av ${side}${im?" npc":""}">${esc(pc)}${im}</div><div class="nm"><b>${esc(name)}</b><span>${esc(sub||"")}</span></div>${clock!=null?`<div class="clk">${clock}</div>`:""}`}
 function renderStrip(box,moves,curIdx,onPick){
@@ -5490,7 +5501,7 @@ const ARENA={
   classic:{seal:"棋",name:"石桌棋仙",intro:"在園子石桌下了五十年的老棋仙，一壺茶、一盤棋，從沒換過位置。",hi:"老夫在這石桌坐了五十年，來，陪我下一盤。",win:"薑還是老的辣，年輕人再練練。",lose:"好！這一章你蓋得名正言順。"},
   qin:{seal:"秦",name:"咸陽鐵卒",intro:"守過長城烽火台的老兵，棋風像秦軍一樣步步進逼、紀律嚴明。",hi:"秦軍出陣，一步不退！",win:"烽火已燃，城門未破。",lose:"這一仗，我服了。"},
   han:{seal:"漢",name:"未央棋侯",intro:"未央宮裡陪皇帝下棋的棋侯，最愛用馬，講究「運籌帷幄」。",hi:"運籌帷幄之中，請。",win:"漢家天下，暫且還姓劉。",lose:"決勝千里，閣下勝了。"},
-  sanguo:{seal:"三國",name:"赤壁火炮將",intro:"赤壁一戰的老將，最擅長用炮火攻，殺法凌厲。",hi:"東風已起，看我火燒連營！",win:"這把火燒得旺。",lose:"東風不與我便……佩服。"},
+  /* 開發者 11/11 選 Gemini 全域審查：原本「赤壁火炮將」用炮火攻、開場「火燒連營」——三國還沒有火藥砲，火燒連營是夷陵之戰；改成霹靂車（《三國志・袁紹傳》官渡發石車）＋火燒赤壁 */sanguo:{seal:"三國",name:"赤壁霹靂將",intro:"赤壁一戰的老將，年輕時在官渡見過曹操的「霹靂車」——拋石頭的機器，就是象棋「砲」的祖先，所以最愛用砲隔山打人。",hi:"東風已起，看我火燒赤壁！",win:"這把火燒得旺。",lose:"東風不與我便……佩服。"},
   weijin:{seal:"晉",name:"竹林棋隱",intro:"竹林七賢的棋友，下棋從不著急，常常一邊喝酒一邊落子。",hi:"竹林風清，慢慢下。",win:"一局清談，承讓了。",lose:"妙哉妙哉，飲一杯為你賀。"},
   nanbei:{seal:"南北",name:"石窟禪棋僧",intro:"在石窟前參禪的僧人，棋風沉穩如石，很少犯錯。",hi:"阿彌陀佛，施主請。",win:"心靜則棋明。",lose:"善哉，施主棋藝精進。"},
   sui:{seal:"隋",name:"運河船棋王",intro:"在大運河上跑船的棋王，船行到哪下到哪，擅長「借水行舟」。",hi:"船靠岸了，來一盤再開船。",win:"順水推舟，這盤我的。",lose:"逆風翻盤，好功夫！"},
@@ -13641,9 +13652,16 @@ const hbImg=(base,hub)=>{const nt=(base==="learn"||base==="battle")&&typeof sw7N
    茶坊這邊開的棋（挑戰電腦、同桌對弈、天井配對的線上對局）都在「茶坊的後園」下——載入畫面是穿過月洞門往後園石台走（data/parkgate/yard*.webp），
    園子上方的地點標籤寫「〇〇・後園」，返回鍵寫「走回雅間／走回〇〇」。〇〇＝這一朝對戰頁的名稱（茶坊、酒肆、旗亭…） */
 function hbHubN(){try{return typeof xqHubName==="function"?xqHubName("battle").split(" ").slice(1).join(" ")||"茶坊":"茶坊"}catch(e){return"茶坊"}}
-const hbYardName=()=>hbHubN()+"・後園";
+/* 開發者 11/11（錄影：首頁橋上石桌點「同桌對弈」，卻穿過月洞門到「茶肆・後園」，返回寫「走回茶肆」）選「從哪進就回哪」：
+   首頁的石桌、底部「立即對局／接著下」開的棋，07z 會先記 sessionStorage xqFromHome；在挑戰電腦、同桌對弈頁（中間去看棋譜也算）時：
+   不走月洞門過場、場景標籤寫「渡口・石桌」（經典世界「苑中・石桌」）、返回鍵寫「回渡口／回首頁」並回到首頁。
+   換到其他頁（例如從地圖去茶肆）就清掉，之後從茶肆開的棋照舊在後園、回茶肆 */
+function hbFromHome(){try{return !!sessionStorage.getItem("xqFromHome")&&/^#\/(cpu|pvp)(\/|$)/.test(location.hash)}catch(e){return false}}
+function hbHomeBack(){try{if(!hbFromHome())return;const b=document.getElementById("back");if(!b)return;b.innerHTML="<b>‹</b>"+(typeof hbIsCl==="function"&&hbIsCl()?"回首頁":"回渡口");b.hidden=false;b.onclick=()=>goBack("#/")}catch(e){}}
+addEventListener("hashchange",()=>{try{if(!/^#\/(cpu|pvp|db)(\/|$)/.test(location.hash))sessionStorage.removeItem("xqFromHome")}catch(e){}});
+const hbYardName=()=>hbFromHome()?(typeof hbIsCl==="function"&&hbIsCl()?"苑中・石桌":"渡口・石桌"):hbHubN()+"・後園";
 const HB_YARD_G=e=>["qin","han","sanguo","weijin","nanbei","sui","tang"].includes(e)?"_han":["wudai","song","yuan"].includes(e)?"_song":"";
-function hbYardGate(kind){const h=hbHubN();let e="";try{e=hbDockEra()}catch(x){}const k=store.get("era","classic"),p=(typeof PW!=="undefined"&&PW[k])||"園子",g=HB_YARD_G(e||k);
+function hbYardGate(kind){if((kind==="cpu"||kind==="pvp")&&hbFromHome())return null;const h=hbHubN();let e="";try{e=hbDockEra()}catch(x){}const k=store.get("era","classic"),p=(typeof PW!=="undefined"&&PW[k])||"園子",g=HB_YARD_G(e||k);
   const T={cpu:["移步後園",`客官請移步，${h}後方的${p}風景正好！`],pvp:["移步後園","裡頭太擠，咱們去後頭寬敞處切磋！"],net:["移步後園",`棋友到了，雙方移步${h}後院石台`]}[kind]||["移步後園",""];
   let n="battle";try{n=hbImg("battle","battle")}catch(x){}
   return{img:["data/parkgate/yard"+g+".webp","data/parkgate/yard.webp","data/hubmap/"+n+".webp"],icon:"🚪",title:T[0],sub:T[1],bg:"#1f2a22",walk:3800,qk:(e||k)}}   /* hspx 11/10：過場也像以前一樣抽一句那一朝跟象棋有關的詩詞（06-cpu parkQuote） */   /* 開發者「過場太快、沒有味道」：停 3.8 秒、慢慢走進門洞（park3d 的 G.walk） */
@@ -13847,7 +13865,7 @@ function hmGoBar(P,nw){const bar=document.createElement("div");bar.className="hm
   let R=nw?{go:"#/camp",t:"🔰 立即開始",s:"第一次下象棋，從這裡學"}:{go:"#/cpu",t:"♟ 立即對局",s:""};
   const set=r=>{R=r;b.innerHTML=`<span>${esc(r.t)}</span><small>${esc(r.s||"")}</small>`;b.setAttribute("aria-label",r.t+(r.s?"："+r.s:""))};set(R);
   const ib=P.querySelector("#hmInst");if(ib)bar.append(ib);bar.append(b);P.append(bar);
-  b.onclick=async e=>{e.stopPropagation();vibrate(5);if(R.sw)try{await api("/play/switch",{kind:R.sw})}catch(err){}if(R.park)store.set("park3d",true);location.hash=R.go};
+  b.onclick=async e=>{e.stopPropagation();vibrate(5);if(R.sw)try{await api("/play/switch",{kind:R.sw})}catch(err){}if(R.park)store.set("park3d",true);try{sessionStorage.setItem("xqFromHome","1")}catch(err){}location.hash=R.go};   /* 11/11：記下從首頁進來（07y hbFromHome） */
   if(nw)return;
   try{if(window.XQNet&&XQNet.playing&&XQNet.playing())return set({go:"#/pvp",t:"▶ 接著下",s:"線上對局"})}catch(e){}
   if(typeof homeRecGame!=="function")return;
@@ -13878,7 +13896,7 @@ function homeMap(v){const home=v.querySelector(".home");if(!home||v.querySelecto
   {const wv=typeof sw7HomeWx==="function"?sw7HomeWx():"",im0=P.querySelector(":scope>img");if(wv&&im0){const pre=new Image();pre.onload=()=>{if(!im0.isConnected)return;try{if(typeof sw7SeaTurn==="function"&&sw7SeaTurn(P,im0,pre.src))return}catch(e){}im0.src=pre.src};pre.src="data/homemap/home_"+wv+".webp?v="+HM_IMGV}}   /* 回饋 811：下雪、下雨天換積雪版 home_snow／雨景版 home_rain（07w7-seasons.js 判斷；先載好再換，載不到留原圖） */
   const GO={hmShip:"#/adventure",hmBattle:"#/hub/battle",hmLearn:"#/hub/learn"};
   for(const[id]of HM_SPOTS){const b=P.querySelector("#"+id);if(!b)continue;
-    b.onclick=()=>{vibrate(5);if(GO[id]){location.hash=GO[id];return}if(id==="hmRec"){if(typeof TODAY_MAP_ON!=="undefined"&&TODAY_MAP_ON){location.hash="#/today";return}hmRecSheet();return}if(id==="hmQuick")location.hash="#/pvp"}}
+    b.onclick=()=>{vibrate(5);if(GO[id]){location.hash=GO[id];return}if(id==="hmRec"){if(typeof TODAY_MAP_ON!=="undefined"&&TODAY_MAP_ON){location.hash="#/today";return}hmRecSheet();return}if(id==="hmQuick"){try{sessionStorage.setItem("xqFromHome","1")}catch(e){}location.hash="#/pvp"}}}   /* 11/11：記下從首頁進來（07y hbFromHome：回首頁、不走後園） */
   {const ib=P.querySelector("#hmInst");if(ib)ib.onclick=e=>{e.stopPropagation();vibrate(5);installGuide(true)}}
   hmGoBar(P,nw);
   if(typeof shpFit==="function")shpFit(v);
@@ -18691,7 +18709,7 @@ function CpuGame(v,practicePage,mode){
     /* 意見回饋 349：朝代擂台（和石桌往事）的上方不放積分／自選，只寫是哪裡 */
     setTop(pr?(st.practice.drill?"🎯 "+(st.practice.title||"練習"):"🔁 錯棋重練"):MODE==="arena"?"🏯 朝代擂台":MODE==="journey"?(st&&st.journey==="park"?"🌳 "+parkName(store.get("era","classic")):(String(st&&st.journey||"").startsWith("bt:")?"⚔ ":"🪨 ")+jName(st&&st.journey)):"挑戰電腦",pr?(st.practice.drill?"#/":"#/redo"):MODE==="journey"?(st&&st.journey==="park"?"^#/port":st&&st.journey?jBack(st.journey):"#/adventure"):MODE==="arena"?"^#/port":(typeof CPUROOM_ON!=="undefined"&&CPUROOM_ON?"#/cpuroom":"#/"),   /* 意見回饋 697：園子、擂台的「‹」回這一朝的渡口 */pr?[]:[/* 意見回饋 346：挑戰電腦看不到擂台、驛站的入口——🏯 只在擂台那盤出現（換擂主）、🏮 只在石桌往事的公園出現 */...(MODE==="arena"?[arenaBtn]:[]),...(MODE==="journey"&&OFF&&st&&st.journey==="park"?[["🏮",()=>walk("inn",()=>navReplace("#/journey/inn")),"走去驛站"]]:[]),...(lk?[]:[parkBtn(()=>{draw();topBar()})]),...(MODE==="arena"||(MODE==="journey"&&st&&/^(park$|inn:)/.test(String(st.journey||"")))?[["⛵",()=>goUp("#/adventure"),"回星槎"]]:[])].concat(vcOn()?[["🎤",()=>voiceMove(()=>!st||st.result?{why:"這盤已經結束"}:st.turn!==st.human||st.thinking?{why:"還沒輪到你"}:{board:st.board,legal:st.legal,play:(f,t)=>{sel=-1;post("/play/move",{f,t})}}),"聲控走棋"]]:[]));
     try{if(seg&&MODE==="cpu"){const t=$("#title");t.textContent="";t.append(seg)}}catch(e){}
-    try{if(MODE==="cpu"&&!pr&&typeof CPUROOM_ON!=="undefined"&&CPUROOM_ON){const b=$("#back");if(b)b.innerHTML="<b>‹</b>走回雅間"}}catch(e){}};   /* 11/10：從茶坊後園走回雅間 */   /* 第一次呼叫時 seg 還沒建立 */
+    try{if(MODE==="cpu"&&!pr&&typeof CPUROOM_ON!=="undefined"&&CPUROOM_ON){const b=$("#back");if(b)b.innerHTML="<b>‹</b>走回雅間"}}catch(e){}if(typeof hbHomeBack==="function")hbHomeBack()};   /* 11/11：從首頁石桌／立即對局進來的，返回回首頁（07y hbHomeBack） */   /* 11/10：從茶坊後園走回雅間 */   /* 第一次呼叫時 seg 還沒建立 */
   topBar();
   /* 意見回饋 276、403、413：首頁「🏯 朝代擂台」改走 #/arena，進頁時 /play/open 先換到擂台那一盤（沒有就開目前朝代的），還沒開始才打開擂主卡；不再用 openArena 計時 */
   // 模式切換直接放在頂部列（取代標題）：積分挑戰／自選難度／獎勵一眼就看得到，點一下就換（離線版才有積分挑戰和獎勵）
@@ -19487,7 +19505,7 @@ function PvpGame(v){
   let seat=NET?(XQNet.side()||"w"):store.get("pvpSeat",null);if(!NET&&OFF&&seat&&!XQ.remoteInfo()){seat=null;store.set("pvpSeat",null);XQ.setPvpOnline(false)}
   const bd=Board(i=>tap(i));v.querySelector("#bbox").append(bd.svg);
   const setTitle=()=>NET?setTop(seat==="w"?"👀 觀戰中":`🌐 我是${seat==="r"?"紅":"黑"}方`,"#/lobby",[parkBtn(()=>draw()),...(vcOn()?[["🎤",()=>voiceMove(()=>!st||st.result?{why:"這盤已經結束"}:seat==="w"?{why:"你在觀戰"}:seat&&st.turn!==seat?{why:"還沒輪到你"}:{board:st.board,legal:st.legal,play:(f,t)=>{sel=-1;flipMan=null;post("/pvp/move",{f,t})}}),"聲控走棋"]]:[]),["🌐",()=>netSheet(),"大廳"]])
-    :setTop(seat?`連線對戰・我執${seat==="r"?"紅":"黑"}`:"👥 同桌對弈","#/hub/battle",(DEVMODE()?[["👥",()=>seatSheet(),"連線對戰"]]:[]).concat([parkBtn(()=>draw()),...(vcOn()?[["🎤",()=>voiceMove(()=>!st||st.result?{why:"這盤已經結束"}:seat==="w"?{why:"你在觀戰"}:seat&&st.turn!==seat?{why:"還沒輪到你"}:{board:st.board,legal:st.legal,play:(f,t)=>{sel=-1;flipMan=null;post("/pvp/move",{f,t})}}),"聲控走棋"]]:[]),["⚙",()=>newSheet(),"新局設定"]]));setTitle();try{const bb=$("#back");if(bb&&typeof hbHubN==="function")bb.innerHTML="<b>‹</b>走回"+hbHubN()}catch(e){}   /* 11/10：從茶坊後園走回茶坊 */   // 透過電腦的連線對戰只給開發者；玩家用「線上對戰」
+    :setTop(seat?`連線對戰・我執${seat==="r"?"紅":"黑"}`:"👥 同桌對弈","#/hub/battle",(DEVMODE()?[["👥",()=>seatSheet(),"連線對戰"]]:[]).concat([parkBtn(()=>draw()),...(vcOn()?[["🎤",()=>voiceMove(()=>!st||st.result?{why:"這盤已經結束"}:seat==="w"?{why:"你在觀戰"}:seat&&st.turn!==seat?{why:"還沒輪到你"}:{board:st.board,legal:st.legal,play:(f,t)=>{sel=-1;flipMan=null;post("/pvp/move",{f,t})}}),"聲控走棋"]]:[]),["⚙",()=>newSheet(),"新局設定"]]));setTitle();try{const bb=$("#back");if(bb&&typeof hbHubN==="function")bb.innerHTML="<b>‹</b>走回"+hbHubN()}catch(e){}if(typeof hbHomeBack==="function")hbHomeBack();   /* 11/11：從首頁石桌進來的回首頁 */   /* 11/10：從茶坊後園走回茶坊 */   // 透過電腦的連線對戰只給開發者；玩家用「線上對戰」
   function netSheet(){sheet(seat==="w"?"觀戰中":"網路對戰",b=>{b.innerHTML=`<button class="btn" id="lb">🌐 回大廳（這盤會保留）</button><button class="btn ghost" id="lv">${seat==="w"?"不看了":"離開這盤"}</button>`;
     b.querySelector("#lb").onclick=()=>{closeSheet();location.hash="#/lobby"};
     b.querySelector("#lv").onclick=()=>{closeSheet();const go=()=>{XQNet.leave();location.hash="#/lobby"};
@@ -19650,6 +19668,7 @@ function PvpGame(v){
   // 網路對局：對方的棋一到就馬上畫出來（原本要等最多 1 秒的輪詢）
   const offG=OFF&&window.XQNet?XQNet.on("game",()=>{if(XQNet.active())refresh()}):null;
   return{stop:()=>{stop();clearInterval(ckT);if(offG)offG()}}}
+
 
 
 
