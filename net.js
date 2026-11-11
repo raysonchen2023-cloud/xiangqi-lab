@@ -290,6 +290,8 @@ var XQNet=(function(){
       t=setTimeout(()=>done(null),ms||8000);W[topic]=done;if(!want){want=true;connect()}const go=()=>{if(cli&&cli.up)cli.sub([topic]);else g=setTimeout(go,400)};go()})},refresh:()=>presence(),
     /* 從伺服器抓回某一盤保留的最後狀態（補存漏掉的棋譜，意見回饋 280） */
     shareIRT(x){const q=ls.get("irtQ",[]);q.push({...x,at:Date.now()});ls.set("irtQ",q.slice(-20));flushIRT()},
+    /* v5 改善單 R05：玩家關掉匿名開關時，手機裡已排隊、還沒送出的那一類一起丟掉（t＝"stk" 卡關訊號、"cpu" 對局評分），關掉後一包都不再送 */
+    dropIRT(t){const q=ls.get("irtQ",[]);ls.set("irtQ",q.filter(x=>!x||x.t!==t))},
     /* 意見回饋 307：公開戰力摘要、開發者的重置指令、後台每天校正好的參數（題目難度、各段位成長參數） */
     pubProf:()=>pubHist(),
     ctl(o){return!!(cli&&cli.up&&cli.pub(`${ROOT}/ctl`,JSON.stringify(o)))},
