@@ -1379,7 +1379,7 @@ html[data-hicon] .tabbar button.on{box-shadow:inset 0 -3px 0 currentColor}
       if(!window.caches)return go();caches.keys().then(function(ks){return Promise.all(ks.filter(function(k){return k.indexOf("xqlab-app-")===0}).map(function(k){return caches.delete(k)}))})
         .then(function(){return navigator.serviceWorker&&navigator.serviceWorker.getRegistration()}).then(function(r){return r&&r.update()}).catch(function(){}).then(go)}};setTimeout(chk,4000)})();
 </script>
-<script>window.XQ_OFFLINE=true;window.XQ_BUILD="20261111-1255";</script>
+<script>window.XQ_OFFLINE=true;window.XQ_BUILD="20261111-1330";</script>
 <script src="core.js"></script>
 <script src="engine.js"></script>
 <script src="local.js"></script>
@@ -1407,6 +1407,9 @@ const iccsC=(f,t)=>String.fromCharCode(97+f%9)+(9-(f/9|0))+String.fromCharCode(9
 const sqI=s=>(9-(+s[1]))*9+(s.charCodeAt(0)-97);
 const evt=v=>v==null?"":Math.abs(v)>=20000?(v>0?"紅方":"黑方")+"有殺":Math.abs(v)<30?"均勢":(v>0?"紅優 ":"黑優 ")+(Math.abs(v)/100).toFixed(1);
 const evPct=v=>v==null?50:50+50*Math.tanh(v/600);
+/* 開發者 11/11 選 ChatGPT UI 報告 UI-11：局勢條沒有評分時原本停在正中間，看起來像「雙方均勢」；改成淡色虛線＝還沒評分，說明寫清楚是誰的視角 */
+function evMark(v,val){try{const e=v.querySelector(".evline");if(!e)return;const no=val==null;e.classList.toggle("noev",no);const t=no?"局勢條：電腦還沒評這一步":"局勢條：紅色越長＝紅方越占優（電腦評分）";e.title=t;e.setAttribute("aria-label",t);e.setAttribute("role","img");
+  if(!document.getElementById("evMarkCss")){const s=document.createElement("style");s.id="evMarkCss";s.textContent=".evline.noev{background:repeating-linear-gradient(90deg,var(--line) 0 6px,transparent 6px 12px)}.evline.noev #evf{opacity:.18}";document.head.append(s)}}catch(x){}}
 const fmt=ms=>{if(ms==null)return"";ms=Math.max(0,ms);const t=Math.ceil(ms/1000),h=Math.floor(t/3600),m=Math.floor(t%3600/60),s=t%60;return(h?h+":"+String(m).padStart(2,"0"):String(m).padStart(2,"0"))+":"+String(s).padStart(2,"0")};
 const esc=s=>String(s==null?"":s).replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
 /* 意見回饋 733：版權保護——在圖片、棋盤、3D 上長按或按右鍵，不跳「儲存圖片」選單，也不能拖出去 */
@@ -1777,7 +1780,9 @@ const unlockAudio=()=>{primeVoice();try{if(navigator.audioSession&&navigator.aud
     if(!AC._primed){const b=AC.createBuffer(1,1,22050),src=AC.createBufferSource();src.buffer=b;src.connect(AC.destination);src.start(0);AC._primed=1}}catch(e){}};
 const sndOn=()=>{try{return store.get("capSound",true)||store.get("mvSound",false)||store.get("voiceCall",true)}catch(e){return false}};
 function sndPill(show){let p=document.getElementById("sndPill");if(!show){if(p)p.remove();return}if(p||!sndOn())return;
-  p=document.createElement("div");p.id="sndPill";p.textContent="🔇 點任意處喚醒聲音";document.body.append(p)}
+  p=document.createElement("div");p.id="sndPill";p.textContent="🔇 點任意處喚醒聲音";document.body.append(p);setTimeout(()=>{if(p.isConnected)p.remove()},8000)}
+  /* 開發者 11/11 選 ChatGPT UI 報告 UI-05：聲音提示原本一直閃在右下角，蓋在設定、首頁底部按鈕和小帥上；改成頂欄正下方置中、不閃，8 秒後自己收起（點任何地方也會收起） */
+  (()=>{try{const s=document.createElement("style");s.id="sndPillPos";s.textContent="#sndPill{right:auto!important;bottom:auto!important;left:50%;top:calc(env(safe-area-inset-top,0px) + 64px);transform:translateX(-50%);animation:none!important;opacity:.9;font-size:12.5px}";document.head.append(s)}catch(e){}})();
 for(const ev of["pointerdown","touchend","click","keydown"])document.addEventListener(ev,()=>{unlockAudio();sndPill(false)},{passive:true,capture:true});
 setTimeout(()=>{if(!AC||AC.state!=="running")sndPill(true)},1500);
 document.addEventListener("visibilitychange",()=>{if(document.hidden&&AC){try{AC.close()}catch(e){}AC=null}if(!document.hidden)setTimeout(()=>{if(!AC||AC.state!=="running")sndPill(true)},400)});
@@ -2500,6 +2505,8 @@ document.addEventListener("click",e=>{const x=e.target&&e.target.closest&&e.targ
 
 
 
+
+
 // ================= 版面骨架與路由 =================
 let screen=null;   // 目前畫面：{stop()}
 addEventListener("hashchange",()=>{try{const s1=history.state;if(s1&&typeof s1.d==="number"){NAV_D=s1.d;NAV_POP=true;navMark(NAV_D,!!s1.xqSheet,false);return}const d=NAV_REPL?NAV_D:NAV_D+1;NAV_REPL=false;history.replaceState({d},"");NAV_D=d;NAV_POP=false;navMark(d,false,true)}catch(e){}});   /* 意見回饋 607：每一層登記網址（NAV_H），退回來的頁面記 NAV_POP */
@@ -2543,7 +2550,13 @@ function icoTitle(t){const m=String(t).match(/^(\S+)\s+([\s\S]*)$/),k=m&&EMO_ICO
 function setTop(title,back,right){{const mc=document.getElementById("meChip");if(mc)mc.remove()}$("#title").innerHTML=icoTitle(title);$("#back").hidden=!back;$("#back").onclick=()=>typeof back==="string"&&back[0]==="^"?upTo(back.slice(1)):goBack(back);   /* 意見回饋 697：back 開頭是 "^"＝回那一層（upTo／goUp），不照瀏覽器上一頁 */
   const tr=$("#topRight");tr.innerHTML="";if(right)for(const[icon,fn,label]of right){const b=document.createElement("button");b.className="ib";b.textContent=icon;b.title=label||"";if(label)b.setAttribute("aria-label",label);b.onclick=fn;tr.append(b)}
   // 全螢幕畫面（沒有底部導覽列）一律加「回首頁」，加入主畫面的 App 模式沒有瀏覽器上一頁也能回去
+  /* 開發者 11/11 選 ChatGPT UI 報告 UI-10：手機上下棋時頂欄太擠（返回、模式、好幾個純圖示，頁名被擠成「朝…」）。
+     對局頁（挑戰電腦、擂台、同桌、雲河棋路、錯棋重練）寬度不到 520 時，右邊兩個以上的圖示收進一顆「⋯」，點了列出每一項的圖示＋名稱；地圖鈕照舊 */
+  try{if(right&&right.length>=2&&innerWidth<520&&/^#\/(cpu|arena|pvp|journey\/play|redo\/play)(\/|$)/.test(location.hash||""))topMore(tr,right)}catch(e){}
   if(back&&back!=="#/"&&!(right&&right.length>=2)){const h=document.createElement("button");h.className="ib";h.textContent="🏠";h.title="回首頁";h.setAttribute("aria-label","回首頁");h.onclick=()=>goHome();tr.append(h)}}   /* 意見回饋 607：🏠 退回首頁，不往前推一頁 */
+function topMore(tr,right){const bs=[...tr.querySelectorAll(".ib")];bs.forEach(b=>b.hidden=true);const m=document.createElement("button");m.className="ib";m.textContent="⋯";m.title="更多";m.setAttribute("aria-label","更多："+right.map(r=>r[2]||r[0]).join("、"));
+  m.onclick=()=>{try{vibrate(5)}catch(e){}sheet("更多",b=>{b.innerHTML=`<div style="display:grid;gap:8px">${right.map((r,i)=>`<button class="btn" data-i="${i}" style="display:flex;align-items:center;gap:10px;justify-content:flex-start;min-height:48px;margin:0"><span style="font-size:20px;min-width:28px;text-align:center">${esc(r[0])}</span><span>${esc(r[2]||"")}</span></button>`).join("")}</div>`;
+    b.querySelectorAll("[data-i]").forEach(x=>x.onclick=()=>{closeSheet();const f=right[+x.dataset.i][1];if(typeof f==="function")setTimeout(f,0)})})};tr.append(m)}
 function setTabs(show,on){$("#tabbar").hidden=!show;for(const b of $("#tabbar").children)b.classList.toggle("on",b.dataset.go===on)}
 for(const b of $("#tabbar").children)b.onclick=()=>{vibrate(5);if(b.dataset.go==="#/")goHome();else location.hash=b.dataset.go};   /* 意見回饋 607：底部「首頁」也是退回首頁 */
 function route(){
@@ -2944,6 +2957,7 @@ async function deviceQR(base,key){
   sheet("讓另一台裝置連到電腦",b=>{b.innerHTML=`<p style="text-align:center">用另一台手機／平板的相機掃這個 QR code，打開後就會連到你的電腦。</p><div class="qrbox" id="qrc"></div>
     <p class="muted" style="text-align:center">⚠ 含存取碼：掃到的人能操作電腦上的對局。只給自己的裝置或信任的人。</p>`;
     new QRCode(b.querySelector("#qrc"),{text:u,width:220,height:220,correctLevel:QRCode.CorrectLevel.L})})}
+
 
 
 
@@ -18774,8 +18788,9 @@ function CpuGame(v,practicePage,mode){
     const o={flip:st.human==="b",last,sel,targets:sel>=0?st.legal.filter(([f])=>f===sel).map(x=>x[1]):[],hint:st.hint?[st.hint.f,st.hint.t]:pHint&&pHint.n===st.moves.length?(pHint.t==null?[pHint.f]:[pHint.f,pHint.t]):null,check:st.check,fx:true};const LVB=lvPlayOf(st);hb.classList.toggle("lvblind",!!(LVB&&LVB.lvp.blind&&!st.result));if(LVB&&LVB.lvp.blind&&!st.result){bd.draw(st.board.map(()=>null),o);return}bd.draw(st.board,o);
     legendCheck(st);legendBadge(v.querySelector("#bbox"),!parkOn()&&legendVisit(st).length>0);
     const JS0=st.journey&&/^(b2)?h\d\d$/.test(st.journey)?jFindStage(st.journey):null,JOPP=LVB&&LVB.lvp.opp&&JCHAR[LVB.lvp.opp]?LVB.lvp.opp:String(st.journey||"").startsWith("char:")&&JCHAR[st.journey.slice(5)]?st.journey.slice(5):null;
+    const BRG=!JS0&&!st.journey&&!st.arena&&!st.practice&&typeof hbBridge==="function"?hbBridge():null;   /* 11/11：從首頁進來的挑戰電腦＝橋上環景 */
     const OT=oppTalk(st,JOPP,N);   /* 意見回饋 826 追加：對面的人開口、贏、輸、和棋各說自己的話（07m3-opptalk.js） */
-    parkDraw(v.querySelector("#bbox"),bd,st.board,o,{tap,bg:JS0?`data/park/j${JR[JS0.r].k}_360.webp`:null,bgName:JS0?"雲河鎮・"+JR[JS0.r].name:innAnyAct(st.journey)?"🏮 "+innName(store.get("era","classic")):!st.journey&&!st.arena&&!st.practice&&typeof hbYardName==="function"?hbYardName():null,   /* 11/10：挑戰電腦在茶坊後園下 */   /* 意見回饋 530：在驛站下棋，標籤寫驛站，不是朝代園林 */arena:st.arena||null,gate:st.journey&&!st.arena?(k=>innAnyAct(st.journey)?{img:["data/inn/"+k+"_ink.webp","data/parkgate/"+k+"_ink.webp","data/inn/"+k+".webp"],icon:"🏮",title:"走進"+innName(k),sub:"旅人在燈下擺好棋盤了",bg:"#2b2a22",qk:k}:{img:["data/parkgate/"+k+"_ink.webp","data/parkgate/"+k+".webp","data/park/"+k+"_360.webp"],icon:"🍃",title:"走進"+parkName(k),sub:"石桌就在前面",bg:"#2b2a22",qk:k})(store.get("era","classic"))   /* 意見回饋 697：驛站旅人的對局，載入畫面和標籤都寫「〇〇的驛站」 */:(!st.journey&&!st.arena&&!st.practice&&!st.net?(typeof hbYardGate==="function"?hbYardGate("cpu"):typeof hbGate==="function"?hbGate("🤖","挑戰電腦","對手擺好棋盤了"):null):null),watchers:legendVisit(st),thinking:!!st.thinking||(!st.result&&st.turn!==st.human),botSide:st.human==="r"?"b":"r",result:st.result?(st.result.w||"draw"):null,hint:o.hint&&o.hint.length===1?[o.hint[0],o.hint[0]]:o.hint,   /* 意見回饋 607：只提示一顆子（錯棋重練提示一、二、提示棋）時傳同一格兩次，園子 3D 才畫得出黃圈（park3d 只畫兩格的提示） */
+    parkDraw(v.querySelector("#bbox"),bd,st.board,o,{tap,...(BRG?{bridge:true,ground:BRG.ground}:{}),bg:JS0?`data/park/j${JR[JS0.r].k}_360.webp`:BRG?BRG.bg:null,bgName:JS0?"雲河鎮・"+JR[JS0.r].name:innAnyAct(st.journey)?"🏮 "+innName(store.get("era","classic")):!st.journey&&!st.arena&&!st.practice&&typeof hbYardName==="function"?hbYardName():null,   /* 11/10：挑戰電腦在茶坊後園下 */   /* 意見回饋 530：在驛站下棋，標籤寫驛站，不是朝代園林 */arena:st.arena||null,gate:st.journey&&!st.arena?(k=>innAnyAct(st.journey)?{img:["data/inn/"+k+"_ink.webp","data/parkgate/"+k+"_ink.webp","data/inn/"+k+".webp"],icon:"🏮",title:"走進"+innName(k),sub:"旅人在燈下擺好棋盤了",bg:"#2b2a22",qk:k}:{img:["data/parkgate/"+k+"_ink.webp","data/parkgate/"+k+".webp","data/park/"+k+"_360.webp"],icon:"🍃",title:"走進"+parkName(k),sub:"石桌就在前面",bg:"#2b2a22",qk:k})(store.get("era","classic"))   /* 意見回饋 697：驛站旅人的對局，載入畫面和標籤都寫「〇〇的驛站」 */:(!st.journey&&!st.arena&&!st.practice&&!st.net?(typeof hbYardGate==="function"?hbYardGate("cpu"):typeof hbGate==="function"?hbGate("🤖","挑戰電腦","對手擺好棋盤了"):null):null),watchers:legendVisit(st),thinking:!!st.thinking||(!st.result&&st.turn!==st.human),botSide:st.human==="r"?"b":"r",result:st.result?(st.result.w||"draw"):null,hint:o.hint&&o.hint.length===1?[o.hint[0],o.hint[0]]:o.hint,   /* 意見回饋 607：只提示一顆子（錯棋重練提示一、二、提示棋）時傳同一格兩次，園子 3D 才畫得出黃圈（park3d 只畫兩格的提示） */
       opp:(JOPP&&JCHAR_LOOK(JOPP,st.human==="r"?"b":"r"))||(innAnyAct(st.journey)?innLook(innAnyAct(st.journey),st.human==="r"?"b":"r"):null)||(st.arena&&CHAMP_LOOK(st.arena,st.human==="r"?"b":"r"))||(N?NPC_LOOK(N,st.human==="r"?"b":"r"):PIKA_LOOK(st.human==="r"?"b":"r")),oppHello:OT.hi,oppWin:OT.win,oppLose:OT.lose});
     if(typeof meGameTalk==="function")meGameTalk(st);   /* 意見回饋 668：你扮演的雲河七星開局、吃子時說一句 */
     if(NPC_HI!==st.id){NPC_HI=st.id;if(pk0&&!st.moves.length&&!st.result)setTimeout(()=>{try{if(PARK&&PARK.host===hb)PARK.v.oppSay(meHi((N&&typeof npcHello==="function"&&npcHello(N))||OT.hi),2.6)}catch(e){}},900);if(N&&typeof npcAskMaybe==="function")npcAskMaybe(N,st,hb)}}   /* 826 追加：園子 3D 已經開著、換一盤新棋時，不只園子路人，每一位對手都開口打招呼 */   /* 意見回饋 658：有羈絆的女棋手打招呼換成新台詞；開局偶爾來委託（小卡，不打斷對局） */
@@ -18808,7 +18823,7 @@ function CpuGame(v,practicePage,mode){
     const bt=playerHTML(me,meCall(),PLAYER[me]+(st.ranked&&CR.next?`・再 ${CR.toNext} 分升 ${CR.next}`:""));
     const pB=v.querySelector("#pBot");if(pB.dataset.h!==bt){pB.dataset.h=bt;pB.innerHTML=bt}
     v.querySelector("#pTop").classList.toggle("on",!st.result&&st.turn===bot);v.querySelector("#pBot").classList.toggle("on",!st.result&&st.turn===me);
-    v.querySelector("#evf").style.width=evPct(st.eval&&st.eval.v)+"%";
+    v.querySelector("#evf").style.width=evPct(st.eval&&st.eval.v)+"%";evMark(v,st.eval?st.eval.v:null);   /* 11/11 UI-11 */
     /* 意見回饋 749（開發者）：錯棋重練的狀態列一直閃——每次輪詢（1.5 秒）都重寫 #stat 的文字，「」裡的著法（藍色可點的 .mvt，250 毫秒後才由 mvtWrap 加回）和 🔁 圖示（emoWalk）被洗掉又加回。
        改成先在 S2 算好要顯示的文字和 hot／wrap，跟上次寫進去的一樣就不動 DOM */
     const s2=v.querySelector("#stat"),S2={textContent:"",cls:{},classList:{add:(...a)=>a.forEach(k=>{S2.cls[k]=1}),toggle:(k,on)=>{if(on)S2.cls[k]=1;else delete S2.cls[k]}},after:x=>s2.after(x)};{const pa=v.querySelector("#pAct");if(pa&&!st.practice&&!pa.hidden)pa.hidden=true}
@@ -19575,7 +19590,7 @@ function PvpGame(v){
   const curN=()=>view==null?st.moves.length:view;
   function evalAt(n){if(evc[n]!=null||!OFF)return;evc[n]="…";
     api("/an/engine",{board:boardAtN(n),side:n%2?"b":"r",ms:600,multipv:1}).then(d=>{const L=(d.lines||[])[0];evc[n]=L?(L.mate!=null?Math.sign(L.mate)*30000:L.vr):null;if(curN()===n)watchBar()}).catch(()=>{evc[n]=null})}
-  function watchBar(){const n=curN(),ev=n===st.moves.length&&st.eval?st.eval.v:typeof evc[n]==="number"?evc[n]:null;v.querySelector("#evf").style.width=evPct(ev)+"%";
+  function watchBar(){const n=curN(),ev=n===st.moves.length&&st.eval?st.eval.v:typeof evc[n]==="number"?evc[n]:null;v.querySelector("#evf").style.width=evPct(ev)+"%";evMark(v,ev);
     if(view!=null){const s2=v.querySelector("#stat"),m=st.moves[n-1];s2.classList.remove("hot");s2.textContent=(n?`第 ${n} 步${m?"："+(m.cn||"")+qTag(n-1):""}`:"開局")+(ev!=null?"・"+evt(ev):"・Pikafish 計算中…")+"・按 ⏭ 回到最新"}}
   function watchStep(d){if(!st)return;const n=Math.max(0,Math.min(st.moves.length,curN()+d));view=n>=st.moves.length?null:n;vibrate(5);draw();watchBar();evalAt(n);stripW()}
   const pickStep=i=>{view=i+1>=st.moves.length?null:i+1;draw();watchBar();evalAt(curN())};
@@ -19597,7 +19612,7 @@ function PvpGame(v){
       // 點公園裡的人看棋友資料（意見回饋 261）：對面、近端（觀戰時）、觀戰者各是誰
       oppId:NET?(seat==="w"?idOf(far):seat?idOf(seat==="r"?"b":"r"):null):null,mateId:NET&&seat==="w"?idOf(near):null,
       watchers:NET&&window.XQNet&&XQNet.watcherBots?XQNet.watcherBots():[],
-      gate:NET?(typeof hbYardGate==="function"?Object.assign(hbYardGate("net"),{duel:true},seat==="w"?{sub:"棋友在後院石台對弈，過去看看"}:{}):{img:["data/parkgate/online.webp"],icon:"🌐",title:"線上棋館",sub:seat==="w"?"正在找觀戰的位子":"正在請對手入座",duel:true,bg:"#14213a"}):(typeof hbYardGate==="function"?hbYardGate("pvp"):typeof hbGate==="function"?hbGate("👥","同桌對弈","兩人輪流下"):null),bgName:typeof hbYardName==="function"?hbYardName():null}}   /* 11/10 開發者選：茶坊開的棋都在「茶坊的後園」下（07y-hubmap hbYardGate） */   /* 意見回饋 410：線上對戰的過場是熱鬧的線上棋館 */
+      gate:NET?(typeof hbYardGate==="function"?Object.assign(hbYardGate("net"),{duel:true},seat==="w"?{sub:"棋友在後院石台對弈，過去看看"}:{}):{img:["data/parkgate/online.webp"],icon:"🌐",title:"線上棋館",sub:seat==="w"?"正在找觀戰的位子":"正在請對手入座",duel:true,bg:"#14213a"}):(typeof hbYardGate==="function"?hbYardGate("pvp"):typeof hbGate==="function"?hbGate("👥","同桌對弈","兩人輪流下"):null),bgName:typeof hbYardName==="function"?hbYardName():null,...(!NET&&typeof hbBridge==="function"&&hbBridge()?Object.assign({bridge:true},hbBridge()):{})}}   /* 11/11：從首頁石桌進來＝橋上環景（07y hbBridge） */   /* 11/10 開發者選：茶坊開的棋都在「茶坊的後園」下（07y-hubmap hbYardGate） */   /* 意見回饋 410：線上對戰的過場是熱鬧的線上棋館 */
   function clocks(){if(!st||!clockBase||!clockBase.c)return;const b=clockBase;
     if(NET&&window.XQNet&&XQNet.turnLeft){const L=XQNet.turnLeft();for(const s of["r","b"]){const el=v.querySelector(`#mk_${s}`);if(!el)continue;const on=b.run&&b.turn===s&&L!=null,x=on?L:180000;el.textContent="每步 "+fmt(x);el.classList.toggle("hot",on&&x<30000)}}
     for(const s of["r","b"]){const el=v.querySelector(`#ck_${s}`);if(el){const x=b.c[s]-(b.run&&b.turn===s?Date.now()-b.at:0);el.textContent=fmt(x);el.style.color=x<60000&&!(b.turn===s&&b.run)?"var(--red)":""}}}
@@ -19628,7 +19643,7 @@ function PvpGame(v){
     clockBase={at:Date.now(),c:st.clocks,turn:st.turn,run:st.running&&!st.result};clocks();
     /* 意見回饋 330：下棋的兩個人看不到紅黑條（形勢），只有觀戰的人看得到；下完再顯示 */
     const hideEv=seat&&seat!=="w"&&!st.result;v.querySelector(".evline").style.visibility=hideEv?"hidden":"";
-    v.querySelector("#evf").style.width=evPct(hideEv?null:st.eval&&st.eval.v)+"%";
+    v.querySelector("#evf").style.width=evPct(hideEv?null:st.eval&&st.eval.v)+"%";evMark(v,hideEv?null:st.eval?st.eval.v:null);   /* 11/11 UI-11 */
     ruleNote(v,st);
     const s2=v.querySelector("#stat");s2.classList.toggle("hot",st.check>=0&&!st.result);
     /* Gemini 評估 11/8（介面圖示化）：狀態列短字加圖示（觀戰中寫在標題，這裡不重複） */
@@ -19677,6 +19692,7 @@ function PvpGame(v){
   // 網路對局：對方的棋一到就馬上畫出來（原本要等最多 1 秒的輪詢）
   const offG=OFF&&window.XQNet?XQNet.on("game",()=>{if(XQNet.active())refresh()}):null;
   return{stop:()=>{stop();clearInterval(ckT);if(offG)offG()}}}
+
 
 
 
@@ -19856,7 +19872,7 @@ function Viewer(v,c,id){
   /* 意見回饋 316：從棋童資料打開的棋譜，返回時回到石桌往事 */
   const dbBack=(()=>{const r=store.get("dbReturn",null);return r&&r.c===c&&Date.now()-r.at<6*36e5?r.to:"#/db/"+encodeURIComponent(c)})();
   setTop("載入中…",dbBack,[["ℹ",()=>info(),"棋局資訊"]]);
-  const acts=actionBar(v.querySelector("#acts"),[["first","⏮","開局",()=>go(0)],["prev","◀","上一步",()=>step(-1)],["an","🔍","分析",()=>anSheet(),true],["next","▶","下一步",()=>step(1)],["last","⏭","最後",()=>go(1e9)]]);
+  const acts=actionBar(v.querySelector("#acts"),[["first","⏮","開局",()=>go(0)],["prev","◀","上一步",()=>step(-1)],["an","🔍","分析",()=>anSheet(),true],["next","▶","下一步",()=>step(1)],["last","⏭","回到最新",()=>go(1e9)]   /* 開發者 11/11 選 ChatGPT UI 報告 UI-11：停在前面的步數時，狀態列寫「回顧中・第 N／共 M 步」，按鈕改叫「回到最新」 */]);
   const seq=(lid,p)=>{const l=L.get(lid);if(!l)return[];if(p<l.start)return l.parent==null?[]:seq(l.parent,p);return(l.parent==null?[]:seq(l.parent,l.start-1)).concat(l.moves.slice(0,p-l.start+1))};
   const endPly=lid=>{const l=L.get(lid);return l.start+l.moves.length-1};
   const owner=(lid,p)=>{const l=L.get(lid);return l.parent!=null&&p<l.start?owner(l.parent,p):lid};
@@ -19981,7 +19997,7 @@ function Viewer(v,c,id){
     v.querySelector("#evf").style.width=evPct(ev)+"%";
     const st=v.querySelector("#stat");st.classList.toggle("hot",!!FREE);
     if(FREE)st.textContent=`🔭 ${FREE.src||"自由走棋"}・${FREE.cur}／${FREE.all.length}`+(ev!=null?"・"+evt(ev):"");
-    else{const g=ply>0&&gradeOf(ply);st.textContent=ply===0?"開局局面・左右滑棋盤可換步":`第 ${ply} 步 ${s[ply-1].cn}`+(g?`【${g.q}】`:"")+(ev!=null?"・"+evt(ev):"")}
+    else{const g=ply>0&&gradeOf(ply);st.textContent=ply===0?"開局局面・左右滑棋盤可換步":`${ply<maxPly(line)?"📖 回顧中・":""}第 ${ply}／${maxPly(line)} 步 ${s[ply-1].cn}`+(g?`【${g.q}】`:"")+(ev!=null?"・"+evt(ev):"")}
     const moves=FREE?FREE.all.map(m=>({...m,q:m.g&&m.g.q})):seq(line,endPly(line)).map((m,i)=>{const g=gradeOf(i+1);return{...m,by:moverAt(i+1),q:g&&g.q}});
     renderStrip(v.querySelector("#strip"),moves,FREE?FREE.cur-1:ply-1,FREE?i=>go(i+1):i=>go(i+1));
     // 變著；推演中則改放推演用的按鈕
@@ -20070,6 +20086,7 @@ function Viewer(v,c,id){
     show();remember();if(typeof rdOpen==="function")rdOpen(c,id);   /* 意見回饋 737 第二期：記下打開讀過這盤（只存 id） */
     loadGrades().then(()=>{if(store.get("openReport")===c+"/"+id){store.set("openReport",null);report(true)}})}).catch(e=>{v.querySelector("#note").textContent="⚠ "+e.message});
   return self}
+
 
 
 
