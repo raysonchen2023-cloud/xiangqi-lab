@@ -147,7 +147,8 @@ var XQNet=(function(){
   function pubHist(){if(!cli||!cli.up||selfBan())return;const m=me(),R=rec();   /* 回饋 852：停權中不公開戰績摘要 */
     cli.pub(`${ROOT}/h/${m.id}`,JSON.stringify({v:1,id:m.id,name:m.name,at:Date.now(),list:R.hist.slice(0,30).map(h=>({gid:h.gid,id:h.rid,opp:h.opp,oid:h.oid,res:h.res,why:h.why,n:h.n,at:h.at,sd:h.sd||null})),prof:(()=>{try{return typeof window.XQ_prof==="function"?window.XQ_prof():null}catch(e){return null}})()}),true)}   /* 意見回饋 307：附上自己的戰力五角形和天賦摘要 */
   /* 意見回饋 301：匿名答題結果（題號、對錯、秒數，沒有名字和代號）送到大廳的 irt 頻道，開發者電腦收集後校正題目難度 */
-  function flushIRT(){if(!cli||!cli.up)return;const q=ls.get("irtQ",[]);if(!q.length)return;const c=cli;q.forEach((x,k)=>setTimeout(()=>{if(c.up)c.pub(`${ROOT}/irt`,JSON.stringify(x))},k*150));ls.set("irtQ",[])}   /* 回饋 854：一則一則隔開送（專用伺服器每條連線每秒最多收 10 則） */
+  /* 11/11 隱私文件盤點：家長關掉線上大廳（07x4 把它當成 XQ_SELFBANNED）時，匿名資料（卡關、對局評分、作答…）也不送、不排隊——設定頁說明早就這樣寫 */
+  function flushIRT(){if(!cli||!cli.up||selfBan())return;const q=ls.get("irtQ",[]);if(!q.length)return;const c=cli;q.forEach((x,k)=>setTimeout(()=>{if(c.up)c.pub(`${ROOT}/irt`,JSON.stringify(x))},k*150));ls.set("irtQ",[])}   /* 回饋 854：一則一則隔開送（專用伺服器每條連線每秒最多收 10 則） */
   /* 回饋 854：有變化才送。內容（不含時間）跟上次一樣、同一條連線、還不到 30 分鐘，就不送；force＝一定送（剛連上、被別人的遺囑清掉） */
   let lastP="",lastPAt=0,lastPCli=null;
   function presence(force){if(!cli||!cli.up)return;const m=me(),sd=side(),now=Date.now();
@@ -312,7 +313,7 @@ var XQNet=(function(){
     getRetained(topic,ms){return new Promise(res=>{let t=null,g=null;const done=v=>{clearTimeout(t);clearTimeout(g);delete W[topic];try{if(cli&&cli.up)cli.unsub([topic])}catch(e){}res(v||null)};
       t=setTimeout(()=>done(null),ms||8000);W[topic]=done;if(!want){want=true;connect()}const go=()=>{if(cli&&cli.up)cli.sub([topic]);else g=setTimeout(go,400)};go()})},refresh:()=>presence(),
     /* 從伺服器抓回某一盤保留的最後狀態（補存漏掉的棋譜，意見回饋 280） */
-    shareIRT(x){const q=ls.get("irtQ",[]);q.push({...x,at:Date.now()});ls.set("irtQ",q.slice(-20));flushIRT()},
+    shareIRT(x){if(selfBan())return;const q=ls.get("irtQ",[]);q.push({...x,at:Date.now()});ls.set("irtQ",q.slice(-20));flushIRT()},
     /* v5 改善單 R05：玩家關掉匿名開關時，手機裡已排隊、還沒送出的那一類一起丟掉（t＝"stk" 卡關訊號、"cpu" 對局評分），關掉後一包都不再送 */
     dropIRT(t){const q=ls.get("irtQ",[]);ls.set("irtQ",q.filter(x=>!x||x.t!==t))},
     /* 意見回饋 307：公開戰力摘要、開發者的重置指令、後台每天校正好的參數（題目難度、各段位成長參數） */
