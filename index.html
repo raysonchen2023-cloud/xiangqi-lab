@@ -1379,7 +1379,7 @@ html[data-hicon] .tabbar button.on{box-shadow:inset 0 -3px 0 currentColor}
       if(!window.caches)return go();caches.keys().then(function(ks){return Promise.all(ks.filter(function(k){return k.indexOf("xqlab-app-")===0}).map(function(k){return caches.delete(k)}))})
         .then(function(){return navigator.serviceWorker&&navigator.serviceWorker.getRegistration()}).then(function(r){return r&&r.update()}).catch(function(){}).then(go)}};setTimeout(chk,4000)})();
 </script>
-<script>window.XQ_OFFLINE=true;window.XQ_BUILD="20261111-1415";</script>
+<script>window.XQ_OFFLINE=true;window.XQ_BUILD="20261111-1430";</script>
 <script src="core.js"></script>
 <script src="engine.js"></script>
 <script src="local.js"></script>
@@ -13795,7 +13795,7 @@ function hubMap(v,hub){const D=HUB_DEF[hub],home=v.querySelector(".home");if(!D|
   const fresh=!store.get("campSeen",false)&&!Object.keys(campStars()).length&&!Object.keys(store.get("record",{})).length;
   const CL=hbIsCl()&&HUB_CL_SPOTS[hub],sp=D.spots.map(([id,sel,x,y])=>{const c=hbCard(v,sel);if(CL&&CL[id])[x,y]=CL[id];return c?{id,c,x,y}:null}).filter(Boolean);
   const d=document.createElement("div");
-  d.innerHTML=`<div class="shp-page cq hub-page"><img src="data/hubmap/${hbImg(D.img,hub)}.webp?v=${HB_IMGV}" alt="${esc(D.cap)}" onerror="this.onerror=null;this.src=this.src.replace('_night.','.')"><div class="hb-fx" aria-hidden="true"></div>${sp.map(o=>`<button class="shp-spot${hbHot(o.c)||(fresh&&(o.id==="hbCamp"||o.id==="hbTerms"))?" hot":""}" id="${o.id}" style="left:${o.x}%;top:${o.y}%"><b>${esc(hbEraWord(hbTitle(o.c)))}</b></button>`).join("")}${hub==="battle"?`<div class="hb-tag">想選對手、選難度、打晉級或比賽，就進${esc(hbHubN())}</div>`:""}</div>`;
+  d.innerHTML=`<div class="shp-page cq hub-page"><img src="data/hubmap/${hbImg(D.img,hub)}.webp?v=${HB_IMGV}" alt="${esc(D.cap)}" onerror="this.onerror=null;this.src=this.src.replace('_night.','.')"><div class="hb-fx" aria-hidden="true"></div>${sp.map(o=>`<button class="shp-spot${hbHot(o.c)||(fresh&&(o.id==="hbCamp"||o.id==="hbTerms"))?" hot":""}" id="${o.id}" style="left:${o.x}%;top:${o.y}%"><b>${esc(hbEraWord(hbTitle(o.c)))}</b></button>`).join("")}${hub==="battle"?`<div class="hb-tag">想算段位、選級數、找真人或打比賽，就進${esc(hbHubN())}正式上桌</div>`:""}</div>`;
   const P=d.firstElementChild;v.insertBefore(P,home);home.classList.add("hb-hidden");
   for(const o of sp){const b=P.querySelector("#"+o.id);if(!b)continue;b.onclick=()=>o.c.click();
     const upd=()=>{if(!b.isConnected){mo.disconnect();return}const h=hbHot(o.c)||(fresh&&(o.id==="hbCamp"||o.id==="hbTerms"));if(b.classList.contains("hot")!==h)b.classList.toggle("hot",h)};
@@ -13884,7 +13884,7 @@ ${typeof WALK_BOT_MERGE!=="undefined"&&WALK_BOT_MERGE?"":"body.hm-on.shw-on .xqb
 function hmGoBar(P,nw){const bar=document.createElement("div");bar.className="hm-go-bar";const b=document.createElement("button");b.type="button";b.className="hm-go";b.id="hmGo";
   /* 開發者 11/11 選 ChatGPT 13 號方案 1「快下 vs 選場」：平常寫「♟ 快速對局」；上一盤是挑戰電腦而且下完了＝小字「用上次難度，馬上跟電腦下」，
      點了直接用那盤的等級和模式（晉級賽／練功房）開新局（fresh）——原本只會打開那盤已經結束的棋，要再按新局，不算「馬上」 */
-  let R=nw?{go:"#/camp",t:"🔰 立即開始",s:"第一次下象棋，從這裡學"}:{go:"#/cpu",t:"♟ 快速對局",s:"馬上跟電腦下一盤"};
+  let R=nw?{go:"#/camp",t:"🔰 立即開始",s:"第一次下象棋，從這裡學"}:{go:"#/cpu",t:"♟ 快下一盤",s:"不用選・不算段位",fresh:{human:"r",lx:3,ranked:false}};   /* 11/11 方案 1：沒有下到一半的棋＝一律開一盤不算分的新局（原本會打開預設的晉級賽） */
   const set=r=>{R=r;b.innerHTML=`<span>${esc(r.t)}</span><small>${esc(r.s||"")}</small>`;b.setAttribute("aria-label",r.t+(r.s?"："+r.s:""))};set(R);
   const ib=P.querySelector("#hmInst");if(ib)bar.append(ib);bar.append(b);P.append(bar);
   b.onclick=async e=>{e.stopPropagation();vibrate(5);if(R.fresh)try{await api("/play/new",R.fresh)}catch(err){}if(R.sw)try{await api("/play/switch",{kind:R.sw})}catch(err){}if(R.park)store.set("park3d",true);try{sessionStorage.setItem("xqFromHome","1")}catch(err){}location.hash=R.go};   /* 11/11：記下從首頁進來（07y hbFromHome） */
@@ -13892,7 +13892,8 @@ function hmGoBar(P,nw){const bar=document.createElement("div");bar.className="hm
   try{if(window.XQNet&&XQNet.playing&&XQNet.playing())return set({go:"#/pvp",t:"▶ 接著下",s:"線上對局"})}catch(e){}
   if(typeof homeRecGame!=="function")return;
   api("/play/state").then(st=>{const g=homeRecGame(st);if(!b.isConnected)return;
-    if(!g){if(st&&st.kind==="cpu"&&st.result&&!st.practice)set({go:"#/cpu",t:"♟ 快速對局",s:"用上次難度，馬上跟電腦下",fresh:{human:st.human||"r",lx:st.level,ranked:!!st.ranked,...(!st.ranked&&st.rlv!=null?{rlv:st.rlv}:{})}});return}const o=g.sw&&(st.others||[]).find(z=>z&&z.kind===g.sw),n=o?+o.n:st&&st.moves?st.moves.length:0;
+    /* 開發者 11/11 選 ChatGPT 14 號方案 1「快局不留名、茶肆才算帳」：快局一律不算段位分（上一盤是晉級賽也一樣，只沿用它的強度）；算分、選級數都在茶肆 */
+    if(!g){if(st&&st.kind==="cpu"&&st.result&&!st.practice)set({go:"#/cpu",t:"♟ 快下一盤",s:"沿用上次難度・不算段位",fresh:{human:st.human||"r",lx:st.level,ranked:false}});return}const o=g.sw&&(st.others||[]).find(z=>z&&z.kind===g.sw),n=o?+o.n:st&&st.moves?st.moves.length:0;
     set({go:g.go,sw:g.sw,park:g.park,t:"▶ 接著下",s:String(g.t).replace(/^.*：/,"")+(n>0?`・第 ${n} 手`:"")})}).catch(()=>{})}
 /* 完全沒下過棋（跟原本首頁「🔰 第一次下象棋？」卡同一個判斷） */
 const hmNew=()=>!store.get("campSeen",false)&&!Object.keys(store.get("record",{})).length;
@@ -18859,6 +18860,8 @@ function CpuGame(v,practicePage,mode){
           api("/play/state").then(s=>{if(!s||s.id!==gid)return;const r=pick(s.moves||[]);if(r.b&&(r.all||n>=4))show(r.b);if(n<14&&!(r.all&&(!r.b||seen)))setTimeout(tick,1500)}).catch(()=>{})};
         setTimeout(tick,300);return`<button type="button" class="reslook" hidden></button>`};
       const RLK=resLook(),XPL=XPR+RLK;
+      /* 開發者 11/11 選 ChatGPT 14 號方案 9「快局結算給下一步」：橋上快局下完，結算視窗用一句話邀請去茶肆（贏了打晉級賽、輸了去練功房挑級數），配一顆可以不理的「去茶肆」；不另外跳視窗 */
+      const QKH=typeof hbHubN==="function"?hbHubN():"茶肆",QKN=FH()?`<p style="font-size:14px;margin:8px 0 2px">${st.result.w===st.human?`手感不錯！要不要去${esc(QKH)}打晉級賽，讓這股氣勢算進段位？`:!st.result.w?`要不要去${esc(QKH)}挑個剛好的對手，再來一盤？`:`這盤有點可惜。要不要去${esc(QKH)}練功房，挑剛好的級數再戰？`}</p><p class="muted" style="font-size:12.5px;margin:0">這盤是橋上快局，不算段位分。</p>`:"";
       const win=st.result.w===st.human,draw0=!st.result.w;vibrate([30,40,30]);if(draw0&&parkOn()&&PARK&&PARK.host===v.querySelector("#bbox")){const dl=oppTalk(st,optJk(st),parkNpcOf(st)).draw;setTimeout(()=>{try{PARK.v.oppSay(dl,3)}catch(e){}},1600)}   /* 826 追加：和棋時對面的人也說一句（園子 3D 原本只有我方說「和棋，不錯喔！」） */
       if(st.result.w&&/將死|困斃/.test(st.result.why||"")){const loser=st.result.w==="r"?"b":"r",k=st.board.indexOf(loser==="r"?"K":"k");if(k>=0){MODAL_HOLD=Date.now()+2700;killFx(bd.svg,win,st.result.why,k,st.human==="b",{side:st.result.w})}}try{window.dispatchEvent(new CustomEvent("xq-result",{detail:win?"win":draw0?"draw":"lose"}))}catch(e){}
       /* 意見回饋 607（RPG 專家建議）：結果視窗統一成「主要按鈕一顆（整排）＋次要一排：📊 檢討・🏠 首頁・看看棋盤」；
@@ -18896,8 +18899,8 @@ function CpuGame(v,practicePage,mode){
             if(win&&s0){const Ls=s0.book===2?jStages2():jStages(),i=Ls.findIndex(x=>x.id===s0.id),nx=i>=0&&i+1<Ls.length&&jOpen(Ls,i+1)?Ls[i+1]:null;
               return nx?resBtns(["📖 下一回 ›",()=>{if(nx.book===2)store.set("legBook",2);goUp(SHELF(nx.book===2?2:1),()=>nx.book===2?legendRead2(nx.n):legendRead(nx.n))}],bk):resBtns(bk)}
             return resBtns(again,bk)})(),"res");return}
-      modal(`<div class="em">${win?"🏆":draw0?"🤝":"💪"}</div><h2>${win?"你贏了！":draw0?"和局":"這盤輸了"}</h2><p class="muted">${esc(st.result.why)}・${st.journey?`🪨 ${esc(jName(st.journey))}`:`對手第 ${st.level} 級「${esc(lv.name||"")}」`}</p>`+XPL,
-        resBtns([win&&st.level<18&&!FH()?"挑戰下一級 ›":"再來一局",()=>api("/play/new",{human:st.human,lx:win&&st.level<18&&!FH()?st.level+1:st.level})   /* 開發者 11/6 修：等級是細分的 1～18 級，用 lx 傳、上限 18；原本傳 level 會被再換算一次，難度暴跳 */.then(render).catch(e=>toast(e.message))]),"res")}}
+      modal(`<div class="em">${win?"🏆":draw0?"🤝":"💪"}</div><h2>${win?"你贏了！":draw0?"和局":"這盤輸了"}</h2><p class="muted">${esc(st.result.why)}・${st.journey?`🪨 ${esc(jName(st.journey))}`:`對手第 ${st.level} 級「${esc(lv.name||"")}」`}</p>`+XPL+QKN,
+        resBtns([win&&st.level<18&&!FH()?"挑戰下一級 ›":"再來一局",()=>api("/play/new",{human:st.human,lx:win&&st.level<18&&!FH()?st.level+1:st.level,...(FH()?{ranked:false}:{})})   /* 開發者 11/6 修：等級是細分的 1～18 級，用 lx 傳、上限 18；原本傳 level 會被再換算一次，難度暴跳 */.then(render).catch(e=>toast(e.message))],FH()?["⚔ 去"+QKH+"正式上桌",()=>{location.hash="#/hub/battle"}]:null),"res")}}
   // 賽後報告：用這一盤自己的編號打開（意見回饋 234：以前拿存檔清單第一筆，存檔還沒寫完或順序不同時會開到別盤）
 async function review(rep,id,at){let it=null;for(let k=0;k<12&&!it;k++){try{const d=await api("/db/items?c=play");it=id?d.items.find(x=>x.id===id):d.items[0]}catch(e){}if(!it)await new Promise(r=>setTimeout(r,250))}
   if(!it)return toast("找不到這盤的存檔");if(rep)store.set("openReport","play/"+it.id);if(at)store.set("openAt",{c:"play",id:it.id,ply:at.ply,why:at.why});REVIEW_BACK={id:it.id,h:location.hash};location.hash="#/db/play/"+encodeURIComponent(it.id)}   /* 意見回饋 607：記下從哪一盤去看報告，回來時不要自動開新局 */
@@ -18970,9 +18973,9 @@ async function review(rep,id,at){let it=null;for(let k=0;k<12&&!it;k++){try{cons
   /* 開發者 11/11（截圖：橋上快速對局也能選難度、切晉級賽）：從首頁快速對局進來的（07y hbFromHome），新局、等級按鈕只給「再來一盤（同樣難度）」，
    想換難度、打晉級賽就去茶肆（快局的價值是快，選難度留給茶肆）；頂欄不放晉級賽／練功房分頁，結算視窗也不給「挑戰下一級」 */
   const FH=()=>MODE==="cpu"&&typeof hbFromHome==="function"&&hbFromHome();
-  function quickSheet(){const hub=typeof hbHubN==="function"?hbHubN():"茶肆";sheet("♟ 快速對局",b=>{b.innerHTML=`<p class="muted" style="margin:0 0 10px">快速對局用上一盤的難度（第 ${st.level} 級）。想換難度、打晉級賽，請到${esc(hub)}。</p>
+  function quickSheet(){const hub=typeof hbHubN==="function"?hbHubN():"茶肆";sheet("♟ 快速對局",b=>{b.innerHTML=`<p class="muted" style="margin:0 0 10px">快速對局用上一盤的難度（第 ${st.level} 級），不算段位分。想換難度、打晉級賽，請到${esc(hub)}正式上桌。</p>
       <button class="btn" id="qkAgain" style="width:100%;margin:0 0 8px">♟ 再來一盤（同樣難度）</button><button class="btn ghost" id="qkHub" style="width:100%;margin:0">⚔ 去${esc(hub)}選難度、打晉級賽</button>`;
-    b.querySelector("#qkAgain").onclick=()=>{closeSheet();const go=()=>api("/play/new",{human:st.human,lx:st.level,ranked:!!st.ranked}).then(render).catch(e=>toast(e.message));if(!st.result&&st.moves.length>=2)confirmBox(st.ranked?"這盤晉級賽還沒下完，重開會算輸，確定？":"這盤還沒下完，確定重開一盤？",go,"再來一盤");else go()};
+    b.querySelector("#qkAgain").onclick=()=>{closeSheet();const go=()=>api("/play/new",{human:st.human,lx:st.level,ranked:false}).then(render).catch(e=>toast(e.message));if(!st.result&&st.moves.length>=2)confirmBox(st.ranked?"這盤晉級賽還沒下完，重開會算輸，確定？":"這盤還沒下完，確定重開一盤？",go,"再來一盤");else go()};
     b.querySelector("#qkHub").onclick=()=>{closeSheet();location.hash="#/hub/battle"}})}
   function newSheet(){if(!st)return;if(FH())return quickSheet();if(MODE==="arena")return arenaSheet(ARENA[st.arena]?st.arena:store.get("era","classic"),arenaStart);if(MODE==="journey")return jNewSheet();   /* 意見回饋 396：擂台裡按「新局」只出現挑戰擂台（再挑戰擂主、集章簿），不出現自選難度 */
     let side=st.human,level=st.level||store.get("cpuLevel",6);const ranked=OFF&&!!st.ranked;
