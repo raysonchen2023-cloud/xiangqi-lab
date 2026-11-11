@@ -1531,7 +1531,7 @@ html[data-hct] .player.on .clk{background:#00563B;color:#FFFFFF;border-color:#00
       if(!window.caches)return go();caches.keys().then(function(ks){return Promise.all(ks.filter(function(k){return k.indexOf("xqlab-app-")===0}).map(function(k){return caches.delete(k)}))})
         .then(function(){return navigator.serviceWorker&&navigator.serviceWorker.getRegistration()}).then(function(r){return r&&r.update()}).catch(function(){}).then(go)}};setTimeout(chk,4000)})();
 </script>
-<script>window.XQ_OFFLINE=true;window.XQ_BUILD="20261112-0810";</script>
+<script>window.XQ_OFFLINE=true;window.XQ_BUILD="20261112-0820";</script>
 <script src="core.js"></script>
 <script src="engine.js"></script>
 <script src="local.js"></script>
@@ -3693,7 +3693,7 @@ function rulesNotation(box){
     <div class="opt" id="nex" style="justify-content:center;flex-wrap:wrap"></div></div>`;
   const bd=Board(null);box.querySelector("#nb").append(bd.svg);const b0=parseFen(START);
   const show=i=>{const[cn,d,mv]=EX[i],b=b0.slice();mv.slice(0,-1).forEach(([f,t])=>{b[t]=b[f];b[f]=null});const[f,t]=mv[mv.length-1];
-    bd.draw(b,{anim:false,arrow:false,sugg:[{f,t}]});box.querySelector("#ncap").innerHTML=`<b>${cn}</b>：${d}`;
+    bd.svg._mvtHold=null;bd.draw(b,{anim:false,arrow:false,sugg:[{f,t}]});box.querySelector("#ncap").innerHTML=`<b>${cn}</b>：${d}`;
     box.querySelectorAll("#nex button").forEach((x,j)=>x.classList.toggle("on",j===i))};
   box.querySelector("#nex").innerHTML=EX.map(([cn],i)=>`<button data-i="${i}">${cn}</button>`).join("");
   box.querySelectorAll("#nex button").forEach(x=>x.onclick=()=>{vibrate(5);show(+x.dataset.i)});show(0)}
