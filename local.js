@@ -35,12 +35,24 @@ var XQ=(function(){
       if(S.moves[i]!==m)return;if(r)Object.assign(m,r);else m.q="—";save()}}
   /* 開發者 11/11 照三方審查（影子模式）：多帶 bv＝最佳著法評估的原值（紅方視角、沒夾 ±2000，core.js classifyRaw 新加的），新算法判「漏殺」和匿名對局資料要用；舊存檔沒有 bv，新算法改用 ev 夾值後＋loss 還原
      ChatGPT 數值盤查 11/11 P1：再多帶 bmt、pmt（殺棋訊號，走方視角，見 core.js classifyRaw），賽後講解只在真的有殺時才說「有殺／錯過殺棋」 */
-  const moveOut=m=>({f:m.f,t:m.t,by:m.by,cn:m.cn,ck:m.ck,q:m.q,loss:m.loss,ev:m.ev,bv:m.bv,bmt:m.bmt,pmt:m.pmt,bc:m.bc,bm:m.bm,bp:m.bp});
+  const moveOut=m=>({f:m.f,t:m.t,by:m.by,cn:m.cn,ck:m.ck,q:m.q,loss:m.loss,ev:m.ev,bv:m.bv,bmt:m.bmt,pmt:m.pmt,rr:m.rr,bc:m.bc,bm:m.bm,bp:m.bp});
   const lastEv=ms=>{for(let i=ms.length-1;i>=0;i--)if(ms[i].ev!=null)return{v:ms[i].ev,ply:i+1};return null};
-  const saveMoves=ms=>ms.map(m=>({f:m.f,t:m.t,by:m.by,q:m.q,loss:m.loss,ev:m.ev,bv:m.bv,bmt:m.bmt,pmt:m.pmt,bc:m.bc,bm:m.bm,bp:m.bp}));   /* bv：見 moveOut（開發者 11/11 影子模式）；bmt、pmt 同上（數值盤查 11/11）；沒有就是 undefined，JSON 存檔時自動省略 */
+  const saveMoves=ms=>ms.map(m=>({f:m.f,t:m.t,by:m.by,q:m.q,loss:m.loss,ev:m.ev,bv:m.bv,bmt:m.bmt,pmt:m.pmt,rr:m.rr,bc:m.bc,bm:m.bm,bp:m.bp}));   /* bv：見 moveOut（開發者 11/11 影子模式）；bmt、pmt 同上（數值盤查 11/11）；沒有就是 undefined，JSON 存檔時自動省略 */
   /* 意見回饋 619：存棋譜排隊一筆一筆來（以前兩筆同時存會互相蓋掉），同一個 id 不重複存 */
   let PG=Promise.resolve();
   function pushGame(kind,g){const p=PG.then(async()=>{const list=(await idb.get("games:"+kind))||[];if(g&&g.id&&list.some(x=>x.id===g.id))return;list.push(g);await idb.set("games:"+kind,list)});PG=p.catch(()=>{});return p}
+  /* ChatGPT 評審 11/11（未評完的狀態）：下完那一刻 pushGame 存的棋譜，最後幾步常常還沒評（評等在背景跑），缺 PV（e.retry）的步也要等之後重評；
+     以前評好的只寫進目前這盤（ls play），存起來的棋譜永遠缺那幾步，對局紀錄、檢討頁就一直「沒評完」。gamePatch 把後來評好的補進存檔：
+     G＝{第幾步: {f,t,q,loss,…}}，f、t 要跟存檔那一步一樣才補，已經有評等的不動（排在 PG 後面，不會跟 pushGame 互相蓋掉） */
+  const GRK=["q","loss","ev","bv","bmt","pmt","rr","bc","bm","bp"];
+  function gamePatch(kind,id,G){if(!id||!G||typeof G!=="object")return Promise.resolve(0);
+    const p=PG.then(async()=>{const list=(await idb.get("games:"+kind))||[],g=list.find(x=>x&&x.id===id);if(!g||!Array.isArray(g.moves))return 0;let n=0;
+      for(const[k,v]of Object.entries(G)){const m=g.moves[(+k)-1];if(!m||!v||!v.q||m.q||v.f!==m.f||v.t!==m.t)continue;for(const x of GRK)if(v[x]!==undefined)m[x]=v[x];n++}
+      if(n)await idb.set("games:"+kind,list);return n});PG=p.catch(()=>{});return p}
+  const movesG=ms=>{const G={};ms.forEach((m,i)=>{if(m&&m.q)G[i+1]=m});return G};
+  /* 我方還有幾步沒評（含缺 PV 等重評的）：對局紀錄清單用；線上對局本來就不會自動評，一步都沒評過的不算「在分析」 */
+  const pendOf=(c,it)=>{const sd=c==="play"?(it.red==="你"?"r":it.black==="你"?"b":null):it.mine,ms=it.lines&&it.lines[0]&&it.lines[0].moves;
+    if(!it.result||(sd!=="r"&&sd!=="b")||!Array.isArray(ms))return{};if(c==="pvp"&&!ms.some(m=>m.q))return{};const n=ms.filter(m=>m.by===sd&&!m.q).length;return n?{pend:n}:{}};
 
   // ---------- 挑戰電腦 ----------
   let P=null,playBusy=false,playMsg="",paBusy=false,engFail=0,engWait=false;   /* 11/11：電腦出棋失敗的次數、是不是在等網路回來（playEngine） */
@@ -143,7 +155,10 @@ var XQ=(function(){
     else if(kindOf(P)==="cpu"&&!/-b$/.test(String(P.id))){const rec=ls.get("record",{}),L=rec[P.level]||(rec[P.level]={w:0,l:0,d:0});L[res]++;ls.set("record",rec)}
     /* 意見回饋 594：石桌往事從中局開始的關也存（記起始局面），我的成長才算得到故事裡下的棋 */
     pushGame("play",{id:P.id,date:P.id.slice(0,10),level:P.level,ranked:!!P.ranked,reward:!!P.reward,rk:P.rk,human:P.human,result:P.result,...(P.start?{start:P.start,startTurn:P.startTurn||"r"}:{}),...(P.journey?{journey:P.journey}:{}),...assist(P),moves:saveMoves(P.moves)});savePlay()}
-  async function analyzePlay(){if(paBusy||!P)return;paBusy=true;try{await analyzeList(P,savePlay,()=>!!P&&!P.result&&P.turn!==P.human)}finally{paBusy=false}}
+  async function analyzePlay(){if(paBusy||!P)return;paBusy=true;const S=P;try{await analyzeList(P,savePlay,()=>!!P&&!P.result&&P.turn!==P.human)}finally{paBusy=false}
+    /* ChatGPT 評審 11/11（未評完的狀態）：下完的那盤，背景評好的補進存檔（gamePatch）；還有缺 PV 沒評到的，5 秒後再評，同一盤最多再試 3 次 */
+    if(S&&S.result&&!S.practice&&S.id){gamePatch("play",S.id,movesG(S.moves));if(S===P&&S.moves.some(m=>!m.q)&&(paRetry[S.id]=(paRetry[S.id]||0)+1)<=3)setTimeout(analyzePlay,5000)}}
+  const paRetry={};
   const ucis=()=>P.moves.map(m=>iccs(m.f,m.t));
   /* 意見回饋 363：秘境棋友的開局喜好是真的——跟他下時，這盤有 90% 機率照他愛下的開局走前一兩步（紅方、黑方各一套），之後才交給 Pikafish */
   const STYLE={
@@ -229,7 +244,8 @@ var XQ=(function(){
   setInterval(pvpClock,250);
   function pvpEnd(w,why,now){if(V.tick!=null&&V.clocks)V.clocks[V.turn]=Math.max(0,pvpLeft(V.turn,now));V.result={w,why,...(V.repetition&&!V.repetition.pending?{adjudication:V.repetition}:{})};V.tick=null;V.draw=null;
     pushGame("pvp",{id:V.id,date:V.id.slice(0,10),red:V.red,black:V.black,tc:V.tcKey,result:V.result,moves:saveMoves(V.moves)});saveV()}
-  async function analyzePvp(){if(vaBusy||!V)return;vaBusy=true;try{await analyzeList(V,saveV)}finally{vaBusy=false}}
+  async function analyzePvp(){if(vaBusy||!V)return;vaBusy=true;const S=V;try{await analyzeList(V,saveV)}finally{vaBusy=false}
+    if(S&&S.result&&S.id)gamePatch("pvp",S.id,movesG(S.moves))}   /* ChatGPT 評審 11/11：下完後評好的補進存檔（見 gamePatch） */
   function pvpState(){ensureV();pvpClock();
     return{rules:C.REP_RULES,repetition:V.repetition||null,id:V.id,red:V.red,black:V.black,board:V.board,turn:V.turn,moves:V.moves.map(moveOut),result:V.result,draw:V.draw,tcKey:V.tcKey,
       clocks:V.clocks?{r:pvpLeft("r"),b:pvpLeft("b")}:null,running:V.tick!=null,legal:V.result?[]:legal(V.board,V.turn),
@@ -315,7 +331,7 @@ var XQ=(function(){
       {key:"study",name:"我的研究",count:((await idb.get("games:study"))||[]).length});return out}
   async function dbItems(c){
     if(c==="study")return{name:"我的研究",note:"推演變化後按「💾 存成棋譜」存在這支手機裡的研究",items:((await idb.get("games:study"))||[]).slice().reverse().map(g=>summary(studyItem(g)))};
-    if(c==="play"||c==="pvp")return{name:c==="play"?"人機對局":"真人對局",note:"這支手機上下完的對局",items:(await gameItems(c)).map(it=>({...summary(it),...(it.mine?{mine:it.mine}:{})}))};   /* 意見回饋（開發者 11/6 分數審查）：清單也帶 mine，戰績頁認自己用 */
+    if(c==="play"||c==="pvp")return{name:c==="play"?"人機對局":"真人對局",note:"這支手機上下完的對局",items:(await gameItems(c)).map(it=>({...summary(it),...(it.mine?{mine:it.mine}:{}),...pendOf(c,it)}))};   /* pend：我方還有幾步沒評（ChatGPT 評審 11/11） */   /* 意見回饋（開發者 11/6 分數審查）：清單也帶 mine，戰績頁認自己用 */
     if(c==="peek")return{name:"棋友的對局",note:"從棋友資料卡打開過的線上對局",items:(await gameItems(c)).map(summary)};
     const d=await loadBook(c);if(!d)throw new Error("手機裡沒有這個資料夾"+(remoteInfo()?"，可以按「從電腦同步」下載":""));
     return{name:d.name,book:d.book,source:d.source,players:d.players||null,items:d.items.map(summary)}}
@@ -483,6 +499,7 @@ var XQ=(function(){
     if(p==="/db/books")return dbBooks();
     if(p==="/db/items")return dbItems(c);
     if(p==="/db/item")return dbItem(c,url.searchParams.get("id"));
+    if(p==="/db/grades"){const B=b||{};if(B.c!=="play"&&B.c!=="pvp")throw new Error("這個資料夾不能補評等");return{n:await gamePatch(B.c,String(B.id||""),B.g)}}   /* ChatGPT 評審 11/11：檢討頁補評好的步寫回存檔（gamePatch） */
     if(p==="/quiz/data"||p==="/terms/data"){const r=await fetch("data/"+p.slice(1,-5)+".json");if(!r.ok)throw new Error("找不到題庫");const d=await r.json();
       /* 意見回饋 301：有校正檔就把每題校正過的鑑別度 a、難度 b 加上去 */
       if(p==="/quiz/data")try{const c=await (await fetch("data/quiz-calib.json")).json();for(const it of d.items){const k=c.items&&c.items[it.id];if(k){it.ca=k.a;it.cb=k.b}}}catch(e){}

@@ -678,7 +678,7 @@
       if(!(++dodgeN&1))dodgeTick();
       hit.style.pointerEvents=hid||dim?"none":"auto";
       box.style.opacity=hid?"0":dim?(boardMode?".2":".25"):boardMode&&!(act||drag||bubT>0)?".45":""},250);
-    const onHash=()=>{userHold=false;boardDrag=false};window.addEventListener("hashchange",onHash);
+    const onHash=()=>{userHold=false;boardDrag=false;bub.style.opacity=0;bubT=0};window.addEventListener("hashchange",onHash);   /* 11/11：換頁就收起泡泡（首頁的冷知識原本會跟到對局頁、蓋在工具列上） */
     // 換朝代：重做造型（字形還沒下載就先下載，好了再換一次）
     const rebuild=()=>{curK=eraK();curP=BP();root.remove(B.bot);Object.assign(B,buildMe(curK,grade()),{glb:null});root.add(B.bot);try{xsLoad();xsMode()}catch(e){}};
     // 升官慶祝（意見回饋 236）：小帥放大走到畫面正中央，金光、彩帶、「升官」字樣，約 5 秒後回原位

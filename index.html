@@ -1434,7 +1434,7 @@ body:has(> .modal) > .toast{z-index:9995}
       if(!window.caches)return go();caches.keys().then(function(ks){return Promise.all(ks.filter(function(k){return k.indexOf("xqlab-app-")===0}).map(function(k){return caches.delete(k)}))})
         .then(function(){return navigator.serviceWorker&&navigator.serviceWorker.getRegistration()}).then(function(r){return r&&r.update()}).catch(function(){}).then(go)}};setTimeout(chk,4000)})();
 </script>
-<script>window.XQ_OFFLINE=true;window.XQ_BUILD="20261111-2230";</script>
+<script>window.XQ_OFFLINE=true;window.XQ_BUILD="20261111-2300";</script>
 <script src="core.js"></script>
 <script src="engine.js"></script>
 <script src="local.js"></script>
@@ -2629,26 +2629,31 @@ addEventListener("hashchange",()=>document.querySelectorAll(".tmx-bub").forEach(
 /* 包住 renderStrip：每次著法條換內容才做一次（box.dataset.k 是 renderStrip 自己記的內容鍵） */
 function tmxStrip(box,moves,onPick){if(!box||!moves)return;const k=box.dataset.k||"";if(box.dataset.tmx===k)return;box.dataset.tmx=k;
   [...box.children].forEach((c,i)=>{const m=moves[i];if(!m)return;const q=c.querySelector(".q");
-    if(q&&TMX_QS.includes(q.textContent)){q.dataset.tq=q.textContent;if(m.loss!=null)q.dataset.tl=m.loss;q.setAttribute("aria-label",tmxPlain(q.textContent,m.loss))}
+    if(q&&TMX_QS.includes(q.textContent)){q.dataset.tq=q.textContent;if(m.loss!=null)q.dataset.tl=m.loss;const tr=tmxRisk(q.textContent,m);if(tr)q.dataset.tr=tr;else delete q.dataset.tr;q.setAttribute("aria-label",tmxPlain(q.textContent,m.loss)+tr)}
     if(!onPick)c.onclick=()=>tmxMove(c,m,i)});
   setTimeout(()=>{try{tmxFirst(box)}catch(e){}},400)}
 function tmxFirst(box){if(!box.isConnected||!box.offsetParent||document.querySelector(".tmx-bub")||Date.now()-TMX_T<3000)return;
   const seen=store.get("tmxSeen",[])||[],br=box.getBoundingClientRect(),on=box.querySelector(".chip.on")||box.lastElementChild,oc=on?on.getBoundingClientRect():br,cx=oc.left+oc.width/2;let best=null,bd=1e9;
   box.querySelectorAll(".q[data-tq]").forEach(q=>{if(seen.includes(q.dataset.tq))return;const r=q.getBoundingClientRect();if(!r.width||r.left<br.left-2||r.right>br.right+2)return;const d=Math.abs(r.left+r.width/2-cx);if(d<bd){bd=d;best=q}});
   if(!best)return;const g=best.dataset.tq;
-  if(tmxBub(best,`${esc(tmxPlain(g,best.dataset.tl))}<small>著法條上的評等字，點一下可以再看說明</small>`,7000)){seen.push(g);store.set("tmxSeen",seen);TMX_T=Date.now()}}
+  if(tmxBub(best,`${esc(tmxPlain(g,best.dataset.tl))}${best.dataset.tr?"<br>⚠ "+esc(best.dataset.tr):""}<small>著法條上的評等字，點一下可以再看說明</small>`,7000)){seen.push(g);store.set("tmxSeen",seen);TMX_T=Date.now()}}
+/* ChatGPT 評審 11/11（失著的具體後果）：失著、敗著才講「這手讓對方下一手可以吃你的車（車8進3）」；只看分析線存的 rr（05-settings mflRisk），沒有就不說。
+   著法條沒有盤面，這裡不重驗（rr 本來就是 core.js classifyRaw 用規則算的）；檢討頁說明另外帶盤面重驗 */
+function tmxRisk(q,m){try{return(q==="失著"||q==="敗著")&&m&&m.rr&&typeof mflRisk==="function"?mflRisk(null,m.by,m,m):""}catch(e){return""}}
 function tmxMove(c,m,i){vibrate(5);let s="";try{MVT_RE.lastIndex=0;if(m.cn&&MVT_RE.test(m.cn))s=mvtSay(m.cn).t}catch(e){}MVT_RE.lastIndex=0;
-  const g=m.q&&TMX_QS.includes(m.q)?tmxPlain(m.q,m.loss):"";
-  tmxBub(c,`<b>第 ${i+1} 步　${esc(m.cn||"")}</b>${s?"<br>"+esc(s):""}${g?"<br>"+esc(g):""}`,7000)}
+  const g=m.q&&TMX_QS.includes(m.q)?tmxPlain(m.q,m.loss):"",tr=tmxRisk(m.q,m);
+  tmxBub(c,`<b>第 ${i+1} 步　${esc(m.cn||"")}</b>${s?"<br>"+esc(s):""}${g?"<br>"+esc(g):""}${tr?"<br>⚠ "+esc(tr):""}`,7000)}
 if(typeof renderStrip==="function"){const f0=renderStrip;renderStrip=function(box,moves,curIdx,onPick){const r=f0.apply(this,arguments);try{tmxStrip(box,moves,onPick)}catch(e){}return r}}
 document.addEventListener("click",e=>{const t=e.target;if(!t||!t.closest)return;
-  const q=t.closest(".chip .q[data-tq]");if(q){e.preventDefault();e.stopPropagation();vibrate(5);TMX_T=Date.now();tmxBub(q,esc(tmxPlain(q.dataset.tq,q.dataset.tl)),6000);return}
+  const q=t.closest(".chip .q[data-tq]");if(q){e.preventDefault();e.stopPropagation();vibrate(5);TMX_T=Date.now();tmxBub(q,esc(tmxPlain(q.dataset.tq,q.dataset.tl))+(q.dataset.tr?"<br>⚠ "+esc(q.dataset.tr):""),6000);return}
   const r=t.closest(".rp-q > span");if(r){const g=TMX_QS.find(k=>r.textContent.includes(k));if(g){vibrate(5);tmxBub(r,esc(tmxPlain(g)),6000)}}},true);
 /* ③ 記譜提示：畫面上（不在泡泡、吐司裡）第一次出現看得到的 .mvt，等 1.5 秒（過場、蓋章動畫先收）再指著它講一次 */
 const tmxVis=el=>{if(!el||!el.offsetParent||el.closest(".tmx-bub"))return false;const r=el.getBoundingClientRect();return r.width>0&&r.top>=50&&r.bottom<=innerHeight-60&&r.left>=0&&r.right<=innerWidth};
 function tmxMvtHint(){if(TMX_MV||TMX_MVT)return;if(![...document.querySelectorAll(".mvt")].some(tmxVis))return;
   TMX_MVT=setTimeout(()=>{TMX_MVT=0;if(TMX_MV||document.querySelector(".tmx-bub,.kjfx,.pkhint")||fxBusy())return;const y=[...document.querySelectorAll(".mvt")].find(tmxVis);if(!y)return;
     if(tmxBub(y,`💡 藍色虛線的走法（像「${esc(y.dataset.mv)}」）<b>點一下</b>，就會在棋盤上畫箭頭，還會用白話說它怎麼走。`,8000)){TMX_MV=true;store.set("tmxMvt",true);TMX_T=Date.now()}},1500)}
+
+
 
 
 
@@ -3831,7 +3836,7 @@ function histList(box,reps){let kind=store.get("histKind","all"),res="",limit=40
         R=ta!=null?{score:Math.round(ta),grade:gradeFor(Math.round(ta))[0]}:rpOk?rp:null,nr=x.c==="pvp"&&nh.find(hh=>hh.rid===x.it.id);
       const lab=r==="w"?"勝":r==="l"?"負":r==="d"?"和":r==="x"?"✕":(r||"—").slice(0,1);
       const why=String(x.it.result||"").replace(/^.*?（/,"").replace(/）$/,"");
-      grp.push(`<button class="st-g" data-c="${x.c}" data-id="${esc(id)}"><span class="dot ${r==="w"||r==="l"?r:""}">${esc(lab)}</span><span class="tx"><b>${x.k==="cpu"?"🤖 ":"👥 "}${/-s\d+$/.test(String(x.it.id))?"🀄 車輪戰・":""}${esc(x.opp||"")}${nr&&isCloud(nr.oid)?cloudTag(true):""}${x.c==="pvp"&&x.side?` <i class="opp-i" data-oid="${esc(nr&&nr.oid||"")}" data-on="${esc(x.opp||"")}" style="font-style:normal;font-size:12px;color:var(--accent);border:1px solid var(--line);border-radius:10px;padding:0 6px;margin-left:4px">ⓘ 棋友</i>`:""}</b><span>${LD.d}・${x.side?"執"+(x.side==="r"?"紅":"黑")+"・":""}${esc(why)}${R&&nr?`・積分 ${nr.d>=0?"+":""}${nr.d}`:""}</span></span>${R?`<b class="r gl" style="background:${gradeFor(R.score)[2]}">${R.grade}</b>`:nr?`<b class="r ${nr.d>=0?"w":"l"}">${nr.d>=0?"+":""}${nr.d}</b>`:'<span class="r muted">›</span>'}</button>`)}
+      grp.push(`<button class="st-g" data-c="${x.c}" data-id="${esc(id)}"><span class="dot ${r==="w"||r==="l"?r:""}">${esc(lab)}</span><span class="tx"><b>${x.k==="cpu"?"🤖 ":"👥 "}${/-s\d+$/.test(String(x.it.id))?"🀄 車輪戰・":""}${esc(x.opp||"")}${nr&&isCloud(nr.oid)?cloudTag(true):""}${x.c==="pvp"&&x.side?` <i class="opp-i" data-oid="${esc(nr&&nr.oid||"")}" data-on="${esc(x.opp||"")}" style="font-style:normal;font-size:12px;color:var(--accent);border:1px solid var(--line);border-radius:10px;padding:0 6px;margin-left:4px">ⓘ 棋友</i>`:""}</b><span>${LD.d}・${x.side?"執"+(x.side==="r"?"紅":"黑")+"・":""}${esc(why)}${R&&nr?`・積分 ${nr.d>=0?"+":""}${nr.d}`:""}${x.it.pend>0?`・📈 還有 ${+x.it.pend} 步待分析`:""}</span></span>${R?`<b class="r gl" style="background:${gradeFor(R.score)[2]}">${R.grade}</b>`:nr?`<b class="r ${nr.d>=0?"w":"l"}">${nr.d>=0?"+":""}${nr.d}</b>`:'<span class="r muted">›</span>'}</button>`)}
     flush();h+=out.join("");
     if(L.length>limit)h+=`<button class="btn ghost" id="more" style="margin-top:12px">再顯示 40 盤（還有 ${L.length-limit} 盤）</button>`;
     box.innerHTML=h;
@@ -5197,8 +5202,20 @@ async function rpRetry(o,ply){const m=o.moves[ply-1];if(!m)return;
    評語照 qNow（跟賽後報告、錯棋重練同一套分界）。回 {b:{ply 第幾步,cn,q,loss,bc,bm}｜null, all 我方每步都評完了沒, n 評好幾步, need 我方共幾步} */
 function mflPick(moves,side){let b=null,all=true,n=0,need=0;
   (moves||[]).forEach((m,i)=>{if(!m||m.by!==side)return;need++;const q=qNow(m);if(!q){all=false;return}if(q==="—")return;n++;const l=+m.loss;
-    if(!isFinite(l)||l<30||q==="妙著"||q==="正著")return;if(!b||l>b.loss)b={ply:i+1,cn:m.cn||"",q,loss:l,bc:m.bc||"",bm:m.bm||""}});
+    if(!isFinite(l)||l<30||q==="妙著"||q==="正著")return;if(!b||l>b.loss)b={ply:i+1,cn:m.cn||"",q,loss:l,bc:m.bc||"",bm:m.bm||"",rr:m.rr,bmt:m.bmt}});   /* rr、bmt：失著的具體後果（mflRisk） */
   return{b,all,n,need}}
+/* ChatGPT 評審 11/11（失著的具體後果）：一句「這手讓對方……」。只看 Pikafish 的分析線——core.js classifyRaw 存的 rr＝這步走完後對方的最佳回應
+   {m ICCS, c 中文記譜, x 吃到哪顆子, k 是否將軍, mt 對方幾步內將死}；沒有 rr（舊存檔、走的就是最佳著）或那一手沒吃子、沒將軍、沒殺棋就回 ""，不猜。
+   b0（可省略）＝走這步之前的盤面、m＝實際走的 {f,t}：有給就用規則（XQCore.legal／make／inCheck）重算一次，那手不合法就不說，吃子、將軍以盤面為準。
+   side＝走這步的一方（玩家）；g＝這步的評等 {rr,bmt}。順序：將死 → 吃子（子名照紅黑：俥／車…）→ 將軍。最佳著也是被殺（bmt＜0）就不怪這步、不說將死 */
+function mflRisk(b0,side,m,g){try{const C=window.XQCore,R=g&&g.rr;if(!C||!R||typeof R!=="object"||(side!=="r"&&side!=="b")||!/^[a-i]\d[a-i]\d$/.test(String(R.m||"")))return"";
+  const os=side==="r"?"b":"r";let x=R.x||null,k=!!R.k,c=String(R.c||"").slice(0,12);
+  if(b0&&m&&b0[m.f]){if(C.sideOf(b0[m.f])!==side)return"";const a=C.make(b0,m.f,m.t),rf=C.parseSq(R.m.slice(0,2)),rt=C.parseSq(R.m.slice(2,4));
+    if(!C.legal(a,os).some(([p,q])=>p===rf&&q===rt))return"";x=a[rt]&&C.sideOf(a[rt])===side?a[rt]:null;k=C.inCheck(C.make(a,rf,rt),side);c=C.notate(a,rf,rt)}
+  const W=c?`（${c}）`:"",mt=Math.round(+R.mt);
+  if(mt>=1&&mt<=50&&!(g.bmt!=null&&g.bmt<0))return mt===1?`這手讓對方下一手就能將死你${W}。`:`這手讓對方 ${mt} 步內就能將死你${c?`，從「${c}」開始`:""}。`;
+  if(x&&!/[kK]/.test(x)&&C.sideOf(x)===side)return`這手讓對方下一手可以吃你的${C.NAMES[side][x.toUpperCase()]}${W}。`;
+  if(k)return`這手讓對方下一手可以將軍你${W}。`;return""}catch(e){return""}}
 /* 一句白話的「為什麼」＋對應的棋理（THEMES 的名字；看不出來回 null，由呼叫的人用 weakTheme 補）。
    b0＝走這步之前的盤面、side＝誰走、m＝實際走的 {f,t,cn}、g＝這步的評等 {q,loss,ev,bv,bmt,pmt,bc,bm}。
    只用 XQCore 現成的規則函式（legal／make／inCheck／VAL／NAMES）看盤面，不另做規則引擎；順序：錯過殺棋 → 走進殺棋 → 白送子／沒處理對方的捉子 → 錯過吃子 → 錯過捉雙 → 錯過將軍 → 照評等說少幾兵 */
@@ -19910,15 +19927,19 @@ function CpuGame(v,practicePage,mode){
       /* 開發者 11/11 選 v3 規劃書 B08：結算視窗多一行「這盤先看這一步」——挑我方評語是失著／敗著裡掉最多分的那一步，點了直接打開這盤棋譜停在那一步。
          評語是背景慢慢算的，視窗先留一個空位（hidden），每 1.5 秒問一次 /play/state；全部算完、或等了 6 秒就顯示目前最嚴重的一步，之後算出更嚴重的再換。
          沒有失著、敗著就什麼都不顯示（不硬湊一步）；練習題、錯棋重練、劇情對決的結算視窗不放 */
-      const resLook=()=>{if(st.practice||!st.id)return"";const gid=st.id,hu=st.human,lxNow=mflLx(st);let n=0,seen=false;   /* lxNow：ChatGPT 改善單 T01「從這步重下」用同一個難度 */
-        const pick=ms=>{let b=null,all=true;ms.forEach((m,i)=>{if(m.by!==hu)return;const q=qNow(m);if(!q)all=false;if((q==="失著"||q==="敗著")&&(!b||(+m.loss||0)>b.loss))b={ply:i+1,cn:m.cn||"",q,loss:+m.loss||0,bc:m.bc||"",bm:m.bm||""}});return{b,all}};
-        const show=b=>{const e=document.querySelector(".modal.res .reslook");if(!e)return false;seen=true;if(+e.dataset.ply===b.ply)return true;e.dataset.ply=b.ply;
-          e.innerHTML=`<span>🔎 這盤先看這一步：<b>第 ${b.ply} 步${b.cn?"「"+esc(b.cn)+"」":""}</b>（${b.q}）</span><span style="flex:none;color:var(--accent);font-weight:900">看 ›</span>`;
+      /* ChatGPT 評審 11/11（失著的具體後果）：mf＝主流程（主要按鈕已經是「看懂這盤最關鍵的一步」）——不放按鈕，只在那一步（mflPick 挑的）有分析線支持的後果時，
+         加一行「⚠ 第 N 步「…」：這手讓對方下一手可以吃你的車（車8進3）。」；一般的「這盤先看這一步」按鈕裡也多一行同樣的後果（05-settings mflRisk，沒有就不寫） */
+      const resLook=mf=>{if(st.practice||!st.id)return"";const gid=st.id,hu=st.human,lxNow=mflLx(st);let n=0,seen=false;   /* lxNow：ChatGPT 改善單 T01「從這步重下」用同一個難度 */
+        const pick=ms=>{if(mf){const r=mflPick(ms,hu);return{b:r.b&&(r.b.q==="失著"||r.b.q==="敗著")?r.b:null,all:r.all}}
+          let b=null,all=true;ms.forEach((m,i)=>{if(m.by!==hu)return;const q=qNow(m);if(!q)all=false;if((q==="失著"||q==="敗著")&&(!b||(+m.loss||0)>b.loss))b={ply:i+1,cn:m.cn||"",q,loss:+m.loss||0,bc:m.bc||"",bm:m.bm||"",rr:m.rr,bmt:m.bmt}});return{b,all}};
+        const show=b=>{const e=document.querySelector(".modal.res .reslook");if(!e)return false;seen=true;const rk=typeof mflRisk==="function"?mflRisk(null,hu,null,b):"";if(e.dataset.ply===b.ply+"|"+rk)return true;e.dataset.ply=b.ply+"|"+rk;
+          if(mf){if(!rk){e.hidden=true;return true}e.textContent=`⚠ 第 ${b.ply} 步${b.cn?"「"+b.cn+"」":""}：${rk}`;e.style.cssText="width:100%;max-width:300px;box-sizing:border-box;margin:8px auto 2px;font-size:14px;line-height:1.6;text-align:left";e.hidden=false;return true}
+          e.innerHTML=`<span>🔎 這盤先看這一步：<b>第 ${b.ply} 步${b.cn?"「"+esc(b.cn)+"」":""}</b>（${b.q}）${rk?`<br><small>⚠ ${esc(rk)}</small>`:""}</span><span style="flex:none;color:var(--accent);font-weight:900">看 ›</span>`;
           e.style.cssText="display:flex;align-items:center;justify-content:space-between;gap:8px;width:100%;max-width:260px;margin:10px auto 4px;padding:10px 12px;border:1px solid var(--accent);border-radius:12px;background:var(--bg);color:inherit;font:inherit;font-size:14.5px;line-height:1.5;text-align:left;cursor:pointer";e.hidden=false;
           e.onclick=()=>{const m=e.closest(".modal");if(m)m.remove();vibrate(5);mflKeySet(gid,hu,b,lxNow);review(false,gid,{ply:b.ply-1,why:"這盤先看這一步（"+b.q+"）",mfl:1})};return true};   /* ChatGPT 改善單 T01：跟主流程同一個關鍵步模式（停在那一步之前、兩條箭頭、白話為什麼、從這步重下） */
         const tick=()=>{n++;const has=!!document.querySelector(".modal.res .reslook");if(has)seen=true;if((seen&&!has)||(!seen&&n>5))return;
           api("/play/state").then(s=>{if(!s||s.id!==gid)return;const r=pick(s.moves||[]);if(r.b&&(r.all||n>=4))show(r.b);if(n<14&&!(r.all&&(!r.b||seen)))setTimeout(tick,1500)}).catch(()=>{})};
-        setTimeout(tick,300);return`<button type="button" class="reslook" hidden></button>`};
+        setTimeout(tick,300);return mf?`<div class="reslook" role="status" hidden></div>`:`<button type="button" class="reslook" hidden></button>`};
       /* 開發者 11/11「下完一局接著看到我的戰績或成長變化（diff value）」：結算視窗多一塊「這盤之後」——
          ①戰績（馬上有）：這一級／晉級賽幾勝幾負、跟電腦的總勝率前→後（晉級賽另記在 cpuRate，record 的第 0 級是晉級賽的重複，不重算）；
          ②成長（等 Pikafish 把我方每一步評完，每 2 秒問一次，最多約 90 秒）：這盤每步準確度跟最近平均比、我的棋力綜合前→後、變最多的一項（04-stats skillDiff）。
@@ -19942,14 +19963,17 @@ function CpuGame(v,practicePage,mode){
         tick=()=>{n++;const b=box();if(b){seen=true;const g=b.querySelector(".rg-go");if(g&&!g.onclick)g.onclick=()=>{const m=g.closest(".modal");if(m)m.remove();vibrate(5);store.set("statsTab","all");location.hash="#/stats"}}
           if((seen&&!b)||(!seen&&n>8))return;
           api("/play/state").then(s=>{if(!s||s.id!==gid)return;const mine=(s.moves||[]).filter(m=>m.by===hu);if(!mine.length)return paint(null,"這盤沒走幾步，不算進「我的棋力」。");
-            if(mine.every(m=>qNow(m)))return skillDiff(gid).then(d=>paint(d,null,ngCount(s.moves,hu))).catch(()=>paint(null));if(n<45)setTimeout(tick,2000);else paint(null)}).catch(()=>{})};
+            if(mine.every(m=>qNow(m)))return skillDiff(gid).then(d=>paint(d,null,ngCount(s.moves,hu))).catch(()=>paint(null));
+            /* ChatGPT 評審 11/11（未評完的狀態）：寫出我方還有幾步在分析（含缺 PV 等重評的），每 2 秒更新；等太久就說打開檢討會接著分析（10-db pendFill），不寫成正著或空白 */
+            const left=mine.filter(m=>!qNow(m)).length,sk=document.querySelector(".modal.res .resgrow .rg-sk.muted");
+            if(n<45){if(sk)sk.textContent=`📈 還有 ${left} 步在分析，評完就知道棋力變化…`;setTimeout(tick,2000)}else paint(null,`📈 還有 ${left} 步還沒分析完，打開「📊 檢討」會接著分析；評完會算進「我的棋力」。`)}).catch(()=>{})};
         setTimeout(tick,600);
         return`<div class="resgrow" style="width:100%;max-width:300px;box-sizing:border-box;margin:8px auto 2px;padding:8px 12px;border:1px solid var(--line);border-radius:12px;font-size:14px;line-height:1.7;text-align:left">${rec}<div class="rg-sk muted">📈 Pikafish 正在評這盤，評完就知道棋力變化…</div><button type="button" class="rg-go" style="display:block;margin:2px 0 0 auto;padding:2px 0;border:0;background:none;color:var(--accent);font:inherit;font-size:13.5px;font-weight:900;cursor:pointer">看我的棋力 ›</button></div>`};
       /* ChatGPT 改善單 T01（開發者 11/11 核准）：首頁「快下一盤」（FH，不算段位的快局）下完、我方走過 3 步以上——結算視窗的主要按鈕改成「🔎 看懂這盤最關鍵的一步」（mflOpen），
          上面那顆「這盤先看這一步」小鈕就不重複放；「再來一局」「去茶肆正式上桌」退成次要。從首頁接著下的晉級賽、盲棋、其他模式照舊 */
       /* ChatGPT v6 重評（11/11）：一般挑戰電腦（含晉級賽、練功房）結算也要一鍵看關鍵著——不再限首頁快局；盲棋、練習、故事、擂台照舊 */
       const MF=!st.practice&&!st.blind&&!st.journey&&!st.arena&&st.moves.filter(m=>m.by===st.human).length>=3;
-      const RLK=MF?"":resLook(),RGW=resGrow(),XPL=XPR+RLK+RGW;
+      const RLK=resLook(MF),RGW=resGrow(),XPL=XPR+RLK+RGW;   /* MF：只放「這一步的後果」那一行（resLook 的 mf） */
       /* 開發者 11/11 選 ChatGPT 14 號方案 9「快局結算給下一步」：橋上快局下完，結算視窗用一句話邀請去茶肆（贏了打晉級賽、輸了去練功房挑級數），配一顆可以不理的「去茶肆」；不另外跳視窗 */
       const QKH=typeof hbHubN==="function"?hbHubN():"茶肆",QKN=FH()?`<p style="font-size:14px;margin:8px 0 2px">${st.result.w===st.human?`手感不錯！要不要去${esc(QKH)}打晉級賽，讓這股氣勢算進段位？`:!st.result.w?`要不要去${esc(QKH)}挑個剛好的對手，再來一盤？`:`這盤有點可惜。要不要去${esc(QKH)}練功房，挑剛好的級數再戰？`}</p><p class="muted" style="font-size:12.5px;margin:0">這盤是橋上快局，不算段位分。</p>`:"";
       const win=st.result.w===st.human,draw0=!st.result.w;vibrate([30,40,30]);if(draw0&&parkOn()&&PARK&&PARK.host===v.querySelector("#bbox")){const dl=oppTalk(st,optJk(st),parkNpcOf(st)).draw;setTimeout(()=>{try{PARK.v.oppSay(dl,3)}catch(e){}},1600)}   /* 826 追加：和棋時對面的人也說一句（園子 3D 原本只有我方說「和棋，不錯喔！」） */
@@ -20005,7 +20029,7 @@ function CpuGame(v,practicePage,mode){
      mflOpen：等 Pikafish 把我方每步評完（最多約 9 秒，邊等邊提示），用 05-settings mflPick 挑少最多分的那一步，打開這盤的檢討頁停在那一步之前；
        這盤沒有明顯的錯著（都是正著、妙著）就直接打開整盤的賽後報告；換頁了就不跳過去 */
   function mflLx(s){if(!s)return 16;if(s.ranked){const i=(s.levels||[]).findIndex(l=>l.name===s.rkName);return i>=0?i+1:16}return s.level||16}
-  function mflKeySet(gid,hu,b,lx){store.set("mflKey",{c:"play",id:gid,ply:b.ply,side:hu,lx,cn:b.cn||"",q:b.q,loss:b.loss,bc:b.bc||"",bm:b.bm||"",at:Date.now()})}
+  function mflKeySet(gid,hu,b,lx){store.set("mflKey",{c:"play",id:gid,ply:b.ply,side:hu,lx,cn:b.cn||"",q:b.q,loss:b.loss,bc:b.bc||"",bm:b.bm||"",...(b.rr?{rr:b.rr,bmt:b.bmt}:{}),at:Date.now()})}   /* rr、bmt：檢討頁存檔還沒有這步評等時，關鍵步說明照樣講得出後果（ChatGPT 評審 11/11） */
   async function mflOpen(gid,hu,lx){const rn=ROUTE_N;let r=null;
     for(let k=0;k<8;k++){let s=null;try{s=await api("/play/state")}catch(e){}if(!s||s.id!==gid)break;r=mflPick(s.moves,hu);if(r.all)break;
       if(!k)toast("🔎 Pikafish 正在評這盤的每一步，馬上好…");await new Promise(z=>setTimeout(z,1200));if(rn!==ROUTE_N)return}
@@ -21059,7 +21083,7 @@ function Library(v,c0){
     for(const it of PER?shown.slice(libState.pg*PER,libState.pg*PER+PER):shown.slice(0,libState.limit)){const b=document.createElement("button");b.className="item";
       const isG=it.red||it.black,R={r:["紅勝","r"],b:["黑勝","b"],d:["和","d"]}[resOf(it)];
       const tail=R?`<span class="lib-r ${R[1]}">${R[0]}</span>`:'<span class="lib-go">›</span>';
-      b.innerHTML=isG?`<span class="lb">${esc(it.year||"")}</span><span class="tx"><b><span class="rn">${esc(it.red||"？")}</span> 對 ${esc(it.black||"？")}</b><span>${esc(it.event||it.open||it.date||(it.title&&it.name?it.name.replace(it.title,"").trim():"")||it.name||"")}</span></span>${tail}`
+      b.innerHTML=isG?`<span class="lb">${esc(it.year||"")}</span><span class="tx"><b><span class="rn">${esc(it.red||"？")}</span> 對 ${esc(it.black||"？")}</b><span>${esc(it.event||it.open||it.date||(it.title&&it.name?it.name.replace(it.title,"").trim():"")||it.name||"")}${it.pend>0?`・📈 還有 ${+it.pend} 步待分析`:""}</span></span>${tail}`
         :`<span class="lb">${esc(it.label||it.no||"")}</span><span class="tx"><b>${esc(it.title||it.name)}</b><span>${esc([it.part,R?"":it.result,it.type].filter(Boolean).join("・"))}</span></span>${tail}`;
       b.onclick=()=>{vibrate(5);location.hash=`#/db/${encodeURIComponent(libState.c)}/${encodeURIComponent(it.id)}`};box.append(b)}
     const more=v.querySelector("#more");more.innerHTML="";
@@ -21279,18 +21303,22 @@ function Viewer(v,c,id){
   const MK=(()=>{const k=store.get("mflKey",null);return k&&k.c===c&&k.id===id&&k.ply>0?k:null})();
   let mkC=null;
   const mkOn=()=>!!(MK&&!FREE&&it&&line===0&&ply===MK.ply-1&&endPly(0)>=MK.ply);
-  function mkData(){const p=MK.ply,m=seq(0,p)[p-1];if(!m)return null;const g=gradeOf(p)||{q:MK.q,loss:MK.loss,bc:MK.bc,bm:MK.bm},q=qNow(g)||g.q||"",key=p+"|"+q+"|"+g.loss;
+  function mkData(){const p=MK.ply,m=seq(0,p)[p-1];if(!m)return null;const g=gradeOf(p)||{q:MK.q,loss:MK.loss,bc:MK.bc,bm:MK.bm,rr:MK.rr,bmt:MK.bmt},q=qNow(g)||g.q||"",key=p+"|"+q+"|"+g.loss+"|"+(g.rr?g.rr.m:"");
     if(mkC&&mkC.key===key)return mkC;const b0=boardAt(0,p-1),side=moverAt(p),W=mflWhy(b0,side,m,g);let best=null,bcn="",tk="";
+    /* ChatGPT 評審 11/11（失著的具體後果）：失著、敗著再加一句「這手讓對方下一手可以吃你的車（車8進3）」——只在分析線（g.rr）有吃子／將軍／殺棋時才有（05-settings mflRisk）；
+       已經說了「將死」，mflWhy 那句「走完這步，對方就有一套連續將軍的殺法」就不重複 */
+    const rk=(q==="失著"||q==="敗著")&&typeof mflRisk==="function"?mflRisk(b0,side,m,g):"";if(rk&&/將死/.test(rk)&&W.tag==="殺棋"&&!/已經有殺棋/.test(W.say||""))W.say="";
     try{best=g.bm&&/^[a-i]\d[a-i]\d$/.test(g.bm)?{f:sqI(g.bm.slice(0,2)),t:sqI(g.bm.slice(2,4))}:g.bc?bcMove(b0,side,g.bc):null;if(best&&(!b0[best.f]||(best.f===m.f&&best.t===m.t)))best=null;if(best)bcn=XQCore.notate(b0,best.f,best.t)}catch(e){best=null}
     try{const mv=seq(0,endPly(0)).map((x,i)=>{const r=gradeOf(i+1)||{};return{f:x.f,t:x.t,cn:x.cn,by:moverAt(i+1),q:r.q,loss:r.loss,ev:r.ev,bv:r.bv,bmt:r.bmt,pmt:r.pmt,bc:r.bc,bm:r.bm,bp:r.bp,ck:x.ck}}),
       R=gameReport(it.board,mv).sides[side],t=R&&R.talk.find(x=>x.ply===p&&x.bad);if(t)tk=String(t.x).replace(/^第 \d+ 回合 [^：]*：/,"")}catch(e){}
-    return mkC={key,p,m,g,q,b0,side,best,bcn,tk,why:W.say,tag:W.tag||(typeof weakTheme==="function"?weakTheme():"將軍")}}
+    return mkC={key,p,m,g,q,b0,side,best,bcn,tk,rk,why:W.say,tag:W.tag||(typeof weakTheme==="function"?weakTheme():"將軍")}}
   function mkNote(K){const L=+K.g.loss||0;
     return[`🔎 這盤最關鍵的一步：第 ${K.p} 步你走「${K.m.cn}」${K.q?`【${K.q}】`:""}`,
       K.q&&typeof tmxPlain==="function"?tmxPlain(K.q):"",   /* 11/11 v6 第 3 點：評等字第一次就有白話（01-board.js tmxPlain）；「少了 2.1 兵」改成「少了約 2.1 個兵的價值」 */
       K.tk?"Pikafish 評語："+String(K.tk).replace(/少了 ([\d.]+) 兵/g,"少了約 $1 個兵的價值"):`比 Pikafish 的首選少了約 ${(L/100).toFixed(1)} 個兵的價值`+(K.bcn?`，建議「${K.bcn}」`:"")+"。",
       K.best?`藍色直線箭頭＝Pikafish 建議的走法；${mvArrowName()}＝你實際走的。`:"",
-      "💡 "+(K.why||"想知道為什麼不好？按下面 🔍 分析，看對方最好怎麼應。"),
+      K.rk?"⚠ "+K.rk:"",   /* ChatGPT 評審 11/11：失著的具體後果（只在分析線支持時） */
+      K.why||!K.rk?"💡 "+(K.why||"想知道為什麼不好？按下面 🔍 分析，看對方最好怎麼應。"):"",
       "按 ▶ 看你走完以後的局面；想換一步試試，按「↻ 從這步重下」。"].filter(Boolean).join("\n")}
   function mkRetry(){const end=endPly(0),ms=mySide(),opp=ms==="r"?it.black:it.red,
       moves=seq(0,end).map((x,i)=>{const g=gradeOf(i+1)||{};return{f:x.f,t:x.t,cn:x.cn,by:moverAt(i+1),q:qNow(g)||g.q,loss:g.loss,ev:g.ev,bc:g.bc,bm:g.bm,bp:g.bp}}),
@@ -21320,7 +21348,7 @@ function Viewer(v,c,id){
     if(FREE)st.textContent=`🔭 ${FREE.src||"自由走棋"}・${FREE.cur}／${FREE.all.length}`+(ev!=null?"・"+evt(ev):"");
     else if(KM){st.classList.add("hot");st.textContent=`🔎 最關鍵的一步・第 ${KM.p} 步之前，輪到${PLAYER[KM.side]}走`}   /* T01 關鍵步模式 */
     else{const g=ply>0&&gradeOf(ply);st.textContent=ply===0?"開局局面・左右滑棋盤可換步":`${ply<maxPly(line)?"📖 回顧中・":""}第 ${ply}／${maxPly(line)} 步 ${s[ply-1].cn}`+(g?`【${g.q}】`:"")+(ev!=null?"・"+evt(ev):"")}
-    const moves=FREE?FREE.all.map(m=>({...m,q:m.g&&m.g.q,loss:m.g&&m.g.loss})):seq(line,endPly(line)).map((m,i)=>{const g=gradeOf(i+1);return{...m,by:moverAt(i+1),q:g&&g.q,loss:g&&g.loss}});   /* 11/11 v6 第 3 點：帶 loss，點評等字時能說「少了約幾個兵」 */
+    const moves=FREE?FREE.all.map(m=>({...m,q:m.g&&m.g.q,loss:m.g&&m.g.loss})):seq(line,endPly(line)).map((m,i)=>{const g=gradeOf(i+1);return{...m,by:moverAt(i+1),q:g&&g.q,loss:g&&g.loss,rr:g&&g.rr,bmt:g&&g.bmt}});   /* rr、bmt：評等字泡泡講失著的具體後果（01-board tmx） */   /* 11/11 v6 第 3 點：帶 loss，點評等字時能說「少了約幾個兵」 */
     renderStrip(v.querySelector("#strip"),moves,FREE?FREE.cur-1:ply-1,FREE?i=>go(i+1):i=>go(i+1));
     // 變著；推演中則改放推演用的按鈕
     const ab=v.querySelector("#alts");ab.innerHTML="";
@@ -21340,13 +21368,26 @@ function Viewer(v,c,id){
       note.textContent=!m?`起點局面（第 ${FREE.base} 步之後）。按 ▶ 或往左滑，一步一步看${FREE.src&&FREE.src.startsWith("Pikafish")?" Pikafish 怎麼預判、在哪裡埋伏":""}；點棋子可以自己改走。`
         :`${FREE.base+FREE.cur}. ${PLAYER[m.by]} ${m.cn}`+(m.tags&&m.tags.length?`【${m.tags.join("、")}】`:"")+(g&&g.q&&g.q!=="—"?`　${g.q}`:"")
          +(g&&g.q&&g.q!=="正著"&&g.q!=="妙著"&&g.bc?`\nPikafish 認為更好的是：${g.bc}`:"")}
-    else if(KM)note.textContent=mkNote(KM);   /* T01 關鍵步模式 */
-    else{const ck=owner(line,ply)+"_"+ply,g=ply>0&&gradeOf(ply);
-      note.textContent=[ply===0?(it.comments["0_0"]||it.note||""):it.comments[ck]||"",ply>0?gradeNote(g,boardAt(line,ply-1)):""].filter(Boolean).join("\n")||(ply===0?"點棋子可以自由走棋；按 🔍 看 Pikafish 分析。":"")}
+    else if(KM)note.textContent=mkNote(KM)+pendLine();   /* T01 關鍵步模式 */
+    else{const ck=owner(line,ply)+"_"+ply,g=ply>0&&gradeOf(ply),
+        rk=g&&(g.q==="失著"||g.q==="敗著")&&typeof mflRisk==="function"?mflRisk(boardAt(line,ply-1),moverAt(ply),s[ply-1],g):"";   /* ChatGPT 評審 11/11：失著的具體後果（只在分析線支持時） */
+      note.textContent=([ply===0?(it.comments["0_0"]||it.note||""):it.comments[ck]||"",ply>0?gradeNote(g,boardAt(line,ply-1)):"",rk?"⚠ "+rk:""].filter(Boolean).join("\n")||(ply===0?"點棋子可以自由走棋；按 🔍 看 Pikafish 分析。":""))+pendLine()}
     if(FREE){acts.first.disabled=acts.prev.disabled=FREE.cur===0;acts.next.disabled=acts.last.disabled=FREE.cur>=FREE.all.length}
     else{acts.first.disabled=acts.prev.disabled=ply===0;acts.next.disabled=acts.last.disabled=ply>=endPly(line)}
     if(!(AN&&AN.k===posKey(pos)))lookupSoon()}
   let lt=null;function lookupSoon(){clearTimeout(lt);lt=setTimeout(async()=>{const pos=curPos(),k=posKey(pos);try{const d=await api("/an/lookup",{engine:[k]});const e=Object.values(d.engine)[0];if(e&&posKey(curPos())===k){AN={k,...e,cached:true};show()}}catch(e){}},150)}
+  /* ChatGPT 評審 11/11（未評完的狀態）：人機、真人對局打開時，我方主線還沒評的步（含缺 PV 等重評的）在背景補評；說明最後一行寫「📈 還有 N 步在分析」，評好一步更新一次，
+     不寫成正著、也不留白。評好的寫回存檔（local.js /db/grades），下次打開、對局紀錄清單就不再缺。線上對局一步都沒評過的照舊不自動評（不顯示） */
+  let PF=null;
+  const g0=(ms,p)=>{const m=ms[p-1];return m&&m.q?m:grades["0|"+p]||null};   /* 主線第 p 步評過了沒（gradeOf 看的是目前這條線，看變著時會不一樣；「—」＝評過、終局沒有評等，不算還在分析） */
+  const pendN=()=>{const sd=mySide();if(!it||!sd||!L.get(0))return 0;const ms=seq(0,endPly(0));let n=0;for(let p=1;p<=ms.length;p++)if(moverAt(p)===sd&&!g0(ms,p))n++;return n};
+  function pendLine(){if(!PF||FREE)return"";const n=pendN();if(!n)return"";return PF.run?`\n📈 這盤你還有 ${n} 步在分析，好了會自動更新`:`\n📈 這盤你還有 ${n} 步還沒分析完，下次打開會再分析`}
+  async function pendFill(){const sd=mySide();if(PF||!it||!sd||(c!=="play"&&c!=="pvp")||!L.get(0))return;const end=endPly(0),ms=seq(0,end);
+    if(c==="pvp"&&!ms.some((m,i)=>g0(ms,i+1)))return;if(!pendN())return;PF={run:true};const G={};let fail=0;show();
+    try{for(let p=1;p<=end;p++){if(screen!==self||!it)return;if(moverAt(p)!==sd||g0(ms,p))continue;const m=ms[p-1];let g=null;
+      try{g=await api("/an/classify",{board:boardAt(0,p-1),side:sd,f:m.f,t:m.t});fail=0}catch(e){if(++fail>=3)break;continue}   /* 缺 PV（e.retry）先跳過；連續 3 次失敗（引擎沒載好）就先停 */
+      if(g&&g.q){grades["0|"+p]=g;G[p]={f:m.f,t:m.t,...g};if(screen===self)show()}}}
+    finally{PF.run=false;if(screen===self&&it)show();if(Object.keys(G).length)api("/db/grades",{c,id,g:G}).catch(()=>{})}}
   async function loadGrades(){const want=new Map();
     for(const l of it.lines){let b=boardAt(l.id,l.start-1);l.moves.forEach((m,i)=>{const p=l.start+i;want.set(fenC(b,moverAt(p))+"|"+iccsC(m.f,m.t),l.id+"|"+p);b=b.slice();b[m.t]=b[m.f];b[m.f]=null})}
     if(!want.size)return;try{const d=await api("/an/lookup",{grade:[...want.keys()].slice(0,5000)});for(const[k,g]of Object.entries(d.grade))grades[want.get(k)]=g;show()}catch(e){}}
@@ -21411,8 +21452,9 @@ function Viewer(v,c,id){
     const r=store.get("recent",[]).find(x=>x.c===c&&x.id===id);ply=r&&r.ply?Math.min(r.ply,endPly(0)):it.jump?Math.min(+it.jump||0,endPly(0)):0;   /* 意見回饋 310：妙棋精選第一次打開就停在妙棋那一步 */
     const oa=store.get("openAt",null);if(oa&&oa.c===c&&oa.id===id){store.set("openAt",null);ply=Math.min(oa.ply,endPly(0));if(!oa.mfl)setTimeout(()=>toast(`從第 ${ply} 步開始：${oa.why}（可以往前看）`),400)}
     show();remember();if(typeof rdOpen==="function")rdOpen(c,id);   /* 意見回饋 737 第二期：記下打開讀過這盤（只存 id） */
-    loadGrades().then(()=>{if(store.get("openReport")===c+"/"+id){store.set("openReport",null);report(true)}})}).catch(e=>{v.querySelector("#note").textContent="⚠ "+e.message});
+    loadGrades().then(()=>{if(store.get("openReport")===c+"/"+id){store.set("openReport",null);report(true)}else pendFill()})}).catch(e=>{v.querySelector("#note").textContent="⚠ "+e.message});
   return self}
+
 
 
 
