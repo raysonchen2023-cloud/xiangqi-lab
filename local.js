@@ -414,7 +414,15 @@ var XQ=(function(){
     if(!t.saved){t.saved=true;if(t.moves.some(m=>m.by==="r"))pushGame("play",{id:SM.id+"-s"+(t.i+1),date:SM.id.slice(0,10),level:t.level,ranked:false,human:"r",result:t.result,simul:{n:SM.n,i:t.i+1},moves:saveMoves(t.moves)})}
     if(SM.tb.every(x=>x.result)&&!SM.done){const s={w:0,d:0,l:0};for(const x of SM.tb)s[!x.result.w?"d":x.result.w==="r"?"w":"l"]++;SM.done={...s,pts:s.w+s.d/2,at:Date.now()};
       const B=ls.get("simulBest",{}),k=String(SM.n),o=B[k];if(!o||SM.done.pts>o.pts||(SM.done.pts===o.pts&&SM.lx>o.lx))B[k]={pts:SM.done.pts,w:s.w,d:s.d,l:s.l,lx:SM.lx,at:SM.done.at};ls.set("simulBest",B);
-      const C=ls.get("simulRec",{}),c=C[k]||(C[k]={plays:0,w:0,d:0,l:0,perfect:0});c.plays++;c.w+=s.w;c.d+=s.d;c.l+=s.l;if(s.w===SM.n)c.perfect++;ls.set("simulRec",C)}}
+      const C=ls.get("simulRec",{}),c=C[k]||(C[k]={plays:0,w:0,d:0,l:0,perfect:0});c.plays++;c.w+=s.w;c.d+=s.d;c.l+=s.l;if(s.w===SM.n)c.perfect++;ls.set("simulRec",C);
+      /* 開發者 11/11 hspx 車輪戰成就（名稱與條件在 08s-simul.js SIM_ACH）：印的顏色看中心級數（青 1～6、朱 7～12、金 13～18 級），同一個成就可以往上升級；
+         「初次繞場」「堅持到底」不分印。這一場新拿到或升級的記在 done.ach，總表顯示「新印」 */
+      const n=SM.n,tier=SM.lx>=13?3:SM.lx>=7?2:1,top=SM.tb[SM.tb.length-1],quit=SM.tb.some(x=>/認輸|算輸/.test(x.result.why||"")),A=ls.get("simulAch",{}),got=[],
+        give=(key,t)=>{const o=A[key];if(!o||t>o.tier){A[key]={tier:t,lx:SM.lx,n,at:Date.now()};got.push({k:key,tier:t,up:!!o})}};
+      give("first",1);if(n===3&&s.w===3)give("w3",tier);if(n===5&&s.w===5)give("w5",tier);if(n===10&&s.w===10)give("w10",tier);
+      if(n===5&&SM.done.pts>=4)give("p5",tier);if(n===10&&SM.done.pts>=8)give("p10",tier);if(n>=5&&s.l===0)give("nl",tier);
+      if(n>=5&&top.result&&top.result.w==="r")give("king",tier);if(n>=5&&s.w===0&&!quit)give("grit",1);
+      ls.set("simulAch",A);SM.done.ach=got}}
   function smApply(t,f,to){stateApply(t,f,to);const r=judgeState(t);if(r)smEnd(t,r.w,r.why);smSave()}
   async function smEngine(){if(smBusy||!smLoad())return;const t=SM.tb.find(x=>!x.result&&x.turn!=="r");if(!t)return;
     smBusy=true;const id=SM.id,n=t.moves.length,lv=LEVELS[t.level-1]||LEVELS[2];
@@ -424,8 +432,8 @@ var XQ=(function(){
       smApply(t,f,to);smFail=0}
     catch(e){smFail++}
     finally{smBusy=false;setTimeout(smEngine,smFail?Math.min(30000,1500*2**Math.min(smFail,5)):0)}}
-  function smState(){const best=ls.get("simulBest",{});if(!smLoad())return{none:true,best};
-    return{id:SM.id,n:SM.n,lx:SM.lx,done:SM.done||null,best,rec:ls.get("simulRec",{}),busy:smBusy,engFail:smFail,tb:SM.tb.map(t=>({i:t.i,level:t.level,name:(L=>L.movetime>3000?String(L.name||"").replace("・全力","")+"（每步 3 秒）":L.name||"")(LEVELS[t.level-1]||{}),board:t.board,turn:t.turn,result:t.result||null,
+  function smState(){const best=ls.get("simulBest",{});if(!smLoad())return{none:true,best,rec:ls.get("simulRec",{}),ach:ls.get("simulAch",{})};
+    return{id:SM.id,n:SM.n,lx:SM.lx,done:SM.done||null,best,rec:ls.get("simulRec",{}),ach:ls.get("simulAch",{}),busy:smBusy,engFail:smFail,tb:SM.tb.map(t=>({i:t.i,level:t.level,name:(L=>L.movetime>3000?String(L.name||"").replace("・全力","")+"（每步 3 秒）":L.name||"")(LEVELS[t.level-1]||{}),board:t.board,turn:t.turn,result:t.result||null,
       moves:t.moves.map(m=>({f:m.f,t:m.t,by:m.by,cn:m.cn,ck:!!m.ck,cap:m.cap?1:0})),check:!t.result&&inCheck(t.board,t.turn)?kingSq(t.board,t.turn):-1,legal:t.result||t.turn!=="r"?[]:legal(t.board,"r")}))}}
   function simulApi(p,b){const T=i=>{if(!smLoad())throw new Error("還沒開始車輪戰");const t=SM.tb[+i];if(!t)throw new Error("沒有這一桌");return t};
     if(p==="/simul/new"){if(smLoad()&&!SM.done)for(const t of SM.tb)if(!t.result&&t.moves.some(m=>m.by==="r"))smEnd(t,"b","重開車輪戰，算輸");

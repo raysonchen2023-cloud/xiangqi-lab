@@ -1379,7 +1379,7 @@ html[data-hicon] .tabbar button.on{box-shadow:inset 0 -3px 0 currentColor}
       if(!window.caches)return go();caches.keys().then(function(ks){return Promise.all(ks.filter(function(k){return k.indexOf("xqlab-app-")===0}).map(function(k){return caches.delete(k)}))})
         .then(function(){return navigator.serviceWorker&&navigator.serviceWorker.getRegistration()}).then(function(r){return r&&r.update()}).catch(function(){}).then(go)}};setTimeout(chk,4000)})();
 </script>
-<script>window.XQ_OFFLINE=true;window.XQ_BUILD="20261111-1515";</script>
+<script>window.XQ_OFFLINE=true;window.XQ_BUILD="20261111-1530";</script>
 <script src="core.js"></script>
 <script src="engine.js"></script>
 <script src="local.js"></script>
@@ -4087,7 +4087,8 @@ function Stats(v){
       const CR=ST.cpuRate;
       box.innerHTML=`<div class="st-rk" style="margin-top:4px">${CR?rk(`${ETIMG("s_rank","","🏅")} 電腦段位・積分挑戰`,CR):`<div class="hd">${ETIMG("s_rank","","🏅")} 電腦段位・積分挑戰</div><div class="muted">還沒有積分挑戰紀錄</div>`}<button class="go" id="cpuGo">開始積分挑戰 ›</button></div>
         <div class="sec-t">自選難度・各級</div><div class="card">${tbl("難度",ST.levels.map(l=>{const r=ST.record[l.n]||{};return[`<b>${l.n}</b> ${esc(l.name)}`,sum(r),r.w?'<span class="w">✔</span>':""]}),["過關"])}</div>`;
-      box.querySelector("#cpuGo").onclick=()=>{store.set("cpuRanked",true);store.set("cpuWant","rank");location.hash="#/cpu"}}
+      box.querySelector("#cpuGo").onclick=()=>{store.set("cpuRanked",true);store.set("cpuWant","rank");location.hash="#/cpu"};
+      if(typeof simAchHTML==="function")box.insertAdjacentHTML("beforeend",simAchHTML())}   /* 開發者 11/11 hspx：車輪戰戰績與特殊成就（08s-simul.js） */
     else if(tab==="net"){const R=XQNet.rating();
       box.innerHTML=`<div class="st-rk" style="margin-top:4px">${rk(`${ETIMG("online","","🌐")} 線上段位`,R)}<button class="go" id="lbGo">去線上大廳 ›</button></div>
         <div class="sec-t">段位怎麼算</div><div class="card" style="font-size:14px;line-height:1.7">從 0 分（新手）開始，用等級分的算法：先算你贏的機率（跟實力差不多的人是一半），加減＝K×（結果−贏的機率）。前 15 盤 K＝48，跟實力差不多的人下，贏約 +24、輸約 −24；之後 K＝32，約 ±16。對手比你強，贏得更多、輸得更少，反過來也一樣；和棋也會依對手強弱小幅加減（對手比你強就加一點、比你弱就扣一點）。分數不會低於 0。中途取消、對方斷線中止、雙方還沒各走一步就結束的對局不計分。${/* 意見回饋（開發者 11/6 分數審查）：照 net.js record() 實作的 K 值改寫 */""}<div class="muted" style="margin-top:6px">${XQNet.ranks().map(([n,p])=>`${esc(n)} ${p}`).join("・")}</div></div>`;
@@ -5558,7 +5559,7 @@ const ARENA_ORDER=["classic","qin","han","sanguo","weijin","nanbei","sui","tang"
 const ARENA_TITLES=[[13,"十三朝棋王"],[7,"七朝豪傑"],[3,"擂台新秀"]];
 const arenaStamps=()=>{try{return JSON.parse(localStorage.getItem("xq_arenaStamps")||"{}")||{}}catch(e){return{}}};
 const arenaTitle=()=>{const n=Object.keys(arenaStamps()).length;const t=ARENA_TITLES.find(([k])=>n>=k);return t?t[1]:""};
-window.XQ_TITLE=()=>{const c=typeof cupTitle==="function"&&cupTitle();if(c==="本週擂主")return c;return(typeof sealTitle==="function"&&sealTitle())||c||arenaTitle()||(typeof battleTitle==="function"&&battleTitle())||(typeof lingTitle==="function"&&(lingTitle()||jarTitle()))||(typeof histTitle==="function"&&histTitle())||""};   /* 開發者 11/5：擂台稱號優先，再來是將令、棋罐的稱號；11/9：本週擂主 → 千秋印主（13 方金印，07i2-seal.js）→ 其他 */   // 大廳廣播：別人點你的資料卡看得到
+window.XQ_TITLE=()=>{const c=typeof cupTitle==="function"&&cupTitle();if(c==="本週擂主")return c;return(typeof sealTitle==="function"&&sealTitle())||c||arenaTitle()||(typeof battleTitle==="function"&&battleTitle())||(typeof simTitle==="function"&&simTitle())||(typeof lingTitle==="function"&&(lingTitle()||jarTitle()))||(typeof histTitle==="function"&&histTitle())||""};   /* 開發者 11/5：擂台稱號優先，再來是將令、棋罐的稱號；11/9：本週擂主 → 千秋印主（13 方金印，07i2-seal.js）→ 其他 */   // 大廳廣播：別人點你的資料卡看得到
 /* 擂主強度跟著你的電腦段位（新手大約「入門」棋力，越高段擂主越強）；意見回饋 288：最強的是經典公園的擂主，再強一級（不在 App 裡說破，讓玩家自己摸索） */
 function arenaLevel(era){let p=0;try{p=(JSON.parse(localStorage.getItem("xq_cpuRate")||"null")||{}).pts||0}catch(e){}
   const base=p>=1150?7:p>=900?6:p>=600?5:p>=300?4:p>=100?3:2;return era==="classic"?7:base}   /* 意見回饋 426、427：石桌棋仙固定在「全力」的前一級（第 7 級職業頂尖），不跟著段位變 */
@@ -9479,7 +9480,10 @@ function cxTitles(){const L=[];let grp="seal";const add=(t,how,got)=>L.push({t,h
   add("本週擂主","千秋盃拿到冠軍，7 天內掛著",cur==="本週擂主");add("千秋擂主","千秋盃拿過一次冠軍",G.includes(1));add("三屆擂主","千秋盃拿過三次冠軍",G.filter(x=>x===1).length>=3);add("擂台常客","千秋盃參加 4 屆以上",G.length>=4);
   const jn=cxTry(()=>jarN(),0);cxTry(()=>JAR_TITLES,[]).slice().reverse().forEach(([k,t])=>add(t,`棋罐收到 ${k} 子`,jn>=k));
   add("領令先鋒","隱藏殘局累積拿到 12 枚將令",cxTry(()=>jHidGot(),0)>=12);add("棋史通","13 張棋史卡都不看答案解開 1 題",cxTry(()=>histTitle(),""));
-  add("九九消寒","九九消寒圖 81 瓣都染完",cxTry(()=>xhTitle(),""));return L}
+  add("九九消寒","九九消寒圖 81 瓣都染完",cxTry(()=>xhTitle(),""));
+  /* 開發者 11/11 hspx：車輪戰朱印以上（中心第 7 級以上）的五個成就也是稱號（08s-simul.js SIM_ACH） */
+  {const A=cxTry(()=>simLs("simulAch")||{},{});cxTry(()=>SIM_ACH,[]).filter(x=>x[4]).forEach(([k,nm,how])=>add(nm,`車輪戰「${nm}」拿到朱印以上（中心第 7 級以上）：${how}`,A[k]&&A[k].tier>=2))}
+  return L}
 function cxTitleSheet(){const L=cxTitles(),n=L.filter(x=>x.got).length,top=cxTry(()=>window.XQ_TITLE(),""),G=cxTry(()=>cupGot(),{});
   const row=x=>`<div class="item"${x.got?"":' style="opacity:.55"'}><span class="lb" style="font-size:20px">${x.got?"🏅":"🔒"}</span><span class="tx"><b>${esc(x.t)}</b><span>${esc(x.how)}</span></span></div>`;
   sheet(`🏅 稱號（已得 ${n}）`,b=>{b.innerHTML=`<p class="muted" style="font-size:13px;line-height:1.6;margin:0 0 8px">稱號是各種收集集滿的獎勵。大廳裡別人點你的資料卡，會看到你最優先的一個${top?`：現在是「${esc(top)}」`:""}。</p>
@@ -19118,6 +19122,24 @@ function repWarn(st,me,draw){try{const CLK=!!st.clocks;   /* 開發者 11/11 選
    版面（開發者 11/11：環景繞著走操作太麻煩，評估後用平面棋盤；ChatGPT 16 號方案 A＋B 合併）：棋盤上方一排桌牌，一眼看到哪桌輪到你；
    走一步就自動換到下一桌輪到你的那桌（像大師繞場），也可以自己點桌牌換桌；棋客都在想的時候停在原桌，有人下好了自動換過去（剛手動換桌的 4 秒內不自動換）。
    全部下完跳總表（幾勝幾和幾負、得分、每桌一行、各盤數最佳紀錄）。不算段位、不記各級戰績；也不算進「我的棋力」（開發者 11/11 照統計複查：同時下很多盤注意力分散，會把棋力拉低），另記車輪戰戰績。入口在茶肆二樓左邊廂房（07y-hubmap hbSimul） */
+/* 開發者 11/11 hspx「車輪戰也加入戰績的特殊成就」（ChatGPT 17 號＋Gemini 78 號，開發者選照 Claude 合併的建議）：
+   [代號, 名稱, 條件, 分不分印, 能不能當大廳稱號]。印看中心級數：青印 1～6、朱印 7～12、金印 13～18 級（防刷：第 1 級刷全勝只拿得到青印）；判定在 local.js smEnd。
+   完整清單放「我的戰績 → 電腦」（04-stats 呼叫 simAchHTML），總表只多一行「新印」，不另外跳視窗；朱印以上的五個進大百科稱號（07i-codex）、大廳稱號（06-cpu XQ_TITLE 的 simTitle）。
+   名稱不掛查不到出處的典故（Gemini 寫的「平分秋色＝楚漢鴻溝」「三戰三捷出自左傳」都不對，沒採用）；「堅持到底」只給自己看 */
+const SIM_ACH=[["first","初次繞場","完成一場車輪戰",0,0],["w3","三桌全勝","3 盤車輪戰全勝",1,0],["p5","五路穩","5 盤車輪戰得 4 分以上（勝 1 分、和 0.5 分）",1,0],
+  ["w5","五關捷","5 盤車輪戰全勝",1,1],["king","擒王","5 盤或 10 盤車輪戰，打贏本場最強的那一桌",1,1],["nl","不敗輪","5 盤或 10 盤車輪戰一盤都沒輸（和也算）",1,1],
+  ["p10","十方破","10 盤車輪戰得 8 分以上",1,1],["w10","滿堂紅","10 盤車輪戰全勝",1,1],["grit","堅持到底","5 盤或 10 盤車輪戰一盤沒贏，但每桌都下到最後",0,0]],
+  SIM_TIER=["","青印","朱印","金印"],SIM_TC=["","#2f7d6d","#C8102E","#b8860b"];
+/* 車輪戰的資料是 local.js 存的（localStorage「xq_」開頭），畫面這邊的 store 是「m_」開頭，要直接讀（跟 06-cpu 讀 xq_cpuRate 一樣） */
+const simLs=k=>{try{return JSON.parse(localStorage.getItem("xq_"+k)||"null")}catch(e){return null}};
+function simTitle(){try{const A=simLs("simulAch")||{};for(const k of["w10","p10","w5","nl","king"]){const o=A[k];if(o&&o.tier>=2)return SIM_ACH.find(x=>x[0]===k)[1]}}catch(e){}return""}
+function simAchHTML(){const A=simLs("simulAch")||{},C=simLs("simulRec")||{},B=simLs("simulBest")||{},P={plays:0,w:0,d:0,l:0,perfect:0};
+  for(const c of Object.values(C))for(const k in P)P[k]+=c[k]||0;const got=SIM_ACH.filter(x=>A[x[0]]).length;
+  return`<div class="sec-t">🀄 車輪戰<small class="muted" style="font-weight:400;font-size:12px;margin-left:6px">特殊成就 ${got}／${SIM_ACH.length}</small></div><div class="card">
+    ${P.plays?`<p style="margin:0 0 4px">下過 <b>${P.plays}</b> 場・${P.w} 勝 ${P.d} 和 ${P.l} 負${P.perfect?`・全勝 ${P.perfect} 場`:""}</p><p class="muted" style="margin:0 0 8px;font-size:13px">${[3,5,10].filter(n=>B[n]).map(n=>`${n} 盤最佳 ${B[n].pts} 分（中心第 ${B[n].lx} 級）`).join("・")}</p>`:'<p class="muted" style="margin:0 0 8px">還沒下過車輪戰。一個人同時跟 3／5／10 位棋客下，在茶肆二樓。</p>'}
+    ${SIM_ACH.map(([k,nm,how,tr])=>{const o=A[k];return`<div class="item"${o?"":' style="opacity:.55"'}><span class="lb" style="font-size:20px">${o?"🏅":"🔒"}</span><span class="tx"><b>${nm}${o&&tr?`<span style="margin-left:6px;padding:0 5px;border:1.5px solid ${SIM_TC[o.tier]};border-radius:5px;color:${SIM_TC[o.tier]};font-size:12px">${SIM_TIER[o.tier]}</span>`:""}</b><span>${how}</span></span></div>`}).join("")}
+    <p class="muted" style="font-size:12px;margin:6px 0 0">印的顏色看中心級數：青印第 1～6 級、朱印 7～12 級、金印 13～18 級，可以往上換。</p>
+    <button class="btn ghost" style="width:100%;margin-top:8px" onclick="location.hash='#/simul'">🀄 去下車輪戰 ›</button></div>`}
 function simCss(){if(document.getElementById("simCss"))return;const s=document.createElement("style");s.id="simCss";s.textContent=`
 .sim-tabs{display:flex;gap:4px;padding:4px 8px 2px;overflow-x:auto;scrollbar-width:none}.sim-tabs::-webkit-scrollbar{display:none}
 .sim-tb{position:relative;flex:1 0 30px;min-width:30px;max-width:58px;height:42px;padding:2px 0 0;border:1.5px solid var(--line);border-radius:9px;background:var(--card);color:inherit;font:inherit;line-height:1.15;cursor:pointer;-webkit-tap-highlight-color:transparent;touch-action:manipulation}
@@ -19175,6 +19197,7 @@ function SimulPage(v){
       p=D.w===n?"像真正的大師一樣，一圈走完，桌桌奏捷。":r>=.6?"穩住了大多數棋局，車輪轉得很順。":r>=.4?"贏輸各半，再磨幾盤就能多拿幾桌。":"多桌同時應戰不容易，記住幾個關鍵失誤，下次再扳回來。";
     modal(`<div class="em">${em}</div><h2>${h}</h2><p class="muted">${p}</p><p style="font-size:17px;font-weight:900;margin:6px 0">${D.w} 勝 ${D.d} 和 ${D.l} 負・得分 ${D.pts} / ${n}</p>
       <table class="sim-tbl"><tr><th>桌</th><th>棋客</th><th>結果</th><th>回合</th></tr>${S.tb.map(t=>`<tr><td>${t.i+1}</td><td>第 ${t.level} 級</td><td style="font-weight:900;color:${resOf(t)==="w"?"#C8102E":"inherit"}">${RES[resOf(t)]||"—"}</td><td>${Math.ceil(t.moves.length/2)}</td></tr>`).join("")}</table>
+      ${(D.ach||[]).length?`<p style="margin:6px 0 0;font-weight:800">${D.ach.slice(0,3).map(a=>{const x=SIM_ACH.find(y=>y[0]===a.k)||[a.k,a.k,"",0];return`【${a.up?"升級":"新印"}】${x[3]?`<span style="color:${SIM_TC[a.tier]}">${SIM_TIER[a.tier]}</span>・`:""}${esc(x[1])}`}).join("<br>")}${D.ach.length>3?`<br><span class="muted" style="font-weight:400">另有 ${D.ach.length-3} 枚，到我的戰績「電腦」看</span>`:""}</p>`:""}
       ${B?`<p class="muted" style="font-size:13px;margin:4px 0 0">${n} 盤最佳：${B.pts} 分（中心第 ${B.lx} 級）${B.at===D.at&&D.pts>0?"・🎉 新紀錄":""}</p>`:""}
       <p class="muted" style="font-size:12.5px;margin:2px 0 0">每桌都存進對局紀錄可以檢討；不算段位，也不算進「我的棋力」。</p>`,
       [["再戰一輪 ›",()=>setup()],["🏠 首頁",()=>goHome(),true],["回茶肆",()=>{location.hash="#/hub/battle"},true],["看看棋盤",null,true]],"res")}
