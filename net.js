@@ -137,9 +137,12 @@ var XQNet=(function(){
        改成等級分的期望勝率：E＝1/(1+10^((對手−自己)/400))，加減＝K×(結果−E)，雙方一加一減會抵銷；前 15 盤 K＝48 比較快定位，之後 K＝32 */
     const res=G.result.w==null?"d":G.result.w===s?"w":"l",E=1/(1+Math.pow(10,(op-R.pts)/400)),K=kOf(R.w+R.l+R.d);
     let d=Math.round(K*((res==="w"?1:res==="d"?.5:0)-E));if(res==="w"&&d<1)d=1;if(res==="l"&&d>-1)d=-1;
-    const before=R.pts,rk0=heldIdx(R);R.pts=Math.max(0,R.pts+d);d=R.pts-before;R[res]++;rankHold(R,before);
-    R.hist.unshift({gid:G.gid,rid:G.id,opp:o.name,oid:o.id,res,d,pts:R.pts,why:G.result.why||"",n:G.moves.length,at:Date.now(),sd:s,me:realNm()||(s==="r"?G.red:G.black).name||"",mv:G.moves.map(([f,t])=>String(f).padStart(2,"0")+String(t).padStart(2,"0")).join("")});R.hist=R.hist.slice(0,100);ls.set("rate",R);pubHist();   /* 意見回饋 619：每盤戰績帶一份棋步（每步 4 個數字，34 步約 136 字），棋譜存檔不見、換手機時還能從這裡補回來 */
+    const before=R.pts,rk0=heldIdx(R),pn0=R.pn;R.pts=Math.max(0,R.pts+d);d=R.pts-before;R[res]++;rankHold(R,before);   /* k0、p0：記下這盤之前的顯示段位，萬一棋鐘競逐改判要撤回這筆（unrecord，數值盤查 11/11 P1） */
+    R.hist.unshift({gid:G.gid,rid:G.id,opp:o.name,oid:o.id,res,d,k0:rk0,p0:pn0,pts:R.pts,why:G.result.why||"",n:G.moves.length,at:Date.now(),sd:s,me:realNm()||(s==="r"?G.red:G.black).name||"",mv:G.moves.map(([f,t])=>String(f).padStart(2,"0")+String(t).padStart(2,"0")).join("")});R.hist=R.hist.slice(0,100);ls.set("rate",R);pubHist();   /* 意見回饋 619：每盤戰績帶一份棋步（每步 4 個數字，34 步約 136 字），棋譜存檔不見、換手機時還能從這裡補回來 */
     presence();emit("rated",{res,d,pts:R.pts,rank:RANKS[R.rk][0],was:RANKS[rk0][0]})}
+  /* ChatGPT 數值盤查 11/11 P1 棋鐘（雙端競逐）：同一盤先記了結果、後來競逐裁決改判（flagTie）時，撤回那一筆積分（加減的分、勝負場數、顯示段位都回到這盤之前） */
+  function unrecord(g){if(!g)return;const R=rec(),i=R.hist.findIndex(h=>h.gid===g.gid&&(!h.rid||h.rid===g.id));if(i<0)return;const h=R.hist[i];
+    R.pts=Math.max(0,R.pts-(+h.d||0));if(R[h.res]>0)R[h.res]--;if(h.k0!=null&&RANKS[h.k0]){R.rk=h.k0;R.pn=h.p0}R.hist.splice(i,1);ls.set("rate",R);pubHist()}
   /* 意見回饋 283：把自己最近 30 盤的摘要公開放在大廳（保留訊息），別人點你的資料卡就能看你的線上棋譜和戰績分析 */
   function pubHist(){if(!cli||!cli.up||selfBan())return;const m=me(),R=rec();   /* 回饋 852：停權中不公開戰績摘要 */
     cli.pub(`${ROOT}/h/${m.id}`,JSON.stringify({v:1,id:m.id,name:m.name,at:Date.now(),list:R.hist.slice(0,30).map(h=>({gid:h.gid,id:h.rid,opp:h.opp,oid:h.oid,res:h.res,why:h.why,n:h.n,at:h.at,sd:h.sd||null})),prof:(()=>{try{return typeof window.XQ_prof==="function"?window.XQ_prof():null}catch(e){return null}})()}),true)}   /* 意見回饋 307：附上自己的戰力五角形和天賦摘要 */
@@ -226,7 +229,7 @@ var XQNet=(function(){
       else if(x.type==="cancel"&&!blk(x.from.id))emit("cancel",x);
       return}
     if(p[0]==="g"&&cur&&p[1]===cur.gid){
-      if(p[2]==="s"){if(!msg)return;let x;try{x=JSON.parse(msg)}catch(e){return}if(!x||x.gid!==p[1]||!Array.isArray(x.moves)||!x.red||!x.black)return;if(!G||x.rev>G.rev||x.gid!==G.gid){if(G&&x.gid===G.gid&&side()&&!okNext(G,x)){badCheck(x);return}seenAt=Date.now();const before=side(),wasEnd=!!(G&&G.result);if(!G||x.gid!==G.gid||x.moves.length!==G.moves.length)arr={n:x.moves.length,t:Date.now()};G=x;dirty=false;if(side()!==before||!!G.result!==wasEnd)presence();record();emit("game")}
+      if(p[2]==="s"){if(!msg)return;let x;try{x=JSON.parse(msg)}catch(e){return}if(!x||x.gid!==p[1]||!Array.isArray(x.moves)||!x.red||!x.black)return;if(G&&x.gid===G.gid&&side()&&flagRace(x))return;if(!G||x.rev>G.rev||x.gid!==G.gid){if(G&&x.gid===G.gid&&side()&&!okNext(G,x)){badCheck(x);return}seenAt=Date.now();const before=side(),wasEnd=!!(G&&G.result);if(!G||x.gid!==G.gid||x.moves.length!==G.moves.length)arr={n:x.moves.length,t:Date.now()};G=x;dirty=false;if(side()!==before||!!G.result!==wasEnd)presence();record();emit("game")}
         else if(dirty&&G&&x.rev<G.rev)pubGame()}
       else if(p[2]==="e"){try{const x=JSON.parse(msg),sid=G&&(x.by==="r"||x.by==="b")?(x.by==="r"?G.red.id:G.black.id):String(x.id||"");   /* 回饋 841：記下是誰傳的（照紅黑方對到對局裡的代號；新版也會附上 id），讀的時候濾掉封鎖的人 */
         emos.push({id:++emoN,by:x.by,sid,e:String(x.e||"").slice(0,12),text:String(x.text||"").slice(0,80),name:sid&&sid===me().id?realNm().slice(0,16):String(x.name||"").slice(0,16),at:Date.now()});   /* 回饋 842：自己的聊天在自己畫面顯示自己取的名字 */
@@ -252,19 +255,39 @@ var XQNet=(function(){
     if(w===me||b.result.abort)return true;
     if(v.res&&v.res.w===w)return true;
     if(w===null)return a.draw===me;
-    if(b.result.timeout&&tmOf(a)===me){const c=a.clk?clockLeft(a,me):Infinity;return Math.min(c,TURN_MS-(Date.now()-turnAt(a)))<5000}
+    if(b.result.timeout&&tmOf(a)===me){const c=a.clk?clockLeft(a,me):Infinity;return Math.min(c,TURN_MS-(Date.now()-turnAt(a)))<FLAG_GRACE}
     return false}catch(e){return false}}
+  /* ChatGPT 數值盤查 11/11 P1 棋鐘（線上雙端競逐）：輪到 A 走、A 在最後一刻落子（M），同時 B 的手機判 A 超時（T）——兩邊各自把 rev 加 1 送出，
+     舊版看到「rev 一樣」就各自忽略對方，結果 A 以為棋還在下、B 以為贏了，伺服器上留的是後到的那份。
+     現在兩端用同一條規則裁決，只看兩份狀態的內容（不看各自手機的時鐘），所以兩端一定選同一份：
+       M 是 A 自己記下的「落子當下的剩餘時間」lft（tickMove 寫的，取棋鐘剩餘和每步 3 分鐘剩餘的較小者；lfN＝它屬於第幾手）。
+       lft ≥ FLAG_GRACE（5 秒，跟 okNext 承認對方判超時的寬限同一個數）＝A 確實還有時間，B 的時鐘慢太多 → 落子 M 算數；
+       否則（只剩不到 5 秒、或舊版沒寫 lft）＝落旗優先 → 超時 T 算數。
+     選完以後輸的一方改用贏的那份，再用更大的 rev 重送一次，蓋掉伺服器上留的那份；已經記過的積分如果被改判，先撤回（unrecord）再照新結果記。
+     兩端都要是這個版本才保證一致（舊版仍是各自忽略） */
+  const FLAG_GRACE=5000;
+  function flagTie(a,b){try{if(!a||!b||a.gid!==b.gid||a.id!==b.id||a.rules!==b.rules)return null;
+    const pair=(T,M)=>{if(!T.result||!T.result.timeout||(M.result&&M.result.timeout))return false;if(T.result.w!==oppOf(tmOf(T)))return false;
+      if(M.moves.length!==T.moves.length+1)return false;for(let i=0;i<T.moves.length;i++)if(!M.moves[i]||!T.moves[i]||M.moves[i][0]!==T.moves[i][0]||M.moves[i][1]!==T.moves[i][1])return false;return true};
+    let T=null,M=null;if(pair(a,b)){T=a;M=b}else if(pair(b,a)){T=b;M=a}else return null;
+    return typeof M.lft==="number"&&M.lfN===M.moves.length&&M.lft>=FLAG_GRACE?M:T}catch(e){return null}}
+  function flagRace(x){const w=flagTie(G,x);if(!w)return false;
+    if(w===x){const was=G,before=side(),wasEnd=!!G.result;if(was.result&&JSON.stringify(was.result)!==JSON.stringify(x.result))unrecord(was);
+      const n=JSON.parse(JSON.stringify(x));n.rev=Math.max(was.rev,x.rev)+1;n.at=Date.now();seenAt=n.at;if(n.moves.length!==was.moves.length)arr={n:n.moves.length,t:n.at};
+      G=n;dirty=false;pubGame();if(side()!==before||!!G.result!==wasEnd)presence();record();emit("game")}
+    else if(x.rev>=G.rev){const n=JSON.parse(JSON.stringify(G));n.rev=x.rev+1;n.at=Date.now();G=n;pubGame()}
+    return true}
   function enter(gid){if(cur&&cur.gid!==gid&&cli&&cli.up)cli.unsub(gt(cur.gid));cur={gid};ls.set("net",cur);emos=[];if(cli&&cli.up)cli.sub(gt(gid));syncRoster();presence()}
   const PL={r:"紅方",b:"黑方"},oppOf=s=>s==="r"?"b":"r";
   // 對方「在這盤」＝在線上，而且他的狀態指著同一盤（已經跑去做別的事就不算）
   const onl=id=>{const x=people[id];return id===me().id?!!(cli&&cli.up):!!(x&&fresh(x,Date.now())&&G&&x.gid===G.gid)};
-  function setResult(r){if(!G||G.result)return;const n=JSON.parse(JSON.stringify(G));n.result=r;n.draw=null;n.rev=G.rev+1;n.at=Date.now();seenAt=n.at;G=n;pubGame();presence();record();emit("game")}
+  function setResult(r,fz){if(!G||G.result)return;const n=JSON.parse(JSON.stringify(G));n.result=r;n.draw=null;if(fz&&n.clk)n.clk[fz]=0;n.rev=G.rev+1;n.at=Date.now();seenAt=n.at;G=n;pubGame();presence();record();emit("game")}
   // 對方離線超過 10 分鐘、棋局也 10 分鐘沒動：自動中止，不再一直掛著「對戰中」
   // 每步限時：輪到的一方超過 3 分鐘沒走（離開、斷線、關掉 App），由等待的一方判他超時負，比賽自動結束並計分
   const TURN_MS=3*60000;
   const toMove=()=>G?(G.moves.length%2?"b":"r"):null;
   function timeoutCheck(){if(!G||G.rules!==RULE_ID||!playing()||!cli||!cli.up)return;const t=toMove(),me=side();if(!t||t===me)return;
-    if(G.clk&&clockLeft(G,t)<=0)return setResult({w:me,timeout:true,why:PL[t]+"時間用完，超時判負"});
+    if(G.clk&&clockLeft(G,t)<=0)return setResult({w:me,timeout:true,why:PL[t]+"時間用完，超時判負"},t);   /* 數值盤查 11/11 P1 棋鐘：判對方鐘上超時時把他的鐘存成 0（fz），跟他自己手機判自己超時（tickMove）存的一樣，兩端狀態才會一字不差；以前存的是他這手開始時的時間，畫面還顯示有剩 */
     if(Date.now()-turnAt(G)>TURN_MS)setResult({w:me,timeout:true,why:PL[t]+"超過 3 分鐘沒走，超時判負"})}
   setInterval(()=>{timeoutCheck();syncRoster()},2000);   /* 回饋 854：順便看要不要訂、收整份名單 */
   function staleCheck(){if(!playing()||!cli||!cli.up||G.cup)return;   /* 擂台比賽沒有「中止」：斷線的人時間照走 */const o=oppOf(side()),oid=o==="r"?G.red.id:G.black.id;
@@ -320,7 +343,12 @@ var XQNet=(function(){
     tc:()=>tcPref(),tcs:TCS,tcOf,isBot,tcOk:f=>tcOk(f),setTc(v){if(TCS.includes(+v)){ls.set("tc",+v);presence();emit("people")}},
     clocks(){return G&&G.clk?{r:clockLeft(G,"r"),b:clockLeft(G,"b")}:null},
     /* 走棋前呼叫：扣掉走的人這步用的時間，從現在開始算對方的 */
-    tickMove(n,sd){if(!n||!n.clk)return;const now=Date.now();n.clk[sd]=Math.max(0,n.clk[sd]-(now-effTk(n)))+(+n.inc||0);n.tk=now;n.tkN=n.moves.length+1},   /* inc：每走一步加幾毫秒（擂台比賽每步加 5 秒） */
+    /* ChatGPT 數值盤查 11/11 P1 棋鐘：同一個時間戳 now 先裁決逾時，再扣時、加秒。自己的棋鐘剩餘 ≤ 0 ms＝已經落旗：不落子、不加秒，直接把結果寫成自己超時判負並回 false
+       （以前先扣到 0 再加秒，落旗後還能走一步把時間加回來）。及時落子時多記 lft＝落子當下的剩餘時間（棋鐘、每步 3 分鐘取小）和 lfN＝第幾手，給雙端競逐裁決用（flagTie） */
+    tickMove(n,sd){if(!n)return true;const now=Date.now(),lc=n.clk?n.clk[sd]-(now-effTk(n)):Infinity;
+      if(n.clk&&lc<=0){n.clk[sd]=0;n.result={w:oppOf(sd),timeout:true,why:PL[sd]+"時間用完，超時判負"};n.draw=null;return false}
+      n.lft=Math.round(Math.min(lc,TURN_MS-(now-(arr.n===n.moves.length?arr.t:now))));n.lfN=n.moves.length+1;
+      if(n.clk){n.clk[sd]=lc+(+n.inc||0);n.tk=now;n.tkN=n.moves.length+1}return true},   /* inc：每走一步加幾毫秒（擂台比賽每步加 5 秒） */
     turnLeft(){if(!G||G.result)return null;return Math.max(0,TURN_MS-(Date.now()-turnAt(G)))},
     // 公園 3D 棋盤：對手的小帥造型（棋子、朝代、官階），對手在大廳廣播的
     oppBot(){if(!G||!side())return null;const o=oppOf(side()),x=people[o==="r"?G.red.id:G.black.id];return x&&x.bot||null},

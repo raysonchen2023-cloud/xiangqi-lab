@@ -19,19 +19,25 @@ var XQ=(function(){
   window.evalPos=async(b,s,ms,multipv)=>{if(!legal(b,s).length)return{lines:[],dead:true};
     return XQEngine.search({fen:fen(b,s)},{movetime:ms||ANALYZE_MS},multipv||1)};
   /* 開發者 11/6（第二裁判）：評語分界線放寬、妙著排除應將和回吃——新評等用新的快取鑰匙 g2（回吃要看對方上一步落在哪：lt）；舊快取 g: 有「少幾分」就照新分界線重算評語，不用讓引擎重跑 */
-  async function classify(b,s,f,t,lt){const cap=!!b[t],k="g2:"+fen(b,s)+"|"+iccs(f,t)+(cap&&lt!=null?"|"+lt:"");const c=await idb.get(k);if(c){c.q=qName(c.q);return c}
-    const o=await idb.get("g:"+fen(b,s)+"|"+iccs(f,t));if(o&&o.loss!=null){const r={...o,q:qName(o.q)};if(r.q==="妙著"){if(inCheck(b,s)||(cap&&lt===t))r.q="正著"}else if(r.q!=="—")r.q=gradeLoss(r.loss);await idb.set(k,r);return r}
-    const r=await classifyRaw(b,s,f,t,undefined,lt);if(r)await idb.set(k,r);return r}
+  /* ChatGPT 數值盤查 11/11 P1 引擎空結果（舊快取）：舊版第二次查詢缺 PV 時把「不是最佳著、loss＝0」寫成正著，這種快取分不出真假，
+     所以不整批清掉，只把「不是最佳著、loss＝0、又沒有新版 bmt 欄位」的那筆（g2: 或舊的 g:）當成可疑、請引擎重評一次；重評失敗（引擎沒載好、又缺 PV）就照舊用快取，不會比原本差 */
+  const gradeSus=(x,f,t)=>!!x&&x.loss===0&&!!x.bm&&x.bm!==iccs(f,t)&&x.bmt===undefined;
+  async function classify(b,s,f,t,lt){const cap=!!b[t],k="g2:"+fen(b,s)+"|"+iccs(f,t)+(cap&&lt!=null?"|"+lt:"");const c=await idb.get(k);if(c&&!gradeSus(c,f,t)){c.q=qName(c.q);return c}
+    const o=c?null:await idb.get("g:"+fen(b,s)+"|"+iccs(f,t)),old=()=>{const r={...o,q:qName(o.q)};if(r.q==="妙著"){if(inCheck(b,s)||(cap&&lt===t))r.q="正著"}else if(r.q!=="—")r.q=gradeLoss(r.loss);return r};
+    if(o&&o.loss!=null&&!gradeSus(o,f,t)){const r=old();await idb.set(k,r);return r}
+    let r;try{r=await classifyRaw(b,s,f,t,undefined,lt)}catch(e){if(c){c.q=qName(c.q);return c}if(o&&o.loss!=null){const x=old();await idb.set(k,x);return x}throw e}
+    if(r)await idb.set(k,r);else if(c){c.q=qName(c.q);return c}return r}
   // 依序評等一盤棋裡還沒評等的步
   // pause()：回傳 true 就先停下來（例如輪到電腦走，讓 Pikafish 先想棋，評等等一下再補）
   async function analyzeList(S,save,pause){
     for(let i=0;i<S.moves.length;i++){const m=S.moves[i];if(m.q&&qName(m.q)!==m.q){m.q=qName(m.q);save()}if(m.q){if(m.loss!=null&&m.q!=="妙著"&&m.q!=="—"&&m.q!==gradeLoss(m.loss)){m.q=gradeLoss(m.loss);save()}continue}if(pause&&pause())return;
-      const[bs,sd]=S.pos[i].split(" ");let r=null;try{r=await classify(parseFen(bs),sd==="w"?"r":"b",m.f,m.t,i>0&&S.moves[i-1]?S.moves[i-1].t:null)}catch(e){return}
+      const[bs,sd]=S.pos[i].split(" ");let r=null;try{r=await classify(parseFen(bs),sd==="w"?"r":"b",m.f,m.t,i>0&&S.moves[i-1]?S.moves[i-1].t:null)}catch(e){if(e&&e.retry)continue;return}   /* ChatGPT 數值盤查 11/11 P1：缺 PV（e.retry）＝這步先留著未評、往下評別步，下次分析再補；其他錯誤（引擎載不到）照舊整批停 */
       if(S.moves[i]!==m)return;if(r)Object.assign(m,r);else m.q="—";save()}}
-  /* 開發者 11/11 照三方審查（影子模式）：多帶 bv＝最佳著法評估的原值（紅方視角、沒夾 ±2000，core.js classifyRaw 新加的），新算法判「漏殺」和匿名對局資料要用；舊存檔沒有 bv，新算法改用 ev 夾值後＋loss 還原 */
-  const moveOut=m=>({f:m.f,t:m.t,by:m.by,cn:m.cn,ck:m.ck,q:m.q,loss:m.loss,ev:m.ev,bv:m.bv,bc:m.bc,bm:m.bm,bp:m.bp});
+  /* 開發者 11/11 照三方審查（影子模式）：多帶 bv＝最佳著法評估的原值（紅方視角、沒夾 ±2000，core.js classifyRaw 新加的），新算法判「漏殺」和匿名對局資料要用；舊存檔沒有 bv，新算法改用 ev 夾值後＋loss 還原
+     ChatGPT 數值盤查 11/11 P1：再多帶 bmt、pmt（殺棋訊號，走方視角，見 core.js classifyRaw），賽後講解只在真的有殺時才說「有殺／錯過殺棋」 */
+  const moveOut=m=>({f:m.f,t:m.t,by:m.by,cn:m.cn,ck:m.ck,q:m.q,loss:m.loss,ev:m.ev,bv:m.bv,bmt:m.bmt,pmt:m.pmt,bc:m.bc,bm:m.bm,bp:m.bp});
   const lastEv=ms=>{for(let i=ms.length-1;i>=0;i--)if(ms[i].ev!=null)return{v:ms[i].ev,ply:i+1};return null};
-  const saveMoves=ms=>ms.map(m=>({f:m.f,t:m.t,by:m.by,q:m.q,loss:m.loss,ev:m.ev,bv:m.bv,bc:m.bc,bm:m.bm,bp:m.bp}));   /* bv：見 moveOut（開發者 11/11 影子模式）；沒有就是 undefined，JSON 存檔時自動省略 */
+  const saveMoves=ms=>ms.map(m=>({f:m.f,t:m.t,by:m.by,q:m.q,loss:m.loss,ev:m.ev,bv:m.bv,bmt:m.bmt,pmt:m.pmt,bc:m.bc,bm:m.bm,bp:m.bp}));   /* bv：見 moveOut（開發者 11/11 影子模式）；bmt、pmt 同上（數值盤查 11/11）；沒有就是 undefined，JSON 存檔時自動省略 */
   /* 意見回饋 619：存棋譜排隊一筆一筆來（以前兩筆同時存會互相蓋掉），同一個 id 不重複存 */
   let PG=Promise.resolve();
   function pushGame(kind,g){const p=PG.then(async()=>{const list=(await idb.get("games:"+kind))||[];if(g&&g.id&&list.some(x=>x.id===g.id))return;list.push(g);await idb.set("games:"+kind,list)});PG=p.catch(()=>{});return p}
@@ -207,29 +213,39 @@ var XQ=(function(){
   const TCS={"10+5":{min:10,inc:5},"20+10":{min:20,inc:10},"60+30":{min:60,inc:30}};
   let V=null,vaBusy=false;
   const nameOf=(s,d)=>String(s||"").replace(/[<>]/g,"").trim().slice(0,20)||d;
-  const saveV=()=>ls.set("pvp",{id:V.id,red:V.red,black:V.black,tcKey:V.tcKey,tc:V.tc,clocks:V.clocks,result:V.result,moves:saveMoves(V.moves)});
+  /* ChatGPT 數值盤查 11/11 P1 棋鐘（同機限時局）：
+     ① 落子、悔棋、提和、認輸前，先用「同一個事件時間戳」now 裁決逾時（pvpFlag）：剩餘 ≤ 0 ms＝已經落旗、直接判負，這步不算、也拿不到加秒；剩 +1 ms 才算及時。
+        以前只靠每 250 ms 的 pvpClock 檢查、落子入口又先加秒，落旗後 250 ms 內（或瀏覽器在背景、計時器被暫停時）還能落子把時間加回來。
+     ② 悔棋：每走一手先存雙方鐘的快照 cs（走方扣掉這手想的時間、還沒加秒；對方的鐘本來就沒在走），悔棋時恢復成那一手之前的快照，不保留那手拿到的加秒；
+        走這手到按悔棋之間的時間不算任何一方的（兩邊回到那一手之前的樣子），鐘從按悔棋那一刻重新開始走。舊存檔沒有 cs 的那幾手照舊做法（只把對方用掉的時間扣掉）。
+     ③ 起鐘規則照舊：第一手（紅方開局）不計時、不加秒，第一手走完才開始計時；存檔重新載入（App 重開）後鐘先停，續局的第一手同樣不扣時、不加秒，走完才繼續計時。 */
+  const saveV=()=>ls.set("pvp",{id:V.id,red:V.red,black:V.black,tcKey:V.tcKey,tc:V.tc,clocks:V.clocks,cs:V.cs||[],result:V.result,moves:saveMoves(V.moves)});
   function ensureV(){if(V)return;const s=ls.get("pvp",null);if(s&&s.moves){V=s;V.tick=null;V.draw=null;stateRebuild(V)}else pvpNew({})}
   function pvpNew(o){const tc=TCS[o.tc]||null;V={id:gameId(),red:nameOf(o.red,"紅方"),black:nameOf(o.black,"黑方"),tcKey:tc?o.tc:"none",tc,
-    clocks:tc?{r:tc.min*60000,b:tc.min*60000}:null,tick:null,draw:null,moves:[],result:null};stateRebuild(V);saveV()}
-  const pvpLeft=s=>!V.clocks?null:V.clocks[s]-(V.tick!=null&&V.turn===s&&!V.result?Date.now()-V.tick:0);
-  function pvpClock(){if(!V||!V.tc||V.result||V.tick==null)return;if(pvpLeft(V.turn)<=0){V.clocks[V.turn]=0;const s=V.turn;V.tick=null;pvpEnd(opp(s),PLAYER[s]+"超時判負")}}
+    clocks:tc?{r:tc.min*60000,b:tc.min*60000}:null,cs:[],tick:null,draw:null,moves:[],result:null};stateRebuild(V);saveV()}
+  const pvpLeft=(s,now)=>!V.clocks?null:V.clocks[s]-(V.tick!=null&&V.turn===s&&!V.result?(now==null?Date.now():now)-V.tick:0);
+  function pvpFlag(now){if(!V||!V.tc||V.result||V.tick==null||pvpLeft(V.turn,now)>0)return false;const s=V.turn;V.clocks[s]=0;V.tick=null;pvpEnd(opp(s),PLAYER[s]+"超時判負");return true}
+  function pvpClock(){pvpFlag(Date.now())}
   setInterval(pvpClock,250);
-  function pvpEnd(w,why){if(V.tick!=null&&V.clocks)V.clocks[V.turn]=Math.max(0,pvpLeft(V.turn));V.result={w,why,...(V.repetition&&!V.repetition.pending?{adjudication:V.repetition}:{})};V.tick=null;V.draw=null;
+  function pvpEnd(w,why,now){if(V.tick!=null&&V.clocks)V.clocks[V.turn]=Math.max(0,pvpLeft(V.turn,now));V.result={w,why,...(V.repetition&&!V.repetition.pending?{adjudication:V.repetition}:{})};V.tick=null;V.draw=null;
     pushGame("pvp",{id:V.id,date:V.id.slice(0,10),red:V.red,black:V.black,tc:V.tcKey,result:V.result,moves:saveMoves(V.moves)});saveV()}
   async function analyzePvp(){if(vaBusy||!V)return;vaBusy=true;try{await analyzeList(V,saveV)}finally{vaBusy=false}}
   function pvpState(){ensureV();pvpClock();
     return{rules:C.REP_RULES,repetition:V.repetition||null,id:V.id,red:V.red,black:V.black,board:V.board,turn:V.turn,moves:V.moves.map(moveOut),result:V.result,draw:V.draw,tcKey:V.tcKey,
       clocks:V.clocks?{r:pvpLeft("r"),b:pvpLeft("b")}:null,running:V.tick!=null,legal:V.result?[]:legal(V.board,V.turn),
       check:!V.result&&inCheck(V.board,V.turn)?kingSq(V.board,V.turn):-1,eval:lastEv(V.moves),engine:true}}
-  async function pvpPost(p,b){ensureV();const side=b.side==="b"?"b":"r";
+  async function pvpPost(p,b){ensureV();const side=b.side==="b"?"b":"r",now=Date.now();
+    if(p!=="/pvp/new"&&pvpFlag(now))return pvpState();   /* 數值盤查 11/11 P1 棋鐘：同一個 now 先裁決逾時，落旗了這個動作就不做（落子不算、悔棋不救、提和認輸也改不了結果） */
     if(p==="/pvp/new")pvpNew(b);
     else if(p==="/pvp/move"){const f=+b.f,t=+b.t;if(V.result)throw new Error("這局已經結束");if(!legal(V.board,V.turn).some(([x,y])=>x===f&&y===t))throw new Error("這步不合法");
-      if(V.tc&&V.tick!=null)V.clocks[V.turn]=pvpLeft(V.turn)+V.tc.inc*1000;
-      stateApply(V,f,t);V.draw=null;V.tick=V.tc?Date.now():null;const r=judgeState(V);if(r)pvpEnd(r.w,r.why);saveV();setTimeout(analyzePvp,0)}
-    else if(p==="/pvp/undo"){if(V.result)throw new Error("這局已經結束，不能悔棋");if(V.moves.length){if(V.tc&&V.tick!=null)V.clocks[V.turn]=pvpLeft(V.turn);
-      V.moves.pop();stateRebuild(V);V.draw=null;V.tick=V.tc&&V.moves.length?Date.now():null;saveV()}}
-    else if(p==="/pvp/draw"){if(V.result)throw new Error("這局已經結束");if(V.draw&&V.draw!==side)pvpEnd(null,"雙方同意和棋");else V.draw=V.draw===side?null:side}
-    else if(p==="/pvp/resign"){if(!V.result)pvpEnd(opp(side),PLAYER[side]+"認輸")}
+      const snap=V.clocks?{r:pvpLeft("r",now),b:pvpLeft("b",now)}:null;if(!V.cs)V.cs=[];while(V.cs.length<V.moves.length)V.cs.push(null);   /* 雙鐘快照（走方已扣這手的時間、還沒加秒）；舊存檔缺的幾手補 null */
+      if(V.tc&&V.tick!=null)V.clocks[V.turn]=snap[V.turn]+V.tc.inc*1000;
+      stateApply(V,f,t);V.cs.push(snap);V.draw=null;V.tick=V.tc?now:null;const r=judgeState(V);if(r)pvpEnd(r.w,r.why,now);saveV();setTimeout(analyzePvp,0)}
+    else if(p==="/pvp/undo"){if(V.result)throw new Error("這局已經結束，不能悔棋");if(V.moves.length){const snap=V.cs&&V.cs.length===V.moves.length?V.cs.pop():null;
+      if(snap&&V.clocks)V.clocks={r:snap.r,b:snap.b};else if(V.tc&&V.tick!=null)V.clocks[V.turn]=pvpLeft(V.turn,now);   /* 有快照：兩個鐘回到那一手之前（不保留那手的加秒）；舊存檔沒快照：照舊 */
+      V.moves.pop();stateRebuild(V);V.draw=null;V.tick=V.tc&&V.moves.length?now:null;saveV()}}
+    else if(p==="/pvp/draw"){if(V.result)throw new Error("這局已經結束");if(V.draw&&V.draw!==side)pvpEnd(null,"雙方同意和棋",now);else V.draw=V.draw===side?null:side}
+    else if(p==="/pvp/resign"){if(!V.result)pvpEnd(opp(side),PLAYER[side]+"認輸",now)}
     return pvpState()}
 
   // ---------- 線上大廳的網路對局：畫面跟雙人對戰一樣，狀態放在 XQNet（公開 MQTT 伺服器）上同步 ----------
@@ -271,7 +287,7 @@ var XQ=(function(){
     if(p==="/pvp/move"){const f=+b.f,t=+b.t;if(g.result)throw new Error("這局已經結束");if(S.turn!==sd)throw new Error("還沒輪到你");
       if(!legal(S.board,S.turn).some(([x,y])=>x===f&&y===t))throw new Error("這步不合法");
       const T={moves:g.moves.map(([a,z])=>({f:a,t:z}))};stateRebuild(T);stateApply(T,f,t);const r=judgeState(T);
-      XQNet.update(n=>{if(XQNet.tickMove)XQNet.tickMove(n,sd);n.moves.push([f,t]);n.draw=null;if(r)n.result=r})}
+      XQNet.update(n=>{if(XQNet.tickMove&&XQNet.tickMove(n,sd)===false)return;n.moves.push([f,t]);n.draw=null;if(r)n.result=r})}   /* ChatGPT 數值盤查 11/11 P1 棋鐘：tickMove 用同一個時間戳先裁決逾時，回 false＝自己已經落旗（tickMove 已把結果寫成超時判負），這步不下、不加秒 */
     else if(p==="/pvp/undo"){if(g.result)throw new Error("這局已經結束，不能悔棋");if(g.cup)throw new Error("擂台比賽落子無悔，不能悔棋");const last=S.moves[S.moves.length-1];
       if(!last||last.by!==sd)throw new Error("對方已經走了，不能悔棋");XQNet.update(n=>{n.moves.pop();n.draw=null})}
     else if(p==="/pvp/draw"){if(g.result)throw new Error("這局已經結束");if(g.cup&&!(g.draw&&g.draw!==sd)&&g.moves.length<40)throw new Error("擂台比賽要下滿 20 回合才能提和");

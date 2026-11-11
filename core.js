@@ -149,8 +149,9 @@ const summary=it=>({id:it.id,no:it.no,label:it.label,part:it.part,title:it.title
 function fullItem(it){if(!it.board)it.board=parseFen(START);if(!it._an){annotate(it);Object.defineProperty(it,"_an",{value:true})}return it}
 function gameItem(g,isLive){
   /* 意見回饋 594：石桌往事有些關從中局開始（g.start＝起始局面、g.startTurn＝誰先走），也要存進對局、算進我的成長 */
+  /* ChatGPT 數值盤查 11/11 P1：棋步多帶 bmt、pmt（殺棋訊號，見 classifyRaw），賽後講解才分得出「真的有殺」還是「只是大優」；這個檔裡其他存檔、moveOut 也一起帶 */
   const b0=()=>{try{return g.start?parseFen(g.start):parseFen(START)}catch(e){return parseFen(START)}};const t0=g.startTurn==="b"?1:0;
-  let b=b0();const moves=g.moves.map((m,i)=>{const cn=notate(b,m.f,m.t);b=make(b,m.f,m.t);return{f:m.f,t:m.t,cn,q:m.q,loss:m.loss,ev:m.ev,bc:m.bc,bm:m.bm,bp:m.bp,by:m.by||((i+t0)%2?"b":"r")}});
+  let b=b0();const moves=g.moves.map((m,i)=>{const cn=notate(b,m.f,m.t);b=make(b,m.f,m.t);return{f:m.f,t:m.t,cn,q:m.q,loss:m.loss,ev:m.ev,bmt:m.bmt,pmt:m.pmt,bc:m.bc,bm:m.bm,bp:m.bp,by:m.by||((i+t0)%2?"b":"r")}});
   const comments={};g.moves.forEach((m,i)=>{if(m.cm)comments["0_"+(i+1)]=PLAYER[m.by]+"："+m.cm});
   return{id:g.id||"current",title:`${g.red} 對 ${g.black}`,red:g.red,black:g.black,year:+String(g.date||g.id||"").slice(0,4)||null,name:(isLive?"【進行中】":"")+(g.date||String(g.id||"").slice(0,10))+"　"+g.red+" 對 "+g.black,
     result:isLive||!g.result?"進行中":(g.result.w?PLAYER[g.result.w]+"勝":"和局")+"（"+g.result.why+"）",
@@ -174,7 +175,7 @@ function stateApply(S,f,t){
   m.ch=[...chasePairs(S.board,mover)].some(x=>!chB.has(x));
   S.moves.push(m);return m}
 function stateRebuild(S){const old=S.moves||[];S.moves=[];S.board=parseFen(S.start||START);S.turn=S.startTurn||"r";S.pos=[fen(S.board,S.turn)];
-  for(const o of old){const m=stateApply(S,o.f,o.t);for(const k of["q","loss","ev","bv","bc","bm","bp"])if(o[k]!==undefined)m[k]=o[k]}S.repetition=repetitionVerdict(S)}   /* bv：開發者 11/11 影子模式，見 classifyRaw */
+  for(const o of old){const m=stateApply(S,o.f,o.t);for(const k of["q","loss","ev","bv","bmt","pmt","bc","bm","bp"])if(o[k]!==undefined)m[k]=o[k]}S.repetition=repetitionVerdict(S)}   /* bv：開發者 11/11 影子模式，見 classifyRaw；bmt、pmt：ChatGPT 數值盤查 11/11 殺棋訊號（走方視角），見 classifyRaw */
 function judgeState(S){
   const n=S.moves.length;S.repetition=null;if(!n)return null;
   const mover=S.moves[n-1].by,other=opp(mover);
@@ -196,9 +197,16 @@ const clampV=v=>Math.max(-2000,Math.min(2000,v));const gradeLoss=l=>l<30?"正著
 async function classifyRaw(b,s,f,t,ms,lt){   /* lt：對方上一步落在哪一格（判斷「回吃」，可省略） */
   const r=await evalPos(b,s,ms,2);if(r.dead||!r.lines.length)return null;
   const best=r.lines[0],second=r.lines[1],mv=iccs(f,t);
-  let played;
-  if(best.mv===mv)played=best.v;
-  else{const after=make(b,f,t),r2=await evalPos(after,opp(s),ms,1);played=r2.dead?30000:(r2.lines[0]?-r2.lines[0].v:best.v)}
+  let played,pmt;
+  if(best.mv===mv){played=best.v;pmt=best.mate}
+  else{const after=make(b,f,t);let r2=await evalPos(after,opp(s),ms,1);
+    /* ChatGPT 數值盤查 11/11 P1 引擎空結果：第二次查詢（走完這步的局面）不是終局、卻沒有任何 PV（lines 空）時，舊版拿最佳著的分數頂替，
+       變成「正著、loss＝0、ev＝最佳分」。改成：先用兩倍時間重查一次；還是沒有 PV 就丟出可重試的錯誤（e.retry），這步保持「未評」，下次分析再補。
+       真正沒有合法著的終局（r2.dead）照原本分支：走這步的一方把對方將死或困斃＝30000 */
+    if(!r2.dead&&!(r2.lines&&r2.lines.length))r2=await evalPos(after,opp(s),(ms||ANALYZE_MS)*2,1);
+    if(r2.dead){played=30000;pmt=1}
+    else if(r2.lines&&r2.lines.length){played=-r2.lines[0].v;const m2=r2.lines[0].mate;pmt=m2==null?null:m2<0?1-m2:-m2}
+    else{const e=new Error("Pikafish 沒有算出這步走完的局面（缺 PV），這步先不評，稍後自動再評");e.retry=true;e.code="XQ_NO_PV";throw e}}
   const loss=Math.max(0,clampV(best.v)-clampV(played)),gap=second?clampV(best.v)-clampV(second.v):0;
   let q;
   if(best.mv===mv)q=gap>=200&&Math.abs(best.v)<1500&&!inCheck(b,s)&&!(b[t]&&lt===t)?"妙著":"正著";   /* 妙著：唯一好棋差距 200 分以上，而且不是應將、不是被迫回吃 */
@@ -206,7 +214,10 @@ async function classifyRaw(b,s,f,t,ms,lt){   /* lt：對方上一步落在哪一
   const bf=parseSq(best.mv.slice(0,2)),bt=parseSq(best.mv.slice(2,4));
   /* 開發者 11/11 照三方審查（影子模式）：多回傳 bv＝最佳著法評估的原值（紅方視角、沒夾 ±2000），q、loss 完全照舊。
      loss 是兩邊都夾到 ±2000 才相減，最佳著法若是殺棋（±29990 左右）原值會不見——新算法判「漏殺」、匿名對局資料校正殺棋分界要用原值 */
-  return{q,loss,gap,ev:s==="r"?played:-played,bv:s==="r"?best.v:-best.v,bc:notate(b,bf,bt),bm:best.mv,bp:(best.pv||[]).slice(0,3)}}   // bp：Pikafish 建議的前 3 步（賽後在棋盤上畫箭頭）
+  /* ChatGPT 數值盤查 11/11 P1 優勢被報為殺棋：保留引擎的殺棋訊號，一律「走這步的一方」視角（跟 ev、bv 的紅方視角不同）：
+     bmt＝最佳著法的殺棋步數（正＝走方 N 步殺對方、負＝走方被殺、null＝沒有殺棋）；pmt＝實際這步走完的殺棋步數（同樣正負；這步直接將死或困斃對方＝1）。
+     新版一定有這兩個欄位（沒有殺棋就是 null），舊存檔、舊快取沒有（undefined）；q、loss、ev、bv 完全照舊 */
+  return{q,loss,gap,ev:s==="r"?played:-played,bv:s==="r"?best.v:-best.v,bmt:best.mate==null?null:best.mate,pmt:pmt==null?null:pmt,bc:notate(b,bf,bt),bm:best.mv,bp:(best.pv||[]).slice(0,3)}}   // bp：Pikafish 建議的前 3 步（賽後在棋盤上畫箭頭）
 return{START,NAMES,CN,VAL,sideOf,opp,parseFen,fen,legal,legalOk,inCheck,kingSq,make,iccs,parseSq,notate,chasePairs,hasAttackers,REP_RULES,repetitionVerdict,PLAYER,annotate,summary,fullItem,gameItem,LEVELS,stateApply,stateRebuild,judgeState,pickMove,ANALYZE_MS,clampV,gradeLoss,qName,classifyRaw};
 })();
 if(typeof module!=="undefined")module.exports=XQCore;

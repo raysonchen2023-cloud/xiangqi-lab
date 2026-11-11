@@ -1379,7 +1379,7 @@ html[data-hicon] .tabbar button.on{box-shadow:inset 0 -3px 0 currentColor}
       if(!window.caches)return go();caches.keys().then(function(ks){return Promise.all(ks.filter(function(k){return k.indexOf("xqlab-app-")===0}).map(function(k){return caches.delete(k)}))})
         .then(function(){return navigator.serviceWorker&&navigator.serviceWorker.getRegistration()}).then(function(r){return r&&r.update()}).catch(function(){}).then(go)}};setTimeout(chk,4000)})();
 </script>
-<script>window.XQ_OFFLINE=true;window.XQ_BUILD="20261111-1845";</script>
+<script>window.XQ_OFFLINE=true;window.XQ_BUILD="20261111-1900";</script>
 <script src="core.js"></script>
 <script src="engine.js"></script>
 <script src="local.js"></script>
@@ -3205,7 +3205,9 @@ function Guess(v){
   const SRC=[["xuyinchuan","許銀川對局"],["gmgames","特級大師對局"]],LEN=15;
   let src=store.get("guessSrc","xuyinchuan"),it=null,mv=[],ply=0,me="r",board=null,LEGAL=[],sel=-1,busy=false,res=[],startPly=0,gsid=0;
   /* 意見回饋 309：每猜一步就記進 guessLog（part＝這盤還沒猜完），中途離開也會算進天賦分析 */
-  const saveG=final=>{if(!res.length||!it)return;const lg=store.get("guessLog",[]),D=res.filter(x=>x.d!=null).map(x=>x.d),e={at:gsid,title:toT(`${it.red||""} 對 ${it.black||""}`)+(it.year?"（"+it.year+"）":""),src,n:res.length,m:res.filter(x=>x.hit).length,pts:Math.round(res.reduce((a,x)=>a+x.pts,0)),d:D,part:final?0:1,gid:it.id,ps:res.map(x=>x.p),h:res.map(x=>x.skip?"-":x.hit?"1":"0").join("")},i=lg.findIndex(x=>x.at===gsid);   /* 意見回饋 737：記棋譜 id、每一步是第幾步、猜中與否（h：1 猜中、0 沒中、- 看大師怎麼走），算「已讀懂」用 */
+  /* ChatGPT 數值盤查 11/11（猜大師著法的分母）：n 照舊是走過的步數（含看答案），另外拆存 vw＝看答案幾步、tr＝真的猜了幾步（嘗試數）、gr＝引擎評到品質的步數（可評數）；
+     pts 只加有分數的步（引擎沒評到又沒猜中的那步是「品質待評」，不給固定分）。天賦練習量、週報改用 tr（04-stats.js gsTried，舊存檔從 h 的「-」回算） */
+  const saveG=final=>{if(!res.length||!it)return;const lg=store.get("guessLog",[]),D=res.filter(x=>x.d!=null).map(x=>x.d),e={at:gsid,title:toT(`${it.red||""} 對 ${it.black||""}`)+(it.year?"（"+it.year+"）":""),src,n:res.length,vw:res.filter(x=>x.skip).length,tr:res.filter(x=>!x.skip).length,gr:D.length,m:res.filter(x=>x.hit).length,pts:Math.round(res.reduce((a,x)=>a+(x.pts||0),0)),d:D,part:final?0:1,gid:it.id,ps:res.map(x=>x.p),h:res.map(x=>x.skip?"-":x.hit?"1":"0").join("")},i=lg.findIndex(x=>x.at===gsid);   /* 意見回饋 737：記棋譜 id、每一步是第幾步、猜中與否（h：1 猜中、0 沒中、- 看大師怎麼走），算「已讀懂」用 */
     if(i>=0)lg[i]=e;else lg.push(e);store.set("guessLog",lg.slice(-60));
     if(typeof rdGuess==="function")rdGuess(src,it.id,res.filter(x=>x.hit).length,res.filter(x=>!x.skip).length)};   /* 意見回饋 737 第二期：這盤答對幾手，存進 rdLog（存檔會帶著走） */
   const bd=Board(x=>tap(x));
@@ -3215,7 +3217,7 @@ function Guess(v){
       <p>跟著大師的實戰對局，<b>你執贏的那一方</b>，每一步先猜大師會怎麼走，再看大師實際走了什麼。對方的棋會照實戰自動走。</p>
       <p class="muted">每步請 Pikafish 算你猜的那步比最好的著法少幾分：跟大師一樣得 10 分，猜別的就看差多少給分。一局猜 ${LEN} 步。這些資料會進到「我的戰績 → 🧬 天賦」的著法品質。</p>
       <div class="row" style="gap:6px;flex-wrap:wrap;margin:6px 0 10px">${SRC.map(([k,l])=>`<button class="pill${k===src?" on":""}" data-s="${k}" style="${k===src?"background:var(--accent);color:#fff;border-color:var(--accent)":""}">${l}</button>`).join("")}</div>
-      ${last?`<p class="muted">上一局：${esc(last.title||"")}・猜中 ${last.m}/${last.n} 步・${last.pts} 分</p>`:""}
+      ${last?`<p class="muted">上一局：${esc(last.title||"")}・猜中 ${last.m}/${last.tr!=null?last.tr:last.n} 步・${last.pts} 分</p>`:""}
       <button class="btn" id="go">開始（隨機挑一盤）</button></div></div>`;
     v.querySelectorAll("[data-s]").forEach(b=>b.onclick=()=>{src=b.dataset.s;store.set("guessSrc",src);intro()});
     (v.querySelector("#go")||{}).onclick=start}
@@ -3229,7 +3231,7 @@ function Guess(v){
     while(ply<startPly){board=applyMv(board,mv[ply]);ply++}
     gameLayout(v);v.querySelector("#bbox").append(bd.svg);v.querySelector("#strip").insertAdjacentHTML("beforebegin",'<div class="note" id="note" style="white-space:pre-wrap"></div>');turn()}
   const applyMv=(b,m)=>{const n=b.slice();n[m.t]=n[m.f];n[m.f]=null;return n};
-  function head(){const pts=res.reduce((a,x)=>a+x.pts,0),m=res.filter(x=>x.hit).length;
+  function head(){const pts=res.reduce((a,x)=>a+(x.pts||0),0),m=res.filter(x=>x.hit).length;   /* 數值盤查 11/11：品質待評（pts＝null）的步當 0 加 */
     v.querySelector("#pTop").innerHTML=playerHTML(me==="r"?"b":"r",toT(me==="r"?it.black:it.red),"對方（照實戰走）",null);
     v.querySelector("#pBot").innerHTML=playerHTML(me,"你（"+toT(me==="r"?it.red:it.black)+" 的位置）",`第 ${res.length+1}/${LEN} 步・猜中 ${m}・${Math.round(pts)} 分`,null)}
   function draw(o){bd.draw(o&&o.board||board,{flip:me==="b",sel,targets:sel>=0?LEGAL.filter(([f])=>f===sel).map(x=>x[1]):[],...(o||{})})}
@@ -3242,24 +3244,26 @@ function Guess(v){
     sel=LEGAL.some(([f])=>f===x)?x:-1;if(sel>=0)vibrate(5);draw()}
   async function judge(f,t){if(busy)return;busy=true;   /* 意見回饋 305：連按「看大師怎麼走」會重複判同一步、往前跳好幾步，盤面跟棋譜對不上（棋子消失） */const gm=mv[ply],hit=f===gm.f&&t===gm.t;const st=v.querySelector("#stat");st.classList.remove("hot");st.textContent="Pikafish 評分中…";
     let mine=null,his=null;try{his=await api("/an/classify",{board,side:me,f:gm.f,t:gm.t});if(f>=0)mine=hit?his:await api("/an/classify",{board,side:me,f,t})}catch(e){toast(e.message)}
-    /* 意見回饋（開發者 11/6 分數審查）：引擎沒評到（mine.loss 缺）時，給分照舊當 300 算，但 d 存 null，不混進天賦系統的 acpl／Regan */
-    const ok=!!(mine&&mine.loss!=null),d=f<0?null:ok?Math.max(0,Math.round(mine.loss)):null,pts=f<0?0:hit?10:10*Math.exp(-(d!=null?d:300)/150);
+    /* 意見回饋（開發者 11/6 分數審查）：引擎沒評到（mine.loss 缺）時 d 存 null，不混進天賦系統的 acpl／Regan
+       ChatGPT 數值盤查 11/11：沒猜中又沒評到的那步原本照 300 分損失給 1.35／10 分，現在 pts＝null（品質待評）：「是否猜中」照記，總分和滿分都不算這步；猜中照舊 10 分（不用引擎也知道） */
+    const ok=!!(mine&&mine.loss!=null),d=f<0?null:ok?Math.max(0,Math.round(mine.loss)):null,pts=f<0?0:hit?10:d!=null?10*Math.exp(-d/150):null;
     res.push({hit,d,pts,skip:f<0,p:ply});saveG(false);addXP(hit?5:2,"猜著法",`gs:${gsid}:${ply}`);vibrate(hit?15:f<0?5:[20,40,20]);
     const cnGM=gm.cn||"",nb=applyMv(board,gm);draw({board:nb,last:{f:gm.f,t:gm.t},sel:-1,targets:[]});
-    st.textContent=f<0?`大師走：${cnGM}`:hit?`✔ 猜中！大師也走 ${cnGM}（+10）`:`大師走的是 ${cnGM}；你那步${mine&&mine.q?"是「"+mine.q+"」":""}，${d!=null?`比最佳少 ${d} 分`:"引擎沒評到"}（+${pts.toFixed(1)}）`;
+    st.textContent=f<0?`大師走：${cnGM}`:hit?`✔ 猜中！大師也走 ${cnGM}（+10）`:`大師走的是 ${cnGM}；你那步${mine&&mine.q?"是「"+mine.q+"」":""}，${d!=null?`比最佳少 ${d} 分`:"引擎沒評到，品質待評"}${pts!=null?`（+${pts.toFixed(1)}）`:"（這步不計分）"}`;
     v.querySelector("#note").textContent=his&&his.q?`大師這步 Pikafish 評為「${his.q}」${his.bc&&his.q!=="正著"&&his.q!=="妙著"?`，它覺得更好的是 ${his.bc}`:""}`:"";
     let went=false;head();actionBar(v.querySelector("#acts"),[["next","›","繼續",async()=>{if(went)return;went=true;board=nb;ply++;
       if(ply<mv.length){await new Promise(r=>setTimeout(r,250));board=applyMv(board,mv[ply]);draw({last:{f:mv[ply].f,t:mv[ply].t}});ply++}
       v.querySelector("#note").textContent="";turn()},true]])}
-  function finish(){v.className="view";const n=res.filter(x=>!x.skip).length,m=res.filter(x=>x.hit).length,pts=Math.round(res.reduce((a,x)=>a+x.pts,0)),D=res.filter(x=>x.d!=null).map(x=>x.d);
+  function finish(){v.className="view";const n=res.filter(x=>!x.skip).length,m=res.filter(x=>x.hit).length,pts=Math.round(res.reduce((a,x)=>a+(x.pts||0),0)),D=res.filter(x=>x.d!=null).map(x=>x.d),
+      pend=res.filter(x=>x.pts==null).length,vw=res.length-n;   /* 數值盤查 11/11：品質待評的步不算進滿分；猜中數的分母用實猜步數 n（不含看答案 vw） */
     const acpl=D.length?D.reduce((a,b)=>a+b,0)/D.length:null;   /* 意見回饋（開發者 11/6 分數審查）：著法品質不再換算成等級分 */
     const title=toT(`${it.red||""} 對 ${it.black||""}`)+(it.year?"（"+it.year+"）":"");
     saveG(true);
     /* 意見回饋 737：每一步猜的結果匿名送去校正棋譜庫的難度（題號＝棋譜 id@第幾步；自己走，不是選擇題）；看大師怎麼走的那步不送 */
     if(typeof readShare==="function"&&it&&it.id&&!res.shared){res.shared=1;readShare(res.filter(x=>!x.skip&&x.p!=null).map(x=>[it.id+"@"+x.p,x.hit?1:0,0,0]))}
     v.innerHTML=`<div class="pad"><div class="card" style="text-align:center"><div style="font-size:44px">🎓</div><div class="muted">${esc(title)}</div>
-      <div style="font-size:40px;font-weight:900;font-family:var(--serif)">${pts}<span style="font-size:16px"> / ${res.length*10} 分</span></div>
-      <p>猜中大師 <b>${m}</b> / ${res.length} 步${acpl!=null?`・平均每步比大師少 ${Math.round(acpl)} 分（${D.length} 步有評到）`:""}</p>
+      <div style="font-size:40px;font-weight:900;font-family:var(--serif)">${pts}<span style="font-size:16px"> / ${(res.length-pend)*10} 分</span></div>
+      <p>猜中大師 <b>${m}</b> / ${n} 步${vw?`・看答案 ${vw} 步`:""}${acpl!=null?`・平均每步比大師少 ${Math.round(acpl)} 分（${D.length} 步有評到）`:""}${pend?`・${pend} 步引擎沒評到，品質待評、不計分`:""}</p>
       <p class="muted" style="font-size:12.5px;text-align:left;line-height:1.7">每一步的損失 δ 會進到天賦系統的 Regan 著法品質模型：δ 越小、越常跟大師想的一樣，「著法品質」和「局面判斷」就越高。</p>
       <button class="btn" id="again">再猜一盤</button><button class="btn ghost" id="st">看我的成長</button><button class="btn ghost" id="gsBk">↩ 回書院</button></div></div>`;
     (v.querySelector("#again")||{}).onclick=start;(v.querySelector("#st")||{}).onclick=()=>{store.set("statsTab","talent");location.hash="#/stats"};(v.querySelector("#gsBk")||{}).onclick=()=>goUp("#/hub/learn")}
@@ -3603,7 +3607,10 @@ function playerGames(oid,name){sheet(`📜 ${name||"棋友"} 的線上棋譜`,as
   const kind=x=>/超時|時間用完|沒走/.test(x.why)?"t":/離開|離線/.test(x.why)?"x":/認輸/.test(x.why)?"r":"m";
   const lk={t:0,x:0,r:0,m:0};Ls.forEach(x=>lk[kind(x)]++);
   const tips=[];
-  if(R.length>=3&&B.length>=3&&Math.abs(wr(R)-wr(B))>=25)tips.push(`執${wr(R)<wr(B)?"紅":"黑"}比較弱：勝率 ${Math.min(wr(R),wr(B))}%，執${wr(R)<wr(B)?"黑":"紅"}有 ${Math.max(wr(R),wr(B))}%。`);
+  /* ChatGPT 數值盤查 11/11（一側沒有對局卻顯示 0%）：紅黑分開寫「勝／總盤數」，沒下過的那一邊寫「尚無對局」，不寫 0%；
+     「執某色比較弱」要兩邊各 ≥ 5 盤、勝率差 ≥ 25 個百分點、勝場換算差 ≥ 2 場才說（3 紅對 3 黑差 33 個百分點其實只差一場），而且附上盤數 */
+  const wn=a=>cnt(a,x=>x.res==="w"),sideTx=(l,a)=>a.length?`執${l} ${wn(a)} 勝／${a.length} 盤`:`執${l}尚無對局`,gapG=Math.abs(wn(R)/Math.max(1,R.length)-wn(B)/Math.max(1,B.length))*Math.min(R.length,B.length);
+  if(R.length>=5&&B.length>=5&&Math.abs(wr(R)-wr(B))>=25&&gapG>=2)tips.push(`執${wr(R)<wr(B)?"紅":"黑"}的成績差一些：${sideTx("紅",R)}、${sideTx("黑",B)}（盤數還不多，參考就好）。`);
   if(lk.t>=2||(Ls.length>=3&&lk.t/Ls.length>=.3))tips.push(`常超時：輸的 ${Ls.length} 盤裡有 ${lk.t} 盤是時間到。跟他下可以穩穩地下，把時間拖長。`);
   if(lk.r>=2&&lk.r/Math.max(1,Ls.length)>=.4)tips.push(`遇到劣勢容易提早認輸（${lk.r} 盤）：先取得一點優勢，他可能就放棄了。`);
   if(lk.x>=2)tips.push(`常中途離開（${lk.x} 盤）。`);
@@ -3616,7 +3623,7 @@ function playerGames(oid,name){sheet(`📜 ${name||"棋友"} 的線上棋譜`,as
   if(!tips.length)tips.push(N<5?"對局還不多，看不出明顯的弱點。":pc(W,N)>=65?`最近 ${N} 盤贏了 ${W} 盤，整體很強；輸的棋沒有固定的輸法，要靠實力硬拚。`:pc(W,N)<=35?`最近 ${N} 盤只贏 ${W} 盤，整體還在進步中；輸的棋沒有集中在同一種輸法。`:`勝負差不多（${W} 勝 ${Ls.length} 負），輸的棋沒有集中在同一種輸法。`);
   const rl=x=>x.res==="w"?"勝":x.res==="l"?"負":"和";
   b.innerHTML=`<div class="card"><div style="display:grid;grid-template-columns:repeat(4,1fr);text-align:center">${[["勝",W,"var(--accent2)"],["負",Ls.length,"var(--red)"],["和",D,"var(--muted)"],["勝率",pc(W,N)+"%",""]].map(([l,x,c])=>`<div><div style="font-size:20px;font-weight:900;color:${c}">${x}</div><div class="muted">${l}</div></div>`).join("")}</div>
-      <div class="muted" style="font-size:12.5px;margin-top:6px;text-align:center">最近 ${N} 盤${R.length||B.length?`・執紅 ${R.length} 盤勝率 ${wr(R)}%・執黑 ${B.length} 盤勝率 ${wr(B)}%`:""}</div></div>
+      <div class="muted" style="font-size:12.5px;margin-top:6px;text-align:center">最近 ${N} 盤${R.length||B.length?`・${sideTx("紅",R)}・${sideTx("黑",B)}`:""}</div></div>
     ${pfCard}
     ${pub.length?"":`<p class="muted" style="font-size:12.5px;margin:8px 2px 0">他還沒公開自己的對局（等他下完下一盤就會有），下面先用你跟他下過的 ${N} 盤來分析。</p>`}
     <div class="card" style="margin-top:8px"><b>🔎 弱點分析</b>${tips.map(t=>`<p style="margin:6px 0 0;line-height:1.6">・${esc(t)}</p>`).join("")}<p id="pgop" class="muted" style="margin:6px 0 0;font-size:13px">讀取開局習慣中…</p></div>
@@ -3870,12 +3877,17 @@ function tlAcpl(L){if(L.length<30)return null;const D=L.map(x=>Math.max(0,Math.m
 /* 數學修正 11/11（審查 9-A～9-C）：BKT 拿掉——同一盤殘局連續的步不是獨立的「練習機會」、四參數可辨識性差（Beck & Chang 2007），而且原本把資料接自己一次湊 15 筆。
    改成 Beta-二項式收縮（Gelman et al., Bayesian Data Analysis 2.4 節）：p̂＝(k＋α)／(n＋α＋β)，α＝β＝2；80% 區間用常態近似；排序用 80% 上界（越不確定越值得先練，UCB／Thompson 的想法） */
 function tlBeta(k,n){const a=2,b=2,N=n+a+b,m=(k+a)/N,v=m*(1-m)/(N+1),s=Math.sqrt(v);return{now:m,lo:Math.max(0,m-1.28*s),hi:Math.min(1,m+1.28*s),n}}
+/* ChatGPT 數值盤查 11/11（猜大師著法的分母）：一局猜著法真的「猜」了幾步（不含「看大師怎麼走」）。新存檔有 tr（03-home-quiz.js 拆存的嘗試數）；
+   舊存檔從 h 回算（每步一個字：1 猜中、0 沒中、- 看答案）；更舊、沒有 h 的只能用 n。天賦的練習量、週報都用它 */
+function gsTried(q){if(!q)return 0;if(q.tr!=null&&isFinite(+q.tr))return+q.tr;if(typeof q.h==="string")return q.h.replace(/-/g,"").length;return q.n!=null?+q.n||0:15}
 /* 動態層 2：階層貝氏成長模型（群體先驗收縮），網格後驗 */
 function tlGrowth(Y,P){const N=Y.length;if(N<3)return null;const S0s=[],As=[],Rs=[];for(let v=30;v<=85.01;v+=2.5)S0s.push(v);for(let v=50;v<=99.01;v+=2)As.push(v);for(let i=0;i<30;i++)Rs.push(.004*Math.pow(250,i/29));
   const lp=(S0,A,r,sg)=>{if(A<S0)return-Infinity;let ll=0;for(let j=0;j<N;j++){const m=A-(A-S0)*Math.exp(-r*P[j]),e=Y[j]-m;ll-=e*e/(2*sg*sg)}
     return ll-N*Math.log(sg)-((S0-TL.S0[0])**2)/(2*TL.S0[1]**2)-((A-TL.A[0])**2)/(2*TL.A[1]**2)-((Math.log(r)-TL.lr[0])**2)/(2*TL.lr[1]**2)};
+  /* ChatGPT 數值盤查 11/11（成長模型的雜訊版本）：第二輪用 sg₁ 算出網格權重後，原本又把 sg 更新成 sg₂ 才回傳——權重是 sg₁ 的、下游（「發揮穩不穩」、Kalman 的觀測雜訊）拿到的卻是 sg₂。
+     改成最後一輪算完網格就停，回傳的 sg 就是產生這組權重的那個 */
   let sg=10,G=[];for(let pass=0;pass<2;pass++){G=[];let best=null;for(const S0 of S0s)for(const A of As)for(const r of Rs){const v=lp(S0,A,r,sg);if(v>-Infinity){G.push([S0,A,r,v]);if(!best||v>best[3])best=[S0,A,r,v]}}
-    let ss=0;for(let j=0;j<N;j++){const e=Y[j]-(best[1]-(best[1]-best[0])*Math.exp(-best[2]*P[j]));ss+=e*e}sg=Math.max(4,Math.sqrt(ss/Math.max(1,N-1)))}
+    if(pass===1)break;let ss=0;for(let j=0;j<N;j++){const e=Y[j]-(best[1]-(best[1]-best[0])*Math.exp(-best[2]*P[j]));ss+=e*e}sg=Math.max(4,Math.sqrt(ss/Math.max(1,N-1)))}
   const mx=Math.max(...G.map(g=>g[3]));const W=G.map(g=>Math.exp(g[3]-mx));const T=W.reduce((a,b)=>a+b,0);
   const post=k=>({m:G.reduce((a,g,i)=>a+g[k]*W[i],0)/T,lo:wq(G.map(g=>g[k]),W,.1),hi:wq(G.map(g=>g[k]),W,.9)});
   const rr=post(2),lrMed=Math.log(wq(G.map(g=>g[2]),W,.5)),p75=Math.exp(TL.lr[0]+.674*TL.lr[1]),p95=Math.exp(TL.lr[0]+1.645*TL.lr[1]);
@@ -3885,14 +3897,23 @@ function tlGrowth(Y,P){const N=Y.length;if(N<3)return null;const S0s=[],As=[],Rs
   return{G,W,T,sg,S0:post(0),A:post(1),r:rr,lrSd,rInf:lrSd<.6*TL.lr[1],slope,rPct:Math.round(PHI((lrMed-TL.lr[0])/TL.lr[1])*100),top25:pr(p75),top5:pr(p95),N}}
 /* 預測曲線與里程碑（含「到不了」的機率） */
 function tlCurve(M,p){const xs=M.G.map(g=>g[1]-(g[1]-g[0])*Math.exp(-g[2]*p));return{m:xs.reduce((a,x,i)=>a+x*M.W[i],0)/M.T,lo:wq(xs,M.W,.1),hi:wq(xs,M.W,.9)}}
-function tlMilestone(M,goal,Pnow){let never=0;const need=[],w=[];M.G.forEach((g,i)=>{const[S0,A,r]=g;if(A<=goal){never+=M.W[i];return}const P=-Math.log((A-goal)/(A-S0))/r;need.push(Math.max(0,P-Pnow));w.push(M.W[i])});
-  return{goal,pNever:never/M.T,med:need.length?wq(need,w,.5):null,lo:need.length?wq(need,w,.1):null,hi:need.length?wq(need,w,.9):null}}
-/* Kalman：每盤更新一次目前能力（狀態方程照成長模型、觀測雜訊＝σ²） */
-function tlKalman(Y,P,M){let th=M.S0.m,v=144;for(let j=0;j<Y.length;j++){const dP=j?P[j]-P[j-1]:P[0];th+=M.r.m*(M.A.m-th)*dP;v+=4*dP+1;const K=v/(v+M.sg*M.sg);th+=K*(Y[j]-th);v*=1-K}return{th,sd:Math.sqrt(v)}}
+/* ChatGPT 數值盤查 11/11（目標已達卻算永遠達不到）：每一組 (S₀,A,r) 先看「現在」的曲線值 A−(A−S₀)·e^(−r·Pnow)：已經 ≥ 目標＝還要 0；
+   沒到、而且上限 A ≤ 目標（含 A＝S₀ 的平線）＝到不了；其餘才解 A−(A−S₀)·e^(−r·P)＝目標。以前先看 A ≤ 目標，S₀＝A＝80、目標 80 會被算成「永遠到不了」。
+   med／lo／hi 是「到得了的那些情況」裡還要練多少的分位數（cond＝1 標明是條件分位數），到不了的機率另外看 pNever */
+function tlMilestone(M,goal,Pnow){let never=0;const need=[],w=[];M.G.forEach((g,i)=>{const[S0,A,r]=g,now=A-(A-S0)*Math.exp(-r*Pnow);if(now>=goal){need.push(0);w.push(M.W[i]);return}
+    if(A<=goal){never+=M.W[i];return}const P=-Math.log((A-goal)/(A-S0))/r;need.push(Math.max(0,P-Pnow));w.push(M.W[i])});
+  return{goal,pNever:never/M.T,cond:1,med:need.length?wq(need,w,.5):null,lo:need.length?wq(need,w,.1):null,hi:need.length?wq(need,w,.9):null}}
+/* Kalman：每盤更新一次目前能力（狀態方程照成長模型、觀測雜訊＝σ²）
+   ChatGPT 數值盤查 11/11 P1「準確度超過 100」：原本用線性近似 th＋＝r·(A−th)·ΔP，練習量跨很大（r·ΔP＞1）時會衝過上限 A、甚至超過 100
+   （起點 55、上限 82、速率 0.3、跨 50、觀測 80、σ 10 → 165.39）。改成成長曲線同一條指數的精確離散化：
+     預測 th＝A＋(th−A)·F，F＝e^(−r·ΔP)（0＜F≤1，預測值一定落在 th 和 A 之間）；
+     變異數 v＝F²·v＋Q·ΔP（轉移係數 F 平方乘上原變異數，加過程雜訊；Q＝5／單位練習量，ΔP＝1 時正好等於原本的 4·1＋1，ΔP＝0（同一時刻重複觀測）不加雜訊）。
+   更新照舊 K＝v／(v＋σ²)、th＋＝K·(Y−th)——是預測和觀測的加權平均，所以觀測在 0～100、A 在 0～100 時點估計一定在 0～100；同一個例子現在是 80.57 */
+function tlKalman(Y,P,M){let th=M.S0.m,v=144;for(let j=0;j<Y.length;j++){const dP=Math.max(0,j?P[j]-P[j-1]:P[0]),F=Math.exp(-M.r.m*dP);th=M.A.m+(th-M.A.m)*F;v=F*F*v+5*dP;const K=v/(v+M.sg*M.sg);th+=K*(Y[j]-th);v*=1-K}return{th,sd:Math.sqrt(v)}}
 /* 用手機裡存過的評等補上還沒評的步，回傳我這邊還缺幾步 */
 async function fillGrades(b0,mv,side){const C=window.XQCore;if(!C)return 0;let b=b0.slice();const keys=[],idx=[];
   for(let i=0;i<mv.length;i++){const m=mv[i];if(!(m.q&&m.q!=="—")){try{keys.push(C.fen(b,m.by)+"|"+C.iccs(m.f,m.t));idx.push(i)}catch(e){}}try{b=C.make(b,m.f,m.t)}catch(e){break}}
-  if(keys.length){let r={};try{r=(await api("/an/lookup",{grade:keys})).grade||{}}catch(e){}keys.forEach((k,j)=>{const g=r[k];if(g&&g.q)Object.assign(mv[idx[j]],g)})}
+  if(keys.length){let r={};try{r=(await api("/an/lookup",{grade:keys})).grade||{}}catch(e){}keys.forEach((k,j)=>{const g=r[k],m=mv[idx[j]];if(g&&g.q&&!(g.loss===0&&g.bm&&g.bm!==C.iccs(m.f,m.t)&&g.bmt===undefined))Object.assign(m,g)})}   /* ChatGPT 數值盤查 11/11 P1：舊 g: 快取裡「不是最佳著、loss＝0、沒有 bmt」的可能是缺 PV 的舊回退值，不拿來補，留給背景補評（/an/classify 會重評） */
   return mv.filter(m=>m.by===side&&!(m.q&&m.q!=="—")).length}
 /* 開發者 11/11 錄影「頁面一直跳動」：有些步評等算不出結果（記成「—」，例如已經將死的局面），原本仍算「沒評過」，評完重畫→又看到沒評→再評，無限循環，
    每次重畫都把整頁（含「詳細數字」）重來一次。改成：這次開 App 期間試過的步不再重試；沒有新的評等結果就不重畫；沒有要評的就不顯示進度列 */
@@ -3988,12 +4009,14 @@ async function readMap(el,G){if(!el)return;const T=readTheta(G);
   const now=[P0(C.gmPct(T.th)),P0(C.cjPct(T.th)),P0(C.brPct(T.th))],mk=(d=>d.getFullYear()+"-"+String(d.getMonth()+1).padStart(2,"0"))(new Date());
   if(!wide)try{const L=rdLog();if(String(L.m[mk])!==String(now)){L.m[mk]=now;const ks=Object.keys(L.m).sort();while(ks.length>24)delete L.m[ks.shift()];store.set("rdLog",L)}}catch(e){}
   const MH=Object.entries(rdLog().m).sort((a,b)=>a[0]<b[0]?-1:1),prev=MH.filter(([k])=>k<mk).pop(),dGm=prev?now[0]-prev[1][0]:null;
+  /* ChatGPT 數值盤查 11/11（同週報）：比較的那筆不一定是上個月（中間沒打開過就會跳過幾個月），寫實際年月；百分比相減寫「個百分點」 */
+  const pvLb=!prev?"":(()=>{const y=+mk.slice(0,4),m=+mk.slice(5,7),pk=m>1?y+"-"+String(m-1).padStart(2,"0"):(y-1)+"-12",py=+prev[0].slice(0,4),pm=+prev[0].slice(5,7);return prev[0]===pk?"上個月":py===y?" "+pm+" 月":" "+py+" 年 "+pm+" 月"})();
   const spark=MH.length>=2?(()=>{const W=120,H=28,xs=i=>4+(W-8)*i/(MH.length-1),ys=v=>H-4-(H-8)*v/100;return`<svg viewBox="0 0 ${W} ${H}" style="width:${W}px;height:${H}px;vertical-align:middle"><polyline points="${MH.map(([,v],i)=>xs(i).toFixed(1)+","+ys(v[0]).toFixed(1)).join(" ")}" fill="none" stroke="var(--accent)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>${MH.map(([,v],i)=>`<circle cx="${xs(i).toFixed(1)}" cy="${ys(v[0]).toFixed(1)}" r="2.4" fill="var(--accent)"/>`).join("")}</svg>`})():"";
   const nOpen=C.M.opened("gmgames");
   /* 推薦：還沒讀懂、看懂機率 0.55～0.75 的盤（剛好讀得懂），打開就停在最難那一手的前面 */
   const cand=I.gm.games.filter(g=>g[2]>=0&&!C.M.gm.has(g[0])).map(g=>[g,rdP(T.th,C.gmB(g),I)]).filter(([,p])=>p>=.55&&p<=.75);
   el.innerHTML=`<div class="sec-t">📚 棋譜庫讀懂地圖</div><div class="card" style="line-height:1.6">
-      ${prev?`<div class="row" style="justify-content:space-between;align-items:center;gap:6px;margin-bottom:4px"><small class="muted" style="white-space:nowrap">📈 每月變化</small><span style="white-space:nowrap">${spark}<b style="font-size:13.5px;margin-left:6px;color:${dGm>0?"var(--accent)":"var(--muted)"}">${dGm>0?"比上個月 +"+dGm+"%":dGm<0?"比上個月 "+dGm+"%":"跟上個月一樣"}</b></span></div>`:""}
+      ${prev?`<div class="row" style="justify-content:space-between;align-items:center;gap:6px;margin-bottom:4px"><small class="muted" style="white-space:nowrap">📈 每月變化</small><span style="white-space:nowrap">${spark}<b style="font-size:13.5px;margin-left:6px;color:${dGm>0?"var(--accent)":"var(--muted)"}">${dGm>0?"比"+pvLb+"多 "+dGm+" 個百分點":dGm<0?"比"+pvLb+"少 "+(-dGm)+" 個百分點":"跟"+pvLb+"一樣"}</b></span></div>`:""}
       <div class="muted" style="font-size:12.5px">「讀懂」＝看得懂那盤棋最關鍵的一手在做什麼。${wide?"<b>資料還少，先參考（虛線＝還在觀察）</b>":""}</div>
       ${row("🏆","特級大師對局",I.gm.N,"盤",C.gmPct,C.M.gm.size,"看得懂主要手段",nOpen?`打開讀過 ${nOpen.toLocaleString()} 盤`:"")}
       ${ph?`<div style="margin:2px 0 6px"><small class="muted">關鍵那一手自己想得到：</small> ${ph}</div>`:""}
@@ -4021,19 +4044,23 @@ async function talentReport(box){
   if(!box.isConnected)return;
   const QL=store.get("quizLog",[]),GL0=store.get("guessLog",[]);
   /* 累積練習量 P：每盤對局 1、做完一次測驗 0.5、猜完一盤 0.5；沒做完的照做了幾題按比例算（意見回饋 309，測驗 8 題、猜著法 15 步算一整次） */
-  const ev=GA.map(g=>({t:g.t,k:"g",g})).concat(QL.map(q=>({t:q.at,k:"q",w:.5*Math.min(1,(q.a||[]).length/8)})),GL0.map(q=>({t:q.at,k:"q",w:.5*Math.min(1,(q.n||15)/15)}))).sort((a,b)=>a.t-b.t);let P=0;const Y=[],PP=[];
+  /* ChatGPT 數值盤查 11/11（猜大師著法的分母）：猜著法的練習量改用實猜步數 gsTried（不含「看大師怎麼走」）——以前用存檔的 n（含看答案），連看 15 手也算半盤練習 */
+  const ev=GA.map(g=>({t:g.t,k:"g",g})).concat(QL.map(q=>({t:q.at,k:"q",w:.5*Math.min(1,(q.a||[]).length/8)})),GL0.map(q=>({t:q.at,k:"q",w:.5*Math.min(1,gsTried(q)/15)}))).sort((a,b)=>a.t-b.t);let P=0;const Y=[],PP=[];
   const LV=[];for(const e of ev){if(e.k==="g"){if(!e.g.hu){Y.push(rowAcc(e.g));PP.push(P);LV.push(e.g.lv!=null?+e.g.lv:null)}P+=1}else P+=e.w}
   /* 數學修正 11/11（審查 10-C）：對手強度共變量 Y'＝Y−β·(級數−自己的平均級數)，β 由後台用大家的資料估（calib.tal.beta，每升一級準確度平均掉幾分）；沒有校正檔就 β＝0（不調） */
   const beta=CT&&isFinite(+CT.beta)?+CT.beta:0,lvs=LV.filter(x=>x!=null),lvM=lvs.length?lvs.reduce((a,b)=>a+b,0)/lvs.length:null,Yf=Y.map((y,j)=>beta&&LV[j]!=null&&lvM!=null?y-beta*(LV[j]-lvM):y);
   /* 殘局技巧：實戰殘局的每一步＋測驗殘局題，依技巧分組（原本做 BKT，數學修正 11/11 改 Beta-二項式 tlBeta） */
-  const TQ={};for(const g of G)if(g.ek&&g.ph&&g.ph.end)(TQ[g.ek]=TQ[g.ek]||[]).push(...g.ph.end.split("").map(Number));
-  for(const s0 of QL)for(const x of s0.a)if(x[6])(TQ[x[6]]=TQ[x[6]]||[]).push(x[1]);
+  /* ChatGPT 數值盤查 11/11（練習序列）：實戰和測驗原本分兩批接（先全部實戰、再全部測驗），「最近」那 60 筆會偏向測驗；改成每筆帶時間、照時間排好再接。每筆觀測只放一次（不複製） */
+  const TQ0={};for(const g of G)if(g.ek&&g.ph&&g.ph.end)for(const x of g.ph.end.split(""))(TQ0[g.ek]=TQ0[g.ek]||[]).push([g.t||0,Number(x)]);
+  for(const s0 of QL)for(const x of s0.a)if(x[6])(TQ0[x[6]]=TQ0[x[6]]||[]).push([s0.at||0,x[1]]);
+  const TQ={};for(const[k,a]of Object.entries(TQ0))TQ[k]=a.map((x,i)=>[x[0],i,x[1]]).sort((p,q)=>p[0]-q[0]||p[1]-q[1]).map(x=>x[2]);
   /* 意見回饋 415：殘局功夫的分數也用「我的棋力」那把尺（每步準確度平均），並標出實戰步數 */
   const accOf=rows=>{let s=0,n=0;for(const x of rows){s+=x[0];n+=x[1]}return n?{v:Math.round(s/n),n}:null};
   const EKL={};for(const g of G)if(g.ek&&g.pa&&g.pa.end&&g.pa.end[1])(EKL[g.ek]=EKL[g.ek]||[]).push(g.pa.end);
   /* 數學修正 11/11（審查 9）：BKT 換成 Beta-二項式收縮（tlBeta），不再把資料接自己一次；排序用 80% 上界（越不確定、越弱的越前面）。
      開發者 11/11 照三方審查「不改玩家看到的分數」：畫面照舊顯示「最近走出好棋 X%」（b.recent，跟原本同一個數字），只有六類的排序改用 Beta 上界 */
-  const TK=Object.entries(TQ).map(([k,seq])=>{if(seq.length<8)return null;const kk=seq.reduce((a,b)=>a+b,0),b=tlBeta(kk,seq.length),rc=seq.slice(-60);b.recent=rc.reduce((a,x)=>a+x,0)/rc.length;return{k,b,n:seq.length}}).filter(Boolean).sort((a,b)=>a.b.hi-b.b.hi);
+  /* ChatGPT 數值盤查 11/11（8 筆練習被當 16 筆）：8～14 筆不擬合也不複製，畫面直接寫「好棋（答對）k／n」（kk、n 是真的觀測數）；滿 15 筆才寫比例。tlBeta 每筆觀測只算一次 */
+  const TK=Object.entries(TQ).map(([k,seq])=>{if(seq.length<8)return null;const kk=seq.reduce((a,b)=>a+(+b||0),0),b=tlBeta(kk,seq.length),rc=seq.slice(-60);b.recent=rc.reduce((a,x)=>a+(+x||0),0)/rc.length;return{k,b,kk,n:seq.length}}).filter(Boolean).sort((a,b)=>a.b.hi-b.b.hi);
   /* 意見回饋（開發者 11/6 分數審查）：畫面上只留一種「等級分」（電腦／線上分頁的段位積分）。Glicko 那個 700～2800 的數字不再顯示（tlGlicko 留著沒用），
      著法品質也不再換算成等級分，只顯示「平均每步少 X 分」。猜著法引擎失敗那步現在存 d=null（03-home-quiz.js），不會混進 acpl */
   const M=tlGrowth(Yf,PP),IR=tlIRT(QL),RG=tlAcpl(G.flatMap(g=>g.L||[]).concat(GL0.flatMap(x=>(x.d||[]).filter(d=>d!=null))));   /* 數學修正 11/11：tlRegan → tlAcpl（只算平均、中位數） */
@@ -4093,7 +4120,7 @@ async function talentReport(box){
       <button class="btn ghost" id="tgo" style="width:100%">想知道先練什麼？看「我的棋力」 ›</button>
       <div class="muted" style="font-size:12px;margin-top:8px;text-align:center">根據 ${G.length} 盤對局・${QL.length} 次測驗・${GL0.length} 局猜著法${nHU?`・用過提示或悔棋的 ${nHU} 盤不算分數`:""}${M&&M.N<20?"・下得還不多，下越多越準":""}</div></div>
     <div id="rdMap"></div>
-    ${chart?`<div class="sec-t">成長軌跡與預測</div><div class="card">${chart}<div class="muted" style="font-size:12px;margin-top:2px">● 灰點＝每一盤　━ 線＝照你的進步速度預測　▒ 淺色＝大概範圍</div>${ms?`<p style="margin:8px 0 0;font-size:14px;line-height:1.6">${ms.med==null||ms.pNever>=.5?(M.A.hi-M.A.lo>18?`📌 「能長到多高」現在還看不準（大概 ${f0(M.A.lo)}～${f0(M.A.hi)} 分），再多下幾盤才知道；回「我的棋力」照建議先練最弱的那一項。`:M.A.m>=ms.cur+1?`📌 照目前的練法，每步準確度大概會停在 <b>${f0(M.A.m)}</b> 分上下；回「我的棋力」照建議先練最弱的那一項，天花板才會往上。`:`📌 目前已接近模型估的上限，再多下幾盤才看得出能不能再上去；回「我的棋力」照建議先練最弱的那一項。`):`📌 再練約 <b>${f0(ms.med)}</b> 盤，每步準確度可以到 <b>${ms.goal}</b> 分。`}</p>`:""}</div>`:""}
+    ${chart?`<div class="sec-t">成長軌跡與預測</div><div class="card">${chart}<div class="muted" style="font-size:12px;margin-top:2px">● 灰點＝每一盤　━ 線＝照你的進步速度預測　▒ 淺色＝大概範圍</div>${ms?`<p style="margin:8px 0 0;font-size:14px;line-height:1.6">${ms.med==null||ms.pNever>=.5?(M.A.hi-M.A.lo>18?`📌 「能長到多高」現在還看不準（大概 ${f0(M.A.lo)}～${f0(M.A.hi)} 分），再多下幾盤才知道；回「我的棋力」照建議先練最弱的那一項。`:M.A.m>=ms.cur+1?`📌 照目前的練法，每步準確度大概會停在 <b>${f0(M.A.m)}</b> 分上下；回「我的棋力」照建議先練最弱的那一項，天花板才會往上。`:`📌 目前已接近模型估的上限，再多下幾盤才看得出能不能再上去；回「我的棋力」照建議先練最弱的那一項。`):ms.med<.5?`📌 照成長曲線估，你的每步準確度已經到 <b>${ms.goal}</b> 分左右了；回「我的棋力」照建議先練最弱的那一項，再往上拉。`:`📌 再練約 <b>${f0(ms.med)}</b> 盤，每步準確度可以到 <b>${ms.goal}</b> 分${ms.pNever>=.1?`（這是「到得了」的情況下估的；也有約 ${pc(ms.pNever)} 的可能會停在 ${ms.goal} 分以下）`:""}。`}</p>`:""}</div>`:""}${/* 數值盤查 11/11：已達目標說「已經到了」；剩餘盤數是到得了的情況下的中位數，到不了的機率 ≥ 10% 時寫出來 */""}
     ${redoPowerHTML()}
     <div class="tdet"><button type="button" class="tdet-h" aria-expanded="false">📊 詳細數字<br><small class="muted" style="font-weight:400;font-size:12px">進步速度、每步準確度、題目功力、棋路底子、殘局功夫</small></button><div class="tdet-b">
     <div class="sec-t" style="margin-top:4px">進步速度</div><div class="card" style="line-height:1.6">${/* 意見回饋 354、357：表格；進步速度和進步很快合併成一列 */""}<div class="muted" style="font-size:13px;margin-bottom:6px">同樣多的練習，你的每步準確度漲得多快。${pctOK?"排名是「勝過多少用這個 App 的棋友」，不是分數。":"棋友資料還不夠多（或你的盤數還少），先只講每 10 盤大約進步幾分，不排名。"}</div>
@@ -4104,13 +4131,13 @@ async function talentReport(box){
       ${M.N<20?`<div class="muted" style="font-size:12.5px;margin-top:4px">下得還不多，先參考${calOK?"":"（假設的）"}一般棋友的樣子，下越多越準</div>`:""}`:`<div style="margin:8px 0">再下 3 盤評過等的對局就能估</div>`}</div>
     ${KF||RG?`<div class="sec-t">每步準確度</div><div class="card" style="line-height:1.6">${/* 意見回饋 353：改成表格＋一句說明 */""}<div class="muted" style="font-size:13px;margin-bottom:6px">每盤每一步的準確度平均（跟「我的棋力」五邊形同一把尺，100＝步步都是電腦首選）一路追下來，越高越好。</div>
       <table class="ttab"><tr><th>項目</th><th>數值</th><th>說明</th></tr>
-      ${KF?`<tr><td>每步準確度</td><td><span class="big">${f0(KF.th)}</span> 分</td><td>大概在 ${f0(KF.th-1.28*KF.sd)}～${f0(KF.th+1.28*KF.sd)} 分之間</td></tr>
+      ${KF?`<tr><td>每步準確度</td><td><span class="big">${f0(KF.th)}</span> 分</td><td>大概在 ${f0(Math.max(0,KF.th-1.28*KF.sd))}～${f0(Math.min(100,KF.th+1.28*KF.sd))} 分之間${/* 數值盤查 11/11 P1：區間夾在準確度的尺度 0～100 裡 */""}</td></tr>
       <tr><td>${calOK?"一般棋友":"一般棋友（暫用假設）"}</td><td>${f0(popNow)} 分</td><td>${calOK?`下了一樣多盤的棋友（${MXC.talN} 人的資料）・你${KF.th>=popNow?"多":"少"} <b>${f0(Math.abs(KF.th-popNow))}</b>`:"還沒有夠多棋友的資料，這是作者先假設的樣子，等資料夠了會換成真的"}</td></tr>`:""}
       ${SR?`<tr><td>同段位</td><td>${SR.now} 分</td><td>${esc(NR)}・${SR.n} 人・進步速度中間值 ${(SR.r*100).toFixed(1)}%</td></tr>`:""}
       ${RG?`<tr><td>平均每步少</td><td>${Math.round(RG.acpl)} 分</td><td>每一步比電腦最好的著法平均少幾分（棋力單位，越小越好；中位數 ${Math.round(RG.med)}；看了 ${RG.n} 步，含猜著法）</td></tr>`:""}</table></div>`:""}
     <div class="sec-t">題目功力（棋力測驗）</div><div class="card">${QZT?`<div class="muted" style="font-size:13px;margin-bottom:6px">${MXC.thQ?"分數＝勝過多少用這個 App 的棋友":"棋友資料還不夠多，先用測驗估的段位表示"}，跟實戰的分數不是同一把尺，不要直接比大小。</div><table class="ttab"><tr><th>項目</th><th>分數</th><th>說明</th></tr>${QZT}</table>`:'<div class="muted" style="font-size:13px">做一次<a href="#/quiz">棋力測驗</a>，就會算出殺法、戰術、局面判斷、殘局題的功力。</div>'}</div>
     ${tau?`<div class="sec-t">你的棋路底子</div><div class="card">${tau}</div>`:""}
-    ${TK.length?`<div class="sec-t">殘局功夫</div><div class="card">${TK.slice(0,6).map(t=>{const x=accOf(EKL[t.k]||[]);return bar(x?{k:t.k,v:x.v,low:x.n<SK.MIN,t:`實戰 ${x.n} 步每步準確度平均${x.n<SK.MIN?"（樣本還少）":""}・最近走出好棋 ${pc(t.b.recent)}`}:{k:t.k,v:null,low:true,t:`還沒有實戰的這種殘局，只有測驗題 ${t.n} 題・最近答對 ${pc(t.b.recent)}`})}).join("")}<p class="muted" style="font-size:12.5px;margin:6px 0 0">照進攻方剩下的大子分類（例如「車兵對士象全」）；分數跟「我的棋力」的殘局同一把尺。</p></div>`:""}
+    ${TK.length?`<div class="sec-t">殘局功夫</div><div class="card">${TK.slice(0,6).map(t=>{const x=accOf(EKL[t.k]||[]);return bar(x?{k:t.k,v:x.v,low:x.n<SK.MIN,t:`實戰 ${x.n} 步每步準確度平均${x.n<SK.MIN?"（樣本還少）":""}・${t.n<15?`走出好棋 ${t.kk}／${t.n}`:`最近走出好棋 ${pc(t.b.recent)}`}`}:{k:t.k,v:null,low:true,t:`還沒有實戰的這種殘局，只有測驗題 ${t.n} 題・${t.n<15?`答對 ${t.kk}／${t.n}`:`最近答對 ${pc(t.b.recent)}`}`})}).join("")}<p class="muted" style="font-size:12.5px;margin:6px 0 0">照進攻方剩下的大子分類（例如「車兵對士象全」）；分數跟「我的棋力」的殘局同一把尺。</p></div>`:""}
     </div></div>
     <details class="card" style="margin-top:8px"><summary><b>這些數字怎麼算的？</b></summary><div class="muted" style="font-size:13px;line-height:1.75;margin-top:6px">
       <p><b>這一頁就是「棋藝天賦」：</b>天賦不是現在多強，是同樣的練習量你進步得多快。同樣下 50 盤，有人進步很多、有人進步一點點，差別就在「長棋速度」。所以這裡看的是你的進步曲線，而不是現在的段位。它只用來決定怎麼練，不是給人打分數。</p>
@@ -4218,7 +4245,10 @@ async function wkRead(){try{if(typeof readTheta!=="function"||typeof readCalc!==
   const C=readCalc(I,T.th,G),now=Math.round(C.gmPct(T.th)*100),noise=Math.abs(C.gmPct(T.th+T.se)-C.gmPct(T.th-T.se))*50;if(!isFinite(now))return null;const wide=!(T.se<=.6),today=wkKey(Date.now()),L=store.get("wkRead",null)||{};L.d=L.d||{};
   if(!wide){L.d[today]=now;const ks=Object.keys(L.d).sort();while(ks.length>60)delete L.d[ks.shift()];store.set("wkRead",L)}   /* 資料還少（我的成長畫虛線）的時候不記，跟 rdLog 每月那筆同一個規矩 */
   const lo=wkKey(Date.now()-13*WK_DAY),hi=wkKey(Date.now()-7*WK_DAY),pk=Object.keys(L.d).filter(k=>k>=lo&&k<=hi&&isFinite(L.d[k])).sort().pop();let d=null,vs="";
-  if(pk!=null){d=now-L.d[pk];vs="上週"}else{try{const M=rdLog().m||{},mk=today.slice(0,7),pm=Object.keys(M).filter(k=>k<mk).sort().pop();if(pm&&Array.isArray(M[pm])&&isFinite(M[pm][0])){d=now-M[pm][0];vs="上個月"}}catch(e){}}
+  /* ChatGPT 數值盤查 11/11（週報比較基準）：回退到 rdLog 的月份快照時，取的是「比這個月早的最後一個月」，不一定是上個月（十一月可能只有八月的快照）；
+     vs 改寫實際快照的年月：真的是上個月才叫「上個月」，否則寫「8 月」、跨年寫「2025 年 8 月」 */
+  if(pk!=null){d=now-L.d[pk];vs="上週"}else{try{const M=rdLog().m||{},mk=today.slice(0,7),pm=Object.keys(M).filter(k=>k<mk).sort().pop();if(pm&&Array.isArray(M[pm])&&isFinite(M[pm][0])){d=now-M[pm][0];
+    const y=+mk.slice(0,4),mo=+mk.slice(5,7),prev=mo>1?y+"-"+String(mo-1).padStart(2,"0"):(y-1)+"-12",py=+pm.slice(0,4),pmo=+pm.slice(5,7);vs=pm===prev?"上個月":py===y?" "+pmo+" 月":" "+py+" 年 "+pmo+" 月"}}catch(e){}}
   const sig=d!=null&&Math.abs(d)>=Math.max(1,noise);return{now,wide,d,vs,noise:Math.round(noise*10)/10,sig}}catch(e){return null}}   /* sig＝差距超過正常起伏才算真的有變 */
 async function wkData(o){const{t0,t1,ks}=o&&o.t0?o:wkRange(),inW=t=>t>=t0&&t<=t1,days=new Set(),day=t=>days.add(wkKey(t)),R={t0,t1};
   /* 殘局、殺法 */
@@ -4229,7 +4259,8 @@ async function wkData(o){const{t0,t1,ks}=o&&o.t0?o:wkRange(),inW=t=>t>=t0&&t<=t1
     R.kills=Object.entries(wk).sort((a,b)=>b[1]-a[1]).map(([k,n])=>({k,n,nu:!old.has(k)}));const ever=new Set([...old,...Object.keys(wk)]);R.nextKill=WK_KILL.find(k=>!ever.has(k))||null}catch(e){}
   /* 測驗、猜著法 */
   const QL=(store.get("quizLog",[])||[]).filter(q=>q&&inW(q.at));R.qz=QL.reduce((a,q)=>a+(q.a||[]).length,0);R.qzOk=QL.reduce((a,q)=>a+(q.a||[]).filter(x=>x&&x[1]).length,0);QL.forEach(q=>day(q.at));
-  const GL=(store.get("guessLog",[])||[]).filter(q=>q&&inW(q.at)&&q.n>0);R.gs=GL.length;R.gsN=GL.reduce((a,q)=>a+(q.n||0),0);R.gsHit=GL.reduce((a,q)=>a+(q.m||0),0);GL.forEach(q=>day(q.at));
+  /* ChatGPT 數值盤查 11/11（猜大師著法的分母）：「猜了幾步」改用實猜步數（04-stats.js gsTried：不含看答案；舊存檔從 h 回算），猜中幾步照舊 */
+  const GL=(store.get("guessLog",[])||[]).filter(q=>q&&inW(q.at)&&q.n>0);R.gs=GL.length;R.gsN=GL.reduce((a,q)=>a+(typeof gsTried==="function"?gsTried(q):(q.n||0)),0);R.gsHit=GL.reduce((a,q)=>a+(q.m||0),0);GL.forEach(q=>day(q.at));
   /* 對局（中途取消、斷線中止的不算） */
   R.g={w:0,l:0,d:0,n:0};
   for(const c of["play","pvp"]){let d=null;try{d=await api("/db/items?c="+c+"&limit=300")}catch(e){continue}
@@ -4258,7 +4289,7 @@ function wkSum(R,nk){const nu=R.kills.find(x=>x.nu),learn=nu?nu.k:R.lessons.leng
   if(!did&&!R.lessons.length&&!R.arena.length&&!R.battles.length)return`這週${nk}在休息。每天花 10 分鐘解一題「今日茶單」，就是很好的開始！`;
   const a=[];if(learn)a.push(`這週學會了「${learn}」`);else if(R.cj)a.push(`這週解開了 ${R.cj} 題殘局`);else if(R.g.n)a.push(`這週下了 ${R.g.n} 盤棋`);else a.push("這週有動腦練習");
   if(R.days>=5)a.push("幾乎天天都有練習，很有恆心");else if(R.arena.length)a.push(`還打敗了擂主${R.arena[0].n}`);else if(R.g.w>=3)a.push(`還贏了 ${R.g.w} 盤`);else if(R.cjP>=3)a.push(`其中 ${R.cjP} 題一次就完美解開`);
-  const nx=R.nextKill&&R.nextKill!==learn?`下週可以試試「${R.nextKill}」`:R.read&&R.read.d>0&&R.read.sig?`看得懂的大師棋又多了 ${R.read.d}%，下週繼續保持`:"下週繼續一起下棋吧";
+  const nx=R.nextKill&&R.nextKill!==learn?`下週可以試試「${R.nextKill}」`:R.read&&R.read.d>0&&R.read.sig?`看得懂的大師棋又多了 ${R.read.d} 個百分點，下週繼續保持`:"下週繼續一起下棋吧";
   return a.join("，")+"。"+nx+"！"}
 
 /* ---------- 畫圖卡 ---------- */
@@ -4306,7 +4337,7 @@ function wkRender(c,R,M,H){const W=1080,P=78,ink="#2A1F15",mut="#6F5F4C",red="#9
     if(!k)item("🌱","這週還沒有打敗對手，下次去擂台試試看！")}
   gap();sec("看得懂大師的棋");
   if(R.read){y+=58;c.font=`900 56px ${WK_F}`;c.fillStyle=red;const s1=`約 ${R.read.now}%`;c.fillText(s1,P+6,y);const w1=c.measureText(s1).width;
-    if(R.read.d!=null){c.font=`700 30px ${WK_S}`;c.fillStyle=R.read.d>0&&R.read.sig?"#2E7D32":mut;c.fillText(!R.read.sig?`跟${R.read.vs}差不多`:R.read.d>0?`比${R.read.vs} +${R.read.d}%`:`比${R.read.vs} ${R.read.d}%`,P+30+w1,y-6)}   /* 數學修正 11/11：差距在正常起伏內寫「差不多」 */
+    if(R.read.d!=null){c.font=`700 30px ${WK_S}`;c.fillStyle=R.read.d>0&&R.read.sig?"#2E7D32":mut;c.fillText(!R.read.sig?`跟${R.read.vs}差不多`:R.read.d>0?`比${R.read.vs}多 ${R.read.d} 個百分點`:`比${R.read.vs}少 ${-R.read.d} 個百分點`,P+30+w1,y-6)}   /* 數學修正 11/11：差距在正常起伏內寫「差不多」；ChatGPT 數值盤查 11/11：兩個百分比相減是「百分點」（50%→55% 寫「多 5 個百分點」，不寫 +5%） */
     y+=26;c.fillStyle="#E4D6BF";wkRR(c,P+6,y,TW-12,20,10);c.fill();c.fillStyle=red;wkRR(c,P+6,y,Math.max(20,(TW-12)*Math.min(100,R.read.now)/100),20,10);c.fill();y+=20;
     item("📚",`三萬多盤特級大師對局裡，大約 ${R.read.now}% 看得懂最關鍵的那一手${R.read.wide?"（資料還少，先參考）":""}`)}
   else item("📚","做一次棋力測驗（大約 3 分鐘），就能算出看得懂幾成大師的棋。");
@@ -4926,6 +4957,10 @@ function gameReport(board0,moves){
     const style=!mine.length?"":checks>=mine.length*.15||caps>=mine.length*.35?"🔥 攻殺型":(cnt["失著"]||0)+(cnt["敗著"]||0)===0&&(score||0)>=75?"🛡 穩健型":"⚖ 均衡型";
     out[s]={score,grade:score==null?null:gradeFor(score),base,bonus,cap,phases:ph,cnt,n:mine.length,graded:graded.length,style,talk:talk(s,plies,graded,ph,score)}}
   return{sides:out,plies,endFrom,complete:plies.every(m=>m.q)}}
+/* ChatGPT 數值盤查 11/11 P1：一步的殺棋訊號（走這步的一方視角）。回 {b：最佳著法是不是殺棋, p：實際這步走完是不是殺棋}；
+   新存檔看 bmt／pmt（core.js classifyRaw），今天稍早的存檔看 bv＋ev 原值（≥ MXS.mate＝有殺，跟影子模式、evText 同一個分界）；兩種都沒有的舊存檔回 null，不推定 */
+function talkMate(m){if(!m)return null;if(m.bmt!==undefined)return{b:m.bmt!=null&&m.bmt>0,p:m.pmt!=null&&m.pmt>0};
+  const sg=m.by==="r"?1:m.by==="b"?-1:0;if(sg&&m.bv!=null&&isFinite(+m.bv)&&m.ev!=null&&isFinite(+m.ev))return{b:sg*(+m.bv)>=MXS.mate,p:sg*(+m.ev)>=MXS.mate};return null}
 // 講解：只用 Pikafish 的評估數字整理出來，不是抄別人的講評
 function talk(s,plies,graded,ph,score){if(score==null)return[];const sg=s==="r"?1:-1,T=[];
   T.push({t:"總評",x:gradeFor(score)[3]+"。"});
@@ -4939,8 +4974,11 @@ function talk(s,plies,graded,ph,score){if(score==null)return[];const sg=s==="r"?
     if(now)lead=now}
   // 最大失誤：錯過殺棋、敗著、失著
   const bad=graded.filter(m=>m.q==="失著"||m.q==="敗著").sort((a,b)=>b.loss-a.loss).slice(0,3);
-  for(const m of bad){const after=sg*(m.ev||0),best=after+m.loss,missMate=best>=1900&&after<1900;
-    T.push({t:missMate?"錯過殺棋":m.q,ply:m.ply,bad:1,x:`第 ${rnd(m.ply)} 回合 ${m.cn}：${missMate?"這時已經有殺棋":"比最佳著法少了 "+(m.loss/100).toFixed(1)+" 兵"}`+(m.bc?`，Pikafish 建議 ${m.bc}`:"")+`。走完之後${evt(m.ev)}。`})}
+  /* ChatGPT 數值盤查 11/11 P1 優勢被報為殺棋：以前用「走完後分數＋損失 ≥ 1900」推定原本有殺，最佳普通分 +1950、實走 +1450 也會說「這時已經有殺棋」。
+     改成只看引擎的殺棋訊號 talkMate(m)：新存檔有 bmt／pmt（core.js classifyRaw，走方視角）；今天稍早的存檔有 bv（最佳評估原值，跟影子模式 mxEv 同一個欄位、同一個殺棋分界 MXS.mate）。
+     有訊號：最佳著法是殺棋、實際這步不是 → 「錯過殺棋」。沒有訊號的舊存檔：原本會被推定成殺棋的那種（最佳 ≥ 1900、走完 < 1900）改說「錯失明顯優勢」，不再說有殺 */
+  for(const m of bad){const after=sg*(m.ev||0),best=after+m.loss,ms=talkMate(m),missMate=!!ms&&ms.b&&!ms.p,bigLead=!ms&&best>=1900&&after<1900;
+    T.push({t:missMate?"錯過殺棋":bigLead?"錯失明顯優勢":m.q,ply:m.ply,bad:1,x:`第 ${rnd(m.ply)} 回合 ${m.cn}：${missMate?"這時已經有殺棋":bigLead?"這時原本有明顯優勢，比最佳著法少了 "+(m.loss/100).toFixed(1)+" 兵":"比最佳著法少了 "+(m.loss/100).toFixed(1)+" 兵"}`+(m.bc?`，Pikafish 建議 ${m.bc}`:"")+`。走完之後${evt(m.ev)}。`})}
   for(const m of graded.filter(m=>m.q==="妙著").slice(0,3))T.push({t:"妙著",ply:m.ply,good:1,x:`第 ${rnd(m.ply)} 回合 ${m.cn}：其他走法都差 1.5 兵以上，只有這步最好。`});
   if(!bad.length&&graded.length>=10)T.push({t:"亮點",x:"整盤沒有失著或敗著，防守很紮實。"});
   return T.sort((a,b)=>(a.ply||0)-(b.ply||0))}

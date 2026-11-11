@@ -53,7 +53,9 @@ var XQEngine=(function(){
         let v=+sc[2];if(sc[1]==="mate")v=v>0?30000-v:-30000-v;
         const pvs=pv[1].trim().split(/\s+/);
         info.set(m?+m[1]:1,{k:m?+m[1]:1,v,mv:pvs[0],pv:pvs,depth:dp?+dp[1]:null,mate:sc[1]==="mate"?+sc[2]:null})});
-      return{best:best.split(/\s+/)[1],lines:[...info.values()].sort((a,b)=>a.k-b.k)}};
+      /* ChatGPT 數值盤查 11/11 P1 引擎空結果：lines 只收「帶 PV 的 info 行」，時間太短或手機太忙時可能一條都沒有（只回 bestmove）。
+         多回 nopv＝true 明講「這次沒有評分」，core.js 的 classifyRaw 看到空的 lines 會重查一次、還是空就丟可重試的錯誤，不再拿最佳著的分數頂替成「正著、loss＝0」 */
+      return{best:best.split(/\s+/)[1],lines:[...info.values()].sort((a,b)=>a.k-b.k),nopv:!info.size}};
     const r=q.then(job);q=r.catch(()=>{});return r}
   return{load,prefetch,search,get ready(){return!!mod},onProgress(f){progress=f},threads:0};
 })();
