@@ -178,7 +178,7 @@ var XQ=(function(){
   function playState(){ensureP();
     const CR=cpuRate(),ci=heldIdx(CR),nx=RANKS[ci+1];
     const SA=stashAll(),others=Object.values(SA).filter(g=>kindOf(g)!==kindOf(P)).map(g=>({kind:kindOf(g),arena:g.arena||null,journey:g.journey||null,ranked:!!g.ranked,reward:!!g.reward,level:g.level,n:g.moves.length,human:g.human}));
-    return{rules:C.REP_RULES,repetition:P.repetition||null,kind:kindOf(P),others,other:others[0]||null,journey:P.journey||null,start:P.start||null,startTurn:P.startTurn||"r",id:P.id,blind:/-b$/.test(String(P.id)),board:P.board,turn:P.turn,human:P.human,level:P.level,ranked:!!P.ranked,reward:!!P.reward,arena:P.arena||null,stamp:P.stamp||null,prize:P.prize||null,rkName:P.ranked?RANKS[P.rk][0]:null,rate:P.rate||null,
+    return{rules:C.REP_RULES,repetition:P.repetition||null,kind:kindOf(P),others,other:others[0]||null,journey:P.journey||null,noPerp:!!P.noPerp,start:P.start||null,startTurn:P.startTurn||"r",id:P.id,blind:/-b$/.test(String(P.id)),board:P.board,turn:P.turn,human:P.human,level:P.level,ranked:!!P.ranked,reward:!!P.reward,arena:P.arena||null,stamp:P.stamp||null,prize:P.prize||null,rkName:P.ranked?RANKS[P.rk][0]:null,rate:P.rate||null,
       cpuRate:{pts:CR.pts,rank:RANKS[ci][0],w:CR.w,l:CR.l,d:CR.d,next:nx?nx[0]:null,toNext:nx?nx[1]-CR.pts:0,lo:RANKS[ci][1],hi:nx?nx[1]:null,hist:CR.hist},
       levels:LEVELS.map(l=>({n:l.n,name:l.name,desc:l.desc})),record:ls.get("record",{}),
       moves:P.moves.map(moveOut),result:P.result,practice:P.practice||null,thinking:playBusy&&P.turn!==P.human,msg:playMsg,eval:lastEv(P.moves),hint:P.hint,hintN:P.hintN||0,undoN:P.undoN||0,   /* 開發者 11/11 選 v3 規劃書 B03：這盤用過幾次提示、悔棋，給畫面標示用 */
@@ -451,14 +451,16 @@ var XQ=(function(){
       if(n>=5&&top.result&&top.result.w==="r")give("king",tier);if(n>=5&&s.w===0&&!quit)give("grit",1);
       ls.set("simulAch",A);SM.done.ach=got}}
   function smApply(t,f,to){stateApply(t,f,to);const r=judgeState(t);if(r)smEnd(t,r.w,r.why);smSave()}
-  async function smEngine(){if(smBusy||!smLoad())return;const t=SM.tb.find(x=>!x.result&&x.turn!=="r");if(!t)return;
+  /* 改善單 R08 車輪戰審查（11/11）：原本永遠挑桌號最小的那桌先想，10 桌時玩家繞回前面落子就插隊到最強的後幾桌前面；
+     改成誰先落子先回誰（t.until 小的先）。想好了但緩衝時間還沒到的桌子標 t.pend，先放開引擎去想下一桌，時間到再落子 */
+  async function smEngine(){if(smBusy||!smLoad())return;const ws=SM.tb.filter(x=>!x.result&&x.turn!=="r"&&!x.pend);if(!ws.length)return;const t=ws.reduce((a,b)=>(a.until||0)<=(b.until||0)?a:b);
     smBusy=true;const id=SM.id,n=t.moves.length,lv=LEVELS[t.level-1]||LEVELS[2];
     try{const r=await XQEngine.search({moves:t.moves.map(m=>iccs(m.f,m.t))},lv.movetime?{movetime:Math.min(lv.movetime,3000)}:{depth:lv.depth},lv.multipv||1);
       if(!SM||SM.id!==id||t.moves.length!==n||t.result)return;
       /* 開發者 11/11「車輪戰對方要等我落子後緩衝時間後再下，不然像是在同步下」：玩家落子時記下 t.until（1.8～3.5 秒後），引擎照樣馬上開始想，但時間沒到不落子 */
-      {const w=(t.until||0)-Date.now();if(w>0){await new Promise(z=>setTimeout(z,w));if(!SM||SM.id!==id||t.moves.length!==n||t.result)return}}
       const mv=pickMove(r,lv),f=parseSq(mv.slice(0,2)),to=parseSq(mv.slice(2,4));if(!legal(t.board,t.turn).some(([a,b])=>a===f&&b===to))throw new Error("引擎給出不合法著法 "+mv);
-      smApply(t,f,to);smFail=0}
+      const w=(t.until||0)-Date.now();
+      if(w>0){t.pend=1;setTimeout(()=>{t.pend=0;if(!SM||SM.id!==id||t.moves.length!==n||t.result)return;smApply(t,f,to);setTimeout(smEngine,0)},w)}else smApply(t,f,to);smFail=0}
     catch(e){smFail++}
     finally{smBusy=false;setTimeout(smEngine,smFail?Math.min(30000,1500*2**Math.min(smFail,5)):0)}}
   function smState(){const best=ls.get("simulBest",{});if(!smLoad())return{none:true,best,rec:ls.get("simulRec",{}),ach:ls.get("simulAch",{})};
