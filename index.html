@@ -1527,7 +1527,7 @@ html[data-hct] .player.on .clk{background:#00563B;color:#FFFFFF;border-color:#00
       if(!window.caches)return go();caches.keys().then(function(ks){return Promise.all(ks.filter(function(k){return k.indexOf("xqlab-app-")===0}).map(function(k){return caches.delete(k)}))})
         .then(function(){return navigator.serviceWorker&&navigator.serviceWorker.getRegistration()}).then(function(r){return r&&r.update()}).catch(function(){}).then(go)}};setTimeout(chk,4000)})();
 </script>
-<script>window.XQ_OFFLINE=true;window.XQ_BUILD="20261112-0710";</script>
+<script>window.XQ_OFFLINE=true;window.XQ_BUILD="20261112-0730";</script>
 <script src="core.js"></script>
 <script src="engine.js"></script>
 <script src="local.js"></script>
@@ -2753,7 +2753,7 @@ function pvSteps(b0,pv){const B=[b0.slice()],L=[null];let b=b0.slice();
 function pvMvts(note){const out=[];let on=false;for(const n of note.childNodes){if(n.nodeType===3){if(/Pikafish 的後續/.test(n.nodeValue))on=true;else if(on&&/\n/.test(n.nodeValue))break}else if(on&&n.classList&&n.classList.contains("mvt"))out.push(n)}return out}
 function pvCss(){if(document.getElementById("pvstCss"))return;const s=document.createElement("style");s.id="pvstCss";
   s.textContent=`.pvst{display:flex;align-items:center;justify-content:center;gap:8px;flex-wrap:wrap;margin:8px 0 2px;white-space:normal}
-.pvst .btn{min-height:44px;min-width:44px;padding:6px 12px;font-size:15px}.pvst .btn:disabled{opacity:.35}
+.pvst .btn{min-height:44px;min-width:44px;padding:6px 12px;font-size:15px;width:auto;margin:0;flex:0 0 auto;display:inline-flex;align-items:center;justify-content:center}.pvst .btn:disabled{opacity:.35}
 .pvst-l{min-width:9em;text-align:center;font-weight:800;font-size:14.5px}.mvt.pvst-on{background:rgba(47,127,224,.18);border-radius:4px;font-weight:900}`;document.head.append(s)}
 /* note：說明文字的元素（裡面有「Pikafish 的後續：…」）；bd：Board()；b0：題目局面；pv：後續著法（中文）；o.draw：畫棋盤要帶的選項（例如 flip）；o.start：一開始停在第幾步（預設 1＝正解剛走完） */
 function pvStepper(note,bd,b0,pv,o){try{if(!note||!bd||!b0||!pv||!pv.length)return;o=o||{};const S=pvSteps(b0,pv);if(S.n<1)return;pvCss();
@@ -15912,12 +15912,12 @@ function lbsParentOffPage(v){setTop("線上大廳",false);setTabs(true,"#/lobby"
     v.innerHTML=`<div class="pad"><div class="card" style="text-align:center;padding:26px 18px;margin-top:14px;line-height:1.8"><div style="font-size:44px">👧</div>
       <h2 style="font-family:var(--serif);margin:6px 0 8px">兒童模式：線上大廳關著</h2><p style="margin:0 0 6px">兒童模式不跟陌生人互動：線上大廳、千秋盃、觀戰都不開，資料也不送出去。</p>
       <p style="margin:0 0 6px">想跟家人朋友下棋，可以用<b>同桌對弈</b>（同一支手機兩個人輪流下）；挑戰電腦、石桌往事、殘局、棋譜都照常可以玩。</p>
-      <p class="muted" style="font-size:13.5px;margin:0 0 14px">想打開，請家長到「設定 → 👪 家長與護眼 → 👧 兒童模式設定」。</p>
+      <p class="muted" style="font-size:13.5px;margin:0 0 14px">想打開，請家長到「設定房間的 🔒 小鎖匣 → 👪 家長與護眼 → 👧 兒童模式」。</p>
       <button class="btn" id="lbpPvp">👥 同桌對弈</button><button class="btn ghost" id="lbpSet" style="margin-top:8px">⚙ 到設定</button><button class="btn ghost" id="lbpHome" style="margin-top:8px">回首頁</button></div></div>`;
     v.querySelector("#lbpPvp").onclick=()=>{location.hash="#/pvp"};v.querySelector("#lbpSet").onclick=()=>{location.hash="#/settings"};v.querySelector("#lbpHome").onclick=()=>{try{goHome()}catch(e){location.hash="#/"}};return{}}
   v.innerHTML=`<div class="pad"><div class="card" style="text-align:center;padding:26px 18px;margin-top:14px;line-height:1.8"><div style="font-size:44px">👪</div>
     <h2 style="font-family:var(--serif);margin:6px 0 8px">線上大廳已由家長關閉</h2><p style="margin:0 0 6px">挑戰電腦、石桌往事、殘局、棋譜這些單機功能都照常可以玩。</p>
-    <p class="muted" style="font-size:13.5px;margin:0 0 14px">想打開，請家長到「設定 → 👪 家長與護眼 → 🔒 家長修改」。</p>
+    <p class="muted" style="font-size:13.5px;margin:0 0 14px">想打開，請家長到「設定房間的 🔒 小鎖匣 → 👪 家長與護眼 → 🔒 家長修改」。</p>
     <button class="btn" id="lbpSet">⚙ 到設定</button><button class="btn ghost" id="lbpHome" style="margin-top:8px">回首頁</button></div></div>`;
   v.querySelector("#lbpSet").onclick=()=>{location.hash="#/settings"};v.querySelector("#lbpHome").onclick=()=>{try{goHome()}catch(e){location.hash="#/"}};return{}}
 if(typeof Lobby==="function"){const f1=Lobby;Lobby=function(v){try{if(typeof fmNetOff==="function"&&fmNetOff())return lbsParentOffPage(v)}catch(e){}return f1.apply(this,arguments)}}
@@ -15930,8 +15930,8 @@ function lbsIntro(again){lbsCss();try{store.set("lbIntro",+store.get("lbIntro",0
     <p>💬 <b>只能用快捷語</b>：大廳和對局裡不能打字，大家都只能用 App 內建的快捷語和表情。</p>
     <p>🙈 <b>不要給個資</b>：名字預設用系統給的「稱號」。不要把真名、學校、電話、住址、LINE、照片告訴任何人，也不要跟陌生人約到 App 外面。</p>
     <p>🚩 <b>不舒服就檢舉、封鎖</b>：點對方的名字，資料卡最下面有「🚩 檢舉」「🚫 封鎖」。對方不會知道是誰檢舉的；封鎖後他的邀請、表情、聊天都不會出現。下棋時不想下了，可以直接認輸離開。</p>
-    <p>👪 <b>家長可以關掉大廳</b>：「設定 → 👪 家長與護眼」可以關閉線上大廳，或打開「👧 兒童模式」（不跟陌生人互動、資料不送出、提醒休息）。</p></div>
-    <p class="muted" style="font-size:12.5px;margin:4px 0 0">${again?"":"這張說明只會自動跳一次；"}之後可以在「設定 → 角色 → 🛡 線上大廳」再看。</p>`,[["我知道了",null]])}
+    <p>👪 <b>家長可以關掉大廳</b>：「設定房間的 🔒 小鎖匣 → 👪 家長與護眼」可以關閉線上大廳，或打開「👧 兒童模式」（不跟陌生人互動、資料不送出、提醒休息）。</p></div>
+    <p class="muted" style="font-size:12.5px;margin:4px 0 0">${again?"":"這張說明只會自動跳一次；"}之後可以在「設定房間的 🔒 小鎖匣 → 🛡 大廳安全須知」再看。</p>`,[["我知道了",null]])}
 if(typeof Lobby==="function"){const f2=Lobby;Lobby=function(v){const r=f2.apply(this,arguments);
   try{if(!store.get("lbIntro",0)&&!window.XQ_SELFBANNED())setTimeout(()=>{try{if(/^#\/lobby/.test(location.hash)&&!store.get("lbIntro",0)&&!window.XQ_SELFBANNED())lbsIntro(false)}catch(e){}},700)}catch(e){}return r}}
 /* ================= ⚙ 設定頁滿版水墨圖「雲河驛站・天字客房」（開發者 11/8 定案：Gemini 方案 1＋3 合體；史學顧問核圖中）=================
@@ -23138,7 +23138,7 @@ function PosRestore(v,sub){posRCss();if(typeof setTabs==="function")setTabs(fals
   setTop("♟ 局面還原",posRBack(store.get("posRFrom",null)));v.className="view";const C=window.XQCore,D=store.get("posRDraft",null)||{},QF=posRQuery(location.hash);
   const QK=QF?fenChk(QF):null,shared=!!(QK&&QK.board);let mine=!shared;   /* 分享來的局面：先不蓋掉自己存的擺子草稿，動了才算自己的 */
   let ck=shared?QK:fenChk(D.fen||C.START+" w");if(!ck.board)ck=fenChk(C.START+" w");let b=ck.board.slice(),side=ck.side,tool="",sel=-1,flip=shared&&ck.side==="b";
-  v.innerHTML=`<div class="pr-wrap"><div class="card"><b>輸入 FEN，或在下面的棋盤上擺子</b><div class="muted" style="font-size:13px;line-height:1.6;margin:2px 0 6px">FEN 例：<code>rnbakabnr/9/1c5c1/p1p1p1p1p/9/9/P1P1P1P1P/1C5C1/9/RNBAKABNR w</code>（大寫＝紅、小寫＝黑，w＝紅先、b＝黑先）</div>
+  v.innerHTML=`<div class="pr-wrap"><div class="card"><b>輸入 FEN，或在下面的棋盤上擺子</b><div class="muted" style="font-size:13px;line-height:1.6;margin:2px 0 6px">FEN 例：<code style="word-break:break-all">rnbakabnr/9/1c5c1/p1p1p1p1p/9/9/P1P1P1P1P/1C5C1/9/RNBAKABNR w</code>（大寫＝紅、小寫＝黑，w＝紅先、b＝黑先）</div>
       <textarea id="prF" rows="2" spellcheck="false" aria-label="FEN"></textarea><div class="opt" style="margin-top:6px"><button class="on" id="prA">套用這個 FEN</button><button id="prC">📋 複製 FEN</button><button id="prSh">🔗 分享這個局面</button></div><div id="prE" aria-live="polite"></div></div>
     ${shared?`<div class="card" id="prQ" role="status"><b>🔗 別人分享的局面</b><div style="font-size:14px;line-height:1.7;margin-top:2px">輪到<b>${PLAYER[ck.side]}</b>走${ck.side==="b"?"（棋盤已翻轉，黑方在下面）":""}。${ck.ok?"可以直接請電腦分析，或從這裡和電腦下。":"這個局面有地方不合規則，見上面的說明。"}</div>${D.fen&&D.fen!==ck.fen?'<button class="btn ghost" id="prMine" style="width:100%;margin-top:8px">↺ 換回我上次擺的局面</button>':""}</div>`:QF?'<div class="card" role="alert" style="color:var(--red,#b22)">分享網址裡的局面讀不懂，先顯示你上次擺的局面。</div>':""}
     <div class="pr-bd" id="prB"></div><div class="pr-pal" id="prP"></div>
@@ -23937,7 +23937,7 @@ function axmAsk(why){if(axmOn()||store.get("axmAsk",0))return;
   const busy=()=>!!document.querySelector(".modal,#sheet.show,#preov");
   if(busy()){if((axmAsk.n=(axmAsk.n||0)+1)<8)setTimeout(()=>axmAsk(why),5000);return}
   store.set("axmAsk",1);const fc=!!(window.matchMedia&&matchMedia("(forced-colors: active)").matches);
-  const B=[["♿ 開啟讀屏與鍵盤模式",()=>axmSet(true)]];if(fc&&!axmHct())B.push(["開啟高對比主題",()=>axmHctSet(true),true]);B.push(["先不用",()=>{try{toast("之後可以在 設定 → 系統 → ♿ 無障礙 打開")}catch(e){}},true]);
+  const B=[["♿ 開啟讀屏與鍵盤模式",()=>axmSet(true)]];if(fc&&!axmHct())B.push(["開啟高對比主題",()=>axmHctSet(true),true]);B.push(["先不用",()=>{try{toast("之後可以在設定房間的 🔒 小鎖匣 → ♿ 無障礙打開")}catch(e){}},true]);
   modal(`<div class="em" aria-hidden="true">♿</div><h2>要開「讀屏與鍵盤模式」嗎？</h2><p style="line-height:1.7">${esc(why)}。開了以後下棋用平面棋盤，每一格都念得出來，方向鍵移動、Enter 選子落子，每一步也會念出來，裝飾動畫會關掉。</p>`,B)}
 {let tabs=0;document.addEventListener("keydown",e=>{if(e.key==="Tab"&&!axmOn()&&!store.get("axmAsk",0)&&++tabs===3)axmAsk("看起來你在用鍵盤操作")});
   try{const rm=matchMedia("(prefers-reduced-motion: reduce)").matches,fc=matchMedia("(forced-colors: active)").matches;if(rm||fc)setTimeout(()=>axmAsk(fc?"你的系統開了強制色彩（高對比）":"你的系統開了「減少動態效果」"),6000)}catch(e){}}
