@@ -1379,7 +1379,7 @@ html[data-hicon] .tabbar button.on{box-shadow:inset 0 -3px 0 currentColor}
       if(!window.caches)return go();caches.keys().then(function(ks){return Promise.all(ks.filter(function(k){return k.indexOf("xqlab-app-")===0}).map(function(k){return caches.delete(k)}))})
         .then(function(){return navigator.serviceWorker&&navigator.serviceWorker.getRegistration()}).then(function(r){return r&&r.update()}).catch(function(){}).then(go)}};setTimeout(chk,4000)})();
 </script>
-<script>window.XQ_OFFLINE=true;window.XQ_BUILD="20261111-1600";</script>
+<script>window.XQ_OFFLINE=true;window.XQ_BUILD="20261111-1615";</script>
 <script src="core.js"></script>
 <script src="engine.js"></script>
 <script src="local.js"></script>
@@ -19174,9 +19174,11 @@ function simCss(){if(document.getElementById("simCss"))return;const s=document.c
 .sim-cap{position:absolute;left:50%;top:max(14px,env(safe-area-inset-top));transform:translateX(-50%);padding:6px 16px;border-radius:999px;border:1.5px solid #f2c94c;background:rgba(20,16,12,.72);color:#ffe08a;font:900 17px/1.35 var(--serif,serif);white-space:nowrap}
 @media (prefers-reduced-motion:reduce){.sim-stage{transition:none}.sim-stage.zoom{transform:none}}`;document.head.append(s)}
 /* ---------- 開場過場（開發者 11/11「請 Gemini 製作車輪戰過場動畫」、「跟著 3／5／10 的選項繪製，排一排或是一整圈」）----------
-   圖：data/simul/simul_bg.webp（茶肆二樓空廂房，斜上方 45 度）＋ simul_f1～f5.webp（學童、茶客、書生、中年棋手、老隱士各坐一桌，綠幕去背；由弱到強對應桌號）。
+   圖：data/simul/simul_bg.webp（茶肆二樓空廂房，斜上方 45 度）＋ simul_f1～f11.webp（十一位棋客各坐一桌，綠幕去背）。
+   棋客（開發者 11/11「10 個棋客卻只有 5 個人重複兩次，請另外畫 5 個不一樣的棋客」「男女比例各一半」「3/5/10 會從這 10 位或是剛剛多畫的隨機挑選」）：男 6 位＝1 學童、2 茶客、3 書生、4 中年棋手、5 老隱士、11 商賈；女 5 位＝6 女棋客、7 少女、8 老闆娘、9 道姑、10 白髮老婦。
+   每場由 simCast 隨機挑、不重複、男女各半（單數盤多的那一位隨機）；學童、茶客沒有背影圖，10 盤時只排上半圈。
    Gemini 畫的棋盤棋子數不對（開發者：「棋子數量記得改正確」）→ 程式把真實棋盤用四點透視貼在畫上的棋盤上（立牌 1024 圖上四角 SIM_Q），每桌就是那一桌現在的局面。
-   排法：3、5 盤一排；10 盤圍成橢圓一圈，十位棋客都面向圓心（開發者 11/11「角度不對，10 個人要面向圓心」）：上半圈五桌用正面立牌，下半圈五桌是背影 →「空桌 simul_table.webp ＋ 程式棋盤 ＋ 背影 simul_b3～b5.webp」三層（背影蓋在棋盤上面），
+   排法：3、5 盤一排；10 盤圍成橢圓一圈，十位棋客都面向圓心（開發者 11/11「角度不對，10 個人要面向圓心」）：上半圈五桌用正面立牌，下半圈五桌是背影 →「空桌 simul_table.webp ＋ 程式棋盤 ＋ 背影 simul_b3～b11.webp」三層（背影蓋在棋盤上面），
    左上兩桌、右下兩桌把圖左右鏡像（棋盤四角跟著換，字不會反）。背影圖由 tools/simul_back.py 對位。桌號依序亮起 → 鏡頭推向第 1 桌 → 進對局；點一下跳過。圖載不到就直接進對局 */
 const SIM_Q={T:[430,328],R:[765,425],B:[560,593],L:[248,488]},SIM_CN={K:"帥",A:"仕",B:"相",N:"傌",R:"俥",C:"炮",P:"兵",k:"將",a:"士",b:"象",n:"馬",r:"車",c:"砲",p:"卒"};
 function simHomo(W,H,d){const[x0,y0]=d[0],[x1,y1]=d[1],[x2,y2]=d[2],[x3,y3]=d[3],dx1=x1-x2,dx2=x3-x2,dy1=y1-y2,dy2=y3-y2,sx=x0-x1+x2-x3,sy=y0-y1+y2-y3,den=dx1*dy2-dx2*dy1,
@@ -19191,13 +19193,16 @@ function simBoardSvg(bd){let s='<svg xmlns="http://www.w3.org/2000/svg" viewBox=
   return s+"</svg>"}
 function simSpots(n){if(n===10)return Array.from({length:10},(_,i)=>{const a=(24+33*(i%5))*Math.PI/180,k=i<5?-1:1,cx=.5+k*.36*Math.cos(a),cy=.59+k*.21*Math.sin(a);return{cx,cy,s:.17*(.8+.45*(cy-.38)/.34),back:i>4,mir:i<2||i===5||i===6}});
   if(n===3)return[.22,.5,.78].map(cx=>({cx,cy:.52,s:.33}));return Array.from({length:n},(_,i)=>({cx:.158+i*.179,cy:.52,s:.25}))}
+const SIM_M=[1,2,3,4,5,11],SIM_F=[6,7,8,9,10];
+function simCast(sp){const sh=a=>{a=a.slice();for(let i=a.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[a[i],a[j]]=[a[j],a[i]]}return a},n=sp.length,nf=Math.floor(n/2)+(n%2&&Math.random()<.5?1:0),c=sh([...sh(SIM_F).slice(0,nf),...sh(SIM_M).slice(0,n-nf)]);
+  sp.forEach((o,i)=>{if(o.back&&c[i]<3){const j=c.findIndex((k,q)=>!sp[q].back&&k>2);if(j>=0)[c[i],c[j]]=[c[j],c[i]]}});return c}
 function simIntro(S,done){let fin=false;const end=()=>{if(fin)return;fin=true;try{ov.remove()}catch(e){}done&&done()};
   const ov=document.createElement("div");ov.className="sim-intro";ov.setAttribute("role","img");ov.setAttribute("aria-label",`車輪戰 ${S.n} 盤開場`);
   const st=document.createElement("div");st.className="sim-stage";ov.append(st);const bg=new Image();bg.src="data/simul/simul_bg.webp";bg.alt="";st.append(bg);
-  const sp=simSpots(S.n),fx=p=>[1024-p[0],p[1]],{T,R,B,L}=SIM_Q,quad=o=>o.back?(o.mir?[L,B,R,T].map(fx):[B,L,T,R]):(o.mir?[R,T,L,B].map(fx):[T,R,B,L]);
-  const tbs=S.tb.map((t,i)=>{const o=sp[i],fk=1+Math.round(i*4/Math.max(1,S.n-1)),el=document.createElement("div");el.className="sim-fig"+(o.mir?" mir":"")+(o.back?" back":"");
+  const sp=simSpots(S.n),cast=simCast(sp),fx=p=>[1024-p[0],p[1]],{T,R,B,L}=SIM_Q,quad=o=>o.back?(o.mir?[L,B,R,T].map(fx):[B,L,T,R]):(o.mir?[R,T,L,B].map(fx):[T,R,B,L]);
+  const tbs=S.tb.map((t,i)=>{const o=sp[i],fk=cast[i],el=document.createElement("div");el.className="sim-fig"+(o.mir?" mir":"")+(o.back?" back":"");
     el.style.cssText=`left:${(o.cx-(o.mir?.505:.495)*o.s)*100}%;top:calc(${o.cy*100}% - ${.45*o.s*100*1200/896}%);width:${o.s*100}%;z-index:${Math.round(o.cy*100)}`;
-    el.innerHTML=`<img src="data/simul/simul_${o.back?"table":"f"+fk}.webp" alt=""><div class="sim-bdw"><div class="sim-bd" style="transform:${simHomo(560,620,quad(o))}">${simBoardSvg(t.board)}</div></div>${o.back?`<img class="sim-bk" src="data/simul/simul_b${Math.max(3,fk)}.webp" alt="">`:""}<b class="sim-no">${i+1}</b>`;st.append(el);return el});
+    el.innerHTML=`<img src="data/simul/simul_${o.back?"table":"f"+fk}.webp" alt=""><div class="sim-bdw"><div class="sim-bd" style="transform:${simHomo(560,620,quad(o))}">${simBoardSvg(t.board)}</div></div>${o.back?`<img class="sim-bk" src="data/simul/simul_b${fk}.webp" alt="">`:""}<b class="sim-no">${i+1}</b>`;st.append(el);return el});
   const cap=document.createElement("div");cap.className="sim-cap";cap.textContent=`🀄 車輪戰・${S.n} 盤`;ov.append(cap);
   ov.onclick=end;document.body.append(ov);
   const fit=()=>{const w=st.clientWidth;st.querySelectorAll(".sim-bdw").forEach(b=>b.style.transform=`scale(${w*parseFloat(b.parentElement.style.width)/100/1024})`)};
