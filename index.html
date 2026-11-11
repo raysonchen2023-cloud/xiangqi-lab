@@ -1379,7 +1379,7 @@ html[data-hicon] .tabbar button.on{box-shadow:inset 0 -3px 0 currentColor}
       if(!window.caches)return go();caches.keys().then(function(ks){return Promise.all(ks.filter(function(k){return k.indexOf("xqlab-app-")===0}).map(function(k){return caches.delete(k)}))})
         .then(function(){return navigator.serviceWorker&&navigator.serviceWorker.getRegistration()}).then(function(r){return r&&r.update()}).catch(function(){}).then(go)}};setTimeout(chk,4000)})();
 </script>
-<script>window.XQ_OFFLINE=true;window.XQ_BUILD="20261111-1200";</script>
+<script>window.XQ_OFFLINE=true;window.XQ_BUILD="20261111-1230";</script>
 <script src="core.js"></script>
 <script src="engine.js"></script>
 <script src="local.js"></script>
@@ -13771,11 +13771,14 @@ function hbFxBattle(P,img){let ph="";try{const S=window.XQNet&&XQNet.cup&&XQNet.
   const fx=P.querySelector(".hb-fx");if(!fx)return;
   if(alt==="battle_curtain")fx.insertAdjacentHTML("beforeend",HUB_LAMP.battle.map(p=>`<i class="hb-lamp on" style="left:${p[0]}%;top:${p[1]}%"></i>`).join(""));
   if(ph==="done")fx.insertAdjacentHTML("beforeend",[[64,14,0],[81,11,-.9],[95,15,-1.7],[72,18,-.4],[57,12,-2.2]].map(([x,y,d])=>`<i class="hb-fw" style="left:${x}%;top:${y}%;animation-delay:${d}s"></i>`).join(""))}
+/* 開發者 11/11 選 ChatGPT 13 號方案 1「快下 vs 選場」：首頁大按鈕是「快速對局」、橋上石桌是「身邊同桌」；茶肆這頁上方一條說明它的用途，
+   入口不加小字（開發者 11/11：畫面太雜；場景標籤一律只放大字） */
+(()=>{try{const s=document.createElement("style");s.id="hbTagCss";s.textContent=".hub-page .hb-tag{position:absolute;left:50%;top:1.2%;transform:translateX(-50%);z-index:4;max-width:92%;padding:5px 14px;border-radius:999px;border:1.5px solid #f2c94c;background:rgba(20,16,12,.72);color:#ffe08a;font:800 13px/1.35 var(--serif,serif);text-align:center;pointer-events:none}";document.head.append(s)}catch(e){}})();
 function hubMap(v,hub){const D=HUB_DEF[hub],home=v.querySelector(".home");if(!D||!home||v.querySelector(".hub-page"))return;hbCss();
   const fresh=!store.get("campSeen",false)&&!Object.keys(campStars()).length&&!Object.keys(store.get("record",{})).length;
   const CL=hbIsCl()&&HUB_CL_SPOTS[hub],sp=D.spots.map(([id,sel,x,y])=>{const c=hbCard(v,sel);if(CL&&CL[id])[x,y]=CL[id];return c?{id,c,x,y}:null}).filter(Boolean);
   const d=document.createElement("div");
-  d.innerHTML=`<div class="shp-page cq hub-page"><img src="data/hubmap/${hbImg(D.img,hub)}.webp?v=${HB_IMGV}" alt="${esc(D.cap)}" onerror="this.onerror=null;this.src=this.src.replace('_night.','.')"><div class="hb-fx" aria-hidden="true"></div>${sp.map(o=>`<button class="shp-spot${hbHot(o.c)||(fresh&&(o.id==="hbCamp"||o.id==="hbTerms"))?" hot":""}" id="${o.id}" style="left:${o.x}%;top:${o.y}%"><b>${esc(hbEraWord(hbTitle(o.c)))}</b></button>`).join("")}</div>`;
+  d.innerHTML=`<div class="shp-page cq hub-page"><img src="data/hubmap/${hbImg(D.img,hub)}.webp?v=${HB_IMGV}" alt="${esc(D.cap)}" onerror="this.onerror=null;this.src=this.src.replace('_night.','.')"><div class="hb-fx" aria-hidden="true"></div>${sp.map(o=>`<button class="shp-spot${hbHot(o.c)||(fresh&&(o.id==="hbCamp"||o.id==="hbTerms"))?" hot":""}" id="${o.id}" style="left:${o.x}%;top:${o.y}%"><b>${esc(hbEraWord(hbTitle(o.c)))}</b></button>`).join("")}${hub==="battle"?`<div class="hb-tag">想選對手、選難度、打晉級或比賽，就進${esc(hbHubN())}</div>`:""}</div>`;
   const P=d.firstElementChild;v.insertBefore(P,home);home.classList.add("hb-hidden");
   for(const o of sp){const b=P.querySelector("#"+o.id);if(!b)continue;b.onclick=()=>o.c.click();
     const upd=()=>{if(!b.isConnected){mo.disconnect();return}const h=hbHot(o.c)||(fresh&&(o.id==="hbCamp"||o.id==="hbTerms"));if(b.classList.contains("hot")!==h)b.classList.toggle("hot",h)};
@@ -13834,7 +13837,7 @@ const HUB_NAME={learn:{classic:"藏譜石窟",qin:"學室",han:"太學",sanguo:"
     battle:{classic:"觀星閣",qin:"酒肆",han:"酒肆",sanguo:"酒肆",weijin:"酒壚",nanbei:"酒肆",sui:"酒肆",tang:"旗亭",wudai:"茶肆",song:"茶坊",yuan:"茶肆",ming:"茶樓",qing:"茶館"}};
 function xqHubName(k){let e="";try{e=typeof shipAt==="function"&&typeof shipDockList==="function"&&shipDockList()?shipAt():""}catch(x){}try{if(!e&&typeof hbIsCl==="function"&&hbIsCl())e="classic"}catch(x){}const n=(HUB_NAME[k]||{})[e];   /* 11/10：還沒登船也是經典世界，頁名用藏譜石窟、觀星閣（原本顯示學習、對戰） */return(k==="quick"?"♟ ":k==="battle"?"⚔ ":"📚 ")+(n||(k==="quick"?"下一盤":k==="battle"?"對戰":"學習"))}
 /* 11/9 開發者：「下一盤」前面的閃電跟水墨圖示融合不了，換成 ♟（e_piece 手繪棋子圖示） */
-const HM_SPOTS=[["hmShip",52,15,"⛵ 雲河星槎"],["hmBattle",14,25.5,"⚔ 對戰"],["hmLearn",86,26.5,"📚 學習"],["hmRec",12,44,"📜 今日推薦"],["hmQuick",52,47.5,"👥 同桌對弈"]];
+const HM_SPOTS=[["hmShip",52,15,"⛵ 雲河星槎"],["hmBattle",14,25.5,"⚔ 對戰"],["hmLearn",86,26.5,"📚 學習"],["hmRec",12,44,"📜 今日推薦"],["hmQuick",52,47.5,"👥 身邊同桌"]];
 /* 07w 的座標表（腳底的位置）：起點在橋中央廣場（石桌左前方）；石桌四周繞著走，不穿過桌子；往後經廣場後緣走木棧道到星槎跳板；
    左右各從拱橋兩端的石階下到碼頭步道：左岸沿河岸步道上去到牌坊前、橋頭告示牌前；右岸過草地到書院山門石階下 */
 const SHW_HOMEMAP={el:40,h:[.05,60,.0008],look0:[50,99],
@@ -13862,14 +13865,17 @@ ${typeof WALK_BOT_MERGE!=="undefined"&&WALK_BOT_MERGE?"":"body.hm-on.shw-on .xqb
    完全沒下過棋＝「🔰 立即開始」進新手訓練營（跟石桌一樣）。「📲 加到主畫面」原本在圖的底部，有這顆按鈕時搬進同一條，疊在上面不互相擋。
    按鈕放在 .home-page 裡（position:fixed），離開首頁跟著頁面一起拿掉 */
 function hmGoBar(P,nw){const bar=document.createElement("div");bar.className="hm-go-bar";const b=document.createElement("button");b.type="button";b.className="hm-go";b.id="hmGo";
-  let R=nw?{go:"#/camp",t:"🔰 立即開始",s:"第一次下象棋，從這裡學"}:{go:"#/cpu",t:"♟ 立即對局",s:""};
+  /* 開發者 11/11 選 ChatGPT 13 號方案 1「快下 vs 選場」：平常寫「♟ 快速對局」；上一盤是挑戰電腦而且下完了＝小字「用上次難度，馬上跟電腦下」，
+     點了直接用那盤的等級和模式（晉級賽／練功房）開新局（fresh）——原本只會打開那盤已經結束的棋，要再按新局，不算「馬上」 */
+  let R=nw?{go:"#/camp",t:"🔰 立即開始",s:"第一次下象棋，從這裡學"}:{go:"#/cpu",t:"♟ 快速對局",s:"馬上跟電腦下一盤"};
   const set=r=>{R=r;b.innerHTML=`<span>${esc(r.t)}</span><small>${esc(r.s||"")}</small>`;b.setAttribute("aria-label",r.t+(r.s?"："+r.s:""))};set(R);
   const ib=P.querySelector("#hmInst");if(ib)bar.append(ib);bar.append(b);P.append(bar);
-  b.onclick=async e=>{e.stopPropagation();vibrate(5);if(R.sw)try{await api("/play/switch",{kind:R.sw})}catch(err){}if(R.park)store.set("park3d",true);try{sessionStorage.setItem("xqFromHome","1")}catch(err){}location.hash=R.go};   /* 11/11：記下從首頁進來（07y hbFromHome） */
+  b.onclick=async e=>{e.stopPropagation();vibrate(5);if(R.fresh)try{await api("/play/new",R.fresh)}catch(err){}if(R.sw)try{await api("/play/switch",{kind:R.sw})}catch(err){}if(R.park)store.set("park3d",true);try{sessionStorage.setItem("xqFromHome","1")}catch(err){}location.hash=R.go};   /* 11/11：記下從首頁進來（07y hbFromHome） */
   if(nw)return;
   try{if(window.XQNet&&XQNet.playing&&XQNet.playing())return set({go:"#/pvp",t:"▶ 接著下",s:"線上對局"})}catch(e){}
   if(typeof homeRecGame!=="function")return;
-  api("/play/state").then(st=>{const g=homeRecGame(st);if(!g||!b.isConnected)return;const o=g.sw&&(st.others||[]).find(z=>z&&z.kind===g.sw),n=o?+o.n:st&&st.moves?st.moves.length:0;
+  api("/play/state").then(st=>{const g=homeRecGame(st);if(!b.isConnected)return;
+    if(!g){if(st&&st.kind==="cpu"&&st.result&&!st.practice)set({go:"#/cpu",t:"♟ 快速對局",s:"用上次難度，馬上跟電腦下",fresh:{human:st.human||"r",lx:st.level,ranked:!!st.ranked,...(!st.ranked&&st.rlv!=null?{rlv:st.rlv}:{})}});return}const o=g.sw&&(st.others||[]).find(z=>z&&z.kind===g.sw),n=o?+o.n:st&&st.moves?st.moves.length:0;
     set({go:g.go,sw:g.sw,park:g.park,t:"▶ 接著下",s:String(g.t).replace(/^.*：/,"")+(n>0?`・第 ${n} 手`:"")})}).catch(()=>{})}
 /* 完全沒下過棋（跟原本首頁「🔰 第一次下象棋？」卡同一個判斷） */
 const hmNew=()=>!store.get("campSeen",false)&&!Object.keys(store.get("record",{})).length;
@@ -13889,7 +13895,7 @@ function homeMap(v){const home=v.querySelector(".home");if(!home||v.querySelecto
   const nw=hmNew(),standalone=matchMedia("(display-mode: standalone)").matches||navigator.standalone,inst=OFF&&!standalone&&!(store.get("instAsk",null)||{}).no;
   /* 開發者 11/11（截圖圈出石桌「著一盤」和底部「立即對局」重複，選「石桌改成同桌對弈」）：石桌旁本來就擺兩張石凳＝兩人面對面下（#/pvp）；
      跟電腦下、接著下、新手第一次都交給底部大按鈕（hmGoBar），石桌不再有新手天光和「第一次下象棋？」 */
-  const lab=id=>id==="hmQuick"?"👥 同桌對弈":id==="hmLearn"?xqHubName("learn"):id==="hmBattle"?xqHubName("battle"):HM_SPOTS.find(s=>s[0]===id)[3];
+  const lab=id=>id==="hmQuick"?"👥 身邊同桌":id==="hmLearn"?xqHubName("learn"):id==="hmBattle"?xqHubName("battle"):HM_SPOTS.find(s=>s[0]===id)[3];
   const d=document.createElement("div");
   d.innerHTML=`<div class="shp-page cq home-page"><img src="data/homemap/${typeof hbIsCl==="function"&&hbIsCl()?"home_classic":"home"}.webp?v=${HM_IMGV}" alt="${typeof hbIsCl==="function"&&hbIsCl()?"千秋時光之苑":"楚河渡口棋鎮"}"><div class="hm-fx" aria-hidden="true"></div>${HM_SPOTS.map(([id,x,y])=>`<button class="shp-spot" id="${id}" style="left:${x}%;top:${y}%"><b>${esc(lab(id))}</b></button>`).join("")}${inst?'<button class="hm-inst" id="hmInst">📲 加到主畫面</button>':""}</div>`;
   const P=d.firstElementChild;v.insertBefore(P,home);home.classList.add("hb-hidden");if(typeof hbCss==="function")hbCss();else home.style.display="none";
