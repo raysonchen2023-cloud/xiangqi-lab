@@ -4,6 +4,30 @@
 // - 互動：點棋盤選子、走子（跟原本的 2D 棋盤一樣的規則與流程）；拖曳可以轉頭看四周，點兩下回正
 // - 小帥：平常看棋盤、眨眼、偶爾抬頭看你；電腦思考時手托下巴；它走棋時伸手；被吃子會驚訝；輸贏有表情
 (function(){
+  /*TAPSNAP{ 11/11 點擊吸附＋手機預設視角（評比第 1 輪 Gemini／ChatGPT「3D 點擊精準度」、AI 模擬玩家第二輪問題 5）。
+     這一段只放純函式（不碰 three.js、DOM），tools/test-park3d-tap.js 會照 TAPSNAP 標記把它抽出來單獨測。
+     tapSnap(P,x,y,o)：P＝90 個交叉點在畫面上的位置 {i,x,y,s（那一格在畫面上的格距 px）,occ（有子）,c（現在可以點：沒選子＝己方棋子；選了子＝綠點／可吃的子，或換選另一顆己方棋子）,w（距離加權，綠點 .9＝優先）}
+       ① 最近的交叉點不能點、而且手指清楚落在它上面（有子 .45 格、空點 .3 格以內）→ 照實回報那一格（點對方的子、點空點：維持原本的反應）
+       ② 不然吸到最近的可點目標，半徑 max(28px, .6 格)；兩個可點目標一樣近（第二近 < 最近×1.2＋2px）→ 不猜，回 amb
+       ③ 都沒有：還在棋盤格子上（.5 格內）就照實回報最近的那一格（原本的「點空」），出了棋盤回 -1（交給點物件看介紹） */
+  const tapSnap=(P,x,y,o)=>{o=o||{};const R0=o.r||28;let n=null,nd=1e9;
+    for(const p of P){p.d=Math.hypot(p.x-x,p.y-y);if(p.d<nd){nd=p.d;n=p}}
+    if(!n)return{i:-1};
+    if(!n.c&&nd<(n.occ?.45:.3)*n.s)return{i:n.i,raw:true};
+    const C=P.filter(p=>p.c).map(p=>({p,e:p.d*(p.w||1)})).sort((a,b)=>a.e-b.e),a=C[0],b=C[1];
+    if(a&&a.p.d<=Math.max(R0,.6*a.p.s)){
+      if(b&&b.p.i!==a.p.i&&b.e<a.e*1.2+2&&b.p.d<=Math.max(R0,.6*b.p.s))return{i:-1,amb:[a.p.i,b.p.i]};
+      return{i:a.p.i,d:a.p.d,snap:a.p!==n}}
+    return nd<.5*n.s?{i:n.i,raw:true}:{i:-1}};
+  /* inBox：棋盤框四角都在畫面內（pad＝上、右、下、左留白 px：上面讓朝代標籤、下面讓「▦ 平面棋盤」和 ＋／－） */
+  const inBox=(pts,W,H,pad)=>pts.every(([x,y])=>x>=pad[3]&&x<=W-pad[1]&&y>=pad[0]&&y<=H-pad[2]);
+  /* boardMeas：prj(x,y,z)→[px,py]；回報棋盤框是否放得下、最遠那排（最小）的格距 px（左右、前後取小的） */
+  const boardMeas=(prj,W,H,g)=>{const c=[[-1,-1],[1,-1],[-1,1],[1,1]].map(([sx,sz])=>prj(sx*g.bw/2,g.top,sz*g.bh/2)),y=g.top+g.ph,a=prj(-4,y,-4.5),b=prj(4,y,-4.5),a1=prj(-4,y,-3.5);
+    return{fit:inBox(c,W,H,g.pad||[24,4,50,4]),sp:Math.min((b[0]-a[0])/8,a1[1]-a[1])}};
+  /* fitZoom：在 [lo,hi] 找最小的鏡頭距離倍數，讓棋盤框放得下、格距剛好到 want（不會拉得比需要的更近）；meas(z)→{fit,sp} */
+  const fitZoom=(meas,lo,hi,want)=>{const ok=z=>{const m=meas(z);return m.fit&&m.sp<=want};if(ok(lo))return lo;if(!ok(hi))return hi;
+    for(let k=0;k<22;k++){const m=(lo+hi)/2;if(ok(m))hi=m;else lo=m}return hi};
+  /*}TAPSNAP*/
   const T=window.THREE;if(!T)return;
   const PI=Math.PI,TAU=PI*2,ease=p=>p<.5?2*p*p:1-Math.pow(-2*p+2,2)/2,clamp=(v,a,b)=>Math.max(a,Math.min(b,v));
   const NAMES={r:{K:"帥",A:"仕",B:"相",N:"傌",R:"俥",C:"炮",P:"兵"},b:{K:"將",A:"士",B:"象",N:"馬",R:"車",C:"砲",P:"卒"}};
@@ -1396,7 +1420,7 @@
     const markG=new T.Group();sc.add(markG);
     const disc=(i,col,r,op)=>{const m=new T.Mesh(new T.CircleGeometry(r,32),new T.MeshBasicMaterial({color:col,transparent:true,opacity:op,depthWrite:false}));m.rotation.x=-PI/2;const[x,z]=pos(i);m.position.set(x,TOP+.012,z);markG.add(m);return m};
     const ring=(i,col,r,w,op)=>{const m=new T.Mesh(new T.RingGeometry(r-w,r,40),new T.MeshBasicMaterial({color:col,transparent:true,opacity:op,depthWrite:false}));m.rotation.x=-PI/2;const[x,z]=pos(i);m.position.set(x,TOP+.014,z);markG.add(m);return m};
-    let selI=-1,checkRing=null;
+    let selI=-1,checkRing=null;const SNAP={b:null,t:[],me:"r"};
     function layoutCaptured(board){lastCapB=board;captured.forEach(g=>sc.remove(g));captured=[];const cnt={r:{},b:{}};board.forEach(p=>{if(p){const s=sideOf(p),k=p.toUpperCase();cnt[s][k]=(cnt[s][k]||0)+1}});
       for(const s of["r","b"]){const lost=[];for(const k of"RCNBAP")for(let n=(START[s][k]||0)-(cnt[s][k]||0);n>0;n--)lost.push(s==="r"?k:k.toLowerCase());
         const mine=(s==="r")===flip;   // 意見回饋 232：被吃的棋子放在吃子那一方的桌邊（我吃掉的對方棋子排在我這側）
@@ -1433,6 +1457,7 @@
       markG.clear();checkRing=null;
       if(L&&L.f!==L.t){ring(L.f,0x2E86DE,.36,.06,.85);disc(L.f,0x2E86DE,.12,.5);ring(L.t,0x2E86DE,.56,.07,.9)}
       selI=o.sel!=null&&o.sel>=0?o.sel:-1;
+      SNAP.b=board;SNAP.t=Array.isArray(o.targets)?o.targets:[];SNAP.me=ex.botSide?(ex.botSide==="r"?"b":"r"):(nf?"b":"r");   /* 11/11 點擊吸附要知道：哪些是己方棋子、哪些是綠點 */
       (o.targets||[]).forEach(i=>{if(board[i])ring(i,0xD7263D,.56,.09,.95);else disc(i,0x2F9E5A,.19,.9)});
       if(typeof o.check==="number"&&o.check>=0&&board[o.check])checkRing=ring(o.check,0xFF2A2A,.62,.12,.9);
       try{CR.chkSet(typeof o.check==="number"&&o.check>=0&&board[o.check]?sideOf(board[o.check]):null)}catch(e){}
@@ -1446,6 +1471,9 @@
       if(!ex.result&&mood){mood=null;endT=0;opp.setFace("smile");mate.setFace("smile")}}
     // ---------- 鏡頭與互動 ----------
     let yaw=0,pitch=0,tyaw=0,tpitch=0,zoom=1,tzoom=1,W=1,H=1,flatV=false;const BILLV=new T.Vector3();   // zoom＝鏡頭到棋盤中心的距離倍數（兩指捏合）
+    /* 11/11 手機預設視角（AI 模擬玩家第二輪問題 5：俯視時棋子、排距只有約 20px）：手機直式、玩家沒存過視角（opt.view 沒給）→ 一開始就是「俯視＋拉近」，
+       距離用 fitZoom 算到格距約 30px、棋盤框不出畫面；HOME＝點兩下回正要回到的樣子；玩家自己捏合／按 ＋－ 以後（userZ）就不再自動調距離 */
+    let HOME={p:0,z:1,fit:false},userZ=false;const HFIT=()=>MOB&&W<=560&&CAMV.hr>=1.05;
     // 鏡頭（iPhone 可讀性）：坐在桌前、比較俯視的角度，讓棋盤幾乎撐滿整個寬度；上方留一段看到對面的對手
     const VH0=window.innerHeight||800;   // 只在建立時量一次螢幕高度（iPhone 捲動時網址列伸縮不會讓畫面跳）
     const CAMV={hr:1.14,ht:(window.__CAM||{}).ht||.24,dp:0};   // 畫面高寬比、水平視角的 tan(半角)（固定水平視野，窄螢幕不會切掉棋盤兩邊）
@@ -1457,7 +1485,7 @@
       // 畫面被壓矮（比 1.14 扁）時：上下視角維持 1.14 的範圍、左右看得更廣，不會把對面和近端的小帥切掉（意見回饋：5:49 截圖）
       const vr=Math.max(CAMV.hr,1.14);CAMV.dp=Math.atan(CAMV.ht*1.14)-Math.atan(CAMV.ht*vr);H=Math.round(W*CAMV.hr);el.style.height=H+"px";rd.setSize(W,H,false);cam.aspect=W/H;
       cam.fov=clamp(2*Math.atan(CAMV.ht*vr)*180/PI,38,62);cam.updateProjectionMatrix();
-      {const nn=CAMV.hr>=1.24;if(nn!==capNear){capNear=nn;if(lastCapB)layoutCaptured(lastCapB)}}};
+      {const nn=CAMV.hr>=1.24;if(nn!==capNear){capNear=nn;if(lastCapB)layoutCaptured(lastCapB)}}if(HOME.fit)zfit()};
     const CO=window.__CAM||{},camBase=new T.Vector3(...(CO.b||[0,27,26])),look=new T.Vector3(...(CO.l||[0,-.3,-.4])),PIV=new T.Vector3(0,-.3,0);   /* 意見回饋 374：小帥坐到正對面，鏡頭往後、往上一點，從他背後看過去；406：座位抬高後鏡頭再拉高，小帥才不會擋到最下排 */
     // 拉近拉遠＝鏡頭沿著「棋盤中心→座位」這條線前後移動，看的方向不變
     /* 意見回饋 375：左右拖曳＝鏡頭繞著棋桌轉（轉到對面就看得到小帥的臉、背景一樣是一整圈），上下拖曳＝俯視的高低；不動的時候跟原本的畫面一樣 */
@@ -1487,11 +1515,31 @@
         for(const m of fades){const wp=m.getWorldPosition(FADEV),vx=wp.x-cam.position.x,vz=wp.z-cam.position.z,vd=Math.hypot(vx,vz)||1,dot=(vx*fx+vz*fz)/fd;
           const a=Math.acos(clamp(dot/vd,-1,1)),k=dot>fd*.7?smooth(.16,.36,a):1;m.material.opacity=.28+.72*k;m.material.depthWrite=k>.98}}};
     const ray=new T.Raycaster(),ndc=new T.Vector2(),plane=new T.Plane(new T.Vector3(0,1,0),-TOP),hitP=new T.Vector3();
-    const pick=(cx,cy)=>{const r=rd.domElement.getBoundingClientRect();ndc.set((cx-r.left)/r.width*2-1,-((cy-r.top)/r.height)*2+1);ray.setFromCamera(ndc,cam);
-      // 先看有沒有點到棋子（棋子比較高，從斜上方點比較準）
-      const hits=ray.intersectObjects(Object.values(pieces),true);if(hits.length){let o=hits[0].object;while(o.parent&&!o.userData.p)o=o.parent;const i=+Object.keys(pieces).find(k=>pieces[k]===o);if(i>=0)return i}
+    /* 11/11 點擊吸附（AI 模擬玩家第二輪問題 5：阿嬤點偏 4px 沒選到、阿哲點傌選到隔壁的俥）：
+       以前先用射線打棋子模型（棋子半徑 .485、鄰子只隔 .03，斜看時側面也算，手指偏幾 px 就打到隔壁那顆），沒打到再打棋盤面（高度是盤面、不是棋子頂面，點在棋子上緣會落到後一排的空點）。
+       現在改成在「畫面上」比距離：90 個交叉點投影到螢幕（有子的用棋子頂面中心），交給上面的 tapSnap 挑——沒選子吸己方棋子、選了子吸綠點；兩個一樣近就不猜（回 -2，畫面提示） */
+    const pickRay=()=>{const hits=ray.intersectObjects(Object.values(pieces),true);if(hits.length){let o=hits[0].object;while(o.parent&&!o.userData.p)o=o.parent;const i=+Object.keys(pieces).find(k=>pieces[k]===o);if(i>=0)return i}
       if(!ray.ray.intersectPlane(plane,hitP))return -1;let c=Math.round(hitP.x+4),r2=Math.round(hitP.z+4.5);if(Math.abs(hitP.x+4-c)>.48||Math.abs(hitP.z+4.5-r2)>.48)return -1;
       if(c<0||c>8||r2<0||r2>9)return -1;if(flip){c=8-c;r2=9-r2}return r2*9+c};
+    let tapAmb=null;const SV=new T.Vector3();
+    const pick=(cx,cy)=>{const r=rd.domElement.getBoundingClientRect();ndc.set((cx-r.left)/r.width*2-1,-((cy-r.top)/r.height)*2+1);ray.setFromCamera(ndc,cam);tapAmb=null;
+      const B=SNAP.b;if(!B||!r.width)return pickRay();
+      const prj=(x,y,z)=>{SV.set(x,y,z).project(cam);return[(SV.x+1)/2*r.width,(1-SV.y)/2*r.height]},tg=new Set(SNAP.t),P=[];
+      for(let i=0;i<90;i++){const[x,z]=pos(i),g=pieces[i],y=g?g.position.y+.27:TOP,q=prj(x,y,z);if(SV.z>1)continue;const qx=prj(x+1,y,z),qz=prj(x,y,z+1);
+        const own=!!B[i]&&sideOf(B[i])===SNAP.me,t=selI>=0&&tg.has(i);
+        P.push({i,x:q[0],y:q[1],s:Math.max(4,Math.min(Math.hypot(qx[0]-q[0],qx[1]-q[1]),Math.hypot(qz[0]-q[0],qz[1]-q[1]))),occ:!!B[i],c:own||t,w:t?.9:1})}
+      const o=tapSnap(P,cx-r.left,cy-r.top,{r:28});if(o.amb){tapAmb=o.amb;return -2}return o.i};
+    /* 兩個一樣近：不選，閃一下那兩個位置＋一行字，請玩家點準一點 */
+    let ambTip=null,ambT=0;const showAmb=a=>{try{for(const i of a){const m=ring(i,0xF2B233,.58,.1,.95);setTimeout(()=>{if(m.parent)m.parent.remove(m)},1300)}
+      if(!ambTip){ambTip=document.createElement("div");ambTip.setAttribute("role","status");ambTip.style.cssText="position:absolute;left:50%;top:40%;transform:translate(-50%,-50%);z-index:5;font:700 14px/1.4 system-ui,sans-serif;color:#3a2618;background:rgba(255,250,240,.95);border:1.5px solid #c8961e;border-radius:10px;padding:7px 12px;white-space:nowrap;pointer-events:none;transition:opacity .35s;opacity:0";el.append(ambTip)}
+      ambTip.textContent="兩個位置一樣近，請點準一點";ambTip.style.opacity=1;clearTimeout(ambT);ambT=setTimeout(()=>{if(ambTip)ambTip.style.opacity=0},1600)}catch(e){}};
+    /* 11/11 手機預設視角：暫時把鏡頭擺到俯視（pitch .5）、試不同距離去量棋盤框和格距（boardMeas／fitZoom），量完放回原位；格距目標 30px、最近拉到 .45 倍 */
+    const zFitCalc=()=>{if(!HFIT())return 1;const y0=yaw,p0=pitch,z0=zoom,V=new T.Vector3();let r=1;
+      try{const prj=(x,y,z)=>{V.set(x,y,z).project(cam);return[(V.x+1)/2*W,(1-V.y)/2*H]};
+        r=fitZoom(z=>{yaw=0;pitch=.5;zoom=z;placeCam();cam.updateMatrixWorld();return boardMeas(prj,W,H,{bw:BW,bh:BH,top:TOP,ph:.27})},.45,1,30)}catch(e){r=1}
+      yaw=y0;pitch=p0;zoom=z0;placeCam();cam.updateMatrixWorld();return r};
+    const zfit=()=>{const was=HOME.z,z=zFitCalc();HOME={p:.5,z,fit:true};if(!userZ&&!tyaw&&tpitch===.5&&Math.abs(tzoom-was)<1e-6)tzoom=z};   /* 畫面大小變了（轉向、網址列）：還在預設視角、沒自己縮放過，就跟著重算 */
+    const goTopFit=now=>{zfit();tyaw=0;tpitch=.5;tzoom=HOME.z;userZ=false;flatV=false;mate.g.visible=true;if(now){yaw=0;pitch=.5;zoom=HOME.z;placeCam()}};
     // 意見回饋 240：點到物件（樹、桌子、茶杯、長椅、凳子、燈籠、對手、遠方背景）就回報是什麼，App 跳出說明
     /* 意見回饋 277：用 128 格的透明度圖，看點的位置附近 r 格內最不透明的值（手指不用剛好點在細細的椅背、樹枝上） */
     const AC=new Map(),AS=128,alphaAt=(im,u,v,r)=>{let a=AC.get(im);if(!a){const c=document.createElement("canvas");c.width=AS;c.height=AS;const g=c.getContext("2d");
@@ -1528,26 +1576,26 @@
       for(const[t,f,l]of[["＋",.8,"放大"],["－",1.25,"縮小"]]){const b=document.createElement("button");b.type="button";b.textContent=t;b.setAttribute("aria-label",l);
         b.style.cssText="width:34px;height:34px;border-radius:50%;border:1px solid rgba(0,0,0,.18);background:rgba(255,255,255,.82);color:#3a2a1c;font:700 20px/1 system-ui;box-shadow:0 1px 4px rgba(0,0,0,.2);padding:0;cursor:pointer";
         b.addEventListener("pointerdown",e=>e.stopPropagation());b.addEventListener("pointerup",e=>e.stopPropagation());
-        b.onclick=e=>{e.stopPropagation();tzoom=clamp(tzoom*f,ZMIN,ZMAX)};zb.append(b)}
+        b.onclick=e=>{e.stopPropagation();userZ=true;tzoom=clamp(tzoom*f,ZMIN,ZMAX)};zb.append(b)}
       el.append(zb)}
-    const reset=()=>{yaw-=Math.round(yaw/TAU)*TAU;tyaw=0;tpitch=0;tzoom=1};   // 轉了好幾圈也走最近的路回正
+    const reset=()=>{yaw-=Math.round(yaw/TAU)*TAU;tyaw=0;tpitch=HOME.p;tzoom=HOME.z;userZ=false};   // 轉了好幾圈也走最近的路回正
     const spread=()=>{const a=[...ptrs.values()];return Math.max(20,Math.hypot(a[0].x-a[1].x,a[0].y-a[1].y))};
     cvs.addEventListener("pointerdown",e=>{ptrs.set(e.pointerId,{x:e.clientX,y:e.clientY});try{cvs.setPointerCapture(e.pointerId)}catch(_){}
       if(ptrs.size>=2){if(!pinch)pinch={d:spread(),z:tzoom};down=null;lastTap=0;return}
       down={x:e.clientX,y:e.clientY,t:performance.now(),y0:tyaw,p0:tpitch,moved:false}});
     cvs.addEventListener("pointermove",e=>{const pt=ptrs.get(e.pointerId);if(pt){pt.x=e.clientX;pt.y=e.clientY}
-      if(pinch){if(ptrs.size>=2)tzoom=clamp(pinch.z*pinch.d/spread(),ZMIN,ZMAX);return}
+      if(pinch){if(ptrs.size>=2){tzoom=clamp(pinch.z*pinch.d/spread(),ZMIN,ZMAX);userZ=true}return}
       if(!down)return;const dx=e.clientX-down.x,dy=e.clientY-down.y;if(Math.hypot(dx,dy)>9)down.moved=true;
       if(down.moved){const y=down.y0-dx/W*1.6;tyaw=FULL?y:clamp(y,-1.2,1.2);tpitch=clamp(down.p0+dy/H*1.6,-1.0,.5)}});
     const up=e=>{ptrs.delete(e.pointerId);
       // 捏合結束：剩下那根手指接著拖曳轉頭（從現在的位置開始算，不會跳），放開也不算點擊
       if(pinch){if(ptrs.size<2){pinch=null;const p=[...ptrs.values()][0];down=p?{x:p.x,y:p.y,t:performance.now(),y0:tyaw,p0:tpitch,moved:true}:null}return}
       if(!down)return;const d=down;down=null;if(d.moved)return;const now=performance.now();
-      if(now-lastTap<320&&(tyaw||tpitch||tzoom!==1)){reset();lastTap=0;return}lastTap=now;const i=pick(e.clientX,e.clientY);if(i>=0){if(opt.onTap)opt.onTap(i);return}
+      if(now-lastTap<320&&(tyaw||tpitch!==HOME.p||tzoom!==HOME.z)){reset();lastTap=0;return}lastTap=now;const i=pick(e.clientX,e.clientY);if(i===-2){if(tapAmb)showAmb(tapAmb);return}if(i>=0){if(opt.onTap)opt.onTap(i);return}
       if(opt.onInfo){const k=infoPick();if(k)opt.onInfo(k)}};
     cvs.addEventListener("pointerup",up);cvs.addEventListener("pointercancel",e=>{ptrs.delete(e.pointerId);if(ptrs.size<2)pinch=null;down=null});
     // 觸控板捏合（瀏覽器送 ctrl＋滾輪）也能縮放；iOS Safari 的 gesture 事件擋掉，免得整頁被放大
-    cvs.addEventListener("wheel",e=>{if(!e.ctrlKey)return;e.preventDefault();tzoom=clamp(tzoom*Math.exp(e.deltaY*.01),ZMIN,ZMAX)},{passive:false});
+    cvs.addEventListener("wheel",e=>{if(!e.ctrlKey)return;e.preventDefault();userZ=true;tzoom=clamp(tzoom*Math.exp(e.deltaY*.01),ZMIN,ZMAX)},{passive:false});
     for(const ev of["gesturestart","gesturechange"])el.addEventListener(ev,e=>e.preventDefault(),{passive:false});
     // ---------- 動畫迴圈 ----------
     let stopped=false,last=performance.now(),roomN=0;
@@ -1666,7 +1714,13 @@
     let drawn=false,shown=false;const t0=performance.now();rd.domElement.style.opacity=0;rd.domElement.style.transition="opacity .35s";
     const shownCb=[];const reveal=()=>{if(shown)return;shown=true;rd.domElement.style.opacity=1;veil.style.opacity=0;setTimeout(()=>veil.remove(),400);if(veil._qmin){hint.style.opacity=1;setTimeout(()=>hint.style.opacity=0,4500)}shownCb.splice(0).forEach(f=>{try{f()}catch(e){}})};
     const waitShow=()=>{if(stopped||shown)return;const mn=veil._qskip?1200:Math.max(1200,veil._qmin||0),dt=performance.now()-t0;if((drawn&&!inflight.size&&dt>mn)||dt>Math.max(6000,veil._qskip?0:mn+2000)){requestAnimationFrame(()=>requestAnimationFrame(reveal));return}setTimeout(waitShow,80)};
-    fit();placeCam();requestAnimationFrame(frame);setTimeout(waitShow,80);
+    /* 視角：俯視 top、平視 flat、數字＝俯角；11/11 新增 topfit＝俯視＋拉近到格距約 30px（只在手機直式；其他裝置等於 top）。
+       top／flat 跟以前一樣（距離 1 倍、點兩下回到坐著看的角度），玩家存過的視角照舊；topfit 點兩下回到 topfit */
+    const setViewF=m=>{if(m==="topfit"&&HFIT()){goTopFit(false);return}const k=m==="topfit"?"top":m;
+      tyaw=k==="flat"?.56:0;tpitch=typeof k==="number"?k:k==="top"?.5:k==="flat"?-.22:0;tzoom=1;flatV=false;mate.g.visible=true;HOME={p:0,z:1,fit:false};userZ=false};
+    fit();placeCam();
+    try{if(opt.view)setViewF(opt.view);else if(HFIT())goTopFit(true)}catch(e){}   /* opt.view＝玩家存過的視角（06-cpu 傳 store parkView）；沒存過的手機直式＝topfit */
+    requestAnimationFrame(frame);setTimeout(waitShow,80);
     const onRs=()=>{if(el.style.display!=="none")fit()};window.addEventListener("resize",onRs);
     function destroy(){if(stopped)return;stopped=true;try{if(WX)WX.dispose()}catch(e){}WX=null;window.removeEventListener("resize",onRs);
       try{sc.traverse(o=>{const ms=o.material?(Array.isArray(o.material)?o.material:[o.material]):[];for(const m of ms){if(m&&m.map)freeTex(m.map);m&&m.dispose&&m.dispose()}if(o.geometry)o.geometry.dispose()});for(const k in faceCache){freeTex(faceCache[k]);delete faceCache[k]}}catch(e){}
@@ -1674,6 +1728,6 @@
     // 意見回饋 244：切回平面棋盤時只藏起來、暫停繪製（不拆掉 3D 場景），再切回公園就直接顯示，不用重新載入
     /* 意見回饋 370：棋盤格 → 螢幕座標（App 的吃子水墨圈畫在公園棋盤的那一格上） */
     const screenOf=i=>{try{const[x,z]=pos(i),v=new T.Vector3(x,TOP,z).project(cam),r=el.getBoundingClientRect();if(!r.width)return null;return{x:r.left+(v.x+1)/2*r.width,y:r.top+(1-v.y)/2*r.height}}catch(e){return null}};
-    return{el,draw,destroy,say,screenOf,whenShown(f){if(shown)f();else shownCb.push(f)},oppSay:(t,d)=>opp.say(t,d),resetView(){reset()},setView(m){tyaw=m==="flat"?.56:0;tpitch=typeof m==="number"?m:m==="top"?.5:m==="flat"?-.22:0;tzoom=1;flatV=false;mate.g.visible=true},   /* 意見回饋 481（開發者：平視看不到小帥）：平視改成從小帥右肩後面斜著看——小帥在畫面左下、不擋棋盤 */   /* 平視＝從小帥的眼睛看出去（小帥先藏起來，不會擋住棋盤） */   /* 意見回饋 430：平視原本 -.85，鏡頭跑到小帥背後被擋住，改成 -.22 */hide(){el.style.display="none"},show(){if(el.style.display==="none"){el.style.display="";fit()}}}}
+    return{el,draw,destroy,say,screenOf,whenShown(f){if(shown)f();else shownCb.push(f)},oppSay:(t,d)=>opp.say(t,d),resetView(){reset()},setView:setViewF,homeView:()=>HOME.fit?"topfit":"",   /* 意見回饋 481（開發者：平視看不到小帥）：平視改成從小帥右肩後面斜著看——小帥在畫面左下、不擋棋盤 */   /* 平視＝從小帥的眼睛看出去（小帥先藏起來，不會擋住棋盤） */   /* 意見回饋 430：平視原本 -.85，鏡頭跑到小帥背後被擋住，改成 -.22 */hide(){el.style.display="none"},show(){if(el.style.display==="none"){el.style.display="";fit()}}}}
   window.XQPark3D={create};
 })();

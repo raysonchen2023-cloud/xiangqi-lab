@@ -98,8 +98,19 @@ var XQ=(function(){
      存檔時一起寄進對局紀錄，我的戰績算棋力、成長時把這種盤排除，才公平；舊存檔沒有這兩欄就照算 */
   const assist=G=>({...(G&&G.hintN?{hintN:G.hintN}:{}),...(G&&G.undoN?{undoN:G.undoN}:{})});
   const keepStart=G=>({...(G&&G.start?{start:G.start,startTurn:G.startTurn||"r"}:{}),...(G&&G.noPerp?{noPerp:true}:{}),...(G&&G.styleOn!=null?{styleOn:G.styleOn}:{})});   /* 對局中途可接續（開發者 11/9）：殘局起手、讓子的關（start）關掉 App 再打開或收起來再拿出來，要從同一個起始局面重建，不然盤面會錯 */
-  const savePlay=()=>ls.set("play",{id:P.id,human:P.human,level:P.level,rlv:P.rlv==null?null:P.rlv,ranked:!!P.ranked,reward:!!P.reward,arena:P.arena||null,journey:P.journey||null,stamp:P.stamp||null,prize:P.prize||null,rk:P.rk,rate:P.rate||null,result:P.result,practice:P.practice||null,...assist(P),...keepStart(P),moves:saveMoves(P.moves)});
+  const savePlay=()=>P&&ls.set("play",{id:P.id,human:P.human,level:P.level,rlv:P.rlv==null?null:P.rlv,ranked:!!P.ranked,reward:!!P.reward,arena:P.arena||null,journey:P.journey||null,stamp:P.stamp||null,prize:P.prize||null,rk:P.rk,rate:P.rate||null,result:P.result,practice:P.practice||null,...assist(P),...keepStart(P),moves:saveMoves(P.moves)});
   function ensureP(){if(P)return;const s=ls.get("play",null);if(s&&s.moves){P=s;P.hint=null;stateRebuild(P)}else playNew("r",3);setTimeout(playEngine,0)}
+  /* ---------- 多分頁（11/11 AI 模擬玩家第二輪問題 1）----------
+     桌上那盤 P 每個分頁各在記憶體裡留一份，原本只在第一次用到時讀 xq_play；兩個分頁同時開著時，各自 savePlay 都整盤寫回去，後寫的贏：
+     另一邊剛下的步、剛開的新局、剛收進 play2 的那盤會被舊的蓋掉（電腦那一方兩邊都會算，連沒在看的分頁也會落子寫回）。
+     改成：別的分頁改了 xq_play（瀏覽器的 storage 事件只送給「其他」分頁），這邊就丟掉記憶體裡那份，下一次 API 用到時 ensureP 重讀最新的；
+     正在算的電腦著法回來時 P 已經換掉，playEngine 本來就會丟掉。對局 id 變了（另一個分頁開了別盤）再發 xq-play-other，畫面提示「另一個分頁也開著」。
+     play2、戰績、積分本來每次都重讀 localStorage，不受影響 */
+  function playSync(e){if(!e||(e.key!=="xq_play"&&e.key!==null))return;if(e.storageArea&&typeof localStorage!=="undefined"&&e.storageArea!==localStorage)return;
+    let id=null;try{const v=e.newValue==null?null:JSON.parse(e.newValue);id=v&&v.id||null}catch(x){}const was=P&&P.id;P=null;
+    if(was&&id!==was)try{window.dispatchEvent(new CustomEvent("xq-play-other",{detail:{id,was}}))}catch(x){}}
+  try{addEventListener("storage",playSync)}catch(e){}
+  /* ---------- 多分頁：以上 ---------- */
   // pre：錯棋重練，先擺上舊對局到錯棋之前的著法（moves），info 記上次走了什麼
   // arena：公園朝代擂台（意見回饋 255）＝這盤是挑戰哪個朝代的擂主；贏了蓋那個朝代的章
   /* 意見回饋 308：挑戰電腦和朝代擂台各留一盤——開另一種棋時，下到一半的這盤先收到 play2，之後可以換回來接著下 */
@@ -155,7 +166,7 @@ var XQ=(function(){
     else if(kindOf(P)==="cpu"&&!/-b$/.test(String(P.id))){const rec=ls.get("record",{}),L=rec[P.level]||(rec[P.level]={w:0,l:0,d:0});L[res]++;ls.set("record",rec)}
     /* 意見回饋 594：石桌往事從中局開始的關也存（記起始局面），我的成長才算得到故事裡下的棋 */
     pushGame("play",{id:P.id,date:P.id.slice(0,10),level:P.level,ranked:!!P.ranked,reward:!!P.reward,rk:P.rk,human:P.human,result:P.result,...(P.start?{start:P.start,startTurn:P.startTurn||"r"}:{}),...(P.journey?{journey:P.journey}:{}),...assist(P),moves:saveMoves(P.moves)});savePlay()}
-  async function analyzePlay(){if(paBusy||!P)return;paBusy=true;const S=P;try{await analyzeList(P,savePlay,()=>!!P&&!P.result&&P.turn!==P.human)}finally{paBusy=false}
+  async function analyzePlay(){if(paBusy||!P)return;paBusy=true;const S=P;try{await analyzeList(S,()=>{if(P===S)savePlay()},()=>P!==S||(!P.result&&P.turn!==P.human))}finally{paBusy=false}   /* 多分頁：另一個分頁改了桌上那盤（playSync 把 P 換掉）就停下、不把舊的那份寫回去 */
     /* ChatGPT 評審 11/11（未評完的狀態）：下完的那盤，背景評好的補進存檔（gamePatch）；還有缺 PV 沒評到的，5 秒後再評，同一盤最多再試 3 次 */
     if(S&&S.result&&!S.practice&&S.id){gamePatch("play",S.id,movesG(S.moves));if(S===P&&S.moves.some(m=>!m.q)&&(paRetry[S.id]=(paRetry[S.id]||0)+1)<=3)setTimeout(analyzePlay,5000)}}
   const paRetry={};

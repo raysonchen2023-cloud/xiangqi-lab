@@ -11,9 +11,12 @@
     s.onload=()=>{try{conv=cn?OpenCC.Converter({from:"tw",to:"cn"}):OpenCC.Converter({from:"cn",to:"tw"});ok()}catch(e){no(e)}};s.onerror=no;document.head.append(s)}));
   const SKIP=/^(SCRIPT|STYLE|TEXTAREA|INPUT|SELECT|CODE|CANVAS|SVG)$/i,ATTR=["placeholder","title","aria-label"];
   const need=t=>t&&CJK.test(t)&&(mode()==="cn"||hasSimp(t));
-  const fixText=n=>{const t=n.nodeValue;if(!need(t))return;if(!conv){pend.add(n);kick();return}const c=conv(t);if(c!==t)n.nodeValue=c};
+  /* 評比循環第 1 輪（AI 模擬玩家第二輪問題 9：時辰盤「丑」變「醜」、秦站「咸陽」變「鹹陽」）：OpenCC 簡→繁會把本來就是繁體的「丑」轉成「醜」、「咸」轉成「鹹」
+     （opencc-cn2t.js 實測 conv("丑")＝醜、conv("咸陽")＝鹹陽）。繁體模式只該動純簡體字，所以轉完長度沒變時，原文是「丑」「咸」的位置一律放回原字 */
+  const KEEP=new Set("丑咸"),tw=(t,c)=>{if(mode()==="cn"||c.length!==t.length)return c;let o="";for(let i=0;i<t.length;i++)o+=KEEP.has(t[i])?t[i]:c[i];return o};
+  const fixText=n=>{const t=n.nodeValue;if(!need(t))return;if(!conv){pend.add(n);kick();return}const c=tw(t,conv(t));if(c!==t)n.nodeValue=c};
   const walk=n=>{if(n.nodeType===3)return fixText(n);if(n.nodeType!==1||SKIP.test(n.nodeName)||(n.closest&&n.closest("[data-nocc]")))return;
-    for(const a of ATTR){const v=n.getAttribute&&n.getAttribute(a);if(v&&need(v)){if(!conv){pend.add(n);kick()}else{const c=conv(v);if(c!==v)n.setAttribute(a,c)}}}
+    for(const a of ATTR){const v=n.getAttribute&&n.getAttribute(a);if(v&&need(v)){if(!conv){pend.add(n);kick()}else{const c=tw(v,conv(v));if(c!==v)n.setAttribute(a,c)}}}
     for(let c=n.firstChild;c;c=c.nextSibling)walk(c)};
   const pend=new Set();let kicked=false;
   const kick=()=>{if(kicked)return;kicked=true;load().then(()=>{const L=[...pend];pend.clear();for(const n of L)if(n.isConnected)walk(n);if(mode()==="cn")walk(document.body)}).catch(()=>{kicked=false})};
