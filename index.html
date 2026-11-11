@@ -1379,7 +1379,7 @@ html[data-hicon] .tabbar button.on{box-shadow:inset 0 -3px 0 currentColor}
       if(!window.caches)return go();caches.keys().then(function(ks){return Promise.all(ks.filter(function(k){return k.indexOf("xqlab-app-")===0}).map(function(k){return caches.delete(k)}))})
         .then(function(){return navigator.serviceWorker&&navigator.serviceWorker.getRegistration()}).then(function(r){return r&&r.update()}).catch(function(){}).then(go)}};setTimeout(chk,4000)})();
 </script>
-<script>window.XQ_OFFLINE=true;window.XQ_BUILD="20261111-0515";</script>
+<script>window.XQ_OFFLINE=true;window.XQ_BUILD="20261111-0530";</script>
 <script src="core.js"></script>
 <script src="engine.js"></script>
 <script src="local.js"></script>
@@ -3753,13 +3753,19 @@ async function fillGrades(b0,mv,side){const C=window.XQCore;if(!C)return 0;let b
   for(let i=0;i<mv.length;i++){const m=mv[i];if(!(m.q&&m.q!=="—")){try{keys.push(C.fen(b,m.by)+"|"+C.iccs(m.f,m.t));idx.push(i)}catch(e){}}try{b=C.make(b,m.f,m.t)}catch(e){break}}
   if(keys.length){let r={};try{r=(await api("/an/lookup",{grade:keys})).grade||{}}catch(e){}keys.forEach((k,j)=>{const g=r[k];if(g&&g.q)Object.assign(mv[idx[j]],g)})}
   return mv.filter(m=>m.by===side&&!(m.q&&m.q!=="—")).length}
-let TALENT_BG=false;
-async function talentBackfill(box,pend){if(TALENT_BG||!pend.length)return;TALENT_BG=true;const C=window.XQCore;const todo=pend.sort((a,b)=>b.t-a.t).slice(0,3);
-  const total=todo.reduce((a,x)=>a+x.mv.filter(m=>m.by===x.side&&!(m.q&&m.q!=="—")).length,0);let n=0;
+/* 開發者 11/11 錄影「頁面一直跳動」：有些步評等算不出結果（記成「—」，例如已經將死的局面），原本仍算「沒評過」，評完重畫→又看到沒評→再評，無限循環，
+   每次重畫都把整頁（含「詳細數字」）重來一次。改成：這次開 App 期間試過的步不再重試；沒有新的評等結果就不重畫；沒有要評的就不顯示進度列 */
+let TALENT_BG=false;const TALENT_TRIED=new Set();
+async function talentBackfill(box,pend){if(TALENT_BG||!pend.length)return;const C=window.XQCore;
+  const key=(x,i)=>(x.t||0)+"|"+i,left=x=>x.mv.filter((m,i)=>m.by===x.side&&!(m.q&&m.q!=="—")&&!TALENT_TRIED.has(key(x,i))).length;
+  const todo=pend.filter(x=>left(x)>0).sort((a,b)=>b.t-a.t).slice(0,3);if(!todo.length)return;TALENT_BG=true;
+  const total=todo.reduce((a,x)=>a+left(x),0);let n=0,got=0;
   const bar=document.createElement("div");bar.className="card muted";bar.style.cssText="margin-top:4px;font-size:13px";const up=()=>{bar.textContent=`🧬 正在幫最近 ${todo.length} 盤棋評等（${n}／${total} 步），評好會自動更新`};up();if(box.isConnected)box.prepend(bar);
-  try{for(const x of todo){let b=x.b0.slice();for(const m of x.mv){if(!box.isConnected)return;if(m.by===x.side&&!(m.q&&m.q!=="—")){try{const g=await api("/an/classify",{board:b,side:m.by,f:m.f,t:m.t});if(g)Object.assign(m,g)}catch(e){}n++;up()}b=C.make(b,m.f,m.t)}}}
+  try{for(const x of todo){let b=x.b0.slice();for(let i=0;i<x.mv.length;i++){const m=x.mv[i];if(!box.isConnected)return;
+    if(m.by===x.side&&!(m.q&&m.q!=="—")&&!TALENT_TRIED.has(key(x,i))){TALENT_TRIED.add(key(x,i));try{const g=await api("/an/classify",{board:b,side:m.by,f:m.f,t:m.t});if(g){Object.assign(m,g);if(g.q&&g.q!=="—")got++}}catch(e){}n++;up()}
+    b=C.make(b,m.f,m.t)}}}
   finally{TALENT_BG=false;bar.remove()}
-  if(box.isConnected)talentReport(box)}
+  if(got&&box.isConnected)talentReport(box)}
 /* 意見回饋 339：天賦加一項「改錯力」——錯棋重練時找到 Pikafish 最好那步（正著、妙著）的比例；
    題數少的時候往中間值（50）拉一點，不會練一題就 0 分或 100 分 */
 function redoPower(){const D=Object.values(store.get("redoDone",{})).filter(d=>d&&d.n>0);if(!D.length)return null;
