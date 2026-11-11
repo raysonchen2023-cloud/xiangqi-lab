@@ -28,7 +28,35 @@
   const fitZoom=(meas,lo,hi,want)=>{const ok=z=>{const m=meas(z);return m.fit&&m.sp<=want};if(ok(lo))return lo;if(!ok(hi))return hi;
     for(let k=0;k<22;k++){const m=(lo+hi)/2;if(ok(m))hi=m;else lo=m}return hi};
   /*}TAPSNAP*/
+  /*PKPOWER{ 11/11 入座運鏡＋省電模式（評比第 2 輪：Gemini「手機預設視角找回敘事沉浸感」、ChatGPT「效能、耗電與低負載模式證據」）。
+     這一段只放純函式（不碰 three.js、DOM），tools/test-park3d-power.js 照 PKPOWER 標記抽出來單獨測。
+     introK(ms,hold,dur)：入座運鏡的進度，0＝坐著看（看得到對面的人和小帥）、1＝topfit；前 hold 毫秒（預設 1800）停住，之後 dur 毫秒（預設 800）ease 過去
+     pwDecide(mode,s)：mode＝auto／on／off；s＝{bat:{charging,level}或 null, saveData, mem（GB，0＝不知道）, cores, mob（手機）, lowFps}；回 {on, why:[原因]}
+       自動開省電：沒在充電而且電量低於 20%、數據節省、手機記憶體 2GB 以下、手機處理器 4 核以下（Safari 不報記憶體、核數又是粗估，只有 2 核以下才算）、量到畫面偏慢
+     pwGap(on,act,idle)：距離上一格至少隔幾毫秒才畫下一格：沒省電＝0（每格都畫）；省電但畫面在動（拖曳、走子、運鏡、說話）＝0；閒置 3 秒內＝100（每秒 10 格）；閒置更久＝500（每秒 2 格，只為了收掉泡泡、換表情）
+     pwDue(now,lastR,gap)：這一格該不該畫（留 8ms 寬限，60Hz 螢幕上 100ms 才會剛好落在第 6 格）
+     fpsWin(w,now)：每畫一格呼叫一次，滿 5 秒回平均每秒幾格（不滿回 null）；兩格之間隔超過 1 秒（切走、藏起來）就重新量
+     pfAdd(q,sec,f,r,i)／pfSum(q,sec)：近 10 秒的計數（每秒一格：f＝迴圈跑幾次、r＝畫了幾次、i＝其中閒置時畫的）；pfSum 只算已經過完的秒 */
+  const introK=(ms,hold,dur)=>{hold=hold==null?1800:hold;dur=dur||800;if(!(ms>hold))return 0;const p=Math.min(1,(ms-hold)/dur);return p<.5?2*p*p:1-Math.pow(-2*p+2,2)/2};
+  const pwDecide=(mode,s)=>{s=s||{};if(mode==="on")return{on:true,why:["手動開"]};if(mode==="off")return{on:false,why:["手動關"]};const w=[];
+    if(s.bat&&!s.bat.charging&&s.bat.level<.2)w.push("電量低於 20%");if(s.saveData)w.push("數據節省");
+    if(s.mob&&s.mem>0&&s.mem<=2)w.push("記憶體 "+s.mem+"GB");if(s.mob&&s.cores>0&&(s.cores<=2||(s.cores<=4&&s.mem>0)))w.push("處理器 "+s.cores+" 核");
+    if(s.lowFps)w.push("畫面偏慢");return{on:w.length>0,why:w}};
+  const pwGap=(on,act,idle)=>!on||act?0:idle<3000?100:500;
+  const pwDue=(now,lastR,gap)=>!gap||now-lastR>=gap-8;
+  const fpsWin=(w,now)=>{if(!w.t0||now-w.lp>1000){w.t0=now;w.lp=now;w.n=0;return null}w.n++;w.lp=now;const el=now-w.t0;if(el>=5000){const a=w.n*1000/el;w.t0=now;w.n=0;return a}return null};
+  const pfAdd=(q,sec,f,r,i)=>{let b=q[q.length-1];if(!b||b.s!==sec){b={s:sec,f:0,r:0,i:0};q.push(b);while(q.length&&q[0].s<sec-10)q.shift()}b.f+=f;b.r+=r;b.i+=i;return q};
+  const pfSum=(q,sec)=>{let f=0,r=0,i=0,lo=sec;for(const b of q)if(b.s<sec&&b.s>=sec-10){f+=b.f;r+=b.r;i+=b.i;if(b.s<lo)lo=b.s}const n=Math.max(1,sec-lo);return{fps:Math.round(r/n*10)/10,frames:f,renders:r,idle:i,span:n}};
+  /*}PKPOWER*/
   const T=window.THREE;if(!T)return;
+  /* 11/11 入座運鏡、省電模式的共用狀態（App 開著就一直在）：INTRO_SEEN＝播過入座運鏡的那幾盤；PWS＝電池、畫面偏慢；PF＝最近一座園子的效能計數（window.__PK.perf、設定頁那一行讀它） */
+  const INTRO_SEEN=new Set(),PWS={bat:null,lowFps:false,batGo:false};
+  try{const t=+localStorage.getItem("xq_pkLowFps")||0;if(t&&Date.now()-t<3*864e5)PWS.lowFps=true}catch(e){}   /* 量到畫面偏慢記 3 天：下次進園子一開始就省電（連抗鋸齒都不開） */
+  const PF={live:false,fps:0,frames:0,renders:0,idle:0,span:0,power:false,why:[],mode:"auto",aa:true,pr:1,lowFps:PWS.lowFps};
+  try{(window.__PK=window.__PK||{}).perf=PF}catch(e){}
+  const pwMode=()=>{try{const v=JSON.parse(localStorage.getItem("m_pkPower")||'"auto"');return v==="on"||v==="off"?v:"auto"}catch(e){return"auto"}};   /* 設定 → 棋盤 → 更多設定「🔋 省電模式」（06-cpu pkPwRow，store pkPower） */
+  const pwSig=()=>{const n=window.navigator||{},c=n.connection||{},mob=(()=>{try{return matchMedia("(pointer:coarse)").matches}catch(e){return false}})();return{bat:PWS.bat,saveData:!!c.saveData,mem:+n.deviceMemory||0,cores:+n.hardwareConcurrency||0,mob,lowFps:PWS.lowFps}};
+  const pwBat=()=>{if(PWS.batGo)return;PWS.batGo=true;try{if(navigator.getBattery)navigator.getBattery().then(b=>{const u=()=>{PWS.bat={charging:!!b.charging,level:+b.level}};u();b.addEventListener("chargingchange",u);b.addEventListener("levelchange",u)}).catch(()=>{})}catch(e){}};
   const PI=Math.PI,TAU=PI*2,ease=p=>p<.5?2*p*p:1-Math.pow(-2*p+2,2)/2,clamp=(v,a,b)=>Math.max(a,Math.min(b,v));
   const NAMES={r:{K:"帥",A:"仕",B:"相",N:"傌",R:"俥",C:"炮",P:"兵"},b:{K:"將",A:"士",B:"象",N:"馬",R:"車",C:"砲",P:"卒"}};
   const sideOf=p=>p===p.toUpperCase()?"r":"b";
@@ -912,8 +940,12 @@
   function create(host,opt){opt=opt||{};
     const el=document.createElement("div");el.className="park3d";el.style.cssText="position:relative;width:100%;border-radius:14px;overflow:hidden;touch-action:none;-webkit-user-select:none;user-select:none;background:#A9CBE8";
     host.append(el);
-    let rd;try{rd=new T.WebGLRenderer({antialias:true,powerPreference:"high-performance"})}catch(e){el.remove();return null}
-    rd.setPixelRatio(Math.min(2,window.devicePixelRatio||1));rd.shadowMap.enabled=true;rd.shadowMap.type=T.PCFSoftShadowMap;
+    /* 11/11 省電模式：建園子當下就判斷一次（電池要等非同步結果，之後每秒重判）；省電時抗鋸齒不開、畫素比最多 1、太陽不投影 */
+    pwBat();const PW0=pwDecide(pwMode(),pwSig()),PW={on:PW0.on,s0:performance.now()/1000,dirty:0,lastR:0,lastAct:0,fw:{t0:0,n:0,lp:0},low:0,q:[],sec:0,shownAt:0};
+    const pwPoke=ms=>{PW.dirty=Math.max(PW.dirty,performance.now()+ms)},pwT=()=>PW.on?PW.s0*1000:performance.now();   /* pwT：省電時飄雲、香爐煙、懸浮畫卷、幻影呼吸的時間停住 */
+    let rd;try{rd=new T.WebGLRenderer({antialias:!PW0.on,powerPreference:PW0.on?"low-power":"high-performance"})}catch(e){el.remove();return null}
+    PF.aa=!PW0.on;PF.power=PW0.on;PF.why=PW0.why;PF.mode=pwMode();
+    rd.setPixelRatio(Math.min(PW0.on?1:2,window.devicePixelRatio||1));rd.shadowMap.enabled=true;rd.shadowMap.type=T.PCFSoftShadowMap;
     // 正確的色彩管理：顏色碼當螢幕色（跟 car3d 一樣）、輸出 sRGB；之前整個場景在 gamma 空間打光＋ACES，顏色被洗白
     if(T.ColorManagement)T.ColorManagement.legacyMode=false;if(T.sRGBEncoding!=null)rd.outputEncoding=T.sRGBEncoding;if(T.SRGBColorSpace)rd.outputColorSpace=T.SRGBColorSpace;
     rd.toneMapping=T.ACESFilmicToneMapping;rd.toneMappingExposure=.98;try{ANI=rd.capabilities.getMaxAnisotropy()||8}catch(e){}
@@ -997,10 +1029,10 @@
     let WX=null,CANO=null,MAPL=null,PANM=null,PANDH=0,PANROT=0,PSPOTS=null,MAPM=null,HILL=null,lastKf=-1,MAPO=[],MAPOK="",MAPP=null,MAPMN=0,RON=(()=>{try{return JSON.parse(localStorage.getItem("m_eramapRealm")||"true")!==false}catch(e){return true}})();   /* 地圖上的地名：[名字, x%, y%, 種類]；長卷的網格、圖高、地標（意見回饋 517、525） */
     let RTF=null,RTK="",RTS=null,RTP=null,RTT=0,RTA=0;   /* 意見回饋 658（B 輿圖遊歷）：路線圖層的重畫函式、目前畫的版本、各站位置（點得到）、左下角的提示、上次檢查的時間、上一格地圖的透明度 */
     const sc=new T.Scene(),FARHIDE=[];sc.fog=new T.Fog(new T.Color(E.mist),70,320);sc.background=new T.Color(E.mist);   /* 意見回饋 486：環景沒畫到的地方顯示朝代的霧色，不會一片黑 */
-    const cam=new T.PerspectiveCamera(50,1,.5,700);try{if(localStorage.getItem("xq_dbg3d"))window.__PK={sc,cam}}catch(e){}   /* 除錯用：localStorage 設 xq_dbg3d 才打開 */
+    const cam=new T.PerspectiveCamera(50,1,.5,700);try{if(localStorage.getItem("xq_dbg3d"))window.__PK={sc,cam}}catch(e){}try{(window.__PK=window.__PK||{}).perf=PF}catch(e){}   /* 除錯用：localStorage 設 xq_dbg3d 才打開 sc、cam；效能計數 perf 一直都在（11/11 省電模式） */
     // 光：午後斜陽（唯一投影光，陰影範圍只包住石桌，陰影比較銳利）＋暖色天光＋冷色補光；整體對比拉高，不再灰白
     sc.add(new T.HemisphereLight(0xFFF1DA,0x5A4A36,.42));
-    const sun=new T.DirectionalLight(0xFFD9A8,1.15);sun.position.set(-18,34,14);sun.castShadow=true;sun.shadow.mapSize.set(2048,2048);
+    const sun=new T.DirectionalLight(0xFFD9A8,1.15);sun.position.set(-18,34,14);sun.castShadow=!PW.on;sun.shadow.mapSize.set(2048,2048);
     Object.assign(sun.shadow.camera,{left:-11,right:11,top:11,bottom:-11,near:10,far:80});sun.shadow.bias=-.0004;sun.shadow.normalBias=.02;sun.shadow.radius=3;sc.add(sun);
     const fill=new T.DirectionalLight(0xC8DCFF,.28);fill.position.set(20,12,-18);sc.add(fill);
     // 天空球（含下半部的雲海色）＋水墨長卷
@@ -1334,7 +1366,7 @@
       /* 意見回饋 577：真實 3D 的小帥是站姿模型、腿彎不了，照上面對齊會變成腳踩在凳面上（站在凳子上）。模型載好後改成臀部落在凳面、腿沉進鼓凳裡，從哪個角度看都是坐著 */
       if(mate.B&&mate.B.glbP)mate.B.glbP.then(ok=>{if(!ok||mateKey!==k||!mate.B||!mate.B.glb)return;try{mate.g.updateMatrixWorld(true);const b=new T.Box3().setFromObject(mate.B.glb),H=b.max.y-b.min.y;mate.g.position.y-=b.min.y-(MSEAT-H*.27);mate.g.userData.y0=null}catch(e){}}).catch(()=>{})};   // 坐在自己的椅子上（座面 y=MSEAT）
     setMate(null);
-    const say=(t,d)=>mate.say(t,d);
+    const say=(t,d)=>{pwPoke(((+d)||2.6)*1000);return mate.say(t,d)};
     /* ---------- 11/10 開發者「園子熱鬧、人來人往」（Gemini 62；開發者選 4 貓咪佔位、2 絕殺驚呼、3 市井煙火、1 七星打氣；小販、貓經史學顧問核過）----------
        七星打氣：每盤最多一次，開局約 90 秒後（沒人被將軍、沒按著棋子時），一位沒上場的雲河七星（App 給 ex.crowd.vis）從石台邊走到空的觀戰點看 25 秒左右：
          打招呼、你吃到車馬炮時歡呼、將軍時驚呼，走前揮手再走開。
@@ -1435,7 +1467,7 @@
       try{const c=btex.image.getContext("2d");drawBoard(c,btex.image.width,btex.image.height,null);btex.needsUpdate=true}catch(e){}if(prevB)sync(prevB)};
     // Noto Serif TC 網路字型晚到：載入後重畫字面（不然會先用系統字型，字又細又糊）
     try{document.fonts&&document.fonts.load(`900 64px ${SERIF}`,"帥仕相傌俥炮兵將士象馬車砲卒").then(()=>{if(!stopped)refreshLook()})}catch(e){}
-    function draw(board,o,ex){o=o||{};ex=ex||{};drawn=true;const nf=!!o.flip;
+    function draw(board,o,ex){o=o||{};ex=ex||{};drawn=true;try{const dk=[(board||[]).join(","),o.sel,(o.targets||[]).join(" "),o.last?o.last.f+"-"+o.last.t:"",o.check,o.flip?1:0,ex.thinking?1:0,ex.result||"",(ex.hint||[]).join(" ")].join("|");if(dk!==PW.dk){PW.dk=dk;pwPoke(1500)}}catch(e){pwPoke(1500)}   /* 11/11 省電：App 每 1.5 秒輪詢都會呼叫 draw，盤面真的有變才算「畫面在動」 */const nf=!!o.flip;
       {const lk=JSON.stringify(ex.look?[ex.look.k,ex.look.img,!!ex.look.gly,ex.look.pset,ex.look.pieces&&ex.look.pieces.r,ex.look.grid]:null);if(lk!==lookKey){lookKey=lk;LOOK=ex.look||null;
         if(LOOK){let n=0;const L0=[LOOK.img,LOOK.pieces&&LOOK.pieces.r,LOOK.pieces&&LOOK.pieces.b,...(LOOK.pset?PSRC(LOOK.pset):[])],done=()=>{if(++n>=L0.length&&LOOK===ex.look)refreshLook()};L0.forEach(src=>{if(!src||loadImg(src,done))done()})}
         refreshLook()}}
@@ -1485,7 +1517,7 @@
       // 畫面被壓矮（比 1.14 扁）時：上下視角維持 1.14 的範圍、左右看得更廣，不會把對面和近端的小帥切掉（意見回饋：5:49 截圖）
       const vr=Math.max(CAMV.hr,1.14);CAMV.dp=Math.atan(CAMV.ht*1.14)-Math.atan(CAMV.ht*vr);H=Math.round(W*CAMV.hr);el.style.height=H+"px";rd.setSize(W,H,false);cam.aspect=W/H;
       cam.fov=clamp(2*Math.atan(CAMV.ht*vr)*180/PI,38,62);cam.updateProjectionMatrix();
-      {const nn=CAMV.hr>=1.24;if(nn!==capNear){capNear=nn;if(lastCapB)layoutCaptured(lastCapB)}}if(HOME.fit)zfit()};
+      {const nn=CAMV.hr>=1.24;if(nn!==capNear){capNear=nn;if(lastCapB)layoutCaptured(lastCapB)}}if(HOME.fit)zfit();pwPoke(400)};
     const CO=window.__CAM||{},camBase=new T.Vector3(...(CO.b||[0,27,26])),look=new T.Vector3(...(CO.l||[0,-.3,-.4])),PIV=new T.Vector3(0,-.3,0);   /* 意見回饋 374：小帥坐到正對面，鏡頭往後、往上一點，從他背後看過去；406：座位抬高後鏡頭再拉高，小帥才不會擋到最下排 */
     // 拉近拉遠＝鏡頭沿著「棋盤中心→座位」這條線前後移動，看的方向不變
     /* 意見回饋 375：左右拖曳＝鏡頭繞著棋桌轉（轉到對面就看得到小帥的臉、背景一樣是一整圈），上下拖曳＝俯視的高低；不動的時候跟原本的畫面一樣 */
@@ -1507,9 +1539,9 @@
       for(const b of bills){const m=b.m;if(b.cup){const[fx,fz]=b.cup,cx=cam.position.x-fx,cy=cam.position.y-.015,cz=cam.position.z-fz,e=Math.atan2(cy,Math.hypot(cx,cz)),t=clamp((b.hb*Math.cos(e)+.03)/Math.max(cy,.5),0,.5);
           m.position.set(fx+cx*t,.015+cy*t,fz+cz*t)}
         else if(b.anchor){const dx0=cam.position.x-b.anchor[0],dz0=cam.position.z-b.anchor[1],d0=Math.hypot(dx0,dz0)||1;m.position.set(b.anchor[0]-dx0/d0*b.back,b.y,b.anchor[1]-dz0/d0*b.back)}
-        if(b.orb){const[r,a0,sp,y,op]=b.orb,a=a0+performance.now()/1000*sp,z=Math.sin(a)*r;m.position.set(Math.cos(a)*r,y,z);m.material.opacity=op*clamp((16-z)/10,0,1);continue}   /* 經典世界繞著飄的雲；飄到鏡頭這一側（z 大）就淡掉，不擋畫面 */
-        if(b.smk){const[x0,y0,z0,ph]=b.smk,u=(performance.now()/1000*.33+ph)%1;m.position.set(x0+Math.sin(u*5+ph*9)*.18,y0+u*2.4,z0);m.material.opacity=.3*Math.sin(Math.PI*u);m.scale.setScalar(.35+u*1.1);continue}   /* 香爐的煙 */
-        if(b.bob||b.br){const ts=performance.now()/1000;if(b.bob)m.position.y=b.y+Math.sin(ts*b.bob[0]+b.bob[1])*b.bob[2];if(b.br)m.material.opacity=b.br[2]+Math.sin(ts*b.br[0]+b.br[1])*b.br[3]}   /* 經典世界的懸浮畫卷、幻影棋客 */
+        if(b.orb){const[r,a0,sp,y,op]=b.orb,a=a0+pwT()/1000*sp,z=Math.sin(a)*r;m.position.set(Math.cos(a)*r,y,z);m.material.opacity=op*clamp((16-z)/10,0,1);continue}   /* 經典世界繞著飄的雲；飄到鏡頭這一側（z 大）就淡掉，不擋畫面 */
+        if(b.smk){const[x0,y0,z0,ph]=b.smk,u=(pwT()/1000*.33+ph)%1;m.position.set(x0+Math.sin(u*5+ph*9)*.18,y0+u*2.4,z0);m.material.opacity=.3*Math.sin(Math.PI*u);m.scale.setScalar(.35+u*1.1);continue}   /* 香爐的煙 */
+        if(b.bob||b.br){const ts=pwT()/1000;if(b.bob)m.position.y=b.y+Math.sin(ts*b.bob[0]+b.bob[1])*b.bob[2];if(b.br)m.material.opacity=b.br[2]+Math.sin(ts*b.br[0]+b.br[1])*b.br[3]}   /* 經典世界的懸浮畫卷、幻影棋客 */
         const wp=m.getWorldPosition(BILLV),dx=cam.position.x-wp.x,dz=cam.position.z-wp.z;m.rotation.set(-b.tilt*Math.atan2(cam.position.y-wp.y,Math.hypot(dx,dz)),Math.atan2(dx,dz),0)}
       if(fades.length){const fx=PIV.x-cam.position.x,fz=PIV.z-cam.position.z,fd=Math.hypot(fx,fz)||1;   /* 桌子後面、離畫面中線 9～21 度以內的樹慢慢變淡（最淡 0.28） */
         for(const m of fades){const wp=m.getWorldPosition(FADEV),vx=wp.x-cam.position.x,vz=wp.z-cam.position.z,vd=Math.hypot(vx,vz)||1,dot=(vx*fx+vz*fz)/fd;
@@ -1540,6 +1572,15 @@
       yaw=y0;pitch=p0;zoom=z0;placeCam();cam.updateMatrixWorld();return r};
     const zfit=()=>{const was=HOME.z,z=zFitCalc();HOME={p:.5,z,fit:true};if(!userZ&&!tyaw&&tpitch===.5&&Math.abs(tzoom-was)<1e-6)tzoom=z};   /* 畫面大小變了（轉向、網址列）：還在預設視角、沒自己縮放過，就跟著重算 */
     const goTopFit=now=>{zfit();tyaw=0;tpitch=.5;tzoom=HOME.z;userZ=false;flatV=false;mate.g.visible=true;if(now){yaw=0;pitch=.5;zoom=HOME.z;placeCam()}};
+    /* 11/11 入座運鏡（評比第 2 輪 Gemini「修正手機預設視角，找回敘事沉浸感」：topfit 拉近以後看不到對面的人和小帥）：
+       手機直式、沒存過視角、這一盤還沒播過（INTRO_SEEN，App 開著就記得；06-cpu 傳 opt.intro＝這盤的代號）→ 先用原本「坐著看」的視角（俯角 0、距離 1 倍）停 1.8 秒，再 0.8 秒 ease 移到 topfit。
+       IN.ph：wait（園子還沒淡入）→ hold（停住）→ run（移動）→ done；運鏡中手指一按下就 held（鏡頭停在原地），放開時照常當成點棋盤（用玩家當下看到的畫面吸附），處理完直接跳到 topfit；
+       拖曳、捏合、按 ＋－、俯視／平視按鈕、點兩下回正：運鏡結束、交給玩家（不跳）。系統設了「減少動態效果」就不運鏡、直接 topfit */
+    const RDM=(()=>{try{return matchMedia("(prefers-reduced-motion: reduce)").matches}catch(e){return false}})(),IN={ph:"done",t0:0,key:null,hold:1800,dur:800};
+    const inOn=()=>IN.ph==="wait"||IN.ph==="hold"||IN.ph==="run"||IN.ph==="held";
+    const inEnd=snap=>{if(!inOn())return;IN.ph="done";if(snap)goTopFit(true)};
+    const inStart=(k,ready)=>{if(!k||INTRO_SEEN.has(k)||RDM||!HFIT())return false;zfit();yaw-=Math.round(yaw/TAU)*TAU;tyaw=0;tpitch=0;tzoom=1;userZ=false;flatV=false;mate.g.visible=true;
+      IN.key=k;if(ready){INTRO_SEEN.add(k);IN.ph="hold";IN.t0=performance.now()}else IN.ph="wait";return true};
     // 意見回饋 240：點到物件（樹、桌子、茶杯、長椅、凳子、燈籠、對手、遠方背景）就回報是什麼，App 跳出說明
     /* 意見回饋 277：用 128 格的透明度圖，看點的位置附近 r 格內最不透明的值（手指不用剛好點在細細的椅背、樹枝上） */
     const AC=new Map(),AS=128,alphaAt=(im,u,v,r)=>{let a=AC.get(im);if(!a){const c=document.createElement("canvas");c.width=AS;c.height=AS;const g=c.getContext("2d");
@@ -1576,26 +1617,28 @@
       for(const[t,f,l]of[["＋",.8,"放大"],["－",1.25,"縮小"]]){const b=document.createElement("button");b.type="button";b.textContent=t;b.setAttribute("aria-label",l);
         b.style.cssText="width:34px;height:34px;border-radius:50%;border:1px solid rgba(0,0,0,.18);background:rgba(255,255,255,.82);color:#3a2a1c;font:700 20px/1 system-ui;box-shadow:0 1px 4px rgba(0,0,0,.2);padding:0;cursor:pointer";
         b.addEventListener("pointerdown",e=>e.stopPropagation());b.addEventListener("pointerup",e=>e.stopPropagation());
-        b.onclick=e=>{e.stopPropagation();userZ=true;tzoom=clamp(tzoom*f,ZMIN,ZMAX)};zb.append(b)}
+        b.onclick=e=>{e.stopPropagation();inEnd(false);userZ=true;tzoom=clamp(tzoom*f,ZMIN,ZMAX)};zb.append(b)}
       el.append(zb)}
-    const reset=()=>{yaw-=Math.round(yaw/TAU)*TAU;tyaw=0;tpitch=HOME.p;tzoom=HOME.z;userZ=false};   // 轉了好幾圈也走最近的路回正
+    const reset=()=>{inEnd(false);yaw-=Math.round(yaw/TAU)*TAU;tyaw=0;tpitch=HOME.p;tzoom=HOME.z;userZ=false};   // 轉了好幾圈也走最近的路回正
     const spread=()=>{const a=[...ptrs.values()];return Math.max(20,Math.hypot(a[0].x-a[1].x,a[0].y-a[1].y))};
     cvs.addEventListener("pointerdown",e=>{ptrs.set(e.pointerId,{x:e.clientX,y:e.clientY});try{cvs.setPointerCapture(e.pointerId)}catch(_){}
-      if(ptrs.size>=2){if(!pinch)pinch={d:spread(),z:tzoom};down=null;lastTap=0;return}
+      if(ptrs.size>=2){inEnd(false);if(!pinch)pinch={d:spread(),z:tzoom};down=null;lastTap=0;return}
+      if(IN.ph==="hold"||IN.ph==="run")IN.ph="held";   /* 入座運鏡中按下去：鏡頭先停在玩家看到的位置 */
       down={x:e.clientX,y:e.clientY,t:performance.now(),y0:tyaw,p0:tpitch,moved:false}});
     cvs.addEventListener("pointermove",e=>{const pt=ptrs.get(e.pointerId);if(pt){pt.x=e.clientX;pt.y=e.clientY}
       if(pinch){if(ptrs.size>=2){tzoom=clamp(pinch.z*pinch.d/spread(),ZMIN,ZMAX);userZ=true}return}
       if(!down)return;const dx=e.clientX-down.x,dy=e.clientY-down.y;if(Math.hypot(dx,dy)>9)down.moved=true;
-      if(down.moved){const y=down.y0-dx/W*1.6;tyaw=FULL?y:clamp(y,-1.2,1.2);tpitch=clamp(down.p0+dy/H*1.6,-1.0,.5)}});
+      if(down.moved){if(IN.ph==="held")inEnd(false);const y=down.y0-dx/W*1.6;tyaw=FULL?y:clamp(y,-1.2,1.2);tpitch=clamp(down.p0+dy/H*1.6,-1.0,.5)}});
     const up=e=>{ptrs.delete(e.pointerId);
       // 捏合結束：剩下那根手指接著拖曳轉頭（從現在的位置開始算，不會跳），放開也不算點擊
       if(pinch){if(ptrs.size<2){pinch=null;const p=[...ptrs.values()][0];down=p?{x:p.x,y:p.y,t:performance.now(),y0:tyaw,p0:tpitch,moved:true}:null}return}
-      if(!down)return;const d=down;down=null;if(d.moved)return;const now=performance.now();
+      if(!down)return;const d=down;down=null;if(d.moved)return;const inH=IN.ph==="held";   /* 11/11 入座運鏡中點的這一下：用玩家當下看到的畫面照常吸附、選子，處理完才跳到 topfit */
+      try{const now=performance.now();
       if(now-lastTap<320&&(tyaw||tpitch!==HOME.p||tzoom!==HOME.z)){reset();lastTap=0;return}lastTap=now;const i=pick(e.clientX,e.clientY);if(i===-2){if(tapAmb)showAmb(tapAmb);return}if(i>=0){if(opt.onTap)opt.onTap(i);return}
-      if(opt.onInfo){const k=infoPick();if(k)opt.onInfo(k)}};
-    cvs.addEventListener("pointerup",up);cvs.addEventListener("pointercancel",e=>{ptrs.delete(e.pointerId);if(ptrs.size<2)pinch=null;down=null});
+      if(opt.onInfo){const k=infoPick();if(k)opt.onInfo(k)}}finally{if(inH)inEnd(true)}};
+    cvs.addEventListener("pointerup",up);cvs.addEventListener("pointercancel",e=>{ptrs.delete(e.pointerId);if(ptrs.size<2)pinch=null;down=null;if(IN.ph==="held")inEnd(true)});
     // 觸控板捏合（瀏覽器送 ctrl＋滾輪）也能縮放；iOS Safari 的 gesture 事件擋掉，免得整頁被放大
-    cvs.addEventListener("wheel",e=>{if(!e.ctrlKey)return;e.preventDefault();userZ=true;tzoom=clamp(tzoom*Math.exp(e.deltaY*.01),ZMIN,ZMAX)},{passive:false});
+    cvs.addEventListener("wheel",e=>{if(!e.ctrlKey)return;e.preventDefault();inEnd(false);userZ=true;tzoom=clamp(tzoom*Math.exp(e.deltaY*.01),ZMIN,ZMAX)},{passive:false});
     for(const ev of["gesturestart","gesturechange"])el.addEventListener(ev,e=>e.preventDefault(),{passive:false});
     // ---------- 動畫迴圈 ----------
     let stopped=false,last=performance.now(),roomN=0;
@@ -1650,20 +1693,35 @@
       if(thinking&&!busy){MH.thinkT+=dt;if(MH.thinkT>1.2&&!MH.did.t){if(mhShow("mh-top",`幻影棋客：「此步容我深思，你先退一步賞景？」<small>按右下角「－」，到天上看看天下大勢</small>`,6000))MH.did.t=1}}else MH.thinkT=0;
       /* ② 一盤下完、結果視窗關掉 */
       if(mood&&!MH.did.e){if(busy)MH.endWait=0;else{MH.endWait+=dt;if(MH.endWait>1.5&&mhShow("mh-say",`小帥：「咦？這圓石台底下好像畫著什麼？」<small>一直按「－」看看</small>`,6000))MH.did.e=1}}}
+    /* 11/11 省電模式（評比第 2 輪 ChatGPT「效能、耗電與低負載模式證據」）：pwApply 每秒重判一次（設定改了、電池變了、量到偏慢都跟著換）；
+       省電＝畫素比最多 1、太陽不投影、落葉藏起來、飄雲／煙／畫卷／幻影呼吸／人物閒置晃動／火光停住、選中的棋子不上下跳、將軍紅圈不閃；
+       畫面沒在動的時候 pwGap 決定少畫幾格。效能計數（近 10 秒）放 PF＝window.__PK.perf，設定頁那一行讀它 */
+    const pwApply=f=>{const m=pwMode(),d=pwDecide(m,pwSig());PF.why=d.why;PF.mode=m;PF.lowFps=PWS.lowFps;if(d.on===PW.on&&!f)return;PW.on=d.on;PF.power=d.on;PW.s0=performance.now()/1000;PW.fw.t0=0;PW.low=0;
+      try{rd.setPixelRatio(Math.min(d.on?1:2,window.devicePixelRatio||1));sun.castShadow=!d.on;for(const l of falling)l.visible=!d.on}catch(e){}pwPoke(400)};
+    const pwSec=(now,sec)=>{PW.sec=sec;Object.assign(PF,pfSum(PW.q,sec));PF.live=true;try{PF.pr=rd.getPixelRatio()}catch(e){}pwApply(false)};
+    /* 自動判斷「畫面偏慢」：沒省電、園子淡入 3 秒後才量；連續兩段 5 秒平均都不到每秒 24 格才算（偶爾卡一下不算），記 3 天 */
+    const pwFps=now=>{if(PW.on||!shown||now-PW.shownAt<3000){PW.fw.t0=0;return}const a=fpsWin(PW.fw,now);if(a==null)return;PF.fps5=Math.round(a*10)/10;PW.low=a<24?PW.low+1:0;
+      if(PW.low>=2&&!PWS.lowFps){PWS.lowFps=true;try{localStorage.setItem("xq_pkLowFps",String(Date.now()))}catch(e){}pwApply(false)}};
+    pwApply(true);
     function frame(now){if(stopped)return;if(!document.body.contains(el)){destroy();return}requestAnimationFrame(frame);
-      if(document.hidden||el.style.display==="none"){last=now;return}const t=Math.min(.05,(now-last)/1000);last=now;
+      if(document.hidden||el.style.display==="none"){last=now;PW.fw.t0=0;PF.live=false;return}
+      if(IN.ph==="hold"||IN.ph==="run"){const k=introK(now-IN.t0,IN.hold,IN.dur);if(now-IN.t0>=IN.hold+IN.dur)inEnd(true);else if(k<=0){tyaw=0;tpitch=0;tzoom=1}else{IN.ph="run";yaw=tyaw=0;pitch=tpitch=.5*k;zoom=tzoom=1+(HOME.z-1)*k}}   /* 11/11 入座運鏡：先停在坐著看，再 ease 到 topfit */
+      const act=!shown||inOn()||ptrs.size>0||anims.length>0||endT>0||reach>0||!!MH.cer||now<PW.dirty||Math.abs(tyaw-yaw)+Math.abs(tpitch-pitch)+Math.abs(tzoom-zoom)>1e-3,sec=Math.floor(now/1000);
+      if(act)PW.lastAct=now;if(sec!==PW.sec)pwSec(now,sec);
+      if(!pwDue(now,PW.lastR,pwGap(PW.on,act,now-PW.lastAct))){pfAdd(PW.q,sec,1,0,0);return}   /* 省電＋閒置：這一格不畫 */
+      const t=Math.min(PW.on&&!act?.6:.05,(now-last)/1000);last=now;   /* 省電閒置時一格可能隔 0.5 秒：計時器照實走；一開始動（走子、拖曳）就跟原本一樣最多 0.05 秒，走子動畫不會一格跳完 */
       if(el.clientWidth&&Math.abs(el.clientWidth-W)>1)fit();
       else if((++roomN%60)===0){const rm=room(),want=Math.round(el.clientWidth*clamp((VH0-300)/(el.clientWidth||300),1.14,1.32));if(Math.abs(Math.min(want,Math.max(.85*W,rm))-H)>3)fit()}   // 版面多一行、少一行時重新量
       yaw+=(tyaw-yaw)*Math.min(1,t*8);pitch+=(tpitch-pitch)*Math.min(1,t*8);zoom+=(tzoom-zoom)*Math.min(1,t*10);placeCam();if(flatV)mate.g.visible=zoom>1.12||Math.abs(Math.atan2(Math.sin(yaw),Math.cos(yaw)))>.35;   /* QA P2-5：平視（從小帥眼睛看）時拉遠或轉開，小帥要回到凳子上，不然只剩一張空凳子 */
       anims=anims.filter(a=>{a.t+=t;const p=Math.min(1,a.t/a.d);a.f(p);if(p>=1){a.end&&a.end();return false}return true});
-      if(selI>=0&&pieces[selI]){const g=pieces[selI];g.position.y=TOP+.32+Math.sin(now/180)*.06}
+      if(selI>=0&&pieces[selI]){const g=pieces[selI];g.position.y=TOP+.32+(PW.on?0:Math.sin(now/180)*.06)}
       Object.entries(pieces).forEach(([i,g])=>{if(+i!==selI&&!anims.length&&g.position.y!==TOP)g.position.y+=(TOP-g.position.y)*Math.min(1,t*12)});
-      if(checkRing)checkRing.material.opacity=.55+.4*Math.sin(now/140);
+      if(checkRing)checkRing.material.opacity=PW.on?.85:.55+.4*Math.sin(now/140);
       if(WX)try{WX.tick(t,now)}catch(e){WX=null}   /* 11/10 下雨下雪、積雪 */
       if(CANO)try{CANO.tick(t,cam.position.y)}catch(e){CANO=null}   /* 11/10 對弈遮篷 */
       try{mhTick(t)}catch(e){}   /* 11/10 引導拉遠看朝代地圖 */
       try{CR.tick(t,now)}catch(e){if(!CR.err){CR.err=1;console.warn("crowd",e)}}   /* 11/10 園子熱鬧 */
-      falling.forEach(l=>{const u=l.userData;u.y-=t*1.6*u.s;if(u.y<-2){u.y=28;u.x=(Math.random()-.5)*50}l.position.set(u.x+Math.sin(now/900+u.ph)*2.5,GY+u.y,u.z);l.rotation.set(now/700*u.s+u.ph,now/500,now/800)});
+      if(!PW.on)falling.forEach(l=>{const u=l.userData;u.y-=t*1.6*u.s;if(u.y<-2){u.y=28;u.x=(Math.random()-.5)*50}l.position.set(u.x+Math.sin(now/900+u.ph)*2.5,GY+u.y,u.z);l.rotation.set(now/700*u.s+u.ph,now/500,now/800)});
       if(endT>0)endT=Math.max(0,endT-t);const EP=1-endT/END,ON=endT>0;   // 勝負動畫的進度 0→1
       // 3D 人物（線上對手的小帥、我的小帥）的勝負動畫：贏＝跳起來、中段轉一圈、雙手歡呼；輸＝垂頭、搖頭、雙手下垂；和＝拱手點頭
       const endPose=(A,res,B,base)=>{const g=A.g,y0=g.userData.y0==null?(g.userData.y0=g.position.y):g.userData.y0,r0=g.userData.r0==null?(g.userData.r0=g.rotation.y):g.userData.r0;
@@ -1672,7 +1730,7 @@
         if(res==="win"){g.position.y=y0+base*Math.abs(Math.sin(EP*END*5.5));g.rotation.y=r0+sp;R(B,0,0,.3*Math.sin(EP*40),-2.7);R(B,1,0,.3*Math.sin(EP*40),2.7);A.face="happy";return[-.3,0]}
         if(res==="lose"){g.position.y=y0;g.rotation.y=r0;R(B,0,.25,0,-.05);R(B,1,.25,0,.05);A.face="sad";return[.55,.35*Math.sin(EP*END*6)*(EP<.8?1:0)]}
         g.position.y=y0;g.rotation.y=r0;const k=Math.sin(Math.min(1,EP*2)*PI);R(B,0,-1.3,.5,-.35);R(B,1,-1.3,-.5,.35);A.face="smile";return[.35*k,0]};
-      const s=now/1000,lerp=(o,k,v)=>{o[k]+=(v-o[k])*Math.min(1,t*5)},tick=A=>{A.blinkT-=t;const bl=A.blinkT<0;if(A.blinkT<-.12)A.blinkT=2+Math.random()*3;
+      const s=PW.on&&!ON?PW.s0:now/1000,lerp=(o,k,v)=>{o[k]+=(v-o[k])*Math.min(1,t*5)},tick=A=>{A.blinkT-=t;const bl=A.blinkT<0;if(A.blinkT<-.12)A.blinkT=2+Math.random()*3;
           if(A.faceT>0&&A.faceT<90){A.faceT-=t;if(A.faceT<=0&&!mood)A.face="smile"}if(A.bubT>0){A.bubT-=t;if(A.bubT<=0)A.bub.visible=false}
           try{XQBot3D.faceApply(A.B,A.face,bl,A.bubT>0&&Math.sin(now/70)>0)}catch(e){}};
       if(oppSpr){const S2=oppSpr;if(reach){reachT+=t;if(reachT>=1.1)reach=0}
@@ -1709,25 +1767,26 @@
         {const e=endPose(mate,mateRes,B,.5);if(e){hx=e[0];hy=e[1]}}
         B.legs[0].rotation.x=-1.5+.08*Math.sin(s*2.2);B.legs[1].rotation.x=-1.5-.08*Math.sin(s*2.2);   /* 意見回饋 551：坐著，大腿平放、小腿輕輕晃 */
         lerp(B.head.rotation,"x",hx);lerp(B.head.rotation,"y",hy);tick(mate)}
-      furn.tick(s);rd.render(sc,cam)}
+      furn.tick(s);rd.render(sc,cam);PW.lastR=now;pfAdd(PW.q,sec,1,1,act?0:1);pwFps(now)}
     // 第一次 draw 之後，等所有圖片（背景、道具、棋盤、棋子、Pikafish）都載好才淡入；最多等 6 秒
     let drawn=false,shown=false;const t0=performance.now();rd.domElement.style.opacity=0;rd.domElement.style.transition="opacity .35s";
-    const shownCb=[];const reveal=()=>{if(shown)return;shown=true;rd.domElement.style.opacity=1;veil.style.opacity=0;setTimeout(()=>veil.remove(),400);if(veil._qmin){hint.style.opacity=1;setTimeout(()=>hint.style.opacity=0,4500)}shownCb.splice(0).forEach(f=>{try{f()}catch(e){}})};
+    const shownCb=[];const reveal=()=>{if(shown)return;shown=true;PW.shownAt=performance.now();if(IN.ph==="wait"){INTRO_SEEN.add(IN.key);IN.ph="hold";IN.t0=performance.now()}rd.domElement.style.opacity=1;veil.style.opacity=0;setTimeout(()=>veil.remove(),400);if(veil._qmin){hint.style.opacity=1;setTimeout(()=>hint.style.opacity=0,4500)}shownCb.splice(0).forEach(f=>{try{f()}catch(e){}})};
     const waitShow=()=>{if(stopped||shown)return;const mn=veil._qskip?1200:Math.max(1200,veil._qmin||0),dt=performance.now()-t0;if((drawn&&!inflight.size&&dt>mn)||dt>Math.max(6000,veil._qskip?0:mn+2000)){requestAnimationFrame(()=>requestAnimationFrame(reveal));return}setTimeout(waitShow,80)};
     /* 視角：俯視 top、平視 flat、數字＝俯角；11/11 新增 topfit＝俯視＋拉近到格距約 30px（只在手機直式；其他裝置等於 top）。
        top／flat 跟以前一樣（距離 1 倍、點兩下回到坐著看的角度），玩家存過的視角照舊；topfit 點兩下回到 topfit */
-    const setViewF=m=>{if(m==="topfit"&&HFIT()){goTopFit(false);return}const k=m==="topfit"?"top":m;
+    const setViewF=m=>{inEnd(false);if(m==="topfit"&&HFIT()){goTopFit(false);return}const k=m==="topfit"?"top":m;
       tyaw=k==="flat"?.56:0;tpitch=typeof k==="number"?k:k==="top"?.5:k==="flat"?-.22:0;tzoom=1;flatV=false;mate.g.visible=true;HOME={p:0,z:1,fit:false};userZ=false};
     fit();placeCam();
-    try{if(opt.view)setViewF(opt.view);else if(HFIT())goTopFit(true)}catch(e){}   /* opt.view＝玩家存過的視角（06-cpu 傳 store parkView）；沒存過的手機直式＝topfit */
+    try{if(opt.view)setViewF(opt.view);else if(HFIT()&&!inStart(typeof opt.intro==="string"?opt.intro:null,false)){if(typeof opt.intro==="string")INTRO_SEEN.add(opt.intro);goTopFit(true)}}catch(e){}   /* opt.view＝玩家存過的視角（06-cpu 傳 store parkView）；沒存過的手機直式＝topfit */
     requestAnimationFrame(frame);setTimeout(waitShow,80);
     const onRs=()=>{if(el.style.display!=="none")fit()};window.addEventListener("resize",onRs);
-    function destroy(){if(stopped)return;stopped=true;try{if(WX)WX.dispose()}catch(e){}WX=null;window.removeEventListener("resize",onRs);
+    function destroy(){if(stopped)return;stopped=true;PF.live=false;try{if(WX)WX.dispose()}catch(e){}WX=null;window.removeEventListener("resize",onRs);
       try{sc.traverse(o=>{const ms=o.material?(Array.isArray(o.material)?o.material:[o.material]):[];for(const m of ms){if(m&&m.map)freeTex(m.map);m&&m.dispose&&m.dispose()}if(o.geometry)o.geometry.dispose()});for(const k in faceCache){freeTex(faceCache[k]);delete faceCache[k]}}catch(e){}
       try{rd.dispose();rd.forceContextLoss()}catch(e){}el.remove();opt.onDestroy&&opt.onDestroy()}
     // 意見回饋 244：切回平面棋盤時只藏起來、暫停繪製（不拆掉 3D 場景），再切回公園就直接顯示，不用重新載入
     /* 意見回饋 370：棋盤格 → 螢幕座標（App 的吃子水墨圈畫在公園棋盤的那一格上） */
     const screenOf=i=>{try{const[x,z]=pos(i),v=new T.Vector3(x,TOP,z).project(cam),r=el.getBoundingClientRect();if(!r.width)return null;return{x:r.left+(v.x+1)/2*r.width,y:r.top+(1-v.y)/2*r.height}}catch(e){return null}};
-    return{el,draw,destroy,say,screenOf,whenShown(f){if(shown)f();else shownCb.push(f)},oppSay:(t,d)=>opp.say(t,d),resetView(){reset()},setView:setViewF,homeView:()=>HOME.fit?"topfit":"",   /* 意見回饋 481（開發者：平視看不到小帥）：平視改成從小帥右肩後面斜著看——小帥在畫面左下、不擋棋盤 */   /* 平視＝從小帥的眼睛看出去（小帥先藏起來，不會擋住棋盤） */   /* 意見回饋 430：平視原本 -.85，鏡頭跑到小帥背後被擋住，改成 -.22 */hide(){el.style.display="none"},show(){if(el.style.display==="none"){el.style.display="";fit()}}}}
-  window.XQPark3D={create};
+    return{el,draw,destroy,say,screenOf,whenShown(f){if(shown)f();else shownCb.push(f)},oppSay:(t,d)=>{pwPoke(((+d)||2.6)*1000);return opp.say(t,d)},resetView(){reset()},setView:setViewF,intro(k){try{if(!k)return false;k=String(k);const ok=inStart(k,shown);if(!ok)INTRO_SEEN.add(k);return ok}catch(e){return false}},   /* 11/11 入座運鏡：同一座園子換下一盤時 06-cpu 叫這個（這盤播過、沒存視角以外的情況都不播） */homeView:()=>HOME.fit?"topfit":"",   /* 意見回饋 481（開發者：平視看不到小帥）：平視改成從小帥右肩後面斜著看——小帥在畫面左下、不擋棋盤 */   /* 平視＝從小帥的眼睛看出去（小帥先藏起來，不會擋住棋盤） */   /* 意見回饋 430：平視原本 -.85，鏡頭跑到小帥背後被擋住，改成 -.22 */hide(){el.style.display="none"},show(){if(el.style.display==="none"){el.style.display="";fit()}}}}
+  /* 11/11 省電模式：power()＝現在的設定和自動判斷結果（開著的園子每秒自己重判，不用通知）；perf()＝最近一座園子近 10 秒的效能計數（同 window.__PK.perf） */
+  window.XQPark3D={create,power(){pwBat();const m=pwMode();return Object.assign({mode:m},pwDecide(m,pwSig()))},perf:()=>PF};
 })();

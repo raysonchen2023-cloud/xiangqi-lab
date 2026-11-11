@@ -98,17 +98,71 @@ var XQ=(function(){
      存檔時一起寄進對局紀錄，我的戰績算棋力、成長時把這種盤排除，才公平；舊存檔沒有這兩欄就照算 */
   const assist=G=>({...(G&&G.hintN?{hintN:G.hintN}:{}),...(G&&G.undoN?{undoN:G.undoN}:{})});
   const keepStart=G=>({...(G&&G.start?{start:G.start,startTurn:G.startTurn||"r"}:{}),...(G&&G.noPerp?{noPerp:true}:{}),...(G&&G.styleOn!=null?{styleOn:G.styleOn}:{})});   /* 對局中途可接續（開發者 11/9）：殘局起手、讓子的關（start）關掉 App 再打開或收起來再拿出來，要從同一個起始局面重建，不然盤面會錯 */
-  const savePlay=()=>P&&ls.set("play",{id:P.id,human:P.human,level:P.level,rlv:P.rlv==null?null:P.rlv,ranked:!!P.ranked,reward:!!P.reward,arena:P.arena||null,journey:P.journey||null,stamp:P.stamp||null,prize:P.prize||null,rk:P.rk,rate:P.rate||null,result:P.result,practice:P.practice||null,...assist(P),...keepStart(P),moves:saveMoves(P.moves)});
-  function ensureP(){if(P)return;const s=ls.get("play",null);if(s&&s.moves){P=s;P.hint=null;stateRebuild(P)}else playNew("r",3);setTimeout(playEngine,0)}
+  /* ---------- 存檔版本號、保存紀錄（評比循環第 2 輪 ChatGPT：續局與分頁衝突的可視化復原紀錄；各鍵的格式見 story/88 第 8 節）----------
+     xq_play 最前面多兩欄：seq＝第幾版（每次寫 +1）、tab＝寫的那個分頁的代號（sessionStorage xqTab，同一個分頁重新整理不變）。VER＝這個分頁「知道的那一版」（讀進來的或自己寫的）。
+     savePlay 寫之前先看 localStorage 裡現在是哪一版：跟 VER 不一樣＝另一個分頁在這之後寫過 → 不覆蓋，丟掉記憶體那份（下次 ensureP 重讀最新的），發 xq-play-newer（畫面提示）。
+     ensureP 每次都先比版本，不一樣就重讀（以前只在第一次讀），所以舊分頁按下去的那一步是下在最新的盤面上。
+     xq_playPrev＝上一版的原文（寫新版前先把舊版搬過去）：xq_play 壞掉（JSON 讀不出來、缺 moves）時改讀它＝回到最後一個完整存檔。setItem 丟例外（空間不足）時舊版原封不動、VER 不變。
+     xq_playBak＝被另一個分頁換掉、或回到別盤時從收納格被擠出來的「沒下完的棋」（最多 3 盤），「↩ 回到那一盤」從這裡或 xq_play2 拿回。
+     xq_saveLog＝最近 20 筆保存事件（時間、哪一盤、事件；不存棋譜），設定頁「💾 存檔 → 🧾 對局保存紀錄」看（07m4-resume.js rsLogSheet） */
+  const TAB=(()=>{let t=null;try{t=sessionStorage.getItem("xqTab")}catch(e){}if(!t||!/^[\w-]{4,16}$/.test(t)){t=Math.random().toString(36).slice(2,8)+Date.now().toString(36).slice(-3);try{sessionStorage.setItem("xqTab",t)}catch(e){}}return t})();
+  let VER=null,PID=null,LOADED=false;
+  const lsRaw=k=>{try{return localStorage.getItem(k||"xq_play")}catch(e){return null}};
+  const headOf=raw=>{const m=raw==null?null:/^\{"seq":(\d+),"tab":"([\w-]*)","id":"([^"]*)"/.exec(raw);return m?{seq:+m[1],tab:m[2],id:m[3]}:null};
+  const verOf=raw=>{if(raw==null)return"-";const h=headOf(raw);return h?h.seq+"|"+h.tab:"0|L"+raw.length};
+  const pOk=s=>!!(s&&typeof s==="object"&&typeof s.id==="string"&&Array.isArray(s.moves));
+  const LOG_N=20,LOG_MERGE={auto:1,fail:1};
+  const logInfo=G=>G&&G.id?{id:String(G.id).slice(0,40),k:kindOf(G),n:Array.isArray(G.moves)?G.moves.length:0,...(G.ranked?{rkd:1}:{}),...(G.arena?{ar:String(G.arena).slice(0,12)}:{}),...(G.journey?{jn:String(G.journey).slice(0,40)}:{}),...(G.practice&&G.practice.title?{pt:String(G.practice.title).slice(0,30)}:{}),...(G.practice&&G.practice.drill?{dr:1}:{}),...(G.result?{end:1}:{})}:{};
+  function saveLog(ev,G,x){try{const L=ls.get("saveLog",[]),A=Array.isArray(L)?L.filter(y=>y&&typeof y==="object"):[],o={at:Date.now(),ev,...logInfo(G),...(x||{}),tab:TAB},h=A[0];
+    if(ev==="auto"&&!o.n)return;
+    if(h&&LOG_MERGE[ev]&&h.ev===ev&&h.id===o.id){h.at=o.at;h.n=o.n;h.c=(h.c||1)+1;h.tab=TAB;if(o.end)h.end=1}
+    else if(ev==="swap"&&A.slice(0,5).some(y=>y.ev==="swap"&&y.id===o.id&&y.to===o.to))return;
+    else A.unshift(o);ls.set("saveLog",A.slice(0,LOG_N))}catch(e){}}
+  const playOut=()=>({id:P.id,human:P.human,level:P.level,rlv:P.rlv==null?null:P.rlv,ranked:!!P.ranked,reward:!!P.reward,arena:P.arena||null,journey:P.journey||null,stamp:P.stamp||null,prize:P.prize||null,rk:P.rk,rate:P.rate||null,result:P.result,practice:P.practice||null,...assist(P),...keepStart(P),moves:saveMoves(P.moves)});
+  function playWrite(prev){if(!P)return false;const raw=lsRaw(),v=verOf(raw),h=headOf(raw);
+    if(VER!=null&&v!==VER){const G=P;P=null;VER=null;saveLog("clash",G);try{window.dispatchEvent(new CustomEvent("xq-play-newer",{detail:{id:G.id}}))}catch(e){}return false}
+    const seq=(h?h.seq:0)+1,take=!!(h&&h.tab&&h.tab!==TAB&&h.id===P.id);
+    if(prev&&raw!=null)try{localStorage.setItem("xq_playPrev",raw)}catch(e){}
+    try{localStorage.setItem("xq_play",JSON.stringify({seq,tab:TAB,...playOut()}))}catch(e){saveLog("fail",P);return false}
+    VER=seq+"|"+TAB;PID=P.id;PN=P.moves.length;LOADED=true;saveLog(take?"take":"auto",P);return true}
+  function savePlay(){return playWrite(true)}
+  /* 回傳 true＝這個分頁原本看到的那盤（PID 第 PN 手）已經被另一個分頁改了（換了盤或步數變了）：playPost 落子、悔棋、認輸這類動作就不做，改提示、回最新盤面 */
+  let PN=-1;
+  function ensureP(){if(P&&verOf(lsRaw())!==VER)P=null;if(P)return false;
+    const raw=lsRaw(),was=LOADED?{id:PID,n:PN}:null;let s=null,fix=false;try{s=raw==null?null:JSON.parse(raw)}catch(e){}
+    if(raw!=null&&!pOk(s)){s=null;let q=null;try{q=JSON.parse(lsRaw("xq_playPrev"))}catch(e){}if(pOk(q)){s=q;fix=true}}
+    VER=verOf(raw);const first=!LOADED;LOADED=true;
+    if(s&&s.moves){try{P=s;P.hint=null;stateRebuild(P)}catch(e){P=null}}
+    if(P){PID=P.id;PN=P.moves.length;if(fix){playWrite(false);saveLog("fix",P)}else if(first&&unfinished(P))saveLog("reopen",P)}
+    else playNew("r",3);
+    setTimeout(playEngine,0);return!!(was&&P&&(was.id!==P.id||was.n!==P.moves.length))}
+  const PLAY_MUT=new Set(["/play/move","/play/undo","/play/resign","/play/repdraw","/play/repundo","/play/hint","/play/hintmark"]);
+  const stashHas=id=>Object.values(stashAll()).some(g=>g&&g.id===id);
+  function bakPut(G){if(!unfinished(G))return;const L=(ls.get("playBak",[])||[]).filter(x=>x&&x.id!==G.id);L.unshift({...stashOut(G),at:Date.now()});ls.set("playBak",L.slice(0,3))}
+  /* 「↩ 回到那一盤」：從 xq_play2 或 xq_playBak 拿出那一盤放上桌；桌上原本沒下完的收進自己那一格（那一格原本有別盤就擠進 xq_playBak），什麼都不丟 */
+  function playRestore(id){id=String(id||"");if(!id)throw new Error("缺少對局代號");if(P&&P.id===id)return;
+    const SA=stashAll(),k0=Object.keys(SA).find(k=>SA[k]&&SA[k].id===id),B=(ls.get("playBak",[])||[]).filter(x=>x&&typeof x==="object"),bi=B.findIndex(x=>x.id===id);
+    const g=k0?SA[k0]:bi>=0?B[bi]:null;if(!g||!unfinished(g))throw new Error("找不到那一盤（可能已經下完、放棄，或被更新的備份擠掉了）");
+    if(k0)stashSet(k0,null);else{B.splice(bi,1);ls.set("playBak",B)}
+    if(unfinished(P)){const k=kindOf(P),o=stashGet(k);if(o&&o.id!==P.id)bakPut(o);stashSet(k,stashOut(P))}
+    P={...g,result:null};delete P.at;P.hint=null;stateRebuild(P);savePlay();saveLog("back",P)}
+  function playLog(){const L=ls.get("saveLog",[]),A=Array.isArray(L)?L.filter(y=>y&&typeof y==="object"):[],raw=lsRaw(),h=headOf(raw);let cur=h?h.id:null;if(!h&&raw)try{cur=JSON.parse(raw).id}catch(e){}
+    const have=new Set([...Object.values(stashAll()).map(g=>g.id),...(ls.get("playBak",[])||[]).filter(unfinished).map(g=>g.id)]);
+    return{log:A,cur,can:[...new Set(A.filter(x=>x.ev==="swap"&&x.id&&x.id!==cur&&have.has(x.id)).map(x=>x.id))]}}
+  /* 畫面那邊的事件（選角保留進度 keep、放棄這盤 drop）也記進同一份紀錄；G 沒給就記桌上那盤 */
+  window.XQ_saveLog=(ev,G)=>{if(ev!=="keep"&&ev!=="drop")return;let g=G&&G.id?G:P;if(!g)try{g=JSON.parse(lsRaw())}catch(e){g=null}saveLog(ev,pOk(g)&&(ev==="drop"||unfinished(g))?g:null)};
   /* ---------- 多分頁（11/11 AI 模擬玩家第二輪問題 1）----------
      桌上那盤 P 每個分頁各在記憶體裡留一份，原本只在第一次用到時讀 xq_play；兩個分頁同時開著時，各自 savePlay 都整盤寫回去，後寫的贏：
      另一邊剛下的步、剛開的新局、剛收進 play2 的那盤會被舊的蓋掉（電腦那一方兩邊都會算，連沒在看的分頁也會落子寫回）。
      改成：別的分頁改了 xq_play（瀏覽器的 storage 事件只送給「其他」分頁），這邊就丟掉記憶體裡那份，下一次 API 用到時 ensureP 重讀最新的；
      正在算的電腦著法回來時 P 已經換掉，playEngine 本來就會丟掉。對局 id 變了（另一個分頁開了別盤）再發 xq-play-other，畫面提示「另一個分頁也開著」。
      play2、戰績、積分本來每次都重讀 localStorage，不受影響 */
+  /* 評比循環第 2 輪：was 改用 PID（這個分頁最後知道的那盤；P 已經被丟掉也記得），換盤時從 e.oldValue（被換掉前的最後一版）留備份（沒下完、也不在收納格才留）、記一筆「被另一個分頁換盤」；被清掉（讀檔、開新旅程）只記不備份 */
   function playSync(e){if(!e||(e.key!=="xq_play"&&e.key!==null))return;if(e.storageArea&&typeof localStorage!=="undefined"&&e.storageArea!==localStorage)return;
-    let id=null;try{const v=e.newValue==null?null:JSON.parse(e.newValue);id=v&&v.id||null}catch(x){}const was=P&&P.id;P=null;
-    if(was&&id!==was)try{window.dispatchEvent(new CustomEvent("xq-play-other",{detail:{id,was}}))}catch(x){}}
+    let id=null,v=null;try{v=e.newValue==null?null:JSON.parse(e.newValue);id=v&&v.id||null}catch(x){}const was=(P&&P.id)||PID;P=null;
+    if(was&&id!==was){let o=null;try{o=e.oldValue==null?null:JSON.parse(e.oldValue)}catch(x){}const og=pOk(o)&&o.id===was?o:{id:was,moves:[]};
+      if(id){if(unfinished(og)&&!stashHas(was))bakPut(og);saveLog("swap",og,{to:String(id).slice(0,40),tk:kindOf(v)})}else saveLog("gone",og);PID=id;
+      try{window.dispatchEvent(new CustomEvent("xq-play-other",{detail:{id,was}}))}catch(x){}}}
   try{addEventListener("storage",playSync)}catch(e){}
   /* ---------- 多分頁：以上 ---------- */
   // pre：錯棋重練，先擺上舊對局到錯棋之前的著法（moves），info 記上次走了什麼
@@ -135,7 +189,7 @@ var XQ=(function(){
     const relv=g=>{if(k==="arena"&&g&&b.level&&!g.result&&g.level!==lv(3)){g.level=lv(3);return true}return false};
     if(kindOf(P)===k){if(relv(P)){stateRebuild(P);savePlay()}return}
     if(!s&&(k==="practice"||(k==="journey"&&!jid(b.journey))))return;
-    if(unfinished(P))stashSet(kindOf(P),stashOut(P));
+    if(unfinished(P)){stashSet(kindOf(P),stashOut(P));saveLog("stash",P)}
     if(s){stashSet(k,null);P=s;P.hint=null;relv(P);stateRebuild(P);savePlay();return}
     P=null;
     if(k==="arena")playNew("r",lv(3),false,null,false,era||"classic",true);
@@ -148,7 +202,7 @@ var XQ=(function(){
   function playNew(human,level,ranked,pre,reward,arena,noStash,journey,lv){
     const plain=!ranked&&!pre&&!reward,nk=pre?"practice":plain&&journey?"journey":plain&&arena?"arena":"cpu";
     if(!noStash&&P){
-      if(unfinished(P)&&kindOf(P)!==nk){const o=stashGet(kindOf(P));if(o)forfeit(o);stashSet(kindOf(P),stashOut(P));P=null}   // 換另一種：這盤收起來
+      if(unfinished(P)&&kindOf(P)!==nk){const o=stashGet(kindOf(P));if(o)forfeit(o);stashSet(kindOf(P),stashOut(P));saveLog("stash",P);P=null}   // 換另一種：這盤收起來
       const s=stashGet(nk);if(s){forfeit(s);stashSet(nk,null)}}                                                                           // 收著的同一種被新局取代
     // 積分挑戰下到一半就開新局：算輸
     forfeit(P);
@@ -209,7 +263,7 @@ var XQ=(function(){
       levels:LEVELS.map(l=>({n:l.n,name:l.name,desc:l.desc})),record:ls.get("record",{}),
       moves:P.moves.map(moveOut),result:P.result,practice:P.practice||null,thinking:playBusy&&P.turn!==P.human,msg:playMsg,eval:lastEv(P.moves),hint:P.hint,hintN:P.hintN||0,undoN:P.undoN||0,   /* 開發者 11/11 選 v3 規劃書 B03：這盤用過幾次提示、悔棋，給畫面標示用 */
       legal:!P.result&&P.turn===P.human?legal(P.board,P.turn):[],check:!P.result&&inCheck(P.board,P.turn)?kingSq(P.board,P.turn):-1,engine:true}}
-  async function playPost(p,b){ensureP();
+  async function playPost(p,b){if(ensureP()&&PLAY_MUT.has(p)){saveLog("clash",P);try{window.dispatchEvent(new CustomEvent("xq-play-newer",{detail:{id:P.id}}))}catch(e){}return playState()}   /* 評比循環第 2 輪：畫面上那盤已經被另一個分頁下過＝這一下不算，改看最新的 */
     if(p==="/play/new"){playNew(b.human==="b"?"b":"r",lvAdj(b,lvIn(b)),!b.pre&&!!b.ranked,b.pre||null,false,typeof b.arena==="string"&&/^[a-z]{2,8}$/.test(b.arena)?b.arena:null,false,jid(b.journey),b.lv);
       /* 開發者 11/11：茶肆盲棋（練功房的級數、看不到棋子）。對局編號結尾加 -b 當記號（存檔、收起來、換盤都帶著）：不記練功房戰績、不算我的棋力（04-stats skillRows） */
       if(b.blind&&P&&!P.ranked&&kindOf(P)==="cpu"&&!/-b$/.test(P.id)){P.id+="-b";savePlay()}if(P&&!P.ranked&&b.rlv!=null&&Number.isInteger(+b.rlv)){P.rlv=Math.max(0,Math.min(RLV.length-1,+b.rlv+dxOf(b)));savePlay()}playMsg="";setTimeout(playEngine,0)}
@@ -220,6 +274,7 @@ var XQ=(function(){
       const before=R.pts,rk0=heldIdx(R);R.pts+=pts;rankHold(R,before);R.hist.unshift({id:"bonus-"+key,res:"bonus",d:pts,pts:R.pts,rk:RANKS[R.rk][0],why:String(b.why||"").slice(0,40),at:Date.now()});R.hist=R.hist.slice(0,100);
       ls.set("cpuRate",R);K[key]=Date.now();ls.set("bonusKeys",K);return{ok:true,d:pts,pts:R.pts,rank:RANKS[R.rk][0],was:RANKS[rk0][0]}}
     else if(p==="/play/switch"||p==="/play/open"){playOpen(b);playMsg="";setTimeout(playEngine,0)}
+    else if(p==="/play/restore"){playRestore(b.id);playMsg="";setTimeout(playEngine,0)}   /* 評比循環第 2 輪：保存紀錄的「↩ 回到那一盤」 */
     else if(p==="/play/move"){const f=+b.f,t=+b.t;if(P.result)throw new Error("這局已經結束");if(P.turn!==P.human)throw new Error("還沒輪到你");
       if(!legal(P.board,P.turn).some(([x,y])=>x===f&&y===t))throw new Error("這步不合法");playApply(f,t);setTimeout(playEngine,0)}
     else if(p==="/play/undo"){if(P.ranked)throw new Error("積分挑戰不能悔棋");/* 意見回饋 651：開發者 597 決定擂台也能用悔棋符，這裡原本還擋著（382 的舊規則），App 先扣了悔棋符、悔棋卻失敗——拿掉 *//* 意見回饋 380：電腦（擂主）還在想的時候也能悔棋——引擎算完會發現步數變了、自動丟掉那步 */
@@ -517,6 +572,7 @@ var XQ=(function(){
       return d}
     if(p.startsWith("/simul/"))return simulApi(p,b||{});   /* 11/11 車輪戰 */
     if(p==="/play/state")return playState();
+    if(p==="/play/log")return playLog();   /* 評比循環第 2 輪：🧾 對局保存紀錄 */
     if(p.startsWith("/play/"))return playPost(p,b||{});
     // 線上大廳的網路對局（不用電腦）
     if(p.startsWith("/pvp/")&&window.XQNet&&XQNet.active())return netPvp(p,b||{});
