@@ -1398,7 +1398,7 @@ html[data-hicon] .tabbar button.on{box-shadow:inset 0 -3px 0 currentColor}
       if(!window.caches)return go();caches.keys().then(function(ks){return Promise.all(ks.filter(function(k){return k.indexOf("xqlab-app-")===0}).map(function(k){return caches.delete(k)}))})
         .then(function(){return navigator.serviceWorker&&navigator.serviceWorker.getRegistration()}).then(function(r){return r&&r.update()}).catch(function(){}).then(go)}};setTimeout(chk,4000)})();
 </script>
-<script>window.XQ_OFFLINE=true;window.XQ_BUILD="20261111-2100";</script>
+<script>window.XQ_OFFLINE=true;window.XQ_BUILD="20261111-2130";</script>
 <script src="core.js"></script>
 <script src="engine.js"></script>
 <script src="local.js"></script>
@@ -14104,7 +14104,9 @@ const HB_CLASSIC_ON=true;
 const XQ_CL_DIRS=new RegExp("data/(todaymap|canjumap|cupmap|deskmap|rostermap|campmap|exammap|termsmap|thememap|redomap|statmap|openmap|gmmap|cpuroom|studymap|passmap|setmap)/");
 function xqClImg(u){try{if(!hbIsCl()||!XQ_CL_DIRS.test(u))return u;return u.replace(/\/([a-z]+_(?:day|night))(?:_[a-z]+)?\.webp/,"/$1_classic.webp")}catch(e){return u}}
 function hbIsCl(){if(!HB_CLASSIC_ON)return false;const e=hbDockEra();return !e||e==="classic"}
-const hbImg=(base,hub)=>{const nt=(base==="learn"||base==="battle")&&typeof sw7NightNow==="function"&&sw7NightNow()?"_night":"";if((base==="learn"||base==="battle")&&hbIsCl())return base+"_classic"+nt;const e=hbDockEra();return base+((HB_ERAS[hub]||[]).includes(e)?"_"+e:"")+nt};   /* 11/10 日落後換夜景圖 <名>_night（07w7 sw7NightNow） */
+/* 開發者 11/11「朝代／經典的學習和對戰天氣沒有跟著首頁變化」：學習、對戰底圖跟首頁同一個季節（07w7 sw7SeaNow），檔名 <名>_<季>[_night].webp，26 組×四季×日夜都有（data/hubmap/seasons.json；夏季＝原圖）。拿不到季節時照舊用原圖 */
+const HB_SEAS=["spring","summer","autumn","winter"];
+const hbImg=(base,hub)=>{const lb=base==="learn"||base==="battle",nt=lb&&typeof sw7NightNow==="function"&&sw7NightNow()?"_night":"";let sq="";if(lb){try{const s=typeof sw7SeaNow==="function"?sw7SeaNow():"";if(HB_SEAS.includes(s))sq="_"+s}catch(x){}}if(lb&&hbIsCl())return base+"_classic"+sq+nt;const e=hbDockEra();return base+((HB_ERAS[hub]||[]).includes(e)?"_"+e:"")+sq+nt};   /* 11/10 日落後換夜景圖 <名>_night（07w7 sw7NightNow） */
 /* 11/10 開發者「同桌對弈不應該出現走去園子過場」「挑戰電腦有景點了，不該再出現茅廬」：茶樓裡開的棋（挑戰電腦、同桌對弈），載入畫面用這一朝的對戰茶樓圖＋茶樓名稱，不再是小帥走去園子、茅廬臥龍 */
 /* 11/10 開發者「原本在茶坊，場景卻跑到了園子」（Gemini 61 號，開發者選：後花園＋月洞門過場圖、小二招呼、線上對戰一起套）：
    茶坊這邊開的棋（挑戰電腦、同桌對弈、天井配對的線上對局）都在「茶坊的後園」下——載入畫面是穿過月洞門往後園石台走（data/parkgate/yard*.webp），
