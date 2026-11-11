@@ -174,7 +174,7 @@ function stateApply(S,f,t){
   m.ch=[...chasePairs(S.board,mover)].some(x=>!chB.has(x));
   S.moves.push(m);return m}
 function stateRebuild(S){const old=S.moves||[];S.moves=[];S.board=parseFen(S.start||START);S.turn=S.startTurn||"r";S.pos=[fen(S.board,S.turn)];
-  for(const o of old){const m=stateApply(S,o.f,o.t);for(const k of["q","loss","ev","bc","bm","bp"])if(o[k]!==undefined)m[k]=o[k]}S.repetition=repetitionVerdict(S)}
+  for(const o of old){const m=stateApply(S,o.f,o.t);for(const k of["q","loss","ev","bv","bc","bm","bp"])if(o[k]!==undefined)m[k]=o[k]}S.repetition=repetitionVerdict(S)}   /* bv：開發者 11/11 影子模式，見 classifyRaw */
 function judgeState(S){
   const n=S.moves.length;S.repetition=null;if(!n)return null;
   const mover=S.moves[n-1].by,other=opp(mover);
@@ -204,7 +204,9 @@ async function classifyRaw(b,s,f,t,ms,lt){   /* lt：對方上一步落在哪一
   if(best.mv===mv)q=gap>=200&&Math.abs(best.v)<1500&&!inCheck(b,s)&&!(b[t]&&lt===t)?"妙著":"正著";   /* 妙著：唯一好棋差距 200 分以上，而且不是應將、不是被迫回吃 */
   else q=gradeLoss(loss);
   const bf=parseSq(best.mv.slice(0,2)),bt=parseSq(best.mv.slice(2,4));
-  return{q,loss,gap,ev:s==="r"?played:-played,bc:notate(b,bf,bt),bm:best.mv,bp:(best.pv||[]).slice(0,3)}}   // bp：Pikafish 建議的前 3 步（賽後在棋盤上畫箭頭）
+  /* 開發者 11/11 照三方審查（影子模式）：多回傳 bv＝最佳著法評估的原值（紅方視角、沒夾 ±2000），q、loss 完全照舊。
+     loss 是兩邊都夾到 ±2000 才相減，最佳著法若是殺棋（±29990 左右）原值會不見——新算法判「漏殺」、匿名對局資料校正殺棋分界要用原值 */
+  return{q,loss,gap,ev:s==="r"?played:-played,bv:s==="r"?best.v:-best.v,bc:notate(b,bf,bt),bm:best.mv,bp:(best.pv||[]).slice(0,3)}}   // bp：Pikafish 建議的前 3 步（賽後在棋盤上畫箭頭）
 return{START,NAMES,CN,VAL,sideOf,opp,parseFen,fen,legal,legalOk,inCheck,kingSq,make,iccs,parseSq,notate,chasePairs,hasAttackers,REP_RULES,repetitionVerdict,PLAYER,annotate,summary,fullItem,gameItem,LEVELS,stateApply,stateRebuild,judgeState,pickMove,ANALYZE_MS,clampV,gradeLoss,qName,classifyRaw};
 })();
 if(typeof module!=="undefined")module.exports=XQCore;

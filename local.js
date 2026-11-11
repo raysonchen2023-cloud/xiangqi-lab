@@ -28,9 +28,10 @@ var XQ=(function(){
     for(let i=0;i<S.moves.length;i++){const m=S.moves[i];if(m.q&&qName(m.q)!==m.q){m.q=qName(m.q);save()}if(m.q){if(m.loss!=null&&m.q!=="妙著"&&m.q!=="—"&&m.q!==gradeLoss(m.loss)){m.q=gradeLoss(m.loss);save()}continue}if(pause&&pause())return;
       const[bs,sd]=S.pos[i].split(" ");let r=null;try{r=await classify(parseFen(bs),sd==="w"?"r":"b",m.f,m.t,i>0&&S.moves[i-1]?S.moves[i-1].t:null)}catch(e){return}
       if(S.moves[i]!==m)return;if(r)Object.assign(m,r);else m.q="—";save()}}
-  const moveOut=m=>({f:m.f,t:m.t,by:m.by,cn:m.cn,ck:m.ck,q:m.q,loss:m.loss,ev:m.ev,bc:m.bc,bm:m.bm,bp:m.bp});
+  /* 開發者 11/11 照三方審查（影子模式）：多帶 bv＝最佳著法評估的原值（紅方視角、沒夾 ±2000，core.js classifyRaw 新加的），新算法判「漏殺」和匿名對局資料要用；舊存檔沒有 bv，新算法改用 ev 夾值後＋loss 還原 */
+  const moveOut=m=>({f:m.f,t:m.t,by:m.by,cn:m.cn,ck:m.ck,q:m.q,loss:m.loss,ev:m.ev,bv:m.bv,bc:m.bc,bm:m.bm,bp:m.bp});
   const lastEv=ms=>{for(let i=ms.length-1;i>=0;i--)if(ms[i].ev!=null)return{v:ms[i].ev,ply:i+1};return null};
-  const saveMoves=ms=>ms.map(m=>({f:m.f,t:m.t,by:m.by,q:m.q,loss:m.loss,ev:m.ev,bc:m.bc,bm:m.bm,bp:m.bp}));
+  const saveMoves=ms=>ms.map(m=>({f:m.f,t:m.t,by:m.by,q:m.q,loss:m.loss,ev:m.ev,bv:m.bv,bc:m.bc,bm:m.bm,bp:m.bp}));   /* bv：見 moveOut（開發者 11/11 影子模式）；沒有就是 undefined，JSON 存檔時自動省略 */
   /* 意見回饋 619：存棋譜排隊一筆一筆來（以前兩筆同時存會互相蓋掉），同一個 id 不重複存 */
   let PG=Promise.resolve();
   function pushGame(kind,g){const p=PG.then(async()=>{const list=(await idb.get("games:"+kind))||[];if(g&&g.id&&list.some(x=>x.id===g.id))return;list.push(g);await idb.set("games:"+kind,list)});PG=p.catch(()=>{});return p}
@@ -61,12 +62,20 @@ var XQ=(function(){
     Promise.resolve().then(async()=>{try{const list=await idb.get("games:play");if(list&&list.length){list.forEach(g=>{if(g&&g.level)g.level=lvOld(g.level)});await idb.set("games:play",list)}}catch(e){}});
   }catch(e){}ls.set("lvFine",1)})();
   const cpuRate=()=>ls.get("cpuRate",null)||{pts:0,w:0,l:0,d:0,hist:[]};
+  /* 數學修正 11/11（審查 5-A）：段位遲滯——積分照算，但「顯示的段位」R.rk 另外記：升段馬上升；降段要積分掉到本段下限再減半個段寬、而且升段後至少下滿 3 盤。
+     模擬（mathfix2/sim/sim-rank-hysteresis.js，實力不變，K 48／32）：每 100 盤升降次數 32→11、17→3.1、17→3.6 次（真實 Elo 1000／1300／1600）；積分本身沒改，長期平均積分不變，
+     顯示段位平均比照積分算的高約 0.23～0.34 段（遲滯的代價，刻意偏向不讓孩子馬上掉段；這段期間電腦照顯示段位挑，勝率約 35～39%）。
+     K 值：開發者 11/11 照三方審查維持「前 15 盤 48、之後 32」，不降到 24——Claude 複審實測 K＝24 讓進步的孩子升段慢 40～60%；K 48／32 時進步 150 分後升段的盤數跟舊制一樣（中位 8～9／9／24～25 盤，review-rank.js）。
+     src/net.js 的 rankHold 是同一段邏輯 */
+  const rankHold=(R,before)=>{const n=(R.w||0)+(R.l||0)+(R.d||0);if(R.rk==null||!RANKS[R.rk])R.rk=rankIdx(before!=null?before:R.pts);const i=rankIdx(R.pts);
+    if(i>R.rk){R.rk=i;R.pn=n}else if(i<R.rk){const lo=RANKS[R.rk][1],w=(RANKS[R.rk+1]?RANKS[R.rk+1][1]:lo+200)-lo;if(R.pts<lo-w/2&&n-(R.pn||0)>=3)R.rk=i}return R.rk};
+  const heldIdx=R=>R.rk!=null&&RANKS[R.rk]?R.rk:rankIdx(R.pts),kOf=n=>n<15?48:32;
   /* 意見回饋 段位失準：跟線上一樣改成等級分的期望勝率（對手＝開局時那一段的電腦，強度取那一階的中間），不再固定贏 +20、輸 −15 */
-  function cpuRateApply(res){const R=cpuRate(),before=R.pts,lo=RANKS[P.rk][1],hi=RANKS[P.rk+1]?RANKS[P.rk+1][1]:lo+200,op=(lo+hi)/2;
-    const E=1/(1+Math.pow(10,(op-R.pts)/400)),K=((R.w||0)+(R.l||0)+(R.d||0))<15?48:32;
+  function cpuRateApply(res){const R=cpuRate(),before=R.pts,rk0=heldIdx(R),lo=RANKS[P.rk][1],hi=RANKS[P.rk+1]?RANKS[P.rk+1][1]:lo+200,op=(lo+hi)/2;
+    const E=1/(1+Math.pow(10,(op-R.pts)/400)),K=kOf((R.w||0)+(R.l||0)+(R.d||0));
     let d=Math.round(K*((res==="w"?1:res==="d"?.5:0)-E));if(res==="w"&&d<1)d=1;if(res==="l"&&d>-1)d=-1;R.pts=Math.max(0,R.pts+d);d=R.pts-before;R[res]++;
-    R.hist.unshift({id:P.id,res,d,pts:R.pts,rk:RANKS[P.rk][0],n:P.moves.length,why:P.result?P.result.why:"",at:Date.now()});R.hist=R.hist.slice(0,100);ls.set("cpuRate",R);
-    P.rate={res,d,pts:R.pts,rank:RANKS[rankIdx(R.pts)][0],was:RANKS[rankIdx(before)][0]}}
+    rankHold(R,before);R.hist.unshift({id:P.id,res,d,pts:R.pts,rk:RANKS[P.rk][0],n:P.moves.length,why:P.result?P.result.why:"",at:Date.now()});R.hist=R.hist.slice(0,100);ls.set("cpuRate",R);
+    P.rate={res,d,pts:R.pts,rank:RANKS[R.rk][0],was:RANKS[rk0][0]}}
   /* 意見回饋 415：這盤用過幾次提示（/play/hint、雲河棋路的提示棋 /play/hintmark）、悔過幾次棋（/play/undo）。
      存檔時一起寄進對局紀錄，我的戰績算棋力、成長時把這種盤排除，才公平；舊存檔沒有這兩欄就照算 */
   const assist=G=>({...(G&&G.hintN?{hintN:G.hintN}:{}),...(G&&G.undoN?{undoN:G.undoN}:{})});
@@ -115,7 +124,7 @@ var XQ=(function(){
     // 積分挑戰下到一半就開新局：算輸
     forfeit(P);
     const pm=pre&&Array.isArray(pre.moves)?pre.moves.filter(m=>Number.isInteger(m.f)&&Number.isInteger(m.t)).slice(0,300):[];
-    P={id:gameId(),human,level:ranked?0:level,ranked:!!ranked,rk:ranked?rankIdx(cpuRate().pts):null,moves:pm,result:null,hint:null,practice:pre?{...(pre.info||{}),base:pm.length}:null,reward:!ranked&&!pre&&!!reward,arena:!ranked&&!pre&&!reward&&arena||null,journey:nk==="journey"?journey:null};
+    P={id:gameId(),human,level:ranked?0:level,ranked:!!ranked,rk:ranked?heldIdx(cpuRate()):null,moves:pm,result:null,hint:null,practice:pre?{...(pre.info||{}),base:pm.length}:null,reward:!ranked&&!pre&&!!reward,arena:!ranked&&!pre&&!reward&&arena||null,journey:nk==="journey"?journey:null};   /* 數學修正 11/11：對手照顯示的段位（遲滯後） */
     {const L=nk==="journey"?lvStart(lv):null;if(L){P.start=L.start;P.startTurn=L.startTurn;if(L.noPerp)P.noPerp=true}}
     stateRebuild(P);if(P.practice&&P.turn!==human)throw new Error("這步不是你走的");savePlay()}
   function playApply(f,t){stateApply(P,f,t);P.hint=null;let r=judgeState(P);if(r&&P.noPerp&&/長將|長捉|長打/.test(r.why))r=null;if(r)playEnd(r.w,r.why);savePlay();setTimeout(analyzePlay,0);
@@ -161,7 +170,7 @@ var XQ=(function(){
       if(off&&noEng&&!engWait){engWait=true;addEventListener("online",()=>{engWait=false;engFail=0;setTimeout(playEngine,800)},{once:true})}}
     finally{playBusy=false;if(!engFail)setTimeout(playEngine,0);else if(!engWait)setTimeout(playEngine,Math.min(60000,1500*2**Math.min(engFail,6)))}}
   function playState(){ensureP();
-    const CR=cpuRate(),ci=rankIdx(CR.pts),nx=RANKS[ci+1];
+    const CR=cpuRate(),ci=heldIdx(CR),nx=RANKS[ci+1];
     const SA=stashAll(),others=Object.values(SA).filter(g=>kindOf(g)!==kindOf(P)).map(g=>({kind:kindOf(g),arena:g.arena||null,journey:g.journey||null,ranked:!!g.ranked,reward:!!g.reward,level:g.level,n:g.moves.length,human:g.human}));
     return{rules:C.REP_RULES,repetition:P.repetition||null,kind:kindOf(P),others,other:others[0]||null,journey:P.journey||null,start:P.start||null,startTurn:P.startTurn||"r",id:P.id,blind:/-b$/.test(String(P.id)),board:P.board,turn:P.turn,human:P.human,level:P.level,ranked:!!P.ranked,reward:!!P.reward,arena:P.arena||null,stamp:P.stamp||null,prize:P.prize||null,rkName:P.ranked?RANKS[P.rk][0]:null,rate:P.rate||null,
       cpuRate:{pts:CR.pts,rank:RANKS[ci][0],w:CR.w,l:CR.l,d:CR.d,next:nx?nx[0]:null,toNext:nx?nx[1]-CR.pts:0,lo:RANKS[ci][1],hi:nx?nx[1]:null,hist:CR.hist},
@@ -175,9 +184,9 @@ var XQ=(function(){
     else if(p==="/play/bonus"){   /* 意見回饋 313：石桌往事「回到當年」答對轉折加段位積分；每個轉折只能領一次 */
       const key=String(b.key||"").slice(0,80),pts=Math.max(1,Math.min(20,Math.round(+b.pts)||0)),K=ls.get("bonusKeys",{});
       if(!key)throw new Error("缺少題目代號");const R=cpuRate();
-      if(K[key])return{already:true,pts:R.pts,rank:RANKS[rankIdx(R.pts)][0]};
-      const before=R.pts;R.pts+=pts;R.hist.unshift({id:"bonus-"+key,res:"bonus",d:pts,pts:R.pts,rk:RANKS[rankIdx(R.pts)][0],why:String(b.why||"").slice(0,40),at:Date.now()});R.hist=R.hist.slice(0,100);
-      ls.set("cpuRate",R);K[key]=Date.now();ls.set("bonusKeys",K);return{ok:true,d:pts,pts:R.pts,rank:RANKS[rankIdx(R.pts)][0],was:RANKS[rankIdx(before)][0]}}
+      if(K[key])return{already:true,pts:R.pts,rank:RANKS[heldIdx(R)][0]};
+      const before=R.pts,rk0=heldIdx(R);R.pts+=pts;rankHold(R,before);R.hist.unshift({id:"bonus-"+key,res:"bonus",d:pts,pts:R.pts,rk:RANKS[R.rk][0],why:String(b.why||"").slice(0,40),at:Date.now()});R.hist=R.hist.slice(0,100);
+      ls.set("cpuRate",R);K[key]=Date.now();ls.set("bonusKeys",K);return{ok:true,d:pts,pts:R.pts,rank:RANKS[R.rk][0],was:RANKS[rk0][0]}}
     else if(p==="/play/switch"||p==="/play/open"){playOpen(b);playMsg="";setTimeout(playEngine,0)}
     else if(p==="/play/move"){const f=+b.f,t=+b.t;if(P.result)throw new Error("這局已經結束");if(P.turn!==P.human)throw new Error("還沒輪到你");
       if(!legal(P.board,P.turn).some(([x,y])=>x===f&&y===t))throw new Error("這步不合法");playApply(f,t);setTimeout(playEngine,0)}

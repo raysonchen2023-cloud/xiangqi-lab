@@ -1379,7 +1379,7 @@ html[data-hicon] .tabbar button.on{box-shadow:inset 0 -3px 0 currentColor}
       if(!window.caches)return go();caches.keys().then(function(ks){return Promise.all(ks.filter(function(k){return k.indexOf("xqlab-app-")===0}).map(function(k){return caches.delete(k)}))})
         .then(function(){return navigator.serviceWorker&&navigator.serviceWorker.getRegistration()}).then(function(r){return r&&r.update()}).catch(function(){}).then(go)}};setTimeout(chk,4000)})();
 </script>
-<script>window.XQ_OFFLINE=true;window.XQ_BUILD="20261111-1715";</script>
+<script>window.XQ_OFFLINE=true;window.XQ_BUILD="20261111-1745";</script>
 <script src="core.js"></script>
 <script src="engine.js"></script>
 <script src="local.js"></script>
@@ -3097,7 +3097,8 @@ const qzCat=q=>q.cat||(q.mate?"殺法":String(q.board).split(",").filter(p=>p&&"
 const qzPar=q=>({a:q.ca||(.8+Math.min(1,(q.gap||100)/400)),b:q.cb!=null?q.cb:(q.tier-QZ.MID)*QZ.S-(q.cap?.15:0),c:QZ.C});
 const qzP=(th,p)=>p.c+(1-p.c)/(1+Math.exp(-p.a*(th-p.b)));
 const qzInfo=(th,p)=>{const P=qzP(th,p);return p.a*p.a*Math.pow(P-p.c,2)*(1-P)/(Math.pow(1-p.c,2)*P)};
-function qzEAP(ans,mu){const th=[],w=[];for(let t=-4.5;t<=4.501;t+=.05){let L=-Math.pow(t-mu,2)/2;for(const x of ans){const P=qzP(t,x.p);L+=x.ok?Math.log(P):Math.log(1-P)}th.push(t);w.push(L)}
+/* 數學修正 11/11（審查 6-C）：先驗 N(mu, 1.5²)——點「我是新手」先驗平均 −3，其實是業4 的人 8 題就停會被拉低約 0.6 階；放寬成 1.5 後約 0.3 階（sim/sim-irt-prior.js）。quizLog 每題多存當時的 a、b（x[7]、x[8]），天賦系統的 tlIRT 用同一套參數 */
+function qzEAP(ans,mu){const th=[],w=[];for(let t=-4.5;t<=4.501;t+=.05){let L=-Math.pow(t-mu,2)/(2*1.5*1.5);for(const x of ans){const P=qzP(t,x.p);L+=x.ok?Math.log(P):Math.log(1-P)}th.push(t);w.push(L)}
   const mx=Math.max(...w),W=w.map(x=>Math.exp(x-mx)),S=W.reduce((a,b)=>a+b,0),m=th.reduce((a,t,i)=>a+t*W[i],0)/S;return{th:m,se:Math.sqrt(th.reduce((a,t,i)=>a+(t-m)**2*W[i],0)/S)}}
 /* 殘局技巧：依走棋方剩下的大子分類（單車、車馬、雙炮…，沒有大子就是兵殘局） */
 const endTech=(b,side)=>{const up=side==="r",c={R:0,N:0,C:0};for(const p of b)if(p&&(p===p.toUpperCase())===up&&c[p.toUpperCase()]!=null)c[p.toUpperCase()]++;
@@ -3113,7 +3114,7 @@ function Quiz(v){
   let D=null,ans=[],sel=-1,LEGAL=[],q=null,board=null,answered=false,mu=0,est={th:0,se:1},asked=new Set(),t0=0,share=true,sid=0;   /* 意見回饋 302：不再顯示匿名分享的勾選框 */
   /* 意見回饋 309：每答一題就記進 quizLog（part＝還沒做完），中途離開也算數；做完才估段位、更新最好成績。
      沒做完的那幾題，下次打開測驗時再匿名送去校正題目難度 */
-  function saveLog(final){if(!ans.length)return;const lg=store.get("quizLog",[]),i=lg.findIndex(x=>x.at===sid),e={at:sid,n:(D&&D.ranks.length)||15,mode:"cat",th:est.th,se:est.se,part:final?0:1,sh:final?1:0,a:ans.map(x=>[x.tier,x.ok?1:0,x.mate,x.ms,x.cat,x.id,x.tech||""])};
+  function saveLog(final){if(!ans.length)return;const lg=store.get("quizLog",[]),i=lg.findIndex(x=>x.at===sid),e={at:sid,n:(D&&D.ranks.length)||15,mode:"cat",th:est.th,se:est.se,part:final?0:1,sh:final?1:0,a:ans.map(x=>[x.tier,x.ok?1:0,x.mate,x.ms,x.cat,x.id,x.tech||"",x.p&&isFinite(x.p.a)?+(+x.p.a).toFixed(2):null,x.p&&isFinite(x.p.b)?+(+x.p.b).toFixed(2):null])};
     if(i>=0)lg[i]=e;else lg.push(e);store.set("quizLog",lg.slice(-40))}
   /* 回饋 838（開發者 11/9 選：全模式中斷接續）：做到一半的測驗存在 store quizRun＝{sid,mu 起始程度,a [{id,ok,ms,tech}] 答過的題,cur 目前這題,an 這題答了沒,at}；
      打開測驗頁可以「繼續上次的測驗」：同一份（sid 一樣，修為不會重給）、同一題（不能關掉重開換題），7 天沒動就作廢。還能接續的那一份先不送去校正題目，免得做完又送一次 */
@@ -3587,9 +3588,10 @@ function playerGames(oid,name){sheet(`📜 ${name||"棋友"} 的線上棋譜`,as
   const PF=H&&H.prof&&typeof H.prof==="object"?H.prof:null,num=x=>x==null||!isFinite(x)?null:Math.max(0,Math.min(100,Math.round(+x)));
   const PK=PF&&Array.isArray(PF.penK)&&PF.penK.length===5?PF.penK.map(k=>esc(String(k).slice(0,4))):["開局","中局","殘局","精準","穩定"],PL=i=>!!(PF&&Array.isArray(PF.penL)&&PF.penL[i]);
   const PS=i=>PF&&Array.isArray(PF.penS)&&isFinite(PF.penS[i])?Math.max(0,Math.round(+PF.penS[i])):null,hasPen=PF&&Array.isArray(PF.pen)&&PF.pen.some(x=>num(x)!=null);
-  const pfCard=PF&&(hasPen||PF.tal)?`<div class="card" style="margin-top:8px"><b>⚔ 棋力</b>${hasPen?penSVG(PK.map((k,i)=>[k,num(PF.pen[i]),PL(i),k==="殺法"&&num(PF.pen[i])!=null?`勝過${num(PF.pen[i])}%`:""]),260):""}
+  /* 數學修正 11/11（審查 6-A、10-A）：別人資料卡上的「勝過 X%」「比 X% 長得快」只在對方的 App 標 cal＝1（有 ≥200 人校正）時才顯示；舊版 App 發的 rPct 是先驗算的，不顯示百分比，只顯示段位文字 penT（有的話） */
+  const PT=i=>PF&&Array.isArray(PF.penT)&&PF.penT[i]?esc(String(PF.penT[i]).slice(0,8)):"",pfCard=PF&&(hasPen||PF.tal)?`<div class="card" style="margin-top:8px"><b>⚔ 棋力</b>${hasPen?penSVG(PK.map((k,i)=>[k,num(PF.pen[i]),PL(i),k==="殺法"&&num(PF.pen[i])!=null?(PT(i)||"測驗"):""]),260):""}
       ${hasPen&&PK.some((_,i)=>PS(i)!=null)?`<p class="muted" style="font-size:12px;margin:4px 0 0;text-align:center">${PK.map((k,i)=>PS(i)==null?"":`${k} ${PS(i)} ${k==="殺法"?"題":"步"}`).filter(Boolean).join("・")}${PK.some((_,i)=>PL(i))?"<br>虛線、淡色＝樣本還少":""}</p>`:""}
-      ${PF.tal?`<p style="margin:6px 0 0">📈 進步速度：<b>${esc(num(PF.tal.rPct)!=null&&PF.tal.lab!=="還在觀察中"?speedLab(num(PF.tal.rPct)):String(PF.tal.lab||"還在觀察中").replace(/慢熱型|越練越穩/,"進步偏慢").slice(0,8))}</b>${num(PF.tal.rPct)!=null?`（比 ${num(PF.tal.rPct)}% 的學棋者長得快）`:""}</p>`:""}
+      ${PF.tal?`<p style="margin:6px 0 0">📈 進步速度：<b>${esc(PF.tal.cal&&num(PF.tal.rPct)!=null&&PF.tal.lab!=="還在觀察中"?speedLab(num(PF.tal.rPct)):String(PF.tal.lab||"還在觀察中").replace(/慢熱型|越練越穩|學得飛快|學習速度快|穩定成長|進步偏慢|還沒明顯進步/,"還在觀察中").slice(0,8))}</b>${PF.tal.cal&&num(PF.tal.rPct)!=null?`（比 ${num(PF.tal.rPct)}% 用這個 App 的棋友長得快）`:""}</p>`:""}
       <p class="muted" style="font-size:12px;margin:6px 0 0">他自己的 App 算出來公開的${PF.at?`（${new Date(+PF.at).toLocaleDateString()}）`:""}</p></div>`:`<p class="muted" style="font-size:12.5px;margin:8px 2px 0">他還沒公開棋力五邊形（對方用新版 App 打開「我的戰績」後就會公開）。</p>`;
   /* 意見回饋 289：他還沒公開（舊版 App、虛擬玩家剛更新還沒下完新的一盤）：先用你跟他下過的對局（換成他的角度）來看 */
   const mineL=oppHist().filter(h=>h.oid===oid&&h.rid).map(h=>({gid:h.gid,id:h.rid,opp:"你",oid:"",res:h.res==="w"?"l":h.res==="l"?"w":"d",why:h.why||"",n:h.n||0,at:h.at,sd:h.sd?(h.sd==="r"?"b":"r"):null,local:1}));
@@ -3690,9 +3692,25 @@ function setProf(x){const p={...store.get("pubProf",{}),...x,v:1,at:Date.now()};
        原本的「精準」跟三個階段分是同一批著法，改成小字「走出電腦首選 X%」。
    三、樣本：實戰軸不到 30 步、殺法不到 10 題＝樣本還少：畫虛線、淡色，不拿來挑「建議先練」。全 App 只有這裡一個「建議先練」。
    四、公平：用過提示或悔棋的那盤（local.js 存檔時記 hintN／undoN）整盤不算；舊存檔沒有這兩欄就照算。 */
-const SK={WIN:150,MIN:30,QMIN:10,acc:l=>100*Math.exp(-Math.max(0,+l||0)/200),
+/* 數學修正 11/11（審查 3-B、4.2；開發者 11/11 照三方審查「先上不改分數的部分」）：
+   ・每步準確度「不改」：照舊 100·e^(−損失/200)（SK.acc）。勝率尺度的新算法只在影子模式背景算（05-settings.js 的 MXS／mxShadowReport），畫面不顯示，所以快取照舊叫 talentCache5、不用重算。
+   ・五軸的時間窗統一：每一盤的權重 λ^(盤序)，λ＝2^(−1/HL)（半衰期 15 盤，有效視窗約 22 盤），三個階段用同一批最近的盤，不再各自往回找 150 步（殘局軸原本反映的是很舊的自己）。
+     盤序用「全部的盤」排（Claude 複審 #11：原本是「這一軸有資料的第幾盤」，殘局只有一半的盤有，時間窗會長一倍）。
+     指數加權還有一個好處：加進新的一盤，軸的變化方向一定跟「這盤 − 原本」同號（滑動視窗有 14% 反號：其實是新盤減掉被擠出去的舊盤）。
+   ・每軸附標準誤（以盤為群集的穩健估計；盤少時退回 σ²·deff／n，deff＝3 是同一盤的步彼此相關的設計效應——工程判斷，待資料估）。
+   ・DEFF＝3、SD0＝26（一步準確度的標準差）都標「需要資料驗證」；有匿名資料後由 tools/calibrate-axes.js 估。 */
+const SK={WIN:150,MIN:30,QMIN:10,HL:15,DEFF:3,SD0:26,acc:l=>100*Math.exp(-Math.max(0,+l||0)/200),
   GO:{開局:["#/openings","我的開局"],中局:["#/redo","錯棋重練"],殘局:["#/db/canju","古典殘局譜"],殺法:["#/quiz","棋力測驗"],穩定:["#/redo","錯棋重練"]}};
-/* 每盤一列（我的棋力、我的成長共用，存在 talentCache5）：我這邊評過等的步——各階段準確度加總 pa＝[加總,步數]、首選 best、失著＋敗著 bad、
+/* 校正檔（store calib，後台每天發）夠不夠多人：tal.people＝成長曲線人數、irtPeople＝測驗作答人數。沒有夠多人之前，百分位、「一般棋友」都只能標「暫用假設」（審查 6-A、10-A）
+   開發者 11/11 照三方審查（ChatGPT）：「一般棋友」的先驗至少 100 人才當真（原本 10 人太少）；「勝過 X%」的分位表至少 200 人（下限，500～1000 人才穩） */
+const MX_RK=["新手","入門1","入門2","入門3","業1","業2","業3","業4","業5","業6","業7","業8","業9","專1","專2"];
+function mxCal(){const C=store.get("calib",null)||{};return{tal:C.tal&&C.tal.people>=100?C.tal:null,talN:C.tal?+C.tal.people||0:0,irtN:+C.irtPeople||0,thQ:Array.isArray(C.thQ)&&C.thQ.length>=9&&(+C.irtPeople||0)>=200?C.thQ:null,
+  lrQ:C.tal&&Array.isArray(C.tal.lrQ)&&C.tal.lrQ.length>=9&&(+C.tal.people||0)>=200?C.tal.lrQ:null,ax:C.ax&&(+C.ax.people||0)>=30?C.ax:null}}
+/* 經驗百分位：Q＝校正檔給的 5%、10%、…、95% 分位（19 個），線性內插；pct＝(#{θ_j<θ}＋0.5·#{θ_j＝θ})／N 的連續版（審查 6-A 的修法） */
+function mxPct(x,Q){if(!Q||!Q.length)return null;const n=Q.length,p=i=>100*(i+1)/(n+1);if(x<=Q[0])return Math.max(1,Math.round(p(0)*Math.max(0,1-(Q[0]-x)/Math.max(1e-6,Q[1]-Q[0]))));
+  for(let i=0;i<n-1;i++)if(x<=Q[i+1]){const f=(x-Q[i])/Math.max(1e-6,Q[i+1]-Q[i]);return Math.round(p(i)+f*(p(i+1)-p(i)))}return Math.min(99,Math.round(p(n-1)+(100-p(n-1))*Math.min(1,(x-Q[n-1])/Math.max(1e-6,Q[n-1]-Q[n-2]))))}
+const mxTierName=th=>MX_RK[Math.max(0,Math.min(MX_RK.length-1,Math.round(th/QZ.S+QZ.MID)))];
+/* 每盤一列（我的棋力、我的成長共用，存在 talentCache5；開發者 11/11：每步準確度照舊，快取不升版；新欄位 id／lv／A 只有新算的列有，舊列沒有就退回 SK.SD0）：我這邊評過等的步——各階段準確度加總 pa＝[加總,步數]、首選 best、失著＋敗著 bad、
    這盤用過提示或悔棋 hu；舊的列沒有 pa 就重新讀那盤算一次。只有我這邊每一步都評好才存快取，還沒評完的回傳在 pend */
 async function skillRows(){
   const me=myName(),games=[];
@@ -3710,9 +3728,9 @@ async function skillRows(){
           const mine=rep.plies.filter(m=>m.by===g.side&&m.loss!=null&&m.q&&m.q!=="—"),ok=m=>QGOOD.includes(m.q)?1:0,of=k=>mine.filter(m=>m.phase===k);
           const w=/^紅/.test(g.res)&&/勝|胜/.test(g.res)?"r":/^黑/.test(g.res)&&/勝|胜/.test(g.res)?"b":null,res=/中止|取消/.test(g.res)?null:w?(w===g.side?"w":"l"):g.res?"d":null;
           row={score:R.score,n:R.graded,bad:(R.cnt["失著"]||0)+(R.cnt["敗著"]||0),best:(R.cnt["正著"]||0)+(R.cnt["妙著"]||0),hu:(+it.hintN||0)+(+it.undoN||0)>0?1:0,
-            t:tlTime(g.id),res,opp:g.c==="play"?tlOppElo(g.opp):null,
+            t:tlTime(g.id),id:key,res,opp:g.c==="play"?tlOppElo(g.opp):null,lv:g.c==="play"?tlOppLv(g.opp):null,   /* 數學修正 11/11：id 給 skillDiff 認這盤（不用時間撞號）；lv＝對手級數（成長模型的對手強度共變量） */
             pa:Object.fromEntries(["open","mid","end"].map(k=>{const a=of(k);return[k,[Math.round(a.reduce((x,m)=>x+SK.acc(m.loss),0)*10)/10,a.length]]})),
-            ph:{open:of("open").map(ok).join(""),mid:of("mid").map(ok).join(""),end:of("end").map(ok).join("")},L:mine.map(m=>Math.round(m.loss)),
+            ph:{open:of("open").map(ok).join(""),mid:of("mid").map(ok).join(""),end:of("end").map(ok).join("")},L:mine.map(m=>Math.round(m.loss)),A:mine.map(m=>Math.round(SK.acc(m.loss))),
             ek:rep.endFrom!=null?(()=>{let bb=it.board.slice();for(let i=0;i<rep.endFrom&&i<mv.length;i++){bb[mv[i].t]=bb[mv[i].f];bb[mv[i].f]=null}return endTech(bb,g.side)})():""};
           if(!miss){cache[key]=row;ch=true}}}}
     /* 開發者 11/11 選（統計複查）：車輪戰的盤（id 結尾 -s桌號）同時下很多盤、注意力分散，不算進我的棋力、準確度、成長曲線、等級分；照樣評等，檢討看得到 */
@@ -3720,19 +3738,43 @@ async function skillRows(){
   if(ch)store.set("talentCache5",cache);
   return{G,pend,smN}}
 /* 五軸的分數。G＝skillRows 的列，IR＝tlIRT(測驗紀錄)。每軸回傳 {k 名稱, v 分數, n 步數或題數, u 單位, g 盤數, ok 樣本夠, go [入口, 名稱]} */
-function skillAxes(G,IR){const R=(G||[]).filter(g=>g&&g.pa&&!g.hu).sort((a,b)=>(a.t||0)-(b.t||0)),out=[];
-  for(const[k,l]of[["open","開局"],["mid","中局"],["end","殘局"]]){let s=0,n=0,gn=0;
-    for(let i=R.length-1;i>=0&&n<SK.WIN;i--){const x=R[i].pa[k];if(x&&x[1]){s+=x[0];n+=x[1];gn++}}
-    out.push({k:l,v:n?Math.round(s/n):null,n,g:gn,u:"步"})}
-  /* 意見回饋（開發者 11/6 分數審查）：殺法軸是 Φ(θ)×100 的百分位（勝過 X% 學棋者），跟另外四軸的準確度不同尺——標 pct:1，不進「綜合」平均、不進「建議先練」 */
-  const ir=IR&&IR.殺戰;out.push({k:"殺法",v:ir?Math.round(PHI(ir.th)*100):null,n:ir?ir.n:0,g:0,u:"題",pct:1});
-  let bad=0,best=0,n=0,gn=0;for(let i=R.length-1;i>=0&&n<SK.WIN;i--){const g=R[i];if(!g.n)continue;bad+=g.bad||0;best+=g.best||0;n+=g.n;gn++}
-  out.push({k:"穩定",v:n?Math.max(0,Math.round(100-300*bad/n)):null,n,g:gn,u:"步",best:n?Math.round(best*100/n):null});
-  for(const a of out){a.ok=a.v!=null&&a.n>=(a.u==="題"?SK.QMIN:SK.MIN);a.go=SK.GO[a.k]}
+/* 數學修正 11/11（審查 3-A、3-B）：每軸＝指數加權平均（同一個時間窗）＋標準誤 se；穩定＝沒有失著、敗著的步數比例（0～100，跟準確度一樣「越高越好、100 滿分」，不再是 100−300×失誤率）。
+   z＝(軸值−同段位棋友平均)／同段位標準差，只有校正檔 calib.ax（tools/calibrate-axes.js，≥30 人）有這一軸、這一段的基準時才算得出來；沒有就 null。
+   綜合＝三個階段加權合起來的每步準確度（＝全部步的準確度平均），穩定另外看、不進綜合（原本穩定軸跟階段分重複扣大錯，審查 3-A） */
+/* 開發者 11/11 照三方審查（Claude 複審 #11）：權重用「全部的盤」的盤序 j（R 已經新到舊排好），不是「這一軸有資料的第幾盤」，三個階段才真的看同一段時間；gn 只算這一軸有資料的盤數（畫面寫「近 X 盤」） */
+function mxAxisPt(R,pick,lam,sd0){let S=0,N=0,n0=0,gn=0,j=-1;const J=[];
+  for(const g of R){j++;const x=pick(g);if(!(x&&x[1]>0))continue;const w=Math.pow(lam,j);S+=w*x[0];N+=w*x[1];n0+=x[1];gn++;J.push([w,x[0],x[1],x[2]])}
+  if(!N)return{v:null,m:null,se:null,n:0,n0:0,g:0};const m=S/N;
+  /* 標準誤：以盤為群集 SE²＝Σ(W_j·(ā_j−m))²／(ΣW_j)²（W_j＝w_j·n_j；Cameron & Miller 2015 的 cluster-robust 寫法）；盤數 <4 或算出來比模型值小就用 σ²·deff·Σ(w²n)／(Σw·n)² */
+  let s1=0,s2=0,sv=0,sn=0;for(const[w,s,n,ss]of J){const d=s/n-m;s1+=w*n*w*n*d*d;s2+=w*w*n;if(ss!=null){sv+=ss;sn+=n}}
+  const sdm=sn>1?Math.sqrt(Math.max(0,sv/sn)):sd0,seM=Math.sqrt(sdm*sdm*(gn>=8?1:SK.DEFF)*s2)/N,seC=gn>=4?Math.sqrt(s1)/N:0;   /* 盤數夠（≥8）時以群集估計為主，模型值只當下限（deff 不再乘；模擬 sim-pick-se.js：乘了會把 se 高估 1.5 倍、抓不到真的弱項） */
+  return{v:Math.round(m),m,se:Math.max(seM,seC),n:Math.round(N),n0,g:gn}}
+function skillAxes(G,IR){const R=(G||[]).filter(g=>g&&g.pa&&!g.hu).sort((a,b)=>(b.t||0)-(a.t||0)),out=[],lam=Math.pow(.5,1/SK.HL),CAL=mxCal(),AX=CAL.ax,NR=(()=>{try{return window.XQNet&&XQNet.rating?XQNet.rating().rank:null}catch(e){return null}})();
+  const sq=g=>{if(!g.A||!g.A.length)return null;const m=g.A.reduce((a,b)=>a+b,0)/g.A.length;return g.A.reduce((a,b)=>a+(b-m)*(b-m),0)};   /* 這盤每步準確度的離均差平方和（估 σ 用）；舊列沒有 A → 用 SK.SD0 */
+  for(const[k,l]of[["open","開局"],["mid","中局"],["end","殘局"]]){const a=mxAxisPt(R,g=>{const x=g.pa[k];return x?[x[0],x[1],x[1]===g.n?sq(g):null]:null},lam,SK.SD0);out.push({k:l,...a,u:"步",key:k})}
+  /* 意見回饋（開發者 11/6 分數審查）：殺法軸跟另外四軸不同尺——標 pct:1，不進「綜合」、不進「建議先練」。
+     數學修正 11/11（審查 6-A）：Φ(θ)×100 不是「勝過 X% 學棋者」（那是假設全體 θ～N(0,1) 且平均在業4，新手會看到 0%）。
+     校正檔有 ≥200 人的 θ 分位（calib.thQ）才算經驗百分位；沒有就顯示「約 業2 程度」這種段位名稱，五邊形的長度用階數換算（0～100） */
+  const ir=IR&&IR.殺戰,pq=ir?mxPct(ir.th,CAL.thQ):null,tier=ir?Math.max(0,Math.min(14,ir.th/QZ.S+QZ.MID)):null;
+  out.push({k:"殺法",v:ir?(pq!=null?pq:Math.round(100*tier/14)):null,txt:ir?(pq!=null?`勝過${pq}%`:`約${mxTierName(ir.th)}`):"",est:pq==null,n:ir?ir.n:0,g:0,u:"題",pct:1});
+  const st=mxAxisPt(R,g=>g.n?[100*(g.n-(g.bad||0)),g.n,null]:null,lam,45);let best=0,bn=0,j=0;for(const g of R){const w=Math.pow(lam,j++);if(!g.n)continue;best+=w*(g.best||0);bn+=w*g.n}
+  out.push({k:"穩定",...st,u:"步",key:"stab",best:bn?Math.round(best*100/bn):null});
+  for(const a of out){a.ok=a.v!=null&&a.n>=(a.u==="題"?SK.QMIN:SK.MIN);a.go=SK.GO[a.k];
+    const B=AX&&a.key&&AX.byRank&&NR&&AX.byRank[NR]&&AX.byRank[NR][a.key];if(B&&B.n>=30&&B.sd>0&&a.m!=null){a.z=(a.m-B.mu)/B.sd;a.zse=a.se/B.sd;a.grp=B.n}else{a.z=null;a.zse=null}}
   return out}
-/* 建議先練：只從樣本夠的軸挑（至少要兩軸才比得出來）；最高最低差不到 5 分就說「差不多」 */
-function skillPick(A){const ok=A.filter(a=>a.ok&&!a.pct).sort((a,b)=>a.v-b.v);if(ok.length<2)return{none:true};   /* 意見回饋（開發者 11/6 分數審查）：只在四個準確度軸裡挑，百分位的殺法不比 */
-  const lo=ok[0],hi=ok[ok.length-1];return hi.v-lo.v<5?{even:true,lo,hi}:{weak:lo,hi}}
+/* 綜合＝三個階段合起來的每步準確度（各軸 m 用加權步數合成），附標準誤 */
+function mxTotal(A){let s=0,n=0,v=0;for(const a of A){if(a.pct||a.key==="stab"||a.m==null||!a.n)continue;s+=a.m*a.n;n+=a.n;v+=a.se*a.se*a.n*a.n}return n?{v:Math.round(s/n),m:s/n,se:Math.sqrt(v)/n,n}:null}
+/* 建議先練（審查 3-B）：四軸不是同一把尺——有同段位基準時比 z 分數（含穩定）；沒有時只比三個階段的準確度（同一單位），穩定不進來。
+   最高、最低差距要超過 2·√(se_lo²＋se_hi²)（約 2 個標準誤，雙側 95%）才說有弱項，不然說「差不多」（原本的「差 5 分」還不到 1 個標準誤）。
+   開發者 11/11 照三方審查（ChatGPT 建議、Claude 複審的 1.64 與 2 的取捨）：說法分三級信心，conf 欄位——
+     hi  差距 ≥ 2 個標準誤 →「建議先練〇〇」（回傳 weak；07z2-statmap 只看 weak，地圖上的朱圈只畫高信心的）
+     mid 1.64 ≤ 差距／標準誤 < 2（單側 95%）→「可能先看〇〇」（回傳 maybe，不回傳 weak）
+     lo  樣本不夠（none），或差距 < 1.64 個標準誤而且門檻還很寬（2 個標準誤 > 8 分，約 20 盤以下；z 尺度 > 0.8）→「資料還少，先多下幾盤」
+     even 差距 < 1.64 個標準誤、門檻已經夠窄（資料夠多）→ 各項差不多
+   8 分、0.8 是工程判斷（sim/sim-pick-conf.js 看各級出現的比例） */
+function skillPick(A){const grp=A.filter(a=>a.ok&&!a.pct).every(a=>a.z!=null)&&A.some(a=>a.z!=null),ok=A.filter(a=>a.ok&&!a.pct&&(grp||a.key!=="stab"));if(ok.length<2)return{none:true,conf:"lo"};
+  const val=a=>grp?a.z:a.m,sev=a=>grp?a.zse:a.se,s=ok.slice().sort((a,b)=>val(a)-val(b)),lo=s[0],hi=s[s.length-1],gap=val(hi)-val(lo),se=Math.sqrt(sev(lo)**2+sev(hi)**2),th=2*se;
+  return gap>=th?{weak:lo,hi,th,grp,conf:"hi"}:gap>=1.64*se?{maybe:lo,hi,th,grp,conf:"mid"}:{even:true,lo,hi,th,grp,conf:th>(grp?.8:8)?"lo":"even"}}
 /* 開發者 11/11「下完一局接著看到我的成長變化」：這一盤（挑戰電腦 id）算進去前、後的我的棋力——跟五邊形同一套（skillRows／skillAxes，綜合＝樣本夠的準確度軸平均）。
    回傳 {hu 用過提示或悔棋, acc 這盤每步準確度, avg 這盤之前最近約 150 步的平均, t0／t1 綜合前後, ax 四個準確度軸前後}；這盤還沒評好等＝null */
 /* 開發者 11/11 選「下一盤目標」（ChatGPT 15 號方案 2「下一盤只練一件事」＋Gemini 76 號方案 4「零失誤挑戰」合併）：
@@ -3744,35 +3786,38 @@ function ngCount(mv,hu){const o={n:0,mist:0,blun:0};for(const m of mv||[]){if(m.
 function ngPick(c,acc){if(!c||c.n<8)return null;if(c.blun)return{k:"blun",v:0};if(c.mist>=2)return{k:"mist",v:1};if(acc!=null&&acc>=10)return{k:"acc",v:Math.floor((acc+2)/5)*5};return null}
 function ngJudge(g,c,acc){if(!g||!c||c.n<8)return null;const ok=g.k==="blun"?c.blun===0:g.k==="mist"?c.mist<=g.v:acc!=null&&acc>=g.v;return{ok,got:g.k==="blun"?`敗著 ${c.blun} 步`:g.k==="mist"?`失著 ${c.mist} 步`:`準確度 ${acc==null?"—":acc}`}}
 function ngGet(){const g=store.get("nextGoal",null);return g&&Date.now()-(g.at||0)<2*864e5?g:null}
-async function skillDiff(id){const{G}=await skillRows(),t=tlTime(id),row=G.find(g=>g.t===t);if(!row||!row.pa)return null;
-  const IR=tlIRT(store.get("quizLog",[])),G0=G.filter(g=>g!==row),A0=skillAxes(G0,IR),A1=skillAxes(G,IR),
-    tot=A=>{const h=A.filter(a=>!a.pct&&a.v!=null),ok=h.filter(a=>a.ok),b=ok.length?ok:h;return b.length?Math.round(b.reduce((s,a)=>s+a.v,0)/b.length):null},
-    avg=R=>{R=R.filter(g=>g&&g.pa&&!g.hu).sort((a,b)=>(b.t||0)-(a.t||0));let s=0,n=0;for(const g of R){if(n>=SK.WIN)break;for(const k of["open","mid","end"]){const x=g.pa[k];if(x&&x[1]){s+=+x[0]||0;n+=x[1]}}}return n?Math.round(s/n):null},a=rowAcc(row);
-  /* 統計審查（數學模型審查_20261111.md 4.2、4.3）：①這盤 vs 最近平均用 z＝(這盤−平均)／√(單盤標準誤²＋4²)，|z|<1＝跟平常差不多，≥2 才算明顯；
-     ②「這盤讓綜合分升降多少」改成指數加權 w＝這盤步數／(步數＋150)×(這盤−舊分)，正負號一定跟這盤表現一致（滑動視窗的 t1−t0 有 14% 反號：其實是新盤減掉被擠出去的舊盤）；
-     ③某一項只有 |這盤−舊分| ≥ 2 倍標準誤才拿出來講，避免從四個雜訊裡挑最大的 */
-  const Ls=(row.L||[]).map(SK.acc),nL=Ls.length,mu=nL?Ls.reduce((x,y)=>x+y,0)/nL:0,sd=Math.max(15,nL>1?Math.sqrt(Ls.reduce((x,y)=>x+(y-mu)**2,0)/(nL-1)):28),sg=k=>Math.sqrt(sd*sd/Math.max(1,k)+16),
-    AV=avg(G0),z=a!=null&&AV!=null&&nL?(a-AV)/sg(nL):null,PK={開局:"open",中局:"mid",殘局:"end"},
-    bs=(()=>{const h=A0.filter(x=>!x.pct&&x.v!=null),ok=h.filter(x=>x.ok);return(ok.length?ok:h).map(x=>x.k)})(),
-    eff=A0.filter(x=>!x.pct&&x.v!=null).map(x=>{let g,k,se;if(x.k==="穩定"){k=row.n||0;if(!k)return null;const p=(row.bad||0)/k;g=Math.max(0,100-300*p);se=Math.sqrt(9e4*Math.max(p,.02)*(1-p)/k+16)}
-      else{const q=row.pa[PK[x.k]];if(!q||!q[1])return null;k=q[1];g=q[0]/k;se=sg(k)}return{k:x.k,d:k/(k+SK.WIN)*(g-x.v),sig:Math.abs(g-x.v)>=2*Math.sqrt(se*se+sd*sd/Math.max(1,x.n/3))}}).filter(Boolean),
-    dT=bs.length?eff.filter(e=>bs.includes(e.k)).reduce((s,e)=>s+e.d,0)/bs.length:null,big=eff.filter(e=>e.sig&&Math.abs(e.d)>=1&&bs.includes(e.k)).sort((p,q)=>Math.abs(q.d)-Math.abs(p.d))[0]||null;
-  return{hu:!!row.hu,acc:a==null?null:Math.round(a),avg:AV,z,dT,big,t0:tot(A0),t1:tot(A1)}}
+async function skillDiff(id){const{G}=await skillRows(),t=tlTime(id),row=G.find(g=>g.id==="play/"+id)||G.find(g=>g.t===t);if(!row||!row.pa)return null;   /* 數學修正 11/11：先用 c/id 認這盤，舊列才用時間（同一秒結束會撞） */
+  const IR=tlIRT(store.get("quizLog",[])),G0=G.filter(g=>g!==row),A0=skillAxes(G0,IR),A1=skillAxes(G,IR),T0=mxTotal(A0),T1=mxTotal(A1),a=rowAcc(row);
+  /* 統計審查（數學模型審查_20261111.md 4.2、4.3）：①這盤 vs 最近平均用 z＝(這盤−平均)／√(單盤標準誤²＋4²)（4＝盤與盤之間的起伏，工程判斷待資料驗證），|z|<1＝跟平常差不多，≥2 才算明顯；
+     ②綜合、各軸都是指數加權平均（skillAxes），所以 t1−t0、各軸的 Δ 就是「加進這盤」的效果，正負號一定跟這盤表現一致，不再另外算一套；
+     ③某一項只有 |Δ| ≥ 2 倍標準誤（Δ 的標準誤＝w·√(這盤的標準誤²＋舊軸的標準誤²)，w＝這盤在新軸裡的權重）才拿出來講，避免從四個雜訊裡挑最大的。
+     開發者 11/11 照三方審查（Claude 複審 #10）：盤與盤之間的起伏從 4 改 6（36）——修正者自己的模擬就假設 6，用 4 時「明顯」出現約 10%（理想 5%）；仍標「需資料驗證」 */
+  const As=row.A||[],nL=As.length||row.n||0,mu=As.length?As.reduce((x,y)=>x+y,0)/As.length:0,sd=Math.max(15,As.length>1?Math.sqrt(As.reduce((x,y)=>x+(y-mu)**2,0)/(As.length-1)):SK.SD0),
+    AV=T0?T0.v:null,z=a!=null&&AV!=null&&nL?(a-AV)/Math.sqrt(sd*sd/nL+36):null,
+    eff=A0.filter(x=>!x.pct&&x.m!=null&&x.ok).map(x=>{const y=A1.find(q=>q.k===x.k);if(!y||y.m==null)return null;let k,g;if(x.key==="stab"){k=row.n||0;if(!k)return null;g=100*(k-(row.bad||0))/k}else{const q=row.pa[x.key];if(!q||!q[1])return null;k=q[1];g=q[0]/k}
+      const w=k/(k+x.n),seg=x.key==="stab"?Math.sqrt(Math.max(g*(100-g),400)/k):Math.sqrt(sd*sd/k),seD=w*Math.sqrt(seg*seg+x.se*x.se),d=y.m-x.m;return{k:x.k,d,sig:Math.abs(d)>=2*seD}}).filter(Boolean),
+    dT=T0&&T1?T1.m-T0.m:null,big=eff.filter(e=>e.sig&&Math.abs(e.d)>=1).sort((p,q)=>Math.abs(q.d)-Math.abs(p.d))[0]||null;
+  return{hu:!!row.hu,acc:a==null?null:Math.round(a),avg:AV,z,dT,big,t0:T0?T0.v:null,t1:T1?T1.v:null}}
 async function skillPentagon(box){
   const{G,smN}=await skillRows();if(!box.isConnected)return;
   const A=skillAxes(G,tlIRT(store.get("quizLog",[]))),hu=G.filter(g=>g.hu).length;
   if(A.every(a=>a.v==null)){box.innerHTML='<div class="muted" style="text-align:center;padding:10px">還沒有評過等的對局。下完一盤挑戰電腦或線上對戰，Pikafish 評完等就會畫出你的棋力五邊形。</div>';return{G,A}}
   /* 意見回饋（開發者 11/6 分數審查）：「綜合」只平均四個準確度軸（開局、中局、殘局、穩定）；殺法是「勝過 X% 學棋者」的百分位，畫在五邊形上但不進平均、不進建議先練 */
-  const A4=A.filter(a=>!a.pct),nG=Math.max(0,...A.map(a=>a.g||0)),has=A4.filter(a=>a.v!=null),okA=has.filter(a=>a.ok),base=okA.length?okA:has,total=base.length?Math.round(base.reduce((s,a)=>s+a.v,0)/base.length):null,pk=skillPick(A),st=A[4];
-  setProf({pen:A.map(a=>a.v),penK:A.map(a=>a.k),penS:A.map(a=>a.n),penL:A.map(a=>a.v!=null&&!a.ok?1:0),penN:nG});
-  const tip=pk.weak?`<button class="btn" data-go="${pk.weak.go[0]}" style="width:100%;margin-top:10px">🎯 建議先練：${pk.weak.k}（${pk.weak.v} 分）・${pk.weak.go[1]} ›</button><div class="muted" style="font-size:12px;margin-top:4px;text-align:center">從樣本夠的準確度項目（開局、中局、殘局、穩定）裡挑最低的；殺法比的是勝過多少棋友，另外看</div>`
-    :pk.even?`<p class="muted" style="margin:8px 0 0;line-height:1.6">樣本夠的幾項準確度差不多（${pk.lo.k} ${pk.lo.v}～${pk.hi.k} ${pk.hi.v}，相差不到 5 分），沒有明顯的弱項。想再上一層，挑一項按「去練」。</p>`
-    :`<p class="muted" style="margin:8px 0 0;line-height:1.6">還要多一點樣本（開局、中局、殘局、穩定每項 ${SK.MIN} 步，至少兩項夠了），才能告訴你先練哪一項。多下幾盤挑戰電腦就有了。</p>`;
-  const rowH=a=>`<div class="skr${a.v!=null&&!a.ok?" low":""}"><div class="nm"><b>${a.k}</b><small>${a.n?`近 ${a.n} ${a.u}${a.g?`・${a.g} 盤`:""}`:a.u==="題"?"還沒做測驗":"還沒有"}${a.v!=null&&!a.ok?"・樣本還少":""}${a.pct?"・比勝過幾成棋友，不進綜合":""}</small></div><b class="sc">${a.v==null?"—":a.pct?`勝過 ${a.v}%`:a.v}</b>${(g=>`<button data-go="${g[0]}">去練：${g[1]} ›</button>`)(a.k==="殺法"?["#/theme/"+encodeURIComponent(weakTheme()),"主題訓練・"+weakTheme()]:a.go)}</div>`;
-  box.innerHTML=penSVG(A.map(a=>[a.k,a.v,a.v!=null&&!a.ok,a.pct&&a.v!=null?`勝過${a.v}%`:""]))+`<div class="row" style="justify-content:space-between;margin-top:4px"><span class="muted">最近 ${nG} 盤${st.best!=null?`・走出電腦首選 ${st.best}%`:""}</span><b>${total==null?"綜合 —":`綜合 ${total} 分（${gradeFor(total)[0]}）`}</b></div>
+  /* 數學修正 11/11：綜合＝三個階段合起來的每步準確度（mxTotal，附標準誤）；穩定、殺法不進綜合。綜合不再掛 S～D（GRADES 是給一盤棋設計的，審查 2-A），只給分數和 ± 範圍 */
+  const nG=Math.max(0,...A.map(a=>a.g||0)),TT=mxTotal(A),total=TT?TT.v:null,pk=skillPick(A),st=A[4],cal=mxCal();
+  setProf({pen:A.map(a=>a.v),penK:A.map(a=>a.k),penS:A.map(a=>a.n),penL:A.map(a=>a.v!=null&&!a.ok?1:0),penT:A.map(a=>a.txt||""),penN:nG});
+  /* 開發者 11/11 照三方審查：建議先練分三級信心（skillPick 的 conf）——高「建議先練〇〇」、中「可能先看〇〇」、低「資料還少，先多下幾盤」；資料夠多、差距又在正常起伏內才說「差不多」 */
+  const thTx=pk.th!=null?(pk.grp?`${pk.th.toFixed(1)} 個標準差`:`${Math.round(pk.th)} 分`):"",
+    tip=pk.weak?`<button class="btn" data-go="${pk.weak.go[0]}" style="width:100%;margin-top:10px">🎯 建議先練：${pk.weak.k}（${pk.weak.v} 分）・${pk.weak.go[1]} ›</button><div class="muted" style="font-size:12px;margin-top:4px;text-align:center">${pk.grp?"跟同段位棋友比，這一項落後最多（差距超過正常起伏）":`開局、中局、殘局裡最低，而且跟最高的差距（${pk.hi.v}−${pk.weak.v}）超過正常起伏（約 ${thTx}）；穩定、殺法另外看`}</div>`
+    :pk.maybe?`<button class="btn ghost" data-go="${pk.maybe.go[0]}" style="width:100%;margin-top:10px">🔎 可能先看：${pk.maybe.k}（${pk.maybe.v} 分）・${pk.maybe.go[1]} ›</button><div class="muted" style="font-size:12px;margin-top:4px;text-align:center">${pk.grp?"跟同段位棋友比，這一項好像落後一點":`開局、中局、殘局裡最低（${pk.hi.v}−${pk.maybe.v}）`}，但差距只比正常起伏（約 ${thTx}）小一點，還不能確定；再下幾盤會更準</div>`
+    :pk.even&&pk.conf==="even"?`<p class="muted" style="margin:8px 0 0;line-height:1.6">${pk.grp?"跟同段位棋友比，各項":"開局、中局、殘局"}差不多（${pk.lo.k} ${pk.lo.v}～${pk.hi.k} ${pk.hi.v}，差距在正常起伏 ${thTx} 以內），還看不出明顯的弱項。想再上一層，挑一項按「去練」。</p>`
+    :pk.even?`<p class="muted" style="margin:8px 0 0;line-height:1.6">📋 資料還少，先多下幾盤。現在${pk.grp?"各項":"開局、中局、殘局"}的差距（${pk.lo.k} ${pk.lo.v}～${pk.hi.k} ${pk.hi.v}）還在正常起伏（約 ${thTx}）以內，看不出哪一項比較弱${pk.grp?"":"；如果想挑一個練，殘局的步數通常最少、最值得多下幾盤"}。</p>`
+    :`<p class="muted" style="margin:8px 0 0;line-height:1.6">📋 資料還少，先多下幾盤。開局、中局、殘局每項要有 ${SK.MIN} 步（至少兩項夠了），才能告訴你先練哪一項；多下幾盤挑戰電腦就有了。</p>`;
+  const rowH=a=>`<div class="skr${a.v!=null&&!a.ok?" low":""}"><div class="nm"><b>${a.k}</b><small>${a.n?`約 ${a.n} ${a.u}${a.g?`・近 ${a.g} 盤`:""}`:a.u==="題"?"還沒做測驗":"還沒有"}${a.v!=null&&!a.ok?"・樣本還少":""}${a.pct?(a.est?"・棋友資料還不夠多，先用測驗的段位估・不進綜合":"・跟用這個 App 的棋友比・不進綜合"):a.key==="stab"?"・不進綜合":""}${a.z!=null?`・同段位 z ${a.z>=0?"+":""}${a.z.toFixed(1)}`:""}</small></div><b class="sc">${a.v==null?"—":a.pct?a.txt:`${a.v}<small class="muted" style="font-weight:400"> ±${Math.round(1.28*(a.se||0))}</small>`}</b>${(g=>`<button data-go="${g[0]}">去練：${g[1]} ›</button>`)(a.k==="殺法"?["#/theme/"+encodeURIComponent(weakTheme()),"主題訓練・"+weakTheme()]:a.go)}</div>`;
+  box.innerHTML=penSVG(A.map(a=>[a.k,a.v,a.v!=null&&!a.ok,a.pct&&a.v!=null?a.txt:""]))+`<div class="row" style="justify-content:space-between;margin-top:4px"><span class="muted">最近 ${nG} 盤${st.best!=null?`・走出好棋 ${st.best}%`:""}</span><b>${total==null?"綜合 —":`綜合 ${total} 分<small class="muted" style="font-weight:400"> ±${Math.round(1.28*TT.se)}</small>`}</b></div>
     ${tip}<div class="skl">${A.map(rowH).join("")}</div>
-    <p class="muted" style="font-size:12px;margin:6px 0 0;line-height:1.6">虛線、淡色＝樣本還少（實戰不到 ${SK.MIN} 步、殺法不到 ${SK.QMIN} 題），先參考就好。${hu?`用過提示或悔棋的 ${hu} 盤不算。`:""}${smN?`車輪戰、盲棋的 ${smN} 盤不算。`:""}</p>
-    <details style="margin-top:6px"><summary class="muted">五項怎麼算？</summary><p class="muted" style="line-height:1.7;margin:6px 0 0">開局、中局、殘局：該階段最近約 ${SK.WIN} 步、每一步準確度的平均（跟賽後報告每盤的開局、中局、殘局分同一把尺，100＝每步都是電腦首選）。穩定：最近約 ${SK.WIN} 步裡失著、敗著越少越高（每 1% 扣 3 分）。綜合：這四項裡樣本夠的平均。殺法：棋力測驗的殺法、戰術題，分數＝勝過多少學棋者，跟準確度不是同一把尺，所以不進綜合、也不拿來挑建議先練。只算 Pikafish 評過等的著法；用過提示或悔棋的那盤不算；還沒評等的對局，打開賽後報告評等後就會算進來。進步得多快看「📈 我的成長」。</p></details>`;
+    <p class="muted" style="font-size:12px;margin:6px 0 0;line-height:1.6">虛線、淡色＝樣本還少（實戰不到 ${SK.MIN} 步、殺法不到 ${SK.QMIN} 題），先參考就好。「±」＝十次裡大約八次會落在這個範圍。${hu?`用過提示或悔棋的 ${hu} 盤不算。`:""}${smN?`車輪戰、盲棋的 ${smN} 盤不算。`:""}</p>
+    <details style="margin-top:6px"><summary class="muted">五項怎麼算？</summary><p class="muted" style="line-height:1.7;margin:6px 0 0">每一步的準確度＝100×e^(−少掉的分數÷200)（100＝走到電腦首選；比首選少 1 兵約 61 分），跟賽後報告同一條式子。開局、中局、殘局：最近的對局裡該階段每一步準確度的平均，越近的盤越重（半衰期 ${SK.HL} 盤，三個階段看的是同一段時間），跟賽後報告每盤的開局、中局、殘局分同一把尺。穩定：最近對局裡沒有失著、敗著的步數比例。綜合：開局、中局、殘局合起來的每步準確度。「走出好棋」＝正著、妙著（跟電腦首選差不到 30 分）的步數比例。殺法：棋力測驗的殺法、戰術題；${cal.thQ?"分數＝勝過多少用這個 App 的棋友（匿名資料算的）":"現在棋友資料還不夠多，先用測驗估的段位表示（等資料夠了會改成勝過多少棋友）"}，跟準確度不是同一把尺，不進綜合。建議先練：差距超過正常起伏（約 2 個標準誤）才說「建議先練」，接近（1.64～2 個）說「可能先看」，再小就是「資料還少」或「差不多」${cal.ax?"，而且是跟同段位棋友比":"；等同段位棋友的資料夠了，會改成跟同段位比（開局本來就比較容易拿高分）"}。只算 Pikafish 評過等的著法；用過提示或悔棋的那盤不算；還沒評等的對局，打開賽後報告評等後就會算進來。進步得多快看「📈 我的成長」。</p></details>`;
   box.querySelectorAll("[data-go]").forEach(b=>b.onclick=()=>{vibrate(5);location.hash=b.dataset.go});return{G,A}}
 /* 意見回饋 301：記錄練習時間（對局、測驗、猜著法、錯棋重練的畫面開著、而且 2 分鐘內有操作，每 15 秒記 0.25 分鐘） */
 let PRACT_ACT=Date.now();addEventListener("pointerdown",()=>PRACT_ACT=Date.now(),{passive:true});
@@ -3788,6 +3833,7 @@ const practiceTotal=()=>Object.values(store.get("practiceMin",{})).reduce((a,b)=
            Regan 著法品質模型（每一步的損失 δ：P(δ)∝exp(−(δ/s)^c)，s＝敏感度、c＝一致性）
    動態層：階層貝氏成長模型 S(P)＝A−(A−S₀)·e^(−r·P)，P＝累積練習量（對局數＋測驗次數×0.5），用群體先驗收縮、網格求後驗；
            Kalman 濾波即時追蹤目前能力；BKT（貝氏知識追蹤）估開局／中局／殘局各自的學習機率 P(T) 與掌握度
+           （開發者 11/11 照三方審查：Regan 改成只算平均、中位數的 tlAcpl；BKT 改成 Beta-二項式 tlBeta；Kalman 這次先留著，換掉會改到「每步準確度」那格的數字）
    應用層：里程碑預測（後驗算出「再練多少可到某準確度」，並含「可能到不了」的機率）、找弱項推薦練習
    群體先驗（一般學棋者的平均）是模型假設；資料越多，個人資料的權重越大 */
 const PHI=z=>{const t=1/(1+.2316419*Math.abs(z)),d=.3989423*Math.exp(-z*z/2),q=d*t*(.3193815+t*(-.3565638+t*(1.781478+t*(-1.821256+t*1.330274))));return z>0?1-q:q};
@@ -3799,28 +3845,31 @@ const TL={S0:[55,12],A:[82,8],lr:[Math.log(.06),.8],LV:[800,1000,1300,1600,1900,
 const TL_LV18=[700,800,900,1000,1150,1300,1400,1500,1600,1750,1900,1975,2050,2125,2200,2500,2650,2800];
 /* 意見回饋（開發者 11/6 分數審查）：積分挑戰（段位）也查 TL_LV18（第 N 級＝TL.RK[N−1]，local.js 的 LEVELS 同一張表），同一強度不再變成兩種 Elo */
 const tlOppElo=n=>{n=String(n||"");let m=/第(\d+)級/.exec(n);if(m)return TL_LV18[+m[1]-1]||null;m=/積分挑戰（([^）]+)）/.exec(n);if(m){const i=TL.RK.indexOf(m[1]);return i>=0?TL_LV18[i]||null:null}return null};
+/* 數學修正 11/11（審查 10-C）：對手級數（1～18），成長模型的對手強度共變量用；積分挑戰照段位名對回級數 */
+const tlOppLv=n=>{n=String(n||"");let m=/第(\d+)級/.exec(n);if(m)return+m[1];m=/積分挑戰（([^）]+)）/.exec(n);if(m){const i=TL.RK.indexOf(m[1]);return i>=0?i+1:null}return null};
 const tlTime=id=>{const m=/^(\d{4}-\d\d-\d\d)T(\d\d)-(\d\d)-(\d\d)/.exec(String(id));return m?Date.parse(`${m[1]}T${m[2]}:${m[3]}:${m[4]}Z`):0};
 const wq=(xs,ws,q)=>{const o=xs.map((x,i)=>[x,ws[i]]).sort((a,b)=>a[0]-b[0]);let s=0;const T=o.reduce((a,b)=>a+b[1],0);for(const[x,w]of o){s+=w;if(s>=q*T)return x}return o.length?o[o.length-1][0]:null};
-/* 測量層 1：Glicko（每盤一個評分期，RD 隨時間變大） */
+/* 測量層 1：Glicko（每盤一個評分期，RD 隨時間變大；Glickman 1999 的 g(RD)、E、d²、r'、RD'）
+   數學修正 11/11（審查 7-A）：對手（18 級電腦）的 RD 從 50 改 150——TL_LV18 是估的，不確定度應有 150～200；等 tools/calibrate-levels.js 用循環賽校準過再降 */
 function tlGlicko(G){let r=1200,RD=350;const q=Math.LN10/400,gf=d=>1/Math.sqrt(1+3*q*q*d*d/(Math.PI*Math.PI));let n=0;
-  for(const x of G){if(x.opp==null||!x.res)continue;RD=Math.min(350,Math.sqrt(RD*RD+30*30));const g=gf(50),E=1/(1+Math.pow(10,-g*(r-x.opp)/400)),s=x.res==="w"?1:x.res==="d"?.5:0;
+  for(const x of G){if(x.opp==null||!x.res)continue;RD=Math.min(350,Math.sqrt(RD*RD+30*30));const g=gf(150),E=1/(1+Math.pow(10,-g*(r-x.opp)/400)),s=x.res==="w"?1:x.res==="d"?.5:0;
     const d2=1/(q*q*g*g*E*(1-E)),den=1/(RD*RD)+1/d2;r+=q/den*g*(s-E);RD=Math.sqrt(1/den);n++}
   return n?{r,RD,n}:null}
-/* 測量層 2：多維 IRT（3PL，猜對率 c=0.05、鑑別度 a=1.2；殺棋題、一般題各估一個 θ，先驗 N(0,1)，網格求後驗） */
-function tlIRT(QL){const dims={all:[],殺法:[],戰術:[],局面:[],殘局:[],殺戰:[]};for(const s of QL)for(const x of s.a){const it={b:(x[0]-(s.n-1)/2)*.55,u:x[1]};dims.all.push(it);const k=x[4]||(x[2]?"殺法":null);if(k&&dims[k]){dims[k].push(it);if(k==="殺法"||k==="戰術")dims.殺戰.push(it)}}
-  const est=A=>{if(A.length<3)return null;const th=[],w=[];for(let t=-4;t<=4.001;t+=.05){let L=-t*t/2;for(const q of A){const P=.05+.95/(1+Math.exp(-1.2*(t-q.b)));L+=q.u?Math.log(P):Math.log(1-P)}th.push(t);w.push(L)}
+/* 測量層 2：多維 IRT（3PL，猜對率 c=0.05；殺棋題、一般題各估一個 θ，網格求後驗）
+   數學修正 11/11（審查 6-B、6-D）：題目參數改用測驗當時存進 quizLog 的 a、b（x[7]、x[8]：含 gap 推的鑑別度、吃子題 −0.15、校正檔），跟測驗結果頁同一套，不再固定 a＝1.2；
+   舊紀錄沒有 a、b 的才退回 (階−(n−1)/2)·0.55、a＝1.2。先驗不再是 N(0,1)（會把新手往業4 拉 0.8 階）：校正檔有 ≥30 人的群體平均、標準差（calib.thMu／thSd）就用它，
+   沒有就用弱資訊的 N(−1.5, 2²)（工程判斷：使用者多半入門～業1；對真實 θ＝−3、20 題 a＝1.2 的偏差從 +0.8 降到約 +0.1，見 sim/sim-irt-prior.js） */
+function tlIRT(QL){const C=store.get("calib",null)||{},pm=isFinite(+C.thMu)&&(+C.irtPeople||0)>=30?[+C.thMu,Math.max(.5,+C.thSd||1)]:[-1.5,2];
+  const dims={all:[],殺法:[],戰術:[],局面:[],殘局:[],殺戰:[]};for(const s of QL)for(const x of s.a){const it={b:x[8]!=null&&isFinite(+x[8])?+x[8]:(x[0]-(s.n-1)/2)*.55,a:x[7]!=null&&isFinite(+x[7])&&+x[7]>0?+x[7]:1.2,u:x[1]};dims.all.push(it);const k=x[4]||(x[2]?"殺法":null);if(k&&dims[k]){dims[k].push(it);if(k==="殺法"||k==="戰術")dims.殺戰.push(it)}}
+  const est=A=>{if(A.length<3)return null;const th=[],w=[];for(let t=-5;t<=5.001;t+=.05){let L=-(t-pm[0])*(t-pm[0])/(2*pm[1]*pm[1]);for(const q of A){const P=.05+.95/(1+Math.exp(-q.a*(t-q.b)));L+=q.u?Math.log(P):Math.log(1-P)}th.push(t);w.push(L)}
     const mx=Math.max(...w),W=w.map(x=>Math.exp(x-mx)),S=W.reduce((a,b)=>a+b,0),m=th.reduce((a,t,i)=>a+t*W[i],0)/S,sd=Math.sqrt(th.reduce((a,t,i)=>a+(t-m)**2*W[i],0)/S);return{th:m,sd,n:A.length}};
-  const o={all:est(dims.all)};for(const k of["殺法","戰術","局面","殘局","殺戰"])o[k]=est(dims[k]);return o}   /* 殺戰＝殺法＋戰術（意見回饋 415：我的棋力的殺法軸） */
-/* 測量層 3：Regan 著法品質（δ＝這步比 Pikafish 最佳著少幾分），最大概似估 s、c */
-function tlRegan(L){if(L.length<30)return null;const D=L.map(x=>Math.max(0,Math.min(1000,x))),N=D.length;let best=null;
-  for(let c=.3;c<=2.001;c+=.05){const Sc=D.reduce((a,d)=>a+Math.pow(d+1,c),0),s=Math.pow(c*Sc/N,1/c),ll=-N/c-N*(Math.log(s)+lnGamma(1+1/c));if(!best||ll>best.ll)best={c,s,ll}}
-  const acpl=D.reduce((a,b)=>a+b,0)/N;return{...best,acpl,elo:Math.round(Math.max(600,Math.min(3000,3100-23*acpl))),n:N}}
-/* 動態層 1：BKT（隱馬可夫：未掌握→掌握；初始掌握 L₀、學習機率 T、猜中 G、失誤 S 四個參數都用網格最大概似估） */
-function tlBKT(seq){if(seq.length<15)return null;let best=null;
-  for(const G of[.1,.2,.3,.4])for(const S of[.05,.1,.2,.3])for(const L0 of[.05,.15,.3,.45,.6,.75,.9])for(const T of[.002,.005,.01,.02,.03,.05,.08,.12,.2]){let p=L0,ll=0;
-    for(const o of seq){const pc=p*(1-S)+(1-p)*G;ll+=Math.log(o?pc:1-pc);const post=o?p*(1-S)/pc:p*S/(1-pc);p=post+(1-post)*T}
-    if(!best||ll>best.ll)best={L0,T,G,S,ll,now:p}}
-  const rc=seq.slice(-60);return{...best,n:seq.length,recent:rc.reduce((a,b)=>a+b,0)/rc.length}}
+  const o={all:est(dims.all)};for(const k of["殺法","戰術","局面","殘局","殺戰"])o[k]=est(dims[k]);return o}   /* 殺戰＝殺法＋戰術（意見回饋 415：我的棋力的殺法軸）。開發者 11/11 照三方審查（Claude 複審 #13）：網格從 ±4 放寬到 ±5——新手 θ≈−3.85 貼著 −4 的邊界，20 題時仍偏高約 0.3 */
+/* 數學修正 11/11（審查 8-A、8-B）：原本的 tlRegan 不是 Regan & Haworth (2011) 的著法選擇模型（那要每步的 multi-PV），只是「實現損失」的單變數分布，s、c、3100−23·acpl 的等級分也都沒顯示；
+   改成只算平均每步少幾分（acpl）和中位數（對一步敗著不敏感），名稱照畫面「平均每步少」 */
+function tlAcpl(L){if(L.length<30)return null;const D=L.map(x=>Math.max(0,Math.min(1000,+x||0))),N=D.length,s=D.slice().sort((a,b)=>a-b);return{acpl:D.reduce((a,b)=>a+b,0)/N,med:s[N>>1],n:N}}
+/* 數學修正 11/11（審查 9-A～9-C）：BKT 拿掉——同一盤殘局連續的步不是獨立的「練習機會」、四參數可辨識性差（Beck & Chang 2007），而且原本把資料接自己一次湊 15 筆。
+   改成 Beta-二項式收縮（Gelman et al., Bayesian Data Analysis 2.4 節）：p̂＝(k＋α)／(n＋α＋β)，α＝β＝2；80% 區間用常態近似；排序用 80% 上界（越不確定越值得先練，UCB／Thompson 的想法） */
+function tlBeta(k,n){const a=2,b=2,N=n+a+b,m=(k+a)/N,v=m*(1-m)/(N+1),s=Math.sqrt(v);return{now:m,lo:Math.max(0,m-1.28*s),hi:Math.min(1,m+1.28*s),n}}
 /* 動態層 2：階層貝氏成長模型（群體先驗收縮），網格後驗 */
 function tlGrowth(Y,P){const N=Y.length;if(N<3)return null;const S0s=[],As=[],Rs=[];for(let v=30;v<=85.01;v+=2.5)S0s.push(v);for(let v=50;v<=99.01;v+=2)As.push(v);for(let i=0;i<30;i++)Rs.push(.004*Math.pow(250,i/29));
   const lp=(S0,A,r,sg)=>{if(A<S0)return-Infinity;let ll=0;for(let j=0;j<N;j++){const m=A-(A-S0)*Math.exp(-r*P[j]),e=Y[j]-m;ll-=e*e/(2*sg*sg)}
@@ -3831,7 +3880,9 @@ function tlGrowth(Y,P){const N=Y.length;if(N<3)return null;const S0s=[],As=[],Rs
   const post=k=>({m:G.reduce((a,g,i)=>a+g[k]*W[i],0)/T,lo:wq(G.map(g=>g[k]),W,.1),hi:wq(G.map(g=>g[k]),W,.9)});
   const rr=post(2),lrMed=Math.log(wq(G.map(g=>g[2]),W,.5)),p75=Math.exp(TL.lr[0]+.674*TL.lr[1]),p95=Math.exp(TL.lr[0]+1.645*TL.lr[1]);
   const pr=t=>G.reduce((a,g,i)=>a+(g[2]>t?W[i]:0),0)/T;
-  return{G,W,T,sg,S0:post(0),A:post(1),r:rr,rPct:Math.round(PHI((lrMed-TL.lr[0])/TL.lr[1])*100),top25:pr(p75),top5:pr(p95),N}}
+  /* 數學修正 11/11（審查 10-B）：lrSd＝ln r 的後驗標準差——小於先驗標準差的 0.6 倍才表示資料真的認得出 r（不然百分位大多是先驗）；slope(P)＝每 10 盤進步幾分＝10·(A−S₀)·r·e^(−rP)，資料少時也認得到的量 */
+  const lrSd=Math.sqrt(G.reduce((a,g,i)=>a+(Math.log(g[2])-lrMed)**2*W[i],0)/T),slope=p=>{const xs=G.map(g=>10*(g[1]-g[0])*g[2]*Math.exp(-g[2]*p));return{m:xs.reduce((a,x,i)=>a+x*W[i],0)/T,lo:wq(xs,W,.1),hi:wq(xs,W,.9)}};
+  return{G,W,T,sg,S0:post(0),A:post(1),r:rr,lrSd,rInf:lrSd<.6*TL.lr[1],slope,rPct:Math.round(PHI((lrMed-TL.lr[0])/TL.lr[1])*100),top25:pr(p75),top5:pr(p95),N}}
 /* 預測曲線與里程碑（含「到不了」的機率） */
 function tlCurve(M,p){const xs=M.G.map(g=>g[1]-(g[1]-g[0])*Math.exp(-g[2]*p));return{m:xs.reduce((a,x,i)=>a+x*M.W[i],0)/M.T,lo:wq(xs,M.W,.1),hi:wq(xs,M.W,.9)}}
 function tlMilestone(M,goal,Pnow){let never=0;const need=[],w=[];M.G.forEach((g,i)=>{const[S0,A,r]=g;if(A<=goal){never+=M.W[i];return}const P=-Math.log((A-goal)/(A-S0))/r;need.push(Math.max(0,P-Pnow));w.push(M.W[i])});
@@ -3883,7 +3934,8 @@ const readIdx=()=>RD_P||(RD_P=fetch("data/lines/read-index.json").then(r=>{if(!r
 const rdP=(th,b,I)=>PHI((th-b)/Math.sqrt(Math.pow(1.702/((I&&I.a)||1.2),2)+Math.pow((I&&I.sigB)||.5,2)));
 /* 對電腦的等級分 → 段位序號（TL_LV18 內插；第 13 級以後是專業段，對到測驗的專1、專2） → θ */
 function rdEloTh(r){const L=TL_LV18;let i=0;if(r<=L[0])i=0;else if(r>=L[L.length-1])i=L.length-1;else{for(let k=1;k<L.length;k++)if(r<=L[k]){i=k-1+(r-L[k-1])/(L[k]-L[k-1]);break}}
-  const tier=i<=12?i:i<=14?12+(i-12)/2:Math.min(14,13+(i-14)/2),k=Math.max(1,Math.min(L.length-1,Math.round(i))),slope=Math.max(40,L[k]-L[k-1]);return{th:(tier-QZ.MID)*QZ.S,per:slope/QZ.S}}
+  /* 數學修正 11/11（審查 7-C）：第 13、14 級（專1-1、專1-2）對到測驗的專1（13 階）、第 15、16 級（專2-1、專2-2）對到專2（14 階），原本差了半階（專1-1 變 12.5） */
+  const tier=i<=12?i:i<=14?13+(i-13)/2:Math.min(14.5,14+(i-15)/2),k=Math.max(1,Math.min(L.length-1,Math.round(i))),slope=Math.max(40,L[k]-L[k-1]);return{th:(tier-QZ.MID)*QZ.S,per:slope/QZ.S}}
 /* 讀懂比例用的 θ：一定要做過棋力測驗；有樣本夠的殘局、對電腦紀錄再一起算（精確度加權） */
 function readTheta(G){const QL=store.get("quizLog",[]),qt=store.get("quizTheta",null);
   if(!QL.some(q=>q&&!q.part&&(q.a||[]).length)&&!(qt&&isFinite(qt.th)))return null;
@@ -3958,7 +4010,7 @@ async function readMap(el,G){if(!el)return;const T=readTheta(G);
     try{const r=store.get("recent",[]).filter(x=>!(x.c==="gmgames"&&x.id===g[0]));r.unshift({c:"gmgames",id:g[0],title:"特級大師對局",book:"特級大師對局",ply:g[2]});store.set("recent",r.slice(0,10))}catch(e){}
     toast("停在這盤最關鍵的那一手前面，想想看大師下一步怎麼走");location.hash="#/db/gmgames/"+encodeURIComponent(g[0])}}
 async function talentReport(box){
-  const CAL=store.get("calib",null),CT=CAL&&CAL.tal&&CAL.tal.people>=10?CAL.tal:null;
+  const CAL=store.get("calib",null),CT=CAL&&CAL.tal&&CAL.tal.people>=100?CAL.tal:null;   /* 開發者 11/11 照三方審查（ChatGPT）：「一般棋友」至少 100 人才用校正值（原本 10 人），跟 mxCal 同一個門檻 */
   if(CT&&Array.isArray(CT.S0)&&Array.isArray(CT.A)&&Array.isArray(CT.lr)){TL.S0=CT.S0;TL.A=CT.A;TL.lr=CT.lr}   /* 意見回饋 307：大家的資料夠多了，就用校正過的「一般棋友」 */
   /* 意見回饋 325：下完棋馬上算進來——先補手機裡已經評過的步，還沒評完的最近幾盤，畫完之後在背景請 Pikafish 補算，算好自動重新整理。
      意見回饋 415：每盤的資料跟「我的棋力」共用 skillRows()（同一個快取、同一套排除規則）。成長模型只用我這邊評過 8 步以上的盤；
@@ -3970,36 +4022,44 @@ async function talentReport(box){
   const QL=store.get("quizLog",[]),GL0=store.get("guessLog",[]);
   /* 累積練習量 P：每盤對局 1、做完一次測驗 0.5、猜完一盤 0.5；沒做完的照做了幾題按比例算（意見回饋 309，測驗 8 題、猜著法 15 步算一整次） */
   const ev=GA.map(g=>({t:g.t,k:"g",g})).concat(QL.map(q=>({t:q.at,k:"q",w:.5*Math.min(1,(q.a||[]).length/8)})),GL0.map(q=>({t:q.at,k:"q",w:.5*Math.min(1,(q.n||15)/15)}))).sort((a,b)=>a.t-b.t);let P=0;const Y=[],PP=[];
-  for(const e of ev){if(e.k==="g"){if(!e.g.hu){Y.push(rowAcc(e.g));PP.push(P)}P+=1}else P+=e.w}
-  /* 殘局技巧：實戰殘局的每一步＋測驗殘局題，依技巧分組做 BKT */
+  const LV=[];for(const e of ev){if(e.k==="g"){if(!e.g.hu){Y.push(rowAcc(e.g));PP.push(P);LV.push(e.g.lv!=null?+e.g.lv:null)}P+=1}else P+=e.w}
+  /* 數學修正 11/11（審查 10-C）：對手強度共變量 Y'＝Y−β·(級數−自己的平均級數)，β 由後台用大家的資料估（calib.tal.beta，每升一級準確度平均掉幾分）；沒有校正檔就 β＝0（不調） */
+  const beta=CT&&isFinite(+CT.beta)?+CT.beta:0,lvs=LV.filter(x=>x!=null),lvM=lvs.length?lvs.reduce((a,b)=>a+b,0)/lvs.length:null,Yf=Y.map((y,j)=>beta&&LV[j]!=null&&lvM!=null?y-beta*(LV[j]-lvM):y);
+  /* 殘局技巧：實戰殘局的每一步＋測驗殘局題，依技巧分組（原本做 BKT，數學修正 11/11 改 Beta-二項式 tlBeta） */
   const TQ={};for(const g of G)if(g.ek&&g.ph&&g.ph.end)(TQ[g.ek]=TQ[g.ek]||[]).push(...g.ph.end.split("").map(Number));
   for(const s0 of QL)for(const x of s0.a)if(x[6])(TQ[x[6]]=TQ[x[6]]||[]).push(x[1]);
   /* 意見回饋 415：殘局功夫的分數也用「我的棋力」那把尺（每步準確度平均），並標出實戰步數 */
   const accOf=rows=>{let s=0,n=0;for(const x of rows){s+=x[0];n+=x[1]}return n?{v:Math.round(s/n),n}:null};
   const EKL={};for(const g of G)if(g.ek&&g.pa&&g.pa.end&&g.pa.end[1])(EKL[g.ek]=EKL[g.ek]||[]).push(g.pa.end);
-  const TK=Object.entries(TQ).map(([k,seq])=>{const b=seq.length>=8?tlBKT(seq.length<15?seq.concat(seq):seq):null;return b?{k,b,n:seq.length}:null}).filter(Boolean).sort((a,b)=>a.b.now-b.b.now);
+  /* 數學修正 11/11（審查 9）：BKT 換成 Beta-二項式收縮（tlBeta），不再把資料接自己一次；排序用 80% 上界（越不確定、越弱的越前面）。
+     開發者 11/11 照三方審查「不改玩家看到的分數」：畫面照舊顯示「最近走出好棋 X%」（b.recent，跟原本同一個數字），只有六類的排序改用 Beta 上界 */
+  const TK=Object.entries(TQ).map(([k,seq])=>{if(seq.length<8)return null;const kk=seq.reduce((a,b)=>a+b,0),b=tlBeta(kk,seq.length),rc=seq.slice(-60);b.recent=rc.reduce((a,x)=>a+x,0)/rc.length;return{k,b,n:seq.length}}).filter(Boolean).sort((a,b)=>a.b.hi-b.b.hi);
   /* 意見回饋（開發者 11/6 分數審查）：畫面上只留一種「等級分」（電腦／線上分頁的段位積分）。Glicko 那個 700～2800 的數字不再顯示（tlGlicko 留著沒用），
      著法品質也不再換算成等級分，只顯示「平均每步少 X 分」。猜著法引擎失敗那步現在存 d=null（03-home-quiz.js），不會混進 acpl */
-  const M=tlGrowth(Y,PP),IR=tlIRT(QL),RG=tlRegan(G.flatMap(g=>g.L||[]).concat(GL0.flatMap(x=>(x.d||[]).filter(d=>d!=null))));
+  const M=tlGrowth(Yf,PP),IR=tlIRT(QL),RG=tlAcpl(G.flatMap(g=>g.L||[]).concat(GL0.flatMap(x=>(x.d||[]).filter(d=>d!=null))));   /* 數學修正 11/11：tlRegan → tlAcpl（只算平均、中位數） */
   if(!M&&!IR.all){box.innerHTML=`<div class="card" style="margin-top:4px;line-height:1.7"><b>資料還不夠</b><p class="muted" style="margin:6px 0 0">成長曲線要從你的練習歷程推估：至少要有 3 盤 Pikafish 評過等、各下了 8 步以上的對局（挑戰電腦或線上對戰），或做一次棋力測驗。目前有 ${G.length} 盤、測驗 ${QL.length} 次。</p>
       <div class="row" style="gap:8px;margin-top:10px"><button class="btn" id="tg1" style="flex:1">挑戰電腦</button><button class="btn ghost" id="tg2" style="flex:1">棋力測驗</button></div></div><div id="rdMap"></div>`;readMap(box.querySelector("#rdMap"),G);
     box.querySelector("#tg1").onclick=()=>location.hash="#/cpu";box.querySelector("#tg2").onclick=()=>location.hash="#/quiz";if(pend.length)setTimeout(()=>talentBackfill(box,pend),300);return}
   const f1=x=>x==null?"—":x.toFixed(1),f0=x=>x==null?"—":Math.round(x),pc=x=>Math.round(x*100)+"%";
-  const KF=M?tlKalman(Y,PP,M):null,popNow=TL.A[0]-(TL.A[0]-TL.S0[0])*Math.exp(-Math.exp(TL.lr[0])*P);
-  const lab=!M?"":M.N<10?"還在觀察中":speedLab(M.rPct);
+  /* 開發者 11/11 照三方審查：Kalman（KF＝「每步準確度」那格的數字）這次「不換」——換成成長模型的後驗預測（mathfix 的 tlNow）會改到玩家看到的數字，留到影子模式之後再換（合併說明.md 列為待辦）。
+     一般棋友 popNow 仍是先驗中位數曲線——校正人數不夠（CT 為 null）時只能標「暫用假設」（審查 10-A）。沒有校正檔時 β＝0、Yf＝Y，KF 跟原本完全一樣 */
+  const KF=M?tlKalman(Yf,PP,M):null,popNow=TL.A[0]-(TL.A[0]-TL.S0[0])*Math.exp(-Math.exp(TL.lr[0])*P),MXC=mxCal(),calOK=!!CT,pctOK=!!(M&&M.N>=5&&M.rInf&&MXC.lrQ),rPct=pctOK?mxPct(Math.log(M.r.m),MXC.lrQ):null,SL=M?M.slope(P):null;
+  /* 數學修正 11/11（審查 10-B、10.4）：進步速度的百分位只在 (a) 校正檔有 ≥200 人的 ln r 分位、(b) 自己的資料真的認得出 r 時才顯示；不然只講資料認得到的「每 10 盤大約進步幾分」，不貼「學得飛快／進步偏慢」標籤 */
+  const lab=!M?"":!pctOK?"還在觀察中":speedLab(rPct),slTx=SL?`每 10 盤大約進步 ${SL.m>=0?"+":""}${SL.m.toFixed(1)} 分（${SL.lo.toFixed(1)}～${SL.hi.toFixed(1)}）`:"";
   const NR=window.XQNet&&XQNet.rating?XQNet.rating().rank:null,SR=CT&&CT.byRank&&NR&&CT.byRank[NR]&&CT.byRank[NR].n>=5?CT.byRank[NR]:null;
   /* τ 表：每一項都附 80% 區間 */
   /* 意見回饋 357：棋路底子也用同一種表格（項目／數值／說明），範圍併進說明 */
   const row=(k,v,iv,note)=>`<tr><td>${k}</td><td>${v}</td><td>${[iv?"大概 "+iv:"",note||""].filter(Boolean).join("・")}</td></tr>`;
   const tau=M?`<table class="ttab"><tr><th>項目</th><th>數值</th><th>說明</th></tr>
       ${row("剛學時的底子",f0(M.S0.m)+" 分",`${f0(M.S0.lo)}～${f0(M.S0.hi)}`,"剛開始下棋時，每步走得好不好（100 分＝步步都是電腦首選）")}
-      ${row("長棋速度",(M.r.m*100).toFixed(1)+"%",`${(M.r.lo*100).toFixed(1)}～${(M.r.hi*100).toFixed(1)}%`,`每多下一盤，離自己的極限又近了幾成；比 ${M.rPct}% 的學棋者長得快`)}
+      ${row("長棋速度",(M.r.m*100).toFixed(1)+"%",`${(M.r.lo*100).toFixed(1)}～${(M.r.hi*100).toFixed(1)}%`,`每多下一盤，離自己的極限又近了幾成${pctOK?`；比 ${rPct}% 用這個 App 的棋友長得快`:M.rInf?"；棋友資料還不夠多，先不比排名":"；下得還不多，這個數字大部分還是先驗"}`)}
       ${row("能長到多高",f0(M.A.m)+" 分",`${f0(M.A.lo)}～${f0(M.A.hi)}`,M.A.hi-M.A.lo>18?"還沒碰到瓶頸，這一項現在還看不準（正常）":"")}
       ${row("發揮穩不穩",f1(M.sg)+" 分","",M.sg<=7?"每盤發揮都差不多":M.sg<=12?"偶爾失常":"忽好忽壞，常常一盤好一盤壞")}</table>`:"";
   /* 意見回饋 415：開局／中局／殘局三條搬走（看「我的棋力」，同一把尺），這頁只留「多快變強」。
      棋力測驗的題目功力收進詳細數字：殺法＋戰術跟「我的棋力」的殺法軸是同一個數字；分數＝勝過多少學棋者，不跟實戰分數比大小、不拿來挑建議先練 */
-  const QZT=[["殺戰","殺法＋戰術","就是「我的棋力」的殺法"],["局面","局面判斷題",""],["殘局","殘局題","跟實戰的殘局不是同一把尺"]].map(([k,l,n])=>{const r=IR[k];if(!r)return"";const v=Math.round(PHI(r.th)*100);
-    return row(l,v+" 分","",`勝過 ${v}% 的學棋者・做了 ${r.n} 題${r.n<SK.QMIN||r.sd>.8?"・題目還少，看不太準":""}${n?"・"+n:""}`)}).join("");
+  /* 數學修正 11/11（審查 6-A）：Φ(θ)×100 不是「勝過 X% 學棋者」；校正檔有 ≥200 人的 θ 分位才算經驗百分位，不然寫測驗估的段位 */
+  const QZT=[["殺戰","殺法＋戰術","就是「我的棋力」的殺法"],["局面","局面判斷題",""],["殘局","殘局題","跟實戰的殘局不是同一把尺"]].map(([k,l,n])=>{const r=IR[k];if(!r)return"";const pq=mxPct(r.th,MXC.thQ);
+    return row(l,pq!=null?`勝過 ${pq}%`:`約 ${mxTierName(r.th)}`,"",`${pq!=null?"跟用這個 App 的棋友比":"棋友資料還不夠多，先用測驗估的段位"}・做了 ${r.n} 題${r.n<SK.QMIN||r.sd>.8?"・題目還少，看不太準":""}${n?"・"+n:""}`)}).join("");
   const bar=q=>`<div style="margin:8px 0${q.low?";opacity:.6":""}"><div class="row" style="justify-content:space-between"><b>${q.k}</b><span style="font-variant-numeric:tabular-nums">${q.v==null?"—":q.v}</span></div><div class="st-bar"><i style="width:${q.v||0}%"></i></div><div class="muted" style="font-size:12.5px">${esc(q.t)}</div></div>`;
   /* 成長軌跡圖：點＝每盤準確度，線＝後驗平均，色帶＝80% 區間，往後延伸一半的練習量 */
   let chart="",ms=null;if(M){const Pmax=Math.max(4,P*1.5),W=320,H=170,L0=28,xs=p=>L0+(W-L0-8)*p/Pmax,ys=v=>H-24-(H-34)*Math.max(0,Math.min(100,v))/100;
@@ -4014,38 +4074,41 @@ async function talentReport(box){
       ${Y.map((y,j)=>`<circle cx="${xs(PP[j]).toFixed(1)}" cy="${ys(y).toFixed(1)}" r="3" fill="var(--muted)" fill-opacity=".6"/>`).join("")}
       <text x="${W-8}" y="${H-6}" text-anchor="end" font-size="10" fill="var(--muted)">累積練習量（盤）</text></svg>`}
   /* 意見回饋 415：公開資料卡只發五邊形（我的棋力）一組分數；這裡只公開進步速度，不再發另一組開局／中局／殘局 */
-  setProf({tal:{rPct:M&&M.N>=5?M.rPct:null,lab,now:KF?Math.round(KF.th):null}});
+  setProf({tal:{rPct:pctOK?rPct:null,cal:pctOK?1:0,lab,now:KF?Math.round(KF.th):null}});   /* 數學修正 11/11：cal＝1 才是真的百分位（別人的資料卡只在 cal＝1 時顯示「比 X% 長得快」） */
   /* 意見回饋 307：成長曲線（只有練習量和準確度，加上段位；沒有名字和代號）每兩天匿名送一次到後台，跟大家的資料一起校正「一般棋友」 */
   if(Y.length>=5&&window.XQNet&&XQNet.shareIRT&&Date.now()-store.get("talShareAt",0)>2*864e5){store.set("talShareAt",Date.now());let aid=store.get("anonId",null);if(!aid){aid=Math.random().toString(36).slice(2,10);store.set("anonId",aid)}
-    api("/play/state").then(st=>st&&st.cpuRate&&st.cpuRate.rank).catch(()=>null).then(crk=>{try{XQNet.shareIRT({t:"tal",aid,rk:NR,crk:crk||null,pts:Y.map((y,j)=>[+PP[j].toFixed(1),Math.round(y)]).slice(-80)})}catch(e){}})}
+    /* 數學修正 11/11：成長曲線每點多帶對手級數 lv（估 β 用）；ax＝最近約 150 步各階段的 [準確度加總, 步數] 和失誤 [失著＋敗著, 步數]（給 calibrate-axes.js 算各段位的階段基準） */
+    api("/play/state").then(st=>st&&st.cpuRate&&st.cpuRate.rank).catch(()=>null).then(crk=>{try{const ax={};let an=0;for(const g of G.slice().sort((a,b)=>(b.t||0)-(a.t||0))){if(an>=SK.WIN)break;for(const k of["open","mid","end"]){const x=g.pa[k];if(x&&x[1]){const o=ax[k]||(ax[k]=[0,0]);o[0]+=x[0];o[1]+=x[1]}}const o=ax.bad||(ax.bad=[0,0]);o[0]+=g.bad||0;o[1]+=g.n||0;an+=g.n||0}
+      XQNet.shareIRT({t:"tal",v:2,aid,rk:NR,crk:crk||null,pts:Y.map((y,j)=>[+PP[j].toFixed(1),Math.round(y),LV[j]]).slice(-80),ax})}catch(e){}})}
   /* 意見回饋 358、415：最上面一張重點卡（三個大數字＋一句總結），「建議先練」只在「我的棋力」，這裡放一個帶過去的按鈕 */
   const RP=redoPower(),dPop=KF?Math.round(KF.th-popNow):null,nHU=GA.length-G.length;
   const tile=(lab,v,unit,sub)=>`<div class="tstat"><small>${lab}</small><b>${v}<i>${unit}</i></b><span>${sub}</span></div>`;
   /* 意見回饋（開發者 11/6 分數審查）：「每步品質」改叫「每步準確度」（Y 已是純準確度）；「進步速度」是百分位，單位從「分」改成「%」 */
-  const sumTxt=[M&&M.N>=5?`你比 <b>${M.rPct}%</b> 的學棋者進步得快`:"資料還不多，進步速度先參考一般棋友",KF?`每步準確度比同樣練習量的人${dPop>=0?"多":"少"} <b>${Math.abs(dPop)}</b> 分`:""].filter(Boolean).join("；")+"。";
+  /* 數學修正 11/11（審查 10-A）：校正人數不夠（calOK 為 false）時，「一般棋友」是作者假設，不能當事實講——只說自己的數字，另外標「暫用假設」 */
+  const sumTxt=[pctOK?`你比 <b>${rPct}%</b> 用這個 App 的棋友進步得快`:slTx?`照目前的曲線，${slTx}`:"資料還不多，先看每盤的準確度",KF&&calOK?`每步準確度比同樣練習量的棋友${dPop>=0?"多":"少"} <b>${Math.abs(dPop)}</b> 分`:KF?`每步準確度大概 <b>${f0(KF.th)}</b> 分（還沒有夠多棋友的資料可以比）`:""].filter(Boolean).join("；")+"。";
   box.innerHTML=`<div class="card thero">
       <div class="muted" style="font-size:12.5px;margin-bottom:8px;text-align:center">這裡看你<b>多快變強</b>；現在多強、先練什麼，看「我的棋力」</div>
-      <div class="tstats">${tile("進步速度",M&&M.N>=5?M.rPct:"?","%",M&&M.N>=5?`勝過 ${M.rPct}% 學棋者・${esc(lab)}`:esc(lab||"還在觀察"))}${tile("每步準確度",KF?f0(KF.th):"—","分",KF?`一般棋友 ${f0(popNow)}`:"再下幾盤")}${tile("改錯力",RP?RP.score:"—","分",RP?`練過 ${RP.q} 題`:"還沒練")}</div>
+      <div class="tstats">${tile("進步速度",pctOK?rPct:SL?(SL.m>=0?"+":"")+SL.m.toFixed(1):"?",pctOK?"%":SL?"分/10盤":"",pctOK?`勝過 ${rPct}% 棋友・${esc(lab)}`:SL?"每 10 盤大約進步幾分・還在觀察":esc(lab||"還在觀察"))}${tile("每步準確度",KF?f0(KF.th):"—","分",KF?(calOK?`一般棋友 ${f0(popNow)}`:`假設的一般棋友 ${f0(popNow)}`):"再下幾盤")}${tile("改錯力",RP?RP.score:"—","分",RP?`練過 ${RP.q} 題`:"還沒練")}</div>
       <p class="tsum">${sumTxt}</p>
       <button class="btn ghost" id="tgo" style="width:100%">想知道先練什麼？看「我的棋力」 ›</button>
       <div class="muted" style="font-size:12px;margin-top:8px;text-align:center">根據 ${G.length} 盤對局・${QL.length} 次測驗・${GL0.length} 局猜著法${nHU?`・用過提示或悔棋的 ${nHU} 盤不算分數`:""}${M&&M.N<20?"・下得還不多，下越多越準":""}</div></div>
     <div id="rdMap"></div>
-    ${chart?`<div class="sec-t">成長軌跡與預測</div><div class="card">${chart}<div class="muted" style="font-size:12px;margin-top:2px">● 灰點＝每一盤　━ 線＝照你的進步速度預測　▒ 淺色＝大概範圍</div>${ms?`<p style="margin:8px 0 0;font-size:14px;line-height:1.6">${ms.med==null||ms.pNever>=.5?(M.A.m>=ms.cur+1?`📌 照目前的練法，每步準確度大概會停在 <b>${f0(M.A.m)}</b> 分上下；回「我的棋力」照建議先練最弱的那一項，天花板才會往上。`:`📌 目前已接近模型估的上限，再多下幾盤才看得出能不能再上去；回「我的棋力」照建議先練最弱的那一項。`):`📌 再練約 <b>${f0(ms.med)}</b> 盤，每步準確度可以到 <b>${ms.goal}</b> 分。`}</p>`:""}</div>`:""}
+    ${chart?`<div class="sec-t">成長軌跡與預測</div><div class="card">${chart}<div class="muted" style="font-size:12px;margin-top:2px">● 灰點＝每一盤　━ 線＝照你的進步速度預測　▒ 淺色＝大概範圍</div>${ms?`<p style="margin:8px 0 0;font-size:14px;line-height:1.6">${ms.med==null||ms.pNever>=.5?(M.A.hi-M.A.lo>18?`📌 「能長到多高」現在還看不準（大概 ${f0(M.A.lo)}～${f0(M.A.hi)} 分），再多下幾盤才知道；回「我的棋力」照建議先練最弱的那一項。`:M.A.m>=ms.cur+1?`📌 照目前的練法，每步準確度大概會停在 <b>${f0(M.A.m)}</b> 分上下；回「我的棋力」照建議先練最弱的那一項，天花板才會往上。`:`📌 目前已接近模型估的上限，再多下幾盤才看得出能不能再上去；回「我的棋力」照建議先練最弱的那一項。`):`📌 再練約 <b>${f0(ms.med)}</b> 盤，每步準確度可以到 <b>${ms.goal}</b> 分。`}</p>`:""}</div>`:""}
     ${redoPowerHTML()}
     <div class="tdet"><button type="button" class="tdet-h" aria-expanded="false">📊 詳細數字<br><small class="muted" style="font-weight:400;font-size:12px">進步速度、每步準確度、題目功力、棋路底子、殘局功夫</small></button><div class="tdet-b">
-    <div class="sec-t" style="margin-top:4px">進步速度</div><div class="card" style="line-height:1.6">${/* 意見回饋 354、357：表格；進步速度和進步很快合併成一列 */""}<div class="muted" style="font-size:13px;margin-bottom:6px">同樣多的練習，你的每步準確度漲得多快；數字是「勝過多少學棋者」，不是分數。</div>
+    <div class="sec-t" style="margin-top:4px">進步速度</div><div class="card" style="line-height:1.6">${/* 意見回饋 354、357：表格；進步速度和進步很快合併成一列 */""}<div class="muted" style="font-size:13px;margin-bottom:6px">同樣多的練習，你的每步準確度漲得多快。${pctOK?"排名是「勝過多少用這個 App 的棋友」，不是分數。":"棋友資料還不夠多（或你的盤數還少），先只講每 10 盤大約進步幾分，不排名。"}</div>
       ${M?`<table class="ttab"><tr><th>項目</th><th>數值</th><th>說明</th></tr>
-      <tr><td>進步速度</td><td><span class="big">${M.N<5?"?":M.rPct}</span> %</td><td>${esc(lab)}・勝過 ${M.N<5?"?":M.rPct}% 的學棋者；有 ${pc(M.top25)} 機會是「進步很快」的人（每 4 人最快的 1 個）</td></tr>
-      <tr><td>頂尖</td><td>${pc(M.top5)}</td><td>機會是每 20 人裡最快的 1 個</td></tr>
+      <tr><td>進步速度</td><td>${pctOK?`<span class="big">${rPct}</span> %`:SL?`<span class="big">${SL.m>=0?"+":""}${SL.m.toFixed(1)}</span> 分/10盤`:"?"}</td><td>${pctOK?`${esc(lab)}・勝過 ${rPct}% 的棋友；有 ${pc(M.top25)} 機會是「進步很快」的人（每 4 人最快的 1 個）`:`${slTx||"還在觀察"}・${M.rInf?"排名要等棋友資料夠多":"下得還不多，長棋速度還看不準"}`}</td></tr>
+      ${pctOK?`<tr><td>頂尖</td><td>${pc(M.top5)}</td><td>機會是每 20 人裡最快的 1 個</td></tr>`:""}
       <tr><td>根據</td><td>${G.length} 盤</td><td>測驗 ${QL.length} 次・猜著法 ${GL0.length} 局・練習量約 ${f1(P)} 盤${practiceTotal()>=1?`・練習 ${practiceTotal()>=60?(practiceTotal()/60).toFixed(1)+" 小時":Math.round(practiceTotal())+" 分鐘"}`:""}</td></tr></table>
-      ${M.N<20?'<div class="muted" style="font-size:12.5px;margin-top:4px">下得還不多，先參考一般棋友的樣子，下越多越準</div>':""}`:`<div style="margin:8px 0">再下 3 盤評過等的對局就能估</div>`}</div>
+      ${M.N<20?`<div class="muted" style="font-size:12.5px;margin-top:4px">下得還不多，先參考${calOK?"":"（假設的）"}一般棋友的樣子，下越多越準</div>`:""}`:`<div style="margin:8px 0">再下 3 盤評過等的對局就能估</div>`}</div>
     ${KF||RG?`<div class="sec-t">每步準確度</div><div class="card" style="line-height:1.6">${/* 意見回饋 353：改成表格＋一句說明 */""}<div class="muted" style="font-size:13px;margin-bottom:6px">每盤每一步的準確度平均（跟「我的棋力」五邊形同一把尺，100＝步步都是電腦首選）一路追下來，越高越好。</div>
       <table class="ttab"><tr><th>項目</th><th>數值</th><th>說明</th></tr>
       ${KF?`<tr><td>每步準確度</td><td><span class="big">${f0(KF.th)}</span> 分</td><td>大概在 ${f0(KF.th-1.28*KF.sd)}～${f0(KF.th+1.28*KF.sd)} 分之間</td></tr>
-      <tr><td>一般棋友</td><td>${f0(popNow)} 分</td><td>下了一樣多盤的人・你${KF.th>=popNow?"多":"少"} <b>${f0(Math.abs(KF.th-popNow))}</b></td></tr>`:""}
+      <tr><td>${calOK?"一般棋友":"一般棋友（暫用假設）"}</td><td>${f0(popNow)} 分</td><td>${calOK?`下了一樣多盤的棋友（${MXC.talN} 人的資料）・你${KF.th>=popNow?"多":"少"} <b>${f0(Math.abs(KF.th-popNow))}</b>`:"還沒有夠多棋友的資料，這是作者先假設的樣子，等資料夠了會換成真的"}</td></tr>`:""}
       ${SR?`<tr><td>同段位</td><td>${SR.now} 分</td><td>${esc(NR)}・${SR.n} 人・進步速度中間值 ${(SR.r*100).toFixed(1)}%</td></tr>`:""}
-      ${RG?`<tr><td>平均每步少</td><td>${Math.round(RG.acpl)} 分</td><td>每一步比電腦最好的著法平均少幾分（棋力單位，越小越好；看了 ${RG.n} 步，含猜著法）</td></tr>`:""}</table></div>`:""}
-    <div class="sec-t">題目功力（棋力測驗）</div><div class="card">${QZT?`<div class="muted" style="font-size:13px;margin-bottom:6px">分數＝勝過多少學棋者，跟實戰的分數不是同一把尺，不要直接比大小。</div><table class="ttab"><tr><th>項目</th><th>分數</th><th>說明</th></tr>${QZT}</table>`:'<div class="muted" style="font-size:13px">做一次<a href="#/quiz">棋力測驗</a>，就會算出殺法、戰術、局面判斷、殘局題的功力。</div>'}</div>
+      ${RG?`<tr><td>平均每步少</td><td>${Math.round(RG.acpl)} 分</td><td>每一步比電腦最好的著法平均少幾分（棋力單位，越小越好；中位數 ${Math.round(RG.med)}；看了 ${RG.n} 步，含猜著法）</td></tr>`:""}</table></div>`:""}
+    <div class="sec-t">題目功力（棋力測驗）</div><div class="card">${QZT?`<div class="muted" style="font-size:13px;margin-bottom:6px">${MXC.thQ?"分數＝勝過多少用這個 App 的棋友":"棋友資料還不夠多，先用測驗估的段位表示"}，跟實戰的分數不是同一把尺，不要直接比大小。</div><table class="ttab"><tr><th>項目</th><th>分數</th><th>說明</th></tr>${QZT}</table>`:'<div class="muted" style="font-size:13px">做一次<a href="#/quiz">棋力測驗</a>，就會算出殺法、戰術、局面判斷、殘局題的功力。</div>'}</div>
     ${tau?`<div class="sec-t">你的棋路底子</div><div class="card">${tau}</div>`:""}
     ${TK.length?`<div class="sec-t">殘局功夫</div><div class="card">${TK.slice(0,6).map(t=>{const x=accOf(EKL[t.k]||[]);return bar(x?{k:t.k,v:x.v,low:x.n<SK.MIN,t:`實戰 ${x.n} 步每步準確度平均${x.n<SK.MIN?"（樣本還少）":""}・最近走出好棋 ${pc(t.b.recent)}`}:{k:t.k,v:null,low:true,t:`還沒有實戰的這種殘局，只有測驗題 ${t.n} 題・最近答對 ${pc(t.b.recent)}`})}).join("")}<p class="muted" style="font-size:12.5px;margin:6px 0 0">照進攻方剩下的大子分類（例如「車兵對士象全」）；分數跟「我的棋力」的殘局同一把尺。</p></div>`:""}
     </div></div>
@@ -4151,11 +4214,12 @@ function weeklyEntryHTML(){return`<a class="card row" href="#/weekly" style="gap
 async function wkRead(){try{if(typeof readTheta!=="function"||typeof readCalc!=="function"||typeof readIdx!=="function")return null;
   let G=null;try{const S=await skillRows();G=S.G.filter(g=>g.n>=8&&rowAcc(g)!=null&&!g.hu)}catch(e){}   /* 跟 talentReport 傳給 readMap 的那批一樣 */
   const T=readTheta(G);if(!T)return null;const I=await readIdx();if(!I||!I.gm||!I.gm.games||!I.gm.games.length)return null;
-  const C=readCalc(I,T.th,G),now=Math.round(C.gmPct(T.th)*100);if(!isFinite(now))return null;const wide=!(T.se<=.6),today=wkKey(Date.now()),L=store.get("wkRead",null)||{};L.d=L.d||{};
+  /* 數學修正 11/11（審查 12）：noise＝θ 動一個標準誤時讀懂比例會動幾個百分點的一半（|gmPct(θ+se)−gmPct(θ−se)|/2）；跟上週的差距不到它就當「差不多」（測驗一次 θ 就可能動 0.3，差距大多是測量雜訊） */
+  const C=readCalc(I,T.th,G),now=Math.round(C.gmPct(T.th)*100),noise=Math.abs(C.gmPct(T.th+T.se)-C.gmPct(T.th-T.se))*50;if(!isFinite(now))return null;const wide=!(T.se<=.6),today=wkKey(Date.now()),L=store.get("wkRead",null)||{};L.d=L.d||{};
   if(!wide){L.d[today]=now;const ks=Object.keys(L.d).sort();while(ks.length>60)delete L.d[ks.shift()];store.set("wkRead",L)}   /* 資料還少（我的成長畫虛線）的時候不記，跟 rdLog 每月那筆同一個規矩 */
   const lo=wkKey(Date.now()-13*WK_DAY),hi=wkKey(Date.now()-7*WK_DAY),pk=Object.keys(L.d).filter(k=>k>=lo&&k<=hi&&isFinite(L.d[k])).sort().pop();let d=null,vs="";
   if(pk!=null){d=now-L.d[pk];vs="上週"}else{try{const M=rdLog().m||{},mk=today.slice(0,7),pm=Object.keys(M).filter(k=>k<mk).sort().pop();if(pm&&Array.isArray(M[pm])&&isFinite(M[pm][0])){d=now-M[pm][0];vs="上個月"}}catch(e){}}
-  return{now,wide,d,vs}}catch(e){return null}}
+  const sig=d!=null&&Math.abs(d)>=Math.max(1,noise);return{now,wide,d,vs,noise:Math.round(noise*10)/10,sig}}catch(e){return null}}   /* sig＝差距超過正常起伏才算真的有變 */
 async function wkData(o){const{t0,t1,ks}=o&&o.t0?o:wkRange(),inW=t=>t>=t0&&t<=t1,days=new Set(),day=t=>days.add(wkKey(t)),R={t0,t1};
   /* 殘局、殺法 */
   const S=store.get("cj",null)||{},SV=S.solved||{},cjW=Object.entries(SV).filter(([,x])=>x&&inW(x.at)&&!x.a);
@@ -4194,7 +4258,7 @@ function wkSum(R,nk){const nu=R.kills.find(x=>x.nu),learn=nu?nu.k:R.lessons.leng
   if(!did&&!R.lessons.length&&!R.arena.length&&!R.battles.length)return`這週${nk}在休息。每天花 10 分鐘解一題「今日茶單」，就是很好的開始！`;
   const a=[];if(learn)a.push(`這週學會了「${learn}」`);else if(R.cj)a.push(`這週解開了 ${R.cj} 題殘局`);else if(R.g.n)a.push(`這週下了 ${R.g.n} 盤棋`);else a.push("這週有動腦練習");
   if(R.days>=5)a.push("幾乎天天都有練習，很有恆心");else if(R.arena.length)a.push(`還打敗了擂主${R.arena[0].n}`);else if(R.g.w>=3)a.push(`還贏了 ${R.g.w} 盤`);else if(R.cjP>=3)a.push(`其中 ${R.cjP} 題一次就完美解開`);
-  const nx=R.nextKill&&R.nextKill!==learn?`下週可以試試「${R.nextKill}」`:R.read&&R.read.d>0?`看得懂的大師棋又多了 ${R.read.d}%，下週繼續保持`:"下週繼續一起下棋吧";
+  const nx=R.nextKill&&R.nextKill!==learn?`下週可以試試「${R.nextKill}」`:R.read&&R.read.d>0&&R.read.sig?`看得懂的大師棋又多了 ${R.read.d}%，下週繼續保持`:"下週繼續一起下棋吧";
   return a.join("，")+"。"+nx+"！"}
 
 /* ---------- 畫圖卡 ---------- */
@@ -4242,7 +4306,7 @@ function wkRender(c,R,M,H){const W=1080,P=78,ink="#2A1F15",mut="#6F5F4C",red="#9
     if(!k)item("🌱","這週還沒有打敗對手，下次去擂台試試看！")}
   gap();sec("看得懂大師的棋");
   if(R.read){y+=58;c.font=`900 56px ${WK_F}`;c.fillStyle=red;const s1=`約 ${R.read.now}%`;c.fillText(s1,P+6,y);const w1=c.measureText(s1).width;
-    if(R.read.d!=null){c.font=`700 30px ${WK_S}`;c.fillStyle=R.read.d>0?"#2E7D32":mut;c.fillText(R.read.d>0?`比${R.read.vs} +${R.read.d}%`:R.read.d<0?`比${R.read.vs} ${R.read.d}%`:`跟${R.read.vs}一樣`,P+30+w1,y-6)}
+    if(R.read.d!=null){c.font=`700 30px ${WK_S}`;c.fillStyle=R.read.d>0&&R.read.sig?"#2E7D32":mut;c.fillText(!R.read.sig?`跟${R.read.vs}差不多`:R.read.d>0?`比${R.read.vs} +${R.read.d}%`:`比${R.read.vs} ${R.read.d}%`,P+30+w1,y-6)}   /* 數學修正 11/11：差距在正常起伏內寫「差不多」 */
     y+=26;c.fillStyle="#E4D6BF";wkRR(c,P+6,y,TW-12,20,10);c.fill();c.fillStyle=red;wkRR(c,P+6,y,Math.max(20,(TW-12)*Math.min(100,R.read.now)/100),20,10);c.fill();y+=20;
     item("📚",`三萬多盤特級大師對局裡，大約 ${R.read.now}% 看得懂最關鍵的那一手${R.read.wide?"（資料還少，先參考）":""}`)}
   else item("📚","做一次棋力測驗（大約 3 分鐘），就能算出看得懂幾成大師的棋。");
@@ -4504,7 +4568,7 @@ function Settings(v){
         <tr><td>Google Apps Script</td><td>意見回饋管理頁（接 Google 表單和試算表）</td></tr>
         <tr><td>JSON</td><td>棋譜、題庫、故事、朝代資料</td></tr></table>
         <div class="muted" style="font-size:12px;margin-top:4px">線上大廳用 MQTT 通訊協定連線；Pikafish 的神經網路權重另外下載。</div></details>`:""}</div>
-    ${OFF?'<div class="sec-t">隱私</div><div class="card muted" style="font-size:13.5px;line-height:1.7">'+'App 每 7 天（或名字、段位改變時）會把你在大廳顯示的名字（用「稱號」就是稱號）、裝置代號（這支手機固定的一組隨機碼）、線上段位、使用時間摘要（總時間和最常待的地方）、App 版本、手機種類和螢幕大小送到開發者的 Google 表單，方便查問題、校正難度；不會送棋譜或存檔。另外會匿名記下你在哪一頁停很久、哪裡點了沒反應、哪個走法看不懂（每次開 App 換一組亂數，不含名字和裝置代號），用來改善不好懂的地方。你可以用下面的開關關掉；家長關閉線上大廳時也不會送。你按「意見回饋」或「檢舉」時，會另外送出你寫的內容和附的截圖（檢舉還會附對方最近的快捷語）。App 不會用網路位置查你在哪裡；線上大廳要不要顯示城市，由你在下面自己選（預設不顯示；用「稱號」的人一律不顯示）。'+'<label style="display:flex;align-items:center;gap:8px;margin-top:8px;color:var(--ink,inherit)"><span style="flex:1">📨 送出玩家登記給開發者</span><input type="checkbox" class="sw" id="repS" aria-label="送出玩家登記給開發者"></label>'+'<label style="display:flex;align-items:center;gap:8px;margin-top:8px;color:var(--ink,inherit)"><span style="flex:1">📍 匿名記錄卡住的地方</span><input type="checkbox" class="sw" id="stkS" aria-label="匿名記錄卡住的地方"></label>'+'<label style="display:flex;align-items:center;gap:8px;margin-top:8px;color:var(--ink,inherit)"><span style="flex:1">🏙 大廳顯示我的城市</span><select id="myCityS" style="font:inherit;padding:4px 6px;border-radius:8px">'+[["","不顯示"],...CITY_ZH.map(([,z])=>[z,z])].map(([v,l])=>'<option value="'+v+'"'+(String(store.get("myCity","")||"")===v?" selected":"")+'>'+l+'</option>').join("")+'</select></label>'+'</div>':''}
+    ${OFF?'<div class="sec-t">隱私</div><div class="card muted" style="font-size:13.5px;line-height:1.7">'+'App 每 7 天（或名字、段位改變時）會把你在大廳顯示的名字（用「稱號」就是稱號）、裝置代號（這支手機固定的一組隨機碼）、線上段位、使用時間摘要（總時間和最常待的地方）、App 版本、手機種類和螢幕大小送到開發者的 Google 表單，方便查問題、校正難度；不會送棋譜或存檔。另外會匿名記下你在哪一頁停很久、哪裡點了沒反應、哪個走法看不懂（每次開 App 換一組亂數，不含名字和裝置代號），用來改善不好懂的地方。跟電腦下完一盤，也會匿名送出這盤你每一步的評估分數和評語、總分、電腦級數、你的段位（用 App 自己產生的匿名碼，不含名字、裝置代號、棋譜和存檔），用來校正評分方式。你可以用下面的開關關掉；家長關閉線上大廳時也不會送。你按「意見回饋」或「檢舉」時，會另外送出你寫的內容和附的截圖（檢舉還會附對方最近的快捷語）。App 不會用網路位置查你在哪裡；線上大廳要不要顯示城市，由你在下面自己選（預設不顯示；用「稱號」的人一律不顯示）。'+'<label style="display:flex;align-items:center;gap:8px;margin-top:8px;color:var(--ink,inherit)"><span style="flex:1">📨 送出玩家登記給開發者</span><input type="checkbox" class="sw" id="repS" aria-label="送出玩家登記給開發者"></label>'+'<label style="display:flex;align-items:center;gap:8px;margin-top:8px;color:var(--ink,inherit)"><span style="flex:1">📍 匿名記錄卡住的地方</span><input type="checkbox" class="sw" id="stkS" aria-label="匿名記錄卡住的地方"></label>'+'<label style="display:flex;align-items:center;gap:8px;margin-top:8px;color:var(--ink,inherit)"><span style="flex:1">📊 匿名送出對局評分（校正分數用）</span><input type="checkbox" class="sw" id="cpaS" aria-label="匿名送出對局評分"></label>'+'<label style="display:flex;align-items:center;gap:8px;margin-top:8px;color:var(--ink,inherit)"><span style="flex:1">🏙 大廳顯示我的城市</span><select id="myCityS" style="font:inherit;padding:4px 6px;border-radius:8px">'+[["","不顯示"],...CITY_ZH.map(([,z])=>[z,z])].map(([v,l])=>'<option value="'+v+'"'+(String(store.get("myCity","")||"")===v?" selected":"")+'>'+l+'</option>').join("")+'</select></label>'+'</div>':''}
     ${OFF?'<div class="sec-t">進階</div><div class="card"><label class="row" style="justify-content:space-between"><span><b>開發者模式</b><br><span class="muted">一般玩家不用打開。打開後才會顯示連線電腦、AI 對戰等開發者功能</span></span><input type="checkbox" class="sw" id="dm"></label></div>'
       +(DEVMODE()?'<div class="items" style="padding:0;margin-top:8px"><button class="item" id="fa"><span class="lb">📋</span><span class="tx"><b>意見回饋管理</b><span>看所有回饋和截圖，決定玩家的回饋要不要修</span></span><span class="muted">›</span></button><button class="item" id="cn"><span class="lb">🖥</span><span class="tx"><b>連線到開發者的電腦</b><span>看 AI 對戰、同步大師棋譜</span></span><span class="muted">›</span></button><button class="item" id="rb"><span class="lb">🔄</span><span class="tx"><b>重置虛擬玩家</b><span>32 位棋友的積分、戰績、練習紀錄歸零；舊資料留在電腦上</span></span><span class="muted">›</span></button></div>':""):""}${OFF?'<div class="sec-t">📱 換手機</div><div class="card"><div class="row" style="gap:8px;flex-wrap:nowrap"><button class="btn" id="xfOut" style="flex:1;min-width:0;margin:0;white-space:nowrap;padding-left:6px;padding-right:6px">📤 舊手機產生碼</button><button class="btn ghost" id="xfIn" style="flex:1;min-width:0;margin:0;white-space:nowrap;padding-left:6px;padding-right:6px">📥 新手機輸入碼</button></div></div>':""}</div></div>`;
   let tbRefresh=()=>{};
@@ -4604,6 +4668,7 @@ function Settings(v){
         if(x&&x.n===n){toast(x.ok?`✅ 已重置 ${x.bots} 位虛擬玩家（舊資料存在電腦：${x.arch}）`:"❌ "+x.why,5000);return}}
       toast("電腦沒有回覆：虛擬玩家的程式可能沒在跑")}catch(e){toast(e.message)}},"重置")}
   {const ab=v.querySelector("#askB");if(ab)ab.onclick=()=>askSheet();const bh=v.querySelector("#botHome");if(bh)bh.onclick=()=>{store.set("botPos",null);if(BOT){BOT.stop();BOT=null}syncBot();toast("小帥回到預設位置了")}}{const bt=v.querySelector("#botT");if(bt)bt.onchange=()=>{store.set("bot3d",bt.checked);syncBot();if(bt.checked)toast("小人出來了！點它會表演")};const sz=v.querySelector("#botSz"),szv=v.querySelector("#botSzV");if(sz)sz.oninput=()=>{store.set("botSize",+sz.value);szv.textContent=Math.round(sz.value*100)+"%";if(BOT&&BOT.setScale)BOT.setScale(+sz.value)}}{const sk=v.querySelector("#stkS");if(sk){sk.checked=!store.get("stkOff",false);sk.onchange=()=>{store.set("stkOff",!sk.checked);vibrate(5);toast(sk.checked?"會匿名記錄卡住的地方":"不再記錄卡住的地方")}}}   /* 卡關訊號開關（開發者 11/11 核准，預設開） */
+  {const ca=v.querySelector("#cpaS");if(ca){ca.checked=!store.get("cpuAnonOff",false);ca.onchange=()=>{store.set("cpuAnonOff",!ca.checked);vibrate(5);toast(ca.checked?"跟電腦下完會匿名送出對局評分":"不再送出對局評分")}}}   /* 對局評分開關（開發者 11/11 照三方審查開始收 t:"cpu"，預設開；另開一個、不跟卡關訊號共用，理由寫在 05b-save.js 的 cpa 段） */
   {const rp=v.querySelector("#repS");if(rp){rp.checked=!store.get("repOff",false);rp.onchange=()=>{store.set("repOff",!rp.checked);vibrate(5);toast(rp.checked?"會送玩家登記給開發者":"不再送玩家登記")}}}{const cs=v.querySelector("#myCityS");if(cs)cs.onchange=()=>{store.set("myCity",cs.value);fetchCity();if(window.XQNet&&XQNet.refresh)XQNet.refresh();toast(cs.value?"大廳會顯示「"+cs.value+"」":"大廳不顯示城市")}}(v.querySelector("#nm")||{}).onclick=()=>{vibrate(5);stab="look";store.set("setTab","look");showTab();setTimeout(()=>{const x=v.querySelector("#nmLook");if(x)x.scrollIntoView({block:"center",behavior:"smooth"})},60)};   /* 意見回饋 498：名字只在「外觀 → 我的角色」改 */(v.querySelector("#fb")||{}).onclick=()=>feedbackSheet();{const au=v.querySelector("#aUpd");if(au)au.onclick=()=>{vibrate(5);updCheck(au)}}{const al=v.querySelector("#aLic");if(al)al.onclick=()=>{vibrate(5);aboutLicSheet()}}{const ue=v.querySelector("#aUse");if(ue)aboutUsage(ue)}{const ft=v.querySelector("#fbTop");if(ft)ft.onclick=()=>{vibrate(5);feedbackSheet()}}{const fx=v.querySelector("#fxh");if(fx)fx.onclick=()=>fixHistory()}{const a2=v.querySelector("#a2h");if(a2)a2.onclick=()=>{vibrate(5);installGuide(true)}}(v.querySelector("#sh")||{}).onclick=shareSheet;const cn=v.querySelector("#cn");if(cn)cn.onclick=connectSheet;const fa=v.querySelector("#fa");if(fa)fa.onclick=()=>location.hash="#/fbadmin";if(typeof epSetBind==="function")epSetBind(v);
   paint();return{}}
 
@@ -4778,6 +4843,70 @@ const gradeFor=x=>GRADES.find(g=>x>=g[1]);
 const rnd=n=>Math.ceil(n/2);
 /* 開發者 11/6（第二裁判：同一個 Pikafish 深算對照）：評語分界線放寬成 正著<30／穩著≤60／緩著≤150／失著≤400／敗著>400 分；存檔裡舊的評語照「少幾分」重算（妙著照舊） */
 function qNow(m){if(!m||!m.q)return m&&m.q;const q0=({"妙手":"妙著","正手":"正著","優著":"穩著","良著":"緩著","錯著":"失著","露著":"敗著"})[m.q]||m.q;if(m.loss==null||q0==="妙著"||q0==="—")return q0;const l=m.loss;return l<30?"正著":l<=60?"穩著":l<=150?"緩著":l<=400?"失著":"敗著"}
+/* ================= 影子模式：勝率尺度的新算法（開發者 11/11 照三方審查「新算法修好必改後走影子模式」） =================
+   畫面一律顯示舊算法（qNow／gameReport／talk／reportSheet 的分數、評語、評級一個字都沒改）；新算法只在背景算：
+   ・mxShadowReport(rep)：拿 gameReport 的結果再算一份新的每步勝率損失、評語、一盤總分、評級，不動 rep。
+   ・05b-save.js 的 cpa*：跟電腦下完一盤，新舊總分存在 store "mxShadow"（最近 200 盤），並匿名送 t:"cpu"（設定 → 隱私可關）。
+   ・開發者模式：賽後報告最下面多一塊「🛠 新算法（影子模式）」並列新舊（reportSheet），孩子看不到。
+   三方審查（story/75_數學模型新算法_三方審查整理.md）的上線前必改 1～4 都在這一段：
+   ①存檔還原 bug：沒有 bv（最佳著法評估原值）時，最佳評估＝ev「先夾到 ±2000」再加 loss（loss 本來就是兩邊夾過才相減）；不存 dw、一律重算（k 改了不會留下過時的 dw）。
+   ②殺棋特例（Lichess lila modules/tree/src/main/Advice.scala 的 MateAdvice 分界）：走進對方的強制殺棋、錯過自己的強制殺棋直接決定評語，另外標「送殺」「漏殺」。
+   ③一盤總分不沿用舊門檻：Lichess 的合成（依局勢波動加權的平均、調和平均各半，lila AccuracyPercent.scala），上限規則改看「勝率掉 ≥ capDw% 的步數」，
+     S／A／B／C 門檻放在 MXS.gr，等影子資料（≥100 人、≥1000 盤）用分位對應重訂（tools/calibrate-grades.js）。
+   ④k、評語門檻集中在 MXS：門檻 th 由 k 和均勢 cp 分界算出來，k 改了門檻自動跟著改；改了任何一個數字就把 MXS.ver 加 1（匿名資料帶著版本）。
+   core.js（xiangqi-referee.js 的 classifyRaw）只多回傳 bv，評語照舊；新算法全部在這裡。 */
+const MXS={ver:1,
+  k:0.00368208,          /* 勝率曲線斜率 Win%(cp)＝100／(1＋e^(−k·cp))：先沿用 Lichess（lichess.org/page/accuracy）；之後用 t:"cpu" 真人對局分段位擬合（tools/calibrate-wdl.js），不可用引擎自對局（Pikafish 自己的曲線 +150 就 96%，會灌水） */
+  cp:[30,60,150,400],    /* 均勢時的評語分界（開發者 11/6 深算驗證過的 cp）；th＝Win%(cp)−50 由 k 算出（下一行） */
+  mate:20000,            /* |評估| ≥ 這個＝有殺（engine.js 把 mate n 換成 ±(30000−n)；跟 evText 同一個分界） */
+  walk:[-700,-1000],     /* 走進對方殺棋：走之前（最佳著法）的評估 > −700 → 敗著；−1000～−700 → 失著；更差 → 緩著 */
+  miss:[700,1000],       /* 錯過自己的殺棋：走完的評估 ≤ 700 → 敗著；700～1000 → 失著；> 1000 → 緩著 */
+  hm:.5,                 /* 一盤準確度＝(1−hm)·波動加權平均＋hm·調和平均（Lichess 各半） */
+  win:[2,8],wt:[.5,12],  /* 波動權重：視窗＝總手數/10 夾在 2～8；視窗內勝率的標準差夾在 0.5～12（Lichess） */
+  capDw:10,              /* 上限規則看「勝率掉 ≥ 10%」的步數（Claude 複審 #4 修法 (b)），送殺、漏殺判成失著／敗著的也算 */
+  cap:{n:[3,6],r:[.1,.2],v:[79,69],blun:89},   /* 上限結構照舊：≥3 步或 ≥10% 最高 79、≥6 步或 ≥20% 最高 69、有敗著最高 89——數字待分位對應 */
+  gr:[90,80,70,60],      /* S／A／B／C 門檻：暫用舊的，待校正 */
+  bonus:[2,6]};          /* 妙著每個 +2、最多 +6（照舊） */
+MXS.th=MXS.cp.map(c=>mxWin(c)-50);   /* 均勢時跟 cp 分界逐點對齊（k＝0.00368208 時 2.758／5.502／13.47／31.35%）；mxWin、mxClamp 都是 function 宣告（會提升），這一行在載入時就能算 */
+function mxClamp(v){return Math.max(-2000,Math.min(2000,+v||0))}
+function mxWin(cp){return 100/(1+Math.exp(-MXS.k*mxClamp(cp)))}
+function mxAccDw(dw){return Math.max(0,Math.min(100,103.1668*Math.exp(-0.04354*Math.max(0,+dw||0))-3.1669))}   /* Lichess 每步準確度（沒加 +1 的不確定加分，跟 Lichess 的差別寫在合併說明.md） */
+function mxGradeDw(dw){const t=MXS.th;return dw<t[0]?"正著":dw<=t[1]?"穩著":dw<=t[2]?"緩著":dw<=t[3]?"失著":"敗著"}
+/* 一步的最佳、實際評估（走的那一方視角）：b 最佳著法、p 實際走完；bk＝b 是原值（有 bv）還是還原的；eq＝不知道是哪一方或沒有 ev，只能當均勢（b＝loss、p＝0） */
+function mxEv(m){if(!m||m.loss==null||!isFinite(+m.loss))return null;const l=Math.max(0,+m.loss),sg=m.by==="r"?1:m.by==="b"?-1:0;
+  if(!sg||m.ev==null||!isFinite(+m.ev))return{b:l,p:0,bk:0,eq:1};const p=sg*(+m.ev);
+  if(m.bv!=null&&isFinite(+m.bv))return{b:sg*(+m.bv),p,bk:1};
+  return{b:mxClamp(p)+l,p,bk:0}}   /* ←必改①：ev 先夾到 ±2000 再加 loss（Claude 複審 §4-1：用沒夾的 ev，走進殺棋 −29990 會被還原成「正著、100 分」） */
+/* 一步的新評語。mt：0 沒事、1 送殺（走進對方的強制殺棋）、2 漏殺（有殺沒走）；mh＝漏殺是推估的（舊存檔沒有 bv，只知道最佳 ≥ 2000，比照 talk 的 1900 分界） */
+function mxShMove(m){const q0=qNow(m);if(!q0||q0==="—")return null;const e=mxEv(m);if(!e)return null;
+  const dw=Math.max(0,mxWin(e.b)-mxWin(e.p)),M=MXS.mate;let q=q0==="妙著"?"妙著":mxGradeDw(dw),mt=0,mh=0;
+  if(q0!=="妙著"&&!e.eq){
+    if(e.p<=-M&&(e.bk?e.b>-M:e.b>-2000)){mt=1;q=e.b>MXS.walk[0]?"敗著":e.b>MXS.walk[1]?"失著":"緩著"}   /* 走之前還沒被殺（沒 bv 時：夾過的最佳 > −2000） */
+    else if(e.p<M&&(e.bk?e.b>=M:e.b>=2000&&e.p<1900)){mt=2;mh=e.bk?0:1;q=e.p<=MXS.miss[0]?"敗著":e.p<=MXS.miss[1]?"失著":"緩著"}}
+  return{b:e.b,p:e.p,bk:e.bk,dw,acc:mxAccDw(dw),q0,q,mt,mh}}
+/* 一方的新總分（rep＝gameReport 的結果；照 rep.plies 的 phase、by、ply） */
+function mxShSide(rep,s){const P=rep&&rep.plies||[],X=[];for(const m of P){if(m.by!==s)continue;const x=mxShMove(m);if(x)X.push({m,x})}if(!X.length)return null;
+  const W=[50];let last=50;for(const m of P){if(m.ev!=null&&isFinite(+m.ev))last=mxWin(+m.ev);W.push(last)}   /* 每一手走完的勝率（紅方視角），第 0 個＝開局前；沒評到的手沿用上一手 */
+  const ws=Math.max(MXS.win[0],Math.min(MXS.win[1],Math.floor(P.length/10))),sdv=a=>{const u=a.reduce((x,y)=>x+y,0)/a.length;return Math.sqrt(a.reduce((x,y)=>x+(y-u)**2,0)/a.length)},win=[];
+  for(let i=0;i<Math.min(ws,W.length)-2;i++)win.push(W.slice(0,ws));for(let i=0;i+ws<=W.length;i++)win.push(W.slice(i,i+ws));if(W.length<ws)win.push(W.slice());
+  const wOf=ply=>{const a=win[ply-1];return a?Math.max(MXS.wt[0],Math.min(MXS.wt[1],sdv(a))):1};
+  let sw=0,sa=0,sh=0;const cnt={},ph={};for(const{m,x}of X){const w=wOf(m.ply);sw+=w;sa+=w*x.acc;sh+=1/Math.max(1,x.acc);cnt[x.q]=(cnt[x.q]||0)+1;const o=ph[m.phase]||(ph[m.phase]={s:0,n:0});o.s+=x.acc;o.n++}   /* 調和平均的每一步至少算 1 分（0 分會讓調和平均變 0） */
+  const wm=sa/sw,hmean=X.length/sh,base=(1-MXS.hm)*wm+MXS.hm*hmean,C=MXS.cap,bonus=Math.min(MXS.bonus[1],MXS.bonus[0]*(cnt["妙著"]||0)),
+    bad=X.filter(({x})=>x.dw>=MXS.capDw||x.q==="失著"||x.q==="敗著").length,blun=cnt["敗著"]||0,br=bad/X.length,
+    cap=bad>=C.n[1]||br>=C.r[1]?C.v[1]:bad>=C.n[0]||br>=C.r[0]?C.v[0]:blun?C.blun:100,score=Math.min(cap,Math.round(base+bonus)),gi=MXS.gr.findIndex(g=>score>=g);
+  return{score,grade:"SABCD"[gi<0?4:gi],base,wm,hmean,bonus,cap,cnt,n:X.length,bk:X.filter(({x})=>x.bk).length,
+    ph:Object.fromEntries(Object.entries(ph).map(([k,o])=>[k,{score:Math.round(o.s/o.n),n:o.n}])),
+    mv:X.map(({m,x})=>({ply:m.ply,cn:m.cn,ph:m.phase,loss:m.loss,...x}))}}
+function mxShadowReport(rep){return{ver:MXS.ver,r:mxShSide(rep,"r"),b:mxShSide(rep,"b")}}
+/* 開發者模式才看得到：賽後報告並列新舊（三方審查：新舊兩個數字不給孩子看，會困惑） */
+function mxShHtml(R,X){if(!X||!R||R.score==null)return"";const QS=["妙著","正著","穩著","緩著","失著","敗著"],df=X.mv.filter(v=>v.q!==v.q0||v.mt);
+  return`<details style="margin-top:12px"><summary class="muted">🛠 新算法（影子模式，只有開發者看得到）</summary>
+    <table class="ttab" style="margin-top:6px"><tr><th></th><th>畫面（舊）</th><th>影子（新）</th></tr>
+    <tr><td>總分</td><td>${R.score}（${R.grade[0]}）</td><td>${X.score}（${X.grade}）</td></tr>
+    <tr><td>準確度</td><td>${R.base.toFixed(1)}</td><td>${X.base.toFixed(1)}<br><small class="muted" style="font-weight:400">波動加權 ${X.wm.toFixed(1)}・調和 ${X.hmean.toFixed(1)}</small></td></tr>
+    <tr><td>上限</td><td>${R.cap}</td><td>${X.cap}</td></tr>${QS.map(q=>`<tr><td>${q}</td><td>${R.cnt[q]||0}</td><td>${X.cnt[q]||0}</td></tr>`).join("")}</table>
+    ${df.length?`<div class="muted" style="font-size:12.5px;line-height:1.6;margin-top:6px">評語不一樣的步：${df.slice(0,30).map(v=>`第 ${v.ply} 手 ${esc(v.cn||"")} ${v.q0}→${v.q}（勝率 −${v.dw.toFixed(1)}%${v.mt===1?"・送殺":v.mt===2?"・漏殺"+(v.mh?"（推估）":""):""}）`).join("；")}</div>`:""}
+    <p class="muted" style="font-size:12px;margin:6px 0 0">MXS v${MXS.ver}：k＝${MXS.k}、評語門檻 ${MXS.th.map(t=>t.toFixed(2)).join("／")}%、殺棋分界 ${MXS.walk.join("／")}・${MXS.miss.join("／")}、S／A／B／C ${MXS.gr.join("／")}（都還沒用真人資料校正）${X.bk<X.n?`；${X.n-X.bk} 步沒有最佳評估原值（舊存檔或舊快取），用 ev 夾值＋loss 還原`:""}</p></details>`}
 function gameReport(board0,moves){
   moves=(moves||[]).map(m=>m&&m.q&&m.loss!=null&&qNow(m)!==m.q?{...m,q:qNow(m)}:m);
   const b=board0.slice(),out={r:null,b:null},plies=[];let endFrom=null;
@@ -4817,6 +4946,7 @@ function talk(s,plies,graded,ph,score){if(score==null)return[];const sg=s==="r"?
   return T.sort((a,b)=>(a.ply||0)-(b.ply||0))}
 // 報告畫面（底部選單）。opts：{title, side:預設看哪一方, names:{r,b}, goto(ply)}
 function reportSheet(rep,opts){let s=opts.side||"r";
+  const SH=(()=>{try{return typeof DEVMODE==="function"&&DEVMODE()?mxShadowReport(rep):null}catch(e){return null}})();   /* 開發者 11/11 影子模式：只有開發者模式算、最下面並列新舊（mxShHtml）；一般玩家的畫面完全照舊 */
   sheet(opts.title||"賽後報告",b=>{const paint=()=>{const R=rep.sides[s],nm=opts.names||{r:"紅方",b:"黑方"};
     const PN=[["open","開局"],["mid","中局"],["end","殘局"]],QS=["妙著","正著","穩著","緩著","失著","敗著"];
     b.innerHTML=(opts.note?`<p class="muted" style="font-size:12.5px;margin:0 0 8px;line-height:1.6">${esc(opts.note)}<br>每一手的分數是 Pikafish 短時間思考的估計，局面複雜時可能會變；想看得更深，在那一步按 🔍 分析。</p>`:"")+`<div class="opt">${["r","b"].map(x=>`<button data-sd="${x}" class="${x===s?"on":""}">${x==="r"?"🔴":"⚫"} ${esc(nm[x])}</button>`).join("")}</div>`+
@@ -4828,7 +4958,7 @@ function reportSheet(rep,opts){let s=opts.side||"r";
       <div class="rp-q">${QS.map(q=>`<span style="color:${QC[q]}"><b>${R.cnt[q]||0}</b>${q}</span>`).join("")}</div>
       <div class="sec-t" style="margin-left:0">Pikafish 講解</div>
       ${R.talk.map(t=>`<div class="rp-t${t.bad?" bad":t.good?" good":""}"${t.ply?` data-p="${t.ply}"`:""}><b>${esc(t.t)}</b>${esc(t.x)}${t.ply&&opts.goto?'<span class="go">看這步 ›</span>':""}${t.bad&&t.ply&&opts.retry&&opts.retry.side===s?`<div style="margin-top:7px"><button class="pill" data-re="${t.ply}" style="font-weight:800">↻ 從這步再下一次</button></div>`:""}</div>`).join("")}
-      <p class="muted" style="font-size:12px;margin-top:12px">評級：S≥90、A≥80、B≥70、C≥60、D&lt;60。每步準確度依「比 Pikafish 最佳著法少幾分」換算（大優時的失誤也照算），再加妙著分。有敗著最高 A；失著＋敗著 3 步以上（或 10%）最高 B；6 步以上（或 20%）最高 C。開局＝前 10 回合；殘局＝雙方車馬炮合計剩 6 個以下。</p>`);
+      <p class="muted" style="font-size:12px;margin-top:12px">評級：S≥90、A≥80、B≥70、C≥60、D&lt;60。每步準確度依「比 Pikafish 最佳著法少幾分」換算（大優時的失誤也照算），再加妙著分。有敗著最高 A；失著＋敗著 3 步以上（或 10%）最高 B；6 步以上（或 20%）最高 C。開局＝前 10 回合；殘局＝雙方車馬炮合計剩 6 個以下。</p>${SH?mxShHtml(R,SH[s]):""}`);
     b.querySelectorAll("[data-sd]").forEach(x=>x.onclick=()=>{s=x.dataset.sd;paint()});
     if(opts.goto)b.querySelectorAll("[data-p]").forEach(x=>x.onclick=()=>{closeSheet();opts.goto(+x.dataset.p)});
     if(opts.retry)b.querySelectorAll("[data-re]").forEach(x=>x.onclick=e=>{e.stopPropagation();vibrate(8);opts.retry.go(+x.dataset.re)})};paint()})}
@@ -5220,6 +5350,47 @@ function stkBoot(){try{if(STK.sid)return;const a=new Uint8Array(8);crypto.getRan
   addEventListener("pagehide",()=>stkSend());
   setInterval(()=>{try{if(document.hidden||!stkOn())return;const idle=Date.now()-STK.act;if(idle>120000&&STK.idle<0){STK.idle=stkEv("idle",null)}if(idle>180000&&!STK.live){STK.live=1;stkSend(1)}}catch(e){}},5000)}catch(e){}}
 stkBoot();
+/* ---------- 跟電腦下完一盤的匿名評分資料 t:"cpu"（開發者 11/11 照三方審查：「同時開始收新的匿名對局資料」）＋影子模式的背景存檔 ----------
+   為什麼要：新算法（05-settings.js 的 MXS、mxShadowReport，影子模式）的勝率曲線 k、評語門檻、殺棋分界、S／A／B 門檻，都要用真人（孩子）的對局分段位校正
+     （tools/calibrate-wdl.js、tools/calibrate-grades.js 讀 xiangqi-db/cpu-games.jsonl）。三方審查一致：不可用引擎自對局校正。
+   什麼時候：跟電腦下完一盤（08b-cpugame.js 發 xq-result）後，每 3 秒問一次 /play/state，等我方每一步都評完等（最多約 5 分鐘）；
+     換到下一盤或逾時，就送已經評好的部分（full:0）。錯棋重練、練習題（practice）不送；同一盤只處理一次（store cpaSent 記最近 60 盤的編號，只存在手機裡）。
+     線上對戰結束也會發 xq-result（02-shell.js），那時 /play/state 是電腦那一盤：處理過就略過、還沒結束就不送。
+   送什麼（只有數字和段位名）：aid（App 自己亂數產生的匿名碼 anonId，跟成長曲線 t:"tal" 同一個，同一個人的很多盤才能放在一起校正）、g（這盤另外亂數 8 碼，後台去重用）、
+     App 版本 ver、裝置類型 dev、新算法常數版本 mx、對局種類 kind、電腦級數 lv／練功房 rlv／積分挑戰 rk＋對手段位 ork、我方 hu、勝負 res、結束原因 why（12 字內）、總手數 n、
+     是不是標準開局 std、提示 hn／悔棋 un 次數、盲棋 bl、玩家段位（電腦積分段位 crk、積分 pts、這盤積分變化 d、線上段位 nrk）、舊算法總分 o、新算法總分 s、
+     我方每一步 m＝[手數, 階段 0開局1中局2殘局, 最佳著法評估原值, 實際走完評估原值, 最佳原值是否確定(1)或還原(0), loss, 舊評語, 新評語, 殺棋 0／1送殺／2漏殺]
+     （評估都是走的那一方視角、「夾 ±2000 之前」的原值，校正殺棋分界要用；夾過的值用 ±2000 自己夾就有。評語是 妙著0 正著1 穩著2 緩著3 失著4 敗著5）。
+   不送：名字、裝置代號、線上 id、棋譜（著法本身）、存檔。
+   開關：設定 → 隱私「📊 匿名送出對局評分」（store cpuAnonOff，預設開）。沒有跟「📍 匿名記錄卡住的地方」共用一個開關，理由：
+     ①是不同的資料（每一步的評估分數 vs 停在哪一頁），家長看開關名稱就要知道送了什麼；②卡關訊號每次開 App 換一組亂數，這個用固定的匿名碼，性質不同，要能分開關。
+   開發者模式不送（測試機、本機例外，加 test:1，collect-anon.js 存到 cpu-games.test.jsonl）；家長關閉線上大廳時連不上大廳，本來就不會送（XQNet.shareIRT 只在連上時送，最多排 20 則）。
+   不管送不送，新舊總分都存在手機的 store "mxShadow"（最近 200 盤，影子模式的「背景存著」；每一步的新評語隨時可以從棋譜重算，不另外存）。 */
+const CPA_Q=["妙著","正著","穩著","緩著","失著","敗著"];let CPA_W=0,CPA_RE=0;
+function cpaOn(){try{return!store.get("cpuAnonOff",false)&&!navigator.webdriver&&(!(typeof DEVMODE==="function"&&DEVMODE())||fnTest())}catch(e){return false}}
+function cpaRnd(n){const a=new Uint8Array(n);crypto.getRandomValues(a);return[...a].map(x=>(x%36).toString(36)).join("")}
+function cpaDone(st,full){try{if(!st||!st.id||!st.result)return;const sent=store.get("cpaSent",[])||[];if(sent.includes(st.id))return;store.set("cpaSent",sent.concat(st.id).slice(-60));
+  if(typeof gameReport!=="function"||typeof mxShadowReport!=="function"||!window.XQCore)return;
+  const hu=st.human,rep=gameReport(XQCore.parseFen(st.start||XQCore.START),st.moves||[]),R=rep.sides[hu],X=mxShadowReport(rep)[hu];if(!R||R.score==null||!X)return;
+  const all=store.get("mxShadow",{})||{};all[st.id]={o:[R.score,R.grade[0]],n:[X.score,X.grade],v:MXS.ver,at:Date.now()};const ks=Object.keys(all);if(ks.length>200)for(const k of ks.sort((a,b)=>all[a].at-all[b].at).slice(0,ks.length-200))delete all[k];store.set("mxShadow",all);
+  if(!cpaOn()||!window.XQNet||!XQNet.shareIRT||X.n<4)return;
+  let aid=store.get("anonId",null);if(!aid){aid=Math.random().toString(36).slice(2,10);store.set("anonId",aid)}
+  const PH={open:0,mid:1,end:2},rd=v=>v==null||!isFinite(+v)?null:Math.round(+v),C=st.cpuRate||{},GI=g=>"SABCD".indexOf(g);let nrk=null;try{nrk=XQNet.rating?XQNet.rating().rank:null}catch(e){}
+  XQNet.shareIRT({t:"cpu",v:1,aid,g:cpaRnd(8),ver:String(window.XQ_BUILD||"").slice(0,20),dev:fnDev(),mx:MXS.ver,kind:String(st.kind||"cpu").slice(0,10),
+    lv:+st.level||0,...(st.rlv!=null?{rlv:+st.rlv}:{}),rk:st.ranked?1:0,...(st.ranked&&st.rkName?{ork:String(st.rkName).slice(0,8)}:{}),hu,res:!st.result.w?"d":st.result.w===hu?"w":"l",why:String(st.result.why||"").slice(0,12),
+    n:(st.moves||[]).length,std:st.start?0:1,hn:+st.hintN||0,un:+st.undoN||0,bl:st.blind?1:0,full:full?1:0,
+    crk:C.rank?String(C.rank).slice(0,8):null,pts:rd(C.pts),...(st.rate&&isFinite(+st.rate.d)?{d:+st.rate.d}:{}),nrk:nrk?String(nrk).slice(0,8):null,
+    o:[R.score,GI(R.grade[0]),Math.round(R.base*10)/10],s:[X.score,GI(X.grade),Math.round(X.base*10)/10],
+    m:X.mv.slice(0,150).map(v=>[v.ply,PH[v.ph]!=null?PH[v.ph]:1,rd(v.b),rd(v.p),v.bk?1:0,rd(v.loss),CPA_Q.indexOf(v.q0),CPA_Q.indexOf(v.q),v.mt]),...(fnTest()?{test:1}:{})})}catch(e){}}
+function cpaWatch(){if(typeof api!=="function")return;if(CPA_W){CPA_RE=1;return}CPA_W=1;let n=0,gid=null,last=null;
+  const end=(st,full)=>{CPA_W=0;if(st)cpaDone(st,full);if(CPA_RE){CPA_RE=0;setTimeout(cpaWatch,500)}};
+  const tick=()=>{n++;api("/play/state").then(st=>{if(!st||!st.id)return end(null);
+      if(gid==null){if(!st.result||st.practice||(store.get("cpaSent",[])||[]).includes(st.id))return end(null);gid=st.id}
+      if(st.id!==gid)return end(last,0);last=st;
+      if((st.moves||[]).filter(m=>m.by===st.human).every(m=>m.q))return end(st,1);
+      if(n>=100)return end(st,0);setTimeout(tick,3000)}).catch(()=>{if(n<100)setTimeout(tick,3000);else end(last,0)})};
+  setTimeout(tick,2000)}
+addEventListener("xq-result",()=>{try{cpaWatch()}catch(e){}});
 // ================= 挑戰電腦 =================
 // 聲控走棋（意見回饋 193）：按 🎤 說「馬八進七」「炮二平五」「車1進1」；把所有合法走法轉成記譜，跟聽到的字比對（同音字也算，例如「嗎」＝馬、「近」＝進）
 const VC_SETS=(()=>{const M={},add=(tok,chs)=>{for(const c of chs)(M[c]=M[c]||[]).push(tok)};
@@ -14523,7 +14694,7 @@ function lbsReport(p){if(!p||!p.id)return;const R=store.get("lbRep",{})||{},last
         chat.length?"對方最近的聊天：\n"+chat.join("\n"):"",also?"（檢舉的人同時封鎖了他）":""].filter(Boolean).join("\n");
       let ok=false;try{const info=await feedbackInfo();ok=await sendRecord(Object.assign({},info,{type:"🚩 檢舉",text,contact:""}))}catch(err){ok=false}
       const R3=store.get("lbRep",{})||{};R3[p.id]=Date.now();for(const k in R3)if(Date.now()-R3[k]>864e5)delete R3[k];store.set("lbRep",R3);
-      closeSheet();if(also)lbsBlock(p);setTimeout(()=>toast(ok?"🚩 檢舉已經送出了，謝謝你！管理員會在後台看到，對方不會知道是誰檢舉的。":"🚩 你的報告已經記在手機裡，有網路時會自動送給星槎管理處")   /* 開發者 11/11 選 ChatGPT UI-13：送出成功時手機並沒有留這份報告（只記剛檢舉過誰，防重複），不能說「記在手機裡」；沒網路時才真的排在手機裡（fbQueue，開 App、恢復連線時補送） */   /* 開發者 11/11 選大廳規劃書案 01：表單送不回收件確認，不說「已送出」 */,also?2300:0)}})}
+      closeSheet();if(also)lbsBlock(p);setTimeout(()=>toast(ok?"🚩 謝謝你！檢舉已經從手機傳出，開發者會一筆一筆看；對方不會知道是誰檢舉的。":"🚩 你的報告已經記在手機裡，有網路時會自動送給星槎管理處")   /* 開發者 11/11 選 ChatGPT UI-13：送出成功時手機並沒有留這份報告（只記剛檢舉過誰，防重複），不能說「記在手機裡」；沒網路時才真的排在手機裡（fbQueue，開 App、恢復連線時補送） */   /* 開發者 11/11 選大廳規劃書案 01：表單送不回收件確認，不說「已送出」 */,also?2300:0)}})}
 
 /* ---------- 回饋 841：資料卡加按鈕（包一層 oppCard；07x3-rostermap.js 的名帖外觀也包在裡面） ---------- */
 function lbsCss(){if(document.getElementById("lbsCss"))return;const s=document.createElement("style");s.id="lbsCss";
@@ -18996,7 +19167,7 @@ function CpuGame(v,practicePage,mode){
         paint=(d,why,c)=>{const e=document.querySelector(".modal.res .resgrow .rg-sk");if(!e)return;e.classList.remove("muted");
           if(why||!d){e.classList.add("muted");e.textContent=why||"這盤還沒評完等，評完會算進「我的棋力」。";return}
           if(d.hu){e.classList.add("muted");e.textContent=`這盤用過提示或悔棋，不算進「我的棋力」${d.acc!=null?`（這盤每步準確度 ${d.acc}）`:""}。`;return}
-          /* 統計審查：差異在正常起伏內就說「跟平常差不多」、「持平」，明顯的才上色（04-stats skillDiff 的 z、dT、big） */
+          /* 統計審查：差異在正常起伏內就說「跟平常差不多」、「持平」，明顯的才上色（04-stats skillDiff 的 z、dT、big）。數學修正 11/11：五邊形改指數加權後 dT＝t1−t0（同一個數字），不再有「這盤比平常好、綜合卻下降」 */
           const zw=d.z==null?"":d.z>=2?`<b style="color:${UP}">明顯比平常好</b>`:d.z>=1?`<span style="color:${UP}">比平常好一點</span>`:d.z<=-2?`<b style="color:${DN}">明顯比平常差</b>`:d.z<=-1?`<span style="color:${DN}">比平常差一點</span>`:"跟平常差不多";
           e.innerHTML=`📈 這盤每步準確度 <b>${d.acc==null?"—":d.acc}</b>${zw?`・${zw}（最近平均 ${d.avg}）`:""}<br>`+
             (d.t0==null?`我的棋力綜合 <b>${d.t1==null?"—":d.t1}</b>（第一盤評好等的棋）`:`我的棋力綜合 <b>${d.t1==null?"—":d.t1}</b>・${d.dT==null||Math.abs(d.dT)<2?"持平":`這盤對綜合是<b style="color:${d.dT>0?UP:DN}">${d.dT>0?"加分":"扣分"}</b>`}${d.big?`（主要是${d.big.k}${d.big.d>0?"進步":"退步"}）`:""}`)+ngH(c,d.acc,d.avg)},

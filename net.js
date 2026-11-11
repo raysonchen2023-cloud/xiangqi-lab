@@ -121,6 +121,13 @@ var XQNet=(function(){
   const RANKS=[["新手",0],["入門1",50],["入門2",100],["入門3",150],["業1",200],["業2",300],["業3",400],["業4",500],["業5",600],["業6",700],["業7",800],["業8",900],["業9",1000],["專1-1",1150],["專1-2",1300],["專2-1",1500],["專2-2",1700]];
   const rankIdx=p=>{let i=0;for(let k=0;k<RANKS.length;k++)if((p||0)>=RANKS[k][1])i=k;return i};
   const rankOf=p=>RANKS[rankIdx(p)][0];
+  /* 數學修正 11/11（審查 5-C）：線上段位也加遲滯（跟 src/local.js 的 rankHold 同一段邏輯）：升段馬上升、降段要掉到本段下限再減半個段寬且升段後至少 3 盤；
+     K 值：開發者 11/11 照三方審查維持 48（<15 盤）／32（之後），不降到 24（K＝24 讓進步的孩子升段慢 40～60%）。Elo K=32 的穩態標準差約 53 分，比入門段寬 50 大，所以遲滯是必要的。
+     模擬（mathfix2/sim/review-rank.js，有回復力的 Elo、業2 附近）：每 100 盤段位變動 15→3.4 次，顯示段位平均比積分段位高約 0.25 段。
+     別人看到你的段位是用你的積分算的（rankOf），跟你自己看到的遲滯段位偶爾會差一段，先接受 */
+  const rankHold=(R,before)=>{const n=(R.w||0)+(R.l||0)+(R.d||0);if(R.rk==null||!RANKS[R.rk])R.rk=rankIdx(before!=null?before:R.pts);const i=rankIdx(R.pts);
+    if(i>R.rk){R.rk=i;R.pn=n}else if(i<R.rk){const lo=RANKS[R.rk][1],w=(RANKS[R.rk+1]?RANKS[R.rk+1][1]:lo+200)-lo;if(R.pts<lo-w/2&&n-(R.pn||0)>=3)R.rk=i}return R.rk};
+  const heldIdx=R=>R.rk!=null&&RANKS[R.rk]?R.rk:rankIdx(R.pts),kOf=n=>n<15?48:32;
   const rec=()=>ls.get("rate",null)||{pts:0,w:0,l:0,d:0,hist:[]};
   const myPts=()=>rec().pts;
   function record(){if(!G||badG.has(G.gid)||G.rules!==RULE_ID||!G.result||G.result.abort||G.result.forfeit||(G.moves.length<2&&!G.result.timeout))return;   // 超時判負一定計分   // 雙方都還沒走就結束：不計分
@@ -128,11 +135,11 @@ var XQNet=(function(){
     const o=s==="r"?G.black:G.red,op=o.pts!=null?o.pts:(people[o.id]&&people[o.id].pts)||0;
     /* 意見回饋 段位失準：原本贏 +20、輸 −15 會停在勝率 43% 那一階、而且越下越高（每盤淨增 5 分）。
        改成等級分的期望勝率：E＝1/(1+10^((對手−自己)/400))，加減＝K×(結果−E)，雙方一加一減會抵銷；前 15 盤 K＝48 比較快定位，之後 K＝32 */
-    const res=G.result.w==null?"d":G.result.w===s?"w":"l",E=1/(1+Math.pow(10,(op-R.pts)/400)),K=(R.w+R.l+R.d)<15?48:32;
+    const res=G.result.w==null?"d":G.result.w===s?"w":"l",E=1/(1+Math.pow(10,(op-R.pts)/400)),K=kOf(R.w+R.l+R.d);
     let d=Math.round(K*((res==="w"?1:res==="d"?.5:0)-E));if(res==="w"&&d<1)d=1;if(res==="l"&&d>-1)d=-1;
-    const before=R.pts;R.pts=Math.max(0,R.pts+d);d=R.pts-before;R[res]++;
+    const before=R.pts,rk0=heldIdx(R);R.pts=Math.max(0,R.pts+d);d=R.pts-before;R[res]++;rankHold(R,before);
     R.hist.unshift({gid:G.gid,rid:G.id,opp:o.name,oid:o.id,res,d,pts:R.pts,why:G.result.why||"",n:G.moves.length,at:Date.now(),sd:s,me:realNm()||(s==="r"?G.red:G.black).name||"",mv:G.moves.map(([f,t])=>String(f).padStart(2,"0")+String(t).padStart(2,"0")).join("")});R.hist=R.hist.slice(0,100);ls.set("rate",R);pubHist();   /* 意見回饋 619：每盤戰績帶一份棋步（每步 4 個數字，34 步約 136 字），棋譜存檔不見、換手機時還能從這裡補回來 */
-    presence();emit("rated",{res,d,pts:R.pts,rank:rankOf(R.pts),was:rankOf(before)})}
+    presence();emit("rated",{res,d,pts:R.pts,rank:RANKS[R.rk][0],was:RANKS[rk0][0]})}
   /* 意見回饋 283：把自己最近 30 盤的摘要公開放在大廳（保留訊息），別人點你的資料卡就能看你的線上棋譜和戰績分析 */
   function pubHist(){if(!cli||!cli.up||selfBan())return;const m=me(),R=rec();   /* 回饋 852：停權中不公開戰績摘要 */
     cli.pub(`${ROOT}/h/${m.id}`,JSON.stringify({v:1,id:m.id,name:m.name,at:Date.now(),list:R.hist.slice(0,30).map(h=>({gid:h.gid,id:h.rid,opp:h.opp,oid:h.oid,res:h.res,why:h.why,n:h.n,at:h.at,sd:h.sd||null})),prof:(()=>{try{return typeof window.XQ_prof==="function"?window.XQ_prof():null}catch(e){return null}})()}),true)}   /* 意見回饋 307：附上自己的戰力五角形和天賦摘要 */
@@ -323,7 +330,7 @@ var XQNet=(function(){
     forget(){try{if(cli&&cli.up){const m=me();cli.pub(`${ROOT}/h/${m.id}`,"",true);cli.pub(`${ROOT}/u/${m.id}`,"",true);return true}}catch(e){}return false},
     // 對局有變化：發布新狀態（rev 越大越新）
     update(fn){if(!G)throw new Error("還在等對局資料，稍等一下");const wasEnd=!!G.result,n=JSON.parse(JSON.stringify(G));fn(n);n.rev=G.rev+1;n.at=Date.now();if(n.moves.length!==G.moves.length||n.gid!==G.gid)arr={n:n.moves.length,t:n.at};seenAt=n.at;G=n;pubGame();if(!!G.result!==wasEnd)presence();record();emit("game");return G},
-    rating(){const R=rec(),i=rankIdx(R.pts),nx=RANKS[i+1];return{pts:R.pts,rank:RANKS[i][0],w:R.w,l:R.l,d:R.d,next:nx?nx[0]:null,toNext:nx?nx[1]-R.pts:0,lo:RANKS[i][1],hi:nx?nx[1]:null,hist:R.hist}},
+    rating(){const R=rec(),i=heldIdx(R),nx=RANKS[i+1];return{pts:R.pts,rank:RANKS[i][0],w:R.w,l:R.l,d:R.d,next:nx?nx[0]:null,toNext:nx?nx[1]-R.pts:0,lo:RANKS[i][1],hi:nx?nx[1]:null,hist:R.hist}},
     rankOf,ranks:()=>RANKS.slice(),
     playing,finished:()=>!!(cur&&G&&G.result),
     // 有人送出意見回饋：通知開發者電腦上的監看程式（只送類型和時間，不送內容）
