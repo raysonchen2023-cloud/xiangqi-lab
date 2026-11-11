@@ -1379,7 +1379,7 @@ html[data-hicon] .tabbar button.on{box-shadow:inset 0 -3px 0 currentColor}
       if(!window.caches)return go();caches.keys().then(function(ks){return Promise.all(ks.filter(function(k){return k.indexOf("xqlab-app-")===0}).map(function(k){return caches.delete(k)}))})
         .then(function(){return navigator.serviceWorker&&navigator.serviceWorker.getRegistration()}).then(function(r){return r&&r.update()}).catch(function(){}).then(go)}};setTimeout(chk,4000)})();
 </script>
-<script>window.XQ_OFFLINE=true;window.XQ_BUILD="20261111-0500";</script>
+<script>window.XQ_OFFLINE=true;window.XQ_BUILD="20261111-0515";</script>
 <script src="core.js"></script>
 <script src="engine.js"></script>
 <script src="local.js"></script>
@@ -3936,7 +3936,7 @@ async function talentReport(box){
     <div id="rdMap"></div>
     ${chart?`<div class="sec-t">成長軌跡與預測</div><div class="card">${chart}<div class="muted" style="font-size:12px;margin-top:2px">● 灰點＝每一盤　━ 線＝照你的進步速度預測　▒ 淺色＝大概範圍</div>${ms?`<p style="margin:8px 0 0;font-size:14px;line-height:1.6">${ms.med==null||ms.pNever>=.5?(M.A.m>=ms.cur+1?`📌 照目前的練法，每步準確度大概會停在 <b>${f0(M.A.m)}</b> 分上下；回「我的棋力」照建議先練最弱的那一項，天花板才會往上。`:`📌 目前已接近模型估的上限，再多下幾盤才看得出能不能再上去；回「我的棋力」照建議先練最弱的那一項。`):`📌 再練約 <b>${f0(ms.med)}</b> 盤，每步準確度可以到 <b>${ms.goal}</b> 分。`}</p>`:""}</div>`:""}
     ${redoPowerHTML()}
-    <details class="tdet"><summary>📊 詳細數字<br><small class="muted" style="font-weight:400;font-size:12px">進步速度、每步準確度、題目功力、棋路底子、殘局功夫</small></summary>
+    <div class="tdet"><button type="button" class="tdet-h" aria-expanded="false">📊 詳細數字<br><small class="muted" style="font-weight:400;font-size:12px">進步速度、每步準確度、題目功力、棋路底子、殘局功夫</small></button><div class="tdet-b">
     <div class="sec-t" style="margin-top:4px">進步速度</div><div class="card" style="line-height:1.6">${/* 意見回饋 354、357：表格；進步速度和進步很快合併成一列 */""}<div class="muted" style="font-size:13px;margin-bottom:6px">同樣多的練習，你的每步準確度漲得多快；數字是「勝過多少學棋者」，不是分數。</div>
       ${M?`<table class="ttab"><tr><th>項目</th><th>數值</th><th>說明</th></tr>
       <tr><td>進步速度</td><td><span class="big">${M.N<5?"?":M.rPct}</span> %</td><td>${esc(lab)}・勝過 ${M.N<5?"?":M.rPct}% 的學棋者；有 ${pc(M.top25)} 機會是「進步很快」的人（每 4 人最快的 1 個）</td></tr>
@@ -3952,7 +3952,7 @@ async function talentReport(box){
     <div class="sec-t">題目功力（棋力測驗）</div><div class="card">${QZT?`<div class="muted" style="font-size:13px;margin-bottom:6px">分數＝勝過多少學棋者，跟實戰的分數不是同一把尺，不要直接比大小。</div><table class="ttab"><tr><th>項目</th><th>分數</th><th>說明</th></tr>${QZT}</table>`:'<div class="muted" style="font-size:13px">做一次<a href="#/quiz">棋力測驗</a>，就會算出殺法、戰術、局面判斷、殘局題的功力。</div>'}</div>
     ${tau?`<div class="sec-t">你的棋路底子</div><div class="card">${tau}</div>`:""}
     ${TK.length?`<div class="sec-t">殘局功夫</div><div class="card">${TK.slice(0,6).map(t=>{const x=accOf(EKL[t.k]||[]);return bar(x?{k:t.k,v:x.v,low:x.n<SK.MIN,t:`實戰 ${x.n} 步每步準確度平均${x.n<SK.MIN?"（樣本還少）":""}・最近走出好棋 ${pc(t.b.recent)}`}:{k:t.k,v:null,low:true,t:`還沒有實戰的這種殘局，只有測驗題 ${t.n} 題・最近答對 ${pc(t.b.recent)}`})}).join("")}<p class="muted" style="font-size:12.5px;margin:6px 0 0">照進攻方剩下的大子分類（例如「車兵對士象全」）；分數跟「我的棋力」的殘局同一把尺。</p></div>`:""}
-    </details>
+    </div></div>
     <details class="card" style="margin-top:8px"><summary><b>這些數字怎麼算的？</b></summary><div class="muted" style="font-size:13px;line-height:1.75;margin-top:6px">
       <p><b>這一頁就是「棋藝天賦」：</b>天賦不是現在多強，是同樣的練習量你進步得多快。同樣下 50 盤，有人進步很多、有人進步一點點，差別就在「長棋速度」。所以這裡看的是你的進步曲線，而不是現在的段位。它只用來決定怎麼練，不是給人打分數。</p>
       <p><b>每一步走得好不好：</b>Pikafish 幫每一盤的每一步評等，算出這盤每步準確度的平均（100 分＝步步都是電腦首選；跟「我的棋力」五邊形同一把尺，不含賽後報告的妙著加分和上限）。把一盤一盤的準確度照順序排起來，就是你的成長曲線。</p>
@@ -4008,7 +4008,7 @@ function Stats(v){
         el.innerHTML=a?`<b style="color:${gradeFor(a.v)[2]}">${a.v} ${gradeFor(a.v)[0]}</b><span>每步準確度</span><small>最近 ${a.g} 盤・${a.n} 步</small>`:`<b>—</b><span>每步準確度</span><small>還沒評過等</small>`;
         if(HL&&HL.paint)HL.paint()}).catch(e=>{const b=box.querySelector("#sPent");if(b)b.innerHTML=`<span class="muted">⚠ ${esc(e.message)}</span>`;const el=box.querySelector("#sAcc");if(el)el.innerHTML=`<b>—</b><span>每步準確度</span><small>算不出來</small>`})}
     else if(tab==="talent"){box.innerHTML='<div class="card muted" style="text-align:center;margin-top:4px">Pikafish 正在看你的每一盤棋…</div>';
-      talentReport(box).then(()=>{if(box.isConnected&&tab!=="talent")paint();else{const d=box.querySelector("details.tdet");if(d&&window.__tdetOpen)d.open=true}}).catch(e=>{if(box.isConnected&&tab==="talent")box.innerHTML=`<div class="card muted">⚠ ${esc(e.message)}</div>`;else if(box.isConnected)paint()})}   /* hspx 11/11「紗燈・線上、棋桌・電腦打開跟我的成長一模一樣」：我的成長算得慢（手機、資料多），算完會蓋掉已經換過去的分頁；算完發現已經換頁，就重畫目前那一頁 */
+      talentReport(box).then(()=>{if(box.isConnected&&tab!=="talent")paint();else{const d=box.querySelector(".tdet");if(d&&window.__tdetOpen){d.classList.add("open");const h=d.querySelector(".tdet-h");if(h)h.setAttribute("aria-expanded","true")}}}).catch(e=>{if(box.isConnected&&tab==="talent")box.innerHTML=`<div class="card muted">⚠ ${esc(e.message)}</div>`;else if(box.isConnected)paint()})}   /* hspx 11/11「紗燈・線上、棋桌・電腦打開跟我的成長一模一樣」：我的成長算得慢（手機、資料多），算完會蓋掉已經換過去的分頁；算完發現已經換頁，就重畫目前那一頁 */
     else if(tab==="cpu"){await ld;if(!v.isConnected||tab!=="cpu")return;
       if(!ST){box.innerHTML='<div class="card muted">載入失敗</div>';return}
       const CR=ST.cpuRate;
@@ -4022,12 +4022,11 @@ function Stats(v){
   }
   v.querySelectorAll("#sTabs button").forEach(b=>b.onclick=()=>{vibrate(5);tab=b.dataset.k;store.set("statsTab",tab);paint()});
   paint();return{}}
-/* hspx 11/11「詳細數字這邊無法展開」（iPhone，手卷裡）：電腦版瀏覽器正常、iPhone Safari 點了不開。
-   改由程式切換開合（不靠瀏覽器原生 details 的點擊），打開後讓手卷的捲動區重算高度；標題裡的小字改成一般換行，不用獨立的區塊 */
-/* hspx 11/11「按下去展開後又會瞬間收起來」（iPhone）：一次觸碰被切換了兩次。點開後 0.6 秒內再來的點擊不理，這段時間內收合區被別的原因切換也改回使用者要的狀態 */
-document.addEventListener("toggle",e=>{const d=e.target;if(!d||!d.classList||!d.classList.contains("tdet")||d._tgAt==null)return;if(Date.now()-d._tgAt<600&&d.open!==d._tgWant)d.open=d._tgWant},true);
-document.addEventListener("click",e=>{const s=e.target&&e.target.closest&&e.target.closest("details.tdet>summary");if(!s)return;e.preventDefault();const d=s.parentElement;if(d._tgAt!=null&&Date.now()-d._tgAt<600)return;d._tgWant=!d.open;d._tgAt=Date.now();d.open=d._tgWant;window.__tdetOpen=d._tgWant;   /* 內容被重畫時記得重新打開 */
-  const sc=d.closest(".xqs-b");if(sc){const y=sc.scrollTop;sc.style.overflow="hidden";void sc.offsetHeight;sc.style.overflow="";sc.scrollTop=y}},true);
+/* hspx 11/11「詳細數字無法展開」→「展開後又瞬間收起」→錄影「一直頁面跳動」（iPhone）：iPhone Safari 的原生 details 在手卷裡會自己多切換一次。
+   改成不用 details：一顆按鈕（.tdet-h）加內容區（.tdet-b），開合只由這裡切 class；0.35 秒內重複的點擊不理；內容被重畫後記得重新打開 */
+(()=>{const st=document.createElement("style");st.textContent=".tdet>.tdet-h{display:block;width:100%;text-align:left;cursor:pointer;padding:12px 14px;border:1px solid var(--line);border-radius:12px;background:var(--card);color:inherit;font:inherit;font-weight:700;font-size:14px;line-height:1.5;-webkit-tap-highlight-color:transparent;touch-action:manipulation}.tdet>.tdet-h::after{content:\" ▾\";color:var(--muted)}.tdet.open>.tdet-h::after{content:\" ▴\"}.tdet:not(.open)>.tdet-b{display:none}";document.head.append(st)})();
+document.addEventListener("click",e=>{const h=e.target&&e.target.closest&&e.target.closest(".tdet>.tdet-h");if(!h)return;e.preventDefault();const d=h.parentElement,now=Date.now();if(d._tgAt&&now-d._tgAt<350)return;d._tgAt=now;
+  const on=!d.classList.contains("open");d.classList.toggle("open",on);h.setAttribute("aria-expanded",String(on));window.__tdetOpen=on});
 
 
 /* 家長學習週報（Gemini 遊玩樂趣評估，開發者 11/8 核准）：#/weekly，入口在「我的成長」最上面和設定的「角色」分頁
