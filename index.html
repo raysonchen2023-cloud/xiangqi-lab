@@ -1379,7 +1379,7 @@ html[data-hicon] .tabbar button.on{box-shadow:inset 0 -3px 0 currentColor}
       if(!window.caches)return go();caches.keys().then(function(ks){return Promise.all(ks.filter(function(k){return k.indexOf("xqlab-app-")===0}).map(function(k){return caches.delete(k)}))})
         .then(function(){return navigator.serviceWorker&&navigator.serviceWorker.getRegistration()}).then(function(r){return r&&r.update()}).catch(function(){}).then(go)}};setTimeout(chk,4000)})();
 </script>
-<script>window.XQ_OFFLINE=true;window.XQ_BUILD="20261111-1245";</script>
+<script>window.XQ_OFFLINE=true;window.XQ_BUILD="20261111-1255";</script>
 <script src="core.js"></script>
 <script src="engine.js"></script>
 <script src="local.js"></script>
@@ -13663,7 +13663,7 @@ const hbYardName=()=>hbFromHome()?(typeof hbIsCl==="function"&&hbIsCl()?"苑中�
 const HB_YARD_G=e=>["qin","han","sanguo","weijin","nanbei","sui","tang"].includes(e)?"_han":["wudai","song","yuan"].includes(e)?"_song":"";
 /* 開發者 11/11 hspx：上一版從首頁進來時回傳 null（不走月洞門），park3d 就掉回預設的「小帥（妹）走路去園子」舊載入動畫。
    改成給一個過場：背景是首頁那張圖（經典世界用時光之苑），標題「橋上石桌」／「苑中石桌」，不走路、只慢慢拉近 */
-function hbHomeGate(){const cl=typeof hbIsCl==="function"&&hbIsCl();return{img:[cl?"data/homemap/home_classic.webp":"data/homemap/home.webp"],icon:"🪑",title:cl?"苑中石桌":"橋上石桌",sub:"坐下來，就在這張石桌下一盤",bg:"#1f2a22"}}
+function hbHomeGate(){const cl=typeof hbIsCl==="function"&&hbIsCl();return{img:[cl?"data/homemap/home_classic.webp":"data/homemap/home.webp"],icon:"",title:cl?"苑中石桌":"橋上石桌",sub:"坐下來，就在這張石桌下一盤",bg:"#1f2a22"}}
 function hbYardGate(kind){if((kind==="cpu"||kind==="pvp")&&hbFromHome())return hbHomeGate();const h=hbHubN();let e="";try{e=hbDockEra()}catch(x){}const k=store.get("era","classic"),p=(typeof PW!=="undefined"&&PW[k])||"園子",g=HB_YARD_G(e||k);
   const T={cpu:["移步後園",`客官請移步，${h}後方的${p}風景正好！`],pvp:["移步後園","裡頭太擠，咱們去後頭寬敞處切磋！"],net:["移步後園",`棋友到了，雙方移步${h}後院石台`]}[kind]||["移步後園",""];
   let n="battle";try{n=hbImg("battle","battle")}catch(x){}
