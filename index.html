@@ -1379,7 +1379,7 @@ html[data-hicon] .tabbar button.on{box-shadow:inset 0 -3px 0 currentColor}
       if(!window.caches)return go();caches.keys().then(function(ks){return Promise.all(ks.filter(function(k){return k.indexOf("xqlab-app-")===0}).map(function(k){return caches.delete(k)}))})
         .then(function(){return navigator.serviceWorker&&navigator.serviceWorker.getRegistration()}).then(function(r){return r&&r.update()}).catch(function(){}).then(go)}};setTimeout(chk,4000)})();
 </script>
-<script>window.XQ_OFFLINE=true;window.XQ_BUILD="20261111-1500";</script>
+<script>window.XQ_OFFLINE=true;window.XQ_BUILD="20261111-1515";</script>
 <script src="core.js"></script>
 <script src="engine.js"></script>
 <script src="local.js"></script>
@@ -19138,7 +19138,7 @@ function SimulPage(v){
   setTabs(false);gameLayout(v);simCss();
   const tabs=document.createElement("div");tabs.className="sim-tabs";tabs.setAttribute("role","tablist");tabs.setAttribute("aria-label","車輪戰各桌");v.insertBefore(tabs,v.firstChild);
   {const ev=v.querySelector(".evline");if(ev)ev.style.display="none"}
-  let S=null,cur=0,sel=-1,busy=false,shownDone=null,live=true,pinAt=0,setupShown=false;
+  let S=null,cur=0,sel=-1,busy=false,shownDone=null,live=true,pinAt=0,holdAt=0,setupShown=false;
   const bd=Board(i=>tap(i));v.querySelector("#bbox").append(bd.svg);v.querySelector("#bbox").style.position="relative";
   setTop("🀄 車輪戰","#/hub/battle",[["＋",()=>setup(),"重開一場"]]);
   const acts=actionBar(v.querySelector("#acts"),[["new","＋","重開",()=>setup(),true],
@@ -19155,7 +19155,8 @@ function SimulPage(v){
     if(sel>=0&&t.legal.some(([f,x])=>f===sel&&x===i)){const f=sel;sel=-1;go(f,i);return}
     sel=t.board[i]&&t.legal.some(([f])=>f===i)?i:-1;paint()}
   async function go(f,to){if(busy)return;busy=true;const i0=cur;try{const cap=!!T().board[to];S=await api("/simul/move",{i:i0,f,t:to});try{moveSound(cap)}catch(e){}
-      if(!S.done){const j=nextMine(i0);if(j>=0)hop(j,S.tb.filter(t=>!t.result).length===1?"最後一桌了，收官要穩":null)}paint()}
+      /* 開發者 11/11「落子後太快切到下一盤」：先畫出這一步、停 1 秒讓玩家看清棋子落在哪，再換桌（這 1 秒內自己點了別桌就不換；背景的自動換桌也先等） */
+      paint();if(!S.done){holdAt=Date.now();setTimeout(()=>{if(!live||cur!==i0||!S||S.none||S.done)return;const j=nextMine(i0);if(j>=0){hop(j,S.tb.filter(t=>!t.result).length===1?"最後一桌了，收官要穩":null);paint()}},1000)}}
     catch(e){toast(e.message)}finally{busy=false}}
   function setup(){const old=S&&!S.none&&!S.done&&S.tb.some(t=>t.moves.some(m=>m.by==="r"));let n=store.get("simN",5),lx=store.get("simLx",null);
     if(lx==null)try{lx=Math.max(3,Math.min(16,+(JSON.parse(localStorage.getItem("xq_play")||"null")||{}).level||5))}catch(e){lx=5}
@@ -19193,7 +19194,7 @@ function SimulPage(v){
     acts.resign.disabled=!!r;acts.all.disabled=!!S.done;
     if(S.done&&shownDone!==S.id){shownDone=S.id;setTimeout(()=>{if(live)summary()},700)}}
   async function refresh(){if(!live||busy)return;try{const s=await api("/simul/state");if(!live||busy)return;S=s;
-      if(!S.none&&!S.done){const t=T();if(t&&(t.result||t.turn!=="r")&&Date.now()-pinAt>4000){const j=nextMine(cur);if(j>=0)hop(j)}}paint()}catch(e){}}
+      if(!S.none&&!S.done){const t=T();if(t&&(t.result||t.turn!=="r")&&Date.now()-pinAt>4000&&Date.now()-holdAt>1100){const j=nextMine(cur);if(j>=0)hop(j)}}paint()}catch(e){}}
   const onEv=()=>setTimeout(refresh,60);addEventListener("xq-simul",onEv);const iv=setInterval(refresh,2500);refresh();
   return{stop(){live=false;removeEventListener("xq-simul",onEv);clearInterval(iv)}}}
 // ================= 問小帥（意見回饋 167）：點小人三下發問；用 App 裡的術語、開局、特級大師資料和常見問題回答，能示範的直接帶去棋盤 =================
