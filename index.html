@@ -1379,7 +1379,7 @@ html[data-hicon] .tabbar button.on{box-shadow:inset 0 -3px 0 currentColor}
       if(!window.caches)return go();caches.keys().then(function(ks){return Promise.all(ks.filter(function(k){return k.indexOf("xqlab-app-")===0}).map(function(k){return caches.delete(k)}))})
         .then(function(){return navigator.serviceWorker&&navigator.serviceWorker.getRegistration()}).then(function(r){return r&&r.update()}).catch(function(){}).then(go)}};setTimeout(chk,4000)})();
 </script>
-<script>window.XQ_OFFLINE=true;window.XQ_BUILD="20261111-0923";</script>
+<script>window.XQ_OFFLINE=true;window.XQ_BUILD="20261111-1045";</script>
 <script src="core.js"></script>
 <script src="engine.js"></script>
 <script src="local.js"></script>
@@ -13829,9 +13829,28 @@ function hmCss(){if(document.getElementById("hmCss"))return;const s=document.cre
 .hm-sky::after{content:"";position:absolute;left:12%;right:12%;bottom:-4%;height:22%;border-radius:50%;background:radial-gradient(closest-side,rgba(255,240,190,.75),rgba(255,230,160,0))}
 @keyframes hmSky{0%,100%{opacity:.75}50%{opacity:1}}
 .hm-me{position:absolute;z-index:3;background:transparent;border:0;padding:0;border-radius:40%;cursor:pointer;-webkit-tap-highlight-color:transparent}
+.hm-go-bar{position:fixed;left:50%;bottom:calc(14px + env(safe-area-inset-bottom));transform:translateX(-50%);z-index:30;display:flex;flex-direction:column;align-items:center;gap:8px;width:max-content;max-width:calc(100vw - 32px);pointer-events:none}
+.hm-go-bar>*{pointer-events:auto}.hm-go-bar .hm-inst{position:static;transform:none}
+.hm-go{display:flex;flex-direction:column;align-items:center;gap:2px;min-width:220px;max-width:100%;min-height:52px;padding:9px 26px;border:2px solid #f2c94c;border-radius:999px;background:linear-gradient(180deg,#b3261e,#7d1611);color:#fff6dc;box-shadow:0 4px 14px rgba(0,0,0,.38),inset 0 1px 0 rgba(255,255,255,.25);font:900 19px/1.15 var(--serif,serif);letter-spacing:.06em;cursor:pointer;-webkit-tap-highlight-color:transparent}
+.hm-go small{font:700 12px/1.2 var(--serif,serif);letter-spacing:0;color:#ffe08a;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:100%}.hm-go small:empty{display:none}
+.hm-go:active{transform:translateY(1px);filter:brightness(.95)}
 .hm-inst{position:absolute;left:50%;bottom:1.4%;transform:translateX(-50%);z-index:4;border:1.5px solid #f2c94c;border-radius:999px;background:rgba(20,16,12,.72);color:#ffe08a;font:800 13px/1 var(--serif,serif);padding:7px 14px;white-space:nowrap;cursor:pointer}
 ${typeof WALK_BOT_MERGE!=="undefined"&&WALK_BOT_MERGE?"":"body.hm-on.shw-on .xqbot{visibility:visible}"}
 @media (prefers-reduced-motion:reduce){.hm-sky{animation:none}}`;document.head.append(s)}
+/* 開發者 11/11 hspx（規劃書方案 02「下棋不被其他系統打斷」，選了「底部固定大按鈕」）：首頁滿版圖底部固定一顆大按鈕，不用先認得石桌、朝代說法。
+   平常＝「♟ 立即對局」直接挑戰電腦（跟石桌一樣 #/cpu）；有下到一半的棋＝「▶ 接著下」＋小字哪一盤、第幾手（判斷跟今日推薦同一個 homeRecGame，線上對局優先）；
+   完全沒下過棋＝「🔰 立即開始」進新手訓練營（跟石桌一樣）。「📲 加到主畫面」原本在圖的底部，有這顆按鈕時搬進同一條，疊在上面不互相擋。
+   按鈕放在 .home-page 裡（position:fixed），離開首頁跟著頁面一起拿掉 */
+function hmGoBar(P,nw){const bar=document.createElement("div");bar.className="hm-go-bar";const b=document.createElement("button");b.type="button";b.className="hm-go";b.id="hmGo";
+  let R=nw?{go:"#/camp",t:"🔰 立即開始",s:"第一次下象棋，從這裡學"}:{go:"#/cpu",t:"♟ 立即對局",s:""};
+  const set=r=>{R=r;b.innerHTML=`<span>${esc(r.t)}</span><small>${esc(r.s||"")}</small>`;b.setAttribute("aria-label",r.t+(r.s?"："+r.s:""))};set(R);
+  const ib=P.querySelector("#hmInst");if(ib)bar.append(ib);bar.append(b);P.append(bar);
+  b.onclick=async e=>{e.stopPropagation();vibrate(5);if(R.sw)try{await api("/play/switch",{kind:R.sw})}catch(err){}if(R.park)store.set("park3d",true);location.hash=R.go};
+  if(nw)return;
+  try{if(window.XQNet&&XQNet.playing&&XQNet.playing())return set({go:"#/pvp",t:"▶ 接著下",s:"線上對局"})}catch(e){}
+  if(typeof homeRecGame!=="function")return;
+  api("/play/state").then(st=>{const g=homeRecGame(st);if(!g||!b.isConnected)return;const o=g.sw&&(st.others||[]).find(z=>z&&z.kind===g.sw),n=o?+o.n:st&&st.moves?st.moves.length:0;
+    set({go:g.go,sw:g.sw,park:g.park,t:"▶ 接著下",s:String(g.t).replace(/^.*：/,"")+(n>0?`・第 ${n} 手`:"")})}).catch(()=>{})}
 /* 完全沒下過棋（跟原本首頁「🔰 第一次下象棋？」卡同一個判斷） */
 const hmNew=()=>!store.get("campSeen",false)&&!Object.keys(store.get("record",{})).length;
 /* 📜 今日推薦：從下方拉出原本首頁的「今天的路」卡 */
@@ -13857,6 +13876,7 @@ function homeMap(v){const home=v.querySelector(".home");if(!home||v.querySelecto
   for(const[id]of HM_SPOTS){const b=P.querySelector("#"+id);if(!b)continue;
     b.onclick=()=>{vibrate(5);if(GO[id]){location.hash=GO[id];return}if(id==="hmRec"){if(typeof TODAY_MAP_ON!=="undefined"&&TODAY_MAP_ON){location.hash="#/today";return}hmRecSheet();return}if(id==="hmQuick")location.hash=hmNew()?"#/camp":"#/cpu"}}
   {const ib=P.querySelector("#hmInst");if(ib)ib.onclick=e=>{e.stopPropagation();vibrate(5);installGuide(true)}}
+  hmGoBar(P,nw);
   if(typeof shpFit==="function")shpFit(v);
   try{if(typeof shwPage==="function"&&SHIP_WALK_ON){shwPage(v,Object.assign({},SHW_PG0,SHW_HOMEMAP),"home");hmMe(P)}}catch(e){}
   try{if(typeof zmPage==="function")zmPage(v)}catch(e){}
