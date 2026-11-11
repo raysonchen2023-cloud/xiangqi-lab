@@ -1382,6 +1382,8 @@ body:has(> .modal) > .toast{z-index:9995}
 .tmx-bub.far::after{display:none}
 .chip .q[data-tq]{text-decoration:underline dotted 1px;text-underline-offset:3px;cursor:help}
 .pk2d{position:absolute;left:calc(10px + env(safe-area-inset-left,0px));bottom:10px;z-index:6;border:none;border-radius:99px;padding:7px 14px;min-height:38px;font:inherit;font-size:14px;font-weight:800;color:#3a2618;background:rgba(255,248,232,.94);box-shadow:0 2px 8px rgba(0,0,0,.32);cursor:pointer}
+/* 11/12 開發者 iPhone 橫向實拍（第 5 輪截圖 A18）：橫向時棋盤最下排貼到 3D 畫面底，左下角的「▦ 平面棋盤」蓋到傌、相、仕；橫向改放左上角 */
+@media (orientation:landscape) and (max-height:600px){.pk2d{top:10px;bottom:auto}}
 .pk2d.pulse{animation:pk2dPulse .9s ease-in-out 4}
 @keyframes pk2dPulse{50%{transform:scale(1.1);box-shadow:0 0 0 7px rgba(200,150,30,.5)}}
 .pk2d-tip{position:absolute;left:calc(10px + env(safe-area-inset-left,0px));bottom:58px;z-index:7;max-width:min(260px,calc(100% - 20px));box-sizing:border-box;padding:8px 11px;border-radius:10px;background:#fffaf0;color:#3a2618;border:1.5px solid #c8961e;font-size:13.5px;line-height:1.55;box-shadow:0 4px 12px rgba(0,0,0,.25);pointer-events:none;transition:opacity .4s}
@@ -1529,7 +1531,7 @@ html[data-hct] .player.on .clk{background:#00563B;color:#FFFFFF;border-color:#00
       if(!window.caches)return go();caches.keys().then(function(ks){return Promise.all(ks.filter(function(k){return k.indexOf("xqlab-app-")===0}).map(function(k){return caches.delete(k)}))})
         .then(function(){return navigator.serviceWorker&&navigator.serviceWorker.getRegistration()}).then(function(r){return r&&r.update()}).catch(function(){}).then(go)}};setTimeout(chk,4000)})();
 </script>
-<script>window.XQ_OFFLINE=true;window.XQ_BUILD="20261112-0740";</script>
+<script>window.XQ_OFFLINE=true;window.XQ_BUILD="20261112-0750";</script>
 <script src="core.js"></script>
 <script src="engine.js"></script>
 <script src="local.js"></script>
@@ -5059,7 +5061,7 @@ function Settings(v){
     {const xo=v.querySelector("#xfOut"),xi=v.querySelector("#xfIn");if(xo)xo.onclick=()=>{vibrate(5);xfSend()};if(xi)xi.onclick=()=>{vibrate(5);xfRecv()}}
     /* 意見回饋 574（開發者）：外觀頁的 3D 園子棋盤、對手形象、棋子樣式拿掉 emoji */
     /* 意見回饋 442、456（開發者）：對手形象可以選——3D 立體小人（跟小帥一樣是立體的，每個人帽子、衣服不同）或畫好的立繪 */
-    {const ol=v.querySelector("#ol");if(ol){const cur=store.get("oppLook","3d");ol.innerHTML=[["3d","Q 版 3D"],["real","真實 3D"],["art","畫好的立繪"]].map(([k,l])=>`<button data-ol="${k}" class="${cur===k?"on":""}">${l}</button>`).join("");
+    {const ol=v.querySelector("#ol");if(ol){const cur=store.get("oppLook","real");ol.innerHTML=[["3d","Q 版 3D"],["real","真實 3D"],["art","畫好的立繪"]].map(([k,l])=>`<button data-ol="${k}" class="${cur===k?"on":""}">${l}</button>`).join("");
       ol.querySelectorAll("[data-ol]").forEach(x=>x.onclick=()=>{vibrate(5);store.set("oppLook",x.dataset.ol);paint()})}}
     {const oa=v.querySelector("#obAgain");if(oa)oa.onclick=()=>{vibrate(5);saveSheet()}}{const dp=v.querySelector("#dfPick");if(dp)dp.onclick=()=>{vibrate(5);diffSheet(()=>{dp.textContent="🎚 "+diffOf().n})}}   /* 意見回饋 668 */
     v.querySelectorAll("[data-rs]").forEach(b=>b.onclick=()=>{vibrate(5);if(!window.XQ_setRulePref){toast("這個版本還不能切換棋規");return}const id=XQ_setRulePref(b.dataset.rs);
@@ -6232,7 +6234,8 @@ const PIKA_LOOK=side=>({cus:"k:"+(/pika2/.test(String(PIKA_META_DIR||""))?"pika2
 /* 驛站旅人、秘境棋友的 3D 小人造型（帽子、帽色、衣服）：選「3D 立體小人」時用，每個人看得出不一樣 */
 const ACTOR_FIG={liuji:["fangjin","#151515","#2F4A6B"],zhangsanfeng:["bun","#E8E6E0","#5E6B5C"],shinaian:["scholar","#1E1A16","#6A4E3A"],shenwansan:["futou","#3a2a1e","#8A5A2B"],changyuchun:["helmet","#6B6B6B","#8E2A22"],wangmian:["bun","#1E1A16","#4E6B3A"],
   tea:["bun","#D8D6D0","#7A6A50"],scholar:["fangjin","#151515","#3E6FA8"],guard:["helmet","#5A5A5A","#5A2420"],monk:["hair","#E2C29A","#C98A2E"],teller:["wusha","#1E1A16","#6B3A5A"]};
-const oppArt=()=>store.get("oppLook","3d")==="art";
+/* 11/12 開發者「等模型驗收完再自動開啟真實 3D」：笑面掌櫃 k_zg 驗收通過後，對手形象沒選過的人（還沒選角色的新玩家）預設也是真實 3D（原本 "3d"＝Q 版；選角色時 05b-save 本來就會設 real）。05-settings、08s-simul、09b-preload 的預設一起改 */
+const oppArt=()=>store.get("oppLook","real")==="art";
 /* 意見回饋 491（開發者）：玩家可以選男生（小帥）或女生，Q 版或真實 3D；園子裡坐在你這一側的就是你選的 */
 const mySex=()=>store.get("pSex","m"),myStyle=()=>store.get("pStyle","q");
 /* 意見回饋 545：身上的字跟著「換棋子」選的那顆（原本小帥妹、真實版都寫死「帥」） */
@@ -6261,7 +6264,7 @@ let GLTF_P=null;const GLBC={};window.XQGLB=url=>GLBC[url]||(GLBC[url]=(GLTF_P=GL
 const FIG3D_BLOCK=new Set([]),FIG2D_BAD=new Set([]);   /* 格格的立繪 11/8 已重畫成兩隻手（擦掉臉前「噓」的那隻），改回顯示立繪 */
 const oppFig=L=>{if(!L||oppArt())return L;const o={...L};delete o.flat;delete o.sprite;delete o.spriteMeta;delete o.spriteMap;
   if(o.actor&&ACTOR_FIG[o.actor]&&!o.npc){const[h,hc,rb]=ACTOR_FIG[o.actor];Object.assign(o,{npc:o.actor,hat:h,hc,robe:rb})}
-  if(store.get("oppLook","3d")==="real"&&typeof o.cus==="string"){const id0=o.cus.replace(":","_"),id=TRIPO_ALIAS[id0]||id0;if(TRIPO[id]&&FIG3D_BLOCK.has(id))return FIG2D_BAD.has(id)?o:{...L,nog3:1};if(TRIPO[id]){o.glb=`data/tripo_app/${id}.glb`;o.ring=TRIPO[id]}}return o};
+  if(store.get("oppLook","real")==="real"&&typeof o.cus==="string"){const id0=o.cus.replace(":","_"),id=TRIPO_ALIAS[id0]||id0;if(TRIPO[id]&&FIG3D_BLOCK.has(id))return FIG2D_BAD.has(id)?o:{...L,nog3:1};if(TRIPO[id]){o.glb=`data/tripo_app/${id}.glb`;o.ring=TRIPO[id]}}return o};
 const ACTOR_LOOK=(id,side)=>({p:npcPc({pc:ACTOR_PC[id]||"將"},side),e:store.get("era","classic"),g:9,actor:id,cus:"a:"+id,flat:true,sprite:"data/actors/",spriteMeta:{w:380,h:512,mask:true,faceOf:faceOf("actors",{idle:id,think:id,move:id,happy:id,sad:id,surprise:id},id)},spriteMap:{idle:id,think:id,move:id,happy:id,sad:id,surprise:id}});
 const innActor=j=>{if(!String(j||"").startsWith("inn:"))return null;const x=INN.concat(SECRETS).find(z=>"inn:"+z.id===j);return x?{...x,pc:ACTOR_PC[x.id]||"將",img:`data/actors/${x.id}.webp`,win:"承讓了，下次再來！",lose:"好棋！佩服。"}:null};
 // 公園棋盤的朝代造型（意見回饋 216）：跟棋盤模式同一套底圖、格線色、棋子底圖、字色、字形
@@ -15961,9 +15964,9 @@ const SM_SPOTS=[
    內容是從 05-settings 原本畫好、綁好的設定「整塊搬」過來的同一批節點（事件、即時生效、存檔都照舊），收起時原封不動搬回原位（留一個註解節點當書籤）。
    SM_EP［入口］＝要搬的區塊：sec:選擇器＝那一格所在的整段（往上含標題 .sec-t、往下到下一個標題前）；head:＝只要標題＋那一格；el:＝只要那一格；title:文字＝標題正好是這幾個字的那一段；btn:＝單獨一顆按鈕。
    沒有列在這裡的入口照舊：菱花鏡＝看 3D 立繪、信插／手札＝意見回饋頁、文牒／書箱＝07s4 的換手機面板。整卷畫軸（四個分頁全部設定）留著，入口改成頂欄的「📜 全部設定」。 */
-const SM_EP={smFan:["sec:#era"],smWin:["sec:#pt"],smBoard:["el:#pv","sec:#th","el:#hiCon","sec:#mv"],smBrush:["head:#ftM","sec:#fzM","head:#zhO"],
+const SM_EP={smFan:["sec:#era"],smWin:["sec:#pt"],smBoard:["el:#pv","sec:#th","el:#hiCon","sec:#mv","sec:#rsO"],smBrush:["head:#ftM","sec:#fzM","head:#zhO"],
   smKnife:["sec:.bpc","el:#chdForm"],smRobe:["sec:#meFig","sec:#botT","sec:#epSw"],smTag:["title:官階"],
-  smInc:["sec:#snd3"],smQin:["sec:#snd2"],smBell:["sec:#snd"],smLock:["sec:#axmSw","btn:#sh","btn:#a2h","sec:#fmSet","title:隱私","title:進階"]};   /* 11/12：♿ 無障礙（讀屏與鍵盤模式、高對比、測試與證據，11b-a11y.js axmSetRows）原本在設定房間沒有入口，放在小鎖匣最上面 */   /* 11/9：小鎖匣加家長與護眼（843，07m5）；線上大廳的名字與封鎖名單（841／842，07x4）接在「我的角色」卡後面，跟著衣帽架一起出現 */
+  smInc:["sec:#snd3"],smQin:["sec:#snd2"],smBell:["sec:#snd"],smLock:["sec:#axmSw","btn:#sh","btn:#a2h","sec:#fmSet","title:隱私","title:進階"]};   /* 11/12：♿ 無障礙（讀屏與鍵盤模式、高對比、測試與證據，11b-a11y.js axmSetRows）原本在設定房間沒有入口，放在小鎖匣最上面；棋規（#rsO 千秋休閒規則／臺灣棋規原型）也沒有入口，放進「試看棋盤」最後面 */   /* 11/9：小鎖匣加家長與護眼（843，07m5）；線上大廳的名字與封鎖名單（841／842，07x4）接在「我的角色」卡後面，跟著衣帽架一起出現 */
 /* 11/12 ChatGPT UI 冗餘盤查（story/104 號）第 7 項：棋盤外觀三個入口照「點了會改什麼」命名——摺扇＝朝代配色、支摘窗＝淺色／深色、炕桌＝試看棋盤（預覽、試走、材質、特效）；
    面板裡 05-settings 畫的小節標題（棋盤的朝代樣式、棋盤風格、深淺色）在這裡換成同一套字（SM_SECNM，只換畫面上的字，不動設定值與存檔），從場景點進去看到的面板標題、小節標題一致。
    木紋、石板、宣紙…那一組（BOARD_THEMES）標成「棋盤材質」 */
@@ -21193,7 +21196,7 @@ const SIM_LOOK={
    只有設定「對手外觀」選真實 3D、而且不是舊裝置（記憶體 2 GB 以下，或園子量到畫面偏慢那三天）才用；模型還在下載、載不到時就是原本的 Q 版棋子人（attachGLB 載成功才把 Q 版藏起來） */
 const SIM_SEAT={1:[.345],2:[.375],3:[.345],4:[.345],5:[.355],6:[.345],7:[.345],8:[.325],9:[.315],10:[.355],11:[.315]};
 function simOld(){try{const m=+((typeof navigator!=="undefined"&&navigator.deviceMemory)||0);if(m&&m<=2)return true;const t=+localStorage.getItem("xq_pkLowFps")||0;return!!(t&&Date.now()-t<3*864e5)}catch(e){return false}}
-function simGlb(fk){return SIM_SEAT[fk]&&store.get("oppLook","3d")==="real"&&!simOld()?{glb:`data/tripo_app/s_f${fk}.glb`,stool:SIM_SEAT[fk].slice()}:null}
+function simGlb(fk){return SIM_SEAT[fk]&&store.get("oppLook","real")==="real"&&!simOld()?{glb:`data/tripo_app/s_f${fk}.glb`,stool:SIM_SEAT[fk].slice()}:null}
 function simOppLook(fk,lv){const c=SIM_LOOK[fk];if(!c)return null;const nm=SIM_NM[fk];
   return{p:SIM_CN[SIM_PC[fk]]||"卒",e:"ming",g:9,npc:nm,sim:1,about:`${nm}，今天在棋館二樓陪你下車輪戰${lv?`（第 ${lv} 級）`:""}。強弱照這一桌的級數，背後是象棋 AI 引擎 Pikafish。`,cus:{...c},...(simGlb(fk)||{})}}
 function simCastOf(S,sp){const k=store.get("simCast",null);if(k&&k.id===S.id&&Array.isArray(k.c)&&k.c.length===S.n&&k.c.every(x=>SIM_LOOK[x]))return k.c;
@@ -21730,7 +21733,7 @@ async function preloadAll(){if(!OFF||!("caches" in window))return PRE_FIRST_OK()
   let M;try{M=await (await fetch("data/preload.json",{cache:"no-cache"})).json()}catch(e){return PRE_FIRST_OK()}
   /* 開發者 11/4：每次開 App 都先蓋載入畫面、檢查全部檔案；回饋 845：缺的、換過的只先下載首批就進首頁（20 秒後可以先進去逛），其他在背景 */
   let c;try{c=await caches.open("xqlab-look")}catch(e){return PRE_FIRST_OK()}
-  const MOBP=(()=>{try{return matchMedia("(pointer:coarse)").matches||innerWidth<820}catch(e){return false}})(),wantReal=store.get("pStyle","q")==="real"||store.get("oppLook","3d")==="real";
+  const MOBP=(()=>{try{return matchMedia("(pointer:coarse)").matches||innerWidth<820}catch(e){return false}})(),wantReal=store.get("pStyle","q")==="real"||store.get("oppLook","real")==="real";
   M.items=M.items.filter(([u])=>/^data\/tripo_app\//.test(u)?wantReal:/^data\/eramap\//.test(u)?(/_m\.webp$/.test(u)===MOBP||!/\.webp$/.test(u)):true);   /* 真實 3D 模型只在選了真實版時下載；朝代地圖手機只抓手機版（清單檔兩邊都要） */
   let ov=null,bar=null,txt=null;const ovMake=()=>{ov=document.createElement("div");ov.id="preov";keepAwake("preload",()=>!!document.getElementById("preov"));
     ov.innerHTML=`<div class="ld-img"><img alt=""><img alt=""></div><div class="ld-q"><div class="ld-tt"></div><div class="ld-qt"></div><div class="ld-src"></div></div>
