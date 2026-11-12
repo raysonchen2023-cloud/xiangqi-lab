@@ -1,0 +1,5 @@
+blank_issues_enabled: false
+contact_links:
+  - name: 在 App 裡回報問題（最快，會自動附版本號）
+    url: https://raysonchen2023-cloud.github.io/xiangqi-lab/
+    about: 打開 App，按「回報問題」。

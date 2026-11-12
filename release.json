@@ -1,12 +1,12 @@
 {
- "version": "20261112-1310",
- "checkedAt": "2026-11-12T11:39:14.246Z",
- "html": "0bb4fb251bc5",
- "sw": "0bf3fcac636e",
+ "version": "20261112-1320",
+ "checkedAt": "2026-11-12T11:48:02.299Z",
+ "html": "fcf4338999f9",
+ "sw": "f3036044ffd0",
  "scripts": 4,
  "modules": {
   "00-util.js": "e4beee43ce00",
-  "01-board.js": "afaaf42e716b",
+  "01-board.js": "b5e3d5bdc64b",
   "02-shell.js": "91de060782f0",
   "03-home-quiz.js": "173a2d58acbf",
   "04-stats.js": "76e9219cff42",

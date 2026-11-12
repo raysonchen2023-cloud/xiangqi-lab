@@ -1747,7 +1747,15 @@
       norm:{tm:{ln:[.15,.85],as:[.85,1.75],lk:1.6,ds:[1.75,2.65],end:3.2},k:[{t:0,c:{y:.64,p:.6,z:.85,f:"k"}},{t:.3,c:{y:.66,p:.68,z:.9,f:"k"}},{t:1,c:{y:.78,p:.55,z:.68,f:"k"},sh:[.08,.18]},
         {t:1.75,fl:[.22,.04]},{t:2.65,c:{y:.68,p:.5,z:.9,f:"k"}}]}};
     let FXTS=1,HSTOP=0,CINE=null,SHK=null,CAPBUSY=0,CAPB_T=0,MATED=null,LBK="";const GTV=new T.Vector3();
-    const capDone=()=>{CAPBUSY=Math.max(0,CAPBUSY-1)};let GBEAMT=null;
+    const capDone=()=>{CAPBUSY=Math.max(0,CAPBUSY-1)};
+    /* 第 9 輪 F1（Gemini 改善單 6「一般落子聲音與視覺回饋」）：一般走子落地那一刻——落點一圈淡淡漣漪＋幾顆塵（園子＝木屑色、黑洞＝星光），並敲一聲落子聲（XQ_LAND，01-board 照落子音效材質）。減少動態、省電模式只出聲 */
+    const landFx=(ti,giant)=>{try{if(window.XQ_LAND)window.XQ_LAND(giant)}catch(e){}if(RDM||PW.on)return;const[x,z]=pos(ti),col=giant?0xBFD8FF:0xE8D9B8,bl=giant?T.AdditiveBlending:T.NormalBlending,s0=giant?GS:1;
+      const r=new T.Mesh(new T.RingGeometry(.34,.4,40),new T.MeshBasicMaterial({color:col,transparent:true,opacity:.55,depthWrite:false,side:T.DoubleSide,blending:bl}));r.rotation.x=-PI/2;r.position.set(x,TOP+.012,z);r.scale.setScalar(s0);sc.add(r);
+      const N=giant?14:10,P=new Float32Array(N*3),V=[];for(let i=0;i<N;i++){const a=Math.random()*TAU,v=.4+Math.random()*.6;V.push([Math.cos(a)*v,.5+Math.random()*.6,Math.sin(a)*v]);P[i*3]=x;P[i*3+1]=TOP+.05;P[i*3+2]=z}
+      const geo=new T.BufferGeometry();geo.setAttribute("position",new T.BufferAttribute(P,3));const pt=new T.Points(geo,new T.PointsMaterial({color:col,size:giant?.09:.06,transparent:true,opacity:.8,depthWrite:false,blending:bl}));sc.add(pt);
+      anims.push({t:0,d:.5,f:p=>{const e=1-Math.pow(1-p,2),tt=p*.5,A=geo.attributes.position.array;r.scale.setScalar((1+e*2.4)*s0);r.material.opacity=.55*(1-p);
+          for(let i=0;i<N;i++){A[i*3]=x+V[i][0]*tt*s0;A[i*3+1]=TOP+.05+V[i][1]*tt-1.6*tt*tt;A[i*3+2]=z+V[i][2]*tt*s0}geo.attributes.position.needsUpdate=true;pt.material.opacity=.8*(1-p)},
+        end:()=>{sc.remove(r);sc.remove(pt);r.geometry.dispose();r.material.dispose();geo.dispose();pt.material.dispose()}})};let GBEAMT=null;
     const gntBeamT=()=>GBEAMT||(GBEAMT=(()=>{const c=document.createElement("canvas");c.width=4;c.height=128;const x=c.getContext("2d"),g=x.createLinearGradient(0,0,0,128);g.addColorStop(0,"#000");g.addColorStop(.55,"#5a4a2a");g.addColorStop(.9,"#fff");g.addColorStop(1,"#fff");x.fillStyle=g;x.fillRect(0,0,4,128);const t=new T.CanvasTexture(c);t.colorSpace=T.SRGBColorSpace;return t})());   /* 光柱：底下最亮、往上淡掉（不然像一片平的長方形） */
     const gntMateAfter=(board,by)=>{try{const X=window.XQCore;return!!(X&&X.legal)&&X.legal(board,by==="r"?"b":"r").length===0}catch(e){return false}};
     const fxShake=(a,d)=>{if(RDM||!(a>0))return;SHK={a,d:Math.max(.05,d),t0:null}};
@@ -2097,8 +2105,8 @@
             gntMove(g,GK,L.f,L.t,()=>{capFx();
               anims.push({t:0,d:.7,f:p=>g.scale.setScalar(s0*(1.5-.5*ease(Math.max(0,(p-.45)/.55)))),end:()=>{g.scale.setScalar(s0);delete g.userData.capS0}})},{screen:GSCR})}})}
         else if(cap&&GIANT){try{gntCapFx(cap,by,board)}catch(e){gntDrop(cap);layoutCaptured(board)}}else if(cap){anims.push({t:0,d:.55,f:p=>{cap.position.y=TOP+Math.sin(p*PI)*.9;cap.position.x+=(x1-x0)*.006;cap.position.z+=(z1>z0?.02:-.02);cap.rotation.z=p*2.2},end:()=>{if(GIANT)gntDrop(cap);else sc.remove(cap);layoutCaptured(board)}})}
-        if(GIANT&&!cap)gntMove(g,GK,L.f,L.t,null,{});
-        else if(!(cap&&GIANT&&!RDM))anims.push({t:0,d:.42,f:p=>{const e=ease(p);g.position.set(x0+(x1-x0)*e,TOP+Math.sin(p*PI)*1.1,z0+(z1-z0)*e)},end:()=>at(g,L.t)});
+        if(GIANT&&!cap)gntMove(g,GK,L.f,L.t,()=>landFx(L.t,true),{});
+        else if(!(cap&&GIANT&&!RDM))anims.push({t:0,d:.42,f:p=>{const e=ease(p);g.position.set(x0+(x1-x0)*e,TOP+Math.sin(p*PI)*1.1,z0+(z1-z0)*e)},end:()=>{at(g,L.t);if(!cap)landFx(L.t,false)}});
         if(GIANT&&o.check)try{gntCheckFx(L.t,board)}catch(e){}   /* 將軍：星樞警鐘 */
         if(botSide&&by===botSide){reach=1;reachT=0;opp.setFace(cap?"happy":"smile",1.4);if(cap){mate.setFace("open",1.6);mate.say(["小心！","哎呀，被吃了","沒關係，扳回來！"][Math.random()*3|0],2)}}
         else if(cap){mate.setFace("happy",1.6);mate.say(["吃得好！","漂亮！","好棋！"][Math.random()*3|0],1.8);if(botSide){opp.setFace("open",1.4);if((opp.B||oppSpr)&&Math.random()<.5)opp.say(["哎呀！","被吃了…","好棋！"][Math.random()*3|0])}}

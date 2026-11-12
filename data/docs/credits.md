@@ -23,7 +23,7 @@ AI 生成素材（Gemini、OpenAI 圖片，Lyria 音樂，Tripo 3D 模型，AI �
 - 授權：MIT（檔頭寫著「Copyright 2010-2023 Three.js Authors / SPDX-License-Identifier: MIT」）
 - 怎麼用：原檔照用，沒有修改
 - 能不能散布：可以，要保留版權聲明和 MIT 全文
-- 狀態：**已確認**（MIT 全文還沒另外附上，待補）
+- 狀態：**已確認**；MIT 全文 11/12 已附上：[three.js-MIT.txt](https://raysonchen2023-cloud.github.io/xiangqi-lab/licenses/three.js-MIT.txt)
 
 ### opencc-js（繁簡轉換）
 
@@ -31,7 +31,7 @@ AI 生成素材（Gemini、OpenAI 圖片，Lyria 音樂，Tripo 3D 模型，AI �
 - 授權：程式是 MIT（全文在 `LICENSE-opencc-js.txt`）。裡面的轉換字典是從 OpenCC 的資料產生的，[OpenCC](https://github.com/BYVoid/OpenCC) 是 Apache-2.0
 - 怎麼用：原檔照用
 - 能不能散布：可以，要附 MIT 全文；字典部分建議另附 OpenCC 的 Apache-2.0 聲明
-- 狀態：程式 **已確認**；字典的 Apache-2.0 聲明 **待開發者確認**（要不要附、怎麼附）
+- 狀態：程式 **已確認**；字典的 Apache-2.0 全文 11/12 已附上（從 OpenCC 上游下載）：[OpenCC-dictionary-Apache-2.0.txt](https://raysonchen2023-cloud.github.io/xiangqi-lab/licenses/OpenCC-dictionary-Apache-2.0.txt)
 
 ### jsQR（換手機時掃 QR 碼）
 
@@ -39,7 +39,7 @@ AI 生成素材（Gemini、OpenAI 圖片，Lyria 音樂，Tripo 3D 模型，AI �
 - 授權：Apache-2.0（上游 GitHub 頁標示）
 - 怎麼用：原檔照用
 - 能不能散布：可以，要附 Apache-2.0 全文和版權聲明
-- 狀態：授權 **已確認**；檔案裡沒有授權聲明，全文 **待補**
+- 狀態：授權 **已確認**；Apache-2.0 全文 11/12 已附上：[jsQR-Apache-2.0.txt](https://raysonchen2023-cloud.github.io/xiangqi-lab/licenses/jsQR-Apache-2.0.txt)
 
 ### QRCode.js（產生 QR 碼）
 
@@ -47,7 +47,7 @@ AI 生成素材（Gemini、OpenAI 圖片，Lyria 音樂，Tripo 3D 模型，AI �
 - 授權：該專案是 MIT
 - 怎麼用：原檔照用
 - 能不能散布：若確定是這個專案，可以，要附 MIT 聲明
-- 狀態：**待開發者確認**（要用上游原檔比對一次，確定是同一份）
+- 狀態：**已確認**（11/12 跟上游 davidshimjs/qrcodejs master 的 `qrcode.min.js` 比對，SHA-1 完全相同 2d06c1f823f3…）；MIT 全文（上游原檔，Copyright (c) 2012 davidshimjs）11/12 已附上：[qrcodejs-MIT.txt](https://raysonchen2023-cloud.github.io/xiangqi-lab/licenses/qrcodejs-MIT.txt)
 
 ### 自己寫的程式
 
@@ -87,7 +87,7 @@ AI 生成素材（Gemini、OpenAI 圖片，Lyria 音樂，Tripo 3D 模型，AI �
 
 - 怎麼用：子集化後做成 `xq-*.woff2`，隨 App 下載
 - 能不能散布：可以，要附各字型的版權聲明和 [OFL 全文](https://openfontlicense.org/open-font-license-official-text/)
-- 狀態：授權類型 **已確認**（依各字型上游標示）；但除了芫荽，其他六個字型的上游授權檔還沒存進專案，各字型原本的版權行也還沒逐一附上 → **待開發者確認／待補**
+- 狀態：授權類型 **已確認**（依各字型上游標示）；11/12 七個字型的授權全文（含各自原本的版權行）都從上游下載附上，總表在 [licenses/](https://raysonchen2023-cloud.github.io/xiangqi-lab/licenses/README.md)
 - 「跟著手機」字型模式用的是手機系統字型，不隨 App 散布
 
 ## 四、圖片（AI 輔助）
@@ -187,6 +187,11 @@ AI 生成素材（Gemini、OpenAI 圖片，Lyria 音樂，Tripo 3D 模型，AI �
 
 - 網站：GitHub Pages。圖片和大檔：Cloudflare Pages。線上大廳：EMQX 雲端服務。意見回饋：Google 表單。這些是服務供應商，不是 App 的素材，資料處理見〈隱私與資料使用〉。
 
+## 授權全文與參與方式
+
+- 第三方程式庫、引擎、字型的授權全文：[licenses/](https://raysonchen2023-cloud.github.io/xiangqi-lab/licenses/README.md)
+- 想回報錯誤或勘誤：[參與《象棋千秋》](https://github.com/raysonchen2023-cloud/xiangqi-lab/blob/main/CONTRIBUTING.md)（目前只收回報與勘誤，不收程式碼 PR）
+
 ## 仍待開發者確認的事（依重要程度）
 
 1. `pikafish.nnue` 的書面許可（或換權重）。
@@ -196,5 +201,5 @@ AI 生成素材（Gemini、OpenAI 圖片，Lyria 音樂，Tripo 3D 模型，AI �
 5. Windows 語音輸出能不能散布。
 6. Gemini 圖片與 Lyria 音樂：哪些是 API、哪些是消費者版；Lyria 專屬條款；哪些圖是 OpenAI 生成的。
 7. Pikafish 的完整對應原始碼包與編譯紀錄。
-8. 第三方聲明：MIT、Apache-2.0、OFL 全文與各字型版權行；`qrcode.min.js` 的上游比對；OpenCC 字典的 Apache-2.0 聲明。
+8. ~~第三方聲明：MIT、Apache-2.0、OFL 全文與各字型版權行；`qrcode.min.js` 的上游比對；OpenCC 字典的 Apache-2.0 聲明~~（11/12 都已附上、比對完成，見 licenses/）。
 9. 大師小傳要不要在畫面上標出處。

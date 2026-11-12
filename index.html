@@ -1534,7 +1534,7 @@ html[data-hct] .player.on .clk{background:#00563B;color:#FFFFFF;border-color:#00
       if(!window.caches)return go();caches.keys().then(function(ks){return Promise.all(ks.filter(function(k){return k.indexOf("xqlab-app-")===0}).map(function(k){return caches.delete(k)}))})
         .then(function(){return navigator.serviceWorker&&navigator.serviceWorker.getRegistration()}).then(function(r){return r&&r.update()}).catch(function(){}).then(go)}};setTimeout(chk,4000)})();
 </script>
-<script>window.XQ_OFFLINE=true;window.XQ_BUILD="20261112-1310";</script>
+<script>window.XQ_OFFLINE=true;window.XQ_BUILD="20261112-1320";</script>
 <script src="core.js"></script>
 <script src="engine.js"></script>
 <script src="local.js"></script>
@@ -2134,6 +2134,9 @@ document.addEventListener("change",e=>{const t=e.target;if(t&&t.dataset&&t.datas
 window.XQ_DRUM=(era,kind)=>{if(!store.get("gateDrum",true))return;try{unlockAudio()}catch(e){}
   withAudio(()=>{const pat=DRUM_PAT[era]||DRUM_PAT.classic,t0=AC.currentTime+.08,sp=kind==="path"?1.15:1;
     for(const[k,at,a,b,c]of pat){const t=t0+at*sp;if(k==="d")drumHit(t,a,b);else if(k==="g")gongHit(t,a,b,!!c);else if(k==="c")cymHit(t,1,.9);else if(k==="b")bellHit(t,a)}})};
+/* 第 9 輪 F1：3D 棋子落地那一刻（park3d landFx 叫 XQ_LAND）照「落子音效材質」敲一聲；已開 2D 落子聲的人不重複，音量跟棋子音效走（調到 0 就安靜） */
+function landSound(giant){try{if(store.get("mvSound",false)||!store.get("land3d",true)||!sxmGain("piece"))return;withAudio(()=>moveSound0(false))}catch(e){}}
+if(typeof window!=="undefined")window.XQ_LAND=landSound;
 function moveSound(cap){if(!(cap?store.get("capSound",true):store.get("mvSound",false))||!sxmGain("piece"))return;withAudio(()=>moveSound0(cap))}
 // 棋子落在木棋盤上的聲音（意見回饋 139）：依棋子材質合成，設定裡可選
 // 每種材質＝棋子本身的幾個共振頻率（倍數不是整數才像真的東西）＋碰到的瞬間一點雜音＋木棋盤低沉的「咚」
