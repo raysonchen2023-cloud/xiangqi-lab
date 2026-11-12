@@ -52,7 +52,7 @@ var XQEngine=(function(){
   function search(pos,lim,multipv){
     const job=async()=>{await load();
       send("setoption name MultiPV value "+(multipv||1));
-      send(pos.fen?"position fen "+pos.fen+" - - 0 1":"position fen "+XQCore.START+" w - - 0 1"+(pos.moves.length?" moves "+pos.moves.join(" "):""));
+      send("position fen "+(pos.fen?pos.fen:XQCore.START+" w")+" - - 0 1"+(pos.moves&&pos.moves.length?" moves "+pos.moves.join(" "):""));   /* 11/13：fen 也可以接 moves（章回棋路從殘局開始的盤＝起始局面＋走過的步；以前帶 fen 就不接 moves） */
       const info=new Map();
       send(lim.nodes?"go nodes "+lim.nodes:lim.movetime?"go movetime "+lim.movetime:"go depth "+lim.depth);   /* nodes：笑面掌櫃「掌櫃真功夫」檔位（訓練循環校準的每步節點數，開發者 11/12） */
       const each=l=>{if(!l.startsWith("info ")||!l.includes(" pv "))return;

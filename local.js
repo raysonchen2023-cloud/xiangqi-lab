@@ -316,6 +316,9 @@ var XQ=(function(){
     if(S&&S.result&&!S.practice&&S.id){gamePatch("play",S.id,movesG(S.moves));if(S===P&&S.moves.some(m=>!m.q)&&(paRetry[S.id]=(paRetry[S.id]||0)+1)<=3)setTimeout(analyzePlay,5000)}}
   const paRetry={};
   const ucis=()=>P.moves.map(m=>iccs(m.f,m.t));
+  /* 11/13 開發者截圖「⚠ 引擎給出不合法著法 g3g4（稍後自動再試）」：章回棋路有些關從殘局開始（P.start），以前一律送「標準開局＋走過的步」給引擎，
+     引擎以為是另一盤棋、回了不存在的走法，電腦就一直卡住。改成有 P.start 就送「起始局面＋走過的步」 */
+  const engPos=()=>P.start?{fen:P.start+" "+(P.startTurn==="b"?"b":"w"),moves:ucis()}:{moves:ucis()};
   /* 意見回饋 363：秘境棋友的開局喜好是真的——跟他下時，這盤有 90% 機率照他愛下的開局走前一兩步（紅方、黑方各一套），之後才交給 Pikafish */
   const STYLE={
     liuji:{r:[["h2e2","b2e2"]],b:[["h7e7","b7e7"]]},                               // 劉伯溫：中炮（後手就還中炮）
@@ -450,7 +453,7 @@ var XQ=(function(){
           if(!P||P.id!==id||P.moves.length!==n||P.result)return;
           const f=parseSq(u.slice(0,2)),t=parseSq(u.slice(2,4));if(legal(P.board,P.turn).some(([a,b])=>a===f&&b===t)){playApply(f,t);playMsg="";engFail=0;return}}}
       const hp=!zg&&HP.on(lv),zl=zg?zgLv(P,lv):lv;   /* 低段（新手～業1）擬人選步：見上面 HUMANPICK；zl＝掌櫃這一盤用的設定（真功夫＝固定節點數） */
-      const r=await XQEngine.search({moves:ucis()},zl.nodes?{nodes:zl.nodes}:lv.movetime?{movetime:lv.movetime}:{depth:lv.depth},zg?SP.mpvOf(zl):hp?HP.mpvOf(lv):lv.multipv||1);
+      const r=await XQEngine.search(engPos(),zl.nodes?{nodes:zl.nodes}:lv.movetime?{movetime:lv.movetime}:{depth:lv.depth},zg?SP.mpvOf(zl):hp?HP.mpvOf(lv):lv.multipv||1);
       const mv=zg?SP.pick(r,zl,P.board,P.turn,Math.random).mv:hp?HP.pick(r,lv,P.board,P.turn,Math.random).mv:pickMove(r,lv);   /* 先挑好這一步，思考時間才看得到是不是回吃（F4） */
       {const w=TP.ms(P,mv,r,lv,cpuPace())-(Date.now()-t0);if(w>0)await new Promise(z=>setTimeout(z,w))}
       if(!P||P.id!==id||P.moves.length!==n||P.result)return;
@@ -460,7 +463,7 @@ var XQ=(function(){
     /* 開發者 11/11（離線盤查）：引擎載不到（沒網路、手機裡還沒有引擎檔、還沒進多執行緒模式）原本立刻重試、無限循環——
        改成：沒網路又沒有引擎＝說清楚、等網路回來（online）再自動接著下；其他失敗＝隔 3、6、12…秒（最多 60 秒）再試 */
     catch(e){engFail++;const off=typeof navigator!=="undefined"&&navigator.onLine===false,noEng=typeof XQEngine!=="undefined"&&!XQEngine.ready;
-      playMsg=off&&noEng?"⚠ 沒有網路，電腦棋手還沒下載到這支手機。連上網路會自動接著下，也可以先去同桌對弈。":"⚠ "+e.message+(engFail>1?"（稍後自動再試）":"");
+      playMsg=off&&noEng?"⚠ 沒有網路，電腦棋手還沒下載到這支手機。連上網路會自動接著下，也可以先去同桌對弈。":"⏳ 電腦棋手一時沒想好，幾秒後會自動再想一次";try{const em=String(e&&e.message||e).slice(0,160);if(P)P.engErr=em;console.warn("[engine]",em)}catch(x){}   /* 11/13 開發者「這是什麼，對玩家來說會看不懂」：畫面上不放技術訊息（不合法著法 g3g4 之類），細節只留在 P.engErr 和主控台給除錯 */
       if(off&&noEng&&!engWait){engWait=true;addEventListener("online",()=>{engWait=false;engFail=0;setTimeout(playEngine,800)},{once:true})}}
     finally{playBusy=false;if(!engFail)setTimeout(playEngine,0);else if(!engWait)setTimeout(playEngine,Math.min(60000,1500*2**Math.min(engFail,6)))}}
   function playState(){ensureP();
@@ -491,7 +494,7 @@ var XQ=(function(){
       const floor=P.practice?P.practice.base:0;if(P.moves.length<=floor)throw new Error(P.practice?"已經回到練習的起點":"你還沒走棋，不用悔棋");if(!P.moves.slice(floor).some(m=>m.by===P.human))throw new Error("你還沒走棋，不用悔棋");
       while(P.moves.length>floor){const m=P.moves.pop();if(m.by===P.human)break}P.undoN=(P.undoN||0)+1;P.result=null;P.hint=null;stateRebuild(P);savePlay();setTimeout(playEngine,0)}
     else if(p==="/play/hint"){throw new Error("挑戰電腦不提供提示，要靠自己");if(P.result||P.turn!==P.human)throw new Error("現在不能提示");
-      const r=await XQEngine.search({moves:ucis()},{movetime:1500},1),f=parseSq(r.best.slice(0,2)),t=parseSq(r.best.slice(2,4));P.hint={f,t,cn:notate(P.board,f,t)};P.hintN=(P.hintN||0)+1;savePlay()}
+      const r=await XQEngine.search(engPos(),{movetime:1500},1),f=parseSq(r.best.slice(0,2)),t=parseSq(r.best.slice(2,4));P.hint={f,t,cn:notate(P.board,f,t)};P.hintN=(P.hintN||0)+1;savePlay()}
     else if(p==="/play/hintmark"){if(!P.result){P.hintN=(P.hintN||0)+1;savePlay()}}   /* 意見回饋 415：雲河棋路的提示棋在畫面那邊算，這裡只記「這盤用過提示」 */
     else if(p==="/play/resign"){if(!P.result)playEnd(opp(P.human),"你認輸")}
     /* 開發者 11/11 選「人機遇待核給和局／悔棋」：裁判判循環「待核」時（亞洲棋例沒辦法自動判的循環），跟電腦下的人可以直接選和局，或退回自己上一步之前變著（不算悔棋次數） */
