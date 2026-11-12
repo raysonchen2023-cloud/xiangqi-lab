@@ -1689,11 +1689,40 @@
         end:()=>{cap.scale.setScalar(s0);onEnd(C0);burst()}})};
     const gntFly=(A,o,done)=>{const sp=gntFx(gntStarSp(o)),B=new T.Vector3(o.x,o.y,o.z);
       anims.push({t:0,d:.55,f:p=>{sp.position.lerpVectors(A,B,ease(p));sp.position.y+=Math.sin(p*PI)*1.6;sp.scale.setScalar(.25+.25*p)},end:()=>{gntUnfx(sp);done()}})};
-    const gntCapFx=(cap,by,board)=>{const red=by==="r",cp=cap.userData&&cap.userData.p||"p",K=String(cp).toUpperCase(),big=!!GBIG[K];
+    /* ---------- 開發者 11/12「請 Gemini 製作黑洞星樞棋兵每一位的吃子動畫，就像黑洞一樣吸進去讓子消失」（story/gemini_app/130，Gemini 設計）----------
+       共用「微型黑洞」：純黑事件視界（球）＋紫色相加混色吸積盤（轉）＋淡藍扭曲環（反轉）；七種星樞棋兵只換黑洞位置和吸法：
+       將＝目標腳下平躺的大黑洞，往下拉長沉進去（down）；士＝胸前 X 形雙吸積盤，邊轉邊縮進交叉點（spin）；象＝目標背後直立的門，往後拉長吸走（pull）；
+       馬＝目標側邊，先往前被拉偏再急轉吸入（L）；車＝車頭前方，瞬間拉成細條（noodle）；砲＝頭頂平躺黑洞，往上捲進去（up）；卒＝胸口的小黑洞，抖著被揉碎（crush）。
+       0.25 秒開洞 → 0.5 秒吸入 → 0.3 秒關洞（閃一下），接著照舊小星飛去星軌；被吸的角色還原大小位置後才放回池子 */
+    const gntHole=(r,flat,x2)=>{const g=new T.Group();g.userData.giant=1;const mk=(geo,col,op)=>new T.Mesh(geo,new T.MeshBasicMaterial({color:col,transparent:true,opacity:op,blending:T.AdditiveBlending,depthWrite:false,side:T.DoubleSide,toneMapped:false}));
+      const core=new T.Mesh(new T.SphereGeometry(r*.42,24,16),new T.MeshBasicMaterial({color:0x000000})),disk=mk(new T.RingGeometry(r*.44,r*1.15,48),0xD08CFF,1),halo=mk(new T.RingGeometry(r*1.15,r*1.9,48),0x7FA0FF,.55);
+      const rot=new T.Group();rot.add(disk,halo);if(x2){const d2=disk.clone();d2.rotation.y=PI/2;rot.add(d2)}if(flat)rot.rotation.x=-PI/2;
+      const gl=new T.Sprite(new T.SpriteMaterial({map:gntGlow(),color:0x9B5CFF,transparent:true,opacity:.85,blending:T.AdditiveBlending,depthWrite:false,toneMapped:false}));gl.scale.setScalar(r*3.4);   /* 實測吸積盤太淡、只看到一顆黑球 → 外面再罩一圈紫光 */
+      g.add(gl,core,rot);g.userData.disk=disk;g.userData.halo=halo;return gntFx(g)};
+    const gntSuck=(cap,mv,onEnd)=>{const K=mv.K,[tx,tz]=pos(mv.t),[fx,fz]=pos(mv.f),dl=Math.hypot(tx-fx,tz-fz)||1,ux=(tx-fx)/dl,uz=(tz-fz)/dl,G=GS,H=GNT_H;let hp,flat=false,r=.6*G,mode;
+      if(K==="K"){hp=[tx,TOP+.05,tz];flat=true;r=.95*G;mode="down"}else if(K==="A"){hp=[tx,TOP+H*.6,tz];r=.5*G;mode="spin"}else if(K==="B"){hp=[tx+ux*.75*G,TOP+H*.55,tz+uz*.75*G];r=.8*G;mode="pull"}
+      else if(K==="N"){hp=[tx-uz*.95*G,TOP+H*.5,tz+ux*.95*G];r=.55*G;mode="L"}else if(K==="R"){hp=[tx+ux*.55*G,TOP+H*.55,tz+uz*.55*G];r=.6*G;mode="noodle"}
+      else if(K==="C"){hp=[tx,TOP+H*1.5,tz];flat=true;r=.6*G;mode="up"}else{hp=[tx,TOP+H*.55,tz];r=.3*G;mode="crush"}
+      const HP=new T.Vector3(hp[0],hp[1],hp[2]),ho=gntHole(r,flat,K==="A");ho.position.copy(HP);if(!flat)ho.lookAt(cam.position.x,HP.y,cam.position.z);ho.scale.setScalar(.01);
+      try{if(window.XQ_BHSUCK)window.XQ_BHSUCK(K)}catch(e){}
+      const P0=cap.position.clone(),R0=cap.rotation.clone(),s0=cap.scale.x||1,CP=mode==="L"?new T.Vector3(P0.x+ux*.9*G,P0.y+H*.3,P0.z+uz*.9*G):new T.Vector3((P0.x+HP.x)/2,(P0.y+HP.y)/2+H*.2,(P0.z+HP.z)/2),d1=.25,d2=.5,d3=.3,Q=new T.Vector3();
+      anims.push({t:0,d:d1+d2+d3,f:p=>{const T0=p*(d1+d2+d3),a=Math.min(1,T0/d1),b=Math.max(0,Math.min(1,(T0-d1)/d2)),c=Math.max(0,(T0-d1-d2)/d3);
+          ho.scale.setScalar(Math.max(.01,ease(a)*(1-ease(c))+(c>0&&c<.25?.25*Math.sin(c*4*PI):0)));ho.userData.disk.rotation.z+=.22;ho.userData.halo.rotation.z-=.09;
+          if(c>0){cap.visible=false;return}if(b<=0)return;const e=ease(b);
+          if(mode==="down"){cap.scale.set(s0*Math.max(.03,1-.92*e),s0*(1+3*e),s0*Math.max(.03,1-.92*e));cap.position.y=P0.y-H*2*e*e}
+          else if(mode==="up"){cap.scale.set(s0*Math.max(.03,1-.85*e),s0*Math.max(.04,1-.92*e),s0*Math.max(.03,1-.85*e));cap.position.y=P0.y+(HP.y-H*.25-P0.y)*e}
+          else if(mode==="spin"){cap.rotation.y=R0.y+e*14;cap.scale.setScalar(s0*Math.max(.02,1-e));cap.position.y=P0.y+(HP.y-H*.5-P0.y)*e}
+          else if(mode==="crush"){const k=Math.max(.02,1-e),j=()=>.7+Math.random()*.6;cap.scale.set(s0*k*j(),s0*k*j(),s0*k*j())}
+          else{const q=mode==="noodle"?Math.min(1,e*1.7):e,m1=1-q;Q.set(m1*m1*P0.x+2*m1*q*CP.x+q*q*HP.x,m1*m1*P0.y+2*m1*q*CP.y+q*q*(HP.y-H*.4),m1*m1*P0.z+2*m1*q*CP.z+q*q*HP.z);cap.position.copy(Q);
+            cap.lookAt(HP.x,Q.y,HP.z);const st=mode==="noodle"?5:3;cap.scale.set(s0*Math.max(.02,1-.95*q),s0*Math.max(.03,1-.85*q),s0*(1+st*q*(1-.6*q)))}},   /* 潮汐力：朝黑洞那一軸拉長、另外兩軸壓細（麵條化） */
+        end:()=>{cap.visible=true;cap.scale.setScalar(s0);cap.rotation.copy(R0);cap.position.copy(P0);fxFade([fxGlow(HP.x,HP.y,HP.z,0xD9B8FF,1.5)],.35);
+          ho.traverse(o=>{if(o.geometry)o.geometry.dispose();if(o.material)o.material.dispose()});sc.remove(ho);onEnd(HP.clone())}})};
+    const gntCapFx=(cap,by,board,mv)=>{const red=by==="r",cp=cap.userData&&cap.userData.p||"p",K=String(cp).toUpperCase(),big=!!GBIG[K];
       gntCmb.n=gntPly-gntCmb.ply<=4?gntCmb.n+1:1;gntCmb.ply=gntPly;const spd=Math.max(.8,1-.07*(gntCmb.n-1));
       try{if(window.XQ_BHCAP)window.XQ_BHCAP(gntCmb.n,red,big)}catch(e){}
       const L=gntStarLay(board).filter(o=>o.s===sideOf(cp)&&o.k===K),tgt=L[L.length-1]||null;
-      gntBurst(cap,red,big,spd,C0=>{gntDrop(cap);if(tgt&&!RDM)gntFly(C0,tgt,()=>layoutCaptured(board));else layoutCaptured(board)})};
+      const after=C0=>{gntDrop(cap);if(tgt&&!RDM)gntFly(C0,tgt,()=>layoutCaptured(board));else layoutCaptured(board)};
+      if(!red&&!RDM&&mv&&mv.K)gntSuck(cap,mv,after);else gntBurst(cap,red,big,spd,after)};   /* 黑方星樞棋兵吃子：黑洞吸入；紅方照舊星爆 */
     const gntTake=p=>{const q=gntPool[p];let g=q&&q.pop();if(g&&g.userData.ped){const[pb,pf,K]=g.userData.ped;pb.material=bMat(true);pf.material=fMat(NAMES.r[K],true)}   /* 換造型（refreshLook）會把舊的棋子材質丟掉，重用的底座要換新的 */if(!g){const K=p.toUpperCase();g=sideOf(p)==="r"?(GNT_X[K]?gntFig(p,K):gntStone(p)):(GNT_XS[K]?gntFig(p,K,true):gntStone(p))}g.visible=true;if(g.userData.capS0){g.scale.setScalar(g.userData.capS0);delete g.userData.capS0}g.rotation.set(0,g.userData.B?((sideOf(p)==="r")!==flip?PI:0):0,0);sc.add(g);return g};
     const gntDrop=g=>{sc.remove(g);if(g&&g.userData&&g.userData.giant){const p=g.userData.p;(gntPool[p]||(gntPool[p]=[])).push(g)}};
     /* ---------- 開發者 11/12 選 ChatGPT 推薦套（story/chatgpt_app/128）：黑洞每種棋子的專屬走法動作 ----------
@@ -1743,6 +1772,50 @@
           if(cross){const[ax]=pos(36),[bx2]=pos(44),mz=(pos(36)[1]+pos(45)[1])/2,y=TOP+.06,w=fxLine([[ax,y,mz],[bx2,y,mz]],gold,.95),h=TOP+GNT_H*.55,
             L1=fxLine([[x1-.2*G,h,z1],[x1-.75*G,h,z1]],0xFFF2C0,.95),L2=fxLine([[x1+.2*G,h,z1],[x1+.75*G,h,z1]],0xFFF2C0,.95);fxFade([w,L1,L2],.5)}})}   /* 過河：河界亮一道、兩側光刃＝之後可以橫走 */
       return go(.42,T0=>{const q=T0/.42,e=ease(q);P(x0+dx*e,z0+dz*e,Math.sin(q*PI)*1.1)})};
+    /* ---------- 開發者 11/12（story/129；開發者選「只在吃子時」「七個物件都用 Tripo」「補過的草鞋」）：紅方七星吃子時變出自己的物件 ----------
+       傌＝駱躍梅騎紅布小馬跳過去（ride）；俥＝齊轍的青銅車輪腰牌變大車輪在身前滾、輾過去（roll）；相＝田飛燕的青玉雙燕環在身邊繞、落地時衝向目標（orbit）；
+       仕＝鐵連城兩只木護腕在兩側、落地時合掌夾住（clap）；帥＝沈方庭的書生方巾在目標上方變大、落地時像印章蓋下（stamp）；
+       炮＝雷借花的竹炮在身前、落地時後座一震（fire）；兵＝步越溪踩著補過的草鞋當滑板衝過去（board）。
+       模型：Tripo 圖片轉 3D（data/tripo_app/i_*.glb），黑洞局出現後在背景先載；還沒載好、或黑方吃子，就照原本「放大 1.5 倍」的演出。
+       s＝物件大小（角色身高的倍數），by＝照高度 h 或長度 l 量，yo＝模型自己的朝向修正（弧度） */
+    const GITEM={N:{k:"horse",s:1.0,by:"l",m:"ride",yo:0},R:{k:"wheel",s:.95,by:"h",m:"roll",yo:0},B:{k:"swallow",s:.75,by:"h",m:"orbit",yo:0},A:{k:"bracer",s:.48,by:"h",m:"clap",yo:0},
+      K:{k:"cap",s:.95,by:"l",m:"stamp",yo:0},C:{k:"cannon",s:.85,by:"l",m:"fire",yo:0},P:{k:"sandal",s:.8,by:"l",m:"board",yo:0}};
+    const GIR={},GIP={},GIDUR={R:.62,N:.72,B:.68,A:.6,K:.58,C:.55,P:.35};
+    const gntItemLoad=k=>GIP[k]||(GIP[k]=(typeof window.XQGLB==="function"?window.XQGLB("data/tripo_app/i_"+k+".glb"):Promise.reject(0)).then(s=>{if(!s)return null;s.updateMatrixWorld(true);
+      const b=new T.Box3().setFromObject(s),z=b.getSize(new T.Vector3()),c=b.getCenter(new T.Vector3());GIR[k]={s,z,c};pwPoke(300);return GIR[k]}).catch(()=>null));
+    /* 做一個物件：模型置中在原點，長軸轉到 +Z（往前），roll 的車輪把最薄的軸轉到 X（輪面跟前進方向平行）；回傳 {w,H,L}（場景單位） */
+    const gntItemMake=K=>{const cf=GITEM[K],r=cf&&GIR[cf.k];if(!r)return null;const m=r.s.clone(true),w=new T.Group(),fix=new T.Group(),z=r.z;m.position.set(-r.c.x,-r.c.y,-r.c.z);fix.add(m);const rl=new T.Group();rl.add(fix);w.add(rl);   /* w（朝前進方向）＞rl（車輪滾動）＞fix（模型朝向、大小） */
+      if(cf.m==="roll"){if(z.z<=z.x&&z.z<=z.y)fix.rotation.y=PI/2;else if(z.y<=z.x)fix.rotation.z=PI/2}else if(z.x>z.z)fix.rotation.y=PI/2;fix.rotation.y+=cf.yo;
+      const base=cf.by==="h"?z.y:Math.max(z.x,z.z),sc=cf.s*GNT_H/Math.max(1e-3,base);fix.scale.setScalar(sc);
+      w.traverse(o=>{if(o.isMesh){o.castShadow=true;o.receiveShadow=false}});const H=(cf.m==="roll"?Math.max(z.x,z.y,z.z):z.y)*sc,L=Math.max(z.x,z.z)*sc;return{w,H,L}};
+    /* 紅方吃子用物件演出；處理了回 true（呼叫端就不跑原本的放大 1.5 倍） */
+    const gntItemCap=(g,K,fi,ti,capFx,scr)=>{const cf=GITEM[K];if(!cf||RDM||!GIR[cf.k])return false;const I=gntItemMake(K);if(!I)return false;
+      const[x0,z0]=pos(fi),[x1,z1]=pos(ti),ry=g.rotation.y,yw=Math.atan2(x1-x0,z1-z0)-ry,fw=[Math.sin(yw),Math.cos(yw)],sd=[Math.cos(yw),-Math.sin(yw)],inner=g.children[0],iy0=inner?inner.position.y:0,G=GS;
+      const w=I.w,parts=[w];let w2=null,stamp=null;w.rotation.y=yw;
+      if(cf.m==="ride"){w.position.set(0,I.H*.5,0);g.add(w)}
+      else if(cf.m==="board"){w.position.set(0,I.H*.5+.02,0);g.add(w)}
+      else if(cf.m==="roll"){w.position.set(fw[0]*.75*G,I.H*.5,fw[1]*.75*G);g.add(w)}
+      else if(cf.m==="fire"){w.position.set(fw[0]*.6*G,I.H*.5,fw[1]*.6*G);g.add(w)}
+      else if(cf.m==="orbit"){w.position.set(sd[0]*.7*G,GNT_H*.7,sd[1]*.7*G);g.add(w)}
+      else if(cf.m==="clap"){const J=gntItemMake(K);w2=J.w;w2.rotation.y=yw;w.position.set(sd[0]*.75*G,GNT_H*.45,sd[1]*.75*G);w2.position.set(-sd[0]*.75*G,GNT_H*.45,-sd[1]*.75*G);g.add(w,w2);parts.push(w2)}
+      else if(cf.m==="stamp"){stamp=w;w.position.set(x1,TOP+GNT_H*2.4,z1);gntFx(w)}
+      const lift=cf.m==="ride"?I.H*.62:cf.m==="board"?I.H+.02:0,gl=fxGlow(x0,TOP+GNT_H*.5,z0,0xFFD98A,1.4);fxFade([gl],.4);
+      for(const p of parts)p.scale.setScalar(.01);
+      const vanish=()=>anims.push({t:0,d:.3,f:p=>{for(const q of parts)q.scale.setScalar(Math.max(.01,1-ease(p)));if(inner)inner.position.y=iy0+lift*(1-ease(p))},
+        end:()=>{for(const q of parts){if(q.parent)q.parent.remove(q)}if(inner)inner.position.y=iy0}});
+      const impact=()=>{const d=.24,P0=parts.map(q=>q.position.clone());anims.push({t:0,d,f:p=>{const e=Math.sin(p*PI);
+          if(cf.m==="clap"){w.position.set(P0[0].x*(1-.75*e),P0[0].y,P0[0].z*(1-.75*e));w2.position.set(P0[1].x*(1-.75*e),P0[1].y,P0[1].z*(1-.75*e))}
+          else if(cf.m==="stamp")w.position.y=P0[0].y-(GNT_H*2.4-I.H*.5)*Math.min(1,p*2.2);
+          else if(cf.m==="fire"){w.position.x=P0[0].x-fw[0]*.25*e;w.position.z=P0[0].z-fw[1]*.25*e}
+          else if(cf.m==="orbit"){const q=Math.min(1,p*1.6);w.position.set(P0[0].x*(1-q)+fw[0]*.3*q,P0[0].y*(1-q)+GNT_H*.4*q,P0[0].z*(1-q)+fw[1]*.3*q)}
+          else if(cf.m==="ride"||cf.m==="board")g.scale.set(1,1-.06*e,1)},end:()=>{g.scale.setScalar(1);capFx();vanish()}})};
+      anims.push({t:0,d:.22,f:p=>{const e=ease(p);for(const q of parts)q.scale.setScalar(Math.max(.01,e));if(inner)inner.position.y=iy0+lift*e},end:()=>{for(const q of parts)q.scale.setScalar(1);if(inner)inner.position.y=iy0+lift;
+        const D=K==="C"&&scr>=0?.55:GIDUR[K]||.5;let a0=0;
+        anims.push({t:0,d:D,f:p=>{const T0=p*D;if(cf.m==="roll"){w.children[0].rotation.x=(T0/D)*Math.hypot(x1-x0,z1-z0)/Math.max(.2,I.H*.5)}   /* 車輪照走的距離滾 */
+          else if(cf.m==="orbit"){a0=T0*9;w.position.set(Math.cos(a0)*.7*G,GNT_H*.7+.15*Math.sin(a0*2),Math.sin(a0)*.7*G)}}});
+        gntMove(g,K,fi,ti,impact,{screen:scr})}});
+      return true};
+    if(GIANT)setTimeout(()=>{for(const K in GITEM)gntItemLoad(GITEM[K].k)},2500);   /* 黑洞局：背景先載七個物件模型（每個約 0.6 MB） */
     /* 將軍：星樞警鐘——攻擊線從走的那顆指向被將的帥／將 0.45 秒，被將的九宮亮一圈 */
     const gntCheckFx=(ti,B)=>{if(RDM)return;const me=sideOf(B[ti]||"P"),kk=me==="r"?"k":"K",ki=B.indexOf(kk);if(ki<0)return;const[ax,az]=pos(ti),[kx,kz]=pos(ki),y=TOP+GNT_H*.6;
       const ln=fxLine([[ax,y,az],[kx,y,kz]],0xFF6B5A,.95),rg=fxRing(kx,kz,0xFF6B5A,.7*GS),gl=fxGlow(kx,TOP+GNT_H*1.25,kz,0xFF6B5A,.9);fxFade([ln,rg,gl],.6,.2)};
@@ -1883,7 +1956,7 @@
       BU.visible=false;bplane.visible=false;sc.background=null;
       for(const g of L)g.traverse(m=>{const t=m.isMesh&&m.name==="meGly"&&m.material&&m.material.map;if(t&&t.repeat&&t.repeat.x===1){t.repeat.x=-1;t.offset.x=1;t.updateMatrix();fl.push(t)}});
       const ac=rd.autoClear,su=rd.shadowMap.autoUpdate;rd.autoClear=false;rd.shadowMap.autoUpdate=false;
-      try{if(L.length){for(const[o]of lt)o.position.y=2*MY-o.position.y;rd.render(sc,cam);for(const[o,y]of lt)o.position.y=y}   /* 第 2 次：鏡像角色（燈也照鏡像擺） */
+      try{if(L.length&&!PW.on){for(const[o]of lt)o.position.y=2*MY-o.position.y;rd.render(sc,cam);for(const[o,y]of lt)o.position.y=y}   /* 第 2 次：鏡像角色（燈也照鏡像擺） */
         for(const g of L)g.visible=false;BU.visible=true;bplane.visible=true;rd.render(sc,cam)}   /* 第 3 次：只畫半透明棋盤（正面＋盤底） */
       finally{rd.autoClear=ac;rd.shadowMap.autoUpdate=su;sc.background=bg;BU.visible=true;bplane.visible=true;for(const t of fl){t.repeat.x=1;t.offset.x=0;t.updateMatrix()}
         for(const g of L){g.visible=true;sc.add(g)}for(const o of hid)o.visible=true;for(const[o,y]of lt)o.position.y=y}};
@@ -1905,7 +1978,9 @@
     const teleUI=()=>{if(TLUI||!GIANT)return;const zb=el.querySelector(".pzoom");TLUI=document.createElement("button");TLUI.type="button";TLUI.className="tele-ui";TLUI.textContent="🔭";TLUI.setAttribute("aria-label","望遠鏡：放大遠方");TLUI.setAttribute("aria-pressed","false");
       TLUI.style.cssText="width:34px;height:34px;border-radius:50%;border:1px solid rgba(0,0,0,.18);background:rgba(255,255,255,.82);color:#3a2a1c;font:700 16px/1 system-ui;box-shadow:0 1px 4px rgba(0,0,0,.2);padding:0;cursor:pointer";
       for(const ev of["pointerdown","pointerup","pointermove"])TLUI.addEventListener(ev,e=>e.stopPropagation());TLUI.onclick=e=>{e.stopPropagation();teleSet(!TELE)};if(zb)zb.prepend(TLUI);else el.append(TLUI)};
-    try{if(GIANT&&window.__PK&&localStorage.getItem("xq_dbg3d"))__PK.st=v=>{if(v){if(v.y!=null)tyaw=v.y;if(v.p!=null)tpitch=v.p;if(v.z!=null)tzoom=v.z}return{yaw,pitch,zoom,tele:!!TELE,under:UNDER,figs:gntFigs.length}};if(GIANT&&window.__PK&&localStorage.getItem("xq_dbg3d"))__PK.frame=()=>{yaw=tyaw;pitch=tpitch;zoom=tzoom;try{gntTick(0,0)}catch(e){}placeCam();if(MG){bplane.visible=false;BU.visible=false}rd.render(sc,cam);gntMirror();return rd.domElement.toDataURL("image/jpeg",.85)}}catch(e){}   /* 除錯：讀／設鏡頭 */
+    try{if(GIANT&&window.__PK&&localStorage.getItem("xq_dbg3d"))__PK.st=v=>{if(v){if(v.y!=null)tyaw=v.y;if(v.p!=null)tpitch=v.p;if(v.z!=null)tzoom=v.z}return{yaw,pitch,zoom,tele:!!TELE,under:UNDER,figs:gntFigs.length}};if(GIANT&&window.__PK&&localStorage.getItem("xq_dbg3d"))__PK.frame=()=>{yaw=tyaw;pitch=tpitch;zoom=tzoom;try{gntTick(0,0)}catch(e){}placeCam();if(MG){bplane.visible=false;BU.visible=false}rd.render(sc,cam);gntMirror();return rd.domElement.toDataURL("image/jpeg",.85)};
+      if(GIANT&&window.__PK&&localStorage.getItem("xq_dbg3d")){__PK.fx=(K,m,fi,ti)=>{const g=pieces[fi],c=pieces[ti];if(m==="suck"){if(!c)return"沒有被吃的子";gntSuck(c,{K,f:fi,t:ti},()=>{});return"ok"}if(!g)return"沒有吃子的子";const ok=gntItemCap(g,K,fi,ti,()=>{},-1);return ok?"ok":"沒載好"};
+        __PK.home=fi=>{const g=pieces[fi];if(g)at(g,fi)};__PK.step=dt=>{const cur=anims;anims=[];const keep=cur.filter(a=>{a.t+=dt;const p=Math.min(1,a.t/a.d);a.f(p);if(p>=1){a.end&&a.end();return false}return true});anims=keep.concat(anims);return anims.length}}}catch(e){}   /* 除錯：讀／設鏡頭；fx 直接演道具吃子或黑洞吸入、step 手動推進動畫（窗格在背景時用） */
     const gntPad=o=>{const sel=o.sel!=null&&o.sel>=0?o.sel:-1,T2=Array.isArray(o.targets)?o.targets.slice():[];
       if(sel<0||!T2.length){padSel=-1;padCur=-1;padT=[];if(PAD)PAD.style.display="none";padRing.visible=padBeam.visible=false;return}
       padUI();PAD.style.display="grid";if(sel!==padSel){padSel=sel;padCur=sel}padT=T2;padShow()};
@@ -1920,7 +1995,8 @@
         const by=sideOf(board[L.t]),botSide=ex.botSide||null;if(GIANT)gntPly++;
         /* 開發者 11/12 hspx「黑洞吃子時，角色先放大 1.5 倍、然後吃對方，再變回原本的大小」：放大 .22 秒 → 放大的樣子跳過去 .42 秒 → 落地才開始吃子特效 → 停一下再縮回（共 .7 秒）。減少動態：照舊 */
         const GK=GIANT?String(board[L.t]||"").toUpperCase():"",GSCR=GIANT&&GK==="C"&&cap&&prevB?gntScreen(prevB,L.f,L.t):-1;   /* 黑洞：專屬走法動作用的棋種、炮的炮架 */
-        if(cap&&GIANT&&!RDM){const s0=g.scale.x||1,capFx=()=>{try{gntCapFx(cap,by,board)}catch(e){gntDrop(cap);layoutCaptured(board)}};g.userData.capS0=s0;
+        if(cap&&GIANT&&!RDM&&by==="r"&&gntItemCap(g,GK,L.f,L.t,()=>{try{gntCapFx(cap,by,board)}catch(e){gntDrop(cap);layoutCaptured(board)}},GSCR)){}   /* 紅方七星：變出自己的物件吃子 */
+        else if(cap&&GIANT&&!RDM){const s0=g.scale.x||1,capFx=()=>{try{gntCapFx(cap,by,board,{K:GK,f:L.f,t:L.t})}catch(e){gntDrop(cap);layoutCaptured(board)}};g.userData.capS0=s0;
           anims.push({t:0,d:.22,f:p=>g.scale.setScalar(s0*(1+.5*ease(p))),end:()=>{g.scale.setScalar(s0*1.5);
             gntMove(g,GK,L.f,L.t,()=>{capFx();
               anims.push({t:0,d:.7,f:p=>g.scale.setScalar(s0*(1.5-.5*ease(Math.max(0,(p-.45)/.55)))),end:()=>{g.scale.setScalar(s0);delete g.userData.capS0}})},{screen:GSCR})}})}
@@ -2190,13 +2266,26 @@
       try{rd.setPixelRatio(Math.min(d.on?1:2,window.devicePixelRatio||1));sun.castShadow=!d.on;for(const l of falling)l.visible=!d.on}catch(e){}pwPoke(400)};
     const pwSec=(now,sec)=>{PW.sec=sec;Object.assign(PF,pfSum(PW.q,sec));PF.live=true;try{PF.pr=rd.getPixelRatio()}catch(e){}pwApply(false)};
     /* 自動判斷「畫面偏慢」：沒省電、園子淡入 3 秒後才量；連續兩段 5 秒平均都不到每秒 24 格才算（偶爾卡一下不算），記 3 天 */
-    const pwFps=now=>{if(PW.on||!shown||now-PW.shownAt<3000){PW.fw.t0=0;return}const a=fpsWin(PW.fw,now);if(a==null)return;PF.fps5=Math.round(a*10)/10;PW.low=a<24?PW.low+1:0;
+    const pwFps=now=>{if(PW.on||!shown||BENCH||now-PW.shownAt<3000){PW.fw.t0=0;return}const a=fpsWin(PW.fw,now);if(a==null)return;PF.fps5=Math.round(a*10)/10;
+      /* 動態解析度（評比第 7 輪 P29.1／P29.2）：5 秒平均低於 30 幀就把像素倍率降一級（每級 .25，最低 1）；連續 3 次高於 55 幀再升回一級。比「記 3 天直接進省電」溫和，畫面只會稍微變軟 */
+      {const pr=rd.getPixelRatio(),pmax=Math.min(2,window.devicePixelRatio||1);if(a<30&&pr>1){rd.setPixelRatio(Math.max(1,Math.round((pr-.25)*4)/4));PF.pr=rd.getPixelRatio();PF.dres=(PF.dres||0)+1;PW.dhi=0;PW.fw.t0=0;pwPoke(400);return}
+        if(a>55&&pr<pmax){PW.dhi=(PW.dhi||0)+1;if(PW.dhi>=3){rd.setPixelRatio(Math.min(pmax,Math.round((pr+.25)*4)/4));PF.pr=rd.getPixelRatio();PW.dhi=0;PW.fw.t0=0}}else PW.dhi=0}PW.low=a<24?PW.low+1:0;
       if(PW.low>=2&&!PWS.lowFps&&!GIANT){PWS.lowFps=true;try{localStorage.setItem("xq_pkLowFps",String(Date.now()))}catch(e){}pwApply(false)}};   /* 11/12 hspx（車輪戰對手變回 Q 版棋子人）：黑洞巨盤（30 個角色＋鏡像）本來就重，量到偏慢不記 3 天的記號，免得拖累其他場景 */
     pwApply(true);
+    /* ---------- 開發者 11/12 評比第 7 輪「3D 技美與場景專家」（P29.1 渲染效能、P29.2 發熱與功耗）：3D 效能量測 ----------
+       設定 → 棋盤 →「📊 3D 效能量測」（06-cpu pkBench）呼叫 bench(cb)：鏡頭固定繞一圈、拉近拉遠 10 秒，每一格記畫一格花多久、繪製次數、三角形數；
+       回報平均幀數、最差 1%（第 99 百分位那一格換算的幀數）、平均繪製次數／三角形、畫面大小、像素倍率、是否省電。開發者在實機按一次就有可重現的數字 */
+    let BENCH=null;
+    const benchEnd=()=>{const B=BENCH;BENCH=null;rd.info.autoReset=true;yaw=tyaw=B.y0;zoom=tzoom=B.z0;pitch=tpitch=B.p0;const d=B.dt.slice().sort((a,b)=>a-b),avg=d.reduce((a,b)=>a+b,0)/Math.max(1,d.length),p99=d[Math.floor(d.length*.99)]||avg||16;
+      const r={scene:GIANT?"黑洞巨盤":EK,frames:B.n,avgFps:Math.round(10000/(avg||16))/10,low1:Math.round(10000/p99)/10,calls:Math.round(B.calls/Math.max(1,B.n)),tris:Math.round(B.tris/Math.max(1,B.n)),w:W,h:H,pr:rd.getPixelRatio(),power:PW.on,at:Date.now()};try{B.cb(r)}catch(e){}};
+    const benchStep=now=>{const B=BENCH,p=Math.min(1,(now-B.t0)/B.ms);yaw=tyaw=B.y0+p*TAU;zoom=tzoom=B.z0*(1+.25*Math.sin(p*TAU*2));pitch=tpitch=B.p0;if(p>=1)benchEnd()};
+    const benchRec=now=>{const B=BENCH;if(!B)return;if(B.last)B.dt.push(now-B.last);B.last=now;B.calls+=rd.info.render.calls;B.tris+=rd.info.render.triangles;B.n++};
+    const bench=(cb,ms)=>{if(BENCH||!shown)return false;rd.info.autoReset=false;BENCH={t0:performance.now(),ms:ms||10000,y0:tyaw,z0:tzoom,p0:tpitch,dt:[],calls:0,tris:0,n:0,last:0,cb:cb||(()=>{})};pwPoke(200);return true};
     function frame(now){if(stopped)return;if(!document.body.contains(el)){destroy();return}requestAnimationFrame(frame);
       if(document.hidden||el.style.display==="none"){last=now;PW.fw.t0=0;PF.live=false;return}
+      if(BENCH)benchStep(now);
       if(IN.ph==="hold"||IN.ph==="run"){const k=introK(now-IN.t0,IN.hold,IN.dur);if(now-IN.t0>=IN.hold+IN.dur)inEnd(true);else if(k<=0){tyaw=0;tpitch=0;tzoom=1}else{IN.ph="run";yaw=tyaw=0;pitch=tpitch=.5*k;zoom=tzoom=1+(HOME.z-1)*k}}   /* 11/11 入座運鏡：先停在坐著看，再 ease 到 topfit */
-      const act=!shown||inOn()||ptrs.size>0||anims.length>0||endT>0||reach>0||!!MH.cer||now<PW.dirty||Math.abs(tyaw-yaw)+Math.abs(tpitch-pitch)+Math.abs(tzoom-zoom)>1e-3,sec=Math.floor(now/1000);
+      const act=!shown||!!BENCH||inOn()||ptrs.size>0||anims.length>0||endT>0||reach>0||!!MH.cer||now<PW.dirty||Math.abs(tyaw-yaw)+Math.abs(tpitch-pitch)+Math.abs(tzoom-zoom)>1e-3,sec=Math.floor(now/1000);
       if(act)PW.lastAct=now;if(sec!==PW.sec)pwSec(now,sec);
       if(!pwDue(now,PW.lastR,pwGap(PW.on,act,now-PW.lastAct))){pfAdd(PW.q,sec,1,0,0);return}   /* 省電＋閒置：這一格不畫 */
       const t=Math.min(PW.on&&!act?.6:.05,(now-last)/1000);last=now;   /* 省電閒置時一格可能隔 0.5 秒：計時器照實走；一開始動（走子、拖曳）就跟原本一樣最多 0.05 秒，走子動畫不會一格跳完 */
@@ -2259,7 +2348,7 @@
         lerp(B.head.rotation,"x",hx);lerp(B.head.rotation,"y",hy);tick(mate)}
       if(GIANT){gntTick(t,s);const tf=TELE?smooth(.06,.45,zoom):1;   /* 望遠鏡越放大：近景、中景越淡（像對焦到遠方）、遠方更暗的星星淡入 */
         for(const L of LAYER2){L.rotation.y+=Math.min(t,.1)*L.userData.spd;if(L.userData.op!=null){const o=L.userData.op*tf;if(L.material.opacity!==o)L.material.opacity=o}}
-        if(DEEPF){const o=TELE?.85*smooth(.9,.2,zoom):0;DEEPF.visible=o>.01;DEEPF.material.opacity=o}if(DEEPS.length)try{storyTick(s)}catch(e){}}orbTick(t,s);furn.tick(s);if(GIANT&&MG){bplane.visible=false;BU.visible=false}rd.render(sc,cam);if(GIANT)try{gntMirror()}catch(e){bplane.visible=true;BU.visible=true}   /* 黑洞：棋盤底下的鏡像角色，畫在同一張畫面上 */PW.lastR=now;pfAdd(PW.q,sec,1,1,act?0:1);pwFps(now)}
+        if(DEEPF){const o=TELE?.85*smooth(.9,.2,zoom):0;DEEPF.visible=o>.01;DEEPF.material.opacity=o}if(DEEPS.length)try{storyTick(s)}catch(e){}}orbTick(t,s);furn.tick(s);if(BENCH)rd.info.reset();if(GIANT&&MG){bplane.visible=false;BU.visible=false}rd.render(sc,cam);if(GIANT)try{gntMirror()}catch(e){bplane.visible=true;BU.visible=true}if(BENCH)benchRec(now);   /* 黑洞：棋盤底下的鏡像角色，畫在同一張畫面上 */PW.lastR=now;pfAdd(PW.q,sec,1,1,act?0:1);pwFps(now)}
     // 第一次 draw 之後，等所有圖片（背景、道具、棋盤、棋子、Pikafish）都載好才淡入；最多等 6 秒
     let drawn=false,shown=false;const t0=performance.now();PF.readyMs=null;PF.revealMs=null;PF.inflight=null;rd.domElement.style.opacity=0;rd.domElement.style.transition="opacity .35s";
     const shownCb=[];const reveal=()=>{if(shown)return;shown=true;PW.shownAt=performance.now();PF.revealMs=Math.round(PW.shownAt-t0);PF.inflight=[...inflight].map(i=>String(i.src||"").split("/").pop()).slice(0,6);if(IN.ph==="wait"){INTRO_SEEN.add(IN.key);IN.ph="hold";IN.t0=performance.now()}rd.domElement.style.opacity=1;veil.style.opacity=0;setTimeout(()=>veil.remove(),400);if(veil._qmin){hint.style.opacity=1;setTimeout(()=>hint.style.opacity=0,4500)}shownCb.splice(0).forEach(f=>{try{f()}catch(e){}})};
@@ -2270,7 +2359,7 @@
        p＝pitch：仰角＝預設仰角（約 0.8）＋(p−0.5)×1.2，所以 p .04 ≈ 仰角 0.25、p −.17 ≈ 跟棋盤同高、p −.5 ≈ 從棋盤底下往上看；z＝zoom；foc＝鎖定紅帥近景 */
     const GVIEWS=[["bh_home","🌌 全盤",{y:0,p:.5,z:1}],["bh_low","🏔 低角度",{y:.45,p:.04,z:1}],["bh_edge","🪞 側看上下鏡像",{y:.9,p:-.17,z:1.1}],["bh_under","🔄 棋盤背面",{y:PI,p:.5+PI/1.2,z:1}],
       ["bh_up","🔭 從底下仰望",{y:.3,p:-.5,z:1}],["bh_sky","✨ 星空俯瞰",{y:0,p:.5,z:2.4}],["bh_hole","🕳 望向黑洞",{y:0,p:.18,z:1.8}],["bh_near","🧍 主帥近景",{y:.35,p:.5,z:.3,foc:"K"}]];
-    const gntView=k=>{const v=(GVIEWS.find(x=>x[0]===k)||[])[2];if(!v)return false;if(TELE)teleSet(false);GFOC=null;
+    const gntView=k=>{const v=k&&typeof k==="object"?k:(GVIEWS.find(x=>x[0]===k)||[])[2];if(!v||!isFinite(v.y)||!isFinite(v.p)||!isFinite(v.z))return false;   /* 也收自訂角度 {y,p,z,foc}（黑洞序局開場對焦黑士，不進視角選單） */if(TELE)teleSet(false);GFOC=null;
       if(v.foc){const g=Object.values(pieces).find(o=>o&&o.userData&&o.userData.p===v.foc);if(g)GFOC=g}
       const P2=TAU/1.2;pitch-=Math.round((pitch-v.p)/P2)*P2;yaw-=Math.round((yaw-v.y)/TAU)*TAU;tyaw=v.y;tpitch=v.p;tzoom=v.z;userZ=true;pwPoke(1500);return true};   /* 走最近的路轉過去，不會繞好幾圈 */
     const setViewF=m=>{inEnd(false);if(GIANT){if(m==="flat")m="bh_low";else if(m==="top"||m==="topfit")m="bh_home";if(gntView(m))return}   /* 黑洞：舊的平視／俯視對到新的低角度／全盤（舊平視在繞球鏡頭會跑到棋盤底下） */
@@ -2292,7 +2381,7 @@
     function gntTick(t,s){for(const o of sc.children)if(o.visible&&!gntKeep(o))o.visible=false;
       for(const g of gntFigs){const B=g.userData.B;if(g.parent&&B&&B.mixer)B.mixer.update(t)}
       for(const g of gntStones){if(!g.parent)continue;const st=g.userData.st;st.position.y=.54+(PW.on?0:.06*Math.sin(s*1.6+g.userData.ph));st.lookAt(cam.position)}}
-    return{el,draw,destroy,say,screenOf,whenShown(f){if(shown)f();else shownCb.push(f)},oppSay:(t,d)=>{pwPoke(((+d)||2.6)*1000);return opp.say(t,d)},resetView(){reset()},setView:setViewF,views:()=>GIANT?GVIEWS.map(([k,l])=>[k,l]):null,intro(k){try{if(!k)return false;k=String(k);const ok=inStart(k,shown);if(!ok)INTRO_SEEN.add(k);return ok}catch(e){return false}},   /* 11/11 入座運鏡：同一座園子換下一盤時 06-cpu 叫這個（這盤播過、沒存視角以外的情況都不播） */homeView:()=>HOME.fit?"topfit":"",   /* 意見回饋 481（開發者：平視看不到小帥）：平視改成從小帥右肩後面斜著看——小帥在畫面左下、不擋棋盤 */   /* 平視＝從小帥的眼睛看出去（小帥先藏起來，不會擋住棋盤） */   /* 意見回饋 430：平視原本 -.85，鏡頭跑到小帥背後被擋住，改成 -.22 */hide(){el.style.display="none"},show(){if(el.style.display==="none"){el.style.display="";fit()}}}}
+    return{el,draw,destroy,say,screenOf,whenShown(f){if(shown)f();else shownCb.push(f)},oppSay:(t,d)=>{pwPoke(((+d)||2.6)*1000);return opp.say(t,d)},resetView(){reset()},bench:(cb,ms)=>bench(cb,ms),setView:setViewF,views:()=>GIANT?GVIEWS.map(([k,l])=>[k,l]):null,intro(k){try{if(!k)return false;k=String(k);const ok=inStart(k,shown);if(!ok)INTRO_SEEN.add(k);return ok}catch(e){return false}},   /* 11/11 入座運鏡：同一座園子換下一盤時 06-cpu 叫這個（這盤播過、沒存視角以外的情況都不播） */homeView:()=>HOME.fit?"topfit":"",   /* 意見回饋 481（開發者：平視看不到小帥）：平視改成從小帥右肩後面斜著看——小帥在畫面左下、不擋棋盤 */   /* 平視＝從小帥的眼睛看出去（小帥先藏起來，不會擋住棋盤） */   /* 意見回饋 430：平視原本 -.85，鏡頭跑到小帥背後被擋住，改成 -.22 */hide(){el.style.display="none"},show(){if(el.style.display==="none"){el.style.display="";fit()}}}}
   /* 11/11 省電模式：power()＝現在的設定和自動判斷結果（開著的園子每秒自己重判，不用通知）；perf()＝最近一座園子近 10 秒的效能計數（同 window.__PK.perf） */
   window.XQPark3D={create,power(){pwBat();const m=pwMode();return Object.assign({mode:m},pwDecide(m,pwSig()))},perf:()=>PF};
 })();
