@@ -186,7 +186,7 @@ var XQ=(function(){
   /* 意見回饋 415：這盤用過幾次提示（/play/hint、雲河棋路的提示棋 /play/hintmark）、悔過幾次棋（/play/undo）。
      存檔時一起寄進對局紀錄，我的戰績算棋力、成長時把這種盤排除，才公平；舊存檔沒有這兩欄就照算 */
   const assist=G=>({...(G&&G.hintN?{hintN:G.hintN}:{}),...(G&&G.undoN?{undoN:G.undoN}:{})});
-  const keepStart=G=>({...(G&&G.start?{start:G.start,startTurn:G.startTurn||"r"}:{}),...(G&&G.noPerp?{noPerp:true}:{}),...(G&&G.styleOn!=null?{styleOn:G.styleOn}:{}),...(G&&G.opp==="zhanggui"?{opp:"zhanggui"}:{})});   /* 對局中途可接續（開發者 11/9）：殘局起手、讓子的關（start）關掉 App 再打開或收起來再拿出來，要從同一個起始局面重建，不然盤面會錯 */
+  const keepStart=G=>({...(G&&G.start?{start:G.start,startTurn:G.startTurn||"r"}:{}),...(G&&G.noPerp?{noPerp:true}:{}),...(G&&G.styleOn!=null?{styleOn:G.styleOn}:{}),...(G&&G.opp==="zhanggui"?{opp:"zhanggui",...(G.zgx?{zgx:true}:{})}:{})});   /* 對局中途可接續（開發者 11/9）：殘局起手、讓子的關（start）關掉 App 再打開或收起來再拿出來，要從同一個起始局面重建，不然盤面會錯 */
   /* ---------- 存檔版本號、保存紀錄（評比循環第 2 輪 ChatGPT：續局與分頁衝突的可視化復原紀錄；各鍵的格式見 story/88 第 8 節）----------
      xq_play 最前面多兩欄：seq＝第幾版（每次寫 +1）、tab＝寫的那個分頁的代號（sessionStorage xqTab，同一個分頁重新整理不變）。VER＝這個分頁「知道的那一版」（讀進來的或自己寫的）。
      savePlay 寫之前先看 localStorage 裡現在是哪一版：跟 VER 不一樣＝另一個分頁在這之後寫過 → 不覆蓋，丟掉記憶體那份（下次 ensureP 重讀最新的），發 xq-play-newer（畫面提示）。
@@ -408,7 +408,10 @@ var XQ=(function(){
   const zgOn=G=>!!(G&&G.opp==="zhanggui"&&!G.ranked&&!G.practice&&!G.journey&&!G.arena&&!G.reward);
   let zgBookP=null;
   /* /play/new、/play/open 帶 opp:"zhanggui"：剛開的這盤是一般挑戰電腦（練功房、快速對局、盲棋）才記上；晉級賽、練習、石桌往事、擂台一律幻影棋客。記上以後先在背景下載開局庫 */
-  function zgSet(b){if(!P||!b||b.opp!=="zhanggui"||P.result||kindOf(P)!=="cpu"||P.ranked||P.practice||P.reward)return;P.opp="zhanggui";savePlay();zgBookLoad()}
+  function zgSet(b){if(!P||!b||b.opp!=="zhanggui"||P.result||kindOf(P)!=="cpu"||P.ranked||P.practice||P.reward)return;P.opp="zhanggui";if(b.zgx)P.zgx=true;savePlay();zgBookLoad()}
+  /* 「掌櫃真功夫」（開發者 11/12）：訓練循環（xiangqi-db/tools/style_loop，第 10 輪正式輪 2000 盤）校準的強度——每步 Pikafish 553 個節點、STYLEPICK 預設棋風、同一份開局庫，
+     勝率跟公開大師對局統計的目標一樣（42.65%）。App 裡不寫真實棋手的名字（開發者指定）。設定照訓練用的 lv＝{nodes}，選步候選數 SP.mpvOf 也照它算 */
+  const ZG_X_NODES=553,zgLv=(G,lv)=>G&&G.zgx?{nodes:ZG_X_NODES}:lv;
   const zgBookLoad=()=>zgBookP||(zgBookP=fetch(BASE+"data/xyc/xyc_book.json").then(r=>{if(!r.ok)throw new Error("開局庫 "+r.status);return r.json()}).then(j=>SP.bookParse(j)).catch(()=>{zgBookP=null;return null}));
   const CPU_MIN_MS=1000;
   async function playEngine(){
@@ -421,11 +424,11 @@ var XQ=(function(){
         if(u){const w=CPU_MIN_MS+Math.random()*500-(Date.now()-t0);if(w>0)await new Promise(z=>setTimeout(z,w));
           if(!P||P.id!==id||P.moves.length!==n||P.result)return;
           const f=parseSq(u.slice(0,2)),t=parseSq(u.slice(2,4));if(legal(P.board,P.turn).some(([a,b])=>a===f&&b===t)){playApply(f,t);playMsg="";engFail=0;return}}}
-      const hp=!zg&&HP.on(lv);   /* 低段（新手～業1）擬人選步：見上面 HUMANPICK */
-      const r=await XQEngine.search({moves:ucis()},lv.movetime?{movetime:lv.movetime}:{depth:lv.depth},zg?SP.mpvOf(lv):hp?HP.mpvOf(lv):lv.multipv||1);
+      const hp=!zg&&HP.on(lv),zl=zg?zgLv(P,lv):lv;   /* 低段（新手～業1）擬人選步：見上面 HUMANPICK；zl＝掌櫃這一盤用的設定（真功夫＝固定節點數） */
+      const r=await XQEngine.search({moves:ucis()},zl.nodes?{nodes:zl.nodes}:lv.movetime?{movetime:lv.movetime}:{depth:lv.depth},zg?SP.mpvOf(zl):hp?HP.mpvOf(lv):lv.multipv||1);
       {const w=CPU_MIN_MS+Math.random()*500-(Date.now()-t0);if(w>0)await new Promise(z=>setTimeout(z,w))}
       if(!P||P.id!==id||P.moves.length!==n||P.result)return;
-      const mv=zg?SP.pick(r,lv,P.board,P.turn,Math.random).mv:hp?HP.pick(r,lv,P.board,P.turn,Math.random).mv:pickMove(r,lv),f=parseSq(mv.slice(0,2)),t=parseSq(mv.slice(2,4));
+      const mv=zg?SP.pick(r,zl,P.board,P.turn,Math.random).mv:hp?HP.pick(r,lv,P.board,P.turn,Math.random).mv:pickMove(r,lv),f=parseSq(mv.slice(0,2)),t=parseSq(mv.slice(2,4));
       if(!legal(P.board,P.turn).some(([a,b])=>a===f&&b===t))throw new Error("引擎給出不合法著法 "+mv);
       playApply(f,t);playMsg="";engFail=0}
     /* 開發者 11/11（離線盤查）：引擎載不到（沒網路、手機裡還沒有引擎檔、還沒進多執行緒模式）原本立刻重試、無限循環——
@@ -437,7 +440,7 @@ var XQ=(function(){
   function playState(){ensureP();
     const CR=cpuRate(),ci=heldIdx(CR),nx=RANKS[ci+1];
     const SA=stashAll(),others=Object.values(SA).filter(g=>kindOf(g)!==kindOf(P)).map(g=>({kind:kindOf(g),opp:zgOn(g)?"zhanggui":null,arena:g.arena||null,journey:g.journey||null,ranked:!!g.ranked,reward:!!g.reward,level:g.level,n:g.moves.length,human:g.human}));
-    return{rules:C.REP_RULES,rc:P.rc||null,repetition:P.repetition||null,kind:kindOf(P),opp:zgOn(P)?"zhanggui":null,others,other:others[0]||null,journey:P.journey||null,noPerp:!!P.noPerp,start:P.start||null,startTurn:P.startTurn||"r",id:P.id,blind:/-b$/.test(String(P.id)),board:P.board,turn:P.turn,human:P.human,level:P.level,ranked:!!P.ranked,reward:!!P.reward,arena:P.arena||null,stamp:P.stamp||null,prize:P.prize||null,rkName:P.ranked?RANKS[P.rk][0]:null,rate:P.rate||null,
+    return{rules:C.REP_RULES,rc:P.rc||null,repetition:P.repetition||null,kind:kindOf(P),opp:zgOn(P)?"zhanggui":null,zgx:zgOn(P)&&!!P.zgx,others,other:others[0]||null,journey:P.journey||null,noPerp:!!P.noPerp,start:P.start||null,startTurn:P.startTurn||"r",id:P.id,blind:/-b$/.test(String(P.id)),board:P.board,turn:P.turn,human:P.human,level:P.level,ranked:!!P.ranked,reward:!!P.reward,arena:P.arena||null,stamp:P.stamp||null,prize:P.prize||null,rkName:P.ranked?RANKS[P.rk][0]:null,rate:P.rate||null,
       cpuRate:{pts:CR.pts,rank:RANKS[ci][0],w:CR.w,l:CR.l,d:CR.d,next:nx?nx[0]:null,toNext:nx?nx[1]-CR.pts:0,lo:RANKS[ci][1],hi:nx?nx[1]:null,hist:CR.hist},
       levels:LEVELS.map(l=>({n:l.n,name:l.name,desc:l.desc})),record:ls.get("record",{}),
       moves:P.moves.map(moveOut),result:P.result,practice:P.practice||null,thinking:playBusy&&P.turn!==P.human,msg:playMsg,eval:lastEv(P.moves),hint:P.hint,hintN:P.hintN||0,undoN:P.undoN||0,   /* 開發者 11/11 選 v3 規劃書 B03：這盤用過幾次提示、悔棋，給畫面標示用 */

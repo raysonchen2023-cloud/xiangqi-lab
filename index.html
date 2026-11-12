@@ -1534,7 +1534,7 @@ html[data-hct] .player.on .clk{background:#00563B;color:#FFFFFF;border-color:#00
       if(!window.caches)return go();caches.keys().then(function(ks){return Promise.all(ks.filter(function(k){return k.indexOf("xqlab-app-")===0}).map(function(k){return caches.delete(k)}))})
         .then(function(){return navigator.serviceWorker&&navigator.serviceWorker.getRegistration()}).then(function(r){return r&&r.update()}).catch(function(){}).then(go)}};setTimeout(chk,4000)})();
 </script>
-<script>window.XQ_OFFLINE=true;window.XQ_BUILD="20261112-1230";</script>
+<script>window.XQ_OFFLINE=true;window.XQ_BUILD="20261112-1240";</script>
 <script src="core.js"></script>
 <script src="engine.js"></script>
 <script src="local.js"></script>
@@ -5712,7 +5712,9 @@ async function journeyStart(n,c,nm,df){const C=WX_CHARS[c];if(!C)return;fnStep("
   if(store.get("oppLook",null)==null)store.set("oppLook","real");if(nm){try{setMyName(nm)}catch(e){}}
   SAVE_LOCK=false;await saveNow(true);
   if(had){SAVE_LOCK=true;saveReload({xqPrologue:"1"});return}
-  try{window.dispatchEvent(new Event("xq-look"))}catch(e){}titleClose();try{route()}catch(e){}setTimeout(prologue,500)}
+  try{window.dispatchEvent(new Event("xq-look"))}catch(e){}
+  if(typeof bhxNeed==="function"&&bhxNeed()&&typeof bhXuStart==="function"){bhXuStart(false);titleClose();location.hash="#/adventure";return}   /* hspx 11/12「開頭過場頓一下」：背後不建首頁 3D 園子（很重），改開星槎頁（下完序局本來就降落在星槎） */   /* 開發者 11/12「開頭會跳到首頁才接到黑洞對戰」：先蓋上星渦再關開頭畫面，首頁不露出來 */
+  titleClose();try{route()}catch(e){}setTimeout(prologue,500)}
 function journeyRepick(c){const C=WX_CHARS[c],J=journey();if(!C||!J||J.re!==1)return;store.set("pChar",c);store.set("pSex",C.sx);store.set("botPiece",C.pc);const hm=jHomePick(c);store.set("journey",{...J,c,sx:C.sx,re:2,era:2,home:hm});store.set("shipDock",null);   /* 意見回饋 675：換了角色＝家鄉換了，已停靠的站照舊規則重算一次（不會變少） */if(hm){store.set("era",hm);store.set("eraUser",null);try{applyEra()}catch(e){}}
   try{window.dispatchEvent(new Event("xq-look"))}catch(e){}saveNow(true);toast("換好了："+C.n+"（之後就鎖定了）")}
 async function slotLoad(n){let S=null;try{S=await slotGet(n)}catch(e){}
@@ -5958,7 +5960,7 @@ function saveMigrateOld(){const c=myChar()||(mySex()==="f"?"f":"m");store.set("j
 function saveBoot(){if(SAVE_OLD!==null){store.set("saveMig1",Date.now());if(SAVE_OLD)saveMigrateOld()}lockFix();
   try{const J=store.get("journey",null);if(J&&CHAR_ERA[J.c]&&J.era!==2){store.set("era",CHAR_ERA[J.c]);store.set("eraUser",null);store.set("journey",{...J,era:2});setTimeout(()=>{try{applyEra()}catch(e){}},300)}}catch(e){}   /* 意見回饋 669 補：1200 版以前就選好角色的旅程，開 App 時補套一次角色主場的朝代（之後自己換的照自己的） */
   let pro=false,shown=false;try{pro=!!sessionStorage.getItem("xqPrologue");if(pro)sessionStorage.removeItem("xqPrologue");shown=!!sessionStorage.getItem("xqTitleShown")}catch(e){}
-  if(pro)setTimeout(prologue,1500);
+  if(pro){if(typeof bhxNeed==="function"&&bhxNeed()&&typeof bhxBack==="function")bhxBack(true);setTimeout(prologue,1500)}   /* 換格開新旅程會重新載入：等序幕的 1.5 秒先蓋黑洞底，不露出首頁 */
   if(shown||navigator.webdriver||!/^(#\/?)?$/.test(location.hash||""))return;titleScreen({})}
 setTimeout(()=>{try{saveBoot()}catch(e){console.warn("saveBoot",e)}},0);
 document.addEventListener("visibilitychange",()=>{if(document.visibilityState==="hidden")saveNow(true)});
@@ -9910,14 +9912,15 @@ function bhxCss(){if(document.getElementById("bhxCss"))return;const s=document.c
 #bhxPg .bx-bd line{stroke:rgba(236,204,128,.62);stroke-width:.32;stroke-dasharray:100;stroke-dashoffset:100;animation:bhxLn 2.4s ease-out forwards}
 @keyframes bhxLn{to{stroke-dashoffset:0}}
 #bhxPg .bx-t{font-size:13px;letter-spacing:.3em;color:#E8C77A;margin-bottom:22px;text-shadow:0 1px 6px #000}
-#bhxPg .bx-l{font-size:clamp(20px,6vw,28px);line-height:1.8;letter-spacing:.08em;font-weight:600;text-shadow:0 2px 12px #000,0 0 3px #000;opacity:0;transform:translateY(8px);transition:opacity .9s,transform .9s}
+#bhxPg .bx-l{font-size:var(--bxfs,clamp(20px,6vw,28px));white-space:nowrap;line-height:1.8;letter-spacing:.08em;font-weight:600;text-shadow:0 2px 12px #000,0 0 3px #000;opacity:0;transform:translateY(8px);transition:opacity .9s,transform .9s}
 #bhxPg .bx-l.on{opacity:1;transform:none}
+#bhxPg .bx-t,#bhxPg .bx-n,#bhxPg .bx-cap{white-space:nowrap}
 #bhxPg .bx-n{margin-top:22px;font-size:14px;color:#e2d6b8;opacity:0;transition:opacity .9s;text-shadow:0 1px 6px #000}#bhxPg .bx-n.on{opacity:1}
 #bhxPg .bx-mt{position:absolute;inset:0;width:100%;height:100%;pointer-events:none}
 #bhxPg .bx-cap{position:absolute;top:calc(8vh + env(safe-area-inset-top,0px));left:0;right:0;font-size:clamp(18px,5.4vw,25px);letter-spacing:.32em;font-weight:600;color:#FFE6A8;text-shadow:0 2px 12px #000,0 0 3px #000;opacity:0;transition:opacity 1s;pointer-events:none}#bhxPg .bx-cap.on{opacity:1}
 #bhxPg .bx-k{position:absolute;right:16px;top:calc(14px + env(safe-area-inset-top,0px));font-size:13px;color:#e2d6b8;background:rgba(0,0,0,.35);border:1px solid rgba(232,199,122,.4);border-radius:99px;padding:6px 14px}
 #bhxVx{position:fixed;inset:0;z-index:9001;display:flex;align-items:center;justify-content:center;background:radial-gradient(circle at 50% 50%,#000 0 6%,#2a1450 16%,#120a26 38%,#05060d 70%);overflow:hidden}
-#bhxVx::before{content:"";position:absolute;width:160vmax;height:160vmax;background:conic-gradient(from 0deg,transparent 0 10%,rgba(180,107,255,.35) 14%,transparent 22% 40%,rgba(110,139,255,.3) 46%,transparent 54% 72%,rgba(180,107,255,.3) 78%,transparent 86%);border-radius:50%;animation:bhxSp 1.8s linear infinite}
+#bhxVx::before{content:"";position:absolute;width:160vmax;height:160vmax;background:conic-gradient(from 0deg,transparent 0 10%,rgba(180,107,255,.35) 14%,transparent 22% 40%,rgba(110,139,255,.3) 46%,transparent 54% 72%,rgba(180,107,255,.3) 78%,transparent 86%);border-radius:50%;animation:bhxSp 1.8s linear infinite;will-change:transform}
 #bhxVx img{position:relative;width:min(46vw,220px);aspect-ratio:1;border-radius:50%;object-fit:cover;object-position:top;border:3px solid #E8C77A;box-shadow:0 0 30px rgba(180,107,255,.8);animation:bhxSk 1.7s cubic-bezier(.55,0,.9,.45) forwards}
 @keyframes bhxSp{to{transform:rotate(360deg)}}
 @keyframes bhxSk{0%{transform:none}35%{transform:rotate(90deg) scale(.95)}100%{transform:rotate(900deg) scale(.02);opacity:.2}}
@@ -9936,6 +9939,8 @@ function bhxPages(keys,done,first){bhxCss();let i=0,tm=[],MT=null;const o=docume
     o.style.backgroundImage=`url(${P.img}),url(data/park/bh_far2.webp)`;o.classList.toggle("bd",!!P.board);
     o.innerHTML=`${P.board?bhxBoardSvg():""}${P.meteor?`<div class="bx-cap">${esc(BHX_TXT.rain)}</div>`:""}${first&&i===0?`<div class="bx-t">第〇章　${esc(BHX_TXT.title)}</div>`:""}${P.big.map(t=>`<div class="bx-l">${esc(t)}</div>`).join("")}${P.narr?`<div class="bx-n">說書人：${esc(P.narr)}</div>`:""}<button class="bx-k" type="button">略過</button>`;
     o.querySelector(".bx-k").onclick=e=>{e.stopPropagation();vibrate(5);end()};
+    /* hspx 開發者 11/12「語句的原則不要換行，這樣很不好看」（截圖：「天上有一張星盤。」被擠成兩行）：每句一行（nowrap），字級照最長那句算到放得下（字距 .08em＋左右留白），最大 28px */
+    {const n=Math.max(...P.big.map(t=>[...t].length)),w=(o.clientWidth||innerWidth)-48;o.style.setProperty("--bxfs",Math.max(14,Math.min(28,Math.floor(w/(n*1.1))))+"px")}
     const lines=()=>{const T0=P.board?1.6:P.meteor?.2:.3;[...o.querySelectorAll(".bx-l,.bx-n")].forEach((x,j)=>tm.push(setTimeout(()=>x.classList.add("on"),(T0+j*.9)*1000)))};
     if(P.meteor){const cap=o.querySelector(".bx-cap");tm.push(setTimeout(()=>cap&&cap.classList.add("on"),700));MT=bhxMeteor(o,()=>{if(cap)cap.classList.add("on");lines()})}else lines()};
   o.onclick=()=>{if(MT&&!MT.done){MT.skip();return}const L=[...o.querySelectorAll(".bx-l:not(.on),.bx-n:not(.on)")];if(L.length){clr();L.forEach(x=>x.classList.add("on"));return}vibrate(5);i++;show()};
@@ -9979,12 +9984,17 @@ function bhxMeteor(o,onDone){const cv=document.createElement("canvas");cv.classN
 function bhxVortex(c,done){bhxCss();const o=document.createElement("div");o.id="bhxVx";o.setAttribute("aria-hidden","true");o.innerHTML=`<img src="data/xs/prev_${c}.webp" alt="" onerror="this.remove()">`;document.body.append(o);
   let rm=false;try{rm=matchMedia("(prefers-reduced-motion:reduce)").matches}catch(e){}
   setTimeout(()=>{o.style.transition="opacity .4s";o.style.opacity="0";setTimeout(()=>o.remove(),450);if(done)done()},rm?500:1750)}
+/* 開發者 11/12「開頭會跳到首頁才接到黑洞對戰」：從星渦到黑洞對局頁出現之間，墊一層黑洞底（z 8990，在分鏡 9000、對話框 10000 底下），首頁不會露出來 */
+function bhxBack(on){let d=document.getElementById("bhxBk");if(!on){if(d){d.style.transition="opacity .5s";d.style.opacity="0";setTimeout(()=>d.remove(),550)}return}
+  if(d)return;d=document.createElement("div");d.id="bhxBk";d.setAttribute("aria-hidden","true");d.style.cssText="position:fixed;inset:0;z-index:8990;background:#05060d url(data/park/bh_far2.webp) center/cover no-repeat";document.body.append(d)}
 /* old＝舊玩家「只看序章」：下完不接原本的序幕，回首頁 */
-function bhXuStart(old){const c=(typeof myChar==="function"&&myChar())||"x_swordboy";store.set("bhXuOld",old?1:0);try{bhPreload()}catch(e){}bhMus("fall");vibrate([20,60,20]);
+function bhXuStart(old){const c=(typeof myChar==="function"&&myChar())||"x_swordboy";store.set("bhXuOld",old?1:0);bhxBack(true);bhMus("fall");vibrate([20,60,20]);
+  /* hspx 11/12「開頭過場頓一下」：分鏡圖先預載（解碼好才不會翻頁時跳一下）；3D 模型等星渦轉完（2 秒）再開始下載，不搶動畫 */
+  for(const k in BHX_PG){try{const im=new Image();im.decoding="async";im.src=BHX_PG[k].img}catch(e){}}setTimeout(()=>{try{bhPreload()}catch(e){}},2000);
   bhxVortex(c,()=>bhxPages(["p1","p5"],bhxIntro,true))}
 function bhxIntro(){modal(`<div class="em">♟</div><h2>星樞棋局・序局</h2><p>星盤展開，棋路成光。七星化作紅方棋子。</p><p class="pl-say">✦ 星樞：「${esc(BHX_TXT.start)}」</p><p class="muted" style="font-size:13px">黑洞殘局，只差最後一手：紅方先走，一步將死黑將。走錯也不算輸。<br>說書人：${esc(BHX_TXT.open)}</p>`,[["入局",bhxGo]],"prolog")}
 function bhxGo(){BHX_W=0;store.set("park3d",true);store.set("bhRet",null);
-  jStart(BHX_ID,{human:"r",lx:1,journey:BHX_ID,lv:{fen:BHX_FEN,turn:"r",noPerpetual:true}},()=>{location.hash="#/journey/play";setTimeout(()=>{bhBell();toast("✦ 星樞："+BHX_TXT.start)},900);
+  jStart(BHX_ID,{human:"r",lx:1,journey:BHX_ID,lv:{fen:BHX_FEN,turn:"r",noPerpetual:true}},()=>{location.hash="#/journey/play";setTimeout(()=>{bhBell();toast("✦ 星樞："+BHX_TXT.start)},900);setTimeout(()=>bhxBack(false),1500);
     /* 從紅方正後方看，同一路的俥、炮、黑士、黑將疊在一起 → 開場轉到右前方斜看、對焦黑士（實測挑的角度） */
     let k=0;const cam=()=>{k++;try{if(typeof PARK!=="undefined"&&PARK&&PARK.v&&PARK.v.setView){PARK.v.setView({y:.6,p:.45,z:.65,foc:"a"});return}}catch(e){}if(k<30)setTimeout(cam,400)};setTimeout(cam,1200)})}
 /* 08b-cpugame tap() 送出前問：序局走錯就不送（回傳 {hint}），走對回 null 照常送 */
@@ -11842,7 +11852,11 @@ const zgIs=st=>!!(st&&st.opp==="zhanggui"&&!st.ranked&&!st.practice&&!st.journey
 const cpuOppName=st=>String(st&&st.journey||"").startsWith("gx:")?"🌌 "+((typeof gxGet==="function"&&gxGet(String(st.journey).slice(3))||{}).t||"第十四顆・鏡像"):String(st&&st.journey||"").startsWith("bh:")?"🌀 星樞":zgIs(st)?OPT_ZG.name:OPT_KM.name;   /* 黑洞星盤的對手是星樞（不是幻影棋客） */
 const cpuOppPref=()=>store.get("cpuOpp","km")==="zhanggui"?"zhanggui":"km";
 /* /play/new 要多帶的參數：晉級賽不帶（local.js 也會擋） */
-const zgArg=(opp,ranked)=>!ranked&&opp==="zhanggui"?{opp:"zhanggui"}:{};
+const zgArg=(opp,ranked,zx)=>!ranked&&opp==="zhanggui"?{opp:"zhanggui",...(zx?{zgx:true}:{})}:{};
+/* 「掌櫃真功夫」檔位（開發者 11/12）：訓練循環校準的強度（local.js ZG_X_NODES），只對笑面掌櫃、只在練功房與快速對局；選過記在 store zgX。
+   開發者指定：App 裡不寫真實棋手的名字、不寫勝率數字 */
+const ZG_X={name:"掌櫃真功夫",short:"真",desc:"掌櫃拿出真本事：強度照公開大師對局的勝率校準過，不跟著等級變。"};
+const zgXOn=opp=>opp==="zhanggui"&&!!store.get("zgX",false);
 /* 3D 園子裡的掌櫃：沒有立繪，用程式畫的小人（幞頭、褐色袍），身上照舊是帥／將；cus 用 k: 開頭，oppLine 不會拿擂主的台詞頂替 */
 const ZG_LOOK=side=>({cus:"k:zg",p:side==="r"?"帥":"將",e:store.get("era","classic"),g:9,npc:OPT_ZG.name,about:OPT_ZG.intro,hat:"futou",hc:"#3a2a1e",robe:"#9A5B2C"});
 function zgCss(){if(document.getElementById("zgCss"))return;const s=document.createElement("style");s.id="zgCss";s.textContent=`
@@ -18690,7 +18704,7 @@ function crPaint(P){const rk=crRanked(),bl=crBlind(),lv=crLevel(),sd=crSide(),CR
     rb.setAttribute("aria-label",`段位牌：${rn}，${CR.pts||0} 分`+(CR.next&&CR.toNext!=null?`，還差 ${CR.toNext} 分升「${CR.next}」`:"")+"，按下看詳細")}
   {const sb=P.querySelector("#crScroll");if(sb)sb.setAttribute("aria-label",`卷軸，按下可換難度，目前第 ${lv} 級`+(crPassed(lv)?"，已通關":""))}
   const live=crLive(),lm=live?(CR_ST.ranked?"晉級賽":CR_ST.blind?`盲棋第 ${CR_ST.level} 級`:`練功房第 ${CR_ST.level} 級`):"";
-  const md=rk?"rank":bl?"blind":"free",info=crInfo(md,lv,sd,{rank:rkTw(CR.rank||"新手"),passed:crPassed(lv)});
+  const md=rk?"rank":bl?"blind":"free",zx=!rk&&zgXOn(crOpp()),info=zx?`${OPT_ZG.name}・${ZG_X.name}：${ZG_X.desc}你執${sd==="b"?"黑方（後走）":"紅方（先走）"}。`:crInfo(md,lv,sd,{rank:rkTw(CR.rank||"新手"),passed:crPassed(lv)});   /* 掌櫃真功夫：不跟等級走，說明換成這一格的 */
   {const gb=P.querySelector("#crGo"),ic=crEra()==="han"?"🍶":"🍵";if(gb){gb.querySelector("b").textContent=ic+" "+CR_GO[md];gb.setAttribute("aria-label",CR_GO[md]+"："+info)}}
   P.querySelector(".cr-card").innerHTML=`<p class="cr-one">${esc(info)}</p>`+(rk?`<p class="cr-rule">⚠ ${esc(CR_RULE)}</p>`:"")+
     (live?`<div class="cr-cont"><span>上一盤${lm}還沒下完</span><button type="button" id="crCont">繼續上一盤 ›</button></div>`:"")+
@@ -18700,14 +18714,15 @@ function crPaint(P){const rk=crRanked(),bl=crBlind(),lv=crLevel(),sd=crSide(),CR
   try{crFit(P)}catch(e){}}
 function crPick(P){const lv0=crLevel();
   sheet("📚 練功房・選難度",b=>{b.innerHTML=`<p class="muted" style="margin:0 0 10px;font-size:13.5px;line-height:1.6">${CR_LVTIP}</p><div class="cr-pick">${CR_LV.map(([a,z,nm,note],i)=>{const dim=crGrpDim(i);let h="";for(let n=a;n<=z;n++)h+=`<button type="button" data-l="${n}" class="${n===lv0?"on":""}"><b>${n}</b>${esc(rkTw(crLvName(n)||""))}${crPassed(n)?"<i>✔ 通關</i>":""}</button>`;
-      return`<div class="cr-sec${dim?" dim":""}"><h4><span>${esc(nm)}</span><small>第 ${a}～${z} 級${note?"・"+esc(note):""}${dim?"・前一卷還沒通關":""}</small></h4><div class="cr-lvs">${h}</div></div>`}).join("")}</div>`;
-    b.querySelectorAll("[data-l]").forEach(x=>x.onclick=()=>{vibrate(5);store.set("cpuLevel",+x.dataset.l);closeSheet();crPaint(P)})})}
+      return`<div class="cr-sec${dim?" dim":""}"><h4><span>${esc(nm)}</span><small>第 ${a}～${z} 級${note?"・"+esc(note):""}${dim?"・前一卷還沒通關":""}</small></h4><div class="cr-lvs">${h}</div></div>`}).join("")}${crOpp()==="zhanggui"?`<div class="cr-sec"><h4><span>${esc(OPT_ZG.name)}</span><small>${esc(ZG_X.desc)}</small></h4><div class="cr-lvs"><button type="button" data-zx="1" class="${zgXOn("zhanggui")?"on":""}"><b>${esc(ZG_X.short)}</b>${esc(ZG_X.name)}</button></div></div>`:""}</div>`;   /* 開發者 11/12：笑面掌櫃多一格「掌櫃真功夫」 */
+    b.querySelectorAll("[data-l]").forEach(x=>x.onclick=()=>{vibrate(5);store.set("cpuLevel",+x.dataset.l);store.set("zgX",false);closeSheet();crPaint(P)});
+    {const z=b.querySelector("[data-zx]");if(z)z.onclick=()=>{vibrate(5);store.set("zgX",true);closeSheet();crPaint(P)}}})}
 function crRankSheet(){const CR=(CR_ST&&CR_ST.cpuRate)||{},span=CR.hi!=null?CR.hi-CR.lo:0,pct=span?Math.round(100*(CR.pts-CR.lo)/span):100;
   sheet("🏅 我的晉級賽段位",b=>{b.innerHTML=`<div class="cpu-rk"><div class="mid"><span class="muted">段位</span><span class="pt"><b>${CR.pts||0}</b> 分</span></div><div class="rk">${esc(CR.rank||"新手")}</div>
     <div class="st-bar"><i style="width:${pct}%"></i></div><div class="muted" style="font-size:13px">${CR.next?`再 ${CR.toNext} 分升「${esc(CR.next)}」`:"已經是最高段位"}・${CR.w||0} 勝 ${CR.l||0} 負 ${CR.d||0} 和</div>
     <p>晉級賽的對手照你的段位配：跟實力差不多的幻影棋客下，贏約 +16、輸約 −16，跟線上對戰分開記分。</p></div>`})}
 async function crStart(){const rk=crRanked(),lv=crLevel(),sd=crSide();
-  const go=async()=>{try{await api("/play/new",{human:sd,lx:lv,ranked:rk,...(crBlind()?{blind:true}:{}),...zgArg(crOpp(),rk)});if(OFF)store.set("cpuRanked",rk);location.hash="#/cpu"}catch(e){toast(e.message||"開不了局")}};
+  const go=async()=>{try{await api("/play/new",{human:sd,lx:lv,ranked:rk,...(crBlind()?{blind:true}:{}),...zgArg(crOpp(),rk,zgXOn(crOpp()))});if(OFF)store.set("cpuRanked",rk);location.hash="#/cpu"}catch(e){toast(e.message||"開不了局")}};
   if(crLive()){const s=CR_ST;modal(`<div class="em">🀄</div><h2>上一盤還沒下完</h2><p class="muted">${s.ranked?"晉級賽下到一半開新局會算輸。":"可以接著下，或放棄那盤開新局。"}</p>`,
     [["繼續上一盤",()=>{location.hash="#/cpu"}],[s.ranked?"開新局（上一盤算輸）":"開新局",go],["取消",null,true]]);return}
   go()}
@@ -21240,7 +21255,7 @@ function CpuGame(v,practicePage,mode){
   const MODE=practicePage?"practice":mode||"cpu",KIND=s=>s.kind||(s.practice?"practice":s.journey?"journey":s.arena?"arena":"cpu"),MODE_URL={cpu:"#/cpu",arena:"#/arena",journey:"#/journey/play",practice:"#/redo/play"};let opened=false;
   const openArgs=()=>{if(MODE==="arena"){const e=(typeof rsArenaEra==="function"&&rsArenaEra())||store.get("era","classic"),k=ARENA[e]?e:"classic";   /* 回饋 838（開發者 11/9 選：全模式中斷接續）：有沒下完的擂台那盤，強度照那盤的朝代算（不照現在停的朝代，免得石桌棋仙那盤被降級、別朝擂主被升到第 7 級） */return{kind:"arena",arena:k,level:arenaLevel(k),dx:typeof diffDx==="function"?diffDx():0}}   /* 意見回饋 675：擂主照航行難度加減幾段 */
     if(MODE==="journey"||MODE==="practice")return{kind:MODE};
-    {const rk=OFF&&store.get("cpuRanked",true);return{kind:"cpu",ranked:rk,lx:store.get("cpuLevel",6),human:"r",...zgArg(cpuOppPref(),rk)}}};
+    {const rk=OFF&&store.get("cpuRanked",true);return{kind:"cpu",ranked:rk,lx:store.get("cpuLevel",6),human:"r",...zgArg(cpuOppPref(),rk,zgXOn(cpuOppPref()))}}};
   setTabs(false);gameLayout(v);
   let st=null,sel=-1,shownResult=null,busy=false,pHint=null;   // pHint：錯棋重練時在棋盤上畫 Pikafish 的建議
   const bd=Board(i=>tap(i));v.querySelector("#bbox").append(bd.svg);
@@ -21477,8 +21492,8 @@ function CpuGame(v,practicePage,mode){
             if(win&&s0){const Ls=s0.book===2?jStages2():jStages(),i=Ls.findIndex(x=>x.id===s0.id),nx=i>=0&&i+1<Ls.length&&jOpen(Ls,i+1)?Ls[i+1]:null;
               return nx?resBtns(["📖 下一回 ›",()=>{if(nx.book===2)store.set("legBook",2);goUp(SHELF(nx.book===2?2:1),()=>nx.book===2?legendRead2(nx.n):legendRead(nx.n))}],bk):resBtns(bk)}
             return resBtns(again,bk)})(),"res");return}
-      modal(`<div class="em">${win?"🏆":draw0?"🤝":"💪"}</div><h2>${win?"你贏了！":draw0?"和局":"這盤輸了"}</h2><p class="muted">${esc(st.result.why)}・${st.journey?`🪨 ${esc(jName(st.journey))}`:`對手${zgIs(st)?esc(OPT_ZG.name)+"・":""}第 ${st.level} 級「${esc(rkTw(lv.name||""))}」`}</p>`+(zgIs(st)?`<p style="font-size:14px;margin:8px 0 2px">🧮 ${esc(OPT_ZG.name)}：「${esc(win?OPT_ZG.lose:draw0?OPT_ZG.draw:OPT_ZG.win)}」</p>`:"")+XPL+QKN+(st.blind?`<p style="font-size:14px;margin:8px 0 2px">${win?"你在看不見的棋盤上，走出了一盤清清楚楚的勝局。":draw0?"看不見棋子也守成和局，記盤功力不錯。":"這盤棋沒守住，但你已經把棋盤放進心裡了一步。"}</p><p class="muted" style="font-size:12.5px;margin:0">盲棋不算段位、不記通關，也不算進「我的棋力」。</p>`:""),
-        (()=>{const nx=[win&&st.level<18&&!FH()?"挑戰下一級 ›":"再來一局",()=>api("/play/new",{human:st.human,lx:win&&st.level<18&&!FH()?st.level+1:st.level,...(FH()?{ranked:false}:{}),...(st.blind?{blind:true}:{}),...zgArg(zgIs(st)?"zhanggui":"km",!!st.ranked)})   /* 開發者 11/6 修：等級是細分的 1～18 級，用 lx 傳、上限 18；原本傳 level 會被再換算一次，難度暴跳 */.then(render).catch(e=>toast(e.message))],hub=FH()?["⚔ 去"+QKH+"正式上桌",()=>{location.hash="#/hub/battle"}]:null;
+      modal(`<div class="em">${win?"🏆":draw0?"🤝":"💪"}</div><h2>${win?"你贏了！":draw0?"和局":"這盤輸了"}</h2><p class="muted">${esc(st.result.why)}・${st.journey?`🪨 ${esc(jName(st.journey))}`:`對手${zgIs(st)?esc(OPT_ZG.name)+"・":""}${st.zgx?esc(ZG_X.name):`第 ${st.level} 級「${esc(rkTw(lv.name||""))}」`}`}</p>`+(zgIs(st)?`<p style="font-size:14px;margin:8px 0 2px">🧮 ${esc(OPT_ZG.name)}：「${esc(win?OPT_ZG.lose:draw0?OPT_ZG.draw:OPT_ZG.win)}」</p>`:"")+XPL+QKN+(st.blind?`<p style="font-size:14px;margin:8px 0 2px">${win?"你在看不見的棋盤上，走出了一盤清清楚楚的勝局。":draw0?"看不見棋子也守成和局，記盤功力不錯。":"這盤棋沒守住，但你已經把棋盤放進心裡了一步。"}</p><p class="muted" style="font-size:12.5px;margin:0">盲棋不算段位、不記通關，也不算進「我的棋力」。</p>`:""),
+        (()=>{const up=win&&st.level<18&&!FH()&&!st.zgx,nx=[up?"挑戰下一級 ›":"再來一局",()=>api("/play/new",{human:st.human,lx:up?st.level+1:st.level,...(FH()?{ranked:false}:{}),...(st.blind?{blind:true}:{}),...zgArg(zgIs(st)?"zhanggui":"km",!!st.ranked,!!st.zgx)})   /* 掌櫃真功夫沒有「下一級」，再來一局照樣是真功夫 */   /* 開發者 11/6 修：等級是細分的 1～18 級，用 lx 傳、上限 18；原本傳 level 會被再換算一次，難度暴跳 */.then(render).catch(e=>toast(e.message))],hub=FH()?["⚔ 去"+QKH+"正式上桌",()=>{location.hash="#/hub/battle"}]:null;
           /* ChatGPT 改善單 T01：快局的主要按鈕＝看懂最關鍵的一步（這盤的編號、執哪一方、難度先記下來，按的時候 st 可能已經換了） */
           if(MF){const gid=st.id,hu=st.human,lx=mflLx(st);return resBtns(["🔎 看懂這盤最關鍵的一步 ›",()=>mflOpen(gid,hu,lx)],["♟ "+nx[0],nx[1]],false,hub)}
           return resBtns(nx,hub)})(),"res")}}
@@ -21555,7 +21570,7 @@ async function review(rep,id,at){let it=null;for(let k=0;k<12&&!it;k++){try{cons
       pa.querySelector("#pPv").onclick=()=>{vibrate(5);pvSheet(bc)}}}
   // 開新局。下到一半（雙方都走過）：積分挑戰會算輸，一定要確認；自選難度換成積分挑戰也問一下，免得誤觸把棋丟掉
   function startNew(o){const ranked=OFF&&!!o.ranked,m=ranked?"rank":"free";
-    const go=()=>{closeSheet();shownResult=null;sel=-1;if(OFF)store.set("cpuRanked",ranked);paintSeg(m);post("/play/new",{human:o.human,lx:o.level,ranked,...zgArg(o.opp,ranked)})   /* 590：挑戰電腦傳的是細分後的 18 級（lx），其他地方傳的舊 1～8 級由 local.js 換算 */};
+    const go=()=>{closeSheet();shownResult=null;sel=-1;if(OFF)store.set("cpuRanked",ranked);paintSeg(m);if(!ranked&&o.opp==="zhanggui")store.set("zgX",!!o.zx);post("/play/new",{human:o.human,lx:o.level,ranked,...zgArg(o.opp,ranked,o.zx)})   /* 590：挑戰電腦傳的是細分後的 18 級（lx），其他地方傳的舊 1～8 級由 local.js 換算 */};
     const live=st&&!st.result&&st.moves.length>=2;
     if(live&&st.ranked)confirmBox("晉級賽還沒下完，開新局會算輸，確定？",go,"確定");
     else if(live&&m!=="free"&&m!==modeOf(st))confirmBox("這盤還沒下完，要換成晉級賽開新局嗎？",go,"換成晉級賽");else go()}
@@ -21570,13 +21585,13 @@ async function review(rep,id,at){let it=null;for(let k=0;k<12&&!it;k++){try{cons
   /* 開發者 11/11（截圖：橋上快速對局也能選難度、切晉級賽）：從首頁快速對局進來的（07y hbFromHome），新局、等級按鈕只給「再來一盤（同樣難度）」，
    想換難度、打晉級賽就去茶肆（快局的價值是快，選難度留給茶肆）；頂欄不放晉級賽／練功房分頁，結算視窗也不給「挑戰下一級」 */
   const FH=()=>MODE==="cpu"&&typeof hbFromHome==="function"&&hbFromHome();
-  function quickSheet(){const hub=typeof hbHubN==="function"?hbHubN():"茶肆";let qo=cpuOppPref();sheet("♟ 快速對局",b=>{const paint=()=>{b.innerHTML=`<p class="muted" style="margin:0 0 10px">快速對局用上一盤的難度（第 ${st.level} 級），不算段位分。想換難度、打晉級賽，請到${esc(hub)}正式上桌。</p>
+  function quickSheet(){const hub=typeof hbHubN==="function"?hbHubN():"茶肆";let qo=cpuOppPref();sheet("♟ 快速對局",b=>{const paint=()=>{b.innerHTML=`<p class="muted" style="margin:0 0 10px">快速對局用上一盤的難度（${st.zgx?esc(ZG_X.name):`第 ${st.level} 級`}），不算段位分。想換難度、打晉級賽，請到${esc(hub)}正式上桌。</p>
       <div class="cpu-lb">對手</div>${zgOppHTML(qo,false)}<div style="height:10px"></div>
       <button class="btn" id="qkAgain" style="width:100%;margin:0 0 8px">♟ 再來一盤（同樣難度）</button><button class="btn ghost" id="qkHub" style="width:100%;margin:0">⚔ 去${esc(hub)}選難度、打晉級賽</button>`;
-    zgOppBind(b,o=>{qo=o;paint()});b.querySelector("#qkAgain").onclick=()=>{closeSheet();const go=()=>api("/play/new",{human:st.human,lx:st.level,ranked:false,...zgArg(qo,false)}).then(render).catch(e=>toast(e.message));if(!st.result&&st.moves.length>=2)confirmBox(st.ranked?"這盤晉級賽還沒下完，重開會算輸，確定？":"這盤還沒下完，確定重開一盤？",go,"再來一盤");else go()};
+    zgOppBind(b,o=>{qo=o;paint()});b.querySelector("#qkAgain").onclick=()=>{closeSheet();const go=()=>api("/play/new",{human:st.human,lx:st.level,ranked:false,...zgArg(qo,false,!!st.zgx&&qo==="zhanggui")}).then(render).catch(e=>toast(e.message));if(!st.result&&st.moves.length>=2)confirmBox(st.ranked?"這盤晉級賽還沒下完，重開會算輸，確定？":"這盤還沒下完，確定重開一盤？",go,"再來一盤");else go()};
     b.querySelector("#qkHub").onclick=()=>{closeSheet();location.hash="#/hub/battle"}};paint()})}
   function newSheet(){if(!st)return;if(FH())return quickSheet();if(MODE==="arena")return arenaSheet(ARENA[st.arena]?st.arena:store.get("era","classic"),arenaStart);if(MODE==="journey")return jNewSheet();   /* 意見回饋 396：擂台裡按「新局」只出現挑戰擂台（再挑戰擂主、集章簿），不出現自選難度 */
-    let side=st.human,level=st.level||store.get("cpuLevel",6),opp=cpuOppPref();const ranked=OFF&&!!st.ranked;   /* 11/11 笑面掌櫃：練功房的新局可以換對手，晉級賽固定幻影棋客 */
+    let side=st.human,level=st.level||store.get("cpuLevel",6),opp=cpuOppPref(),zx=zgXOn(opp);const ranked=OFF&&!!st.ranked;   /* zx＝笑面掌櫃「掌櫃真功夫」檔位（07m3 ZG_X） */   /* 11/11 笑面掌櫃：練功房的新局可以換對手，晉級賽固定幻影棋客 */
     const sh=sheet(ranked?"🥇 晉級賽・開新局":"📚 練功房・開新局",b=>{const rec=st.record||{},CR=st.cpuRate||{};
       const paint=()=>{const span=CR.hi!=null?CR.hi-CR.lo:0,pct=span?Math.round(100*(CR.pts-CR.lo)/span):100;
         b.innerHTML=(ranked?`<div class="cpu-rk"><div class="mid"><span class="muted">你的電腦段位</span><span class="pt"><b>${CR.pts||0}</b> 分</span></div>
@@ -21585,12 +21600,12 @@ async function review(rep,id,at){let it=null;for(let k=0;k<12&&!it;k++){try{cons
           <p>電腦的強度跟著你的段位走，段位越高越難。用等級分的算法：跟實力差不多的電腦下，贏約 +16、輸約 −16，跟線上對戰分開記分。不能悔棋、不能提示，下到一半開新局算輸。</p></div>`:"")+
         `<div class="cpu-lb">你執</div><div class="opt"><button data-s="r" class="${side==="r"?"on":""}">🔴 紅方（先走）</button><button data-s="b" class="${side==="b"?"on":""}">⚫ 黑方（後走）</button></div>`+
         `<div class="cpu-lb">對手</div>${zgOppHTML(ranked?"km":opp,ranked)}`+
-        (ranked?"":`<div class="cpu-lb">難度</div><div class="lvl">${st.levels.map(l=>`<button data-l="${l.n}" class="${l.n===level?"on":""}"><b>${l.n}</b><span>${esc(l.name)}</span>${(rec[l.n]||{}).w?'<span class="ok">✔ 通關</span>':""}</button>`).join("")}</div>
-          <div class="cpu-desc">${esc((st.levels[level-1]||{}).desc||"")}</div>`)+
-        `<button class="btn" id="go">${ranked?"開始晉級賽":`開始第 ${level} 級`}</button>`+
+        (ranked?"":`<div class="cpu-lb">難度</div><div class="lvl">${st.levels.map(l=>`<button data-l="${l.n}" class="${l.n===level&&!(zx&&opp==="zhanggui")?"on":""}"><b>${l.n}</b><span>${esc(l.name)}</span>${(rec[l.n]||{}).w?'<span class="ok">✔ 通關</span>':""}</button>`).join("")}${opp==="zhanggui"?`<button data-zx="1" class="${zx?"on":""}"><b>${esc(ZG_X.short)}</b><span>${esc(ZG_X.name)}</span></button>`:""}</div>
+          <div class="cpu-desc">${esc(zx&&opp==="zhanggui"?ZG_X.desc:(st.levels[level-1]||{}).desc||"")}</div>`)+
+        `<button class="btn" id="go">${ranked?"開始晉級賽":zx&&opp==="zhanggui"?"開始："+ZG_X.name:`開始第 ${level} 級`}</button>`+
         "";   /* 意見回饋 413：挑戰電腦裡不放朝代擂台入口，擂台從首頁 #/arena 進 */
-        b.querySelectorAll("[data-s]").forEach(x=>x.onclick=()=>{side=x.dataset.s;paint()});b.querySelectorAll("[data-l]").forEach(x=>x.onclick=()=>{level=+x.dataset.l;paint()});zgOppBind(b,o=>{opp=o;paint()});
-        b.querySelector("#go").onclick=()=>startNew({human:side,level,ranked,opp});{const ga=b.querySelector("#goArena");if(ga)ga.onclick=()=>{closeSheet();setTimeout(()=>arenaBtn[1](),250)}}};paint()});
+        b.querySelectorAll("[data-s]").forEach(x=>x.onclick=()=>{side=x.dataset.s;paint()});b.querySelectorAll("[data-l]").forEach(x=>x.onclick=()=>{level=+x.dataset.l;zx=false;paint()});{const z=b.querySelector("[data-zx]");if(z)z.onclick=()=>{zx=true;paint()}}zgOppBind(b,o=>{opp=o;paint()});
+        b.querySelector("#go").onclick=()=>startNew({human:side,level,ranked,opp,zx:zx&&opp==="zhanggui"});{const ga=b.querySelector("#goArena");if(ga)ga.onclick=()=>{closeSheet();setTimeout(()=>arenaBtn[1](),250)}}};paint()});
     sh.classList.add("cpu-sheet")}
   // 上一盤已經下完：一進來就直接開新局（同樣的難度和執子），不要讓人以為還沒下完
   let first=true;

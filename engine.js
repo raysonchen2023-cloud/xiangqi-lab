@@ -47,7 +47,7 @@ var XQEngine=(function(){
       send("setoption name MultiPV value "+(multipv||1));
       send(pos.fen?"position fen "+pos.fen+" - - 0 1":"position fen "+XQCore.START+" w - - 0 1"+(pos.moves.length?" moves "+pos.moves.join(" "):""));
       const info=new Map();
-      send(lim.movetime?"go movetime "+lim.movetime:"go depth "+lim.depth);
+      send(lim.nodes?"go nodes "+lim.nodes:lim.movetime?"go movetime "+lim.movetime:"go depth "+lim.depth);   /* nodes：笑面掌櫃「掌櫃真功夫」檔位（訓練循環校準的每步節點數，開發者 11/12） */
       const best=await until(l=>l.startsWith("bestmove"),l=>{if(!l.startsWith("info ")||!l.includes(" pv "))return;
         const m=l.match(/ multipv (\d+)/),sc=l.match(/ score (cp|mate) (-?\d+)/),pv=l.match(/ pv (.+)$/),dp=l.match(/ depth (\d+)/);if(!sc||!pv)return;
         let v=+sc[2];if(sc[1]==="mate")v=v>0?30000-v:-30000-v;
