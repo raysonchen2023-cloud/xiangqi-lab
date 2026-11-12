@@ -1035,7 +1035,7 @@
     /* hspx（開發者 11/12 黑洞星樞棋局）：opt.giant＝巨盤模式——棋盤浮在黑洞環景裡，不放桌椅地面和人物，紅方棋子換成雲河七星、黑方是星樞的發光棋子，鏡頭可以從俯視全盤一路推到站在棋盤上的第一人稱 */
     const GIANT=!!opt.giant;BRIVER=GIANT?"data/park/bh_river.webp":null;
     el.style.background=E.mist;
-    let WX=null,CANO=null,MAPL=null,PANM=null,PANDH=0,PANROT=0,PSPOTS=null,MAPM=null,HILL=null,lastKf=-1,MAPO=[],MAPOK="",MAPP=null,MAPMN=0,RON=(()=>{try{return JSON.parse(localStorage.getItem("m_eramapRealm")||"true")!==false}catch(e){return true}})();   /* 地圖上的地名：[名字, x%, y%, 種類]；長卷的網格、圖高、地標（意見回饋 517、525） */
+    let WX=null,CANO=null,MAPL=null,PANM=null,PANDH=0,PANROT=0,PSPOTS=null,MAPM=null,HILL=null,SIMRF=1,lastKf=-1,MAPO=[],MAPOK="",MAPP=null,MAPMN=0,RON=(()=>{try{return JSON.parse(localStorage.getItem("m_eramapRealm")||"true")!==false}catch(e){return true}})();   /* 地圖上的地名：[名字, x%, y%, 種類]；長卷的網格、圖高、地標（意見回饋 517、525） */
     let RTF=null,RTK="",RTS=null,RTP=null,RTT=0,RTA=0;   /* 意見回饋 658（B 輿圖遊歷）：路線圖層的重畫函式、目前畫的版本、各站位置（點得到）、左下角的提示、上次檢查的時間、上一格地圖的透明度 */
     const sc=new T.Scene(),FARHIDE=[];sc.fog=new T.Fog(new T.Color(E.mist),70,320);sc.background=new T.Color(E.mist);if(GIANT){sc.fog=null;sc.background=new T.Color(0x05060d);el.style.background="#05060d"}   /* 意見回饋 486：環景沒畫到的地方顯示朝代的霧色，不會一片黑 */
     const cam=new T.PerspectiveCamera(50,1,.5,700);try{if(localStorage.getItem("xq_dbg3d"))window.__PK={sc,cam}}catch(e){}try{(window.__PK=window.__PK||{}).perf=PF}catch(e){}   /* 除錯用：localStorage 設 xq_dbg3d 才打開 sc、cam；效能計數 perf 一直都在（11/11 省電模式） */
@@ -1052,7 +1052,7 @@
       pan.position.y=(PAN.yt+PAN.yb)/2;pan.renderOrder=-1;sc.add(pan);FARHIDE.push(pan);PANM=pan;
       if(BI){const put=()=>{const im=imgCache[BI.src];if(!im||!im.naturalWidth||!el.isConnected)return;try{let pc;
           if(BI.pano){// 整圈長圖：圓柱的高度、位置照圖的比例重做（圖不變形），貼圖換成 4096×1024
-            const pg=panoGeo(BI,im.naturalWidth,im.naturalHeight);pan.geometry.dispose();pan.geometry=new T.CylinderGeometry(PAN.r,PAN.r,pg.Hc,128,1,true,0,TAU);pan.position.y=pg.cy;if(opt.indoor){const k=IN_R/PAN.r;pan.scale.setScalar(k);pan.position.y=16+(pg.cy-16)*k}
+            const pg=panoGeo(BI,im.naturalWidth,im.naturalHeight);pan.geometry.dispose();pan.geometry=new T.CylinderGeometry(PAN.r,PAN.r,pg.Hc,128,1,true,0,TAU);pan.position.y=pg.cy;if(opt.indoor){const k=IN_R/PAN.r;pan.scale.set(k*SIMRF,k,k*SIMRF);pan.position.y=16+(pg.cy-16)*k}
             const c=pt.image;if(c.width!==PANO.W||c.height!==PANO.H){c.width=PANO.W;c.height=PANO.H;pt.dispose()}pc=drawPano(c.getContext("2d"),c.width,c.height,im,BI);PANDH=Math.round(c.width*im.naturalHeight/im.naturalWidth);PANROT=BI.rot||0;
             /* 意見回饋 525：長卷上每個地標的位置和名字（data/pano/spots.json），點到哪裡就說是哪裡 */
             if(!opt.bg)fetch("data/pano/spots.json").then(r=>r.ok?r.json():null).then(J=>{if(J&&Array.isArray(J[EK]))PSPOTS=J[EK]}).catch(()=>{})}
@@ -1068,7 +1068,8 @@
     // 山上平台：石板地＋石欄杆，平台外是山谷雲海
     const TR=21,IN_R=80;   /* 室內（車輪戰棋館）房間半徑：環景縮到這裡、地板鋪到這裡 */
     const stone=M(0xffffff,{map:stoneTex("#8C8478",2),roughness:.85}),stone2=M(0xffffff,{map:stoneTex("#776F64",2),roughness:.9});
-    const pave=new T.Mesh(new T.CircleGeometry(TR,64),M(0xffffff,{map:paveTex(),roughness:.95}));pave.rotation.x=-PI/2;pave.position.y=FL;pave.receiveShadow=true;sc.add(pave);
+    const SIMFL=[];   /* 車輪戰多桌：棋館地板（中間圓盤＋外圈）要跟著別桌一起移動、放大（simSync） */
+    const pave=new T.Mesh(new T.CircleGeometry(TR,64),M(0xffffff,{map:paveTex(),roughness:.95}));pave.rotation.x=-PI/2;pave.position.y=FL;pave.receiveShadow=true;sc.add(pave);SIMFL.push(pave);
     /* 意見回饋 359：朝代的地面（data/pano/<朝代>_ground.webp，Gemini 畫的俯視地面）鋪在石板平台上；頭頂加一個天頂圓（_sky.webp，魚眼天空、邊緣淡出），鏡頭壓低往上看也是畫的天空 */
     {const gs=typeof opt.ground==="string"&&/^data\/[\w\/.-]+\.webp$/.test(opt.ground)?opt.ground:"data/pano/"+EK+"_ground.webp",   /* 11/11：opt.ground＝指定地面（首頁橋上石桌＝橋面條石） */gp=()=>{const im=imgCache[gs];if(!im||!im.naturalWidth||!el.isConnected)return;const t=srgb(new T.Texture(im));t.anisotropy=ANI;t.needsUpdate=true;pave.material.map=t;pave.material.needsUpdate=true};if(loadImg(gs,gp))setTimeout(gp,0);
       const ss="data/pano/"+EK+"_sky.webp",sp=()=>{const im=imgCache[ss];if(!im||!im.naturalWidth||!el.isConnected)return;const TM=1.3,   /* 意見回饋 421：長卷抬高後，天頂圓淡出的那圈收到長卷上緣以上（原本 1.75 會蓋到山頭） */R0=PAN.r-6,g=new T.SphereGeometry(R0,64,24,0,TAU,0,TM),P=g.attributes.position,U=g.attributes.uv;
@@ -1078,7 +1079,7 @@
     /* 意見回饋 490（開發者：石台邊像懸崖，希望像雲河棋路那樣是山坡上的大石台）：石台外圍加一圈往外慢慢往下的山坡（草地、碎石），遠的地方淡進霧裡，把石台側面那圈牆蓋住 */
     {const pts=(opt.indoor?[[TR,FL],[50,FL],[IN_R+1,FL]]:[[TR-.2,FL-.06],[TR+4,FL-.9],[TR+12,FL-3.6],[TR+26,FL-9],[TR+46,FL-18],[TR+76,FL-32],[TR+120,FL-52]]).map(([r,y])=>new T.Vector2(r,y));
       const hg=new T.LatheGeometry(pts,96),hb="#"+new T.Color(E.mist).lerp(new T.Color(EK==="yuan"?"#7E8F45":"#4A7A35"),.72).getHexString(),hm=opt.indoor?M(0x9A7A58,{roughness:.95}):M(0xffffff,{map:grassTex(hb,E.ink,10),roughness:.95});
-      const hill=new T.Mesh(hg,hm);hill.material.side=T.DoubleSide;hill.receiveShadow=true;sc.add(hill);
+      const hill=new T.Mesh(hg,hm);hill.material.side=T.DoubleSide;hill.receiveShadow=true;sc.add(hill);SIMFL.push(hill);
       /* hspx（開發者 11/12「車輪戰地面要符合茶肆二樓的地板」「茶肆二樓地板是平的，3D 也要看到是平的；花園不用，是要做出高山的感覺」）：室內外圈改成水平地板一路鋪到牆邊，環景縮成半徑 IN_R 的房間、以鏡頭高度 16 為中心縮放，hor −10.2 度讓畫上的牆腳剛好落在地板邊（公園是 −24 度、半徑 170、往下看的高山感）；室內不放天頂圓；這圈不鋪草，改鋪跟中間同一張木地板，貼圖照平面座標（每 42 單位一張，跟中間圓盤接齊），一路接到環景畫的地板 */
       if(opt.indoor&&typeof opt.ground==="string"&&/^data\/[\w\/.-]+\.webp$/.test(opt.ground)){const U=hg.attributes.uv,P=hg.attributes.position;for(let i=0;i<P.count;i++)U.setXY(i,P.getX(i)/(2*TR)+.5,-P.getZ(i)/(2*TR)+.5);U.needsUpdate=true;
         {const N=hg.attributes.normal;for(let i=0;i<N.count;i++)N.setXYZ(i,0,N.getY(i)<0?-1:1,0);N.needsUpdate=true}   /* 受光跟中間的平地一樣（斜坡的法線朝外會比較暗，交界看得出一圈亮帶） */
@@ -1616,6 +1617,48 @@
       try{const c=btex.image.getContext("2d");drawBoard(c,btex.image.width,btex.image.height,null);btex.needsUpdate=true}catch(e){}if(prevB)sync(prevB)};
     // Noto Serif TC 網路字型晚到：載入後重畫字面（不然會先用系統字型，字又細又糊）
     try{document.fonts&&document.fonts.load(`900 64px ${SERIF}`,"帥仕相傌俥炮兵將士象馬車砲卒").then(()=>{if(!stopped)refreshLook()})}catch(e){}
+    /* ---------- 開發者 11/12「車輪戰 3D 場景對手 3 個就要擺出 3 個，5／10 也照過場動畫的位置擺上 3D 場景；下完一盤或切到要下的對手，我們的角色會自動坐在該盤位置」----------
+       ex.simul＝{n 桌數, i 現在下的這桌, sp:[[cx,cy]…] 開場畫面每桌的位置（08s-simul simSpots）, tb:[{b 盤面, look 棋客造型, res 結果 w／d／l}]}。
+       棋館的地板、環景和其他桌放進 SIMW 一個群組，照開場位置排：3／5 桌一排、棋客面向玩家；10 桌一圈、棋客坐外側面向圈心。棋館以這一排（圈）的中心為中心，放大到裝得下每一桌。
+       現在下的這桌永遠在原點（棋盤、棋客、小帥、鏡頭都不動）；換桌時 SIMW 整個平移＋轉向 1 秒，把那一桌帶到眼前＝看起來是自己走過去坐下。
+       別桌：簡化的木方桌、2D 畫的目前盤面、那位棋客（造型同開場）、玩家那側的空凳；下完的桌子上方標勝／和／負 */
+    let SIMW=null,simCur=-1,simSig="",simL=null;const SIMST=[],simWood=M(0x7A5236,{roughness:.8}),simLeg=M(0x5A3A22,{roughness:.9});
+    const simLay=s=>{const ring=s.n>=10,S=ring?250:s.n>=5?190:120,KZ=ring?1.7:1,P=s.sp.map(([cx,cy])=>({x:cx*S,z:cy*S*KZ}));
+      const C={x:P.reduce((a,p)=>a+p.x,0)/P.length,z:P.reduce((a,p)=>a+p.z,0)/P.length},face=P.map(p=>ring?Math.atan2(C.x-p.x,C.z-p.z):0);
+      let R=0;for(const p of P)R=Math.max(R,Math.hypot(p.x-C.x,p.z-C.z));return{P,C,face,R:R+28}};
+    const simXf=(L,i)=>{const r=-L.face[i],c=Math.cos(r),s=Math.sin(r),p=L.P[i];return{r,x:-(p.x*c+p.z*s),z:-(-p.x*s+p.z*c)}};
+    const simBoardTex=b=>{const cv=document.createElement("canvas");cv.width=520;cv.height=570;const g=cv.getContext("2d"),ox=44,oy=42,d=54;g.fillStyle="#E6C48A";g.fillRect(0,0,520,570);g.strokeStyle="#5A3A1A";g.lineWidth=3;
+      const ln=(a,b2,c2,d2)=>{g.beginPath();g.moveTo(ox+a*d,oy+b2*d);g.lineTo(ox+c2*d,oy+d2*d);g.stroke()};for(let r=0;r<10;r++)ln(0,r,8,r);for(let c=0;c<9;c++){if(c===0||c===8)ln(c,0,c,9);else{ln(c,0,c,4);ln(c,5,c,9)}}
+      ln(3,0,5,2);ln(5,0,3,2);ln(3,7,5,9);ln(5,7,3,9);g.textAlign="center";g.textBaseline="middle";g.font=`900 30px ${SERIF}`;
+      (b||[]).forEach((p,i)=>{if(!p)return;const x=ox+(i%9)*d,y=oy+Math.floor(i/9)*d,red=sideOf(p)==="r";g.fillStyle="#F6E4BC";g.beginPath();g.arc(x,y,23,0,TAU);g.fill();g.lineWidth=2.5;g.strokeStyle=red?"#B3141B":"#2A2018";g.stroke();g.fillStyle=red?"#B3141B":"#1A1410";g.fillText(NAMES[sideOf(p)][p.toUpperCase()]||"",x,y+1)});
+      const t=new T.CanvasTexture(cv);if(T.SRGBColorSpace)t.colorSpace=T.SRGBColorSpace;t.anisotropy=ANI;return t};
+    const simTag=res=>{const cv=document.createElement("canvas");cv.width=cv.height=128;const g=cv.getContext("2d"),col=res==="w"?"#C8102E":res==="l"?"#3A3A3A":"#8A6A2A";g.fillStyle="rgba(255,248,232,.95)";g.beginPath();g.arc(64,64,58,0,TAU);g.fill();
+      g.lineWidth=6;g.strokeStyle=col;g.stroke();g.fillStyle=col;g.font=`900 72px ${SERIF}`;g.textAlign="center";g.textBaseline="middle";g.fillText(res==="w"?"勝":res==="l"?"負":"和",64,68);
+      const sp=new T.Sprite(new T.SpriteMaterial({map:new T.CanvasTexture(cv),transparent:true,depthWrite:false}));sp.scale.setScalar(3.4);sp.position.set(0,9,-6);return sp};
+    const simStation=()=>{const g=new T.Group(),top=new T.Mesh(new T.BoxGeometry(14,.8,15),simWood);top.position.y=-.4;top.castShadow=top.receiveShadow=true;g.add(top);
+      const lh=-.8-FL;for(const[x,z]of[[-6.2,-6.7],[6.2,-6.7],[-6.2,6.7],[6.2,6.7]]){const l=new T.Mesh(new T.BoxGeometry(.8,lh,.8),simLeg);l.position.set(x,FL+lh/2,z);g.add(l)}
+      const bd=new T.Mesh(new T.PlaneGeometry(10.4,11.4),new T.MeshStandardMaterial({roughness:.75}));bd.rotation.x=-PI/2;bd.position.y=.02;g.add(bd);
+      const st=new T.Mesh(new T.CylinderGeometry(1.7,1.9,SY-FL,16),simLeg);st.position.set(0,(SY+FL)/2,MZ-1.4);g.add(st);
+      g.userData={bd,fig:null,bk:"",lk:"",tag:null,tr:""};return g};
+    const simFig=(g,look)=>{const k=JSON.stringify(look||null);if(g.userData.lk===k)return;g.userData.lk=k;if(g.userData.fig){g.remove(g.userData.fig);g.userData.fig=null}if(!look||!window.XQBot3D||!XQBot3D.figure)return;
+      let B=null;try{B=XQBot3D.figure(look)}catch(e){}if(!B)return;const h=new T.Group();h.add(B.bot);h.scale.setScalar(4.1);h.position.set(0,SY-.9,BZ+1);g.add(h);g.userData.fig=h;
+      if(B.glbP)B.glbP.then(ok=>{if(!ok||!B.glb||g.userData.fig!==h)return;try{h.updateMatrixWorld(true);let b=new T.Box3().setFromObject(B.glb);const H=b.max.y-b.min.y,y0=g.getWorldPosition(new T.Vector3()).y;
+        if(Array.isArray(look.stool)&&look.stool[0]>0){B.glb.scale.multiplyScalar((SY-FL)/(look.stool[0]*H));h.updateMatrixWorld(true);b=new T.Box3().setFromObject(B.glb);h.position.y-=b.min.y-y0-FL}else h.position.y-=b.min.y-y0-(SY-H*.27)}catch(e){}pwPoke(600)}).catch(()=>{})};
+    const simApply=(r,x,z)=>{SIMW.rotation.y=r;SIMW.position.set(x,0,z)};
+    function simSync(s){if(!s||!opt.indoor||!Array.isArray(s.sp)||s.sp.length!==s.n||s.n<2||!Array.isArray(s.tb)){if(SIMW)SIMW.visible=false;return}
+      if(!SIMW){SIMW=new T.Group();SIMW.userData.giant=1;sc.add(SIMW);for(const m of SIMFL)SIMW.add(m);if(PANM)SIMW.add(PANM)}SIMW.visible=true;
+      const sig=s.n+":"+s.sp.map(p=>p.join(",")).join(";");
+      if(sig!==simSig){simSig=sig;simL=simLay(s);SIMST.splice(0).forEach(g=>SIMW.remove(g));for(let j=0;j<s.n;j++){const g=simStation();g.position.set(simL.P[j].x,0,simL.P[j].z);g.rotation.y=simL.face[j];SIMW.add(g);SIMST.push(g)}
+        SIMRF=Math.max(1,simL.R/(IN_R+1));for(const m of SIMFL){m.position.x=simL.C.x;m.position.z=simL.C.z;if(Math.abs(m.rotation.x)>1)m.scale.set(SIMRF,SIMRF,1);else m.scale.set(SIMRF,1,SIMRF)}
+        if(PANM){PANM.position.x=simL.C.x;PANM.position.z=simL.C.z;const k=PANM.scale.y;PANM.scale.set(k*SIMRF,k,k*SIMRF)}simCur=-1}
+      const L=simL,i=Math.max(0,Math.min(s.n-1,s.i|0));
+      s.tb.forEach((t,j)=>{const g=SIMST[j];if(!g||!t)return;simFig(g,t.look);const bk=(t.b||[]).join(",");if(bk!==g.userData.bk){g.userData.bk=bk;const m=g.userData.bd.material;if(m.map)m.map.dispose();m.map=simBoardTex(t.b);m.needsUpdate=true}
+        const tr=t.res||"";if(tr!==g.userData.tr){g.userData.tr=tr;if(g.userData.tag){g.remove(g.userData.tag);g.userData.tag.material.map.dispose();g.userData.tag.material.dispose();g.userData.tag=null}if(tr){g.userData.tag=simTag(tr);g.add(g.userData.tag)}}});
+      const to=simXf(L,i);
+      if(simCur<0||RDM){simApply(to.r,to.x,to.z);SIMST.forEach((g,j)=>g.visible=j!==i)}
+      else if(simCur!==i){const r0=SIMW.rotation.y,x0=SIMW.position.x,z0=SIMW.position.z;let dr=to.r-r0;dr-=Math.round(dr/TAU)*TAU;const old=simCur;SIMST.forEach((g,j)=>g.visible=j!==i);
+        anims.push({t:0,d:1,f:p=>{const e=ease(p);simApply(r0+dr*e,x0+(to.x-x0)*e,z0+(to.z-z0)*e)},end:()=>{simApply(to.r,to.x,to.z)}});pwPoke(1200)}
+      simCur=i}
     function draw(board,o,ex){o=o||{};ex=ex||{};drawn=true;orbSet(ex.bhOrb,ex.gxLit);gxSet(ex.gx);if(GIANT){const R=ex.result||null;if(R!==gntRes){gntRes=R;if(R)setTimeout(()=>{for(const g of Object.values(pieces))if(g&&g.userData&&g.userData.B)gntAct(g,R==="r"?"cheer":R==="b"?"bow":"idle",4200)},600)}}try{const dk=[(board||[]).join(","),o.sel,(o.targets||[]).join(" "),o.last?o.last.f+"-"+o.last.t:"",o.check,o.flip?1:0,ex.thinking?1:0,ex.result||"",(ex.hint||[]).join(" ")].join("|");if(dk!==PW.dk){PW.dk=dk;pwPoke(1500)}}catch(e){pwPoke(1500)}   /* 11/11 省電：App 每 1.5 秒輪詢都會呼叫 draw，盤面真的有變才算「畫面在動」 */const nf=!!o.flip;
       {const lk=JSON.stringify(ex.look?[ex.look.k,ex.look.img,!!ex.look.gly,ex.look.pset,ex.look.pieces&&ex.look.pieces.r,ex.look.grid]:null);if(lk!==lookKey){lookKey=lk;LOOK=ex.look||null;
         if(LOOK){let n=0;const L0=[LOOK.img,LOOK.pieces&&LOOK.pieces.r,LOOK.pieces&&LOOK.pieces.b,...(LOOK.pset?PSRC(LOOK.pset):[])],done=()=>{if(++n>=L0.length&&LOOK===ex.look)refreshLook()};L0.forEach(src=>{if(!src||loadImg(src,done))done()})}
@@ -1643,7 +1686,7 @@
       if(typeof o.check==="number"&&o.check>=0&&board[o.check])checkRing=ring(o.check,0xFF2A2A,.62,.12,.9);
       try{CR.chkSet(typeof o.check==="number"&&o.check>=0&&board[o.check]?sideOf(board[o.check]):null)}catch(e){}
       if(ex.hint&&ex.hint.length===2){ring(ex.hint[0],0xF2B233,.5,.07,.9);ring(ex.hint[1],0xF2B233,.5,.07,.9)}
-      thinking=!!ex.thinking;setOpp(ex.opp||null);setMate(ex.mateLook||null);setWatchers(ex.watchers);mySide=ex.botSide?(ex.botSide==="r"?"b":"r"):"r";try{CR.data(ex.crowd||null,o,ex)}catch(e){}
+      thinking=!!ex.thinking;setOpp(ex.opp||null);try{simSync(ex.simul)}catch(e){}setMate(ex.mateLook||null);setWatchers(ex.watchers);mySide=ex.botSide?(ex.botSide==="r"?"b":"r"):"r";try{CR.data(ex.crowd||null,o,ex)}catch(e){}
       if(ex.result&&ex.result!==mood){mood=ex.result;const b=ex.botSide;endT=END;
         oppRes=mood==="draw"||!b?"draw":mood===b?"win":"lose";mateRes=oppRes==="win"?"lose":oppRes==="lose"?"win":"draw";
         if(mood==="draw"){opp.setFace("flat",99);mate.setFace("flat",99);mate.say("和棋，不錯喔！",3)}

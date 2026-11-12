@@ -1,8 +1,8 @@
 {
- "version": "20261112-1110",
- "checkedAt": "2026-11-12T03:53:10.556Z",
- "html": "aaa1f4fd07d4",
- "sw": "e91670d428d9",
+ "version": "20261112-1120",
+ "checkedAt": "2026-11-12T04:04:56.561Z",
+ "html": "728ccddcbb5b",
+ "sw": "92f5ca885fb0",
  "scripts": 4,
  "modules": {
   "00-util.js": "e4beee43ce00",
@@ -82,7 +82,7 @@
   "07w9-exits.js": "cd1e9661edf9",
   "08-scene.js": "86969cd488ba",
   "08b-cpugame.js": "aa44f768af2c",
-  "08s-simul.js": "bd7a83d4535e",
+  "08s-simul.js": "1171c387dbac",
   "09-askbot.js": "a3df284295ae",
   "09b-preload.js": "0982545005cc",
   "10-db.js": "8d1ee230a260",

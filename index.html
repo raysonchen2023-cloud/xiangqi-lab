@@ -1534,7 +1534,7 @@ html[data-hct] .player.on .clk{background:#00563B;color:#FFFFFF;border-color:#00
       if(!window.caches)return go();caches.keys().then(function(ks){return Promise.all(ks.filter(function(k){return k.indexOf("xqlab-app-")===0}).map(function(k){return caches.delete(k)}))})
         .then(function(){return navigator.serviceWorker&&navigator.serviceWorker.getRegistration()}).then(function(r){return r&&r.update()}).catch(function(){}).then(go)}};setTimeout(chk,4000)})();
 </script>
-<script>window.XQ_OFFLINE=true;window.XQ_BUILD="20261112-1110";</script>
+<script>window.XQ_OFFLINE=true;window.XQ_BUILD="20261112-1120";</script>
 <script src="core.js"></script>
 <script src="engine.js"></script>
 <script src="local.js"></script>
@@ -21608,7 +21608,9 @@ function SimulPage(v){
     {const on=tabs.querySelector(".on");if(on&&on.scrollIntoView)try{on.scrollIntoView({block:"nearest",inline:"nearest"})}catch(e){}}
     const t=T(),done=S.tb.filter(x=>x.result).length,c={w:0,d:0,l:0},cast=simCastOf(S);for(const x of S.tb){const r=resOf(x);if(r)c[r]++}
     {const o={last:t.moves[t.moves.length-1],sel,targets:sel>=0?t.legal.filter(([f])=>f===sel).map(x=>x[1]):[],check:t.check,fx:true};bd.draw(t.board,o);
-      if(typeof parkDraw==="function")try{parkDraw(v.querySelector("#bbox"),bd,t.board,o,{tap:i=>tap(i),bg:"data/park/simul_360.webp",ground:"data/pano/simul_ground.webp",bgName:"🀄 車輪戰・棋館",era:"ming",indoor:true,gate:SIM_GATE,quietMate:true,opp:simOppLook(cast[t.i],t.level)})}catch(e){}}
+      /* 開發者 11/12：3D 棋館照開場位置擺出每一桌（park3d simSync），換桌時自己走過去坐下 */
+      const simX={n:S.n,i:cur,sp:simSpots(S.n).map(o=>[o.cx,o.cy]),tb:S.tb.map((x,j)=>({b:x.board,look:simOppLook(cast[j],x.level),res:resOf(x)}))};
+      if(typeof parkDraw==="function")try{parkDraw(v.querySelector("#bbox"),bd,t.board,o,{tap:i=>tap(i),bg:"data/park/simul_360.webp",ground:"data/pano/simul_ground.webp",bgName:"🀄 車輪戰・棋館",era:"ming",indoor:true,gate:SIM_GATE,quietMate:true,opp:simOppLook(cast[t.i],t.level),simul:simX})}catch(e){}}
     v.querySelector("#pTop").innerHTML=playerHTML("b",`第 ${t.i+1} 桌・${t.name||SIM_NM[cast[t.i]]||"棋客"}`,`第 ${t.level} 級棋客`);
     v.querySelector("#pBot").innerHTML=playerHTML("r",meName(),`車輪戰 ${S.n} 盤・下完 ${done}／${S.n}${done?`・${c.w} 勝 ${c.d} 和 ${c.l} 負`:""}`);
     const r=resOf(t);v.querySelector("#stat").textContent=r?`第 ${t.i+1} 桌：${RES[r]}（${t.result.why}）`:t.turn==="r"?(t.check>=0?`⚠ 第 ${t.i+1} 桌被將軍！`:`👉 第 ${t.i+1} 桌輪到你`):S.engFail?"電腦棋手還沒準備好，稍後自動再試…":"🤔 棋客在想…可以先去別桌";
