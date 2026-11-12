@@ -48,6 +48,44 @@
   const pfAdd=(q,sec,f,r,i)=>{let b=q[q.length-1];if(!b||b.s!==sec){b={s:sec,f:0,r:0,i:0};q.push(b);while(q.length&&q[0].s<sec-10)q.shift()}b.f+=f;b.r+=r;b.i+=i;return q};
   const pfSum=(q,sec)=>{let f=0,r=0,i=0,lo=sec;for(const b of q)if(b.s<sec&&b.s>=sec-10){f+=b.f;r+=b.r;i+=b.i;if(b.s<lo)lo=b.s}const n=Math.max(1,sec-lo);return{fps:Math.round(r/n*10)/10,frames:f,renders:r,idle:i,span:n}};
   /*}PKPOWER*/
+  /*PKCB{ 11/13 評比第 12 輪 X1／X6：色弱模式套到 3D 園子（平面棋盤是 m/07cb-colorblind.js；規格、量測數字在 art/docs/colorblind.md 第 5 節）。
+     這一段只放純函式（不碰 three.js、DOM），tools/test-park3d-colorblind.js 照 PKCB 標記抽出來單獨測。
+     App 傳來的 LOOK.hc＝高對比棋子／高對比主題／色弱模式任一個開著；LOOK.cb＝色弱模式（06-cpu.js parkLook0）。
+     PKCB：色碼（黃點、朱橘、墨色跟平面 CB_COL 同一組）；Old 結尾的是原本的顏色。
+     pkcbMarks(board,o,ex,md)：這一盤要畫哪些提示記號，md＝{hc,cb}；回 [{k:"ring"|"disc"|"bars"|"tag", i, col, r, w, op, ro, m}]，draw() 照著畫。
+       沒有 ro＝原本的畫法（舊的 ring／disc），有 ro＝新記號（不經色調映射、照 ro 的順序疊）；m＝哪一種提示（last／dot／cap／check／hint）。
+       原本：上一步藍圈＋起點藍點、可走空格綠點、可吃的子紅圈、被將軍紅圈、電腦建議琥珀圈。
+       hc：可走空格＝黃點黑邊；可吃的子＝四角瞄準框（白底黑線，形狀跟上一步的圓圈不同）；被將軍＝紅圈加粗＋黃底黑字「將」牌。
+       cb 再加：上一步＝朱橘圈，外面描黑、白兩圈（淺色棋盤靠黑邊、深色棋盤靠白邊），起點朱橘點；電腦建議＝藍色虛線方框（跟平面棋盤的建議框同形），白邊襯底。
+     pkcbAim(a,b,t)／pkcbDash(h,t,e)：四角瞄準框、虛線方框的長方形清單 [x0,z0,x1,z1]（棋盤平面上、相對格點中心）。
+     pkcbFace(g,n,ch,red)：高對比棋面（2D context）：紅子白底紅字紅圈；黑子黑底白字白圈（跟平面棋盤「黑子反白」一致）。pkcbBody(red)：高對比棋子側邊色（黑子整顆深色，平視也分得出）。
+     pkcbTag(g,n)：「將」字牌貼圖（黃底黑邊黑字）。pkcbPad(ok,cb)：黑洞搖桿光圈色（能走＝綠，色弱模式改黃；不能走＝灰）。 */
+  const PKCB={last:0xD55E00,dot:0xFFD400,ink:0x111111,white:0xFFFFFF,hint:0x0D47A1,chk:0xFF2A2A,
+    lastOld:0x2E86DE,dotOld:0x2F9E5A,capOld:0xD7263D,hintOld:0xF2B233,padOk:0x7CFFB0,padOkCb:0xFFD400,padNo:0x9A9AA8,
+    faceR:"#FFFFFF",inkR:"#C8102E",faceB:"#111111",inkB:"#FFFFFF",bodyR:"#EFE9DF",bodyB:"#1C1C1C"};
+  const pkcbAim=(a,b,t)=>{const o=[],lo=(p,q)=>p<q?[p,q]:[q,p],e=t/2,inn=a-b-e+.0375;
+    for(const sx of[-1,1])for(const sz of[-1,1]){const[x0,x1]=lo(sx*inn,sx*(a+e)),[z0,z1]=lo(sz*inn,sz*(a+e));o.push([x0,sz*a-e,x1,sz*a+e],[sx*a-e,z0,sx*a+e,z1])}return o};
+  const pkcbDash=(h,t,e)=>{const o=[],n=4,gap=.1,dl=(2*h-(n-1)*gap)/n,k=t/2;e=e||0;
+    for(let j=0;j<n;j++){const s=j===0?-h-k:-h+j*(dl+gap)-e,f=j===n-1?h+k:-h+j*(dl+gap)+dl+e;o.push([s,-h-k,f,-h+k],[s,h-k,f,h+k],[-h-k,s,-h+k,f],[h-k,s,h+k,f])}return o};
+  const pkcbMarks=(board,o,ex,md)=>{board=board||[];o=o||{};ex=ex||{};md=md||{};const C=PKCB,out=[],cb=!!md.cb,hc=!!(md.hc||md.cb),
+      L=o.last&&o.last.f!=null&&o.last.t!=null&&o.last.f!==o.last.t?o.last:null,
+      put=(d,ro,m,x)=>{if(ro)d.ro=ro;d.m=m;out.push(Object.assign(d,x||{}))},
+      R=(i,col,r,w,op,ro,m,x)=>put({k:"ring",i,col,r,w,op},ro,m,x),D=(i,col,r,op,ro,m)=>put({k:"disc",i,col,r,op},ro,m),B=(i,col,op,b,ro,m)=>put({k:"bars",i,col,op,b},ro,m),
+      halo=(i,col,r,w,ro,m)=>{R(i,C.white,r+.05,w+.1,1,ro,m);R(i,C.ink,r+.025,w+.05,1,ro+1,m);R(i,col,r,w,1,ro+2,m)};
+    if(L){if(cb){halo(L.f,C.last,.36,.06,1,"last");D(L.f,C.last,.12,.9,3,"last");halo(L.t,C.last,.56,.07,1,"last")}
+      else{R(L.f,C.lastOld,.36,.06,.85,0,"last");D(L.f,C.lastOld,.12,.5,0,"last");R(L.t,C.lastOld,.56,.07,.9,0,"last")}}
+    for(const i of Array.isArray(o.targets)?o.targets:[]){if(board[i]){if(hc){B(i,C.white,1,pkcbAim(.55,.22,.15),4,"cap");B(i,C.ink,1,pkcbAim(.55,.22,.075),5,"cap")}else R(i,C.capOld,.56,.09,.95,0,"cap")}
+      else if(hc){D(i,C.ink,.245,1,4,"dot");D(i,C.dot,.19,1,5,"dot")}else D(i,C.dotOld,.19,.9,0,"dot")}
+    if(typeof o.check==="number"&&o.check>=0&&board[o.check]){if(hc){R(o.check,C.chk,.64,.16,.95,6,"check",{chk:1});put({k:"tag",i:o.check},20,"check")}else R(o.check,C.chk,.62,.12,.9,0,"check",{chk:1})}
+    const H=ex.hint;if(Array.isArray(H)&&H.length===2)for(const i of H){if(cb){B(i,C.white,.95,pkcbDash(.5,.13,.03),6,"hint");B(i,C.hint,1,pkcbDash(.5,.07,0),7,"hint")}else R(i,C.hintOld,.5,.07,.9,0,"hint")}
+    return out};
+  const pkcbFace=(g,n,ch,red)=>{const h=n/2,C=PKCB,ink=red?C.inkR:C.inkB;g.fillStyle=red?C.faceR:C.faceB;g.fillRect(0,0,n,n);g.strokeStyle=ink;g.lineWidth=n*.05;g.beginPath();g.arc(h,h,n*.44,0,Math.PI*2);g.stroke();
+    g.lineWidth=n*.02;g.beginPath();g.arc(h,h,n*.36,0,Math.PI*2);g.stroke();g.font=`900 ${n*.6|0}px "Noto Sans TC","PingFang TC",sans-serif`;g.textAlign="center";g.textBaseline="middle";g.fillStyle=ink;g.fillText(ch,h,h+n*.03)};
+  const pkcbBody=red=>red?PKCB.bodyR:PKCB.bodyB;
+  const pkcbTag=(g,n)=>{const h=n/2;g.clearRect(0,0,n,n);g.fillStyle="#FFD400";g.strokeStyle="#111111";g.lineWidth=n*.08;g.beginPath();g.arc(h,h,n*.42,0,Math.PI*2);g.fill();g.stroke();
+    g.font=`900 ${n*.5|0}px "Noto Sans TC","PingFang TC",sans-serif`;g.textAlign="center";g.textBaseline="middle";g.fillStyle="#111111";g.fillText("將",h,h+n*.03)};
+  const pkcbPad=(ok,cb)=>ok?(cb?PKCB.padOkCb:PKCB.padOk):PKCB.padNo;
+  /*}PKCB*/
   const T=window.THREE;if(!T)return;
   /* 11/11 入座運鏡、省電模式的共用狀態（App 開著就一直在）：INTRO_SEEN＝播過入座運鏡的那幾盤；PWS＝電池、畫面偏慢；PF＝最近一座園子的效能計數（window.__PK.perf、設定頁那一行讀它） */
   const INTRO_SEEN=new Set(),PWS={bat:null,lowFps:false,batGo:false};
@@ -166,8 +204,7 @@
   /* 意見回饋 399：這個朝代有 Gemini 整套棋子（LOOK.pset），棋面直接貼那一顆的圖（字已經畫在上面） */
   const PSRC=b=>["r","b"].flatMap(s=>"KABRNCP".split("").map(k=>b+s+k+".webp"));
   const faceTex=(ch,red,onReady)=>{const L=LOOK,s=red?"r":"b",im=L&&L.pieces?loadImg(L.pieces[s],onReady):null,key=ch+(im?"|"+L.k:"");if(faceCache[key])return faceCache[key];
-    if(L&&L.hc){const k="hc|"+ch;return faceCache[k]||(faceCache[k]=cv(FN,FN,(g,n)=>{const ink=red?"#C8102E":"#111111";g.fillStyle="#FFFFFF";g.fillRect(0,0,n,n);g.strokeStyle=ink;g.lineWidth=n*.05;g.beginPath();g.arc(n/2,n/2,n*.44,0,TAU);g.stroke();g.lineWidth=n*.02;g.beginPath();g.arc(n/2,n/2,n*.36,0,TAU);g.stroke();
-      g.font=`900 ${n*.6|0}px "Noto Sans TC","PingFang TC",sans-serif`;g.textAlign="center";g.textBaseline="middle";g.fillStyle=ink;g.fillText(ch,n/2,n/2+n*.03)}))}   /* 高對比棋子 */
+    if(L&&L.hc){const k="hc|"+ch+(red?"r":"b");return faceCache[k]||(faceCache[k]=cv(FN,FN,(g,n)=>pkcbFace(g,n,ch,red)))}   /* 高對比棋子（11/13 第 12 輪：黑子改黑底白字，跟平面一致；色弱模式也走這裡，見 PKCB） */
     if(L&&L.pset){const lt=Object.keys(NAMES[s]).find(k=>NAMES[s][k]===ch),src=L.pset+s+lt+".webp",pim=loadImg(src,onReady),pk="ps|"+src;if(faceCache[pk])return faceCache[pk];
       if(pim)return faceCache[pk]=cv(FN,FN,(g,n)=>{g.fillStyle=rimOf(pim);g.fillRect(0,0,n,n);g.imageSmoothingQuality="high";g.drawImage(pim,-n*.03,-n*.03,n*1.06,n*1.06)})}
     if(L&&L.pieces&&!im)return plainFace(ch,red);
@@ -1611,7 +1648,7 @@
     const pMat=o=>{try{return new T.MeshPhysicalMaterial(Object.assign({metalness:0,specularIntensity:.22,toneMapped:false},o))}catch(e){return new T.MeshStandardMaterial(Object.assign({metalness:0,toneMapped:false},o))}};
     const faceGeo=new T.CircleGeometry(.435,64),faceMat={},bodyMat={};
     const bMat=red=>{const s=red?"r":"b";if(bodyMat[s])return bodyMat[s];const L=LOOK,im=L&&L.pieces?loadImg(L.pieces[s]):null;
-      const c=new T.Color(richHex(im?rimOf(im):"#E2C48C")).multiply(NEUT);return bodyMat[s]=pMat({color:c,roughness:.42})};
+      const c=new T.Color(L&&L.hc?pkcbBody(red):richHex(im?rimOf(im):"#E2C48C")).multiply(NEUT);return bodyMat[s]=pMat({color:c,roughness:.42})};   /* 高對比：黑子整顆深色（PKCB） */
     const fMat=(ch,red)=>faceMat[ch+red]||(faceMat[ch+red]=(()=>{const tx=faceTex(ch,red);return pMat({map:tx,color:NEUT,roughness:.5})})());
     const makePiece=p=>{if(GIANT)return gntTake(p);const s=sideOf(p),ch=NAMES[s][p.toUpperCase()],g=new T.Group();const body=new T.Mesh(pieceGeo,bMat(s==="r"));body.castShadow=true;body.receiveShadow=true;g.add(body);
       const f=new T.Mesh(faceGeo,fMat(ch,s==="r"));f.rotation.x=-PI/2;f.position.y=.272;g.add(f);g.userData={p};sc.add(g);return g};
@@ -1947,6 +1984,17 @@
     const markG=new T.Group();sc.add(markG);
     const disc=(i,col,r,op)=>{const m=new T.Mesh(new T.CircleGeometry(r,32),new T.MeshBasicMaterial({color:col,transparent:true,opacity:op,depthWrite:false}));m.rotation.x=-PI/2;const[x,z]=pos(i);m.position.set(x,TOP+.012,z);markG.add(m);return m};
     const ring=(i,col,r,w,op)=>{const m=new T.Mesh(new T.RingGeometry(r-w,r,40),new T.MeshBasicMaterial({color:col,transparent:true,opacity:op,depthWrite:false}));m.rotation.x=-PI/2;const[x,z]=pos(i);m.position.set(x,TOP+.014,z);markG.add(m);return m};
+    /* 11/13 第 12 輪色弱模式（PKCB）：pkcbMarks 給的新記號——不經色調映射（畫出來就是規格的色碼）、照 renderOrder 疊（白邊→黑邊→顏色）；
+       長方形清單合成一個網格（瞄準框、虛線框）；「將」字牌是永遠面向鏡頭的小牌子，不被棋子擋住。markClr：清掉上一輪的記號並釋放網格、材質（「將」字牌貼圖共用不釋放） */
+    let tagT=null;const tagTex=()=>tagT||(tagT=cv(128,128,(g,n)=>pkcbTag(g,n)));
+    const markMat=(col,op)=>new T.MeshBasicMaterial({color:col,transparent:true,opacity:op,depthWrite:false,side:T.DoubleSide,toneMapped:false});
+    const barGeo=B=>{const p=[];for(const[a,b,c,d]of B)p.push(a,0,b,a,0,d,c,0,b,c,0,b,a,0,d,c,0,d);const g=new T.BufferGeometry();g.setAttribute("position",new T.Float32BufferAttribute(p,3));return g};
+    const markAdd=d=>{if(!d.ro)return d.k==="disc"?disc(d.i,d.col,d.r,d.op):ring(d.i,d.col,d.r,d.w,d.op);const[x,z]=pos(d.i);let m;
+      if(d.k==="tag"){m=new T.Sprite(new T.SpriteMaterial({map:tagTex(),transparent:true,depthTest:false,depthWrite:false,toneMapped:false}));m.scale.set(.5,.5,1);m.position.set(x+.36,TOP+.66,z-.36)}
+      else if(d.k==="bars"){m=new T.Mesh(barGeo(d.b),markMat(d.col,d.op));m.position.set(x,TOP+.016,z)}
+      else{m=new T.Mesh(d.k==="disc"?new T.CircleGeometry(d.r,32):new T.RingGeometry(d.r-d.w,d.r,40),markMat(d.col,d.op));m.rotation.x=-PI/2;m.position.set(x,TOP+(d.k==="disc"?.012:.014),z)}
+      m.renderOrder=d.ro;m.userData.cbm=d.m;markG.add(m);return m};
+    const markClr=()=>{for(const m of markG.children){try{if(m.geometry&&!m.isSprite)m.geometry.dispose();if(m.material)m.material.dispose()}catch(e){}}markG.clear()};
     let selI=-1,checkRing=null;const SNAP={b:null,t:[],me:"r"};
     function layoutCaptured(board){lastCapB=board;captured.forEach(g=>sc.remove(g));captured=[];if(GIANT){gntStars(board);return}   /* 巨盤模式沒有桌邊：被吃的子化成星，排在棋盤外的星軌（gntStars） */const cnt={r:{},b:{}};board.forEach(p=>{if(p){const s=sideOf(p),k=p.toUpperCase();cnt[s][k]=(cnt[s][k]||0)+1}});
       for(const s of["r","b"]){const lost=[];for(const k of"RCNBAP")for(let n=(START[s][k]||0)-(cnt[s][k]||0);n>0;n--)lost.push(s==="r"?k:k.toLowerCase());
@@ -2030,8 +2078,8 @@
     const padRing=new T.Mesh(new T.RingGeometry(.36,.48,40),new T.MeshBasicMaterial({color:0x7CFFB0,transparent:true,opacity:.95,depthWrite:false,side:T.DoubleSide}));padRing.rotation.x=-PI/2;padRing.renderOrder=3;padRing.visible=false;padRing.userData.giant=1;
     const padBeam=new T.Mesh(new T.CylinderGeometry(.42,.42,2.6,32,1,true),new T.MeshBasicMaterial({color:0x7CFFB0,transparent:true,opacity:.18,depthWrite:false,blending:T.AdditiveBlending,side:T.DoubleSide}));padBeam.visible=false;padBeam.userData.giant=1;
     const padShow=()=>{const ok=padT.includes(padCur);if(padCur<0){padRing.visible=padBeam.visible=false;return}const[x,z]=pos(padCur);padRing.position.set(x,UNDER?2*MY-TOP-.03:TOP+.03,z);padBeam.position.set(x,UNDER?2*MY-TOP-1.3:TOP+1.3,z);
-      padRing.visible=padBeam.visible=true;const c=ok?0x7CFFB0:0x9A9AA8;padRing.material.color.setHex(c);padBeam.material.color.setHex(c);padBeam.material.opacity=ok?.2:.08;
-      if(PAD){const g=PAD.querySelector(".pad-go");g.disabled=!ok;g.setAttribute("aria-disabled",String(!ok));const L=PAD.querySelector(".pad-tip");if(L)L.textContent=ok?"可以走這裡":padCur===padSel?"移到要去的格子":"這裡不能走"}pwPoke(300)};
+      const CBM=!!(LOOK&&LOOK.cb);padRing.visible=padBeam.visible=true;const c=pkcbPad(ok,CBM);padRing.material.color.setHex(c);padBeam.material.color.setHex(c);padBeam.material.opacity=ok?.2:.08;   /* 色弱模式：能走的光圈改黃（綠對灰在紅綠色盲下只差亮度），提示字前面加 ✓／✗ */
+      if(PAD){const g=PAD.querySelector(".pad-go");g.disabled=!ok;g.setAttribute("aria-disabled",String(!ok));const L=PAD.querySelector(".pad-tip");if(L)L.textContent=(CBM&&padCur!==padSel?(ok?"✓ ":"✗ "):"")+(ok?"可以走這裡":padCur===padSel?"移到要去的格子":"這裡不能走")}pwPoke(300)};
     const padMove=(dr,dc)=>{if(padCur<0)return;const r=(padCur/9|0)+(flip?-dr:dr),c=padCur%9+(flip?-dc:dc)*(FLIPUP?-1:1);if(r<0||r>9||c<0||c>8){vibrate(8);return}vibrate(4);padCur=r*9+c;padShow()};
     const padUI=()=>{if(PAD)return PAD;if(!sc.children.includes(padRing))sc.add(padRing,padBeam);PAD=document.createElement("div");PAD.className="gpad";PAD.setAttribute("role","group");PAD.setAttribute("aria-label","搖桿：移動要去的格子");
       PAD.style.cssText="position:absolute;left:50%;bottom:10px;transform:translateX(-50%);z-index:4;display:none;grid-template-columns:44px 54px 44px;grid-template-rows:40px 44px 40px auto;gap:3px;align-items:center;justify-items:center;touch-action:manipulation";
@@ -2101,7 +2149,7 @@
       if(sel<0||!T2.length){padSel=-1;padCur=-1;padT=[];if(PAD)PAD.style.display="none";padRing.visible=padBeam.visible=false;return}
       padUI();PAD.style.display="grid";if(sel!==padSel){padSel=sel;padCur=sel}padT=T2;padShow()};
     function draw(board,o,ex){o=o||{};ex=ex||{};drawn=true;orbSet(ex.bhOrb,ex.gxLit);gxSet(ex.gx);LBK=(board||[]).join(",");if(MATED&&LBK!==MATED.k){MATED.g.visible=true;MATED.g.scale.setScalar(MATED.s0);if(GFOC===MATED.an)GFOC=null;sc.remove(MATED.an);MATED=null}if(GIANT){const R=ex.result||null;if(R!==gntRes){gntRes=R;if(R)setTimeout(()=>{for(const g of Object.values(pieces))if(g&&g.userData&&g.userData.B)gntAct(g,R==="r"?"cheer":R==="b"?"bow":"idle",4200)},600)}}try{const dk=[(board||[]).join(","),o.sel,(o.targets||[]).join(" "),o.last?o.last.f+"-"+o.last.t:"",o.check,o.flip?1:0,ex.thinking?1:0,ex.result||"",(ex.hint||[]).join(" ")].join("|");if(dk!==PW.dk){PW.dk=dk;pwPoke(1500)}}catch(e){pwPoke(1500)}   /* 11/11 省電：App 每 1.5 秒輪詢都會呼叫 draw，盤面真的有變才算「畫面在動」 */const nf=!!o.flip;
-      {const lk=JSON.stringify(ex.look?[ex.look.k,ex.look.img,!!ex.look.gly,ex.look.pset,ex.look.pieces&&ex.look.pieces.r,ex.look.grid]:null);if(lk!==lookKey){lookKey=lk;LOOK=ex.look||null;
+      {const lk=JSON.stringify(ex.look?[ex.look.k,ex.look.img,!!ex.look.gly,ex.look.pset,ex.look.pieces&&ex.look.pieces.r,ex.look.grid,!!ex.look.hc,!!ex.look.cb]:null);   /* 11/13：高對比／色弱模式切換也要重畫棋面（PKCB） */if(lk!==lookKey){lookKey=lk;LOOK=ex.look||null;
         if(LOOK){let n=0;const L0=[LOOK.img,LOOK.pieces&&LOOK.pieces.r,LOOK.pieces&&LOOK.pieces.b,...(LOOK.pset?PSRC(LOOK.pset):[])],done=()=>{if(++n>=L0.length&&LOOK===ex.look)refreshLook()};L0.forEach(src=>{if(!src||loadImg(src,done))done()})}
         refreshLook()}}
       if(nf!==flip){flip=nf;prevB=null}if(GIANT)try{gntPad(o);gsUI();unUI();teleUI();storySet(ex.bhStars);gntHorseLock(o.sel!=null?o.sel:-1,board)}catch(e){}   /* 搖桿：翻盤更新後才算方向；棋距拉桿 */
@@ -2129,14 +2177,12 @@
       else if(!prevB||board.join(",")!==prevB.join(","))sync(board);
       prevB=board.slice();prevLast=lk;
       // 提示：上一步、選子、可走點、將軍
-      markG.clear();checkRing=null;
-      if(L&&L.f!==L.t){ring(L.f,0x2E86DE,.36,.06,.85);disc(L.f,0x2E86DE,.12,.5);ring(L.t,0x2E86DE,.56,.07,.9)}
+      markClr();checkRing=null;
       selI=o.sel!=null&&o.sel>=0?o.sel:-1;
       SNAP.b=board;SNAP.t=Array.isArray(o.targets)?o.targets:[];SNAP.me=ex.botSide?(ex.botSide==="r"?"b":"r"):(nf?"b":"r");   /* 11/11 點擊吸附要知道：哪些是己方棋子、哪些是綠點 */
-      (o.targets||[]).forEach(i=>{if(board[i])ring(i,0xD7263D,.56,.09,.95);else disc(i,0x2F9E5A,.19,.9)});
-      if(typeof o.check==="number"&&o.check>=0&&board[o.check])checkRing=ring(o.check,0xFF2A2A,.62,.12,.9);
+      /* 上一步、可走點、可吃、將軍、電腦建議：pkcbMarks 決定畫什麼（高對比／色弱模式換形狀和色碼，見 PKCB），這裡照著畫 */
+      for(const d of pkcbMarks(board,o,ex,{hc:!!(LOOK&&LOOK.hc),cb:!!(LOOK&&LOOK.cb)})){const m=markAdd(d);if(d.chk)checkRing=m}
       try{CR.chkSet(typeof o.check==="number"&&o.check>=0&&board[o.check]?sideOf(board[o.check]):null)}catch(e){}
-      if(ex.hint&&ex.hint.length===2){ring(ex.hint[0],0xF2B233,.5,.07,.9);ring(ex.hint[1],0xF2B233,.5,.07,.9)}
       thinking=!!ex.thinking;setOpp(ex.opp||null);try{simSync(ex.simul)}catch(e){}setMate(ex.mateLook||null);setWatchers(ex.watchers);mySide=ex.botSide?(ex.botSide==="r"?"b":"r"):"r";try{CR.data(ex.crowd||null,o,ex)}catch(e){}
       if(ex.result&&ex.result!==mood){mood=ex.result;const b=ex.botSide;endT=END;
         oppRes=mood==="draw"||!b?"draw":mood===b?"win":"lose";mateRes=oppRes==="win"?"lose":oppRes==="lose"?"win":"draw";

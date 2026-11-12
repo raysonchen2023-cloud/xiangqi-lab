@@ -78,7 +78,7 @@ var XQNet=(function(){
     const vlen=n=>{const a=[];do{let d=n%128;n=Math.floor(n/128);if(n>0)d|=128;a.push(d)}while(n>0);return a};
     const str=x=>{const b=te.encode(x);return[b.length>>8,b.length&255,...b]};
     const pkt=(h,body)=>new Uint8Array([h,...vlen(body.length),...body]);
-    const me={up:false,onup:null,ondown:null,onmsg:null};let buf=new Uint8Array(0),pid=1,ping=null,ws;
+    const me={up:false,onup:null,ondown:null,onmsg:null,rtt:null,rttAt:0};let buf=new Uint8Array(0),pid=1,ping=null,ws,pingAt=0;   /* 評比第 12 輪 X11：rtt＝最近一次心跳 PINGREQ→PINGRESP 的來回毫秒（跟伺服器之間的延遲） */
     try{ws=new WebSocket(url,["mqtt"])}catch(e){setTimeout(()=>me.ondown&&me.ondown(false),0);return me}
     ws.binaryType="arraybuffer";
     let lastRx=Date.now(),dog=null;
@@ -91,10 +91,11 @@ var XQNet=(function(){
     ws.onmessage=e=>{if(downed)return;lastRx=Date.now();const d=new Uint8Array(e.data),nb=new Uint8Array(buf.length+d.length);nb.set(buf);nb.set(d,buf.length);buf=nb;
       for(;;){if(buf.length<2)return;let mul=1,n=0,i=1,c;do{if(i>=buf.length)return;c=buf[i++];n+=(c&127)*mul;mul*=128}while(c&128);
         if(buf.length<i+n)return;const t=buf[0],b=buf.slice(i,i+n);buf=buf.slice(i+n);
-        if(t>>4===2){if(b[1]===0){me.up=true;ping=setInterval(()=>send(new Uint8Array([0xC0,0])),o.keepalive*500);
+        if(t>>4===2){if(b[1]===0){me.up=true;const pg=()=>{if(send(new Uint8Array([0xC0,0])))pingAt=Date.now()};ping=setInterval(pg,o.keepalive*500);pg();
           dog=setInterval(()=>{if(Date.now()-lastRx>o.keepalive*1200){try{ws.close()}catch(e){}me.kill&&me.kill()}},3000);me.onup&&me.onup()}else ws.close()}
         else if(t>>4===3){const tl=(b[0]<<8)|b[1],topic=td.decode(b.subarray(2,2+tl));let p=2+tl;if((t>>1)&3)p+=2;
-          try{me.onmsg&&me.onmsg(topic,td.decode(b.subarray(p)),!!(t&1))}catch(err){console.error(err)}}}};
+          try{me.onmsg&&me.onmsg(topic,td.decode(b.subarray(p)),!!(t&1))}catch(err){console.error(err)}}
+        else if(t>>4===13){if(pingAt){me.rtt=Date.now()-pingAt;me.rttAt=Date.now();pingAt=0}}}};
     ws.onerror=()=>{};
     // 手機網路切換時 WebSocket 可能卡住不觸發 close，看門狗直接判定斷線
     let downed=false;const down=()=>{if(downed)return;downed=true;clearInterval(ping);clearInterval(dog);const was=me.up;me.up=false;me.ondown&&me.ondown(was)};
@@ -183,7 +184,7 @@ var XQNet=(function(){
     let v=c;if(v>PTS_MAX){v=PTS_MAX;why.push("超出範圍")}
     if(botId(id))return{pts:Math.round(v),ok:!why.length,why:why.join("、")};
     const L=ptsSeen[id]||[],hit=L.find(e=>e.pts===c),last=L[L.length-1];let n=hit?hit.n:null;
-    if(L.length&&!hit){why.push("跟在線狀態不一致");v=Math.min(v,Math.max(0,last.pts));n=last.n}
+    if(L.length&&!hit){why.push("跟上線狀態不一致");v=Math.min(v,Math.max(0,last.pts));n=last.n}
     if(n==null){why.push("查不到場數");v=Math.min(v,Math.max(0,myPts()))}else if(v>ptsCap(n)){why.push("超過場數拿得到的上限");v=ptsCap(n)}
     return{pts:Math.round(v),ok:!why.length,why:why.join("、")}}
   /* 在線狀態收進名單前：記下他報的分數和場數，超過上限的換成保守值（原值留在 ptsRaw） */
@@ -255,7 +256,7 @@ var XQNet=(function(){
     /* 回饋 854：連上時不再一律訂整份名單（u/+），改由 syncRoster 看頁面決定；sys/+、cup/+ 用萬用字元合併（專用伺服器每條連線最多 10 個訂閱）。
        30 秒的計時器還在（判對方離線太久），但在線狀態要有變化或滿 30 分鐘才真的送 */
     cli.onup=()=>{everUp=true;downAt=0;upAt=Date.now();rosterOn=false;trk.clear();prune();cli.sub([`${ROOT}/i/${m.id}`,`${ROOT}/sys/+`,`${ROOT}/cup/+`,...(cur?gt(cur.gid):[]),...Object.keys(QS).map(k=>`${ROOT}/${k}`)]);syncRoster();presence(true);pubHist();flushIRT();clearInterval(hb);hb=setInterval(()=>{presence();staleCheck()},30000);
-      if(dirty&&G){dirty=false;setTimeout(()=>{if(G&&cli&&cli.up)pubGame()},600)}if(cur&&!G)waitGame(cur.gid,false);rxAt=syncAt=Date.now();if(document.hidden&&!bgT)bgWatch();emit("status")};   /* 評審 P22.1：剛訂閱會收到保留狀態，重抓計時從現在算；在背景連上的，滿 60 秒再下線 */
+      if(dirty&&G){dirty=false;setTimeout(()=>{if(G&&cli&&cli.up)pubGame()},600)}if(cur&&!G)waitGame(cur.gid,false);rxAt=syncAt=Date.now();if(document.hidden&&!bgT)bgWatch();lkUp();emit("status")};   /* 評審 P22.1：剛訂閱會收到保留狀態，重抓計時從現在算；在背景連上的，滿 60 秒再下線 */
     cli.onmsg=onMsg;
     cli.ondown=was=>{cli=null;clearInterval(hb);if(!downAt)downAt=Date.now();emit("status");
       clearTimeout(retryT);if(want)retryT=setTimeout(connect,backoff(was))}}
@@ -301,6 +302,7 @@ var XQNet=(function(){
     if(p[0]==="g"&&cur&&p[1]===cur.gid){
       if(p[2]==="s"){if(!msg)return;let x;try{x=JSON.parse(msg)}catch(e){return}if(!x||x.gid!==p[1]||!Array.isArray(x.moves)||!x.red||!x.black)return;
         vq=vq.then(()=>sgVet(x)).then(v=>{if(!cur||cur.gid!==x.gid)return;if(v.ok)gameIn(x,msg);else sgBad(x,v.why)}).catch(e=>console.error(e))}   /* 評審 P22 對局簽名：先驗簽（照收到的順序一則一則驗），過了才交給 gameIn（原本這裡的那段，含棋規握手的 rcNotice） */
+      else if(p[2]==="k")lkIn(msg);   /* 評比第 12 輪 X11：對局的連線同步頻道（見 LINK 區段；舊版 App 不認 k，直接忽略） */
       else if(p[2]==="e"){try{const x=JSON.parse(msg),sid=G&&(x.by==="r"||x.by==="b")?(x.by==="r"?G.red.id:G.black.id):String(x.id||"");   /* 回饋 841：記下是誰傳的（照紅黑方對到對局裡的代號；新版也會附上 id），讀的時候濾掉封鎖的人 */
         emos.push({id:++emoN,by:x.by,sid,e:String(x.e||"").slice(0,12),text:String(x.text||"").slice(0,80),name:sid&&sid===me().id?realNm().slice(0,16):String(x.name||"").slice(0,16),at:Date.now()});   /* 回饋 842：自己的聊天在自己畫面顯示自己取的名字 */
         emos=emos.slice(-40);emit("game")}catch(e){}}}}
@@ -454,11 +456,92 @@ var XQNet=(function(){
   function sgBad(x,why){SUS.push({at:Date.now(),gid:x.gid,rev:x.rev,why});SUS=SUS.slice(-50);emit("suspicious",{gid:x.gid,why});if(G&&x.gid===G.gid)sgFix()}
   const sgState=()=>{if(!G)return null;const B=BIND[G.gid];return!B?"unknown":B.legacy?"legacy":B.cup?"cup":"signed"};
   /* 驗過的對局狀態（原本 onMsg 裡那段，照舊）：flagRace → 更新的 rev → 同 rev 裁決 → 舊的就補送自己的 */
-  function gameIn(x,msg){rxAt=Date.now();if(G&&x.gid===G.gid&&side()&&flagRace(x))return;
-    if(!G||x.rev>G.rev||x.gid!==G.gid){if(G&&x.gid===G.gid&&side()&&!okNext(G,x)){badCheck(x);return}seenAt=Date.now();const before=side(),wasEnd=!!(G&&G.result);if(!G||x.gid!==G.gid||x.moves.length!==G.moves.length)arr={n:x.moves.length,t:Date.now()};G=x;netAck=x;wire={gid:x.gid,rev:x.rev,s:msg};dirty=false;if(side()!==before||!!G.result!==wasEnd)presence();record();emit("game");if(typeof rcNotice==="function")rcNotice(G)}
-    else if(x.rev===G.rev){if(gKey(x)===gKey(G))netAck=G;revTie(x)}else if(dirty&&G&&x.rev<G.rev)pubGame();else if(G&&x.rev<G.rev&&!sgLegacy(G)){if(side()){netAck=null;pubTry=0}sgFix()}}   /* 收到比手上舊的＝伺服器上留的可能被晚到的舊訊息蓋掉了：補送一次，而且改回「還沒確認」，補送那則也掉了的話 netHeal 會再送。netAck：伺服器轉回來的（含自己送出去的回音）跟手上這份一樣＝伺服器確實收到了 */
+  /* 評比第 12 輪 X11：via＝"k"（對手直接從連線同步頻道補來的，不代表伺服器有這份：不算回音確認，交給 netHeal 去核對、補到伺服器；比手上舊的直接不理）、
+     "gap"（先前跳號暫放、補齊後再套用的）；跳號又接不上手上這份的先放 gapQ，跟對手要中間那幾份（LINK 區段） */
+  function gameIn(x,msg,via){const vk=via==="k";rxAt=Date.now();lkHear(x);if(vk&&G&&x.gid===G.gid&&x.rev<G.rev)return;if(G&&x.gid===G.gid&&side()&&flagRace(x))return;
+    if(!G||x.rev>G.rev||x.gid!==G.gid){if(G&&x.gid===G.gid&&side()&&!okNext(G,x)){if(x.rev>G.rev+1)gapPut(x,msg);badCheck(x);return}seenAt=Date.now();const before=side(),wasEnd=!!(G&&G.result);if(!G||x.gid!==G.gid||x.moves.length!==G.moves.length)arr={n:x.moves.length,t:Date.now()};G=x;netAck=vk?null:x;if(vk)pubTry=0;wire={gid:x.gid,rev:x.rev,s:msg};lkRing(x.gid,x.rev,msg);dirty=false;if(side()!==before||!!G.result!==wasEnd)presence();record();emit("game");if(typeof rcNotice==="function")rcNotice(G);gapRun()}
+    else if(x.rev===G.rev){if(gKey(x)===gKey(G)&&!vk)netAck=G;revTie(x)}else if(dirty&&G&&x.rev<G.rev)pubGame();else if(G&&x.rev<G.rev&&!sgLegacy(G)){if(side()){netAck=null;pubTry=0}sgFix()}}   /* 收到比手上舊的＝伺服器上留的可能被晚到的舊訊息蓋掉了：補送一次，而且改回「還沒確認」，補送那則也掉了的話 netHeal 會再送。netAck：伺服器轉回來的（含自己送出去的回音）跟手上這份一樣＝伺服器確實收到了 */
   /* ================= SIGN:END ================= */
-  function enter(gid){if(cur&&cur.gid!==gid&&cli&&cli.up)cli.unsub(gt(cur.gid));cur={gid};ls.set("net",cur);emos=[];if(cli&&cli.up)cli.sub(gt(gid));syncRoster();presence()}
+  /* ================= LINK:BEGIN 連線同步頻道（評比第 12 輪 X11，評審「連線與雲端架構師」P22.1 斷線重連與狀態同步、P22.2 延遲與容錯；測試 tools/test-net-link.js） =================
+     對局頻道多一個 g/<對局>/k（不保留）：只有正在下這盤的兩支手機用，觀眾不送不收。舊版 App 訂的是 g/<對局>/+，收到 k 直接忽略（舊版 onMsg 只認 s、e）。
+     每則都帶 {v:1, t 種類, id 送的人, ss 這次開 App 的亂數, sq 序號（同一個 ss 內只增不減）, gid}：
+       p＝ping：每 15 秒一次；剛連上、剛進這盤時馬上一次（帶 hi:1）。帶 ts（送出時間）、rev、n（步數）、h（局面雜湊＝gKey 的 FNV-1a）
+       q＝pong（回 ping）：to、ets（照抄 ping 的 ts：用自己的時鐘算來回，不信對方手機的時間）、rev、n、h
+       st＝補狀態：to、list（最多 8 份「原封不動、簽好名的對局狀態字串」）；收到的照 rev 由小到大一份一份走跟 s 頻道一樣的驗簽（sgVet）和規則（gameIn）
+       nd＝跟對方要狀態：to、after（我手上的 rev，要比它新的）
+     序號：同一個 ss 收過的 sq 再來＝重複，丟掉（LKN.dup）；比收過最大的還小的 p／q＝晚到的舊心跳，丟掉（LKN.old）；st、nd 晚到照收（狀態本身有 rev 把關）。
+       對局狀態本身的序號就是 rev：舊的不收、一樣的冪等忽略（同 rev 不同內容走 revTie 裁決）、新的才套用。
+     比對：收到 p／q 就拿對方的 rev＋h 跟自己的比。一樣＝同步（syncInfo().ok）。不一樣先等 4 秒再 ping 一次（訊息可能還在路上），同一個不一致看到兩次才補：
+       對方落後（rev 比我小，或 rev 一樣、雜湊不同＝同一瞬間各改一次）＝把我有、他沒有的狀態用 st 直接送他；對方超前＝重訂這盤，抓伺服器保留的那份。
+       重連後的第一個 ping（hi）對方收到馬上補，不等第二次。
+     亂序跳號：自己在下的這盤收到 rev 跳號、又接不上手上這份的（例如漏了對方悔棋那份、接著他又走了一步），先放 gapQ（最多 8 份、30 秒），
+       用 nd 跟對方要中間那幾份，補齊後照 rev 由小到大套用。對方是舊版（不回 nd）就跟以前一樣不收。
+     延遲：ping 的來回時間（最近 5 次取中位數）；對方是舊版、沒回 pong 時，改用這支手機跟伺服器的心跳來回（mqtt 的 PINGREQ→PINGRESP）。latency()＝{ms, bars 0～4, src "peer"／"server"}。
+     對方沒回應：peer()＝{st "ok"／"slow"（30 秒）／"gone"（90 秒）／"self"（是自己斷線）, ms, kpeer, oppTurn, winIn（輪到他時，再幾毫秒會照規則判他超時）, canAbort}。
+       新版對手看 k 頻道和他簽的對局狀態多久沒來；舊版對手看他的在線狀態離線多久。只是提示，判負、中止的規則一條都沒改（輪到他超過 3 分鐘照舊判超時、離線 10 分鐘照舊中止）。
+       peerAbort()：對方 "gone" 時這支手機可以選「判和（不計分）」＝結果 {w:null, abort:true}，跟現有的「對方離線，對局中止」同一種（舊版、新版都收，不計積分）；千秋盃不行。
+     流量：每盤每支手機每 15 秒一則 ping、一則 pong（約 150 位元組）；對方 3 次都沒回（舊版）改成每 60 秒一則。 */
+  const LK_PING=15000,LK_SLOW=30000,LK_GONE=90000,LKS=Math.random().toString(36).slice(2,10);
+  const LKN={pings:0,pongs:0,dup:0,old:0,stOut:0,stIn:0,nd:0,gap:0,gapFix:0,mis:0,fix:0};
+  let lkSq=0,lkK=false,lkPingAt=0,lkPings=0,lkRtt=[],lkRttAt=0,lkHeard=Date.now(),lkOff=0,lkSync=null,lkMis=null,lkGiveAt=0,lkNdAt=0,lkSubAt=0,lkHi=true,lkPS="none",RING=[],gapQ=[];
+  const lkSeen=new Map();
+  const fnv=s=>{let h=0x811c9dc5;for(let i=0;i<s.length;i++){h^=s.charCodeAt(i);h=Math.imul(h,0x01000193)>>>0}return h.toString(16).padStart(8,"0")};
+  const posH=g=>g?fnv(gKey(g)):"";
+  const oppId=()=>{const s=side();return s?(s==="r"?G.black.id:G.red.id):null};
+  function lkReset(){lkK=false;lkPingAt=0;lkPings=0;lkRtt=[];lkRttAt=0;lkHeard=Date.now();lkOff=0;lkSync=null;lkMis=null;lkHi=true;RING=[];gapQ=[];lkSeen.clear()}
+  /* 重新連上：對方多久沒回應從現在重算（斷線期間收不到不算他的），下一輪馬上 ping（hi） */
+  function lkUp(){lkHeard=Date.now();lkHi=true;lkPingAt=0;lkMis=null}
+  function lkSend(o){if(!(cli&&cli.up&&cur&&G&&side()))return false;const m=me();return!!cli.pub(`${ROOT}/g/${G.gid}/k`,JSON.stringify(Object.assign({v:1,id:m.id,ss:LKS,sq:++lkSq,gid:G.gid},o)))}
+  const lkMine=()=>({rev:G.rev,n:G.moves.length,h:posH(G)});
+  function lkPing(){if(!(cli&&cli.up&&cur&&G&&side()))return;const now=Date.now();lkPingAt=now;lkPings++;LKN.pings++;lkSend(Object.assign({t:"p",ts:now},lkHi?{hi:1}:{},lkMine()));lkHi=false}
+  /* 最近 8 份這盤的原始狀態字串（收到的、自己送的），給對方補用 */
+  function lkRing(gid,rev,s){if(!s||!gid)return;RING=RING.filter(r=>r.gid===gid&&r.rev!==rev);RING.push({gid,rev,s});if(RING.length>8)RING.shift()}
+  /* 對方有動靜：他簽的（或他轉送的）對局狀態 */
+  function lkHear(x){try{const s=side();if(!s||!G||!x||x.gid!==G.gid)return;const o=oppOf(s);if((x.sg&&x.sg.s===o)||(x.rl&&x.rl.s===o))lkHeard=Date.now()}catch(e){}}
+  function lkGive(after,tie){const now=Date.now();if(!G||now-lkGiveAt<3000)return;let L=RING.filter(r=>r.gid===G.gid&&(tie?r.rev>=after:r.rev>after)).sort((a,b)=>a.rev-b.rev).slice(-8).map(r=>r.s);
+    if(!L.length&&wire&&wire.gid===G.gid&&wire.rev>=after)L=[wire.s];if(!L.length)return;lkGiveAt=now;LKN.stOut++;lkSend({t:"st",to:oppId(),list:L})}
+  function lkResub(){const now=Date.now();if(!(cli&&cli.up&&G)||now-lkSubAt<5000)return;lkSubAt=now;syncAt=now;cli.sub(gt(G.gid))}
+  function lkNeed(){const now=Date.now();if(!G||now-lkNdAt<3000)return;lkNdAt=now;LKN.nd++;lkSend({t:"nd",to:oppId(),after:G.rev});lkResub()}
+  /* 拿對方報的 rev＋雜湊跟自己的比；at1＝馬上補（對方剛重連的 hi），不然同一個不一致要隔 3.5 秒以上看到兩次才補 */
+  function lkCmp(x,at1){const m=lkMine(),now=Date.now(),pr=+x.rev,ph=String(x.h||"");if(!Number.isFinite(pr))return;
+    if(pr===m.rev&&ph===m.h){lkSync={ok:true,at:now,rev:m.rev,peer:pr};lkMis=null;return}
+    lkSync={ok:false,at:lkSync&&!lkSync.ok?lkSync.at:now,rev:m.rev,peer:pr};LKN.mis++;
+    const k=m.rev+"|"+m.h+"|"+pr+"|"+ph;
+    if(!at1&&!(lkMis&&lkMis.k===k&&now-lkMis.at>=3500)){if(!lkMis||lkMis.k!==k)lkMis={k,at:now};lkPingAt=Math.min(lkPingAt,now-LK_PING+4000);return}
+    lkMis=null;LKN.fix++;if(pr<=m.rev)lkGive(pr,pr===m.rev);if(pr>=m.rev)lkResub()}
+  function lkIn(msg){let x;try{x=JSON.parse(msg)}catch(e){return}if(!x||typeof x!=="object"||x.v!==1||!G||x.gid!==G.gid||!side())return;
+    const i=me().id;if(x.id===i||x.id!==oppId())return;
+    const ss=String(x.ss||"").slice(0,16),sq=+x.sq;if(!Number.isInteger(sq))return;
+    let S=lkSeen.get(ss);if(!S){S={max:0,got:new Set()};lkSeen.set(ss,S);if(lkSeen.size>3)lkSeen.delete(lkSeen.keys().next().value)}
+    if(S.got.has(sq)){LKN.dup++;return}S.got.add(sq);if(S.got.size>64)S.got.delete(S.got.values().next().value);
+    const stale=sq<S.max;S.max=Math.max(S.max,sq);lkK=true;const now=Date.now();lkHeard=now;
+    if(x.t==="p"){if(stale){LKN.old++;return}lkSend(Object.assign({t:"q",to:x.id,ets:+x.ts||0},lkMine()));lkCmp(x,!!x.hi);return}
+    if(x.t==="q"){if(x.to!==i)return;if(stale){LKN.old++;return}LKN.pongs++;const r=now-(+x.ets||0);if(r>=0&&r<60000){lkRtt.push(r);if(lkRtt.length>5)lkRtt.shift();lkRttAt=now}lkCmp(x,false);return}
+    if(x.t==="nd"){if(x.to===i)lkGive(+x.after||0,false);return}
+    if(x.t==="st"){if(x.to!==i||!Array.isArray(x.list))return;LKN.stIn++;
+      const L=x.list.slice(0,8).map(s=>{try{const y=typeof s==="string"?JSON.parse(s):null;return y&&y.gid===G.gid&&Array.isArray(y.moves)&&y.red&&y.black&&Number.isFinite(y.rev)?{y,s}:null}catch(e){return null}}).filter(Boolean).sort((a,b)=>a.y.rev-b.y.rev);
+      for(const q of L)vq=vq.then(()=>!cur||!G||cur.gid!==q.y.gid||q.y.rev<G.rev?null:sgVet(q.y)).then(v=>{if(!v||!cur||cur.gid!==q.y.gid)return;if(v.ok)gameIn(q.y,q.s,"k");else sgBad(q.y,v.why)}).catch(e=>console.error(e))}}
+  /* 跳號暫放：同一份不重複放；放了就跟對方要中間那幾份 */
+  function gapPut(x,msg){if(!G||x.gid!==G.gid)return;if(!gapQ.some(q=>q.x.rev===x.rev&&gKey(q.x)===gKey(x))){gapQ.push({x,msg,at:Date.now()});gapQ.sort((a,b)=>a.x.rev-b.x.rev);if(gapQ.length>8)gapQ.pop();LKN.gap++}lkNeed()}
+  /* 手上這份往前進了：拿暫放裡 rev 最小、比手上新的那份再驗一次、再套一次（接得上就繼續往下接） */
+  function gapRun(){if(!gapQ.length||!G)return;gapQ=gapQ.filter(q=>q.x.gid===G.gid&&q.x.rev>G.rev);const q=gapQ[0];if(!q)return;
+    vq=vq.then(()=>sgVet(q.x)).then(v=>{if(v&&v.ok&&cur&&G&&cur.gid===q.x.gid&&q.x.rev>G.rev){const r0=G.rev;gameIn(q.x,q.msg,"gap");if(G&&G.rev>r0)LKN.gapFix++}}).catch(e=>console.error(e))}
+  function peerInfo(){if(!playing())return null;const now=Date.now(),t=toMove(),oppTurn=t!==side();
+    const winIn=oppTurn?Math.max(0,Math.min(G.clk?clockLeft(G,t):Infinity,TURN_MS-(now-turnAt(G)))):null;
+    if(!(cli&&cli.up))return{st:"self",ms:downAt?now-downAt:0,kpeer:lkK,oppTurn,winIn,canAbort:false};
+    const ms=lkK?Math.max(0,now-lkHeard):lkOff?now-lkOff:0,st=ms>=LK_GONE?"gone":ms>=LK_SLOW?"slow":"ok";
+    return{st,ms,kpeer:lkK,oppTurn,winIn,canAbort:st==="gone"&&!G.cup}}
+  function latency(){const now=Date.now();if(!(cli&&cli.up))return{ms:null,bars:0,src:null};let ms=null,src=null;
+    if(lkRtt.length&&now-lkRttAt<60000){const a=lkRtt.slice().sort((p,q)=>p-q);ms=a[a.length>>1];src="peer"}
+    else if(cli.rtt!=null&&now-(cli.rttAt||0)<60000){ms=cli.rtt;src="server"}
+    return{ms,bars:ms==null?null:ms<300?4:ms<700?3:ms<1500?2:1,src}}
+  function lkTick(){const now=Date.now();
+    if(playing()){if(onl(oppId()))lkOff=0;else if(!lkOff)lkOff=now}else lkOff=0;
+    if(cur&&G&&side()&&cli&&cli.up&&(!G.result||now-seenAt<60000)){const iv=lkK||lkPings<3?LK_PING:4*LK_PING;if(now-lkPingAt>=iv)lkPing()}
+    if(gapQ.length)gapQ=gapQ.filter(q=>G&&q.x.gid===G.gid&&q.x.rev>G.rev&&now-q.at<30000);
+    const P=peerInfo(),s=P?P.st:"none";if(s!==lkPS){lkPS=s;emit("peer",P)}}
+  /* ================= LINK:END ================= */
+  function enter(gid){if(cur&&cur.gid!==gid&&cli&&cli.up)cli.unsub(gt(cur.gid));if(!cur||cur.gid!==gid)lkReset();cur={gid};ls.set("net",cur);emos=[];if(cli&&cli.up)cli.sub(gt(gid));syncRoster();presence()}
   const PL={r:"紅方",b:"黑方"},oppOf=s=>s==="r"?"b":"r";
   // 對方「在這盤」＝在線上，而且他的狀態指著同一盤（已經跑去做別的事就不算）
   const onl=id=>{const x=people[id];return id===me().id?!!(cli&&cli.up):!!(x&&fresh(x,Date.now())&&G&&x.gid===G.gid)};
@@ -485,7 +568,7 @@ var XQNet=(function(){
     if((G.result?now-seenAt<5*60000&&now-Math.max(rxAt,syncAt)>3*RESYNC:now-Math.max(rxAt,syncAt)>RESYNC)){syncAt=now;cli.sub(gt(G.gid));return}   /* 已經結束的盤：最後一次變動後 5 分鐘內，每 60 秒沒動靜也重抓（兩邊各自判了不同的結果時，靠這個收到對方那份、照 flagRace 裁決） */
     /* 快要判對方超時前（剩不到 12 秒）再重抓一次：伺服器上其實已經有他那步的話，先收到就不會誤判（不延後判超時的時間點） */
     const t=toMove();if(playing()&&t!==side()&&now-syncAt>10000){const left=Math.min(G.clk?clockLeft(G,t):Infinity,TURN_MS-(now-turnAt(G)));if(left<12000){syncAt=now;cli.sub(gt(G.gid))}}}
-  setInterval(()=>{timeoutCheck();syncRoster();netHeal()},2000);   /* 回饋 854：順便看要不要訂、收整份名單 */
+  setInterval(()=>{timeoutCheck();syncRoster();netHeal();lkTick()},2000);   /* 回饋 854：順便看要不要訂、收整份名單 */
   function staleCheck(){if(!playing()||!cli||!cli.up||G.cup)return;   /* 擂台比賽沒有「中止」：斷線的人時間照走 */const o=oppOf(side()),oid=o==="r"?G.red.id:G.black.id;
     if(!onl(oid)&&Date.now()-seenAt>10*60000)setResult({w:null,abort:true,why:"對方離線太久，對局中止"})}
   // 自己離開一盤還沒下完的棋：對方還在線上就算自己認輸；對方已經離線就直接中止
@@ -496,7 +579,7 @@ var XQNet=(function(){
     if(auto)seeking=Date.now();presence();emit("matchfail",{auto});tryMatch()},12000)}
   /* 評審 P22 對局簽名：先蓋章（sgSeal，非同步）再送；照呼叫的順序送。沒連上馬上標「棋步連上後送出」 */
   function pubGame(){if(!G)return;const g=G;if(g!==pubG){pubG=g;pubTry=0}pubAt=Date.now();if(!(cli&&cli.up))dirty=true;
-    sigQ=sigQ.then(()=>sgSeal(g)).then(s=>{if(s==null)return;if(cli&&cli.up&&cli.pub(`${ROOT}/g/${g.gid}/s`,s,true)){if(G===g)wire={gid:g.gid,rev:g.rev,s}}else{dirty=true;connect()}}).catch(e=>console.error(e))}
+    sigQ=sigQ.then(()=>sgSeal(g)).then(s=>{if(s==null)return;lkRing(g.gid,g.rev,s);if(cli&&cli.up&&cli.pub(`${ROOT}/g/${g.gid}/s`,s,true)){if(G===g)wire={gid:g.gid,rev:g.rev,s}}else{dirty=true;connect()}}).catch(e=>console.error(e))}
   // 手機切到背景時主動下線（iPhone 背景會斷線），回來再連上
   const kick=()=>{if(!want)return;if(!cli){clearTimeout(retryT);connect()}else if(cli.up)presence()};
   /* 評審 P22.1（11/12）：上面那行註解以前只做了「回來再連上」，「切到背景主動下線」沒做——只靠 iPhone 系統把連線停掉、伺服器 45 秒後照遺囑清在線狀態；
@@ -547,6 +630,10 @@ var XQNet=(function(){
     downFor:()=>cli&&cli.up||!downAt?0:Date.now()-downAt,pendingSend:()=>dirty,
     /* 評審 P22 對局簽名：signState＝這盤 "signed"（雙方簽名）／"legacy"（對方版本較舊，無法驗證，不計積分）／"cup"／"unknown"／null；suspicious＝最近 50 筆被擋下的可疑對局訊息（不跳視窗） */
     signState:()=>sgState(),suspicious:()=>SUS.slice(),
+    /* 評比第 12 輪 X11（LINK 區段）：latency＝連線延遲與訊號格；peer＝對方有沒有回應；syncInfo＝跟對方的局面比對（rev＋雜湊）；linkStats＝計數（測試、除錯用）；
+       peerAbort（"draw"／"leave"）＝對方 90 秒以上沒回應時，判和（不計分）＝中止這盤；回 true＝成立 */
+    latency,peer:()=>peerInfo(),syncInfo:()=>G&&side()?Object.assign({kpeer:lkK,ok:null,at:0,rev:G.rev,peer:null},lkSync||{}):null,   /* ok：true 一致／false 對不上／null 還沒比過（對方是舊版就一直是 null） */linkStats:()=>Object.assign({},LKN),
+    peerAbort(kind){const P=peerInfo();if(!P||!P.canAbort)return false;setResult({w:null,abort:true,why:kind==="leave"?"對方長時間沒回應，離開對局（不計分）":"對方長時間沒回應，判和（不計分）"});return!!(G&&G.result&&G.result.abort)},
     people:()=>{const now=Date.now(),i=me().id,all=Object.values(people).filter(x=>x.id!==i&&fresh(x,now)),bg=new Set(all.filter(x=>x.st==="playing"&&x.gid&&blk(x.id)).map(x=>x.gid));
       return all.filter(x=>!blk(x.id)&&!(x.st==="playing"&&x.gid&&bg.has(x.gid)))},   /* 回饋 841：封鎖的人藏起來；他正在下的那盤也不列（不然對戰卡只剩對手一個人） */
     blocked:id=>blk(id),

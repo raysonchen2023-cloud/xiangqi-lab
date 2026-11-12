@@ -437,7 +437,8 @@ var XQ=(function(){
       return Math.round(Math.max(MIN,Math.min(MAX,v*lf)))}
     return{ms,MIN,MAX}}
   /* THINKPACE:END */
-  const TP=THINKPACE(C,HP,CPU_MIN_MS),cpuPace=()=>{try{return JSON.parse(localStorage.getItem("m_cpuPace"))==="fast"?"fast":"real"}catch(e){return"real"}};
+  /* 第 12 輪 F3：快棋模式（App 的 store blitz＝localStorage m_blitz，07pm-premove.js）打開時，電腦節奏一律當作「快速」，不管設定頁選了擬真 */
+  const TP=THINKPACE(C,HP,CPU_MIN_MS),cpuPace=()=>{try{if(JSON.parse(localStorage.getItem("m_blitz"))===true)return"fast"}catch(e){}try{return JSON.parse(localStorage.getItem("m_cpuPace"))==="fast"?"fast":"real"}catch(e){return"real"}};
   async function playEngine(){
     if(!P||P.result||P.turn===P.human||playBusy)return;
     {const sm=styleMove();if(sm){playBusy=true;setTimeout(()=>{try{if(P&&!P.result&&P.turn!==P.human)playApply(sm[0],sm[1])}finally{playBusy=false;setTimeout(playEngine,0)}},700);return}}
@@ -517,6 +518,9 @@ var XQ=(function(){
   function pvpFlag(now){if(!V||!V.tc||V.result||V.tick==null||pvpLeft(V.turn,now)>0)return false;const s=V.turn;V.clocks[s]=0;V.tick=null;pvpEnd(opp(s),PLAYER[s]+"超時判負");return true}
   function pvpClock(){pvpFlag(Date.now())}
   setInterval(pvpClock,250);
+  /* 評比循環第 12 輪 X10（m/07fm-focus.js 呼叫）：App 切到背景、接電話、老闆鍵時同機限時局的棋鐘暫停。true＝把這手已經用掉的時間記進鐘、停錶、存檔（已經落旗就不救）；false＝只解除這裡停的，從現在接著走 */
+  window.XQ_pvpPause=on=>{if(!V||!V.tc||V.result)return false;const now=Date.now();if(on){if(pvpFlag(now)||V.tick==null)return false;V.clocks[V.turn]=pvpLeft(V.turn,now);V.tick=null;V.paused=true;saveV();return true}
+    if(!V.paused)return false;V.paused=false;if(V.tick!=null)return false;V.tick=now;return true};
   function pvpEnd(w,why,now){if(V.tick!=null&&V.clocks)V.clocks[V.turn]=Math.max(0,pvpLeft(V.turn,now));V.result={w,why,...(V.repetition&&!V.repetition.pending?{adjudication:V.repetition}:{})};V.tick=null;V.draw=null;
     pushGame("pvp",{id:V.id,rc:V.rc||null,date:V.id.slice(0,10),red:V.red,black:V.black,tc:V.tcKey,result:V.result,moves:saveMoves(V.moves)});saveV()}
   async function analyzePvp(){if(vaBusy||!V)return;vaBusy=true;const S=V;try{await analyzeList(V,saveV)}finally{vaBusy=false}
