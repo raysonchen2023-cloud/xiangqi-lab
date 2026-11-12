@@ -1534,7 +1534,7 @@ html[data-hct] .player.on .clk{background:#00563B;color:#FFFFFF;border-color:#00
       if(!window.caches)return go();caches.keys().then(function(ks){return Promise.all(ks.filter(function(k){return k.indexOf("xqlab-app-")===0}).map(function(k){return caches.delete(k)}))})
         .then(function(){return navigator.serviceWorker&&navigator.serviceWorker.getRegistration()}).then(function(r){return r&&r.update()}).catch(function(){}).then(go)}};setTimeout(chk,4000)})();
 </script>
-<script>window.XQ_OFFLINE=true;window.XQ_BUILD="20261112-1270";</script>
+<script>window.XQ_OFFLINE=true;window.XQ_BUILD="20261112-1280";</script>
 <script src="core.js"></script>
 <script src="engine.js"></script>
 <script src="local.js"></script>
@@ -5617,7 +5617,7 @@ const SHIP_ROUTE=["classic","qin","han","sanguo","weijin","nanbei","sui","tang",
 /* 意見回饋 675（開發者 11/6 定案，評審 24）：星槎不再照修為自動停靠，改成玩家在星槎頁按「⛵ 起航」才往下一站開（不設門檻、沒有每天上限）。
    已停靠的站記在旅程鍵 shipDock（照停靠先後）；新旅程一開始是［船艙、家鄉］。舊旅程第一次讀到時，照 674 版的舊規則（shipLegacyN）把已經停靠的站算出來存進去，一站都不收回。
    eraOpen 是 674 版「蓋了站章的站」，現在只在換算舊旅程時讀 */
-/* 意見回饋 674（開發者 11/6）：經典園子＝星槎的船艙，每個角色一開始就能去（航線第一站固定是船艙，第二站才是家鄉朝代） */
+/* 意見回饋 674（開發者 11/6）：青石園＝星槎的船艙，每個角色一開始就能去（航線第一站固定是船艙，第二站才是家鄉朝代） */
 /* hspx 11/10：開新旅程時，從角色的兩個主場（星槎航線上他當主場的站）隨機抽一個當起點，存在 journey.home；阿轍只有秦一站。舊旅程沒有 home 就照 CHAR_ERA */
 const CHAR_HOMES={x_swordboy:["qin"],x_spiritgirl:["weijin","nanbei"],x_martialgirl:["wudai","song"],x_miaogirl:["han","yuan"],x_shuai:["sanguo","ming"],x_shi:["tang","ming"],x_bing:["sui","qing"]};
 const jHomePick=c=>{const L=CHAR_HOMES[c]||(CHAR_ERA[c]?[CHAR_ERA[c]]:[]);return L.length?L[Math.random()*L.length|0]:null};
@@ -6568,7 +6568,7 @@ function setupSheet(board0,side0,flip0,eng){if(!board0)return;const H=[{board:bo
 // ================= 🏯 朝代擂台＋集章（意見回饋 255：吸引玩家到公園下棋）=================
 // 每個朝代的公園有一位擂主（由 Pikafish 扮演），難度跟著你的電腦段位；打贏蓋該朝代的朱印，集 3／7／13 枚得到稱號（大廳的棋友資料卡看得到）
 const ARENA={
-  classic:{seal:"棋",name:"石桌棋仙",intro:"在園子石桌下了五十年的老棋仙，一壺茶、一盤棋，從沒換過位置。",hi:"老夫在這石桌坐了五十年，來，陪我下一盤。",win:"薑還是老的辣，年輕人再練練。",lose:"好！這一章你蓋得名正言順。"},
+  classic:{seal:"青",name:"石桌棋仙",intro:"在園子石桌下了五十年的老棋仙，一壺茶、一盤棋，從沒換過位置。",hi:"老夫在這石桌坐了五十年，來，陪我下一盤。",win:"薑還是老的辣，年輕人再練練。",lose:"好！這一章你蓋得名正言順。"},
   qin:{seal:"秦",name:"咸陽鐵卒",intro:"守過長城烽火台的老兵，棋風像秦軍一樣步步進逼、紀律嚴明。",hi:"秦軍出陣，一步不退！",win:"烽火已燃，城門未破。",lose:"這一仗，我服了。"},
   han:{seal:"漢",name:"未央棋侯",intro:"未央宮裡陪皇帝下棋的棋侯，最愛用馬，講究「運籌帷幄」。",hi:"運籌帷幄之中，請。",win:"漢家天下，暫且還姓劉。",lose:"決勝千里，閣下勝了。"},
   /* 開發者 11/11 選 Gemini 全域審查：原本「赤壁火炮將」用炮火攻、開場「火燒連營」——三國還沒有火藥砲，火燒連營是夷陵之戰；改成霹靂車（《三國志・袁紹傳》官渡發石車）＋火燒赤壁 */sanguo:{seal:"三國",name:"赤壁霹靂將",intro:"赤壁一戰的老將，年輕時在官渡見過曹操的「霹靂車」——拋石頭的機器，就是象棋「砲」的祖先，所以最愛用砲隔山打人。",hi:"東風已起，看我火燒赤壁！",win:"這把火燒得旺。",lose:"東風不與我便……佩服。"},
@@ -6589,11 +6589,11 @@ window.XQ_TITLE=()=>{const c=typeof cupTitle==="function"&&cupTitle();if(c==="�
 /* 擂主強度跟著你的電腦段位（新手大約「入門」棋力，越高段擂主越強）；意見回饋 288：最強的是經典公園的擂主，再強一級（不在 App 裡說破，讓玩家自己摸索） */
 function arenaLevel(era){let p=0;try{p=(JSON.parse(localStorage.getItem("xq_cpuRate")||"null")||{}).pts||0}catch(e){}
   const base=p>=1150?7:p>=900?6:p>=600?5:p>=300?4:p>=100?3:2;return era==="classic"?7:base}   /* 意見回饋 426、427：石桌棋仙固定在「全力」的前一級（第 7 級職業頂尖），不跟著段位變 */
-const eraLabel=k=>({classic:"經典園子",qin:"秦朝",han:"漢朝",sanguo:"三國",weijin:"魏晉",nanbei:"南北朝",sui:"隋朝",tang:"唐朝",wudai:"五代",song:"宋朝",yuan:"元朝",ming:"明朝",qing:"清朝"})[k]||k;
+const eraLabel=k=>({classic:"青石園",qin:"秦朝",han:"漢朝",sanguo:"三國",weijin:"魏晉",nanbei:"南北朝",sui:"隋朝",tang:"唐朝",wudai:"五代",song:"宋朝",yuan:"元朝",ming:"明朝",qing:"清朝"})[k]||k;
 /* 意見回饋 412：古代沒有「公園」這個詞（清末才出現），各朝代用當時的說法：秦漢的皇家「苑囿」（上林苑）、三國「園囿」（銅雀園）、
    魏晉以後文人的「園林」（金谷園、華林園）、隋煬帝的「西苑」→「林苑」、宋代的「園圃」、元代的「園亭」、清代口語的「園子」 */
 const PW={classic:"園子",qin:"苑囿",han:"苑囿",sanguo:"園囿",weijin:"園林",nanbei:"園林",sui:"林苑",tang:"園林",wudai:"園林",song:"園圃",yuan:"園亭",ming:"園林",qing:"園子"};
-const parkName=k=>k==="classic"||!PW[k]?"經典園子":eraLabel(k)+"的"+PW[k];
+const parkName=k=>k==="classic"||!PW[k]?"青石園":eraLabel(k)+"的"+PW[k];
 /* 開發者要求：進園子的過場，配一句那個朝代棋手（或談棋名人）說過的話，每次隨機、不跟上一次重複。
    每句都對過原典（維基文庫的《弈人傳》、正史、《古今圖書集成・藝術典》、《佩文齋詠物詩選》卷二〇八等）；[句子, 誰, 出處, 小注]。11/10 開發者「要講象棋的史實，有圍棋的都拿掉」：只留講象棋、六博、象戲的句子，講「弈」的都拿掉；沒有句子的朝代用經典那組 */
 const PARK_Q={
@@ -7268,7 +7268,7 @@ function ParkGate(v){setTop("🪨 千秋石枰","#/adventure");setTabs(false);v.
     const from=typeof shipAt==="function"?shipAt():cur,im=b.querySelector("img");if(im&&k!==from)im.classList.add("sflip");
     setTimeout(()=>qianqiu(from,k,()=>{if(typeof shipEra==="function")shipEra(k);else{store.set("era",k);try{applyEra()}catch(e){}}store.set("park3d",true);try{saveNow(true)}catch(e){}
     jStart("park",{human:"r",level:parkNpcLv(),journey:"park"},()=>{navReplace("#/journey/play");
-      setTimeout(()=>{const r=store.get("parkNpc",null),n=r&&PARK_NPC.find(x=>x.id===r.id);toast(`🌳 ${parkName(k)}到了${n?"・遇到"+n.name:""}`);if(k==="classic"&&typeof tellerTalk==="function")setTimeout(()=>tellerTalk(),900)},600)})},"park"),k===from?0:800)})}   /* 意見回饋 674：經典園子有說書人 */
+      setTimeout(()=>{const r=store.get("parkNpc",null),n=r&&PARK_NPC.find(x=>x.id===r.id);toast(`🌳 ${parkName(k)}到了${n?"・遇到"+n.name:""}`);if(k==="classic"&&typeof tellerTalk==="function")setTimeout(()=>tellerTalk(),900)},600)})},"park"),k===from?0:800)})}   /* 意見回饋 674：青石園有說書人 */
 /* 意見回饋 389：點朝代石頭——石頭先慢慢翻轉，再出現那個朝代的封面（驛站場景圖＋朝代名＋印），然後才進公園下棋；點封面可以跳過 */
 function stoneCover(b,k){return new Promise(res=>{const im=b.querySelector("img")||b;im.classList.add("sflip");vibrate(8);
   const info=(PARK_INFO[k]||PARK_INFO.classic)._||[eraLabel(k),""],seal=(ARENA[k]&&ARENA[k].seal)||"";let done=false;
@@ -8581,7 +8581,7 @@ function gardenMeCard(){const d=document.createElement("div");d.className="card 
 
 /* ---------- B．輿圖遊歷：路線（p＝地圖上的位置，圖寬的 %；被石台蓋住的站推到石台邊；nl＝地圖原本沒有這個地名，要自己寫字；q＝題號） ---------- */
 const YU_R={
-  /* 11/10 開發者選 Gemini 69 方案 3＋1：經典園子不再用《禹貢》九州（看起來像第 14 個朝代），改成千秋石桌上的北斗陣眼；五題照舊，開陽、搖光由 park3d 照終章有沒有完成畫亮或暗 */
+  /* 11/10 開發者選 Gemini 69 方案 3＋1：青石園不再用《禹貢》九州（看起來像第 14 個朝代），改成千秋石桌上的北斗陣眼；五題照舊，開陽、搖光由 park3d 照終章有沒有完成畫亮或暗 */
   classic:{"t":"千秋時光之苑・北斗陣眼","seal":"北斗","yr":"雲河星槎","src":"北斗七星的星名（漢代緯書《春秋運斗樞》）","tale":1,"x":"千秋時光之苑不屬於任何朝代。園子中央那張千秋石桌，石面刻著棋盤，外圈刻著北斗七星的星軌。古人看北斗的斗柄指向哪裡，就知道現在是什麼季節。幻影把五個陣眼排成北斗的樣子，每個陣眼放一題殘局；剩下的開陽、搖光兩顆，要等七位旅伴完成「千秋歸位」那天才會亮起來。","s":[{"n":"天樞","nl":1,"p":[73,35],"x":"天樞是北斗的第一顆星。「樞」是門的轉軸，門靠它才轉得動；下棋也一樣，先看清楚哪一子是整盤棋的關鍵。","q":"gm2013-B84A43K1A3r"},{"n":"天璇","nl":1,"p":[66,33],"x":"天璇和天樞連成一直線，往天樞那頭延長，就找得到北極星。棋子也要排成線、互相照應，才走得出力量。","q":"lk196"},{"n":"天璣","nl":1,"p":[64,44],"x":"天璣在斗勺的底部。勺底要穩，東西才裝得住；就像九宮要守好，帥才安全。","q":"mr007"},{"n":"天權","nl":1,"p":[72,47],"x":"天權是斗勺和斗柄相接的那一顆，也是七顆裡最暗的一顆，卻把整個北斗連起來；小兵小卒也能撐起一盤棋。","q":"ys063"},{"n":"玉衡","nl":1,"p":[70,58],"x":"玉衡是北斗七星裡最亮的一顆。幻影說：「走到這裡，基本功就打好了。開陽、搖光，等七子歸位那天再一起點亮。」","q":"lk202c4"}]},
   qin:{"t":"始皇東巡","seal":"東巡","yr":"前 219、前 210 年","src":"《史記．秦始皇本紀》","x":"秦始皇統一天下以後，好幾次出巡。這條路把《史記》記的兩次合起來走：始皇二十八年（前 219 年）登泰山、到琅邪；三十七年（前 210 年）上會稽，回程病死在沙丘。","s":[{"n":"咸陽","p":[42.1,44],"x":"秦的都城。統一以後，秦始皇下令「車同軌，書同文字」：全國車輪的距離一樣、文字的寫法也一樣。","th":"車同軌：用車殺","q":"lk242c4"},{"n":"泰山","p":[66.2,38.9],"x":"前 219 年，秦始皇登上泰山，立石刻字、舉行封禮。《史記》說下山時遇到暴風雨，他在一棵樹下躲雨，就封那棵樹為「五大夫」。","q":"sq308"},{"n":"琅邪","p":[73,40.4],"x":"同一年他往南到琅邪，非常喜歡這裡，一住就是三個月，還遷了三萬戶百姓到琅邪臺下。","q":"lk113c4"},{"n":"會稽","p":[77.3,53.9],"x":"前 210 年，他上會稽山祭拜大禹，遠望南海，又立了一塊石碑，刻字稱頌秦朝的功德。","q":"sq056c8"},{"n":"沙丘","p":[60.8,36.3],"nl":1,"x":"回程走到平原津就病倒了，七月死在沙丘平臺。丞相李斯怕天下大亂，把消息瞞住，不發喪。","q":"sq463c6"}]},
   han:{"t":"張騫出使西域","seal":"鑿空","yr":"約前 139～前 126 年","src":"《史記．大宛列傳》","x":"漢武帝想聯合大月氏一起對付匈奴，招人出使，張騫去應徵。他這一去十三年，出發時一百多人，回來的只剩兩個人。司馬遷說張騫這一趟是「鑿空」——第一次把通往西域的路打通。","s":[{"n":"長安","p":[58.7,54.7],"x":"張騫以郎官的身分應募出使大月氏，帶著胡人甘父（堂邑父）從長安出發。","q":"sq245"},{"n":"隴西","p":[39.7,55.5],"nl":1,"x":"《史記》說他們「出隴西」，往西走，就得經過匈奴的地盤。","q":"ys280"},{"n":"匈奴","p":[51.5,26.7],"x":"他們被匈奴抓住，送到單于那裡。匈奴把張騫留了十多年，還讓他娶妻生子，可是張騫一直把漢朝的符節帶在身邊，沒有丟掉。","q":"lk171c5"},{"n":"西域","p":[12.5,35.8],"x":"他找機會逃走，往西到了大宛，再經康居到大月氏。《史記》說大宛「多善馬，馬汗血」。可惜大月氏過得安穩，不想再跟匈奴打仗了。","th":"大宛出好馬：用馬殺","q":"lk128"},{"n":"羌","p":[36.1,51.9],"x":"回程他沿著南山走，想從羌人的地方回漢朝，又被匈奴抓住。一年多後匈奴內亂，他才帶著妻子和堂邑父逃回長安。","q":"sq100"}]},
@@ -8615,7 +8615,7 @@ function yuBackHash(){const h=store.get("yuBack","");return typeof h==="string"&
 window.XQ_MAPROUTE=era=>{if(typeof PARK_J==="undefined"||PARK_J!=="park")return null;const R=YU_R[era];if(!R)return null;const N=R.s.length,n=Math.min(yuOf(era).n,N);
   return{key:era+":"+n,n,all:n>=N,tip:n>=N?`🧭 ${R.t}：整條走完了`:`🧭 ${R.t}：點發亮的「${yuName(R.s[n])}」，在那裡過一關`,
     s:R.s.map((s,i)=>({nm:s.n,t:s.nl?yuName(s):"",x:s.p[0],y:s.p[1],st:i<n?1:i===n?2:0}))}};
-/* 經典園子地圖的北斗七星：開陽、搖光要等終章「千秋歸位」學會才亮（park3d.js 畫 realms.json classic 的 stars 時問這裡） */
+/* 青石園地圖的北斗七星：開陽、搖光要等終章「千秋歸位」學會才亮（park3d.js 畫 realms.json classic 的 stars 時問這裡） */
 window.XQ_FINALE=()=>{try{return typeof shipLearned==="function"&&!!shipLearned("finale")}catch(e){return false}};
 
 /* 點到地圖上的地名（06-cpu.js parkInfo）：是這個朝代路線上的站，就換成「介紹＋這一站」的小卡；回傳 true＝處理好了 */
@@ -9073,7 +9073,7 @@ function navPrev(){try{for(let i=NAV_D-1;i>=0;i--){const x=NAV_H[i];if(typeof x=
 const shipNav=(h,rep)=>{if(navKey(h)===navKey(location.hash))route();else if(rep)navReplace(h);else location.hash=h};   /* 已經在那一頁（例如在驛站旅人的對局頁去園子）就重畫 */
 function shipPort(k){if(eraLocked(k))return toast(eraLockMsg(k));shipEra(k);walk("port",()=>{location.hash="#/port"},k==="classic"?"⚓ 下船・走進":"⚓ 放下跳板，走上")}
 function shipPark(k,rep){if(eraLocked(k))return toast(eraLockMsg(k));shipEra(k);store.set("park3d",true);
-  jStart("park",{human:"r",level:parkNpcLv(),journey:"park"},()=>{shipNav("#/journey/play",rep);setTimeout(()=>{const r=store.get("parkNpc",null),n=r&&typeof PARK_NPC!=="undefined"&&PARK_NPC.find(x=>x.id===r.id);toast(`🌳 ${parkName(k)}到了${n?"・遇到"+n.name:""}`);if(k==="classic")setTimeout(()=>tellerTalk(),900)},600)})}   /* 意見回饋 674：經典園子有說書人 */
+  jStart("park",{human:"r",level:parkNpcLv(),journey:"park"},()=>{shipNav("#/journey/play",rep);setTimeout(()=>{const r=store.get("parkNpc",null),n=r&&typeof PARK_NPC!=="undefined"&&PARK_NPC.find(x=>x.id===r.id);toast(`🌳 ${parkName(k)}到了${n?"・遇到"+n.name:""}`);if(k==="classic")setTimeout(()=>tellerTalk(),900)},600)})}   /* 意見回饋 674：青石園有說書人 */
 function shipInn(k,rep){if(eraLocked(k))return toast(eraLockMsg(k));shipEra(k);walk("inn",()=>shipNav("#/journey/inn",rep))}
 function shipArena(k,rep){if(eraLocked(k))return toast(eraLockMsg(k));shipEra(k);store.set("park3d",true);shipNav("#/arena",rep)}
 
@@ -9364,7 +9364,7 @@ function Voyage(v){setTop("⛵ 雲河星槎","#/");setTabs(true,"#/");v.classNam
     mainDoneBind(v);jResume(v.querySelector("#spRes"));if(typeof v7Try==="function")v7Try(v,"ship")};   /* 七星來訪（07j-visit.js）：沒選的六位偶爾來串門子 */
   paint();return{}}
 
-/* 意見回饋 674（開發者 11/6）：說書人在經典園子（船艙）說書——每天第一次進經典園子，說書人先拍醒木講一段，可以去書架聽這一回，或先下棋 */
+/* 意見回饋 674（開發者 11/6）：說書人在青石園（船艙）說書——每天第一次進青石園，說書人先拍醒木講一段，可以去書架聽這一回，或先下棋 */
 function tellerTalk(force){try{const day=new Date().toDateString();if(!force&&store.get("tellerDay","")===day)return;store.set("tellerDay",day);const L=legendState(),done=!!L.epi;
   sheet("🪭 船艙裡的說書人",b=>{b.innerHTML=`<div class="tlr"><img src="data/actors/teller.webp" alt="" onerror="this.remove()"><div><p class="tlr-q">「${esc(shipQuote())}」</p><p class="muted">醒木一拍：${done?"「《石桌往事》講完了，今天換《紙譜新局》。」":`「今天接著講《石桌往事》第${CNUM(L.n)}回。」`}</p></div></div><button class="btn" id="tl1" style="width:100%;margin-top:10px">📖 去書架聽這一回</button><button class="btn ghost" id="tl2" style="width:100%;margin-top:8px">♟ 先下這盤棋</button>`;
     b.querySelector("#tl1").onclick=()=>{closeSheet();location.hash=done?SHELF(2):"#/shelf/1/"+L.n};   /* 意見回饋 735：直接到那一回 */b.querySelector("#tl2").onclick=()=>closeSheet()})}catch(e){}}
@@ -9484,18 +9484,18 @@ function homeRecBind(v){const b=v&&v.querySelector("#hRec");if(!b)return;let R={
    驛站的 .po-sight 是入口（旅人、秘境棋友、信箱…），照舊顯示 */
 (()=>{try{const s=document.createElement("style");s.id="poSightHide";s.textContent=".po-sight[data-ps]{opacity:0!important;min-width:20cqw;min-height:12cqw;border:0!important;box-shadow:none!important;background:transparent!important;color:transparent!important;animation:none!important}";document.head.append(s)}catch(e){}})();
 
-/* ================= 🀄 經典園子・千秋石桌（開發者 11/10 hspx；Gemini 67 定案：方案 1 幻影指導局＋方案 8 歸位之兆；觸發只用「同一題錯 3 次」）=================
-   在某一朝的千秋殘局同一題走錯 3 次，旅伴提議「回星槎的經典園子找找靈感」；經典渡口多一個「🀄 千秋石桌」：石桌對面坐著水墨幻影（前朝棋手留在《千秋棋話》裡的一縷棋意），
+/* ================= 🀄 青石園・千秋石桌（開發者 11/10 hspx；Gemini 67 定案：方案 1 幻影指導局＋方案 8 歸位之兆；觸發只用「同一題錯 3 次」）=================
+   在某一朝的千秋殘局同一題走錯 3 次，旅伴提議「回星槎的青石園找找靈感」；經典渡口多一個「🀄 千秋石桌」：石桌對面坐著水墨幻影（前朝棋手留在《千秋棋話》裡的一縷棋意），
    擺一題「同一招殺法、步數少」的簡單殘局（canju-set 同 kill、n≤2，挑最簡單、還沒練過的）；解開得到那一站的口訣卡（SHIP_LESSON[k].k），回原題時題目上方會顯示，不直接給答案。
    歸位之兆：石桌上七顆紅子（終章千秋歸位要放回的俥傌相仕帥炮兵）隨進度凝實——學會的站數＋幻影教過的次數×0.5，每 2 點凝實一顆，13 站學完正好七顆。
-   請幻影要人在經典（shipAt()==="classic"）；從提示按「回經典園子」會直接開到經典再進來 */
+   請幻影要人在經典（shipAt()==="classic"）；從提示按「回青石園」會直接開到經典再進來 */
 const PH_ON=true,PH_PC=["俥","傌","相","仕","帥","炮","兵"];
 const phGet=()=>{const S=store.get("phState",null)||{};S.wrong=S.wrong||{};S.cards=S.cards||{};S.used=S.used||[];S.helps=S.helps|0;return S};
 function phKill(P,k){return(P&&P.kill)||((SHIP_LESSON[k]||{}).kill||[])[0]||"殺棋"}
 function phWrong(k,id,P){try{if(!PH_ON||shipRec(k,id))return;const S=phGet(),key=k+"/"+id,n=(S.wrong[key]|0)+1;S.wrong[key]=n;
     if(n%3===0){S.need={k,id,kill:phKill(P,k),at:Date.now()};store.set("phState",S);setTimeout(()=>phAsk(S.need),900)}else store.set("phState",S)}catch(e){}}
 function phAsk(N){if(!N||!/^#\/canju\/s\//.test(location.hash))return;const nm=typeof shipBuddy==="function"?shipBuddy():"小帥";
-  sheet("🀄 找找靈感",b=>{b.innerHTML='<p class="shp-say">'+esc(nm)+'：「這題好難，我們回星槎的經典園子找找靈感吧！」</p><p>經典園子的千秋石桌對面，坐著一位水墨幻影。他會擺一題用同一招「'+esc(N.kill)+'」的簡單題給你練，練完帶一句口訣回來再試。</p><div class="row" style="gap:8px;margin-top:10px;flex-wrap:wrap"><button class="btn" id="phGo">⛵ 回經典園子</button><button class="btn ghost" id="phNo">再想一下</button></div>';
+  sheet("🀄 找找靈感",b=>{b.innerHTML='<p class="shp-say">'+esc(nm)+'：「這題好難，我們回星槎的青石園找找靈感吧！」</p><p>青石園的千秋石桌對面，坐著一位水墨幻影。他會擺一題用同一招「'+esc(N.kill)+'」的簡單題給你練，練完帶一句口訣回來再試。</p><div class="row" style="gap:8px;margin-top:10px;flex-wrap:wrap"><button class="btn" id="phGo">⛵ 回青石園</button><button class="btn ghost" id="phNo">再想一下</button></div>';
     b.querySelector("#phGo").onclick=()=>{closeSheet();try{shipEra("classic")}catch(e){}setTimeout(()=>{location.hash="#/ship/phantom"},60)};b.querySelector("#phNo").onclick=()=>closeSheet()})}
 async function phPick(N){const d=await cjData(),own=new Set(Object.values((typeof SHIP_BANK!=="undefined"&&SHIP_BANK&&SHIP_BANK.stops)||{}).flat()),S=phGet(),used=new Set(S.used);
   const ok=x=>x&&x.kill===N.kill&&(x.n|0)<=2&&!own.has(x.id)&&x.tree;let L=d.items.filter(ok);if(!L.length)L=d.items.filter(x=>x&&(x.n|0)===1&&!own.has(x.id)&&x.tree);
@@ -9510,12 +9510,12 @@ function phCss(){if(document.getElementById("phCss"))return;const s=document.cre
 function ShipPhantom(v){setTop("🀄 千秋石桌","#/port");setTabs(false);v.className="view";phCss();const S=phGet(),N=S.need,here=shipHere()==="classic",nm=typeof shipBuddy==="function"?shipBuddy():"小帥",glow=S.glow;
   const gh='<div class="ph-ghost"><img src="'+(typeof PIKA_DIR==="function"?PIKA_DIR():"data/pika2/")+'idle.webp" alt=""><div>';
   let card;
-  if(!here)card='<b>🀄 千秋石桌</b><p>石桌在星槎的經典園子裡。先到航線上點「船艙」那一站，再過來。</p>';
+  if(!here)card='<b>🀄 千秋石桌</b><p>石桌在星槎的青石園裡。先到航線上點「船艙」那一站，再過來。</p>';
   else if(N)card=gh+'<b>幻影</b><p class="shp-say">「我是《千秋棋話》裡留下的一縷棋意。你在'+esc(shipShort(N.k))+'卡住的那一題，關鍵是「'+esc(N.kill)+'」——先試試這一題簡單的。」</p></div></div><div class="row" style="gap:8px;margin-top:8px;flex-wrap:wrap"><button class="btn" id="phPlay">♟ 跟幻影練一題</button></div>';
   else{const k=S.lastK,C=k&&S.cards[k];card=gh+'<b>幻影</b><p class="shp-say">「'+(C?'記住這句口訣：「'+esc((SHIP_LESSON[k]||{}).k||"")+'」。帶回'+esc(shipShort(k))+'，再試一次吧！':'石桌上的紅子，要等七位旅伴都走過自己的路，才會全部回來。卡住的時候，再來找我。')+'」</p></div></div>'+(C?'<div class="row" style="gap:8px;margin-top:8px"><button class="btn" id="phBack">⛵ 回'+esc(shipShort(k))+'再試一次</button></div>':'')}
   const solid=phSolid().filter(s=>s>=1).length;
   card+='<p style="margin:10px 0 0"><b>歸位之兆</b>　石桌上的紅子：'+solid+'／7</p>'+phTableHTML()+'<p class="muted" style="font-size:12.5px;margin:2px 0 0">每學會一站、每次跟幻影練過，紅子就更清楚一點；七顆都回來，就是「千秋歸位」的時候。</p>';
-  v.innerHTML=shpPage("page_canju","🀄 千秋石桌","經典園子・幻影指導局",[],'<div class="shs-card">'+card+'</div>');
+  v.innerHTML=shpPage("page_canju","🀄 千秋石桌","青石園・幻影指導局",[],'<div class="shs-card">'+card+'</div>');
   if(glow!=null){const e=v.querySelectorAll(".ph-pc")[glow];if(e)e.classList.add("glow");const T=phGet();delete T.glow;store.set("phState",T)}
   const pl=v.querySelector("#phPlay");if(pl)pl.onclick=async()=>{vibrate(5);pl.disabled=true;let id=null;try{id=await phPick(N)}catch(e){}if(!id){pl.disabled=false;toast("題目還在載入，再按一次");return}location.hash="#/canju/ph/"+N.k+"/"+id};
   const bk=v.querySelector("#phBack");if(bk)bk.onclick=()=>{const k=S.lastK,id=S.lastId;vibrate(5);try{shipEra(k)}catch(e){}setTimeout(()=>{location.hash=id?shipHref(k,id):"#/ship/pz"},60)};
@@ -11434,7 +11434,7 @@ function sealGoldCheck(o){o=o||{};if(!SEAL_ON)return[];const G=store.get("sealGo
   nw.forEach((k,i)=>setTimeout(()=>{try{addXP(SEAL_GOLD_XP,"鑄成金印・"+sealNm(k),"seal:gold:"+k)}catch(e){}},(o.delay||0)+600+i*500));
   if(o.fx)nw.forEach((k,i)=>setTimeout(()=>sealGoldFx(k),(o.delay||0)+i*50));return nw}
 function sealGoldFx(k){const p=SEAL_FX_Q.then(()=>new Promise(done=>{try{sealCss();const all=sealGoldN()>=SEAL_ERAS().length,d=document.createElement("div");d.className="qsfx";d.tabIndex=0;
-    d.innerHTML=`${sealDraw(k,{fx:1})}<h2>${esc(sealNm(k))}・鑄成金印！</h2><p>${esc(eraLabel(k)==="經典園子"?"船艙":eraLabel(k))}的關都過了。修為 +${SEAL_GOLD_XP}</p>${all?'<p style="color:#FFD45A;font-weight:900">🏅 13 方千秋印都是金印了！得到稱號「千秋印主」</p>':`<p>金印 ${sealGoldN()}／13 方</p>`}<small>點一下收下</small>`;
+    d.innerHTML=`${sealDraw(k,{fx:1})}<h2>${esc(sealNm(k))}・鑄成金印！</h2><p>${esc(eraLabel(k)==="青石園"?"船艙":eraLabel(k))}的關都過了。修為 +${SEAL_GOLD_XP}</p>${all?'<p style="color:#FFD45A;font-weight:900">🏅 13 方千秋印都是金印了！得到稱號「千秋印主」</p>':`<p>金印 ${sealGoldN()}／13 方</p>`}<small>點一下收下</small>`;
     document.body.append(d);try{d.focus({preventScroll:true})}catch(e){}try{if(typeof vibrate==="function")vibrate([20,60,40,60])}catch(e){}try{if(typeof rfxSound==="function")rfxSound(matchMedia("(prefers-reduced-motion: reduce)").matches)}catch(e){}
     let shut=false;const close=e=>{if(e){e.preventDefault();e.stopPropagation()}if(shut)return;shut=true;d.classList.add("out");setTimeout(()=>{d.remove();done()},230)};
     d.addEventListener("click",close);d.addEventListener("keydown",e=>{if(e.key==="Escape"||e.key==="Enter"||e.key===" ")close(e)})}catch(e){done()}})).catch(()=>{});SEAL_FX_Q=p;return p}
@@ -11910,7 +11910,7 @@ function yzInn(v,k){if(!YZ_ON||!YZ_READY.has(k))return;const S=YZ_SPOT[k],pad=v.
   shpFit(v)}
 /* ================= 🧳 從別處路過的客人（意見回饋 826：驛站旅人只有五位，讓別處的角色也來，世界比較有流通感）=================
    驛站「🏮 路過的旅人」除了原本五位（INN），每天（照手機日期，同一天固定、換天輪替）多 2～3 位從別處路過的客人：
-     園子路人 PARK_NPC（女棋手照她的家鄉朝代 era；沒有家鄉的經典園子路人照 IG_PARK 的 e 列，只排到身分在那一朝說得通的驛站，雲河驛站一律可以來）、
+     園子路人 PARK_NPC（女棋手照她的家鄉朝代 era；沒有家鄉的青石園路人照 IG_PARK 的 e 列，只排到身分在那一朝說得通的驛站，雲河驛站一律可以來）、
      朝代擂主 ARENA（只在自己那一朝的驛站）、石桌往事人物 JCHAR（照 IG_J 的 e：少年時代＝元末、老年＝明）、
      雲河七星 WX_CHARS（穿越時空的孩子，哪一朝都能來，但一天最多一位、只到星槎停靠過的站；要有雲河七星的旅程，自己選的那位不算）。
      秘境棋友是要玩家自己在園子找到的秘密，不當客人。
@@ -11921,7 +11921,7 @@ function yzInn(v,k){if(!YZ_ON||!YZ_READY.has(k))return;const S=YZ_SPOT[k],pad=v.
    存檔 store "innGuest"（05b-save.js JOURNEY_KEYS 的 m_innGuest，跟存檔走）＝{r:{客人:{n 下完幾盤,w 贏,l 輸}},wx:{d 日期,e 站,c 角色}}。
    對局頁（08b-cpugame.js）用 innAnyAct／igAct 找對手的名字、立繪、3D 造型和台詞；石桌往事一次只留一盤，跟驛站旅人共用 jStart、journeyGameEnd */
 const IG_ON=true;
-/* 經典園子路人沒有家鄉朝代：e＝身分在那一朝說得通的驛站（八段錦、代書、梆子打更、豆花攤宋以後才常見；紙鳶唐以後；遛鳥、木匠刨子明清）；w＝為什麼路過這裡 */
+/* 青石園路人沒有家鄉朝代：e＝身分在那一朝說得通的驛站（八段錦、代書、梆子打更、豆花攤宋以後才常見；紙鳶唐以後；遛鳥、木匠刨子明清）；w＝為什麼路過這裡 */
 const IG_T2Q=["tang","wudai","song","yuan","ming","qing"],IG_S2Q=["song","yuan","ming","qing"],IG_ALL=["qin","han","sanguo","weijin","nanbei","sui","tang","wudai","song","yuan","ming","qing"];
 const IG_PARK={niao:{e:["ming","qing"],w:"帶畫眉出來遛遛，走遠了，進來歇歇腳。"},duanjin:{e:IG_S2Q,w:"早上的拳打完了，走到這兒正好歇一歇。"},douhua:{e:IG_S2Q,w:"挑著豆花擔子來賣，趕路的人最愛吃一碗熱的。"},
   fengzheng:{e:IG_T2Q,w:"風箏斷了線，一路追過來的！"},mujiang:{e:["ming","qing"],w:"驛站的門板壞了，叫我來修，修好了。"},amah:{e:IG_ALL,w:"抱孫子出來走走，他在這兒睡著了。"},
@@ -11955,7 +11955,7 @@ function igMake(gid,k){const m=/^g\.([ncjx])\.(\w+)$/.exec(String(gid||""));if(!
   if(t==="n"){const n=PARK_NPC.find(z=>z.id===id);if(!n)return null;const w=n.era?IG_PW[id]:(IG_PARK[id]||{}).w;if(!w)return null;
     g={name:n.name,ic:"🍃",pc:n.pc,img:`data/npc/${id}.webp`,hi:n.say,win:n.win,lose:n.lose,draw:OPT_NDRAW[id],why:w,from:"從"+parkName(n.era||k)+"路過",band:igBand(igParkC()),age:AGE["n:"+id],look:s=>NPC_LOOK(n,s)}}
   else if(t==="c"){const A=ARENA[id];if(!A||!IG_CW[id])return null;let L=3;try{L=arenaLevel(id)}catch(e){}
-    g={name:A.name,ic:"🏯",pc:(CHAMP_PC[id]&&PC_CH.b[CHAMP_PC[id]])||"將",img:`data/champ/${id}_idle.webp`,hi:A.hi,win:A.win,lose:A.lose,draw:OPT_CDRAW[id],why:IG_CW[id],from:"從"+(id==="classic"?"經典園子":eraLabel(id))+"的擂台路過",band:igBand(Math.min(14,3*(L-1))),age:AGE["c:"+id],look:s=>CHAMP_LOOK(id,s)||{p:s==="r"?"帥":"將",e:id,g:9}}}
+    g={name:A.name,ic:"🏯",pc:(CHAMP_PC[id]&&PC_CH.b[CHAMP_PC[id]])||"將",img:`data/champ/${id}_idle.webp`,hi:A.hi,win:A.win,lose:A.lose,draw:OPT_CDRAW[id],why:IG_CW[id],from:"從"+(id==="classic"?"青石園":eraLabel(id))+"的擂台路過",band:igBand(Math.min(14,3*(L-1))),age:AGE["c:"+id],look:s=>CHAMP_LOOK(id,s)||{p:s==="r"?"帥":"將",e:id,g:9}}}
   else if(t==="j"){const J=JCHAR[id];if(!J||!IG_J[id])return null;
     g={name:J.name,ic:"🪨",pc:J.pc,img:`data/journey/char_${id}_idle.webp`,hi:J.hi,win:J.win,lose:J.lose,draw:OPT_JDRAW[id],why:IG_J[id].w,from:"從石桌往事的雲河鎮路過",band:igBand(3*((JCHAR_LV[id]||3)-1)),age:AGE["j:"+id],look:s=>JCHAR_LOOK(id,s)}}
   else if(t==="x"){const C=WX_CHARS[id];if(!C||!IG_XW[id])return null;const pc=IG_XPC[C.pc]||"將",f0=x=>Array.isArray(x)?x[0]:x;
@@ -11975,7 +11975,7 @@ function igWxToday(){const day=igDay(),D=igData();if(D.wx&&D.wx.d===day)return D
     st=SHIP_ROUTE.filter(e=>!eraLocked(e)),e=st[Math.floor(r()*st.length)];if(ok&&c&&e)w={d:day,e,c}}}catch(e){}
   store.set("innGuest",{...D,wx:w});return w}
 /* 今天這一站的客人（gid 陣列）：2 或 3 位；雲河七星今天停在這一站就佔一位 */
-/* 有自己朝代的人（女棋手、擂主、石桌往事人物）抽中的機會是經典園子路人的 3 倍；各朝驛站一天最多一位經典園子路人（雲河驛站本來就是他們的園子，不限） */
+/* 有自己朝代的人（女棋手、擂主、石桌往事人物）抽中的機會是青石園路人的 3 倍；各朝驛站一天最多一位青石園路人（雲河驛站本來就是他們的園子，不限） */
 const igGen=(g,k)=>k!=="classic"&&/^g\.n\./.test(g)&&!(PARK_NPC.find(z=>"g.n."+z.id===g)||{}).era;
 function igToday(k){if(!IG_ON||!k)return[];const day=igDay(),r=igRnd(day+"|"+k),n=r()<.5?2:3,P=igPool(k).map(g=>[g,Math.pow(r(),1/(igGen(g,k)?1:3))]).sort((a,b)=>b[1]-a[1]).map(x=>x[0]);
   const w=igWxToday(),out=w.e===k&&w.c?["g.x."+w.c]:[];let gn=0;for(const g of P){if(out.length>=n)break;if(igGen(g,k)){if(gn)continue;gn++}out.push(g)}return out}
@@ -14281,7 +14281,7 @@ const SHW_SHIP={W:896,H:1200,el:35,h:y=>.088+(y-66)*.001,home:"home",look0:[50,8
 const SHW_PG0={W:768,H:1376,el:38,home:"home",look0:[45,90],h:[.045,60,.0009]};
 const SHW_PORT={
   /* hspx 11/10「3D 小人不見了」：經典世界的渡口（port_classic，千秋石桌那一頁）原本沒有座標表，只出現平面小帥。
-     起點在右下石階頂，木板橋上到中間石島（千秋石桌），左邊過石拱橋到老松下的石桌（經典園子），再沿石階上擂台；右邊走木棧道到雲河驛站門口 */
+     起點在右下石階頂，木板橋上到中間石島（千秋石桌），左邊過石拱橋到老松下的石桌（青石園），再沿石階上擂台；右邊走木棧道到雲河驛站門口 */
   classic:{N:{home:[82,80],pl:[70,74.5],cen:[54,71],c1:[44,67],br1:[50,63.5],br2:[40,58.5],br3:[30.5,58.5],l1:[26,55.5],lp:[34,47.5],ar:[46,37.5],in1:[60,62],in2:[68,58.5],inn:[75,56.5]},
     E:"home-pl pl-cen cen-c1 c1-br1 br1-br2 br2-br3 br3-l1 l1-lp lp-ar br1-in1 in1-in2 in2-inn",
     HS:{poPark:["l1",22,50,"wave"],poInn:["inn",84,52,"bow"],poArena:["ar",56,30,"cheer"],poPh:["cen",57,66,"bow"]}},
