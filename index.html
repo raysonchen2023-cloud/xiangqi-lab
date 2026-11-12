@@ -1534,7 +1534,7 @@ html[data-hct] .player.on .clk{background:#00563B;color:#FFFFFF;border-color:#00
       if(!window.caches)return go();caches.keys().then(function(ks){return Promise.all(ks.filter(function(k){return k.indexOf("xqlab-app-")===0}).map(function(k){return caches.delete(k)}))})
         .then(function(){return navigator.serviceWorker&&navigator.serviceWorker.getRegistration()}).then(function(r){return r&&r.update()}).catch(function(){}).then(go)}};setTimeout(chk,4000)})();
 </script>
-<script>window.XQ_OFFLINE=true;window.XQ_BUILD="20261112-1240";</script>
+<script>window.XQ_OFFLINE=true;window.XQ_BUILD="20261112-1250";</script>
 <script src="core.js"></script>
 <script src="engine.js"></script>
 <script src="local.js"></script>
@@ -4882,15 +4882,29 @@ function rsNote(){const R=window.XQCore&&XQCore.RULESETS&&XQCore.RULESETS[rsCur(
 const XQDOC={privacy:["privacy","🔒 隱私與資料使用"],family:["family","👨‍👩‍👧 家長與兒童模式"],credits:["credits","🎨 素材與授權"],release:["release-notes","🏷 版本與差異"],limits:["limits","⚠️ 已知限制"],evidence:["evidence","✅ 自動測試紀錄"],history:["history","📜 文史考據"],rules:["rules","⚖️ 棋規與裁決"],architecture:["architecture","🌐 連線與資料"],tour:["a11y-tour","🧭 空間導覽"],a11y:["a11y","📋 無障礙證據"],sound:["sound","🔊 音效設計"]};   /* 第 6 輪 F3：音效設計說明（art/docs/sound.md） */   /* 回饋 875（開發者 11/12「盤查類似的 不要換行」）：按鈕字縮到 7 字內，xqDocBtns 一格至少 9em、放不下就自動改一欄，按鈕不換行 */   /* 11/12 無障礙第 5 輪：設定 → ♿ 無障礙「📋 測試與證據」（a11y.md＝92 號稽核報告的副本，開頭是 P16.3～P16.5 怎麼驗證） */   /* 11/12 無障礙第 4 輪 P16.5：給看不到畫面的人在腦中建地圖（11c-a11ysnd.js 的 ? 說明卡、G 鍵也開這份） */
 function xqDocBtns(){return`<div class="xqd-g" style="margin-top:10px">${Object.keys(XQDOC).map(k=>`<button type="button" class="btn ghost" data-xqdoc="${k}" style="font-size:13.5px;padding:8px 6px">${XQDOC[k][1]}</button>`).join("")}</div>`}
 {const s=document.createElement("style");s.textContent=".xqd-g{display:grid;grid-template-columns:repeat(auto-fit,minmax(9em,1fr));gap:6px}.xqd-g>button{white-space:nowrap;margin:0;width:auto;min-width:0}";document.head.append(s)}
-function xqDocIn(s){return provDoc(esc(s)).replace(/\*\*([^*]+)\*\*/g,"<b>$1</b>").replace(/`([^`]+)`/g,"<code>$1</code>").replace(/\[([^\]]+)\]\((https:\/\/[^)\s]+)\)/g,(m,t,u)=>`<a href="${u}" target="_blank" rel="noopener">${t}</a>`)}
+/* 評比第 8 輪 F2、F5（ChatGPT、Gemini：「公開文件的 Markdown 連結、證據索引原樣顯示」）：相對連結也轉——
+   別份說明（rules.md、rules-cases.md…）＝App 內直接打開那一份（data-xqdoc；不在 XQDOC 裡的照網址開新分頁）；evidence/ 的截圖＝圖片（![…](…)）或連結；
+   只收安全的相對路徑（英數、%、-、_、.、/，不能有 ..）；#錨點不轉（標題 id 是流水號，對不上） */
+const xqDocKey=f=>{for(const k in XQDOC)if(XQDOC[k][0]+".md"===f)return k;return null};
+const xqDocRel=u=>/^[\w%.\-\/]+(#[^\s"'<>&]*)?$/.test(u)&&!/\.\./.test(u)&&!/^\//.test(u);
+function xqDocLink(t,u){if(/^https:\/\//.test(u))return`<a href="${u}" target="_blank" rel="noopener">${t}</a>`;if(!xqDocRel(u))return t;
+  const f=u.split("#")[0],k=/\.md$/.test(f)&&!f.includes("/")?xqDocKey(f):null;
+  return k?`<button type="button" class="lk" data-xqdoc="${k}">${t}</button>`:`<a href="data/docs/${u}" target="_blank" rel="noopener">${t}</a>`}
+function xqDocIn(s){return provDoc(esc(s)).replace(/\*\*([^*]+)\*\*/g,"<b>$1</b>").replace(/`([^`]+)`/g,"<code>$1</code>")
+  .replace(/!\[([^\]]*)\]\(([^)\s]+)\)/g,(m,t,u)=>xqDocRel(u)&&/\.(png|jpe?g|webp|gif)$/i.test(u)?`<img src="data/docs/${u}" alt="${t}" loading="lazy" decoding="async" style="display:block;max-width:100%;height:auto;margin:6px 0;border-radius:6px;border:1px solid var(--line)">`:/^https:\/\//.test(u)?`<a href="${u}" target="_blank" rel="noopener">🖼 ${t||"圖片"}</a>`:t)
+  .replace(/\[([^\]]+)\]\(([^)\s]+)\)/g,(m,t,u)=>xqDocLink(t,u))}
 /* 11/12 無障礙第 5 輪 P16.5：文件改成真的標題階層——# ＝h1（卡片標題已經寫了，所以只給讀屏）、## ＝h2（每一段包成 section，讀螢幕可以用標題、地標跳）、### ＝h3；
    | 表格 | 轉成 table（th scope=col，窄螢幕在表格裡左右捲，不會整頁橫捲）；> 引言照一般段落 */
 let xqDocN=0;
 function xqDocTbl(rows){const cell=r=>r.replace(/^\||\|$/g,"").split("|").map(c=>c.trim()),R=rows.filter(r=>!/^\|[\s:|-]+\|$/.test(r)).map(cell);if(!R.length)return"";const[h,...b]=R;
   return`<div style="overflow-x:auto;margin:0 0 10px"><table class="xqd-tb"><thead><tr>${h.map(c=>`<th scope="col">${xqDocIn(c)}</th>`).join("")}</tr></thead><tbody>${b.map(r=>`<tr>${r.map(c=>`<td>${xqDocIn(c)}</td>`).join("")}</tr>`).join("")}</tbody></table></div>`}
-function xqDocHtml(md){const out=[];let ls=null,pa=[],tb=null,sec=false;
+function xqDocHtml(md){const out=[];let ls=null,pa=[],tb=null,sec=false,fc=null;
   const fp=()=>{if(pa.length){out.push(`<p style="margin:0 0 8px">${xqDocIn(pa.join(""))}</p>`);pa=[]}},fl=()=>{if(ls){out.push(`<${ls.t} style="margin:0 0 10px;padding-left:1.3em">${ls.a.join("")}</${ls.t}>`);ls=null}},ft=()=>{if(tb){out.push(xqDocTbl(tb));tb=null}};
   for(const raw of String(md||"").split(/\r?\n/)){const l=raw.trim();let m;
+    /* 評比第 8 輪 F5：``` 程式碼區塊原樣等寬顯示（窄螢幕在框裡左右捲）；--- 分隔線畫成線 */
+    if(/^```/.test(l)){if(fc){out.push(`<pre class="xqd-pre" style="overflow-x:auto;margin:0 0 10px;padding:8px 10px;border-radius:6px;background:rgba(0,0,0,.05);font-size:13px;line-height:1.5"><code>${esc(fc.join("\n"))}</code></pre>`);fc=null}else{fp();fl();ft();fc=[]}continue}
+    if(fc){fc.push(raw.replace(/\s+$/,""));continue}
+    if(/^(-{3,}|\*{3,}|_{3,})$/.test(l)){fp();fl();ft();out.push('<hr style="border:0;border-top:1px solid var(--line);margin:12px 0">');continue}
     if(!l){fp();fl();ft();continue}
     if(/^\|.*\|$/.test(l)){fp();fl();(tb=tb||[]).push(l);continue}
     ft();
@@ -4901,6 +4915,7 @@ function xqDocHtml(md){const out=[];let ls=null,pa=[],tb=null,sec=false;
     if((m=/^(?:([-*])|\d+\.)\s+(.*)$/.exec(l))){fp();const t=m[1]?"ul":"ol";if(ls&&ls.t!==t)fl();(ls=ls||{t,a:[]}).a.push(`<li style="margin-bottom:4px">${xqDocIn(m[2])}</li>`);continue}
     if((m=/^>\s?(.*)$/.exec(l))){fl();pa.push(m[1]);continue}
     fl();pa.push(l)}
+  if(fc)out.push(`<pre class="xqd-pre" style="overflow-x:auto;margin:0 0 10px"><code>${esc(fc.join("\n"))}</code></pre>`);   /* 沒收尾的 ``` 也照樣顯示 */
   fp();fl();ft();if(sec)out.push("</section>");return out.join("")}
 function xqDocSheet(k){const d=XQDOC[k];if(!d)return;
   sheet(d[1],b=>{b.innerHTML='<div class="muted" style="padding:14px 0;text-align:center">讀取中…</div>';
@@ -14487,7 +14502,7 @@ function shwBotCss(){if(document.getElementById("shwBotCss"))return;const s=docu
 .shw-hint{position:absolute;z-index:151;transform:translate(-50%,-100%);border:1px solid rgba(60,40,24,.55);border-radius:10px 10px 10px 2px;background:#f6efdf;color:#3a2618;font:700 11px/1 var(--serif,serif);padding:3px 5px;cursor:pointer;box-shadow:0 1px 2px rgba(0,0,0,.25);opacity:.92}
 .shw-say{position:absolute;z-index:210;transform:translate(-50%,-100%);max-width:62%;width:max-content;background:#fbf6ea;color:#2f2216;border:1.5px solid #3a2618;border-radius:12px;padding:5px 10px;font:700 12.5px/1.45 var(--serif,serif);text-align:center;box-shadow:0 2px 6px rgba(0,0,0,.22);pointer-events:none;opacity:0;transition:opacity .25s}
 .shw-say.on{opacity:1}.shw-say.side::after{display:none}.shw-say.low{z-index:190}.shw-say::after{content:"";position:absolute;left:50%;bottom:-7px;margin-left:-6px;border:6px solid transparent;border-top-color:#3a2618;border-bottom:0}
-.shw-menu{position:absolute;z-index:211;display:flex;flex-direction:column;gap:4px;padding:6px;background:#f6efdf url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='80' height='80'%3E%3Cfilter id='n'%3E%3CfeTurbulence baseFrequency='.9'/%3E%3CfeColorMatrix values='0 0 0 0 .4 0 0 0 0 .3 0 0 0 0 .2 0 0 0 .06 0'/%3E%3C/filter%3E%3Crect width='80' height='80' filter='url(%23n)'/%3E%3C/svg%3E");border:1.5px solid #3a2618;border-radius:10px;box-shadow:0 4px 12px rgba(0,0,0,.3)}
+.shw-menu{position:absolute;z-index:211;pointer-events:auto;display:flex;flex-direction:column;gap:4px;padding:6px;background:#f6efdf url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='80' height='80'%3E%3Cfilter id='n'%3E%3CfeTurbulence baseFrequency='.9'/%3E%3CfeColorMatrix values='0 0 0 0 .4 0 0 0 0 .3 0 0 0 0 .2 0 0 0 .06 0'/%3E%3C/filter%3E%3Crect width='80' height='80' filter='url(%23n)'/%3E%3C/svg%3E");border:1.5px solid #3a2618;border-radius:10px;box-shadow:0 4px 12px rgba(0,0,0,.3)}
 .shw-menu button{border:1px solid rgba(60,40,24,.35);border-radius:999px;background:rgba(255,255,255,.55);color:#2f2216;font:800 13px/1 var(--serif,serif);padding:7px 12px;white-space:nowrap;text-align:left;cursor:pointer}
 .shw-menu button:active{background:#e9d9b4}`;document.head.append(s)}
 /* 回饋 804：泡泡別蓋住標籤（⚔ 古戰場等）：疊到標籤就往有空的那一邊挪，再不行就放到腳下；都擠，才沉到標籤底下（z 190＜標籤 200） */
