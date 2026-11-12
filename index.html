@@ -1531,7 +1531,7 @@ html[data-hct] .player.on .clk{background:#00563B;color:#FFFFFF;border-color:#00
       if(!window.caches)return go();caches.keys().then(function(ks){return Promise.all(ks.filter(function(k){return k.indexOf("xqlab-app-")===0}).map(function(k){return caches.delete(k)}))})
         .then(function(){return navigator.serviceWorker&&navigator.serviceWorker.getRegistration()}).then(function(r){return r&&r.update()}).catch(function(){}).then(go)}};setTimeout(chk,4000)})();
 </script>
-<script>window.XQ_OFFLINE=true;window.XQ_BUILD="20261112-0840";</script>
+<script>window.XQ_OFFLINE=true;window.XQ_BUILD="20261112-0850";</script>
 <script src="core.js"></script>
 <script src="engine.js"></script>
 <script src="local.js"></script>
@@ -21200,7 +21200,7 @@ const SIM_PC={1:"P",2:"n",3:"B",4:"r",5:"k",6:"C",7:"p",8:"R",9:"A",10:"a",11:"c
 function simPlate(p,c,u,v,th){const col=p===p.toUpperCase()?"#b3261e":"#1e1a18",m=(dx,dy)=>`matrix(${u[0]/100},${u[1]/100},${v[0]/100},${v[1]/100},${c[0]-u[0]-v[0]+dx},${c[1]-u[1]-v[1]+dy})`;
   return`<div class="sim-pl" style="transform:${m(th[0],th[1])}"><svg viewBox="0 0 200 200"><circle cx="100" cy="100" r="98" fill="#4a2c14"/></svg></div><div class="sim-pl" style="transform:${m(0,0)}"><svg viewBox="0 0 200 200"><circle cx="100" cy="100" r="98" fill="#5c3a1e"/><circle cx="100" cy="100" r="91" fill="#d6ac74"/><circle cx="100" cy="100" r="74" fill="none" stroke="${col}" stroke-width="4.5"/><circle cx="100" cy="100" r="66" fill="none" stroke="${col}" stroke-width="1.8"/><text x="100" y="134" font-size="96" font-weight="700" text-anchor="middle" fill="${col}" font-family="BiauKai,DFKai-SB,KaiTi,STKaiti,serif">${SIM_CN[p]||""}</text></svg></div>`}
 function simPlates(o,fk){const p=SIM_PC[fk]||"P",X=x=>o.mir?1024-x:x,s=o.mir?-1:1;
-  if(o.back){const R=115;return simPlate(p,[X(300),488],[.67*R,-.43*R*s],[0,R],[-10*s,-4])}
+  if(o.back)return"";   /* hspx（開發者 11/12 圈起背影棋客背上的圓牌「修正拿掉背後的棋子」）：背影位不再貼背牌；正面位桌前的小棋位牌照舊 */
   const r=60;return simPlate(p,[X(300),640],[.95*r,.32*r*s],[0,r],[4*s,3])}
 function simSpots(n){if(n===10)return Array.from({length:10},(_,i)=>{const a=(24+33*(i%5))*Math.PI/180,k=i<5?-1:1,cx=.5+k*.36*Math.cos(a),cy=.59+k*.21*Math.sin(a);return{cx,cy,s:.17*(.8+.45*(cy-.38)/.34),back:i>4,mir:i<2||i===5||i===6}});
   if(n===3)return[.22,.5,.78].map(cx=>({cx,cy:.52,s:.33}));return Array.from({length:n},(_,i)=>({cx:.158+i*.179,cy:.52,s:.25}))}
@@ -21292,14 +21292,14 @@ function SimulPage(v){
   function setup(){const old=S&&!S.none&&!S.done&&S.tb.some(t=>t.moves.some(m=>m.by==="r"));let n=store.get("simN",5),lx=store.get("simLx",null);
     if(lx==null)try{lx=Math.max(3,Math.min(16,+(JSON.parse(localStorage.getItem("xq_play")||"null")||{}).level||5))}catch(e){lx=5}
     sheet("🀄 車輪戰",b=>{const B=(S&&S.best)||{},rng=()=>{const a=Math.max(1,Math.min(lx-Math.floor((n-1)/2),19-n));return`本場棋客：第 ${a}～${a+n-1} 級，由弱到強`};
-      const draw=()=>{b.innerHTML=`<p class="muted" style="margin:0 0 8px">一人走遍多桌，全部執紅先走；走完一步就換下一桌。</p>
+      const draw=()=>{b.innerHTML=`<p class="muted" style="margin:0 0 8px">一人走遍多桌，全部執紅先走；走完一步就換下一桌。</p><p style="margin:0 0 10px;font:800 15px/1.5 var(--serif,serif)">「上二樓者，卸下棋子身。」 <button type="button" class="lk" id="smWhy">為什麼？</button></p>
         <b>盤數</b><div class="sim-n">${[3,5,10].map(k=>`<button data-n="${k}" class="${k===n?"on":""}">${k} 盤</button>`).join("")}</div>
         <b>中心級數</b><div class="sim-lv"><button id="smM" aria-label="降一級">－</button><b>第 ${lx} 級</b><button id="smP" aria-label="升一級">＋</button></div>
         <p class="muted" style="text-align:center;margin:0 0 10px">${rng()}${B[n]?`<br>${n} 盤最佳：${B[n].pts} 分（${B[n].w} 勝 ${B[n].d} 和 ${B[n].l} 負・中心第 ${B[n].lx} 級）`:""}</p>
         ${old?'<p style="color:#C8102E;font-size:13.5px;margin:0 0 8px">上一場還沒下完：重開的話，走過棋的桌子算輸。</p>':""}
         <button class="btn" id="smGo" style="width:100%">開始繞場</button>`;
         b.querySelectorAll("[data-n]").forEach(x=>x.onclick=()=>{n=+x.dataset.n;vibrate(5);draw()});
-        b.querySelector("#smM").onclick=()=>{lx=Math.max(1,lx-1);draw()};b.querySelector("#smP").onclick=()=>{lx=Math.min(18,lx+1);draw()};
+        b.querySelector("#smM").onclick=()=>{lx=Math.max(1,lx-1);draw()};{const wy=b.querySelector("#smWhy");if(wy)wy.onclick=()=>{vibrate(5);modal(`<img src="data/zhanggui/idle.webp" alt="" onerror="this.remove()"><h2>笑面掌櫃</h2><p class="pl-say">「規矩嘛——上二樓的，都得卸下棋子身，免得十盤棋氣撞在一塊。至於他們原本是誰……客官下完再問吧。」</p>`,[["知道了",null]],"prolog")}}   /* 開發者 11/12 選「表面規矩、底下殘譜」（story/114）：棋客為何不是棋子身——表面是茶肆二樓的規矩，底下是黑洞循環留下的人形殘譜（不說破） */b.querySelector("#smP").onclick=()=>{lx=Math.min(18,lx+1);draw()};
         b.querySelector("#smGo").onclick=()=>{store.set("simN",n);store.set("simLx",lx);closeSheet();cur=0;sel=-1;shownDone=null;post("/simul/new",{n,lx}).then(()=>{if(S&&!S.none&&!S.done)simIntro(S,()=>flash("茶已溫，棋已擺好。請入席，走第一步"));else flash("茶已溫，棋已擺好。請入席，走第一步")})}};draw()})}
   function summary(){const D=S.done,n=S.n,B=(S.best||{})[n],r=D.pts/n,em=D.w===n?"🏆":r>=.6?"😄":r>=.4?"🤝":"🧐",
       h=D.w===n?`${n===10?"十":n===5?"五":"三"}桌皆破！`:r>=.6?"今日戰果漂亮！":r>=.4?"有來有往！":"這一輪很硬！",
