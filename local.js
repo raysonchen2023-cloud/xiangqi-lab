@@ -414,6 +414,30 @@ var XQ=(function(){
   const ZG_X_NODES=553,zgLv=(G,lv)=>G&&G.zgx?{nodes:ZG_X_NODES}:lv;
   const zgBookLoad=()=>zgBookP||(zgBookP=fetch(BASE+"data/xyc/xyc_book.json").then(r=>{if(!r.ok)throw new Error("開局庫 "+r.status);return r.json()}).then(j=>SP.bookParse(j)).catch(()=>{zgBookP=null;return null}));
   const CPU_MIN_MS=1000;
+  /* THINKPACE:BEGIN */
+  /* 第 11 輪 F4（評審 P48.1「AI 是否依局面複雜度模擬人類的思考時間，而非永遠機械式秒下」；開發者 11/12 選「適中＋可切快速」）：
+     擬真（預設）：只有 1～2 步可走 0.65～1 秒；回吃剛走過來的子 0.8～1.3 秒；開局前 8 手 1～2 秒（像背譜）；其他看複雜度——
+     可走步數、可吃的子、引擎前兩名候選差多少分（差越小越難選），2～6 秒再乘上約 ±25% 的自然起伏；被將軍 ×0.8、殘局（場上 10 子以下）×0.85；
+     低段（擬人選步）×0.75 比較隨性、高段（固定思考時間）×1.15 比較沉穩；最短 0.6 秒、最長 8 秒。
+     快速（設定 → 電腦下棋節奏）：跟以前一樣 1～1.5 秒。ai-batch.js 會把這段原樣切出來算透明頁的思考時間 */
+  function THINKPACE(C,HP,CPU_MIN_MS){
+    const MIN=600,MAX=8000;
+    function ms(S,mv,r,lv,pace,rnd){rnd=rnd||Math.random;
+      if(pace==="fast")return CPU_MIN_MS+rnd()*500;
+      const b=S.board,side=S.turn,L=C.legal(b,side),n=S.moves.length,last=n?S.moves[n-1]:null,t=mv?C.parseSq(mv.slice(2,4)):-1;
+      let v;
+      if(L.length<=2)v=650+rnd()*350;
+      else if(last&&t===last.t&&b[t])v=800+rnd()*500;
+      else if(n<8)v=1000+rnd()*1000;
+      else{const capN=L.filter(m=>b[m[1]]).length,ln=r&&r.lines||[],gap=ln.length>=2&&ln[0].v!=null&&ln[1].v!=null?Math.abs(ln[0].v-ln[1].v):null,
+          c1=Math.max(0,Math.min(1,(L.length-15)/30)),c2=Math.min(1,capN/4),c3=gap==null?.5:gap<30?1:gap>200?0:1-(gap-30)/170,c=.35*c1+.3*c2+.35*c3;
+        v=(2000+c*4000)*Math.exp(((rnd()+rnd()+rnd())/3-.5)*.9);
+        if(C.inCheck(b,side))v*=.8;if(b.filter(Boolean).length<=10)v*=.85}
+      const lf=lv&&lv.movetime?1.15:lv&&HP.on(lv)?.75:1;
+      return Math.round(Math.max(MIN,Math.min(MAX,v*lf)))}
+    return{ms,MIN,MAX}}
+  /* THINKPACE:END */
+  const TP=THINKPACE(C,HP,CPU_MIN_MS),cpuPace=()=>{try{return JSON.parse(localStorage.getItem("m_cpuPace"))==="fast"?"fast":"real"}catch(e){return"real"}};
   async function playEngine(){
     if(!P||P.result||P.turn===P.human||playBusy)return;
     {const sm=styleMove();if(sm){playBusy=true;setTimeout(()=>{try{if(P&&!P.result&&P.turn!==P.human)playApply(sm[0],sm[1])}finally{playBusy=false;setTimeout(playEngine,0)}},700);return}}
@@ -421,14 +445,15 @@ var XQ=(function(){
     const t0=Date.now();   /* 11/10 開發者「我剛走完一步，電腦就馬上落子」：低等級用淺層深度幾毫秒就算完，至少等 1～1.5 秒再落子，讓玩家看清自己那一步 */
     const zg=zgOn(P);   /* 笑面掌櫃：前 20 手先查開局庫（照次數加權抽，不叫引擎）；出庫後引擎多給幾條候選，STYLEPICK 照棋風挑 */
     try{if(zg&&!P.start&&n<SP.DEF.bookMaxPly){const B=await zgBookLoad(),u=B&&n<B.maxPly?SP.bookPick(B,P.board,P.turn,Math.random):null;
-        if(u){const w=CPU_MIN_MS+Math.random()*500-(Date.now()-t0);if(w>0)await new Promise(z=>setTimeout(z,w));
+        if(u){const w=TP.ms(P,u,null,lv,cpuPace())-(Date.now()-t0);if(w>0)await new Promise(z=>setTimeout(z,w));
           if(!P||P.id!==id||P.moves.length!==n||P.result)return;
           const f=parseSq(u.slice(0,2)),t=parseSq(u.slice(2,4));if(legal(P.board,P.turn).some(([a,b])=>a===f&&b===t)){playApply(f,t);playMsg="";engFail=0;return}}}
       const hp=!zg&&HP.on(lv),zl=zg?zgLv(P,lv):lv;   /* 低段（新手～業1）擬人選步：見上面 HUMANPICK；zl＝掌櫃這一盤用的設定（真功夫＝固定節點數） */
       const r=await XQEngine.search({moves:ucis()},zl.nodes?{nodes:zl.nodes}:lv.movetime?{movetime:lv.movetime}:{depth:lv.depth},zg?SP.mpvOf(zl):hp?HP.mpvOf(lv):lv.multipv||1);
-      {const w=CPU_MIN_MS+Math.random()*500-(Date.now()-t0);if(w>0)await new Promise(z=>setTimeout(z,w))}
+      const mv=zg?SP.pick(r,zl,P.board,P.turn,Math.random).mv:hp?HP.pick(r,lv,P.board,P.turn,Math.random).mv:pickMove(r,lv);   /* 先挑好這一步，思考時間才看得到是不是回吃（F4） */
+      {const w=TP.ms(P,mv,r,lv,cpuPace())-(Date.now()-t0);if(w>0)await new Promise(z=>setTimeout(z,w))}
       if(!P||P.id!==id||P.moves.length!==n||P.result)return;
-      const mv=zg?SP.pick(r,zl,P.board,P.turn,Math.random).mv:hp?HP.pick(r,lv,P.board,P.turn,Math.random).mv:pickMove(r,lv),f=parseSq(mv.slice(0,2)),t=parseSq(mv.slice(2,4));
+      const f=parseSq(mv.slice(0,2)),t=parseSq(mv.slice(2,4));
       if(!legal(P.board,P.turn).some(([a,b])=>a===f&&b===t))throw new Error("引擎給出不合法著法 "+mv);
       playApply(f,t);playMsg="";engFail=0}
     /* 開發者 11/11（離線盤查）：引擎載不到（沒網路、手機裡還沒有引擎檔、還沒進多執行緒模式）原本立刻重試、無限循環——
