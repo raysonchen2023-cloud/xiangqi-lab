@@ -1,13 +1,13 @@
 {
- "version": "20261113-0630",
- "checkedAt": "2026-11-12T22:30:09.822Z",
- "html": "dae1c0396271",
- "sw": "a1575fc58cf2",
+ "version": "20261113-0656",
+ "checkedAt": "2026-11-12T22:56:58.904Z",
+ "html": "84dcec7e7c41",
+ "sw": "c9e2db59b0c0",
  "scripts": 4,
  "modules": {
   "00-util.js": "5b2fecc4f62f",
-  "01-board.js": "2de70027521f",
-  "02-shell.js": "0a1d1cee70b4",
+  "01-board.js": "8750957ed3a7",
+  "02-shell.js": "2b9dcfb49545",
   "03-home-quiz.js": "173a2d58acbf",
   "04-stats.js": "443c393d8338",
   "04c-weekly.js": "326899d53f7b",
@@ -84,7 +84,7 @@
   "07w8-shichen.js": "24b6fb85c70f",
   "07w9-exits.js": "94a8b7c84852",
   "08-scene.js": "86969cd488ba",
-  "08b-cpugame.js": "923785c9c876",
+  "08b-cpugame.js": "d0adfd8ca65f",
   "08s-simul.js": "2126db3ab684",
   "09-askbot.js": "4e6983c50d4c",
   "09b-preload.js": "145283a6dbd3",
@@ -103,33 +103,19 @@
   "07lh-lefty.js": "b1b6761a4a97",
   "07pm-premove.js": "b58dc45776cd",
   "07dq-daily.js": "c1076bdd0ee8",
-  "07i18n.js": "170de5fb89a8"
+  "07i18n.js": "78e42feebf82",
+  "07sp-spotfit.js": "d06e7535a995"
  },
  "differsFromSource": [
   {
    "module": "05-settings.js",
-   "lines": 16,
+   "lines": 1,
    "sourceModified": "2026-11-12T22:28:17.831Z"
   },
   {
    "module": "07y-hubmap.js",
    "lines": 5,
    "sourceModified": "2026-11-11T16:25:41.802Z"
-  },
-  {
-   "module": "08b-cpugame.js",
-   "lines": 23,
-   "sourceModified": "2026-11-12T22:27:43.839Z"
-  },
-  {
-   "module": "09b-preload.js",
-   "lines": 2,
-   "sourceModified": "2026-11-12T22:28:26.055Z"
-  },
-  {
-   "module": "07i18n.js",
-   "lines": 303,
-   "sourceModified": "2026-11-12T22:29:38.329Z"
   }
  ]
 }
