@@ -1531,7 +1531,7 @@ html[data-hct] .player.on .clk{background:#00563B;color:#FFFFFF;border-color:#00
       if(!window.caches)return go();caches.keys().then(function(ks){return Promise.all(ks.filter(function(k){return k.indexOf("xqlab-app-")===0}).map(function(k){return caches.delete(k)}))})
         .then(function(){return navigator.serviceWorker&&navigator.serviceWorker.getRegistration()}).then(function(r){return r&&r.update()}).catch(function(){}).then(go)}};setTimeout(chk,4000)})();
 </script>
-<script>window.XQ_OFFLINE=true;window.XQ_BUILD="20261112-0830";</script>
+<script>window.XQ_OFFLINE=true;window.XQ_BUILD="20261112-0840";</script>
 <script src="core.js"></script>
 <script src="engine.js"></script>
 <script src="local.js"></script>
@@ -21165,6 +21165,15 @@ body.sim-on .xqbot{visibility:hidden!important}
 .sim-pl{position:absolute;left:0;top:0;width:200px;height:200px;transform-origin:0 0}.sim-pl svg{width:200px;height:200px;display:block}
 .sim-fig.lit .sim-no{background:#C8102E;color:#fff3c4;box-shadow:0 0 10px 3px rgba(255,200,90,.75)}
 .sim-cap{position:absolute;left:50%;top:max(14px,env(safe-area-inset-top));transform:translateX(-50%);padding:6px 16px;border-radius:999px;border:1.5px solid #f2c94c;background:rgba(20,16,12,.72);color:#ffe08a;font:900 17px/1.35 var(--serif,serif);white-space:nowrap}
+.sim-stage>img{filter:brightness(.4) saturate(.75);transition:filter .45s ease-out}.sim-intro.lite .sim-stage>img{filter:none}
+.sim-vig{position:absolute;inset:0;pointer-events:none;background:radial-gradient(ellipse at 50% 55%,rgba(0,0,0,0) 35%,rgba(0,0,0,.78) 100%);transition:opacity .45s}.sim-intro.lite .sim-vig{opacity:.4}
+.sim-fig{transform-origin:50% 92%;translate:0 2.5%;scale:1 .955;filter:brightness(.5) saturate(.6);transition:translate .32s cubic-bezier(.3,1.7,.5,1),scale .32s cubic-bezier(.3,1.7,.5,1),filter .25s}.sim-fig.lit{translate:0 0;scale:1;filter:none}
+.sim-fig.lit .sim-no{animation:simPop .38s cubic-bezier(.3,1.6,.5,1)}@keyframes simPop{0%{scale:.3}100%{scale:1}}
+.sim-intro.lean .sim-fig{animation:simLean .5s ease-out forwards}@keyframes simLean{0%{translate:0 0;scale:1}45%{translate:0 -1.6%;scale:1.035}100%{translate:0 -.6%;scale:1.012}}
+.sim-slam{position:absolute;left:50%;top:46%;transform:translate(-50%,-50%) scale(2.6);opacity:0;pointer-events:none;white-space:nowrap;color:#ffe08a;font:900 clamp(30px,9.5vw,68px)/1.2 var(--serif,serif);letter-spacing:.08em;text-shadow:0 0 2px #2a0d05,0 3px 0 #6b1d0c,0 0 18px rgba(200,40,20,.85),0 0 42px rgba(255,190,80,.55)}
+.sim-intro.lean .sim-slam{animation:simSlam .42s cubic-bezier(.2,1.3,.4,1) forwards}@keyframes simSlam{0%{opacity:0;transform:translate(-50%,-50%) scale(2.6)}70%{opacity:1}100%{opacity:1;transform:translate(-50%,-50%) scale(1)}}
+.sim-stage.shake{animation:simShake .34s linear}@keyframes simShake{0%,100%{translate:0 0}20%{translate:-6px 3px}40%{translate:5px -4px}60%{translate:-4px -2px}80%{translate:3px 3px}}
+@media (prefers-reduced-motion:reduce){.sim-fig{translate:none;scale:none;transition:filter .2s}.sim-intro.lean .sim-fig,.sim-fig.lit .sim-no,.sim-stage.shake{animation:none}.sim-intro.lean .sim-slam{animation:none;opacity:1;transform:translate(-50%,-50%)}}
 @media (prefers-reduced-motion:reduce){.sim-stage{transition:none}.sim-stage.zoom{transform:none}}`;document.head.append(s)}
 /* ---------- 開場過場（開發者 11/11「請 Gemini 製作車輪戰過場動畫」、「跟著 3／5／10 的選項繪製，排一排或是一整圈」）----------
    圖：data/simul/simul_bg.webp（茶肆二樓空廂房，斜上方 45 度）＋ simul_f1～f11.webp（十一位棋客各坐一桌，綠幕去背）。
@@ -21237,11 +21246,19 @@ function simIntro(S,done){let fin=false;const end=()=>{if(fin)return;fin=true;tr
     el.style.cssText=`left:${(o.cx-(o.mir?.505:.495)*o.s)*100}%;top:calc(${o.cy*100}% - ${.45*o.s*100*1200/896}%);width:${o.s*100}%;z-index:${Math.round(o.cy*100)}`;
     el.innerHTML=`<img src="data/simul/simul_${o.back?"table":"f"+fk}.webp" alt=""><div class="sim-bdw"><div class="sim-bd" style="transform:${simHomo(560,620,quad(o))}">${simBoardSvg(t.board)}</div></div>${o.back?`<img class="sim-bk" src="data/simul/simul_b${fk}.webp" alt="">`:""}<div class="sim-bdw">${simPlates(o,fk)}</div><b class="sim-no">${i+1}</b>`;st.append(el);return el});
   const cap=document.createElement("div");cap.className="sim-cap";cap.textContent=`🀄 車輪戰・${S.n} 盤`;ov.append(cap);
+  /* hspx（開發者 11/12「開始繞場動畫太虛了，找 Gemini 重新設計，更有生命力和即將戰鬥的味道」；story/113 Gemini「落子如雨」＋ChatGPT「擂台點將」）：
+     暗場低鼓 → 逐桌亮起、棋客挺身、桌號彈出、每桌一聲落子（越來越快）→ 全場亮、全員前傾看向你、鑼鼓齊響、大字「以一敵 N，開局！」砸下、畫面一震 → 推向第 1 桌 */
+  {const vg=document.createElement("div");vg.className="sim-vig";st.append(vg)}
+  const SLN=["","一","二","三","四","五","六","七","八","九","十"],slam=document.createElement("div");slam.className="sim-slam";slam.textContent=`以一敵${SLN[S.n]||S.n}，開局！`;ov.append(slam);
+  const sfx=f=>{try{if(typeof withAudio==="function"&&typeof AC!=="undefined"&&AC)withAudio(()=>f(AC.currentTime+.02))}catch(e){}};
   ov.onclick=end;document.body.append(ov);
   const fit=()=>{const w=st.clientWidth;st.querySelectorAll(".sim-bdw").forEach(b=>b.style.transform=`scale(${w*parseFloat(b.parentElement.style.width)/100/1024})`)};
-  const go=()=>{if(fin)return;fit();ov.classList.add("on");const R=matchMedia("(prefers-reduced-motion:reduce)").matches,gap=R?60:Math.min(220,1500/S.n);
-    tbs.forEach((el,i)=>setTimeout(()=>{if(!fin)el.classList.add("lit")},450+i*gap));
-    const tz=450+S.n*gap+350;setTimeout(()=>{if(fin)return;const o=sp[0];st.style.transformOrigin=`${o.cx*100}% ${o.cy*100}%`;st.classList.add("zoom");ov.classList.add("out")},tz);setTimeout(end,tz+(R?200:650))};
+  const go=()=>{if(fin)return;fit();ov.classList.add("on");const R=matchMedia("(prefers-reduced-motion:reduce)").matches,n=tbs.length;
+    sfx(t=>{if(typeof drumHit==="function")drumHit(t,.9,52)});
+    const TR=R?500:n>=10?1500:n>=5?1200:900,w=tbs.map((_,i)=>1-.62*i/Math.max(1,n)),ws=w.reduce((a,b)=>a+b,0)||1;let acc=380;   /* 間隔一桌比一桌短：落子聲由慢轉急 */
+    tbs.forEach((el,i)=>{const at=acc;acc+=TR*w[i]/ws;setTimeout(()=>{if(fin)return;el.classList.add("lit");sfx(()=>{if(typeof moveSound0==="function")moveSound0(false)})},at)});
+    const tl=acc+180;setTimeout(()=>{if(fin)return;ov.classList.add("lite","lean");if(!R)st.classList.add("shake");sfx(t=>{if(typeof gongHit==="function")gongHit(t,180,1.6,true);if(typeof drumHit==="function")drumHit(t,1.1,48)});try{vibrate([20,40,30])}catch(e){}},tl);
+    const tz=tl+(R?500:820);setTimeout(()=>{if(fin)return;st.classList.remove("shake");const o=sp[0];st.style.transformOrigin=`${o.cx*100}% ${o.cy*100}%`;st.classList.add("zoom");ov.classList.add("out")},tz);setTimeout(end,tz+(R?200:650))};
   let ok=0;const ims=[bg,...st.querySelectorAll(".sim-fig img")],need=ims.length,tick=()=>{if(++ok>=need)go()};ims.forEach(im=>{if(im.complete&&im.naturalWidth)tick();else{im.onload=tick;im.onerror=end}});
   setTimeout(()=>{if(!ov.classList.contains("on"))end()},4000)}
 function SimulPage(v){
