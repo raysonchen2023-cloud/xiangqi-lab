@@ -320,16 +320,28 @@ var XQNet=(function(){
   const badG=new Set();
   function badCheck(x){try{if(!x||!G||badG.has(G.gid)||!window.XQ_netCheck)return;const v=window.XQ_netCheck(x.moves,x.rc);if(v&&v.ok)return;badG.add(G.gid);emit("abnormal",{gid:G.gid,why:"illegal"})}catch(e){}}
   const tmOf=g=>g.moves.length%2?"b":"r";
+  /* 威脅模型 T4（第 15 輪 X4 找到、高；開發者 11/13 選「現在修」）：改過的 App 簽一份「只改棋鐘」的狀態（把我的鐘改成 1 秒），我的手機以前照收、下一步就判自己超時。
+     棋鐘只有三種合法的變法：①走子的人扣自己的鐘、再加 inc（tickMove）；②判超時時把被判的那方存成 0（setResult 的 fz）；③再來一局重設成 tc 分鐘。
+     所以對方送來的狀態：我的鐘一毫秒都不能動（只有「判我超時、結果是對方贏」時可以是 0，真的到時間沒有照舊由下面 timeout 那條核對）；
+     他自己的鐘只能變少（剛走一步時最多多出 inc）；不能是負的、不是數字；tc、inc 開局後不能改；有棋鐘的盤不能把棋鐘拿掉、沒棋鐘的不能加 */
+  function clkOk(a,b,me){if(!a.clk&&!b.clk)return true;if(!a.clk||!b.clk||!me)return false;
+    if(+a.tc!==+b.tc||(+a.inc||0)!==(+b.inc||0))return false;
+    const o=oppOf(me),A=a.clk,B=b.clk,num=x=>typeof x==="number"&&isFinite(x)&&x>=0;if(!num(B.r)||!num(B.b))return false;
+    if(B[me]!==A[me]&&!(B[me]===0&&b.result&&b.result.timeout&&b.result.w===o))return false;
+    return B[o]<=A[o]+(b.moves.length===a.moves.length+1?(+b.inc||0):0)+1}
+  /* 再來一局：棋鐘要是全新的（雙方都是 tc 分鐘），時制、加秒跟上一盤一樣 */
+  function clkFresh(a,b){if(!a.clk&&!b.clk)return true;if(!b.clk)return false;if(a.clk&&(+a.tc!==+b.tc||(+a.inc||0)!==(+b.inc||0)))return false;const f=+b.tc*60000;return f>0&&b.clk.r===f&&b.clk.b===f}
   function okNext(a,b){const me=side();try{
     if(a.rules!==b.rules||rcKey(a)!==rcKey(b))return false;   /* 棋規設定下到一半也不能換 */
-    if(gKey(a)===gKey(b))return true;   /* 評比第 15 輪 X4 弱網長測抓到：內容一樣、只換更大的 rev 的轉送（例如分岔裁決後對方用 rev＋1 重送贏的那份）。以前已經結束的盤一律不收，兩邊的 rev 從此差 1，下一個動作（再來一局）撞號被當成同 rev 的不同內容，舊局蓋掉新局 */
-    if(a.result&&!b.result)return b.red.id===a.black.id&&b.black.id===a.red.id&&!b.moves.length;
+    if(gKey(a)===gKey(b))return +a.tc===+b.tc&&(+a.inc||0)===(+b.inc||0);   /* T4：gKey 不含 tc、inc，只改這兩個的不能從這條捷徑過 */   /* 評比第 15 輪 X4 弱網長測抓到：內容一樣、只換更大的 rev 的轉送（例如分岔裁決後對方用 rev＋1 重送贏的那份）。以前已經結束的盤一律不收，兩邊的 rev 從此差 1，下一個動作（再來一局）撞號被當成同 rev 的不同內容，舊局蓋掉新局 */
+    if(a.result&&!b.result)return b.red.id===a.black.id&&b.black.id===a.red.id&&!b.moves.length&&clkFresh(a,b);
     if(b.red.id!==a.red.id||b.black.id!==a.black.id||a.result)return false;
     const o=oppOf(me),A=a.moves,B=b.moves,n=Math.min(A.length,B.length);
     for(let i=0;i<n;i++)if(!B[i]||A[i][0]!==B[i][0]||A[i][1]!==B[i][1])return false;
     if(B.length===A.length+1){if(tmOf(a)!==o)return false}
     else if(B.length===A.length-1){if(a.cup||((A.length-1)%2?o!=="b":o!=="r"))return false}   /* 擂台比賽落子無悔 */
     else if(B.length!==A.length)return false;
+    if(!clkOk(a,b,me))return false;
     const v=window.XQ_netCheck?window.XQ_netCheck(B,b.rc):{ok:true,res:null};if(!v||!v.ok)return false;
     if(!b.result)return true;const w=b.result.w;
     if(w===me||b.result.abort)return true;

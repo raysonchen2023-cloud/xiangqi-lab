@@ -960,7 +960,7 @@ html[data-theme=dark]:not([data-era]) .shp-rd strong.kl,html[data-era=qin] .shp-
 .inn-walk{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:6px;margin-top:8px}.inn-walk .btn{width:auto;margin:0;padding:10px 2px;font-size:14px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 
 /* 意見回饋 698：星槎水墨圖與圖上的入口 */
-.shp-map{position:relative;margin:0 0 10px;border-radius:14px;overflow:hidden;background:#f3f0e8}.shp-map img{display:block;width:100%;height:auto}
+.shp-map{position:relative;margin:0 0 10px;border-radius:14px;overflow:hidden;background:#f3f0e8}.shp-map img:not(.eic){display:block;width:100%;height:auto}   /* hspx 開發者 11/13「盤查圖示和文字換行的問題，這樣很醜，直接一行」：原本 .shp-map img 也套到按鈕裡的小圖示（img.eic），權重比 .eic 高，圖示變成區塊、自己佔一行 */
 .shp-hs{position:absolute;transform:translate(-50%,-50%);background:rgba(255,251,242,.9);border:1.5px solid #2a2018;border-radius:99px;padding:4px 10px;font:700 12.5px/1.2 var(--serif,serif);color:#2a2018;white-space:nowrap;box-shadow:0 2px 6px rgba(0,0,0,.28);cursor:pointer}
 .shp-hs:active{transform:translate(-50%,-50%) scale(.95)}.shp-hs.hot{background:#B5452B;border-color:#7a2414;color:#fff;font-size:13.5px;padding:5px 12px}
 
@@ -1606,7 +1606,7 @@ html[data-lefty] .tskip{right:auto;left:14px}
       if(!window.caches)return go();caches.keys().then(function(ks){return Promise.all(ks.filter(function(k){return k.indexOf("xqlab-app-")===0}).map(function(k){return caches.delete(k)}))})
         .then(function(){return navigator.serviceWorker&&navigator.serviceWorker.getRegistration()}).then(function(r){return r&&r.update()}).catch(function(){}).then(go)}};setTimeout(chk,4000)})();
 </script>
-<script>window.XQ_OFFLINE=true;window.XQ_BUILD="20261113-0716";</script>
+<script>window.XQ_OFFLINE=true;window.XQ_BUILD="20261113-0740";</script>
 <script src="core.js"></script>
 <script src="engine.js"></script>
 <script src="local.js"></script>
@@ -11713,12 +11713,8 @@ function Codex(v){setTop("📚 千秋大百科","#/me");if(typeof setTabs==="fun
     v.innerHTML=`<div class="pad" style="padding-bottom:28px"><div class="card cx-top"><span class="cx-ring" style="--p:${P.p}" role="img" aria-label="總完成度 ${P.p}%"><b>${P.p}%</b></span><div><b style="font-size:18px;font-family:var(--serif)">總完成度</b>
       <div class="muted" style="font-size:13px;line-height:1.6">有總數的 ${P.n} 類收集，各類完成比例的平均${full?`・已經集滿 ${full} 類`:""}。<br>修為、官階是等級，不算進去；寶物、棋盤、棋譜這些沒有上限的只寫已收。</div></div></div>
       ${CODEX_GRP.map(([g,t])=>{const G=L.filter(c=>c.g===g);return G.length?`<div class="sec-t">${t}</div><div class="cx-grid">${G.map(cxCard).join("")}</div>`:""}).join("")}
-      <button class="btn ghost" id="cxReplay" style="width:100%;margin-top:12px">🎁 再看一次開箱</button>
       <p class="muted" style="font-size:12.5px;line-height:1.7;margin-top:12px">點一張卡，直接打開那個收藏冊或去拿的地方。</p></div>`;
-    /* 開發者 11/8：開箱動畫平常要撿到新珍品才看得到；這顆拿已經有的珍品重播一次（沒有就借一件給你看），不會多給東西 */
-    {const rb=v.querySelector("#cxReplay");if(rb)rb.onclick=async()=>{if(typeof vibrate==="function")vibrate(5);try{const R=await relicsData(),M=relicsMine(),own=[];for(const e in M)for(const id of M[e]||[]){const it=(R[e]||[]).find(z=>z.id===id);if(it)own.push([e,it])}
-      let pick=own.length?own[Math.floor(Math.random()*own.length)]:null;if(!pick){const es=Object.keys(R).filter(e=>(R[e]||[]).length);if(es.length){const e=es[Math.floor(Math.random()*es.length)];pick=[e,R[e][Math.floor(Math.random()*R[e].length)]]}}
-      if(pick)relicFx(pick[0],pick[1],{from:own.length?"重播開箱・你收藏的珍品":"開箱預覽・還沒收到的珍品"});else toast("珍品資料還沒載好")}catch(e){toast("暫時沒辦法播放")}}}
+    /* hspx 開發者 11/13「把再看一次開箱的功能拿掉」：百科底下的「🎁 再看一次開箱」按鈕（11/8 加的重播開箱）拿掉；撿到新珍品時的開箱動畫照舊 */
     v.querySelectorAll("[data-cx]").forEach(b=>b.onclick=()=>{const c=CODEX.find(z=>z.id===b.dataset.cx);if(!c)return;if(typeof vibrate==="function")vibrate(5);try{c.go()}catch(e){toast("這一類暫時打不開")}})}).catch(e=>{if(v.isConnected)v.innerHTML=`<div class="pad"><div class="card muted">${esc(e.message||"載入失敗")}</div></div>`});return{}}
 /* 我的角色頁底下的小卡（07-legend.js Me） */
 function codexMeCard(){cxCss();const d=document.createElement("div");d.className="card";d.innerHTML=`<button class="cx-me" id="cxMe"><span class="cx-ic">📚</span><span style="flex:1;min-width:0"><b>千秋大百科</b><br><span class="muted" style="font-size:13px" id="cxMeS">所有收藏一次看：已收多少、去哪裡拿、有什麼用</span></span><span class="muted">›</span></button>`;
@@ -14323,7 +14319,7 @@ function wmBmPz(N){const pc=myPc(),nm=WM_PC[pc]||pc;wmBmPick().then(P=>{if(!P)re
 
 /* =================================================================== 1 千秋殘譜流轉 =================================================================== */
 const WM_SCR={
-  a:{nm:"千秋殘譜・清弦圖",parts:["上卷","中卷","下卷"],w:["w09","w01","w17"],fin:"sq218",rel:"清弦帛書",ic:"🎼",
+  a:{nm:"千秋殘譜・清弦圖",parts:["上卷","中卷","下卷"],w:["w09","w01","w17"],fin:"sq218",rel:"清弦帛書",ic:"📜",   /* 11/13 開發者「怎麼出現五線譜，修正」：西洋五線譜圖示跟古琴殘譜不搭，改成卷軸（完成文字裡的帛書圖示一起換） */
     give:"這卷帛書，是我在洛水邊的蘆葦叢裡拾到的。上頭畫著縱橫的格子和幾顆棋子，還有一個我不認得的字——後來你教我下棋，我才知道那是「炮」。漢人不下這種棋，它大概是從很遠的地方漂來的。帛的末尾寫著「三卷合一」。這是上卷；另外兩卷……或許在你要去的地方。",
     ask1:"這帛書……我在長安一位老畫師的箱底見過另一段。他說畫的人守了一輩子的城，那一段畫的就是怎麼守。老畫師把它描給了我，可我不能白給你：敵人一輛車來攻，你只有帥、仕、相，守住了，中卷就是你的。",
     ok1:"守住了！仕、相一顆都沒丟。中卷給你，我在背面畫了一朵牡丹，別嫌它多事。",
@@ -14331,7 +14327,7 @@ const WM_SCR={
     ok2:"師父說得對，你就是那個人。下卷給你——三卷合在一起，就是一整盤棋了。",
     hint:["去漢朝的園子，等抱琴的女琴師羈絆滿 3 級","帶著上卷，去唐朝的園子找長安的牡丹娘子","帶著中卷，去明朝的園子找秦淮琵琶女"],
     full:"三卷帛書拼在一起，一整盤棋終於完整了。帛的邊上寫著幾個小字：「千秋殘譜・清弦」。",
-    done:"三卷合成的這一局，是明朝徐芝編的《適情雅趣》（1570 年）裡的〈路隔星河〉。清弦帛書和它跨朝代流傳的經過，是這個遊戲編的故事，不是史書記載。帛書收進珍品冊：🎼 清弦帛書。",
+    done:"三卷合成的這一局，是明朝徐芝編的《適情雅趣》（1570 年）裡的〈路隔星河〉。清弦帛書和它跨朝代流傳的經過，是這個遊戲編的故事，不是史書記載。帛書收進珍品冊：📜 清弦帛書。",
     hold:{name:"清弦圖・中卷：單車來攻",fen:"4k4/9/9/9/9/2r6/9/4B4/9/3AKAB2",keep:["A","B"],
       skill:"單車難破士象全：仕、相連在一起，帥不亂走，車就找不到破口",say:"敵人一輛車來攻。你只有帥、仕、相——仕相連成一氣，誰也進不來。"}},
   b:{nm:"千秋殘譜・蘆花圖",parts:["上段","中段","下段"],w:["w07","w14","w08"],fin:"xw077",rel:"蘆花繡帕",ic:"🪡",
@@ -22000,7 +21996,7 @@ function CpuGame(v,practicePage,mode){
     PARK_LK=!!s.arena;if(s.arena&&!s.result&&!parkOn()){store.set("park3d",true);setTimeout(()=>{draw();topBar()},0)}/* 意見回饋 319：朝代擂台的棋一律在公園 3D 裡 */if(!st.legal.some(([f])=>f===sel))sel=-1;
     const lk=!!(st.arena&&!st.result);if(lk&&!parkOn())store.set("park3d",true);PARK_J=st.journey||null;const pr=!!st.practice;if(pr!==PARK_OFF){PARK_OFF=pr;arenaLock=null}
     if(lk!==arenaLock||(st.journey||null)!==jKey){arenaLock=lk;jKey=st.journey||null;topBar()}draw();try{lvWatch(st,v)}catch(e){}pmFire();   /* 第 12 輪 F3：輪到你、有排好的預走就走出 */
-    if(!st.result&&!st.practice&&st.id&&st.moves.length<=(st.human==="b"?1:0)&&KJ_LAST!==st.id){KJ_LAST=st.id;loadKaiju();const kj=()=>kaijuFx(bd.svg,"r");if(parkOn())kjWait(kj);else setTimeout(kj,350)}   /* 意見回饋 416：開局特效 */
+    if(!st.result&&!st.practice&&st.id&&st.moves.length<=(st.human==="b"?1:0)&&(st.board||[]).filter(Boolean).length>=32&&KJ_LAST!==st.id){   /* hspx 開發者 11/13「黑洞因為是殘局了，不應該再出現開頭通用的開局動畫」（序局黑洞 BHX_FEN）：從殘局開始的盤（第 0、1 步就不到 32 子）不播開局特效 */KJ_LAST=st.id;loadKaiju();const kj=()=>kaijuFx(bd.svg,"r");if(parkOn())kjWait(kj);else setTimeout(kj,350)}   /* 意見回饋 416：開局特效 */
     if(n0!=null&&lastN===n0+1&&!st.practice){const cue=openingCue(st.moves);if(cue)setTimeout(()=>openFx(bd.svg,cue[1],cue[0]),350)}
     const lv=st.levels[st.level-1]||{},me=st.human,bot=opp(me);
     const CR=st.cpuRate||{};paintSeg(modeOf(st));if(!st.ranked&&st.level&&!st.practice&&!st.journey)store.set("cpuLevel",st.level);   /* 11/12 星系地面工作階段回報：旅程關卡（黑洞星系、石桌往事）的級數是關卡自己定的，不能記成你選的難度——玩過權星（固定 18 級）後 bhLevel 讀到 18，之後每個星系都變 18 級 */
@@ -27158,19 +27154,38 @@ if(typeof document!=="undefined"&&document.body)i18nBoot();
    重算時機：場景頁出現、標籤字變了（07i18n 換英文）、轉向／改視窗大小、字型載入完。從「目前位置扣掉現在的推移量」算原位，值有變才寫，不會抖。 */
 function spfFit(P){const bs=[...P.querySelectorAll(".shp-spot")].filter(b=>b.getClientRects().length);if(bs.length<2)return 0;
   const pr=P.getBoundingClientRect(),k=P.offsetHeight?pr.height/P.offsetHeight:1;if(pr.height<20||!k)return 0;
+  /* 11/13 大螢幕滿版（07fl）：iPad 直向圖填滿寬度、上下裁掉一點時，推回的範圍是「看得到的那一段」，不是整張圖 */
+  const vb=typeof xflVis==="function"?xflVis(P,pr):null,VT=vb?vb.t:pr.top,VB=vb?vb.b:pr.bottom;
   const Q=bs.map(b=>{const r=b.getBoundingClientRect(),d=+b.dataset.spfY||0;return{b,x:r.left,y:r.top-d*k,w:r.width,h:r.height,d0:d,dy:0}}).filter(q=>q.w>1&&q.h>1);
   const G=4;for(let it=0;it<24;it++){let mv=false;
     for(let i=0;i<Q.length;i++)for(let j=i+1;j<Q.length;j++){const a=Q[i],c=Q[j],ox=Math.min(a.x+a.w,c.x+c.w)-Math.max(a.x,c.x);if(ox<=1)continue;
       const ay=a.y+a.dy,cy=c.y+c.dy,oy=Math.min(ay+a.h,cy+c.h)-Math.max(ay,cy);if(oy<=-G+0.5)continue;
       const s=(oy+G)/2,up=ay<cy||(ay===cy&&a.x<c.x)?a:c,dn=up===a?c:a;up.dy-=s;dn.dy+=s;mv=true}
-    for(const q of Q){const t=q.y+q.dy,lo=pr.top+2,hi=pr.bottom-q.h-2;if(t<lo){q.dy+=lo-t;mv=true}else if(t>hi&&hi>lo){q.dy-=t-hi;mv=true}}
+    for(const q of Q){const t=q.y+q.dy,lo=VT+2,hi=VB-q.h-2;if(t<lo){q.dy+=lo-t;mv=true}else if(t>hi&&hi>lo){q.dy-=t-hi;mv=true}}
     if(!mv)break}
   let n=0;for(const q of Q){const d=Math.round(q.dy/k*10)/10;if(Math.abs(d-q.d0)<0.5)continue;n++;if(Math.abs(d)<0.5){q.b.style.translate="";delete q.b.dataset.spfY}else{q.b.style.translate=`0 ${d}px`;q.b.dataset.spfY=d}}
   return n}
-function spfAll(){let n=0;document.querySelectorAll(".shp-page").forEach(P=>{try{n+=spfFit(P)}catch(e){}});return n}
+/* hspx 開發者 11/13「盤查圖示和文字換行的問題，這樣很醜，直接一行，但也要避免跟別人重疊的邊界風險」：星槎甲板（07f .shp-map.full）的入口 .shp-hs
+   改成圖示和字同一行（m.css .shp-map img:not(.eic)）以後變寬，可能跟旁邊的疊到。星槎標籤的 translate 已經給 07w 走路抬升、07n 港口視差用，
+   左右、上下貼邊由 07f shpMapFit／07x zmShipPush 用 marginLeft、marginTop 收；這裡在它們排完之後，同樣用 marginTop 把互相疊到的上下推開（各推一半、留 4px 縫），
+   不推出甲板上下緣（頂端讓開 .shp-cap 標題）。自己加的量記在 data-spf-m，重算時先扣掉，不會越推越遠 */
+function spfShip(M){if(!M||!M.isConnected)return 0;const R=M.getBoundingClientRect();if(R.height<20)return 0;const capH=(M.querySelector(".shp-cap")||{}).offsetHeight||0,lo=R.top+capH+8,hi=R.bottom-8;
+  const ty=b=>{const p=String(b.style.translate||"").split(/\s+/);return p.length>1?parseFloat(p[1])||0:0};
+  const Q=[...M.querySelectorAll(".shp-hs")].filter(b=>b.getClientRects().length).map(b=>{const r=b.getBoundingClientRect(),a=+b.dataset.spfM||0;return{b,x:r.left,y:r.top-a-ty(b),w:r.width,h:r.height,a,dy:0}}).filter(q=>q.w>1&&q.h>1);
+  const G=4;for(let it=0;it<24;it++){let mv=false;
+    for(let i=0;i<Q.length;i++)for(let j=i+1;j<Q.length;j++){const a=Q[i],c=Q[j],ox=Math.min(a.x+a.w,c.x+c.w)-Math.max(a.x,c.x);if(ox<=1)continue;
+      const ay=a.y+a.dy,cy=c.y+c.dy,oy=Math.min(ay+a.h,cy+c.h)-Math.max(ay,cy);if(oy<=-G+0.5)continue;
+      const s=(oy+G)/2,up=ay<cy||(ay===cy&&a.x<c.x)?a:c,dn=up===a?c:a;up.dy-=s;dn.dy+=s;mv=true}
+    for(const q of Q){const t=q.y+q.dy;if(t<lo){q.dy+=lo-t;mv=true}else if(t+q.h>hi&&hi-q.h>lo){q.dy-=t+q.h-hi;mv=true}}
+    if(!mv)break}
+  let n=0;for(const q of Q){const d=Math.round(q.dy);if(d===q.a)continue;n++;const base=(parseFloat(q.b.style.marginTop)||0)-q.a,m=base+d;q.b.style.marginTop=m?m+"px":"";if(d)q.b.dataset.spfM=d;else delete q.b.dataset.spfM}
+  return n}
+if(typeof shpMapFit==="function"){const f0=shpMapFit;shpMapFit=function(v){const r=f0.apply(this,arguments);try{requestAnimationFrame(()=>requestAnimationFrame(()=>{const M=v&&v.querySelector&&v.querySelector(".shp-map.full");if(M){M.querySelectorAll(".shp-hs").forEach(b=>{delete b.dataset.spfM});spfShip(M)}}))}catch(e){}return r}}
+if(typeof zmShipPush==="function"){const f1=zmShipPush;zmShipPush=function(M,s){const r=f1.apply(this,arguments);try{if(M&&!(s>1)){M.querySelectorAll(".shp-hs").forEach(b=>{delete b.dataset.spfM});spfShip(M)}}catch(e){}return r}}
+function spfAll(){let n=0;document.querySelectorAll(".shp-page").forEach(P=>{try{n+=spfFit(P)}catch(e){}});document.querySelectorAll(".shp-map.full").forEach(M=>{try{n+=spfShip(M)}catch(e){}});return n}
 let spfT=0;function spfSoon(ms){clearTimeout(spfT);spfT=setTimeout(()=>{spfAll();requestAnimationFrame(spfAll)},ms==null?120:ms)}
 (()=>{try{const mo=new MutationObserver(L=>{for(const m of L){const t=m.target&&(m.target.nodeType===1?m.target:m.target.parentElement);
-      if(t&&t.closest&&t.closest(".shp-page")){spfSoon();return}for(const a of m.addedNodes||[])if(a.nodeType===1&&(a.matches(".shp-page")||a.querySelector&&a.querySelector(".shp-page"))){spfSoon();return}}});
+      if(t&&t.closest&&t.closest(".shp-page,.shp-hs")){spfSoon();return}for(const a of m.addedNodes||[])if(a.nodeType===1&&(a.matches(".shp-page,.shp-map")||a.querySelector&&a.querySelector(".shp-page,.shp-map"))){spfSoon();return}}});
     mo.observe(document.body,{childList:true,subtree:true,characterData:true});
     addEventListener("resize",()=>spfSoon(200));addEventListener("orientationchange",()=>spfSoon(400));
     if(document.fonts&&document.fonts.ready)document.fonts.ready.then(()=>spfSoon(0));spfSoon(600)}catch(e){}})();
