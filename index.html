@@ -1534,7 +1534,7 @@ html[data-hct] .player.on .clk{background:#00563B;color:#FFFFFF;border-color:#00
       if(!window.caches)return go();caches.keys().then(function(ks){return Promise.all(ks.filter(function(k){return k.indexOf("xqlab-app-")===0}).map(function(k){return caches.delete(k)}))})
         .then(function(){return navigator.serviceWorker&&navigator.serviceWorker.getRegistration()}).then(function(r){return r&&r.update()}).catch(function(){}).then(go)}};setTimeout(chk,4000)})();
 </script>
-<script>window.XQ_OFFLINE=true;window.XQ_BUILD="20261112-1100";</script>
+<script>window.XQ_OFFLINE=true;window.XQ_BUILD="20261112-1110";</script>
 <script src="core.js"></script>
 <script src="engine.js"></script>
 <script src="local.js"></script>
@@ -23554,16 +23554,37 @@ function hwVerify(text){const s=String(text||""),ok=[],bad=[],rx=/XQHW1\.([A-Za-
   if(!k&&/作業成績/.test(s))bad.push({k:0,why:"只有文字、沒有簽章那一行：請學生更新 App，按「📋 複製成績」整段傳來"});
   return{ok,bad}}
 /* 彙整表：同一份作業、學生並排（同名字的以後貼的為準）；每題算「沒有一次答對」（第 2 次以後才對、看答案）幾人＝wrong，最多的列在 worst */
+/* 評比第 6 輪（ChatGPT 改善清單第 7 項、第 7 輪計畫 F2）：錯因分類＋弱點追蹤。
+   錯因只用學生傳來的四個數字（做完、走錯幾次、用時、看答案）判斷，不猜學生在想什麼：
+   一次就對（3 分鐘內）／想很久（一次對但超過 3 分鐘）／計算不穩（第 2～3 次才對）／多次試錯（第 4 次以後才對）／不會解（看答案）／沒做完 */
+const HW_CAUSE=[["slow","想很久","一次就對，但超過 3 分鐘：會，還不熟"],["shaky","計算不穩","第 2～3 次才答對：方向對，算得不夠深或漏看一步"],["guess","多次試錯","第 4 次以後才答對：比較像在猜，建議回頭看這個主題的基本型"],["stuck","不會解","看了答案：這個主題還沒學會"],["undone","沒做完","打開過但沒有答對、也沒看答案"]];
+function hwCause(y){const[dn,mi,sec,an]=y||[0,0,0,0];if(!dn)return mi?{k:"undone",t:"沒做完"}:{k:"none",t:"沒做"};if(an)return{k:"stuck",t:"不會解"};if(mi>=3)return{k:"guess",t:"多次試錯"};if(mi>=1)return{k:"shaky",t:"計算不穩"};if(sec>180)return{k:"slow",t:"想很久"};return{k:"ok",t:"一次就對"}}
+/* 題目的主題：hwLabels 的「殘局・短殺〈…〉」「主題・將軍、殺棋〈…〉」取第一個主題；還沒讀到標題就只分殘局／主題題 */
+function hwTheme(label,it){const m=/^(?:殘局|主題)・([^〈、]+)/.exec(String(label||""));return m?m[1].trim():(it&&it.k==="c"?"殘局":"主題題")}
+const hwBad=k=>k==="shaky"||k==="guess"||k==="stuck"||k==="undone";
+/* 弱點追蹤：這支手機收過的所有作業（store hwGrades），同名字的學生合在一起；每人做了幾題、一次就對的比例、各錯因幾次、最弱的兩個主題（錯的比例高的先） */
+function hwWeak(A,labelsBy){const st={};
+  for(const code of Object.keys(A||{})){const H=hwDec(code);if(!H)continue;const L=labelsBy&&labelsBy[code]||[];
+    for(const x of Object.values(A[code].st||{})){const nm=x.name||"（沒寫名字）",S=st[nm]||(st[nm]={nm,hw:0,n:0,first:0,c:{},th:{}});S.hw++;
+      H.items.forEach((it,i)=>{const c=hwCause(x.r&&x.r[i]);if(c.k==="none")return;const th=hwTheme(L[i],it),T=S.th[th]||(S.th[th]={n:0,bad:0});S.n++;T.n++;
+        if(c.k==="ok"||c.k==="slow")S.first++;S.c[c.k]=(S.c[c.k]||0)+1;if(hwBad(c.k))T.bad++})}}
+  return Object.values(st).map(S=>({nm:S.nm,hw:S.hw,n:S.n,first:S.first,c:S.c,rate:S.n?Math.round(S.first*100/S.n):0,
+    weak:Object.entries(S.th).filter(([,T])=>T.bad>0).sort((a,b)=>b[1].bad/b[1].n-a[1].bad/a[1].n||b[1].bad-a[1].bad||(a[0]<b[0]?-1:1)).slice(0,2).map(([k,T])=>({th:k,bad:T.bad,n:T.n}))})).sort((a,b)=>a.rate-b.rate||(a.nm<b.nm?-1:1))}
 function hwGradeTab(recs,H,labels){const S=[],by={};for(const x of recs){const nm=x.name||"（沒寫名字）"+x.sig.slice(0,4);if(nm in by)S[by[nm]]={...x,nm};else{by[nm]=S.length;S.push({...x,nm})}}
-  const cell=y=>{const[dn,mi,sec,an]=y||[0,0,0,0];if(!dn)return{t:mi?"沒做完（試了 "+mi+" 次）":"沒做",k:"no",s:null};if(an)return{t:"看答案",k:"ans",s:sec};return{t:"第 "+(mi+1)+" 次答對",k:mi?"late":"first",n:mi+1,s:sec}};
-  const rows=H.items.map((it,i)=>{const C=S.map(x=>cell(x.r[i]));return{i,label:labels&&labels[i]||(it.k==="c"?"殘局 ":"主題題 ")+it.id,cells:C,first:C.filter(c=>c.k==="first").length,wrong:C.filter(c=>c.k==="late"||c.k==="ans").length,undone:C.filter(c=>c.k==="no").length}});
+  const cell=y=>{const[dn,mi,sec,an]=y||[0,0,0,0],c=hwCause(y);if(!dn)return{t:mi?"沒做完（試了 "+mi+" 次）":"沒做",k:"no",s:null,c};if(an)return{t:"看答案",k:"ans",s:sec,c};return{t:"第 "+(mi+1)+" 次答對",k:mi?"late":"first",n:mi+1,s:sec,c}};
+  const rows=H.items.map((it,i)=>{const C=S.map(x=>cell(x.r[i])),label=labels&&labels[i]||(it.k==="c"?"殘局 ":"主題題 ")+it.id;return{i,label,th:hwTheme(labels&&labels[i],it),cells:C,first:C.filter(c=>c.k==="first").length,wrong:C.filter(c=>c.k==="late"||c.k==="ans").length,undone:C.filter(c=>c.k==="no").length}});
   const mx=Math.max(0,...rows.map(r=>r.wrong)),worst=mx?rows.filter(r=>r.wrong===mx).map(r=>r.i):[];
   const tot=S.map(x=>({done:x.r.filter(y=>y[0]).length,first:x.r.filter(y=>y[0]&&!y[3]&&!y[1]).length,ans:x.r.filter(y=>y[0]&&y[3]).length,s:x.r.reduce((a,y)=>a+(y[0]?y[2]:0),0)}));
-  return{title:H.title||"象棋作業",students:S.map(x=>x.nm),dates:S.map(x=>x.d),rows,worst,tot}}
+  /* 這份作業的錯因統計（全班）、各主題幾人次沒一次答對 */
+  const causes={},thm={};rows.forEach(r=>r.cells.forEach(c=>{if(c.c.k==="none")return;causes[c.c.k]=(causes[c.c.k]||0)+1;const T=thm[r.th]||(thm[r.th]={th:r.th,n:0,bad:0});T.n++;if(hwBad(c.c.k))T.bad++}));
+  const themes=Object.values(thm).sort((a,b)=>b.bad/b.n-a.bad/a.n||b.bad-a.bad);
+  return{title:H.title||"象棋作業",students:S.map(x=>x.nm),dates:S.map(x=>x.d),rows,worst,tot,causes,themes}}
 function hwCsv(T){const q=x=>{let s=String(x==null?"":x);if(/^[=+\-@]/.test(s))s="'"+s;return/[",\r\n]/.test(s)?'"'+s.replace(/"/g,'""')+'"':s};
-  const L=[["學生","日期","完成題數","第一次就答對","看答案","總用時（秒）",...T.rows.flatMap(r=>["第"+(r.i+1)+"題 "+r.label,"第"+(r.i+1)+"題 用時（秒）"])]];
-  T.students.forEach((nm,k)=>{const t=T.tot[k];L.push([nm,T.dates[k],t.done,t.first,t.ans,t.s,...T.rows.flatMap(r=>[r.cells[k].t,r.cells[k].s==null?"":r.cells[k].s])])});
-  L.push(["（沒有一次答對的人數）","","","","","",...T.rows.flatMap(r=>[r.wrong,""])],["（沒做的人數）","","","","","",...T.rows.flatMap(r=>[r.undone,""])]);
+  const L=[["學生","日期","完成題數","第一次就答對","看答案","總用時（秒）",...T.rows.flatMap(r=>["第"+(r.i+1)+"題 "+r.label,"第"+(r.i+1)+"題 用時（秒）","第"+(r.i+1)+"題 錯因"])]];
+  T.students.forEach((nm,k)=>{const t=T.tot[k];L.push([nm,T.dates[k],t.done,t.first,t.ans,t.s,...T.rows.flatMap(r=>[r.cells[k].t,r.cells[k].s==null?"":r.cells[k].s,r.cells[k].c?r.cells[k].c.t:""])])});
+  L.push(["（沒有一次答對的人數）","","","","","",...T.rows.flatMap(r=>[r.wrong,"",""])],["（沒做的人數）","","","","","",...T.rows.flatMap(r=>[r.undone,"",""])]);
+  /* 第 6 輪改善：錯因統計與各主題弱點，接在表格下面（空一行） */
+  if(T.causes&&T.themes){L.push([],["錯因","人次","說明"]);for(const[k,t,d]of HW_CAUSE)L.push([t,T.causes[k]||0,d]);L.push([],["主題","沒一次答對（人次）","做過（人次）"]);for(const x of T.themes)L.push([x.th,x.bad,x.n])}
   return"﻿"+L.map(r=>r.map(q).join(",")).join("\r\n")+"\r\n"}
 function hwGAll(){const A=store.get("hwGrades",null);return A&&typeof A==="object"?A:{}}
 /* 教練：#/hw/grade 貼上學生成績 → 彙整表、匯出 CSV（成績只存在這支手機的 store "hwGrades"，最多 20 份作業）。
@@ -23585,15 +23606,24 @@ function HwGrade(v){setTop("🧑‍🏫 教練作業","#/canju");if(typeof setTa
     const recs=Object.values(A[cur].st||{}),T=hwGradeTab(recs,H,labels[cur]),cls={first:"first",late:"late",ans:"ans",no:"no"};
     box.innerHTML=`<div class="card"><b>🧑‍🏫 ${esc(T.title)}</b><div class="muted" style="font-size:13px">${T.students.length} 位學生・${H.items.length} 題${T.worst.length?"・⚠ 最多人沒一次答對：第 "+T.worst.map(i=>i+1).join("、")+" 題（"+T.rows[T.worst[0]].wrong+" 人）":""}</div>
       <div class="hw-tw" style="margin-top:8px"><table class="hw-tab"><thead><tr><th>題目</th>${T.students.map((n,k)=>`<th>${esc(n)}<small>${esc(T.dates[k])}</small></th>`).join("")}<th>沒一次答對</th></tr></thead><tbody>
-        ${T.rows.map(r=>`<tr class="${T.worst.includes(r.i)?"worst":""}"><td>${r.i+1}. ${esc(r.label)}${T.worst.includes(r.i)?" ⚠":""}</td>${r.cells.map(c=>`<td class="${cls[c.k]}">${c.k==="first"?"✅ 一次對":c.k==="late"?"✔ 第 "+c.n+" 次":c.k==="ans"?"👁 看答案":esc(c.t)}${c.s!=null?`<small>${hwTime(c.s*1000)}</small>`:""}</td>`).join("")}<td><b>${r.wrong}</b>${r.undone?`<small>沒做 ${r.undone}</small>`:""}</td></tr>`).join("")}
+        ${T.rows.map(r=>`<tr class="${T.worst.includes(r.i)?"worst":""}"><td>${r.i+1}. ${esc(r.label)}${T.worst.includes(r.i)?" ⚠":""}</td>${r.cells.map(c=>`<td class="${cls[c.k]}">${c.k==="first"?"✅ 一次對":c.k==="late"?"✔ 第 "+c.n+" 次":c.k==="ans"?"👁 看答案":esc(c.t)}${c.s!=null?`<small>${hwTime(c.s*1000)}</small>`:""}${c.c&&(hwBad(c.c.k)||c.c.k==="slow")?`<small>${esc(c.c.t)}</small>`:""}</td>`).join("")}<td><b>${r.wrong}</b>${r.undone?`<small>沒做 ${r.undone}</small>`:""}</td></tr>`).join("")}
         <tr><td>完成</td>${T.tot.map(t=>`<td>${t.done}／${H.items.length}</td>`).join("")}<td></td></tr><tr><td>第一次就答對</td>${T.tot.map(t=>`<td>${t.first}</td>`).join("")}<td></td></tr>
         <tr><td>看答案</td>${T.tot.map(t=>`<td>${t.ans}</td>`).join("")}<td></td></tr><tr><td>總用時</td>${T.tot.map(t=>`<td>${hwTime(t.s*1000)}</td>`).join("")}<td></td></tr></tbody></table></div>
       <div class="opt" style="margin:10px 0 0"><button class="on" id="hgCsv">⬇ 匯出 CSV</button><button id="hgCp">📋 複製 CSV</button><button id="hgDel">🗑 清掉這份</button></div>
-      <p class="muted" style="font-size:12px;line-height:1.6;margin:6px 0 0">「沒一次答對」＝第 2 次以後才答對，或看了答案；沒做的另外算。CSV 可以用 Excel、Google 試算表打開。</p></div>`;
+      <p class="muted" style="font-size:12px;line-height:1.6;margin:6px 0 0">「沒一次答對」＝第 2 次以後才答對，或看了答案；沒做的另外算。CSV 可以用 Excel、Google 試算表打開。</p></div>
+      ${(()=>{const W=hwWeak(A,labels),cs=HW_CAUSE.filter(([k])=>T.causes[k]);   /* 第 6 輪改善：錯因分類＋弱點追蹤（只用學生傳來的成績算，不上傳） */
+        return`<div class="card"><b>🔎 錯因與弱點</b>
+        <div class="muted" style="font-size:13px;line-height:1.7;margin:4px 0 6px">錯因只看「走錯幾次、用時、有沒有看答案」，不猜學生在想什麼。</div>
+        ${cs.length?`<ul style="margin:0 0 8px;padding-left:1.2em;line-height:1.7;font-size:14px">${cs.map(([k,t,d])=>`<li><b>${esc(t)}</b> ${T.causes[k]} 人次<small class="muted" style="display:block;font-size:12px">${esc(d)}</small></li>`).join("")}</ul>`:'<p class="muted" style="font-size:14px">這份作業大家都一次就對。</p>'}
+        ${T.themes.some(x=>x.bad)?`<div style="font-size:14px;margin:4px 0"><b>這份作業最弱的主題</b>：${T.themes.filter(x=>x.bad).slice(0,3).map(x=>esc(x.th)+" "+x.bad+"／"+x.n+" 人次").join("、")}</div>`:""}
+        ${W.length?`<div style="font-size:14px;margin:10px 0 4px"><b>📈 每位學生的弱點（這支手機收過的 ${Object.keys(A).length} 份作業合計）</b></div>
+        <div class="hw-tw"><table class="hw-tab"><thead><tr><th>學生</th><th>作業</th><th>題數</th><th>一次就對</th><th>最弱的主題</th></tr></thead><tbody>
+        ${W.map(w=>`<tr><td>${esc(w.nm)}</td><td>${w.hw}</td><td>${w.n}</td><td>${w.rate}%</td><td style="white-space:normal;text-align:left">${w.weak.length?w.weak.map(x=>esc(x.th)+"（錯 "+x.bad+"／"+x.n+"）").join("、"):"—"}</td></tr>`).join("")}</tbody></table></div>`:""}</div>`})()}`;
     const csv=()=>hwCsv(T),fn="作業成績_"+(T.title||"作業");
     box.querySelector("#hgCsv").onclick=()=>pgnOut(csv(),fn,"csv","file");box.querySelector("#hgCp").onclick=()=>pgnOut(csv().replace(/^﻿/,""),fn,"csv","copy");
     box.querySelector("#hgDel").onclick=()=>confirmBox("清掉這份作業在這支手機上的所有學生成績？",()=>{const A3=hwGAll();delete A3[cur];store.set("hwGrades",A3);cur="";paint()},"清掉");
-    if(!labels[cur]){const c0=cur;hwLabels(H).then(L=>{labels[c0]=L;if(v.isConnected&&location.hash==="#/hw/grade"&&cur===c0)paint()}).catch(()=>{labels[c0]=null})}};
+    if(!labels[cur]){const c0=cur;hwLabels(H).then(L=>{labels[c0]=L;if(v.isConnected&&location.hash==="#/hw/grade"&&cur===c0)paint()}).catch(()=>{labels[c0]=null})}
+    else{const miss=codes.filter(c=>!(c in labels));if(miss.length)Promise.all(miss.map(c=>{const H2=hwDec(c);return H2?hwLabels(H2).then(L=>{labels[c]=L}).catch(()=>{labels[c]=null}):(labels[c]=null)})).then(()=>{if(v.isConnected&&location.hash==="#/hw/grade")paint()})}};   /* 弱點追蹤要每份作業的題目主題 */
   paint();return{}}
 // ================= AI 對戰直播 =================
 // ================= 觀戰：線上棋友正在下的棋＋AI 對戰 =================

@@ -1,8 +1,8 @@
 {
- "version": "20261112-1100",
- "checkedAt": "2026-11-12T03:42:12.316Z",
- "html": "0a9d10e40be1",
- "sw": "e1bbcb3a1057",
+ "version": "20261112-1110",
+ "checkedAt": "2026-11-12T03:53:10.556Z",
+ "html": "aaa1f4fd07d4",
+ "sw": "e91670d428d9",
  "scripts": 4,
  "modules": {
   "00-util.js": "e4beee43ce00",
@@ -88,7 +88,7 @@
   "10-db.js": "8d1ee230a260",
   "10b-libmap.js": "958c9851b677",
   "10c-deskmap.js": "0fbcb6b36d55",
-  "10d-coach.js": "e86c9d89dbd0",
+  "10d-coach.js": "e0a4c2c6e33a",
   "11-watch.js": "020277592a67",
   "07q2-coop.js": "8b666670e73c",
   "11b-a11y.js": "769bf31f06d6",
