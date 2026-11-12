@@ -1534,7 +1534,7 @@ html[data-hct] .player.on .clk{background:#00563B;color:#FFFFFF;border-color:#00
       if(!window.caches)return go();caches.keys().then(function(ks){return Promise.all(ks.filter(function(k){return k.indexOf("xqlab-app-")===0}).map(function(k){return caches.delete(k)}))})
         .then(function(){return navigator.serviceWorker&&navigator.serviceWorker.getRegistration()}).then(function(r){return r&&r.update()}).catch(function(){}).then(go)}};setTimeout(chk,4000)})();
 </script>
-<script>window.XQ_OFFLINE=true;window.XQ_BUILD="20261112-1250";</script>
+<script>window.XQ_OFFLINE=true;window.XQ_BUILD="20261112-1260";</script>
 <script src="core.js"></script>
 <script src="engine.js"></script>
 <script src="local.js"></script>
@@ -5722,13 +5722,14 @@ function prologue(){const c=myChar();if(!c)return;if(typeof bhxNeed==="function"
 /* ---------- 新的旅程、讀檔、改選 ---------- */
 async function journeyStart(n,c,nm,df){const C=WX_CHARS[c];if(!C)return;fnStep("pick");const had=!!journey(),cur=curSlot();
   if(had&&cur&&cur!==n)await saveNow(true);SAVE_LOCK=true;
-  store.set("slotCur",n);if(had||!tsmProgNow().any){const fw=localStorage.getItem("m_firstWin");saveApply({});if(fw!=null)localStorage.setItem("m_firstWin",fw)}else try{if(window.XQ_saveLog)XQ_saveLog("keep")}catch(e){}   /* 新手秒開局的旗標跟著新旅程存進這一格 */   /* 11/11 第二輪問題 1：還沒選過角色、但手機裡已有進度（下到一半的棋、戰績、殘局）＝第一次選角，進度留著跟這位角色走，不清掉（原本會連 xq_play、xq_play2 一起清，多分頁時那盤就不見了） */
+  store.set("slotCur",n);if(had||!tsmProgNow().any){const fw=localStorage.getItem("m_firstWin"),xu=localStorage.getItem("m_bhXuDone"),xp=localStorage.getItem("m_bhxPick");saveApply({});if(fw!=null)localStorage.setItem("m_firstWin",fw);if(xu!=null)localStorage.setItem("m_bhXuDone",xu);if(xp!=null)localStorage.setItem("m_bhxPick",xp)}   /* 序局下過了（先下序局才選角的新玩家）：新旅程不再重下一次 */else try{if(window.XQ_saveLog)XQ_saveLog("keep")}catch(e){}   /* 新手秒開局的旗標跟著新旅程存進這一格 */   /* 11/11 第二輪問題 1：還沒選過角色、但手機裡已有進度（下到一半的棋、戰績、殘局）＝第一次選角，進度留著跟這位角色走，不清掉（原本會連 xq_play、xq_play2 一起清，多分頁時那盤就不見了） */
   store.set("pChar",c);store.set("pSex",C.sx);store.set("pStyle","real");store.set("botPiece",C.pc);store.set("onboard1",true);const hm=jHomePick(c);store.set("journey",{c,sx:C.sx,born:Date.now(),v:1,era:2,home:hm});if(hm){store.set("era",hm);store.set("eraUser",null);try{applyEra()}catch(e){}}store.set("playSec",0);store.set("diff",df>=1&&df<=5?df|0:2);if(hm)store.set("shipDock",["classic",hm]);   /* 意見回饋 675：新旅程的難度、一開始停靠船艙和家鄉 */
   if(store.get("oppLook",null)==null)store.set("oppLook","real");if(nm){try{setMyName(nm)}catch(e){}}
   SAVE_LOCK=false;await saveNow(true);
   if(had){SAVE_LOCK=true;saveReload({xqPrologue:"1"});return}
   try{window.dispatchEvent(new Event("xq-look"))}catch(e){}
-  if(typeof bhxNeed==="function"&&bhxNeed()&&typeof bhXuStart==="function"){bhXuStart(false);titleClose();location.hash="#/adventure";return}   /* hspx 11/12「開頭過場頓一下」：背後不建首頁 3D 園子（很重），改開星槎頁（下完序局本來就降落在星槎） */   /* 開發者 11/12「開頭會跳到首頁才接到黑洞對戰」：先蓋上星渦再關開頭畫面，首頁不露出來 */
+  if(typeof bhxNeed==="function"&&bhxNeed()&&typeof bhXuStart==="function"){bhXuStart(false);titleClose();location.hash="#/adventure";return}
+  if(typeof bhxLandNew==="function"&&bhxLandNew())return;   /* 先下序局、在流星裡選角的新玩家：降落經典星槎再出序幕 */   /* hspx 11/12「開頭過場頓一下」：背後不建首頁 3D 園子（很重），改開星槎頁（下完序局本來就降落在星槎） */   /* 開發者 11/12「開頭會跳到首頁才接到黑洞對戰」：先蓋上星渦再關開頭畫面，首頁不露出來 */
   titleClose();try{route()}catch(e){}setTimeout(prologue,500)}
 function journeyRepick(c){const C=WX_CHARS[c],J=journey();if(!C||!J||J.re!==1)return;store.set("pChar",c);store.set("pSex",C.sx);store.set("botPiece",C.pc);const hm=jHomePick(c);store.set("journey",{...J,c,sx:C.sx,re:2,era:2,home:hm});store.set("shipDock",null);   /* 意見回饋 675：換了角色＝家鄉換了，已停靠的站照舊規則重算一次（不會變少） */if(hm){store.set("era",hm);store.set("eraUser",null);try{applyEra()}catch(e){}}
   try{window.dispatchEvent(new Event("xq-look"))}catch(e){}saveNow(true);toast("換好了："+C.n+"（之後就鎖定了）")}
@@ -5839,11 +5840,16 @@ function titleScreen(opt){opt=opt||{};try{navClear()}catch(e){}try{sessionStorag
     document.body.append(o);TITLE=o;document.body.classList.add("xqt-on");try{ldShow(o)}catch(e){}
     /* 開發者 11/11「這個莫名其妙的紅圈按扭拿掉」：標題畫面右上角的 ⚙ 設定鈕拿掉（設定從星槎天字客房進） */}
   const J=journey();
-  if(!opt.view&&fwNeed()){titlePaint("wait",opt);fwSaved().then(s=>{if(TITLE&&TITLE.dataset.v==="wait")titlePaint(s||!fwNeed()?"menu":"first",opt)});return}   /* 新手秒開局：先確定 IndexedDB 裡也沒有存檔（不然開機會從存檔還原），才出一步殺 */
+  if(!opt.view&&fwNeed()){titlePaint("wait",opt);fwSaved().then(s=>{if(TITLE&&TITLE.dataset.v==="wait")titlePaint(s||!fwNeed()?"menu":typeof bhxNeed==="function"&&bhxNeed()?"xu":"first",opt)});return}   /* 新手秒開局：先確定 IndexedDB 裡也沒有存檔（不然開機會從存檔還原），才出一步殺 */
   titlePaint(opt.view||(J&&J.re===1?"news":"menu"),opt)}
 function titlePaint(view,opt){const o=TITLE;if(!o)return;opt=opt||{};const inn=o.querySelector(".xqt-in"),b=o.querySelector(".xqt-b"),J=journey(),M=slotMetaAll();o.dataset.v=view;
   inn.classList.toggle("full",/^(pick|diff|confirm|save|slots|first)$/.test(view));inn.scrollTop=0;
-  if(view==="wait"){b.innerHTML="";return}if(view==="first"){fwPaint(b);return}const back=v=>`<button class="btn ghost xqt-bk" data-tb="${v||"menu"}">‹ 返回</button>`;
+  if(view==="wait"){b.innerHTML="";return}if(view==="first"){fwPaint(b);return}
+  /* hspx 開發者 11/12「讓遊戲一進去，把選角放到七星降落後才讓玩家選角，黑洞對戰直接放最一開頭」：全新玩家的開頭畫面只有一顆「入局」（手機要先點一下才能放音樂），
+     按下去就是星渦 → 第〇章 → 黑洞序局 → 七星流星裡點一顆星選角（07bh-blackhole.js）；原本選角前的「新手秒開局」一步殺拿掉（開發者選，序局本身就是一步殺）。換手機的人留讀入存檔、搬資料 */
+  if(view==="xu"){b.innerHTML=`<button class="btn xqt-main" id="tXu">入局</button><div class="xqt-lk"><button type="button" id="tIm">📂 讀入存檔檔案</button><button type="button" id="tXf">📱 從舊手機搬資料</button></div>`;
+    b.querySelector("#tXu").onclick=()=>{vibrate(10);if(typeof bhXuStart==="function"){bhXuStart(false);titleClose();location.hash="#/adventure"}else titlePaint("menu",{})};   /* 先蓋星渦再關開頭畫面；背後開星槎頁（首頁 3D 園子太重，會讓過場頓一下） */
+    b.querySelector("#tXf").onclick=()=>{vibrate(6);titleClose();xfRecv()};b.querySelector("#tIm").onclick=()=>{vibrate(6);slotImportPick(1,null,true)};return}const back=v=>`<button class="btn ghost xqt-bk" data-tb="${v||"menu"}">‹ 返回</button>`;
   if(view==="news"){const nm=meName();
     b.innerHTML=`<div class="xqt-msg"><h3>💾 存檔功能上線了</h3><p>你目前的進度已經存在第 1 格，角色是「${esc(nm)}」。從今天起，角色選定後就不能再換；想玩別的角色，可以在開頭畫面開始「新的旅程」，存到第 2、3 格。</p><p class="muted">這次更新送你一次「最後改選」：只換角色，修為、官階、故事進度都保留。</p></div><button class="btn" id="tKeep">就是${esc(nm)}</button><button class="btn ghost" id="tRe">最後改選一次</button>`;
     b.querySelector("#tKeep").onclick=()=>{vibrate(8);const j=journey();if(j){store.set("journey",{...j,re:2});saveNow(true)}titlePaint("menu",{})};
@@ -9932,6 +9938,9 @@ function bhxCss(){if(document.getElementById("bhxCss"))return;const s=document.c
 #bhxPg .bx-t,#bhxPg .bx-n,#bhxPg .bx-cap{white-space:nowrap}
 #bhxPg .bx-n{margin-top:22px;font-size:14px;color:#e2d6b8;opacity:0;transition:opacity .9s;text-shadow:0 1px 6px #000}#bhxPg .bx-n.on{opacity:1}
 #bhxPg .bx-mt{position:absolute;inset:0;width:100%;height:100%;pointer-events:none}
+#bhxPg .bx-pk{position:absolute;transform:translate(-50%,-50%);width:min(30vw,150px);aspect-ratio:1;border-radius:50%;border:2px solid rgba(255,214,120,.55);background:radial-gradient(circle,rgba(255,214,120,.18),rgba(255,214,120,0) 70%);cursor:pointer;animation:bhxPkG 1.8s ease-in-out infinite;padding:0}
+#bhxPg .bx-pk span{position:absolute;left:50%;bottom:-1.7em;transform:translateX(-50%);white-space:nowrap;font-size:13px;font-weight:700;color:#FFE6A8;text-shadow:0 1px 6px #000,0 0 2px #000}
+@keyframes bhxPkG{0%,100%{box-shadow:0 0 0 0 rgba(255,214,120,.25)}50%{box-shadow:0 0 18px 4px rgba(255,214,120,.45)}}
 #bhxPg .bx-cap{position:absolute;top:calc(8vh + env(safe-area-inset-top,0px));left:0;right:0;font-size:clamp(18px,5.4vw,25px);letter-spacing:.32em;font-weight:600;color:#FFE6A8;text-shadow:0 2px 12px #000,0 0 3px #000;opacity:0;transition:opacity 1s;pointer-events:none}#bhxPg .bx-cap.on{opacity:1}
 #bhxPg .bx-k{position:absolute;right:16px;top:calc(14px + env(safe-area-inset-top,0px));font-size:13px;color:#e2d6b8;background:rgba(0,0,0,.35);border:1px solid rgba(232,199,122,.4);border-radius:99px;padding:6px 14px}
 #bhxVx{position:fixed;inset:0;z-index:9001;display:flex;align-items:center;justify-content:center;background:radial-gradient(circle at 50% 50%,#000 0 6%,#2a1450 16%,#120a26 38%,#05060d 70%);overflow:hidden}
@@ -9957,8 +9966,10 @@ function bhxPages(keys,done,first){bhxCss();let i=0,tm=[],MT=null;const o=docume
     /* hspx 開發者 11/12「語句的原則不要換行，這樣很不好看」（截圖：「天上有一張星盤。」被擠成兩行）：每句一行（nowrap），字級照最長那句算到放得下（字距 .08em＋左右留白），最大 28px */
     {const n=Math.max(...P.big.map(t=>[...t].length)),w=(o.clientWidth||innerWidth)-48;o.style.setProperty("--bxfs",Math.max(14,Math.min(28,Math.floor(w/(n*1.1))))+"px")}
     const lines=()=>{const T0=P.board?1.6:P.meteor?.2:.3;[...o.querySelectorAll(".bx-l,.bx-n")].forEach((x,j)=>tm.push(setTimeout(()=>x.classList.add("on"),(T0+j*.9)*1000)))};
-    if(P.meteor){const cap=o.querySelector(".bx-cap");tm.push(setTimeout(()=>cap&&cap.classList.add("on"),700));MT=bhxMeteor(o,()=>{if(cap)cap.classList.add("on");lines()})}else lines()};
-  o.onclick=()=>{if(MT&&!MT.done){MT.skip();return}const L=[...o.querySelectorAll(".bx-l:not(.on),.bx-n:not(.on)")];if(L.length){clr();L.forEach(x=>x.classList.add("on"));return}vibrate(5);i++;show()};
+    if(P.meteor){const cap=o.querySelector(".bx-cap");tm.push(setTimeout(()=>cap&&cap.classList.add("on"),700));
+      if(!(typeof myChar==="function"&&myChar()))MT=bhxMeteor(o,()=>{if(cap)cap.classList.add("on");bhxPick(o,cap,k=>{MT=bhxMeteor(o,()=>{if(cap)cap.textContent=BHX_TXT.rain;lines()},{mode:"catch",key:k})})},{mode:"all"});   /* hspx 11/12：還沒選角＝七顆都落下，點一顆星選角 */
+      else MT=bhxMeteor(o,()=>{if(cap)cap.classList.add("on");lines()})}else lines()};
+  o.onclick=()=>{if(MT&&!MT.done){MT.skip();return}if(o.dataset.pick==="1")return;const L=[...o.querySelectorAll(".bx-l:not(.on),.bx-n:not(.on)")];if(L.length){clr();L.forEach(x=>x.classList.add("on"));return}vibrate(5);i++;show()};
   show();requestAnimationFrame(()=>requestAnimationFrame(()=>o.classList.add("on")))}
 /* 第 4 頁「七星未醒」的流星（hspx 開發者 11/12「七星降落做個動畫，像流星般落入不同朝代」＋補充「不同朝代指的是各自主場」；
    Gemini、ChatGPT 討論在 story/134，開發者選兩家合體：2D 流星分流＋茶香接上星槎，旁白「七星如雨，各歸其時。」）
@@ -9966,44 +9977,44 @@ function bhxPages(keys,done,first){bhxCss();let i=0,tm=[],MT=null;const o=docume
    玩家那顆金星飛近自己的主場、停在半空 → 星槎剪影從下方浮出、一縷茶香光線往上接住金星 → 金星順著茶香落進星槎、船亮一下（接著降落經典星槎）。
    點一下＝直接跳到最後一格；減少動態＝不飛，1.2 秒淡入最後一格 */
 const BHX_SPOT={x_swordboy:[183,203],x_spiritgirl:[604,286],x_martialgirl:[157,503],x_miaogirl:[612,592],x_shuai:[152,803],x_shi:[613,908],x_bing:[296,1018]};   /* s0_4.webp（768×1376）七個小景裡紅光的位置：秦、南北朝、宋、元、明深宅、明當鋪、清 */
-function bhxMeteor(o,onDone){const cv=document.createElement("canvas");cv.className="bx-mt";o.prepend(cv);
+function bhxMeteor(o,onDone,opt){opt=opt||{};const ALL=opt.mode==="all",CATCH=opt.mode==="catch";const cv=document.createElement("canvas");cv.className="bx-mt";o.prepend(cv);
   const W=o.clientWidth||innerWidth,H=o.clientHeight||innerHeight,dpr=Math.min(2,devicePixelRatio||1);cv.width=Math.round(W*dpr);cv.height=Math.round(H*dpr);const g=cv.getContext("2d");g.scale(dpr,dpr);
-  const s=Math.max(W/768,H/1376),ox=(W-768*s)/2,oy=(H-1376*s)/2,P=([x,y])=>[ox+x*s,oy+y*s],me=(typeof myChar==="function"&&myChar())||"x_swordboy";
+  const s=Math.max(W/768,H/1376),ox=(W-768*s)/2,oy=(H-1376*s)/2,P=([x,y])=>[ox+x*s,oy+y*s],me=ALL?null:opt.key||(typeof myChar==="function"&&myChar())||"x_swordboy";   /* all＝還沒選角：七顆都落下；catch＝選好了：只演茶香接住那一顆 */
   const src=P([384,30]),SH=[W/2,H*.88],lerp=(a,b,u)=>[a[0]+(b[0]-a[0])*u,a[1]+(b[1]-a[1])*u],ez=u=>u<.5?2*u*u:1-Math.pow(-2*u+2,2)/2;
   const bz=(a,c,b,u)=>[(1-u)*(1-u)*a[0]+2*(1-u)*u*c[0]+u*u*b[0],(1-u)*(1-u)*a[1]+2*(1-u)*u*c[1]+u*u*b[1]];
-  const L=Object.keys(BHX_SPOT).map((k,i)=>{const t=P(BHX_SPOT[k]),mine=k===me,c=[(src[0]+t[0])/2+(t[0]<W/2?-1:1)*W*.2,(src[1]+t[1])/2-H*.06];return{k,t,c,mine,d:.8+i*.13,tr:[],hv:mine?bz(src,c,t,.8):null}});
-  const M=L.find(x=>x.mine)||L[0];M.mine=true;
-  const TC1=[M.hv[0]+(M.hv[0]<W/2?W*.28:-W*.28),(M.hv[1]+SH[1])/2],TC2=[W/2+(M.hv[0]<W/2?-W*.18:W*.18),SH[1]-H*.12];
-  const tea=u=>{const a=1-u;return[a*a*a*SH[0]+3*a*a*u*TC2[0]+3*a*u*u*TC1[0]+u*u*u*M.hv[0],a*a*a*SH[1]+3*a*a*u*TC2[1]+3*a*u*u*TC1[1]+u*u*u*M.hv[1]]};
+  const L=Object.keys(BHX_SPOT).map((k,i)=>{const t=P(BHX_SPOT[k]),mine=k===me,c=[(src[0]+t[0])/2+(t[0]<W/2?-1:1)*W*.2,(src[1]+t[1])/2-H*.06];return{k,t,c,mine,d:.8+i*.13,tr:[],hv:mine?(CATCH?t:bz(src,c,t,.8)):null}});
+  const M=ALL?null:(L.find(x=>x.mine)||L[0]);if(M)M.mine=true;const HV=M?M.hv:[W/2,H/2];
+  const TC1=[HV[0]+(HV[0]<W/2?W*.28:-W*.28),(HV[1]+SH[1])/2],TC2=[W/2+(HV[0]<W/2?-W*.18:W*.18),SH[1]-H*.12];
+  const tea=u=>{if(!M)return SH;const a=1-u;return[a*a*a*SH[0]+3*a*a*u*TC2[0]+3*a*u*u*TC1[0]+u*u*u*M.hv[0],a*a*a*SH[1]+3*a*a*u*TC2[1]+3*a*u*u*TC1[1]+u*u*u*M.hv[1]]};
   const glow=(x,y,r,rgb,a)=>{if(a<=0)return;const gr=g.createRadialGradient(x,y,0,x,y,r*4);gr.addColorStop(0,`rgba(255,255,255,${a})`);gr.addColorStop(.22,`rgba(${rgb},${a*.9})`);gr.addColorStop(1,`rgba(${rgb},0)`);g.fillStyle=gr;g.beginPath();g.arc(x,y,r*4,0,6.2832);g.fill()};
   const boat=(a,lit)=>{if(a<=0)return;const [x,y]=SH,k=Math.min(W,H*.6)/420;g.save();g.globalAlpha=a;g.translate(x,y);g.scale(k,k);
     g.fillStyle="#8a5a34";g.strokeStyle="#E8C77A";g.lineWidth=1.6;g.beginPath();g.moveTo(-70,-6);g.quadraticCurveTo(0,26,74,-10);g.lineTo(60,-14);g.quadraticCurveTo(0,8,-60,-12);g.closePath();g.fill();g.stroke();
     g.beginPath();g.moveTo(6,-12);g.lineTo(10,-78);g.stroke();g.fillStyle="rgba(240,226,196,.85)";g.beginPath();g.moveTo(10,-74);g.quadraticCurveTo(40,-52,12,-26);g.closePath();g.fill();
     glow(66,-24,3,"255,90,60",.95);if(lit>0)glow(0,-14,22,"255,214,120",lit);g.restore()};
   let rm=false;try{rm=matchMedia("(prefers-reduced-motion:reduce)").matches}catch(e){}
-  const D=rm?1.2:6.2,R={done:false,stop(){cancelAnimationFrame(raf);R.done=true},skip(){t0=performance.now()-D*1000}};let t0=performance.now(),raf=0,called=false;
+  const D=rm?1.2:ALL?3.4:6.2,R={done:false,stop(){cancelAnimationFrame(raf);R.done=true},skip(){t0=performance.now()-D*1000}};let t0=performance.now()-(CATCH&&!rm?3400:0),raf=0,called=false;
   const draw=now=>{const u=rm?D:Math.min(D,(now-t0)/1000),fa=rm?Math.min(1,(now-t0)/1000/D):1;g.clearRect(0,0,W,H);
     if(!rm&&u<1.6)glow(src[0],src[1],10+8*Math.sin(Math.min(1,u/1.6)*Math.PI),"200,220,255",Math.sin(Math.min(1,u/1.6)*Math.PI));
     for(const m of L){const fl=1.5;let p=null,land=0;
-      if(m.mine){if(u>=m.d&&u<4.7){const e=ez(Math.min(1,(u-m.d)/fl))*.8;p=bz(src,m.c,m.t,e)}else if(u>=4.7&&u<5.7)p=tea(1-ez((u-4.7)/1));else if(u>=5.7)p=null}
+      if(m.mine){if(u>=m.d&&u<4.7){const e=ez(Math.min(1,(u-m.d)/fl))*.8;p=CATCH?[m.hv[0],m.hv[1]-Math.sin(Math.min(1,(u-3.4)/1.3)*Math.PI/2)*H*.02]:bz(src,m.c,m.t,e)}else if(u>=4.7&&u<5.7)p=tea(1-ez((u-4.7)/1));else if(u>=5.7)p=null}
       else if(u>=m.d){const e=Math.min(1,(u-m.d)/fl);p=bz(src,m.c,m.t,ez(e));land=u-m.d-fl}
       if(p&&!rm){m.tr.push(p);if(m.tr.length>16)m.tr.shift();for(let j=1;j<m.tr.length;j++){const q=m.tr[j-1],w=m.tr[j],k=j/m.tr.length;g.strokeStyle=m.mine?`rgba(255,214,120,${k*.8})`:`rgba(255,120,90,${k*.7})`;g.lineWidth=(m.mine?4:3)*k;g.beginPath();g.moveTo(q[0],q[1]);g.lineTo(w[0],w[1]);g.stroke()}}
       if(!m.mine&&(land>=0||rm)){const lt=rm?.6:land;if(lt<.7)glow(m.t[0],m.t[1],5+lt*30,"255,140,110",(1-lt/.7)*.8*fa);glow(m.t[0],m.t[1],3.5,"255,110,90",.85*fa)}
       else if(p)glow(p[0],p[1],m.mine?5:4,m.mine?"255,214,120":"255,110,90",1)}
-    const bA=rm?fa:Math.max(0,Math.min(1,(u-3.4)/.8)),lit=rm?.7*fa:u>=5.7?Math.max(0,1-(u-5.7)/.5)*.9+.35:0;boat(bA,lit);
-    if(!rm&&u>=3.7&&u<5.9){const k=Math.min(1,(u-3.7)/1),fo=u>5.2?Math.max(0,1-(u-5.2)/.7):1;g.strokeStyle=`rgba(232,240,255,${.55*fo})`;g.lineWidth=2.2;g.setLineDash([]);g.beginPath();for(let j=0;j<=40*k;j++){const q=tea(j/40),wv=Math.sin(j*.6+u*5)*3;j?g.lineTo(q[0]+wv,q[1]):g.moveTo(q[0]+wv,q[1])}g.stroke()}
-    if(rm)glow(SH[0],SH[1]-14*Math.min(W,H*.6)/420,6,"255,214,120",fa);
+    const bA=!M?0:rm?fa:Math.max(0,Math.min(1,(u-3.4)/.8)),lit=rm?.7*fa:u>=5.7?Math.max(0,1-(u-5.7)/.5)*.9+.35:0;boat(bA,lit);
+    if(M&&!rm&&u>=3.7&&u<5.9){const k=Math.min(1,(u-3.7)/1),fo=u>5.2?Math.max(0,1-(u-5.2)/.7):1;g.strokeStyle=`rgba(232,240,255,${.55*fo})`;g.lineWidth=2.2;g.setLineDash([]);g.beginPath();for(let j=0;j<=40*k;j++){const q=tea(j/40),wv=Math.sin(j*.6+u*5)*3;j?g.lineTo(q[0]+wv,q[1]):g.moveTo(q[0]+wv,q[1])}g.stroke()}
+    if(rm&&M)glow(SH[0],SH[1]-14*Math.min(W,H*.6)/420,6,"255,214,120",fa);
     if(u>=D||(rm&&fa>=1)){R.done=true;if(!called){called=true;if(onDone)onDone()}return}raf=requestAnimationFrame(draw)};
   raf=requestAnimationFrame(draw);return R}
 /* 入口：選角確認後，角色頭像被墨色星渦捲進去（1.7 秒；減少動態＝0.5 秒） */
-function bhxVortex(c,done){bhxCss();const o=document.createElement("div");o.id="bhxVx";o.setAttribute("aria-hidden","true");o.innerHTML=`<img src="data/xs/prev_${c}.webp" alt="" onerror="this.remove()">`;document.body.append(o);
+function bhxVortex(c,done){bhxCss();const o=document.createElement("div");o.id="bhxVx";o.setAttribute("aria-hidden","true");o.innerHTML=`<img src="${c?"data/xs/prev_"+c+".webp":bhxSeven()}" alt="" onerror="this.remove()">`;document.body.append(o);
   let rm=false;try{rm=matchMedia("(prefers-reduced-motion:reduce)").matches}catch(e){}
   setTimeout(()=>{o.style.transition="opacity .4s";o.style.opacity="0";setTimeout(()=>o.remove(),450);if(done)done()},rm?500:1750)}
 /* 開發者 11/12「開頭會跳到首頁才接到黑洞對戰」：從星渦到黑洞對局頁出現之間，墊一層黑洞底（z 8990，在分鏡 9000、對話框 10000 底下），首頁不會露出來 */
 function bhxBack(on){let d=document.getElementById("bhxBk");if(!on){if(d){d.style.transition="opacity .5s";d.style.opacity="0";setTimeout(()=>d.remove(),550)}return}
   if(d)return;d=document.createElement("div");d.id="bhxBk";d.setAttribute("aria-hidden","true");d.style.cssText="position:fixed;inset:0;z-index:8990;background:#05060d url(data/park/bh_far2.webp) center/cover no-repeat";document.body.append(d)}
 /* old＝舊玩家「只看序章」：下完不接原本的序幕，回首頁 */
-function bhXuStart(old){const c=(typeof myChar==="function"&&myChar())||"x_swordboy";store.set("bhXuOld",old?1:0);bhxBack(true);bhMus("fall");vibrate([20,60,20]);
+function bhXuStart(old){const c=(typeof myChar==="function"&&myChar())||null;   /* 還沒選角（一進 App 先下序局）＝星渦捲走七顆紅星 */store.set("bhXuOld",old?1:0);bhxBack(true);bhMus("fall");vibrate([20,60,20]);
   /* hspx 11/12「開頭過場頓一下」：分鏡圖先預載（解碼好才不會翻頁時跳一下）；3D 模型等星渦轉完（2 秒）再開始下載，不搶動畫 */
   for(const k in BHX_PG){try{const im=new Image();im.decoding="async";im.src=BHX_PG[k].img}catch(e){}}setTimeout(()=>{try{bhPreload()}catch(e){}},2000);
   bhxVortex(c,()=>bhxPages(["p1","p5"],bhxIntro,true))}
@@ -10021,9 +10032,33 @@ function bhxGuard(st,f,t){if(!st||st.journey!==BHX_ID||st.result)return null;
 function bhxEnd(){store.set("bhXuDone",Date.now())}
 function bhxAfter(){bhxEnd();bhMus(null);
   modal(`<div class="em">✨</div><h2>星盤暫合</h2><p class="pl-say">✦ 星樞：「${esc(BHX_TXT.win)}」</p>`,[["循著茶香",()=>{const old=+store.get("bhXuOld",0)===1;store.set("bhXuOld",0);
-    if(!old){try{if(typeof shipEra==="function")shipEra("classic");else{store.set("era","classic");store.set("eraUser",null);applyEra()}}catch(e){}store.set("bhxLand",Date.now())}   /* hspx 開發者 11/12「每個角色打完黑洞的第一站，要統一降落到經典首頁，而不是每個人的主場」：首頁朝代設回經典（停靠紀錄照舊有主場；舊玩家只看序章不動） */
+    if(!old&&journey()){try{if(typeof shipEra==="function")shipEra("classic");else{store.set("era","classic");store.set("eraUser",null);applyEra()}}catch(e){}store.set("bhxLand",Date.now())}   /* hspx 開發者 11/12「每個角色打完黑洞的第一站，要統一降落到經典首頁，而不是每個人的主場」：首頁朝代設回經典（停靠紀錄照舊有主場；舊玩家只看序章不動） */
     location.hash=old?"#/":"#/adventure";   /* hspx 更正（11/12）：打完第一場黑洞對戰，降落在經典星槎上（星槎頁、停靠經典站） */
-    setTimeout(()=>bhxPages(["p2","p3","p4"],()=>{if(old){toast("序章看完了，旅程照你原本的進度繼續");return}if(typeof prologue==="function")prologue()}),400)}]],"prolog")}
+    setTimeout(()=>bhxPages(["p2","p3","p4"],()=>{if(old){toast("序章看完了，旅程照你原本的進度繼續");return}
+      const pk=store.get("bhxPick",null);if(!journey()&&pk&&typeof titleScreen==="function"){titleScreen({view:"diff",mode:"new",slot:1,c:pk});return}   /* 在流星裡選好角色的新玩家：接選難度、取名（05b 開頭畫面），確定後 bhxLandNew 降落星槎 */
+      if(typeof prologue==="function")prologue()}),400)}]],"prolog")}
+/* 星渦裡的七顆紅星（還沒選角時代替角色頭像） */
+function bhxSeven(){let c="";for(let i=0;i<7;i++){const a=i*Math.PI*2/7-Math.PI/2,x=(50+30*Math.cos(a)).toFixed(1),y=(50+30*Math.sin(a)).toFixed(1);c+=`<circle cx='${x}' cy='${y}' r='8' fill='#c8102e' stroke='#E8C77A' stroke-width='1.6'/>`}
+  return"data:image/svg+xml,"+encodeURIComponent(`<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><rect width='100' height='100' fill='#120a26'/>${c}</svg>`)}
+/* hspx 開發者 11/12（選「在流星畫面直接點一顆星」）：七顆星落進七個朝代小景後停住，大字「哪一顆星，是你？」；點小景跳那位角色的小卡，「就是這顆星」＝選定 */
+function bhxPick(o,cap,cb){o.dataset.pick="1";if(cap){cap.textContent="哪一顆星，是你？";cap.classList.add("on")}
+  const W=o.clientWidth||innerWidth,H=o.clientHeight||innerHeight,s=Math.max(W/768,H/1376),ox=(W-768*s)/2,oy=(H-1376*s)/2,box=document.createElement("div");box.className="bx-pks";o.append(box);
+  for(const k in BHX_SPOT){const C=WX_CHARS[k];if(!C)continue;const b=document.createElement("button");b.type="button";b.className="bx-pk";b.style.left=(ox+BHX_SPOT[k][0]*s)+"px";b.style.top=(oy+BHX_SPOT[k][1]*s)+"px";
+    b.setAttribute("aria-label",`${C.pc}・${C.n}，${typeof eraLabel==="function"?eraLabel(CHAR_ERA[k]):""}`);b.innerHTML=`<span>${esc(C.pc)}・${esc(C.n)}</span>`;
+    b.onclick=e=>{e.stopPropagation();vibrate(8);const el=typeof eraLabel==="function"?eraLabel(CHAR_ERA[k]):"";
+      /* hspx 開發者 11/12「點星星選角後，會出現 3D 角色讓玩家知道模樣」：小卡上方是 3D 舞台（跟「我的角色」頁同一顆 Tripo 模型、慢慢轉、可拖曳），載好之前先放立繪 */
+      const m=modal(`<div class="bx-fig" style="position:relative;width:min(58vw,240px);aspect-ratio:3/4;margin:0 auto 8px;border-radius:14px;overflow:hidden;touch-action:none;background:radial-gradient(circle at 50% 38%,#3a2a5c,#0b0a1a)"><img src="data/xs/prev_${k}.webp" alt="" onerror="this.remove()" style="position:absolute;inset:0;width:100%;height:100%;object-fit:cover;object-position:top;transition:opacity .45s"></div><h2>${esc(C.pc)}・${esc(C.n)}</h2><p class="muted">${esc(C.s||el)}</p><p class="pl-say">「${esc(C.say||"")}」</p><p class="muted" style="font-size:13px">選定之後，這段旅程就用他的眼睛走下去。</p>`,
+        [["✦ 就是這顆星",()=>{store.set("bhxPick",k);box.remove();o.dataset.pick="";cb(k)}],["再看看",null,true]],"prolog");
+      bhxFig(m,k)};box.append(b)}}
+/* 選星小卡的 3D 角色：TRIPO 表還沒載好就等一下；沒有 3D 模型或載不到就留著立繪 */
+async function bhxFig(m,k){const C=WX_CHARS[k];let n=0;while(typeof TRIPO!=="undefined"&&!Object.keys(TRIPO).length&&n++<30)await new Promise(r=>setTimeout(r,100));
+  const f=(m&&m.querySelector&&m.querySelector(".bx-fig"))||[...document.querySelectorAll(".modal .bx-fig")].pop();if(!f||typeof fig3d!=="function"||typeof TRIPO==="undefined"||!TRIPO[k])return;
+  const host=document.createElement("div");host.style.cssText="position:absolute;inset:0;opacity:0;transition:opacity .45s;touch-action:none";f.append(host);
+  const res=await fig3d(host,{p:C.pc,e:"classic",g:9,glb:`data/tripo_app/${k}.glb`,ring:TRIPO[k]},{tight:true,spin:true});if(!res){host.remove();return}
+  const show=()=>{host.style.opacity=1;const im=f.querySelector("img");if(im)im.style.opacity=0};if(res.B&&res.B.glbP)res.B.glbP.then(show,()=>host.remove());else show()}
+/* 05b journeyStart 叫：先下序局、在流星裡選角的新玩家，建好旅程後降落經典星槎（停靠經典站、星槎頁），再出說書人序幕 */
+function bhxLandNew(){try{if(!store.get("bhXuDone",null)||store.get("bhxLand",null)||!store.get("bhxPick",null))return false}catch(e){return false}
+  store.set("bhxLand",Date.now());try{if(typeof shipEra==="function")shipEra("classic")}catch(e){}if(typeof titleClose==="function")titleClose();location.hash="#/adventure";setTimeout(()=>{try{prologue()}catch(e){}},700);return true}
 /* 舊玩家：開 App 後首頁沒有開頭畫面、沒有別的視窗時，跳一次 */
 function bhxOldAsk(){try{if(!journey()||!bhxNeed()||store.get("bhXuAsk",null)||TITLE||!/^(#\/?)?$/.test(location.hash||"")||document.querySelector(".modal,#bhxPg,#bhxVx"))return false}catch(e){return false}store.set("bhXuAsk",Date.now());
   modal(`<div class="em">🌀</div><h2>大更新：第〇章與黑洞序局</h2><p>故事前面多了一章神話開場——天裂成河、青石落入雲河。現在建好角色後，會先從星渦掉進黑洞，跟星樞下一盤序局，才開始第一章。</p><p class="muted" style="font-size:13px">建議從頭玩一次。開新的旅程會存到另一格，你現在這段旅程不會被蓋掉。</p>`,
