@@ -1641,7 +1641,7 @@
        棋館的地板、環景和其他桌放進 SIMW 一個群組，照開場位置排：3／5 桌一排、棋客面向玩家；10 桌一圈、棋客坐外側面向圈心。棋館以這一排（圈）的中心為中心，放大到裝得下每一桌。
        現在下的這桌永遠在原點（棋盤、棋客、小帥、鏡頭都不動）；換桌時 SIMW 整個平移＋轉向 1 秒，把那一桌帶到眼前＝看起來是自己走過去坐下。
        別桌：簡化的木方桌、2D 畫的目前盤面、那位棋客（造型同開場）、玩家那側的空凳；下完的桌子上方標勝／和／負 */
-    let SIMW=null,simCur=-1,simSig="",simL=null;const SIMST=[],simWood=M(0x7A5236,{roughness:.8}),simLeg=M(0x5A3A22,{roughness:.9});
+    let SIMW=null,simCur=-1,simSig="",simL=null,simPI=-2;const SIMST=[],simWood=M(0x7A5236,{roughness:.8}),simLeg=M(0x5A3A22,{roughness:.9});
     const simLay=s=>{const ring=s.n>=10,S=ring?250:s.n>=5?190:120,KZ=ring?1.7:1,P=s.sp.map(([cx,cy])=>({x:cx*S,z:cy*S*KZ}));
       const C={x:P.reduce((a,p)=>a+p.x,0)/P.length,z:P.reduce((a,p)=>a+p.z,0)/P.length},face=P.map(p=>ring?Math.atan2(C.x-p.x,C.z-p.z):0);
       let R=0;for(const p of P)R=Math.max(R,Math.hypot(p.x-C.x,p.z-C.z));return{P,C,face,R:R+28}};
@@ -1663,9 +1663,21 @@
       const sp=new T.Sprite(new T.SpriteMaterial({map:new T.CanvasTexture(cv),transparent:true,depthWrite:false}));sp.scale.setScalar(3.4);sp.position.set(0,9,-6);return sp};
     const simStation=()=>{const g=new T.Group(),top=new T.Mesh(new T.BoxGeometry(14,.8,15),simWood);top.position.y=-.4;top.castShadow=top.receiveShadow=true;g.add(top);
       const lh=-.8-FL;for(const[x,z]of[[-6.2,-6.7],[6.2,-6.7],[-6.2,6.7],[6.2,6.7]]){const l=new T.Mesh(new T.BoxGeometry(.8,lh,.8),simLeg);l.position.set(x,FL+lh/2,z);g.add(l)}
-      const bd=new T.Mesh(new T.PlaneGeometry(10.4,11.4),new T.MeshStandardMaterial({roughness:.75}));bd.rotation.x=-PI/2;bd.position.y=.02;g.add(bd);
+      /* 開發者 11/12 hspx「每個人桌上初始都要有棋盤，下完換到另一桌，還是能從別桌看到桌上的棋盤」：別桌放真的 3D 棋盤（厚木盤＋跟主桌同一張棋盤貼圖 btex），棋子是 3D（simPieces 用 InstancedMesh 一起畫） */
+      const bx=new T.Mesh(new T.BoxGeometry(BW+.5,.6,BH+.5),simLeg);bx.position.y=.3;bx.castShadow=bx.receiveShadow=true;g.add(bx);
+      const bd=new T.Mesh(new T.PlaneGeometry(BW,BH),simBdMat());bd.rotation.x=-PI/2;bd.position.y=.61;g.add(bd);
       const st=new T.Mesh(new T.CylinderGeometry(1.7,1.9,SY-FL,16),simLeg);st.position.set(0,(SY+FL)/2,MZ-1.4);g.add(st);
       g.userData={bd,fig:null,bk:"",lk:"",tag:null,tr:""};return g};
+    /* 別桌的 3D 棋子：同一種棋子（14 種）全部桌一起用一個 InstancedMesh 畫（10 桌也只多 14 次繪製），位置＝那桌在 SIMW 裡的位置 × 格子位置；現在下的這桌不畫（真的棋盤在原點） */
+    let simBdM=null;const simBdMat=()=>simBdM||(simBdM=new T.MeshStandardMaterial({map:btex,roughness:.6}));
+    const SIMPM={},simPGeo=new T.CylinderGeometry(.42,.42,.24,24),simPSide=M(0xE2CC9E,{roughness:.55}),simPBot=M(0x8A6A40,{roughness:.8}),SIMQ=new T.Matrix4(),SIMR=new T.Matrix4();
+    const simPTex=p=>{const cv=document.createElement("canvas");cv.width=cv.height=128;const g=cv.getContext("2d"),red=sideOf(p)==="r",ink=red?"#B3141B":"#1A1410";g.fillStyle="#F3E2BC";g.beginPath();g.arc(64,64,62,0,TAU);g.fill();g.lineWidth=6;g.strokeStyle="#6B4423";g.stroke();
+      g.lineWidth=3;g.strokeStyle=ink;g.beginPath();g.arc(64,64,48,0,TAU);g.stroke();g.fillStyle=ink;g.font=`900 64px ${SERIF}`;g.textAlign="center";g.textBaseline="middle";g.fillText(NAMES[sideOf(p)][p.toUpperCase()]||"",64,68);
+      const t=new T.CanvasTexture(cv);if(T.SRGBColorSpace)t.colorSpace=T.SRGBColorSpace;t.anisotropy=ANI;return t};
+    const simPMesh=p=>{if(SIMPM[p])return SIMPM[p];const m=new T.InstancedMesh(simPGeo,[simPSide,new T.MeshStandardMaterial({map:simPTex(p),roughness:.5}),simPBot],64);m.count=0;m.castShadow=true;m.frustumCulled=false;SIMW.add(m);return SIMPM[p]=m};
+    const simPieces=act=>{for(const k in SIMPM)SIMPM[k].count=0;
+      SIMST.forEach((g,j)=>{if(j===act||!g.userData.b)return;g.updateMatrix();g.userData.b.forEach((p,i)=>{if(!p)return;const m=simPMesh(p),n=m.count;if(n>=64)return;SIMR.makeTranslation(i%9-4,.73,(i/9|0)-4.5);SIMQ.multiplyMatrices(g.matrix,SIMR);m.setMatrixAt(n,SIMQ);m.count=n+1})});
+      for(const k in SIMPM)SIMPM[k].instanceMatrix.needsUpdate=true;pwPoke(300)};
     const simFig=(g,look)=>{const k=JSON.stringify(look||null);if(g.userData.lk===k)return;g.userData.lk=k;if(g.userData.fig){g.remove(g.userData.fig);g.userData.fig=null}if(!look||!window.XQBot3D||!XQBot3D.figure)return;
       let B=null;try{B=XQBot3D.figure(look)}catch(e){}if(!B)return;const h=new T.Group();h.add(B.bot);h.scale.setScalar(4.1);h.position.set(0,SY-.9,BZ+1);g.add(h);g.userData.fig=h;
       if(B.glbP)B.glbP.then(ok=>{if(!ok||!B.glb||g.userData.fig!==h)return;try{h.updateMatrixWorld(true);let b=new T.Box3().setFromObject(B.glb);const H=b.max.y-b.min.y,y0=g.getWorldPosition(new T.Vector3()).y;
@@ -1677,14 +1689,14 @@
       if(sig!==simSig){simSig=sig;simL=simLay(s);SIMST.splice(0).forEach(g=>SIMW.remove(g));for(let j=0;j<s.n;j++){const g=simStation();g.position.set(simL.P[j].x,0,simL.P[j].z);g.rotation.y=simL.face[j];SIMW.add(g);SIMST.push(g)}
         SIMRF=Math.max(1,simL.R/(IN_R+1));for(const m of SIMFL){m.position.x=simL.C.x;m.position.z=simL.C.z;if(Math.abs(m.rotation.x)>1)m.scale.set(SIMRF,SIMRF,1);else m.scale.set(SIMRF,1,SIMRF)}
         if(PANM){PANM.position.x=simL.C.x;PANM.position.z=simL.C.z;const k=PANM.scale.y;PANM.scale.set(k*SIMRF,k,k*SIMRF)}simCur=-1}
-      const L=simL,i=Math.max(0,Math.min(s.n-1,s.i|0));
-      s.tb.forEach((t,j)=>{const g=SIMST[j];if(!g||!t)return;simFig(g,t.look);const bk=(t.b||[]).join(",");if(bk!==g.userData.bk){g.userData.bk=bk;const m=g.userData.bd.material;if(m.map)m.map.dispose();m.map=simBoardTex(t.b);m.needsUpdate=true}
+      const L=simL,i=Math.max(0,Math.min(s.n-1,s.i|0));let pDirty=false;
+      s.tb.forEach((t,j)=>{const g=SIMST[j];if(!g||!t)return;simFig(g,t.look);const bk=(t.b||[]).join(",");if(bk!==g.userData.bk){g.userData.bk=bk;g.userData.b=(t.b||[]).slice();pDirty=true}
         const tr=t.res||"";if(tr!==g.userData.tr){g.userData.tr=tr;if(g.userData.tag){g.remove(g.userData.tag);g.userData.tag.material.map.dispose();g.userData.tag.material.dispose();g.userData.tag=null}if(tr){g.userData.tag=simTag(tr);g.add(g.userData.tag)}}});
       const to=simXf(L,i);
       if(simCur<0||RDM){simApply(to.r,to.x,to.z);SIMST.forEach((g,j)=>g.visible=j!==i)}
       else if(simCur!==i){const r0=SIMW.rotation.y,x0=SIMW.position.x,z0=SIMW.position.z;let dr=to.r-r0;dr-=Math.round(dr/TAU)*TAU;const old=simCur;SIMST.forEach((g,j)=>g.visible=j!==i);
         anims.push({t:0,d:1,f:p=>{const e=ease(p);simApply(r0+dr*e,x0+(to.x-x0)*e,z0+(to.z-z0)*e)},end:()=>{simApply(to.r,to.x,to.z)}});pwPoke(1200)}
-      simCur=i}
+      if(pDirty||simPI!==i){simPI=i;simPieces(i)}simCur=i}
     /* ---------- 開發者 11/12 hspx「棋子變成角色，拿起來不好操作；加上下左右搖桿，選定角色後用搖桿移到想去的位置，確認後按落子，不能走的地方無法落子」----------
        只在黑洞巨盤（GIANT）：點角色選好之後（o.sel），畫面下方中間出現十字鍵＋「落子」；棋盤上一圈光標出目前格（從選的那隻開始）。
        ↑＝往對方陣地、→＝畫面右邊（翻盤時跟著反過來）；光圈停在能走的格子是綠色、「落子」可以按，不能走的是灰色、「落子」按不下去。按落子＝照點那一格（opt.onTap） */
