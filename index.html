@@ -1534,7 +1534,7 @@ html[data-hct] .player.on .clk{background:#00563B;color:#FFFFFF;border-color:#00
       if(!window.caches)return go();caches.keys().then(function(ks){return Promise.all(ks.filter(function(k){return k.indexOf("xqlab-app-")===0}).map(function(k){return caches.delete(k)}))})
         .then(function(){return navigator.serviceWorker&&navigator.serviceWorker.getRegistration()}).then(function(r){return r&&r.update()}).catch(function(){}).then(go)}};setTimeout(chk,4000)})();
 </script>
-<script>window.XQ_OFFLINE=true;window.XQ_BUILD="20261112-1190";</script>
+<script>window.XQ_OFFLINE=true;window.XQ_BUILD="20261112-1200";</script>
 <script src="core.js"></script>
 <script src="engine.js"></script>
 <script src="local.js"></script>
@@ -6379,10 +6379,15 @@ function parkInfo(k){if(k==="orb"&&typeof bhOrbTap==="function")return bhOrbTap(
 function parkUi(host,pv){let b=host.querySelector(".pkview");if(!b){b=document.createElement("button");b.type="button";b.className="pkview";host.append(b)}
   /* 11/11（AI 模擬玩家第二輪問題 5）：手機直式沒存過視角時，park3d 一開始就是「俯視＋拉近」（topfit，格距約 30px），按鈕要當成已經在俯視、下一個是平視；
      從按鈕切回俯視存成 topfit（拉近版）；以前存的 top／flat 照舊不動 */
+  /* 開發者 11/12 hspx「增加切換不同視角的功能按鈕，加在平視那邊用選單選，可以切換很美很漂亮的角度」：黑洞巨盤（pv.views 有清單）這顆鈕改成「🎥 視角」，點了跳選單（park3d GVIEWS）；選的不存進 parkView（那是一般園子用的） */
+  const GV=pv.views?pv.views():null;
+  if(GV&&GV.length){b.textContent="🎥 視角";b.setAttribute("aria-label","切換視角");
+    b.onclick=e=>{e.stopPropagation();vibrate(5);sheet("🎥 切換視角",bx=>{bx.innerHTML=`<p class="muted" style="margin:0 0 10px;font-size:13.5px">選一個角度，畫面會慢慢轉過去；之後照樣可以拖曳、縮放。</p><div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">${GV.map(([k,l])=>`<button type="button" class="btn ghost" data-gv="${esc(k)}" style="padding:12px 6px;font-size:15px">${esc(l)}</button>`).join("")}</div>`;
+      bx.querySelectorAll("[data-gv]").forEach(x=>x.onclick=()=>{try{pv.setView(x.dataset.gv)}catch(err){}closeSheet()})})}}else{
   const modes=[["top","俯視"],["flat","平視"]];let m=store.get("parkView","");const pkIsTop=()=>m==="top"||m==="topfit"||(!m&&!!pv.homeView&&pv.homeView()==="topfit");
   const paint=()=>{const nx=pkIsTop()?modes[1]:modes[0];b.textContent=(nx[0]==="top"?"⬇ ":"👁 ")+nx[1];b.setAttribute("aria-label","切換成"+nx[1])};paint();
   if(m&&pv.setView)setTimeout(()=>{try{pv.setView(m)}catch(e){}},400);
-  b.onclick=e=>{e.stopPropagation();vibrate(5);m=pkIsTop()?"flat":pv.homeView?"topfit":"top";store.set("parkView",m);try{pv.setView(m)}catch(x){}paint()};
+  b.onclick=e=>{e.stopPropagation();vibrate(5);m=pkIsTop()?"flat":pv.homeView?"topfit":"top";store.set("parkView",m);try{pv.setView(m)}catch(x){}paint()}}
   /* 11/11 模擬玩家問題 8（兩個教學提示疊在棋盤上）：園子裡 park3d 自己的小紙條（.mh-tip，例如「大都到杭州有多遠？」）正開著就先等它收；
      手勢提示出來的 3.5 秒內 host 加 pk-hinting，期間冒出來的小紙條先藏著（m.css 檔尾），一次只看到一個 */
   if(!store.get("parkHint",false)){const go=()=>{if(!host.isConnected)return;if(fxBusy()||document.querySelector(".kjfx")||host.querySelector(".mh-tip.on"))return setTimeout(go,500);store.set("parkHint",true);const h=document.createElement("div");h.className="pkhint";h.style.pointerEvents="none";h.innerHTML='<div class="pkh-hand">👆</div><b>拖曳轉身看四周</b><span>兩指捏合縮放・點兩下回到原本的角度</span>';host.append(h);host.classList.add("pk-hinting");PK_HTS=Date.now();
@@ -9756,7 +9761,7 @@ body.bh-full #pTop *,body.bh-full #pBot *{color:inherit}
 body.bh-full #stat{top:calc(var(--bhTop,56px) + 6px);left:50%;transform:translateX(-50%);max-width:44vw;padding:4px 12px!important;border-radius:99px;background:rgba(10,10,30,.74);color:#FFE08A!important;font-size:13px!important;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 body.bh-full #acts{top:calc(var(--bhTop,56px) + 6px);right:calc(6px + env(safe-area-inset-right,0px));left:auto!important;width:auto!important;flex-direction:column;gap:2px;padding:4px!important;border-radius:14px;background:rgba(10,10,30,.62)!important;border:0!important}
 body.bh-full #acts button{min-width:54px;font-size:11px!important;color:#f1e7cf!important;padding:3px 2px!important}
-body.bh-full #strip,body.bh-full .evline,body.bh-full .rule-note,body.bh-full .pkname,body.bh-full .pk3d-back,body.bh-full .pkview{display:none!important}
+body.bh-full #strip,body.bh-full .evline,body.bh-full .rule-note,body.bh-full .pkname,body.bh-full .pk3d-back{display:none!important}body.bh-full .pkview{top:auto!important;right:auto!important;bottom:106px!important;left:10px!important}
 body.bh-full .pk2d{top:auto!important;bottom:56px!important;left:10px!important}
 body.bh-full .pzoom{right:calc(84px + env(safe-area-inset-right,0px))!important}
 body.bh-full .gs-pop{right:calc(128px + env(safe-area-inset-right,0px))!important}
