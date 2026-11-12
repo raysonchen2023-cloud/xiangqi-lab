@@ -1534,7 +1534,7 @@ html[data-hct] .player.on .clk{background:#00563B;color:#FFFFFF;border-color:#00
       if(!window.caches)return go();caches.keys().then(function(ks){return Promise.all(ks.filter(function(k){return k.indexOf("xqlab-app-")===0}).map(function(k){return caches.delete(k)}))})
         .then(function(){return navigator.serviceWorker&&navigator.serviceWorker.getRegistration()}).then(function(r){return r&&r.update()}).catch(function(){}).then(go)}};setTimeout(chk,4000)})();
 </script>
-<script>window.XQ_OFFLINE=true;window.XQ_BUILD="20261112-1180";</script>
+<script>window.XQ_OFFLINE=true;window.XQ_BUILD="20261112-1190";</script>
 <script src="core.js"></script>
 <script src="engine.js"></script>
 <script src="local.js"></script>
@@ -9721,7 +9721,8 @@ function bhMaybe(k,next,cover){let hit=false;try{const mk=!!store.get("bhMark",0
 let BH_PRE=null;const BH_GLB=["x_shuai","x_shi","x_spiritgirl","x_miaogirl","x_swordboy","x_martialgirl","x_bing","xs_jiang","xs_shi","xs_xiang","xs_ma","xs_che","xs_pao","xs_zu"];
 function bhPreload(){if(BH_PRE||typeof document==="undefined")return BH_PRE;
   for(const f of["bh_far2","bh_layer2","bh_layer3b","bh_board2","bh_river"]){try{const im=new Image();im.decoding="async";im.src="data/park/"+f+".webp"}catch(e){}}
-  BH_PRE=(typeof parkLoad==="function"?parkLoad():Promise.resolve()).then(async()=>{if(typeof window.XQGLB!=="function")return;for(const g of BH_GLB){try{await window.XQGLB("data/tripo_app/"+g+".glb")}catch(e){}await new Promise(r=>setTimeout(r,30))}}).catch(()=>{});return BH_PRE}
+  /* 1180 原本在這裡就解析模型（XQGLB），iPhone 每個要幾百毫秒、會卡住畫面，開發者 hspx「入局按下去要等 5 秒」→ 1190 改成只下載進快取（fetch，交給 sw.js 存），解析留到進場 */
+  BH_PRE=(async()=>{for(const g of BH_GLB){try{await fetch("data/tripo_app/"+g+".glb",{cache:"force-cache"}).then(r=>r.ok?r.arrayBuffer():null)}catch(e){}}})().catch(()=>{});return BH_PRE}
 function bhOffer(k,next,cover){const n=store.get("bhCount",0)||0;bhMus("fall");vibrate([20,60,20]);try{bhPreload()}catch(e){}
   modal(`<div class="em">🌀</div><h2>星槎偏航</h2><p>${esc(BH_TXT.fall)}</p>${n?bhSay(BH_TXT.again):""}<p class="muted" style="font-size:13px">墨色星渦的中心，浮著一張巨大的棋盤。要下這一盤嗎？不下也不扣任何東西，星槎照原本的航線停靠。</p>`,
     [["🌀 接受棋局",()=>bhIntro(k,cover)],["先回航線",()=>{bhMus(null);if(next)next()},true]],"prolog")}
