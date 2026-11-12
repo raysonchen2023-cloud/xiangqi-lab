@@ -1531,7 +1531,7 @@ html[data-hct] .player.on .clk{background:#00563B;color:#FFFFFF;border-color:#00
       if(!window.caches)return go();caches.keys().then(function(ks){return Promise.all(ks.filter(function(k){return k.indexOf("xqlab-app-")===0}).map(function(k){return caches.delete(k)}))})
         .then(function(){return navigator.serviceWorker&&navigator.serviceWorker.getRegistration()}).then(function(r){return r&&r.update()}).catch(function(){}).then(go)}};setTimeout(chk,4000)})();
 </script>
-<script>window.XQ_OFFLINE=true;window.XQ_BUILD="20261112-0820";</script>
+<script>window.XQ_OFFLINE=true;window.XQ_BUILD="20261112-0830";</script>
 <script src="core.js"></script>
 <script src="engine.js"></script>
 <script src="local.js"></script>
@@ -1841,7 +1841,7 @@ function ruleNote(v,st){
   /* 11/11 Gemini 架構報告第一項：這盤的棋規設定 st.rc 不是千秋休閒規則（設定頁選了原型）時，徽章照實寫「原型・不計積分」 */
   const RS=st.rc&&window.XQCore&&XQCore.RULESETS&&XQCore.RULESETS[st.rc.rulesetId],proto=!np&&!!(RS&&RS.status==="prototype");
   const S=np?"📜 本關棋規：不判長將長捉":proto?"⚖️ 本局棋規："+RS.name+"・不計積分":"📜 本局棋規："+((st.rules&&st.rules.name)||"亞洲棋例（直接捉子）");
-  const T=proto?"這盤開局時用設定頁選的「"+RS.name+"」，中途不能改。這是原型：只改了一條——長將、長捉循環到第 3 次不自動判負，先提醒，請變著或雙方協議和棋（臺灣比賽規程寫「經裁判裁決仍不變著」才判負，App 沒有現場裁判）。一將一捉、閒著循環怎麼判，臺灣條文未查證，也只提醒、不自動判和。其他照千秋休閒規則。這盤不計積分。"
+  const T=proto?"這盤開局時用設定頁選的「"+RS.name+"」，中途不能改。這是原型：只改了一條——長將、長捉循環到第 3 次不自動判負，先提醒，請變著或雙方協議和棋（臺灣比賽規程寫「經裁判裁決仍不變著」才判負，App 沒有現場裁判）。一將一捉、閒著循環也只提醒、不自動判和（《中華民國象棋規則》113 年修訂版的判法還沒照著改）。其他照千秋休閒規則。這盤不計積分。"
     :np?"這一關不判長將、長捉：局面重複不會判輸贏，也不會因此判和，可以一直將軍或追子。其他照常：將死、困斃判負；連續 60 回合沒吃子、雙方都沒有車馬炮兵判和。"
     :"這盤開局時就定好用這一版，中途不能改。同局面第三次出現時檢查循環；單方長將（繞不同路線也算）、直接長捉同一子判負。一將一捉不直接判負。特殊互捉、同類牽制待核，可變著或提和；計時照常。遊戲限著為連續60回合未吃子，並非完整正式賽例裁判。";
   if(sm&&sm.textContent!==S)sm.textContent=S;if(p&&p.textContent!==T)p.textContent=T;
@@ -1988,7 +1988,7 @@ const unlockAudio=()=>{primeVoice();try{if(navigator.audioSession&&navigator.aud
     if(!AC)return;AC._t=now;AC._ct=AC.currentTime;
     if(AC.state!=="running"){const p=AC.resume();if(p&&p.catch)p.catch(()=>{})}
     if(!AC._primed){const b=AC.createBuffer(1,1,22050),src=AC.createBufferSource();src.buffer=b;src.connect(AC.destination);src.start(0);AC._primed=1}}catch(e){}};
-const sndOn=()=>{try{return store.get("capSound",true)||store.get("mvSound",false)||store.get("voiceCall",true)}catch(e){return false}};
+const sndOn=()=>{try{return!sxmAllOff()&&(store.get("capSound",true)||store.get("mvSound",false)||store.get("voiceCall",true))}catch(e){return false}};   /* 第 6 輪 F3：全部靜音時不跳「點任意處喚醒聲音」 */
 function sndPill(show){let p=document.getElementById("sndPill");if(!show){if(p)p.remove();return}if(p||!sndOn())return;
   p=document.createElement("div");p.id="sndPill";p.textContent="🔇 點任意處喚醒聲音";document.body.append(p);setTimeout(()=>{if(p.isConnected)p.remove()},8000);
   sndPillAt();setTimeout(sndPillAt,300);setTimeout(sndPillAt,1500)}
@@ -2034,14 +2034,33 @@ function loadVc(){return Promise.all(["chi","jj"].map(w=>{const k=vcKey(w);if(VC
   return VC_P[k]||(VC_P[k]=fetch(`data/voice/${k}.wav`).then(r=>{if(!r.ok)throw 0;return r.arrayBuffer()}).then(b=>{VC_RAW[k]=b}).catch(()=>{VC_P[k]=null}))}))}
 function playVc(k){if(!AC||!VC_RAW[k])return false;if(VC_DEC.ctx!==AC)VC_DEC={ctx:AC};const ctx=AC;
   const p=VC_DEC[k]||(VC_DEC[k]=new Promise((ok,no)=>ctx.decodeAudioData(VC_RAW[k].slice(0),ok,no)).catch(()=>null));
-  p.then(b=>{if(!b||!AC)return;const s=AC.createBufferSource();s.buffer=b;s.connect(AC.destination);s.start(AC.currentTime+.005)});return true}
-function sayCall(text){try{window.dispatchEvent(new CustomEvent("xq-call",{detail:text}))}catch(e){}if(!store.get("voiceCall",true))return;const jj=text==="將軍",k=vcKey(jj?"jj":"chi");
+  p.then(b=>{if(!b||!AC)return;const s=AC.createBufferSource();s.buffer=b;s.connect(sxmDst("voice"));s.start(AC.currentTime+.005)});return true}
+function sayCall(text){try{window.dispatchEvent(new CustomEvent("xq-call",{detail:text}))}catch(e){}if(!store.get("voiceCall",true))return;const vg=sxmGain("voice");if(!vg||sxmAllOff())return;const jj=text==="將軍",k=vcKey(jj?"jj":"chi");
   if(AC&&VC_RAW[k]){withAudio(()=>playVc(k));return}loadVc();
   if(!window.speechSynthesis)return;try{speechSynthesis.cancel();const sex=store.get("voiceSex","m"),rt={s:1,n:1.2,f:1.5}[store.get("voiceRate","n")]||1.2;
   const u=new SpeechSynthesisUtterance(text+"！");u.lang=VOICE?VOICE.lang:"zh-TW";if(VOICE)u.voice=VOICE;u.rate=rt;
-  u.pitch=sex==="f"?(VOICE_FIT?1.15:1.5):(VOICE_FIT?.8:.45);u.volume=1;speechSynthesis.speak(u)}catch(e){}}
+  u.pitch=sex==="f"?(VOICE_FIT?1.15:1.5):(VOICE_FIT?.8:.45);u.volume=Math.min(1,vg);speechSynthesis.speak(u)}catch(e){}}
 setTimeout(()=>{if(store.get("voiceCall",true))loadVc()},1500);
-function withAudio(play){if(!AC)return;if(AC.state==="running"){try{play()}catch(e){}return}try{AC.resume().then(()=>{if(AC&&AC.state==="running")try{play()}catch(e){}}).catch(()=>{})}catch(e){}}
+function withAudio(play){if(!AC||sxmAllOff())return;if(AC.state==="running"){try{play()}catch(e){}return}try{AC.resume().then(()=>{if(AC&&AC.state==="running")try{play()}catch(e){}}).catch(()=>{})}catch(e){}}
+/* #SXM-BUS-BEGIN：第 6 輪 F3（評比 P24.4、ChatGPT 第 5 輪第 8 項）音量分類的接線；純函式在 11c 的 SXM-PURE 段，test-sound-mix.js 用假的 AudioContext 跑這一段。
+   每個 AudioContext 建四條匯流排（GainNode）：bgm 背景音樂與鼓聲、piece 棋子音效、cue 提示音、voice 語音報棋；各類聲音接到自己那條再接喇叭。
+   拉滑桿＝改那條的增益（setTargetAtTime 時間常數 15ms，不會喀一聲）；cue 那條多接 3800Hz 低通＋限幅器，削掉方波、鋸齒波刺耳的高頻泛音。
+   AC 換新（iPhone 從背景回來）時匯流排跟著重建（掛在 AC._sxm）。全部靜音＝withAudio 不播、背景音樂暫停、語音不念 */
+function sxmMix(){try{return store.get("sndMix",null)}catch(e){return null}}
+function sxmGain(cat){try{return sxmLevel(sxmMix(),cat)}catch(e){return 1}}
+function sxmAllOff(){try{return sxmNorm(sxmMix()).all}catch(e){return false}}
+function sxmNow(){try{return performance.now()}catch(e){return Date.now()}}
+function sxmThr(){return sxmThr.s||(sxmThr.s={})}
+function sxmBus(cat){if(!AC)return null;try{const B=AC._sxm||(AC._sxm={});if(B[cat])return B[cat];const g=AC.createGain();g.gain.value=sxmGain(cat);
+    if(cat==="cue"){const K=sxmK(),lp=AC.createBiquadFilter(),lm=AC.createDynamicsCompressor();lp.type="lowpass";lp.frequency.value=K.lp;lp.Q.value=K.lpQ;
+      for(const k of Object.keys(K.lim))lm[k].value=K.lim[k];g.connect(lp);lp.connect(lm);lm.connect(AC.destination)}else g.connect(AC.destination);
+    return B[cat]=g}catch(e){return null}}
+function sxmDst(cat){return sxmBus(cat)||AC.destination}
+function sxmApply(){const mix=sxmMix();
+  try{if(AC&&AC._sxm)for(const k of Object.keys(AC._sxm)){const g=AC._sxm[k].gain,to=sxmLevel(mix,k);try{g.cancelScheduledValues(AC.currentTime);g.setTargetAtTime(to,AC.currentTime,sxmK().ramp)}catch(e){g.value=to}}}catch(e){}
+  try{if(BGM.a)BGM.a.volume=sxmBgmVol(mix)}catch(e){}try{bgmSync()}catch(e){}
+  if(!sxmLevel(mix,"voice"))try{speechSynthesis.cancel()}catch(e){}}
+/* #SXM-BUS-END */
 
 /* 意見回饋 499（開發者）：過場動畫（進園子的朝代入口、擂台開擂、荒野小徑）配一段那個朝代戰場上的鳴鼓、敲鑼聲。
    Gemini 不會做音效，這裡直接用 Web Audio 合成：
@@ -2062,16 +2081,16 @@ const DRUM_PAT={
   ming:[["g",0,180,1.4],["c",.45],["g",.9,180,1.4],["c",1.2],["d",1.5,.8],["g",1.8,180,2.4]],
   qing:[["g",0,150,1.6,1],["c",.42],["g",.84,150,1.6,1],["c",1.1],["g",1.38,320,.9],["g",1.66,150,2.6,1]]};
 function drumHit(t,v,f0){const o=AC.createOscillator(),g=AC.createGain();f0=f0||62;o.type="sine";o.frequency.setValueAtTime(f0*2.4,t);o.frequency.exponentialRampToValueAtTime(f0,t+.09);
-  g.gain.setValueAtTime(0,t);g.gain.linearRampToValueAtTime(.55*v,t+.006);g.gain.exponentialRampToValueAtTime(.001,t+.55);o.connect(g);g.connect(AC.destination);o.start(t);o.stop(t+.6);
+  g.gain.setValueAtTime(0,t);g.gain.linearRampToValueAtTime(.55*v,t+.006);g.gain.exponentialRampToValueAtTime(.001,t+.55);o.connect(g);g.connect(sxmDst("bgm"));o.start(t);o.stop(t+.6);
   const n=AC.createBufferSource(),b=AC.createBuffer(1,AC.sampleRate*.08|0,AC.sampleRate),d=b.getChannelData(0);for(let i=0;i<d.length;i++)d[i]=(Math.random()*2-1)*(1-i/d.length);
-  const bp=AC.createBiquadFilter(),ng=AC.createGain();bp.type="bandpass";bp.frequency.value=f0*4;bp.Q.value=.8;ng.gain.value=.22*v;n.buffer=b;n.connect(bp);bp.connect(ng);ng.connect(AC.destination);n.start(t)}
+  const bp=AC.createBiquadFilter(),ng=AC.createGain();bp.type="bandpass";bp.frequency.value=f0*4;bp.Q.value=.8;ng.gain.value=.22*v;n.buffer=b;n.connect(bp);bp.connect(ng);ng.connect(sxmDst("bgm"));n.start(t)}
 function gongHit(t,f,dur,big){const P=big?[1,1.47,1.98,2.43,2.93,3.71,4.6]:[1,1.52,2.1,2.84,3.6];
   P.forEach((k,i)=>{const o=AC.createOscillator(),g=AC.createGain();o.type="sine";o.frequency.setValueAtTime(f*k,t);o.frequency.linearRampToValueAtTime(f*k*(big?1.012:1.03),t+dur);
-    const a=(big?.2:.15)/(1+i*.7);g.gain.setValueAtTime(0,t);g.gain.linearRampToValueAtTime(a,t+.012);g.gain.exponentialRampToValueAtTime(.0008,t+dur*(1-i*.08));o.connect(g);g.connect(AC.destination);o.start(t);o.stop(t+dur+.1)});
+    const a=(big?.2:.15)/(1+i*.7);g.gain.setValueAtTime(0,t);g.gain.linearRampToValueAtTime(a,t+.012);g.gain.exponentialRampToValueAtTime(.0008,t+dur*(1-i*.08));o.connect(g);g.connect(sxmDst("bgm"));o.start(t);o.stop(t+dur+.1)});
   cymHit(t,.35,.25)}
 function cymHit(t,v,dur){dur=dur||1;const n=AC.createBufferSource(),b=AC.createBuffer(1,AC.sampleRate*dur|0,AC.sampleRate),d=b.getChannelData(0);for(let i=0;i<d.length;i++)d[i]=(Math.random()*2-1)*Math.pow(1-i/d.length,3);
-  const hp=AC.createBiquadFilter(),g=AC.createGain();hp.type="highpass";hp.frequency.value=3200;g.gain.value=.16*(v||1);n.buffer=b;n.connect(hp);hp.connect(g);g.connect(AC.destination);n.start(t)}
-function bellHit(t,f){[1,2.76,5.4,8.93].forEach((k,i)=>{const o=AC.createOscillator(),g=AC.createGain();o.type="sine";o.frequency.value=f*k;g.gain.setValueAtTime(0,t);g.gain.linearRampToValueAtTime(.12/(1+i),t+.004);g.gain.exponentialRampToValueAtTime(.0008,t+1.8/(1+i*.6));o.connect(g);g.connect(AC.destination);o.start(t);o.stop(t+2)})}
+  const hp=AC.createBiquadFilter(),g=AC.createGain();hp.type="highpass";hp.frequency.value=3200;g.gain.value=.16*(v||1);n.buffer=b;n.connect(hp);hp.connect(g);g.connect(sxmDst("bgm"));n.start(t)}
+function bellHit(t,f){[1,2.76,5.4,8.93].forEach((k,i)=>{const o=AC.createOscillator(),g=AC.createGain();o.type="sine";o.frequency.value=f*k;g.gain.setValueAtTime(0,t);g.gain.linearRampToValueAtTime(.12/(1+i),t+.004);g.gain.exponentialRampToValueAtTime(.0008,t+1.8/(1+i*.6));o.connect(g);g.connect(sxmDst("bgm"));o.start(t);o.stop(t+2)})}
 /* 背景音樂（開發者 11/5：每個朝代兩種當時最流行的樂器，Gemini Lyria 做的古風曲，data/bgm/<朝代>/，清單在 data/bgm/index.json）。
    聲音頁「背景音樂」打開才播（意見回饋 572：91 首做完後預設打開）；這個朝代沒有曲子就不播；曲子隨機輪流、App 切到背景就暫停、換朝代就換曲子 */
 var BGM={a:null,list:null,titles:null,era:null,src:"",last:-1};
@@ -2093,9 +2112,9 @@ function bgmBlob(rel){const U=BGM.u||(BGM.u={});if(U[rel])return Promise.resolve
   return U[rel]=fetch(BGM_BASE+rel,BGM_BASE?{mode:"cors",credentials:"omit"}:undefined).then(r=>{if(!r.ok)throw new Error("http"+r.status);return r.blob()}).then(b=>U[rel]=URL.createObjectURL(b)).catch(e=>{delete U[rel];BGM.err="下載"+((e&&e.message)||"");return null})}
 function bgmPick(era,L,next){if(!next&&BGM.era===era&&BGM.src)return;BGM.era=era;let n=Math.floor(Math.random()*L.length);if(L.length>1&&n===BGM.last)n=(n+1)%L.length;BGM.last=n;BGM.src=`data/bgm/${era}/${L[n]}`;
   const U=BGM.u||{};for(const k of Object.keys(U))if(k!==BGM.src&&typeof U[k]==="string"&&U[k]!==BGM.cur){try{URL.revokeObjectURL(U[k])}catch(e){}delete U[k]}bgmBlob(BGM.src)}
-async function bgmSync(next){const on=!!store.get("bgm",true)&&!document.hidden,era=store.get("era","classic");
+async function bgmSync(next){const on=!!store.get("bgm",true)&&!document.hidden&&sxmGain("bgm")>0,era=store.get("era","classic");   /* 第 6 輪 F3：背景音樂音量 0、靜音、全部靜音＝暫停 */
   if(!on){if(BGM.a)BGM.a.pause();return}const L=((BGM.L||await bgmList())||{})[era]||[];if(!L.length){if(BGM.a)BGM.a.pause();return}
-  if(!BGM.a){BGM.a=new Audio();BGM.a.volume=.55;BGM.a.preload="auto";BGM.cur="";BGM.a.onended=()=>bgmSync(true);BGM.a.onplay=BGM.a.onpause=()=>bgmNow();BGM.a.onerror=()=>{const x=BGM.a&&BGM.a.error;BGM.err="media"+(x?x.code:"")}}
+  if(!BGM.a){BGM.a=new Audio();BGM.a.volume=sxmBgmVol(sxmMix());BGM.a.preload="auto";BGM.cur="";BGM.a.onended=()=>bgmSync(true);BGM.a.onplay=BGM.a.onpause=()=>bgmNow();BGM.a.onerror=()=>{const x=BGM.a&&BGM.a.error;BGM.err="media"+(x?x.code:"")}}
   bgmPick(era,L,next);const u=(BGM.u||{})[BGM.src];
   if(typeof u!=="string"){const want=BGM.src;bgmBlob(want).then(x=>{if(x&&BGM.src===want&&store.get("bgm",true))bgmSync()});return}
   if(BGM.cur!==u){const old=BGM.cur;BGM.cur=u;BGM.a.src=u;if(old&&old!==u&&!Object.values(BGM.u||{}).includes(old)){try{URL.revokeObjectURL(old)}catch(e){}}}
@@ -2109,14 +2128,14 @@ document.addEventListener("change",e=>{const t=e.target;if(t&&t.dataset&&t.datas
 window.XQ_DRUM=(era,kind)=>{if(!store.get("gateDrum",true))return;try{unlockAudio()}catch(e){}
   withAudio(()=>{const pat=DRUM_PAT[era]||DRUM_PAT.classic,t0=AC.currentTime+.08,sp=kind==="path"?1.15:1;
     for(const[k,at,a,b,c]of pat){const t=t0+at*sp;if(k==="d")drumHit(t,a,b);else if(k==="g")gongHit(t,a,b,!!c);else if(k==="c")cymHit(t,1,.9);else if(k==="b")bellHit(t,a)}})};
-function moveSound(cap){if(!(cap?store.get("capSound",true):store.get("mvSound",false)))return;withAudio(()=>moveSound0(cap))}
+function moveSound(cap){if(!(cap?store.get("capSound",true):store.get("mvSound",false))||!sxmGain("piece"))return;withAudio(()=>moveSound0(cap))}
 // 棋子落在木棋盤上的聲音（意見回饋 139）：依棋子材質合成，設定裡可選
 // 每種材質＝棋子本身的幾個共振頻率（倍數不是整數才像真的東西）＋碰到的瞬間一點雜音＋木棋盤低沉的「咚」
 // m：f0 基頻、modes [倍數, 音量, 衰減比例]、dur 餘音長度、click 碰撞雜音中心頻率、thump 棋盤聲比例
 const SND_MAT={
   // 實木：厚棋子拍在木棋盤上＝低沉的「叩」。棋子本身共鳴低、收得很快（不清脆）；碰撞雜音只留中低頻；棋盤面板的「咚」是主角
   wood:{name:"實木",f0:380,dur:.06,modes:[[1,1,1],[1.93,.4,.6],[3.4,.12,.35]],click:900,clickV:.55,thump:1.1,board:[[180,.6,.13],[290,.35,.09]],cap:{f0:300,dur:.075,thump:1.4}}};
-function matSound(cap,M){const t=AC.currentTime+.02,out=AC.createDynamicsCompressor();out.threshold.value=-12;out.ratio.value=4;out.connect(AC.destination);
+function matSound(cap,M){const t=AC.currentTime+.02,out=AC.createDynamicsCompressor();out.threshold.value=-12;out.ratio.value=4;out.connect(sxmDst("piece"));
   const hit=(at,f0,vol,dur,thump)=>{
     for(const[r,a,d]of M.modes){const o=AC.createOscillator(),g=AC.createGain();o.type="sine";o.frequency.setValueAtTime(f0*r,t+at);
       g.gain.setValueAtTime(.0001,t+at);g.gain.linearRampToValueAtTime(vol*a*.5,t+at+.002);g.gain.exponentialRampToValueAtTime(.0001,t+at+dur*d);o.connect(g).connect(out);o.start(t+at);o.stop(t+at+dur*d+.03)}
@@ -2137,12 +2156,12 @@ function loadSfx(k){if(SFX_RAW[k])return Promise.resolve();if(SFX_P[k])return SF
 function sfxDec(k){if(!AC||!SFX_RAW[k])return null;if(SFX_DEC.ctx!==AC)SFX_DEC={ctx:AC};const ctx=AC;
   return SFX_DEC[k]||(SFX_DEC[k]=Promise.all(SFX_RAW[k].map(b=>new Promise((ok,no)=>ctx.decodeAudioData(b.slice(0),ok,no)))).catch(()=>{SFX_DEC[k]=null;return null}))}
 function playSfx(k,cap){const p=sfxDec(k);if(!p)return false;p.then(d=>{if(!d||!AC)return;const b=cap?d[1]:d[Math.random()<.5?0:2],s=AC.createBufferSource(),g=AC.createGain();
-  g.gain.value=.9;s.buffer=b;s.connect(g).connect(AC.destination);s.start(AC.currentTime+.005)});return true}
+  g.gain.value=.9;s.buffer=b;s.connect(g).connect(sxmDst("piece"));s.start(AC.currentTime+.005)});return true}
 function moveSound0(cap){let k=store.get("sndStyle","wood");if(/^s\d\d$/.test(k)){if(playSfx(k,cap))return;loadSfx(k);k="wood"}if(k!=="soft"&&!SND_MAT[k])k="wood";const M=SND_MAT[k];if(M){try{matSound(cap,M)}catch(e){}return}try{const t=AC.currentTime+.02;
   const hit=(f,dur,vol,at)=>{const o=AC.createOscillator(),g=AC.createGain();o.type="triangle";o.frequency.setValueAtTime(f,t+at);o.frequency.exponentialRampToValueAtTime(f*.55,t+at+dur);
-    g.gain.setValueAtTime(vol,t+at);g.gain.exponentialRampToValueAtTime(.001,t+at+dur);o.connect(g).connect(AC.destination);o.start(t+at);o.stop(t+at+dur+.02)};
+    g.gain.setValueAtTime(vol,t+at);g.gain.exponentialRampToValueAtTime(.001,t+at+dur);o.connect(g).connect(sxmDst("piece"));o.start(t+at);o.stop(t+at+dur+.02)};
   const n=AC.createBufferSource(),buf=AC.createBuffer(1,AC.sampleRate*.04|0,AC.sampleRate),d=buf.getChannelData(0);for(let i=0;i<d.length;i++)d[i]=(Math.random()*2-1)*Math.pow(1-i/d.length,3);
-  const ng=AC.createGain(),bp=AC.createBiquadFilter();bp.type="bandpass";bp.frequency.value=cap?900:1600;ng.gain.value=cap?.5:.35;n.buffer=buf;n.connect(bp).connect(ng).connect(AC.destination);n.start(t);
+  const ng=AC.createGain(),bp=AC.createBiquadFilter();bp.type="bandpass";bp.frequency.value=cap?900:1600;ng.gain.value=cap?.5:.35;n.buffer=buf;n.connect(bp).connect(ng).connect(sxmDst("piece"));n.start(t);
   hit(cap?260:420,cap?.18:.09,cap?.55:.4,0);if(cap)hit(180,.22,.35,.05)}catch(e){}}
 // 認得出來的殺法（剛走的那顆棋將軍）：臥槽馬、掛角馬、馬後炮、重炮
 // 位置都換成「被將的那一方」的角度：row 0＝他的底線，col 4＝中路
@@ -2180,9 +2199,11 @@ function checkFx(svg,label){if(!store.get("ckFx",true))return;svg=fxHost(svg);co
   // 墨色筆刷一抹橫過楚河漢界，金色「將」「軍」兩字一左一右落下，棋盤四周泛一圈紅光
   const d=document.createElement("div");d.className="ckfx";d.style.cssText=`left:${r.left}px;top:${r.top}px;width:${r.width}px;height:${r.height}px;font-size:${Math.round(r.width*.15)}px`;
   d.innerHTML='<i class="glow"></i><div class="mid'+(label?' has':'')+'"><i class="ink"></i>'+jjGlyphs()+(label?`<em class="seal${label.length>3?" s4":""}">${esc(label)}</em>`:"")+'</div>';document.body.append(d);vibrate([25,30,25]);setTimeout(()=>d.remove(),1900);
-  if(store.get("capSound",true)||store.get("mvSound",false))withAudio(()=>{const t=AC.currentTime+.02;
+  /* 第 6 輪 F3（P24.4 聽覺疲勞）：「鏘」是 880／1320Hz 方波，原本一下子就 0.12 起跳、直接進喇叭。改成 8ms 淡入、過 3800Hz 低通（削掉刺耳泛音）、接棋子音效那條匯流排（跟著音量滑桿）；
+     連續將軍（棋譜快轉、連將）1.5 秒內只鏘一次（sxmThrottle，跟 11c 提示音同一套節流） */
+  if((store.get("capSound",true)||store.get("mvSound",false))&&sxmThrottle(sxmThr(),"ckfx",sxmNow(),sxmGapOf("check")))withAudio(()=>{const t=AC.currentTime+.02,K=sxmK(),lp=AC.createBiquadFilter();lp.type="lowpass";lp.frequency.value=K.lp;lp.Q.value=K.lpQ;lp.connect(sxmDst("piece"));
     for(const[f,at]of[[880,0],[1320,.09]]){const o=AC.createOscillator(),g=AC.createGain();o.type="square";o.frequency.setValueAtTime(f,t+at);
-      g.gain.setValueAtTime(.12,t+at);g.gain.exponentialRampToValueAtTime(.001,t+at+.35);o.connect(g).connect(AC.destination);o.start(t+at);o.stop(t+at+.4)}})}
+      g.gain.setValueAtTime(.0001,t+at);g.gain.linearRampToValueAtTime(.12,t+at+K.attack);g.gain.exponentialRampToValueAtTime(.001,t+at+.35);o.connect(g).connect(lp);o.start(t+at);o.stop(t+at+.4)}})}
 /* 意見回饋 416：每一盤開始時的「開局」特效——Gemini 寫的書法字（data/glyphs/kaiju.json，5 版隨機一版，tools/kaiju_vec.py 描成向量）；
    還沒有那個檔就先用宋體字。音效：三聲大鼓＋一聲鑼（跟走子音效同一個開關） */
 let KJ_P=null,KJ_GLY=null,KJ_LAST=null;const loadKaiju=()=>KJ_P||(KJ_P=fetch("data/glyphs/kaiju.json").then(r=>r.ok?r.json():null).then(j=>KJ_GLY=j).catch(()=>{KJ_P=null}));
@@ -2194,7 +2215,7 @@ function kaijuFx(svg,side,k){if(!store.get("opFx",true)||focusOn())return;if(fxB
   const d=document.createElement("div");d.className="kjfx";d.style.cssText=`left:${r.left}px;top:${r.top}px;width:${r.width}px;height:${r.height}px;font-size:${Math.round(r.width*.2)}px`;
   d.innerHTML='<i class="band"></i><div class="gw">'+g+'</div><em class="seal'+(side==="b"?" b":"")+'">'+(side==="b"?"黑先":"紅先")+'</em>';
   document.body.append(d);vibrate([20,60,20,60,40]);setTimeout(()=>d.remove(),2500);
-  if(store.get("capSound",true)||store.get("mvSound",false))withAudio(()=>{const t=AC.currentTime+.03,out=AC.createGain();out.gain.value=.9;out.connect(AC.destination);
+  if(store.get("capSound",true)||store.get("mvSound",false))withAudio(()=>{const t=AC.currentTime+.03,out=AC.createGain();out.gain.value=.9;out.connect(sxmDst("piece"));
     /* 大鼓：低頻正弦往下滑＋一點噪音的鼓皮聲，咚、咚、咚 */
     for(const at of[0,.24,.48]){const o=AC.createOscillator(),gg=AC.createGain();o.type="sine";o.frequency.setValueAtTime(110,t+at);o.frequency.exponentialRampToValueAtTime(48,t+at+.25);
       gg.gain.setValueAtTime(.0001,t+at);gg.gain.exponentialRampToValueAtTime(.8,t+at+.008);gg.gain.exponentialRampToValueAtTime(.001,t+at+.42);o.connect(gg).connect(out);o.start(t+at);o.stop(t+at+.45);
@@ -4852,8 +4873,8 @@ const rsName=id=>{const R=window.XQCore&&XQCore.RULESETS&&XQCore.RULESETS[id];re
 function rsOpts(){const RS=(window.XQCore&&XQCore.RULESETS)||{},cur=rsCur();return Object.values(RS).map(R=>`<button data-rs="${esc(R.id)}"${R.id===cur?' class="on"':""}>${esc(R.short||R.name)}${R.status==="prototype"?"（原型）":""}</button>`).join("")}
 function rsNote(){const R=window.XQCore&&XQCore.RULESETS&&XQCore.RULESETS[rsCur()];
   if(!R||R.status!=="prototype")return'亞洲棋例（直接捉子）的子集。晉級賽、線上積分都用這一套。 <button type="button" class="lk" data-xqdoc="rules">⚖️ 怎麼判</button>';
-  return'⚠ <b>原型，不計積分</b>：只改了「長將、長捉循環到第 3 次先提醒、交雙方協議」這一條；其他照千秋休閒規則，臺灣條文<b>未查證</b>。只用在之後新開的挑戰電腦（非晉級賽）、同機對下、車輪戰、線上邀請；晉級賽照舊用千秋休閒規則。 <button type="button" class="lk" data-xqdoc="rules">⚖️ 差在哪</button>'}
-const XQDOC={privacy:["privacy","🔒 隱私與資料使用"],family:["family","👨‍👩‍👧 家長與兒童模式"],credits:["credits","🎨 素材與授權"],release:["release-notes","🏷 版本與差異"],limits:["limits","⚠️ 已知限制"],evidence:["evidence","✅ 自動測試紀錄"],history:["history","📜 文史考據"],rules:["rules","⚖️ 棋規與裁決"],architecture:["architecture","🌐 連線與資料"],tour:["a11y-tour","🧭 空間導覽"],a11y:["a11y","📋 無障礙證據"]};   /* 回饋 875（開發者 11/12「盤查類似的 不要換行」）：按鈕字縮到 7 字內，xqDocBtns 一格至少 9em、放不下就自動改一欄，按鈕不換行 */   /* 11/12 無障礙第 5 輪：設定 → ♿ 無障礙「📋 測試與證據」（a11y.md＝92 號稽核報告的副本，開頭是 P16.3～P16.5 怎麼驗證） */   /* 11/12 無障礙第 4 輪 P16.5：給看不到畫面的人在腦中建地圖（11c-a11ysnd.js 的 ? 說明卡、G 鍵也開這份） */
+  return'⚠ <b>原型，不計積分</b>：只改了「長將、長捉循環到第 3 次先提醒、交雙方協議」這一條；臺灣條文已找到《中華民國象棋規則》113 年修訂版，但原型還沒照條文改判法（差在哪見文件）。只用在之後新開的挑戰電腦（非晉級賽）、同機對下、車輪戰、線上邀請；晉級賽照舊用千秋休閒規則。 <button type="button" class="lk" data-xqdoc="rules">⚖️ 差在哪</button>'}
+const XQDOC={privacy:["privacy","🔒 隱私與資料使用"],family:["family","👨‍👩‍👧 家長與兒童模式"],credits:["credits","🎨 素材與授權"],release:["release-notes","🏷 版本與差異"],limits:["limits","⚠️ 已知限制"],evidence:["evidence","✅ 自動測試紀錄"],history:["history","📜 文史考據"],rules:["rules","⚖️ 棋規與裁決"],architecture:["architecture","🌐 連線與資料"],tour:["a11y-tour","🧭 空間導覽"],a11y:["a11y","📋 無障礙證據"],sound:["sound","🔊 音效設計"]};   /* 第 6 輪 F3：音效設計說明（art/docs/sound.md） */   /* 回饋 875（開發者 11/12「盤查類似的 不要換行」）：按鈕字縮到 7 字內，xqDocBtns 一格至少 9em、放不下就自動改一欄，按鈕不換行 */   /* 11/12 無障礙第 5 輪：設定 → ♿ 無障礙「📋 測試與證據」（a11y.md＝92 號稽核報告的副本，開頭是 P16.3～P16.5 怎麼驗證） */   /* 11/12 無障礙第 4 輪 P16.5：給看不到畫面的人在腦中建地圖（11c-a11ysnd.js 的 ? 說明卡、G 鍵也開這份） */
 function xqDocBtns(){return`<div class="xqd-g" style="margin-top:10px">${Object.keys(XQDOC).map(k=>`<button type="button" class="btn ghost" data-xqdoc="${k}" style="font-size:13.5px;padding:8px 6px">${XQDOC[k][1]}</button>`).join("")}</div>`}
 {const s=document.createElement("style");s.textContent=".xqd-g{display:grid;grid-template-columns:repeat(auto-fit,minmax(9em,1fr));gap:6px}.xqd-g>button{white-space:nowrap;margin:0;width:auto;min-width:0}";document.head.append(s)}
 function xqDocIn(s){return provDoc(esc(s)).replace(/\*\*([^*]+)\*\*/g,"<b>$1</b>").replace(/`([^`]+)`/g,"<code>$1</code>").replace(/\[([^\]]+)\]\((https:\/\/[^)\s]+)\)/g,(m,t,u)=>`<a href="${u}" target="_blank" rel="noopener">${t}</a>`)}
@@ -5105,6 +5126,7 @@ function Settings(v){
       {const s3=v.querySelector("#snd3");for(const k of["gateDrum","bgm"]){const x=mvB.querySelector(`[data-t="${k}"]`);if(x&&s3)s3.append(x.closest("label"))}
         if(s3){const nw=document.createElement("div");nw.id="bgmNow";nw.style.cssText="display:none;align-items:center;gap:8px;padding:0 2px 8px;font-size:13.5px;opacity:.8";s3.append(nw);bgmNow();if(DEVMODE()){const dg=document.createElement("div");dg.style.cssText="padding:0 2px 8px;font-size:12px;opacity:.75;word-break:break-all";dg.innerHTML=`<span id="bgmDg"></span> <button class="btn ghost" id="bgmTest" style="width:auto;margin:4px 0 0;padding:3px 10px;font-size:12.5px">▶ 測試背景音樂</button>`;s3.append(dg);const up=()=>{const e=dg.querySelector("#bgmDg");if(e)e.textContent="🛠 "+bgmDiag()};up();dg.querySelector("#bgmTest").onclick=()=>{if(BGM.a&&BGM.a.paused){BGM.a=null;BGM.src=""}bgmSync();setTimeout(up,300);setTimeout(up,1500);setTimeout(up,4000)}}}}
       [...sdB.children].slice(1).forEach(x=>x.style.borderTop="1px solid var(--line)")}
+    if(typeof sxmMount==="function")sxmMount(v);   /* 第 6 輪 F3：三張聲音卡片加音量分類（滑桿、靜音、全部靜音，11c-a11ysnd.js） */
     v.querySelectorAll("[data-vc]").forEach(x=>x.onclick=()=>{const k=x.dataset.vc;v.querySelectorAll("[data-vc]").forEach(y=>y.classList.toggle("on",y===x));
       store.set("voiceCall",k!=="off");if(k!=="off"){store.set("voiceSex",k);pickVoice();primeVoice();unlockAudio();loadVc().then(()=>{sayCall("將軍");setTimeout(()=>sayCall("吃"),1100)})}});
     v.querySelectorAll("[data-vr]").forEach(x=>x.onclick=()=>{store.set("voiceRate",x.dataset.vr);v.querySelectorAll("[data-vr]").forEach(y=>y.classList.toggle("on",y===x));
@@ -23957,7 +23979,7 @@ function axmAsk(why){if(axmOn()||store.get("axmAsk",0))return;
      Web Audio StereoPannerNode 照棋子在畫面上的那一路放左右聲道：玩家看出去右邊數來，一路在最右、九路在最左（跟 11b axmPos 念的路數一致），翻轉棋盤跟著翻。
      開關：設定 → 系統 → ♿ 無障礙「🎧 聲音方位與動作提示音」（store axSnd：沒選過＝跟著讀屏模式；勾了／取消＝自己決定）。
      沒開＝一般模式完全照舊（01-board 的 moveSound、sayCall 原封不動）。開了：落子、吃子改播有方位的提示音（取代原本置中的叩聲），喊「吃」「將軍」照舊。
-     靜音：「走子音效」「吃子音效」都關＝不響；App 在背景不響；沒有聲音（AC 還沒被點擊喚醒）也不硬叫。音量跟原本走棋音效同一級（App 沒有另外的音量滑桿，照手機音量）。
+     靜音：「走子音效」「吃子音效」都關＝不響；App 在背景不響；沒有聲音（AC 還沒被點擊喚醒）也不硬叫。音量跟原本走棋音效同一級（第 6 輪 F3 起另有「提示音」音量滑桿、靜音、節流，見下面 SXM 段）。
    P21.3 狀態提示與過場回饋（只在讀屏模式）：換頁念「頁面：棋譜」；長時間載入（象棋引擎、資料下載、畫面上的「載入中…」字樣、等圖的水墨畫面）超過 0.8 秒念「載入中…」，好了念「載入完成」。
    P16.5 心智模型：? 鍵說明卡多一顆「🧭 空間導覽」（data/docs/a11y-tour.md，05-settings XQDOC.tour）；G 鍵直接開。
      讀屏模式不畫 3D 園子（focusOn），園子裡能點的東西（石桌、茶杯、燈籠、樹、遠景、對手…）改成「🌳 園子地點清單」按鈕列，點了＝在園子裡點那樣東西（06-cpu parkInfo）。
@@ -24031,6 +24053,55 @@ function axsPageMap(hash){const h=String(hash||"#/").split("?")[0];
   if(/^#\/(cpu|arena|pvp|journey\/play|redo\/play)(\/|$)/.test(h))return"本頁地圖：你坐在石桌前，棋盤在正中間，對手在對面。由上到下：對手的名牌和棋鐘、棋盤、你的名牌和棋鐘、狀態列、走過的著法；最下面一排是動作按鈕。按 B 到棋盤。";
   return""}
 /* #AXS-PURE-END */
+/* #SXM-PURE-BEGIN：第 6 輪 F3（評比 P24.1／P24.2／P24.4、ChatGPT 第 5 輪第 8 項）音量分類、靜音、提示音節流、長聽舒適的數字、音效圖鑑的音源與材質。
+   不碰畫面、不碰聲音；test-sound-mix.js 直接執行。都寫成 function（不用 const）：直接打開設定頁時 route() 比這個檔早跑。
+   接線（匯流排）在 01-board 的 SXM-BUS 段；文件 art/docs/sound.md 的數字照抄這裡，改了要一起改 */
+/* 四類：[代號, 名稱, 預設 %]。bgm＝背景音樂與過場鼓聲；piece＝落子、吃子、將軍「鏘」、開局鼓鑼；cue＝聲音方位與動作提示音；voice＝語音報「吃」「將軍」 */
+function sxmCats(){return[["bgm","背景音樂與鼓聲",80],["piece","棋子音效",100],["cue","提示音",80],["voice","語音報棋",100]]}
+/* 舒適性：bgmMax 背景音樂 100% 時的播放器音量（原本固定 0.55）；cueMax 提示音每個音的峰值（原本 0.42）；attack 淡入秒；floor 淡出到的增益（-80 dB）；
+   lp／lpQ 提示音低通；lim 提示音限幅器；maxHz 提示音基頻上限；ramp 拉滑桿換音量的時間常數（秒）；gap 同一種提示音最短間隔（毫秒），gaps 特例；burst／win＝一秒內最多幾個提示音 */
+function sxmK(){return{bgmMax:.55,cueMax:.42,attack:.008,floor:.0001,lp:3800,lpQ:.7,lim:{threshold:-12,knee:6,ratio:12,attack:.003,release:.15},maxHz:1100,ramp:.015,gap:250,gaps:{illegal:600,check:1500},burst:6,win:1000}}
+function sxmPct(x,d){if(x==null||x==="")return d;x=Math.round(+x);return isFinite(x)?Math.max(0,Math.min(100,x)):d}
+/* store sndMix：{v:{bgm:80,…}, m:{bgm:false,…}, all:false}；壞掉、缺的照預設 */
+function sxmNorm(mix){mix=mix&&typeof mix==="object"?mix:{};const v=mix.v&&typeof mix.v==="object"?mix.v:{},m=mix.m&&typeof mix.m==="object"?mix.m:{},o={v:{},m:{},all:mix.all===true};
+  for(const[k,,d]of sxmCats()){o.v[k]=sxmPct(v[k],d);o.m[k]=m[k]===true}return o}
+/* 百分比 → 增益：平方曲線（50%＝0.25≈-12 dB、80%＝0.64≈-3.9 dB），比直線接近耳朵聽到的大小；這一類靜音、全部靜音＝0；不認得的類別＝1（不受控） */
+function sxmLevel(mix,cat){const M=sxmNorm(mix);if(M.all)return 0;if(!(cat in M.v))return 1;if(M.m[cat])return 0;const p=M.v[cat]/100;return Math.round(p*p*1000)/1000}
+function sxmDb(g){return g>0?Math.round(20*Math.log10(g)*10)/10+" dB":"靜音"}
+/* 拉滑桿：設定百分比；拉到大於 0 就順便解除這一類的靜音 */
+function sxmSetVol(mix,cat,pct){const M=sxmNorm(mix);if(cat in M.v){M.v[cat]=sxmPct(pct,M.v[cat]);if(M.v[cat]>0)M.m[cat]=false}return M}
+/* 靜音鍵：cat＝"all" 是全部靜音；on 不給＝切換 */
+function sxmMute(mix,cat,on){const M=sxmNorm(mix);if(cat==="all")M.all=on==null?!M.all:!!on;else if(cat in M.m)M.m[cat]=on==null?!M.m[cat]:!!on;return M}
+function sxmBgmVol(mix){return Math.round(sxmK().bgmMax*sxmLevel(mix,"bgm")*1000)/1000}
+/* 提示音每個音實際的最大增益＝cueMax × 類別增益（axsTone 每個音的相對音量都 ≤ 1） */
+function sxmCuePeak(mix){return Math.round(sxmK().cueMax*sxmLevel(mix,"cue")*1000)/1000}
+/* 畫面上那一格的字：「80%」「靜音」「全部靜音中」 */
+function sxmTxt(mix,cat){const M=sxmNorm(mix);return M.all?"全部靜音中":M.m[cat]?"靜音":M.v[cat]+"%"}
+/* 節流：S＝{last:{種類:毫秒}, win:[最近一秒播過的時間]}。同一種在間隔內只響一次（預設 250ms；走不了 600ms、將軍 1500ms），
+   所有提示音加起來一秒最多 6 個；回傳 true＝可以響（同時記下來）。時間倒退（換了時鐘）當作沒響過 */
+function sxmGapOf(kind){const K=sxmK();return Object.prototype.hasOwnProperty.call(K.gaps,kind)?K.gaps[kind]:K.gap}
+function sxmThrottle(S,kind,now,gap){if(!S)return true;const K=sxmK();if(!S.last||typeof S.last!=="object")S.last={};S.win=(Array.isArray(S.win)?S.win:[]).filter(t=>now>=t&&now-t<K.win);
+  gap=gap==null?sxmGapOf(kind):gap;const t=S.last[kind];if(t!=null&&now>=t&&now-t<gap)return false;if(S.win.length>=K.burst)return false;
+  S.last[kind]=now;S.win.push(now);return true}
+/* 淡入淡出：一個音的包絡 [[秒, 增益]…]：從 floor 開始、attack 秒線性升到 v、指數降回 floor（第 d 秒）。11c axsPlay 照這個排 */
+function sxmEnv(v,d){const K=sxmK();return[[0,K.floor],[K.attack,v],[Math.max(d,Math.round((K.attack+.01)*1e6)/1e6),K.floor]]}
+/* 音效圖鑑的「音源」：照 axsTone 實際的波形與頻率產生（不手寫，改了音色這裡跟著變） */
+function sxmWave(w){return{sine:"正弦波",triangle:"三角波",square:"方波",sawtooth:"鋸齒波"}[w]||w}
+function sxmSrc(k){const T=typeof axsTone==="function"?axsTone(k):null;if(!T)return"";const f=T.n.map(x=>x[0]);
+  return"合成"+sxmWave(T.w)+" "+(f.every(x=>x===f[0])?f[0]+"Hz"+(f.length>1?" ×"+f.length:""):f.join("→")+"Hz")}
+/* 聽感比喻（主觀，給沒看過波形的人想像；提示音都是程式合成，不是實物錄音） */
+function sxmFeel(k){return{select:"像輕敲小磬",move:"像輕點木魚",capture:"像兩下悶鼓",check:"像急促的銅鈴",illegal:"像低沉的嗡嗡聲",turn:"像門鈴叮咚往上",opp:"像門鈴叮咚往下",timelow:"像電子錶嗶嗶",timeout:"像粗啞的號角"}[k]||""}
+/* 左右聲像對第幾路：[[路, 聲像]…]，畫面最左（九路）到最右（一路），紅方視角不翻轉 */
+function sxmPanRow(){const o=[];for(let c=0;c<9;c++)o.push([axsFile(81+c,false),axsPan(81+c,false)]);return o}
+/* 棋子落子的材質（🔔 棋子聲 的選單）：即時合成兩種＋預先合成的音檔；全部是程式合成的仿材質聲，不是實物錄音（art/docs/credits.md 第七項） */
+function sxmPieceMats(){const L=[["實木（即時合成）","木子 380Hz 共鳴、木棋盤 180／290Hz 低頻咚聲；吃子降到 300Hz、咚聲加重"],["輕敲（即時合成）","三角波 420Hz 往下滑＋1600Hz 碰撞雜音；吃子 260Hz＋180Hz 兩下"]];
+  let n=[];try{if(typeof SFX_SET!=="undefined")n=SFX_SET.map(x=>x[1])}catch(e){}if(n.length)L.push(["預先合成的音檔 "+n.length+" 種",n.join("、")+"（走子、吃子、變化各一檔）"]);return L}
+/* 音效圖鑑下半部：聲像對路數、棋子材質、其他類的音源 */
+function sxmDexMore(){const Z="一二三四五六七八九",P=sxmPanRow().map(([f,p])=>Z[f-1]+"路 "+(p>0?"+":"")+p).join("・"),S='class="muted" style="margin:0 0 8px;line-height:1.7"';
+  return`<div class="sec-t" style="margin-top:14px">聲像對第幾路</div><p ${S}>聲像（-1 最左、+1 最右）＝（畫面第幾欄 − 4）÷ 4 × 0.8，每一路差 0.2，最邊邊只到 ±0.8，戴單耳也聽得到：${P}。</p>`
+    +`<div class="sec-t" style="margin-top:14px">棋子落子的材質</div><p ${S}>落子、吃子在 設定 → 聲音「棋子聲」選，全部是程式合成的仿材質聲，不是實物錄音：</p><ul style="margin:0 0 8px;padding-left:1.3em;line-height:1.7">${sxmPieceMats().map(([n,d])=>`<li><b>${n}</b>　<span class="muted">${d}</span></li>`).join("")}</ul>`
+    +`<div class="sec-t" style="margin-top:14px">其他聲音</div><ul style="margin:0;padding-left:1.3em;line-height:1.7"><li><b>將軍「鏘」</b>　<span class="muted">合成方波 880→1320Hz，過 3800Hz 低通，1.5 秒內只響一次</span></li><li><b>語音報棋</b>　<span class="muted">「吃！」「將軍！」，Windows 內建語音合成錄成的音檔，男聲、女聲</span></li><li><b>背景音樂</b>　<span class="muted">每個朝代的古風曲，AI（Lyria）生成，不是真人演奏</span></li></ul>`}
+/* #SXM-PURE-END */
 /* #AXS-CORE-BEGIN：要用到 store、AC（01-board 的 AudioContext）、withAudio，測試用假的換進去 */
 var AXS_S;
 function axsSt(){return AXS_S||(AXS_S={clk:{},fired:{},load:{since:0,said:false,label:""},tasks:new Map(),tn:0,pg:0,log:[],maps:new Set()})}
@@ -24039,26 +24110,34 @@ function axsLogAdd(kind,file,pan,st){const S=axsSt();S.log.push({t:Date.now(),ki
 function axsPref(){try{const v=store.get("axSnd",null);return v===true||v===false?v:null}catch(e){return null}}
 function axsOn(){let ax=false;try{ax=typeof axmOn==="function"&&axmOn()}catch(e){}return axsSpatialOn(axsPref(),ax)}
 function axsMutedNow(){try{return axsMuted((k,d)=>store.get(k,d))}catch(e){return true}}
-/* 真的發聲：每個音一顆振盪器＋包絡，全部接到總音量，再接立體聲方位（瀏覽器沒有 StereoPanner 就置中） */
-function axsPlay(T,pan,delay){if(typeof AC==="undefined"||!AC||!T)return null;const t0=AC.currentTime+.02+(delay||0);let out=AC.destination,p=null;
-  if(pan&&AC.createStereoPanner){p=AC.createStereoPanner();p.pan.value=pan;p.connect(AC.destination);out=p}
-  const g0=AC.createGain();g0.gain.value=.42;g0.connect(out);
-  for(const[f,at,d,v]of T.n){const o=AC.createOscillator(),g=AC.createGain();o.type=T.w;o.frequency.setValueAtTime(f,t0+at);
-    g.gain.setValueAtTime(.0001,t0+at);g.gain.linearRampToValueAtTime(v,t0+at+.006);g.gain.exponentialRampToValueAtTime(.0001,t0+at+d);
+/* 真的發聲：每個音一顆振盪器＋包絡，全部接到總音量，再接立體聲方位（瀏覽器沒有 StereoPanner 就置中）。
+   第 6 輪 F3：方位後面接 01-board 的「提示音」匯流排（音量滑桿＋3800Hz 低通＋限幅器）；峰值 sxmK().cueMax、包絡 sxmEnv（8ms 淡入、指數淡出到 -80 dB）。沒載入 sxm（舊測試）就照原本直接接喇叭 */
+function axsPlay(T,pan,delay){if(typeof AC==="undefined"||!AC||!T)return null;const t0=AC.currentTime+.02+(delay||0),dst=typeof sxmDst==="function"?sxmDst("cue"):AC.destination;let out=dst,p=null;
+  if(pan&&AC.createStereoPanner){p=AC.createStereoPanner();p.pan.value=pan;p.connect(dst);out=p}
+  const g0=AC.createGain();g0.gain.value=typeof sxmK==="function"?sxmK().cueMax:.42;g0.connect(out);
+  for(const[f,at,d,v]of T.n){const o=AC.createOscillator(),g=AC.createGain(),E=typeof sxmEnv==="function"?sxmEnv(v,d):[[0,.0001],[.008,v],[d,.0001]];o.type=T.w;o.frequency.setValueAtTime(f,t0+at);
+    g.gain.setValueAtTime(E[0][1],t0+at+E[0][0]);g.gain.linearRampToValueAtTime(E[1][1],t0+at+E[1][0]);g.gain.exponentialRampToValueAtTime(E[2][1],t0+at+E[2][0]);
     o.connect(g);g.connect(g0);o.start(t0+at);o.stop(t0+at+d+.03)}
   return p}
 /* 播一種提示音。sq＞＝0 就照那一格放左右；回傳 true＝有接手（開著、沒靜音） */
 function axsCue(kind,sq,flip,delay){const T=axsTone(kind);if(!T)return false;const has=sq!=null&&sq>=0&&sq<=89,pan=has?axsPan(sq,flip):0,file=has?axsFile(sq,flip):0;let st="已播放";
   if(!axsOn())st="沒播（提示音沒開）";else if(axsMutedNow())st="沒播（走子、吃子音效都關）";else{try{if(typeof document!=="undefined"&&document.hidden)st="沒播（App 在背景）"}catch(e){}}
+  if(st==="已播放")st=axsGate(kind);
   axsLogAdd(kind,file,pan,st);if(st!=="已播放")return false;
   try{withAudio(()=>axsPlay(T,pan,delay))}catch(e){}return true}
+/* 第 6 輪 F3：提示音音量 0／靜音／全部靜音、或太密（sxmThrottle：同一種 250ms 內只響一次，走不了 600ms、將軍 1500ms，一秒最多 6 個）就不播。
+   沒載入 sxm（舊測試只跑 AXS 兩段）＝照播 */
+function axsGate(kind){try{if(typeof sxmGain==="function"&&!sxmGain("cue"))return"沒播（提示音靜音）";
+    if(typeof sxmThrottle==="function"&&typeof sxmThr==="function"&&!sxmThrottle(sxmThr(),kind,sxmNow()))return"沒播（太密，略過）"}catch(e){}return"已播放"}
 /* 第 5 輪 音效圖鑑的 ▶ 試聽：使用者自己按的，所以「提示音沒開」也播；「走子音效、吃子音效」都關（App 內的靜音）就不播、說原因。sq＝畫面格號（左中右試聽用），不翻轉 */
 function axsPreview(kind,sq){try{unlockAudio()}catch(e){}const T=axsTone(kind);if(!T)return false;const has=sq!=null&&sq>=0&&sq<=89,pan=has?axsPan(sq,false):0,file=has?axsFile(sq,false):0;
   if(axsMutedNow()){axsLogAdd(kind,file,pan,"沒播（走子、吃子音效都關）");try{toast("走子音效、吃子音效都關著，提示音不會響（設定 → 聲音）")}catch(e){}try{axSay("走子音效、吃子音效都關著，提示音不會響")}catch(e){}return false}
+  if(typeof sxmGain==="function"&&!sxmGain("cue")){axsLogAdd(kind,file,pan,"沒播（提示音靜音）");try{toast("提示音靜音中（設定 → 聲音 →「提示音」）")}catch(e){}try{axSay("提示音靜音中")}catch(e){}return false}   /* 第 6 輪 F3 */
   axsLogAdd(kind,file,pan,"試聽");try{withAudio(()=>axsPlay(T,pan,0))}catch(e){}return true}
 /* 01-board 走完一步叫這個（取代 moveSound）：自己走＝落子／吃子；對方走＝「對方走完」（吃了再加吃子聲）；將軍在被將的那一格響；輪到你＝置中上行兩聲。
    o：{to, flip, cap, side 走的那方, me 玩家那方（看棋譜＝null）, ck 被將的格子（沒有＝-1）, board}。回傳 false＝沒開，照原本的 moveSound */
-function axsMove(o){if(!o||!axsOn()||axsMutedNow())return false;const mine=!o.me||o.side===o.me;let d=0;
+function axsMove(o){if(!o||!axsOn()||axsMutedNow()||(typeof sxmGain==="function"&&!sxmGain("cue")))return false;   /* 第 6 輪 F3：提示音靜音＝交回一般落子聲 */
+  const mine=!o.me||o.side===o.me;let d=0;
   if(mine)axsCue(o.cap?"capture":"move",o.to,o.flip,0);
   else{axsCue("opp",o.to,o.flip,0);if(o.cap){d=.16;axsCue("capture",o.to,o.flip,d)}}
   let mate=false;if(o.ck>=0){d+=.2;axsCue("check",o.ck,o.flip,d);try{mate=!!(o.board&&typeof XQCore!=="undefined"&&XQCore.legal&&XQCore.legal(o.board,o.board[o.ck]==="K"?"r":"b").length===0)}catch(e){}}
@@ -24082,10 +24161,11 @@ function axsSetRow(){const on=axsOn(),pf=axsPref(),B='style="width:auto;margin:0
     +`<div class="row" style="gap:8px;flex-wrap:wrap;padding:2px 2px 8px"><button type="button" class="btn ghost" id="axsTry" ${B}>🔈 試聽左右</button><button type="button" class="btn ghost axs-dx" ${B}>🎼 音效圖鑑</button><button type="button" class="btn ghost" data-xqdoc="tour" ${B}>🧭 空間導覽</button>${dev?`<button type="button" class="btn ghost axs-lg" ${B}>🔍 聲音事件紀錄</button>`:""}</div>`}
 /* 第 5 輪 P16.4 音效圖鑑：九種提示音一列一個（名稱、代表什麼、聲音長怎樣、▶ 試聽），下面左／中／右試聽 */
 function axsDexSheet(){const P='style="width:auto;margin:0;padding:6px 14px;min-height:44px;min-width:44px"';
-  sheet("🎼 音效圖鑑",b=>{b.innerHTML=`<p class="muted" style="margin:0 0 8px;line-height:1.7">九種動作各有一個聲音，按 ▶ 試聽（要你按下才會播放）。音量跟著手機音量，App 裡沒有另外的音量；iPhone 靜音鍵打開時仍會響，要安靜請到 設定 → 聲音 把「走子音效」「吃子音效」都關掉。</p>`
-    +`<ul style="list-style:none;margin:0;padding:0;display:grid;gap:6px">${AXS_DEX.map(([k,n,s,m])=>`<li class="card row" style="margin:0;padding:8px 10px;gap:10px;justify-content:space-between"><span style="min-width:0;line-height:1.6"><b>${n}</b>　${m}<br><span class="muted" style="font-size:13px">${s}</span></span><button type="button" class="btn ghost" data-axsdx="${k}" aria-label="試聽：${n}" ${P}>▶</button></li>`).join("")}</ul>`
+  sheet("🎼 音效圖鑑",b=>{b.innerHTML=`<p class="muted" style="margin:0 0 8px;line-height:1.7">九種動作各有一個聲音，按 ▶ 試聽（要你按下才會播放）。音量在 設定 → 聲音「提示音」滑桿調，也能單獨靜音或「🔇 全部靜音」；iPhone 靜音鍵打開時仍會響。同一種提示音太密會略過（250 毫秒內只響一次）。</p>`
+    +`<ul style="list-style:none;margin:0;padding:0;display:grid;gap:6px">${AXS_DEX.map(([k,n,s,m])=>`<li class="card row" style="margin:0;padding:8px 10px;gap:10px;justify-content:space-between"><span style="min-width:0;line-height:1.6"><b>${n}</b>　${m}<br><span class="muted" style="font-size:13px">${s}</span>${typeof sxmSrc==="function"?`<br><span class="muted" style="font-size:12.5px">${sxmSrc(k)}・${sxmFeel(k)}</span>`:""}</span><button type="button" class="btn ghost" data-axsdx="${k}" aria-label="試聽：${n}" ${P}>▶</button></li>`).join("")}</ul>`
     +`<div class="sec-t" style="margin-top:14px">左右方位</div><p class="muted" style="margin:0 0 8px;line-height:1.7">聲音只分左右，用左右聲像提示棋子在第幾路，不是 3D 環繞：一路在畫面最右、九路在最左。翻轉棋盤（你執黑）時，同一顆棋子的聲音左右對調。戴耳機最清楚。</p>`
-    +`<div class="row" style="gap:8px;flex-wrap:wrap"><button type="button" class="btn ghost" data-axspn="81" aria-label="試聽左邊：九路" ${P}>◀ 左・九路</button><button type="button" class="btn ghost" data-axspn="85" aria-label="試聽中間：五路" ${P}>● 中・五路</button><button type="button" class="btn ghost" data-axspn="89" aria-label="試聽右邊：一路" ${P}>右・一路 ▶</button></div>`})}
+    +`<div class="row" style="gap:8px;flex-wrap:wrap"><button type="button" class="btn ghost" data-axspn="81" aria-label="試聽左邊：九路" ${P}>◀ 左・九路</button><button type="button" class="btn ghost" data-axspn="85" aria-label="試聽中間：五路" ${P}>● 中・五路</button><button type="button" class="btn ghost" data-axspn="89" aria-label="試聽右邊：一路" ${P}>右・一路 ▶</button></div>`
+    +(typeof sxmDexMore==="function"?sxmDexMore():"")})}
 /* 第 5 輪 開發者模式的「聲音事件紀錄」：最近 20 筆，新的在上（給評審截圖驗證；一般玩家看不到按鈕） */
 function axsLogSheet(){const L=axsSt().log.slice().reverse();
   sheet("🔍 聲音事件紀錄（開發者）",b=>{b.innerHTML=`<p class="muted" style="margin:0 0 8px;line-height:1.7">最近 20 個提示音事件，新的在上：哪一種、第幾路、偏左偏右、有沒有播出來。</p>`
@@ -24141,4 +24221,48 @@ setInterval(()=>{try{axsWrapEngine()}catch(e){}if(document.hidden)return;
   if(!axmOn())return;try{axsParkBtn()}catch(e){}},1000);
 setInterval(()=>{if(document.hidden||!axmOn())return;const S=axsSt(),tk=[...S.tasks.values()],dm=tk.length?"":axsDomBusy(),busy=!!(tk.length||dm);
   const say=axsLoadStep(S.load,busy,Date.now(),tk[0]||dm||"載入");if(say)try{axSay(say)}catch(e){}},400);
+/* ---------- 第 6 輪 F3：設定 → 聲音 的音量分類（四條滑桿、各自靜音、全部靜音）；05-settings 畫完聲音頁叫 sxmMount(v) ----------
+   放進聲音頁三張卡片：🔔 棋子聲（#snd）放「全部靜音」＋棋子音效＋提示音＋圖鑑、文件按鈕；🎵 語音報棋（#snd2）放語音；🕯 氛圍（#snd3）放背景音樂與鼓聲。
+   設定房間三個入口（07s2 SM_EP 整段搬 #snd／#snd2／#snd3）打開的面板各自看得到自己那類。樣式用 JS 注入（#sxmCss），不動 m.css */
+function sxmCss(){if(document.getElementById("sxmCss"))return;const s=document.createElement("style");s.id="sxmCss";
+  s.textContent=".sxm-top{padding:4px 0 10px;border-bottom:1px solid var(--line);margin-bottom:2px}.sxm-bot{border-top:1px solid var(--line);padding-top:4px}"
+    +".sxm-hd{display:flex;justify-content:space-between;align-items:center;gap:10px;padding:4px 0}.btn.sxm-all{width:auto;margin:0;min-height:44px;padding:6px 12px;font-size:13.5px;white-space:nowrap;flex:none}"
+    +".sxm-r{padding:6px 0}.sxm-h{display:flex;justify-content:space-between;align-items:baseline;gap:8px}.sxm-n{flex:none;font-variant-numeric:tabular-nums;font-size:13px;opacity:.75;white-space:nowrap}"
+    +".sxm-c{display:flex;align-items:center;gap:8px}.sxm-s{flex:1;min-width:0;height:44px;margin:0;accent-color:var(--accent,#B3261E)}.sxm-mu .sxm-s{opacity:.45}"
+    +".sxm-m{flex:none;width:44px;height:44px;margin:0;padding:0;border-radius:12px;border:1.5px solid var(--line);background:var(--card);color:inherit;font-size:18px;line-height:1}"
+    +".sxm-m[aria-pressed=true]{border-color:var(--accent,#B3261E);background:color-mix(in srgb,var(--accent,#B3261E) 14%,var(--card))}.sxm-d{font-size:12.5px;line-height:1.5}"
+    +".sxm-lk{display:flex;gap:8px;flex-wrap:wrap;padding:8px 0 4px}.sxm-lk .btn{width:auto;margin:0;min-height:44px;padding:6px 12px;font-size:13.5px;white-space:nowrap}";document.head.append(s)}
+/* 一條滑桿：名稱、目前多少、0～100（每格 5）、旁邊 🔊／🔇 靜音鍵（44px），下面一行小字說包含哪些聲音 */
+function sxmRow(cat){const c=sxmCats().find(x=>x[0]===cat);if(!c)return"";const M=sxmNorm(sxmMix()),t=sxmTxt(M,cat),ic={bgm:"🎵",piece:"♟",cue:"🎧",voice:"🗣"}[cat],
+    d={bgm:"朝代古風曲、過場鼓聲",piece:"落子、吃子、將軍「鏘」、開局鼓鑼",cue:"聲音方位與動作提示音（🎧 開了才有）",voice:"「吃！」「將軍！」"}[cat];
+  return`<div class="sxm-r${M.m[cat]||M.all?" sxm-mu":""}" data-sxm="${cat}"><div class="sxm-h"><label for="sxmS-${cat}"><b>${ic} ${c[1]}</b></label><span class="sxm-n">${t}</span></div>`
+    +`<div class="sxm-c"><input type="range" id="sxmS-${cat}" class="sxm-s" min="0" max="100" step="5" value="${M.v[cat]}" aria-valuetext="${t}"><button type="button" class="sxm-m" aria-pressed="${M.m[cat]}" aria-label="${c[1]}靜音">${M.m[cat]?"🔇":"🔊"}</button></div>`
+    +`<div class="sxm-d muted">${d}</div></div>`}
+function sxmAllBtn(){const M=sxmNorm(sxmMix());return`<button type="button" class="btn ghost sxm-all" aria-pressed="${M.all}">${M.all?"🔊 恢復全部聲音":"🔇 全部靜音"}</button>`}
+function sxmMount(v){try{if(!v||!v.querySelector)return;sxmCss();
+  const blk=(cls,html)=>{const d=document.createElement("div");d.className="sxm-x "+cls;d.innerHTML=html;return d};
+  const clr=c=>{c.querySelectorAll(":scope>.sxm-x").forEach(x=>x.remove());return c};
+  {const c=v.querySelector("#snd");if(c){clr(c).prepend(blk("sxm-top",`<div class="sxm-hd"><b>音量</b>${sxmAllBtn()}</div>`+sxmRow("piece")+sxmRow("cue")));
+    c.append(blk("sxm-bot",`<div class="sxm-lk"><button type="button" class="btn ghost axs-dx">🎼 音效圖鑑</button><button type="button" class="btn ghost" data-xqdoc="sound">🔊 音效設計</button></div>`))}}
+  {const c=v.querySelector("#snd2");if(c)clr(c).append(blk("sxm-bot",sxmRow("voice")))}
+  {const c=v.querySelector("#snd3");if(c){const b=blk("sxm-bot",sxmRow("bgm")),l=c.querySelector('[data-t="bgm"]'),r=l&&l.closest("label");clr(c);if(r&&r.parentNode===c)r.after(b);else c.append(b)}}}catch(e){}}
+/* 畫面上所有滑桿、靜音鍵跟著存檔更新（同一頁、設定房間面板都可能開著） */
+function sxmSync(){const M=sxmNorm(sxmMix());
+  document.querySelectorAll(".sxm-r").forEach(r=>{const c=r.dataset.sxm;if(!(c in M.v))return;const t=sxmTxt(M,c),s=r.querySelector(".sxm-s"),b=r.querySelector(".sxm-m"),n=r.querySelector(".sxm-n");
+    if(s){if(document.activeElement!==s)s.value=M.v[c];s.setAttribute("aria-valuetext",t)}if(n)n.textContent=t;if(b){b.setAttribute("aria-pressed",String(M.m[c]));b.textContent=M.m[c]?"🔇":"🔊"}r.classList.toggle("sxm-mu",M.m[c]||M.all)});
+  document.querySelectorAll(".sxm-all").forEach(b=>{b.setAttribute("aria-pressed",String(M.all));b.textContent=M.all?"🔊 恢復全部聲音":"🔇 全部靜音"})}
+/* 放開滑桿、解除靜音時試聽那一類 */
+function sxmTry(cat){try{unlockAudio()}catch(e){}if(sxmAllOff()||!sxmGain(cat))return;
+  if(cat==="piece"){withAudio(()=>moveSound0(false));return}
+  if(cat==="cue"){axsPreview("move",85);return}
+  if(cat==="voice"){if(store.get("voiceCall",true))sayCall("將軍");else try{toast("語音報子關著（上面選男聲或女聲才會念）")}catch(e){}return}
+  if(cat==="bgm"&&!store.get("bgm",true))try{toast("背景音樂開關關著，打開才會播")}catch(e){}}
+document.addEventListener("input",e=>{const s=e.target;if(!s||!s.classList||!s.classList.contains("sxm-s"))return;const r=s.closest(".sxm-r");if(!r)return;
+  store.set("sndMix",sxmSetVol(sxmMix(),r.dataset.sxm,s.value));sxmApply();sxmSync()});
+document.addEventListener("change",e=>{const s=e.target;if(!s||!s.classList||!s.classList.contains("sxm-s"))return;const r=s.closest(".sxm-r");if(r)sxmTry(r.dataset.sxm)});
+document.addEventListener("click",e=>{const b=e.target&&e.target.closest&&e.target.closest(".sxm-m,.sxm-all");if(!b)return;
+  const all=b.classList.contains("sxm-all"),r=b.closest(".sxm-r"),cat=all?"all":r&&r.dataset.sxm;if(!cat)return;
+  const M=sxmMute(sxmMix(),cat);store.set("sndMix",M);try{unlockAudio()}catch(x){}sxmApply();sxmSync();try{vibrate(5)}catch(x){}
+  const on=all?M.all:M.m[cat],t=(all?"全部聲音":(sxmCats().find(c=>c[0]===cat)||[])[1])+(on?"：靜音":"：恢復");try{toast((on?"🔇 ":"🔊 ")+t)}catch(x){}try{axSay(t)}catch(x){}
+  if(!on&&!all)sxmTry(cat)});
 </script></body></html>

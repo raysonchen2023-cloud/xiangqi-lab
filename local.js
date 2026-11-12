@@ -261,7 +261,8 @@ var XQ=(function(){
   /* 意見回饋 338：錯棋重練（和小帥的中殘局練習）也是自己的一盤，開它不會動到挑戰電腦那盤 */
   const kindOf=G=>G&&G.practice?"practice":G&&G.journey?"journey":G&&G.arena?"arena":"cpu",unfinished=G=>!!(G&&!G.result&&G.moves&&G.moves.length);
   // 積分挑戰下到一半就丟掉（開同一種的新局）：算輸，不然輸棋前開新局就能躲掉扣分
-  function forfeit(G){if(!G||!G.ranked||G.result||G.moves.length<2)return;const keep=P;P=G;
+  /* 評比第 6 輪 F4（棋規閉環）：中途離開算輸也要跟 playEnd 同一關——只有千秋休閒規則的 ranked 才動積分；存檔被手改成原型棋規的晉級賽，結束不計分、中途離開也不扣分 */
+  function forfeit(G){if(!G||!G.ranked||G.result||G.moves.length<2)return;const rc=C.ruleConfigOf(G);if(!(C.ruleRated(rc)&&rc.mode==="ranked"))return;const keep=P;P=G;
     P.result={w:opp(P.human),why:"中途離開，算輸"};cpuRateApply("l");pushGame("play",{id:P.id,date:P.id.slice(0,10),level:0,ranked:true,rk:P.rk,human:P.human,result:P.result,...assist(P),moves:saveMoves(P.moves)});P=keep}
   const stashOut=G=>({id:G.id,rc:G.rc||null,human:G.human,level:G.level,rlv:G.rlv==null?null:G.rlv,ranked:!!G.ranked,reward:!!G.reward,arena:G.arena||null,journey:G.journey||null,rk:G.rk,result:null,practice:G.practice||null,...assist(G),...keepStart(G),moves:saveMoves(G.moves)});
   // play2：收起來的棋，每一種一盤 {cpu,arena,journey}（舊版只存一盤，讀的時候換成新格式）

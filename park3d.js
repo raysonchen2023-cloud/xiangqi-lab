@@ -1037,13 +1037,13 @@
     const fill=new T.DirectionalLight(0xC8DCFF,.28);fill.position.set(20,12,-18);sc.add(fill);
     // 天空球（含下半部的雲海色）＋水墨長卷
     const sky=new T.Mesh(new T.SphereGeometry(400,32,16),new T.MeshBasicMaterial({map:skyTex(E),side:T.BackSide,fog:false,depthWrite:false,toneMapped:false}));sky.renderOrder=-2;sc.add(sky);FARHIDE.push(sky);   /* 意見回饋 517／525：拉遠功能把天空改成半透明後，天空排到長卷後面畫、整片蓋住長卷（城、蒙古包都看不到）；天空固定最先畫 */
-    const BI=opt.bg?{src:opt.bg,pano:true,hz:.58,hor:PANO_HOR,rot:0}:BG_IMG[EK],FULL=!!BI;   /* 意見回饋 362：石桌往事的關卡在那一站的地點環景裡下（渡口、聽濤樓茶館、雲河棋會、決賽、石桌） */   // FULL：有朝代長卷，背景是完整一圈，可以整個轉身看
+    const BI=opt.bg?{src:opt.bg,pano:true,hz:.58,hor:opt.indoor?-10.2:PANO_HOR,rot:0}:BG_IMG[EK],FULL=!!BI;   /* 意見回饋 362：石桌往事的關卡在那一站的地點環景裡下（渡口、聽濤樓茶館、雲河棋會、決賽、石桌） */   // FULL：有朝代長卷，背景是完整一圈，可以整個轉身看
     {const pt=panTex(Object.assign({},E,{userBg:FULL}),EK.length*977+13);pt.wrapS=T.RepeatWrapping;pt.repeat.x=-1;   // 從圓柱內側看，貼圖要左右翻回來
       const arc=FULL?TAU:PAN.arc,pan=new T.Mesh(new T.CylinderGeometry(PAN.r,PAN.r,PAN.yt-PAN.yb,FULL?128:64,1,true,PI-arc/2,arc),new T.MeshBasicMaterial({map:pt,side:T.BackSide,transparent:true,fog:false,depthWrite:false,toneMapped:false}));
       pan.position.y=(PAN.yt+PAN.yb)/2;pan.renderOrder=-1;sc.add(pan);FARHIDE.push(pan);PANM=pan;
       if(BI){const put=()=>{const im=imgCache[BI.src];if(!im||!im.naturalWidth||!el.isConnected)return;try{let pc;
           if(BI.pano){// 整圈長圖：圓柱的高度、位置照圖的比例重做（圖不變形），貼圖換成 4096×1024
-            const pg=panoGeo(BI,im.naturalWidth,im.naturalHeight);pan.geometry.dispose();pan.geometry=new T.CylinderGeometry(PAN.r,PAN.r,pg.Hc,128,1,true,0,TAU);pan.position.y=pg.cy;
+            const pg=panoGeo(BI,im.naturalWidth,im.naturalHeight);pan.geometry.dispose();pan.geometry=new T.CylinderGeometry(PAN.r,PAN.r,pg.Hc,128,1,true,0,TAU);pan.position.y=pg.cy;if(opt.indoor){const k=IN_R/PAN.r;pan.scale.setScalar(k);pan.position.y=16+(pg.cy-16)*k}
             const c=pt.image;if(c.width!==PANO.W||c.height!==PANO.H){c.width=PANO.W;c.height=PANO.H;pt.dispose()}pc=drawPano(c.getContext("2d"),c.width,c.height,im,BI);PANDH=Math.round(c.width*im.naturalHeight/im.naturalWidth);PANROT=BI.rot||0;
             /* 意見回饋 525：長卷上每個地標的位置和名字（data/pano/spots.json），點到哪裡就說是哪裡 */
             if(!opt.bg)fetch("data/pano/spots.json").then(r=>r.ok?r.json():null).then(J=>{if(J&&Array.isArray(J[EK]))PSPOTS=J[EK]}).catch(()=>{})}
@@ -1057,19 +1057,23 @@
     const mesh=(geo,mat,pos,o)=>{const m=new T.Mesh(geo,mat);if(pos)m.position.set(...pos);m.castShadow=!(o&&o.noCast);m.receiveShadow=true;sc.add(m);return m};
     const GY=-19,FL=(window.__FL||-6.6);   /* 意見回饋 398：桌子再矮一點（真實的桌高），坐的高度不變、凳子跟著變矮 */   /* 意見回饋 377、381：平台地面抬到 FL（跟真的一樣：桌高、凳子和長榻直接放在地上，不再墊高台座）；GY 只剩程式畫的家具還在用，地面以下看不到 */   // 地面高度（桌面＝0）
     // 山上平台：石板地＋石欄杆，平台外是山谷雲海
-    const TR=21;
+    const TR=21,IN_R=80;   /* 室內（車輪戰棋館）房間半徑：環景縮到這裡、地板鋪到這裡 */
     const stone=M(0xffffff,{map:stoneTex("#8C8478",2),roughness:.85}),stone2=M(0xffffff,{map:stoneTex("#776F64",2),roughness:.9});
     const pave=new T.Mesh(new T.CircleGeometry(TR,64),M(0xffffff,{map:paveTex(),roughness:.95}));pave.rotation.x=-PI/2;pave.position.y=FL;pave.receiveShadow=true;sc.add(pave);
     /* 意見回饋 359：朝代的地面（data/pano/<朝代>_ground.webp，Gemini 畫的俯視地面）鋪在石板平台上；頭頂加一個天頂圓（_sky.webp，魚眼天空、邊緣淡出），鏡頭壓低往上看也是畫的天空 */
     {const gs=typeof opt.ground==="string"&&/^data\/[\w\/.-]+\.webp$/.test(opt.ground)?opt.ground:"data/pano/"+EK+"_ground.webp",   /* 11/11：opt.ground＝指定地面（首頁橋上石桌＝橋面條石） */gp=()=>{const im=imgCache[gs];if(!im||!im.naturalWidth||!el.isConnected)return;const t=srgb(new T.Texture(im));t.anisotropy=ANI;t.needsUpdate=true;pave.material.map=t;pave.material.needsUpdate=true};if(loadImg(gs,gp))setTimeout(gp,0);
       const ss="data/pano/"+EK+"_sky.webp",sp=()=>{const im=imgCache[ss];if(!im||!im.naturalWidth||!el.isConnected)return;const TM=1.3,   /* 意見回饋 421：長卷抬高後，天頂圓淡出的那圈收到長卷上緣以上（原本 1.75 會蓋到山頭） */R0=PAN.r-6,g=new T.SphereGeometry(R0,64,24,0,TAU,0,TM),P=g.attributes.position,U=g.attributes.uv;
         for(let i=0;i<P.count;i++){const x=P.getX(i),y=P.getY(i),z=P.getZ(i),th=Math.acos(clamp(y/R0,-1,1)),ph=Math.atan2(z,x),k=th/TM*.5;U.setXY(i,.5+k*Math.cos(ph),.5+k*Math.sin(ph))}U.needsUpdate=true;
-        const t=srgb(new T.Texture(im));t.needsUpdate=true;const cap=new T.Mesh(g,new T.MeshBasicMaterial({map:t,side:T.BackSide,transparent:true,depthWrite:false,fog:false,toneMapped:false}));cap.renderOrder=-.5;sc.add(cap);FARHIDE.push(cap)};if(loadImg(ss,sp))setTimeout(sp,0)}
+        const t=srgb(new T.Texture(im));t.needsUpdate=true;const cap=new T.Mesh(g,new T.MeshBasicMaterial({map:t,side:T.BackSide,transparent:true,depthWrite:false,fog:false,toneMapped:false}));cap.renderOrder=-.5;sc.add(cap);FARHIDE.push(cap)};if(!opt.indoor&&loadImg(ss,sp))setTimeout(sp,0)}
     mesh(new T.CylinderGeometry(TR,TR*.9,26+FL-GY,48,1,true),stone2,[0,FL-(26+FL-GY)/2,0],{noCast:1});
     /* 意見回饋 490（開發者：石台邊像懸崖，希望像雲河棋路那樣是山坡上的大石台）：石台外圍加一圈往外慢慢往下的山坡（草地、碎石），遠的地方淡進霧裡，把石台側面那圈牆蓋住 */
-    {const pts=[[TR-.2,FL-.06],[TR+4,FL-.9],[TR+12,FL-3.6],[TR+26,FL-9],[TR+46,FL-18],[TR+76,FL-32],[TR+120,FL-52]].map(([r,y])=>new T.Vector2(r,y));
-      const hg=new T.LatheGeometry(pts,96),hb="#"+new T.Color(E.mist).lerp(new T.Color(EK==="yuan"?"#7E8F45":"#4A7A35"),.72).getHexString(),hm=M(0xffffff,{map:grassTex(hb,E.ink,10),roughness:.95});
+    {const pts=(opt.indoor?[[TR,FL],[50,FL],[IN_R+1,FL]]:[[TR-.2,FL-.06],[TR+4,FL-.9],[TR+12,FL-3.6],[TR+26,FL-9],[TR+46,FL-18],[TR+76,FL-32],[TR+120,FL-52]]).map(([r,y])=>new T.Vector2(r,y));
+      const hg=new T.LatheGeometry(pts,96),hb="#"+new T.Color(E.mist).lerp(new T.Color(EK==="yuan"?"#7E8F45":"#4A7A35"),.72).getHexString(),hm=opt.indoor?M(0x9A7A58,{roughness:.95}):M(0xffffff,{map:grassTex(hb,E.ink,10),roughness:.95});
       const hill=new T.Mesh(hg,hm);hill.material.side=T.DoubleSide;hill.receiveShadow=true;sc.add(hill);
+      /* hspx（開發者 11/12「車輪戰地面要符合茶肆二樓的地板」「茶肆二樓地板是平的，3D 也要看到是平的；花園不用，是要做出高山的感覺」）：室內外圈改成水平地板一路鋪到牆邊，環景縮成半徑 IN_R 的房間、以鏡頭高度 16 為中心縮放，hor −10.2 度讓畫上的牆腳剛好落在地板邊（公園是 −24 度、半徑 170、往下看的高山感）；室內不放天頂圓；這圈不鋪草，改鋪跟中間同一張木地板，貼圖照平面座標（每 42 單位一張，跟中間圓盤接齊），一路接到環景畫的地板 */
+      if(opt.indoor&&typeof opt.ground==="string"&&/^data\/[\w\/.-]+\.webp$/.test(opt.ground)){const U=hg.attributes.uv,P=hg.attributes.position;for(let i=0;i<P.count;i++)U.setXY(i,P.getX(i)/(2*TR)+.5,-P.getZ(i)/(2*TR)+.5);U.needsUpdate=true;
+        {const N=hg.attributes.normal;for(let i=0;i<N.count;i++)N.setXYZ(i,0,N.getY(i)<0?-1:1,0);N.needsUpdate=true}   /* 受光跟中間的平地一樣（斜坡的法線朝外會比較暗，交界看得出一圈亮帶） */
+        const gs2=opt.ground,hp=()=>{const im=imgCache[gs2];if(!im||!im.naturalWidth||!el.isConnected)return;const t=srgb(new T.Texture(im));t.wrapS=t.wrapT=T.RepeatWrapping;t.anisotropy=ANI;t.needsUpdate=true;hill.material.map=t;hill.material.color.set(0xffffff);hill.material.needsUpdate=true};if(loadImg(gs2,hp))setTimeout(hp,0)}
       /* 11/10 開發者「對戰的位置上頭搭一個朝代的遮篷，即使不下雨也會用；下雨時雨照樣下，但篷子下面淋不到」（Gemini 59 號，開發者選：程式畫＋水墨描邊、下雨布幔垂下、五組一次做完）
          五組：秦～南北朝 帷幄（原木柱、平頂黑褐幄、朱紅垂邊）；隋唐 涼棚（朱漆柱、青布四角攢尖、金流蘇；顧問：「華蓋」是帝王傘蓋，不用這個名）；五代宋＋棋鎮 竹竿布棚（竹竿、米白麻布人字頂）；
          元 氈帳（粗木柱、灰白氈微圓頂、藍邊）；明清 捲棚（方木柱、黃褐油布捲棚頂）。柱子用一般材質（後面的水墨處理會加墨線），篷頂、布幔另描一圈墨線。
@@ -1214,11 +1218,12 @@
         MAPM=map;HILL=hill;map.material.opacity=0;map.visible=false;lastKf=-1;
         /* 意見回饋 517：拉遠看地圖時，地圖上的地名點得到（data/eramap/labels.json 的位置，介紹在 App 的 places.json） */
         fetch("data/eramap/labels.json").then(r=>r.ok?r.json():null).then(L=>{if(L&&Array.isArray(L[EK]))MAPL=L[EK]}).catch(()=>{});eraOverlay(map)};
-      if(loadImg(ms,mp))setTimeout(mp,0)}
+      if(!opt.indoor&&loadImg(ms,mp))setTimeout(mp,0)}   /* hspx（開發者 11/12）：室內拉遠不浮出朝代大地圖，木地板一直在 */
     {/* 意見回饋 406：平台邊的石欄杆跟著地面抬高後幾乎跟桌面一樣高，降成約 20 公分的矮欄；421：矮欄＋36 根望柱從桌邊看過去還是一整圈牆（像一座高石台的邊、又剛好擋在山水前面），
        改成貼地的一圈石砌收邊（約 7 公分），只留平台的邊線，不擋遠景 */
-      const curb=new T.Mesh(new T.CylinderGeometry(TR-.15,TR-.15,.45,96,1,true),stone2);curb.material.side=T.DoubleSide;curb.position.y=FL+.22;sc.add(curb);
-      const lip=new T.Mesh(new T.TorusGeometry(TR-.3,.22,5,128),stone);lip.rotation.x=PI/2;lip.position.y=FL+.42;sc.add(lip)}
+      /* hspx（開發者 11/12）：室內是一整片木地板，不放石砌收邊 */
+      if(!opt.indoor){const curb=new T.Mesh(new T.CylinderGeometry(TR-.15,TR-.15,.45,96,1,true),stone2);curb.material.side=T.DoubleSide;curb.position.y=FL+.22;sc.add(curb);
+      const lip=new T.Mesh(new T.TorusGeometry(TR-.3,.22,5,128),stone);lip.rotation.x=PI/2;lip.position.y=FL+.42;sc.add(lip)}}
     // 朝代家具（桌、長椅、凳子、燈）：見 buildFurn；桌面頂面 y=0，長椅座面高度 SY
     /* 意見回饋 406：椅面抬高到桌面下約 30 公分（真實的桌椅落差），人坐著露出比較多身體，桌子看起來才矮 */
     const BZ=-12.6,SY=(window.__SY||-2.7),BL=13,iron=M(0x2A2620,{roughness:.45,metalness:.6});
@@ -1264,8 +1269,8 @@
     function ptGround(o){if(PT.inst.has(o))return;PT.inst.add(o);const ob=o.onBeforeCompile;
       o.onBeforeCompile=(s,r)=>{if(ob)ob(s,r);s.uniforms.xqInk=PT.u;
         s.vertexShader=s.vertexShader.replace("#include <common>","#include <common>\nvarying vec3 vXqW;").replace("#include <project_vertex>","#include <project_vertex>\nvXqW = ( modelMatrix * vec4( transformed, 1.0 ) ).xyz;");
-        s.fragmentShader=s.fragmentShader.replace("#include <common>","#include <common>\nuniform float xqInk;\nvarying vec3 vXqW;\n"+PT_N).replace("#include <map_fragment>","#include <map_fragment>\nif ( xqInk > .5 ) {\nfloat xqY = dot( diffuseColor.rgb, vec3( .2126, .7152, .0722 ) );\nvec3 xqC = mix( vec3( xqY ), diffuseColor.rgb, .5 );\nfloat xqG = xqN( vXqW.xz * 3.1 ) * .5 + xqN( vXqW.xz * 11. ) * .3 + xqN( vXqW.xz * 37. ) * .2;\nxqC *= vec3( 1., .975, .92 ) * ( .9 + .14 * xqG );\ndiffuseColor.rgb = mix( xqC, vec3( .84, .79, .68 ), .45 * smoothstep( 15., 21.5, length( vXqW.xz ) ) * ( 1. - smoothstep( 21.5, 24., length( vXqW.xz ) ) ) );\n}")};
-      o.customProgramCacheKey=()=>"xqGround";o.needsUpdate=true}
+        s.fragmentShader=s.fragmentShader.replace("#include <common>","#include <common>\nuniform float xqInk;\nvarying vec3 vXqW;\n"+PT_N).replace("#include <map_fragment>","#include <map_fragment>\nif ( xqInk > .5 ) {\nfloat xqY = dot( diffuseColor.rgb, vec3( .2126, .7152, .0722 ) );\nvec3 xqC = mix( vec3( xqY ), diffuseColor.rgb, "+(opt.indoor?".9":".5")+" );\nfloat xqG = xqN( vXqW.xz * 3.1 ) * .5 + xqN( vXqW.xz * 11. ) * .3 + xqN( vXqW.xz * 37. ) * .2;\nxqC *= vec3( 1., .975, .92 ) * ( .9 + .14 * xqG );\ndiffuseColor.rgb = mix( xqC, vec3( .84, .79, .68 ), "+(opt.indoor?"0.":".45")+" * smoothstep( 15., 21.5, length( vXqW.xz ) ) * ( 1. - smoothstep( 21.5, 24., length( vXqW.xz ) ) ) );\n}")};
+      o.customProgramCacheKey=()=>"xqGround"+(opt.indoor?"In":"");o.needsUpdate=true}
     const PT_W2=!!(rd.capabilities&&rd.capabilities.isWebGL2);
     function ptCard(o){if(PT.inst.has(o)||!PT_W2)return;PT.inst.add(o);const ob=o.onBeforeCompile;
       o.onBeforeCompile=(s,r)=>{if(ob)ob(s,r);s.uniforms.xqInk=PT.u;
