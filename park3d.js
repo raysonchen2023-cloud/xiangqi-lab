@@ -1327,16 +1327,32 @@
       const halo=new T.Sprite(new T.SpriteMaterial({map:radial("rgba(200,150,255,.9)","rgba(110,60,220,.35)"),transparent:true,blending:T.AdditiveBlending,depthWrite:false,fog:false,toneMapped:false}));halo.scale.setScalar(4.2);
       const hit=new T.Mesh(new T.SphereGeometry(2.3,12,8),new T.MeshBasicMaterial({visible:false}));   /* 點擊範圍比球大一圈，手指好點 */
       const dust=new T.Group();for(let i=0;i<22;i++){const sp=new T.Sprite(new T.SpriteMaterial({map:radial("rgba(255,236,190,1)","rgba(255,210,140,.4)"),transparent:true,blending:T.AdditiveBlending,depthWrite:false,fog:false,toneMapped:false}));const a=i/22*TAU;sp.position.set(Math.cos(a)*1.6,Math.sin(i*1.7)*.18,Math.sin(a)*1.6);sp.scale.setScalar(.28+Math.random()*.18);dust.add(sp)}
-      g.add(halo,core,cracks,hit,dust);g.userData.parts={core,cracks,halo,hit,dust,cm};g.visible=false;sc.add(g);return g};
-    const orbSet=k=>{k=k==="ball"||k==="dust"?k:null;if(k===orbK)return;orbK=k;if(orbFlyT>=0)return;if(!k){if(ORB)ORB.visible=false;return}ORB=ORB||orbMake();const P=ORB.userData.parts,ball=k==="ball";
-      P.core.visible=P.cracks.visible=P.halo.visible=ball;P.dust.visible=!ball;ORB.scale.setScalar(ball?.85:1);ORB.visible=true;orbT=1};
-    const orbHit=()=>!!(ORB&&ORB.visible&&orbK==="ball"&&orbFlyT<0&&ray.intersectObject(ORB.userData.parts.hit,false).length);
+      /* 幻譜星門（"gate"，07gx-galaxy.js）：戰勝過黑洞以後，小黑洞完全張開——紫金漩渦、中心轉著一張小棋盤、外圍一圈 13 點星光（打過的星系亮金色） */
+      const gate=new T.Group(),SWM=new T.SpriteMaterial({map:cv(256,256,(x,w,h)=>{const c=w/2;x.clearRect(0,0,w,h);const gr=x.createRadialGradient(c,c,0,c,c,c);gr.addColorStop(0,"rgba(4,2,10,1)");gr.addColorStop(.32,"rgba(10,4,24,1)");gr.addColorStop(.5,"rgba(120,70,220,.85)");gr.addColorStop(.72,"rgba(240,200,120,.45)");gr.addColorStop(1,"rgba(0,0,0,0)");x.fillStyle=gr;x.fillRect(0,0,w,h);
+        x.lineCap="round";for(let k=0;k<5;k++){x.beginPath();for(let a=0;a<5.5;a+=.06){const r=c*.3+a*c*.11,an=a+k*TAU/5;x.lineTo(c+Math.cos(an)*r,c+Math.sin(an)*r)}x.strokeStyle="rgba(255,226,150,.55)";x.lineWidth=3;x.stroke()}}),transparent:true,blending:T.AdditiveBlending,depthWrite:false,fog:false,toneMapped:false}),swirl=new T.Sprite(SWM);swirl.scale.setScalar(4.8);
+      const mini=new T.Sprite(new T.SpriteMaterial({map:cv(128,140,(x,w,h)=>{x.fillStyle="rgba(20,14,30,.92)";x.fillRect(0,0,w,h);x.strokeStyle="#F2C14E";x.lineWidth=3;const X=c=>10+c*13.5,Y=r=>10+r*13.3;for(let r=0;r<10;r++){x.beginPath();x.moveTo(X(0),Y(r));x.lineTo(X(8),Y(r));x.stroke()}for(let c=0;c<9;c++){x.beginPath();if(c===0||c===8){x.moveTo(X(c),Y(0));x.lineTo(X(c),Y(9))}else{x.moveTo(X(c),Y(0));x.lineTo(X(c),Y(4));x.moveTo(X(c),Y(5));x.lineTo(X(c),Y(9))}x.stroke()}}),transparent:true,depthWrite:false,fog:false,toneMapped:false}));mini.scale.set(1.25,1.37,1);mini.renderOrder=3;
+      const ring=new T.Group(),stars=[];for(let i=0;i<13;i++){const sp=new T.Sprite(new T.SpriteMaterial({map:radial("rgba(255,255,255,1)","rgba(255,255,255,.35)"),color:0x6E7BA8,transparent:true,blending:T.AdditiveBlending,depthWrite:false,fog:false,toneMapped:false}));const a=i/13*TAU;sp.position.set(Math.cos(a)*2.7,0,Math.sin(a)*2.7);sp.scale.setScalar(.55);ring.add(sp);stars.push(sp)}
+      gate.add(swirl,mini,ring);gate.visible=false;
+      g.add(halo,core,cracks,hit,dust,gate);g.userData.parts={core,cracks,halo,hit,dust,cm,gate,swirl,ring,stars,mini};g.visible=false;sc.add(g);return g};
+    let orbLitK="";
+    const orbSet=(k,lit)=>{k=k==="ball"||k==="dust"||k==="gate"?k:null;if(k==="gate"&&ORB){const L=(lit||[]).map(v=>v?1:0).join("");if(L!==orbLitK){orbLitK=L;ORB.userData.parts.stars.forEach((s,i)=>s.material.color.setHex(lit&&lit[i]?0xFFD76A:0x6E7BA8))}}
+      if(k===orbK)return;orbK=k;if(orbFlyT>=0)return;if(!k){if(ORB)ORB.visible=false;return}ORB=ORB||orbMake();const P=ORB.userData.parts,ball=k==="ball",gt=k==="gate";
+      P.core.visible=P.cracks.visible=P.halo.visible=ball;P.dust.visible=k==="dust";P.gate.visible=gt;ORB.scale.setScalar(ball?.85:1);ORB.visible=true;orbT=1;if(gt){orbLitK="";orbSet("gate",lit)}};
+    const orbHit=()=>!!(ORB&&ORB.visible&&(orbK==="ball"||orbK==="gate")&&orbFlyT<0&&ray.intersectObject(ORB.userData.parts.hit,false).length);
+    /* 幻譜星門的星系主宰（07gx gxParkEx 的 ex.gx＝{c 主色, c2 第二色}）：同一個幻影棋客模型，用星系顏色的點光源把他照亮、身後一圈星系色的光暈 */
+    let GXF=null,gxK="";
+    const gxSet=gx=>{const k=gx&&gx.c?gx.c+"|"+(gx.c2||""):"";if(k===gxK)return;gxK=k;if(GXF){for(const o of GXF.objs)sc.remove(o);GXF=null}if(!k)return;
+      const l1=new T.PointLight(new T.Color(gx.c),2.4,28,1.6),objs=[l1],h=new T.Sprite(new T.SpriteMaterial({map:radial("rgba(255,255,255,.95)","rgba(255,255,255,.3)"),color:new T.Color(gx.c),transparent:true,opacity:.55,blending:T.AdditiveBlending,depthWrite:false,fog:false,toneMapped:false}));h.scale.setScalar(11);h.renderOrder=-.1;objs.push(h);
+      let l2=null;if(gx.c2){l2=new T.PointLight(new T.Color(gx.c2),1.6,22,1.6);objs.push(l2)}for(const o of objs)sc.add(o);GXF={objs,l1,l2,h}};
+    let gxT=1;const gxC=new T.Vector3(0,SY+3,BZ+1);
+    const gxFxTick=(dt,ts)=>{if(!GXF)return;gxT+=dt;if(gxT>.5){gxT=0;try{orbBB.setFromObject(opp.g);if(!orbBB.isEmpty()&&isFinite(orbBB.max.y))orbBB.getCenter(gxC)}catch(e){}}const cx=gxC.x,cy=gxC.y,cz=gxC.z;
+      GXF.l1.position.set(cx+3,cy+3,cz+4);GXF.h.position.set(cx,cy+1,cz-2.5);GXF.h.material.opacity=.45+.15*Math.sin(ts*1.6);if(GXF.l2)GXF.l2.position.set(cx-4,cy+2,cz+3)};
     const orbFly=()=>{orbFlyT=0;pwPoke(1500)};
-    const orbTick=(dt,ts)=>{if(!ORB||!ORB.visible)return;orbT+=dt;if(orbT>1){orbT=0;try{orbBB.setFromObject(opp.g);if(!orbBB.isEmpty()&&isFinite(orbBB.max.y))orbV.set((orbBB.min.x+orbBB.max.x)/2,orbBB.max.y+1.8,(orbBB.min.z+orbBB.max.z)/2)}catch(e){}}
+    const orbTick=(dt,ts)=>{gxFxTick(dt,ts);if(!ORB||!ORB.visible)return;orbT+=dt;if(orbT>1){orbT=0;try{orbBB.setFromObject(opp.g);if(!orbBB.isEmpty()&&isFinite(orbBB.max.y))orbV.set((orbBB.min.x+orbBB.max.x)/2,orbBB.max.y+1.8,(orbBB.min.z+orbBB.max.z)/2)}catch(e){}}
       const P=ORB.userData.parts;
       if(orbFlyT>=0){orbFlyT+=dt;const f=Math.min(1,orbFlyT/1.3),e=f*f;ORB.position.set(orbV.x-34*e,orbV.y+26*e,orbV.z-70*e);ORB.scale.setScalar(.85*(1-.8*f));P.halo.material.opacity=1-f;P.cm.opacity=1-f;
         if(f>=1){ORB.visible=false;orbFlyT=-1;P.halo.material.opacity=1;P.cm.opacity=1;if(orbK){const k=orbK;orbK=null;orbSet(k)}}else pwPoke(200);return}
-      ORB.position.set(orbV.x,orbV.y+Math.sin(ts*1.3)*.25,orbV.z);ORB.rotation.y+=dt*.35;P.cm.opacity=.55+.45*Math.sin(ts*2.4);P.dust.rotation.y+=dt*.25};
+      ORB.position.set(orbV.x,orbV.y+(orbK==="gate"?1.6:0)+Math.sin(ts*1.3)*.25,orbV.z);ORB.rotation.y+=dt*.35;P.cm.opacity=.55+.45*Math.sin(ts*2.4);P.dust.rotation.y+=dt*.25;if(orbK==="gate"){P.swirl.material.rotation-=dt*.6;P.ring.rotation.y+=dt*.3}};
     // 意見回饋 218：小帥坐在我這一側、棋盤左前角外的桌面上，面向我、身體往後仰一點（鏡頭在上方，這樣看得到臉）；
     // 之前 sc.add 被寫進註解裡，小帥根本沒出現。位置在棋盤框外，不會擋到棋子
     /* 意見回饋 362、365：小帥坐在自己的椅子上（桌子外緣、棋盤左前角旁），面向對手；椅背在他身後（靠鏡頭那側、很矮） */
@@ -1499,13 +1515,16 @@
     const GNT_X={K:"x_shuai",A:"x_shi",B:"x_spiritgirl",N:"x_miaogirl",R:"x_swordboy",C:"x_martialgirl",P:"x_bing"},GNT_CH={K:"帥",A:"仕",B:"相",N:"傌",R:"俥",C:"炮",P:"兵"},GNT_H=1.55;
     /* 開發者 11/12「棋子字太小了，要符合角色背後的棋子」：七星背上本來都揹著一顆大木棋子；從背面正交圖量出那顆棋子的中心（u 由背面看的左邊、v 由頭頂）和半徑，
        圓牌半徑＝棋面（外框的 85%），蓋在他自己的棋子上（量法：scratchpad backs.html）。田飛燕、駱躍梅、雷借花的棋子被頭髮或披風遮住，圓牌貼在遮住的地方 */
+    /* 開發者 11/12「宇宙的黑方也是 3D 棋子嗎？如果不是請製作」→ 選「新畫 7 位星樞棋兵」：Gemini 立繪 park/xingshu/xs_*.png → Tripo 靜態站姿 data/tripo_app/xs_*.glb；
+       跟七星一樣站在格點上、面向對方、背上補本命字（量法同上）。模型沒骨架，所以不做動作 */
+    const GNT_XS={K:"xs_jiang",A:"xs_shi",B:"xs_xiang",N:"xs_ma",R:"xs_che",C:"xs_pao",P:"xs_zu"},GNT_GLYB={K:{u:.5,v:.54,r:.425},A:{u:.5,v:.47,r:.444},B:{u:.5,v:.48,r:.453},N:{u:.5,v:.44,r:.453},R:{u:.5,v:.5,r:.434},C:{u:.49,v:.53,r:.425},P:{u:.5,v:.48,r:.425}};
     const GNT_GLY={K:{u:.5,v:.636,r:.368},A:{u:.49,v:.6,r:.378},B:{u:.53,v:.64,r:.36},N:{u:.5,v:.63,r:.34},R:{u:.5,v:.584,r:.374},C:{u:.5,v:.6,r:.34},P:{u:.5,v:.67,r:.415}};
     const gntPool={},gntCnt={},gntFigs=[],gntStones=[];
     const gntShadow=root=>{const KT=window.XQTOON_KIT;root.traverse(m=>{if(!m.isMesh||m.name==="meGly")return;if(KT&&KT.isHull&&KT.isHull(m)){m.visible=false;m.userData.gntOff=1;return}   /* 水墨描邊的黑殼：半透明的分身會透出一整片黑，分身不描邊 */const ms=(Array.isArray(m.material)?m.material:[m.material]).map(x=>{const c=x.clone();c.transparent=true;c.opacity=.52;c.depthWrite=false;if(c.color)c.color.lerp(new T.Color(0x8FB4FF),.45);if(c.emissive)c.emissive.set(0x1A3A7A);return c});m.material=Array.isArray(m.material)?ms:ms[0];m.castShadow=false})};
-    const gntFig=(p,K)=>{const n=gntCnt[p]=(gntCnt[p]||0)+1,body=n===1,g=new T.Group(),inner=new T.Group();g.add(inner);g.userData={p,th:GNT_H*.55,giant:1,body};
+    const gntFig=(p,K,blk)=>{const n=gntCnt[p]=(gntCnt[p]||0)+1,body=n===1,g=new T.Group(),inner=new T.Group();g.add(inner);g.userData={p,th:GNT_H*.55,giant:1,body};
       /* 開發者 11/12「底下踩著的棋子不用放上去，只要站角色即可」：不再墊本命棋子底座，角色直接站在棋盤格點上；
          「把棋子放在每個 3D 角色背後，然後他們要面向對方」：本命字圓牌貼在背上（gly.back），角色轉身面向敵陣（gntTake 依 flip 轉 180 度），玩家從後面看得到字 */
-      let B=null;try{B=window.XQBot3D&&XQBot3D.figure?XQBot3D.figure({glb:"data/tripo_app/"+GNT_X[K]+".glb",p:GNT_CH[K],gly:Object.assign({back:1},GNT_GLY[K])}):null}catch(e){B=null}
+      let B=null;try{B=window.XQBot3D&&XQBot3D.figure?XQBot3D.figure({glb:"data/tripo_app/"+(blk?GNT_XS[K]:GNT_X[K])+".glb",p:blk?NAMES.b[K]:GNT_CH[K],gly:Object.assign({back:1},(blk?GNT_GLYB:GNT_GLY)[K])}):null}catch(e){B=null}
       if(!B)return gntStone(p);inner.add(B.bot);g.userData.B=B;gntFigs.push(g);
       /* 放大倍數、位置一律在 inner 自己的座標算（量世界座標再扣掉 inner 的世界位置），不然角色會被拉回棋盤中心 */
       const fitTo=(obj,H)=>{inner.scale.setScalar(1);B.bot.position.set(0,0,0);g.updateMatrixWorld(true);const b=new T.Box3().setFromObject(obj),h=b.max.y-b.min.y;if(!(h>0))return false;
@@ -1527,10 +1546,10 @@
     /* 開發者 11/12「3D 角色變成棋子在對戰的時候也會有相對應的動作表情」：七星照局面做動作（Tripo 綁的 idle／walk／cheer／bow／wave_goodbye_01）——
        自己走子：走路，吃到子接著歡呼；被星樞吃掉一顆：帥揮手示警；贏了全體歡呼、輸了全體鞠躬；做完回待機 */
     const gntAct=(g,k,ms)=>{const B=g&&g.userData&&g.userData.B;if(!B||!B.clips)return;const kk=B.clips[k]?k:({wave:"wave_goodbye_01"})[k]||k;crPlay(B,kk);clearTimeout(g.userData.actT);if(ms)g.userData.actT=setTimeout(()=>{crPlay(B,"idle")},ms);pwPoke(ms||1500)};
-    const gntReact=(g,by,cap)=>{if(g&&g.userData&&g.userData.B){gntAct(g,"walk",cap?480:720);if(cap)setTimeout(()=>gntAct(g,"cheer",1900),490);return}
-      if(cap&&cap.userData&&cap.userData.B){const k=Object.values(pieces).find(x=>x&&x.userData&&x.userData.B&&x.userData.p==="K");if(k)gntAct(k,"wave",1700)}};
+    const gntReact=(g,by,cap)=>{if(g&&g.userData&&g.userData.B){gntAct(g,"walk",cap?480:720);if(cap)setTimeout(()=>gntAct(g,"cheer",1900),490)}
+      if(sideOf(cap&&cap.userData&&cap.userData.p||"a")==="r"&&cap.userData.B){const k=Object.values(pieces).find(x=>x&&x.userData&&x.userData.B&&x.userData.p==="K");if(k)gntAct(k,"wave",1700)}};
     let gntRes=null;
-    const gntTake=p=>{const q=gntPool[p];let g=q&&q.pop();if(g&&g.userData.ped){const[pb,pf,K]=g.userData.ped;pb.material=bMat(true);pf.material=fMat(NAMES.r[K],true)}   /* 換造型（refreshLook）會把舊的棋子材質丟掉，重用的底座要換新的 */if(!g){const K=p.toUpperCase();g=sideOf(p)==="r"&&GNT_X[K]?gntFig(p,K):gntStone(p)}g.visible=true;g.rotation.set(0,g.userData.B?(flip?0:PI):0,0);sc.add(g);return g};
+    const gntTake=p=>{const q=gntPool[p];let g=q&&q.pop();if(g&&g.userData.ped){const[pb,pf,K]=g.userData.ped;pb.material=bMat(true);pf.material=fMat(NAMES.r[K],true)}   /* 換造型（refreshLook）會把舊的棋子材質丟掉，重用的底座要換新的 */if(!g){const K=p.toUpperCase();g=sideOf(p)==="r"?(GNT_X[K]?gntFig(p,K):gntStone(p)):(GNT_XS[K]?gntFig(p,K,true):gntStone(p))}g.visible=true;g.rotation.set(0,g.userData.B?((sideOf(p)==="r")!==flip?PI:0):0,0);sc.add(g);return g};
     const gntDrop=g=>{sc.remove(g);if(g&&g.userData&&g.userData.giant){const p=g.userData.p;(gntPool[p]||(gntPool[p]=[])).push(g)}};
     let pieces={},prevB=null,prevLast=null,anims=[],captured=[],capNear=true,lastCapB=null;
     // 提示記號
@@ -1552,7 +1571,7 @@
       try{const c=btex.image.getContext("2d");drawBoard(c,btex.image.width,btex.image.height,null);btex.needsUpdate=true}catch(e){}if(prevB)sync(prevB)};
     // Noto Serif TC 網路字型晚到：載入後重畫字面（不然會先用系統字型，字又細又糊）
     try{document.fonts&&document.fonts.load(`900 64px ${SERIF}`,"帥仕相傌俥炮兵將士象馬車砲卒").then(()=>{if(!stopped)refreshLook()})}catch(e){}
-    function draw(board,o,ex){o=o||{};ex=ex||{};drawn=true;orbSet(ex.bhOrb);if(GIANT){const R=ex.result||null;if(R!==gntRes){gntRes=R;if(R)setTimeout(()=>{for(const g of Object.values(pieces))if(g&&g.userData&&g.userData.B)gntAct(g,R==="r"?"cheer":R==="b"?"bow":"idle",4200)},600)}}try{const dk=[(board||[]).join(","),o.sel,(o.targets||[]).join(" "),o.last?o.last.f+"-"+o.last.t:"",o.check,o.flip?1:0,ex.thinking?1:0,ex.result||"",(ex.hint||[]).join(" ")].join("|");if(dk!==PW.dk){PW.dk=dk;pwPoke(1500)}}catch(e){pwPoke(1500)}   /* 11/11 省電：App 每 1.5 秒輪詢都會呼叫 draw，盤面真的有變才算「畫面在動」 */const nf=!!o.flip;
+    function draw(board,o,ex){o=o||{};ex=ex||{};drawn=true;orbSet(ex.bhOrb,ex.gxLit);gxSet(ex.gx);if(GIANT){const R=ex.result||null;if(R!==gntRes){gntRes=R;if(R)setTimeout(()=>{for(const g of Object.values(pieces))if(g&&g.userData&&g.userData.B)gntAct(g,R==="r"?"cheer":R==="b"?"bow":"idle",4200)},600)}}try{const dk=[(board||[]).join(","),o.sel,(o.targets||[]).join(" "),o.last?o.last.f+"-"+o.last.t:"",o.check,o.flip?1:0,ex.thinking?1:0,ex.result||"",(ex.hint||[]).join(" ")].join("|");if(dk!==PW.dk){PW.dk=dk;pwPoke(1500)}}catch(e){pwPoke(1500)}   /* 11/11 省電：App 每 1.5 秒輪詢都會呼叫 draw，盤面真的有變才算「畫面在動」 */const nf=!!o.flip;
       {const lk=JSON.stringify(ex.look?[ex.look.k,ex.look.img,!!ex.look.gly,ex.look.pset,ex.look.pieces&&ex.look.pieces.r,ex.look.grid]:null);if(lk!==lookKey){lookKey=lk;LOOK=ex.look||null;
         if(LOOK){let n=0;const L0=[LOOK.img,LOOK.pieces&&LOOK.pieces.r,LOOK.pieces&&LOOK.pieces.b,...(LOOK.pset?PSRC(LOOK.pset):[])],done=()=>{if(++n>=L0.length&&LOOK===ex.look)refreshLook()};L0.forEach(src=>{if(!src||loadImg(src,done))done()})}
         refreshLook()}}
@@ -1682,7 +1701,7 @@
       if(!a.d)return 255;const x0=clamp(Math.floor(u*AS),0,AS-1),y0=clamp(Math.floor((1-v)*AS),0,AS-1);let m=0;r=r||0;
       for(let y=Math.max(0,y0-r);y<=Math.min(AS-1,y0+r);y++)for(let x=Math.max(0,x0-r);x<=Math.min(AS-1,x0+r);x++){const al=a.d[(y*AS+x)*4+3];if(al>m)m=al}return m};
     const infoPick=()=>{   // 用 pick() 剛設好的那條射線
-      if(orbHit()){orbFly();return"orb"}   /* 幻影棋客頭上的小黑洞（點了化成紫光飛走，App 接 parkInfo("orb")） */
+      if(orbHit()){if(orbK==="ball")orbFly();return"orb"}   /* 幻影棋客頭上的小黑洞（點了化成紫光飛走，App 接 parkInfo("orb")） */
       if(ray.ray.intersectPlane(plane,hitP)&&Math.abs(hitP.x)<BW/2&&Math.abs(hitP.z)<BH/2)return null;   // 點在棋盤（含邊框）上不算
       // 人：觀戰者、近端的小帥、對面的 3D 小帥（點了看棋友資料）
       for(const h of ray.intersectObjects([watchG,mate.g,...(oppSpr?[]:[opp.g])],true)){let o=h.object;while(o&&o!==watchG&&o!==mate.g&&o!==opp.g&&!(o.userData&&o.userData.pid))o=o.parent;

@@ -25,7 +25,11 @@ var XQNet=(function(){
   /* host 留空＝照舊用公開伺服器 broker.emqx.io；填了 host（EMQX Serverless 總覽頁的 Address，例如 xxxxxxxx.ala.us-east-1.emqxsl.com）就連 wss://host:port/path。user／pass 放給 App 用的那組帳號（xqapp） */
   const MQ={host:"d23f1132.ala.asia-southeast1.emqxsl.com",port:8084,path:"/mqtt",user:"xqapp",pass:"xqapp12345678"};   /* 開發者 11/9「可以切換私人伺服器了」：EMQX Serverless（xiangqi-lobby，新加坡）；xqapp 是公開帳號，權限只准 +/v1/…（不能發 sys、cup/state、cup/hall、cal、ctl/ack、c/） */
   const URLS=[MQ.host?"wss://"+MQ.host+":"+MQ.port+MQ.path:"wss://broker.emqx.io:8084/mqtt"];
-  let ROOT="xqlab-r7k2q/v1";try{const r=JSON.parse(localStorage.getItem("xq_netRoot")||"null");if(r&&/^[\w-]{3,40}$/.test(r))ROOT="xqlab-test-"+r+"/v1"}catch(e){}
+  let ROOT="xqlab-r7k2q/v1";try{const v=localStorage.getItem("xq_netRoot");let r=null;try{r=JSON.parse(v||"null")}catch(e){r=v}   /* 11/12：測試房設成沒引號的字串（例如 xq_test）以前會 JSON 解析失敗、默默連到正式大廳（棋友a3d9）；沒引號也當測試房 */
+  if(r&&/^[\w-]{3,40}$/.test(r))ROOT="xqlab-test-"+r+"/v1"}catch(e){}
+  /* 開發者 11/12「嚴格禁止電腦虛擬測試玩家跑到正式大廳」：本機網址（localhost、127.x、[::1]、*.localhost、區網 192.168／10.x）或自動化瀏覽器（navigator.webdriver），
+     不管 xq_netRoot 怎麼設，一律只進測試房 xqlab-test-local；正式大廳只有正式站上的真人（大廳棋友程式 lobby-bots 是 Node 直接連，不經過這裡） */
+  try{const h=String(location.hostname||"");if(ROOT==="xqlab-r7k2q/v1"&&(/^(localhost|127\.|\[::1\]|192\.168\.|10\.)/.test(h)||/\.localhost$/.test(h)||(typeof navigator!=="undefined"&&navigator.webdriver)))ROOT="xqlab-test-local/v1"}catch(e){}
   const MQA={user:MQ.user,pass:MQ.pass};
   if(/^xqlab-test-/.test(ROOT))try{const t=JSON.parse(localStorage.getItem("xq_mqtt")||"null");if(t&&typeof t.url==="string"&&/^wss?:\/\/[\w.:\[\]-]+(\/[\w./-]*)?$/.test(t.url)){URLS[0]=t.url;MQA.user=String(t.user||"");MQA.pass=String(t.pass||"")}}catch(e){}
   const ALIVE=150000;

@@ -288,7 +288,7 @@ var XQ=(function(){
   /* 石桌往事的特製關卡（levels.json 的 play 步驟）：從指定局面開始、讓子（拿掉幾顆）、關掉長將判負。棋盤 90 格要合法、兩邊都有將帥才接受 */
   function lvStart(lv){if(!lv||typeof lv!=="object")return null;let b;try{b=parseFen(typeof lv.fen==="string"&&lv.fen?lv.fen:START)}catch(e){return null}
     if(!Array.isArray(b)||b.length!==90)return null;for(const q of Array.isArray(lv.remove)?lv.remove.slice(0,16):[]){const i=parseSq(String(q));if(Number.isInteger(i)&&i>=0&&i<90&&b[i]&&!/[kK]/.test(b[i]))b[i]=null}
-    if(!b.includes("k")||!b.includes("K"))return null;return{start:fen(b,"r").split(" ")[0],startTurn:lv.turn==="b"?"b":"r",noPerp:!!lv.noPerpetual}}
+    if(!b.includes("k")||!b.includes("K"))return null;return{start:fen(b,"r").split(" ")[0],startTurn:lv.turn==="b"?"b":"r",noPerp:!!lv.noPerpetual,mirror:Array.isArray(lv.mirror)?lv.mirror.filter(u=>/^[a-i][0-9][a-i][0-9]$/.test(String(u))).slice(0,4):null}}   /* mirror：幻譜星門「第十四顆」——電腦先照玩家自己最常贏的開局走前幾步（styleMove） */
   function playNew(human,level,ranked,pre,reward,arena,noStash,journey,lv){
     const plain=!ranked&&!pre&&!reward,nk=pre?"practice":plain&&journey?"journey":plain&&arena?"arena":"cpu";
     if(!noStash&&P){
@@ -298,7 +298,7 @@ var XQ=(function(){
     forfeit(P);
     const pm=pre&&Array.isArray(pre.moves)?pre.moves.filter(m=>Number.isInteger(m.f)&&Number.isInteger(m.t)).slice(0,300):[];
     P={id:gameId(),human,level:ranked?0:level,ranked:!!ranked,rk:ranked?heldIdx(cpuRate()):null,moves:pm,result:null,hint:null,practice:pre?{...(pre.info||{}),base:pm.length}:null,reward:!ranked&&!pre&&!!reward,arena:!ranked&&!pre&&!reward&&arena||null,journey:nk==="journey"?journey:null};   /* 數學修正 11/11：對手照顯示的段位（遲滯後） */
-    {const L=nk==="journey"?lvStart(lv):null;if(L){P.start=L.start;P.startTurn=L.startTurn;if(L.noPerp)P.noPerp=true}}
+    {const L=nk==="journey"?lvStart(lv):null;if(L){P.start=L.start;P.startTurn=L.startTurn;if(L.noPerp)P.noPerp=true;if(L.mirror&&L.mirror.length)P.mirror=L.mirror}}
     P.rc=C.ruleConfig(nk==="cpu"&&!ranked&&!reward?rulePref():C.RULESET_DEFAULT,ranked?"ranked":pre?"puzzle":"casual");   /* 晉級賽一律千秋休閒規則（積分只認這一套） */
     stateRebuild(P);if(P.practice&&P.turn!==human)throw new Error("這步不是你走的");savePlay()}
   function playApply(f,t){stateApply(P,f,t);P.hint=null;let r=judgeState(P);if(r&&P.noPerp&&/長將|長捉|長打/.test(r.why))r=null;if(r)playEnd(r.w,r.why);savePlay();setTimeout(analyzePlay,0);
@@ -324,7 +324,8 @@ var XQ=(function(){
     shenwansan:{r:[["g0e2","c0e2"]],b:[["c9e7","g9e7"]]},                         // 沈萬三：飛相局
     changyuchun:{r:[["h2e2"],["h0g2"]],b:[["h7e7"],["h9g7"]]},                     // 常遇春：順炮直衝
     wangmian:{r:[["h2d2","b2f2"]],b:[["b7f7","h7d7"]]}};                          // 王冕：過宮炮
-  function styleMove(){if(!P.journey||!String(P.journey).startsWith("inn:")||P.practice)return null;const S=STYLE[String(P.journey).slice(4)];if(!S)return null;
+  function styleMove(){if(P.mirror&&P.journey&&!P.practice){const u=P.mirror[Math.floor(P.moves.length/2)];if(!u)return null;const f=parseSq(u.slice(0,2)),t=parseSq(u.slice(2,4));return legal(P.board,P.turn).some(([a,b])=>a===f&&b===t)?[f,t]:null}   /* 幻譜星門「第十四顆」：鏡像的自己 */
+    if(!P.journey||!String(P.journey).startsWith("inn:")||P.practice)return null;const S=STYLE[String(P.journey).slice(4)];if(!S)return null;
     if(P.styleOn==null)P.styleOn=Math.random()<.9;if(!P.styleOn)return null;
     const list=(S[P.turn]||[])[Math.floor(P.moves.length/2)];if(!list)return null;const L=legal(P.board,P.turn);
     for(const u of list){const f=parseSq(u.slice(0,2)),t=parseSq(u.slice(2,4));if(L.some(([a,b])=>a===f&&b===t))return[f,t]}return null}
