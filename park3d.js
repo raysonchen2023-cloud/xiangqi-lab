@@ -90,8 +90,8 @@
   /* 開發者 11/12「黑洞的大棋盤不夠大，請 Gemini 重新設計黑洞風格的神秘棋盤」：Gemini 畫的星石盤面底圖（bh_board.webp，無格線），格線、九宮由程式用淡金色畫上（才跟棋子位置對齊），河界照舊疊星河 */
   let BBOARD=null;
   function drawBhBoard(g,w,h,onReady){const u=w/BW,im=loadImg(BBOARD,onReady);g.fillStyle="#0A0B1E";g.fillRect(0,0,w,h);if(im)g.drawImage(im,0,0,w,h);
-    const X=c=>(c+1.2)*u,Y=r=>(r+1.2)*u,ln=(a,b,c,d)=>{g.beginPath();g.moveTo(X(a),Y(b));g.lineTo(X(c),Y(d));g.stroke()};g.lineCap="round";g.strokeStyle="rgba(240,206,120,.82)";g.shadowColor="rgba(255,214,130,.55)";g.shadowBlur=.1*u;
-    g.lineWidth=.05*u;g.strokeRect(X(0)-.13*u,Y(0)-.13*u,8.26*u,9.26*u);g.lineWidth=.034*u;for(let r=0;r<10;r++)ln(0,r,8,r);for(let c=0;c<9;c++){if(c===0||c===8)ln(c,0,c,9);else{ln(c,0,c,4);ln(c,5,c,9)}}
+    const X=c=>(c+1.2)*u,Y=r=>(r+1.2)*u,ln=(a,b,c,d)=>{g.beginPath();g.moveTo(X(a),Y(b));g.lineTo(X(c),Y(d));g.stroke()};g.lineCap="round";g.strokeStyle="rgba(216,200,151,.62)";g.shadowColor="rgba(255,236,190,.4)";g.shadowBlur=.08*u;   /* 11/12 ChatGPT 細修報告（story/chatgpt_app/121）：格線淡金偏月白 #d8c897、略細，不搶角色 */
+    g.lineWidth=.042*u;g.strokeRect(X(0)-.13*u,Y(0)-.13*u,8.26*u,9.26*u);g.lineWidth=.028*u;for(let r=0;r<10;r++)ln(0,r,8,r);for(let c=0;c<9;c++){if(c===0||c===8)ln(c,0,c,9);else{ln(c,0,c,4);ln(c,5,c,9)}}
     ln(3,0,5,2);ln(5,0,3,2);ln(3,7,5,9);ln(5,7,3,9);g.shadowBlur=0}
   function drawBoard(g,w,h,onReady){try{if(BBOARD)drawBhBoard(g,w,h,onReady);else drawBoard0(g,w,h,onReady)}finally{if(BRIVER)try{drawRiver(g,w,h,onReady)}catch(e){}}}
   function drawBoard0(g,w,h,onReady){const u=w/BW;const L=LOOK,im=L&&L.img?loadImg(L.img,onReady):null;
@@ -1039,7 +1039,7 @@
     /* 開發者 11/11 hspx「讓車輪戰也能有對戰的環景切換功能」：opt.era＝指定朝代（車輪戰在江南棋館，用明朝的家具和配色）；opt.indoor＝室內（不放樹、手繪道具、落葉、長榻和燈，只有木桌和兩張木凳） */
     const EK=opt.era&&ERA[opt.era]?opt.era:eraKey(),E=ERA[EK];
     /* hspx（開發者 11/12 黑洞星樞棋局）：opt.giant＝巨盤模式——棋盤浮在黑洞環景裡，不放桌椅地面和人物，紅方棋子換成雲河七星、黑方是星樞的發光棋子，鏡頭可以從俯視全盤一路推到站在棋盤上的第一人稱 */
-    const GIANT=!!opt.giant;BRIVER=GIANT?"data/park/bh_river.webp":null;BBOARD=GIANT?"data/park/bh_board.webp":null;
+    const GIANT=!!opt.giant;BRIVER=GIANT?"data/park/bh_river.webp":null;BBOARD=GIANT?"data/park/bh_board2.webp":null;
     let GS=1;if(GIANT)try{const v=+JSON.parse(localStorage.getItem("xq_bhGS")||"1.3");GS=v>=1&&v<=1.6?v:1.3}catch(e){GS=1.3}   /* 黑洞格距倍率（說明在 pos 那裡）；要在建棋盤之前宣告 */
     el.style.background=E.mist;
     let WX=null,CANO=null,MAPL=null,PANM=null,PANDH=0,PANROT=0,PSPOTS=null,MAPM=null,HILL=null,SIMRF=1,LAYER2=[],lastKf=-1,MAPO=[],MAPOK="",MAPP=null,MAPMN=0,RON=(()=>{try{return JSON.parse(localStorage.getItem("m_eramapRealm")||"true")!==false}catch(e){return true}})();   /* 地圖上的地名：[名字, x%, y%, 種類]；長卷的網格、圖高、地標（意見回饋 517、525） */
@@ -1060,7 +1060,7 @@
       /* 開發者 11/12「請 Gemini 繪製第二層黑洞環景，疊加原本的環境圖，讓空間感更神秘」：bh_layer2.webp 純黑底只有發光的星流，
          貼在比原環景近一點的圓柱（半徑 150）、相加混色（黑＝透明）、繞一圈貼兩次，慢慢轉（gntTick 旁），前後兩層產生景深 */
       /* 開發者 11/12「疊加兩層後，再繪製第三層環景增加遠近空間感，遠／中／近／超大棋盤」：遠＝原黑洞環景（半徑 170）、中＝bh_layer2（150，慢轉）、近＝bh_layer3（95，大顆失焦星塵，轉得快一點），越近轉越快＝視差 */
-      if(opt.giant)for(const[src,r,hh,y,op,spd,ro]of[["data/park/bh_layer2.webp",150,200,10,.9,.012,-.4],["data/park/bh_layer3.webp",95,130,8,.75,.03,-.3]]){
+      if(opt.giant)for(const[src,r,hh,y,op,spd,ro]of[["data/park/bh_layer2.webp",150,200,10,.6,.012,-.4],["data/park/bh_layer3b.webp",115,150,8,.5,.016,-.3]]){
         const L2=new T.Mesh(new T.CylinderGeometry(r,r,hh,96,1,true),new T.MeshBasicMaterial({transparent:true,opacity:0,blending:T.AdditiveBlending,depthWrite:false,side:T.BackSide,fog:false,toneMapped:false}));
         L2.position.y=y;L2.renderOrder=ro;L2.userData.giant=1;L2.userData.spd=spd;sc.add(L2);LAYER2.push(L2);
         const put2=()=>{const im=imgCache[src];if(!im||!im.naturalWidth||!el.isConnected)return;const t=srgb(new T.Texture(im));t.wrapS=T.RepeatWrapping;t.repeat.x=-2;t.needsUpdate=true;L2.material.map=t;L2.material.opacity=op;L2.material.needsUpdate=true;pwPoke(400)};if(loadImg(src,put2))setTimeout(put2,0)}
@@ -1721,9 +1721,15 @@
     /* 棋距拉桿（左上，1.0～1.6 倍、每格 0.1）：拉了馬上換棋盤、木框、棋子位置、吃子星軌，鏡頭下一幀跟著拉遠 */
     let GSUI=null;const gsSet=v=>{v=Math.round(clamp(v,1,1.6)*10)/10;if(v===GS)return;GS=v;try{localStorage.setItem("xq_bhGS",JSON.stringify(v))}catch(e){}gsBoard();for(const k in pieces){const g=pieces[k];if(g)at(g,+k)}
       try{if(lastCapB)layoutCaptured(lastCapB)}catch(e){}if(padCur>=0)padShow();pwPoke(800)};
-    const gsUI=()=>{if(GSUI||!GIANT)return;GSUI=document.createElement("label");GSUI.className="gs-ui";GSUI.style.cssText="position:absolute;left:10px;top:46px;z-index:4;display:flex;align-items:center;gap:6px;padding:5px 10px;border-radius:99px;background:rgba(16,14,34,.72);color:#FFE08A;font:700 12px/1 system-ui";
-      GSUI.innerHTML=`棋距<input type="range" min="1" max="1.6" step="0.1" value="${GS}" aria-label="棋盤格距" style="width:92px;accent-color:#FFE08A;margin:0"><b>${GS.toFixed(1)}×</b>`;const r=GSUI.querySelector("input"),b=GSUI.querySelector("b");
-      for(const ev of["pointerdown","pointerup","pointermove","click"])GSUI.addEventListener(ev,e=>e.stopPropagation());r.oninput=()=>{gsSet(+r.value);b.textContent=GS.toFixed(1)+"×"};el.append(GSUI)};
+    /* 開發者 11/12 hspx「棋距放的位置很遮畫面」：拉桿收成一顆小圓鈕「↔」，放進右下角 ＋／－ 那一排最上面（樣式一樣），點了才在左邊展開拉桿，3.5 秒沒動就收起來 */
+    const gsUI=()=>{if(GSUI||!GIANT)return;const zb=el.querySelector(".pzoom");GSUI=document.createElement("button");GSUI.type="button";GSUI.className="gs-ui";GSUI.textContent="↔";GSUI.setAttribute("aria-label","調整棋距");GSUI.setAttribute("aria-expanded","false");
+      GSUI.style.cssText="width:34px;height:34px;border-radius:50%;border:1px solid rgba(0,0,0,.18);background:rgba(255,255,255,.82);color:#3a2a1c;font:800 17px/1 system-ui;box-shadow:0 1px 4px rgba(0,0,0,.2);padding:0;cursor:pointer";
+      const pop=document.createElement("div");pop.className="gs-pop";pop.style.cssText="position:absolute;right:50px;bottom:88px;z-index:5;display:none;align-items:center;gap:6px;padding:6px 10px;border-radius:99px;background:rgba(16,14,34,.84);color:#FFE08A;font:700 12px/1 system-ui;box-shadow:0 2px 8px rgba(0,0,0,.35)";
+      pop.innerHTML=`棋距<input type="range" min="1" max="1.6" step="0.1" value="${GS}" aria-label="棋盤格距" style="width:110px;accent-color:#FFE08A;margin:0"><b>${GS.toFixed(1)}×</b>`;const r=pop.querySelector("input"),b=pop.querySelector("b");
+      let hideT=0;const arm=()=>{clearTimeout(hideT);hideT=setTimeout(()=>{pop.style.display="none";GSUI.setAttribute("aria-expanded","false")},3500)};
+      for(const x of[GSUI,pop])for(const ev of["pointerdown","pointerup","pointermove","click"])x.addEventListener(ev,e=>e.stopPropagation());
+      GSUI.onclick=()=>{const open=pop.style.display==="none";pop.style.display=open?"flex":"none";GSUI.setAttribute("aria-expanded",String(open));if(open)arm()};
+      r.oninput=()=>{gsSet(+r.value);b.textContent=GS.toFixed(1)+"×";arm()};if(zb)zb.prepend(GSUI);else el.append(GSUI);el.append(pop)};
     const gntPad=o=>{const sel=o.sel!=null&&o.sel>=0?o.sel:-1,T2=Array.isArray(o.targets)?o.targets.slice():[];
       if(sel<0||!T2.length){padSel=-1;padCur=-1;padT=[];if(PAD)PAD.style.display="none";padRing.visible=padBeam.visible=false;return}
       padUI();PAD.style.display="grid";if(sel!==padSel){padSel=sel;padCur=sel}padT=T2;padShow()};
@@ -1772,7 +1778,7 @@
     // 意見回饋 218：螢幕夠高時畫面拉高一點（最多 1.32），多出來的都給下方（上緣維持原本的位置），露出棋盤前方的桌面讓小帥坐
     // 意見回饋 260：固定高度的對局頁（iPhone 主畫面 App 可用高度少、觀戰多一行狀態）不能比版面留給它的空間高，不然會壓到下面的玩家列
     const room=()=>{const box=el.parentElement,view=box&&box.parentElement;
-      if(box&&getComputedStyle(box).position==="sticky"){const bs=getComputedStyle(box);return box.clientHeight-parseFloat(bs.paddingTop)-parseFloat(bs.paddingBottom)}   /* 11/12 iPhone 橫向（第 6 輪截圖 18）：對局頁變兩欄、左欄固定高度，3D 照左欄高度算，不再比螢幕高 */
+      if(box&&/^(sticky|fixed)$/.test(getComputedStyle(box).position)){   /* fixed＝黑洞橫向滿版（07bh bhFull） */const bs=getComputedStyle(box);return box.clientHeight-parseFloat(bs.paddingTop)-parseFloat(bs.paddingBottom)}   /* 11/12 iPhone 橫向（第 6 輪截圖 18）：對局頁變兩欄、左欄固定高度，3D 照左欄高度算，不再比螢幕高 */
       if(!view||getComputedStyle(view).overflow!=="hidden")return 1e9;
       let used=0;for(const c of view.children)if(c!==box&&!(parseFloat(getComputedStyle(c).flexGrow)>0))used+=c.offsetHeight;const cs=getComputedStyle(box);   /* 撐開空白的那格（flex:1）不算 */return view.clientHeight-used-parseFloat(cs.paddingTop)-parseFloat(cs.paddingBottom)};
     const fit=()=>{W=el.clientWidth||300;CAMV.hr=clamp((VH0-300)/W,1.14,1.32);const rm=room();if(W*CAMV.hr>rm)CAMV.hr=Math.max(.3,rm/W);   /* 意見回饋 295：電腦的寬螢幕也照可用高度滿版（上下視角不變、左右看更廣），不再撐得比螢幕還高 */
@@ -1806,8 +1812,9 @@
       GFQ.copy(GFT);GFQ.y-=pitch*5.2*(1-k);cam.lookAt(GFQ);cam.rotateX(CAMV.dp*(1-k));gntClear(k>.35)};
     /* 放大繞著角色轉時，鏡頭會穿進旁邊的角色、或被前排擋住：擋在鏡頭到目標這條線上（半徑 0.6 內）的其他角色先藏起來，拉遠就回來 */
     const GFR=new T.Vector3();const gntClear=on=>{const C=cam.position;for(const g of gntFigs){const inn=g.children[0];if(!inn)continue;let hide=false;
-      if(on&&g!==GFOC&&g.parent){g.getWorldPosition(GFR);GFR.y+=GNT_H*.5;const ax=GFT.x-C.x,ay=GFT.y-C.y,az=GFT.z-C.z,L2=ax*ax+ay*ay+az*az||1;let t=((GFR.x-C.x)*ax+(GFR.y-C.y)*ay+(GFR.z-C.z)*az)/L2;
-        if(t<.92){t=Math.max(0,t);const px=C.x+ax*t-GFR.x,py=C.y+ay*t-GFR.y,pz=C.z+az*t-GFR.z;hide=px*px+py*py+pz*pz<.36}}
+      /* 開發者 11/12「某些角度會讓原本的棋子消失」：原本擋在視線上的角色都藏起來，玩家會以為那隻棋不見了（例如從黑方背後看，將被藏掉）。
+         改成只有鏡頭真的鑽進角色身體裡（離身體中心 0.75 以內）才藏，擋住視線的照樣看得到 */
+      if(on&&g!==GFOC&&g.parent){g.getWorldPosition(GFR);GFR.y+=GNT_H*.5;hide=GFR.distanceTo(C)<.75}
       if(inn.visible===hide)inn.visible=!hide}};
     const gntCam=()=>{GFL.set(0,0,-.6*GS);if(zoom<1)return gntCamNear();if(cam.near!==.5){cam.near=.5;cam.updateProjectionMatrix()}GFT.copy(GFL);gntClear(false);
       const near=0,far=smooth(1.05,2.6,zoom),mix=(a,b,k)=>a.map((v,j)=>v+(b[j]-v)*k);let v=mix(GNT_V[1],GNT_V[0],near);v=mix(v,GNT_V[2],far);v=v.map(x=>x*GS);   /* 格距放大，鏡頭跟著等比拉遠 */

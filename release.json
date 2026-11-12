@@ -1,8 +1,8 @@
 {
- "version": "20261112-1150",
- "checkedAt": "2026-11-12T04:37:59.218Z",
- "html": "aeb0f787ff6c",
- "sw": "5fa0474db275",
+ "version": "20261112-1160",
+ "checkedAt": "2026-11-12T04:50:13.214Z",
+ "html": "17e370b0c718",
+ "sw": "8409fd18d819",
  "scripts": 4,
  "modules": {
   "00-util.js": "e4beee43ce00",
@@ -21,7 +21,7 @@
   "07e-garden2.js": "3fcba9f0abfc",
   "07f-ship.js": "70f9f4405a6d",
   "07o-shipmore.js": "3e3ebb9d732b",
-  "07bh-blackhole.js": "a15c12bded90",
+  "07bh-blackhole.js": "2fd88dfa2534",
   "07gx-galaxy.js": "02ed2c124e51",
   "07dv-devtest.js": "161965d8865f",
   "07g-battle.js": "6c2de94250f9",

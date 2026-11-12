@@ -1534,7 +1534,7 @@ html[data-hct] .player.on .clk{background:#00563B;color:#FFFFFF;border-color:#00
       if(!window.caches)return go();caches.keys().then(function(ks){return Promise.all(ks.filter(function(k){return k.indexOf("xqlab-app-")===0}).map(function(k){return caches.delete(k)}))})
         .then(function(){return navigator.serviceWorker&&navigator.serviceWorker.getRegistration()}).then(function(r){return r&&r.update()}).catch(function(){}).then(go)}};setTimeout(chk,4000)})();
 </script>
-<script>window.XQ_OFFLINE=true;window.XQ_BUILD="20261112-1150";</script>
+<script>window.XQ_OFFLINE=true;window.XQ_BUILD="20261112-1160";</script>
 <script src="core.js"></script>
 <script src="engine.js"></script>
 <script src="local.js"></script>
@@ -9732,7 +9732,32 @@ function bhStart(k,cover){store.set("bhRet",{k,cover:cover!==false,at:Date.now()
   jStart("bh:"+k,{human:"r",lx:bhLevel(),journey:"bh:"+k},()=>{location.hash="#/journey/play";setTimeout(()=>toast("✦ 星樞："+BH_TXT.voice[1]),900)})}
 const bhIs=st=>!!st&&String(st.journey||"").startsWith("bh:");
 /* 對局頁的 3D：巨盤模式＋黑洞環景（08b-cpugame 的 parkDraw 參數最後疊上去） */
-function bhParkEx(st){if(!bhIs(st)){if(typeof BGM!=="undefined"&&BGM.force&&/^bh_/.test(BGM.force))bhMus(null);return null}return{giant:true,bg:"data/park/blackhole_360.webp",bgName:"🌀 黑洞・星樞棋局",era:"classic",quietMate:true,watchers:[],oppHello:null,opp:null,mateLook:null,crowd:null,
+/* 開發者 11/12「黑洞對戰自動轉成手機／平板的橫向遊玩；等於是滿版的對戰，其他原本的文字你幫我優化要放哪」＋hspx「搖桿直向橫向都能使用」：
+   網頁沒辦法強制轉螢幕（iPhone 不支援），開發者選「提示轉橫向＋滿版排版」：
+   黑洞局在 body 掛 bh-full；橫向（高度 ≤ 600）時 3D 星盤蓋滿頂欄以下整個畫面，其他資訊縮成浮在上面的小條：
+   左上＝對手（星樞、級數）、左下＝自己、上方中間＝狀態（輪到你、形勢）、右側直排＝按鈕（悔棋、認輸…）；棋譜條、棋規條、場景名收起來；
+   左上第二排＝棋距拉桿、左下第二排＝平面棋盤；搖桿在右下（+／－ 的左邊），直向時照舊在下方中間。直向進黑洞局時提示一次「轉橫向會滿版」 */
+function bhFullCss(){if(document.getElementById("bhFullCss"))return;const s=document.createElement("style");s.id="bhFullCss";s.textContent=`@media (orientation:landscape) and (max-height:600px){
+body.bh-full .view.fixed:has(>#bbox):has(>#acts)>#bbox{position:fixed!important;grid-column:auto!important;left:0!important;right:0!important;top:var(--bhTop,56px)!important;bottom:auto!important;width:100vw!important;height:calc(100dvh - var(--bhTop,56px))!important;max-height:none!important;padding:0!important;margin:0!important;z-index:40;background:#05060d}
+body.bh-full .view.fixed:has(>#bbox):has(>#acts)>#bbox .park3d{border-radius:0!important}
+body.bh-full #pTop,body.bh-full #pBot,body.bh-full #stat,body.bh-full #acts{position:fixed!important;z-index:41;margin:0!important}
+body.bh-full #pTop,body.bh-full #pBot{left:calc(8px + env(safe-area-inset-left,0px));width:auto!important;max-width:34vw;padding:4px 10px!important;border-radius:12px;background:rgba(10,10,30,.74)!important;color:#f1e7cf!important;transform:scale(.8)}
+body.bh-full #pTop{top:calc(var(--bhTop,56px) + 6px);transform-origin:0 0}
+body.bh-full #pBot{bottom:6px;transform-origin:0 100%}
+body.bh-full #pTop *,body.bh-full #pBot *{color:inherit}
+body.bh-full #stat{top:calc(var(--bhTop,56px) + 6px);left:50%;transform:translateX(-50%);max-width:44vw;padding:4px 12px!important;border-radius:99px;background:rgba(10,10,30,.74);color:#FFE08A!important;font-size:13px!important;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+body.bh-full #acts{top:calc(var(--bhTop,56px) + 6px);right:calc(6px + env(safe-area-inset-right,0px));left:auto!important;width:auto!important;flex-direction:column;gap:2px;padding:4px!important;border-radius:14px;background:rgba(10,10,30,.62)!important;border:0!important}
+body.bh-full #acts button{min-width:54px;font-size:11px!important;color:#f1e7cf!important;padding:3px 2px!important}
+body.bh-full #strip,body.bh-full .evline,body.bh-full .rule-note,body.bh-full .pkname,body.bh-full .pk3d-back,body.bh-full .pkview{display:none!important}
+body.bh-full .pk2d{top:auto!important;bottom:56px!important;left:10px!important}
+body.bh-full .pzoom{right:calc(84px + env(safe-area-inset-right,0px))!important}
+body.bh-full .gs-pop{right:calc(128px + env(safe-area-inset-right,0px))!important}
+body.bh-full .gpad{left:auto!important;right:calc(130px + env(safe-area-inset-right,0px))!important;bottom:8px!important;transform:none!important}}`;document.head.append(s)}
+function bhFull(on,st){if(typeof document==="undefined")return;const b=document.body;if(!b)return;if(!on){if(b.classList.contains("bh-full"))b.classList.remove("bh-full");return}bhFullCss();b.classList.add("bh-full");
+  try{const tb=document.getElementById("topbar"),h=tb?Math.round(tb.getBoundingClientRect().bottom):56;document.documentElement.style.setProperty("--bhTop",Math.max(0,h)+"px")}catch(e){}
+  try{const port=matchMedia("(orientation:portrait)").matches,k="bhRot:"+(st&&st.id||"");if(port&&!sessionStorage.getItem(k)){sessionStorage.setItem(k,"1");setTimeout(()=>{try{toast("📱 手機轉成橫向，黑洞星盤會滿版")}catch(e){}},1800)}}catch(e){}}
+if(typeof window!=="undefined"){addEventListener("hashchange",()=>{if(!/^#\/journey\/play/.test(location.hash))bhFull(false)});addEventListener("resize",()=>{if(document.body&&document.body.classList.contains("bh-full"))bhFull(true,null)})}
+function bhParkEx(st){bhFull(bhIs(st),st);if(!bhIs(st)){if(typeof BGM!=="undefined"&&BGM.force&&/^bh_/.test(BGM.force))bhMus(null);return null}return{giant:true,bg:"data/park/bh_far2.webp"   /* 11/12 ChatGPT 細修報告＋Gemini 回應：遠景改用 Gemini 重畫、左右無縫的版本 */,bgName:"🌀 黑洞・星樞棋局",era:"classic",quietMate:true,watchers:[],oppHello:null,opp:null,mateLook:null,crowd:null,
   gate:{img:["data/park/blackhole_360.webp"],icon:"🌀",title:"星樞棋局",sub:"墨色星渦的中心，有一張巨大的星盤",bg:"#05060d",quiet:true}}}
 /* 對局中：領先、落後各提醒一次；下到中盤星樞說一句伏筆（不說破幻影棋客是什麼） */
 let BH_T={id:null,s:{}};
