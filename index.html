@@ -1534,7 +1534,7 @@ html[data-hct] .player.on .clk{background:#00563B;color:#FFFFFF;border-color:#00
       if(!window.caches)return go();caches.keys().then(function(ks){return Promise.all(ks.filter(function(k){return k.indexOf("xqlab-app-")===0}).map(function(k){return caches.delete(k)}))})
         .then(function(){return navigator.serviceWorker&&navigator.serviceWorker.getRegistration()}).then(function(r){return r&&r.update()}).catch(function(){}).then(go)}};setTimeout(chk,4000)})();
 </script>
-<script>window.XQ_OFFLINE=true;window.XQ_BUILD="20261112-1290";</script>
+<script>window.XQ_OFFLINE=true;window.XQ_BUILD="20261112-1300";</script>
 <script src="core.js"></script>
 <script src="engine.js"></script>
 <script src="local.js"></script>
@@ -9880,6 +9880,24 @@ function bhCapSnd(n,red,big){try{if(typeof withAudio!=="function"||typeof AC==="
   for(const[k,a,d]of[[1,.16,.5],[2.01,.06,.35],[3,.03,.25]]){const o=AC.createOscillator(),g=AC.createGain();o.type=red?"sine":"triangle";o.frequency.setValueAtTime(f0*k,t);o.frequency.exponentialRampToValueAtTime(f0*k*(red?1.03:.62),t+d);
     g.gain.setValueAtTime(0,t);g.gain.linearRampToValueAtTime(a*(big?1.3:1),t+.01);g.gain.exponentialRampToValueAtTime(.0008,t+d);o.connect(g);g.connect(dst);o.start(t);o.stop(t+d+.05)}})}catch(e){}}
 if(typeof window!=="undefined")window.XQ_BHCAP=bhCapSnd;
+/* hspx 1086（開發者 11/12「吃子需要氣勢非常強，打敗對手的視覺震撼」）：紅方物件命中那一下（park3d cineHit 呼叫）＝低頻重擊往下沉＋一陣碎響；s＝強度（將死那一步 1） */
+function bhHitSnd(s){try{if(typeof withAudio!=="function"||typeof AC==="undefined"||!AC)return;withAudio(()=>{const t=AC.currentTime+.01,dst=sxmDst("piece"),o=AC.createOscillator(),g=AC.createGain();
+  o.type="sine";o.frequency.setValueAtTime(110,t);o.frequency.exponentialRampToValueAtTime(38,t+.45);g.gain.setValueAtTime(0,t);g.gain.linearRampToValueAtTime(.5*s,t+.008);g.gain.exponentialRampToValueAtTime(.0008,t+.6);o.connect(g);g.connect(dst);o.start(t);o.stop(t+.65);
+  const n=Math.floor(AC.sampleRate*.35),b=AC.createBuffer(1,n,AC.sampleRate),d=b.getChannelData(0);for(let i=0;i<n;i++)d[i]=(Math.random()*2-1)*Math.pow(1-i/n,2.5);
+  const src=AC.createBufferSource(),f=AC.createBiquadFilter(),g2=AC.createGain();src.buffer=b;f.type="lowpass";f.frequency.value=1800;g2.gain.value=.35*s;src.connect(f);f.connect(g2);g2.connect(dst);src.start(t)})}catch(e){}}
+if(typeof window!=="undefined")window.XQ_BHHIT=bhHitSnd;
+/* hspx 1086（開發者 11/12 選「星盤閉合＋化氣為茶（合體）」，一般黑洞局用同一套簡化版；ChatGPT 140／141 號）：黑洞局將死不放通用水墨「絕殺」，
+   改 park3d mateFx（吃子播完 → 九宮星線收束 → 星盤環停正 → 將化茶霧／星砂）；播完才跳結果視窗（MODAL_HOLD＋modalSkip）。3D 沒開就照舊 killFx */
+function bhMateFx(st,k){try{if(!bhIs(st)||typeof PARK==="undefined"||!PARK||!PARK.v||typeof PARK.v.mateFx!=="function")return false;const xu=st.journey===BHX_ID,lp=st.board[k];
+  MODAL_HOLD=Date.now()+15000;LAST_KFX=Date.now()+15000;   /* 01-board 的將死動畫看 LAST_KFX，這段期間不放 */
+  const ok=PARK.v.mateFx({sq:k,tea:xu,cam:lp==="k",snd:x=>bhMateSnd(x,xu),done:()=>{LAST_KFX=Date.now();if(typeof modalSkip==="function")modalSkip();else MODAL_HOLD=0}});
+  if(ok===false){MODAL_HOLD=0;LAST_KFX=0}return ok!==false}catch(e){return false}}
+/* 絕殺音效：start＝音樂停半拍（序局第 2 首壓到幾乎無聲，0.65 秒後回到 .25）＋低沉編鐘；lock＝星盤停正「叮」；tea＝茶霧風鈴（五聲往上）；dust＝星砂（低一點、輕一點） */
+function bhMateSnd(x,xu){try{if(x==="start"){if(xu&&typeof OP!=="undefined"&&OP.on){opVol(.02,.06);setTimeout(()=>{try{opVol(.25,1.4)}catch(e){}},650)}bhBell();return}
+  if(typeof withAudio!=="function"||typeof AC==="undefined"||!AC)return;withAudio(()=>{const t=AC.currentTime+.02,dst=sxmDst("piece");
+    const ping=(f,at,a,d)=>{const o=AC.createOscillator(),g=AC.createGain();o.type="sine";o.frequency.value=f;g.gain.setValueAtTime(0,at);g.gain.linearRampToValueAtTime(a,at+.01);g.gain.exponentialRampToValueAtTime(.0005,at+d);o.connect(g);g.connect(dst);o.start(at);o.stop(at+d+.05)};
+    if(x==="lock"){ping(1568,t,.08,.6);ping(2349,t,.045,.4);ping(784,t,.06,.9)}
+    else{const F=x==="tea"?[1318,1568,1760,2093,2637]:[880,1047,1319,1568];F.forEach((f,i)=>ping(f,t+i*.13,x==="tea"?.05:.035,1.6))}})}catch(e){}}
 /* ---------- 開發者 11/12 選：黑洞望遠鏡裡的「七星故事星系」（story/127 整合：Gemini 125 方案 A「星海拾憶」＋ChatGPT 126 定稿文案）----------
    遠方 14 個天體裡指定 7 個當七星的記憶星系；照星槎劇情進度解鎖（停靠站數＝讀到第幾章，13 站全開＝第 14 章），還沒到的維持普通星雲、不爆雷。
    解鎖的星系閃霧金色；🔭 放大到 20 倍以上對準 → 浮現星點連成的星座（程式畫，第一期不出圖）、星名大字和一句回憶；第一次找到，那位角色說一句。七顆都找到後，棋盤星座浮現星樞的收束台詞 */
@@ -10050,7 +10068,7 @@ function bhxGuard(st,f,t){if(!st||st.journey!==BHX_ID||st.result)return null;
   BHX_W++;try{bhBell()}catch(e){}vibrate([10,40,10]);toast("✦ 星樞："+BHX_TXT.wrong);setTimeout(()=>toast("💡 "+(BHX_W>=2?BHX_TXT.hint2:BHX_TXT.hint1)),1700);return{hint:BHX_W>=2?BHX_SOL:null}}
 /* 序局下完（bhGameEnd、bhResultModal 轉過來）：星樞一句 → 第 2～4 頁 → 新旅程接原本的序幕；舊玩家回首頁 */
 function bhxEnd(){store.set("bhXuDone",Date.now())}
-function bhxAfter(){bhxEnd();opVol(.25,1.2);   /* 將死：第 2 首淡下來 */
+function bhxAfter(){bhxEnd();if(!(MODAL_HOLD>Date.now()))opVol(.25,1.2);   /* 新絕殺動畫在播：音量由 bhMateSnd 處理 */   /* 將死：第 2 首淡下來 */
   modal(`<div class="em">✨</div><h2>星盤暫合</h2><p class="pl-say">✦ 星樞：「${esc(BHX_TXT.win)}」</p>`,[["循著茶香",()=>{const old=+store.get("bhXuOld",0)===1;store.set("bhXuOld",0);
     opPlay(3,{fade:.8});   /* 第 3 首〈七星歸槎〉：按「循著茶香」那一下開始 */
     if(!old&&journey()&&!store.get("bhxFresh",0)){try{if(typeof shipEra==="function")shipEra("classic");else{store.set("era","classic");store.set("eraUser",null);applyEra()}}catch(e){}store.set("bhxLand",Date.now())}   /* hspx 開發者 11/12「每個角色打完黑洞的第一站，要統一降落到經典首頁，而不是每個人的主場」：首頁朝代設回經典（停靠紀錄照舊有主場；舊玩家只看序章不動） */
@@ -10174,7 +10192,6 @@ function bhxFilm(F,done){bhxCss();let rm=false;try{rm=matchMedia("(prefers-reduc
   /* 手指劃過撥出星光（開發者選）：不換頁 */
   const brush=e=>{if(o.dataset.pick==="1")return;const r=o.getBoundingClientRect(),x=e.clientX-r.left,y=e.clientY-r.top;for(let k=0;k<(e.type==="pointerdown"?14:3);k++){const a=Math.random()*6.283,v=.3+Math.random()*1.6;add(x,y,Math.cos(a)*v,Math.sin(a)*v-.2,40+Math.random()*40,1+Math.random()*1.8,Math.random()<.3?"255,214,120":"200,225,255")}};
   o.addEventListener("pointerdown",brush);o.addEventListener("pointermove",e=>{if(e.buttons||e.pointerType==="touch")brush(e)});
-  const crackLines=[];for(let k=0;k<7;k++){const a=(k%2?.55:-.55)*Math.PI/2+(k<4?Math.PI/2:-Math.PI/2)+(Math.random()-.5)*.8,pts=[[0,0]];let x=0,y=0,h=a;for(let j=0;j<9;j++){h+=(Math.random()-.5)*1.1;const st=5+Math.random()*7;x+=Math.cos(h)*st;y+=Math.sin(h)*st;pts.push([x,y])}crackLines.push(pts)}   /* 沿裂縫上下兩個方向走的曲折細紋（不是放射直線） */
   const frame=()=>{if(fin)return;const t=opTime();let i=F.shots.length-1;while(i>0&&F.shots[i].at>t)i--;if(i!==si)setShot(i);
     if(t>=F.end&&!(S&&S.meteor!=null)){finish();return}
     const a=S.at,b=nextAt(si),p=Math.max(0,Math.min(1,(t-a)/Math.max(.1,b-a))),e=p<.5?2*p*p:1-Math.pow(-2*p+2,2)/2;
@@ -10199,7 +10216,8 @@ function bhxFilm(F,done){bhxCss();let rm=false;try{rm=matchMedia("(prefers-reduc
       if(S.fx==="steam"&&Math.random()<.4)add(src[0]+(Math.random()-.5)*40,src[1],(Math.random()-.5)*.3,-.4-Math.random()*.6,90,2+Math.random()*3,"240,240,240")}
     g.globalCompositeOperation="lighter";
     if(S.fx==="crack"&&t>=S.crack){const k=Math.min(1,(t-S.crack)/.6),fl=Math.max(0,1-(t-S.crack)/.5);if(fl>0){g.fillStyle=`rgba(255,250,235,${fl*.55})`;g.fillRect(0,0,W,H)}
-      const ca=Math.max(0,1-(t-S.crack)/1.8);g.strokeStyle=`rgba(255,236,190,${.8*ca})`;g.lineWidth=1.1;if(ca>0)for(const L of crackLines){g.beginPath();const n=Math.ceil(L.length*k);for(let j=0;j<n;j++){const q=L[j];j?g.lineTo(src[0]+q[0]*kbNow[0]*.6,src[1]+q[1]*kbNow[0]*.6):g.moveTo(src[0],src[1])}g.stroke()}}
+      /* 開發者 11/12「這裂痕太假，重畫」：不再用程式畫裂紋線（疊在畫好的裂縫上很假），改成裂口爆出一圈柔和的白金光暈，擴散後淡掉 */
+      const ct=t-S.crack,ca=Math.max(0,1-ct/2.2);if(ca>0){const R=(40+ct*260)*Math.min(1.6,kbNow[0]),gr=g.createRadialGradient(src[0],src[1],0,src[0],src[1],R);gr.addColorStop(0,`rgba(255,250,232,${.85*ca})`);gr.addColorStop(.35,`rgba(255,226,170,${.35*ca})`);gr.addColorStop(1,"rgba(255,226,170,0)");g.fillStyle=gr;g.beginPath();g.arc(src[0],src[1],R,0,6.2832);g.fill()}}
     for(let j=P.length-1;j>=0;j--){const q=P[j];q.l++;if(S.fx==="whirl"&&q.col!=="255,214,120"){const dx=src[0]-q.x,dy=src[1]-q.y,d=Math.hypot(dx,dy)||1;q.vx=q.vx*.96+(dx/d)*.6+(-dy/d)*.9;q.vy=q.vy*.96+(dy/d)*.6+(dx/d)*.9;if(d<8)q.l=q.m}
       q.x+=q.vx;q.y+=q.vy;if(S.fx==="fall"||S.fx==="crack")q.vy+=.01;const al=Math.max(0,1-q.l/q.m);if(al<=0||q.x<-20||q.x>W+20||q.y>H+20){P.splice(j,1);continue}
       g.fillStyle=`rgba(${q.col},${al*.9})`;g.beginPath();g.arc(q.x,q.y,q.r,0,6.2832);g.fill()}
@@ -21653,7 +21671,7 @@ function CpuGame(v,practicePage,mode){
       /* 開發者 11/11 選 ChatGPT 14 號方案 9「快局結算給下一步」：橋上快局下完，結算視窗用一句話邀請去茶肆（贏了打晉級賽、輸了去練功房挑級數），配一顆可以不理的「去茶肆」；不另外跳視窗 */
       const QKH=typeof hbHubN==="function"?hbHubN():"茶肆",QKN=FH()?`<p style="font-size:14px;margin:8px 0 2px">${st.result.w===st.human?`手感不錯！要不要去${esc(QKH)}打晉級賽，讓這股氣勢算進段位？`:!st.result.w?`要不要去${esc(QKH)}挑個剛好的對手，再來一盤？`:`這盤有點可惜。要不要去${esc(QKH)}練功房，挑剛好的級數再戰？`}</p><p class="muted" style="font-size:12.5px;margin:0">這盤是快速對局，不算段位分。</p>`:"";
       const win=st.result.w===st.human,draw0=!st.result.w;vibrate([30,40,30]);if(draw0&&parkOn()&&PARK&&PARK.host===v.querySelector("#bbox")){const dl=oppTalk(st,optJk(st),parkNpcOf(st)).draw;setTimeout(()=>{try{PARK.v.oppSay(dl,3)}catch(e){}},1600)}   /* 826 追加：和棋時對面的人也說一句（園子 3D 原本只有我方說「和棋，不錯喔！」） */
-      if(st.result.w&&/將死|困斃/.test(st.result.why||"")){const loser=st.result.w==="r"?"b":"r",k=st.board.indexOf(loser==="r"?"K":"k");if(k>=0){MODAL_HOLD=Date.now()+2700;killFx(bd.svg,win,st.result.why,k,st.human==="b",{side:st.result.w})}}try{window.dispatchEvent(new CustomEvent("xq-result",{detail:win?"win":draw0?"draw":"lose"}))}catch(e){}
+      if(st.result.w&&/將死|困斃/.test(st.result.why||"")){const loser=st.result.w==="r"?"b":"r",k=st.board.indexOf(loser==="r"?"K":"k");if(k>=0&&!(typeof bhMateFx==="function"&&bhMateFx(st,k))){MODAL_HOLD=Date.now()+2700;killFx(bd.svg,win,st.result.why,k,st.human==="b",{side:st.result.w})}}try{window.dispatchEvent(new CustomEvent("xq-result",{detail:win?"win":draw0?"draw":"lose"}))}catch(e){}
       /* 意見回饋 607（RPG 專家建議）：結果視窗統一成「主要按鈕一顆（整排）＋次要一排：📊 檢討・🏠 首頁・看看棋盤」；
          📊 檢討＝原本的「賽後報告」＋「檢討這盤」合併（打開時直接附報告）；看看棋盤＝原本的「關閉」；back＝[字, 動作]：次要列上面多一排（回驛站／園子、去車庫…） */
       const resBtns=(main,back,noRev,back2)=>[...(main?[main]:[]),...(back?[[back[0],back[1],"wide"]]:[]),...(back2?[[back2[0],back2[1],"wide"]]:[]),...(noRev?[]:[["📊 檢討",()=>review(true,st&&st.id),true]]),["🏠 首頁",()=>goHome(),true],["看看棋盤",null,true]];
