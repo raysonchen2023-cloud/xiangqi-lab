@@ -1534,7 +1534,7 @@ html[data-hct] .player.on .clk{background:#00563B;color:#FFFFFF;border-color:#00
       if(!window.caches)return go();caches.keys().then(function(ks){return Promise.all(ks.filter(function(k){return k.indexOf("xqlab-app-")===0}).map(function(k){return caches.delete(k)}))})
         .then(function(){return navigator.serviceWorker&&navigator.serviceWorker.getRegistration()}).then(function(r){return r&&r.update()}).catch(function(){}).then(go)}};setTimeout(chk,4000)})();
 </script>
-<script>window.XQ_OFFLINE=true;window.XQ_BUILD="20261112-1300";</script>
+<script>window.XQ_OFFLINE=true;window.XQ_BUILD="20261112-1310";</script>
 <script src="core.js"></script>
 <script src="engine.js"></script>
 <script src="local.js"></script>
@@ -9936,11 +9936,11 @@ if(typeof addEventListener==="function")addEventListener("hashchange",()=>{try{i
    舊玩家（hspx 11/12「提醒已經創好角色的玩家，有大更新建議從頭開始遊玩」，開發者選推播＋開 App 跳一次視窗）：開新的旅程／只看序章、下序局／之後再說 */
 const BHX_ID="bh:xu",BHX_FEN="4k4/4a4/2N1R1N2/4C4/8P/9/9/9/9/4KAB2",BHX_SOL=[22,13];   /* 紅俥 e7（第 2 排第 5 路）進一吃黑士＝將死；兩匹傌封住將的左右、也護住俥 */
 const BHX_PG={
-  p1:{img:"data/story0/s0_1.webp",board:true,big:["很久很久以前，天上有一張星盤。","一裂開，星光便流成河。","那道河，人間後來叫它界。"],narr:"棋路，先於棋名。"},
-  p2:{img:"data/story0/s0_2.webp",big:["人間傳說，有五色石補過天。","另有一角青石，落入雲河。","它記住了萬年的棋聲。"],narr:"石未開口，局已在心。"},
-  p3:{img:"data/story0/s0_3.webp",big:["青石成桌，桌上有河。","河邊少了一塊界石。","七碗茶，正等七個人醒來。"],narr:"茶未入口，緣已同船。"},
+  p1:{img:"data/story0/s0_13.webp",board:true,big:["很久很久以前，天上有一張星盤。","一裂開，星光便流成河。","那道河，人間後來叫它界。"],narr:"棋路，先於棋名。"},
+  p2:{img:"data/story0/s0_14.webp",big:["人間傳說，有五色石補過天。","另有一角青石，落入雲河。","它記住了萬年的棋聲。"],narr:"石未開口，局已在心。"},
+  p3:{img:"data/story0/s0_3b.webp",big:["青石成桌，桌上有河。","河邊少了一塊界石。","七碗茶，正等七個人醒來。"],narr:"茶未入口，緣已同船。"},
   p4:{img:"data/story0/s0_4.webp",meteor:true,big:["七個孩子，來自七段歲月。","他們還沒相認。","本命棋子，已先在星河發亮。"],narr:"人未醒，棋先知名。"},
-  p6:{img:"data/story0/s0_6.webp",big:[]},p7:{img:"data/story0/s0_7.webp",big:[]},p8:{img:"data/story0/s0_8.webp",big:[]},p9:{img:"data/story0/s0_9.webp",big:[]},   /* hspx 11/12 開發者「透過 Gemini 繪製場景補足開頭的電影故事」：補圖①星雨入凡 ②河畔初枰 ③星盤傾側 ④茶香引路 */
+  p6:{img:"data/story0/s0_6.webp",big:[]},p10:{img:"data/story0/s0_10.webp",big:[]},p11:{img:"data/story0/s0_11.webp",big:[]},p12:{img:"data/story0/s0_12.webp",big:[]},p15:{img:"data/story0/s0_15.webp",big:[]},p16:{img:"data/story0/s0_16.webp",big:[]},p7:{img:"data/story0/s0_7.webp",big:[]},p8:{img:"data/story0/s0_8.webp",big:[]},p9:{img:"data/story0/s0_9.webp",big:[]},   /* hspx 11/12 開發者「透過 Gemini 繪製場景補足開頭的電影故事」：補圖①星雨入凡 ②河畔初枰 ③星盤傾側 ④茶香引路 */
   p5:{img:"data/story0/s0_5.webp",big:["星河也有深不見底的彎。","那裡，有一盤下了萬年的棋。","一步一步，像從未停過。"],narr:"黑非惡，只是深。"}};
 const BHX_TXT={title:"天裂星盤沉雲河，黑洞殘局啟千秋",rain:"七星如雨，各歸其時。",start:"來者，請在星盤上落子。",open:"落子無悔，星局初開。",good:["齊轍","俥有路了，直取星心！"],win:"星盤暫合。循著茶香，去尋你們的青石吧。",
   wrong:"這一步……星盤上，早已落過千萬遍。",hint1:"先看黑將面前，那顆擋住俥路的黑士。",hint2:"請走：俥五進一，直接吃掉黑將面前的黑士。"};
@@ -10072,9 +10072,10 @@ function bhxAfter(){bhxEnd();if(!(MODAL_HOLD>Date.now()))opVol(.25,1.2);   /* �
   modal(`<div class="em">✨</div><h2>星盤暫合</h2><p class="pl-say">✦ 星樞：「${esc(BHX_TXT.win)}」</p>`,[["循著茶香",()=>{const old=+store.get("bhXuOld",0)===1;store.set("bhXuOld",0);
     opPlay(3,{fade:.8});   /* 第 3 首〈七星歸槎〉：按「循著茶香」那一下開始 */
     if(!old&&journey()&&!store.get("bhxFresh",0)){try{if(typeof shipEra==="function")shipEra("classic");else{store.set("era","classic");store.set("eraUser",null);applyEra()}}catch(e){}store.set("bhxLand",Date.now())}   /* hspx 開發者 11/12「每個角色打完黑洞的第一站，要統一降落到經典首頁，而不是每個人的主場」：首頁朝代設回經典（停靠紀錄照舊有主場；舊玩家只看序章不動） */
+    bhxBack(true);   /* hspx 開發者 11/12「黑洞絕殺後會先跳到一個不該出現的頁面」：換頁前先蓋上黑洞底幕，星槎頁不會在電影淡入前閃出來；電影播完才拿掉 */
     location.hash=old?"#/":"#/adventure";   /* hspx 更正（11/12）：打完第一場黑洞對戰，降落在經典星槎上（星槎頁、停靠經典站） */
     let rm=false;try{rm=matchMedia("(prefers-reduced-motion:reduce)").matches}catch(e){}
-    setTimeout(()=>(rm?bhxPages:(K,d)=>bhxFilm(OP_FILM2,d))(["p2","p3","p4"],()=>{if(old){opStop(2);toast("序章看完了，旅程照你原本的進度繼續");return}
+    setTimeout(()=>(rm?bhxPages:(K,d)=>bhxFilm(OP_FILM2,d))(["p2","p3","p4"],()=>{bhxBack(false);if(old){opStop(2);toast("序章看完了，旅程照你原本的進度繼續");return}
       const pk=store.get("bhxPick",null);if(pk&&(store.get("bhxFresh",0)||!journey())&&typeof journeyStart==="function"){const nm=typeof myName==="function"&&myName()?null:(typeof defaultName==="function"?defaultName():null);journeyStart(store.get("bhxSlot",1)||1,pk,nm,2).catch(e=>{try{toast("開始失敗："+(e&&e.message||e))}catch(x){}});return}   /* hspx 開發者 11/12「選完角色後不用再出現難度和確認出發那一頁，太冗餘」：直接建旅程（難度預設「入局」、名字用預設，之後都能改）→ bhxLandNew 降落星槎 */
       opStop(2);   /* 在流星裡選好角色的新玩家：接選難度、取名（05b 開頭畫面），確定後 bhxLandNew 降落星槎 */
       if(typeof prologue==="function")prologue()}),400)}]],"prolog")}
@@ -10158,18 +10159,39 @@ function opSfx(k,big){if(typeof withAudio!=="function")return;withAudio(()=>{con
 /* 開發者 11/12「這三頁停頓太久、敘述太短」：旁白加長（ChatGPT 139 號，每句 ≤15 字、每個鏡頭 3～4 句，照秒數出現） */
 const OP_FILM1={n:1,end:89.5,shots:[
   {at:0,img:null,fx:"dark",sfx:[[0,"vortex"]],say:[[0.0,"第〇章"],[1.7,"天裂星盤沉雲河"],[3.4,"黑洞殘局啟千秋"]]},
-  {at:5.4,img:"p1",kb:[[2.3,50,10],[2.05,50,12]],fx:"crack",crack:7.0,say:[[5.5,"很久很久以前，"],[8.8,"天上有張星盤。"],[12.4,"一聲巨響，天裂了。"],[16.2,"星光從縫中落。"]]},
+  {at:5.4,img:"p10",ly:[[10.4,"p11",.55,"r"],[12.4,"p12",.3,"r"],[17.6,"p1",.7]],rc:[390,545],kb:[[1.0,50,42],[1.1,50,40]],fx:"tear",crack:12.4,shk:[[10.4,.3,4],[12.4,.4,9]],sfx:[[12.4,"lines"]],say:[[5.5,"很久很久以前，"],[8.8,"天上有張星盤。"],[12.4,"一聲巨響，天裂了。"],[16.2,"星光從縫中落。"]]},
   {at:20,img:"p6",kb:[[1.2,50,22],[1.0,50,62]],fx:"fall",say:[[20.5,"裂口灑下星光。"],[24.0,"像細雨入山河。"],[27.8,"大河先被點亮。"],[31.6,"村燈跟著醒來。"]]},
-  {at:35,img:"p1",kb:[[1.5,50,45],[1.05,50,56]],fx:"river",board:36,sfx:[[36,"lines"]],say:[[35.5,"星河橫過天心。"],[39.0,"星線交成棋路。"],[42.8,"那道河，後來叫界。"],[46.5,"兩岸從此相望。"]]},
+  {at:35,img:"p1",kb:[[1.4,50,68],[1.05,50,62]],fx:"river",board:36,bp:[1000,560],rvy:1000,sfx:[[36,"lines"]],say:[[35.5,"星河橫過天心。"],[39.0,"星線交成棋路。"],[42.8,"那道河，後來叫界。"],[46.5,"兩岸從此相望。"]]},
   {at:50,img:"p7",kb:[[1.0,50,48],[1.12,50,47]],fx:"stars",board:51,bp:[657,440],sfx:[[51,"lines"]],say:[[50.5,"河畔有塊青石。"],[54.0,"沉睡不知幾年。"],[57.8,"星光落在石面。"],[61.5,"棋盤慢慢醒來。"]],nar:[58.8,"棋路，先於棋名。"]},
   {at:65,img:"p8",kb:[[1.0,50,45],[1.22,62,56]],fx:"whirl",say:[[65.4,"天上星盤傾斜。"],[68.8,"一角滑入暗彎。"],[72.0,"墨色漩渦初開。"],[74.6,"誰也望不到底。"]]},
   {at:75,img:"p5",kb:[[1,50,32],[1.4,50,26]],fx:"whirl",sfx:[[76,"suck"]],say:[[75.4,"黑洞張開無聲。"],[79.0,"星槎被河牽去。"],[82.8,"棋聲在深處響。"],[86.6,"一步一步未停。"]],nar:[88.6,"黑非惡，只是深。"]}]};
 const OP_FILM2={n:3,end:60,shots:[
-  {at:0,img:"p2",kb:[[1.35,70,20],[1.05,55,60]],fx:"stone",splash:11.4,say:[[0.6,"五色石曾補天。"],[3.8,"另有一角青石。"],[7.0,"一枚界石相隨。"],[10.2,"同落雲河深處。"]],nar:[11.5,"它記住萬年棋聲。"]},
-  {at:12.5,img:"p3",kb:[[1.0,50,50],[1.45,40,62]],fx:"steam",say:[[12.8,"青石後來成桌。"],[15.8,"桌上仍有星河。"],[18.9,"河邊少了界石。"],[21.6,"七碗茶正等候。"]]},
+  {at:0,img:"p2",ly:[[8.6,"p15",1.4]],grow:1,kb:[[1.12,52,40],[1.0,50,52]],fx:"stone",splash:9.4,say:[[0.6,"五色石曾補天。"],[3.8,"另有一角青石。"],[7.0,"一枚界石相隨。"],[10.2,"同落雲河深處。"]],nar:[11.5,"它記住萬年棋聲。"]},
+  {at:12.5,img:"p15",ly:[[12.6,"p16",2.2],[16.6,"p3",1.4]],grow:1,kb:[[1.0,50,52],[1.22,44,60]],fx:"steam",say:[[12.8,"青石後來成桌。"],[15.8,"桌上仍有星河。"],[18.9,"河邊少了界石。"],[21.6,"七碗茶正等候。"]]},
   {at:23,img:"p9",kb:[[1.25,50,70],[1.0,50,35]],fx:"steam",say:[[23.3,"茶氣飄出船外。"],[25.9,"在河上織小路。"],[28.3,"七點紅光在前。"]],nar:[29.2,"茶未入口，緣已同船。"]},
   {at:30,img:"p4",fx:"dark",say:[[30.0,"七段歲月在岸。"],[33.0,"七個孩子將醒。"],[35.8,"本命棋子先亮。"]],meteor:36}]};
-const opImgXY={p1:[384,200],p5:[384,350],p2:[600,520],p3:[300,880],p6:[384,40],p7:[384,657],p8:[545,795],p9:[380,1020]};   /* 各張圖粒子的源頭（圖上像素，768×1376）：天裂口、黑洞心、青石、茶碗 */
+/* hspx 開發者 11/12「想製作從沒有裂縫到破洞的動畫」「要有漸漸裂掉變成棋桌的過程畫面」：
+   第 1 首天裂鏡頭＝完整青瓷天（p10，天幕被頂起）→ 10.4 秒裂紋從中心爆開（p11，縫裡透光）→ 12.4 秒「天裂了」崩成破洞（p12）→ 17.6 秒淡到天河全景（p1）；
+   第 3 首開頭＝圓青石與界石從破洞墜落（p2）→ 落進雲河（p15），冰裂紋依圓板透視一條條長成棋盤線（9 直 10 橫、楚河漢界、九宮），河帶通到缺口（界石的位置）
+   → 青瓷洗成灰白青石（p16）→ 線沉回石裡、只留河 → 星槎上的青石桌（p3，河光接到缺口）。圖都是 Gemini 畫的（開發者逐張看過）；棋盤線由程式畫（Gemini 畫的線數不對） */
+const BHX_DUST={p11:{c:[392,560]},p12:{c:[390,560],rad:[190,245],tip:[402,808]},p1:{c:[390,360],rad:[105,125],tip:[396,515],band:1000}};   /* 落塵：裂口中心、破洞半徑、下緣出口、銀河高度（圖上像素） */
+const BHX_BD3={cx:388,cy:750,rx:262,ry:118,th:52.7*Math.PI/180,S:.17,g0:10.0,f0:15.4,f1:16.6};   /* 雲河上那塊圓青石的頂面橢圓（p15／p16 同一個位置）、河帶指向缺口的角度、棋盤大小；g0 開始長線、f0～f1 線沉回石裡 */
+function bhxGrowSvg(st){const B=BHX_BD3,ex=[Math.cos(B.th),Math.sin(B.th)],ey=[-Math.sin(B.th),Math.cos(B.th)],P=(a,b)=>{const u=(a*ex[0]+b*ey[0])*B.S,v=(a*ex[1]+b*ey[1])*B.S;return[B.cx+u*B.rx,B.cy+v*B.ry]};
+  const L=[],seg=(a0,b0,a1,b1,s,d,keep)=>L.push({p:P(a0,b0),q:P(a1,b1),s,d,keep:!!keep}),g=B.g0,rk=i=>-4.5+i;
+  const ext=r=>{let a=4;while(a<8){const u=(a*ex[0]+r*ey[0])*B.S,v=(a*ex[1]+r*ey[1])*B.S;if(u*u+v*v>.95)break;a+=.1}return a};
+  for(const r of[rk(4),rk(5)]){const e=ext(r);seg(-e,r,e,r,g,1.4,1)}   /* 河帶兩邊先亮，一路延伸到桌緣（流向缺口） */
+  [[3,6],[2,7],[1,8],[0,9]].forEach(([a,b],i)=>{seg(-4,rk(a),4,rk(a),g+.6+i*.6,1.2);seg(-4,rk(b),4,rk(b),g+.6+i*.6,1.2)});   /* 其餘橫線由河往外一條條長 */
+  for(let f=-4;f<=4;f++){const s=g+.8+Math.abs(f)*.15;seg(f,rk(4),f,rk(0),s,2.2);seg(f,rk(5),f,rk(9),s,2.2);if(f===-4||f===4)seg(f,rk(4),f,rk(5),s,.5)}   /* 9 條直線從河邊往兩岸長，邊線跨河 */
+  for(const[b0,b1]of[[rk(0),rk(2)],[rk(7),rk(9)]]){seg(-1,b0,1,b1,g+3.2,.8);seg(1,b0,-1,b1,g+3.2,.8)}   /* 兩個九宮 X */
+  const ns="http://www.w3.org/2000/svg",svg=document.createElementNS(ns,"svg");svg.setAttribute("class","fm-gr");svg.setAttribute("viewBox","0 0 768 1376");svg.setAttribute("preserveAspectRatio","xMidYMid slice");svg.setAttribute("aria-hidden","true");
+  svg.style.cssText="position:absolute;inset:0;width:100%;height:100%;pointer-events:none";
+  svg.innerHTML=`<defs><filter id="fmGlw" x="-20%" y="-20%" width="140%" height="140%"><feGaussianBlur stdDeviation="2.4" result="b"/><feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge></filter><clipPath id="fmClp"><ellipse cx="${B.cx}" cy="${B.cy}" rx="${(B.rx*.99).toFixed(1)}" ry="${(B.ry*.99).toFixed(1)}"/></clipPath></defs><g clip-path="url(#fmClp)" filter="url(#fmGlw)" stroke="#fff3cf" stroke-width="2.2" stroke-linecap="round" fill="none"></g>`;
+  const G=svg.querySelector("g");for(const o of L){const l=document.createElementNS(ns,"line");l.setAttribute("x1",o.p[0].toFixed(1));l.setAttribute("y1",o.p[1].toFixed(1));l.setAttribute("x2",o.q[0].toFixed(1));l.setAttribute("y2",o.q[1].toFixed(1));
+    l.setAttribute("pathLength","1");l.setAttribute("stroke-dasharray","1 1");l.setAttribute("stroke-dashoffset","1");G.append(l);o.el=l}
+  st.append(svg);return{svg,L}}
+function bhxGrowTick(R,t){const B=BHX_BD3;for(const o of R.L){const k=Math.max(0,Math.min(1,(t-o.s)/o.d));o.el.setAttribute("stroke-dashoffset",(1-k).toFixed(3));o.el.style.opacity=(o.keep?1:Math.max(0,Math.min(1,1-(t-B.f0)/(B.f1-B.f0)))).toFixed(2)}
+  R.svg.style.opacity=Math.max(0,Math.min(1,1-(t-B.f1)/1.0)).toFixed(2)}   /* 線沉回石裡只留河，再淡到星槎 */
+const opImgXY={p1:[396,515],p5:[384,350],p2:[388,700],p3:[300,880],p6:[384,40],p7:[384,657],p8:[545,795],p9:[380,1020]};   /* 各張圖粒子的源頭（圖上像素，768×1376）：天裂口、黑洞心、青石、茶碗 */
 function bhxFilm(F,done){bhxCss();let rm=false;try{rm=matchMedia("(prefers-reduced-motion:reduce)").matches}catch(e){}
   const o=document.createElement("div");o.id="bhxPg";o.className="fm on";o.setAttribute("role","dialog");o.setAttribute("aria-label","第〇章");document.body.append(o);
   o.innerHTML=`<div class="fm-st"><div class="fm-bg"></div></div><canvas class="fm-fx"></canvas><div class="fm-cap"></div><div class="fm-tx"></div><button class="bx-k" type="button">略過</button><button class="fm-nx" type="button" aria-label="下一個鏡頭">▶</button>`;
@@ -10179,9 +10201,37 @@ function bhxFilm(F,done){bhxCss();let rm=false;try{rm=matchMedia("(prefers-reduc
     const n=Math.max(15,...F.shots.flatMap(S=>(S.say||[]).map(([,t])=>[...t].length)));o.style.setProperty("--bxfs",Math.max(14,Math.min(28,Math.floor((W-48)/(n*1.1))))+"px")};fit();addEventListener("resize",fit);
   const P=[],add=(x,y,vx,vy,life,r,col)=>{if(P.length<(low?140:320))P.push({x,y,vx,vy,l:0,m:life,r,col})};
   let si=-1,S=null,kbNow=[1,50,50],fin=false,raf=0,mt=null,fired={};
+  /* hspx 開發者 11/12「裂痕和落下的塵太假」：落塵照 ChatGPT 142 號規格重做——四種粒子（光絲 30%、星屑 35%、青瓷碎片 15%、遠景微塵 20%），
+     有遠近（z）、閃爍、光絲拖尾；出生後 0.3～0.8 秒轉向「星河路徑」（裂口往下流、碰到銀河轉橫）；上限 150 顆（低階手機 80） */
+  let LY=[],GR=null,DU=[],lastT=null;const SPR={},DCAP=low?80:150,dEm={acc:0,burst:false};
+  const spr=c=>SPR[c]||(SPR[c]=(()=>{const k=document.createElement("canvas");k.width=k.height=32;const x=k.getContext("2d"),gr=x.createRadialGradient(16,16,0,16,16,16);gr.addColorStop(0,`rgba(${c},1)`);gr.addColorStop(.25,`rgba(${c},.55)`);gr.addColorStop(1,`rgba(${c},0)`);x.fillStyle=gr;x.fillRect(0,0,32,32);return k})());
+  const dAdd=(k,x,y,vx,vy,z)=>{if(DU.length>=DCAP)return;DU.push({k,x,y,vx,vy,z,a:0,life:k==="chip"?1.6+Math.random():k==="streak"?1.4+Math.random()*1.2:2.5+Math.random()*2.5,
+    sz:(k==="streak"?8+Math.random()*20:k==="chip"?2+Math.random()*4:k==="mote"?.8+Math.random()*1.6:.4+Math.random()*.6)*(.7+z*.6),tl:.12+Math.random()*.13,ph:Math.random()*6.283,fr:4+Math.random()*7,
+    rot:Math.random()*6.283,vr:(Math.random()-.5)*8,side:Math.random()<.5?-1:1,st:.3+Math.random()*.5,col:k==="streak"?(Math.random()<.5?"255,244,214":"205,225,255"):["255,255,255","255,230,170","200,240,235"][Math.floor(Math.random()*3)]})};
+  const dPick=()=>{const r=Math.random();return r<.3?"streak":r<.65?"mote":r<.8?"chip":"glit"};
+  const tearEmit=(t,dt,K)=>{const D=BHX_DUST[K];if(!D)return;const cs=Math.max(W/768,H/1376)*kbNow[0];
+    if(K==="p11"&&Math.random()<dt*4){const c=onScr(cover(D.c));dAdd("chip",c[0]+(Math.random()-.5)*40*cs,c[1]+(Math.random()-.3)*30*cs,(Math.random()-.5)*40,20+Math.random()*40,Math.random())}   /* 裂紋爆開：縫裡掉出一點瓷片 */
+    if(S.crack!=null&&t>=S.crack&&!dEm.burst&&D.rad){dEm.burst=true;const c=onScr(cover(D.c));for(let i=0;i<54;i++){const an=Math.random()*6.283,ex=c[0]+Math.cos(an)*D.rad[0]*cs*.85,ey=c[1]+Math.sin(an)*D.rad[1]*cs*.85,r=Math.random(),k=r<.5?"streak":r<.75?"chip":"mote",v=(k==="chip"?60:90)+Math.random()*110,z=Math.random();
+      dAdd(k,ex,ey,Math.cos(an)*v*(.5+z),Math.sin(an)*v*(.5+z)+40,z)}}   /* 崩開那一下：沿破洞邊緣多點噴出 54 顆（光絲一半、碎片四分之一） */
+    if(!D.tip||S.crack==null||t<S.crack+.4)return;const rel=t-S.crack,rate=K==="p12"?(rel<5?11:6):4;dEm.acc+=dt*rate;
+    while(dEm.acc>=1){dEm.acc-=1;const p=onScr(cover(D.tip)),z=Math.random(),k=dPick();dAdd(k,p[0]+(Math.random()-.5)*16*cs,p[1]+(Math.random()-.5)*8*cs,(Math.random()-.5)*30,(k==="streak"?90:k==="glit"?14:35)*(.6+z*.8),z)}};   /* 之後從破洞下緣持續洩出 */
+  const tearDraw=(t,dt,K)=>{const D=BHX_DUST[K]||{},cs=Math.max(W/768,H/1376)*kbNow[0],cx=D.tip?onScr(cover(D.tip))[0]:W/2,by=D.band?onScr(cover([0,D.band]))[1]:H*2;
+    for(let j=DU.length-1;j>=0;j--){const q=DU[j];q.a+=dt;if(q.a>=q.life||q.y>H+40||q.x<-40||q.x>W+40){DU.splice(j,1);continue}
+      const wind=Math.sin(t*1.2+q.y*.01)*(5+q.z*13);
+      if(q.k==="chip"){q.vy+=70*dt;q.rot+=q.vr*dt;q.vx*=1-.6*dt}
+      else if(q.a>q.st){const sp=(q.k==="streak"?110:q.k==="glit"?14:38)*(.6+q.z*.8);let tx,ty;if(q.y<by-30*cs){tx=(cx-q.x)*.5+wind;ty=sp}else{tx=q.side*sp;ty=sp*.12}const m=Math.min(1,dt*1.8);q.vx+=(tx-q.vx)*m;q.vy+=(ty-q.vy)*m}
+      q.x+=q.vx*dt;q.y+=q.vy*dt;
+      const fade=Math.min(1,q.a/.15)*Math.max(0,1-q.a/q.life),tw=.75+.25*Math.sin(t*q.fr+q.ph),al=fade*tw*(q.k==="glit"?.3:q.k==="mote"?.85:.8)*(.55+q.z*.45);
+      if(q.k==="chip"){g.globalCompositeOperation="source-over";g.save();g.translate(q.x,q.y);g.rotate(q.rot);const s=q.sz;g.beginPath();g.moveTo(-s,-s*.5);g.lineTo(s*.8,-s*.7);g.lineTo(s*.3,s*.8);g.closePath();
+        g.fillStyle=`rgba(95,138,122,${fade*.9})`;g.fill();g.strokeStyle=`rgba(216,239,228,${fade*.8})`;g.lineWidth=.7;g.stroke();g.restore();g.globalCompositeOperation="lighter";continue}
+      if(q.k==="streak"){const L=Math.hypot(q.vx,q.vy)||1,len=Math.min(q.sz*1.6,L*q.tl),x2=q.x-q.vx/L*len,y2=q.y-q.vy/L*len,gr=g.createLinearGradient(q.x,q.y,x2,y2);gr.addColorStop(0,`rgba(${q.col},${al})`);gr.addColorStop(1,`rgba(${q.col},0)`);
+        g.strokeStyle=gr;g.lineWidth=.6+q.z*.9;g.beginPath();g.moveTo(q.x,q.y);g.lineTo(x2,y2);g.stroke();continue}
+      if(q.k==="glit"){g.fillStyle=`rgba(255,255,255,${al})`;g.fillRect(q.x,q.y,1,1);continue}
+      const s=q.sz*3;g.globalAlpha=al;g.drawImage(spr(q.col),q.x-s,q.y-s,2*s,2*s);g.globalAlpha=1}};
   const cover=([ix,iy])=>{const s=Math.max(W/768,H/1376);return[(W-768*s)/2+ix*s,(H-1376*s)/2+iy*s]},onScr=pt=>{const[s,fx,fy]=kbNow,ox=W*fx/100,oy=H*fy/100;return[ox+(pt[0]-ox)*s,oy+(pt[1]-oy)*s]};
-  const setShot=i=>{si=i;S=F.shots[i];fired={};P.length=0;const PG=S.img&&BHX_PG[S.img];
-    bg.style.backgroundImage=PG?`url(${PG.img}),url(data/park/bh_far2.webp)`:"none";st.querySelectorAll(".bx-bd").forEach(e=>e.remove());
+  const setShot=i=>{si=i;S=F.shots[i];fired={};P.length=0;DU.length=0;dEm.acc=0;dEm.burst=false;const PG=S.img&&BHX_PG[S.img];
+    bg.style.backgroundImage=PG?`url(${PG.img}),url(data/park/bh_far2.webp)`:"none";st.querySelectorAll(".bx-bd,.fm-ly,.fm-gr").forEach(e=>e.remove());
+    LY=(S.ly||[]).map(([lt,k,fd,md])=>{const d=document.createElement("div");d.className="fm-bg fm-ly";const pg=BHX_PG[k];d.style.backgroundImage=pg?`url(${pg.img})`:"none";d.style.opacity="0";st.append(d);return{t:lt,k,fd:Math.max(.05,fd||1),md,d}});GR=S.grow?bhxGrowSvg(st):null;   /* 同一個鏡頭裡的後續圖：交叉淡入，或 "r"＝從裂口中心往外揭開 */
    /* 河界對準圖上橫流的星河（圖上 y≈819），不同手機長寬比都對得上 */
     tx.innerHTML=(S.say||[]).map(([,t])=>`<div class="bx-l">${esc(t)}</div>`).join("")+(S.nar?`<div class="bx-n">說書人：${esc(S.nar[1])}</div>`:"");
     o.classList.toggle("bd",S.board!=null)};
@@ -10192,12 +10242,13 @@ function bhxFilm(F,done){bhxCss();let rm=false;try{rm=matchMedia("(prefers-reduc
   /* 手指劃過撥出星光（開發者選）：不換頁 */
   const brush=e=>{if(o.dataset.pick==="1")return;const r=o.getBoundingClientRect(),x=e.clientX-r.left,y=e.clientY-r.top;for(let k=0;k<(e.type==="pointerdown"?14:3);k++){const a=Math.random()*6.283,v=.3+Math.random()*1.6;add(x,y,Math.cos(a)*v,Math.sin(a)*v-.2,40+Math.random()*40,1+Math.random()*1.8,Math.random()<.3?"255,214,120":"200,225,255")}};
   o.addEventListener("pointerdown",brush);o.addEventListener("pointermove",e=>{if(e.buttons||e.pointerType==="touch")brush(e)});
-  const frame=()=>{if(fin)return;const t=opTime();let i=F.shots.length-1;while(i>0&&F.shots[i].at>t)i--;if(i!==si)setShot(i);
+  const frame=()=>{if(fin)return;const t=opTime(),dt=lastT==null?0:Math.max(0,Math.min(.05,t-lastT));lastT=t;let i=F.shots.length-1;while(i>0&&F.shots[i].at>t)i--;if(i!==si)setShot(i);
     if(t>=F.end&&!(S&&S.meteor!=null)){finish();return}
     const a=S.at,b=nextAt(si),p=Math.max(0,Math.min(1,(t-a)/Math.max(.1,b-a))),e=p<.5?2*p*p:1-Math.pow(-2*p+2,2)/2;
     if(S.kb){const[A,B]=S.kb;kbNow=[A[0]+(B[0]-A[0])*e,A[1]+(B[1]-A[1])*e,A[2]+(B[2]-A[2])*e]}else kbNow=[1,50,50];
-    let shake=0;if(S.crack!=null&&t>=S.crack&&t<S.crack+.35)shake=(1-(t-S.crack)/.35)*6;
+    let shake=0;if(S.crack!=null&&t>=S.crack&&t<S.crack+.35)shake=(1-(t-S.crack)/.35)*6;for(const[ts,d,am]of S.shk||[])if(t>=ts&&t<ts+d)shake=Math.max(shake,(1-(t-ts)/d)*am);
     st.style.transformOrigin=`${kbNow[1]}% ${kbNow[2]}%`;st.style.transform=`translate(${(Math.random()-.5)*shake}px,${(Math.random()-.5)*shake}px) scale(${kbNow[0]})`;
+    let topK=S.img;for(const Lr of LY){const k=Math.max(0,Math.min(1,(t-Lr.t)/Lr.fd));if(k>0)topK=Lr.k;if(Lr.md==="r"){if(k>0&&k<1){const c=cover(S.rc||[384,600]),R=k*Math.hypot(W,H)*1.1,m=`radial-gradient(circle at ${c[0]}px ${c[1]}px,#000 ${R}px,transparent ${R+80}px)`;Lr.d.style.webkitMaskImage=m;Lr.d.style.maskImage=m}else{Lr.d.style.webkitMaskImage="none";Lr.d.style.maskImage="none"}Lr.d.style.opacity=k>0?"1":"0"}else Lr.d.style.opacity=k.toFixed(3)}
     if(S.board!=null&&t>=S.board&&!fired.bd){fired.bd=1;st.insertAdjacentHTML("beforeend",bhxBoardSvg());const B=st.querySelector(".bx-bd"),cs=Math.max(W/768,H/1376);if(B){B.style.top=cover([0,S.bp?S.bp[0]:819])[1]+"px";if(S.bp)B.style.width=S.bp[1]*cs+"px"}}   /* 到點才放進去，線一條條畫出來；河界對準圖上的星河（p1 y≈819），河畔初枰照石面（y≈657、寬≈440） */
     for(const[ts,k]of S.sfx||[])if(t>=ts&&t<ts+1&&!fired["s"+ts]){fired["s"+ts]=1;opSfx(k)}
     (S.say||[]).forEach(([ts],j)=>{const L=tx.querySelectorAll(".bx-l")[j];if(L&&t>=ts)L.classList.add("on")});
@@ -10205,22 +10256,25 @@ function bhxFilm(F,done){bhxCss();let rm=false;try{rm=matchMedia("(prefers-reduc
     if(S.title!=null){if(t>=S.title&&!fired.tt){fired.tt=1;capE.textContent="第〇章　"+BHX_TXT.title;capE.classList.add("on")}}else if(S.meteor==null)capE.classList.remove("on");
     if(S.meteor!=null&&t>=S.meteor&&!fired.met){fired.met=1;tx.querySelectorAll(".bx-l").forEach(x=>x.classList.add("on"));bhxFilmMeteor(o,capE,()=>finish())}
     /* 粒子 */
-    g.clearRect(0,0,W,H);const src=S.img&&opImgXY[S.img]?onScr(cover(opImgXY[S.img])):[W/2,H*.2];
-    if(!rm){if(S.fx==="dark"&&Math.random()<.5)add(Math.random()*W,Math.random()*H,0,0,60+Math.random()*80,.6+Math.random()*1.2,"220,230,255");
+    g.clearRect(0,0,W,H);const sk=opImgXY[topK]?topK:S.img,src=sk&&opImgXY[sk]?onScr(cover(opImgXY[sk])):[W/2,H*.2];   /* 粒子源頭跟著目前最上層的圖走（疊層鏡頭） */
+    if(!rm){if(S.fx==="tear")tearEmit(t,dt,topK);if(S.fx==="dark"&&Math.random()<.5)add(Math.random()*W,Math.random()*H,0,0,60+Math.random()*80,.6+Math.random()*1.2,"220,230,255");
       if(S.fx==="crack"&&t>=S.crack){if(!fired.cf){fired.cf=1;for(let k=0;k<90;k++){const an=Math.random()*6.283,v=1+Math.random()*5;add(src[0],src[1],Math.cos(an)*v,Math.sin(an)*v,30+Math.random()*50,1+Math.random()*2.4,"255,240,200")}}for(let k=0;k<3;k++)add(src[0]+(Math.random()-.5)*20,src[1],(Math.random()-.5)*1.2,1.5+Math.random()*3,60+Math.random()*60,.8+Math.random()*1.6,"200,225,255")}
       if(S.fx==="stars"&&Math.random()<.6)add(src[0]+(Math.random()-.5)*W*.6,src[1]-H*.3+Math.random()*H*.1,(Math.random()-.5)*.3,.4+Math.random()*.8,120,.6+Math.random()*1.4,"200,225,255");
       if(S.fx==="fall")for(let k=0;k<2;k++)add(src[0]+(Math.random()-.5)*W*.3,src[1]+(Math.random()-.5)*20,(Math.random()-.5)*.8,1+Math.random()*2.5,90+Math.random()*60,.6+Math.random()*1.5,"200,225,255");
-      if(S.fx==="river"){const ry=onScr(cover([0,810]))[1];for(let k=0;k<2;k++)add(-5,ry+(Math.random()-.5)*H*.05,1+Math.random()*2.2,(Math.random()-.5)*.2,W/1.5,.6+Math.random()*1.4,"200,225,255")}
+      if(S.fx==="river"){const ry=onScr(cover([0,S.rvy||810]))[1];for(let k=0;k<2;k++)add(-5,ry+(Math.random()-.5)*H*.05,1+Math.random()*2.2,(Math.random()-.5)*.2,W/1.5,.6+Math.random()*1.4,"200,225,255")}
       if(S.fx==="whirl")for(let k=0;k<3;k++){const an=Math.random()*6.283,R=Math.max(W,H)*.6;add(src[0]+Math.cos(an)*R,src[1]+Math.sin(an)*R*.6,0,0,120,.8+Math.random()*1.6,Math.random()<.5?"180,140,255":"200,225,255")}
       if(S.fx==="stone"&&S.splash!=null&&t>=S.splash&&!fired.sp){fired.sp=1;const w=onScr(cover([380,800]));opSfx("meteor",true);for(let k=0;k<70;k++){const an=-Math.PI*Math.random(),v=1+Math.random()*4;add(w[0],w[1],Math.cos(an)*v,Math.sin(an)*v,40+Math.random()*40,1+Math.random()*2,"200,225,255")}}
-      if(S.fx==="steam"&&Math.random()<.4)add(src[0]+(Math.random()-.5)*40,src[1],(Math.random()-.5)*.3,-.4-Math.random()*.6,90,2+Math.random()*3,"240,240,240")}
-    g.globalCompositeOperation="lighter";
+      if(S.fx==="steam"&&opImgXY[topK]&&Math.random()<.4)add(src[0]+(Math.random()-.5)*40,src[1],(Math.random()-.5)*.3,-.4-Math.random()*.6,90,2+Math.random()*3,"240,240,240")}
+    g.globalCompositeOperation="lighter";if(GR)bhxGrowTick(GR,t);
+    if(S.fx==="tear"){const ct=t-S.crack;if(ct>=0&&ct<.18){g.fillStyle=`rgba(255,250,235,${(1-ct/.18)*.45})`;g.fillRect(0,0,W,H)}const D=BHX_DUST[topK];if(D&&D.c){let a=0;if(topK==="p11")a=.3+.2*Math.sin(t*9);else if(ct>=0&&topK==="p12")a=Math.max(0,.85*(1-ct/1.4));   /* 裂紋時縫裡一明一暗地透光；崩開時一圈光散掉（閃白 0.18 秒，ChatGPT 142） */
+      if(a>0){const c=onScr(cover(D.c)),R=(D.rad?D.rad[0]:170)*Math.max(W/768,H/1376)*kbNow[0]*1.3,gr=g.createRadialGradient(c[0],c[1],0,c[0],c[1],R);gr.addColorStop(0,`rgba(255,248,226,${a})`);gr.addColorStop(.5,`rgba(220,230,255,${a*.35})`);gr.addColorStop(1,"rgba(220,230,255,0)");g.fillStyle=gr;g.fillRect(c[0]-R,c[1]-R,2*R,2*R)}}}
     if(S.fx==="crack"&&t>=S.crack){const k=Math.min(1,(t-S.crack)/.6),fl=Math.max(0,1-(t-S.crack)/.5);if(fl>0){g.fillStyle=`rgba(255,250,235,${fl*.55})`;g.fillRect(0,0,W,H)}
       /* 開發者 11/12「這裂痕太假，重畫」：不再用程式畫裂紋線（疊在畫好的裂縫上很假），改成裂口爆出一圈柔和的白金光暈，擴散後淡掉 */
       const ct=t-S.crack,ca=Math.max(0,1-ct/2.2);if(ca>0){const R=(40+ct*260)*Math.min(1.6,kbNow[0]),gr=g.createRadialGradient(src[0],src[1],0,src[0],src[1],R);gr.addColorStop(0,`rgba(255,250,232,${.85*ca})`);gr.addColorStop(.35,`rgba(255,226,170,${.35*ca})`);gr.addColorStop(1,"rgba(255,226,170,0)");g.fillStyle=gr;g.beginPath();g.arc(src[0],src[1],R,0,6.2832);g.fill()}}
     for(let j=P.length-1;j>=0;j--){const q=P[j];q.l++;if(S.fx==="whirl"&&q.col!=="255,214,120"){const dx=src[0]-q.x,dy=src[1]-q.y,d=Math.hypot(dx,dy)||1;q.vx=q.vx*.96+(dx/d)*.6+(-dy/d)*.9;q.vy=q.vy*.96+(dy/d)*.6+(dx/d)*.9;if(d<8)q.l=q.m}
       q.x+=q.vx;q.y+=q.vy;if(S.fx==="fall"||S.fx==="crack")q.vy+=.01;const al=Math.max(0,1-q.l/q.m);if(al<=0||q.x<-20||q.x>W+20||q.y>H+20){P.splice(j,1);continue}
       g.fillStyle=`rgba(${q.col},${al*.9})`;g.beginPath();g.arc(q.x,q.y,q.r,0,6.2832);g.fill()}
+    if(DU.length)tearDraw(t,dt,topK);
     g.globalCompositeOperation="source-over";raf=requestAnimationFrame(frame)};
   setShot(0);raf=requestAnimationFrame(frame);return{finish}}
 /* 電影第 2 段的七星流星：還沒選角＝七顆落下 → 選星（音樂在 36～44 秒小聲循環）→ 選定跳到 45 秒（七音上行）茶香接住；已有角色＝原本那段完整流星 */
