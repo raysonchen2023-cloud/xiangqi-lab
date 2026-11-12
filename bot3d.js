@@ -359,15 +359,18 @@
         d.position.set(px-c.x,py-bb.min.y,pz-c.z+sz.y*.004);hold.add(d)}
       const R3e=meId&&!ME_RING[meId]&&R3&&Array.isArray(R3[meId])?{u:R3[meId][0],v:R3[meId][1],r:R3[meId][2]*.85,z:R3[meId][3],back:R3[meId][4]===1}:null;
       /* hspx（開發者 11/12 黑洞星樞棋局）：模型身上沒有本命字、表上也沒有圓牌位置時，呼叫端可以用 o.gly＝{u,v,r} 指定胸前圓牌的位置（雲河七星當巨盤棋子） */
-      const GLe=!ME_RING[meId]&&!R3e&&o.gly&&o.gly.r>0?{u:+o.gly.u||.5,v:+o.gly.v||.4,r:+o.gly.r,back:!!o.gly.back}:null;
+      const GLe=!ME_RING[meId]&&!R3e&&o.gly&&o.gly.r>0?{u:+o.gly.u||.5,v:+o.gly.v||.4,r:+o.gly.r,back:!!o.gly.back,g:1}:null;
+      /* 開發者 11/12 hspx 圈起紅兵背牌下緣一條黑金色（模型的腰帶從圓牌後面凸出來）：黑洞巨盤的圓牌（g:1）量整面約 50 個點、取最凸的深度，圓牌整面浮在模型前面；
+         原本只量圓心附近 9 點，邊緣有袖子、腰帶、手凸出就會蓋過去（掃描：紅兵背、紅炮背、紅傌胸、黑馬背胸、黑象胸、黑士胸、黑將胸、黑卒胸共 9 面被擋 2～7%） */
+      const GLY_PTS=[];for(let i=-4;i<=4;i++)for(let j=-4;j<=4;j++){const a=i/4,b=j/4;if(a*a+b*b<=1.0001)GLY_PTS.push([a,b])}
       if(meId&&(ME_RING[meId]||R3e||GLe)){const mk=R=>{try{const rad=R.r*sz.x*.9,px=R.back?bb.max.x-R.u*sz.x:bb.min.x+R.u*sz.x,py=bb.max.y-R.v*sz.y;
         /* 意見回饋 564：有些圓牌是凹下去的碟形（明朝擂主），只量圓心的深度會被邊緣擋住、字看起來殘缺；在圓牌上量九個點，取最靠前的深度 */
-        let pz=-1e9;const rc=new T.Raycaster();for(const[dx,dy]of[[0,0],[.75,0],[-.75,0],[0,.75],[0,-.75],[.53,.53],[-.53,.53],[.53,-.53],[-.53,-.53]]){rc.set(new T.Vector3(px+dx*rad,py+dy*rad,R.back?bb.min.z-sz.z-1:bb.max.z+sz.z+1),new T.Vector3(0,0,R.back?1:-1));const hit=rc.intersectObject(g,true)[0];const hz=hit?(R.back?-hit.point.z:hit.point.z):-1e9;if(hz>pz)pz=hz}if(pz<-1e8)pz=R.back?-bb.min.z:bb.max.z;if(R.back)pz=-pz;   /* 開發者 11/6：齊轍的棋子揹在背後，圓牌貼在背面（ring3d.json 第 5 個值＝1） */if(R.z!=null)pz=bb.min.z+R.z*sz.z;   /* 意見回饋 665：少年阿古拉手上捧著棋盤，打點量到的是棋盤表面，圓片浮在胸口前面、一轉就偏到旁邊；ring3d.json 第 4 個值是校正量到的圓面深度 */
+        let pz=-1e9;const rc=new T.Raycaster();for(const[dx,dy]of(R.g?GLY_PTS:[[0,0],[.75,0],[-.75,0],[0,.75],[0,-.75],[.53,.53],[-.53,.53],[.53,-.53],[-.53,-.53]])){rc.set(new T.Vector3(px+dx*rad,py+dy*rad,R.back?bb.min.z-sz.z-1:bb.max.z+sz.z+1),new T.Vector3(0,0,R.back?1:-1));const hit=rc.intersectObject(g,true)[0];const hz=hit?(R.back?-hit.point.z:hit.point.z):-1e9;if(hz>pz)pz=hz}if(pz<-1e8)pz=R.back?-bb.min.z:bb.max.z;if(R.back)pz=-pz;   /* 開發者 11/6：齊轍的棋子揹在背後，圓牌貼在背面（ring3d.json 第 5 個值＝1） */if(R.z!=null)pz=bb.min.z+R.z*sz.z;   /* 意見回饋 665：少年阿古拉手上捧著棋盤，打點量到的是棋盤表面，圓片浮在胸口前面、一轉就偏到旁邊；ring3d.json 第 4 個值是校正量到的圓面深度 */
         const d=new T.Mesh(new T.CircleGeometry(rad,48),new T.MeshBasicMaterial({map:glyTex(meCh,meK),color:0xEDE6D8,transparent:true,depthWrite:false,toneMapped:false}));d.name="meGly";{const _p=new T.Vector3(),_n=new T.Vector3(),_v=new T.Vector3();d.onBeforeRender=(rn,s2,cam)=>{try{d.getWorldPosition(_p);_n.set(0,0,1).transformDirection(d.matrixWorld);_v.copy(cam.position).sub(_p).normalize();d.material.opacity=Math.max(0,Math.min(1,(_n.dot(_v)-.3)/.3))}catch(e){}}}   /* 584：轉到側面時字面淡掉，不會看到一片紙浮在身上 */   /* 577：整面棋子、不受燈光影響（背光時不會變成深褐），顏色稍微壓暗一點才不會比身體亮太多 */
-        d.position.set(px-c.x,py-bb.min.y,pz-c.z+(R.back?-1:1)*sz.y*.006);if(R.back)d.rotation.y=Math.PI;hold.add(d)}catch(e){}};
+        d.position.set(px-c.x,py-bb.min.y,pz-c.z+(R.back?-1:1)*sz.y*(R.g?.016:.006));if(R.back)d.rotation.y=Math.PI;hold.add(d)}catch(e){}};
         const R0=ME_RING[meId]||R3e||GLe;mk(R0);
         /* 開發者 11/12 黑洞「雙方正面也要把棋子貼上去，不然會不知道對面是什麼棋」：o.gly.front＝{u,v,r} 時，另一面（胸前）再貼一個 */
-        if(GLe&&o.gly.front&&+o.gly.front.r>0)mk({u:+o.gly.front.u||.5,v:+o.gly.front.v||.45,r:+o.gly.front.r,back:!R0.back})}
+        if(GLe&&o.gly.front&&+o.gly.front.r>0)mk({u:+o.gly.front.u||.5,v:+o.gly.front.v||.45,r:+o.gly.front.r,back:!R0.back,g:1})}
       for(const ch of B.bot.children)ch.visible=false;B.bot.add(hold);B.glb=hold;return true});B.glbP.catch(()=>{q0.forEach(ch=>{ch.visible=true})})}
 
   // ---------- 招牌動作 ----------

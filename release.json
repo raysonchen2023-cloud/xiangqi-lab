@@ -1,8 +1,8 @@
 {
- "version": "20261112-1120",
- "checkedAt": "2026-11-12T04:04:56.561Z",
- "html": "728ccddcbb5b",
- "sw": "92f5ca885fb0",
+ "version": "20261112-1130",
+ "checkedAt": "2026-11-12T04:20:29.713Z",
+ "html": "0e8858f9d3c2",
+ "sw": "c776dc70cfd2",
  "scripts": 4,
  "modules": {
   "00-util.js": "e4beee43ce00",
@@ -43,7 +43,7 @@
   "07t-episodes.js": "0051faff8d1e",
   "07u-women.js": "51e0958c2f14",
   "07v-relicdrop.js": "a7a7fe139082",
-  "07w-shipwalk.js": "fab101d1c18f",
+  "07w-shipwalk.js": "1a2df292fa35",
   "07w4-porthost.js": "37517de40cbe",
   "07q-buddy.js": "eaff43887e46",
   "07w5-ouyu.js": "7e4ec66ef89f",

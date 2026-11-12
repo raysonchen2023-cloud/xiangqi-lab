@@ -1315,7 +1315,9 @@
        Tripo 靜態站姿 data/tripo_app/k_ref.glb（立繪 park/referee/ref_idle.png），站在地上、桌子右側（雙方中間），面向棋盤、微微朝鏡頭；首頁橋上石桌、黑洞巨盤不放 */
     if(!opt.giant&&!opt.bridge&&typeof window.XQGLB==="function")try{window.XQGLB("data/tripo_app/k_ref.glb").then(s=>{if(!s||!el.isConnected)return;const g=s.clone(true);g.rotation.y=-PI/2;g.updateMatrixWorld(true);
       const bb=new T.Box3().setFromObject(g),sz=bb.getSize(new T.Vector3()),c=bb.getCenter(new T.Vector3());if(!(sz.y>0))return;const hold=new T.Group();hold.name="referee";g.position.set(-c.x,-bb.min.y,-c.z);hold.add(g);
-      hold.scale.setScalar(10.5/sz.y);hold.position.set(9.6,FL,-5.2);hold.rotation.y=-.95;g.traverse(m=>{if(m.isMesh){m.castShadow=true;m.receiveShadow=true}});sc.add(hold)}).catch(()=>{})}catch(e){}
+      /* 開發者 11/12「裁判的角度好怪，還有高度」：原本站在桌角正後方（9.6,-5.2）、高 10.5，身體被桌面擋住像趴在桌邊探頭。
+         改成站到桌子右側外面（11.5,-6，不擋棋盤也不撞右邊的凳子）、高 13（桌高 6.6 的兩倍，跟坐著的棋客比才像站著的大人），面向棋盤中央偏玩家這邊 */
+      hold.scale.setScalar(13/sz.y);hold.position.set(11.5,FL,-6);hold.rotation.y=Math.atan2(-11.5,8);g.traverse(m=>{if(m.isMesh){m.castShadow=true;m.receiveShadow=true}});sc.add(hold)}).catch(()=>{})}catch(e){}
     /* hspx（開發者 11/12，story/116 選「Claude 混搭」）：幻影棋客頭上的小黑洞——App 用 ex.bhOrb 控制："ball"＝有裂痕的小黑洞球、"dust"＝去過黑洞後頭上留的一圈星塵、其他＝沒有。
        球浮在對手頭頂、裂痕紫光一明一暗；點到它（infoPick 回 "orb"）就化成紫光往遠處飛走（App 再接台詞和引導） */
     let ORB=null,orbK=null,orbT=1,orbFlyT=-1;const orbV=new T.Vector3(0,SY+8,BZ+1),orbBB=new T.Box3();
@@ -1627,10 +1629,17 @@
       const C={x:P.reduce((a,p)=>a+p.x,0)/P.length,z:P.reduce((a,p)=>a+p.z,0)/P.length},face=P.map(p=>ring?Math.atan2(C.x-p.x,C.z-p.z):0);
       let R=0;for(const p of P)R=Math.max(R,Math.hypot(p.x-C.x,p.z-C.z));return{P,C,face,R:R+28}};
     const simXf=(L,i)=>{const r=-L.face[i],c=Math.cos(r),s=Math.sin(r),p=L.P[i];return{r,x:-(p.x*c+p.z*s),z:-(-p.x*s+p.z*c)}};
-    const simBoardTex=b=>{const cv=document.createElement("canvas");cv.width=520;cv.height=570;const g=cv.getContext("2d"),ox=44,oy=42,d=54;g.fillStyle="#E6C48A";g.fillRect(0,0,520,570);g.strokeStyle="#5A3A1A";g.lineWidth=3;
+    /* 開發者 11/12 hspx「下第二盤時，第一盤也要有第一盤下的棋盤和棋子位置」：別桌的盤面原本太淡、棋子太小，遠看像空白。
+       改成跟主桌同一個感覺：深色木框、較深的木色棋盤、粗線，棋子放大（格距 108、半徑 47）、有立體感（陰影＋漸層＋深色外圈），遠看也分得出哪裡有棋 */
+    const simBoardTex=b=>{const W=1040,H=1140,cv=document.createElement("canvas");cv.width=W;cv.height=H;const g=cv.getContext("2d"),ox=88,oy=84,d=108;
+      g.fillStyle="#4A2A14";g.fillRect(0,0,W,H);g.fillStyle="#C99456";g.fillRect(22,22,W-44,H-44);g.strokeStyle="#2E1A0C";g.lineWidth=7;
       const ln=(a,b2,c2,d2)=>{g.beginPath();g.moveTo(ox+a*d,oy+b2*d);g.lineTo(ox+c2*d,oy+d2*d);g.stroke()};for(let r=0;r<10;r++)ln(0,r,8,r);for(let c=0;c<9;c++){if(c===0||c===8)ln(c,0,c,9);else{ln(c,0,c,4);ln(c,5,c,9)}}
-      ln(3,0,5,2);ln(5,0,3,2);ln(3,7,5,9);ln(5,7,3,9);g.textAlign="center";g.textBaseline="middle";g.font=`900 30px ${SERIF}`;
-      (b||[]).forEach((p,i)=>{if(!p)return;const x=ox+(i%9)*d,y=oy+Math.floor(i/9)*d,red=sideOf(p)==="r";g.fillStyle="#F6E4BC";g.beginPath();g.arc(x,y,23,0,TAU);g.fill();g.lineWidth=2.5;g.strokeStyle=red?"#B3141B":"#2A2018";g.stroke();g.fillStyle=red?"#B3141B":"#1A1410";g.fillText(NAMES[sideOf(p)][p.toUpperCase()]||"",x,y+1)});
+      ln(3,0,5,2);ln(5,0,3,2);ln(3,7,5,9);ln(5,7,3,9);g.textAlign="center";g.textBaseline="middle";
+      (b||[]).forEach((p,i)=>{if(!p)return;const x=ox+(i%9)*d,y=oy+Math.floor(i/9)*d,red=sideOf(p)==="r",R=47;
+        g.fillStyle="rgba(20,10,4,.45)";g.beginPath();g.arc(x+5,y+7,R,0,TAU);g.fill();
+        const gr=g.createRadialGradient(x-14,y-16,6,x,y,R);gr.addColorStop(0,"#FFF6DE");gr.addColorStop(1,"#E0BC80");g.fillStyle=gr;g.beginPath();g.arc(x,y,R,0,TAU);g.fill();
+        g.lineWidth=7;g.strokeStyle="#5C3818";g.stroke();g.lineWidth=3.5;g.strokeStyle=red?"#B3141B":"#1A1410";g.beginPath();g.arc(x,y,R-11,0,TAU);g.stroke();
+        g.fillStyle=red?"#B3141B":"#1A1410";g.font=`900 50px ${SERIF}`;g.fillText(NAMES[sideOf(p)][p.toUpperCase()]||"",x,y+3)});
       const t=new T.CanvasTexture(cv);if(T.SRGBColorSpace)t.colorSpace=T.SRGBColorSpace;t.anisotropy=ANI;return t};
     const simTag=res=>{const cv=document.createElement("canvas");cv.width=cv.height=128;const g=cv.getContext("2d"),col=res==="w"?"#C8102E":res==="l"?"#3A3A3A":"#8A6A2A";g.fillStyle="rgba(255,248,232,.95)";g.beginPath();g.arc(64,64,58,0,TAU);g.fill();
       g.lineWidth=6;g.strokeStyle=col;g.stroke();g.fillStyle=col;g.font=`900 72px ${SERIF}`;g.textAlign="center";g.textBaseline="middle";g.fillText(res==="w"?"勝":res==="l"?"負":"和",64,68);
@@ -1659,11 +1668,35 @@
       else if(simCur!==i){const r0=SIMW.rotation.y,x0=SIMW.position.x,z0=SIMW.position.z;let dr=to.r-r0;dr-=Math.round(dr/TAU)*TAU;const old=simCur;SIMST.forEach((g,j)=>g.visible=j!==i);
         anims.push({t:0,d:1,f:p=>{const e=ease(p);simApply(r0+dr*e,x0+(to.x-x0)*e,z0+(to.z-z0)*e)},end:()=>{simApply(to.r,to.x,to.z)}});pwPoke(1200)}
       simCur=i}
+    /* ---------- 開發者 11/12 hspx「棋子變成角色，拿起來不好操作；加上下左右搖桿，選定角色後用搖桿移到想去的位置，確認後按落子，不能走的地方無法落子」----------
+       只在黑洞巨盤（GIANT）：點角色選好之後（o.sel），畫面下方中間出現十字鍵＋「落子」；棋盤上一圈光標出目前格（從選的那隻開始）。
+       ↑＝往對方陣地、→＝畫面右邊（翻盤時跟著反過來）；光圈停在能走的格子是綠色、「落子」可以按，不能走的是灰色、「落子」按不下去。按落子＝照點那一格（opt.onTap） */
+    let PAD=null,padSel=-1,padCur=-1,padT=[];
+    const padRing=new T.Mesh(new T.RingGeometry(.36,.48,40),new T.MeshBasicMaterial({color:0x7CFFB0,transparent:true,opacity:.95,depthWrite:false,side:T.DoubleSide}));padRing.rotation.x=-PI/2;padRing.renderOrder=3;padRing.visible=false;padRing.userData.giant=1;
+    const padBeam=new T.Mesh(new T.CylinderGeometry(.42,.42,2.6,32,1,true),new T.MeshBasicMaterial({color:0x7CFFB0,transparent:true,opacity:.18,depthWrite:false,blending:T.AdditiveBlending,side:T.DoubleSide}));padBeam.visible=false;padBeam.userData.giant=1;
+    const padShow=()=>{const ok=padT.includes(padCur);if(padCur<0){padRing.visible=padBeam.visible=false;return}const[x,z]=pos(padCur);padRing.position.set(x,TOP+.03,z);padBeam.position.set(x,TOP+1.3,z);
+      padRing.visible=padBeam.visible=true;const c=ok?0x7CFFB0:0x9A9AA8;padRing.material.color.setHex(c);padBeam.material.color.setHex(c);padBeam.material.opacity=ok?.2:.08;
+      if(PAD){const g=PAD.querySelector(".pad-go");g.disabled=!ok;g.setAttribute("aria-disabled",String(!ok));const L=PAD.querySelector(".pad-tip");if(L)L.textContent=ok?"可以走這裡":padCur===padSel?"移到要去的格子":"這裡不能走"}pwPoke(300)};
+    const padMove=(dr,dc)=>{if(padCur<0)return;const r=(padCur/9|0)+(flip?-dr:dr),c=padCur%9+(flip?-dc:dc);if(r<0||r>9||c<0||c>8){vibrate(8);return}vibrate(4);padCur=r*9+c;padShow()};
+    const padUI=()=>{if(PAD)return PAD;if(!sc.children.includes(padRing))sc.add(padRing,padBeam);PAD=document.createElement("div");PAD.className="gpad";PAD.setAttribute("role","group");PAD.setAttribute("aria-label","搖桿：移動要去的格子");
+      PAD.style.cssText="position:absolute;left:50%;bottom:10px;transform:translateX(-50%);z-index:4;display:none;grid-template-columns:44px 54px 44px;grid-template-rows:40px 44px 40px auto;gap:3px;align-items:center;justify-items:center;touch-action:manipulation";
+      const B=(t,l,ar,ac,st)=>{const b=document.createElement("button");b.type="button";b.textContent=t;b.setAttribute("aria-label",l);b.style.cssText="width:44px;height:40px;border-radius:12px;border:1px solid rgba(255,224,138,.55);background:rgba(16,14,34,.78);color:#FFE08A;font:900 18px/1 system-ui;padding:0;cursor:pointer;"+(st||"");
+        b.addEventListener("pointerdown",e=>e.stopPropagation());b.addEventListener("pointerup",e=>e.stopPropagation());b.onclick=e=>{e.stopPropagation();padMove(ar,ac)};return b};
+      const up=B("▲","往上（對方陣地）",-1,0,"grid-column:2;grid-row:1"),lf=B("◀","往左",0,-1,"grid-column:1;grid-row:2"),rt=B("▶","往右",0,1,"grid-column:3;grid-row:2"),dn=B("▼","往下（自己陣地）",1,0,"grid-column:2;grid-row:3");
+      const go=document.createElement("button");go.type="button";go.className="pad-go";go.textContent="落子";go.setAttribute("aria-label","落子");go.style.cssText="grid-column:2;grid-row:2;width:54px;height:44px;border-radius:50%;border:2px solid #7CFFB0;background:#1E6B45;color:#fff;font:900 15px/1 var(--serif,serif);padding:0;cursor:pointer";
+      go.addEventListener("pointerdown",e=>e.stopPropagation());go.addEventListener("pointerup",e=>e.stopPropagation());
+      go.onclick=e=>{e.stopPropagation();if(go.disabled||!padT.includes(padCur)){vibrate(12);return}vibrate(8);const i=padCur;if(opt.onTap)opt.onTap(i)};
+      const tip=document.createElement("div");tip.className="pad-tip";tip.setAttribute("aria-live","polite");tip.style.cssText="grid-column:1/4;grid-row:4;font:700 12px/1.3 system-ui;color:#FFE08A;text-shadow:0 0 3px #000;white-space:nowrap";
+      PAD.append(up,lf,go,rt,dn,tip);el.append(PAD);
+      const style=document.createElement("style");style.textContent=".gpad .pad-go[disabled]{opacity:.4;filter:grayscale(1);border-color:#888!important}";PAD.append(style);return PAD};
+    const gntPad=o=>{const sel=o.sel!=null&&o.sel>=0?o.sel:-1,T2=Array.isArray(o.targets)?o.targets.slice():[];
+      if(sel<0||!T2.length){padSel=-1;padCur=-1;padT=[];if(PAD)PAD.style.display="none";padRing.visible=padBeam.visible=false;return}
+      padUI();PAD.style.display="grid";if(sel!==padSel){padSel=sel;padCur=sel}padT=T2;padShow()};
     function draw(board,o,ex){o=o||{};ex=ex||{};drawn=true;orbSet(ex.bhOrb,ex.gxLit);gxSet(ex.gx);if(GIANT){const R=ex.result||null;if(R!==gntRes){gntRes=R;if(R)setTimeout(()=>{for(const g of Object.values(pieces))if(g&&g.userData&&g.userData.B)gntAct(g,R==="r"?"cheer":R==="b"?"bow":"idle",4200)},600)}}try{const dk=[(board||[]).join(","),o.sel,(o.targets||[]).join(" "),o.last?o.last.f+"-"+o.last.t:"",o.check,o.flip?1:0,ex.thinking?1:0,ex.result||"",(ex.hint||[]).join(" ")].join("|");if(dk!==PW.dk){PW.dk=dk;pwPoke(1500)}}catch(e){pwPoke(1500)}   /* 11/11 省電：App 每 1.5 秒輪詢都會呼叫 draw，盤面真的有變才算「畫面在動」 */const nf=!!o.flip;
       {const lk=JSON.stringify(ex.look?[ex.look.k,ex.look.img,!!ex.look.gly,ex.look.pset,ex.look.pieces&&ex.look.pieces.r,ex.look.grid]:null);if(lk!==lookKey){lookKey=lk;LOOK=ex.look||null;
         if(LOOK){let n=0;const L0=[LOOK.img,LOOK.pieces&&LOOK.pieces.r,LOOK.pieces&&LOOK.pieces.b,...(LOOK.pset?PSRC(LOOK.pset):[])],done=()=>{if(++n>=L0.length&&LOOK===ex.look)refreshLook()};L0.forEach(src=>{if(!src||loadImg(src,done))done()})}
         refreshLook()}}
-      if(nf!==flip){flip=nf;prevB=null}
+      if(nf!==flip){flip=nf;prevB=null}if(GIANT)try{gntPad(o)}catch(e){}   /* 搖桿：翻盤更新後才算方向 */
       const L=o.last&&o.last.f!=null&&o.last.t!=null?o.last:null,lk=L?L.f+"-"+L.t:"";
       const moved=prevB&&L&&lk!==prevLast&&board[L.t]&&board[L.t]===prevB[L.f]&&!board[L.f]&&pieces[L.f]&&board.filter(Boolean).length>=prevB.filter(Boolean).length-1;
       if(moved){const g=pieces[L.f],cap=pieces[L.t];delete pieces[L.f];pieces[L.t]=g;const[x0,z0]=pos(L.f),[x1,z1]=pos(L.t);

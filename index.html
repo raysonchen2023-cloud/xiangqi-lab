@@ -1534,7 +1534,7 @@ html[data-hct] .player.on .clk{background:#00563B;color:#FFFFFF;border-color:#00
       if(!window.caches)return go();caches.keys().then(function(ks){return Promise.all(ks.filter(function(k){return k.indexOf("xqlab-app-")===0}).map(function(k){return caches.delete(k)}))})
         .then(function(){return navigator.serviceWorker&&navigator.serviceWorker.getRegistration()}).then(function(r){return r&&r.update()}).catch(function(){}).then(go)}};setTimeout(chk,4000)})();
 </script>
-<script>window.XQ_OFFLINE=true;window.XQ_BUILD="20261112-1120";</script>
+<script>window.XQ_OFFLINE=true;window.XQ_BUILD="20261112-1130";</script>
 <script src="core.js"></script>
 <script src="engine.js"></script>
 <script src="local.js"></script>
@@ -14001,7 +14001,12 @@ function shwClick(S,e){if(S.pass||!S.ready||!S.box.isConnected)return;const g=S.
   if(b){const h=tk||S.o.keyOf(b),H=S.C.HS[h];if(!H||!S.C.N[H[0]])return;e.stopPropagation();e.preventDefault();vibrate(5);
     if(tk&&S.C.TB){const p=shwPt(S,e),tn=shwTblAt(S.C,p);if(tn){shwGo(S,{hs:h,btn:b,H,tbl:tn,tap:p});return}}   /* 820：點桌上的東西本身＝走到它旁邊最近的可站處再打開 */
     shwGo(S,{hs:h,btn:b,H});return}
+  /* 開發者 11/12 hspx「在圖上快速點兩下角色，3D 角色會快速移動」：點到小人自己的 3D 畫布（「我的角色」按鈕沒蓋到的邊緣）被當成點空地，
+     往旁邊最近的路點衝一小段（短路程最少 0.35 秒）；連點兩下就衝兩次。點到小人身上＝點角色（開選單），不走路；0.4 秒內在同一處再點一下也不重走 */
+  {const cv=S.box.querySelector("canvas"),r=cv&&cv.getBoundingClientRect();   /* 小人是 pointer-events:none，點擊會穿到底圖：用位置判斷是不是點在小人身上（畫布中間 70% 寬、85% 高） */
+    if(r&&r.width>0&&!(e.target.closest&&e.target.closest(".shw-me,.shw-hint,.shw-menu"))&&e.clientX>=r.left+r.width*.15&&e.clientX<=r.right-r.width*.15&&e.clientY>=r.top+r.height*.1&&e.clientY<=r.bottom-r.height*.05){e.stopPropagation();e.preventDefault();const h=S.o.layer.querySelector(".shw-me");if(h&&h.style.display!=="none"&&e.isTrusted)h.click();return}}
   if(!shwFreeOk(S,e))return;const p=shwPt(S,e);if(!(p[0]>=0&&p[0]<=100&&p[1]>=0&&p[1]<=100))return;
+  {const now=Date.now(),L=S.lastTap;S.lastTap={t:now,p};if(L&&now-L.t<400&&Math.hypot(p[0]-L.p[0],p[1]-L.p[1])<6){e.stopPropagation();e.preventDefault();return}}
   /* 回饋 816／820：點到桌面＝走到最近的桌邊跳上去、再在桌面上繞過障礙走到點的地方（點在障礙上＝走到旁邊最近的可站處）；人已經在桌上＝直接在桌面上走過去；不觸發別的 */
   if(WALK_HOP_ON&&S.C.TB){const tn=shwTblAt(S.C,p);if(tn){e.stopPropagation();e.preventDefault();shwInk(S,p);vibrate(5);shwGo(S,{free:1,tbl:tn,tap:p});return}}const q=shwNear(S.C,p);if(!q)return;shwInk(S,p);shwGo(S,{free:1,q,tap:p})}   /* 意見回饋 782：點空地＝走到路網上離那裡最近的點，走到只換待機 */
 function shwGo(S,o){shwDrop();const C=S.C,g0=S.go;if(g0&&g0.btn&&g0.btn!==o.btn)g0.btn.classList.remove("shw-fade");
