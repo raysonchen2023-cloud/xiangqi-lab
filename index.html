@@ -1531,7 +1531,7 @@ html[data-hct] .player.on .clk{background:#00563B;color:#FFFFFF;border-color:#00
       if(!window.caches)return go();caches.keys().then(function(ks){return Promise.all(ks.filter(function(k){return k.indexOf("xqlab-app-")===0}).map(function(k){return caches.delete(k)}))})
         .then(function(){return navigator.serviceWorker&&navigator.serviceWorker.getRegistration()}).then(function(r){return r&&r.update()}).catch(function(){}).then(go)}};setTimeout(chk,4000)})();
 </script>
-<script>window.XQ_OFFLINE=true;window.XQ_BUILD="20261112-0850";</script>
+<script>window.XQ_OFFLINE=true;window.XQ_BUILD="20261112-0900";</script>
 <script src="core.js"></script>
 <script src="engine.js"></script>
 <script src="local.js"></script>
@@ -6434,7 +6434,7 @@ function parkDraw(host,bd,board,o,ex){
   if(PARK&&(PARK.era!==store.get("era","classic")||(PARK.bg||null)!==(ex.bg||null))){PARK.v.destroy();PARK=null}   // 換了朝代（例如從集章簿換過去）：公園重建
   if(!PARK||PARK.host!==host||!document.body.contains(PARK.v.el)){if(PARK)PARK.v.destroy();
     if(ex.gate&&ex.gate.qk)ex.gate=Object.assign({},ex.gate,{quote:parkQuote(ex.gate.qk)});   /* 名言只在真的建公園、要顯示過場時才抽，不然每次重畫都抽一次，會跟上次重複 */
-    const pv=XQPark3D.create(host,{view:store.get("parkView","")||null,intro:store.get("parkView","")||ex.quietMate?null:pkIntroKey(ex),   /* 11/11：玩家存過的視角一開始就用；沒存過的手機直式 park3d 用 topfit（俯視＋拉近） */arena:ex.arena||null,gate:ex.gate||null,bg:ex.bg||null,bridge:!!ex.bridge,ground:ex.ground||null,era:ex.era||null,indoor:!!ex.indoor,   /* 11/11：車輪戰棋館＝明朝家具、室內（不放園子的樹和道具） */   /* 11/11：首頁橋上石桌（07y hbBridge）＝橋上家具＋橋面地面；換場景靠 bg 不同就會重建 */onTap:i=>{if(!pkGateEat())pkSwTap(ex,i)},onInfo:k=>{if(!pkGateEat())parkInfo(k)},onDestroy:()=>{if(PARK&&PARK.v===pv){PARK=null;botVis(true)}}});
+    const pv=XQPark3D.create(host,{giant:!!ex.giant,   /* hspx（開發者 11/12）：黑洞星樞棋局的巨盤模式（07bh-blackhole.js） */view:ex.giant?null:store.get("parkView","")||null,intro:store.get("parkView","")||ex.quietMate?null:pkIntroKey(ex),   /* 11/11：玩家存過的視角一開始就用；沒存過的手機直式 park3d 用 topfit（俯視＋拉近） */arena:ex.arena||null,gate:ex.gate||null,bg:ex.bg||null,bridge:!!ex.bridge,ground:ex.ground||null,era:ex.era||null,indoor:!!ex.indoor,   /* 11/11：車輪戰棋館＝明朝家具、室內（不放園子的樹和道具） */   /* 11/11：首頁橋上石桌（07y hbBridge）＝橋上家具＋橋面地面；換場景靠 bg 不同就會重建 */onTap:i=>{if(!pkGateEat())pkSwTap(ex,i)},onInfo:k=>{if(!pkGateEat())parkInfo(k)},onDestroy:()=>{if(PARK&&PARK.v===pv){PARK=null;botVis(true)}}});
     if(!pv){toast("這台裝置沒辦法顯示 3D，先用棋盤模式");store.set("park3d",false);return}PARK={host,v:pv,era:store.get("era","classic"),bg:ex.bg||null,ik:pkIntroKey(ex)};try{pkGateWatch(pv)}catch(e){}parkUi(host,pv);setTimeout(()=>{try{if(!ex.quietMate)pv.say(`我是${BOTN()}，幫你加油！`,2.6);if(ex.oppHello)setTimeout(()=>pv.oppSay(ex.oppHello,2.6),1400)}catch(e){}},700)}
   /* 意見回饋 417：園子上方標出朝代和那個朝代對園子的叫法（例如「唐朝・園林」「漢朝・苑囿」） */
   {let tg=host.querySelector(".pkname");if(!tg){tg=document.createElement("div");tg.className="pkname";if(getComputedStyle(host).position==="static")host.style.position="relative";host.append(tg)}const k=store.get("era","classic");tg.textContent=ex.bgName||((k==="classic"?"經典":eraLabel(k))+"・"+(PW[k]||"園子"));tg.hidden=false}
@@ -7165,10 +7165,10 @@ function innSheet(v){setTimeout(innDrop,1200);const I=xpInfo(),Sx=jSecrets(),nx=
 /* 意見回饋 327：石桌往事的棋（雲河棋路、驛站、公園）自己留一盤，跟朝代擂台、挑戰電腦互不干擾 */
 /* 意見回饋 588（開發者：路人看起來都是 Lv1，要照修為調整才有挑戰性）：每 3 級修為升一級（Lv3＝第 2 級電腦，最高第 8 級），再照最近輸贏微調：贏了下一位強一點、輸了弱一點（最多上下 2 級） */
 const parkLv=()=>Math.max(1,Math.min(8,1+Math.floor(xpInfo().L/3)+(store.get("parkAdj",0)||0)));
-function jName(j){if(!j)return"石桌往事";if(j==="park")return"園子";if(String(j).startsWith("bt:")){const c=typeof battleCardJ==="function"?battleCardJ(j):null;return"古戰場・"+(c?c.name:"讓子對弈")}if(String(j).startsWith("char:")){const c=JCHAR[String(j).slice(5)];return c?"大廳・"+c.name:"大廳"}if(String(j).startsWith("inn:")){const x=INN.concat(SECRETS).find(z=>"inn:"+z.id===j)||(typeof igAct==="function"?igAct(j):null);return x?"驛站・"+x.name:"驛站"}
+function jName(j){if(!j)return"石桌往事";if(j==="park")return"園子";if(String(j).startsWith("bh:"))return"黑洞・星樞棋局";if(String(j).startsWith("bt:")){const c=typeof battleCardJ==="function"?battleCardJ(j):null;return"古戰場・"+(c?c.name:"讓子對弈")}if(String(j).startsWith("char:")){const c=JCHAR[String(j).slice(5)];return c?"大廳・"+c.name:"大廳"}if(String(j).startsWith("inn:")){const x=INN.concat(SECRETS).find(z=>"inn:"+z.id===j)||(typeof igAct==="function"?igAct(j):null);return x?"驛站・"+x.name:"驛站"}
   const s=jFindStage(j);return s?(s.book===2?"紙譜新局・":ROAD_NAME+"・")+s.name:ROAD_NAME}
-const jBack=j=>String(j||"").startsWith("bt:")?"#/battle":String(j||"").startsWith("char:")?"#/lobby":j==="park"?"#/port":String(j||"").startsWith("inn:")?"#/journey/inn":(()=>{const R=jRunGet(j);if(R&&!R.done)return"#/journey/"+j;const s=jFindStage(j);return s?jChapterHref(s):"#/shelf/1"})();
-const jPlace=j=>String(j||"").startsWith("bt:")?"古戰場":j==="park"?"渡口":String(j||"").startsWith("inn:")?"驛站":String(j||"").startsWith("char:")?"大廳":(()=>{const s=jFindStage(j);return s?"第"+CNUM(s.n)+"回":"石桌往事"})();   /* 意見回饋 735：章回棋路併進書的目錄，回到書 */
+const jBack=j=>String(j||"").startsWith("bh:")?"#/adventure":String(j||"").startsWith("bt:")?"#/battle":String(j||"").startsWith("char:")?"#/lobby":j==="park"?"#/port":String(j||"").startsWith("inn:")?"#/journey/inn":(()=>{const R=jRunGet(j);if(R&&!R.done)return"#/journey/"+j;const s=jFindStage(j);return s?jChapterHref(s):"#/shelf/1"})();
+const jPlace=j=>String(j||"").startsWith("bh:")?"星槎":String(j||"").startsWith("bt:")?"古戰場":j==="park"?"渡口":String(j||"").startsWith("inn:")?"驛站":String(j||"").startsWith("char:")?"大廳":(()=>{const s=jFindStage(j);return s?"第"+CNUM(s.n)+"回":"石桌往事"})();   /* 意見回饋 735：章回棋路併進書的目錄，回到書 */
 /* 意見回饋 413：石桌往事只留一盤（雲河棋路、驛站、園子、守關共用一格）。要開的跟手上那盤不是同一個對手時先問，不會悄悄蓋掉；同一個對手就接著下；force＝重下這一盤 */
 async function jStart(id,b,go,force){let st;try{st=await api("/play/state")}catch(e){toast(e.message);return}
   const cur=st.journey&&!st.result&&st.moves&&st.moves.length?{journey:st.journey,n:st.moves.length}:null,o=(st.others||[]).find(z=>z.kind==="journey");let g=cur||(o?{journey:o.journey,n:o.n}:null);
@@ -7271,6 +7271,7 @@ function lvRuleMiss(st,rule,me){const C=window.XQCore;let b,miss=0,n=0,crossed=f
 function journeyGameEnd(st){if(!st||!st.result)return;try{if(typeof qqParkEnd==="function")qqParkEnd(st)}catch(e){}   /* 千秋穿梭突發事件：在園子贏了攔路棋客＝贖回押著的東西 */
   if(!st.practice&&(st.moves||[]).length>=10)addXP(st.result.w===st.human?40:15,"對局","g:"+st.id);   /* QA P1-3：雙方各走不到 5 步就結束（走一步就認輸）不給修為，免得刷經驗 */
   const P=store.get("jPending",null);if(!P||P.game!==st.id)return;store.set("jPending",null);
+  if(String(P.id).startsWith("bh:")){if(typeof bhGameEnd==="function")bhGameEnd(st,P);return}   /* hspx（開發者 11/12）：黑洞星樞棋局（07bh-blackhole.js）：記輸贏、調下次難度 */
   if(String(P.id).startsWith("bt:")){if(typeof battleOddsEnd==="function")battleOddsEnd(st,P);return}   /* 古戰場的讓子對弈（07g-battle.js）：贏了蓋戰役印 */
   if(String(P.id).startsWith("inn:")){const x=INN.concat(SECRETS).find(z=>"inn:"+z.id===P.id);if(!x){if(typeof igGameEnd==="function")igGameEnd(st,P);return}   /* 意見回饋 826：路過的客人 */
     let rl=null;if(!x.who){const C=store.get("innCur",null);rl=C&&C.id===x.id&&Number.isInteger(C.rl)?C.rl:innRlv(x);const i=INN.indexOf(x),B=INN_BAND[i]||INN_BAND[0],A=store.get("innAdj",{});
@@ -8982,7 +8983,7 @@ function diffSheet(after){sheet("🎚 航行難度",b=>{const cur=diffNow(),sg=d
 
 /* ---------- 起航：往下一站開——先播千秋穿梭（只播經過的那幾朝，意見回饋 697），再出停靠封面（2.6 秒、點一下跳過），再看這一站主場角色的開場 ---------- */
 function shipSailGo(done){{const N=shipSailNeed();if(N){shipGateSay(N);return}}const from=shipAt(),k=shipSail();if(!k)return;shipEra(k);vibrate([10,40,10]);try{saveNow(true)}catch(e){}
-  qianqiu(from,k,()=>shipDockCover(k,done),"sail")}
+  qianqiu(from,k,()=>{if(typeof bhMaybe==="function")bhMaybe(k,()=>shipDockCover(k,done),true);else shipDockCover(k,done)},"sail")}   /* hspx（開發者 11/12）：穿梭完 10% 偏航進黑洞（07bh-blackhole.js），不下就照常停靠 */
 function shipDockCover(k,done){const Ls=SHIP_LESSON[k]||{},T=SHIP_STOP[k],c=document.createElement("div");let fin=false;c.className="ecover";
   c.innerHTML=`<i style="background-image:url(data/inn/${k}_ink.webp),url(data/inn/${k}.webp)"></i><div><span class="es">${esc((ARENA[k]||{}).seal||"⛵")}</span><b>${esc(shipShort(k))}</b><small>⛵ 星槎停靠・${esc(T.place)}</small></div>`;
   document.body.append(c);requestAnimationFrame(()=>c.classList.add("on"));
@@ -8996,7 +8997,7 @@ function shipEra(k){store.set("shipAt",k);if(store.get("era","classic")===k)retu
 function shipHere(){const e=store.get("era","classic"),k=shipDocked().includes(e)?e:shipAt();if(e!==k||store.get("shipAt",null)!==k)shipEra(k);return k}
 /* 換朝代只在星槎：航線點別站、擂主卡和集章簿的「⛵ 回星槎開往〇朝」都走這裡，播千秋穿梭 */
 function shipGoTo(e,after){if(eraLocked(e)){vibrate(8);toast(eraLockMsg(e));return}const k=shipAt();if(e===k){if(after)after();return}shipEra(e);try{saveNow(true)}catch(x){}
-  qianqiu(k,e,()=>{if(after)after();else if(navKey(location.hash)==="/adventure")route()},"go")}
+  qianqiu(k,e,()=>{const go=()=>{if(after)after();else if(navKey(location.hash)==="/adventure")route()};if(typeof bhMaybe==="function")bhMaybe(e,go,false);else go()},"go")}
 function innName(k){return k==="classic"?"雲河驛站":eraLabel(k)+"的驛站"}   /* 意見回饋 697：船艙那一站的驛站叫「雲河驛站」 */
 function portName(k){return k==="classic"?"船艙":eraLabel(k)+"的渡口"}
 function navPrev(){try{for(let i=NAV_D-1;i>=0;i--){const x=NAV_H[i];if(typeof x==="string"&&x[0]!=="~")return x}}catch(e){}return null}   /* 上一頁的網址（跳過卡片那一層） */
@@ -9681,6 +9682,59 @@ async function shipMorePz(v,k,Lz,B){const sp=v.querySelector("#pzSpots"),svg=v.q
     bt.querySelector("#pzSail").onclick=()=>{vibrate(8);location.hash=nxS?"#/ship/sail":"#/adventure"};
     if(typeof view==="number"&&todo)pick(list.findIndex(id=>!rec(id)))}
   render()}
+/* ---------- 黑洞・星樞棋局（hspx 開發者 11/12：「星槎在穿越時空時有 10% 掉入黑洞……7 個角色聚集在一張超大棋盤上……跟電腦下棋，對手是神秘的力量」）----------
+   流程：星槎起航／換朝代播完千秋穿梭 → 10% 偏航（bhMaybe）→ 選「接受棋局」或「先回航線」（回航不扣任何東西，照原流程停靠）
+   → 接受：石桌往事的對局機制開一盤 journey "bh:<朝代>"（不計積分、不扣分），3D 是巨盤模式（park3d opt.giant）：
+     棋盤浮在黑洞環景裡，紅方棋子是雲河七星（本體＋星影分身），黑方是星樞的發光棋子；鏡頭從俯視全盤一路放大到站在棋盤上的第一人稱
+   → 下完「⛵ 星槎回航」回到原本要停靠的那一站。
+   文案：story/chatgpt_app/109_星槎黑洞_文案_ChatGPT回覆.md（開發者選方案 A 本體＋星影分身、神秘力量叫「星樞」）；
+   幻影棋客是黑洞無限循環裡算出來的棋手（開發者 11/12 選 ChatGPT 方案二）——不說破，星樞只留一句伏筆。
+   測試：localStorage 設 xq_bhForce＝1，下一次起航一定偏航；或在主控台叫 bhOffer("tang") 直接跳選擇視窗 */
+const BH_P=.1,BH_TXT={
+  fall:"雲河忽然倒流，星槎被墨色星渦牽引！",
+  again:["步越溪","又是這座星盤！這次換我先看路。"],
+  wake:["齊轍","醒醒！我們在巨棋盤上，還成了棋子？"],
+  voice:["星樞","來者，請在星盤上落子。"],
+  rule:"黑洞棋局開始：照象棋規則對弈，勝和敗皆可返航。",
+  lead:["田飛燕","局勢順風，別貪吃子，守住要點。"],
+  behind:["沈方庭","慢慢來，先保帥，再找反擊。"],
+  hush:["星樞","這一步……星盤上，早已落過千萬遍。"],
+  win:["雷借花","贏啦！星光開門，星槎回航！"],
+  lose:["駱躍梅","這局學到就好，星槎送我們回去。"],
+  draw:["鐵連城","不分勝負，也算過了這一關。"]};
+const BH_FACE={齊轍:"x_swordboy",田飛燕:"x_spiritgirl",雷借花:"x_martialgirl",駱躍梅:"x_miaogirl",沈方庭:"x_shuai",鐵連城:"x_shi",步越溪:"x_bing"};
+const bhSay=([who,t])=>`<p class="pl-say">${BH_FACE[who]?`<img src="data/xs/prev_${BH_FACE[who]}.webp" alt="" onerror="this.remove()" style="width:44px;height:44px;border-radius:50%;object-fit:cover;vertical-align:middle;margin-right:6px">`:""}${esc(who)}：「${esc(t)}」</p>`;
+function bhForced(){try{return localStorage.getItem("xq_bhForce")==="1"}catch(e){return false}}
+/* 星槎起航（shipSailGo、shipGoTo）播完千秋穿梭時叫：沒偏航就照原流程 next() */
+function bhMaybe(k,next,cover){let hit=false;try{hit=bhForced()||Math.random()<BH_P}catch(e){}if(!hit||!k)return next();bhOffer(k,next,cover)}
+function bhOffer(k,next,cover){const n=store.get("bhCount",0)||0;vibrate([20,60,20]);
+  modal(`<div class="em">🌀</div><h2>星槎偏航</h2><p>${esc(BH_TXT.fall)}</p>${n?bhSay(BH_TXT.again):""}<p class="muted" style="font-size:13px">墨色星渦的中心，浮著一張巨大的棋盤。要下這一盤嗎？不下也不扣任何東西，星槎照原本的航線停靠。</p>`,
+    [["🌀 接受棋局",()=>bhIntro(k,cover)],["先回航線",()=>{if(next)next()},true]],"prolog")}
+function bhIntro(k,cover){modal(`<div class="em">♟</div><h2>星樞棋局</h2>${bhSay(BH_TXT.wake)}<p class="pl-say">✦ ${esc(BH_TXT.voice[0])}：「${esc(BH_TXT.voice[1])}」</p><p class="muted" style="font-size:13px">${esc(BH_TXT.rule)}<br>不計積分、不扣分。可以用＋／－或兩指縮放：拉遠看整盤，放大到最近就站在棋盤上。</p>`,
+  [["入局",()=>bhStart(k,cover)]],"prolog")}
+/* 難度：照玩家平常挑戰電腦的級數，第一次低兩級；輸了下一次再低一級（最多低三級）、贏了回升一級 */
+function bhLevel(){const base=+store.get("cpuLevel",6)||6,adj=+store.get("bhAdj",0)||0,first=!(store.get("bhCount",0)>0);return Math.max(1,Math.min(18,Math.round(base+adj-(first?2:0))))}
+function bhStart(k,cover){store.set("bhRet",{k,cover:cover!==false,at:Date.now()});store.set("park3d",true);
+  jStart("bh:"+k,{human:"r",lx:bhLevel(),journey:"bh:"+k},()=>{location.hash="#/journey/play";setTimeout(()=>toast("✦ 星樞："+BH_TXT.voice[1]),900)})}
+const bhIs=st=>!!st&&String(st.journey||"").startsWith("bh:");
+/* 對局頁的 3D：巨盤模式＋黑洞環景（08b-cpugame 的 parkDraw 參數最後疊上去） */
+function bhParkEx(st){if(!bhIs(st))return null;return{giant:true,bg:"data/park/blackhole_360.webp",bgName:"🌀 黑洞・星樞棋局",era:"classic",quietMate:true,watchers:[],oppHello:null,opp:null,mateLook:null,crowd:null,
+  gate:{img:["data/park/blackhole_360.webp"],icon:"🌀",title:"星樞棋局",sub:"墨色星渦的中心，有一張巨大的星盤",bg:"#05060d",quiet:true}}}
+/* 對局中：領先、落後各提醒一次；下到中盤星樞說一句伏筆（不說破幻影棋客是什麼） */
+let BH_T={id:null,s:{}};
+function bhTick(st){if(!bhIs(st)||st.result||!st.id)return;if(BH_T.id!==st.id)BH_T={id:st.id,s:{}};const S=BH_T.s,n=(st.moves||[]).length,me=st.human==="b"?-1:1,v=st.eval&&st.eval.v!=null?st.eval.v*me:null;
+  const say=(k,L,ms)=>{if(S[k])return;S[k]=1;setTimeout(()=>toast((L[0]==="星樞"?"✦ ":"")+L[0]+"："+L[1]),ms||600)};
+  if(v!=null&&n>=8&&v>=280)say("lead",BH_TXT.lead);else if(v!=null&&n>=8&&v<=-280)say("behind",BH_TXT.behind);
+  if(n>=24&&st.turn===st.human)say("hush",BH_TXT.hush,1200)}
+/* 07-legend journeyGameEnd 叫：記次數、照輸贏調下次難度 */
+function bhGameEnd(st){store.set("bhCount",(store.get("bhCount",0)||0)+1);const a=+store.get("bhAdj",0)||0,w=st.result&&st.result.w;
+  if(w===st.human)store.set("bhAdj",Math.min(0,a+1));else if(w)store.set("bhAdj",Math.max(-3,a-1))}
+function bhResultModal(st,win,draw0,XPR){const L=win?BH_TXT.win:draw0?BH_TXT.draw:BH_TXT.lose;
+  modal(`<div class="em">${win?"✨":draw0?"🤝":"🌀"}</div><h2>${win?"星光開門":draw0?"不分勝負":"星渦退去"}</h2><p class="muted">${esc(st.result.why||"")}・🌀 黑洞・星樞棋局（不計積分、不扣分）</p>${bhSay(L)}${XPR||""}`,
+    [["⛵ 星槎回航",bhReturn],["再看一下星盤",null,true]],"res")}
+/* 回航：回到星槎，原本是起航就照常出那一站的停靠封面 */
+function bhReturn(){const R=store.get("bhRet",null);store.set("bhRet",null);location.hash="#/adventure";
+  if(R&&R.cover&&R.k&&typeof shipDockCover==="function")setTimeout(()=>{try{shipDockCover(R.k,()=>{})}catch(e){}},400)}
 /* ================= ⚔ 古戰場・戰役題卡＋朝代戰役地圖（意見回饋 725 方案 A＋B，開發者 11/7 選定；方案在 story/經典戰役玩法方案_725_v2.md）=================
    渡口頁「擂台」旁多一扇門「⚔ 古戰場」→ #/battle：上方是那一朝的疆域地圖（data/eramap/<朝代>.webp＋realms.json 疆域＋labels.json 地名），5 場戰役照經緯度標在實際地點，
    照年代連成一條戰役路線（打下一場，路線延伸到下一場；已蓋印的點變實心印）；下方是 5 張戰役卡。跟渡口同樣的鎖定規則（停靠過的朝代才進得來）；船艙沒有古戰場。
@@ -11316,7 +11370,7 @@ const OPT_ZG={name:"笑面掌櫃",intro:"和氣生財，精算盈虧，均勢愛
 /* 幻影棋客的介紹卡（選對手用；名字和四句台詞照 OPT_KM） */
 const OPT_KM_CARD={intro:"水墨裡走出來的幻影，算得精、下得準，強弱隨你調。",tags:["精準計算","強弱可調","冷靜不語"]};
 const zgIs=st=>!!(st&&st.opp==="zhanggui"&&!st.ranked&&!st.practice&&!st.journey&&!st.arena);
-const cpuOppName=st=>zgIs(st)?OPT_ZG.name:OPT_KM.name;
+const cpuOppName=st=>String(st&&st.journey||"").startsWith("bh:")?"🌀 星樞":zgIs(st)?OPT_ZG.name:OPT_KM.name;   /* 黑洞星盤的對手是星樞（不是幻影棋客） */
 const cpuOppPref=()=>store.get("cpuOpp","km")==="zhanggui"?"zhanggui":"km";
 /* /play/new 要多帶的參數：晉級賽不帶（local.js 也會擋） */
 const zgArg=(opp,ranked)=>!ranked&&opp==="zhanggui"?{opp:"zhanggui"}:{};
@@ -20792,7 +20846,8 @@ function CpuGame(v,practicePage,mode){
     const BRG=!JS0&&!st.journey&&!st.arena&&!st.practice&&typeof hbBridge==="function"?hbBridge():null;   /* 11/11：從首頁進來的挑戰電腦＝橋上環景 */
     const OT=oppTalk(st,JOPP,N);   /* 意見回饋 826 追加：對面的人開口、贏、輸、和棋各說自己的話（07m3-opptalk.js） */
     parkDraw(v.querySelector("#bbox"),bd,st.board,o,{tap,gid:st.id?"cpu:"+st.id:null,...(BRG?{bridge:true,ground:BRG.ground}:{}),bg:JS0?`data/park/j${JR[JS0.r].k}_360.webp`:BRG?BRG.bg:null,bgName:JS0?"雲河鎮・"+JR[JS0.r].name:innAnyAct(st.journey)?"🏮 "+innName(store.get("era","classic")):!st.journey&&!st.arena&&!st.practice&&typeof hbYardName==="function"?hbYardName():null,   /* 11/10：挑戰電腦在茶坊後園下 */   /* 意見回饋 530：在驛站下棋，標籤寫驛站，不是朝代園林 */arena:st.arena||null,gate:st.journey&&!st.arena?(k=>innAnyAct(st.journey)?{img:["data/inn/"+k+"_ink.webp","data/parkgate/"+k+"_ink.webp","data/inn/"+k+".webp"],icon:"🏮",title:"走進"+innName(k),sub:"旅人在燈下擺好棋盤了",bg:"#2b2a22",qk:k}:{img:["data/parkgate/"+k+"_ink.webp","data/parkgate/"+k+".webp","data/park/"+k+"_360.webp"],icon:"🍃",title:"走進"+parkName(k),sub:"石桌就在前面",bg:"#2b2a22",qk:k})(store.get("era","classic"))   /* 意見回饋 697：驛站旅人的對局，載入畫面和標籤都寫「〇〇的驛站」 */:(!st.journey&&!st.arena&&!st.practice&&!st.net?(typeof hbYardGate==="function"?hbYardGate("cpu"):typeof hbGate==="function"?hbGate("🤖","挑戰電腦","對手擺好棋盤了"):null):null),watchers:legendVisit(st),thinking:!!st.thinking||(!st.result&&st.turn!==st.human),botSide:st.human==="r"?"b":"r",result:st.result?(st.result.w||"draw"):null,hint:o.hint&&o.hint.length===1?[o.hint[0],o.hint[0]]:o.hint,   /* 意見回饋 607：只提示一顆子（錯棋重練提示一、二、提示棋）時傳同一格兩次，園子 3D 才畫得出黃圈（park3d 只畫兩格的提示） */
-      opp:(JOPP&&JCHAR_LOOK(JOPP,st.human==="r"?"b":"r"))||(innAnyAct(st.journey)?innLook(innAnyAct(st.journey),st.human==="r"?"b":"r"):null)||(st.arena&&CHAMP_LOOK(st.arena,st.human==="r"?"b":"r"))||(N?NPC_LOOK(N,st.human==="r"?"b":"r"):zgIs(st)?ZG_LOOK(st.human==="r"?"b":"r"):PIKA_LOOK(st.human==="r"?"b":"r")),oppHello:OT.hi,oppWin:OT.win,oppLose:OT.lose});
+      opp:(JOPP&&JCHAR_LOOK(JOPP,st.human==="r"?"b":"r"))||(innAnyAct(st.journey)?innLook(innAnyAct(st.journey),st.human==="r"?"b":"r"):null)||(st.arena&&CHAMP_LOOK(st.arena,st.human==="r"?"b":"r"))||(N?NPC_LOOK(N,st.human==="r"?"b":"r"):zgIs(st)?ZG_LOOK(st.human==="r"?"b":"r"):PIKA_LOOK(st.human==="r"?"b":"r")),oppHello:OT.hi,oppWin:OT.win,oppLose:OT.lose,...(typeof bhParkEx==="function"?bhParkEx(st):null)});   /* hspx（開發者 11/12）：黑洞星樞棋局換成巨盤模式、黑洞環景（07bh-blackhole.js） */
+    if(typeof bhTick==="function")bhTick(st);
     if(typeof meGameTalk==="function")meGameTalk(st);   /* 意見回饋 668：你扮演的雲河七星開局、吃子時說一句 */
     if(NPC_HI!==st.id){NPC_HI=st.id;if(pk0&&!st.moves.length&&!st.result)setTimeout(()=>{try{if(PARK&&PARK.host===hb)PARK.v.oppSay(meHi((N&&typeof npcHello==="function"&&npcHello(N))||OT.hi),2.6)}catch(e){}},900);if(N&&typeof npcAskMaybe==="function")npcAskMaybe(N,st,hb)}}   /* 826 追加：園子 3D 已經開著、換一盤新棋時，不只園子路人，每一位對手都開口打招呼 */   /* 意見回饋 658：有羈絆的女棋手打招呼換成新台詞；開局偶爾來委託（小卡，不打斷對局） */
   let lastN=null;   // 上一次畫的步數：步數剛好多一步才秀開局名（重新整理、開新局不秀）
@@ -20818,7 +20873,7 @@ function CpuGame(v,practicePage,mode){
     const lv=st.levels[st.level-1]||{},me=st.human,bot=opp(me);
     const CR=st.cpuRate||{};paintSeg(modeOf(st));if(!st.ranked&&st.level&&!st.practice)store.set("cpuLevel",st.level);
     // 對手列右邊：目前的段位／難度，點了開「開新局」選單（換難度、換紅黑）
-    const JP=(()=>{const L=lvPlayOf(st),k=(L&&L.lvp.opp)||(String(st.journey||"").startsWith("char:")?st.journey.slice(5):null);return k&&JCHAR[k]?{...JCHAR[k],say:JCHAR[k].hi,img:`data/journey/char_${k}_idle.webp`}:innAnyAct(st.journey)})(),NP=parkNpcOf(st)||JP,top=(NP?npcHTML(bot,NP,(JP&&NP===JP?(NP.name&&NP.name===(innAnyAct(st.journey)||{}).name?"驛站的棋友・":"石桌往事・"):"園子裡的路人棋友・")+(lv.desc||""))   /* 意見回饋 530：驛站的對手不是「石桌往事」 */:(H=>zgIs(st)?(zgCss(),zgAvHTML(H)):H)(playerHTML(bot,st.arena&&ARENA[st.arena]?`🏯 ${ARENA[st.arena].name}`:cpuOppName(st),st.arena&&ARENA[st.arena]?`${eraLabel(st.arena)}擂主${st.arena==="classic"?"・職業頂尖":""}`:st.ranked?"🥇 晉級賽":lv.desc||"練功房")))   /* 11/10 開發者：電腦對手叫「幻影棋客」，不再顯示 Pikafish */+
+    const JP=(()=>{const L=lvPlayOf(st),k=(L&&L.lvp.opp)||(String(st.journey||"").startsWith("char:")?st.journey.slice(5):null);return k&&JCHAR[k]?{...JCHAR[k],say:JCHAR[k].hi,img:`data/journey/char_${k}_idle.webp`}:innAnyAct(st.journey)})(),NP=parkNpcOf(st)||JP,top=(NP?npcHTML(bot,NP,(JP&&NP===JP?(NP.name&&NP.name===(innAnyAct(st.journey)||{}).name?"驛站的棋友・":"石桌往事・"):"園子裡的路人棋友・")+(lv.desc||""))   /* 意見回饋 530：驛站的對手不是「石桌往事」 */:(H=>zgIs(st)?(zgCss(),zgAvHTML(H)):H)(playerHTML(bot,st.arena&&ARENA[st.arena]?`🏯 ${ARENA[st.arena].name}`:cpuOppName(st),st.arena&&ARENA[st.arena]?`${eraLabel(st.arena)}擂主${st.arena==="classic"?"・職業頂尖":""}`:String(st.journey||"").startsWith("bh:")?"黑洞星盤・不計分":st.ranked?"🥇 晉級賽":lv.desc||"練功房")))   /* 11/10 開發者：電腦對手叫「幻影棋客」，不再顯示 Pikafish */+
       `<button class="cpu-chip${st.ranked?" rk":""}" aria-label="${st.ranked?"段位與開新局":"換難度"}"><span><b>${st.ranked?"🏅 "+esc(rkTw(st.rkName||CR.rank||"")):"第 "+st.level+" 級"}</b><small>${st.ranked?(CR.pts||0)+" 分":esc(rkTw(lv.name||""))}</small></span><i>›</i></button>`;
     const pT=v.querySelector("#pTop");if(pT.dataset.h!==top){pT.dataset.h=top;pT.innerHTML=top}
     const bt=playerHTML(me,meCall(),PLAYER[me]+(st.ranked&&CR.next?`・再 ${CR.toNext} 分升 ${CR.next}`:""));
@@ -20932,7 +20987,8 @@ function CpuGame(v,practicePage,mode){
             return resBtns(win?(nx?["下一位擂主 ›",()=>arenaSheet(nx,arenaStart)]:book):["再挑戰一次 ›",()=>arenaStart(st.arena,st.level)],win&&nx?book:null)})(),"res");return}
       /* 意見回饋 413：石桌往事（含守關）的結果：再挑戰同一關／同一位對手，或回雲河棋路、驛站、園子；不會變成挑戰電腦，也不是擂台 */
       if(MODE==="journey"){const j=st.journey,s0=jFindStage(j);
-        if(String(j||"").startsWith("bt:")&&typeof battleResultModal==="function"){battleResultModal(st,win,draw0,XPR);return}   /* 古戰場的讓子對弈：戰役印、下一場、再下一盤（同樣的讓子） */
+        if(String(j||"").startsWith("bt:")&&typeof battleResultModal==="function"){battleResultModal(st,win,draw0,XPR);return}
+        if(String(j||"").startsWith("bh:")&&typeof bhResultModal==="function"){bhResultModal(st,win,draw0,XPR);return}   /* hspx（開發者 11/12）：黑洞星樞棋局——下完一律「星槎回航」，回到原本要停靠的那一站 */   /* 古戰場的讓子對弈：戰役印、下一場、再下一盤（同樣的讓子） */
         const NR=parkNpcOf(st);
         modal(`<div class="em">${win?"🏆":draw0?"🤝":"💪"}</div><h2>${win?"你贏了！":draw0?"和局":"這盤輸了"}</h2><p class="muted">${esc(st.result.why)}・🪨 ${esc(jName(j))}${NR?"・"+esc(NR.name)+"（第 "+st.level+" 級）":""}</p>`+(NR?`<p style="font-style:italic">${esc(NR.name)}：「${esc(win?NR.lose:draw0?"和了，改天再下一盤！":NR.win)}」</p>`:"")+XPL,
           (()=>{/* 意見回饋 607：劇情關「回到關卡」、回雲河棋路／驛站／園子都改成退回那一層（goUp），不再往前推一頁；雲河棋路的對弈關贏了，主要按鈕是「📖 下一回 ›」（下一關已經開放才有，做法跟過關畫面的「讀第 N 回」一樣） */

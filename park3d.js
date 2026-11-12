@@ -1025,10 +1025,12 @@
     hint.textContent="點棋子走棋・點物件看介紹・拖曳轉頭・兩指縮放";el.append(hint);if(veil._qmin)hint.style.opacity=0;else setTimeout(()=>hint.style.opacity=0,4500);   /* 有名言的過場：操作提示等過場收掉才出現 */
     /* 開發者 11/11 hspx「讓車輪戰也能有對戰的環景切換功能」：opt.era＝指定朝代（車輪戰在江南棋館，用明朝的家具和配色）；opt.indoor＝室內（不放樹、手繪道具、落葉、長榻和燈，只有木桌和兩張木凳） */
     const EK=opt.era&&ERA[opt.era]?opt.era:eraKey(),E=ERA[EK];
+    /* hspx（開發者 11/12 黑洞星樞棋局）：opt.giant＝巨盤模式——棋盤浮在黑洞環景裡，不放桌椅地面和人物，紅方棋子換成雲河七星、黑方是星樞的發光棋子，鏡頭可以從俯視全盤一路推到站在棋盤上的第一人稱 */
+    const GIANT=!!opt.giant;
     el.style.background=E.mist;
     let WX=null,CANO=null,MAPL=null,PANM=null,PANDH=0,PANROT=0,PSPOTS=null,MAPM=null,HILL=null,lastKf=-1,MAPO=[],MAPOK="",MAPP=null,MAPMN=0,RON=(()=>{try{return JSON.parse(localStorage.getItem("m_eramapRealm")||"true")!==false}catch(e){return true}})();   /* 地圖上的地名：[名字, x%, y%, 種類]；長卷的網格、圖高、地標（意見回饋 517、525） */
     let RTF=null,RTK="",RTS=null,RTP=null,RTT=0,RTA=0;   /* 意見回饋 658（B 輿圖遊歷）：路線圖層的重畫函式、目前畫的版本、各站位置（點得到）、左下角的提示、上次檢查的時間、上一格地圖的透明度 */
-    const sc=new T.Scene(),FARHIDE=[];sc.fog=new T.Fog(new T.Color(E.mist),70,320);sc.background=new T.Color(E.mist);   /* 意見回饋 486：環景沒畫到的地方顯示朝代的霧色，不會一片黑 */
+    const sc=new T.Scene(),FARHIDE=[];sc.fog=new T.Fog(new T.Color(E.mist),70,320);sc.background=new T.Color(E.mist);if(GIANT){sc.fog=null;sc.background=new T.Color(0x05060d);el.style.background="#05060d"}   /* 意見回饋 486：環景沒畫到的地方顯示朝代的霧色，不會一片黑 */
     const cam=new T.PerspectiveCamera(50,1,.5,700);try{if(localStorage.getItem("xq_dbg3d"))window.__PK={sc,cam}}catch(e){}try{(window.__PK=window.__PK||{}).perf=PF}catch(e){}   /* 除錯用：localStorage 設 xq_dbg3d 才打開 sc、cam；效能計數 perf 一直都在（11/11 省電模式） */
     // 光：午後斜陽（唯一投影光，陰影範圍只包住石桌，陰影比較銳利）＋暖色天光＋冷色補光；整體對比拉高，不再灰白
     sc.add(new T.HemisphereLight(0xFFF1DA,0x5A4A36,.42));
@@ -1037,7 +1039,7 @@
     const fill=new T.DirectionalLight(0xC8DCFF,.28);fill.position.set(20,12,-18);sc.add(fill);
     // 天空球（含下半部的雲海色）＋水墨長卷
     const sky=new T.Mesh(new T.SphereGeometry(400,32,16),new T.MeshBasicMaterial({map:skyTex(E),side:T.BackSide,fog:false,depthWrite:false,toneMapped:false}));sky.renderOrder=-2;sc.add(sky);FARHIDE.push(sky);   /* 意見回饋 517／525：拉遠功能把天空改成半透明後，天空排到長卷後面畫、整片蓋住長卷（城、蒙古包都看不到）；天空固定最先畫 */
-    const BI=opt.bg?{src:opt.bg,pano:true,hz:.58,hor:opt.indoor?-10.2:PANO_HOR,rot:0}:BG_IMG[EK],FULL=!!BI;   /* 意見回饋 362：石桌往事的關卡在那一站的地點環景裡下（渡口、聽濤樓茶館、雲河棋會、決賽、石桌） */   // FULL：有朝代長卷，背景是完整一圈，可以整個轉身看
+    const BI=opt.bg?{src:opt.bg,pano:true,hz:.58,hor:opt.indoor?-10.2:opt.giant?3:PANO_HOR,rot:0}:BG_IMG[EK],FULL=!!BI;   /* 意見回饋 362：石桌往事的關卡在那一站的地點環景裡下（渡口、聽濤樓茶館、雲河棋會、決賽、石桌） */   // FULL：有朝代長卷，背景是完整一圈，可以整個轉身看
     {const pt=panTex(Object.assign({},E,{userBg:FULL}),EK.length*977+13);pt.wrapS=T.RepeatWrapping;pt.repeat.x=-1;   // 從圓柱內側看，貼圖要左右翻回來
       const arc=FULL?TAU:PAN.arc,pan=new T.Mesh(new T.CylinderGeometry(PAN.r,PAN.r,PAN.yt-PAN.yb,FULL?128:64,1,true,PI-arc/2,arc),new T.MeshBasicMaterial({map:pt,side:T.BackSide,transparent:true,fog:false,depthWrite:false,toneMapped:false}));
       pan.position.y=(PAN.yt+PAN.yb)/2;pan.renderOrder=-1;sc.add(pan);FARHIDE.push(pan);PANM=pan;
@@ -1301,6 +1303,11 @@
       setFace(f,d){this.face=f;this.faceT=d||0},say(t,d){const m=this.bub.material;m.map&&m.map.dispose();m.map=bubbleTex(t);m.needsUpdate=true;this.bub.visible=true;this.bubT=d||2.2}});
     const seat=B=>{B.legs.forEach(l=>{l.rotation.x=-1.35});B.bot.position.y=-.35};
     const opp=actor(new T.Group(),mkBub(4.4,3.2,-9.2,6.2));opp.g.position.set(0,SY-.9,BZ+1.0);opp.g.scale.setScalar(4.1);sc.add(opp.g);
+    /* 開發者 11/12「新增裁判官角色，繪製 3D，放到每個對戰的 3D 場景雙方的中間靠近桌子處，包含線上也要有裁判官站在旁邊」：
+       Tripo 靜態站姿 data/tripo_app/k_ref.glb（立繪 park/referee/ref_idle.png），站在地上、桌子右側（雙方中間），面向棋盤、微微朝鏡頭；首頁橋上石桌、黑洞巨盤不放 */
+    if(!opt.giant&&!opt.bridge&&typeof window.XQGLB==="function")try{window.XQGLB("data/tripo_app/k_ref.glb").then(s=>{if(!s||!el.isConnected)return;const g=s.clone(true);g.rotation.y=-PI/2;g.updateMatrixWorld(true);
+      const bb=new T.Box3().setFromObject(g),sz=bb.getSize(new T.Vector3()),c=bb.getCenter(new T.Vector3());if(!(sz.y>0))return;const hold=new T.Group();hold.name="referee";g.position.set(-c.x,-bb.min.y,-c.z);hold.add(g);
+      hold.scale.setScalar(10.5/sz.y);hold.position.set(9.6,FL,-5.2);hold.rotation.y=-.95;g.traverse(m=>{if(m.isMesh){m.castShadow=true;m.receiveShadow=true}});sc.add(hold)}).catch(()=>{})}catch(e){}
     // 意見回饋 218：小帥坐在我這一側、棋盤左前角外的桌面上，面向我、身體往後仰一點（鏡頭在上方，這樣看得到臉）；
     // 之前 sc.add 被寫進註解裡，小帥根本沒出現。位置在棋盤框外，不會擋到棋子
     /* 意見回饋 362、365：小帥坐在自己的椅子上（桌子外緣、棋盤左前角旁），面向對手；椅背在他身後（靠鏡頭那側、很矮） */
@@ -1452,17 +1459,47 @@
     const bMat=red=>{const s=red?"r":"b";if(bodyMat[s])return bodyMat[s];const L=LOOK,im=L&&L.pieces?loadImg(L.pieces[s]):null;
       const c=new T.Color(richHex(im?rimOf(im):"#E2C48C")).multiply(NEUT);return bodyMat[s]=pMat({color:c,roughness:.42})};
     const fMat=(ch,red)=>faceMat[ch+red]||(faceMat[ch+red]=(()=>{const tx=faceTex(ch,red);return pMat({map:tx,color:NEUT,roughness:.5})})());
-    const makePiece=p=>{const s=sideOf(p),ch=NAMES[s][p.toUpperCase()],g=new T.Group();const body=new T.Mesh(pieceGeo,bMat(s==="r"));body.castShadow=true;body.receiveShadow=true;g.add(body);
+    const makePiece=p=>{if(GIANT)return gntTake(p);const s=sideOf(p),ch=NAMES[s][p.toUpperCase()],g=new T.Group();const body=new T.Mesh(pieceGeo,bMat(s==="r"));body.castShadow=true;body.receiveShadow=true;g.add(body);
       const f=new T.Mesh(faceGeo,fMat(ch,s==="r"));f.rotation.x=-PI/2;f.position.y=.272;g.add(f);g.userData={p};sc.add(g);return g};
     let flip=false;const pos=i=>{const c=i%9,r=i/9|0;return flip?[4-c,4.5-r]:[c-4,r-4.5]};
     const at=(g,i,lift)=>{const[x,z]=pos(i);g.position.set(x,TOP+(lift||0),z)};
+    /* ---------- 巨盤模式（opt.giant，黑洞星樞棋局）的棋子 ----------
+       紅方＝雲河七星的 3D 模型（每種棋子第一個是本體，其他同種的是半透明帶星光藍的「星影分身」），胸前補一面本命字圓牌（bot3d o.gly）；
+       黑方＝星樞的棋子：墨色立起來的大棋子、星光金字，面向玩家、輕輕浮動。
+       sync 每次重排都會拿掉全部棋子再擺：巨盤模式把拿掉的放回池子（gntPool）重用，不重新載模型 */
+    const GNT_X={K:"x_shuai",A:"x_shi",B:"x_spiritgirl",N:"x_miaogirl",R:"x_swordboy",C:"x_martialgirl",P:"x_bing"},GNT_CH={K:"帥",A:"仕",B:"相",N:"傌",R:"俥",C:"炮",P:"兵"},GNT_H=1.55;
+    const gntPool={},gntCnt={},gntFigs=[],gntStones=[];
+    const gntShadow=root=>{const KT=window.XQTOON_KIT;root.traverse(m=>{if(!m.isMesh||m.name==="meGly")return;if(KT&&KT.isHull&&KT.isHull(m)){m.visible=false;m.userData.gntOff=1;return}   /* 水墨描邊的黑殼：半透明的分身會透出一整片黑，分身不描邊 */const ms=(Array.isArray(m.material)?m.material:[m.material]).map(x=>{const c=x.clone();c.transparent=true;c.opacity=.52;c.depthWrite=false;if(c.color)c.color.lerp(new T.Color(0x8FB4FF),.45);if(c.emissive)c.emissive.set(0x1A3A7A);return c});m.material=Array.isArray(m.material)?ms:ms[0];m.castShadow=false})};
+    const gntFig=(p,K)=>{const n=gntCnt[p]=(gntCnt[p]||0)+1,body=n===1,g=new T.Group(),inner=new T.Group();g.add(inner);g.userData={p,th:.27+GNT_H*.55,giant:1,body};
+      {const pb=new T.Mesh(pieceGeo,bMat(true)),pf=new T.Mesh(faceGeo,fMat(NAMES.r[K],true));pf.rotation.x=-PI/2;pf.position.y=.272;pb.receiveShadow=true;g.add(pb,pf);inner.position.y=.27;g.userData.ped=[pb,pf,K]}   /* 角色站在自己的本命棋子上：俯視全盤時也認得出是哪顆子 */
+      let B=null;try{B=window.XQBot3D&&XQBot3D.figure?XQBot3D.figure({glb:"data/tripo_app/"+GNT_X[K]+".glb",p:GNT_CH[K],gly:{u:.5,v:.4,r:.15}}):null}catch(e){B=null}
+      if(!B)return gntStone(p);inner.add(B.bot);g.userData.B=B;gntFigs.push(g);
+      /* 放大倍數、位置一律在 inner 自己的座標算（量世界座標再扣掉 inner 的世界位置），不然角色會被拉回棋盤中心 */
+      const fitTo=(obj,H)=>{inner.scale.setScalar(1);B.bot.position.set(0,0,0);g.updateMatrixWorld(true);const b=new T.Box3().setFromObject(obj),h=b.max.y-b.min.y;if(!(h>0))return false;
+        const o=inner.getWorldPosition(new T.Vector3()),c=b.getCenter(new T.Vector3());B.bot.position.set(o.x-c.x,o.y-b.min.y,o.z-c.z);inner.scale.setScalar(H/h);return true};
+      try{fitTo(B.bot,GNT_H*.8)}catch(e){}   /* 模型還沒到、或載不到時的 Q 版棋子人：先縮成差不多高 */
+      if(B.glbP)B.glbP.then(ok=>{if(!ok||!B.glb)return;if(!fitTo(B.glb,GNT_H))return;if(!body)gntShadow(B.glb);B.glb.traverse(m=>{if(m.isMesh)m.castShadow=body});pwPoke(800)}).catch(()=>{});
+      return g};
+    let gntStoneTex={};const gntGlyph=ch=>gntStoneTex[ch]||(gntStoneTex[ch]=(()=>{const c=document.createElement("canvas");c.width=c.height=256;const x=c.getContext("2d");
+      const gr=x.createRadialGradient(128,110,10,128,128,128);gr.addColorStop(0,"#2A2F55");gr.addColorStop(.7,"#10132A");gr.addColorStop(1,"#05060D");x.fillStyle=gr;x.beginPath();x.arc(128,128,126,0,TAU);x.fill();
+      x.strokeStyle="#E9C46A";x.lineWidth=7;x.beginPath();x.arc(128,128,112,0,TAU);x.stroke();x.lineWidth=2.5;x.beginPath();x.arc(128,128,100,0,TAU);x.stroke();
+      for(let i=0;i<26;i++){x.fillStyle=`rgba(255,240,200,${.25+Math.random()*.5})`;const a=Math.random()*TAU,r=60+Math.random()*44;x.fillRect(128+Math.cos(a)*r,128+Math.sin(a)*r,2,2)}
+      x.font=`900 128px ${SERIF}`;x.textAlign="center";x.textBaseline="middle";x.shadowColor="rgba(255,214,120,.9)";x.shadowBlur=18;x.fillStyle="#FFE6A3";x.fillText(ch,128,136);
+      const t=new T.CanvasTexture(c);if(T.SRGBColorSpace)t.colorSpace=T.SRGBColorSpace;else if(T.sRGBEncoding!=null)t.encoding=T.sRGBEncoding;return t})());
+    const gntStone=p=>{const s=sideOf(p),ch=NAMES[s][p.toUpperCase()],g=new T.Group(),R0=.46;g.userData={p,th:.55,giant:1,ph:Math.random()*TAU};
+      const rim=new T.Mesh(new T.CylinderGeometry(R0,R0,.16,48),new T.MeshStandardMaterial({color:0x1B1F3A,roughness:.35,metalness:.3,emissive:0x101840}));rim.rotation.x=PI/2;
+      const fm=new T.MeshBasicMaterial({map:gntGlyph(ch),toneMapped:false}),f1=new T.Mesh(new T.CircleGeometry(R0*.97,48),fm);f1.position.z=.081;
+      const glow=new T.Mesh(new T.CircleGeometry(R0*1.5,40),new T.MeshBasicMaterial({color:0x6E8BFF,transparent:true,opacity:.22,depthWrite:false,blending:T.AdditiveBlending,toneMapped:false}));glow.position.z=-.09;
+      const st=new T.Group();st.add(rim,f1,glow);st.position.y=R0+.08;g.add(st);g.userData.st=st;gntStones.push(g);return g};
+    const gntTake=p=>{const q=gntPool[p];let g=q&&q.pop();if(g&&g.userData.ped){const[pb,pf,K]=g.userData.ped;pb.material=bMat(true);pf.material=fMat(NAMES.r[K],true)}   /* 換造型（refreshLook）會把舊的棋子材質丟掉，重用的底座要換新的 */if(!g){const K=p.toUpperCase();g=sideOf(p)==="r"&&GNT_X[K]?gntFig(p,K):gntStone(p)}g.visible=true;g.rotation.set(0,0,0);sc.add(g);return g};
+    const gntDrop=g=>{sc.remove(g);if(g&&g.userData&&g.userData.giant){const p=g.userData.p;(gntPool[p]||(gntPool[p]=[])).push(g)}};
     let pieces={},prevB=null,prevLast=null,anims=[],captured=[],capNear=true,lastCapB=null;
     // 提示記號
     const markG=new T.Group();sc.add(markG);
     const disc=(i,col,r,op)=>{const m=new T.Mesh(new T.CircleGeometry(r,32),new T.MeshBasicMaterial({color:col,transparent:true,opacity:op,depthWrite:false}));m.rotation.x=-PI/2;const[x,z]=pos(i);m.position.set(x,TOP+.012,z);markG.add(m);return m};
     const ring=(i,col,r,w,op)=>{const m=new T.Mesh(new T.RingGeometry(r-w,r,40),new T.MeshBasicMaterial({color:col,transparent:true,opacity:op,depthWrite:false}));m.rotation.x=-PI/2;const[x,z]=pos(i);m.position.set(x,TOP+.014,z);markG.add(m);return m};
     let selI=-1,checkRing=null;const SNAP={b:null,t:[],me:"r"};
-    function layoutCaptured(board){lastCapB=board;captured.forEach(g=>sc.remove(g));captured=[];const cnt={r:{},b:{}};board.forEach(p=>{if(p){const s=sideOf(p),k=p.toUpperCase();cnt[s][k]=(cnt[s][k]||0)+1}});
+    function layoutCaptured(board){lastCapB=board;captured.forEach(g=>sc.remove(g));captured=[];if(GIANT)return;   /* 巨盤模式沒有桌邊可以排被吃的子 */const cnt={r:{},b:{}};board.forEach(p=>{if(p){const s=sideOf(p),k=p.toUpperCase();cnt[s][k]=(cnt[s][k]||0)+1}});
       for(const s of["r","b"]){const lost=[];for(const k of"RCNBAP")for(let n=(START[s][k]||0)-(cnt[s][k]||0);n>0;n--)lost.push(s==="r"?k:k.toLowerCase());
         const mine=(s==="r")===flip;   // 意見回饋 232：被吃的棋子放在吃子那一方的桌邊（我吃掉的對方棋子排在我這側）
         /* 縮小一點不搶棋盤的戲：對方吃到的排在棋盤後方茶杯兩邊，我吃到的排在我這側桌邊 */
@@ -1470,7 +1507,7 @@
           if(mine&&!capNear){if(j<7){x=6.2;z=4.4-j*.75}else{x=7.0;z=4.4-(j-7)*.75}}   /* 畫面太矮、看不到我這側桌邊時：排在棋盤右邊，從我這一端往中間排（意見回饋 343：以前從對方那一端排起，看起來像放在對方那邊） */
           else if(mine){const SL=[[1,6.3,5],[1,7.0,4],[-1,6.3,3],[-1,7.0,3]];let q=j,r=0;while(r<3&&q>=SL[r][2]){q-=SL[r][2];r++}x=SL[r][0]*(1.35+q*.9);z=SL[r][1]}else{   /* 意見回饋 281：我吃到的棋子排在我這側的桌邊（茶杯右邊，滿了再排左邊） */const sd=j%2?-1:1,k=j>>1;if(k<4){x=sd*(1.35+k*.95);z=-6.55}else{x=sd*(1.35+(k-4)*.78);z=-7.25}}   // 對方輸掉的棋子分排在茶杯左右兩邊
           g.position.set(x,0,z);g.rotation.y=(Math.random()-.5)*.6;captured.push(g)})}}
-    function sync(board){Object.values(pieces).forEach(g=>sc.remove(g));pieces={};board.forEach((p,i)=>{if(p){const g=makePiece(p);at(g,i);pieces[i]=g}});layoutCaptured(board)}
+    function sync(board){Object.values(pieces).forEach(g=>GIANT?gntDrop(g):sc.remove(g));pieces={};board.forEach((p,i)=>{if(p){const g=makePiece(p);at(g,i);pieces[i]=g}});layoutCaptured(board)}
     // 朝代造型換了（或圖剛載入）：重畫棋盤、清掉棋子貼圖、整盤重排
     let lookKey="";const refreshLook=()=>{for(const k in faceCache){freeTex(faceCache[k]);delete faceCache[k]}for(const k in faceMat){try{faceMat[k].dispose()}catch(e){}delete faceMat[k]}for(const k in bodyMat){try{bodyMat[k].dispose()}catch(e){}delete bodyMat[k]}
       try{const c=btex.image.getContext("2d");drawBoard(c,btex.image.width,btex.image.height,null);btex.needsUpdate=true}catch(e){}if(prevB)sync(prevB)};
@@ -1485,7 +1522,7 @@
       const moved=prevB&&L&&lk!==prevLast&&board[L.t]&&board[L.t]===prevB[L.f]&&!board[L.f]&&pieces[L.f]&&board.filter(Boolean).length>=prevB.filter(Boolean).length-1;
       if(moved){const g=pieces[L.f],cap=pieces[L.t];delete pieces[L.f];pieces[L.t]=g;const[x0,z0]=pos(L.f),[x1,z1]=pos(L.t);
         const by=sideOf(board[L.t]),botSide=ex.botSide||null;
-        if(cap){anims.push({t:0,d:.55,f:p=>{cap.position.y=TOP+Math.sin(p*PI)*.9;cap.position.x+=(x1-x0)*.006;cap.position.z+=(z1>z0?.02:-.02);cap.rotation.z=p*2.2},end:()=>{sc.remove(cap);layoutCaptured(board)}})}
+        if(cap){anims.push({t:0,d:.55,f:p=>{cap.position.y=TOP+Math.sin(p*PI)*.9;cap.position.x+=(x1-x0)*.006;cap.position.z+=(z1>z0?.02:-.02);cap.rotation.z=p*2.2},end:()=>{if(GIANT)gntDrop(cap);else sc.remove(cap);layoutCaptured(board)}})}
         anims.push({t:0,d:.42,f:p=>{const e=ease(p);g.position.set(x0+(x1-x0)*e,TOP+Math.sin(p*PI)*1.1,z0+(z1-z0)*e)},end:()=>at(g,L.t)});
         if(botSide&&by===botSide){reach=1;reachT=0;opp.setFace(cap?"happy":"smile",1.4);if(cap){mate.setFace("open",1.6);mate.say(["小心！","哎呀，被吃了","沒關係，扳回來！"][Math.random()*3|0],2)}}
         else if(cap){mate.setFace("happy",1.6);mate.say(["吃得好！","漂亮！","好棋！"][Math.random()*3|0],1.8);if(botSide){opp.setFace("open",1.4);if((opp.B||oppSpr)&&Math.random()<.5)opp.say(["哎呀！","被吃了…","好棋！"][Math.random()*3|0])}}
@@ -1533,7 +1570,16 @@
     /* 意見回饋 421（構圖）：坐正的時候跟原本一樣（看整盤棋）；繞著桌子轉開時鏡頭自動放低一點、視線往上抬，畫面上半部讓給遠方的山水（前景平台和道具、中景城樓、遠景山和天空）；
        往上拖（壓低鏡頭）也一樣把視線抬到地平線附近，越過小帥的頭看出去 */
     const smooth=(a,b,x)=>{const t=clamp((x-a)/(b-a),0,1);return t*t*(3-2*t)},FADEV=new T.Vector3();
-    const placeCam=()=>{const wy=Math.abs(Math.atan2(Math.sin(yaw),Math.cos(yaw))),orb=smooth(.2,1.1,wy),low=clamp(-pitch/.7,0,1);
+    /* 巨盤模式的鏡頭（開發者 11/12：「超大第一人稱是指可以放大到很多倍」）：只看 zoom 一條軸——
+       zoom＝1 預設：斜上方看得清全盤；拉遠（＞1）慢慢升成俯視全局；放大（＜1）一路推進到紅方陣前、高度跟角色胸口差不多＝站在棋盤上的第一人稱，看得到七星的臉和胸前本命字。
+       左右拖曳：遠的時候繞著棋盤轉，越近越像原地轉頭；上下拖曳：視線抬高壓低 */
+    const GNT_V=[[0,2.15,9.4,0,1.68,2.2],[0,12.5,13.5,0,0,-.6],[0,27,6.5,0,0,0]],GV1=new T.Vector3(),GV2=new T.Vector3();
+    const gntCam=()=>{const near=smooth(.9,.14,zoom),far=smooth(1.05,2.6,zoom),mix=(a,b,k)=>a.map((v,j)=>v+(b[j]-v)*k);let v=mix(GNT_V[1],GNT_V[0],near);v=mix(v,GNT_V[2],far);
+      const P=GV1.set(v[0],v[1],v[2]),L=GV2.set(v[3],v[4]-pitch*(2.2+3*(1-near)),v[5]),ao=yaw*(1-near),ah=yaw*near*.8;
+      {const c=Math.cos(ao),s=Math.sin(ao),x=P.x,z=P.z;P.x=x*c+z*s;P.z=-x*s+z*c;const lx=L.x,lz=L.z;L.x=lx*c+lz*s;L.z=-lx*s+lz*c}
+      if(ah){const dx=L.x-P.x,dz=L.z-P.z,c=Math.cos(ah),s=Math.sin(ah);L.x=P.x+dx*c+dz*s;L.z=P.z-dx*s+dz*c}
+      cam.position.copy(P);cam.lookAt(L);cam.rotateX(CAMV.dp)};
+    const placeCam=()=>{if(GIANT)return gntCam();const wy=Math.abs(Math.atan2(Math.sin(yaw),Math.cos(yaw))),orb=smooth(.2,1.1,wy),low=clamp(-pitch/.7,0,1);
       const off=camBase.clone().sub(PIV),lk=look.clone().sub(PIV),el0=Math.atan2(off.y,Math.hypot(off.x,off.z)),el=clamp(el0+pitch-.26*orb,.1,1.5),R=Math.min(off.length()*zoom,330),az=Math.atan2(off.x,off.z)+yaw;
       /* 開發者 11/4：畫面拉遠看石台底下的朝代大地圖——鏡頭距離超過 105（長卷半徑的 62%）以後，鏡頭慢慢升高成俯視，長卷、天空跟著淡掉，霧也變淡 */
       const kf=smooth(105,220,R),elF=el+(1.38-el)*kf;   /* 意見回饋 525：拉到一半還要看得到環景長卷（517 時提早淡掉，改回原本的距離） */
@@ -1566,7 +1612,7 @@
     const pick=(cx,cy)=>{const r=rd.domElement.getBoundingClientRect();ndc.set((cx-r.left)/r.width*2-1,-((cy-r.top)/r.height)*2+1);ray.setFromCamera(ndc,cam);tapAmb=null;
       const B=SNAP.b;if(!B||!r.width)return pickRay();
       const prj=(x,y,z)=>{SV.set(x,y,z).project(cam);return[(SV.x+1)/2*r.width,(1-SV.y)/2*r.height]},tg=new Set(SNAP.t),P=[];
-      for(let i=0;i<90;i++){const[x,z]=pos(i),g=pieces[i],y=g?g.position.y+.27:TOP,q=prj(x,y,z);if(SV.z>1)continue;const qx=prj(x+1,y,z),qz=prj(x,y,z+1);
+      for(let i=0;i<90;i++){const[x,z]=pos(i),g=pieces[i],y=g?g.position.y+(g.userData.th||.27):TOP,q=prj(x,y,z);if(SV.z>1)continue;const qx=prj(x+1,y,z),qz=prj(x,y,z+1);
         const own=!!B[i]&&sideOf(B[i])===SNAP.me,t=selI>=0&&tg.has(i);
         P.push({i,x:q[0],y:q[1],s:Math.max(4,Math.min(Math.hypot(qx[0]-q[0],qx[1]-q[1]),Math.hypot(qz[0]-q[0],qz[1]-q[1]))),occ:!!B[i],c:own||t,w:t?.9:1})}
       const o=tapSnap(P,cx-r.left,cy-r.top,{r:28});if(o.amb){tapAmb=o.amb;return -2}return o.i};
@@ -1620,7 +1666,7 @@
       return"bg"};
     // 觸控：一指拖曳轉頭（有朝代長卷的可以整圈轉身，其他左右各約 69 度）、兩指捏合拉近拉遠（0.6～1.25 倍）、點一下選子、點兩下回正（含縮放）
     /* 意見回饋 360：公園的棋盤可以放得更大、縮得更小（兩指捏合的範圍放寬），右下角加 ＋／－ 按鈕 */
-    const ZMIN=.35,ZMAX=8.8,   /* 開發者 11/4：拉得更遠，看得到石台底下整張朝代地圖（鏡頭距離另外不超過長卷半徑的 62%） */
+    const ZMIN=GIANT?.1:.35,ZMAX=GIANT?2.6:8.8,   /* 開發者 11/4：拉得更遠，看得到石台底下整張朝代地圖（鏡頭距離另外不超過長卷半徑的 62%） */
     cvs=rd.domElement,ptrs=new Map();let down=null,lastTap=0,pinch=null;
     {const zb=document.createElement("div");zb.className="pzoom";zb.style.cssText="position:absolute;right:8px;bottom:8px;z-index:3;display:flex;flex-direction:column;gap:6px";
       for(const[t,f,l]of[["＋",.8,"放大"],["－",1.25,"縮小"]]){const b=document.createElement("button");b.type="button";b.textContent=t;b.setAttribute("aria-label",l);
@@ -1696,10 +1742,10 @@
       if(MH.seen||lastKf>.05)return;
       const busy=selI>=0||!!checkRing||document.querySelector(".modal,#sheet.show");
       /* ③ 剛進園子：－ 鈕發亮＋小紙條（每座園子一次） */
-      if(!MH.did.n&&MH_CITY[EK]){MH.did.n=1;setTimeout(()=>{if(MH.seen||stopped)return;const z=el.querySelector(".pzoom"),bs=z?z.querySelectorAll("button"):[],mi=bs[bs.length-1];if(mi){mi.classList.add("mh-glow");MH.pulse=mi;setTimeout(()=>{if(MH.pulse===mi){mi.classList.remove("mh-glow");MH.pulse=null}},9000)}
+      if(!MH.did.n&&MH_CITY[EK]&&!GIANT){MH.did.n=1;setTimeout(()=>{if(MH.seen||stopped)return;const z=el.querySelector(".pzoom"),bs=z?z.querySelectorAll("button"):[],mi=bs[bs.length-1];if(mi){mi.classList.add("mh-glow");MH.pulse=mi;setTimeout(()=>{if(MH.pulse===mi){mi.classList.remove("mh-glow");MH.pulse=null}},9000)}
         const C=MH_CITY[EK].map(mhNm);mhShow("mh-note",`${C[0]}到${C[1]}有多遠？往外看就知道！<small>一直按右下角的「－」</small>`,7000)},4000)}
       /* ① 電腦想棋 */
-      if(thinking&&!busy){MH.thinkT+=dt;if(MH.thinkT>1.2&&!MH.did.t){if(mhShow("mh-top",`幻影棋客：「此步容我深思，你先退一步賞景？」<small>按右下角「－」，到天上看看天下大勢</small>`,6000))MH.did.t=1}}else MH.thinkT=0;
+      if(thinking&&!busy){MH.thinkT+=dt;if(MH.thinkT>1.2&&!MH.did.t){if(mhShow("mh-top",GIANT?`星樞：「此步……容我再算一遍。」<small>按右下角「－」，退遠看整盤星盤</small>`:`幻影棋客：「此步容我深思，你先退一步賞景？」<small>按右下角「－」，到天上看看天下大勢</small>`,6000))MH.did.t=1}}else MH.thinkT=0;
       /* ② 一盤下完、結果視窗關掉 */
       if(mood&&!MH.did.e){if(busy)MH.endWait=0;else{MH.endWait+=dt;if(MH.endWait>1.5&&mhShow("mh-say",`小帥：「咦？這圓石台底下好像畫著什麼？」<small>一直按「－」看看</small>`,6000))MH.did.e=1}}}
     /* 11/11 省電模式（評比第 2 輪 ChatGPT「效能、耗電與低負載模式證據」）：pwApply 每秒重判一次（設定改了、電池變了、量到偏慢都跟著換）；
@@ -1776,7 +1822,7 @@
         {const e=endPose(mate,mateRes,B,.5);if(e){hx=e[0];hy=e[1]}}
         B.legs[0].rotation.x=-1.5+.08*Math.sin(s*2.2);B.legs[1].rotation.x=-1.5-.08*Math.sin(s*2.2);   /* 意見回饋 551：坐著，大腿平放、小腿輕輕晃 */
         lerp(B.head.rotation,"x",hx);lerp(B.head.rotation,"y",hy);tick(mate)}
-      furn.tick(s);rd.render(sc,cam);PW.lastR=now;pfAdd(PW.q,sec,1,1,act?0:1);pwFps(now)}
+      if(GIANT)gntTick(t,s);furn.tick(s);rd.render(sc,cam);PW.lastR=now;pfAdd(PW.q,sec,1,1,act?0:1);pwFps(now)}
     // 第一次 draw 之後，等所有圖片（背景、道具、棋盤、棋子、Pikafish）都載好才淡入；最多等 6 秒
     let drawn=false,shown=false;const t0=performance.now();rd.domElement.style.opacity=0;rd.domElement.style.transition="opacity .35s";
     const shownCb=[];const reveal=()=>{if(shown)return;shown=true;PW.shownAt=performance.now();if(IN.ph==="wait"){INTRO_SEEN.add(IN.key);IN.ph="hold";IN.t0=performance.now()}rd.domElement.style.opacity=1;veil.style.opacity=0;setTimeout(()=>veil.remove(),400);if(veil._qmin){hint.style.opacity=1;setTimeout(()=>hint.style.opacity=0,4500)}shownCb.splice(0).forEach(f=>{try{f()}catch(e){}})};
@@ -1795,6 +1841,12 @@
     // 意見回饋 244：切回平面棋盤時只藏起來、暫停繪製（不拆掉 3D 場景），再切回公園就直接顯示，不用重新載入
     /* 意見回饋 370：棋盤格 → 螢幕座標（App 的吃子水墨圈畫在公園棋盤的那一格上） */
     const screenOf=i=>{try{const[x,z]=pos(i),v=new T.Vector3(x,TOP,z).project(cam),r=el.getBoundingClientRect();if(!r.width)return null;return{x:r.left+(v.x+1)/2*r.width,y:r.top+(1-v.y)/2*r.height}}catch(e){return null}};
+    /* 巨盤模式：場景建好當下的東西（桌椅、地面、長卷以外的道具、小帥、對手、天空球）全部藏起來，每一格都再藏一次（有些會被動畫打開）；只留燈、棋盤、黑洞環景、提示記號 */
+    const gntKeep=o=>o.isLight||o===bplane||o.material===wood||o===PANM||o===markG||!!(o.userData&&o.userData.giant);
+    if(GIANT){for(const A of[mate,opp])if(A)A.say=()=>{}}
+    function gntTick(t,s){for(const o of sc.children)if(o.visible&&!gntKeep(o))o.visible=false;
+      for(const g of gntFigs){const B=g.userData.B;if(g.parent&&B&&B.mixer)B.mixer.update(t)}
+      for(const g of gntStones){if(!g.parent)continue;const st=g.userData.st;st.position.y=.54+(PW.on?0:.06*Math.sin(s*1.6+g.userData.ph));st.lookAt(cam.position)}}
     return{el,draw,destroy,say,screenOf,whenShown(f){if(shown)f();else shownCb.push(f)},oppSay:(t,d)=>{pwPoke(((+d)||2.6)*1000);return opp.say(t,d)},resetView(){reset()},setView:setViewF,intro(k){try{if(!k)return false;k=String(k);const ok=inStart(k,shown);if(!ok)INTRO_SEEN.add(k);return ok}catch(e){return false}},   /* 11/11 入座運鏡：同一座園子換下一盤時 06-cpu 叫這個（這盤播過、沒存視角以外的情況都不播） */homeView:()=>HOME.fit?"topfit":"",   /* 意見回饋 481（開發者：平視看不到小帥）：平視改成從小帥右肩後面斜著看——小帥在畫面左下、不擋棋盤 */   /* 平視＝從小帥的眼睛看出去（小帥先藏起來，不會擋住棋盤） */   /* 意見回饋 430：平視原本 -.85，鏡頭跑到小帥背後被擋住，改成 -.22 */hide(){el.style.display="none"},show(){if(el.style.display==="none"){el.style.display="";fit()}}}}
   /* 11/11 省電模式：power()＝現在的設定和自動判斷結果（開著的園子每秒自己重判，不用通知）；perf()＝最近一座園子近 10 秒的效能計數（同 window.__PK.perf） */
   window.XQPark3D={create,power(){pwBat();const m=pwMode();return Object.assign({mode:m},pwDecide(m,pwSig()))},perf:()=>PF};
