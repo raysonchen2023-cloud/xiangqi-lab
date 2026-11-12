@@ -836,7 +836,7 @@
     if(X.indoor){F3D=true;for(const[x,z]of STOOLS){K.at(x,0,z);OX=x;OZ=z;f.stool()}}   /* 11/11：橋上用圓石桌（首頁橋上畫的是圓石桌），不用這一朝花園的木桌 */
     /* 開發者 11/11（首頁橋上石桌，Gemini 75 方案 A「溯江望槎」）：X.bridge＝在渡口青石拱橋中央下——只有石桌和兩張青石鼓凳，左右各一道宋式素面矮石欄（尋杖欄板），
        不放這一朝花園的長榻、燈、手繪道具和樹（那些是後園的東西） */
-    if(X.indoor){}
+    if(X.indoor||X.giant){}   /* 黑洞巨盤（11/12 hspx 進黑洞要等 6～7 秒）：長榻、凳子、燈、手繪道具反正都藏起來，不建也不載圖 */
     else if(X.bridge){F3D=true;const FY=X.FL!=null?X.FL:GY;
       for(const[x,z]of STOOLS){K.at(x,0,z);OX=x;OZ=z;ct(X.stone,0,GY+6.7,0,1.9,2.25,13.4,28);for(const y of[FY+1.2,GY+12.2])tor(X.stone2,0,y,0,2.2,.16,TAU,null,32)}
       K.at();OX=OZ=0;for(const sx of[-1,1]){const x=sx*21;bx(X.stone2,x,FY+4.6,-3,.7,.7,34,null,4);bx(X.stone,x,FY+2.3,-3,.45,3.6,34,null,4);
@@ -844,7 +844,7 @@
     else if(PP&&X.FL==null){if(f.dais)f.dais(DT,15,5.4);else bx(X.stone2,0,(GY+DT)/2,BZ,15,DT-GY,5.4,null,4)}   /* 地面抬高後長榻直接放在地上，不用台座 */
     else{F3D=true;f.bench();for(const[x,z]of STOOLS){K.at(x,0,z);OX=x;OZ=z;f.stool()}for(const[sx,x,z]of LAMPS){OX=x;OZ=z;K.at(OX,0,OZ);f.lamp(sx)}}
     K.at();K.build(root);OX=OZ=0;
-    if(PP&&!X.bridge&&!X.indoor)paint();
+    if(PP&&!X.bridge&&!X.indoor&&!X.giant)paint();
     // ---- 手繪道具立牌：一張去背圖貼在平面上，轉向座位（鏡頭只在座位上轉頭，不會走動，所以永遠看到正面）；
     // tilt＝往後仰多少（0＝直立、1＝整張正對鏡頭），下緣貼地／貼桌；不投影（平的，影子會穿幫），腳下改放一團柔和的接觸陰影
     function paint(){const base="data/park3d/"+EK+"/",CAMP=new T.Vector3(0,16,9.2),GY=X.FL!=null?X.FL:X.GY,BS=X.FL!=null?Math.max(.4,(SY-X.FL)/(SY-DT)):1;   /* BS＝地面抬高後凳子、長榻跟著縮小的比例（坐的高度不變） */   /* 道具都站在（抬高後的）地面上 */
@@ -1072,8 +1072,41 @@
       const TX=[["sp",1],["sp",2],["el",3],["cl",4],["nb",5],["nb",6],["bd",7]].map(([k,d])=>tex(k,d));s=11;
       for(let i=0;i<14;i++){const ti=i===9?6:i%6,sz=ti===6?3.2:ti<2?3+rnd()*4:ti===4||ti===5?4+rnd()*5:1.6+rnd()*2.4,az=i*TAU/14+(rnd()-.5)*.3,elv=ti===6?.42:.08+rnd()*.55;
         const sp=new T.Sprite(new T.SpriteMaterial({map:TX[ti],transparent:true,opacity:ti===6?.95:.85,blending:T.AdditiveBlending,depthWrite:false,fog:false,toneMapped:false,rotation:ti===6?0:rnd()*TAU}));
-        sp.scale.set(sz,sz,1);sp.position.copy(dirv(az,elv,160));sp.renderOrder=-.6;sp.userData.giant=1;DEEPG.add(sp)}
+        sp.scale.set(sz,sz,1);sp.position.copy(dirv(az,elv,160));sp.renderOrder=-.6;sp.userData.giant=1;sp.userData.map0=sp.material.map;sp.userData.s0=sz;if(ti===6)sp.userData.egg=1;DEEPG.add(sp);DEEPS.push(sp)}
       sc.add(DEEPG)}
+    /* ---------- 七星故事星系（App 07bh 的 BH_STARS 傳 ex.bhStars＝已解鎖的那幾顆）----------
+       固定 7 個天體位置（第 0、2、4…12 個，平均散在一圈；第 9 個是星點棋盤彩蛋）換成星座圖、放大一點、外面一圈霧金色光暈慢慢呼吸；沒解鎖的維持原本的星雲。
+       🔭 放大 20 倍以上（zoom＜.05）、星座在畫面中間附近 → 下方浮現星名大字＋一句回憶；第一次找到呼叫 window.XQ_BHSTAR(id)（App 記錄、角色說一句）。
+       七顆都找到（ex.bhStars.all）後對準棋盤彩蛋 → 浮現星樞的收束台詞 */
+    let DEEPS=[],STORY=null,STK="",STIP=null,STT=0,STLAST=null;const STF=new Set(),STSLOT={qizhe:0,shen:2,tian:4,tie:6,luo:8,bu:10,lei:12},STTEX={};
+    const storyTex=fig=>STTEX[fig]||(STTEX[fig]=(()=>{const c=document.createElement("canvas");c.width=c.height=512;const x=c.getContext("2d"),U=v=>256+v*200;x.globalCompositeOperation="lighter";
+      const glow=(px,py,r,a,col)=>{const g=x.createRadialGradient(px,py,0,px,py,r);g.addColorStop(0,`rgba(${col},${a})`);g.addColorStop(1,`rgba(${col},0)`);x.fillStyle=g;x.fillRect(px-r,py-r,2*r,2*r)};
+      glow(256,256,250,.16,"255,214,140");glow(256,256,150,.12,"170,140,255");
+      const P=[],Ls=[];let red=-1;const pt=(a,b)=>{P.push([a,b]);return P.length-1},pl=(...ix)=>{for(let i=1;i<ix.length;i++)Ls.push([ix[i-1],ix[i]])},ring=(cx,cy,r,n,a0=0,a1=TAU)=>{const o=[];for(let i=0;i<n;i++){const a=a0+(a1-a0)*i/(a1-a0>=TAU-1e-6?n:n-1);o.push(pt(cx+Math.cos(a)*r,cy+Math.sin(a)*r))}return o};
+      if(fig==="wheel"){const R=ring(0,-.1,.55,12),h=pt(0,-.1);pl(...R,R[0]);for(let i=0;i<12;i+=2)pl(h,R[i]);const q=[pt(-.9,.75),pt(-.4,.68),pt(.1,.7),pt(.55,.82),pt(.9,.95)];pl(...q)}   /* 車輪紋腰牌＋轉彎的車轍 */
+      else if(fig==="palace"){const g=[];for(let r=0;r<3;r++)for(let k=0;k<3;k++)g.push(pt(-.45+k*.45,-.15+r*.45));for(let r=0;r<3;r++)pl(g[r*3],g[r*3+1],g[r*3+2]);for(let k=0;k<3;k++)pl(g[k],g[3+k],g[6+k]);pl(g[0],g[4],g[8]);pl(g[2],g[4],g[6]);
+        const A=ring(0,-.15,.62,7,PI,TAU);pl(...A);red=g[4]}   /* 九宮＋中間的帥位＋長命鎖的弧 */
+      else if(fig==="lamp"){const t=pt(0,-.85),a=pt(-.28,-.55),b=pt(.28,-.55),cR=pt(.36,.05),d=pt(.28,.45),e=pt(-.28,.45),f=pt(-.36,.05),m=pt(0,-.05),z=pt(0,.75);pl(t,a,f,e,d,cR,b,t);pl(e,z,d);red=m;
+        const k1=pt(-.85,.45),k2=pt(-.55,.45),k3=pt(-.55,.75),k4=pt(-.85,.75);pl(k1,k2,k3,k4,k1)}   /* 柳後一盞小燈＋油布包 */
+      else if(fig==="knot"){const a=pt(-.65,-.3),b=pt(.4,-.3),cc=pt(.4,.3),d=pt(-.65,.3);pl(a,b,cc,d,a);pl(a,cc);pl(b,d);const L=ring(.66,0,.24,7,-PI*.85,PI*.85);pl(b,...L,cc)}   /* 木護腕、紅繩交叉、收成一個結 */
+      else if(fig==="bead"){const l=pt(-.8,.3),r=pt(.8,.3),ll=pt(-.45,.15),rr=pt(.45,.15),tp=pt(0,-.4);pl(l,ll,tp,rr,r);pl(ll,rr);red=pt(0,-.6);pl(tp,red)}   /* 鈸笠帽＋帽頂紅琉璃珠 */
+      else if(fig==="flag"){const p0=pt(-.55,-.85),p1=pt(-.55,.85),f1=pt(.55,-.8),f2=pt(.55,-.1),f0=pt(-.55,-.1),s0=pt(0,-.83),s1=pt(0,-.12);pl(p0,p1);pl(p0,f1,f2,f0);pl(s0,s1)}   /* 接合的祈福小旗（中間一道接縫） */
+      else{const o=pt(0,0);for(let i=0;i<14;i++){const a=i*TAU/14,u=pt(Math.cos(a)*.42,Math.sin(a)*.42),v=pt(Math.cos(a)*.78,Math.sin(a)*.78);pl(o,u,v)}}   /* 無聲煙火：放射的細光 */
+      x.strokeStyle="rgba(255,224,138,.42)";x.lineWidth=3;x.lineCap="round";x.beginPath();for(const[a,b]of Ls){x.moveTo(U(P[a][0]),U(P[a][1]));x.lineTo(U(P[b][0]),U(P[b][1]))}x.stroke();
+      P.forEach(([a,b],i)=>{const r=i===red;glow(U(a),U(b),r?24:12,r?.95:.8,r?"255,90,80":"255,236,180");glow(U(a),U(b),3.5,1,"255,255,245")});
+      if(fig==="flag"){x.font=`900 120px ${SERIF}`;x.textAlign="center";x.textBaseline="middle";x.shadowColor="rgba(255,214,120,.9)";x.shadowBlur=18;x.fillStyle="rgba(255,230,163,.85)";x.fillText("卒",U(0),U(-.45))}
+      const tx=new T.CanvasTexture(c);try{tx.anisotropy=rd.capabilities.getMaxAnisotropy()}catch(e){}return tx})());
+    const storySet=B=>{const k=JSON.stringify(B||null);if(k===STK||!DEEPS.length)return;STK=k;STORY=B||null;const on={};if(STORY&&Array.isArray(STORY.list))for(const o of STORY.list)if(STSLOT[o.id]!=null)on[STSLOT[o.id]]=o;
+      DEEPS.forEach((sp,i)=>{if(sp.userData.egg)return;const o=on[i]||null;sp.userData.story=o;sp.material.map=o?storyTex(o.fig):sp.userData.map0;sp.material.rotation=o?0:sp.material.rotation;sp.material.needsUpdate=true;sp.scale.setScalar(o?4.6:sp.userData.s0);
+        if(o&&!sp.userData.halo){const h=new T.Sprite(new T.SpriteMaterial({map:gntGlow(),color:0xFFD27A,transparent:true,opacity:.4,blending:T.AdditiveBlending,depthWrite:false,fog:false,toneMapped:false}));h.position.copy(sp.position);h.scale.setScalar(9);h.renderOrder=-.6;h.userData.giant=1;DEEPG.add(h);sp.userData.halo=h}
+        if(sp.userData.halo)sp.userData.halo.visible=!!o})};
+    const storyTick=s=>{for(const sp of DEEPS){const h=sp.userData.halo;if(h&&h.visible)h.material.opacity=.28+.2*Math.sin(s*2.1+sp.position.x)}
+      const now=performance.now();if(now-STT<200)return;STT=now;let hit=null;
+      if(TELE&&zoom<.05&&STORY){let bd=.4;for(const sp of DEEPS){const o=sp.userData.story,eg=sp.userData.egg&&STORY.all;if(!o&&!eg)continue;GFQ.copy(sp.position).project(cam);if(GFQ.z>1)continue;const d=Math.hypot(GFQ.x,GFQ.y);if(d<bd){bd=d;hit=o?{star:o.star,line:o.line,id:o.id}:{star:"星樞",line:STORY.close}}}}
+      const key=hit?hit.star:null;if(key===STLAST)return;STLAST=key;
+      if(!STIP){STIP=document.createElement("div");STIP.setAttribute("role","status");STIP.style.cssText="position:absolute;left:50%;bottom:22%;transform:translateX(-50%);z-index:4;text-align:center;pointer-events:none;transition:opacity .6s;opacity:0;width:90%;text-shadow:0 0 8px #000,0 0 3px #000";el.append(STIP)}
+      if(hit){STIP.innerHTML=`<div style="font:900 30px/1.3 ${SERIF};color:#FFE08A;letter-spacing:.15em">${hit.star}</div><div style="font:700 18px/1.5 ${SERIF};color:#F4EBD6;margin-top:4px">「${hit.line}」</div>`;STIP.style.opacity=1;
+        if(hit.id&&!STF.has(hit.id)){STF.add(hit.id);try{if(window.XQ_BHSTAR)window.XQ_BHSTAR(hit.id)}catch(e){}}pwPoke(800)}else STIP.style.opacity=0};
     let WX=null,CANO=null,MAPL=null,PANM=null,PANDH=0,PANROT=0,PSPOTS=null,MAPM=null,HILL=null,SIMRF=1,LAYER2=[],lastKf=-1,MAPO=[],MAPOK="",MAPP=null,MAPMN=0,RON=(()=>{try{return JSON.parse(localStorage.getItem("m_eramapRealm")||"true")!==false}catch(e){return true}})();   /* 地圖上的地名：[名字, x%, y%, 種類]；長卷的網格、圖高、地標（意見回饋 517、525） */
     let RTF=null,RTK="",RTS=null,RTP=null,RTT=0,RTA=0;   /* 意見回饋 658（B 輿圖遊歷）：路線圖層的重畫函式、目前畫的版本、各站位置（點得到）、左下角的提示、上次檢查的時間、上一格地圖的透明度 */
     const sc=new T.Scene(),FARHIDE=[];sc.fog=new T.Fog(new T.Color(E.mist),70,320);sc.background=new T.Color(E.mist);if(GIANT){sc.fog=null;sc.background=new T.Color(0x05060d);el.style.background="#05060d"}   /* 意見回饋 486：環景沒畫到的地方顯示朝代的霧色，不會一片黑 */
@@ -1287,18 +1320,21 @@
     const infos=[];   // 意見回饋 240：點得到、會跳說明的物件
     const bills=[];   // 意見回饋 375：鏡頭可以繞著桌子轉，貼圖（道具、座椅）每一格都轉向鏡頭
     const fades=[];   /* 意見回饋 421：轉頭時剛好擋在畫面正中間、桌子後面的樹，淡成水墨的薄影，讓遠景透出來 */
-    const furn=buildFurn(EK,E,{sc,M,GY,FL,SY,BZ,BL,stone,stone2,iron,infos,bills,fades,bridge:!!opt.bridge,indoor:!!opt.indoor});
+    const furn=buildFurn(EK,E,{sc,M,GY,FL,SY,BZ,BL,stone,stone2,iron,infos,bills,fades,bridge:!!opt.bridge,indoor:!!opt.indoor,giant:!!opt.giant});
     // 木棋盤嵌在桌上：深色實木框，和灰色石桌對比清楚
     const wood=M(furn.frame,{roughness:.55}),GWB=[mesh(new T.BoxGeometry(BW+.5,.6,BH+.5),wood,[0,.24,0]),mesh(new T.BoxGeometry(BW+.62,.08,BH+.62),wood,[0,-.0,0])];   // 厚木棋盤＋底座線腳（意見回饋 215）
     const btex=boardTex(()=>{try{btex.image.getContext("2d").clearRect(0,0,1,1);drawBoard(btex.image.getContext("2d"),btex.image.width,btex.image.height,null);btex.needsUpdate=true}catch(e){}});const bplane=new T.Mesh(new T.PlaneGeometry(BW,BH),new T.MeshStandardMaterial({map:btex,roughness:.6}));bplane.rotation.x=-PI/2;bplane.position.y=TOP-.02+.03;bplane.receiveShadow=true;sc.add(bplane);
-    const gsBoard=()=>{bplane.scale.set(GS,GS,1);GWB.forEach(m=>m.scale.set(GS,1,GS))};if(GIANT)gsBoard();   /* 黑洞巨盤：棋盤、木框照格距倍率放大 */
+    /* 棋盤底下的鏡像（說明在 gntMirror）：MG＝照 y＝.25（MY）上下鏡像的群組；BU＝盤底那面星盤（UV 左右反過來，從底下看字是正的） */
+    let MG=null,BU=null;if(GIANT){MG=new T.Group();MG.scale.y=-1;MG.position.y=2*.25;MG.userData.giant=1;const ug=bplane.geometry.clone(),uv=ug.attributes.uv;for(let i=0;i<uv.count;i++)uv.setX(i,1-uv.getX(i));
+      BU=new T.Mesh(ug,bplane.material);BU.rotation.x=-PI/2;BU.position.y=bplane.position.y;MG.add(BU);sc.add(MG)}
+    const gsBoard=()=>{bplane.scale.set(GS,GS,1);if(BU)BU.scale.set(GS,GS,1);GWB.forEach(m=>m.scale.set(GS,1,GS))};if(GIANT)gsBoard();   /* 黑洞巨盤：棋盤、木框照格距倍率放大 */
     // 茶杯：Pikafish（對面）一杯、我一杯（意見回饋 215）
     const teaCup=(x,z)=>{const cup=new T.Group();cup.position.set(x,0,z);sc.add(cup);const por=M(0xF4F1EA,{roughness:.25}),blue=M(0x2D5DA8,{roughness:.3});const a=new T.Mesh(new T.CylinderGeometry(.75,.75,.08,32),por);a.position.y=.04;cup.add(a);
       const b=new T.Mesh(new T.CylinderGeometry(.5,.36,.7,32,1,true),por);b.position.y=.43;b.material.side=T.DoubleSide;cup.add(b);const band=new T.Mesh(new T.CylinderGeometry(.505,.47,.12,32,1,true),blue);band.position.y=.6;cup.add(band);
       const tea=new T.Mesh(new T.CircleGeometry(.47,32),M(0x9C6B1E,{roughness:.1}));tea.rotation.x=-PI/2;tea.position.y=.66;cup.add(tea);cup.traverse(o=>{if(o.isMesh){o.castShadow=true;o.receiveShadow=true;o.userData.info="cup";infos.push(o)}});return cup};   /* 意見回饋 348：3D 茶杯也點得到 */
     teaCup(0,-6.85);teaCup(.4,7.0);   // 意見回饋 219：Pikafish 的茶在它面前正中間、我的茶在我面前正中間
     // 平台上的樹（依朝代：松、柳、竹）：水墨畫的看板（兩種筆法輪流），放在兩側，轉頭時當前景框；不投影（畫是平的，影子會穿幫）
-    if(!PROP_IMG[EK]&&!opt.bridge&&!opt.indoor){const seat=new T.Vector3(0,16,9.2),barkM=M(0xffffff,{map:barkTex(E,E.tree),roughness:.95}),folM=new T.MeshBasicMaterial({map:foliageTex(E,E.tree,EK.length*131+7),transparent:true,alphaTest:.02,depthWrite:false,side:T.DoubleSide,toneMapped:false});
+    if(!PROP_IMG[EK]&&!opt.bridge&&!opt.indoor&&!GIANT){const seat=new T.Vector3(0,16,9.2),barkM=M(0xffffff,{map:barkTex(E,E.tree),roughness:.95}),folM=new T.MeshBasicMaterial({map:foliageTex(E,E.tree,EK.length*131+7),transparent:true,alphaTest:.02,depthWrite:false,side:T.DoubleSide,toneMapped:false});
       // 位置（意見回饋 233）：放在平台邊、斜後方，當轉頭時畫面的框，不再一棵大樹擋住整個側面
       [[-14.8,-13.2,.95,11],[17.8,-8.2,.9,29],[-19.2,3.2,.72,53]].forEach(([x,z,k,sd])=>sc.add(inkTree3D(E,E.tree,EK.length*97+sd,new T.Vector3(x,GY,z),seat,k,barkM,folM)))}
     // 落葉（朝代色系的花瓣／葉子），在畫面外圍飄
@@ -1583,7 +1619,7 @@
       const fitTo=(obj,H)=>{inner.scale.setScalar(1);B.bot.position.set(0,0,0);g.updateMatrixWorld(true);const b=new T.Box3().setFromObject(obj),h=b.max.y-b.min.y;if(!(h>0))return false;
         const o=inner.getWorldPosition(new T.Vector3()),c=b.getCenter(new T.Vector3());B.bot.position.set(o.x-c.x,o.y-b.min.y,o.z-c.z);inner.scale.setScalar(H/h);return true};
       try{fitTo(B.bot,GNT_H*.8)}catch(e){}   /* 模型還沒到、或載不到時的 Q 版棋子人：先縮成差不多高 */
-      if(B.glbP)B.glbP.then(ok=>{if(!ok||!B.glb)return;if(!fitTo(B.glb,GNT_H))return;B.glb.traverse(m=>{if(m.isMesh)m.castShadow=true});   /* 開發者 11/12「黑洞對戰角色全都是本體好了，不要用透明的」：同種的其他棋子也用不透明本體（gntShadow 留著不用） */pwPoke(800)}).catch(()=>{});
+      if(B.glbP)B.glbP.then(ok=>{if(!ok||!B.glb)return;if(!fitTo(B.glb,GNT_H))return;B.glb.traverse(m=>{if(m.isMesh){m.castShadow=true;m.receiveShadow=false}});   /* 不收陰影：棋盤底下的鏡像角色用的是同一批網格，收陰影會被棋盤的影子蓋黑 */   /* 開發者 11/12「黑洞對戰角色全都是本體好了，不要用透明的」：同種的其他棋子也用不透明本體（gntShadow 留著不用） */pwPoke(800)}).catch(()=>{});
       return g};
     let gntStoneTex={};const gntGlyph=ch=>gntStoneTex[ch]||(gntStoneTex[ch]=(()=>{const c=document.createElement("canvas");c.width=c.height=256;const x=c.getContext("2d");
       const gr=x.createRadialGradient(128,110,10,128,128,128);gr.addColorStop(0,"#2A2F55");gr.addColorStop(.7,"#10132A");gr.addColorStop(1,"#05060D");x.fillStyle=gr;x.beginPath();x.arc(128,128,126,0,TAU);x.fill();
@@ -1599,7 +1635,7 @@
     /* 開發者 11/12「3D 角色變成棋子在對戰的時候也會有相對應的動作表情」：七星照局面做動作（Tripo 綁的 idle／walk／cheer／bow／wave_goodbye_01）——
        自己走子：走路，吃到子接著歡呼；被星樞吃掉一顆：帥揮手示警；贏了全體歡呼、輸了全體鞠躬；做完回待機 */
     const gntAct=(g,k,ms)=>{const B=g&&g.userData&&g.userData.B;if(!B||!B.clips)return;const kk=B.clips[k]?k:({wave:"wave_goodbye_01"})[k]||k;crPlay(B,kk);clearTimeout(g.userData.actT);if(ms)g.userData.actT=setTimeout(()=>{crPlay(B,"idle")},ms);pwPoke(ms||1500)};
-    const gntReact=(g,by,cap)=>{if(g&&g.userData&&g.userData.B){gntAct(g,"walk",cap?480:720);if(cap)setTimeout(()=>gntAct(g,"cheer",1900),490)}
+    const gntReact=(g,by,cap)=>{if(g&&g.userData&&g.userData.B){gntAct(g,"walk",cap?(RDM?480:660):720);if(cap)setTimeout(()=>gntAct(g,"cheer",1900),RDM?490:670)}
       if(sideOf(cap&&cap.userData&&cap.userData.p||"a")==="r"&&cap.userData.B){try{if(window.XQ_BHBELL)window.XQ_BHBELL()}catch(e){}   /* 星樞吃掉七星：一聲極低的鐘 */const k=Object.values(pieces).find(x=>x&&x.userData&&x.userData.B&&x.userData.p==="K");if(k)gntAct(k,"wave",1700)}};
     let gntRes=null;
     /* ---------- 開發者 11/12 選 Gemini 方案 A「星塵坍縮」＋加分點子「星光排隊當吃子區」「連續吃子音階上升」（story/gemini_app/120）----------
@@ -1647,7 +1683,7 @@
       try{if(window.XQ_BHCAP)window.XQ_BHCAP(gntCmb.n,red,big)}catch(e){}
       const L=gntStarLay(board).filter(o=>o.s===sideOf(cp)&&o.k===K),tgt=L[L.length-1]||null;
       gntBurst(cap,red,big,spd,C0=>{gntDrop(cap);if(tgt&&!RDM)gntFly(C0,tgt,()=>layoutCaptured(board));else layoutCaptured(board)})};
-    const gntTake=p=>{const q=gntPool[p];let g=q&&q.pop();if(g&&g.userData.ped){const[pb,pf,K]=g.userData.ped;pb.material=bMat(true);pf.material=fMat(NAMES.r[K],true)}   /* 換造型（refreshLook）會把舊的棋子材質丟掉，重用的底座要換新的 */if(!g){const K=p.toUpperCase();g=sideOf(p)==="r"?(GNT_X[K]?gntFig(p,K):gntStone(p)):(GNT_XS[K]?gntFig(p,K,true):gntStone(p))}g.visible=true;g.rotation.set(0,g.userData.B?((sideOf(p)==="r")!==flip?PI:0):0,0);sc.add(g);return g};
+    const gntTake=p=>{const q=gntPool[p];let g=q&&q.pop();if(g&&g.userData.ped){const[pb,pf,K]=g.userData.ped;pb.material=bMat(true);pf.material=fMat(NAMES.r[K],true)}   /* 換造型（refreshLook）會把舊的棋子材質丟掉，重用的底座要換新的 */if(!g){const K=p.toUpperCase();g=sideOf(p)==="r"?(GNT_X[K]?gntFig(p,K):gntStone(p)):(GNT_XS[K]?gntFig(p,K,true):gntStone(p))}g.visible=true;if(g.userData.capS0){g.scale.setScalar(g.userData.capS0);delete g.userData.capS0}g.rotation.set(0,g.userData.B?((sideOf(p)==="r")!==flip?PI:0):0,0);sc.add(g);return g};
     const gntDrop=g=>{sc.remove(g);if(g&&g.userData&&g.userData.giant){const p=g.userData.p;(gntPool[p]||(gntPool[p]=[])).push(g)}};
     let pieces={},prevB=null,prevLast=null,anims=[],captured=[],capNear=true,lastCapB=null;
     // 提示記號
@@ -1736,10 +1772,10 @@
     let PAD=null,padSel=-1,padCur=-1,padT=[];
     const padRing=new T.Mesh(new T.RingGeometry(.36,.48,40),new T.MeshBasicMaterial({color:0x7CFFB0,transparent:true,opacity:.95,depthWrite:false,side:T.DoubleSide}));padRing.rotation.x=-PI/2;padRing.renderOrder=3;padRing.visible=false;padRing.userData.giant=1;
     const padBeam=new T.Mesh(new T.CylinderGeometry(.42,.42,2.6,32,1,true),new T.MeshBasicMaterial({color:0x7CFFB0,transparent:true,opacity:.18,depthWrite:false,blending:T.AdditiveBlending,side:T.DoubleSide}));padBeam.visible=false;padBeam.userData.giant=1;
-    const padShow=()=>{const ok=padT.includes(padCur);if(padCur<0){padRing.visible=padBeam.visible=false;return}const[x,z]=pos(padCur);padRing.position.set(x,TOP+.03,z);padBeam.position.set(x,TOP+1.3,z);
+    const padShow=()=>{const ok=padT.includes(padCur);if(padCur<0){padRing.visible=padBeam.visible=false;return}const[x,z]=pos(padCur);padRing.position.set(x,UNDER?2*MY-TOP-.03:TOP+.03,z);padBeam.position.set(x,UNDER?2*MY-TOP-1.3:TOP+1.3,z);
       padRing.visible=padBeam.visible=true;const c=ok?0x7CFFB0:0x9A9AA8;padRing.material.color.setHex(c);padBeam.material.color.setHex(c);padBeam.material.opacity=ok?.2:.08;
       if(PAD){const g=PAD.querySelector(".pad-go");g.disabled=!ok;g.setAttribute("aria-disabled",String(!ok));const L=PAD.querySelector(".pad-tip");if(L)L.textContent=ok?"可以走這裡":padCur===padSel?"移到要去的格子":"這裡不能走"}pwPoke(300)};
-    const padMove=(dr,dc)=>{if(padCur<0)return;const r=(padCur/9|0)+(flip?-dr:dr),c=padCur%9+(flip?-dc:dc)*(UNDER?-1:1);if(r<0||r>9||c<0||c>8){vibrate(8);return}vibrate(4);padCur=r*9+c;padShow()};
+    const padMove=(dr,dc)=>{if(padCur<0)return;const r=(padCur/9|0)+(flip?-dr:dr),c=padCur%9+(flip?-dc:dc)*(FLIPUP?-1:1);if(r<0||r>9||c<0||c>8){vibrate(8);return}vibrate(4);padCur=r*9+c;padShow()};
     const padUI=()=>{if(PAD)return PAD;if(!sc.children.includes(padRing))sc.add(padRing,padBeam);PAD=document.createElement("div");PAD.className="gpad";PAD.setAttribute("role","group");PAD.setAttribute("aria-label","搖桿：移動要去的格子");
       PAD.style.cssText="position:absolute;left:50%;bottom:10px;transform:translateX(-50%);z-index:4;display:none;grid-template-columns:44px 54px 44px;grid-template-rows:40px 44px 40px auto;gap:3px;align-items:center;justify-items:center;touch-action:manipulation";
       const B=(t,l,ar,ac,st)=>{const b=document.createElement("button");b.type="button";b.textContent=t;b.setAttribute("aria-label",l);b.style.cssText="width:44px;height:40px;border-radius:12px;border:1px solid rgba(255,224,138,.55);background:rgba(16,14,34,.78);color:#FFE08A;font:900 18px/1 system-ui;padding:0;cursor:pointer;"+(st||"");
@@ -1763,20 +1799,29 @@
       for(const x of[GSUI,pop])for(const ev of["pointerdown","pointerup","pointermove","click"])x.addEventListener(ev,e=>e.stopPropagation());
       GSUI.onclick=()=>{const open=pop.style.display==="none";pop.style.display=open?"flex":"none";GSUI.setAttribute("aria-expanded",String(open));if(open)arm()};
       r.oninput=()=>{gsSet(+r.value);b.textContent=GS.toFixed(1)+"×";arm()};if(zb)zb.prepend(GSUI);else el.append(GSUI);el.append(pop)};
-    /* 開發者 11/12「超大棋盤從底部看，會有個鏡像對稱的 3D 角色，也就是從背面也可以下棋，上下是一起連動」：
-       右下角那排最上面加「⇅」：按下去畫面像翻牌一樣翻到棋盤背面——整盤左右鏡像、盤面變深紫的背面星盤；角色、走子、吃子特效是同一盤、同步動。
-       背面時：點選、拖曳轉頭、兩指放大、搖桿左右都照鏡像換算；字（胸前背後的本命字、吃子星、楚河漢界）反過來貼，翻過來看還是正的字 */
-    let UNDER=false,UNUI=null,unTip=null,unTipT=0,UNT=0;const mX=cx=>{if(!UNDER)return cx;const r=cvs.getBoundingClientRect();return r.left+r.right-cx};
-    const unTex=t=>{if(!t||!t.repeat)return;const k=UNDER?-1:1;if(t.repeat.x!==k){t.repeat.x=k;t.offset.x=UNDER?1:0;if(t.updateMatrix)t.updateMatrix()}};
-    const unGly=()=>{for(const g of gntFigs)g.traverse(m=>{if(m.isMesh&&m.name==="meGly")unTex(m.material&&m.material.map)});for(const k in gntStoneTex)unTex(gntStoneTex[k]);unTex(btex);bplane.material.color.setHex(UNDER?0xB4A2FF:0xFFFFFF)};
-    const unSet=on=>{on=!!on;if(on===UNDER||!GIANT)return;const c=cvs.style,dt=RDM?0:200;c.transition=dt?"opacity .35s,transform .2s ease-in":"opacity .35s";if(dt)c.transform=(UNDER?"scaleX(-1) ":"")+"scaleY(.02)";
-      setTimeout(()=>{UNDER=on;unGly();if(padCur>=0)padShow();c.transition=dt?"opacity .35s,transform .24s ease-out":"opacity .35s";c.transform=UNDER?"scaleX(-1)":"";
-        if(UNUI){UNUI.setAttribute("aria-pressed",String(UNDER));UNUI.setAttribute("aria-label",UNDER?"翻回棋盤正面":"翻到棋盤背面")}
-        try{if(!unTip){unTip=document.createElement("div");unTip.setAttribute("role","status");unTip.style.cssText="position:absolute;left:50%;top:14px;transform:translateX(-50%);z-index:5;font:700 13px/1.4 system-ui,sans-serif;color:#FFE08A;background:rgba(16,14,34,.84);border:1px solid rgba(255,224,138,.5);border-radius:99px;padding:5px 12px;white-space:nowrap;pointer-events:none;transition:opacity .35s;opacity:0";el.append(unTip)}
-          unTip.textContent=UNDER?"棋盤背面：鏡像的同一盤棋":"回到棋盤正面";unTip.style.opacity=1;clearTimeout(unTipT);unTipT=setTimeout(()=>{if(unTip)unTip.style.opacity=0},1600)}catch(e){}pwPoke(900)},dt)};
+    /* 開發者 11/12「超大棋盤從底部看，會有個鏡像對稱的 3D 角色，也就是從背面也可以下棋，上下是一起連動」；
+       1170 先做成「按 ⇅ 把畫面左右翻過來」，開發者 hspx「沒有鏡像功能」（平視看棋盤邊，底下是空的）→ 1180 改成真的鏡像：
+       ① 棋盤底下常駐一組上下顛倒的角色（gntMirror：每一幀把棋子暫時掛到 y 鏡像的群組 MG 再畫一次，燈光也照鏡像擺），從任何角度看棋盤下方都看得到，跟上面同一批物件、同步動；
+       ② 盤底貼一面同樣的星盤（BU，MG 裡）；③「⇅」＝鏡頭鑽到棋盤底下（鏡頭照棋盤中間的平面鏡像、頭朝下），從背面看、照樣能點、能用搖桿下 */
+    let UNDER=false,UNUI=null,unTip=null,unTipT=0;const MY=.25;   /* MY：鏡像平面（棋盤面 .57 與盤底 -.07 的中間） */
+    const myv=v=>{if(UNDER)v.y=2*MY-v.y;return v};   /* 背面時，把正面的點換成鏡像那一點再投影到畫面 */
+    /* 每一幀畫完正面後再畫一次鏡像：棋子暫時掛進 MG（y 鏡像），其他東西（環景、棋盤、特效）先藏、燈照鏡像擺、字牌貼圖左右反過來（鏡像後字才是正的），
+       不清畫面、不重算陰影，所以會跟正面畫在同一張、被棋盤正確遮住；畫完全部放回原處。同一批物件＝走子、動作、吃子都同步 */
+    const gntMirror=()=>{if(!MG)return;const L=[];for(const k in pieces){const g=pieces[k];if(g&&g.parent===sc&&g.visible)L.push(g)}if(!L.length)return;
+      for(const g of L)MG.add(g);   /* 先把棋子移進 MG，下面藏東西時才不會連棋子一起藏 */
+      const hid=[],lt=[],fl=[],bg=sc.background;for(const o of sc.children){if(o.isLight){lt.push([o,o.position.y]);o.position.y=2*MY-o.position.y}else if(o.visible&&o!==MG){o.visible=false;hid.push(o)}}
+      BU.visible=false;sc.background=null;
+      for(const g of L)g.traverse(m=>{const t=m.isMesh&&m.name==="meGly"&&m.material&&m.material.map;if(t&&t.repeat&&t.repeat.x===1){t.repeat.x=-1;t.offset.x=1;t.updateMatrix();fl.push(t)}});
+      const ac=rd.autoClear,su=rd.shadowMap.autoUpdate;rd.autoClear=false;rd.shadowMap.autoUpdate=false;
+      try{rd.render(sc,cam)}finally{rd.autoClear=ac;rd.shadowMap.autoUpdate=su;sc.background=bg;BU.visible=true;for(const t of fl){t.repeat.x=1;t.offset.x=0;t.updateMatrix()}
+        for(const g of L)sc.add(g);for(const o of hid)o.visible=true;for(const[o,y]of lt)o.position.y=y}};
+    /* ⇅：上下再轉半圈（仰角 +180°，平順轉過去）——從棋盤另一側、頭朝下看底下的鏡像角色＝正的；再按一次再轉半圈回正面。UNDER（鏡頭在棋盤底下）每一幀由 placeCam 判斷 */
+    const unSet=()=>{if(!GIANT||TELE)return;const was=UNDER;tpitch+=PI/1.2;tyaw+=PI;userZ=true;   /* 同時水平轉半圈：翻過去以後紅方還是在靠近玩家這一側 */
+      try{if(!unTip){unTip=document.createElement("div");unTip.setAttribute("role","status");unTip.style.cssText="position:absolute;left:50%;top:14px;transform:translateX(-50%);z-index:5;font:700 13px/1.4 system-ui,sans-serif;color:#FFE08A;background:rgba(16,14,34,.84);border:1px solid rgba(255,224,138,.5);border-radius:99px;padding:5px 12px;white-space:nowrap;pointer-events:none;transition:opacity .35s;opacity:0";el.append(unTip)}
+        unTip.textContent=was?"回到棋盤正面":"棋盤背面：鏡像的同一盤棋，照樣可以下";unTip.style.opacity=1;clearTimeout(unTipT);unTipT=setTimeout(()=>{if(unTip)unTip.style.opacity=0},1800)}catch(e){}pwPoke(1500)};
     const unUI=()=>{if(UNUI||!GIANT)return;const zb=el.querySelector(".pzoom");UNUI=document.createElement("button");UNUI.type="button";UNUI.className="un-ui";UNUI.textContent="⇅";UNUI.setAttribute("aria-label","翻到棋盤背面");UNUI.setAttribute("aria-pressed","false");
       UNUI.style.cssText="width:34px;height:34px;border-radius:50%;border:1px solid rgba(0,0,0,.18);background:rgba(255,255,255,.82);color:#3a2a1c;font:800 17px/1 system-ui;box-shadow:0 1px 4px rgba(0,0,0,.2);padding:0;cursor:pointer";
-      for(const ev of["pointerdown","pointerup","pointermove"])UNUI.addEventListener(ev,e=>e.stopPropagation());UNUI.onclick=e=>{e.stopPropagation();unSet(!UNDER)};if(zb)zb.prepend(UNUI);else el.append(UNUI)};
+      for(const ev of["pointerdown","pointerup","pointermove"])UNUI.addEventListener(ev,e=>e.stopPropagation());UNUI.onclick=e=>{e.stopPropagation();unSet()};if(zb)zb.prepend(UNUI);else el.append(UNUI)};
     /* 開發者 11/12「放大近中遠，把遠的地方放大到極限倍」：右下角那排加「🔭」望遠鏡——鏡頭停在棋盤上方不動，只把視角收窄（最多 40 倍），
        拖曳＝轉方向（越放大轉得越慢）、兩指／＋－＝倍率；越放大近景、中景越淡（像對焦到遠方），遠方程式畫的星系、更暗的星星淡入。再按一次回到原本的視角 */
     let TELE=null,TLUI=null;const teleSet=on=>{on=!!on;if(on===!!TELE||!GIANT)return;
@@ -1788,7 +1833,7 @@
     const teleUI=()=>{if(TLUI||!GIANT)return;const zb=el.querySelector(".pzoom");TLUI=document.createElement("button");TLUI.type="button";TLUI.className="tele-ui";TLUI.textContent="🔭";TLUI.setAttribute("aria-label","望遠鏡：放大遠方");TLUI.setAttribute("aria-pressed","false");
       TLUI.style.cssText="width:34px;height:34px;border-radius:50%;border:1px solid rgba(0,0,0,.18);background:rgba(255,255,255,.82);color:#3a2a1c;font:700 16px/1 system-ui;box-shadow:0 1px 4px rgba(0,0,0,.2);padding:0;cursor:pointer";
       for(const ev of["pointerdown","pointerup","pointermove"])TLUI.addEventListener(ev,e=>e.stopPropagation());TLUI.onclick=e=>{e.stopPropagation();teleSet(!TELE)};if(zb)zb.prepend(TLUI);else el.append(TLUI)};
-    try{if(GIANT&&window.__PK&&localStorage.getItem("xq_dbg3d"))__PK.st=v=>{if(v){if(v.y!=null)tyaw=v.y;if(v.p!=null)tpitch=v.p;if(v.z!=null)tzoom=v.z}return{yaw,pitch,zoom,tele:!!TELE,under:UNDER,figs:gntFigs.length}}}catch(e){}   /* 除錯：讀／設鏡頭 */
+    try{if(GIANT&&window.__PK&&localStorage.getItem("xq_dbg3d"))__PK.st=v=>{if(v){if(v.y!=null)tyaw=v.y;if(v.p!=null)tpitch=v.p;if(v.z!=null)tzoom=v.z}return{yaw,pitch,zoom,tele:!!TELE,under:UNDER,figs:gntFigs.length}};if(GIANT&&window.__PK&&localStorage.getItem("xq_dbg3d"))__PK.frame=()=>{yaw=tyaw;pitch=tpitch;zoom=tzoom;try{gntTick(0,0)}catch(e){}placeCam();rd.render(sc,cam);gntMirror();return rd.domElement.toDataURL("image/jpeg",.85)}}catch(e){}   /* 除錯：讀／設鏡頭 */
     const gntPad=o=>{const sel=o.sel!=null&&o.sel>=0?o.sel:-1,T2=Array.isArray(o.targets)?o.targets.slice():[];
       if(sel<0||!T2.length){padSel=-1;padCur=-1;padT=[];if(PAD)PAD.style.display="none";padRing.visible=padBeam.visible=false;return}
       padUI();PAD.style.display="grid";if(sel!==padSel){padSel=sel;padCur=sel}padT=T2;padShow()};
@@ -1796,13 +1841,18 @@
       {const lk=JSON.stringify(ex.look?[ex.look.k,ex.look.img,!!ex.look.gly,ex.look.pset,ex.look.pieces&&ex.look.pieces.r,ex.look.grid]:null);if(lk!==lookKey){lookKey=lk;LOOK=ex.look||null;
         if(LOOK){let n=0;const L0=[LOOK.img,LOOK.pieces&&LOOK.pieces.r,LOOK.pieces&&LOOK.pieces.b,...(LOOK.pset?PSRC(LOOK.pset):[])],done=()=>{if(++n>=L0.length&&LOOK===ex.look)refreshLook()};L0.forEach(src=>{if(!src||loadImg(src,done))done()})}
         refreshLook()}}
-      if(nf!==flip){flip=nf;prevB=null}if(GIANT)try{gntPad(o);gsUI();unUI();teleUI();if(UNDER)unGly()}catch(e){}   /* 搖桿：翻盤更新後才算方向；棋距拉桿 */
+      if(nf!==flip){flip=nf;prevB=null}if(GIANT)try{gntPad(o);gsUI();unUI();teleUI();storySet(ex.bhStars)}catch(e){}   /* 搖桿：翻盤更新後才算方向；棋距拉桿 */
       const L=o.last&&o.last.f!=null&&o.last.t!=null?o.last:null,lk=L?L.f+"-"+L.t:"";
       const moved=prevB&&L&&lk!==prevLast&&board[L.t]&&board[L.t]===prevB[L.f]&&!board[L.f]&&pieces[L.f]&&board.filter(Boolean).length>=prevB.filter(Boolean).length-1;
       if(moved){const g=pieces[L.f],cap=pieces[L.t];delete pieces[L.f];pieces[L.t]=g;const[x0,z0]=pos(L.f),[x1,z1]=pos(L.t);
         const by=sideOf(board[L.t]),botSide=ex.botSide||null;if(GIANT)gntPly++;
-        if(cap&&GIANT){try{gntCapFx(cap,by,board)}catch(e){gntDrop(cap);layoutCaptured(board)}}else if(cap){anims.push({t:0,d:.55,f:p=>{cap.position.y=TOP+Math.sin(p*PI)*.9;cap.position.x+=(x1-x0)*.006;cap.position.z+=(z1>z0?.02:-.02);cap.rotation.z=p*2.2},end:()=>{if(GIANT)gntDrop(cap);else sc.remove(cap);layoutCaptured(board)}})}
-        anims.push({t:0,d:.42,f:p=>{const e=ease(p);g.position.set(x0+(x1-x0)*e,TOP+Math.sin(p*PI)*1.1,z0+(z1-z0)*e)},end:()=>at(g,L.t)});
+        /* 開發者 11/12 hspx「黑洞吃子時，角色先放大 1.5 倍、然後吃對方，再變回原本的大小」：放大 .22 秒 → 放大的樣子跳過去 .42 秒 → 落地才開始吃子特效 → 停一下再縮回（共 .7 秒）。減少動態：照舊 */
+        if(cap&&GIANT&&!RDM){const s0=g.scale.x||1,capFx=()=>{try{gntCapFx(cap,by,board)}catch(e){gntDrop(cap);layoutCaptured(board)}};g.userData.capS0=s0;
+          anims.push({t:0,d:.22,f:p=>g.scale.setScalar(s0*(1+.5*ease(p))),end:()=>{g.scale.setScalar(s0*1.5);
+            anims.push({t:0,d:.42,f:p=>{const e=ease(p);g.position.set(x0+(x1-x0)*e,TOP+Math.sin(p*PI)*1.1,z0+(z1-z0)*e)},end:()=>{at(g,L.t);capFx();
+              anims.push({t:0,d:.7,f:p=>g.scale.setScalar(s0*(1.5-.5*ease(Math.max(0,(p-.45)/.55)))),end:()=>{g.scale.setScalar(s0);delete g.userData.capS0}})}})}})}
+        else if(cap&&GIANT){try{gntCapFx(cap,by,board)}catch(e){gntDrop(cap);layoutCaptured(board)}}else if(cap){anims.push({t:0,d:.55,f:p=>{cap.position.y=TOP+Math.sin(p*PI)*.9;cap.position.x+=(x1-x0)*.006;cap.position.z+=(z1>z0?.02:-.02);cap.rotation.z=p*2.2},end:()=>{if(GIANT)gntDrop(cap);else sc.remove(cap);layoutCaptured(board)}})}
+        if(!(cap&&GIANT&&!RDM))anims.push({t:0,d:.42,f:p=>{const e=ease(p);g.position.set(x0+(x1-x0)*e,TOP+Math.sin(p*PI)*1.1,z0+(z1-z0)*e)},end:()=>at(g,L.t)});
         if(botSide&&by===botSide){reach=1;reachT=0;opp.setFace(cap?"happy":"smile",1.4);if(cap){mate.setFace("open",1.6);mate.say(["小心！","哎呀，被吃了","沒關係，扳回來！"][Math.random()*3|0],2)}}
         else if(cap){mate.setFace("happy",1.6);mate.say(["吃得好！","漂亮！","好棋！"][Math.random()*3|0],1.8);if(botSide){opp.setFace("open",1.4);if((opp.B||oppSpr)&&Math.random()<.5)opp.say(["哎呀！","被吃了…","好棋！"][Math.random()*3|0])}}
         try{CR.move(by,prevB[L.t]||null)}catch(e){}if(GIANT)try{gntReact(g,by,cap)}catch(e){}
@@ -1860,15 +1910,19 @@
        左右拖曳＝繞著他轉、上下拖曳＝抬高壓低，中心不動就不會飄。點兩下回全盤。zoom≥1（拉遠）照原本的路線 */
     let GFOC=null;const GFL=new T.Vector3(0,0,-.6),GFT=new T.Vector3(0,0,-.6),GFD=new T.Vector3(),GFQ=new T.Vector3(),GF_D1=Math.hypot(12.5,14.1),GF_E1=Math.atan2(12.5,14.1);
     const gntOn=g=>{for(let o=g;o;o=o.parent){if(!o.visible)return false;if(o===sc)return true}return false};
-    const gntFocus=(cx,cy,rad)=>{cx=mX(cx);const r=cvs.getBoundingClientRect();let best=null,bd=rad;for(const g of gntFigs){if(!gntOn(g))continue;g.getWorldPosition(GFQ);GFQ.y+=GNT_H*.62;GFQ.project(cam);if(GFQ.z>1)continue;
+    const gntFocus=(cx,cy,rad)=>{const r=cvs.getBoundingClientRect();let best=null,bd=rad;for(const g of gntFigs){if(!gntOn(g))continue;g.getWorldPosition(GFQ);GFQ.y+=GNT_H*.62;myv(GFQ).project(cam);if(GFQ.z>1)continue;
         const d=Math.hypot(r.left+(GFQ.x+1)/2*r.width-cx,r.top+(1-GFQ.y)/2*r.height-cy);if(d<bd){bd=d;best=g}}if(best){GFOC=best;pwPoke(1500)}return best};
     const gntCamNear=()=>{const k=smooth(1,.45,zoom);if(GFOC&&!gntOn(GFOC))GFOC=null;
       if(GFOC){GFOC.getWorldPosition(GFD);GFD.y+=GNT_H*.62}else GFD.copy(GFL);GFD.lerp(GFL,1-k);
       const dd=GFT.distanceTo(GFD);GFT.lerp(GFD,dd>1e-3?.2:1);if(dd>1e-3)pwPoke(120);
-      const e=clamp(GF_E1+(.22-GF_E1)*k+pitch*.9*k,-.25,1.45),d=GF_D1*zoom*(1+(GS-1)*(1-k)),a=yaw;
+      const e=GF_E1+(.22-GF_E1)*k+.45*k+(pitch-.5)*1.2,d=GF_D1*zoom*(1+(GS-1)*(1-k)),a=yaw;   /* 開發者 11/12「拖曳可以繞整球」：上下拖曳不再設上下限，可以一路轉過頭頂、繞到棋盤底下（pitch .5＝原本的預設角度） */
       cam.position.set(GFT.x+Math.sin(a)*Math.cos(e)*d,GFT.y+Math.sin(e)*d,GFT.z+Math.cos(a)*Math.cos(e)*d);
       const nr=clamp(d*.08,.02,.5);if(Math.abs(cam.near-nr)>1e-3){cam.near=nr;cam.updateProjectionMatrix()}
-      GFQ.copy(GFT);GFQ.y-=pitch*5.2*(1-k);cam.lookAt(GFQ);cam.rotateX(CAMV.dp*(1-k));gntClear(k>.35)};
+      GFQ.copy(GFT);GFQ.y-=.5*5.2*(1-k);gntUp(a,e);cam.lookAt(GFQ);cam.up.set(0,1,0);cam.rotateX(CAMV.dp*(1-k));gntClear(k>.35)};
+    /* 繞整球的頭頂方向＝仰角增加的切線方向：轉過頭頂（cos＜0）畫面自然上下顛倒，從另一側看棋盤底下的鏡像角色是正的；FLIPUP 給左右拖曳、搖桿換算用 */
+    let FLIPUP=false;const gntUp=(a,e)=>{const c=Math.cos(e),s=Math.sin(e);cam.up.set(-Math.sin(a)*s,c,-Math.cos(a)*s);FLIPUP=c<0};
+    const gntOrb=(P,L,de,a0)=>{const vx=P.x-L.x,vy=P.y-L.y,vz=P.z-L.z,r=Math.hypot(vx,vy,vz),a=Math.atan2(vx,vz),e=Math.atan2(vy,Math.hypot(vx,vz))+de;
+      P.set(L.x+Math.sin(a)*Math.cos(e)*r,L.y+Math.sin(e)*r,L.z+Math.cos(a)*Math.cos(e)*r);return[a,e]};
     /* 放大繞著角色轉時，鏡頭會穿進旁邊的角色、或被前排擋住：擋在鏡頭到目標這條線上（半徑 0.6 內）的其他角色先藏起來，拉遠就回來 */
     const GFR=new T.Vector3();const gntClear=on=>{const C=cam.position;for(const g of gntFigs){const inn=g.children[0];if(!inn)continue;let hide=false;
       /* 開發者 11/12「某些角度會讓原本的棋子消失」：原本擋在視線上的角色都藏起來，玩家會以為那隻棋不見了（例如從黑方背後看，將被藏掉）。
@@ -1880,11 +1934,11 @@
       GV2.set(P.x-Math.sin(az)*Math.cos(elv),P.y+Math.sin(elv),P.z-Math.cos(az)*Math.cos(elv));cam.lookAt(GV2);const f=clamp((CAMV.fov||50)*zoom,1,CAMV.fov||50);if(Math.abs(cam.fov-f)>1e-4){cam.fov=f;cam.updateProjectionMatrix()}gntClear(false)};
     const gntCam=()=>{GFL.set(0,0,-.6*GS);if(TELE)return gntTele();if(zoom<1)return gntCamNear();if(cam.near!==.5){cam.near=.5;cam.updateProjectionMatrix()}GFT.copy(GFL);gntClear(false);
       const near=0,far=smooth(1.05,2.6,zoom),mix=(a,b,k)=>a.map((v,j)=>v+(b[j]-v)*k);let v=mix(GNT_V[1],GNT_V[0],near);v=mix(v,GNT_V[2],far);v=v.map(x=>x*GS);   /* 格距放大，鏡頭跟著等比拉遠 */
-      const P=GV1.set(v[0],v[1],v[2]),L=GV2.set(v[3],v[4]-pitch*(2.2+3*(1-near)),v[5]),ao=yaw*(1-near),ah=yaw*near*.8;
+      const P=GV1.set(v[0],v[1],v[2]),L=GV2.set(v[3],v[4]-.5*(2.2+3*(1-near)),v[5]),ao=yaw*(1-near),ah=yaw*near*.8;   /* 視線高度固定在預設（pitch .5）；上下拖曳改成繞著視線中心轉（gntOrb） */
       {const c=Math.cos(ao),s=Math.sin(ao),x=P.x,z=P.z;P.x=x*c+z*s;P.z=-x*s+z*c;const lx=L.x,lz=L.z;L.x=lx*c+lz*s;L.z=-lx*s+lz*c}
       if(ah){const dx=L.x-P.x,dz=L.z-P.z,c=Math.cos(ah),s=Math.sin(ah);L.x=P.x+dx*c+dz*s;L.z=P.z-dx*s+dz*c}
-      cam.position.copy(P);cam.lookAt(L);cam.rotateX(CAMV.dp)};
-    const placeCam=()=>{if(GIANT)return gntCam();const wy=Math.abs(Math.atan2(Math.sin(yaw),Math.cos(yaw))),orb=smooth(.2,1.1,wy),low=clamp(-pitch/.7,0,1);
+      const[oa,oe]=gntOrb(P,L,(pitch-.5)*1.2);cam.position.copy(P);gntUp(oa,oe);cam.lookAt(L);cam.up.set(0,1,0);cam.rotateX(CAMV.dp)};
+    const placeCam=()=>{if(GIANT){gntCam();UNDER=cam.position.y<MY;if(UNUI&&UNUI.getAttribute("aria-pressed")!==String(UNDER)){UNUI.setAttribute("aria-pressed",String(UNDER));UNUI.setAttribute("aria-label",UNDER?"轉回棋盤正面":"轉到棋盤背面")}return}const wy=Math.abs(Math.atan2(Math.sin(yaw),Math.cos(yaw))),orb=smooth(.2,1.1,wy),low=clamp(-pitch/.7,0,1);
       const off=camBase.clone().sub(PIV),lk=look.clone().sub(PIV),el0=Math.atan2(off.y,Math.hypot(off.x,off.z)),el=clamp(el0+pitch-.26*orb,.1,1.5),R=Math.min(off.length()*zoom,330),az=Math.atan2(off.x,off.z)+yaw;
       /* 開發者 11/4：畫面拉遠看石台底下的朝代大地圖——鏡頭距離超過 105（長卷半徑的 62%）以後，鏡頭慢慢升高成俯視，長卷、天空跟著淡掉，霧也變淡 */
       const kf=smooth(105,220,R),elF=el+(1.38-el)*kf;   /* 意見回饋 525：拉到一半還要看得到環景長卷（517 時提早淡掉，改回原本的距離） */
@@ -1914,9 +1968,9 @@
       if(!ray.ray.intersectPlane(plane,hitP))return -1;let c=Math.round(hitP.x+4),r2=Math.round(hitP.z+4.5);if(Math.abs(hitP.x+4-c)>.48||Math.abs(hitP.z+4.5-r2)>.48)return -1;
       if(c<0||c>8||r2<0||r2>9)return -1;if(flip){c=8-c;r2=9-r2}return r2*9+c};
     let tapAmb=null;const SV=new T.Vector3();
-    const pick=(cx,cy)=>{cx=mX(cx);const r=rd.domElement.getBoundingClientRect();ndc.set((cx-r.left)/r.width*2-1,-((cy-r.top)/r.height)*2+1);ray.setFromCamera(ndc,cam);tapAmb=null;
+    const pick=(cx,cy)=>{const r=rd.domElement.getBoundingClientRect();ndc.set((cx-r.left)/r.width*2-1,-((cy-r.top)/r.height)*2+1);ray.setFromCamera(ndc,cam);tapAmb=null;
       const B=SNAP.b;if(!B||!r.width)return pickRay();
-      const prj=(x,y,z)=>{SV.set(x,y,z).project(cam);return[(SV.x+1)/2*r.width,(1-SV.y)/2*r.height]},tg=new Set(SNAP.t),P=[];
+      const prj=(x,y,z)=>{myv(SV.set(x,y,z)).project(cam);return[(SV.x+1)/2*r.width,(1-SV.y)/2*r.height]},tg=new Set(SNAP.t),P=[];
       for(let i=0;i<90;i++){const[x,z]=pos(i),g=pieces[i],y=g?g.position.y+(g.userData.th||.27):TOP,q=prj(x,y,z);if(SV.z>1)continue;const qx=prj(x+1,y,z),qz=prj(x,y,z+1);
         const own=!!B[i]&&sideOf(B[i])===SNAP.me,t=selI>=0&&tg.has(i);
         P.push({i,x:q[0],y:q[1],s:Math.max(4,Math.min(Math.hypot(qx[0]-q[0],qx[1]-q[1]),Math.hypot(qz[0]-q[0],qz[1]-q[1]))),occ:!!B[i],c:own||t,w:t?.9:1})}
@@ -1980,7 +2034,7 @@
         b.addEventListener("pointerdown",e=>e.stopPropagation());b.addEventListener("pointerup",e=>e.stopPropagation());
         b.onclick=e=>{e.stopPropagation();inEnd(false);userZ=true;if(GIANT&&f<1&&!GFOC&&!TELE)try{const r=cvs.getBoundingClientRect();gntFocus(r.left+r.width/2,r.top+r.height*.55,1e9)}catch(_){}tzoom=clamp(tzoom*(GIANT&&f<1&&tzoom<.5?.7:f),ZMIN,ZMAX)};zb.append(b)}
       el.append(zb)}
-    const reset=()=>{inEnd(false);if(GIANT)GFOC=null;if(TELE){yaw-=Math.round(yaw/TAU)*TAU;tyaw=0;tpitch=0;tzoom=1;return}   /* 望遠鏡裡點兩下：回 1 倍、正前方 */yaw-=Math.round(yaw/TAU)*TAU;tyaw=0;tpitch=HOME.p;tzoom=HOME.z;userZ=false};   // 轉了好幾圈也走最近的路回正
+    const reset=()=>{inEnd(false);if(GIANT)GFOC=null;if(TELE){yaw-=Math.round(yaw/TAU)*TAU;tyaw=0;tpitch=0;tzoom=1;return}   /* 望遠鏡裡點兩下：回 1 倍、正前方 */yaw-=Math.round(yaw/TAU)*TAU;if(GIANT){const P2=TAU/1.2;pitch-=Math.round((pitch-HOME.p)/P2)*P2}   /* 繞了好幾圈也走最近的路回正 */tyaw=0;tpitch=HOME.p;tzoom=HOME.z;userZ=false};   // 轉了好幾圈也走最近的路回正
     const spread=()=>{const a=[...ptrs.values()];return Math.max(20,Math.hypot(a[0].x-a[1].x,a[0].y-a[1].y))};
     cvs.addEventListener("pointerdown",e=>{ptrs.set(e.pointerId,{x:e.clientX,y:e.clientY});try{cvs.setPointerCapture(e.pointerId)}catch(_){}
       if(ptrs.size>=2){inEnd(false);if(!pinch){pinch={d:spread(),z:tzoom};if(GIANT&&!TELE)try{const a=[...ptrs.values()];gntFocus((a[0].x+a[1].x)/2,(a[0].y+a[1].y)/2,1e9)}catch(_){}}down=null;lastTap=0;return}   /* 黑洞：兩指中間最靠近的角色＝放大的中心 */
@@ -1989,7 +2043,7 @@
     cvs.addEventListener("pointermove",e=>{const pt=ptrs.get(e.pointerId);if(pt){pt.x=e.clientX;pt.y=e.clientY}
       if(pinch){if(ptrs.size>=2){tzoom=clamp(pinch.z*pinch.d/spread(),ZMIN,ZMAX);userZ=true}return}
       if(!down)return;const dx=e.clientX-down.x,dy=e.clientY-down.y;if(Math.hypot(dx,dy)>9)down.moved=true;
-      if(down.moved){if(IN.ph==="held")inEnd(false);const tk=TELE?Math.max(zoom,.03):1,y=down.y0-(UNDER?-dx:dx)/W*1.6*tk;tyaw=FULL?y:clamp(y,-1.2,1.2);tpitch=TELE?clamp(down.p0+dy/H*1.6*tk,-.8,1.1):clamp(down.p0+dy/H*1.6,-1.0,.5)}});   /* 望遠鏡：越放大轉得越慢、可以往上看 */
+      if(down.moved){if(IN.ph==="held")inEnd(false);const tk=TELE?Math.max(zoom,.03):1,y=down.y0-(FLIPUP?-dx:dx)/W*1.6*tk;tyaw=FULL?y:clamp(y,-1.2,1.2);tpitch=TELE?clamp(down.p0+dy/H*1.6*tk,-.8,1.1):GIANT?down.p0+dy/H*2.4:clamp(down.p0+dy/H*1.6,-1.0,.5)}});   /* 望遠鏡：越放大轉得越慢、可以往上看 */
     const up=e=>{ptrs.delete(e.pointerId);
       // 捏合結束：剩下那根手指接著拖曳轉頭（從現在的位置開始算，不會跳），放開也不算點擊
       if(pinch){if(ptrs.size<2){pinch=null;const p=[...ptrs.values()][0];down=p?{x:p.x,y:p.y,t:performance.now(),y0:tyaw,p0:tpitch,moved:true}:null}return}
@@ -2074,7 +2128,7 @@
       if(el.clientWidth&&Math.abs(el.clientWidth-W)>1)fit();
       else if((++roomN%60)===0){const rm=room(),want=Math.round(el.clientWidth*clamp((VH0-300)/(el.clientWidth||300),1.14,1.32));if(Math.abs(Math.min(want,Math.max(.85*W,rm))-H)>3)fit()}   // 版面多一行、少一行時重新量
       yaw+=(tyaw-yaw)*Math.min(1,t*8);pitch+=(tpitch-pitch)*Math.min(1,t*8);zoom+=(tzoom-zoom)*Math.min(1,t*10);placeCam();if(flatV)mate.g.visible=zoom>1.12||Math.abs(Math.atan2(Math.sin(yaw),Math.cos(yaw)))>.35;   /* QA P2-5：平視（從小帥眼睛看）時拉遠或轉開，小帥要回到凳子上，不然只剩一張空凳子 */
-      anims=anims.filter(a=>{a.t+=t;const p=Math.min(1,a.t/a.d);a.f(p);if(p>=1){a.end&&a.end();return false}return true});
+      {const cur=anims;anims=[];const keep=cur.filter(a=>{a.t+=t;const p=Math.min(1,a.t/a.d);a.f(p);if(p>=1){a.end&&a.end();return false}return true});anims=keep.concat(anims)}   /* 11/12：動畫結束時接著加的下一段（星塵爆開、星飛去排隊、吃子後縮回）先放新陣列再併回；以前直接 filter，end 裡 push 的會被丟掉 */
       if(selI>=0&&pieces[selI]){const g=pieces[selI];g.position.y=TOP+.32+(PW.on?0:Math.sin(now/180)*.06)}
       Object.entries(pieces).forEach(([i,g])=>{if(+i!==selI&&!anims.length&&g.position.y!==TOP)g.position.y+=(TOP-g.position.y)*Math.min(1,t*12)});
       if(checkRing)checkRing.material.opacity=PW.on?.85:.55+.4*Math.sin(now/140);
@@ -2130,12 +2184,11 @@
         lerp(B.head.rotation,"x",hx);lerp(B.head.rotation,"y",hy);tick(mate)}
       if(GIANT){gntTick(t,s);const tf=TELE?smooth(.06,.45,zoom):1;   /* 望遠鏡越放大：近景、中景越淡（像對焦到遠方）、遠方更暗的星星淡入 */
         for(const L of LAYER2){L.rotation.y+=Math.min(t,.1)*L.userData.spd;if(L.userData.op!=null){const o=L.userData.op*tf;if(L.material.opacity!==o)L.material.opacity=o}}
-        if(DEEPF){const o=TELE?.85*smooth(.9,.2,zoom):0;DEEPF.visible=o>.01;DEEPF.material.opacity=o}
-        if(UNDER){const n2=performance.now();if(n2-UNT>900){UNT=n2;unGly()}}}   /* 背面：模型晚到才長出來的字牌、新的吃子星，每秒補翻一次 */orbTick(t,s);furn.tick(s);rd.render(sc,cam);PW.lastR=now;pfAdd(PW.q,sec,1,1,act?0:1);pwFps(now)}
+        if(DEEPF){const o=TELE?.85*smooth(.9,.2,zoom):0;DEEPF.visible=o>.01;DEEPF.material.opacity=o}if(DEEPS.length)try{storyTick(s)}catch(e){}}orbTick(t,s);furn.tick(s);rd.render(sc,cam);if(GIANT)try{gntMirror()}catch(e){}   /* 黑洞：棋盤底下的鏡像角色，畫在同一張畫面上 */PW.lastR=now;pfAdd(PW.q,sec,1,1,act?0:1);pwFps(now)}
     // 第一次 draw 之後，等所有圖片（背景、道具、棋盤、棋子、Pikafish）都載好才淡入；最多等 6 秒
-    let drawn=false,shown=false;const t0=performance.now();rd.domElement.style.opacity=0;rd.domElement.style.transition="opacity .35s";
-    const shownCb=[];const reveal=()=>{if(shown)return;shown=true;PW.shownAt=performance.now();if(IN.ph==="wait"){INTRO_SEEN.add(IN.key);IN.ph="hold";IN.t0=performance.now()}rd.domElement.style.opacity=1;veil.style.opacity=0;setTimeout(()=>veil.remove(),400);if(veil._qmin){hint.style.opacity=1;setTimeout(()=>hint.style.opacity=0,4500)}shownCb.splice(0).forEach(f=>{try{f()}catch(e){}})};
-    const waitShow=()=>{if(stopped||shown)return;const mn=veil._qskip?1200:Math.max(1200,veil._qmin||0),dt=performance.now()-t0;if((drawn&&!inflight.size&&dt>mn)||dt>Math.max(6000,veil._qskip?0:mn+2000)){requestAnimationFrame(()=>requestAnimationFrame(reveal));return}setTimeout(waitShow,80)};
+    let drawn=false,shown=false;const t0=performance.now();PF.readyMs=null;PF.revealMs=null;PF.inflight=null;rd.domElement.style.opacity=0;rd.domElement.style.transition="opacity .35s";
+    const shownCb=[];const reveal=()=>{if(shown)return;shown=true;PW.shownAt=performance.now();PF.revealMs=Math.round(PW.shownAt-t0);PF.inflight=[...inflight].map(i=>String(i.src||"").split("/").pop()).slice(0,6);if(IN.ph==="wait"){INTRO_SEEN.add(IN.key);IN.ph="hold";IN.t0=performance.now()}rd.domElement.style.opacity=1;veil.style.opacity=0;setTimeout(()=>veil.remove(),400);if(veil._qmin){hint.style.opacity=1;setTimeout(()=>hint.style.opacity=0,4500)}shownCb.splice(0).forEach(f=>{try{f()}catch(e){}})};
+    const waitShow=()=>{if(stopped||shown)return;const mn=veil._qskip?1200:Math.max(1200,veil._qmin||0),dt=performance.now()-t0;if(drawn&&!inflight.size&&PF.readyMs==null)PF.readyMs=Math.round(dt);PF.pend=inflight.size?[...inflight].map(i=>String(i.src||"").split("/").pop().slice(0,40)).slice(0,6):null;PF.drawn=drawn;   /* 11/12 hspx「進黑洞要等 6～7 秒」：記下圖片載完、畫面出現各花幾毫秒（__PK.perf） */if((drawn&&!inflight.size&&dt>mn)||dt>Math.max(6000,veil._qskip?0:mn+2000)){requestAnimationFrame(()=>requestAnimationFrame(reveal));return}setTimeout(waitShow,80)};
     /* 視角：俯視 top、平視 flat、數字＝俯角；11/11 新增 topfit＝俯視＋拉近到格距約 30px（只在手機直式；其他裝置等於 top）。
        top／flat 跟以前一樣（距離 1 倍、點兩下回到坐著看的角度），玩家存過的視角照舊；topfit 點兩下回到 topfit */
     const setViewF=m=>{inEnd(false);if(m==="topfit"&&HFIT()){goTopFit(false);return}const k=m==="topfit"?"top":m;
@@ -2149,7 +2202,7 @@
       try{rd.dispose();rd.forceContextLoss()}catch(e){}el.remove();opt.onDestroy&&opt.onDestroy()}
     // 意見回饋 244：切回平面棋盤時只藏起來、暫停繪製（不拆掉 3D 場景），再切回公園就直接顯示，不用重新載入
     /* 意見回饋 370：棋盤格 → 螢幕座標（App 的吃子水墨圈畫在公園棋盤的那一格上） */
-    const screenOf=i=>{try{const[x,z]=pos(i),v=new T.Vector3(x,TOP,z).project(cam),r=el.getBoundingClientRect();if(!r.width)return null;return{x:r.left+(UNDER?(1-v.x):(v.x+1))/2*r.width,y:r.top+(1-v.y)/2*r.height}}catch(e){return null}};   /* 翻到背面：畫面左右鏡像 */
+    const screenOf=i=>{try{const[x,z]=pos(i),v=myv(new T.Vector3(x,TOP,z)).project(cam),r=el.getBoundingClientRect();if(!r.width)return null;return{x:r.left+(v.x+1)/2*r.width,y:r.top+(1-v.y)/2*r.height}}catch(e){return null}};   /* 翻到背面：畫面左右鏡像 */
     /* 巨盤模式：場景建好當下的東西（桌椅、地面、長卷以外的道具、小帥、對手、天空球）全部藏起來，每一格都再藏一次（有些會被動畫打開）；只留燈、棋盤、黑洞環景、提示記號 */
     const gntKeep=o=>o.isLight||o===bplane||o.material===wood||o===PANM||o===markG||!!(o.userData&&o.userData.giant);
     if(GIANT){for(const A of[mate,opp])if(A)A.say=()=>{}}

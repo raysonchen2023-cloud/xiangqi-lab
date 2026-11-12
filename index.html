@@ -1534,7 +1534,7 @@ html[data-hct] .player.on .clk{background:#00563B;color:#FFFFFF;border-color:#00
       if(!window.caches)return go();caches.keys().then(function(ks){return Promise.all(ks.filter(function(k){return k.indexOf("xqlab-app-")===0}).map(function(k){return caches.delete(k)}))})
         .then(function(){return navigator.serviceWorker&&navigator.serviceWorker.getRegistration()}).then(function(r){return r&&r.update()}).catch(function(){}).then(go)}};setTimeout(chk,4000)})();
 </script>
-<script>window.XQ_OFFLINE=true;window.XQ_BUILD="20261112-1170";</script>
+<script>window.XQ_OFFLINE=true;window.XQ_BUILD="20261112-1180";</script>
 <script src="core.js"></script>
 <script src="engine.js"></script>
 <script src="local.js"></script>
@@ -6418,8 +6418,9 @@ function pkGateEat(){const v=PK_GV;if(!v)return false;if(PK_HTS&&PK_PD>=PK_HTS)r
 function pkIntroKey(ex){return String(ex&&ex.gid||("h:"+String(location.hash||"").split("?")[0]))}
 function pkPwNowTxt(){try{const X=window.XQPark3D,P=X&&X.perf?X.perf():null,D=X&&X.power?X.power():null;if(!X)return"目前：還沒進過園子（進園子下一會兒再回來看）";
   const why=on=>on&&P&&P.why&&P.why.length&&P.mode==="auto"?`（${P.why.join("、")}）`:"";
-  if(P&&P.live)return`目前：每秒 ${P.fps} 幀・省電 ${P.power?"開":"關"}${why(P.power)}`;
-  if(P&&P.span)return`上次在園子：每秒 ${P.fps} 幀・省電 ${P.power?"開":"關"}${why(P.power)}`;
+  const ld=P&&P.revealMs?`・上次進場 ${(P.revealMs/1000).toFixed(1)} 秒（圖片 ${P.readyMs==null?"未載完":(P.readyMs/1000).toFixed(1)+" 秒"}）`:"";   /* 11/12 hspx「進黑洞要等 6～7 秒」：顯示上次進場花多久，開發者實機看得到 */
+  if(P&&P.live)return`目前：每秒 ${P.fps} 幀・省電 ${P.power?"開":"關"}${why(P.power)}${ld}`;
+  if(P&&P.span)return`上次在園子：每秒 ${P.fps} 幀・省電 ${P.power?"開":"關"}${why(P.power)}${ld}`;
   return`目前：園子沒開著・省電 ${D&&D.on?"開":"關"}`}catch(e){return""}}
 function pkPwLive(){const p=document.getElementById("pkPwNow");if(!p||p.dataset.on)return;p.dataset.on="1";const tk=()=>{if(!p.isConnected)return clearInterval(iv);p.textContent=pkPwNowTxt()},iv=setInterval(tk,1000);tk()}
 function pkPwSet(k){if(!["auto","on","off"].includes(k))return;store.set("pkPower",k);try{vibrate(5)}catch(e){}
@@ -9715,10 +9716,16 @@ const bhSay=([who,t])=>`<p class="pl-say">${BH_FACE[who]?`<img src="data/xs/prev
 function bhForced(){try{return localStorage.getItem("xq_bhForce")==="1"}catch(e){return false}}
 /* 星槎起航（shipSailGo、shipGoTo）播完千秋穿梭時叫：沒偏航就照原流程 next() */
 function bhMaybe(k,next,cover){let hit=false;try{const mk=!!store.get("bhMark",0)&&!!k;if(mk)store.set("bhMark",0);hit=bhForced()||mk||Math.random()<BH_P}catch(e){}   /* bhMark：點過幻影棋客頭上的小黑洞，下一次起航必定偏航 */if(!hit||!k)return next();bhOffer(k,next,cover)}
-function bhOffer(k,next,cover){const n=store.get("bhCount",0)||0;bhMus("fall");vibrate([20,60,20]);
+/* 11/12 hspx「進黑洞要等 6～7 秒」：偏航視窗一跳出來就在背景先載 3D（three、園子程式）、14 個角色模型（一個接一個解析，不卡畫面）和黑洞的圖，
+   玩家讀文字、按「入局」的時間拿來載入；不下這盤也只是先放進快取。一次 App 只做一次 */
+let BH_PRE=null;const BH_GLB=["x_shuai","x_shi","x_spiritgirl","x_miaogirl","x_swordboy","x_martialgirl","x_bing","xs_jiang","xs_shi","xs_xiang","xs_ma","xs_che","xs_pao","xs_zu"];
+function bhPreload(){if(BH_PRE||typeof document==="undefined")return BH_PRE;
+  for(const f of["bh_far2","bh_layer2","bh_layer3b","bh_board2","bh_river"]){try{const im=new Image();im.decoding="async";im.src="data/park/"+f+".webp"}catch(e){}}
+  BH_PRE=(typeof parkLoad==="function"?parkLoad():Promise.resolve()).then(async()=>{if(typeof window.XQGLB!=="function")return;for(const g of BH_GLB){try{await window.XQGLB("data/tripo_app/"+g+".glb")}catch(e){}await new Promise(r=>setTimeout(r,30))}}).catch(()=>{});return BH_PRE}
+function bhOffer(k,next,cover){const n=store.get("bhCount",0)||0;bhMus("fall");vibrate([20,60,20]);try{bhPreload()}catch(e){}
   modal(`<div class="em">🌀</div><h2>星槎偏航</h2><p>${esc(BH_TXT.fall)}</p>${n?bhSay(BH_TXT.again):""}<p class="muted" style="font-size:13px">墨色星渦的中心，浮著一張巨大的棋盤。要下這一盤嗎？不下也不扣任何東西，星槎照原本的航線停靠。</p>`,
     [["🌀 接受棋局",()=>bhIntro(k,cover)],["先回航線",()=>{bhMus(null);if(next)next()},true]],"prolog")}
-function bhIntro(k,cover){modal(`<div class="em">♟</div><h2>星樞棋局</h2>${bhSay(BH_TXT.wake)}<p class="pl-say">✦ ${esc(BH_TXT.voice[0])}：「${esc(BH_TXT.voice[1])}」</p><p class="muted" style="font-size:13px">${esc(BH_TXT.rule)}<br>不計積分、不扣分。可以用＋／－或兩指縮放：拉遠看整盤，放大到最近就站在棋盤上。</p>`,
+function bhIntro(k,cover){try{bhPreload()}catch(e){}modal(`<div class="em">♟</div><h2>星樞棋局</h2>${bhSay(BH_TXT.wake)}<p class="pl-say">✦ ${esc(BH_TXT.voice[0])}：「${esc(BH_TXT.voice[1])}」</p><p class="muted" style="font-size:13px">${esc(BH_TXT.rule)}<br>不計積分、不扣分。可以用＋／－或兩指縮放：拉遠看整盤，放大到最近就站在棋盤上。</p>`,
   [["入局",()=>bhStart(k,cover)]],"prolog")}
 /* 難度見 bhLevel（實力＋1）；bhAdj 只是記錄輸贏，不再調難度 */
 /* 開發者 11/12「黑洞的電腦難度會評估你現在的實力，往上加一等級的難度給玩家挑戰」：實力＝三個取最高——晉級賽段位對應的電腦級數（第 N 級的名字就是段位表第 N 個）、
@@ -9728,7 +9735,7 @@ function bhLevel(){let s=0;const J=k=>{try{return JSON.parse(localStorage.getIte
   const R=J("xq_cpuRate");if(R&&(R.w||R.l||R.d)){let ci=0;BH_RK.forEach((t,i)=>{if((+R.pts||0)>=t)ci=i});s=ci+1}
   const rec=J("xq_record")||{};for(const k in rec)if(rec[k]&&rec[k].w>0)s=Math.max(s,+k||0);
   const cl=store.get("cpuLevel",null);if(cl!=null)s=Math.max(s,+cl||0);if(!s)s=2;return Math.max(1,Math.min(18,s+1))}
-function bhStart(k,cover){store.set("bhRet",{k,cover:cover!==false,at:Date.now()});store.set("park3d",true);
+function bhStart(k,cover){try{bhPreload()}catch(e){}store.set("bhRet",{k,cover:cover!==false,at:Date.now()});store.set("park3d",true);
   jStart("bh:"+k,{human:"r",lx:bhLevel(),journey:"bh:"+k},()=>{location.hash="#/journey/play";setTimeout(()=>toast("✦ 星樞："+BH_TXT.voice[1]),900)})}
 const bhIs=st=>!!st&&String(st.journey||"").startsWith("bh:");
 /* 對局頁的 3D：巨盤模式＋黑洞環景（08b-cpugame 的 parkDraw 參數最後疊上去） */
@@ -9757,7 +9764,7 @@ function bhFull(on,st){if(typeof document==="undefined")return;const b=document.
   try{const tb=document.getElementById("topbar"),h=tb?Math.round(tb.getBoundingClientRect().bottom):56;document.documentElement.style.setProperty("--bhTop",Math.max(0,h)+"px")}catch(e){}
   try{const port=matchMedia("(orientation:portrait)").matches,k="bhRot:"+(st&&st.id||"");if(port&&!sessionStorage.getItem(k)){sessionStorage.setItem(k,"1");setTimeout(()=>{try{toast("📱 手機轉成橫向，黑洞星盤會滿版")}catch(e){}},1800)}}catch(e){}}
 if(typeof window!=="undefined"){addEventListener("hashchange",()=>{if(!/^#\/journey\/play/.test(location.hash))bhFull(false)});addEventListener("resize",()=>{if(document.body&&document.body.classList.contains("bh-full"))bhFull(true,null)})}
-function bhParkEx(st){bhFull(bhIs(st),st);if(!bhIs(st)){if(typeof BGM!=="undefined"&&BGM.force&&/^bh_/.test(BGM.force))bhMus(null);return null}return{giant:true,bg:"data/park/bh_far2.webp"   /* 11/12 ChatGPT 細修報告＋Gemini 回應：遠景改用 Gemini 重畫、左右無縫的版本 */,bgName:"🌀 黑洞・星樞棋局",era:"classic",quietMate:true,watchers:[],oppHello:null,opp:null,mateLook:null,crowd:null,
+function bhParkEx(st){bhFull(bhIs(st),st);if(!bhIs(st)){if(typeof BGM!=="undefined"&&BGM.force&&/^bh_/.test(BGM.force))bhMus(null);return null}return{giant:true,bg:"data/park/bh_far2.webp"   /* 11/12 ChatGPT 細修報告＋Gemini 回應：遠景改用 Gemini 重畫、左右無縫的版本 */,bgName:"🌀 黑洞・星樞棋局",bhStars:bhStarsEx(),era:"classic",quietMate:true,watchers:[],oppHello:null,opp:null,mateLook:null,crowd:null,
   gate:{img:["data/park/blackhole_360.webp"],icon:"🌀",title:"星樞棋局",sub:"墨色星渦的中心，有一張巨大的星盤",bg:"#05060d",quiet:true}}}
 /* 對局中：領先、落後各提醒一次；下到中盤星樞說一句伏筆（不說破幻影棋客是什麼） */
 let BH_T={id:null,s:{}};
@@ -9811,6 +9818,24 @@ function bhCapSnd(n,red,big){try{if(typeof withAudio!=="function"||typeof AC==="
   for(const[k,a,d]of[[1,.16,.5],[2.01,.06,.35],[3,.03,.25]]){const o=AC.createOscillator(),g=AC.createGain();o.type=red?"sine":"triangle";o.frequency.setValueAtTime(f0*k,t);o.frequency.exponentialRampToValueAtTime(f0*k*(red?1.03:.62),t+d);
     g.gain.setValueAtTime(0,t);g.gain.linearRampToValueAtTime(a*(big?1.3:1),t+.01);g.gain.exponentialRampToValueAtTime(.0008,t+d);o.connect(g);g.connect(dst);o.start(t);o.stop(t+d+.05)}})}catch(e){}}
 if(typeof window!=="undefined")window.XQ_BHCAP=bhCapSnd;
+/* ---------- 開發者 11/12 選：黑洞望遠鏡裡的「七星故事星系」（story/127 整合：Gemini 125 方案 A「星海拾憶」＋ChatGPT 126 定稿文案）----------
+   遠方 14 個天體裡指定 7 個當七星的記憶星系；照星槎劇情進度解鎖（停靠站數＝讀到第幾章，13 站全開＝第 14 章），還沒到的維持普通星雲、不爆雷。
+   解鎖的星系閃霧金色；🔭 放大到 20 倍以上對準 → 浮現星點連成的星座（程式畫，第一期不出圖）、星名大字和一句回憶；第一次找到，那位角色說一句。七顆都找到後，棋盤星座浮現星樞的收束台詞 */
+const BH_STARS=[
+  {id:"qizhe",c:"齊轍",star:"輪痕星",fig:"wheel",ch:2,line:"兩個人一起看看路，再決定怎麼走。",say:"車有路了，我也看見了。"},
+  {id:"shen",c:"沈方庭",star:"九宮星",fig:"palace",ch:4,line:"我坐得穩，勞你去看看他們。",say:"我坐在這裡，也看得見。"},
+  {id:"tian",c:"田飛燕",star:"歸燈星",fig:"lamp",ch:6,line:"等候的人，也可以替歸路點燈。",say:"這盞燈，替歸路亮著。"},
+  {id:"tie",c:"鐵連城",star:"護結星",fig:"knot",ch:8,line:"守護的人，也得聽見被守護的人。",say:"這次，我先聽你說。"},
+  {id:"luo",c:"駱躍梅",star:"紅珠星",fig:"bead",ch:11,line:"跑多遠，我們都看得見你。",say:"我不藏了，你們陪我。"},
+  {id:"bu",c:"步越溪",star:"卒旗星",fig:"flag",ch:13,line:"往前有用，留在能幫忙的地方，也有用。",say:"小卒站穩，也能過河。"},
+  {id:"lei",c:"雷借花",star:"靜焰星",fig:"fire",ch:14,line:"聲音小一點，心意也不會少。",say:"別怕，我把聲音放輕。"}];
+const BH_CLOSE="七星既明，千秋仍有路。";
+function bhChapter(){try{if(typeof shipDockList!=="function"||!shipDockList())return 0;const n=shipDocked().length;return n+(n>=SHIP_ROUTE.length?1:0)}catch(e){return 0}}
+function bhStarsEx(){const ch=bhChapter(),F=store.get("bhStarFound",[]);
+  return{list:BH_STARS.filter(s=>ch>=s.ch).map(s=>({id:s.id,star:s.star,fig:s.fig,line:s.line,found:F.includes(s.id)})),all:BH_STARS.every(s=>F.includes(s.id)),close:BH_CLOSE}}
+function bhStarFound(id){const s=BH_STARS.find(x=>x.id===id);if(!s)return;const F=store.get("bhStarFound",[]);if(F.includes(id))return;F.push(id);store.set("bhStarFound",F);
+  try{toast(`✦ ${s.c}：「${s.say}」`)}catch(e){}if(F.length===BH_STARS.length)setTimeout(()=>{try{toast("✦ 七星都找到了。去看看那張星點棋盤……")}catch(e){}},2600)}
+if(typeof window!=="undefined")window.XQ_BHSTAR=bhStarFound;
 let BH_CH=null;
 function bhChord(st){if(typeof AC==="undefined"||!AC||typeof sxmDst!=="function"||!store.get("bgm",true))return bhChordOff();const has={};for(const p of st.board||[])if(p&&p===p.toUpperCase())has[p]=1;
   if(!BH_CH){BH_CH={};const F={K:261.63,A:293.66,B:329.63,N:392,R:440,C:523.25,P:587.33};let i=0;
