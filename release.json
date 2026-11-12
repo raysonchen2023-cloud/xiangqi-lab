@@ -1,8 +1,8 @@
 {
- "version": "20261112-1160",
- "checkedAt": "2026-11-12T04:50:13.214Z",
- "html": "17e370b0c718",
- "sw": "8409fd18d819",
+ "version": "20261112-1170",
+ "checkedAt": "2026-11-12T05:21:46.519Z",
+ "html": "450d509d2c01",
+ "sw": "c25b58f627a8",
  "scripts": 4,
  "modules": {
   "00-util.js": "e4beee43ce00",
