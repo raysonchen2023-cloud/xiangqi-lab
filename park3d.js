@@ -1549,6 +1549,51 @@
     const gntReact=(g,by,cap)=>{if(g&&g.userData&&g.userData.B){gntAct(g,"walk",cap?480:720);if(cap)setTimeout(()=>gntAct(g,"cheer",1900),490)}
       if(sideOf(cap&&cap.userData&&cap.userData.p||"a")==="r"&&cap.userData.B){try{if(window.XQ_BHBELL)window.XQ_BHBELL()}catch(e){}   /* 星樞吃掉七星：一聲極低的鐘 */const k=Object.values(pieces).find(x=>x&&x.userData&&x.userData.B&&x.userData.p==="K");if(k)gntAct(k,"wave",1700)}};
     let gntRes=null;
+    /* ---------- 開發者 11/12 選 Gemini 方案 A「星塵坍縮」＋加分點子「星光排隊當吃子區」「連續吃子音階上升」（story/gemini_app/120）----------
+       被吃的角色先閃光（光暈），往胸口坍縮成一個光點（縮放，不改材質），再爆成星塵（Points 60／大子 110 顆）：
+       紅吃黑＝金色星塵往上飄；黑吃紅＝紫黑星塵被地上的漩渦吸下去。吃車馬炮（和將帥）多一圈貼地震波。
+       接著一顆寫著棋名的小星飛到棋盤外的星軌排隊（紅方吃到的排在右側、從紅方底線往中間；黑方吃到的排在左側），兼當吃子區。
+       4 手內又吃子＝連擊：特效快一點（最多快 20%），吃子聲一次高一個全音（07bh bhCapSnd）。減少動態：只淡出、不噴星塵、不飛星 */
+    const GBIG={R:1,N:1,C:1,K:1},GSTAR_ORD="RNCBAPK";let gntPly=0,gntCmb={n:0,ply:-9},gntStarG=null,gntGlowT=null;
+    const gntGlow=()=>gntGlowT||(gntGlowT=(()=>{const c=document.createElement("canvas");c.width=c.height=64;const x=c.getContext("2d"),g=x.createRadialGradient(32,32,0,32,32,32);
+      g.addColorStop(0,"rgba(255,255,255,1)");g.addColorStop(.25,"rgba(255,255,255,.7)");g.addColorStop(1,"rgba(255,255,255,0)");x.fillStyle=g;x.fillRect(0,0,64,64);return new T.CanvasTexture(c)})());
+    const gntFx=o=>{o.userData.giant=1;sc.add(o);return o},gntUnfx=o=>{if(!o)return;sc.remove(o);if(o.geometry)o.geometry.dispose();if(o.material)o.material.dispose()};
+    const gntStarLay=board=>{const full={K:1,A:2,B:2,N:2,R:2,C:2,P:5},have={r:{},b:{}};board.forEach(p=>{if(p){const s=sideOf(p),k=p.toUpperCase();have[s][k]=(have[s][k]||0)+1}});
+      const xs=[pos(0)[0],pos(8)[0]],xR=Math.max(...xs)+1.5,xL=Math.min(...xs)-1.5,zr=pos(85)[1],zb=pos(4)[1],out=[];
+      for(const s of["b","r"]){const by=s==="b"?"r":"b",x=by==="r"?xR:xL,z0=by==="r"?zr:zb,dz=Math.sign((by==="r"?zb-zr:zr-zb)||1)*.62;let n=0;
+        for(const k of GSTAR_ORD){const m=(full[k]||0)-(have[s][k]||0);for(let j=0;j<m;j++)out.push({s,k,x,y:TOP+1.1,z:z0+dz*n++})}}return out};
+    const gntStarSp=(o,sz)=>{const sp=new T.Sprite(new T.SpriteMaterial({map:gntGlyph(NAMES[o.s][o.k]),transparent:true,depthWrite:false}));sp.scale.setScalar(sz||.5);return sp};
+    const gntStars=board=>{if(gntStarG){sc.remove(gntStarG);gntStarG.children.forEach(o=>o.material.dispose())}gntStarG=gntFx(new T.Group());
+      for(const o of gntStarLay(board)){const gl=new T.Sprite(new T.SpriteMaterial({map:gntGlow(),color:o.s==="b"?0xFFD98A:0xB46BFF,transparent:true,opacity:.55,blending:T.AdditiveBlending,depthWrite:false}));
+        gl.scale.setScalar(.95);gl.position.set(o.x,o.y,o.z);const sp=gntStarSp(o);sp.position.copy(gl.position);gntStarG.add(gl,sp)}};
+    const gntBurst=(cap,red,big,spd,onEnd)=>{const C0=new T.Vector3();cap.getWorldPosition(C0);C0.y+=GNT_H*.55;const s0=cap.scale.x||1;
+      if(RDM){anims.push({t:0,d:.45,f:p=>cap.scale.setScalar(s0*Math.max(.01,1-p)),end:()=>{cap.scale.setScalar(s0);onEnd(C0)}});return}
+      const col=new T.Color(red?0xFFD98A:0xB46BFF),col2=new T.Color(red?0x8FD3FF:0x5A0F2E),d1=.28*spd,d2=.42*spd,d3=.7*spd;
+      const halo=gntFx(new T.Sprite(new T.SpriteMaterial({map:gntGlow(),color:col,transparent:true,opacity:0,blending:T.AdditiveBlending,depthWrite:false})));halo.position.copy(C0);halo.scale.setScalar(.3);
+      const burst=()=>{const N=big?110:60,P0=new Float32Array(N*3),V=[];for(let i=0;i<N;i++){P0[i*3]=C0.x;P0[i*3+1]=C0.y;P0[i*3+2]=C0.z;const th=Math.random()*TAU,ph=Math.acos(2*Math.random()-1),v=(red?1.5:2)*(.4+Math.random());
+          V.push([Math.sin(ph)*Math.cos(th)*v,Math.cos(ph)*v*(red?1:.6),Math.sin(ph)*Math.sin(th)*v])}
+        const geo=new T.BufferGeometry();geo.setAttribute("position",new T.BufferAttribute(P0,3));
+        const pts=gntFx(new T.Points(geo,new T.PointsMaterial({map:gntGlow(),color:col,size:big?.24:.17,transparent:true,blending:T.AdditiveBlending,depthWrite:false,sizeAttenuation:true})));
+        let ring=null,vort=null;
+        if(big){ring=gntFx(new T.Mesh(new T.RingGeometry(.9,1,48),new T.MeshBasicMaterial({color:col,transparent:true,opacity:.8,blending:T.AdditiveBlending,depthWrite:false,side:T.DoubleSide})));ring.rotation.x=-PI/2;ring.position.set(C0.x,TOP+.05,C0.z);ring.scale.setScalar(.2)}
+        if(!red){vort=gntFx(new T.Mesh(new T.CircleGeometry(1.2,40),new T.MeshBasicMaterial({map:gntGlow(),color:col2,transparent:true,opacity:0,blending:T.AdditiveBlending,depthWrite:false})));vort.rotation.x=-PI/2;vort.position.set(C0.x,TOP+.04,C0.z)}
+        anims.push({t:0,d:d3,f:p=>{const A=geo.attributes.position.array,tt=p*d3,e=ease(p),CP=cam.position;
+            for(let i=0;i<N;i++){const v=V[i];let x,y,z;if(red){x=C0.x+v[0]*tt;y=C0.y+v[1]*tt+.45*tt*tt;z=C0.z+v[2]*tt}
+              else{const r=1.3*(1-e)+.15,a=p*3.2,c=Math.cos(a),s=Math.sin(a),ox=v[0]*tt*r,oz=v[2]*tt*r;x=C0.x+ox*c-oz*s;z=C0.z+ox*s+oz*c;y=Math.max(TOP+.02,C0.y+v[1]*tt-1.6*p*p)}
+              const dx=x-CP.x,dy=y-CP.y,dz=z-CP.z;if(dx*dx+dy*dy+dz*dz<.3)y=-99;A[i*3]=x;A[i*3+1]=y;A[i*3+2]=z}   /* 太靠近鏡頭的星塵藏起來，第一人稱不會糊一片 */
+            geo.attributes.position.needsUpdate=true;pts.material.opacity=1-e;halo.material.opacity=Math.max(0,.9-p*2);halo.scale.setScalar(.6+p*.9);
+            if(ring){ring.scale.setScalar(.3+e*2.6);ring.material.opacity=.8*(1-p)}if(vort){vort.material.opacity=.75*Math.sin(p*PI);vort.rotation.z-=.22;vort.scale.setScalar(1.3-p*.9)}},
+          end:()=>{[pts,halo,ring,vort].forEach(gntUnfx)}})};
+      anims.push({t:0,d:d1+d2,f:p=>{const T0=p*(d1+d2),a=Math.min(1,T0/d1),b=Math.max(0,(T0-d1)/d2),k=Math.max(.02,1-ease(b)),w=1+.1*Math.sin(a*PI);
+          halo.material.opacity=Math.min(1,a*1.3);halo.scale.setScalar(.4+a*1.5-b*1.3);cap.scale.set(s0*w*k,s0*k*k,s0*w*k);cap.rotation.y+=b*.3},
+        end:()=>{cap.scale.setScalar(s0);onEnd(C0);burst()}})};
+    const gntFly=(A,o,done)=>{const sp=gntFx(gntStarSp(o)),B=new T.Vector3(o.x,o.y,o.z);
+      anims.push({t:0,d:.55,f:p=>{sp.position.lerpVectors(A,B,ease(p));sp.position.y+=Math.sin(p*PI)*1.6;sp.scale.setScalar(.25+.25*p)},end:()=>{gntUnfx(sp);done()}})};
+    const gntCapFx=(cap,by,board)=>{const red=by==="r",cp=cap.userData&&cap.userData.p||"p",K=String(cp).toUpperCase(),big=!!GBIG[K];
+      gntCmb.n=gntPly-gntCmb.ply<=4?gntCmb.n+1:1;gntCmb.ply=gntPly;const spd=Math.max(.8,1-.07*(gntCmb.n-1));
+      try{if(window.XQ_BHCAP)window.XQ_BHCAP(gntCmb.n,red,big)}catch(e){}
+      const L=gntStarLay(board).filter(o=>o.s===sideOf(cp)&&o.k===K),tgt=L[L.length-1]||null;
+      gntBurst(cap,red,big,spd,C0=>{gntDrop(cap);if(tgt&&!RDM)gntFly(C0,tgt,()=>layoutCaptured(board));else layoutCaptured(board)})};
     const gntTake=p=>{const q=gntPool[p];let g=q&&q.pop();if(g&&g.userData.ped){const[pb,pf,K]=g.userData.ped;pb.material=bMat(true);pf.material=fMat(NAMES.r[K],true)}   /* 換造型（refreshLook）會把舊的棋子材質丟掉，重用的底座要換新的 */if(!g){const K=p.toUpperCase();g=sideOf(p)==="r"?(GNT_X[K]?gntFig(p,K):gntStone(p)):(GNT_XS[K]?gntFig(p,K,true):gntStone(p))}g.visible=true;g.rotation.set(0,g.userData.B?((sideOf(p)==="r")!==flip?PI:0):0,0);sc.add(g);return g};
     const gntDrop=g=>{sc.remove(g);if(g&&g.userData&&g.userData.giant){const p=g.userData.p;(gntPool[p]||(gntPool[p]=[])).push(g)}};
     let pieces={},prevB=null,prevLast=null,anims=[],captured=[],capNear=true,lastCapB=null;
@@ -1557,7 +1602,7 @@
     const disc=(i,col,r,op)=>{const m=new T.Mesh(new T.CircleGeometry(r,32),new T.MeshBasicMaterial({color:col,transparent:true,opacity:op,depthWrite:false}));m.rotation.x=-PI/2;const[x,z]=pos(i);m.position.set(x,TOP+.012,z);markG.add(m);return m};
     const ring=(i,col,r,w,op)=>{const m=new T.Mesh(new T.RingGeometry(r-w,r,40),new T.MeshBasicMaterial({color:col,transparent:true,opacity:op,depthWrite:false}));m.rotation.x=-PI/2;const[x,z]=pos(i);m.position.set(x,TOP+.014,z);markG.add(m);return m};
     let selI=-1,checkRing=null;const SNAP={b:null,t:[],me:"r"};
-    function layoutCaptured(board){lastCapB=board;captured.forEach(g=>sc.remove(g));captured=[];if(GIANT)return;   /* 巨盤模式沒有桌邊可以排被吃的子 */const cnt={r:{},b:{}};board.forEach(p=>{if(p){const s=sideOf(p),k=p.toUpperCase();cnt[s][k]=(cnt[s][k]||0)+1}});
+    function layoutCaptured(board){lastCapB=board;captured.forEach(g=>sc.remove(g));captured=[];if(GIANT){gntStars(board);return}   /* 巨盤模式沒有桌邊：被吃的子化成星，排在棋盤外的星軌（gntStars） */const cnt={r:{},b:{}};board.forEach(p=>{if(p){const s=sideOf(p),k=p.toUpperCase();cnt[s][k]=(cnt[s][k]||0)+1}});
       for(const s of["r","b"]){const lost=[];for(const k of"RCNBAP")for(let n=(START[s][k]||0)-(cnt[s][k]||0);n>0;n--)lost.push(s==="r"?k:k.toLowerCase());
         const mine=(s==="r")===flip;   // 意見回饋 232：被吃的棋子放在吃子那一方的桌邊（我吃掉的對方棋子排在我這側）
         /* 縮小一點不搶棋盤的戲：對方吃到的排在棋盤後方茶杯兩邊，我吃到的排在我這側桌邊 */
@@ -1579,8 +1624,8 @@
       const L=o.last&&o.last.f!=null&&o.last.t!=null?o.last:null,lk=L?L.f+"-"+L.t:"";
       const moved=prevB&&L&&lk!==prevLast&&board[L.t]&&board[L.t]===prevB[L.f]&&!board[L.f]&&pieces[L.f]&&board.filter(Boolean).length>=prevB.filter(Boolean).length-1;
       if(moved){const g=pieces[L.f],cap=pieces[L.t];delete pieces[L.f];pieces[L.t]=g;const[x0,z0]=pos(L.f),[x1,z1]=pos(L.t);
-        const by=sideOf(board[L.t]),botSide=ex.botSide||null;
-        if(cap){anims.push({t:0,d:.55,f:p=>{cap.position.y=TOP+Math.sin(p*PI)*.9;cap.position.x+=(x1-x0)*.006;cap.position.z+=(z1>z0?.02:-.02);cap.rotation.z=p*2.2},end:()=>{if(GIANT)gntDrop(cap);else sc.remove(cap);layoutCaptured(board)}})}
+        const by=sideOf(board[L.t]),botSide=ex.botSide||null;if(GIANT)gntPly++;
+        if(cap&&GIANT){try{gntCapFx(cap,by,board)}catch(e){gntDrop(cap);layoutCaptured(board)}}else if(cap){anims.push({t:0,d:.55,f:p=>{cap.position.y=TOP+Math.sin(p*PI)*.9;cap.position.x+=(x1-x0)*.006;cap.position.z+=(z1>z0?.02:-.02);cap.rotation.z=p*2.2},end:()=>{if(GIANT)gntDrop(cap);else sc.remove(cap);layoutCaptured(board)}})}
         anims.push({t:0,d:.42,f:p=>{const e=ease(p);g.position.set(x0+(x1-x0)*e,TOP+Math.sin(p*PI)*1.1,z0+(z1-z0)*e)},end:()=>at(g,L.t)});
         if(botSide&&by===botSide){reach=1;reachT=0;opp.setFace(cap?"happy":"smile",1.4);if(cap){mate.setFace("open",1.6);mate.say(["小心！","哎呀，被吃了","沒關係，扳回來！"][Math.random()*3|0],2)}}
         else if(cap){mate.setFace("happy",1.6);mate.say(["吃得好！","漂亮！","好棋！"][Math.random()*3|0],1.8);if(botSide){opp.setFace("open",1.4);if((opp.B||oppSpr)&&Math.random()<.5)opp.say(["哎呀！","被吃了…","好棋！"][Math.random()*3|0])}}

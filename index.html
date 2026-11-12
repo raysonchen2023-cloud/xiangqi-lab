@@ -1534,7 +1534,7 @@ html[data-hct] .player.on .clk{background:#00563B;color:#FFFFFF;border-color:#00
       if(!window.caches)return go();caches.keys().then(function(ks){return Promise.all(ks.filter(function(k){return k.indexOf("xqlab-app-")===0}).map(function(k){return caches.delete(k)}))})
         .then(function(){return navigator.serviceWorker&&navigator.serviceWorker.getRegistration()}).then(function(r){return r&&r.update()}).catch(function(){}).then(go)}};setTimeout(chk,4000)})();
 </script>
-<script>window.XQ_OFFLINE=true;window.XQ_BUILD="20261112-1050";</script>
+<script>window.XQ_OFFLINE=true;window.XQ_BUILD="20261112-1100";</script>
 <script src="core.js"></script>
 <script src="engine.js"></script>
 <script src="local.js"></script>
@@ -9780,6 +9780,12 @@ const BH_MUS={fall:"bh_1.mp3",wake:"bh_2.mp3",play:"bh_3.mp3",danger:"bh_4.mp3",
 function bhMus(k){try{if(typeof bgmForce==="function")bgmForce(k?BH_MUS[k]:null)}catch(e){}}
 function bhBell(){try{if(typeof withAudio==="function"&&typeof AC!=="undefined"&&AC&&typeof gongHit==="function")withAudio(()=>gongHit(AC.currentTime+.02,58,3.4,true))}catch(e){}}
 if(typeof window!=="undefined")window.XQ_BHBELL=bhBell;
+/* 開發者 11/12 選 Gemini 方案 A＋「連續吃子音階上升」（park3d gntCapFx 呼叫）：紅方吃子＝往上揚的清亮三泛音，星樞吃子＝往下沉的吞噬聲；
+   n＝連擊第幾下（4 手內又吃子），每多一下高一個全音（最多 6 級）；big＝車馬炮將帥，聲音大一點。走「棋子音效」音量 */
+function bhCapSnd(n,red,big){try{if(typeof withAudio!=="function"||typeof AC==="undefined"||!AC)return;withAudio(()=>{const t=AC.currentTime+.02,f0=(red?660:330)*Math.pow(1.122,Math.min(6,Math.max(1,n|0))-1),dst=sxmDst("piece");
+  for(const[k,a,d]of[[1,.16,.5],[2.01,.06,.35],[3,.03,.25]]){const o=AC.createOscillator(),g=AC.createGain();o.type=red?"sine":"triangle";o.frequency.setValueAtTime(f0*k,t);o.frequency.exponentialRampToValueAtTime(f0*k*(red?1.03:.62),t+d);
+    g.gain.setValueAtTime(0,t);g.gain.linearRampToValueAtTime(a*(big?1.3:1),t+.01);g.gain.exponentialRampToValueAtTime(.0008,t+d);o.connect(g);g.connect(dst);o.start(t);o.stop(t+d+.05)}})}catch(e){}}
+if(typeof window!=="undefined")window.XQ_BHCAP=bhCapSnd;
 let BH_CH=null;
 function bhChord(st){if(typeof AC==="undefined"||!AC||typeof sxmDst!=="function"||!store.get("bgm",true))return bhChordOff();const has={};for(const p of st.board||[])if(p&&p===p.toUpperCase())has[p]=1;
   if(!BH_CH){BH_CH={};const F={K:261.63,A:293.66,B:329.63,N:392,R:440,C:523.25,P:587.33};let i=0;
