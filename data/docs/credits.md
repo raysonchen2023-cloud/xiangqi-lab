@@ -1,8 +1,18 @@
 # 素材與授權
 
-最後核對：2026 年 11 月 11 日。
+最後核對：2026 年 11 月 11 日；授權段 11 月 13 日定稿（程式 GPL-3.0-or-later、素材 CC BY-NC-SA 4.0）。
 
-《象棋千秋》是推廣中國象棋的免費、非商業學習計畫：不收費、沒有內購、沒有廣告。原創的程式、畫面、美術和文字 © 2026 陳泓昇。下面列出的別人做的東西，照它們各自的授權使用，不在上面的權利範圍內。
+《象棋千秋》是推廣中國象棋的免費、非商業學習計畫：不收費、沒有內購、沒有廣告。
+
+## 本 App 自己的授權（2026 年 11 月 13 日起）
+
+© 2026 陳泓昇（Chen Hung-Sheng）。
+
+- **程式碼**（App 的 HTML、CSS、JavaScript，`core.js`、`local.js`、`net.js` 等，以及建置與測試工具）：依 **GNU 通用公共授權第 3 版，或（由你選擇）任何更新的版本**（SPDX：`GPL-3.0-or-later`）授權。可以自由使用、研究、修改、再散布（包括商業用途），條件是散布時同樣用 GPL、附上原始碼和授權全文。全文在倉庫根目錄 [LICENSE](https://github.com/raysonchen2023-cloud/xiangqi-lab/blob/main/LICENSE)，可讀的原始碼在 [source/](https://github.com/raysonchen2023-cloud/xiangqi-lab/tree/main/source)。
+- **開發者自製的素材**（放在 `data/` 底下的美術、AI 協助生成的圖片、Tripo 3D 模型、背景音樂、程式合成的音效，以及長篇劇情、角色對白、題目講解、棋史說明等資料檔裡的文字）：依 **創用 CC 姓名標示─非商業性─相同方式分享 4.0 國際（CC BY-NC-SA 4.0）** 授權。可以分享和改作，但要標示「《象棋千秋》陳泓昇」、不得作商業用途、改作要用同樣的授權。條文：[creativecommons.org/licenses/by-nc-sa/4.0](https://creativecommons.org/licenses/by-nc-sa/4.0/)；哪些檔案算素材見倉庫根目錄 [LICENSE-ASSETS.md](https://github.com/raysonchen2023-cloud/xiangqi-lab/blob/main/LICENSE-ASSETS.md)。
+- **分界（看檔案放在哪裡）**：寫在程式檔（`.js`、`.css`、`.html`）裡的文字，包括介面文字、場景小故事和角色對白，跟著程式，是 GPL-3.0-or-later；放在 `data/` 底下的圖片、音訊、3D 模型和長篇劇情、題目等資料檔，是 CC BY-NC-SA 4.0。同一段對白寫在程式裡就是 GPL，放在劇情資料檔裡就是 CC BY-NC-SA。
+- **兩種都不是的**：特級大師小傳 `data/gmbios.json`（改寫自維基百科等，見第十一項）和語音 12 檔 `data/voice/`（見第八項），照原來源的條件，不以上面兩種授權。
+- **第三方的東西**：下面列出的別人做的元件和資料，照它們各自的授權使用，不適用上面兩種授權。總表見倉庫根目錄 [NOTICE.md](https://github.com/raysonchen2023-cloud/xiangqi-lab/blob/main/NOTICE.md)。
 
 ## 怎麼讀這一頁
 
@@ -52,6 +62,7 @@ AI 生成素材（Gemini、OpenAI 圖片，Lyria 音樂，Tripo 3D 模型，AI �
 ### 自己寫的程式
 
 - `three-shim.mjs`、`core.js`（規則核心）、`local.js`、`net.js` 等：© 陳泓昇，AI（Claude、ChatGPT Codex）協助撰寫
+- 授權：GPL-3.0-or-later（11/13 起；第 3 版或更新版），原始碼在倉庫的 `source/`
 - 狀態：**已確認**為自有
 
 ## 二、象棋引擎與神經網路權重
@@ -93,7 +104,7 @@ AI 生成素材（Gemini、OpenAI 圖片，Lyria 音樂，Tripo 3D 模型，AI �
 ## 四、圖片（AI 輔助）
 
 - 來源：人物、場景、地圖、圖示、棋子、封面、古戰場插圖等，用 Google Gemini 的圖像模型生成（專案腳本裡出現過的模型：gemini-3-pro-image、gemini-3.1-flash-image、gemini-2.5-flash-image 等），開發者挑選、修圖、裁切後使用。部分圖可能用 OpenAI 的圖像模型生成
-- 授權：Gemini API 條款（2026 年 3 月 23 日生效版）寫「Google 不主張生成內容的所有權」，使用責任在使用者。[Gemini API 條款](https://aistudio.google.com/docs/terms)
+- 授權：Gemini API 條款（2026 年 3 月 23 日生效版）寫「Google 不主張生成內容的所有權」，使用責任在使用者。[Gemini API 條款](https://aistudio.google.com/docs/terms)。開發者對這些圖（含挑選、修圖、裁切）能主張的權利，11/13 起以 CC BY-NC-SA 4.0 授權
 - 怎麼用：轉成 webp 放進 App
 - 能不能散布：條款沒有禁止；但 AI 生成圖能不能主張著作權，各國法律不同
 - 狀態：**待開發者確認**——①哪些圖是用 OpenAI 生成的；②有沒有圖是用 Gemini App（消費者版）而不是 API 做的（條款不同）；③preview 版模型的條款
@@ -110,13 +121,13 @@ AI 生成素材（Gemini、OpenAI 圖片，Lyria 音樂，Tripo 3D 模型，AI �
   - 本機最早的模型檔生成於 11 月 4 日 16:48（臺灣時間，是後來淘汰的試做品），在第一筆付款之後；App 裡上線的 129 個模型，最早是 11 月 5 日 16:38。所以**沒有模型是用免費點數做的**。
 - **更正**：11/12 下午這裡寫「開發者回覆：用的是免費方案」，是把 Tripo 網頁版的會員方案跟 API 帳戶弄混了；API 帳戶一直是付費儲值，已更正。
 - 怎麼用：放進園子、星槎甲板、黑洞棋盤等 3D 場景
-- 能不能散布：可以。條款限制：不能拿輸出去做和 Tripo 競爭的 3D 生成服務；Tripo 可以為了提供服務而使用、展示這些內容。仍在這頁署名「3D 模型由 Tripo AI 生成」
+- 能不能散布：可以。條款限制：不能拿輸出去做和 Tripo 競爭的 3D 生成服務；Tripo 可以為了提供服務而使用、展示這些內容。仍在這頁署名「3D 模型由 Tripo AI 生成」。11/13 起開發者以 CC BY-NC-SA 4.0 授權給大家
 - 狀態：**已確認**。付款紀錄與發票由開發者保存，當作權利證明。輸入圖是 Gemini 生成的，第四項的說明也適用
 
 ## 六、背景音樂
 
 - 來源：13 個朝代、共 91 首，開發者用 Gemini API 的音樂模型 Lyria 3.5 生成（`tools/bgm_gen.py`），曲名是開發者取的。是 AI 製作的音樂，不是真人演奏
-- 授權：同第四項，Gemini API 條款寫 Google 不主張生成內容的所有權；Lyria 有沒有額外的使用規範，本次沒有查到
+- 授權：同第四項，Gemini API 條款寫 Google 不主張生成內容的所有權；Lyria 有沒有額外的使用規範，本次沒有查到。開發者能主張的部分 11/13 起以 CC BY-NC-SA 4.0 授權
 - 怎麼用：在 App 裡依朝代播放
 - 能不能散布：條款沒有禁止
 - 狀態：**待開發者確認**——Lyria 專屬條款；有沒有曲子是用 Gemini App（消費者版）做的；有沒有和既有曲目太像（沒做過相似度檢查）
@@ -131,12 +142,12 @@ AI 生成素材（Gemini、OpenAI 圖片，Lyria 音樂，Tripo 3D 模型，AI �
 - 狀態：**待開發者確認**——若是自己錄的或程式合成的，寫明並保留原始檔即可；若是下載的素材，要找回授權；查不到就換掉。App 另有程式即時合成的走棋聲，不受影響
 - 11/12 開發者回覆：落子的「啪」聲是**程式合成**的。`data/sfx/` 這 60 檔若也是程式合成，要補上產生方式（專案裡目前找不到產生腳本）；補不出來就改用程式即時合成的聲音
 - 11/12 查對話紀錄**已確認**：60 檔全是**程式合成**，沒有錄音、沒有下載素材。11/2 開發者貼來的 Python 合成腳本（意見回饋 196、197，Gemini 寫的）由 Claude 執行產生：s01–s10 用 `gen_sfx.py`、另外兩批用 `gen_sfx2.py`／`gen_sfx3.py`（濾波器＋衰減正弦波＋雜訊，純數學合成）。腳本已存進 `xiangqi-db/tools/audio_src/`，可以重新產生
-- 結論：**可以散布**，自己的作品；狀態改為已確認
+- 結論：**可以散布**，自己的作品；狀態改為已確認。11/13 起 CC BY-NC-SA 4.0
 
 ## 八、語音
 
 - 來源：`data/voice/` 共 12 檔（男聲、女聲 × 「吃」「將軍」× 慢中快三種速度），用 Windows 內建語音合成（志偉、雅婷）錄成音檔；檔案還沒下載好時，改用手機內建的語音朗讀
-- 授權：微軟對「Windows 內建語音的輸出能不能再散布」的規定，本次未查證
+- 授權：微軟對「Windows 內建語音的輸出能不能再散布」的規定，本次未查證。這 12 檔**不以**本 App 的 GPL 或 CC BY-NC-SA 授權
 - 能不能散布：不確定
 - 狀態：**待開發者確認**（專案裡沒有找到產生語音的腳本，也還沒查微軟條款）。手機內建語音是即時朗讀，不隨 App 散布
 - 11/12 開發者回覆：**不記得**怎麼做的；這份台帳先前的紀錄是 Windows 內建語音（志偉、雅婷）。微軟對內建語音輸出再散布的規定未查證；最穩的做法是拿掉這 12 個檔、全部改用手機內建語音即時朗讀（App 原本就有這個備案）
@@ -158,7 +169,7 @@ AI 生成素材（Gemini、OpenAI 圖片，Lyria 音樂，Tripo 3D 模型，AI �
 - 古譜殘局題、測驗題：題目取自上面的古譜，答案由 Pikafish 計算；新手題是程式擺出的基本題；悶宮專題、大師對局題是程式從終局倒推或從大師對局挑出，都經過 Pikafish 驗證
 - 「妙棋精選」：程式從大師對局裡挑出、再用引擎驗證
 - 測驗講解、故事題：開發者構思，AI（Claude、Gemini、ChatGPT）協助撰寫，開發者審過
-- 授權：自有（© 陳泓昇）；底下用到的棋局資料見第九項
+- 授權：自有（© 陳泓昇），講解和故事題文字 11/13 起 CC BY-NC-SA 4.0；底下用到的棋局資料見第九項（不在這個授權範圍內）
 - 狀態：自有部分 **已確認**；所依據的棋譜資料 **待開發者確認**（同第九項）
 
 ## 十一、文字資料
@@ -173,13 +184,13 @@ AI 生成素材（Gemini、OpenAI 圖片，Lyria 音樂，Tripo 3D 模型，AI �
 ### 特級大師小傳（`gmbios.json`，72 位）
 
 - 來源：每位都附了來源網址：中文維基百科（78 筆）、廣東象棋網 gdchess.com（21 筆）、互動百科（18 筆）、新華網、澎湃新聞等
-- 授權：維基百科是 CC BY-SA；其他網站各有著作權。小傳是根據這些資料改寫的，不是原文照抄
+- 授權：維基百科是 CC BY-SA；其他網站各有著作權。小傳是根據這些資料改寫的，不是原文照抄。這份檔**不以**本 App 的 GPL 或 CC BY-NC-SA 授權，照原來源的條件
 - 狀態：**待開發者確認**——改寫的程度夠不夠、要不要在畫面上標出處（目前來源只存在資料檔裡）
 
 ### 故事、角色、對白、棋史說明
 
 - 來源：開發者構思，AI（Claude、Gemini、ChatGPT）協助撰寫，開發者審過。故事裡有歷史人物和朝代背景，但情節是虛構創作。哪些是史實、哪些是傳說或創作，見〈文史考據〉
-- 授權：© 陳泓昇
+- 授權：© 陳泓昇，11/13 起資料檔裡的 CC BY-NC-SA 4.0（寫在程式檔裡的介面文字、場景小故事和對白是 GPL-3.0-or-later，見本頁開頭〈分界〉）
 - 狀態：自有 **已確認**；AI 協助部分的著作權說法，和各 AI 平臺條款的關係 **待開發者確認**
 
 ### 問小帥用到的外部資料
@@ -193,8 +204,11 @@ AI 生成素材（Gemini、OpenAI 圖片，Lyria 音樂，Tripo 3D 模型，AI �
 
 ## 授權全文與參與方式
 
+- 本 App 程式碼：GPL-3.0-or-later，全文 [LICENSE](https://github.com/raysonchen2023-cloud/xiangqi-lab/blob/main/LICENSE)；原始碼與組裝、測試方法 [source/](https://github.com/raysonchen2023-cloud/xiangqi-lab/tree/main/source)
+- 本 App 自製素材：CC BY-NC-SA 4.0，說明 [LICENSE-ASSETS.md](https://github.com/raysonchen2023-cloud/xiangqi-lab/blob/main/LICENSE-ASSETS.md)
+- 第三方清單：[NOTICE.md](https://github.com/raysonchen2023-cloud/xiangqi-lab/blob/main/NOTICE.md)
 - 第三方程式庫、引擎、字型的授權全文：[licenses/](https://raysonchen2023-cloud.github.io/xiangqi-lab/licenses/README.md)
-- 想回報錯誤或勘誤：[參與《象棋千秋》](https://github.com/raysonchen2023-cloud/xiangqi-lab/blob/main/CONTRIBUTING.md)（目前只收回報與勘誤，不收程式碼 PR）
+- 想回報錯誤或勘誤：[參與《象棋千秋》](https://github.com/raysonchen2023-cloud/xiangqi-lab/blob/main/CONTRIBUTING.md)（公開倉庫只收問題回報 Issue，不收 Pull Request；程式可以依 GPL 自己 fork 修改）
 
 ## 仍待開發者確認的事（依重要程度）
 

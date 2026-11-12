@@ -85,7 +85,40 @@
   const pkcbTag=(g,n)=>{const h=n/2;g.clearRect(0,0,n,n);g.fillStyle="#FFD400";g.strokeStyle="#111111";g.lineWidth=n*.08;g.beginPath();g.arc(h,h,n*.42,0,Math.PI*2);g.fill();g.stroke();
     g.font=`900 ${n*.5|0}px "Noto Sans TC","PingFang TC",sans-serif`;g.textAlign="center";g.textBaseline="middle";g.fillStyle="#111111";g.fillText("將",h,h+n*.03)};
   const pkcbPad=(ok,cb)=>ok?(cb?PKCB.padOkCb:PKCB.padOk):PKCB.padNo;
+  /* 11/13 評比第 13 輪 F4：3D 預走標記（跟平面棋盤 m/07pm-premove.js pmvPaint 同一套：紫色虛線框＋落點淡淡塗色＋淡色虛線箭頭＋「預」字牌；預走走出後對方那一步灰色虛線 2.5 秒）。
+     pkcbPre(o,P)：o.pre／o.pmOpp＝{f,t}；P(i)→[x,z]＝格子在棋盤平面的座標（park3d 的 pos，已處理翻盤、巨盤格距）；回傳跟 pkcbMarks 同格式的記號，多一種 k:"tris"（p＝相對 i 格中心的 [x,z,…] 三角形頂點，三個一組）。
+       尺寸照平面（格距 60 像素＝1）：框半邊 .47、線寬 .07；箭頭從起點 .23 畫到落點前 .4（箭頭尖），身寬 .117、虛線 .2／.133，箭頭長 .3、半寬 .217；灰色虛線圈半徑 .33（起點）、.53（落點）。
+     pkcbArc(r,w,n,fill)：虛線圓環（n 段、每段佔 fill）三角形頂點。pkcbPreTag(g,n)：「預」字牌貼圖（白底、紫邊、紫字）。
+     第 13 輪 X6（色弱模式補完）：pkcbFx(cb)＝黑洞特效色——將軍「星樞警鐘」（攻擊線、九宮圈、光點）、馬腿／象眼星鎖「✕」；色弱模式：警鐘改黃 #FFD400（跟「將」字牌、黃點同色）、攻擊線改虛線（形狀也不同），
+       星鎖「✕」改橘 #FFB347（平面色弱模式「壞、不能」的橘，CB_COL.orangeL）、加粗成三條、光點改白。pkcbSeg(a,b,n)：a→b 切成 n 段虛線。pkcbCross(s,thick)：「✕」的線段（加粗＝左右各多一條）。
+       pkcbSimFace(g,n,ch,red,hc,font)／pkcbSimSide(red,hc)：車輪戰別桌的 3D 小棋子棋面、側邊色：hc（高對比／色弱模式）＝跟主桌一樣黑子黑底白字、側邊深色；關＝原本米色棋面。 */
+  Object.assign(PKCB,{pre:0x7A3FD1,preOpp:0x6B6B6B,ckOld:0xFF6B5A,lockOld:0xFF8A5A,lockGlowOld:0xFFB070,lockCb:0xFFB347,simFace:"#F3E2BC",simRim:"#6B4423",simInkR:"#B3141B",simInkB:"#1A1410",simSide:"#E2CC9E"});
+  const pkcbArc=(r,w,n,fill)=>{const p=[],K=6,ri=r-w;for(let j=0;j<n;j++){const a0=j*2*Math.PI/n,a1=a0+fill*2*Math.PI/n;for(let k=0;k<K;k++){const u=a0+(a1-a0)*k/K,v=a0+(a1-a0)*(k+1)/K,cu=Math.cos(u),su=Math.sin(u),cv=Math.cos(v),sv=Math.sin(v);
+      p.push(ri*cu,ri*su,r*cu,r*su,r*cv,r*sv,ri*cu,ri*su,r*cv,r*sv,ri*cv,ri*sv)}}return p};
+  const pkcbPre=(o,P)=>{o=o||{};const C=PKCB,out=[],ok=x=>!!x&&x.f!=null&&x.t!=null&&x.f!==x.t,put=(d,ro)=>{d.ro=ro;d.m="pre";out.push(d)};
+    const shaft=(f,t,w,s0,s1,dash,gap,hl,hw)=>{const[a,b]=P(f),[c,d]=P(t),dx=c-a,dz=d-b,L=Math.hypot(dx,dz)||1,ux=dx/L,uz=dz/L,nx=-uz,nz=ux,p=[],h=w/2;
+      const q=(s,e)=>p.push(ux*s+nx*h,uz*s+nz*h,ux*e+nx*h,uz*e+nz*h,ux*s-nx*h,uz*s-nz*h,ux*e+nx*h,uz*e+nz*h,ux*e-nx*h,uz*e-nz*h,ux*s-nx*h,uz*s-nz*h);
+      const tip=L-s1,end=tip-(hl||0);for(let s=s0;s<end-1e-6;s+=dash+gap)q(s,Math.min(s+dash,end));
+      if(hl){const bs=tip-hl;p.push(ux*tip,uz*tip,ux*bs+nx*hw,uz*bs+nz*hw,ux*bs-nx*hw,uz*bs-nz*hw)}return p};
+    const A=o.pmOpp;if(ok(A)){put({k:"tris",i:A.f,col:C.preOpp,op:.7,p:pkcbArc(.33,.05,8,.55)},2);put({k:"tris",i:A.t,col:C.preOpp,op:.75,p:pkcbArc(.53,.05,12,.55)},2);
+      put({k:"tris",i:A.f,col:C.preOpp,op:.6,p:shaft(A.f,A.t,.067,.33,.53,.05,.117,0,0)},2)}
+    const Q=o.pre;if(ok(Q)){put({k:"bars",i:Q.t,col:C.pre,op:.16,b:[[-.45,-.45,.45,.45]]},6);
+      for(const i of[Q.f,Q.t]){put({k:"bars",i,col:C.white,op:.9,b:pkcbDash(.47,.13,.03)},7);put({k:"bars",i,col:C.pre,op:1,b:pkcbDash(.47,.07,0)},8)}
+      put({k:"tris",i:Q.f,col:C.pre,op:.5,p:shaft(Q.f,Q.t,.117,.23,.4,.2,.133,.3,.217)},9);put({k:"tag",i:Q.t,tx:"pre"},21)}
+    return out};
+  const pkcbPreTag=(g,n)=>{const h=n/2;g.clearRect(0,0,n,n);g.fillStyle="#FFFFFF";g.strokeStyle="#7A3FD1";g.lineWidth=n*.1;g.beginPath();g.arc(h,h,n*.4,0,Math.PI*2);g.fill();g.stroke();
+    g.font=`900 ${n*.5|0}px "Noto Sans TC","PingFang TC",sans-serif`;g.textAlign="center";g.textBaseline="middle";g.fillStyle="#7A3FD1";g.fillText("預",h,h+n*.03)};
+  const pkcbFx=cb=>{const C=PKCB;return cb?{ck:{line:C.dot,ring:C.dot,glow:C.dot,dash:true},lock:{x:C.lockCb,glow:C.white,thick:true}}:{ck:{line:C.ckOld,ring:C.ckOld,glow:C.ckOld,dash:false},lock:{x:C.lockOld,glow:C.lockGlowOld,thick:false}}};
+  const pkcbSeg=(a,b,n)=>{const o=[],L=(s)=>a.map((v,k)=>v+(b[k]-v)*s);for(let j=0;j<n;j++)o.push([L(j/n),L((j+.55)/n)]);return o};
+  const pkcbCross=(s,thick)=>{const o=[],D=thick?[0,-.035,.035]:[0];for(const e of D)o.push([[-s+e,-s],[s+e,s]],[[s+e,-s],[-s+e,s]]);return o};
+  const pkcbSimFace=(g,n,ch,red,hc,font)=>{if(hc)return pkcbFace(g,n,ch,red);const C=PKCB,h=n/2,ink=red?C.simInkR:C.simInkB;g.fillStyle=C.simFace;g.beginPath();g.arc(h,h,n*.484,0,Math.PI*2);g.fill();g.lineWidth=n*.047;g.strokeStyle=C.simRim;g.stroke();
+    g.lineWidth=n*.023;g.strokeStyle=ink;g.beginPath();g.arc(h,h,n*.375,0,Math.PI*2);g.stroke();g.fillStyle=ink;g.font=`900 ${n/2|0}px ${font||"serif"}`;g.textAlign="center";g.textBaseline="middle";g.fillText(ch,h,h+n*.031)};
+  const pkcbSimSide=(red,hc)=>hc?pkcbBody(red):PKCB.simSide;
   /*}PKCB*/
+  /*PKBZ{ 11/13 評比第 13 輪 F4：快棋模式（App 傳 ex.blitz＝m/07pm-premove.js blzOn()）時 3D 走子動畫加快的倍數＝平面走子滑動「一般 280 毫秒 → 快棋 90 毫秒」的比例（blzTab slide；test-blitz.js 會對）。
+     動畫的 k＝播放速度倍數（anims 每一幀 t 多加 k 倍）；只套在走子、被吃的子飛走、黑洞專屬走法與吃子放大縮回，不動入座運鏡、絕殺分鏡、天氣等 */
+  const PKBZ={slide:[280,90]};const pkbzK=on=>on?PKBZ.slide[0]/PKBZ.slide[1]:1;
+  /*}PKBZ*/
   const T=window.THREE;if(!T)return;
   /* 11/11 入座運鏡、省電模式的共用狀態（App 開著就一直在）：INTRO_SEEN＝播過入座運鏡的那幾盤；PWS＝電池、畫面偏慢；PF＝最近一座園子的效能計數（window.__PK.perf、設定頁那一行讀它） */
   const INTRO_SEEN=new Set(),PWS={bat:null,lowFps:false,batGo:false};
@@ -1881,7 +1914,7 @@
       const gold=sideOf(g.userData.p||"P")==="r"?0xFFD98A:0xB9A7FF,P=(x,z,y)=>g.position.set(x,TOP+(y||0),z);
       const lean=a=>{GMA.set(dz/dist,0,-dx/dist);GMQ.setFromAxisAngle(GMA,a);GMQ2.setFromAxisAngle(GUPY,ry);g.quaternion.copy(GMQ).multiply(GMQ2)};   /* 往前進方向傾斜 a 弧度（負＝往後仰） */
       const done=()=>{g.rotation.set(0,ry,0);g.scale.setScalar(s0);at(g,ti);if(onLand)onLand()};
-      const go=(d,f,end)=>anims.push({t:0,d,f:p=>f(p*d),end:()=>{if(end)end();done()}});
+      const go=(d,f,end)=>anims.push({t:0,d,k:pkbzK(BLZ),f:p=>f(p*d),end:()=>{if(end)end();done()}});
       if(RDM)return go(.3,T0=>{const e=ease(T0/.3);P(x0+dx*e,z0+dz*e,0)});
       if(K==="R"){const tr=fxLine([[x0,TOP+.3,z0],[x0,TOP+.3,z0]],gold,.85);
         return go(.62,T0=>{let e,ln=0,sq=1;if(T0<.1){e=0;ln=-.12*T0/.1;sq=1-.08*T0/.1}else if(T0<.46){const q=(T0-.1)/.36;e=q*q*(3-2*q);ln=.17}else{const q=(T0-.46)/.16;e=1+.04*Math.sin(q*PI);ln=.17*(1-q)-.06*Math.sin(q*PI)}
@@ -1971,13 +2004,14 @@
     if(GIANT)setTimeout(()=>{for(const K in GITEM)gntItemLoad(GITEM[K].k)},2500);   /* 黑洞局：背景先載七個物件模型（每個約 0.6 MB） */
     /* 將軍：星樞警鐘——攻擊線從走的那顆指向被將的帥／將 0.45 秒，被將的九宮亮一圈 */
     const gntCheckFx=(ti,B)=>{if(RDM)return;const me=sideOf(B[ti]||"P"),kk=me==="r"?"k":"K",ki=B.indexOf(kk);if(ki<0)return;const[ax,az]=pos(ti),[kx,kz]=pos(ki),y=TOP+GNT_H*.6;
-      const ln=fxLine([[ax,y,az],[kx,y,kz]],0xFF6B5A,.95),rg=fxRing(kx,kz,0xFF6B5A,.7*GS),gl=fxGlow(kx,TOP+GNT_H*1.25,kz,0xFF6B5A,.9);fxFade([ln,rg,gl],.6,.2)};
+      const F=pkcbFx(!!(LOOK&&LOOK.cb)).ck,ln=F.dash?pkcbSeg([ax,y,az],[kx,y,kz],7).map(s=>fxLine(s,F.line,.95)):[fxLine([[ax,y,az],[kx,y,kz]],F.line,.95)],rg=fxRing(kx,kz,F.ring,.7*GS),gl=fxGlow(kx,TOP+GNT_H*1.25,kz,F.glow,.9);fxFade([...ln,rg,gl],.6,.2)};   /* 第 13 輪 X6：色弱模式改黃色虛線（PKCB pkcbFx） */
     /* 馬被蹩腿：選到自己的馬時，被擋住的馬腿格亮一個星鎖（紅金色 ✕＋光點）1.2 秒，教「不是目標格不行，是馬腿被堵住」 */
     /* 開發者 11/12 hspx「相眼被擋住也要有」：選到自己的相／象時，被塞住的象眼（斜一格，而且那個田字落點在棋盤內、沒過河）也亮星鎖 */
     let GNSEL=-1;const gntHorseLock=(sel,B)=>{if(sel===GNSEL)return;GNSEL=sel;if(sel<0||RDM||!B||!/^[NnBb]$/.test(B[sel]||""))return;const r=sel/9|0,c=sel%9,objs=[],ele=/^[Bb]$/.test(B[sel]);
       const legs=ele?[[1,1],[1,-1],[-1,1],[-1,-1]].filter(([dr,dc])=>{const tr=r+2*dr,tc=c+2*dc;return tr>=0&&tr<=9&&tc>=0&&tc<=8&&((r<=4)===(tr<=4))}):[[1,0],[-1,0],[0,1],[0,-1]].filter(([dr,dc])=>(dr?[[r+2*dr,c-1],[r+2*dr,c+1]]:[[r-1,c+2*dc],[r+1,c+2*dc]]).some(([tr,tc])=>tr>=0&&tr<=9&&tc>=0&&tc<=8));   /* 馬：這條腿後面至少有一個落點在棋盤內才算 */
+      const F=pkcbFx(!!(LOOK&&LOOK.cb)).lock;   /* 第 13 輪 X6：色弱模式「✕」改橘 #FFB347、加粗、光點改白（PKCB pkcbFx／pkcbCross） */
       for(const[dr,dc]of legs){const rr=r+dr,cc=c+dc;if(rr<0||rr>9||cc<0||cc>8||!B[rr*9+cc])continue;const[x,z]=pos(rr*9+cc),y=TOP+GNT_H*1.15,s=.22*GS;
-        objs.push(fxLine([[x-s,y-s,z],[x+s,y+s,z]],0xFF8A5A,.95),fxLine([[x+s,y-s,z],[x-s,y+s,z]],0xFF8A5A,.95),fxGlow(x,y,z,0xFFB070,.6))}
+        for(const[[a1,b1],[a2,b2]]of pkcbCross(s,F.thick))objs.push(fxLine([[x+a1,y+b1,z],[x+a2,y+b2,z]],F.x,.95));objs.push(fxGlow(x,y,z,F.glow,.6))}
       if(objs.length)fxFade(objs,.5,.9)};
     let pieces={},prevB=null,prevLast=null,anims=[],captured=[],capNear=true,lastCapB=null;
     // 提示記號
@@ -1986,12 +2020,14 @@
     const ring=(i,col,r,w,op)=>{const m=new T.Mesh(new T.RingGeometry(r-w,r,40),new T.MeshBasicMaterial({color:col,transparent:true,opacity:op,depthWrite:false}));m.rotation.x=-PI/2;const[x,z]=pos(i);m.position.set(x,TOP+.014,z);markG.add(m);return m};
     /* 11/13 第 12 輪色弱模式（PKCB）：pkcbMarks 給的新記號——不經色調映射（畫出來就是規格的色碼）、照 renderOrder 疊（白邊→黑邊→顏色）；
        長方形清單合成一個網格（瞄準框、虛線框）；「將」字牌是永遠面向鏡頭的小牌子，不被棋子擋住。markClr：清掉上一輪的記號並釋放網格、材質（「將」字牌貼圖共用不釋放） */
-    let tagT=null;const tagTex=()=>tagT||(tagT=cv(128,128,(g,n)=>pkcbTag(g,n)));
+    let tagT=null,preT=null,BLZ=false;const tagTex=()=>tagT||(tagT=cv(128,128,(g,n)=>pkcbTag(g,n))),preTex=()=>preT||(preT=cv(128,128,(g,n)=>pkcbPreTag(g,n)));   /* 第 13 輪 F4：「預」字牌、快棋模式（PKBZ） */
+    const triGeo=p=>{const a=[];for(let k=0;k+1<p.length;k+=2)a.push(p[k],0,p[k+1]);const g=new T.BufferGeometry();g.setAttribute("position",new T.Float32BufferAttribute(a,3));return g};
     const markMat=(col,op)=>new T.MeshBasicMaterial({color:col,transparent:true,opacity:op,depthWrite:false,side:T.DoubleSide,toneMapped:false});
     const barGeo=B=>{const p=[];for(const[a,b,c,d]of B)p.push(a,0,b,a,0,d,c,0,b,c,0,b,a,0,d,c,0,d);const g=new T.BufferGeometry();g.setAttribute("position",new T.Float32BufferAttribute(p,3));return g};
     const markAdd=d=>{if(!d.ro)return d.k==="disc"?disc(d.i,d.col,d.r,d.op):ring(d.i,d.col,d.r,d.w,d.op);const[x,z]=pos(d.i);let m;
-      if(d.k==="tag"){m=new T.Sprite(new T.SpriteMaterial({map:tagTex(),transparent:true,depthTest:false,depthWrite:false,toneMapped:false}));m.scale.set(.5,.5,1);m.position.set(x+.36,TOP+.66,z-.36)}
+      if(d.k==="tag"){m=new T.Sprite(new T.SpriteMaterial({map:d.tx==="pre"?preTex():tagTex(),transparent:true,depthTest:false,depthWrite:false,toneMapped:false}));m.scale.set(.5,.5,1);m.position.set(x+.36,TOP+(GIANT&&d.tx==="pre"?GNT_H*1.3:.66),z-.36)}   /* 巨盤：「預」字牌浮在角色頭上 */
       else if(d.k==="bars"){m=new T.Mesh(barGeo(d.b),markMat(d.col,d.op));m.position.set(x,TOP+.016,z)}
+      else if(d.k==="tris"){m=new T.Mesh(triGeo(d.p),markMat(d.col,d.op));m.position.set(x,TOP+.018,z)}
       else{m=new T.Mesh(d.k==="disc"?new T.CircleGeometry(d.r,32):new T.RingGeometry(d.r-d.w,d.r,40),markMat(d.col,d.op));m.rotation.x=-PI/2;m.position.set(x,TOP+(d.k==="disc"?.012:.014),z)}
       m.renderOrder=d.ro;m.userData.cbm=d.m;markG.add(m);return m};
     const markClr=()=>{for(const m of markG.children){try{if(m.geometry&&!m.isSprite)m.geometry.dispose();if(m.material)m.material.dispose()}catch(e){}}markG.clear()};
@@ -2007,7 +2043,7 @@
     function sync(board){Object.values(pieces).forEach(g=>GIANT?gntDrop(g):sc.remove(g));pieces={};board.forEach((p,i)=>{if(p){const g=makePiece(p);at(g,i);pieces[i]=g}});layoutCaptured(board)}
     // 朝代造型換了（或圖剛載入）：重畫棋盤、清掉棋子貼圖、整盤重排
     let lookKey="";const refreshLook=()=>{for(const k in faceCache){freeTex(faceCache[k]);delete faceCache[k]}for(const k in faceMat){try{faceMat[k].dispose()}catch(e){}delete faceMat[k]}for(const k in bodyMat){try{bodyMat[k].dispose()}catch(e){}delete bodyMat[k]}
-      try{const c=btex.image.getContext("2d");drawBoard(c,btex.image.width,btex.image.height,null);btex.needsUpdate=true}catch(e){}if(prevB)sync(prevB)};
+      try{const c=btex.image.getContext("2d");drawBoard(c,btex.image.width,btex.image.height,null);btex.needsUpdate=true}catch(e){}if(prevB)sync(prevB);try{simPClr()}catch(e){}};   /* 第 13 輪 X6：車輪戰別桌小棋子跟著換棋面 */
     // Noto Serif TC 網路字型晚到：載入後重畫字面（不然會先用系統字型，字又細又糊）
     try{document.fonts&&document.fonts.load(`900 64px ${SERIF}`,"帥仕相傌俥炮兵將士象馬車砲卒").then(()=>{if(!stopped)refreshLook()})}catch(e){}
     /* ---------- 開發者 11/12「車輪戰 3D 場景對手 3 個就要擺出 3 個，5／10 也照過場動畫的位置擺上 3D 場景；下完一盤或切到要下的對手，我們的角色會自動坐在該盤位置」----------
@@ -2044,11 +2080,13 @@
       g.userData={bd,fig:null,bk:"",lk:"",tag:null,tr:""};return g};
     /* 別桌的 3D 棋子：同一種棋子（14 種）全部桌一起用一個 InstancedMesh 畫（10 桌也只多 14 次繪製），位置＝那桌在 SIMW 裡的位置 × 格子位置；現在下的這桌不畫（真的棋盤在原點） */
     let simBdM=null;const simBdMat=()=>simBdM||(simBdM=new T.MeshStandardMaterial({map:btex,roughness:.6}));
-    const SIMPM={},simPGeo=new T.CylinderGeometry(.42,.42,.24,24),simPSide=M(0xE2CC9E,{roughness:.55}),simPBot=M(0x8A6A40,{roughness:.8}),SIMQ=new T.Matrix4(),SIMR=new T.Matrix4();
-    const simPTex=p=>{const cv=document.createElement("canvas");cv.width=cv.height=128;const g=cv.getContext("2d"),red=sideOf(p)==="r",ink=red?"#B3141B":"#1A1410";g.fillStyle="#F3E2BC";g.beginPath();g.arc(64,64,62,0,TAU);g.fill();g.lineWidth=6;g.strokeStyle="#6B4423";g.stroke();
-      g.lineWidth=3;g.strokeStyle=ink;g.beginPath();g.arc(64,64,48,0,TAU);g.stroke();g.fillStyle=ink;g.font=`900 64px ${SERIF}`;g.textAlign="center";g.textBaseline="middle";g.fillText(NAMES[sideOf(p)][p.toUpperCase()]||"",64,68);
+    const SIMPM={},simPGeo=new T.CylinderGeometry(.42,.42,.24,24),simPSide0=M(parseInt(PKCB.simSide.slice(1),16),{roughness:.55}),simPBot=M(0x8A6A40,{roughness:.8}),SIMQ=new T.Matrix4(),SIMR=new T.Matrix4();
+    /* 第 13 輪 X6：高對比／色弱模式（LOOK.hc）時別桌小棋子也換成主桌那套黑白棋面、深色側邊（PKCB pkcbSimFace／pkcbSimSide）；look 換了 refreshLook 會清掉重建 */
+    const simHC=()=>!!(LOOK&&LOOK.hc),simSideM={};
+    const simPTex=p=>{const cv=document.createElement("canvas");cv.width=cv.height=128;const g=cv.getContext("2d"),red=sideOf(p)==="r";pkcbSimFace(g,128,NAMES[sideOf(p)][p.toUpperCase()]||"",red,simHC(),SERIF);
       const t=new T.CanvasTexture(cv);if(T.SRGBColorSpace)t.colorSpace=T.SRGBColorSpace;t.anisotropy=ANI;return t};
-    const simPMesh=p=>{if(SIMPM[p])return SIMPM[p];const m=new T.InstancedMesh(simPGeo,[simPSide,new T.MeshStandardMaterial({map:simPTex(p),roughness:.5}),simPBot],64);m.count=0;m.castShadow=true;m.frustumCulled=false;SIMW.add(m);return SIMPM[p]=m};
+    const simPClr=()=>{for(const k in SIMPM){const m=SIMPM[k];try{if(SIMW)SIMW.remove(m);m.material[1].map.dispose();m.material[1].dispose();m.dispose&&m.dispose()}catch(e){}delete SIMPM[k]}if(SIMW&&simPI>-2)simPieces(simPI)};
+    const simPMesh=p=>{if(SIMPM[p])return SIMPM[p];const red=sideOf(p)==="r",hc=simHC(),sk=(hc?"h":"")+(red?"r":"b"),simPSide=hc?(simSideM[sk]||(simSideM[sk]=M(parseInt(pkcbSimSide(red,true).slice(1),16),{roughness:.55}))):simPSide0;const m=new T.InstancedMesh(simPGeo,[simPSide,new T.MeshStandardMaterial({map:simPTex(p),roughness:.5}),simPBot],64);m.count=0;m.castShadow=true;m.frustumCulled=false;SIMW.add(m);return SIMPM[p]=m};
     const simPieces=act=>{for(const k in SIMPM)SIMPM[k].count=0;
       SIMST.forEach((g,j)=>{if(j===act||!g.userData.b)return;g.updateMatrix();g.userData.b.forEach((p,i)=>{if(!p)return;const m=simPMesh(p),n=m.count;if(n>=64)return;SIMR.makeTranslation(i%9-4,.73,(i/9|0)-4.5);SIMQ.multiplyMatrices(g.matrix,SIMR);m.setMatrixAt(n,SIMQ);m.count=n+1})});
       for(const k in SIMPM)SIMPM[k].instanceMatrix.needsUpdate=true;pwPoke(300)};
@@ -2148,7 +2186,7 @@
     const gntPad=o=>{const sel=o.sel!=null&&o.sel>=0?o.sel:-1,T2=Array.isArray(o.targets)?o.targets.slice():[];
       if(sel<0||!T2.length){padSel=-1;padCur=-1;padT=[];if(PAD)PAD.style.display="none";padRing.visible=padBeam.visible=false;return}
       padUI();PAD.style.display="grid";if(sel!==padSel){padSel=sel;padCur=sel}padT=T2;padShow()};
-    function draw(board,o,ex){o=o||{};ex=ex||{};drawn=true;orbSet(ex.bhOrb,ex.gxLit);gxSet(ex.gx);LBK=(board||[]).join(",");if(MATED&&LBK!==MATED.k){MATED.g.visible=true;MATED.g.scale.setScalar(MATED.s0);if(GFOC===MATED.an)GFOC=null;sc.remove(MATED.an);MATED=null}if(GIANT){const R=ex.result||null;if(R!==gntRes){gntRes=R;if(R)setTimeout(()=>{for(const g of Object.values(pieces))if(g&&g.userData&&g.userData.B)gntAct(g,R==="r"?"cheer":R==="b"?"bow":"idle",4200)},600)}}try{const dk=[(board||[]).join(","),o.sel,(o.targets||[]).join(" "),o.last?o.last.f+"-"+o.last.t:"",o.check,o.flip?1:0,ex.thinking?1:0,ex.result||"",(ex.hint||[]).join(" ")].join("|");if(dk!==PW.dk){PW.dk=dk;pwPoke(1500)}}catch(e){pwPoke(1500)}   /* 11/11 省電：App 每 1.5 秒輪詢都會呼叫 draw，盤面真的有變才算「畫面在動」 */const nf=!!o.flip;
+    function draw(board,o,ex){o=o||{};ex=ex||{};drawn=true;orbSet(ex.bhOrb,ex.gxLit);gxSet(ex.gx);BLZ=!!ex.blitz;LBK=(board||[]).join(",");if(MATED&&LBK!==MATED.k){MATED.g.visible=true;MATED.g.scale.setScalar(MATED.s0);if(GFOC===MATED.an)GFOC=null;sc.remove(MATED.an);MATED=null}if(GIANT){const R=ex.result||null;if(R!==gntRes){gntRes=R;if(R)setTimeout(()=>{for(const g of Object.values(pieces))if(g&&g.userData&&g.userData.B)gntAct(g,R==="r"?"cheer":R==="b"?"bow":"idle",4200)},600)}}try{const dk=[(board||[]).join(","),o.sel,(o.targets||[]).join(" "),o.last?o.last.f+"-"+o.last.t:"",o.check,o.flip?1:0,ex.thinking?1:0,ex.result||"",(ex.hint||[]).join(" "),o.pre?o.pre.f+">"+o.pre.t:"",o.pmOpp?o.pmOpp.f+">"+o.pmOpp.t:""].join("|");if(dk!==PW.dk){PW.dk=dk;pwPoke(1500)}}catch(e){pwPoke(1500)}   /* 11/11 省電：App 每 1.5 秒輪詢都會呼叫 draw，盤面真的有變才算「畫面在動」 */const nf=!!o.flip;
       {const lk=JSON.stringify(ex.look?[ex.look.k,ex.look.img,!!ex.look.gly,ex.look.pset,ex.look.pieces&&ex.look.pieces.r,ex.look.grid,!!ex.look.hc,!!ex.look.cb]:null);   /* 11/13：高對比／色弱模式切換也要重畫棋面（PKCB） */if(lk!==lookKey){lookKey=lk;LOOK=ex.look||null;
         if(LOOK){let n=0;const L0=[LOOK.img,LOOK.pieces&&LOOK.pieces.r,LOOK.pieces&&LOOK.pieces.b,...(LOOK.pset?PSRC(LOOK.pset):[])],done=()=>{if(++n>=L0.length&&LOOK===ex.look)refreshLook()};L0.forEach(src=>{if(!src||loadImg(src,done))done()})}
         refreshLook()}}
@@ -2162,12 +2200,12 @@
         const FIN=GIANT&&!!cap&&gntMateAfter(board,by);if(cap&&GIANT){CAPBUSY++;CAPB_T=performance.now()}   /* hspx 1086：這一步將死＝吃子放慢照分鏡；絕殺等吃子播完（CAPBUSY）才開始 */
         if(cap&&GIANT&&!RDM&&by==="r"&&gntItemCap(g,GK,L.f,L.t,()=>{try{gntCapFx(cap,by,board,{K:GK,f:L.f,t:L.t})}catch(e){gntDrop(cap);layoutCaptured(board);capDone()}},GSCR,FIN,cap)){}   /* 紅方七星：變出自己的物件吃子 */
         else if(cap&&GIANT&&!RDM){const s0=g.scale.x||1,capFx=()=>{try{gntCapFx(cap,by,board,{K:GK,f:L.f,t:L.t})}catch(e){gntDrop(cap);layoutCaptured(board)}};g.userData.capS0=s0;
-          anims.push({t:0,d:.22,f:p=>g.scale.setScalar(s0*(1+.5*ease(p))),end:()=>{g.scale.setScalar(s0*1.5);
+          anims.push({t:0,d:.22,k:pkbzK(BLZ),f:p=>g.scale.setScalar(s0*(1+.5*ease(p))),end:()=>{g.scale.setScalar(s0*1.5);
             gntMove(g,GK,L.f,L.t,()=>{capFx();
-              anims.push({t:0,d:.7,f:p=>g.scale.setScalar(s0*(1.5-.5*ease(Math.max(0,(p-.45)/.55)))),end:()=>{g.scale.setScalar(s0);delete g.userData.capS0}})},{screen:GSCR})}})}
-        else if(cap&&GIANT){try{gntCapFx(cap,by,board)}catch(e){gntDrop(cap);layoutCaptured(board)}}else if(cap){anims.push({t:0,d:.55,f:p=>{cap.position.y=TOP+Math.sin(p*PI)*.9;cap.position.x+=(x1-x0)*.006;cap.position.z+=(z1>z0?.02:-.02);cap.rotation.z=p*2.2},end:()=>{if(GIANT)gntDrop(cap);else sc.remove(cap);layoutCaptured(board)}})}
+              anims.push({t:0,d:.7,k:pkbzK(BLZ),f:p=>g.scale.setScalar(s0*(1.5-.5*ease(Math.max(0,(p-.45)/.55)))),end:()=>{g.scale.setScalar(s0);delete g.userData.capS0}})},{screen:GSCR})}})}
+        else if(cap&&GIANT){try{gntCapFx(cap,by,board)}catch(e){gntDrop(cap);layoutCaptured(board)}}else if(cap){anims.push({t:0,d:.55,k:pkbzK(BLZ),f:p=>{cap.position.y=TOP+Math.sin(p*PI)*.9;cap.position.x+=(x1-x0)*.006;cap.position.z+=(z1>z0?.02:-.02);cap.rotation.z=p*2.2},end:()=>{if(GIANT)gntDrop(cap);else sc.remove(cap);layoutCaptured(board)}})}
         if(GIANT&&!cap)gntMove(g,GK,L.f,L.t,()=>landFx(L.t,true),{});
-        else if(!(cap&&GIANT&&!RDM))anims.push({t:0,d:.42,f:p=>{const e=ease(p);g.position.set(x0+(x1-x0)*e,TOP+Math.sin(p*PI)*1.1,z0+(z1-z0)*e)},end:()=>{at(g,L.t);if(!cap)landFx(L.t,false)}});
+        else if(!(cap&&GIANT&&!RDM))anims.push({t:0,d:.42,k:pkbzK(BLZ),f:p=>{const e=ease(p);g.position.set(x0+(x1-x0)*e,TOP+Math.sin(p*PI)*1.1,z0+(z1-z0)*e)},end:()=>{at(g,L.t);if(!cap)landFx(L.t,false)}});
         if(GIANT&&o.check)try{gntCheckFx(L.t,board)}catch(e){}   /* 將軍：星樞警鐘 */
         if(botSide&&by===botSide){reach=1;reachT=0;opp.setFace(cap?"happy":"smile",1.4);if(cap){mate.setFace("open",1.6);mate.say(["小心！","哎呀，被吃了","沒關係，扳回來！"][Math.random()*3|0],2)}}
         else if(cap){mate.setFace("happy",1.6);mate.say(["吃得好！","漂亮！","好棋！"][Math.random()*3|0],1.8);if(botSide){opp.setFace("open",1.4);if((opp.B||oppSpr)&&Math.random()<.5)opp.say(["哎呀！","被吃了…","好棋！"][Math.random()*3|0])}}
@@ -2182,6 +2220,7 @@
       SNAP.b=board;SNAP.t=Array.isArray(o.targets)?o.targets:[];SNAP.me=ex.botSide?(ex.botSide==="r"?"b":"r"):(nf?"b":"r");   /* 11/11 點擊吸附要知道：哪些是己方棋子、哪些是綠點 */
       /* 上一步、可走點、可吃、將軍、電腦建議：pkcbMarks 決定畫什麼（高對比／色弱模式換形狀和色碼，見 PKCB），這裡照著畫 */
       for(const d of pkcbMarks(board,o,ex,{hc:!!(LOOK&&LOOK.hc),cb:!!(LOOK&&LOOK.cb)})){const m=markAdd(d);if(d.chk)checkRing=m}
+      for(const d of pkcbPre(o,pos))markAdd(d);   /* 第 13 輪 F4：預走標記（紫色虛線框、淡色箭頭、「預」字牌）、預走走出後對方那一步灰色虛線 */
       try{CR.chkSet(typeof o.check==="number"&&o.check>=0&&board[o.check]?sideOf(board[o.check]):null)}catch(e){}
       thinking=!!ex.thinking;setOpp(ex.opp||null);try{simSync(ex.simul)}catch(e){}setMate(ex.mateLook||null);setWatchers(ex.watchers);mySide=ex.botSide?(ex.botSide==="r"?"b":"r"):"r";try{CR.data(ex.crowd||null,o,ex)}catch(e){}
       if(ex.result&&ex.result!==mood){mood=ex.result;const b=ex.botSide;endT=END;
@@ -2455,7 +2494,7 @@
       if(el.clientWidth&&Math.abs(el.clientWidth-W)>1)fit();
       else if((++roomN%60)===0){const rm=room(),want=Math.round(el.clientWidth*clamp((VH0-300)/(el.clientWidth||300),1.14,1.32));if(Math.abs(Math.min(want,Math.max(.85*W,rm))-H)>3)fit()}   // 版面多一行、少一行時重新量
       yaw+=(tyaw-yaw)*Math.min(1,t*8);pitch+=(tpitch-pitch)*Math.min(1,t*8);zoom+=(tzoom-zoom)*Math.min(1,t*10);placeCam();fxShakeTick(now);if(flatV)mate.g.visible=zoom>1.12||Math.abs(Math.atan2(Math.sin(yaw),Math.cos(yaw)))>.35;   /* QA P2-5：平視（從小帥眼睛看）時拉遠或轉開，小帥要回到凳子上，不然只剩一張空凳子 */
-      cineTick(now);const ETS=now<HSTOP?0:FXTS;{const cur=anims;anims=[];const keep=cur.filter(a=>{a.t+=a.rt?t:t*ETS;const p=Math.min(1,a.t/a.d);a.f(p);if(p>=1){a.end&&a.end();return false}return true});anims=keep.concat(anims)}   /* 11/12：動畫結束時接著加的下一段（星塵爆開、星飛去排隊、吃子後縮回）先放新陣列再併回；以前直接 filter，end 裡 push 的會被丟掉 */
+      cineTick(now);const ETS=now<HSTOP?0:FXTS;{const cur=anims;anims=[];const keep=cur.filter(a=>{a.t+=(a.rt?t:t*ETS)*(a.k||1);const p=Math.min(1,a.t/a.d);a.f(p);if(p>=1){a.end&&a.end();return false}return true});anims=keep.concat(anims)}   /* 11/12：動畫結束時接著加的下一段（星塵爆開、星飛去排隊、吃子後縮回）先放新陣列再併回；以前直接 filter，end 裡 push 的會被丟掉 */
       if(selI>=0&&pieces[selI]){const g=pieces[selI];g.position.y=TOP+.32+(PW.on?0:Math.sin(now/180)*.06)}
       Object.entries(pieces).forEach(([i,g])=>{if(+i!==selI&&!anims.length&&g.position.y!==TOP)g.position.y+=(TOP-g.position.y)*Math.min(1,t*12)});
       if(checkRing)checkRing.material.opacity=PW.on?.85:.55+.4*Math.sin(now/140);
