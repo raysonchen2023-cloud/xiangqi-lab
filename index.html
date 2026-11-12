@@ -1531,7 +1531,7 @@ html[data-hct] .player.on .clk{background:#00563B;color:#FFFFFF;border-color:#00
       if(!window.caches)return go();caches.keys().then(function(ks){return Promise.all(ks.filter(function(k){return k.indexOf("xqlab-app-")===0}).map(function(k){return caches.delete(k)}))})
         .then(function(){return navigator.serviceWorker&&navigator.serviceWorker.getRegistration()}).then(function(r){return r&&r.update()}).catch(function(){}).then(go)}};setTimeout(chk,4000)})();
 </script>
-<script>window.XQ_OFFLINE=true;window.XQ_BUILD="20261112-1000";</script>
+<script>window.XQ_OFFLINE=true;window.XQ_BUILD="20261112-1010";</script>
 <script src="core.js"></script>
 <script src="engine.js"></script>
 <script src="local.js"></script>
@@ -2102,6 +2102,8 @@ async function bgmNow(){const el=document.getElementById("bgmNow");if(!el)return
   const ins={zheng:"古箏",bianzhong:"編鐘",paixiao:"排簫",xun:"塤",ruan:"阮",konghou:"箜篌",dizi:"笛子",pipa:"琵琶",xiao:"洞簫",qin:"古琴",morinkhuur:"馬頭琴",sanxian:"三弦",erhu:"二胡"}[(k.split("/").pop()||"").replace(/_\d+\.\w+$/,"")]||"";
   el.innerHTML=`<span style="flex:1;min-width:0">♪ 正在播放${t?`《${esc(t)}》`:""}${ins?`・${ins}`:""}</span><button class="btn ghost" id="bgmNext" style="flex:none;width:auto;margin:0;padding:4px 12px;font-size:13px;white-space:nowrap">換一首</button>`;
   el.querySelector("#bgmNext").onclick=()=>{vibrate(5);bgmSync(true)}}
+/* hspx（開發者 11/12 黑洞篇 5 首主題曲，story/118）：指定曲目（data/bgm/blackhole/bh_N.mp3），黑洞對局依局面換；null＝回到朝代配樂輪播 */
+function bgmForce(file){file=file||null;if((BGM.force||null)===file)return;BGM.force=file;try{bgmSync(true)}catch(e){}}
 function bgmList(){return BGM.list||(BGM.list=fetch("data/bgm/index.json").then(r=>r.ok?r.json():{}).catch(()=>({}))).then(j=>{BGM.L=j;return j})}
 /* 意見回饋 687：iPhone 只准在點擊的當下開始播放；清單已經載好就不要 await，直接同步呼叫 play()，免得等下載完那一下點擊已經「過期」
    11/10 開發者「網頁版還是沒有 bgm」：mp3 只放 CDN（GitHub 上 404），而 CDN 不支援分段下載（Range 回 200 整檔），iPhone 的 audio 一定要分段才肯播（media 錯誤 4）。
@@ -2112,8 +2114,8 @@ function bgmBlob(rel){const U=BGM.u||(BGM.u={});if(U[rel])return Promise.resolve
   return U[rel]=fetch(BGM_BASE+rel,BGM_BASE?{mode:"cors",credentials:"omit"}:undefined).then(r=>{if(!r.ok)throw new Error("http"+r.status);return r.blob()}).then(b=>U[rel]=URL.createObjectURL(b)).catch(e=>{delete U[rel];BGM.err="下載"+((e&&e.message)||"");return null})}
 function bgmPick(era,L,next){if(!next&&BGM.era===era&&BGM.src)return;BGM.era=era;let n=Math.floor(Math.random()*L.length);if(L.length>1&&n===BGM.last)n=(n+1)%L.length;BGM.last=n;BGM.src=`data/bgm/${era}/${L[n]}`;
   const U=BGM.u||{};for(const k of Object.keys(U))if(k!==BGM.src&&typeof U[k]==="string"&&U[k]!==BGM.cur){try{URL.revokeObjectURL(U[k])}catch(e){}delete U[k]}bgmBlob(BGM.src)}
-async function bgmSync(next){const on=!!store.get("bgm",true)&&!document.hidden&&sxmGain("bgm")>0,era=store.get("era","classic");   /* 第 6 輪 F3：背景音樂音量 0、靜音、全部靜音＝暫停 */
-  if(!on){if(BGM.a)BGM.a.pause();return}const L=((BGM.L||await bgmList())||{})[era]||[];if(!L.length){if(BGM.a)BGM.a.pause();return}
+async function bgmSync(next){const on=!!store.get("bgm",true)&&!document.hidden&&sxmGain("bgm")>0,era=BGM.force?"blackhole":store.get("era","classic");   /* 第 6 輪 F3：背景音樂音量 0、靜音、全部靜音＝暫停 */
+  if(!on){if(BGM.a)BGM.a.pause();return}const L=BGM.force?[BGM.force]:((BGM.L||await bgmList())||{})[era]||[];if(!L.length){if(BGM.a)BGM.a.pause();return}
   if(!BGM.a){BGM.a=new Audio();BGM.a.volume=sxmBgmVol(sxmMix());BGM.a.preload="auto";BGM.cur="";BGM.a.onended=()=>bgmSync(true);BGM.a.onplay=BGM.a.onpause=()=>bgmNow();BGM.a.onerror=()=>{const x=BGM.a&&BGM.a.error;BGM.err="media"+(x?x.code:"")}}
   bgmPick(era,L,next);const u=(BGM.u||{})[BGM.src];
   if(typeof u!=="string"){const want=BGM.src;bgmBlob(want).then(x=>{if(x&&BGM.src===want&&store.get("bgm",true))bgmSync()});return}
@@ -9710,9 +9712,9 @@ const bhSay=([who,t])=>`<p class="pl-say">${BH_FACE[who]?`<img src="data/xs/prev
 function bhForced(){try{return localStorage.getItem("xq_bhForce")==="1"}catch(e){return false}}
 /* 星槎起航（shipSailGo、shipGoTo）播完千秋穿梭時叫：沒偏航就照原流程 next() */
 function bhMaybe(k,next,cover){let hit=false;try{const mk=!!store.get("bhMark",0)&&!!k;if(mk)store.set("bhMark",0);hit=bhForced()||mk||Math.random()<BH_P}catch(e){}   /* bhMark：點過幻影棋客頭上的小黑洞，下一次起航必定偏航 */if(!hit||!k)return next();bhOffer(k,next,cover)}
-function bhOffer(k,next,cover){const n=store.get("bhCount",0)||0;vibrate([20,60,20]);
+function bhOffer(k,next,cover){const n=store.get("bhCount",0)||0;bhMus("fall");vibrate([20,60,20]);
   modal(`<div class="em">🌀</div><h2>星槎偏航</h2><p>${esc(BH_TXT.fall)}</p>${n?bhSay(BH_TXT.again):""}<p class="muted" style="font-size:13px">墨色星渦的中心，浮著一張巨大的棋盤。要下這一盤嗎？不下也不扣任何東西，星槎照原本的航線停靠。</p>`,
-    [["🌀 接受棋局",()=>bhIntro(k,cover)],["先回航線",()=>{if(next)next()},true]],"prolog")}
+    [["🌀 接受棋局",()=>bhIntro(k,cover)],["先回航線",()=>{bhMus(null);if(next)next()},true]],"prolog")}
 function bhIntro(k,cover){modal(`<div class="em">♟</div><h2>星樞棋局</h2>${bhSay(BH_TXT.wake)}<p class="pl-say">✦ ${esc(BH_TXT.voice[0])}：「${esc(BH_TXT.voice[1])}」</p><p class="muted" style="font-size:13px">${esc(BH_TXT.rule)}<br>不計積分、不扣分。可以用＋／－或兩指縮放：拉遠看整盤，放大到最近就站在棋盤上。</p>`,
   [["入局",()=>bhStart(k,cover)]],"prolog")}
 /* 難度見 bhLevel（實力＋1）；bhAdj 只是記錄輸贏，不再調難度 */
@@ -9727,12 +9729,12 @@ function bhStart(k,cover){store.set("bhRet",{k,cover:cover!==false,at:Date.now()
   jStart("bh:"+k,{human:"r",lx:bhLevel(),journey:"bh:"+k},()=>{location.hash="#/journey/play";setTimeout(()=>toast("✦ 星樞："+BH_TXT.voice[1]),900)})}
 const bhIs=st=>!!st&&String(st.journey||"").startsWith("bh:");
 /* 對局頁的 3D：巨盤模式＋黑洞環景（08b-cpugame 的 parkDraw 參數最後疊上去） */
-function bhParkEx(st){if(!bhIs(st))return null;return{giant:true,bg:"data/park/blackhole_360.webp",bgName:"🌀 黑洞・星樞棋局",era:"classic",quietMate:true,watchers:[],oppHello:null,opp:null,mateLook:null,crowd:null,
+function bhParkEx(st){if(!bhIs(st)){if(typeof BGM!=="undefined"&&BGM.force&&/^bh_/.test(BGM.force))bhMus(null);return null}return{giant:true,bg:"data/park/blackhole_360.webp",bgName:"🌀 黑洞・星樞棋局",era:"classic",quietMate:true,watchers:[],oppHello:null,opp:null,mateLook:null,crowd:null,
   gate:{img:["data/park/blackhole_360.webp"],icon:"🌀",title:"星樞棋局",sub:"墨色星渦的中心，有一張巨大的星盤",bg:"#05060d",quiet:true}}}
 /* 對局中：領先、落後各提醒一次；下到中盤星樞說一句伏筆（不說破幻影棋客是什麼） */
 let BH_T={id:null,s:{}};
-function bhTick(st){if(!bhIs(st)||st.result||!st.id)return;if(BH_T.id!==st.id)BH_T={id:st.id,s:{}};const S=BH_T.s,n=(st.moves||[]).length,me=st.human==="b"?-1:1,v=st.eval&&st.eval.v!=null?st.eval.v*me:null;
-  const say=(k,L,ms)=>{if(S[k])return;S[k]=1;setTimeout(()=>toast((L[0]==="星樞"?"✦ ":"")+L[0]+"："+L[1]),ms||600)};
+function bhTick(st){if(bhIs(st))try{bhMusTick(st)}catch(e){}if(!bhIs(st)||st.result||!st.id)return;if(BH_T.id!==st.id)BH_T={id:st.id,s:{}};const S=BH_T.s,n=(st.moves||[]).length,me=st.human==="b"?-1:1,v=st.eval&&st.eval.v!=null?st.eval.v*me:null;
+  const say=(k,L,ms)=>{if(S[k])return;S[k]=1;setTimeout(()=>{if(L[0]==="星樞")bhBell()},ms||600);setTimeout(()=>toast((L[0]==="星樞"?"✦ ":"")+L[0]+"："+L[1]),ms||600)};
   if(v!=null&&n>=8&&v>=280)say("lead",BH_TXT.lead);else if(v!=null&&n>=8&&v<=-280)say("behind",BH_TXT.behind);
   if(n>=24&&st.turn===st.human)say("hush",BH_TXT.hush,1200)}
 /* 07-legend journeyGameEnd 叫：記次數、照輸贏調下次難度 */
@@ -9767,6 +9769,23 @@ function bhOrbTap(){if(BH_ORB_K==="gate"&&typeof gxMap==="function"){vibrate([10
   vibrate([10,40,10]);store.set("bhMark",1);store.set("bhOrbHit",1);
   setTimeout(()=>{try{if(PARK&&PARK.v&&PARK.v.oppSay)PARK.v.oppSay(BH_ORB.say,3)}catch(e){}},500);
   setTimeout(()=>toast("🌀 "+BH_ORB.go),1900);try{if(typeof route==="function")setTimeout(()=>{if(PARK&&PARK.last)try{PARK.v.draw(PARK.last.board,PARK.last.o,Object.assign({},PARK.last.ex,{bhOrb:null}))}catch(e){}},1400)}catch(e){}}
+/* ---------- 黑洞篇配樂（開發者 11/12，story/118 選 Claude 混搭＋三個點子）----------
+   5 首 Lyria 主題曲 data/bgm/blackhole/bh_N.mp3：偏航視窗①墨渦墜槎 → 開局前 6 手②星盤初醒 → 平常③七星連枝 → 落後（≤ −150 分）或被將軍④星樞逼將 → 結算⑤幻門留影；
+   離開黑洞對局就回朝代配樂。星樞吃掉七星、星樞開口時敲一聲極低的鐘（bhBell）。
+   七星和聲（bhChord）：帥仕相傌俥炮兵各一個五聲音，疊在配樂底下很輕的一層；那種棋子全被吃光，那個音就淡出，殘局越下越孤單。都跟背景音樂開關、音量走 */
+const BH_MUS={fall:"bh_1.mp3",wake:"bh_2.mp3",play:"bh_3.mp3",danger:"bh_4.mp3",end:"bh_5.mp3"};
+function bhMus(k){try{if(typeof bgmForce==="function")bgmForce(k?BH_MUS[k]:null)}catch(e){}}
+function bhBell(){try{if(typeof withAudio==="function"&&typeof AC!=="undefined"&&AC&&typeof gongHit==="function")withAudio(()=>gongHit(AC.currentTime+.02,58,3.4,true))}catch(e){}}
+if(typeof window!=="undefined")window.XQ_BHBELL=bhBell;
+let BH_CH=null;
+function bhChord(st){if(typeof AC==="undefined"||!AC||typeof sxmDst!=="function"||!store.get("bgm",true))return bhChordOff();const has={};for(const p of st.board||[])if(p&&p===p.toUpperCase())has[p]=1;
+  if(!BH_CH){BH_CH={};const F={K:261.63,A:293.66,B:329.63,N:392,R:440,C:523.25,P:587.33};let i=0;
+    for(const k in F){const o=AC.createOscillator(),g=AC.createGain(),lp=AC.createBiquadFilter();o.type=i++%2?"triangle":"sine";o.frequency.value=F[k];lp.type="lowpass";lp.frequency.value=1400;g.gain.value=0;o.connect(lp);lp.connect(g);g.connect(sxmDst("bgm"));o.start();BH_CH[k]={o,g}}}
+  const t=AC.currentTime;for(const k in BH_CH)BH_CH[k].g.gain.setTargetAtTime(has[k]?.011:0,t,.8)}
+function bhChordOff(){if(!BH_CH)return;const C=BH_CH;BH_CH=null;try{const t=AC.currentTime;for(const k in C){C[k].g.gain.setTargetAtTime(0,t,.4);C[k].o.stop(t+2)}}catch(e){}}
+function bhMusTick(st){if(st.result){bhMus("end");bhChordOff();return}const n=(st.moves||[]).length,me=st.human==="b"?-1:1,v=st.eval&&st.eval.v!=null?st.eval.v*me:null,chk=st.check!=null&&st.check>=0&&st.turn===st.human;
+  bhMus(n<6?"wake":(chk||(v!=null&&v<=-150))?"danger":"play");bhChord(st)}
+if(typeof addEventListener==="function")addEventListener("hashchange",()=>{try{if(!/^#\/journey\/play/.test(location.hash)){bhChordOff();if(typeof BGM!=="undefined"&&BGM.force&&/^bh_/.test(BGM.force))bhMus(null)}}catch(e){}});
 /* ================= 幻譜星門・十三星系（開發者 11/12，story/115、117 的「開發者決定」；前綴 gx） =================
    入口：① 戰勝過黑洞的人，挑戰電腦時幻影棋客頭上的小黑洞變成「星門」（07bh bhOrbKind 回 "gate"，park3d 畫張開的黑洞＋中心小棋盤＋外圍 13 點星光），點了開星圖；
          ② 從黑洞回來以後，星槎圖上多一顆「🌌 幻譜星門」熱點（gxShipHs）。

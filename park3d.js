@@ -1547,7 +1547,7 @@
        自己走子：走路，吃到子接著歡呼；被星樞吃掉一顆：帥揮手示警；贏了全體歡呼、輸了全體鞠躬；做完回待機 */
     const gntAct=(g,k,ms)=>{const B=g&&g.userData&&g.userData.B;if(!B||!B.clips)return;const kk=B.clips[k]?k:({wave:"wave_goodbye_01"})[k]||k;crPlay(B,kk);clearTimeout(g.userData.actT);if(ms)g.userData.actT=setTimeout(()=>{crPlay(B,"idle")},ms);pwPoke(ms||1500)};
     const gntReact=(g,by,cap)=>{if(g&&g.userData&&g.userData.B){gntAct(g,"walk",cap?480:720);if(cap)setTimeout(()=>gntAct(g,"cheer",1900),490)}
-      if(sideOf(cap&&cap.userData&&cap.userData.p||"a")==="r"&&cap.userData.B){const k=Object.values(pieces).find(x=>x&&x.userData&&x.userData.B&&x.userData.p==="K");if(k)gntAct(k,"wave",1700)}};
+      if(sideOf(cap&&cap.userData&&cap.userData.p||"a")==="r"&&cap.userData.B){try{if(window.XQ_BHBELL)window.XQ_BHBELL()}catch(e){}   /* 星樞吃掉七星：一聲極低的鐘 */const k=Object.values(pieces).find(x=>x&&x.userData&&x.userData.B&&x.userData.p==="K");if(k)gntAct(k,"wave",1700)}};
     let gntRes=null;
     const gntTake=p=>{const q=gntPool[p];let g=q&&q.pop();if(g&&g.userData.ped){const[pb,pf,K]=g.userData.ped;pb.material=bMat(true);pf.material=fMat(NAMES.r[K],true)}   /* 換造型（refreshLook）會把舊的棋子材質丟掉，重用的底座要換新的 */if(!g){const K=p.toUpperCase();g=sideOf(p)==="r"?(GNT_X[K]?gntFig(p,K):gntStone(p)):(GNT_XS[K]?gntFig(p,K,true):gntStone(p))}g.visible=true;g.rotation.set(0,g.userData.B?((sideOf(p)==="r")!==flip?PI:0):0,0);sc.add(g);return g};
     const gntDrop=g=>{sc.remove(g);if(g&&g.userData&&g.userData.giant){const p=g.userData.p;(gntPool[p]||(gntPool[p]=[])).push(g)}};
