@@ -1470,8 +1470,8 @@
     const GNT_X={K:"x_shuai",A:"x_shi",B:"x_spiritgirl",N:"x_miaogirl",R:"x_swordboy",C:"x_martialgirl",P:"x_bing"},GNT_CH={K:"帥",A:"仕",B:"相",N:"傌",R:"俥",C:"炮",P:"兵"},GNT_H=1.55;
     const gntPool={},gntCnt={},gntFigs=[],gntStones=[];
     const gntShadow=root=>{const KT=window.XQTOON_KIT;root.traverse(m=>{if(!m.isMesh||m.name==="meGly")return;if(KT&&KT.isHull&&KT.isHull(m)){m.visible=false;m.userData.gntOff=1;return}   /* 水墨描邊的黑殼：半透明的分身會透出一整片黑，分身不描邊 */const ms=(Array.isArray(m.material)?m.material:[m.material]).map(x=>{const c=x.clone();c.transparent=true;c.opacity=.52;c.depthWrite=false;if(c.color)c.color.lerp(new T.Color(0x8FB4FF),.45);if(c.emissive)c.emissive.set(0x1A3A7A);return c});m.material=Array.isArray(m.material)?ms:ms[0];m.castShadow=false})};
-    const gntFig=(p,K)=>{const n=gntCnt[p]=(gntCnt[p]||0)+1,body=n===1,g=new T.Group(),inner=new T.Group();g.add(inner);g.userData={p,th:.27+GNT_H*.55,giant:1,body};
-      {const pb=new T.Mesh(pieceGeo,bMat(true)),pf=new T.Mesh(faceGeo,fMat(NAMES.r[K],true));pf.rotation.x=-PI/2;pf.position.y=.272;pb.receiveShadow=true;g.add(pb,pf);inner.position.y=.27;g.userData.ped=[pb,pf,K]}   /* 角色站在自己的本命棋子上：俯視全盤時也認得出是哪顆子 */
+    const gntFig=(p,K)=>{const n=gntCnt[p]=(gntCnt[p]||0)+1,body=n===1,g=new T.Group(),inner=new T.Group();g.add(inner);g.userData={p,th:GNT_H*.55,giant:1,body};
+      /* 開發者 11/12「底下踩著的棋子不用放上去，只要站角色即可」：不再墊本命棋子底座，角色直接站在棋盤格點上（胸前的本命字照舊） */
       let B=null;try{B=window.XQBot3D&&XQBot3D.figure?XQBot3D.figure({glb:"data/tripo_app/"+GNT_X[K]+".glb",p:GNT_CH[K],gly:{u:.5,v:.4,r:.15}}):null}catch(e){B=null}
       if(!B)return gntStone(p);inner.add(B.bot);g.userData.B=B;gntFigs.push(g);
       /* 放大倍數、位置一律在 inner 自己的座標算（量世界座標再扣掉 inner 的世界位置），不然角色會被拉回棋盤中心 */
