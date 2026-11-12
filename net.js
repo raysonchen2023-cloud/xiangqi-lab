@@ -43,9 +43,34 @@ var XQNet=(function(){
   const CUP_KEY=/^xqlab-test-/.test(ROOT)?{x:"AdIvuWHACyopyR4QKZPcwXRj-CwjFPRGKhdtTRUD7iE",y:"gixRZI_bD2-G1VJBK8pTVUf--TjFwr2o08PhCvTzR3o"}:{x:"AFFHksP_gHhR6T8pWVfhfnO5NuvpRGyjDQFgdjPGlO8",y:"JYvXhSoW71HnDaFZpMroP6kuJy6ILXWRnJTrqBYGXIs"};
   let CUP=null,CUPHALL=null,cupKeyP=null;
   const b64u=t=>{t=String(t).replace(/-/g,"+").replace(/_/g,"/");while(t.length%4)t+="=";const r=atob(t),u=new Uint8Array(r.length);for(let i=0;i<r.length;i++)u[i]=r.charCodeAt(i);return u};
+  const cupPub=()=>cupKeyP||(cupKeyP=crypto.subtle.importKey("jwk",{kty:"EC",crv:"P-256",x:CUP_KEY.x,y:CUP_KEY.y,ext:true},{name:"ECDSA",namedCurve:"P-256"},false,["verify"]));
   async function cupVerify(msg){try{const x=JSON.parse(msg);if(!x||typeof x.d!=="string"||typeof x.s!=="string"||!(window.crypto&&crypto.subtle))return null;
-    cupKeyP=cupKeyP||crypto.subtle.importKey("jwk",{kty:"EC",crv:"P-256",x:CUP_KEY.x,y:CUP_KEY.y,ext:true},{name:"ECDSA",namedCurve:"P-256"},false,["verify"]);
-    const ok=await crypto.subtle.verify({name:"ECDSA",hash:"SHA-256"},await cupKeyP,b64u(x.s),new TextEncoder().encode(x.d));return ok?JSON.parse(x.d):null}catch(e){return null}}
+    const ok=await crypto.subtle.verify({name:"ECDSA",hash:"SHA-256"},await cupPub(),b64u(x.s),new TextEncoder().encode(x.d));return ok?JSON.parse(x.d):null}catch(e){return null}}
+  /* 第 9 輪外部評審（Gemini：千秋盃的報名與賽程廣播也要簽名驗證；格式見 tools/cup-key.js，測試 tools/test-cup-sign.js）：
+     ① 裁判台的廣播（cup/state 名單賽程成績、cup/hall 擂主碑）：簽名要對；簽的內容 d 要帶 k（跟主題一樣："state"／"hall"）和 rt（跟這支 App 連的大廳 ROOT 一樣），
+       擋「把擂主碑貼到名單頻道」「把測試房的公告貼到正式大廳」；d.at（裁判台發布時間）不能比這支手機收過的同一種還舊（記在 localStorage xq_cupSeen，重開 App 也記得）＝擋重放舊賽程；
+       名單超過 3 天、擂主碑超過 9 天沒更新＝過期不收（裁判台每 30 分鐘重發一次）。
+     ② 裁判台開的對局（g/cup…/s）帶 hs＝裁判台對對局內容的簽名：第一次看到某盤千秋盃，要 hs 驗得過、或裁判台簽過名的名單裡有這盤（gid、紅黑代號都對）才收（sgVet）；
+       之後這盤的紅黑代號不能換；「棄擂」判決（result.forfeit）只有裁判台能下，沒有 hs 的不收；名單裡列為千秋盃的 gid，不帶 cup 的狀態也不收（不能拿掉 cup 改當一般對局）。
+     ③ 報名、取消、點將（cup/req）用這支手機的對局金鑰簽名（pk＋sg），裁判台驗過才受理（cupReq）。
+     驗不過的一律不顯示、不改狀態，記在 CUPBAD（XQNet.cupBad()：sig 簽名不對、scope 頻道或大廳不對、stale 過期、replay 重放、game 對局不是裁判台開的） */
+  const CUP_STALE={state:3*864e5,hall:9*864e5},CUPBAD={n:0,sig:0,scope:0,stale:0,replay:0,game:0,last:null};
+  let cupSeenM=null,cupQ=Promise.resolve();
+  const cupSeen=()=>{if(!cupSeenM){let v=null;try{v=JSON.parse(localStorage.getItem("xq_cupSeen")||"null")}catch(e){}cupSeenM=v&&typeof v==="object"?v:{}}return cupSeenM};
+  function cupBad(k,why){CUPBAD[k]=(CUPBAD[k]||0)+1;CUPBAD.n++;CUPBAD.last={k,why:String(why||""),at:Date.now()};try{emit("cupbad",CUPBAD.last)}catch(e){}}
+  async function cupIn(kind,msg){const d=await cupVerify(msg);if(!d||typeof d!=="object")return cupBad("sig",kind+"：裁判台簽名不對");
+    if(d.k!==kind||d.rt!==ROOT)return cupBad("scope",kind+"：不是這個頻道或這個大廳的公告");
+    const at=+d.at,now=Date.now();if(!isFinite(at)||now-at>CUP_STALE[kind])return cupBad("stale",kind+"：太久沒更新的舊公告");
+    const sn=cupSeen(),sk=ROOT+"|"+kind;if(at<(+sn[sk]||0))return cupBad("replay",kind+"：比收過的還舊（重放）");
+    if(kind==="state"&&CUP&&d.wk===CUP.wk&&(d.n||0)<(CUP.n||0))return cupBad("replay",kind+"：同一屆、版本比手上的舊");
+    sn[sk]=Math.min(at,now);try{localStorage.setItem("xq_cupSeen",JSON.stringify(sn))}catch(e){}
+    if(kind==="state")CUP=d;else CUPHALL=d;emit("cup",kind)}
+  const hcCup=g=>{const o={};for(const k in g)if(k!=="rev"&&k!=="at"&&k!=="sg"&&k!=="rl"&&k!=="hs")o[k]=g[k];return JSON.stringify(o)};
+  async function cupHsOk(x){try{const h=x&&x.hs;if(!h||typeof h!=="object"||typeof h.k!=="string"||!(window.crypto&&crypto.subtle))return false;
+    return await crypto.subtle.verify({name:"ECDSA",hash:"SHA-256"},await cupPub(),b64u(h.k),new TextEncoder().encode("xq-cupg1|"+ROOT+"|"+x.gid+"|"+hcCup(x)))}catch(e){return false}}
+  const cupGames=()=>{const r=[];try{if(CUP&&CUP.m&&typeof CUP.m==="object")for(const k in CUP.m){const m=CUP.m[k];if(m&&Array.isArray(m.g))for(const z of m.g)if(z&&z.gid)r.push(z)}}catch(e){}return r};
+  const cupListed=x=>cupGames().some(z=>z.gid===x.gid&&z.red===x.red.id&&z.black===x.black.id),cupGidKnown=gid=>cupGames().some(z=>z.gid===gid);
+  const cupReqMsg=x=>"xq-cupreq1"+JSON.stringify([ROOT,x.wk,x.t,x.id,x.name,x.pts,x.at,x.pk]);
 
   // ---------- 很小的 MQTT 3.1.1 用戶端（只用 QoS 0：發布、訂閱、保留訊息、遺囑、心跳） ----------
   function mqtt(url,o){
@@ -250,7 +275,7 @@ var XQNet=(function(){
     if(p[0]==="sys"&&p[1]==="bots"){try{const x=msg?JSON.parse(msg):null;BOTS_ST=x&&Array.isArray(x.ids)?{up:!!x.up,ids:new Set(x.ids.map(String))}:null}catch(e){BOTS_ST=null}emit("people");return}   /* 回饋 854 */
     if(p[0]==="sys"&&p[1]==="online"){try{const x=msg?JSON.parse(msg):null;ONL=x&&isFinite(x.n)?{n:+x.n,at:+x.at||0}:null}catch(e){ONL=null}emit("people");return}   /* 回饋 854 */
     if(p[0]==="sys"||p[0]==="cup"&&p[1]==="req")return;
-    if(p[0]==="cup"&&(p[1]==="state"||p[1]==="hall")){if(!msg)return;cupVerify(msg).then(d=>{if(!d)return;if(p[1]==="state"){if(CUP&&d.wk===CUP.wk&&(d.n||0)<(CUP.n||0))return;CUP=d}else CUPHALL=d;emit("cup",p[1])});return}
+    if(p[0]==="cup"&&(p[1]==="state"||p[1]==="hall")){if(!msg)return;const k=p[1];cupQ=cupQ.then(()=>cupIn(k,msg)).catch(e=>console.error(e));return}   /* 第 9 輪評審：照收到的順序一則一則驗（cupIn） */
     if(p[0]==="u"){const id=p[1];if(!rosterOn&&!trk.has(id))return;   /* 回饋 854：名單已經收掉（取消訂閱前就送出來的） */
       if(!msg){delete people[id];if(id===me().id)heal()}
       else{try{const x=JSON.parse(msg);if(x&&x.id===id){if(x.v>=2)x.at=Math.min(Date.now(),+x.ts||Date.now());ptsPres(x);people[id]=x;sweep(id,x,retain)}}catch(e){}}   /* 評審 P22.5：ptsPres 記下他報的分數、場數，超過上限的換保守值 */   /* 回饋 854：新版的 at 是「現在＋32 分鐘」給舊版看的，存起來前換回更新時間（資料卡「幾分鐘前更新」用） */
@@ -349,7 +374,8 @@ var XQNet=(function(){
        → 自己在下的這盤、rev 剛好多 1 的新動作，p 要等於手上這份的雜湊（防拼接）。過了才交給原本的 gameIn（okNext、flagRace、revTie 照舊，判超時照舊用自己的棋鐘核對）。
        沒過：不收、記一筆可疑事件（SUS，不跳視窗），自己在下的話把手上最後一份好的原始訊息重送一次（每 5 秒最多一次），蓋掉伺服器上被偽造的保留訊息。
      舊版相容：邀請或接受裡沒有 pk（舊版 App、或這支手機不能用 WebCrypto）＝這盤標成 legacy：照舊規則收發、不驗簽，但這盤**不計積分**（signState() 回 "legacy"，畫面寫「對方版本較舊，無法驗證」）。
-       已經綁了金鑰的盤，沒有簽名的狀態一律不收（不能降級）。千秋盃（gid cup… 而且有 cup）由裁判台開局、目前還不簽，照舊收、照舊計分（signState() 回 "cup"）。 */
+       已經綁了金鑰的盤，沒有簽名的狀態一律不收（不能降級）。千秋盃（gid cup… 而且有 cup）由裁判台開局：玩家的每一步目前還不簽，照舊收、照舊計分（signState() 回 "cup"）；
+       第 9 輪評審起，開局要有裁判台的章（hs）或列在裁判台簽過名的名單裡，紅黑代號綁住不能換，棄擂判決要有裁判台的章（見上面 CUP_KEY 那段）。 */
   const u64=u=>{const a=new Uint8Array(u);let s="";for(let i=0;i<a.length;i++)s+=String.fromCharCode(a[i]);return btoa(s).replace(/\+/g,"-").replace(/\//g,"_").replace(/=+$/,"")};
   const sgEnc=s=>new TextEncoder().encode(s),sgPk=v=>typeof v==="string"&&/^[A-Za-z0-9_-]{80,100}$/.test(v)?v:undefined;
   let KEY=null,PK=null;
@@ -373,7 +399,7 @@ var XQNet=(function(){
   function sgAccepted(x){const fp=sgPk(x.from&&x.from.pk);if(PK&&fp)bindSet(x.gid,{k:{[me().id]:PK,[x.from.id]:fp}});else bindSet(x.gid,{legacy:true})}
   function sgBind(g){if(signedG(g))bindSet(g.gid,{k:{[g.red.id]:g.red.pk,[g.black.id]:g.black.pk}});else bindSet(g.gid,{legacy:true})}
   /* 自己的新動作：清掉抄來的簽名、記下前一份（簽 p 用）；只換 rev 重送：記下來源（沿用原本的簽名） */
-  const sgFresh=(n,b)=>{delete n.sg;delete n.rl;Object.defineProperty(n,"_b",{value:b||null,configurable:true})},sgRelay=(n,src)=>{Object.defineProperty(n,"_s",{value:src,configurable:true})};
+  const sgFresh=(n,b)=>{delete n.sg;delete n.rl;delete n.hs;Object.defineProperty(n,"_b",{value:b||null,configurable:true})},sgRelay=(n,src)=>{Object.defineProperty(n,"_s",{value:src,configurable:true})};
   const moverOf=i=>i%2?"b":"r",ACTS=new Set(["start","rematch","move","undo","draw","drawok","resign","flag","abort","claim","sync"]);
   function actOf(b,g,s){if(!b)return"start";if(g.id!==b.id)return"rematch";const L=g.moves.length,K=b.moves.length,r=g.result;
     if(L>K)return"move";if(r&&!b.result)return r.abort?"abort":r.timeout?"flag":r.w==null?"drawok":r.w===s?"claim":"resign";if(L<K)return"undo";if((g.draw||null)!==(b.draw||null))return"draw";return"sync"}
@@ -391,13 +417,17 @@ var XQNet=(function(){
     return true}
   /* 還沒綁金鑰的盤（觀眾、或這支手機的綁定紀錄不見了）：從這份狀態推一個綁定，驗過簽名才記下來 */
   function sgBindFrom(x){const i=me().id,seat=x.red.id===i?"red":x.black.id===i?"black":null;
-    if(/^cup/.test(String(x.gid))&&x.cup)return{cup:true};
     if(!signedG(x)){for(const k of["red","black"]){const pp=people[x[k].id];if(pp&&sgPk(pp.pk))return null}if(seat&&PK&&sgPk(x[seat==="red"?"black":"red"].pk))return null;return{legacy:true}}
     if(seat&&x[seat].pk!==PK)return null;
     for(const k of["red","black"]){const pp=people[x[k].id];if(pp&&sgPk(pp.pk)&&pp.pk!==x[k].pk)return null}
     return{k:{[x.red.id]:x.red.pk,[x.black.id]:x.black.pk}}}
-  async function sgVet(x){let B=BIND[x.gid],cand=null;if(!B){cand=sgBindFrom(x);if(!cand)return{ok:false,why:"金鑰對不上（不是這盤的雙方）"};B=cand}
-    if(B.legacy||B.cup){if(cand)bindSet(x.gid,cand);return{ok:true,mode:B.cup?"cup":"legacy"}}
+  async function sgVet(x){let B=BIND[x.gid],cand=null;
+    if(!B&&(/^cup/.test(String(x.gid))&&x.cup||cupGidKnown(x.gid))){if(!x.cup||!(cupListed(x)||await cupHsOk(x))){cupBad("game","千秋盃對局 "+String(x.gid).slice(0,40)+" 不是裁判台開的");return{ok:false,why:"千秋盃對局沒有裁判台簽名"}}cand={cup:true,r:x.red.id,b:x.black.id};B=cand}   /* 第 9 輪評審：千秋盃對局要裁判台開的（hs 或簽過名的名單裡有），綁住紅黑代號 */
+    if(!B){cand=sgBindFrom(x);if(!cand)return{ok:false,why:"金鑰對不上（不是這盤的雙方）"};B=cand}
+    if(B.cup){if(B.r&&(x.red.id!==B.r||x.black.id!==B.b)){cupBad("game","千秋盃對陣被換掉");return{ok:false,why:"千秋盃對陣跟裁判台開的不一樣"}}
+      if(x.result&&x.result.forfeit&&!(await cupHsOk(x))){cupBad("game","棄擂判決沒有裁判台簽名");return{ok:false,why:"棄擂判決沒有裁判台簽名"}}
+      if(cand)bindSet(x.gid,cand);return{ok:true,mode:"cup"}}
+    if(B.legacy){if(cand)bindSet(x.gid,cand);return{ok:true,mode:"legacy"}}
     if(!(window.crypto&&crypto.subtle))return{ok:false,why:"這個瀏覽器不能驗簽"};
     const e=x.sg;if(!e||typeof e!=="object"||typeof e.k!=="string"||typeof e.h!=="string"||typeof e.r!=="number")return{ok:false,why:"沒有簽名"};
     if(!signedG(x)||!B.k||B.k[x.red.id]!==x.red.pk||B.k[x.black.id]!==x.black.pk)return{ok:false,why:"雙方金鑰跟開局時不一樣"};
@@ -508,7 +538,11 @@ var XQNet=(function(){
     status:()=>cli&&cli.up?"up":want?"connecting":"off",
     /* 千秋盃：裁判台簽過名的本週狀態、歷屆擂主；報名、取消、報到送到 cup/req（裁判台收下後更新名單） */
     cup:()=>{if(CUP!==cupS){cupS=CUP;cupF=CUP&&Array.isArray(CUP.reg)&&CUP.reg.some(r=>r&&ban(r.id))?Object.assign({},CUP,{reg:CUP.reg.filter(r=>!(r&&ban(r.id)))}):CUP}return cupF},cupHall:()=>CUPHALL,   /* 回饋 852：千秋盃報名名單藏起停權的人（裁判台 tools/cup-host.js 也會擋他報名） */
-    cupReq(t){const m=me();if(!CUP||selfBan())return false;const go=k=>{if(cli&&cli.up)cli.pub(`${ROOT}/cup/req`,JSON.stringify({t,wk:CUP.wk,id:m.id,name:m.name,pts:myPts(),at:Date.now()}));else if(k<6){if(!want){want=true;connect()}setTimeout(()=>go(k+1),1500)}};go(0);return true},
+    /* 第 9 輪評審：報名、取消、點將用這支手機的對局金鑰簽名（pk＋sg，格式見 tools/cup-key.js）；這支手機不能用 WebCrypto＝送不出去（回 false），裁判台不收沒簽名的 */
+    cupReq(t){const m=me();if(!CUP||selfBan()||!(window.crypto&&crypto.subtle))return false;const wk=CUP.wk,pts=myPts();
+      const go=(k,s)=>{if(cli&&cli.up)cli.pub(`${ROOT}/cup/req`,s);else if(k<6){if(!want){want=true;connect()}setTimeout(()=>go(k+1,s),1500)}};
+      keyP.then(async kp=>{if(!kp||!PK){emit("cupreq",{ok:false,why:"這支手機沒辦法簽名"});return}const x={t,wk,id:m.id,name:m.name,pts,at:Date.now(),pk:PK};x.sg=await signS(cupReqMsg(x));go(0,JSON.stringify(x))}).catch(e=>console.error(e));return true},
+    cupBad:()=>JSON.parse(JSON.stringify(CUPBAD)),
     cupChamp:()=>{const h=CUPHALL&&CUPHALL.list&&CUPHALL.list[0];return h&&Date.now()-h.at<8*864e5?h:null},
     downFor:()=>cli&&cli.up||!downAt?0:Date.now()-downAt,pendingSend:()=>dirty,
     /* 評審 P22 對局簽名：signState＝這盤 "signed"（雙方簽名）／"legacy"（對方版本較舊，無法驗證，不計積分）／"cup"／"unknown"／null；suspicious＝最近 50 筆被擋下的可疑對局訊息（不跳視窗） */

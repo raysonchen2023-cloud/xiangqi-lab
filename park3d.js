@@ -1117,7 +1117,7 @@
     let WX=null,CANO=null,MAPL=null,PANM=null,PANDH=0,PANROT=0,PSPOTS=null,MAPM=null,HILL=null,SIMRF=1,LAYER2=[],lastKf=-1,MAPO=[],MAPOK="",MAPP=null,MAPMN=0,RON=(()=>{try{return JSON.parse(localStorage.getItem("m_eramapRealm")||"true")!==false}catch(e){return true}})();   /* 地圖上的地名：[名字, x%, y%, 種類]；長卷的網格、圖高、地標（意見回饋 517、525） */
     let RTF=null,RTK="",RTS=null,RTP=null,RTT=0,RTA=0;   /* 意見回饋 658（B 輿圖遊歷）：路線圖層的重畫函式、目前畫的版本、各站位置（點得到）、左下角的提示、上次檢查的時間、上一格地圖的透明度 */
     const sc=new T.Scene(),FARHIDE=[];sc.fog=new T.Fog(new T.Color(E.mist),70,320);sc.background=new T.Color(E.mist);if(GIANT){sc.fog=null;sc.background=new T.Color(0x05060d);el.style.background="#05060d"}   /* 意見回饋 486：環景沒畫到的地方顯示朝代的霧色，不會一片黑 */
-    const cam=new T.PerspectiveCamera(50,1,.5,700);try{if(localStorage.getItem("xq_dbg3d"))window.__PK={sc,cam}}catch(e){}try{(window.__PK=window.__PK||{}).perf=PF}catch(e){}   /* 除錯用：localStorage 設 xq_dbg3d 才打開 sc、cam；效能計數 perf 一直都在（11/11 省電模式） */
+    const cam=new T.PerspectiveCamera(50,1,.5,700);try{if(localStorage.getItem("xq_dbg3d"))window.__PK={sc,cam,land:(ti,g)=>landFx(ti,!!g)}}catch(e){}   /* 第 10 輪 F1：除錯時 __PK.land(格,巨型) 直接在某格觸發一次落地特效，給截圖證據用 */try{(window.__PK=window.__PK||{}).perf=PF}catch(e){}   /* 除錯用：localStorage 設 xq_dbg3d 才打開 sc、cam；效能計數 perf 一直都在（11/11 省電模式） */
     // 光：午後斜陽（唯一投影光，陰影範圍只包住石桌，陰影比較銳利）＋暖色天光＋冷色補光；整體對比拉高，不再灰白
     sc.add(new T.HemisphereLight(0xFFF1DA,0x5A4A36,.42));
     const sun=new T.DirectionalLight(0xFFD9A8,1.15);sun.position.set(-18,34,14);sun.castShadow=!PW.on;sun.shadow.mapSize.set(2048,2048);
@@ -1748,14 +1748,16 @@
         {t:1.75,fl:[.22,.04]},{t:2.65,c:{y:.68,p:.5,z:.9,f:"k"}}]}};
     let FXTS=1,HSTOP=0,CINE=null,SHK=null,CAPBUSY=0,CAPB_T=0,MATED=null,LBK="";const GTV=new T.Vector3();
     const capDone=()=>{CAPBUSY=Math.max(0,CAPBUSY-1)};
-    /* 第 9 輪 F1（Gemini 改善單 6「一般落子聲音與視覺回饋」）：一般走子落地那一刻——落點一圈淡淡漣漪＋幾顆塵（園子＝木屑色、黑洞＝星光），並敲一聲落子聲（XQ_LAND，01-board 照落子音效材質）。減少動態、省電模式只出聲 */
-    const landFx=(ti,giant)=>{try{if(window.XQ_LAND)window.XQ_LAND(giant)}catch(e){}if(RDM||PW.on)return;const[x,z]=pos(ti),col=giant?0xBFD8FF:0xE8D9B8,bl=giant?T.AdditiveBlending:T.NormalBlending,s0=giant?GS:1;
-      const r=new T.Mesh(new T.RingGeometry(.34,.4,40),new T.MeshBasicMaterial({color:col,transparent:true,opacity:.55,depthWrite:false,side:T.DoubleSide,blending:bl}));r.rotation.x=-PI/2;r.position.set(x,TOP+.012,z);r.scale.setScalar(s0);sc.add(r);
-      const N=giant?14:10,P=new Float32Array(N*3),V=[];for(let i=0;i<N;i++){const a=Math.random()*TAU,v=.4+Math.random()*.6;V.push([Math.cos(a)*v,.5+Math.random()*.6,Math.sin(a)*v]);P[i*3]=x;P[i*3+1]=TOP+.05;P[i*3+2]=z}
-      const geo=new T.BufferGeometry();geo.setAttribute("position",new T.BufferAttribute(P,3));const pt=new T.Points(geo,new T.PointsMaterial({color:col,size:giant?.09:.06,transparent:true,opacity:.8,depthWrite:false,blending:bl}));sc.add(pt);
-      anims.push({t:0,d:.5,f:p=>{const e=1-Math.pow(1-p,2),tt=p*.5,A=geo.attributes.position.array;r.scale.setScalar((1+e*2.4)*s0);r.material.opacity=.55*(1-p);
-          for(let i=0;i<N;i++){A[i*3]=x+V[i][0]*tt*s0;A[i*3+1]=TOP+.05+V[i][1]*tt-1.6*tt*tt;A[i*3+2]=z+V[i][2]*tt*s0}geo.attributes.position.needsUpdate=true;pt.material.opacity=.8*(1-p)},
-        end:()=>{sc.remove(r);sc.remove(pt);r.geometry.dispose();r.material.dispose();geo.dispose();pt.material.dispose()}})};let GBEAMT=null;
+    /* 第 9 輪 F1（Gemini 改善單 6「一般落子聲音與視覺回饋」）：一般走子落地那一刻——落點漣漪＋塵（園子＝木屑色、黑洞＝星光），並敲一聲落子聲（XQ_LAND，01-board 照落子音效材質） */
+    /* 第 10 輪 F1（Gemini：「漣漪太淡，截圖看不清楚」）：園子淺色木桌上改用深棕外環＋亮色內閃兩層，擴散到約 1.6 格、停留 0.8 秒（前 35% 不淡），塵粒加多加大；黑洞照樣星光加法混合但加粗。減少動態、省電模式仍只出聲 */
+    const landFx=(ti,giant)=>{try{if(window.XQ_LAND)window.XQ_LAND(giant)}catch(e){}if(RDM||PW.on)return;const[x,z]=pos(ti),col=giant?0xBFD8FF:0x6B4A22,hi=giant?0xFFFFFF:0xFFF2D0,dust=giant?0xBFD8FF:0xC9A66B,bl=giant?T.AdditiveBlending:T.NormalBlending,s0=giant?GS:1;
+      const ring=(a,b,c,o)=>{const m=new T.Mesh(new T.RingGeometry(a,b,48),new T.MeshBasicMaterial({color:c,transparent:true,opacity:o,depthWrite:false,side:T.DoubleSide,blending:bl}));m.rotation.x=-PI/2;m.position.set(x,TOP+.012,z);m.scale.setScalar(s0);sc.add(m);return m};
+      const r=ring(.34,.47,col,.85),r2=ring(.36,.42,hi,.95);r2.position.y=TOP+.014;
+      const N=giant?20:16,P=new Float32Array(N*3),V=[];for(let i=0;i<N;i++){const a=Math.random()*TAU,v=.5+Math.random()*.7;V.push([Math.cos(a)*v,.6+Math.random()*.7,Math.sin(a)*v]);P[i*3]=x;P[i*3+1]=TOP+.05;P[i*3+2]=z}
+      const geo=new T.BufferGeometry();geo.setAttribute("position",new T.BufferAttribute(P,3));const pt=new T.Points(geo,new T.PointsMaterial({color:dust,size:giant?.13:.1,transparent:true,opacity:.95,depthWrite:false,blending:bl}));sc.add(pt);
+      anims.push({t:0,d:.8,f:p=>{const e=1-Math.pow(1-p,2),k=p<.35?1:1-(p-.35)/.65,tt=p*.6,A=geo.attributes.position.array;r.scale.setScalar((1+e*3.2)*s0);r.material.opacity=.85*k;r2.scale.setScalar((1+e*1.6)*s0);r2.material.opacity=.95*Math.max(0,1-p*2.5);
+          for(let i=0;i<N;i++){A[i*3]=x+V[i][0]*tt*s0;A[i*3+1]=Math.max(TOP+.02,TOP+.05+V[i][1]*tt-1.6*tt*tt);A[i*3+2]=z+V[i][2]*tt*s0}geo.attributes.position.needsUpdate=true;pt.material.opacity=.95*k},
+        end:()=>{for(const m of[r,r2]){sc.remove(m);m.geometry.dispose();m.material.dispose()}sc.remove(pt);geo.dispose();pt.material.dispose()}})};let GBEAMT=null;
     const gntBeamT=()=>GBEAMT||(GBEAMT=(()=>{const c=document.createElement("canvas");c.width=4;c.height=128;const x=c.getContext("2d"),g=x.createLinearGradient(0,0,0,128);g.addColorStop(0,"#000");g.addColorStop(.55,"#5a4a2a");g.addColorStop(.9,"#fff");g.addColorStop(1,"#fff");x.fillStyle=g;x.fillRect(0,0,4,128);const t=new T.CanvasTexture(c);t.colorSpace=T.SRGBColorSpace;return t})());   /* 光柱：底下最亮、往上淡掉（不然像一片平的長方形） */
     const gntMateAfter=(board,by)=>{try{const X=window.XQCore;return!!(X&&X.legal)&&X.legal(board,by==="r"?"b":"r").length===0}catch(e){return false}};
     const fxShake=(a,d)=>{if(RDM||!(a>0))return;SHK={a,d:Math.max(.05,d),t0:null}};

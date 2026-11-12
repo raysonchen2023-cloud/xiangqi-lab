@@ -131,6 +131,59 @@ function repetitionVerdict(S){
   if(r.chase)return result("b","紅方長捉同一子判負");
   if(b.chase)return result("r","黑方長捉同一子判負");
   return result(null,"亞洲棋例：循環未構成單方長將或直接長捉，判和")}
+/* 臺灣棋規正式版（開發者 11/12 評比第 9 輪「F4 可以做嗎」→ 做；選「雙方都選才計分」「100 著自動判和」）
+   依《中華民國象棋規則》113 年修訂版（中華民國象棋文化協會 https://www.cccs.org.tw/Page?itemid=18&mid=35 附的 PDF）：
+   ・第二章第一節術語「長將／長捉」：循環歸原狀態達三次循環 → 同一局面第 4 次出現才判（千秋休閒規則是第 3 次）
+   ・術語「捉」說明一～六：將帥、兵卒攻擊＝閒；不能離線的子攻擊＝閒；同兵種互相攻擊＝閒，被攻擊子不能離線＝捉；
+     有真根＝閒、無根＝捉；傌炮仕相攻擊俥不論有根無根都是捉；可互換吃去＝兌（閒）
+   ・第二節 C 表 2.2-1：雙方同為長將／長捉／未犯例都判和；一方長將另一方不是＝長將方負；一方長捉另一方未犯例＝長捉方負
+   ・棋例總綱 7：長捉同類子未犯例，但該子受牽制不能離線時仍作長捉論；活傌長捉拐腳馬亦犯例
+   ・第三章第四節限著：雙方共走 100 著未吃子判和（條文「經裁判審查」，App 沒有裁判，自動判和並寫明） */
+const TW_RULES=Object.freeze({id:"tw113-v1",name:"中華民國象棋規則 113 年修訂版",occurrences:4});
+function twPinned(b,i){const p=b[i];if(!p)return false;const s=sideOf(p),n=b.slice();n[i]=null;return inCheck(n,s)||facing(n)}   /* 術語「不能離線／位」：這子一離開就會被將或王見王 */
+function twCatch(b,f,t){const p=b[f].toUpperCase(),q=b[t].toUpperCase(),s=sideOf(b[f]);
+  if(p==="K"||p==="P")return{c:false,why:"將帥兵卒攻擊為閒"};
+  if(twPinned(b,f))return{c:false,why:"攻擊子不能離線為閒"};
+  if(p===q){if(twPinned(b,t))return{c:true,same:true,why:"同兵種、被攻擊子不能離線為捉"};if(captureLegal(b,t,f))return{c:false,why:"同兵種可以互相攻擊為閒"}}
+  if(q==="R"&&"NCAB".includes(p))return{c:true,why:"傌炮仕相攻擊俥不論有根無根皆為捉"};
+  if(captureLegal(b,t,f))return{c:false,why:"可互換吃去為兌"};
+  const n=make(b,f,t),rooted=n.some((x,j)=>x&&sideOf(x)!==s&&captureLegal(n,j,t));
+  return rooted?{c:false,why:"被攻擊子有真根為閒"}:{c:true,same:p===q,why:"被攻擊子無根為捉"}}
+function twTrace(S,from){
+  let b=parseFen(S.start||START),ids=b.map((p,i)=>p?i:null),s=S.startTurn||"r",cycleIds=null,stable=true;const tr=[];
+  for(let i=0;i<S.moves.length;i++){if(i===from)cycleIds=ids.slice();const m=S.moves[i],before=i>=from?attackMap(b,ids,s):null;
+    b=make(b,m.f,m.t);ids=ids.slice();ids[m.t]=ids[m.f];ids[m.f]=null;
+    if(i>=from&&fen(b,opp(s))===S.pos[from]&&ids.some((id,j)=>id!==cycleIds[j]))stable=false;
+    if(i>=from){const after=attackMap(b,ids,s);tr.push({ply:i+1,by:s,check:inCheck(b,opp(s)),board:b,ids,attacks:[...after].filter(([k])=>!before.has(k)).map(([,a])=>a)})}
+    s=opp(s)}
+  /* 對手這一手化解了（逃子、擋住、吃掉）才算步步捉；跟千秋休閒規則同一個做法 */
+  return{stable,trace:tr.map((e,i)=>{const reply=tr[(i+1)%tr.length];return{...e,attacks:e.attacks.filter(a=>{const f=reply.ids.indexOf(a.attacker),t=reply.ids.indexOf(a.target);return f<0||t<0||!captureLegal(reply.board,f,t)})}})}}
+function twRepetitionVerdict(S){
+  const n=S.moves.length,key=S.pos&&S.pos[n],idx=[];if(!key)return null;
+  S.pos.forEach((p,i)=>{if(i<=n&&p===key)idx.push(i)});
+  if(idx.length<TW_RULES.occurrences)return null;
+  const points=idx.slice(-TW_RULES.occurrences),from=points[0],len=points[1]-from;
+  const evidence={rules:TW_RULES.id,ruleset:"tw113",occurrences:points,fromPly:from+1,toPly:n};
+  const same=points.every((p,k)=>k===0||p-points[k-1]===len)&&[1,2].every(c=>S.moves.slice(from,points[1]).every((m,i)=>{const z=S.moves[points[c]+i];return z&&m.f===z.f&&m.t===z.t}));
+  if(!same){const sp=checksSpan(S,from,n),rc=sp.filter(x=>x.by==="r"),bc=sp.filter(x=>x.by==="b"),rC=rc.length>0&&rc.every(x=>x.check),bC=bc.length>0&&bc.every(x=>x.check);
+    if(rC&&bC)return{...evidence,w:null,why:"臺灣棋規：雙方長將，經三次循環仍不變著，判和（表 2.2-1）"};
+    if(rC)return{...evidence,w:"b",why:"臺灣棋規：紅方長將，經三次循環仍不變著，判負（棋例總綱 1）"};
+    if(bC)return{...evidence,w:"r",why:"臺灣棋規：黑方長將，經三次循環仍不變著，判負（棋例總綱 1）"};
+    return{...evidence,pending:true,policy:"prompt_agree",why:"臺灣棋規：循環路線不同，App 無法比對是否「步步」將或捉；請變著，或雙方協議和棋"}}
+  const R=twTrace(S,from);
+  if(!R.stable)return{...evidence,pending:true,policy:"prompt_agree",why:"臺灣棋規：同類棋子交換位置的循環，App 無法比對；請變著，或雙方協議和棋"};
+  const side=s=>{const ms=R.trace.filter(m=>m.by===s),check=ms.length>0&&ms.every(m=>m.check);let targets=null,samePin=false;
+    for(const m of ms){const ts=new Set();for(const a of m.check?[]:m.attacks){const k=twCatch(m.board,a.from,a.to);if(k.c){ts.add(a.target);if(k.same)samePin=true}}
+      targets=targets===null?ts:new Set([...targets].filter(t=>ts.has(t)))}
+    /* 棋例總綱 9：將帥或兵卒聯合他子長捉同一子未犯例 */
+    const pk=ms.some(m=>m.attacks.some(a=>(a.piece==="K"||a.piece==="P")&&targets&&targets.has(a.target)));
+    const chase=!!(targets&&targets.size)&&!pk;return{check,chase,samePin:chase&&samePin,targets:targets?[...targets]:[]}};
+  const r=side("r"),b=side("b"),lv=x=>x.check?2:x.chase?1:0,L=["未犯例","長捉","長將"];
+  evidence.red={check:r.check,chase:r.chase,targets:r.targets};evidence.black={check:b.check,chase:b.chase,targets:b.targets};
+  const res=(w,why)=>({...evidence,w,why}),R0=lv(r),B0=lv(b),art=x=>x.check?"棋例總綱 1":x.samePin?"棋例總綱 7（同類子受牽制不能離線，仍作長捉論）":"棋例總綱 3";
+  if(R0===B0)return res(null,"臺灣棋規：雙方"+L[R0]+"，經三次循環仍不變著，判和（表 2.2-1）");
+  if(R0>B0)return res("b","臺灣棋規：紅方"+L[R0]+"，經三次循環仍不變著，判負（"+art(r)+"）");
+  return res("r","臺灣棋規：黑方"+L[B0]+"，經三次循環仍不變著，判負（"+art(b)+"）")}
 
 /* 棋規註冊表與棋規設定（開發者 11/11 評比循環 F3「多棋規與臺灣棋規可切換原型」；Gemini 架構報告第一項，查證後實作，見 story/100_Gemini架構報告處理.md）
    真正實作、可以計積分的只有 qiqiu_casual（上面 REP_RULES 的亞洲棋例直接捉子子集＋App 自訂限著）。
@@ -143,14 +196,22 @@ const RULESETS=Object.freeze({
     basis:"亞洲棋例（直接捉子）的子集，循環裁判版本 "+REP_RULES.id+"；60 回合限著是 App 自訂",
     covers:["將死","困斃","長將判負","直接長捉同一子判負","一將一捉判和","閒著循環判和","60 回合未吃子判和","雙方無進攻子力判和","超時判負"],
     pending:["路線不同的循環（不是每步將軍）","同類棋子換位","雙方互捉","同類子牽制"],diffs:[]}),
-  tw_proto:Object.freeze({id:"tw_proto",name:"臺灣比賽規程（原型）",short:"臺灣規程・原型",edition:"依比賽規程引用的《中華民國象棋規則》96 年修訂版；條文原文未取得",status:"prototype",rated:false,unresolvedPolicy:"prompt_agree",
+  tw_proto:Object.freeze({id:"tw_proto",hidden:true,name:"臺灣比賽規程（原型）",short:"臺灣規程・原型",edition:"依比賽規程引用的《中華民國象棋規則》96 年修訂版；條文原文未取得",status:"prototype",rated:false,unresolvedPolicy:"prompt_agree",
     basis:"新竹市 114 年市長盃競賽規程（引用《中華民國象棋規則》96 年修訂版）；條文原文未取得",
     covers:["將死","困斃","雙方無進攻子力判和（沿用，未查證）","60 回合未吃子判和（沿用，未查證）","超時判負（沿用）"],pending:["所有循環：提示後交雙方協議"],
     diffs:[{rule:"長將",tw:"單方長將循環三回合後，經裁判裁決長將方仍不變著判負（規程原文）",app:"第 3 次重複改成提示、交雙方協議，不自動判負",verified:true},
       {rule:"長捉",tw:"長捉無根子循環三回合後，經裁判裁決仍不變著判負（規程原文）",app:"同上",verified:true},
       {rule:"一將一捉、互捉、閒著循環",tw:"未查證",app:"提示、交雙方協議，不自動判和",verified:false},
       {rule:"60 回合限著",tw:"未查證",app:"暫時沿用千秋休閒規則",verified:false},
-      {rule:"超時、子力不足",tw:"未查證",app:"暫時沿用千秋休閒規則（時間用完一律判負）",verified:false}]})});
+      {rule:"超時、子力不足",tw:"未查證",app:"暫時沿用千秋休閒規則（時間用完一律判負）",verified:false}]}),
+  /* 11/12 正式版：照 113 年修訂版條文自動判；可以計分（線上要雙方都選這一套才計分，net.js netRc；晉級賽可選，local.js） */
+  tw113:Object.freeze({id:"tw113",name:"臺灣棋規（中華民國象棋規則 113 年修訂版）",short:"臺灣棋規",edition:"113 年修訂版",status:"implemented",rated:true,unresolvedPolicy:"prompt_agree",
+    basis:"《中華民國象棋規則》113 年修訂版（中華民國象棋文化協會），循環裁判版本 "+TW_RULES.id+"；條文 https://www.cccs.org.tw/Page?itemid=18&mid=35",
+    covers:["將死","困斃","長將判負（三次循環）","長捉判負（三次循環，術語「捉」說明一～六）","雙方長將／長捉／未犯例判和（表 2.2-1）","同類子受牽制仍作長捉（棋例總綱 7）","100 著未吃子判和（App 代替裁判審查）","雙方無進攻子力判和（App 自訂）","超時判負"],
+    pending:["循環路線不同（不是每步將軍）","同類棋子交換位置"],
+    diffs:[{rule:"循環判決時機",tw:"三次循環後裁判介入",app:"同一局面第 4 次出現自動判（沒有現場裁判）",verified:true},
+      {rule:"自然限著",tw:"雙方共走 100 著未吃子，經裁判員認同後判和",app:"第 100 著自動判和",verified:true},
+      {rule:"犯規、違例次數（犯規兩次或違例四次判負）",tw:"現場裁判記錄",app:"App 不讓下出違規著法，不記次數",verified:true}]})});
 const RC_MODES=["casual","ranked","puzzle"];
 function ruleConfig(id,mode){const R=RULESETS[id]||RULESETS[RULESET_DEFAULT],m=RC_MODES.includes(mode)?mode:"casual";
   return Object.freeze({rulesetId:R.id,edition:R.edition,implementationVersion:REP_RULES.id,mode:m==="ranked"&&!R.rated?"casual":m,unresolvedPolicy:R.unresolvedPolicy})}
@@ -172,8 +233,9 @@ function repetitionWarning(st,me){
   if(!st||st.result||!me||st.turn!==me||!st.moves||st.moves.length<4)return null;
   const base={start:st.start||null,startTurn:st.startTurn||"r",moves:st.moves.map(m=>({f:m.f,t:m.t}))};if(st.rc)base.rc=st.rc;
   const S={...base,moves:base.moves.slice()};stateRebuild(S);
-  const n=S.moves.length,key=S.pos[n],idx=[];S.pos.forEach((p,i)=>{if(p===key)idx.push(i)});if(idx.length!==2)return null;
-  const cyc=base.moves.slice(idx[0],idx[1]);let v=null;
+  const n=S.moves.length,key=S.pos[n],idx=[];S.pos.forEach((p,i)=>{if(p===key)idx.push(i)});
+  const need=st.rc&&st.rc.rulesetId==="tw113"?TW_RULES.occurrences-1:2;if(idx.length!==need)return null;   /* 臺灣棋規正式版第 4 次出現才判，所以第 3 次出現時預警 */
+  const cyc=base.moves.slice(idx[need-2],idx[need-1]);let v=null;
   for(let k=1;k<=cyc.length&&!v;k++){const T={...base,moves:base.moves.concat(cyc.slice(0,k))};stateRebuild(T);const j=judgeState(T);if(j)v=j;else if(T.repetition&&T.repetition.pending)v=T.repetition}
   if(!v||(!v.pending&&v.w!==opp(me)))return null;
   if(st.noPerp&&!v.pending&&/長將|長捉|長打/.test(v.why||""))return null;
@@ -227,10 +289,11 @@ function judgeState(S){
   const mover=S.moves[n-1].by,other=opp(mover);
   if(legal(S.board,other).length===0)return{w:mover,why:inCheck(S.board,other)?"將死":"困斃"};
   // 長將／長捉先於自然限著，不能以未吃子和局覆蓋違例。
-  const rep=rulesetVerdict(repetitionVerdict(S),S);S.repetition=rep;   /* rulesetVerdict：依這盤的棋規（S.rc）調整；沒有 rc＝千秋休閒規則，原樣 */
+  const tw=S.rc&&S.rc.rulesetId==="tw113",rep=tw?twRepetitionVerdict(S):rulesetVerdict(repetitionVerdict(S),S);S.repetition=rep;   /* 臺灣棋規正式版另一套循環裁判（第 4 次出現才判） */   /* rulesetVerdict：依這盤的棋規（S.rc）調整；沒有 rc＝千秋休閒規則，原樣 */
   if(rep){if(rep.pending)return null;return{w:rep.w,why:rep.why,adjudication:rep}}
   if(!hasAttackers(S.board,"r")&&!hasAttackers(S.board,"b"))return{w:null,why:"雙方均無進攻子力"};
   let since=0;for(let i=n-1;i>=0;i--){if(S.moves[i].cap)break;since++}
+  if(tw&&since>=100)return{w:null,why:"臺灣棋規：自然限著，雙方共走 100 著未吃子，判和（第三章第四節；App 代替裁判審查）"};
   if(since>=120)return{w:null,why:"遊戲自然限著：60 回合未吃子"};
   return null}
 function pickMove(r,lv){
@@ -275,6 +338,6 @@ async function classifyRaw(b,s,f,t,ms,lt){   /* lt：對方上一步落在哪一
      bmt＝最佳著法的殺棋步數（正＝走方 N 步殺對方、負＝走方被殺、null＝沒有殺棋）；pmt＝實際這步走完的殺棋步數（同樣正負；這步直接將死或困斃對方＝1）。
      新版一定有這兩個欄位（沒有殺棋就是 null），舊存檔、舊快取沒有（undefined）；q、loss、ev、bv 完全照舊 */
   return{q,loss,gap,ev:s==="r"?played:-played,bv:s==="r"?best.v:-best.v,bmt:best.mate==null?null:best.mate,pmt:pmt==null?null:pmt,rr,bc:notate(b,bf,bt),bm:best.mv,bp:(best.pv||[]).slice(0,3)}}   // bp：Pikafish 建議的前 3 步（賽後在棋盤上畫箭頭）
-return{START,NAMES,CN,VAL,sideOf,opp,parseFen,fen,legal,legalOk,inCheck,kingSq,make,iccs,parseSq,notate,chasePairs,hasAttackers,REP_RULES,repetitionVerdict,RULESET_DEFAULT,RULESETS,ruleConfig,ruleConfigOf,ruleRated,rulesetVerdict,repetitionWarning,PLAYER,annotate,summary,fullItem,gameItem,LEVELS,stateApply,stateRebuild,judgeState,pickMove,ANALYZE_MS,clampV,gradeLoss,qName,classifyRaw};
+return{START,NAMES,CN,VAL,sideOf,opp,parseFen,fen,legal,legalOk,inCheck,kingSq,make,iccs,parseSq,notate,chasePairs,hasAttackers,REP_RULES,repetitionVerdict,TW_RULES,twRepetitionVerdict,RULESET_DEFAULT,RULESETS,ruleConfig,ruleConfigOf,ruleRated,rulesetVerdict,repetitionWarning,PLAYER,annotate,summary,fullItem,gameItem,LEVELS,stateApply,stateRebuild,judgeState,pickMove,ANALYZE_MS,clampV,gradeLoss,qName,classifyRaw};
 })();
 if(typeof module!=="undefined")module.exports=XQCore;

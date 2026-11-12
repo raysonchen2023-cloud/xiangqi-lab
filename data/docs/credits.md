@@ -59,7 +59,7 @@ AI 生成素材（Gemini、OpenAI 圖片，Lyria 音樂，Tripo 3D 模型，AI �
 ### Pikafish 引擎（`engine/pikafish.wasm`、`pikafish.js`）
 
 - 來源：[official-pikafish/Pikafish](https://github.com/official-pikafish/Pikafish)，版本標籤 Pikafish-2026-09-06
-- 授權：GNU GPL 第 3 版（全文 `LICENSE-Pikafish-GPL3.txt`）
+- 授權：GNU GPL 第 3 版（全文 [LICENSE-Pikafish-GPL3.txt](https://raysonchen2023-cloud.github.io/xiangqi-lab/LICENSE-Pikafish-GPL3.txt)）
 - 怎麼用：編成 WebAssembly 在手機裡跑，負責電腦下棋和複盤分析。只改了 `uci.cpp`（讓網頁能送指令），改過的檔案和建置腳本公開在 [pikafish-src](https://github.com/raysonchen2023-cloud/xiangqi-lab/tree/main/pikafish-src)
 - 能不能散布：可以，但要提供對應原始碼
 - 狀態：授權 **已確認**；「完整對應原始碼包」和「執行檔確實由這份原始碼編出」的證據 **待開發者確認**
@@ -67,7 +67,7 @@ AI 生成素材（Gemini、OpenAI 圖片，Lyria 音樂，Tripo 3D 模型，AI �
 ### 神經網路權重 `pikafish.nnue`
 
 - 來源：Pikafish 官方
-- 授權：Pikafish 的 NNUE 授權（全文 `NNUE-License.md`，和官方 [Networks README](https://github.com/official-pikafish/Networks/blob/master/README.md) 一致）：只能合法使用；**未經許可不得商用**；官網名單上的單位可以商用
+- 授權：Pikafish 的 NNUE 授權（全文 [NNUE-License.md](https://raysonchen2023-cloud.github.io/xiangqi-lab/NNUE-License.md)，和官方 [Networks README](https://github.com/official-pikafish/Networks/blob/master/README.md) 一致）：只能合法使用；**未經許可不得商用**；官網名單上的單位可以商用
 - 怎麼用：引擎啟動時載入，評估局面
 - 能不能散布：《象棋千秋》不收費、不做商業用途，在這個條件下隨 App 一起提供。要商用必須先取得 Pikafish 團隊許可，或換成其他權重
 - 狀態：**待開發者確認**——目前沒有書面許可；「免費上架算不算商用」條文沒有說清楚。另外，官方 README 說 Fairy-Stockfish 象棋版權重是 CC0，但那**不是**我們用的檔案
@@ -103,11 +103,15 @@ AI 生成素材（Gemini、OpenAI 圖片，Lyria 音樂，Tripo 3D 模型，AI �
 ## 五、3D 模型
 
 - 來源：用 Tripo 把立繪轉成 3D（`tripo_app`、`tripo_anim`），再瘦身放進 App
-- 授權：**看用的是哪個方案。** Tripo 自己的說明頁說：免費方案的生成結果，權利歸 Tripo、不能商用；付費方案的使用者擁有生成結果、可以商用。也有 Tripo 文章說免費方案的公開模型是 CC BY 4.0（要署名）。說法不一致，要以當時的服務條款為準。[Tripo 說明頁（商用）](https://www.tripo3d.ai/help/privacy-policy/can-i-use-models-commercially)（本次直接讀取被網站擋下，上面是搜尋結果摘要，服務條款原文未核對）
-- 怎麼用：放進園子、星槎甲板等 3D 場景
-- 能不能散布：付費方案可以；免費方案可能不行
-- 狀態：**待開發者確認**——用的是哪個方案、當時的條款版本。輸入圖是 Gemini 生成的，第四項的疑問也適用
-- 11/12 開發者回覆：**用的是免費方案**。照 Tripo 的說法，免費方案的結果權利歸 Tripo、不能商用（另有文章說是 CC BY 4.0，要署名）。《象棋千秋》不收費、不商用，在這個條件下使用，並在素材授權頁署名「3D 模型由 Tripo AI 生成」；要商用或上架收費前，要升級付費方案重新生成，或確認條款原文
+- 授權：**付費使用者的產出，權利歸開發者。** 依 [Tripo 使用者協議](https://www.tripo3d.ai/terms)（2025 年 7 月 11 日版）第 5.2.2 條，付費使用者擁有輸入和輸出的全部權利（包括使用、修改、散布、授權、營利）；第 5.2.1 條的免費使用者，產出權利才歸 Tripo。
+- 怎麼確認的（2026 年 11 月 12 日晚上，開發者登入 Tripo 開發者平台帳單頁，Claude 核對）：
+  - 全部 3D 模型都是用 Tripo **API** 生成（`tools/tripo_gen.py`），不是網頁版。
+  - 開發者的 API 帳戶從 **2026 年 11 月 4 日**起用 Stripe 付費儲值，共 8 次、13,000 點（帳單頁有交易紀錄，可下載發票）。
+  - 本機最早的模型檔生成於 11 月 4 日 16:48（臺灣時間，是後來淘汰的試做品），在第一筆付款之後；App 裡上線的 129 個模型，最早是 11 月 5 日 16:38。所以**沒有模型是用免費點數做的**。
+- **更正**：11/12 下午這裡寫「開發者回覆：用的是免費方案」，是把 Tripo 網頁版的會員方案跟 API 帳戶弄混了；API 帳戶一直是付費儲值，已更正。
+- 怎麼用：放進園子、星槎甲板、黑洞棋盤等 3D 場景
+- 能不能散布：可以。條款限制：不能拿輸出去做和 Tripo 競爭的 3D 生成服務；Tripo 可以為了提供服務而使用、展示這些內容。仍在這頁署名「3D 模型由 Tripo AI 生成」
+- 狀態：**已確認**。付款紀錄與發票由開發者保存，當作權利證明。輸入圖是 Gemini 生成的，第四項的說明也適用
 
 ## 六、背景音樂
 

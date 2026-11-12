@@ -402,6 +402,7 @@ html[data-era=ming] .topbar,html[data-era=qing] .topbar{border-bottom-width:4px}
 /* 意見回饋 416：開局特效——墨帶一抹、金色書法「開局」由左到右像毛筆寫出來，右邊蓋一方「紅先／黑先」朱印 */
 .pkname{position:absolute;top:8px;left:50%;transform:translateX(-50%);z-index:6;pointer-events:none;padding:3px 14px;border-radius:99px;background:rgba(28,18,10,.62);color:#fbeed4;font:800 14px/1.5 var(--serif);letter-spacing:.14em;white-space:nowrap;box-shadow:0 2px 6px rgba(0,0,0,.25)}
 #preov{position:fixed;inset:0;z-index:9999;display:flex;align-items:flex-end;justify-content:center;background:#F3ECDD;padding:24px max(24px,env(safe-area-inset-left,0px)) max(28px,env(safe-area-inset-bottom,0px));transition:opacity .4s;overflow:hidden}#preov.out{opacity:0}
+#preov.pv-dark{background:#07080f radial-gradient(120% 70% at 50% 30%,#1a1d3a 0%,#07080f 70%)}#preov.pv-dark .ld-img,#preov.pv-dark .ld-q{display:none}#preov.pv-dark .pre-t{color:#E8C77A}#preov.pv-dark .pre-s,#preov.pv-dark .pre-h,#preov.pv-dark .pre-skip{color:#BDB3A0;border-color:rgba(232,199,122,.35)}#preov.pv-dark .pre-n{color:#E8D9B8}#preov.pv-dark .pre-bar{background:rgba(232,199,122,.15)}#preov.pv-dark .pre-bar i{background:#E8C77A}
 .hub3{display:grid;gap:12px;margin-top:6px}.hub3 .hubc{display:flex!important;flex-direction:row!important;align-items:center!important;justify-content:flex-start!important;gap:14px;width:100%;min-height:112px;padding:16px 16px 16px 14px!important;text-align:left!important;position:relative}
 .hubc .hi{font-size:40px;width:64px;height:64px;display:flex;align-items:center;justify-content:center;flex:none;margin:0!important}.hubc .hi img{width:56px;height:56px;object-fit:contain}
 .hubc .tx{display:flex!important;flex-direction:column;gap:4px;flex:1;min-width:0;align-items:flex-start!important;text-align:left!important}.hubc .t{font-family:var(--serif);font-size:24px!important;font-weight:900;letter-spacing:.14em;line-height:1.2}.hubc .s{font-size:13px;line-height:1.5;color:var(--muted);white-space:nowrap!important;overflow:hidden!important;text-overflow:ellipsis!important;display:block;max-width:100%}.hubc .go{flex:none;font-size:22px;color:var(--muted);margin:0!important}.hubc .bd{position:static!important;margin-left:8px;vertical-align:middle;letter-spacing:0;font-size:11px}
@@ -1534,7 +1535,7 @@ html[data-hct] .player.on .clk{background:#00563B;color:#FFFFFF;border-color:#00
       if(!window.caches)return go();caches.keys().then(function(ks){return Promise.all(ks.filter(function(k){return k.indexOf("xqlab-app-")===0}).map(function(k){return caches.delete(k)}))})
         .then(function(){return navigator.serviceWorker&&navigator.serviceWorker.getRegistration()}).then(function(r){return r&&r.update()}).catch(function(){}).then(go)}};setTimeout(chk,4000)})();
 </script>
-<script>window.XQ_OFFLINE=true;window.XQ_BUILD="20261112-1320";</script>
+<script>window.XQ_OFFLINE=true;window.XQ_BUILD="20261112-1340";</script>
 <script src="core.js"></script>
 <script src="engine.js"></script>
 <script src="local.js"></script>
@@ -1843,8 +1844,10 @@ function ruleNote(v,st){
   const np=!!st.noPerp,sm=note.querySelector("summary"),p=note.querySelector("p");
   /* 11/11 Gemini 架構報告第一項：這盤的棋規設定 st.rc 不是千秋休閒規則（設定頁選了原型）時，徽章照實寫「原型・不計積分」 */
   const RS=st.rc&&window.XQCore&&XQCore.RULESETS&&XQCore.RULESETS[st.rc.rulesetId],proto=!np&&!!(RS&&RS.status==="prototype");
-  const S=np?"📜 本關棋規：不判長將長捉":proto?"⚖️ 本局棋規："+RS.name+"・不計積分":"📜 本局棋規："+((st.rules&&st.rules.name)||"亞洲棋例（直接捉子）");
-  const T=proto?"這盤開局時用設定頁選的「"+RS.name+"」，中途不能改。這是原型：只改了一條——長將、長捉循環到第 3 次不自動判負，先提醒，請變著或雙方協議和棋（臺灣比賽規程寫「經裁判裁決仍不變著」才判負，App 沒有現場裁判）。一將一捉、閒著循環也只提醒、不自動判和（《中華民國象棋規則》113 年修訂版的判法還沒照著改）。其他照千秋休閒規則。這盤不計積分。"
+  const tw=!np&&!!(RS&&RS.id==="tw113");   /* 11/12 臺灣棋規正式版 */
+  const S=np?"📜 本關棋規：不判長將長捉":tw?"⚖️ 本局棋規：臺灣棋規（113 年版）"+(st.rc.mode==="ranked"?"・計積分":""):proto?"⚖️ 本局棋規："+RS.name+"・不計積分":"📜 本局棋規："+((st.rules&&st.rules.name)||"亞洲棋例（直接捉子）");
+  const T=tw?"這盤開局時用設定頁選的「"+RS.name+"」，中途不能改。長將、長捉要三次循環（同一局面第 4 次出現）仍不變著才判負；雙方長將、雙方長捉、雙方都沒犯例判和（表 2.2-1）；同類子受牽制不能離線仍算長捉（棋例總綱 7）；將帥、兵卒追子算閒。雙方共走 100 著沒吃子判和（條文是經裁判審查，App 自動判）。循環路線不同、同類子換位這兩種 App 判不了，只提醒變著或協議和棋。犯規、違例次數由現場裁判記，App 不讓下出違規著法、不記次數。"
+    :proto?"這盤開局時用設定頁選的「"+RS.name+"」，中途不能改。這是原型：只改了一條——長將、長捉循環到第 3 次不自動判負，先提醒，請變著或雙方協議和棋（臺灣比賽規程寫「經裁判裁決仍不變著」才判負，App 沒有現場裁判）。一將一捉、閒著循環也只提醒、不自動判和（《中華民國象棋規則》113 年修訂版的判法還沒照著改）。其他照千秋休閒規則。這盤不計積分。"
     :np?"這一關不判長將、長捉：局面重複不會判輸贏，也不會因此判和，可以一直將軍或追子。其他照常：將死、困斃判負；連續 60 回合沒吃子、雙方都沒有車馬炮兵判和。"
     :"這盤開局時就定好用這一版，中途不能改。同局面第三次出現時檢查循環；單方長將（繞不同路線也算）、直接長捉同一子判負。一將一捉不直接判負。特殊互捉、同類牽制待核，可變著或提和；計時照常。遊戲限著為連續60回合未吃子，並非完整正式賽例裁判。";
   if(sm&&sm.textContent!==S)sm.textContent=S;if(p&&p.textContent!==T)p.textContent=T;
@@ -1865,7 +1868,7 @@ function asstTip(){modal(`<div class="em">🎒</div><h2>這盤用過提示棋或
 
 /* 開發者 11/11 選「邀請時顯示棋規」：邀請框寫出本局採用哪一版（版本不同的邀請 net.js 會先擋掉，看得到邀請＝同一版） */
 /* 11/11 Gemini 架構報告第一項：邀請帶 rs（對方設定的棋規，舊版沒帶＝千秋休閒規則）；跟自己的設定不同、或雙方都選原型，先講明這盤只算友誼賽 */
-function ruleLine(x){try{const R=window.XQCore&&XQCore.REP_RULES;if(!R)return"";const RS=XQCore.RULESETS||{},d=XQCore.RULESET_DEFAULT||"qiqiu_casual",a=window.XQ_rulePref?XQ_rulePref():d,b=x&&x.from&&RS[x.from.rs]?x.from.rs:d;const fr=a!==b||!(RS[a]&&RS[a].rated)?`<br>⚖️ ${a!==b?`對方用「${esc((RS[b]||{}).name||b)}」、你用「${esc((RS[a]||{}).name||a)}」，這盤照千秋休閒規則判`:`雙方都選了「${esc((RS[a]||{}).name||a)}」`}，只算友誼賽、不計積分。`:"";return`<p class="muted" style="font-size:13px;margin:6px 0 0">📜 本局採用：${esc(R.name)}（點對局畫面上的棋規徽章可以看說明）${fr}</p>`}catch(e){return""}}
+function ruleLine(x){try{const R=window.XQCore&&XQCore.REP_RULES;if(!R)return"";const RS=XQCore.RULESETS||{},d=XQCore.RULESET_DEFAULT||"qiqiu_casual",a=window.XQ_rulePref?XQ_rulePref():d,b=x&&x.from&&RS[x.from.rs]?x.from.rs:d;const fr=a!==b||!(RS[a]&&RS[a].rated)?`<br>⚖️ ${a!==b?`對方用「${esc((RS[b]||{}).name||b)}」、你用「${esc((RS[a]||{}).name||a)}」，這盤照千秋休閒規則判`:`雙方都選了「${esc((RS[a]||{}).name||a)}」`}，只算友誼賽、不計積分。`:"";return`<p class="muted" style="font-size:13px;margin:6px 0 0">📜 本局採用：${esc(a===b&&a!==d&&RS[a]?RS[a].name:R.name)}（點對局畫面上的棋規徽章可以看說明）${fr}</p>`}catch(e){return""}}
 /* 來源標籤（11/11 Gemini 架構報告第四項，查證後實作；處理紀錄 story/100_Gemini架構報告處理.md）
    說法跟「📜 文史考據」頁（data/docs/history.md）同一套四種：【史實】【有爭議／傳說】【演義・小說】【遊戲創作】，不另外發明別的說法。
    資料有 tags 就照 tags；Gemini 提議的標籤也認，但換成現有說法：fiction（Gemini 叫【雲河演義】）＝【遊戲創作】（「演義」在文史頁專指古代小說）；
@@ -4877,13 +4880,15 @@ function aboutLicSheet(){const L=(u,t)=>`<a href="${u}" target="_blank" rel="noo
    只認簡單 Markdown：# 第一層不顯示（sheet 已有標題）、## 段標題、### 小標、- 或 1. 清單、**粗體**、`字`、[字](https://…)、空行分段；先 esc 再轉，不吃 HTML。
    讀不到（沒網路、檔還沒發布）就直說讀不到。隱私那份最下面接「刪除這支手機的全部資料」（wipeAsk 本身確認兩次）。前綴 xqDoc */
 /* 棋規選項（11/11 Gemini 架構報告第一項；註冊表在 core 的 RULESETS，偏好存在 local.js 的 XQ_rulePref）。對局畫面的標示在 00-util.js 的 ruleNote（棋規徽章） */
-const rsDef=()=>(window.XQCore&&XQCore.RULESET_DEFAULT)||"qiqiu_casual",rsCur=()=>{try{return window.XQ_rulePref?XQ_rulePref():rsDef()}catch(e){return rsDef()}};
+/* 11/12 臺灣棋規正式版（評比第 9 輪 F4）上線：原型 tw_proto 標 hidden、選單不列；之前選原型的人打開設定頁時改成正式版 tw113 */
+const rsDef=()=>(window.XQCore&&XQCore.RULESET_DEFAULT)||"qiqiu_casual",rsCur=()=>{try{let v=window.XQ_rulePref?XQ_rulePref():rsDef();const RS=window.XQCore&&XQCore.RULESETS;if(RS&&RS[v]&&RS[v].hidden&&RS.tw113&&window.XQ_setRulePref)v=XQ_setRulePref("tw113");return v}catch(e){return rsDef()}};
 const rsName=id=>{const R=window.XQCore&&XQCore.RULESETS&&XQCore.RULESETS[id];return R?R.name:"千秋休閒規則"};
-function rsOpts(){const RS=(window.XQCore&&XQCore.RULESETS)||{},cur=rsCur();return Object.values(RS).map(R=>`<button data-rs="${esc(R.id)}"${R.id===cur?' class="on"':""}>${esc(R.short||R.name)}${R.status==="prototype"?"（原型）":""}</button>`).join("")}
+function rsOpts(){const RS=(window.XQCore&&XQCore.RULESETS)||{},cur=rsCur();return Object.values(RS).filter(R=>!R.hidden).map(R=>`<button data-rs="${esc(R.id)}"${R.id===cur?' class="on"':""}>${esc(R.short||R.name)}${R.status==="prototype"?"（原型）":""}</button>`).join("")}
 function rsNote(){const R=window.XQCore&&XQCore.RULESETS&&XQCore.RULESETS[rsCur()];
+  if(R&&R.id==="tw113")return'依《中華民國象棋規則》113 年修訂版：長將、長捉要<b>三次循環</b>（同一局面第 4 次出現）仍不變著才判負；雙方長將、雙方長捉、雙方都沒犯例判和；同類子受牽制不能離線仍算長捉；雙方共走 100 著沒吃子判和。<b>可計積分</b>：晉級賽照這一套判；線上要<b>雙方都選這一套</b>才計積分，否則是友誼賽。循環路線不同、同類子換位這兩種 App 判不了，會提醒變著或協議和棋。 <button type="button" class="lk" data-xqdoc="rules">⚖️ 怎麼判</button>';
   if(!R||R.status!=="prototype")return'亞洲棋例（直接捉子）的子集。晉級賽、線上積分都用這一套。 <button type="button" class="lk" data-xqdoc="rules">⚖️ 怎麼判</button>';
   return'⚠ <b>原型，不計積分</b>：只改了「長將、長捉循環到第 3 次先提醒、交雙方協議」這一條；臺灣條文已找到《中華民國象棋規則》113 年修訂版，但原型還沒照條文改判法（差在哪見文件）。只用在之後新開的挑戰電腦（非晉級賽）、同機對下、車輪戰、線上邀請；晉級賽照舊用千秋休閒規則。 <button type="button" class="lk" data-xqdoc="rules">⚖️ 差在哪</button>'}
-const XQDOC={privacy:["privacy","🔒 隱私與資料使用"],family:["family","👨‍👩‍👧 家長與兒童模式"],credits:["credits","🎨 素材與授權"],release:["release-notes","🏷 版本與差異"],limits:["limits","⚠️ 已知限制"],evidence:["evidence","✅ 自動測試紀錄"],history:["history","📜 文史考據"],rules:["rules","⚖️ 棋規與裁決"],architecture:["architecture","🌐 連線與資料"],tour:["a11y-tour","🧭 空間導覽"],a11y:["a11y","📋 無障礙證據"],sound:["sound","🔊 音效設計"]};   /* 第 6 輪 F3：音效設計說明（art/docs/sound.md） */   /* 回饋 875（開發者 11/12「盤查類似的 不要換行」）：按鈕字縮到 7 字內，xqDocBtns 一格至少 9em、放不下就自動改一欄，按鈕不換行 */   /* 11/12 無障礙第 5 輪：設定 → ♿ 無障礙「📋 測試與證據」（a11y.md＝92 號稽核報告的副本，開頭是 P16.3～P16.5 怎麼驗證） */   /* 11/12 無障礙第 4 輪 P16.5：給看不到畫面的人在腦中建地圖（11c-a11ysnd.js 的 ? 說明卡、G 鍵也開這份） */
+const XQDOC={privacy:["privacy","🔒 隱私與資料使用"],family:["family","👨‍👩‍👧 家長與兒童模式"],credits:["credits","🎨 素材與授權"],release:["release-notes","🏷 版本與差異"],limits:["limits","⚠️ 已知限制"],evidence:["evidence","✅ 自動測試紀錄"],history:["history","📜 文史考據"],rules:["rules","⚖️ 棋規與裁決"],architecture:["architecture","🌐 連線與資料"],tour:["a11y-tour","🧭 空間導覽"],a11y:["a11y","📋 無障礙證據"],sound:["sound","🔊 音效設計"],ai:["ai-levels","🤖 電腦對手怎麼下"]};   /* 評比第 10 輪 F3：電腦對手透明頁（各級參數＋批次測試，tools/ai-batch.js） */   /* 第 6 輪 F3：音效設計說明（art/docs/sound.md） */   /* 回饋 875（開發者 11/12「盤查類似的 不要換行」）：按鈕字縮到 7 字內，xqDocBtns 一格至少 9em、放不下就自動改一欄，按鈕不換行 */   /* 11/12 無障礙第 5 輪：設定 → ♿ 無障礙「📋 測試與證據」（a11y.md＝92 號稽核報告的副本，開頭是 P16.3～P16.5 怎麼驗證） */   /* 11/12 無障礙第 4 輪 P16.5：給看不到畫面的人在腦中建地圖（11c-a11ysnd.js 的 ? 說明卡、G 鍵也開這份） */
 function xqDocBtns(){return`<div class="xqd-g" style="margin-top:10px">${Object.keys(XQDOC).map(k=>`<button type="button" class="btn ghost" data-xqdoc="${k}" style="font-size:13.5px;padding:8px 6px">${XQDOC[k][1]}</button>`).join("")}</div>`}
 {const s=document.createElement("style");s.textContent=".xqd-g{display:grid;grid-template-columns:repeat(auto-fit,minmax(9em,1fr));gap:6px}.xqd-g>button{white-space:nowrap;margin:0;width:auto;min-width:0}";document.head.append(s)}
 /* 評比第 8 輪 F2、F5（ChatGPT、Gemini：「公開文件的 Markdown 連結、證據索引原樣顯示」）：相對連結也轉——
@@ -5071,7 +5076,7 @@ function Settings(v){
         <tr><td>Google Apps Script</td><td>意見回饋管理頁（接 Google 表單和試算表）</td></tr>
         <tr><td>JSON</td><td>棋譜、題庫、故事、朝代資料</td></tr></table>
         <div class="muted" style="font-size:12px;margin-top:4px">線上大廳用 MQTT 通訊協定連線；Pikafish 的神經網路權重另外下載。</div></details>`:""}</div>
-    ${OFF?'<div class="sec-t">隱私</div><div class="card muted" style="font-size:13.5px;line-height:1.7">'+'App 每 7 天（或名字、段位改變時）會把你在大廳顯示的名字（用「稱號」就是稱號）、裝置代號（這支手機固定的一組隨機碼）、線上段位、使用時間摘要（總時間和最常待的地方）、App 版本、手機種類和螢幕大小送到開發者的 Google 表單，方便查問題、校正難度；不會送棋譜或存檔。另外會匿名記下你在哪一頁停很久、哪裡點了沒反應、哪個走法看不懂（每次開 App 換一組亂數，不含名字和裝置代號），用來改善不好懂的地方。跟電腦下完一盤，也會匿名送出這盤你每一步的評估分數和評語、總分、電腦級數、你的段位（用 App 自己產生的匿名碼，不含名字、裝置代號、棋譜和存檔），用來校正評分方式。做測驗、殘局、讀譜的對錯和秒數、新手引導走到哪一步、成長曲線，也會匿名送出（不含名字和裝置代號），用來校正題目難度、改善新手引導。卡住的地方保留 90 天，對局評分和學習進度保留一年，過期就刪；關掉開關後，手機裡還沒送出的也一起丟掉。意見回饋和檢舉在處理完後保留一年（有停權的保留到停權結束），玩家登記在最後一次登記後保留一年；線上大廳的戰績摘要 90 天沒更新就清，對局棋譜保留 30 天。你可以用下面的開關關掉；家長關閉線上大廳時也不會送。你按「意見回饋」或「檢舉」時，會另外送出你寫的內容和附的截圖（檢舉還會附對方最近的快捷語）。App 不會用網路位置查你在哪裡；線上大廳要不要顯示城市，由你在下面自己選（預設不顯示；用「稱號」的人一律不顯示）。'+'<label style="display:flex;align-items:center;gap:8px;margin-top:8px;color:var(--ink,inherit)"><span style="flex:1">📨 送出玩家登記給開發者</span><input type="checkbox" class="sw" id="repS" aria-label="送出玩家登記給開發者"></label>'+'<label style="display:flex;align-items:center;gap:8px;margin-top:8px;color:var(--ink,inherit)"><span style="flex:1">📍 匿名記錄卡住的地方</span><input type="checkbox" class="sw" id="stkS" aria-label="匿名記錄卡住的地方"></label>'+'<label style="display:flex;align-items:center;gap:8px;margin-top:8px;color:var(--ink,inherit)"><span style="flex:1">📊 匿名送出對局評分（校正分數用）</span><input type="checkbox" class="sw" id="cpaS" aria-label="匿名送出對局評分"></label>'+'<label style="display:flex;align-items:center;gap:8px;margin-top:8px;color:var(--ink,inherit)"><span style="flex:1">📈 匿名送出學習進度（新手引導、作答、成長曲線）</span><input type="checkbox" class="sw" id="lrnS" aria-label="匿名送出學習進度"></label>'+'<label style="display:flex;align-items:center;gap:8px;margin-top:8px;color:var(--ink,inherit)"><span style="flex:1">🏙 大廳顯示我的城市</span><select id="myCityS" style="font:inherit;padding:4px 6px;border-radius:8px">'+[["","不顯示"],...CITY_ZH.map(([,z])=>[z,z])].map(([v,l])=>'<option value="'+v+'"'+(String(store.get("myCity","")||"")===v?" selected":"")+'>'+l+'</option>').join("")+'</select></label>'+'<button type="button" class="btn ghost" id="srvDelB" style="width:100%;margin-top:10px;font-size:13.5px">🗑 申請刪除我在伺服器上的資料</button><div id="srvDelSt" style="font-size:12.5px;margin-top:4px">'+esc(srvDelLine())+'</div>'+xqDocBtns()+'</div>':''}
+    ${OFF?'<div class="sec-t">隱私</div><div class="card muted" style="font-size:13.5px;line-height:1.7">'+'App 每 7 天（或名字、段位改變時）會把你在大廳顯示的名字（用「稱號」就是稱號）、裝置代號（這支手機固定的一組隨機碼）、線上段位、使用時間摘要（總時間和最常待的地方）、App 版本、手機種類和螢幕大小送到開發者的 Google 表單，方便查問題、校正難度；不會送棋譜或存檔。另外會匿名記下你在哪一頁停很久、哪裡點了沒反應、哪個走法看不懂（每次開 App 換一組亂數，不含名字和裝置代號），用來改善不好懂的地方。跟電腦下完一盤，也會匿名送出這盤你每一步的評估分數和評語、總分、電腦級數、你的段位（用 App 自己產生的匿名碼，不含名字、裝置代號、棋譜和存檔），用來校正評分方式。做測驗、殘局、讀譜的對錯和秒數、新手引導走到哪一步、成長曲線，也會匿名送出（不含名字和裝置代號），用來校正題目難度、改善新手引導。卡住的地方保留 90 天，對局評分和學習進度保留一年，過期就刪；關掉開關後，手機裡還沒送出的也一起丟掉。意見回饋和檢舉在處理完後保留一年（有停權的保留到停權結束），玩家登記在最後一次登記後保留一年；線上大廳的戰績摘要 90 天沒更新就清，對局棋譜保留 30 天。你可以用下面的開關關掉；家長關閉線上大廳時也不會送。你按「意見回饋」或「檢舉」時，會另外送出你寫的內容和附的截圖（檢舉還會附對方最近的快捷語）。App 不會用網路位置查你在哪裡；線上大廳要不要顯示城市，由你在下面自己選（預設不顯示；用「稱號」的人一律不顯示）。'+'<label style="display:flex;align-items:center;gap:8px;margin-top:8px;color:var(--ink,inherit)"><span style="flex:1">📨 送出玩家登記給開發者</span><input type="checkbox" class="sw" id="repS" aria-label="送出玩家登記給開發者"></label>'+'<label style="display:flex;align-items:center;gap:8px;margin-top:8px;color:var(--ink,inherit)"><span style="flex:1">📍 匿名記錄卡住的地方</span><input type="checkbox" class="sw" id="stkS" aria-label="匿名記錄卡住的地方"></label>'+'<label style="display:flex;align-items:center;gap:8px;margin-top:8px;color:var(--ink,inherit)"><span style="flex:1">📊 匿名送出對局評分（校正分數用）</span><input type="checkbox" class="sw" id="cpaS" aria-label="匿名送出對局評分"></label>'+'<label style="display:flex;align-items:center;gap:8px;margin-top:8px;color:var(--ink,inherit)"><span style="flex:1">📈 匿名送出學習進度（新手引導、作答、成長曲線）</span><input type="checkbox" class="sw" id="lrnS" aria-label="匿名送出學習進度"></label>'+'<label style="display:flex;align-items:center;gap:8px;margin-top:8px;color:var(--ink,inherit)"><span style="flex:1">🏙 大廳顯示我的城市</span><select id="myCityS" style="font:inherit;padding:4px 6px;border-radius:8px">'+[["","不顯示"],...CITY_ZH.map(([,z])=>[z,z])].map(([v,l])=>'<option value="'+v+'"'+(String(store.get("myCity","")||"")===v?" selected":"")+'>'+l+'</option>').join("")+'</select></label>'+'<button type="button" class="btn ghost" id="srvDelB" style="width:100%;margin-top:10px;font-size:13.5px">🗑 申請刪除我在伺服器上的資料</button><div id="srvDelSt" style="font-size:12.5px;margin-top:4px">'+esc(srvDelLine())+'</div>'+'<button type="button" class="btn ghost" id="healB" style="width:100%;margin-top:10px;font-size:13.5px">📊 本機使用與健康紀錄</button>'+xqDocBtns()+'</div>':''}
     ${OFF?'<div class="sec-t">進階</div><div class="card"><label class="row" style="justify-content:space-between"><span><b>開發者模式</b><br><span class="muted">一般玩家不用打開。打開後才會顯示連線電腦、AI 對戰等開發者功能</span></span><input type="checkbox" class="sw" id="dm"></label></div>'
       +(DEVMODE()?'<div class="items" style="padding:0;margin-top:8px"><button class="item" id="fa"><span class="lb">📋</span><span class="tx"><b>意見回饋管理</b><span>看所有回饋和截圖，決定玩家的回饋要不要修</span></span><span class="muted">›</span></button><button class="item" id="cn"><span class="lb">🖥</span><span class="tx"><b>連線到開發者的電腦</b><span>看 AI 對戰、同步大師棋譜</span></span><span class="muted">›</span></button><button class="item" id="dvt"><span class="lb">🧪</span><span class="tx"><b>開發者測試台</b><span>不用等機率：直接掉進黑洞、叫出小黑洞／星門、開任一星系、重設黑洞篇進度</span></span><span class="muted">›</span></button><button class="item" id="rb"><span class="lb">🔄</span><span class="tx"><b>重置虛擬玩家</b><span>32 位棋友的積分、戰績、練習紀錄歸零；舊資料留在電腦上</span></span><span class="muted">›</span></button></div>':""):""}${OFF?'<div class="sec-t">📱 換手機</div><div class="card"><div class="row" style="gap:8px;flex-wrap:nowrap"><button class="btn" id="xfOut" style="flex:1;min-width:0;margin:0;white-space:nowrap;padding-left:6px;padding-right:6px">📤 舊手機產生碼</button><button class="btn ghost" id="xfIn" style="flex:1;min-width:0;margin:0;white-space:nowrap;padding-left:6px;padding-right:6px">📥 新手機輸入碼</button></div></div>':""}</div></div>`;
   let tbRefresh=()=>{};
@@ -5176,7 +5181,7 @@ function Settings(v){
       toast("電腦沒有回覆：虛擬玩家的程式可能沒在跑")}catch(e){toast(e.message)}},"重置")}
   {const ab=v.querySelector("#askB");if(ab)ab.onclick=()=>askSheet();const bh=v.querySelector("#botHome");if(bh)bh.onclick=()=>{store.set("botPos",null);if(BOT){BOT.stop();BOT=null}syncBot();toast("小帥回到預設位置了")}}{const bt=v.querySelector("#botT");if(bt)bt.onchange=()=>{store.set("bot3d",bt.checked);syncBot();if(bt.checked)toast("小人出來了！點它會表演")};const sz=v.querySelector("#botSz"),szv=v.querySelector("#botSzV");if(sz)sz.oninput=()=>{store.set("botSize",+sz.value);szv.textContent=Math.round(sz.value*100)+"%";if(BOT&&BOT.setScale)BOT.setScale(+sz.value)}}{const sk=v.querySelector("#stkS");if(sk){sk.checked=!store.get("stkOff",false);sk.onchange=()=>{store.set("stkOff",!sk.checked);if(!sk.checked){try{XQNet.dropIRT("stk")}catch(e){}try{STK.p=[];STK.e=[]}catch(e){}}vibrate(5);toast(sk.checked?"會匿名記錄卡住的地方":"不再記錄卡住的地方")}}}   /* 卡關訊號開關（開發者 11/11 核准，預設開） */
   {const ca=v.querySelector("#cpaS");if(ca){ca.checked=!store.get("cpuAnonOff",false);ca.onchange=()=>{store.set("cpuAnonOff",!ca.checked);if(!ca.checked)try{XQNet.dropIRT("cpu")}catch(e){}vibrate(5);toast(ca.checked?"跟電腦下完會匿名送出對局評分":"不再送出對局評分")}}}   /* 對局評分開關（開發者 11/11 照三方審查開始收 t:"cpu"，預設開；另開一個、不跟卡關訊號共用，理由寫在 05b-save.js 的 cpa 段） */
-  {const lr=v.querySelector("#lrnS");if(lr){lr.checked=!store.get("learnAnonOff",false);lr.onchange=()=>{store.set("learnAnonOff",!lr.checked);if(!lr.checked)try{XQNet.dropIRT(lrnAnonType)}catch(e){}vibrate(5);toast(lr.checked?"會匿名送出學習進度":"不再送出學習進度")}}}{const sd=v.querySelector("#srvDelB");if(sd)sd.onclick=()=>{vibrate(5);srvDelAsk()}}   /* 學習進度開關、申請刪除伺服器資料（開發者 11/11 核准資料保留期限；lrnAnon* 在 05b-save.js，srvDel* 在本檔「申請刪除伺服器資料」段） */
+  {const lr=v.querySelector("#lrnS");if(lr){lr.checked=!store.get("learnAnonOff",false);lr.onchange=()=>{store.set("learnAnonOff",!lr.checked);if(!lr.checked)try{XQNet.dropIRT(lrnAnonType)}catch(e){}vibrate(5);toast(lr.checked?"會匿名送出學習進度":"不再送出學習進度")}}}{const sd=v.querySelector("#srvDelB");if(sd)sd.onclick=()=>{vibrate(5);srvDelAsk()};const hb=v.querySelector("#healB");if(hb)hb.onclick=()=>{vibrate(5);if(typeof healShow==="function")healShow()}}   /* 學習進度開關、申請刪除伺服器資料（開發者 11/11 核准資料保留期限；lrnAnon* 在 05b-save.js，srvDel* 在本檔「申請刪除伺服器資料」段） */
   {const rp=v.querySelector("#repS");if(rp){rp.checked=!store.get("repOff",false);rp.onchange=()=>{store.set("repOff",!rp.checked);vibrate(5);toast(rp.checked?"會送玩家登記給開發者":"不再送玩家登記")}}}{const cs=v.querySelector("#myCityS");if(cs)cs.onchange=()=>{store.set("myCity",cs.value);fetchCity();if(window.XQNet&&XQNet.refresh)XQNet.refresh();toast(cs.value?"大廳會顯示「"+cs.value+"」":"大廳不顯示城市")}}(v.querySelector("#nm")||{}).onclick=()=>{vibrate(5);stab="look";store.set("setTab","look");showTab();setTimeout(()=>{const x=v.querySelector("#nmLook");if(x)x.scrollIntoView({block:"center",behavior:"smooth"})},60)};   /* 意見回饋 498：名字只在「外觀 → 我的角色」改 */(v.querySelector("#fb")||{}).onclick=()=>feedbackSheet();{const au=v.querySelector("#aUpd");if(au)au.onclick=()=>{vibrate(5);updCheck(au)}}{const al=v.querySelector("#aLic");if(al)al.onclick=()=>{vibrate(5);aboutLicSheet()}}{const ue=v.querySelector("#aUse");if(ue)aboutUsage(ue)}{const ft=v.querySelector("#fbTop");if(ft)ft.onclick=()=>{vibrate(5);feedbackSheet()}}{const fx=v.querySelector("#fxh");if(fx)fx.onclick=()=>fixHistory()}{const a2=v.querySelector("#a2h");if(a2)a2.onclick=()=>{vibrate(5);installGuide(true)}}(v.querySelector("#sh")||{}).onclick=shareSheet;const cn=v.querySelector("#cn");if(cn)cn.onclick=connectSheet;const fa=v.querySelector("#fa");if(fa)fa.onclick=()=>location.hash="#/fbadmin";{const dv=v.querySelector("#dvt");if(dv)dv.onclick=()=>{if(typeof dvtSheet==="function")dvtSheet()}}if(typeof epSetBind==="function")epSetBind(v);
   paint();return{}}
 
@@ -5730,7 +5735,7 @@ async function journeyStart(n,c,nm,df){const C=WX_CHARS[c];if(!C)return;fnStep("
   store.set("pChar",c);store.set("pSex",C.sx);store.set("pStyle","real");store.set("botPiece",C.pc);store.set("onboard1",true);const hm=jHomePick(c);store.set("journey",{c,sx:C.sx,born:Date.now(),v:1,era:2,home:hm});if(hm){store.set("era",hm);store.set("eraUser",null);try{applyEra()}catch(e){}}store.set("playSec",0);store.set("diff",df>=1&&df<=5?df|0:2);if(hm)store.set("shipDock",["classic",hm]);   /* 意見回饋 675：新旅程的難度、一開始停靠船艙和家鄉 */
   if(store.get("oppLook",null)==null)store.set("oppLook","real");if(nm){try{setMyName(nm)}catch(e){}}
   SAVE_LOCK=false;await saveNow(true);
-  if(had){SAVE_LOCK=true;saveReload({xqPrologue:"1"});return}
+  if(had){SAVE_LOCK=true;saveReload({xqPrologue:"1",xqDarkLoad:"1"});return}   /* 11/12 開發者實機錄影：重開時的載入頁改深色（09b 的 pv-dark），接在開場電影後不突兀 */
   try{window.dispatchEvent(new Event("xq-look"))}catch(e){}
   if(typeof bhxNeed==="function"&&bhxNeed()&&typeof bhXuStart==="function"){bhXuStart(false);titleClose();location.hash="#/adventure";return}
   if(typeof bhxLandNew==="function"&&bhxLandNew())return;   /* 先下序局、在流星裡選角的新玩家：降落經典星槎再出序幕 */   /* hspx 11/12「開頭過場頓一下」：背後不建首頁 3D 園子（很重），改開星槎頁（下完序局本來就降落在星槎） */   /* 開發者 11/12「開頭會跳到首頁才接到黑洞對戰」：先蓋上星渦再關開頭畫面，首頁不露出來 */
@@ -6091,6 +6096,71 @@ function cpaWatch(){if(typeof api!=="function")return;if(CPA_W){CPA_RE=1;return}
       if(n>=100)return end(st,0);setTimeout(tick,3000)}).catch(()=>{if(n<100)setTimeout(tick,3000);else end(last,0)})};
   setTimeout(tick,2000)}
 addEventListener("xq-result",()=>{try{cpaWatch()}catch(e){}});
+/* 第 10 輪 F2（ChatGPT 改善單 6「本機匿名營運健康與功能使用率匯出」）
+   只存在這支手機（store "health"），App 不會自動送出；玩家在 設定 → 隱私「📊 本機使用與健康紀錄」自己看、自己決定要不要複製或存檔給開發者。
+   記的東西（都不含名字、裝置代號、棋譜、存檔、玩家打的字）：
+   ・功能使用次數：網址 # 後面第一段（頁面名，只收小寫英數和 -），記次數、第一次用到是安裝後第幾天
+   ・使用天數：每天開幾次（只留最近 60 天）
+   ・新手流程：讀 05b-save 已經記在本機的 store "funnel" 各步驟秒數，不另外記
+   ・錯誤：window error／unhandledrejection 次數；最近 10 筆只留訊息前 80 字、檔名（去掉網址參數和路徑）、行號
+   ・資源載入：圖片、程式、資料檔各載入幾次、多大（檔案實際大小；從離線快取讀的傳輸量是 0，所以用 encodedBodySize）、失敗幾個、最慢一個幾毫秒
+   ・啟動時間：每次開 App 到畫面可用的毫秒數（最近 20 次）
+   ・卡頓：瀏覽器回報的長任務（超過 50 毫秒）次數和總毫秒（Safari 沒有這項）
+   ・儲存空間：navigator.storage.estimate 的用量
+   前綴 heal（先 grep 過沒撞名）。測試：xiangqi-lab/tools/test-health.js */
+const HEAL_KEY="health",HEAL_V=1,HEAL_DAY=864e5;
+const healNew=()=>({v:HEAL_V,since:Date.now(),feat:{},first:{},days:{},err:{n:0,last:[]},res:{img:[0,0,0,0],js:[0,0,0,0],data:[0,0,0,0]},boot:[],lt:[0,0]});
+let HEAL=null,healDirty=false;
+function healGet(){if(!HEAL){const h=store.get(HEAL_KEY,null);HEAL=h&&h.v===HEAL_V?h:healNew()}return HEAL}
+function healSave(){if(!healDirty||!HEAL)return;healDirty=false;store.set(HEAL_KEY,HEAL)}
+const healToday=()=>{const d=new Date();return d.getFullYear()+"-"+String(d.getMonth()+1).padStart(2,"0")+"-"+String(d.getDate()).padStart(2,"0")};
+/* 頁面名：#/journey/3 → journey；# 或 #/ → home；不是小寫英數和 - 的一律不記（避免記到任何玩家輸入） */
+function healPage(hash){const t=String(hash||"").replace(/^#?\/?/,"");if(!t)return"home";const g=t.split(/[/?]/)[0];return/^[a-z0-9-]{1,20}$/.test(g)?g:null}
+function healFeat(k){if(!k)return;const h=healGet();h.feat[k]=(h.feat[k]||0)+1;if(h.first[k]==null)h.first[k]=Math.floor((Date.now()-h.since)/HEAL_DAY);healDirty=true}
+function healOpen(){const h=healGet(),d=healToday();h.days[d]=(h.days[d]||0)+1;const ks=Object.keys(h.days).sort();while(ks.length>60)delete h.days[ks.shift()];healDirty=true}
+/* 錯誤訊息只留前 80 字；檔名去掉網址參數和路徑（https://…/m.html?x=1 → m.html） */
+function healFile(u){return String(u||"").split(/[?#]/)[0].split("/").pop().slice(0,40)}
+function healErr(msg,file,line){const h=healGet();h.err.n++;h.err.last.push({d:healToday(),m:String(msg||"").replace(/\s+/g," ").slice(0,80),f:healFile(file),l:+line||0});if(h.err.last.length>10)h.err.last.shift();healDirty=true}
+function healResKind(name){const u=String(name||"").split(/[?#]/)[0].toLowerCase();if(/\.(webp|png|jpe?g|gif|svg|avif)$/.test(u))return"img";if(/\.(m?js)$/.test(u))return"js";if(/\.(json|bin|nnue|wasm|glb|mp3|ogg|m4a|woff2?)$/.test(u))return"data";return null}
+function healRes(name,kb,ms,fail){const k=healResKind(name);if(!k)return;const r=healGet().res[k];r[0]++;r[1]+=Math.round(kb||0);if(fail)r[2]++;r[3]=Math.max(r[3],Math.round(ms||0));healDirty=true}
+function healBoot(ms){if(!(ms>0))return;const b=healGet().boot;b.push(Math.round(ms));if(b.length>20)b.shift();healDirty=true}
+function healLong(ms){const l=healGet().lt;l[0]++;l[1]+=Math.round(ms||0);healDirty=true}
+const healMed=a=>{if(!a.length)return null;const s=a.slice().sort((x,y)=>x-y),i=s.length>>1;return s.length%2?s[i]:Math.round((s[i-1]+s[i])/2)};
+async function healExport(){const h=healGet();healSave();let st=null;try{if(navigator.storage&&navigator.storage.estimate){const e=await navigator.storage.estimate();st={usedMB:+(e.usage/1048576).toFixed(1),quotaMB:Math.round(e.quota/1048576)}}}catch(e){}
+  let ver=null;try{ver=typeof appVer==="function"?await appVer():null}catch(e){}
+  const fn=store.get("funnel",null),days=Object.keys(h.days).sort();
+  const res={};for(const k of["img","js","data"]){const r=h.res[k];res[k]={count:r[0],kb:r[1],failed:r[2],slowestMs:r[3]}}
+  return{about:"象棋千秋 本機使用與健康紀錄（只存在這支手機，不含名字、裝置代號、棋譜、存檔；要不要給開發者由你決定）",format:"xq-health-v"+HEAL_V,
+    app:{version:ver,exportedAt:new Date().toISOString(),recordingSince:new Date(h.since).toISOString().slice(0,10)},
+    usage:{activeDays:days.length,opens:days.reduce((s,d)=>s+h.days[d],0),perDay:Object.fromEntries(days.slice(-30).map(d=>[d,h.days[d]])),
+      features:Object.fromEntries(Object.entries(h.feat).sort((a,b)=>b[1]-a[1])),firstUseDay:h.first},
+    onboarding:fn&&fn.s?{steps:fn.s,finished:!!fn.end}:null,
+    health:{errors:{count:h.err.n,recent:h.err.last},resources:res,bootMs:{median:healMed(h.boot),samples:h.boot.length},longTasks:{count:h.lt[0],totalMs:h.lt[1]},storage:st},
+    device:{screen:[screen.width,screen.height],dpr:devicePixelRatio||1,installed:!!(matchMedia&&matchMedia("(display-mode: standalone)").matches)}}}
+function healClear(){HEAL=healNew();healDirty=true;healSave()}
+const HEAL_NAME={home:"首頁",journey:"雲河棋路",canju:"殘局",ship:"星槎",db:"大師對局",pvp:"同機對下",cpu:"挑戰電腦",adventure:"冒險",settings:"設定",shelf:"書架",lobby:"線上大廳",theme:"主題練習",me:"我的",stats:"我的棋力",redo:"錯棋重練",coop:"合作",hub:"主場",codex:"圖鑑",camp:"營地",watch:"觀戰",quiz:"測驗",profile:"個人頁",cup:"千秋盃",today:"今日",gm:"大師",arena:"擂台",cpuroom:"電腦房",battle:"戰役"};
+async function healShow(){let x;try{x=await healExport()}catch(e){toast("讀不到紀錄");return}
+  const U=x.usage,H=x.health,top=Object.entries(U.features).slice(0,12);
+  const row=(a,b)=>`<tr><td style="text-align:left;padding:2px 6px">${a}</td><td style="text-align:right;padding:2px 6px">${b}</td></tr>`;
+  const R=H.resources,sz=kb=>kb>=1024?(kb/1024).toFixed(1)+" MB":kb+" KB",rs=k=>`${R[k].count} 次・${sz(R[k].kb)}${R[k].failed?`・<b>失敗 ${R[k].failed}</b>`:""}`;
+  const html=`<div class="em">📊</div><h2>本機使用與健康紀錄</h2>
+    <p class="muted" style="font-size:13px;text-align:left">只存在這支手機，<b>App 不會自動送出</b>。不含名字、裝置代號、棋譜、存檔。回報問題時，如果你願意，可以按「複製」貼給開發者。從 ${esc(x.app.recordingSince)} 開始記。</p>
+    <table style="width:100%;font-size:13.5px;border-collapse:collapse">${row("用過的天數",U.activeDays+" 天")}${row("開 App 次數",U.opens+" 次")}${row("啟動時間（中位數）",H.bootMs.median!=null?H.bootMs.median+" 毫秒":"還沒有")}${row("錯誤",H.errors.count+" 次")}${row("卡頓（長任務）",H.longTasks.count?H.longTasks.count+" 次・共 "+(H.longTasks.totalMs/1000).toFixed(1)+" 秒":"沒有紀錄")}${row("圖片載入",rs("img"))}${row("程式載入",rs("js"))}${row("資料檔載入",rs("data"))}${row("儲存空間",H.storage?H.storage.usedMB+" MB":"讀不到")}</table>
+    <p style="text-align:left;margin:10px 0 4px"><b>最常用的功能</b></p><table style="width:100%;font-size:13.5px;border-collapse:collapse">${top.length?top.map(([k,n])=>row(esc(HEAL_NAME[k]||k),n+" 次")).join(""):row("還沒有紀錄","")}</table>`;
+  const txt=()=>JSON.stringify(x,null,2);
+  modal(html,[["📋 複製",()=>{try{navigator.clipboard.writeText(txt()).then(()=>toast("已複製，可以貼到意見回饋"),()=>toast("這台手機不能複製"))}catch(e){toast("這台手機不能複製")}}],
+    ["💾 存成檔案",()=>{try{const a=document.createElement("a");a.href=URL.createObjectURL(new Blob([txt()],{type:"application/json"}));a.download="xiangqi-health-"+healToday()+".json";document.body.append(a);a.click();setTimeout(()=>{URL.revokeObjectURL(a.href);a.remove()},1000)}catch(e){toast("存不了檔")}}],
+    ["🗑 清除",()=>{healClear();toast("已清除，從現在重新記")}],["關閉",null]])}
+function healBootstrap(){try{healOpen();healFeat(healPage(location.hash));
+  addEventListener("hashchange",()=>healFeat(healPage(location.hash)));
+  addEventListener("error",e=>{if(e&&e.target&&e.target!==window&&e.target.tagName){const t=e.target.tagName;if(t==="IMG"||t==="SCRIPT")healRes(e.target.src||e.target.currentSrc,0,0,true);return}healErr(e&&e.message,e&&e.filename,e&&e.lineno)},true);
+  addEventListener("unhandledrejection",e=>{const r=e&&e.reason;healErr("未處理的 Promise："+(r&&r.message||String(r)),r&&r.stack&&(String(r.stack).match(/\/([^/\s:]+\.(?:js|html))/)||[])[1],0)});
+  if(window.PerformanceObserver){try{new PerformanceObserver(l=>l.getEntries().forEach(e=>healRes(e.name,(e.transferSize||e.encodedBodySize||0)/1024,e.duration,false))).observe({type:"resource",buffered:true})}catch(e){}
+    try{new PerformanceObserver(l=>l.getEntries().forEach(e=>healLong(e.duration))).observe({type:"longtask",buffered:true})}catch(e){}}
+  const bt=()=>{try{const n=performance.getEntriesByType("navigation")[0];healBoot(n?n.domContentLoadedEventEnd:performance.now())}catch(e){}};
+  if(document.readyState==="complete")bt();else addEventListener("load",bt,{once:true});
+  setInterval(healSave,30000);addEventListener("pagehide",healSave);document.addEventListener("visibilitychange",()=>{if(document.hidden)healSave()})}catch(e){}}
+healBootstrap();
 // ================= 挑戰電腦 =================
 // 聲控走棋（意見回饋 193）：按 🎤 說「馬八進七」「炮二平五」「車1進1」；把所有合法走法轉成記譜，跟聽到的字比對（同音字也算，例如「嗎」＝馬、「近」＝進）
 const VC_SETS=(()=>{const M={},add=(tok,chs)=>{for(const c of chs)(M[c]=M[c]||[]).push(tok)};
@@ -6648,6 +6718,8 @@ function arenaSheet(era,start){era=ARENA[era]?era:"classic";const A=ARENA[era],S
    每週：週一～週五 22:00 報名 → 週六 13:30～13:55 點將（報到）→ 14:00 開打，16 強單淘汰，大約 17:15 頒獎。
    獎品（開發者 11/5 選了「先做基本的」）：本週擂主頭銜、大廳名字旁的🏆、刻上千秋擂主碑、將令／提示棋／悔棋符／修為；
    不給棋罐的子（棋罐綁劇情進度）；虛擬棋客拿到名次只上擂主碑，不發東西 */
+/* 第 9 輪評審（千秋盃報名簽名）：報名、取消、點將要用這支手機的對局金鑰簽名，瀏覽器不能簽名（太舊、不是 https）就送不出去 */
+const CUP_NOSEND="沒有送出：目前不能報名，或這支手機的瀏覽器沒辦法簽名（請更新瀏覽器）";
 const CUP_RN={1:"兵卒過河",2:"車馬爭先",3:"炮震中原",4:"九宮論劍",5:"雙士爭輝"};
 const CUP_RN_SUB={1:"十六強",2:"八強",3:"準決賽",4:"決賽（紅黑各一盤）",5:"季軍戰"};
 /* 意見回饋 643（開發者 11/6）：千秋週擂唸起來不順，改名「千秋盃」。裁判台還沒重開前送來的舊名字，顯示時也換成新名字 */
@@ -6714,9 +6786,9 @@ function CupPage(v){setTop("🏯 千秋盃","#/hub/battle");setTabs(true,"#/hub/
       top=`<div class="card" style="text-align:center;line-height:1.8"><div style="font-size:40px">🏆</div><b style="font-size:20px">${c?esc(c.name):"（從缺）"}</b>${c?cloudTag(c.bot||isCloud(c.id)):""}<div class="muted">本週擂主</div>${p?`<div style="margin-top:6px">你的成績：<b>${esc((CUP_PRIZE[p]||{}).t||"")}</b>${S.practice&&p!==16?"（闖擂練習只發參加獎）":""}</div>`:""}<div class="muted" style="font-size:13px;margin-top:4px">技壓群雄，登頂擂主！下週擂台虛位以待，誰來攻擂？</div></div>`}
     box.innerHTML=`<div class="abn" style="height:120px;background-image:url(data/arenagate/classic.webp);background-position:center 40%;margin-bottom:10px"><div class="hc"><b>🏯 ${ttl}</b><small>每週六下午・16 強擂台・每方 ${S.tc?S.tc.m:10} 分鐘＋每步 ${S.tc?S.tc.inc:5} 秒</small></div></div>${top}${bracket(S)}${rules()}${hall(H)}`;
     const b=k=>box.querySelector(k);
-    if(b("#cuR"))b("#cuR").onclick=()=>{if(!myName())return nameSheet(true);XQNet.cupReq("reg");vibrate(10);toast("🏯 報名送出了，等裁判台確認…")};
-    if(b("#cuU"))b("#cuU").onclick=()=>confirmBox("確定取消這一屆的報名？",()=>{XQNet.cupReq("unreg");toast("已送出取消")},"取消報名");
-    if(b("#cuK"))b("#cuK").onclick=()=>{XQNet.cupReq("ck");vibrate([20,40,20]);toast("🥁 點將送出了")};
+    if(b("#cuR"))b("#cuR").onclick=()=>{if(!myName())return nameSheet(true);if(!XQNet.cupReq("reg"))return toast(CUP_NOSEND);vibrate(10);toast("🏯 報名送出了，等裁判台確認…")};
+    if(b("#cuU"))b("#cuU").onclick=()=>confirmBox("確定取消這一屆的報名？",()=>{if(!XQNet.cupReq("unreg"))return toast(CUP_NOSEND);toast("已送出取消")},"取消報名");
+    if(b("#cuK"))b("#cuK").onclick=()=>{if(!XQNet.cupReq("ck"))return toast(CUP_NOSEND);vibrate([20,40,20]);toast("🥁 點將送出了")};
     if(b("#cuJ"))b("#cuJ").onclick=e=>cupJoin(e.currentTarget.dataset.g);
     box.querySelectorAll("[data-cw]").forEach(x=>x.onclick=()=>{XQNet.watch(x.dataset.cw);location.hash="#/pvp"})}
   function bracket(S){if(!S.m||!S.order||!S.order.length)return"";const me=meInfo().id;let h="";
@@ -9970,13 +10042,13 @@ function bhxCss(){if(document.getElementById("bhxCss"))return;const s=document.c
 #bhxPg .fm-tx{position:relative;z-index:3;display:flex;flex-direction:column;align-items:center}
 #bhxPg .fm-cap{position:absolute;z-index:3;top:calc(8vh + env(safe-area-inset-top,0px));left:0;right:0;text-align:center;white-space:nowrap;font-size:min(16px,calc((100vw - 32px)/22));letter-spacing:.2em;color:#E8C77A;text-shadow:0 1px 8px #000;opacity:0;transition:opacity 1.2s;pointer-events:none}#bhxPg .fm-cap.on{opacity:1}
 #bhxPg .bx-k,#bhxPg .fm-nx{z-index:4}
-#bhxPg .fm-nx{position:absolute;right:16px;bottom:calc(16px + env(safe-area-inset-bottom,0px));width:44px;height:44px;border-radius:50%;font-size:16px;color:#e2d6b8;background:rgba(0,0,0,.35);border:1px solid rgba(232,199,122,.4)}
+#bhxPg .fm-nx{position:absolute;right:16px;bottom:calc(16px + env(safe-area-inset-bottom,0px));width:52px;height:52px;border-radius:50%;font-size:20px;color:#e2d6b8;background:rgba(0,0,0,.45);border:1px solid rgba(232,199,122,.55)}.bx-k:focus-visible,.fm-nx:focus-visible{outline:3px solid #E8C77A;outline-offset:3px}
 #bhxPg .bx-pks{position:absolute;inset:0;z-index:3}
 #bhxPg .bx-pk{position:absolute;transform:translate(-50%,-50%);width:min(30vw,150px);aspect-ratio:1;border-radius:50%;border:2px solid rgba(255,214,120,.55);background:radial-gradient(circle,rgba(255,214,120,.18),rgba(255,214,120,0) 70%);cursor:pointer;animation:bhxPkG 1.8s ease-in-out infinite;padding:0}
 #bhxPg .bx-pk span{position:absolute;left:50%;bottom:-1.7em;transform:translateX(-50%);white-space:nowrap;font-size:13px;font-weight:700;color:#FFE6A8;text-shadow:0 1px 6px #000,0 0 2px #000}
 @keyframes bhxPkG{0%,100%{box-shadow:0 0 0 0 rgba(255,214,120,.25)}50%{box-shadow:0 0 18px 4px rgba(255,214,120,.45)}}
 #bhxPg .bx-cap{position:absolute;top:calc(8vh + env(safe-area-inset-top,0px));left:0;right:0;font-size:clamp(18px,5.4vw,25px);letter-spacing:.32em;font-weight:600;color:#FFE6A8;text-shadow:0 2px 12px #000,0 0 3px #000;opacity:0;transition:opacity 1s;pointer-events:none}#bhxPg .bx-cap.on{opacity:1}
-#bhxPg .bx-k{position:absolute;right:16px;top:calc(14px + env(safe-area-inset-top,0px));font-size:13px;color:#e2d6b8;background:rgba(0,0,0,.35);border:1px solid rgba(232,199,122,.4);border-radius:99px;padding:6px 14px}
+#bhxPg .bx-k{position:absolute;right:16px;top:calc(14px + env(safe-area-inset-top,0px));min-width:64px;min-height:44px;font-size:15px;color:#e2d6b8;background:rgba(0,0,0,.45);border:1px solid rgba(232,199,122,.55);border-radius:99px;padding:10px 18px}
 #bhxVx{position:fixed;inset:0;z-index:9001;display:flex;align-items:center;justify-content:center;background:radial-gradient(circle at 50% 50%,#000 0 6%,#2a1450 16%,#120a26 38%,#05060d 70%);overflow:hidden}
 #bhxVx::before{content:"";position:absolute;width:160vmax;height:160vmax;background:conic-gradient(from 0deg,transparent 0 10%,rgba(180,107,255,.35) 14%,transparent 22% 40%,rgba(110,139,255,.3) 46%,transparent 54% 72%,rgba(180,107,255,.3) 78%,transparent 86%);border-radius:50%;animation:bhxSp 1.8s linear infinite;will-change:transform}
 #bhxVx img{position:relative;width:min(46vw,220px);aspect-ratio:1;border-radius:50%;object-fit:cover;object-position:top;border:3px solid #E8C77A;box-shadow:0 0 30px rgba(180,107,255,.8);animation:bhxSk 1.7s cubic-bezier(.55,0,.9,.45) forwards}
@@ -10078,8 +10150,9 @@ function bhxAfter(){bhxEnd();if(!(MODAL_HOLD>Date.now()))opVol(.25,1.2);   /* �
     bhxBack(true);   /* hspx 開發者 11/12「黑洞絕殺後會先跳到一個不該出現的頁面」：換頁前先蓋上黑洞底幕，星槎頁不會在電影淡入前閃出來；電影播完才拿掉 */
     location.hash=old?"#/":"#/adventure";   /* hspx 更正（11/12）：打完第一場黑洞對戰，降落在經典星槎上（星槎頁、停靠經典站） */
     let rm=false;try{rm=matchMedia("(prefers-reduced-motion:reduce)").matches}catch(e){}
-    setTimeout(()=>(rm?bhxPages:(K,d)=>bhxFilm(OP_FILM2,d))(["p2","p3","p4"],()=>{bhxBack(false);if(old){opStop(2);toast("序章看完了，旅程照你原本的進度繼續");return}
-      const pk=store.get("bhxPick",null);if(pk&&(store.get("bhxFresh",0)||!journey())&&typeof journeyStart==="function"){const nm=typeof myName==="function"&&myName()?null:(typeof defaultName==="function"?defaultName():null);journeyStart(store.get("bhxSlot",1)||1,pk,nm,2).catch(e=>{try{toast("開始失敗："+(e&&e.message||e))}catch(x){}});return}   /* hspx 開發者 11/12「選完角色後不用再出現難度和確認出發那一頁，太冗餘」：直接建旅程（難度預設「入局」、名字用預設，之後都能改）→ bhxLandNew 降落星槎 */
+    setTimeout(()=>(rm?bhxPages:(K,d)=>bhxFilm(OP_FILM2,d))(["p2","p3","p4"],()=>{const rl=!old&&!!store.get("bhxPick",null)&&!!store.get("bhxFresh",0)&&!!journey()&&typeof journeyStart==="function";if(!rl)bhxBack(false);   /* 11/12 開發者實機錄影：已有旅程的人開新旅程，選角後 journeyStart 會重開 App；底幕留著直接重開，不閃出舊主場 */
+      if(old){opStop(2);toast("序章看完了，旅程照你原本的進度繼續");return}
+      const pk=store.get("bhxPick",null);if(pk&&(store.get("bhxFresh",0)||!journey())&&typeof journeyStart==="function"){const nm=typeof myName==="function"&&myName()?null:(typeof defaultName==="function"?defaultName():null);journeyStart(store.get("bhxSlot",1)||1,pk,nm,2).catch(e=>{try{bhxBack(false);toast("開始失敗："+(e&&e.message||e))}catch(x){}});return}   /* hspx 開發者 11/12「選完角色後不用再出現難度和確認出發那一頁，太冗餘」：直接建旅程（難度預設「入局」、名字用預設，之後都能改）→ bhxLandNew 降落星槎 */
       opStop(2);   /* 在流星裡選好角色的新玩家：接選難度、取名（05b 開頭畫面），確定後 bhxLandNew 降落星槎 */
       if(typeof prologue==="function")prologue()}),400)}]],"prolog")}
 /* 星渦裡的七顆紅星（還沒選角時代替角色頭像） */
@@ -10287,7 +10360,8 @@ function bhxFilmMeteor(o,cap,done){const stg=o.querySelector(".fm-st"),lift=()=>
   bhxMeteor(o,after);lift();let n=0;const iv=setInterval(()=>{if(++n>7){clearInterval(iv);return}opSfx("meteor",n===7)},420)}
 /* 開新旅程一律從開頭來（開發者 11/12「點選新的旅程不會從開頭開始，請修正」）：記下要存哪一格、標記「這一趟開頭要選角」（bhxFresh），選好的那顆星才帶進新旅程 */
 function bhxFresh(){try{return !!store.get("bhxFresh",0)||!(typeof myChar==="function"&&myChar())}catch(e){return true}}
-function bhxNewJourney(slot){store.set("bhxFresh",1);store.set("bhxSlot",slot||1);store.set("bhxPick",null);try{opPre()}catch(e){}bhXuStart(false);if(typeof titleClose==="function")titleClose();location.hash="#/adventure"}
+function bhxNewJourney(slot){store.set("bhxFresh",1);store.set("bhxSlot",slot||1);store.set("bhxPick",null);store.set("bhxLand",null);   /* hspx 開發者 11/12「選完角色後，降落的地點要改成在星槎船上，而不是首頁」：bhxLand 是整支手機共用、不在存檔清單裡，玩過一次的人開新旅程時 bhxLandNew 以為降落過了就回首頁；開新旅程先清掉 */
+  try{opPre()}catch(e){}bhXuStart(false);if(typeof titleClose==="function")titleClose();location.hash="#/adventure"}
 /* 舊玩家：開 App 後首頁沒有開頭畫面、沒有別的視窗時，跳一次 */
 function bhxOldAsk(){try{if(!journey()||!bhxNeed()||store.get("bhXuAsk",null)||TITLE||!/^(#\/?)?$/.test(location.hash||"")||document.querySelector(".modal,#bhxPg,#bhxVx"))return false}catch(e){return false}store.set("bhXuAsk",Date.now());
   modal(`<div class="em">🌀</div><h2>大更新：第〇章與黑洞序局</h2><p>故事前面多了一章神話開場——天裂成河、青石落入雲河。現在建好角色後，會先從星渦掉進黑洞，跟星樞下一盤序局，才開始第一章。</p><p class="muted" style="font-size:13px">建議從頭玩一次。開新的旅程會存到另一格，你現在這段旅程不會被蓋掉。</p>`,
@@ -10480,6 +10554,9 @@ function dvtSheet(){if(!dvtOn())return toast("要先打開開發者模式");
         ${row("dvF","⭐","九枚星印全拿","星圖全亮、北辰後的第十四顆出現")}
         ${row("dvH","🀄","預覽車輪戰開場（10 盤）","只播開場動畫，不開對局")}
         ${row("dvR","🧹","重設黑洞篇進度","清掉黑洞次數、輸贏、小黑洞、星印、星系進度和上面這些開關")}
+      </div>
+      <div class="sec-t">📈 實機量測</div><div class="items" style="padding:0">
+        ${row("dvP",store.get("perfHud",false)?"✅":"📈","效能浮標："+(store.get("perfHud",false)?"開":"關"),"右上角顯示幀數、10 秒最低幀數、3D 省電模式、記憶體、時鐘（錄影對照用；不擋點擊）")}
       </div>`;
     const G=b.querySelector("#dvG");if(G&&typeof GX_ORD!=="undefined"){G.innerHTML=GX_ORD.concat(["mirror"]).map(id=>{const g=id==="mirror"?{n:"第十四顆"}:gxGet(id)||{};return`<button class="pill" data-gx="${id}" style="margin:2px">${S[id]?"⭐":""}${esc(g.n||g.t||id)}</button>`}).join("")}
     const q=s=>b.querySelector(s),re=()=>{closeSheet();setTimeout(dvtSheet,250)};
@@ -10492,7 +10569,37 @@ function dvtSheet(){if(!dvtOn())return toast("要先打開開發者模式");
     b.querySelectorAll("[data-gx]").forEach(x=>x.onclick=()=>{if(!store.get("dvtGxAll",0))return toast("先打開「全部星系解鎖」");closeSheet();if(typeof gxStart==="function")gxStart(x.dataset.gx)});
     q("#dvF").onclick=()=>{if(typeof GX_ORD==="undefined")return;const S2={};for(const k of GX_ORD)S2[k]=Date.now();store.set("gxSeal",S2);toast("⭐ 九枚星印都拿到了");re()};
     q("#dvH").onclick=()=>{closeSheet();if(typeof simIntro==="function"&&typeof parseFen==="function")setTimeout(()=>simIntro({id:"dvt-demo",n:10,tb:Array.from({length:10},()=>({board:parseFen(START)}))},()=>{}),300)};
+    q("#dvP").onclick=()=>{const on=typeof phudToggle==="function"&&phudToggle();toast(on?"📈 效能浮標：開":"📈 效能浮標：關");re()};   /* 第 9 輪 Gemini：效能浮標（07dw-perfhud.js） */
     q("#dvR").onclick=()=>confirmBox("清掉黑洞篇和十三星系的全部進度？（只影響這支手機）",()=>{for(const k of DVT_KEYS)store.set(k,null);dvtForce(false);toast("🧹 黑洞篇進度清掉了");re()},"清掉")})}
+/* ---------- 效能浮標（第 9 輪 Gemini 改善單「新增效能偵錯覆疊介面（供後續實機截圖用）」，開發者 11/12 選做）：前綴 phud ----------
+   只在開發者模式、而且在「🧪 開發者測試台」打開時出現；畫面右上角（避開瀏海）一個不擋點擊的小框，每半秒更新：
+   ・整頁幀數（requestAnimationFrame 算，最近 1 秒）和最近 10 秒的最低幀數
+   ・3D 園子／黑洞：park3d 的效能計數 window.__PK.perf（3D 幀數、省電模式開不開、原因、畫素比、抗鋸齒）
+   ・JS 記憶體（只有 Chrome 系有 performance.memory；iPhone Safari 沒有就寫「不提供」）、長任務次數（Safari 沒有）
+   ・時鐘到 0.1 秒、目前頁面：錄影時拿來對照幀數掉在哪一秒
+   用法：設定 → 進階 → 開發者模式 → 🧪 開發者測試台 →「📈 效能浮標」。開著時才跑 requestAnimationFrame，切到背景暫停。測試：xiangqi-lab/tools/test-perfhud.js */
+const PHUD={el:null,raf:0,iv:0,fr:[],lt:0,lo:null};
+const phudOn=()=>typeof DEVMODE==="function"&&DEVMODE()&&!!store.get("perfHud",false);
+/* 最近 1 秒幾格＝幀數；最近 10 秒切成 10 個一秒的格子，資料涵蓋到的格子取最少的那格＝最低幀數 */
+function phudFps(now){const a=PHUD.fr;while(a.length&&now-a[0]>11000)a.shift();let n=0;for(let i=a.length-1;i>=0&&now-a[i]<1000;i--)n++;
+  let lo=null;for(let k=1;k<=10;k++){const s=now-k*1000;if(!a.length||a[0]>s)break;let c=0;for(const t of a)if(t>s&&t<=s+1000)c++;if(lo==null||c<lo)lo=c}return{fps:n,lo}}
+function phudText(now){const f=phudFps(now),P=window.__PK&&window.__PK.perf,m=performance.memory,d=new Date();
+  const L=[`頁面 ${f.fps} fps`+(f.lo!=null?`（10 秒最低 ${f.lo}）`:"")];
+  if(P&&P.live)L.push(`3D ${P.fps|0} fps・省電${P.power?"開":"關"}${P.power&&P.why&&P.why.length?"（"+P.why.join("、")+"）":""}・畫素比 ${(+P.pr||1).toFixed(2)}${P.aa?"・抗鋸齒":""}`);else L.push("3D 沒在畫");
+  L.push(m&&m.usedJSHeapSize?`JS 記憶體 ${Math.round(m.usedJSHeapSize/1048576)}／${Math.round(m.jsHeapSizeLimit/1048576)} MB`:"JS 記憶體：這個瀏覽器不提供");
+  L.push(`長任務 ${PHUD.lt} 次・${String(d.getHours()).padStart(2,"0")}:${String(d.getMinutes()).padStart(2,"0")}:${String(d.getSeconds()).padStart(2,"0")}.${Math.floor(d.getMilliseconds()/100)}・${(location.hash||"#/").slice(0,18)}`);
+  return L.join("\n")}
+function phudStop(){cancelAnimationFrame(PHUD.raf);clearInterval(PHUD.iv);PHUD.raf=0;PHUD.iv=0;PHUD.fr=[];if(PHUD.el){PHUD.el.remove();PHUD.el=null}}
+function phudStart(){if(!phudOn()){phudStop();return}if(PHUD.el)return;
+  const el=PHUD.el=document.createElement("div");el.id="phud";el.setAttribute("aria-hidden","true");
+  el.style.cssText="position:fixed;top:calc(env(safe-area-inset-top,0px) + 2px);right:calc(env(safe-area-inset-right,0px) + 4px);z-index:99999;pointer-events:none;white-space:pre;font:600 10.5px/1.35 ui-monospace,Menlo,monospace;color:#d8ffd8;background:rgba(0,0,0,.66);padding:3px 6px;border-radius:6px;max-width:72vw;overflow:hidden";
+  document.body.append(el);
+  if(window.PerformanceObserver&&!PHUD.lo){try{PHUD.lo=new PerformanceObserver(l=>{PHUD.lt+=l.getEntries().length});PHUD.lo.observe({type:"longtask",buffered:false})}catch(e){PHUD.lo=null}}
+  const tick=t=>{PHUD.fr.push(t);PHUD.raf=requestAnimationFrame(tick)};PHUD.raf=requestAnimationFrame(tick);
+  PHUD.iv=setInterval(()=>{if(!PHUD.el)return;if(document.hidden)return;const now=performance.now();PHUD.fr=PHUD.fr.filter(x=>now-x<=11000);PHUD.el.textContent=phudText(now)},500)}
+function phudToggle(){store.set("perfHud",!store.get("perfHud",false));if(phudOn())phudStart();else phudStop();return phudOn()}
+document.addEventListener("visibilitychange",()=>{if(!PHUD.el)return;if(document.hidden){cancelAnimationFrame(PHUD.raf);PHUD.raf=0}else if(!PHUD.raf){const tick=t=>{PHUD.fr.push(t);PHUD.raf=requestAnimationFrame(tick)};PHUD.raf=requestAnimationFrame(tick)}});
+setTimeout(()=>{try{phudStart()}catch(e){}},1500);
 /* ================= ⚔ 古戰場・戰役題卡＋朝代戰役地圖（意見回饋 725 方案 A＋B，開發者 11/7 選定；方案在 story/經典戰役玩法方案_725_v2.md）=================
    渡口頁「擂台」旁多一扇門「⚔ 古戰場」→ #/battle：上方是那一朝的疆域地圖（data/eramap/<朝代>.webp＋realms.json 疆域＋labels.json 地名），5 場戰役照經緯度標在實際地點，
    照年代連成一條戰役路線（打下一場，路線延伸到下一場；已蓋印的點變實心印）；下方是 5 張戰役卡。跟渡口同樣的鎖定規則（停靠過的朝代才進得來）；船艙沒有古戰場。
@@ -21880,7 +21987,7 @@ async function review(rep,id,at){let it=null;for(let k=0;k<12&&!it;k++){try{cons
         `<div class="cpu-lb">你執</div><div class="opt"><button data-s="r" class="${side==="r"?"on":""}">🔴 紅方（先走）</button><button data-s="b" class="${side==="b"?"on":""}">⚫ 黑方（後走）</button></div>`+
         `<div class="cpu-lb">對手</div>${zgOppHTML(ranked?"km":opp,ranked)}`+
         (ranked?"":`<div class="cpu-lb">難度</div><div class="lvl">${st.levels.map(l=>`<button data-l="${l.n}" class="${l.n===level&&!(zx&&opp==="zhanggui")?"on":""}"><b>${l.n}</b><span>${esc(l.name)}</span>${(rec[l.n]||{}).w?'<span class="ok">✔ 通關</span>':""}</button>`).join("")}${opp==="zhanggui"?`<button data-zx="1" class="${zx?"on":""}"><b>${esc(ZG_X.short)}</b><span>${esc(ZG_X.name)}</span></button>`:""}</div>
-          <div class="cpu-desc">${esc(zx&&opp==="zhanggui"?ZG_X.desc:(st.levels[level-1]||{}).desc||"")}</div>`)+
+          <div class="cpu-desc">${esc(zx&&opp==="zhanggui"?ZG_X.desc:(st.levels[level-1]||{}).desc||"")} <button type="button" class="lk" data-xqdoc="ai">🤖 各級怎麼下</button></div>`)+   /* 評比第 10 輪 F3：電腦對手透明頁（data/docs/ai-levels.md，05-settings XQDOC.ai） */
         `<button class="btn" id="go">${ranked?"開始晉級賽":zx&&opp==="zhanggui"?"開始："+ZG_X.name:`開始第 ${level} 級`}</button>`+
         "";   /* 意見回饋 413：挑戰電腦裡不放朝代擂台入口，擂台從首頁 #/arena 進 */
         b.querySelectorAll("[data-s]").forEach(x=>x.onclick=()=>{side=x.dataset.s;paint()});b.querySelectorAll("[data-l]").forEach(x=>x.onclick=()=>{level=+x.dataset.l;zx=false;paint()});{const z=b.querySelector("[data-zx]");if(z)z.onclick=()=>{zx=true;paint()}}zgOppBind(b,o=>{opp=o;paint()});
@@ -22615,7 +22722,9 @@ async function preloadAll(){if(!OFF||!("caches" in window))return PRE_FIRST_OK()
     ov.innerHTML=`<div class="ld-img"><img alt=""><img alt=""></div><div class="ld-q"><div class="ld-tt"></div><div class="ld-qt"></div><div class="ld-src"></div></div>
       <div class="pre-in"><div class="pre-t">象棋千秋</div><div class="pre-s">${preUi({phase:"check"}).main}</div>
       <div class="pre-bar"><i></i></div><div class="pre-n" role="status">${preUi({phase:"check"}).sub}</div><div class="pre-h">準備好就能下棋；其他朝代和故事的圖之後在背景下載，進度在「設定 → 關於」。</div><button class="pre-skip" type="button" hidden>先進去逛（背景繼續下載）</button></div>`;
-    document.body.append(ov);bar=ov.querySelector(".pre-bar i");txt=ov.querySelector(".pre-n");ldShow(ov);
+    let dk=false;try{dk=!!sessionStorage.getItem("xqDarkLoad");if(dk)sessionStorage.removeItem("xqDarkLoad")}catch(e){}   /* 11/12 開發者 iPhone 17 Pro Max 實機錄影：舊玩家開新旅程，選角後會重開一次，原本跳出米白載入頁很突兀；改成跟開場電影一樣的星空底 */
+    if(dk){ov.classList.add("pv-dark");const s=ov.querySelector(".pre-s");if(s)s.textContent="星槎靠岸中…"}
+    document.body.append(ov);bar=ov.querySelector(".pre-bar i");txt=ov.querySelector(".pre-n");if(!dk)ldShow(ov);
     setTimeout(()=>{const k=ov&&ov.querySelector(".pre-skip");if(k){k.hidden=false;k.onclick=()=>{ov.remove();ov=null;PRE_FIRST_OK();preEnd()}}},4000)};ovMake();   /* 開發者 11/11 選 ChatGPT UI 報告 UI-12：「先進去逛」原本 20 秒後才出現，慢網路的人要乾等；改成 4 秒（網路快的人通常已經載完、看不到這顆） */
   const abs=preAbs,H0=location.hash,preEnd=()=>{const h=preBackTo(H0,location.hash);if(h)location.hash=h};
   const PH=store.get("preH",{}),NH={},miss=[];   /* 換過的圖（檔名一樣、內容不同）也要重新下載：秦、漢黑棋換新圖後手機一直是舊的 */
