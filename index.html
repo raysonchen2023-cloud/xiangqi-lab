@@ -1534,7 +1534,7 @@ html[data-hct] .player.on .clk{background:#00563B;color:#FFFFFF;border-color:#00
       if(!window.caches)return go();caches.keys().then(function(ks){return Promise.all(ks.filter(function(k){return k.indexOf("xqlab-app-")===0}).map(function(k){return caches.delete(k)}))})
         .then(function(){return navigator.serviceWorker&&navigator.serviceWorker.getRegistration()}).then(function(r){return r&&r.update()}).catch(function(){}).then(go)}};setTimeout(chk,4000)})();
 </script>
-<script>window.XQ_OFFLINE=true;window.XQ_BUILD="20261112-1210";</script>
+<script>window.XQ_OFFLINE=true;window.XQ_BUILD="20261112-1220";</script>
 <script src="core.js"></script>
 <script src="engine.js"></script>
 <script src="local.js"></script>
@@ -9876,6 +9876,18 @@ const GX_ORD=["ziyuan","taisu","tianyuan","yaoguang","kaiyang","yuxiu","quanxing
 const GX_TXT={gate:"裂痕剝落，十三點微光在深淵中重組。",invite:"這門，我好像替你開過。",open:"十三點星光，排成未完棋譜。",pick:"選一顆吧，別選我算過的。",go:"落子入門",stay:"先走此局",enter:"星槎折返，卻抵達更遠處。",win:"這一敗，竟不在舊譜。",lose:"無妨，你會回到這步。",all:"第十四顆，尚未落子。",ship:"黑洞歸來，星槎多了一道無名星門。",mirror:"這一局，是你自己算出來的。"};
 const gxGet=id=>GX_LIST.find(g=>g.id===id)||null;
 const gxIs=st=>!!st&&String(st.journey||"").startsWith("gx:");
+/* 開發者 11/12 選「三檔自選＋實測校正」（story/128：Gemini、ChatGPT 規劃，模型照 ChatGPT）：
+   電腦級數＝玩家實力 P（bhLevel）＋規則修正 R＋模式修正 M（輕鬆 −2／標準 0／挑戰 +2），夾在 1～18；北辰第二盤再 +1；權星固定 18（他的身分就是讓雙車的全力 AI）。
+   R 先用 ChatGPT 的表（四炮少象、生存戰偏易；八馬、亂陣、陷阱偏難），之後用電腦自我對弈量勝率再調。星印分銀（輕鬆）／星（標準）／金（挑戰），取最高。
+   輸了：結果視窗給一句這一關的訣竅；連輸 3 次以上多一顆「改用輕鬆再來」（不自動偷偷降級，讓玩家自己選） */
+const GX_R={ziyuan:-1,taisu:-1,tianyuan:0,yaoguang:0,kaiyang:1,yuxiu:0,gouchen:1,beichen:2,xuanbing:0,shuchen:1,jiyue:1,tengshe:2,mirror:0};
+const GX_MODES=[["easy","輕鬆",-2,"銀印"],["std","標準",0,"星印"],["hard","挑戰",2,"金印"]];
+const GX_HINT={ziyuan:"四門炮要有炮架才兇：先兌掉中路的子，少給他架炮；他沒有象，底線是弱點。",taisu:"生存戰不用贏：多兌子、少冒險，車守兩翼，撐滿 40 步就算過。",
+  tianyuan:"奪子計比的是車馬炮：先把自己的大子連起來互相保護，再找他沒人保護的子。",yaoguang:"六門炮沒有車馬，近身就弱：用馬和兵靠近，同一條線上別放兩顆子讓他架炮。",
+  kaiyang:"八匹馬怕被絆腿：用兵和車卡住馬腿要點，別讓馬跳到你的九宮旁邊。",yuxiu:"殘局先算清楚再動：每一步先想對方最兇的回應。",
+  quanxing:"你多兩個車：先求穩、多兌子，子力優勢會越換越大。",gouchen:"開局背的都用不上：先把車放出來、兩邊的子連起來，再找進攻。",beichen:"連贏兩盤要穩：第一盤贏了別急，第二盤他會強一級。"};
+const gxMode=k=>GX_MODES.find(m=>m[0]===k)||GX_MODES[1];
+const gxLx=(g,R,base)=>g.lx?g.lx:Math.max(1,Math.min(18,base+(GX_R[g.id]||0)+gxMode(R.m)[2]+(g.twice&&R.ph===2?1:0)));
 const gxSeals=()=>store.get("gxSeal",null)||{};
 const gxOpen=()=>(store.get("bhCount",0)||0)>0||(!!store.get("dvtGxAll",0)&&typeof DEVMODE==="function"&&DEVMODE());   /* 開發者測試台「全部星系解鎖」 */
 const gxDocked=()=>{try{return typeof shipDocked==="function"?shipDocked().length:0}catch(e){return 0}};
@@ -9900,10 +9912,11 @@ async function gxCanjuPick(lv){let A=[];try{A=(((await (await fetch("data/canju/
   if(!A.length)return[];const lo=lv<=6?0:lv<=12?1.8:2.6,hi=lv<=6?2.2:lv<=12?3.4:9,B=A.filter(x=>(+x.d||0)>=lo&&(+x.d||0)<=hi),C=(B.length>=3?B:A).slice();
   const out=[];while(out.length<3&&C.length){const i=Math.floor(Math.random()*C.length);out.push({fen:C[i].fen,t:C[i].t||"殘局",id:C[i].id});C.splice(i,1)}return out}
 /* 開一關。run＝這一關的進度（玉宿第幾局、北辰第幾盤） */
-async function gxStart(id,again){const g=id==="mirror"?{id:"mirror",n:"第十四顆",t:"第十四顆・鏡像",say:GX_TXT.mirror}:gxGet(id);if(!g)return;
+async function gxStart(id,again,mode){const g=id==="mirror"?{id:"mirror",n:"第十四顆",t:"第十四顆・鏡像",say:GX_TXT.mirror}:gxGet(id);if(!g)return;
   if(id!=="mirror"){const no=gxLock(id);if(no){toast("🌌 "+no);return}}else if(!gxAllDone()){toast("🌌 九個星系都打完，第十四顆才會出現");return}
   const base=typeof bhLevel==="function"?bhLevel():8;let R=store.get("gxRun",null);if(!R||R.id!==id||!again)R={id,k:0,ph:1};
-  const b={human:"r",lx:Math.max(1,Math.min(18,g.lx||base+(g.twice&&R.ph===2?1:0)+(g.twice?1:0))),journey:"gx:"+id};
+  if(mode&&GX_MODES.some(m=>m[0]===mode))R.m=mode;if(!R.m)R.m=store.get("gxMode","std");store.set("gxMode",R.m);   /* 三檔：重試沿用同一檔 */
+  const b={human:"r",lx:gxLx(g,R,base),journey:"gx:"+id};
   if(g.fen)b.lv={fen:g.fen,turn:"r"};else if(g.remove)b.lv={fen:"",remove:g.remove.slice(),turn:"r"};else if(g.shuffle)b.lv={fen:gxShuffleFen(),turn:"r"};
   else if(g.canju){if(!R.list||!R.list.length||R.k===0)R.list=await gxCanjuPick(b.lx);const it=(R.list||[])[R.k];if(!it){toast("殘局題庫載入失敗，稍後再試");return}b.lv={fen:it.fen,turn:"r"}}
   else if(id==="mirror"){b.human="b";b.lv={fen:"",turn:"r",mirror:await gxMirrorLine()}}
@@ -9920,7 +9933,8 @@ function gxJudge(st,forced){const id=String(st.journey||"").slice(3),g=id==="mir
 /* 結算（同一盤只算一次）：記星印、推進玉宿／北辰的進度 */
 function gxSettle(st,forced){const D=store.get("gxDone",null)||{};if(D.id===st.id)return D.r;const r=gxJudge(st,forced);if(!r)return null;
   const id=String(st.journey||"").slice(3),R=store.get("gxRun",null)||{id,k:0,ph:1};
-  if(r.fin){if(id==="mirror")store.set("gxMirror",{at:Date.now()});else{const S=gxSeals();S[id]={at:Date.now(),n:(S[id]&&S[id].n||0)+1};store.set("gxSeal",S)}store.set("gxRun",null)}
+  {const LS=store.get("gxLoss",null)||{};if(!r.ok)LS[id]=(LS[id]||0)+1;else if(r.fin)LS[id]=0;store.set("gxLoss",LS)}   /* 連輸幾次（給提示、建議輕鬆用） */
+  if(r.fin){if(id==="mirror")store.set("gxMirror",{at:Date.now()});else{const S=gxSeals(),ti=Math.max(0,GX_MODES.findIndex(m=>m[0]===(R.m||"std")));S[id]={at:Date.now(),n:(S[id]&&S[id].n||0)+1,t:Math.max(S[id]&&S[id].t!=null?S[id].t:-1,ti)};store.set("gxSeal",S)}store.set("gxRun",null)}   /* t＝星印等級 0 銀、1 星、2 金，取最高 */
   else if(r.next==="k"){R.k++;store.set("gxRun",R)}else if(r.next==="ph"){R.ph=2;store.set("gxRun",R)}else if(r.reset){R.k=0;R.ph=1;R.list=null;store.set("gxRun",R)}
   store.set("gxDone",{id:st.id,r});return r}
 /* 07-legend journeyGameEnd 叫 */
@@ -9939,8 +9953,11 @@ function gxTick(st){if(!gxIs(st)||!st.id||st.result)return;if(GX_T.id!==st.id)GX
 function gxResultModal(st,win,draw0,XPR){const r=gxSettle(st)||{ok:win},id=String(st.journey||"").slice(3),g=id==="mirror"?{t:"第十四顆・鏡像"}:gxGet(id)||{t:"星系"};
   const all=r.fin&&gxAllDone()&&id!=="mirror",nx=r.ok&&!r.fin?(r.next==="k"?"下一個殘局 ›":"再破一次星核 ›"):null;
   modal(`<div class="em">${r.ok?"✨":"🌌"}</div><h2>${r.fin?"星印到手":r.ok?"這一關還沒完":"星光暗了一下"}</h2><p class="muted">${esc((st.result&&st.result.why)||"")}・🌌 ${esc(g.t)}（不計積分、不扣分）</p>`+
-    `<p class="pl-say">✦ ${esc(g.t)}：「${esc(r.ok?GX_TXT.win:GX_TXT.lose)}」</p>`+(all?`<p class="pl-say">✦ 星樞：「${esc(GX_TXT.all)}」</p>`:"")+(XPR||""),
-    [nx?[nx,()=>gxStart(id,true)]:r.ok?["🌌 回星圖",()=>gxMap()]:["再挑戰一次",()=>gxStart(id,true)],r.ok&&!nx?["回挑戰電腦",()=>{location.hash="#/cpu"},true]:["🌌 回星圖",()=>gxMap(),true]],"res")}
+    `<p class="pl-say">✦ ${esc(g.t)}：「${esc(r.ok?GX_TXT.win:GX_TXT.lose)}」</p>`+(all?`<p class="pl-say">✦ 星樞：「${esc(GX_TXT.all)}」</p>`:"")+
+    (!r.ok&&GX_HINT[id]?`<p style="line-height:1.7;margin:8px 0 0">💡 ${esc(GX_HINT[id])}</p>`:"")+(r.fin&&id!=="mirror"?`<p class="muted" style="margin:6px 0 0">這次用「${esc(gxMode(store.get("gxMode","std"))[1])}」過關：${esc(gxMode(store.get("gxMode","std"))[3])}</p>`:"")+(XPR||""),
+    [nx?[nx,()=>gxStart(id,true)]:r.ok?["🌌 回星圖",()=>gxMap()]:["再挑戰一次",()=>gxStart(id,true)],
+     ...(!r.ok&&id!=="mirror"&&((store.get("gxLoss",null)||{})[id]||0)>=3&&store.get("gxMode","std")!=="easy"?[["改用輕鬆再來",()=>gxStart(id,false,"easy"),true]]:[]),   /* 連輸 3 次：讓玩家自己選要不要降一檔（銀印，之後可以再挑戰更高檔） */
+     r.ok&&!nx?["回挑戰電腦",()=>{location.hash="#/cpu"},true]:["🌌 回星圖",()=>gxMap(),true]],"res")}
 /* 3D 場景參數（08b parkDraw 疊上）：星空背景、星系光暈、主宰的開場白 */
 function gxParkEx(st){if(!gxIs(st))return null;const id=String(st.journey).slice(3),g=id==="mirror"?{n:"第十四顆",c:"#FFFFFF",say:GX_TXT.mirror}:gxGet(id);if(!g)return null;
   return{bg:"data/park/blackhole_360.webp",ground:"data/pano/classic_ground.webp",indoor:true,era:"classic",bgName:"🌌 幻譜星門・"+g.n,gx:{c:g.c,c2:g.c2||null},oppHello:g.say,quietMate:true,watchers:[],crowd:null,
@@ -9961,7 +9978,7 @@ function gxCss(){if(document.getElementById("gxCss"))return;const s=document.cre
 .gx-14{position:absolute;left:50%;top:48.5%;transform:translate(-50%,-50%);border:1.5px dashed #ffe08a;background:rgba(0,0,0,.35);color:#ffe08a;border-radius:999px;padding:4px 10px;font:900 13px/1.2 var(--serif,serif)}
 .gx-card{margin:10px 12px max(14px,env(safe-area-inset-bottom));padding:12px 14px;border-radius:14px;background:rgba(30,26,40,.92);border:1.5px solid #4b3f6b}
 .gx-card h3{margin:0 0 4px;font:900 18px/1.3 var(--serif,serif);color:#ffe08a}.gx-card p{margin:4px 0;font-size:14.5px;line-height:1.6}
-.gx-btns{display:flex;gap:8px;margin-top:10px}.gx-btns button{flex:1;padding:11px 0;border-radius:11px;font:900 16px/1 var(--serif,serif);border:1.5px solid #6b5a33}
+.gx-btns{display:flex;flex-wrap:wrap;gap:8px;margin-top:10px}.gx-btns .gx-go{flex:1 1 28%;min-width:84px}.gx-btns button{flex:1;padding:11px 0;border-radius:11px;font:900 16px/1 var(--serif,serif);border:1.5px solid #6b5a33}
 .gx-go{background:#7a2bb5;color:#fff;border-color:#b58cff!important}.gx-go[disabled]{opacity:.45}.gx-stay{background:transparent;color:#f1e7cf}`;document.head.append(s)}
 function gxMap(o){o=o||{};gxCss();vibrate(8);const old=document.querySelector(".gx-ov");if(old)old.remove();
   const S=gxSeals(),all=gxAllDone(),ov=document.createElement("div");ov.className="gx-ov";ov.setAttribute("role","dialog");ov.setAttribute("aria-label","幻譜星門・十三星系");
@@ -9974,9 +9991,9 @@ function gxMap(o){o=o||{};gxCss();vibrate(8);const old=document.querySelector(".
   document.body.append(ov);const close=()=>{ov.remove()};ov.querySelector(".gx-x").onclick=()=>{vibrate(5);close()};
   const card=ov.querySelector("#gxCard"),pick=id=>{vibrate(5);ov.querySelectorAll(".gx-st,.gx-14").forEach(b=>b.classList.toggle("sel",b.dataset.gx===id));
     if(id==="mirror"){card.innerHTML=`<h3>第十四顆・鏡像</h3><p>${esc(GX_TXT.all)}</p><p>這一盤你執黑；對面照你自己最常贏的開局走前兩步，再用全力跟你下。</p><div class="gx-btns"><button class="gx-go" type="button">${esc(GX_TXT.go)}</button><button class="gx-stay" type="button">${esc(GX_TXT.stay)}</button></div>`}
-    else{const g=gxGet(id),lk=gxLock(id),dn=S[id];card.innerHTML=`<h3>${esc(g.t)}</h3><p>${esc(g.rule)}</p>${g.goal?`<p>勝利條件：${esc(g.goal)}</p>`:""}${g.say?`<p style="font-style:italic">「${esc(g.say)}」</p>`:""}<p class="muted" style="color:#a99f88;font-size:13px">${dn?"✦ 已得星印，可以再挑戰":lk?"🔒 "+esc(lk):"不計積分、不扣分"}</p>`+
-      `<div class="gx-btns"><button class="gx-go" type="button"${lk?" disabled":""}>${esc(GX_TXT.go)}</button><button class="gx-stay" type="button">${esc(GX_TXT.stay)}</button></div>`}
-    card.querySelector(".gx-stay").onclick=()=>{vibrate(5);close()};const go=card.querySelector(".gx-go");if(go)go.onclick=()=>{if(go.disabled)return;close();toast("🌌 "+GX_TXT.enter);setTimeout(()=>gxStart(id),300)}};
+    else{const g=gxGet(id),lk=gxLock(id),dn=S[id];card.innerHTML=`<h3>${esc(g.t)}</h3><p>${esc(g.rule)}</p>${g.goal?`<p>勝利條件：${esc(g.goal)}</p>`:""}${g.say?`<p style="font-style:italic">「${esc(g.say)}」</p>`:""}<p class="muted" style="color:#a99f88;font-size:13px">${dn?"✦ 已得"+esc((GX_MODES[dn.t!=null?dn.t:1]||GX_MODES[1])[3])+"，可以再挑戰更高一檔":lk?"🔒 "+esc(lk):"不計積分、不扣分"}</p>`+
+      `<div class="gx-btns">${GX_MODES.map(([k,l,d,seal])=>`<button class="gx-go" type="button" data-m="${k}"${lk?" disabled":""} aria-label="${esc(l)}：電腦${d?(d>0?"強":"弱")+Math.abs(d)+"級":"跟你差不多"}，過關得${esc(seal)}">${esc(l)}<small style="display:block;font-size:11px;opacity:.8">${esc(seal)}</small></button>`).join("")}<button class="gx-stay" type="button">${esc(GX_TXT.stay)}</button></div>`}
+    card.querySelector(".gx-stay").onclick=()=>{vibrate(5);close()};card.querySelectorAll(".gx-go").forEach(go=>go.onclick=()=>{if(go.disabled)return;close();toast("🌌 "+GX_TXT.enter);setTimeout(()=>gxStart(id,false,go.dataset.m),300)})};   /* 三檔：data-m＝easy／std／hard；鏡像那顆沒有 data-m，照上次的檔 */
   ov.querySelectorAll("[data-gx]").forEach(b=>b.onclick=()=>pick(b.dataset.gx));if(o.pick)pick(o.pick)}
 /* 星槎圖上的「🌌 幻譜星門」熱點（07f Voyage 畫完叫）：第一次出現先說旁白 */
 function gxShipHs(v){if(!gxOpen())return;const hl=v.querySelector(".shp-hl");if(!hl||hl.querySelector("[data-gxhs]"))return;const b=document.createElement("button");b.className="shp-hs";b.dataset.gxhs="1";b.type="button";b.style.cssText="left:30%;top:12%";b.textContent="🌌 幻譜星門";
@@ -21583,7 +21600,8 @@ const SIM_LOOK={
    park3d 讓凳面落在座高、凳腳落地，桌上對面那一角立一面這位棋客的棋位牌（SIM_PC，Q 版是寫在身上）。
    只有設定「對手外觀」選真實 3D、而且不是舊裝置（記憶體 2 GB 以下，或園子量到畫面偏慢那三天）才用；模型還在下載、載不到時就是原本的 Q 版棋子人（attachGLB 載成功才把 Q 版藏起來） */
 const SIM_SEAT={1:[.345],2:[.375],3:[.345],4:[.345],5:[.355],6:[.345],7:[.345],8:[.325],9:[.315],10:[.355],11:[.315]};
-function simOld(){try{const m=+((typeof navigator!=="undefined"&&navigator.deviceMemory)||0);if(m&&m<=2)return true;const t=+localStorage.getItem("xq_pkLowFps")||0;return!!(t&&Date.now()-t<3*864e5)}catch(e){return false}}
+/* 11/12 hspx（車輪戰對手變回 Q 版棋子人）：只有手機記憶體 2GB 以下才用 Q 版；不再看「量到畫面偏慢」的記號（黑洞局量到偏慢會連帶害車輪戰退回 Q 版） */
+function simOld(){try{const m=+((typeof navigator!=="undefined"&&navigator.deviceMemory)||0);return!!(m&&m<=2)}catch(e){return false}}
 function simGlb(fk){return SIM_SEAT[fk]&&store.get("oppLook","real")==="real"&&!simOld()?{glb:`data/tripo_app/s_f${fk}.glb`,stool:SIM_SEAT[fk].slice()}:null}
 function simOppLook(fk,lv){const c=SIM_LOOK[fk];if(!c)return null;const nm=SIM_NM[fk];
   return{p:SIM_CN[SIM_PC[fk]]||"卒",e:"ming",g:9,npc:nm,sim:1,about:`${nm}，今天在棋館二樓陪你下車輪戰${lv?`（第 ${lv} 級）`:""}。強弱照這一桌的級數，背後是象棋 AI 引擎 Pikafish。`,cus:{...c},...(simGlb(fk)||{})}}

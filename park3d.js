@@ -51,6 +51,7 @@
   const T=window.THREE;if(!T)return;
   /* 11/11 入座運鏡、省電模式的共用狀態（App 開著就一直在）：INTRO_SEEN＝播過入座運鏡的那幾盤；PWS＝電池、畫面偏慢；PF＝最近一座園子的效能計數（window.__PK.perf、設定頁那一行讀它） */
   const INTRO_SEEN=new Set(),PWS={bat:null,lowFps:false,batGo:false};
+  try{if(localStorage.getItem("xq_pkLowFpsV")!=="2"){localStorage.removeItem("xq_pkLowFps");localStorage.setItem("xq_pkLowFpsV","2")}}catch(e){}   /* 11/12 hspx「遊戲解析度變好差」：1180～1220 黑洞局量到偏慢會記 3 天，害所有園子降畫質；這版起黑洞不記，舊記號清一次 */
   try{const t=+localStorage.getItem("xq_pkLowFps")||0;if(t&&Date.now()-t<3*864e5)PWS.lowFps=true}catch(e){}   /* 量到畫面偏慢記 3 天：下次進園子一開始就省電（連抗鋸齒都不開） */
   const PF={live:false,fps:0,frames:0,renders:0,idle:0,span:0,power:false,why:[],mode:"auto",aa:true,pr:1,lowFps:PWS.lowFps};
   try{(window.__PK=window.__PK||{}).perf=PF}catch(e){}
@@ -2190,7 +2191,7 @@
     const pwSec=(now,sec)=>{PW.sec=sec;Object.assign(PF,pfSum(PW.q,sec));PF.live=true;try{PF.pr=rd.getPixelRatio()}catch(e){}pwApply(false)};
     /* 自動判斷「畫面偏慢」：沒省電、園子淡入 3 秒後才量；連續兩段 5 秒平均都不到每秒 24 格才算（偶爾卡一下不算），記 3 天 */
     const pwFps=now=>{if(PW.on||!shown||now-PW.shownAt<3000){PW.fw.t0=0;return}const a=fpsWin(PW.fw,now);if(a==null)return;PF.fps5=Math.round(a*10)/10;PW.low=a<24?PW.low+1:0;
-      if(PW.low>=2&&!PWS.lowFps){PWS.lowFps=true;try{localStorage.setItem("xq_pkLowFps",String(Date.now()))}catch(e){}pwApply(false)}};
+      if(PW.low>=2&&!PWS.lowFps&&!GIANT){PWS.lowFps=true;try{localStorage.setItem("xq_pkLowFps",String(Date.now()))}catch(e){}pwApply(false)}};   /* 11/12 hspx（車輪戰對手變回 Q 版棋子人）：黑洞巨盤（30 個角色＋鏡像）本來就重，量到偏慢不記 3 天的記號，免得拖累其他場景 */
     pwApply(true);
     function frame(now){if(stopped)return;if(!document.body.contains(el)){destroy();return}requestAnimationFrame(frame);
       if(document.hidden||el.style.display==="none"){last=now;PW.fw.t0=0;PF.live=false;return}
