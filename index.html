@@ -1535,7 +1535,7 @@ html[data-hct] .player.on .clk{background:#00563B;color:#FFFFFF;border-color:#00
       if(!window.caches)return go();caches.keys().then(function(ks){return Promise.all(ks.filter(function(k){return k.indexOf("xqlab-app-")===0}).map(function(k){return caches.delete(k)}))})
         .then(function(){return navigator.serviceWorker&&navigator.serviceWorker.getRegistration()}).then(function(r){return r&&r.update()}).catch(function(){}).then(go)}};setTimeout(chk,4000)})();
 </script>
-<script>window.XQ_OFFLINE=true;window.XQ_BUILD="20261112-1340";</script>
+<script>window.XQ_OFFLINE=true;window.XQ_BUILD="20261112-1341";</script>
 <script src="core.js"></script>
 <script src="engine.js"></script>
 <script src="local.js"></script>
@@ -10360,7 +10360,8 @@ function bhxFilmMeteor(o,cap,done){const stg=o.querySelector(".fm-st"),lift=()=>
   bhxMeteor(o,after);lift();let n=0;const iv=setInterval(()=>{if(++n>7){clearInterval(iv);return}opSfx("meteor",n===7)},420)}
 /* 開新旅程一律從開頭來（開發者 11/12「點選新的旅程不會從開頭開始，請修正」）：記下要存哪一格、標記「這一趟開頭要選角」（bhxFresh），選好的那顆星才帶進新旅程 */
 function bhxFresh(){try{return !!store.get("bhxFresh",0)||!(typeof myChar==="function"&&myChar())}catch(e){return true}}
-function bhxNewJourney(slot){store.set("bhxFresh",1);store.set("bhxSlot",slot||1);store.set("bhxPick",null);store.set("bhxLand",null);   /* hspx 開發者 11/12「選完角色後，降落的地點要改成在星槎船上，而不是首頁」：bhxLand 是整支手機共用、不在存檔清單裡，玩過一次的人開新旅程時 bhxLandNew 以為降落過了就回首頁；開新旅程先清掉 */
+function bhxNewJourney(slot){if(typeof journey==="function"&&journey()){try{for(const k of["xq_play","xq_play2","xq_playPrev"])localStorage.removeItem(k)}catch(e){}}   /* hspx 開發者 11/12「覆蓋舊角色開新旅程，到黑洞對戰前跳出舊角色下到一半的那盤、問要放棄還是繼續」：對局不在存檔清單裡，舊旅程的電腦對局、石桌往事那盤會跟到新角色。已有旅程的人開新旅程時先清掉（local.js ensureP 看到資料沒了就丟掉記憶體裡的舊局、開空局，不走中途離開算輸）；第一次選角不清（11/11：試玩的那盤跟著第一位角色走） */
+  store.set("bhxFresh",1);store.set("bhxSlot",slot||1);store.set("bhxPick",null);store.set("bhxLand",null);   /* hspx 開發者 11/12「選完角色後，降落的地點要改成在星槎船上，而不是首頁」：bhxLand 是整支手機共用、不在存檔清單裡，玩過一次的人開新旅程時 bhxLandNew 以為降落過了就回首頁；開新旅程先清掉 */
   try{opPre()}catch(e){}bhXuStart(false);if(typeof titleClose==="function")titleClose();location.hash="#/adventure"}
 /* 舊玩家：開 App 後首頁沒有開頭畫面、沒有別的視窗時，跳一次 */
 function bhxOldAsk(){try{if(!journey()||!bhxNeed()||store.get("bhXuAsk",null)||TITLE||!/^(#\/?)?$/.test(location.hash||"")||document.querySelector(".modal,#bhxPg,#bhxVx"))return false}catch(e){return false}store.set("bhXuAsk",Date.now());
@@ -10495,7 +10496,7 @@ function gxHello(st){const S=gxSeals(),ks=Object.keys(S).filter(k=>gxGet(k));if(
 function gxCss(){if(document.getElementById("gxCss"))return;const s=document.createElement("style");s.id="gxCss";s.textContent=`
 .gx-ov{position:fixed;inset:0;z-index:9500;background:#05060d;color:#f1e7cf;display:flex;flex-direction:column;overflow:auto;-webkit-overflow-scrolling:touch}
 .gx-top{display:flex;align-items:center;gap:8px;padding:max(10px,env(safe-area-inset-top)) 12px 6px}.gx-top b{flex:1;font:900 18px/1.3 var(--serif,serif);color:#ffe08a}
-.gx-x{border:1.5px solid #6b5a33;background:rgba(20,16,12,.6);color:#f1e7cf;border-radius:999px;padding:6px 12px;font:800 14px/1 inherit}
+.gx-x{border:1.5px solid #6b5a33;background:rgba(20,16,12,.6);color:#f1e7cf;border-radius:999px;padding:0;min-width:44px;min-height:44px;display:inline-flex;align-items:center;justify-content:center;font:800 20px/1 inherit}
 .gx-say{margin:0 14px 6px;font:700 14px/1.5 var(--serif,serif);color:#d9cfb6}
 .gx-map{position:relative;width:100%;aspect-ratio:1376/768;flex:none}.gx-map>img{position:absolute;inset:0;width:100%;height:100%}
 .gx-st{position:absolute;transform:translate(-50%,-50%);width:11%;aspect-ratio:1;border-radius:50%;border:0;background:transparent;padding:0}
@@ -10510,17 +10511,18 @@ function gxCss(){if(document.getElementById("gxCss"))return;const s=document.cre
 function gxMap(o){o=o||{};gxCss();vibrate(8);const old=document.querySelector(".gx-ov");if(old)old.remove();
   const S=gxSeals(),all=gxAllDone(),ov=document.createElement("div");ov.className="gx-ov";ov.setAttribute("role","dialog");ov.setAttribute("aria-label","幻譜星門・十三星系");
   const first=!store.get("gxSeen",0);store.set("gxSeen",1);
-  ov.innerHTML=`<div class="gx-top"><b>🌌 幻譜星門</b><button class="gx-x" type="button">${esc(GX_TXT.stay)}</button></div>`+
+  ov.innerHTML=`<div class="gx-top"><b>🌌 幻譜星門</b><button class="gx-x" type="button" aria-label="離開幻譜星門">✕</button></div>`+
     `<p class="gx-say">${o.from==="orb"?`✦ ${esc(first?GX_TXT.gate:GX_TXT.open)}<br>幻影棋客：「${esc(GX_TXT.invite)}」`:`✦ ${esc(GX_TXT.open)}`}</p>`+
     `<div class="gx-map"><img src="data/park/galaxy_map.webp" alt="十三星系星圖">`+GX_LIST.map(g=>{const lk=gxLock(g.id),dn=!!S[g.id];
       return`<button class="gx-st${dn?" on":""}" type="button" data-gx="${g.id}" style="left:${g.p[0]}%;top:${g.p[1]}%" aria-label="${esc(g.t)}${dn?"，已得星印":lk?"，"+esc(lk):""}"></button><span class="gx-lb${g.off?" off":dn?" done":""}" style="left:${g.p[2]}%;top:${g.p[3]}%">${esc(g.n)}${dn?"<i>✦</i>":lk&&!g.off?"<i>🔒</i>":""}</span>`}).join("")+
     (all?`<button class="gx-14" type="button" data-gx="mirror">第十四顆</button>`:"")+`</div><div class="gx-card" id="gxCard"><p>幻影棋客：「${esc(GX_TXT.pick)}」</p><p class="muted" style="color:#a99f88;font-size:13px">點一顆星看看。打贏一位主宰，下一顆星就會亮。</p></div>`;
-  document.body.append(ov);const close=()=>{ov.remove()};ov.querySelector(".gx-x").onclick=()=>{vibrate(5);close()};
+  document.body.append(ov);const close=()=>{ov.remove()};   /* hspx 開發者 11/12（截圖圈右上角「先走此局」）：右上角那顆其實是離開星門，卻寫成劇情文案「先走此局」，看起來像「開始這一局」，又跟卡片裡的同名鍵重複（卡片裡那顆還被擠成直排）→ 右上角改成 ✕（44×44、讀屏念「離開幻譜星門」），卡片裡的拿掉 */
+  ov.querySelector(".gx-x").onclick=()=>{vibrate(5);close()};
   const card=ov.querySelector("#gxCard"),pick=id=>{vibrate(5);ov.querySelectorAll(".gx-st,.gx-14").forEach(b=>b.classList.toggle("sel",b.dataset.gx===id));
-    if(id==="mirror"){card.innerHTML=`<h3>第十四顆・鏡像</h3><p>${esc(GX_TXT.all)}</p><p>這一盤你執黑；對面照你自己最常贏的開局走前兩步，再用全力跟你下。</p><div class="gx-btns"><button class="gx-go" type="button">${esc(GX_TXT.go)}</button><button class="gx-stay" type="button">${esc(GX_TXT.stay)}</button></div>`}
+    if(id==="mirror"){card.innerHTML=`<h3>第十四顆・鏡像</h3><p>${esc(GX_TXT.all)}</p><p>這一盤你執黑；對面照你自己最常贏的開局走前兩步，再用全力跟你下。</p><div class="gx-btns"><button class="gx-go" type="button">${esc(GX_TXT.go)}</button></div>`}
     else{const g=gxGet(id),lk=gxLock(id),dn=S[id];card.innerHTML=`<h3>${esc(g.t)}</h3><p>${esc(g.rule)}</p>${g.goal?`<p>勝利條件：${esc(g.goal)}</p>`:""}${g.say?`<p style="font-style:italic">「${esc(g.say)}」</p>`:""}<p class="muted" style="color:#a99f88;font-size:13px">${dn?"✦ 已得"+esc((GX_MODES[dn.t!=null?dn.t:1]||GX_MODES[1])[3])+"，可以再挑戰更高一檔":lk?"🔒 "+esc(lk):"不計積分、不扣分"}</p>`+
-      `<div class="gx-btns">${GX_MODES.map(([k,l,d,seal])=>`<button class="gx-go" type="button" data-m="${k}"${lk?" disabled":""} aria-label="${esc(l)}：電腦${d?(d>0?"強":"弱")+Math.abs(d)+"級":"跟你差不多"}，過關得${esc(seal)}">${esc(l)}<small style="display:block;font-size:11px;opacity:.8">${esc(seal)}</small></button>`).join("")}<button class="gx-stay" type="button">${esc(GX_TXT.stay)}</button></div>`}
-    card.querySelector(".gx-stay").onclick=()=>{vibrate(5);close()};card.querySelectorAll(".gx-go").forEach(go=>go.onclick=()=>{if(go.disabled)return;close();toast("🌌 "+GX_TXT.enter);setTimeout(()=>gxStart(id,false,go.dataset.m),300)})};   /* 三檔：data-m＝easy／std／hard；鏡像那顆沒有 data-m，照上次的檔 */
+      `<div class="gx-btns">${GX_MODES.map(([k,l,d,seal])=>`<button class="gx-go" type="button" data-m="${k}"${lk?" disabled":""} aria-label="${esc(l)}：電腦${d?(d>0?"強":"弱")+Math.abs(d)+"級":"跟你差不多"}，過關得${esc(seal)}">${esc(l)}<small style="display:block;font-size:11px;opacity:.8">${esc(seal)}</small></button>`).join("")}</div>`}
+    card.querySelectorAll(".gx-go").forEach(go=>go.onclick=()=>{if(go.disabled)return;close();toast("🌌 "+GX_TXT.enter);setTimeout(()=>gxStart(id,false,go.dataset.m),300)})};   /* 三檔：data-m＝easy／std／hard；鏡像那顆沒有 data-m，照上次的檔 */
   ov.querySelectorAll("[data-gx]").forEach(b=>b.onclick=()=>pick(b.dataset.gx));if(o.pick)pick(o.pick)}
 /* 星槎圖上的「🌌 幻譜星門」熱點（07f Voyage 畫完叫）：第一次出現先說旁白 */
 function gxShipHs(v){if(!gxOpen())return;const hl=v.querySelector(".shp-hl");if(!hl||hl.querySelector("[data-gxhs]"))return;const b=document.createElement("button");b.className="shp-hs";b.dataset.gxhs="1";b.type="button";b.style.cssText="left:30%;top:12%";b.textContent="🌌 幻譜星門";
