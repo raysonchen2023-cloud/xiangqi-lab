@@ -1,13 +1,13 @@
 {
- "version": "20261113-0656",
- "checkedAt": "2026-11-12T22:56:58.904Z",
- "html": "84dcec7e7c41",
- "sw": "c9e2db59b0c0",
+ "version": "20261113-0716",
+ "checkedAt": "2026-11-12T23:16:50.902Z",
+ "html": "8f67dd8a6f0b",
+ "sw": "4ffe81905594",
  "scripts": 4,
  "modules": {
   "00-util.js": "5b2fecc4f62f",
   "01-board.js": "8750957ed3a7",
-  "02-shell.js": "2b9dcfb49545",
+  "02-shell.js": "09cf51899274",
   "03-home-quiz.js": "173a2d58acbf",
   "04-stats.js": "443c393d8338",
   "04c-weekly.js": "326899d53f7b",
@@ -15,7 +15,7 @@
   "05b-save.js": "765c7e29a23c",
   "05c-health.js": "a1bcf3e541ac",
   "05d-telemetry.js": "98d12b742868",
-  "06-cpu.js": "b0b46c35d92b",
+  "06-cpu.js": "6434f5b0aa1f",
   "06c-cup.js": "b41ca428b52a",
   "07-legend.js": "9adb41fc19f2",
   "07c-canju.js": "a91312f29641",
@@ -84,7 +84,7 @@
   "07w8-shichen.js": "24b6fb85c70f",
   "07w9-exits.js": "94a8b7c84852",
   "08-scene.js": "86969cd488ba",
-  "08b-cpugame.js": "d0adfd8ca65f",
+  "08b-cpugame.js": "ec8f3f4dee8c",
   "08s-simul.js": "2126db3ab684",
   "09-askbot.js": "4e6983c50d4c",
   "09b-preload.js": "145283a6dbd3",
@@ -104,7 +104,8 @@
   "07pm-premove.js": "b58dc45776cd",
   "07dq-daily.js": "c1076bdd0ee8",
   "07i18n.js": "78e42feebf82",
-  "07sp-spotfit.js": "d06e7535a995"
+  "07sp-spotfit.js": "242fae00285d",
+  "07fl-fill.js": "8aeba1485348"
  },
  "differsFromSource": [
   {
@@ -116,6 +117,16 @@
    "module": "07y-hubmap.js",
    "lines": 5,
    "sourceModified": "2026-11-11T16:25:41.802Z"
+  },
+  {
+   "module": "07sp-spotfit.js",
+   "lines": 3,
+   "sourceModified": "2026-11-12T23:14:15.187Z"
+  },
+  {
+   "module": "07fl-fill.js",
+   "lines": 74,
+   "sourceModified": "2026-11-12T23:14:15.076Z"
   }
  ]
 }
