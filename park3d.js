@@ -1695,6 +1695,63 @@
       gntBurst(cap,red,big,spd,C0=>{gntDrop(cap);if(tgt&&!RDM)gntFly(C0,tgt,()=>layoutCaptured(board));else layoutCaptured(board)})};
     const gntTake=p=>{const q=gntPool[p];let g=q&&q.pop();if(g&&g.userData.ped){const[pb,pf,K]=g.userData.ped;pb.material=bMat(true);pf.material=fMat(NAMES.r[K],true)}   /* 換造型（refreshLook）會把舊的棋子材質丟掉，重用的底座要換新的 */if(!g){const K=p.toUpperCase();g=sideOf(p)==="r"?(GNT_X[K]?gntFig(p,K):gntStone(p)):(GNT_XS[K]?gntFig(p,K,true):gntStone(p))}g.visible=true;if(g.userData.capS0){g.scale.setScalar(g.userData.capS0);delete g.userData.capS0}g.rotation.set(0,g.userData.B?((sideOf(p)==="r")!==flip?PI:0):0,0);sc.add(g);return g};
     const gntDrop=g=>{sc.remove(g);if(g&&g.userData&&g.userData.giant){const p=g.userData.p;(gntPool[p]||(gntPool[p]=[])).push(g)}};
+    /* ---------- 開發者 11/12 選 ChatGPT 推薦套（story/chatgpt_app/128）：黑洞每種棋子的專屬走法動作 ----------
+       帥＝星冕御步（腳下光環、平穩移駕、到點收束）；仕＝宮紋換位（九宮線亮起、斜滑）；相＝象田飛渡（低拋物線飛過田字、象眼亮星、田字框閃）；
+       傌＝踏星躍日（先往馬腿踏半步、馬腿亮星、高跳、地上留 L 形星痕）；俥＝星軌快衝（蓄力→直線衝刺→急停回彈，拖一道光痕）；
+       炮＝一般滑行，隔子吃子時炮架上方開星門、炮高拋越過（炮架星門）；兵＝小步前踏，過河那一步河界亮波紋、兩側閃光刃（渡河開鋒）。
+       走子 0.35～0.72 秒；光效都是線、光環、光點（不用大量粒子）；減少動態：0.3 秒直線滑過去。鏡像那組是同一批物件，動作自動同步 */
+    const GMQ=new T.Quaternion(),GMQ2=new T.Quaternion(),GMA=new T.Vector3(),GUPY=new T.Vector3(0,1,0);
+    const fxLine=(pts,col,op)=>{const m=gntFx(new T.Line(new T.BufferGeometry().setFromPoints(pts.map(p=>new T.Vector3(p[0],p[1],p[2]))),new T.LineBasicMaterial({color:col,transparent:true,opacity:op==null?.9:op,depthWrite:false,toneMapped:false})));return m};
+    const fxRing=(x,z,col,r)=>{const m=gntFx(new T.Mesh(new T.RingGeometry(r*.8,r,40),new T.MeshBasicMaterial({color:col,transparent:true,opacity:.9,depthWrite:false,side:T.DoubleSide,toneMapped:false,blending:T.AdditiveBlending})));m.rotation.x=-PI/2;m.position.set(x,TOP+.03,z);return m};
+    const fxGlow=(x,y,z,col,s)=>{const m=gntFx(new T.Sprite(new T.SpriteMaterial({map:gntGlow(),color:col,transparent:true,opacity:.9,depthWrite:false,blending:T.AdditiveBlending,toneMapped:false})));m.position.set(x,y,z);m.scale.setScalar(s||.8);return m};
+    const fxFade=(objs,d,delay)=>{const L0=objs.filter(Boolean);for(const o of L0)o.userData.op0=o.material.opacity;anims.push({t:-(delay||0),d,f:p=>{p=Math.max(0,p);for(const o of L0)o.material.opacity=o.userData.op0*(1-p)},end:()=>L0.forEach(gntUnfx)})};
+    /* 炮的炮架：起點到終點直線上中間剛好一顆子，回傳它的格號（沒有回 -1） */
+    const gntScreen=(B,f,t)=>{const r0=f/9|0,c0=f%9,r1=t/9|0,c1=t%9;if(r0!==r1&&c0!==c1)return -1;const dr=Math.sign(r1-r0),dc=Math.sign(c1-c0);let n=0,s=-1;
+      for(let r=r0+dr,c=c0+dc;r!==r1||c!==c1;r+=dr,c+=dc){if(B[r*9+c]){n++;s=r*9+c}}return n===1?s:-1};
+    const gntMove=(g,K,fi,ti,onLand,o)=>{o=o||{};const[x0,z0]=pos(fi),[x1,z1]=pos(ti),dx=x1-x0,dz=z1-z0,dist=Math.hypot(dx,dz)||1,ry=g.rotation.y,s0=g.scale.x||1,G=GS;
+      const gold=sideOf(g.userData.p||"P")==="r"?0xFFD98A:0xB9A7FF,P=(x,z,y)=>g.position.set(x,TOP+(y||0),z);
+      const lean=a=>{GMA.set(dz/dist,0,-dx/dist);GMQ.setFromAxisAngle(GMA,a);GMQ2.setFromAxisAngle(GUPY,ry);g.quaternion.copy(GMQ).multiply(GMQ2)};   /* 往前進方向傾斜 a 弧度（負＝往後仰） */
+      const done=()=>{g.rotation.set(0,ry,0);g.scale.setScalar(s0);at(g,ti);if(onLand)onLand()};
+      const go=(d,f,end)=>anims.push({t:0,d,f:p=>f(p*d),end:()=>{if(end)end();done()}});
+      if(RDM)return go(.3,T0=>{const e=ease(T0/.3);P(x0+dx*e,z0+dz*e,0)});
+      if(K==="R"){const tr=fxLine([[x0,TOP+.3,z0],[x0,TOP+.3,z0]],gold,.85);
+        return go(.62,T0=>{let e,ln=0,sq=1;if(T0<.1){e=0;ln=-.12*T0/.1;sq=1-.08*T0/.1}else if(T0<.46){const q=(T0-.1)/.36;e=q*q*(3-2*q);ln=.17}else{const q=(T0-.46)/.16;e=1+.04*Math.sin(q*PI);ln=.17*(1-q)-.06*Math.sin(q*PI)}
+          P(x0+dx*e,z0+dz*e,0);lean(ln);g.scale.set(s0,s0*sq,s0);const a=tr.geometry.attributes.position;a.setXYZ(1,g.position.x,TOP+.3,g.position.z);a.needsUpdate=true;tr.material.opacity=T0<.46?.85:.85*(1-(T0-.46)/.16)},()=>gntUnfx(tr))}
+      if(K==="N"){const r0=fi/9|0,c0=fi%9,r1=ti/9|0,c1=ti%9,li=Math.abs(r1-r0)===2?(r0+Math.sign(r1-r0))*9+c0:r0*9+c0+Math.sign(c1-c0),[lx,lz]=pos(li);
+        const st=fxGlow(lx,TOP+.2,lz,gold,.75),tr=fxLine([[x0,TOP+.06,z0],[lx,TOP+.06,lz],[x1,TOP+.06,z1]],gold,.8),bx=x0+(lx-x0)*.3,bz=z0+(lz-z0)*.3;
+        return go(.72,T0=>{if(T0<.12){const q=T0/.12;P(x0+(bx-x0)*q,z0+(bz-z0)*q,0);g.scale.set(s0,s0*(1-.1*q),s0)}else if(T0<.55){const q=(T0-.12)/.43,e=ease(q);P(bx+(x1-bx)*e,bz+(z1-bz)*e,Math.sin(q*PI)*G);g.scale.setScalar(s0)}
+          else{const q=(T0-.55)/.17;P(x1,z1,0);g.scale.set(s0,s0*(1-.12*Math.sin(q*PI)),s0)}},()=>fxFade([st,tr],.35))}
+      if(K==="B"){const ei=(((fi/9|0)+(ti/9|0))/2)*9+((fi%9)+(ti%9))/2,[ex,ez]=pos(ei),st=fxGlow(ex,TOP+.15,ez,gold,.55),tr=fxLine([[x0,TOP+.05,z0],[ex,TOP+.05,ez],[x1,TOP+.05,z1]],gold,.7),
+          sq=fxLine([[x0,TOP+.04,z0],[x1,TOP+.04,z0],[x1,TOP+.04,z1],[x0,TOP+.04,z1],[x0,TOP+.04,z0]],gold,0);
+        return go(.68,T0=>{if(T0<.1)g.scale.set(s0,s0*(1-.08*T0/.1),s0);else if(T0<.52){const q=(T0-.1)/.42,e=ease(q);P(x0+dx*e,z0+dz*e,Math.sin(q*PI)*.65*G);g.scale.setScalar(s0);lean(.17*Math.sin(q*PI))}
+          else{P(x1,z1,0);sq.material.opacity=.7*(1-(T0-.52)/.16)}},()=>{sq.material.opacity=0;fxFade([st,tr,sq],.25)})}
+      if(K==="A"){const rb=(fi/9|0)<=2?0:7,Q=(c,r)=>{const p2=pos(r*9+c);return new T.Vector3(p2[0],TOP+.04,p2[1])},S=[];for(let k=0;k<3;k++)S.push(Q(3,rb+k),Q(5,rb+k),Q(3+k,rb),Q(3+k,rb+2));S.push(Q(3,rb),Q(5,rb+2),Q(5,rb),Q(3,rb+2));
+        const pl=gntFx(new T.LineSegments(new T.BufferGeometry().setFromPoints(S),new T.LineBasicMaterial({color:gold,transparent:true,opacity:0,depthWrite:false,toneMapped:false})));
+        return go(.6,T0=>{pl.material.opacity=.9*Math.min(1,T0/.12)*(T0>.45?1-(T0-.45)/.15:1);if(T0<.12)g.scale.setScalar(s0*(1-.06*T0/.12));
+          else if(T0<.45){const q=(T0-.12)/.33,e=ease(q);P(x0+dx*e,z0+dz*e,.08*Math.sin(q*PI));g.scale.setScalar(s0*(.94+.06*q));lean(.12*Math.sin(q*PI))}else P(x1,z1,0)},()=>gntUnfx(pl))}
+      if(K==="K"){const rg=fxRing(x0,z0,gold,.6*G);
+        return go(.58,T0=>{if(T0<.12){const q=T0/.12;g.scale.setScalar(s0*(1-.05*Math.sin(q*PI)));rg.scale.setScalar(.6+.4*q)}else if(T0<.46){const q=(T0-.12)/.34,e=ease(q);P(x0+dx*e,z0+dz*e,.15*Math.sin(q*PI));rg.position.set(g.position.x,TOP+.03,g.position.z);g.scale.setScalar(s0)}
+          else{const q=(T0-.46)/.12;P(x1,z1,0);rg.position.set(x1,TOP+.03,z1);rg.scale.setScalar(Math.max(.05,1-.8*q));rg.material.opacity=.9*(1-q)}},()=>gntUnfx(rg))}
+      if(K==="C"){if(o.screen!=null&&o.screen>=0){const[sx,sz]=pos(o.screen),gy=TOP+GNT_H*1.2,gate=gntFx(new T.Mesh(new T.RingGeometry(.42*G,.52*G,40),new T.MeshBasicMaterial({color:gold,transparent:true,opacity:0,depthWrite:false,side:T.DoubleSide,toneMapped:false,blending:T.AdditiveBlending})));
+          gate.position.set(sx,gy,sz);gate.lookAt(x1,gy,z1);const tr=fxLine([[x0,TOP+.7,z0],[x0,TOP+.7,z0]],gold,.85);   /* 炮架上方的星門，正對炮飛過去的方向 */
+          return go(.55,T0=>{gate.material.opacity=.95*Math.min(1,T0/.15)*(T0>.42?1-(T0-.42)/.13:1);gate.scale.setScalar(.6+.4*Math.min(1,T0/.15));
+            if(T0<.15)lean(-.14*T0/.15);else{const q=(T0-.15)/.4,e=ease(q);P(x0+dx*e,z0+dz*e,Math.sin(q*PI)*(GNT_H+.6)*G);lean(-.14*(1-q));const a=tr.geometry.attributes.position;a.setXYZ(1,g.position.x,g.position.y+.7,g.position.z);a.needsUpdate=true}},()=>{gntUnfx(gate);fxFade([tr],.25)})}
+        return go(.45,T0=>{const q=T0/.45,e=ease(q);P(x0+dx*e,z0+dz*e,.05*Math.sin(q*PI));lean(-.14*Math.sin(q*PI))})}
+      if(K==="P"){const cross=((fi/9|0)<=4)!==((ti/9|0)<=4);
+        return go(.35,T0=>{const q=T0/.35,e=ease(q);P(x0+dx*e,z0+dz*e,Math.sin(q*PI)*.3*G);lean(.1*Math.sin(q*PI))},()=>{fxFade([fxRing(x1,z1,gold,.42*G)],.35);
+          if(cross){const[ax]=pos(36),[bx2]=pos(44),mz=(pos(36)[1]+pos(45)[1])/2,y=TOP+.06,w=fxLine([[ax,y,mz],[bx2,y,mz]],gold,.95),h=TOP+GNT_H*.55,
+            L1=fxLine([[x1-.2*G,h,z1],[x1-.75*G,h,z1]],0xFFF2C0,.95),L2=fxLine([[x1+.2*G,h,z1],[x1+.75*G,h,z1]],0xFFF2C0,.95);fxFade([w,L1,L2],.5)}})}   /* 過河：河界亮一道、兩側光刃＝之後可以橫走 */
+      return go(.42,T0=>{const q=T0/.42,e=ease(q);P(x0+dx*e,z0+dz*e,Math.sin(q*PI)*1.1)})};
+    /* 將軍：星樞警鐘——攻擊線從走的那顆指向被將的帥／將 0.45 秒，被將的九宮亮一圈 */
+    const gntCheckFx=(ti,B)=>{if(RDM)return;const me=sideOf(B[ti]||"P"),kk=me==="r"?"k":"K",ki=B.indexOf(kk);if(ki<0)return;const[ax,az]=pos(ti),[kx,kz]=pos(ki),y=TOP+GNT_H*.6;
+      const ln=fxLine([[ax,y,az],[kx,y,kz]],0xFF6B5A,.95),rg=fxRing(kx,kz,0xFF6B5A,.7*GS),gl=fxGlow(kx,TOP+GNT_H*1.25,kz,0xFF6B5A,.9);fxFade([ln,rg,gl],.6,.2)};
+    /* 馬被蹩腿：選到自己的馬時，被擋住的馬腿格亮一個星鎖（紅金色 ✕＋光點）1.2 秒，教「不是目標格不行，是馬腿被堵住」 */
+    /* 開發者 11/12 hspx「相眼被擋住也要有」：選到自己的相／象時，被塞住的象眼（斜一格，而且那個田字落點在棋盤內、沒過河）也亮星鎖 */
+    let GNSEL=-1;const gntHorseLock=(sel,B)=>{if(sel===GNSEL)return;GNSEL=sel;if(sel<0||RDM||!B||!/^[NnBb]$/.test(B[sel]||""))return;const r=sel/9|0,c=sel%9,objs=[],ele=/^[Bb]$/.test(B[sel]);
+      const legs=ele?[[1,1],[1,-1],[-1,1],[-1,-1]].filter(([dr,dc])=>{const tr=r+2*dr,tc=c+2*dc;return tr>=0&&tr<=9&&tc>=0&&tc<=8&&((r<=4)===(tr<=4))}):[[1,0],[-1,0],[0,1],[0,-1]].filter(([dr,dc])=>(dr?[[r+2*dr,c-1],[r+2*dr,c+1]]:[[r-1,c+2*dc],[r+1,c+2*dc]]).some(([tr,tc])=>tr>=0&&tr<=9&&tc>=0&&tc<=8));   /* 馬：這條腿後面至少有一個落點在棋盤內才算 */
+      for(const[dr,dc]of legs){const rr=r+dr,cc=c+dc;if(rr<0||rr>9||cc<0||cc>8||!B[rr*9+cc])continue;const[x,z]=pos(rr*9+cc),y=TOP+GNT_H*1.15,s=.22*GS;
+        objs.push(fxLine([[x-s,y-s,z],[x+s,y+s,z]],0xFF8A5A,.95),fxLine([[x+s,y-s,z],[x-s,y+s,z]],0xFF8A5A,.95),fxGlow(x,y,z,0xFFB070,.6))}
+      if(objs.length)fxFade(objs,.5,.9)};
     let pieces={},prevB=null,prevLast=null,anims=[],captured=[],capNear=true,lastCapB=null;
     // 提示記號
     const markG=new T.Group();sc.add(markG);
@@ -1855,18 +1912,21 @@
       {const lk=JSON.stringify(ex.look?[ex.look.k,ex.look.img,!!ex.look.gly,ex.look.pset,ex.look.pieces&&ex.look.pieces.r,ex.look.grid]:null);if(lk!==lookKey){lookKey=lk;LOOK=ex.look||null;
         if(LOOK){let n=0;const L0=[LOOK.img,LOOK.pieces&&LOOK.pieces.r,LOOK.pieces&&LOOK.pieces.b,...(LOOK.pset?PSRC(LOOK.pset):[])],done=()=>{if(++n>=L0.length&&LOOK===ex.look)refreshLook()};L0.forEach(src=>{if(!src||loadImg(src,done))done()})}
         refreshLook()}}
-      if(nf!==flip){flip=nf;prevB=null}if(GIANT)try{gntPad(o);gsUI();unUI();teleUI();storySet(ex.bhStars)}catch(e){}   /* 搖桿：翻盤更新後才算方向；棋距拉桿 */
+      if(nf!==flip){flip=nf;prevB=null}if(GIANT)try{gntPad(o);gsUI();unUI();teleUI();storySet(ex.bhStars);gntHorseLock(o.sel!=null?o.sel:-1,board)}catch(e){}   /* 搖桿：翻盤更新後才算方向；棋距拉桿 */
       const L=o.last&&o.last.f!=null&&o.last.t!=null?o.last:null,lk=L?L.f+"-"+L.t:"";
       const moved=prevB&&L&&lk!==prevLast&&board[L.t]&&board[L.t]===prevB[L.f]&&!board[L.f]&&pieces[L.f]&&board.filter(Boolean).length>=prevB.filter(Boolean).length-1;
       if(moved){const g=pieces[L.f],cap=pieces[L.t];delete pieces[L.f];pieces[L.t]=g;const[x0,z0]=pos(L.f),[x1,z1]=pos(L.t);
         const by=sideOf(board[L.t]),botSide=ex.botSide||null;if(GIANT)gntPly++;
         /* 開發者 11/12 hspx「黑洞吃子時，角色先放大 1.5 倍、然後吃對方，再變回原本的大小」：放大 .22 秒 → 放大的樣子跳過去 .42 秒 → 落地才開始吃子特效 → 停一下再縮回（共 .7 秒）。減少動態：照舊 */
+        const GK=GIANT?String(board[L.t]||"").toUpperCase():"",GSCR=GIANT&&GK==="C"&&cap&&prevB?gntScreen(prevB,L.f,L.t):-1;   /* 黑洞：專屬走法動作用的棋種、炮的炮架 */
         if(cap&&GIANT&&!RDM){const s0=g.scale.x||1,capFx=()=>{try{gntCapFx(cap,by,board)}catch(e){gntDrop(cap);layoutCaptured(board)}};g.userData.capS0=s0;
           anims.push({t:0,d:.22,f:p=>g.scale.setScalar(s0*(1+.5*ease(p))),end:()=>{g.scale.setScalar(s0*1.5);
-            anims.push({t:0,d:.42,f:p=>{const e=ease(p);g.position.set(x0+(x1-x0)*e,TOP+Math.sin(p*PI)*1.1,z0+(z1-z0)*e)},end:()=>{at(g,L.t);capFx();
-              anims.push({t:0,d:.7,f:p=>g.scale.setScalar(s0*(1.5-.5*ease(Math.max(0,(p-.45)/.55)))),end:()=>{g.scale.setScalar(s0);delete g.userData.capS0}})}})}})}
+            gntMove(g,GK,L.f,L.t,()=>{capFx();
+              anims.push({t:0,d:.7,f:p=>g.scale.setScalar(s0*(1.5-.5*ease(Math.max(0,(p-.45)/.55)))),end:()=>{g.scale.setScalar(s0);delete g.userData.capS0}})},{screen:GSCR})}})}
         else if(cap&&GIANT){try{gntCapFx(cap,by,board)}catch(e){gntDrop(cap);layoutCaptured(board)}}else if(cap){anims.push({t:0,d:.55,f:p=>{cap.position.y=TOP+Math.sin(p*PI)*.9;cap.position.x+=(x1-x0)*.006;cap.position.z+=(z1>z0?.02:-.02);cap.rotation.z=p*2.2},end:()=>{if(GIANT)gntDrop(cap);else sc.remove(cap);layoutCaptured(board)}})}
-        if(!(cap&&GIANT&&!RDM))anims.push({t:0,d:.42,f:p=>{const e=ease(p);g.position.set(x0+(x1-x0)*e,TOP+Math.sin(p*PI)*1.1,z0+(z1-z0)*e)},end:()=>at(g,L.t)});
+        if(GIANT&&!cap)gntMove(g,GK,L.f,L.t,null,{});
+        else if(!(cap&&GIANT&&!RDM))anims.push({t:0,d:.42,f:p=>{const e=ease(p);g.position.set(x0+(x1-x0)*e,TOP+Math.sin(p*PI)*1.1,z0+(z1-z0)*e)},end:()=>at(g,L.t)});
+        if(GIANT&&o.check)try{gntCheckFx(L.t,board)}catch(e){}   /* 將軍：星樞警鐘 */
         if(botSide&&by===botSide){reach=1;reachT=0;opp.setFace(cap?"happy":"smile",1.4);if(cap){mate.setFace("open",1.6);mate.say(["小心！","哎呀，被吃了","沒關係，扳回來！"][Math.random()*3|0],2)}}
         else if(cap){mate.setFace("happy",1.6);mate.say(["吃得好！","漂亮！","好棋！"][Math.random()*3|0],1.8);if(botSide){opp.setFace("open",1.4);if((opp.B||oppSpr)&&Math.random()<.5)opp.say(["哎呀！","被吃了…","好棋！"][Math.random()*3|0])}}
         try{CR.move(by,prevB[L.t]||null)}catch(e){}if(GIANT)try{gntReact(g,by,cap)}catch(e){}
