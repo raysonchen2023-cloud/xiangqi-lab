@@ -1384,6 +1384,9 @@ body:has(> .modal) > .toast{z-index:9995}
 .pk2d{position:absolute;left:calc(10px + env(safe-area-inset-left,0px));bottom:10px;z-index:6;border:none;border-radius:99px;padding:7px 14px;min-height:38px;font:inherit;font-size:14px;font-weight:800;color:#3a2618;background:rgba(255,248,232,.94);box-shadow:0 2px 8px rgba(0,0,0,.32);cursor:pointer}
 /* 11/12 開發者 iPhone 橫向實拍（第 5 輪截圖 A18）：橫向時棋盤最下排貼到 3D 畫面底，左下角的「▦ 平面棋盤」蓋到傌、相、仕；橫向改放左上角 */
 @media (orientation:landscape) and (max-height:600px){.pk2d{top:10px;bottom:auto}}
+/* 11/12 開發者 iPhone 橫向實拍（第 6 輪截圖 18）：「▦ 平面棋盤」移到左上後蓋到置中的場景名，橫向時場景名改排在它下面、靠左 */
+#bbox:has(>.park3d){position:relative}   /* 橫向開局再轉直向時，平面棋盤鈕與場景名才會在 3D 畫面裡（原本只在直向開局時由 06-cpu 補 relative） */
+@media (orientation:landscape) and (max-height:600px){.pkname{left:10px;top:56px;transform:none}.pk2d{left:10px}.pkview{right:10px}}   /* 橫向時整頁已經讓開左邊安全區（動態島），3D 裡的按鈕不用再讓一次 */
 .pk2d.pulse{animation:pk2dPulse .9s ease-in-out 4}
 @keyframes pk2dPulse{50%{transform:scale(1.1);box-shadow:0 0 0 7px rgba(200,150,30,.5)}}
 .pk2d-tip{position:absolute;left:calc(10px + env(safe-area-inset-left,0px));bottom:58px;z-index:7;max-width:min(260px,calc(100% - 20px));box-sizing:border-box;padding:8px 11px;border-radius:10px;background:#fffaf0;color:#3a2618;border:1.5px solid #c8961e;font-size:13.5px;line-height:1.55;box-shadow:0 4px 12px rgba(0,0,0,.25);pointer-events:none;transition:opacity .4s}
@@ -1531,7 +1534,7 @@ html[data-hct] .player.on .clk{background:#00563B;color:#FFFFFF;border-color:#00
       if(!window.caches)return go();caches.keys().then(function(ks){return Promise.all(ks.filter(function(k){return k.indexOf("xqlab-app-")===0}).map(function(k){return caches.delete(k)}))})
         .then(function(){return navigator.serviceWorker&&navigator.serviceWorker.getRegistration()}).then(function(r){return r&&r.update()}).catch(function(){}).then(go)}};setTimeout(chk,4000)})();
 </script>
-<script>window.XQ_OFFLINE=true;window.XQ_BUILD="20261112-1020";</script>
+<script>window.XQ_OFFLINE=true;window.XQ_BUILD="20261112-1030";</script>
 <script src="core.js"></script>
 <script src="engine.js"></script>
 <script src="local.js"></script>
@@ -5332,7 +5335,7 @@ function gameLayout(v){
 (()=>{try{const s=document.createElement("style");s.id="glLand";s.textContent=`@media (orientation:landscape) and (max-height:600px){
 .view.fixed:has(>#bbox):has(>#acts){display:grid;grid-template-columns:min(62vw,calc((100dvh - 64px) * 560 / 615)) minmax(0,1fr);grid-template-rows:repeat(12,min-content) 1fr;grid-auto-rows:min-content;column-gap:4px;overflow-y:auto;padding-left:env(safe-area-inset-left);padding-right:env(safe-area-inset-right)}
 .view.fixed:has(>#bbox):has(>#acts)>*{grid-column:2;min-width:0}
-.view.fixed:has(>#bbox):has(>#acts)>#bbox{grid-column:1;grid-row:1/-1;position:sticky;top:0;align-self:start;height:calc(100dvh - 64px);max-height:100%;min-height:0;padding:2px 2px 2px 6px;box-sizing:border-box}
+.view.fixed:has(>#bbox):has(>#acts)>#bbox{grid-column:1;grid-row:1/-1;position:sticky!important;top:0;align-self:start;height:calc(100dvh - 64px - env(safe-area-inset-bottom,0px));max-height:100%;min-height:0;padding:2px 2px 2px 6px;box-sizing:border-box}
 .view.fixed:has(>#bbox):has(>#acts)>#bbox svg{height:100%;width:auto;max-width:100%;max-height:100%}
 .view.fixed:has(>#bbox):has(>#acts)>#bbox canvas{max-width:100%;max-height:100%}
 .view.fixed:has(>#bbox):has(>#acts)>.evline{margin:4px 8px}

@@ -1615,7 +1615,9 @@
     const CAMV={hr:1.14,ht:(window.__CAM||{}).ht||.24,dp:0};   // 畫面高寬比、水平視角的 tan(半角)（固定水平視野，窄螢幕不會切掉棋盤兩邊）
     // 意見回饋 218：螢幕夠高時畫面拉高一點（最多 1.32），多出來的都給下方（上緣維持原本的位置），露出棋盤前方的桌面讓小帥坐
     // 意見回饋 260：固定高度的對局頁（iPhone 主畫面 App 可用高度少、觀戰多一行狀態）不能比版面留給它的空間高，不然會壓到下面的玩家列
-    const room=()=>{const box=el.parentElement,view=box&&box.parentElement;if(!view||getComputedStyle(view).overflow!=="hidden")return 1e9;
+    const room=()=>{const box=el.parentElement,view=box&&box.parentElement;
+      if(box&&getComputedStyle(box).position==="sticky"){const bs=getComputedStyle(box);return box.clientHeight-parseFloat(bs.paddingTop)-parseFloat(bs.paddingBottom)}   /* 11/12 iPhone 橫向（第 6 輪截圖 18）：對局頁變兩欄、左欄固定高度，3D 照左欄高度算，不再比螢幕高 */
+      if(!view||getComputedStyle(view).overflow!=="hidden")return 1e9;
       let used=0;for(const c of view.children)if(c!==box&&!(parseFloat(getComputedStyle(c).flexGrow)>0))used+=c.offsetHeight;const cs=getComputedStyle(box);   /* 撐開空白的那格（flex:1）不算 */return view.clientHeight-used-parseFloat(cs.paddingTop)-parseFloat(cs.paddingBottom)};
     const fit=()=>{W=el.clientWidth||300;CAMV.hr=clamp((VH0-300)/W,1.14,1.32);const rm=room();if(W*CAMV.hr>rm)CAMV.hr=Math.max(.3,rm/W);   /* 意見回饋 295：電腦的寬螢幕也照可用高度滿版（上下視角不變、左右看更廣），不再撐得比螢幕還高 */
       // 畫面被壓矮（比 1.14 扁）時：上下視角維持 1.14 的範圍、左右看得更廣，不會把對面和近端的小帥切掉（意見回饋：5:49 截圖）

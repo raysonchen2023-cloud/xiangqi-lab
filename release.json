@@ -1,8 +1,8 @@
 {
- "version": "20261112-1020",
- "checkedAt": "2026-11-12T02:27:29.876Z",
- "html": "f64d297b4ecd",
- "sw": "c6985d45ca70",
+ "version": "20261112-1030",
+ "checkedAt": "2026-11-12T03:11:08.650Z",
+ "html": "f99fca7dc2bd",
+ "sw": "229694224449",
  "scripts": 4,
  "modules": {
   "00-util.js": "e4beee43ce00",
@@ -11,7 +11,7 @@
   "03-home-quiz.js": "173a2d58acbf",
   "04-stats.js": "76e9219cff42",
   "04c-weekly.js": "326899d53f7b",
-  "05-settings.js": "8d2a6f83578c",
+  "05-settings.js": "619eec5773bb",
   "05b-save.js": "f1205c787a98",
   "06-cpu.js": "ca26d2687ea7",
   "06c-cup.js": "892d1ff0445e",
