@@ -13,6 +13,8 @@
 
 這一頁是整理，不是法律意見。上架前的完整盤點另見專案內的授權台帳。
 
+AI 生成素材（Gemini、OpenAI 圖片，Lyria 音樂，Tripo 3D 模型，AI 協助的文字）各家條款的重點與本 App 的遵守方式，見〈AI 素材的使用條款〉（[ai-assets.md](ai-assets.md)）。
+
 ## 一、程式庫
 
 ### three.js（3D 園子、立體棋子）
