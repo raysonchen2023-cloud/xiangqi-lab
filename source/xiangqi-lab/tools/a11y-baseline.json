@@ -1,0 +1,89 @@
+{
+ "at": "2026-11-11T14:11:59.371Z",
+ "total": 12,
+ "count": {
+  "icon-button": 1,
+  "js-icon-button": 0,
+  "img-alt": 0,
+  "click-norole": 5,
+  "role-notab": 3,
+  "contrast": 3
+ },
+ "issues": [
+  {
+   "kind": "click-norole",
+   "file": "xiangqi-db/m/02-shell.js",
+   "line": 324,
+   "snip": "<div class=\"card\" id=\"myg\" style=\"margin-bottom:8px;cursor:pointer;border:2px solid var(--accent);background:color-mix(in srgb,var(--accent) 12%,var(--card))\">"
+  },
+  {
+   "kind": "click-norole",
+   "file": "xiangqi-db/m/02-shell.js",
+   "line": 336,
+   "snip": "<div class=\"card row\" data-p=\"${esc(p.id)}\" style=\"justify-content:space-between;margin-bottom:8px;cursor:pointer\">"
+  },
+  {
+   "kind": "click-norole",
+   "file": "xiangqi-db/m/02-shell.js",
+   "line": 347,
+   "snip": "<div class=\"card row\" data-q=\"${esc(p.id)}\" style=\"margin-bottom:6px;cursor:pointer\">"
+  },
+  {
+   "kind": "icon-button",
+   "file": "xiangqi-db/m/05-settings.js",
+   "line": 483,
+   "snip": "<button data-x=\"${i}\" class=\"pill\" style=\"position:absolute;top:-8px;right:-8px;padding:0 7px;line-height:22px\">✕"
+  },
+  {
+   "kind": "role-notab",
+   "file": "xiangqi-db/m/06-cpu.js",
+   "line": 214,
+   "snip": "<div class=\"av ${side} npc\" role=\"button\" aria-label=\"看${esc(n.name)}的 3D 人物\">"
+  },
+  {
+   "kind": "click-norole",
+   "file": "xiangqi-db/m/07-legend.js",
+   "line": 111,
+   "snip": "<div class=\"ppl\" data-pp=\"${esc(x.name)}\" style=\"cursor:pointer;${im?\"\":\"\"}\"${im?' style=\"flex-direction:row;gap:10px;align-items:center\"':\"\"}>"
+  },
+  {
+   "kind": "role-notab",
+   "file": "xiangqi-db/m/07g-battle.js",
+   "line": 192,
+   "snip": "<div class=\"bt2-hd\" id=\"bt2H\" role=\"button\" aria-label=\"拉開或收起\">"
+  },
+  {
+   "kind": "role-notab",
+   "file": "xiangqi-db/m/10-db.js",
+   "line": 89,
+   "snip": "<span class=\"bio-i\" role=\"button\" aria-label=\"生平\">"
+  },
+  {
+   "kind": "click-norole",
+   "file": "xiangqi-db/m/11-watch.js",
+   "line": 20,
+   "snip": "<span data-pid=\"${esc(p.id)}\" data-pn=\"${esc(p.name)}\" style=\"text-decoration:underline dotted;cursor:pointer\">"
+  },
+  {
+   "kind": "contrast",
+   "file": "xiangqi-db/m.css",
+   "line": 556,
+   "sel": ".car .own-b",
+   "ratio": 2.38
+  },
+  {
+   "kind": "contrast",
+   "file": "xiangqi-db/m.css",
+   "line": 841,
+   "sel": ".sv-cur",
+   "ratio": 2.42
+  },
+  {
+   "kind": "contrast",
+   "file": "xiangqi-db/m.css",
+   "line": 886,
+   "sel": ".xqt-df em",
+   "ratio": 3.91
+  }
+ ]
+}

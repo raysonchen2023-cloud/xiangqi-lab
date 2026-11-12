@@ -1,0 +1,174 @@
+<!doctype html>
+<!--
+  象棋千秋 Xiangqi Qianqiu
+  Copyright (c) 2026 陳泓昇 (Chen Hung-Sheng)
+  SPDX-License-Identifier: GPL-3.0-or-later
+  程式碼（本頁的 HTML、CSS、JavaScript 與建置工具，包括寫在程式裡的介面文字、場景小故事和對白）
+  依 GNU 通用公共授權第 3 版，或（由你選擇）任何更新的版本（GPL-3.0-or-later）授權，
+  全文見 LICENSE；可讀的原始碼與組裝方法：https://github.com/raysonchen2023-cloud/xiangqi-lab/tree/main/source
+  開發者自製的素材（data/ 底下的美術、AI 生成圖、3D 模型、音樂、長篇劇情等）依 CC BY-NC-SA 4.0 授權，見 LICENSE-ASSETS.md；
+  data/gmbios.json（改寫自維基百科等）和 data/voice/ 語音檔不在這個授權裡，照原來源的條件。
+  第三方元件依各自授權：Pikafish 象棋引擎 GPL-3.0（LICENSE-Pikafish-GPL3.txt）、
+  神經網路 pikafish.nnue 限非商業使用（NNUE-License.md）、three.js、OpenCC、字型等，清單見 NOTICE.md。
+  Code (HTML, CSS, JavaScript and build tools, including UI text, vignettes and dialogue inside the code):
+  GNU GPL version 3 or (at your option) any later version (GPL-3.0-or-later), see LICENSE.
+  Original assets under data/ (art, AI-generated images, 3D models, music, long-form story): CC BY-NC-SA 4.0,
+  see LICENSE-ASSETS.md; data/gmbios.json and data/voice/ are excluded and keep their original terms.
+  Third-party components keep their own licenses, see NOTICE.md.
+-->
+<html lang="zh-Hant"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover,user-scalable=no">
+<title>象棋千秋</title><!-- 意見回饋 580（開發者 11/5）：App 改名「象棋研究室」→「象棋千秋」 -->
+<meta name="theme-color" content="#3B2A1A">
+<meta name="apple-mobile-web-app-capable" content="yes"><meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent"><meta name="apple-mobile-web-app-title" content="象棋千秋">
+<link rel="manifest" href="/m/manifest.json"><link rel="icon" href="/m/icon.svg"><link rel="apple-touch-icon" href="/m/icon-180.png">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700;900&family=Noto+Serif+TC:wght@700;900&display=swap">
+<link rel="stylesheet" href="m.css"></head><body>
+<div class="app">
+ <div class="topbar" id="topbar"><button class="ib" id="back" hidden><b>‹</b>返回</button><h1 id="title">象棋千秋</h1><span id="topRight"></span></div>
+ <div class="view" id="view"></div>
+ <nav class="tabbar" id="tabbar">
+  <button data-go="#/"><span class="ic">🏠</span>首頁</button>
+  <button data-go="#/lobby"><span class="ic">🌐</span>線上</button>
+  <button data-go="#/db"><span class="ic">📚</span>棋譜</button>
+  <button data-go="#/settings"><span class="ic">⚙️</span>設定</button>
+ </nav>
+</div>
+<script>
+/* 開發者決定（Gemini 效能審閱 P0-1）：存檔雙份，資料不會因為瀏覽器清掉 localStorage 就不見
+   1. 所有寫進 localStorage 的東西（修為、等級、戰績、集章、解鎖、設定、未下完的棋…），同時寫一份到 IndexedDB（xqlab-save）
+   2. 第一次升級到這版：把現有的 localStorage 整份搬進 IndexedDB，一筆都不少
+   3. 打開時發現 localStorage 被清掉或缺了一大半，就從 IndexedDB 搬回來，自動重開一次
+   4. 請瀏覽器把這個網站的資料標成「持久儲存」，降低被系統清掉的機會 */
+(function(){if(!window.indexedDB||!window.localStorage)return;var DB=null,W=[],SKIP=/^(xqReload|xqRestored)$/;
+  function open(cb){if(DB)return cb(DB);W.push(cb);if(W.length>1)return;var r;try{r=indexedDB.open("xqlab-save",1)}catch(e){W=[];return}
+    r.onupgradeneeded=function(){try{r.result.createObjectStore("kv")}catch(e){}};r.onsuccess=function(){DB=r.result;var q=W;W=[];q.forEach(function(f){try{f(DB)}catch(e){}})};r.onerror=function(){W=[]}}
+  function put(k,v){open(function(d){try{var t=d.transaction("kv","readwrite");if(v===null)t.objectStore("kv").delete(k);else t.objectStore("kv").put(v,k)}catch(e){}})}
+  var P=Storage.prototype,oS=P.setItem,oR=P.removeItem,oC=P.clear;
+  P.setItem=function(k,v){oS.call(this,k,v);try{if(this===localStorage&&!SKIP.test(k))put(String(k),String(v))}catch(e){}};
+  P.removeItem=function(k){oR.call(this,k);try{if(this===localStorage)put(String(k),null)}catch(e){}};
+  P.clear=function(){oC.call(this);try{if(this===localStorage)open(function(d){d.transaction("kv","readwrite").objectStore("kv").clear()})}catch(e){}};
+  var SOFT={};
+  window.XQSave={soft:function(k,v){try{oS.call(localStorage,k,v);SOFT[k]=1}catch(e){}},dump:function(){var o={};for(var i=0;i<localStorage.length;i++){var k=localStorage.key(i);if(!SKIP.test(k))o[k]=localStorage.getItem(k)}return o},
+    /* 意見回饋 668：flush(cb)＝等前面排隊的 IndexedDB 寫入都完成（同一個物件庫的讀寫交易照建立順序跑完）才呼叫 cb(true)；3 秒沒好就 cb(false) */
+    flush:function(cb){var f=false,d=function(ok){if(f)return;f=true;try{cb&&cb(ok)}catch(e){}};open(function(db){try{var t=db.transaction("kv","readwrite");t.oncomplete=function(){d(true)};t.onerror=t.onabort=function(){d(false)}}catch(e){d(false)}});setTimeout(function(){d(false)},3000)},
+    load:function(o,done){var ks=[];for(var i=0;i<localStorage.length;i++)ks.push(localStorage.key(i));ks.forEach(function(k){if(!SKIP.test(k))localStorage.removeItem(k)});for(var k in o)localStorage.setItem(k,o[k]);setTimeout(done||function(){},600)}};
+  open(function(d){try{var t=d.transaction("kv","readonly"),st=t.objectStore("kv"),rk=st.getAllKeys(),rv=st.getAll();
+    t.oncomplete=function(){var K=rk.result||[],V=rv.result||[],i;
+      if(!K.length){for(i=0;i<localStorage.length;i++){var k=localStorage.key(i);if(!SKIP.test(k))put(k,localStorage.getItem(k))}SOFT={};return}
+      var miss=[];for(i=0;i<K.length;i++)if(localStorage.getItem(K[i])===null||SOFT[K[i]])miss.push(i);
+      if(miss.length&&(miss.length>=5||localStorage.length<K.length/2)&&!sessionStorage.getItem("xqRestored")){
+        miss.forEach(function(j){try{oS.call(localStorage,K[j],V[j])}catch(e){}});sessionStorage.setItem("xqRestored","1");location.reload()}}}catch(e){}});
+  try{if(navigator.storage&&navigator.storage.persist)navigator.storage.persisted().then(function(p){if(!p)return navigator.storage.persist()}).catch(function(){})}catch(e){}})();
+</script>
+<script>
+// 安全網：打開 4 秒後畫面還是空的（更新到一半、程式出錯），顯示「修復」按鈕：清掉 App 快取重新下載（引擎、棋譜、戰績都不會刪）
+(function(){var err="",t0=Date.now();window.addEventListener("error",function(e){err=String(e.message||"")});
+  var chk=function(){var v=document.getElementById("view");if(!v||v.children.length)return;if(document.getElementById("preov")||(!err&&Date.now()-t0<15000))return setTimeout(chk,2000);   /* 開發者：4 秒白畫面「修復並重開」不穩定（手機慢、載入畫面還在時會誤判） */
+    v.innerHTML='<div style="padding:24px;text-align:center"><div style="font-size:44px">🔧</div><h2>畫面沒有載入成功</h2><p style="color:#888;font-size:13px">'+err.replace(/[<>&]/g,"")+'</p><button id="xqFix" style="font-size:17px;padding:12px 22px;border-radius:12px;background:#B5452B;color:#fff">修復並重新開啟</button></div>';
+    document.getElementById("xqFix").onclick=function(){var go=function(){location.replace(location.pathname+"#/");setTimeout(function(){location.reload()},50)};
+      if(!window.caches)return go();caches.keys().then(function(ks){return Promise.all(ks.filter(function(k){return k.indexOf("xqlab-app-")===0}).map(function(k){return caches.delete(k)}))})
+        .then(function(){return navigator.serviceWorker&&navigator.serviceWorker.getRegistration()}).then(function(r){return r&&r.update()}).catch(function(){}).then(go)}};setTimeout(chk,4000)})();
+</script>
+<script>
+"use strict";
+//#include m/00-util.js
+//#include m/01-board.js
+//#include m/02-shell.js
+//#include m/03-home-quiz.js
+//#include m/04-stats.js
+//#include m/04c-weekly.js
+//#include m/05-settings.js
+//#include m/05b-save.js
+//#include m/05c-health.js
+//#include m/05d-telemetry.js
+//#include m/06-cpu.js
+//#include m/06c-cup.js
+//#include m/07-legend.js
+//#include m/07c-canju.js
+//#include m/07d-garden.js
+//#include m/07e-garden2.js
+//#include m/07f-ship.js
+//#include m/07o-shipmore.js
+//#include m/07bh-blackhole.js
+//#include m/07gx-galaxy.js
+//#include m/07dv-devtest.js
+//#include m/07dw-perfhud.js
+//#include m/07g-battle.js
+//#include m/07h-qqev.js
+//#include m/07i-codex.js
+//#include m/07i2-seal.js
+//#include m/07j-visit.js
+//#include m/07k-inkfx.js
+//#include m/07m-yizhan.js
+//#include m/07m2-innguest.js
+//#include m/07m3-opptalk.js
+//#include m/07m4-resume.js
+//#include m/07m5-family.js
+//#include m/07n-portfx.js
+//#include m/07p-portcolor.js
+//#include m/07q-chardiff.js
+//#include m/07r-portwind.js
+//#include m/07s-qqgate.js
+//#include m/07t-episodes.js
+//#include m/07u-women.js
+//#include m/07v-relicdrop.js
+//#include m/07w-shipwalk.js
+//#include m/07w4-porthost.js
+//#include m/07q-buddy.js
+//#include m/07w5-ouyu.js
+//#include m/07x-zoom.js
+//#include m/07y-hubmap.js
+//#include m/07z-homemap.js
+//#include m/07x2-lobbymap.js
+//#include m/07x3-rostermap.js
+//#include m/07x4-lobbysafe.js
+//#include m/07s2-setmap.js
+//#include m/07t2-tabink.js
+//#include m/07t3-tabtube.js
+//#include m/07s3-feedback.js
+//#include m/07s4-passmap.js
+//#include m/07y2-campmap.js
+//#include m/07c2-canjumap.js
+//#include m/07y3-thememap.js
+//#include m/07y4-termsmap.js
+//#include m/07y5-todaymap.js
+//#include m/07y6-gmmap.js
+//#include m/07y7-cupmap.js
+//#include m/07y8-redomap.js
+//#include m/07y9-exammap.js
+//#include m/07z2-statmap.js
+//#include m/07z3-openmap.js
+//#include m/07z4-studymap.js
+//#include m/07z5-cpuroom.js
+//#include m/07z6-sitemap.js
+//#include m/07z7-lesson.js
+//#include m/07z8-grablab.js
+//#include m/07w6-sceneinfo.js
+//#include m/07w6b-scenedata.js
+//#include m/07w6c-scenepoem.js
+//#include m/07w7-seasons.js
+//#include m/07w8-shichen.js
+//#include m/07w9-exits.js
+//#include m/08-scene.js
+//#include m/08b-cpugame.js
+//#include m/08s-simul.js
+//#include m/09-askbot.js
+//#include m/09b-preload.js
+//#include m/10-db.js
+//#include m/10b-libmap.js
+//#include m/10c-deskmap.js
+//#include m/10d-coach.js
+//#include m/11-watch.js
+//#include m/07q2-coop.js
+//#include m/11b-a11y.js
+//#include m/11c-a11ysnd.js
+//#include m/07cb-colorblind.js
+//#include m/07hp-haptics.js
+//#include m/07hs-netsig.js
+//#include m/07fm-focus.js
+//#include m/07lh-lefty.js
+//#include m/07pm-premove.js
+//#include m/07dq-daily.js
+</script></body></html>

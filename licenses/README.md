@@ -21,4 +21,4 @@
 
 字型都只取 App 用到的字做成子集，並照 OFL 規定改了字型內部名稱，不沿用原本的保留字型名。
 
-AI 生成的圖片、音樂、3D 模型與語音不是開源授權，各家條款與目前狀態請看 [AI 素材與授權條款](../data/docs/ai-assets.md)。
+本 App 自己的程式碼是 GNU GPL 第 3 版或（由你選擇）任何更新的版本（`GPL-3.0-or-later`，[../LICENSE](../LICENSE)），寫在程式檔裡的介面文字、場景小故事和對白也算程式；開發者自製的素材（`data/` 底下的圖片、3D 模型、音樂、長篇劇情等，含 AI 協助生成的）是 CC BY-NC-SA 4.0（[../LICENSE-ASSETS.md](../LICENSE-ASSETS.md)）。特級大師小傳 `data/gmbios.json` 和語音 12 檔 `data/voice/` 不在這兩種授權裡，照原來源的條件。各 AI 服務的條款見 [AI 素材與授權條款](../data/docs/ai-assets.md)。

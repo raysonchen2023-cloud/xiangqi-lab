@@ -1,0 +1,446 @@
+{
+ "note": "ai-batch.js 用的固定局面（許銀川對局集 site/data/xuyinchuan.json，種子 20261112）；fen＝XQCore.fen 格式；master＝大師在這個局面實際走的著法",
+ "seed": 20261112,
+ "positions": [
+  {
+   "id": "op01",
+   "phase": "開局",
+   "src": "20060522汪洋和許銀川 第 7 手後",
+   "fen": "rnbakabr1/9/1c4nc1/p1p1p2Rp/6p2/9/P1P1P1P1P/1C2C1N2/9/RNBAKAB2 b",
+   "master": "b9c7"
+  },
+  {
+   "id": "op02",
+   "phase": "開局",
+   "src": "20021027許銀川勝陳孝堃 第 10 手後",
+   "fen": "r1bakabr1/9/1c4nc1/p3p1p1p/1np6/9/P1P1P1P1P/N1C1C1N2/9/R1BAKABR1 w",
+   "master": "h0h6"
+  },
+  {
+   "id": "op03",
+   "phase": "開局",
+   "src": "19950119許銀川勝胡榮華 第 5 手後",
+   "fen": "rnbakabr1/9/1c5cn/p1p1p1p1p/9/9/P1P1P1P1P/1C1C2N2/9/RNBAKABR1 b",
+   "master": "c6c5"
+  },
+  {
+   "id": "op04",
+   "phase": "開局",
+   "src": "20050329許銀川和苗利明 第 11 手後",
+   "fen": "rn1akabR1/9/1c1cb1n2/p1p1p1C1p/6p2/9/P1P1P1P1P/1C2B1N2/9/RNBAKA3 b",
+   "master": "g7h9"
+  },
+  {
+   "id": "op05",
+   "phase": "開局",
+   "src": "20010314趙國榮和許銀川 第 7 手後",
+   "fen": "r1bakabnr/9/1cn2c3/p3p1p1p/2p6/6P2/P1P1P3P/NC2C1N2/9/R1BAKAB1R b",
+   "master": "h9g7"
+  },
+  {
+   "id": "op06",
+   "phase": "開局",
+   "src": "20021221許銀川負呂欽 第 10 手後",
+   "fen": "2baka2r/r8/nc2b1nc1/p1p1p3p/6p2/2P6/P3P1P1P/1CN1B2C1/5R3/2BAKA1NR w",
+   "master": "f1f4"
+  },
+  {
+   "id": "op07",
+   "phase": "開局",
+   "src": "19990814胡榮華負許銀川 第 12 手後",
+   "fen": "2bakab1r/9/2ncc1n2/p1p1p1p1p/1r7/2P3P2/P3P3P/NC2B2C1/5N3/1RBAKA2R w",
+   "master": "b2c2"
+  },
+  {
+   "id": "op08",
+   "phase": "開局",
+   "src": "19980613陶漢明勝許銀川 第 5 手後",
+   "fen": "rnbakabr1/9/1c4nc1/p1p1p1p1p/9/9/P1P1P1P1P/1C2C1N2/9/RNBAKABR1 b",
+   "master": "b9c7"
+  },
+  {
+   "id": "op09",
+   "phase": "開局",
+   "src": "19901012熊學元負許銀川 第 7 手後",
+   "fen": "rnbakabr1/9/1c4n1c/p1p1p1p1p/9/2P3P2/P3P3P/1C3CN2/9/RNBAKAB1R b",
+   "master": "c9e7"
+  },
+  {
+   "id": "op10",
+   "phase": "開局",
+   "src": "19961104孫勇征負許銀川 第 8 手後",
+   "fen": "rn1akabr1/9/1c2b1nc1/p1p1p3p/6p2/2P6/P3P1P1P/1C2C1N2/9/RNBAKABR1 w",
+   "master": "h0h6"
+  },
+  {
+   "id": "op11",
+   "phase": "開局",
+   "src": "20040104趙國榮和許銀川 第 4 手後",
+   "fen": "rnbakabr1/9/1c4nc1/p1p1p1p1p/9/9/P1P1P1P1P/1C2C1N2/9/RNBAKAB1R w",
+   "master": "i0h0"
+  },
+  {
+   "id": "op12",
+   "phase": "開局",
+   "src": "19980408許銀川勝徐天紅 第 10 手後",
+   "fen": "rnbak2nr/4a4/2c1b2c1/2p1p1p1p/9/p1P6/P3P1P1P/NC2C1N2/9/1RBAKAB1R w",
+   "master": "a3a4"
+  },
+  {
+   "id": "op13",
+   "phase": "開局",
+   "src": "20010815許銀川和黃海林1 第 5 手後",
+   "fen": "r1bakabnr/9/1cn2c3/p1p1p1p1p/9/6P2/P1P1P3P/1C2C1N2/9/RNBAKAB1R b",
+   "master": "c6c5"
+  },
+  {
+   "id": "op14",
+   "phase": "開局",
+   "src": "19921027許銀川勝蔣志梁 第 5 手後",
+   "fen": "rnbakabr1/9/1c4nc1/p1p1p1p1p/9/9/P1P1P1P1P/1C2C1N2/9/RNBAKABR1 b",
+   "master": "b9c7"
+  },
+  {
+   "id": "op15",
+   "phase": "開局",
+   "src": "19901014許銀川和李家華 第 10 手後",
+   "fen": "r2akabr1/9/1cn1b1nc1/p3p1p1p/2p6/7R1/P1P1P1P1P/NC2C1N2/9/R1BAKAB2 w",
+   "master": "c3c4"
+  },
+  {
+   "id": "op16",
+   "phase": "開局",
+   "src": "19980408許銀川和徐天紅 第 4 手後",
+   "fen": "rn1akabnr/9/2c1b2c1/p1p1p1p1p/9/2P6/P3P1P1P/1C2C4/9/RNBAKABNR w",
+   "master": "h0g2"
+  },
+  {
+   "id": "op17",
+   "phase": "開局",
+   "src": "19891029許銀川勝馮明光 第 11 手後",
+   "fen": "r1bakab2/3r5/1cn1c1n2/p1p1p1p1p/9/2P3P2/P3P3P/1CN1C1N2/9/R1BAKABR1 b",
+   "master": "d8d3"
+  },
+  {
+   "id": "op18",
+   "phase": "開局",
+   "src": "19971100許銀川和鄭亞生 第 4 手後",
+   "fen": "rnbakab1r/9/2c3nc1/p1p1p1p1p/9/2P6/P3P1P1P/1C4NC1/9/RNBAKAB1R w",
+   "master": "b0c2"
+  },
+  {
+   "id": "op19",
+   "phase": "開局",
+   "src": "20040404許銀川和于幼華 第 4 手後",
+   "fen": "rnbakabr1/9/1c4nc1/p1p1p1p1p/9/9/P1P1P1P1P/1C2C1N2/9/RNBAKAB1R w",
+   "master": "i0h0"
+  },
+  {
+   "id": "op20",
+   "phase": "開局",
+   "src": "20011200柳大華和許銀川 第 8 手後",
+   "fen": "r1bakabr1/9/1cn3nc1/p1p1p3p/6p2/9/P1P1P1P1P/NC2C1N2/9/R1BAKABR1 w",
+   "master": "b2c2"
+  },
+  {
+   "id": "mg01",
+   "phase": "中局",
+   "src": "19911023李來群勝許銀川 第 20 手後",
+   "fen": "1n1akab2/r8/2c1b1n2/p1p1p4/6C1p/2P6/P3P1P1c/2N1C4/3R5/2BAKABN1 w",
+   "master": "g5g6"
+  },
+  {
+   "id": "mg02",
+   "phase": "中局",
+   "src": "19930706董旭彬負許銀川 第 22 手後",
+   "fen": "r2akab1r/9/nc2b1n2/1cp1p3p/p5p2/5R3/P1P1P1P1P/N1C1B1N1C/9/2BAKA1R1 w",
+   "master": "g3g4"
+  },
+  {
+   "id": "mg03",
+   "phase": "中局",
+   "src": "20000422許銀川勝吳貴臨 第 41 手後",
+   "fen": "3akab2/9/1c2b4/N3p3p/P4R3/9/2r1P3P/4B2r1/9/RC1AKA3 b",
+   "master": "b7b3"
+  },
+  {
+   "id": "mg04",
+   "phase": "中局",
+   "src": "20050301許銀川勝王斌 第 58 手後",
+   "fen": "4ka3/4a4/b3b4/p3c2rp/4rnn2/P1P3B2/3R4P/2C1B1N2/4A4/3AK1RC1 w",
+   "master": "g0f0"
+  },
+  {
+   "id": "mg05",
+   "phase": "中局",
+   "src": "19950119許銀川勝徐天紅 第 21 手後",
+   "fen": "2bakab2/9/ncc2Rn2/2p1p1p1p/p6r1/1C4P2/P1P1P3P/3CB1N2/2N1A4/R1BAK4 b",
+   "master": "b7f7"
+  },
+  {
+   "id": "mg06",
+   "phase": "中局",
+   "src": "20021223洪智負許銀川 第 55 手後",
+   "fen": "4kab2/4a4/2n1b3c/p4r1cp/4p4/PNR5P/3NP4/1C2B4/4A4/4KAB2 b",
+   "master": "f6e6"
+  },
+  {
+   "id": "mg07",
+   "phase": "中局",
+   "src": "20040101胡榮華和許銀川 第 23 手後",
+   "fen": "1rbakab2/4c4/2nr2n2/p1p1p3p/9/2P3R2/Pc2P3P/2NCC1N2/4A4/1RBAK1B2 b",
+   "master": "b3c3"
+  },
+  {
+   "id": "mg08",
+   "phase": "中局",
+   "src": "20051030洪智和許銀川 第 22 手後",
+   "fen": "r1b1kab2/4a1c2/1cn3n2/p1p1pR2p/4P4/2P6/P3N1p1P/1CN1C4/7r1/R1BAKAB2 w",
+   "master": "e3d5"
+  },
+  {
+   "id": "mg09",
+   "phase": "中局",
+   "src": "19950506林宏敏負許銀川 第 44 手後",
+   "fen": "1r2kab2/4a4/3cb1n2/3Rp1N1p/3n5/P5P2/2pr4P/Nc2BC3/2C1A4/2BAK1R2 w",
+   "master": "f2f1"
+  },
+  {
+   "id": "mg10",
+   "phase": "中局",
+   "src": "19990705許銀川和呂欽 第 20 手後",
+   "fen": "2baka1nr/9/c1n1b4/p3p3p/2p3r2/7N1/P1P1P3P/2N1B1C2/1R7/2BAKA2R w",
+   "master": "i0g0"
+  },
+  {
+   "id": "mg11",
+   "phase": "中局",
+   "src": "19961030許銀川和趙國榮 第 20 手後",
+   "fen": "2bakac1r/9/1cn1b1n2/p3p1p1p/2p6/5RPN1/PCP1P3P/N3B2C1/3rA4/2BAK3R w",
+   "master": "h2h1"
+  },
+  {
+   "id": "mg12",
+   "phase": "中局",
+   "src": "20050205許銀川和萬春林 第 33 手後",
+   "fen": "2baka1n1/9/1c2b3c/4p3p/1npr5/R5P2/4P2CP/2NCB1N2/4A4/4KAB2 b",
+   "master": "d5h5"
+  },
+  {
+   "id": "mg13",
+   "phase": "中局",
+   "src": "19990704許銀川和胡榮華 第 36 手後",
+   "fen": "2baka3/9/4b1n2/N1n3C1p/4p1p2/c8/2c1P1P1P/1C2B4/5N3/2BAKA3 w",
+   "master": "f1d2"
+  },
+  {
+   "id": "mg14",
+   "phase": "中局",
+   "src": "20020408許銀川和胡榮華 第 22 手後",
+   "fen": "3akab2/3n4r/4b2c1/p3p3p/2r2n3/1N4R2/P3P3P/1c2B2C1/3R1N3/2BAKA3 w",
+   "master": "h2b2"
+  },
+  {
+   "id": "mg15",
+   "phase": "中局",
+   "src": "20010106胡榮華和許銀川 第 34 手後",
+   "fen": "r2akab2/9/3cb1n2/p2rp3p/6n2/2R2N3/PR2P3P/N3C4/4A4/2B1KAB2 w",
+   "master": "e3e4"
+  },
+  {
+   "id": "mg16",
+   "phase": "中局",
+   "src": "19950412許銀川和胡榮華 第 32 手後",
+   "fen": "4kab2/2n1a4/3cb1n2/p3p3p/6p2/6P2/P1c1P3P/N3B1N1C/9/2BAKA3 w",
+   "master": "a2c3"
+  },
+  {
+   "id": "mg17",
+   "phase": "中局",
+   "src": "20060527金波勝許銀川 第 23 手後",
+   "fen": "2bakab2/5r1r1/c1n4c1/p1p4RC/1R2p1p2/2P6/P3P1n1P/2NC2N2/9/2BAKAB2 b",
+   "master": "e5e4"
+  },
+  {
+   "id": "mg18",
+   "phase": "中局",
+   "src": "19971100許銀川勝陳國良 第 53 手後",
+   "fen": "3ak1b2/4aC3/1cn1b2c1/p2R4p/3nr4/3N5/P3P4/C7B/4A4/2BAK1R2 b",
+   "master": "g9i7"
+  },
+  {
+   "id": "mg19",
+   "phase": "中局",
+   "src": "20050328許銀川和趙鑫鑫 第 34 手後",
+   "fen": "2nakab2/c8/3cb1n2/C3p3p/2r6/1N4R2/P3P3P/1C2B1N2/9/2BAKA3 w",
+   "master": "g4c4"
+  },
+  {
+   "id": "mg20",
+   "phase": "中局",
+   "src": "20010423于幼華和許銀川1 第 37 手後",
+   "fen": "1r2kabr1/4a4/4b4/p3p3p/3N1n1c1/2R6/P3P3P/1CN6/1R7/2BAKAB2 b",
+   "master": "h5d5"
+  },
+  {
+   "id": "eg01",
+   "phase": "殘局",
+   "src": "浙江西貝樂宇宙聯盟邱東紅先負廣東東莞日報許銀川-(三臺) 第 120 手後",
+   "fen": "4k4/c3a4/3ab4/4n4/2b1C4/P3N4/1p7/3A5/9/3AK4 w",
+   "master": "a4a5",
+   "selV": -31
+  },
+  {
+   "id": "eg02",
+   "phase": "殘局",
+   "src": "20010309胡榮華和許銀川 第 64 手後",
+   "fen": "2bak4/4a4/4b4/8R/2p1p4/9/4P2rP/4B1c2/4A4/2BAK1C2 w",
+   "master": "i6g6",
+   "selV": -13
+  },
+  {
+   "id": "eg03",
+   "phase": "殘局",
+   "src": "20040105呂欽和許銀川 第 56 手後",
+   "fen": "2bak4/4a4/4b1n2/4p4/7rp/P1N3P2/7R1/4B4/4A4/3AK1B2 w",
+   "master": "h3f3",
+   "selV": 3
+  },
+  {
+   "id": "eg04",
+   "phase": "殘局",
+   "src": "19981209許銀川和宗永生 第 44 手後",
+   "fen": "3akab2/9/4b4/p1P1p3p/5np2/9/P2N1nP1P/C8/4K4/2BA1AB2 w",
+   "master": "e1e0",
+   "selV": 10
+  },
+  {
+   "id": "eg05",
+   "phase": "殘局",
+   "src": "20040226許銀川和趙國榮 第 69 手後",
+   "fen": "2c1kab2/4a4/4b4/p3p3p/3N3n1/4P4/5C3/4BA3/9/3AK1B2 b",
+   "master": "a6a5",
+   "selV": 17
+  },
+  {
+   "id": "eg06",
+   "phase": "殘局",
+   "src": "20030924許銀川負孫勇征 第 80 手後",
+   "fen": "2b1kab2/4a4/2P6/p3r1N1p/6P2/4p4/P2R4P/9/2n1A4/2B1KA3 w",
+   "master": "d3d1",
+   "selV": -29
+  },
+  {
+   "id": "eg07",
+   "phase": "殘局",
+   "src": "19961222柳大華勝許銀川 第 79 手後",
+   "fen": "5a3/2Rka1N2/9/p7p/2p1P4/3r5/P7P/1n7/4A4/3AK1B2 b",
+   "master": "d8d9",
+   "selV": -335
+  },
+  {
+   "id": "eg08",
+   "phase": "殘局",
+   "src": "19980627趙國榮勝許銀川 第 99 手後",
+   "fen": "3a1k3/1c2a4/3r5/2PN5/8R/P8/8P/4B4/4A4/4KAB2 b",
+   "master": "b8d8",
+   "selV": -463
+  },
+  {
+   "id": "eg09",
+   "phase": "殘局",
+   "src": "19901023許銀川勝宗永生 第 107 手後",
+   "fen": "3ak4/1c2aP3/9/C8/4R4/9/p5r2/4B4/4A4/2BAK4 b",
+   "master": "b8a8",
+   "selV": -400
+  },
+  {
+   "id": "eg10",
+   "phase": "殘局",
+   "src": "北京對廣東-靳玉硯先負許銀川 第 146 手後",
+   "fen": "5a3/3ka4/9/3c5/2b1N1b2/6B2/9/5A3/6n2/2BA1K3 w",
+   "master": "e5c4",
+   "selV": -335
+  },
+  {
+   "id": "eg11",
+   "phase": "殘局",
+   "src": "19890506韓寶玉負許銀川 第 64 手後",
+   "fen": "4kab2/4a4/4b2c1/2R1p3p/1r7/9/4P1p1P/5A3/4A4/4K2N1 w",
+   "master": "h0i2",
+   "selV": -451
+  },
+  {
+   "id": "eg12",
+   "phase": "殘局",
+   "src": "19941010李雪松勝許銀川 第 175 手後",
+   "fen": "1R3kb1c/9/4b4/4P2r1/4C4/8P/9/4BA3/9/2B1KA3 b",
+   "master": "f9f8",
+   "selV": -443
+  },
+  {
+   "id": "eg13",
+   "phase": "殘局",
+   "src": "20011030許銀川勝廖二平 第 59 手後",
+   "fen": "2baka3/3r5/9/p2N4p/3P2b2/3nP4/P8/BR7/4A4/4KAB2 b",
+   "master": "d8d7",
+   "selV": -395
+  },
+  {
+   "id": "eg14",
+   "phase": "殘局",
+   "src": "19990706柳大華負許銀川 第 112 手後",
+   "fen": "2ba1a3/4k4/4b4/N8/9/P8/9/4n4/4A4/3K1AB1c w",
+   "master": "a6b4",
+   "selV": -408
+  },
+  {
+   "id": "eg15",
+   "phase": "殘局",
+   "src": "19960921許銀川勝呂欽 第 107 手後",
+   "fen": "5k3/3P5/bn3a3/4Rr3/p8/9/9/4BC3/4A4/2B1KA3 b",
+   "master": "f6f3",
+   "selV": -498
+  },
+  {
+   "id": "eg16",
+   "phase": "殘局",
+   "src": "19950818呂欽負許銀川 第 118 手後",
+   "fen": "4k1b2/4a4/4b4/3c5/2p6/5p3/2PC5/N3B2n1/3KA4/5AB2 w",
+   "master": "d3i3",
+   "selV": -188
+  },
+  {
+   "id": "eg17",
+   "phase": "殘局",
+   "src": "20010402許銀川勝陶漢明 第 87 手後",
+   "fen": "9/5k3/b8/p7p/9/P8/2r1P1R1P/3A2N2/9/c3KAB2 b",
+   "master": "a0a2",
+   "selV": -421
+  },
+  {
+   "id": "eg18",
+   "phase": "殘局",
+   "src": "20010607許銀川勝陶漢明 第 171 手後",
+   "fen": "6b2/4k4/4bn3/9/7R1/7p1/9/5A2B/9/4KAB2 b",
+   "master": "h4h3",
+   "selV": -380
+  },
+  {
+   "id": "eg19",
+   "phase": "殘局",
+   "src": "19930804許銀川負趙國榮 第 110 手後",
+   "fen": "3ak1b2/1P2a4/8b/9/6p1p/4r4/6R1P/8B/3K5/9 w",
+   "master": "b8c8",
+   "selV": -249
+  },
+  {
+   "id": "eg20",
+   "phase": "殘局",
+   "src": "19951009許銀川負金波 第 104 手後",
+   "fen": "2bak4/9/3a4b/4C3p/5C3/6B1P/2p3n2/9/6n2/2B1K4 w",
+   "master": "e0f0",
+   "selV": -411
+  }
+ ]
+}

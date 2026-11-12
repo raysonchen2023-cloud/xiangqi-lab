@@ -1,0 +1,9 @@
+{
+  "_說明": "回饋 854：電腦上的程式（虛擬棋友、千秋盃裁判台、抓 bug 玩家、意見回饋通知、版本公告）連線上大廳用。抄一份改名成 mqtt-config.json 再填；mqtt-config.json 不要放進 git、密碼不要貼到對話裡。host 留空＝用 url（現在的公開伺服器）。",
+  "host": "",
+  "port": 8084,
+  "path": "/mqtt",
+  "url": "wss://broker.emqx.io:8084/mqtt",
+  "username": "",
+  "password": ""
+}
