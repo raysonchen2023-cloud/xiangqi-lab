@@ -1471,8 +1471,9 @@
     const gntPool={},gntCnt={},gntFigs=[],gntStones=[];
     const gntShadow=root=>{const KT=window.XQTOON_KIT;root.traverse(m=>{if(!m.isMesh||m.name==="meGly")return;if(KT&&KT.isHull&&KT.isHull(m)){m.visible=false;m.userData.gntOff=1;return}   /* 水墨描邊的黑殼：半透明的分身會透出一整片黑，分身不描邊 */const ms=(Array.isArray(m.material)?m.material:[m.material]).map(x=>{const c=x.clone();c.transparent=true;c.opacity=.52;c.depthWrite=false;if(c.color)c.color.lerp(new T.Color(0x8FB4FF),.45);if(c.emissive)c.emissive.set(0x1A3A7A);return c});m.material=Array.isArray(m.material)?ms:ms[0];m.castShadow=false})};
     const gntFig=(p,K)=>{const n=gntCnt[p]=(gntCnt[p]||0)+1,body=n===1,g=new T.Group(),inner=new T.Group();g.add(inner);g.userData={p,th:GNT_H*.55,giant:1,body};
-      /* 開發者 11/12「底下踩著的棋子不用放上去，只要站角色即可」：不再墊本命棋子底座，角色直接站在棋盤格點上（胸前的本命字照舊） */
-      let B=null;try{B=window.XQBot3D&&XQBot3D.figure?XQBot3D.figure({glb:"data/tripo_app/"+GNT_X[K]+".glb",p:GNT_CH[K],gly:{u:.5,v:.4,r:.15}}):null}catch(e){B=null}
+      /* 開發者 11/12「底下踩著的棋子不用放上去，只要站角色即可」：不再墊本命棋子底座，角色直接站在棋盤格點上；
+         「把棋子放在每個 3D 角色背後，然後他們要面向對方」：本命字圓牌貼在背上（gly.back），角色轉身面向敵陣（gntTake 依 flip 轉 180 度），玩家從後面看得到字 */
+      let B=null;try{B=window.XQBot3D&&XQBot3D.figure?XQBot3D.figure({glb:"data/tripo_app/"+GNT_X[K]+".glb",p:GNT_CH[K],gly:{u:.5,v:.38,r:.15,back:1}}):null}catch(e){B=null}
       if(!B)return gntStone(p);inner.add(B.bot);g.userData.B=B;gntFigs.push(g);
       /* 放大倍數、位置一律在 inner 自己的座標算（量世界座標再扣掉 inner 的世界位置），不然角色會被拉回棋盤中心 */
       const fitTo=(obj,H)=>{inner.scale.setScalar(1);B.bot.position.set(0,0,0);g.updateMatrixWorld(true);const b=new T.Box3().setFromObject(obj),h=b.max.y-b.min.y;if(!(h>0))return false;
@@ -1491,7 +1492,7 @@
       const fm=new T.MeshBasicMaterial({map:gntGlyph(ch),toneMapped:false}),f1=new T.Mesh(new T.CircleGeometry(R0*.97,48),fm);f1.position.z=.081;
       const glow=new T.Mesh(new T.CircleGeometry(R0*1.5,40),new T.MeshBasicMaterial({color:0x6E8BFF,transparent:true,opacity:.22,depthWrite:false,blending:T.AdditiveBlending,toneMapped:false}));glow.position.z=-.09;
       const st=new T.Group();st.add(rim,f1,glow);st.position.y=R0+.08;g.add(st);g.userData.st=st;gntStones.push(g);return g};
-    const gntTake=p=>{const q=gntPool[p];let g=q&&q.pop();if(g&&g.userData.ped){const[pb,pf,K]=g.userData.ped;pb.material=bMat(true);pf.material=fMat(NAMES.r[K],true)}   /* 換造型（refreshLook）會把舊的棋子材質丟掉，重用的底座要換新的 */if(!g){const K=p.toUpperCase();g=sideOf(p)==="r"&&GNT_X[K]?gntFig(p,K):gntStone(p)}g.visible=true;g.rotation.set(0,0,0);sc.add(g);return g};
+    const gntTake=p=>{const q=gntPool[p];let g=q&&q.pop();if(g&&g.userData.ped){const[pb,pf,K]=g.userData.ped;pb.material=bMat(true);pf.material=fMat(NAMES.r[K],true)}   /* 換造型（refreshLook）會把舊的棋子材質丟掉，重用的底座要換新的 */if(!g){const K=p.toUpperCase();g=sideOf(p)==="r"&&GNT_X[K]?gntFig(p,K):gntStone(p)}g.visible=true;g.rotation.set(0,g.userData.B?(flip?0:PI):0,0);sc.add(g);return g};
     const gntDrop=g=>{sc.remove(g);if(g&&g.userData&&g.userData.giant){const p=g.userData.p;(gntPool[p]||(gntPool[p]=[])).push(g)}};
     let pieces={},prevB=null,prevLast=null,anims=[],captured=[],capNear=true,lastCapB=null;
     // 提示記號
