@@ -24,6 +24,7 @@ const MON0 = Date.UTC(1970, 0, 5);   // 1970-01-05 是星期一
 const SEED_POS = [1, 16, 8, 9, 5, 12, 4, 13, 3, 14, 6, 11, 7, 10, 2, 15];
 const ROUND_NAME = { 1: "兵卒過河", 2: "車馬爭先", 3: "炮震中原", 4: "九宮論劍", 5: "雙士爭輝" };   // 5＝季軍戰
 const PL = { r: "紅方", b: "黑方" }, opp = s => s === "r" ? "b" : "r";
+const CK_PK = /^[A-Za-z0-9_-]{80,100}$/;   // 玩家公開金鑰的格式（跟 cup-key.js 的 PK_RE、App 的 sgPk 一樣）
 
 module.exports = function startCup(ctx) {
   const { ROOT, URL, mqtt, BOTS, people, isHuman, C, log, LIVE, DBDIR, argv, hex } = ctx;
@@ -145,7 +146,9 @@ module.exports = function startCup(ctx) {
     else { const ra = X.reds[m.a.id] || 0, rb = X.reds[m.b.id] || 0; red = ra < rb ? m.a : rb < ra ? m.b : Math.random() < .5 ? m.a : m.b; black = red === m.a ? m.b : m.a }
     X.reds[red.id] = (X.reds[red.id] || 0) + 1;
     const gid = "cup" + hex(6) + now.toString(36), clk = tb ? { r: TC.tb[0], b: TC.tb[1] } : { r: TC.m * MIN, b: TC.m * MIN };
-    const G = { rules: C.REP_RULES.id, gid, id: new Date(now).toISOString().replace(/[:.]/g, "-").slice(0, 19), rev: 1, red: { id: red.id, name: red.name, pts: red.pts }, black: { id: black.id, name: black.name, pts: black.pts },
+    /* 評比第 14 輪 F2：雙方報名時驗過、綁在代號上的公開金鑰（X.pk）寫進開局狀態，整份蓋裁判台的章＝「裁判台認證」的金鑰；App 拿它驗千秋盃連線同步頻道（k）的簽名。虛擬棋客沒有金鑰就不寫 */
+    const kp = p => X.pk && typeof X.pk[p.id] === "string" && CK_PK.test(X.pk[p.id]) ? { pk: X.pk[p.id] } : {};
+    const G = { rules: C.REP_RULES.id, gid, id: new Date(now).toISOString().replace(/[:.]/g, "-").slice(0, 19), rev: 1, red: { id: red.id, name: red.name, pts: red.pts, ...kp(red) }, black: { id: black.id, name: black.name, pts: black.pts, ...kp(black) },
       moves: [], result: null, draw: null, at: now, tc: tb ? 5 : TC.m, inc: tb ? 0 : TC.inc, clk, tk: now, tkN: 0, cup: { wk: S.wk, m: m.id, g: k, tb: !!tb, rn: ROUND_NAME[m.r], fast: FAST || undefined } };
     X.games[gid] = { G, arrN: 0, arrT: now, t0: now, m: m.id };
     m.g.push({ gid, red: red.id, black: black.id, tb: !!tb, res: null, why: "" }); m.gid = gid; m.st = "live"; m.t0 = m.t0 || now;
@@ -165,7 +168,8 @@ module.exports = function startCup(ctx) {
   function onGame(gid, msg) {
     const T = X && X.games[gid]; if (!T || !msg) return; let x; try { x = JSON.parse(msg) } catch (e) { return }
     if (!x || x.gid !== gid || x.rules !== T.G.rules || !(x.rev > T.G.rev)) return;
-    const okIds = x.red && x.black && x.red.id === T.G.red.id && x.black.id === T.G.black.id && x.cup && x.cup.m === T.G.cup.m;
+    /* 第 14 輪 F2：雙方的公開金鑰（裁判台認證的）也不能被換掉或拿掉 */
+    const okIds = x.red && x.black && x.red.id === T.G.red.id && x.black.id === T.G.black.id && x.cup && x.cup.m === T.G.cup.m && (x.red.pk || null) === (T.G.red.pk || null) && (x.black.pk || null) === (T.G.black.pk || null);
     const st = okIds && Array.isArray(x.moves) ? replay(x.moves) : null;
     const pre = T.G.moves, prefix = st && pre.every((mv, i) => i >= x.moves.length || (x.moves[i][0] === mv[0] && x.moves[i][1] === mv[1]));
     const fake = !!(x.result && x.result.forfeit);   /* 第 9 輪評審：「棄擂」只有裁判台自己判（setRes），從網路上收到的一律當成不合法 */

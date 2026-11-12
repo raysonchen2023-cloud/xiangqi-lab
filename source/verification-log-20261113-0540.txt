@@ -1,0 +1,133 @@
+《象棋千秋》可重現驗證紀錄（verify-all.js）
+========================================
+執行時間：2026-11-12T21:47:16.352Z（UTC）＝ 2026-11-13 05:47:16（臺灣時間）
+Node.js：v24.20.0；作業系統：win32 10.0.26300 x64
+倉庫資料夾：<倉庫資料夾>
+倉庫 commit：（不是 git 檢出；用下面的雜湊對照）
+release.json：版本 20261113-0540、html f177580e9a2b、sw f4f436cfd22f
+verify-all.js SHA-256：4204127ad2dd75bb8f95ed79039156af8cc4e52bfabd0ff04890588e4414af2b
+
+成品 SHA-256（SHA-1 前 12 碼）：
+  index.html  e61c636a5ebe1c47f3d70c9d304a4f314e5cd825f23bdbdbbc279311e34c7e1d  (f177580e9a2b)
+  sw.js  ae6997909bfadaf4d90d5a18e8a71ac0a9e028ca5aa645705e8bce2328944b6f  (f4f436cfd22f)
+  release.json  1de3cf5a56c8803a9aedd85dff124ddbf13d4ced874411587e2cbab4dad40a6b  (1695cd59f0bb)
+  core.js  fdaea59621ff94d664218f14c1a11b9abe0d4566da7d3e45733caf34fa7a50d3  (972b7ec035c7)
+  engine.js  f7025474c55f35810f5c55e5a4546023f65a24806f5dddcd9d4564176dcf5c4a  (c90f24caff9d)
+  engine/pikafish.wasm  7fb6fc805a36ced6a55626a9513b7dda821b0bbb5e830fa17f120f1550a9a331  (d568cded4f5b)
+  engine/pikafish.js  dd5498bfb76381598d453a612d74e5e1955835452324c4d0b962a64fb44438f7  (77eca54d3204)
+  engine/pikafish.nnue  7d13d73569a9b571ba0eb20cf1596247bc2a42738967e61afef6482b231e900e  (3a043e259a72)
+source/ 資料夾：210 個檔，樹雜湊 SHA-256 ba68f5e946bbc249dddd81588de44c50b71d3fe0f7c2bd9890911b0d76dd7830
+Pikafish 建置紀錄：<倉庫資料夾>\pikafish-src\build-record.json  SHA-256 489173747f8de4abec4f9dda704538fecb24af4c02f294e57b8f7ead857ad738
+（樹雜湊＝每個檔「相對路徑＋NUL＋SHA-256＋換行」照路徑排序後再算 SHA-256）
+
+----------------------------------------
+第 1 步 check-build：通過（結束代碼 0，0.1 秒）
+指令（在倉庫資料夾執行）：node source/check-build.js
+工具 SHA-256：8e5202037f127d5039faf7f195a3286103d71ba1a128801cbb6dfcc12a1aa381
+輸出：
+  ✔ 一致：<倉庫資料夾>\index.html 就是這份原始碼組出來的（忽略授權聲明、版本號、整包大小）
+----------------------------------------
+第 2 步 release-verify：通過（結束代碼 0，0.1 秒）
+指令（在倉庫資料夾執行）：node source/xiangqi-lab/tools/release-verify.js --dir .
+工具 SHA-256：4874be00c4f2fce8b777204299e23339abf56c472ee57bc2e603a5edaaf00e78
+輸出：
+  成品核對：<倉庫資料夾>
+    ✔ release.json：版本 20261113-0540、html f177580e9a2b、sw f4f436cfd22f（檢查時間 2026-11-12T21:41:20.672Z）
+    ✔ index.html SHA-1 前 12 碼 f177580e9a2b，跟 release.json 一致
+    ✔ sw.js SHA-1 前 12 碼 f4f436cfd22f，跟 release.json 一致
+    ✔ 版本號：index.html 20261113-0540、sw.js 20261113-0540、release.json 20261113-0540，三個一樣
+    ✔ release.json 自己註明有 1 支模組跟當時的原始碼不同（07y-hubmap.js）；原始模組不公開，外部核對不了這一欄
+  
+  ✔ index.html、sw.js 跟 release.json 一致
+----------------------------------------
+第 3 步 pikafish-verify：通過（結束代碼 0，0.1 秒）
+指令（在倉庫資料夾執行）：node source/xiangqi-lab/tools/pikafish-verify.js --dir . --record pikafish-src/build-record.json
+工具 SHA-256：da3a10677bdf0be32998e22fa6010bdc29055893678bd6553b224cb681fedc7c
+輸出：
+  Pikafish 網頁版核對：<倉庫資料夾>
+  建置紀錄：<倉庫資料夾>\pikafish-src\build-record.json
+    ✔ 引擎、載入程式、改過的 uci.cpp、建置腳本、GPL 授權全文都在
+    ✔ WebAssembly 第 1 版，11 個區段、匯出 20 個
+    ✔ WebAssembly.Module 編譯通過（只驗證、不執行）
+    ✔ 共用記憶體 是、初始 192 MB、上限 2048 MB（紀錄：192 MB／2048 MB，對應 -pthread -sINITIAL_MEMORY=192MB -sMAXIMUM_MEMORY=2GB）
+    ✔ 內嵌編譯器字串：Clang 24.0.0git (https://github.com/llvm/llvm-project 83ee07799c341b60965f07892f7bb3d175da05be)（跟紀錄一致）
+    ✔ 內嵌編譯日期 __DATE__：Oct 30 2026（跟紀錄一致）
+    ✔ 沒有自訂區段（沒有 producers／除錯資訊；編譯器版本只能從上面的內嵌字串看）
+    ✔ Emscripten 載入程式：匯出名 PikafishModule、有 _uci_command、會載入 pikafish.wasm
+    ✔ pikafish.wasm SHA-256 7fb6fc805a36ced6a55626a9513b7dda821b0bbb5e830fa17f120f1550a9a331（跟建置紀錄一致）
+    ✔ pikafish.js SHA-256 dd5498bfb76381598d453a612d74e5e1955835452324c4d0b962a64fb44438f7（跟建置紀錄一致）
+    ✔ pikafish-src/uci.cpp SHA-256 149644b9781bbc7c3c8422ba9406ceaa20db1fad2d384ea96d0d8189ef20be5e（跟建置紀錄一致）
+    ✔ pikafish-src/build-wsl.sh SHA-256 bee2e78227010d5b89d20be9264728ce0c6a1e6590dba6e7a290ed321d6ebdb4（跟建置紀錄一致）
+    ✔ 紀錄的 31 個編譯／連結旗標都在公開的 build-wsl.sh 裡
+    △ 公開的 build-wsl.sh 裝的是 latest，沒有釘版本（紀錄：Emscripten 6.0.13；釘版本的是本機的 build-pinned.sh）
+    ✔ 紀錄裡的重編：2026-11-13 03:51 (+08:00)，WSL Ubuntu-24.04、Emscripten 6.0.13（emcc e13ee988ce3d）、Clang 24.0.0git 83ee07799c34，SOURCE_DATE_EPOCH=1793361600（2026-10-30）：pikafish.wasm、pikafish.js 都跟發布的逐位元相同；不固定日期（當天 UTC 11 月 12 日）重編：pikafish.js 相同、pikafish.wasm 只差 5 個位元組＝內嵌的 __DATE__ 字串
+  
+  ✔ 全部符合（△ 是照實列出的缺口，不算失敗）
+----------------------------------------
+第 4 步 run-tests：通過（結束代碼 0，42.9 秒）
+指令（在倉庫資料夾執行）：node source/run-tests.js
+工具 SHA-256：f6c7f421243c8de793bd2012a7c752106c26b568ace278f497bd4be7d9da4772
+輸出：
+  測試三類統計（實際跑過；格式＝通過／項數）
+  檔案	行為	混合	原始碼	待分類
+  test-a11y-audio.js	15/15	0/0	3/3	0/0
+  test-a11y.js	11/11	2/2	3/3	0/0
+  test-ai-think.js	6/6	0/0	2/2	0/0
+  test-analysis-cases.js	38/38	0/0	0/0	0/0
+  test-asian-rules.js	30/30	0/0	0/0	0/0
+  test-bhmate.js	0/0	0/0	8/8	0/0
+  test-clock-pv.js	43/43	0/0	0/0	0/0
+  test-cpuroom-copy.js	0/0	7/7	2/2	0/0
+  test-cup-sign.js	6/6	0/0	1/1	0/0
+  test-docbtns.js	1/1	0/0	1/1	0/0
+  test-docs-md.js	2/2	1/1	0/0	0/0
+  test-engine-timeout.js	4/4	0/0	1/1	0/0
+  test-family.js	14/14	0/0	4/4	0/0
+  test-fb871.js	8/8	2/2	2/2	0/0
+  test-haptics.js	11/11	1/1	1/1	0/0
+  test-home-order.js	5/5	0/0	1/1	0/0
+  test-homeclamp.js	3/3	0/0	0/0	0/0
+  test-human-ai.js	11/11	0/0	2/2	0/0
+  test-human-p1.js	0/0	2/2	1/1	0/0
+  test-i18n.js	31/31	2/2	4/4	0/0
+  test-land3d.js	2/2	0/0	1/1	0/0
+  test-lefty.js	10/10	0/0	2/2	0/0
+  test-mvt-hold.js	0/0	6/6	1/1	0/0
+  test-net-chaos.js	5/5	0/0	0/0	0/0
+  test-net-guard.js	4/4	0/0	0/0	0/0
+  test-net-reconnect.js	16/16	0/0	0/0	0/0
+  test-oss-scan.js	7/7	0/0	0/0	0/0
+  test-park-firstflat.js	8/8	0/0	1/1	0/0
+  test-park-weather.js	3/3	0/0	1/1	0/0
+  test-park3d-bench.js	0/0	1/1	2/2	0/0
+  test-park3d-power.js	16/16	0/0	1/1	0/0
+  test-park3d-tap.js	12/12	0/0	0/0	0/0
+  test-perfhud.js	6/6	0/0	2/2	0/0
+  test-pgn-variations.js	8/8	0/0	1/1	0/0
+  test-provenance.js	4/4	0/0	1/1	0/0
+  test-pv-stepper.js	3/3	1/1	2/2	0/0
+  test-qixing.js	6/6	0/0	0/0	0/0
+  test-quiz-check-exit.js	1/1	1/1	2/2	0/0
+  test-reply-risk.js	24/24	0/0	0/0	0/0
+  test-report-id.js	9/9	0/0	0/0	0/0
+  test-repwarn.js	13/13	0/0	0/0	0/0
+  test-resume-state.js	27/27	0/0	1/1	0/0
+  test-retention.js	14/14	0/0	1/1	0/0
+  test-rule-handshake.js	6/6	0/0	0/0	0/0
+  test-ruleset-cases.js	61/61	0/0	1/1	0/0
+  test-ruleset.js	19/19	1/1	2/2	0/0
+  test-save-file.js	5/5	0/0	1/1	0/0
+  test-ship-tilt.js	6/6	0/0	1/1	0/0
+  test-sound-mix.js	18/18	1/1	3/3	0/0
+  test-stats-kill.js	0/0	2/2	3/3	0/0
+  test-telemetry.js	12/12	0/0	2/2	0/0
+  test-xfer.js	8/8	0/0	1/1	0/0
+  test-xfer2.js	11/11	0/0	1/1	0/0
+  test-xqs-tb.js	0/0	4/4	2/2	0/0
+  合計	583/583	34/34	72/72	0/0
+  
+  交接單引用：行為 583/583、混合 34/34、原始碼比對 72/72，共 689 項。
+  說明：原始碼比對只證明程式碼存在，不證明功能會動；測試由開發用的 AI 撰寫，不等於第三方驗證。
+----------------------------------------
+總結：4 步，通過 4、失敗 0、略過 0
+✔ 全部通過

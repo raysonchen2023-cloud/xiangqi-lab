@@ -26,6 +26,15 @@ function xqHubName(k){let e="";try{e=typeof shipAt==="function"&&typeof shipDock
 const HM_PVP_NM="👥 同桌對弈",HM_PVP_AL="同桌對弈：兩人共用這台裝置",hmAl=t=>String(t||"").replace(/^[\p{Extended_Pictographic}\uFE0F\u200D\s]+/u,"")||String(t||"")   /* 11/13 開發者實機旁白錄影：入口前面的圖示被念成「帆船」「交叉的劍」「羊皮紙卷」，語音標籤去掉開頭的圖示 */;
 const HM_FIRST={go:"#/camp",t:"🔰 學走第一手",s:"從新手訓練營開始"};
 const HM_SPOTS=[["hmShip",52,15,"⛵ 雲河星槎"],["hmBattle",14,25.5,"⚔ 對戰"],["hmLearn",86,26.5,"📚 學習"],["hmRec",12,44,"📜 今日推薦"],["hmQuick",52,47.5,"👥 同桌對弈"]];
+/* 評比第 14 輪（開發者 11/13 iPhone 旁白錄影第 4 段）：旁白、鍵盤 Tab 的順序＝DOM 順序。入口按鈕照「由上到下、同一列由左到右」排（上% 差 HM_ROW_TOL 以內算同一列），
+   畫面位置一點都不動（位置由 left／top 決定）；座標表以後改了也自動照新位置排。圖上方的主張紙條排最前面，角色、角色的小選單排在入口後面，
+   底部那一條（加到主畫面、回報問題、快速對局）一律排最後（hmTail：別的模組之後再加進來的東西也插到它前面）。測試：xiangqi-lab/tools/test-home-order.js */
+const HM_ROW_TOL=6;
+/*HMORDER{*/
+function hmFocusOrder(L,tol){tol=tol==null?HM_ROW_TOL:tol;const A=L.map((s,i)=>({s,i,x:+s[1],y:+s[2]})).sort((a,b)=>a.y-b.y||a.x-b.x||a.i-b.i),R=[];
+  for(const a of A){const r=R[R.length-1];if(r&&a.y-r[0].y<=tol)r.push(a);else R.push([a])}
+  return R.flatMap(r=>r.sort((a,b)=>a.x-b.x||a.i-b.i)).map(a=>a.s)}
+/*}HMORDER*/
 /* 開發者 11/11 選 ChatGPT 77 號方案一「地圖主路收斂版」（主張「看懂一步，敢下一盤」）。
    開發者 11/11 hspx「把首頁看棋譜和練一題改回之前的版本（學習），不然看棋譜這個入口太冗餘了」：1815 加的「📜 看棋譜」拿掉、「🧩 練一題」改回學習入口原名（藏譜石窟／書院…），
    棋譜庫照舊從學習入口進。只留下地圖上方一條宣紙主張紙條：完全沒下過棋的新手一直顯示；其他人每天第一次進首頁顯示 3 秒後淡出，之後當天不再出現 */
@@ -66,7 +75,7 @@ function hmClamp(P){const vw=document.documentElement.clientWidth,pad=8,pr=P.get
   const l=r.left-m0,rr=r.right-m0,dx=l<L?L-l:rr>R?R-rr:0,nv=dx?Math.round(dx)+"px":"";if(b.style.marginLeft!==nv)b.style.marginLeft=nv});if(typeof r07HitSoon==="function")r07HitSoon()}
 /* 首頁主張紙條（ChatGPT 77 號方案一）：新手一直顯示；其他人每天第一次 3 秒後淡出（store hmSloganDay）；不能點、不擋地圖標籤 */
 function hmSlogan(P,nw){const d=typeof localDay==="function"?localDay():new Date().toDateString();if(!nw&&store.get("hmSloganDay","")===d)return;
-  const s=document.createElement("div");s.className="hm-slogan";s.setAttribute("role","note");s.textContent="看懂一步，敢下一盤";P.append(s);if(nw)return;
+  const s=document.createElement("div");s.className="hm-slogan";s.setAttribute("role","note");s.textContent="看懂一步，敢下一盤";const f=P.querySelector(":scope>.shp-spot");if(f)P.insertBefore(s,f);else P.append(s);if(nw)return;   /* 第 14 輪：紙條在圖最上方，旁白也先念它（排在入口前面） */
   store.set("hmSloganDay",d);setTimeout(()=>{s.classList.add("out");setTimeout(()=>s.remove(),900)},3000)}
 function hmGoBar(P,nw){const bar=document.createElement("div");bar.className="hm-go-bar";const b=document.createElement("button");b.type="button";b.className="hm-go";b.id="hmGo";
   /* 開發者 11/11 選 ChatGPT 13 號方案 1「快下 vs 選場」：平常寫「♟ 快速對局」；上一盤是挑戰電腦而且下完了＝小字「用上次難度，馬上跟電腦下」，
@@ -106,13 +115,18 @@ function hmMe(P){if(typeof WALK_BOT_MERGE!=="undefined"&&WALK_BOT_MERGE)return; 
     const k=+m[3],cw=parseFloat(cv.style.width)||cv.clientWidth,ch=parseFloat(cv.style.height)||cv.clientHeight,L=parseFloat(cv.style.left)||0,T=parseFloat(cv.style.top)||0;
     Object.assign(btn.style,{display:"",left:(+m[1]+(L+cw*.28)*k).toFixed(1)+"px",top:(+m[2]+(T+ch*.12)*k).toFixed(1)+"px",width:(cw*.44*k).toFixed(1)+"px",height:(Math.max(0,-T-ch*.12)*k).toFixed(1)+"px"})};
   const mo=new MutationObserver(upd);mo.observe(box,{attributes:true,attributeFilter:["style","class"]});upd()}
+/* 第 14 輪焦點順序：底部那一條（.hm-go-bar：position:fixed、z-index 30，畫面位置跟 DOM 順序無關）永遠是 P 的最後一個；
+   之後才加進 P 的東西（07w 的角色按鈕、💬、角色小選單、我的角色…）都插到它前面。正在焦點上的東西不搬（搬了焦點會掉） */
+function hmTail(P){const bar=P.querySelector(":scope>.hm-go-bar");if(!bar)return null;
+  const fix=()=>{if(!P.isConnected||bar.parentNode!==P)return;const a=document.activeElement;let n=bar.nextSibling;while(n){const nx=n.nextSibling;if(!(a&&n.contains&&n.contains(a)))P.insertBefore(n,bar);n=nx}};
+  fix();let mo=null;try{mo=new MutationObserver(()=>{if(!P.isConnected){mo.disconnect();return}fix()});mo.observe(P,{childList:true})}catch(e){}return mo}
 function homeMap(v){const home=v.querySelector(".home");if(!home||v.querySelector(".home-page"))return;hmCss();
   const nw=hmNew(),standalone=matchMedia("(display-mode: standalone)").matches||navigator.standalone,inst=OFF&&!standalone&&!(store.get("instAsk",null)||{}).no;
   /* 開發者 11/11（截圖圈出石桌「著一盤」和底部「立即對局」重複，選「石桌改成同桌對弈」）：石桌旁本來就擺兩張石凳＝兩人面對面下（#/pvp）；
      跟電腦下、接著下、新手第一次都交給底部大按鈕（hmGoBar），石桌不再有新手天光和「第一次下象棋？」 */
   const lab=id=>id==="hmQuick"?HM_PVP_NM:id==="hmLearn"?xqHubName("learn"):id==="hmBattle"?xqHubName("battle"):HM_SPOTS.find(s=>s[0]===id)[3];
   const d=document.createElement("div");
-  d.innerHTML=`<div class="shp-page cq home-page"><img src="data/homemap/${typeof hbIsCl==="function"&&hbIsCl()?"home_classic":"home"}.webp?v=${HM_IMGV}" alt="${typeof hbIsCl==="function"&&hbIsCl()?"千秋時光之苑":"楚河渡口棋鎮"}"><div class="hm-fx" aria-hidden="true"></div>${HM_SPOTS.map(([id,x,y])=>`<button class="shp-spot" id="${id}" style="left:${x}%;top:${y}%" aria-label="${esc(id==="hmQuick"?HM_PVP_AL:hmAl(lab(id)))}"><b>${esc(lab(id))}</b></button>`).join("")}${inst?'<button class="hm-inst" id="hmInst" aria-label="加到主畫面">📲 加到主畫面</button>':""}</div>`;
+  d.innerHTML=`<div class="shp-page cq home-page"><img src="data/homemap/${typeof hbIsCl==="function"&&hbIsCl()?"home_classic":"home"}.webp?v=${HM_IMGV}" alt="${typeof hbIsCl==="function"&&hbIsCl()?"千秋時光之苑":"楚河渡口棋鎮"}"><div class="hm-fx" aria-hidden="true"></div>${hmFocusOrder(HM_SPOTS).map(([id,x,y])=>`<button class="shp-spot" id="${id}" style="left:${x}%;top:${y}%" aria-label="${esc(id==="hmQuick"?HM_PVP_AL:hmAl(lab(id)))}"><b>${esc(lab(id))}</b></button>`).join("")}${inst?'<button class="hm-inst" id="hmInst" aria-label="加到主畫面">📲 加到主畫面</button>':""}</div>`;
   const P=d.firstElementChild;v.insertBefore(P,home);home.classList.add("hb-hidden");if(typeof hbCss==="function")hbCss();else home.style.display="none";
   {const wv=typeof sw7HomeWx==="function"?sw7HomeWx():"",im0=P.querySelector(":scope>img");if(wv&&im0){const pre=new Image();pre.onload=()=>{if(!im0.isConnected)return;try{if(typeof sw7SeaTurn==="function"&&sw7SeaTurn(P,im0,pre.src))return}catch(e){}im0.src=pre.src};pre.src="data/homemap/home_"+wv+".webp?v="+HM_IMGV}}   /* 回饋 811：下雪、下雨天換積雪版 home_snow／雨景版 home_rain（07w7-seasons.js 判斷；先載好再換，載不到留原圖） */
   const GO={hmShip:"#/adventure",hmBattle:"#/hub/battle",hmLearn:"#/hub/learn"};
@@ -124,6 +138,7 @@ function homeMap(v){const home=v.querySelector(".home");if(!home||v.querySelecto
   {const cl=()=>{if(!P.isConnected)return;try{hmClamp(P)}catch(e){}},rs=()=>{if(!P.isConnected){removeEventListener("resize",rs);return}setTimeout(cl,300)};addEventListener("resize",rs);cl();requestAnimationFrame(cl);setTimeout(cl,60);setTimeout(cl,700);   /* 11/13 開發者截圖「今日推薦會左右抖一下」：原本 60 毫秒後才推回畫面內，第一幀先畫在超出畫面的位置；改成建好立刻推、下一幀前再推一次 */const im=P.querySelector(":scope>img");if(im)im.addEventListener("load",cl)}
   if(typeof shpFit==="function")shpFit(v);
   try{if(typeof shwPage==="function"&&SHIP_WALK_ON){shwPage(v,Object.assign({},SHW_PG0,SHW_HOMEMAP),"home");hmMe(P)}}catch(e){}
+  try{hmTail(P)}catch(e){}
   try{if(typeof zmPage==="function")zmPage(v)}catch(e){}
   document.body.classList.add("hm-on");const t=setInterval(()=>{if(!P.isConnected){clearInterval(t);if(!document.querySelector(".home-page"))document.body.classList.remove("hm-on")}},800)}
 if(typeof Home==="function"){const f0=Home;Home=function(v,hub){const r=f0.apply(this,arguments);try{if(HOME_MAP_ON&&!hub)homeMap(v)}catch(e){}return r}}

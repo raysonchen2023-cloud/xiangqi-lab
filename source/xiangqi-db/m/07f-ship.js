@@ -543,13 +543,32 @@ function shpGyroOn(e){if(!SPX.el||!SPX.el.isConnected||SPX.drag)return;const b=e
   SPX.tx=Math.max(-1,Math.min(1,(g-o.g)/18));SPX.ty=Math.max(-1,Math.min(1,(b-o.b)/18));SPX.k=.1;shpPxRun()}
 function shpGyroSet(on){SPX.gyro=on;SPX.g0=null;store.set("shpGyro",on?1:0);
   if(on)addEventListener("deviceorientation",shpGyroOn);else{removeEventListener("deviceorientation",shpGyroOn);SPX.tx=SPX.ty=0;SPX.k=.035;shpPxRun()}
-  document.querySelectorAll(".shp-gy").forEach(b=>b.classList.toggle("on",on))}
+  document.querySelectorAll(".shp-gy").forEach(b=>{b.classList.toggle("on",on);b.setAttribute("aria-pressed",on?"true":"false")})}
+/* 評比第 14 輪 X2（開發者 11/13 iPhone 旁白錄影，recordings.md 第 5 段）：一進星槎就跳「想要取用動作和方向」，用旁白的人突然被打斷。
+   原因：上次按過「🌀 立體」（store shpGyro＝1），再進星槎時 shpGyroTry 會自動 addEventListener("deviceorientation") 試聽；
+   iOS 這時如果還在「點入口」那一下的使用者手勢有效期間（圖從快取載入很快），Safari 就把它當成要權限、跳出詢問。改成：
+   ① 要授權的瀏覽器（iOS：DeviceOrientationEvent.requestPermission 存在）一律不自動聽，只有使用者自己按「🌀 立體」才可能問；
+   ② 按了先跳一張說明卡（modal 會用 axSay 念出來）：「接下來手機會詢問是否允許讀取動作與方向…」，按「繼續」才真的問（這一按就是使用者手勢）；同一次開啟允許過就不再跳說明；
+   ③ 減少動態（prefers-reduced-motion）不出現「🌀 立體」；螢幕報讀模式（axMode）預設不出現；設定開關 shpTiltSw「📱 傾斜手機看景深」（store shpTilt：沒選過＝跟著螢幕報讀模式，1／0＝自己決定）；
+   ④ 擋掉換頁那一下的穿透點擊：按鈕出現 0.7 秒內、或不是真的點（isTrusted 為 false）都不理。
+   不用授權的瀏覽器（Android）照舊：上次開過就先靜靜聽一下，真的有傾斜資料才開。測試：xiangqi-lab/tools/test-ship-tilt.js */
+function shpGyroAsk(){try{return typeof DeviceOrientationEvent!=="undefined"&&typeof DeviceOrientationEvent.requestPermission==="function"}catch(e){return false}}
+function shpTiltPref(){let p=null;try{p=store.get("shpTilt",null)}catch(e){}if(p!=null)return!!+p;try{return!(typeof axmOn==="function"?axmOn():store.get("axMode",false))}catch(e){return true}}
+function shpTiltOk(){try{if(matchMedia("(prefers-reduced-motion: reduce)").matches)return false}catch(e){}return shpTiltPref()}
+function shpGyroNo(){try{toast("沒有開陀螺儀；用手指在圖上拖動也看得到立體")}catch(e){}}
+function shpGyroReq(){const go=()=>shpGyroTry().then(y=>y?shpGyroSet(true):shpGyroNo());if(!shpGyroAsk()||SPX.okd)return go();
+  const ask=()=>{let p;try{p=DeviceOrientationEvent.requestPermission()}catch(e){return shpGyroNo()}Promise.resolve(p).then(r=>{if(r==="granted"){SPX.okd=1;go()}else shpGyroNo()}).catch(()=>shpGyroNo())};
+  modal(`<h2 style="font-size:19px">📱 傾斜手機看景深</h2><p style="line-height:1.7;margin:6px 0 0">接下來手機會詢問是否允許讀取「動作與方向」。允許後，傾斜手機就能看到星槎的前後景深；不允許也沒關係，用手指在圖上拖動一樣看得到。</p>`,[["繼續",ask],["先不要",null,true]])}
 function shpGyroBtn(M){if(!("DeviceOrientationEvent"in window)||!matchMedia("(pointer: coarse)").matches||M.querySelector(".shp-gy"))return;
-  const ask=typeof DeviceOrientationEvent.requestPermission==="function",no=()=>toast("沒有開陀螺儀；用手指在圖上拖動也看得到立體");
-  const b=document.createElement("button");b.type="button";b.className="shp-gy"+(SPX.gyro?" on":"");b.textContent="🌀 立體";b.title="傾斜手機看立體";M.appendChild(b);
-  b.onclick=e=>{e.stopPropagation();vibrate(5);if(SPX.gyro)return shpGyroSet(false);const go=()=>shpGyroTry().then(y=>y?shpGyroSet(true):no());
-    if(ask)DeviceOrientationEvent.requestPermission().then(r=>r==="granted"?go():no()).catch(go);else go()};
-  if(!SPX.gyro&&store.get("shpGyro",0))shpGyroTry().then(y=>{if(y&&!SPX.gyro)shpGyroSet(true)})}   /* 上次開過：先靜靜聽一下，真的有傾斜資料（Android）才開；iOS 沒授權收不到，不會跳權限，要使用者再按 */
+  if(!shpTiltOk()){if(SPX.gyro){SPX.gyro=false;removeEventListener("deviceorientation",shpGyroOn)}return}
+  const t0=Date.now(),b=document.createElement("button");b.type="button";b.className="shp-gy"+(SPX.gyro?" on":"");b.textContent="🌀 立體";b.title="傾斜手機看立體";b.setAttribute("aria-label","傾斜手機看景深");b.setAttribute("aria-pressed",SPX.gyro?"true":"false");M.appendChild(b);
+  b.onclick=e=>{e.stopPropagation();if(e.isTrusted===false||Date.now()-t0<700)return;vibrate(5);if(SPX.gyro)return shpGyroSet(false);shpGyroReq()};
+  if(!shpGyroAsk()&&!SPX.gyro&&store.get("shpGyro",0))shpGyroTry().then(y=>{if(y&&!SPX.gyro&&b.isConnected)shpGyroSet(true)})}   /* 上次開過：只有不用授權的瀏覽器（Android）才先靜靜聽一下，真的有傾斜資料才開；iOS 一律等使用者再按 */
+/* 設定頁開關（05-settings 放進「系統」或「無障礙」那一區：${typeof shpTiltRow==="function"?shpTiltRow():""}）；勾選框 id＝shpTiltSw */
+function shpTiltRow(){return`<label class="row" style="justify-content:space-between;padding:8px 2px;gap:10px"><span style="min-width:0"><b>📱 傾斜手機看景深</b><br><span class="muted" style="font-size:12.5px">雲河星槎、渡口出現「🌀 立體」按鈕，按了才會詢問「動作與方向」權限；螢幕報讀模式預設不出現${store.get("shpTilt",null)==null?"（現在跟著螢幕報讀模式）":""}</span></span><input type="checkbox" class="sw" id="shpTiltSw"${shpTiltPref()?" checked":""} aria-label="傾斜手機看景深"></label>`}
+try{document.addEventListener("change",e=>{const t=e.target;if(!t||t.id!=="shpTiltSw")return;const on=!!t.checked;store.set("shpTilt",on?1:0);
+  if(!on){if(SPX.gyro)shpGyroSet(false);document.querySelectorAll(".shp-gy").forEach(b=>b.remove())}else if(SPX.el&&SPX.el.isConnected)shpGyroBtn(SPX.el);
+  try{toast(on?"📱 傾斜手機看景深：開（到星槎按「🌀 立體」才會詢問權限）":"📱 傾斜手機看景深：關")}catch(x){}})}catch(e){}
 function shpGyroTry(){return new Promise(ok=>{const f=e=>{if(e.beta==null)return;clearTimeout(t);removeEventListener("deviceorientation",f);ok(true)},
   t=setTimeout(()=>{removeEventListener("deviceorientation",f);ok(false)},1200);addEventListener("deviceorientation",f)})}   /* 電腦或沒有陀螺儀的手機收不到資料，就提示改用拖動 */
 

@@ -5,7 +5,12 @@
      https://…/#/daily/2026-11-13
    ・同題怎麼保證：只用「臺灣日期」（UTC+8，跟手機時區無關）和題目編號算雜湊（dqHash），不用匿名碼、存檔、解過哪些題；離線也一樣。
      星期決定份量：週一二 ☕一口（短殺、難度 ≤3.5）、週三到五 🍵一盞（短殺／中殺 3.5～5.5）、週六日 🫖一壺（中殺、多步大師收官 5.5～8）。
-     同一份量前 DQ.NOREP 天「第一順位」挑到的題今天不再出（題庫夠大時幾乎不會重複）。
+     同一份量前 DQ.NOREP 天「第一順位」挑到的題今天不再出（題庫夠大時幾乎不會重複；題比 NOREP 少時至少留一題可出）。
+   ・題庫改版（第 14 輪 X4）：挑題只看寫死在這裡的「名冊」DQ.GEN（每一批：從哪天起、三種份量各有哪些題號），不看題庫檔當下有哪些題、難度怎麼標。
+     所以題庫新增題、刪題、改難度，已經出過和還沒出的每一天都不會變；新題要進每日同題＝在 GEN 後面加一批（from 設在發布後至少 7 天），
+     那天以前全部不變。題目壞掉要下架＝在 DQ.DROP 加 {id, from}（from 設在未來），那天以前不變。名冊裡的題不能從題庫刪掉
+     （test-daily.js 會擋）；手機上的題庫比程式舊、找不到那天的題，就請玩家連網重新整理，不會偷偷換成別題。
+     產生新的一批：node xiangqi-lab/tools/daily-roster.js（列出題庫裡符合份量、還沒進名冊的題號）。
    ・方格：每一步一格。🟩 一次走對、🟨 走錯過才走對、🟦 用了提示（含免費的方向提示）、⬛ 看答案（從那一步起）；色弱模式（cbMode）改 🟧🟦⬜⬛。
      每一步的紀錄由 07c-canju.js CanjuPlay 記在解題進度 R.sx（cjSx），解完時 XM.fin 交給這裡記成績。
    ・網址：#/daily → 今天；#/daily/<日期> → 那天的題（解過就顯示成績頁）；#/daily/<日期>/play → 再解一次（不改成績）。
@@ -18,7 +23,14 @@ const DQ={EPOCH:"2026-11-13",KEY:"dqDaily",RK:"cjRunDQ",NOREP:28,KEEP:1200,
   SLOT:{sip:["一口","☕"],cup:["一盞","🍵"],pot:["一壺","🫖"]},
   WANT:{sip:x=>x.t==="短殺"&&x.d<=3.5,cup:x=>(x.t==="短殺"||x.t==="中殺")&&x.d>3.5&&x.d<=5.5,pot:x=>(x.t==="中殺"||(x.t==="大師收官"&&x.n>=3))&&x.d>5.5&&x.d<=8},
   EMO:{g:"🟩",y:"🟨",h:"🟦",x:"⬛"},EMO_CB:{g:"🟧",y:"🟦",h:"⬜",x:"⬛"},
-  WORD:{g:"一次走對",y:"走錯過才走對",h:"用了提示",x:"看答案"}};
+  WORD:{g:"一次走對",y:"走錯過才走對",h:"用了提示",x:"看答案"},
+  /* 名冊（只往後加，已經有的一批不准改）：第 1 批＝2026-11-05 版題庫（621 題）照 WANT 分好的題號，跟第 13 輪上線時挑的題一模一樣 */
+  GEN:[{from:"2026-11-13",
+    sip:"jc006c8 jc133c5 lk001c4 lk019c6 lk020c5 lk021c7 lk024c4 lk035c4 lk037c8 lk048c6 lk054c7 lk055c9 lk070c4 lk072c7 lk084 lk085c7 lk091c4 lk094c5 lk103c5 lk104c4 lk105c7 lk107c6 lk119c8 lk124c5 lk129c7 lk135c7 lk137c6 lk140c5 lk141c5 lk148c5 lk151c4 lk156 lk157c9 lk165c6 lk167c9 lk168c9 lk172c7 lk179c7 lk182c5 lk183 lk203c7 lk208c5 lk219c6 lk220c7 lk222 lk230c7 lk233c6 lk242c4 lk249c4 lk251c5 lk252c5 lk258c4 mr003 mr018c5 mr022c4 mr042 mr043c4 mr073c4 mr075c4 mr085c5 mr087c5 mr088c5 mr094c5 mr105c7 mr112c8 mr119c6 mr125c5 mr151c7 sq011c4 sq019c4 sq030c6 sq044c5 sq055c8 sq062c4 sq069c6 sq071c6 sq077c8 sq091c5 sq098c4 sq104c5 sq114c9 sq116c7 sq121c6 sq123c5 sq125c9 sq127c5 sq132c4 sq134c6 sq136c9 sq140c8 sq146c6 sq149c7 sq151c5 sq163c6 sq171c6 sq179c4 sq184c4 sq188c6 sq191 sq192 sq193c7 sq201c6 sq203c6 sq206c5 sq207c8 sq209c5 sq221c7 sq233c5 sq234 sq243c4 sq251c7 sq253 sq261c5 sq291c4 sq363c5 sq369c5 xw007c6 xw078c4 ys047c6 ys049c5 ys054c4 ys067c4 ys068c4",
+    cup:"jc036 jc108c8 jc130c6 jc131c4 jz010 jz039c6 lk007 lk009c7 lk010 lk011c4 lk012 lk016c7 lk017c6 lk033c5 lk039c4 lk043 lk058c5 lk059 lk065 lk087 lk093c4 lk097 lk113c4 lk116c6 lk118c6 lk120c8 lk121 lk128 lk131 lk132 lk133 lk142 lk147c4 lk150 lk152 lk160c5 lk162 lk171c5 lk173c5 lk174 lk192c7 lk200c7 lk202c4 lk204c6 lk216 lk225 lk229c5 lk236 lk241 lk243 lk253 lk256 mr001 mr002 mr008c4 mr011 mr012 mr014 mr019 mr030 mr031 mr034c4 mr039 mr041 mr057 mr068c5 mr074c4 mr078c4 mr083c5 mr100c6 mr103 sq008c6 sq010c5 sq013 sq034c6 sq035c4 sq047c5 sq052 sq053 sq056c8 sq066 sq068 sq075 sq082 sq084 sq100 sq103 sq108 sq112 sq113c5 sq122c6 sq126 sq141c4 sq145 sq150c6 sq152c5 sq161 sq162 sq165c6 sq167 sq169 sq170 sq174 sq183c6 sq186 sq187c7 sq195 sq196 sq197c4 sq224 sq236 sq260 sq265 sq270 sq272 sq273 sq276c5 sq284 sq293c5 sq307c8 sq333 sq351c4 sq361 sq405c4 sq406c4 sq423c8 sq426c5 sq429c8 sq463c6 xw056c8 xw057c8 xw208c5 ys030c6 ys061c7 ys063 ys095 ys096 ys106 ys110 ys130",
+    pot:"gm1981-A4N1B1KAB2b gm1985-2R2K32B1r4b gm1985-2nCA42BAK4r gm1985-3C12BAKAr2b gm1988-4A41RB1KA3b gm1991-7P4BA33K59b gm1999-P6P7P5K399b gm2004-52Cr52B1K4b gm2005-4A4r2NKAR2b gm2006-4C42BAKAB2b gm2011-24A44KA1r1r gm2013-4B493AKAB2r jc106 jc113 lk022 lk026 lk040 lk041 lk045 lk047 lk081 lk083 lk090 lk102 lk127 lk149 lk154 lk155 lk158 lk166 lk178 lk180 lk186 lk190 lk199 lk217 lk227 lk234 mr020 mr021 mr028 mr029 mr053 mr054 mr055 mr056 mr058 mr062 mr063 mr066 mr067 sq015 sq017 sq043 sq051 sq057 sq058 sq059 sq061 sq067 sq070 sq083 sq093 sq094 sq099 sq102 sq105 sq111 sq120 sq129 sq131 sq133 sq137 sq153 sq158 sq159 sq160 sq164 sq166 sq173 sq178 sq180 sq185 sq194 sq198 sq199 sq212 sq218 sq226 sq228 sq229 sq230 sq231 sq237 sq239 sq240 sq242 sq249 sq250 sq252 sq259 sq262 sq263 sq264 sq268 sq271 sq275 sq279 sq280 sq323 sq380 ys115"}],
+  /* 下架：[{id:"題號",from:"從哪天起不再出"}]（from 要在未來，那天以前照舊） */
+  DROP:[]};
 
 /* ---------- 日期、編號、挑題（純函式，測試直接呼叫） ---------- */
 function dqToday(t){return new Date((t==null?Date.now():t)+8*36e5).toISOString().slice(0,10)}
@@ -27,16 +39,32 @@ function dqAdd(k,n){return new Date(Date.parse(k+"T12:00:00Z")+n*864e5).toISOStr
 const dqNo=k=>dqDN(k)-dqDN(DQ.EPOCH)+1;
 function dqSlot(k){const w=new Date(Date.parse(k+"T12:00:00Z")).getUTCDay();return w===1||w===2?"sip":w===0||w===6?"pot":"cup"}
 function dqHash(s){let h=2166136261;for(const c of String(s)){h^=c.codePointAt(0);h=Math.imul(h,16777619)}h^=h>>>16;h=Math.imul(h,2246822507);h^=h>>>13;h=Math.imul(h,3266489909);h^=h>>>16;return h>>>0}
+/* 分享網址的日期寬鬆一點認（第 14 輪 X4）：前後空白、全形數字、「2026年11月14日」、「2026.11.14」、「20261114」、個位數月日、
+   通訊軟體在後面黏上的「?fbclid=…」「&utm_…」都認得，換成標準的 2026-11-14；認不出來回傳 ""（日期對不對交給 dqBad） */
+function dqNorm(k){let s=String(k==null?"":k);try{s=decodeURIComponent(s)}catch(e){}
+  s=s.replace(/[０-９]/g,c=>String.fromCharCode(c.charCodeAt(0)-0xFEE0)).replace(/[年月－‐-―−．.／\/]/g,"-").replace(/日/g,"").trim();
+  const m=/^(\d{4})(?:-(\d{1,2})-(\d{1,2})|(\d{2})(\d{2}))(?!\d)/.exec(s);if(!m)return"";const p=n=>String(+n).padStart(2,"0");return m[1]+"-"+p(m[2]||m[4])+"-"+p(m[3]||m[5])}
 /* 日期不對就回傳原因（給畫面顯示），對就回傳 "" */
 function dqBad(k,t){t=t||dqToday();if(!/^\d{4}-\d{2}-\d{2}$/.test(String(k||""))||isNaN(Date.parse(k+"T12:00:00Z"))||dqAdd(k,0)!==k)return"這個每日同題的網址看不懂（日期要像 2026-11-13）。";
   if(k<DQ.EPOCH)return`每日同題從 ${DQ.EPOCH.replace(/-/g,"/")} 開始，這一天還沒有題。`;
-  if(k>t)return"這一天還沒到，題目還沒出（臺灣時間 0:00 換題）。";return""}
-function dqPool(D,s){const c=D._dqP||(D._dqP={});if(!c[s]){const f=DQ.WANT[s],ok=x=>x&&x.id&&x.tree&&x.n>0;let p=D.items.filter(x=>ok(x)&&f(x));if(!p.length)p=D.items.filter(ok);c[s]=p}return c[s]}
-function dqBest(P,k,no){let best=null,bh=0;for(const x of P){if(no&&no.has(x.id))continue;const h=dqHash(k+"|"+x.id);if(!best||h<bh||(h===bh&&x.id<best.id)){best=x;bh=h}}return best}
-/* 那一天的題：同份量的題裡雜湊最小的；前 NOREP 天同份量第一順位的題跳過（題不夠時就不跳） */
-function dqPick(D,k){const s=dqSlot(k),P=dqPool(D,s);if(!P.length)return null;const no=new Set();
-  for(let i=1;i<=DQ.NOREP;i++){const j=dqAdd(k,-i);if(j<DQ.EPOCH)break;if(dqSlot(j)===s){const r=dqBest(P,j,null);if(r)no.add(r.id)}}
-  return dqBest(P,k,no.size<P.length?no:null)}
+  if(k>t)return"這一天還沒到，題目還沒出（臺灣時間 0:00 換題）。如果是朋友剛分享的，可能是對方或你的手機時間不準，手機時間請設成自動。";return""}
+/* 手機時間被調錯（早於第一天）：回傳說明，正常回傳 "" */
+function dqClock(t){t=t||dqToday();return t<DQ.EPOCH?`這支手機現在的日期是 ${t.replace(/-/g,"/")}（換算成臺灣時間），比每日同題開始的 ${DQ.EPOCH.replace(/-/g,"/")} 還早，手機時間可能不準。請把手機的日期與時間設成「自動設定」再回來。`:""}
+/* 名冊：那一天、那個份量可以出的題號＝GEN 裡 from ≤ 那天的每一批合起來，扣掉 DROP 裡 from ≤ 那天的；某份量一題都沒有就用三種份量合起來 */
+function dqIds(k,s){const G=DQ.GEN||[],X=DQ.DROP||[];if(DQ._g!==G||DQ._x!==X||!DQ._c){DQ._g=G;DQ._x=X;DQ._c={}}
+  const gs=G.filter(g=>g&&g.from<=k),xs=X.filter(d=>d&&d.from<=k),key=s+"|"+gs.map(g=>g.from).join()+"|"+xs.map(d=>d.id).join();if(DQ._c[key])return DQ._c[key];
+  const out=new Set(),drop=new Set(xs.map(d=>d.id)),add=t=>{for(const g of gs)for(const id of String(g[t]||"").split(/\s+/))if(id&&!drop.has(id))out.add(id)};
+  add(s);if(!out.size)for(const t in DQ.SLOT)add(t);return DQ._c[key]=[...out]}
+function dqBestId(ids,k,no){let best=null,bh=0;for(const id of ids){if(no&&no.has(id))continue;const h=dqHash(k+"|"+id);if(best===null||h<bh||(h===bh&&id<best)){best=id;bh=h}}return best}
+/* 那一天的題號：只看名冊和日期（不看題庫檔、存檔、匿名碼）。同份量雜湊最小的；前 NOREP 天同份量「第一順位」的題跳過（跟第 13 輪一樣）。
+   名冊比 NOREP 還少（極端情況）：改成跳過最近幾天同份量「真的出過」的題，最多跳到只剩一題——相鄰兩次一定不同、輪著出，不會沒題 */
+function dqPickId(k){const s=dqSlot(k),P=dqIds(k,s),c=DQ._c,ck="@"+k;if(ck in c)return c[ck];if(!P.length)return c[ck]=null;const inP=new Set(P),no=new Set(),few=P.length<=DQ.NOREP;
+  for(let i=1;i<=DQ.NOREP&&no.size<P.length-1;i++){const j=dqAdd(k,-i);if(j<DQ.EPOCH)break;if(dqSlot(j)!==s)continue;const r=few?dqPickId(j):dqBestId(dqIds(j,s),j,null);if(r&&inP.has(r))no.add(r)}
+  return c[ck]=dqBestId(P,k,no)}
+/* 那一天的題（題庫裡的那一筆）；手機上的題庫太舊、找不到就回傳 null（不換成別題） */
+function dqPick(D,k){const id=dqPickId(k);if(!id||!D||!D.items)return null;const M=D._dqM||(D._dqM=new Map(D.items.map(x=>[x&&x.id,x]))),x=M.get(id);return x&&x.tree&&x.n>0?x:null}
+/* 題庫照 WANT 分份量（產生新一批名冊、測試檢查用；挑題不用它） */
+function dqRosterFrom(D){const ok=x=>x&&x.id&&x.tree&&x.n>0,o={};for(const s in DQ.WANT)o[s]=((D&&D.items)||[]).filter(x=>ok(x)&&DQ.WANT[s](x)).map(x=>x.id).sort();return o}
 
 /* ---------- 成績 ---------- */
 function dqAll(){const A=store.get(DQ.KEY,null);return A&&A.d&&typeof A.d==="object"?A:{v:1,d:{}}}
@@ -123,12 +151,14 @@ function dqPastHTML(t){const D=dqAll().d,L=[];for(let i=1;i<=7;i++){const k=dqAd
 
 /* ---------- 一盞茶頁的入口卡 ---------- */
 function dqCardHTML(){dqCSS();const k=dqToday(),r=dqRec(k),sl=DQ.SLOT[dqSlot(k)],T=dqStats(k);
+  if(dqClock(k))return`<button class="cj-tea" id="dqGo" type="button"><span class="cj-ic">🌏</span><span class="tx"><b>每日同題</b><small>手機日期好像不對（早於 ${DQ.EPOCH.replace(/-/g,"/")}），請把時間設成自動</small></span><span class="cj-st">說明 ›</span></button>`;   /* 第 14 輪：手機時間被調到第一天以前，不顯示 #0、#-3 這種號碼 */
   const sub=r?`${dqEmo(r.sq,dqCb())}　${dqLine(r)}`:`今天大家都解同一題・解完可以分享不劇透的成績${T.cur?`・🔥 連續 ${T.cur} 天`:""}`;
   return`<button class="cj-tea${r?" done":""}" id="dqGo" type="button"><span class="cj-ic">🌏</span><span class="tx"><b>每日同題 #${dqNo(k)}・${sl[1]}${sl[0]}</b><small>${esc(sub)}</small></span><span class="cj-st">${r?(r.w?"✔ 成績":"👁 成績"):"開始 ›"}</span></button>`}
 function dqCardBind(v){const b=v&&v.querySelector&&v.querySelector("#dqGo");if(b)b.onclick=()=>{if(typeof vibrate==="function")vibrate(5);location.hash="#/daily/"+dqToday()}}
 
 /* ---------- 解題畫面設定（07c-canju.js CanjuPlay 的 XM）：id＝"dq/<日期>/<題號>" ---------- */
 function dqXM(id){const m=/^dq\/(\d{4}-\d{2}-\d{2})\/(.+)$/.exec(String(id||""));if(!m)return null;const k=m[1],pid=m[2],back=()=>"#/canju",bad=dqBad(k);if(bad)return{err:bad,back};
+  if(pid!==dqPickId(k))return{err:"這個網址的題目跟那一天的每日同題對不上（網址可能複製不完整或被改過）。",back:()=>"#/daily/"+k};   /* 第 14 輪：不能拿別題記成那天的成績 */
   const re=!!dqRec(k),sl=DQ.SLOT[dqSlot(k)],res="#/daily/"+k,late=k!==dqToday();
   return{id:pid,rk:DQ.RK,back,top:"🌏 每日同題",icon:"🌏",
     ans:re?"這是再解一次，看答案不會改成績，確定？":"看答案就算這一天放棄了（成績記成「看了答案」，一樣可以分享），確定？",
@@ -138,13 +168,15 @@ function dqXM(id){const m=/^dq\/(\d{4}-\d{2}-\d{2})\/(.+)$/.exec(String(id||""))
 
 /* ---------- 路由：#/daily、#/daily/<日期>、#/daily/<日期>/play ---------- */
 function DailyPage(v,k,sub){dqCSS();const t=dqToday();if(typeof setTabs==="function")setTabs(false);
-  if(!k){if(typeof navReplace==="function")navReplace("#/daily/"+t);else location.replace("#/daily/"+t);return{}}
   if(typeof setTop==="function")setTop("🌏 每日同題","#/canju");v.className="view";
+  const ck=dqClock(t);if(ck){v.innerHTML=`<div class="cj-wrap"><div class="card"><p style="line-height:1.7;margin:0">${esc(ck)}</p></div></div>`;return{}}   /* 第 14 輪：手機時間早於第一天，不出「去解今天的 #0」 */
+  if(!k){if(typeof navReplace==="function")navReplace("#/daily/"+t);else location.replace("#/daily/"+t);return{}}
+  {const k2=dqNorm(k);if(k2&&k2!==k){const h="#/daily/"+k2+(sub==="play"?"/play":"");if(typeof navReplace==="function")navReplace(h);else location.replace(h);return{}}}   /* 第 14 輪：分享網址日期寫法不標準（全形、個位數、後面黏了 ?fbclid）就換成標準網址再開 */
   const bad=dqBad(k,t);if(bad){v.innerHTML=`<div class="cj-wrap"><div class="card"><p style="line-height:1.7;margin:0">${esc(bad)}</p><div class="cj-row"><button class="btn" id="dqT">去解今天的 #${dqNo(t)}</button></div></div></div>`;
     const b=v.querySelector("#dqT");if(b)b.onclick=()=>{location.hash="#/daily/"+t};return{}}
   if(sub!=="play"&&dqRec(k))return dqResult(v,k,t);
   v.innerHTML='<div class="pad muted">題目準備中…</div>';const H0=location.hash;
-  cjData().then(D=>{if(!v.isConnected||location.hash!==H0)return;const P=dqPick(D,k);if(!P){v.innerHTML='<div class="pad"><div class="card muted">題庫裡找不到可以出的題。</div></div>';return}
+  cjData().then(D=>{if(!v.isConnected||location.hash!==H0)return;const P=dqPick(D,k);if(!P){v.innerHTML=dqPickId(k)?'<div class="pad"><div class="card muted">這支手機裡的題庫是舊版，找不到這一天的題。連上網路、重新整理一次就會更新。</div></div>':'<div class="pad"><div class="card muted">題庫裡找不到可以出的題。</div></div>';return}
     CanjuPlay(v,"dq/"+k+"/"+P.id)}).catch(e=>{if(v.isConnected)v.innerHTML=`<div class="pad"><div class="card muted">${esc(e&&e.message||"題庫載入失敗")}<br>題庫要先下載才能玩（連上網路再打開一次）。</div></div>`});
   return{}}
 function dqResult(v,k,t){const r=dqRec(k),T=dqStats(t),sl=DQ.SLOT[dqSlot(k)];

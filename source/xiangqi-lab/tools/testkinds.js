@@ -15,8 +15,11 @@ const DIR = __dirname;
 const SKIP = new Set(["test-home-focus.js", "testkinds.js"]);
 /* 11/12 已逐項分類（開發者稽核 story/102_評比灌水誠實稽核.md 第 3 項） */
 const CLASSIFIED = new Set([
+  "test-i18n.js",   /* 11/13 第 14 輪 F1 英文介面架構（m/07i18n.js；行為 31、混合 2、原始碼 4） */
+  "test-android-roadmap.js",   /* 11/13 第 14 輪 F3 Android 路線圖＋可重現驗證包：verify-all.js、xiangqi-android 骨架檢查、F-Droid 草稿、make-www（行為 8、混合 1） */
   "test-fdroid-evidence.js",   /* 11/13 第 13 輪 F2 F-Droid 可建置證據：pikafish-verify.js、release-verify.js（行為 8、原始碼 1） */
-  "test-daily.js",   /* 11/13 第 13 輪 F1 每日同題＋無雷分享（m/07dq-daily.js；行為 11、原始碼 2） */
+  "test-daily.js",   /* 11/13 第 13 輪 F1 每日同題＋無雷分享（m/07dq-daily.js；行為 11、原始碼 2）；第 14 輪 X4 題庫改版名冊＋邊界（行為 +13） */
+  "test-ship-tilt.js", "test-home-order.js",   /* 11/13 第 14 輪 X2 星槎傾斜權限不自動問（行為 6、原始碼 1）、首頁焦點順序（行為 5、原始碼 1） */
   "test-focus-modes.js",   /* 11/13 第 12 輪 F4 純淨畫面、X10 老闆鍵＋中斷恢復（行為 15、原始碼 2） */
   "test-blitz.js",   /* 11/13 第 12 輪 F3 快棋模式、動畫最短化、預走（行為 14、混合 1、原始碼 2） */
   "test-premove-online3d.js", "test-park3d-cbfx.js",   /* 11/13 第 13 輪 F3 線上預走＋F4 3D 預走與快棋 3D 動畫（行為 12、原始碼 3）、X6 3D 色弱特效補完（行為 7、原始碼 1） */
@@ -49,6 +52,7 @@ const CLASSIFIED = new Set([
   "test-cup-sign.js",   /* 第 9 輪評審：千秋盃報名與賽程廣播簽名（行為 6、原始碼 1） */
   "test-net-link.js", "test-xfer2.js",   /* 11/13 第 12 輪 X11 連線同步頻道（行為 15、原始碼 1）、換手機轉移碼補強（行為 11、原始碼 1） */
   "test-net-linksig.js",   /* 11/13 第 13 輪 X2 同步頻道簽名、防重放、除錯小卡（行為 11、原始碼 1） */
+  "test-net-pin.js",   /* 11/13 第 14 輪 F2 開局公開金鑰驗證、千秋盃 k 簽名（行為 13、原始碼 1） */
   "test-oss-scan.js"   /* 11/13 原始碼公開前的機密與個資掃描 tools/oss-scan.js（行為 7） */
 ]);
 /* 還沒逐項分類的檔（統計列為「待分類」）；新測試檔先放這裡，分好類再移到 CLASSIFIED */
@@ -114,4 +118,6 @@ if (require.main === module && !process.env.NODE_TEST_CONTEXT) {
   const pend = files.filter(f => !classified(f.file)).map(f => f.file);
   if (pend.length) console.log("待分類的檔：" + pend.join("、"));
   console.log("說明：原始碼比對只證明程式碼存在，不證明功能會動；測試由開發用的 AI 撰寫，不等於第三方驗證。");
+  /* 11/13：有任何一項沒過就回報失敗（結束代碼 1），source/run-tests.js、verify-all.js 才不會把沒過的當成通過 */
+  if (mode === "run") { const bad = files.filter(f => KINDS.some(k => f.n[k].pass < f.n[k].all)).map(f => f.file); if (bad.length) { console.log("✖ 有測試沒過：" + bad.join("、")); process.exitCode = 1 } }
 }

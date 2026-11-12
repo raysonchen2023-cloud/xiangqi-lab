@@ -39,7 +39,9 @@ const TEST_SKIP = {
   "test-blitz.js": WHY_NEWER, "test-colorblind.js": WHY_NEWER, "test-park3d-colorblind.js": WHY_NEWER, "test-touch-fixes.js": WHY_NEWER, "test-focus-modes.js": WHY_NEWER,
   "test-askbot-city.js": WHY_NEWER, "test-fdroid-evidence.js": WHY_NEWER, "test-health-funnel.js": WHY_NEWER, "test-health.js": WHY_NEWER,
   "test-a11y-emoji.js": WHY_NEWER,   /* 11/13 新加，測 11b-a11y.js 還沒發布的修改 */
+  "test-android-roadmap.js": "要讀只在開發者電腦的 xiangqi-android/ 骨架（verify-all.js 本身會公開）",   /* 11/13 第 14 輪 F3 */
   "test-net-sign.js": "要用 fixtures/net-legacy-1111.js（舊版 net.js），那個檔頭寫「不要發布」，先一起不放",
+  "test-net-pin.js": "要接千秋盃裁判台 cup-host.js（營運程式，不公開）",   /* 11/13 第 14 輪：公開副本裡 0/1 */
   "test-ui-redundancy.js": "有一項檢查開發者刻意不發布的 07y-hubmap.js 段落",
   "test-foss-audit.js": "倉庫多了 source/ 以後，foss-audit.js 會把 source/ 裡的規則文字當成追蹤 SDK（要先讓它跳過 source/）",
 };

@@ -9,17 +9,24 @@
       延遲（最近 10 次、平均、抖動、伺服器心跳）、雙方 rev／步數／局面雜湊一不一致、對局簽名和對方版本、這盤重連幾次、計數、最近 20 則同步事件
       （時間、收／送、種類、序號、驗簽 ✓／✗／未驗證、丟掉的原因）；「📋 複製除錯資訊」複製成純文字（只有匿名統計：沒有金鑰、代號、名字、對局代號）。卡片開著每秒更新。
       資料來自 XQNet.linkDebug()；對方是上一版（同步訊息沒簽名）時，延遲標「未驗證」。
-   沒有改 m.css：樣式在這裡用一個 <style id="nsgCss"> 放進去。前綴 nsg／NSG。測試 xiangqi-lab/tools/test-net-link.js、test-net-linksig.js */
-const NSG={el:null,hold:0,box:null,last:"",dbg:null,lp:null,lpOn:false};
+   ④ 評比第 14 輪 F2（開局公開金鑰驗證）：小卡多「對方金鑰」（已釘選／第一次見到／已變更⚠，千秋盃加「裁判台認證」）、對方金鑰指紋、我的指紋（兩人可以當面或用別的方式比對）；
+      資料來自 XQNet.keyInfo()。指紋只顯示、不放進「複製除錯資訊」。對方金鑰「已變更」時膠囊多一個 🔑⚠；收到「金鑰跟上次不一樣」的邀請、或擋下可疑的邀請時跳 toast。
+   沒有改 m.css：樣式在這裡用一個 <style id="nsgCss"> 放進去。前綴 nsg／NSG。測試 xiangqi-lab/tools/test-net-link.js、test-net-linksig.js、test-net-pin.js */
+const NSG={el:null,hold:0,box:null,last:"",dbg:null,lp:null,lpOn:false,inv:false,kbAt:0};
+/* 對方金鑰的狀態 → 文字（K＝XQNet.keyInfo() 或 linkDebug().key） */
+const NSG_KS={pinned:"已釘選（跟上次對局同一把）",first:"第一次見到",changed:"已變更⚠（跟上次對局不是同一把）",none:"沒有金鑰（對方版本較舊）"};
+const nsgKeyTxt=K=>!K?"—":(NSG_KS[K.st]||"—")+(K.cert?"・裁判台認證":"")+(K.iv?"・邀請有簽名":"");
 /* 秒數 → 「45 秒」「2 分 05 秒」 */
 const nsgSec=ms=>{const s=Math.max(0,Math.round((+ms||0)/1000));return s<120?s+" 秒":Math.floor(s/60)+" 分 "+String(s%60).padStart(2,"0")+" 秒"};
 /* 膠囊的內容（純函式，測試直接呼叫）：L＝latency()、P＝peer()、S＝syncInfo()、now＝現在 → {bars 0～4 或 null, txt 文字, tip 點一下的說明, lv 顏色等級} */
-function nsgView(L,P,S,now){L=L||{};const b=L.bars==null?null:L.bars|0,up=!(L.bars===0&&L.ms==null);
+function nsgView(L,P,S,now,K){L=L||{};const b=L.bars==null?null:L.bars|0,up=!(L.bars===0&&L.ms==null);
   let txt=!up?"斷線":L.ms==null?"—":L.ms+" ms";
   const syncBad=!!(S&&S.ok===false&&now-S.at>4000);if(syncBad)txt+=" 🔄 同步中";
   if(P&&(P.st==="slow"||P.st==="gone"))txt+=" ⏳ 對方 "+nsgSec(P.ms)+"沒回應";
+  const kc=!!(K&&K.st==="changed");if(kc)txt+=" 🔑⚠";   /* 第 14 輪 F2：對方金鑰跟上次對局不一樣 */
   const tip=(!up?"網路斷了，重新連線中；斷線時走的棋，連上後會自動送出。":L.ms==null?"正在量連線延遲…":`連線延遲 ${L.ms} 毫秒（${L.src==="peer"?"跟對方手機來回一趟":"跟伺服器來回一趟"}）・訊號 ${b}／4 格。`+(L.src==="peer"&&L.ver===false?"（未驗證：對方版本較舊，同步訊息沒有簽名）":""))
-    +(S&&S.ok===true?"棋局跟對方一致。":S&&S.ok===false?"棋局跟對方還沒對上，正在自動補齊。":"")+(P&&P.st!=="ok"&&P.st!=="self"?`對方已經 ${nsgSec(P.ms)}沒有回應。`:"");
+    +(S&&S.ok===true?"棋局跟對方一致。":S&&S.ok===false?"棋局跟對方還沒對上，正在自動補齊。":"")+(P&&P.st!=="ok"&&P.st!=="self"?`對方已經 ${nsgSec(P.ms)}沒有回應。`:"")
+    +(kc?"對方的手機金鑰跟上次對局不一樣（換手機、重裝 App 也會這樣），點一下看指紋。":"");
   return{bars:up?b:0,txt,tip,lv:!up?0:b==null?2:b}}
 /* 對方沒回應的視窗內容（純函式）：P＝peer() → {html, opts:[{k:"wait"|"draw"|"leave"|"lobby", label}]} */
 function nsgAskSpec(P){const w=P.winIn!=null?nsgSec(P.winIn):null;
@@ -38,7 +45,7 @@ const nsgEsc=s=>String(s==null?"":s).replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt
 const nsgHm=t=>{const d=new Date(t);return[d.getHours(),d.getMinutes(),d.getSeconds()].map(v=>String(v).padStart(2,"0")).join(":")};
 /* 小卡內容（純函式，測試直接呼叫）：D＝XQNet.linkDebug()、tip＝膠囊的說明、now → {body 卡片內文 html, html 整張, text 複製用的純文字}。
    text 只放 D 裡的匿名統計（D 本身就沒有金鑰、代號、名字、gid） */
-function nsgDbgSpec(D,tip,now){
+function nsgDbgSpec(D,tip,now,K){
   if(!D){const t="象棋千秋 連線除錯：現在不在線上對局裡";return{body:'<p class="muted">現在不在線上對局裡。</p>',html:'<h2>📶 連線狀態</h2><p class="muted">現在不在線上對局裡。</p>',text:t}}
   const L=D.lat||{},S=D.sync||{},st=D.stats||{},ms=v=>v==null?"—":v+" ms",n=v=>v==null?"—":v;
   const src=L.src==="peer"?"跟對方手機來回"+(L.ver===false?"・未驗證":L.ver?"・已驗簽":""):L.src==="server"?"跟伺服器來回（對方沒回 pong）":"還沒量到";
@@ -55,22 +62,29 @@ function nsgDbgSpec(D,tip,now){
     ["收到的同步訊息",`驗過 ${n(st.sigOk)}・未驗證 ${n(st.unv)}`],
     ["丟掉的",`簽名不對 ${n(st.bad)}・沒簽名 ${n(st.nosig)}・重放 ${n(st.replay)}・時間窗外 ${n(st.win)}・重複 ${n(st.dup)}・舊心跳 ${n(st.old)}・太多 ${n(st.flood)}`],
     ["補齊",`補狀態 送 ${n(st.stOut)}／收 ${n(st.stIn)}・要狀態 ${n(st.nd)}・跳號 ${n(st.gap)}／補上 ${n(st.gapFix)}`]];
+  /* 第 14 輪 F2：對方金鑰（K＝keyInfo()，有指紋；沒有就用 D.key，沒有指紋）。指紋那兩列只放畫面（第三個欄位 false＝不複製） */
+  const KK=K||D.key||null;
+  if(KK){rows.splice(7,0,["對方金鑰",nsgKeyTxt(KK)]);
+    if(K&&K.st!=="none")rows.splice(8,0,["對方金鑰指紋",(K.fp||"計算中…")+(K.st==="changed"&&K.was?`（上次是 ${K.was}）`:""),false],["我的指紋",K.mine||"計算中…",false])}
+  const kNote=KK&&KK.st==="changed"?"⚠ 對方的手機金鑰跟你上次跟他下棋時不一樣。換手機、重裝 App、清掉網站資料都會這樣；不確定是不是本人，請當面或用別的方式跟他比對：他小卡上的「我的指紋」要等於你這裡的「對方金鑰指紋」。"
+    :KK&&KK.st==="first"&&!KK.cert?"第一次跟這把金鑰下棋。想確認是本人，可以跟他比對指紋：他小卡上的「我的指紋」要等於你這裡的「對方金鑰指紋」。":"";
   const E=(D.ev||[]).slice().reverse(),okTxt=e=>e.ok===true?"✓":e.ok===false?"✗":"未驗證",why=e=>e.why||(e.d==="out"?"送出":"收下");
-  const body=(tip?`<p class="muted">${nsgEsc(tip)}</p>`:"")+'<table class="nsg-kv">'+rows.map(r=>`<tr><th>${nsgEsc(r[0])}</th><td>${nsgEsc(r[1])}</td></tr>`).join("")+"</table>"
+  const body=(tip?`<p class="muted">${nsgEsc(tip)}</p>`:"")+'<table class="nsg-kv">'+rows.map(r=>`<tr${r[2]===false?' class="nsg-fp"':""}><th>${nsgEsc(r[0])}</th><td>${nsgEsc(r[1])}</td></tr>`).join("")+"</table>"
+    +(kNote?`<p class="muted nsg-kn">${nsgEsc(kNote)}</p>`:"")
     +`<h3>最近 ${E.length} 則同步事件</h3>`+(E.length?'<div class="nsg-ev"><table><tr><th>時間</th><th></th><th>種類</th><th>序號</th><th>驗簽</th><th>結果</th></tr>'
     +E.map(e=>`<tr class="${e.why?"bad":""}"><td>${nsgHm(e.at)}</td><td>${e.d==="out"?"送":"收"}</td><td>${nsgEsc(NSG_T[e.t]||e.t)}</td><td>${e.sq==null?"—":"#"+e.sq}</td><td>${okTxt(e)}</td><td>${nsgEsc(why(e))}</td></tr>`).join("")+"</table></div>":'<p class="muted">還沒有。</p>');
-  const text=["象棋千秋 連線除錯（匿名統計，不含金鑰、代號、名字）",new Date(now).toISOString()].concat(rows.map(r=>r[0]+"："+r[1]),["最近同步事件（新的在前）："],
+  const text=["象棋千秋 連線除錯（匿名統計，不含金鑰、代號、名字）",new Date(now).toISOString()].concat(rows.filter(r=>r[2]!==false).map(r=>r[0]+"："+r[1]),["最近同步事件（新的在前）："],
     E.map(e=>`${nsgHm(e.at)} ${e.d==="out"?"送":"收"} ${NSG_T[e.t]||e.t} ${e.sq==null?"—":"#"+e.sq} ${okTxt(e)} ${why(e)}`)).join("\n");
   return{body,html:'<h2>📶 連線狀態</h2><div class="nsg-dbg-b">'+body+'</div><p class="nsg-cpw"><button type="button" class="btn ghost nsg-cp">📋 複製除錯資訊</button></p>',text}}
-function nsgDbgData(){const N=window.XQNet;let D=null,tip="";try{D=N&&N.linkDebug?N.linkDebug():null;tip=N?nsgView(N.latency(),N.peer(),N.syncInfo(),Date.now()).tip:""}catch(e){}return{D,tip}}
+function nsgDbgData(){const N=window.XQNet;let D=null,tip="",K=null;try{D=N&&N.linkDebug?N.linkDebug():null;K=N&&N.keyInfo?N.keyInfo():null;tip=N?nsgView(N.latency(),N.peer(),N.syncInfo(),Date.now(),K).tip:""}catch(e){}return{D,tip,K}}
 function nsgCopy(t){const ok=()=>{try{toast("已複製除錯資訊（不含金鑰、代號、名字）")}catch(e){}},old=()=>{try{const a=document.createElement("textarea");a.value=t;a.setAttribute("readonly","");a.style.cssText="position:fixed;left:-9999px;top:0";document.body.append(a);a.select();document.execCommand("copy");a.remove();ok()}catch(e){try{toast("這支手機不能複製")}catch(e2){}}};
   try{if(navigator.clipboard&&navigator.clipboard.writeText)navigator.clipboard.writeText(t).then(ok,old);else old()}catch(e){old()}}
-function nsgDbgOpen(){try{if(NSG.dbg&&NSG.dbg.isConnected)return;nsgCss();const{D,tip}=nsgDbgData(),A=nsgDbgSpec(D,tip,Date.now());
+function nsgDbgOpen(){try{if(NSG.dbg&&NSG.dbg.isConnected)return;nsgCss();const{D,tip,K}=nsgDbgData(),A=nsgDbgSpec(D,tip,Date.now(),K);
   const m=modal(A.html,[["關閉",()=>{NSG.dbg=null}]],"nsg-dbg");if(!m)return;NSG.dbg=m;
-  const b=m.querySelector(".nsg-cp");if(b)b.onclick=()=>{const x=nsgDbgData();nsgCopy(nsgDbgSpec(x.D,x.tip,Date.now()).text)}}catch(e){}}
+  const b=m.querySelector(".nsg-cp");if(b)b.onclick=()=>{const x=nsgDbgData();nsgCopy(nsgDbgSpec(x.D,x.tip,Date.now(),x.K).text)}}catch(e){}}
 /* 卡片開著：每秒更新內文（離開對局頁就收掉） */
 function nsgDbgTick(on){if(!NSG.dbg)return;if(!NSG.dbg.isConnected){NSG.dbg=null;return}if(!on){try{NSG.dbg.remove()}catch(e){}NSG.dbg=null;return}
-  const b=NSG.dbg.querySelector(".nsg-dbg-b");if(b){const{D,tip}=nsgDbgData();b.innerHTML=nsgDbgSpec(D,tip,Date.now()).body}}
+  const b=NSG.dbg.querySelector(".nsg-dbg-b");if(b){const{D,tip,K}=nsgDbgData();b.innerHTML=nsgDbgSpec(D,tip,Date.now(),K).body}}
 function nsgDo(k){const N=window.XQNet;if(!N)return;
   if(k==="wait"){NSG.hold=Date.now()+120000;return}
   if(k==="lobby"){NSG.hold=Date.now()+120000;location.hash="#/lobby";return}
@@ -82,9 +96,15 @@ function nsgCss(){if(document.getElementById("nsgCss"))return;const s=document.c
     +".nsg-dbg .box{max-width:440px;text-align:left}.nsg-dbg h2{text-align:center}.nsg-dbg h3{font-size:13px;margin:10px 0 4px}.nsg-dbg table{width:100%;border-collapse:collapse;font-size:12px;line-height:1.4}"
     +".nsg-dbg th,.nsg-dbg td{padding:3px 4px;border-top:1px solid rgba(127,127,127,.22);vertical-align:top;text-align:left;font-weight:400}.nsg-kv th{white-space:nowrap;opacity:.75;width:6.5em}"
     +".nsg-ev{max-height:34vh;overflow:auto;-webkit-overflow-scrolling:touch}.nsg-ev th{opacity:.7;position:sticky;top:0;background:inherit}.nsg-ev td{font-variant-numeric:tabular-nums;word-break:break-all}.nsg-ev tr.bad td{color:#dc2626}"
-    +".nsg-cpw{text-align:center;margin:10px 0 0}";
+    +".nsg-cpw{text-align:center;margin:10px 0 0}.nsg-dbg tr.nsg-fp td{font:700 14px/1.3 ui-monospace,Menlo,Consolas,monospace;letter-spacing:.08em}.nsg-dbg .nsg-kn{font-size:12px;line-height:1.5;margin:8px 0 0}";
   document.head.append(s)}
-function nsgTick(){try{const N=window.XQNet,on=/^#\/pvp(\/|$)/.test(location.hash||"")&&N&&N.latency&&N.peer&&N.active()&&!!N.side();
+/* 第 14 輪 F2：邀請的金鑰跟上次對局不一樣＝提醒一下（照樣可以接受）；擋下可疑的邀請／接受＝提醒（30 秒內最多一次，免得被灌訊息時一直跳） */
+const nsgInvTxt=x=>`🔑⚠ ${String(x&&x.from&&x.from.name||"對方").slice(0,16)} 的手機金鑰跟上次對局不一樣（換手機、重裝 App 也會這樣）。不確定是不是本人，開局後點訊號膠囊比對指紋。`;
+const nsgBadTxt=e=>`🔑 擋下一則可疑的${e&&e.type==="accept"?"接受":"邀請"}：${String(e&&e.why||"")}`;
+function nsgKeyHook(N){if(NSG.inv||!N||!N.on)return;NSG.inv=true;
+  N.on("invite",x=>{try{if(x&&x.ks==="changed")toast(nsgInvTxt(x))}catch(e){}});
+  N.on("keybad",e=>{try{const t=Date.now();if(t-NSG.kbAt<30000)return;NSG.kbAt=t;toast(nsgBadTxt(e))}catch(err){}})}
+function nsgTick(){try{nsgKeyHook(window.XQNet);const N=window.XQNet,on=/^#\/pvp(\/|$)/.test(location.hash||"")&&N&&N.latency&&N.peer&&N.active()&&!!N.side();
   const bb=on?document.querySelector("#view #bbox"):null;nsgDbgTick(!!bb);if(!bb){if(NSG.el){NSG.el.remove();NSG.el=null}nsgBoxOff();return}
   if(!NSG.el||!NSG.el.isConnected||NSG.el.previousElementSibling!==bb){if(NSG.el)NSG.el.remove();nsgCss();const d=document.createElement("div");d.id="nsg";
     d.innerHTML='<button type="button" class="nsg-p" aria-label="連線狀態"><span class="nsg-b"><i style="height:3px"></i><i style="height:5px"></i><i style="height:8px"></i><i style="height:11px"></i></span><span class="nsg-t"></span></button>';
@@ -92,7 +112,7 @@ function nsgTick(){try{const N=window.XQNet,on=/^#\/pvp(\/|$)/.test(location.has
     btn.onclick=()=>{if(NSG.lpOn){NSG.lpOn=false;return}nsgDbgOpen()};
     btn.addEventListener("pointerdown",()=>{lpOff();NSG.lpOn=false;NSG.lp=setTimeout(()=>{NSG.lp=null;NSG.lpOn=true;nsgDbgOpen()},550)});
     ["pointerup","pointerleave","pointercancel"].forEach(t=>btn.addEventListener(t,lpOff));btn.addEventListener("contextmenu",e=>e.preventDefault());bb.after(d);NSG.el=d}
-  const P=N.peer(),V=nsgView(N.latency(),P,N.syncInfo(),Date.now()),k=V.bars+"|"+V.txt;
+  const P=N.peer(),V=nsgView(N.latency(),P,N.syncInfo(),Date.now(),N.keyInfo?N.keyInfo():null),k=V.bars+"|"+V.txt;
   if(k!==NSG.last){NSG.last=k;const p=NSG.el.querySelector(".nsg-b");p.className="nsg-b l"+V.lv;p.querySelectorAll("i").forEach((x,i)=>x.classList.toggle("on",V.bars!=null&&i<V.bars));
     NSG.el.querySelector(".nsg-t").textContent=V.txt;NSG.el.querySelector("button").setAttribute("aria-label","連線狀態："+V.tip+"點一下看詳細。")}
   if(P&&P.st==="gone"){if(!NSG.box&&!document.hidden&&Date.now()>NSG.hold){const A=nsgAskSpec(P);NSG.box=modal(A.html,A.opts.map((o,i)=>[o.label,()=>{NSG.box=null;nsgDo(o.k)},i?true:false]),"nsg-ask")||{remove(){}}}}

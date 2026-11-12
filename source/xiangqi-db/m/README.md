@@ -88,6 +88,7 @@
 | 11b-a11y.js | 11/12 無障礙（評比第 3 輪 P16）：♿ 螢幕報讀與鍵盤模式（axMode）、高對比主題（hcTheme）、跟著系統字級（fzSys）、棋盤格念法 axmCellLabel／每步念法 axmMoveLine、對話框焦點鎖、圖示按鈕補名字。include 在 m.html 最後；前綴 axm／AXM_。稽核 `xiangqi-lab/tools/a11y-audit.js`、測試 `test-a11y.js` |
 | 07hp-haptics.js | 📳 觸覺回饋（第 11 輪 X2）：落子、吃子、將軍、走不了、勝／敗／和／將死各一種震動節奏（hapPats）；開關 store `haptic`（預設開，關掉連 00-util vibrate 也停）。掛點：01-board 畫面更新 hapMove、tapGo hapTap，對局結束 xq-result。iPhone Safari 沒有 navigator.vibrate，不會震。include 在 m.html 最後；前綴 hap／HAP_。測試 `test-haptics.js` |
 | 07hs-netsig.js | 📶 線上對局連線訊號格＋對方沒回應（第 12 輪 X11）：讀 src/net.js LINK 區段的 XQNet.latency／peer／syncInfo。#/pvp 自己在下時棋盤右下角小膠囊（格數＋毫秒、🔄 同步中、⏳ 對方 N 秒沒回應，點一下 toast 說明）；對方 90 秒沒回應跳視窗：繼續等／判和（不計分）／離開這盤（不計分），千秋盃只有繼續等／回大廳（peerAbort，判負規則沒改）。樣式自帶 `<style id="nsgCss">`，沒改 m.css；include 在 07hp-haptics 後面；前綴 nsg／NSG。測試 `test-net-link.js` ⑦ |
+| 07i18n.js | 🌐 英文介面架構（第 14 輪 F1）：掃描文字節點＋字典替換（I18N_EN 字典、I18N_PAT 句型、照中文標點切段；還剩中文就整段不換），選了 English（store `lang`＝"en"）才裝 MutationObserver，原文記在 WeakMap 可還原（i18nRevert）；讀螢幕念法換英文（axmMoveLine／axmCellLabel／axmPcName 指定換掉，axSay／axsAlert 包一層），著法用 WXF 記譜；設定頁頂欄 🌐 與「文字」那排的 English 都走 i18nPick（換了重新載入）。不翻的字 I18N_GUARD。include 在 07dq-daily 後面；前綴 i18n／I18N_。說明 art/docs/i18n.md；測試 `test-i18n.js` |
 
 ## 改程式時
 - 找某段字在哪個檔：`node xiangqi-db/tools/mhtml.js --find "要找的字"`。

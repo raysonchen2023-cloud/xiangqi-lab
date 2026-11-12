@@ -1,0 +1,60 @@
+{
+ "schema": 1,
+ "note": "Pikafish 網頁版（engine/pikafish.wasm、pikafish.js）的建置紀錄。第 13 輪 F2 補記：原始編譯（2026-10-30）當時沒存紀錄，下面的工具鏈是從本機 WSL 已安裝的 emsdk 和 wasm 檔內嵌的字串對出來的；rebuilds 是之後實際重編的結果。核對：node xiangqi-lab/tools/pikafish-verify.js",
+ "upstream": {
+  "repo": "https://github.com/official-pikafish/Pikafish",
+  "tag": "Pikafish-2026-09-06",
+  "commit": "4c17cee11f888ae1d48a9494f2e2239f019f0a1f",
+  "upstreamUciCppSha256": "3b49ab2d2f06b5c7b1cbd3f0da77f96cac4cf5e94511953702e84ded9ca7a82c"
+ },
+ "modified": {
+  "src/uci.cpp": {
+   "sha256": "149644b9781bbc7c3c8422ba9406ceaa20db1fad2d384ea96d0d8189ef20be5e",
+   "published": "pikafish-src/uci.cpp",
+   "why": "瀏覽器沒有標準輸入，改成由網頁呼叫 uci_command() 把指令放進佇列（上游 32 行新增，其他檔案沒改）"
+  }
+ },
+ "toolchain": {
+  "host": "WSL Ubuntu-24.04（Windows 11）",
+  "emscripten": "6.0.13",
+  "emscriptenReleasesCommit": "eb132757325583b787fe9414b09afea9442b72ad",
+  "emsdkCommit": "d7b4130688bfa348392b921ab04015aa15c4f154",
+  "clangVersion": "Clang 24.0.0git (https://github.com/llvm/llvm-project 83ee07799c341b60965f07892f7bb3d175da05be)",
+  "node": "24.19.0",
+  "evidence": "emsdk 的 upstream 資料夾 2026-10-30 06:37:57 (+08:00) 啟用、本機只裝了這一版；pikafish.wasm 內嵌的 __VERSION__ 字串跟這版 clang --version 逐字相同"
+ },
+ "buildScript": {
+  "published": "pikafish-src/build-wsl.sh",
+  "sha256": "bee2e78227010d5b89d20be9264728ce0c6a1e6590dba6e7a290ed321d6ebdb4",
+  "pinned": "xiangqi-wasm/build-pinned.sh（只在本機；釘 Emscripten 6.0.13、檢查 commit 和 uci.cpp 雜湊、固定 SOURCE_DATE_EPOCH 和排序語系）"
+ },
+ "flags": [
+  "-O3", "-DNDEBUG", "-std=c++17", "-fno-exceptions", "-DIS_64BIT",
+  "-msse", "-msse2", "-mssse3", "-msse4.1", "-msimd128", "-DUSE_SSE2", "-DUSE_SSSE3", "-DUSE_SSE41", "-DUSE_POPCNT", "-DUSE_SLOPPY_ATOMICS",
+  "-pthread", "-flto",
+  "-sPROXY_TO_PTHREAD", "-sPTHREAD_POOL_SIZE=6", "-sEXIT_RUNTIME=0",
+  "-sINITIAL_MEMORY=192MB", "-sALLOW_MEMORY_GROWTH", "-sMAXIMUM_MEMORY=2GB", "-sSTACK_SIZE=3MB", "-sDEFAULT_PTHREAD_STACK_SIZE=4MB",
+  "-sMODULARIZE", "-sEXPORT_NAME=PikafishModule", "-sENVIRONMENT=web,worker,node",
+  "-sEXPORTED_FUNCTIONS=_main,_uci_command", "-sEXPORTED_RUNTIME_METHODS=ccall,FS", "-sFILESYSTEM=1"
+ ],
+ "memory": { "shared": true, "initialBytes": 201326592, "maximumBytes": 2147483648 },
+ "exportName": "PikafishModule",
+ "originalBuild": {
+  "when": "2026-10-30 06:38 (+08:00)",
+  "dateMacro": "Oct 30 2026",
+  "log": "沒有保存（當時沒存編譯紀錄）"
+ },
+ "artifacts": {
+  "pikafish.wasm": { "sha256": "7fb6fc805a36ced6a55626a9513b7dda821b0bbb5e830fa17f120f1550a9a331", "bytes": 727020, "published": "engine/pikafish.wasm" },
+  "pikafish.js": { "sha256": "dd5498bfb76381598d453a612d74e5e1955835452324c4d0b962a64fb44438f7", "bytes": 77607, "published": "engine/pikafish.js" }
+ },
+ "rebuilds": [
+  {
+   "when": "2026-11-13 03:51 (+08:00)",
+   "toolchain": "WSL Ubuntu-24.04、Emscripten 6.0.13（emcc e13ee988ce3d）、Clang 24.0.0git 83ee07799c34",
+   "command": "wsl.exe -d Ubuntu-24.04 -- bash xiangqi-wasm/build-pinned.sh xiangqi-wasm/Pikafish xiangqi-wasm/Pikafish/src/uci.cpp <輸出資料夾>",
+   "result": "SOURCE_DATE_EPOCH=1793361600（2026-10-30）：pikafish.wasm、pikafish.js 都跟發布的逐位元相同；不固定日期（當天 UTC 11 月 12 日）重編：pikafish.js 相同、pikafish.wasm 只差 5 個位元組＝內嵌的 __DATE__ 字串",
+   "evidence": "xiangqi-wasm/rebuild-20261113/（build.log、SHA256SUMS、重編的兩個檔；build-today-date.log、SHA256SUMS-today-date）"
+  }
+ ]
+}
