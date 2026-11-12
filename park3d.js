@@ -1524,7 +1524,7 @@
     const gntFig=(p,K,blk)=>{const n=gntCnt[p]=(gntCnt[p]||0)+1,body=n===1,g=new T.Group(),inner=new T.Group();g.add(inner);g.userData={p,th:GNT_H*.55,giant:1,body};
       /* 開發者 11/12「底下踩著的棋子不用放上去，只要站角色即可」：不再墊本命棋子底座，角色直接站在棋盤格點上；
          「把棋子放在每個 3D 角色背後，然後他們要面向對方」：本命字圓牌貼在背上（gly.back），角色轉身面向敵陣（gntTake 依 flip 轉 180 度），玩家從後面看得到字 */
-      let B=null;try{B=window.XQBot3D&&XQBot3D.figure?XQBot3D.figure({glb:"data/tripo_app/"+(blk?GNT_XS[K]:GNT_X[K])+".glb",p:blk?NAMES.b[K]:GNT_CH[K],gly:Object.assign({back:1},(blk?GNT_GLYB:GNT_GLY)[K])}):null}catch(e){B=null}
+      let B=null;try{B=window.XQBot3D&&XQBot3D.figure?XQBot3D.figure({glb:"data/tripo_app/"+(blk?GNT_XS[K]:GNT_X[K])+".glb",p:blk?NAMES.b[K]:GNT_CH[K],gly:Object.assign({back:1,front:blk?{u:.5,v:.55,r:.3}:{u:.5,v:.62,r:.3}},(blk?GNT_GLYB:GNT_GLY)[K])}):null}catch(e){B=null}   /* 開發者 11/12「雙方正面也要把棋子貼上去」：胸前再貼一個（bot3d.js gly.front） */
       if(!B)return gntStone(p);inner.add(B.bot);g.userData.B=B;gntFigs.push(g);
       /* 放大倍數、位置一律在 inner 自己的座標算（量世界座標再扣掉 inner 的世界位置），不然角色會被拉回棋盤中心 */
       const fitTo=(obj,H)=>{inner.scale.setScalar(1);B.bot.position.set(0,0,0);g.updateMatrixWorld(true);const b=new T.Box3().setFromObject(obj),h=b.max.y-b.min.y;if(!(h>0))return false;
@@ -1634,7 +1634,27 @@
        zoom＝1 預設：斜上方看得清全盤；拉遠（＞1）慢慢升成俯視全局；放大（＜1）一路推進到紅方陣前、高度跟角色胸口差不多＝站在棋盤上的第一人稱，看得到七星的臉和胸前本命字。
        左右拖曳：遠的時候繞著棋盤轉，越近越像原地轉頭；上下拖曳：視線抬高壓低 */
     const GNT_V=[[0,2.15,9.4,0,1.68,2.2],[0,12.5,13.5,0,0,-.6],[0,27,6.5,0,0,0]],GV1=new T.Vector3(),GV2=new T.Vector3();
-    const gntCam=()=>{const near=smooth(.9,.14,zoom),far=smooth(1.05,2.6,zoom),mix=(a,b,k)=>a.map((v,j)=>v+(b[j]-v)*k);let v=mix(GNT_V[1],GNT_V[0],near);v=mix(v,GNT_V[2],far);
+    /* 開發者 11/12「想要放大某個角色，就能放到他很多倍；目前放大畫面感覺會亂飄」：放大（zoom＜1）改成鎖定一位角色（GFOC）——
+       點一下角色、或兩指捏合的位置最靠近的角色、或按＋時畫面中間的角色；鏡頭以他胸口為中心推近（距離＝18.8×zoom，最近約 0.5，看得到臉），
+       左右拖曳＝繞著他轉、上下拖曳＝抬高壓低，中心不動就不會飄。點兩下回全盤。zoom≥1（拉遠）照原本的路線 */
+    let GFOC=null;const GFL=new T.Vector3(0,0,-.6),GFT=new T.Vector3(0,0,-.6),GFD=new T.Vector3(),GFQ=new T.Vector3(),GF_D1=Math.hypot(12.5,14.1),GF_E1=Math.atan2(12.5,14.1);
+    const gntOn=g=>{for(let o=g;o;o=o.parent){if(!o.visible)return false;if(o===sc)return true}return false};
+    const gntFocus=(cx,cy,rad)=>{const r=cvs.getBoundingClientRect();let best=null,bd=rad;for(const g of gntFigs){if(!gntOn(g))continue;g.getWorldPosition(GFQ);GFQ.y+=GNT_H*.62;GFQ.project(cam);if(GFQ.z>1)continue;
+        const d=Math.hypot(r.left+(GFQ.x+1)/2*r.width-cx,r.top+(1-GFQ.y)/2*r.height-cy);if(d<bd){bd=d;best=g}}if(best){GFOC=best;pwPoke(1500)}return best};
+    const gntCamNear=()=>{const k=smooth(1,.45,zoom);if(GFOC&&!gntOn(GFOC))GFOC=null;
+      if(GFOC){GFOC.getWorldPosition(GFD);GFD.y+=GNT_H*.62}else GFD.copy(GFL);GFD.lerp(GFL,1-k);
+      const dd=GFT.distanceTo(GFD);GFT.lerp(GFD,dd>1e-3?.2:1);if(dd>1e-3)pwPoke(120);
+      const e=clamp(GF_E1+(.22-GF_E1)*k+pitch*.9*k,-.25,1.45),d=GF_D1*zoom,a=yaw;
+      cam.position.set(GFT.x+Math.sin(a)*Math.cos(e)*d,GFT.y+Math.sin(e)*d,GFT.z+Math.cos(a)*Math.cos(e)*d);
+      const nr=clamp(d*.08,.02,.5);if(Math.abs(cam.near-nr)>1e-3){cam.near=nr;cam.updateProjectionMatrix()}
+      GFQ.copy(GFT);GFQ.y-=pitch*5.2*(1-k);cam.lookAt(GFQ);cam.rotateX(CAMV.dp*(1-k));gntClear(k>.35)};
+    /* 放大繞著角色轉時，鏡頭會穿進旁邊的角色、或被前排擋住：擋在鏡頭到目標這條線上（半徑 0.6 內）的其他角色先藏起來，拉遠就回來 */
+    const GFR=new T.Vector3();const gntClear=on=>{const C=cam.position;for(const g of gntFigs){const inn=g.children[0];if(!inn)continue;let hide=false;
+      if(on&&g!==GFOC&&g.parent){g.getWorldPosition(GFR);GFR.y+=GNT_H*.5;const ax=GFT.x-C.x,ay=GFT.y-C.y,az=GFT.z-C.z,L2=ax*ax+ay*ay+az*az||1;let t=((GFR.x-C.x)*ax+(GFR.y-C.y)*ay+(GFR.z-C.z)*az)/L2;
+        if(t<.92){t=Math.max(0,t);const px=C.x+ax*t-GFR.x,py=C.y+ay*t-GFR.y,pz=C.z+az*t-GFR.z;hide=px*px+py*py+pz*pz<.36}}
+      if(inn.visible===hide)inn.visible=!hide}};
+    const gntCam=()=>{if(zoom<1)return gntCamNear();if(cam.near!==.5){cam.near=.5;cam.updateProjectionMatrix()}GFT.copy(GFL);gntClear(false);
+      const near=0,far=smooth(1.05,2.6,zoom),mix=(a,b,k)=>a.map((v,j)=>v+(b[j]-v)*k);let v=mix(GNT_V[1],GNT_V[0],near);v=mix(v,GNT_V[2],far);
       const P=GV1.set(v[0],v[1],v[2]),L=GV2.set(v[3],v[4]-pitch*(2.2+3*(1-near)),v[5]),ao=yaw*(1-near),ah=yaw*near*.8;
       {const c=Math.cos(ao),s=Math.sin(ao),x=P.x,z=P.z;P.x=x*c+z*s;P.z=-x*s+z*c;const lx=L.x,lz=L.z;L.x=lx*c+lz*s;L.z=-lx*s+lz*c}
       if(ah){const dx=L.x-P.x,dz=L.z-P.z,c=Math.cos(ah),s=Math.sin(ah);L.x=P.x+dx*c+dz*s;L.z=P.z-dx*s+dz*c}
@@ -1727,18 +1747,18 @@
       return"bg"};
     // 觸控：一指拖曳轉頭（有朝代長卷的可以整圈轉身，其他左右各約 69 度）、兩指捏合拉近拉遠（0.6～1.25 倍）、點一下選子、點兩下回正（含縮放）
     /* 意見回饋 360：公園的棋盤可以放得更大、縮得更小（兩指捏合的範圍放寬），右下角加 ＋／－ 按鈕 */
-    const ZMIN=GIANT?.1:.35,ZMAX=GIANT?2.6:8.8,   /* 開發者 11/4：拉得更遠，看得到石台底下整張朝代地圖（鏡頭距離另外不超過長卷半徑的 62%） */
+    const ZMIN=GIANT?.025:.35,ZMAX=GIANT?2.6:8.8,   /* 開發者 11/4：拉得更遠，看得到石台底下整張朝代地圖（鏡頭距離另外不超過長卷半徑的 62%） */
     cvs=rd.domElement,ptrs=new Map();let down=null,lastTap=0,pinch=null;
     {const zb=document.createElement("div");zb.className="pzoom";zb.style.cssText="position:absolute;right:8px;bottom:8px;z-index:3;display:flex;flex-direction:column;gap:6px";
       for(const[t,f,l]of[["＋",.8,"放大"],["－",1.25,"縮小"]]){const b=document.createElement("button");b.type="button";b.textContent=t;b.setAttribute("aria-label",l);
         b.style.cssText="width:34px;height:34px;border-radius:50%;border:1px solid rgba(0,0,0,.18);background:rgba(255,255,255,.82);color:#3a2a1c;font:700 20px/1 system-ui;box-shadow:0 1px 4px rgba(0,0,0,.2);padding:0;cursor:pointer";
         b.addEventListener("pointerdown",e=>e.stopPropagation());b.addEventListener("pointerup",e=>e.stopPropagation());
-        b.onclick=e=>{e.stopPropagation();inEnd(false);userZ=true;tzoom=clamp(tzoom*f,ZMIN,ZMAX)};zb.append(b)}
+        b.onclick=e=>{e.stopPropagation();inEnd(false);userZ=true;if(GIANT&&f<1&&!GFOC)try{const r=cvs.getBoundingClientRect();gntFocus(r.left+r.width/2,r.top+r.height*.55,1e9)}catch(_){}tzoom=clamp(tzoom*(GIANT&&f<1&&tzoom<.5?.7:f),ZMIN,ZMAX)};zb.append(b)}
       el.append(zb)}
-    const reset=()=>{inEnd(false);yaw-=Math.round(yaw/TAU)*TAU;tyaw=0;tpitch=HOME.p;tzoom=HOME.z;userZ=false};   // 轉了好幾圈也走最近的路回正
+    const reset=()=>{inEnd(false);if(GIANT)GFOC=null;yaw-=Math.round(yaw/TAU)*TAU;tyaw=0;tpitch=HOME.p;tzoom=HOME.z;userZ=false};   // 轉了好幾圈也走最近的路回正
     const spread=()=>{const a=[...ptrs.values()];return Math.max(20,Math.hypot(a[0].x-a[1].x,a[0].y-a[1].y))};
     cvs.addEventListener("pointerdown",e=>{ptrs.set(e.pointerId,{x:e.clientX,y:e.clientY});try{cvs.setPointerCapture(e.pointerId)}catch(_){}
-      if(ptrs.size>=2){inEnd(false);if(!pinch)pinch={d:spread(),z:tzoom};down=null;lastTap=0;return}
+      if(ptrs.size>=2){inEnd(false);if(!pinch){pinch={d:spread(),z:tzoom};if(GIANT)try{const a=[...ptrs.values()];gntFocus((a[0].x+a[1].x)/2,(a[0].y+a[1].y)/2,1e9)}catch(_){}}down=null;lastTap=0;return}   /* 黑洞：兩指中間最靠近的角色＝放大的中心 */
       if(IN.ph==="hold"||IN.ph==="run")IN.ph="held";   /* 入座運鏡中按下去：鏡頭先停在玩家看到的位置 */
       down={x:e.clientX,y:e.clientY,t:performance.now(),y0:tyaw,p0:tpitch,moved:false}});
     cvs.addEventListener("pointermove",e=>{const pt=ptrs.get(e.pointerId);if(pt){pt.x=e.clientX;pt.y=e.clientY}
@@ -1750,7 +1770,7 @@
       if(pinch){if(ptrs.size<2){pinch=null;const p=[...ptrs.values()][0];down=p?{x:p.x,y:p.y,t:performance.now(),y0:tyaw,p0:tpitch,moved:true}:null}return}
       if(!down)return;const d=down;down=null;if(d.moved)return;const inH=IN.ph==="held";   /* 11/11 入座運鏡中點的這一下：用玩家當下看到的畫面照常吸附、選子，處理完才跳到 topfit */
       try{const now=performance.now();
-      if(now-lastTap<320&&(tyaw||tpitch!==HOME.p||tzoom!==HOME.z)){reset();lastTap=0;return}lastTap=now;const i=pick(e.clientX,e.clientY);if(i===-2){if(tapAmb)showAmb(tapAmb);return}if(i>=0){if(opt.onTap)opt.onTap(i);return}
+      if(now-lastTap<320&&(tyaw||tpitch!==HOME.p||tzoom!==HOME.z)){reset();lastTap=0;return}lastTap=now;let fg=null;if(GIANT)try{fg=gntFocus(e.clientX,e.clientY,70)}catch(_){}const i=pick(e.clientX,e.clientY);if(i===-2){if(tapAmb)showAmb(tapAmb);return}if(i>=0){if(opt.onTap)opt.onTap(i);return}if(fg)return;   /* 黑洞：點到角色＝鎖定放大中心，不開旁邊物件的介紹 */
       if(opt.onInfo){const k=infoPick();if(k)opt.onInfo(k)}}finally{if(inH)inEnd(true)}};
     cvs.addEventListener("pointerup",up);cvs.addEventListener("pointercancel",e=>{ptrs.delete(e.pointerId);if(ptrs.size<2)pinch=null;down=null;if(IN.ph==="held")inEnd(true)});
     // 觸控板捏合（瀏覽器送 ctrl＋滾輪）也能縮放；iOS Safari 的 gesture 事件擋掉，免得整頁被放大
