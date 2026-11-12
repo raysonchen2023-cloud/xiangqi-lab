@@ -1468,12 +1468,15 @@
        黑方＝星樞的棋子：墨色立起來的大棋子、星光金字，面向玩家、輕輕浮動。
        sync 每次重排都會拿掉全部棋子再擺：巨盤模式把拿掉的放回池子（gntPool）重用，不重新載模型 */
     const GNT_X={K:"x_shuai",A:"x_shi",B:"x_spiritgirl",N:"x_miaogirl",R:"x_swordboy",C:"x_martialgirl",P:"x_bing"},GNT_CH={K:"帥",A:"仕",B:"相",N:"傌",R:"俥",C:"炮",P:"兵"},GNT_H=1.55;
+    /* 開發者 11/12「棋子字太小了，要符合角色背後的棋子」：七星背上本來都揹著一顆大木棋子；從背面正交圖量出那顆棋子的中心（u 由背面看的左邊、v 由頭頂）和半徑，
+       圓牌半徑＝棋面（外框的 85%），蓋在他自己的棋子上（量法：scratchpad backs.html）。田飛燕、駱躍梅、雷借花的棋子被頭髮或披風遮住，圓牌貼在遮住的地方 */
+    const GNT_GLY={K:{u:.5,v:.636,r:.368},A:{u:.49,v:.6,r:.378},B:{u:.53,v:.64,r:.36},N:{u:.5,v:.63,r:.34},R:{u:.5,v:.584,r:.374},C:{u:.5,v:.6,r:.34},P:{u:.5,v:.67,r:.415}};
     const gntPool={},gntCnt={},gntFigs=[],gntStones=[];
     const gntShadow=root=>{const KT=window.XQTOON_KIT;root.traverse(m=>{if(!m.isMesh||m.name==="meGly")return;if(KT&&KT.isHull&&KT.isHull(m)){m.visible=false;m.userData.gntOff=1;return}   /* 水墨描邊的黑殼：半透明的分身會透出一整片黑，分身不描邊 */const ms=(Array.isArray(m.material)?m.material:[m.material]).map(x=>{const c=x.clone();c.transparent=true;c.opacity=.52;c.depthWrite=false;if(c.color)c.color.lerp(new T.Color(0x8FB4FF),.45);if(c.emissive)c.emissive.set(0x1A3A7A);return c});m.material=Array.isArray(m.material)?ms:ms[0];m.castShadow=false})};
     const gntFig=(p,K)=>{const n=gntCnt[p]=(gntCnt[p]||0)+1,body=n===1,g=new T.Group(),inner=new T.Group();g.add(inner);g.userData={p,th:GNT_H*.55,giant:1,body};
       /* 開發者 11/12「底下踩著的棋子不用放上去，只要站角色即可」：不再墊本命棋子底座，角色直接站在棋盤格點上；
          「把棋子放在每個 3D 角色背後，然後他們要面向對方」：本命字圓牌貼在背上（gly.back），角色轉身面向敵陣（gntTake 依 flip 轉 180 度），玩家從後面看得到字 */
-      let B=null;try{B=window.XQBot3D&&XQBot3D.figure?XQBot3D.figure({glb:"data/tripo_app/"+GNT_X[K]+".glb",p:GNT_CH[K],gly:{u:.5,v:.38,r:.15,back:1}}):null}catch(e){B=null}
+      let B=null;try{B=window.XQBot3D&&XQBot3D.figure?XQBot3D.figure({glb:"data/tripo_app/"+GNT_X[K]+".glb",p:GNT_CH[K],gly:Object.assign({back:1},GNT_GLY[K])}):null}catch(e){B=null}
       if(!B)return gntStone(p);inner.add(B.bot);g.userData.B=B;gntFigs.push(g);
       /* 放大倍數、位置一律在 inner 自己的座標算（量世界座標再扣掉 inner 的世界位置），不然角色會被拉回棋盤中心 */
       const fitTo=(obj,H)=>{inner.scale.setScalar(1);B.bot.position.set(0,0,0);g.updateMatrixWorld(true);const b=new T.Box3().setFromObject(obj),h=b.max.y-b.min.y;if(!(h>0))return false;
