@@ -1,8 +1,8 @@
 {
- "version": "20261113-0751",
- "checkedAt": "2026-11-12T23:51:07.432Z",
- "html": "55c48f2536ec",
- "sw": "73ab2ab439bb",
+ "version": "20261113-0755",
+ "checkedAt": "2026-11-12T23:55:04.097Z",
+ "html": "d3ca2349ac34",
+ "sw": "0e650f15bbb3",
  "scripts": 4,
  "modules": {
   "00-util.js": "5b2fecc4f62f",
@@ -72,7 +72,7 @@
   "07y9-exammap.js": "67a43d5c3b56",
   "07z2-statmap.js": "01453e7b4d2c",
   "07z3-openmap.js": "ce88d33a4b07",
-  "07z4-studymap.js": "b3d479d46b8b",
+  "07z4-studymap.js": "61d2b38fec03",
   "07z5-cpuroom.js": "b4b21ee0c0f3",
   "07z6-sitemap.js": "48e65b723592",
   "07z7-lesson.js": "cc01e025cac7",
