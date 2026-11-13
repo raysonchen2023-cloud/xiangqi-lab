@@ -1,8 +1,8 @@
 {
- "version": "20261113-1800",
- "checkedAt": "2026-11-13T10:00:12.949Z",
- "html": "a94763a2de46",
- "sw": "89d7c8ec5996",
+ "version": "20261113-1842",
+ "checkedAt": "2026-11-13T10:42:05.405Z",
+ "html": "b60fd76734a7",
+ "sw": "021364de1bb8",
  "scripts": 4,
  "modules": {
   "00-util.js": "7addbcf20a30",
@@ -109,7 +109,7 @@
   "07i18n.js": "a38a719ea2ea",
   "07sp-spotfit.js": "f7f205a79901",
   "07fl-fill.js": "48c2936f36c4",
-  "07mnf-mainfilm.js": "6a758bfc48b7",
+  "07mnf-mainfilm.js": "3e02444778e4",
   "07mnq-mainquest.js": "6ef8aa0b0326"
  },
  "differsFromSource": [
@@ -127,11 +127,6 @@
    "module": "07s4-passmap.js",
    "lines": 1,
    "sourceModified": "2026-11-13T03:19:39.481Z"
-  },
-  {
-   "module": "07mnf-mainfilm.js",
-   "lines": 53,
-   "sourceModified": "2026-11-13T09:55:08.514Z"
   }
  ]
 }
