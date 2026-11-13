@@ -1613,7 +1613,7 @@ html[data-lefty] .tskip{right:auto;left:14px}
       if(!window.caches)return go();caches.keys().then(function(ks){return Promise.all(ks.filter(function(k){return k.indexOf("xqlab-app-")===0}).map(function(k){return caches.delete(k)}))})
         .then(function(){return navigator.serviceWorker&&navigator.serviceWorker.getRegistration()}).then(function(r){return r&&r.update()}).catch(function(){}).then(go)}};setTimeout(chk,4000)})();
 </script>
-<script>window.XQ_OFFLINE=true;window.XQ_BUILD="20261114-0619";</script>
+<script>window.XQ_OFFLINE=true;window.XQ_BUILD="20261114-0720";</script>
 <script src="core.js"></script>
 <script src="engine.js"></script>
 <script src="local.js"></script>
@@ -3007,7 +3007,7 @@ function icoTitle(t){const m=String(t).match(/^(\S+)\s+([\s\S]*)$/),k=m&&EMO_ICO
 function bkTo(back){if(typeof back==="string"&&back[0]==="^")return back.slice(1);
   if(NAV_D>0){for(let i=NAV_D-1;i>=0;i--){const x=NAV_H[i];if(typeof x!=="string")return"";if(x[0]!=="~")return x}return""}   /* goBack＝瀏覽器上一頁：卡片那一層會被 popstate 再退一格，所以找最近一筆不是卡片的 */
   return typeof back==="string"?back:""}
-const BK_NAME=[["/cpuroom","雅間"],["/guanxing","觀星臺"],["/adventure","星槎"],["/ship/pz","千秋殘局"],["/ship","星槎"],["/port","渡口"],["/theme","主題訓練"],["/camp","訓練營"],["/cup","千秋盃"],["/simul","車輪戰"],["/lesson","棋理體驗"],["/lab","小實驗"],["/today","今日推薦"],["/codex","百科"],["/weekly","週報"],["/feedback","信房"],["/db","棋譜庫"]];
+const BK_NAME=[["/cpuroom","雅間"],["/guanxing","觀星臺"],["/ximarket/tea","聽雨茶坊"],["/ximarket","西市"],["/adventure","星槎"],["/ship/pz","千秋殘局"],["/ship","星槎"],["/port","渡口"],["/theme","主題訓練"],["/camp","訓練營"],["/cup","千秋盃"],["/simul","車輪戰"],["/lesson","棋理體驗"],["/lab","小實驗"],["/today","今日推薦"],["/codex","百科"],["/weekly","週報"],["/feedback","信房"],["/db","棋譜庫"]];
 function bkName(h){if(!h)return"";const k=navKey(h).split("?")[0];if(k==="/")return"首頁";
   if(k==="/hub/learn"||k==="/hub/battle"){let n="";try{n=typeof xqHubName==="function"?xqHubName(k.slice(5)).split(" ").slice(1).join(" "):""}catch(e){}return n&&!/^(學習|對戰)$/.test(n)?n:k==="/hub/learn"?"書院":"茶樓"}   /* 書院照停靠朝代／經典世界的叫法（國子監、藏譜石窟、觀星閣…） */
   for(const[p,n]of BK_NAME)if(k===p||k.startsWith(p+"/"))return n;
@@ -3060,6 +3060,7 @@ function route(){
   if(p[0]==="coop"&&typeof CoopPage==="function")return screen=CoopPage(v,p.slice(1));   /* 開發者 11/9：合作殘譜（同桌 #/coop、殘篇閣 #/coop/lobby；m/07q2-coop.js） */
   if(p[0]==="lobby")return screen=Lobby(v);
   if(p[0]==="guanxing"&&typeof GxtPage==="function")return screen=GxtPage(v);   /* 開發者 11/13：觀星臺＝黑洞玩法總入口（07gxt-guanxing.js） */
+  if(p[0]==="ximarket"&&typeof XsmPage==="function")return screen=XsmPage(v,p[1]||"");   /* 開發者 11/13：西市（#/ximarket）、聽雨茶坊（#/ximarket/tea）（07xsm-ximarket.js） */
   if(p[0]==="cpuroom"&&typeof CpuRoom==="function")return screen=CpuRoom(v);   /* 11/10 開發者：挑戰電腦的雅間（07z5-cpuroom.js） */
   if(p[0]==="simul"&&typeof SimulPage==="function")return screen=SimulPage(v);   /* 開發者 11/11 hspx：車輪戰（m/08s-simul.js） */
   if(p[0]==="lesson"&&typeof LsnPage==="function")return screen=LsnPage(v,p[1]||"");   /* ChatGPT 改善單 I01（開發者 11/11）：棋理體驗 #/lesson/<站>（m/07z7-lesson.js） */
@@ -5850,7 +5851,7 @@ const CHAR_ERA={x_swordboy:"qin",x_spiritgirl:"nanbei",x_martialgirl:"song",x_mi
 const JOURNEY_KEYS=["sw7Box","pSex","pChar","pStyle","botPiece","onboard1","journey","playSec","era","eraOpen","xp","xpDay","xpKeys","record","hintBonus","hintUse","undoBonus","undoDropIds","bag","jarGot","lingN","giftGames","dropMiss",
   "legend","legendGame","legBook","legRead","jStars","jPending","jPrev","jRun","jScene","jHid","jMig36","jpSeen","novelRead","sceneDone","storyEraTip","eraUser","study","campSeen","campStars",
   "npcBond","npcAsk","npcAskSeen","parkNpc","parkNpcLast","npcPity","parkAdj","visitGone","secrets","secretClue","secretSpots","secretWins","relics","relicSolved","relicAt","histSeen","histSolved","histTitle",
-  "innCur","innDrop","innAdj","innGuest","resumeLast","xhMake","xhMei","xhTitle","yuDay","yuHint","yuRoute","yuTitle","cupDrop","cupGot","cj","cjRun","shipAt","shipSolved","shipGames","shipLessonSeen","shipWins","shipArena","cjRunS","jRunS","battleSeal","battleTitle","battleVol","battleGrand","battleVolY","battleVolLegacy","battleMig","battleSeal0","cjRunB","jRunB","battlePlan","diff","shipDock","shipLearn","undoFree","shipGal","shipStale","shipRead","shipMore","evLog","evPawn","evHeld","evStash","jRunE","cjRunE","rdLog","firstWin","wkRead","visit7","chd","ep","cjRunEp","wmDays","wmPg","wmBm","wmScr","wmEcho","jRunW","sealGold","sealIntro","jRunC","rsHint","buddy","cjRunBd","ouyu","jRunO","mnq","bhtd","bhtdFx","bhtl","dgl","gxtSeen"].map(k=>"m_"+k)   /* 平日體力（07dgl-stamina.js，開發者 11/13）：dgl＝身上的星芒、第一次下船的說明看過了沒（定軌力本身不存，關 App 再開回滿） */   /* 黑洞陣地塔防（07bht-td.js，開發者 11/13）：bhtd＝破過哪幾關、各關輸贏、每位角色帶的 4 招；bhtdFx＝戰鬥演出（完整／簡化／關閉）；bhtl＝塔防練習賽練過／跳過、練了幾次、進階機制第一次的提示看過哪些（07bhtl-tdlearn.js） */   /* 七星遇見玩法（07q-buddy.js，開發者 11/9）：buddy＝旅伴闖禍、驛站飛書、心結的進度，cjRunBd＝這兩種殘局解到一半的那一題 */   /* 回饋 856（開發者 11/9：女棋手分普通／稀有／傳說、機率加保底）：npcPity＝稀有、傳說女棋手的保底計數（06-cpu.js parkNpcNew） */   /* 回饋 838（開發者 11/9 選：全模式中斷接續）：jRunC＝新手訓練營玩到一半的那一課、rsHint＝對局裡用掉的提示棋黃框（主題訓練 jpRun、棋力測驗 quizRun 跟 themeStat、quizLog 一樣是棋手本人的，各格共用，不放這裡） */   /* 千秋印（07i2-seal.js，開發者 11/9）：sealGold＝各朝第一次鑄成金印的時間與修為已發、sealIntro＝看過「集章簿換成千秋印譜」說明卡。Gemini 遊玩樂趣評估（開發者 11/8 核准）：visit7＝七星來訪的次數、說過的話、小任務（07j-visit.js）；evStash＝千秋穿梭收進囊中、12 小時內再處理的突發事件（07h-qqev.js）；firstWin＝新手秒開局下過（或跳過）了；wkRead＝學習週報每天記一筆讀懂地圖比例，算「比上週」。意見回饋 737 第二期：rdLog＝讀過哪些棋譜、猜著法每盤答對幾手（壓縮成字串）。意見回饋 674：星槎在看哪一站、千秋殘局解開的題、正在解的那一題；675：航行難度、已停靠的站、學會的棋理、這盤用了幾次免費悔棋；685：七星同局圖鑑與熱身解開的題、看過困斃說明、讀過《雲河七星》哪幾章 */
+  "innCur","innDrop","innAdj","innGuest","resumeLast","xhMake","xhMei","xhTitle","yuDay","yuHint","yuRoute","yuTitle","cupDrop","cupGot","cj","cjRun","shipAt","shipSolved","shipGames","shipLessonSeen","shipWins","shipArena","cjRunS","jRunS","battleSeal","battleTitle","battleVol","battleGrand","battleVolY","battleVolLegacy","battleMig","battleSeal0","cjRunB","jRunB","battlePlan","diff","shipDock","shipLearn","undoFree","shipGal","shipStale","shipRead","shipMore","evLog","evPawn","evHeld","evStash","jRunE","cjRunE","rdLog","firstWin","wkRead","visit7","chd","ep","cjRunEp","wmDays","wmPg","wmBm","wmScr","wmEcho","jRunW","sealGold","sealIntro","jRunC","rsHint","buddy","cjRunBd","ouyu","jRunO","mnq","bhtd","bhtdFx","bhtl","xsmSeen","dgl","gxtSeen"].map(k=>"m_"+k)   /* 西市（07xsm-ximarket.js，開發者 11/13）：xsmSeen＝去過西市了沒（首頁「🏮 西市」不再發亮、第一次的介紹卡只跳一次） */   /* 平日體力（07dgl-stamina.js，開發者 11/13）：dgl＝身上的星芒、第一次下船的說明看過了沒（定軌力本身不存，關 App 再開回滿） */   /* 黑洞陣地塔防（07bht-td.js，開發者 11/13）：bhtd＝破過哪幾關、各關輸贏、每位角色帶的 4 招；bhtdFx＝戰鬥演出（完整／簡化／關閉）；bhtl＝塔防練習賽練過／跳過、練了幾次、進階機制第一次的提示看過哪些（07bhtl-tdlearn.js） */   /* 七星遇見玩法（07q-buddy.js，開發者 11/9）：buddy＝旅伴闖禍、驛站飛書、心結的進度，cjRunBd＝這兩種殘局解到一半的那一題 */   /* 回饋 856（開發者 11/9：女棋手分普通／稀有／傳說、機率加保底）：npcPity＝稀有、傳說女棋手的保底計數（06-cpu.js parkNpcNew） */   /* 回饋 838（開發者 11/9 選：全模式中斷接續）：jRunC＝新手訓練營玩到一半的那一課、rsHint＝對局裡用掉的提示棋黃框（主題訓練 jpRun、棋力測驗 quizRun 跟 themeStat、quizLog 一樣是棋手本人的，各格共用，不放這裡） */   /* 千秋印（07i2-seal.js，開發者 11/9）：sealGold＝各朝第一次鑄成金印的時間與修為已發、sealIntro＝看過「集章簿換成千秋印譜」說明卡。Gemini 遊玩樂趣評估（開發者 11/8 核准）：visit7＝七星來訪的次數、說過的話、小任務（07j-visit.js）；evStash＝千秋穿梭收進囊中、12 小時內再處理的突發事件（07h-qqev.js）；firstWin＝新手秒開局下過（或跳過）了；wkRead＝學習週報每天記一筆讀懂地圖比例，算「比上週」。意見回饋 737 第二期：rdLog＝讀過哪些棋譜、猜著法每盤答對幾手（壓縮成字串）。意見回饋 674：星槎在看哪一站、千秋殘局解開的題、正在解的那一題；675：航行難度、已停靠的站、學會的棋理、這盤用了幾次免費悔棋；685：七星同局圖鑑與熱身解開的題、看過困斃說明、讀過《雲河七星》哪幾章 */
   .concat(["cpuRate","bonusKeys","record","arenaStamps","play","play2","playPrev","playBak"].map(k=>"xq_"+k));   /* 評比循環第 2 輪：playPrev（上一版，存檔壞掉時讀）、playBak（被別的分頁換掉的棋）跟著存檔格走；保存紀錄 xq_saveLog 是這支手機的，不跟格子走 */
 const JK=new Set(JOURNEY_KEYS),SLOT_N=3;
 /* 意見回饋 668：舊玩家判斷要在首頁畫出來以前做（首頁會順手寫一些旅程鍵，例如 lingN），所以這裡直接讀 localStorage；null＝已經過渡過了 */
@@ -18116,6 +18117,115 @@ if(DGL_ON&&typeof window!=="undefined"){
   addEventListener("hashchange",()=>{DGL.done=0;setTimeout(dglTick,700)});
   document.addEventListener("visibilitychange",()=>{DGL.last=Date.now()});
   setInterval(dglTick,2000)}
+/* ================= 🏮 西市：首頁橋左邊的生活場景（開發者 11/13；文案照 story/西市文案定稿草案_1113.md，第五節 18 項全照推薦；前綴 xsm／XSM，11/13 grep 過沒撞名：xm 已被 01-board 的混音器用掉）=================
+   路由 #/ximarket（西市外景）、#/ximarket/tea（聽雨茶坊內景）（02-shell）。
+   入口：首頁橋左邊一個「🏮 西市」場景標籤（#hmXsm；跟 07gxt 觀星臺一樣包 07z 的 Home／hmwSet，不改 HM_SPOTS、不動 07y；原圖、iPad 直版 p34、橫版 l1610 各一組座標 XSM_HOME，避開左岸告示牌）。
+     只在千秋時光之苑（經典世界 hbIsCl）出現（第 1 項 A）；領過七星授印禮（07mnq 存檔 "mnq".gift.a1）才出現（第 2 項 B）；開發者模式一律看得到。網址直接進、還沒解鎖＝回首頁。
+     第一次進來以前首頁標籤是 .hot（第 17 項；之後「有禮可領、有人來訪」也要亮，等那兩個玩法做好再接，不加紅點數字）。
+   場景圖 data/ximarket/（park/ximarket 轉來，process_art.py MAPS["ximarket"]）：外景白天 xm_day、夜景 xm_night（768×1376，器物位置相同，座標共用）；茶坊內景 xm_tea。只有直幅。
+     日夜照人間時辰（07w8 clkIdx，頂欄時辰鐘同一個判斷）：卯時～申時白天，酉時～寅時夜景（第 3 項 A）；頁面開著跨過時辰會自己換；一張載不到就換另一張（XSM_BAD）。
+     茶坊窗外固定下雨（第 18 項 A，程式畫的雨；減少動態時不動）；茶坊只有一張圖，夜裡蓋一層暗藍（日夜跟著西市換）。
+   標籤只放大字、不放圖示（第 5 項 A：寫玩法名）：領禮物＝櫃坊、七星來訪＝老槐樹下、找棋子＝棋具攤、暗棋＝聽雨茶坊、聽曲＝樂棚（第 10 項 A）。
+     這一版只做場景頁：「暗棋」這一攤可以進茶坊看內景；其他攤和茶坊裡的暗棋桌灰色帶鎖，點了跳「還沒開張，敬請期待。」（第 12 項 A）。
+   第一次進來跳介紹卡（定位句＋介紹，第一節）。出口照 07w9 圖上出口：外景＝市門「🏘 回棋鎮」，茶坊＝「↩ 回西市」（07w9 EXITS）。
+   走路角色：外景接 07w shwPage（座標表 XSM_WALK，量 park/ximarket/xm_day.png）；茶坊內景不放走路角色。
+   存檔鍵 xsmSeen（05b JOURNEY_KEYS）。平日體力 07dgl：#/ximarket 不在星槎、也不在「不算」那組，照預設算人間。
+   純計算 xsmGot／xsmDay／xsmPickDay／xsmSrc／xsmSpots 不碰 DOM，測試 xiangqi-lab/tools/test-ximarket.js 用 vm 跑。
+   還沒做：配樂（第 13 項：「西市燈影」「聽雨暗棋」還沒有檔）、各攤玩法、考究說明卡（出處待史學顧問核）。 */
+const XSM_ON=true,XSM_IMGV="1113";   /* 圖的版本：同檔名換圖時改掉，手機才會重抓 */
+const XSM_OFF="還沒開張，敬請期待。";
+const XSM_TX={pos:"各朝的貨色，都在這裡湊成一市。",intro:"西市，原本是城西那座市集的名字。漢朝、唐朝的長安城都有。千秋時光之苑不屬於任何朝代，各朝的貨色就都擺到這裡來了。"};
+/* [id, 大字, 左%, 上%, 還沒開張？]（量 xm_day 768×1376；標籤放在攤位上方，不擋主體） */
+const XSM_SPOTS=[
+  ["xsmGift","領禮物",17,39,1],   /* 左邊櫃坊：櫃台上的布簾 */
+  ["xsmMusic","聽曲",64,47.5,1],   /* 樂棚：掛琵琶、拍板的木架上方 */
+  ["xsmTea","暗棋",86,44,0],   /* 右邊聽雨茶坊：竹簾 */
+  ["xsmChess","找棋子",38,61,1],   /* 左下棋具攤：棋盒、棋子袋那張桌子上方的簷下 */
+  ["xsmVisit","七星來訪",81,74,1]];   /* 市門右邊的老槐樹：樹下石墩、木凳上方 */
+const XSM_TEA_SPOTS=[["xsmDark","暗棋",50,44,1]];   /* 茶坊中間那張暗棋桌（量 xm_tea 768×1376） */
+const XSM_HOME={"":[16,59],p34:[16,60],l1610:[19,71]};   /* 首頁橋左邊（跟觀星臺 GXT_HOME 左右對稱，再往下挪開左岸告示牌；原圖量 home_classic 768×1376，p34 量 1536×2048，l1610 量 2560×1600） */
+const XSM_RAIN=[[53,12,60,31],[69.5,14,82,36]];   /* 茶坊窗外看得到雨的兩塊（左、上、右、下 %） */
+const XSM_BAD={};   /* 這次開 App 載不到的圖（d＝白天、n＝夜景），換另一張不再試 */
+/* ---------- 走路角色（外景）：N＝腳踩的青石路面，E＝走的路（避開櫃坊、中間鋪子、左下棋具攤的屋子和桌子、樂棚木架、茶坊、市門兩根柱子的腳、木桶、老槐樹、石墩木凳）。
+   home＝市門裡面；市門外的石板路通到老槐樹下（七星來訪）。身高照茶坊門高約圖高 14% 換算 ---------- */
+const XSM_WALK={W:768,H:1376,el:38,home:"home",look0:[50,95],h:[.09,60,.0006],
+  N:{home:[52,80],c1:[55,72.5],chess:[42,76],cross:[55,61],n1:[56,52],counter:[40,49.2],music:[64,63],tea:[75,59.5],gate:[64,86.5],g2:[69,92.5],tree:[79,90.5]},
+  E:"home-chess home-c1 c1-cross cross-n1 n1-counter cross-music music-tea home-gate gate-g2 g2-tree",
+  HS:{xsmGift:["counter",18,45,"bow"],xsmChess:["chess",36,66,"bow"],xsmMusic:["music",65,54,"wave"],xsmTea:["tea",86,47,"bow"],xsmVisit:["tree",88,80,"wave"],xsmExit:["gate",72,97,"wave"]}};
+const xsmWalkCfg=()=>Object.assign({},typeof SHW_PG0!=="undefined"?SHW_PG0:{},XSM_WALK);
+/* ---------- 純計算 ---------- */
+/* 解鎖：領過七星授印禮（M＝07mnq 的存檔 "mnq"） */
+const xsmGot=M=>!!(M&&typeof M==="object"&&M.gift&&typeof M.gift==="object"&&M.gift.a1);
+function xsmOpen(){if(!XSM_ON)return false;try{if(typeof DEVMODE==="function"&&DEVMODE())return true}catch(e){}
+  try{return xsmGot(store.get("mnq",null))}catch(e){return false}}
+/* 白天？卯（05–07）～申（15–17）；時辰序號照 07w8 clkIdx（子＝0：23–01） */
+function xsmDay(d){d=d||new Date();let i;try{i=typeof clkIdx==="function"?clkIdx(d):NaN}catch(e){i=NaN}if(!(i>=0))i=Math.floor(((d.getHours()+1)%24)/2);return i>=3&&i<=8}
+/* 想要白天／夜景 → 實際用哪一張（那張載不到就換另一張；兩張都壞就照原本那張） */
+const xsmPickDay=day=>day?!XSM_BAD.d:(!!XSM_BAD.n&&!XSM_BAD.d);
+const xsmSrc=(day,tea)=>tea?`data/ximarket/xm_tea.webp?v=${XSM_IMGV}`:`data/ximarket/xm_${xsmPickDay(day)?"day":"night"}.webp?v=${XSM_IMGV}`;
+/* 標籤 [id,左,上,大字,還沒開張] */
+const xsmSpots=L=>(L||XSM_SPOTS).map(s=>[s[0],s[2],s[3],s[1],!!s[4]]);
+/* ---------- 畫面 ---------- */
+function xsmCss(){if(document.getElementById("xsmCss"))return;const s=document.createElement("style");s.id="xsmCss";s.textContent=`
+.xsm-page{margin:0 0 6px}.xsm-page .shp-spot{max-width:46%;padding:4px 11px;z-index:3}.xsm-page .shp-spot b{white-space:nowrap;font-size:15px;letter-spacing:.06em}
+.xsm-page .shp-spot.lock{border-color:#8a8476;background:rgba(28,26,30,.68);box-shadow:none}.xsm-page .shp-spot.lock b{color:#c9c2b2;font-size:14px}
+.xsm-tea .xsm-rain{position:absolute;z-index:1;pointer-events:none;overflow:hidden;opacity:.6;background-image:repeating-linear-gradient(100deg,rgba(255,255,255,0) 0 9px,rgba(232,240,250,.6) 9px 10px,rgba(255,255,255,0) 10px 23px);background-size:46px 58px;animation:xsmRain .55s linear infinite}
+@keyframes xsmRain{to{background-position:-10px 58px}}
+.xsm-tea::after{content:"";position:absolute;inset:0;z-index:1;pointer-events:none;background:rgba(16,24,58,.4);mix-blend-mode:multiply;opacity:0;transition:opacity .6s}.xsm-tea[data-day=""]::after{opacity:1}
+@media (prefers-reduced-motion:reduce){.xsm-tea .xsm-rain{animation:none}}`;document.head.append(s)}
+/* 標籤按鈕（旁白、Tab 順序＝由上到下、同一列由左到右：07z hmFocusOrder） */
+function xsmBtns(L){const S=xsmSpots(L),O=typeof hmFocusOrder==="function"?hmFocusOrder(S):S;
+  return O.map(([id,x,y,t,off])=>`<button type="button" class="shp-spot${off?" lock":""}" id="${id}" style="left:${x}%;top:${y}%" aria-label="${esc(t+(off?"，還沒開張":""))}"><b>${off?"🔒 ":""}${esc(t)}</b></button>`).join("")}
+const XSM_ACT={xsmTea:()=>{location.hash="#/ximarket/tea"}};
+function xsmBind(P,L){for(const s of L){const b=P.querySelector("#"+s[0]);if(!b)continue;b.onclick=e=>{e.stopPropagation();vibrate(5);if(s[4]){toast("🏮 "+XSM_OFF);return}const f=XSM_ACT[s[0]];if(f)f()}}}
+/* 圖載好以後：07t3 補滿高度、07sp 標籤推回畫面內、R07 點選範圍；兩指縮放 */
+function xsmAfter(v,P){const im=P.querySelector(":scope>img");
+  im.addEventListener("load",()=>{if(!P.isConnected)return;try{if(typeof ttFill==="function")ttFill()}catch(e){}try{if(typeof spfSoon==="function")spfSoon(0)}catch(e){}try{if(typeof r07HitSoon==="function")r07HitSoon()}catch(e){}});
+  if(typeof shpFit==="function")shpFit(v);try{if(typeof zmPage==="function")zmPage(v)}catch(e){}}
+/* 換日夜：先載好再換；載不到記下來（下次 xsmSrc 自己換另一張） */
+function xsmSwap(P,day){const im=P.querySelector(":scope>img");if(!im)return;const nd=xsmPickDay(day),src=xsmSrc(nd);if(im.getAttribute("src")===src)return;
+  const pre=new Image();pre.onload=()=>{if(!P.isConnected)return;P.dataset.day=nd?"1":"";im.src=src};pre.onerror=()=>{XSM_BAD[nd?"d":"n"]=1};pre.src=src}
+function xsmIntro(){modal(`<h3>🏮 西市</h3><p><b>${esc(XSM_TX.pos)}</b></p><p>${esc(XSM_TX.intro)}</p>`,[["逛逛西市",null]])}
+function xsmWalk(v){if(typeof shwPage!=="function"||typeof SHIP_WALK_ON==="undefined"||!SHIP_WALK_ON)return;try{shwPage(v,xsmWalkCfg(),"xsm")}catch(e){}}
+function XsmPage(v,sub){if(sub==="tea")return xsmTea(v);
+  setTop("🏮 西市","#/");setTabs(true,"#/");v.className="view";
+  if(!xsmOpen()){toast("🏮 西市還沒開市");navReplace("#/");return{}}
+  xsmCss();let first=false;try{first=!store.get("xsmSeen",0);store.set("xsmSeen",1)}catch(e){}
+  const day=xsmDay(),nd=xsmPickDay(day),P=document.createElement("div");P.className="shp-page cq xsm-page";P.dataset.day=nd?"1":"";
+  P.innerHTML=`<img src="${xsmSrc(nd)}" alt="西市：市門、夯土市牆、青石路，十字路口四角是櫃坊、棋具攤、樂棚和茶坊，遠處有市樓、水池和柳樹">`+xsmBtns(XSM_SPOTS);
+  v.append(P);xsmBind(P,XSM_SPOTS);
+  const im=P.querySelector(":scope>img");
+  im.onerror=()=>{const sh=P.dataset.day==="1";XSM_BAD[sh?"d":"n"]=1;const n2=xsmPickDay(sh);if(n2!==sh){P.dataset.day=n2?"1":"";im.src=xsmSrc(n2)}};
+  /* 07w9 的出口晚一點才放進來：補 id（走路角色的入口代號 HS.xsmExit） */
+  try{const mo=new MutationObserver(()=>{if(!P.isConnected){mo.disconnect();return}const s=P.querySelector(".ex-spot");if(s&&!s.id)s.id="xsmExit"});mo.observe(P,{childList:true})}catch(e){}
+  /* 每分鐘看一次時辰，跨過卯時、酉時就換日夜 */
+  {const tm=setInterval(()=>{if(!P.isConnected){clearInterval(tm);return}const d=xsmPickDay(xsmDay());if(d!==(P.dataset.day==="1"))xsmSwap(P,d)},60000)}
+  xsmAfter(v,P);
+  xsmWalk(v);   /* 走路角色（3D 載不到、減少動態時 07w 不攔點選，入口照舊直接開） */
+  if(first)setTimeout(()=>{if(P.isConnected)xsmIntro()},450);
+  return{}}
+function xsmTea(v){setTop("🍵 聽雨茶坊","#/ximarket");setTabs(true,"#/");v.className="view";
+  if(!xsmOpen()){toast("🏮 西市還沒開市");navReplace("#/");return{}}
+  xsmCss();const P=document.createElement("div");P.className="shp-page cq xsm-page xsm-tea";P.dataset.day=xsmDay()?"1":"";
+  P.innerHTML=`<img src="${xsmSrc(false,1)}" alt="聽雨茶坊：方桌、條凳、靠背椅，窗外下著雨，中間一張暗棋桌">`+
+    XSM_RAIN.map(r=>`<i class="xsm-rain" style="left:${r[0]}%;top:${r[1]}%;width:${r[2]-r[0]}%;height:${r[3]-r[1]}%"></i>`).join("")+xsmBtns(XSM_TEA_SPOTS);
+  v.append(P);xsmBind(P,XSM_TEA_SPOTS);
+  {const tm=setInterval(()=>{if(!P.isConnected){clearInterval(tm);return}const d=xsmDay()?"1":"";if(d!==P.dataset.day)P.dataset.day=d},60000)}
+  xsmAfter(v,P);
+  return{}}
+/* ---------- 首頁橋左邊「🏮 西市」 ---------- */
+function xsmHomePos(P){const b=P&&P.querySelector("#hmXsm");if(!b)return;const c=XSM_HOME[P.dataset.hmw||""]||XSM_HOME[""];b.style.left=c[0]+"%";b.style.top=c[1]+"%";delete b.dataset.ttL;b.style.marginLeft=""}
+function xsmHomeSpot(v){if(!xsmOpen()||!(typeof hbIsCl==="function"&&hbIsCl()))return;const P=v.querySelector(".home-page");if(!P||P.querySelector("#hmXsm"))return;
+  const k=P.dataset.hmw||"",c=XSM_HOME[k]||XSM_HOME[""],b=document.createElement("button");b.type="button";b.id="hmXsm";b.className="shp-spot"+(store.get("xsmSeen",0)?"":" hot");
+  b.style.left=c[0]+"%";b.style.top=c[1]+"%";b.setAttribute("aria-label","西市");b.innerHTML="<b>🏮 西市</b>";
+  b.onclick=e=>{e.stopPropagation();vibrate(5);location.hash="#/ximarket"};
+  /* 焦點順序：照 hmFocusOrder 插在對的位置（觀星臺已經放好就一起算；底部那一條永遠最後） */
+  let ref=null;try{const G=P.querySelector("#hmGxt")&&typeof GXT_HOME!=="undefined"?[["hmGxt"].concat(GXT_HOME[k]||GXT_HOME[""])]:[];
+    const S=(typeof hmwSpots==="function"?hmwSpots(k):[]).concat(G,[["hmXsm",c[0],c[1]]]),ord=hmFocusOrder(S).map(s=>s[0]),i=ord.indexOf("hmXsm");for(let j=i+1;j<ord.length&&!ref;j++)ref=P.querySelector(":scope>#"+ord[j])}catch(e){}
+  if(!ref){const sp=P.querySelectorAll(":scope>.shp-spot");ref=sp.length?sp[sp.length-1].nextSibling:P.querySelector(":scope>.hm-go-bar")}
+  P.insertBefore(b,ref||null);try{if(typeof hmClamp==="function")hmClamp(P)}catch(e){}}
+if(typeof Home==="function"){const f0=Home;Home=function(v,hub){const r=f0.apply(this,arguments);try{if(!hub)xsmHomeSpot(v)}catch(e){}return r}}
+if(typeof hmwSet==="function"){const f1=hmwSet;hmwSet=function(P){const r=f1.apply(this,arguments);try{xsmHomePos(P)}catch(e){}return r}}   /* 首頁原地換寬版圖時跟著換座標 */
 /* ================= 🏮 線上大廳滿版水墨圖「千燈天井」（開發者 11/8 定案：Gemini 方案 1＋9 精簡版；史學顧問核過，必改的素材另外換圖）=================
    規劃：story/gemini_app/37 號 md；圖：park/lobbymap/lobby_v4.png（AI 桌的棋盤程式畫完整開局）＋綠幕素材（棋桌、燈籠亮暗、茶客剪影）→ art/lobbymap/ → data/lobbymap/。
    包一層 Lobby(v)：原本的大廳清單（#lb，paint() 每 15 秒和有人進出時重畫）照舊畫、照舊綁好所有按鈕，只是收進「📜 名冊」抽屜（點竹簡從下方拉出來）；
@@ -23561,7 +23671,7 @@ function exInY(s,V,P){if(s.dataset.exT!=null)s.style.top=s.dataset.exT;const q=s
   if(s.dataset.exT==null)s.dataset.exT=s.style.top;s.style.top="calc("+s.dataset.exT+" - "+Math.round(q.bottom-B)+"px)"}
 const EXITS={"/hub/learn":[52,86,"‹ 回棋鎮","#/"],"/hub/battle":[78,87,"‹ 回棋鎮","#/"],
   "/camp":[50,87,"↩ 回書院"],"/theme":[50,87,"↩ 走回書院"],"/canju":[22,87,"↩ 回書院"],"/terms":[50,87,"↩ 回書院","#/hub/learn"],
-  "/cup":[50,87,"↩ 下樓・回茶坊","#/hub/battle"],"/cpuroom":[50,96,"↩ 掀簾・回茶坊","#/hub/battle"],"/guanxing":[86,90,"🏘 回棋鎮"],"/redo":[24,87,"↩ 回書院","#/hub/learn"],"/stats":[50,87,"↩ 回書院","#/hub/learn"],"/openings":[50,87,"↩ 回書院","#/hub/learn"],
+  "/cup":[50,87,"↩ 下樓・回茶坊","#/hub/battle"],"/cpuroom":[50,96,"↩ 掀簾・回茶坊","#/hub/battle"],"/guanxing":[86,90,"🏘 回棋鎮"],"/ximarket":[64,91,"🏘 回棋鎮"],"/ximarket/tea":[24,95,"↩ 回西市","#/ximarket"],"/redo":[24,87,"↩ 回書院","#/hub/learn"],"/stats":[50,87,"↩ 回書院","#/hub/learn"],"/openings":[50,87,"↩ 回書院","#/hub/learn"],
   "/journey/inn":[18,86,"⛵ 回渡口"],"/ship/lesson":[16,90,"⛵ 回星槎"],"/ship/pz":[16,90,"⛵ 回星槎"],"/ship/shelf":[16,90,"⛵ 回星槎"],"/ship/bag":[16,90,"⛵ 回星槎"],
   "/feedback":[20,74,"⛵ 回星槎","#/adventure"],"/me":[50,87,"🏘 回棋鎮"],"/today":[30,87,"🏘 回棋鎮"],"/gm":[50,87,"↩ 回棋譜庫"],"/quiz":[50,87,"↩ 回書院","#/hub/learn"],
   "/lobby":[18,88,"↩ 回對戰茶樓"],"/db":[20,88,"↩ 回學習書院"],"/settings":[14,90,"⛵ 回星槎"]};

@@ -1,8 +1,8 @@
 {
- "version": "20261114-0619",
- "checkedAt": "2026-11-13T22:20:01.033Z",
- "html": "699f9369c519",
- "sw": "f0cb06d58d8a",
+ "version": "20261114-0720",
+ "checkedAt": "2026-11-13T23:20:41.549Z",
+ "html": "a291287cabb0",
+ "sw": "4134a9234c83",
  "scripts": 4,
  "modules": {
   "00-util.js": "7addbcf20a30",
@@ -119,19 +119,9 @@
  },
  "differsFromSource": [
   {
-   "module": "02-shell.js",
-   "lines": 2,
-   "sourceModified": "2026-11-13T13:22:24.037Z"
-  },
-  {
    "module": "05-settings.js",
    "lines": 1,
    "sourceModified": "2026-11-13T19:04:13.233Z"
-  },
-  {
-   "module": "05b-save.js",
-   "lines": 1,
-   "sourceModified": "2026-11-13T15:01:20.771Z"
   },
   {
    "module": "07bht-td.js",
@@ -144,19 +134,9 @@
    "sourceModified": "2026-11-13T18:59:11.775Z"
   },
   {
-   "module": "07xsm-ximarket.js",
-   "lines": 102,
-   "sourceModified": "2026-11-13T13:21:58.004Z"
-  },
-  {
    "module": "07s4-passmap.js",
    "lines": 1,
    "sourceModified": "2026-11-13T03:19:39.481Z"
-  },
-  {
-   "module": "07w9-exits.js",
-   "lines": 1,
-   "sourceModified": "2026-11-13T13:22:24.134Z"
   },
   {
    "module": "07hs-netsig.js",
