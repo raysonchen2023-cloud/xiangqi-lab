@@ -67,7 +67,7 @@ var XQ=(function(){
     if(!it.result||(sd!=="r"&&sd!=="b")||!Array.isArray(ms))return{};if(c==="pvp"&&!ms.some(m=>m.q))return{};const n=ms.filter(m=>m.by===sd&&!m.q).length;return n?{pend:n}:{}};
 
   // ---------- 挑戰電腦 ----------
-  let P=null,playBusy=false,playMsg="",paBusy=false,paFxT=0,engFail=0,engWait=false;   /* 11/11：電腦出棋失敗的次數、是不是在等網路回來（playEngine） */
+  let P=null,playBusy=false,playSince=0,playMsg="",paBusy=false,paFxT=0,engFail=0,engWait=false;   /* 11/11：電腦出棋失敗的次數、是不是在等網路回來（playEngine） */
   // 積分挑戰：跟線上對戰一樣的段位（新手～專2-2），但分開記分。電腦的強度跟著你目前的段位走，段位越高越難。
   const RANKS=[["新手",0],["入門1",50],["入門2",100],["入門3",150],["業1",200],["業2",300],["業3",400],["業4",500],["業5",600],["業6",700],["業7",800],["業8",900],["業9",1000],["專1-1",1150],["專1-2",1300],["專2-1",1500],["專2-2",1700]];
   const rankIdx=p=>{let i=0;for(let k=0;k<RANKS.length;k++)if((p||0)>=RANKS[k][1])i=k;return i};
@@ -455,21 +455,25 @@ var XQ=(function(){
   /* THINKPACE:END */
   /* 第 12 輪 F3：快棋模式（App 的 store blitz＝localStorage m_blitz，07pm-premove.js）打開時，電腦節奏一律當作「快速」，不管設定頁選了擬真 */
   const TP=THINKPACE(C,HP,CPU_MIN_MS),cpuPace=()=>{try{if(JSON.parse(localStorage.getItem("m_blitz"))===true)return"fast"}catch(e){}try{return JSON.parse(localStorage.getItem("m_cpuPace"))==="fast"?"fast":"real"}catch(e){return"real"}};
+  /* 11/13 晚開發者「iPad 卡在第一盤棋，對方一直思考中」：引擎啟動或下載卡住時 search 永遠不回，playBusy 一直是真、連按新局也卡。
+     每一步加總時限（引擎還沒載好 3 分鐘，含第一次下載 48 MB；載好之後 60 秒），逾時就把引擎整個重來（XQEngine.abort），幾秒後自動再想 */
+  const engTmo=()=>typeof XQEngine!=="undefined"&&XQEngine.ready?60000:180000;
+  const engRace=(p,ms)=>Promise.race([p,new Promise((_,j)=>setTimeout(()=>{const e=new Error("ENG_TIMEOUT");e.tmo=1;j(e)},ms))]);
   async function playEngine(){
     if(!P||P.result||P.turn===P.human||playBusy)return;
     {const sm=styleMove();if(sm){playBusy=true;setTimeout(()=>{try{if(P&&!P.result&&P.turn!==P.human)playApply(sm[0],sm[1])}finally{playBusy=false;setTimeout(playEngine,0)}},700);return}}
-    playBusy=true;const id=P.id,n=P.moves.length,lv=P.ranked?RLV[P.rk]||RLV[0]:P.rlv!=null?RLV[P.rlv]||RLV[0]:LEVELS[P.level-1]||LEVELS[2];   /* 意見回饋 548：驛站旅人用段位強度 rlv 浮動 */
+    playBusy=true;playSince=Date.now();const id=P.id,n=P.moves.length,lv=P.ranked?RLV[P.rk]||RLV[0]:P.rlv!=null?RLV[P.rlv]||RLV[0]:LEVELS[P.level-1]||LEVELS[2];   /* 意見回饋 548：驛站旅人用段位強度 rlv 浮動 */
     const t0=Date.now();   /* 11/10 開發者「我剛走完一步，電腦就馬上落子」：低等級用淺層深度幾毫秒就算完，至少等 1～1.5 秒再落子，讓玩家看清自己那一步 */
     const zg=zgOn(P);   /* 笑面掌櫃：前 20 手先查開局庫（照次數加權抽，不叫引擎）；出庫後引擎多給幾條候選，STYLEPICK 照棋風挑 */
     try{if(zg&&!P.start&&n<SP.DEF.bookMaxPly){const B=await zgBookLoad(),u=B&&n<B.maxPly?SP.bookPick(B,P.board,P.turn,Math.random):null;
         if(u){const w=TP.ms(P,u,null,lv,cpuPace())-(Date.now()-t0);if(w>0)await new Promise(z=>setTimeout(z,w));
           if(!P||P.id!==id||P.moves.length!==n||P.result)return;
           const f=parseSq(u.slice(0,2)),t=parseSq(u.slice(2,4));if(legal(P.board,P.turn).some(([a,b])=>a===f&&b===t)){playApply(f,t);playMsg="";engFail=0;return}}}
-      if(P.td&&window.XQ_TD){const TD=window.XQ_TD.engine(P,C),r=await XQEngine.search(engPos(),{depth:TD.depth,searchmoves:TD.sm},TD.mpv),mv=window.XQ_TD.pick(r,TD,Math.random);   /* 黑洞陣地塔防：星樞推算 N 步＋失誤率；被定身的子不走（敵方沒別步可走時照常走） */
+      if(P.td&&window.XQ_TD){const TD=window.XQ_TD.engine(P,C),r=await engRace(XQEngine.search(engPos(),{depth:TD.depth,searchmoves:TD.sm},TD.mpv),engTmo()),mv=window.XQ_TD.pick(r,TD,Math.random);   /* 黑洞陣地塔防：星樞推算 N 步＋失誤率；被定身的子不走（敵方沒別步可走時照常走） */
         {const w=1100-(Date.now()-t0);if(w>0)await new Promise(z=>setTimeout(z,w))}if(!P||P.id!==id||P.moves.length!==n||P.result)return;
         const f=parseSq(mv.slice(0,2)),t=parseSq(mv.slice(2,4));if(!legal(P.board,P.turn).some(([a,b])=>a===f&&b===t))throw new Error("引擎給出不合法著法 "+mv);playApply(f,t);playMsg="";engFail=0;return}
       const hp=!zg&&HP.on(lv),zl=zg?zgLv(P,lv):lv;   /* 低段（新手～業1）擬人選步：見上面 HUMANPICK；zl＝掌櫃這一盤用的設定（真功夫＝固定節點數） */
-      const r=await XQEngine.search(engPos(),zl.nodes?{nodes:zl.nodes}:lv.movetime?{movetime:lv.movetime}:{depth:lv.depth},zg?SP.mpvOf(zl):hp?HP.mpvOf(lv):lv.multipv||1);
+      const r=await engRace(XQEngine.search(engPos(),zl.nodes?{nodes:zl.nodes}:lv.movetime?{movetime:lv.movetime}:{depth:lv.depth},zg?SP.mpvOf(zl):hp?HP.mpvOf(lv):lv.multipv||1),engTmo());
       const mv=zg?SP.pick(r,zl,P.board,P.turn,Math.random).mv:hp?HP.pick(r,lv,P.board,P.turn,Math.random).mv:pickMove(r,lv);   /* 先挑好這一步，思考時間才看得到是不是回吃（F4） */
       {const w=TP.ms(P,mv,r,lv,cpuPace())-(Date.now()-t0);if(w>0)await new Promise(z=>setTimeout(z,w))}
       if(!P||P.id!==id||P.moves.length!==n||P.result)return;
@@ -479,7 +483,8 @@ var XQ=(function(){
     /* 開發者 11/11（離線盤查）：引擎載不到（沒網路、手機裡還沒有引擎檔、還沒進多執行緒模式）原本立刻重試、無限循環——
        改成：沒網路又沒有引擎＝說清楚、等網路回來（online）再自動接著下；其他失敗＝隔 3、6、12…秒（最多 60 秒）再試 */
     catch(e){engFail++;const off=typeof navigator!=="undefined"&&navigator.onLine===false,noEng=typeof XQEngine!=="undefined"&&!XQEngine.ready;
-      playMsg=off&&noEng?"⚠ 沒有網路，電腦棋手還沒下載到這支手機。連上網路會自動接著下，也可以先去同桌對弈。":"⏳ 電腦棋手一時沒想好，幾秒後會自動再想一次";try{const em=String(e&&e.message||e).slice(0,160);if(P)P.engErr=em;console.warn("[engine]",em)}catch(x){}   /* 11/13 開發者「這是什麼，對玩家來說會看不懂」：畫面上不放技術訊息（不合法著法 g3g4 之類），細節只留在 P.engErr 和主控台給除錯 */
+      if(e&&e.tmo)try{if(XQEngine.abort)XQEngine.abort()}catch(x){}
+      playMsg=off&&noEng?"⚠ 沒有網路，電腦棋手還沒下載到這支手機。連上網路會自動接著下，也可以先去同桌對弈。":e&&e.tmo?"⏳ 電腦棋手卡住了，正在重新啟動；等不及可以按「新局」重新開一盤":"⏳ 電腦棋手一時沒想好，幾秒後會自動再想一次";try{const em=String(e&&e.message||e).slice(0,160);if(P)P.engErr=em;console.warn("[engine]",em)}catch(x){}   /* 11/13 開發者「這是什麼，對玩家來說會看不懂」：畫面上不放技術訊息（不合法著法 g3g4 之類），細節只留在 P.engErr 和主控台給除錯 */
       if(off&&noEng&&!engWait){engWait=true;addEventListener("online",()=>{engWait=false;engFail=0;setTimeout(playEngine,800)},{once:true})}}
     finally{playBusy=false;if(!engFail)setTimeout(playEngine,0);else if(!engWait)setTimeout(playEngine,Math.min(60000,1500*2**Math.min(engFail,6)))}}
   function playState(){ensureP();
@@ -493,7 +498,7 @@ var XQ=(function(){
   /* 評比循環第 3 輪（兩分頁同一瞬間寫入）：會改盤面的動作（PLAY_MUT）用 Web Locks 排隊，同一時間只有一個分頁在改；鎖裡面 ensureP 先重讀最新版，再照版本檢查決定接受或提示「已切換到最新」。不支援 Web Locks 的瀏覽器照舊只靠版本號 */
   function playPost(p,b){try{if(PLAY_MUT.has(p)&&typeof navigator!=="undefined"&&navigator.locks&&navigator.locks.request)return navigator.locks.request("xq-play-write",()=>playPostIn(p,b))}catch(e){}return playPostIn(p,b)}
   async function playPostIn(p,b){if(ensureP()&&PLAY_MUT.has(p)){saveLog("clash",P);try{window.dispatchEvent(new CustomEvent("xq-play-newer",{detail:{id:P.id}}))}catch(e){}return playState()}   /* 評比循環第 2 輪：畫面上那盤已經被另一個分頁下過＝這一下不算，改看最新的 */
-    if(p==="/play/new"){playNew(b.human==="b"?"b":"r",lvAdj(b,lvIn(b)),!b.pre&&!!b.ranked,b.pre||null,false,typeof b.arena==="string"&&/^[a-z]{2,8}$/.test(b.arena)?b.arena:null,false,jid(b.journey),b.lv);
+    if(p==="/play/new"){if(playBusy&&Date.now()-playSince>15000)try{if(typeof XQEngine!=="undefined"&&XQEngine.abort)XQEngine.abort()}catch(x){}playBusy=false;engFail=0;playNew(   /* 11/13 晚：卡住的那一步還在引擎排隊，新局不要排在它後面 */b.human==="b"?"b":"r",lvAdj(b,lvIn(b)),!b.pre&&!!b.ranked,b.pre||null,false,typeof b.arena==="string"&&/^[a-z]{2,8}$/.test(b.arena)?b.arena:null,false,jid(b.journey),b.lv);
       /* 開發者 11/11：茶肆盲棋（練功房的級數、看不到棋子）。對局編號結尾加 -b 當記號（存檔、收起來、換盤都帶著）：不記練功房戰績、不算我的棋力（04-stats skillRows） */
       if(b.blind&&P&&!P.ranked&&kindOf(P)==="cpu"&&!/-b$/.test(P.id)){P.id+="-b";savePlay()}if(P&&!P.ranked&&b.rlv!=null&&Number.isInteger(+b.rlv)){P.rlv=Math.max(0,Math.min(RLV.length-1,+b.rlv+dxOf(b)));savePlay()}zgSet(b);if(b.td&&P&&P.journey&&window.XQ_TD){try{P.td=window.XQ_TD.boot(b.td,P,C)}catch(e){console.warn("[td]",e);P.td=null}savePlay()}playMsg="";setTimeout(playEngine,0)}   /* 黑洞陣地塔防：開局帶 td（m/07bht-td.js 的關卡設定） */
     else if(p==="/play/bonus"){   /* 意見回饋 313：石桌往事「回到當年」答對轉折加段位積分；每個轉折只能領一次 */

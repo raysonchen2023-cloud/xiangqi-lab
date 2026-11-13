@@ -1613,7 +1613,7 @@ html[data-lefty] .tskip{right:auto;left:14px}
       if(!window.caches)return go();caches.keys().then(function(ks){return Promise.all(ks.filter(function(k){return k.indexOf("xqlab-app-")===0}).map(function(k){return caches.delete(k)}))})
         .then(function(){return navigator.serviceWorker&&navigator.serviceWorker.getRegistration()}).then(function(r){return r&&r.update()}).catch(function(){}).then(go)}};setTimeout(chk,4000)})();
 </script>
-<script>window.XQ_OFFLINE=true;window.XQ_BUILD="20261113-2301";</script>
+<script>window.XQ_OFFLINE=true;window.XQ_BUILD="20261113-2326";</script>
 <script src="core.js"></script>
 <script src="engine.js"></script>
 <script src="local.js"></script>
@@ -23414,6 +23414,7 @@ function stampBook(start){if(typeof sealBook==="function"&&typeof SEAL_ON!=="und
 function stampFx(era){const A=ARENA[era];if(!A)return;const d=document.createElement("div");d.className="stampfx";d.innerHTML=typeof sealDraw==="function"?sealDraw(era,{fx:1}):sealHTML(era,true,true);document.body.append(d);vibrate([20,60,40]);setTimeout(()=>d.remove(),2600)}
 /* 第 15 輪 X3 鍵值化：核心字串用鍵，英文模式回 07i18n.js I18N_KEY 的英文，其他（或沒有 07i18n）照原文 */
 function cgT(k,z,v){return typeof i18nT==="function"?i18nT(k,z,v):z}
+const CG_STK={k:"",t:0};   /* 11/13 晚：電腦這一步從什麼時候開始想（卡住 25 秒出「重新開一局」） */
 /* hspx P0 開發者 11/13「點下我的棋力沒反應，甚至出現第二張圖（畫面整個往上捲、下面一片空白）」：結果視窗的「看我的棋力 ›」以前靠 tick 事後綁 onclick，沒綁上就點不動；
    改成全域點擊委派：什麼時候按都有反應。先關視窗、把被 iOS 捲走的頁面捲回頂，再去「我的棋力」 */
 document.addEventListener("click",e=>{const g=e.target&&e.target.closest&&e.target.closest(".modal .rg-go");if(!g)return;e.preventDefault();e.stopPropagation();
@@ -23554,6 +23555,12 @@ function CpuGame(v,practicePage,mode){
     else{S2.textContent=st.check>=0?cgT("game.check","⚠ 被將軍！"):st.hint?"💡 提示："+st.hint.cn:cgT("game.yourMove","👉 輪到你")+(st.eval&&!st.td?`・${evt(st.eval.v)}`:"");S2.classList.toggle("hot",st.check>=0||!!st.hint)}
     if(st.practice&&!st.result&&!st.msg&&!(st.repetition&&st.repetition.pending))practiceBar(S2);
     if(s2.dataset.t!==S2.textContent){s2.dataset.t=S2.textContent;s2.textContent=S2.textContent}
+    /* 開發者 11/13 晚「iPad 玩家卡在第一盤棋，對方一直思考中，要能重開新的一局」：同一步想超過 25 秒，狀態列下面出現「🔄 重新開一局」（開新局選單）；不卡了就收起來 */
+    try{const k=(st.id||"")+"|"+st.moves.length;if(st.thinking&&!st.result){if(CG_STK.k!==k){CG_STK.k=k;CG_STK.t=Date.now()}}else CG_STK.k="";
+      const old=v.querySelector("#cgStuck"),late=!!(st.thinking&&!st.result&&CG_STK.k===k&&Date.now()-CG_STK.t>25000);
+      if(late&&!old){const d=document.createElement("div");d.id="cgStuck";d.style.cssText="display:flex;align-items:center;justify-content:center;gap:8px;flex-wrap:wrap;margin:6px 0;font-size:14px";
+        d.innerHTML=`<span class="muted">${esc(cgT("game.stuck","電腦想太久了？"))}</span><button type="button" class="btn ghost" style="min-height:40px">${esc(cgT("game.stuckNew","🔄 重新開一局"))}</button>`;
+        d.querySelector("button").onclick=()=>{vibrate(8);newSheet()};s2.after(d)}else if(!late&&old)old.remove()}catch(e){}
     for(const k of["hot","wrap"])if(s2.classList.contains(k)!==!!S2.cls[k])s2.classList.toggle(k,!!S2.cls[k]);
     ruleNote(v,st);asstNote(v,st);
     /* 11/11 笑面掌櫃：開局、玩家妙著／失著、領先落後、過 60 手時開口（07m3 zgWatch）；3D 園子開著就在園子裡說 */
