@@ -1,8 +1,8 @@
 {
- "version": "20261113-1233",
- "checkedAt": "2026-11-13T04:33:27.522Z",
- "html": "121b3c4b829f",
- "sw": "40f6a366ff19",
+ "version": "20261113-1239",
+ "checkedAt": "2026-11-13T04:39:08.309Z",
+ "html": "68c708c2d0b3",
+ "sw": "a57637ecb762",
  "scripts": 4,
  "modules": {
   "00-util.js": "402a8c296ec8",
@@ -21,7 +21,7 @@
   "07c-canju.js": "a91312f29641",
   "07d-garden.js": "cc746ff05fc7",
   "07e-garden2.js": "23fcaecb532a",
-  "07f-ship.js": "61ef8ab08622",
+  "07f-ship.js": "ab5ed89addb8",
   "07o-shipmore.js": "3e3ebb9d732b",
   "07bh-blackhole.js": "d18ba98e03b1",
   "07gx-galaxy.js": "f79b141f237d",
@@ -98,7 +98,7 @@
   "11c-a11ysnd.js": "f5b8710e8e5a",
   "07cb-colorblind.js": "cb776a712df2",
   "07hp-haptics.js": "d1bd73fd4974",
-  "07hs-netsig.js": "bc27b4ac257b",
+  "07hs-netsig.js": "0b8221572b1a",
   "07fm-focus.js": "dc78f2529554",
   "07lh-lefty.js": "b1b6761a4a97",
   "07pm-premove.js": "b58dc45776cd",
@@ -195,8 +195,8 @@
   },
   {
    "module": "07hs-netsig.js",
-   "lines": 9,
-   "sourceModified": "2026-11-13T04:29:20.669Z"
+   "lines": 21,
+   "sourceModified": "2026-11-13T04:38:20.670Z"
   },
   {
    "module": "07i18n.js",
