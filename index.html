@@ -1606,7 +1606,7 @@ html[data-lefty] .tskip{right:auto;left:14px}
       if(!window.caches)return go();caches.keys().then(function(ks){return Promise.all(ks.filter(function(k){return k.indexOf("xqlab-app-")===0}).map(function(k){return caches.delete(k)}))})
         .then(function(){return navigator.serviceWorker&&navigator.serviceWorker.getRegistration()}).then(function(r){return r&&r.update()}).catch(function(){}).then(go)}};setTimeout(chk,4000)})();
 </script>
-<script>window.XQ_OFFLINE=true;window.XQ_BUILD="20261113-1120";</script>
+<script>window.XQ_OFFLINE=true;window.XQ_BUILD="20261113-1152";</script>
 <script src="core.js"></script>
 <script src="engine.js"></script>
 <script src="local.js"></script>
@@ -4009,7 +4009,7 @@ function oppCard(oid,name,opt){opt=opt||{};let live=null;try{live=window.XQNet&&
   const N=(p.w||0)+(p.l||0)+(p.d||0),ago=p.at?Math.max(0,Math.round((Date.now()-p.at)/60000)):null;
   const agoTx=ago==null?"":ago<1?"剛剛":ago<60?ago+" 分鐘前":ago<1440?Math.round(ago/60)+" 小時前":Math.round(ago/1440)+" 天前";
   const ST2={idle:"閒置中",seeking:"找對手中",playing:"對局中",watching:"觀戰中"};
-  sheet("棋友資料",b=>{b.innerHTML=`<div style="text-align:center"><div style="font-size:22px;font-weight:900;font-family:var(--serif)">${esc(p.name||name||"棋友")}</div>${isCloud(oid)||p.bot?`<div style="margin-top:4px">${cloudTag(true,true)}</div><div class="muted" style="font-size:12.5px;margin-top:2px">${cloudTip()}</div>`:""}${p.title?`<div style="color:#C8102E;font-weight:900;margin-top:2px">🏯 ${esc(p.title)}</div>`:""}
+  sheet("棋友資料",b=>{b.innerHTML=`<div style="text-align:center"><div style="font-size:22px;font-weight:900;font-family:var(--serif)">${esc(p.name||name||"棋友")}</div>${isCloud(oid)||(p.bot&&p.bot.npc)?`<div style="margin-top:4px">${cloudTag(true,true)}</div><div class="muted" style="font-size:12.5px;margin-top:2px">${cloudTip()}</div>`:""}${p.title?`<div style="color:#C8102E;font-weight:900;margin-top:2px">🏯 ${esc(p.title)}</div>`:""}
       <div style="margin:6px 0">${p.pts!=null&&window.XQNet?`<span class="pill" style="font-size:15px;padding:4px 12px">🏅 ${esc(XQNet.rankOf(p.pts))}・${p.pts||0} 分</span>`:""}</div>
       <div class="muted">${live?"🟢 在線上・"+(ST2[live.st]||""):"⚪ 不在線上"+(agoTx?"・上次看到 "+agoTx:"")}${p.city?"・📍"+esc(p.city):""}${p.kind?"・"+esc(p.kind):""}</div></div>
     <div class="card" style="margin-top:12px"><div class="muted" style="margin-bottom:6px">他的線上戰績${live?"":snap?"（上次看到的資料）":""}</div>${p.w==null?'<div class="muted">還沒有他的戰績資料（他上線時會更新）</div>':`<div style="display:grid;grid-template-columns:repeat(4,1fr);text-align:center">
@@ -6941,7 +6941,7 @@ function cloudLegend(on){return on?'<span class="cloudleg">☁電腦＝雲遊棋
 /* 開發者 11/11 選「電腦標示全入口核對」：這支手機認過的雲遊棋客代號記下來（最多 300 個），離線、重開 App、角色程式沒開的時候，
    歷史棋譜、對手資料、錯題本一樣標得出「電腦」（原本只有連上大廳、收到名單時才認得） */
 let CLOUD_IDS=null;
-function isCloud(id){try{if(!id)return false;if(!CLOUD_IDS)CLOUD_IDS=new Set(store.get("cloudIds",[])||[]);
+function isCloud(id){try{if(!id)return false;if(!CLOUD_IDS&&!store.get("cloudFix1",0)){store.set("cloudIds",[]);store.set("cloudFix1",1)}if(!CLOUD_IDS)CLOUD_IDS=new Set(store.get("cloudIds",[])||[]);
   if(window.XQNet&&XQNet.isBot&&XQNet.isBot(id)){if(!CLOUD_IDS.has(id)){CLOUD_IDS.add(id);store.set("cloudIds",[...CLOUD_IDS].slice(-300))}return true}
   return CLOUD_IDS.has(id)}catch(e){return false}}
 function devBotTag(id){return cloudTag(isCloud(id))}

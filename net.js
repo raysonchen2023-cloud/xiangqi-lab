@@ -29,7 +29,9 @@ var XQNet=(function(){
   if(r&&/^[\w-]{3,40}$/.test(r))ROOT="xqlab-test-"+r+"/v1"}catch(e){}
   /* 開發者 11/12「嚴格禁止電腦虛擬測試玩家跑到正式大廳」：本機網址（localhost、127.x、[::1]、*.localhost、區網 192.168／10.x）或自動化瀏覽器（navigator.webdriver），
      不管 xq_netRoot 怎麼設，一律只進測試房 xqlab-test-local；正式大廳只有正式站上的真人（大廳棋友程式 lobby-bots 是 Node 直接連，不經過這裡） */
-  try{const h=String(location.hostname||"");if(ROOT==="xqlab-r7k2q/v1"&&(/^(localhost|127\.|\[::1\]|192\.168\.|10\.)/.test(h)||/\.localhost$/.test(h)||(typeof navigator!=="undefined"&&navigator.webdriver)))ROOT="xqlab-test-local/v1"}catch(e){}
+  /* 11/13 Android 三方實測 P1：Android App（Capacitor）網址主機也是 localhost，以前被當成本機開發、強制進測試房，上架後玩家會進不了正式大廳。
+     App 裡（UA 有 XQQianqiuApp 或 Capacitor 原生平台）不套用本機網址這一條；模擬器（UA 有 sdk_gphone 等）和自動化瀏覽器照舊只進測試房 */
+  try{const h=String(location.hostname||""),ua=typeof navigator!=="undefined"&&navigator.userAgent||"",app=/XQQianqiuApp\//.test(ua)||!!(window.Capacitor&&typeof window.Capacitor.isNativePlatform==="function"&&window.Capacitor.isNativePlatform());if(ROOT==="xqlab-r7k2q/v1"&&((typeof navigator!=="undefined"&&navigator.webdriver)||/sdk_gphone|Android SDK built for|google_sdk|generic_x86|Emulator/i.test(ua)||(!app&&(/^(localhost|127\.|\[::1\]|192\.168\.|10\.)/.test(h)||/\.localhost$/.test(h)))))ROOT="xqlab-test-local/v1"}catch(e){}
   const MQA={user:MQ.user,pass:MQ.pass};
   if(/^xqlab-test-/.test(ROOT))try{const t=JSON.parse(localStorage.getItem("xq_mqtt")||"null");if(t&&typeof t.url==="string"&&/^wss?:\/\/[\w.:\[\]-]+(\/[\w./-]*)?$/.test(t.url)){URLS[0]=t.url;MQA.user=String(t.user||"");MQA.pass=String(t.pass||"")}}catch(e){}
   const ALIVE=150000;
@@ -142,7 +144,7 @@ var XQNet=(function(){
   const TCS=[5,10,15,20,30],tcPref=()=>{const v=+ls.get("tc",30);return TCS.includes(v)?v:30};
   /* 意見回饋 336：大廳拿掉時制選單，以前自己選過的一律回到預設 30 分鐘（之後只在邀請時講好再改） */
   try{if(+ls.get("tcV",0)<2){ls.set("tc",30);ls.set("tcV",2)}}catch(e){}
-  const isBot=id=>!!(people[id]&&people[id].bot)||!!botMem[id]||!!(BOTS_ST&&BOTS_ST.ids.has(id)),tcOf=f=>TCS.includes(+(f&&f.tc))?+f.tc:null,tcOk=f=>isBot(f.id)||tcOf(f)===tcPref();
+  const isBot=id=>!!(people[id]&&people[id].bot&&people[id].bot.npc)||!!botMem[id]||!!(BOTS_ST&&BOTS_ST.ids.has(id)),tcOf=f=>TCS.includes(+(f&&f.tc))?+f.tc:null,tcOk=f=>isBot(f.id)||tcOf(f)===tcPref();
   let tcWaitAt=0;
   /* 輪到的一方從什麼時候開始算時間：走棋的人會寫 tk；舊版或沒寫的話，用這支手機收到那一步的時間 */
   /* QA P1-2：兩支手機的時鐘可能差很多，所以計時一律用「這支手機收到（或自己走出）這一步的時間」，不用對方手機寫的時間 */
@@ -232,7 +234,7 @@ var XQNet=(function(){
   const ROSTER_PG=/^#\/(lobby|cup)(\/|$)/;
   let rosterOn=false,rosterTill=0,rosterHold=0;const trk=new Set();
   const rosterNeed=()=>{const h=String(location.hash||"");return ROSTER_PG.test(h)||(/^#\/pvp(\/|$)/.test(h)&&!!cur)||!!seeking||!!pending||Date.now()<rosterHold};
-  const prune=()=>{let ch=false;for(const id in people)if(!trk.has(id)){if(people[id]&&people[id].bot)botMem[id]=1;delete people[id];ch=true}if(ch)emit("people")};
+  const prune=()=>{let ch=false;for(const id in people)if(!trk.has(id)){if(people[id]&&people[id].bot&&people[id].bot.npc)botMem[id]=1;delete people[id];ch=true}if(ch)emit("people")};
   /* 收著整份名單時，自己和對手的個別訂閱就收掉（u/+ 已經包含），省訂閱數；先訂新的再退舊的，中間不漏訊息 */
   function syncRoster(){if(!cli||!cli.up)return;const now=Date.now();if(rosterNeed())rosterTill=now+LINGER;const w=now<rosterTill;
     const need=new Set();if(!w){need.add(me().id);if(cur&&G){need.add(G.red.id);need.add(G.black.id)}}
