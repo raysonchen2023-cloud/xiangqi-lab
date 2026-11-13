@@ -1142,7 +1142,7 @@
     const EK=opt.era&&ERA[opt.era]?opt.era:eraKey(),E=ERA[EK];
     /* hspx（開發者 11/12 黑洞星樞棋局）：opt.giant＝巨盤模式——棋盤浮在黑洞環景裡，不放桌椅地面和人物，紅方棋子換成雲河七星、黑方是星樞的發光棋子，鏡頭可以從俯視全盤一路推到站在棋盤上的第一人稱 */
     const GIANT=!!opt.giant;BRIVER=GIANT?"data/park/bh_river.webp":null;BBOARD=GIANT?"data/park/bh_board2.webp":null;
-    let GS=1;if(GIANT)try{const v=+JSON.parse(localStorage.getItem("xq_bhGS")||"1.3");GS=v>=1&&v<=1.6?v:1.3}catch(e){GS=1.3}   /* 黑洞格距倍率（說明在 pos 那裡）；要在建棋盤之前宣告 */
+    let GS=1;if(GIANT)try{const v=+JSON.parse(localStorage.getItem("xq_bhGS")||"1.6");GS=v>=1&&v<=1.6?v:1.6}catch(e){GS=1.6}   /* 黑洞格距倍率（說明在 pos 那裡）；要在建棋盤之前宣告。11/14 開發者「玩家說棋盤很擠、不好操作」：預設從 1.3 改成最大 1.6（自己拉過拉桿的照存的值） */
     el.style.background=E.mist;
     /* 開發者 11/12「放大近中遠時，用最高清的解析度，把遠的地方放大到極限倍」：環景是圖片（一度大約 11 像素），放大 40 倍一定糊。
        所以遠方另外用程式畫「放大多少都清楚」的深空：① 星點（固定 1～2 像素大小，越放大星星分得越開，再淡入更暗的一層＝望遠鏡看得到更多星）；
@@ -1722,7 +1722,7 @@
     const fMat=(ch,red)=>faceMat[ch+red]||(faceMat[ch+red]=(()=>{const tx=faceTex(ch,red);return pMat({map:tx,color:NEUT,roughness:.5})})());
     const makePiece=p=>{if(GIANT)return gntTake(p);const s=sideOf(p),ch=NAMES[s][p.toUpperCase()],g=new T.Group();const body=new T.Mesh(pieceGeo,bMat(s==="r"));body.castShadow=true;body.receiveShadow=true;g.add(body);
       const f=new T.Mesh(faceGeo,fMat(ch,s==="r"));f.rotation.x=-PI/2;f.position.y=.272;g.add(f);g.userData={p};sc.add(g);return g};
-    /* 開發者 11/12「黑洞棋盤太擠，用拉桿可以變大變小棋盤的棋距，不要大得太誇張」：巨盤的格距倍率 GS（1.0～1.6，預設 1.3，記在 xq_bhGS）；
+    /* 開發者 11/12「黑洞棋盤太擠，用拉桿可以變大變小棋盤的棋距，不要大得太誇張」：巨盤的格距倍率 GS（1.0～1.6，預設 1.6〔11/14 從 1.3 改成最大〕，記在 xq_bhGS）；
        棋盤、木框、棋子位置、鏡頭一起照倍率放大，角色大小不變＝角色之間變寬 */
     let flip=false;const pos=i=>{const c=i%9,r=i/9|0;return flip?[(4-c)*GS,(4.5-r)*GS]:[(c-4)*GS,(r-4.5)*GS]};
     const at=(g,i,lift)=>{const[x,z]=pos(i);g.position.set(x,TOP+(lift||0),z)};
