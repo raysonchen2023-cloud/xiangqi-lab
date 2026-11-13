@@ -1613,7 +1613,7 @@ html[data-lefty] .tskip{right:auto;left:14px}
       if(!window.caches)return go();caches.keys().then(function(ks){return Promise.all(ks.filter(function(k){return k.indexOf("xqlab-app-")===0}).map(function(k){return caches.delete(k)}))})
         .then(function(){return navigator.serviceWorker&&navigator.serviceWorker.getRegistration()}).then(function(r){return r&&r.update()}).catch(function(){}).then(go)}};setTimeout(chk,4000)})();
 </script>
-<script>window.XQ_OFFLINE=true;window.XQ_BUILD="20261113-1533";</script>
+<script>window.XQ_OFFLINE=true;window.XQ_BUILD="20261113-1624";</script>
 <script src="core.js"></script>
 <script src="engine.js"></script>
 <script src="local.js"></script>
@@ -10616,7 +10616,12 @@ function opSfx(k,big){if(typeof withAudio!=="function")return;withAudio(()=>{con
     env(g,k==="vortex"?.07:.12,.04,D);o.connect(g);g.connect(dst);o.start(t);o.stop(t+D+.05);
     const nz=opNoise(D),f=ac.createBiquadFilter(),g2=ac.createGain();f.type=k==="vortex"?"bandpass":"lowpass";f.Q.value=k==="vortex"?8:.7;f.frequency.setValueAtTime(k==="vortex"?900:1400,t);f.frequency.exponentialRampToValueAtTime(k==="vortex"?180:160,t+D);
     env(g2,k==="vortex"?.09:.1,.05,D);nz.connect(f);f.connect(g2);g2.connect(dst);nz.start(t);nz.stop(t+D)}
-  else if(k==="lines"){[660,784,880,990,1175,1320,1568].forEach((hz,i)=>{const o=ac.createOscillator(),g=ac.createGain(),s=t+i*.11;o.type="triangle";o.frequency.value=hz;g.gain.setValueAtTime(0,s);g.gain.linearRampToValueAtTime(.05,s+.01);g.gain.exponentialRampToValueAtTime(.0001,s+.18);o.connect(g);g.connect(dst);o.start(s);o.stop(s+.2)})}
+  else if(k==="crack"){   /* 11/13 開發者「一聲巨響跟清脆的程式音很不搭」：天裂＝低音悶響（70→30Hz）＋裂開的沙沙聲＋3 秒低頻餘韻，跟配樂融在一起 */
+    const o=ac.createOscillator(),g=ac.createGain();o.type="sine";o.frequency.setValueAtTime(72,t);o.frequency.exponentialRampToValueAtTime(30,t+1.8);env(g,.24,.012,2.6);o.connect(g);g.connect(dst);o.start(t);o.stop(t+2.7);
+    const o2=ac.createOscillator(),g2=ac.createGain();o2.type="triangle";o2.frequency.setValueAtTime(48,t);o2.frequency.exponentialRampToValueAtTime(26,t+1.2);env(g2,.12,.02,1.6);o2.connect(g2);g2.connect(dst);o2.start(t);o2.stop(t+1.7);
+    const n1=opNoise(.6),f1=ac.createBiquadFilter(),g3=ac.createGain();f1.type="bandpass";f1.Q.value=1.2;f1.frequency.setValueAtTime(2600,t);f1.frequency.exponentialRampToValueAtTime(500,t+.5);env(g3,.08,.004,.55);n1.connect(f1);f1.connect(g3);g3.connect(dst);n1.start(t);n1.stop(t+.6);
+    const n2=opNoise(3.4),f2=ac.createBiquadFilter(),g4=ac.createGain();f2.type="lowpass";f2.Q.value=.7;f2.frequency.setValueAtTime(320,t);f2.frequency.exponentialRampToValueAtTime(70,t+3.2);env(g4,.07,.25,3.3);n2.connect(f2);f2.connect(g4);g4.connect(dst);n2.start(t);n2.stop(t+3.4)}
+  else if(k==="lines"){[660,784,880,990,1175,1320,1568].forEach((hz,i)=>{const o=ac.createOscillator(),g=ac.createGain(),s=t+i*.11;o.type="sine";o.frequency.value=hz;g.gain.setValueAtTime(0,s);g.gain.linearRampToValueAtTime(.022,s+.03);g.gain.exponentialRampToValueAtTime(.0001,s+.42);o.connect(g);g.connect(dst);o.start(s);o.stop(s+.2)})}
   else if(k==="meteor"){const m=big?1.25:1,o=ac.createOscillator(),g=ac.createGain();o.type="sine";o.frequency.setValueAtTime(160,t);o.frequency.exponentialRampToValueAtTime(70,t+.22);env(g,.06*m,.01,.22);o.connect(g);g.connect(dst);o.start(t);o.stop(t+.25);
     const o2=ac.createOscillator(),g2=ac.createGain();o2.type="sine";o2.frequency.setValueAtTime(1200,t);o2.frequency.exponentialRampToValueAtTime(1800,t+.38);env(g2,.045*m,.01,.38);o2.connect(g2);g2.connect(dst);o2.start(t);o2.stop(t+.4)}})}
 
@@ -10628,7 +10633,7 @@ function opSfx(k,big){if(typeof withAudio!=="function")return;withAudio(()=>{con
 /* 開發者 11/12「這三頁停頓太久、敘述太短」：旁白加長（ChatGPT 139 號，每句 ≤15 字、每個鏡頭 3～4 句，照秒數出現） */
 const OP_FILM1={n:1,end:89.5,shots:[
   {at:0,img:null,fx:"dark",sfx:[[0,"vortex"]],say:[[0.0,"第〇章"],[1.7,"天裂星盤沉雲河"],[3.4,"黑洞殘局啟千秋"]]},
-  {at:5.4,img:"p10",ly:[[10.4,"p11",.55,"r"],[12.4,"p12",.3,"r"],[17.6,"p1",.7]],rc:[390,545],kb:[[1.0,50,42],[1.1,50,40]],fx:"tear",crack:12.4,shk:[[10.4,.3,4],[12.4,.4,9]],sfx:[[12.4,"lines"]],say:[[5.5,"很久很久以前，"],[8.8,"天上有張星盤。"],[12.4,"一聲巨響，天裂了。"],[16.2,"星光從縫中落。"]]},
+  {at:5.4,img:"p10",ly:[[10.4,"p11",.55,"r"],[12.4,"p12",.3,"r"],[17.6,"p1",.7]],rc:[390,545],kb:[[1.0,50,42],[1.1,50,40]],fx:"tear",crack:12.4,shk:[[10.4,.3,4],[12.4,.4,9]],sfx:[[12.4,"crack"]],say:[[5.5,"很久很久以前，"],[8.8,"天上有張星盤。"],[12.4,"一聲巨響，天裂了。"],[16.2,"星光從縫中落。"]]},
   {at:20,img:"p6",kb:[[1.2,50,22],[1.0,50,62]],fx:"fall",say:[[20.5,"裂口灑下星光。"],[24.0,"像細雨入山河。"],[27.8,"大河先被點亮。"],[31.6,"村燈跟著醒來。"]]},
   {at:35,img:"p1",kb:[[1.4,50,68],[1.05,50,62]],fx:"river",board:36,bp:[1000,560],rvy:1000,sfx:[[36,"lines"]],say:[[35.5,"星河橫過天心。"],[39.0,"星線交成棋路。"],[42.8,"那道河，後來叫界。"],[46.5,"兩岸從此相望。"]]},
   {at:50,img:"p7",kb:[[1.0,50,48],[1.12,50,47]],fx:"stars",board:51,bp:[657,440],sfx:[[51,"lines"]],say:[[50.5,"河畔有塊青石。"],[54.0,"沉睡不知幾年。"],[57.8,"星光落在石面。"],[61.5,"棋盤慢慢醒來。"]],nar:[58.8,"棋路，先於棋名。"]},
