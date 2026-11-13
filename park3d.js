@@ -308,6 +308,8 @@
     tang:{src:"data/park/tang_360.webp",pano:true,hz:.58,hor:PANO_HOR,rot:0}};
   // 其他 12 個朝代也換成 Gemini 畫的整圈背景（同一套規格）
   for(const k of["classic","qin","han","sanguo","weijin","nanbei","sui","wudai","song","yuan","ming","qing"])BG_IMG[k]={src:"data/park/"+k+"_360.webp",pano:true,hz:.58,hor:PANO_HOR,rot:0};   // 開發者用 Gemini 畫的 13 朝代長卷全部到齊
+  /* 開發者 11/13（iPhone）：經典環景天空裡斜飄兩支巨大毛筆，Gemini 修圖擦掉後同檔名換圖；帶版本參數，手機的 xqlab-look 快取才會重抓 */
+  BG_IMG.classic.src+="?v=1113nb";
   // 開發者用 Gemini 畫的朝代道具（data/park3d/<朝代>/：tree1、tree2、bench、stool、lantern、cup、tabletop 去背 webp，下緣＝落地／落桌的地方）
   // 有列在這裡的朝代：樹、長椅、凳子、燈籠、茶杯都換成手繪立牌，桌面換成手繪桌面；其他朝代照舊用程式做的 3D 家具。新增朝代＝放圖＋這裡加一行
   // top＝桌面圖上圓桌面的圓心 x、y、半徑（像素，1024 的圖）
@@ -970,7 +972,10 @@
           const ft=new T.Mesh(new T.CylinderGeometry(r*2.4,r*3.2,.8,12),postM);ft.position.set(px,GY+.4,pz);root.add(ft);blob(px,GY+.03,pz,1.4,1.4,.35);
           glow(x+nx*.4,LY,z+nz*.4,4.6,.5)}});
       // 樹：牡丹樹、松樹輪流，站在平台邊上，轉頭時當畫面的框
-      [[-14.8,-13.2,"tree2",17],[17.8,-8.2,"tree1",14.5],[-18.2,3.4,"tree1",12.5]].forEach(([x,z,n,h])=>use(n,im=>{const c=card(im,{x,y:GY,z,h,tilt:.12,info:n});blob(x,GY+.03,z,c.w*.32,c.w*.2,.35,c.ry);if(X.fades)X.fades.push(c.m)}));
+      /* 開發者 11/13（iPhone）「天空斜飄巨大毛筆」：經典世界的 tree2 是「大筆架斜倚三支比人高的毛筆」，轉到它前面時立牌變半透明，看起來就是幾支毛筆斜飄在天上；
+         經典世界那個位置改種一棵左右翻面的古松（tree1），不再放筆架。其他朝代的 tree2 照舊 */
+      const CLT=EK==="classic";
+      [[-14.8,-13.2,CLT?"tree1":"tree2",CLT?15.5:17,CLT],[17.8,-8.2,"tree1",14.5],[-18.2,3.4,"tree1",12.5]].forEach(([x,z,n,h,mi])=>use(n,im=>{const c=card(im,{x,y:GY,z,h,tilt:.12,info:n,mirror:!!mi});blob(x,GY+.03,z,c.w*.32,c.w*.2,.35,c.ry);if(X.fades)X.fades.push(c.m)}));
       /* 11/10 經典世界（Gemini 70／71，開發者選「補齊 Gemini 的元素」）：空中兩卷懸浮畫卷（緩緩上下漂），石台外兩位淡墨幻影棋客（半透明、像呼吸一樣忽濃忽淡） */
       if(EK==="classic"){const lastB=c=>{const b=X.bills&&X.bills[X.bills.length-1];return b&&b.m===c.m?b:null};
         /* hspx 開發者 11/13「漂浮的譜，修正」：亭子裡兩卷懸浮畫卷看起來像紙卡在半空（截圖在燈籠旁、樑下），拿掉；淡墨幻影棋客、地上刻的棋盤照舊 */
@@ -991,15 +996,22 @@
           const gm=new T.Mesh(new T.PlaneGeometry(PS,PS),new T.MeshBasicMaterial({map:tx,transparent:true,depthWrite:false,toneMapped:false,polygonOffset:true,polygonOffsetFactor:-2,polygonOffsetUnits:-3}));
           gm.rotation.x=-PI/2;gm.position.set(0,GY+.03,0);gm.renderOrder=1;root.add(gm);
           DIP.slice(0,5).forEach(([x,z])=>glow(x,GY+.25,z,1.8,.4))}
-        /* hspx 11/10「讓經典世界的雲有流動的視覺效果」：石台外圍一圈大片淡雲，慢慢繞著石台飄（遠近、高低、快慢各不同） */
+        /* hspx 11/10「讓經典世界的雲有流動的視覺效果」：石台外圍一圈大片淡雲，慢慢繞著石台飄（遠近、高低、快慢各不同）
+           11/13 起下面這個 canvas 雲只當備用：Gemini 水墨雲（cloud1／cloud2）載到就換掉，見這一段最後 */
         {const ct=cv(256,128,(g,w,h)=>{g.clearRect(0,0,w,h);const P=[[64,82,34],[104,66,40],[150,62,44],[192,80,32],[128,90,36]];   /* 水墨雲朵：幾團圓疊成一朵，淡灰墨邊、底部一點陰影 */
             const blob=()=>{g.beginPath();for(const[x,y,r]of P){g.moveTo(x+r,y);g.arc(x,y,r,0,TAU)}};g.save();g.beginPath();g.rect(0,0,w,h-14);g.clip();
             blob();g.lineWidth=5;g.strokeStyle="rgba(110,120,140,.42)";g.stroke();   /* 先描粗線、再填白：裡面的線被蓋掉，只留外輪廓 */
             blob();const gr=g.createLinearGradient(0,20,0,h-14);gr.addColorStop(0,"rgba(255,255,255,1)");gr.addColorStop(.7,"rgba(246,248,251,1)");gr.addColorStop(1,"rgba(206,213,226,1)");g.fillStyle=gr;g.fill();
             g.fillStyle="rgba(110,120,140,.35)";g.fillRect(14,h-16,w-28,2);g.restore()});
+          const CLS=[];
           for(let i=0;i<12;i++){const op=.55+Math.random()*.25,s=new T.Sprite(new T.SpriteMaterial({map:ct,transparent:true,opacity:op,depthWrite:false,toneMapped:false,fog:false}));s.renderOrder=4;
             /* 意見回饋 878（開發者 11/12「雲跑到地面了」）：原本半徑 21～29、離地 0.5～3.5，剛好坐在石台邊的山坡上；改飄在石台外的山谷，雲底一定高過下面的山坡，看起來是山谷裡的雲海 */
-            const r=(X.TR||21)+20+Math.random()*40,sz=10+Math.random()*10,lo=hillY(r,X.TR||21,GY)+sz*.35+1.2,hi=Math.max(lo+1,GY+2.5),y=lo+Math.random()*(hi-lo);s.scale.set(sz*1.4,sz*.7,1);root.add(s);if(X.bills)X.bills.push({m:s,y,tilt:0,orb:[r,i/12*TAU+Math.random()*.4,(.006+Math.random()*.008)*(i%3?1:-1),y,op]})}}
+            const r=(X.TR||21)+20+Math.random()*40,sz=10+Math.random()*10,lo=hillY(r,X.TR||21,GY)+sz*.35+1.2,hi=Math.max(lo+1,GY+2.5),y=lo+Math.random()*(hi-lo);s.scale.set(sz*1.4,sz*.7,1);root.add(s);CLS.push([s,sz]);if(X.bills)X.bills.push({m:s,y,tilt:0,orb:[r,i/12*TAU+Math.random()*.4,(.006+Math.random()*.008)*(i%3?1:-1),y,op]})}
+          /* 開發者 11/13「雲太假」：圓形疊出來的卡通白雲換成 Gemini 畫的兩張水墨淡雲（data/park3d/classic/cloud1＝長條流雲、cloud2＝雲堆），12 朵輪流用；
+             飄動、遠近、高低、快慢照舊（還是上面那 12 個 Sprite，只換貼圖和長寬比）；圖沒載到就維持上面的 canvas 雲。網址帶版本，換圖時改 CLOUD_V */
+          const CLOUD_V="1113";
+          [1,2].forEach(n=>{const src=base+"cloud"+n+".webp?v="+CLOUD_V,go=()=>{const im=imgCache[src];if(!im||!im.naturalWidth)return;const t=texOf(im);
+            CLS.forEach(([s,sz],i)=>{if(i%2!==n-1)return;s.material.map=t;s.material.needsUpdate=true;const w=sz*1.5;s.scale.set(w,w*im.naturalHeight/im.naturalWidth,1)})};if(loadImg(src,go))go()})}
         /* 桌角一個青瓷小香爐（茶杯的對角），爐頂飄淡淡的白煙（程式畫、會往上飄散） */
         use("censer",im=>{const x=5.9,z=-4.4,c=card(im,{x,y:.015,z,h:1.5,tilt:.3}),b=lastB(c);if(b)Object.assign(b,{cup:[x,z],hb:0});
           const st=radial("rgba(255,255,255,.85)","rgba(255,255,255,.35)");for(let i=0;i<4;i++){const s=new T.Sprite(new T.SpriteMaterial({map:st,transparent:true,opacity:0,depthWrite:false,toneMapped:false,fog:false}));root.add(s);if(X.bills)X.bills.push({m:s,y:0,tilt:0,smk:[x,1.25,z,i/4]})}})}
@@ -1337,14 +1349,16 @@
           for(const r of RE.realms)for(const p of r.p){path(p);if(r.d){g.setLineDash([S/90,S/160]);g.lineWidth=Math.max(2,S/300);g.strokeStyle=r.c;g.globalAlpha=.9;g.stroke();g.setLineDash([])}
             else{g.globalAlpha=.75;g.lineWidth=Math.max(4,S/115);g.strokeStyle="#FAF4E6";g.stroke();g.globalAlpha=.95;g.lineWidth=Math.max(2,S/260);g.strokeStyle=r.c;g.stroke()}}
           /* 11/10 經典園子（Gemini 69 方案 3＋1）：realms.json 的 classic 改放 stars（北斗七星）和 lines（連線），不畫疆域；
-             end＝終章「千秋歸位」完成才亮的星（開陽、搖光），問 App 的 window.XQ_FINALE()；前五顆的名字由路線那層寫，這裡只寫 end 的星名 */
+             end＝終章「千秋歸位」完成才亮的星（開陽、搖光），問 App 的 window.XQ_FINALE()；
+             開發者 11/13（iPhone）「七星只標了開陽、搖光」：前五顆的名字原本只靠石桌往事的路線那層寫，平常下棋沒有路線就沒名字；改成這裡七顆都寫（亮的深金褐、沒亮的淡灰），
+             路線那層遇到這裡已經寫過的星名就不再重寫（陣法關掉時才由路線那層補寫），RE._nm＝這裡寫過的名字 */
           if(Array.isArray(RE.stars)){let fin=false;try{fin=typeof window.XQ_FINALE==="function"&&!!window.XQ_FINALE()}catch(e){}
-            const ST=RE.stars,on=q=>!q.end||fin,Q=i=>[P(ST[i].x),P(ST[i].y)],R0=S/75;
+            const ST=RE.stars,on=q=>!q.end||fin,Q=i=>[P(ST[i].x),P(ST[i].y)],R0=S/75;RE._nm=new Set(ST.map(q=>q.n));
             for(const[a,b]of RE.lines||[]){const A=Q(a),B=Q(b),lit=on(ST[a])&&on(ST[b]);g.globalAlpha=lit?.85:.8;g.strokeStyle=lit?"#E2B64A":"#8C7A5E";g.lineWidth=lit?Math.max(2,S/300):Math.max(3,S/220);   /* hspx 開發者 11/12「沒連到嗎？」：還沒亮的玉衡→開陽→搖光原本淡灰 .35，灰石面上看不見，像斷掉；改成看得見的棕灰虛線 */
               g.setLineDash(lit?[]:[S/110,S/140]);g.beginPath();g.moveTo(A[0],A[1]);g.lineTo(B[0],B[1]);g.stroke()}g.setLineDash([]);
             for(const q of ST){const X=P(q.x),Y=P(q.y),lit=on(q),gr=g.createRadialGradient(X,Y,0,X,Y,R0*2.8);gr.addColorStop(0,lit?"rgba(255,228,140,.95)":"rgba(210,205,195,.55)");gr.addColorStop(1,"rgba(255,228,140,0)");
               g.globalAlpha=1;g.fillStyle=gr;g.beginPath();g.arc(X,Y,R0*2.8,0,2*PI);g.fill();g.fillStyle=lit?"#FFF4CC":"#A89C86";g.beginPath();g.arc(X,Y,R0*.6,0,2*PI);g.fill();if(!lit){g.strokeStyle="#8C7A5E";g.lineWidth=Math.max(3,S/240);g.beginPath();g.arc(X,Y,R0*1.25,0,2*PI);g.stroke()}   /* 還沒亮的星也畫一圈空心圓（跟前五顆路線層的圓圈對應），看得出星位 */
-              if(q.end){const sz=Math.round(50*k);g.font=sz+"px "+FF;g.textAlign="center";g.textBaseline="middle";g.lineWidth=Math.max(3,sz/4.5);g.strokeStyle="rgba(250,244,230,.92)";g.strokeText(q.n,X,Y-R0*1.6-sz*.5);g.fillStyle=lit?"#7A4A0A":"#8C857A";g.fillText(q.n,X,Y-R0*1.6-sz*.5)}}}
+              {const sz=Math.round(50*k);g.font=sz+"px "+FF;g.textAlign="center";g.textBaseline="middle";g.lineWidth=Math.max(3,sz/4.5);g.strokeStyle="rgba(250,244,230,.92)";g.strokeText(q.n,X,Y-R0*1.6-sz*.5);g.fillStyle=lit?"#7A4A0A":"#8C857A";g.fillText(q.n,X,Y-R0*1.6-sz*.5)}}}
           g.globalAlpha=1;fadeC(g);add(c,1,"r");
           /* 左上角：疆域開關＋圖例（拉遠看到地圖時才出現） */
           const pn=document.createElement("div");pn.style.cssText="position:absolute;left:8px;top:8px;z-index:3;display:none;max-width:64%;font:600 12px/1.4 system-ui,sans-serif;color:#3a2a1c";
@@ -1355,7 +1369,7 @@
             sw.style.cssText=`flex:none;width:14px;height:10px;border-radius:2px;background:${it.c}55;border:2px ${it.d?"dashed":"solid"} ${it.c}`;const tx=document.createElement("span");tx.textContent=it.g;row.append(sw,tx);lg.append(row)}
           const sync=()=>{bt.textContent=(RE.btn||"疆域")+(RON?"：開":"：關");bt.setAttribute("aria-pressed",RON?"true":"false");lg.style.display=RON?"block":"none";MAPOK=""};
           for(const ev of["pointerdown","pointerup"])pn.addEventListener(ev,e=>e.stopPropagation());
-          bt.onclick=e=>{e.stopPropagation();RON=!RON;try{localStorage.setItem("m_eramapRealm",JSON.stringify(RON))}catch(_){}sync()};
+          bt.onclick=e=>{e.stopPropagation();RON=!RON;try{localStorage.setItem("m_eramapRealm",JSON.stringify(RON))}catch(_){}sync();if(RTF)RTF()};
           sync();pn.append(bt,lg);el.append(pn);MAPP=pn}
         if(LB){const ST={n:[92,66,"#961A12"],c:[66,48,"#241A10"],r:[60,46,"#284E68"],s:[58,46,"#463220"]};
           const draw=minor=>{const c=mk(),g=c.getContext("2d");g.textAlign="center";g.textBaseline="middle";g.lineJoin="round";
@@ -1370,7 +1384,7 @@
           (document.fonts&&document.fonts.load?Promise.race([document.fonts.load('48px "XQ twkai"',LB.map(l=>l[0]).join("")),new Promise(r=>setTimeout(r,2500))]):Promise.resolve()).then(go,go)}
         /* 意見回饋 658（B 輿圖遊歷）：石桌往事的園子裡，App（07e-garden2.js 的 window.XQ_MAPROUTE）給這個朝代的路線，畫在地名上面一層：
            虛線是還沒走的路、紅線是走過的、整條走完變金線；下一站畫一圈發亮的光暈；地圖原本沒有的地名（t）自己寫上。key 變了才重畫（下面 placeCam 每 0.8 秒問一次） */
-        RTF=()=>{let R=null;try{R=window.XQ_MAPROUTE?window.XQ_MAPROUTE(EK):null}catch(e){}const key=R&&R.key||"";if(key===RTK)return;RTK=key;
+        RTF=()=>{let R=null;try{R=window.XQ_MAPROUTE?window.XQ_MAPROUTE(EK):null}catch(e){}const NM=RE&&RE._nm,key=(R&&R.key||"")+(NM?"|"+!!RON:"");if(key===RTK)return;RTK=key;
           for(let i=MAPO.length-1;i>=0;i--)if(MAPO[i].k==="t"){const m=MAPO[i].m;sc.remove(m);if(m.material.map)m.material.map.dispose();m.material.dispose();MAPO.splice(i,1)}
           RTS=null;MAPOK="";if(!R||!Array.isArray(R.s)||R.s.length<2){if(RTP)RTP.style.display="none";return}
           const c=mk(),g=c.getContext("2d"),P=v=>v*S/100,pt=R.s.map(q=>[P(q.x),P(q.y)]),L=pt.length-1,n=Math.min(R.n|0,L+1),rd=S/105;
@@ -1380,7 +1394,7 @@
           R.s.forEach((q,i)=>{const[x,y]=pt[i];
             if(q.st===2){const gr=g.createRadialGradient(x,y,0,x,y,rd*4.2);gr.addColorStop(0,"rgba(255,214,90,.95)");gr.addColorStop(.45,"rgba(255,196,60,.55)");gr.addColorStop(1,"rgba(255,196,60,0)");g.fillStyle=gr;g.beginPath();g.arc(x,y,rd*4.2,0,2*PI);g.fill()}
             g.beginPath();g.arc(x,y,rd,0,2*PI);g.fillStyle=R.all?"#D4A017":q.st===1?"#B0281E":q.st===2?"#FFF3C4":"#FAF4E6";g.fill();g.lineWidth=Math.max(2,rd/2.6);g.strokeStyle=q.st===2?"#C8961E":q.st===1||R.all?"#FAF4E6":"#7A4A2A";g.stroke();
-            if(q.t){const sz=Math.round(50*k);g.font=sz+"px "+FF;g.textAlign="center";g.textBaseline="middle";g.lineWidth=Math.max(3,sz/4.5);g.strokeStyle="#F6EEDC";g.strokeText(q.t,x,y-rd-sz*.75);g.fillStyle="#3A2414";g.fillText(q.t,x,y-rd-sz*.75)}});
+            if(q.t&&!(NM&&RON&&NM.has(q.t))){const sz=Math.round(50*k);g.font=sz+"px "+FF;g.textAlign="center";g.textBaseline="middle";g.lineWidth=Math.max(3,sz/4.5);g.strokeStyle="#F6EEDC";g.strokeText(q.t,x,y-rd-sz*.75);g.fillStyle="#3A2414";g.fillText(q.t,x,y-rd-sz*.75)}});
           add(c,4,"t");RTS=R.s.map(q=>[q.nm,q.x,q.y]);
           if(!RTP){RTP=document.createElement("div");RTP.style.cssText="position:absolute;left:8px;bottom:8px;z-index:3;display:none;max-width:calc(100% - 70px);font:700 12.5px/1.45 system-ui,sans-serif;color:#3a2a1c;background:rgba(255,246,214,.92);border:1px solid #C8961E;border-radius:10px;padding:5px 9px;pointer-events:none;box-shadow:0 1px 4px rgba(0,0,0,.2)";el.append(RTP)}
           RTP.textContent=R.tip||""};
