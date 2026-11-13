@@ -1613,7 +1613,7 @@ html[data-lefty] .tskip{right:auto;left:14px}
       if(!window.caches)return go();caches.keys().then(function(ks){return Promise.all(ks.filter(function(k){return k.indexOf("xqlab-app-")===0}).map(function(k){return caches.delete(k)}))})
         .then(function(){return navigator.serviceWorker&&navigator.serviceWorker.getRegistration()}).then(function(r){return r&&r.update()}).catch(function(){}).then(go)}};setTimeout(chk,4000)})();
 </script>
-<script>window.XQ_OFFLINE=true;window.XQ_BUILD="20261114-0353";</script>
+<script>window.XQ_OFFLINE=true;window.XQ_BUILD="20261114-0424";</script>
 <script src="core.js"></script>
 <script src="engine.js"></script>
 <script src="local.js"></script>
@@ -29235,8 +29235,9 @@ let xflR07Off=function(){},xflR07Wide=null;
    電影資料 MNF_FILMS[id]＝{end 秒, mus 配樂（data/bgm/ 底下的相對路徑）, card 跳過後的任務卡 {t 大字, b 按鈕}, shots:[鏡頭…]}；
    鏡頭＝{at 秒, img 圖代號（MNF_IMG）, kb [[縮放,焦點x%,焦點y%] 起, 迄], fx 粒子, src 粒子源頭（圖上像素）, say [[秒,字幕]], who [[秒,角色,"l"|"r"]], sfx [[秒,音效]],
           board 秒＝星線棋盤（沿用 07bh bhxBoardSvg）, bp [中心 y, 寬]（平放、置中）或 bq 棋盤四角貼到圖上（[第1路第1排, 第9路第1排, 第9路第10排, 第1路第10排] 圖上像素，可帶透視，見 mnfQuadM）,
-          big [秒,大字], seal [秒,印文]（蓋在 src）, qte 危機題代號（到這個鏡頭就定格解題，解完才往下）, tr 換進這個鏡頭的溶接秒數（預設 MNF_XD；0＝硬切，給重拍、大字用）}。
-   fx：mist 晨霧、glow 金光上升、stars 星點、whirl 墨色漩渦、river 河光流動、ink 墨石暈開、burst 一次炸開、gates 十三道星門、frz 定格（只剩霧在動）。
+          big [秒,大字], seal [秒,印文]（蓋在 src）, qte 危機題代號（到這個鏡頭就定格解題，解完才往下）, tr 換進這個鏡頭的溶接秒數（預設 MNF_XD；0＝硬切，給重拍、大字用）,
+          （11/14 第二章加的張力欄位，story/主線電影_加一章的資料格式.md）shk [[秒,強度px]] 畫面震一下、duck [[秒,音量0～1,淡變秒]] 配樂音量、tint [起,迄] 鏡頭內濾鏡慢慢變（MNF_TINT 的代號）、flash 秒＝白閃一下（快溶進出閃回用）}。
+   fx：mist 晨霧、glow 金光上升、stars 星點、whirl 墨色漩渦、river 河光流動、ink 墨石暈開、burst 一次炸開、gates 十三道星門、frz 定格（只剩霧在動）、dust 塵土貼地騰起、rain 斜雨線。
    字幕（開發者定）：每個畫面最多一行、8～16 字，像電影台詞；同一個鏡頭的兩句至少隔 2 秒，後一句換掉前一句。
    跳過：右上角常駐「略過」，電影隨時可以跳；危機解題不能跳（解題時「略過」藏起來）。跳過後一定先顯示一張任務卡（大字寫現在要做什麼），按了才往下。
    危機解題 mnfQte：畫面定格、棋盤從場景浮出（沿用 01-board.js 的 Board 畫棋盤、XQCore 判合法與勝負，不另寫規則）；只放 4～6 顆子、一開始就選起要動的那顆、合法落點發光；
@@ -29263,13 +29264,25 @@ const MNF_IMG={home:{u:"data/story1/c1_home.webp"},table:{u:"data/story1/c1_tabl
   teller:{u:"data/story1/c1_teller.webp"},open:{u:"data/story1/c1_open.webp"},cabin:{u:"data/story1/c1_cabin.webp"},
   riteHand:{u:"data/story1/c1_rite_hand.webp"},rite:{u:"data/story1/c1_rite_up.webp"},   /* 殘局解開儀式（電影用）：riteHand＝說書人右手平按桌緣，rite＝手移開；兩張同構圖、座標對齊 */
   novel:{u:"data/shipmap/novel/ch01_3.webp",w:1000,h:747},novelHand:{u:"data/shipmap/novel/ch01_3_hand.webp",w:1000,h:747}};   /* 舊版儀式（小說插畫，橫幅）：電影不再用，留給 set:"novel" */
-/* 儀式的圖組：hand 手按著、up 手移開（兩張同構圖交叉淡入）；fh 手掌、fx 刻痕光的位置（原圖像素）；dw 光痕寬（圖寬 %）、rot 光痕角度；k＝[開場, 推近, 退回] 縮放 */
+/* 第二章「秦・日落之前」十一張（story/第二章電影分鏡_1113.md 方案 A；正本 art/story2，原稿 park/ch2film/*.png；864×1536 的原稿縮成高 1376、左右各裁 3px，跟第一章一樣 768×1376、webp q85）。主體座標（原圖像素）：
+   road 船頭踏板 150,1150、夯土民夫 420,600、直道盡頭 470,180、左側小陷車 130,520｜stuck 輪轂軸頭 315,890、老伯 560,950｜clerk 小吏頭 240,330、鞭梢 370,300、長影 200,1100
+   rain 翻倒的糧車 560,820、車輪紋木牌 560,1125｜tilt 少年 600,400、斜車輪 330,640、老伯 600,750、車轍（中）150,800→300,1300、（右）345,800→595,1300、坡上車隊 600,175
+   dry 乾地上的車輪軸頭 150,720、夕陽 360,60｜rite_fist／rite_palm 同構圖（特徵點比對位移 <1px）：拳頭 470,770、掌心木牌 420,750、拳頭下方那段桌緣刻痕 590,1000（約 -38°）
+   window 窗外老伯 390,780、車 530,830、陶水囊 680,1150｜bench 紅布小馬 200,830、銀鈴 300,850、腰側木牌 620,1100｜depart 星槎 530,580、星槎左上方空星空（蓋印）500,400、直道 290,1000 */
+const MNF_S2="data/story2/c2_";
+Object.assign(MNF_IMG,{road:{u:MNF_S2+"road.webp"},stuck:{u:MNF_S2+"stuck.webp"},clerk:{u:MNF_S2+"clerk.webp"},rain:{u:MNF_S2+"rain.webp"},tilt:{u:MNF_S2+"tilt.webp"},dry:{u:MNF_S2+"dry.webp"},
+  window:{u:MNF_S2+"window.webp"},bench:{u:MNF_S2+"bench.webp"},depart:{u:MNF_S2+"depart.webp"},c2Fist:{u:MNF_S2+"rite_fist.webp"},c2Palm:{u:MNF_S2+"rite_palm.webp"}});
+/* 儀式的圖組：hand 手按著、up 手移開（兩張同構圖交叉淡入）；fh 手掌、fx 刻痕光的位置（原圖像素）；dw 光痕寬（圖寬 %）、rot 光痕角度；k＝[開場, 推近, 退回] 縮放；
+   txt＝這一章的儀式字幕（蓋過 MNF_RITE_TXT 的同名句，沒寫的照舊）*/
 const MNF_RITE_SET={c1:{hand:"riteHand",up:"rite",fh:[420,830],fx:[530,925],dw:33,rot:-31,k:[1.15,1.45,1.25]},   /* 11/13 實看：光原本在 595,855（刻痕上方約 30px、太短）；改成手掌蓋住的那段刻度 (422,990)～(640,860) 的中心、沿刻痕斜度 */
-  novel:{hand:"novelHand",up:"novel",fh:[390,452],fx:[348,456],dw:7,rot:-14,k:[1.25,2.1,1.8]}};
-const MNF_FX=["mist","glow","stars","whirl","river","ink","burst","gates","frz"];
+  novel:{hand:"novelHand",up:"novel",fh:[390,452],fx:[348,456],dw:7,rot:-14,k:[1.25,2.1,1.8]},
+  c2:{hand:"c2Fist",up:"c2Palm",fh:[470,770],fx:[590,1000],dw:30,rot:-38,k:[1.15,1.45,1.25],txt:{hand:"攥緊的手，慢慢鬆開。",glow:"刻痕，又亮回一段。",rule:"缺槽，仍舊空著。"}}};   /* 第二章：齊轍攥著車輪木牌的拳頭 → 攤開；光在拳頭下方那段桌緣刻痕；最後一句留懸念 */
+const MNF_FX=["mist","glow","stars","whirl","river","ink","burst","gates","frz","dust","rain"];
+/* 鏡頭 tint 的濾鏡代號（CSS filter）：dusk 慢慢壓暗轉紅（小吏那鏡）、cold 閃回去色偏冷、warm 夕照暖亮 */
+const MNF_TINT={none:"none",dusk:"sepia(.3) saturate(1.35) brightness(.7) hue-rotate(-10deg)",cold:"grayscale(.78) brightness(.82) contrast(1.08) sepia(.12) hue-rotate(170deg)",warm:"sepia(.18) saturate(1.2) brightness(1.06)"};
 /* 轉場：MNF_XD 換圖交叉溶接秒數（鏡頭 tr 可改，0＝硬切）、MNF_GL 同一張圖連兩鏡時運鏡滑接秒數、MNF_EA 運鏡緩動比例（0＝等速，1＝舊的 ease-in-out 頭尾會停） */
 const MNF_XD=.8,MNF_GL=1.1,MNF_EA=.35;
-const MNF_SFX=["bell","star","drum","heart","gong","drip","whoosh"];
+const MNF_SFX=["bell","star","drum","heart","gong","drip","whoosh","hang","crack","whip","whipf","rain"];   /* 11/14 第二章加：hang 夯、crack 木裂、whip 鞭響、whipf 遠遠的鞭響（閃回）、rain 雨聲約 3 秒；都用 WebAudio 合成 */
 /* 第 1 章「古典・河圖初渡」三段（ChatGPT 141d 第一章分鏡表；字幕改成 8～16 字）。c1o 開章 35 秒、c1m 危機（1 步題）＋殘局解開儀式＋河口打通、c1e 章末 28 秒
    11/13 第二版＝story/第一章電影重做分鏡_1113.md 第四節「推薦方案」（開發者選定）：十二張圖每張只出現在一個連續鏡頭裡、一個連續鏡頭只配一句字幕；
      同一張圖在資料上拆成兩段（換粒子、定格、蓋印）時畫面不切，播放器用 MNF_GL 秒把運鏡滑接過去，不算重複用圖。換圖一律交叉溶接（tr 可改秒數）。
@@ -29301,8 +29314,31 @@ const MNF_FILMS={
     {at:12.2,img:"stone",kb:[[1.5,50,0],[1.3,58,42]],fx:"gates",src:[384,260],sfx:[[12.4,"star"]]},   /* 天空浮出十三道星門（不出字幕），往下搖到松樹、青石台 */
     {at:16.2,img:"stone",kb:[[1.55,49,98],[1.7,50,90]],fx:"glow",src:[422,832],seal:[17.35,"古典"],sfx:[[17.35,"bell"]],say:[[17.8,"收下這枚古典之印。"]]},   /* 同圖續：石台光暈擺在畫面 60%,40%，印蓋在光暈上、頭像在左下不擋印 */
     {at:23.34,img:"ship",kb:[[1.0,80,26],[1.5,81,26]],fx:"stars",src:[582,352],say:[[23.8,"遠方城樓，等著下一盤棋。"]]}]}};   /* 印的金光接船頭燈籠；對著遠城推近 */
-/* 危機題：預設（沒有另外指定時）＝船艙站齊轍那題 xs-classic-R（data/canju/ship-set.json），主線會照玩家本命子換成同一站那一題（07mnq mnqQteFor） */
-const MNF_QTE={c1:{id:"xs-classic-R",fen:"4ka3/4a4/RP7/9/9/9/9/9/9/4K4",side:"r",line:["a7a9"],big:"破局！",say:"一步，打開河口！",hint:"看你的本命棋子：一路衝到底！",est:20}};
+/* 第 2 章「秦・日落之前」（story/第二章電影分鏡_1113.md 方案 A，開發者 11/14 選定；配樂是第二章專用的兩首 data/bgm/film/c2_crisis.mp3、c2_end.mp3）。
+   c2_crisis（87 秒）用 ffmpeg 量：約每 5.95 秒一個重拍 6.0／11.95／17.85／23.75／29.75，2～5.75 秒偏靜（夯聲留白）；c2_end（82 秒）前 15 秒安靜、8.05／16.05 起句、16 秒起變大、24.1 重拍。開發者要實際聽過再微調切點。
+   c2o 鏡頭 6 → 5.95 → 5.9 → 2.95 → 2.95 秒越切越短，23.75 重拍上定格，車轍浮出棋盤；c2m 定格解題 → 解開淡進「車有路了」；儀式放在 c2m 播完之後（07mnq MNQ_CHAP.qin.rite:"end"）→ c2e 章末。
+   棋盤 MNF_C2Q 貼在 tilt 下方的中、右兩道車轍上（左邊那道在手機上會被裁掉，不用）：第 1 路沿中轍、第 9 路沿右轍，y 900～1220 */
+const MNF_C2Q=[[180,900],[395,900],[555,1220],[276,1220]];
+Object.assign(MNF_FILMS,{
+  c2o:{end:27.5,mus:"film/c2_crisis.mp3",card:{t:"找路！",b:"出發"},shots:[
+    {at:0,img:"road",kb:[[1.45,40,92],[1.25,58,28]],fx:"dust",src:[420,640],sfx:[[0.6,"hang"],[1.6,"hang"],[2.6,"hang"],[3.6,"hang"]],say:[[1.2,"齊轍：爹的車，會在這條路上嗎？"]]},   /* 從船頭踏板往上搖到直道盡頭；夯聲當心跳，4.6～6 秒留白 */
+    {at:6,img:"stuck",tr:.5,kb:[[1.2,45,55],[1.7,41,65]],fx:"dust",src:[330,1000],sfx:[[11,"crack"]],shk:[[11,7]],say:[[6.5,"坡腳的車，輪子陷進泥裡。"]]},   /* road 左下那輛小陷車的近景；推近裂開的軸頭，木裂聲加震動 */
+    {at:11.95,img:"clerk",tr:.25,kb:[[1.15,50,88],[1.42,34,38]],tint:["none","dusk"],fx:"dust",src:[300,1100],sfx:[[17.3,"whip"]],shk:[[17.3,5]],say:[[12.4,"小吏：日頭落下前，全送到！"]]},   /* 低處往上仰，越推越壓迫、慢慢壓暗轉紅；只聞鞭聲 */
+    {at:17.85,img:"rain",tr:.2,flash:17.85,tint:["cold","cold"],fx:"rain",kb:[[1.3,55,60],[1.6,78,100]],duck:[[17.85,.12,.3]],sfx:[[17.9,"rain"],[18.4,"heart"],[19.2,"whipf"],[19.6,"heart"]],say:[[17.95,"「大道不走，偏要走歪路。」"]]},   /* 閃回渭水雨夜：鞭聲帶過去、白閃快溶、配樂壓到幾乎靜默 */
+    {at:20.8,img:"tilt",tr:.2,flash:20.8,kb:[[1.15,55,50],[1.3,52,55]],fx:"dust",src:[330,700],duck:[[20.8,1,.25]],sfx:[[20.9,"heart"],[21.6,"crack"]],shk:[[21.6,6]],say:[[20.95,"齊轍：先別拉！車要倒了！"]]},   /* 白閃拉回現在，配樂一下子全開 */
+    {at:23.75,img:"tilt",kb:[[1.3,52,55],[1.35,48,72]],fx:"frz",big:[23.85,"找路！"],board:24,bq:MNF_C2Q,sfx:[[23.8,"gong"]]}]},   /* 同圖續：定格，車轍浮出星線棋盤 */
+  c2m:{end:5.5,mus:"film/c2_crisis.mp3",card:{t:"車有路了",b:"出發"},shots:[
+    {at:0,img:"tilt",kb:[[1.35,48,72],[1.35,48,72]],fx:"frz",board:0,bq:MNF_C2Q,qte:"c2"},   /* 同圖續：c2o 最後一格，定格解題 */
+    {at:0.1,img:"dry",tr:1,kb:[[1.7,20,52],[1.15,45,50]],fx:"glow",src:[150,720],duck:[[0.1,.55,2]],sfx:[[0.2,"gong"],[1,"star"]],say:[[0.6,"齊轍：車有路了。"]]}]},   /* 棋子化光淡出時夕照溶進來；從軸頭往後拉，車停在乾地上；張力放掉，配樂降下來 */
+  c2e:{end:30,mus:"film/c2_end.mp3",card:{t:"收下秦之印",b:"好"},shots:[
+    {at:0,img:"window",tr:1,kb:[[1.15,50,60],[1.5,51,57]],fx:"mist",say:[[0.8,"等回去，和爹一起看路。"]]},   /* 儀式淡出時溶進來；慢推到窗外在窄處停下的老伯 */
+    {at:8.05,img:"bench",kb:[[1.35,26,60],[1.35,78,78]],sfx:[[8.3,"drip"]],say:[[8.6,"小梅：下回路堵了，先叫我。"]]},   /* 由遠到近：紅布小馬橫移到腰側的車輪木牌 */
+    {at:16.05,img:"depart",kb:[[1.4,40,85],[1.3,62,35]],fx:"stars",src:[530,580],sfx:[[16.1,"star"]]},   /* 從直道往上搖到星河裡的星槎（不出字幕） */
+    {at:24.1,img:"depart",kb:[[1.3,62,35],[1.42,66,30]],fx:"glow",src:[500,400],seal:[24.1,"秦"],sfx:[[24.1,"bell"]],say:[[24.6,"收下這枚秦之印。"]]}]}});   /* 同圖續：星槎上方蓋「秦」印 */
+/* 危機題：預設（沒有另外指定時）＝船艙站齊轍那題 xs-classic-R（data/canju/ship-set.json），主線會照玩家本命子換成同一站那一題（07mnq mnqQteFor）
+   alt＝其他也對的著法線（第一手照哪一條走，後面就照那一條自動應對）；wrong＝{著法:台詞}，走到那一手先顯示台詞（對方吃回）再倒帶 */
+const MNF_QTE={c1:{id:"xs-classic-R",fen:"4ka3/4a4/RP7/9/9/9/9/9/9/4K4",side:"r",line:["a7a9"],big:"破局！",say:"一步，打開河口！",hint:"看你的本命棋子：一路衝到底！",est:20},
+  c2:{id:"xs-qin-0",fen:"4ka3/2P1a4/9/9/4R4/9/8p/9/9/4K4",side:"r",line:["e5b5","e9d9","b5b9"],alt:[["e5a5","e9d9","a5a9"]],big:"找路！",say:"先找乾地，再直走！",hint:"別硬衝！旁邊哪一路是空的？",wrong:{e5e8:"士一退就吃回來——車斷在這裡，後頭更過不來。"},est:25}};
 /* 殘局解開儀式的字幕（一行 ≤16 字） */
 const MNF_RITE_TXT={hand:"說書人的手，慢慢移開。",glow:"刻痕，亮回一小段。",line:"補上一行。",rule:"解開一盤，刻痕亮一段。",old:"這一行，早已補上。",demo:"這一行，還空著。",demo2:"下次，自己補上它。"};
 const MNF={on:false,au:null,mus:"",u:{},cur:null};
@@ -29317,7 +29353,12 @@ function mnfCheck(F,id){const P=[],N=id||"?";if(!F||!Array.isArray(F.shots)||!F.
     let last=-9;for(const[t,s]of S.say||[]){const n=mnfLen(s);if(n<4||n>16)P.push(`${N} 字幕「${s}」${n} 字（要 ≤16）`);if(/\n/.test(s))P.push(`${N} 字幕「${s}」換行了`);if(t<S.at||t>=nx)P.push(`${N} 字幕「${s}」不在鏡頭時間內`);if(t-last<2)P.push(`${N} 字幕「${s}」跟前一句不到 2 秒`);last=t}
     for(const[t,k]of S.sfx||[]){if(!MNF_SFX.includes(k))P.push(`${N} 音效不認得：${k}`);if(t<S.at||t>=nx)P.push(`${N} 音效 ${k} 不在鏡頭時間內`)}
     if(S.qte&&!MNF_QTE[S.qte])P.push(`${N} 危機題不存在：${S.qte}`);if(S.tr!=null&&!(S.tr>=0&&S.tr<=2))P.push(`${N} 第 ${i+1} 個鏡頭的 tr（溶接秒數）要 0～2`);
-    if(S.bq&&!(Array.isArray(S.bq)&&S.bq.length===4&&S.bq.every(p=>Array.isArray(p)&&p.length===2&&p.every(Number.isFinite))))P.push(`${N} 第 ${i+1} 個鏡頭的 bq 要四個 [x,y]`)});
+    if(S.bq&&!(Array.isArray(S.bq)&&S.bq.length===4&&S.bq.every(p=>Array.isArray(p)&&p.length===2&&p.every(Number.isFinite))))P.push(`${N} 第 ${i+1} 個鏡頭的 bq 要四個 [x,y]`);
+    const inT=t=>Number.isFinite(t)&&t>=S.at&&t<nx;
+    for(const[t,k]of S.shk||[])if(!inT(t)||!(k>0&&k<=20))P.push(`${N} 第 ${i+1} 個鏡頭的 shk 要 [鏡頭內的秒, 1～20]`);
+    for(const[t,v,d]of S.duck||[])if(!inT(t)||!(v>=0&&v<=1)||!(d>=0))P.push(`${N} 第 ${i+1} 個鏡頭的 duck 要 [鏡頭內的秒, 音量 0～1, 淡變秒]`);
+    if(S.tint&&!(Array.isArray(S.tint)&&S.tint.length===2&&S.tint.every(k=>k in MNF_TINT)))P.push(`${N} 第 ${i+1} 個鏡頭的 tint 要 [起, 迄]（MNF_TINT 的代號）`);
+    if(S.flash!=null&&!inT(S.flash))P.push(`${N} 第 ${i+1} 個鏡頭的 flash 不在鏡頭時間內`)});
   return P}
 /* 星線棋盤貼到圖上（鏡頭的 bq）：q＝棋盤四角的螢幕座標 [第1路第1排, 第9路第1排, 第9路第10排, 第1路第10排]；
    算單位正方形→四邊形的投影（Heckbert），再接上「元素像素 → 單位座標」（bhxBoardSvg 的 viewBox 從 -1 起、線在 0～80、0～90，元素設成 82×92px），回傳 CSS matrix3d（transform-origin 要 0 0） */
@@ -29344,6 +29385,10 @@ function mnfCss(){if(document.getElementById("mnfCss"))return;const s=document.c
 @media (min-aspect-ratio:4/5){#mnfPg,html #mnfRite{left:50%;right:auto;width:min(100vw,max(calc(100vh*.62),360px));transform:translateX(-50%);box-shadow:0 0 60px rgba(0,0,0,.7)}#mnfBk{display:block}}
 #mnfPg .mnf-st{position:absolute;inset:0;will-change:transform,opacity;transition:filter .6s}
 #mnfPg .mnf-st .gone{opacity:0!important;transition:opacity .5s!important}
+#mnfPg .mnf-st.shk{animation:mnfShk2 .4s ease-out}
+@keyframes mnfShk2{15%{translate:calc(var(--shk,6px)*-1) calc(var(--shk,6px)*.3)}35%{translate:var(--shk,6px) calc(var(--shk,6px)*-.4)}55%{translate:calc(var(--shk,6px)*-.6) 0}75%{translate:calc(var(--shk,6px)*.3) 0}}
+#mnfPg .mnf-fl{position:absolute;inset:0;z-index:4;background:#fffaf0;opacity:0;pointer-events:none;animation:mnfFl .45s ease-out forwards}
+@keyframes mnfFl{15%{opacity:.85}100%{opacity:0}}
 #mnfPg .mnf-bg{position:absolute;inset:0;background:#05060d center/cover no-repeat;transition:opacity .7s}
 #mnfPg .mnf-st.frz{filter:grayscale(.55) brightness(.62) contrast(1.05)}
 #mnfPg .mnf-fx{position:absolute;inset:0;width:100%;height:100%;pointer-events:none;z-index:2}
@@ -29372,7 +29417,8 @@ function mnfCss(){if(document.getElementById("mnfCss"))return;const s=document.c
 #mnfPg .mnf-q.on .mnf-qi{transform:none;opacity:1}
 #mnfPg .mnf-qi svg{display:block;width:100%;height:auto;touch-action:none}
 #mnfPg .mnf-qs{margin:8px 0 0;text-align:center;font:800 19px/1.35 var(--serif,serif);color:#3b2a1a;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-#mnfPg .mnf-qh{margin:4px 0 0;text-align:center;font:800 18px/1.35 var(--serif,serif);color:#1f5fae;white-space:nowrap;min-height:0}
+#mnfPg .mnf-qh{margin:4px 0 0;text-align:center;font:800 18px/1.35 var(--serif,serif);color:#1f5fae;white-space:normal;text-wrap:balance;min-height:0}
+#mnfPg .mnf-qh.w{color:#9a2a1e}
 #mnfPg .mnf-demo{display:block;margin:8px auto 2px;min-height:48px;padding:10px 24px;border-radius:99px;border:2px solid #f2c94c;background:linear-gradient(#b3261e,#7d1611);color:#fff6dc;font:900 19px var(--serif,serif)}
 #mnfPg .mnf-qw{position:relative}
 #mnfPg .mnf-tg{fill:rgba(255,222,120,.55);stroke:#fff3c4;stroke-width:3;pointer-events:none;transform-box:fill-box;transform-origin:center;animation:mnfTg 1.1s ease-in-out infinite}
@@ -29440,7 +29486,16 @@ function mnfSfx(k){if(typeof withAudio!=="function"||typeof AC==="undefined")ret
     else if(k==="heart"&&typeof drumHit==="function"){drumHit(t,.55,46);drumHit(t+.22,.4,46)}
     else if(k==="gong"&&typeof gongHit==="function")gongHit(t,196,2.4,true);
     else if(k==="drip"&&typeof bellHit==="function")bellHit(t,1568);
-    else if((k==="star"||k==="whoosh")&&typeof opSfx==="function")opSfx(k==="star"?"lines":"suck")})}
+    else if((k==="star"||k==="whoosh")&&typeof opSfx==="function")opSfx(k==="star"?"lines":"suck");
+    else if(k==="hang"&&typeof drumHit==="function")drumHit(t,.75,40);
+    else if(k==="crack"){for(let i=0;i<5;i++)mnfNoise(t+i*.028+Math.random()*.012,.05,"highpass",1700+i*260,.7,.5*(1-i*.14));if(typeof drumHit==="function")drumHit(t,.3,95)}
+    else if(k==="whip"){mnfNoise(t,.1,"highpass",2600,.8,.75,.012);mnfNoise(t+.07,.05,"bandpass",3200,1.4,.6)}
+    else if(k==="whipf"){mnfNoise(t,.14,"bandpass",1500,1.1,.22,.02);mnfNoise(t+.08,.06,"bandpass",1900,1.4,.16)}
+    else if(k==="rain")mnfNoise(t,3.2,"lowpass",1500,.4,.16,.5)})}
+/* 雜訊音效（木裂、鞭響、雨聲）：白雜訊 → 濾波 → 音量包絡（att 秒起音、到 dur 秒淡到無聲），接音效的音量匯流排 */
+function mnfNoise(t,dur,type,f,Q,vol,att){const n=AC.createBufferSource(),len=Math.max(1,AC.sampleRate*dur|0),b=AC.createBuffer(1,len,AC.sampleRate),d=b.getChannelData(0);for(let i=0;i<len;i++)d[i]=Math.random()*2-1;
+  const fl=AC.createBiquadFilter(),g=AC.createGain(),a=att||.004;fl.type=type;fl.frequency.value=f;fl.Q.value=Q;g.gain.setValueAtTime(0,t);g.gain.linearRampToValueAtTime(vol,t+a);g.gain.exponentialRampToValueAtTime(.001,t+dur);
+  n.buffer=b;n.connect(fl);fl.connect(g);g.connect(typeof sxmDst==="function"?sxmDst("piece"):AC.destination);n.start(t);n.stop(t+dur+.05)}
 /* 電影、解題、儀式播放中（畫面上有 #mnfPg 而且不是任務卡、或有 #mnfRite）：別的 toast、修為通知（07-legend xpChip，例如解開千秋殘局 addXP 的「+35 修為」）先排隊，
    播完或跳到任務卡再照順序一則一則顯示（不丟掉、不疊在電影字幕上）；平常照舊直接顯示（開發者 11/13 看儀式截圖） */
 const MNF_Q=[];let MNF_QT=0;
@@ -29455,7 +29510,7 @@ if(typeof document!=="undefined"){document.addEventListener("visibilitychange",(
   for(const ev of["pointerdown","touchend"])document.addEventListener(ev,()=>{if(!MNF.need||!MNF.au||!MNF.mus)return;MNF.need=false;const p=MNF.au.play();if(p&&p.catch)p.catch(()=>{MNF.need=true})},{passive:true,capture:true})}
 /* ---------- 角色立繪（第一版用 2D 立繪 data/xs/prev_<角色>.webp；3D 七星之後再接） ---------- */
 function mnfWho(k){let me="";try{me=typeof myChar==="function"&&myChar()||""}catch(e){}if(k==="me")return me||"x_swordboy";if(k==="guide")return me==="x_swordboy"?"x_miaogirl":"x_swordboy";return k}
-function mnfPre(id){const F=MNF_FILMS[id];if(!F)return;const ld=u=>{const im=new Image();im.decoding="async";im.src=u};for(const S of F.shots){const I=MNF_IMG[S.img];if(I)ld(I.u)}if(mnfQteIn(F).length){ld(MNF_IMG.riteHand.u);ld(MNF_IMG.rite.u)}   /* 有危機題＝解開後要演儀式：兩張圖先載好，交叉淡入時才不會現抓 */if(F.mus&&mnfMusOk())mnfBlob(F.mus)}
+function mnfPre(id,set){const F=MNF_FILMS[id];if(!F)return;const ld=u=>{const im=new Image();im.decoding="async";im.src=u};for(const S of F.shots){const I=MNF_IMG[S.img];if(I)ld(I.u)}const RS=MNF_RITE_SET[set]||MNF_RITE_SET.c1;if(mnfQteIn(F).length){ld(MNF_IMG[RS.hand].u);ld(MNF_IMG[RS.up].u)}   /* 有危機題＝解開後要演儀式：兩張圖先載好，交叉淡入時才不會現抓 */if(F.mus&&mnfMusOk())mnfBlob(F.mus)}
 /* ---------- 播放器 ---------- */
 function mnfPlay(id,opt){opt=opt||{};const F=opt.film||MNF_FILMS[id];if(!F){if(opt.onDone)opt.onDone({skipped:true,missing:true});return null}mnfCss();
   let rm=false;try{rm=matchMedia("(prefers-reduced-motion:reduce)").matches}catch(e){}
@@ -29497,6 +29552,7 @@ function mnfPlay(id,opt){opt=opt||{};const F=opt.film||MNF_FILMS[id];if(!F){if(o
     else st.querySelectorAll(".bx-bd,.mnf-seal").forEach(same?fade:e=>e.remove());
     GL=prev&&same&&!rm?{j:pi,d:Math.min(MNF_GL,Math.max(.2,nextAt(i)-S.at))}:null;
     bg.style.backgroundImage=u;st.classList.toggle("frz",S.fx==="frz");
+    if(S.tint){const[a,z]=S.tint,dur=Math.max(.1,nextAt(i)-S.at);bg.style.transition="none";bg.style.filter=MNF_TINT[a]||"none";void bg.offsetWidth;bg.style.transition=rm?"none":`filter ${dur}s linear,opacity .7s`;bg.style.filter=MNF_TINT[z]||"none"}   /* 鏡頭內濾鏡慢慢變（壓暗轉紅、閃回去色）；同一張圖的下一鏡沒寫 tint 就維持 */
     if(!same){const b=document.createElement("i");b.style.backgroundImage=u;bk.append(b);const ob=[...bk.children].slice(0,-1);requestAnimationFrame(()=>b.classList.add("on"));setTimeout(()=>ob.forEach(x=>x.remove()),(D||0)*1000+950)}
     const keepM=S.fx==="mist"||S.fx==="frz";for(const q of P)if(!q.o&&!(keepM&&q.k==="m"))q.o=rm?1:28;
     subHide();if(!(S.who||[]).length){who.classList.remove("on")}if(!S.big)big.classList.remove("on")};
@@ -29524,6 +29580,9 @@ function mnfPlay(id,opt){opt=opt||{};const F=opt.film||MNF_FILMS[id];if(!F){if(o
     let k=kbAt(si,Math.min(t,F.end));if(GL&&t<S.at+GL.d){const q=Math.max(0,(t-S.at)/GL.d),w=q*q*(3-2*q),k0=kbAt(GL.j,t);k=k.map((v,j)=>k0[j]+(v-k0[j])*w)}else GL=null;   /* 同圖兩鏡：從舊路線滑到新路線 */
     kbNow=kbSet(st,k);if(XO)kbSet(XO.el,kbAt(XO.j,t));   /* 溶接中的舊層照原本的速度繼續推 */
     for(const[ts,k]of S.sfx||[])if(t>=ts&&!fired["s"+ts+k]){fired["s"+ts+k]=1;if(t<ts+1)mnfSfx(k)}
+    for(const[ts,k]of S.shk||[])if(t>=ts&&!fired["k"+ts]){fired["k"+ts]=1;if(!rm&&t<ts+.5){st.style.setProperty("--shk",k+"px");st.classList.remove("shk");void st.offsetWidth;st.classList.add("shk");const s0=st;setTimeout(()=>s0.classList.remove("shk"),450)}}   /* 震一下（木裂、鞭響、車要倒） */
+    for(const[ts,v,d]of S.duck||[])if(t>=ts&&!fired["d"+ts]){fired["d"+ts]=1;if(opt.vol!==0)mnfVol(v*(opt.vol==null?1:opt.vol),d)}   /* 配樂音量（閃回壓到幾乎靜默、回到現在一下子全開） */
+    if(S.flash!=null&&t>=S.flash&&!fired.fl){fired.fl=1;if(!rm&&t<S.flash+.4){const f=document.createElement("div");f.className="mnf-fl";o.insertBefore(f,cv);setTimeout(()=>f.remove(),520)}}   /* 白閃（快溶進出閃回） */
     {let cur=null;for(const x of S.say||[])if(t>=x[0])cur=x;if(cur&&fired.say!==cur[0]){fired.say=cur[0];subSet(cur[1])}}
     for(const[ts,k,sd]of S.who||[])if(t>=ts&&!fired["w"+ts]){fired["w"+ts]=1;const wu=`url(data/xs/prev_${mnfWho(k)}.webp)`,wc="mnf-who "+(sd||"l");if(who.classList.contains("on")&&who.dataset.u===wu&&who.className.startsWith(wc))continue;   /* 同一個人、同一邊已經在畫面上：不重新進場 */
       who.className=wc;who.style.backgroundImage=wu;who.dataset.u=wu;void who.offsetWidth;who.classList.add("on")}
@@ -29541,6 +29600,8 @@ function mnfFx(g,S,t,W,H,P,add,onScr,cover,fired){const src=onScr(cover(S.src||[
   if(fx==="whirl")for(let k=0;k<2;k++){const a=R()*6.283,r=Math.max(W,H)*.6;add(src[0]+Math.cos(a)*r,src[1]+Math.sin(a)*r*.6,0,0,140,.8+R()*1.6,R()<.5?"170,130,255":"200,225,255","w")}
   if(fx==="river"&&R()<.8)add(src[0]+(R()-.5)*W*.5,H+8,(R()-.5)*.4,-1.2-R()*1.6,H/1.6,.6+R()*1.4,"200,232,255");
   if(fx==="ink"&&R()<.06)add(src[0]+(R()-.5)*W*.6,src[1]+(R()-.5)*H*.18,0,0,110,4,"10,10,16","i");
+  if(fx==="dust"&&R()<.22)add(src[0]+(R()-.5)*W*.55,src[1]+(R()-.5)*30,(R()-.5)*.5,-.12-R()*.3,130+R()*80,16+R()*28,"205,168,112","d");   /* 塵土：貼地騰起、慢慢散 */
+  if(fx==="rain")for(let k=0;k<3;k++)add(R()*W*1.25-W*.05,-20-R()*40,-2.4,15+R()*6,90,1,"205,218,236","r");   /* 斜雨線 */
   if(fx==="burst"&&!fired.bu){fired.bu=1;for(let k=0;k<110;k++){const a=R()*6.283,v=1+R()*6;add(src[0],src[1],Math.cos(a)*v,Math.sin(a)*v,50+R()*50,1+R()*2.4,R()<.5?"255,236,170":"190,240,220")}}
   g.globalCompositeOperation="lighter";
   if(fx==="gates"){const n=Math.min(13,Math.floor((t-S.at)/.2)+1);for(let i=0;i<n;i++){const a=Math.PI*(.08+.84*i/12),x=W/2-Math.cos(a)*W*.44,y=H*.3-Math.sin(a)*H*.15,tw=.75+.25*Math.sin(t*3+i),rr=7+2*tw,gr=g.createRadialGradient(x,y,0,x,y,rr*2);
@@ -29548,7 +29609,9 @@ function mnfFx(g,S,t,W,H,P,add,onScr,cover,fired){const src=onScr(cover(S.src||[
       g.fillStyle=`rgba(255,252,236,${tw})`;g.beginPath();g.arc(x,y,2.4,0,6.2832);g.fill();g.strokeStyle=`rgba(255,226,150,${.7*tw})`;g.lineWidth=1.2;g.beginPath();g.arc(x,y,rr*.9,Math.PI,0);g.lineTo(x+rr*.9,y+rr*.9);g.moveTo(x-rr*.9,y);g.lineTo(x-rr*.9,y+rr*.9);g.stroke()}}
   for(let j=P.length-1;j>=0;j--){const q=P[j];q.l++;if(q.o&&--q.o<=0){P.splice(j,1);continue}   /* q.o＝換鏡頭後的淡出倒數（格），不再一刀清空 */
     if(q.k==="w"&&!q.o){const dx=src[0]-q.x,dy=src[1]-q.y,d=Math.hypot(dx,dy)||1;q.vx=q.vx*.95+(dx/d)*.7+(-dy/d)*1;q.vy=q.vy*.95+(dy/d)*.7+(dx/d)*1;if(d<10)q.l=q.m}
-    q.x+=q.vx;q.y+=q.vy;const al=Math.max(0,1-q.l/q.m)*Math.min(1,q.l/10)*(q.o?q.o/28:1);if(al<=0||q.x>W+200||q.y<-40){P.splice(j,1);continue}
+    q.x+=q.vx;q.y+=q.vy;const al=q.k==="r"?(q.o?q.o/28:1):Math.max(0,1-q.l/q.m)*Math.min(1,q.l/10)*(q.o?q.o/28:1);if(al<=0||q.x>W+200||q.y<-40&&q.k!=="r"||q.y>H+40||q.l>q.m){P.splice(j,1);continue}
+    if(q.k==="r"){g.globalCompositeOperation="source-over";g.strokeStyle=`rgba(${q.col},${.42*al})`;g.lineWidth=1.1;g.beginPath();g.moveTo(q.x,q.y);g.lineTo(q.x-q.vx*1.8,q.y-q.vy*1.8);g.stroke();g.globalCompositeOperation="lighter";continue}
+    if(q.k==="d"){g.globalCompositeOperation="source-over";const gr=g.createRadialGradient(q.x,q.y,0,q.x,q.y,q.r+q.l*.15);gr.addColorStop(0,`rgba(${q.col},${.2*al})`);gr.addColorStop(1,`rgba(${q.col},0)`);g.fillStyle=gr;g.fillRect(q.x-q.r-q.l*.15,q.y-q.r-q.l*.15,(q.r+q.l*.15)*2,(q.r+q.l*.15)*2);g.globalCompositeOperation="lighter";continue}
     if(q.k==="m"){g.globalCompositeOperation="source-over";const gr=g.createRadialGradient(q.x,q.y,0,q.x,q.y,q.r);gr.addColorStop(0,`rgba(${q.col},${.16*Math.min(1,q.l/60)*al})`);gr.addColorStop(1,`rgba(${q.col},0)`);g.fillStyle=gr;g.fillRect(q.x-q.r,q.y-q.r,q.r*2,q.r*2);g.globalCompositeOperation="lighter";continue}
     if(q.k==="i"){g.globalCompositeOperation="source-over";const rr=q.r+q.l*.5;g.fillStyle=`rgba(${q.col},${.32*al})`;g.beginPath();g.arc(q.x,q.y,rr,0,6.2832);g.fill();g.globalCompositeOperation="lighter";continue}
     const tw=q.k==="t"?.5+.5*Math.sin(q.l*.15+q.x):1;g.fillStyle=`rgba(${q.col},${al*.9*tw})`;g.beginPath();g.arc(q.x,q.y,q.r,0,6.2832);g.fill()}
@@ -29558,7 +29621,7 @@ function mnfQte(host,P,done){const C=typeof window!=="undefined"&&window.XQCore;
   if(!C||!P||typeof Board!=="function"){setTimeout(()=>done({mist:0,hint:false,demo:true,cn:"",skip:1}),600);return}
   const w=document.createElement("div");w.className="mnf-q";w.innerHTML=`<div class="mnf-qi"><div class="mnf-qw"></div><p class="mnf-qs">${esc(P.say||"")}</p><p class="mnf-qh" aria-live="polite"></p><div class="mnf-qd"></div></div>`;host.append(w);
   const wrap=w.querySelector(".mnf-qw"),hintE=w.querySelector(".mnf-qh"),dE=w.querySelector(".mnf-qd");
-  const side=P.side||"r",b0=C.parseFen(String(P.fen).split(" ")[0]),line=(P.line||[]).slice();let b=b0.slice(),step=0,sel=-1,last=null,busy=false,mist=0,hintOn=false,demo=false,cn=[];
+  const side=P.side||"r",b0=C.parseFen(String(P.fen).split(" ")[0]),lines=[P.line||[],...(P.alt||[])].map(L=>L.slice()),pl=[];let line=lines[0].slice(),b=b0.slice(),step=0,sel=-1,last=null,busy=false,mist=0,hintOn=false,demo=false,cn=[];   /* pl＝到目前為止走過的著法（含對方應著）；第一手照 alt 走就換成那一條線 */
   const sq=u=>[C.parseSq(u.slice(0,2)),C.parseSq(u.slice(2,4))],want=()=>line[step*2]||"",ck=bb=>C.inCheck(bb,"r")?C.kingSq(bb,"r"):C.inCheck(bb,"b")?C.kingSq(bb,"b"):-1;
   const bd=Board(x=>tap(x));wrap.append(bd.svg);
   const tg=()=>sel>=0?C.legal(b,side).filter(([f])=>f===sel).map(x=>x[1]):[];
@@ -29569,15 +29632,21 @@ function mnfQte(host,P,done){const C=typeof window!=="undefined"&&window.XQCore;
   const win=()=>{busy=true;hintE.textContent="";dE.innerHTML="";mnfSfx("gong");if(typeof vibrate==="function")vibrate([15,40,25]);lit(last.t);
     setTimeout(()=>{w.classList.add("done");setTimeout(()=>{w.remove();done({mist,hint:hintOn,demo,cn:cn.join("　")})},900)},700)};
   const wrong=(nb,f,t)=>{busy=true;mist++;b=nb;last={f,t};sel=-1;draw({targets:[]});wrap.classList.add("shk");if(typeof vibrate==="function")vibrate([20,40,20]);mnfSfx("drum");
+    /* 題目指定的陷阱著法（P.wrong）：先顯示那句台詞，對方吃得回來就真的吃回給玩家看，再倒帶 */
+    const msg=P.wrong&&P.wrong[C.iccs(f,t)];if(msg){hintE.textContent=msg;hintE.classList.add("w");setTimeout(()=>{const R=C.legal(nb,C.opp(side)).find(x=>x[1]===t);if(R){b=C.make(nb,R[0],R[1]);last={f:R[0],t:R[1]};draw({targets:[]});mnfSfx("drum")}},560)}
     setTimeout(()=>{wrap.classList.remove("shk");wrap.classList.add("rew");setTimeout(()=>{wrap.classList.remove("rew");b=bstep.slice();last=lastStep;
-      if(mist>=2&&!hintOn){hintOn=true;hintE.textContent=P.hint||"看藍框那顆棋子。"}
+      if(hintOn&&hintE.classList.contains("w")){hintE.classList.remove("w");hintE.textContent=P.hint||"看藍框那顆棋子。"}
+      if(mist>=2&&!hintOn){hintOn=true;hintE.classList.remove("w");hintE.textContent=P.hint||"看藍框那顆棋子。"}
       if(mist>=3&&!dE.firstChild){const bt=document.createElement("button");bt.type="button";bt.className="mnf-demo";bt.textContent="看軍師演示";bt.onclick=e=>{e.stopPropagation();playDemo()};dE.append(bt)}
-      presel();busy=false;draw()},520)},620)};
+      presel();busy=false;draw()},520)},msg?1700:620)};
   let bstep=b.slice(),lastStep=null;
-  const go=(f,t)=>{const J=mnfQteJudge(C,b,side,f,t,want());cn.push(C.notate(b,f,t));
+  const go=(f,t)=>{const u=C.iccs(f,t),L2=lines.find(L=>pl.every((x,i)=>L[i]===x)&&L[pl.length]===u);if(L2)line=L2.slice();   /* 走的是另一條對的線（例如九路、八路都行）：照那一條往下 */
+    const J=mnfQteJudge(C,b,side,f,t,want());cn.push(C.notate(b,f,t));
     if(!J.ok){cn.pop();return wrong(J.nb,f,t)}
+    if(hintE.classList.contains("w")){hintE.classList.remove("w");hintE.textContent=hintOn?(P.hint||""):""}
     b=J.nb;last={f,t};sel=-1;draw({targets:[]});if(typeof vibrate==="function")vibrate(15);
     if(J.win||!line[step*2+1]){win();return}
+    pl.push(u,line[step*2+1]);
     busy=true;setTimeout(()=>{const[f2,t2]=sq(line[step*2+1]);b=C.make(b,f2,t2);last={f:f2,t:t2};step++;bstep=b.slice();lastStep=last;presel();busy=false;draw()},600)};
   function tap(x){if(busy)return;const L=C.legal(b,side);if(sel>=0&&L.some(([f,t])=>f===sel&&t===x)){const f=sel;return go(f,x)}sel=L.some(([f])=>f===x)?x:-1;if(sel>=0&&typeof vibrate==="function")vibrate(5);draw()}
   function playDemo(){if(busy)return;demo=true;busy=true;dE.innerHTML="";hintE.textContent="軍師：看好了——";const u=want();if(!u){win();return}const[f,t]=sq(u);sel=f;draw();
@@ -29590,7 +29659,7 @@ function mnfTgGlow(svg,T){const NS="http://www.w3.org/2000/svg";svg.querySelecto
 function mnfSolveRite(o){o=o||{};mnfCss();let rm=false;try{rm=matchMedia("(prefers-reduced-motion:reduce)").matches}catch(e){}
   const A=(()=>{try{return store.get("shipSolved",{})||{}}catch(e){return{}}})(),per=typeof SHIP_PER!=="undefined"?SHIP_PER:3,route=typeof SHIP_ROUTE!=="undefined"?SHIP_ROUTE:[o.k];
   const cnt=mnfRiteCount(A,route,per),rows=mnfRiteRows(A,o.k,o.L,per),me=rows.findIndex(r=>r.id===o.id),st=o.state||"new";
-  const nm=(typeof QP_SEAL!=="undefined"&&QP_SEAL[o.k])||(typeof shipShort==="function"?(()=>{try{return shipShort(o.k)}catch(e){return""}})():""),R=MNF_RITE_SET[o.set]||MNF_RITE_SET.c1,I=MNF_IMG[R.up],IW=I.w||MNF_W,IH=I.h||MNF_H;
+  const nm=(typeof QP_SEAL!=="undefined"&&QP_SEAL[o.k])||(typeof shipShort==="function"?(()=>{try{return shipShort(o.k)}catch(e){return""}})():""),R=MNF_RITE_SET[o.set]||MNF_RITE_SET.c1,TX=Object.assign({},MNF_RITE_TXT,R.txt||{}),I=MNF_IMG[R.up],IW=I.w||MNF_W,IH=I.h||MNF_H;
   const d=document.createElement("div");d.id="mnfRite";d.setAttribute("role","dialog");d.setAttribute("aria-label","殘譜補上一行");
   const CN=["一","二","三","四","五","六"];
   const rowH=rows.map((r,i)=>{const txt=r.id===o.id?(o.cn||"──"):r.on?"〰〰〰":"";const isMe=i===me&&st!=="demo";
@@ -29604,7 +29673,7 @@ function mnfSolveRite(o){o=o||{};mnfCss();let rm=false;try{rm=matchMedia("(prefe
   const place=(k,f)=>{const w=W(),h=H(),s=Math.max(w/IW,h/IH)*k,ox=Math.min(0,Math.max(w-IW*s,w*.5-f[0]*s)),oy=Math.min(0,Math.max(h-IH*s,h*.42-f[1]*s));
     im.style.width=IW*s+"px";im.style.height=IH*s+"px";im.style.transform=`translate(${ox}px,${oy}px)`};
   dot.style.left=R.fx[0]/IW*100+"%";dot.style.top=R.fx[1]/IH*100+"%";dot.style.width=R.dw+"%";dot.style.transform=`translate(-50%,-50%) rotate(${R.rot}deg)`;
-  const n=Math.max(...Object.values(MNF_RITE_TXT).map(mnfLen));d.style.setProperty("--mnfs",Math.max(15,Math.min(28,Math.floor((W()-36)/(n*1.12))))+"px");
+  const n=Math.max(...Object.values(TX).map(mnfLen));d.style.setProperty("--mnfs",Math.max(15,Math.min(28,Math.floor((W()-36)/(n*1.12))))+"px");
   const say=t=>{sub.classList.remove("on");sub.textContent=t;void sub.offsetWidth;sub.classList.add("on")};
   const T=[],at=(s,f)=>T.push(setTimeout(f,rm?Math.min(s*1000,s*300):s*1000));let fin=false,k0=performance.now(),raf=0;
   const up=d.querySelector(".rt-up"),sm=x=>x<=0?0:x>=1?1:x*x*(3-2*x),[K0,K1,K2]=R.k;
@@ -29613,15 +29682,15 @@ function mnfSolveRite(o){o=o||{};mnfCss();let rm=false;try{rm=matchMedia("(prefe
   const zoom=()=>{if(fin)return;const t=(performance.now()-k0)/1000;place(...zf(t));if(t<5)raf=requestAnimationFrame(zoom)};zoom();
   const end=()=>{if(fin)return;fin=true;T.forEach(clearTimeout);cancelAnimationFrame(raf);d.classList.remove("on");setTimeout(()=>d.remove(),850);if(o.onDone)setTimeout(o.onDone,300)};   /* 淡出 0.8 秒；0.3 秒就讓電影在底下接著播，儀式和下一鏡（open 河口打通）疊著溶接 */
   d.querySelector(".mnf-k").onclick=e=>{e.stopPropagation();if(typeof vibrate==="function")vibrate(5);end()};
-  at(.3,()=>say(MNF_RITE_TXT.hand));
+  at(.3,()=>say(TX.hand));
   at(1.6,()=>{im.classList.add("mv");up.classList.add("on")});
   at(2.4,()=>im.classList.remove("mv"));
   at(2.6,()=>{dot.classList.add("on");mnfSfx("drip")});
-  at(2.9,()=>say(MNF_RITE_TXT.glow));
-  at(4.9,()=>{stg.style.opacity=".28";bk.classList.add("on");say(st==="demo"?MNF_RITE_TXT.demo:st==="old"?MNF_RITE_TXT.old:MNF_RITE_TXT.line)});
+  at(2.9,()=>say(TX.glow));
+  at(4.9,()=>{stg.style.opacity=".28";bk.classList.add("on");say(st==="demo"?TX.demo:st==="old"?TX.old:TX.line)});
   at(5.5,()=>{bk.classList.add("op");mnfSfx("star")});
   if(st==="new")at(6.2,()=>{const cs=[...d.querySelectorAll(".rt-r.nw span.c")];cs.forEach((c,i)=>T.push(setTimeout(()=>c.classList.add("on"),rm?0:i*220)));const r=d.querySelector(".rt-r.nw");if(r)T.push(setTimeout(()=>r.classList.add("on"),cs.length*220))});
-  at(7.2,()=>say(st==="demo"?MNF_RITE_TXT.demo2:MNF_RITE_TXT.rule));
+  at(7.2,()=>say(st==="demo"?TX.demo2:TX.rule));
   at(9.3,end);
   return{end,count:cnt,rows}}
 /* ================= ⛵ 主線任務「星槎遠征令」＋首頁「下一步」＋三個大禮包（開發者 11/13 新手體驗第一波；定案 story/新手體驗定案_141_兩輪討論.md）=================
@@ -29636,34 +29705,56 @@ function mnfSolveRite(o){o=o||{};mnfCss();let rm=false;try{rm=matchMedia("(prefe
    危機解開（mnqSolved）：照玩家本命子出船艙站那一題劇情局（07f SHIP_PLAN.classic，xs-classic-<本命子>），解開就照千秋殘局記一題（shipMark），
      殘局解開儀式的殘譜行數、刻痕段數都照 shipSolved（07mnf mnfRiteCount）；看軍師演示的不記（千秋殘局看答案也不算解開）。
    新手保護：主線裡解題的比例要低（定案 ≤30%）：第 1 章三段只有 1 題 1 步，mnqPuzzleShare 算出來給測試檢查。
-   存檔 store "mnq"（JOURNEY_KEYS 的 m_mnq，讀檔、開新旅程跟著換）＝{seg:{c1o,c1m,c1e:看完時間}, qte:{c1:{mist,hint,demo,at}}, lamp:{朝代:亮燈時間}, gift:{a1,a2,a6:{朝代:時間}},
+   11/14 第二章「秦・日落之前」接上：各章資料集中在 MNQ_CHAP（加一章只加資料），下一步在第一章、禮包之後接「第二章起還沒看完、已開放的章」，沒開放就帶去星槎開船（k:"ship"）。
+   存檔 store "mnq"（JOURNEY_KEYS 的 m_mnq，讀檔、開新旅程跟著換）＝{seg:{c1o,c1m,c1e,c2o…:看完時間}, qte:{c1,c2…:{mist,hint,demo,at}}, lamp:{朝代:亮燈時間}, reach:{朝代:星槎第一次停到的時間}, gift:{a1,a2,a6:{朝代:時間}},
      title:{xin,chu}, page:[札記頁朝代], music:["朝代/檔名"], clue:{朝代:線索}, a2cj:額外題號}。
    自動跳禮包（mnqTick）只在首頁、星槎頁、沒有別的視窗時；無頭瀏覽器（navigator.webdriver）不自動跳，免得擋到別的自動測試（localStorage xq_mnqQa＝"1" 才跳，給本模組的實測用）。
    名稱前綴 mnq／MNQ（11/13 已 grep 確認沒人用）。 */
 const MNQ_CH=[["classic","古典・河圖初渡"],["qin","秦・日落之前"],["han","漢・長安星火"],["sanguo","三國・赤壁連環"],["weijin","魏晉・竹林清談"],["nanbei","南北朝・飛燕過河"],["sui","隋・運河聽潮"],
   ["tang","唐・長安燈會"],["wudai","五代・驛路風旗"],["song","宋・汴梁點茶"],["yuan","元・草原星路"],["ming","明・徽州當鋪"],["qing","清・揚州急遞"]];
-const MNQ_SEGS={classic:["c1o","c1m","c1e"]};
-const MNQ_SEG_NM={c1o:"河圖初渡",c1m:"破局",c1e:"古典之印"};
+/* 主線各章的資料（11/14 接第二章時整理）：加一章＝這裡加一筆，07mnf 加圖（MNF_IMG）、三段電影（MNF_FILMS）、危機題（MNF_QTE）、儀式圖組（MNF_RITE_SET），流程程式不用改。
+   格式說明：story/主線電影_加一章的資料格式.md。
+   segs 三段電影（開章、危機、章末）、nm 各段的名字（遠征令、札記、電影的無障礙標籤用）；qte＝MNF_QTE 的危機題代號；set＝MNF_RITE_SET 的儀式圖組；
+   rite："solve" 解開當下就演儀式、演完才回電影（第一章）／"end" 危機那段（segs[1]）播完才演、演完接章末（第二章：先看「車有路了」再回船艙）；
+   open："start" 一開始就開放（第一章）／"reach" 前面有資料的章都看完、而且星槎停到過這一朝（S.reach，或已領那一朝的遠征補給）才開放（開發者 11/14 定） */
+const MNQ_CHAP={
+  classic:{segs:["c1o","c1m","c1e"],nm:{c1o:"河圖初渡",c1m:"破局",c1e:"古典之印"},qte:"c1",set:"c1",rite:"solve",open:"start"},
+  qin:{segs:["c2o","c2m","c2e"],nm:{c2o:"日落之前",c2m:"找路",c2e:"秦之印"},qte:"c2",set:"c2",rite:"end",open:"reach"}};
+const MNQ_SEGS=Object.fromEntries(Object.entries(MNQ_CHAP).map(([e,c])=>[e,c.segs]));
+const MNQ_SEG_NM=Object.assign({},...Object.values(MNQ_CHAP).map(c=>c.nm));
+const MNQ_CN=["一","二","三","四","五","六","七","八","九","十","十一","十二","十三"];
+const mnqChN=era=>MNQ_CH.findIndex(c=>c[0]===era)+1;
+const mnqShort=era=>String((MNQ_CH.find(c=>c[0]===era)||[0,era])[1]).split("・")[0];
 const MNQ_GIFT={a1:{nm:"七星授印禮",seal:"授",say:"七星授印已成，雲河星槎為你點亮第一段航路。"},a2:{nm:"破局錦囊",seal:"勝",say:"你破開第一局迷霧，這份錦囊記下你的初勝。"},
   a6:{nm:"朝代遠征補給",seal:"補",say:"新朝渡口已至，請收下此地的樂聲、線索與圖鑑。"}};
 const MNQ_HINT_A1=5;
 /* ---------- 存檔、環境 ---------- */
-function mnqSt(){let s=null;try{s=store.get("mnq",null)}catch(e){}s=s&&typeof s==="object"?s:{};for(const k of["seg","qte","lamp","gift","title","clue"])if(!s[k]||typeof s[k]!=="object")s[k]={};
+function mnqSt(){let s=null;try{s=store.get("mnq",null)}catch(e){}s=s&&typeof s==="object"?s:{};for(const k of["seg","qte","lamp","gift","title","clue","reach"])if(!s[k]||typeof s[k]!=="object")s[k]={};
   if(!s.gift.a6||typeof s.gift.a6!=="object")s.gift.a6={};for(const k of["page","music"])if(!Array.isArray(s[k]))s[k]=[];return s}
 const mnqSave=s=>{try{store.set("mnq",s)}catch(e){}};
 function mnqWins(){try{const R=JSON.parse(localStorage.getItem("xq_record")||"null")||{};return Object.values(R).reduce((a,v)=>a+((v&&v.w)|0),0)}catch(e){return 0}}
 function mnqEnv(){const E={hasChar:false,firstWin:false,home:"",at:"",homeLabel:""};
   try{const c=typeof myChar==="function"?myChar():"";E.hasChar=!!c;const J=typeof journey==="function"?journey():null;E.home=(J&&(J.home||(typeof CHAR_ERA!=="undefined"&&CHAR_ERA[J.c])))||""}catch(e){}
   E.firstWin=mnqWins()>0;try{E.at=store.get("shipAt",null)||""}catch(e){}try{E.homeLabel=E.home&&typeof eraLabel==="function"?eraLabel(E.home):""}catch(e){}return E}
-/* ---------- 純計算：下一步 ---------- */
+/* ---------- 純計算：章的進度、下一步 ---------- */
+function mnqDone(S,era){const L=MNQ_SEGS[era],seg=(S&&S.seg)||{};return!!L&&L.every(id=>seg[id])}
+/* 這一章開放了沒：要有資料；open:"start" 一開始就開；"reach" 要前面有資料的章都看完，而且星槎停到過這一朝（S.reach／領過那一朝的遠征補給／現在就停在那一朝） */
+function mnqOpen(S,E,era){const C=MNQ_CHAP[era];if(!C)return false;if(C.open==="start")return true;S=S||{};const i=MNQ_CH.findIndex(c=>c[0]===era);
+  for(let j=0;j<i;j++){const e=MNQ_CH[j][0];if(MNQ_CHAP[e]&&!mnqDone(S,e))return false}
+  return!!((S.reach||{})[era]||((S.gift||{}).a6||{})[era]||(E&&E.at===era))}
 function mnqNextOf(S,E){S=S||{seg:{},gift:{a6:{}},lamp:{}};E=E||{};const G=S.gift||{},A6=G.a6||{},seg=S.seg||{};
   if(E.hasChar&&!G.a1)return{k:"gift",g:"a1",t:"七星授印"};
-  for(const id of MNQ_SEGS.classic)if(!seg[id])return{k:"film",id,t:MNQ_SEG_NM[id]};
+  for(const id of MNQ_SEGS.classic)if(!seg[id])return{k:"film",era:"classic",id,t:MNQ_SEG_NM[id]};
   if(E.firstWin&&!G.a2)return{k:"gift",g:"a2",t:"破局錦囊"};
   if(E.at&&E.at!=="classic"&&MNQ_CH.some(c=>c[0]===E.at)&&!A6[E.at])return{k:"gift",g:"a6",era:E.at,t:"遠征補給"};
+  /* 第二章起：照章序找第一個還沒看完的章；開放了就接著看（看到哪段接哪段），還沒開放就停下來（後面再看要不要叫玩家開船過去） */
+  for(const[e]of MNQ_CH){if(e==="classic"||!MNQ_CHAP[e]||mnqDone(S,e))continue;if(!mnqOpen(S,E,e))break;const id=MNQ_SEGS[e].find(x=>!seg[x]);return{k:"film",era:e,id,t:MNQ_SEG_NM[id]}}
   if(!E.firstWin)return{k:"cpu",t:"贏第一盤"};
   if(E.home&&E.at!==E.home&&!A6[E.home])return{k:"home",era:E.home,t:"回"+(E.homeLabel||"家鄉")};
-  return{k:"panel",t:"星槎遠征令"}}
+  const nx=MNQ_CH.find(([e])=>MNQ_CHAP[e]&&!mnqDone(S,e));
+  if(nx)return{k:"ship",era:nx[0],t:"開往"+mnqShort(nx[0])+"・第"+MNQ_CN[mnqChN(nx[0])-1]+"章"};   /* 下一章有資料、還沒停到那一朝：帶去星槎開船 */
+  const soon=MNQ_CH.findIndex(([e])=>!MNQ_CHAP[e]);
+  return soon<0?{k:"panel",t:"星槎遠征令"}:{k:"panel",t:"星槎遠征令",soon:soon+1}}
 /* 主線解題比例（定案 ≤30%）：每段電影的秒數 vs 危機題預估秒數 */
 function mnqPuzzleShare(era){const L=MNQ_SEGS[era||"classic"]||[];let film=0,pz=0;for(const id of L){const F=MNF_FILMS[id];if(!F)continue;film+=F.end;for(const q of mnfQteIn(F))pz+=(MNF_QTE[q]&&MNF_QTE[q].est)||20}return{film,pz,share:pz/Math.max(1,film+pz)}}
 /* ---------- 大禮包：發東西（只發一次；回傳 false＝已經發過） ---------- */
@@ -29733,39 +29824,46 @@ function mnqGift(k,era,after){mnqCss();const G=MNQ_GIFT[k];if(!G)return;const go
   try{o.querySelector("#mnqGf1").focus({preventScroll:true})}catch(e){}return got}
 /* ---------- 任務卡（章末、跳過後）：大字寫現在要做什麼 ---------- */
 function mnqNextCard(n){n=n||mnqNextOf(mnqSt(),mnqEnv());return{t:mnqNextTxt(n),b:"出發",g:"回首頁"}}
-const mnqNextTxt=n=>n.k==="panel"?"第二章即將開放":n.t;
+const mnqNextTxt=n=>n.k==="panel"?(n.soon?"第"+MNQ_CN[n.soon-1]+"章即將開放":n.t):n.t;
 function mnqTaskCard(n){mnqCss();n=n||mnqNextOf(mnqSt(),mnqEnv());const old=document.getElementById("mnqCard");if(old)old.remove();
   const o=document.createElement("div");o.id="mnqCard";o.setAttribute("role","dialog");o.setAttribute("aria-label","下一步："+mnqNextTxt(n));
   o.innerHTML=`<div class="cd-k">下一步</div><b>${esc(mnqNextTxt(n))}</b><div class="gf-b"><button type="button">出發</button><button type="button" class="g">回首頁</button></div>`;document.body.append(o);requestAnimationFrame(()=>o.classList.add("on"));
   const[b1,b2]=o.querySelectorAll("button"),close=()=>{o.classList.remove("on");setTimeout(()=>o.remove(),360);mnqHomeSync()};
   b1.onclick=()=>{close();mnqGo(n)};b2.onclick=()=>{close();if(!/^#?\/?$/.test(location.hash||""))location.hash="#/"};try{b1.focus({preventScroll:true})}catch(e){}}
-/* ---------- 第 1 章 ---------- */
-function mnqQteId(){let pc="俥";try{const c=typeof myChar==="function"&&myChar();pc=(c&&WX_CHARS[c].pc)||store.get("botPiece","俥")||"俥"}catch(e){}
-  let id=MNF_QTE.c1.id;try{if(typeof SHIP_PLAN!=="undefined"&&SHIP_PLAN.classic&&typeof SHIP_PLAN.classic.story==="function")id=SHIP_PLAN.classic.story(pc);else if(typeof SHIP_PC!=="undefined"&&SHIP_PC[pc])id="xs-classic-"+SHIP_PC[pc]}catch(e){}return{id,pc}}
-/* 危機題＝船艙站那一題劇情局（一盞茶題庫 cjData 併進來的 ship-set.json）；載不到就用預設那題（記進度時會對題號，不會記錯題） */
-async function mnqQteFor(){const base=Object.assign({},MNF_QTE.c1),{id,pc}=mnqQteId();
-  try{const D=await Promise.race([cjData(),new Promise((_,j)=>setTimeout(()=>j(0),6000))]),X=D&&D.byId&&D.byId[id];if(X&&X.fen&&X.line)return Object.assign(base,{id,fen:X.fen,side:X.side||"r",line:X.line,hint:`看你的本命棋子「${pc}」！`})}catch(e){}
+/* ---------- 一章：開章 → 危機（解題＋儀式）→ 章末；照 MNQ_CHAP[朝代] 的資料走 ---------- */
+/* 危機題題號：SHIP_PLAN[朝代].story 是函式＝照本命子換題（第一章船艙站）、是字串＝固定那一題（第二章 xs-qin-0）；都沒有就用 MNF_QTE 的預設題 */
+function mnqQteId(era){era=era||"classic";const C=MNQ_CHAP[era]||MNQ_CHAP.classic;let pc="俥";try{const c=typeof myChar==="function"&&myChar();pc=(c&&WX_CHARS[c].pc)||store.get("botPiece","俥")||"俥"}catch(e){}
+  let id=MNF_QTE[C.qte].id,byPc=false;try{const PL=typeof SHIP_PLAN!=="undefined"&&SHIP_PLAN[era];
+    if(PL&&typeof PL.story==="function"){id=PL.story(pc);byPc=true}else if(PL&&typeof PL.story==="string")id=PL.story;else if(era==="classic"&&typeof SHIP_PC!=="undefined"&&SHIP_PC[pc]){id="xs-classic-"+SHIP_PC[pc];byPc=true}}catch(e){}return{id,pc,byPc}}
+/* 危機題＝那一站的劇情局（一盞茶題庫 cjData 併進來的 ship-set.json）；載不到就用預設那題（記進度時會對題號，不會記錯題）；固定題而且就是預設題＝直接用 MNF_QTE（含 alt 兩解、wrong 台詞） */
+async function mnqQteFor(era){era=era||"classic";const C=MNQ_CHAP[era]||MNQ_CHAP.classic,base=Object.assign({},MNF_QTE[C.qte]),{id,pc,byPc}=mnqQteId(era);if(id===base.id&&!byPc)return base;
+  try{const D=await Promise.race([cjData(),new Promise((_,j)=>setTimeout(()=>j(0),6000))]),X=D&&D.byId&&D.byId[id];
+    if(X&&X.fen&&X.line){const o={id,fen:X.fen,side:X.side||"r",line:X.line};if(id!==base.id){o.alt=null;o.wrong=null}if(byPc)o.hint=`看你的本命棋子「${pc}」！`;return Object.assign(base,o)}}catch(e){}
   return base}
-/* 危機解開：記千秋殘局（看演示不記）→ 殘局解開儀式 → 接回電影 */
-function mnqSolved(P,r,go){const S=mnqSt();S.qte.c1={mist:r.mist|0,hint:!!r.hint,demo:!!r.demo,at:Date.now()};mnqSave(S);
-  let state="demo";if(!r.demo&&!r.skip&&P.id===mnqQteId().id){state="old";try{if(typeof shipMark==="function"){const m=shipMark("classic",P.id,{hint:r.hint});state=m&&m.first?"new":"old"}}catch(e){}}
-  let L=null;try{L=typeof shipPuzzles==="function"?shipPuzzles("classic"):null}catch(e){}
-  mnfSolveRite({k:"classic",id:P.id,cn:r.cn,state,L,onDone:go})}
-function mnqChapter(era){era=era||"classic";const segs=MNQ_SEGS[era];if(!segs)return toast("這一章即將開放");const S=mnqSt();
+/* 危機解開：記千秋殘局（看演示不記）→ 殘局解開儀式（rite:"solve" 當下演完才回電影；"end" 先回電影，回傳儀式資料給 mnqChapter 等危機那段播完再演） */
+function mnqSolved(era,P,r,go){const C=MNQ_CHAP[era]||MNQ_CHAP.classic,S=mnqSt();S.qte[C.qte]={mist:r.mist|0,hint:!!r.hint,demo:!!r.demo,at:Date.now()};mnqSave(S);
+  let state="demo";if(!r.demo&&!r.skip&&P.id===mnqQteId(era).id){state="old";try{if(typeof shipMark==="function"){const m=shipMark(era,P.id,{hint:r.hint});state=m&&m.first?"new":"old"}}catch(e){}}
+  let L=null;try{L=typeof shipPuzzles==="function"?shipPuzzles(era):null}catch(e){}
+  const R={k:era,id:P.id,cn:r.cn,state,L,set:C.set};if(C.rite==="end"){go();return R}
+  mnfSolveRite(Object.assign(R,{onDone:go}));return R}
+function mnqChapter(era){era=era||"classic";const C=MNQ_CHAP[era],segs=C&&C.segs;if(!segs)return toast("這一章即將開放");const S=mnqSt();
   let i=segs.findIndex(id=>!S.seg[id]);if(i<0)i=0;try{mnfMusic(MNF_FILMS[segs[i]].mus)}catch(e){}   /* 點選當下先開配樂（iPhone） */
-  const P=Object.assign({},MNF_QTE.c1);mnqQteFor().then(x=>Object.assign(P,x)).catch(()=>{});segs.forEach(mnfPre);
+  const P=Object.assign({},MNF_QTE[C.qte]);mnqQteFor(era).then(x=>Object.assign(P,x)).catch(()=>{});segs.forEach(id=>mnfPre(id,C.set));
+  const N="第"+MNQ_CN[mnqChN(era)-1]+"章・";let rite=null;
   const play=j=>{const id=segs[j],lastSeg=j===segs.length-1;
-    mnfPlay(id,{label:"第一章・"+MNQ_SEG_NM[id],keepMusic:!lastSeg,qte:{c1:P},onQte:(q,r,go)=>mnqSolved(P,r,go),card:lastSeg?()=>{mnqMark(id,era);return mnqNextCard()}:null,
-      onDone:res=>{mnqMark(id,era);if(!lastSeg)return play(j+1);mnfMusicStop(1);const n=mnqNextOf(mnqSt(),mnqEnv());
+    mnfPlay(id,{label:N+MNQ_SEG_NM[id],keepMusic:!lastSeg,qte:{[C.qte]:P},onQte:(q,r,go)=>{const R=mnqSolved(era,P,r,go);if(C.rite==="end")rite=R},card:lastSeg?()=>{mnqMark(id,era);return mnqNextCard()}:null,
+      onDone:res=>{mnqMark(id,era);
+        if(rite&&!lastSeg){const R=rite;rite=null;try{mnfVol(.45,1)}catch(e){}mnfSolveRite(Object.assign(R,{onDone:()=>play(j+1)}));return}   /* rite:"end"：危機那段播完才演儀式，儀式淡出時章末在底下溶進來 */
+        if(!lastSeg)return play(j+1);mnfMusicStop(1);const n=mnqNextOf(mnqSt(),mnqEnv());
         if(res.skipped){if(res.card===1)mnqGo(n);else if(!/^#?\/?$/.test(location.hash||""))location.hash="#/";mnqHomeSync();return}mnqTaskCard(n)}})};
   play(i)}
 function mnqMark(id,era){const S=mnqSt();if(!S.seg[id])S.seg[id]=Date.now();if(MNQ_SEGS[era]&&MNQ_SEGS[era].every(x=>S.seg[x])&&!S.lamp[era])S.lamp[era]=Date.now();mnqSave(S)}
 /* ---------- 下一步：照 mnqNextOf 的結果去做 ---------- */
 function mnqGo(n){n=n||mnqNextOf(mnqSt(),mnqEnv());if(typeof vibrate==="function")vibrate(8);
   if(n.k==="gift")return mnqGift(n.g,n.era);
-  if(n.k==="film")return mnqChapter("classic");
+  if(n.k==="film")return mnqChapter(n.era||"classic");
   if(n.k==="cpu"){const go=()=>{location.hash="#/cpu"};try{api("/play/new",{human:"r",lx:1,ranked:false}).then(go,go)}catch(e){go()}return}
-  if(n.k==="home"){location.hash="#/adventure";setTimeout(()=>{try{shipGoTo(n.era)}catch(e){}},700);return}
+  if(n.k==="home"||n.k==="ship"){location.hash="#/adventure";setTimeout(()=>{try{shipGoTo(n.era)}catch(e){}},700);return}   /* ship：下一章要星槎停到那一朝才開放（航線還沒開到那一站時 shipGoTo 自己會說） */
   mnqPanel()}
 /* ---------- 首頁「下一步」：包一層 07z homeMap，放在底部那一條的最上面（同一個直排容器，不會跟入口標籤、大按鈕疊在一起） ---------- */
 function mnqHomeBtn(v){const P=v&&v.querySelector&&v.querySelector(".home-page"),bar=P&&P.querySelector(".hm-go-bar");if(!bar||bar.querySelector(".mnq-next"))return;mnqCss();
@@ -29779,18 +29877,18 @@ function mnqDodge(P,bar){const R=bar.getBoundingClientRect();if(!R.height)return
     if(q.bottom>R.top-6&&q.top<R.bottom&&q.right>R.left-4&&q.left<R.right+4){s.style.marginTop=-Math.ceil(q.bottom-R.top+6)+"px";s.classList.add("mnq-dg");mv++}});   /* 11/14 r17 B1：mnq-dg＝這裡推的，05 fzPull 看到就不清（以前 0.4 秒後被它清掉又疊回去）；沒推過的不動別人的 marginTop */
   if(mv&&typeof r07HitSoon==="function")try{r07HitSoon()}catch(e){}}
 function mnqHomeSync(){const b=document.getElementById("mnqNext");if(!b)return;const n=mnqNextOf(mnqSt(),mnqEnv()),t="⛵ 下一步・"+mnqNextTxt(n);
-  if(b.dataset.t!==t){b.dataset.t=t;b.textContent=t;b.setAttribute("aria-label","下一步："+mnqNextTxt(n))}if(n.k==="film")try{mnfPre(n.id)}catch(e){}}
+  if(b.dataset.t!==t){b.dataset.t=t;b.textContent=t;b.setAttribute("aria-label","下一步："+mnqNextTxt(n))}if(n.k==="film")try{mnfPre(n.id,(MNQ_CHAP[n.era]||{}).set)}catch(e){}}
 if(typeof homeMap==="function"){const f0=homeMap;homeMap=function(v){const r=f0.apply(this,arguments);try{mnqHomeBtn(v)}catch(e){}return r}}
 /* ---------- 星槎遠征令面板 ---------- */
 let MNQ_AU=null;
-function mnqPanel(){mnqCss();const S=mnqSt(),n=mnqNextOf(S,mnqEnv());
+function mnqPanel(){mnqCss();const S=mnqSt(),E=mnqEnv(),n=mnqNextOf(S,E);
   sheet("⛵ 星槎遠征令",b=>{const lit=MNQ_CH.filter(c=>S.lamp[c[0]]).length;
-    b.innerHTML=`<p style="margin:0 0 8px;font:800 17px var(--serif,serif)">航線亮了 ${lit}／13 盞</p><div class="mnq-rt">${MNQ_CH.map(([e,nm],i)=>{const on=!!S.lamp[e],ok=!!MNQ_SEGS[e],cur=ok&&!on;
-      return`<button type="button" class="mnq-ln ${on?"on":cur?"cur":"off"}" data-e="${e}"${ok?"":' aria-disabled="true"'}><span class="lp">${on?"🏮":i+1}</span>${esc(nm)}<em>${on?"再看一次":cur?"前往":"即將開放"}</em></button>`}).join("")}</div>
+    b.innerHTML=`<p style="margin:0 0 8px;font:800 17px var(--serif,serif)">航線亮了 ${lit}／13 盞</p><div class="mnq-rt">${MNQ_CH.map(([e,nm],i)=>{const on=!!S.lamp[e],has=!!MNQ_SEGS[e],ok=on||mnqOpen(S,E,e),cur=ok&&!on;
+      return`<button type="button" class="mnq-ln ${on?"on":cur?"cur":"off"}" data-e="${e}"${ok?"":' aria-disabled="true"'}><span class="lp">${on?"🏮":i+1}</span>${esc(nm)}<em>${on?"再看一次":cur?"前往":has?"停靠"+esc(mnqShort(e))+"後開放":"即將開放"}</em></button>`}).join("")}</div>
       ${S.music.length?`<div class="sec-t">♪ 配樂收藏</div>${S.music.map(m=>`<button type="button" class="mnq-mu" data-m="${esc(m)}">▶ <span class="mnq-mt">${esc(m)}</span></button>`).join("")}`:""}
       ${S.page.length?`<div class="sec-t">📜 星槎遠征札記</div>${S.page.map(e=>`<button type="button" class="item mnq-pg" data-pg="${e}"><span class="lb" style="font-size:20px">📜</span><span class="tx"><b>${esc((MNQ_CH.find(c=>c[0]===e)||[0,e])[1])}</b><span>${esc(S.clue[e]||(e==="classic"?MNQ_NOTE0:""))}</span></span><span class="mnq-pg-go" aria-hidden="true">›</span></button>`).join("")}`:""}`;
     b.querySelectorAll(".mnq-pg").forEach(x=>x.onclick=()=>mnqNote(x.dataset.pg));
-    b.querySelectorAll(".mnq-ln").forEach(x=>x.onclick=()=>{const e=x.dataset.e;if(!MNQ_SEGS[e]){toast("這一章即將開放");return}closeSheet();setTimeout(()=>mnqChapter(e),250)});
+    b.querySelectorAll(".mnq-ln").forEach(x=>x.onclick=()=>{const e=x.dataset.e;if(!MNQ_SEGS[e]){toast("這一章即將開放");return}if(!S.lamp[e]&&!mnqOpen(S,E,e)){toast(MNQ_CH.slice(0,mnqChN(e)-1).every(([p])=>!MNQ_CHAP[p]||mnqDone(S,p))?"星槎停靠"+mnqShort(e)+"，這一章就開放":"先看完上一章");return}closeSheet();setTimeout(()=>mnqChapter(e),250)});
     if(S.music.length&&typeof bgmTitles==="function")bgmTitles().then(T=>b.querySelectorAll(".mnq-mu").forEach(x=>{const t=(T||{})[x.dataset.m];if(t)x.querySelector(".mnq-mt").textContent="《"+t+"》"})).catch(()=>{});
     b.querySelectorAll(".mnq-mu").forEach(x=>x.onclick=()=>mnqListen(x))})}
 /* 札記頁（開發者 11/13 晚：遠征令裡的札記卡片看起來點得開、其實點不開）：章名、札記全文、星路歷程（收禮、到站、看完電影、亮燈，照時間排） */
@@ -29818,7 +29916,8 @@ if(typeof window!=="undefined"&&typeof window.XQ_TITLE==="function"){const f2=wi
 function mnqIdle(){try{if(typeof TITLE!=="undefined"&&TITLE)return false;if(document.hidden)return false;if(!/^(#\/?|#\/adventure\/?)?$/.test(location.hash||""))return false;
   const pv=document.getElementById("preov");if(pv&&getComputedStyle(pv).display!=="none"&&pv.getBoundingClientRect().height>0)return false;   /* 開 App 的下載畫面還在 */
   return!document.querySelector(".modal,#sheet,#mnfPg,#mnfRite,#mnqGf,#mnqCard,#bhxPg,#bhxVx,.rfx,.qp-ov")}catch(e){return false}}
-function mnqTick(auto){try{const v=document.getElementById("view");if(v&&!document.getElementById("mnqNext"))mnqHomeBtn(v);mnqHomeSync();if(!auto||!mnqIdle())return;const n=mnqNextOf(mnqSt(),mnqEnv());if(n.k==="gift")mnqGift(n.g,n.era)}catch(e){}}
+function mnqReach(){try{const E=mnqEnv();if(!E.at||!MNQ_CHAP[E.at])return;const S=mnqSt();if(S.reach[E.at])return;S.reach[E.at]=Date.now();mnqSave(S)}catch(e){}}   /* 星槎第一次停到有主線資料的那一朝：記下來，那一章就開放（之後開走也不會再關） */
+function mnqTick(auto){try{mnqReach();const v=document.getElementById("view");if(v&&!document.getElementById("mnqNext"))mnqHomeBtn(v);mnqHomeSync();if(!auto||!mnqIdle())return;const n=mnqNextOf(mnqSt(),mnqEnv());if(n.k==="gift")mnqGift(n.g,n.era)}catch(e){}}
 /* 首頁第一次畫出來時（m.html 載入途中就 route 了）這個模組還沒包到 homeMap：計時器順便補上按鈕 */
 if(typeof window!=="undefined"&&typeof document!=="undefined"){let qa=false;try{qa=localStorage.getItem("xq_mnqQa")==="1"}catch(e){}const auto=!navigator.webdriver||qa;setInterval(()=>mnqTick(auto),2500);setTimeout(()=>mnqTick(false),0)}
 </script></body></html>
