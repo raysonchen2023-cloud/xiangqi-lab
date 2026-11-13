@@ -1625,7 +1625,13 @@
     let mateKey=null;const setMate=look=>{const k=JSON.stringify(look||null);if(k===mateKey)return;mateKey=k;mate.g.position.y=MSEAT;mate.g.userData.y0=null;
       buildActor(mate,look||{});mateSit(mate.B);mateTop();try{mate.g.updateMatrixWorld(true);const b=new T.Box3().setFromObject(mate.B&&mate.B.torso&&!mate.B.glb?mate.B.torso:mate.g);   /* 551：用身體底部對齊座面，小腿垂在凳子旁邊 */mate.g.position.y-=b.min.y-(MSEAT+.02)}catch(e){}
       /* 意見回饋 577：真實 3D 的小帥是站姿模型、腿彎不了，照上面對齊會變成腳踩在凳面上（站在凳子上）。模型載好後改成臀部落在凳面、腿沉進鼓凳裡，從哪個角度看都是坐著 */
-      if(mate.B&&mate.B.glbP)mate.B.glbP.then(ok=>{if(!ok||mateKey!==k||!mate.B||!mate.B.glb)return;try{mate.g.updateMatrixWorld(true);const b=new T.Box3().setFromObject(mate.B.glb),H=b.max.y-b.min.y;mate.g.position.y-=b.min.y-(MSEAT-H*.27);mate.g.userData.y0=null}catch(e){}}).catch(()=>{})};   // 坐在自己的椅子上（座面 y=MSEAT）
+      if(mate.B&&mate.B.glbP)mate.B.glbP.then(ok=>{if(!ok||mateKey!==k||!mate.B||!mate.B.glb)return;try{mate.g.updateMatrixWorld(true);const b=new T.Box3().setFromObject(mate.B.glb),H=b.max.y-b.min.y;mate.g.position.y-=b.min.y-(MSEAT-H*.27);if(glbSit(mate.B.glb,mate.g,MSEAT))mateSat=1;mate.g.userData.y0=null}catch(e){}}).catch(()=>{})};   // 坐在自己的椅子上（座面 y=MSEAT）
+    /* 11/13 開發者截圖「角色應該是要坐著」：沉進鼓凳的做法從側面、背面看還是直腿站著（像站在桶子裡）。七星的 Tripo 模型有骨架（L_Thigh／L_Calf…），
+       棋桌上玩家角色的動畫只在載入時套一次 idle、之後不再更新，所以直接把大腿往前轉 90 度、小腿往下轉回 90 度，再把骨盆對齊凳面＝真的坐著；沒有這些骨頭的模型照舊沉進凳子 */
+    let mateSat=0;
+    function glbSit(root,grp,seatY){let P=null;const L=[];root.traverse(o=>{if(!o.isBone)return;if(/^[LR]_Thigh$/.test(o.name))L.push([o,SIT_TH]);else if(/^[LR]_Calf$/.test(o.name))L.push([o,SIT_CA]);else if(o.name==="Pelvis")P=o});
+      if(L.length<4||!P)return false;const ax=new T.Vector3(1,0,0);for(const[bn,a]of L)bn.quaternion.multiply(new T.Quaternion().setFromAxisAngle(ax,a));grp.updateMatrixWorld(true);const v=new T.Vector3();P.getWorldPosition(v);grp.position.y+=seatY+SIT_UP-v.y;grp.updateMatrixWorld(true);return true}
+    const SIT_TH=window.__SITTH!=null?window.__SITTH:1.5,SIT_CA=window.__SITCA!=null?window.__SITCA:-1.5,SIT_UP=window.__SITUP!=null?window.__SITUP:.6;
     setMate(null);
     const say=(t,d)=>{pwPoke(((+d)||2.6)*1000);return mate.say(t,d)};
     /* ---------- 11/10 開發者「園子熱鬧、人來人往」（Gemini 62；開發者選 4 貓咪佔位、2 絕殺驚呼、3 市井煙火、1 七星打氣；小販、貓經史學顧問核過）----------

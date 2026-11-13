@@ -1,8 +1,8 @@
 {
- "version": "20261113-1624",
- "checkedAt": "2026-11-13T08:24:28.395Z",
- "html": "5a39087983cb",
- "sw": "1e623d852d0c",
+ "version": "20261113-1646",
+ "checkedAt": "2026-11-13T08:46:15.851Z",
+ "html": "c0f3867b4722",
+ "sw": "b54898ce10ae",
  "scripts": 4,
  "modules": {
   "00-util.js": "9d72b869caaa",
@@ -86,7 +86,7 @@
   "07w8-shichen.js": "a58cc715dba5",
   "07w9-exits.js": "94a8b7c84852",
   "08-scene.js": "86969cd488ba",
-  "08b-cpugame.js": "4b953aa3cf69",
+  "08b-cpugame.js": "b257b88820d6",
   "08s-simul.js": "2126db3ab684",
   "09-askbot.js": "4e6983c50d4c",
   "09b-preload.js": "2076624db3a7",
@@ -144,8 +144,8 @@
   },
   {
    "module": "08b-cpugame.js",
-   "lines": 2,
-   "sourceModified": "2026-11-13T08:22:43.910Z"
+   "lines": 3,
+   "sourceModified": "2026-11-13T08:40:10.263Z"
   }
  ]
 }
