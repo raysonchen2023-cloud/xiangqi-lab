@@ -1,32 +1,32 @@
 {
- "version": "20261113-1942",
- "checkedAt": "2026-11-13T11:42:48.760Z",
- "html": "2b161747dd96",
- "sw": "16c213558d59",
+ "version": "20261113-2301",
+ "checkedAt": "2026-11-13T15:02:02.023Z",
+ "html": "dff99d4559ca",
+ "sw": "e0e00ddae1f0",
  "scripts": 4,
  "modules": {
   "00-util.js": "7addbcf20a30",
   "01-board.js": "5f3d6e9db69e",
-  "02-shell.js": "6edaba1ac330",
+  "02-shell.js": "a13677cd060a",
   "02r-reloadguard.js": "aef31133c6b0",
   "03-home-quiz.js": "24d24f013354",
   "04-stats.js": "783c70902f05",
   "04c-weekly.js": "326899d53f7b",
   "05-settings.js": "1573a334db26",
-  "05b-save.js": "7fc80eb4f6d0",
+  "05b-save.js": "3e701ae75b5f",
   "05c-health.js": "a1bcf3e541ac",
   "05d-telemetry.js": "98d12b742868",
-  "06-cpu.js": "a9763b7e77ce",
+  "06-cpu.js": "625d73947248",
   "06c-cup.js": "edc2e989a25e",
   "07-legend.js": "9adb41fc19f2",
-  "07c-canju.js": "cafe18164cab",
+  "07c-canju.js": "1a57b36ca4e3",
   "07d-garden.js": "cc746ff05fc7",
   "07e-garden2.js": "23fcaecb532a",
-  "07f-ship.js": "f8518e1fd1ab",
+  "07f-ship.js": "140b6a9c99e5",
   "07o-shipmore.js": "3e3ebb9d732b",
-  "07bh-blackhole.js": "27490cda6df3",
+  "07bh-blackhole.js": "4c56a6d847e4",
   "07gx-galaxy.js": "f79b141f237d",
-  "07bht-td.js": "99eac8bac6c2",
+  "07bht-td.js": "32dc4cbf4390",
   "07bhtl-tdlearn.js": "f047b6750504",
   "07dv-devtest.js": "3d44120f0210",
   "07dw-perfhud.js": "a3755bd4af6c",
@@ -56,8 +56,9 @@
   "07x-zoom.js": "9570ff10639b",
   "07y-hubmap.js": "27f38a97d3c1",
   "07z-homemap.js": "ed4ba7ca045d",
-  "07gxt-guanxing.js": "865955dc219b",
-  "07dgl-stamina.js": "2d5e1adaa51a",
+  "07gxt-guanxing.js": "2c4eec869a22",
+  "07dgl-stamina.js": "934d33ba5e36",
+  "07xsm-ximarket.js": "fa669eb50747",
   "07x2-lobbymap.js": "492b0f6f7013",
   "07x3-rostermap.js": "ad71f65833df",
   "07x4-lobbysafe.js": "c8b34c8400f2",
@@ -87,7 +88,7 @@
   "07w6c-scenepoem.js": "8b310494b149",
   "07w7-seasons.js": "529ad2792fb0",
   "07w8-shichen.js": "a58cc715dba5",
-  "07w9-exits.js": "0f45109a873a",
+  "07w9-exits.js": "bd206ffef683",
   "08-scene.js": "86969cd488ba",
   "08b-cpugame.js": "573591e98a64",
   "08s-simul.js": "2126db3ab684",
@@ -103,22 +104,37 @@
   "11c-a11ysnd.js": "f5b8710e8e5a",
   "07cb-colorblind.js": "cb776a712df2",
   "07hp-haptics.js": "d1bd73fd4974",
-  "07hs-netsig.js": "428c8e02702f",
+  "07hs-netsig.js": "88e43f5a0d10",
   "07fm-focus.js": "b719a401a30d",
   "07lh-lefty.js": "b1b6761a4a97",
   "07pm-premove.js": "b58dc45776cd",
   "07dq-daily.js": "c1076bdd0ee8",
-  "07i18n.js": "86bf30287090",
+  "07i18n.js": "aa341bb345cd",
   "07sp-spotfit.js": "f7f205a79901",
   "07fl-fill.js": "48c2936f36c4",
   "07mnf-mainfilm.js": "20009b76de16",
-  "07mnq-mainquest.js": "6ef8aa0b0326"
+  "07mnq-mainquest.js": "25449ad6ac95"
  },
  "differsFromSource": [
+  {
+   "module": "02-shell.js",
+   "lines": 2,
+   "sourceModified": "2026-11-13T13:22:24.037Z"
+  },
   {
    "module": "05-settings.js",
    "lines": 1,
    "sourceModified": "2026-11-13T09:14:18.708Z"
+  },
+  {
+   "module": "05b-save.js",
+   "lines": 1,
+   "sourceModified": "2026-11-13T15:01:20.771Z"
+  },
+  {
+   "module": "07bht-td.js",
+   "lines": 27,
+   "sourceModified": "2026-11-13T15:01:20.794Z"
   },
   {
    "module": "07y-hubmap.js",
@@ -126,9 +142,29 @@
    "sourceModified": "2026-11-11T16:25:41.802Z"
   },
   {
+   "module": "07xsm-ximarket.js",
+   "lines": 102,
+   "sourceModified": "2026-11-13T13:21:58.004Z"
+  },
+  {
    "module": "07s4-passmap.js",
    "lines": 1,
    "sourceModified": "2026-11-13T03:19:39.481Z"
+  },
+  {
+   "module": "07w9-exits.js",
+   "lines": 1,
+   "sourceModified": "2026-11-13T13:22:24.134Z"
+  },
+  {
+   "module": "07hs-netsig.js",
+   "lines": 3,
+   "sourceModified": "2026-11-13T14:00:29.777Z"
+  },
+  {
+   "module": "07i18n.js",
+   "lines": 6,
+   "sourceModified": "2026-11-13T14:07:48.787Z"
   }
  ]
 }
