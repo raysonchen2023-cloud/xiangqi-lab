@@ -1606,7 +1606,7 @@ html[data-lefty] .tskip{right:auto;left:14px}
       if(!window.caches)return go();caches.keys().then(function(ks){return Promise.all(ks.filter(function(k){return k.indexOf("xqlab-app-")===0}).map(function(k){return caches.delete(k)}))})
         .then(function(){return navigator.serviceWorker&&navigator.serviceWorker.getRegistration()}).then(function(r){return r&&r.update()}).catch(function(){}).then(go)}};setTimeout(chk,4000)})();
 </script>
-<script>window.XQ_OFFLINE=true;window.XQ_BUILD="20261113-0820";</script>
+<script>window.XQ_OFFLINE=true;window.XQ_BUILD="20261113-0825";</script>
 <script src="core.js"></script>
 <script src="engine.js"></script>
 <script src="local.js"></script>
@@ -14981,7 +14981,7 @@ function shwExitDo(S){const C=S.C,P=C.N[C.home];S.go=null;S.curE=null;S.onT=null
   try{if(o&&o.btn&&!o.free&&!o.ex)shwTapTip(S,o.btn)}catch(e){}try{const X=S.o.X;if(o&&o.ex&&X&&S.go){S.go.seq.push({k:"w",pts:[S.C.N[X.n],X.out],fade:"out"});S.go.ex=1}}catch(e){}return r}}
 {const f0=shwClick;shwClick=function(S,e){try{const X=S.o.X,g=S.go,t0=e.target;
     /* 回饋 835（開發者 11/9 選：過場點兩下跳過）：點空地走路途中，再點同一個地方（離目標 SHW_FF_PX 原圖像素內）＝角色直接到那裡；點別處照舊改走新目標 */
-    if(g&&g.free&&!g.win&&!g.ex&&g.tap&&!S.pass&&S.ready&&S.box.isConnected&&shwFreeOk(S,e)&&!(t0.closest&&t0.closest(S.o.sel))){const p=shwPt(S,e);if(shwPx(S.C,p,g.tap)<SHW_FF_PX){e.stopPropagation();e.preventDefault();shwInk(S,p);shwFinish(S);return}}
+    if(SHW_FF_ON&&g&&g.free&&!g.win&&!g.ex&&g.tap&&!S.pass&&S.ready&&S.box.isConnected&&shwFreeOk(S,e)&&!(t0.closest&&t0.closest(S.o.sel))){const p=shwPt(S,e);if(shwPx(S.C,p,g.tap)<SHW_FF_PX){e.stopPropagation();e.preventDefault();shwInk(S,p);shwFinish(S);return}}
     if(X&&!S.pass&&S.ready&&S.box.isConnected){
     if(g&&g.ex){e.stopPropagation();e.preventDefault();shwExitDo(S);return}   /* 回饋 835（開發者 11/9 選：過場點兩下跳過）：往出口走、走出畫面途中再點一下＝不等角色走完，直接出去（原本淡出那段點了不理） */
     if(g&&g.fd==="in"){const A=S.C.N[X.n];S.go=null;S.curE=null;S.x=A[0];S.y=A[1];S.at=X.n;S.box.style.opacity="";S.box.style.transition="";S.place()}
@@ -14990,6 +14990,8 @@ function shwExitDo(S){const C=S.C,P=C.N[C.home];S.go=null;S.curE=null;S.onT=null
 /* 回饋 835（開發者 11/9 選：過場點兩下跳過）：把正在走的這一趟一口氣做完——跳桌的每一跳、每一段路都直接算到終點，結果跟走完一樣（位置記憶 SHW_MEM、桌上狀態、面向）；
    走向入口＝shwOpen 打開、走向出口＝shwExitDo 出去、點空地＝站到那裡。SHW_FF_PX＝「點同一處」的範圍（原圖像素） */
 const SHW_FF_PX=60;
+/* hspx 開發者 11/13「點兩下，角色會快速移動到那個點上，又再度發生」→ 選「只留出口的跳過」：空地上走路途中再點同一處不再瞬間到達（照正常速度走）；往出口走時再點一下＝直接換頁照舊 */
+const SHW_FF_ON=false;
 function shwFinish(S){const C=S.C;for(let n=0;n<60&&S.go;n++){const g=S.go;
   if(g.ph==="hop"){S.sq=null;S.curE=null;S.x=g.b[0];S.y=g.b[1];if(g.up){S.onT=g.tb;S.hy=g.h1}else{S.onT=null;S.hy=null;S.at=g.fn}g.ph=null;g.pts=[g.b];g.segE=[];g.onT=g.up?g.tb:null;g.t=g.dur=g.L=0;if(g.seq&&g.seq.length)shwNext(S);continue}
   const q=g.pts&&g.pts[g.pts.length-1];if(q){S.x=q[0];S.y=q[1]}if(g.onT&&C.TB&&C.TB[g.onT]){S.curE=null;S.hy=shwTHy(C.TB[g.onT],[S.x,S.y])}
