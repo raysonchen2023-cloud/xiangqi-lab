@@ -1,8 +1,8 @@
 {
- "version": "20261113-1848",
- "checkedAt": "2026-11-13T10:48:43.013Z",
- "html": "86ccf35ae516",
- "sw": "741ce1674b12",
+ "version": "20261113-1852",
+ "checkedAt": "2026-11-13T10:52:09.608Z",
+ "html": "75013913f4e3",
+ "sw": "509dbd3f50a4",
  "scripts": 4,
  "modules": {
   "00-util.js": "7addbcf20a30",
@@ -109,7 +109,7 @@
   "07i18n.js": "a38a719ea2ea",
   "07sp-spotfit.js": "f7f205a79901",
   "07fl-fill.js": "48c2936f36c4",
-  "07mnf-mainfilm.js": "3e02444778e4",
+  "07mnf-mainfilm.js": "20009b76de16",
   "07mnq-mainquest.js": "6ef8aa0b0326"
  },
  "differsFromSource": [
