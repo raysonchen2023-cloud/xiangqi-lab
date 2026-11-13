@@ -1,8 +1,8 @@
 {
- "version": "20261114-0304",
- "checkedAt": "2026-11-13T19:04:14.294Z",
- "html": "80dc61e1d36d",
- "sw": "55e9540550b6",
+ "version": "20261114-0331",
+ "checkedAt": "2026-11-13T19:31:30.067Z",
+ "html": "add95c821fef",
+ "sw": "29d3f8c5acf5",
  "scripts": 4,
  "modules": {
   "00-util.js": "7addbcf20a30",
@@ -24,11 +24,12 @@
   "07e-garden2.js": "23fcaecb532a",
   "07f-ship.js": "140b6a9c99e5",
   "07o-shipmore.js": "3e3ebb9d732b",
-  "07bh-blackhole.js": "17d7d0a04b96",
+  "07bh-blackhole.js": "ec8d097f6179",
   "07gx-galaxy.js": "f79b141f237d",
   "07bht-td.js": "32dc4cbf4390",
   "07bhtl-tdlearn.js": "9f4a36afdf40",
-  "07dv-devtest.js": "3d44120f0210",
+  "07bhf-bossfx.js": "4e772511bd89",
+  "07dv-devtest.js": "077191672ec5",
   "07dw-perfhud.js": "a3755bd4af6c",
   "07g-battle.js": "6c2de94250f9",
   "07h-qqev.js": "a406f6ef795d",
@@ -132,14 +133,24 @@
    "sourceModified": "2026-11-13T15:01:20.771Z"
   },
   {
-   "module": "06-cpu.js",
-   "lines": 1,
-   "sourceModified": "2026-11-13T15:16:40.223Z"
+   "module": "07bh-blackhole.js",
+   "lines": 5,
+   "sourceModified": "2026-11-13T19:30:41.380Z"
   },
   {
    "module": "07bht-td.js",
    "lines": 27,
    "sourceModified": "2026-11-13T15:01:20.794Z"
+  },
+  {
+   "module": "07bhf-bossfx.js",
+   "lines": 115,
+   "sourceModified": "2026-11-13T19:31:29.396Z"
+  },
+  {
+   "module": "07dv-devtest.js",
+   "lines": 8,
+   "sourceModified": "2026-11-13T19:17:02.054Z"
   },
   {
    "module": "07y-hubmap.js",
