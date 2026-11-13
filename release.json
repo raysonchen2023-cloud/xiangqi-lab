@@ -1,8 +1,8 @@
 {
- "version": "20261113-1219",
- "checkedAt": "2026-11-13T04:19:50.692Z",
- "html": "c93cf1d0f96f",
- "sw": "ffa02ab83ea5",
+ "version": "20261113-1231",
+ "checkedAt": "2026-11-13T04:31:20.609Z",
+ "html": "94b45b63dad6",
+ "sw": "e4d2508fae51",
  "scripts": 4,
  "modules": {
   "00-util.js": "402a8c296ec8",
@@ -87,8 +87,8 @@
   "08b-cpugame.js": "631eda3bfa74",
   "08s-simul.js": "2126db3ab684",
   "09-askbot.js": "4e6983c50d4c",
-  "09b-preload.js": "44e080e12e92",
-  "10-db.js": "9d1b1d465d58",
+  "09b-preload.js": "2076624db3a7",
+  "10-db.js": "c834a6160fe5",
   "10b-libmap.js": "3d860dc618ed",
   "10c-deskmap.js": "e4bf62a9e231",
   "10d-coach.js": "3cc2fcbe54d5",
@@ -98,12 +98,12 @@
   "11c-a11ysnd.js": "f5b8710e8e5a",
   "07cb-colorblind.js": "cb776a712df2",
   "07hp-haptics.js": "d1bd73fd4974",
-  "07hs-netsig.js": "d381b5776a86",
+  "07hs-netsig.js": "bc27b4ac257b",
   "07fm-focus.js": "dc78f2529554",
   "07lh-lefty.js": "b1b6761a4a97",
   "07pm-premove.js": "b58dc45776cd",
   "07dq-daily.js": "c1076bdd0ee8",
-  "07i18n.js": "351393187f5f",
+  "07i18n.js": "c2971264b78a",
   "07sp-spotfit.js": "f7f205a79901",
   "07fl-fill.js": "48c2936f36c4"
  },
@@ -170,8 +170,13 @@
   },
   {
    "module": "09b-preload.js",
-   "lines": 3,
-   "sourceModified": "2026-11-13T02:33:03.594Z"
+   "lines": 5,
+   "sourceModified": "2026-11-13T04:29:29.712Z"
+  },
+  {
+   "module": "10-db.js",
+   "lines": 1,
+   "sourceModified": "2026-11-13T04:29:29.760Z"
   },
   {
    "module": "10b-libmap.js",
@@ -190,13 +195,13 @@
   },
   {
    "module": "07hs-netsig.js",
-   "lines": 1,
-   "sourceModified": "2026-11-13T02:20:44.521Z"
+   "lines": 9,
+   "sourceModified": "2026-11-13T04:29:20.669Z"
   },
   {
    "module": "07i18n.js",
-   "lines": 5,
-   "sourceModified": "2026-11-13T02:34:22.164Z"
+   "lines": 6,
+   "sourceModified": "2026-11-13T04:29:20.722Z"
   },
   {
    "module": "07sp-spotfit.js",
