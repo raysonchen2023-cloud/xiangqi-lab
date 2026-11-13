@@ -1,8 +1,8 @@
 {
- "version": "20261113-1239",
- "checkedAt": "2026-11-13T04:39:08.309Z",
- "html": "68c708c2d0b3",
- "sw": "a57637ecb762",
+ "version": "20261113-1242",
+ "checkedAt": "2026-11-13T04:42:02.268Z",
+ "html": "d1284a55ea90",
+ "sw": "ce461bebc42f",
  "scripts": 4,
  "modules": {
   "00-util.js": "402a8c296ec8",
@@ -21,7 +21,7 @@
   "07c-canju.js": "a91312f29641",
   "07d-garden.js": "cc746ff05fc7",
   "07e-garden2.js": "23fcaecb532a",
-  "07f-ship.js": "ab5ed89addb8",
+  "07f-ship.js": "097d43c40bdd",
   "07o-shipmore.js": "3e3ebb9d732b",
   "07bh-blackhole.js": "d18ba98e03b1",
   "07gx-galaxy.js": "f79b141f237d",
@@ -55,7 +55,7 @@
   "07z-homemap.js": "ed4ba7ca045d",
   "07x2-lobbymap.js": "492b0f6f7013",
   "07x3-rostermap.js": "ad71f65833df",
-  "07x4-lobbysafe.js": "c1c1583e48d6",
+  "07x4-lobbysafe.js": "62deccab5eb9",
   "07s2-setmap.js": "bec05eeb524b",
   "07t2-tabink.js": "1dddba96e53c",
   "07t3-tabtube.js": "4f44fa6161b2",
@@ -98,7 +98,7 @@
   "11c-a11ysnd.js": "f5b8710e8e5a",
   "07cb-colorblind.js": "cb776a712df2",
   "07hp-haptics.js": "d1bd73fd4974",
-  "07hs-netsig.js": "0b8221572b1a",
+  "07hs-netsig.js": "428c8e02702f",
   "07fm-focus.js": "dc78f2529554",
   "07lh-lefty.js": "b1b6761a4a97",
   "07pm-premove.js": "b58dc45776cd",
@@ -155,8 +155,8 @@
   },
   {
    "module": "07x4-lobbysafe.js",
-   "lines": 81,
-   "sourceModified": "2026-11-13T02:34:22.092Z"
+   "lines": 99,
+   "sourceModified": "2026-11-13T04:41:53.852Z"
   },
   {
    "module": "07s4-passmap.js",
@@ -196,7 +196,7 @@
   {
    "module": "07hs-netsig.js",
    "lines": 21,
-   "sourceModified": "2026-11-13T04:38:20.670Z"
+   "sourceModified": "2026-11-13T04:39:44.611Z"
   },
   {
    "module": "07i18n.js",
