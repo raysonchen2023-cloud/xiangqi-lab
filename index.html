@@ -1613,7 +1613,7 @@ html[data-lefty] .tskip{right:auto;left:14px}
       if(!window.caches)return go();caches.keys().then(function(ks){return Promise.all(ks.filter(function(k){return k.indexOf("xqlab-app-")===0}).map(function(k){return caches.delete(k)}))})
         .then(function(){return navigator.serviceWorker&&navigator.serviceWorker.getRegistration()}).then(function(r){return r&&r.update()}).catch(function(){}).then(go)}};setTimeout(chk,4000)})();
 </script>
-<script>window.XQ_OFFLINE=true;window.XQ_BUILD="20261113-1852";</script>
+<script>window.XQ_OFFLINE=true;window.XQ_BUILD="20261113-1906";</script>
 <script src="core.js"></script>
 <script src="engine.js"></script>
 <script src="local.js"></script>
@@ -11269,9 +11269,15 @@ body.bh-full .bt-sk{min-height:38px}}
 .bt-mk.eye{width:calc(var(--c)*.95);height:calc(var(--c)*.95);border-radius:50%;border:2px solid rgba(255,224,138,.9);box-shadow:0 0 14px 4px rgba(255,214,120,.55),inset 0 0 10px rgba(255,214,120,.5);animation:btEye 2s ease-in-out infinite}
 .bt-mk.eye::after{content:"✦";position:absolute;top:-1.1em;font-size:14px;color:#FFE08A;text-shadow:0 0 6px #FFB000}
 @keyframes btEye{50%{box-shadow:0 0 22px 8px rgba(255,214,120,.75),inset 0 0 14px rgba(255,214,120,.7)}}
-.bt-mk.gate{width:calc(var(--c)*1.05);height:calc(var(--c)*1.05);border-radius:50%;border:2.5px dashed #b46bff;background:radial-gradient(circle,rgba(120,40,200,.45),rgba(40,10,80,.15) 70%);color:#f0dcff;flex-direction:column;animation:btGate 3s linear infinite}
-.bt-mk.gate b{font-size:14px;line-height:1}.bt-mk.gate i{font-style:normal;font-size:11px}
-@keyframes btGate{to{transform:translate(-50%,-50%) rotate(360deg)}}
+.bt-mk.gate{width:calc(var(--c)*1.05);height:calc(var(--c)*1.05);color:#f0dcff;flex-direction:column}
+.bt-mk.gate::before{content:"";position:absolute;inset:0;border-radius:50%;border:2.5px dashed #b46bff;background:radial-gradient(circle,rgba(120,40,200,.45),rgba(40,10,80,.15) 70%);animation:btGate 3s linear infinite}
+.bt-mk.gate b,.bt-mk.gate i{position:relative}.bt-mk.gate b{font-size:14px;line-height:1}.bt-mk.gate i{font-style:normal;font-size:11px}
+@keyframes btGate{to{transform:rotate(360deg)}}
+/* 11/13 開發者截圖「主角的金環很違和、門跑到盤外」：門原本整個元素在轉（動畫的 transform 蓋掉 bhtdFrame 寫的位置，門被釘在左上角）；改成只有 ::before 的虛線圈在轉。
+   3D 盤（g3）：地面類記號照盤面透視貼平（bhtdGnd 算的 matrix，transform-origin 要 0 0），金環不再像貼紙浮在角色身上、拿掉 ✦；門的數字另起直立小標籤 gt；3D 區頂端重複的「黑洞・星樞棋局」場名（.pkname）在塔防局藏起來，免得擋到最遠那一排 */
+.bt-mk.g3{transform-origin:0 0}.bt-mk.eye.g3::after{display:none}.bt-mk.eye.g3{border-width:3px;background:radial-gradient(circle,rgba(255,214,120,.38),rgba(255,214,120,0) 72%)}
+.bt-mk.gt{font-size:12px;font-weight:800;color:#f3e6ff;background:rgba(60,16,110,.88);border:1px solid #b46bff;border-radius:99px;padding:1px 7px;white-space:nowrap;box-shadow:0 0 8px rgba(180,107,255,.7)}
+body.bhtd-on #bbox .pkname{display:none!important}
 .bt-mk.pj{font-size:11px;font-weight:700;color:#fff;background:#d2601a;border-radius:6px;padding:0 3px;margin:calc(var(--c)*-.42) 0 0 calc(var(--c)*.42);box-shadow:0 0 6px #ff9a3c}
 .bt-mk.frz{font-size:calc(var(--c)*.42);margin-top:calc(var(--c)*-.5);filter:drop-shadow(0 0 4px #fff7c0)}
 .bt-mk.sh{font-size:10.5px;font-weight:700;color:#e8f4ff;background:#2b6fd6;border-radius:6px;padding:0 3px;margin:calc(var(--c)*-.42) calc(var(--c)*.42) 0 0}
@@ -11386,12 +11392,17 @@ function bhtdNextPick(T,S){const C=bhtdC();if(T.pk.length>=S.steps){BHTD_TG=null
     modal(`<h2 style="font-size:19px">${esc(S.nm)}</h2><p class="muted">打哪一條線？</p>`,L.map(o=>[o.l,()=>bhtdPlay(T.id,T.pk.concat([o.v]))]).concat([["取消",null,true]]));return}
   if(!L.length){BHTD_TG=null;BHTD_MK="";bhtdHudPaint();toast("沒有可以配對的目標");return}BHTD_MK="";bhtdHudPaint()}
 /* 格子 → 螢幕座標：3D 巨盤用 park3d screenOf；平面棋盤照 01-board 的 SVG（560×620、格距 60、邊 40） */
+/* 3D 盤（park3d 畫在 #bbox）時，地面類記號貼平在盤面：用相鄰兩格的投影當透視的 x、z 單位向量，組成 CSS matrix（元素 1 個 --c 寬＝盤面 1 格） */
+const BHTD_GND=/\b(eye|gate|shard|fb|fr|tg)\b/;
+function bhtd3d(){try{const bb=document.getElementById("bbox");return!!(typeof PARK!=="undefined"&&PARK&&PARK.v&&PARK.host===bb&&PARK.v.el&&PARK.v.el.isConnected&&PARK.v.el.style.display!=="none"&&PARK.v.screenOf)}catch(e){return false}}
+function bhtdGnd(q,p,cell){const c=q%9,r=q/9|0,sx=c<8?1:-1,sz=r<9?1:-1,a=bhtdXY(q+sx),b=bhtdXY(q+9*sz);if(!a||!b||!cell)return null;
+  const M=[(a.x-p.x)*sx/cell,(a.y-p.y)*sx/cell,(b.x-p.x)*sz/cell,(b.y-p.y)*sz/cell,0,0];return M.every(Number.isFinite)?M.map(n=>+n.toFixed(4)).join(","):null}
 function bhtdXY(sq){try{const bb=document.getElementById("bbox");if(typeof PARK!=="undefined"&&PARK&&PARK.v&&PARK.host===bb&&PARK.v.el&&PARK.v.el.isConnected&&PARK.v.el.style.display!=="none"&&PARK.v.screenOf)return PARK.v.screenOf(sq);
     const sv=bb&&bb.querySelector("svg");if(!sv)return null;const r=sv.getBoundingClientRect();if(!r.width)return null;const k=Math.min(r.width/560,r.height/620),ox=r.left+(r.width-560*k)/2,oy=r.top+(r.height-620*k)/2;return{x:ox+(40+sq%9*60)*k,y:oy+(40+(sq/9|0)*60)*k}}catch(e){return null}}
 function bhtdMarks(st){const td=st.td,L=[],C=bhtdC(),b=st.board;
   if(BHTD_TG){const T=BHTD_TG;for(const q of T.pk)L.push({k:"tg pk",sq:q});const S=BHTD.SKM[T.id],cand=C?BHTD.targets(bhtdPv(st),T.id,T.pk,C):[];if(cand.length&&typeof cand[0]!=="object")for(const q of cand)if(!T.pk.includes(q))L.push({k:"tg",sq:q,b:1})}
   const eye=BHTD.sqOf(td,td.eye);if(eye!=null)L.push({k:"eye",sq:eye});
-  if(td.gate&&!st.result)td.gate.sq.concat(td.gate.fk||[]).forEach(q=>L.push({k:"gate",sq:q,t:`<b>門</b><i>${Math.max(0,td.gate.at-td.rnd)}</i>`}));   /* 假門跟真門畫得一樣 */
+  if(td.gate&&!st.result){const n=Math.max(0,td.gate.at-td.rnd),g3=bhtd3d();td.gate.sq.concat(td.gate.fk||[]).forEach(q=>{if(g3){L.push({k:"gate",sq:q});L.push({k:"gt",sq:q,t:`門 ${n}`})}else L.push({k:"gate",sq:q,t:`<b>門</b><i>${n}</i>`})})}   /* 假門跟真門畫得一樣；3D 盤上圈貼地、數字另起直立標籤 */
   for(const q of td.shard||[])if(!b[q])L.push({k:"shard",sq:q});
   if(td.fx&&!st.result){const F=BHTD.foeMarks(td,b);for(const q of F.blk)L.push({k:"fb",sq:q});for(const q of F.red)L.push({k:"fr",sq:q,t:"<i>1</i>"})}
   for(const t of td.pj){const q=BHTD.sqOf(td,t);if(q!=null)L.push({k:"pj",sq:q,t:"破"})}
@@ -11402,7 +11413,9 @@ function bhtdFrame(){BHTD_RAF=0;const st=BHTD_ST,o=document.getElementById("bhtd
   if(!/^#\/journey\/play/.test(location.hash)){bhtdHide();return}
   const L=bhtdMarks(st),key=JSON.stringify(L),box=o.querySelector(".mks");if(key!==BHTD_MK){BHTD_MK=key;box.innerHTML=L.map(m=>m.b?`<button type="button" class="bt-mk ${m.k}" data-sq="${m.sq}" aria-label="目標 ${m.sq}"></button>`:`<div class="bt-mk ${m.k}" data-sq="${m.sq}">${m.t||""}</div>`).join("")}
   const a=bhtdXY(40),c=bhtdXY(41),cell=a&&c?Math.max(18,Math.min(90,Math.hypot(c.x-a.x,c.y-a.y))):36;o.style.setProperty("--c",cell+"px");
-  for(const el of box.children){const p=bhtdXY(+el.dataset.sq);if(!p){el.style.display="none";continue}el.style.display="";el.style.transform=`translate(${p.x}px,${p.y}px) translate(-50%,-50%)`}
+  const g3=bhtd3d();for(const el of box.children){const q=+el.dataset.sq,p=bhtdXY(q);if(!p){el.style.display="none";continue}el.style.display="";
+    const M=g3&&BHTD_GND.test(el.className)?bhtdGnd(q,p,cell):null,up=el.classList.contains("gt")?cell*.62:0;el.classList.toggle("g3",!!M);
+    el.style.transform=`translate(${p.x}px,${p.y-up}px)`+(M?` matrix(${M})`:"")+" translate(-50%,-50%)"+(!M&&el.classList.contains("shard")?" rotate(45deg)":"")}
   /* 炮線：紅炮隔一子瞄到的敵子（回合結束就會破甲），淡橘虛線 */
   {const sv=o.querySelector("svg");let h="";if(!st.result&&st.turn===st.human)for(const z of BHTD.netHits(st.board,(st.td.fn2|0)>=st.td.rnd)){const p=bhtdXY(z.c),q=bhtdXY(z.t);if(p&&q)h+=`<line x1="${p.x}" y1="${p.y}" x2="${q.x}" y2="${q.y}" stroke="rgba(255,154,60,.75)" stroke-width="2.5" stroke-dasharray="7 6"/>`}if(sv.dataset.h!==h){sv.dataset.h=h;sv.innerHTML=h}}
   BHTD_RAF=requestAnimationFrame(bhtdFrame)}
@@ -17277,6 +17290,24 @@ const GXT_SPOTS=[
 const GXT_EXIT={p:[86,90],w:[68,86]};   /* 出口（右下石階）：直幅跟 07w9 EXITS 同一組 */
 const GXT_HOME={"":[84,56],p34:[82,57],l1610:[75,69]};   /* 首頁橋右側（home 768×1376、home_p34、home_l1610 各量一次；經典世界、季節圖跟原圖同構圖） */
 const GXT_BAD={};   /* 這次開 App 載不到的白天圖（p＝直幅、w＝寬版），退回夜景不再試 */
+/* ---------- 走路角色（開發者 11/13：「像首頁或其他頁面可以控制角色移動的那種」；用 07w shwPage／shwMount，跟渡口、驛站同一套）----------
+   座標表兩組（夜景、白天共用，器物位置一樣）：直幅量 park/guanxing/gx_tai.png（768×1376）、寬版量 gx_tai_w.png（1376×768）；N＝腳踩的青磚地面，E＝走的路
+   （避開星圖碑座、渾儀龍柱、圭表與石圭、石桌和石鼓凳、燈桿那一圈欄杆，不出平台）。兩組節點名相同（各自多幾個轉角點），轉向換表時記住的位置照樣用。
+   HS 停靠點都在器物前面（腳比器物低）：渾儀前、星圖碑前、圭表前、石桌左邊、平台中央面向天頂黑洞、石階口；未通的三個一樣走過去，到了才跳「星軌未通」。
+   身高照「石桌直徑佔圖高」（兩張都約 0.155）換算：首頁石桌 0.078 配身高 0.05，這裡約 0.085～0.095。出口按鈕（07w9 .ex-spot）沒有 id，gxtExPos 補上 gxtExit */
+const GXT_WALK_P={W:768,H:1376,el:38,home:"home",look0:[50,95],h:[.085,72,.0012],
+  N:{home:[57,73],td:[51,69.5],m1:[38,69.5],simul:[34,66],gx:[19,63],c1:[12,67],free:[10,73],omen:[72,63.5],r1:[88,64.5],stair:[88.5,70]},
+  E:"home-td home-m1 m1-simul m1-c1 td-simul simul-gx gx-c1 c1-free home-omen omen-r1 r1-stair",
+  HS:{gxtTd:["td",50,50,"bow"],gxtGx:["gx",18,45,"wave"],gxtOmen:["omen",73,50,"bow"],gxtFree:["free",28,75,"wave"],gxtSimul:["simul",50,8,"cheer"],gxtExit:["stair",95,86,"wave"]}};
+const GXT_WALK_W={W:1376,H:768,el:38,home:"home",look0:[50,95],h:[.09,72,.0012],
+  N:{home:[44,71.5],td:[50.5,72.5],simul:[43,66.5],gx:[38.5,64.5],w1:[36,70],free:[37,76.5],e1:[55.5,69.5],omen:[57,62.5],stair:[61.5,73.5]},
+  E:"home-td home-simul home-w1 simul-gx gx-w1 w1-free td-e1 e1-omen e1-stair",
+  HS:{gxtTd:["td",50.5,55,"bow"],gxtGx:["gx",39.5,48,"wave"],gxtOmen:["omen",57,50,"bow"],gxtFree:["free",44,76,"wave"],gxtSimul:["simul",50,12,"cheer"],gxtExit:["stair",68,88,"wave"]}};
+const gxtWalkCfg=k=>Object.assign({},typeof SHW_PG0!=="undefined"?SHW_PG0:{},k?GXT_WALK_W:GXT_WALK_P);
+/* 掛上走路角色；直幅／寬版換了＝收掉舊的（07w 的框一拿掉，畫面迴圈、3D 畫布自己收）、用新的那組重掛（跟 07z hmwWalk 同一個做法） */
+function gxtWalk(P,k){if(typeof shwPage!=="function"||typeof SHIP_WALK_ON==="undefined"||!SHIP_WALK_ON)return;const V=P.parentNode;if(!V)return;
+  if(P.dataset.shw){if((P._gxtW||"")===k)return;P.querySelectorAll(":scope>.shw,:scope>.shw-me,:scope>.shw-hint,:scope>.shw-say,:scope>.shw-menu").forEach(e=>e.remove());delete P.dataset.shw;P.classList.remove("shw-iso")}
+  P._gxtW=k;try{shwPage(V,gxtWalkCfg(k),"gxt")}catch(e){}}
 /* 解鎖：打贏過黑洞（w＝bhWin 次數；P＝塔防進度 bhtd，c＝破過的關） */
 const gxtWon=(w,P)=>(+w||0)>0||!!(P&&P.c&&typeof P.c==="object"&&Object.keys(P.c).length);
 function gxtOpen(){if(!GXT_ON)return false;try{if(typeof DEVMODE==="function"&&DEVMODE())return true}catch(e){}
@@ -17297,10 +17328,10 @@ function gxtCss(){if(document.getElementById("gxtCss"))return;const s=document.c
 function gxtSet(P,k,day){const im=P.querySelector(":scope>img");if(!im)return;const src=gxtSrc(k,day);
   const apply=()=>{if(!P.isConnected)return;P.dataset.gxt=k;P.dataset.day=day&&!GXT_BAD[k?"w":"p"]?"1":"";
     for(const[id,x,y]of gxtSpots(k)){const b=P.querySelector("#"+id);if(!b)continue;b.style.left=x+"%";b.style.top=y+"%";delete b.dataset.ttL;b.style.marginLeft=""}   /* ttL 是 07t3 記的原位，換座標要清掉 */
-    gxtExPos(P);if(im.getAttribute("src")!==src)im.src=src};
+    gxtExPos(P);if(im.getAttribute("src")!==src)im.src=src;gxtWalk(P,k)};
   if(im.getAttribute("src")===src&&P.dataset.gxt===k)return;const pre=new Image();pre.onload=apply;pre.onerror=()=>{if(day){GXT_BAD[k?"w":"p"]=1;gxtSet(P,k,false)}};pre.src=src}
 /* 07w9 放的出口：直幅照 EXITS，寬版挪到寬版圖的石階（清掉 07w9 推移記的原位，再請 exIn 推回看得到的範圍） */
-function gxtExPos(P){const s=P.querySelector(".ex-spot");if(!s)return;const k=P.dataset.gxt||"";if(s.dataset.gxtK===k)return;const E=GXT_EXIT[k?"w":"p"];
+function gxtExPos(P){const s=P.querySelector(".ex-spot");if(!s)return;if(!s.id)s.id="gxtExit";const k=P.dataset.gxt||"";   /* id＝走路角色的入口代號（HS.gxtExit） */if(s.dataset.gxtK===k)return;const E=GXT_EXIT[k?"w":"p"];
   delete s.dataset.exL;delete s.dataset.exT;delete s.dataset.ttL;s.style.left=E[0]+"%";s.style.top=E[1]+"%";s.style.marginLeft="";s.dataset.gxtK=k;try{if(typeof exIn==="function")exIn(s)}catch(e){}}
 function gxtTd(){try{sessionStorage.setItem("gxtFrom","1")}catch(e){}if(typeof bhtdOpen==="function")bhtdOpen();else toast("🌌 "+GXT_OFF)}
 const GXT_ACT={gxtTd:gxtTd,gxtGx:()=>{if(typeof gxMap==="function")gxMap();else toast("🌌 "+GXT_OFF)}};
@@ -17322,6 +17353,7 @@ function GxtPage(v){setTop("🔭 觀星臺","#/");setTabs(true,"#/");v.className
   {let t=0;const rs=()=>{if(!P.isConnected){removeEventListener("resize",rs);return}clearTimeout(t);t=setTimeout(()=>{if(!P.isConnected)return;const k2=gxtPick(v);if(k2!==(P.dataset.gxt||""))gxtSet(P,k2,gxtDay())},250)};addEventListener("resize",rs)}
   {const tm=setInterval(()=>{if(!P.isConnected){clearInterval(tm);return}const d=gxtDay();if(d!==(P.dataset.day==="1")&&!(d&&GXT_BAD[(P.dataset.gxt||"")?"w":"p"]))gxtSet(P,P.dataset.gxt||"",d)},60000)}
   if(typeof shpFit==="function")shpFit(v);
+  gxtWalk(P,k);   /* 走路角色（3D 載不到、減少動態時 07w 不攔點選，入口照舊直接開；有角色時小帥照 WALK_BOT_MERGE 不另外出現） */
   try{if(typeof zmPage==="function")zmPage(v)}catch(e){}
   return{}}
 /* ---------- 首頁橋右側「🔭 觀星臺」 ---------- */
