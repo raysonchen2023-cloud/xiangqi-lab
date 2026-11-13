@@ -1,29 +1,29 @@
 {
- "version": "20261113-1152",
- "checkedAt": "2026-11-13T03:52:04.672Z",
- "html": "f9659a16278d",
- "sw": "a2a69f7511ab",
+ "version": "20261113-1216",
+ "checkedAt": "2026-11-13T04:16:07.515Z",
+ "html": "d5cb84b2eab6",
+ "sw": "8cc300c1dc2c",
  "scripts": 4,
  "modules": {
   "00-util.js": "402a8c296ec8",
   "01-board.js": "8750957ed3a7",
   "02-shell.js": "d7075bcec55e",
   "03-home-quiz.js": "24d24f013354",
-  "04-stats.js": "6977084a35d2",
+  "04-stats.js": "783c70902f05",
   "04c-weekly.js": "326899d53f7b",
   "05-settings.js": "edf6028817a9",
   "05b-save.js": "950a0704bcf0",
   "05c-health.js": "a1bcf3e541ac",
   "05d-telemetry.js": "98d12b742868",
   "06-cpu.js": "6434f5b0aa1f",
-  "06c-cup.js": "5944cdb93315",
+  "06c-cup.js": "edc2e989a25e",
   "07-legend.js": "9adb41fc19f2",
   "07c-canju.js": "a91312f29641",
   "07d-garden.js": "cc746ff05fc7",
   "07e-garden2.js": "8694cc6ab0e6",
   "07f-ship.js": "61ef8ab08622",
   "07o-shipmore.js": "3e3ebb9d732b",
-  "07bh-blackhole.js": "7d9b542d1651",
+  "07bh-blackhole.js": "d18ba98e03b1",
   "07gx-galaxy.js": "f79b141f237d",
   "07dv-devtest.js": "6e07fd36bb13",
   "07dw-perfhud.js": "a3755bd4af6c",
@@ -81,10 +81,10 @@
   "07w6b-scenedata.js": "834d49f27096",
   "07w6c-scenepoem.js": "8b310494b149",
   "07w7-seasons.js": "529ad2792fb0",
-  "07w8-shichen.js": "24b6fb85c70f",
+  "07w8-shichen.js": "1777a0b333c3",
   "07w9-exits.js": "94a8b7c84852",
   "08-scene.js": "86969cd488ba",
-  "08b-cpugame.js": "abd88797e20a",
+  "08b-cpugame.js": "631eda3bfa74",
   "08s-simul.js": "2126db3ab684",
   "09-askbot.js": "4e6983c50d4c",
   "09b-preload.js": "44e080e12e92",
@@ -121,7 +121,7 @@
   {
    "module": "04-stats.js",
    "lines": 4,
-   "sourceModified": "2026-11-13T02:16:45.507Z"
+   "sourceModified": "2026-11-13T03:53:43.836Z"
   },
   {
    "module": "05-settings.js",
@@ -135,8 +135,8 @@
   },
   {
    "module": "06c-cup.js",
-   "lines": 5,
-   "sourceModified": "2026-11-13T02:18:34.382Z"
+   "lines": 4,
+   "sourceModified": "2026-11-13T03:53:43.839Z"
   },
   {
    "module": "07w-shipwalk.js",
