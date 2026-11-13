@@ -1,11 +1,12 @@
 # Android 與 F-Droid 路線圖
 
-最後核對：2026 年 11 月 13 日（評比第 14 輪 F3 寫成；第 15 輪 F3、F4 補上編譯與可重現建置）。這一頁是計畫和現況整理，不是法律意見。**11/13 已經在開發者電腦上編出 debug APK**（約 97 MB），兩次乾淨編譯逐位元相同；**還沒有在任何手機上跑過**，也還沒有正式簽章的發布版。11/13 在電腦的 Android 模擬器上跑過：新版 WebView 第一次開引擎能下棋，但再開一次跨來源隔離就消失；開發者決定改 App 原生碼修（Service Worker 的請求也補標頭），**已正式採用、重編 debug APK，模擬器上清掉資料連開 3 次都正常**（見〈模擬器驗證〉）。
+最後核對：2026 年 11 月 13 日（評比第 14 輪 F3 寫成；第 15 輪 F3、F4 補上編譯與可重現建置）。這一頁是計畫和現況整理，不是法律意見。**11/13 已經在開發者電腦上編出 debug APK**（約 97 MB），兩次乾淨編譯逐位元相同；**還沒有在任何手機上跑過**，也還沒有正式簽章的發布版。11/13 在電腦的 Android 模擬器上跑過：新版 WebView 第一次開引擎能下棋，但再開一次跨來源隔離就消失；開發者決定改 App 原生碼修（Service Worker 的請求也補標頭），**已正式採用、重編 debug APK，模擬器上清掉資料連開 3 次都正常**（見〈模擬器驗證〉）。同一天再補上**發布版設定與外部可重建**（R8、版本號規則、AAB、Gradle 相依驗證、`xiangqi-android/REBUILD.md`；在全新資料夾、全新快取下重建，APK 拿掉簽章後逐位元相同，見〈發布版設定與乾淨環境重建〉），以及**舊 WebView 的降級提示**（原生 App 不再自動重整，改說明要更新什麼、哪些功能還能用，見〈舊 WebView 降級提示〉）；正式上傳金鑰仍由開發者自己產生。
 
 ## 先講結論
 
 - **debug APK 編得出來了，而且可重現。** 開發者電腦上的 `xiangqi-android/` 是 Capacitor 8.6.2 專案；11/13 開發者同意後，在使用者資料夾裝了 JDK 21、Android SDK 命令列工具、platform 36、build-tools，用專案的 Gradle wrapper 編出 debug APK，原生碼**第一次編就通過、沒有改程式邏輯**。之後模擬器驗證找到「再開 App 隔離就掉」的問題，原生碼補了 Service Worker 那條路，重編（現在的 APK SHA-256 `8265202f…`）。清掉所有 build 資料夾連編兩次，APK 逐位元相同；複製到另一個資料夾、換一把 debug 金鑰再編，拿掉簽章區塊後也逐位元相同（見〈編譯與可重現建置〉）。APK 裡沒有 Google Play 服務、Firebase。
-- **最大的技術風險是引擎。** Pikafish 是多執行緒 WebAssembly，要 `SharedArrayBuffer`。Android 的 WebView 不支援網頁版用的 COOP／COEP 跨來源隔離；2026 年 10 月 21 日 androidx.webkit 1.18.0 才新增官方的開法（允許清單＋`Document-Isolation-Policy` 標頭）。骨架照這個寫了，編譯通過，Android 模擬器（WebView 154）上跨來源隔離和引擎都驗過，但**沒有實機驗證**；手機上的 WebView 太舊就不能用（模擬器的 WebView 133 就不行），要有備案（Android 版改用 NDK 編原生 Pikafish）。
+- **最大的技術風險是引擎。** Pikafish 是多執行緒 WebAssembly，要 `SharedArrayBuffer`。Android 的 WebView 不支援網頁版用的 COOP／COEP 跨來源隔離；2026 年 10 月 21 日 androidx.webkit 1.18.0 才新增官方的開法（允許清單＋`Document-Isolation-Policy` 標頭）。骨架照這個寫了，編譯通過，Android 模擬器（WebView 154）上跨來源隔離和引擎都驗過，但**沒有實機驗證**；手機上的 WebView 太舊就不能用（模擬器的 WebView 133 就不行），要有備案（Android 版改用 NDK 編原生 Pikafish）；在備案做好以前，App 遇到太舊的 WebView 會跳說明請玩家更新，不再自動重整（〈舊 WebView 降級提示〉）。
+- **發布版和外部重建準備好了（不含正式金鑰）。** release 開 R8、版本號照網站版本號算（`20261113-0540` → versionCode `26111305`）、`bundleRelease` 編得出 AAB；工具鏈和所有 Gradle 相依都釘住版本和雜湊。照 `xiangqi-android/REBUILD.md` 在全新資料夾、全新快取、全新金鑰下重建，debug APK、release APK 拿掉簽章後逐位元相同，AAB 解開後內容相同。正式上傳金鑰和 Play App Signing 由開發者自己做。
 - **兩條上架路線要的東西不一樣。** Google Play 要付費帳號、身分驗證、封閉測試、資料安全表單、AAB 格式；F-Droid 要它的伺服器能從公開原始碼建出 APK，而且不收預先編好的二進位檔。
 - **F-Droid 會標的反特性（Anti-Features）：** NonFreeAssets（素材 CC BY-NC-SA 4.0、權重不得商用）、NonFreeNet（線上大廳 EMQX Cloud、意見回饋 Google 表單），以及很可能 Tracking（三種匿名資料預設開）。都是「收錄但標示」，不是拒收。
 - **建議順序：** 先在手機上驗證引擎（決定走 WebView 還是原生），再做 Google Play 內部測試；F-Droid 等「預編的 `pikafish.wasm`」和「大檔只在 CDN」兩件事有解法再送。
@@ -63,9 +64,13 @@ iOS 準備在 `xiangqi-ios/`（11/13，見那個資料夾的 `IMAC-DAY.md`、`no
 | `scripts/check-skeleton.js` | 不用 SDK、不連網的檢查：沒有 Google Play 服務／Firebase、關掉相依資訊區塊、webkit ≥ 1.18.0、原生碼有允許清單和標頭、Service Worker 的請求也補標頭（標頭清單只有一份）、來源固定、沒有二進位檔、F-Droid 草稿欄位齊全 | 11/13 全部通過（只列「有 gradle-wrapper.jar」提醒） |
 | `fdroid/com.raysonchen.xiangqiqianqiu.yml` | 給 fdroiddata 的建置設定草稿（下面〈F-Droid 路線〉） | 草稿，還不能送 |
 | `fastlane/metadata/android/zh-TW`、`en-US` | 商店標題、短說明、長說明（F-Droid 從倉庫讀） | 草稿 |
-| `www/` | `make-www.js` 做出來的網頁成品（`npx cap sync android` 再複製到 `android/app/src/main/assets/public/`） | 11/13 是 `20261113-0540` |
+| `www/` | `make-www.js` 做出來的網頁成品（`npx cap sync android` 再複製到 `android/app/src/main/assets/public/`） | 11/13 是 `20261113-0540`；11/13 起 `.gitignore` 擋掉（重建時從公開倉庫重做） |
+| `REBUILD.md` | 乾淨環境重建的步驟和指令、釘住的版本、發布版設定、開發者要自己做的事（上傳金鑰、Play App Signing） | 11/13 寫好、照著做過一次 |
+| `scripts/clean-rebuild.js` | 照 `REBUILD.md` 在全新資料夾重建（只複製會進版本控制的檔、公開倉庫指定 commit、全新 npm／Gradle 快取、全新 debug 金鑰），再跟參考成品比對 debug APK、release APK、AAB | 11/13 寫好、實際跑過 |
+| `android/gradle/verification-metadata.xml` | Gradle 相依驗證：AGP、androidx、Kotlin、R8 等 390 個元件的 SHA-256，下載後逐一核對，不符就停 | 11/13 |
+| `build-records/rebuild-20261113.json` | 乾淨環境重建紀錄（三個成品的雜湊、比對結果、工具版本、每一步花的時間） | 11/13 |
 
-**還沒做的：** 原生橋接（觸覺、分享、存檔匯出、關 service worker、每日提醒）、圖示和啟動畫面、發布用簽章金鑰、`localhost` 被當成測試機的修補、實機測試。
+**還沒做的：** 原生橋接（觸覺、分享、存檔匯出、關 service worker、每日提醒）、圖示和啟動畫面、正式上傳金鑰（開發者自己產生，步驟在 `REBUILD.md`）、`localhost` 被當成測試機的修補、實機測試。
 
 ## Google Play 路線
 
@@ -190,21 +195,40 @@ gradlew assembleDebug --no-daemon
 2. **複製到另一個資料夾、用另一把新產生的 debug 金鑰編**：整檔 SHA-256 不同（補 Service Worker 標頭後是 `4b2b4aaba1338957a74ef6d9c073c5248738c38a46ccef840ba6a224b8793373`；之前那一版是 `847720b26fd145074ffdd6383e7a6a2703256092237644c87a63a6680ee67c4c`），差別**只在 APK 簽章區塊**；拿掉簽章區塊後逐位元相同，每個 dex、資源、assets、項目順序、檔案時間都一樣。所以編譯結果不受資料夾路徑影響。
 3. **沒有需要消除的不一致。** Android Gradle 外掛已經把 ZIP 時間固定、項目排序固定；`make-www.js` 的 `native-build.json` 本來就不寫建置時間。
 
-這代表 F-Droid 那種「拿開發者簽的 APK 的簽章、套到自己從原始碼編的 APK 上比對」的做法在 debug 版可行；release 版還要另外驗（R8／ProGuard 目前關著、Android Gradle 外掛預設會把 git commit 寫進 release APK（`vcsInfo`）、簽章金鑰還沒有）。
+這代表 F-Droid 那種「拿開發者簽的 APK 的簽章、套到自己從原始碼編的 APK 上比對」的做法在 debug 版可行；release 版見下一節。
+
+### 發布版設定與乾淨環境重建
+
+11 月 13 日補上。步驟、指令、開發者要自己做的事都寫在 `xiangqi-android/REBUILD.md`。
+
+**釘住的版本：** JDK Temurin 21.0.13+9（`android/build.gradle` 檢查主版本一定是 21）、Gradle 8.14.3（wrapper 核對發行包 SHA-256）、AGP 8.13.0、platform android-36 r02、build-tools 35.0.0（`variables.gradle` 的 `buildToolsVersion`）、Capacitor 8.6.2（`package.json` 寫死、`package-lock.json` 的 integrity）。新增 `android/gradle/verification-metadata.xml`：AGP、androidx、Kotlin、R8 等 390 個 Maven 元件的 SHA-256，Gradle 下載後逐一核對，不符就停。第一次在全新的 Gradle 快取試建時，它真的擋下兩個沒登記到的檔（`guava-parent-33.3.1-jre.pom`、`junit-bom-5.10.2.module`；在原本有快取的電腦上產生驗證檔時漏掉），補上雜湊後重新從頭建一次才通過。
+
+**發布版設定（`app/build.gradle`）：** release 開 R8（`minifyEnabled true`、`proguard-android-optimize.txt`），dex 從 6 個縮成 1 個、release APK 97617196 位元組；`vcsInfo.include = false`（不把 git commit 寫進 APK）；版本號從網站版本號算：`versionName`＝`20261113-0540`、`versionCode`＝`26111305`（年後兩碼＋月日＋時，同一小時要重發用 `-PxqVersionCode` 覆寫）；簽章從倉庫外的 properties 檔讀（`-PxqSigning=<路徑>` 或 `XQ_SIGNING_PROPERTIES`），沒給就編沒簽章的版本。`bundleRelease` 編出 AAB（97595729 位元組）。**沒有產生、也沒有用任何正式金鑰**：流程是用每個環境自己的 debug 金鑰當暫時的發布金鑰跑的（`apksigner` 驗過 release APK 是 v2 簽章、`jarsigner` 驗過 AAB）。debug APK 也跟著用新的版本號，所以內容雜湊跟上面那版（versionCode 1）不同。
+
+**乾淨環境重建：** 用 `scripts/clean-rebuild.js` 照 `REBUILD.md` 在一個全新的暫存資料夾重做一次：只複製會進版本控制的原生專案檔（101 個，用 `git ls-files` 照 `.gitignore` 判斷，原始碼指紋跟原專案一致），網頁從公開倉庫 commit `253d76925e8b9836a3567ea68e72b489dbfd1ccd`（`20261113-0540`）clone 出來再跑 `make-www.js`（含 check-build）、`capacitor sync`；npm 快取、Gradle 快取（重新下載 Gradle 和所有相依並核對雜湊）、debug 金鑰全部是新的。跟原專案清乾淨後編的參考成品比：
+
+| 成品 | 參考建置 SHA-256 | 乾淨環境重建 SHA-256 | 拿掉簽章後 |
+|---|---|---|---|
+| debug APK | `77d40d51ec9642f607c51ad2cd8a6ddfc573566c1385f7183818624b1830abc1` | `22706796fd718e464f2b0ffcd483b21387ecedbe96654067e760bd80e1126ca1` | 逐位元相同：`cb430e80e64b09cc488f8740eee9bcb66003ae87e9baf9754d5d70af81c1e9fd` |
+| release APK（R8） | `73f3a732f3dad558ea7418fbb4a0d5861e04931d24e5af7eb7a14497b30d2714` | `5dcdaadf367a36d797b2ab366dc9ad330aee2aebe82b07551580eea9b332d578` | 逐位元相同：`62ada3afd0e00152843084e9b934b3a7275e4fc6a862a0696fe18c5756e541c6` |
+| AAB | `38953e3848efe4e22d373459410d1401028d9106ce91aa6e6ef47241e4260df9` | `161bc5d6e1b36dc7776cfe9f781022bd22a959d1f12098cccbf6d2d127ce5c52` | AAB 是 jar 簽章（簽章檔在 ZIP 裡），比解開後的內容：相同，`8f5aa2389508cda31c07955fa6265d17fff4d24e24c0fab581e72105a69aad3a` |
+
+整檔雜湊不同只因為兩邊的 debug 金鑰不同；dex、資源、assets、項目順序、檔案時間全部一樣，三個都沒有 Google Play 服務、Firebase。重建花的時間：Gradle 第一次（含下載）約 2 分鐘、release＋AAB 約 1 分鐘。紀錄在 `build-records/rebuild-20261113.json`。
 
 ### 還沒驗證的
 
 - **真機。** 沒有在任何手機上安裝、開啟過；畫面、觸控、存檔、線上大廳都沒試。
 - **跨來源隔離在真機上是不是 true。** 模擬器（WebView 154）上已經是 true（〈模擬器驗證〉），真機還要用 `chrome://inspect` 看 `crossOriginIsolated`、`typeof SharedArrayBuffer`；這要看手機的 Android System WebView 版本支不支援 `CROSS_ORIGIN_ISOLATED_ALLOWLIST`（WebView 133 不支援）。不是 true 的話引擎載不起來，要走備案 B 或 C。
 - **`MainActivity.load()` 先載入一次、換 WebViewClient 再重載**的順序，在真機上會不會閃一下或重複執行頁面腳本。
-- **別台電腦、Linux（F-Droid 的建置環境）** 編出來是不是也一樣；這次只在同一台 Windows 換資料夾和金鑰。
-- **release 版**（簽章、R8、`vcsInfo`）、**AAB**、Google Play 的預先審查都還沒做。
+- **別台電腦、Linux（F-Droid 的建置環境）** 編出來是不是也一樣；這次只在同一台 Windows 換資料夾、換快取、換金鑰。
+- **正式上傳金鑰簽的 AAB、Google Play 的預先審查**都還沒做（金鑰由開發者產生）；R8 縮過的 release APK 也還沒在模擬器或手機上開過（模擬器驗的是 debug APK）。
+- F-Droid 草稿的建置方式（`make-www.js --into`、不跑 `capacitor sync`）少了 `cordova.js`、`cordova_plugins.js`，跟 `REBUILD.md` 的步驟編出來的 APK 不會逐位元相同；要對齊得讓 `make-www.js` 補這兩個檔。
 
 ### 要開發者做的事
 
 - 拿一支 Android 7.0 以上的手機（Android System WebView 先在 Play 商店更新到最新），開「開發人員選項」和 USB 偵錯；裝這個 debug APK 前要先在 `capacitor.config.json` 暫時打開 `webContentsDebuggingEnabled` 重編（目前關著，`chrome://inspect` 看不到）。
 - 決定〈要開發者決定的事〉第 2～4 項（appId、引擎路線、Android 專案放哪）。
-- 發布用的簽章金鑰要由開發者自己產生、自己保管（不能放進任何倉庫）。
+- 發布用的上傳金鑰要由開發者自己產生、自己保管（不能放進任何倉庫），再到 Play Console 用 Play App Signing；指令和步驟在 `xiangqi-android/REBUILD.md`〈開發者要自己做的〉。
 
 ## 模擬器驗證
 
@@ -267,17 +291,37 @@ AVD 放在 `android-dev/android-user-home/avd/`（`xq_pixel9_api36`、`xq_pixel9
 - logcat 的 crash 緩衝區是空的，沒有 `FATAL EXCEPTION`、沒有 ANR。
 - **映像 A（WebView 133）這次沒有重測**：它不支援 `CROSS_ORIGIN_ISOLATED_ALLOWLIST`，允許清單根本設不上，補不補標頭都一樣是 false、引擎載不起來，照舊無解（〈發現的問題〉第 4 項）。
 
+### 舊 WebView 降級提示
+
+11 月 13 日補上（〈發現的問題〉第 2、4 項）。改的是網頁 `xiangqi-db/m/02-shell.js` 的兩小段，只在原生 App（User-Agent 帶 `XQQianqiuApp/`）作用，網頁版照舊：
+
+1. **不自動重整。** Service Worker 就緒後「沒有跨來源隔離就重整、同一次最多兩次」那段，加上「原生 App 不重整」：App 的隔離靠原生碼的允許清單，不靠 `sw.js`，重整不會好，只會讓開頭空白十幾秒。
+2. **跳一次說明。** 原生 App 裡 `crossOriginIsolated` 不是 true、或沒有 `SharedArrayBuffer`，開啟約 2.5 秒後（畫面上有預載畫面、別的視窗、卡片就先等，最多等 90 秒）跳出：「這支手機的 Android System WebView 版本太舊，電腦棋手無法運作；請到 Play 商店更新『Android System WebView』或『Chrome』」，加上更新後要把 App 完全關掉再打開、照樣能用的功能（同桌對弈、殘局、古譜與大師對局、測驗、線上對弈）、要等更新才能用的功能（挑戰電腦、擂台、棋局分析與提示）、目前的 WebView 版本。按「這個版本不再跳出」之後，同一個 WebView 版本只在下方出一行提示。
+3. **引擎直接回同一句話。** 引擎的下載、載入、搜尋都改成回這句（原本是「瀏覽器還沒開啟多執行緒模式，請把 App 關掉重開一次」，舊 WebView 怎麼重開都沒用），也不再背景下載 48 MB 的引擎檔。
+
+這段改動還沒發布到網站，App 裡的網頁還是 `20261113-0540`。模擬器驗證用的 APK 是：乾淨環境重建的那份專案、網頁成品只把這兩小段原樣套進 `index.html`（其他不動），用該環境的 debug 金鑰編（SHA-256 `a5452804a5d5417453334258a7899c37371a1d2eac21ed3258682d84867ff4a3`，只供驗證，不要發布）。兩台都先移除舊版、裝這個 APK，同一時間只開一台，用自己的 adb 伺服器（埠 5038），沒碰開發者的 adb（埠 5037）；驗完兩台都關了。
+
+| 項目 | 映像 A（WebView 133.0.6943.137） | 映像 B（WebView 154.0.8037.73） |
+|---|---|---|
+| `crossOriginIsolated`／`typeof SharedArrayBuffer` | false／`"undefined"` | true／`"function"` |
+| 清掉資料後第一次開 | 開啟後 4.7 秒跳出說明（`41-oldwv-prompt.png`） | 不跳說明 |
+| 自動重整 | **沒有**：開著 76 秒都是同一次載入（導覽類型 `navigate`、`xqReload` 是空的、頁面上設的記號還在） | 沒有 |
+| 練功房下炮二平五 | 電腦不回著，下方寫那句話（`42-oldwv-cpu.png`）；引擎檔沒有下載（`xqlab-engine` 快取是空的） | 引擎 3 個執行緒，含第一次下載引擎約 20 秒內回象 3 進 5（`44-newwv-cpu-reply.png`） |
+| 關掉再開 | 一樣不重整，再跳一次說明（`43-oldwv-relaunch.png`） | 頁面從 Service Worker 快取來（`deliveryType: cache`），隔離仍是 true、不跳說明 |
+
+開頭畫面、開場影片、星槎序局是用點「入局」「略過」和 DevTools 藏起來跳過的（跟之前一樣）。映像 A 第一次用的驗證 APK 會等開頭畫面（`xqt-on`）結束才跳，開著 90 秒才出來，所以改成不等開頭畫面、重編再驗（上面是改好後的結果）。
+
 ### 發現的問題
 
 1. **再開 App 引擎就壞（已修）。** Capacitor 8.6.2 的 `Bridge` 另外設了 `ServiceWorkerClient`，Service Worker 發的請求走那裡、不經過 `XQWebViewClient`，所以 `sw.js` 安裝時存進快取的頁面沒有 `Document-Isolation-Policy`；第二次起頁面從快取來，就沒有跨來源隔離。當時的修法二選一：(a) 原生碼也替 Service Worker 請求補標頭；(b) `sw.js` 的 `isolate()` 也補 `Document-Isolation-Policy`（改網站，網頁版也會收到這個標頭，沒驗）。**開發者選 (a)，已正式採用、重編、在模擬器驗過**（〈正式修法的驗證〉）。注意：舊快取裡的頁面不會自己變，裝過有問題版本的手機要等網站換版（快取名稱跟著版本號）才會好；Android 版還沒發布，目前沒有這種手機。
-2. **沒有跨來源隔離時開頭空白約 15 秒。** `02-shell.js` 看到 `crossOriginIsolated` 是 false 會自動重整，同一次最多兩次；模擬器上首頁到第 15 秒還是空的。問題 1 修好後 WebView 154 上不再重整（正式修法驗證的三次 `xqReload` 都是空的）；WebView 太舊的手機還是會這樣。
+2. **沒有跨來源隔離時開頭空白約 15 秒。** `02-shell.js` 看到 `crossOriginIsolated` 是 false 會自動重整，同一次最多兩次；模擬器上首頁到第 15 秒還是空的。問題 1 修好後 WebView 154 上不再重整（正式修法驗證的三次 `xqReload` 都是空的）。**11/13 已改：** 原生 App 不再自動重整，WebView 太舊時改跳說明（〈舊 WebView 降級提示〉；網頁還沒發布）。
 3. **App 裡跳出「把象棋千秋加到主畫面？」**（`02-home.png`、`16-canary-relaunch.png`），教使用者點瀏覽器選單，在原生 App 裡沒有意義；首頁下方也有「加到主畫面」鈕。App 的 User-Agent 帶 `XQQianqiuApp/1`，可以用來藏起來。
-4. **WebView 133 不支援允許清單。** Android 16 映像內建的 WebView 133 沒有這個功能；手機上的 WebView 會從 Play 商店更新，但沒更新的手機、沒有 Play 商店的手機（F-Droid 使用者常見）引擎就不能用，要提示或走備案 B／C。154 有支援；中間從哪一版開始支援沒有測。
+4. **WebView 133 不支援允許清單。** Android 16 映像內建的 WebView 133 沒有這個功能；手機上的 WebView 會從 Play 商店更新，但沒更新的手機、沒有 Play 商店的手機（F-Droid 使用者常見）引擎就不能用，要提示或走備案 B／C。**11/13 已加提示**（〈舊 WebView 降級提示〉）；沒有 Play 商店的手機照樣無解，要等備案 B。154 有支援；中間從哪一版開始支援沒有測。
 5. 映像 B（Android 17）WebView 從螢幕最上面開始畫（狀態列疊在網頁上），映像 A 從狀態列下面開始；截圖裡標題沒有被蓋到，但深色頁面（星渦影片）狀態列圖示不明顯，要在真機再看。
 
 ### 截圖
 
-在 `xiangqi-android/verify/`：`01-launch-15s.png`（A，開啟 15 秒還在重整）、`02-home.png`（A，加到主畫面視窗）、`03-home-full.png`（A，首頁）、`04-cpu.png`（A，練功房）、`05-cpu-move1.png`（A，電腦不回著、多執行緒錯誤）、`11-canary-launch-15s.png`、`12-canary-title.png`（B，開頭畫面）、`13-canary-film.png`（B，開場影片）、`14-canary-adventure.png`（B，星槎序局）、`15-canary-cpu.png`（B，序局星渦蓋住練功房）、`16-canary-relaunch.png`（B，再開後）、`21-fix-cpu-start.png`、`22-fix-cpu-reply.png`（實驗版，電腦回著）、`31-swfix-launch1.png`、`32-swfix-launch2.png`、`33-swfix-launch3.png`（正式版，清掉資料後連開 3 次的首頁）、`34-swfix-cpu-start.png`（正式版，練功房第 3 級開局）、`35-swfix-cpu-reply.png`（正式版，炮二平五後電腦回砲 2 進 7）。
+在 `xiangqi-android/verify/`：`01-launch-15s.png`（A，開啟 15 秒還在重整）、`02-home.png`（A，加到主畫面視窗）、`03-home-full.png`（A，首頁）、`04-cpu.png`（A，練功房）、`05-cpu-move1.png`（A，電腦不回著、多執行緒錯誤）、`11-canary-launch-15s.png`、`12-canary-title.png`（B，開頭畫面）、`13-canary-film.png`（B，開場影片）、`14-canary-adventure.png`（B，星槎序局）、`15-canary-cpu.png`（B，序局星渦蓋住練功房）、`16-canary-relaunch.png`（B，再開後）、`21-fix-cpu-start.png`、`22-fix-cpu-reply.png`（實驗版，電腦回著）、`31-swfix-launch1.png`、`32-swfix-launch2.png`、`33-swfix-launch3.png`（正式版，清掉資料後連開 3 次的首頁）、`34-swfix-cpu-start.png`（正式版，練功房第 3 級開局）、`35-swfix-cpu-reply.png`（正式版，炮二平五後電腦回砲 2 進 7）、`41-oldwv-prompt.png`（A，降級說明）、`42-oldwv-cpu.png`（A，練功房寫那句話、電腦不回著）、`43-oldwv-relaunch.png`（A，關掉再開，不重整、再跳說明）、`44-newwv-cpu-reply.png`（B，炮二平五後電腦回象 3 進 5）。
 
 ### 模擬器驗不到的
 
@@ -297,7 +341,7 @@ node source/xiangqi-lab/tools/verify-all.js --out 紀錄.txt
 
 ## 限制
 
-- debug APK 11/13 編得出來、可重現，Android 模擬器（WebView 154）上引擎能用，但**沒有在任何手機上試過**；`androidx.webkit` 1.18.0 的允許清單是 2026 年 10 月的新功能，只對過官方文件和函式庫的類別，各家手機的 WebView 支援到哪一版也還不知道。可重現只在同一台 Windows 電腦（換資料夾、換 debug 金鑰）驗過。
+- debug APK 11/13 編得出來、可重現，Android 模擬器（WebView 154）上引擎能用，但**沒有在任何手機上試過**；`androidx.webkit` 1.18.0 的允許清單是 2026 年 10 月的新功能，只對過官方文件和函式庫的類別，各家手機的 WebView 支援到哪一版也還不知道。可重現只在同一台 Windows 電腦（換資料夾、換 debug 金鑰；11/13 再加全新的 npm／Gradle 快取，見〈發布版設定與乾淨環境重建〉）驗過。
 - Google Play 的帳號、測試人數、大小上限、目標 API 這些規定常改，表格是 11 月 13 日查到的，送審前以 Play Console 為準；開發者驗證的實施狀況來自報導和 F-Droid 的公開信，不是 Google 官方文件。
 - F-Droid 收不收 npm 下載的 Capacitor、收不收 870 MB 的 APK，都要等送出後維護者回覆；草稿照公開文件寫，沒有用 fdroidserver 實際試建。
 - `npx cap add android` 在 Windows 產生的專案沒有放進任何 git 倉庫。

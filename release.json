@@ -1,8 +1,8 @@
 {
- "version": "20261113-1327",
- "checkedAt": "2026-11-13T05:27:47.369Z",
- "html": "82d1ecf1834b",
- "sw": "49a226fcd0ed",
+ "version": "20261113-1345",
+ "checkedAt": "2026-11-13T05:45:20.856Z",
+ "html": "ee32a266ae44",
+ "sw": "0715b2b22d53",
  "scripts": 4,
  "modules": {
   "00-util.js": "9d72b869caaa",
@@ -112,49 +112,9 @@
  },
  "differsFromSource": [
   {
-   "module": "00-util.js",
-   "lines": 14,
-   "sourceModified": "2026-11-13T05:17:46.676Z"
-  },
-  {
-   "module": "02-shell.js",
-   "lines": 30,
-   "sourceModified": "2026-11-13T05:27:42.631Z"
-  },
-  {
-   "module": "02r-reloadguard.js",
-   "lines": 68,
-   "sourceModified": "2026-11-13T05:15:51.074Z"
-  },
-  {
-   "module": "03-home-quiz.js",
-   "lines": 1,
-   "sourceModified": "2026-11-13T02:18:42.402Z"
-  },
-  {
-   "module": "04-stats.js",
-   "lines": 4,
-   "sourceModified": "2026-11-13T03:53:43.836Z"
-  },
-  {
    "module": "05-settings.js",
-   "lines": 6,
-   "sourceModified": "2026-11-13T03:19:39.331Z"
-  },
-  {
-   "module": "05b-save.js",
-   "lines": 64,
-   "sourceModified": "2026-11-13T04:45:25.424Z"
-  },
-  {
-   "module": "06c-cup.js",
-   "lines": 4,
-   "sourceModified": "2026-11-13T03:53:43.839Z"
-  },
-  {
-   "module": "07w-shipwalk.js",
    "lines": 1,
-   "sourceModified": "2026-11-13T02:14:35.279Z"
+   "sourceModified": "2026-11-13T03:19:39.331Z"
   },
   {
    "module": "07y-hubmap.js",
@@ -162,74 +122,9 @@
    "sourceModified": "2026-11-11T16:25:41.802Z"
   },
   {
-   "module": "07x2-lobbymap.js",
-   "lines": 17,
-   "sourceModified": "2026-11-13T02:34:10.871Z"
-  },
-  {
-   "module": "07x4-lobbysafe.js",
-   "lines": 125,
-   "sourceModified": "2026-11-13T05:00:34.802Z"
-  },
-  {
    "module": "07s4-passmap.js",
    "lines": 1,
    "sourceModified": "2026-11-13T03:19:39.481Z"
-  },
-  {
-   "module": "07y7-cupmap.js",
-   "lines": 2,
-   "sourceModified": "2026-11-13T02:19:16.801Z"
-  },
-  {
-   "module": "09b-preload.js",
-   "lines": 5,
-   "sourceModified": "2026-11-13T04:29:29.712Z"
-  },
-  {
-   "module": "10-db.js",
-   "lines": 1,
-   "sourceModified": "2026-11-13T04:29:29.760Z"
-  },
-  {
-   "module": "10b-libmap.js",
-   "lines": 8,
-   "sourceModified": "2026-11-13T02:13:29.636Z"
-  },
-  {
-   "module": "11-watch.js",
-   "lines": 1,
-   "sourceModified": "2026-11-13T02:19:27.615Z"
-  },
-  {
-   "module": "07q2-coop.js",
-   "lines": 4,
-   "sourceModified": "2026-11-13T02:20:32.792Z"
-  },
-  {
-   "module": "07hs-netsig.js",
-   "lines": 21,
-   "sourceModified": "2026-11-13T04:39:44.611Z"
-  },
-  {
-   "module": "07i18n.js",
-   "lines": 11,
-   "sourceModified": "2026-11-13T05:16:00.863Z"
-  },
-  {
-   "module": "07sp-spotfit.js",
-   "lines": 14,
-   "sourceModified": "2026-11-13T02:39:10.453Z"
-  },
-  {
-   "module": "07mnf-mainfilm.js",
-   "lines": 320,
-   "sourceModified": "2026-11-13T05:21:54.548Z"
-  },
-  {
-   "module": "07mnq-mainquest.js",
-   "lines": 169,
-   "sourceModified": "2026-11-13T04:59:34.826Z"
   }
  ]
 }
