@@ -1613,7 +1613,7 @@ html[data-lefty] .tskip{right:auto;left:14px}
       if(!window.caches)return go();caches.keys().then(function(ks){return Promise.all(ks.filter(function(k){return k.indexOf("xqlab-app-")===0}).map(function(k){return caches.delete(k)}))})
         .then(function(){return navigator.serviceWorker&&navigator.serviceWorker.getRegistration()}).then(function(r){return r&&r.update()}).catch(function(){}).then(go)}};setTimeout(chk,4000)})();
 </script>
-<script>window.XQ_OFFLINE=true;window.XQ_BUILD="20261113-1842";</script>
+<script>window.XQ_OFFLINE=true;window.XQ_BUILD="20261113-1848";</script>
 <script src="core.js"></script>
 <script src="engine.js"></script>
 <script src="local.js"></script>
@@ -11084,7 +11084,7 @@ const BHTD=(()=>{
         hitEn(td,capDmg(m.cap,pc,td.me.atk,eye,pj),m.t,eye?"陣眼擒子":"擒子");spAdd(td,1);
         if(td.fx&&td.fx.id==="cfx"&&!td.fx.used&&tv&&tv===td.fx.tag){td.fx.used=1;hitMe(td,1,m.t,"殘卒反星")}}
       if(m.ck)hitEn(td,5,b.indexOf("k"),"將軍");if(td.shard&&td.shard.includes(m.t)){ev(td,{k:"shard",sq:m.t});hitMe(td,3,m.t,"星碎格")}}
-    else{td.rnd++;
+    else{td.rnd++;if(!(td.seal>=td.rnd))spAdd(td,1);   /* 開發者 11/13：每回合 +1 靈力（擒子再 +1）；原本只靠擒子，沒吃子就整局放不出招。陣眼被擒封靈的那一回合不加 */
       if(m.cap&&sd(m.cap)==="r"){const cx=td.fx&&td.fx.id==="cfx"&&!td.fx.used&&tf&&tf===td.fx.tag;if(cx)td.fx.used=1;   /* 殘卒反星：點名的卒吃子，扣元氣多 1 */
         const sh=tv?shTake(td,tv):0,raw=Math.min(CAPMAX,Math.round(CAPB[up(m.cap)]*CAPM[up(pc)])+(cx?1:0)),n=Math.max(0,raw-sh);if(td.en.sp<td.en.spMax){td.en.sp++;ev(td,{k:"esp",n:1})}
         if(sh)ev(td,{k:"shuse",sq:m.t,n:Math.min(sh,raw)});if(n)hitMe(td,n,m.t,"被擒");
@@ -11336,7 +11336,7 @@ function bhtdSelect(k,cover){bhtdCss();const ck=bhtdChar(),L=bhtdL(),st=BHTD.sta
     <div class="bt-cards">${BHTD.LV.map(V=>card(V.n)).join("")}</div>
     <p class="bt-me" style="margin-bottom:0">帶上場的招式（最多 4 招）：</p><div class="bt-sklist">${skHTML()}</div>
     <p class="bt-me">戰鬥演出：<span class="bt-seg">${Object.keys(BHTD_FXN).map(x=>`<button type="button" data-fx="${x}" class="${x===fx?"on":""}">${BHTD_FXN[x]}</button>`).join("")}</span></p>
-    <details class="bt-rule"><summary>陣地規則</summary>雙方各有元氣（紅條）。星樞的子過河後，每回合每顆扣你 1 元氣，停進你的九宮再多扣 2；你的子過河也一樣扣星樞。被將軍扣 5。擒子扣對方元氣（越弱的子吃越強的子扣得越多，一次最多 12），還 +1 靈力。<br>炮隔一子瞄到的敵子會「破甲」，下次打它多扣 1。紫墨星門會在預告的格子落下星樞的援軍，站上去可以堵住。<br>發星光的是陣眼子：用它吃子扣元氣 ×1.5；它被吃，靈力全散、招式停 1 回合。<br>一回合放一招，放招不佔走棋。將死或把星樞元氣打光都算贏；你的元氣歸零就輸，可以重打本關。</details>`,
+    <details class="bt-rule"><summary>陣地規則</summary>雙方各有元氣（紅條）。星樞的子過河後，每回合每顆扣你 1 元氣，停進你的九宮再多扣 2；你的子過河也一樣扣星樞。被將軍扣 5。擒子扣對方元氣（越弱的子吃越強的子扣得越多，一次最多 12），還 +1 靈力；每回合也會自動 +1 靈力。<br>炮隔一子瞄到的敵子會「破甲」，下次打它多扣 1。紫墨星門會在預告的格子落下星樞的援軍，站上去可以堵住。<br>發星光的是陣眼子：用它吃子扣元氣 ×1.5；它被吃，靈力全散、招式停 1 回合。<br>一回合放一招，放招不佔走棋。將死或把星樞元氣打光都算贏；你的元氣歸零就輸，可以重打本關。</details>`,
     [["⚔ 出戰",()=>bhtdStart(sel,k,cover,pk)],["之後再來",()=>{try{bhMus(null);if(cover!==false&&k&&typeof shipDockCover==="function")shipDockCover(k,()=>{})}catch(e){}},true]],"prolog bt-sel");
   if(!m)return;const paint=()=>{m.querySelector(".bt-cards").innerHTML=BHTD.LV.map(V=>card(V.n)).join("");m.querySelector(".bt-sklist").innerHTML=skHTML()};
   m.addEventListener("click",e=>{const c=e.target.closest(".bt-card");if(c){const n=+c.dataset.n;if(!bhtdOpenLv(P,n)){toast("🔒 先破第 "+(n-1)+" 關");return}vibrate(5);sel=n;paint();return}
