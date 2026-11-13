@@ -1,8 +1,8 @@
 {
- "version": "20261114-0051",
- "checkedAt": "2026-11-13T16:55:22.521Z",
- "html": "a78f763f663d",
- "sw": "31c8b11e7a48",
+ "version": "20261114-0304",
+ "checkedAt": "2026-11-13T19:04:14.294Z",
+ "html": "80dc61e1d36d",
+ "sw": "55e9540550b6",
  "scripts": 4,
  "modules": {
   "00-util.js": "7addbcf20a30",
@@ -12,7 +12,7 @@
   "03-home-quiz.js": "24d24f013354",
   "04-stats.js": "783c70902f05",
   "04c-weekly.js": "326899d53f7b",
-  "05-settings.js": "95ace5bba899",
+  "05-settings.js": "8d0b68e39ab3",
   "05b-save.js": "3e701ae75b5f",
   "05c-health.js": "a1bcf3e541ac",
   "05d-telemetry.js": "98d12b742868",
@@ -54,7 +54,7 @@
   "07q-buddy.js": "eaff43887e46",
   "07w5-ouyu.js": "8ee3b1bc19f3",
   "07x-zoom.js": "cfb889d84f52",
-  "07y-hubmap.js": "27f38a97d3c1",
+  "07y-hubmap.js": "7c606e4f759b",
   "07z-homemap.js": "ed4ba7ca045d",
   "07gxt-guanxing.js": "c5d2a3f23cdf",
   "07dgl-stamina.js": "a76f8d135a8d",
@@ -100,7 +100,7 @@
   "10d-coach.js": "3cc2fcbe54d5",
   "11-watch.js": "992287959982",
   "07q2-coop.js": "5545fdbdb9fc",
-  "11b-a11y.js": "580912dae87a",
+  "11b-a11y.js": "48e49ae9b2df",
   "11c-a11ysnd.js": "f5b8710e8e5a",
   "07cb-colorblind.js": "cb776a712df2",
   "07hp-haptics.js": "d1bd73fd4974",
@@ -113,7 +113,7 @@
   "07sp-spotfit.js": "f7f205a79901",
   "07fl-fill.js": "6d07e97dc32f",
   "07mnf-mainfilm.js": "20009b76de16",
-  "07mnq-mainquest.js": "25449ad6ac95"
+  "07mnq-mainquest.js": "201e2d014df5"
  },
  "differsFromSource": [
   {
@@ -124,7 +124,7 @@
   {
    "module": "05-settings.js",
    "lines": 1,
-   "sourceModified": "2026-11-13T16:55:04.522Z"
+   "sourceModified": "2026-11-13T19:04:13.233Z"
   },
   {
    "module": "05b-save.js",
@@ -144,7 +144,7 @@
   {
    "module": "07y-hubmap.js",
    "lines": 5,
-   "sourceModified": "2026-11-11T16:25:41.802Z"
+   "sourceModified": "2026-11-13T18:59:11.775Z"
   },
   {
    "module": "07xsm-ximarket.js",
