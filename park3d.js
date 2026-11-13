@@ -1841,7 +1841,10 @@
       const L=gntStarLay(board).filter(o=>o.s===sideOf(cp)&&o.k===K),tgt=L[L.length-1]||null;
       const after=C0=>{gntDrop(cap);capDone();const fin=()=>layoutCaptured(board);if(tgt&&!RDM)gntFly(C0,tgt,fin);else fin()};
       if(!RDM&&mv&&mv.K){if(red)gntSuck(cap,{K:mv.K==="K"?"K":"B",f:mv.f,t:mv.t},C0=>{gntSpark(C0,0xFFD98A,big?120:80,1.6,.7);after(C0)});else gntSuck(cap,mv,after)}else gntBurst(cap,red,big,spd,after)};   /* hspx 開發者 11/12「星樞棋兵被吃掉後，也要有消失在黑洞的動畫」：紅方撞完，被吃的子背後開黑洞往後吸走（帥＝腳下黑洞往下沉），洞關起來噴金色星塵 */   /* 黑方星樞棋兵吃子：黑洞吸入；紅方照舊星爆 */
-    const gntTake=p=>{const bm=p==="k"&&GBOSS&&GNT_XS[GBOSS.k]?GBOSS:null,q=gntPool[bm?p+"@"+bm.k:p];let g=q&&q.pop();if(g&&g.userData.ped){const[pb,pf,K]=g.userData.ped;pb.material=bMat(true);pf.material=fMat(NAMES.r[K],true)}   /* 換造型（refreshLook）會把舊的棋子材質丟掉，重用的底座要換新的 */if(!g){const K=p.toUpperCase();g=sideOf(p)==="r"?(GNT_X[K]?gntFig(p,K):gntStone(p)):(GNT_XS[K]?gntFig(p,K,true,bm):gntStone(p))}g.visible=true;if(g.userData.capS0){g.scale.setScalar(g.userData.capS0);delete g.userData.capS0}g.rotation.set(0,g.userData.B?((sideOf(p)==="r")!==flip?PI:0):0,0);sc.add(g);return g};
+    const gntTake=p=>{const bm=p==="k"&&GBOSS&&GNT_XS[GBOSS.k]?GBOSS:null,q=gntPool[bm?p+"@"+bm.k:p];let g=q&&q.pop();if(g&&g.userData.ped){const[pb,pf,K]=g.userData.ped;pb.material=bMat(true);pf.material=fMat(NAMES.r[K],true)}   /* 換造型（refreshLook）會把舊的棋子材質丟掉，重用的底座要換新的 */if(!g){const K=p.toUpperCase();g=sideOf(p)==="r"?(GNT_X[K]?gntFig(p,K):gntStone(p)):(GNT_XS[K]?gntFig(p,K,true,bm):gntStone(p))}g.visible=true;if(g.userData.capS0){g.scale.setScalar(g.userData.capS0);delete g.userData.capS0}g.rotation.set(0,g.userData.B?((sideOf(p)==="r")!==flip?PI:0):0,0);if(p==="k")gntTxHide(g,!!(GBOSS&&GBOSS.k==="taixu"));sc.add(g);return g};
+    /* 11/14 太虛星尊（ex.bhBoss＝{k:"taixu"}）：黑將照常是一顆棋子（走子、將軍、將死的邏輯都不動），只把它的外觀藏起來；
+       魔王模型和三招魔法由 App 的 m/07bhf-bossfx.js 用 fxApi() 接 bossfx3d.js 畫，魔王每一格跟著這顆將的位置走。換回別的守關或一般局時外觀放回來 */
+    const gntTxHide=(g,on)=>{const u=g.userData;if(on){if(u.txHid)return;u.txHid=g.children.filter(c=>c.visible);u.txHid.forEach(c=>{c.visible=false})}else if(u.txHid){u.txHid.forEach(c=>{c.visible=true});delete u.txHid}};
     const gntDrop=g=>{sc.remove(g);if(g&&g.userData&&g.userData.giant){const p=g.userData.pk||g.userData.p;(gntPool[p]||(gntPool[p]=[])).push(g)}};
     /* ---------- 開發者 11/12 選 ChatGPT 推薦套（story/chatgpt_app/128）：黑洞每種棋子的專屬走法動作 ----------
        帥＝星冕御步（腳下光環、平穩移駕、到點收束）；仕＝宮紋換位（九宮線亮起、斜滑）；相＝象田飛渡（低拋物線飛過田字、象眼亮星、田字框閃）；
@@ -1907,7 +1910,7 @@
        o＝{sq 被將死的將（帥）在哪一格, tea 序局, cam 要不要運鏡, snd(事件) 音效：start/lock/tea/dust, done()}；將消融後藏起來，盤面換了（下一盤、復盤）才放回來 */
     const mateFx=o=>{o=o||{};let fired=false;const done=()=>{if(fired)return;fired=true;try{o.done&&o.done()}catch(e){}},snd=k=>{try{o.snd&&o.snd(k)}catch(e){}};
       const go=()=>{const g=pieces[o.sq];if(!g||!g.parent){done();return}
-        const tea=!!o.tea,M=tea?GMATE.tea:GMATE.norm,TM=M.tm,[kx,kz]=pos(o.sq),G=GS,s0=g.scale.x||1,HH=GNT_H*s0;FXTS=1;
+        const tea=!!o.tea,M=tea?GMATE.tea:GMATE.norm,TM=M.tm,[kx,kz]=pos(o.sq),G=GS,s0=g.scale.x||1,HH=GNT_H*s0*(g.userData&&g.userData.txHid&&GBOSS&&GBOSS.h>0?GBOSS.h:1);FXTS=1;   /* 11/14 太虛星尊（黑將外觀藏著、魔王 bossfx3d 跟著這顆將的縮放一起消融）：星盤環、茶霧照魔王的高度（ex.bhBoss.h 倍） */
         const hide=()=>{const an=gntFx(new T.Object3D());an.position.set(kx,TOP,kz);if(GFOC===g)GFOC=an;g.visible=false;g.scale.setScalar(s0);MATED={g,s0,k:LBK,an}};   /* 將藏起來後鏡頭還盯著那一格（gntOn 看不到藏起來的子會鬆開對焦、畫面跳走） */
         snd("start");pwPoke(9000);
         if(RDM){anims.push({t:0,d:.9,rt:1,f:p=>g.scale.set(s0,s0*Math.max(.01,1-p),s0),end:()=>{hide();done()}});return}
@@ -2221,14 +2224,17 @@
        不清畫面、不重算陰影，所以會跟正面畫在同一張、被棋盤正確遮住；畫完全部放回原處。同一批物件＝走子、動作、吃子都同步 */
     /* 開發者 11/12 選「半透明星石盤」：棋盤（正反兩面）最後才畫——主畫面先不畫棋盤 → 第 2 次畫鏡像角色 → 第 3 次只畫半透明棋盤，
        這樣隔著棋盤看得到另一面的角色和環景，而且只染一次色（不會兩層疊得太暗）；棋盤不寫深度，站在棋盤上面的角色照樣擋住棋盤 */
+    /* 11/14 正式交給外掛特效（太虛星尊魔法 bossfx3d.js，經 fxApi().hook）的繪製掛勾：每一格畫三次，每一次 render 前叫一次——
+       "main"＝主畫面（星盤藏著）、"mirror"＝盤底倒影（棋子已搬進 MG；省電或盤上沒子時這次不畫、也不叫）、"board"＝只畫半透明星盤 */
+    const FXH=new Set(),fxH=k=>{for(const f of FXH)try{f(k)}catch(e){}};
     const gntMirror=()=>{if(!MG)return;if(BGL&&BGL.scale.x!==GS)BGL.scale.set(GS,1,GS);if(BRV&&BRV.scale.x!==GS)BRV.scale.set(GS,GS,1);const L=[];for(const k in pieces){const g=pieces[k];if(g&&g.parent===sc&&g.visible)L.push(g)}
       for(const g of L)MG.add(g);   /* 先把棋子移進 MG，下面藏東西時才不會連棋子一起藏 */
       const hid=[],lt=[],fl=[],bg=sc.background;for(const o of sc.children){if(o.isLight)lt.push([o,o.position.y]);else if(o.visible&&o!==MG){o.visible=false;hid.push(o)}}
       BU.visible=false;bplane.visible=false;sc.background=null;
       for(const g of L)g.traverse(m=>{const t=m.isMesh&&m.name==="meGly"&&m.material&&m.material.map;if(t&&t.repeat&&t.repeat.x===1){t.repeat.x=-1;t.offset.x=1;t.updateMatrix();fl.push(t)}});
       const ac=rd.autoClear,su=rd.shadowMap.autoUpdate;rd.autoClear=false;rd.shadowMap.autoUpdate=false;
-      try{if(L.length&&!PW.on){for(const[o]of lt)o.position.y=2*MY-o.position.y;rd.render(sc,cam);for(const[o,y]of lt)o.position.y=y}   /* 第 2 次：鏡像角色（燈也照鏡像擺） */
-        for(const g of L)g.visible=false;BU.visible=true;bplane.visible=true;rd.render(sc,cam)}   /* 第 3 次：只畫半透明棋盤（正面＋盤底） */
+      try{if(L.length&&!PW.on){for(const[o]of lt)o.position.y=2*MY-o.position.y;if(FXH.size)fxH("mirror");rd.render(sc,cam);for(const[o,y]of lt)o.position.y=y}   /* 第 2 次：鏡像角色（燈也照鏡像擺） */
+        if(FXH.size)fxH("board");for(const g of L)g.visible=false;BU.visible=true;bplane.visible=true;rd.render(sc,cam)}   /* 第 3 次：只畫半透明棋盤（正面＋盤底） */
       finally{rd.autoClear=ac;rd.shadowMap.autoUpdate=su;sc.background=bg;BU.visible=true;bplane.visible=true;for(const t of fl){t.repeat.x=1;t.offset.x=0;t.updateMatrix()}
         for(const g of L){g.visible=true;sc.add(g)}for(const o of hid)o.visible=true;for(const[o,y]of lt)o.position.y=y}};
     /* ⇅：上下再轉半圈（仰角 +180°，平順轉過去）——從棋盤另一側、頭朝下看底下的鏡像角色＝正的；再按一次再轉半圈回正面。UNDER（鏡頭在棋盤底下）每一幀由 placeCam 判斷 */
@@ -2346,10 +2352,10 @@
     const gntOrb=(P,L,de,a0)=>{const vx=P.x-L.x,vy=P.y-L.y,vz=P.z-L.z,r=Math.hypot(vx,vy,vz),a=Math.atan2(vx,vz),e=Math.atan2(vy,Math.hypot(vx,vz))+de;
       P.set(L.x+Math.sin(a)*Math.cos(e)*r,L.y+Math.sin(e)*r,L.z+Math.cos(a)*Math.cos(e)*r);return[a,e]};
     /* 放大繞著角色轉時，鏡頭會穿進旁邊的角色、或被前排擋住：擋在鏡頭到目標這條線上（半徑 0.6 內）的其他角色先藏起來，拉遠就回來 */
-    const GFR=new T.Vector3();const gntClear=on=>{const C=cam.position;for(const g of gntFigs){const inn=g.children[0];if(!inn)continue;let hide=false;
+    const GFR=new T.Vector3();const gntClear=on=>{const C=cam.position;for(const g of gntFigs){const inn=g.children[0];if(!inn)continue;let hide=!!(g.userData&&g.userData.txHid);   /* 11/14 太虛星尊上場時黑將外觀一直藏著（gntTxHide） */
       /* 開發者 11/12「某些角度會讓原本的棋子消失」：原本擋在視線上的角色都藏起來，玩家會以為那隻棋不見了（例如從黑方背後看，將被藏掉）。
          改成只有鏡頭真的鑽進角色身體裡（離身體中心 0.75 以內）才藏，擋住視線的照樣看得到 */
-      if(on&&g!==GFOC&&g.parent){g.getWorldPosition(GFR);GFR.y+=GNT_H*.5;hide=GFR.distanceTo(C)<.75}
+      if(!hide&&on&&g!==GFOC&&g.parent){g.getWorldPosition(GFR);GFR.y+=GNT_H*.5;hide=GFR.distanceTo(C)<.75}
       if(inn.visible===hide)inn.visible=!hide}};
     /* 望遠鏡：站在預設視角的位置（GNT_V[1]），往 yaw／pitch 的方向看；視角＝1 倍視角×zoom（zoom 最小 .025＝40 倍） */
     const gntTele=()=>{if(cam.near!==.5){cam.near=.5;cam.updateProjectionMatrix()}const P=GV1.set(GNT_V[1][0]*GS,GNT_V[1][1]*GS,GNT_V[1][2]*GS),az=-yaw,elv=clamp(.1+pitch*1.2,-.9,1.45);cam.position.copy(P);
@@ -2619,7 +2625,7 @@
         lerp(B.head.rotation,"x",hx);lerp(B.head.rotation,"y",hy);tick(mate)}
       if(GIANT){gntTick(t,s);const tf=TELE?smooth(.06,.45,zoom):1;   /* 望遠鏡越放大：近景、中景越淡（像對焦到遠方）、遠方更暗的星星淡入 */
         for(const L of LAYER2){L.rotation.y+=Math.min(t,.1)*L.userData.spd;if(L.userData.op!=null){const o=L.userData.op*tf;if(L.material.opacity!==o)L.material.opacity=o}}
-        if(DEEPF){const o=TELE?.85*smooth(.9,.2,zoom):0;DEEPF.visible=o>.01;DEEPF.material.opacity=o}if(DEEPS.length)try{storyTick(s)}catch(e){}}orbTick(t,s);furn.tick(s);if(BENCH)rd.info.reset();if(GIANT&&MG){bplane.visible=false;BU.visible=false}rd.render(sc,cam);if(GIANT)try{gntMirror()}catch(e){bplane.visible=true;BU.visible=true}if(BENCH)benchRec(now);   /* 黑洞：棋盤底下的鏡像角色，畫在同一張畫面上 */PW.lastR=now;pfAdd(PW.q,sec,1,1,act?0:1);pwFps(now)}
+        if(DEEPF){const o=TELE?.85*smooth(.9,.2,zoom):0;DEEPF.visible=o>.01;DEEPF.material.opacity=o}if(DEEPS.length)try{storyTick(s)}catch(e){}}orbTick(t,s);furn.tick(s);if(BENCH)rd.info.reset();if(GIANT&&FXH.size)fxH("main");if(GIANT&&MG){bplane.visible=false;BU.visible=false}rd.render(sc,cam);if(GIANT)try{gntMirror()}catch(e){bplane.visible=true;BU.visible=true}if(BENCH)benchRec(now);   /* 黑洞：棋盤底下的鏡像角色，畫在同一張畫面上 */PW.lastR=now;pfAdd(PW.q,sec,1,1,act?0:1);pwFps(now)}
     // 第一次 draw 之後，等所有圖片（背景、道具、棋盤、棋子、Pikafish）都載好才淡入；最多等 6 秒
     let drawn=false,shown=false;const t0=performance.now();PF.readyMs=null;PF.revealMs=null;PF.inflight=null;rd.domElement.style.opacity=0;rd.domElement.style.transition="opacity .35s";
     const shownCb=[];const reveal=()=>{if(shown)return;shown=true;PW.shownAt=performance.now();PF.revealMs=Math.round(PW.shownAt-t0);PF.inflight=[...inflight].map(i=>String(i.src||"").split("/").pop()).slice(0,6);if(IN.ph==="wait"){INTRO_SEEN.add(IN.key);IN.ph="hold";IN.t0=performance.now()}rd.domElement.style.opacity=1;veil.style.opacity=0;setTimeout(()=>veil.remove(),400);if(veil._qmin){hint.style.opacity=1;setTimeout(()=>hint.style.opacity=0,4500)}shownCb.splice(0).forEach(f=>{try{f()}catch(e){}})};
@@ -2653,7 +2659,12 @@
     function gntTick(t,s){for(const o of sc.children)if(o.visible&&!gntKeep(o))o.visible=false;
       for(const g of gntFigs){const B=g.userData.B;if(g.parent&&B&&B.mixer)B.mixer.update(t)}
       for(const g of gntStones){if(!g.parent)continue;const st=g.userData.st;st.position.y=.54+(PW.on?0:.06*Math.sin(s*1.6+g.userData.ph));st.lookAt(cam.position)}}
-    return{el,draw,destroy,say,screenOf,itemCast:o=>{try{return itemCast(o)}catch(e){try{o&&o.done&&o.done()}catch(_){}return{skip(){}}}},mateFx:o=>{try{return mateFx(o)}catch(e){try{o&&o.done&&o.done()}catch(_){}return false}},whenShown(f){if(shown)f();else shownCb.push(f)},oppSay:(t,d)=>{pwPoke(((+d)||2.6)*1000);return opp.say(t,d)},resetView(){reset()},bench:(cb,ms)=>bench(cb,ms),setView:setViewF,views:()=>GIANT?GVIEWS.map(([k,l])=>[k,l]):null,intro(k){try{if(!k)return false;k=String(k);const ok=inStart(k,shown);if(!ok)INTRO_SEEN.add(k);return ok}catch(e){return false}},   /* 11/11 入座運鏡：同一座園子換下一盤時 06-cpu 叫這個（這盤播過、沒存視角以外的情況都不播） */homeView:()=>HOME.fit?"topfit":"",   /* 意見回饋 481（開發者：平視看不到小帥）：平視改成從小帥右肩後面斜著看——小帥在畫面左下、不擋棋盤 */   /* 平視＝從小帥的眼睛看出去（小帥先藏起來，不會擋住棋盤） */   /* 意見回饋 430：平視原本 -.85，鏡頭跑到小帥背後被擋住，改成 -.22 */hide(){el.style.display="none"},show(){if(el.style.display==="none"){el.style.display="";fit()}}}}
+    return{el,draw,destroy,say,screenOf,itemCast:o=>{try{return itemCast(o)}catch(e){try{o&&o.done&&o.done()}catch(_){}return{skip(){}}}},mateFx:o=>{try{return mateFx(o)}catch(e){try{o&&o.done&&o.done()}catch(_){}return false}},whenShown(f){if(shown)f();else shownCb.push(f)},oppSay:(t,d)=>{pwPoke(((+d)||2.6)*1000);return opp.say(t,d)},resetView(){reset()},bench:(cb,ms)=>bench(cb,ms),setView:setViewF,views:()=>GIANT?GVIEWS.map(([k,l])=>[k,l]):null,intro(k){try{if(!k)return false;k=String(k);const ok=inStart(k,shown);if(!ok)INTRO_SEEN.add(k);return ok}catch(e){return false}},   /* 11/11 入座運鏡：同一座園子換下一盤時 06-cpu 叫這個（這盤播過、沒存視角以外的情況都不播） */homeView:()=>HOME.fit?"topfit":"",   /* 意見回饋 481（開發者：平視看不到小帥）：平視改成從小帥右肩後面斜著看——小帥在畫面左下、不擋棋盤 */   /* 平視＝從小帥的眼睛看出去（小帥先藏起來，不會擋住棋盤） */   /* 意見回饋 430：平視原本 -.85，鏡頭跑到小帥背後被擋住，改成 -.22 */fxApi:()=>GIANT?{T,scene:sc,camera:cam,el,canvas:rd.domElement,gs:()=>GS,flip:()=>flip,top:TOP,pieceH:GNT_H,
+      cell:(c,r)=>new T.Vector3((flip?4-c:c-4)*GS,TOP,(flip?4.5-r:r-4.5)*GS),
+      piece:(c,r)=>{if(!(c>=0&&c<=8&&r>=0&&r<=9)||c%1||r%1)return null;const g=pieces[r*9+c];return g&&g.userData&&g.userData.giant?g:null},
+      find:p=>{for(const i in pieces){const g=pieces[i];if(g&&g.userData&&g.userData.p===p)return g}return null},
+      board:bplane,mirror:MG,hook(f){FXH.add(f);return()=>FXH.delete(f)},view:()=>({yaw,pitch,zoom,tele:!!TELE,under:UNDER}),poke:ms=>pwPoke(+ms||1500),shown:()=>shown&&el.style.display!=="none"}:null,   /* 11/14 正式交出黑洞巨盤的場景、鏡頭、格子座標（c 路 0～8、r 列 0＝黑方底線，翻盤也對）、棋子、星盤網格、倒影群組、繪製掛勾，給太虛星尊魔法 bossfx3d.js 用（m/07bhf-bossfx.js）；不是巨盤＝null */
+      hide(){el.style.display="none"},show(){if(el.style.display==="none"){el.style.display="";fit()}}}}
   /* 11/11 省電模式：power()＝現在的設定和自動判斷結果（開著的園子每秒自己重判，不用通知）；perf()＝最近一座園子近 10 秒的效能計數（同 window.__PK.perf） */
   window.XQPark3D={create,power(){pwBat();const m=pwMode();return Object.assign({mode:m},pwDecide(m,pwSig()))},perf:()=>PF};
 })();

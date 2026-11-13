@@ -1,8 +1,8 @@
 {
- "version": "20261114-0331",
- "checkedAt": "2026-11-13T19:31:30.067Z",
- "html": "add95c821fef",
- "sw": "29d3f8c5acf5",
+ "version": "20261114-0353",
+ "checkedAt": "2026-11-13T19:53:51.625Z",
+ "html": "2be606ebbf20",
+ "sw": "125c84b5a61e",
  "scripts": 4,
  "modules": {
   "00-util.js": "7addbcf20a30",
@@ -28,7 +28,7 @@
   "07gx-galaxy.js": "f79b141f237d",
   "07bht-td.js": "32dc4cbf4390",
   "07bhtl-tdlearn.js": "9f4a36afdf40",
-  "07bhf-bossfx.js": "4e772511bd89",
+  "07bhf-bossfx.js": "8516daf7973e",
   "07dv-devtest.js": "077191672ec5",
   "07dw-perfhud.js": "a3755bd4af6c",
   "07g-battle.js": "6c2de94250f9",
@@ -133,24 +133,9 @@
    "sourceModified": "2026-11-13T15:01:20.771Z"
   },
   {
-   "module": "07bh-blackhole.js",
-   "lines": 5,
-   "sourceModified": "2026-11-13T19:30:41.380Z"
-  },
-  {
    "module": "07bht-td.js",
    "lines": 27,
    "sourceModified": "2026-11-13T15:01:20.794Z"
-  },
-  {
-   "module": "07bhf-bossfx.js",
-   "lines": 115,
-   "sourceModified": "2026-11-13T19:31:29.396Z"
-  },
-  {
-   "module": "07dv-devtest.js",
-   "lines": 8,
-   "sourceModified": "2026-11-13T19:17:02.054Z"
   },
   {
    "module": "07y-hubmap.js",
