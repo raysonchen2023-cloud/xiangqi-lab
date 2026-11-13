@@ -1606,7 +1606,7 @@ html[data-lefty] .tskip{right:auto;left:14px}
       if(!window.caches)return go();caches.keys().then(function(ks){return Promise.all(ks.filter(function(k){return k.indexOf("xqlab-app-")===0}).map(function(k){return caches.delete(k)}))})
         .then(function(){return navigator.serviceWorker&&navigator.serviceWorker.getRegistration()}).then(function(r){return r&&r.update()}).catch(function(){}).then(go)}};setTimeout(chk,4000)})();
 </script>
-<script>window.XQ_OFFLINE=true;window.XQ_BUILD="20261113-1244";</script>
+<script>window.XQ_OFFLINE=true;window.XQ_BUILD="20261113-1327";</script>
 <script src="core.js"></script>
 <script src="engine.js"></script>
 <script src="local.js"></script>
@@ -2993,7 +2993,7 @@ function icoTitle(t){const m=String(t).match(/^(\S+)\s+([\s\S]*)$/),k=m&&EMO_ICO
 function bkTo(back){if(typeof back==="string"&&back[0]==="^")return back.slice(1);
   if(NAV_D>0){for(let i=NAV_D-1;i>=0;i--){const x=NAV_H[i];if(typeof x!=="string")return"";if(x[0]!=="~")return x}return""}   /* goBack＝瀏覽器上一頁：卡片那一層會被 popstate 再退一格，所以找最近一筆不是卡片的 */
   return typeof back==="string"?back:""}
-const BK_NAME=[["/cpuroom","雅間"],["/adventure","星槎"],["/ship","星槎"],["/port","渡口"],["/theme","主題訓練"],["/camp","訓練營"],["/cup","千秋盃"],["/simul","車輪戰"],["/lesson","棋理體驗"],["/lab","小實驗"],["/today","今日推薦"],["/codex","百科"],["/weekly","週報"],["/feedback","信房"],["/db","棋譜庫"]];
+const BK_NAME=[["/cpuroom","雅間"],["/adventure","星槎"],["/ship/pz","千秋殘局"],["/ship","星槎"],["/port","渡口"],["/theme","主題訓練"],["/camp","訓練營"],["/cup","千秋盃"],["/simul","車輪戰"],["/lesson","棋理體驗"],["/lab","小實驗"],["/today","今日推薦"],["/codex","百科"],["/weekly","週報"],["/feedback","信房"],["/db","棋譜庫"]];
 function bkName(h){if(!h)return"";const k=navKey(h).split("?")[0];if(k==="/")return"首頁";
   if(k==="/hub/learn"||k==="/hub/battle"){let n="";try{n=typeof xqHubName==="function"?xqHubName(k.slice(5)).split(" ").slice(1).join(" "):""}catch(e){}return n&&!/^(學習|對戰)$/.test(n)?n:k==="/hub/learn"?"書院":"茶樓"}   /* 書院照停靠朝代／經典世界的叫法（國子監、藏譜石窟、觀星閣…） */
   for(const[p,n]of BK_NAME)if(k===p||k.startsWith(p+"/"))return n;
@@ -8474,7 +8474,8 @@ function CanjuPlay(v,id){cjCSS();const H0=location.hash,here=()=>v.isConnected&&
   const XM=(typeof hwXM==="function"&&hwXM(id))||(typeof dqXM==="function"&&dqXM(id))||(typeof cjXMode==="function"?cjXMode(id):null);   /* 評比第 13 輪 F1：#/daily/<日期>＝每日同題（m/07dq-daily.js dqXM；XM.fin 記成績、XM.bind 綁解完卡的分享鈕） */   /* 評比第 3 輪 P17：#/canju/hw/<編碼>/<第幾題>＝教練作業的殘局題（m/10d-coach.js hwXM） */
   const zm=XM?null:/^z\/(.+)$/.exec(id),Z=zm?{rid:zm[1]}:null,hm=Z||XM?null:/^h\/(\w+)\/(.+)$/.exec(id),HS=hm?{era:hm[1]}:null,RK=XM?XM.rk||"cjRunX":Z?"cjRunZ":HS?"cjRunH":"cjRun";if(HS)id=hm[2];if(XM&&XM.id)id=XM.id;
   const hBack=()=>typeof histBackHash==="function"?histBackHash():"#/adventure",BK=XM?XM.back():Z?"#/me/relics":HS?hBack():"#/canju";
-  setTop(XM?XM.top||"🍵 一盞茶殘局":Z?"🏺 珍品藏局":HS?"📜 古法殘局":"🍵 一盞茶殘局",BK);if(typeof setTabs==="function")setTabs(false);
+  /* 11/13 開發者「千秋殘局做完的返回鍵是回到選擇千秋殘局的入口處」：千秋殘局（XM）的返回鍵直接回那一層（^），不照瀏覽器上一頁（按過下一題會退回上一題） */
+  setTop(XM?XM.top||"🍵 一盞茶殘局":Z?"🏺 珍品藏局":HS?"📜 古法殘局":"🍵 一盞茶殘局",XM&&BK[0]!=="^"?"^"+BK:BK);if(typeof setTabs==="function")setTabs(false);
   v.className="view fixed";v.innerHTML=`<div class="cj-top" id="cjH"></div><div class="boardbox" id="bbox"></div><div class="status" id="stat"></div><div class="note cj-note" id="note"></div><div class="cj-step" id="cjStep"></div><div style="flex:1"></div><div class="actions" id="acts"></div>`;
   const $=q=>v.querySelector(q);let D=null,P=null,S=null,R=null,b=null,node=null,step=0,sel=-1,busy=false,hk=null,tok=0,last=null,me="r",flip=false;
   const bd=Board(x=>tap(x));$("#bbox").append(bd.svg);
@@ -9118,7 +9119,7 @@ const SHIP_LESSON={
   tang:{t:"棄仕解殺須果斷",x:["仕為貼身護衛，但有時也是絆腳石。","當敵方重兵壓境，自家仕若擋住主帥的退路，","須果斷棄仕，換取主帥逃脫空間，方能解殺。"],k:"棄仕保帥，果斷求生",
     open:"有我在，誰也別想碰他！我來擋刀！",done:"最好的盾牌，是讓出位子讓他自己變強。",pre:"客官，下一站長安西市——該撐仕還是棄仕？這可是生死抉擇。",theme:"引離"},
   wudai:{t:"重炮悶殺顯神威",x:["雙炮疊在同一直線，後炮借前炮為架，謂之重炮。","若敵將被自家士象堵住去路，單炮照將即成「悶殺」。","此二者皆是利用空間局限的凌厲殺招。"],k:"重炮悶宮，無處可逃",
-    open:"隔一個，剛剛好！看我把你們全悶在裡面！",done:"聲音再響，也不如安靜的一擊致命。",pre:"客官，下一站戰亂逃荒路——重炮與悶殺，學會便能凌厲致勝。",kill:["重炮","炮殺"],theme:"悶宮"},
+    open:"隔一個，剛剛好！看我把你們全悶在裡面！",done:"聲音再響，也不如安靜的一擊致命。",pre:"客官，下一站戰亂逃荒路——悶宮殺法，學會便能凌厲致勝。",kill:["重炮","炮殺"],theme:"悶宮"},
   song:{t:"當頭炮巧借炮架",x:["炮須隔子而擊，故炮架存亡即是炮局關鍵。","當頭炮雖能鎮守中路，若無子可借，即失其威。","行棋時當留心炮架之進退，方能連綿發火。"],k:"鎮守中路，保全炮架",
     open:"這煙花得借個火才響！炮架別跑！",done:"煙火放完就安靜了，退在後面當炮架也挺好。",pre:"客官，下一站臨安元宵——當頭炮需巧借子，無架之炮不生威啊。",kill:["馬後炮","炮殺"],theme:"抽將"},
   yuan:{t:"臥槽掛角馬如龍",x:["馬進到對方三、七路的二線，照將又封將門，謂之臥槽馬。","馬跳到對方九宮的角上照將，謂之掛角馬。","此二馬位皆是馬的絕佳殺點，威力無窮。"],k:"臥槽掛角，招招致命",
@@ -9258,7 +9259,7 @@ function shipDots(k,L){L=L||shipPuzzles(k)||[];return`<span class="shp-dots">${(
 /* 意見回饋 762 第零版：這站學會了、還有下一站（不是學徒）＝下一站的代號，結果卡和石桌頁的主按鈕改成「⛵ 起航」 */
 const shipSailTo=k=>{try{return shipLearned(k)&&!shipAppr()?shipNextStop():null}catch(e){return null}};
 function shipXM(k,id){const rd=/\/read$/.test(id);if(rd)id=id.replace(/\/read$/,"");   /* 意見回饋 685：…/read＝從正文的解題卡來的，解完回到正文 */
-  const T=SHIP_STOP[k],Ls=SHIP_LESSON[k]||{},Pl=SHIP_PLAN[k]||{},back=()=>rd?"#/ship/read/"+k+"/mark":"#/adventure";shipBank().catch(()=>{});
+  const T=SHIP_STOP[k],Ls=SHIP_LESSON[k]||{},Pl=SHIP_PLAN[k]||{},back=()=>rd?"#/ship/read/"+k+"/mark":"#/ship/pz";shipBank().catch(()=>{});   /* 11/13 開發者「千秋殘局做完的返回鍵是回到選擇千秋殘局的入口處」：以前回星槎甲板 #/adventure */
   if(!T)return{err:"找不到這一站（航線可能更新了）。",back};
   if(shipIsLvId(id))return{err:"這一題是星槎小關，要從千秋殘局頁打開。",back};
   if(eraLocked(k)&&!rd)return{err:"星槎還沒停靠"+eraLabel(k)+"：到星槎頁按「⛵ 起航」往下開。",back};   /* 11/13：從正文的解題卡來（rd）不擋 */
@@ -26121,7 +26122,8 @@ function fcmClock(){let hid=false;try{hid=!!document.hidden}catch(e){}const want
   try{if(typeof XQ_pvpPause!=="function")return;if(want&&!FCM.pz){if(XQ_pvpPause(true))FCM.pz=true}else if(!want&&FCM.pz){FCM.pz=false;XQ_pvpPause(false)}}catch(e){}}
 
 /* ---------- 純淨畫面 ---------- */
-function fcmSync(){try{const de=document.documentElement,bp=fcmBoardPage(),on=fcmCleanOn()&&bp;
+function fcmSync(){try{const de=document.documentElement,bp=fcmBoardPage(),on=fcmCleanOn()&&bp,was=de.hasAttribute("data-fcmclean");
+  if(on&&!was)try{(document.scrollingElement||de).scrollTop=0;window.scrollTo(0,0)}catch(x){}   /* hspx 11/13：剛切到純淨畫面時捲回頂端（iPhone 原本捲在下面，棋盤頂端被切） */
   de.toggleAttribute("data-fcmclean",on);de.toggleAttribute("data-fcmnomv",on&&store.get("cleanMoves",true)===false);fcmBar(on);fcmBtn(bp)}catch(e){}}
 function fcmBtn(show){const tr=document.getElementById("topRight");if(!tr)return;let b=document.getElementById("fcmBtn");if(!show){if(b)b.remove();return}if(b&&b.parentNode===tr)return;
   if(!b){b=document.createElement("button");b.id="fcmBtn";b.type="button";b.className="ib";b.textContent="🎬";b.title="純淨畫面（直播、截圖用）";b.setAttribute("aria-label","純淨畫面：只留棋盤、名字和棋鐘");
@@ -26179,7 +26181,10 @@ function fcmChange(e){const t=e&&e.target;if(!t)return;
   else if(t.id==="bossSw"){store.set("bossKey",!!t.checked);try{toast(t.checked?"已打開老闆鍵：電腦連按兩下 Esc、手機三根手指點一下":"已關閉老闆鍵")}catch(x){}}}
 
 /* ---------- 樣式 ---------- */
+/* hspx 11/13 開發者「修正純淨棋子畫面不完整的問題」（iPhone 截圖：棋盤頂端被瀏海和狀態列切掉、下面一大片空白）：頂欄收起以後沒有東西讓開瀏海，
+   上方名牌貼在 top 0、被狀態列蓋住；右上角 #fcmBar 也疊在上方名牌的級數上；內容全擠在上面。改成讓開瀏海＋#fcmBar 的高度、底部讓開 Home 條，上下置中 */
 function fcmCssText(){return`html[data-fcmclean] #topbar,html[data-fcmclean] #tabbar{display:none!important}
+html[data-fcmclean] #view{padding-top:calc(env(safe-area-inset-top,0px) + 54px)!important;padding-bottom:calc(env(safe-area-inset-bottom,0px) + 12px)!important;min-height:100vh;min-height:100dvh;box-sizing:border-box;justify-content:center!important}
 html[data-fcmclean] #view>:not(#pTop):not(#bbox):not(#pBot):not(#strip){display:none!important}
 html[data-fcmclean][data-fcmnomv] #view>#strip{display:none!important}
 html[data-fcmclean] .player .nm span,html[data-fcmclean] .player .av img,html[data-fcmclean] .tmx-bub,html[data-fcmclean] .emo,html[data-fcmclean] .xqbot,html[data-fcmclean] #sndPill{display:none!important}
