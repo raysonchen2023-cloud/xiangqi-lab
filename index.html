@@ -508,7 +508,7 @@ html[data-era=ming] .topbar,html[data-era=qing] .topbar{border-bottom-width:4px}
 .rp-ph{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:10px}.rp-ph>div{background:var(--bg);border:1px solid var(--line);border-radius:12px;padding:8px 10px;display:flex;flex-direction:column;gap:2px}.rp-ph b{font-size:22px}.rp-ph i{display:block;height:5px;border-radius:3px}
 .rp-q{display:flex;flex-wrap:wrap;gap:6px 12px;font-size:13px;margin-bottom:6px}.rp-q b{font-size:17px;margin-right:2px}
 .rp-t{padding:9px 12px;border-radius:12px;background:var(--bg);margin:6px 0;border-left:4px solid var(--line);font-size:14px}.rp-t b{margin-right:6px}.rp-t.bad{border-left-color:#C0392B}.rp-t.good{border-left-color:#C27C0E}.rp-t .go{float:right;color:var(--accent);font-size:13px}.rp-t[data-p]{cursor:pointer}
-.toast{position:fixed;left:50%;bottom:calc(90px + var(--safeB));transform:translateX(-50%);background:#000d;color:#fff;padding:9px 16px;border-radius:999px;font-size:14px;z-index:70;max-width:90vw;text-align:center}
+.toast{position:fixed;left:50%;bottom:calc(90px + var(--safeB));transform:translateX(-50%);background:#000d;color:#fff;padding:9px 16px;border-radius:999px;font-size:14px;z-index:70;max-width:90vw;text-align:center;box-sizing:border-box;word-break:keep-all;overflow-wrap:anywhere;text-wrap:balance}   /* 11/13 換行規矩（00-util toastFit）：要換行時只在標點、空白處斷，兩行拉平均 */
 /* 清單 */
 .search{display:flex;gap:8px;padding:10px 12px 6px}
 .search input{flex:1;min-width:0;padding:10px 14px;border-radius:999px;border:1px solid var(--line);background:var(--card)}
@@ -1606,7 +1606,7 @@ html[data-lefty] .tskip{right:auto;left:14px}
       if(!window.caches)return go();caches.keys().then(function(ks){return Promise.all(ks.filter(function(k){return k.indexOf("xqlab-app-")===0}).map(function(k){return caches.delete(k)}))})
         .then(function(){return navigator.serviceWorker&&navigator.serviceWorker.getRegistration()}).then(function(r){return r&&r.update()}).catch(function(){}).then(go)}};setTimeout(chk,4000)})();
 </script>
-<script>window.XQ_OFFLINE=true;window.XQ_BUILD="20261113-0755";</script>
+<script>window.XQ_OFFLINE=true;window.XQ_BUILD="20261113-0801";</script>
 <script src="core.js"></script>
 <script src="engine.js"></script>
 <script src="local.js"></script>
@@ -1695,7 +1695,13 @@ async function api(u,b){if(window.XQ)return XQ.api(u,b);   // 離線版：由手
   catch(e){throw new Error(e&&e.name==="TimeoutError"?"電腦太久沒回應，再試一次":"連不到電腦，再試一次")}
   const d=await r.json().catch(()=>({error:"伺服器回應有問題"}));if(d&&d.error)throw new Error(d.error);return d}
 let toastT=null;
-function toast(msg){let t=$("#toast");if(!t){t=document.createElement("div");t.id="toast";t.className="toast";document.body.append(t)}t.textContent=msg;t.hidden=false;clearTimeout(toastT);toastT=setTimeout(()=>t.hidden=true,2200)}
+function toast(msg){let t=$("#toast");if(!t){t=document.createElement("div");t.id="toast";t.className="toast";document.body.append(t)}t.textContent=msg;t.hidden=false;toastFit(t);clearTimeout(toastT);toastT=setTimeout(()=>t.hidden=true,2200)}
+/* hspx 開發者 11/13「可以一行說完嗎，不要換行，換行機制你定個規矩吧」（截圖：「去搭星槎，找裂痕的另一」／「端。」）。全 App 短訊息的換行規矩：
+   ① 放得下就一行；② 放不下先縮字（14px 起，每次 0.5px，最小 12px），盡量還是一行；③ 還是放不下才換行，而且只在標點、空白處斷（word-break:keep-all），
+   兩行拉平均（text-wrap:balance），不會剩一兩個字掛在第二行。樣式在 m.css .toast */
+function toastFit(t){try{t.style.whiteSpace="nowrap";t.style.fontSize="";let fs=parseFloat(getComputedStyle(t).fontSize)||14;
+  while(t.scrollWidth>t.clientWidth+1&&fs>12){fs-=.5;t.style.fontSize=fs+"px"}
+  if(t.scrollWidth>t.clientWidth+1)t.style.whiteSpace="normal"}catch(e){}}
 // 底部彈出選單
 // ================= 殺棋動畫（意見回饋 181）：先演完才跳結果視窗 =================
 // 畫面四周壓暗＋棋盤一震 → 被將死的帥／將爆出紅金衝擊波、裂痕 → 金色大字「絕殺」重重蓋下（困斃時寫「困斃」）＋墨點飛濺 → 朱印「勝／敗」→ 淡出
@@ -10140,9 +10146,9 @@ function bhReturn(){const R=store.get("bhRet",null);store.set("bhRet",null);loca
 /* ---------- hspx（開發者 11/12，story/116 選「Claude 混搭」）：幻影棋客頭上的小黑洞，引沒搭過星槎的人去碰黑洞 ----------
    挑戰電腦（對手是幻影棋客、不是掌櫃，不是石桌往事、擂台、練習、線上、盲棋）：沒去過黑洞、這是玩過的第 6 盤以後，每天第一盤下到第 12 手，
    幻影棋客頭頂浮出一顆有裂痕的小黑洞球（park3d ex.bhOrb="ball"），不跳視窗、不擋棋盤。
-   點它：球化成紫光飛走（park3d）→ 幻影棋客「這道裂，我算過。」→ 提示「去搭星槎，找裂痕的另一端。」；記 bhMark，下一次起航必定偏航（bhMaybe）。
+   點它：球化成紫光飛走（park3d）→ 幻影棋客「天上這道裂痕，通往另一盤棋。」→ 提示「去搭星槎，找裂痕的另一端。」；記 bhMark，下一次起航必定偏航（bhMaybe）。
    去過黑洞以後：點過球的人，幻影棋客頭上只留一圈淡淡星塵（"dust"）；從黑洞回來後的第一盤，他開口說「你竟從那無盡的循環裡，帶回了新棋譜。」 */
-const BH_ORB={say:"這道裂，我算過。",go:"去搭星槎，找裂痕的另一端。",back:"你竟從那無盡的循環裡，帶回了新棋譜。"};
+const BH_ORB={say:"天上這道裂痕，通往另一盤棋。",   /* 11/13 開發者「這道裂，我算過，換個說法吧，有點怪」 */go:"去搭星槎，找裂痕的另一端。",back:"你竟從那無盡的循環裡，帶回了新棋譜。"};
 function bhOrbDay(){const d=new Date();return d.getFullYear()+"-"+(d.getMonth()+1)+"-"+d.getDate()}
 function bhOrbKind(st){try{if(!st||!st.id||st.journey||st.arena||st.practice||st.net||st.blind)return null;{const F=store.get("dvtOrb",null);if(F&&typeof DEVMODE==="function"&&DEVMODE())return F}   /* 開發者測試台：固定出現哪一種 */if(typeof zgIs==="function"&&zgIs(st))return null;
   if((store.get("bhCount",0)||0)>0){if(store.get("bhWin",0)){const today=bhOrbDay(),G=store.get("gxGateDay",null);if(!G||G.d!==today){store.set("gxGateDay",{d:today,id:st.id});return"gate"}if(G.id===st.id)return"gate"}return store.get("bhOrbHit",0)?"dust":null}   /* 戰勝過黑洞：每天第一盤，頭上是幻譜星門（07gx-galaxy.js） */
@@ -21887,6 +21893,10 @@ function stampBook(start){if(typeof sealBook==="function"&&typeof SEAL_ON!=="und
 function stampFx(era){const A=ARENA[era];if(!A)return;const d=document.createElement("div");d.className="stampfx";d.innerHTML=typeof sealDraw==="function"?sealDraw(era,{fx:1}):sealHTML(era,true,true);document.body.append(d);vibrate([20,60,40]);setTimeout(()=>d.remove(),2600)}
 /* 第 15 輪 X3 鍵值化：核心字串用鍵，英文模式回 07i18n.js I18N_KEY 的英文，其他（或沒有 07i18n）照原文 */
 function cgT(k,z,v){return typeof i18nT==="function"?i18nT(k,z,v):z}
+/* hspx P0 開發者 11/13「點下我的棋力沒反應，甚至出現第二張圖（畫面整個往上捲、下面一片空白）」：結果視窗的「看我的棋力 ›」以前靠 tick 事後綁 onclick，沒綁上就點不動；
+   改成全域點擊委派：什麼時候按都有反應。先關視窗、把被 iOS 捲走的頁面捲回頂，再去「我的棋力」 */
+document.addEventListener("click",e=>{const g=e.target&&e.target.closest&&e.target.closest(".modal .rg-go");if(!g)return;e.preventDefault();e.stopPropagation();
+  const m=g.closest(".modal");if(m)m.remove();try{vibrate(5)}catch(x){}try{(document.scrollingElement||document.documentElement).scrollTop=0;window.scrollTo(0,0)}catch(x){}store.set("statsTab","all");location.hash="#/stats"},true);
 function CpuGame(v,practicePage,mode){
   /* 意見回饋 413：這一頁是哪個模式由網址決定（#/cpu 挑戰電腦、#/arena 朝代擂台、#/journey/play 石桌往事、#/redo/play 練習）；標題、返回、上面的按鈕、新局、結果視窗都只看 MODE。守關算石桌往事（KIND 跟 local.js 的 kindOf 一樣：journey 優先） */
   const MODE=practicePage?"practice":mode||"cpu",KIND=s=>s.kind||(s.practice?"practice":s.journey?"journey":s.arena?"arena":"cpu"),MODE_URL={cpu:"#/cpu",arena:"#/arena",journey:"#/journey/play",practice:"#/redo/play"};let opened=false;
@@ -22073,7 +22083,7 @@ function CpuGame(v,practicePage,mode){
           const zw=d.z==null?"":d.z>=2?`<b style="color:${UP}">明顯比平常好</b>`:d.z>=1?`<span style="color:${UP}">比平常好一點</span>`:d.z<=-2?`<b style="color:${DN}">明顯比平常差</b>`:d.z<=-1?`<span style="color:${DN}">比平常差一點</span>`:"跟平常差不多";
           e.innerHTML=`📈 這盤每步準確度 <b>${d.acc==null?"—":d.acc}</b>${zw?`・${zw}（最近平均 ${d.avg}）`:""}<br>`+
             (d.t0==null?`我的棋力綜合 <b>${d.t1==null?"—":d.t1}</b>（第一盤評好等的棋）`:`我的棋力綜合 <b>${d.t1==null?"—":d.t1}</b>・${d.dT==null||Math.abs(d.dT)<2?"持平":`這盤對綜合是<b style="color:${d.dT>0?UP:DN}">${d.dT>0?"加分":"扣分"}</b>`}${d.big?`（主要是${d.big.k}${d.big.d>0?"進步":"退步"}）`:""}`)+ngH(c,d.acc,d.avg)},
-        tick=()=>{n++;const b=box();if(b){seen=true;const g=b.querySelector(".rg-go");if(g&&!g.onclick)g.onclick=()=>{const m=g.closest(".modal");if(m)m.remove();vibrate(5);store.set("statsTab","all");location.hash="#/stats"}}
+        tick=()=>{n++;const b=box();if(b)seen=true;else if(!seen){if(n<40)setTimeout(tick,700);return}   /* hspx P0 開發者 11/13「點下我的棋力沒反應」：結果視窗要等將死動畫播完才出來，第一次 tick（0.6 秒）時還不在，查完狀態就結束、不再排下一次——按鈕沒綁上、分析文字也停在「正在評這盤」。視窗還沒出來就每 0.7 秒再等（最多約 28 秒）；按鈕改用下面的全域點擊委派 */
           if((seen&&!b)||(!seen&&n>8))return;
           api("/play/state").then(s=>{if(!s||s.id!==gid)return;const mine=(s.moves||[]).filter(m=>m.by===hu);if(!mine.length)return paint(null,"這盤沒走幾步，不算進「我的棋力」。");
             if(mine.every(m=>qNow(m)))return skillDiff(gid).then(d=>paint(d,null,ngCount(s.moves,hu))).catch(()=>paint(null));

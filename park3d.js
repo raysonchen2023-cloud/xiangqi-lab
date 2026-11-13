@@ -973,7 +973,8 @@
       [[-14.8,-13.2,"tree2",17],[17.8,-8.2,"tree1",14.5],[-18.2,3.4,"tree1",12.5]].forEach(([x,z,n,h])=>use(n,im=>{const c=card(im,{x,y:GY,z,h,tilt:.12,info:n});blob(x,GY+.03,z,c.w*.32,c.w*.2,.35,c.ry);if(X.fades)X.fades.push(c.m)}));
       /* 11/10 經典世界（Gemini 70／71，開發者選「補齊 Gemini 的元素」）：空中兩卷懸浮畫卷（緩緩上下漂），石台外兩位淡墨幻影棋客（半透明、像呼吸一樣忽濃忽淡） */
       if(EK==="classic"){const lastB=c=>{const b=X.bills&&X.bills[X.bills.length-1];return b&&b.m===c.m?b:null};
-        use("scroll",im=>[[-11.5,10.5,-16,3.6,0],[12.5,12.5,-14.5,3,1]].forEach(([x,y,z,h,mi],i)=>{const c=card(im,{x,y:GY+y,z,h,mirror:!!mi}),b=lastB(c);if(b)b.bob=[2.1,i*2.1,.4]}));   /* Gemini 72：畫卷 3 秒一週期上下漂、幻影 4 秒一週期呼吸 */
+        /* hspx 開發者 11/13「漂浮的譜，修正」：亭子裡兩卷懸浮畫卷看起來像紙卡在半空（截圖在燈籠旁、樑下），拿掉；淡墨幻影棋客、地上刻的棋盤照舊 */
+        if(0)use("scroll",im=>[[-11.5,10.5,-16,3.6,0],[12.5,12.5,-14.5,3,1]].forEach(([x,y,z,h,mi],i)=>{const c=card(im,{x,y:GY+y,z,h,mirror:!!mi}),b=lastB(c);if(b)b.bob=[2.1,i*2.1,.4]}));   /* Gemini 72：畫卷 3 秒一週期上下漂、幻影 4 秒一週期呼吸 */
         use("ghost",im=>[[-23,-19,11,0],[24,-16,10.5,1]].forEach(([x,z,h,mi],i)=>{const c=card(im,{x,y:GY,z,h,mirror:!!mi,tilt:.08});c.m.material.opacity=.3;c.m.material.depthWrite=false;const b=lastB(c);if(b)b.br=[1.57,i*1.7,.3,.08]}));
         /* Gemini 72（開發者選「兩個都要」）：石台地上用淡金細虛線刻一張大楚河漢界棋盤（9 直 10 橫、河界、九宮斜線，程式畫保證正確），
            右側刻北斗七星連線，天樞到玉衡五顆（五站）微微發光；只畫在石台圓面裡 */
