@@ -1,8 +1,8 @@
 {
- "version": "20261113-1216",
- "checkedAt": "2026-11-13T04:16:07.515Z",
- "html": "d5cb84b2eab6",
- "sw": "8cc300c1dc2c",
+ "version": "20261113-1219",
+ "checkedAt": "2026-11-13T04:19:50.692Z",
+ "html": "c93cf1d0f96f",
+ "sw": "ffa02ab83ea5",
  "scripts": 4,
  "modules": {
   "00-util.js": "402a8c296ec8",
@@ -20,7 +20,7 @@
   "07-legend.js": "9adb41fc19f2",
   "07c-canju.js": "a91312f29641",
   "07d-garden.js": "cc746ff05fc7",
-  "07e-garden2.js": "8694cc6ab0e6",
+  "07e-garden2.js": "23fcaecb532a",
   "07f-ship.js": "61ef8ab08622",
   "07o-shipmore.js": "3e3ebb9d732b",
   "07bh-blackhole.js": "d18ba98e03b1",

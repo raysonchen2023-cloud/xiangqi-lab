@@ -1352,8 +1352,9 @@
              end＝終章「千秋歸位」完成才亮的星（開陽、搖光），問 App 的 window.XQ_FINALE()；
              開發者 11/13（iPhone）「七星只標了開陽、搖光」：前五顆的名字原本只靠石桌往事的路線那層寫，平常下棋沒有路線就沒名字；改成這裡七顆都寫（亮的深金褐、沒亮的淡灰），
              路線那層遇到這裡已經寫過的星名就不再重寫（陣法關掉時才由路線那層補寫），RE._nm＝這裡寫過的名字 */
-          if(Array.isArray(RE.stars)){let fin=false;try{fin=typeof window.XQ_FINALE==="function"&&!!window.XQ_FINALE()}catch(e){}
-            const ST=RE.stars,on=q=>!q.end||fin,Q=i=>[P(ST[i].x),P(ST[i].y)],R0=S/75;RE._nm=new Set(ST.map(q=>q.n));
+          /* 11/13 開發者選「解開陣眼題才亮」：前五顆不再一開始就亮，問 App 的 window.XQ_NORTH_LIT()（解開的陣眼星名）；舊版 App 沒有這個函式就照舊全亮 */
+          if(Array.isArray(RE.stars)){let fin=false,lit=null;try{fin=typeof window.XQ_FINALE==="function"&&!!window.XQ_FINALE()}catch(e){}try{if(typeof window.XQ_NORTH_LIT==="function")lit=new Set(window.XQ_NORTH_LIT()||[])}catch(e){}
+            const ST=RE.stars,on=q=>q.end?fin:(!lit||lit.has(q.n)),Q=i=>[P(ST[i].x),P(ST[i].y)],R0=S/75;RE._nm=new Set(ST.map(q=>q.n));
             for(const[a,b]of RE.lines||[]){const A=Q(a),B=Q(b),lit=on(ST[a])&&on(ST[b]);g.globalAlpha=lit?.85:.8;g.strokeStyle=lit?"#E2B64A":"#8C7A5E";g.lineWidth=lit?Math.max(2,S/300):Math.max(3,S/220);   /* hspx 開發者 11/12「沒連到嗎？」：還沒亮的玉衡→開陽→搖光原本淡灰 .35，灰石面上看不見，像斷掉；改成看得見的棕灰虛線 */
               g.setLineDash(lit?[]:[S/110,S/140]);g.beginPath();g.moveTo(A[0],A[1]);g.lineTo(B[0],B[1]);g.stroke()}g.setLineDash([]);
             for(const q of ST){const X=P(q.x),Y=P(q.y),lit=on(q),gr=g.createRadialGradient(X,Y,0,X,Y,R0*2.8);gr.addColorStop(0,lit?"rgba(255,228,140,.95)":"rgba(210,205,195,.55)");gr.addColorStop(1,"rgba(255,228,140,0)");
