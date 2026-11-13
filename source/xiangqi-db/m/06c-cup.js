@@ -25,7 +25,7 @@ function cloudLegend(on){return on?'<span class="cloudleg">☁電腦＝雲遊棋
 /* 開發者 11/11 選「電腦標示全入口核對」：這支手機認過的雲遊棋客代號記下來（最多 300 個），離線、重開 App、角色程式沒開的時候，
    歷史棋譜、對手資料、錯題本一樣標得出「電腦」（原本只有連上大廳、收到名單時才認得） */
 let CLOUD_IDS=null;
-function isCloud(id){try{if(!id)return false;if(!CLOUD_IDS)CLOUD_IDS=new Set(store.get("cloudIds",[])||[]);
+function isCloud(id){try{if(!id)return false;if(!CLOUD_IDS&&!store.get("cloudFix1",0)){store.set("cloudIds",[]);store.set("cloudFix1",1)}if(!CLOUD_IDS)CLOUD_IDS=new Set(store.get("cloudIds",[])||[]);
   if(window.XQNet&&XQNet.isBot&&XQNet.isBot(id)){if(!CLOUD_IDS.has(id)){CLOUD_IDS.add(id);store.set("cloudIds",[...CLOUD_IDS].slice(-300))}return true}
   return CLOUD_IDS.has(id)}catch(e){return false}}
 function devBotTag(id){return cloudTag(isCloud(id))}
@@ -45,7 +45,7 @@ function cupGrant(S){if(!S||S.ph!=="done"||!S.place)return;const me=meInfo().id,
 let CUP_ASKED="";
 function cupWatch(){if(!(OFF&&window.XQNet&&XQNet.on))return;XQNet.on("cup",k=>{if(k!=="state")return;const S=XQNet.cup();if(!S)return;cupGrant(S);
   const m=cupMine(S);if(m&&m.st==="live"&&m.gid&&XQNet.gid()!==m.gid&&CUP_ASKED!==m.gid){CUP_ASKED=m.gid;vibrate([40,60,40,60,40]);
-    modal(`<div class="em">🏯</div><h2>你的擂台比賽開始了！</h2><p>${esc(cupNm(S.name))}・${esc(CUP_RN[m.r]||"")}<br>${esc(m.a.name)} 對 ${esc(m.b.name)}</p><p class="muted">5 分鐘內沒有入座算棄擂。比賽中不能悔棋，下滿 20 回合才能提和。</p>`,[["⚔ 入座",()=>cupJoin(m.gid)],["等一下",null,true]])}})}
+    modal(`<div class="em">🏯</div><h2>你的擂台比賽開始了！</h2><p>${esc(cupNm(S.name))}・${esc(CUP_RN[m.r]||"")}<br>${esc(lbnShow(m.a))} 對 ${esc(lbnShow(m.b))}</p><p class="muted">5 分鐘內沒有入座算棄擂。比賽中不能悔棋，下滿 20 回合才能提和。</p>`,[["⚔ 入座",()=>cupJoin(m.gid)],["等一下",null,true]])}})}
 function cupJoin(gid){if(!gid)return;const go=()=>{XQNet.watch(gid);location.hash="#/pvp"};if(XQNet.playing()&&XQNet.gid()!==gid)confirmBox("你有一盤進行中的對局，去打擂台會離開它，確定？",()=>{XQNet.leave();go()},"去打擂台");else go()}
 setTimeout(cupWatch,600);
 
@@ -53,7 +53,7 @@ function CupPage(v){setTop("🏯 千秋盃","#/hub/battle");setTabs(true,"#/hub/
   v.className="view";
   if(!OFF||!window.XQNet){v.innerHTML='<div class="pad"><div class="card">千秋盃要用安裝在手機上的 App（GitHub 版）。</div></div>';return{}}
   XQNet.start();v.innerHTML='<div class="pad" id="cupb"><div class="card muted">連線到大廳，讀取本週的擂台…</div></div>';
-  const pn=(p,w)=>!p?'<div class="nmx muted">（等前一場的勝者）</div>':p.none?'<div class="nmx muted">（從缺）</div>':`<div class="nmx"><b${w?' style="color:var(--accent)"':""}>${esc(p.name)}</b>${cloudTag(p.bot||isCloud(p.id))}${p.seed?`<small class="muted">${p.seed} 號</small>`:""}</div>`;
+  const pn=(p,w)=>!p?'<div class="nmx muted">（等前一場的勝者）</div>':p.none?'<div class="nmx muted">（從缺）</div>':`<div class="nmx"><b${w?' style="color:var(--accent)"':""}>${esc(lbnShow(p))}</b>${cloudTag(p.bot||isCloud(p.id))}${p.seed?`<small class="muted">${p.seed} 號</small>`:""}</div>`;
   function paint(){const box=v.querySelector("#cupb");if(!box)return;const S=XQNet.cup(),H=XQNet.cupHall(),me=meInfo().id,now=Date.now();
     if(!S){box.innerHTML=`<div class="card" style="line-height:1.8">${XQNet.status()==="up"?"還沒收到本週的擂台資訊。裁判台在開發者的電腦上，電腦開著的時候才有比賽；過一會兒再來看看。":"連線到大廳中…"}</div>`+rules()+hall(H);return}
     const reg=S.reg||[],ri=reg.findIndex(r=>r.id===me),inMain=ri>=0&&ri<16,ck=(S.ck||[]).includes(me),mine=cupMine(S);
@@ -68,7 +68,7 @@ function CupPage(v){setTop("🏯 千秋盃","#/hub/battle");setTabs(true,"#/hub/
     else if(S.ph==="play"){const live=mine&&mine.st==="live"&&mine.gid;
       top=`${S.practice?'<div class="card muted" style="margin-bottom:8px">這一屆真人不到 2 位，是「闖擂練習」：照常比賽，只發參加獎。</div>':""}${live?`<button class="btn" id="cuJ" data-g="${esc(mine.gid)}">⚔ 入座：${esc(CUP_RN[mine.r])}</button>`:mine&&mine.st!=="done"?`<div class="card" style="border:2px solid var(--accent2)">⏳ 你的下一場是「${esc(CUP_RN[mine.r])}」，前面的比賽打完就開始，開打時會跳出「入座」。</div>`:mine&&mine.st==="done"&&mine.w!==me?'<div class="card">這一屆你止步了，謝謝你上擂台！可以留下來觀戰，看誰當上擂主。</div>':""}`}
     else if(S.ph==="done"){const c=S.champ,p=S.place&&S.place[me];
-      top=`<div class="card" style="text-align:center;line-height:1.8"><div style="font-size:40px">🏆</div><b style="font-size:20px">${c?esc(c.name):"（從缺）"}</b>${c?cloudTag(c.bot||isCloud(c.id)):""}<div class="muted">本週擂主</div>${p?`<div style="margin-top:6px">你的成績：<b>${esc((CUP_PRIZE[p]||{}).t||"")}</b>${S.practice&&p!==16?"（闖擂練習只發參加獎）":""}</div>`:""}<div class="muted" style="font-size:13px;margin-top:4px">技壓群雄，登頂擂主！下週擂台虛位以待，誰來攻擂？</div></div>`}
+      top=`<div class="card" style="text-align:center;line-height:1.8"><div style="font-size:40px">🏆</div><b style="font-size:20px">${c?esc(lbnShow(c)):"（從缺）"}</b>${c?cloudTag(c.bot||isCloud(c.id)):""}<div class="muted">本週擂主</div>${p?`<div style="margin-top:6px">你的成績：<b>${esc((CUP_PRIZE[p]||{}).t||"")}</b>${S.practice&&p!==16?"（闖擂練習只發參加獎）":""}</div>`:""}<div class="muted" style="font-size:13px;margin-top:4px">技壓群雄，登頂擂主！下週擂台虛位以待，誰來攻擂？</div></div>`}
     box.innerHTML=`<div class="abn" style="height:120px;background-image:url(data/arenagate/classic.webp);background-position:center 40%;margin-bottom:10px"><div class="hc"><b>🏯 ${ttl}</b><small>每週六下午・16 強擂台・每方 ${S.tc?S.tc.m:10} 分鐘＋每步 ${S.tc?S.tc.inc:5} 秒</small></div></div>${top}${bracket(S)}${rules()}${hall(H)}`;
     const b=k=>box.querySelector(k);
     if(b("#cuR"))b("#cuR").onclick=()=>{if(!myName())return nameSheet(true);if(!XQNet.cupReq("reg"))return toast(CUP_NOSEND);vibrate(10);toast("🏯 報名送出了，等裁判台確認…")};
@@ -87,6 +87,6 @@ function CupPage(v){setTop("🏯 千秋盃","#/hub/battle");setTabs(true,"#/hub/
     <p>・16 強單淘汰：兵卒過河（16 強）→ 車馬爭先（8 強）→ 炮震中原（準決賽）→ 九宮論劍（決賽，紅黑各一盤）；另有一盤雙士爭輝（季軍戰）。<br>・每方 10 分鐘，每走一步加 5 秒；每一步最多 3 分鐘。<br>・和棋就加賽一盤超快棋（紅 5 分、黑 4 分），正局拿黑的人拿紅；加賽再和，算黑方勝。<br>・落子無悔：比賽中不能悔棋，下滿 20 回合才能提和。<br>・開打 5 分鐘還沒入座算棄擂。比賽中斷線不會中止，時間照走，回來可以接著下。<br>・對手是不是本人：裁判台用報名時的簽名核對雙方手機的金鑰，比賽中兩支手機互傳的連線訊息也都簽名（點棋盤右下角的訊號膠囊，看得到「裁判台認證」和指紋）。<br>・名次獎：擂主 🪙將令 3 枚、亞軍 2 枚、四強 1 枚，八強 💡提示棋 3 顆，十六強 💡2 顆＋↶1 張，另有修為。</p></details>
     <details class="card" style="margin-top:8px;line-height:1.8"><summary><b>👨‍👩‍👧 家長看這裡</b></summary><p>千秋盃每週六下午 14:00 開始，大約 17:15 結束；每盤大約 20 分鐘，輸了就結束，最多下 5 盤。完全免費、沒有任何付費，獎品只是 App 裡的徽章和道具。比賽在公開伺服器上進行，只傳暱稱和棋步，建議不要用本名。人數不夠時，空位由 App 的常駐「虛擬棋客」補上，籤表上會標出來。</p></details>`}
   function hall(H){const L=(H&&H.list||[]).filter(x=>!x.test).slice(0,12);if(!L.length)return"";
-    return`<div class="sec-t">🪨 千秋擂主碑${cloudLegend(L.some(x=>x.bot))}</div><div class="card" style="line-height:1.9">${L.map(x=>`<div class="nmx"><span class="muted" style="flex:none">第 ${x.ed} 屆</span><b>${esc(x.name)}</b>${cloudTag(x.bot)}${x.practice?'<small class="muted">練習</small>':""}<small class="muted" style="margin-left:auto">${new Date(x.at).toLocaleDateString()}</small></div>`).join("")}</div>`}
+    return`<div class="sec-t">🪨 千秋擂主碑${cloudLegend(L.some(x=>x.bot))}</div><div class="card" style="line-height:1.9">${L.map(x=>`<div class="nmx"><span class="muted" style="flex:none">第 ${x.ed} 屆</span><b>${esc(lbnShow(x))}</b>${cloudTag(x.bot)}${x.practice?'<small class="muted">練習</small>':""}<small class="muted" style="margin-left:auto">${new Date(x.at).toLocaleDateString()}</small></div>`).join("")}</div>`}
   const offs=[XQNet.on("cup",paint),XQNet.on("status",paint)];paint();const t=setInterval(paint,20000);
   return{stop:()=>{offs.forEach(f=>f());clearInterval(t)}}}

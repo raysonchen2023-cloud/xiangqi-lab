@@ -42,6 +42,8 @@ const CLK_DIAL_RE=/^\/(|adventure|ship\/(lesson|pz|shelf|bag|sail)|port|journey\
 const CLK_NT_RE=new RegExp("^/(lobby|db|db/[^/]+|settings)$");
 const CLK={el:null,sm:null,mode:"",tm:0,vt:null,va:null,vi:0};
 const clkRM=()=>{try{return matchMedia("(prefers-reduced-motion: reduce)").matches}catch(e){return false}};
+/* 11/13 開發者更正：「船艙」（#/port，雲河星槎・船艙石桌）是下船以後，有人間時辰；只有在船上才沒有時間（所以船上畫面都是黑白的）。
+   1216 曾把船艙算進星槎無歲月，1250 撤回，船艙照常顯示時辰 */
 function clkShip(){return!!document.querySelector(".travel.qq")||CLK_SHIP_RE.test(clkKey())}
 const clkP=(cx,cy,r,a)=>{const t=a*Math.PI/180;return[+(cx+r*Math.cos(t)).toFixed(2),+(cy+r*Math.sin(t)).toFixed(2)]};
 function clkCss(){if(document.getElementById("clkCss"))return;const s=document.createElement("style");s.id="clkCss";s.textContent=`

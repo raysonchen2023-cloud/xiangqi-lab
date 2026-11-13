@@ -99,7 +99,9 @@ const loadKillGly=()=>KILL_P||(KILL_P=fetch("data/glyphs/kill.json").then(r=>r.j
 setTimeout(loadKillGly,2500);
 // 公園 3D 棋盤時棋盤模式是藏起來的：特效改蓋在 3D 畫面上（意見回饋 234）
 const fxHost=svg=>{if(svg&&!svg.getBoundingClientRect().width&&svg.parentElement){const p=svg.parentElement.querySelector(".park3d");if(p)return p}return svg};
-function killFx(svg,win,why,kIdx,flip,o){svg=fxHost(svg);const r=svg.getBoundingClientRect();if(!r.width)return;o=o||{};LAST_KFX=Date.now();loadKillGly();
+/* 11/13 開發者 P1（iPhone 3D 絕殺後頁面被重新載入，量測見 xiangqi-lab/tools/test-reload-guard.js 開頭）：蓋在 3D 園子上時（P3），
+   不對整個 WebGL 畫面套灰階濾鏡（只留震一下 kx-board3d）、金光不用混色模式、墨點金星彩紙少一點——同時存在的合成圖層從約 85 層降下來，動畫順序和字都一樣 */
+function killFx(svg,win,why,kIdx,flip,o){svg=fxHost(svg);const r=svg.getBoundingClientRect();if(!r.width)return;o=o||{};LAST_KFX=Date.now();loadKillGly();const P3=!!(svg.classList&&svg.classList.contains("park3d"));
   if(!document.getElementById("kfx3css")){document.querySelectorAll("#kfx2css").forEach(x=>x.remove());const st=document.createElement("style");st.id="kfx3css";st.textContent=`
 .kx-flash{position:fixed;inset:0;z-index:67;pointer-events:none;background:#fff;animation:kxflash .35s ease-out forwards}
 @keyframes kxflash{0%{opacity:.85}100%{opacity:0}}
@@ -149,16 +151,19 @@ function killFx(svg,win,why,kIdx,flip,o){svg=fxHost(svg);const r=svg.getBounding
 @keyframes kxdrip{to{height:var(--h)}}
 .kx-dim.lose{background:radial-gradient(ellipse at center,rgba(10,18,32,.25) 25%,rgba(4,8,16,.86) 100%)}
 .kx-board.lose{animation-name:kxboardL}
+.kx-board3d{animation:kxshake .45s ease}
+@keyframes kxshake{0%,100%{transform:none}25%{transform:scale(1.035) translate(-5px,3px)}50%{transform:translate(5px,-3px)}75%{transform:translate(-3px,2px)}}
+.kx.p3 .gleam{mix-blend-mode:normal;opacity:.45}
 @keyframes kxboardL{0%{filter:none;transform:none}3%{transform:scale(1.035) translate(-5px,3px)}6%{transform:translate(5px,-3px)}9%{transform:translate(-3px,2px)}12%{transform:none;filter:grayscale(1) brightness(.5) contrast(1.15)}84%{filter:grayscale(1) brightness(.5) contrast(1.15)}100%{filter:none}}
 .kx .cap{position:absolute;left:0;right:0;top:80%;text-align:center;font-size:.075em;font-weight:900;color:#fff;letter-spacing:.1em;text-shadow:0 1px 4px #000;opacity:0;animation:kxcap .4s ease 1.6s forwards}
 @keyframes kxcap{to{opacity:1}}`;document.head.append(st)}
   document.querySelectorAll(".kx,.kx-dim,.kx-bar,.kx-flash,.kfx,.kfx-dim,.ckfx,.cpfx").forEach(x=>x.remove());const lose=!win;
   const els=[];const mk=(cls,html)=>{const e=document.createElement("div");e.className=cls;if(html)e.innerHTML=html;document.body.append(e);els.push(e);return e};
-  mk("kx-dim"+(lose?" lose":""));mk("kx-bar t");mk("kx-bar b");mk("kx-flash");
+  mk("kx-dim"+(lose?" lose":""));mk("kx-bar t");mk("kx-bar b");{const fl=mk("kx-flash");fl.addEventListener("animationend",()=>fl.remove(),{once:true})}
   /* 意見回饋 607：殺棋動畫可以點一下跳過（透明的一層蓋在動畫上），等著的結果視窗馬上出來。只在有結果視窗在等（MODAL_HOLD）時才加，棋譜裡看到將死的動畫不擋按鈕 */
-  if(MODAL_HOLD>Date.now()){const sk=mk("kx-skip");sk.title="點一下跳過";sk.addEventListener("click",e=>{e.preventDefault();e.stopPropagation();els.forEach(x=>x.remove());svg.classList.remove("kx-board","lose");modalSkip()},{once:true})}
-  svg.classList.remove("kx-board","lose");void svg.getBoundingClientRect();svg.classList.add("kx-board");if(lose)svg.classList.add("lose");
-  const W=r.width,H=r.height,d=mk("kx "+(lose?"lose":"win"));d.style.cssText=`left:${r.left}px;top:${r.top}px;width:${W}px;height:${H}px;font-size:${W}px`;
+  if(MODAL_HOLD>Date.now()){const sk=mk("kx-skip");sk.title="點一下跳過";sk.addEventListener("click",e=>{e.preventDefault();e.stopPropagation();els.forEach(x=>x.remove());svg.classList.remove("kx-board","kx-board3d","lose");modalSkip()},{once:true})}
+  svg.classList.remove("kx-board","kx-board3d","lose");void svg.getBoundingClientRect();svg.classList.add(P3?"kx-board3d":"kx-board");if(lose&&!P3)svg.classList.add("lose");
+  const W=r.width,H=r.height,d=mk("kx "+(lose?"lose":"win")+(P3?" p3":""));d.style.cssText=`left:${r.left}px;top:${r.top}px;width:${W}px;height:${H}px;font-size:${W}px`;
   let col=kIdx%9,row=kIdx/9|0;if(flip){col=8-col;row=9-row}const kx=40+col*60,ky=40+row*60;
   let cr="";for(let i=0;i<8;i++){const a=i/8*Math.PI*2+Math.random()*.4,L=80+Math.random()*100;let p=`M${kx} ${ky}`;for(let k=1;k<=3;k++){const x=kx+Math.cos(a+(Math.random()-.5)*.6)*L*k/3,y=ky+Math.sin(a+(Math.random()-.5)*.6)*L*k/3;p+=`L${x.toFixed(1)} ${y.toFixed(1)}`}
     cr+=`<path class="crack" d="${p}" stroke-width="${(4-i%3).toFixed(1)}"/>`}
@@ -181,13 +186,13 @@ function killFx(svg,win,why,kIdx,flip,o){svg=fxHost(svg);const r=svg.getBounding
   if(sg){const [p,w,h]=sg,sw=W*.4,sh=sw*h/w,sd=d.appendChild(document.createElement("div"));sd.className="kxs";sd.style.cssText=`width:${sw}px;height:${sh}px`;
     sd.innerHTML=`<svg viewBox="-4 -4 ${w+8} ${h+8}" style="display:block;width:100%;height:100%;overflow:visible;filter:drop-shadow(0 2px 4px rgba(0,0,0,.7))"><path d="${p}" fill="${winSide==="r"?"#d0201a":"#120a06"}" stroke="#f3d27a" stroke-width="3" stroke-linejoin="round" paint-order="stroke"/></svg>`}
   // 墨點、金星
-  let sp="";for(let i=0;i<18;i++){const a=Math.random()*Math.PI*2,R=.25+Math.random()*.3,z=(.008+Math.random()*.022).toFixed(3);sp+=`<i class="dot" style="width:${z}em;height:${z}em;--dx:${(Math.cos(a)*R).toFixed(3)}em;--dy:${(Math.sin(a)*R*.55).toFixed(3)}em"></i>`}
-  for(let i=0;i<14;i++){const a=Math.random()*Math.PI*2,R=.2+Math.random()*.32,z=(.012+Math.random()*.02).toFixed(3);sp+=`<i class="spark" style="width:${z}em;height:${z}em;--o:0;--dx:${(Math.cos(a)*R).toFixed(3)}em;--dy:${(Math.sin(a)*R*.6).toFixed(3)}em"></i>`}
-  if(!lose){sp='<i class="rays"></i>'+sp;for(let i=0;i<26;i++){const x=(Math.random()*100).toFixed(1),c=["#f3c64a","#d0201a","#fff2b0","#e8932a"][i%4];
+  let sp="";for(let i=0;i<(P3?8:18);i++){const a=Math.random()*Math.PI*2,R=.25+Math.random()*.3,z=(.008+Math.random()*.022).toFixed(3);sp+=`<i class="dot" style="width:${z}em;height:${z}em;--dx:${(Math.cos(a)*R).toFixed(3)}em;--dy:${(Math.sin(a)*R*.55).toFixed(3)}em"></i>`}
+  for(let i=0;i<(P3?6:14);i++){const a=Math.random()*Math.PI*2,R=.2+Math.random()*.32,z=(.012+Math.random()*.02).toFixed(3);sp+=`<i class="spark" style="width:${z}em;height:${z}em;--o:0;--dx:${(Math.cos(a)*R).toFixed(3)}em;--dy:${(Math.sin(a)*R*.6).toFixed(3)}em"></i>`}
+  if(!lose){sp='<i class="rays"></i>'+sp;for(let i=0;i<(P3?10:26);i++){const x=(Math.random()*100).toFixed(1),c=["#f3c64a","#d0201a","#fff2b0","#e8932a"][i%4];
       sp+=`<i class="conf" style="left:${x}%;background:${c};--dx:${((Math.random()-.5)*.3).toFixed(3)}em;--r:${(Math.random()*720-360)|0}deg;animation-delay:${(.75+Math.random()*.6).toFixed(2)}s"></i>`}}
   else{for(let i=0;i<7;i++){const x=(28+Math.random()*44).toFixed(1);sp+=`<i class="drip" style="left:${x}%;--h:${(.06+Math.random()*.14).toFixed(3)}em;animation-delay:${(1.05+Math.random()*.5).toFixed(2)}s"></i>`}}
   d.insertAdjacentHTML("beforeend",sp+`<i class="seal" style="--sx:${(W*.36).toFixed(0)}px;--sy:${(W*.13).toFixed(0)}px;font-size:${W*.1}px">${win?"勝":"敗"}</i><div class="cap">${o.cap||(win?"你贏了！":word==="困斃"?"無路可走…":"這盤輸了…再接再厲")}</div>`);
-  vibrate([70,50,140]);setTimeout(()=>{els.forEach(e=>e.remove());svg.classList.remove("kx-board")},3250);
+  vibrate([70,50,140]);setTimeout(()=>{els.forEach(e=>e.remove());svg.classList.remove("kx-board","kx-board3d")},3250);
   if(store.get("capSound",true)||store.get("mvSound",false))withAudio(()=>{const t=AC.currentTime+.02,out=AC.destination;
     const noise=(dur,pw)=>{const len=AC.sampleRate*dur|0,b=AC.createBuffer(1,len,AC.sampleRate),c=b.getChannelData(0);for(let i=0;i<len;i++)c[i]=(Math.random()*2-1)*Math.pow(1-i/len,pw);const s=AC.createBufferSource();s.buffer=b;return s};
     // 衝擊：低頻下滑＋雜音

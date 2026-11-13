@@ -18,6 +18,7 @@
 | 00-util.js | 共用小工具、殺棋動畫；回饋 835：蓋印、開局、將軍、開局名動畫（`FX_TAP_SEL`）點一下畫面就淡掉收起，不吃掉那一下點選 |
 | 01-board.js | 棋盤、朝代風格、棋盤立體化與紋飾 |
 | 02-shell.js | 版面骨架與路由、離線版連線與引擎下載、名字、線上大廳、分享、加到主畫面 |
+| 02r-reloadguard.js | 🔁 重新載入防護（開發者 11/13 P1：3D 絕殺後頁面重載、又直接開第二盤）：`rlgHold` 對局結束 60 秒內／結果視窗／底部視窗／殺棋特效中，02-shell.js 不套用新版、不做跨來源隔離重整；`rlgPrep` 真的重整前把對局頁網址換成那個模式的選單頁或首頁；`rlgBoot` 對局剛結束 90 秒內被重新載入（不是使用者按的）就停在選單、跳大字提示（07i18n `rlg.reloaded`）；最近 10 次異常重載存 localStorage `xq_rlgLog`，開發者模式設定頁「系統」看得到；`window.XQ_fxBusy` 給 local.js 賽後分析等特效播完。前綴 rlg；測試 xiangqi-lab/tools/test-reload-guard.js |
 | 03-home-quiz.js | 首頁、棋力測驗、猜著法、象棋術語 |
 | 04-stats.js | 錯棋重練、我的開局、戰績、棋友資料、我的棋力、天賦系統 |
 | 04c-weekly.js | 家長學習週報 #/weekly（開發者 11/8 核准）：最近 7 天有日期的紀錄 → canvas 直式圖卡、「存成圖片」；入口在我的成長、設定的角色分頁 |
@@ -90,6 +91,8 @@
 | 07hp-haptics.js | 📳 觸覺回饋（第 11 輪 X2）：落子、吃子、將軍、走不了、勝／敗／和／將死各一種震動節奏（hapPats）；開關 store `haptic`（預設開，關掉連 00-util vibrate 也停）。掛點：01-board 畫面更新 hapMove、tapGo hapTap，對局結束 xq-result。iPhone Safari 沒有 navigator.vibrate，不會震。include 在 m.html 最後；前綴 hap／HAP_。測試 `test-haptics.js` |
 | 07hs-netsig.js | 📶 線上對局連線訊號格＋對方沒回應（第 12 輪 X11）：讀 src/net.js LINK 區段的 XQNet.latency／peer／syncInfo。#/pvp 自己在下時棋盤右下角小膠囊（格數＋毫秒、🔄 同步中、⏳ 對方 N 秒沒回應，點一下 toast 說明）；對方 90 秒沒回應跳視窗：繼續等／判和（不計分）／離開這盤（不計分），千秋盃只有繼續等／回大廳（peerAbort，判負規則沒改）。樣式自帶 `<style id="nsgCss">`，沒改 m.css；include 在 07hp-haptics 後面；前綴 nsg／NSG。測試 `test-net-link.js` ⑦ |
 | 07i18n.js | 🌐 英文介面架構（第 14 輪 F1）：掃描文字節點＋字典替換（I18N_EN 字典、I18N_PAT 句型、照中文標點切段；還剩中文就整段不換），選了 English（store `lang`＝"en"）才裝 MutationObserver，原文記在 WeakMap 可還原（i18nRevert）；讀螢幕念法換英文（axmMoveLine／axmCellLabel／axmPcName 指定換掉，axSay／axsAlert 包一層），著法用 WXF 記譜；設定頁頂欄 🌐 與「文字」那排的 English 都走 i18nPick（換了重新載入）。不翻的字 I18N_GUARD。include 在 07dq-daily 後面；前綴 i18n／I18N_。說明 art/docs/i18n.md；測試 `test-i18n.js` |
+| 07mnf-mainfilm.js | 🎬 主線電影播放器（11/13 新手體驗第一波，定案 story/新手體驗定案_141_兩輪討論.md 第九節）：`mnfPlay(id,{onDone,qte,onQte,card,keepMusic})` 即時演出（現有水墨圖滿版＋kb 推拉＋粒子＋一行字幕 ≤16 字＋現有配樂），電影資料 `MNF_FILMS`（第 1 章 c1o／c1m／c1e）、`mnfCheck` 檢查格式；右上「略過」→ 一定先出任務卡；危機解題 `mnfQte`（定格、棋盤浮出，沿用 01 Board＋XQCore 判勝負，錯 2 次提示、3 次看軍師演示）；殘局解開儀式 `mnfSolveRite`（老人手移開 → 刻痕一小點青玉光 → 殘譜一行逐字浮墨；行數＝刻痕段數＝千秋殘局 shipSolved 真實進度 `mnfRiteCount`） |
+| 07mnq-mainquest.js | ⛵ 主線任務「星槎遠征令」（13 章，航線亮燈）＋首頁常駐「下一步」（包一層 07z homeMap，按鈕放在底部那一條最上面；導向邏輯 `mnqNextOf` 純計算）＋大禮包 A1 七星授印禮／A2 破局錦囊／A6 朝代遠征補給（`mnqGrant` 只發一次：稱號、提示棋、一盞茶額外題、配樂收藏、景點線索、千秋大百科「星槎遠征札記」）；第 1 章危機＝船艙站本命子那題劇情局，解開照千秋殘局記（shipMark）；存檔 `m_mnq`（JOURNEY_KEYS） |
 
 ## 改程式時
 - 找某段字在哪個檔：`node xiangqi-db/tools/mhtml.js --find "要找的字"`。

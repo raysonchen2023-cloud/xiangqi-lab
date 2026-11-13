@@ -72,8 +72,9 @@ test("主張紙條（圖最上方）排在入口前面，旁白先念它", () =>
   f(P, true); assert.deepEqual(P.kids.map(k => k.name), ["img", "hm-fx", "slogan", "s1", "s2"]);
 });
 
-test("〔原始碼〕首頁入口照 hmFocusOrder 產生、畫面座標照舊用 HM_SPOTS；homeMap 最後呼叫 hmTail", () => {
-  assert.ok(SRC.includes('${hmFocusOrder(HM_SPOTS).map(([id,x,y])=>`<button class="shp-spot" id="${id}" style="left:${x}%;top:${y}%"'));
+test("〔原始碼〕首頁入口照 hmFocusOrder 產生、畫面座標照舊用 HM_SPOTS（11/13 起 iPad 寬版圖用 hmwSpots 那一組，原圖 hmwSpots(\"\")＝HM_SPOTS，見 test-home-wide.js）；homeMap 最後呼叫 hmTail", () => {
+  assert.ok(SRC.includes('${hmFocusOrder(hmwSpots(hk)).map(([id,x,y])=>`<button class="shp-spot" id="${id}" style="left:${x}%;top:${y}%"'));
+  assert.ok(SRC.includes(':HM_SPOTS;'), "原圖（hk 是空字串）照舊用 HM_SPOTS");
   assert.match(SRC, /hmMe\(P\)\}\}catch\(e\)\{\}\n  try\{hmTail\(P\)\}catch\(e\)\{\}/);
   assert.ok(![...SRC].some(c => { const x = c.codePointAt(0); return x < 32 && x !== 10 }), "07z-homemap.js 有 CR 或控制字元");
 });

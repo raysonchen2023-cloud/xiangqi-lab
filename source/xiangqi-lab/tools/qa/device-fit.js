@@ -77,7 +77,17 @@ function judgeLayout(m, dev, page) {
   if (m.small > 0) out.push(`可點元素小於 44×44 點：${m.small} 個（例：${m.smallSample.slice(0, 4).join("、")}）`);
   return out;
 }
-module.exports = { DEVICES, PAGES, judgeLayout, IPHONE_UA, IPAD_UA };
+// 量測誤報排除（11/13 第 16 輪）：「文字超出元素框／文字被截斷」是拿 Range 量元素裡「所有」文字的範圍，看不見的字也算進去。
+//   左上時辰鐘（07w8 .clk-dial）的 SVG 裡有一個 <text class="clk-big" x="0" y="0" opacity="0">（例「辰時」），基線在圓盤左上角、
+//   字身往上伸出圓盤 16px，可是它 opacity 0、又被圓形 clip-path 裁掉，畫面上看不到；看得到的十二地支都在 56×56 的圓盤裡。
+//   規則：在頁面裡重量一次（TEXTVIS），只有「看得到的字（祖先沒有 opacity 0、visibility hidden）都在框內，超框的全是看不見的字」才排除，寫進 fp（附理由），不算問題
+//   chk[k]＝第 k 個問題的重量結果 {visOut, hidOut, hidTxt} 或 null（找不到元素就照舊算問題）
+function splitFalsePos(fit, chk) {
+  const keep = [], fp = [];
+  fit.forEach((f, k) => { const c = chk && chk[k]; if ((f.type === "box" || f.type === "cut") && c && !c.visOut && c.hidOut) fp.push({ type: f.type, text: f.text, detail: f.detail, why: `超出框的只有看不見的字（${(c.hidTxt || []).join("、") || "—"}：opacity 0 或 visibility hidden），看得到的字都在框內` }); else keep.push(f) });
+  return { keep, fp };
+}
+module.exports = { DEVICES, PAGES, judgeLayout, splitFalsePos, IPHONE_UA, IPAD_UA };
 if (require.main !== module) return;
 
 // ================= 以下才開瀏覽器 =================
@@ -94,6 +104,8 @@ const LOCAL_FN = (() => { if (!LOCAL) return null; const s = fs.readFileSync(pat
 const URL0 = LOCAL ? `http://127.0.0.1:${PORT}/xiangqi-lab/` : arg("--url", EV.LIVE_URL);
 const OUTDIR = path.resolve(arg("--outdir", path.join(HOME, "xiangqi-db", "tools", "review_loop", "rounds", "r15", "devices"))), SHOTDIR = path.join(OUTDIR, "shots");
 const USE_DEV = DEVICES.filter(d => !arg("--dev") || arg("--dev").split(",").includes(d.id)), USE_PAGE = PAGES.filter(p => !arg("--page") || arg("--page").split(",").includes(p.id));
+// --store '{"sw7Wx":false,"shipAt":"song"}'：開頁前多寫幾個 App 設定（store 的鍵，自動加 m_ 前綴；值照 JSON）。11/13 首頁寬版圖要在「宋代原圖、關掉場景節氣天氣」才看得到，驗證時用
+const STORE0 = (() => { const s = arg("--store", ""); if (!s) return {}; try { return JSON.parse(s) } catch (e) { throw new Error("--store 要是 JSON 物件：" + e.message) } })();
 fs.mkdirSync(SHOTDIR, { recursive: true });
 const sleep = ms => new Promise(r => setTimeout(r, ms));
 const log = (...a) => console.log(new Date().toLocaleTimeString("zh-TW", { hour12: false }), ...a);
@@ -105,10 +117,18 @@ function MEASURE() {
   const top = document.querySelector(".modal") || document.querySelector("#sheet.sheet") ? null : [...document.querySelectorAll("#view > *")].filter(vis)[0];
   // 主要內容欄：#view 底下最寬、而且有文字的區塊（滿版地圖算滿版）
   let col = null; if (top) { const r = top.getBoundingClientRect(); let inner = [...top.querySelectorAll(".home,.lib,.st-wrap,.set,.box,section,main")].filter(vis).map(e => e.getBoundingClientRect().width); col = { w: Math.max(r.width > vw * 0.98 && inner.length ? Math.max(...inner) : r.width, 0) } }
-  const small = [], seen = new Set();
+  // 11/13 第 16 輪：外觀小、但用透明的 ::before／::after 把點選範圍擴大的元素（例：大廳亮燈、殘影），照「手指實際點得到」算：
+  //   以元素中心為準，上下左右各 ±21px 共 9 個點（44×44 的方格）用 elementFromPoint 點點看，每一點都點到它自己（或它裡面的東西）才算夠大；
+  //   畫面外的點不算（貼邊的按鈕手指本來就點不到外面）；被別的入口、標籤蓋住的點＝點不到它＝還是太小。只看框的話，擴大的點選範圍量不到
+  const hitOK = (e, r) => { const cx = r.left + r.width / 2, cy = r.top + r.height / 2; for (const dx of [-21, 0, 21]) for (const dy of [-21, 0, 21]) { const x = cx + dx, y = cy + dy; if (x < 0 || y < 0 || x >= vw || y >= vh) continue; const h = document.elementFromPoint(x, y); if (!h || !(h === e || e.contains(h))) return false } return true };
+  // 只給讀屏軟體的隱藏清單（祖先寬或高 ≤2px、或 clip／clip-path 裁掉；跟 evidence-shots COLLECT 的 hide 同一個規則）：畫面上看不到、手指點不到，不算「太小的可點元素」。
+  //   例：07w6 場景器物的 .sci-sr（「棋盒、腳踏、硯台…」各 30×23，給旁白念「畫裡可以點的東西」）；手指點的是圖上器物本身的多邊形範圍
+  const srOnly = e => { for (let a = e; a && a !== document.body; a = a.parentElement) { const s = getComputedStyle(a), b = a.getBoundingClientRect(); if (b.width <= 2 || b.height <= 2 || (s.clip && s.clip !== "auto") || /inset\(50%|inset\(100%/.test(s.clipPath || "")) return true } return false };
+  const small = [], seen = new Set(), hitBig = [];
   for (const e of document.querySelectorAll("button,[role=button],a[href],[role=tab],input[type=checkbox],select")) {
-    if (!vis(e) || e.closest("svg,#axLive,.ax-sr")) continue; const r = e.getBoundingClientRect();
+    if (!vis(e) || e.closest("svg,#axLive,.ax-sr") || srOnly(e)) continue; const r = e.getBoundingClientRect();
     if (r.right <= 0 || r.left >= vw || r.bottom <= 0 || r.top >= vh) continue;
+    if (r.width < 44 && r.height < 44 && hitOK(e, r)) { hitBig.push(((e.innerText || e.getAttribute("aria-label") || e.title || e.tagName) + "").replace(/\s+/g, " ").trim().slice(0, 12) + `(${Math.round(r.width)}×${Math.round(r.height)})`); continue }
     if (r.width < 44 && r.height < 44) { const t = ((e.innerText || e.getAttribute("aria-label") || e.title || e.tagName) + "").replace(/\s+/g, " ").trim().slice(0, 12); if (!seen.has(t)) { seen.add(t); small.push(t + `(${Math.round(r.width)}×${Math.round(r.height)})`) } }
   }
   // 滿版場景（11/13 07fl）：圖的框、#view 看得到的範圍、有沒有模糊底；入口標籤有沒有被裁到看不到的地方
@@ -116,7 +136,24 @@ function MEASURE() {
   if (SP && V && vis(SP)) { const pr = SP.getBoundingClientRect(), vr = V.getBoundingClientRect(), vb = Math.min(vr.top + V.clientHeight, vh), bg = document.getElementById("xflBg");
     const cut = V.scrollHeight > V.clientHeight + 2 ? [] : [...SP.querySelectorAll(".shp-spot")]   /* #view 可以捲（手機直向圖比畫面高、橫放側欄）＝捲得到，不算裁掉 */.filter(vis).filter(e => { const r = e.getBoundingClientRect(); return r.top < Math.max(pr.top, vr.top) - 1 || r.bottom > Math.min(pr.bottom, vb) + 1 || r.left < Math.max(pr.left, vr.left) - 1 || r.right > Math.min(pr.right, vr.right) + 1 }).map(e => (e.innerText || "").replace(/\s+/g, " ").trim().slice(0, 10));
     scene = { x: pr.left - vr.left, w: pr.width, vw: vr.width, bg: !!(bg && !bg.hidden && bg.getBoundingClientRect().width > 0), mode: ["xfl-port", "r07-fit", "r07-side", "tt-fillx"].filter(c => V.classList.contains(c)).join(" "), cut } }
-  return { vw, vh, board: sv ? box(sv.getBoundingClientRect()) : null, col, small: small.length, smallSample: small, kind: typeof MY_KIND !== "undefined" ? MY_KIND : "", scene };
+  return { vw, vh, board: sv ? box(sv.getBoundingClientRect()) : null, col, small: small.length, smallSample: small, hitBig, kind: typeof MY_KIND !== "undefined" ? MY_KIND : "", scene };
+}
+// 頁面裡重量「文字超框」：list＝[{x,y,w,h}]（COLLECT 量到的元素框）；用同一組選擇器找回框一樣的元素，逐個文字節點分「看得到／看不見」量（容許誤差跟 judgeOverflow 一樣：左右 1px、上下 4px）
+function TEXTVIS(list) {
+  const SEL = "button,[role=button],[role=tab],a[href],label,h1,h2,h3,h4,summary,th,.sec-t,.sh-t,.chip,.tab,.pill,.badge", all = [...document.querySelectorAll(SEL)];
+  const near = (q, r) => Math.abs(q.left - r.x) < .6 && Math.abs(q.top - r.y) < .6 && Math.abs(q.width - r.w) < .6 && Math.abs(q.height - r.h) < .6;
+  const out = (c, r) => c.left < r.x - 1 || c.right > r.x + r.w + 1 || c.top < r.y - 4 || c.bottom > r.y + r.h + 4;
+  return list.map(r => {
+    const e = all.find(x => near(x.getBoundingClientRect(), r)); if (!e) return null;
+    let visOut = false, hidOut = false; const hidTxt = [];
+    const w = document.createTreeWalker(e, NodeFilter.SHOW_TEXT);
+    for (let t = w.nextNode(); t; t = w.nextNode()) {
+      if (!t.nodeValue.trim()) continue; const p = t.parentElement, seen = !p || !p.checkVisibility || p.checkVisibility({ opacityProperty: true, visibilityProperty: true });
+      const rg = document.createRange(); rg.selectNodeContents(t);
+      for (const c of rg.getClientRects()) { if (c.width < .5 || c.height < .5 || !out(c, r)) continue; if (seen) visOut = true; else { hidOut = true; const s = t.nodeValue.trim().slice(0, 10); if (!hidTxt.includes(s)) hidTxt.push(s) } }
+    }
+    return { visOut, hidOut, hidTxt };
+  });
 }
 async function waitReady(page) {
   const t0 = Date.now();
@@ -144,14 +181,15 @@ async function gotoHash(page, h, wait) {
     for (const D of USE_DEV) {
       const ctx = await browser.newContext({ viewport: { width: D.w, height: D.h }, deviceScaleFactor: 1, isMobile: true, hasTouch: true, userAgent: D.kind === "pad" ? IPAD_UA : IPHONE_UA, locale: "zh-TW" });
       try {
-        await ctx.addInitScript(() => {
+        await ctx.addInitScript(ST0 => {
           try {
             localStorage.setItem("xq_netRoot", JSON.stringify("xq_test"));
             const S = (k, v) => { if (localStorage.getItem(k) == null) localStorage.setItem(k, JSON.stringify(v)) };
             S("m_onboard1", true); S("m_firstWin", true); S("m_langHint", true); S("m_focusBoard", true); S("instAsk", { no: true, at: Date.now() });
             S("xq_me", { id: "qadv" + Math.random().toString(36).slice(2, 8), name: "裝置測試" });
+            for (const k in ST0) localStorage.setItem("m_" + k, JSON.stringify(ST0[k]));
           } catch (e) { }
-        });
+        }, STORE0);
         const page = await ctx.newPage(); page.setDefaultTimeout(10000);
         page.on("pageerror", e => R.errors.push({ dev: D.id, msg: String(e.message).slice(0, 200) }));
         page.on("dialog", d => d.dismiss().catch(() => { }));
@@ -162,9 +200,10 @@ async function gotoHash(page, h, wait) {
         for (const P of USE_PAGE) {
           try {
             await gotoHash(page, P.hash, P.board ? 4000 : 3000);
-            const snap = await page.evaluate(`(${COLLECT_SRC})()`), fit = EV.judgeOverflow(snap), m = await page.evaluate(MEASURE), lay = judgeLayout(m, D, P);
+            const snap = await page.evaluate(`(${COLLECT_SRC})()`), fit0 = EV.judgeOverflow(snap), m = await page.evaluate(MEASURE), lay = judgeLayout(m, D, P);
+            const chk = await page.evaluate(TEXTVIS, fit0.map(f => (f.type === "box" || f.type === "cut") && f.r ? f.r : { x: -1e4, y: -1e4, w: 0, h: 0 })).catch(() => null), { keep: fit, fp } = splitFalsePos(fit0, chk);
             const file = `${D.id}-${P.id}.png`; await page.screenshot({ path: path.join(SHOTDIR, file) });
-            (R.res[D.id] = R.res[D.id] || {})[P.id] = { file, fit: fit.map(f => ({ type: f.type, text: f.text, detail: f.detail })), lay, m };
+            (R.res[D.id] = R.res[D.id] || {})[P.id] = { file, fit: fit.map(f => ({ type: f.type, text: f.text, detail: f.detail })), lay, m, fp };
             log(D.id, P.id, "爆版", fit.length, "版面", lay.length);
           } catch (e) { R.errors.push({ dev: D.id, page: P.id, msg: String(e.message).slice(0, 200) }); log(D.id, P.id, "出錯", e.message) }
         }
@@ -177,6 +216,9 @@ async function gotoHash(page, h, wait) {
   for (const D of USE_DEV) md += `| ${D.name} | ${D.w}×${D.h} | ` + USE_PAGE.map(p => cell(R.res[D.id] && R.res[D.id][p.id])).join(" | ") + " |\n";
   md += "\n## 逐項問題\n";
   for (const D of USE_DEV) for (const P of USE_PAGE) { const x = R.res[D.id] && R.res[D.id][P.id]; if (!x || !(x.fit.length + x.lay.length)) continue; md += `\n### ${D.name} ・ ${P.name}（shots/${x.file}）\n` + x.lay.map(t => `- 版面：${t}`).join("\n") + (x.lay.length ? "\n" : "") + x.fit.map(f => `- ${EV.FIT_TYPES[f.type] || f.type}：${(f.text || "").replace(/\|/g, "／")}（${f.detail}）`).join("\n") + "\n" }
+  { const FP = {}, HB = {}; for (const D of USE_DEV) for (const P of USE_PAGE) { const x = R.res[D.id] && R.res[D.id][P.id]; if (!x) continue; for (const f of x.fp || []) { const k = f.text.slice(0, 40) + "｜" + f.why; (FP[k] = FP[k] || []).push(D.id + "／" + P.id) } for (const h of (x.m && x.m.hitBig) || []) { const k = h.replace(/\(\d+×\d+\)$/, ""); (HB[k] = HB[k] || new Set()).add(P.name) } }
+    if (Object.keys(FP).length) md += "\n## 排除的量測誤報（不算在上表）\n\n" + Object.entries(FP).map(([k, l]) => `- ${k.split("｜")[0]}：${k.split("｜")[1]}。共 ${l.length} 處（例 ${l.slice(0, 3).join("、")}）`).join("\n") + "\n";
+    if (Object.keys(HB).length) md += "\n## 外觀小於 44×44、但點選範圍已經擴到 44×44（elementFromPoint 9 點都點得到它，不算太小）\n\n" + Object.entries(HB).map(([k, s]) => `- ${k}：${[...s].join("、")}`).join("\n") + "\n" }
   if (R.errors.length) md += "\n## 錯誤\n" + R.errors.map(e => `- ${e.dev}${e.page ? "／" + e.page : ""}：${e.msg}`).join("\n") + "\n";
   fs.writeFileSync(path.join(OUTDIR, "device-fit.md"), md);
   log(`完成：${USE_DEV.length} 個尺寸 × ${USE_PAGE.length} 頁，錯誤 ${R.errors.length}；${path.join(OUTDIR, "device-fit.md")}`);

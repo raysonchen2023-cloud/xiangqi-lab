@@ -180,6 +180,14 @@ const I18N_EN={
   "路過的人物":"Passers-by","回天井":"Back to the courtyard","上一頁":"Previous page","下一頁":"Next page","收起客簿":"Close the guest book","熟面孔":"Familiar faces","可以邀請":"Can invite","一盤棋":"A game","目前沒有人在對戰":"No one is playing right now",
   "誰在看":"Who's watching","我":"Me","對局中":"In a game","回到對局":"Back to the game","閒著":"Free","大廳":"Lobby","回大廳":"Back to the lobby",
   /* 大廳安全：檢舉、封鎖、稱號、家長（07x4） */
+  /* 紅藍隊 R05：設定頁「自己的名字不合格」提示（07x4 LBN_WHY） */
+  "你的名字不適合公開":"Your name isn't suitable to show publicly","太長":"it's too long","是空白的":"it's blank","有看不見的字":"it has invisible characters","有疊在一起的符號":"it has stacked symbols",
+  "有角括號":"it has angle brackets","像網址":"it looks like a web address","像 Email":"it looks like an email","有 4 位以上的數字":"it has 4 or more digits in a row",
+  "像聯絡方式（LINE、IG、加我…）":"it looks like contact info (LINE, IG, add me…)","像官方或開發者（官方、公告、裁判、客服、系統…）":"it looks like an official or the developer (official, notice, referee, support, system…)",
+  "棋友會看到系統稱號":"other players will see a system title",
+  /* 11/13：不雅字詞、不合格名字改送稱號、稱號三選一（07x4） */
+  "有不雅或罵人的字":"it has rude or offensive words","這個名字不能在大廳顯示":"This name can't be shown in the lobby","別人看到的是稱號":"Others see the title",
+  "換一組":"New set","線上大廳恢復顯示":"The lobby shows your name again","線上大廳改成顯示稱號":"The lobby now shows the title","請到「我的角色」改名字":"Go to \"My character\" to change your name","請到":"go to","改名字":"to change your name",
   "不當名字":"Inappropriate name","名字有髒話、罵人，或不適合小朋友":"The name has swearing or insults, or isn't suitable for kids","騷擾":"Harassment","聊天讓人不舒服、一直纏著邀請":"Chat is upsetting, or keeps pestering with invites","作弊":"Cheating",
   "好像用電腦軟體幫忙下棋":"Seems to be using software to play","其他":"Other","其他想讓開發者知道的事":"Anything else the developer should know","長安":"Chang'an","洛陽":"Luoyang","咸陽":"Xianyang","汴京":"Bianjing","臨安":"Lin'an","金陵":"Jinling",
   "大都":"Dadu","燕京":"Yanjing","成都":"Chengdu","揚州":"Yangzhou","姑蘇":"Gusu","錢塘":"Qiantang","敦煌":"Dunhuang","廣陵":"Guangling","會稽":"Kuaiji","建康":"Jiankang","江陵":"Jiangling","襄陽":"Xiangyang","晉陽":"Jinyang","鄴城":"Yecheng",
@@ -403,11 +411,13 @@ const I18N_KEY={
   "res.win":"You won!","res.draw":"Draw","res.lose":"You lost this one","res.review":"📊 Review","res.home":"🏠 Home","res.viewBoard":"View board","res.again":"Play again","res.nextLevel":"Next level ›",
   "res.keyMove":"🔎 Understand the key move of this game ›","res.rankedAgain":"Play another ranked game ›","res.quickNote":"This was a quick game; it doesn't count toward your rank.",
   "net.win.r":"Red ({n}) wins","net.win.b":"Black ({n}) wins",
+  "net.note.late":"A move arrived {n} min late; accepted by the rules","net.note.lateKeep":"A move arrived {n} min late; now unrated, your win stands","net.note.act":"Blocked {n} unsigned action(s) (possible impersonation)",
   "new.titleRanked":"🥇 Ranked · New game","new.titlePractice":"📚 Practice room · New game","new.youPlay":"You play","new.opp":"Opponent","new.level":"Level",
   "new.red":"🔴 Red (moves first)","new.black":"⚫ Black (moves second)","new.goRanked":"Start ranked game","new.goLevel":"Start level {n}",
   "set.title":"Settings","set.tab.bot":"Character","set.tab.look":"Board","set.tab.sound":"Sound","set.tab.more":"System","set.more":"⚙ More settings",
   "set.font":"Font","set.fontSize":"Text size","set.lang":"Language","set.rules":"Rules","set.pace":"Computer pace","set.moveFx":"Move display and effects",
-  "set.sndPiece":"Piece sounds","set.sndVoice":"Voice calls","set.sndAmb":"Ambience","set.myChar":"My character","set.display":"Display","set.support":"Support","set.about":"About"
+  "set.sndPiece":"Piece sounds","set.sndVoice":"Voice calls","set.sndAmb":"Ambience","set.myChar":"My character","set.display":"Display","set.support":"Support","set.about":"About",
+  "rlg.reloaded":"The screen just reloaded. Your last game's result has been saved."   /* 11/13 開發者 P1：對局剛結束時頁面被重新載入（m/02r-reloadguard.js） */
 };
 /* 英文時不換的屬性值：別的模組用這幾個 aria-label／title 找按鈕（06-cpu 換園子、07t3 籤筒、07w9 出口），換掉就找不到 */
 const I18N_AGUARD=["回首頁","回星槎","聲控走棋","回棋盤模式","去園子下棋（3D）"];

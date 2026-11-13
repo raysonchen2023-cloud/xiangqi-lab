@@ -117,11 +117,21 @@ function lmCss(){if(document.getElementById("lmCss"))return;const s=document.cre
 .lm-dw.open{transform:none}.lm-dw-h{display:flex;align-items:center;gap:8px;padding:10px 14px 6px;font:900 16px var(--serif,serif)}.lm-dw-h button{margin-left:auto;border:0;background:none;font-size:20px;cursor:pointer;color:inherit}
 .lm-dw-b{overflow:auto;padding:0 2px 16px}
 .lm-scrim{position:fixed;inset:0;z-index:949;background:rgba(0,0,0,.25);display:none}.lm-scrim.open{display:block}
-@media (prefers-reduced-motion:reduce){.lm-lp.on::before,.lm-wave i{animation:none}.lm-wave i{opacity:.6;transform:scale(.8)}}`;document.head.append(s)}
+/* 第 16 輪版面缺陷清零（r15 device-fit：大廳每種尺寸 6～13 處）：
+   ① 亮著的燈（一盞一人、可以點）畫出來只有 9～10px 寬：外觀不變，透明的 ::after 把點選範圍擴到 44×44（標籤、棋桌在上面，蓋到的地方照樣點到它們）；lmSlots 也盡量讓亮燈彼此隔開一個指頭寬
+   ② 熟面孔、石桌往事人物的小掛牌原本掛在燈的框外面（top:100%），燈的框加高把掛牌包進來（墨畫燈 20×46 → 20×62），量起來不再「超出元素框」
+   ③ 收起來的名冊抽屜只是往下推出畫面，裡面的名冊、門房入口還「看得到」；收起時 visibility:hidden，滑出動畫結束後才藏 */
+.lm-lp.on::after{content:"";position:absolute;left:50%;top:50%;width:max(100%,44px);height:max(100%,44px);transform:translate(-50%,-50%)}
+.lm-lp.ink.fam,.lm-lp.ink.story{aspect-ratio:20/62}.lm-lp.ink.fam i,.lm-lp.ink.story i{top:auto;bottom:0;height:24%}
+.lm-dw{visibility:hidden;transition:transform .28s ease,visibility 0s linear .28s}.lm-dw.open{visibility:visible;transition:transform .28s ease}
+@media (prefers-reduced-motion:reduce){.lm-lp.on::before,.lm-wave i{animation:none}.lm-wave i{opacity:.6;transform:scale(.8)}.lm-dw,.lm-dw.open{transition:none}}`;document.head.append(s)}
 const LM_SLOT={};   /* 人 id → 燈的編號（同一個人一直用同一盞，直到離開） */
 function lmSlots(ids){for(const k of Object.keys(LM_SLOT))if(!ids.includes(k))delete LM_SLOT[k];const used=new Set(Object.values(LM_SLOT));
   for(const id of ids){if(LM_SLOT[id]!=null)continue;let h=0;for(const c of String(id))h=(h*31+c.charCodeAt(0))>>>0;
-    for(let i=0;i<LM_LAMPS.length;i++){const s=(h+i*7)%LM_LAMPS.length;if(!used.has(s)){LM_SLOT[id]=s;used.add(s);break}}}}
+    let pk=-1;for(let i=0;i<LM_LAMPS.length;i++){const s=(h+i*7)%LM_LAMPS.length;if(used.has(s))continue;if(pk<0)pk=s;if(lmFar(s,used)){pk=s;break}}if(pk>=0){LM_SLOT[id]=pk;used.add(pk)}}}
+/* 第 16 輪：新點的燈先挑離其他亮燈至少 LM_GAP（圖寬的 %；手機 375 寬約 44px）的那盞，44×44 的點選範圍才不會互相蓋到；都太近才照舊用第一盞空燈。座標是圖寬、圖高的 %，高換成寬的單位（圖 768×1376） */
+const LM_GAP=12;
+function lmFar(s,used){const a=LM_LAMPS[s];for(const u of used){const b=LM_LAMPS[u];if(!b)continue;if(Math.max(Math.abs(a[0]-b[0]),Math.abs(a[1]-b[1])*1376/768)<LM_GAP)return false}return true}
 /* 照 XQNet 的即時資料畫棋桌、燈籠、剪影、銅鑼狀態 */
 function lmPaint(v,P){const lay=P.querySelector(".lm-l");if(!lay||!window.XQNet)return;let ps=[];try{ps=XQNet.people()||[]}catch(e){}
   const me=(()=>{try{return XQNet.me().id}catch(e){return""}})(),G=(()=>{try{return XQNet.playing()&&XQNet.game()}catch(e){return null}})();
@@ -140,14 +150,15 @@ function lmPaint(v,P){const lay=P.querySelector(".lm-l");if(!lay||!window.XQNet)
   const pri=id=>/^jc:/.test(id)?2:fam.has(id)?0:(typeof isCloud==="function"&&isCloud(id))?3:1;
   const ids0=ps.filter(p=>p.id!==me).map(p=>p.id).concat(VS.map(k=>"jc:"+k)),ids=ids0.map((id,i)=>[id,i]).sort((a,b)=>pri(a[0])-pri(b[0])||a[1]-b[1]).map(x=>x[0]).slice(0,LM_LAMPS.length);
   const extra=ids0.length-ids.length;lmSlots(ids);
-  const lit={};for(const p of ps)if(p.id!==me&&LM_SLOT[p.id]!=null)lit[LM_SLOT[p.id]]={id:p.id,name:p.name,cls:(fam.has(p.id)?" fam":"")+(typeof isCloud==="function"&&isCloud(p.id)?" bot":"")};
+  const lit={};for(const p of ps)if(p.id!==me&&LM_SLOT[p.id]!=null)lit[LM_SLOT[p.id]]={id:p.id,name:lbnShow(p),cls:(fam.has(p.id)?" fam":"")+(typeof isCloud==="function"&&isCloud(p.id)?" bot":"")};
   for(const k of VS){const s=LM_SLOT["jc:"+k];if(s!=null)lit[s]={jc:k,name:(typeof JCHAR!=="undefined"&&JCHAR[k]&&JCHAR[k].name)||k,cls:" story"}}
   const E=lmEra(),GU=(LM_SET.lantern_on||[]).includes(E),PALE=E==="tang"||E==="wudai";   /* 停靠朝代：唐以前掛青銅燈盞圖，唐、五代素紗燈 */
   const FIG=["fig_sit","fig_lean","fig_fan"].map(n=>lmN(n,E));
-  lay.innerHTML=T.slice(0,8).map((t,i)=>{const[x,y]=LM_TABLES[i];const nm=t.l?t.l.map(p=>p.name).join(" 對 "):"";
-      return`<button class="lm-t${t.mine?" mine":""}${t.empty?" empty":""}" ${t.gid?`data-g="${esc(t.gid)}"`:""}${t.mine?' data-mine="1"':""} style="left:${x}%;top:${y}%;z-index:${Math.round(y)}" aria-label="${esc(t.mine?"我的對局":t.empty?"空桌":nm+"・觀戰")}" tabindex="${t.empty?-1:0}"><img src="${LM_IMG(lmN(t.empty?"table_empty":"table_game",E))}" alt=""></button>`}).join("")+
+  lay.innerHTML=T.slice(0,8).map((t,i)=>{const[x,y]=LM_TABLES[i];const nm=t.l?t.l.map(p=>lbnShow(p)).join(" 對 "):"";
+      const tg=t.empty?"span":"button";   /* 第 16 輪版面缺陷清零：空桌、暗燈本來就不接點選（pointer-events:none、tabindex -1），改成裝飾用的 span，不再算成按鈕（讀螢幕也不念「空著的燈」×40） */
+      return`<${tg} class="lm-t${t.mine?" mine":""}${t.empty?" empty":""}" ${t.gid?`data-g="${esc(t.gid)}"`:""}${t.mine?' data-mine="1"':""} style="left:${x}%;top:${y}%;z-index:${Math.round(y)}" ${t.empty?'aria-hidden="true"':`aria-label="${esc(t.mine?"我的對局":nm+"・觀戰")}" tabindex="0"`}><img src="${LM_IMG(lmN(t.empty?"table_empty":"table_game",E))}" alt=""></${tg}>`}).join("")+
     LM_LAMPS.map(([x,y,f,g],i)=>{const o=lit[i];const fig=o&&g?`<img class="lm-fig" src="${LM_IMG(FIG[i%3])}" alt="" style="left:${x}%;top:${y+(f===2?10.5:7.5)}%">`:"";
-      return`${fig}<button class="lm-lp f${f}${GU?" gu":LM_INK_LAMP?" ink"+(PALE?" pale":""):""}${o?" on"+o.cls:""}" ${o?(o.jc?`data-jc="${esc(o.jc)}"`:`data-p="${esc(o.id)}"`):""} style="left:${x}%;top:${y}%" aria-label="${o?esc(o.name)+(/ bot/.test(o.cls)?"（雲遊棋客・電腦）":""):"空著的燈"}" tabindex="${o?0:-1}">${LM_INK_LAMP&&!GU?'<svg viewBox="0 0 20 46"><use href="#lmLamp"/></svg>':`<img src="${LM_IMG(lmN(o?"lantern_on":"lantern_off",E))}" alt="">`}${o&&/fam|story/.test(o.cls)?"<i></i>":""}</button>`}).join("")+
+      const tg=o?"button":"span";return`${fig}<${tg} class="lm-lp f${f}${GU?" gu":LM_INK_LAMP?" ink"+(PALE?" pale":""):""}${o?" on"+o.cls:""}" ${o?(o.jc?`data-jc="${esc(o.jc)}"`:`data-p="${esc(o.id)}"`):""} style="left:${x}%;top:${y}%" ${o?`aria-label="${esc(o.name)+(/ bot/.test(o.cls)?"（雲遊棋客・電腦）":"")}" tabindex="0"`:'aria-hidden="true"'}>${LM_INK_LAMP&&!GU?'<svg viewBox="0 0 20 46"><use href="#lmLamp"/></svg>':`<img src="${LM_IMG(lmN(o?"lantern_on":"lantern_off",E))}" alt="">`}${o&&/fam|story/.test(o.cls)?"<i></i>":""}</${tg}>`}).join("")+
     (XQNet.seeking&&XQNet.seeking()?'<span class="lm-wave"><i></i><i></i><i></i></span>':"")+
     (extra>0?`<button type="button" class="lm-more" data-more="p" style="left:88%;top:30.5%">＋${extra} 人</button>`:"")+
     (moreG>0?`<button type="button" class="lm-more" data-more="g" style="left:67%;top:90%">更多棋局 ＋${moreG}</button>`:"")+

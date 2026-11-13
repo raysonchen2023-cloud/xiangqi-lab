@@ -45,6 +45,65 @@ const SHW_HOMEMAP={el:40,h:[.05,60,.0008],look0:[50,99],
     ls:[22,57],brd:[13,56],lq:[24,47],arch:[18,41.5],rs:[78,57],rq:[80,49],gate:[84,45]},
   E:"home-tbl home-pl home-pr pl-plc plc-pb pr-prc prc-pb pb-j1 j1-ship pl-ls ls-brd ls-lq lq-arch pr-rs rs-rq rq-gate",
   HS:{hmShip:["ship",62,30,"wave"],hmBattle:["arch",12,36,"bow"],hmLearn:["gate",87,38,"bow"],hmRec:["brd",12,50,"wave"],hmQuick:["tbl",52,54,"bow"]}};
+/* ---------- 11/13 開發者同意：iPad 寬版首頁圖（rounds/r15/devices/home-wide-coords.md）----------
+   直版 home_p34（1536×2048，3:4）給 iPad 直向、Duo 攤開直拿；橫版 home_l1610（2560×1600，16:10）給 iPad 橫向、Duo 攤開橫拿。
+   挑圖照 07fl 的判斷（可用寬 ÷ 可用高）：0.6～0.85 而且（寬 600 以上或比可用高度寬）＝直版；1.3 以上而且畫面短邊 600 以上＝橫版（手機橫放短邊不到 600，照舊圖靠左＋右側選單）；其他照舊原圖。
+   只有「原圖」home.webp（停靠宋代或沒朝代圖、沒有季節／晨昏／夜景／雨雪圖、不是經典世界）有寬版：07w7 sw7HomeWx() 有回傳變體、或經典世界＝照舊原圖＋07fl 程式滿版。寬版載不到＝退回原圖（HMW_BAD）。
+   換寬版時入口標籤、主張紙條、走路節點都換成寬版那一組（各自以母圖量的 %）；版面由 07fl xflHmw 用 cover 填滿，不再放大裁切、模糊延伸。
+   轉向、改視窗大小：07fl 包的 r07Wide 每次先問 hmwSync，比例跨過門檻就原地換圖、換座標、重掛走路角色，圖載好再重排一次。
+   純計算 hmwKind／hmwSpots／hmwSrc 不碰 DOM，自動測試 xiangqi-lab/tools/test-home-wide.js 用 vm 跑 */
+const HMW_ON=true,HMW_IMGV="0910";   /* 寬版圖的版本：同檔名換圖時改掉，手機才會重抓 */
+const HMW_PORT=[0.6,0.85],HMW_LAND=1.3,HMW_LMIN=600;
+/* f 檔名、w/h 母圖尺寸、S 入口錨點（左%、上%；home-wide-coords.md，橫版大船太擠可改 53／14）、sl 主張紙條離看得到的上緣多少（圖高 %）、
+   safe 最多裁掉多少（每邊，圖寬／圖高的比例：直版左右 6%、橫版上下 5%＝清單的安全區；另一個方向照錨點離邊多遠給寬一點，下緣都沒有地標） */
+const HM_SPOTS_P34=[["hmShip",54,15],["hmBattle",25,26],["hmLearn",80,26],["hmRec",23,44],["hmQuick",53,47.5]];
+const HM_SPOTS_L1610=[["hmShip",53,11],["hmBattle",30,26],["hmLearn",78.5,27],["hmRec",29,54],["hmQuick",50.5,61.5]];
+/* 走路節點（腳底，%）：同一套節點名和路（起點在橋上石桌左前方、廣場四角、木棧道到星槎、左岸告示牌和牌坊、右岸書院山門），各自在母圖上重量（11/13 畫在圖上對過，臨時檔沒留）。
+   身高照「石桌直徑佔圖高」換算：原圖 0.078、直版 0.085、橫版 0.081 */
+const SHW_HOMEMAP_P34={W:1536,H:2048,el:40,h:[.054,59,.00087],look0:[50,99],
+  N:{home:[46,59.6],tbl:[46.2,57.6],pl:[41,56],plc:[41,52.2],pb:[52.5,51.6],pr:[63.5,56],prc:[63.5,52.2],j1:[52.5,45],ship:[56.5,39],
+    ls:[28,57.8],brd:[21.5,58.2],lq:[32,47],arch:[25,42.2],rs:[77,58],rq:[79,50],gate:[80,46.6]},
+  E:SHW_HOMEMAP.E,
+  HS:{hmShip:["ship",55,31,"wave"],hmBattle:["arch",23,35,"bow"],hmLearn:["gate",80,37,"bow"],hmRec:["brd",22,51,"wave"],hmQuick:["tbl",53,55,"bow"]}};
+const SHW_HOMEMAP_L1610={W:2560,H:1600,el:40,h:[.052,70,.0008],look0:[50,99],
+  N:{home:[47,74],tbl:[46.5,71.6],pl:[42.5,70],plc:[43,66.6],pb:[51.8,65.6],pr:[58.5,70],prc:[58,66.6],j1:[52,48.5],ship:[56,43],
+    ls:[35,73.5],brd:[29,73.5],lq:[37,60],arch:[32,49.5],rs:[66.5,73.5],rq:[76,64],gate:[81,57.5]},
+  E:SHW_HOMEMAP.E,
+  HS:{hmShip:["ship",54,33,"wave"],hmBattle:["arch",31,38,"bow"],hmLearn:["gate",79,40,"bow"],hmRec:["brd",29,63,"wave"],hmQuick:["tbl",50,68,"bow"]}};
+const HMW={p34:{f:"home_p34",w:1536,h:2048,S:HM_SPOTS_P34,sl:1.4,safe:{l:.06,r:.06,t:.06,b:.10},walk:SHW_HOMEMAP_P34},
+  l1610:{f:"home_l1610",w:2560,h:1600,S:HM_SPOTS_L1610,sl:1.4,safe:{l:.12,r:.12,t:.05,b:.10},walk:SHW_HOMEMAP_L1610}};
+const HMW_BAD={};   /* 這次開 App 載不到的寬版（退回原圖，不再試） */
+/* 純計算：W 可用寬、av 可用高、vw #view 寬、vh 畫面高 → "p34"／"l1610"／""（原圖） */
+function hmwKind(W,av,vw,vh){if(!HMW_ON||!(W>0&&av>=120))return"";const r=W/av;
+  if(r>=HMW_PORT[0]&&r<=HMW_PORT[1]&&(vw>=600||vw>av))return HMW_BAD.p34?"":"p34";
+  if(r>=HMW_LAND&&Math.min(vw,vh)>=HMW_LMIN)return HMW_BAD.l1610?"":"l1610";return""}
+/* 現在這頁該用原圖（沒有變體）才有寬版：經典世界、季節／晨昏／夜景／雨雪圖都不換 */
+function hmwBase(){return true}   /* 開發者 11/13 選「iPad 先一律用寬版原圖」：寬版只有原圖（白天、預設世界）一張；原本經典世界、節氣天氣（季節、雨雪）時退回直式變體圖，iPad 上幾乎看不到寬版。改成 iPad／摺疊機寬版一律優先（暫時沒有季節、日夜變化），手機照舊 */
+const hmwSrc=k=>HMW[k]?`data/homemap/${HMW[k].f}.webp?v=${HMW_IMGV}`:`data/homemap/home.webp?v=${HM_IMGV}`;
+/* 入口座標表（含大字）：寬版用寬版那組座標，大字照 HM_SPOTS */
+const hmwSpots=k=>HMW[k]?HMW[k].S.map(([id,x,y])=>[id,x,y,(HM_SPOTS.find(s=>s[0]===id)||[])[3]]):HM_SPOTS;
+const hmwWalkCfg=k=>Object.assign({},SHW_PG0,HMW[k]?HMW[k].walk:SHW_HOMEMAP);
+/* 量 P 在 #view 裡的可用寬高（跟 07t3 r07Wide、07fl xflPort 同一套算法） */
+function hmwMeasure(V,P){const vr=V.getBoundingClientRect(),pr=P.getBoundingClientRect(),pb=parseFloat(getComputedStyle(V).paddingBottom)||0;
+  return{W:pr.width,av:V.clientHeight-pb-(pr.top-vr.top+V.scrollTop),vw:V.clientWidth,vh:document.documentElement.clientHeight||innerHeight}}
+const hmwPick=m=>hmwBase()?hmwKind(m.W,m.av,m.vw,m.vh):"";
+/* 原地換圖、換入口座標、主張紙條、走路角色；k＝""＝換回原圖 */
+function hmwSet(P,k){const im=P.querySelector(":scope>img");if(!im)return;P.dataset.hmw=k;
+  for(const[id,x,y]of hmwSpots(k)){const b=P.querySelector("#"+id);if(!b)continue;b.style.left=x+"%";b.style.top=y+"%";delete b.dataset.ttL;b.style.marginLeft=""}   /* ttL 是 07t3 記的原位，換座標要清掉，不然會被還原回舊位置 */
+  if(HMW[k])P.style.setProperty("--hmSlT",HMW[k].sl+"%");else P.style.removeProperty("--hmSlT");
+  const src=hmwSrc(k);if(im.getAttribute("src")!==src){
+    im.onerror=()=>{const kk=P.dataset.hmw;if(kk&&HMW[kk]){HMW_BAD[kk]=1;hmwSet(P,"")}};
+    im.addEventListener("load",()=>{if(!P.isConnected)return;try{if(typeof ttFill==="function")ttFill()}catch(e){}try{if(typeof spfSoon==="function")spfSoon(0)}catch(e){}},{once:true});
+    im.src=src}
+  hmwWalk(P,k)}
+/* 走路角色掛的是哪一組節點（P._hmwW）跟現在不同＝收掉舊的（07w 的框一拿掉，畫面迴圈、3D 畫布自己收），用新的那組重掛 */
+function hmwWalk(P,k){if(!P.dataset.shw||(P._hmwW||"")===k)return;const V=P.parentNode;if(!V)return;
+  P.querySelectorAll(":scope>.shw,:scope>.shw-me,:scope>.shw-hint,:scope>.shw-say,:scope>.shw-menu,:scope>.hm-me").forEach(e=>e.remove());delete P.dataset.shw;P.classList.remove("shw-iso");P._hmwW=k;
+  try{if(typeof shwPage==="function"&&SHIP_WALK_ON){shwPage(V,hmwWalkCfg(k),"home");hmMe(P)}}catch(e){}}
+/* 07fl 包的 r07Wide 每次排版前問這裡：不是首頁＝null；比例跨過門檻＝原地換掉、回 "wait"（圖載好會再排一次）；其他＝目前用的那一種（""＝原圖） */
+function hmwSync(V,P){if(!V||!P||!P.classList.contains("home-page")||P.dataset.hmw==null)return null;const k=hmwPick(hmwMeasure(V,P)),cur=P.dataset.hmw;
+  if(k!==cur){hmwSet(P,k);return"wait"}
+  if(k){const im=P.querySelector(":scope>img");if(!im||!im.complete||!im.naturalWidth)return"wait"}return k}
 function hmCss(){if(document.getElementById("hmCss"))return;const s=document.createElement("style");s.id="hmCss";s.textContent=`
 .home-page{margin:0 0 6px}.home-page .shp-spot{max-width:46%;padding:4px 11px}.home-page .shp-spot b{white-space:nowrap;font-size:14px}.home-page .shp-spot.hot{padding:5px 13px}.home-page .shp-spot.hot b{font-size:15px}
 .hm-fx{position:absolute;inset:0;pointer-events:none;overflow:hidden}
@@ -126,18 +185,21 @@ function homeMap(v){const home=v.querySelector(".home");if(!home||v.querySelecto
      跟電腦下、接著下、新手第一次都交給底部大按鈕（hmGoBar），石桌不再有新手天光和「第一次下象棋？」 */
   const lab=id=>id==="hmQuick"?HM_PVP_NM:id==="hmLearn"?xqHubName("learn"):id==="hmBattle"?xqHubName("battle"):HM_SPOTS.find(s=>s[0]===id)[3];
   const d=document.createElement("div");
-  d.innerHTML=`<div class="shp-page cq home-page"><img src="data/homemap/${typeof hbIsCl==="function"&&hbIsCl()?"home_classic":"home"}.webp?v=${HM_IMGV}" alt="${typeof hbIsCl==="function"&&hbIsCl()?"千秋時光之苑":"楚河渡口棋鎮"}"><div class="hm-fx" aria-hidden="true"></div>${hmFocusOrder(HM_SPOTS).map(([id,x,y])=>`<button class="shp-spot" id="${id}" style="left:${x}%;top:${y}%" aria-label="${esc(id==="hmQuick"?HM_PVP_AL:hmAl(lab(id)))}"><b>${esc(lab(id))}</b></button>`).join("")}${inst?'<button class="hm-inst" id="hmInst" aria-label="加到主畫面">📲 加到主畫面</button>':""}</div>`;
-  const P=d.firstElementChild;v.insertBefore(P,home);home.classList.add("hb-hidden");if(typeof hbCss==="function")hbCss();else home.style.display="none";
-  {const wv=typeof sw7HomeWx==="function"?sw7HomeWx():"",im0=P.querySelector(":scope>img");if(wv&&im0){const pre=new Image();pre.onload=()=>{if(!im0.isConnected)return;try{if(typeof sw7SeaTurn==="function"&&sw7SeaTurn(P,im0,pre.src))return}catch(e){}im0.src=pre.src};pre.src="data/homemap/home_"+wv+".webp?v="+HM_IMGV}}   /* 回饋 811：下雪、下雨天換積雪版 home_snow／雨景版 home_rain（07w7-seasons.js 判斷；先載好再換，載不到留原圖） */
+  /* 11/13 寬版圖：先放一個空框量可用寬高，照比例挑圖（hmwPick），只載要用的那一張 */
+  let hk="";try{if(HMW_ON&&hmwBase()){const t=document.createElement("div");t.className="shp-page cq home-page";v.insertBefore(t,home);hk=hmwPick(hmwMeasure(v,t));t.remove()}}catch(e){hk=""}
+  d.innerHTML=`<div class="shp-page cq home-page" data-hmw="${hk}"${hk?` style="--hmSlT:${HMW[hk].sl}%"`:""}><img src="${hk?hmwSrc(hk):`data/homemap/${typeof hbIsCl==="function"&&hbIsCl()?"home_classic":"home"}.webp?v=${HM_IMGV}`}" alt="${typeof hbIsCl==="function"&&hbIsCl()?"千秋時光之苑":"楚河渡口棋鎮"}"><div class="hm-fx" aria-hidden="true"></div>${hmFocusOrder(hmwSpots(hk)).map(([id,x,y])=>`<button class="shp-spot" id="${id}" style="left:${x}%;top:${y}%" aria-label="${esc(id==="hmQuick"?HM_PVP_AL:hmAl(lab(id)))}"><b>${esc(lab(id))}</b></button>`).join("")}${inst?'<button class="hm-inst" id="hmInst" aria-label="加到主畫面">📲 加到主畫面</button>':""}</div>`;
+  const P=d.firstElementChild;v.insertBefore(P,home);home.classList.add("hb-hidden");
+  if(hk){const im1=P.querySelector(":scope>img");im1.onerror=()=>{const kk=P.dataset.hmw;if(kk&&HMW[kk]){HMW_BAD[kk]=1;hmwSet(P,"")}}}   /* 寬版載不到＝退回原圖 */if(typeof hbCss==="function")hbCss();else home.style.display="none";
+  {const wv=typeof sw7HomeWx==="function"&&!hk?sw7HomeWx():"",im0=P.querySelector(":scope>img");if(wv&&im0){const pre=new Image();pre.onload=()=>{if(!im0.isConnected)return;try{if(typeof sw7SeaTurn==="function"&&sw7SeaTurn(P,im0,pre.src))return}catch(e){}im0.src=pre.src};pre.src="data/homemap/home_"+wv+".webp?v="+HM_IMGV}}   /* 回饋 811：下雪、下雨天換積雪版 home_snow／雨景版 home_rain（07w7-seasons.js 判斷；先載好再換，載不到留原圖） */
   const GO={hmShip:"#/adventure",hmBattle:"#/hub/battle",hmLearn:"#/hub/learn"};
-  for(const[id]of HM_SPOTS){const b=P.querySelector("#"+id);if(!b)continue;
+  for(const[id]of HM_SPOTS){const b=P.querySelector("#"+id);if(!b)continue;   /* 寬版只換座標，id 跟點了去哪都一樣 */
     b.onclick=()=>{vibrate(5);if(GO[id]){location.hash=GO[id];return}if(id==="hmRec"){if(typeof TODAY_MAP_ON!=="undefined"&&TODAY_MAP_ON){location.hash="#/today";return}hmRecSheet();return}if(id==="hmQuick"){try{sessionStorage.setItem("xqFromHome","1")}catch(e){}location.hash="#/pvp"}}}   /* 11/11：記下從首頁進來（07y hbFromHome：回首頁、不走後園） */
   {const ib=P.querySelector("#hmInst");if(ib)ib.onclick=e=>{e.stopPropagation();vibrate(5);installGuide(true)}}
   hmGoBar(P,nw);try{hmSlogan(P,nw)}catch(e){}
   /* v5 改善單 R07：轉向／縮放時 07t3 ttFill 要 120ms 後才重排圖的寬度，這裡等 300ms 再推標籤（原本 resize 當下就推，量到的是還沒重排的舊圖） */
   {const cl=()=>{if(!P.isConnected)return;try{hmClamp(P)}catch(e){}},rs=()=>{if(!P.isConnected){removeEventListener("resize",rs);return}setTimeout(cl,300)};addEventListener("resize",rs);cl();requestAnimationFrame(cl);setTimeout(cl,60);setTimeout(cl,700);   /* 11/13 開發者截圖「今日推薦會左右抖一下」：原本 60 毫秒後才推回畫面內，第一幀先畫在超出畫面的位置；改成建好立刻推、下一幀前再推一次 */const im=P.querySelector(":scope>img");if(im)im.addEventListener("load",cl)}
   if(typeof shpFit==="function")shpFit(v);
-  try{if(typeof shwPage==="function"&&SHIP_WALK_ON){shwPage(v,Object.assign({},SHW_PG0,SHW_HOMEMAP),"home");hmMe(P)}}catch(e){}
+  try{if(typeof shwPage==="function"&&SHIP_WALK_ON){P._hmwW=hk;shwPage(v,hmwWalkCfg(hk),"home");hmMe(P)}}catch(e){}
   try{hmTail(P)}catch(e){}
   try{if(typeof zmPage==="function")zmPage(v)}catch(e){}
   document.body.classList.add("hm-on");const t=setInterval(()=>{if(!P.isConnected){clearInterval(t);if(!document.querySelector(".home-page"))document.body.classList.remove("hm-on")}},800)}

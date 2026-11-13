@@ -17,7 +17,7 @@ function WatchHub(v){setTop("觀戰",false);setTabs(true,"#/watch");const RI=!OF
       <div class="muted" style="margin:4px 0 10px">${up?`線上 ${ps.length} 位棋友・有人開始下棋就會出現在這裡`:"稍等一下"}</div><button class="btn ghost" id="go">去線上大廳找人下棋</button></div>`;
       box.querySelector("#go").onclick=()=>location.hash="#/lobby";return}
     box.innerHTML=list.map(([g,l])=>{const w=ps.filter(x=>x.gid===g&&x.st==="watching").length;
-      return`<div class="card row" style="justify-content:space-between;margin-bottom:8px"><span style="min-width:0"><b>${l.map(p=>`<span data-pid="${esc(p.id)}" data-pn="${esc(p.name)}" role="button" tabindex="0" data-axk style="text-decoration:underline dotted;cursor:pointer">${esc(p.name)}</span> <span class="pill">${esc(XQNet.rankOf(p.pts))}</span>`).join(" 對 ")}</b><br>
+      return`<div class="card row" style="justify-content:space-between;margin-bottom:8px"><span style="min-width:0"><b>${l.map(p=>`<span data-pid="${esc(p.id)}" data-pn="${esc(p.name)}" role="button" tabindex="0" data-axk style="text-decoration:underline dotted;cursor:pointer">${esc(lbnShow(p))}</span> <span class="pill">${esc(XQNet.rankOf(p.pts))}</span>`).join(" 對 ")}</b><br>
         <span class="muted"><span class="live">對戰中</span>${w?`・${w} 人觀戰`:""}</span></span><button class="pill pill-main" data-w="${esc(g)}" style="padding:8px 14px;flex:none">👀 觀看</button></div>`}).join("");
     box.querySelectorAll("[data-pid]").forEach(x=>x.onclick=e=>{e.stopPropagation();oppCard(x.dataset.pid,x.dataset.pn)});
     box.querySelectorAll("[data-w]").forEach(b=>b.onclick=()=>{const go=()=>{XQNet.watch(b.dataset.w);location.hash="#/pvp"};

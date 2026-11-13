@@ -378,7 +378,7 @@ function CoopLobbyPage(v){setTabs(false);setTop("🧩 殘篇閣","#/lobby");
     if(ev==="nostate"){toast("搭檔沒有接上，再找一次");paint()}}));
   if(!core.resume())lastPh="";
   function bubble(d){const m=coopPhr(d.k),box=v.querySelector("#bbox");if(!box)return;let b=v.querySelector(".cpl-bub");if(!b){b=document.createElement("div");b.className="cpl-bub";box.style.position="relative";box.append(b)}
-    b.className="cpl-bub"+(d.by==="B"?" b":"");b.textContent=`${d.by==="A"?"📜":"♟"} ${d.name||""}：${m[1]} ${m[2]}`;b.style.opacity="1";clearTimeout(bubT);bubT=setTimeout(()=>{b.style.opacity="0"},3200);vibrate(6)}
+    b.className="cpl-bub"+(d.by==="B"?" b":"");b.textContent=`${d.by==="A"?"📜":"♟"} ${lbnPeer(core.view().partner,d.name)||""}：${m[1]} ${m[2]}`;b.style.opacity="1";clearTimeout(bubT);bubT=setTimeout(()=>{b.style.opacity="0"},3200);vibrate(6)}
   function goneBox(d){modal(`<h2 style="font-size:19px">${d&&d.bye?"看譜人先走了":"看譜人好像斷線了"}</h2><p>沒關係，不會扣分。要請小帥 AI 接手看譜嗎？</p>`,[["請小帥接手",()=>core.aiTakeOver()],["我也先離開",()=>{core.quit();paint()},true]])}
   /* 依階段重畫整頁 */
   function paint(){if(!alive)return;const V=core.view();
@@ -405,13 +405,13 @@ function CoopLobbyPage(v){setTabs(false);setTop("🧩 殘篇閣","#/lobby");
     b.querySelectorAll("[data-k]").forEach(x=>x.onclick=()=>{closeSheet();core.say(x.dataset.k)})})}
   function solBox(){const V=core.view();if(!V.pz)return;const R=COOP_R,sol=R.solOf(V.pz);let b=XQCore.parseFen(V.pz.fen);const cn=sol.map(([f,t],i)=>{const s=XQCore.notate(b,f,t);b=XQCore.make(b,f,t);return(i%2?"黑 ":"紅 ")+s});
     modal(`<h2 style="font-size:19px">📜 殘篇上的正解</h2><p style="line-height:1.8">${cn.map(esc).join("<br>")}</p><p class="muted" style="font-size:13px">不能直接說答案，只能用暗語讓下棋人自己想到！（黑方由電腦照殘篇應著）</p>`,[["知道了",null]])}
-  function logPaint(){const el=v.querySelector("#clog");if(!el)return;const V=core.view();el.innerHTML=V.msgs.slice(-3).map(x=>{const m=coopPhr(x.k);return`<div><b>${x.by==="A"?"📜":"♟"} ${esc(x.name||"")}</b>：${m[1]} ${esc(m[2])}</div>`}).join("")||'<div>還沒有人說話</div>'}
+  function logPaint(){const el=v.querySelector("#clog");if(!el)return;const V=core.view();el.innerHTML=V.msgs.slice(-3).map(x=>{const m=coopPhr(x.k);return`<div><b>${x.by==="A"?"📜":"♟"} ${esc(lbnPeer(V.partner,x.name)||"")}</b>：${m[1]} ${esc(m[2])}</div>`}).join("")||'<div>還沒有人說話</div>'}
   function statPaint(){const st=v.querySelector("#stat");if(!st)return;const V=core.view(),S=V.st;if(!S){st.textContent="⏳ 等搭檔的棋盤…";return}
-    const k=Math.min(3,Math.floor(S.moves.length/2)+1),pn=V.partner?V.partner.name:"";
+    const k=Math.min(3,Math.floor(S.moves.length/2)+1),pn=V.partner?lbnPeer(V.partner,V.partner.name):"";
     let t=V.role==="B"?`♟ 你是下棋人：3 步內將死黑方（第 ${k}／3 步）・試了 ${S.tries} 次`:V.role==="A"?`📜 你是看譜人：藍色箭頭是正解，用暗語提示 ${pn}`:"👀 小帥已經接手看譜，你在旁邊看";
     if(V.lost)t="🔌 搭檔好像斷線了，等他一下…";if(S.end)t={ok:"🎉 殘篇補全了！",reveal:"📖 正解揭曉",quit:"搭檔先走了，沒關係",gone:"搭檔離開了，這局先收起來"}[S.end.w]||"結束";
     st.textContent=t;
-    const pt=v.querySelector("#pTop"),pb=v.querySelector("#pBot");if(pt&&pb){pt.innerHTML=playerHTML("b","黑方（電腦照殘篇應著）","");pb.innerHTML=playerHTML("r",`${S.B.name}（下棋人）`,`看譜人：${S.A.ai?"🤖 小帥":S.A.name}`)}}
+    const pt=v.querySelector("#pTop"),pb=v.querySelector("#pBot");if(pt&&pb){pt.innerHTML=playerHTML("b","黑方（電腦照殘篇應著）","");pb.innerHTML=playerHTML("r",`${lbnPeer(V.partner,S.B.name)}（下棋人）`,`看譜人：${S.A.ai?"🤖 小帥":lbnPeer(V.partner,S.A.name)}`)}}
   /* 新的棋步一步一步放出來（紅方走完停一下再放黑方應著） */
   function pump(){clearTimeout(pumpT);const V=core.view();if(!bd||!V.st)return drawB();const n=V.st.moves.length;if(shown>n)shown=n;if(shown<n){shown++;drawB();pumpT=setTimeout(pump,650)}else drawB();logPaint();statPaint()}
   function drawB(){if(!bd)return;const V=core.view(),S=V.st;if(!S||!V.pz){return}const C=XQCore,ms=S.moves.slice(0,shown),b=COOP_R.replay(V.pz.fen,ms),s=ms.length%2?"b":"r",L=ms[ms.length-1];

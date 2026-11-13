@@ -126,7 +126,8 @@ function CpuGame(v,practicePage,mode){
     const JP=(()=>{const L=lvPlayOf(st),k=(L&&L.lvp.opp)||(String(st.journey||"").startsWith("char:")?st.journey.slice(5):null);return k&&JCHAR[k]?{...JCHAR[k],say:JCHAR[k].hi,img:`data/journey/char_${k}_idle.webp`}:innAnyAct(st.journey)})(),NP=parkNpcOf(st)||JP,top=(NP?npcHTML(bot,NP,(JP&&NP===JP?(NP.name&&NP.name===(innAnyAct(st.journey)||{}).name?"驛站的棋友・":"石桌往事・"):"園子裡的路人棋友・")+(lv.desc||""))   /* 意見回饋 530：驛站的對手不是「石桌往事」 */:(H=>zgIs(st)?(zgCss(),zgAvHTML(H)):H)(playerHTML(bot,st.arena&&ARENA[st.arena]?`🏯 ${ARENA[st.arena].name}`:cpuOppName(st),st.arena&&ARENA[st.arena]?`${eraLabel(st.arena)}擂主${st.arena==="classic"?"・職業頂尖":""}`:String(st.journey||"").startsWith("bh:")?"黑洞星盤・不計分":String(st.journey||"").startsWith("gx:")?"幻譜星門・不計分":st.ranked?"🥇 晉級賽":lv.desc||"練功房")))   /* 11/10 開發者：電腦對手叫「幻影棋客」，不再顯示 Pikafish */+
       `<button class="cpu-chip${st.ranked?" rk":""}" aria-label="${st.ranked?"段位與開新局":"換難度"}"><span><b>${st.ranked?"🏅 "+esc(rkTw(st.rkName||CR.rank||"")):"第 "+st.level+" 級"}</b><small>${st.ranked?(CR.pts||0)+" 分":esc(rkTw(lv.name||""))}</small></span><i>›</i></button>`;
     const pT=v.querySelector("#pTop");if(pT.dataset.h!==top){pT.dataset.h=top;pT.innerHTML=top}
-    const bt=playerHTML(me,meCall(),PLAYER[me]+(st.ranked&&CR.next?`・再 ${CR.toNext} 分升 ${CR.next}`:""));
+    /* 11/13 開發者：開頭黑洞序局（BHX_ID）名牌一律寫「你」，不用存檔裡前一次的角色名（也不放角色頭像：playerHTML 只在名字＝meName() 時放） */
+    const bt=playerHTML(me,typeof BHX_ID!=="undefined"&&st.journey===BHX_ID?"你":meCall(),PLAYER[me]+(st.ranked&&CR.next?`・再 ${CR.toNext} 分升 ${CR.next}`:""));
     const pB=v.querySelector("#pBot");if(pB.dataset.h!==bt){pB.dataset.h=bt;pB.innerHTML=bt}
     v.querySelector("#pTop").classList.toggle("on",!st.result&&st.turn===bot);v.querySelector("#pBot").classList.toggle("on",!st.result&&st.turn===me);
     v.querySelector("#evf").style.width=evPct(st.eval&&st.eval.v)+"%";evMark(v,st.eval?st.eval.v:null);   /* 11/11 UI-11 */

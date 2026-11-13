@@ -38,11 +38,11 @@ function lbsBanFetch(){if(LBS_BAN_P)return LBS_BAN_P;if(Date.now()-(+lbsLs.get("
 setTimeout(()=>{try{if(OFF)lbsBanFetch()}catch(e){}},2500);
 /* 改了名單：重送一次自己的在線狀態，伺服器回傳那一則時大廳就會重畫（net.js 收到 u/ 會發 people） */
 function lbsPing(){LBS_SET=null;try{if(window.XQNet&&XQNet.refresh)XQNet.refresh()}catch(e){}try{window.dispatchEvent(new CustomEvent("xq-block"))}catch(e){}}
-function lbsBlock(p){if(!p||!p.id)return;const L=lbsList().filter(x=>x.id!==p.id);L.push({id:String(p.id),name:String(p.name||"棋友").slice(0,16),at:Date.now()});store.set("lbBlock",L.slice(-300));lbsPing();toast(`🚫 已封鎖 ${p.name||"這位棋友"}`)}
-function lbsUnblock(id){const L=lbsList(),x=L.find(q=>q.id===id);store.set("lbBlock",L.filter(q=>q.id!==id));lbsPing();toast(`已解除封鎖${x&&x.name?" "+x.name:""}`)}
+function lbsBlock(p){if(!p||!p.id)return;const L=lbsList().filter(x=>x.id!==p.id);L.push({id:String(p.id),name:String(p.name||"棋友").slice(0,16),at:Date.now()});store.set("lbBlock",L.slice(-300));lbsPing();toast(`🚫 已封鎖 ${lbnShow(p)||"這位棋友"}`)}
+function lbsUnblock(id){const L=lbsList(),x=L.find(q=>q.id===id);store.set("lbBlock",L.filter(q=>q.id!==id));lbsPing();toast(`已解除封鎖${x&&x.name?" "+lbnShow(x):""}`)}
 function lbsInGameWith(id){try{const G=window.XQNet&&XQNet.game&&XQNet.game();return!!(G&&!G.result&&G.red&&G.black&&(G.red.id===id||G.black.id===id))}catch(e){return false}}
 function lbsBlockAsk(p,after){if(!p||!p.id)return;const ing=lbsInGameWith(p.id)&&XQNet.side&&XQNet.side();
-  modal(`<div class="em">🚫</div><h2>封鎖 ${esc(p.name||"這位棋友")}？</h2><div style="text-align:left;line-height:1.8;font-size:14.5px;margin:6px 0">封鎖以後，在這支手機上：<br>・他不會出現在名冊和大廳燈籠裡<br>・他送來的邀請會自動婉拒<br>・隨機配對會避開他<br>・對局中不顯示他的表情和聊天</div>
+  modal(`<div class="em">🚫</div><h2>封鎖 ${esc(lbnShow(p)||"這位棋友")}？</h2><div style="text-align:left;line-height:1.8;font-size:14.5px;margin:6px 0">封鎖以後，在這支手機上：<br>・他不會出現在名冊和大廳燈籠裡<br>・他送來的邀請會自動婉拒<br>・隨機配對會避開他<br>・對局中不顯示他的表情和聊天</div>
     <p class="muted" style="font-size:13px;margin:4px 0">他不會收到通知。${ing?"這盤棋還會繼續；不想下了可以認輸離開。":""}隨時可以到「設定 → 角色 → 🛡 線上大廳」解除。</p>`,
     [["封鎖",()=>{lbsBlock(p);after&&after()}],["取消",null,true]])}
 /* 邀請視窗（02-shell.js）多的那一顆 */
@@ -90,7 +90,7 @@ function lbsMineSheet(){lbsCss();sheet("🚩 我的檢舉",b=>{const paint=()=>{
     b.innerHTML=`<p style="margin:0 0 6px;font-size:14px;line-height:1.7">每一筆檢舉都有一個編號。<b>如果要詢問進度，告訴開發者這個編號。</b></p>
       <p class="muted" style="margin:0 0 10px;font-size:12.5px;line-height:1.7">📮 排隊中 → ✅ 已從手機送出 → 🛠 已處理。「已從手機送出」只代表手機送出去了（表單不會回收件確認）；開發者處理好、App 抓到新的處理紀錄以後，才會標「🛠 已處理」。這份清單只存在這支手機，只記編號、時間、對象名字和狀態。</p>`+
       (L.length?L.map(x=>{const k=lbsMineState(x),S=LBS_ST[k];return`<div class="card lbs-mi"><div class="lbs-mi-h"><b class="lbs-rid">${esc(x.rid)}</b><span class="lbs-st lbs-st-${k}">${S[0]} ${S[1]}</span></div>
-        <div class="muted" style="font-size:13px">檢舉 ${esc(x.name||"棋友")}・${esc(lbsMineWhen(x.at))}${k==="done"&&x.dnAt?"・"+esc(x.dnAt)+" 處理":""}</div><div class="muted" style="font-size:12.5px;margin-top:2px">${S[2]}</div></div>`}).join("")
+        <div class="muted" style="font-size:13px">檢舉 ${esc(lbnShow("",x.name)||"棋友")}・${esc(lbsMineWhen(x.at))}${k==="done"&&x.dnAt?"・"+esc(x.dnAt)+" 處理":""}</div><div class="muted" style="font-size:12.5px;margin-top:2px">${S[2]}</div></div>`}).join("")
         :'<div class="card muted" style="text-align:center">還沒有檢舉過任何人</div>')};
   paint();lbsMineFetch(true).then(()=>{if(b.isConnected)paint()})})}
 
@@ -98,9 +98,9 @@ function lbsMineSheet(){lbsCss();sheet("🚩 我的檢舉",b=>{const paint=()=>{
 function lbsWhere(id){let s="";try{const G=XQNet.game&&XQNet.game();if(G&&G.red&&G.black&&(G.red.id===id||G.black.id===id))s=(XQNet.side&&XQNet.side()?"對局中（他是我的對手）":"觀戰中（他在下這盤）")+"・對局代號 "+(G.gid||"")+"・第 "+(G.moves?G.moves.length:0)+" 步"}catch(e){}
   const h=location.hash||"#/";return(s||(/^#\/lobby/.test(h)?"線上大廳":/^#\/watch/.test(h)?"觀戰列表":/^#\/db/.test(h)?"棋譜":"其他頁"))+"（"+h+"）"}
 function lbsReport(p){if(!p||!p.id)return;const R=store.get("lbRep",{})||{},last=+R[p.id]||0;
-  if(Date.now()-last<LBS_REP_GAP)return toast(`${Math.max(1,Math.round((Date.now()-last)/60000))} 分鐘前已經檢舉過 ${p.name||"他"}，不用再送；編號和狀態在「🛡 線上大廳 → 🚩 我的檢舉」`);   /* 檢舉追蹤編號：原本說「報告已經記在手機裡」，現在手機真的有一份「我的檢舉」（編號、狀態） */
+  if(Date.now()-last<LBS_REP_GAP)return toast(`${Math.max(1,Math.round((Date.now()-last)/60000))} 分鐘前已經檢舉過 ${lbnShow(p)||"他"}，不用再送；編號和狀態在「🛡 線上大廳 → 🚩 我的檢舉」`);   /* 檢舉追蹤編號：原本說「報告已經記在手機裡」，現在手機真的有一份「我的檢舉」（編號、狀態） */
   sheet("🚩 檢舉",b=>{let why="";
-    b.innerHTML=`<p style="margin:0 0 8px">檢舉 <b>${esc(p.name||"棋友")}</b></p><p class="muted" style="font-size:13px;margin:0 0 10px">開發者會收到他的代號、名字和你選的原因。他不會知道是誰檢舉的。送出後會給你一個檢舉編號。</p>
+    b.innerHTML=`<p style="margin:0 0 8px">檢舉 <b>${esc(lbnShow(p)||"棋友")}</b></p><p class="muted" style="font-size:13px;margin:0 0 10px">開發者會收到他的代號、名字和你選的原因。他不會知道是誰檢舉的。送出後會給你一個檢舉編號。</p>
       <div class="items lbs-why" style="padding:0">${LBS_REASONS.map(([k,t,h])=>`<button class="item" data-why="${k}"><span class="lb">⚪</span><span class="tx"><b>${t}</b><span>${h}</span></span></button>`).join("")}</div>
       <textarea id="lbsTx" maxlength="300" rows="3" placeholder="想多說一點可以寫在這裡（可以不寫）" style="width:100%;box-sizing:border-box;margin-top:10px;padding:10px;border:1px solid var(--line);border-radius:12px;background:var(--card);color:inherit;font:inherit"></textarea>
       <label class="row" style="gap:8px;margin:8px 0 12px;align-items:center"><input type="checkbox" id="lbsAlso"${window.XQ_BLOCKED(p.id)?" checked disabled":""}><span>同時封鎖他</span></label>
@@ -113,10 +113,10 @@ function lbsReport(p){if(!p||!p.id)return;const R=store.get("lbRep",{})||{},last
       let chat=[];try{chat=XQNet.chatOf?XQNet.chatOf(p.id).slice(-5).map(x=>x.text?"「"+x.text+"」":"〔快捷語〕"+(((typeof EMOTES!=="undefined"?EMOTES:[]).find(q=>q[0]===x.e)||[])[2]||x.e)):[]}catch(e){}   /* 回饋 850：快捷語（表情代號）也寫成原句 */   /* chatOf：這盤收到他的聊天（封鎖了也拿得到，給開發者當證據） */
       const d=new Date();let tw="";try{tw=d.toLocaleString("zh-TW",{hour12:false,timeZone:"Asia/Taipei"})}catch(e){tw=d.toLocaleString()}
       const rid=lbsMineRid(d);   /* 檢舉追蹤編號：寫在「內容」最前面 [R-1111-7K3Q]，表單結構不動 */
-      const text=["["+rid+"] 🚩 檢舉線上玩家",`被檢舉的人：${p.name||"（沒有名字）"}`,`對方 ID：${p.id}`,`原因：${W?W[1]:why}`,note?`補充：${note}`:"",`在哪裡：${lbsWhere(p.id)}`,`時間：${tw}（臺灣時間）／${d.toISOString()}`,
+      const text=["["+rid+"] 🚩 檢舉線上玩家",`被檢舉的人：${p.name||"（沒有名字）"}${lbnShow(p)!==String(p.name||"")?"（畫面上顯示成「"+lbnShow(p)+"」）":""}`,`對方 ID：${p.id}`,`原因：${W?W[1]:why}`,note?`補充：${note}`:"",`在哪裡：${lbsWhere(p.id)}`,`時間：${tw}（臺灣時間）／${d.toISOString()}`,
         live&&live.pts!=null&&window.XQNet&&XQNet.rankOf?`對方資料：${XQNet.rankOf(live.pts)} ${live.pts} 分${live.city?"・"+live.city:""}${live.kind?"・"+live.kind:""}`:"",
         chat.length?"對方最近的聊天：\n"+chat.join("\n"):"",also?"（檢舉的人同時封鎖了他）":""].filter(Boolean).join("\n");
-      lbsMineAdd(rid,p.name,Date.now());
+      lbsMineAdd(rid,lbnShow(p),Date.now());   /* R05：「我的檢舉」只存畫面上顯示的名字（不合格的、兒童在看的都是稱號） */
       let ok=false;try{const info=await feedbackInfo();ok=await sendRecord(Object.assign({},info,{type:"🚩 檢舉",text,contact:"",rid}))}catch(err){ok=false;try{lbsMineSet(rid,"lost")}catch(e){}}   /* rid 不在 FEEDBACK_FORM.entries 裡，postForm 不會送出這一格，只拿來在 fbQueue 裡認出是哪一筆 */
       const R3=store.get("lbRep",{})||{};R3[p.id]=Date.now();for(const k in R3)if(Date.now()-R3[k]>864e5)delete R3[k];store.set("lbRep",R3);
       closeSheet();if(also)lbsBlock(p);setTimeout(()=>lbsReportDone(rid,ok),280)}})}   /* 開發者 11/11 選 ChatGPT UI-13、大廳規劃書案 01：表單送不回收件確認，所以只說「從手機送出」，不說「已收到」；沒網路時真的排在手機裡（fbQueue，開 App、恢復連線時補送） */
@@ -134,6 +134,9 @@ function lbsCss(){if(document.getElementById("lbsCss"))return;const s=document.c
 .lbs-why .item.on{border-color:var(--accent);background:color-mix(in srgb,var(--accent) 10%,var(--card))}
 .lbs-bl{display:flex;align-items:center;gap:10px;margin-bottom:8px}.lbs-bl b{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 #lbSafe .opt button{flex:1;min-width:0}
+#lbSafe #lbsNm button{white-space:nowrap;overflow:hidden;text-overflow:ellipsis;padding:9px 6px;font-size:clamp(12px,4.2vw,15px)}
+#lbSafe .lbs-tp{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:6px;margin:0 0 6px}#lbSafe .lbs-tp1{margin:0 0 8px}
+#lbSafe .lbs-tp button,#lbSafe .lbs-tp1 button{font:inherit;font-size:min(17px,4.4vw);font-weight:700;padding:10px 2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .lbs-rid{font-family:ui-monospace,Menlo,Consolas,monospace;letter-spacing:.06em;-webkit-user-select:text;user-select:text}
 .lbs-mi{margin-bottom:8px}.lbs-mi-h{display:flex;justify-content:space-between;align-items:center;gap:8px;flex-wrap:wrap;margin-bottom:2px}
 .lbs-st{font-size:13px;font-weight:700;padding:2px 9px;border-radius:999px;background:var(--line);white-space:nowrap}
@@ -160,10 +163,27 @@ const lbsTitleAt=i=>{const n=LBS_PLACE.length*LBS_ROLE.length;i=((i%n)+n)%n;retu
 function lbsPick(start){let used=new Set();try{if(window.XQNet&&XQNet.people)XQNet.people().forEach(p=>used.add(p.name))}catch(e){}
   for(let k=0;k<576;k++){const i=start+k*97,t=lbsTitleAt(i);if(!used.has(t))return{i:((i%576)+576)%576,t}}return{i:start%576,t:lbsTitleAt(start)}}
 function lbsTitle(id){const T=lbsLs.get("pubTitle",null);if(T&&T.t)return T.t;const x=lbsPick(lbsHash(id||(window.meInfo?meInfo().id:"")));lbsLs.set("pubTitle",x);return x.t}
-window.XQ_PUBNAME=m=>lbsMode()==="t"?lbsTitle(m&&m.id):"";
+/* 11/13 開發者選：自己取的名字不合格（lbnBad：聯絡方式、冒充官方、不雅字…）也對外改送稱號，自己畫面照常；名字改合格就恢復送自己的名字。空白名字照舊（net.js 補「棋友＋代號」） */
+function lbsSelfBad(nm){if(nm==null){try{nm=myName()}catch(e){nm=""}}nm=nm==null?"":String(nm);if(!nm)return"";try{return lbnBad(nm)}catch(e){return""}}
+const lbsPubT=m=>lbsMode()==="t"||!!lbsSelfBad(m&&m.name!=null?m.name:null);
+window.XQ_PUBNAME=m=>lbsPubT(m)?lbsTitle(m&&m.id):"";
+/* 改名字（00-util setMyName）以後對外的名字變了：馬上重送在線狀態和戰績摘要；合格↔不合格換了就提示一次 */
+if(typeof setMyName==="function"){const f0=setMyName;setMyName=function(n){let a="",b0=false;try{a=window.XQ_PUBNAME(meInfo())||myName();b0=!!lbsSelfBad()}catch(e){}const r=f0.apply(this,arguments);
+  try{const b1=!!lbsSelfBad();if((window.XQ_PUBNAME(meInfo())||myName())!==a)lbsPubNow();if(b1!==b0&&lbsMode()!=="t")setTimeout(()=>toast(b1?`⚠ 這個名字不能在大廳顯示，別人看到的是稱號「${lbsTitle()}」`:`✍ 線上大廳恢復顯示「${myName()}」`),1800)}catch(e){}return r}}
+/* 選稱號：給 3 個線上沒人用的讓玩家挑（11/13 開發者選），「換一組」再給 3 個；選定存在 xq_pubTitle。從 start 每次跳 97 格，avoid 裡的（剛才那一組、現在的稱號）不再給；
+   先挑地名都不一樣的（也跟 avoid 的地名不同），挑不滿再放寬 */
+function lbsTitleCands(n,avoid,start){avoid=avoid||[];const used=new Set(avoid);let me="";try{me=XQNet.me().id}catch(e){}
+  try{if(window.XQNet&&XQNet.people)XQNet.people().forEach(p=>{if(p&&p.id!==me)used.add(p.name)})}catch(e){}
+  const N=LBS_PLACE.length*LBS_ROLE.length,out=[],pl=new Set(avoid.map(t=>String(t).slice(0,2)));if(start==null)start=Math.floor(Math.random()*N);
+  for(const strict of[true,false])for(let k=0;k<N&&out.length<n;k++){const i=(((start+k*97)%N)+N)%N,t=lbsTitleAt(i),p=LBS_PLACE[i%LBS_PLACE.length];
+    if(used.has(t)||strict&&pl.has(p))continue;used.add(t);pl.add(p);out.push({i,t})}return out}
+let LBS_TPC=null;
+function lbsTpGroup(){const cur=lbsTitle();if(!LBS_TPC||!LBS_TPC.length)LBS_TPC=[{i:(lbsLs.get("pubTitle",null)||{}).i,t:cur}].concat(lbsTitleCands(2,[cur]));return LBS_TPC}
+function lbsTpMore(){const av=(LBS_TPC||[]).map(x=>x.t).concat(lbsTitle());LBS_TPC=lbsTitleCands(3,av);if(LBS_TPC.length<3)LBS_TPC=lbsTitleCands(3,[lbsTitle()]);return LBS_TPC}
+function lbsTpSet(k){const x=(LBS_TPC||[]).find(q=>q.t===k);if(!x||x.t===lbsTitle())return false;lbsLs.set("pubTitle",{i:x.i,t:x.t});lbsPubNow();toast(`🏮 線上大廳改成顯示稱號「${x.t}」`);return true}
 /* 線上有人跟我的稱號一樣（很少見）：不在對局時換一個（隨機起點，兩個人同時換也不會又撞在一起） */
 let LBS_RER=0;
-if(window.XQNet&&XQNet.on)XQNet.on("people",()=>{if(lbsMode()!=="t"||Date.now()-LBS_RER<60000)return;try{if(XQNet.active())return;const t=lbsTitle(),i=XQNet.me().id;
+if(window.XQNet&&XQNet.on)XQNet.on("people",()=>{if(!lbsPubT(window.meInfo?meInfo():null)||Date.now()-LBS_RER<60000)return;try{if(XQNet.active())return;const t=lbsTitle(),i=XQNet.me().id;
   if(!XQNet.people().some(p=>p.id!==i&&p.name===t))return;LBS_RER=Date.now();lbsLs.set("pubTitle",lbsPick(Math.floor(Math.random()*576)));XQNet.refresh();if(XQNet.pubProf)XQNet.pubProf()}catch(e){}});
 function lbsPubNow(){try{if(window.XQNet){if(XQNet.refresh)XQNet.refresh();if(XQNet.pubProf)XQNet.pubProf()}}catch(e){}}
 /* 家長確認：兩位數乘一位數 */
@@ -176,22 +196,119 @@ function lbsSetMode(k,after){if(k===lbsMode())return after&&after();
   const go=()=>{lbsLs.set("pubNm",k);lbsPubNow();toast(k==="t"?`🏮 線上大廳改成顯示稱號「${lbsTitle()}」`:`✍ 線上大廳改成顯示「${(window.myName&&myName())||"你取的名字"}」`);after&&after()};
   if(k==="n")lbsParentGate(go);else go()}
 
+/* ---------- 紅藍隊 R05（威脅模型 I6）：名字安全顯示 ----------
+   名字是玩家自己打的（最多 16 字），可以放聯絡方式、不雅字，或冒充「開發者公告」。這裡管「這支手機怎麼顯示別人的名字」；
+   自己的名字不合格時（11/13 開發者選），上面的 XQ_PUBNAME 對外改送稱號（舊版 App 的棋友也看不到原名），自己畫面照常顯示自己取的名字，名字改合格就恢復。
+   lbnBad(名字)：低誤傷規則，回傳原因代號（""＝沒問題）：
+     len 超過 16 字（App 改名時就截成 16 字，超過的一定是改過的 App）、empty 空白或全是看不見的字、
+     invis 控制字元、零寬字元、雙向文字控制（RLO 等）、韓文填充字等看不見的字（emoji 中間的 ZWJ 不算）、mark 三個以上疊在一起的組合符號、html 有 < >、
+     url 網址、mail Email、digit 4 位以上數字（全形、圈圈數字先用 NFKC 變成半形；中文〇零一～九、大寫壹～玖；中間可以夾一個空白或 - . 之類），
+     contact LINE、IG、FB、Discord、微信、加我、私訊等，imp 官方、公告、開發者、裁判、客服、系統、管理員、admin 等，rude 不雅字詞清單 LBN_BAD_WORDS（開發者可以直接增刪）。
+     比對前先 NFKC、轉小寫；關鍵字另外拿掉空白和標點再比一次（「開 發 者」「L.I.N.E」一樣擋）。英文短字（line、ig、fb、admin）前面不能接英文字母，
+     後面也不能接（line、ig、fb 後面接 id 例外），所以 Caroline、Tiger、Badminton 不會被擋。App 自己給的預設名字「棋友＋4 碼」不算 4 位數字。
+   lbnPick(代號, 名字, {me, kid})：要顯示的名字。自己＝照原樣；名字本來就是系統稱號＝照原樣；兒童在看（kid）＝一律稱號；不合格＝稱號。
+     稱號用代號算 lbsTitleAt(lbsHash(代號))，同一個人每次都一樣（跟他自己選稱號時的第一個候選相同）；沒有代號就用名字算。
+   這一段到「名字安全顯示：以上」只用 String、RegExp、Set、LBS_PLACE、LBS_ROLE、lbsHash、lbsTitleAt，xiangqi-lab/tools/test-name-safe.js 直接切出來測 */
+const LBN_D="0-9"+String.fromCharCode(0x3007,0x96F6,0x4E00,0x4E8C,0x4E09,0x56DB,0x4E94,0x516D,0x4E03,0x516B,0x4E5D,0x58F9,0x8CB3,0x8D30,0x8CAE,0x53C3,0x53C1,0x8086,0x4F0D,0x9678,0x9646,0x67D2,0x634C,0x7396);   /* 〇零一到九、大寫壹到玖（含簡體的貳、參、陸）；用字碼組：zh-lint 不准原始碼出現簡體字，i18n 測試也不會把它當成畫面文字 */
+const LBN_RE={
+  invis:/[\p{Cc}\p{Cf}\p{Co}\p{Cs}\p{Zl}\p{Zp}ᅟᅠㅤﾠ⠀͏឴឵᠎ -   ]/u,
+  zwj:/(\p{Extended_Pictographic}[\u{1F3FB}-\u{1F3FF}️]?)‍(?=\p{Extended_Pictographic})/gu,
+  mark:/\p{M}{3,}/u,
+  html:/[<>]/,
+  url:/https?:|:\/\/|www\.|[a-z0-9]\s*\.\s*(?:com|net|org|tw|io|cc|gg|ly|xyz|top|info|link|site|online|shop|vip|club|app|tv|cn|hk|jp|kr|uk|ru|biz|live|fun|gl|ws|pw|tk|ml)(?![a-z])/,
+  urlK:/www|(?:點|点|dot)(?:com|net|org|tw|cc|io)/,
+  mail:/@\s*[a-z0-9]/,
+  mailK:/gmail|yahoo|hotmail|outlook|icloud|protonmail/,
+  digit:new RegExp("["+LBN_D+"](?:[\\s\\-_.,，、/|~～·・]?["+LBN_D+"]){3,}"),
+  contactK:/加我|加賴|加赖|私訊|私讯|私聊|密我|微信|weixin|wechat|telegram|whatsapp|instagram|discord|facebook|臉書|脸书|推特|twitter|抖音|tiktok|小紅書|小红书|youtube|手機號|手机号|電話|电话|聯絡我|联系我|聯繫我/,
+  contactW:/(?:^|[^a-z])(?:line|ig|fb)(?:id|[^a-z]|$)/,
+  impK:/官方|公告|開發者|开发者|開發團隊|开发团队|裁判|客服|系統|系统|管理員|管理员|版主|站長|站长|工作人員|工作人员|官網|官网/,
+  impW:/(?:^|[^a-z])(?:admin|official|moderator|developer|sysop)/,
+  dflt:/^棋友[0-9A-F]{4}$/
+};
+/* 不雅字詞清單（11/13 開發者選：髒話、性相關、歧視、人身攻擊；判成 rude）——開發者可以直接增刪：每一行是一個正規式，詞跟詞用 | 隔開。
+   比對前名字已經 NFKC、轉小寫、拿掉空白和標點（「幹 你」「f.u.c.k」一樣擋）。
+   中文一律寫詞組，不寫單字：寫「幹你」不寫「幹」（能幹、幹部、樹幹），寫「操你」不寫「操」（體操、操場），寫「去死吧」不寫「去死」（失去死黨）；
+     只有沒有正常用法的字（屄、肏）才寫單字。簡體字可以直接寫在正規式裡（zh-lint 不掃正規式）。
+   英文 enAny：出現在哪裡都擋（fuck、bitch…）。enW：前後都不能接英文字母才擋（Scunthorpe 問題：assassin、class、Dickens、Sussex、Ashita、Hancock、therapist 不擋），
+     可以寫字尾變化，例如 shit(?:s|ty)?。人名本身就是正常英文名的（Dick）不放。 */
+const LBN_BAD_WORDS={
+  zhSwear:/幹你|幹妳|幹您|幹林|幹拎|幹恁|恁娘|姦你|操你|操妳|操您|操他媽|屌你|屌妳|他媽的|你媽的|妳媽的|去你媽|你媽死|你老母|草泥馬|草泥马|他妈的|你妈的|操你妈|去你妈|靠北|靠杯|靠夭|雞掰|雞歪|機掰|機歪|基掰|鸡巴|雞巴|屄|肏|傻逼|傻b|煞筆|牛逼|懶叫|懶趴|仆街|撲街|冚家鏟|含撚/,
+  zhSex:/做愛|做爱|性交|口交|肛交|性愛|性爱|援交|約炮|约炮|一夜情|嫖妓|嫖娼|賣淫|卖淫|妓女|強姦|强奸|強暴|强暴|輪姦|迷姦|戀童|恋童|陰莖|阴茎|陰道|阴道|陰蒂|自慰|手淫|打手槍|擼管|射精|精液|奶子|巨乳|爆乳|裸體|裸体|裸照|裸聊|a片|黃片|黄片|色情片|淫蕩|淫荡|淫賤|淫娃|淫穢|騷貨|骚货|破麻|婊子/,
+  zhHate:/支那|黑鬼|尼哥|黑奴|娘炮|人妖|死gay|死同性戀|台巴子|高麗棒子|日本鬼子|白皮豬|猶太豬|納粹|纳粹|希特勒/,
+  zhAttack:/去死吧|你去死|快去死|死全家|全家死光|白癡|白痴|智障|腦殘|脑残|低能兒|廢物(?!利用)|废物|人渣|賤人|贱人|賤貨|贱货|雜種|杂种|畜生|畜牲|王八蛋|狗娘養|狗娘养|龜兒子|孬種|死肥豬|死胖子/,
+  enAny:/fuck|fvck|sexy|motherf|bitch|bastard|asshole|dumbass|jackass|dickhead|bullshit|shithead|nigger|nigga|faggot|whore|wanker|blowjob|jerkoff|dildo|pornhub|killyourself/,
+  enW:/shit(?:s|ty)?|ass(?:es)?|arse|cunts?|cocks?|puss(?:y|ies)|penis|vaginas?|porno?|sex(?:ual)?|sluts?|fags?|retard(?:s|ed)?|rape[sd]?|rapists?|nazis?|hitler|twat|wank|boobs?|boobies|tits|titties|milf|idiots?|morons?|stfu|nmsl|fck/
+};
+let LBN_BADW=null;
+function lbnRude(n,k){if(!LBN_BADW)LBN_BADW=new RegExp("(?:^|[^a-z])(?:"+LBN_BAD_WORDS.enW.source+")(?![a-z])");const B=LBN_BAD_WORDS;
+  return B.zhSwear.test(k)||B.zhSex.test(k)||B.zhHate.test(k)||B.zhAttack.test(k)||B.enAny.test(k)||LBN_BADW.test(n)||LBN_BADW.test(k)}
+const LBN_WHY={len:"太長",empty:"是空白的",invis:"有看不見的字",mark:"有疊在一起的符號",html:"有角括號",url:"像網址",mail:"像 Email",digit:"有 4 位以上的數字",contact:"像聯絡方式（LINE、IG、加我…）",imp:"像官方或開發者（官方、公告、裁判、客服、系統…）",rude:"有不雅或罵人的字"};
+let LBN_TSET=null;
+function lbnIsTitle(nm){if(!LBN_TSET){LBN_TSET=new Set();for(const a of LBS_PLACE)for(const b of LBS_ROLE)LBN_TSET.add(a+b)}return LBN_TSET.has(String(nm))}
+function lbnBad(nm){const s=nm==null?"":String(nm);
+  if(s.length>16)return"len";
+  if(LBN_RE.dflt.test(s)||lbnIsTitle(s))return"";
+  if(LBN_RE.invis.test(s.replace(LBN_RE.zwj,"$1")))return"invis";
+  if(!s.replace(/[\s　]/g,""))return"empty";
+  if(LBN_RE.mark.test(s))return"mark";
+  let n=s;try{n=s.normalize("NFKC")}catch(e){}n=n.toLowerCase().replace(/[。｡]/g,".");
+  if(LBN_RE.html.test(n))return"html";
+  const k=n.replace(/[\s\p{P}\p{S}\p{Z}_]/gu,"");
+  if(LBN_RE.url.test(n)||LBN_RE.urlK.test(k))return"url";
+  if(LBN_RE.mail.test(n)||LBN_RE.mailK.test(k))return"mail";
+  if(LBN_RE.digit.test(n)||LBN_RE.digit.test(k))return"digit";
+  if(LBN_RE.contactK.test(k)||LBN_RE.contactW.test(n)||LBN_RE.contactW.test(k))return"contact";
+  if(LBN_RE.impK.test(k)||LBN_RE.impW.test(n)||LBN_RE.impW.test(k))return"imp";
+  if(lbnRude(n,k))return"rude";
+  return""}
+function lbnTitleOf(id,nm){id=id==null?"":String(id);return lbsTitleAt(lbsHash(id||"n:"+String(nm==null?"":nm)))}
+function lbnPick(id,nm,o){o=o||{};nm=nm==null?"":String(nm);if(o.me)return nm;if(lbnIsTitle(nm))return nm;if(!nm&&(id==null||id===""))return"";
+  if(o.kid||lbnBad(nm))return lbnTitleOf(id,nm);return nm}
+/* ---------- 名字安全顯示：以上 ---------- */
+/* 兒童在看：07m5 的兒童模式（大廳本來就關著，這裡管棋譜、戰績這些還看得到名字的地方），或自己在大廳選了「稱號」（回饋 842：新玩家預設，App 拿它當「可能是小朋友」） */
+const LBN_KID_T=true;
+function lbnKid(){try{if(typeof fmKid==="function"&&fmKid())return true}catch(e){}try{return LBN_KID_T&&lbsMode()==="t"}catch(e){return false}}
+/* 所有顯示別人名字的地方都走這一個：lbnShow(玩家物件) 或 lbnShow(代號, 名字)；回傳純文字，放進 innerHTML 時外面還是要 esc() */
+function lbnShow(a,b){let id=a,nm=b;if(a&&typeof a==="object"){id=a.id;nm=a.name}id=id==null?"":String(id);
+  let me=false;try{me=!!id&&id===meInfo().id}catch(e){}
+  try{return lbnPick(id,nm,{me,kid:!me&&lbnKid()})}catch(e){return lbnTitleOf(id,nm)}}
+window.XQ_SHOWNAME=lbnShow;
+/* 殘篇閣（07q2）：名字是搭檔（不是小帥 AI）的才走 lbnShow，自己、小帥照原樣 */
+function lbnPeer(p,nm){return p&&!p.ai&&nm!=null&&nm!==""&&nm===p.name?lbnShow(p.id,nm):nm}
+/* 線上對局畫面（09b 的名牌、聊天泡泡）：照紅黑在 XQNet.game() 找到代號再走 lbnShow */
+function lbnSeat(by,nm){try{const G=window.XQNet&&XQNet.game&&XQNet.game(),o=G&&(by==="r"?G.red:by==="b"?G.black:null);if(o)return lbnShow(o.id,nm||o.name)}catch(e){}let me="";try{me=myName()||""}catch(e){}return nm&&nm===me?nm:lbnShow("",nm)}
+/* 棋譜庫裡存的線上對局（「真人對局」裡有 mine／net 標記的、「棋友的對局」peek）讀出來時，對手名字也走 lbnShow：存檔本身不改，只改這次讀出來的副本；
+   自己那一方（mine，舊紀錄沒有 mine 就跟自己的名字比）照原樣，同桌對弈（沒有 mine、沒有 net）不動 */
+function lbnLibIt(it,peek){if(!it||typeof it!=="object"||!(peek||it.net||it.mine))return it;let me="";try{me=myName()||""}catch(e){}
+  const f=(nm,sd)=>nm==null||nm===""||(it.mine?it.mine===sd:!!me&&nm===me)?nm:lbnShow("",nm);
+  return Object.assign({},it,{red:f(it.red,"r"),black:f(it.black,"b")})}
+if(typeof api==="function"){const f0=api;api=async function(u){const r=await f0.apply(this,arguments);
+  try{const m=/^\/db\/items?\?(?:.*&)?c=(pvp|peek)(?:&|$)/.exec(String(u||""));if(m&&r&&typeof r==="object"){const pk=m[1]==="peek";
+    if(Array.isArray(r.items))return Object.assign({},r,{items:r.items.map(x=>lbnLibIt(x,pk))});if(/^\/db\/item\?/.test(String(u)))return lbnLibIt(r,pk)}}catch(e){}return r}}
+
 /* ---------- 設定「角色」分頁：🛡 線上大廳（#lbSafe） ---------- */
 function lbsBlockSheet(){sheet("🚫 我封鎖的人",b=>{const paint=()=>{const L=lbsList().slice().reverse();
     b.innerHTML=`<p class="muted" style="margin:0 0 10px;font-size:13.5px">封鎖的人不會出現在名冊和燈籠裡，邀請會自動婉拒，配對會避開，對局中不顯示他的表情和聊天。名單只存在這支手機。</p>`+
-      (L.length?L.map(x=>`<div class="card lbs-bl"><b>${esc(x.name||"棋友")}</b><span class="muted" style="font-size:12px">${new Date(x.at||Date.now()).toLocaleDateString()}</span><button class="pill" data-un="${esc(x.id)}" style="padding:6px 12px;font-size:13.5px">解除</button></div>`).join("")
+      (L.length?L.map(x=>`<div class="card lbs-bl"><b>${esc(lbnShow(x)||"棋友")}</b><span class="muted" style="font-size:12px">${new Date(x.at||Date.now()).toLocaleDateString()}</span><button class="pill" data-un="${esc(x.id)}" style="padding:6px 12px;font-size:13.5px">解除</button></div>`).join("")
         :'<div class="card muted" style="text-align:center">還沒有封鎖任何人</div>');
     b.querySelectorAll("[data-un]").forEach(x=>x.onclick=()=>{vibrate(5);lbsUnblock(x.dataset.un);paint();lbsSetPaint()})};paint()})}
 function lbsSetHTML(){const t=lbsMode()==="t",n=lbsList().length,nm=(window.myName&&myName())||"";
+  let bad="";try{bad=!t&&nm?lbnBad(nm):""}catch(e){}   /* R05＋11/13：自己的名字不合格，對外改送稱號（XQ_PUBNAME），這裡提示要改名 */
+  const cur=t||bad?lbsTitle():"",G=t?lbsTpGroup():[];
   return`<div class="sec-t">🛡 線上大廳</div><div class="card"><div><b>在線上大廳顯示</b><br><span class="muted" style="font-size:13px">別人在大廳、對局、觀戰看到的名字。你自己的畫面照常顯示你取的名字。</span></div>
     <div class="opt" id="lbsNm" style="margin:8px 0 6px"><button data-nm="t"${t?' class="on"':""}>🏮 稱號</button><button data-nm="n"${t?"":' class="on"'}>✍ 我取的名字</button></div>
-    <div class="muted" style="font-size:13px">現在別人看到：<b style="color:var(--ink,inherit)">${esc(t?lbsTitle():(nm||"棋友"))}</b>${t?"（系統給的稱號）":""}</div></div>
+    ${t?`<div class="opt lbs-tp" id="lbsTp">${G.map(x=>`<button data-tp="${esc(x.t)}"${x.t===cur?' class="on"':""}>${esc(x.t)}</button>`).join("")}</div><div class="opt lbs-tp1"><button id="lbsTpMore">🔄 換一組</button></div>`:""}
+    <div class="muted" style="font-size:13px">現在別人看到：<b style="color:var(--ink,inherit)">${esc(cur||nm||"棋友")}</b>${cur?"（系統給的稱號）":""}</div>
+    ${bad?`<p id="lbsNmBad" style="font-size:13px;line-height:1.7;margin:8px 0 0;color:var(--red,#b3261e)">⚠ 這個名字不能在大廳顯示：<span>${esc(LBN_WHY[bad]||"")}</span>。別人看到的是稱號：<b>${esc(cur)}</b>。請到「我的角色」改名字。</p>`:""}</div>
     <button class="item card" id="lbsBl" style="width:100%;margin:8px 0 4px;font:inherit;color:inherit"><span class="lb">🚫</span><span class="tx" style="flex:1"><b>我封鎖的人（${n}）</b><span class="muted" style="display:block;font-size:12.5px">看名單、解除封鎖</span></span><span class="muted">›</span></button>
     <button class="item card" id="lbsMy" style="width:100%;margin:4px 0;font:inherit;color:inherit"><span class="lb">🚩</span><span class="tx" style="flex:1"><b>我的檢舉（${lbsMine().length}）</b><span class="muted" style="display:block;font-size:12.5px">看檢舉編號和處理狀態</span></span><span class="muted">›</span></button>
     <button class="item card" id="lbsIn" style="width:100%;margin:4px 0;font:inherit;color:inherit"><span class="lb">📖</span><span class="tx" style="flex:1"><b>線上大廳安全須知</b><span class="muted" style="display:block;font-size:12.5px">快捷語、個資、檢舉封鎖、家長關閉大廳</span></span><span class="muted">›</span></button>
     <p class="muted" style="font-size:12.5px;margin:4px 2px 10px">遇到不舒服的名字或聊天：點他的名字，資料卡最下面有「🚩 檢舉」「🚫 封鎖」。</p>`}
 function lbsSetPaint(){const w=document.getElementById("lbSafe");if(!w)return;w.innerHTML=lbsSetHTML();
   w.querySelectorAll("[data-nm]").forEach(x=>x.onclick=()=>{vibrate(5);lbsSetMode(x.dataset.nm,lbsSetPaint)});
+  w.querySelectorAll("[data-tp]").forEach(x=>x.onclick=()=>{vibrate(5);if(lbsTpSet(x.dataset.tp))lbsSetPaint()});
+  const tm=w.querySelector("#lbsTpMore");if(tm)tm.onclick=()=>{vibrate(5);lbsTpMore();lbsSetPaint()};
   const bl=w.querySelector("#lbsBl");if(bl)bl.onclick=()=>{vibrate(5);lbsBlockSheet()};const my=w.querySelector("#lbsMy");if(my)my.onclick=()=>{vibrate(5);lbsMineSheet()};
   const li=w.querySelector("#lbsIn");if(li)li.onclick=()=>{vibrate(5);lbsIntro(true)}}
 function lbsSetInject(v){if(!OFF||!window.XQNet)return;const pane=v.querySelector('[data-pane="bot"]');if(!pane||pane.querySelector("#lbSafe"))return;lbsCss();

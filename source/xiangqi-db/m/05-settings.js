@@ -1,4 +1,5 @@
 /* ================= 📱 換手機轉移碼（開發者決定，Gemini 效能審閱 P0-1）=================
+   （11/13 起新產生的是 10 碼 v4，見 05b-save.js 的 XFER4 區段；這裡的 8 碼 v2 和 XFER2 的 v3 只留著收舊版 App 的碼）
    舊手機：整份存檔（XQSave.dump）壓縮 → 用 8 碼轉移碼推出 AES-GCM 金鑰加密 → 分段發到 MQTT 留存頻道（頻道名是轉移碼的雜湊，沒有碼找不到）
    新手機：輸入轉移碼 → 收齊 → 解密、解壓 → 確認後取代這支手機的資料 → 刪掉頻道上的資料（一次性）→ 重開
    公開伺服器上只有加密過的資料；30 分鐘後失效 */
@@ -48,7 +49,7 @@ function xfLocalize(data,myId){const o=Object.assign({},data||{});let m=null;try
   o.xq_me=JSON.stringify(Object.assign({},m&&typeof m==="object"?m:{},{id}));XF_DROP.forEach(k=>{delete o[k]});return{data:o,id,old}}
 /* XFER:END */
 async function xfSend(){if(!OFF||!window.XQNet||!window.XQSave||!crypto.subtle)return toast("這個瀏覽器不支援轉移碼");
-  const code=[...crypto.getRandomValues(new Uint8Array(8))].map(x=>XF_ABC[x%XF_ABC.length]).join(""),shown=code.slice(0,4)+"-"+code.slice(4);
+  const code=xf4Code(),shown=code.slice(0,5)+"-"+code.slice(5);   /* 紅藍隊 R03／I5：v4 的 10 碼（xf4Code、xf4Upload 在 05b-save.js 的 XFER4 區段） */
   sheet("📱 產生轉移碼",async b=>{b.innerHTML='<p class="muted">整理資料、加密中…</p>';
     try{const U=await xfUpload(code);
       setTimeout(()=>xfWipe(U.K,U.n),XF_TTL);
@@ -57,12 +58,12 @@ async function xfSend(){if(!OFF||!window.XQNet||!window.XQSave||!crypto.subtle)r
       b.querySelector("#xfX").onclick=()=>{xfWipe(U.K,U.n);toast("這組轉移碼已作廢");closeSheet()}}
     catch(e){b.innerHTML=`<p>⚠ ${esc(e.message||String(e))}</p>`}})}
 async function xfRecv(){if(!OFF||!window.XQNet||!window.XQSave||!crypto.subtle)return toast("這個瀏覽器不支援轉移碼");
-  sheet("📱 輸入轉移碼",b=>{b.innerHTML='<p>輸入舊手機上顯示的 8 碼：</p><input id="xfC" inputmode="text" autocomplete="off" autocapitalize="characters" maxlength="9" placeholder="ABCD-1234" style="width:100%;font:900 26px ui-monospace,monospace;letter-spacing:.12em;text-align:center;padding:10px;border-radius:12px;border:1px solid var(--line);background:var(--card);color:inherit"><button class="btn" id="xfGo" style="width:100%;margin-top:10px">下載資料</button><p class="muted" id="xfM" style="font-size:13px"></p>';
+  sheet("📱 輸入轉移碼",b=>{b.innerHTML='<p>輸入舊手機上顯示的 10 碼（舊版 App 是 8 碼）：</p><input id="xfC" inputmode="text" autocomplete="off" autocapitalize="characters" maxlength="11" placeholder="ABCDE-23456" style="width:100%;font:900 26px ui-monospace,monospace;letter-spacing:.12em;text-align:center;padding:10px;border-radius:12px;border:1px solid var(--line);background:var(--card);color:inherit"><button class="btn" id="xfGo" style="width:100%;margin-top:10px">下載資料</button><p class="muted" id="xfM" style="font-size:13px"></p>';
     const msg=t=>{b.querySelector("#xfM").textContent=t};
-    b.querySelector("#xfGo").onclick=async()=>{const code=xfNorm(b.querySelector("#xfC").value);if(code.length!==8)return msg("轉移碼是 8 碼");msg("連線中…");
+    b.querySelector("#xfGo").onclick=async()=>{const code=xfNorm(b.querySelector("#xfC").value);if(code.length!==10&&code.length!==8)return msg("轉移碼是 10 碼（舊版 App 產生的是 8 碼）");msg(code.length===8?"⚠ 舊版 8 碼轉移碼，安全性較低。連線中…":"連線中…");
       let D=null;try{D=await xfDownload(code,(i,n)=>msg(`下載中… ${i}／${n}`))}catch(e){return msg(e&&e.message||"解不開：轉移碼不對，或資料已經被換掉了")}
       const n=Object.keys(D&&D.data||{}).length;if(!n)return msg("收到的資料是空的");const ng=Object.values(D.games||{}).reduce((a,l)=>a+(Array.isArray(l)?l.length:0),0);
-      modal(`<div class="em">📱</div><h2>用舊手機的資料取代這支手機？</h2><p class="muted">收到 ${n} 筆資料${ng?`、${ng} 盤棋譜`:""}（${new Date(D.at).toLocaleString()} 產生）。這支手機原本的修為、戰績和設定會被換掉；棋譜是合併，這支手機原有的不會刪。這支手機會保留自己的裝置代號。這組轉移碼已經用掉，取消的話要在舊手機重新產生。</p>`,
+      modal(`<div class="em">📱</div><h2>用舊手機的資料取代這支手機？</h2><p class="muted">收到 ${n} 筆資料${ng?`、${ng} 盤棋譜`:""}（${new Date(D.at).toLocaleString()} 產生）。這支手機原本的修為、戰績和設定會被換掉；棋譜是合併，這支手機原有的不會刪。這支手機會保留自己的裝置代號。這組轉移碼已經用掉，取消的話要在舊手機重新產生。</p>${D.xfWarn?`<p class="muted" style="color:var(--warn,#c60)">⚠ ${esc(D.xfWarn)}</p>`:""}`,
         [["取代並重新開啟",async()=>{const L=xfLocalize(D.data,meInfo().id);try{await xfGamesPut(D.games||{})}catch(e){}XQSave.load(L.data,async()=>{try{await slotPutAll(D.slots||{})}catch(e){}location.replace(location.pathname+"#/");setTimeout(()=>location.reload(),80)})}],["取消",null,true]])}})}
 /* 意見回饋 491（開發者）：第一次進 App 先選「男生／女生」，再取名字；老玩家更新到這版也會跳一次
    意見回饋 604（開發者）：不再問 Q 版還是真實版，一律用真實 3D（之後可以在「設定 → 角色」改）；名字欄先填好「棋友＋4 位 16 進位」 */
@@ -99,7 +100,7 @@ function onboard(){if(journey())journeyLock();else titleScreen({})}
 // ================= 設定：棋盤風格、棋子樣式、走棋顯示 =================
 const SAMPLE_FEN0="rnbakabnr/9/1c5c1/p1p1p1p1p/9/9/P1P1P1P1P/1C5C1/9/RNBAKABNR",SAMPLE_FEN1="rnbakabnr/9/1c5c1/p1p1p1p1p/9/9/P1P1P1P1P/1C2C4/9/RNBAKABNR",SAMPLE_LAST={f:70,t:67};
 /* 意見回饋 661：關於頁顯示整包遊戲要多大空間。XQ_SIZES 由 build-site.js 建置時填入（開發中的 m.html 是 null，就不顯示） */
-const XQ_SIZES={"pre":397868793,"code":14535256,"eng":51511005,"gm":33668932,"bgm":280488180,"opt":[["比賽對局 1956–2010",21765744],["比賽對局 2011–2014",25596413],["比賽對局 2015–2019",24821916]],"all":890728296,"other":40472057};
+const XQ_SIZES={"pre":397868793,"code":14535256,"eng":51511005,"gm":33668932,"bgm":280488180,"opt":[["比賽對局 1956–2010",21765744],["比賽對局 2011–2014",25596413],["比賽對局 2015–2019",24821916]],"all":892694295,"other":42438056};
 const szMB=b=>b>=1073741824?(b/1073741824).toFixed(1)+" GB":Math.max(1,Math.round(b/1048576))+" MB";
 function aboutSizes(){const S=XQ_SIZES,bg=typeof preStatRow==="function"?preStatRow():"";if(!S)return bg;const opt=S.opt||[];   /* 意見回饋 662：玩家只看總數，細項只在開發者模式顯示；11/11 ChatGPT 介面報告 P1：開 App 等待畫面不再寫容量，背景下載狀態放這裡（09b preStatRow） */
   return `<div class="row" style="justify-content:space-between"><span class="muted">整包下載</span><b>約 ${szMB(S.all)}</b></div>${bg}
@@ -325,7 +326,6 @@ function Settings(v){
     <div class="sec-t" data-i18n="set.about">關於</div><div class="card" id="about" style="line-height:1.9">
       <div class="row" style="justify-content:space-between"><span class="muted">App</span><b>象棋千秋</b></div>
       <div class="row" style="justify-content:space-between"><span class="muted">開發者</span><b>hungshengc</b></div>
-      <div class="row" style="justify-content:space-between"><span class="muted">開始開發</span><b>2026 年 10 月 29 日</b></div>
       <div class="row" style="justify-content:space-between;align-items:center"><span class="muted">版本</span><span class="row" style="gap:8px;align-items:center"><b>${esc(window.XQ_BUILD&&!/__BUILD__/.test(window.XQ_BUILD)?window.XQ_BUILD:"開發中")}</b>${OFF?'<button class="pill" id="aUpd">檢查更新</button>':""}</span></div>   <!-- 意見回饋 531：系統更新從首頁搬到這裡 -->
       ${aboutSizes()}   <!-- 意見回饋 661：整包大小、這支手機已用多少 -->
       <button class="btn ghost" id="aLic" style="width:100%;margin-top:8px">📜 關於與開源授權</button>   <!-- 開發者 11/11 選規劃書方案 10 -->

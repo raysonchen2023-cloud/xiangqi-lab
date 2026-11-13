@@ -206,7 +206,8 @@ function CanjuPlay(v,id){cjCSS();const H0=location.hash,here=()=>v.isConnected&&
   const XM=(typeof hwXM==="function"&&hwXM(id))||(typeof dqXM==="function"&&dqXM(id))||(typeof cjXMode==="function"?cjXMode(id):null);   /* 評比第 13 輪 F1：#/daily/<日期>＝每日同題（m/07dq-daily.js dqXM；XM.fin 記成績、XM.bind 綁解完卡的分享鈕） */   /* 評比第 3 輪 P17：#/canju/hw/<編碼>/<第幾題>＝教練作業的殘局題（m/10d-coach.js hwXM） */
   const zm=XM?null:/^z\/(.+)$/.exec(id),Z=zm?{rid:zm[1]}:null,hm=Z||XM?null:/^h\/(\w+)\/(.+)$/.exec(id),HS=hm?{era:hm[1]}:null,RK=XM?XM.rk||"cjRunX":Z?"cjRunZ":HS?"cjRunH":"cjRun";if(HS)id=hm[2];if(XM&&XM.id)id=XM.id;
   const hBack=()=>typeof histBackHash==="function"?histBackHash():"#/adventure",BK=XM?XM.back():Z?"#/me/relics":HS?hBack():"#/canju";
-  setTop(XM?XM.top||"🍵 一盞茶殘局":Z?"🏺 珍品藏局":HS?"📜 古法殘局":"🍵 一盞茶殘局",BK);if(typeof setTabs==="function")setTabs(false);
+  /* 11/13 開發者「千秋殘局做完的返回鍵是回到選擇千秋殘局的入口處」：千秋殘局（XM）的返回鍵直接回那一層（^），不照瀏覽器上一頁（按過下一題會退回上一題） */
+  setTop(XM?XM.top||"🍵 一盞茶殘局":Z?"🏺 珍品藏局":HS?"📜 古法殘局":"🍵 一盞茶殘局",XM&&BK[0]!=="^"?"^"+BK:BK);if(typeof setTabs==="function")setTabs(false);
   v.className="view fixed";v.innerHTML=`<div class="cj-top" id="cjH"></div><div class="boardbox" id="bbox"></div><div class="status" id="stat"></div><div class="note cj-note" id="note"></div><div class="cj-step" id="cjStep"></div><div style="flex:1"></div><div class="actions" id="acts"></div>`;
   const $=q=>v.querySelector(q);let D=null,P=null,S=null,R=null,b=null,node=null,step=0,sel=-1,busy=false,hk=null,tok=0,last=null,me="r",flip=false;
   const bd=Board(x=>tap(x));$("#bbox").append(bd.svg);

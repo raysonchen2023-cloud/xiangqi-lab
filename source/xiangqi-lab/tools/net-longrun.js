@@ -6,7 +6,9 @@
 // 量的東西：每盤最後四方（紅、黑、觀眾、伺服器保留的）是否一字不差（一致率）、對方落子到這支手機收到的時間分佈（補步時間）、
 //   超時判負分成「被判的那方正好斷線中（規則內）」和「被判的那方一直在線（誤判）」、戰績是否雙方一致各記一次、可疑事件數，
 //   以及每 30 分鐘抽樣一次的計時器數、localStorage 大小、除錯事件數、伺服器保留訊息數、Node 記憶體（看有沒有越跑越多）。
-// 亂數全部用固定種子（網路、棋手、手機裡的 Math.random、手機裡的 Date 都接假時鐘），同一個種子的結果可重現（WebCrypto 完成先後偶爾會讓個別訊息差幾毫秒）。
+// 亂數全部用固定種子（網路、棋手、手機裡的 Math.random、手機裡的 Date 都接假時鐘），同一個種子的結果可重現。
+//   11/13 起 net-harness.js 照呼叫的順序交回 WebCrypto 的結果：以前要看電腦當下忙不忙（單獨跑和旁邊有別的程式在跑，「反覆斷線」一次全過、一次有一盤沒收斂），
+//   現在結果只看種子，單獨跑或同時跑都一樣；那次沒收斂是 net.js 真的有的分岔（revTie 的 _pm、revPick 的判超時順位），已修。
 // 不連正式或測試伺服器、不發任何真的訊息、不開瀏覽器。
 // 用法：
 //   node xiangqi-lab/tools/net-longrun.js                 完整長測（6 種情境，各模擬 2～6 小時；約幾分鐘）
@@ -156,6 +158,8 @@ async function longRun(sc, o) {
       const jumpNear = (LP.jumps || []).some(([t, by]) => by > 0 && t <= tr && t >= tr - TURN_MS - 60000);   /* 被判的那支手機時間剛被往前調（net.js 刻意不補，見 threat-model.md） */
       row.flag = offNear ? "rule" : jumpNear ? "clock" : "misjudge"; row.flagWho = LP === A ? "A" : "K"; row.tr = Math.round((tr - t0) / 1000);
     }
+    /* 威脅模型 T11：影子鐘（第一版只記錄）這盤雙方各量到的對方用時 sh、對方棋鐘自己扣的 cl、單步最大差 max（校準用） */
+    row.sh = [A, K].map(P => { const x = P.net.shadow(); return { n: x.n, sh: x.sh, cl: x.cl, ncl: x.ncl, max: x.max } });
     games.push(row);
     if (S.now >= END) break;
     await S.run(Math.round(5000 + rnd() * 15000));
@@ -184,7 +188,9 @@ async function longRun(sc, o) {
     name: sc.name, seed, simH: +((S.now - t0) / HOUR).toFixed(2), tries, games: games.length, consistent: done.length, stuck, rematchFail,
     plies: done.reduce((s, x) => s + x.plies, 0), ends: done.reduce((o, x) => (o[x.res] = (o[x.res] || 0) + 1, o), {}),
     flagRule: flags.filter(x => x.flag === "rule").length, flagMis: flags.filter(x => x.flag === "misjudge").length, flagClock: flags.filter(x => x.flag === "clock").length, selfFlag: ctl.selfFlag,
-    histBad, sus: [A, K, W].reduce((s, P) => s + P.net.suspicious().length, 0), keyBad: [A, K].reduce((s, P) => s + P.net.keyBad().n, 0),
+    histBad, late: (() => { const L = [A, K].flatMap(P => P.net.lateLog()); return { n: L.length, keep: L.filter(e => e.keep).length, max: L.length ? Math.max(...L.map(e => e.late || 0)) : 0 } })(),
+    shadow: (() => { const R = done.flatMap(x => x.sh || []); return { moves: R.reduce((s, x) => s + x.n, 0), maxGap: R.length ? Math.max(...R.map(x => x.max)) : 0, sh: R.reduce((s, x) => s + x.sh, 0), cl: R.reduce((s, x) => s + x.cl, 0) } })(),
+    sus: [A, K, W].reduce((s, P) => s + P.net.suspicious().length, 0), keyBad: [A, K].reduce((s, P) => s + P.net.keyBad().n, 0),
     lagOpp: dist(lagO), lagWatch: dist(lagW), conv: dist(done.map(x => x.conv)), ev, chaosN: { ...B.chaosN },
     k: (() => { const s = A.net.linkStats(); return { dup: s.dup, old: s.old, replay: s.replay, win: s.win, bad: s.bad, nosig: s.nosig, stOut: s.stOut, gapFix: s.gapFix } })(),
     mem, errors: S.errors.slice(0, 5), signed: [A, K, W].every(P => P.net.signState() === "signed"), bad: games.filter(x => !x.ok), rows: games,
@@ -199,6 +205,7 @@ function verdict(r) {
   if (r.stuck || r.rematchFail) why.push(`有 ${r.stuck} 盤沒收斂、${r.rematchFail} 次再來一局沒開成`);
   if (r.flagMis) why.push(`誤判超時 ${r.flagMis} 次`);
   if (r.histBad) why.push(`戰績不一致 ${r.histBad} 盤`);
+  if (r.late && r.late.keep) why.push(`晚到推翻時保留勝場 ${r.late.keep} 次（老實玩家被當成晚到太久）`);
   if (r.sus || r.keyBad) why.push(`可疑事件 ${r.sus}、擋下的邀請 ${r.keyBad}（真訊息被當成偽造）`);
   if (r.errors && r.errors.length) why.push("程式丟錯：" + r.errors[0]);
   if (r.mem && r.mem.length > 2) {
@@ -225,6 +232,7 @@ if (require.main === module) {
         if (r.fatal) { console.log("  ✖ " + r.fatal); bad++; continue }
         console.log(`  盤數 ${r.games}（一致 ${r.consistent}）、總步數 ${r.plies}、結局 ${JSON.stringify(r.ends)}、開局邀請 ${r.tries} 次`);
         console.log(`  超時：規則內 ${r.flagRule}、誤判 ${r.flagMis}、手機時間往前跳 ${r.flagClock}、自己落旗 ${r.selfFlag}；戰績不一致 ${r.histBad}；可疑事件 ${r.sus}；擋下的邀請 ${r.keyBad}`);
+        console.log(`  晚到推翻（T11）：超過 3 分鐘 ${r.late.n} 次、保留勝場 ${r.late.keep} 次、最晚 ${s1(r.late.max)}；影子鐘：${r.shadow.moves} 步、對方用時合計 ${s1(r.shadow.sh)}（棋鐘自己扣 ${s1(r.shadow.cl)}）、單步最大差 ${s1(r.shadow.maxGap)}`);
         console.log(`  對方收到這一步：中位 ${s1(r.lagOpp.p50)}、90% ${s1(r.lagOpp.p90)}、99% ${s1(r.lagOpp.p99)}、最慢 ${s1(r.lagOpp.max)}（${r.lagOpp.n} 步）；觀眾最慢 ${s1(r.lagWatch.max || 0)}`);
         console.log(`  結果出現到四方一致：中位 ${s1(r.conv.p50 || 0)}、最慢 ${s1(r.conv.max || 0)}；網路事件 ${JSON.stringify(r.ev)}；混沌 ${JSON.stringify(r.chaosN)}`);
         const m0 = r.mem[0], m1 = r.mem[r.mem.length - 1];

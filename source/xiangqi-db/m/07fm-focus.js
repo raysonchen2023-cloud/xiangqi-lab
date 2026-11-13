@@ -108,7 +108,8 @@ function fcmClock(){let hid=false;try{hid=!!document.hidden}catch(e){}const want
   try{if(typeof XQ_pvpPause!=="function")return;if(want&&!FCM.pz){if(XQ_pvpPause(true))FCM.pz=true}else if(!want&&FCM.pz){FCM.pz=false;XQ_pvpPause(false)}}catch(e){}}
 
 /* ---------- 純淨畫面 ---------- */
-function fcmSync(){try{const de=document.documentElement,bp=fcmBoardPage(),on=fcmCleanOn()&&bp;
+function fcmSync(){try{const de=document.documentElement,bp=fcmBoardPage(),on=fcmCleanOn()&&bp,was=de.hasAttribute("data-fcmclean");
+  if(on&&!was)try{(document.scrollingElement||de).scrollTop=0;window.scrollTo(0,0)}catch(x){}   /* hspx 11/13：剛切到純淨畫面時捲回頂端（iPhone 原本捲在下面，棋盤頂端被切） */
   de.toggleAttribute("data-fcmclean",on);de.toggleAttribute("data-fcmnomv",on&&store.get("cleanMoves",true)===false);fcmBar(on);fcmBtn(bp)}catch(e){}}
 function fcmBtn(show){const tr=document.getElementById("topRight");if(!tr)return;let b=document.getElementById("fcmBtn");if(!show){if(b)b.remove();return}if(b&&b.parentNode===tr)return;
   if(!b){b=document.createElement("button");b.id="fcmBtn";b.type="button";b.className="ib";b.textContent="🎬";b.title="純淨畫面（直播、截圖用）";b.setAttribute("aria-label","純淨畫面：只留棋盤、名字和棋鐘");
@@ -166,7 +167,10 @@ function fcmChange(e){const t=e&&e.target;if(!t)return;
   else if(t.id==="bossSw"){store.set("bossKey",!!t.checked);try{toast(t.checked?"已打開老闆鍵：電腦連按兩下 Esc、手機三根手指點一下":"已關閉老闆鍵")}catch(x){}}}
 
 /* ---------- 樣式 ---------- */
+/* hspx 11/13 開發者「修正純淨棋子畫面不完整的問題」（iPhone 截圖：棋盤頂端被瀏海和狀態列切掉、下面一大片空白）：頂欄收起以後沒有東西讓開瀏海，
+   上方名牌貼在 top 0、被狀態列蓋住；右上角 #fcmBar 也疊在上方名牌的級數上；內容全擠在上面。改成讓開瀏海＋#fcmBar 的高度、底部讓開 Home 條，上下置中 */
 function fcmCssText(){return`html[data-fcmclean] #topbar,html[data-fcmclean] #tabbar{display:none!important}
+html[data-fcmclean] #view{padding-top:calc(env(safe-area-inset-top,0px) + 54px)!important;padding-bottom:calc(env(safe-area-inset-bottom,0px) + 12px)!important;min-height:100vh;min-height:100dvh;box-sizing:border-box;justify-content:center!important}
 html[data-fcmclean] #view>:not(#pTop):not(#bbox):not(#pBot):not(#strip){display:none!important}
 html[data-fcmclean][data-fcmnomv] #view>#strip{display:none!important}
 html[data-fcmclean] .player .nm span,html[data-fcmclean] .player .av img,html[data-fcmclean] .tmx-bub,html[data-fcmclean] .emo,html[data-fcmclean] .xqbot,html[data-fcmclean] #sndPill{display:none!important}

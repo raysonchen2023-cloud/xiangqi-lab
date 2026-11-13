@@ -61,7 +61,12 @@ function lbCss(){if(document.getElementById("lbCss"))return;const s=document.cre
 .lb-pn.open{transform:none}.lb-pn-h{display:flex;align-items:center;gap:8px;padding:10px 14px 4px;font:900 16px var(--serif,serif)}.lb-pn-h button{margin:-8px -10px -8px auto;border:0;background:none;font-size:22px;cursor:pointer;color:inherit;min-width:44px;min-height:44px;display:inline-flex;align-items:center;justify-content:center;padding:0}
 .lb-pn-b{overflow:auto;flex:1;-webkit-overflow-scrolling:touch}
 .lb-scrim{position:fixed;inset:0;z-index:949;background:rgba(0,0,0,.22);display:none}.lb-scrim.open{display:block}
-@media (prefers-reduced-motion:reduce){.lb-pn{transition:none}.lb-box.dl i{animation:none}}`;document.head.append(s)}
+/* 11/13 第 16 輪版面缺陷清零（r15 device-fit：棋譜庫每種尺寸 10～31 處）：
+   ① 收起來的宣紙面板只是往下推出畫面，裡面的書目、搜尋鈕、上一頁仍「看得到」（讀螢幕會念、Tab 走得到，量測也把它跟場景入口算成互相重疊）；收起時 visibility:hidden，滑出動畫結束後才藏
+   ② 書櫥／白玉冊的 6 個書名籤只是畫面上的字：整排早就蓋了一塊透明點選區（.lb-shelf，點了開「選一本棋譜」大按鈕清單），書名籤自己點不到；改成不接點選的裝飾，點選區當唯一的入口（讀螢幕、鍵盤也走它） */
+.lb-pn{visibility:hidden;transition:transform .3s ease,visibility 0s linear .3s}.lb-pn.open{visibility:visible;transition:transform .3s ease}
+.lb-cell{pointer-events:none}.lib-page.cl .lb-cell span{padding:3px 0;font-size:10px}
+@media (prefers-reduced-motion:reduce){.lb-pn,.lb-pn.open{transition:none}.lb-box.dl i{animation:none}}`;document.head.append(s)}
 /* 迷你棋盤（SVG）：照「繼續研究」那盤的開始局面畫（拿不到就畫開局） */
 function lbMini(fen){let b=null;try{b=parseFen(fen||START)}catch(e){}const G=[];for(let i=0;i<9;i++)G.push(`<line x1="${i}" y1="0" x2="${i}" y2="${i%8?4:9}"/>`,i%8?`<line x1="${i}" y1="5" x2="${i}" y2="9"/>`:"");
   for(let j=0;j<10;j++)G.push(`<line x1="0" y1="${j}" x2="8" y2="${j}"/>`);G.push('<path d="M3 0 5 2M5 0 3 2M3 7 5 9M5 7 3 9"/>');
@@ -70,7 +75,7 @@ function lbMini(fen){let b=null;try{b=parseFen(fen||START)}catch(e){}const G=[];
 function libMap(v,c0){const root=v.querySelector(".lib");if(!root||v.querySelector(".lib-page"))return;lbCss();
   const d=document.createElement("div");
   const CLB=lbCl();d.innerHTML=`<div class="shp-page cq lib-page${CLB?" cl":""}"><img src="data/libmap/${lbImg()}.webp?v=${LB_IMGV}" alt="崇文書閣"><div class="lb-fx"></div>
-    ${LB_OLD.map(([k,n,f],i)=>`<button class="lb-cell" id="lbC${i}" data-c="${k}" style="left:${(CLB?LB_CL.cells:LB_CELLS)[i][0]}%;top:${(CLB?LB_CL.cells:LB_CELLS)[i][1]}%" aria-label="${esc(f)}"><span>${esc(n)}</span></button>`).join("")}
+    ${LB_OLD.map(([k,n,f],i)=>`<span class="lb-cell" id="lbC${i}" data-c="${k}" style="left:${(CLB?LB_CL.cells:LB_CELLS)[i][0]}%;top:${(CLB?LB_CL.cells:LB_CELLS)[i][1]}%" aria-hidden="true"><span>${esc(n)}</span></span>`).join("")}
     ${CLB?`<button class="lb-box lb-one" style="left:${LB_CL.one[0]}%;top:${LB_CL.one[1]}%" aria-label="比賽對局（三冊）"><i></i></button>`:LB_BOX.map(([x,y],i)=>`<button class="lb-box" data-i="${i}" style="left:${x}%;top:${y}%" aria-label="比賽對局第 ${i+1} 箱"><i></i></button>`).join("")}
     ${LB_SPOTS.map(([id,x,y,t])=>{if(CLB&&LB_CL.spots[id])[x,y]=LB_CL.spots[id];return`<button class="shp-spot" id="${id}" style="left:${x}%;top:${y}%"><b>${esc(t)}</b></button>`}).join("")}</div>`;
   const P=d.firstElementChild;v.insertBefore(P,root);
@@ -91,7 +96,8 @@ function libMap(v,c0){const root=v.querySelector(".lib");if(!root||v.querySelect
   /* v5 改善單 R07（古譜窄書籤）：朝代書閣（不是經典世界）的 6 格書櫥一樣窄——每格約 45×31px、格子名只有 10.5px 字，上下左右貼著，一樣點不準；
      改成兩個世界都蓋透明點選區、點了跳同一張「選一本棋譜」大按鈕清單（每本一顆，至少 52px 高）。書閣的點選區蓋住 6 格書櫥和格子名（左 4.2%～26.8%、上 50.8%～67%，圖上這一塊沒有別的入口）。
      點選區標 data-r07m：橫放矮螢幕的側欄入口選單（07t3 r07Menu）也會列出「📚 古譜」這一項 */
-  {const sh=document.createElement("button");sh.type="button";sh.className="lb-shelf";sh.setAttribute("aria-hidden","true");sh.tabIndex=-1;sh.dataset.r07m="📚 古譜";if(!CLB)Object.assign(sh.style,{left:"4.2%",top:"50.8%",width:"22.6%",height:"16.2%"});P.append(sh);
+  {const sh=document.createElement("button");sh.type="button";sh.className="lb-shelf";sh.setAttribute("aria-label","古譜六部："+LB_OLD.map(x=>x[2]).join("、"));sh.dataset.r07m="📚 古譜";   /* 第 16 輪：書名籤改成裝飾，這塊點選區就是古譜的入口（讀螢幕、鍵盤也走這裡） */
+if(!CLB)Object.assign(sh.style,{left:"4.2%",top:"50.8%",width:"22.6%",height:"16.2%"});P.append(sh);
     sh.onclick=()=>{vibrate(5);sheet("📚 選一本棋譜",b=>{b.innerHTML=`<div class="lb-pick">${LB_OLD.map(([k,n,f])=>`<button type="button" data-c="${esc(k)}" data-f="${esc(f)}">${esc(n)}${f&&f!==n?`<small>${esc(f)}</small>`:""}</button>`).join("")}</div>`;
       b.querySelectorAll("[data-c]").forEach(x=>x.onclick=()=>{vibrate(5);closeSheet();book(x.dataset.c,x.dataset.f)})})}}
   const GO={lbGm:()=>book("gmgames","大師對局"),lbMine:()=>book("play","我的對局",false,"mine"),lbFind:()=>open("搜尋",true),

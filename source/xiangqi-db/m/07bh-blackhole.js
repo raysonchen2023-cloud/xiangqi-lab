@@ -186,7 +186,7 @@ const BHX_PG={
   p1:{img:"data/story0/s0_13.webp",board:true,big:["很久很久以前，天上有一張星盤。","一裂開，星光便流成河。","那道河，人間後來叫它界。"],narr:"棋路，先於棋名。"},
   p2:{img:"data/story0/s0_14.webp",big:["人間傳說，有五色石補過天。","另有一角青石，落入雲河。","它記住了萬年的棋聲。"],narr:"石未開口，局已在心。"},
   p3:{img:"data/story0/s0_3b.webp",big:["青石成桌，桌上有河。","河邊少了一塊界石。","七碗茶，正等七個人醒來。"],narr:"茶未入口，緣已同船。"},
-  p4:{img:"data/story0/s0_4.webp",meteor:true,big:["七個孩子，來自七段歲月。","他們還沒相認。","本命棋子，已先在星河發亮。"],narr:"人未醒，棋先知名。"},
+  p4:{img:"data/story0/s0_4.webp",imgN:"data/story0/s0_4n.webp",meteor:true,big:["七個孩子，來自七段歲月。","他們還沒相認。","本命棋子，已先在星河發亮。"],narr:"人未醒，棋先知名。"},
   p6:{img:"data/story0/s0_6.webp",big:[]},p10:{img:"data/story0/s0_10.webp",big:[]},p11:{img:"data/story0/s0_11.webp",big:[]},p12:{img:"data/story0/s0_12.webp",big:[]},p15:{img:"data/story0/s0_15.webp",big:[]},p16:{img:"data/story0/s0_16.webp",big:[]},p7:{img:"data/story0/s0_7.webp",big:[]},p8:{img:"data/story0/s0_8.webp",big:[]},p9:{img:"data/story0/s0_9.webp",big:[]},   /* hspx 11/12 開發者「透過 Gemini 繪製場景補足開頭的電影故事」：補圖①星雨入凡 ②河畔初枰 ③星盤傾側 ④茶香引路 */
   p5:{img:"data/story0/s0_5.webp",big:["星河也有深不見底的彎。","那裡，有一盤下了萬年的棋。","一步一步，像從未停過。"],narr:"黑非惡，只是深。"}};
 const BHX_TXT={title:"天裂星盤沉雲河，黑洞殘局啟千秋",rain:"七星如雨，各歸其時。",start:"來者，請在星盤上落子。",open:"落子無悔，星局初開。",good:["齊轍","俥有路了，直取星心！"],win:"星盤暫合。循著茶香，去尋你們的青石吧。",
@@ -241,7 +241,7 @@ function bhxPages(keys,done,first){bhxCss();let i=0,tm=[],MT=null;const o=docume
   const clr=()=>{tm.forEach(clearTimeout);tm=[]};let fin=false;
   const end=()=>{if(fin)return;fin=true;clr();if(MT)MT.stop();o.classList.remove("on");setTimeout(()=>o.remove(),600);if(done)setTimeout(done,350)};
   const show=()=>{clr();if(MT){MT.stop();MT=null}const P=BHX_PG[keys[i]];if(!P)return end();
-    o.style.backgroundImage=`url(${P.img}),url(data/park/bh_far2.webp)`;o.classList.toggle("bd",!!P.board);
+    o.style.backgroundImage=`url(${P.imgN||P.img}),url(data/park/bh_far2.webp)`;o.classList.toggle("bd",!!P.board);
     o.innerHTML=`${P.board?bhxBoardSvg():""}${P.meteor?`<div class="bx-cap">${esc(BHX_TXT.rain)}</div>`:""}${first&&i===0?`<div class="bx-t">第〇章　${esc(BHX_TXT.title)}</div>`:""}${P.big.map(t=>`<div class="bx-l">${esc(t)}</div>`).join("")}${P.narr?`<div class="bx-n">說書人：${esc(P.narr)}</div>`:""}<button class="bx-k" type="button">略過</button>`;
     {const B=o.querySelector(".bx-bd");if(B){const W=o.clientWidth||innerWidth,H=o.clientHeight||innerHeight,k=Math.max(W/768,H/1376);B.style.top=((H-1376*k)/2+819*k)+"px"}}
     o.querySelector(".bx-k").onclick=e=>{e.stopPropagation();vibrate(5);end()};
@@ -259,7 +259,13 @@ function bhxPages(keys,done,first){bhxCss();let i=0,tm=[],MT=null;const o=docume
    玩家那顆金星飛近自己的主場、停在半空 → 星槎剪影從下方浮出、一縷茶香光線往上接住金星 → 金星順著茶香落進星槎、船亮一下（接著降落經典星槎）。
    點一下＝直接跳到最後一格；減少動態＝不飛，1.2 秒淡入最後一格 */
 const BHX_SPOT={x_swordboy:[183,203],x_spiritgirl:[604,286],x_martialgirl:[157,503],x_miaogirl:[612,592],x_shuai:[152,803],x_shi:[613,908],x_bing:[296,1018]};   /* s0_4.webp（768×1376）七個小景裡紅光的位置：秦、南北朝、宋、元、明深宅、明當鋪、清 */
-function bhxMeteor(o,onDone,opt){opt=opt||{};const ALL=opt.mode==="all",CATCH=opt.mode==="catch";const cv=document.createElement("canvas");cv.className="bx-mt";o.prepend(cv);
+/* 11/13 開發者「這邊應該還不能顯示七個星吧，要落下才有」：s0_4 圖上本來就畫了七個紅光，星還沒落就亮著。
+   改成先用抹掉紅光的 s0_4n.webp（cv2 inpaint），星雨開始 1.3 秒後原圖淡入，紅光跟著星落地才亮。
+   電影版疊在 .fm-st 的 .fm-bg 後面（跟著鏡頭推拉，換鏡頭時跟 .fm-ly 一起清掉）；分頁版背景直接在 #bhxPg 上，疊一層 z-index:-1（在 ::before 暗化層底下） */
+function bhxStarRev(o){try{const P=BHX_PG.p4;if(!P||!P.imgN)return;const st=o.querySelector(".fm-st"),bg=st&&st.querySelector(".fm-bg"),cur=String((bg||o).style.backgroundImage||"");if(!cur.includes(P.imgN))return;
+  const d=document.createElement("div");d.className=bg?"fm-bg fm-ly bx-rev":"bx-rev";d.style.cssText=(bg?"":"position:absolute;inset:0;z-index:-1;background-position:center;background-size:cover;background-repeat:no-repeat;")+"pointer-events:none;opacity:0;transition:opacity 1.1s ease;background-image:url("+P.img+")";
+  if(bg)bg.after(d);else o.prepend(d);setTimeout(()=>{d.style.opacity="1"},1300)}catch(e){}}
+function bhxMeteor(o,onDone,opt){opt=opt||{};bhxStarRev(o);const ALL=opt.mode==="all",CATCH=opt.mode==="catch";const cv=document.createElement("canvas");cv.className="bx-mt";o.prepend(cv);
   const W=o.clientWidth||innerWidth,H=o.clientHeight||innerHeight,dpr=Math.min(2,devicePixelRatio||1);cv.width=Math.round(W*dpr);cv.height=Math.round(H*dpr);const g=cv.getContext("2d");g.scale(dpr,dpr);
   const s=Math.max(W/768,H/1376),ox=(W-768*s)/2,oy=(H-1376*s)/2,P=([x,y])=>[ox+x*s,oy+y*s],me=ALL?null:opt.key||(typeof myChar==="function"&&myChar())||"x_swordboy";   /* all＝還沒選角：七顆都落下；catch＝選好了：只演茶香接住那一顆 */
   const src=P([384,30]),SH=[W/2,H*.88],lerp=(a,b,u)=>[a[0]+(b[0]-a[0])*u,a[1]+(b[1]-a[1])*u],ez=u=>u<.5?2*u*u:1-Math.pow(-2*u+2,2)/2;
@@ -443,6 +449,7 @@ const opImgXY={p1:[396,515],p5:[384,350],p2:[388,700],p3:[300,880],p6:[384,40],p
 function bhxFilm(F,done){bhxCss();let rm=false;try{rm=matchMedia("(prefers-reduced-motion:reduce)").matches}catch(e){}
   const o=document.createElement("div");o.id="bhxPg";o.className="fm on";o.setAttribute("role","dialog");o.setAttribute("aria-label","第〇章");document.body.append(o);
   o.innerHTML=`<div class="fm-st"><div class="fm-bg"></div></div><canvas class="fm-fx"></canvas><div class="fm-cap"></div><div class="fm-tx"></div><button class="bx-k" type="button">略過</button><button class="fm-nx" type="button" aria-label="下一個鏡頭">▶</button>`;
+  try{if(BHX_PG.p4&&BHX_PG.p4.imgN)(new Image).src=BHX_PG.p4.imgN}catch(e){}   /* 11/13：七星那一幕的無紅光底圖先載好 */
   const st=o.querySelector(".fm-st"),bg=o.querySelector(".fm-bg"),cv=o.querySelector(".fm-fx"),tx=o.querySelector(".fm-tx"),capE=o.querySelector(".fm-cap"),g=cv.getContext("2d");
   const low=(()=>{try{return(navigator.deviceMemory||4)<=3||(navigator.hardwareConcurrency||4)<=4}catch(e){return false}})(),dpr=low?1:Math.min(2,devicePixelRatio||1);
   let W=0,H=0;const fit=()=>{W=o.clientWidth||innerWidth;H=o.clientHeight||innerHeight;cv.width=Math.round(W*dpr);cv.height=Math.round(H*dpr);g.setTransform(dpr,0,0,dpr,0,0);
@@ -478,7 +485,7 @@ function bhxFilm(F,done){bhxCss();let rm=false;try{rm=matchMedia("(prefers-reduc
       const s=q.sz*3;g.globalAlpha=al;g.drawImage(spr(q.col),q.x-s,q.y-s,2*s,2*s);g.globalAlpha=1}};
   const cover=([ix,iy])=>{const s=Math.max(W/768,H/1376);return[(W-768*s)/2+ix*s,(H-1376*s)/2+iy*s]},onScr=pt=>{const[s,fx,fy]=kbNow,ox=W*fx/100,oy=H*fy/100;return[ox+(pt[0]-ox)*s,oy+(pt[1]-oy)*s]};
   const setShot=i=>{si=i;S=F.shots[i];fired={};P.length=0;DU.length=0;dEm.acc=0;dEm.burst=false;const PG=S.img&&BHX_PG[S.img];
-    bg.style.backgroundImage=PG?`url(${PG.img}),url(data/park/bh_far2.webp)`:"none";st.querySelectorAll(".bx-bd,.fm-ly,.fm-gr").forEach(e=>e.remove());
+    bg.style.backgroundImage=PG?`url(${PG.imgN||PG.img}),url(data/park/bh_far2.webp)`:"none";st.querySelectorAll(".bx-bd,.fm-ly,.fm-gr").forEach(e=>e.remove());
     LY=(S.ly||[]).map(([lt,k,fd,md])=>{const d=document.createElement("div");d.className="fm-bg fm-ly";const pg=BHX_PG[k];d.style.backgroundImage=pg?`url(${pg.img})`:"none";d.style.opacity="0";st.append(d);return{t:lt,k,fd:Math.max(.05,fd||1),md,d}});GR=S.grow?bhxGrowSvg(st):null;   /* 同一個鏡頭裡的後續圖：交叉淡入，或 "r"＝從裂口中心往外揭開 */
    /* 河界對準圖上橫流的星河（圖上 y≈819），不同手機長寬比都對得上 */
     tx.innerHTML=(S.say||[]).map(([,t])=>`<div class="bx-l">${esc(t)}</div>`).join("")+(S.nar?`<div class="bx-n">說書人：${esc(S.nar[1])}</div>`:"");

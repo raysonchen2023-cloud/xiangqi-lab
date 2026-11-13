@@ -14,7 +14,10 @@ const te = new TextEncoder(), td = new TextDecoder();
 
 /* ---------- 非同步工作計數：WebCrypto、假 IndexedDB 每開始一件 +1、做完 -1；settle() 等到歸零（中間會冒出的新工作也等） ---------- */
 const PEND = { n: 0 };
-const track = p => { PEND.n++; return Promise.resolve(p).finally(() => { PEND.n-- }) };
+/* 11/13（紅藍隊第 1 輪，長測可重現）：WebCrypto 在執行緒池裡算，哪一件先做完要看電腦當下忙不忙；以前同一個種子的長測，單獨跑和旁邊有別的程式在跑，
+   結果會不一樣（例如「反覆斷線」一次 16 盤全過、一次 12 盤有一盤沒收斂）。改成照呼叫的順序一件一件交回結果（各自照樣同時在算），結果就只看種子 */
+let trackQ = Promise.resolve();
+const track = p => { PEND.n++; const r = trackQ.then(() => p); trackQ = r.catch(() => { }); return r.finally(() => { PEND.n-- }) };
 const tick = () => new Promise(r => setImmediate(r));
 async function settle() { for (let i = 0; i < 100000; i++) { await tick(); if (!PEND.n) { await tick(); if (!PEND.n) return } } throw new Error("非同步工作一直做不完") }
 const subtle = new Proxy(webcrypto.subtle, { get(t, k) { const f = t[k]; return typeof f === "function" ? (...a) => track(f.apply(t, a)) : f } });

@@ -3,8 +3,9 @@
 const test = require("node:test"), assert = require("node:assert"), fs = require("fs"), path = require("path");
 const SRC = fs.readFileSync(path.join(__dirname, "..", "src", "net.js"), "utf8");
 const i = SRC.indexOf("let ROOT="), j = SRC.indexOf("const MQA=", i);
-const room = (host, netRoot, webdriver) => new Function("localStorage", "location", "navigator", SRC.slice(i, j) + ";return ROOT")(
-  { getItem: k => (k === "xq_netRoot" && netRoot != null ? netRoot : null) }, { hostname: host }, { webdriver: !!webdriver });
+/* 11/13：選房間那行多看 window.Capacitor（App 裡不套用本機網址那條），這裡給一個空的 window（瀏覽器），不然會丟錯、被 try 吞掉、一律留在正式大廳 */
+const room = (host, netRoot, webdriver) => new Function("localStorage", "location", "navigator", "window", SRC.slice(i, j) + ";return ROOT")(
+  { getItem: k => (k === "xq_netRoot" && netRoot != null ? netRoot : null) }, { hostname: host }, { webdriver: !!webdriver, userAgent: "" }, {});
 const LIVE = "xqlab-r7k2q/v1", SITE = "raysonchen2023-cloud.github.io";
 
 test("正式站上的真人才進正式大廳", () => {

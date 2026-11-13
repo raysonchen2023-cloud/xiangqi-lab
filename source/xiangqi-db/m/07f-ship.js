@@ -60,7 +60,7 @@ const SHIP_LESSON={
   tang:{t:"棄仕解殺須果斷",x:["仕為貼身護衛，但有時也是絆腳石。","當敵方重兵壓境，自家仕若擋住主帥的退路，","須果斷棄仕，換取主帥逃脫空間，方能解殺。"],k:"棄仕保帥，果斷求生",
     open:"有我在，誰也別想碰他！我來擋刀！",done:"最好的盾牌，是讓出位子讓他自己變強。",pre:"客官，下一站長安西市——該撐仕還是棄仕？這可是生死抉擇。",theme:"引離"},
   wudai:{t:"重炮悶殺顯神威",x:["雙炮疊在同一直線，後炮借前炮為架，謂之重炮。","若敵將被自家士象堵住去路，單炮照將即成「悶殺」。","此二者皆是利用空間局限的凌厲殺招。"],k:"重炮悶宮，無處可逃",
-    open:"隔一個，剛剛好！看我把你們全悶在裡面！",done:"聲音再響，也不如安靜的一擊致命。",pre:"客官，下一站戰亂逃荒路——重炮與悶殺，學會便能凌厲致勝。",kill:["重炮","炮殺"],theme:"悶宮"},
+    open:"隔一個，剛剛好！看我把你們全悶在裡面！",done:"聲音再響，也不如安靜的一擊致命。",pre:"客官，下一站戰亂逃荒路——悶宮殺法，學會便能凌厲致勝。",kill:["重炮","炮殺"],theme:"悶宮"},
   song:{t:"當頭炮巧借炮架",x:["炮須隔子而擊，故炮架存亡即是炮局關鍵。","當頭炮雖能鎮守中路，若無子可借，即失其威。","行棋時當留心炮架之進退，方能連綿發火。"],k:"鎮守中路，保全炮架",
     open:"這煙花得借個火才響！炮架別跑！",done:"煙火放完就安靜了，退在後面當炮架也挺好。",pre:"客官，下一站臨安元宵——當頭炮需巧借子，無架之炮不生威啊。",kill:["馬後炮","炮殺"],theme:"抽將"},
   yuan:{t:"臥槽掛角馬如龍",x:["馬進到對方三、七路的二線，照將又封將門，謂之臥槽馬。","馬跳到對方九宮的角上照將，謂之掛角馬。","此二馬位皆是馬的絕佳殺點，威力無窮。"],k:"臥槽掛角，招招致命",
@@ -200,10 +200,10 @@ function shipDots(k,L){L=L||shipPuzzles(k)||[];return`<span class="shp-dots">${(
 /* 意見回饋 762 第零版：這站學會了、還有下一站（不是學徒）＝下一站的代號，結果卡和石桌頁的主按鈕改成「⛵ 起航」 */
 const shipSailTo=k=>{try{return shipLearned(k)&&!shipAppr()?shipNextStop():null}catch(e){return null}};
 function shipXM(k,id){const rd=/\/read$/.test(id);if(rd)id=id.replace(/\/read$/,"");   /* 意見回饋 685：…/read＝從正文的解題卡來的，解完回到正文 */
-  const T=SHIP_STOP[k],Ls=SHIP_LESSON[k]||{},Pl=SHIP_PLAN[k]||{},back=()=>rd?"#/ship/read/"+k+"/mark":"#/adventure";shipBank().catch(()=>{});
+  const T=SHIP_STOP[k],Ls=SHIP_LESSON[k]||{},Pl=SHIP_PLAN[k]||{},back=()=>rd?"#/ship/read/"+k+"/mark":"#/ship/pz";shipBank().catch(()=>{});   /* 11/13 開發者「千秋殘局做完的返回鍵是回到選擇千秋殘局的入口處」：以前回星槎甲板 #/adventure */
   if(!T)return{err:"找不到這一站（航線可能更新了）。",back};
   if(shipIsLvId(id))return{err:"這一題是星槎小關，要從千秋殘局頁打開。",back};
-  if(eraLocked(k))return{err:"星槎還沒停靠"+eraLabel(k)+"：到星槎頁按「⛵ 起航」往下開。",back};
+  if(eraLocked(k)&&!rd)return{err:"星槎還沒停靠"+eraLabel(k)+"：到星槎頁按「⛵ 起航」往下開。",back};   /* 11/13：從正文的解題卡來（rd）不擋 */
   {const M=typeof shipMoreXM==="function"?shipMoreXM(k,id):null;if(M)return M}   /* 意見回饋 762 第一版：石桌續局的題（07o-shipmore.js） */
   {const M=typeof chdHomeXM==="function"?chdHomeXM(k,id):null;if(M)return M}   /* 意見回饋 774 故國舊夢：家鄉那一站信裡夾的殘譜（07q-chardiff.js） */
   const isX=()=>{const L=shipPuzzles(k);return!!L&&!L.includes(id)&&shipExtras(k).includes(id)},L0=shipPuzzles(k);   /* 選做題（直接打開網址時題庫可能還沒挑好，用到時再判斷） */
@@ -227,8 +227,8 @@ function ShipLv(v,k,id,rd){const T=SHIP_STOP[k],Pl=SHIP_PLAN[k]||{},Ls=SHIP_LESS
   setTop("⛵ 千秋殘局",back);setTabs(false);v.className="view";v.innerHTML='<div class="pad muted">載入中…</div>';
   const bad=msg=>{v.className="view";v.innerHTML=`<div class="pad"><div class="card muted">${esc(msg)}<br><a href="${back}">回去</a></div></div>`};
   if(!T){bad("找不到這一站（航線可能更新了）。");return{}}
-  if(k==="finale"&&!shipFinaleOpen()){bad("終章要十三站的棋理都學會以後才會開。");return{}}
-  if(k!=="finale"&&eraLocked(k)){bad("星槎還沒停靠"+eraLabel(k)+"：到星槎頁按「⛵ 起航」往下開。");return{}}
+  if(k==="finale"&&!shipFinaleOpen()&&!rd){bad("終章要十三站的棋理都學會以後才會開。");return{}}   /* 11/13：從正文的解題卡來（rd）不擋 */
+  if(k!=="finale"&&eraLocked(k)&&!rd){bad("星槎還沒停靠"+eraLabel(k)+"：到星槎頁按「⛵ 起航」往下開。");return{}}
   shipBank().then(B=>{if(!v.isConnected)return;const P=B.D.byId[id],L=shipPuzzles(k)||[],isX=!L.includes(id)&&shipExtras(k).includes(id);
     if(!P||!P.lv){bad("找不到這一題（題庫可能更新了）。");return}
     if(!L.includes(id)&&!isX){bad("這一題不在這一站的千秋殘局裡（換了難度或題庫更新了），回星槎頁再點一次。");return}
@@ -675,9 +675,11 @@ function ShipRead(v,k,at){setTabs(false);v.className="view";v.innerHTML='<div cl
       v.querySelectorAll("[data-rk]").forEach(b=>b.onclick=()=>{vibrate(5);SHIP_RD_BACK="#/ship/read";location.hash="#/ship/read/"+b.dataset.rk});return}
     const i=N.chapters.findIndex(c=>c.k===k);if(i<0){navReplace("#/ship/read");return}
     const V=yunheView(N.chapters[i],M),c=V.c,m=c.marks[0]||null,Pl=SHIP_PLAN[k]||{},lock=shipLockedK(k),done=mkDone(c),pv=N.chapters[i-1],nx=N.chapters[i+1];
-    if(!R[k]){R[k]=Date.now();store.set("shipRead",R)}setTop("📖 第"+CNUM(c.n)+"章",SHIP_RD_BACK||"#/ship/read");
+    /* 11/13 開發者「點回星槎不是回到星槎上，是變前一章」：返回鍵字是照去處寫的「回星槎」，但以前照瀏覽器上一頁退（按過下一章就退回上一章）；改成 ^ 直接回那一層 */
+    if(!R[k]){R[k]=Date.now();store.set("shipRead",R)}setTop("📖 第"+CNUM(c.n)+"章",(b=>b[0]==="^"?b:"^"+b)(SHIP_RD_BACK||"#/ship/read"));
+    /* 11/13 開發者「沒有題目，請修正」：正文的解題卡以前在星槎還沒停靠那一站時只寫「停靠以後就能解」，讀到這裡沒題可解；改成一律能解（解題頁從正文來的 /read 不擋鎖），解開照樣記在那一站 */
     const mk=m?`<div class="card shp-mk" id="rdMk"><b>♟ 跟${esc(Pl.who||"大家")}一起解這一局</b><span class="muted">${esc(m.label)}</span>
-      ${lock?`<p class="muted">${k==="finale"?"十三站的棋理都學會以後，就能在這裡解這一局。":"星槎停靠"+esc(eraLabel(k))+"以後，就能在這裡解這一局。"}</p>`:`<button class="btn" id="rdGo">${done?"✅ 解開了・再看一次":"♟ 解這一局"}</button>`}<button class="lk" id="rdSkip">先往下讀 ›</button></div>`:"";
+      <button class="btn" id="rdGo">${done?"✅ 解開了・再看一次":"♟ 解這一局"}</button>${lock&&!done?`<p class="muted">${k==="finale"?"十三站還沒走完，也能先在這裡解。":"星槎還沒停靠"+esc(eraLabel(k))+"，也能先在這裡解。"}</p>`:""}<button class="lk" id="rdSkip">先往下讀 ›</button></div>`:"";
     const KP=(KL&&M&&KL.pov&&KL.pov[M.n])||{},Lc=KL?(V.pov?KP[c.n]:KL.main&&KL.main[c.n]):null,klOn=yunheKLon(),klT=o=>"✒ 重點句："+(o?"開":"關");
     v.innerHTML=`<div class="pad shp-rd${klOn?"":" kl-off"}"><h2 class="shp-rh">${esc(c.title)}</h2><p class="muted shp-rs">${provChip(c.tags?c:{tags:N.tags||["fiction"]})}《${esc(N.title||"雲河七星")}》・⛵ ${esc(shipShort(k))}・${esc((SHIP_STOP[k]||{}).place||"")}${V.pov?`・<em class="shp-povt">👤 你的視角：${esc(meN)}</em>`:""}</p>${KL?`<div class="shp-klbar"><button class="lk shp-klsw" id="rdKl" aria-pressed="${klOn}" title="重點句用朱紅粗體標出來">${klT(klOn)}</button></div>`:""}${M?`<div class="shp-povbar">${sw}</div>`:""}${rdGistHTML(RA,"yh",c.n)}
       ${((PIC,mkW)=>c.paras.map((p,j)=>(PIC[j]||"")+(m&&m.at===j?mk:"")+`<p${m&&m.at===j?' id="rdAfter"':""}>${mkW(p)}</p>`).join(""))(yunhePics(k,N.chapters[i].paras.length,c.paras.length),yunheKLW(rdMarker(RA,"yh"),Lc))}${m&&m.at>=c.paras.length?mk:""}

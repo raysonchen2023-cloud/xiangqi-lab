@@ -44,7 +44,7 @@ const CHAR_ERA={x_swordboy:"qin",x_spiritgirl:"nanbei",x_martialgirl:"song",x_mi
 const JOURNEY_KEYS=["sw7Box","pSex","pChar","pStyle","botPiece","onboard1","journey","playSec","era","eraOpen","xp","xpDay","xpKeys","record","hintBonus","hintUse","undoBonus","undoDropIds","bag","jarGot","lingN","giftGames","dropMiss",
   "legend","legendGame","legBook","legRead","jStars","jPending","jPrev","jRun","jScene","jHid","jMig36","jpSeen","novelRead","sceneDone","storyEraTip","eraUser","study","campSeen","campStars",
   "npcBond","npcAsk","npcAskSeen","parkNpc","parkNpcLast","npcPity","parkAdj","visitGone","secrets","secretClue","secretSpots","secretWins","relics","relicSolved","relicAt","histSeen","histSolved","histTitle",
-  "innCur","innDrop","innAdj","innGuest","resumeLast","xhMake","xhMei","xhTitle","yuDay","yuHint","yuRoute","yuTitle","cupDrop","cupGot","cj","cjRun","shipAt","shipSolved","shipGames","shipLessonSeen","shipWins","shipArena","cjRunS","jRunS","battleSeal","battleTitle","battleVol","battleGrand","battleVolY","battleVolLegacy","battleMig","battleSeal0","cjRunB","jRunB","battlePlan","diff","shipDock","shipLearn","undoFree","shipGal","shipStale","shipRead","shipMore","evLog","evPawn","evHeld","evStash","jRunE","cjRunE","rdLog","firstWin","wkRead","visit7","chd","ep","cjRunEp","wmDays","wmPg","wmBm","wmScr","wmEcho","jRunW","sealGold","sealIntro","jRunC","rsHint","buddy","cjRunBd","ouyu","jRunO"].map(k=>"m_"+k)   /* 七星遇見玩法（07q-buddy.js，開發者 11/9）：buddy＝旅伴闖禍、驛站飛書、心結的進度，cjRunBd＝這兩種殘局解到一半的那一題 */   /* 回饋 856（開發者 11/9：女棋手分普通／稀有／傳說、機率加保底）：npcPity＝稀有、傳說女棋手的保底計數（06-cpu.js parkNpcNew） */   /* 回饋 838（開發者 11/9 選：全模式中斷接續）：jRunC＝新手訓練營玩到一半的那一課、rsHint＝對局裡用掉的提示棋黃框（主題訓練 jpRun、棋力測驗 quizRun 跟 themeStat、quizLog 一樣是棋手本人的，各格共用，不放這裡） */   /* 千秋印（07i2-seal.js，開發者 11/9）：sealGold＝各朝第一次鑄成金印的時間與修為已發、sealIntro＝看過「集章簿換成千秋印譜」說明卡。Gemini 遊玩樂趣評估（開發者 11/8 核准）：visit7＝七星來訪的次數、說過的話、小任務（07j-visit.js）；evStash＝千秋穿梭收進囊中、12 小時內再處理的突發事件（07h-qqev.js）；firstWin＝新手秒開局下過（或跳過）了；wkRead＝學習週報每天記一筆讀懂地圖比例，算「比上週」。意見回饋 737 第二期：rdLog＝讀過哪些棋譜、猜著法每盤答對幾手（壓縮成字串）。意見回饋 674：星槎在看哪一站、千秋殘局解開的題、正在解的那一題；675：航行難度、已停靠的站、學會的棋理、這盤用了幾次免費悔棋；685：七星同局圖鑑與熱身解開的題、看過困斃說明、讀過《雲河七星》哪幾章 */
+  "innCur","innDrop","innAdj","innGuest","resumeLast","xhMake","xhMei","xhTitle","yuDay","yuHint","yuRoute","yuTitle","cupDrop","cupGot","cj","cjRun","shipAt","shipSolved","shipGames","shipLessonSeen","shipWins","shipArena","cjRunS","jRunS","battleSeal","battleTitle","battleVol","battleGrand","battleVolY","battleVolLegacy","battleMig","battleSeal0","cjRunB","jRunB","battlePlan","diff","shipDock","shipLearn","undoFree","shipGal","shipStale","shipRead","shipMore","evLog","evPawn","evHeld","evStash","jRunE","cjRunE","rdLog","firstWin","wkRead","visit7","chd","ep","cjRunEp","wmDays","wmPg","wmBm","wmScr","wmEcho","jRunW","sealGold","sealIntro","jRunC","rsHint","buddy","cjRunBd","ouyu","jRunO","mnq"].map(k=>"m_"+k)   /* 七星遇見玩法（07q-buddy.js，開發者 11/9）：buddy＝旅伴闖禍、驛站飛書、心結的進度，cjRunBd＝這兩種殘局解到一半的那一題 */   /* 回饋 856（開發者 11/9：女棋手分普通／稀有／傳說、機率加保底）：npcPity＝稀有、傳說女棋手的保底計數（06-cpu.js parkNpcNew） */   /* 回饋 838（開發者 11/9 選：全模式中斷接續）：jRunC＝新手訓練營玩到一半的那一課、rsHint＝對局裡用掉的提示棋黃框（主題訓練 jpRun、棋力測驗 quizRun 跟 themeStat、quizLog 一樣是棋手本人的，各格共用，不放這裡） */   /* 千秋印（07i2-seal.js，開發者 11/9）：sealGold＝各朝第一次鑄成金印的時間與修為已發、sealIntro＝看過「集章簿換成千秋印譜」說明卡。Gemini 遊玩樂趣評估（開發者 11/8 核准）：visit7＝七星來訪的次數、說過的話、小任務（07j-visit.js）；evStash＝千秋穿梭收進囊中、12 小時內再處理的突發事件（07h-qqev.js）；firstWin＝新手秒開局下過（或跳過）了；wkRead＝學習週報每天記一筆讀懂地圖比例，算「比上週」。意見回饋 737 第二期：rdLog＝讀過哪些棋譜、猜著法每盤答對幾手（壓縮成字串）。意見回饋 674：星槎在看哪一站、千秋殘局解開的題、正在解的那一題；675：航行難度、已停靠的站、學會的棋理、這盤用了幾次免費悔棋；685：七星同局圖鑑與熱身解開的題、看過困斃說明、讀過《雲河七星》哪幾章 */
   .concat(["cpuRate","bonusKeys","record","arenaStamps","play","play2","playPrev","playBak"].map(k=>"xq_"+k));   /* 評比循環第 2 輪：playPrev（上一版，存檔壞掉時讀）、playBak（被別的分頁換掉的棋）跟著存檔格走；保存紀錄 xq_saveLog 是這支手機的，不跟格子走 */
 const JK=new Set(JOURNEY_KEYS),SLOT_N=3;
 /* 意見回饋 668：舊玩家判斷要在首頁畫出來以前做（首頁會順手寫一些旅程鍵，例如 lingN），所以這裡直接讀 localStorage；null＝已經過渡過了 */
@@ -230,7 +230,7 @@ async function xf2Check(){let O=null;try{O=JSON.parse(localStorage.getItem("xq_x
   const drop=()=>{try{localStorage.removeItem("xq_xfOut")}catch(e){}};if(Date.now()>(+O.exp||0)+XF2_ACK_TTL){drop();return{st:"gone"}}
   const t=`${XQNet.root()}/x/${O.id}/m`,m=await XQNet.getRetained(t,6000);let M=null;try{M=m?JSON.parse(m):null}catch(e){}
   if(M&&M.done&&M.ah===O.ah){drop();try{localStorage.setItem("xq_xfMoved",JSON.stringify({at:+M.done||Date.now()}))}catch(e){}XQNet.putRetained(t,"");return{st:"moved",at:+M.done||Date.now()}}
-  if(M&&typeof M.iv==="string"&&Date.now()<=+M.exp)return{st:"pending",exp:+M.exp};
+  if(M&&(typeof M.iv==="string"||typeof M.c==="string")&&Date.now()<=+M.exp)return{st:"pending",exp:+M.exp};   /* v4 的說明是 {v:4,n,exp,c}（c＝加密過的說明），沒有 iv */
   if(!m&&!(XQNet.status&&XQNet.status()==="up"))return{st:"unknown"};
   drop();return{st:"gone"}}
 /* XFER2:END */
@@ -240,6 +240,72 @@ function xf2Watch(){clearTimeout(XF2_T);XF2_T=null;let O=null;try{O=JSON.parse(l
   xf2Check().then(r=>{if(r.st==="moved"){modal(`<div class="em">📱</div><h2>進度已經轉到新手機</h2><p class="muted">新手機在 ${fmtAt(r.at)} 收下了這支手機的進度（修為、戰績、存檔、棋譜）。之後請用新手機玩：這支手機的進度不會再跟新手機同步，兩支一起玩會各記各的。這支手機的資料沒有被刪掉。</p>`,[["知道了",null]]);return}
     if(r.st==="pending"||(r.st==="unknown"&&Date.now()<=(+O.exp||0)))XF2_T=setTimeout(xf2Watch,45000)}).catch(()=>{XF2_T=setTimeout(xf2Watch,45000)})}
 if(typeof xfUpload==="function"&&typeof xfDownload==="function"){xfUpload=xf2Upload;xfDownload=xf2Download}
+/* ---------- 📱 轉移碼 v4（紅藍隊 r15 R03＝威脅模型 I5，11/13；測試 xiangqi-lab/tools/test-xfer4.js、重現 review_loop/rounds/r15/redblue/repro-xfer-topic-bruteforce-v4.js）----------
+   v3 的毛病：主題 id＝SHA-256("xqlab-xfer-id:"+碼) 前 80 位元，只算一次、沒有鹽；碼 8 碼（31^8≈2^39.6），看得到主題名就能用 GPU 幾分鐘反推出碼。
+   說明（n、exp、h）是明文、分段雜湊也是明文，知道碼的人還能在新手機下載前把整份換掉。
+   v4：① xf4Keys 只做一次 PBKDF2-HMAC-SHA512（30 萬次，鹽 "xqlab-xfer-v4"）deriveBits 512 位元：前 256 位元＝AES-GCM 金鑰，後 256 位元切成主題 id（80 位元）和回條 ah（176 位元）。
+      猜一次碼就要算一次完整的 PBKDF2，主題 id、回條都不能拿來快速比對。SHA-512 一個區塊剛好 512 位元，攻擊的人不能只算一半省時間。
+   ② 碼 10 碼（31^10≈2^49.5），xf4Code 用拒絕取樣（不偏向前幾個字）；字元集照舊（沒有 I、L、O、0、1）。
+   ③ 說明 {v:4,n,exp,c}：c＝AES-GCM 加密的 {sid（這次上傳的隨機代號）,gz,at}，AAD＝版本、種類、段數、期限；每一段各自加密（自己的 iv），AAD 再加 sid 和第幾段。
+      改說明的 n 或 exp、換掉、調換順序、拿別次上傳的段來混、截短，都解不開；期限沒有金鑰就改不了。
+   ④ 一次性：新手機收完清掉各段、說明換成回條；這支手機記住收過的 sid（xq_xfUsed，存檔取代後也留著），同一份資料被人重放也不收；過期的不收、順手清掉。
+   ⑤ 舊的 8 碼（v3）到 XF4_V3_UNTIL 前照收（走 xf2Download），回傳的資料帶 xfWarn，畫面提示「安全性較低，建議重新產生」；之後一律拒收。 */
+/* XFER4:BEGIN（只用 crypto、XQNet、XQSave、localStorage、05-settings 的 XFER 區段和上面的 XFER2 區段；test-xfer4.js 三段一起切出來在 node 跑） */
+const XF4_LEN=10,XF4_IT=300000,XF4_SALT="xqlab-xfer-v4",XF4_PB=90000,XF4_USED="xq_xfUsed",XF4_GOT=new Map();
+const XF4_V3_UNTIL=Date.UTC(2026,11,31,16);   /* 舊 8 碼收到臺灣時間 2027-01-01 00:00 為止（開發者可改） */
+const XF4_WARN="這組是舊版 App 產生的 8 碼轉移碼，安全性較低（比較容易被猜出來）。建議兩支手機都更新 App，在舊手機重新產生 10 碼的轉移碼再搬一次。";
+const xf4Hx=u=>Array.from(u,x=>x.toString(16).padStart(2,"0")).join("");
+function xf4Code(){const a=[],N=XF_ABC.length,lim=256-256%N;while(a.length<XF4_LEN)for(const x of crypto.getRandomValues(new Uint8Array(16)))if(x<lim&&a.length<XF4_LEN)a.push(XF_ABC[x%N]);return a.join("")}
+async function xf4Keys(code){const te=new TextEncoder(),c=xfNorm(code),base=await crypto.subtle.importKey("raw",te.encode(c),"PBKDF2",false,["deriveBits"]);
+  const b=new Uint8Array(await crypto.subtle.deriveBits({name:"PBKDF2",salt:te.encode(XF4_SALT),iterations:XF4_IT,hash:"SHA-512"},base,512));
+  const key=await crypto.subtle.importKey("raw",b.slice(0,32),{name:"AES-GCM"},false,["encrypt","decrypt"]),id=xf4Hx(b.slice(32,42)),ah=xf4Hx(b.slice(42,64));b.fill(0);
+  return{v:4,id,ah,key,topic:k=>`${XQNet.root()}/x/${id}/${k}`}}
+const xf4Aad=(kind,n,exp,sid,i)=>new TextEncoder().encode(`xqlab-xfer|v4|${kind}|n=${n}|exp=${exp}`+(kind==="p"?`|sid=${sid}|i=${i}`:""));
+async function xf4Seal(K,u,aad){const iv=crypto.getRandomValues(new Uint8Array(12)),c=new Uint8Array(await crypto.subtle.encrypt({name:"AES-GCM",iv,additionalData:aad},K.key,u)),o=new Uint8Array(12+c.length);o.set(iv);o.set(c,12);return xfB64(o)}
+async function xf4Open(K,s,aad){const u=xfUnB64(String(s));if(u.length<28)throw new Error("太短");return new Uint8Array(await crypto.subtle.decrypt({name:"AES-GCM",iv:u.subarray(0,12),additionalData:aad},K.key,u.subarray(12)))}
+function xf4UsedAll(){let o=null;try{o=JSON.parse(localStorage.getItem(XF4_USED)||"null")}catch(e){}const t=Date.now(),r={};if(o&&typeof o==="object")for(const k in o)if(/^[0-9a-f]{32}$/.test(k)&&+o[k]>t)r[k]=+o[k];return r}
+/* 舊手機：同 xfUpload（回 {K,exp,n,kb,games}），另外記 xq_xfOut 等回條。code 要是 10 碼（xf4Code 產生） */
+async function xf4Upload(code){const c=xfNorm(code);if(c.length!==XF4_LEN)throw new Error("轉移碼要 10 碼");const K=await xf4Keys(c);let games={};try{games=await xfGamesAll()}catch(e){}
+  const dump=XQSave.dump();delete dump.xq_xfOut;delete dump.xq_xfMoved;delete dump[XF4_USED];
+  const te=new TextEncoder(),zip=await xfZip(te.encode(JSON.stringify({v:2,at:Date.now(),data:dump,slots:await slotAll(),games}))),n=Math.max(1,Math.ceil(zip.length/XF4_PB));
+  if(n>500)throw new Error("資料太大，轉移碼帶不動：請改用「匯出成檔案」");
+  const exp=Date.now()+XF_TTL,sid=xf4Hx(crypto.getRandomValues(new Uint8Array(16))),parts=[];
+  for(let i=0;i<n;i++)parts.push(await xf4Seal(K,zip.subarray(i*XF4_PB,(i+1)*XF4_PB),xf4Aad("p",n,exp,sid,i)));
+  for(let i=0;i<n;i++)if(!await xf2Put(K.topic(i),parts[i])){xfWipe(K,n);throw new Error("上傳到一半斷線了，已上傳的部分已經清掉，請再按一次產生轉移碼")}
+  const meta=JSON.stringify({v:4,n,exp,c:await xf4Seal(K,te.encode(JSON.stringify({sid,gz:!!window.CompressionStream,at:Date.now()})),xf4Aad("m",n,exp))});
+  if(!await xf2Put(K.topic("m"),meta)){xfWipe(K,n);throw new Error("連不上線上伺服器，等一下再試")}
+  try{localStorage.setItem("xq_xfOut",JSON.stringify({id:K.id,ah:K.ah,exp,at:Date.now()}))}catch(e){}
+  try{if(typeof xf2Watch==="function")xf2Watch()}catch(e){}
+  return{K,exp,n,kb:Math.ceil(parts.reduce((a,p)=>a+p.length,0)/1024),games:Object.values(games).reduce((a,l)=>a+l.length,0)}}
+/* 新手機：10 碼走 v4；8 碼是舊版（v3），期限內照收但帶 xfWarn。回解開的資料，錯誤丟 Error（訊息直接給使用者看） */
+async function xf4Download(code,prog){const c=xfNorm(code);
+  if(c.length===8){if(Date.now()>XF4_V3_UNTIL)throw new Error("這是舊版 App 的 8 碼轉移碼，已經停止支援：請把舊手機的 App 更新到最新版，再重新產生 10 碼的轉移碼");
+    const D=await xf2Download(c,prog);if(D&&typeof D==="object")D.xfWarn=XF4_WARN;return D}
+  if(c.length!==XF4_LEN)throw new Error("轉移碼是 10 碼（舊版 App 產生的是 8 碼）");
+  const K=await xf4Keys(c),lost="找不到這組轉移碼：可能打錯、過期，或已經用過了",fake="說明對不上：轉移碼不對，或資料已經被換掉了。請在舊手機重新產生轉移碼";
+  let m=null;for(let k=0;k<2&&!m;k++)m=await XQNet.getRetained(K.topic("m"),k?6000:10000);if(!m)throw new Error(lost);
+  let M=null;try{M=JSON.parse(m)}catch(e){}
+  if(M&&M.done){if(typeof M.ah==="string"&&M.ah===K.ah)throw new Error(`這組轉移碼已經用過了：${xf2Hm(M.done)} 已經轉到另一支手機。要再搬一次，請在舊手機重新產生`);throw new Error(lost)}
+  if(!M||M.v!==4||typeof M.c!=="string")throw new Error(fake);
+  const n=+M.n,exp=+M.exp;if(!(Number.isInteger(n)&&n>=1&&n<=500&&exp>0))throw new Error(fake);
+  let I=null;try{I=JSON.parse(new TextDecoder().decode(await xf4Open(K,M.c,xf4Aad("m",n,exp))))}catch(e){}
+  if(!I||typeof I.sid!=="string"||!/^[0-9a-f]{32}$/.test(I.sid))throw new Error(fake);
+  if(Date.now()>exp){await xfWipe(K,n);XF4_GOT.delete(K.id);throw new Error("這組轉移碼已經過期，請在舊手機重新產生")}
+  const U=xf4UsedAll();if(U[I.sid])throw new Error("這份資料這支手機已經收過了，不再收第二次。要再搬一次，請在舊手機重新產生轉移碼");
+  let got=XF4_GOT.get(K.id);if(!got||got.sid!==I.sid){got={sid:I.sid,p:[]};XF4_GOT.set(K.id,got)}
+  for(let i=0;i<n;i++){if(prog)prog(i+1,n);if(got.p[i])continue;let ok=null,bad=false;
+    for(let k=0;k<XF2_TRY&&!ok;k++){const p=await XQNet.getRetained(K.topic(i),k?6000:10000);if(p){try{ok=await xf4Open(K,p,xf4Aad("p",n,exp,I.sid,i))}catch(e){bad=true}}if(!ok&&k<XF2_TRY-1)await xf2Wait(600*(k+1))}
+    if(!ok)throw new Error(`第 ${i+1}／${n} 段${bad?"對不上（被改過，或在路上壞掉了）":"收不到"}。已收好的 ${i} 段先留著：轉移碼到 ${xf2Hm(exp)} 前都有效，網路穩一點再按一次「下載資料」，會從這段接著下。`);
+    got.p[i]=ok}
+  let D=null;try{const all=new Uint8Array(got.p.reduce((a,p)=>a+p.length,0));let o=0;for(const p of got.p){all.set(p,o);o+=p.length}
+    D=JSON.parse(new TextDecoder().decode(I.gz?await xfZip(all,true):all))}catch(e){XF4_GOT.delete(K.id);throw new Error("解不開：資料不完整，請在舊手機重新產生轉移碼")}
+  if(!D||typeof D!=="object"||!D.data||typeof D.data!=="object"){XF4_GOT.delete(K.id);throw new Error("收到的資料格式不對，請在舊手機重新產生轉移碼")}
+  XF4_GOT.delete(K.id);U[I.sid]=exp+XF2_ACK_TTL;const us=JSON.stringify(U);try{localStorage.setItem(XF4_USED,us)}catch(e){}D.data[XF4_USED]=us;   /* 存檔取代（XQSave.load 會清 localStorage）後也記得收過 */
+  const a=[];for(let i=0;i<n;i++)a.push(XQNet.putRetained(K.topic(i),""));await Promise.all(a);
+  await XQNet.putRetained(K.topic("m"),JSON.stringify({v:4,done:Date.now(),ah:K.ah,exp:Date.now()+XF2_ACK_TTL}));
+  return D}
+/* XFER4:END */
+if(typeof xf4Upload==="function"&&typeof xf4Download==="function"){xfUpload=xf4Upload;xfDownload=xf4Download}
 setTimeout(()=>{try{if(localStorage.getItem("xq_xfOut"))xf2Watch()}catch(e){}},9000);
 
 /* ---------- 存檔與讀檔（開頭畫面、設定、我的頁共用） ---------- */

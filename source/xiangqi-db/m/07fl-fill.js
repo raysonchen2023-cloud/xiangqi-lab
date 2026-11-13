@@ -22,6 +22,28 @@ function xflPlan(o){const W=o.W,av=o.av,nw=o.nw||768,nh=o.nh||1376,H0=W*nh/nw,fi
   if(!r){H=fitH;r={lo:0,hi:0}}
   const mx=H-av,top=Math.min(r.hi,Math.max(r.lo,lockTop?0:mx*XFL_TOPW)),w=Math.min(W,H*nw/nh);
   return{w:Math.round(w),H:Math.round(H),top:Math.max(0,Math.round(top)),crop:Math.max(0,Math.round(mx)),fill:Math.round(w/W*1000)/1000}}
+/* 11/13 首頁寬版圖（07z HMW：直版 3:4、橫版 16:10，圖本身就是那個比例）：不再放大裁切、模糊延伸，改成 cover 填滿可用寬高。
+   純計算：o={W,av,nw,nh,off,safe:{l,r,t,b} 每邊最多裁掉圖寬／圖高的多少}；裁的量先兩邊平分，一邊超過安全區就把多的挪到另一邊；
+   兩邊加起來還不夠＝少放大一點（只在比例很極端時：左右或上下留一點空隙，由 ③ 模糊底補）。off>8（圖上面還有內容）不裁上面。
+   回傳 {w 圖寬, h 圖高, left 圖左緣（負＝左邊裁掉）, top 上面裁掉幾 px, crop 上下共裁幾 px, gx/gy 左右／上下沒蓋滿的空隙} */
+function xflCover(o){const W=o.W,av=o.av,nw=o.nw,nh=o.nh,S=Object.assign({l:0,r:0,t:0,b:0},o.safe||{}),lockTop=(o.off||0)>8;if(!(W>0&&av>0&&nw>0&&nh>0))return null;
+  const t0=lockTop?0:S.t,sMin=Math.min(W/nw,av/nh);let s=Math.max(W/nw,av/nh);
+  s=Math.min(s,W/(nw*Math.max(.01,1-S.l-S.r)),av/(nh*Math.max(.01,1-t0-S.b)));s=Math.max(s,sMin);
+  const w=nw*s,h=nh*s,cx=Math.max(0,w-W),cy=Math.max(0,h-av);
+  const cut=(c,a,b,L)=>{let p=c/2;if(p>a*L)p=a*L;if(c-p>b*L)p=Math.min(a*L,c-b*L);return Math.max(0,Math.min(c,p))};
+  const lx=cut(cx,S.l,S.r,w),ty=lockTop?0:cut(cy,t0,S.b,h);
+  return{w:Math.round(w),h:Math.round(h),left:Math.round(cx?-lx:(W-w)/2),top:Math.round(ty),crop:Math.round(cy),gx:Math.max(0,Math.round(W-w)),gy:Math.max(0,Math.round(av-h))}}
+/* 首頁寬版圖排版：成功回傳 true；k＝07z 的 "p34"／"l1610"。沿用 xfl-port（07sp 推回範圍 xflVis、標題條和主張紙條跟著看得到的上緣、標籤晚到重排），多一個 xfl-hmw 記號 */
+function xflHmw(V,P,nw,nh,k){const vr=V.getBoundingClientRect(),pr=P.getBoundingClientRect(),pb=parseFloat(getComputedStyle(V).paddingBottom)||0,off=pr.top-vr.top+V.scrollTop,av=V.clientHeight-pb-off,W=pr.width;
+  const sf=typeof HMW!=="undefined"&&HMW[k]?HMW[k].safe:null,pl=xflCover({W,av,nw,nh,off,safe:sf});if(!pl||av<120)return false;
+  if(typeof r07Off==="function")xflR07Off(V);
+  if(P.dataset.xflMt==null)P.dataset.xflMt=P.style.marginTop||"";
+  Object.assign(P.style,{maxWidth:"none",width:pl.w+"px",marginLeft:pl.left+"px",marginTop:(pl.top?-pl.top:0)+"px"});P.style.setProperty("--xflT",pl.top+"px");P.classList.toggle("xfl-nar",pl.gx>1);
+  xflCss();V.classList.add("xfl-port","xfl-hmw");P._xflKey=xflKey(xflItems(P,P.getBoundingClientRect()));
+  {const ex=V.scrollHeight-V.clientHeight;if(ex<=pl.crop-pl.top+30){V.classList.add("xfl-clip");V.scrollTop=0}}
+  xflBg(V,P,pl.gx>1||pl.gy>1);
+  if(typeof r07Push==="function")r07Push(V,P);if(typeof spfSoon==="function")spfSoon(0);if(typeof hmClamp==="function")try{hmClamp(P)}catch(e){}
+  xflWatch(V,P);return true}
 /* 量 P 裡所有看得到的可點東西（底部固定那條、走路角色、縮放提示、標題條不算）在圖高的比例；扣掉 07sp 的上下推移 */
 const XFL_SEL=".shp-spot,.po-sight,[data-r07m],.pz-go,.ex-bow,.cy,[data-xfl]",XFL_SKIP=".hm-go-bar,.shw,.hm-me,.zm-ex,.zm-tip,.shp-cap";   /* 只量固定的入口和點選區（.cy＝07y 經典世界天上的朝代殘影，點了會說是哪一朝，也算）；旁白泡泡、角色這種會一直出現消失的不算，免得一直重排 */
 function xflItems(P,pr){const out=[];if(!pr||!pr.height)return out;
@@ -36,7 +58,8 @@ function xflCss(){if(document.getElementById("xflCss"))return;const s=document.c
 #view.xfl-clip{overflow:hidden!important}
 #view.xfl-port .shp-page.cq.xfl-nar{box-shadow:0 0 22px rgba(20,12,6,.45)}
 #view.xfl-port .shp-page .shp-cap{top:var(--xflT,0px)}
-#view.xfl-port .shp-page .hm-slogan{top:calc(var(--xflT,0px) + 10px)}`;document.head.append(s)}
+#view.xfl-port .shp-page .hm-slogan{top:calc(var(--xflT,0px) + 10px)}
+#view.xfl-hmw .shp-page .hm-slogan{top:calc(var(--xflT,0px) + var(--hmSlT,1.4%))}`;document.head.append(s)}
 /* ③ 模糊底：蓋住 #view 的範圍；圖換了（日夜、季節、雨雪）跟著換 */
 function xflBg(V,P,on){let B=document.getElementById("xflBg");
   if(!on||!V||!P){if(B)B.hidden=true;if(V)V.classList.remove("xfl-bgon");return}
@@ -46,7 +69,7 @@ function xflBg(V,P,on){let B=document.getElementById("xflBg");
   const r=V.getBoundingClientRect();Object.assign(B.style,{left:Math.round(r.left)+"px",top:Math.round(r.top)+"px",width:Math.round(r.width)+"px",height:Math.round(V.clientHeight)+"px"});B.hidden=false;B._P=P;V.classList.add("xfl-bgon");
   if(!im.dataset.xflL){im.dataset.xflL="1";im.addEventListener("load",()=>{const b=document.getElementById("xflBg");if(im.isConnected&&b&&!b.hidden)xflBg(V,P,true)})}}
 /* 還原 ① 的裁切（每次重排前先還原，再照新的畫面大小算） */
-function xflClear(V,P){if(V)V.classList.remove("xfl-port","xfl-clip");if(P){if(P.dataset.xflMt!=null){P.style.marginTop=P.dataset.xflMt;delete P.dataset.xflMt}P.style.removeProperty("--xflT");P.classList.remove("xfl-nar")}}
+function xflClear(V,P){if(V)V.classList.remove("xfl-port","xfl-clip","xfl-hmw");if(P){if(P.dataset.xflMt!=null){P.style.marginTop=P.dataset.xflMt;delete P.dataset.xflMt}P.style.removeProperty("--xflT");P.classList.remove("xfl-nar")}}
 /* 07sp 用：直向填滿時「看得到的範圍」（client 座標）；其他情況回傳 null（照原本量整張圖） */
 function xflVis(P,pr){const V=document.getElementById("view");if(!V||!V.classList.contains("xfl-port")||!V.contains(P))return null;pr=pr||P.getBoundingClientRect();
   const vr=V.getBoundingClientRect(),pb=parseFloat(getComputedStyle(V).paddingBottom)||0;return{t:Math.max(pr.top,vr.top),b:Math.min(pr.bottom,vr.top+V.clientHeight-pb)}}
@@ -70,7 +93,9 @@ let xflR07Off=function(){},xflR07Wide=null;
 (()=>{if(!XFL_ON||typeof r07Wide!=="function"||typeof r07Off!=="function"||typeof ttFill!=="function")return;
   const off0=r07Off,wide0=r07Wide,tt0=ttFill;xflR07Off=off0;xflR07Wide=wide0;
   r07Off=function(V){try{xflClear(V,V&&V.querySelector(".shp-page.cq"));xflBg(V,null,false)}catch(e){}return off0.apply(this,arguments)};
-  r07Wide=function(V,P,vr,pr,nw,nh){try{xflClear(V,P);xflBg(V,null,false);if(xflPort(V,P,nw,nh))return true;vr=V.getBoundingClientRect();pr=P.getBoundingClientRect()}catch(e){}
+  r07Wide=function(V,P,vr,pr,nw,nh){try{xflClear(V,P);xflBg(V,null,false);
+      {const hk=typeof hmwSync==="function"?hmwSync(V,P):null;if(hk==="wait"){xflR07Off(V);return true}if(hk&&xflHmw(V,P,nw,nh,hk))return true}   /* 11/13 首頁寬版圖：比例跨過門檻＝07z 原地換圖，等圖載好再排；用寬版＝cover 填滿 */
+      if(xflPort(V,P,nw,nh))return true;vr=V.getBoundingClientRect();pr=P.getBoundingClientRect()}catch(e){}
     const r=wide0.call(this,V,P,vr,pr,nw,nh);try{xflBg(V,P,!!r&&(V.classList.contains("r07-fit")||V.classList.contains("r07-side")))}catch(e){}return r};
   /* 換頁時 #view 內容整個換掉，ttFill 要 350ms 後才重排：舊圖框一離開就立刻收掉模糊底、還原「不給捲」，新頁不會先閃舊圖、也不會短暫不能捲 */
   try{const V=document.getElementById("view");if(V&&window.MutationObserver)new MutationObserver(()=>{const B=document.getElementById("xflBg");if(B&&!B.hidden&&B._P&&!B._P.isConnected)xflBg(V,null,false);

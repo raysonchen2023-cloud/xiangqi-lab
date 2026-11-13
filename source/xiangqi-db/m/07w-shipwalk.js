@@ -463,7 +463,8 @@ function shwHitCut(L,box,l,t,w,h){try{const now=performance.now();let K=L._shwKo
   const W2=a[2]-a[0],H2=a[3]-a[1];return W2<16||H2<16?null:[a[0],a[1],W2,H2]}catch(e){return[l,t,w,h]}}
 function shwBotHook(S){if(S.botHook||!S.box||!S.box.isConnected)return;S.botHook=1;shwBotCss();const L=S.o.layer,box=S.box;
   const hit=document.createElement("button");hit.type="button";hit.className="shw-me";hit.setAttribute("aria-label","我的角色：問問題、聽棋語");
-  const hint=document.createElement("button");hint.type="button";hint.className="shw-hint";hint.textContent="💬";hint.setAttribute("aria-label","問問題、聽棋語");
+  const hint=document.createElement("span");hint.className="shw-hint";hint.textContent="💬";hint.setAttribute("aria-hidden","true");   /* 第 16 輪版面缺陷清零：頭上的 💬 早就不接點選（pointer-events:none，點的是包住它的 .shw-me），不再當成一顆 27×22 的按鈕（量測算成太小、跟 .shw-me 重疊；讀螢幕也念兩次） */
+  
   const say=document.createElement("div");say.className="shw-say";say.setAttribute("aria-live","polite");
   for(const e of[hit,hint,say])e.style.display="none";L.append(hit,hint,say);
   let menu=null,head=[0,0],sayT=0;

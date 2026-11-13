@@ -627,6 +627,9 @@ html[data-era=ming] .topbar,html[data-era=qing] .topbar{border-bottom-width:4px}
 .cpu-seg button{flex:1;min-width:0;height:44px;border-radius:9px;font-size:14px;font-weight:500;color:var(--barink);opacity:.75;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;transition:background .15s,color .15s}
 .cpu-seg button.on{background:var(--barink);color:var(--bar);opacity:1;font-weight:700;box-shadow:0 1px 3px #0000004d}
 .cpu-seg button:not(.on):active{background:#ffffff14}
+/* 第 16 輪版面缺陷清零（r15 device-fit：iPad 最窄側欄 320 寬，頂欄標題只剩 87px，「🥇 晉級賽」「📚 練功房」各 37px 寬、字被截成「🥇 ⋯」還壓到右邊的 ⋯）：
+   窄到 359px 以下改成圖示一行、字一行（字 11px，keep-all 只在空格換行，三個字放得下），按鈕照樣 44px 高 */
+@media (max-width:359px){.cpu-seg button{white-space:normal;word-break:keep-all;text-overflow:clip;font-size:11px;line-height:1.15;padding:0 1px}}
 .cpu-chip{--c:var(--accent2);flex:none;display:flex;align-items:center;gap:6px;max-width:52%;padding:5px 8px 5px 12px;border-radius:12px;text-align:right;
   border:1px solid var(--line);border-color:color-mix(in srgb,var(--c) 45%,var(--line));background:var(--card);background:color-mix(in srgb,var(--c) 10%,var(--card));transition:transform .1s}
 .cpu-chip.rk{--c:var(--warn)}
@@ -1535,3 +1538,7 @@ html[data-lefty] .tskip{right:auto;left:14px}
 /* ③ 提示小泡泡（.tmx-bub，例如出口旁「要回去，點這裡」）整個不接點選：泡泡貼在目標上方 10px，會蓋到出口標籤往上撐的 44px 點選範圍（第 12 輪量到「回星槎」只剩 31 高）；
    泡泡本身只有字、點了本來就沒有作用（點任何地方它都會收起），點選穿過去給底下的出口 */
 .tmx-bub{pointer-events:none}
+/* 11/13 第 16 輪版面缺陷清零（r15 device-fit：91 個「裝置×頁面」有小於 44×44 的可點元素）：外觀不變，用透明的 ::after 把點選範圍擴到 44×44。
+   ① 經典世界首頁、觀星閣、藏譜石窟、棋譜庫天上的朝代殘影（07y .cy，例「秦長城與烽火台」41×35、「赤壁樓船」38×29）：同一頁殘影的中心最少隔圖寬 12%（375 寬約 45px），擴到 44 不會互相蓋到；
+      殘影層 z-index 1，入口標籤、出口都在上面，蓋到的地方照樣點到它們 */
+.cy::after{content:"";position:absolute;left:50%;top:50%;width:max(100%,44px);height:max(100%,44px);transform:translate(-50%,-50%)}

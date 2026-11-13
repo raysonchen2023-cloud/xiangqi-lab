@@ -194,7 +194,7 @@ function oppCard(oid,name,opt){opt=opt||{};let live=null;try{live=window.XQNet&&
   const N=(p.w||0)+(p.l||0)+(p.d||0),ago=p.at?Math.max(0,Math.round((Date.now()-p.at)/60000)):null;
   const agoTx=ago==null?"":ago<1?"剛剛":ago<60?ago+" 分鐘前":ago<1440?Math.round(ago/60)+" 小時前":Math.round(ago/1440)+" 天前";
   const ST2={idle:"閒置中",seeking:"找對手中",playing:"對局中",watching:"觀戰中"};
-  sheet("棋友資料",b=>{b.innerHTML=`<div style="text-align:center"><div style="font-size:22px;font-weight:900;font-family:var(--serif)">${esc(p.name||name||"棋友")}</div>${isCloud(oid)||p.bot?`<div style="margin-top:4px">${cloudTag(true,true)}</div><div class="muted" style="font-size:12.5px;margin-top:2px">${cloudTip()}</div>`:""}${p.title?`<div style="color:#C8102E;font-weight:900;margin-top:2px">🏯 ${esc(p.title)}</div>`:""}
+  sheet("棋友資料",b=>{b.innerHTML=`<div style="text-align:center"><div style="font-size:22px;font-weight:900;font-family:var(--serif)">${esc(lbnShow(p.id||oid,p.name||name)||"棋友")}</div>${isCloud(oid)||(p.bot&&p.bot.npc)?`<div style="margin-top:4px">${cloudTag(true,true)}</div><div class="muted" style="font-size:12.5px;margin-top:2px">${cloudTip()}</div>`:""}${p.title?`<div style="color:#C8102E;font-weight:900;margin-top:2px">🏯 ${esc(p.title)}</div>`:""}
       <div style="margin:6px 0">${p.pts!=null&&window.XQNet?`<span class="pill" style="font-size:15px;padding:4px 12px">🏅 ${esc(XQNet.rankOf(p.pts))}・${p.pts||0} 分</span>`:""}</div>
       <div class="muted">${live?"🟢 在線上・"+(ST2[live.st]||""):"⚪ 不在線上"+(agoTx?"・上次看到 "+agoTx:"")}${p.city?"・📍"+esc(p.city):""}${p.kind?"・"+esc(p.kind):""}</div></div>
     <div class="card" style="margin-top:12px"><div class="muted" style="margin-bottom:6px">他的線上戰績${live?"":snap?"（上次看到的資料）":""}</div>${p.w==null?'<div class="muted">還沒有他的戰績資料（他上線時會更新）</div>':`<div style="display:grid;grid-template-columns:repeat(4,1fr);text-align:center">
@@ -213,7 +213,7 @@ function oppCard(oid,name,opt){opt=opt||{};let live=null;try{live=window.XQNet&&
    改成照長棋速度的排名直接說：前 10% 學得飛快、前 30% 學習速度快、中間穩定成長、15～35% 進步偏慢、最後 15% 還沒明顯進步 */
 const speedLab=p=>p==null||!isFinite(p)?"還在觀察中":p>=90?"學得飛快":p>=70?"學習速度快":p>=35?"穩定成長":p>=15?"進步偏慢":"還沒明顯進步";
 /* 意見回饋 283：棋友（含虛擬玩家）公開的最近 30 盤：勝負、執紅執黑、怎麼輸的、常用開局，整理出弱點；點一盤就打開棋譜 */
-function playerGames(oid,name){sheet(`📜 ${name||"棋友"} 的線上棋譜`,async b=>{b.innerHTML='<p class="muted">從大廳讀取他的對局…</p>';
+function playerGames(oid,name){sheet(`📜 ${lbnShow(oid,name)||"棋友"} 的線上棋譜`,async b=>{b.innerHTML='<p class="muted">從大廳讀取他的對局…</p>';
   const H=await XQNet.fetchHist(oid,5000).catch(()=>null);if(!b.isConnected)return;
   /* 意見回饋 415：公開資料卡只畫一組分數——他的「我的棋力」五邊形（新版有 penK 軸名、penS 步數／題數、penL 樣本還少）＋進步速度；
      不再畫舊版的天賦長條（那是另一把尺，會跟五邊形的開局、中局、殘局對不起來） */
@@ -255,7 +255,7 @@ function playerGames(oid,name){sheet(`📜 ${name||"棋友"} 的線上棋譜`,as
     ${pfCard}
     ${pub.length?"":`<p class="muted" style="font-size:12.5px;margin:8px 2px 0">他還沒公開自己的對局（等他下完下一盤就會有），下面先用你跟他下過的 ${N} 盤來分析。</p>`}
     <div class="card" style="margin-top:8px"><b>🔎 弱點分析</b>${tips.map(t=>`<p style="margin:6px 0 0;line-height:1.6">・${esc(t)}</p>`).join("")}<p id="pgop" class="muted" style="margin:6px 0 0;font-size:13px">讀取開局習慣中…</p></div>
-    <div class="sec-t">對局（點一盤看棋譜）</div><div class="items" style="padding:0">${L.map(x=>`<button class="item" data-g="${esc(x.gid)}" data-id="${esc(x.id)}"><span class="lb">${x.res==="w"?"🏆":x.res==="l"?"💪":"🤝"}</span><span class="tx"><b>${rl(x)}・對 ${esc(x.opp||"")}</b><span>${new Date(x.at).toLocaleDateString()}・${x.sd?"執"+(x.sd==="r"?"紅":"黑")+"・":""}${x.n||0} 步${x.why?"・"+esc(x.why):""}</span></span><span class="muted">›</span></button>`).join("")}</div>`;
+    <div class="sec-t">對局（點一盤看棋譜）</div><div class="items" style="padding:0">${L.map(x=>`<button class="item" data-g="${esc(x.gid)}" data-id="${esc(x.id)}"><span class="lb">${x.res==="w"?"🏆":x.res==="l"?"💪":"🤝"}</span><span class="tx"><b>${rl(x)}・對 ${esc(x.opp==="你"?x.opp:lbnShow(x.oid||"",x.opp||""))}</b><span>${new Date(x.at).toLocaleDateString()}・${x.sd?"執"+(x.sd==="r"?"紅":"黑")+"・":""}${x.n||0} 步${x.why?"・"+esc(x.why):""}</span></span><span class="muted">›</span></button>`).join("")}</div>`;
   b.querySelectorAll("[data-g]").forEach(x=>x.onclick=async()=>{vibrate(5);
     if(!pub.length){const id=x.dataset.id,has=(await api("/db/items?c=pvp&limit=500").catch(()=>({items:[]}))).items.some(i=>i.id===id)||await netRecover({gid:x.dataset.g,rid:id});
       if(has){closeSheet();location.hash="#/db/pvp/"+encodeURIComponent(id)}else toast("這盤沒存到棋譜，伺服器上也找不到了");return}
@@ -294,7 +294,7 @@ function histList(box,reps){let kind=store.get("histKind","all"),res="",limit=40
         R=ta!=null?{score:Math.round(ta),grade:gradeFor(Math.round(ta))[0]}:rpOk?rp:null,nr=x.c==="pvp"&&nh.find(hh=>hh.rid===x.it.id);
       const lab=r==="w"?"勝":r==="l"?"負":r==="d"?"和":r==="x"?"✕":(r||"—").slice(0,1);
       const why=String(x.it.result||"").replace(/^.*?（/,"").replace(/）$/,"");
-      grp.push(`<button class="st-g" data-c="${x.c}" data-id="${esc(id)}"><span class="dot ${r==="w"||r==="l"?r:""}">${esc(lab)}</span><span class="tx"><b>${x.k==="cpu"?"🤖 ":"👥 "}${/-s\d+$/.test(String(x.it.id))?"🀄 車輪戰・":""}${esc(x.opp||"")}${nr&&isCloud(nr.oid)?cloudTag(true):""}${x.c==="pvp"&&x.side?` <i class="opp-i" data-oid="${esc(nr&&nr.oid||"")}" data-on="${esc(x.opp||"")}" style="font-style:normal;font-size:12px;color:var(--accent);border:1px solid var(--line);border-radius:10px;padding:0 6px;margin-left:4px">ⓘ 棋友</i>`:""}</b><span>${LD.d}・${x.side?"執"+(x.side==="r"?"紅":"黑")+"・":""}${esc(why)}${R&&nr?`・積分 ${nr.d>=0?"+":""}${nr.d}`:""}${x.it.pend>0?`・📈 還有 ${+x.it.pend} 步待分析`:""}</span></span>${R?`<b class="r gl" style="background:${gradeFor(R.score)[2]}">${R.grade}</b>`:nr?`<b class="r ${nr.d>=0?"w":"l"}">${nr.d>=0?"+":""}${nr.d}</b>`:'<span class="r muted">›</span>'}</button>`)}
+      grp.push(`<button class="st-g" data-c="${x.c}" data-id="${esc(id)}"><span class="dot ${r==="w"||r==="l"?r:""}">${esc(lab)}</span><span class="tx"><b>${x.k==="cpu"?"🤖 ":"👥 "}${/-s\d+$/.test(String(x.it.id))?"🀄 車輪戰・":""}${esc(nr?lbnShow(nr.oid||"",x.opp||""):x.opp||"")}${nr&&isCloud(nr.oid)?cloudTag(true):""}${x.c==="pvp"&&x.side?` <i class="opp-i" data-oid="${esc(nr&&nr.oid||"")}" data-on="${esc(x.opp||"")}" style="font-style:normal;font-size:12px;color:var(--accent);border:1px solid var(--line);border-radius:10px;padding:0 6px;margin-left:4px">ⓘ 棋友</i>`:""}</b><span>${LD.d}・${x.side?"執"+(x.side==="r"?"紅":"黑")+"・":""}${esc(why)}${R&&nr?`・積分 ${nr.d>=0?"+":""}${nr.d}`:""}${x.it.pend>0?`・📈 還有 ${+x.it.pend} 步待分析`:""}</span></span>${R?`<b class="r gl" style="background:${gradeFor(R.score)[2]}">${R.grade}</b>`:nr?`<b class="r ${nr.d>=0?"w":"l"}">${nr.d>=0?"+":""}${nr.d}</b>`:'<span class="r muted">›</span>'}</button>`)}
     flush();h+=out.join("");
     if(L.length>limit)h+=`<button class="btn ghost" id="more" style="margin-top:12px">再顯示 40 盤（還有 ${L.length-limit} 盤）</button>`;
     if(L.length&&typeof pgnExportList==="function")h+=`<button class="btn ghost" id="stPgn" style="margin-top:8px">📤 匯出${L.length>1?`這 ${Math.min(L.length,100)} 盤`:"這盤"}的棋譜（PGN／中文記譜）</button>`;   /* 評比第 3 輪 P17：照上面的篩選一起匯出，最多 100 盤（m/10d-coach.js） */

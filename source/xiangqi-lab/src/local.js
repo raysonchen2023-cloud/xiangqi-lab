@@ -61,7 +61,7 @@ var XQ=(function(){
     if(!it.result||(sd!=="r"&&sd!=="b")||!Array.isArray(ms))return{};if(c==="pvp"&&!ms.some(m=>m.q))return{};const n=ms.filter(m=>m.by===sd&&!m.q).length;return n?{pend:n}:{}};
 
   // ---------- 挑戰電腦 ----------
-  let P=null,playBusy=false,playMsg="",paBusy=false,engFail=0,engWait=false;   /* 11/11：電腦出棋失敗的次數、是不是在等網路回來（playEngine） */
+  let P=null,playBusy=false,playMsg="",paBusy=false,paFxT=0,engFail=0,engWait=false;   /* 11/11：電腦出棋失敗的次數、是不是在等網路回來（playEngine） */
   // 積分挑戰：跟線上對戰一樣的段位（新手～專2-2），但分開記分。電腦的強度跟著你目前的段位走，段位越高越難。
   const RANKS=[["新手",0],["入門1",50],["入門2",100],["入門3",150],["業1",200],["業2",300],["業3",400],["業4",500],["業5",600],["業6",700],["業7",800],["業8",900],["業9",1000],["專1-1",1150],["專1-2",1300],["專2-1",1500],["專2-2",1700]];
   const rankIdx=p=>{let i=0;for(let k=0;k<RANKS.length;k++)if((p||0)>=RANKS[k][1])i=k;return i};
@@ -311,7 +311,12 @@ var XQ=(function(){
     else if(kindOf(P)==="cpu"&&!/-b$/.test(String(P.id))){const rec=ls.get("record",{}),L=rec[P.level]||(rec[P.level]={w:0,l:0,d:0});L[res]++;ls.set("record",rec)}
     /* 意見回饋 594：石桌往事從中局開始的關也存（記起始局面），我的成長才算得到故事裡下的棋 */
     pushGame("play",{id:P.id,rc:P.rc||null,date:P.id.slice(0,10),level:P.level,ranked:!!P.ranked,reward:!!P.reward,rk:P.rk,human:P.human,result:P.result,...(P.start?{start:P.start,startTurn:P.startTurn||"r"}:{}),...(P.journey?{journey:P.journey}:{}),...(zgOn(P)?{opp:"zhanggui"}:{}),...assist(P),moves:saveMoves(P.moves)});savePlay()}
-  async function analyzePlay(){if(paBusy||!P)return;paBusy=true;const S=P;try{await analyzeList(S,()=>{if(P===S)savePlay()},()=>P!==S||(!P.result&&P.turn!==P.human))}finally{paBusy=false}   /* 多分頁：另一個分頁改了桌上那盤（playSync 把 P 換掉）就停下、不把舊的那份寫回去 */
+  /* 11/13 開發者 P1（iPhone 3D 絕殺後頁面被重新載入）：剛分出勝負、殺棋特效還在播（畫面那邊的 window.XQ_fxBusy，m/02r-reloadguard.js），賽後分析先等特效播完再開始，
+     不跟 3D 園子、特效、音效、觸覺擠在同一刻；同一段最多等 20 秒，等完照常分析（不佔「缺 PV 重評」的 3 次） */
+  const paFx=()=>{try{const b=typeof window!=="undefined"&&typeof window.XQ_fxBusy==="function"&&!!window.XQ_fxBusy();if(!b){paFxT=0;return false}if(!paFxT)paFxT=Date.now();return Date.now()-paFxT<20000}catch(e){return false}};
+  const paHold=S=>!!(S&&S.result)&&paFx();
+  async function analyzePlay(){if(paBusy||!P)return;if(paHold(P)){setTimeout(analyzePlay,500);return}paBusy=true;const S=P;let held=false;try{await analyzeList(S,()=>{if(P===S)savePlay()},()=>P!==S||(!P.result&&P.turn!==P.human)||(held=paHold(S)))}finally{paBusy=false}
+    if(held&&P===S){setTimeout(analyzePlay,500);return}   /* 多分頁：另一個分頁改了桌上那盤（playSync 把 P 換掉）就停下、不把舊的那份寫回去 */
     /* ChatGPT 評審 11/11（未評完的狀態）：下完的那盤，背景評好的補進存檔（gamePatch）；還有缺 PV 沒評到的，5 秒後再評，同一盤最多再試 3 次 */
     if(S&&S.result&&!S.practice&&S.id){gamePatch("play",S.id,movesG(S.moves));if(S===P&&S.moves.some(m=>!m.q)&&(paRetry[S.id]=(paRetry[S.id]||0)+1)<=3)setTimeout(analyzePlay,5000)}}
   const paRetry={};
@@ -552,7 +557,7 @@ var XQ=(function(){
     const S={moves:g.moves.map(([f,t])=>({f,t})),rc:g.rc||null};stateRebuild(S);NB={key:g.gid+"|"+g.rev,S,g};   /* g.rc：邀請握手時定的棋規（net.js），沒有＝舊版對局，千秋休閒規則 */
     // 下完的網路對局存到「真人對局」，之後可以看賽後報告
     if(g.result&&!netSaved.has(g.id)&&XQNet.side()){netSaved.add(g.id);ls.set("netSaved",[...netSaved].slice(-200));
-      pushGame("pvp",{id:g.id,rc:S.rc,date:g.id.slice(0,10),red:g.red.name,black:g.black.name,tc:"none",result:g.result,moves:saveMoves(S.moves),net:true,mine:XQNet.side()}).catch(()=>{netSaved.delete(g.id);ls.set("netSaved",[...netSaved].slice(-200))})}   /* 意見回饋 619：沒存成功就拿掉「已存」記號，下次再存 */   /* 意見回饋（開發者 11/6 分數審查）：多存 mine＝我是紅還是黑，戰績頁認自己用 */
+      pushGame("pvp",{id:g.id,rc:S.rc,date:g.id.slice(0,10),red:g.red.name,black:g.black.name,tc:"none",result:g.result,moves:saveMoves(S.moves),net:true,mine:XQNet.side(),...netNoteOf(g)}).catch(()=>{netSaved.delete(g.id);ls.set("netSaved",[...netSaved].slice(-200))})}   /* 意見回饋 619：沒存成功就拿掉「已存」記號，下次再存 */   /* 意見回饋（開發者 11/6 分數審查）：多存 mine＝我是紅還是黑，戰績頁認自己用 */
     return NB}
   /* 補存：伺服器抓回來的已結束網路對局，還沒存過就存進「真人對局」 */
   window.XQ_saveNetGame=async g=>{if(!g||!g.result||!g.id||!Array.isArray(g.moves))return false;const list=(await idb.get("games:pvp"))||[];if(list.some(x=>x.id===g.id))return true;
@@ -568,7 +573,11 @@ var XQ=(function(){
   /* QA P1-1：收到別人發的對局狀態時，從頭重走一遍檢查每步都合法，順便用規則判這盤是不是已經分出勝負（給 net.js 的 okNext 用） */
   window.XQ_netCheck=(mv,rc)=>{try{const S={moves:[],rc:rc||null};stateRebuild(S);for(const[f,t]of mv){if(!legal(S.board,S.turn).some(([x,y])=>x===f&&y===t))return{ok:false};stateApply(S,f,t)}return{ok:true,res:judgeState(S)}}catch(e){return{ok:false}}};
   /* 對局結束時就算不在對局畫面（切到別頁、對方認輸、離開）也要存棋譜（意見回饋 275） */
-  setTimeout(function hookNet(){if(window.XQNet&&XQNet.on)XQNet.on("game",()=>{try{netBuild()}catch(e){}});else setTimeout(hookNet,500)},0);
+  /* 開發者 11/13 選「只記在對局紀錄」（威脅模型 T9、T11）：這盤發生過晚到推翻、擋下沒有簽名的動作，存進真人對局時多記 nnote（net.js 的 notes()），檢討頁 ℹ 寫一行；
+     存好以後才發生的（例如先記了勝、後來被晚到的那步推翻）收到 note 事件時補寫進已存的那筆。一般對局沒有 nnote */
+  const netNoteOf=g=>{try{const n=XQNet.notes&&XQNet.notes(g);return Array.isArray(n)&&n.length?{nnote:n}:{}}catch(e){return{}}};
+  function netNotePatch(e){if(!e||!e.id||!Array.isArray(e.notes)||!netSaved.has(e.id))return;PG=PG.then(async()=>{const list=(await idb.get("games:pvp"))||[],x=list.find(q=>q.id===e.id);if(!x)return;x.nnote=e.notes;await idb.set("games:pvp",list)}).catch(()=>{})}
+  setTimeout(function hookNet(){if(window.XQNet&&XQNet.on){XQNet.on("game",()=>{try{netBuild()}catch(e){}});XQNet.on("note",e=>{try{netNotePatch(e)}catch(err){}})}else setTimeout(hookNet,500)},0);
   function netState(){const nb=netBuild(),sd=XQNet.side(),em=[];
     if(!nb)return{id:"wait",red:"等待中…",black:"等待中…",board:parseFen(START),turn:"r",moves:[],result:null,draw:null,tcKey:"none",clocks:null,running:false,legal:[],check:-1,eval:null,
       engine:true,online:{r:false,b:false},who:{r:"",b:""},emotes:[],net:true,mySide:sd||"w",watchers:XQNet.watchers(),waiting:true,link:XQNet.status()};
@@ -605,7 +614,7 @@ var XQ=(function(){
     if(!d)return null;d.byId=new Map(d.items.map(x=>[x.id,x]));return bookCache[key]=d}
   async function gameItems(kind){const list=(await idb.get("games:"+kind))||[];
     return list.slice().reverse().map(g=>{if(Array.isArray(g.moves)&&g.moves.some(m=>m&&m.q&&qName(m.q)!==m.q))g={...g,moves:g.moves.map(m=>m&&m.q?{...m,q:qName(m.q)}:m)};if(kind==="play"){const lv=LEVELS[g.level-1]||{name:"?"},bot=g.ranked?"Pikafish 積分挑戰（"+(RANKS[g.rk]||["?"])[0]+"）":(g.journey?"石桌往事・":zgOn(g)?"笑面掌櫃・":"")+"Pikafish 第"+g.level+"級「"+lv.name+"」"+(g.reward?"・🚗獎勵":"");g={...g,red:g.human==="r"?"你":bot,black:g.human==="b"?"你":bot}}
-      return{...gameItem(g,false),...assist(g),...(g.mine==="r"||g.mine==="b"?{mine:g.mine}:{})}})}   /* 意見回饋（開發者 11/6 分數審查）：線上對局帶出 mine */
+      return{...gameItem(g,false),...assist(g),...(g.mine==="r"||g.mine==="b"?{mine:g.mine}:{}),...(Array.isArray(g.nnote)&&g.nnote.length?{nnote:g.nnote}:{})}})}   /* 意見回饋（開發者 11/6 分數審查）：線上對局帶出 mine */
   async function dbBooks(){const out=[];for(const b of await publicBooks())out.push({key:b.key,name:b.name,count:b.count});
     for(const b of await syncedBooks())if(out.some(x=>x.key===b.key))unsync(b.key);else out.push({key:b.key,name:b.name,count:b.count,synced:b.at});   // 以前從電腦同步過、現在已內建的，不要出現兩份
     if(remoteInfo())out.push({key:"ai",name:"AI 對局",count:0});

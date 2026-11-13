@@ -197,7 +197,7 @@ function PvpGame(v){
       b.querySelector("#cp").onclick=async()=>{try{await navigator.clipboard.writeText(link);toast("已複製連結")}catch(e){prompt("複製這個連結",link)}}})}
   // 表情：只在連線對戰時用
   let lastEmo=null;
-  function emoteSheet(){sheet(NET?"跟對手說話":"傳個表情給對手",b=>{const qt=x=>x.text||((EMOTES.find(q=>q[0]===x.e)||[])[2]||""),qn=x=>{const G=window.XQNet&&XQNet.game&&XQNet.game(),o=G&&(x.by==="r"?G.red:x.by==="b"?G.black:null);return x.name||(o&&o.name)||PLAYER[x.by]||""};   /* 回饋 850（線上聊天只能用快捷語，開發者 11/9）：拿掉打字框、只留快捷語按鈕；上面列最近 8 句快捷語 */
+  function emoteSheet(){sheet(NET?"跟對手說話":"傳個表情給對手",b=>{const qt=x=>x.text||((EMOTES.find(q=>q[0]===x.e)||[])[2]||""),qn=x=>{const G=window.XQNet&&XQNet.game&&XQNet.game(),o=G&&(x.by==="r"?G.red:x.by==="b"?G.black:null);return(typeof lbnShow==="function"&&lbnShow(o&&o.id||"",x.name||(o&&o.name)||""))||x.name||(o&&o.name)||PLAYER[x.by]||""};   /* 回饋 850（線上聊天只能用快捷語，開發者 11/9）：拿掉打字框、只留快捷語按鈕；上面列最近 8 句快捷語 */
     b.innerHTML=(NET?`<p class="muted" style="font-size:12.5px;margin:0 0 8px">線上對局只能用下面的快捷語跟對手說話</p>
       ${(window.XQNet?XQNet.chatLog():[]).filter(qt).slice(-8).map(x=>`<div class="muted" style="font-size:13px">${esc(qn(x))}：${esc(qt(x))}</div>`).join("")}`:"")+`<div class="emogrid">${EMOTES.map(([k,i,t])=>`<button data-e="${k}"><span>${i}</span>${esc(t)}</button>`).join("")}</div>`;
     b.querySelectorAll("[data-e]").forEach(x=>x.onclick=async()=>{closeSheet();try{const s=await api("/pvp/emote",{seat,e:x.dataset.e});showEmote(x.dataset.e,true);lastEmo=Math.max(lastEmo||0,...(s.emotes||[]).map(m=>m.id));render(s)}catch(e){toast(e.message)}})})}
@@ -262,8 +262,8 @@ function PvpGame(v){
     {const gk=NET&&window.XQNet&&XQNet.gid?XQNet.gid():null;if(NET&&gk&&!st.result&&!st.moves.length&&seat!=="w"&&KJ_LAST!==gk){KJ_LAST=gk;loadKaiju();setTimeout(()=>kaijuFx(bd.svg,"r"),parkOn()?1600:350)}}   /* 意見回饋 416：線上對戰也有開局特效（觀戰的人不播） */
     const ems=st.emotes||[];if(lastEmo==null)lastEmo=ems.reduce((m,x)=>Math.max(m,x.id),0);
     else for(const x of ems)if(x.id>lastEmo){lastEmo=x.id;if(x.text){const fl0=isFlip(),tp=fl0?"r":"b",pk=parkOn()&&PARK&&PARK.host===v.querySelector("#bbox");
-        let said=false;if(pk){try{x.by===tp?PARK.v.oppSay(x.text,4):PARK.v.say(x.text,4);said=true}catch(e){}}if(!said)showChat(x.text,x.by===seat,x.name||PLAYER[x.by],v.querySelector(x.by===tp?"#pTop":"#pBot"))}else if(seat&&x.by!==seat)showEmote(x.e,false)}
-    const fl=isFlip(),top=fl?"r":"b",bot=fl?"b":"r",nm=x=>x==="r"?st.red:st.black;
+        let said=false;if(pk){try{x.by===tp?PARK.v.oppSay(x.text,4):PARK.v.say(x.text,4);said=true}catch(e){}}if(!said)showChat(x.text,x.by===seat,(NET&&typeof lbnSeat==="function"&&lbnSeat(x.by,x.name)||x.name)||PLAYER[x.by],v.querySelector(x.by===tp?"#pTop":"#pBot"))}else if(seat&&x.by!==seat)showEmote(x.e,false)}
+    const fl=isFlip(),top=fl?"r":"b",bot=fl?"b":"r",nm=x=>(NET&&typeof lbnSeat==="function"&&lbnSeat(x,x==="r"?st.red:st.black))||(x==="r"?st.red:st.black);
     // 連線對戰：自己標「這支手機」，對方標在不在線上
     const sub=x=>!seat?PLAYER[x]:x===seat?PLAYER[x]+(NET?"・我":"・這支手機"):PLAYER[x]+((st.online||{})[x]?"・🟢 "+(NET?"線上":((st.who||{})[x]||"線上")):NET?"・⚪ 對方暫時離線":"・⚪ 對方還沒連上");
     /* 意見回饋 278：線上對戰標出雙方的線上段位（自己用自己的積分，對方用他在大廳最新的積分） */
@@ -302,7 +302,7 @@ function PvpGame(v){
       modal(`<div class="em">🤝</div><h2>${PLAYER[st.draw]}提議和棋</h2><p class="muted">${esc(nm(o))}（${PLAYER[o]}）要同意嗎？</p>`,[["同意和棋",()=>post("/pvp/draw",{side:o})],["拒絕",()=>post("/pvp/draw",{side:st.draw}),true]])}
     if(!st.draw)drawAsked=null;
     if(seat!=="w")pmFire();   /* 第 13 輪 F3：輪到你、有排好的預走就走出（不合法、子被吃就取消並提示） */
-    if(st.result&&shownResult!==st.id&&seat==="w"){shownResult=st.id;modal(`<div class="em">${st.result.w?"🏆":"🤝"}</div><h2 data-i18n="${st.result.w?"net.win."+st.result.w:"res.draw"}" data-i18n-n="${st.result.w?esc(nm(st.result.w)):""}">${st.result.w?`${PLAYER[st.result.w]}（${esc(nm(st.result.w))}）勝`:"和局"}</h2><p class="muted">${esc(st.result.why)}</p>`,[["回大廳",()=>{XQNet.leave();goUp("#/lobby")}],["留在這裡",null,true]],"res")}   /* 意見回饋 607：退回大廳那一層，不往前推一頁 */
+    if(st.result&&shownResult!==st.id&&seat==="w"){shownResult=st.id;modal(`<div class="em">${st.result.w?"🏆":"🤝"}</div><h2 data-i18n="${st.result.w?"net.win."+st.result.w:"res.draw"}" data-i18n-n="${st.result.w?esc(nm(st.result.w)):""}">${st.result.w?`${PLAYER[st.result.w]}（${esc(nm(st.result.w))}）勝`:"和局"}</h2><p class="muted">${esc(st.result.why)}</p>${NET&&typeof nsgNoteHtml==="function"&&window.XQNet&&XQNet.notes?nsgNoteHtml(XQNet.notes()):""}`,[["回大廳",()=>{XQNet.leave();goUp("#/lobby")}],["留在這裡",null,true]],"res")}   /* 意見回饋 607：退回大廳那一層，不往前推一頁 */
     if(st.result&&shownResult!==st.id){shownResult=st.id;vibrate([30,40,30]);try{if(typeof shipGameDone==="function")shipGameDone(st)}catch(e){}
       /* 意見回饋 597：線上對戰也有機會掉寶物（照對手段位），線上不能用、跟電腦下時用 */
       if(NET&&seat&&seat!=="w"&&window.XQNet)try{const G=XQNet.game(),o=G&&(seat==="r"?G.black:G.red),pt=o?((XQNet.people().find(q=>q.id===o.id)||{}).pts??o.pts):null;
@@ -312,7 +312,7 @@ function PvpGame(v){
         if(w&&!st.result.abort&&st.moves.length>=2&&!(typeof blzSkip==="function"&&blzSkip("killFx"))){const loser=w==="r"?"b":"r",k=st.board.indexOf(loser==="r"?"K":"k");
           if(k>=0){MODAL_HOLD=Date.now()+2700;const mate=/將死|困斃/.test(st.result.why||""),cz=mine?(win?"對方":"你")+String(st.result.why||"").replace(/^(紅方|黑方)/,"").replace(/[，,].*$/,"").slice(0,12):String(st.result.why||"");
             try{killFx(bd.svg,win,st.result.why,k,isFlip(),{side:w,...(mate?{}:{cap:cz+(win?"・你贏了！":"")})})}catch(e){}}}}
-      modal(`<div class="em">${st.result.w?"🏆":"🤝"}</div><h2 data-i18n="${st.result.w?"net.win."+st.result.w:"res.draw"}" data-i18n-n="${st.result.w?esc(nm(st.result.w)):""}">${st.result.w?`${PLAYER[st.result.w]}（${esc(nm(st.result.w))}）勝`:"和局"}</h2><p class="muted">${esc(st.result.why)}</p>`,
+      modal(`<div class="em">${st.result.w?"🏆":"🤝"}</div><h2 data-i18n="${st.result.w?"net.win."+st.result.w:"res.draw"}" data-i18n-n="${st.result.w?esc(nm(st.result.w)):""}">${st.result.w?`${PLAYER[st.result.w]}（${esc(nm(st.result.w))}）勝`:"和局"}</h2><p class="muted">${esc(st.result.why)}</p>${NET&&typeof nsgNoteHtml==="function"&&window.XQNet&&XQNet.notes?nsgNoteHtml(XQNet.notes()):""}`,
         /* 意見回饋 607（RPG 專家建議）：結果視窗＝主要按鈕一顆＋次要一排（📊 檢討・🏠 首頁・看看棋盤）。線上對戰自己下的人，主要按鈕是「🌐 回大廳 ›」（離開這盤、退回大廳那一層），再來一局放到次要；
            📊 檢討＝原本的「賽後報告」＋「檢討這盤」合併，打開時直接附報告 */
         (()=>{const again=()=>post("/pvp/new",{red:st.red,black:st.black,tc:st.tcKey}),sub=[["📊 檢討",()=>{store.set("openReport","pvp/"+st.id);location.hash="#/db/pvp/"+encodeURIComponent(st.id)},true],["🏠 首頁",()=>goHome(),true],["看看棋盤",null,true]];

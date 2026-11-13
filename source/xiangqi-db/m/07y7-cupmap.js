@@ -87,7 +87,7 @@ const CP2_LAMPS={"":CP2_LAMP_SVG,han:cp2Bowl("#7c6c40","#3e3420"),weijin:cp2Bowl
   tang:'<svg viewBox="0 0 30 70" aria-hidden="true"><path d="M15 0V9" stroke="#3a2a1c" stroke-width="1"/><rect x="9" y="8" width="12" height="3" rx="1" fill="#6a4a28"/><path d="M15 11C26 11.5 27 45 15 47C3 45 4 11.5 15 11Z" fill="#f2ede0" stroke="#6a5a44" stroke-width="1"/><path d="M15 11.5V46.5M10 12.5C7 22 7 36 10 46M20 12.5C23 22 23 36 20 46M6 22H24M5.5 30H24.5M6 38H24" fill="none" stroke="rgba(110,84,50,.38)" stroke-width=".7"/><ellipse cx="15" cy="28" rx="7.5" ry="12.5" fill="rgba(255,214,140,.55)"/><rect x="9.5" y="46" width="11" height="3" rx="1" fill="#6a4a28"/><path d="M15 49V62" stroke="#8a6a42" stroke-width="1"/></svg>'};
 const CP2_BALL_SVG='<svg viewBox="0 0 120 70" aria-hidden="true"><path d="M2 6C25 26 40 30 48 30M118 6C95 26 80 30 72 30" fill="none" stroke="#c23a2a" stroke-width="6" stroke-linecap="round"/><path d="M2 6C25 26 40 30 48 30M118 6C95 26 80 30 72 30" fill="none" stroke="rgba(255,190,170,.4)" stroke-width="2"/><circle cx="60" cy="34" r="15" fill="#c8402c" stroke="#6a2216" stroke-width="1.2"/><path d="M47 28C55 34 65 34 73 28M46 38C55 44 65 44 74 38M60 19C54 27 54 41 60 49M60 19C66 27 66 41 60 49" fill="none" stroke="rgba(110,30,18,.55)" stroke-width="1.2"/><path d="M54 49L50 68M60 49V70M66 49L70 68" stroke="#c23a2a" stroke-width="2.4" stroke-linecap="round"/></svg>';
 /* 名字縮成三個字以內（紅紙窄） */
-const cp2Nm=p=>{if(!p)return"";if(p.none)return"從缺";const n=String(p.name||"").trim();return n.length>4?n.slice(0,3)+"…":n};
+const cp2Nm=p=>{if(!p)return"";if(p.none)return"從缺";const n=String(lbnShow(p)||"").trim();return n.length>4?n.slice(0,3)+"…":n};
 /* 屏風一扇：8 位（4 組）＋對陣線往內收；side＝"l"（線往右收）或 "r"（線往左收） */
 function cp2Side(side,P8,win){const W=100,H=380,rows=8,top=18,step=(H-top*2)/(rows-1),nx=side==="l"?4:46,nw=50,j1=side==="l"?62:38,j2=side==="l"?78:22,j3=side==="l"?96:4;
   let s=`<rect x="0" y="0" width="${W}" height="${H}" fill="none"/>`;
@@ -155,7 +155,7 @@ function cp2Wrap(v,R){if(!CUP_MAP_ON||!window.XQNet||!v.querySelector("#cupb"))r
     const live=ms.filter(m=>m.st==="live"&&m.gid).sort((a,b)=>b.r-a.r)[0];
     if(live&&(live.gid!==feat||Date.now()-featAt>15000)){feat=live.gid;featAt=Date.now();XQNet.fetchGame(live.gid,5000).then(g=>{if(g&&g.gid===feat){featG=g;paintB()}}).catch(()=>{})}
     if(!live){feat="";featG=null}
-    const paintB=()=>{const lv=ms.find(m=>m.gid===feat&&m.st==="live");if(lv&&featG)Q("b").innerHTML=cp2Board(cp2Fen(featG),(featG.red&&featG.red.name)||(lv.a&&lv.a.name),(featG.black&&featG.black.name)||(lv.b&&lv.b.name),`${CUP_RN[lv.r]||""}・點一下觀戰`);
+    const paintB=()=>{const lv=ms.find(m=>m.gid===feat&&m.st==="live");if(lv&&featG)Q("b").innerHTML=cp2Board(cp2Fen(featG),lbnShow(featG.red&&featG.red.name?featG.red:lv.a||{}),lbnShow(featG.black&&featG.black.name?featG.black:lv.b||{}),`${CUP_RN[lv.r]||""}・點一下觀戰`);
       else Q("b").innerHTML=cp2Board(START,"","",S&&S.ph==="play"?"等下一盤開打":"週六開擂後，掛上正在下的對局")};
     paintB();
     /* 比賽日：紅紗燈、紅綵球；擂主出爐才灑紅紙屑、金箔 */

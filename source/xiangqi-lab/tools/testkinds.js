@@ -16,6 +16,8 @@ const SKIP = new Set(["test-home-focus.js", "testkinds.js"]);
 /* 11/12 已逐項分類（開發者稽核 story/102_評比灌水誠實稽核.md 第 3 項） */
 const CLASSIFIED = new Set([
   "test-i18n.js",   /* 11/13 第 14 輪 F1 英文介面架構（m/07i18n.js；行為 31、混合 2、原始碼 4） */
+  "test-p0-regress.js",   /* 11/13 三個 P0 發布版完整流程回歸 tools/qa/p0-regress.js 的純函式（行為 12、原始碼 1） */
+  "test-handoff-facts.js",   /* 11/13 交接單事實段自動產生＋核對公開連結 review_loop/handoff-facts.js（行為 9、原始碼 1；評比工具不在公開副本時整檔跳過） */
   "test-evidence-shots.js",   /* 11/13 第 15 輪 F1／F2／X2 可重現畫面證據包＋英文防爆版檢查（tools/qa/evidence-shots.js 的純函式；行為 16、原始碼 1） */
   "test-android-build.js",   /* 11/13 第 15 輪 F3、F4 Android debug APK 編譯＋可重現檢查 repro-check.js、建置與工具鏈紀錄（行為 9、混合 2、原始碼 1）；11/13 Service Worker 標頭修法正式採用（混合 +1、原始碼 +1） */
   "test-android-roadmap.js",   /* 11/13 第 14 輪 F3 Android 路線圖＋可重現驗證包：verify-all.js、xiangqi-android 骨架檢查、F-Droid 草稿、make-www（行為 8、混合 1）；11/13 骨架檢查 native.swclient（行為 +1） */
@@ -42,6 +44,7 @@ const CLASSIFIED = new Set([
   "test-spotfit.js",   /* 11/13 hspx 1098 場景標籤英文疊在一起、聲音提示蓋頂欄 */
   "test-engine-start.js",   /* 11/13 hspx P0 章回棋路殘局開局送錯局面給引擎（不合法著法 g3g4／c3c4、電腦卡住） */
   "test-ui-1113.js",   /* 11/13 hspx：看我的棋力沒反應（P0）、toast 換行規矩、幻影台詞、漂浮畫卷 */
+  "test-home-wide.js",   /* 11/13 首頁接 iPad 寬版圖 home_p34／home_l1610：挑圖、退回原圖、座標表、走路節點、網址版本、cover 填滿（07z HMW、07fl xflCover；行為 8、混合 1） */
   "test-ipad-fill.js",   /* 11/13 遊戲畫面都要滿版：iPad／Duo 直向填滿寬度、橫向兩側模糊底（07fl；行為 8、原始碼 1） */
   "test-engine-timeout.js",   /* 11/12 開發者截圖「思考有點久」：引擎沒回應不再永遠等 */
   "test-ai-levels.js",   /* 11/12 第 10 輪 F3：電腦對手透明頁（行為 2、混合 3、原始碼 2） */
@@ -61,7 +64,18 @@ const CLASSIFIED = new Set([
   "test-net-linksig.js",   /* 11/13 第 13 輪 X2 同步頻道簽名、防重放、除錯小卡（行為 11、原始碼 1） */
   "test-net-pin.js",   /* 11/13 第 14 輪 F2 開局公開金鑰驗證、千秋盃 k 簽名（行為 13、原始碼 1） */
   "test-threat-weaknet.js", "test-verify-daily.js",   /* 11/13 第 15 輪 X4 威脅模型＋弱網長測（行為 11、原始碼 3）、X5 每日同題公開名冊對照工具（行為 9、原始碼 1） */
-  "test-oss-scan.js"   /* 11/13 原始碼公開前的機密與個資掃描 tools/oss-scan.js（行為 7） */
+  "test-redblue.js",   /* 11/13 紅藍隊 R02 晚到推翻不給好處＋影子鐘（T11）、R01 千秋盃玩家動作簽名（T9）（行為 8、原始碼 1） */
+  "test-name-safe.js",   /* 11/13 紅藍隊 r15 R05（威脅模型 I6）名字安全顯示 m/07x4 lbnBad／lbnShow：惡意名字換稱號、正常名字 0 誤擋、兒童看別人一律稱號（行為 6、原始碼 2）；11/13 不雅字詞清單＋誤擋測試、不合格名字對外改送稱號、稱號三選一（行為 +3、原始碼 +2） */
+  "test-oss-scan.js",   /* 11/13 原始碼公開前的機密與個資掃描 tools/oss-scan.js（行為 7） */
+  "test-xfer4.js",   /* 11/13 紅藍隊 r15 R03（威脅模型 I5）轉移碼 v4：錯碼、過期、重放、竄改分段和說明、舊 8 碼警告（行為 10、原始碼 1） */
+  "test-android-oldwebview.js"   /* 11/13 Android 舊 WebView 降級提示、原生 App 不自動重整（m/02-shell.js 兩小段；行為 6、原始碼 1）；test-android-build.js 同日加外部可重建＋發布版（行為 3、混合 1、原始碼 1） */,
+  "test-layout-r16.js"   /* 11/13 第 16 輪版面缺陷清零：棋譜庫、大廳、44×44 點選範圍、殘影讓開、量測誤報排除（tools/qa/device-fit.js）（行為 5、混合 1、原始碼 5） */,
+  "test-net-notes.js"   /* 11/13 開發者選「只記在對局紀錄」：晚到推翻、千秋盃擋下沒簽名的動作寫進賽後紀錄（net.js notes()、m/07hs-netsig.js nsgNotes、09b 結果視窗、10-db 檢討頁 ℹ；行為 5、原始碼 1） */,
+  "test-mp-p2.js"   /* 11/13 Android 三方實測 P2：訊號膠囊不壓棋盤（07hs nsgPos）、網路恢復 5 秒內連回（net.js netBack／FAST_WIN／連線逾時）、觀眾進場棋鐘（obsTk）（行為 7、原始碼 1） */,
+  "test-mainquest.js"   /* 11/13 新手體驗第一波：主線電影播放器 07mnf、星槎遠征令／下一步／大禮包 07mnq、殘局解開儀式、電影中通知排隊（行為 8、原始碼 3） */,
+  "test-varengine.js"   /* 11/13 黑洞超展開新引擎 src/varengine.js＋worker：走法、擺棋規則、非標準陣容、將死困斃、今日異象、level／weaken；11/13 定案點數＋堆疊加價＋沈方庭九宮優惠（行為 20） */,
+  "test-net-start.js"   /* 11/13 開局那一方第一步之前的每步 3 分鐘：每步剩餘照走、判超時不分岔、坐黑判得出紅方超時、重抓不往後挪（net.js arr／ackTurn myStart；行為 4） */,
+  "test-reload-guard.js"   /* 11/13 開發者 P1 iPhone 3D 絕殺後頁面重載又直接開第二盤：更新延後、對局頁網址改寫、重載後不開新局、勝負先寫入、賽後分析等特效、異常重載紀錄（m/02r-reloadguard.js；行為 8、混合 2、原始碼 2） */
 ]);
 /* 還沒逐項分類的檔（統計列為「待分類」）；新測試檔先放這裡，分好類再移到 CLASSIFIED */
 const PENDING = new Set([]);

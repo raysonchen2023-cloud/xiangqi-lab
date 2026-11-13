@@ -55,6 +55,8 @@ window.XQ_MAPROUTE=era=>{if(typeof PARK_J==="undefined"||PARK_J!=="park")return 
     s:R.s.map((s,i)=>({nm:s.n,t:s.nl?yuName(s):"",x:s.p[0],y:s.p[1],st:i<n?1:i===n?2:0}))}};
 /* 青石園地圖的北斗七星：開陽、搖光要等終章「千秋歸位」學會才亮（park3d.js 畫 realms.json classic 的 stars 時問這裡） */
 window.XQ_FINALE=()=>{try{return typeof shipLearned==="function"&&!!shipLearned("finale")}catch(e){return false}};
+/* 11/13 開發者選「解開陣眼題才亮」：北斗陣眼五顆（天樞→玉衡）照輿圖遊歷 classic 走過幾站，一站亮一顆（yuRoute.classic.n，照順序解） */
+window.XQ_NORTH_LIT=()=>{try{const n=yuOf("classic").n;return YU_R.classic.s.slice(0,n).map(s=>s.n)}catch(e){return[]}};
 
 /* 點到地圖上的地名（06-cpu.js parkInfo）：是這個朝代路線上的站，就換成「介紹＋這一站」的小卡；回傳 true＝處理好了 */
 function yuMapSheet(era,nm,d,en,yr){const i=yuFind(era,nm);if(i<0)return false;

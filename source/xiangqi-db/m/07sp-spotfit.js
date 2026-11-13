@@ -33,10 +33,25 @@ function spfShip(M){if(!M||!M.isConnected)return 0;const R=M.getBoundingClientRe
   return n}
 if(typeof shpMapFit==="function"){const f0=shpMapFit;shpMapFit=function(v){const r=f0.apply(this,arguments);try{requestAnimationFrame(()=>requestAnimationFrame(()=>{const M=v&&v.querySelector&&v.querySelector(".shp-map.full");if(M){M.querySelectorAll(".shp-hs").forEach(b=>{delete b.dataset.spfM});spfShip(M)}}))}catch(e){}return r}}
 if(typeof zmShipPush==="function"){const f1=zmShipPush;zmShipPush=function(M,s){const r=f1.apply(this,arguments);try{if(M&&!(s>1)){M.querySelectorAll(".shp-hs").forEach(b=>{delete b.dataset.spfM});spfShip(M)}}catch(e){}return r}}
-function spfAll(){let n=0;document.querySelectorAll(".shp-page").forEach(P=>{try{n+=spfFit(P)}catch(e){}});document.querySelectorAll(".shp-map.full").forEach(M=>{try{n+=spfShip(M)}catch(e){}});return n}
+/* 11/13 第 16 輪版面缺陷清零：經典世界天上的朝代殘影（07y .cy，m.css 用透明 ::after 把點選範圍擴到 44×44）。
+   量測（device-fit，以殘影中心為準的 44×44 方格、9 點都要點得到它）：SE、320 寬首頁的「秦長城」「赤壁樓船」上半截在頂欄底下，棋譜庫的「古戲台」下緣壓到「瀏覽大師棋譜」標籤。
+   殘影只是淡淡的剪影，這裡把它上下挪開最少的距離（每次 2px，最多 ±64px，不挪出場景頁），讓那個方格不碰到頂欄和入口標籤（出口也是 .shp-spot）；
+   挪動量記在 data-spf-cy，重算時先扣掉，不會越挪越遠；左右不動。在 spfFit 推完標籤之後算 */
+function spfCy(P){const L=P.querySelector(":scope>.cy-l");if(!L)return 0;const cs=[...L.querySelectorAll(".cy")].filter(b=>b.getClientRects().length);if(!cs.length)return 0;
+  const pr=P.getBoundingClientRect(),k=P.offsetHeight?pr.height/P.offsetHeight:1;if(pr.height<20||!k)return 0;
+  const B=[],tb=document.getElementById("topbar");if(tb){const r=tb.getBoundingClientRect();if(r.width>1&&r.height>1)B.push(r)}
+  P.querySelectorAll(".shp-spot").forEach(e=>{const r=e.getBoundingClientRect();if(r.width<=1||r.height<=1)return;const ex=Math.max(4,(44-r.width)/2),ey=Math.max(4,(44-r.height)/2);B.push({left:r.left-ex,right:r.right+ex,top:r.top-ey,bottom:r.bottom+ey})});   /* 標籤自己的點選範圍（07z spotHit ::before）至少 44、外加 4px，一起讓開 */
+  let n=0;for(const b of cs){const d0=+b.dataset.spfCy||0,r=b.getBoundingClientRect(),cx=r.left+r.width/2,c0=r.top+r.height/2-d0*k;
+    const hit=c=>B.some(q=>q.left<cx+22&&q.right>cx-22&&q.top<c+22&&q.bottom>c-22);
+    let s0=0;if(hit(c0)){s0=null;for(let s=2;s<=64&&s0==null;s+=2){if(!hit(c0+s)&&c0+s+22<=pr.bottom)s0=s;else if(!hit(c0-s)&&c0-s-22>=pr.top)s0=-s}if(s0==null)s0=0}
+    B.push({left:cx-22,right:cx+22,top:c0+s0-22,bottom:c0+s0+22});   /* 排好的殘影也是下一個的障礙：320 寬時相鄰殘影只隔 41px，44 的方格會互相蓋到 */
+    const d=Math.round(s0/k);if(d===d0)continue;n++;if(d){b.style.translate=`0 ${d}px`;b.dataset.spfCy=d}else{b.style.translate="";delete b.dataset.spfCy}}
+  return n}
+function spfAll(){let n=0;document.querySelectorAll(".shp-page").forEach(P=>{try{n+=spfFit(P)}catch(e){}try{n+=spfCy(P)}catch(e){}});document.querySelectorAll(".shp-map.full").forEach(M=>{try{n+=spfShip(M)}catch(e){}});return n}
 let spfT=0;function spfSoon(ms){clearTimeout(spfT);spfT=setTimeout(()=>{spfAll();requestAnimationFrame(spfAll)},ms==null?120:ms)}
 (()=>{try{const mo=new MutationObserver(L=>{for(const m of L){const t=m.target&&(m.target.nodeType===1?m.target:m.target.parentElement);
       if(t&&t.closest&&t.closest(".shp-page,.shp-hs")){spfSoon();return}for(const a of m.addedNodes||[])if(a.nodeType===1&&(a.matches(".shp-page,.shp-map")||a.querySelector&&a.querySelector(".shp-page,.shp-map"))){spfSoon();return}}});
     mo.observe(document.body,{childList:true,subtree:true,characterData:true});
-    addEventListener("resize",()=>spfSoon(200));addEventListener("orientationchange",()=>spfSoon(400));
+    addEventListener("resize",()=>spfSoon(200));
+    {const tb=document.getElementById("topbar");if(tb&&typeof ResizeObserver==="function")new ResizeObserver(()=>spfSoon(80)).observe(tb)}   /* 第 16 輪：頂欄長出時辰鐘（07w8 clk-on）會變高，殘影要重新讓開 */addEventListener("orientationchange",()=>spfSoon(400));
     if(document.fonts&&document.fonts.ready)document.fonts.ready.then(()=>spfSoon(0));spfSoon(600)}catch(e){}})();
