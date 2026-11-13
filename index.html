@@ -1613,7 +1613,7 @@ html[data-lefty] .tskip{right:auto;left:14px}
       if(!window.caches)return go();caches.keys().then(function(ks){return Promise.all(ks.filter(function(k){return k.indexOf("xqlab-app-")===0}).map(function(k){return caches.delete(k)}))})
         .then(function(){return navigator.serviceWorker&&navigator.serviceWorker.getRegistration()}).then(function(r){return r&&r.update()}).catch(function(){}).then(go)}};setTimeout(chk,4000)})();
 </script>
-<script>window.XQ_OFFLINE=true;window.XQ_BUILD="20261114-0428";</script>
+<script>window.XQ_OFFLINE=true;window.XQ_BUILD="20261114-0442";</script>
 <script src="core.js"></script>
 <script src="engine.js"></script>
 <script src="local.js"></script>
@@ -29717,9 +29717,10 @@ const MNQ_CH=[["classic","古典・河圖初渡"],["qin","秦・日落之前"],[
    segs 三段電影（開章、危機、章末）、nm 各段的名字（遠征令、札記、電影的無障礙標籤用）；qte＝MNF_QTE 的危機題代號；set＝MNF_RITE_SET 的儀式圖組；
    rite："solve" 解開當下就演儀式、演完才回電影（第一章）／"end" 危機那段（segs[1]）播完才演、演完接章末（第二章：先看「車有路了」再回船艙）；
    open："start" 一開始就開放（第一章）／"reach" 前面有資料的章都看完、而且星槎停到過這一朝（S.reach，或已領那一朝的遠征補給）才開放（開發者 11/14 定） */
-const MNQ_CHAP={
+const MNQ_CHAP_ALL={
   classic:{segs:["c1o","c1m","c1e"],nm:{c1o:"河圖初渡",c1m:"破局",c1e:"古典之印"},qte:"c1",set:"c1",rite:"solve",open:"start"},
-  qin:{segs:["c2o","c2m","c2e"],nm:{c2o:"日落之前",c2m:"找路",c2e:"秦之印"},qte:"c2",set:"c2",rite:"end",open:"reach"}};
+  qin:{segs:["c2o","c2m","c2e"],nm:{c2o:"日落之前",c2m:"找路",c2e:"秦之印"},qte:"c2",set:"c2",rite:"end",open:"reach",off:1}};   /* off：11/14 開發者看完第二章「很無聊、出戲、不知道角色在幹嘛」，先下架重做；資料留著，拿掉 off 就回來 */
+const MNQ_CHAP=Object.fromEntries(Object.entries(MNQ_CHAP_ALL).filter(([,c])=>!c.off));   /* 上線中的章；下架的章在各處都當成「即將開放」 */
 const MNQ_SEGS=Object.fromEntries(Object.entries(MNQ_CHAP).map(([e,c])=>[e,c.segs]));
 const MNQ_SEG_NM=Object.assign({},...Object.values(MNQ_CHAP).map(c=>c.nm));
 const MNQ_CN=["一","二","三","四","五","六","七","八","九","十","十一","十二","十三"];
