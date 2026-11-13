@@ -1606,7 +1606,7 @@ html[data-lefty] .tskip{right:auto;left:14px}
       if(!window.caches)return go();caches.keys().then(function(ks){return Promise.all(ks.filter(function(k){return k.indexOf("xqlab-app-")===0}).map(function(k){return caches.delete(k)}))})
         .then(function(){return navigator.serviceWorker&&navigator.serviceWorker.getRegistration()}).then(function(r){return r&&r.update()}).catch(function(){}).then(go)}};setTimeout(chk,4000)})();
 </script>
-<script>window.XQ_OFFLINE=true;window.XQ_BUILD="20261113-1242";</script>
+<script>window.XQ_OFFLINE=true;window.XQ_BUILD="20261113-1244";</script>
 <script src="core.js"></script>
 <script src="engine.js"></script>
 <script src="local.js"></script>
@@ -21645,9 +21645,9 @@ const CLK_DIAL_RE=/^\/(|adventure|ship\/(lesson|pz|shelf|bag|sail)|port|journey\
 const CLK_NT_RE=new RegExp("^/(lobby|db|db/[^/]+|settings)$");
 const CLK={el:null,sm:null,mode:"",tm:0,vt:null,va:null,vi:0};
 const clkRM=()=>{try{return matchMedia("(prefers-reduced-motion: reduce)").matches}catch(e){return false}};
-/* 11/13 開發者「午時但場景是暗的？」：停在古典站時「船艙」（#/port，雲河星槎・船艙石桌）其實在船上，照星槎無歲月換雲河星圖、不顯示人間時辰 */
-const CLK_CABIN_RE=/^\/port(\/|$)/;
-function clkShip(){return!!document.querySelector(".travel.qq")||CLK_SHIP_RE.test(clkKey())||(CLK_CABIN_RE.test(clkKey())&&store.get("era","classic")==="classic")}
+/* 11/13 開發者更正：「船艙」（#/port，雲河星槎・船艙石桌）是下船以後，有人間時辰；只有在船上才沒有時間（所以船上畫面都是黑白的）。
+   1216 曾把船艙算進星槎無歲月，1250 撤回，船艙照常顯示時辰 */
+function clkShip(){return!!document.querySelector(".travel.qq")||CLK_SHIP_RE.test(clkKey())}
 const clkP=(cx,cy,r,a)=>{const t=a*Math.PI/180;return[+(cx+r*Math.cos(t)).toFixed(2),+(cy+r*Math.sin(t)).toFixed(2)]};
 function clkCss(){if(document.getElementById("clkCss"))return;const s=document.createElement("style");s.id="clkCss";s.textContent=`
 #topbar.clk-on{position:relative;padding-top:calc(var(--safeT,0px) + 2px);padding-bottom:2px}
