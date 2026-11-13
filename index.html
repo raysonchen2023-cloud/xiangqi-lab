@@ -1613,7 +1613,7 @@ html[data-lefty] .tskip{right:auto;left:14px}
       if(!window.caches)return go();caches.keys().then(function(ks){return Promise.all(ks.filter(function(k){return k.indexOf("xqlab-app-")===0}).map(function(k){return caches.delete(k)}))})
         .then(function(){return navigator.serviceWorker&&navigator.serviceWorker.getRegistration()}).then(function(r){return r&&r.update()}).catch(function(){}).then(go)}};setTimeout(chk,4000)})();
 </script>
-<script>window.XQ_OFFLINE=true;window.XQ_BUILD="20261113-1345";</script>
+<script>window.XQ_OFFLINE=true;window.XQ_BUILD="20261113-1533";</script>
 <script src="core.js"></script>
 <script src="engine.js"></script>
 <script src="local.js"></script>
@@ -3501,7 +3501,7 @@ function rlgBoot(){const now=Date.now(),L=rlgLs(RLG_KEY),W=rlgLs(RLG_WHY);try{lo
   RLG_REC=null;rlgSave({h:location.hash,a:now,ph:0,vh:0,d3:false,end:L&&+L.end||0});return{c,ended}}
 /* 大字提示：等開頭的載入畫面收起來；新版套用那次先讓「✓ 已更新到新版」顯示完 */
 function rlgSay(){if(!RLG_SAY)return;const s=RLG_SAY;RLG_SAY=null;let n=0;const go=()=>{if(document.getElementById("preov")&&++n<100)return setTimeout(go,400);
-  const t=document.createElement("div");t.className="toast";t.setAttribute("role","status");t.style.cssText="z-index:312;font-size:19px;font-weight:900;line-height:1.5;max-width:min(92vw,520px);padding:14px 18px";
+  const t=document.createElement("div");t.className="toast";t.setAttribute("role","status");t.style.cssText="z-index:312;font-size:19px;font-weight:900;line-height:1.5;width:min(88vw,460px);max-width:min(88vw,460px);padding:14px 20px;border-radius:16px";   /* 11/13：.toast 是膠囊形（圓角 999px），長句大字會縮成大黑圓、斷成 4 行 → 固定寬度、一般圓角 */
   t.textContent=typeof i18nT==="function"?i18nT("rlg.reloaded","剛才畫面重新載入了，上一盤的結果已經記好"):"剛才畫面重新載入了，上一盤的結果已經記好";document.body.append(t);setTimeout(()=>t.remove(),6000)};
   setTimeout(go,s.why==="upd"?6200:900)}
 try{if(typeof window!=="undefined"&&typeof document!=="undefined"&&typeof localStorage!=="undefined"){rlgBoot();rlgSay();window.XQ_fxBusy=rlgFxBusy;
@@ -9653,7 +9653,7 @@ function shipGateSay(N){vibrate([20,40,20]);const here=shipHere()===N.k;sheet(N.
   const e=b.querySelector("#sgL");if(e)e.onclick=()=>{closeSheet();location.hash="#/ship/lesson"};
   b.querySelectorAll("[data-sg]").forEach(x=>x.onclick=()=>{const t=N.T[+x.dataset.sg];closeSheet();if(t&&t.go)location.hash=t.go})})}
 /* 起航 #/ship/sail：船尾舵與帆；天上寫下一站（說書人預告、棋理、這一朝的棋、建議修為），舵旁的星光＝起航。十三站都停靠過＝旅程終點卡 */
-function ShipSail(v){setTop("⛵ 起航","#/adventure");setTabs(false);v.className="view";const ap=shipAppr(),k=shipHere(),nx=ap?null:shipNextStop(),allIn=!ap&&!nx&&!!shipDockList(),I=xpInfo(),[sx,sy]=SAIL_SPOT;
+function ShipSail(v){setTop("⛵ 起航",null,[["🏠",()=>goHome(),"回首頁"]]);setTabs(false);   /* 11/13 開發者：左上角「‹ 回星槎」拿掉，改成船板上的場景大字標籤 ssUp（跟渡口一樣） */v.className="view";const ap=shipAppr(),k=shipHere(),nx=ap?null:shipNextStop(),allIn=!ap&&!nx&&!!shipDockList(),I=xpInfo(),[sx,sy]=SAIL_SPOT;
   let card,sp=[],cap,sub;
   if(nx){const Ln=SHIP_LESSON[nx]||{},Hn=typeof HIST!=="undefined"?HIST[nx]:null,lvH=SHIP_LV[shipOrder().indexOf(nx)]||0;cap="⛵ 下一站・"+esc(shipShort(nx));sub="現在停靠："+esc(shipShort(k));
     card=`<b>${esc(shipShort(nx))}・${esc(SHIP_STOP[nx].place)}</b>${Ln.pre?`<p class="shp-say">說書人：「${esc(Ln.pre)}」</p>`:""}<p>📘 棋理：${esc(Ln.t||"")}${Hn?`<br>📜 這一朝的棋：${esc(Hn.t)}`:""}</p>${lvH?`<p class="muted">建議修為 Lv ${lvH}（你現在 Lv ${I.L}；只是建議，隨時都能開）</p>`:""}`;
@@ -9661,9 +9661,10 @@ function ShipSail(v){setTop("⛵ 起航","#/adventure");setTabs(false);v.classNa
   else if(allIn){cap="🏁 旅程終點";sub="十三站都停靠過了";card=`<b>${esc(SHIP_END.t)}</b><p>${SHIP_END.x.map(esc).join("<br>")}</p>`+(shipFinaleOpen()?"":`<p class="shp-say">說書人：「雲河到了盡頭，但好多渡口走馬看花呢。」</p><p>點航線回到舊朝代，把沒解完的殘局補齊，才能看見真正的終局！</p>`);sp=[["ssDb",sx,sy,"🏆 看特級大師對局","棋譜"],...(typeof chdEndSpot==="function"?chdEndSpot():[])]}   /* 意見回饋 774 破關卡（07q-chardiff.js） */
   else{cap="⛵ 起航";sub=ap?"說書人的學徒":"";card=ap?`<b>📜 十三站都能去</b><p>說書人的學徒不用照順序起航；回星槎頁，在航線上點想去的那一站。</p>`:`<b>還沒選角色</b><p>回星槎頁，從頭開始這段旅程。</p>`;sp=[["ssBack",sx,sy,"🌌 看航線","回星槎頁"]]}
   if(shipFinaleOpen()){const fd=shipLearned("finale");sp.push(["ssFin",FIN_SPOT[0],FIN_SPOT[1],"♟ 千秋歸位",fd?"✅ 石桌已補全":"終章・七人共局",fd?"":"hot"]);card+=fd?`<p class="muted">✅ 石桌已補全：七顆棋子都歸位了。</p>`:`<p class="shp-say">說書人：「歸位以前，再陪老朽看一局？」</p>`}   /* 終章（元件 C）：13 站都學會才出現 */
+  if(!sp.some(s=>s[0]==="ssBack"))sp.push(["ssUp",UP_SPOT[0],UP_SPOT[1],"⛵ 回星槎",""]);
   v.innerHTML=shpPage("page_sail",cap,sub,sp,`<div class="shs-card">${card}</div>`);
-  shpOn(v,"#ssFin",()=>{location.hash="#/ship/lv/finale/xl-finale"});shpOn(v,"#ssGo",()=>shipSailGo(()=>goUp("#/adventure")));shpOn(v,"#ssDb",()=>{location.hash="#/db"});shpOn(v,"#ssBack",()=>goUp("#/adventure"));if(allIn&&typeof chdEndBind==="function")chdEndBind(v);shpFit(v);return{}}
-const SAIL_SPOT=[52,72],FIN_SPOT=[52,86];
+  shpOn(v,"#ssUp",()=>goUp("#/adventure"));shpOn(v,"#ssFin",()=>{location.hash="#/ship/lv/finale/xl-finale"});shpOn(v,"#ssGo",()=>shipSailGo(()=>goUp("#/adventure")));shpOn(v,"#ssDb",()=>{location.hash="#/db"});shpOn(v,"#ssBack",()=>goUp("#/adventure"));if(allIn&&typeof chdEndBind==="function")chdEndBind(v);shpFit(v);return{}}
+const SAIL_SPOT=[52,72],FIN_SPOT=[52,86],UP_SPOT=[20,86];
 const SHIP_PG={lesson:ShipLesson,shelf:ShipShelf,bag:ShipBag,sail:ShipSail};
 
 /* 開發者 11/7：星槎主畫面「假 3D 視差」——原圖切成四層（art/shipmap/layers：雲海星河 bg、船身＋碼頭 ship、帆桅旗燈 fg、金色星光 star），
@@ -28192,7 +28193,14 @@ function mnqGo(n){n=n||mnqNextOf(mnqSt(),mnqEnv());if(typeof vibrate==="function
 /* ---------- 首頁「下一步」：包一層 07z homeMap，放在底部那一條的最上面（同一個直排容器，不會跟入口標籤、大按鈕疊在一起） ---------- */
 function mnqHomeBtn(v){const P=v&&v.querySelector&&v.querySelector(".home-page"),bar=P&&P.querySelector(".hm-go-bar");if(!bar||bar.querySelector(".mnq-next"))return;mnqCss();
   const b=document.createElement("button");b.type="button";b.className="mnq-next";b.id="mnqNext";bar.insertBefore(b,bar.firstChild);
-  b.onclick=e=>{e.stopPropagation();mnqGo()};mnqHomeSync()}
+  b.onclick=e=>{e.stopPropagation();mnqGo()};mnqHomeSync();
+  const dg=()=>{if(!P.isConnected)return;try{mnqDodge(P,bar)}catch(e){}},rs=()=>{if(!P.isConnected){removeEventListener("resize",rs);return}setTimeout(dg,320)};addEventListener("resize",rs);requestAnimationFrame(dg);setTimeout(dg,90);setTimeout(dg,760)}
+/* 11/13 第 16 輪 device-fit：iPhone Duo 闔起（466×678）等矮螢幕，底部那條多了「下一步」變高，蓋到圖上的「同桌對弈」標籤。
+   被底部那條蓋到的標籤用 marginTop 往上推到它上面（跟 07z hmClamp 用 marginLeft 推左右同一套，先歸零再量，不會越推越多），推完通知 r07HitSoon 重算點選範圍 */
+function mnqDodge(P,bar){const R=bar.getBoundingClientRect();if(!R.height)return;let mv=0;
+  P.querySelectorAll(".shp-spot").forEach(s=>{if(bar.contains(s))return;s.style.marginTop="";const q=s.getBoundingClientRect();if(!q.width)return;
+    if(q.bottom>R.top-6&&q.top<R.bottom&&q.right>R.left-4&&q.left<R.right+4){s.style.marginTop=-Math.ceil(q.bottom-R.top+6)+"px";mv++}});
+  if(mv&&typeof r07HitSoon==="function")try{r07HitSoon()}catch(e){}}
 function mnqHomeSync(){const b=document.getElementById("mnqNext");if(!b)return;const n=mnqNextOf(mnqSt(),mnqEnv()),t="⛵ 下一步・"+mnqNextTxt(n);
   if(b.dataset.t!==t){b.dataset.t=t;b.textContent=t;b.setAttribute("aria-label","下一步："+mnqNextTxt(n))}if(n.k==="film")try{mnfPre(n.id)}catch(e){}}
 if(typeof homeMap==="function"){const f0=homeMap;homeMap=function(v){const r=f0.apply(this,arguments);try{mnqHomeBtn(v)}catch(e){}return r}}
