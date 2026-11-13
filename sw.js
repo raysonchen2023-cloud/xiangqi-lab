@@ -1,7 +1,7 @@
 // Service worker：
 // 1) 離線快取：App、古譜、引擎存在手機裡；神經網路檔（48 MB）放在另一個快取，更新 App 時不用重新下載
 // 2) 多執行緒：幫每個回應加上 COOP/COEP 標頭（WebAssembly 多執行緒需要「跨來源隔離」，GitHub Pages 自己不能設）
-const VERSION="20261113-1701";
+const VERSION="20261113-1704";
 const APP_CACHE="xqlab-app-"+VERSION,ENGINE_CACHE="xqlab-engine";
 const APP_FILES=["./","index.html","core.js","engine.js","local.js","manifest.json","icon.svg","icon-180.png","icon-512.png","icon-512-mask.png","qrcode.min.js","jsQR.min.js","net.js","zh.js","opencc-cn2t.js","opencc-t2cn.js","bot3d.js","park3d.js","engine/pikafish.js","engine/pikafish.wasm",
   "data/books.json","data/shiqingyaqu.json","data/juzhongmi.json","data/meihuapu.json","data/kaiju.json","data/canju.json","data/xuyinchuan.json","data/big-books.json","data/quiz.json","data/terms.json","data/gmbios.json","three.min.js","map3d.js","data/park-legend.json","data/park-novel.json","data/preload.json"];   /* 意見回饋 422：3D 程式和故事也一起先存 */
@@ -44,16 +44,19 @@ async function cdnParts(rel,mode,sig,want){const m=await cdnRaw(rel+".parts.json
 async function readAll(r){const rd=r.body.getReader(),cs=[];let n=0;for(;;){const st=setTimeout(()=>r.xqAbort(),30000);let x;try{x=await rd.read()}finally{clearTimeout(st)}if(x.done)break;cs.push(x.value);n+=x.value.byteLength}
   const out=new Uint8Array(n);let o=0;for(const c of cs){out.set(c,o);o+=c.byteLength}return out.buffer}
 /* 從 CDN 拿 rel；拿不到或內容不對回傳 null（呼叫的地方就照原本的方式抓 GitHub）。一般檔整個收完才回應：Content-Length 是真正的大小（App 用它比對手機裡的檔），順便核對指紋 */
-async function cdnGet(rel,url,mode,sig){try{const fr=url&&url.searchParams.get("fresh"),want=(await fpLoad()).get(rel)||(/^[0-9a-f]{8}$/.test(fr||"")?fr:null);
+async function cdnGet(rel,url,mode,sig,onStale){try{const fr=url&&url.searchParams.get("fresh"),want=(await fpLoad()).get(rel)||(/^[0-9a-f]{8}$/.test(fr||"")?fr:null);
     if(SPLIT.test(rel)){const p=await cdnParts(rel,mode,sig,want);if(p!==undefined)return p}
     const r=await cdnRaw(rel,mode,sig);if(!r)return null;
     if(r.status===404&&!SPLIT.test(rel))return(await cdnParts(rel,mode,sig,want))||null;
     if(!r.ok)return null;
-    const buf=await readAll(r);if(want&&(await hex(buf)).slice(0,want.length)!==want)return null;
+    const buf=await readAll(r);if(want&&(await hex(buf)).slice(0,want.length)!==want){if(onStale){const h0=new Headers(r.headers);h0.delete("content-encoding");h0.set("content-length",String(buf.byteLength));h0.set("x-xq-cdn","stale");onStale(new Response(buf,{status:200,statusText:"OK",headers:h0}))}return null}
     const h=new Headers(r.headers);h.delete("content-encoding");h.set("content-length",String(buf.byteLength));h.set("x-xq-cdn","1");
     return new Response(buf,{status:200,statusText:"OK",headers:h})}catch(e){return null}}
 /* 先試 CDN，不行就照原本的方式（gh）抓 */
-async function viaCdn(req,rel,url,mode,gh){if(useCdn(rel,req)){const r=await cdnGet(rel,url,mode,req&&req.signal);if(r)return r}return gh()}
+/* 11/13 開發者截圖「青石園環景壞了」：preload.json 指紋過期（換了圖忘了更新）時，CDN 的檔被丟掉、改走 GitHub，但大圖只放 CDN，GitHub 拿不到就整張空白。
+   改成：指紋不符時先把 CDN 那份留著；GitHub 拿得到就照舊用 GitHub 的（小檔用 git 更新的做法不變），GitHub 也拿不到才改用 CDN 那份 */
+async function viaCdn(req,rel,url,mode,gh){let st=null;if(useCdn(rel,req)){const r=await cdnGet(rel,url,mode,req&&req.signal,o=>{st=o});if(r)return r}
+  if(!st)return gh();try{const g=await gh();if(g&&g.ok)return g}catch(e){}return st}
 // 安裝新版時一律從網路抓最新檔案（cache:"reload"），不要拿到瀏覽器裡的舊檔
 /* 意見回饋 593：每存好一個檔就告訴畫面「第幾個／共幾個」，更新提示才能顯示進度；任何一個檔失敗就整個重來（跟 addAll 一樣） */
 const updTell=m=>self.clients.matchAll({includeUncontrolled:true,type:"window"}).then(cs=>cs.forEach(c=>c.postMessage(m))).catch(()=>{});

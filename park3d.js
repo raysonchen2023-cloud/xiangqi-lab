@@ -153,7 +153,7 @@
     im.src=src;imgCache[src]=im;im.addEventListener("load",()=>cb&&cb(),{once:true});
     /* 意見回饋 486、487（宋朝環景一直是黑的，重開也一樣）：手機快取裡那張圖壞了，解碼失敗——把壞的快取刪掉、繞過快取重抓一次（下次開會重新存一份好的） */
     if(!/[?&]fresh=/.test(src))im.addEventListener("error",()=>{try{const u=new URL(src,location.href).href;if(window.caches)caches.keys().then(ks=>ks.forEach(k=>caches.open(k).then(c=>c.delete(u)))).catch(()=>{})}catch(e){}
-      setTimeout(()=>{const r=new Image();r.decoding="async";inflight.add(r);const off2=()=>inflight.delete(r);r.addEventListener("load",()=>{off2();imgCache[src]=r;cb&&cb()},{once:true});r.addEventListener("error",off2,{once:true});r.src=src+(src.includes("?")?"&":"?")+"fresh="+Date.now()},1200)},{once:true});
+      const retry=n=>setTimeout(()=>{const r=new Image();r.decoding="async";inflight.add(r);const off2=()=>inflight.delete(r);r.addEventListener("load",()=>{off2();imgCache[src]=r;cb&&cb()},{once:true});r.addEventListener("error",()=>{off2();if(n<2)retry(n+1)},{once:true});r.src=src+(src.includes("?")?"&":"?")+"fresh="+Date.now()},[1200,4000,10000][n]);retry(0)},{once:true});   /* 11/13：網路一時抓不到（環景整張空白）就再試，最多 3 次：1.2、4、10 秒後 */
     return null};
   const boardTex=onReady=>{const t=MOB?cv(1040,1140,(g,w,h)=>drawBoard(g,w,h,onReady)):cv(1560,1710,(g,w,h)=>drawBoard(g,w,h,onReady));return t};
   /* hspx（開發者 11/12「把黑洞的楚河漢界改畫成宇宙感的味道，請 Gemini 發揮」）：巨盤模式（黑洞星盤，create 設 BRIVER）河界換成 Gemini 畫的星河長條 data/park/bh_river.webp，
