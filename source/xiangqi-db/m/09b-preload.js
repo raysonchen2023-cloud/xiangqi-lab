@@ -302,7 +302,7 @@ function PvpGame(v){
       modal(`<div class="em">🤝</div><h2>${PLAYER[st.draw]}提議和棋</h2><p class="muted">${esc(nm(o))}（${PLAYER[o]}）要同意嗎？</p>`,[["同意和棋",()=>post("/pvp/draw",{side:o})],["拒絕",()=>post("/pvp/draw",{side:st.draw}),true]])}
     if(!st.draw)drawAsked=null;
     if(seat!=="w")pmFire();   /* 第 13 輪 F3：輪到你、有排好的預走就走出（不合法、子被吃就取消並提示） */
-    if(st.result&&shownResult!==st.id&&seat==="w"){shownResult=st.id;modal(`<div class="em">${st.result.w?"🏆":"🤝"}</div><h2>${st.result.w?`${PLAYER[st.result.w]}（${esc(nm(st.result.w))}）勝`:"和局"}</h2><p class="muted">${esc(st.result.why)}</p>`,[["回大廳",()=>{XQNet.leave();goUp("#/lobby")}],["留在這裡",null,true]],"res")}   /* 意見回饋 607：退回大廳那一層，不往前推一頁 */
+    if(st.result&&shownResult!==st.id&&seat==="w"){shownResult=st.id;modal(`<div class="em">${st.result.w?"🏆":"🤝"}</div><h2 data-i18n="${st.result.w?"net.win."+st.result.w:"res.draw"}" data-i18n-n="${st.result.w?esc(nm(st.result.w)):""}">${st.result.w?`${PLAYER[st.result.w]}（${esc(nm(st.result.w))}）勝`:"和局"}</h2><p class="muted">${esc(st.result.why)}</p>`,[["回大廳",()=>{XQNet.leave();goUp("#/lobby")}],["留在這裡",null,true]],"res")}   /* 意見回饋 607：退回大廳那一層，不往前推一頁 */
     if(st.result&&shownResult!==st.id){shownResult=st.id;vibrate([30,40,30]);try{if(typeof shipGameDone==="function")shipGameDone(st)}catch(e){}
       /* 意見回饋 597：線上對戰也有機會掉寶物（照對手段位），線上不能用、跟電腦下時用 */
       if(NET&&seat&&seat!=="w"&&window.XQNet)try{const G=XQNet.game(),o=G&&(seat==="r"?G.black:G.red),pt=o?((XQNet.people().find(q=>q.id===o.id)||{}).pts??o.pts):null;
@@ -312,7 +312,7 @@ function PvpGame(v){
         if(w&&!st.result.abort&&st.moves.length>=2&&!(typeof blzSkip==="function"&&blzSkip("killFx"))){const loser=w==="r"?"b":"r",k=st.board.indexOf(loser==="r"?"K":"k");
           if(k>=0){MODAL_HOLD=Date.now()+2700;const mate=/將死|困斃/.test(st.result.why||""),cz=mine?(win?"對方":"你")+String(st.result.why||"").replace(/^(紅方|黑方)/,"").replace(/[，,].*$/,"").slice(0,12):String(st.result.why||"");
             try{killFx(bd.svg,win,st.result.why,k,isFlip(),{side:w,...(mate?{}:{cap:cz+(win?"・你贏了！":"")})})}catch(e){}}}}
-      modal(`<div class="em">${st.result.w?"🏆":"🤝"}</div><h2>${st.result.w?`${PLAYER[st.result.w]}（${esc(nm(st.result.w))}）勝`:"和局"}</h2><p class="muted">${esc(st.result.why)}</p>`,
+      modal(`<div class="em">${st.result.w?"🏆":"🤝"}</div><h2 data-i18n="${st.result.w?"net.win."+st.result.w:"res.draw"}" data-i18n-n="${st.result.w?esc(nm(st.result.w)):""}">${st.result.w?`${PLAYER[st.result.w]}（${esc(nm(st.result.w))}）勝`:"和局"}</h2><p class="muted">${esc(st.result.why)}</p>`,
         /* 意見回饋 607（RPG 專家建議）：結果視窗＝主要按鈕一顆＋次要一排（📊 檢討・🏠 首頁・看看棋盤）。線上對戰自己下的人，主要按鈕是「🌐 回大廳 ›」（離開這盤、退回大廳那一層），再來一局放到次要；
            📊 檢討＝原本的「賽後報告」＋「檢討這盤」合併，打開時直接附報告 */
         (()=>{const again=()=>post("/pvp/new",{red:st.red,black:st.black,tc:st.tcKey}),sub=[["📊 檢討",()=>{store.set("openReport","pvp/"+st.id);location.hash="#/db/pvp/"+encodeURIComponent(st.id)},true],["🏠 首頁",()=>goHome(),true],["看看棋盤",null,true]];

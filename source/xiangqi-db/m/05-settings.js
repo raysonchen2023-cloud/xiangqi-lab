@@ -99,7 +99,7 @@ function onboard(){if(journey())journeyLock();else titleScreen({})}
 // ================= 設定：棋盤風格、棋子樣式、走棋顯示 =================
 const SAMPLE_FEN0="rnbakabnr/9/1c5c1/p1p1p1p1p/9/9/P1P1P1P1P/1C5C1/9/RNBAKABNR",SAMPLE_FEN1="rnbakabnr/9/1c5c1/p1p1p1p1p/9/9/P1P1P1P1P/1C2C4/9/RNBAKABNR",SAMPLE_LAST={f:70,t:67};
 /* 意見回饋 661：關於頁顯示整包遊戲要多大空間。XQ_SIZES 由 build-site.js 建置時填入（開發中的 m.html 是 null，就不顯示） */
-const XQ_SIZES=/*__SIZES__*/null;
+const XQ_SIZES={"pre":397868793,"code":14535256,"eng":51511005,"gm":33668932,"bgm":280488180,"opt":[["比賽對局 1956–2010",21765744],["比賽對局 2011–2014",25596413],["比賽對局 2015–2019",24821916]],"all":890728296,"other":40472057};
 const szMB=b=>b>=1073741824?(b/1073741824).toFixed(1)+" GB":Math.max(1,Math.round(b/1048576))+" MB";
 function aboutSizes(){const S=XQ_SIZES,bg=typeof preStatRow==="function"?preStatRow():"";if(!S)return bg;const opt=S.opt||[];   /* 意見回饋 662：玩家只看總數，細項只在開發者模式顯示；11/11 ChatGPT 介面報告 P1：開 App 等待畫面不再寫容量，背景下載狀態放這裡（09b preStatRow） */
   return `<div class="row" style="justify-content:space-between"><span class="muted">整包下載</span><b>約 ${szMB(S.all)}</b></div>${bg}
@@ -236,9 +236,9 @@ fzApply();
 /* 11/12 開發者 iPhone 實測（自動跟著系統字級、放到 2 倍）：貼邊的標籤（官階、棋子聲）放大後被畫面左右邊切掉。
    fzPull 把放大後超出圖框的標籤往內推回來（用 margin 推，因為 translate 已被港口視差 07n、角色讓位 07w 拿去用），推完再檢查疊到 */
 function fzUnpull(e){e.classList.remove("fz-sh");e.style.marginLeft="";e.style.marginTop=""}
-function fzPull(L,P){const pr=P.getBoundingClientRect(),l=Math.max(pr.left,0)+2,rr=Math.min(pr.right,innerWidth)-2,t=pr.top+2,b=pr.bottom-2;
-  L.forEach(e=>{fzUnpull(e);const q=e.getBoundingClientRect(),dx=q.left<l?l-q.left:q.right>rr?rr-q.right:0,dy=q.top<t?t-q.top:q.bottom>b?b-q.bottom:0;
-    if(Math.abs(dx)>=1||Math.abs(dy)>=1){e.classList.add("fz-sh");e.style.marginLeft=Math.round(dx)+"px";e.style.marginTop=Math.round(dy)+"px"}})}
+function fzPull(L,P){const pr=P.getBoundingClientRect(),l=Math.max(pr.left,0)+2,rr=Math.min(pr.right,innerWidth)-2,t=pr.top+2,b=pr.bottom-2,H=!!(P.dataset&&P.dataset.hmc);
+  L.forEach(e=>{if(H){e.classList.remove("fz-sh");e.style.marginTop=""}else fzUnpull(e);const q=e.getBoundingClientRect(),dx=H?0:q.left<l?l-q.left:q.right>rr?rr-q.right:0,dy=q.top<t?t-q.top:q.bottom>b?b-q.bottom:0;
+    if(Math.abs(dx)>=1||Math.abs(dy)>=1){e.classList.add("fz-sh");if(!H)e.style.marginLeft=Math.round(dx)+"px";e.style.marginTop=Math.round(dy)+"px"}})}   /* hspx 開發者 11/13「今日推薦還是會左右抖一下」：首頁的左右貼邊只歸 07z hmClamp 管（它在頁面上標 data-hmc）；這裡、07t3 r07Push、07f shpFit 看到 data-hmc 就不碰左右，不再互相蓋來蓋去 */
 /* 評比第 5 輪（截圖 B10、Gemini 改善清單第 1 項）：440 寬的練功房，段位牌在標準字級就被畫面左邊切掉。場景圖比畫面寬時，貼邊的標籤一律推回看得到的範圍（不只放大字級時）；標準字級只推回、不縮字 */
 function fzFit(){const r=document.documentElement;if(!["l","xl","xxl","max"].includes(r.dataset.fz)){document.querySelectorAll(".fz-no").forEach(e=>e.classList.remove("fz-no"));
     document.querySelectorAll(".shp-page").forEach(P=>{const L=[...P.querySelectorAll(".shp-spot,.shp-hs")].filter(e=>e.getClientRects().length);if(L.length)fzPull(L,P)});return}
@@ -262,11 +262,11 @@ function focusOn(){try{return!!store.get("focusBoard",false)||!!store.get("axMod
 function focusApply(){document.documentElement.toggleAttribute("data-focus",focusOn())}
 focusApply();document.head.appendChild(Object.assign(document.createElement("style"),{textContent:"html[data-focus]:has(#bbox) .xqbot{display:none!important}"}));
 function Settings(v){
-  setTop("設定",false,[...(OFF&&DEVMODE()?[["📋",openFbAdmin,"意見回饋管理"]]:[]),...(typeof i18nSheet==="function"?[["🌐",i18nSheet,"語言 Language"]]:[])]);   /* 評比第 14 輪 F1：頂欄 🌐 選語言（繁體／簡體／English，07i18n.js），看不懂中文的人也找得到 */   /* 意見回饋 570：意見回饋管理放設定頁右上角 */setTabs(true,"#/settings");
+  setTop(typeof i18nT==="function"?i18nT("set.title","設定"):"設定",false,[...(OFF&&DEVMODE()?[["📋",openFbAdmin,"意見回饋管理"]]:[]),...(typeof i18nSheet==="function"?[["🌐",i18nSheet,"語言 Language"]]:[])]);   /* 評比第 14 輪 F1：頂欄 🌐 選語言（繁體／簡體／English，07i18n.js），看不懂中文的人也找得到 */   /* 意見回饋 570：意見回饋管理放設定頁右上角 */setTabs(true,"#/settings");
   // 設定分成四個分頁，一次只看一類（意見回饋 141）
   let stab=store.get("setTab","look");if(stab==="play")stab="look";   /* 意見回饋 526：分頁改成 角色／棋盤／聲音／系統，原本的「走棋」併進「棋盤」 */
   v.innerHTML=`<div class="pad home">
-    <div class="st-tabs" id="sgTabs" style="position:static;margin:4px 0 10px">${[["bot","🙂","角色"],["look","♟","棋盤"],["sound","🔊","聲音"],["more","⚙","系統"]].map(([k,e,l])=>`<button data-k="${k}"><i class="tic" data-ic="t_${k}">${e}</i> ${l}</button>`).join("")}</div>
+    <div class="st-tabs" id="sgTabs" style="position:static;margin:4px 0 10px">${[["bot","🙂","角色"],["look","♟","棋盤"],["sound","🔊","聲音"],["more","⚙","系統"]].map(([k,e,l])=>`<button data-k="${k}" data-i18n="set.tab.${k}"><i class="tic" data-ic="t_${k}">${e}</i> ${l}</button>`).join("")}</div>
     <div data-pane="look">
     <div class="card" style="padding:10px"><div id="pv" style="max-width:300px;margin:0 auto"></div>
       <div class="opt" id="tbb" style="justify-content:center;margin-top:8px"><!-- 意見回饋 620：「示範一步」跟「走一步」重複，只留走一步（會照設定播特效和音效） -->${[["mv","♟ 走一步"],["cap","💥 吃子"],["ck","⚔ 將軍"],["op","🚩 開局動畫"]].map(([k,l])=>`<button data-tst="${k}">${l}</button>`).join("")}</div></div>   <!-- 意見回饋 537：預覽和測試併成一個棋盤；547：小字提示都拿掉 -->
@@ -276,12 +276,12 @@ function Settings(v){
     <div class="thgrid thsw" id="th"></div>
     <div class="sec-t" style="display:none">對手形象</div><div class="opt" id="ol" style="display:none"></div>
     <div class="sec-t" style="display:none">棋子樣式</div><div class="opt" id="ps" style="display:none"></div>
-    <details class="card" style="padding:10px 12px;margin-top:14px"><summary style="font-weight:700;cursor:pointer">⚙ 更多設定</summary>   <!-- 意見回饋 576（開發者）：只留「更多設定」，後面的說明拿掉 -->   <!-- 意見回饋 537：不常改的收在這裡 -->
+    <details class="card" style="padding:10px 12px;margin-top:14px"><summary style="font-weight:700;cursor:pointer" data-i18n="set.more">⚙ 更多設定</summary>   <!-- 意見回饋 576（開發者）：只留「更多設定」，後面的說明拿掉 -->   <!-- 意見回饋 537：不常改的收在這裡 -->
     <div class="sec-t">深淺色</div><div class="opt" id="pt"></div><p class="muted" id="ptN" style="display:none"></p>${typeof sw7SetRow==="function"?sw7SetRow():""}
-    <div class="sec-t">字體</div><div class="opt" id="ftM"></div>
-    <div class="sec-t" id="fzT">字級</div><div class="opt" id="fzM" role="group" aria-labelledby="fzT"></div><p class="muted" id="fzN" style="font-size:12.5px;margin:4px 2px 0">面板、對局文字、小說都跟著放大；棋盤上的棋子不變。</p>${typeof axmFzSysRow==="function"?axmFzSysRow():""}   <!-- 回饋 846（開發者 11/9 選：字級放大）；11/12 無障礙：跟著系統字級 -->
-    <div class="sec-t">文字</div><div class="opt" id="zhO" data-nocc>${[["tw","繁體中文"],["cn","简体中文"],["en","English"]].map(([k,l])=>`<button data-zh="${k}"${(typeof i18nCur==="function"?i18nCur():((window.XQ_ZH&&XQ_ZH.mode())||"tw"))===k?' class="on"':""}>${l}</button>`).join("")}</div>   <!-- 意見回饋 518：繁簡切換（zh.js） -->
-    <div class="sec-t">棋規</div><div class="opt" id="rsO">${rsOpts()}</div><p class="muted" id="rsN" style="font-size:12.5px;margin:4px 2px 0;line-height:1.6">${rsNote()}</p><div class="sec-t">電腦下棋節奏</div><div class="opt" id="paceO">${[["real","擬真"],["fast","快速"]].map(([k,l])=>`<button data-pace="${k}"${store.get("cpuPace","real")===k?' class="on"':""}>${l}</button>`).join("")}</div><p class="muted" style="font-size:12.5px;margin:4px 2px 0;line-height:1.6">擬真：照局面難易決定想多久——開局 1～2 秒、一般 2～5 秒、難局最多 8 秒，只有一兩步可走時 1 秒內，像真人在想。快速：每步 1 秒左右。</p><label class="row" style="justify-content:space-between;padding:8px 2px"><span><b>⚡ 快棋模式</b><br><span class="muted" style="font-size:12.5px">動畫縮到最短、略過吃子／將軍／開局特效，電腦用快速節奏</span></span><input type="checkbox" class="sw" id="blitzSw" aria-label="快棋模式"></label>   <!-- 第 12 輪 F3：07pm-premove.js 監聽 #blitzSw -->
+    <div class="sec-t" data-i18n="set.font">字體</div><div class="opt" id="ftM"></div>
+    <div class="sec-t" id="fzT" data-i18n="set.fontSize">字級</div><div class="opt" id="fzM" role="group" aria-labelledby="fzT"></div><p class="muted" id="fzN" style="font-size:12.5px;margin:4px 2px 0">面板、對局文字、小說都跟著放大；棋盤上的棋子不變。</p>${typeof axmFzSysRow==="function"?axmFzSysRow():""}   <!-- 回饋 846（開發者 11/9 選：字級放大）；11/12 無障礙：跟著系統字級 -->
+    <div class="sec-t" data-i18n="set.lang">文字</div><div class="opt" id="zhO" data-nocc>${[["tw","繁體中文"],["cn","简体中文"],["en","English"]].map(([k,l])=>`<button data-zh="${k}"${(typeof i18nCur==="function"?i18nCur():((window.XQ_ZH&&XQ_ZH.mode())||"tw"))===k?' class="on"':""}>${l}</button>`).join("")}</div>   <!-- 意見回饋 518：繁簡切換（zh.js） -->
+    <div class="sec-t" data-i18n="set.rules">棋規</div><div class="opt" id="rsO">${rsOpts()}</div><p class="muted" id="rsN" style="font-size:12.5px;margin:4px 2px 0;line-height:1.6">${rsNote()}</p><div class="sec-t" data-i18n="set.pace">電腦下棋節奏</div><div class="opt" id="paceO">${[["real","擬真"],["fast","快速"]].map(([k,l])=>`<button data-pace="${k}"${store.get("cpuPace","real")===k?' class="on"':""}>${l}</button>`).join("")}</div><p class="muted" style="font-size:12.5px;margin:4px 2px 0;line-height:1.6">擬真：照局面難易決定想多久——開局 1～2 秒、一般 2～5 秒、難局最多 8 秒，只有一兩步可走時 1 秒內，像真人在想。快速：每步 1 秒左右。</p><label class="row" style="justify-content:space-between;padding:8px 2px"><span><b>⚡ 快棋模式</b><br><span class="muted" style="font-size:12.5px">動畫縮到最短、略過吃子／將軍／開局特效，電腦用快速節奏</span></span><input type="checkbox" class="sw" id="blitzSw" aria-label="快棋模式"></label>   <!-- 第 12 輪 F3：07pm-premove.js 監聽 #blitzSw -->
     <label class="row" style="justify-content:space-between;padding:8px 2px"><span><b>⏳ 預走</b><br><span class="muted" style="font-size:12.5px">電腦或對方還在想時，先點棋子和落點排好下一步，輪到你就自動走（平面、3D 園子、線上對局都可以）</span></span><input type="checkbox" class="sw" id="premoveSw" aria-label="預走"></label>   <!-- 第 12 輪 F3：07pm-premove.js 監聽 #premoveSw -->
     <label class="row" style="justify-content:space-between;padding:8px 2px"><span><b>🫲 左撇子單手模式</b><br><span class="muted" style="font-size:12.5px">返回、更多、關閉鍵移到左下角，方便左手拇指按；棋盤和文字方向不變</span></span><input type="checkbox" class="sw" id="leftySw" aria-label="左撇子單手模式"></label>   <!-- 第 12 輪：07lh-lefty.js 監聽 #leftySw（存檔、套用、提示都在模組裡） -->
     <label class="row" style="justify-content:space-between;padding:8px 2px"><span><b>🎬 純淨畫面</b><br><span class="muted" style="font-size:12.5px">對局只留棋盤、名字、棋鐘和著法，適合直播、截圖（Esc 或右上角 ✕ 還原）</span></span><input type="checkbox" class="sw" id="cleanSw" aria-label="純淨畫面"></label>   <!-- 第 12 輪：07fm-focus.js 監聽 #cleanSw（存檔、套用、提示都在模組裡） -->
@@ -291,13 +291,13 @@ function Settings(v){
     <label class="row" style="justify-content:space-between;padding:8px 2px"><span><b>🎨 色弱模式</b><br><span class="muted" style="font-size:12.5px">黑子加黑環、上一步改朱橘加外框、評語和長條加符號；紅綠色弱也分得清，3D 園子也套用</span></span><input type="checkbox" class="sw" id="cbSw" aria-label="色弱模式"></label>   <!-- 第 11 輪 F3：07cb-colorblind.js 讀 cbMode -->
     ${typeof shpTiltRow==="function"?shpTiltRow():""}   <!-- 第 14 輪 X2：「📱 傾斜手機看景深」，07f-ship.js 產生整列並監聽 #shpTiltSw -->
     <label class="row" style="justify-content:space-between;padding:8px 2px"><span><b>專注棋盤模式</b><br><span class="muted" style="font-size:12.5px">下棋時只留平面棋盤：收起 3D 園子、開局卷軸、吃子水墨字和小帥（朝代擂台除外）</span></span><input type="checkbox" class="sw" id="focB" aria-label="專注棋盤模式（下棋時收起背景動畫與裝飾）"></label>   <!-- 開發者 11/11 選（規劃書 D08） -->${typeof pkPwRow==="function"?pkPwRow():""}${typeof chdFormRow==="function"?chdFormRow():""}
-    <div class="sec-t">走棋顯示與特效</div><div class="card sgc" id="mv"></div></details></div>
+    <div class="sec-t" data-i18n="set.moveFx">走棋顯示與特效</div><div class="card sgc" id="mv"></div></details></div>
     <div data-pane="sound">   <!-- 意見回饋 541：聲音頁分成三張卡片：棋子聲、語音、氛圍 -->
-      <div class="sec-t" style="margin-top:4px">${ETIMG("t_sound","","♟")} 棋子聲</div><div class="card sgc" id="snd"></div>
-      <div class="sec-t">${ETIMG("t_play","","🗣")} 語音報子</div><div class="card sgc" id="snd2"></div>
-      <div class="sec-t">${ETIMG("arena","","🥁")} 氛圍</div><div class="card sgc" id="snd3"></div></div>
+      <div class="sec-t" style="margin-top:4px" data-i18n="set.sndPiece">${ETIMG("t_sound","","♟")} 棋子聲</div><div class="card sgc" id="snd"></div>
+      <div class="sec-t" data-i18n="set.sndVoice">${ETIMG("t_play","","🗣")} 語音報子</div><div class="card sgc" id="snd2"></div>
+      <div class="sec-t" data-i18n="set.sndAmb">${ETIMG("arena","","🥁")} 氛圍</div><div class="card sgc" id="snd3"></div></div>
     <div data-pane="bot">
-    <div class="sec-t" style="margin-top:4px">我的角色</div><div class="card row" style="gap:10px;align-items:center;margin-bottom:6px">   <!-- 意見回饋 506：精簡成一張小卡；522：跟官階、棋子、顯示放在同一個「角色」分頁 -->
+    <div class="sec-t" style="margin-top:4px" data-i18n="set.myChar">我的角色</div><div class="card row" style="gap:10px;align-items:center;margin-bottom:6px">   <!-- 意見回饋 506：精簡成一張小卡；522：跟官階、棋子、顯示放在同一個「角色」分頁 -->
       <img id="meFig" role="button" aria-label="看我的 3D 角色" src="${meImg()}" ${meImgTag(myStyle(),mySex())} alt="" style="width:46px;height:58px;object-fit:contain;flex:none;cursor:pointer" onerror="this.remove()">
       <div style="flex:1;min-width:0"><b>${esc(meName())}</b>   <!-- 意見回饋 668：選雲河七星的人也顯示對的名字 -->   <!-- 開發者 11/4：只寫「小帥Q版」或「小帥」，不寫「真實版」 --><br><span class="muted" style="font-size:13px">${esc(myName()||"還沒取名字")}</span></div>
       <button class="pill" id="obAgain">💾 存檔</button>${typeof DIFF!=="undefined"&&journey()?`<button class="pill" id="dfPick">🎚 ${esc(diffOf().n)}</button>`:""}   <!-- 意見回饋 675：航行難度，隨時可換 -->   <!-- 意見回饋 668：角色選定就鎖住，這裡改成存檔與讀檔 --><button class="pill" id="nmLook">改名</button></div>
@@ -311,7 +311,7 @@ function Settings(v){
       <div class="sec-t">${myChar()?"本命棋子":"換一顆棋子"}</div><div class="card"><!-- 意見回饋 596：拿掉這段小字說明 -->
         ${myChar()?`<div class="row" style="gap:10px;align-items:center;margin:4px 0"><span class="bpc on" style="display:inline-flex;align-items:center;justify-content:center;color:#B3261E;flex:none;width:44px">${esc(botPc())}</span><span style="flex:1;font-size:14px">🔒 ${esc(meName())}就是「${esc(botPc())}」——雲河七星的棋子跟著角色，這段旅程不能換。</span></div>`:[["紅方","帥仕相俥傌炮兵"],["黑方","將士象車馬砲卒"]].map(([t,cs])=>`<div class="row" style="gap:6px;margin:6px 0;align-items:center"><span class="muted" style="font-size:12px;width:34px">${t}</span>${[...cs].map(c=>`<button data-bp="${c}" class="bpc${botPc()===c?" on":""}" style="color:${t==="紅方"?"#B3261E":"#1A1410"}">${c}</button>`).join("")}</div>`).join("")}
         <style>.bpc{flex:1;aspect-ratio:1;max-width:44px;border-radius:50%;border:2px solid var(--line);background:radial-gradient(circle at 40% 35%,#FFF8E6,#EBD3A0);font:900 19px/1 "Noto Serif TC",serif;padding:0}.bpc.on{border-color:var(--accent);box-shadow:0 0 0 3px color-mix(in srgb,var(--accent) 30%,transparent)}</style></div>
-      <div class="sec-t">顯示</div><div class="card">
+      <div class="sec-t" data-i18n="set.display">顯示</div><div class="card">
         <label class="row" style="justify-content:space-between"><span><b>顯示 3D 象棋小人</b><br><span class="muted">圓滾滾的棋子小人，跟著朝代換造型</span></span><input type="checkbox" class="sw" id="botT" ${botOn()?"checked":""}></label>
         <div style="border-top:1px solid var(--line);margin:8px 0"></div>
         <div class="row" style="gap:10px"><b style="white-space:nowrap">大小</b><input type="range" id="botSz" min="0.6" max="2" step="0.05" value="${store.get("botSize",.7)}" style="flex:1"><b id="botSzV" style="width:46px;text-align:right">${Math.round(store.get("botSize",.7)*100)}%</b></div></div>
@@ -319,10 +319,10 @@ function Settings(v){
       <div class="row" style="gap:8px;margin-top:10px"><button class="btn" id="askB" style="flex:1">💬 問<span>${ASKN()}</span></button><button class="btn ghost" id="botHome" style="flex:1">↩ 回到預設位置</button></div>
       ${typeof epSetHTML==="function"?epSetHTML():""}</div>   <!-- 開發者 11/8：🎐 旅途插曲的開關（07t-episodes.js） -->
     <div data-pane="more">${typeof axmSetRows==="function"?axmSetRows():""}   <!-- 11/12 無障礙：♿ 螢幕報讀與鍵盤模式、高對比主題 -->   <!-- 意見回饋 523：「我的名字」「顯示我的城市」拿掉（名字在角色分頁改，城市一律照網路位置自動顯示）；「其他」改名「系統」 -->
-    <div class="sec-t" style="margin-top:4px">支援</div><div class="items" style="padding:0">
+    <div class="sec-t" style="margin-top:4px" data-i18n="set.support">支援</div><div class="items" style="padding:0">
       <button class="item" id="fb"><span class="lb">${ETIMG("feedback","","💬")}</span><span class="tx"><b>意見回饋</b><span>回報錯誤、想要的功能</span></span><span class="muted">›</span></button><button class="item" id="fxh"><span class="lb">${ETIMG("o_fixes","","🛠")}</span><span class="tx"><b>修正紀錄</b><span>你回報、已經修好的問題</span></span><span class="muted">›</span></button>${OFF&&!isStandalone()?`<button class="item" id="a2h"><span class="lb">📲</span><span class="tx"><b>加到主畫面</b><span>從主畫面點圖示打開：全螢幕、沒網路也能下棋</span></span><span class="muted">›</span></button>`:""}
       <button class="item" id="sh"><span class="lb">${ETIMG("share","","📤")}</span><span class="tx"><b>分享給朋友</b><span>QR code・LINE</span></span><span class="muted">›</span></button></div>
-    <div class="sec-t">關於</div><div class="card" id="about" style="line-height:1.9">
+    <div class="sec-t" data-i18n="set.about">關於</div><div class="card" id="about" style="line-height:1.9">
       <div class="row" style="justify-content:space-between"><span class="muted">App</span><b>象棋千秋</b></div>
       <div class="row" style="justify-content:space-between"><span class="muted">開發者</span><b>hungshengc</b></div>
       <div class="row" style="justify-content:space-between"><span class="muted">開始開發</span><b>2026 年 10 月 29 日</b></div>

@@ -484,7 +484,7 @@ html[data-era=ming] .topbar,html[data-era=qing] .topbar{border-bottom-width:4px}
 .rp-ph{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:10px}.rp-ph>div{background:var(--bg);border:1px solid var(--line);border-radius:12px;padding:8px 10px;display:flex;flex-direction:column;gap:2px}.rp-ph b{font-size:22px}.rp-ph i{display:block;height:5px;border-radius:3px}
 .rp-q{display:flex;flex-wrap:wrap;gap:6px 12px;font-size:13px;margin-bottom:6px}.rp-q b{font-size:17px;margin-right:2px}
 .rp-t{padding:9px 12px;border-radius:12px;background:var(--bg);margin:6px 0;border-left:4px solid var(--line);font-size:14px}.rp-t b{margin-right:6px}.rp-t.bad{border-left-color:#C0392B}.rp-t.good{border-left-color:#C27C0E}.rp-t .go{float:right;color:var(--accent);font-size:13px}.rp-t[data-p]{cursor:pointer}
-.toast{position:fixed;left:50%;bottom:calc(90px + var(--safeB));transform:translateX(-50%);background:#000d;color:#fff;padding:9px 16px;border-radius:999px;font-size:14px;z-index:70;max-width:90vw;text-align:center}
+.toast{position:fixed;left:50%;bottom:calc(90px + var(--safeB));transform:translateX(-50%);background:#000d;color:#fff;padding:9px 16px;border-radius:999px;font-size:14px;z-index:70;max-width:90vw;text-align:center;box-sizing:border-box;word-break:keep-all;overflow-wrap:anywhere;text-wrap:balance}   /* 11/13 換行規矩（00-util toastFit）：要換行時只在標點、空白處斷，兩行拉平均 */
 /* 清單 */
 .search{display:flex;gap:8px;padding:10px 12px 6px}
 .search input{flex:1;min-width:0;padding:10px 14px;border-radius:999px;border:1px solid var(--line);background:var(--card)}
@@ -936,7 +936,7 @@ html[data-theme=dark]:not([data-era]) .shp-rd strong.kl,html[data-era=qin] .shp-
 .inn-walk{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:6px;margin-top:8px}.inn-walk .btn{width:auto;margin:0;padding:10px 2px;font-size:14px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 
 /* 意見回饋 698：星槎水墨圖與圖上的入口 */
-.shp-map{position:relative;margin:0 0 10px;border-radius:14px;overflow:hidden;background:#f3f0e8}.shp-map img{display:block;width:100%;height:auto}
+.shp-map{position:relative;margin:0 0 10px;border-radius:14px;overflow:hidden;background:#f3f0e8}.shp-map img:not(.eic){display:block;width:100%;height:auto}   /* hspx 開發者 11/13「盤查圖示和文字換行的問題，這樣很醜，直接一行」：原本 .shp-map img 也套到按鈕裡的小圖示（img.eic），權重比 .eic 高，圖示變成區塊、自己佔一行 */
 .shp-hs{position:absolute;transform:translate(-50%,-50%);background:rgba(255,251,242,.9);border:1.5px solid #2a2018;border-radius:99px;padding:4px 10px;font:700 12.5px/1.2 var(--serif,serif);color:#2a2018;white-space:nowrap;box-shadow:0 2px 6px rgba(0,0,0,.28);cursor:pointer}
 .shp-hs:active{transform:translate(-50%,-50%) scale(.95)}.shp-hs.hot{background:#B5452B;border-color:#7a2414;color:#fff;font-size:13.5px;padding:5px 12px}
 

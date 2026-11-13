@@ -131,7 +131,7 @@ body:not(.r07-side) .r07-menu{display:none}
 function r07Off(V){if(V)V.classList.remove("r07-fit","r07-side");if(document.body)document.body.classList.remove("r07-side");const M=document.getElementById("r07Menu");if(M)M.remove();
   const b=document.querySelector(".hm-go-bar[data-r07]");if(b){b.style.left="";b.removeAttribute("data-r07")}}
 /* 寬螢幕模式下把貼邊的標籤推回「圖和畫面重疊的那一塊」（原本的推法量的是畫面，圖變窄以後要量圖） */
-function r07Push(V,P){requestAnimationFrame(()=>{if(!P.isConnected)return;const q0=P.getBoundingClientRect(),v0=V.getBoundingClientRect(),L=Math.max(q0.left,v0.left)+6,R=Math.min(q0.right,v0.right)-6;
+function r07Push(V,P){requestAnimationFrame(()=>{if(!P.isConnected||P.dataset.hmc)return;const q0=P.getBoundingClientRect(),v0=V.getBoundingClientRect(),L=Math.max(q0.left,v0.left)+6,R=Math.min(q0.right,v0.right)-6;
   P.querySelectorAll(".shp-spot,.po-sight").forEach(b=>{if(b.dataset.ttL==null)b.dataset.ttL=b.style.left;const q=b.getBoundingClientRect();if(!q.width)return;let d=0;if(q.left<L)d=L-q.left;else if(q.right>R)d=R-q.right;if(d)b.style.left="calc("+b.dataset.ttL+" + "+Math.round(d)+"px)"});
   if(typeof r07HitSoon==="function")r07HitSoon()})}
 function r07Wide(V,P,vr,pr,nw,nh){if(!R07_WIDE_ON){r07Off(V);return false}

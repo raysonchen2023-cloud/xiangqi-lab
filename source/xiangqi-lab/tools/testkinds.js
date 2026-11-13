@@ -16,7 +16,9 @@ const SKIP = new Set(["test-home-focus.js", "testkinds.js"]);
 /* 11/12 已逐項分類（開發者稽核 story/102_評比灌水誠實稽核.md 第 3 項） */
 const CLASSIFIED = new Set([
   "test-i18n.js",   /* 11/13 第 14 輪 F1 英文介面架構（m/07i18n.js；行為 31、混合 2、原始碼 4） */
-  "test-android-roadmap.js",   /* 11/13 第 14 輪 F3 Android 路線圖＋可重現驗證包：verify-all.js、xiangqi-android 骨架檢查、F-Droid 草稿、make-www（行為 8、混合 1） */
+  "test-evidence-shots.js",   /* 11/13 第 15 輪 F1／F2／X2 可重現畫面證據包＋英文防爆版檢查（tools/qa/evidence-shots.js 的純函式；行為 16、原始碼 1） */
+  "test-android-build.js",   /* 11/13 第 15 輪 F3、F4 Android debug APK 編譯＋可重現檢查 repro-check.js、建置與工具鏈紀錄（行為 9、混合 2、原始碼 1）；11/13 Service Worker 標頭修法正式採用（混合 +1、原始碼 +1） */
+  "test-android-roadmap.js",   /* 11/13 第 14 輪 F3 Android 路線圖＋可重現驗證包：verify-all.js、xiangqi-android 骨架檢查、F-Droid 草稿、make-www（行為 8、混合 1）；11/13 骨架檢查 native.swclient（行為 +1） */
   "test-fdroid-evidence.js",   /* 11/13 第 13 輪 F2 F-Droid 可建置證據：pikafish-verify.js、release-verify.js（行為 8、原始碼 1） */
   "test-daily.js",   /* 11/13 第 13 輪 F1 每日同題＋無雷分享（m/07dq-daily.js；行為 11、原始碼 2）；第 14 輪 X4 題庫改版名冊＋邊界（行為 +13） */
   "test-ship-tilt.js", "test-home-order.js",   /* 11/13 第 14 輪 X2 星槎傾斜權限不自動問（行為 6、原始碼 1）、首頁焦點順序（行為 5、原始碼 1） */
@@ -32,10 +34,15 @@ const CLASSIFIED = new Set([
   "test-touch-fixes.js",   /* 11/12 第 11 輪 F1 小螢幕觸控修正（行為 5、混合 2、原始碼 4） */
   "test-lefty.js",   /* 11/13 第 12 輪 F1 左撇子單手模式＋F2 剩餘小目標（行為 10、原始碼 2） */
   "test-beidou-lines.js",   /* 11/12 hspx 北斗斗柄連線 */
+  "test-classic-sky.js",   /* 11/13 開發者 iPhone 經典世界：環景毛筆擦掉、Gemini 水墨雲（載不到退回 canvas）、俯視圖七星全標名、經典不放大筆架立牌（行為 9、原始碼 3） */
   "test-park-weather.js",   /* 意見回饋 878 雲跑到地面、雨範圍太小 */
   "test-askbot-city.js",   /* 第 12 輪 X12：小幫手天氣「台北／臺北」都認得 */
   "test-a11y-emoji.js",   /* 11/13 實機旁白：圖示、「・」不再被念出來 */
   "test-docbtns.js",   /* 11/13 說明清單按鈕字超出框 */
+  "test-spotfit.js",   /* 11/13 hspx 1098 場景標籤英文疊在一起、聲音提示蓋頂欄 */
+  "test-engine-start.js",   /* 11/13 hspx P0 章回棋路殘局開局送錯局面給引擎（不合法著法 g3g4／c3c4、電腦卡住） */
+  "test-ui-1113.js",   /* 11/13 hspx：看我的棋力沒反應（P0）、toast 換行規矩、幻影台詞、漂浮畫卷 */
+  "test-ipad-fill.js",   /* 11/13 遊戲畫面都要滿版：iPad／Duo 直向填滿寬度、橫向兩側模糊底（07fl；行為 8、原始碼 1） */
   "test-engine-timeout.js",   /* 11/12 開發者截圖「思考有點久」：引擎沒回應不再永遠等 */
   "test-ai-levels.js",   /* 11/12 第 10 輪 F3：電腦對手透明頁（行為 2、混合 3、原始碼 2） */
   "test-land3d.js", "test-bhmate.js", "test-docs-md.js", "test-net-chaos.js", "test-park3d-bench.js", "test-save-file.js", "test-story0.js",   /* 11/12 晚上逐項分類（第 8 輪證據頁） */
@@ -53,6 +60,7 @@ const CLASSIFIED = new Set([
   "test-net-link.js", "test-xfer2.js",   /* 11/13 第 12 輪 X11 連線同步頻道（行為 15、原始碼 1）、換手機轉移碼補強（行為 11、原始碼 1） */
   "test-net-linksig.js",   /* 11/13 第 13 輪 X2 同步頻道簽名、防重放、除錯小卡（行為 11、原始碼 1） */
   "test-net-pin.js",   /* 11/13 第 14 輪 F2 開局公開金鑰驗證、千秋盃 k 簽名（行為 13、原始碼 1） */
+  "test-threat-weaknet.js", "test-verify-daily.js",   /* 11/13 第 15 輪 X4 威脅模型＋弱網長測（行為 11、原始碼 3）、X5 每日同題公開名冊對照工具（行為 9、原始碼 1） */
   "test-oss-scan.js"   /* 11/13 原始碼公開前的機密與個資掃描 tools/oss-scan.js（行為 7） */
 ]);
 /* 還沒逐項分類的檔（統計列為「待分類」）；新測試檔先放這裡，分好類再移到 CLASSIFIED */

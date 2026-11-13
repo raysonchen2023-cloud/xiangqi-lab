@@ -93,9 +93,9 @@ function bhReturn(){const R=store.get("bhRet",null);store.set("bhRet",null);loca
 /* ---------- hspx（開發者 11/12，story/116 選「Claude 混搭」）：幻影棋客頭上的小黑洞，引沒搭過星槎的人去碰黑洞 ----------
    挑戰電腦（對手是幻影棋客、不是掌櫃，不是石桌往事、擂台、練習、線上、盲棋）：沒去過黑洞、這是玩過的第 6 盤以後，每天第一盤下到第 12 手，
    幻影棋客頭頂浮出一顆有裂痕的小黑洞球（park3d ex.bhOrb="ball"），不跳視窗、不擋棋盤。
-   點它：球化成紫光飛走（park3d）→ 幻影棋客「這道裂，我算過。」→ 提示「去搭星槎，找裂痕的另一端。」；記 bhMark，下一次起航必定偏航（bhMaybe）。
+   點它：球化成紫光飛走（park3d）→ 幻影棋客「天上這道裂痕，通往另一盤棋。」→ 提示「去搭星槎，找裂痕的另一端。」；記 bhMark，下一次起航必定偏航（bhMaybe）。
    去過黑洞以後：點過球的人，幻影棋客頭上只留一圈淡淡星塵（"dust"）；從黑洞回來後的第一盤，他開口說「你竟從那無盡的循環裡，帶回了新棋譜。」 */
-const BH_ORB={say:"這道裂，我算過。",go:"去搭星槎，找裂痕的另一端。",back:"你竟從那無盡的循環裡，帶回了新棋譜。"};
+const BH_ORB={say:"天上這道裂痕，通往另一盤棋。",   /* 11/13 開發者「這道裂，我算過，換個說法吧，有點怪」 */go:"去搭星槎，找裂痕的另一端。",back:"你竟從那無盡的循環裡，帶回了新棋譜。"};
 function bhOrbDay(){const d=new Date();return d.getFullYear()+"-"+(d.getMonth()+1)+"-"+d.getDate()}
 function bhOrbKind(st){try{if(!st||!st.id||st.journey||st.arena||st.practice||st.net||st.blind)return null;{const F=store.get("dvtOrb",null);if(F&&typeof DEVMODE==="function"&&DEVMODE())return F}   /* 開發者測試台：固定出現哪一種 */if(typeof zgIs==="function"&&zgIs(st))return null;
   if((store.get("bhCount",0)||0)>0){if(store.get("bhWin",0)){const today=bhOrbDay(),G=store.get("gxGateDay",null);if(!G||G.d!==today){store.set("gxGateDay",{d:today,id:st.id});return"gate"}if(G.id===st.id)return"gate"}return store.get("bhOrbHit",0)?"dust":null}   /* 戰勝過黑洞：每天第一盤，頭上是幻譜星門（07gx-galaxy.js） */

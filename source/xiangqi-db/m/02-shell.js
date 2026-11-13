@@ -114,7 +114,7 @@ function route(){
   if(p[0]==="guess")return screen=Guess(v);
   if(/^pos(\?|$)/.test(p[0]||"")&&typeof PosRestore==="function")return screen=PosRestore(v,p[0]==="pos"?p[1]||"":"");   /* 11/11 ChatGPT 介面報告 P2：分享網址 #/pos?fen=…（m/10d-coach.js posRQuery） */   /* 評比第 4 輪：局面還原 #/pos（FEN、擺子）、#/pos/play 從局面和電腦下（m/10d-coach.js） */
   if(p[0]==="hw"&&typeof Homework==="function")return screen=Homework(v,p[1]||"",p[2]);   /* 評比第 3 輪 P17 教練作業：#/hw 出作業、#/hw/<編碼> 作業清單與成績、#/hw/<編碼>/<第幾題>（m/10d-coach.js） */
-  if(p[0]==="daily"&&typeof DailyPage==="function")return screen=DailyPage(v,p[1]||"",p[2]||"");   /* 評比第 13 輪 F1 每日同題：#/daily 今天、#/daily/<日期>、#/daily/<日期>/play（m/07dq-daily.js） */
+  if(p[0]==="daily"&&typeof DailyPage==="function"){try{return screen=DailyPage(v,p[1]||"",p[2]||"")}catch(e){if(e instanceof ReferenceError&&!route.tdz){route.tdz=1;setTimeout(()=>{route.tdz=0;route()},0);return}throw e}}   /* 11/13 第 15 輪證據包抓到：冷開分享連結 #/daily/<日期> 時，11-watch.js 檔尾第一次 route() 比 07dq 的 const DQ 早跑（還沒初始化就丟 ReferenceError，整個 App 停在載入失敗）；遇到就等整支程式跑完再排一次 */   /* 評比第 13 輪 F1 每日同題：#/daily 今天、#/daily/<日期>、#/daily/<日期>/play（m/07dq-daily.js） */
   if(p[0]==="canju")return screen=p[1]?CanjuPlay(v,decodeURIComponent(p.slice(1).join("/"))):CanjuDaily(v);   /* 一盞茶殘局：今日茶單／解題 */
   if(p[0]==="xiaohan"&&typeof XiaohanPage==="function")return screen=XiaohanPage(v);   /* 意見回饋 658（D）：九九消寒圖（07e-garden2.js） */
   if(p[0]==="legend")return screen=LegendScene(v,decodeURIComponent(p[1]||""));
@@ -430,7 +430,7 @@ const DEVREMOTE=()=>OFF&&DEVMODE()&&!!(window.XQ&&XQ.remoteInfo&&XQ.remoteInfo()
 // ================= 加到主畫面：用瀏覽器打開時問一次，玩家自己決定 =================
 // iPhone 不能用程式安裝，只能教步驟；Android 可以直接跳出系統的安裝視窗。LINE 內建瀏覽器不能加，要先改用手機的瀏覽器。
 let installEvt=null;addEventListener("beforeinstallprompt",e=>{e.preventDefault();installEvt=e});
-const isStandalone=()=>matchMedia("(display-mode: standalone)").matches||!!navigator.standalone;
+const isStandalone=()=>matchMedia("(display-mode: standalone)").matches||!!navigator.standalone||/XQQianqiuApp\//.test(navigator.userAgent);   /* 11/13 Android 模擬器驗證：原生 App（Capacitor，UA 尾巴加 XQQianqiuApp/1，xiangqi-android／xiangqi-ios 的 capacitor.config.json）本來就是獨立 App，不跳「加到主畫面」那套教學 */
 function installGuide(manual){if(isStandalone())return;const ua=navigator.userAgent,inLine=/ Line\/[0-9]/i.test(ua),ios=MY_KIND==="iPhone"||MY_KIND==="iPad";
   const later=()=>store.set("instAsk",{at:Date.now()}),never=()=>store.set("instAsk",{no:true});
   if(inLine)return modal(`<div class="em">📲</div><h2>用手機的瀏覽器打開</h2><p class="muted">在 LINE 裡沒辦法把象棋千秋加到主畫面。按下面的按鈕，會改用 ${ios?"Safari":"Chrome"} 打開，再照步驟加到主畫面。</p>`,

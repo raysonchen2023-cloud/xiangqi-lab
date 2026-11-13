@@ -79,7 +79,13 @@ async function api(u,b){if(window.XQ)return XQ.api(u,b);   // 離線版：由手
   catch(e){throw new Error(e&&e.name==="TimeoutError"?"電腦太久沒回應，再試一次":"連不到電腦，再試一次")}
   const d=await r.json().catch(()=>({error:"伺服器回應有問題"}));if(d&&d.error)throw new Error(d.error);return d}
 let toastT=null;
-function toast(msg){let t=$("#toast");if(!t){t=document.createElement("div");t.id="toast";t.className="toast";document.body.append(t)}t.textContent=msg;t.hidden=false;clearTimeout(toastT);toastT=setTimeout(()=>t.hidden=true,2200)}
+function toast(msg){let t=$("#toast");if(!t){t=document.createElement("div");t.id="toast";t.className="toast";document.body.append(t)}t.textContent=msg;t.hidden=false;toastFit(t);clearTimeout(toastT);toastT=setTimeout(()=>t.hidden=true,2200)}
+/* hspx 開發者 11/13「可以一行說完嗎，不要換行，換行機制你定個規矩吧」（截圖：「去搭星槎，找裂痕的另一」／「端。」）。全 App 短訊息的換行規矩：
+   ① 放得下就一行；② 放不下先縮字（14px 起，每次 0.5px，最小 12px），盡量還是一行；③ 還是放不下才換行，而且只在標點、空白處斷（word-break:keep-all），
+   兩行拉平均（text-wrap:balance），不會剩一兩個字掛在第二行。樣式在 m.css .toast */
+function toastFit(t){try{t.style.whiteSpace="nowrap";t.style.fontSize="";let fs=parseFloat(getComputedStyle(t).fontSize)||14;
+  while(t.scrollWidth>t.clientWidth+1&&fs>12){fs-=.5;t.style.fontSize=fs+"px"}
+  if(t.scrollWidth>t.clientWidth+1)t.style.whiteSpace="normal"}catch(e){}}
 // 底部彈出選單
 // ================= 殺棋動畫（意見回饋 181）：先演完才跳結果視窗 =================
 // 畫面四周壓暗＋棋盤一震 → 被將死的帥／將爆出紅金衝擊波、裂痕 → 金色大字「絕殺」重重蓋下（困斃時寫「困斃」）＋墨點飛濺 → 朱印「勝／敗」→ 淡出

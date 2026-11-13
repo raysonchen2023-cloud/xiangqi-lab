@@ -973,7 +973,8 @@
       [[-14.8,-13.2,"tree2",17],[17.8,-8.2,"tree1",14.5],[-18.2,3.4,"tree1",12.5]].forEach(([x,z,n,h])=>use(n,im=>{const c=card(im,{x,y:GY,z,h,tilt:.12,info:n});blob(x,GY+.03,z,c.w*.32,c.w*.2,.35,c.ry);if(X.fades)X.fades.push(c.m)}));
       /* 11/10 經典世界（Gemini 70／71，開發者選「補齊 Gemini 的元素」）：空中兩卷懸浮畫卷（緩緩上下漂），石台外兩位淡墨幻影棋客（半透明、像呼吸一樣忽濃忽淡） */
       if(EK==="classic"){const lastB=c=>{const b=X.bills&&X.bills[X.bills.length-1];return b&&b.m===c.m?b:null};
-        use("scroll",im=>[[-11.5,10.5,-16,3.6,0],[12.5,12.5,-14.5,3,1]].forEach(([x,y,z,h,mi],i)=>{const c=card(im,{x,y:GY+y,z,h,mirror:!!mi}),b=lastB(c);if(b)b.bob=[2.1,i*2.1,.4]}));   /* Gemini 72：畫卷 3 秒一週期上下漂、幻影 4 秒一週期呼吸 */
+        /* hspx 開發者 11/13「漂浮的譜，修正」：亭子裡兩卷懸浮畫卷看起來像紙卡在半空（截圖在燈籠旁、樑下），拿掉；淡墨幻影棋客、地上刻的棋盤照舊 */
+        if(0)use("scroll",im=>[[-11.5,10.5,-16,3.6,0],[12.5,12.5,-14.5,3,1]].forEach(([x,y,z,h,mi],i)=>{const c=card(im,{x,y:GY+y,z,h,mirror:!!mi}),b=lastB(c);if(b)b.bob=[2.1,i*2.1,.4]}));   /* Gemini 72：畫卷 3 秒一週期上下漂、幻影 4 秒一週期呼吸 */
         use("ghost",im=>[[-23,-19,11,0],[24,-16,10.5,1]].forEach(([x,z,h,mi],i)=>{const c=card(im,{x,y:GY,z,h,mirror:!!mi,tilt:.08});c.m.material.opacity=.3;c.m.material.depthWrite=false;const b=lastB(c);if(b)b.br=[1.57,i*1.7,.3,.08]}));
         /* Gemini 72（開發者選「兩個都要」）：石台地上用淡金細虛線刻一張大楚河漢界棋盤（9 直 10 橫、河界、九宮斜線，程式畫保證正確），
            右側刻北斗七星連線，天樞到玉衡五顆（五站）微微發光；只畫在石台圓面裡 */
@@ -1409,7 +1410,7 @@
     const wood=M(furn.frame,{roughness:.55}),GWB=[mesh(new T.BoxGeometry(BW+.5,.6,BH+.5),wood,[0,.24,0]),mesh(new T.BoxGeometry(BW+.62,.08,BH+.62),wood,[0,-.0,0])];   // 厚木棋盤＋底座線腳（意見回饋 215）
     const btex=boardTex(()=>{try{btex.image.getContext("2d").clearRect(0,0,1,1);drawBoard(btex.image.getContext("2d"),btex.image.width,btex.image.height,null);btex.needsUpdate=true}catch(e){}});const bplane=new T.Mesh(new T.PlaneGeometry(BW,BH),new T.MeshStandardMaterial({map:btex,roughness:.6}));bplane.rotation.x=-PI/2;bplane.position.y=TOP-.02+.03;bplane.receiveShadow=true;sc.add(bplane);
     /* 棋盤底下的鏡像（說明在 gntMirror）：MG＝照 y＝.25（MY）上下鏡像的群組；BU＝盤底那面星盤（UV 左右反過來，從底下看字是正的） */
-    let MG=null,BU=null,BFR=null,BGL=null;if(GIANT){MG=new T.Group();MG.scale.y=-1;MG.position.y=2*.25;MG.userData.giant=1;const ug=bplane.geometry.clone(),uv=ug.attributes.uv;for(let i=0;i<uv.count;i++)uv.setX(i,1-uv.getX(i));
+    let MG=null,BU=null,BFR=null,BGL=null,BRV=null;if(GIANT){MG=new T.Group();MG.scale.y=-1;MG.position.y=2*.25;MG.userData.giant=1;const ug=bplane.geometry.clone(),uv=ug.attributes.uv;for(let i=0;i<uv.count;i++)uv.setX(i,1-uv.getX(i));
       BU=new T.Mesh(ug,bplane.material);BU.rotation.x=-PI/2;BU.position.y=bplane.position.y;MG.add(BU);sc.add(MG);
       /* 半透明星石盤（開發者 11/12 選）：盤面 55% 不透明、不寫深度；厚木框藏起來，改成四邊發光細框（上下兩圈＋四根角柱） */
       const bm=bplane.material;bm.transparent=true;bm.opacity=.55;bm.depthWrite=false;bm.side=T.FrontSide;bm.needsUpdate=true;GWB.forEach(m=>{m.visible=false;m.userData.gntHide=1});
@@ -1418,8 +1419,13 @@
       /* hspx 開發者 11/12「修正鏡像的那一面，棋盤上的線也要標誌」：盤底那面（BU）只朝下看得到，從上面、平視都背對鏡頭，倒影角色腳下沒有線。
          另外在盤底高度畫一組淡金格線（跟正面格線同色 #d8c897；9 直 10 橫、楚河處斷開、兩個九宮斜線），兩面都看得見；用格距 1 建、每幀照 GS 縮放（gntMirror 開頭） */
       const GLV=[],gy=2*.25-bplane.position.y-.004,seg=(a,b,c,d)=>GLV.push(a-4,gy,b-4.5,c-4,gy,d-4.5);for(let r=0;r<10;r++)seg(0,r,8,r);for(let c=0;c<9;c++){if(c===0||c===8)seg(c,0,c,9);else{seg(c,0,c,4);seg(c,5,c,9)}}seg(3,0,5,2);seg(5,0,3,2);seg(3,7,5,9);seg(5,7,3,9);
-      const gg=new T.BufferGeometry();gg.setAttribute("position",new T.Float32BufferAttribute(GLV,3));BGL=new T.LineSegments(gg,new T.LineBasicMaterial({color:0xD8C897,transparent:true,opacity:.8,toneMapped:false}));BGL.scale.set(GS,1,GS);BGL.userData.giant=1;sc.add(BGL)}
-    const gsBoard=()=>{bplane.scale.set(GS,GS,1);if(BU)BU.scale.set(GS,GS,1);if(BFR)BFR.scale.set(GS,1,GS);GWB.forEach(m=>m.scale.set(GS,1,GS))};if(GIANT)gsBoard();   /* 黑洞巨盤：棋盤、木框照格距倍率放大 */
+      const gg=new T.BufferGeometry();gg.setAttribute("position",new T.Float32BufferAttribute(GLV,3));BGL=new T.LineSegments(gg,new T.LineBasicMaterial({color:0xD8C897,transparent:true,opacity:.8,toneMapped:false}));BGL.scale.set(GS,1,GS);BGL.userData.giant=1;sc.add(BGL);
+      /* hspx 開發者 11/13「棋盤鏡像面的楚河漢界也要補上去」：楚河漢界是畫在正面貼圖裡（drawRiver），盤底那面 BU 朝下、從上面看是背面，鏡像面就只剩 BGL 格線。
+         在格線同高度（略低一點，格線畫在上面）再鋪一面朝上的「河界層」BRV：透明貼圖上只畫星河長條＋楚河漢界金字（同一支 drawRiver，字從上面看是正的），
+         只朝上（FrontSide）：從上面、平視看得到；按 ⇅ 鑽到底下時自動被剔除，不跟 BU 的正字疊在一起 */
+      const rtex=cv(MOB?1040:1560,MOB?1140:1710,(g,w,h)=>drawRiver(g,w,h,()=>{try{const c=rtex.image,x=c.getContext("2d");x.clearRect(0,0,c.width,c.height);drawRiver(x,c.width,c.height,null);rtex.needsUpdate=true}catch(e){}}));
+      BRV=new T.Mesh(new T.PlaneGeometry(BW,BH),new T.MeshBasicMaterial({map:rtex,transparent:true,opacity:.75,depthWrite:false,toneMapped:false,side:T.FrontSide}));BRV.rotation.x=-PI/2;BRV.position.y=gy-.003;BRV.scale.set(GS,GS,1);BRV.userData.giant=1;sc.add(BRV)}
+    const gsBoard=()=>{bplane.scale.set(GS,GS,1);if(BU)BU.scale.set(GS,GS,1);if(BRV)BRV.scale.set(GS,GS,1);if(BFR)BFR.scale.set(GS,1,GS);GWB.forEach(m=>m.scale.set(GS,1,GS))};if(GIANT)gsBoard();   /* 黑洞巨盤：棋盤、木框照格距倍率放大 */
     // 茶杯：Pikafish（對面）一杯、我一杯（意見回饋 215）
     const teaCup=(x,z)=>{const cup=new T.Group();cup.position.set(x,0,z);sc.add(cup);const por=M(0xF4F1EA,{roughness:.25}),blue=M(0x2D5DA8,{roughness:.3});const a=new T.Mesh(new T.CylinderGeometry(.75,.75,.08,32),por);a.position.y=.04;cup.add(a);
       const b=new T.Mesh(new T.CylinderGeometry(.5,.36,.7,32,1,true),por);b.position.y=.43;b.material.side=T.DoubleSide;cup.add(b);const band=new T.Mesh(new T.CylinderGeometry(.505,.47,.12,32,1,true),blue);band.position.y=.6;cup.add(band);
@@ -2152,7 +2158,7 @@
        不清畫面、不重算陰影，所以會跟正面畫在同一張、被棋盤正確遮住；畫完全部放回原處。同一批物件＝走子、動作、吃子都同步 */
     /* 開發者 11/12 選「半透明星石盤」：棋盤（正反兩面）最後才畫——主畫面先不畫棋盤 → 第 2 次畫鏡像角色 → 第 3 次只畫半透明棋盤，
        這樣隔著棋盤看得到另一面的角色和環景，而且只染一次色（不會兩層疊得太暗）；棋盤不寫深度，站在棋盤上面的角色照樣擋住棋盤 */
-    const gntMirror=()=>{if(!MG)return;if(BGL&&BGL.scale.x!==GS)BGL.scale.set(GS,1,GS);const L=[];for(const k in pieces){const g=pieces[k];if(g&&g.parent===sc&&g.visible)L.push(g)}
+    const gntMirror=()=>{if(!MG)return;if(BGL&&BGL.scale.x!==GS)BGL.scale.set(GS,1,GS);if(BRV&&BRV.scale.x!==GS)BRV.scale.set(GS,GS,1);const L=[];for(const k in pieces){const g=pieces[k];if(g&&g.parent===sc&&g.visible)L.push(g)}
       for(const g of L)MG.add(g);   /* 先把棋子移進 MG，下面藏東西時才不會連棋子一起藏 */
       const hid=[],lt=[],fl=[],bg=sc.background;for(const o of sc.children){if(o.isLight)lt.push([o,o.position.y]);else if(o.visible&&o!==MG){o.visible=false;hid.push(o)}}
       BU.visible=false;bplane.visible=false;sc.background=null;

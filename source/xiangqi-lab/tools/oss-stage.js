@@ -23,6 +23,7 @@ const SRC_OWN = ["bot3d.js", "engine.js", "local.js", "map3d.js", "net.js", "par
    不放：mqtt-config.json（密碼）、.last-version.json（本機狀態）、lobby-bots.js／qa-players.js／ban.js（營運用連線程式）、
    cdn-deploy.js／announce-version.js／watch-feedback.js／feedback-api.gs（發布、通知、回饋表單營運）、MQTT 申請與搬家筆記 */
 const TOOLS_EXCLUDE = new Set(["mqtt-config.json", ".last-version.json", ".gitignore", "lobby-bots.js", "lobby-bots-live.ps1", "qa-players.js", "ban.js",
+  "cup-host.js",   /* 11/13 0825 重產時補：千秋盃裁判台（營運程式）不公開；0452、0540 兩版的 source/ 曾誤帶 */
   "cdn-deploy.js", "announce-version.js", "watch-feedback.js", "feedback-api.gs", "MQTT搬家步驟.md", "MQTT申請步驟_手機版.md", "serve.js",
   "calibrate-grades.js", "stuck-report.js", "__pycache__",
   "test-home-focus.js"]);   /* 會開無頭 Chrome、要開發者電腦上的 playwright 路徑（testkinds.js 本來就不跑它） */
@@ -42,6 +43,10 @@ const TEST_SKIP = {
   "test-android-roadmap.js": "要讀只在開發者電腦的 xiangqi-android/ 骨架（verify-all.js 本身會公開）",   /* 11/13 第 14 輪 F3 */
   "test-net-sign.js": "要用 fixtures/net-legacy-1111.js（舊版 net.js），那個檔頭寫「不要發布」，先一起不放",
   "test-net-pin.js": "要接千秋盃裁判台 cup-host.js（營運程式，不公開）",   /* 11/13 第 14 輪：公開副本裡 0/1 */
+  "test-cup-sign.js": "要 require 千秋盃裁判台 cup-host.js（營運程式，不公開）",   /* 11/13 0825 重產：cup-host.js 移出 source/ 後一起拿掉 */
+  "test-android-build.js": "要讀只在開發者電腦的 xiangqi-android/ 骨架（scripts/repro-check.js）",   /* 11/13 0825 重產：公開副本裡 0/1 */
+  "test-classic-sky.js": WHY_NEWER + "（park3d.js 水墨雲）；也要讀 xiangqi-db/park 的修圖備份",   /* 11/13 0825 重產：公開副本裡 2/9 */
+  "test-threat-weaknet.js": "threat-model.md 對照表要找 test-net-sign.js（上面已排除，見該行）",   /* 11/13 0825 重產：公開副本裡 14/15 */
   "test-ui-redundancy.js": "有一項檢查開發者刻意不發布的 07y-hubmap.js 段落",
   "test-foss-audit.js": "倉庫多了 source/ 以後，foss-audit.js 會把 source/ 裡的規則文字當成追蹤 SDK（要先讓它跳過 source/）",
 };

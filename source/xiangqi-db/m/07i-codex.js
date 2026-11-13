@@ -140,12 +140,8 @@ function Codex(v){setTop("📚 千秋大百科","#/me");if(typeof setTabs==="fun
     v.innerHTML=`<div class="pad" style="padding-bottom:28px"><div class="card cx-top"><span class="cx-ring" style="--p:${P.p}" role="img" aria-label="總完成度 ${P.p}%"><b>${P.p}%</b></span><div><b style="font-size:18px;font-family:var(--serif)">總完成度</b>
       <div class="muted" style="font-size:13px;line-height:1.6">有總數的 ${P.n} 類收集，各類完成比例的平均${full?`・已經集滿 ${full} 類`:""}。<br>修為、官階是等級，不算進去；寶物、棋盤、棋譜這些沒有上限的只寫已收。</div></div></div>
       ${CODEX_GRP.map(([g,t])=>{const G=L.filter(c=>c.g===g);return G.length?`<div class="sec-t">${t}</div><div class="cx-grid">${G.map(cxCard).join("")}</div>`:""}).join("")}
-      <button class="btn ghost" id="cxReplay" style="width:100%;margin-top:12px">🎁 再看一次開箱</button>
       <p class="muted" style="font-size:12.5px;line-height:1.7;margin-top:12px">點一張卡，直接打開那個收藏冊或去拿的地方。</p></div>`;
-    /* 開發者 11/8：開箱動畫平常要撿到新珍品才看得到；這顆拿已經有的珍品重播一次（沒有就借一件給你看），不會多給東西 */
-    {const rb=v.querySelector("#cxReplay");if(rb)rb.onclick=async()=>{if(typeof vibrate==="function")vibrate(5);try{const R=await relicsData(),M=relicsMine(),own=[];for(const e in M)for(const id of M[e]||[]){const it=(R[e]||[]).find(z=>z.id===id);if(it)own.push([e,it])}
-      let pick=own.length?own[Math.floor(Math.random()*own.length)]:null;if(!pick){const es=Object.keys(R).filter(e=>(R[e]||[]).length);if(es.length){const e=es[Math.floor(Math.random()*es.length)];pick=[e,R[e][Math.floor(Math.random()*R[e].length)]]}}
-      if(pick)relicFx(pick[0],pick[1],{from:own.length?"重播開箱・你收藏的珍品":"開箱預覽・還沒收到的珍品"});else toast("珍品資料還沒載好")}catch(e){toast("暫時沒辦法播放")}}}
+    /* hspx 開發者 11/13「把再看一次開箱的功能拿掉」：百科底下的「🎁 再看一次開箱」按鈕（11/8 加的重播開箱）拿掉；撿到新珍品時的開箱動畫照舊 */
     v.querySelectorAll("[data-cx]").forEach(b=>b.onclick=()=>{const c=CODEX.find(z=>z.id===b.dataset.cx);if(!c)return;if(typeof vibrate==="function")vibrate(5);try{c.go()}catch(e){toast("這一類暫時打不開")}})}).catch(e=>{if(v.isConnected)v.innerHTML=`<div class="pad"><div class="card muted">${esc(e.message||"載入失敗")}</div></div>`});return{}}
 /* 我的角色頁底下的小卡（07-legend.js Me） */
 function codexMeCard(){cxCss();const d=document.createElement("div");d.className="card";d.innerHTML=`<button class="cx-me" id="cxMe"><span class="cx-ic">📚</span><span style="flex:1;min-width:0"><b>千秋大百科</b><br><span class="muted" style="font-size:13px" id="cxMeS">所有收藏一次看：已收多少、去哪裡拿、有什麼用</span></span><span class="muted">›</span></button>`;

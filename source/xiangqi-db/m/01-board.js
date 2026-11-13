@@ -113,7 +113,7 @@ function sndPill(show){let p=document.getElementById("sndPill");if(!show){if(p)p
    其他頁照舊在頂欄下置中。換頁、轉向時重算（提示只活 8 秒） */
 function sndPillAt(sm){const p=document.getElementById("sndPill");if(!p)return;p.style.left="";p.style.top="";p.style.transform="";
   if(!sm)Object.assign(p.style,{padding:"",fontSize:""});
-  if(!document.getElementById("pTop"))return;
+  if(!document.getElementById("pTop")){const t=[...document.querySelectorAll(".topbar")].filter(e=>e.getClientRects().length).map(e=>e.getBoundingClientRect().bottom).sort((x,y)=>y-x)[0];if(t&&p.getBoundingClientRect().top<t+4)p.style.top=Math.round(t+8)+"px";return}   /* 11/13 hspx 1098：場景頁頂欄有星晷時比較高，原本固定在安全區下 64px 會蓋到「第 N 天」那行（英文還折成兩行）；改成一律放在頂欄下緣下面 */
   const r=p.getBoundingClientRect(),w=r.width,h=r.height,vw=innerWidth,vh=innerHeight,m=8;if(!w||!h)return;
   const R=s=>{const e=document.querySelector(s);if(!e||!e.getClientRects().length)return null;const b=e.getBoundingClientRect();return b.width>1&&b.height>1?b:null};
   const ob=["#topbar","#pTop","#pBot","#bbox","#stat","#strip",".evline","#acts",".xqbot"].map(R).filter(Boolean),A=R("#acts"),Bx=R("#bbox"),S=R("#stat");
@@ -126,7 +126,7 @@ function sndPillAt(sm){const p=document.getElementById("sndPill");if(!p)return;p
   if(best!==C[0])Object.assign(p.style,{left:Math.round(best[0])+"px",top:Math.round(best[1])+"px",transform:"none"})}
 addEventListener("resize",()=>setTimeout(sndPillAt,200));addEventListener("hashchange",()=>{setTimeout(sndPillAt,400);setTimeout(sndPillAt,1500)});
   /* 開發者 11/11 選 ChatGPT UI 報告 UI-05：聲音提示原本一直閃在右下角，蓋在設定、首頁底部按鈕和小帥上；改成頂欄正下方置中、不閃，8 秒後自己收起（點任何地方也會收起） */
-  (()=>{try{const s=document.createElement("style");s.id="sndPillPos";s.textContent="#sndPill{right:auto!important;bottom:auto!important;left:50%;top:calc(env(safe-area-inset-top,0px) + 64px);transform:translateX(-50%);animation:none!important;opacity:.9;font-size:12.5px}";document.head.append(s)}catch(e){}})();
+  (()=>{try{const s=document.createElement("style");s.id="sndPillPos";s.textContent="#sndPill{right:auto!important;bottom:auto!important;left:50%;top:calc(env(safe-area-inset-top,0px) + 64px);transform:translateX(-50%);animation:none!important;opacity:.9;font-size:12.5px;white-space:nowrap;max-width:calc(100vw - 24px);overflow:hidden;text-overflow:ellipsis}";document.head.append(s)}catch(e){}})();
 for(const ev of["pointerdown","touchend","click","keydown"])document.addEventListener(ev,()=>{unlockAudio();sndPill(false)},{passive:true,capture:true});
 setTimeout(()=>{if(!AC||AC.state!=="running")sndPill(true)},1500);
 document.addEventListener("visibilitychange",()=>{if(document.hidden&&AC){try{AC.close()}catch(e){}AC=null}if(!document.hidden)setTimeout(()=>{if(!AC||AC.state!=="running")sndPill(true)},400)});

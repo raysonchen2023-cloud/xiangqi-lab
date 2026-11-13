@@ -19,7 +19,12 @@ const MZ_IMGV="2510";
 const MZ_W=896,MZ_H=1200;
 /* 亮格 12 格：直線 x、橫線 y（像素） */
 const MZ_CX=[61,141,221,302,381],MZ_CY=[247,340,432,520];
-const MZ_CELLS=(()=>{const c=[];for(let r=0;r<3;r++)for(let k=0;k<4;k++)c.push([MZ_CX[k],MZ_CY[r],MZ_CX[k+1],MZ_CY[r+1]]);return c})();
+const mzGrid=(X,Y)=>{const c=[];for(let r=0;r<3;r++)for(let k=0;k<4;k++)c.push([X[k],Y[r],X[k+1],Y[r+1]]);return c};
+const MZ_CELLS=mzGrid(MZ_CX,MZ_CY);
+/* hspx 開發者 11/13「有破圖，多一個藍色背景」：經典世界的書房會換成 study_*_classic.webp（07y xqClImg；768×1376、另一張畫，櫃子比較低），亮格淡墨格卻照原版 896×1200 的座標疊，
+   整排往上錯位（最上一排落在櫃子上方的窗格上，淡墨後變成一塊藍灰色）。經典版另外量（圖片像素：直線 x 51、118、188、258、324，橫線 y 445、533、623、708），
+   換算成原版座標（兩張圖都是撐滿同一個框），背景裁切、位置的算法不用改 */
+const MZ_CELLS_CL=mzGrid([51,118,188,258,324].map(x=>x*MZ_W/768),[445,533,623,708].map(y=>y*MZ_H/1376));
 /* 入口：[id, 左, 上, 右, 下, 標籤, 標籤錨點 x, y, a＝標籤在錨點上面／m＝置中／b＝在下面]（像素） */
 const MZ_SPOTS=[["mzZhen",62,530,381,735,"珍品",221,632,"m"],["mzBoard",469,483,621,566,"棋盤",545,488,"a"],["mzSecret",637,429,832,560,"秘境棋友",735,494,"m"],
   ["mzKifu",445,580,860,712,"棋譜",540,668,"m"],["mzXh",457,15,589,422,"消寒圖",523,64,"m"],["mzYu",610,37,896,247,"輿圖",790,96,"m"],["mzRank",637,286,870,370,"官階",753,328,"m"],
@@ -93,7 +98,7 @@ function mzItemSheet(k){const T=(f,d)=>{try{return f()}catch(e){return d}};const
 /* 打開千秋印譜：有 sealBook 就用；沒有就退回舊的集章簿，再不行開千秋大百科 */
 function mzSealOpen(){if(typeof sealBook==="function")return sealBook();if(typeof stampBook==="function")return stampBook();location.hash="#/codex"}
 function mzWall(v){const pad=v.querySelector(".pad"),me2=pad&&pad.querySelector(".me2");if(!me2||pad.querySelector(".mz-wall"))return;mzCss();
-  const dk=mzDark(),src=xqClImg(`data/studymap/${dk?"study_night":"study_day"}.webp?v=${MZ_IMGV}`),pc=(a,b)=>((a/b)*100).toFixed(2)+"%",
+  const dk=mzDark(),src=xqClImg(`data/studymap/${dk?"study_night":"study_day"}.webp?v=${MZ_IMGV}`),CELLS=/_classic\.webp/.test(src)?MZ_CELLS_CL:MZ_CELLS,pc=(a,b)=>((a/b)*100).toFixed(2)+"%",
     R4=r=>`left:${pc(r[0],MZ_W)};top:${pc(r[1],MZ_H)};width:${pc(r[2]-r[0],MZ_W)};height:${pc(r[3]-r[1],MZ_H)}`;
   /* 原本的東西：藏起來、留著給牆上的東西按 */
   const q=s=>pad.querySelector(s),hide=e=>{if(e)e.style.display="none"};
@@ -108,7 +113,7 @@ function mzWall(v){const pad=v.querySelector(".pad"),me2=pad&&pad.querySelector(
   const zOn=C.z&&C.z[0]?Math.max(1,Math.round(12*C.z[0]/(C.z[1]||130))):0;
   const lb=(x0,y0,x1,y1,t,ax,ay,al)=>`<span class="mz-lb ${al}" data-hs="1" style="left:${pc(ax-x0,x1-x0)};top:${pc(ay-y0,y1-y0)}"><b>${esc(t)}</b><small></small></span>`;
   W.innerHTML=`<img src="${src}" alt="棋鎮書齋：亮格櫃、書格、輿圖、立軸和畫桌上的收藏">
-    <div class="mz-g">${MZ_CELLS.map((c,i)=>`<i class="mz-cell${i<zOn?" on":""}" style="${R4(c)};background-image:url(${src});background-size:${(MZ_W/(c[2]-c[0])*100).toFixed(2)}% ${(MZ_H/(c[3]-c[1])*100).toFixed(2)}%;background-position:${(c[0]/(MZ_W-(c[2]-c[0]))*100).toFixed(2)}% ${(c[1]/(MZ_H-(c[3]-c[1]))*100).toFixed(2)}%"></i>`).join("")}
+    <div class="mz-g">${CELLS.map((c,i)=>`<i class="mz-cell${i<zOn?" on":""}" style="${R4(c)};background-image:url(${src});background-size:${(MZ_W/(c[2]-c[0])*100).toFixed(2)}% ${(MZ_H/(c[3]-c[1])*100).toFixed(2)}%;background-position:${(c[0]/(MZ_W-(c[2]-c[0]))*100).toFixed(2)}% ${(c[1]/(MZ_H-(c[3]-c[1]))*100).toFixed(2)}%"></i>`).join("")}
       ${mzPlum(C.xh)}${mzMap(C.yu)}</div>
     ${MZ_SPOTS.map(([id,x0,y0,x1,y1,t,ax,ay,al])=>`<button type="button" class="mz-hs" id="${id}" style="${R4([x0,y0,x1,y1])}" aria-label="${esc(t)}">${lb(x0,y0,x1,y1,t,ax,ay,al)}</button>`).join("")}`;
   me2.after(W);
@@ -132,7 +137,7 @@ function mzWall(v){const pad=v.querySelector(".pad"),me2=pad&&pad.querySelector(
   if(MZ_WALK_ON&&typeof shwMount==="function"&&typeof SHIP_WALK_ON!=="undefined"&&SHIP_WALK_ON){try{const HS={};for(const k in SHW_MZ.HS){HS[k]=SHW_MZ.HS[k].slice();if(full[k])HS[k][3]="cheer"}
     shwMount({v,cfg:Object.assign({},SHW_MZ,{HS}),root:W,frame:W,layer:W,before:W.querySelector(".mz-hs"),sel:".mz-hs",keyOf:b=>b.id,find:h=>W.querySelector("#"+h),mem:"study"})}catch(e){}}
   /* 點畫裡的東西看說明（07w6）：亮格各格還是淡墨的，說明後面補一句 */
-  if(typeof sciPage==="function"){try{const it=MZ_RELIC.map(([n,t,nd],i)=>{const c=MZ_CELLS[i];return{n,nd,t:t+(i<zOn?"":"（這一格還是淡墨的，多收幾件珍品就會變成彩色。）"),s:[[[c[0]+3,c[1]+3],[c[2]-3,c[1]+3],[c[2]-3,c[3]-3],[c[0]+3,c[3]-3]]]}});
+  if(typeof sciPage==="function"){try{const it=MZ_RELIC.map(([n,t,nd],i)=>{const c=CELLS[i];return{n,nd,t:t+(i<zOn?"":"（這一格還是淡墨的，多收幾件珍品就會變成彩色。）"),s:[[[c[0]+3,c[1]+3],[c[2]-3,c[1]+3],[c[2]-3,c[3]-3],[c[0]+3,c[3]-3]]]}});
     sciPage(v,{k:"study",nm:"書齋",W:MZ_W,H:MZ_H,it:it.concat(MZ_SCI)})}catch(e){}}
   if(typeof shpFit==="function")try{shpFit(v)}catch(e){}
   try{if(typeof zmPage==="function")zmPage(v)}catch(e){}}

@@ -70,7 +70,7 @@ ${typeof WALK_BOT_MERGE!=="undefined"&&WALK_BOT_MERGE?"":"body.hm-on.shw-on .xqb
    畫好後把超出畫面的標籤往內推回 8px（只動 marginLeft，不改座標表），轉向、縮放時重算 */
 /* v5 改善單 R07（桌面／矮螢幕）：寬螢幕時 07t3 r07Wide 把地圖限寬置中（或靠左＋側欄選單），圖比畫面窄，貼邊標籤要推回「圖和畫面重疊的那一塊」裡（圖的框 overflow:hidden，推到畫面內還是會被圖切掉）；
    手機直向圖比畫面寬（左右各裁約 20px），重疊那一塊就是畫面本身，結果跟原本一樣。推完通知 r07HitSoon 重算點選範圍 */
-function hmClamp(P){const vw=document.documentElement.clientWidth,pad=8,pr=P.getBoundingClientRect(),L=Math.max(pad,pr.left+pad),R=Math.min(vw-pad,pr.right-pad);P.querySelectorAll(".shp-spot").forEach(b=>{const m0=parseFloat(b.style.marginLeft)||0,r=b.getBoundingClientRect();if(!r.width)return;
+function hmClamp(P){if(P.dataset)P.dataset.hmc="1";const vw=document.documentElement.clientWidth,pad=8,pr=P.getBoundingClientRect(),L=Math.max(pad,pr.left+pad),R=Math.min(vw-pad,pr.right-pad);P.querySelectorAll(".shp-spot").forEach(b=>{const m0=parseFloat(b.style.marginLeft)||0,r=b.getBoundingClientRect();if(!r.width)return;
   /* 開發者 11/12 hspx「回棋鎮的時候，今日推薦都會左右抖一下」：原本先把 marginLeft 清掉再量、再推回去，貼邊的標籤會先彈出去再回來；改成從目前位置扣掉現在的推移量算出原位，值有變才改 */
   const l=r.left-m0,rr=r.right-m0,dx=l<L?L-l:rr>R?R-rr:0,nv=dx?Math.round(dx)+"px":"";if(b.style.marginLeft!==nv)b.style.marginLeft=nv});if(typeof r07HitSoon==="function")r07HitSoon()}
 /* 首頁主張紙條（ChatGPT 77 號方案一）：新手一直顯示；其他人每天第一次 3 秒後淡出（store hmSloganDay）；不能點、不擋地圖標籤 */

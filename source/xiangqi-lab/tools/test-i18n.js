@@ -7,6 +7,8 @@
 //   ④ 讀螢幕：WXF 記譜跟 core.js 的中文記譜對得上（開局、黑方、同一路兩子）；每步念法、格子念法
 //   ⑤ 切換：選 English／繁體／簡體各做對的事；英文開機換 html lang、標題、念法；繁中開機什麼都不裝；簡體選項照舊
 //   ⑥ 接線：m.html include、設定頁 🌐 與 English 選項、說明文件兩份逐字相同、名稱不撞
+//   ⑦ 第 15 輪 X3：新頁面（設定說明小字、線上大廳與安全、連線小卡、一盞茶、每日同題、棋譜庫、術語、千秋盃、出口）每一段固定的字翻得出來；
+//      鍵值化（I18N_KEY、i18nT、data-i18n）：模組用到的鍵都在、跟字典翻法一致；原文改字英文照樣對；切回繁中一字不差；保留的 aria-label 不換；底欄照 data-go；英文防爆版樣式
 // 用法：node --test xiangqi-lab/tools/test-i18n.js
 "use strict";
 const assert = require("node:assert/strict"), test = require("node:test"), fs = require("fs"), path = require("path"), vm = require("vm");
@@ -21,7 +23,7 @@ function loadPure() {
   const i = SRC.indexOf("#I18N-PURE-BEGIN"), j = SRC.indexOf("/* #I18N-PURE-END */");
   assert.ok(i > 0 && j > i, "找不到 #I18N-PURE 區段");
   const ctx = {}; vm.createContext(ctx);
-  vm.runInContext(SRC.slice(SRC.indexOf("\n", i) + 1, j) + ";this.R={I18N_EN,I18N_GUARD,i18nText,i18nLine,i18nMove,i18nWxf,i18nMoveLine,i18nCellLabel,i18nPcName,i18nNum,i18nDate,i18nCnNum}", ctx, { filename: "07i18n(純函式)" });
+  vm.runInContext(SRC.slice(SRC.indexOf("\n", i) + 1, j) + ";this.R={I18N_EN,I18N_GUARD,I18N_KEY,I18N_AGUARD,i18nText,i18nLine,i18nMove,i18nWxf,i18nMoveLine,i18nCellLabel,i18nPcName,i18nNum,i18nDate,i18nCnNum}", ctx, { filename: "07i18n(純函式)" });
   return ctx.R;
 }
 const R = loadPure(), T = s => R.i18nText(s);
@@ -157,7 +159,7 @@ function gamePage(doc) {
   v.querySelector("#pBot").innerHTML = F.playerHTML("r", "小帥", "紅方・再 16 分升 業3");
   v.querySelector("#stat").textContent = "👉 輪到你・紅方稍好，約領先 1.5 個兵";
   F.renderStrip(v.querySelector("#strip"), [{ cn: "炮二平五", by: "r", q: "正著" }, { cn: "馬8進7", by: "b" }], 1);
-  const items = vm.runInNewContext(cut(CPU, "const acts=actionBar(v.querySelector(\"#acts\"),", "]]);").replace("const acts=actionBar(v.querySelector(\"#acts\"),", "") + "]]", { bagSheet() { }, undoAsk() { }, newSheet() { }, confirmBox() { }, post() { }, review() { }, setupSheet() { }, peek() { }, st: null });
+  const items = vm.runInNewContext(cut(CPU, "const acts=actionBar(v.querySelector(\"#acts\"),", "]]);").replace("const acts=actionBar(v.querySelector(\"#acts\"),", "") + "]]", { bagSheet() { }, undoAsk() { }, newSheet() { }, confirmBox() { }, post() { }, review() { }, setupSheet() { }, peek() { }, st: null, cgT: (k, z) => z });
   F.actionBar(v.querySelector("#acts"), items);
   const md = doc.createElement("div"); md.className = "modal"; doc.body.appendChild(md);
   md.innerHTML = `<div class="box"><div class="em">🏆</div><h2>你贏了！</h2><p class="muted">將死・對手幻影棋客・第 3 級「入門3」</p><p style="font-size:14px">手感不錯！要不要去茶肆打晉級賽，讓這股氣勢算進段位？</p><p class="muted">這盤是快速對局，不算段位分。</p><div class="row"><button>🔎 看懂這盤最關鍵的一步 ›</button><button>♟ 再來一局</button><button>⚔ 去茶肆正式上桌</button><button>📊 檢討</button><button>🏠 首頁</button><button>看看棋盤</button></div></div>`;
@@ -169,7 +171,7 @@ function gamePage(doc) {
 // ====================== ① 字典 ======================
 test("字典：每個鍵都有中文、每個值都是英文（不留中文、不用彎引號、不是空字串）", () => {
   const E = R.I18N_EN, keys = Object.keys(E);
-  assert.ok(keys.length >= 250, "字典只有 " + keys.length + " 筆");
+  assert.ok(keys.length >= 1500, "字典只有 " + keys.length + " 筆（第 15 輪擴大到 1500 筆以上）");
   for (const k of keys) { assert.ok(CJK.test(k), "鍵沒有中文：" + k); const v = E[k]; assert.ok(typeof v === "string" && v.trim(), "空值：" + k); assert.ok(!CJK.test(v), "值還有中文：" + k + "→" + v); assert.ok(!/[\u201c\u201d\u2018\u2019]/.test(v), "彎引號：" + v) }
 });
 test("〔原始碼〕字典沒有重複的鍵（物件字面量重複時後面的會默默蓋掉前面）", () => {
@@ -200,7 +202,7 @@ const REGIONS = [
   ["08b 狀態列", CPU, "else if(st.thinking)S2.textContent=", "if(st.practice&&!st.result&&!st.msg"],
   ["08b 結果視窗按鈕", CPU, "const resBtns=(main,back,noRev,back2)=>", "\n"],
   ["08b 晉級賽結果", CPU, "if(st.ranked){const R=st.rate;", "if(MODE===\"arena\"&&ARENA[st.arena])"],
-  ["08b 挑戰電腦結果", CPU, "      modal(`<div class=\"em\">${win?\"🏆\":draw0?\"🤝\":\"💪\"}</div><h2>${win?\"你贏了！\":draw0?\"和局\":\"這盤輸了\"}</h2><p class=\"muted\">${esc(st.result.why)}・${st.journey", "/* ================= ChatGPT 改善單 T01"],
+  ["08b 挑戰電腦結果", CPU, "      modal(`<div class=\"em\">${win?\"🏆\":draw0?\"🤝\":\"💪\"}</div><h2 data-i18n=\"res.${win?\"win\":draw0?\"draw\":\"lose\"}\">${win?\"你贏了！\":draw0?\"和局\":\"這盤輸了\"}</h2><p class=\"muted\">${esc(st.result.why)}・${st.journey", "/* ================= ChatGPT 改善單 T01"],
   ["08b 快局結算一句話", CPU, "const QKH=typeof hbHubN", "\n"],
   ["08b 快速對局選單", CPU, "function quickSheet(){", "function newSheet(){"],
   ["08b 挑戰電腦開新局選單", CPU, "function newSheet(){", "// 上一盤已經下完"],
@@ -348,4 +350,136 @@ test("〔原始碼〕名稱不撞：07i18n.js 宣告的名字別的模組都沒�
   const others = fs.readdirSync(M).filter(f => /\.js$/.test(f) && f !== "07i18n.js").map(f => rd(path.join(M, f))).join("\n");
   for (const n of decl) assert.ok(!new RegExp("(?:const|let|var|function)\\s+" + n.replace(/\$/g, "\\$") + "\\b").test(others), "撞名：" + n);
   assert.ok(!/[\r\u0000-\u0008\u000b\u000c\u000e-\u001f]/.test(fs.readFileSync(path.join(M, "07i18n.js"), "utf8")));
+});
+
+// ====================== ⑦ 第 15 輪 X3：擴大範圍與鍵值化 ======================
+const SHELL = rd(path.join(M, "02-shell.js")), PRE = rd(path.join(M, "09b-preload.js")), A11Y = rd(path.join(M, "11b-a11y.js"));
+const NEWREG = [
+  ["05 設定頁四個分頁（含開關底下的說明小字）", SET, "function Settings(v){", "function srvDelRid("],
+  ["05 棋規說明、說明文件按鈕、刪除這支手機的資料", SET, "function rsOpts(", "function hcApply("],
+  ["05 走棋音效選單", SET, "function sndPicker(", "// 修正通知"],
+  ["11b 無障礙設定列", A11Y, "function axmSetRows(", "\nfunction axmFzSysRow"],
+  ["02 線上大廳（配對、邀請、觀戰、時制、棋友資料）", SHELL, "function Lobby(v){", "const APP_HOME="],
+  ...["07x2-lobbymap.js", "07x3-rostermap.js", "07x4-lobbysafe.js", "07hs-netsig.js", "07c-canju.js", "07c2-canjumap.js", "07dq-daily.js", "10-db.js", "10b-libmap.js", "07y4-termsmap.js", "06c-cup.js", "07w9-exits.js"].map(f => [f, rd(path.join(M, f)), "", null])
+];
+/* 單獨翻不出來是正常的：程式組字的片段（頭尾是標點或「」、單一個中文字）、保留字、系統給小朋友的稱號（人名一律不翻）；另列的是棋子字、語言名稱、隱私全文（超過 600 字）、《中華民國象棋規則》條文片段、棋手生平的組字 */
+const CN = (...c) => String.fromCharCode(...c);   /* 簡體字用字碼組（原始碼不放簡體字，zh-lint 才不會報） */
+const NOTR = new Set(["繁體中文", CN(0x7b80, 0x4f53) + "中文", "〇一二三四五六七八九", "帥仕相俥傌炮兵", "將士象車馬砲卒", "九八七六五四三二一", "楚河　　　　漢界", "怎麼跟", "互動", "問題", "⚖️ 已換成",
+  "切" + CN(0x6362) + "成" + CN(0x7b80, 0x4f53) + "中文…", "切換成繁體中文…", "對 （暫時不在大廳）", "分鐘前更新", "回應…", "⏱ 時制不一樣：對方每方", "可邀請 $1", "〔快捷語〕", "要不要用", "1 枚將令", "補上昨天？連續", "關鍵在你的",
+  "🛡 另外得到 1 張", "年生", "年特級大師", "生於", "年獲特級大師", "是實際走的", "的總時間用完了", "的首選", "走完後", "下面國字是", "↩ 下樓・回", "↩ 掀簾・回"]);
+const NOTR_PRE = ["App 每 7 天", "馬" + CN(0x9a6c), "依《中華民國象棋規則》", "（同一局面第 4 次出現）", "才計積分，否則是友誼賽", "的路數（", "切" + CN(0x6362) + "成"];
+const isFrag = s => /^[，；：、・」）\]]/.test(s) || /[「（，：、・；]$/.test(s) || s.replace(/[^㐀-鿿]/g, "").length <= 1 || R.I18N_GUARD.some(g => s.includes(g)) || /^小..$/.test(s) || NOTR.has(s) || NOTR_PRE.some(p => s.startsWith(p));
+for (const [name, src, a, b] of NEWREG) {
+  test("第 15 輪新頁面的固定字翻得出英文：" + name, () => {
+    const P = pieces(lits(a === "" ? src : cut(src, a, b))).filter(p => !p.startsWith("!--") && !/[{}]/.test(p));
+    assert.ok(P.length >= 8, "這段切不到中文字（原始碼改了？）");
+    const bad = P.filter(p => !isFrag(p) && T(p) == null);
+    assert.deepEqual(bad, [], "翻不出來：" + bad.join("｜"));
+  });
+}
+test("第 15 輪抽樣：星槎與渡口入口、學習與對戰的地圖入口、書齋、千秋盃樓台、殘局句型與標點規則", () => {
+  const cases = {
+    "⛵ 起航": "⛵ Set sail", "🀄 千秋石桌": "🀄 Qianqiu stone table", "⚔ 古戰場": "⚔ Ancient battlefield", "📚 船艙書架": "📚 Cabin bookshelf", "🎒 行囊": "🎒 Pack", "💾 存檔與讀檔": "💾 Save and load",
+    "‹ 回棋鎮": "‹ Back to the chess town", "↩ 回學習書院": "↩ Back to the Learning Academy", "↩ 下樓・回茶坊": "↩ Go downstairs · Back to Teahouse", "回大廳": "Back to the lobby",
+    "棋譜石室": "Game library", "初學講武場": "Boot camp", "千秋翰林書院・前院啟蒙、中庭日課、講堂考校、藏書閣典藏": "Qianqiu Hanlin Academy · basics in the front court, daily lessons in the courtyard, tests in the lecture hall, collections in the library",
+    "🫙 棋罐": "🫙 Piece jar", "悔棋符": "Undo tokens", "對陣金榜": "Bracket board", "擂主虛位以待": "The champion's seat awaits",
+    "📴 目前沒有網路。線上對戰和觀戰要連上網路才能用；跟電腦下棋、做題、看棋譜不受影響。": "📴 No internet connection. Online play and watching need the internet; playing the computer, puzzles and the game library still work.",
+    "（這一屆真人不到 2 位，是闖擂練習，只發參加獎）": "(Fewer than 2 human players this time, so it's arena practice with participation prizes only)",
+    "887 局，約 1 MB": "887 games, about 1 MB", "31,531 局，約 32 MB": "31,531 games, about 32 MB", "Pikafish 思考中…（約 1.5 秒）": "Pikafish thinking… (about 1.5 s)", "3 分鐘前更新": "updated 3 min ago",
+    "✔ 對了！按「下一步」看後續": "✔ Correct! Tap \"Next\" to see what follows", "🍵 完美解開！": "🍵 Perfect solve!", "・他送來的邀請會自動婉拒": "· their invitations are declined automatically",
+    "對局中（他是我的對手）": "In a game (they're my opponent)", "🌐 回大廳（這盤保留）": "🌐 Back to Lobby (game kept)", "🤝 判和（不計分）": "🤝 Call it a draw (unrated)",
+    "👉 Your move・紅方稍好，約領先 1.5 個兵": "👉 Your move · Red slightly better, ahead by about 1.5 pawns", "🤔 Thinking…・⏳ 已預走": "🤔 Thinking… · ⏳ Premove set"
+  };
+  for (const [k, v] of Object.entries(cases)) assert.equal(T(k), v, k);
+  assert.equal(T("（已通關）"), "(cleared)", "整句包在括號裡的舊規則照舊");
+});
+test("I18N_KEY：鍵名是「區.項」、值都是英文；保留的屬性值清單", () => {
+  const K = R.I18N_KEY, ks = Object.keys(K);
+  assert.ok(ks.length >= 50, "鍵只有 " + ks.length + " 個");
+  for (const k of ks) { assert.match(k, /^[a-z]+(\.[A-Za-z0-9]+)+$/, "鍵名：" + k); assert.ok(K[k].trim() && !CJK.test(K[k]) && !/[“”‘’]/.test(K[k]), "值：" + k + "→" + K[k]) }
+  assert.deepEqual([...R.I18N_AGUARD].sort(), ["去園子下棋（3D）", "回星槎", "回棋盤模式", "回首頁", "聲控走棋"].sort());
+});
+/* 模組裡的鍵：cgT／i18nT("鍵","中文") 與 data-i18n="鍵">中文；樣板組出來的鍵另外列 */
+const KEYSRC = [["08b-cpugame.js", CPU], ["05-settings.js", SET], ["09b-preload.js", PRE]];
+test("〔混合〕鍵值化接線：08b／05／09b 用到的鍵 I18N_KEY 都有；同一句用字典翻跟用鍵翻出來的英文一樣（07i18n 還沒載入時退回字典也一致）", () => {
+  const K = R.I18N_KEY, used = new Set(), pairs = [];
+  for (const [f, s] of KEYSRC) {
+    for (const m of s.matchAll(/\b(?:cgT|i18nT)\("([\w.]+)","([^"]+)"(\))?/g)) { used.add(m[1]); if (m[3]) pairs.push([f, m[1], m[2]]) }   /* 帶 {n} 的（原文是組出來的）只檢查鍵在不在 */
+    for (const m of s.matchAll(/data-i18n="([\w.]+)"(?:[^>]*)>([^<$]+)</g)) { used.add(m[1]); pairs.push([f, m[1], m[2].trim()]) }
+    for (const m of s.matchAll(/data-i18n="([\w.]+)"/g)) used.add(m[1]);
+  }
+  for (const k of ["set.tab.bot", "set.tab.look", "set.tab.sound", "set.tab.more", "res.win", "res.draw", "res.lose", "net.win.r", "net.win.b", "new.goLevel"]) used.add(k);
+  assert.ok(used.size >= 45, "用到的鍵太少：" + used.size);
+  const miss = [...used].filter(k => !Object.prototype.hasOwnProperty.call(K, k)); assert.deepEqual(miss, [], "I18N_KEY 少了：" + miss.join("、"));
+  assert.ok(pairs.length >= 35, "鍵與原文的配對太少：" + pairs.length);
+  for (const [f, k, zh] of pairs) assert.equal(T(zh), K[k], f + "：" + k + "（" + zh + "）");
+  assert.match(CPU, /^function cgT\(k,z,v\)\{return typeof i18nT==="function"\?i18nT\(k,z,v\):z\}$/m, "08b 的小掛勾有 typeof 保護");
+  assert.match(CPU, /\(undoLeft\(\)\?cgT\("game\.undoN","悔棋（"\+undoLeft\(\)\+"）",\{n:undoLeft\(\)\}\):cgT\("game\.undo","悔棋"\)\)/, "悔棋鈕剩幾張用 {n}");
+  assert.match(SET, /setTop\(typeof i18nT==="function"\?i18nT\("set\.title","設定"\):"設定",false,/);
+  assert.match(SET, /<button data-k="\$\{k\}" data-i18n="set\.tab\.\$\{k\}">/);
+  assert.equal((PRE.match(/<h2 data-i18n="\$\{st\.result\.w\?"net\.win\."\+st\.result\.w:"res\.draw"\}" data-i18n-n=/g) || []).length, 2, "09b 兩個線上結果視窗");
+  assert.equal((CPU.match(/<h2 data-i18n="res\.\$\{win\?"win":draw0\?"draw":"lose"\}">/g) || []).length, 4, "08b 四個結果視窗標題");
+});
+/* 08b 的 cgT 照原樣拿出來，接到假環境的 i18nT */
+const cgOf = c => vm.runInNewContext("(" + cut(CPU, "function cgT(k,z,v){", "\n") + ")", { i18nT: c ? c.i18nT : undefined });
+test("鍵值化：原文改字也翻得對——工具列、認輸確認改了中文，英文照樣是 Undo／Resign；繁中模式原樣回傳改過的中文；沒有 07i18n 也不會壞", () => {
+  const src = cut(CPU, "const acts=actionBar(v.querySelector(\"#acts\"),", "]]);").replace("const acts=actionBar(v.querySelector(\"#acts\"),", "") + "]]";
+  const changed = src.replace(/cgT\("([\w.]+)","([^"]+)"\)/g, (m, k) => `cgT("${k}","改過的字${k}")`);
+  assert.notEqual(changed, src);
+  const stub = c => ({ bagSheet() { }, undoAsk() { }, newSheet() { }, confirmBox: (t, y, l) => c.push([t, l]), post() { }, review() { }, setupSheet() { }, peek() { }, st: null });
+  const en = loadFull("en"), box = [], itemsEn = vm.runInNewContext(changed, { ...stub(box), cgT: cgOf(en.ctx) });
+  assert.deepEqual(Array.from(itemsEn, x => x[2]), ["Items", "Undo", "New", "Resign", "Review", "Setup", "Peek"]);
+  itemsEn.find(x => x[0] === "resign")[3](); assert.deepEqual(box[0], ["Resign this game?", "Resign"], "認輸確認的標題與按鈕");
+  const zh = loadFull(null), itemsZh = vm.runInNewContext(changed, { ...stub([]), cgT: cgOf(zh.ctx) });
+  assert.deepEqual(Array.from(itemsZh, x => x[2]), ["game.items", "game.undo", "game.new", "game.resign", "game.review", "game.setup", "game.peek"].map(k => "改過的字" + k), "繁中原樣回傳");
+  const none = vm.runInNewContext(src, { ...stub([]), cgT: cgOf(null) });
+  assert.deepEqual(Array.from(none, x => x[2]), ["寶物", "悔棋", "新局", "認輸", "檢討", "擺盤", "偷看"], "沒有 07i18n（typeof 保護）照原文");
+  assert.equal(en.ctx.i18nT("no.such.key", "原文"), "原文", "沒有的鍵回原文");
+  assert.equal(cgOf(en.ctx)("game.undoN", "退一步（2）", { n: 2 }), "Undo (2)", "悔棋鈕剩幾張"); assert.equal(cgOf(zh.ctx)("game.undoN", "退一步（2）", { n: 2 }), "退一步（2）");
+  assert.equal(en.ctx.i18nT("new.goLevel", "開始第 7 級", { n: 7 }), "Start level 7", "{n} 換成值");
+  assert.equal(zh.ctx.i18nT("game.undo", "悔棋"), "悔棋");
+});
+test("鍵值化：data-i18n 的元素原文改字也換得對（設定分頁、標題、結果視窗、開新局選單、線上結果帶名字），切回繁中一字不差，繁中模式不動", () => {
+  const { ctx, doc } = loadFull(null);
+  const tabsTpl = cut(SET, "${[[\"bot\",\"🙂\",\"角色\"]", ".join(\"\")}") + ".join(\"\")}";
+  const tabs = vm.runInNewContext("`" + tabsTpl.replace("\"角色\"", "\"人物\"").replace("\"系統\"", "\"其他\"") + "`", {});
+  assert.match(tabs, /data-i18n="set\.tab\.bot"><i class="tic" data-ic="t_bot">🙂<\/i> 人物<\/button>/);
+  doc.body.innerHTML = `<div id="sgTabs">${tabs}</div><div class="sec-t" data-i18n="set.rules">棋的規矩</div><details><summary data-i18n="set.more">⚙ 其他設定</summary></details>`
+    + `<div class="sec-t" data-i18n="set.sndPiece"><img alt=""> 落子的聲音</div><div class="modal"><div class="box"><h2 data-i18n="res.win">贏啦！</h2><h2 data-i18n="res.lose">輸囉</h2></div></div>`
+    + `<div class="cpu-lb" data-i18n="new.youPlay">你拿</div><button data-s="r" data-i18n="new.red">🔴 紅（先）</button><button class="btn" id="go" data-i18n="new.goLevel" data-i18n-n="7">開打第 7 級</button>`
+    + `<h2 data-i18n="net.win.r" data-i18n-n="Ming">紅方（Ming）獲勝</h2><p data-i18n="no.such.key">確定認輸？</p>`;
+  const html0 = doc.body.innerHTML; ctx.i18nApply(doc.body);
+  const txt = seen(doc.body).join("｜");
+  for (const w of ["Character", "Board", "Sound", "System", "Rules", "⚙ More settings", "Piece sounds", "You won!", "You lost this one", "You play", "🔴 Red (moves first)", "Start level 7", "Red (Ming) wins", "Resign this game?"]) assert.ok(txt.includes(w), "看不到：" + w + "｜" + txt);
+  assert.match(doc.body.innerHTML, /<i class="tic" data-ic="t_bot">🙂<\/i> Character<\/button>/, "圖示留著、前面的空白照留");
+  assert.deepEqual(seen(doc.body).filter(s => CJK.test(s)), [], "沒有中文");
+  ctx.i18nRevert(doc.body); assert.equal(doc.body.innerHTML, html0, "切回繁中一字不差");
+  const z = loadFull(null); z.doc.body.innerHTML = html0; assert.equal(z.MO.cb, null); assert.equal(z.doc.body.innerHTML, html0, "繁中模式什麼都不換");
+});
+test("鍵值化＋MutationObserver：程式之後改了有鍵元素的字（改文字節點、整個 textContent 換掉），英文照鍵重換", () => {
+  const { MO, doc } = loadFull("en");
+  const t = doc.createElement("div"); t.innerHTML = `<h2 data-i18n="res.draw">和局</h2><b data-i18n="game.check">⚠ 被將軍！</b>`; doc.body.appendChild(t);
+  MO.cb([{ type: "childList", addedNodes: [t] }]); assert.equal(t.textContent, "Draw⚠ Check!");
+  const h = t.querySelector("h2"); h.firstChild.nodeValue = "平手"; MO.cb([{ type: "characterData", target: h.firstChild }]); assert.equal(h.textContent, "Draw");
+  const b = t.querySelector("b"); b.textContent = "⚠ 將軍了"; MO.cb([{ type: "childList", addedNodes: [b.firstChild] }]); assert.equal(b.textContent, "⚠ Check!");
+});
+test("英文模式不換別的模組拿來找按鈕的 aria-label／title（I18N_AGUARD），其他屬性照換", () => {
+  const { ctx, doc } = loadFull(null);
+  doc.body.innerHTML = `<div id="topRight"><button class="ib" aria-label="回首頁" title="回首頁">🏠</button><button aria-label="聲控走棋" title="聲控走棋">🎤</button><button aria-label="去園子下棋（3D）">🌳</button><button aria-label="回棋盤模式">♟</button><button aria-label="回星槎">⛵</button><button aria-label="認輸" title="關閉">🏳</button></div>`;
+  ctx.i18nApply(doc.body); const bs = doc.body.querySelectorAll("button");
+  assert.deepEqual(bs.slice(0, 5).map(b => b.getAttribute("aria-label")), ["回首頁", "聲控走棋", "去園子下棋（3D）", "回棋盤模式", "回星槎"]);
+  assert.equal(bs[0].getAttribute("title"), "回首頁"); assert.equal(bs[5].getAttribute("aria-label"), "Resign"); assert.equal(bs[5].getAttribute("title"), "Close");
+});
+test("〔混合〕底欄照 data-go 標鍵（m.html 的字改了也一樣）；英文開機注入只對 html[lang=en] 生效的防爆版樣式，繁中不注入、m.css 沒動到", () => {
+  const tb = HTML.slice(HTML.indexOf("<nav class=\"tabbar\" id=\"tabbar\">"), HTML.indexOf("</nav>") + 6);
+  assert.match(tb, /data-go="#\/lobby"/);
+  const { ctx, doc } = loadFull(null); doc.body.innerHTML = tb.replace(">首頁<", ">主頁<").replace(">棋譜<", ">譜<");
+  ctx.i18nTabKeys(); ctx.i18nApply(doc.body);
+  assert.deepEqual(doc.body.querySelectorAll("#tabbar [data-go]").map(b => b.getAttribute("data-i18n")), ["tab.home", "tab.online", "tab.library", "tab.settings"]);
+  assert.deepEqual(seen(doc.body).filter(s => /[A-Za-z]/.test(s)), ["Home", "Online", "Library", "Settings"]);
+  const en = loadFull("en"), st = en.doc.head.querySelector("#i18nCss");
+  assert.ok(st, "英文模式有樣式"); for (const r of st.textContent.split("\n")) assert.match(r, /^html\[lang=en\] /, "每一條都只在英文生效：" + r);
+  assert.match(st.textContent, /\.tabbar button\{font-size:10\.5px/); assert.match(st.textContent, /#acts button\{[^}]*white-space:normal/);
+  assert.equal(loadFull(null).doc.head.querySelector("#i18nCss"), null, "繁中不注入");
+  assert.ok(!/i18n|lang=en/.test(rd(path.join(DB, "m.css"))), "m.css 沒有英文模式的規則（都在 07i18n）");
 });
