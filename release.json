@@ -1,8 +1,8 @@
 {
- "version": "20261114-0942",
- "checkedAt": "2026-11-14T01:43:00.971Z",
- "html": "07ad2417254a",
- "sw": "dc4c928059bb",
+ "version": "20261114-0957",
+ "checkedAt": "2026-11-14T01:57:11.870Z",
+ "html": "78e5eca4df0f",
+ "sw": "4bfd381f32ff",
  "scripts": 4,
  "modules": {
   "00-util.js": "7addbcf20a30",
@@ -26,7 +26,7 @@
   "07o-shipmore.js": "3e3ebb9d732b",
   "07bh-blackhole.js": "02b8ea3b973c",
   "07gx-galaxy.js": "f79b141f237d",
-  "07bht-td.js": "1c11b03c5e36",
+  "07bht-td.js": "cad63688b237",
   "07bhtl-tdlearn.js": "fb8b16175754",
   "07bhf-bossfx.js": "8516daf7973e",
   "07dv-devtest.js": "077191672ec5",
@@ -58,7 +58,7 @@
   "07y-hubmap.js": "7c606e4f759b",
   "07z-homemap.js": "985af4b3f859",
   "07gxt-guanxing.js": "bed3367c7517",
-  "07dgl-stamina.js": "78d4bf2fd829",
+  "07dgl-stamina.js": "63c79b0de1f1",
   "07xsm-ximarket.js": "1efd4cc82cf4",
   "07xsd-xsmdark.js": "14cf67001b41",
   "07hmp-pano.js": "abcd6b0af228",
@@ -126,39 +126,9 @@
    "sourceModified": "2026-11-14T00:50:03.894Z"
   },
   {
-   "module": "05b-save.js",
-   "lines": 1,
-   "sourceModified": "2026-11-14T01:36:50.409Z"
-  },
-  {
-   "module": "07-legend.js",
-   "lines": 1,
-   "sourceModified": "2026-11-14T01:36:34.742Z"
-  },
-  {
-   "module": "07bh-blackhole.js",
-   "lines": 2,
-   "sourceModified": "2026-11-14T01:36:31.221Z"
-  },
-  {
-   "module": "07bht-td.js",
-   "lines": 240,
-   "sourceModified": "2026-11-14T01:41:12.561Z"
-  },
-  {
    "module": "07y-hubmap.js",
    "lines": 5,
    "sourceModified": "2026-11-13T18:59:11.775Z"
-  },
-  {
-   "module": "07gxt-guanxing.js",
-   "lines": 6,
-   "sourceModified": "2026-11-14T01:36:23.403Z"
-  },
-  {
-   "module": "07dgl-stamina.js",
-   "lines": 22,
-   "sourceModified": "2026-11-14T01:36:11.386Z"
   },
   {
    "module": "07s4-passmap.js",
@@ -169,11 +139,6 @@
    "module": "07hs-netsig.js",
    "lines": 3,
    "sourceModified": "2026-11-13T14:00:29.777Z"
-  },
-  {
-   "module": "07i18n.js",
-   "lines": 22,
-   "sourceModified": "2026-11-14T01:41:08.687Z"
   }
  ]
 }
