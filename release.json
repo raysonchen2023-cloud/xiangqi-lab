@@ -1,8 +1,8 @@
 {
- "version": "20261114-0835",
- "checkedAt": "2026-11-14T00:35:19.688Z",
- "html": "f40214efc58a",
- "sw": "d1002475ede4",
+ "version": "20261114-0847",
+ "checkedAt": "2026-11-14T00:47:29.834Z",
+ "html": "f89b4a457952",
+ "sw": "9f2ee885aaee",
  "scripts": 4,
  "modules": {
   "00-util.js": "7addbcf20a30",
@@ -13,7 +13,7 @@
   "04-stats.js": "783c70902f05",
   "04c-weekly.js": "326899d53f7b",
   "05-settings.js": "8d0b68e39ab3",
-  "05b-save.js": "b5e019574b4d",
+  "05b-save.js": "f17bfa923ad7",
   "05c-health.js": "a1bcf3e541ac",
   "05d-telemetry.js": "98d12b742868",
   "06-cpu.js": "1bfd156c07ab",
@@ -26,7 +26,7 @@
   "07o-shipmore.js": "3e3ebb9d732b",
   "07bh-blackhole.js": "fd75fbb79ffb",
   "07gx-galaxy.js": "f79b141f237d",
-  "07bht-td.js": "a82caf350e2e",
+  "07bht-td.js": "afa976c57172",
   "07bhtl-tdlearn.js": "fb8b16175754",
   "07bhf-bossfx.js": "8516daf7973e",
   "07dv-devtest.js": "077191672ec5",
@@ -56,12 +56,12 @@
   "07w5-ouyu.js": "8ee3b1bc19f3",
   "07x-zoom.js": "dee40ae73c65",
   "07y-hubmap.js": "7c606e4f759b",
-  "07z-homemap.js": "6a35483be7e4",
+  "07z-homemap.js": "985af4b3f859",
   "07gxt-guanxing.js": "c5d2a3f23cdf",
   "07dgl-stamina.js": "0da7953e958b",
   "07xsm-ximarket.js": "1efd4cc82cf4",
-  "07xsd-xsmdark.js": "64ecd0966459",
-  "07hmp-pano.js": "471dbb72f42d",
+  "07xsd-xsmdark.js": "14cf67001b41",
+  "07hmp-pano.js": "73f6adea5031",
   "07x2-lobbymap.js": "492b0f6f7013",
   "07x3-rostermap.js": "ad71f65833df",
   "07x4-lobbysafe.js": "c8b34c8400f2",
@@ -112,7 +112,7 @@
   "07lh-lefty.js": "b1b6761a4a97",
   "07pm-premove.js": "52061c9a3011",
   "07dq-daily.js": "c1076bdd0ee8",
-  "07i18n.js": "2df9080b8715",
+  "07i18n.js": "bfcfe13115b3",
   "07sp-spotfit.js": "f7f205a79901",
   "07fl-fill.js": "6d07e97dc32f",
   "07mnf-mainfilm.js": "a1ff0f0af87d",
@@ -131,19 +131,14 @@
    "sourceModified": "2026-11-13T19:04:13.233Z"
   },
   {
-   "module": "05b-save.js",
-   "lines": 1,
-   "sourceModified": "2026-11-14T00:02:49.752Z"
-  },
-  {
    "module": "07bh-blackhole.js",
    "lines": 1,
    "sourceModified": "2026-11-14T00:22:23.831Z"
   },
   {
    "module": "07bht-td.js",
-   "lines": 259,
-   "sourceModified": "2026-11-14T00:33:17.528Z"
+   "lines": 261,
+   "sourceModified": "2026-11-14T00:44:32.733Z"
   },
   {
    "module": "07bhtl-tdlearn.js",
@@ -167,23 +162,13 @@
   },
   {
    "module": "07z-homemap.js",
-   "lines": 14,
-   "sourceModified": "2026-11-14T00:22:06.292Z"
-  },
-  {
-   "module": "07xsm-ximarket.js",
-   "lines": 6,
-   "sourceModified": "2026-11-14T00:02:49.751Z"
-  },
-  {
-   "module": "07xsd-xsmdark.js",
-   "lines": 285,
-   "sourceModified": "2026-11-14T00:33:04.061Z"
+   "lines": 17,
+   "sourceModified": "2026-11-14T00:45:16.260Z"
   },
   {
    "module": "07hmp-pano.js",
-   "lines": 139,
-   "sourceModified": "2026-11-14T00:34:38.067Z"
+   "lines": 143,
+   "sourceModified": "2026-11-14T00:44:33.908Z"
   },
   {
    "module": "07t3-tabtube.js",
@@ -209,6 +194,11 @@
    "module": "07pm-premove.js",
    "lines": 1,
    "sourceModified": "2026-11-14T00:22:16.232Z"
+  },
+  {
+   "module": "07i18n.js",
+   "lines": 37,
+   "sourceModified": "2026-11-14T00:47:17.374Z"
   }
  ]
 }

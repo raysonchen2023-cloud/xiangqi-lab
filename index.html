@@ -1613,7 +1613,7 @@ html[data-lefty] .tskip{right:auto;left:14px}
       if(!window.caches)return go();caches.keys().then(function(ks){return Promise.all(ks.filter(function(k){return k.indexOf("xqlab-app-")===0}).map(function(k){return caches.delete(k)}))})
         .then(function(){return navigator.serviceWorker&&navigator.serviceWorker.getRegistration()}).then(function(r){return r&&r.update()}).catch(function(){}).then(go)}};setTimeout(chk,4000)})();
 </script>
-<script>window.XQ_OFFLINE=true;window.XQ_BUILD="20261114-0835";</script>
+<script>window.XQ_OFFLINE=true;window.XQ_BUILD="20261114-0847";</script>
 <script src="core.js"></script>
 <script src="engine.js"></script>
 <script src="local.js"></script>
@@ -5851,7 +5851,7 @@ const CHAR_ERA={x_swordboy:"qin",x_spiritgirl:"nanbei",x_martialgirl:"song",x_mi
 const JOURNEY_KEYS=["sw7Box","pSex","pChar","pStyle","botPiece","onboard1","journey","playSec","era","eraOpen","xp","xpDay","xpKeys","record","hintBonus","hintUse","undoBonus","undoDropIds","bag","jarGot","lingN","giftGames","dropMiss",
   "legend","legendGame","legBook","legRead","jStars","jPending","jPrev","jRun","jScene","jHid","jMig36","jpSeen","novelRead","sceneDone","storyEraTip","eraUser","study","campSeen","campStars",
   "npcBond","npcAsk","npcAskSeen","parkNpc","parkNpcLast","npcPity","parkAdj","visitGone","secrets","secretClue","secretSpots","secretWins","relics","relicSolved","relicAt","histSeen","histSolved","histTitle",
-  "innCur","innDrop","innAdj","innGuest","resumeLast","xhMake","xhMei","xhTitle","yuDay","yuHint","yuRoute","yuTitle","cupDrop","cupGot","cj","cjRun","shipAt","shipSolved","shipGames","shipLessonSeen","shipWins","shipArena","cjRunS","jRunS","battleSeal","battleTitle","battleVol","battleGrand","battleVolY","battleVolLegacy","battleMig","battleSeal0","cjRunB","jRunB","battlePlan","diff","shipDock","shipLearn","undoFree","shipGal","shipStale","shipRead","shipMore","evLog","evPawn","evHeld","evStash","jRunE","cjRunE","rdLog","firstWin","wkRead","visit7","chd","ep","cjRunEp","wmDays","wmPg","wmBm","wmScr","wmEcho","jRunW","sealGold","sealIntro","jRunC","rsHint","buddy","cjRunBd","ouyu","jRunO","mnq","bhtd","bhtdFx","bhtl","xsmSeen","dgl","gxtSeen"].map(k=>"m_"+k)   /* 西市（07xsm-ximarket.js，開發者 11/13）：xsmSeen＝去過西市了沒（首頁「🏮 西市」不再發亮、第一次的介紹卡只跳一次） */   /* 平日體力（07dgl-stamina.js，開發者 11/13）：dgl＝身上的星芒、第一次下船的說明看過了沒（定軌力本身不存，關 App 再開回滿） */   /* 黑洞陣地塔防（07bht-td.js，開發者 11/13）：bhtd＝破過哪幾關、各關輸贏、每位角色帶的 4 招；bhtdFx＝戰鬥演出（完整／簡化／關閉）；bhtl＝塔防練習賽練過／跳過、練了幾次、進階機制第一次的提示看過哪些（07bhtl-tdlearn.js） */   /* 七星遇見玩法（07q-buddy.js，開發者 11/9）：buddy＝旅伴闖禍、驛站飛書、心結的進度，cjRunBd＝這兩種殘局解到一半的那一題 */   /* 回饋 856（開發者 11/9：女棋手分普通／稀有／傳說、機率加保底）：npcPity＝稀有、傳說女棋手的保底計數（06-cpu.js parkNpcNew） */   /* 回饋 838（開發者 11/9 選：全模式中斷接續）：jRunC＝新手訓練營玩到一半的那一課、rsHint＝對局裡用掉的提示棋黃框（主題訓練 jpRun、棋力測驗 quizRun 跟 themeStat、quizLog 一樣是棋手本人的，各格共用，不放這裡） */   /* 千秋印（07i2-seal.js，開發者 11/9）：sealGold＝各朝第一次鑄成金印的時間與修為已發、sealIntro＝看過「集章簿換成千秋印譜」說明卡。Gemini 遊玩樂趣評估（開發者 11/8 核准）：visit7＝七星來訪的次數、說過的話、小任務（07j-visit.js）；evStash＝千秋穿梭收進囊中、12 小時內再處理的突發事件（07h-qqev.js）；firstWin＝新手秒開局下過（或跳過）了；wkRead＝學習週報每天記一筆讀懂地圖比例，算「比上週」。意見回饋 737 第二期：rdLog＝讀過哪些棋譜、猜著法每盤答對幾手（壓縮成字串）。意見回饋 674：星槎在看哪一站、千秋殘局解開的題、正在解的那一題；675：航行難度、已停靠的站、學會的棋理、這盤用了幾次免費悔棋；685：七星同局圖鑑與熱身解開的題、看過困斃說明、讀過《雲河七星》哪幾章 */
+  "innCur","innDrop","innAdj","innGuest","resumeLast","xhMake","xhMei","xhTitle","yuDay","yuHint","yuRoute","yuTitle","cupDrop","cupGot","cj","cjRun","shipAt","shipSolved","shipGames","shipLessonSeen","shipWins","shipArena","cjRunS","jRunS","battleSeal","battleTitle","battleVol","battleGrand","battleVolY","battleVolLegacy","battleMig","battleSeal0","cjRunB","jRunB","battlePlan","diff","shipDock","shipLearn","undoFree","shipGal","shipStale","shipRead","shipMore","evLog","evPawn","evHeld","evStash","jRunE","cjRunE","rdLog","firstWin","wkRead","visit7","chd","ep","cjRunEp","wmDays","wmPg","wmBm","wmScr","wmEcho","jRunW","sealGold","sealIntro","jRunC","rsHint","buddy","cjRunBd","ouyu","jRunO","mnq","xsdRec","xsdRun","xsdLv","bhtd","bhtdFx","bhtl","xsmSeen","dgl","gxtSeen"].map(k=>"m_"+k)   /* 聽雨茶坊的臺灣暗棋（07xsd-xsmdark.js，開發者 11/14）：xsdRec＝勝、和、負局數；xsdRun＝下到一半的那一盤（離開自動保留）；xsdLv＝電腦難度（新手／一般，沒選過＝新手） */   /* 西市（07xsm-ximarket.js，開發者 11/13）：xsmSeen＝去過西市了沒（首頁「🏮 西市」不再發亮、第一次的介紹卡只跳一次） */   /* 平日體力（07dgl-stamina.js，開發者 11/13）：dgl＝身上的星芒、第一次下船的說明看過了沒（定軌力本身不存，關 App 再開回滿） */   /* 黑洞陣地塔防（07bht-td.js，開發者 11/13）：bhtd＝破過哪幾關、各關輸贏、每位角色帶的 4 招；bhtdFx＝戰鬥演出（完整／簡化／關閉）；bhtl＝塔防練習賽練過／跳過、練了幾次、進階機制第一次的提示看過哪些（07bhtl-tdlearn.js） */   /* 七星遇見玩法（07q-buddy.js，開發者 11/9）：buddy＝旅伴闖禍、驛站飛書、心結的進度，cjRunBd＝這兩種殘局解到一半的那一題 */   /* 回饋 856（開發者 11/9：女棋手分普通／稀有／傳說、機率加保底）：npcPity＝稀有、傳說女棋手的保底計數（06-cpu.js parkNpcNew） */   /* 回饋 838（開發者 11/9 選：全模式中斷接續）：jRunC＝新手訓練營玩到一半的那一課、rsHint＝對局裡用掉的提示棋黃框（主題訓練 jpRun、棋力測驗 quizRun 跟 themeStat、quizLog 一樣是棋手本人的，各格共用，不放這裡） */   /* 千秋印（07i2-seal.js，開發者 11/9）：sealGold＝各朝第一次鑄成金印的時間與修為已發、sealIntro＝看過「集章簿換成千秋印譜」說明卡。Gemini 遊玩樂趣評估（開發者 11/8 核准）：visit7＝七星來訪的次數、說過的話、小任務（07j-visit.js）；evStash＝千秋穿梭收進囊中、12 小時內再處理的突發事件（07h-qqev.js）；firstWin＝新手秒開局下過（或跳過）了；wkRead＝學習週報每天記一筆讀懂地圖比例，算「比上週」。意見回饋 737 第二期：rdLog＝讀過哪些棋譜、猜著法每盤答對幾手（壓縮成字串）。意見回饋 674：星槎在看哪一站、千秋殘局解開的題、正在解的那一題；675：航行難度、已停靠的站、學會的棋理、這盤用了幾次免費悔棋；685：七星同局圖鑑與熱身解開的題、看過困斃說明、讀過《雲河七星》哪幾章 */
   .concat(["cpuRate","bonusKeys","record","arenaStamps","play","play2","playPrev","playBak"].map(k=>"xq_"+k));   /* 評比循環第 2 輪：playPrev（上一版，存檔壞掉時讀）、playBak（被別的分頁換掉的棋）跟著存檔格走；保存紀錄 xq_saveLog 是這支手機的，不跟格子走 */
 const JK=new Set(JOURNEY_KEYS),SLOT_N=3;
 /* 意見回饋 668：舊玩家判斷要在首頁畫出來以前做（首頁會順手寫一些旅程鍵，例如 lingN），所以這裡直接讀 localStorage；null＝已經過渡過了 */
@@ -18199,7 +18199,7 @@ if(DGL_ON&&typeof window!=="undefined"){
   document.addEventListener("visibilitychange",()=>{DGL.last=Date.now()});
   setInterval(dglTick,2000)}
 /* ================= 🏮 西市：首頁橋左邊的生活場景（開發者 11/13；文案照 story/西市文案定稿草案_1113.md，第五節 18 項全照推薦；前綴 xsm／XSM，11/13 grep 過沒撞名：xm 已被 01-board 的混音器用掉）=================
-   路由 #/ximarket（西市外景）、#/ximarket/tea（聽雨茶坊內景）（02-shell）。
+   路由 #/ximarket（西市外景）、#/ximarket/tea（聽雨茶坊內景）、#/ximarket/dark（茶坊的臺灣暗棋，07xsd）（02-shell）。
    入口：首頁橋左邊一個「🏮 西市」場景標籤（#hmXsm；跟 07gxt 觀星臺一樣包 07z 的 Home／hmwSet，不改 HM_SPOTS、不動 07y；原圖、iPad 直版 p34、橫版 l1610 各一組座標 XSM_HOME，避開左岸告示牌）。
      只在千秋時光之苑（經典世界 hbIsCl）出現（第 1 項 A）；領過七星授印禮（07mnq 存檔 "mnq".gift.a1）才出現（第 2 項 B）；開發者模式一律看得到。網址直接進、還沒解鎖＝回首頁。
      第一次進來以前首頁標籤是 .hot（第 17 項；之後「有禮可領、有人來訪」也要亮，等那兩個玩法做好再接，不加紅點數字）。
@@ -18207,7 +18207,8 @@ if(DGL_ON&&typeof window!=="undefined"){
      日夜照人間時辰（07w8 clkIdx，頂欄時辰鐘同一個判斷）：卯時～申時白天，酉時～寅時夜景（第 3 項 A）；頁面開著跨過時辰會自己換；一張載不到就換另一張（XSM_BAD）。
      茶坊窗外固定下雨（第 18 項 A，程式畫的雨；減少動態時不動）；茶坊只有一張圖，夜裡蓋一層暗藍（日夜跟著西市換）。
    標籤只放大字、不放圖示（第 5 項 A：寫玩法名）：領禮物＝櫃坊、七星來訪＝老槐樹下、找棋子＝棋具攤、暗棋＝聽雨茶坊、聽曲＝樂棚（第 10 項 A）。
-     這一版只做場景頁：「暗棋」這一攤可以進茶坊看內景；其他攤和茶坊裡的暗棋桌灰色帶鎖，點了跳「還沒開張，敬請期待。」（第 12 項 A）。
+     這一版只做場景頁：「暗棋」這一攤可以進茶坊看內景；其他攤灰色帶鎖，點了跳「還沒開張，敬請期待。」（第 12 項 A）。
+     11/14 開發者：茶坊中間的暗棋桌第一個開張，點了到 #/ximarket/dark 玩臺灣暗棋（07xsd-xsmdark.js，對電腦）。
    第一次進來跳介紹卡（定位句＋介紹，第一節）。出口照 07w9 圖上出口：外景＝市門「🏘 回棋鎮」，茶坊＝「↩ 回西市」（07w9 EXITS）。
    走路角色：外景接 07w shwPage（座標表 XSM_WALK，量 park/ximarket/xm_day.png）；茶坊內景不放走路角色。
    存檔鍵 xsmSeen（05b JOURNEY_KEYS）。平日體力 07dgl：#/ximarket 不在星槎、也不在「不算」那組，照預設算人間。
@@ -18223,7 +18224,7 @@ const XSM_SPOTS=[
   ["xsmTea","暗棋",86,44,0],   /* 右邊聽雨茶坊：竹簾 */
   ["xsmChess","找棋子",38,61,1],   /* 左下棋具攤：棋盒、棋子袋那張桌子上方的簷下 */
   ["xsmVisit","七星來訪",81,74,1]];   /* 市門右邊的老槐樹：樹下石墩、木凳上方 */
-const XSM_TEA_SPOTS=[["xsmDark","暗棋",50,44,1]];   /* 茶坊中間那張暗棋桌（量 xm_tea 768×1376） */
+const XSM_TEA_SPOTS=[["xsmDark","暗棋",50,44,0]];   /* 茶坊中間那張暗棋桌（量 xm_tea 768×1376）；11/14 開張：點了開一盤臺灣暗棋（07xsd-xsmdark.js） */
 const XSM_HOME={"":[16,59],p34:[16,60],l1610:[19,71]};   /* 首頁橋左邊（跟觀星臺 GXT_HOME 左右對稱，再往下挪開左岸告示牌；原圖量 home_classic 768×1376，p34 量 1536×2048，l1610 量 2560×1600） */
 const XSM_RAIN=[[53,12,60,31],[69.5,14,82,36]];   /* 茶坊窗外看得到雨的兩塊（左、上、右、下 %） */
 const XSM_BAD={};   /* 這次開 App 載不到的圖（d＝白天、n＝夜景），換另一張不再試 */
@@ -18257,7 +18258,7 @@ function xsmCss(){if(document.getElementById("xsmCss"))return;const s=document.c
 /* 標籤按鈕（旁白、Tab 順序＝由上到下、同一列由左到右：07z hmFocusOrder） */
 function xsmBtns(L){const S=xsmSpots(L),O=typeof hmFocusOrder==="function"?hmFocusOrder(S):S;
   return O.map(([id,x,y,t,off])=>`<button type="button" class="shp-spot${off?" lock":""}" id="${id}" style="left:${x}%;top:${y}%" aria-label="${esc(t+(off?"，還沒開張":""))}"><b>${off?"🔒 ":""}${esc(t)}</b></button>`).join("")}
-const XSM_ACT={xsmTea:()=>{location.hash="#/ximarket/tea"}};
+const XSM_ACT={xsmTea:()=>{location.hash="#/ximarket/tea"},xsmDark:()=>{location.hash="#/ximarket/dark"}};
 function xsmBind(P,L){for(const s of L){const b=P.querySelector("#"+s[0]);if(!b)continue;b.onclick=e=>{e.stopPropagation();vibrate(5);if(s[4]){toast("🏮 "+XSM_OFF);return}const f=XSM_ACT[s[0]];if(f)f()}}}
 /* 圖載好以後：07t3 補滿高度、07sp 標籤推回畫面內、R07 點選範圍；兩指縮放 */
 function xsmAfter(v,P){const im=P.querySelector(":scope>img");
@@ -18268,7 +18269,7 @@ function xsmSwap(P,day){const im=P.querySelector(":scope>img");if(!im)return;con
   const pre=new Image();pre.onload=()=>{if(!P.isConnected)return;P.dataset.day=nd?"1":"";im.src=src};pre.onerror=()=>{XSM_BAD[nd?"d":"n"]=1};pre.src=src}
 function xsmIntro(){modal(`<h3>🏮 西市</h3><p><b>${esc(XSM_TX.pos)}</b></p><p>${esc(XSM_TX.intro)}</p>`,[["逛逛西市",null]])}
 function xsmWalk(v){if(typeof shwPage!=="function"||typeof SHIP_WALK_ON==="undefined"||!SHIP_WALK_ON)return;try{shwPage(v,xsmWalkCfg(),"xsm")}catch(e){}}
-function XsmPage(v,sub){if(sub==="tea")return xsmTea(v);
+function XsmPage(v,sub){if(sub==="tea")return xsmTea(v);if(sub==="dark"&&typeof xsdPage==="function")return xsdPage(v);
   setTop("🏮 西市","#/");setTabs(true,"#/");v.className="view";
   if(!xsmOpen()){toast("🏮 西市還沒開市");navReplace("#/");return{}}
   xsmCss();let first=false;try{first=!store.get("xsmSeen",0);store.set("xsmSeen",1)}catch(e){}
@@ -18307,6 +18308,307 @@ function xsmHomeSpot(v){if(!xsmOpen()||!(typeof hbIsCl==="function"&&hbIsCl()))r
   P.insertBefore(b,ref||null);try{if(typeof hmClamp==="function")hmClamp(P)}catch(e){}}
 if(typeof Home==="function"){const f0=Home;Home=function(v,hub){const r=f0.apply(this,arguments);try{if(!hub)xsmHomeSpot(v)}catch(e){}return r}}
 if(typeof hmwSet==="function"){const f1=hmwSet;hmwSet=function(P){const r=f1.apply(this,arguments);try{xsmHomePos(P)}catch(e){}return r}}   /* 首頁原地換寬版圖時跟著換座標 */
+/* ================= 🀄 聽雨茶坊・臺灣暗棋（開發者 11/14：西市第一個開張的攤＝茶坊中間那張暗棋桌 xsmDark；前綴 xsd／XSD，11/14 grep 過 m/*.js、m.css 都沒有）=================
+   文案照 story/西市文案定稿草案_1113.md（第一節 5：短版、完整版規則、掌櫃台詞「先翻，才知命。」；第五節 14 殘局自動保留、15 第一顆翻出的顏色定陣營、16 吃光或無棋可走贏、50 手無吃無翻判和）；
+   規則照 story/新手體驗定案_141_兩輪討論.md 暗棋定案：不連吃、兵可吃帥、帥不可吃兵、炮隔一子跳吃、50 手沒吃也沒翻判和（星霧暗子不叫暗棋，跟這裡無關）。
+   路由 #/ximarket/dark（07xsm XsmPage 轉過來；頂欄返回＝回聽雨茶坊）。玩家對電腦、手機直式 4 欄 × 8 列；橫的畫面（電腦、iPad 橫放）轉成 8 欄 × 4 列，規則一樣。
+   不計分、不進大廳、不碰線上對戰。存檔鍵（05b JOURNEY_KEYS）：xsdRec＝勝、和、負局數 {w,d,l}；xsdRun＝下到一半的那一盤（離開自動保留，回來接著下）。xsdLv＝電腦難度（easy 新手／norm 一般；第一次玩＝新手；規則卡、結果視窗切換，開發者 11/14）。
+   純函式（不碰 DOM）：xsdDeal／xsdNew／xsdEats／xsdMoves／xsdActs／xsdDo／xsdJudge／xsdThink…；測試 xiangqi-lab/tools/test-xsm-dark.js 用 vm 跑。
+   電腦：看得到的子＋還蓋著的子「一共剩哪些」（公開資訊，不偷看蓋著的是哪顆）；走子、吃子用 alpha-beta 搜 3 層＋吃子延伸；翻子算期望值：這格翻出每一種可能的子各搜一次、照剩下的張數加權平均。
+     黑洞超展開的自寫引擎（xiangqi-lab/src/varengine.js）是整張棋盤的標準走法，暗棋的半盤、蓋子、翻子都不一樣，共用不了，另寫這個小的。 */
+const XSD_ON=true;
+const XSD_DRAW=50;   /* 連續幾手（一方走一次算一手）沒吃子也沒翻子就判和 */
+/* 棋子代號：低 3 位＝種類（1 兵 2 炮 3 傌 4 俥 5 相 6 仕 7 帥）、+8＝黑、+16＝還蓋著；0＝空格 */
+const XSD_SET=[7,6,6,5,5,4,4,3,3,2,2,1,1,1,1,1];   /* 一方 16 子 */
+const XSD_L=" PCNRBAK";   /* 種類 → 00-util NAMES 的字母 */
+const XSD_TX={short:"翻開才知道是哪顆棋；大吃小，兵能吃帥，炮要隔一顆跳著吃。",
+  long:"32 顆棋蓋在 4×8 格裡，輪流翻棋或走棋；大可吃小、同級可吃，兵可吃帥、帥不可吃兵，炮隔一子跳吃，不連吃；50 手沒有吃子也沒有翻棋就算和棋。",
+  rank:"棋子大小：帥（將）＞仕（士）＞相（象）＞俥（車）＞傌（馬）＞炮（包）＞兵（卒）。",
+  intro:"暗棋是在臺灣很流行的象棋玩法：棋子先蓋著，翻開才知道是哪一顆。",
+  open:"先翻，才知命。",kingFirst:"頭一翻就是{k}？好兆頭。",pawnKing:"小兵也能扳倒大帥，這就是暗棋。",lose:"茶還熱著，再翻一局。"};
+/* ---------- 盤面：格子 i＝列×4＋欄（4 欄 × 8 列）；鄰格與四個方向的直線（炮跳吃用） ---------- */
+const XSD_NB=[],XSD_RAY=[];
+for(let i=0;i<32;i++){const x=i%4,y=(i/4)|0;XSD_NB[i]=[];XSD_RAY[i]=[];
+  for(const[dx,dy]of[[1,0],[-1,0],[0,1],[0,-1]]){const r=[];let a=x+dx,b=y+dy;while(a>=0&&a<4&&b>=0&&b<8){r.push(b*4+a);a+=dx;b+=dy}if(r.length){XSD_NB[i].push(r[0]);XSD_RAY[i].push(r)}}}
+const xsdKind=p=>p&7,xsdCol=p=>(p>>3)&1,xsdHid=p=>!!(p&16);
+/* 可重現的亂數（測試、量測用；App 裡用 Math.random） */
+function xsdRng(seed){let a=seed>>>0;return()=>{a=(a+0x6D2B79F5)>>>0;let t=a;t=Math.imul(t^(t>>>15),t|1);t^=t+Math.imul(t^(t>>>7),t|61);return((t^(t>>>14))>>>0)/4294967296}}
+/* 發牌：紅黑各 16 子全部蓋著，亂數擺 */
+function xsdDeal(rnd){rnd=rnd||Math.random;const a=[];for(const k of XSD_SET)a.push(k|16,k|8|16);
+  for(let i=a.length-1;i>0;i--){const j=Math.floor(rnd()*(i+1));const t=a[i];a[i]=a[j];a[j]=t}return a}
+/* 一盤：玩家 0＝你、1＝電腦；cur＝輪到誰；col＝[你的顏色, 電腦的顏色]（0 紅 1 黑；第一顆翻開以前是 null）；q＝連續沒吃沒翻的手數；
+   cap＝[你吃到的, 電腦吃到的]；h＝最近幾個盤面（電腦避免來回走）；last＝上一手（畫面標示） */
+function xsdNew(rnd,first){return{b:xsdDeal(rnd),cur:first?1:0,col:null,q:0,n:0,flips:0,cap:[[],[]],h:[],last:null,over:null}}
+/* a 能不能吃 t（都是種類 1～7；炮不走這條，炮只能跳吃）：大吃小、同級可吃；兵可吃帥、帥不可吃兵 */
+function xsdEats(a,t){if(a===7&&t===1)return false;if(a===1&&t===7)return true;return a>=t}
+/* 顏色 c 的所有走法（代號 從×32＋到；從＝到＝翻那一格）。flips＝要不要列翻子；caps＝只列吃子 */
+function xsdMoves(b,c,flips,caps){const o=[];
+  for(let i=0;i<32;i++){const p=b[i];if(!p)continue;
+    if(p&16){if(flips)o.push(i*33);continue}
+    if(((p>>3)&1)!==c)continue;const k=p&7;
+    if(k===2){for(const r of XSD_RAY[i]){if(!caps&&!b[r[0]])o.push(i*32+r[0]);let j=0;while(j<r.length&&!b[r[j]])j++;j++;while(j<r.length&&!b[r[j]])j++;
+        if(j<r.length){const t=b[r[j]];if(!(t&16)&&((t>>3)&1)!==c)o.push(i*32+r[j])}}}   /* 炮：走一格；隔一子（蓋著的也算）跳吃翻開的敵子，大小不論 */
+    else for(const j of XSD_NB[i]){const t=b[j];if(!t){if(!caps)o.push(i*32+j)}else if(!(t&16)&&((t>>3)&1)!==c&&xsdEats(k,t&7))o.push(i*32+j)}}
+  return o}
+/* 這一盤輪到的人能做什麼（第一顆翻開以前只能翻） */
+function xsdActs(S){if(!S||S.over)return[];if(!S.col)return xsdMoves(S.b,0,true,true).filter(a=>((a/32)|0)===a%32);return xsdMoves(S.b,S.col[S.cur],true,false)}
+/* 顏色 c 還有幾子（蓋著的也算） */
+function xsdCount(b,c){let n=0;for(const p of b)if(p&&((p>>3)&1)===c)n++;return n}
+/* 判勝負（輪到 S.cur）：對方吃光 → 贏；輪到的人翻不了也走不了 → 輸；連續 XSD_DRAW 手沒吃沒翻 → 和。w＝贏的玩家，-1＝和 */
+function xsdJudge(S){if(!S.col)return null;const me=S.cur,c=S.col[me];
+  if(!xsdCount(S.b,c))return{w:1-me,why:"eat"};
+  if(!xsdMoves(S.b,c,true,false).length)return{w:1-me,why:"stuck"};
+  if(S.q>=XSD_DRAW)return{w:-1,why:"draw"};return null}
+const xsdKey=(b,c)=>b.map(p=>p&16?16:p).join(",")+"|"+c;   /* 蓋著的只記「蓋著」，不記是什麼 */
+/* 下一手（不改原本那盤，回傳新的一盤）；不合法回 null。不連吃：吃完就換人 */
+function xsdDo(S,a){if(!S||S.over||xsdActs(S).indexOf(a)<0)return null;
+  const b=S.b.slice(),f=(a/32)|0,t=a%32,me=S.cur,N={b,cur:1-me,col:S.col?S.col.slice():null,q:S.q+1,n:S.n+1,flips:S.flips,cap:[S.cap[0].slice(),S.cap[1].slice()],h:S.h?S.h.slice():[],last:null,over:null};
+  if(f===t){const p=b[f]&15;b[f]=p;N.q=0;N.flips++;N.h=[];if(!N.col){const c=(p>>3)&1;N.col=me?[1-c,c]:[c,1-c]}N.last={t:"f",i:f,p,by:me}}
+  else{const x=b[t];b[t]=b[f];b[f]=0;if(x){N.q=0;N.cap[me].push(x);N.h=[]}else N.h=N.h.concat(xsdKey(b,N.cur)).slice(-16);N.last={t:x?"c":"m",f,to:t,p:b[t],x,by:me}}
+  N.over=xsdJudge(N);return N}
+/* ---------- 電腦 ---------- */
+const XSD_WIN=100000;
+/* 子力：帥的價值看對方還剩幾個兵（兵會吃帥）；兵在對方帥還在時比較值錢 */
+function xsdMat(b){const M=[{n:0,k:0,p:0,ph:0},{n:0,k:0,p:0,ph:0}];for(const p of b){if(!p)continue;const m=M[(p>>3)&1],k=p&7;m.n++;if(k===7)m.k=1;if(k===1)m.p++}return M}
+const XSD_BASE=[0,0,16,6,10,18,30,0];
+function xsdVal(k,M,c){if(k===7)return 40+5*(5-M[1-c].p);if(k===1)return M[1-c].k?8:3;return XSD_BASE[k]}
+/* 靜態評估（站在顏色 c 這邊）：子力（蓋著的也照顏色算，這是公開資訊）＋看得到的子互相逼近（贏面大的一方會去追）；領先時拖手數扣一點，免得一直磨到和棋 */
+function xsdEval(b,c,q){const M=xsdMat(b),U=[];let s=0;
+  for(let i=0;i<32;i++){const p=b[i];if(!p)continue;const pc=(p>>3)&1,v=xsdVal(p&7,M,pc);if(p&16)s+=pc===c?v*.92:-v*.92;else{s+=pc===c?v:-v;U.push(i)}}
+  const kw=U.length===M[0].n+M[1].n&&Math.min(M[0].n,M[1].n)<=3?.5:.12;   /* 殘局（都翻開了、有一方剩 3 子以下）：逼近的分數加重，才會去圍 */
+  for(const i of U){const p=b[i],pc=(p>>3)&1,k=p&7;if(k===2)continue;const xi=i%4,yi=(i/4)|0;
+    for(const j of U){const t=b[j];if(((t>>3)&1)===pc||!xsdEats(k,t&7))continue;
+      const g=xsdVal(t&7,M,1-pc)*kw/(Math.abs(xi-j%4)+Math.abs(yi-((j/4)|0))+1);s+=pc===c?g:-g}}
+  if(q&&s>8)s-=q*.08;else if(q&&s<-8)s+=q*.08;
+  return s}
+/* 走一步（就地改 b，回傳被吃的子）、悔回去 */
+const xsdMk=(b,a)=>{const f=(a/32)|0,t=a%32,x=b[t];b[t]=b[f];b[f]=0;return x};
+const xsdUn=(b,a,x)=>{const f=(a/32)|0,t=a%32;b[f]=b[t];b[t]=x};
+/* 吃子排前面（先吃大的） */
+function xsdOrder(b,L){return L.map(a=>[a,b[a%32]?(b[a%32]&7)*10-(b[(a/32)|0]&7):-1]).sort((x,y)=>y[1]-x[1]).map(x=>x[0])}
+/* 只看吃子的延伸搜尋（最多再看 4 手吃子；子多的盤面吃來吃去會爆炸） */
+function xsdQ(b,c,al,be,X,ply,qd){qd=qd|0;X.n++;if(X.dl&&!(X.n&1023)&&Date.now()>X.dl)throw XSD_STOP;let sp=xsdEval(b,c,0);if(sp>=be)return sp;if(sp>al)al=sp;if(qd>=4)return sp;
+  for(const a of xsdOrder(b,xsdMoves(b,c,false,true))){const x=xsdMk(b,a);let v;if(!xsdCount(b,1-c))v=XSD_WIN-ply;else v=-xsdQ(b,1-c,-be,-al,X,ply+1,qd+1);xsdUn(b,a,x);
+    if(v>=be)return v;if(v>al)al=v}
+  return al}
+/* alpha-beta（樹裡不展開翻子；還有蓋著的子時，輪到的人可以「翻一顆」當作讓一手，用讓手搜尋代替） */
+function xsdAB(b,c,d,al,be,q,X,ply){X.n++;if(X.dl&&!(X.n&1023)&&Date.now()>X.dl)throw XSD_STOP;
+  if(!xsdCount(b,c))return-(XSD_WIN-ply);
+  if(q>=XSD_DRAW)return 0;
+  if(d<=0)return xsdQ(b,c,al,be,X,ply);
+  const L=xsdMoves(b,c,false,false);let hid=false;for(const p of b)if(p&16){hid=true;break}
+  if(!L.length&&!hid)return-(XSD_WIN-ply);
+  let best=-Infinity;
+  if(hid){best=-xsdAB(b,1-c,d-1,-be,-al,0,X,ply+1);if(best>=be)return best;if(best>al)al=best}
+  for(const a of xsdOrder(b,L)){const x=xsdMk(b,a);let v;if(x&&!xsdCount(b,1-c))v=XSD_WIN-ply;else v=-xsdAB(b,1-c,d-1,-be,-al,x?0:q+1,X,ply+1);xsdUn(b,a,x);
+    if(v>best)best=v;if(v>al)al=v;if(al>=be)break}
+  return best}
+/* 還蓋著的子有哪些（代號去掉「蓋著」→ 張數）：大家都數得出來 */
+function xsdPool(b){const P={};let n=0;for(const p of b)if(p&16){const k=p&15;P[k]=(P[k]||0)+1;n++}return{P,n}}
+const XSD_STOP={stop:1};
+/* 搜一層深度 D 的根：每個走法的分數 [[a,v]…]（翻子＝這格翻出各種子的加權平均） */
+function xsdRoot(S,A,D,X){const me=S.cur,c=S.col[me],b=S.b.slice(),{P,n}=xsdPool(b),seen=new Set(S.h||[]),R=[],ks=Object.keys(P).map(Number);
+  /* 不偷看：蓋著的格子一律照「剩下哪些」重新排過（由小到大依序填），電腦算的時候不知道哪格是什麼 */
+  const Hc=[],pool=[];for(let i=0;i<32;i++)if(b[i]&16)Hc.push(i);for(const k of ks)for(let j=0;j<P[k];j++)pool.push(k);
+  const fill=(skip,k)=>{let r=k==null?-1:pool.indexOf(k),j=0;for(const i of Hc){if(i===skip)continue;if(j===r)j++;b[i]=pool[j++]|16}};fill(-1,null);
+  /* 蓋著的格子 × 可能的子太多時（開局 30 格 × 14 種），翻子少搜一層 */
+  let bst=-Infinity;const W=2;   /* 走子只要確定「比目前最好的差 W 分以上」就不用算準（剪枝）；翻子要加權平均，每種都算準 */
+  const fd=Math.max(0,A.filter(a=>((a/32)|0)===a%32).length*ks.length>90?D-2:D-1);
+  const O=A.map(a=>{const f=(a/32)|0,t=a%32;return[a,f===t?-50:b[t]?(b[t]&7)*10-(b[f]&7):0]}).sort((x,y)=>y[1]-x[1]).map(x=>x[0]);   /* 先算吃子、再走子、最後翻子（只看翻開的子排序，不看蓋著的是什麼） */
+  for(const a of O){const f=(a/32)|0,t=a%32;let v;
+    if(f===t){v=0;try{for(const k of ks){fill(f,k);b[f]=k;v+=P[k]/n*-xsdAB(b,1-c,fd,-Infinity,Infinity,0,X,1)}}finally{fill(-1,null)}}
+    else{const x=xsdMk(b,a);try{if(x&&!xsdCount(b,1-c))v=XSD_WIN;else{v=-xsdAB(b,1-c,D-1,-Infinity,-(bst-W),x?0:S.q+1,X,1);if(!x&&seen.has(xsdKey(b,1-me)))v-=3}}finally{xsdUn(b,a,x)}}
+    if(v>bst)bst=v;R.push([a,v])}
+  return R}
+/* 電腦想一手：回傳 {a, v, ms, n, d}。o.depth＝固定搜幾層（測試用）；沒給就從 2 層開始加深，超過 o.ms（預設 700 毫秒）就用上一層搜完的結果。
+   o.rnd＝亂數、o.noise＝差不多好的走法隨機挑一個（預設 .6，免得每盤都一樣） */
+/* 難度（開發者 11/14）：easy＝新手（第一次玩預設），norm＝一般（上面這套照算）。
+   新手會故意犯錯：rand 的機率整手隨便走（合法的）、skip 的機率看漏吃子（有別的走法時不吃）、少搜一層、最多 2 層、差不多好的範圍放寬（noise） */
+const XSD_LV={easy:"新手",norm:"一般"};
+const XSD_EASY={rand:.1,skip:.35,noise:.9,max:2};   /* noise 放太大（2.5）殘局會亂走、一直和棋，量過 .9 剛好 */
+/* o.lv＝"easy" 走新手 */
+function xsdThink(S,o){o=o||{};const ez=o.lv==="easy",t0=Date.now(),rnd=o.rnd||Math.random,X={n:0},noise=o.noise==null?(ez?XSD_EASY.noise:.6):o.noise;
+  const A0=xsdActs(S);if(!A0.length)return null;
+  if(!S.col){const a=A0[Math.floor(rnd()*A0.length)];return{a,v:0,ms:Date.now()-t0,n:0,d:0}}   /* 第一手：隨便翻一顆 */
+  if(ez&&rnd()<XSD_EASY.rand){const a=A0[Math.floor(rnd()*A0.length)];return{a,v:0,ms:Date.now()-t0,n:0,d:0,mis:"rand"}}
+  let A=A0,mis=null;if(ez&&rnd()<XSD_EASY.skip){const nc=A0.filter(a=>((a/32)|0)===a%32||!S.b[a%32]);if(nc.length&&nc.length<A0.length){A=nc;mis="skip"}}
+  let R=null,dd=0;const mx=ez?XSD_EASY.max:(o.max||4);
+  if(o.depth){dd=ez?Math.max(1,o.depth-1):o.depth;R=xsdRoot(S,A,dd,X)}
+  else{R=xsdRoot(S,A,1,X);dd=1;X.dl=t0+(o.ms||700);
+    for(let D=2;D<=mx;D++){try{R=xsdRoot(S,A,D,X);dd=D}catch(e){if(e!==XSD_STOP)throw e;break}if(Date.now()-t0>(o.ms||700)*.35)break}}
+  R.sort((x,y)=>y[1]-x[1]);const top=R.filter(r=>r[1]>=R[0][1]-noise),pick=top[Math.floor(rnd()*top.length)];
+  return{a:pick[0],v:pick[1],ms:Date.now()-t0,n:X.n,d:dd,mis}}
+/* 目前選的難度（沒選過＝新手） */
+function xsdLv(){let v=null;try{v=store.get("xsdLv",null)}catch(e){}return v==="norm"?"norm":"easy"}
+/* ---------- 紀錄 ---------- */
+function xsdRec(){let r=null;try{r=store.get("xsdRec",null)}catch(e){}r=r&&typeof r==="object"?r:{};return{w:r.w|0,d:r.d|0,l:r.l|0}}
+/* 一盤結束記一筆（玩家 0 的角度）：o.w 0＝你贏、1＝電腦贏、-1＝和 */
+function xsdTally(R,o){R=Object.assign({w:0,d:0,l:0},R);if(o.w===0)R.w++;else if(o.w===1)R.l++;else R.d++;return R}
+/* 存檔的那一盤合不合用（讀到壞資料就當沒有） */
+function xsdOkRun(S){return!!(S&&typeof S==="object"&&Array.isArray(S.b)&&S.b.length===32&&S.b.every(p=>Number.isInteger(p)&&p>=0&&p<32)&&(S.cur===0||S.cur===1)&&(S.col===null||(Array.isArray(S.col)&&S.col.length===2))&&Array.isArray(S.cap)&&!S.over&&(S.lv==null||!!XSD_LV[S.lv]))}
+/* ---------- 畫面 ---------- */
+const XSD_RM=()=>{try{return matchMedia("(prefers-reduced-motion: reduce)").matches}catch(e){return false}};
+const XSD_INK=["#B3261E","#1B1F1C"];
+const xsdName=p=>{const s=(p>>3)&1?"b":"r";return(typeof NAMES!=="undefined"?NAMES[s][XSD_L[p&7]]:"")||""};
+const xsdSide=c=>c?"黑":"紅";
+function xsdCss(){if(document.getElementById("xsdCss"))return;document.addEventListener("click",e=>{const b=e.target&&e.target.closest&&e.target.closest(".xsd-lv");if(b)xsdSetLv(b.dataset.lv,b)});const s=document.createElement("style");s.id="xsdCss";s.textContent=`
+body:has(.xsd-page) .xqbot{visibility:hidden!important}
+.xsd-page.wide .xsd-bar,.xsd-page.wide .xsd-foot{max-width:900px}
+.xsd-page{display:flex;flex-direction:column;align-items:center;gap:8px;padding:8px 16px calc(12px + env(safe-area-inset-bottom,0px));--xsdRes:250px}
+.xsd-say{min-height:24px;font-size:15px;font-weight:700;color:var(--ink);text-align:center;letter-spacing:.04em}
+.xsd-bar{display:flex;gap:8px;width:100%;max-width:540px;align-items:stretch}
+.xsd-pl{flex:1;display:flex;align-items:center;gap:6px;padding:6px 10px;border-radius:10px;border:1px solid var(--line);background:var(--card);font-size:14px;color:var(--muted);min-height:44px;box-sizing:border-box}
+.xsd-pl b{color:var(--ink);font-size:15px}.xsd-pl i{font-style:normal;margin-left:auto;font-weight:900}.xsd-pl.on{border-color:var(--accent2);box-shadow:0 0 0 2px var(--accent2) inset;color:var(--ink)}
+.xsd-pl .c0{color:${XSD_INK[0]}}.xsd-pl .c1{color:var(--ink)}
+.xsd-st{min-height:40px;font-size:14px;line-height:20px;color:var(--muted);text-align:center;display:flex;align-items:center;justify-content:center}
+.xsd-st.busy::after{content:"";display:inline-block;width:1.2em;text-align:left;animation:xsdDots 1.2s steps(4) infinite}
+@keyframes xsdDots{0%{content:""}25%{content:"．"}50%{content:"．．"}75%{content:"．．．"}}
+.xsd-board{position:relative;display:grid;width:min(100%,540px,calc(var(--xsdH,calc(100dvh - var(--xsdRes))) / 2));aspect-ratio:1/2;padding:6px;box-sizing:border-box;border-radius:12px;
+  background:linear-gradient(160deg,#E9C48A,#B9813F);box-shadow:0 3px 10px #0005,inset 0 0 0 2px #6d4519}
+.xsd-board.wide{width:min(100%,900px,calc(var(--xsdH,calc(100dvh - var(--xsdRes))) * 2));aspect-ratio:2/1}
+.xsd-c{position:relative;margin:0;padding:0;border:0;background:transparent;border-right:1px solid #4A2E1266;border-bottom:1px solid #4A2E1266;min-width:0;min-height:0;cursor:pointer;-webkit-tap-highlight-color:transparent}
+.xsd-c:focus-visible{outline:3px solid var(--accent2);outline-offset:-3px;z-index:2}
+.xsd-c.lt{background:#ffffff38}.xsd-c.lt2{background:#ffd76a55}
+.xsd-c svg{position:absolute;left:7%;top:7%;width:86%;height:86%;overflow:visible;pointer-events:none}
+.xsd-c.sel svg{transform:translateY(-6%) scale(1.06)}
+.xsd-c.sel::after{content:"";position:absolute;inset:3%;border-radius:50%;border:4px solid var(--accent2);box-shadow:0 0 0 2px #fff8;pointer-events:none;z-index:2}
+.xsd-c .dot{position:absolute;left:50%;top:50%;width:24%;height:24%;margin:-12% 0 0 -12%;border-radius:50%;background:var(--accent2);opacity:.75;pointer-events:none}
+.xsd-c .ring{position:absolute;inset:5%;border-radius:50%;border:4px solid #D83A2E;pointer-events:none;z-index:1}
+.xsd-c.fl svg{animation:xsdFlip .34s ease-out}
+.xsd-c.mv svg{animation:xsdMv .24s ease-out}
+.xsd-ghost{position:absolute;inset:0;pointer-events:none;z-index:3;animation:xsdEat .5s ease-in forwards}
+.xsd-pop{position:absolute;left:50%;top:-6%;transform:translateX(-50%);font-weight:900;font-size:clamp(16px,5vw,24px);color:#fff;text-shadow:0 0 4px #000,0 0 2px #000;pointer-events:none;z-index:4;animation:xsdPop .7s ease-out forwards}
+@keyframes xsdFlip{0%{transform:scaleX(.05)}100%{transform:scaleX(1)}}
+@keyframes xsdMv{0%{transform:translate(var(--dx),var(--dy))}100%{transform:none}}
+@keyframes xsdEat{0%{transform:scale(1);opacity:1}100%{transform:scale(1.4) rotate(12deg);opacity:0}}
+@keyframes xsdPop{0%{opacity:0;transform:translate(-50%,20%)}25%{opacity:1}100%{opacity:0;transform:translate(-50%,-60%)}}
+.xsd-caps{display:flex;gap:6px;width:100%;max-width:760px;font-size:13px;color:var(--muted);align-items:center;min-height:22px;flex-wrap:wrap;justify-content:center}
+.xsd-caps{column-gap:3px;row-gap:2px}.xsd-caps em{font-style:normal;margin:0 2px}.xsd-caps span{display:inline-flex;align-items:center;justify-content:center;width:19px;height:19px;border-radius:50%;background:#F3DDB4;border:1px solid #8A5A28;font-weight:900;font-size:12px;font-family:var(--serif)}
+.xsd-foot{display:flex;gap:8px;width:100%;max-width:420px}
+.xsd-foot button{flex:1;min-height:44px;margin:0;padding:8px}
+.xsd-lvsw{display:flex;align-items:center;justify-content:center;gap:6px;margin:10px 0 2px;flex-wrap:wrap}.xsd-lvsw>span{font-weight:700;color:var(--ink)}
+.xsd-lv{min-width:72px;min-height:44px;padding:6px 14px;border-radius:22px;border:1.5px solid var(--line);background:var(--bg);color:var(--ink);font-weight:700;font-size:15px}
+.xsd-lv[aria-pressed="true"]{background:var(--accent2);border-color:var(--accent2);color:#fff}.xsd-lv:focus-visible{outline:3px solid var(--accent);outline-offset:2px}
+.xsd-lvtip{font-size:13px;color:var(--muted);text-align:center;margin:2px 0 0}.xsd-pl small{font-size:12px;color:var(--muted);font-weight:700}
+.xsd-card summary{min-height:44px;display:flex;align-items:center;justify-content:center;gap:6px;cursor:pointer;font-weight:700;color:var(--accent2);list-style:none}.xsd-card summary::-webkit-details-marker{display:none}.xsd-card summary::before{content:"▸";transition:transform .2s}.xsd-card details[open] summary::before{transform:rotate(90deg)}
+.xsd-card .r{font-size:15px;line-height:1.6}
+@media (max-height:720px){.xsd-page{gap:4px;padding-top:4px}.xsd-pl{min-height:36px;padding:4px 10px}.xsd-say{min-height:20px;font-size:14px}}   /* 矮的手機（375×667）：格子才保得住 44px */
+@media (prefers-reduced-motion:reduce){.xsd-c.fl svg,.xsd-c.mv svg,.xsd-ghost,.xsd-pop,.xsd-st.busy::after{animation:none}.xsd-ghost,.xsd-pop{display:none}.xsd-c.sel svg{transform:none}}`;document.head.append(s)}
+/* 棋子的木頭漸層（整頁共用一份） */
+const XSD_DEFS=`<svg width="0" height="0" style="position:absolute" aria-hidden="true"><defs>
+<radialGradient id="xsdSh"><stop offset="0" stop-color="#000" stop-opacity=".5"/><stop offset=".6" stop-color="#000" stop-opacity=".28"/><stop offset="1" stop-color="#000" stop-opacity="0"/></radialGradient>
+<linearGradient id="xsdSd" x1="0" y1="0" x2="0" y2="1"><stop offset=".45" stop-color="#9A6633"/><stop offset=".8" stop-color="#6E4219"/><stop offset="1" stop-color="#4A2A0E"/></linearGradient>
+<radialGradient id="xsdTp" cx=".42" cy=".34" r=".72"><stop offset="0" stop-color="#FFF7E6"/><stop offset=".5" stop-color="#F3DDB4"/><stop offset=".86" stop-color="#DDB57E"/><stop offset="1" stop-color="#B98A50"/></radialGradient>
+<radialGradient id="xsdBk" cx=".42" cy=".34" r=".75"><stop offset="0" stop-color="#E2B57A"/><stop offset=".6" stop-color="#C08A4C"/><stop offset="1" stop-color="#8E5E2A"/></radialGradient>
+<linearGradient id="xsdRm" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#fff" stop-opacity=".9"/><stop offset=".45" stop-color="#fff" stop-opacity="0"/><stop offset=".6" stop-color="#000" stop-opacity="0"/><stop offset="1" stop-color="#000" stop-opacity=".35"/></linearGradient>
+</defs></svg>`;
+/* 一顆棋子（照 01-board 的立體木棋子：落影、側面、頂面、倒角亮邊、內圈、刻字）；蓋著的＝素面木色背面 */
+function xsdPc(p){if(!p)return"";const H=`<ellipse cx="52" cy="58" rx="44" ry="41" fill="url(#xsdSh)"/><circle cx="50" cy="57" r="43" fill="url(#xsdSd)" stroke="#3E2309" stroke-width="1"/>`;
+  if(p&16)return`<svg viewBox="0 0 100 100" aria-hidden="true">${H}<circle cx="50" cy="50" r="43" fill="url(#xsdBk)" stroke="#6A4118" stroke-width="1.2"/><circle cx="50" cy="50" r="41" fill="none" stroke="url(#xsdRm)" stroke-width="3"/><circle cx="50" cy="50" r="31" fill="none" stroke="#7A4D1E" stroke-width="1.3" opacity=".55"/><ellipse cx="40" cy="30" rx="15" ry="6" fill="#fff" opacity=".22" transform="rotate(-20 40 30)"/></svg>`;
+  const col=XSD_INK[(p>>3)&1],ch=xsdName(p);
+  return`<svg viewBox="0 0 100 100" aria-hidden="true">${H}<circle cx="50" cy="50" r="43" fill="url(#xsdTp)" stroke="#8A5A28" stroke-width="1.2"/><circle cx="50" cy="50" r="41" fill="none" stroke="url(#xsdRm)" stroke-width="3"/><ellipse cx="40" cy="30" rx="15" ry="6" fill="#fff" opacity=".3" transform="rotate(-20 40 30)"/><circle cx="50" cy="50" r="34" fill="none" stroke="${col}" stroke-width="2.6" opacity=".9"/>`+
+    `<text x="50" y="51" dy=".35em" text-anchor="middle" font-size="44" font-weight="900" style="font-family:var(--serif)" fill="#fff" opacity=".7" transform="translate(0 1.4)">${ch}</text><text x="50" y="51" dy=".35em" text-anchor="middle" font-size="44" font-weight="900" style="font-family:var(--serif)" fill="${col}">${ch}</text></svg>`}
+let XSD=null;   /* 這一頁：{P, S, sel, busy, tm[], wide} */
+const xsdWideNow=()=>{try{return innerWidth>innerHeight*1.05}catch(e){return false}};
+/* 格子 i 在畫面上的 [欄, 列]（從 1 起）：直式 4×8；橫式轉成 8×4 */
+const xsdPos=(i,wide)=>wide?[((i/4)|0)+1,(i%4)+1]:[(i%4)+1,((i/4)|0)+1];
+function xsdLoadRun(){let S=null;try{S=store.get("xsdRun",null)}catch(e){}return xsdOkRun(S)?Object.assign({h:[],n:0,flips:0,last:null},S,{over:null}):null}
+function xsdSave(){if(!XSD)return;try{const S=XSD.S;if(!S||S.over)store.set("xsdRun",null);else store.set("xsdRun",S)}catch(e){}}
+function xsdSay(t){if(!XSD)return;const e=XSD.P.querySelector(".xsd-say");if(e)e.textContent=t||""}
+function xsdStatus(t,busy){if(!XSD)return;const e=XSD.P.querySelector(".xsd-st");if(e){e.textContent=t||"";e.classList.toggle("busy",!!busy)}}
+function xsdTgts(){const X=XSD;if(!X||X.sel<0||!X.S.col)return{};const o={};for(const a of xsdActs(X.S))if(((a/32)|0)===X.sel&&a%32!==X.sel)o[a%32]=X.S.b[a%32]?"c":"m";return o}
+function xsdLabel(i,p,tg,wide){const[c,r]=xsdPos(i,wide);let t=`第 ${r} 列第 ${c} 格，`;t+=!p?"空格":(p&16)?"蓋著的棋":xsdSide((p>>3)&1)+xsdName(p);
+  if(tg==="m")t+="，可以走到這裡";else if(tg==="c")t+="，可以吃";if(XSD&&XSD.sel===i)t+="，選好了";return t}
+/* 畫盤面；fx＝這一手的演出 {t:"f"|"m"|"c", f, to, i, x} */
+function xsdDraw(fx){const X=XSD;if(!X)return;const B=X.P.querySelector(".xsd-board"),S=X.S,wide=xsdWideNow(),tg=xsdTgts(),rm=XSD_RM();X.wide=wide;
+  B.classList.toggle("wide",wide);X.P.classList.toggle("wide",wide);B.style.gridTemplateColumns=`repeat(${wide?8:4},1fr)`;B.style.gridTemplateRows=`repeat(${wide?4:8},1fr)`;
+  const L=S.last,yourTurn=!S.over&&S.cur===0&&!X.busy;let h="";
+  for(let i=0;i<32;i++){const p=S.b[i],[c,r]=xsdPos(i,wide);let cl="xsd-c";
+    if(L&&(L.t==="f"?L.i===i:(L.f===i||L.to===i)))cl+=L.by===1?" lt2":" lt";if(X.sel===i)cl+=" sel";
+    if(fx&&!rm){if(fx.t==="f"&&fx.i===i)cl+=" fl";if((fx.t==="m"||fx.t==="c")&&fx.to===i)cl+=" mv"}
+    let sty=`grid-column:${c};grid-row:${r}`;
+    if(fx&&!rm&&(fx.t==="m"||fx.t==="c")&&fx.to===i){const[c0,r0]=xsdPos(fx.f,wide);sty+=`;--dx:${(c0-c)*100/0.86}%;--dy:${(r0-r)*100/0.86}%`}
+    h+=`<button type="button" class="${cl}" data-i="${i}" style="${sty}" aria-label="${esc(xsdLabel(i,p,tg[i],wide))}"${yourTurn?"":" aria-disabled=\"true\""}>${xsdPc(p)}${tg[i]==="m"?'<i class="dot"></i>':tg[i]==="c"?'<i class="ring"></i>':""}</button>`}
+  const fo=document.activeElement&&B.contains(document.activeElement)?document.activeElement.dataset.i:null;   /* 重畫後鍵盤焦點留在同一格 */
+  B.innerHTML=h;if(fo!=null){const e=B.querySelector(`[data-i="${fo}"]`);if(e)try{e.focus({preventScroll:true})}catch(x){}}
+  if(fx&&fx.t==="c"&&!rm){const cell=B.querySelector(`[data-i="${fx.to}"]`);if(cell){const g=document.createElement("div");g.className="xsd-ghost";g.innerHTML=xsdPc(fx.x);cell.append(g);
+    const pop=document.createElement("b");pop.className="xsd-pop";pop.textContent="吃！";cell.append(pop);setTimeout(()=>{g.remove();pop.remove()},800)}}
+  /* 上方兩位、吃到的子 */
+  const pl=X.P.querySelectorAll(".xsd-pl");for(const k of[0,1]){const e=pl[k];if(!e)continue;const c=S.col?S.col[k]:-1;
+    e.classList.toggle("on",!S.over&&S.cur===k);e.querySelector("i").className=c<0?"":"c"+c;e.querySelector("i").textContent=c<0?"未定":xsdSide(c)}
+  {const lv=XSD_LV[S.lv]||XSD_LV[xsdLv()],sm=X.P.querySelector(".xsd-pl small");if(sm)sm.textContent="（"+lv+"）";B.setAttribute("aria-label","暗棋棋盤，電腦難度："+lv)}
+  const cp=X.P.querySelector(".xsd-caps");cp.innerHTML=`<em style="font-style:normal">你吃到：</em>${S.cap[0].map(p=>`<span style="color:${XSD_INK[(p>>3)&1]}">${xsdName(p)}</span>`).join("")||"—"}<em style="font-style:normal;margin-left:10px">電腦吃到：</em>${S.cap[1].map(p=>`<span style="color:${XSD_INK[(p>>3)&1]}">${xsdName(p)}</span>`).join("")||"—"}`;
+  try{xsdFit()}catch(e){}
+  if(!S.over&&!X.busy)xsdStatus(S.cur===0?(S.col?`輪到你（${xsdSide(S.col[0])}）：翻一顆，或走一步。`:"輪到你：先翻一顆，翻出什麼顏色你就執那一色。"):"")}
+/* 棋盤大小：整頁剛好放進一個畫面（扣掉頂欄、台詞、雙方、狀態、吃到的子、按鈕），不用捲 */
+function xsdFit(){const X=XSD;if(!X)return;const P=X.P,B=P.querySelector(".xsd-board"),V=document.getElementById("view");if(!B)return;
+  const bh=B.getBoundingClientRect().height,other=P.getBoundingClientRect().height-bh,top=V?V.getBoundingClientRect().top:0;
+  const h=Math.floor(innerHeight-Math.max(0,top)-other-4);if(h>120)B.style.setProperty("--xsdH",h+"px")}
+/* 難度切換（開局前：規則卡、結果視窗）：記在 xsdLv；還沒下第一手的那盤跟著換 */
+const XSD_LVTIP={easy:"新手：電腦偶爾會看漏、走錯，適合剛學。",norm:"一般：電腦會認真算。"};
+function xsdLvHtml(){const v=xsdLv();return`<div class="xsd-lvsw" role="group" aria-label="電腦難度"><span>電腦難度</span>${["easy","norm"].map(k=>`<button type="button" class="xsd-lv" data-lv="${k}" aria-pressed="${k===v}">${XSD_LV[k]}</button>`).join("")}</div><p class="xsd-lvtip" aria-live="polite">${esc(XSD_LVTIP[v])}</p>`}
+function xsdSetLv(lv,btn){if(!XSD_LV[lv])return;try{store.set("xsdLv",lv)}catch(e){}vibrate(4);
+  const g=btn&&btn.closest(".xsd-lvsw");if(g){g.querySelectorAll(".xsd-lv").forEach(x=>x.setAttribute("aria-pressed",String(x.dataset.lv===lv)));const t=g.nextElementSibling;if(t&&t.classList.contains("xsd-lvtip"))t.textContent=XSD_LVTIP[lv]}
+  const X=XSD;if(X&&X.S&&!X.S.over&&X.S.n===0&&!X.busy){X.S.lv=lv;xsdSave();xsdDraw()}
+  try{if(typeof axSay==="function")axSay("電腦難度："+XSD_LV[lv])}catch(e){}}
+/* 一手的旁白（給讀螢幕） */
+function xsdDesc(L,S){if(!L)return"";const who=L.by===0?"你":"電腦";
+  if(L.t==="f")return`${who}翻開了${xsdSide((L.p>>3)&1)}${xsdName(L.p)}`;
+  if(L.t==="m")return`${who}的${xsdName(L.p)}走了一格`;
+  return`${who}的${xsdName(L.p)}吃掉了${xsdSide((L.x>>3)&1)}${xsdName(L.x)}`}
+/* 一手之後的掌櫃台詞 */
+function xsdLine(S,N){const L=N.last;if(!L)return"";
+  if(L.t==="f"&&S.flips===0&&L.by===0&&(L.p&7)===7)return XSD_TX.kingFirst.replace("{k}",xsdName(L.p));
+  if(L.t==="c"&&(L.p&7)===1&&(L.x&7)===7)return XSD_TX.pawnKing;return null}
+function xsdPlay(a){const X=XSD;if(!X)return;const S=X.S,N=xsdDo(S,a);if(!N)return;X.S=N;X.sel=-1;
+  const L=N.last,ln=xsdLine(S,N);if(ln)xsdSay(ln);
+  if(L.t==="c")try{if(typeof moveSound==="function")moveSound(true)}catch(e){}else if(L.t==="m")try{if(typeof moveSound==="function")moveSound(false)}catch(e){}
+  vibrate(L.t==="c"?12:5);
+  xsdSave();xsdDraw(L.t==="f"?{t:"f",i:L.i}:{t:L.t,f:L.f,to:L.to,x:L.x});
+  try{if(typeof axSay==="function")axSay(xsdDesc(L,N))}catch(e){}
+  if(N.over){xsdEnd();return}
+  if(N.cur===1)xsdCpu()}
+function xsdLater(f,ms){const X=XSD;if(!X)return;const t=setTimeout(()=>{if(XSD===X&&X.P.isConnected)f()},ms);X.tm.push(t)}
+function xsdCpu(){const X=XSD;if(!X)return;X.busy=true;xsdStatus("電腦思考中",true);   /* 不重畫盤面：剛下的那一手的演出（翻、走、吃）還在播 */
+  const rm=XSD_RM();xsdLater(()=>{const t0=Date.now();let r=null;try{r=xsdThink(X.S,{lv:X.S.lv||xsdLv()})}catch(e){}
+    const wait=Math.max(0,(rm?150:550)-(Date.now()-t0));
+    xsdLater(()=>{X.busy=false;if(!r){xsdDraw();return}xsdPlay(r.a);if(!X.S.over)xsdStatus(xsdDesc(X.S.last,X.S)+"。輪到你。")},wait)},rm?60:280)}
+function xsdEnd(){const X=XSD;if(!X)return;const S=X.S,o=S.over;let R=xsdRec();R=xsdTally(R,o);try{store.set("xsdRec",R);store.set("xsdRun",null)}catch(e){}
+  const why=o.why==="eat"?(o.w===0?"電腦的棋子被你吃光了。":"你的棋子被吃光了。"):o.why==="stuck"?(o.w===0?"電腦沒有棋可走了。":"你沒有棋可走了。"):o.why==="draw"?`連續 ${XSD_DRAW} 手沒有吃子、也沒有翻棋。`:"你認輸了。";
+  const head=o.w===0?"🎉 你贏了":o.w===1?"這局電腦贏了":"和棋";
+  xsdStatus(head+"。");if(o.w===1)xsdSay(XSD_TX.lose);
+  xsdLater(()=>{modal(`<h3>🀄 ${esc(head)}</h3><p>${esc(why)}</p>${o.w===1?`<p><b>${esc(XSD_TX.lose)}</b></p>`:""}<p style="color:var(--muted)">紀錄：勝 ${R.w}・和 ${R.d}・負 ${R.l}</p>${xsdLvHtml()}`,
+    [["再來一局",()=>xsdStart(false)],["回茶坊",()=>{location.hash="#/ximarket/tea"},true]],"res")},XSD_RM()?100:700)}
+function xsdRuleHtml(open){return`<p class="r"><b>${esc(XSD_TX.short)}</b></p><details${open?" open":""}><summary>完整規則</summary><p class="r">${esc(XSD_TX.long)}</p><p class="r">${esc(XSD_TX.rank)}</p><p class="r">輪到你時，翻開一顆蓋著的棋，或把自己的一顆棋走一格（上下左右）。第一顆翻出什麼顏色，翻的人就執那一色。吃光對方，或對方輪到時翻不了也走不了，就贏了。</p></details>`}
+function xsdRules(){modal(`<div class="xsd-card"><h3>🀄 暗棋規則</h3>${xsdRuleHtml(true)}</div>`,[["知道了",null]])}
+/* 開一盤新的（card＝先跳規則卡） */
+function xsdStart(card){const X=XSD;if(!X)return;const R=xsdRec(),first=(R.w+R.d+R.l)%2===1;   /* 你先、電腦先輪流 */
+  X.S=xsdNew(Math.random,first);X.S.lv=xsdLv();X.sel=-1;X.busy=false;xsdSave();xsdSay(XSD_TX.open);xsdDraw();
+  const go=()=>{if(XSD!==X)return;if(X.S.cur===1)xsdCpu()};
+  if(card)modal(`<div class="xsd-card"><h3>🀄 臺灣暗棋</h3><p class="r">${esc(XSD_TX.intro)}</p>${xsdRuleHtml(false)}${xsdLvHtml()}<p class="r" style="color:var(--muted)">${first?"這局電腦先翻。":"這局你先翻。"}</p></div>`,[["開始翻棋",go],["回茶坊",()=>{location.hash="#/ximarket/tea"},true]]);
+  else{toast((first?"🀄 這局電腦先翻":"🀄 這局你先翻")+"（"+XSD_LV[X.S.lv]+"）");go()}}
+function xsdTap(i){const X=XSD;if(!X||X.busy||X.S.over||X.S.cur!==0)return;const S=X.S,p=S.b[i];
+  if(X.sel>=0){const tg=xsdTgts();if(tg[i]){xsdPlay(X.sel*32+i);return}}
+  if(p&16){xsdPlay(i*33);return}
+  if(p&&S.col&&((p>>3)&1)===S.col[0]&&X.sel!==i){const has=xsdActs(S).some(a=>((a/32)|0)===i&&a%32!==i);X.sel=i;xsdDraw();if(!has)xsdStatus("這顆現在走不了，也吃不到。");vibrate(4);return}
+  if(p&&S.col&&((p>>3)&1)!==S.col[0]&&X.sel<0){xsdStatus("那是電腦的棋。先點你自己的棋，再點要去的地方。");return}
+  X.sel=-1;xsdDraw()}
+function xsdResign(){const X=XSD;if(!X||X.S.over)return;modal(`<h3>認輸？</h3><p>認輸的話，這局算輸。</p>`,[["繼續下",null],["認輸",()=>{if(XSD!==X||X.S.over)return;X.tm.forEach(clearTimeout);X.busy=false;X.S=Object.assign({},X.S,{over:{w:1,why:"resign"}});xsdDraw();xsdEnd()},true]])}
+function xsdPage(v){setTop("🀄 暗棋","#/ximarket/tea");try{setTabs(true,"#/")}catch(e){}v.className="view";
+  if(!XSD_ON||(typeof xsmOpen==="function"&&!xsmOpen())){toast("🏮 西市還沒開市");navReplace("#/");return{}}
+  xsdCss();const P=document.createElement("div");P.className="xsd-page";
+  P.innerHTML=XSD_DEFS+`<div class="xsd-say" aria-live="polite"></div><div class="xsd-bar"><div class="xsd-pl"><b>你</b><i></i></div><div class="xsd-pl"><b>電腦</b><small></small><i></i></div></div>`+
+    `<div class="xsd-board" role="group" aria-label="暗棋棋盤"></div><div class="xsd-st" aria-live="polite"></div><div class="xsd-caps"></div>`+
+    `<div class="xsd-foot"><button type="button" class="btn ghost" data-k="rule">規則</button><button type="button" class="btn ghost" data-k="give">認輸</button></div>`;
+  v.append(P);
+  const X=XSD={P,S:null,sel:-1,busy:false,tm:[],wide:false};
+  P.querySelector(".xsd-board").addEventListener("click",e=>{const b=e.target.closest(".xsd-c");if(b)xsdTap(+b.dataset.i)});
+  P.querySelector('[data-k="rule"]').onclick=()=>xsdRules();P.querySelector('[data-k="give"]').onclick=()=>xsdResign();
+  const onR=()=>{if(XSD!==X||!P.isConnected)return;if(xsdWideNow()!==X.wide)xsdDraw();else xsdFit()};addEventListener("resize",onR);
+  const S0=xsdLoadRun();
+  if(S0&&S0.n>0){X.S=S0;xsdSay(XSD_TX.open);xsdDraw();toast("🀄 接著上次那一局");if(S0.cur===1)xsdCpu()}
+  else xsdStart(true);
+  return{stop(){X.tm.forEach(clearTimeout);removeEventListener("resize",onR);if(XSD===X)XSD=null}}}
 /* ================= 🏮 線上大廳滿版水墨圖「千燈天井」（開發者 11/8 定案：Gemini 方案 1＋9 精簡版；史學顧問核過，必改的素材另外換圖）=================
    規劃：story/gemini_app/37 號 md；圖：park/lobbymap/lobby_v4.png（AI 桌的棋盤程式畫完整開局）＋綠幕素材（棋桌、燈籠亮暗、茶客剪影）→ art/lobbymap/ → data/lobbymap/。
    包一層 Lobby(v)：原本的大廳清單（#lb，paint() 每 15 秒和有人進出時重畫）照舊畫、照舊綁好所有按鈕，只是收進「📜 名冊」抽屜（點竹簡從下方拉出來）；
@@ -28642,6 +28944,7 @@ const I18N_EN={
   "下了船，每走一會兒就要花一點定軌力；下完一盤棋、解完一題都能補回來。":"Off the raft, walking around slowly uses orbit stamina; finishing a game or solving a puzzle tops it up.","在人間走動，每過一會兒就要花一點定軌力；下完一盤棋、解完一題都能補回來。":"Moving around the human world slowly uses orbit stamina; finishing a game or solving a puzzle tops it up.",
   "定軌力微弱，星槎旅人要歇一會兒啦。":"Orbit stamina is low - time for the raft traveler to rest a while.","在星槎上歇息，回到 15 就能再下船。":"Resting on the Star Raft; at 15 you can go ashore again.","在星槎上歇息：每分鐘回 3，回到 15 就能再下船":"Resting on the Star Raft: restores 3 per minute; at 15 you can go ashore again",
   "人間會用，星槎會回":"Drains in the human world, refills on the Star Raft","滿格加成":"Full bonus","穩定加成":"Steady bonus","未達加成":"No bonus yet","歸零會化墨退場":"At 0 you dissolve into ink","人間":"Human world","／分":"/min","下棋解題":"Games & puzzles","下棋／解題":"Games / puzzles","黑洞過關":"Black Hole clear","歸零回星槎":"At 0: back to the raft","黑洞對局裡不扣定軌力。":"Black Hole games don't use orbit stamina.","心定則棋穩：定軌力一半以上，下棋、解題得到的修為多一成；滿格多兩成。":"Steady mind, steady play: with orbit stamina at half or more, games and puzzles give 10% more XP; when full, 20% more.","解題過關得，星宿黑洞用":"Earn it from puzzles and stages; spend it on stars and Black Holes","來源":"Earn","用途":"Spend","主線":"Main story","星宿":"Lunar mansions","點／宿":"each","已點亮":"Lit","黑洞開局靈力":"Black Hole starting spirit","在觀星臺可以點亮二十八宿星圖：每宿 2 點。":"At the Observatory you can light up the Chart of the 28 Lunar Mansions: 2 points per mansion.","最多補到靈力上限。":"It fills up to your spirit cap at most.","修為越高，三項越強":"More XP, stronger in all three","星芒變開局靈力":"Starglow becomes starting spirit","定軌力細則":"Orbit stamina details","星芒細則":"Starglow details","黑洞細則":"Black Hole details","快回星槎":"Head back to the raft soon","定軌力用完了":"Orbit stamina used up","這一盤下完、這一題解完，就要回星槎歇息。":"After this game or puzzle you'll return to the Star Raft to rest.","化墨退場中":"Dissolved into ink","下船倒數":"Ashore in","分鐘":"min","可下船":"Go ashore","平日體力已關閉":"Daily stamina is off","不扣、不退場、無加成":"No drain, no ink exit, no bonus","平日體力已在設定裡關掉：定軌力不扣、不會化墨退場，也沒有「心定則棋穩」修為加成。":"Daily stamina is turned off in Settings: orbit stamina doesn't drain, you won't dissolve into ink, and there's no \"steady mind\" XP bonus.",   /* 11/14 角色卡視覺化（07dgl） */
+  "臺灣暗棋":"Taiwanese Dark Chess","暗棋規則":"Dark Chess rules","完整規則":"Full rules","暗棋是在臺灣很流行的象棋玩法：棋子先蓋著，翻開才知道是哪一顆。":"Dark chess is a xiangqi game that is very popular in Taiwan: all pieces start face down, and you only find out what a piece is when you turn it over.","翻開才知道是哪顆棋；大吃小，兵能吃帥，炮要隔一顆跳著吃。":"Turn a piece over to see what it is. Bigger captures smaller, a soldier can capture the general, and a cannon captures by jumping over one piece.","32 顆棋蓋在 4×8 格裡，輪流翻棋或走棋；大可吃小、同級可吃，兵可吃帥、帥不可吃兵，炮隔一子跳吃，不連吃；50 手沒有吃子也沒有翻棋就算和棋。":"32 pieces lie face down on a 4×8 board. Take turns turning a piece over or moving one. A piece can capture smaller or equal pieces; a soldier can capture the general, but the general cannot capture a soldier; a cannon captures by jumping over exactly one piece; only one capture per turn. If 50 moves pass with no capture and no piece turned over, the game is a draw.","棋子大小：帥（將）＞仕（士）＞相（象）＞俥（車）＞傌（馬）＞炮（包）＞兵（卒）。":"Piece ranks: General > Advisor > Elephant > Chariot > Horse > Cannon > Soldier.","輪到你時，翻開一顆蓋著的棋，或把自己的一顆棋走一格（上下左右）。第一顆翻出什麼顏色，翻的人就執那一色。吃光對方，或對方輪到時翻不了也走不了，就贏了。":"On your turn, turn over a face-down piece or move one of your pieces one square (up, down, left or right). Whoever turns over the first piece plays that piece's color. You win by capturing all of the opponent's pieces, or when the opponent cannot turn over or move anything on their turn.","先翻，才知命。":"Turn it over to learn your fate.","頭一翻就是帥？好兆頭。":"A general on the very first flip? Good omen.","頭一翻就是將？好兆頭。":"A general on the very first flip? Good omen.","小兵也能扳倒大帥，這就是暗棋。":"Even a little soldier can topple the general. That's dark chess.","茶還熱著，再翻一局。":"The tea is still warm. Flip another game.","未定":"Not yet","紅":"Red","黑":"Black","（新手）":"(Beginner)","（一般）":"(Normal)","電腦難度":"Computer level","一般":"Normal","新手：電腦偶爾會看漏、走錯，適合剛學。":"Beginner: the computer sometimes misses things or makes mistakes. Good for learning.","一般：電腦會認真算。":"Normal: the computer thinks it through.","電腦難度：新手":"Computer level: Beginner","電腦難度：一般":"Computer level: Normal","暗棋棋盤":"Dark chess board","空格":"empty","蓋著的棋":"face-down piece","吃！":"Capture!","你吃到：":"You captured:","電腦吃到：":"Computer captured:","輪到你（紅）：翻一顆，或走一步。":"Your turn (Red): turn a piece over or make a move.","輪到你（黑）：翻一顆，或走一步。":"Your turn (Black): turn a piece over or make a move.","輪到你：先翻一顆，翻出什麼顏色你就執那一色。":"Your turn: turn a piece over first. You will play the color it shows.","電腦思考中":"Computer is thinking","這顆現在走不了，也吃不到。":"This piece can't move or capture right now.","那是電腦的棋。先點你自己的棋，再點要去的地方。":"That's the computer's piece. Tap one of your own pieces first, then tap where it should go.","這局電腦贏了":"The computer won this game","電腦的棋子被你吃光了。":"You captured all of the computer's pieces.","你的棋子被吃光了。":"All of your pieces were captured.","電腦沒有棋可走了。":"The computer has no moves left.","你沒有棋可走了。":"You have no moves left.","你認輸了。":"You resigned.","回茶坊":"Back to the teahouse","開始翻棋":"Start","規則":"Rules","認輸？":"Resign?","認輸的話，這局算輸。":"If you resign, this game counts as a loss.","這局電腦先翻。":"The computer goes first this game.","這局你先翻。":"You go first this game.","這局電腦先翻（新手）":"The computer goes first this game (Beginner)","這局你先翻（新手）":"You go first this game (Beginner)","這局電腦先翻（一般）":"The computer goes first this game (Normal)","這局你先翻（一般）":"You go first this game (Normal)","接著上次那一局":"Picking up your last game",   /* 11/14 西市聽雨茶坊臺灣暗棋（07xsd） */
   "星淵靈氣入體，旅人精神百倍！":"Abyss spirit flows in - the traveler is full of energy!","化墨退場中：在星槎上歇到 15 才能再下船。":"Dissolved into ink: rest on the Star Raft until 15 before going ashore.","定軌力用完了：這一盤下完、這一題解完，就要回星槎歇息。":"Orbit stamina is used up: after this game or puzzle you'll return to the Star Raft to rest.",
   "跑了一天的馳道，車輪都要轉不動了……歇一會兒吧。":"A whole day on the imperial roads - even the wheels can barely turn... let's rest a while.","渡口的船都靠岸了，我們也該歇一歇啦！":"All the ferry boats have docked - time for us to rest too!","哈——欠！我說話都小聲了，這可不得了，快休息！":"Yaaawn! Even my voice has gone quiet - that's serious, let's rest!",
   "草原的風都吹不走睡意了，我們回星槎睡一覺吧。":"Not even the grassland wind can blow my sleepiness away - let's go back to the raft and nap.","呼……人間的風有點重，我緩一緩就好。":"Phew... the air down here feels heavy. I just need a moment.","……休整，是為了下一場勝仗。":"...Resting is for the next victory.","跑了一整天的腿，腳都軟了，今天先到這兒吧！":"Running errands all day, my legs are jelly - let's stop here for today!",
@@ -29090,7 +29393,16 @@ const I18N_KEY={
 /* 英文時不換的屬性值：別的模組用這幾個 aria-label／title 找按鈕（06-cpu 換園子、07t3 籤筒、07w9 出口），換掉就找不到 */
 const I18N_AGUARD=["回首頁","回星槎","聲控走棋","回棋盤模式","去園子下棋（3D）"];
 /* 句型：[正規式, (比對結果, 翻譯函式)=>英文或 null]；T(字) 翻不出來會回 null，整句就不換 */
+const I18N_XSD_PC={帥:"General",將:"General",仕:"Advisor",士:"Advisor",相:"Elephant",象:"Elephant",俥:"Chariot",車:"Chariot",傌:"Horse",馬:"Horse",炮:"Cannon",包:"Cannon",兵:"Soldier",卒:"Soldier"};   /* 暗棋動態句的棋子名（字典裡的棋子名是 WXF 記譜字母，不適合整句） */
+const i18nXsdPc=(c,p)=>(c?(c==="紅"?"Red ":"Black "):"")+(I18N_XSD_PC[p]||p);
 const I18N_PAT=[
+  [/^(你|電腦)翻開了(紅|黑)(.)$/,m=>(m[1]==="你"?"You turned over ":"The computer turned over ")+i18nXsdPc(m[2],m[3])],
+  [/^(你|電腦)的(.)走了一格$/,m=>(m[1]==="你"?"Your ":"The computer\u2019s ")+i18nXsdPc("",m[2])+" moved one square"],
+  [/^(你|電腦)的(.)吃掉了(紅|黑)(.)$/,m=>(m[1]==="你"?"Your ":"The computer\u2019s ")+i18nXsdPc("",m[2])+" captured "+i18nXsdPc(m[3],m[4])],
+  [/^暗棋棋盤，電腦難度：(新手|一般)$/,m=>"Dark chess board, computer level: "+(m[1]==="新手"?"Beginner":"Normal")],
+  [/^紀錄：勝\s*(\d+)・和\s*(\d+)・負\s*(\d+)$/,m=>"Record: "+m[1]+" won \u00b7 "+m[2]+" drawn \u00b7 "+m[3]+" lost"],
+  [/^連續\s*(\d+)\s*手沒有吃子、也沒有翻棋。?$/,m=>m[1]+" moves in a row with no capture and no piece turned over."],
+  [/^第\s*(\d+)\s*列第\s*(\d+)\s*格，(.*)$/,(m,t)=>"Row "+m[1]+", square "+m[2]+", "+m[3].split("，").filter(Boolean).map(x=>{const q=x.match(/^(紅|黑)(.)$/);return q?i18nXsdPc(q[1],q[2]):x==="可以走到這裡"?"you can move here":x==="可以吃"?"you can capture":x==="選好了"?"selected":t(x)}).join(", ")],   /* 11/14 暗棋（07xsd）動態句 */
   [/^第\s*(\d+)\s*級$/,m=>"Level "+m[1]],
   [/^第\s*(\d+)\s*(手|步)$/,m=>"move "+m[1]],
   [/^(\d+)\s*分$/,m=>m[1]+" pts"],
