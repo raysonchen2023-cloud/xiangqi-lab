@@ -52,8 +52,8 @@ test("⑤ 首頁左右貼邊只歸 hmClamp 管，其他三支看到 data-hmc 就
   assert.match(TT, /function r07Push\(V,P\)\{requestAnimationFrame\(\(\)=>\{if\(!P\.isConnected\|\|P\.dataset\.hmc\)return;/);
   assert.match(SH, /const P=v\.querySelector\("\.shp-page\.cq"\);if\(!P\|\|P\.dataset\.hmc\)return;/);
   /* 行為：fzPull 在 data-hmc 的頁面不動 marginLeft（只推上下） */
-  const src = ST.split("\n"), i = src.findIndex(l => l.startsWith("function fzPull(")), body = src.slice(i, i + 3).join("\n").replace(/\/\*[\s\S]*?\*\/\s*$/, "");
-  const el = (x, y) => ({ classList: { add() {}, remove() {} }, style: { marginLeft: "23px", marginTop: "" }, getBoundingClientRect: () => ({ left: x, right: x + 80, top: y, bottom: y + 30 }) });
+  const src = ST.split("\n"), i = src.findIndex(l => l.startsWith("function fzPull(")), body = src.slice(i, i + 3).join("\n").replace(/\/\*[^\n]*\*\/\s*$/, "");   /* 11/14：只去最後一行行尾的註解（第 2 行中間也有註解，不能一路吃到底） */
+  const el = (x, y) => ({ classList: { add() {}, remove() {}, contains: () => false }, style: { marginLeft: "23px", marginTop: "" }, getBoundingClientRect: () => ({ left: x, right: x + 80, top: y, bottom: y + 30 }) });
   const fzUnpull = e => { e.style.marginLeft = ""; e.style.marginTop = "" };
   const run = new Function("fzUnpull", "innerWidth", body + ";return fzPull")(fzUnpull, 400);
   const P = H => ({ dataset: H ? { hmc: "1" } : {}, getBoundingClientRect: () => ({ left: 0, right: 400, top: 0, bottom: 800 }) });

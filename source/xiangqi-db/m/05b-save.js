@@ -44,7 +44,7 @@ const CHAR_ERA={x_swordboy:"qin",x_spiritgirl:"nanbei",x_martialgirl:"song",x_mi
 const JOURNEY_KEYS=["sw7Box","pSex","pChar","pStyle","botPiece","onboard1","journey","playSec","era","eraOpen","xp","xpDay","xpKeys","record","hintBonus","hintUse","undoBonus","undoDropIds","bag","jarGot","lingN","giftGames","dropMiss",
   "legend","legendGame","legBook","legRead","jStars","jPending","jPrev","jRun","jScene","jHid","jMig36","jpSeen","novelRead","sceneDone","storyEraTip","eraUser","study","campSeen","campStars",
   "npcBond","npcAsk","npcAskSeen","parkNpc","parkNpcLast","npcPity","parkAdj","visitGone","secrets","secretClue","secretSpots","secretWins","relics","relicSolved","relicAt","histSeen","histSolved","histTitle",
-  "innCur","innDrop","innAdj","innGuest","resumeLast","xhMake","xhMei","xhTitle","yuDay","yuHint","yuRoute","yuTitle","cupDrop","cupGot","cj","cjRun","shipAt","shipSolved","shipGames","shipLessonSeen","shipWins","shipArena","cjRunS","jRunS","battleSeal","battleTitle","battleVol","battleGrand","battleVolY","battleVolLegacy","battleMig","battleSeal0","cjRunB","jRunB","battlePlan","diff","shipDock","shipLearn","undoFree","shipGal","shipStale","shipRead","shipMore","evLog","evPawn","evHeld","evStash","jRunE","cjRunE","rdLog","firstWin","wkRead","visit7","chd","ep","cjRunEp","wmDays","wmPg","wmBm","wmScr","wmEcho","jRunW","sealGold","sealIntro","jRunC","rsHint","buddy","cjRunBd","ouyu","jRunO","mnq"].map(k=>"m_"+k)   /* 七星遇見玩法（07q-buddy.js，開發者 11/9）：buddy＝旅伴闖禍、驛站飛書、心結的進度，cjRunBd＝這兩種殘局解到一半的那一題 */   /* 回饋 856（開發者 11/9：女棋手分普通／稀有／傳說、機率加保底）：npcPity＝稀有、傳說女棋手的保底計數（06-cpu.js parkNpcNew） */   /* 回饋 838（開發者 11/9 選：全模式中斷接續）：jRunC＝新手訓練營玩到一半的那一課、rsHint＝對局裡用掉的提示棋黃框（主題訓練 jpRun、棋力測驗 quizRun 跟 themeStat、quizLog 一樣是棋手本人的，各格共用，不放這裡） */   /* 千秋印（07i2-seal.js，開發者 11/9）：sealGold＝各朝第一次鑄成金印的時間與修為已發、sealIntro＝看過「集章簿換成千秋印譜」說明卡。Gemini 遊玩樂趣評估（開發者 11/8 核准）：visit7＝七星來訪的次數、說過的話、小任務（07j-visit.js）；evStash＝千秋穿梭收進囊中、12 小時內再處理的突發事件（07h-qqev.js）；firstWin＝新手秒開局下過（或跳過）了；wkRead＝學習週報每天記一筆讀懂地圖比例，算「比上週」。意見回饋 737 第二期：rdLog＝讀過哪些棋譜、猜著法每盤答對幾手（壓縮成字串）。意見回饋 674：星槎在看哪一站、千秋殘局解開的題、正在解的那一題；675：航行難度、已停靠的站、學會的棋理、這盤用了幾次免費悔棋；685：七星同局圖鑑與熱身解開的題、看過困斃說明、讀過《雲河七星》哪幾章 */
+  "innCur","innDrop","innAdj","innGuest","resumeLast","xhMake","xhMei","xhTitle","yuDay","yuHint","yuRoute","yuTitle","cupDrop","cupGot","cj","cjRun","shipAt","shipSolved","shipGames","shipLessonSeen","shipWins","shipArena","cjRunS","jRunS","battleSeal","battleTitle","battleVol","battleGrand","battleVolY","battleVolLegacy","battleMig","battleSeal0","cjRunB","jRunB","battlePlan","diff","shipDock","shipLearn","undoFree","shipGal","shipStale","shipRead","shipMore","evLog","evPawn","evHeld","evStash","jRunE","cjRunE","rdLog","firstWin","wkRead","visit7","chd","ep","cjRunEp","wmDays","wmPg","wmBm","wmScr","wmEcho","jRunW","sealGold","sealIntro","jRunC","rsHint","buddy","cjRunBd","ouyu","jRunO","mnq","xsdRec","xsdRun","xsdLv","bhtdDust","bhtd","bhtdFx","bhtl","xsmSeen","dgl","gxtSeen"].map(k=>"m_"+k)   /* 黑洞塔防爽度第二批（07bht-td.js，開發者 11/14）：bhtdDust＝星塵、點亮的天賦、各關最佳星數、星淵急襲場數、發過星塵的盤（排在 bhtd 前面：test-bhtl 要 "bhtd","bhtdFx","bhtl" 相連） */   /* 聽雨茶坊的臺灣暗棋（07xsd-xsmdark.js，開發者 11/14）：xsdRec＝勝、和、負局數；xsdRun＝下到一半的那一盤（離開自動保留）；xsdLv＝電腦難度（新手／一般，沒選過＝新手） */   /* 西市（07xsm-ximarket.js，開發者 11/13）：xsmSeen＝去過西市了沒（首頁「🏮 西市」不再發亮、第一次的介紹卡只跳一次） */   /* 平日體力（07dgl-stamina.js，開發者 11/13）：dgl＝身上的星芒、第一次下船的說明看過了沒（定軌力本身不存，關 App 再開回滿） */   /* 黑洞陣地塔防（07bht-td.js，開發者 11/13）：bhtd＝破過哪幾關、各關輸贏、每位角色帶的 4 招；bhtdFx＝戰鬥演出（完整／簡化／關閉）；bhtl＝塔防練習賽練過／跳過、練了幾次、進階機制第一次的提示看過哪些（07bhtl-tdlearn.js） */   /* 七星遇見玩法（07q-buddy.js，開發者 11/9）：buddy＝旅伴闖禍、驛站飛書、心結的進度，cjRunBd＝這兩種殘局解到一半的那一題 */   /* 回饋 856（開發者 11/9：女棋手分普通／稀有／傳說、機率加保底）：npcPity＝稀有、傳說女棋手的保底計數（06-cpu.js parkNpcNew） */   /* 回饋 838（開發者 11/9 選：全模式中斷接續）：jRunC＝新手訓練營玩到一半的那一課、rsHint＝對局裡用掉的提示棋黃框（主題訓練 jpRun、棋力測驗 quizRun 跟 themeStat、quizLog 一樣是棋手本人的，各格共用，不放這裡） */   /* 千秋印（07i2-seal.js，開發者 11/9）：sealGold＝各朝第一次鑄成金印的時間與修為已發、sealIntro＝看過「集章簿換成千秋印譜」說明卡。Gemini 遊玩樂趣評估（開發者 11/8 核准）：visit7＝七星來訪的次數、說過的話、小任務（07j-visit.js）；evStash＝千秋穿梭收進囊中、12 小時內再處理的突發事件（07h-qqev.js）；firstWin＝新手秒開局下過（或跳過）了；wkRead＝學習週報每天記一筆讀懂地圖比例，算「比上週」。意見回饋 737 第二期：rdLog＝讀過哪些棋譜、猜著法每盤答對幾手（壓縮成字串）。意見回饋 674：星槎在看哪一站、千秋殘局解開的題、正在解的那一題；675：航行難度、已停靠的站、學會的棋理、這盤用了幾次免費悔棋；685：七星同局圖鑑與熱身解開的題、看過困斃說明、讀過《雲河七星》哪幾章 */
   .concat(["cpuRate","bonusKeys","record","arenaStamps","play","play2","playPrev","playBak"].map(k=>"xq_"+k));   /* 評比循環第 2 輪：playPrev（上一版，存檔壞掉時讀）、playBak（被別的分頁換掉的棋）跟著存檔格走；保存紀錄 xq_saveLog 是這支手機的，不跟格子走 */
 const JK=new Set(JOURNEY_KEYS),SLOT_N=3;
 /* 意見回饋 668：舊玩家判斷要在首頁畫出來以前做（首頁會順手寫一些旅程鍵，例如 lingN），所以這裡直接讀 localStorage；null＝已經過渡過了 */
@@ -106,7 +106,7 @@ function lockFix(){try{const c=myChar();if(c&&WX_CHARS[c].pc&&store.get("botPiec
 function pieceLock(){const c=myChar();if(!c)return;const C=WX_CHARS[c];modal(`<div class="em">🔒</div><h2>${esc(C.n)}就是「${esc(C.pc)}」</h2><p class="muted">雲河七星每個人都是一顆棋子：棋子跟著角色，這段旅程不能換。</p>`,[["好",null]])}
 function journeyLock(){const J=journey();if(!J)return titleScreen({});
   modal(`<div class="em">🔒</div><h2>${esc(meName())}的旅程正在進行</h2><p class="muted">這段旅程選定的角色不能更換。想用別人的身分出發，請回開頭畫面開始「新的旅程」——可以存到另一格，不會蓋掉這段。</p>`,
-    (J.re===1?[["最後改選一次",()=>titleScreen({view:"pick",mode:"repick"})]]:[]).concat([["回開頭畫面",()=>titleScreen({})],["💾 存檔與讀檔",saveSheet,true],["好",null,true]]))}
+    [["回開頭畫面",()=>titleScreen({})],["💾 存檔與讀檔",saveSheet,true],["好",null,true]])}   /* 11/13 晚：「最後改選一次」拿掉，見 titleScreen */
 /* 入局序幕：開新旅程選好角色後看到的三句話 */
 function prologue(){const c=myChar();if(!c)return;if(typeof bhxNeed==="function"&&bhxNeed()&&typeof bhXuStart==="function"){bhXuStart(false);return}   /* hspx 開發者 11/12：建好角色先從星渦掉進黑洞下序局（07bh-blackhole.js），下完才回到這裡 */
   const C=WX_CHARS[c],era=store.get("era","classic"),nk=C.nk||C.n;
@@ -371,7 +371,8 @@ function titleScreen(opt){opt=opt||{};try{navClear()}catch(e){}try{sessionStorag
     /* 開發者 11/11「這個莫名其妙的紅圈按扭拿掉」：標題畫面右上角的 ⚙ 設定鈕拿掉（設定從星槎天字客房進） */}
   const J=journey();
   if(!opt.view&&fwNeed()){titlePaint("wait",opt);fwSaved().then(s=>{if(TITLE&&TITLE.dataset.v==="wait")titlePaint(s||!fwNeed()?"menu":typeof bhxNeed==="function"&&bhxNeed()?"xu":"first",opt)});return}   /* 新手秒開局：先確定 IndexedDB 裡也沒有存檔（不然開機會從存檔還原），才出一步殺 */
-  titlePaint(opt.view||(J&&J.re===1?"news":"menu"),opt)}
+  if(!opt.view&&J&&J.re===1){store.set("journey",{...J,re:2});try{saveNow(true)}catch(e){}}   /* 開發者 11/13 晚（iPad 舊存檔更新後一開就被帶去選角）：拿掉「存檔功能上線了＋最後改選一次」公告，舊存檔直接當「就是這位」；換角色請開新的旅程（從開場流星選） */
+  titlePaint(opt.view||"menu",opt)}
 function titlePaint(view,opt){const o=TITLE;if(!o)return;opt=opt||{};const inn=o.querySelector(".xqt-in"),b=o.querySelector(".xqt-b"),J=journey(),M=slotMetaAll();o.dataset.v=view;
   inn.classList.toggle("full",/^(pick|diff|confirm|save|slots|first)$/.test(view));inn.scrollTop=0;
   if(view==="wait"){b.innerHTML="";return}if(view==="first"){fwPaint(b);return}
@@ -400,7 +401,7 @@ function titlePaint(view,opt){const o=TITLE;if(!o)return;opt=opt||{};const inn=o
     on("#tGo",()=>{titleClose();if(!/^(#\/?)?$/.test(location.hash||""))goHome()});on("#tCont",tsmGoOn);on("#tLater",tsmLater);
     on("#tNew",()=>{if(J)titlePaint("slots",{mode:"new"});else{const e=[1,2,3].find(n=>!M[n])||1;titlePaint("pick",{mode:"new",slot:e})}});
     on("#tSv",()=>titlePaint("save",{}));on("#tXf",()=>{titleClose();xfRecv()});on("#tIm",()=>slotImportPick([1,2,3].find(n=>!M[n])||1,null,true))}
-  else if(view==="slots"){const cur=curSlot();
+  else if(view==="slots"){const cur=curSlot();if(opt.mode==="new"&&typeof opPre==="function")try{opPre()}catch(e){}   /* 11/13 晚：新旅程一定從開場來，選格這幾秒先下載開場曲與圖 */
     b.innerHTML=`<p class="xqt-h">新的旅程要存在哪一格？</p>`+[1,2,3].map(n=>slotCardHTML(n,M[n],n===cur&&!!J)+`<div class="sv-a">${M[n]?`<button data-ns="${n}" class="warn">覆蓋這格</button>`:`<button data-ns="${n}" class="main">用這格</button>`}</div>`).join("")+back();
     b.querySelectorAll("[data-ns]").forEach(x=>x.onclick=()=>{vibrate(5);const n=+x.dataset.ns,m=M[n];if(!m)return titlePaint("pick",{mode:"new",slot:n,c:opt.c});
       modal(`<div class="em">⚠</div><h2>覆蓋第 ${n} 格？</h2><p class="sv-w">「${esc(m.pc)}・${esc(m.nm)}・Lv ${m.lv|0}・遊玩 ${fmtSec(m.sec)}」會被清掉，無法復原。</p>`,[["清掉並開始",()=>titlePaint("pick",{mode:"new",slot:n,c:opt.c})],["取消",null,true]])})}
@@ -508,7 +509,7 @@ function fnBoot(){try{FN=store.get("funnel",null);if(FN){if(!FN.end&&FN.s){if(Da
 setTimeout(fnBoot,0);
 
 /* ---------- 開機：舊玩家過渡、開頭畫面、自動存檔 ---------- */
-function saveMigrateOld(){const c=myChar()||(mySex()==="f"?"f":"m");store.set("journey",{c,sx:mySex(),born:Date.now(),v:1,re:1,mig:1});
+function saveMigrateOld(){const c=myChar()||(mySex()==="f"?"f":"m");store.set("journey",{c,sx:mySex(),born:Date.now(),v:1,re:2,mig:1});
   if(store.get("playSec",null)==null){let s=0;try{s=Math.round(practiceTotal()*60)}catch(e){}store.set("playSec",s)}store.set("slotCur",1);lockFix();saveNow(true)}
 function saveBoot(){if(SAVE_OLD!==null){store.set("saveMig1",Date.now());if(SAVE_OLD)saveMigrateOld()}lockFix();
   try{const J=store.get("journey",null);if(J&&CHAR_ERA[J.c]&&J.era!==2){store.set("era",CHAR_ERA[J.c]);store.set("eraUser",null);store.set("journey",{...J,era:2});setTimeout(()=>{try{applyEra()}catch(e){}},300)}}catch(e){}   /* 意見回饋 669 補：1200 版以前就選好角色的旅程，開 App 時補套一次角色主場的朝代（之後自己換的照自己的） */

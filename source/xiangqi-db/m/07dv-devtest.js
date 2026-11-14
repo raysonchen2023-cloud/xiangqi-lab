@@ -2,7 +2,7 @@
    只在開發者模式出現（設定 → 進階 → 🧪 開發者測試台）。不用等 10% 機率、每天第一盤、星槎站數，直接玩到黑洞篇和十三星系；
    開關都存在 store（dvt 開頭），按「重設黑洞篇進度」會一起清掉。一般玩家看不到、也不受影響（每個開關都再檢查 DEVMODE()）。 */
 const dvtOn=()=>typeof DEVMODE==="function"&&DEVMODE();
-const DVT_KEYS=["bhCount","bhWin","bhAdj","bhMark","bhOrbHit","bhBackSay","bhOrbG","bhOrbDay","bhRet","gxSeal","gxSeen","gxRun","gxDone","dvtOrb","dvtGxAll"];
+const DVT_KEYS=["bhCount","bhWin","bhAdj","bhMark","bhOrbHit","bhBackSay","bhOrbG","bhOrbDay","bhRet","gxSeal","gxSeen","gxRun","gxDone","dvtOrb","dvtGxAll","bhtl","dvtTaixu","dvtTaixu2"];
 function dvtHere(){try{return typeof shipAt==="function"&&shipAt()||store.get("era","classic")||"tang"}catch(e){return"tang"}}
 function dvtForce(on){try{if(on)localStorage.setItem("xq_bhForce","1");else localStorage.removeItem("xq_bhForce")}catch(e){}}
 function dvtForced(){try{return localStorage.getItem("xq_bhForce")==="1"}catch(e){return false}}
@@ -16,6 +16,10 @@ function dvtSheet(){if(!dvtOn())return toast("要先打開開發者模式");
         ${row("dvB","♟","直接開星樞星盤對局","跳過視窗，直接進黑洞巨盤（難度＝實力＋1）")}
         ${row("dvC",dvtForced()?"✅":"⛵","起航必定偏航："+(dvtForced()?"開":"關"),"打開後每次星槎起航、換朝代都掉進黑洞（測完記得關）")}
       </div>
+      <div class="sec-t">👑 太虛星尊魔法 3D（試接）</div><div class="card"><p class="muted" style="margin:0 0 6px">先開一盤黑洞局、用 3D 巨盤，再按招式：黑將換成太虛星尊、放一招給你看。只播特效，棋子不會真的被拿掉，也不扣元氣、不鎖子（App 還沒有魔王關的玩法）。</p>
+        ${["meteor","lock","river"].map(k=>`<button class="pill" data-tx="${k}" style="margin:2px">${esc((typeof BHFX_K!=="undefined"&&BHFX_K[k])||k)}</button>`).join("")}
+        <button class="pill${store.get("dvtTaixu2",0)?" on":""}" id="dvT2" style="margin:2px">第二階段（範圍變大）：${store.get("dvtTaixu2",0)?"開":"關"}</button>
+        <button class="pill${store.get("dvtTaixu",0)?" on":""}" id="dvT1" style="margin:2px">魔王在場：${store.get("dvtTaixu",0)?"開":"關"}</button></div>
       <div class="sec-t">🔮 幻影棋客頭上</div><div class="card"><p class="muted" style="margin:0 0 6px">下一盤「挑戰電腦」對手頭上固定出現（不用等第 6 盤、第 12 手、每天第一盤）：</p>
         ${pill("ball","有裂痕的小黑洞")}${pill("gate","星門（13 點星光）")}${pill("dust","星塵圈")}${pill("","照一般規則")}</div>
       <div class="sec-t">🌌 幻譜星門・十三星系</div><div class="items" style="padding:0">
@@ -35,6 +39,9 @@ function dvtSheet(){if(!dvtOn())return toast("要先打開開發者模式");
     const q=s=>b.querySelector(s),re=()=>{closeSheet();setTimeout(dvtSheet,250)};
     q("#dvA").onclick=()=>{closeSheet();if(typeof bhOffer==="function")bhOffer(dvtHere(),()=>toast("先回航線（測試）"),false)};
     q("#dvB").onclick=()=>{closeSheet();if(typeof bhStart==="function")bhStart(dvtHere(),false)};
+    b.querySelectorAll("[data-tx]").forEach(x=>x.onclick=()=>{closeSheet();if(typeof bhfxTry==="function")setTimeout(()=>bhfxTry(x.dataset.tx),300)});   /* 11/14 太虛星尊魔法 3D（07bhf-bossfx.js） */
+    q("#dvT2").onclick=()=>{store.set("dvtTaixu2",store.get("dvtTaixu2",0)?0:1);re()};
+    q("#dvT1").onclick=()=>{const on=!store.get("dvtTaixu",0);store.set("dvtTaixu",on?1:0);toast(on?"👑 魔王在場：開（黑洞局的黑將換成太虛星尊）":"👑 魔王在場：關");re()};
     q("#dvC").onclick=()=>{dvtForce(!dvtForced());toast(dvtForced()?"⛵ 起航必定偏航：開":"⛵ 起航必定偏航：關");re()};
     b.querySelectorAll("[data-orb]").forEach(x=>x.onclick=()=>{const k=x.dataset.orb||null;store.set("dvtOrb",k);toast(k?"下一盤挑戰電腦，幻影棋客頭上會出現："+x.textContent:"照一般規則");re()});
     q("#dvD").onclick=()=>{store.set("dvtGxAll",all?0:1);toast(all?"全部星系解鎖：關":"全部星系解鎖：開");re()};

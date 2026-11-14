@@ -10,7 +10,7 @@
    共用的是 shwMount(o)：o.cfg＝座標表（見 SHW_SHIP），o.root＝攔點選的範圍，o.frame＝跟原圖一樣大的框（座標的 100%），o.layer＋o.before＝角色插在哪，
      o.sel／o.keyOf＝哪些是入口、入口的代號，o.find＝用代號找回入口，o.mem＝記住位置用的名字，o.gate＝回 false 時先不出現（渡口等下船過場播完）。
    座標表：W、H＝原圖像素；el＝鏡頭俯角（度）；h(y)＝角色身高佔圖高的比例；N＝節點［左%, 上%］（量的是腳底踩的地面）；E＝可以走的路（"a-b"，避開桌子、牆、樹、桅杆，不出地面）；
-     HS＝入口 → ［停靠點, 面向的位置 左%, 上%, 動作 bow／wave／cheer］；home＝起點；look0＝站著時面向哪裡。停靠點都選在東西「前面」（腳比東西低），角色疊在圖上才不會像站在桌上。
+     HS＝入口 → ［停靠點, 面向的位置 左%, 上%, 動作 bow／wave／cheer］；home＝起點；look0＝站著時面向哪裡。xr＝點空地走路算數的左右範圍（不寫＝0～100；11/14 首頁三屏長卷是 -100～200，左右兩屏在圖框外面）。dmax＝一趟路最多走幾秒（不寫＝1.2；長卷過橋到西市、觀星臺路長，放寬到 2.2 秒才不像用衝的）。停靠點都選在東西「前面」（腳比東西低），角色疊在圖上才不會像站在桌上。
    開關：SHIP_WALK_ON（星槎，07f-ship.js 的 Voyage 呼叫 shipWalk）、SHW_PORT_ON（渡口，包一層 portWind）、SHW_YZ_ON（驛站，包一層 yzInn）；SHW_PORT／SHW_YZ 有座標表的朝代才走。樣式在 shwCss */
 const SHIP_WALK_ON=true,SHW_PORT_ON=true,SHW_YZ_ON=true;   /* 開發者 11/8 說全開 */
 /* 回饋 808／816／820（開發者 11/9）：角色矮，遇到桌子就跳上去（820 起桌面是可以走的高台，見 shwTblAt 上面的說明）——座標表多一個 T:{桌面節點:{hy:桌下地板的 y%}}；桌面節點只連一條邊到桌邊的地板節點，
@@ -169,7 +169,7 @@ const shwLen=(C,pts)=>{let L=0;for(let i=1;i<pts.length;i++)L+=shwPx(C,pts[i-1],
 function shwNext(S){const g=S.go;if(!g)return;const ph=g.seq.shift();if(!ph)return;const C=S.C;
   if(ph.k==="h"){g.ph="hop";g.a=ph.a;g.b=ph.b;g.up=ph.up;g.tb=ph.tb;g.fn=ph.fn;g.th=0;S.curE=null;S.x=ph.a[0];S.y=ph.a[1];
     g.h0=ph.up?ph.a[1]:shwTHy(C.TB[ph.tb],ph.a);g.h1=ph.up?shwTHy(C.TB[ph.tb],ph.b):ph.b[1];return}
-  if(g.fd==="in"){S.box.style.opacity="";S.box.style.transition=""}g.fd=ph.fade||null;g.ph=null;g.pts=ph.pts;g.segE=ph.segE||[];g.onT=ph.onT||null;g.L=shwLen(C,ph.pts);g.t=0;g.dur=g.L?Math.max(g.free?.35:.6,Math.min(1.2,.3+g.L/650)):0;if(g.fd){S.box.style.transition="none";if(g.dur)g.dur=Math.max(.7,g.dur)}}
+  if(g.fd==="in"){S.box.style.opacity="";S.box.style.transition=""}g.fd=ph.fade||null;g.ph=null;g.pts=ph.pts;g.segE=ph.segE||[];g.onT=ph.onT||null;g.L=shwLen(C,ph.pts);g.t=0;g.dur=g.L?Math.max(g.free?.35:.6,Math.min(C.dmax||1.2,.3+g.L/650))*(typeof dglSlow==="function"?dglSlow():1):0;if(g.fd){S.box.style.transition="none";if(g.dur)g.dur=Math.max(.7,g.dur)}}
 /* 808：一跳（u 0→1）：先蹲（0～0.16）、空中照弧線走並拉長（0.16～0.86）、落地蹲一下；身高參考的 y 從 h0 換到 h1 */
 function shwHop(S,a,b,u,h0,h1){S.hy=h0+(h1-h0)*u;if(shwRM()){S.x=a[0]+(b[0]-a[0])*u;S.y=a[1]+(b[1]-a[1])*u;S.sq=null;return}const p0=.16,p1=.86;
   if(u<p0){const k=u/p0;S.x=a[0];S.y=a[1];S.sq=[1+.12*k,1-.16*k];S.hy=h0}
@@ -205,7 +205,7 @@ function shwClick(S,e){if(S.pass||!S.ready||!S.box.isConnected)return;const g=S.
      往旁邊最近的路點衝一小段（短路程最少 0.35 秒）；連點兩下就衝兩次。點到小人身上＝點角色（開選單），不走路；0.4 秒內在同一處再點一下也不重走 */
   {const cv=S.box.querySelector("canvas"),r=cv&&cv.getBoundingClientRect();   /* 小人是 pointer-events:none，點選會穿到底圖：用位置判斷是不是點在小人身上（畫布中間 70% 寬、85% 高） */
     if(r&&r.width>0&&!(e.target.closest&&e.target.closest(".shw-me,.shw-hint,.shw-menu"))&&e.clientX>=r.left+r.width*.15&&e.clientX<=r.right-r.width*.15&&e.clientY>=r.top+r.height*.1&&e.clientY<=r.bottom-r.height*.05){e.stopPropagation();e.preventDefault();const h=S.o.layer.querySelector(".shw-me");if(h&&h.style.display!=="none"&&e.isTrusted)h.click();return}}
-  if(!shwFreeOk(S,e))return;const p=shwPt(S,e);if(!(p[0]>=0&&p[0]<=100&&p[1]>=0&&p[1]<=100))return;
+  if(!shwFreeOk(S,e))return;const p=shwPt(S,e),xr=S.C.xr||[0,100];if(!(p[0]>=xr[0]&&p[0]<=xr[1]&&p[1]>=0&&p[1]<=100))return;
   {const now=Date.now(),L=S.lastTap;S.lastTap={t:now,p};if(L&&now-L.t<400&&Math.hypot(p[0]-L.p[0],p[1]-L.p[1])<6){e.stopPropagation();e.preventDefault();return}}
   /* 回饋 816／820：點到桌面＝走到最近的桌邊跳上去、再在桌面上繞過障礙走到點的地方（點在障礙上＝走到旁邊最近的可站處）；人已經在桌上＝直接在桌面上走過去；不觸發別的 */
   if(WALK_HOP_ON&&S.C.TB){const tn=shwTblAt(S.C,p);if(tn){e.stopPropagation();e.preventDefault();shwInk(S,p);vibrate(5);shwGo(S,{free:1,tbl:tn,tap:p});return}}const q=shwNear(S.C,p);if(!q)return;shwInk(S,p);shwGo(S,{free:1,q,tap:p})}   /* 意見回饋 782：點空地＝走到路網上離那裡最近的點，走到只換待機 */
@@ -443,7 +443,7 @@ function shwBotCss(){if(document.getElementById("shwBotCss"))return;const s=docu
 .shw-menu button:active{background:#e9d9b4}`;document.head.append(s)}
 /* 回饋 804：泡泡別蓋住標籤（⚔ 古戰場等）：疊到標籤就往有空的那一邊挪，再不行就放到腳下；都擠，才沉到標籤底下（z 190＜標籤 200） */
 function shwSayFit(el,L,below){try{el.style.marginLeft=el.style.marginTop=el.style.maxWidth="";el.classList.remove("side","low");const labs=[...L.querySelectorAll(".shp-spot,.po-sight")].filter(b=>b.offsetParent&&getComputedStyle(b).opacity!=="0").map(b=>b.getBoundingClientRect());
-  const LR=L.getBoundingClientRect(),cl=()=>{const a=Math.max(LR.left,0)+4,b=Math.min(LR.right,innerWidth)-4;if(el.getBoundingClientRect().width>b-a)el.style.maxWidth=Math.floor(b-a)+"px";const q=el.getBoundingClientRect();let d=0;if(q.left<a)d=a-q.left;else if(q.right>b)d=b-q.right;if(d){el.style.marginLeft=((parseFloat(el.style.marginLeft)||0)+d)+"px";el.classList.add("side")}};   /* 11/9 開發者截圖：角色站在左邊說長句，泡泡超出畫面左邊被切掉；最後一律推回畫面裡 */
+  const LR0=L.getBoundingClientRect(),LR=L.classList&&L.classList.contains("hmp-on")&&L.parentNode&&L.parentNode.getBoundingClientRect?L.parentNode.getBoundingClientRect():LR0,cl=()=>{const a=Math.max(LR.left,0)+4,b=Math.min(LR.right,innerWidth)-4;if(el.getBoundingClientRect().width>b-a)el.style.maxWidth=Math.floor(b-a)+"px";const q=el.getBoundingClientRect();if(LR!==LR0&&(q.right<a||q.left>b))return;let d=0;if(q.left<a)d=a-q.left;else if(q.right>b)d=b-q.right;if(d){el.style.marginLeft=((parseFloat(el.style.marginLeft)||0)+d)+"px";el.classList.add("side")}};   /* 11/9 開發者截圖：角色站在左邊說長句，泡泡超出畫面左邊被切掉；最後一律推回畫面裡。11/14 首頁三屏長卷（07hmp，.hmp-on）：圖框比畫面寬三倍，改量外面那層裁切框；角色在別屏（泡泡整個在畫面外）就不推進來 */
   for(const mw of["","44%","34%"]){el.style.maxWidth=mw;const r=el.getBoundingClientRect(),w=r.width,hit=(dx,dy)=>labs.filter(q=>!(q.right<r.left+dx+2||q.left>r.right+dx-2||q.bottom<r.top+dy+2||q.top>r.bottom+dy-2));
     const h0=hit(0,0);if(!h0.length){if(mw)el.classList.add("side");cl();return}
     const up=Math.min(...h0.map(q=>q.top))-r.bottom-6,C=[[-(w/2+24),0],[w/2+24,0],[-(w+30),0],[w+30,0],[0,up],[-w/3,up],[w/3,up]];if(below)C.push([0,below],[-w/3,below],[w/3,below],[-w/2,below],[w/2,below]);
@@ -514,7 +514,7 @@ async function shwLoad(S){
     cv.style.transformOrigin=`50% ${(ftF*100).toFixed(1)}%`;cv.style.transform=S.sq?`scale(${S.sq[0].toFixed(3)},${S.sq[1].toFixed(3)})`:""};   /* 808：站在桌上照桌下地板的透視（hy）；跳的時候蹲、拉長（sq） */
   const clips=B.mixer&&B.clips||null;let cur=null,yawR=S.yaw;
   S.anim=(n,ts)=>{if(!clips){S.pn=n;return}const a=clips[n]||clips.idle;if(!a)return;a.timeScale=ts||1;if(a===cur)return;a.reset().fadeIn(n==="idle"?.25:.12).play();if(cur)cur.fadeOut(.15);cur=a};
-  S.anim("idle",1);
+  S.anim("idle",1);try{if(typeof dglWalkHook==="function")dglWalkHook(S)}catch(e){}   /* 開發者 11/13 平日體力：定軌力低時頭上冒小條、走慢、打哈欠（m/07dgl-stamina.js） */
   const a0=B.arms&&B.arms[1]?B.arms[1].rotation.z:0,proc=(t,walk,act,p)=>{if(clips)return;const ph=t*14;root.position.y=walk?Math.abs(Math.sin(ph))*hM*.04:act==="cheer"?Math.abs(Math.sin(p*Math.PI*2))*hM*.12:0;root.rotation.z=walk?Math.sin(ph)*.07:0;root.rotation.x=act==="bow"?Math.sin(Math.min(1,p*1.6)*Math.PI/2)*.45:0;
     if(B.legs&&B.legs.length===2)B.legs.forEach((l,i)=>l.rotation.x=walk?Math.sin(ph)*.6*(i?1:-1):0);if(B.arms&&B.arms.length===2){B.arms.forEach((a,i)=>a.rotation.x=walk?Math.sin(ph)*.5*(i?-1:1):0);B.arms[1].rotation.z=act==="wave"||act==="cheer"?a0+Math.min(1,p*3)*2.5:a0}};
   if(window.ResizeObserver){const ro=new ResizeObserver(()=>{if(!S.box.isConnected||S.gen!==G){ro.disconnect();return}fit()});ro.observe(S.I)}fit();

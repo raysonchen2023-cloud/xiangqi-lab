@@ -1,0 +1,5 @@
+Xiangqi Qianqiu is a Chinese chess (xiangqi) app in Traditional Chinese: play against the computer (Pikafish engine), solve endgame puzzles, try the daily puzzle, study master games and rule rulings, or play people in the online lobby.
+
+The code is GPL-3.0-or-later. Artwork, 3D models, music and story texts are CC BY-NC-SA 4.0 (non-commercial). The Pikafish neural network weights may not be used commercially.
+
+The online lobby uses EMQX Cloud; feedback goes to a Google Form; anonymous stuck-point signals are sent by default and can be turned off in Settings.

@@ -1,0 +1,23 @@
+{
+  "name": "xiangqi-qianqiu-android",
+  "version": "0.1.0",
+  "private": true,
+  "description": "象棋千秋 Android 原生殼（Capacitor）骨架。網頁成品由 scripts/make-www.js 從公開倉庫（含 source/）做出來；詳見 ../xiangqi-db/art/docs/android.md。",
+  "license": "GPL-3.0-or-later",
+  "author": "陳泓昇 (Chen Hung-Sheng)",
+  "scripts": {
+    "www": "node scripts/make-www.js",
+    "sync": "node scripts/make-www.js && npx cap sync android",
+    "check": "node scripts/check-skeleton.js"
+  },
+  "engines": {
+    "node": ">=22"
+  },
+  "dependencies": {
+    "@capacitor/android": "8.6.2",
+    "@capacitor/core": "8.6.2"
+  },
+  "devDependencies": {
+    "@capacitor/cli": "8.6.2"
+  }
+}

@@ -434,11 +434,12 @@ function shipReadyHTML(){try{const k=shipFront();if(!k||shipAppr()||shipOrder().
 function shipGateSay(N){vibrate([20,40,20]);const here=shipHere()===N.k;sheet(N.first?"⚓ 船錨卡住了":"⛵ 還不能起航",b=>{
   b.innerHTML=(N.first?'<p class="shp-say">說書人：「先翻開這一站的《棋話》看一頁，船錨就拉得起來。」</p>'+shipGoalHTML(N)+(here?'<div class="row" style="gap:8px;margin-top:10px"><button class="btn" id="sgL">📘 看《棋話》</button></div>':'')
     :'<p class="shp-say">'+esc(shipBuddy())+'：「等一下啦，我們還沒逛完這裡呢！」</p><p>清單上還有好多好玩的事，陪我再解一題殘局嘛。</p><p><b>【本站歷練】（'+N.n+'/'+SAIL_NEED+'）</b></p>'+shipTaskList(N,here))+
-    (here?"":'<p class="muted">先在航線上點回「'+esc(shipShort(N.k))+'」那一站。</p>');
+    (here?"":'<p class="muted">要先回到「'+esc(shipShort(N.k))+'」那一站。按下面這顆，星槎會自動開回去。</p><div class="row" style="gap:8px;margin-top:10px"><button class="btn" id="sgGo">⛵ 回'+esc(shipShort(N.k))+(N.first?'，翻開《棋話》':'那一站')+'</button></div>');   /* 開發者 11/13 晚截圖：新手不知道「航線」在哪，只有一行字、沒有可以按的東西 */
   const e=b.querySelector("#sgL");if(e)e.onclick=()=>{closeSheet();location.hash="#/ship/lesson"};
+  const g=b.querySelector("#sgGo");if(g)g.onclick=()=>{closeSheet();shipGoTo(N.k,()=>{location.hash=N.first?"#/ship/lesson":"#/adventure"})};
   b.querySelectorAll("[data-sg]").forEach(x=>x.onclick=()=>{const t=N.T[+x.dataset.sg];closeSheet();if(t&&t.go)location.hash=t.go})})}
 /* 起航 #/ship/sail：船尾舵與帆；天上寫下一站（說書人預告、棋理、這一朝的棋、建議修為），舵旁的星光＝起航。十三站都停靠過＝旅程終點卡 */
-function ShipSail(v){setTop("⛵ 起航","#/adventure");setTabs(false);v.className="view";const ap=shipAppr(),k=shipHere(),nx=ap?null:shipNextStop(),allIn=!ap&&!nx&&!!shipDockList(),I=xpInfo(),[sx,sy]=SAIL_SPOT;
+function ShipSail(v){setTop("⛵ 起航",null,[["🏠",()=>goHome(),"回首頁"]]);setTabs(false);   /* 11/13 開發者：左上角「‹ 回星槎」拿掉，改成船板上的場景大字標籤 ssUp（跟渡口一樣） */v.className="view";const ap=shipAppr(),k=shipHere(),nx=ap?null:shipNextStop(),allIn=!ap&&!nx&&!!shipDockList(),I=xpInfo(),[sx,sy]=SAIL_SPOT;
   let card,sp=[],cap,sub;
   if(nx){const Ln=SHIP_LESSON[nx]||{},Hn=typeof HIST!=="undefined"?HIST[nx]:null,lvH=SHIP_LV[shipOrder().indexOf(nx)]||0;cap="⛵ 下一站・"+esc(shipShort(nx));sub="現在停靠："+esc(shipShort(k));
     card=`<b>${esc(shipShort(nx))}・${esc(SHIP_STOP[nx].place)}</b>${Ln.pre?`<p class="shp-say">說書人：「${esc(Ln.pre)}」</p>`:""}<p>📘 棋理：${esc(Ln.t||"")}${Hn?`<br>📜 這一朝的棋：${esc(Hn.t)}`:""}</p>${lvH?`<p class="muted">建議修為 Lv ${lvH}（你現在 Lv ${I.L}；只是建議，隨時都能開）</p>`:""}`;
@@ -446,9 +447,10 @@ function ShipSail(v){setTop("⛵ 起航","#/adventure");setTabs(false);v.classNa
   else if(allIn){cap="🏁 旅程終點";sub="十三站都停靠過了";card=`<b>${esc(SHIP_END.t)}</b><p>${SHIP_END.x.map(esc).join("<br>")}</p>`+(shipFinaleOpen()?"":`<p class="shp-say">說書人：「雲河到了盡頭，但好多渡口走馬看花呢。」</p><p>點航線回到舊朝代，把沒解完的殘局補齊，才能看見真正的終局！</p>`);sp=[["ssDb",sx,sy,"🏆 看特級大師對局","棋譜"],...(typeof chdEndSpot==="function"?chdEndSpot():[])]}   /* 意見回饋 774 破關卡（07q-chardiff.js） */
   else{cap="⛵ 起航";sub=ap?"說書人的學徒":"";card=ap?`<b>📜 十三站都能去</b><p>說書人的學徒不用照順序起航；回星槎頁，在航線上點想去的那一站。</p>`:`<b>還沒選角色</b><p>回星槎頁，從頭開始這段旅程。</p>`;sp=[["ssBack",sx,sy,"🌌 看航線","回星槎頁"]]}
   if(shipFinaleOpen()){const fd=shipLearned("finale");sp.push(["ssFin",FIN_SPOT[0],FIN_SPOT[1],"♟ 千秋歸位",fd?"✅ 石桌已補全":"終章・七人共局",fd?"":"hot"]);card+=fd?`<p class="muted">✅ 石桌已補全：七顆棋子都歸位了。</p>`:`<p class="shp-say">說書人：「歸位以前，再陪老朽看一局？」</p>`}   /* 終章（元件 C）：13 站都學會才出現 */
+  if(!sp.some(s=>s[0]==="ssBack"))sp.push(["ssUp",UP_SPOT[0],UP_SPOT[1],"⛵ 回星槎",""]);
   v.innerHTML=shpPage("page_sail",cap,sub,sp,`<div class="shs-card">${card}</div>`);
-  shpOn(v,"#ssFin",()=>{location.hash="#/ship/lv/finale/xl-finale"});shpOn(v,"#ssGo",()=>shipSailGo(()=>goUp("#/adventure")));shpOn(v,"#ssDb",()=>{location.hash="#/db"});shpOn(v,"#ssBack",()=>goUp("#/adventure"));if(allIn&&typeof chdEndBind==="function")chdEndBind(v);shpFit(v);return{}}
-const SAIL_SPOT=[52,72],FIN_SPOT=[52,86];
+  shpOn(v,"#ssUp",()=>goUp("#/adventure"));shpOn(v,"#ssFin",()=>{location.hash="#/ship/lv/finale/xl-finale"});shpOn(v,"#ssGo",()=>shipSailGo(()=>goUp("#/adventure")));shpOn(v,"#ssDb",()=>{location.hash="#/db"});shpOn(v,"#ssBack",()=>goUp("#/adventure"));if(allIn&&typeof chdEndBind==="function")chdEndBind(v);shpFit(v);return{}}
+const SAIL_SPOT=[52,72],FIN_SPOT=[52,86],UP_SPOT=[20,86];
 const SHIP_PG={lesson:ShipLesson,shelf:ShipShelf,bag:ShipBag,sail:ShipSail};
 
 /* 開發者 11/7：星槎主畫面「假 3D 視差」——原圖切成四層（art/shipmap/layers：雲海星河 bg、船身＋碼頭 ship、帆桅旗燈 fg、金色星光 star），
@@ -591,7 +593,7 @@ function Voyage(v){setTop("⛵ 雲河星槎","#/");setTabs(true,"#/");v.classNam
       ${mainDoneHTML()}<div id="spRes"></div>
     </div>`;
     const on=(q,fn)=>{const e=v.querySelector(q);if(e)e.onclick=()=>{vibrate(5);fn()}};
-    if(typeof gxShipHs==="function")try{gxShipHs(v)}catch(e){}   /* 從黑洞回來以後：星槎圖上多一顆「🌌 幻譜星門」（07gx-galaxy.js） */
+    /* 開發者 11/13 晚：星槎圖上不再放「🌌 幻譜星門」（07gx gxShipHs）和「🌌 星淵」（07gxt gxtShipHs）熱點，黑洞與十三星系統一從時光之苑的觀星臺進；兩個函式留著、這裡不呼叫 */
     /* 意見回饋 709：圖上的入口各開一頁滿版水墨圖（#/ship/lesson、pz、shelf、bag、sail）；下船、千秋石枰、讀這一章直接去 */
     v.querySelectorAll("[data-hs]").forEach(b=>b.onclick=()=>{vibrate(5);const h=b.dataset.hs;
       if({lesson:1,pz:1,shelf:1,bag:1,sail:1}[h]){location.hash="#/ship/"+h;return}

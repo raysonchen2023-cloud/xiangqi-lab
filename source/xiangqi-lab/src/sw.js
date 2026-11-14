@@ -44,16 +44,19 @@ async function cdnParts(rel,mode,sig,want){const m=await cdnRaw(rel+".parts.json
 async function readAll(r){const rd=r.body.getReader(),cs=[];let n=0;for(;;){const st=setTimeout(()=>r.xqAbort(),30000);let x;try{x=await rd.read()}finally{clearTimeout(st)}if(x.done)break;cs.push(x.value);n+=x.value.byteLength}
   const out=new Uint8Array(n);let o=0;for(const c of cs){out.set(c,o);o+=c.byteLength}return out.buffer}
 /* 從 CDN 拿 rel；拿不到或內容不對回傳 null（呼叫的地方就照原本的方式抓 GitHub）。一般檔整個收完才回應：Content-Length 是真正的大小（App 用它比對手機裡的檔），順便核對指紋 */
-async function cdnGet(rel,url,mode,sig){try{const fr=url&&url.searchParams.get("fresh"),want=(await fpLoad()).get(rel)||(/^[0-9a-f]{8}$/.test(fr||"")?fr:null);
+async function cdnGet(rel,url,mode,sig,onStale){try{const fr=url&&url.searchParams.get("fresh"),want=(await fpLoad()).get(rel)||(/^[0-9a-f]{8}$/.test(fr||"")?fr:null);
     if(SPLIT.test(rel)){const p=await cdnParts(rel,mode,sig,want);if(p!==undefined)return p}
     const r=await cdnRaw(rel,mode,sig);if(!r)return null;
     if(r.status===404&&!SPLIT.test(rel))return(await cdnParts(rel,mode,sig,want))||null;
     if(!r.ok)return null;
-    const buf=await readAll(r);if(want&&(await hex(buf)).slice(0,want.length)!==want)return null;
+    const buf=await readAll(r);if(want&&(await hex(buf)).slice(0,want.length)!==want){if(onStale){const h0=new Headers(r.headers);h0.delete("content-encoding");h0.set("content-length",String(buf.byteLength));h0.set("x-xq-cdn","stale");onStale(new Response(buf,{status:200,statusText:"OK",headers:h0}))}return null}
     const h=new Headers(r.headers);h.delete("content-encoding");h.set("content-length",String(buf.byteLength));h.set("x-xq-cdn","1");
     return new Response(buf,{status:200,statusText:"OK",headers:h})}catch(e){return null}}
 /* 先試 CDN，不行就照原本的方式（gh）抓 */
-async function viaCdn(req,rel,url,mode,gh){if(useCdn(rel,req)){const r=await cdnGet(rel,url,mode,req&&req.signal);if(r)return r}return gh()}
+/* 11/13 開發者截圖「青石園環景壞了」：preload.json 指紋過期（換了圖忘了更新）時，CDN 的檔被丟掉、改走 GitHub，但大圖只放 CDN，GitHub 拿不到就整張空白。
+   改成：指紋不符時先把 CDN 那份留著；GitHub 拿得到就照舊用 GitHub 的（小檔用 git 更新的做法不變），GitHub 也拿不到才改用 CDN 那份 */
+async function viaCdn(req,rel,url,mode,gh){let st=null;if(useCdn(rel,req)){const r=await cdnGet(rel,url,mode,req&&req.signal,o=>{st=o});if(r)return r}
+  if(!st)return gh();try{const g=await gh();if(g&&g.ok)return g}catch(e){}return st}
 // 安裝新版時一律從網路抓最新檔案（cache:"reload"），不要拿到瀏覽器裡的舊檔
 /* 意見回饋 593：每存好一個檔就告訴畫面「第幾個／共幾個」，更新提示才能顯示進度；任何一個檔失敗就整個重來（跟 addAll 一樣） */
 const updTell=m=>self.clients.matchAll({includeUncontrolled:true,type:"window"}).then(cs=>cs.forEach(c=>c.postMessage(m))).catch(()=>{});
@@ -92,7 +95,7 @@ self.addEventListener("fetch",e=>{
       if(useCdn(rel,req)){const r=await cdnGet(rel,url,"no-cache",req.signal);if(r)try{await c.put(req.url,r.clone());return isolate(r)}catch(err){}}
       const res=await fetch(req.url,{cache:"no-cache"});if(res.ok)await c.put(req.url,res.clone());return isolate(res)}
     // 外觀圖（朝代棋盤、棋子、字形）：存在獨立快取，改版也不用重抓
-    if(/\/data\/(boards|pieces|glyphs|sfx|voice|qa|park|park3d|pika|pika2|path|inn|map|stonetable|treasure|legend|champ|stones|seat|pano|pieceset|journey|xs|people|icons|arenagate|parkgate|pset|map3d|levels|npc|loading|blind|actors|tripo_app|eramap|relics|lines|fonts|canju|qianqiu|shipmap|battles|yizhan|hubmap|homemap|lobbymap|setmap|libmap|tabink|feedback|campmap|canjumap|thememap|termsmap|todaymap|gmmap|cupmap|redomap|exammap|statmap|studymap|openmap|deskmap|rostermap|passmap|seasonbox|tabtube|gxground)\//.test(url.pathname)&&!url.searchParams.has("fresh")){const c=await caches.open("xqlab-look");
+    if(/\/data\/(boards|pieces|glyphs|sfx|voice|qa|park|park3d|pika|pika2|path|inn|map|stonetable|treasure|legend|champ|stones|seat|pano|pieceset|journey|xs|people|icons|arenagate|parkgate|pset|map3d|levels|npc|loading|blind|actors|tripo_app|eramap|relics|lines|fonts|canju|qianqiu|shipmap|battles|yizhan|hubmap|homemap|lobbymap|setmap|libmap|tabink|feedback|campmap|canjumap|thememap|termsmap|todaymap|gmmap|cupmap|redomap|exammap|statmap|studymap|openmap|deskmap|rostermap|passmap|seasonbox|tabtube|gxground|guanxing)\//.test(url.pathname)&&!url.searchParams.has("fresh")){const c=await caches.open("xqlab-look");
       /* 意見回饋 507：清單檔（tripo.json、xs.json、faces.json…）一律先抓網路上最新的，沒網路才用存的——之前 tripo.json 第一次存下來（只有 5 個角色）就永遠不更新，手機上大部分角色都退回 Q 版 */
       if(/\.json$/.test(url.pathname)){try{const res=await viaCdn(req,rel,url,"no-cache",()=>fetch(req.url,{cache:"no-cache"}));if(res.ok){await c.put(req.url,res.clone());return isolate(res)}}catch(err){}const old=await c.match(req.url);if(old)return isolate(old)}
       const hit=await c.match(req.url);if(hit)return isolate(hit);const res=await viaCdn(req,rel,url,"no-cache",()=>fetch(req.url,{cache:"no-cache"}));if(res.ok)await c.put(req.url,res.clone());return isolate(res)}

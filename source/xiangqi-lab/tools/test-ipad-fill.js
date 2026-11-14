@@ -77,10 +77,10 @@ test("圖照寬度放就比畫面矮（不用裁）：回傳 null，交給原本
 });
 
 // 包裝行為：假的 #view／圖框，手機直向（門檻不過）時完全交給原本的 r07Wide，不碰圖框樣式；iPad 直向時接手、不呼叫原本的
-function fakeEnv(vw, vh) {
+function fakeEnv(vw, vh, pClass) {
   const calls = [], cls = new Set(), style = {}, pst = { setProperty() { }, removeProperty() { } }, pcl = new Set();
   const im = { naturalWidth: NW, naturalHeight: NH, complete: true, currentSrc: "data/homemap/home.webp", src: "data/homemap/home.webp", dataset: {}, addEventListener() { }, isConnected: true };
-  const P = { style: pst, dataset: {}, classList: { toggle: (c, on) => on ? pcl.add(c) : pcl.delete(c), remove: c => pcl.delete(c), add: c => pcl.add(c) }, isConnected: true,
+  const P = { className: pClass || "shp-page cq home-page", style: pst, dataset: {}, classList: { toggle: (c, on) => on ? pcl.add(c) : pcl.delete(c), remove: c => pcl.delete(c), add: c => pcl.add(c) }, isConnected: true,
     getBoundingClientRect: () => ({ left: 0, top: 86, width: vw, height: vw * NH / NW, right: vw, bottom: 86 + vw * NH / NW }), querySelectorAll: () => [], querySelector: () => im };
   const V = { clientWidth: vw, clientHeight: vh - 86, scrollTop: 0, scrollHeight: vw * NH / NW, classList: { add: c => cls.add(c), remove: (...c) => c.forEach(x => cls.delete(x)), contains: c => cls.has(c) },
     getBoundingClientRect: () => ({ left: 0, top: 86, width: vw, height: vh - 86, right: vw, bottom: vh }), querySelector: () => P, contains: () => true, parentNode: { append() { } } };
@@ -102,6 +102,16 @@ test("包裝：手機直向（402×874）照原本的 r07Wide 走、圖框樣式
   assert.ok(parseFloat(ip.P.style.marginTop) < 0, "上面裁一點");
   ip.ctx.r07Off(ip.V);
   assert.equal(ip.cls.has("xfl-port"), false, "r07Off 一併還原");
+});
+
+test("意見回饋 885：「我的角色」書齋牆（.mz-wall）在 iPad 直向不縮成一屏、照手機滿寬往下捲；橫向照原本的 r07Wide", () => {
+  const ip = fakeEnv(820, 1148, "shp-page cq mz-wall");
+  const r = ip.ctx.r07Wide(ip.V, ip.P, ip.V.getBoundingClientRect(), ip.P.getBoundingClientRect(), NW, NH);
+  assert.equal(r, true); assert.deepEqual(ip.calls, ["off"], "只收掉寬螢幕排法，不呼叫原本的 r07Wide");
+  assert.equal(ip.P.style.width, undefined, "不設寬度＝滿寬"); assert.equal(ip.cls.has("xfl-port"), false);
+  const ls = fakeEnv(1180, 820, "shp-page cq mz-wall");
+  ls.ctx.r07Wide(ls.V, ls.P, ls.V.getBoundingClientRect(), ls.P.getBoundingClientRect(), NW, NH);
+  assert.ok(ls.calls.includes("wide"), "橫向照舊");
 });
 
 test("〔原始碼〕m.html 在 07t3 和 07sp 後面載入 07fl；07sp 量看得到的範圍；07fl 沒有 // 行內註解", () => {

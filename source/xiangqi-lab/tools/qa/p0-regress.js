@@ -38,7 +38,7 @@ const ITEMS = [
 ];
 const DISCLAIMER = "無頭 Chrome（Playwright）模擬・不是實機・不是真人操作";
 /* 同一時間只能有一個無頭瀏覽器：這些腳本在跑就等（test-p0-regress.js 這類測試檔不算：前面是「-」） */
-const BUSY_RE = /(?:^|[\\/\s"'])(device-fit|evidence-shots|p0-regress|colorblind-scan|touch-stress|test-home-focus)\.js(?=$|[\s"'])|qa_monkey|stress2|learn_run/i;
+const BUSY_RE = /(?:^|[\\/\s"'])(device-fit|evidence-shots|p0-regress|colorblind-scan|touch-stress|test-home-focus|flow-regress|perf-bench)\.js(?=$|[\s"'])|qa_monkey|stress2|learn_run/i;   /* 第 17 輪加 flow-regress、perf-bench */
 /* 程序清單文字 → [{pid, cmd}]：每行「pid<Tab>指令」（PowerShell）或「  pid 指令」（ps -eo pid=,args=） */
 function parseProcList(text) {
   const out = [];

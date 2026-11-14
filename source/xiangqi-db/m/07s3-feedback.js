@@ -221,6 +221,7 @@ function FeedbackPage(v,sub){fbpCss();setTop("💬 意見回饋",fbpFrom()||"#/s
       const top=F.items.slice(0,3);P.querySelectorAll(".fbp-slip").forEach((e,i)=>{const x=top[i];if(!x)return;e.style.display="";fbpSlipFit(e,String(x.n||"已修正").replace(/^[✅\s]+/,""))});
       /* 回饋 861（開發者 11/10）「不用把張數寫出來」：告示榜不再標「共 N 張」 */}).catch(()=>{if(v.isConnected)fl.innerHTML='<p class="fbp-bw-m">讀不到修正紀錄</p>'});
     if(sub==="fixes"){sub="";setTimeout(openB,60)}
+    {const pre=fbrTake();if(pre){pick(pre.y|0);fx.value=pre.t+"\n";fx.dispatchEvent(new Event("input"));setTimeout(()=>{open(true);setTimeout(()=>{try{fx.setSelectionRange(fx.value.length,fx.value.length)}catch(e){}},320)},350)}}   /* fbr：從開發者回覆的飛鴿按「回覆開發者」進來，先帶好「回覆第 N 列」和類型 */
     paint();
     try{if(typeof shwPage==="function"&&typeof SHIP_WALK_ON!=="undefined"&&SHIP_WALK_ON)shwPage(v,Object.assign({},SHW_PG0,SHW_FBP),"fbp")}catch(e){}
     try{if(typeof exSync==="function")exSync()}catch(e){}};   /* 開發者 11/10「這一頁沒有出入口」：寄出信後整頁重畫會洗掉圖上的出口標籤（07w9 只在換頁時放），重畫完再放一次 */
@@ -229,7 +230,8 @@ function FeedbackPage(v,sub){fbpCss();setTop("💬 意見回饋",fbpFrom()||"#/s
 /* 開發者 11/11 hspx「從哪來就從哪回去，意見回饋也要遵循」：記下從哪一頁進信房（首頁「💬 回報問題」、星槎、天字客房、大廳…），圖上出口（07w9 exDyn）和返回照這個回去 */
 const fbpFrom=()=>{try{return sessionStorage.getItem("xqFbFrom")||""}catch(e){return""}},fbpFromSet=h=>{try{if(!/^#\/feedback/.test(h||""))sessionStorage.setItem("xqFbFrom",h||"#/")}catch(e){}};
 addEventListener("hashchange",e=>{try{if(/^#\/feedback/.test(location.hash))fbpFromSet(new URL(e.oldURL).hash||"#/")}catch(x){}});
-if(typeof feedbackSheet==="function"){FBP_F0=feedbackSheet;feedbackSheet=function(){if(FEEDBACK_PAGE_ON){fbpFromSet(location.hash||"#/");location.hash="#/feedback";return}return FBP_F0.apply(this,arguments)}}
+if(typeof feedbackSheet==="function"){FBP_F0=feedbackSheet;feedbackSheet=function(){if(FEEDBACK_PAGE_ON){fbpFromSet(location.hash||"#/");location.hash="#/feedback";return}const r=FBP_F0.apply(this,arguments);
+  setTimeout(()=>{const fx=document.querySelector("#sheet #fx");if(!fx||typeof fbrTake!=="function")return;const pre=fbrTake();if(!pre)return;const b=document.querySelectorAll("#sheet [data-y]")[pre.y|0];if(b)b.click();fx.value=pre.t+"\n";fx.dispatchEvent(new Event("input"))},60);return r}}   /* 信房關掉時（底部表單）也帶入回覆開頭 */
 if(typeof fixHistory==="function"){FBP_FX0=fixHistory;fixHistory=function(){if(FEEDBACK_PAGE_ON){location.hash="#/feedback/fixes";return}return FBP_FX0.apply(this,arguments)}}
 if(typeof Home==="function"){const f0=Home;Home=function(v,hub){if(FEEDBACK_PAGE_ON&&!hub&&/^#\/feedback(\/|$)/.test(location.hash))return FeedbackPage(v,location.hash.split("/")[2]||"");return f0.apply(this,arguments)}}
 
@@ -247,7 +249,25 @@ async function fblPending(){if(typeof fixHash!=="function"||typeof meInfo!=="fun
   const d=await fetch("data/fixes.json?v="+encodeURIComponent(window.XQ_BUILD||"")).then(r=>r.json()).catch(()=>null);if(!d)return[];
   const mine=(d.items||[]).filter(x=>x.h===h&&!x.d),seen=new Set(store.get("fbLetterSeen",[])||[]);
   if(!store.get("fbLetterInit",false)){const old=Date.now()-3*864e5;mine.forEach(x=>{if(fblAtMs(x.at)<old)seen.add(fblKey(x))});store.set("fbLetterSeen",[...seen].slice(-800));store.set("fbLetterInit",true)}
-  return mine.filter(x=>!seen.has(fblKey(x)))}
+  const re=(d.replies||[]).filter(x=>x&&x.h===h&&x.re).map(x=>Object.assign({},x,{_re:1}));   /* 開發者回覆（fbr）：只取自己 ID 雜湊的那幾列 */
+  return mine.filter(x=>!seen.has(fblKey(x))).concat(re.filter(x=>!seen.has(fbrKey(x))))}
+/* ================= ✉ 開發者回覆玩家（hspx 開發者 11/13，前綴 fbr／FBR_）=================
+   開發者在管理頁（feedback-api.gs）某一列按「✉ 回覆玩家」寫話（快捷：請補截圖、請說明怎麼重現、已修好請更新、自訂），存在回饋表「回覆玩家」欄；
+   發布前 fixes-export.snippet.js 匯出到 fixes.json 的 replies（只放列號、線上 ID 雜湊、回報時間、類型、開發者的話；玩家原文不放）。
+   App 照修好回信的飛鴿：下次回到首頁，鳥停在角色肩上；信裡有「你上次告訴我們」（手機自己存的 fbMine）和開發者的話。
+   要玩家補東西的回覆有「✍ 回覆開發者」：直接開信房、類型照原本的、內容先帶「回覆第 N 列（11/13 回報的錯誤）：」，可附截圖；管理頁看到這開頭就連回原列。
+   回覆改了字＝新的一封（key 帶字的雜湊）；寫「已修好」那類不放回覆鈕。
+   11/13 開發者決定同一列回覆多次全部留著：fixes.json 裡同一列可能有好幾筆（照順序），各是一封，信上寫回覆時間 rt */
+const fbrHash=s=>{let h=5381;s=String(s||"");for(let i=0;i<s.length;i++)h=(h*33+s.charCodeAt(i))>>>0;return h.toString(36)};
+const fbrKey=x=>"re|"+x.r+"|"+fbrHash(x.re);
+const fbrAsk=x=>!/已修好|修好了|已經修好|已修正/.test(String(x.re||""));
+const fbrTyN=t=>/錯誤/.test(t||"")?0:/建議/.test(t||"")?1:2;
+function fbrPre(x){const d=String(x.at||"").split(" ")[0].replace(/^\d{4}\//,""),n=String(x.ty||"").replace(/^\S+\s*/,"")||"回報";return"回覆第 "+x.r+" 列（"+d+" 回報的"+n+"）："}
+function fbrTake(){try{const s=sessionStorage.getItem("xqFbPre");if(!s)return null;sessionStorage.removeItem("xqFbPre");const p=JSON.parse(s);return p&&p.t?p:null}catch(e){return null}}
+function fbrReply(x){try{sessionStorage.setItem("xqFbPre",JSON.stringify({t:fbrPre(x),y:fbrTyN(x.ty)}))}catch(e){}if(typeof feedbackSheet==="function")feedbackSheet()}
+function fbrItem(x,i){const q=fblQuote(x),d=esc(String(x.at||"").split(" ")[0]);
+  return'<div class="it">'+(q?'你在 '+d+' 告訴我們：<span class="q">「'+esc(q)+'」</span><br>':'你在 '+d+' 回報的'+esc(x.ty||"意見")+'<br>')+
+    '<b>開發者回覆你'+(x.rt?'（'+esc(x.rt)+'）':'')+'：</b><div class="fbr-say">'+esc(x.re)+'</div>'+(fbrAsk(x)?'<button class="btn ghost fbr-go" type="button" data-i="'+i+'">✍ 回覆開發者（可以附截圖）</button>':'')+'</div>'}
 function fblCss(){if(document.getElementById("fblCss"))return;const s=document.createElement("style");s.id="fblCss";s.textContent=`
 .fbl-bird{position:fixed;left:0;top:0;z-index:960;pointer-events:auto;cursor:pointer;height:auto;filter:drop-shadow(0 3px 3px rgba(0,0,0,.25))}
 .fbl-tag{position:fixed;z-index:961;transform:translate(-50%,-100%);font-size:20px;pointer-events:none;animation:fblBob 1s ease-in-out infinite alternate}@keyframes fblBob{to{transform:translate(-50%,-125%)}}
@@ -257,14 +277,18 @@ function fblCss(){if(document.getElementById("fblCss"))return;const s=document.c
 @keyframes fblOpen{from{transform:scaleY(.2);opacity:0}to{transform:none;opacity:1}}
 .fbl-paper h3{margin:0 0 6px;font:900 17px var(--serif,serif)}.fbl-paper .q{color:#7a4a2a}.fbl-paper .it{border-top:1px dashed rgba(120,80,40,.35);padding:8px 0}
 .fbl-paper .sig{text-align:right;margin-top:6px}.fbl-paper .seal{display:inline-block;margin-left:6px;width:30px;height:30px;line-height:30px;text-align:center;border:2px solid #a63a24;color:#a63a24;border-radius:4px;font-weight:900;transform:rotate(-6deg)}
-.fbl-paper .btn{width:100%;margin-top:10px}`;document.head.append(s)}
+.fbl-paper .btn{width:100%;margin-top:10px}
+.fbl-paper .fbr-say{margin:2px 0 0;padding:6px 10px;background:rgba(255,255,255,.55);border-left:3px solid #a63a24;border-radius:3px;white-space:pre-wrap;word-break:break-word}
+.fbl-paper .fbr-go{margin-top:8px;font-size:14px}`;document.head.append(s)}
 function fblOpen(L,done){fblCss();const nm=(typeof meName==="function"&&meName())||"棋手",bg=document.createElement("div");bg.className="fbl-bg";
-  const it=L.map(x=>{const q=fblQuote(x),n=fblNote(x.n),bug=/錯誤/.test(x.ty);
+  const it=L.map((x,i)=>{if(x._re)return fbrItem(x,i);const q=fblQuote(x),n=fblNote(x.n),bug=/錯誤/.test(x.ty);
     return'<div class="it">'+(q?'你上次告訴我們：<span class="q">「'+esc(q)+'」</span><br>':'你之前回報的'+esc(x.ty||"意見")+'（'+esc((x.at||"").split(" ")[0])+'）<br>')+
       (x.no?'我們仔細研究了你的建議，目前會先保持原樣，但你的好點子我們收進百寶箱囉！':(bug?'我們已經抓到這隻蟲子啦！':'你的好點子，我們做出來囉！')+(n?'<br><span class="muted">（開發者：'+esc(n)+'）</span>':''))+'</div>'}).join("");
-  bg.innerHTML='<div class="fbl-paper" role="dialog" aria-label="回信"><h3>給聰明的棋手 '+esc(nm)+'：</h3>'+(L.length>1?'<p style="margin:0">你真是抓蟲大師！你回報的幾件事，我們都處理好了：</p>':'')+it+
+  const nRe=L.filter(x=>x._re).length,lead=nRe===L.length?'開發者看了你的回報，有話想跟你說：':nRe?'你回報的事，開發者有新消息：':L.length>1?'你真是抓蟲大師！你回報的幾件事，我們都處理好了：':'';
+  bg.innerHTML='<div class="fbl-paper" role="dialog" aria-label="回信"><h3>給聰明的棋手 '+esc(nm)+'：</h3>'+(lead?'<p style="margin:0">'+lead+'</p>':'')+it+
     '<p style="margin:8px 0 0">謝謝你讓這個世界變得更好！</p><div class="sig">── 象棋千秋開發者<span class="seal">兵</span></div><button class="btn" type="button">收到啦！</button></div>';
-  document.body.append(bg);const close=()=>{bg.remove();done&&done()};bg.querySelector(".btn").onclick=()=>{vibrate(8);close()};bg.onclick=e=>{if(e.target===bg)close()}}
+  document.body.append(bg);const close=()=>{bg.remove();done&&done()};bg.querySelector(".btn:not(.fbr-go)").onclick=()=>{vibrate(8);close()};bg.onclick=e=>{if(e.target===bg)close()};
+  bg.querySelectorAll(".fbr-go").forEach(b=>b.onclick=()=>{vibrate(8);close();fbrReply(L[+b.dataset.i])})}
 const fblBusyUI=()=>!!document.querySelector("#sheet,.fbl-bg,.modal,#fmOv,.fm-ov,.qq-ov,.title-ov,#titleOv");   /* 有面板、彈窗（含護眼提醒 #fmOv）時不飛來 */
 async function fblCheck(){if(!FBL_ON||FBL_BUSY||Date.now()-FBL_T0<5000)return;if(!["","#","#/","#/home"].includes(location.hash))return;
   if(fblBusyUI())return;const me=document.querySelector(".shw-me");if(!me)return;
@@ -275,7 +299,7 @@ async function fblCheck(){if(!FBL_ON||FBL_BUSY||Date.now()-FBL_T0<5000)return;if
   const target=()=>{const r=me.getBoundingClientRect();return K==="goose"?[r.left+r.width*1.1,r.bottom-2]:[r.left+r.width*.62,r.top+r.height*.28]};
   const fin=()=>{if(end)return;end=true;b.remove();tag.remove();say.remove();FBL_BUSY=false};
   const leave=()=>{if(ph==="out")return;ph="out";tOut=0;tag.remove();say.remove()};
-  const open=()=>{if(opened)return;opened=true;vibrate(10);leave();fblOpen(L,()=>{const S=new Set(store.get("fbLetterSeen",[])||[]);L.forEach(x=>S.add(fblKey(x)));store.set("fbLetterSeen",[...S].slice(-800))})};
+  const open=()=>{if(opened)return;opened=true;vibrate(10);leave();fblOpen(L,()=>{const S=new Set(store.get("fbLetterSeen",[])||[]);L.forEach(x=>S.add(x._re?fbrKey(x):fblKey(x)));store.set("fbLetterSeen",[...S].slice(-800))})};
   b.onclick=open;const meClick=e=>{if(ph==="perch"){e.stopPropagation();e.preventDefault();open()}};me.addEventListener("click",meClick,true);
   const off=()=>{removeEventListener("hashchange",off);me.removeEventListener("click",meClick,true);fin()};addEventListener("hashchange",off);
   const fw=K==="goose"?150:110,sw=K==="goose"?54:40;

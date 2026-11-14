@@ -7,7 +7,13 @@ var XQ=(function(){
   const gameId=()=>new Date().toISOString().replace(/[:.]/g,"-").slice(0,19);
   /* 棋規設定（11/11 Gemini 架構報告第一項；註冊表在 xiangqi-referee.js 的 RULESETS）：每次重放都先把這盤的 rc 整理好再交給裁判——
      舊存檔沒有 rc 就補預設（千秋休閒規則＋目前裁判版本）；有 rc 就沿用開局時那份，開局後改設定不影響這盤 */
-  const stateRebuild=S=>{S.rc=C.ruleConfigOf(S);return C.stateRebuild(S)};
+  const stateRebuild=S=>{S.rc=C.ruleConfigOf(S);if(!(S.ed&&S.ed.length))return C.stateRebuild(S);return tdRebuild(S)};
+  /* 黑洞陣地塔防（開發者 11/13，m/07bht-td.js）：招式移除敵子、星門落子這類「不是走棋的盤面變化」記在 S.ed＝[{n:第幾手之後,s:{格:子或 null}}]；
+     重放時照順序在那一手之後套上，盤面、pos 才跟當時一樣。沒有 ed 的對局完全照舊（C.stateRebuild） */
+  function tdRebuild(S){const old=S.moves||[],E=S.ed,ap=n=>{let hit=false;for(const e of E)if(e&&e.n===n&&e.s){hit=true;for(const k in e.s)S.board[+k]=e.s[k]||null}return hit};
+    S.moves=[];S.board=parseFen(S.start||START);S.turn=S.startTurn||"r";ap(0);S.pos=[fen(S.board,S.turn)];
+    for(const o of old){const m=C.stateApply(S,o.f,o.t);for(const k of["q","loss","ev","bv","bmt","pmt","rr","bc","bm","bp"])if(o[k]!==undefined)m[k]=o[k];if(ap(S.moves.length))S.pos[S.pos.length-1]=fen(S.board,S.turn)}
+    S.repetition=null;return S}
   const ls={get(k,d){try{const v=localStorage.getItem("xq_"+k);return v==null?d:JSON.parse(v)}catch(e){return d}},set(k,v){try{localStorage.setItem("xq_"+k,JSON.stringify(v))}catch(e){}}};
   /* 設定頁的「棋規」：只影響之後新開的自由對局（挑戰電腦非晉級賽、同機對下、車輪戰、線上邀請）；晉級賽、擂台、石桌往事、錯棋重練一律千秋休閒規則 */
   const rulePref=()=>{const v=ls.get("ruleset",C.RULESET_DEFAULT);return C.RULESETS[v]?v:C.RULESET_DEFAULT};
@@ -61,7 +67,7 @@ var XQ=(function(){
     if(!it.result||(sd!=="r"&&sd!=="b")||!Array.isArray(ms))return{};if(c==="pvp"&&!ms.some(m=>m.q))return{};const n=ms.filter(m=>m.by===sd&&!m.q).length;return n?{pend:n}:{}};
 
   // ---------- 挑戰電腦 ----------
-  let P=null,playBusy=false,playMsg="",paBusy=false,paFxT=0,engFail=0,engWait=false;   /* 11/11：電腦出棋失敗的次數、是不是在等網路回來（playEngine） */
+  let P=null,playBusy=false,playSince=0,playMsg="",paBusy=false,paFxT=0,engFail=0,engWait=false;   /* 11/11：電腦出棋失敗的次數、是不是在等網路回來（playEngine） */
   // 積分挑戰：跟線上對戰一樣的段位（新手～專2-2），但分開記分。電腦的強度跟著你目前的段位走，段位越高越難。
   const RANKS=[["新手",0],["入門1",50],["入門2",100],["入門3",150],["業1",200],["業2",300],["業3",400],["業4",500],["業5",600],["業6",700],["業7",800],["業8",900],["業9",1000],["專1-1",1150],["專1-2",1300],["專2-1",1500],["專2-2",1700]];
   const rankIdx=p=>{let i=0;for(let k=0;k<RANKS.length;k++)if((p||0)>=RANKS[k][1])i=k;return i};
@@ -186,7 +192,7 @@ var XQ=(function(){
   /* 意見回饋 415：這盤用過幾次提示（/play/hint、雲河棋路的提示棋 /play/hintmark）、悔過幾次棋（/play/undo）。
      存檔時一起寄進對局紀錄，我的戰績算棋力、成長時把這種盤排除，才公平；舊存檔沒有這兩欄就照算 */
   const assist=G=>({...(G&&G.hintN?{hintN:G.hintN}:{}),...(G&&G.undoN?{undoN:G.undoN}:{})});
-  const keepStart=G=>({...(G&&G.start?{start:G.start,startTurn:G.startTurn||"r"}:{}),...(G&&G.noPerp?{noPerp:true}:{}),...(G&&G.styleOn!=null?{styleOn:G.styleOn}:{}),...(G&&G.opp==="zhanggui"?{opp:"zhanggui",...(G.zgx?{zgx:true}:{})}:{})});   /* 對局中途可接續（開發者 11/9）：殘局起手、讓子的關（start）關掉 App 再打開或收起來再拿出來，要從同一個起始局面重建，不然盤面會錯 */
+  const keepStart=G=>({...(G&&G.start?{start:G.start,startTurn:G.startTurn||"r"}:{}),...(G&&G.noPerp?{noPerp:true}:{}),...(G&&G.styleOn!=null?{styleOn:G.styleOn}:{}),...(G&&G.opp==="zhanggui"?{opp:"zhanggui",...(G.zgx?{zgx:true}:{})}:{}),...(G&&G.td?{td:G.td}:{}),...(G&&G.ed&&G.ed.length?{ed:G.ed}:{})});   /* td、ed：黑洞陣地塔防的狀態與盤面變化（m/07bht-td.js），存檔、收起來都要帶著 */   /* 對局中途可接續（開發者 11/9）：殘局起手、讓子的關（start）關掉 App 再打開或收起來再拿出來，要從同一個起始局面重建，不然盤面會錯 */
   /* ---------- 存檔版本號、保存紀錄（評比循環第 2 輪 ChatGPT：續局與分頁衝突的可視化復原紀錄；各鍵的格式見 story/88 第 8 節）----------
      xq_play 最前面多兩欄：seq＝第幾版（每次寫 +1）、tab＝寫的那個分頁的代號（sessionStorage xqTab，同一個分頁重新整理不變）。VER＝這個分頁「知道的那一版」（讀進來的或自己寫的）。
      savePlay 寫之前先看 localStorage 裡現在是哪一版：跟 VER 不一樣＝另一個分頁在這之後寫過 → 不覆蓋，丟掉記憶體那份（下次 ensureP 重讀最新的），發 xq-play-newer（畫面提示）。
@@ -225,7 +231,7 @@ var XQ=(function(){
     if(P){PID=P.id;PN=P.moves.length;if(fix){playWrite(false);saveLog("fix",P)}else if(first&&unfinished(P))saveLog("reopen",P)}
     else playNew("r",3);
     setTimeout(playEngine,0);return!!(was&&P&&(was.id!==P.id||was.n!==P.moves.length))}
-  const PLAY_MUT=new Set(["/play/move","/play/undo","/play/resign","/play/repdraw","/play/repundo","/play/hint","/play/hintmark"]);
+  const PLAY_MUT=new Set(["/play/move","/play/undo","/play/resign","/play/repdraw","/play/repundo","/play/hint","/play/hintmark","/play/td"]);
   const stashHas=id=>Object.values(stashAll()).some(g=>g&&g.id===id);
   function bakPut(G){if(!unfinished(G))return;const L=(ls.get("playBak",[])||[]).filter(x=>x&&x.id!==G.id);L.unshift({...stashOut(G),at:Date.now()});ls.set("playBak",L.slice(0,3))}
   /* 「↩ 回到那一盤」：從 xq_play2 或 xq_playBak 拿出那一盤放上桌；桌上原本沒下完的收進自己那一格（那一格原本有別盤就擠進 xq_playBak），什麼都不丟 */
@@ -301,7 +307,8 @@ var XQ=(function(){
     {const L=nk==="journey"?lvStart(lv):null;if(L){P.start=L.start;P.startTurn=L.startTurn;if(L.noPerp)P.noPerp=true;if(L.mirror&&L.mirror.length)P.mirror=L.mirror}}
     const rp=rulePref();P.rc=C.ruleConfig(nk==="cpu"&&!reward&&(!ranked||C.RULESETS[rp].rated)?rp:C.RULESET_DEFAULT,ranked?"ranked":pre?"puzzle":"casual");   /* 晉級賽只用可計分的棋規：千秋休閒規則或臺灣棋規正式版（原型不行） */
     stateRebuild(P);if(P.practice&&P.turn!==human)throw new Error("這步不是你走的");savePlay()}
-  function playApply(f,t){stateApply(P,f,t);P.hint=null;let r=judgeState(P);if(r&&P.noPerp&&/長將|長捉|長打/.test(r.why))r=null;if(r)playEnd(r.w,r.why);savePlay();setTimeout(analyzePlay,0);
+  function playApply(f,t){stateApply(P,f,t);P.hint=null;let tdE=null;if(P.td&&window.XQ_TD)try{tdE=window.XQ_TD.move(P,P.moves[P.moves.length-1],C)}catch(e){console.warn("[td]",e)}   /* 黑洞陣地塔防：扣元氣、星門落子（可能改盤面），再交給裁判 */
+    let r=judgeState(P);if(r&&P.noPerp&&/長將|長捉|長打/.test(r.why))r=null;if(!r&&tdE&&tdE.end)r=tdE.end;if(r)playEnd(r.w,r.why);savePlay();setTimeout(analyzePlay,0);
     try{window.dispatchEvent(new Event("xq-play"))}catch(e){}}   // 通知畫面馬上更新，不用等下一次輪詢
   function playEnd(w,why){P.result={w,why,...(P.repetition&&!P.repetition.pending?{adjudication:P.repetition}:{})};const res=!w?"d":w===P.human?"w":"l";
     if(P.practice){savePlay();return}   // 錯棋重練：不算戰績、不存進對局紀錄
@@ -310,6 +317,7 @@ var XQ=(function(){
       P.stamp={era:P.arena,first,total:Object.keys(S).length}}
     else if(kindOf(P)==="cpu"&&!/-b$/.test(String(P.id))){const rec=ls.get("record",{}),L=rec[P.level]||(rec[P.level]={w:0,l:0,d:0});L[res]++;ls.set("record",rec)}
     /* 意見回饋 594：石桌往事從中局開始的關也存（記起始局面），我的成長才算得到故事裡下的棋 */
+    if(P.ed&&P.ed.length){savePlay();return}   /* 黑洞陣地塔防：盤面被招式、星門改過的那盤不存進棋譜（棋譜重放沒有這些變化，會走出不合法的步） */
     pushGame("play",{id:P.id,rc:P.rc||null,date:P.id.slice(0,10),level:P.level,ranked:!!P.ranked,reward:!!P.reward,rk:P.rk,human:P.human,result:P.result,...(P.start?{start:P.start,startTurn:P.startTurn||"r"}:{}),...(P.journey?{journey:P.journey}:{}),...(zgOn(P)?{opp:"zhanggui"}:{}),...assist(P),moves:saveMoves(P.moves)});savePlay()}
   /* 11/13 開發者 P1（iPhone 3D 絕殺後頁面被重新載入）：剛分出勝負、殺棋特效還在播（畫面那邊的 window.XQ_fxBusy，m/02r-reloadguard.js），賽後分析先等特效播完再開始，
      不跟 3D 園子、特效、音效、觸覺擠在同一刻；同一段最多等 20 秒，等完照常分析（不佔「缺 PV 重評」的 3 次） */
@@ -323,7 +331,7 @@ var XQ=(function(){
   const ucis=()=>P.moves.map(m=>iccs(m.f,m.t));
   /* 11/13 開發者截圖「⚠ 引擎給出不合法著法 g3g4（稍後自動再試）」：章回棋路有些關從殘局開始（P.start），以前一律送「標準開局＋走過的步」給引擎，
      引擎以為是另一盤棋、回了不存在的走法，電腦就一直卡住。改成有 P.start 就送「起始局面＋走過的步」 */
-  const engPos=()=>P.start?{fen:P.start+" "+(P.startTurn==="b"?"b":"w"),moves:ucis()}:{moves:ucis()};
+  const engPos=()=>P.ed&&P.ed.length?{fen:fen(P.board,P.turn)}:P.start?{fen:P.start+" "+(P.startTurn==="b"?"b":"w"),moves:ucis()}:{moves:ucis()};
   /* 意見回饋 363：秘境棋友的開局喜好是真的——跟他下時，這盤有 90% 機率照他愛下的開局走前一兩步（紅方、黑方各一套），之後才交給 Pikafish */
   const STYLE={
     liuji:{r:[["h2e2","b2e2"]],b:[["h7e7","b7e7"]]},                               // 劉伯溫：中炮（後手就還中炮）
@@ -447,18 +455,25 @@ var XQ=(function(){
   /* THINKPACE:END */
   /* 第 12 輪 F3：快棋模式（App 的 store blitz＝localStorage m_blitz，07pm-premove.js）打開時，電腦節奏一律當作「快速」，不管設定頁選了擬真 */
   const TP=THINKPACE(C,HP,CPU_MIN_MS),cpuPace=()=>{try{if(JSON.parse(localStorage.getItem("m_blitz"))===true)return"fast"}catch(e){}try{return JSON.parse(localStorage.getItem("m_cpuPace"))==="fast"?"fast":"real"}catch(e){return"real"}};
+  /* 11/13 晚開發者「iPad 卡在第一盤棋，對方一直思考中」：引擎啟動或下載卡住時 search 永遠不回，playBusy 一直是真、連按新局也卡。
+     每一步加總時限（引擎還沒載好 3 分鐘，含第一次下載 48 MB；載好之後 60 秒），逾時就把引擎整個重來（XQEngine.abort），幾秒後自動再想 */
+  const engTmo=()=>typeof XQEngine!=="undefined"&&XQEngine.ready?60000:180000;
+  const engRace=(p,ms)=>Promise.race([p,new Promise((_,j)=>setTimeout(()=>{const e=new Error("ENG_TIMEOUT");e.tmo=1;j(e)},ms))]);
   async function playEngine(){
     if(!P||P.result||P.turn===P.human||playBusy)return;
     {const sm=styleMove();if(sm){playBusy=true;setTimeout(()=>{try{if(P&&!P.result&&P.turn!==P.human)playApply(sm[0],sm[1])}finally{playBusy=false;setTimeout(playEngine,0)}},700);return}}
-    playBusy=true;const id=P.id,n=P.moves.length,lv=P.ranked?RLV[P.rk]||RLV[0]:P.rlv!=null?RLV[P.rlv]||RLV[0]:LEVELS[P.level-1]||LEVELS[2];   /* 意見回饋 548：驛站旅人用段位強度 rlv 浮動 */
+    playBusy=true;playSince=Date.now();const id=P.id,n=P.moves.length,lv=P.ranked?RLV[P.rk]||RLV[0]:P.rlv!=null?RLV[P.rlv]||RLV[0]:LEVELS[P.level-1]||LEVELS[2];   /* 意見回饋 548：驛站旅人用段位強度 rlv 浮動 */
     const t0=Date.now();   /* 11/10 開發者「我剛走完一步，電腦就馬上落子」：低等級用淺層深度幾毫秒就算完，至少等 1～1.5 秒再落子，讓玩家看清自己那一步 */
     const zg=zgOn(P);   /* 笑面掌櫃：前 20 手先查開局庫（照次數加權抽，不叫引擎）；出庫後引擎多給幾條候選，STYLEPICK 照棋風挑 */
     try{if(zg&&!P.start&&n<SP.DEF.bookMaxPly){const B=await zgBookLoad(),u=B&&n<B.maxPly?SP.bookPick(B,P.board,P.turn,Math.random):null;
         if(u){const w=TP.ms(P,u,null,lv,cpuPace())-(Date.now()-t0);if(w>0)await new Promise(z=>setTimeout(z,w));
           if(!P||P.id!==id||P.moves.length!==n||P.result)return;
           const f=parseSq(u.slice(0,2)),t=parseSq(u.slice(2,4));if(legal(P.board,P.turn).some(([a,b])=>a===f&&b===t)){playApply(f,t);playMsg="";engFail=0;return}}}
+      if(P.td&&window.XQ_TD){const TD=window.XQ_TD.engine(P,C),r=await engRace(XQEngine.search(engPos(),{depth:TD.depth,searchmoves:TD.sm},TD.mpv),engTmo()),mv=window.XQ_TD.pick(r,TD,Math.random);   /* 黑洞陣地塔防：星樞推算 N 步＋失誤率；被定身的子不走（敵方沒別步可走時照常走） */
+        {const w=1100-(Date.now()-t0);if(w>0)await new Promise(z=>setTimeout(z,w))}if(!P||P.id!==id||P.moves.length!==n||P.result)return;
+        const f=parseSq(mv.slice(0,2)),t=parseSq(mv.slice(2,4));if(!legal(P.board,P.turn).some(([a,b])=>a===f&&b===t))throw new Error("引擎給出不合法著法 "+mv);playApply(f,t);playMsg="";engFail=0;return}
       const hp=!zg&&HP.on(lv),zl=zg?zgLv(P,lv):lv;   /* 低段（新手～業1）擬人選步：見上面 HUMANPICK；zl＝掌櫃這一盤用的設定（真功夫＝固定節點數） */
-      const r=await XQEngine.search(engPos(),zl.nodes?{nodes:zl.nodes}:lv.movetime?{movetime:lv.movetime}:{depth:lv.depth},zg?SP.mpvOf(zl):hp?HP.mpvOf(lv):lv.multipv||1);
+      const r=await engRace(XQEngine.search(engPos(),zl.nodes?{nodes:zl.nodes}:lv.movetime?{movetime:lv.movetime}:{depth:lv.depth},zg?SP.mpvOf(zl):hp?HP.mpvOf(lv):lv.multipv||1),engTmo());
       const mv=zg?SP.pick(r,zl,P.board,P.turn,Math.random).mv:hp?HP.pick(r,lv,P.board,P.turn,Math.random).mv:pickMove(r,lv);   /* 先挑好這一步，思考時間才看得到是不是回吃（F4） */
       {const w=TP.ms(P,mv,r,lv,cpuPace())-(Date.now()-t0);if(w>0)await new Promise(z=>setTimeout(z,w))}
       if(!P||P.id!==id||P.moves.length!==n||P.result)return;
@@ -468,7 +483,8 @@ var XQ=(function(){
     /* 開發者 11/11（離線盤查）：引擎載不到（沒網路、手機裡還沒有引擎檔、還沒進多執行緒模式）原本立刻重試、無限循環——
        改成：沒網路又沒有引擎＝說清楚、等網路回來（online）再自動接著下；其他失敗＝隔 3、6、12…秒（最多 60 秒）再試 */
     catch(e){engFail++;const off=typeof navigator!=="undefined"&&navigator.onLine===false,noEng=typeof XQEngine!=="undefined"&&!XQEngine.ready;
-      playMsg=off&&noEng?"⚠ 沒有網路，電腦棋手還沒下載到這支手機。連上網路會自動接著下，也可以先去同桌對弈。":"⏳ 電腦棋手一時沒想好，幾秒後會自動再想一次";try{const em=String(e&&e.message||e).slice(0,160);if(P)P.engErr=em;console.warn("[engine]",em)}catch(x){}   /* 11/13 開發者「這是什麼，對玩家來說會看不懂」：畫面上不放技術訊息（不合法著法 g3g4 之類），細節只留在 P.engErr 和主控台給除錯 */
+      if(e&&e.tmo)try{if(XQEngine.abort)XQEngine.abort()}catch(x){}
+      playMsg=off&&noEng?"⚠ 沒有網路，電腦棋手還沒下載到這支手機。連上網路會自動接著下，也可以先去同桌對弈。":e&&e.tmo?"⏳ 電腦棋手卡住了，正在重新啟動；等不及可以按「新局」重新開一盤":"⏳ 電腦棋手一時沒想好，幾秒後會自動再想一次";try{const em=String(e&&e.message||e).slice(0,160);if(P)P.engErr=em;console.warn("[engine]",em)}catch(x){}   /* 11/13 開發者「這是什麼，對玩家來說會看不懂」：畫面上不放技術訊息（不合法著法 g3g4 之類），細節只留在 P.engErr 和主控台給除錯 */
       if(off&&noEng&&!engWait){engWait=true;addEventListener("online",()=>{engWait=false;engFail=0;setTimeout(playEngine,800)},{once:true})}}
     finally{playBusy=false;if(!engFail)setTimeout(playEngine,0);else if(!engWait)setTimeout(playEngine,Math.min(60000,1500*2**Math.min(engFail,6)))}}
   function playState(){ensureP();
@@ -478,13 +494,13 @@ var XQ=(function(){
       cpuRate:{pts:CR.pts,rank:RANKS[ci][0],w:CR.w,l:CR.l,d:CR.d,next:nx?nx[0]:null,toNext:nx?nx[1]-CR.pts:0,lo:RANKS[ci][1],hi:nx?nx[1]:null,hist:CR.hist},
       levels:LEVELS.map(l=>({n:l.n,name:l.name,desc:l.desc})),record:ls.get("record",{}),
       moves:P.moves.map(moveOut),result:P.result,practice:P.practice||null,thinking:playBusy&&P.turn!==P.human,msg:playMsg,eval:lastEv(P.moves),hint:P.hint,hintN:P.hintN||0,undoN:P.undoN||0,   /* 開發者 11/11 選 v3 規劃書 B03：這盤用過幾次提示、悔棋，給畫面標示用 */
-      legal:!P.result&&P.turn===P.human?legal(P.board,P.turn):[],check:!P.result&&inCheck(P.board,P.turn)?kingSq(P.board,P.turn):-1,engine:true}}
+      legal:!P.result&&P.turn===P.human?legal(P.board,P.turn):[],check:!P.result&&inCheck(P.board,P.turn)?kingSq(P.board,P.turn):-1,engine:true,td:P.td||null}}
   /* 評比循環第 3 輪（兩分頁同一瞬間寫入）：會改盤面的動作（PLAY_MUT）用 Web Locks 排隊，同一時間只有一個分頁在改；鎖裡面 ensureP 先重讀最新版，再照版本檢查決定接受或提示「已切換到最新」。不支援 Web Locks 的瀏覽器照舊只靠版本號 */
   function playPost(p,b){try{if(PLAY_MUT.has(p)&&typeof navigator!=="undefined"&&navigator.locks&&navigator.locks.request)return navigator.locks.request("xq-play-write",()=>playPostIn(p,b))}catch(e){}return playPostIn(p,b)}
   async function playPostIn(p,b){if(ensureP()&&PLAY_MUT.has(p)){saveLog("clash",P);try{window.dispatchEvent(new CustomEvent("xq-play-newer",{detail:{id:P.id}}))}catch(e){}return playState()}   /* 評比循環第 2 輪：畫面上那盤已經被另一個分頁下過＝這一下不算，改看最新的 */
-    if(p==="/play/new"){playNew(b.human==="b"?"b":"r",lvAdj(b,lvIn(b)),!b.pre&&!!b.ranked,b.pre||null,false,typeof b.arena==="string"&&/^[a-z]{2,8}$/.test(b.arena)?b.arena:null,false,jid(b.journey),b.lv);
+    if(p==="/play/new"){if(playBusy&&Date.now()-playSince>15000)try{if(typeof XQEngine!=="undefined"&&XQEngine.abort)XQEngine.abort()}catch(x){}playBusy=false;engFail=0;playNew(   /* 11/13 晚：卡住的那一步還在引擎排隊，新局不要排在它後面 */b.human==="b"?"b":"r",lvAdj(b,lvIn(b)),!b.pre&&!!b.ranked,b.pre||null,false,typeof b.arena==="string"&&/^[a-z]{2,8}$/.test(b.arena)?b.arena:null,false,jid(b.journey),b.lv);
       /* 開發者 11/11：茶肆盲棋（練功房的級數、看不到棋子）。對局編號結尾加 -b 當記號（存檔、收起來、換盤都帶著）：不記練功房戰績、不算我的棋力（04-stats skillRows） */
-      if(b.blind&&P&&!P.ranked&&kindOf(P)==="cpu"&&!/-b$/.test(P.id)){P.id+="-b";savePlay()}if(P&&!P.ranked&&b.rlv!=null&&Number.isInteger(+b.rlv)){P.rlv=Math.max(0,Math.min(RLV.length-1,+b.rlv+dxOf(b)));savePlay()}zgSet(b);playMsg="";setTimeout(playEngine,0)}
+      if(b.blind&&P&&!P.ranked&&kindOf(P)==="cpu"&&!/-b$/.test(P.id)){P.id+="-b";savePlay()}if(P&&!P.ranked&&b.rlv!=null&&Number.isInteger(+b.rlv)){P.rlv=Math.max(0,Math.min(RLV.length-1,+b.rlv+dxOf(b)));savePlay()}zgSet(b);if(b.td&&P&&P.journey&&window.XQ_TD){try{P.td=window.XQ_TD.boot(b.td,P,C)}catch(e){console.warn("[td]",e);P.td=null}savePlay()}playMsg="";setTimeout(playEngine,0)}   /* 黑洞陣地塔防：開局帶 td（m/07bht-td.js 的關卡設定） */
     else if(p==="/play/bonus"){   /* 意見回饋 313：石桌往事「回到當年」答對轉折加段位積分；每個轉折只能領一次 */
       const key=String(b.key||"").slice(0,80),pts=Math.max(1,Math.min(20,Math.round(+b.pts)||0)),K=ls.get("bonusKeys",{});
       if(!key)throw new Error("缺少題目代號");const R=cpuRate();
@@ -495,7 +511,9 @@ var XQ=(function(){
     else if(p==="/play/restore"){playRestore(b.id);playMsg="";setTimeout(playEngine,0)}   /* 評比循環第 2 輪：保存紀錄的「↩ 回到那一盤」 */
     else if(p==="/play/move"){const f=+b.f,t=+b.t;if(P.result)throw new Error("這局已經結束");if(P.turn!==P.human)throw new Error("還沒輪到你");
       if(!legal(P.board,P.turn).some(([x,y])=>x===f&&y===t))throw new Error("這步不合法");playApply(f,t);setTimeout(playEngine,0)}
-    else if(p==="/play/undo"){if(P.ranked)throw new Error("積分挑戰不能悔棋");/* 意見回饋 651：開發者 597 決定擂台也能用悔棋符，這裡原本還擋著（382 的舊規則），App 先扣了悔棋符、悔棋卻失敗——拿掉 *//* 意見回饋 380：電腦（擂主）還在想的時候也能悔棋——引擎算完會發現步數變了、自動丟掉那步 */
+    else if(p==="/play/td"){if(!P.td||!window.XQ_TD)throw new Error("這盤沒有招式");if(P.result)throw new Error("這局已經結束");if(P.turn!==P.human)throw new Error("還沒輪到你");   /* 黑洞陣地塔防：放招（不佔走棋） */
+      const o=window.XQ_TD.cast(P,b,C)||{};if(o.err)throw new Error(o.err);if(o.end)playEnd(o.end.w,o.end.why);savePlay();try{window.dispatchEvent(new Event("xq-play"))}catch(e){}}
+    else if(p==="/play/undo"){if(P.ranked)throw new Error("積分挑戰不能悔棋");if(P.td)throw new Error("黑洞陣地戰不能悔棋");/* 意見回饋 651：開發者 597 決定擂台也能用悔棋符，這裡原本還擋著（382 的舊規則），App 先扣了悔棋符、悔棋卻失敗——拿掉 *//* 意見回饋 380：電腦（擂主）還在想的時候也能悔棋——引擎算完會發現步數變了、自動丟掉那步 */
       const floor=P.practice?P.practice.base:0;if(P.moves.length<=floor)throw new Error(P.practice?"已經回到練習的起點":"你還沒走棋，不用悔棋");if(!P.moves.slice(floor).some(m=>m.by===P.human))throw new Error("你還沒走棋，不用悔棋");
       while(P.moves.length>floor){const m=P.moves.pop();if(m.by===P.human)break}P.undoN=(P.undoN||0)+1;P.result=null;P.hint=null;stateRebuild(P);savePlay();setTimeout(playEngine,0)}
     else if(p==="/play/hint"){throw new Error("挑戰電腦不提供提示，要靠自己");if(P.result||P.turn!==P.human)throw new Error("現在不能提示");
@@ -504,7 +522,7 @@ var XQ=(function(){
     else if(p==="/play/resign"){if(!P.result)playEnd(opp(P.human),"你認輸")}
     /* 開發者 11/11 選「人機遇待核給和局／悔棋」：裁判判循環「待核」時（亞洲棋例沒辦法自動判的循環），跟電腦下的人可以直接選和局，或退回自己上一步之前變著（不算悔棋次數） */
     else if(p==="/play/repdraw"){if(P.result||!(P.repetition&&P.repetition.pending))throw new Error("現在沒有待核的循環");playEnd(null,"循環待核，同意和局")}
-    else if(p==="/play/repundo"){if(P.result||!(P.repetition&&P.repetition.pending))throw new Error("現在沒有待核的循環");const floor=P.practice?P.practice.base:0;if(!P.moves.slice(floor).some(m=>m.by===P.human))throw new Error("沒有可以退回的棋");
+    else if(p==="/play/repundo"){if(P.td)throw new Error("黑洞陣地戰不能退回，可以選和局");if(P.result||!(P.repetition&&P.repetition.pending))throw new Error("現在沒有待核的循環");const floor=P.practice?P.practice.base:0;if(!P.moves.slice(floor).some(m=>m.by===P.human))throw new Error("沒有可以退回的棋");
       while(P.moves.length>floor){const m=P.moves.pop();if(m.by===P.human)break}P.result=null;P.hint=null;stateRebuild(P);savePlay();setTimeout(playEngine,0)}
     return playState()}
 

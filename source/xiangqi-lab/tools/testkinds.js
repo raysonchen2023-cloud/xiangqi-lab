@@ -75,6 +75,8 @@ const CLASSIFIED = new Set([
   "test-mainquest.js"   /* 11/13 新手體驗第一波：主線電影播放器 07mnf、星槎遠征令／下一步／大禮包 07mnq、殘局解開儀式、電影中通知排隊（行為 8、原始碼 3） */,
   "test-varengine.js"   /* 11/13 黑洞超展開新引擎 src/varengine.js＋worker：走法、擺棋規則、非標準陣容、將死困斃、今日異象、level／weaken；11/13 定案點數＋堆疊加價＋沈方庭九宮優惠（行為 20） */,
   "test-net-start.js"   /* 11/13 開局那一方第一步之前的每步 3 分鐘：每步剩餘照走、判超時不分岔、坐黑判得出紅方超時、重抓不往後挪（net.js arr／ackTurn myStart；行為 4） */,
+  "test-redblue-public.js",   /* 11/13 第 17 輪 F3 公開紅藍隊攻擊重現：tools/redblue-cases.js 逐案攻擊＋正常對照；還沒修的用 todo 保持失敗 */
+  "test-release-sync.js",   /* 11/13 第 17 輪 F1 同版閘門 tools/release-sync-check.js：版本不一致、刻意不發布的行、不該公開的檔都要擋 */
   "test-reload-guard.js"   /* 11/13 開發者 P1 iPhone 3D 絕殺後頁面重載又直接開第二盤：更新延後、對局頁網址改寫、重載後不開新局、勝負先寫入、賽後分析等特效、異常重載紀錄（m/02r-reloadguard.js；行為 8、混合 2、原始碼 2） */
 ]);
 /* 還沒逐項分類的檔（統計列為「待分類」）；新測試檔先放這裡，分好類再移到 CLASSIFIED */
@@ -101,7 +103,8 @@ function runFile(file) {
     const m = /^(not ok|ok) \d+ - (.*)$/.exec(line);
     if (!m) continue;
     const name = m[2].replace(/\s+# (SKIP|TODO)\b.*$/i, "").replace(/\\#/g, "#").replace(/\\\\/g, "\\");
-    res.push({ name, ok: m[1] === "ok" });
+    const sk = /\s# SKIP\b\s*(.*)$/i.exec(m[2]);   /* 11/14：SKIP＝略過（TAP 裡是 ok，但沒有跑），另外統計、不算通過 */
+    res.push({ name, ok: m[1] === "ok", todo: /\s# TODO\b/i.test(m[2]), skip: !!sk, why: sk ? sk[1].replace(/\\#/g, "#").replace(/\\\\/g, "\\") : undefined });   /* 第 17 輪 F3：todo＝還沒修的漏洞（預期失敗），另外統計 */
   }
   return res;
 }
@@ -113,12 +116,12 @@ function staticFile(file) {
 }
 /* 統計：{ files:[{file, items:[{name,ok,kind}], n:{行為:{all,pass},...}}], total:{...} } */
 function tally(mode) {
-  const z = () => Object.fromEntries(KINDS.map(k => [k, { all: 0, pass: 0 }]));
+  const z = () => Object.assign(Object.fromEntries(KINDS.map(k => [k, { all: 0, pass: 0, skip: 0 }])), { todo: { all: 0, xpass: 0 } });
   const total = z(), files = [];
   for (const file of listFiles()) {
     const items = (mode === "static" ? staticFile(file) : runFile(file)).map(x => ({ ...x, kind: kindOf(file, x.name) }));
     const n = z();
-    for (const it of items) for (const o of [n, total]) { o[it.kind].all++; if (it.ok) o[it.kind].pass++ }
+    for (const it of items) for (const o of [n, total]) { if (it.todo) { o.todo.all++; if (it.ok) o.todo.xpass++; continue } o[it.kind].all++; if (it.skip) o[it.kind].skip++; else if (it.ok) o[it.kind].pass++ }
     files.push({ file, items, n });
   }
   return { files, total };
@@ -128,8 +131,8 @@ module.exports = { kindOf, runFile, staticFile, tally, listFiles, CLASSIFIED, PE
 if (require.main === module && !process.env.NODE_TEST_CONTEXT) {
   const mode = process.argv.includes("--static") ? "static" : "run";
   const { files, total } = tally(mode);
-  const cell = o => mode === "static" ? String(o.all) : `${o.pass}/${o.all}`;
-  const head = mode === "static" ? "（只數呼叫處，沒有跑測試；迴圈產生的多項只算一次）" : "（實際跑過；格式＝通過／項數）";
+  const cell = o => mode === "static" ? String(o.all) : `${o.pass}/${o.all}` + (o.skip ? `（略過 ${o.skip}）` : "");   /* 略過的不算通過，另外標 */
+  const head = mode === "static" ? "（只數呼叫處，沒有跑測試；迴圈產生的多項只算一次）" : "（實際跑過；格式＝通過／項數，略過的另外標、不算通過）";
   console.log("測試三類統計" + head);
   console.log(["檔案", ...KINDS].join("\t"));
   for (const f of files) console.log([f.file, ...KINDS.map(k => cell(f.n[k]))].join("\t"));
@@ -139,7 +142,14 @@ if (require.main === module && !process.env.NODE_TEST_CONTEXT) {
     (total["待分類"].all ? `、待分類 ${cell(total["待分類"])}` : "") + `，共 ${sum} 項。`);
   const pend = files.filter(f => !classified(f.file)).map(f => f.file);
   if (pend.length) console.log("待分類的檔：" + pend.join("、"));
+  if (mode === "run") {   /* 11/14：通過、失敗、略過、預期失敗四欄分開，總數不再把略過算成通過 */
+    const sm = k => KINDS.reduce((a, x) => a + total[x][k], 0), P = sm("pass"), S = sm("skip");
+    console.log(`四欄合計：通過 ${P}、失敗 ${sum - P - S}、略過 ${S}、預期失敗 ${total.todo.all}（其中預期失敗卻通過 ${total.todo.xpass}）；三類項數合計 ${sum}（含略過），預期失敗另計。`);
+    const sk = files.flatMap(f => f.items.filter(x => x.skip && !x.todo).map(x => `  ﹣ ${f.file}：${x.name}${x.why ? "（" + x.why + "）" : ""}`));
+    if (sk.length) console.log("略過的項目（這個環境跑不了、沒有執行，不算通過）：\n" + sk.join("\n"));
+  }
+  if (total.todo.all) console.log(`預期失敗（還沒修的漏洞，node:test todo；不算進上面三類）：${total.todo.all} 項，其中「預期失敗卻通過」${total.todo.xpass} 項（${files.filter(f => f.n.todo.all).map(f => f.file + " " + f.n.todo.all).join("、")}）`);
   console.log("說明：原始碼比對只證明程式碼存在，不證明功能會動；測試由開發用的 AI 撰寫，不等於第三方驗證。");
   /* 11/13：有任何一項沒過就回報失敗（結束代碼 1），source/run-tests.js、verify-all.js 才不會把沒過的當成通過 */
-  if (mode === "run") { const bad = files.filter(f => KINDS.some(k => f.n[k].pass < f.n[k].all)).map(f => f.file); if (bad.length) { console.log("✖ 有測試沒過：" + bad.join("、")); process.exitCode = 1 } }
+  if (mode === "run") { const bad = files.filter(f => KINDS.some(k => f.n[k].pass + f.n[k].skip < f.n[k].all) || f.n.todo.xpass).map(f => f.file);   /* 預期失敗卻通過也算：漏洞可能修好了，要把 todo 改成一般測試 */ if (bad.length) { console.log("✖ 有測試沒過：" + bad.join("、")); process.exitCode = 1 } }
 }

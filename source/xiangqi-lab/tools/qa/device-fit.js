@@ -43,6 +43,9 @@ const DEVICES = [
   { id: "pro13", name: "iPad Pro 13 吋", kind: "pad", w: 1032, h: 1376, inset: PAD },
   { id: "pro13L", name: "iPad Pro 13 吋 橫向", kind: "pad", w: 1376, h: 1032, inset: PAD },
   { id: "split", name: "iPad 13 吋 橫向分割一半", kind: "pad", w: 678, h: 1024, inset: PAD },
+  // 11/13 開發者「這兩種電腦解析度有支援嗎」：意見回饋管理頁看到的兩位真人玩家（Windows 瀏覽器實際可用範圍）；kind:"pc"＝桌機身分（沒觸控、不是手機 UA）
+  { id: "pc1600", name: "Windows 電腦 1600×1073", kind: "pc", w: 1600, h: 1073, inset: { top: 0, bottom: 0, left: 0, right: 0 } },
+  { id: "pc1920", name: "Windows 電腦 1920×911", kind: "pc", w: 1920, h: 911, inset: { top: 0, bottom: 0, left: 0, right: 0 } },
   { id: "win", name: "iPad 小視窗（iPadOS 視窗模式）", kind: "pad", w: 500, h: 700, inset: { top: 0, bottom: 0, left: 0, right: 0 } },
   { id: "slim", name: "iPad 最窄側欄", kind: "pad", w: 320, h: 1000, inset: { top: 0, bottom: 0, left: 0, right: 0 } },
 ];
@@ -56,6 +59,13 @@ const PAGES = [
   { id: "canju", name: "一盞茶殘局", hash: "#/canju" },
   { id: "daily", name: "每日同題", hash: "#/daily" },
 ];
+/* 第 17 輪（11/13）：新內容的頁面，只在 --extra 時加量（舊版沒有這些頁，新舊對照只用上面 8 頁）。觀星臺要先打贏過黑洞才開：加 --store '{"bhWin":1}' */
+const EXTRA_PAGES = [
+  { id: "guanxing", name: "觀星臺", hash: "#/guanxing" },
+  { id: "ximarket", name: "西市", hash: "#/ximarket" },
+];
+/* 21 種行動裝置尺寸（第 15、16 輪的對照組；不含後來加的兩種 Windows 電腦） */
+const DEV21 = DEVICES.filter(d => d.kind !== "pc").map(d => d.id);
 // 一頁的版面判斷：m＝頁面裡量到的 {vw, vh, board:{x,y,w,h}|null, col:{w}|null, small:n, smallSample:[]}；回傳問題陣列（文字）
 function judgeLayout(m, dev, page) {
   const out = [], vw = m.vw, vh = m.vh, big = Math.min(vw, vh) >= 600;
@@ -87,7 +97,27 @@ function splitFalsePos(fit, chk) {
   fit.forEach((f, k) => { const c = chk && chk[k]; if ((f.type === "box" || f.type === "cut") && c && !c.visOut && c.hidOut) fp.push({ type: f.type, text: f.text, detail: f.detail, why: `超出框的只有看不見的字（${(c.hidTxt || []).join("、") || "—"}：opacity 0 或 visibility hidden），看得到的字都在框內` }); else keep.push(f) });
   return { keep, fp };
 }
-module.exports = { DEVICES, PAGES, judgeLayout, splitFalsePos, IPHONE_UA, IPAD_UA };
+/* 第 17 輪：同一次量測同時算「舊規則（第 15 輪）」和「新規則（第 16 輪三條）」，新舊版本才能用同一套判定器比。
+   x＝R.res[裝置][頁面]（device-fit.json 的一格）；回傳 {now:[問題], old:[問題], ex:{r1,r2,r3}}，問題＝{key, kind:"fit"|"lay", type, text, detail}
+   r1＝時辰鐘等「只有看不見的字超框」（splitFalsePos 的 fp）；r2＝外觀小於 44、但 9 點都點得到（hitBig）；r3＝只給讀屏的隱藏清單（.sci-sr 這類）
+   舊資料（第 17 輪以前的 json）沒有 smallOld，就當舊規則＝新規則（記 legacy:true） */
+const normKey = s => String(s || "").replace(/\(\d+×\d+\)/g, "").replace(/\d+(\.\d+)?/g, "#").replace(/\s+/g, " ").trim().slice(0, 80);
+function rulesBoth(x, dev, page) {
+  if (!x) return null;
+  const fitNow = (x.fit || []).map(f => ({ key: "fit:" + f.type + ":" + normKey(f.text), kind: "fit", type: f.type, text: f.text, detail: f.detail }));
+  const fpL = (x.fp || []).map(f => ({ key: "fit:" + f.type + ":" + normKey(f.text), kind: "fit", type: f.type, text: f.text, detail: f.detail, rule: "r1" }));
+  const m = x.m || {}, legacy = !Array.isArray(m.smallOld);
+  const layLine = t => ({ key: "lay:" + (/^可點元素小於/.test(t) ? "small" : normKey(t)), kind: "lay", type: /^可點元素小於/.test(t) ? "small" : "layout", text: t, detail: "" });
+  const layNow = (x.lay || []).map(layLine);
+  let layOld = layNow, r2 = [], r3 = [];
+  if (!legacy) {
+    const so = m.smallOld || [], all = so.map(s => s.t);
+    r2 = so.filter(s => s.why === "hit").map(s => s.t); r3 = so.filter(s => s.why === "sr").map(s => s.t);
+    layOld = judgeLayout(Object.assign({}, m, { small: all.length, smallSample: all }), dev, page).map(layLine);
+  }
+  return { legacy, now: fitNow.concat(layNow), old: fitNow.concat(fpL).concat(layOld), small: (m.smallSample || []).slice(), ex: { r1: fpL, r2, r3 } };
+}
+module.exports = { DEVICES, PAGES, EXTRA_PAGES, DEV21, judgeLayout, splitFalsePos, rulesBoth, normKey, IPHONE_UA, IPAD_UA };
 if (require.main !== module) return;
 
 // ================= 以下才開瀏覽器 =================
@@ -101,9 +131,33 @@ const argv = process.argv.slice(2), arg = (k, d) => argv.includes(k) ? argv[argv
 // --local：拍本機組好的版本（xiangqi-db/m.html＋m/*.js），跟 evidence-shots.js --local 同一套 localHtml()／serve()（直接從它的原始碼取出，規則只有一份），埠 --port 預設 8842
 const LOCAL = argv.includes("--local"), PORT = +arg("--port", 8842), http = require("http");
 const LOCAL_FN = (() => { if (!LOCAL) return null; const s = fs.readFileSync(path.join(__dirname, "evidence-shots.js"), "utf8").replace(/\r\n/g, "\n"), a = s.indexOf("// ---------- 本機模式"), b = s.indexOf("// ---------- 頁面裡量測"); if (a < 0 || b < 0) throw new Error("evidence-shots.js 裡找不到本機模式那段"); return eval(s.slice(a, b) + "\n;({ localHtml, serve })") })();
-const URL0 = LOCAL ? `http://127.0.0.1:${PORT}/xiangqi-lab/` : arg("--url", EV.LIVE_URL);
+/* 第 17 輪 --git <ref>：量公開倉庫某一版「已發布檔」（xiangqi-lab/site 的 git，例 origin/main＝正式站最新、854ff3c＝0931），本機伺服器原封不動送出，
+   git 裡沒有的大檔（data/ 圖片、音樂）用本機 site/ 工作區的；不連正式站。跟 p0-regress.js --git 同一個做法 */
+const GIT_REF = arg("--git", ""), GITM = !!GIT_REF, cp = require("child_process");
+function gitServe(ref) {
+  const SITE = path.join(HOME, "xiangqi-lab", "site"), git = a => cp.execFileSync("git", ["-C", SITE, ...a], { maxBuffer: 400e6, windowsHide: true });
+  const commit = git(["rev-parse", ref]).toString().trim(), tree = new Map();
+  for (const line of git(["-c", "core.quotePath=false", "ls-tree", "-r", ref]).toString("utf8").split(/\r?\n/)) { const x = /^\d+ blob ([0-9a-f]{40})\t(.+)$/.exec(line); if (x) tree.set(x[2], x[1]) }
+  const cache = new Map(), blob = p => { if (!tree.has(p)) return null; if (!cache.has(p)) cache.set(p, git(["cat-file", "blob", tree.get(p)])); return cache.get(p) };
+  const MIME = { ".html": "text/html; charset=utf-8", ".js": "text/javascript; charset=utf-8", ".mjs": "text/javascript; charset=utf-8", ".json": "application/json; charset=utf-8", ".css": "text/css", ".webp": "image/webp", ".png": "image/png", ".jpg": "image/jpeg", ".svg": "image/svg+xml", ".glb": "model/gltf-binary", ".wasm": "application/wasm", ".mp3": "audio/mpeg", ".woff2": "font/woff2" };
+  const COI = { "Cross-Origin-Embedder-Policy": "require-corp", "Cross-Origin-Opener-Policy": "same-origin", "Cross-Origin-Resource-Policy": "same-origin", "Cache-Control": "no-store" };
+  return new Promise((res, rej) => {
+    const srv = http.createServer((q, r) => {
+      let u = ""; try { u = decodeURIComponent(q.url.split("?")[0]) } catch (e) { r.writeHead(400); return r.end() }
+      if (!u.startsWith("/xiangqi-lab/")) { r.writeHead(404); return r.end() }
+      u = u.slice(13) || "index.html"; if (u.includes("..") || u === "sw.js") { r.writeHead(404); return r.end() }
+      let b = blob(u); if (!b) { const f = path.join(SITE, u); try { b = fs.readFileSync(f) } catch (e) { b = null } }
+      if (!b) { r.writeHead(404); return r.end() }
+      r.writeHead(200, Object.assign({ "Content-Type": MIME[path.extname(u)] || "application/octet-stream" }, COI)); r.end(b);
+    });
+    srv.on("error", rej); srv.listen(PORT, "127.0.0.1", () => res({ srv, commit }));
+  });
+}
+const URL0 = LOCAL || GITM ? `http://127.0.0.1:${PORT}/xiangqi-lab/` : arg("--url", EV.LIVE_URL);
 const OUTDIR = path.resolve(arg("--outdir", path.join(HOME, "xiangqi-db", "tools", "review_loop", "rounds", "r15", "devices"))), SHOTDIR = path.join(OUTDIR, "shots");
-const USE_DEV = DEVICES.filter(d => !arg("--dev") || arg("--dev").split(",").includes(d.id)), USE_PAGE = PAGES.filter(p => !arg("--page") || arg("--page").split(",").includes(p.id));
+/* --dev 21＝第 15、16 輪那 21 種行動裝置尺寸；--extra＝再加新內容的頁面（EXTRA_PAGES） */
+const DEVSEL = arg("--dev") === "21" ? DEV21 : arg("--dev") ? arg("--dev").split(",") : null;
+const USE_DEV = DEVICES.filter(d => !DEVSEL || DEVSEL.includes(d.id)), USE_PAGE = PAGES.concat(argv.includes("--extra") ? EXTRA_PAGES : []).filter(p => !arg("--page") || arg("--page").split(",").includes(p.id));
 // --store '{"sw7Wx":false,"shipAt":"song"}'：開頁前多寫幾個 App 設定（store 的鍵，自動加 m_ 前綴；值照 JSON）。11/13 首頁寬版圖要在「宋代原圖、關掉場景節氣天氣」才看得到，驗證時用
 const STORE0 = (() => { const s = arg("--store", ""); if (!s) return {}; try { return JSON.parse(s) } catch (e) { throw new Error("--store 要是 JSON 物件：" + e.message) } })();
 fs.mkdirSync(SHOTDIR, { recursive: true });
@@ -131,12 +185,22 @@ function MEASURE() {
     if (r.width < 44 && r.height < 44 && hitOK(e, r)) { hitBig.push(((e.innerText || e.getAttribute("aria-label") || e.title || e.tagName) + "").replace(/\s+/g, " ").trim().slice(0, 12) + `(${Math.round(r.width)}×${Math.round(r.height)})`); continue }
     if (r.width < 44 && r.height < 44) { const t = ((e.innerText || e.getAttribute("aria-label") || e.title || e.tagName) + "").replace(/\s+/g, " ").trim().slice(0, 12); if (!seen.has(t)) { seen.add(t); small.push(t + `(${Math.round(r.width)}×${Math.round(r.height)})`) } }
   }
+  /* 第 17 輪：同一頁也照「舊規則」（第 15 輪：只看框、讀屏隱藏清單也算）再數一次，每個標上被哪條新規則排除：why＝"hit"（9 點都點得到）、"sr"（讀屏隱藏清單）、""（新規則也算太小） */
+  const smallOld = [], seenOld = new Set();
+  for (const e of document.querySelectorAll("button,[role=button],a[href],[role=tab],input[type=checkbox],select")) {
+    if (!vis(e) || e.closest("svg,#axLive,.ax-sr")) continue; const r = e.getBoundingClientRect();
+    if (r.right <= 0 || r.left >= vw || r.bottom <= 0 || r.top >= vh || !(r.width < 44 && r.height < 44)) continue;
+    const t = ((e.innerText || e.getAttribute("aria-label") || e.title || e.tagName) + "").replace(/\s+/g, " ").trim().slice(0, 12); if (seenOld.has(t)) continue; seenOld.add(t);
+    smallOld.push({ t: t + `(${Math.round(r.width)}×${Math.round(r.height)})`, why: srOnly(e) ? "sr" : hitOK(e, r) ? "hit" : "", x: Math.round(r.left), y: Math.round(r.top) });
+  }
+  /* 第 17 輪：場景頁的入口標籤、首頁「下一步」的座標（Duo 闔起首頁重疊要逐個看位置） */
+  const spots = [...document.querySelectorAll("#view .shp-spot, #mnqNext, #view .hm-go")].filter(vis).map(e => { const r = e.getBoundingClientRect(); return { id: e.id || "", t: (e.innerText || e.getAttribute("aria-label") || "").replace(/\s+/g, " ").trim().slice(0, 12), x: Math.round(r.left), y: Math.round(r.top), w: Math.round(r.width), h: Math.round(r.height) } });
   // 滿版場景（11/13 07fl）：圖的框、#view 看得到的範圍、有沒有模糊底；入口標籤有沒有被裁到看不到的地方
   let scene = null; const SP = document.querySelector("#view .shp-page.cq"), V = document.getElementById("view");
   if (SP && V && vis(SP)) { const pr = SP.getBoundingClientRect(), vr = V.getBoundingClientRect(), vb = Math.min(vr.top + V.clientHeight, vh), bg = document.getElementById("xflBg");
     const cut = V.scrollHeight > V.clientHeight + 2 ? [] : [...SP.querySelectorAll(".shp-spot")]   /* #view 可以捲（手機直向圖比畫面高、橫放側欄）＝捲得到，不算裁掉 */.filter(vis).filter(e => { const r = e.getBoundingClientRect(); return r.top < Math.max(pr.top, vr.top) - 1 || r.bottom > Math.min(pr.bottom, vb) + 1 || r.left < Math.max(pr.left, vr.left) - 1 || r.right > Math.min(pr.right, vr.right) + 1 }).map(e => (e.innerText || "").replace(/\s+/g, " ").trim().slice(0, 10));
     scene = { x: pr.left - vr.left, w: pr.width, vw: vr.width, bg: !!(bg && !bg.hidden && bg.getBoundingClientRect().width > 0), mode: ["xfl-port", "r07-fit", "r07-side", "tt-fillx"].filter(c => V.classList.contains(c)).join(" "), cut } }
-  return { vw, vh, board: sv ? box(sv.getBoundingClientRect()) : null, col, small: small.length, smallSample: small, hitBig, kind: typeof MY_KIND !== "undefined" ? MY_KIND : "", scene };
+  return { vw, vh, board: sv ? box(sv.getBoundingClientRect()) : null, col, small: small.length, smallSample: small, hitBig, smallOld, spots, kind: typeof MY_KIND !== "undefined" ? MY_KIND : "", scene };
 }
 // 頁面裡重量「文字超框」：list＝[{x,y,w,h}]（COLLECT 量到的元素框）；用同一組選擇器找回框一樣的元素，逐個文字節點分「看得到／看不見」量（容許誤差跟 judgeOverflow 一樣：左右 1px、上下 4px）
 function TEXTVIS(list) {
@@ -176,10 +240,11 @@ async function gotoHash(page, h, wait) {
   let browser, srv = null;
   try {
     if (LOCAL) { const b = "local-" + new Date(Date.now() + 8 * 36e5).toISOString().replace(/\D/g, "").slice(0, 12); srv = await LOCAL_FN.serve(LOCAL_FN.localHtml(b)); log("本機伺服器", URL0, b) }
+    if (GITM) { const g = await gitServe(GIT_REF); srv = g.srv; R.git = { ref: GIT_REF, commit: g.commit }; log("公開倉庫已發布檔", GIT_REF, g.commit.slice(0, 10), URL0) }
     browser = await chromium.launch({ channel: "chrome", headless: true, args: ["--mute-audio"] });
     R.browser = "Chrome（headless）" + browser.version();
     for (const D of USE_DEV) {
-      const ctx = await browser.newContext({ viewport: { width: D.w, height: D.h }, deviceScaleFactor: 1, isMobile: true, hasTouch: true, userAgent: D.kind === "pad" ? IPAD_UA : IPHONE_UA, locale: "zh-TW" });
+      const ctx = await browser.newContext(D.kind === "pc" ? { viewport: { width: D.w, height: D.h }, deviceScaleFactor: 1, locale: "zh-TW" } : { viewport: { width: D.w, height: D.h }, deviceScaleFactor: 1, isMobile: true, hasTouch: true, userAgent: D.kind === "pad" ? IPAD_UA : IPHONE_UA, locale: "zh-TW" });
       try {
         await ctx.addInitScript(ST0 => {
           try {

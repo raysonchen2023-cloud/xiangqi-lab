@@ -1,0 +1,169 @@
+{
+ "schema": "xq-android-rebuild-record/1",
+ "builtAtUtc": "2026-11-13T02:26:57.586Z",
+ "method": "照 xiangqi-android/REBUILD.md 在全新資料夾重建（scripts/clean-rebuild.js）",
+ "fresh": {
+  "gradleUserHome": true,
+  "androidUserHome": true,
+  "npmCache": true,
+  "nodeModules": true,
+  "buildDirs": true
+ },
+ "source": {
+  "files": 101,
+  "treeSha256": "0de2fe4cb7e028bddcdc432b74e4391b3aff3168ca54592a64ddfec42536a14a",
+  "originalTreeSha256": "0de2fe4cb7e028bddcdc432b74e4391b3aff3168ca54592a64ddfec42536a14a"
+ },
+ "web": {
+  "origin": "https://github.com/raysonchen2023-cloud/xiangqi-lab.git",
+  "commit": "253d76925e8b9836a3567ea68e72b489dbfd1ccd",
+  "siteVersion": "20261113-0540",
+  "html": "f177580e9a2b",
+  "files": 517
+ },
+ "tools": {
+  "jdk": "Temurin-21.0.13+9 21.0.13+9-LTS",
+  "gradle": "8.14.3",
+  "gradleDistributionSha256": "ed1a8d686605fd7c23bdf62c7fc7add1c5b23b2bbc3721e661934ef4a4911d7c",
+  "agp": "8.13.0",
+  "compileSdk": "36",
+  "targetSdk": "36",
+  "minSdk": "24",
+  "androidxWebkit": "1.18.0",
+  "capacitor": "8.6.2",
+  "node": "v24.20.0",
+  "npm": "11.19.0",
+  "platformRevision": "2",
+  "buildTools": "35.0.0",
+  "buildToolsRevision": "35.0.0",
+  "gradleWrapperJarSha256": "7d3a4ac4de1c32b59bc6a4eb8ecb8e612ccd0cf1ae1e99f66902da64df296172",
+  "dependencyVerification": true
+ },
+ "manifest": {
+  "package": "com.raysonchen.xiangqiqianqiu",
+  "versionCode": "26111305",
+  "versionName": "20261113-0540",
+  "minSdk": "24",
+  "targetSdk": "36",
+  "compileSdk": "36",
+  "permissions": [
+   "android.permission.INTERNET",
+   "com.raysonchen.xiangqiqianqiu.DYNAMIC_RECEIVER_NOT_EXPORTED_PERMISSION"
+  ]
+ },
+ "signing": "參考建置與重建各用自己那個環境的 debug 金鑰（不是正式金鑰）；比對時拿掉簽章",
+ "artifacts": [
+  {
+   "name": "app-debug.apk",
+   "reference": {
+    "bytes": 101827302,
+    "sha256": "77d40d51ec9642f607c51ad2cd8a6ddfc573566c1385f7183818624b1830abc1",
+    "unsignedSha256": "cb430e80e64b09cc488f8740eee9bcb66003ae87e9baf9754d5d70af81c1e9fd",
+    "contentSha256": "80268c1836fc11ef67de741cf124aab541025892fe8b20e18e48bd590893626f",
+    "entries": 958,
+    "nonfree": []
+   },
+   "rebuilt": {
+    "bytes": 101827302,
+    "sha256": "22706796fd718e464f2b0ffcd483b21387ecedbe96654067e760bd80e1126ca1",
+    "unsignedSha256": "cb430e80e64b09cc488f8740eee9bcb66003ae87e9baf9754d5d70af81c1e9fd",
+    "contentSha256": "80268c1836fc11ef67de741cf124aab541025892fe8b20e18e48bd590893626f",
+    "entries": 958,
+    "nonfree": []
+   },
+   "identical": false,
+   "sameUnsignedBytes": true,
+   "sameContentExcludingSignature": true,
+   "sameDex": true,
+   "sameAssets": true,
+   "sameResources": true,
+   "diffs": [],
+   "ok": true
+  },
+  {
+   "name": "app-release.apk",
+   "reference": {
+    "bytes": 97617196,
+    "sha256": "73f3a732f3dad558ea7418fbb4a0d5861e04931d24e5af7eb7a14497b30d2714",
+    "unsignedSha256": "62ada3afd0e00152843084e9b934b3a7275e4fc6a862a0696fe18c5756e541c6",
+    "contentSha256": "03c614d181f1d2a0dafc6d7e12224806b18c613ec0ced0438f3ef5a683470929",
+    "entries": 953,
+    "nonfree": []
+   },
+   "rebuilt": {
+    "bytes": 97617196,
+    "sha256": "5dcdaadf367a36d797b2ab366dc9ad330aee2aebe82b07551580eea9b332d578",
+    "unsignedSha256": "62ada3afd0e00152843084e9b934b3a7275e4fc6a862a0696fe18c5756e541c6",
+    "contentSha256": "03c614d181f1d2a0dafc6d7e12224806b18c613ec0ced0438f3ef5a683470929",
+    "entries": 953,
+    "nonfree": []
+   },
+   "identical": false,
+   "sameUnsignedBytes": true,
+   "sameContentExcludingSignature": true,
+   "sameDex": true,
+   "sameAssets": true,
+   "sameResources": true,
+   "diffs": [],
+   "ok": true
+  },
+  {
+   "name": "app-release.aab",
+   "reference": {
+    "bytes": 97595729,
+    "sha256": "38953e3848efe4e22d373459410d1401028d9106ce91aa6e6ef47241e4260df9",
+    "unsignedSha256": "38953e3848efe4e22d373459410d1401028d9106ce91aa6e6ef47241e4260df9",
+    "contentSha256": "8f5aa2389508cda31c07955fa6265d17fff4d24e24c0fab581e72105a69aad3a",
+    "entries": 961,
+    "nonfree": []
+   },
+   "rebuilt": {
+    "bytes": 97595726,
+    "sha256": "161bc5d6e1b36dc7776cfe9f781022bd22a959d1f12098cccbf6d2d127ce5c52",
+    "unsignedSha256": "161bc5d6e1b36dc7776cfe9f781022bd22a959d1f12098cccbf6d2d127ce5c52",
+    "contentSha256": "8f5aa2389508cda31c07955fa6265d17fff4d24e24c0fab581e72105a69aad3a",
+    "entries": 961,
+    "nonfree": []
+   },
+   "identical": false,
+   "sameUnsignedBytes": false,
+   "sameContentExcludingSignature": true,
+   "sameDex": true,
+   "sameAssets": true,
+   "sameResources": true,
+   "diffs": [],
+   "ok": true
+  }
+ ],
+ "allMatch": true,
+ "steps": [
+  {
+   "step": "複製原生專案（只有會進版本控制的檔）",
+   "seconds": 0.3
+  },
+  {
+   "step": "取公開倉庫的指定 commit",
+   "seconds": 1.5
+  },
+  {
+   "step": "npm ci（全新快取）",
+   "seconds": 2.4
+  },
+  {
+   "step": "make-www（含 check-build）",
+   "seconds": 0.7
+  },
+  {
+   "step": "capacitor sync android",
+   "seconds": 0.8
+  },
+  {
+   "step": "gradlew assembleDebug（全新 Gradle 快取、全新 debug 金鑰）",
+   "seconds": 122
+  },
+  {
+   "step": "gradlew assembleRelease bundleRelease（暫時的 debug 金鑰）",
+   "seconds": 63.4
+  }
+ ]
+}

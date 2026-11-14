@@ -1,5 +1,6 @@
 /* 第 15 輪 X3 鍵值化：核心字串用鍵，英文模式回 07i18n.js I18N_KEY 的英文，其他（或沒有 07i18n）照原文 */
 function cgT(k,z,v){return typeof i18nT==="function"?i18nT(k,z,v):z}
+const CG_STK={k:"",t:0};   /* 11/13 晚：電腦這一步從什麼時候開始想（卡住 25 秒出「重新開一局」） */
 /* hspx P0 開發者 11/13「點下我的棋力沒反應，甚至出現第二張圖（畫面整個往上捲、下面一片空白）」：結果視窗的「看我的棋力 ›」以前靠 tick 事後綁 onclick，沒綁上就點不動；
    改成全域點擊委派：什麼時候按都有反應。先關視窗、把被 iOS 捲走的頁面捲回頂，再去「我的棋力」 */
 document.addEventListener("click",e=>{const g=e.target&&e.target.closest&&e.target.closest(".modal .rg-go");if(!g)return;e.preventDefault();e.stopPropagation();
@@ -13,6 +14,7 @@ function CpuGame(v,practicePage,mode){
   setTabs(false);gameLayout(v);
   let st=null,sel=-1,shownResult=null,busy=false,pHint=null;   // pHint：錯棋重練時在棋盤上畫 Pikafish 的建議
   const bd=Board(i=>tap(i));v.querySelector("#bbox").append(bd.svg);
+  try{window.cgPlay={tap:i=>tap(i),sel:()=>sel,rr:()=>{if(st)render(st)}}}catch(e){}   /* 11/14 黑洞塔防（07bht-td.js）：取消選取、預選的子輪到你時選起來、換視角立刻重畫 */
   // 🏯 朝代擂台：在公園 3D 裡打（意見回饋 319），沒開公園時先帶你去公園
   const arenaStart=(era,lv)=>{if(!parkOn()){store.set("park3d",true);setTimeout(()=>{draw();topBar()},0)}if(PARK&&PARK.era!==era){try{PARK.v.destroy()}catch(e){}PARK=null}
     store.set("cpuRanked",false);shownResult=null;sel=-1;post("/play/new",{human:"r",level:lv,arena:era,dx:typeof diffDx==="function"?diffDx():0}).then(()=>{toast(`🏯 ${ARENA[era].name}：${ARENA[era].hi}`)})};
@@ -83,7 +85,7 @@ function CpuGame(v,practicePage,mode){
   function tap(i){if(st&&!st.result&&(st.turn!==st.human||st.thinking)&&typeof pmvTap==="function"&&pmvTap(st,st.human,i,{redraw:()=>{if(st)render(st)}}))return;
     if(!st||st.result||st.turn!==st.human||st.thinking)return;
     if(sel>=0&&st.legal.some(([f,t])=>f===sel&&t===i)){const f=sel;sel=-1;
-      {const g=typeof bhxGuard==="function"?bhxGuard(st,f,i):null;if(g){if(g.hint)pHint={n:st.moves.length,f:g.hint[0],t:g.hint[1]};draw();return}}   /* 黑洞序局走錯：不送出，星樞提示（07bh-blackhole.js） */
+      {const g=typeof bhxGuard==="function"?bhxGuard(st,f,i):null;if(g){if(g.hint)pHint={n:st.moves.length,f:g.hint[0],t:g.hint[1]};draw();return}}{const g=typeof bhtlGuard==="function"?bhtlGuard(st,f,i):null;if(g){if(g.hint)pHint={n:st.moves.length,f:g.hint[0],t:g.hint[1]};draw();return}}   /* 黑洞序局走錯：不送出，星樞提示（07bh-blackhole.js）；塔防練習賽照劇本走（07bhtl-tdlearn.js bhtlGuard） */
       vibrate(15);return post("/play/move",{f,t:i})}
     sel=i===sel?-1:st.legal.some(([f])=>f===i)?i:-1;if(sel>=0)vibrate(5);draw()}
   function draw(){if(!st)return;const last=st.moves[st.moves.length-1],N=parkNpcOf(st),hb=v.querySelector("#bbox"),pk0=!!(PARK&&PARK.host===hb&&document.body.contains(PARK.v.el));
@@ -95,7 +97,7 @@ function CpuGame(v,practicePage,mode){
     const JS0=st.journey&&/^(b2)?h\d\d$/.test(st.journey)?jFindStage(st.journey):null,JOPP=LVB&&LVB.lvp.opp&&JCHAR[LVB.lvp.opp]?LVB.lvp.opp:String(st.journey||"").startsWith("char:")&&JCHAR[st.journey.slice(5)]?st.journey.slice(5):null;
     const BRG=!JS0&&!st.journey&&!st.arena&&!st.practice&&typeof hbBridge==="function"?hbBridge():null;   /* 11/11：從首頁進來的挑戰電腦＝橋上環景 */
     const OT=oppTalk(st,JOPP,N);   /* 意見回饋 826 追加：對面的人開口、贏、輸、和棋各說自己的話（07m3-opptalk.js） */
-    parkDraw(v.querySelector("#bbox"),bd,st.board,o,{tap,gid:st.id?"cpu:"+st.id:null,...(BRG?{bridge:true,ground:BRG.ground}:{}),bg:JS0?`data/park/j${JR[JS0.r].k}_360.webp`:BRG?BRG.bg:null,bgName:JS0?"雲河鎮・"+JR[JS0.r].name:innAnyAct(st.journey)?"🏮 "+innName(store.get("era","classic")):!st.journey&&!st.arena&&!st.practice&&typeof hbYardName==="function"?hbYardName():null,   /* 11/10：挑戰電腦在茶坊後園下 */   /* 意見回饋 530：在驛站下棋，標籤寫驛站，不是朝代園林 */arena:st.arena||null,gate:st.journey&&!st.arena?(k=>innAnyAct(st.journey)?{img:["data/inn/"+k+"_ink.webp","data/parkgate/"+k+"_ink.webp","data/inn/"+k+".webp"],icon:"🏮",title:"走進"+innName(k),sub:"旅人在燈下擺好棋盤了",bg:"#2b2a22",qk:k}:{img:["data/parkgate/"+k+"_ink.webp","data/parkgate/"+k+".webp","data/park/"+k+"_360.webp"],icon:"🍃",title:"走進"+parkName(k),sub:"石桌就在前面",bg:"#2b2a22",qk:k})(store.get("era","classic"))   /* 意見回饋 697：驛站旅人的對局，載入畫面和標籤都寫「〇〇的驛站」 */:(!st.journey&&!st.arena&&!st.practice&&!st.net?(typeof hbYardGate==="function"?hbYardGate("cpu"):typeof hbGate==="function"?hbGate("🤖","挑戰電腦","對手擺好棋盤了"):null):null),watchers:legendVisit(st),thinking:!!st.thinking||(!st.result&&st.turn!==st.human),botSide:st.human==="r"?"b":"r",result:st.result?(st.result.w||"draw"):null,hint:o.hint&&o.hint.length===1?[o.hint[0],o.hint[0]]:o.hint,   /* 意見回饋 607：只提示一顆子（錯棋重練提示一、二、提示棋）時傳同一格兩次，園子 3D 才畫得出黃圈（park3d 只畫兩格的提示） */
+    parkDraw(v.querySelector("#bbox"),bd,st.board,o,{tap,gid:st.id?"cpu:"+st.id:null,start:st.start||null,   /* 11/13：被吃的子照這盤的開局算（park3d CAPBASE；十三星系、黑洞塔防、石桌往事自訂局面） */...(BRG?{bridge:true,ground:BRG.ground}:{}),bg:JS0?`data/park/j${JR[JS0.r].k}_360.webp`:BRG?BRG.bg:null,bgName:JS0?"雲河鎮・"+JR[JS0.r].name:innAnyAct(st.journey)?"🏮 "+innName(store.get("era","classic")):!st.journey&&!st.arena&&!st.practice&&typeof hbYardName==="function"?hbYardName():null,   /* 11/10：挑戰電腦在茶坊後園下 */   /* 意見回饋 530：在驛站下棋，標籤寫驛站，不是朝代園林 */arena:st.arena||null,gate:st.journey&&!st.arena?(k=>innAnyAct(st.journey)?{img:["data/inn/"+k+"_ink.webp","data/parkgate/"+k+"_ink.webp","data/inn/"+k+".webp"],icon:"🏮",title:"走進"+innName(k),sub:"旅人在燈下擺好棋盤了",bg:"#2b2a22",qk:k}:{img:["data/parkgate/"+k+"_ink.webp","data/parkgate/"+k+".webp","data/park/"+k+"_360.webp"],icon:"🍃",title:"走進"+parkName(k),sub:"石桌就在前面",bg:"#2b2a22",qk:k})(store.get("era","classic"))   /* 意見回饋 697：驛站旅人的對局，載入畫面和標籤都寫「〇〇的驛站」 */:(!st.journey&&!st.arena&&!st.practice&&!st.net?(typeof hbYardGate==="function"?hbYardGate("cpu"):typeof hbGate==="function"?hbGate("🤖","挑戰電腦","對手擺好棋盤了"):null):null),watchers:legendVisit(st),thinking:!!st.thinking||(!st.result&&st.turn!==st.human),botSide:st.human==="r"?"b":"r",result:st.result?(st.result.w||"draw"):null,hint:o.hint&&o.hint.length===1?[o.hint[0],o.hint[0]]:o.hint,   /* 意見回饋 607：只提示一顆子（錯棋重練提示一、二、提示棋）時傳同一格兩次，園子 3D 才畫得出黃圈（park3d 只畫兩格的提示） */
       opp:(JOPP&&JCHAR_LOOK(JOPP,st.human==="r"?"b":"r"))||(innAnyAct(st.journey)?innLook(innAnyAct(st.journey),st.human==="r"?"b":"r"):null)||(st.arena&&CHAMP_LOOK(st.arena,st.human==="r"?"b":"r"))||(N?NPC_LOOK(N,st.human==="r"?"b":"r"):zgIs(st)?ZG_LOOK(st.human==="r"?"b":"r"):PIKA_LOOK(st.human==="r"?"b":"r")),oppHello:OT.hi,oppWin:OT.win,oppLose:OT.lose,...(typeof bhParkEx==="function"?bhParkEx(st):null),...(typeof bhOrbEx==="function"&&!(typeof bhIs==="function"&&bhIs(st))?bhOrbEx(st):null),...(typeof gxParkEx==="function"?gxParkEx(st):null)});   /* hspx（開發者 11/12）：黑洞星樞棋局換成巨盤模式、黑洞環景（07bh-blackhole.js） */
     if(typeof bhTick==="function")bhTick(st);if(typeof gxTick==="function")gxTick(st);
     if(typeof meGameTalk==="function")meGameTalk(st);   /* 意見回饋 668：你扮演的雲河七星開局、吃子時說一句 */
@@ -116,7 +118,7 @@ function CpuGame(v,practicePage,mode){
     if(!pHint&&!s.result){const H=store.get("rsHint",null);if(H&&H.id===s.id&&H.n===s.moves.length)pHint=H}   /* 回饋 838（開發者 11/9 選：全模式中斷接續）：讀回用掉的提示棋黃框 */
     const n0=lastN;st=s;lastN=s.moves.length;if(lastN>(n0||0))setTimeout(()=>repWarn(st,st.human),700);   /* 開發者 11/11 選規劃書方案 01 */if(typeof rsTouch==="function")try{rsTouch(s)}catch(e){}   /* 對局中途可接續：記下最後動到的時間（07m4-resume.js） */
     PARK_LK=!!s.arena;if(s.arena&&!s.result&&!parkOn()){store.set("park3d",true);setTimeout(()=>{draw();topBar()},0)}/* 意見回饋 319：朝代擂台的棋一律在公園 3D 裡 */if(!st.legal.some(([f])=>f===sel))sel=-1;
-    const lk=!!(st.arena&&!st.result);if(lk&&!parkOn())store.set("park3d",true);PARK_J=st.journey||null;const pr=!!st.practice;if(pr!==PARK_OFF){PARK_OFF=pr;arenaLock=null}
+    const lk=!!(st.arena&&!st.result);if(lk&&!parkOn())store.set("park3d",true);PARK_J=st.journey||null;const pr=!!st.practice||(typeof bhtlFlat==="function"&&bhtlFlat(st));if(pr!==PARK_OFF){PARK_OFF=pr;arenaLock=null}   /* 塔防練習賽：這盤一律平面棋盤（手機 3D 全盤遠景格子太小點不到），不改玩家的 park3d 設定（07bhtl-tdlearn.js） */
     if(lk!==arenaLock||(st.journey||null)!==jKey){arenaLock=lk;jKey=st.journey||null;topBar()}draw();try{lvWatch(st,v)}catch(e){}pmFire();   /* 第 12 輪 F3：輪到你、有排好的預走就走出 */
     if(!st.result&&!st.practice&&st.id&&st.moves.length<=(st.human==="b"?1:0)&&(st.board||[]).filter(Boolean).length>=32&&KJ_LAST!==st.id){   /* hspx 開發者 11/13「黑洞因為是殘局了，不應該再出現開頭通用的開局動畫」（序局黑洞 BHX_FEN）：從殘局開始的盤（第 0、1 步就不到 32 子）不播開局特效 */KJ_LAST=st.id;loadKaiju();const kj=()=>kaijuFx(bd.svg,"r");if(parkOn())kjWait(kj);else setTimeout(kj,350)}   /* 意見回饋 416：開局特效 */
     if(n0!=null&&lastN===n0+1&&!st.practice){const cue=openingCue(st.moves);if(cue)setTimeout(()=>openFx(bd.svg,cue[1],cue[0]),350)}
@@ -130,16 +132,22 @@ function CpuGame(v,practicePage,mode){
     const bt=playerHTML(me,typeof BHX_ID!=="undefined"&&st.journey===BHX_ID?"你":meCall(),PLAYER[me]+(st.ranked&&CR.next?`・再 ${CR.toNext} 分升 ${CR.next}`:""));
     const pB=v.querySelector("#pBot");if(pB.dataset.h!==bt){pB.dataset.h=bt;pB.innerHTML=bt}
     v.querySelector("#pTop").classList.toggle("on",!st.result&&st.turn===bot);v.querySelector("#pBot").classList.toggle("on",!st.result&&st.turn===me);
-    v.querySelector("#evf").style.width=evPct(st.eval&&st.eval.v)+"%";evMark(v,st.eval?st.eval.v:null);   /* 11/11 UI-11 */
+    {const E=st.td?null:st.eval;v.querySelector("#evf").style.width=evPct(E&&E.v)+"%";evMark(v,E?E.v:null)}   /* 黑洞陣地塔防（07bht-td.js）：黑子還沒全上場，盤面評估會誤導，不顯示 */   /* 11/11 UI-11 */
     /* 意見回饋 749（開發者）：錯棋重練的狀態列一直閃——每次輪詢（1.5 秒）都重寫 #stat 的文字，「」裡的著法（藍色可點的 .mvt，250 毫秒後才由 mvtWrap 加回）和 🔁 圖示（emoWalk）被洗掉又加回。
        改成先在 S2 算好要顯示的文字和 hot／wrap，跟上次寫進去的一樣就不動 DOM */
     const s2=v.querySelector("#stat"),S2={textContent:"",cls:{},classList:{add:(...a)=>a.forEach(k=>{S2.cls[k]=1}),toggle:(k,on)=>{if(on)S2.cls[k]=1;else delete S2.cls[k]}},after:x=>s2.after(x)};{const pa=v.querySelector("#pAct");if(pa&&!st.practice&&!pa.hidden)pa.hidden=true}
     if(!st.result&&st.repetition&&st.repetition.pending){S2.textContent=st.repetition.why;const pk=(st.id||"")+"|"+st.moves.length;if(repAsked!==pk){repAsked=pk;setTimeout(()=>{if(!st||st.result||!(st.repetition&&st.repetition.pending))return;   /* 開發者 11/11 選「人機遇待核給和局／悔棋」 */
       modal(`<div class="em">⚖️</div><h2>循環待核</h2><p>${esc(st.repetition.why||"這個循環裁判沒辦法自動判。")}</p><p class="muted" style="font-size:13px">跟電腦下沒有人工裁判，你可以直接選和局，或退回你上一步之前換一步走。</p><p style="font-size:13.5px;text-align:left;line-height:1.7">🤝 同意和局：這盤記一盤和局${st.ranked?"（晉級賽照和局算分）":""}。<br>↶ 悔一步變著：退回你上一步再換一步，不算用悔棋，也不影響「我的棋力」。</p>`   /* 開發者 11/11 選 ChatGPT UI-13：寫清楚兩個選擇的後果（local.js /play/repdraw＝playEnd 和局、晉級賽 cpuRateApply；/play/repundo 不加 undoN） */,[["🤝 同意和局",()=>post("/play/repdraw")],["↶ 悔一步變著",()=>post("/play/repundo")],["繼續下",null]])},500)}}else if(st.msg)S2.textContent=st.msg;else if(st.result)S2.textContent=st.result.why;
     else if(st.thinking)S2.textContent=cgT("game.thinking","🤔 思考中…")+(typeof pmvLabel==="function"?pmvLabel(st):"");   /* 第 12 輪 F3：排了預走就寫「⏳ 已預走」 */   /* Gemini 評估 11/8（介面圖示化）：狀態列短字加圖示；誰在想看上面那排亮起來的頭像 */
-    else{S2.textContent=st.check>=0?cgT("game.check","⚠ 被將軍！"):st.hint?"💡 提示："+st.hint.cn:cgT("game.yourMove","👉 輪到你")+(st.eval?`・${evt(st.eval.v)}`:"");S2.classList.toggle("hot",st.check>=0||!!st.hint)}
+    else{S2.textContent=st.check>=0?cgT("game.check","⚠ 被將軍！"):st.hint?"💡 提示："+st.hint.cn:cgT("game.yourMove","👉 輪到你")+(st.eval&&!st.td?`・${evt(st.eval.v)}`:"");S2.classList.toggle("hot",st.check>=0||!!st.hint)}
     if(st.practice&&!st.result&&!st.msg&&!(st.repetition&&st.repetition.pending))practiceBar(S2);
     if(s2.dataset.t!==S2.textContent){s2.dataset.t=S2.textContent;s2.textContent=S2.textContent}
+    /* 開發者 11/13 晚「iPad 玩家卡在第一盤棋，對方一直思考中，要能重開新的一局」：同一步想超過 25 秒，狀態列下面出現「🔄 重新開一局」（開新局選單）；不卡了就收起來 */
+    try{const k=(st.id||"")+"|"+st.moves.length;if(st.thinking&&!st.result){if(CG_STK.k!==k){CG_STK.k=k;CG_STK.t=Date.now()}}else CG_STK.k="";
+      const old=v.querySelector("#cgStuck"),late=!!(st.thinking&&!st.result&&CG_STK.k===k&&Date.now()-CG_STK.t>25000);
+      if(late&&!old){const d=document.createElement("div");d.id="cgStuck";d.style.cssText="display:flex;align-items:center;justify-content:center;gap:8px;flex-wrap:wrap;margin:6px 0;font-size:14px";
+        d.innerHTML=`<span class="muted">${esc(cgT("game.stuck","電腦想太久了？"))}</span><button type="button" class="btn ghost" style="min-height:40px">${esc(cgT("game.stuckNew","🔄 重新開一局"))}</button>`;
+        d.querySelector("button").onclick=()=>{vibrate(8);newSheet()};s2.after(d)}else if(!late&&old)old.remove()}catch(e){}
     for(const k of["hot","wrap"])if(s2.classList.contains(k)!==!!S2.cls[k])s2.classList.toggle(k,!!S2.cls[k]);
     ruleNote(v,st);asstNote(v,st);
     /* 11/11 笑面掌櫃：開局、玩家妙著／失著、領先落後、過 60 手時開口（07m3 zgWatch）；3D 園子開著就在園子裡說 */
@@ -286,7 +294,7 @@ async function review(rep,id,at){let it=null;for(let k=0;k<12&&!it;k++){try{cons
         for(let round=0;round<5&&cns.length<12;round++){const d=await api("/an/engine",{board:boards[boards.length-1],side,ms:round?900:2000,multipv:1});const l=(d.lines||[])[0];if(!l)break;if(!L)L=l;
           const before=cns.length;for(const u of(l.pvm||[]).slice(0,12-cns.length)){const f=sqI(u.slice(0,2)),t=sqI(u.slice(2,4));if(!boards[boards.length-1][f])break;push(f,t)}if(cns.length===before)break}
         return{L,boards,lasts,cns}})().then(({L,boards,lasts,cns})=>{if(!L&&cns.length<2){b.querySelector("#pvm").textContent="這個局面算不出來";return}
-        let k=0,tm=null;const ev=!L?"":"之後局面："+(L.mate!=null?(L.mate>0?"可以殺棋":"會被殺"):evt(L.vr));   /* 評比循環第 1 輪：局面句跟其他地方同一套白話（00-util evt），不再寫「優勢 1.2 兵」 */
+        let k=0,tm=null;const e0=!L?"":L.mate!=null?(L.mate>0?"可以殺棋":"會被殺"):evt(L.vr),ev=e0?"之後局面："+e0:"";   /* 評比循環第 1 輪：局面句跟其他地方同一套白話（00-util evt），不再寫「優勢 1.2 兵」 */
         const show=()=>{mb.draw(boards[k],{flip,last:lasts[k]});b.querySelector("#pvm").textContent=k?"第 "+k+" 步："+cns[k-1]+(k===1?"（電腦建議）":""):"練習起點・按「自動播放」看電腦怎麼下"+(ev?"・"+ev:"");
           b.querySelector("#pvl").innerHTML=cns.slice(0,boards.length-1).map((c,i)=>'<span style="'+(i===k-1?"font-weight:900;color:var(--accent)":"")+'">'+(i+1)+". "+esc(c)+"</span>").join("　")};
         b.querySelector("#pvp").onclick=()=>{clearInterval(tm);k=Math.max(0,k-1);show()};b.querySelector("#pvn").onclick=()=>{clearInterval(tm);k=Math.min(boards.length-1,k+1);show()};

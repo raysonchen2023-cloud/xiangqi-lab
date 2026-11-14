@@ -30,7 +30,7 @@ test("局面分析（只帶 fen、沒有 moves）照舊", () => {
 });
 test("〔原始碼〕挑戰電腦落子、提示都用 engPos；畫面訊息不放 e.message，細節留在 P.engErr", () => {
   assert.ok(!LOCAL.includes("XQEngine.search({moves:ucis()}"), "不能再只送標準局面＋步數");
-  assert.equal((LOCAL.match(/XQEngine\.search\(engPos\(\),/g) || []).length, 2, "落子、提示兩處");
+  assert.equal((LOCAL.match(/XQEngine\.search\(engPos\(\),/g) || []).length, 3, "落子、提示、黑洞陣地塔防的星樞（11/13）三處");
   const msg = LOCAL.split("\n").find(l => l.includes("電腦棋手一時沒想好"));
   assert.ok(msg && !/playMsg=[^;]*e\.message/.test(msg), "畫面訊息不能接技術訊息");
   assert.match(msg, /if\(P\)P\.engErr=em;console\.warn\("\[engine\]",em\)/);

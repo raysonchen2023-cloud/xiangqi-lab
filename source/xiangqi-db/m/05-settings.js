@@ -8,7 +8,7 @@
    e：伺服器上的密文不再只靠舊手機的計時器清——新手機解開後馬上清、碰到過期的也順手清；tools/mqtt-prune.js 也會清 x/ 底下過期或沒有說明的分段。
    f：連棋譜庫一起帶（IndexedDB xqlab 的 games:*：人機對局、真人對局、我的研究、看過的對局），壓縮加密後照樣分段；新手機用合併（同一盤 id 不重複），不刪新手機原有的棋譜。
    g：搬過來的資料改用新手機自己的裝置代號（舊手機留原本的），不帶「正在下哪一盤」和舊代號的刪除請求紀錄，兩支手機不會在大廳共用同一個代號 */
-const XF_ABC="ABCDEFGHJKMNPQRSTUVWXYZ23456789",XF_TTL=30*60000,XF_CH=120000,XF_DROP=["xq_net","m_srvDelReq","xq_netBind"];
+const XF_ABC="ABCDEFGHJKMNPQRSTUVWXYZ23456789",XF_TTL=30*60000,XF_CH=120000,XF_DROP=["xq_net","m_srvDelReq","xq_netBind","m_srvKey"];
 const xfNorm=c=>String(c||"").toUpperCase().replace(/[^A-Z0-9]/g,"").replace(/[IL]/g,"1").replace(/O/g,"0");
 async function xfKeys(code){const te=new TextEncoder(),c=xfNorm(code),h=new Uint8Array(await crypto.subtle.digest("SHA-256",te.encode("xqlab-xfer-id:"+c))),id=[...h.slice(0,10)].map(x=>x.toString(16).padStart(2,"0")).join("");
   const base=await crypto.subtle.importKey("raw",te.encode(c),"PBKDF2",false,["deriveKey"]);
@@ -238,7 +238,7 @@ fzApply();
    fzPull 把放大後超出圖框的標籤往內推回來（用 margin 推，因為 translate 已被港口視差 07n、角色讓位 07w 拿去用），推完再檢查疊到 */
 function fzUnpull(e){e.classList.remove("fz-sh");e.style.marginLeft="";e.style.marginTop=""}
 function fzPull(L,P){const pr=P.getBoundingClientRect(),l=Math.max(pr.left,0)+2,rr=Math.min(pr.right,innerWidth)-2,t=pr.top+2,b=pr.bottom-2,H=!!(P.dataset&&P.dataset.hmc);
-  L.forEach(e=>{if(H){e.classList.remove("fz-sh");e.style.marginTop=""}else fzUnpull(e);const q=e.getBoundingClientRect(),dx=H?0:q.left<l?l-q.left:q.right>rr?rr-q.right:0,dy=q.top<t?t-q.top:q.bottom>b?b-q.bottom:0;
+  L.forEach(e=>{if(e.classList.contains("mnq-dg"))return;   /* 11/14 r17 B1：07mnq mnqDodge 為了讓開底部「下一步」推上去的標籤（mnq-dg）歸它管，這裡不清 marginTop，不然 0.4 秒後又疊回去 */if(H){e.classList.remove("fz-sh");e.style.marginTop=""}else fzUnpull(e);const q=e.getBoundingClientRect(),dx=H?0:q.left<l?l-q.left:q.right>rr?rr-q.right:0,dy=q.top<t?t-q.top:q.bottom>b?b-q.bottom:0;
     if(Math.abs(dx)>=1||Math.abs(dy)>=1){e.classList.add("fz-sh");if(!H)e.style.marginLeft=Math.round(dx)+"px";e.style.marginTop=Math.round(dy)+"px"}})}   /* hspx 開發者 11/13「今日推薦還是會左右抖一下」：首頁的左右貼邊只歸 07z hmClamp 管（它在頁面上標 data-hmc）；這裡、07t3 r07Push、07f shpFit 看到 data-hmc 就不碰左右，不再互相蓋來蓋去 */
 /* 評比第 5 輪（截圖 B10、Gemini 改善清單第 1 項）：440 寬的練功房，段位牌在標準字級就被畫面左邊切掉。場景圖比畫面寬時，貼邊的標籤一律推回看得到的範圍（不只放大字級時）；標準字級只推回、不縮字 */
 function fzFit(){const r=document.documentElement;if(!["l","xl","xxl","max"].includes(r.dataset.fz)){document.querySelectorAll(".fz-no").forEach(e=>e.classList.remove("fz-no"));
@@ -303,6 +303,7 @@ function Settings(v){
       <div style="flex:1;min-width:0"><b>${esc(meName())}</b>   <!-- 意見回饋 668：選雲河七星的人也顯示對的名字 -->   <!-- 開發者 11/4：只寫「小帥Q版」或「小帥」，不寫「真實版」 --><br><span class="muted" style="font-size:13px">${esc(myName()||"還沒取名字")}</span></div>
       <button class="pill" id="obAgain">💾 存檔</button>${typeof DIFF!=="undefined"&&journey()?`<button class="pill" id="dfPick">🎚 ${esc(diffOf().n)}</button>`:""}   <!-- 意見回饋 675：航行難度，隨時可換 -->   <!-- 意見回饋 668：角色選定就鎖住，這裡改成存檔與讀檔 --><button class="pill" id="nmLook">改名</button></div>
     <a class="card row" href="#/weekly" style="gap:10px;align-items:center;margin-bottom:6px;color:inherit;text-decoration:none"><span style="font-size:24px">👨‍👩‍👧</span><span style="flex:1;min-width:0"><b>本週學習週報</b><br><span class="muted" style="font-size:13px">最近 7 天學了什麼，可以存成圖片給家長看</span></span><span class="muted">›</span></a>   <!-- 開發者 11/8 核准：家長學習週報（m/04c-weekly.js） -->
+    ${typeof dglSetRow==="function"?dglSetRow():""}   <!-- 開發者 11/13 晚（第 16 輪評比第 2 項）：平日體力開關，07dgl-stamina.js 產生整列並監聽 #dglSw -->
     ${(()=>{let p=0;try{p=(JSON.parse(localStorage.getItem("xq_cpuRate")||"null")||{}).pts||0}catch(e){}
       const TH=[1500,1150,1000,800,600,400,200,100,0],g=TH.findIndex(t=>p>=t)+1,lo=TH[g-1],hi=g>1?TH[g-2]:null,pc=hi?Math.round((p-lo)/(hi-lo)*100):100,ZH="〇一二三四五六七八九";
       return`<div class="sec-t">官階</div><div class="card" style="text-align:center"><div style="font-size:13px" class="muted"><span class="botN">${BOTN()}</span>目前的官階</div><div style="font-size:26px;font-weight:900;margin:2px 0">🏛 ${RANKT(store.get("era","classic"),g)}</div>
@@ -463,8 +464,13 @@ function srvDelRid(d,rnd){d=d||new Date();const p=n=>String(n).padStart(2,"0");
   const r=rnd||(()=>{try{const a=new Uint8Array(1);for(let k=0;k<64;k++){crypto.getRandomValues(a);if(a[0]<248)return a[0]%31}}catch(e){}return Math.floor(Math.random()*31)});
   let s="";for(let i=0;i<4;i++)s+=SRV_DEL_ABC[((r()%31)+31)%31];return"D-"+p(d.getMonth()+1)+p(d.getDate())+"-"+s}
 function srvDelTw(t){return new Date(+t+8*3600e3).toISOString().slice(0,16).replace("T"," ")}
-function srvDelRec(id,rid,at,forgot,ver,role){return{type:"🗑 刪除請求",text:["["+rid+"] 🗑 申請刪除伺服器上的資料","裝置代號："+id,"請求編號："+rid,"時間："+srvDelTw(at)+"（臺灣時間）",
-  "要刪：這個裝置代號送過的意見回饋、檢舉、玩家登記；線上大廳的戰績摘要和對局棋譜","上線狀態和戰績摘要："+(forgot?"手機已經自己清掉":"手機沒連上大廳、沒清到，請開發者清")].join("\n"),contact:"",id,name:"",rank:"",ver:ver||"",dev:"",page:"",role:role||"玩家",rid}}   /* rid 不在表單欄位裡、不會送出；帶著是讓 07x4 包的 postForm 在沒網路時丟錯（sendBeacon 沒網路也回 true），這筆才會進 fbQueue 排隊，也拿來在 fbQueue 認出是哪一筆 */
+/* 本人證明（11/14 隱私審查：裝置代號會在線上大廳公開廣播，拿到別人的代號就能冒名送刪除請求；開發者決定要修）：
+   手機第一次用到時產生一組只存在這支手機的祕密值（store srvKey，32 位 16 進位；轉移存檔不帶，新手機自己產生），
+   玩家登記附上它的雜湊「🔑 驗證碼」（srvKeyV），刪除請求附上祕密值本身「本人證明：…」；管理頁（feedback-api.gs delCheck_）算雜湊，跟這個代號最早登記的驗證碼比對 */
+function srvKey(){let k=store.get("srvKey","");if(!/^[0-9a-f]{32}$/.test(k)){const a=new Uint8Array(16);crypto.getRandomValues(a);k=[...a].map(x=>x.toString(16).padStart(2,"0")).join("");store.set("srvKey",k)}return k}
+async function srvKeyV(k){const d=await crypto.subtle.digest("SHA-256",new TextEncoder().encode("xqkey:"+k));return[...new Uint8Array(d)].map(x=>x.toString(16).padStart(2,"0")).join("").slice(0,16)}
+function srvDelRec(id,rid,at,forgot,ver,role,key){return{type:"🗑 刪除請求",text:["["+rid+"] 🗑 申請刪除伺服器上的資料","裝置代號："+id,"請求編號："+rid,"時間："+srvDelTw(at)+"（臺灣時間）",
+  "要刪：這個裝置代號送過的意見回饋、檢舉、玩家登記；線上大廳的戰績摘要和對局棋譜","上線狀態和戰績摘要："+(forgot?"手機已經自己清掉":"手機沒連上大廳、沒清到，請開發者清")].concat(key?["本人證明："+key]:[]).join("\n"),contact:"",id,name:"",rank:"",ver:ver||"",dev:"",page:"",role:role||"玩家",rid}}   /* rid 不在表單欄位裡、不會送出；帶著是讓 07x4 包的 postForm 在沒網路時丟錯（sendBeacon 沒網路也回 true），這筆才會進 fbQueue 排隊，也拿來在 fbQueue 認出是哪一筆 */
 function srvDelList(){const L=store.get("srvDelReq",[]);return Array.isArray(L)?L.filter(x=>x&&typeof x.rid==="string"&&SRV_DEL_RE.test(x.rid)):[]}
 function srvDelState(x){if(!x)return"";if(x.st==="sent")return"sent";const q=store.get("fbQueue",[])||[];return q.some(r=>r&&(r.rid===x.rid||String(r.text||"").indexOf("["+x.rid+"]")===0))?"q":"sent"}
 function srvDelLine(){const x=srvDelList().slice(-1)[0];if(!x)return"";return"上次申請："+x.rid+"（"+srvDelTw(x.at)+"，"+(srvDelState(x)==="sent"?"✅ 已從手機送出":"📮 排隊中，有網路時自動送出")+"），開發者會在 30 天內處理"}
@@ -473,7 +479,8 @@ async function srvDelSend(now){now=now||Date.now();const id=meInfo().id,have=new
   try{store.set("repOff",true)}catch(e){}
   const role=typeof DEVMODE==="function"&&DEVMODE()?"開發者":"玩家",ver=String(window.XQ_BUILD||"").slice(0,20);
   store.set("srvDelReq",srvDelList().concat({rid,at:now,st:"q",forgot}).slice(-10));
-  const ok=await sendRecord(srvDelRec(id,rid,now,forgot,ver,role));
+  let key="";try{key=srvKey()}catch(e){}
+  const ok=await sendRecord(srvDelRec(id,rid,now,forgot,ver,role,key));
   if(ok){const L=srvDelList(),x=L.find(q=>q.rid===rid);if(x){x.st="sent";store.set("srvDelReq",L)}}
   return{rid,id,ok,forgot}}
 /* ---------- 申請刪除伺服器資料：以上 ---------- */
@@ -573,7 +580,7 @@ function feedbackSheet(){let type="🐞 錯誤";
     const paintF=()=>{ffl.innerHTML=atts.map((a,i)=>`<span class="fch">📎 <em>${esc(a.name)}</em><span class="muted">${(a.text.length/1000).toFixed(1)}k 字</span><a href="#" data-fx="${i}" aria-label="移除">✕</a></span>`).join("");ffl.querySelectorAll("[data-fx]").forEach(x=>x.onclick=e=>{e.preventDefault();atts.splice(+x.dataset.fx,1);paintF()})};
     ff.onchange=async()=>{const fs=[...(ff.files||[])];ff.value="";for(const f of fs){if(atts.length>=3){toast("最多 3 個檔案");break}if(f.size>200*1024){toast(`${f.name} 超過 200KB`);continue}
       try{atts.push({name:f.name,text:await f.text()})}catch(e){toast("讀不到 "+f.name)}}paintF()};
-    const paintI=()=>{fps.innerHTML=imgs.map((d,i)=>`<span style="position:relative;display:inline-block"><img src="${d}" alt="" style="height:72px;max-width:96px;border-radius:8px;border:1px solid var(--line);display:block"><button data-x="${i}" class="pill" style="position:absolute;top:-8px;right:-8px;padding:0 7px;line-height:22px">✕</button></span>`).join("");
+    const paintI=()=>{fps.innerHTML=imgs.map((d,i)=>`<span style="position:relative;display:inline-block"><img src="${d}" alt="" style="height:72px;max-width:96px;border-radius:8px;border:1px solid var(--line);display:block"><button data-x="${i}" class="pill" aria-label="移除這張圖" style="position:absolute;top:-8px;right:-8px;padding:0 7px;line-height:22px">✕</button></span>`).join("");
       fps.querySelectorAll("[data-x]").forEach(x=>x.onclick=()=>{imgs.splice(+x.dataset.x,1);paintI()})};
     fi.onchange=async()=>{const fs=[...(fi.files||[])];fi.value="";if(!fs.length)return;if(imgs.length+fs.length>MAXI)toast(`最多 ${MAXI} 張，只取前面幾張`);
       for(const f of fs.slice(0,MAXI-imgs.length)){try{imgs.push(await shrinkImage(f))}catch(e){toast(e.message)}}paintI()};
@@ -601,9 +608,10 @@ const useFmt=ms=>{const m=Math.round(ms/60000);return m>=60?`${Math.floor(m/60)}
 function useSummary(){const S=store.get("useStat",null);if(!S||!S.t)return"";const P={...(S.p||{})};if(P.ship){P["雲河星槎"]=(P["雲河星槎"]||0)+P.ship;delete P.ship}   /* 意見回饋 724：星槎新頁（#/ship/...）以前記成 ship，併進雲河星槎 */
   const top=Object.entries(P).sort((a,b)=>b[1]-a[1]).slice(0,3).map(([k,v])=>`${k} ${useFmt(v)}`);return`總共用了 ${useFmt(S.t)}・最常待：${top.join("、")}`}
 // 線上 ID 登記：名字或段位有變、或超過 7 天，就送一筆「玩家」紀錄到同一個表單（意見回饋 708：多用了 30 分鐘以上、距離上次超過一天也送，時間才跟得上）
-async function reportPlayer(){if(!OFF||!FEEDBACK_FORM.action)return;if(navigator.webdriver)return;if(typeof fnTest==="function"&&fnTest())return;   /* 11/12：Claude 在內建瀏覽器設了測試房（xq_netRoot）拍截圖，還是送出玩家登記「棋友28AB」被當成真人；設了測試房或本機就不送 */   /* 意見回饋 652：自動化測試（Playwright 等）開的 App 不送玩家登記，名單才分得清真人 */if(/^(localhost|127\.|\[::1\])/.test(location.hostname))return;   /* 電腦本機測試不送玩家紀錄（第 502、504 列是測試時誤送的） */if(store.get("repOff",false)||(typeof fmNetOff==="function"&&fmNetOff()))return;   /* 上架隱私整理 11/10：玩家可以在設定關掉登記，家長關掉線上大廳時也不送 */const i=await feedbackInfo();try{const pn=typeof window.XQ_PUBNAME==="function"?window.XQ_PUBNAME(meInfo()):"";if(pn)i.name=pn}catch(e){}i.page="";   /* 登記只送大廳對外的名字（選稱號就是稱號），不送玩家自取的名字，也不送目前在哪一頁 */const key=i.id+"|"+i.name+"|"+i.rank.split(" ")[0],last=store.get("playerRep",null);
+async function reportPlayer(){if(!OFF||!FEEDBACK_FORM.action)return;if(navigator.webdriver)return;if(typeof fnTest==="function"&&fnTest())return;   /* 11/12：Claude 在內建瀏覽器設了測試房（xq_netRoot）拍截圖，還是送出玩家登記「棋友28AB」被當成真人；設了測試房或本機就不送 */   /* 意見回饋 652：自動化測試（Playwright 等）開的 App 不送玩家登記，名單才分得清真人 */if(/^(localhost|127\.|\[::1\])/.test(location.hostname))return;   /* 電腦本機測試不送玩家紀錄（第 502、504 列是測試時誤送的） */if(store.get("repOff",false)||(typeof fmNetOff==="function"&&fmNetOff()))return;   /* 上架隱私整理 11/10：玩家可以在設定關掉登記，家長關掉線上大廳時也不送 */const i=await feedbackInfo();try{const pn=typeof window.XQ_PUBNAME==="function"?window.XQ_PUBNAME(meInfo()):"";if(pn)i.name=pn}catch(e){}i.page="";   /* 登記只送大廳對外的名字（選稱號就是稱號），不送玩家自取的名字，也不送目前在哪一頁 */const key=i.id+"|"+i.name+"|"+i.rank.split(" ")[0]+"|k1",last=store.get("playerRep",null);   /* |k1：11/14 加本人證明，舊版登記過的玩家更新後馬上補送一次（帶驗證碼） */
   const ut=((store.get("useStat",null)||{}).t)||0;if(last&&last.k===key&&Date.now()-last.at<7*864e5&&!(Date.now()-last.at>864e5&&ut-(last.u||0)>=18e5))return;
-  if(await sendRecord(Object.assign(i,{type:"👤 玩家",text:useSummary(),contact:""})))store.set("playerRep",{k:key,at:Date.now(),u:ut})}
+  let kv="";try{if(typeof srvKeyV==="function")kv="🔑 "+await srvKeyV(srvKey())}catch(e){}
+  if(await sendRecord(Object.assign(i,{type:"👤 玩家",text:[useSummary(),kv].filter(Boolean).join("\n"),contact:""})))store.set("playerRep",{k:key,at:Date.now(),u:ut})}
 setTimeout(()=>{flushFeedback();reportPlayer()},8000);window.addEventListener("online",()=>setTimeout(flushFeedback,2000));
 
 // ================= 意見回饋管理（開發者）：打開 Google 上的管理頁 =================
@@ -751,7 +759,7 @@ function talk(s,plies,graded,ph,score){if(score==null)return[];const sg=s==="r"?
       :`${PN[hi[0]]}最好（${hi[1].score} 分），${PN[lo[0]]}最需要加強（${lo[1].score} 分）。`+(lo[0]==="open"?"可以多看開局譜，熟悉前十回合的常見走法。":lo[0]==="end"?"殘局要算得更細，建議多練古典殘局譜。":"中局要多注意對方的威脅再出手。")})}
   // 優勢易手：局勢從這方有利（≥1.5 兵）變成不利，或反過來
   let lead=0;for(const m of plies){if(m.ev==null)continue;const v=sg*m.ev,now=v>=150?1:v<=-150?-1:0;
-    if(now&&lead&&now!==lead)T.push({t:now>0?"翻盤":"被翻盤",ply:m.ply,x:`第 ${rnd(m.ply)} 回合${m.by===s?"你":"對方"}走${m.cn}之後，局勢${now>0?"轉成你有利":"變成對方有利"}（${evt(m.ev)}）。`});
+    if(now&&lead&&now!==lead)T.push({t:now>0?"翻盤":"被翻盤",ply:m.ply,x:`第 ${rnd(m.ply)} 回合${m.by===s?"你":"對方"}走${m.cn}之後，局勢${now>0?"轉成你有利":"變成對方有利"}${evt(m.ev)?"（"+evt(m.ev)+"）":""}。`});
     if(now)lead=now}
   // 最大失誤：錯過殺棋、敗著、失著
   const bad=graded.filter(m=>m.q==="失著"||m.q==="敗著").sort((a,b)=>b.loss-a.loss).slice(0,3);

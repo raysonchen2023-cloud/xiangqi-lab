@@ -839,8 +839,10 @@ function Board(onTap,onSwipe){
       const orig=pieceEls[p0.sq],cl=orig.cloneNode(true);orig.style.opacity=".25";
       cl.style.cssText="transform-box:fill-box;transform-origin:center;pointer-events:none;filter:drop-shadow(0 12px 10px rgba(0,0,0,.45))";svg.append(cl);
       p0.drag={cl,orig};vibrate(8)}
-    const q=svgPt(e);p0.drag.cl.style.transform=`translate(${q.x-X(p0.sq)}px,${q.y-Y(p0.sq)-14}px) scale(1.22)`});   // 拿在手上：放大、浮起來、陰影
-  const endDrag=e=>{const d=p0.drag;d.cl.remove();d.orig.style.opacity="";const t=sqAt(e);p0=null;if(t>=0&&t!==lastO.sel){dropNoAnim=true;tapGo(t);setTimeout(()=>{dropNoAnim=false},3000)}};   /* 開發者 11/11 選 ChatGPT UI 報告 UI-07：拖曳放下也走 tapGo——開了「落子前再確認」就先只預定（棋子回原位、落點標出來），再點一次同一點才走；沒開照舊直接走 */
+    const q=svgPt(e);p0.drag.cl.style.transform=`translate(${q.x-X(p0.sq)}px,${q.y-Y(p0.sq)-(typeof bhtdLift==="function"?bhtdLift(svg):14)}px) scale(1.22)`});   /* 11/14 黑洞塔防：浮在手指上方 45px（07bht-td.js bhtdLift） */   // 拿在手上：放大、浮起來、陰影
+  const endDrag=e=>{const d=p0.drag,up=typeof bhtdLift==="function"?bhtdLift(svg,1):0,t=sqAt(up?{clientX:e.clientX,clientY:e.clientY-up}:e);p0=null;
+    if(up&&!(lastO.targets||[]).includes(t)){d.cl.style.transition="transform .2s ease-out";d.cl.style.transform="translate(0px,0px) scale(1)";setTimeout(()=>{d.cl.remove();d.orig.style.opacity=""},210);return}   /* 11/14 塔防：放開不是合法落點＝200ms 彈回，選取留著 */
+    d.cl.remove();d.orig.style.opacity="";if(t>=0&&t!==lastO.sel){dropNoAnim=true;tapGo(t);setTimeout(()=>{dropNoAnim=false},3000)}};   /* 開發者 11/11 選 ChatGPT UI 報告 UI-07：拖曳放下也走 tapGo——開了「落子前再確認」就先只預定（棋子回原位、落點標出來），再點一次同一點才走；沒開照舊直接走 */
   svg.addEventListener("pointercancel",()=>{if(p0&&p0.drag){p0.drag.cl.remove();p0.drag.orig.style.opacity=""}p0=null});
   svg.addEventListener("pointerup",e=>{axLastPU=Date.now();if(!p0)return;if(p0.drag)return endDrag(e);   /* 回饋 847：記下一般點選的時間，讀螢幕格子那層才不會同一下又點一次 */const dx=e.clientX-p0.x,dy=e.clientY-p0.y;
     if(onSwipe&&Math.abs(dx)>45&&Math.abs(dx)>Math.abs(dy)*1.3){onSwipe(dx<0?1:-1);p0=null;return}
@@ -954,7 +956,8 @@ function tmxStrip(box,moves,onPick){if(!box||!moves)return;const k=box.dataset.k
     if(q&&TMX_QS.includes(q.textContent)){q.dataset.tq=q.textContent;if(m.loss!=null)q.dataset.tl=m.loss;if(m.ev!=null&&isFinite(+m.ev))q.dataset.te=m.ev;else delete q.dataset.te;if(m.by)q.dataset.tb=m.by;const tr=tmxRisk(q.textContent,m);if(tr)q.dataset.tr=tr;else delete q.dataset.tr;q.setAttribute("aria-label",tmxPlain(q.textContent,m.loss,m.ev,m.by)+tr)}   /* te、tb：走完的分數、誰走的（評比循環第 1 輪：評等泡泡接一句「走完整盤誰好」） */
     if(!onPick)c.onclick=()=>tmxMove(c,m,i)});
   setTimeout(()=>{try{tmxFirst(box)}catch(e){}},400)}
-function tmxFirst(box){if(!box.isConnected||!box.offsetParent||document.querySelector(".tmx-bub")||Date.now()-TMX_T<3000)return;
+function tmxFirst(box){if(typeof bhtlHush==="function"&&bhtlHush())return;   /* 塔防練習賽進行中先不跳（07bhtl-tdlearn.js），練完照常 */
+  if(!box.isConnected||!box.offsetParent||document.querySelector(".tmx-bub")||Date.now()-TMX_T<3000)return;
   const seen=store.get("tmxSeen",[])||[],br=box.getBoundingClientRect(),on=box.querySelector(".chip.on")||box.lastElementChild,oc=on?on.getBoundingClientRect():br,cx=oc.left+oc.width/2;let best=null,bd=1e9;
   box.querySelectorAll(".q[data-tq]").forEach(q=>{if(seen.includes(q.dataset.tq))return;const r=q.getBoundingClientRect();if(!r.width||r.left<br.left-2||r.right>br.right+2)return;const d=Math.abs(r.left+r.width/2-cx);if(d<bd){bd=d;best=q}});
   if(!best)return;const g=best.dataset.tq;
@@ -974,7 +977,7 @@ document.addEventListener("click",e=>{const t=e.target;if(!t||!t.closest)return;
 const tmxVis=el=>{if(!el||!el.offsetParent||el.closest(".tmx-bub"))return false;const r=el.getBoundingClientRect();if(!(r.width>0&&r.top>=50&&r.bottom<=innerHeight-60&&r.left>=0&&r.right<=innerWidth))return false;return !tmxClipped(el,r)};
 /* 回饋 872／873：記譜在可捲的框裡被裁掉（例如漂流瓶的說明被擠成一條線）就不算看得到，泡泡不要指著看不見的字 */
 function tmxClipped(el,r){try{for(let p=el.parentElement;p&&p!==document.body;p=p.parentElement){const s=getComputedStyle(p);if(s.overflow==="visible"&&s.overflowY==="visible")continue;const q=p.getBoundingClientRect();if(r.top<q.top-1||r.bottom>q.bottom+1)return true}}catch(e){}return false}
-function tmxMvtHint(){if(TMX_MV||TMX_MVT)return;if(![...document.querySelectorAll(".mvt")].some(tmxVis))return;
+function tmxMvtHint(){if(TMX_MV||TMX_MVT||(typeof bhtlHush==="function"&&bhtlHush()))return;if(![...document.querySelectorAll(".mvt")].some(tmxVis))return;
   TMX_MVT=setTimeout(()=>{TMX_MVT=0;if(TMX_MV||document.querySelector(".tmx-bub,.kjfx,.pkhint")||fxBusy())return;const y=[...document.querySelectorAll(".mvt")].find(tmxVis);if(!y)return;
     if(tmxBub(y,`💡 藍色虛線的走法（像「${esc(y.dataset.mv)}」）<b>點一下</b>，就會在棋盤上畫箭頭，還會用白話說它怎麼走。`,8000)){TMX_MV=true;store.set("tmxMvt",true);TMX_T=Date.now()}},1500)}
 

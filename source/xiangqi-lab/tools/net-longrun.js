@@ -41,7 +41,8 @@ function skewable(P) {
 }
 const pct = (a, p) => { if (!a.length) return null; const s = a.slice().sort((x, y) => x - y); return s[Math.min(s.length - 1, Math.floor(p * s.length))] };
 const dist = a => ({ n: a.length, p50: pct(a, .5), p90: pct(a, .9), p99: pct(a, .99), max: a.length ? Math.max(...a) : null });
-const coreOf = g => g && JSON.stringify([g.id, g.red && g.red.id, g.black && g.black.id, g.moves, g.result || null, g.draw || null]);
+/* 第 16 輪第 5 項：「不計分」標記 ns 也要四方一字不差 */
+const coreOf = g => g && JSON.stringify([g.id, g.red && g.red.id, g.black && g.black.id, g.moves, g.result || null, g.draw || null, g.ns || null]);
 
 /* 一個棋手：只看自己這支手機畫面上的局面（P.net.game()），輪到自己就想一下再走；下到 target 步以後：一半認輸、一半走完這步再提和；看到對方提和就同意 */
 function player(S, P, seed, ctl) {
@@ -119,12 +120,13 @@ async function longRun(sc, o) {
   }
   if (sc.skew && sc.skew.jump) { const j = sc.skew.jump; S.add(() => { ev.jumps++; const P = PH[j.who]; P.skew(P.ctx.__SK + j.by) }, Math.round(j.at * hours * HOUR), 0, "sim") }
   /* 每支手機每盤每一步第一次出現在畫面上的時間；每盤第一次出現結果的時間 */
-  const seen = new Map(), firstRes = new Map(), mover = new Map();
+  const seen = new Map(), firstRes = new Map(), mover = new Map(), firstNs = new Map();
   for (const P of [A, K, W]) P.net.on("game", () => {
     const g = P.net.game(); if (!g || !g.id) return;
     const k = P.tag + "|" + g.id, have = seen.get(k) || 0;
     for (let i = have + 1; i <= g.moves.length; i++) { seen.set(P.tag + "|" + g.id + "|" + i, S.now); const sd = (i - 1) % 2 ? "b" : "r"; if (P !== W && P.net.side() === sd && !mover.has(g.id + "|" + i)) mover.set(g.id + "|" + i, { P, at: S.now }) }
     if (g.moves.length > have) seen.set(k, g.moves.length);
+    if (g.ns && !firstNs.has(g.id)) firstNs.set(g.id, S.now);
     if (g.result) { const rk = g.id + "|" + JSON.stringify(g.result) + "|" + g.moves.length; if (!firstRes.has(rk)) firstRes.set(rk, S.now) }   /* 同一盤可能先出現一個結果、後來被改判（斷線中落的子送到）：照最後那個結果第一次出現的時間算 */
   });
   const ctl = { stop: false, acts: 0, selfFlag: 0, think: sc.think || [2000, 20000] };
@@ -159,7 +161,14 @@ async function longRun(sc, o) {
       row.flag = offNear ? "rule" : jumpNear ? "clock" : "misjudge"; row.flagWho = LP === A ? "A" : "K"; row.tr = Math.round((tr - t0) / 1000);
     }
     /* 威脅模型 T11：影子鐘（第一版只記錄）這盤雙方各量到的對方用時 sh、對方棋鐘自己扣的 cl、單步最大差 max（校準用） */
-    row.sh = [A, K].map(P => { const x = P.net.shadow(); return { n: x.n, sh: x.sh, cl: x.cl, ncl: x.ncl, max: x.max } });
+    row.sh = [A, K].map(P => { const x = P.net.shadow(); return { n: x.n, sh: x.sh, cl: x.cl, ncl: x.ncl, max: x.max, ex: x.ex } });
+    /* 第 16 輪第 5 項：這盤被宣告「不計分」（ns）：被指為棋鐘不可信的那一方（宣告者的對手）那段時間是不是真的長時間斷線（規則內）、手機時間被往前調，還是一直在線（誤判） */
+    if (g.ns) {
+      const tn = firstNs.get(g.id) || S.now, sid = g.ns.s === "r" ? g.black.id : g.red.id, SP = sid === A.id ? A : K;
+      const offNear = OFF.get(SP).some(([s0, e]) => s0 <= tn && (e == null || e >= tn - 15 * MIN) && ((e == null ? tn : e) - s0) >= 60000);
+      const jumpNear = (SP.jumps || []).concat((SP === A ? K : A).jumps || []).some(([t]) => t <= tn && t >= tn - 15 * MIN);
+      row.ns = { why: g.ns.why, v: g.ns.v, by: g.ns.s, cls: offNear ? "rule" : jumpNear ? "clock" : "misjudge" };
+    }
     games.push(row);
     if (S.now >= END) break;
     await S.run(Math.round(5000 + rnd() * 15000));
@@ -180,7 +189,7 @@ async function longRun(sc, o) {
   let histBad = 0; const ha = A.hist(), hk = K.hist();
   for (const x of games.filter(x => x.ok && x.res !== "abort")) {
     const a = ha.filter(h => h.rid === x.id), b = hk.filter(h => h.rid === x.id);
-    const okp = a.length === 1 && b.length === 1 && ((a[0].res === "d" && b[0].res === "d") || (a[0].res === "w" && b[0].res === "l") || (a[0].res === "l" && b[0].res === "w"));
+    const okp = x.ns ? (!a.length && !b.length) : a.length === 1 && b.length === 1 && ((a[0].res === "d" && b[0].res === "d") || (a[0].res === "w" && b[0].res === "l") || (a[0].res === "l" && b[0].res === "w"));   /* 不計分的盤：兩支手機都不記 */
     if (!okp) histBad++;
   }
   const done = games.filter(x => x.ok), flags = done.filter(x => x.res === "timeout");
@@ -188,8 +197,9 @@ async function longRun(sc, o) {
     name: sc.name, seed, simH: +((S.now - t0) / HOUR).toFixed(2), tries, games: games.length, consistent: done.length, stuck, rematchFail,
     plies: done.reduce((s, x) => s + x.plies, 0), ends: done.reduce((o, x) => (o[x.res] = (o[x.res] || 0) + 1, o), {}),
     flagRule: flags.filter(x => x.flag === "rule").length, flagMis: flags.filter(x => x.flag === "misjudge").length, flagClock: flags.filter(x => x.flag === "clock").length, selfFlag: ctl.selfFlag,
-    histBad, late: (() => { const L = [A, K].flatMap(P => P.net.lateLog()); return { n: L.length, keep: L.filter(e => e.keep).length, max: L.length ? Math.max(...L.map(e => e.late || 0)) : 0 } })(),
-    shadow: (() => { const R = done.flatMap(x => x.sh || []); return { moves: R.reduce((s, x) => s + x.n, 0), maxGap: R.length ? Math.max(...R.map(x => x.max)) : 0, sh: R.reduce((s, x) => s + x.sh, 0), cl: R.reduce((s, x) => s + x.cl, 0) } })(),
+    histBad, ns: (() => { const R = done.filter(x => x.ns); return { n: R.length, rule: R.filter(x => x.ns.cls === "rule").length, clock: R.filter(x => x.ns.cls === "clock").length, mis: R.filter(x => x.ns.cls === "misjudge").length, list: R.map(x => x.ns) } })(),
+    late: (() => { const L = [A, K].flatMap(P => P.net.lateLog()); return { n: L.length, keep: L.filter(e => e.keep).length, max: L.length ? Math.max(...L.map(e => e.late || 0)) : 0 } })(),
+    shadow: (() => { const R = done.flatMap(x => x.sh || []); return { moves: R.reduce((s, x) => s + x.n, 0), maxGap: R.length ? Math.max(...R.map(x => x.max)) : 0, sh: R.reduce((s, x) => s + x.sh, 0), cl: R.reduce((s, x) => s + x.cl, 0), exMax: R.length ? Math.max(...R.map(x => x.ex || 0)) : 0 } })(),
     sus: [A, K, W].reduce((s, P) => s + P.net.suspicious().length, 0), keyBad: [A, K].reduce((s, P) => s + P.net.keyBad().n, 0),
     lagOpp: dist(lagO), lagWatch: dist(lagW), conv: dist(done.map(x => x.conv)), ev, chaosN: { ...B.chaosN },
     k: (() => { const s = A.net.linkStats(); return { dup: s.dup, old: s.old, replay: s.replay, win: s.win, bad: s.bad, nosig: s.nosig, stOut: s.stOut, gapFix: s.gapFix } })(),
@@ -205,7 +215,8 @@ function verdict(r) {
   if (r.stuck || r.rematchFail) why.push(`有 ${r.stuck} 盤沒收斂、${r.rematchFail} 次再來一局沒開成`);
   if (r.flagMis) why.push(`誤判超時 ${r.flagMis} 次`);
   if (r.histBad) why.push(`戰績不一致 ${r.histBad} 盤`);
-  if (r.late && r.late.keep) why.push(`晚到推翻時保留勝場 ${r.late.keep} 次（老實玩家被當成晚到太久）`);
+  if (r.ns && r.ns.mis) why.push(`誤判不計分 ${r.ns.mis} 盤（老實玩家一直在線，卻被當成棋鐘不可信）`);
+  /* 第 16 輪第 5 項：晚到太久（以前「保留勝場」）改成整盤不計分，誤判與否看上面的 ns.mis（被指的那方是不是真的長時間斷線） */
   if (r.sus || r.keyBad) why.push(`可疑事件 ${r.sus}、擋下的邀請 ${r.keyBad}（真訊息被當成偽造）`);
   if (r.errors && r.errors.length) why.push("程式丟錯：" + r.errors[0]);
   if (r.mem && r.mem.length > 2) {
@@ -232,7 +243,8 @@ if (require.main === module) {
         if (r.fatal) { console.log("  ✖ " + r.fatal); bad++; continue }
         console.log(`  盤數 ${r.games}（一致 ${r.consistent}）、總步數 ${r.plies}、結局 ${JSON.stringify(r.ends)}、開局邀請 ${r.tries} 次`);
         console.log(`  超時：規則內 ${r.flagRule}、誤判 ${r.flagMis}、手機時間往前跳 ${r.flagClock}、自己落旗 ${r.selfFlag}；戰績不一致 ${r.histBad}；可疑事件 ${r.sus}；擋下的邀請 ${r.keyBad}`);
-        console.log(`  晚到推翻（T11）：超過 3 分鐘 ${r.late.n} 次、保留勝場 ${r.late.keep} 次、最晚 ${s1(r.late.max)}；影子鐘：${r.shadow.moves} 步、對方用時合計 ${s1(r.shadow.sh)}（棋鐘自己扣 ${s1(r.shadow.cl)}）、單步最大差 ${s1(r.shadow.maxGap)}`);
+        console.log(`  晚到推翻（T11）：超過 3 分鐘 ${r.late.n} 次、因此改為不計分 ${r.late.keep} 次、最晚 ${s1(r.late.max)}；影子鐘：${r.shadow.moves} 步、對方用時合計 ${s1(r.shadow.sh)}（棋鐘自己扣 ${s1(r.shadow.cl)}）、單步最大差 ${s1(r.shadow.maxGap)}`);
+        console.log(`  不計分（ns，第 16 輪第 5 項）：${r.ns.n} 盤（對方真的長時間斷線 ${r.ns.rule}、手機時間被調 ${r.ns.clock}、誤判 ${r.ns.mis}）${r.ns.list.length ? " " + JSON.stringify(r.ns.list) : ""}；影子鐘「量到的用時－對方棋鐘自己扣的」單盤最大 ${s1(r.shadow.exMax)}`);
         console.log(`  對方收到這一步：中位 ${s1(r.lagOpp.p50)}、90% ${s1(r.lagOpp.p90)}、99% ${s1(r.lagOpp.p99)}、最慢 ${s1(r.lagOpp.max)}（${r.lagOpp.n} 步）；觀眾最慢 ${s1(r.lagWatch.max || 0)}`);
         console.log(`  結果出現到四方一致：中位 ${s1(r.conv.p50 || 0)}、最慢 ${s1(r.conv.max || 0)}；網路事件 ${JSON.stringify(r.ev)}；混沌 ${JSON.stringify(r.chaosN)}`);
         const m0 = r.mem[0], m1 = r.mem[r.mem.length - 1];

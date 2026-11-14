@@ -24,8 +24,9 @@ const SM_SPOTS=[
    SM_EP［入口］＝要搬的區塊：sec:選擇器＝那一格所在的整段（往上含標題 .sec-t、往下到下一個標題前）；head:＝只要標題＋那一格；el:＝只要那一格；title:文字＝標題正好是這幾個字的那一段；btn:＝單獨一顆按鈕。
    沒有列在這裡的入口照舊：菱花鏡＝看 3D 立繪、信插／手札＝意見回饋頁、文牒／書箱＝07s4 的換手機面板。整卷畫軸（四個分頁全部設定）留著，入口改成頂欄的「📜 全部設定」。 */
 const SM_EP={smFan:["sec:#era"],smWin:["sec:#pt"],smBoard:["el:#pv","sec:#th","el:#hiCon","sec:#mv","sec:#rsO"],smBrush:["head:#ftM","sec:#fzM","head:#zhO"],
-  smKnife:["sec:.bpc","el:#chdForm"],smRobe:["sec:#meFig","sec:#botT","sec:#epSw"],smTag:["title:官階"],
+  smKnife:["sec:.bpc","el:#chdForm"],smRobe:["sec:#meFig","sec:#dglSw","sec:#botT","sec:#epSw"],smTag:["title:官階"],
   smInc:["sec:#snd3"],smQin:["sec:#snd2"],smBell:["sec:#snd"],smLock:["sec:#axmSw","btn:#sh","btn:#a2h","sec:#fmSet","title:隱私","title:進階"]};   /* 11/12：♿ 無障礙（螢幕報讀與鍵盤模式、高對比、測試與證據，11b-a11y.js axmSetRows）原本在設定房間沒有入口，放在小鎖匣最上面；棋規（#rsO 千秋休閒規則／臺灣棋規原型）也沒有入口，放進「試看棋盤」最後面 */   /* 11/9：小鎖匣加家長與護眼（843，07m5）；線上大廳的名字與封鎖名單（841／842，07x4）接在「我的角色」卡後面，跟著衣帽架一起出現 */
+/* 11/13 晚：平日體力開關（07dgl-stamina.js dglSetRow 畫的 #dglSw）跟著衣帽架「我的角色」面板一起出現 */
 /* 11/12 ChatGPT UI 冗餘盤查（story/104 號）第 7 項：棋盤外觀三個入口照「點了會改什麼」命名——摺扇＝朝代配色、支摘窗＝淺色／深色、炕桌＝試看棋盤（預覽、試走、材質、特效）；
    面板裡 05-settings 畫的小節標題（棋盤的朝代樣式、棋盤風格、深淺色）在這裡換成同一套字（SM_SECNM，只換畫面上的字，不動設定值與存檔），從場景點進去看到的面板標題、小節標題一致。
    木紋、石板、宣紙…那一組（BOARD_THEMES）標成「棋盤材質」 */

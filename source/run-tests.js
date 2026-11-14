@@ -21,6 +21,7 @@ try {
   fs.cpSync(path.join(SRC, "xiangqi-db"), path.join(WS, "xiangqi-db"), { recursive: true });
   fs.cpSync(path.join(SRC, "xiangqi-lab"), path.join(WS, "xiangqi-lab"), { recursive: true });
   fs.copyFileSync(path.join(SRC, "xiangqi-referee.js"), path.join(WS, "xiangqi-referee.js"));
+  if (fs.existsSync(path.join(SRC, "xiangqi-android"))) fs.cpSync(path.join(SRC, "xiangqi-android"), path.join(WS, "xiangqi-android"), { recursive: true });   /* Android 建置鏈（11/13 第 17 輪起公開） */
   link(REPO, path.join(WS, "xiangqi-lab", "site"));
   if (fs.existsSync(path.join(REPO, "data", "docs"))) link(path.join(REPO, "data", "docs"), path.join(WS, "xiangqi-db", "art", "docs"));
   const env = { ...process.env, XQ_CUP_KEY_DIR: KEYS, XQ_CUP_LEGACY_DIR: KEYS };

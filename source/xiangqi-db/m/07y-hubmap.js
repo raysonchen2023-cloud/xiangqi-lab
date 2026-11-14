@@ -182,7 +182,7 @@ if(typeof Home==="function"){const f0=Home;Home=function(v,hub){const r=f0.apply
    四頁照朝代順序分：首頁（經典、秦、漢、三國）、觀星閣窗外（魏晉、南北朝、隋）、藏譜石窟（唐、五代、宋）、棋譜庫（元、明、清）。
    位置＝[朝代, 左%, 上%, 寬%]（量 768×1376 的定稿圖，只放在天空、洞口、岩壁，不壓入口標籤）。用 MutationObserver 找頁面，不用改各頁的程式 */
 const CY_ON=true,CY_V="2215";
-const CY_SPOT={home:[["classic",8,6,12],["qin",21,3,11],["han",34,6.5,11],["sanguo",47,3,10]],battle:[["weijin",11,5,13],["nanbei",81,5,13],["sui",93,16,10]],
+const CY_SPOT={home:[["classic",5,6,12],["qin",21,10.5,11],["han",36.5,6.5,10],["sanguo",47.5,3,10]],   /* 11/14 r17 B2：夜景首頁的月亮（07w6c 熱區 x 146～270、y 4～128，原圖 768×1376）原本壓在秦、漢殘影上，點不準；秦移到月亮正下方，其餘左右讓開 */battle:[["weijin",11,5,13],["nanbei",81,5,13],["sui",93,16,10]],
   learn:[["tang",10,6,13],["wudai",50,3.5,9],["song",89,6,13]],lib:[["yuan",71,12,11],["ming",14,34,13],["qing",89,47,11]]};
 const CY_NM={classic:"千秋石桌與古松",qin:"秦長城與烽火台",han:"漢闕",sanguo:"赤壁樓船",weijin:"竹林茅亭",nanbei:"雲岡石窟",sui:"趙州橋",tang:"大雁塔",wudai:"山水座屏",song:"水轉筒車",yuan:"草原大帳",ming:"紫禁城角樓",qing:"古戲台"};
 function cyCss(){if(document.getElementById("cyCss"))return;const s=document.createElement("style");s.id="cyCss";s.textContent=`.cy-l{position:absolute;inset:0;pointer-events:none;z-index:1}

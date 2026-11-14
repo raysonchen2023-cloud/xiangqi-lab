@@ -92,7 +92,7 @@ function Library(v,c0){
         const list=()=>{const q=s2(b.querySelector("#ps").value.trim()),box=b.querySelector("#pl");box.innerHTML="";
           const all=[{name:"",count:data.items.length}].concat(pl).filter(p=>!q||s2(p.name).includes(q)).slice(0,120);
           for(const p of all){const x=document.createElement("button");const hb=p.name&&bios&&bios[p.name];
-            x.innerHTML=`<span>${p.name?esc(p.name)+(p.revoked?" ＊":""):"全部棋手"}${p.name===libState.player?' <span class="badge">已選</span>':""}</span><span class="muted">${hb?'<span class="bio-i" role="button" aria-label="生平">ⓘ</span> ':""}${p.count} 局</span>`;
+            x.innerHTML=`<span>${p.name?esc(p.name)+(p.revoked?" ＊":""):"全部棋手"}${p.name===libState.player?' <span class="badge">已選</span>':""}</span><span class="muted">${hb?'<span class="bio-i" role="button" tabindex="0" aria-label="生平">ⓘ</span> ':""}${p.count} 局</span>`;
             x.onclick=e=>{if(e.target.closest(".bio-i"))return bioSheet(p.name);libState.player=p.name;libState.limit=60;closeSheet();filter(true)};box.append(x)}};
         getBios().then(()=>{if(b.isConnected)list()});
         b.querySelector("#ps").oninput=list;list()};paint()})}

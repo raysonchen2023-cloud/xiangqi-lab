@@ -1,6 +1,45 @@
 # 開源建置與授權
 
-最後核對：2026 年 11 月 13 日（第 11 輪 X7 寫成，第 13 輪 F2 補「可建置證據」和缺口分類；11 月 13 日開發者決定公開原始碼、改授權後更新；第 14 輪 F3 補 Android 路線圖和可重現驗證包；給 F-Droid 和其他自由軟體平台的審查參考）。這一頁是整理，不是法律意見。
+最後核對：2026 年 11 月 14 日（第 11 輪 X7 寫成，第 13 輪 F2 補「可建置證據」和缺口分類；11 月 13 日開發者決定公開原始碼、改授權後更新；第 14 輪 F3 補 Android 路線圖和可重現驗證包；第 17 輪補〈這一頁對應哪一版〉的同版閘門、Android 公開建置鏈、「APK 可重建」和「整站可重建」的分別，11 月 14 日第一次照同版閘門對 `20261114-1209` 發布；給 F-Droid 和其他自由軟體平台的審查參考）。這一頁是整理，不是法律意見。
+
+## 這一頁對應哪一版（發布前自動核對）
+
+**這一頁和 `source/` 對應的發布版：`20261114-1209`**
+
+（每次發布時用 `release-sync-check.js --stamp <版本> foss.md` 改成那一版；跟發布版不一致就不准發布，見下面。）
+
+第 16 輪評審查到：線上 App 已經是 `20261113-1942`，`source/` 還停在 `20261113-1345`、`evidence.md` 停在 `20261113-0825`，這一頁卻寫「`source/` 公開的是線上已發布的那一版」——**那句話當時不實**。原因是 `source/` 和說明文件是另外同步的，不是每次發布都跟著換。第 17 輪起改成：每次發布前，對「要推上公開倉庫的那個 commit」跑同版閘門 `release-sync-check.js`，下面任何一項不一致就停（結束代碼 1），不推。
+
+| 核對 | 內容 |
+|---|---|
+| release | `index.html`、`sw.js`、`release.json` 三處版本號一樣、雜湊對得上 |
+| stage-manifest | `source/STAGE-MANIFEST.json` 記的版本和 `index.html` 指紋就是這一版（`source/` 是從這一版切出來的） |
+| check-build | `source/` 組出來的 `index.html` 跟發布的逐字相同 |
+| verification-log | `source/` 裡只有一份驗證紀錄、就是這一版的，四步都是通過或略過、記的 `index.html` 雜湊對得上 |
+| evidence | `evidence.md` 是對這一版的 `source/` 跑的（標題和「對應的發布版」都是這一版），不是對開發者電腦上的工作區跑的 |
+| foss | 這一頁上面那行「對應的發布版」是這一版 |
+| forbidden-files | 沒有千秋盃裁判台 `cup-host.js`、金鑰與簽章檔、簽章設定、帳密檔 |
+| private-lines | 開發者刻意不發布的程式行沒有出現在任何公開的檔（只比對雜湊；指紋檔只在開發者電腦，外部跑這一項會顯示「略過」） |
+| secrets | `oss-scan.js` 掃 `source/` 沒有高風險（金鑰、私鑰、密碼、token） |
+
+任何人都可以在公開倉庫根目錄自己跑（一致是結束代碼 0、不一致是 1）：
+
+```
+node source/xiangqi-lab/tools/release-sync-check.js --dir .
+```
+
+這支工具的測試是 `source/xiangqi-lab/tools/test-release-sync.js`：用假的小倉庫逐項弄壞（evidence 舊版、這一頁沒標記、`source/` 是別版切的、驗證紀錄別版或有一步失敗、刻意不發布的行換了縮排、`cup-host.js`、簽章金鑰），每一種都要擋。
+
+### 「APK 可重建」和「整站可重建」是兩件事
+
+| | APK 可重建 | 整站可重建 |
+|---|---|---|
+| 意思 | 拿公開倉庫的某個 commit（網站成品照原樣用）加上 `source/xiangqi-android/`（Android 原生專案），在乾淨環境編出跟參考建置**拿掉簽章後逐位元相同**的 APK | 只用公開的檔，從原始碼重做出整個網站（`index.html`、資料檔、素材、`preload.json`） |
+| 現況 | **做得到**：輸入全部公開（見下一列），步驟在 `source/xiangqi-android/REBUILD.md`，`clean-rebuild.js` 一個指令重做、`repro-check.js` 比對 | **做不到**：`index.html` 能從 `source/` 組出（check-build）、`core.js` 能抽出，但資料檔和素材原始資料夾只在開發者電腦，大部分圖片、音樂、3D 模型只放 Cloudflare CDN |
+| 需要的輸入 | 公開倉庫的 commit；`source/xiangqi-android/`（`EXPORT-MANIFEST.json` 有每個檔的 SHA-256）；JDK 21.0.13+9、Android SDK platform 36 r02、build-tools 35.0.0（下載網址和 SHA-256 在 `build-records/toolchain-20261113.json`）；Gradle 8.14.3（wrapper 核對 SHA-256）；389 個 Maven 元件（`verification-metadata.xml` 逐一核對）；npm 套件（`package-lock.json` 的 integrity） | 上面那些，加上只在開發者電腦的 `xiangqi-db/*.json`、素材原始資料夾，和只放 CDN 的大檔 |
+| 不在裡面的 | 正式上傳金鑰（開發者自己保管；外部重建用自己環境的 debug 金鑰，比對時拿掉簽章） | — |
+
+APK 用的是公開倉庫裡**已經組好的網站成品**，不是從原始碼重建網站；所以「APK 可重建」不代表「整站可重建」。
 
 ## 先講結論
 
@@ -8,7 +47,7 @@
 
 改了以後，《象棋千秋》**仍然不符合 F-Droid 的收錄條件**，不打算假裝符合。還卡在三件事：
 
-1. **只有網頁 App，沒有 Android 安裝檔。** F-Droid 收的是 Android App，而且要它的伺服器能從原始碼建出安裝檔；目前沒有 Android 安裝檔（iOS 版另外在準備）。這是現在最主要的缺口。第 14 輪在開發者電腦上做了 Capacitor 骨架和 F-Droid 建置設定草稿（沒編譯、沒上機），怎麼上 Google Play 和 F-Droid、要決定什麼，整理在〈Android 與 F-Droid 路線圖〉（[android.md](android.md)）。
+1. **Android 安裝檔還沒上架。** F-Droid 收的是 Android App，而且要它的伺服器能從原始碼建出安裝檔。Android 原生專案（Capacitor）第 15 輪起在開發者電腦上編得出 debug／release APK 和 AAB、乾淨環境重建拿掉簽章後逐位元相同；**第 17 輪起整個建置鏈公開在 `source/xiangqi-android/`**（原生專案、釘版本的相依、`clean-rebuild.js`、`REBUILD.md`、建置紀錄）。還沒有正式簽章、沒有上任何商店、沒在 Linux（F-Droid 的建置環境）重建過。怎麼上 Google Play 和 F-Droid、要決定什麼，整理在〈Android 與 F-Droid 路線圖〉（[android.md](android.md)）。
 2. **公開的原始碼還建不出「整個網站」。** `source/` 能組出 `index.html`（`node source/check-build.js` 核對跟發布的逐字相同）和 `core.js`；但完整建置（`build-site.js`）還要用到只在開發者電腦上的資料檔和素材原始資料夾，大部分圖片、音樂、3D 模型也只放在 Cloudflare CDN、不進 git。
 3. **有非自由素材。** 開發者的素材是 CC BY-NC-SA 4.0（限非商業，不算自由授權），神經網路權重 `pikafish.nnue` 也不得商用。F-Droid 對這種情形是收錄但標「NonFreeAssets」，不是拒收。
 
@@ -135,14 +174,14 @@ node xiangqi-lab/tools/pikafish-verify.js --rebuilt xiangqi-wasm/rebuild-2026111
 
 ## 可重現建置：現在怎麼從原始碼組出網站
 
-11/13 起原始碼公開在倉庫的 `source/`（資料夾配置跟開發者電腦一樣：`source/xiangqi-db/`、`source/xiangqi-lab/src`、`source/xiangqi-lab/tools`、`source/xiangqi-referee.js`）。公開的是**線上已發布的那一版**；開發者電腦上還沒發布的修改不在裡面。任何人都可以：
+11/13 起原始碼公開在倉庫的 `source/`（資料夾配置跟開發者電腦一樣：`source/xiangqi-db/`、`source/xiangqi-lab/src`、`source/xiangqi-lab/tools`、`source/xiangqi-referee.js`）。公開的是 `source/STAGE-MANIFEST.json` 記的那一版（`version` 欄位），發布前由同版閘門核對它就是倉庫根目錄 `index.html` 那一版（見〈這一頁對應哪一版〉）；開發者電腦上還沒發布的修改不在裡面。任何人都可以：
 
 ```
 node source/check-build.js          # 從 source/ 組出 index.html，跟倉庫根目錄的 index.html 比對（忽略授權聲明、版本號、整包大小）
 node source/run-tests.js            # 重跑自動測試（不連網、不開瀏覽器；在暫存資料夾組出開發時的資料夾配置）
 ```
 
-11 月 13 日（對 `20261113-0330`）的結果：`index.html` 逐字一致；`core.js` 由 `xiangqi-referee.js` 抽出，跟發布的逐位元相同；release.json 的 97 支模組指紋有 96 支跟 `source/` 重算的相同，唯一不同的 `07y-hubmap.js` 就是 release.json 的 `differsFromSource` 申報的那支（開發者刻意不發布的 5 行，公開的是發布版）；50 個測試檔、637 項全部通過（另有 33 個測試檔要讀不公開的開發資料、素材原始檔，或測的是還沒發布的新功能，暫時沒放）。
+（舊紀錄，留著對照；這一版的結果看 `source/verification-log-<版本>.txt` 和 `evidence.md`）11 月 13 日（對 `20261113-0330`）的結果：`index.html` 逐字一致；`core.js` 由 `xiangqi-referee.js` 抽出，跟發布的逐位元相同；release.json 的 97 支模組指紋有 96 支跟 `source/` 重算的相同，唯一不同的 `07y-hubmap.js` 就是 release.json 的 `differsFromSource` 申報的那支（開發者刻意不發布的 5 行，公開的是發布版）；50 個測試檔、637 項全部通過（另有 33 個測試檔要讀不公開的開發資料、素材原始檔，或測的是還沒發布的新功能，暫時沒放）。
 
 開發者電腦上，網站是這樣組出來的：
 

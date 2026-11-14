@@ -1,23 +1,23 @@
 《象棋千秋》可重現驗證紀錄（verify-all.js）
 ========================================
-執行時間：2026-11-13T05:49:52.532Z（UTC）＝ 2026-11-13 13:49:52（臺灣時間）
+執行時間：2026-11-14T05:52:38.682Z（UTC）＝ 2026-11-14 13:52:38（臺灣時間）
 Node.js：v24.20.0；作業系統：win32 10.0.26300 x64
 倉庫資料夾：<倉庫資料夾>
 倉庫 commit：（不是 git 檢出；用下面的雜湊對照）
-說明：倉庫＝候選版 20261113-1345 提交物件（git -c core.autocrlf=false archive）＋本機 oss-stage.js 重產的 source/；尚未推上公開倉庫
-release.json：版本 20261113-1345、html ee32a266ae44、sw 0715b2b22d53
+說明：倉庫＝公開倉庫 origin/main（52723cf＝線上 20261114-1209，git archive）＋oss-stage.js 從那一版切出的 source/＋這次的 foss.md、threat-model.md、architecture.md；這次只換 source/、驗證紀錄與公開文件，App 不換版；尚未推上公開倉庫
+release.json：版本 20261114-1209、html 26b431de745a、sw 0244b98201aa
 verify-all.js SHA-256：4204127ad2dd75bb8f95ed79039156af8cc4e52bfabd0ff04890588e4414af2b
 
 成品 SHA-256（SHA-1 前 12 碼）：
-  index.html  af678664747dad2d9fabbe56bc6a2209f8d451d728192304b710b6682dcb87ec  (ee32a266ae44)
-  sw.js  75d3bf117e0d18a54c491b27e97000b142e6e8ebcf8814deee6a95fe64859ea4  (0715b2b22d53)
-  release.json  dc2d53b15551e61d695e554f47cb730a460eaf48532937982a0d21b26db3dabf  (e41afcf89456)
+  index.html  64e58cbf74f7bae15727c833e328382905ae23ff7ac3bc15dd4a42e58096a3ae  (26b431de745a)
+  sw.js  d7383e4fe5a15bf25f80503c44b6f98325bd7cc9f9c31f0ed9091ae4738c96f0  (0244b98201aa)
+  release.json  97c5d57b6252526749adf88be5f647771e7ec2ab562feac4fe8c80b6cf972dfa  (4779947e9eb5)
   core.js  fdaea59621ff94d664218f14c1a11b9abe0d4566da7d3e45733caf34fa7a50d3  (972b7ec035c7)
-  engine.js  b08ae420713dfe4e3987e4782431c33bb187ed6038b7323d356e18e186c5fecb  (1065221bc5da)
+  engine.js  f22e34a95627fa0bdb68f72aa2983b6acb4b85e0226b5ae9dd7e4d5d93d9bb76  (fe5340a774c8)
   engine/pikafish.wasm  7fb6fc805a36ced6a55626a9513b7dda821b0bbb5e830fa17f120f1550a9a331  (d568cded4f5b)
   engine/pikafish.js  dd5498bfb76381598d453a612d74e5e1955835452324c4d0b962a64fb44438f7  (77eca54d3204)
   engine/pikafish.nnue  7d13d73569a9b571ba0eb20cf1596247bc2a42738967e61afef6482b231e900e  (3a043e259a72)
-source/ 資料夾：234 個檔，樹雜湊 SHA-256 98b6066ee5cdd7cd77c2cdce09e388634c1e4847504a273b3ee9ab61fd51628f
+source/ 資料夾：364 個檔，樹雜湊 SHA-256 43204eb56350d241cde400e5a18cedbfd18939334a3143b7fd29bb14e6e0f802
 Pikafish 建置紀錄：<倉庫資料夾>\pikafish-src\build-record.json  SHA-256 489173747f8de4abec4f9dda704538fecb24af4c02f294e57b8f7ead857ad738
 （樹雜湊＝每個檔「相對路徑＋NUL＋SHA-256＋換行」照路徑排序後再算 SHA-256）
 
@@ -33,11 +33,11 @@ Pikafish 建置紀錄：<倉庫資料夾>\pikafish-src\build-record.json  SHA-25
 工具 SHA-256：4874be00c4f2fce8b777204299e23339abf56c472ee57bc2e603a5edaaf00e78
 輸出：
   成品核對：<倉庫資料夾>
-    ✔ release.json：版本 20261113-1345、html ee32a266ae44、sw 0715b2b22d53（檢查時間 2026-11-13T05:45:20.856Z）
-    ✔ index.html SHA-1 前 12 碼 ee32a266ae44，跟 release.json 一致
-    ✔ sw.js SHA-1 前 12 碼 0715b2b22d53，跟 release.json 一致
-    ✔ 版本號：index.html 20261113-1345、sw.js 20261113-1345、release.json 20261113-1345，三個一樣
-    ✔ release.json 自己註明有 3 支模組跟當時的原始碼不同（05-settings.js、07y-hubmap.js、07s4-passmap.js）；原始模組不公開，外部核對不了這一欄
+    ✔ release.json：版本 20261114-1209、html 26b431de745a、sw 0244b98201aa（檢查時間 2026-11-14T04:09:34.987Z）
+    ✔ index.html SHA-1 前 12 碼 26b431de745a，跟 release.json 一致
+    ✔ sw.js SHA-1 前 12 碼 0244b98201aa，跟 release.json 一致
+    ✔ 版本號：index.html 20261114-1209、sw.js 20261114-1209、release.json 20261114-1209，三個一樣
+    ✔ release.json 自己註明有 4 支模組跟當時的原始碼不同（05-settings.js、07y-hubmap.js、07s4-passmap.js、07hs-netsig.js）；原始模組不公開，外部核對不了這一欄
   
   ✔ index.html、sw.js 跟 release.json 一致
 ----------------------------------------
@@ -65,41 +65,56 @@ Pikafish 建置紀錄：<倉庫資料夾>\pikafish-src\build-record.json  SHA-25
   
   ✔ 全部符合（△ 是照實列出的缺口，不算失敗）
 ----------------------------------------
-第 4 步 run-tests：通過（結束代碼 0，75.8 秒）
+第 4 步 run-tests：通過（結束代碼 0，96.3 秒）
 指令（在倉庫資料夾執行）：node source/run-tests.js
-工具 SHA-256：f6c7f421243c8de793bd2012a7c752106c26b568ace278f497bd4be7d9da4772
+工具 SHA-256：8bb3d8506adec7c119e694a0620858ecf79d366ccc43368454192fce41f824b9
 輸出：
-  測試三類統計（實際跑過；格式＝通過／項數）
+  測試三類統計（實際跑過；格式＝通過／項數，略過的另外標、不算通過）
   檔案	行為	混合	原始碼	待分類
   test-a11y-audio.js	15/15	0/0	3/3	0/0
+  test-a11y-emoji.js	4/4	0/0	1/1	0/0
   test-a11y.js	11/11	2/2	3/3	0/0
   test-ai-think.js	6/6	0/0	2/2	0/0
   test-analysis-cases.js	38/38	0/0	0/0	0/0
+  test-android-build.js	12/12	4/4	3/3	0/0
   test-android-oldwebview.js	6/6	0/0	1/1	0/0
   test-asian-rules.js	30/30	0/0	0/0	0/0
+  test-askbot-city.js	3/3	1/1	1/1	0/0
+  test-bhfx.js	0/0	0/0	0/0	23/24（略過 1）
   test-bhmate.js	0/0	0/0	8/8	0/0
+  test-bhtd-combo.js	0/0	0/0	0/0	9/9
+  test-bhtd-r2.js	0/0	0/0	0/0	22/22
+  test-bhtd-rules.js	0/0	0/0	0/0	57/57
+  test-bhtl.js	0/0	0/0	0/0	18/18
+  test-blitz.js	14/14	1/1	3/3	0/0
   test-clock-pv.js	43/43	0/0	0/0	0/0
+  test-colorblind.js	10/10	0/0	4/4	0/0
   test-cpuroom-copy.js	0/0	7/7	2/2	0/0
+  test-dgl.js	0/0	0/0	0/0	35/35
   test-docbtns.js	1/1	0/0	1/1	0/0
   test-docs-md.js	2/2	1/1	0/0	0/0
   test-engine-start.js	3/3	0/0	1/1	0/0
-  test-engine-timeout.js	4/4	0/0	1/1	0/0
+  test-engine-timeout.js	7/7	0/0	2/2	0/0
   test-evidence-shots.js	16/16	0/0	1/1	0/0
   test-family.js	14/14	0/0	4/4	0/0
   test-fb871.js	8/8	2/2	2/2	0/0
-  test-handoff-facts.js	1/1	0/0	0/0	0/0
+  test-fdroid-evidence.js	7/8（略過 1）	0/0	1/1	0/0
+  test-handoff-facts.js	0/1（略過 1）	0/0	0/0	0/0
   test-haptics.js	11/11	1/1	1/1	0/0
+  test-health-funnel.js	11/11	0/0	1/1	0/0
+  test-health.js	10/10	0/0	1/1	0/0
   test-home-order.js	5/5	0/0	1/1	0/0
+  test-home-pano.js	0/0	0/0	0/0	8/9（略過 1）
   test-homeclamp.js	3/3	0/0	0/0	0/0
   test-human-ai.js	11/11	0/0	2/2	0/0
   test-human-p1.js	0/0	2/2	1/1	0/0
   test-i18n.js	54/54	4/4	4/4	0/0
-  test-ipad-fill.js	8/8	0/0	1/1	0/0
+  test-ipad-fill.js	9/9	0/0	1/1	0/0
   test-land3d.js	2/2	0/0	1/1	0/0
-  test-layout-r16.js	5/5	1/1	5/5	0/0
   test-lefty.js	10/10	0/0	2/2	0/0
   test-mp-p2.js	7/7	0/0	1/1	0/0
   test-mvt-hold.js	0/0	6/6	1/1	0/0
+  test-name-safe.js	10/10	0/0	4/4	0/0
   test-net-chaos.js	5/5	0/0	0/0	0/0
   test-net-guard.js	4/4	0/0	0/0	0/0
   test-net-reconnect.js	16/16	0/0	0/0	0/0
@@ -109,14 +124,20 @@ Pikafish 建置紀錄：<倉庫資料夾>\pikafish-src\build-record.json  SHA-25
   test-park-firstflat.js	8/8	0/0	1/1	0/0
   test-park-weather.js	3/3	0/0	1/1	0/0
   test-park3d-bench.js	0/0	1/1	2/2	0/0
+  test-park3d-capbase.js	0/0	0/0	0/0	5/5
+  test-park3d-cbfx.js	7/7	0/0	1/1	0/0
+  test-park3d-colorblind.js	11/11	0/0	2/2	0/0
   test-park3d-power.js	16/16	0/0	1/1	0/0
   test-park3d-tap.js	12/12	0/0	0/0	0/0
   test-perfhud.js	6/6	0/0	2/2	0/0
   test-pgn-variations.js	8/8	0/0	1/1	0/0
+  test-premove-online3d.js	12/12	0/0	3/3	0/0
   test-provenance.js	4/4	0/0	1/1	0/0
   test-pv-stepper.js	3/3	1/1	2/2	0/0
   test-qixing.js	6/6	0/0	0/0	0/0
   test-quiz-check-exit.js	1/1	1/1	2/2	0/0
+  test-r17-qa.js	0/0	0/0	0/0	6/6
+  test-release-sync.js	9/9	0/0	0/0	0/0
   test-reload-guard.js	8/8	2/2	2/2	0/0
   test-reply-risk.js	24/24	0/0	0/0	0/0
   test-report-id.js	9/9	0/0	0/0	0/0
@@ -132,15 +153,24 @@ Pikafish 建置紀錄：<倉庫資料夾>\pikafish-src\build-record.json  SHA-25
   test-spotfit.js	8/8	0/0	0/0	0/0
   test-stats-kill.js	0/0	2/2	3/3	0/0
   test-telemetry.js	12/12	0/0	2/2	0/0
+  test-touch-fixes.js	5/5	2/2	5/5	0/0
   test-ui-1113.js	5/5	0/0	0/0	0/0
   test-verify-daily.js	9/9	0/0	1/1	0/0
   test-xfer.js	8/8	0/0	1/1	0/0
   test-xfer2.js	11/11	0/0	1/1	0/0
   test-xfer4.js	10/10	0/0	1/1	0/0
   test-xqs-tb.js	0/0	4/4	2/2	0/0
-  合計	702/702	39/39	86/86	0/0
+  test-xsm-dark.js	0/0	0/0	0/0	15/15
+  合計	825/827（略過 2）	46/46	112/112	198/200（略過 2）
   
-  交接單引用：行為 702/702、混合 39/39、原始碼比對 86/86，共 827 項。
+  交接單引用：行為 825/827（略過 2）、混合 46/46、原始碼比對 112/112、待分類 198/200（略過 2），共 1185 項。
+  待分類的檔：test-bhfx.js、test-bhtd-combo.js、test-bhtd-r2.js、test-bhtd-rules.js、test-bhtl.js、test-dgl.js、test-home-pano.js、test-park3d-capbase.js、test-r17-qa.js、test-xsm-dark.js
+  四欄合計：通過 1181、失敗 0、略過 4、預期失敗 0（其中預期失敗卻通過 0）；三類項數合計 1185（含略過），預期失敗另計。
+  略過的項目（這個環境跑不了、沒有執行，不算通過）：
+    ﹣ test-bhfx.js：④ 載入量：一般首頁不載 bossfx3d.js、不預載 data/bhtd；素材都放在 art/bhtd（build-site 複製到 data/bhtd）（要讀只在開發者電腦的素材 art/bhtd（魔王模型、特效圖只放 CDN；公開副本沒有，開發者電腦上照跑））
+    ﹣ test-fdroid-evidence.js：真的公開倉庫（本機 git origin/main，不連網）：成品跟 release.json 一致、Pikafish 跟建置紀錄一致（沒有 site/.git）
+    ﹣ test-handoff-facts.js：評比循環工具不在這個副本，跳過（沒有 handoff-facts.js）
+    ﹣ test-home-pano.js：登記的每個變體都有左右兩屏的圖（864×1376＝一屏 768＋多蓋中間那屏 96），中間那屏也在；而且工具的 BAND 跟樣式的 112.5% 對得上（要讀只在開發者電腦的出圖工具 tools/homemap_pano.py 和 art/homemap 原圖（公開副本沒有；開發者電腦上照跑））
   說明：原始碼比對只證明程式碼存在，不證明功能會動；測試由開發用的 AI 撰寫，不等於第三方驗證。
 ----------------------------------------
 總結：4 步，通過 4、失敗 0、略過 0

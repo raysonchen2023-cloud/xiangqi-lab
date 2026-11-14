@@ -92,11 +92,11 @@ function delPhone(opt) {
   opt = opt || {}; const ls = new Map(), beacons = [], bells = [], forgets = [];
   const store = { get(k, d) { const v = ls.get("m_" + k); if (v == null) return d; try { return JSON.parse(v) } catch (e) { return d } }, set(k, v) { ls.set("m_" + k, JSON.stringify(v)) } };
   const navigator = { onLine: opt.onLine !== false, sendBeacon: (u, body) => { beacons.push(String(body)); return true } };
-  const ctx = { store, navigator, crypto: require("crypto").webcrypto, URLSearchParams, Uint8Array, Math, Date, Set, Object, Array, String, Error, Promise, JSON,
+  const ctx = { store, navigator, crypto: require("crypto").webcrypto, TextEncoder, URLSearchParams, Uint8Array, Math, Date, Set, Object, Array, String, Error, Promise, JSON,
     meInfo: () => ({ id: "dev12345abcd", name: "長安小棋童" }), XQ_BUILD: "20261111-2200",
     XQNet: { bell: x => bells.push(x), forget: () => { forgets.push(1); return opt.forget !== false } }, fetch: async () => { throw new Error("不該用 fetch") }, ls, beacons, bells, forgets };
   ctx.window = ctx; vm.createContext(ctx);
-  vm.runInContext(FB_SRC + "\n" + RID_SRC + "\n" + DEL_SRC + "\n;this.T={FEEDBACK_FORM,sendRecord,flushFeedback,srvDelRid,srvDelRec,srvDelList,srvDelState,srvDelLine,srvDelSend,SRV_DEL_RE,SRV_DEL_ABC};", ctx);
+  vm.runInContext(FB_SRC + "\n" + RID_SRC + "\n" + DEL_SRC + "\n;this.T={FEEDBACK_FORM,sendRecord,flushFeedback,srvDelRid,srvDelRec,srvDelList,srvDelState,srvDelLine,srvDelSend,SRV_DEL_RE,SRV_DEL_ABC,srvKey,srvKeyV};", ctx);
   for (const k of Object.keys(ctx.T)) if (typeof ctx.T[k] === "function") { const f = ctx.T[k]; ctx.T[k] = (...a) => { const r = f(...a); return r && typeof r.then === "function" ? Promise.resolve(r).then(J) : J(r) } }
   return ctx;
 }
@@ -119,6 +119,10 @@ test("刪除請求：送一筆「🗑 刪除請求」（編號＋裝置代號）
   assert.ok(f.text.startsWith("[" + r.rid + "] 🗑 申請刪除伺服器上的資料"), f.text);
   assert.match(f.text, /裝置代號：dev12345abcd/); assert.match(f.text, new RegExp("請求編號：" + r.rid)); assert.match(f.text, /時間：2026-11-11 14:05（臺灣時間）/);
   assert.match(f.text, /意見回饋、檢舉、玩家登記/); assert.match(f.text, /手機已經自己清掉/);
+  const key = JSON.parse(X.ls.get("m_srvKey")); assert.match(key, /^[0-9a-f]{32}$/, "本人證明的祕密值存在這支手機");
+  assert.ok(f.text.endsWith("\n本人證明：" + key), "刪除請求附本人證明（11/14 防冒名）");
+  assert.equal(X.T.srvKey(), key, "同一支手機一直用同一組");
+  assert.equal(await X.T.srvKeyV(key), require("crypto").createHash("sha256").update("xqkey:" + key).digest("hex").slice(0, 16), "驗證碼＝管理頁 delCheck_ 的算法");
   assert.equal(f.name, "", "不送名字"); assert.ok(!/rid/.test(X.beacons[0]) || !new URLSearchParams(X.beacons[0]).has("rid"), "rid 不是表單欄位、不送");
   assert.deepEqual(X.bells.map(b => b.type), ["🗑 刪除請求"], "大廳送不含內容的提醒");
   assert.equal(JSON.parse(X.ls.get("m_repOff")), true, "關掉玩家登記");

@@ -19,7 +19,8 @@ const sqI=s=>(9-(+s[1]))*9+(s.charCodeAt(0)-97);
 /* 11/11 v6 第 3 點（ChatGPT 十視角重評、AI 模擬玩家報告問題 5）：局勢評語一律白話，數字換成「約領先幾個兵」。原本寫「黑優 0.5」「紅優 2.1」，新手看不懂。
    v＝紅方視角的分數（100＝1 個兵）。分界：不到 0.3 兵＝均勢；不到 1.5 兵＝稍好（跟 10-db 和棋說明、賽後報告「翻盤」的 1.5 兵一致）；不到 3 兵＝明顯好；再多＝大占上風。
    s 有值＝只要「約領先幾個兵」那半句（前面已經寫了誰比較好的句子用，免得「紅方稍好（紅方稍好…）」重複） */
-const evt=(v,s)=>{if(v==null)return"";const a=Math.abs(v),sd=v>0?"紅方":"黑方";if(a>=20000)return sd+"有殺（能將死對方）";if(a<30)return"均勢，雙方差不多";
+/* 11/13 開發者：黑洞陣地塔防局（07bht-td.js bhtdMuteEv）黑子還沒全上場，「紅方大占上風，約領先 N 個兵」會誤導，塔防局一律不講；其他對局照舊 */
+const evt=(v,s)=>{if(v==null||(typeof bhtdMuteEv==="function"&&bhtdMuteEv()))return"";const a=Math.abs(v),sd=v>0?"紅方":"黑方";if(a>=20000)return sd+"有殺（能將死對方）";if(a<30)return"均勢，雙方差不多";
   const p=a/100,amt=p>=20?"領先非常多":"約領先"+(p<.75?"半個兵":" "+pawnN(a)+" 個兵");return s?sd+amt:sd+(a<150?"稍好":a<300?"明顯好":"大占上風")+"，"+amt};
 /* 評比循環第 1 輪（Gemini、ChatGPT 都列第一；AI 模擬玩家第二輪問題 3）：評等字和局面句打架、兵數每處寫法不同。
    兵數一律用這兩個換算（同一個四捨五入：小數一位、去掉 .0；不到 0.75 兵寫「半個兵」），同一步在著法條泡泡、關鍵一步、賽後講解、錯棋重練看到的數字一樣。
@@ -31,7 +32,7 @@ function pawnAbout(cp){return Math.abs(+cp||0)<75?"約半個兵":"約 "+pawnN(cp
 function lossAbout(cp){return Math.abs(+cp||0)>=2000?"差很多":"少了"+pawnAbout(cp)+"的價值"}
 /* 評等（這一步跟最好的走法比，差多少）和局面句（走完以後整盤誰好）是兩件事，接在一起時用這半句講清楚：
    ev＝走完這步的分數（紅方視角）、by＝走這步的一方。走完走方還領先＝「不過走完整盤還是紅方稍好，…」；其他＝「走完整盤：黑方明顯好，…」；沒有分數回 "" */
-function evLink(ev,by){if(ev==null||ev===""||!isFinite(+ev))return"";const v=+ev,sg=by==="r"?1:by==="b"?-1:0;
+function evLink(ev,by){if(ev==null||ev===""||!isFinite(+ev)||(typeof bhtdMuteEv==="function"&&bhtdMuteEv()))return"";const v=+ev,sg=by==="r"?1:by==="b"?-1:0;
   if(Math.abs(v)<30)return"走完整盤是"+evt(v);return(sg&&Math.sign(v)===sg?"不過走完整盤還是":"走完整盤：")+evt(v)}
 /* 11/11 v6 第 3 點：段位簡稱「業2」新手看不懂，畫面上寫成「業餘2級」（資料裡的名字不變，只改顯示；08b 對局頁右上的難度鈕用） */
 const rkTw=s=>String(s==null?"":s).replace(/^業(\d)$/,"業餘$1級");

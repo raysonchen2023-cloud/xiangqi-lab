@@ -14,11 +14,12 @@ function boot(modes){
     caches:{open:async()=>({match:async()=>({arrayBuffer:async()=>new ArrayBuffer(4)}),put:async()=>{}})},
     XQCore:{START:"rnbakabnr/9/1c5c1/p1p1p1p1p/9/9/P1P1P1P1P/1C5C1/9/RNBAKABNR"},document:{head:{append(){}}}};
   ctx.window=ctx;
-  ctx.PikafishModule=async opt=>{made.n++;const mode=modes[Math.min(mi++,modes.length-1)];let going=false;
+  /* 11/13 晚多兩種：modhang＝引擎模組啟動後永遠不回；nouci＝收到 uci 不回 uciok（iPad「卡在第一盤棋、對方一直思考中」） */
+  ctx.PikafishModule=opt=>{made.n++;const mode=modes[Math.min(mi++,modes.length-1)];if(mode==="modhang")return new Promise(()=>{});let going=false;
     const out=l=>setTimeout(()=>opt.print(l),1);
     return{PThread:{terminateAllThreads(){log.push("terminate")}},
       ccall(fn,r,t,[c]){log.push(c);
-        if(c==="uci")out("uciok");else if(c==="isready")out("readyok");
+        if(c==="uci"){if(mode!=="nouci")out("uciok")}else if(c==="isready")out("readyok");
         else if(c.startsWith("go ")){going=true;if(mode==="ok"){out("info depth 3 multipv 1 score cp 25 pv h2e2 h9g7");out("bestmove h2e2")}}
         else if(c==="stop"&&going&&mode==="stopok"){out("info depth 2 multipv 1 score cp 10 pv b2e2");out("bestmove b2e2")}}}};
   vm.createContext(ctx);vm.runInContext(SRC,ctx,{filename:"engine.js"});
@@ -42,3 +43,19 @@ test("卡住的那一步不會擋住排在後面的搜尋",async()=>{
 test("〔原始碼〕電腦落子遇到錯誤會隔幾秒自動重試（不是停在思考中）",()=>{
   assert.ok(LOCAL.includes("catch(e){engFail++;"));
   assert.ok(LOCAL.includes("else if(!engWait)setTimeout(playEngine,Math.min(60000,1500*2**Math.min(engFail,6)))"))});
+test("引擎啟動一直不回（iPad 卡在第一盤）：不會永遠等，逾時拋錯、重置；下一次重新啟動成功",async()=>{
+  const{E,made}=boot(["modhang","ok"]);
+  await assert.rejects(E.search({moves:[]},{depth:3},1),/啟動太久/);assert.equal(E.ready,false);
+  const r=await E.search({moves:[]},{depth:3},1);assert.equal(r.best,"h2e2");assert.equal(made.n,2)});
+test("收到 uci 不回 uciok：逾時拋錯、重置；下一次重新啟動成功",async()=>{
+  const{E,made}=boot(["nouci","ok"]);
+  await assert.rejects(E.search({moves:[]},{depth:3},1),/逾時/);assert.equal(E.ready,false);
+  const r=await E.search({moves:[]},{depth:3},1);assert.equal(r.best,"h2e2");assert.equal(made.n,2)});
+test("abort：卡住的排隊被清掉，之後的搜尋重新啟動引擎、照常回答",async()=>{
+  const{E,made}=boot(["modhang","ok"]);const a=E.search({moves:[]},{depth:3},1);a.catch(()=>{});
+  await new Promise(r=>setTimeout(r,10));E.abort();   /* 實際上是卡了一陣子才叫 abort：先讓第一次搜尋真的開始啟動 */const r=await E.search({moves:[]},{depth:3},1);assert.equal(r.best,"h2e2");assert.ok(made.n>=2)});
+test("〔原始碼〕電腦每一步有總時限、逾時把引擎整個重來；按新局一定解除忙碌（不會連新局都卡在思考中）",()=>{
+  assert.ok(LOCAL.includes("const engTmo=()=>typeof XQEngine!==\"undefined\"&&XQEngine.ready?60000:180000;"));
+  assert.ok((LOCAL.match(/await engRace\(XQEngine\.search\(/g)||[]).length===2,"塔防與一般對局兩個搜尋都包了時限");
+  assert.ok(LOCAL.includes("if(e&&e.tmo)try{if(XQEngine.abort)XQEngine.abort()}catch(x){}"));
+  assert.ok(/if\(p==="\/play\/new"\)\{if\(playBusy&&Date\.now\(\)-playSince>15000\)[^]*?playBusy=false;engFail=0;playNew\(/.test(LOCAL))});

@@ -312,7 +312,7 @@ function CanjuPlay(v,id){cjCSS();const H0=location.hash,here=()=>v.isConnected&&
       ${HS&&typeof histCardDoneHTML==="function"?histCardDoneHTML(HS.era,o.hs,R.ans):""}
       ${XM?XM.done(o.xs,R.ans):""}
       <div class="cj-row">${trap?`<button class="btn ghost" id="cjTrap">如果走 ${esc(C.notate(C.parseFen(P.fen),...sq(trap.mv)))}？</button>`:""}${s.db?`<button class="btn ghost" id="cjBook">看整局</button>`:""}</div>
-      <div class="cj-row"><button class="btn ghost" id="cjBack">${Z?"回珍品冊":HS||XM?"回去":"回茶單"}</button><button class="btn" id="cjNext">${nxL()}</button></div></div>`;
+      <div class="cj-row">${(()=>{const bl=Z?"回珍品冊":HS||XM?"回去":"回茶單";return bl===nxL()?"":`<button class="btn ghost" id="cjBack">${bl}</button>`})()}<button class="btn" id="cjNext">${nxL()}</button></div></div>`;   /* 開發者 11/13 晚截圖：最後一題沒有下一題時兩顆都寫「回去」，同字就只留主按鈕 */
       const on=(q,f)=>{const e=bx.querySelector(q);if(e)e.onclick=f};
       on("#cjTrap",()=>{closeSheet();trapDemo(o)});on("#cjBook",()=>{closeSheet();location.hash="#/db/"+s.db});on("#cjBack",()=>{closeSheet();goUp(BK)});on("#cjNext",()=>{closeSheet();next()});cjZBind(bx);if(XM&&XM.bind)try{XM.bind(bx)}catch(e){}})}
   function trapDemo(o){const tr=P.trap,b0=C.parseFen(P.fen);stat(`如果走 ${C.notate(b0,...sq(tr.mv))}？`);note("");const acc=[];

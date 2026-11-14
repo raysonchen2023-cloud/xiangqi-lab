@@ -1,0 +1,9 @@
+node_modules/
+# 網頁成品（scripts/make-www.js 產生，從公開倉庫重做）
+www/
+# 簽章金鑰和密碼檔絕對不能進倉庫（開發者自己保管）
+*.jks
+*.keystore
+*.p12
+keystore.properties
+signing.properties

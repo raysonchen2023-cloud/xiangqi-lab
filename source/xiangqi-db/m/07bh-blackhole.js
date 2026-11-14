@@ -44,7 +44,9 @@ function bhLevel(){let s=0;const J=k=>{try{return JSON.parse(localStorage.getIte
   const rec=J("xq_record")||{};for(const k in rec)if(rec[k]&&rec[k].w>0)s=Math.max(s,+k||0);
   const cl=store.get("cpuLevel",null);if(cl!=null)s=Math.max(s,+cl||0);if(!s)s=2;
   const fst=!((+store.get("bhCount",0)||0)>0);return Math.max(1,Math.min(18,s+(fst?-1:1)))}   /* 開發者 11/12 選：第一次真正偏航「星樞未醒」＝實力 −1，第二次起才 ＋1（序局不算次數） */
-function bhStart(k,cover){try{bhPreload()}catch(e){}store.set("bhRet",{k,cover:cover!==false,at:Date.now(),first:!((+store.get("bhCount",0)||0)>0)});store.set("park3d",true);
+function bhStart(k,cover){{const lk=typeof bhtdLock==="function"?bhtdLock():"";if(lk){toast("🌫 "+lk);try{bhMus(null);if(cover!==false&&k&&typeof shipDockCover==="function")shipDockCover(k,()=>{})}catch(e){}return}}   /* 11/14：定軌力用完＝黑洞入口關著（07bht bhtdLock → 07dgl dglBhLock） */
+  if(typeof BHTD_ON!=="undefined"&&BHTD_ON&&typeof bhtdSelect==="function"){bhtdSelect(k,cover);return}   /* 開發者 11/13：黑洞對戰改成陣地塔防，先選關卡（m/07bht-td.js） */
+  try{bhPreload()}catch(e){}store.set("bhRet",{k,cover:cover!==false,at:Date.now(),first:!((+store.get("bhCount",0)||0)>0)});store.set("park3d",true);
   jStart("bh:"+k,{human:"r",lx:bhLevel(),journey:"bh:"+k},()=>{location.hash="#/journey/play";setTimeout(()=>toast("✦ 星樞："+BH_TXT.voice[1]),900)})}
 const bhIs=st=>!!st&&String(st.journey||"").startsWith("bh:");
 /* 對局頁的 3D：巨盤模式＋黑洞環景（08b-cpugame 的 parkDraw 參數最後疊上去） */
@@ -71,20 +73,21 @@ body.bh-full .gs-pop{right:calc(128px + env(safe-area-inset-right,0px))!importan
 body.bh-full .gpad{left:auto!important;right:calc(130px + env(safe-area-inset-right,0px))!important;bottom:8px!important;transform:none!important}}`;document.head.append(s)}
 function bhFull(on,st){if(typeof document==="undefined")return;const b=document.body;if(!b)return;if(!on){if(b.classList.contains("bh-full"))b.classList.remove("bh-full");return}bhFullCss();b.classList.add("bh-full");
   try{const tb=document.getElementById("topbar"),h=tb?Math.round(tb.getBoundingClientRect().bottom):56;document.documentElement.style.setProperty("--bhTop",Math.max(0,h)+"px")}catch(e){}
-  try{const port=matchMedia("(orientation:portrait)").matches,k="bhRot:"+(st&&st.id||"");if(port&&!sessionStorage.getItem(k)){sessionStorage.setItem(k,"1");setTimeout(()=>{try{toast("📱 手機轉成橫向，黑洞星盤會滿版")}catch(e){}},1800)}}catch(e){}}
+  try{const port=matchMedia("(orientation:portrait)").matches,k="bhRot:"+(st&&st.id||"");if(port&&st&&!st.td&&!sessionStorage.getItem(k)){   /* 11/14 塔防局直拿已經滿版：不再跳「轉橫向」，改在視角選單放一行靜態提示（07bht-td.js bhtdViewMenu）；轉向時（resize 沒帶 st）也不跳 */sessionStorage.setItem(k,"1");setTimeout(()=>{try{toast("📱 手機轉成橫向，黑洞星盤會滿版")}catch(e){}},1800)}}catch(e){}}
 if(typeof window!=="undefined"){addEventListener("hashchange",()=>{if(!/^#\/journey\/play/.test(location.hash))bhFull(false)});addEventListener("resize",()=>{if(document.body&&document.body.classList.contains("bh-full"))bhFull(true,null)})}
-function bhParkEx(st){bhFull(bhIs(st),st);if(!bhIs(st)){if(typeof BGM!=="undefined"&&BGM.force&&/^bh_/.test(BGM.force))bhMus(null);return null}return{giant:true,bg:"data/park/bh_far2.webp"   /* 11/12 ChatGPT 細修報告＋Gemini 回應：遠景改用 Gemini 重畫、左右無縫的版本 */,bgName:"🌀 黑洞・星樞棋局",bhStars:bhStarsEx(),era:"classic",quietMate:true,watchers:[],oppHello:null,opp:null,mateLook:null,crowd:null,
+function bhParkEx(st){bhFull(bhIs(st),st);if(!bhIs(st)){if(typeof BGM!=="undefined"&&BGM.force&&/^bh_/.test(BGM.force))bhMus(null);return null}return{giant:true,bg:"data/park/bh_far2.webp"   /* 11/12 ChatGPT 細修報告＋Gemini 回應：遠景改用 Gemini 重畫、左右無縫的版本 */,bgName:"🌀 黑洞・星樞棋局",bhStars:bhStarsEx(),era:"classic",quietMate:true,watchers:[],oppHello:null,opp:null,mateLook:null,crowd:null,...(typeof bhtdParkEx==="function"?bhtdParkEx(st):null),...(typeof bhfxParkEx==="function"?bhfxParkEx(st):null)   /* 11/14 太虛星尊上場：黑將外觀換成魔王（07bhf-bossfx.js；現在只有開發者測試台會開） */,
   gate:{img:["data/park/blackhole_360.webp"],icon:"🌀",title:"星樞棋局",sub:"墨色星渦的中心，有一張巨大的星盤",bg:"#05060d",quiet:true}}}
 /* 對局中：領先、落後各提醒一次；下到中盤星樞說一句伏筆（不說破幻影棋客是什麼） */
 let BH_T={id:null,s:{}};
-function bhTick(st){if(bhIs(st))try{bhMusTick(st)}catch(e){}if(!bhIs(st)||st.result||!st.id)return;if(BH_T.id!==st.id)BH_T={id:st.id,s:{}};const S=BH_T.s,n=(st.moves||[]).length,me=st.human==="b"?-1:1,v=st.eval&&st.eval.v!=null?st.eval.v*me:null;
+function bhTick(st){try{if(typeof bhtdTick==="function")bhtdTick(st)}catch(e){console.warn("[bhtd]",e)}try{if(typeof bhfxSync==="function")bhfxSync(st)}catch(e){console.warn("[bhfx]",e)}   /* 11/14 太虛星尊魔法 3D：魔王該上場就延遲載入、建特效，不該就收掉（07bhf-bossfx.js） */   /* 陣地塔防：元氣、靈力條、招式鈕、盤上標記（07bht-td.js；不是陣地局就收起來） */
+  if(bhIs(st))try{bhMusTick(st)}catch(e){}if(!bhIs(st)||st.result||!st.id)return;if(BH_T.id!==st.id)BH_T={id:st.id,s:{}};const S=BH_T.s,n=(st.moves||[]).length,me=st.human==="b"?-1:1,v=st.eval&&st.eval.v!=null?st.eval.v*me:null;
   const say=(k,L,ms)=>{if(S[k])return;S[k]=1;setTimeout(()=>{if(L[0]==="星樞")bhBell()},ms||600);setTimeout(()=>toast((L[0]==="星樞"?"✦ ":"")+L[0]+"："+L[1]),ms||600)};
-  if(v!=null&&n>=8&&v>=280)say("lead",BH_TXT.lead);else if(v!=null&&n>=8&&v<=-280)say("behind",BH_TXT.behind);
+  if(st.td){}else if(v!=null&&n>=8&&v>=280)say("lead",BH_TXT.lead);   /* 陣地塔防不看盤面評估（黑子還沒全上場） */else if(v!=null&&n>=8&&v<=-280)say("behind",BH_TXT.behind);
   if(n>=24&&st.turn===st.human)say("hush",BH_TXT.hush,1200)}
 /* 07-legend journeyGameEnd 叫：記次數、照輸贏調下次難度 */
-function bhGameEnd(st){if(st&&st.journey===BHX_ID){bhxEnd();return}   /* 序局不算進黑洞次數（第一次真正偏航才降一階） */store.set("bhCount",(store.get("bhCount",0)||0)+1);store.set("bhBackSay",1);if(st&&st.result&&st.result.w&&st.result.w===st.human)store.set("bhWin",(store.get("bhWin",0)||0)+1);   /* 戰勝過黑洞：幻影棋客頭上的小黑洞變成幻譜星門（07gx） */const a=+store.get("bhAdj",0)||0,w=st.result&&st.result.w;
+function bhGameEnd(st){if(st&&st.journey===BHX_ID){bhxEnd();return}if(st&&st.journey==="bh:tl"){if(typeof bhtlEnd==="function")bhtlEnd(st);return}   /* 塔防練習賽（07bhtl-tdlearn.js）：不算黑洞次數、輸贏、塔防進度 */   /* 序局不算進黑洞次數（第一次真正偏航才降一階） */store.set("bhCount",(store.get("bhCount",0)||0)+1);store.set("bhBackSay",1);if(st&&st.result&&st.result.w&&st.result.w===st.human)store.set("bhWin",(store.get("bhWin",0)||0)+1);if(st&&st.td&&typeof bhtdEnd==="function")bhtdEnd(st);   /* 陣地塔防：記破過哪一關 */   /* 戰勝過黑洞：幻影棋客頭上的小黑洞變成幻譜星門（07gx） */const a=+store.get("bhAdj",0)||0,w=st.result&&st.result.w;
   if(w===st.human)store.set("bhAdj",Math.min(0,a+1));else if(w)store.set("bhAdj",Math.max(-3,a-1))}
-function bhResultModal(st,win,draw0,XPR){if(st&&st.journey===BHX_ID){bhxAfter();return}const L=win?BH_TXT.win:draw0?BH_TXT.draw:BH_TXT.lose,R0=store.get("bhRet",null),fst=!!(R0&&R0.first);
+function bhResultModal(st,win,draw0,XPR){if(st&&st.journey===BHX_ID){bhxAfter();return}if(st&&st.journey==="bh:tl"&&typeof bhtlResult==="function"){bhtlResult(st,win,draw0,XPR);return}   /* 塔防練習賽的結果視窗 */if(st&&st.td&&typeof bhtdResult==="function"){bhtdResult(st,win,draw0,XPR);return}   /* 陣地塔防：下一關／重打本關 */const L=win?BH_TXT.win:draw0?BH_TXT.draw:BH_TXT.lose,R0=store.get("bhRet",null),fst=!!(R0&&R0.first);
   modal(`<div class="em">${win?"✨":draw0?"🤝":"🌀"}</div><h2>${win?"星光開門":draw0?"不分勝負":"星渦退去"}</h2><p class="muted">${esc(st.result.why||"")}・🌀 黑洞・星樞棋局（不計積分、不扣分）</p>${bhSay(L)}${win&&fst?`<p class="pl-say">✦ 星樞：「${esc(BHX_FD.win)}」</p>`:""}${XPR||""}`,
     [["⛵ 星槎回航",bhReturn],["再看一下星盤",null,true]],"res")}
 /* 回航：回到星槎，原本是起航就照常出那一站的停靠封面 */
@@ -193,6 +196,12 @@ const BHX_TXT={title:"天裂星盤沉雲河，黑洞殘局啟千秋",rain:"七�
   wrong:"這一步……星盤上，早已落過千萬遍。",hint1:"先看黑將面前，那顆擋住俥路的黑士。",hint2:"請走：俥五進一，直接吃掉黑將面前的黑士。"};
 const BHX_FD={title:"雲河偏航・星樞未醒",desc:["雲河航線短暫偏入黑洞星盤；此局不計積分，也不扣分。","星樞尚未完全甦醒，棋力會比你目前的實力低一階。"],win:"千萬年來，星盤未曾有過此等變數……你是誰？",back:"星槎已回航線；往後起航，仍可能再次偏入黑洞。"};
 function bhxNeed(){try{return !store.get("bhXuDone",null)}catch(e){return false}}
+/* 開發者 11/13 晚「iPad 開頭的音樂和轉場有點 lag」：全螢幕粒子畫布的倍率照螢幕面積設上限（約 160 萬像素；手機照舊 2 倍，iPad 降到 1.1 倍左右，每幀少畫四分之三） */
+function bhxDpr(W,H,low){const d=low?1:Math.min(2,(typeof devicePixelRatio!=="undefined"&&devicePixelRatio)||1);return Math.max(1,Math.min(d,Math.sqrt(1.6e6/Math.max(1,W*H))))}
+/* 開場電影的圖全部先下載、先解碼（原本換鏡頭那一刻才設 background-image，iPad 當場解碼大圖會頓）；留著參照，免得被回收 */
+const BHX_IMGS=[];
+function bhxPreImg(){if(BHX_IMGS.length)return;try{const U=new Set(["data/park/bh_far2.webp"]);for(const k in BHX_PG){const p=BHX_PG[k];if(p.img)U.add(p.img);if(p.imgN)U.add(p.imgN)}
+  for(const u of U){const im=new Image();im.decoding="async";im.src=u;BHX_IMGS.push(im);if(im.decode)im.decode().catch(()=>{})}}catch(e){}}
 function bhxCss(){if(document.getElementById("bhxCss"))return;const s=document.createElement("style");s.id="bhxCss";s.textContent=`
 #bhxPg{position:fixed;inset:0;z-index:9000;background-color:#05060d;background-position:center;background-size:cover;background-repeat:no-repeat;color:#f6efe0;display:flex;flex-direction:column;justify-content:center;align-items:center;padding:24px 22px calc(24px + env(safe-area-inset-bottom,0px));text-align:center;cursor:pointer;opacity:0;transition:opacity .6s;overflow:hidden}
 #bhxPg.on{opacity:1}
@@ -210,6 +219,10 @@ function bhxCss(){if(document.getElementById("bhxCss"))return;const s=document.c
 #bhxPg .bx-mt{position:absolute;inset:0;width:100%;height:100%;pointer-events:none}
 #bhxPg.fm{background:#05060d;cursor:default}#bhxPg.fm::before{z-index:1}
 #bhxPg .fm-st{position:absolute;inset:0;will-change:transform}#bhxPg .fm-bg{position:absolute;inset:0;background-size:cover;background-position:center;background-repeat:no-repeat}
+/* 意見回饋 882～883（iPad 主畫面 App 820x1148「底部有一條白底、上半部好像被截掉」）：電影圖是 9:16 直幅，iPad 用 cover 鋪滿會裁掉兩成高度、再加鏡頭推移就切到船桅和上排圓圈；
+   比 0.62 寬的螢幕把鏡頭舞台框成 0.62 寬高比置中、左右淡進底色（手機不受影響）。底部那條是 02-shell gapfix 塗的紙色，電影播放時改塗電影底色 */
+@media (min-aspect-ratio:31/50){#bhxPg .fm-st{left:50%;right:auto;width:62vh;width:62dvh;margin-left:-31vh;margin-left:-31dvh;-webkit-mask-image:linear-gradient(90deg,transparent,#000 7%,#000 93%,transparent);mask-image:linear-gradient(90deg,transparent,#000 7%,#000 93%,transparent)}}
+html:has(#bhxPg),html:has(#bhxPg) body{background:#05060d}
 #bhxPg .fm-fx{position:absolute;inset:0;width:100%;height:100%;pointer-events:none;z-index:2}
 #bhxPg .fm-tx{position:relative;z-index:3;display:flex;flex-direction:column;align-items:center}
 #bhxPg .fm-cap{position:absolute;z-index:3;top:calc(8vh + env(safe-area-inset-top,0px));left:0;right:0;text-align:center;white-space:nowrap;font-size:min(16px,calc((100vw - 32px)/22));letter-spacing:.2em;color:#E8C77A;text-shadow:0 1px 8px #000;opacity:0;transition:opacity 1.2s;pointer-events:none}#bhxPg .fm-cap.on{opacity:1}
@@ -266,7 +279,7 @@ function bhxStarRev(o){try{const P=BHX_PG.p4;if(!P||!P.imgN)return;const st=o.qu
   const d=document.createElement("div");d.className=bg?"fm-bg fm-ly bx-rev":"bx-rev";d.style.cssText=(bg?"":"position:absolute;inset:0;z-index:-1;background-position:center;background-size:cover;background-repeat:no-repeat;")+"pointer-events:none;opacity:0;transition:opacity 1.1s ease;background-image:url("+P.img+")";
   if(bg)bg.after(d);else o.prepend(d);setTimeout(()=>{d.style.opacity="1"},1300)}catch(e){}}
 function bhxMeteor(o,onDone,opt){opt=opt||{};bhxStarRev(o);const ALL=opt.mode==="all",CATCH=opt.mode==="catch";const cv=document.createElement("canvas");cv.className="bx-mt";o.prepend(cv);
-  const W=o.clientWidth||innerWidth,H=o.clientHeight||innerHeight,dpr=Math.min(2,devicePixelRatio||1);cv.width=Math.round(W*dpr);cv.height=Math.round(H*dpr);const g=cv.getContext("2d");g.scale(dpr,dpr);
+  const W=o.clientWidth||innerWidth,H=o.clientHeight||innerHeight,dpr=bhxDpr(W,H,false);cv.width=Math.round(W*dpr);cv.height=Math.round(H*dpr);const g=cv.getContext("2d");g.scale(dpr,dpr);
   const s=Math.max(W/768,H/1376),ox=(W-768*s)/2,oy=(H-1376*s)/2,P=([x,y])=>[ox+x*s,oy+y*s],me=ALL?null:opt.key||(typeof myChar==="function"&&myChar())||"x_swordboy";   /* all＝還沒選角：七顆都落下；catch＝選好了：只演茶香接住那一顆 */
   const src=P([384,30]),SH=[W/2,H*.88],lerp=(a,b,u)=>[a[0]+(b[0]-a[0])*u,a[1]+(b[1]-a[1])*u],ez=u=>u<.5?2*u*u:1-Math.pow(-2*u+2,2)/2;
   const bz=(a,c,b,u)=>[(1-u)*(1-u)*a[0]+2*(1-u)*u*c[0]+u*u*b[0],(1-u)*(1-u)*a[1]+2*(1-u)*u*c[1]+u*u*b[1]];
@@ -308,12 +321,13 @@ function bhXuStart(old){const c=bhxFresh()?null:(typeof myChar==="function"&&myC
   /* 開發者 11/12：第 1 首〈天河初裂〉整首（約 90 秒）當開場電影；3D 模型改到星樞邀局時才載（ChatGPT 135 號：不跟開場搶）。減少動態＝原本兩頁分鏡 */
   let rm=false;try{rm=matchMedia("(prefers-reduced-motion:reduce)").matches}catch(e){}opPlay(1,{fade:.3});
   if(rm){bhxVortex(c,()=>bhxPages(["p1","p5"],bhxIntro,true));return}bhxFilm(OP_FILM1,bhxIntro);bhxVortex(c,null)}
-function bhxIntro(){OP.loop=[75,89];opVol(.5,1.5);setTimeout(()=>{try{bhPreload()}catch(e){}},500);   /* 邀局時第 1 首小聲在最後一段循環；趁玩家讀字先載 3D */
+function bhxIntro(){OP.loop=[75,89];opVol(.5,1.5);setTimeout(()=>{try{bhPreload()}catch(e){}try{if(typeof bhfxPre==="function")bhfxPre()}catch(e){}},500);   /* 11/14：序局的黑將是太虛星尊，魔王模型、魔法圖也趁讀字時先下載 */   /* 邀局時第 1 首小聲在最後一段循環；趁玩家讀字先載 3D */
   modal(`<div class="em">♟</div><h2>星樞棋局・序局</h2><p>星盤展開，棋路成光。七星化作紅方棋子。</p><p class="pl-say">✦ 星樞：「${esc(BHX_TXT.start)}」</p><p class="muted" style="font-size:13px">黑洞殘局，只差最後一手：紅方先走，一步將死黑將。走錯也不算輸。<br>說書人：${esc(BHX_TXT.open)}</p>`,[["入局",bhxGo]],"prolog")}
 function bhxGo(){BHX_W=0;store.set("park3d",true);store.set("bhRet",null);opPlay(2,{fade:.8,loop:[8,84]});   /* 第 2 首〈星樞試局〉：按「入局」那一下開始（iPhone 要在點選裡），玩家一直沒下就 8～84 秒循環 */
   jStart(BHX_ID,{human:"r",lx:1,journey:BHX_ID,lv:{fen:BHX_FEN,turn:"r",noPerpetual:true}},()=>{location.hash="#/journey/play";setTimeout(()=>{bhBell();toast("✦ 星樞："+BHX_TXT.start)},900);setTimeout(()=>bhxBack(false),1500);
     /* 從紅方正後方看，同一路的俥、炮、黑士、黑將疊在一起 → 開場轉到右前方斜看、對焦黑士（實測挑的角度） */
-    let k=0;const cam=()=>{k++;try{if(typeof PARK!=="undefined"&&PARK&&PARK.v&&PARK.v.setView){PARK.v.setView({y:.6,p:.45,z:.65,foc:"a"});return}}catch(e){}if(k<30)setTimeout(cam,400)};setTimeout(cam,1200)})}
+    let k=0;const cam=()=>{k++;if(typeof bhfxXuBusy==="function"&&bhfxXuBusy())return;   /* 11/14 太虛星尊開場示威正在播（07bhf-bossfx.js）：播完由它轉到這個角度 */try{if(typeof PARK!=="undefined"&&PARK&&PARK.v&&PARK.v.setView){PARK.v.setView(BHX_CAM);return}}catch(e){}if(k<30)setTimeout(cam,400)};setTimeout(cam,1200)})}
+const BHX_CAM={y:.6,p:.45,z:.65,foc:"a"};   /* 序局開場的鏡頭角度（上面 bhxGo 用；太虛星尊示威播完也轉回這裡） */
 /* 08b-cpugame tap() 送出前問：序局走錯就不送（回傳 {hint}），走對回 null 照常送 */
 let BHX_W=0;
 function bhxGuard(st,f,t){if(!st||st.journey!==BHX_ID||st.result)return null;
@@ -372,18 +386,18 @@ function opRamp(c,to,dur){if(!c)return;const lv=Math.max(0,to)*opLevel(),D=Math.
 /* 整首抓成 Blob（跟 bgmBlob 同一個理由：CDN 不給分段下載、iPhone 要分段才肯播）；自己一份快取，不被一般配樂的換曲清掉 */
 function opBlob(n){const rel="data/bgm/blackhole/"+OP_F[n];if(OP.u[rel])return Promise.resolve(OP.u[rel]);const base=typeof BGM_BASE!=="undefined"?BGM_BASE:"";
   return OP.u[rel]=fetch(base+rel,base?{mode:"cors",credentials:"omit"}:undefined).then(r=>{if(!r.ok)throw 0;return r.blob()}).then(b=>OP.u[rel]=URL.createObjectURL(b)).catch(()=>{delete OP.u[rel];return null})}
-function opPre(){if(!opOn())return;for(const n of[1,2,3])opBlob(n)}
+function opPre(){try{bhxPreImg()}catch(e){}if(!opOn())return;for(const n of[1,2,3])opBlob(n)}
 /* 播第 n 首：從 at 秒開始、fade 秒淡入，舊的那首同時淡出（交叉淡化）；一定要在點選當下叫（iPhone） */
-function opPlay(n,o){o=o||{};const at=o.at||0,fade=o.fade==null?.3:o.fade;OP.on=true;opTick();OP.n=n;OP.loop=o.loop||null;OP.t0=performance.now()-at*1000;
+function opPlay(n,o){o=o||{};const at=o.at||0,fade=o.fade==null?.3:o.fade;OP.on=true;opTick();OP.n=n;OP.loop=o.loop||null;OP.t0=performance.now()-at*1000;OP.hold=null;
   try{if(typeof BGM!=="undefined"&&BGM.a)BGM.a.pause()}catch(e){}
   const old=OP.ch[OP.cur];if(old){opRamp(old,0,Math.max(.4,fade));const oa=old.a;setTimeout(()=>{if(OP.ch[OP.cur]!==old)try{oa.pause()}catch(e){}},(Math.max(.4,fade)+.15)*1000)}
   if(!opOn()){OP.cur=-1;return}const ac=opAC();try{if(ac&&ac.state!=="running")ac.resume()}catch(e){}
   const nx=OP.cur===0?1:0,c=opCh(nx);OP.cur=nx;
-  const go=u=>{if(OP.n!==n||OP.ch[OP.cur]!==c||!OP.on)return;if(c.a.src!==u)c.a.src=u;const want=(performance.now()-OP.t0)/1000;
+  const go=u=>{if(OP.n!==n||OP.ch[OP.cur]!==c||!OP.on)return;if(OP.hold){OP.t0=performance.now()-OP.hold.at*1000;OP.hold=null}if(c.a.src!==u)c.a.src=u;const want=(performance.now()-OP.t0)/1000;
     const seek=()=>{try{c.a.currentTime=Math.max(0,want)}catch(e){}};if(c.a.readyState>=1)seek();else c.a.addEventListener("loadedmetadata",seek,{once:true});
     if(c.g)c.g.gain.value=0;else c.a.volume=0;const p=c.a.play();if(p&&p.catch)p.catch(()=>{OP.need=true});opRamp(c,o.vol==null?1:o.vol,fade)};
-  const u=OP.u["data/bgm/blackhole/"+OP_F[n]];if(typeof u==="string")go(u);else opBlob(n).then(x=>{if(x)go(x)})}
-function opTime(){const c=OP.ch[OP.cur];if(c&&!c.a.paused&&c.a.readyState>=2&&!c.a.ended){const t=c.a.currentTime;OP.t0=performance.now()-t*1000;return t}return(performance.now()-OP.t0)/1000}
+  const u=OP.u["data/bgm/blackhole/"+OP_F[n]];if(typeof u==="string")go(u);else{OP.hold={at,until:performance.now()+5000};opBlob(n).then(x=>{if(x)go(x)})}}   /* 11/13 晚：曲子還沒下載完，畫面時鐘先停在 at 等（最多 5 秒），音樂到了一起開始；原本畫面先跑、音樂晚到再跳秒，iPad 看起來在卡 */
+function opTime(){if(OP.hold){if(performance.now()<OP.hold.until)return OP.hold.at;OP.t0=performance.now()-OP.hold.at*1000;OP.hold=null}const c=OP.ch[OP.cur];if(c&&!c.a.paused&&c.a.readyState>=2&&!c.a.ended){const t=c.a.currentTime;OP.t0=performance.now()-t*1000;return t}return(performance.now()-OP.t0)/1000}
 function opSeek(t){OP.t0=performance.now()-t*1000;const c=OP.ch[OP.cur];if(c)try{c.a.currentTime=t}catch(e){}}
 function opVol(v,d){opRamp(OP.ch[OP.cur],v,d==null?1:d)}
 function opStop(d){if(!OP.on)return;OP.on=false;OP.loop=null;const c=OP.ch[OP.cur];if(c){opRamp(c,0,d==null?1:d);const a=c.a;setTimeout(()=>{try{a.pause()}catch(e){}},((d==null?1:d)+.15)*1000)}
@@ -401,7 +415,12 @@ function opSfx(k,big){if(typeof withAudio!=="function")return;withAudio(()=>{con
     env(g,k==="vortex"?.07:.12,.04,D);o.connect(g);g.connect(dst);o.start(t);o.stop(t+D+.05);
     const nz=opNoise(D),f=ac.createBiquadFilter(),g2=ac.createGain();f.type=k==="vortex"?"bandpass":"lowpass";f.Q.value=k==="vortex"?8:.7;f.frequency.setValueAtTime(k==="vortex"?900:1400,t);f.frequency.exponentialRampToValueAtTime(k==="vortex"?180:160,t+D);
     env(g2,k==="vortex"?.09:.1,.05,D);nz.connect(f);f.connect(g2);g2.connect(dst);nz.start(t);nz.stop(t+D)}
-  else if(k==="lines"){[660,784,880,990,1175,1320,1568].forEach((hz,i)=>{const o=ac.createOscillator(),g=ac.createGain(),s=t+i*.11;o.type="triangle";o.frequency.value=hz;g.gain.setValueAtTime(0,s);g.gain.linearRampToValueAtTime(.05,s+.01);g.gain.exponentialRampToValueAtTime(.0001,s+.18);o.connect(g);g.connect(dst);o.start(s);o.stop(s+.2)})}
+  else if(k==="crack"){   /* 11/13 開發者「一聲巨響跟清脆的程式音很不搭」：天裂＝低音悶響（70→30Hz）＋裂開的沙沙聲＋3 秒低頻餘韻，跟配樂融在一起 */
+    const o=ac.createOscillator(),g=ac.createGain();o.type="sine";o.frequency.setValueAtTime(72,t);o.frequency.exponentialRampToValueAtTime(30,t+1.8);env(g,.24,.012,2.6);o.connect(g);g.connect(dst);o.start(t);o.stop(t+2.7);
+    const o2=ac.createOscillator(),g2=ac.createGain();o2.type="triangle";o2.frequency.setValueAtTime(48,t);o2.frequency.exponentialRampToValueAtTime(26,t+1.2);env(g2,.12,.02,1.6);o2.connect(g2);g2.connect(dst);o2.start(t);o2.stop(t+1.7);
+    const n1=opNoise(.6),f1=ac.createBiquadFilter(),g3=ac.createGain();f1.type="bandpass";f1.Q.value=1.2;f1.frequency.setValueAtTime(2600,t);f1.frequency.exponentialRampToValueAtTime(500,t+.5);env(g3,.08,.004,.55);n1.connect(f1);f1.connect(g3);g3.connect(dst);n1.start(t);n1.stop(t+.6);
+    const n2=opNoise(3.4),f2=ac.createBiquadFilter(),g4=ac.createGain();f2.type="lowpass";f2.Q.value=.7;f2.frequency.setValueAtTime(320,t);f2.frequency.exponentialRampToValueAtTime(70,t+3.2);env(g4,.07,.25,3.3);n2.connect(f2);f2.connect(g4);g4.connect(dst);n2.start(t);n2.stop(t+3.4)}
+  else if(k==="lines"){[660,784,880,990,1175,1320,1568].forEach((hz,i)=>{const o=ac.createOscillator(),g=ac.createGain(),s=t+i*.11;o.type="sine";o.frequency.value=hz;g.gain.setValueAtTime(0,s);g.gain.linearRampToValueAtTime(.022,s+.03);g.gain.exponentialRampToValueAtTime(.0001,s+.42);o.connect(g);g.connect(dst);o.start(s);o.stop(s+.2)})}
   else if(k==="meteor"){const m=big?1.25:1,o=ac.createOscillator(),g=ac.createGain();o.type="sine";o.frequency.setValueAtTime(160,t);o.frequency.exponentialRampToValueAtTime(70,t+.22);env(g,.06*m,.01,.22);o.connect(g);g.connect(dst);o.start(t);o.stop(t+.25);
     const o2=ac.createOscillator(),g2=ac.createGain();o2.type="sine";o2.frequency.setValueAtTime(1200,t);o2.frequency.exponentialRampToValueAtTime(1800,t+.38);env(g2,.045*m,.01,.38);o2.connect(g2);g2.connect(dst);o2.start(t);o2.stop(t+.4)}})}
 
@@ -413,7 +432,7 @@ function opSfx(k,big){if(typeof withAudio!=="function")return;withAudio(()=>{con
 /* 開發者 11/12「這三頁停頓太久、敘述太短」：旁白加長（ChatGPT 139 號，每句 ≤15 字、每個鏡頭 3～4 句，照秒數出現） */
 const OP_FILM1={n:1,end:89.5,shots:[
   {at:0,img:null,fx:"dark",sfx:[[0,"vortex"]],say:[[0.0,"第〇章"],[1.7,"天裂星盤沉雲河"],[3.4,"黑洞殘局啟千秋"]]},
-  {at:5.4,img:"p10",ly:[[10.4,"p11",.55,"r"],[12.4,"p12",.3,"r"],[17.6,"p1",.7]],rc:[390,545],kb:[[1.0,50,42],[1.1,50,40]],fx:"tear",crack:12.4,shk:[[10.4,.3,4],[12.4,.4,9]],sfx:[[12.4,"lines"]],say:[[5.5,"很久很久以前，"],[8.8,"天上有張星盤。"],[12.4,"一聲巨響，天裂了。"],[16.2,"星光從縫中落。"]]},
+  {at:5.4,img:"p10",ly:[[10.4,"p11",.55,"r"],[12.4,"p12",.3,"r"],[17.6,"p1",.7]],rc:[390,545],kb:[[1.0,50,42],[1.1,50,40]],fx:"tear",crack:12.4,shk:[[10.4,.3,4],[12.4,.4,9]],sfx:[[12.4,"crack"]],say:[[5.5,"很久很久以前，"],[8.8,"天上有張星盤。"],[12.4,"一聲巨響，天裂了。"],[16.2,"星光從縫中落。"]]},
   {at:20,img:"p6",kb:[[1.2,50,22],[1.0,50,62]],fx:"fall",say:[[20.5,"裂口灑下星光。"],[24.0,"像細雨入山河。"],[27.8,"大河先被點亮。"],[31.6,"村燈跟著醒來。"]]},
   {at:35,img:"p1",kb:[[1.4,50,68],[1.05,50,62]],fx:"river",board:36,bp:[1000,560],rvy:1000,sfx:[[36,"lines"]],say:[[35.5,"星河橫過天心。"],[39.0,"星線交成棋路。"],[42.8,"那道河，後來叫界。"],[46.5,"兩岸從此相望。"]]},
   {at:50,img:"p7",kb:[[1.0,50,48],[1.12,50,47]],fx:"stars",board:51,bp:[657,440],sfx:[[51,"lines"]],say:[[50.5,"河畔有塊青石。"],[54.0,"沉睡不知幾年。"],[57.8,"星光落在石面。"],[61.5,"棋盤慢慢醒來。"]],nar:[58.8,"棋路，先於棋名。"]},
@@ -451,14 +470,14 @@ function bhxFilm(F,done){bhxCss();let rm=false;try{rm=matchMedia("(prefers-reduc
   o.innerHTML=`<div class="fm-st"><div class="fm-bg"></div></div><canvas class="fm-fx"></canvas><div class="fm-cap"></div><div class="fm-tx"></div><button class="bx-k" type="button">略過</button><button class="fm-nx" type="button" aria-label="下一個鏡頭">▶</button>`;
   try{if(BHX_PG.p4&&BHX_PG.p4.imgN)(new Image).src=BHX_PG.p4.imgN}catch(e){}   /* 11/13：七星那一幕的無紅光底圖先載好 */
   const st=o.querySelector(".fm-st"),bg=o.querySelector(".fm-bg"),cv=o.querySelector(".fm-fx"),tx=o.querySelector(".fm-tx"),capE=o.querySelector(".fm-cap"),g=cv.getContext("2d");
-  const low=(()=>{try{return(navigator.deviceMemory||4)<=3||(navigator.hardwareConcurrency||4)<=4}catch(e){return false}})(),dpr=low?1:Math.min(2,devicePixelRatio||1);
-  let W=0,H=0;const fit=()=>{W=o.clientWidth||innerWidth;H=o.clientHeight||innerHeight;cv.width=Math.round(W*dpr);cv.height=Math.round(H*dpr);g.setTransform(dpr,0,0,dpr,0,0);
+  const low=(()=>{try{return(navigator.deviceMemory||4)<=3||(navigator.hardwareConcurrency||4)<=4}catch(e){return false}})();let dpr=1;bhxPreImg();
+  let W=0,H=0;const fit=()=>{W=o.clientWidth||innerWidth;H=o.clientHeight||innerHeight;dpr=bhxDpr(W,H,low);cv.width=Math.round(W*dpr);cv.height=Math.round(H*dpr);g.setTransform(dpr,0,0,dpr,0,0);
     const n=Math.max(15,...F.shots.flatMap(S=>(S.say||[]).map(([,t])=>[...t].length)));o.style.setProperty("--bxfs",Math.max(14,Math.min(28,Math.floor((W-48)/(n*1.1))))+"px")};fit();addEventListener("resize",fit);
   const P=[],add=(x,y,vx,vy,life,r,col)=>{if(P.length<(low?140:320))P.push({x,y,vx,vy,l:0,m:life,r,col})};
   let si=-1,S=null,kbNow=[1,50,50],fin=false,raf=0,mt=null,fired={};
   /* hspx 開發者 11/12「裂痕和落下的塵太假」：落塵照 ChatGPT 142 號規格重做——四種粒子（光絲 30%、星屑 35%、青瓷碎片 15%、遠景微塵 20%），
      有遠近（z）、閃爍、光絲拖尾；出生後 0.3～0.8 秒轉向「星河路徑」（裂口往下流、碰到銀河轉橫）；上限 150 顆（低階手機 80） */
-  let LY=[],GR=null,DU=[],lastT=null;const SPR={},DCAP=low?80:150,dEm={acc:0,burst:false};
+  let LY=[],GR=null,DU=[],lastT=null;const SPR={},DCAP=low?300:700,dEm={acc:0,burst:false};
   const spr=c=>SPR[c]||(SPR[c]=(()=>{const k=document.createElement("canvas");k.width=k.height=32;const x=k.getContext("2d"),gr=x.createRadialGradient(16,16,0,16,16,16);gr.addColorStop(0,`rgba(${c},1)`);gr.addColorStop(.25,`rgba(${c},.55)`);gr.addColorStop(1,`rgba(${c},0)`);x.fillStyle=gr;x.fillRect(0,0,32,32);return k})());
   const dAdd=(k,x,y,vx,vy,z)=>{if(DU.length>=DCAP)return;DU.push({k,x,y,vx,vy,z,a:0,life:k==="chip"?1.6+Math.random():k==="streak"?1.4+Math.random()*1.2:2.5+Math.random()*2.5,
     sz:(k==="streak"?8+Math.random()*20:k==="chip"?2+Math.random()*4:k==="mote"?.8+Math.random()*1.6:.4+Math.random()*.6)*(.7+z*.6),tl:.12+Math.random()*.13,ph:Math.random()*6.283,fr:4+Math.random()*7,
@@ -466,10 +485,12 @@ function bhxFilm(F,done){bhxCss();let rm=false;try{rm=matchMedia("(prefers-reduc
   const dPick=()=>{const r=Math.random();return r<.3?"streak":r<.65?"mote":r<.8?"chip":"glit"};
   const tearEmit=(t,dt,K)=>{const D=BHX_DUST[K];if(!D)return;const cs=Math.max(W/768,H/1376)*kbNow[0];
     if(K==="p11"&&Math.random()<dt*4){const c=onScr(cover(D.c));dAdd("chip",c[0]+(Math.random()-.5)*40*cs,c[1]+(Math.random()-.3)*30*cs,(Math.random()-.5)*40,20+Math.random()*40,Math.random())}   /* 裂紋爆開：縫裡掉出一點瓷片 */
-    if(S.crack!=null&&t>=S.crack&&!dEm.burst&&D.rad){dEm.burst=true;const c=onScr(cover(D.c));for(let i=0;i<54;i++){const an=Math.random()*6.283,ex=c[0]+Math.cos(an)*D.rad[0]*cs*.85,ey=c[1]+Math.sin(an)*D.rad[1]*cs*.85,r=Math.random(),k=r<.5?"streak":r<.75?"chip":"mote",v=(k==="chip"?60:90)+Math.random()*110,z=Math.random();
+    if(S.crack!=null&&t>=S.crack&&!dEm.burst&&D.rad){dEm.burst=true;const c=onScr(cover(D.c));for(let i=0;i<120;i++){const an=Math.random()*6.283,ex=c[0]+Math.cos(an)*D.rad[0]*cs*.85,ey=c[1]+Math.sin(an)*D.rad[1]*cs*.85,r=Math.random(),k=r<.5?"streak":r<.75?"chip":"mote",v=(k==="chip"?60:90)+Math.random()*110,z=Math.random();
       dAdd(k,ex,ey,Math.cos(an)*v*(.5+z),Math.sin(an)*v*(.5+z)+40,z)}}   /* 崩開那一下：沿破洞邊緣多點噴出 54 顆（光絲一半、碎片四分之一） */
-    if(!D.tip||S.crack==null||t<S.crack+.4)return;const rel=t-S.crack,rate=K==="p12"?(rel<5?11:6):4;dEm.acc+=dt*rate;
-    while(dEm.acc>=1){dEm.acc-=1;const p=onScr(cover(D.tip)),z=Math.random(),k=dPick();dAdd(k,p[0]+(Math.random()-.5)*16*cs,p[1]+(Math.random()-.5)*8*cs,(Math.random()-.5)*30,(k==="streak"?90:k==="glit"?14:35)*(.6+z*.8),z)}};   /* 之後從破洞下緣持續洩出 */
+    if(!D.tip||S.crack==null||t<S.crack+.4)return;const rel=t-S.crack,rate=K==="p12"?(rel<5?110:50):24;dEm.acc+=dt*rate;
+    while(dEm.acc>=1){dEm.acc-=1;const z=Math.random(),k=dPick();let p;
+      if(D.rad&&Math.random()<.55){const c=onScr(cover(D.c)),an=.15+Math.random()*(Math.PI-.3);p=[c[0]+Math.cos(an)*D.rad[0]*cs*.9,c[1]+Math.sin(an)*D.rad[1]*cs*.9]}else{const q=onScr(cover(D.tip));p=[q[0]+(Math.random()-.5)*34*cs,q[1]+(Math.random()-.5)*14*cs]}
+      dAdd(k,p[0],p[1],(Math.random()-.5)*50,(k==="streak"?90:k==="glit"?14:35)*(.6+z*.8),z)}};   /* 之後從破洞下緣持續洩出；開發者 11/13 晚「破洞落下的粒子有點空虛，加強大量落下的視覺感」：速率約 10 倍、一半從尖端成瀑布、一半沿破洞整個下緣灑落，同時上限 700（低階 300），裂開那一下 120 顆 */
   const tearDraw=(t,dt,K)=>{const D=BHX_DUST[K]||{},cs=Math.max(W/768,H/1376)*kbNow[0],cx=D.tip?onScr(cover(D.tip))[0]:W/2,by=D.band?onScr(cover([0,D.band]))[1]:H*2;
     for(let j=DU.length-1;j>=0;j--){const q=DU[j];q.a+=dt;if(q.a>=q.life||q.y>H+40||q.x<-40||q.x>W+40){DU.splice(j,1);continue}
       const wind=Math.sin(t*1.2+q.y*.01)*(5+q.z*13);

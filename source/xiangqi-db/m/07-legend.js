@@ -233,7 +233,7 @@ function Me(v){Profile(v);setTop("🙂 我的角色","#/");setTabs(true,"#/");co
     /* 意見回饋 613：字型（朝代字體）和花窗圖晚一點才載好，標籤高度一變，牆被撐高、屋簷跟著變高，花窗就被壓到——載好、高度變了都重算 */
     try{document.fonts.ready.then(fit)}catch(e){}
     try{const ws=d.querySelector(".mws");if(ws&&window.ResizeObserver){let last=-1;const ro=new ResizeObserver(()=>{if(!ws.isConnected){ro.disconnect();return}const h=ws.offsetHeight;if(Math.abs(h-last)>1){last=h;fit()}});ro.observe(ws)}}catch(e){}
-    d.querySelectorAll(".mwall img").forEach(im=>{if(!im.complete)im.addEventListener("load",fit,{once:true})})}}if(circ){circ.style.display="none";pad.append(circ)}if(typeof gardenMeCard==="function")pad.append(gardenMeCard());if(typeof codexMeCard==="function")pad.append(codexMeCard());if(typeof chdMeCard==="function"){const x=chdMeCard();if(x)pad.append(x)}   /* 意見回饋 658：園子棋友的羈絆、棋史卡 */
+    d.querySelectorAll(".mwall img").forEach(im=>{if(!im.complete)im.addEventListener("load",fit,{once:true})})}}if(circ){circ.style.display="none";pad.append(circ)}if(typeof gardenMeCard==="function")pad.append(gardenMeCard());if(typeof codexMeCard==="function")pad.append(codexMeCard());if(typeof chdMeCard==="function"){const x=chdMeCard();if(x)pad.append(x)}if(typeof dglMeCard==="function"){const x=dglMeCard();if(x)pad.append(x)}   /* 意見回饋 658：園子棋友的羈絆、棋史卡 */
   const on=(id,fn)=>{const e=v.querySelector(id);if(e)e.onclick=()=>{vibrate(5);fn(e)}};
   on("#meFig2",f=>{const st=v.querySelector("#meSt");if(st){st.classList.remove("tap");void st.offsetWidth;st.classList.add("tap")}const im=f.querySelector("img");if(!f.dataset.g3)setTimeout(()=>meFigOpen(im&&im.src),220)});   /* 584：舞台已經是 3D 就不用再開大圖 */
   on("#meNm",()=>nameSheet(false));on("#meOb",()=>journeyLock());on("#mePc",()=>{if(myChar())return pieceLock();store.set("setTab","bot");location.hash="#/settings"});   /* 意見回饋 668：角色選定就鎖住；雲河七星的棋子也鎖住 */
@@ -604,7 +604,7 @@ function lvRuleMiss(st,rule,me){const C=window.XQCore;let b,miss=0,n=0,crossed=f
       if(rule.finishWith&&i===mv.length-1&&st.result&&st.result.w===me&&p.toUpperCase()!==String(rule.finishWith.piece||"P").toUpperCase())miss++}
     b=C.make(b,m.f,m.t)}return miss}
 function journeyGameEnd(st){if(!st||!st.result)return;try{if(typeof qqParkEnd==="function")qqParkEnd(st)}catch(e){}   /* 千秋穿梭突發事件：在園子贏了攔路棋客＝贖回押著的東西 */
-  if(!st.practice&&(st.moves||[]).length>=10)addXP(st.result.w===st.human?40:15,"對局","g:"+st.id);   /* QA P1-3：雙方各走不到 5 步就結束（走一步就認輸）不給修為，免得刷經驗 */
+  if(!st.practice&&(st.moves||[]).length>=10&&!(typeof bhtdNoXp==="function"&&bhtdNoXp(st)))addXP(st.result.w===st.human?40:15,"對局","g:"+st.id);   /* 11/14：星淵急襲只給星塵、不給修為（07bht bhtdNoXp） */   /* QA P1-3：雙方各走不到 5 步就結束（走一步就認輸）不給修為，免得刷經驗 */
   const P=store.get("jPending",null);if(!P||P.game!==st.id)return;store.set("jPending",null);
   if(String(P.id).startsWith("bh:")){if(typeof bhGameEnd==="function")bhGameEnd(st,P);return}
   if(String(P.id).startsWith("gx:")){if(typeof gxGameEnd==="function")gxGameEnd(st,P);return}   /* 幻譜星門・十三星系（07gx-galaxy.js）：記星印、推進玉宿／北辰的進度 */   /* hspx（開發者 11/12）：黑洞星樞棋局（07bh-blackhole.js）：記輸贏、調下次難度 */

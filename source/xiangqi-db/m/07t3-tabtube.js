@@ -112,7 +112,7 @@ function ttFill(){const V=document.getElementById("view");if(!V)return;const P=V
     try{if(r07Wide(V,P,vr,pr,nw,nh))return}catch(e){}   /* v5 改善單 R07：寬螢幕、橫放的矮螢幕另外排（見 r07Wide）；手機直向不會進去 */
     if(!W||av-H<2||av>H*1.25)return;const set=h=>{const w=Math.round(h*nw/nh);Object.assign(P.style,{maxWidth:"none",width:w+"px",marginLeft:Math.round((W-w)/2)+"px"})};V.classList.add("tt-fillx");set(av);
     {const ex=V.scrollHeight-V.clientHeight;if(ex>0&&ex<40)set(av-ex)}   /* 圖下還有一點邊距（.pad 之類）就扣掉，免得多出幾 px 可以捲 */
-    requestAnimationFrame(()=>P.querySelectorAll(".shp-spot,.po-sight").forEach(b=>{if(b.dataset.ttL==null)b.dataset.ttL=b.style.left;const q=b.getBoundingClientRect(),m=6;let d=0;if(q.left<vr.left+m)d=vr.left+m-q.left;else if(q.right>vr.right-m)d=vr.right-m-q.right;if(d)b.style.left="calc("+b.dataset.ttL+" + "+Math.round(d)+"px)"}))};
+    requestAnimationFrame(()=>{const ox=parseFloat(P.style.left)||0;P.querySelectorAll(".shp-spot,.po-sight").forEach(b=>{if(b.classList.contains("hmp-side"))return;if(b.dataset.ttL==null)b.dataset.ttL=b.style.left;const q=b.getBoundingClientRect(),m=6,ql=q.left-ox,qr=q.right-ox;let d=0;if(ql<vr.left+m)d=vr.left+m-ql;else if(qr>vr.right-m)d=vr.right-m-qr;if(d)b.style.left="calc("+b.dataset.ttL+" + "+Math.round(d)+"px)"})})};   /* 11/14 首頁三屏長卷（07hmp）：鏡頭是 P 的 style.left，量的時候扣掉；左右兩屏的標籤（.hmp-side）不推 */
   if(im.complete&&im.naturalWidth)go();else im.addEventListener("load",go,{once:true})}
 /* v5 改善單 R07（桌面／矮螢幕）：評測 1440×900 首頁內容約 2586px 高、844×390 場景頁約 1518px——滿版圖照畫面寬度放，寬螢幕就變成要先往下捲一大片背景才找得到入口。
    只在「畫面比可用高度寬」或「寬 600px 以上」、而且圖照寬度放會比可用高度高時才處理；手機直向（寬 390～440、比高度窄）永遠不進來，版面跟原本一模一樣。

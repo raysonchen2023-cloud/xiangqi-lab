@@ -94,6 +94,8 @@ let xflR07Off=function(){},xflR07Wide=null;
   const off0=r07Off,wide0=r07Wide,tt0=ttFill;xflR07Off=off0;xflR07Wide=wide0;
   r07Off=function(V){try{xflClear(V,V&&V.querySelector(".shp-page.cq"));xflBg(V,null,false)}catch(e){}return off0.apply(this,arguments)};
   r07Wide=function(V,P,vr,pr,nw,nh){try{xflClear(V,P);xflBg(V,null,false);
+      /* 意見回饋 885（iPad 直拿「我的角色」下面畫面太小）：書齋牆在角色舞台下面，縮到剛好塞進剩下的高度只剩中間一半寬；直向大螢幕改成跟手機一樣滿寬、往下捲 */
+      if(P&&/(^|\s)mz-wall(\s|$)/.test(P.className||"")&&V.clientWidth/Math.max(1,V.clientHeight)<=XFL_PORT_MAX){xflR07Off(V);return true}
       {const hk=typeof hmwSync==="function"?hmwSync(V,P):null;if(hk==="wait"){xflR07Off(V);return true}if(hk&&xflHmw(V,P,nw,nh,hk))return true}   /* 11/13 首頁寬版圖：比例跨過門檻＝07z 原地換圖，等圖載好再排；用寬版＝cover 填滿 */
       if(xflPort(V,P,nw,nh))return true;vr=V.getBoundingClientRect();pr=P.getBoundingClientRect()}catch(e){}
     const r=wide0.call(this,V,P,vr,pr,nw,nh);try{xflBg(V,P,!!r&&(V.classList.contains("r07-fit")||V.classList.contains("r07-side")))}catch(e){}return r};

@@ -44,7 +44,7 @@ function icoTitle(t){const m=String(t).match(/^(\S+)\s+([\s\S]*)$/),k=m&&EMO_ICO
 function bkTo(back){if(typeof back==="string"&&back[0]==="^")return back.slice(1);
   if(NAV_D>0){for(let i=NAV_D-1;i>=0;i--){const x=NAV_H[i];if(typeof x!=="string")return"";if(x[0]!=="~")return x}return""}   /* goBack＝瀏覽器上一頁：卡片那一層會被 popstate 再退一格，所以找最近一筆不是卡片的 */
   return typeof back==="string"?back:""}
-const BK_NAME=[["/cpuroom","雅間"],["/adventure","星槎"],["/ship/pz","千秋殘局"],["/ship","星槎"],["/port","渡口"],["/theme","主題訓練"],["/camp","訓練營"],["/cup","千秋盃"],["/simul","車輪戰"],["/lesson","棋理體驗"],["/lab","小實驗"],["/today","今日推薦"],["/codex","百科"],["/weekly","週報"],["/feedback","信房"],["/db","棋譜庫"]];
+const BK_NAME=[["/cpuroom","雅間"],["/guanxing","觀星臺"],["/ximarket/tea","聽雨茶坊"],["/ximarket","西市"],["/adventure","星槎"],["/ship/pz","千秋殘局"],["/ship","星槎"],["/port","渡口"],["/theme","主題訓練"],["/camp","訓練營"],["/cup","千秋盃"],["/simul","車輪戰"],["/lesson","棋理體驗"],["/lab","小實驗"],["/today","今日推薦"],["/codex","百科"],["/weekly","週報"],["/feedback","信房"],["/db","棋譜庫"]];
 function bkName(h){if(!h)return"";const k=navKey(h).split("?")[0];if(k==="/")return"首頁";
   if(k==="/hub/learn"||k==="/hub/battle"){let n="";try{n=typeof xqHubName==="function"?xqHubName(k.slice(5)).split(" ").slice(1).join(" "):""}catch(e){}return n&&!/^(學習|對戰)$/.test(n)?n:k==="/hub/learn"?"書院":"茶樓"}   /* 書院照停靠朝代／經典世界的叫法（國子監、藏譜石窟、觀星閣…） */
   for(const[p,n]of BK_NAME)if(k===p||k.startsWith(p+"/"))return n;
@@ -70,6 +70,7 @@ function setTabs(show,on){$("#tabbar").hidden=!show;for(const b of $("#tabbar").
 for(const b of $("#tabbar").children)b.onclick=()=>{vibrate(5);if(b.dataset.go==="#/")goHome();else location.hash=b.dataset.go};   /* 意見回饋 607：底部「首頁」也是退回首頁 */
 function route(){
   try{if(typeof fmRouteGate==="function"&&fmRouteGate())return}catch(e){}   /* 回饋 843（開發者 11/9 選：護眼提醒＋家長時段）：家長設的時間到了，除了首頁、設定、週報、意見回饋都回首頁（m/07m5-family.js） */
+  try{if(typeof dglRouteGate==="function"&&dglRouteGate())return}catch(e){}   /* 開發者 11/13 平日體力：定軌力用完（化墨退場）後，人間的頁先關著、回星槎歇息（m/07dgl-stamina.js） */
   try{if(typeof fcmBootGo==="function"&&fcmBootGo())return}catch(e){}   /* 評比循環第 12 輪 X10 中斷恢復：這個分頁第一次打開、網址是首頁、6 小時內在對局／解題中被打斷（切背景、關分頁）＝直接回那一盤（m/07fm-focus.js） */
   /* 意見回饋 607：換頁時把上一頁的視窗（結果視窗等）一起關掉；ROUTE_N 讓殺棋動畫後才要出來的視窗知道畫面換了 */
   ROUTE_N++;document.querySelectorAll(".modal:not(.keep)").forEach(m=>m.remove());
@@ -95,6 +96,8 @@ function route(){
   if(p[0]==="ouyu"&&typeof OuyuPage==="function")return screen=OuyuPage(v,p.slice(1));   /* 開發者 11/10：偶遇求助角色的解題頁 #/ouyu/<誰>/<題號>（m/07w5-ouyu.js） */
   if(p[0]==="coop"&&typeof CoopPage==="function")return screen=CoopPage(v,p.slice(1));   /* 開發者 11/9：合作殘譜（同桌 #/coop、殘篇閣 #/coop/lobby；m/07q2-coop.js） */
   if(p[0]==="lobby")return screen=Lobby(v);
+  if(p[0]==="guanxing"&&typeof GxtPage==="function")return screen=GxtPage(v);   /* 開發者 11/13：觀星臺＝黑洞玩法總入口（07gxt-guanxing.js） */
+  if(p[0]==="ximarket"&&typeof XsmPage==="function")return screen=XsmPage(v,p[1]||"");   /* 開發者 11/13：西市（#/ximarket）、聽雨茶坊（#/ximarket/tea）（07xsm-ximarket.js） */
   if(p[0]==="cpuroom"&&typeof CpuRoom==="function")return screen=CpuRoom(v);   /* 11/10 開發者：挑戰電腦的雅間（07z5-cpuroom.js） */
   if(p[0]==="simul"&&typeof SimulPage==="function")return screen=SimulPage(v);   /* 開發者 11/11 hspx：車輪戰（m/08s-simul.js） */
   if(p[0]==="lesson"&&typeof LsnPage==="function")return screen=LsnPage(v,p[1]||"");   /* ChatGPT 改善單 I01（開發者 11/11）：棋理體驗 #/lesson/<站>（m/07z7-lesson.js） */

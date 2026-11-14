@@ -1,0 +1,18 @@
+{
+	"appId": "com.raysonchen.xiangqiqianqiu",
+	"appName": "象棋千秋",
+	"webDir": "www",
+	"loggingBehavior": "none",
+	"android": {
+		"backgroundColor": "#3B2A1A",
+		"allowMixedContent": false,
+		"captureInput": false,
+		"webContentsDebuggingEnabled": false,
+		"appendUserAgent": "XQQianqiuApp/1",
+		"useLegacyBridge": false
+	},
+	"server": {
+		"androidScheme": "https",
+		"hostname": "localhost"
+	}
+}

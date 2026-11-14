@@ -14,7 +14,10 @@ function zmCss(){if(document.getElementById("zmCss"))return;const s=document.cre
 .zm-ex b{font:900 20px/1 var(--serif,serif);color:#fff6e0;text-shadow:0 0 3px rgba(0,0,0,.6);padding:12px 3px;margin:0 2px;border-radius:10px;background:rgba(24,18,12,.5);box-shadow:0 0 0 1px rgba(214,176,92,.45)}.zm-ex.on{opacity:.72}.zm-ex.on.nudge{opacity:1}
 .zm-ex.l.nudge b{animation:zmNl .8s ease-in-out 3}.zm-ex.r.nudge b{animation:zmNr .8s ease-in-out 3}@keyframes zmNl{50%{transform:translateX(-5px)}}@keyframes zmNr{50%{transform:translateX(5px)}}
 .zm-tip{position:absolute;left:50%;bottom:64px;z-index:5;transform:translateX(-50%);pointer-events:none;white-space:nowrap;padding:5px 12px;border-radius:14px;background:rgba(24,18,12,.72);color:#fff6e0;font:700 13px/1.3 var(--serif,serif);animation:zmTip 3.6s ease both}
-@keyframes zmTip{0%{opacity:0}12%{opacity:1}80%{opacity:1}100%{opacity:0}}@media (prefers-reduced-motion:reduce){.zm-ex b,.zm-tip{animation:none}}`;document.head.append(s)}
+@keyframes zmTip{0%{opacity:0}12%{opacity:1}80%{opacity:1}100%{opacity:0}}@media (prefers-reduced-motion:reduce){.zm-ex b,.zm-tip{animation:none}}
+/* 意見回饋 884（iPad 玩家「不知道按了什麼，首頁長這樣無法縮小」）：放大後只有雙擊能還原、畫面上沒有任何提示；放大時上方出現「還原大小」 */
+.zm-rs{display:none;position:absolute;top:10px;left:50%;transform:translateX(-50%);z-index:6;min-height:40px;padding:6px 16px;border:0;border-radius:20px;background:rgba(24,18,12,.78);color:#fff6e0;font:700 15px/1.2 var(--serif,serif);box-shadow:0 0 0 1px rgba(214,176,92,.55),0 2px 8px rgba(0,0,0,.35);cursor:pointer;white-space:nowrap}
+.zm-c.zm-on>.zm-rs{display:block}`;document.head.append(s)}
 /* C＝看得到的框（裁切範圍），E＝被縮放的圖層（座標的 100%） */
 /* 回饋 837（星槎甲板可左右看）：第三個參數 o.panX＝圖比框寬時，沒放大也能左右拖（單指水平拖、滑鼠拖），進頁停在原本置中的位置；o.onPan＝每次位移後呼叫（星槎用來重排貼邊的標籤）。
    直向的手勢照舊捲頁面；從畫面左右邊緣 24px 內起手的不接（讓給右邊緣往內滑、iOS 左緣返回等系統手勢）；拖過放開的那一下不算點選（同縮放） */
@@ -22,9 +25,9 @@ const ZM_EDGE=24;
 function zmAttach(C,E,o){if(!ZOOM_ON||!C||!E||C.dataset.zm)return;C.dataset.zm="1";zmCss();C.classList.add("zm-c");o=o||{};
   let s=1,tx=0,ty=0,sup=0;const cl=(v,a,b)=>Math.max(a,Math.min(b,v));
   const ovX=B=>!!o.panX&&B.ew-B.W>2;   /* 回饋 837：沒放大時圖左右有沒有被裁 */
-  const box=()=>({W:C.clientWidth,H:C.clientHeight,ox:E.offsetLeft,oy:E.offsetTop,ew:E.offsetWidth,eh:E.offsetHeight});
+  const box=()=>{let x=null;try{x=o.ext?o.ext():null}catch(e){x=null}return{W:C.clientWidth,H:C.clientHeight,ox:E.offsetLeft,oy:E.offsetTop,ew:E.offsetWidth,eh:E.offsetHeight,el:x&&x.l||0,er:x&&x.r||0}};   /* 11/14 首頁三屏長卷：o.ext()＝圖層左右還有多少（左右兩屏），放大後拖曳的範圍算到那裡 */
   const apply=()=>{const B=box();s=cl(s,1,ZM_MAX);if(s<=1.001){s=1;ty=0;if(!ovX(B))tx=0}   /* 回饋 837：1 倍時圖比框寬，保留左右位移 */
-    tx=cl(tx,B.W-s*(B.ox+B.ew),-s*B.ox);ty=cl(ty,B.H-s*(B.oy+B.eh),-s*B.oy);
+    tx=cl(tx,B.W-s*(B.ox+B.ew+B.er),-s*(B.ox-B.el));ty=cl(ty,B.H-s*(B.oy+B.eh),-s*B.oy);
     if(s===1&&Math.abs(tx)<.5){tx=0;E.style.transform="";E.style.transformOrigin=""}else if(s===1){E.style.transformOrigin="";E.style.transform=`translate(${tx.toFixed(1)}px,0px)`}else{E.style.transformOrigin="0 0";E.style.transform=`translate(${(tx+(s-1)*B.ox).toFixed(1)}px,${(ty+(s-1)*B.oy).toFixed(1)}px) scale(${s.toFixed(3)})`}
     C.classList.toggle("zm-on",s>1);try{zmEdge(B)}catch(e){}if(o.onPan)try{o.onPan(s)}catch(e){}};
   /* 回饋 837：左右拖曳提示（只有 panX 的框才有） */
@@ -36,6 +39,7 @@ function zmAttach(C,E,o){if(!ZOOM_ON||!C||!E||C.dataset.zm)return;C.dataset.zm="
   const loc=(x,y)=>{const r=C.getBoundingClientRect();return[x-r.left,y-r.top]};
   const zoomAt=(ns,m,s0,t0,m0)=>{const c=[(m0[0]-t0[0])/s0,(m0[1]-t0[1])/s0];s=cl(ns,1,ZM_MAX);tx=m[0]-s*c[0];ty=m[1]-s*c[1];apply()};
   const reset=()=>{s=1;tx=ty=0;apply()};
+  {const b=document.createElement("button");b.type="button";b.className="zm-rs";b.textContent="⤢ 還原大小";b.addEventListener("click",e=>{e.preventDefault();e.stopPropagation();reset()});C.append(b)}   /* 意見回饋 884：放大時才看得到（.zm-on） */
   /* 觸控：兩指縮放（以兩指中點為準，也跟著平移）、放大時單指拖曳、雙擊還原 */
   let T=null,last=null;
   C.addEventListener("touchstart",e=>{const t=e.touches;if(t.length>=2){const a=loc(t[0].clientX,t[0].clientY),b=loc(t[1].clientX,t[1].clientY);T={pinch:1,d0:Math.hypot(a[0]-b[0],a[1]-b[1])||1,m0:[(a[0]+b[0])/2,(a[1]+b[1])/2],s0:s,t0:[tx,ty],moved:1};sup=1;e.preventDefault()}
@@ -62,9 +66,9 @@ function zmAttach(C,E,o){if(!ZOOM_ON||!C||!E||C.dataset.zm)return;C.dataset.zm="
   if(window.ResizeObserver){const ro=new ResizeObserver(()=>{if(!C.isConnected){ro.disconnect();return}if(s>1||o.panX)apply()});ro.observe(C);if(o.panX)ro.observe(E)}   /* 回饋 837：圖框大小變了（shpMapFit 重排）也重新夾住左右位移 */
   C.zm={reset,get s(){return s},set:(ns,mx,my)=>zoomAt(ns,[mx,my],s,[tx,ty],[mx,my])};apply()}
 /* 渡口、驛站：.shp-page.cq 外面包一層裁切框，接手原本的外距 */
-function zmPage(v){const P=v&&v.querySelector(".shp-page.cq");if(!P||P.dataset.zm||!ZOOM_ON)return;let W=P.parentNode;
+function zmPage(v,o){const P=v&&v.querySelector(".shp-page.cq");if(!P||P.dataset.zm||!ZOOM_ON)return;let W=P.parentNode;   /* o：zmAttach 的選項（首頁三屏長卷傳 ext） */
   if(!W.classList.contains("zm-wrap")){W=document.createElement("div");W.className="zm-wrap";const cs=getComputedStyle(P);W.style.margin=cs.margin;P.style.margin="0";P.parentNode.insertBefore(W,P);W.append(P)}
-  P.dataset.zm="1";zmAttach(W,P)}
+  P.dataset.zm="1";zmAttach(W,P,o||undefined)}
 /* 回饋 837（星槎甲板可左右看）：星槎圖比畫面寬（手機直拿）時可以左右拖；拖的時候照 07f shpMapFit 的規則重排貼邊的入口標籤（裁到邊的往內推、拖進畫面就回原位），1 倍時才排 */
 function zmShipPush(M,s){if(s>1||!M||!M.isConnected)return;const I=M.querySelector(".shp-in");if(!I)return;const R=M.getBoundingClientRect(),m=8,mx=M.classList.contains("zm-px")?30:8,capH=(M.querySelector(".shp-cap")||{}).offsetHeight||0;   /* 左右留 30px 給拖曳提示 ‹ › */
   I.querySelectorAll(".shp-hs").forEach(b=>{b.style.marginLeft="";b.style.marginTop="";const q=b.getBoundingClientRect();if(!q.width)return;let dx=0,dy=0;

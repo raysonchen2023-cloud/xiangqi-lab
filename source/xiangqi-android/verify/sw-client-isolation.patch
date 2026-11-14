@@ -1,0 +1,31 @@
+--- a/android/app/src/main/java/com/raysonchen/xiangqiqianqiu/MainActivity.java
++++ b/android/app/src/main/java/com/raysonchen/xiangqiqianqiu/MainActivity.java
+@@ -40,6 +40,14 @@
+         // 換成會補標頭的 WebViewClient，然後從頭載入一次，確保第一個文件回應就帶 Document-Isolation-Policy。
+         if (bridge != null) {
+             bridge.setWebViewClient(new XQWebViewClient(bridge));
++            // 實驗（模擬器驗證用，不在正式專案）：Service Worker 發出的請求走 ServiceWorkerClient，不經過 WebViewClient，也要補標頭
++            final com.getcapacitor.Bridge br = bridge;
++            android.webkit.ServiceWorkerController.getInstance().setServiceWorkerClient(new android.webkit.ServiceWorkerClient() {
++                @Override
++                public android.webkit.WebResourceResponse shouldInterceptRequest(android.webkit.WebResourceRequest request) {
++                    return XQWebViewClient.addIsolationHeaders(request, br.getLocalServer().shouldInterceptRequest(request));
++                }
++            });
+             bridge.getWebView().stopLoading();
+             bridge.getWebView().loadUrl(bridge.getAppUrl());
+         }
+--- a/android/app/src/main/java/com/raysonchen/xiangqiqianqiu/XQWebViewClient.java
++++ b/android/app/src/main/java/com/raysonchen/xiangqiqianqiu/XQWebViewClient.java
+@@ -27,7 +27,10 @@
+ 
+     @Override
+     public WebResourceResponse shouldInterceptRequest(WebView view, WebResourceRequest request) {
+-        WebResourceResponse r = super.shouldInterceptRequest(view, request);
++        return addIsolationHeaders(request, super.shouldInterceptRequest(view, request));
++    }
++
++    static WebResourceResponse addIsolationHeaders(WebResourceRequest request, WebResourceResponse r) {
+         if (r == null || request == null || request.getUrl() == null) return r;
+         String origin = request.getUrl().getScheme() + "://" + request.getUrl().getHost();
+         if (!MainActivity.APP_ORIGIN.equals(origin)) return r;

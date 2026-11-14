@@ -186,8 +186,8 @@ axmApply();
 if(fzSysOn())try{fzApply()}catch(e){}
 /* 自動提示一次：用 Tab 鍵、系統減少動態效果、強制色彩 */
 function axmAsk(why){if(axmOn()||store.get("axmAsk",0))return;
-  const busy=()=>!!document.querySelector(".modal,#sheet.show,#preov");
-  if(busy()){if((axmAsk.n=(axmAsk.n||0)+1)<8)setTimeout(()=>axmAsk(why),5000);return}
+  const busy=()=>!!document.querySelector(".modal,#sheet.show,#preov,#bhxPg,#mnfPg,#mnfRite,#xqTitle:not(.out)");   /* 11/14 r17 B4：開了「減少動態效果」6 秒後問，常常蓋在開場／開章電影或標題畫面上（略過鈕點不到）；電影、標題畫面也算忙，播完才問 */
+  if(busy()){if((axmAsk.n=(axmAsk.n||0)+1)<60)setTimeout(()=>axmAsk(why),5000);return}   /* 電影可能好幾分鐘：最多等 5 分鐘 */
   store.set("axmAsk",1);const fc=!!(window.matchMedia&&matchMedia("(forced-colors: active)").matches);
   const B=[["♿ 開啟螢幕報讀與鍵盤模式",()=>axmSet(true)]];if(fc&&!axmHct())B.push(["開啟高對比主題",()=>axmHctSet(true),true]);B.push(["先不用",()=>{try{toast("之後可以在設定房間的 🔒 小鎖匣 → ♿ 無障礙打開")}catch(e){}},true]);
   modal(`<div class="em" aria-hidden="true">♿</div><h2>要開「螢幕報讀與鍵盤模式」嗎？</h2><p style="line-height:1.7">${esc(why)}。開了以後下棋用平面棋盤，每一格都念得出來，方向鍵移動、Enter 選子落子，每一步也會念出來，裝飾動畫會關掉。</p>`,B)}

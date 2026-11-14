@@ -1,0 +1,92 @@
+{
+ "schema": "xq-android-toolchain/1",
+ "installedAtTaiwan": "2026-11-13 06:10",
+ "installRoot": "<使用者資料夾>/android-dev",
+ "systemChanges": "沒有改系統設定、沒有改全域 PATH；每次編譯在指令裡設 JAVA_HOME、ANDROID_HOME、ANDROID_USER_HOME、GRADLE_USER_HOME",
+ "tools": [
+  {
+   "name": "Eclipse Temurin JDK",
+   "version": "21.0.13+9 LTS",
+   "source": "https://github.com/adoptium/temurin21-binaries/releases/download/jdk-21.0.13%2B9/OpenJDK21U-jdk_x64_windows_hotspot_21.0.13_9.zip",
+   "file": "OpenJDK21U-jdk_x64_windows_hotspot_21.0.13_9.zip",
+   "bytes": 205421281,
+   "sha256": "a4dbaa05fca4bd89d84584e58c459bd732efebb1722af80ab13c6516832004f9",
+   "verifiedAgainst": "api.adoptium.net 公布的 checksum（相同）",
+   "installedTo": "android-dev/jdk-21.0.13+9"
+  },
+  {
+   "name": "Android SDK Command-line Tools",
+   "version": "23.0（build 16111833）",
+   "source": "https://dl.google.com/android/repository/commandlinetools-win-16111833_latest.zip",
+   "file": "commandlinetools-win-16111833_latest.zip",
+   "bytes": 154957218,
+   "sha256": "e5885e2e59038c0778a85fc19f01de7ce7c567c105553f7617b936b1e0e87b2b",
+   "sha1": "57d04f2d75eb8e8fffc5000a987e5de4b5a63e9d",
+   "verifiedAgainst": "dl.google.com/android/repository/repository2-3.xml 的 SHA-1（相同）",
+   "installedTo": "android-dev/sdk/cmdline-tools/latest"
+  },
+  {
+   "name": "Android CLI（命令列工具 23 內建；sdkmanager 已改由它處理）",
+   "version": "1.1.16717390",
+   "source": "第一次執行 sdkmanager.bat 時自動下載解開（Google 官方）",
+   "installedTo": "android-dev/android-user-home/cli",
+   "note": "用 --no-metrics 執行；analytics.settings 的 hasOptedIn 是 false"
+  },
+  {
+   "name": "Android SDK Platform 36",
+   "version": "android-36 r02",
+   "source": "https://dl.google.com/android/repository/platform-36_r02.zip",
+   "bytes": 65878410,
+   "sha256": "37607369a28c5b640b3a7998868d45898ebcb777565a0e85f9acf36f29631d2e",
+   "sha1": "2c1a80dd4d9f7d0e6dd336ec603d9b5c55a6f576",
+   "verifiedAgainst": "repository2-3.xml 的 SHA-1（相同）",
+   "installedTo": "android-dev/sdk/platforms/android-36"
+  },
+  {
+   "name": "Android SDK Build-Tools",
+   "version": "35.0.0（AGP 8.13.0 預設，用來編譯）",
+   "source": "https://dl.google.com/android/repository/build-tools_r35_windows.zip",
+   "bytes": 59878107,
+   "sha256": "5753c679a1b90bcf6fbc9945a2ce39dfb9e74f1df0831a1e1866ae5b594326f0",
+   "sha1": "af059bb67cf7786f45ee0db85e2d24985df1b4b6",
+   "verifiedAgainst": "repository2-3.xml 的 SHA-1（相同）",
+   "installedTo": "android-dev/sdk/build-tools/35.0.0"
+  },
+  {
+   "name": "Android SDK Build-Tools",
+   "version": "36.0.0（aapt2、apksigner 檢查用）",
+   "source": "https://dl.google.com/android/repository/build-tools_r36_windows.zip",
+   "bytes": 58699878,
+   "sha256": "aa1095cb14d83e483818a748a2c06faaeb8e601561b06a356a119a1b2ca280d3",
+   "sha1": "f16ccffd34de8790dede813a6c7d8e2c11a27b50",
+   "verifiedAgainst": "repository2-3.xml 的 SHA-1（相同）",
+   "installedTo": "android-dev/sdk/build-tools/36.0.0"
+  },
+  {
+   "name": "Android SDK Platform-Tools",
+   "version": "37.0.1（只裝不用；沒有開 adb、沒有開模擬器）",
+   "source": "https://dl.google.com/android/repository/platform-tools_r37.0.1-win.zip",
+   "bytes": 8044989,
+   "sha256": "45f4d63113e895ebde0c90f194099a4676b6ac653bd28d54314a9e022bbc1a99",
+   "sha1": "e03e78b1d80b396f1c3358e31251cb31740e1110",
+   "verifiedAgainst": "repository2-3.xml 的 SHA-1（相同）",
+   "installedTo": "android-dev/sdk/platform-tools"
+  },
+  {
+   "name": "Gradle（專案 wrapper 下載）",
+   "version": "8.14.3 all",
+   "source": "https://services.gradle.org/distributions/gradle-8.14.3-all.zip",
+   "sha256": "ed1a8d686605fd7c23bdf62c7fc7add1c5b23b2bbc3721e661934ef4a4911d7c",
+   "verifiedAgainst": "services.gradle.org 的 .sha256；已寫進 gradle-wrapper.properties 的 distributionSha256Sum，wrapper 下載後自己核對",
+   "installedTo": "android-dev/gradle-home/wrapper/dists"
+  },
+  {
+   "name": "gradle-wrapper.jar（專案裡原有）",
+   "version": "8.14.3",
+   "sha256": "7d3a4ac4de1c32b59bc6a4eb8ecb8e612ccd0cf1ae1e99f66902da64df296172",
+   "verifiedAgainst": "services.gradle.org/distributions/gradle-8.14.3-wrapper.jar.sha256（相同）"
+  }
+ ],
+ "licenses": "Android SDK 標準授權（https://developer.android.com/studio/terms）：Android CLI 安裝套件時顯示條款並自動寫入 sdk/licenses/android-sdk-license；開發者 11/13 同意安裝 Android 開發工具，Claude 代為同意這份標準授權",
+ "diskUsage": "約 2.7 GB（JDK 330 MB、SDK 595 MB、Gradle 快取與發行包 1.0 GB、Android CLI 232 MB、保留的下載檔 528 MB：為了算 SHA-256 把 SDK 套件重新下載一次留著）"
+}

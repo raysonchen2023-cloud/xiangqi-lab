@@ -1,0 +1,96 @@
+{
+ "schema": "xq-android-build-record/1",
+ "builtAtUtc": "2026-11-12T22:22:50.025Z",
+ "applicationId": "com.raysonchen.xiangqiqianqiu",
+ "variant": "debug",
+ "site": {
+  "version": "20261113-0540",
+  "html": "f177580e9a2b",
+  "sw": "f4f436cfd22f",
+  "files": 517,
+  "bytes": 112226400
+ },
+ "tools": {
+  "jdk": "Temurin-21.0.13+9 21.0.13+9-LTS",
+  "gradle": "8.14.3",
+  "gradleDistributionSha256": "ed1a8d686605fd7c23bdf62c7fc7add1c5b23b2bbc3721e661934ef4a4911d7c",
+  "agp": "8.13.0",
+  "compileSdk": "36",
+  "targetSdk": "36",
+  "minSdk": "24",
+  "androidxWebkit": "1.18.0",
+  "capacitor": "8.6.2"
+ },
+ "manifest": {
+  "package": "com.raysonchen.xiangqiqianqiu",
+  "versionCode": "1",
+  "versionName": "1.0",
+  "minSdk": "24",
+  "targetSdk": "36",
+  "compileSdk": "36",
+  "permissions": [
+   "android.permission.INTERNET",
+   "com.raysonchen.xiangqiqianqiu.DYNAMIC_RECEIVER_NOT_EXPORTED_PERMISSION"
+  ]
+ },
+ "apk": {
+  "bytes": 101826582,
+  "sha256": "38892682a9340bb0ac3f8cee5237b94d32f4e5780ce5ad52de1a58aa68394f9d",
+  "unsignedSha256": "f89b58f8100e4a8de671e9e65a7b9c26e08b9903c0c8437aee5dc03a14a022e7",
+  "contentSha256": "74123416252c51bf30a02f40b5369a34d5cda21633f990f9e721960c178fa58c",
+  "entries": 958,
+  "dex": [
+   {
+    "name": "classes.dex",
+    "sha256": "a1ac3aee6464f4e0c06a35988d4dd588b92d57719472ddfb7845dee26dbb8ab3"
+   },
+   {
+    "name": "classes2.dex",
+    "sha256": "3639e72bf0f70b11e7a3c2d0df7c6085bc1b442160950161d21dbf1cffda7814"
+   },
+   {
+    "name": "classes3.dex",
+    "sha256": "78c81563b3b6e392e78c4c02bb7e3909a072e1f5d2e6e4b827baf571b5455c1f"
+   },
+   {
+    "name": "classes4.dex",
+    "sha256": "85d5488d8f2ef922710c069fb0b248dcac56fb6c0f39652499af0c54134f604e"
+   },
+   {
+    "name": "classes5.dex",
+    "sha256": "d476d39d08d4fb09d804c567f06a8e78b0e1145f6a93cf8ce4f88270631f66b5"
+   },
+   {
+    "name": "classes6.dex",
+    "sha256": "6074032bc4994afcd0e4e6bfb85163d7140caf258a833d6e6a7f128762c32a45"
+   }
+  ],
+  "assetsSha256": "5332e1095a537eb80bb06bed09bc35e5bfc4de9f696400c577938fb6a571af19",
+  "resourcesSha256": "9edd85180b35601f567e973829d351671e5f8a8b4678514ebbdc88bf265d6fea",
+  "signingBlockBytes": 4096,
+  "v1Signature": false
+ },
+ "nonfree": [],
+ "reproducibility": {
+  "runs": 2,
+  "cleanBetweenRuns": true,
+  "identical": true,
+  "sameUnsignedBytes": true,
+  "sameContentExcludingSignature": true,
+  "runSha256": [
+   "38892682a9340bb0ac3f8cee5237b94d32f4e5780ce5ad52de1a58aa68394f9d",
+   "38892682a9340bb0ac3f8cee5237b94d32f4e5780ce5ad52de1a58aa68394f9d"
+  ],
+  "diffs": []
+ },
+ "crossChecks": [
+  {
+   "note": "同一份輸入複製到另一個資料夾、用另一把新產生的 debug 金鑰編譯",
+   "sha256": "847720b26fd145074ffdd6383e7a6a2703256092237644c87a63a6680ee67c4c",
+   "identical": false,
+   "sameUnsignedBytes": true,
+   "sameContentExcludingSignature": true,
+   "diffs": []
+  }
+ ]
+}
