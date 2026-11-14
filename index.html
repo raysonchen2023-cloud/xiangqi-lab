@@ -1613,7 +1613,7 @@ html[data-lefty] .tskip{right:auto;left:14px}
       if(!window.caches)return go();caches.keys().then(function(ks){return Promise.all(ks.filter(function(k){return k.indexOf("xqlab-app-")===0}).map(function(k){return caches.delete(k)}))})
         .then(function(){return navigator.serviceWorker&&navigator.serviceWorker.getRegistration()}).then(function(r){return r&&r.update()}).catch(function(){}).then(go)}};setTimeout(chk,4000)})();
 </script>
-<script>window.XQ_OFFLINE=true;window.XQ_BUILD="20261114-0759";</script>
+<script>window.XQ_OFFLINE=true;window.XQ_BUILD="20261114-0804";</script>
 <script src="core.js"></script>
 <script src="engine.js"></script>
 <script src="local.js"></script>
@@ -17442,7 +17442,7 @@ const HM_IMGV="2215";   /* 圖的版本：同檔名換圖時改掉，手機才�
    弈：秦漢三國酒肆、魏晉酒壚（《世說新語》黃公酒壚）、南北朝隋酒肆、唐旗亭（旗亭畫壁）、五代茶肆、宋茶坊（《東京夢華錄》）、元茶肆、明茶樓、清茶館 */
 const HUB_NAME={learn:{classic:"藏譜石窟",qin:"學室",han:"太學",sanguo:"太學",weijin:"國子學",nanbei:"國學",sui:"國子寺",tang:"國子監",wudai:"國子監",song:"書院",yuan:"書院",ming:"書院",qing:"書院"},
   quick:{qin:"博一局",han:"博一局",sanguo:"博一局",weijin:"博一局",nanbei:"象戲一局",sui:"象戲一局",tang:"象戲一局",wudai:"象戲一局",song:"著一局",yuan:"著一盤",ming:"下一盤",qing:"殺一盤"},   /* 11/9 開發者：「下一盤」也照朝代：秦漢到魏晉叫「博」（六博）；南北朝、隋用北周《象經》的「象戲」（11/10 開發者：圍棋用語「弈、手談、坐隱」都拿掉）；唐牛僧孺《玄怪錄》寶應象戲；宋元「著棋」；清俗話「殺一盤」 */
-    battle:{classic:"觀星閣",qin:"酒肆",han:"酒肆",sanguo:"酒肆",weijin:"酒壚",nanbei:"酒肆",sui:"酒肆",tang:"旗亭",wudai:"茶肆",song:"茶坊",yuan:"茶肆",ming:"茶樓",qing:"茶館"}};
+    battle:{classic:"雲弈閣",qin:"酒肆",han:"酒肆",sanguo:"酒肆",weijin:"酒壚",nanbei:"酒肆",sui:"酒肆",tang:"旗亭",wudai:"茶肆",song:"茶坊",yuan:"茶肆",ming:"茶樓",qing:"茶館"}};
 function xqHubName(k){let e="";try{e=typeof shipAt==="function"&&typeof shipDockList==="function"&&shipDockList()?shipAt():""}catch(x){}try{if(!e&&typeof hbIsCl==="function"&&hbIsCl())e="classic"}catch(x){}const n=(HUB_NAME[k]||{})[e];   /* 11/10：還沒登船也是經典世界，頁名用藏譜石窟、觀星閣（原本顯示學習、對戰） */return(k==="quick"?"♟ ":k==="battle"?"⚔ ":"📚 ")+(n||(k==="quick"?"下一盤":k==="battle"?"對戰":"學習"))}
 /* 11/9 開發者：「下一盤」前面的閃電跟水墨圖示融合不了，換成 ♟（e_piece 手繪棋子圖示） */
 /* 11/12 ChatGPT UI 冗餘盤查（story/104 號）第 5 項：橋上石桌跟對戰頁同一個東西（#/pvp），統一叫「同桌對弈」（螢幕報讀另外說兩人共用這台裝置，畫面不加小字）；
@@ -28550,7 +28550,7 @@ const I18N_EN={
   "雲河星槎":"Star Raft","對戰":"Play","學習":"Learn","同桌對弈":"Pass and play","同桌對弈：兩人共用這台裝置":"Pass and play: two players share this device","快速對局":"Quick game",
   "不用選":"no setup","不算段位":"unrated","接著下":"Continue","線上對局":"Online game","沿用上次難度":"same level as last time","學走第一手":"Learn your first move",
   "從新手訓練營開始":"Start with Boot Camp","看懂一步，敢下一盤":"Understand one move, then dare to play a game","千秋時光之苑":"Qianqiu Garden of Time","楚河渡口棋鎮":"Chu River Ferry Town",
-  "藏譜石窟":"Archive Grotto","觀星閣":"Stargazing Pavilion","學室":"Study hall","太學":"Imperial Academy","國子學":"Imperial Academy","國學":"Imperial Academy","國子寺":"Imperial Academy",
+  "藏譜石窟":"Archive Grotto","雲弈閣":"Cloud Chess Pavilion","學室":"Study hall","太學":"Imperial Academy","國子學":"Imperial Academy","國學":"Imperial Academy","國子寺":"Imperial Academy",
   /* 平日體力：定軌力、星芒、化墨退場（07dgl-stamina.js，開發者 11/13） */
   "定軌力":"Orbit stamina","星芒":"Starglow","定軌力（紅）":"Orbit stamina (red)","星芒（藍）":"Starglow (blue)","元氣":"Vitality","靈力上限":"Spirit cap","攻擊":"Attack","黑洞裡的你":"You in the Black Hole","我的角色頁":"My character page",
   "定軌力耗盡，化墨退場——回星槎歇息。":"Orbit stamina spent: dissolving into ink. Back to the Star Raft to rest.","在人間（下船以後）每分鐘少 1；在星槎上不會少。":"In the human world (after leaving the raft) it drops 1 per minute; on the Star Raft it doesn't drop.",

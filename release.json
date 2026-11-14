@@ -1,8 +1,8 @@
 {
- "version": "20261114-0759",
- "checkedAt": "2026-11-14T00:00:11.211Z",
- "html": "3d645a12c649",
- "sw": "9eb5cf05e608",
+ "version": "20261114-0804",
+ "checkedAt": "2026-11-14T00:04:25.369Z",
+ "html": "dfe746f3bf27",
+ "sw": "cc1deaa96c4f",
  "scripts": 4,
  "modules": {
   "00-util.js": "7addbcf20a30",
@@ -13,7 +13,7 @@
   "04-stats.js": "783c70902f05",
   "04c-weekly.js": "326899d53f7b",
   "05-settings.js": "8d0b68e39ab3",
-  "05b-save.js": "3e701ae75b5f",
+  "05b-save.js": "b5e019574b4d",
   "05c-health.js": "a1bcf3e541ac",
   "05d-telemetry.js": "98d12b742868",
   "06-cpu.js": "1bfd156c07ab",
@@ -56,10 +56,11 @@
   "07w5-ouyu.js": "8ee3b1bc19f3",
   "07x-zoom.js": "cfb889d84f52",
   "07y-hubmap.js": "7c606e4f759b",
-  "07z-homemap.js": "ed4ba7ca045d",
+  "07z-homemap.js": "749dbbb36034",
   "07gxt-guanxing.js": "c5d2a3f23cdf",
   "07dgl-stamina.js": "a76f8d135a8d",
-  "07xsm-ximarket.js": "fa669eb50747",
+  "07xsm-ximarket.js": "1efd4cc82cf4",
+  "07xsd-xsmdark.js": "f01419716b95",
   "07x2-lobbymap.js": "492b0f6f7013",
   "07x3-rostermap.js": "ad71f65833df",
   "07x4-lobbysafe.js": "c8b34c8400f2",
@@ -110,7 +111,7 @@
   "07lh-lefty.js": "b1b6761a4a97",
   "07pm-premove.js": "b58dc45776cd",
   "07dq-daily.js": "c1076bdd0ee8",
-  "07i18n.js": "fe3da6b8874e",
+  "07i18n.js": "8074c354fc21",
   "07sp-spotfit.js": "f7f205a79901",
   "07fl-fill.js": "6d07e97dc32f",
   "07mnf-mainfilm.js": "a1ff0f0af87d",
@@ -124,6 +125,11 @@
    "sourceModified": "2026-11-13T19:04:13.233Z"
   },
   {
+   "module": "05b-save.js",
+   "lines": 1,
+   "sourceModified": "2026-11-14T00:02:49.752Z"
+  },
+  {
    "module": "07bht-td.js",
    "lines": 27,
    "sourceModified": "2026-11-13T15:01:20.794Z"
@@ -132,6 +138,16 @@
    "module": "07y-hubmap.js",
    "lines": 5,
    "sourceModified": "2026-11-13T18:59:11.775Z"
+  },
+  {
+   "module": "07xsm-ximarket.js",
+   "lines": 6,
+   "sourceModified": "2026-11-14T00:02:49.751Z"
+  },
+  {
+   "module": "07xsd-xsmdark.js",
+   "lines": 267,
+   "sourceModified": "2026-11-14T00:03:46.886Z"
   },
   {
    "module": "07s4-passmap.js",
