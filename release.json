@@ -1,8 +1,8 @@
 {
- "version": "20261114-0847",
- "checkedAt": "2026-11-14T00:47:29.834Z",
- "html": "f89b4a457952",
- "sw": "9f2ee885aaee",
+ "version": "20261114-0858",
+ "checkedAt": "2026-11-14T00:58:40.918Z",
+ "html": "9547c50be792",
+ "sw": "1ffc8b477dc5",
  "scripts": 4,
  "modules": {
   "00-util.js": "7addbcf20a30",
@@ -12,7 +12,7 @@
   "03-home-quiz.js": "24d24f013354",
   "04-stats.js": "783c70902f05",
   "04c-weekly.js": "326899d53f7b",
-  "05-settings.js": "8d0b68e39ab3",
+  "05-settings.js": "f369f986bc94",
   "05b-save.js": "f17bfa923ad7",
   "05c-health.js": "a1bcf3e541ac",
   "05d-telemetry.js": "98d12b742868",
@@ -97,7 +97,7 @@
   "08s-simul.js": "2126db3ab684",
   "09-askbot.js": "4e6983c50d4c",
   "09b-preload.js": "2076624db3a7",
-  "10-db.js": "c834a6160fe5",
+  "10-db.js": "1fe1ab886257",
   "10b-libmap.js": "3d860dc618ed",
   "10c-deskmap.js": "e4bf62a9e231",
   "10d-coach.js": "3cc2fcbe54d5",
@@ -112,48 +112,18 @@
   "07lh-lefty.js": "b1b6761a4a97",
   "07pm-premove.js": "52061c9a3011",
   "07dq-daily.js": "c1076bdd0ee8",
-  "07i18n.js": "bfcfe13115b3",
+  "07i18n.js": "892dfd51810f",
   "07sp-spotfit.js": "f7f205a79901",
   "07fl-fill.js": "6d07e97dc32f",
   "07mnf-mainfilm.js": "a1ff0f0af87d",
-  "07mnv-mainvn.js": "256c09c40fb3",
+  "07mnv-mainvn.js": "4c72bc49d2a6",
   "07mnq-mainquest.js": "1ff228dbc49d"
  },
  "differsFromSource": [
   {
-   "module": "01-board.js",
-   "lines": 4,
-   "sourceModified": "2026-11-14T00:22:16.236Z"
-  },
-  {
    "module": "05-settings.js",
    "lines": 1,
-   "sourceModified": "2026-11-13T19:04:13.233Z"
-  },
-  {
-   "module": "07bh-blackhole.js",
-   "lines": 1,
-   "sourceModified": "2026-11-14T00:22:23.831Z"
-  },
-  {
-   "module": "07bht-td.js",
-   "lines": 261,
-   "sourceModified": "2026-11-14T00:44:32.733Z"
-  },
-  {
-   "module": "07bhtl-tdlearn.js",
-   "lines": 5,
-   "sourceModified": "2026-11-14T00:22:16.231Z"
-  },
-  {
-   "module": "07w-shipwalk.js",
-   "lines": 4,
-   "sourceModified": "2026-11-14T00:32:51.508Z"
-  },
-  {
-   "module": "07x-zoom.js",
-   "lines": 4,
-   "sourceModified": "2026-11-14T00:22:15.628Z"
+   "sourceModified": "2026-11-14T00:50:03.894Z"
   },
   {
    "module": "07y-hubmap.js",
@@ -161,44 +131,14 @@
    "sourceModified": "2026-11-13T18:59:11.775Z"
   },
   {
-   "module": "07z-homemap.js",
-   "lines": 17,
-   "sourceModified": "2026-11-14T00:45:16.260Z"
-  },
-  {
-   "module": "07hmp-pano.js",
-   "lines": 143,
-   "sourceModified": "2026-11-14T00:44:33.908Z"
-  },
-  {
-   "module": "07t3-tabtube.js",
-   "lines": 1,
-   "sourceModified": "2026-11-14T00:22:27.226Z"
-  },
-  {
    "module": "07s4-passmap.js",
    "lines": 1,
    "sourceModified": "2026-11-13T03:19:39.481Z"
   },
   {
-   "module": "08b-cpugame.js",
-   "lines": 1,
-   "sourceModified": "2026-11-14T00:22:16.233Z"
-  },
-  {
    "module": "07hs-netsig.js",
    "lines": 3,
    "sourceModified": "2026-11-13T14:00:29.777Z"
-  },
-  {
-   "module": "07pm-premove.js",
-   "lines": 1,
-   "sourceModified": "2026-11-14T00:22:16.232Z"
-  },
-  {
-   "module": "07i18n.js",
-   "lines": 37,
-   "sourceModified": "2026-11-14T00:47:17.374Z"
   }
  ]
 }

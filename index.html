@@ -1613,7 +1613,7 @@ html[data-lefty] .tskip{right:auto;left:14px}
       if(!window.caches)return go();caches.keys().then(function(ks){return Promise.all(ks.filter(function(k){return k.indexOf("xqlab-app-")===0}).map(function(k){return caches.delete(k)}))})
         .then(function(){return navigator.serviceWorker&&navigator.serviceWorker.getRegistration()}).then(function(r){return r&&r.update()}).catch(function(){}).then(go)}};setTimeout(chk,4000)})();
 </script>
-<script>window.XQ_OFFLINE=true;window.XQ_BUILD="20261114-0847";</script>
+<script>window.XQ_OFFLINE=true;window.XQ_BUILD="20261114-0858";</script>
 <script src="core.js"></script>
 <script src="engine.js"></script>
 <script src="local.js"></script>
@@ -2820,8 +2820,10 @@ function Board(onTap,onSwipe){
       const orig=pieceEls[p0.sq],cl=orig.cloneNode(true);orig.style.opacity=".25";
       cl.style.cssText="transform-box:fill-box;transform-origin:center;pointer-events:none;filter:drop-shadow(0 12px 10px rgba(0,0,0,.45))";svg.append(cl);
       p0.drag={cl,orig};vibrate(8)}
-    const q=svgPt(e);p0.drag.cl.style.transform=`translate(${q.x-X(p0.sq)}px,${q.y-Y(p0.sq)-14}px) scale(1.22)`});   // 拿在手上：放大、浮起來、陰影
-  const endDrag=e=>{const d=p0.drag;d.cl.remove();d.orig.style.opacity="";const t=sqAt(e);p0=null;if(t>=0&&t!==lastO.sel){dropNoAnim=true;tapGo(t);setTimeout(()=>{dropNoAnim=false},3000)}};   /* 開發者 11/11 選 ChatGPT UI 報告 UI-07：拖曳放下也走 tapGo——開了「落子前再確認」就先只預定（棋子回原位、落點標出來），再點一次同一點才走；沒開照舊直接走 */
+    const q=svgPt(e);p0.drag.cl.style.transform=`translate(${q.x-X(p0.sq)}px,${q.y-Y(p0.sq)-(typeof bhtdLift==="function"?bhtdLift(svg):14)}px) scale(1.22)`});   /* 11/14 黑洞塔防：浮在手指上方 45px（07bht-td.js bhtdLift） */   // 拿在手上：放大、浮起來、陰影
+  const endDrag=e=>{const d=p0.drag,up=typeof bhtdLift==="function"?bhtdLift(svg,1):0,t=sqAt(up?{clientX:e.clientX,clientY:e.clientY-up}:e);p0=null;
+    if(up&&!(lastO.targets||[]).includes(t)){d.cl.style.transition="transform .2s ease-out";d.cl.style.transform="translate(0px,0px) scale(1)";setTimeout(()=>{d.cl.remove();d.orig.style.opacity=""},210);return}   /* 11/14 塔防：放開不是合法落點＝200ms 彈回，選取留著 */
+    d.cl.remove();d.orig.style.opacity="";if(t>=0&&t!==lastO.sel){dropNoAnim=true;tapGo(t);setTimeout(()=>{dropNoAnim=false},3000)}};   /* 開發者 11/11 選 ChatGPT UI 報告 UI-07：拖曳放下也走 tapGo——開了「落子前再確認」就先只預定（棋子回原位、落點標出來），再點一次同一點才走；沒開照舊直接走 */
   svg.addEventListener("pointercancel",()=>{if(p0&&p0.drag){p0.drag.cl.remove();p0.drag.orig.style.opacity=""}p0=null});
   svg.addEventListener("pointerup",e=>{axLastPU=Date.now();if(!p0)return;if(p0.drag)return endDrag(e);   /* 回饋 847：記下一般點選的時間，讀螢幕格子那層才不會同一下又點一次 */const dx=e.clientX-p0.x,dy=e.clientY-p0.y;
     if(onSwipe&&Math.abs(dx)>45&&Math.abs(dx)>Math.abs(dy)*1.3){onSwipe(dx<0?1:-1);p0=null;return}
@@ -5501,7 +5503,7 @@ function feedbackSheet(){let type="🐞 錯誤";
     const paintF=()=>{ffl.innerHTML=atts.map((a,i)=>`<span class="fch">📎 <em>${esc(a.name)}</em><span class="muted">${(a.text.length/1000).toFixed(1)}k 字</span><a href="#" data-fx="${i}" aria-label="移除">✕</a></span>`).join("");ffl.querySelectorAll("[data-fx]").forEach(x=>x.onclick=e=>{e.preventDefault();atts.splice(+x.dataset.fx,1);paintF()})};
     ff.onchange=async()=>{const fs=[...(ff.files||[])];ff.value="";for(const f of fs){if(atts.length>=3){toast("最多 3 個檔案");break}if(f.size>200*1024){toast(`${f.name} 超過 200KB`);continue}
       try{atts.push({name:f.name,text:await f.text()})}catch(e){toast("讀不到 "+f.name)}}paintF()};
-    const paintI=()=>{fps.innerHTML=imgs.map((d,i)=>`<span style="position:relative;display:inline-block"><img src="${d}" alt="" style="height:72px;max-width:96px;border-radius:8px;border:1px solid var(--line);display:block"><button data-x="${i}" class="pill" style="position:absolute;top:-8px;right:-8px;padding:0 7px;line-height:22px">✕</button></span>`).join("");
+    const paintI=()=>{fps.innerHTML=imgs.map((d,i)=>`<span style="position:relative;display:inline-block"><img src="${d}" alt="" style="height:72px;max-width:96px;border-radius:8px;border:1px solid var(--line);display:block"><button data-x="${i}" class="pill" aria-label="移除這張圖" style="position:absolute;top:-8px;right:-8px;padding:0 7px;line-height:22px">✕</button></span>`).join("");
       fps.querySelectorAll("[data-x]").forEach(x=>x.onclick=()=>{imgs.splice(+x.dataset.x,1);paintI()})};
     fi.onchange=async()=>{const fs=[...(fi.files||[])];fi.value="";if(!fs.length)return;if(imgs.length+fs.length>MAXI)toast(`最多 ${MAXI} 張，只取前面幾張`);
       for(const f of fs.slice(0,MAXI-imgs.length)){try{imgs.push(await shrinkImage(f))}catch(e){toast(e.message)}}paintI()};
@@ -10302,7 +10304,7 @@ body.bh-full .gs-pop{right:calc(128px + env(safe-area-inset-right,0px))!importan
 body.bh-full .gpad{left:auto!important;right:calc(130px + env(safe-area-inset-right,0px))!important;bottom:8px!important;transform:none!important}}`;document.head.append(s)}
 function bhFull(on,st){if(typeof document==="undefined")return;const b=document.body;if(!b)return;if(!on){if(b.classList.contains("bh-full"))b.classList.remove("bh-full");return}bhFullCss();b.classList.add("bh-full");
   try{const tb=document.getElementById("topbar"),h=tb?Math.round(tb.getBoundingClientRect().bottom):56;document.documentElement.style.setProperty("--bhTop",Math.max(0,h)+"px")}catch(e){}
-  try{const port=matchMedia("(orientation:portrait)").matches,k="bhRot:"+(st&&st.id||"");if(port&&!sessionStorage.getItem(k)){sessionStorage.setItem(k,"1");setTimeout(()=>{try{toast("📱 手機轉成橫向，黑洞星盤會滿版")}catch(e){}},1800)}}catch(e){}}
+  try{const port=matchMedia("(orientation:portrait)").matches,k="bhRot:"+(st&&st.id||"");if(port&&st&&!st.td&&!sessionStorage.getItem(k)){   /* 11/14 塔防局直拿已經滿版：不再跳「轉橫向」，改在視角選單放一行靜態提示（07bht-td.js bhtdViewMenu）；轉向時（resize 沒帶 st）也不跳 */sessionStorage.setItem(k,"1");setTimeout(()=>{try{toast("📱 手機轉成橫向，黑洞星盤會滿版")}catch(e){}},1800)}}catch(e){}}
 if(typeof window!=="undefined"){addEventListener("hashchange",()=>{if(!/^#\/journey\/play/.test(location.hash))bhFull(false)});addEventListener("resize",()=>{if(document.body&&document.body.classList.contains("bh-full"))bhFull(true,null)})}
 function bhParkEx(st){bhFull(bhIs(st),st);if(!bhIs(st)){if(typeof BGM!=="undefined"&&BGM.force&&/^bh_/.test(BGM.force))bhMus(null);return null}return{giant:true,bg:"data/park/bh_far2.webp"   /* 11/12 ChatGPT 細修報告＋Gemini 回應：遠景改用 Gemini 重畫、左右無縫的版本 */,bgName:"🌀 黑洞・星樞棋局",bhStars:bhStarsEx(),era:"classic",quietMate:true,watchers:[],oppHello:null,opp:null,mateLook:null,crowd:null,...(typeof bhtdParkEx==="function"?bhtdParkEx(st):null),...(typeof bhfxParkEx==="function"?bhfxParkEx(st):null)   /* 11/14 太虛星尊上場：黑將外觀換成魔王（07bhf-bossfx.js；現在只有開發者測試台會開） */,
   gate:{img:["data/park/blackhole_360.webp"],icon:"🌀",title:"星樞棋局",sub:"墨色星渦的中心，有一張巨大的星盤",bg:"#05060d",quiet:true}}}
@@ -11051,7 +11053,7 @@ const BHTD=(()=>{
   function markNet(td,b,two){for(const h of netHits(b,two)){const tag=td.pid[h.t];if(tag&&!td.pj.includes(tag)){td.pj.push(tag);ev(td,{k:"mark",sq:h.t})}}}
   /* 扣元氣：hitMe 先吃護盾（整次抵消）；hitEn 敵方沒有護盾 */
   function hitMe(td,n,sq,why){n=Math.max(0,Math.round(n));if(!n)return 0;if(td.gd>0){td.gd--;ev(td,{k:"absorb",sq,why});return 0}td.me.hp=Math.max(0,td.me.hp-n);td.taken+=n;td.rf.hurt=1;td.rf.dmg=(td.rf.dmg||0)+n;ev(td,{k:"hit",sd:"r",n,sq,why});return n}
-  function hitEn(td,n,sq,why,src){n=Math.max(0,Math.round(n));if(!n)return 0;td.en.hp=Math.max(0,td.en.hp-n);td.dealt+=n;ev(td,{k:"hit",sd:"b",n,sq,why,src});return n}
+  function hitEn(td,n,sq,why,src,x){n=Math.max(0,Math.round(n));if(!n)return 0;td.en.hp=Math.max(0,td.en.hp-n);td.dealt+=n;ev(td,Object.assign({k:"hit",sd:"b",n,sq,why,src},x||{}));return n}   /* x：演出用的附加欄位（擒子的棋種、弱吃強、連擊） */
   /* 打某一顆黑子造成的扣元氣（招式）：基礎×攻擊倍率，破甲多扣 1（用掉），單次最多 12 */
   function hitPiece(td,sq,base,why){const tag=td.pid[sq],pj=tag&&td.pj.includes(tag);if(pj)td.pj=td.pj.filter(x=>x!==tag);return hitEn(td,Math.min(CAPMAX,Math.round(base*td.me.atk)+(pj?1:0)),sq,why,"sk")}
   /* 不打某一顆子的扣元氣（直路衝鋒）：照樣乘攻擊倍率、上限 12 */
@@ -11059,6 +11061,14 @@ const BHTD=(()=>{
   /* 多回合定身：排進 frzQ，roundEnd 清掉 td.frz 之後才推進去（黑方走棋時定的身才不會被當回合清掉） */
   function freezeN(td,tag,n){if(!tag||!(n>0))return;const o=td.frzQ.find(x=>x.tag===tag);if(o)o.n=Math.max(o.n,n);else td.frzQ.push({tag,n})}
   function capDmg(v,c,atk,eye,pj){return Math.min(CAPMAX,Math.round(CAPB[up(v)]*CAPM[up(c)]*(atk||1)*(eye?EYEK:1))+(pj?1:0))}
+  /* ===== 連擊（11/14 爽度第一批，story/黑洞塔防爽度_Gemini提案與審查_1114.md；不改象棋規則、一回合照樣 1 招）=====
+     comboOf：擒子這一下的連擊加成。base＝原本的擒子扣點（capDmg）；mk＝吃掉的是「這回合先放招標記過」的敵子＝奇謀連擊 ×2（多扣 2、回 1 靈）；
+       eye＋pj＝陣眼子吃掉炮架破甲目標＝陣眼貫穿（星樞元氣再多扣 1，第 8 條審查：棋子沒有個別血量，不做濺射）。
+       加成後一樣受單次上限 12 限制；原本就超過 12 的（12＋破甲 1）照原本的數字，不因為連擊反而變少。回 {n 扣幾點, sp 多回幾靈, k 連擊種類, bonus 實際多扣}
+     chkDmg：紅方將軍扣幾點。上一回合也將軍（prevR＝這回合−1）＝連環逼宮，5 → 7；中斷一回合就回到 5 */
+  function comboOf(o){o=o||{};const base=Math.max(0,Math.round(+o.base||0)),mk=!!o.mk,pc=!!(o.eye&&o.pj),bonus=(mk?2:0)+(pc?1:0);
+    const n=bonus?Math.max(base,Math.min(CAPMAX,base+bonus)):base;return{n,sp:mk?1:0,k:mk&&pc?"qm+pierce":mk?"qm":pc?"pierce":"",bonus:n-base}}
+  function chkDmg(prevR,rnd){const chain=prevR!=null&&prevR===rnd-1;return{n:chain?7:5,chain}}
   function heal(td,n){const a=Math.round(n*td.me.max/50),h0=td.me.hp;td.me.hp=Math.min(td.me.max,td.me.hp+a);ev(td,{k:"heal",n:td.me.hp-h0});return td.me.hp-h0}
   function spAdd(td,n){const s0=td.me.sp;td.me.sp=Math.min(td.me.spMax,td.me.sp+n);if(td.me.sp>s0)ev(td,{k:"sp",n:td.me.sp-s0});return td.me.sp-s0}
   function shAdd(td,sq,v){const tag=td.pid[sq];if(!tag)return;td.sh.push({tag,v,until:td.rnd+3});ev(td,{k:"sh",sq,n:v})}   /* 小盾：最多撐 3 回合 */
@@ -11103,14 +11113,14 @@ const BHTD=(()=>{
     else if(!fx.used)ev(td,{k:"miss",id:fx.id})}
   /* td v3（11/13 十八招去重定稿）新欄位；舊存檔（v2）讀進來時補預設值。move／roundEnd／engine／why／cast 開頭都叫 */
   const TD3={hot:[],frzQ:[],trap:[],lockW:null,run:null,noCross:-1,noCap:[],noTake:[],pair:[],revB:0,lastR:null,thr:null};
-  function tdFix(td){if(!td||td.v>=3)return td;for(const k in TD3)if(td[k]===undefined)td[k]=Array.isArray(TD3[k])?[]:TD3[k];td.rf=Object.assign({chk:0,hurt:0,dmg:0,cap:0},td.rf||{});td.v=3;return td}
+  function tdFix(td){if(td&&td.ckR===undefined){td.cmb=null;td.ckR=-9;td.capR=-9;td.capN=0}   /* 11/14 連擊欄位：舊盤補上（不動版本號） */if(!td||td.v>=3)return td;for(const k in TD3)if(td[k]===undefined)td[k]=Array.isArray(TD3[k])?[]:TD3[k];td.rf=Object.assign({chk:0,hurt:0,dmg:0,cap:0},td.rf||{});td.v=3;return td}
   /* ---------- 開局 ---------- */
   function boot(cfg,P,C){cfg=cfg||{};const tl=cfg.lv==="tl",n=tl?0:Math.max(1,Math.min(LV.length,Math.round(+cfg.lv)||1)),L=tl?TL:LV[n-1],st=stats(cfg.ch,cfg.L,cfg),ai=tl?{depth:1,base:1,err:0,mpv:1,margin:300}:depthOf(n,cfg.diff),pl=lvPlan(L),E=L.en||{};   /* 練習賽 lv "tl"：td.lv＝0 */
     const pool=SK.filter(s=>s.ch===st.ck&&s.lv<=st.L).map(s=>s.id),sk=tl?pool.filter(id=>SKM[id].lv===1).slice(0,1):(Array.isArray(cfg.sk)?cfg.sk:[]).filter((x,i,a)=>pool.includes(x)&&a.indexOf(x)===i).slice(0,4);
     const td={v:3,lv:n,nm:L.nm,ch:st.ck,cn:st.n,pc:st.pc,L:st.L,diff:Math.max(1,Math.min(5,+cfg.diff||2)),
       me:{hp:st.hp,max:st.hp,sp:tl?Math.max(0,st.sp-(L.spGap||0)):Math.min(st.sp,(L.sp0||0)+Math.max(0,Math.min(10,Math.round(+cfg.xm||0)))),spMax:st.sp,atk:st.atk},en:{hp:Math.min(L.hp,E.hp0||L.hp),max:L.hp,sp:L.noEsp?0:Math.min(5,E.sp0||0),spMax:L.noEsp?0:5},rnd:0,sk:sk.length?sk:pool.slice(0,4),castR:-1,
       pid:{},eye:"r"+EYE0[st.pc],lost:[],pj:[],frz:[],frzR:[],li:[],sh:[],gd:0,ci:[],seal:0,disc:0,fn2:-1,pf:0,rf:{chk:0,hurt:0,dmg:0,cap:0},
-      hot:[],frzQ:[],trap:[],lockW:null,run:null,noCross:-1,noCap:[],noTake:[],pair:[],revB:0,lastR:null,thr:null,
+      hot:[],frzQ:[],trap:[],lockW:null,run:null,noCross:-1,noCap:[],noTake:[],pair:[],revB:0,lastR:null,thr:null,cmb:null,ckR:-9,capR:-9,capN:0,   /* 連擊：cmb＝這回合放招標記的敵子 {r,tags}；ckR＝上一次將軍的回合；capR／capN＝連續擒子 */
       waves:pl.waves.map(w=>({at:w.at,ps:w.ps.map(x=>x.slice()),fake:w.fake})),gate:null,wn:0,ev:[],seq:0,ai,boss:L.boss||null,dealt:0,taken:0,
       tpl:L.tpl||"",ps:L.ps||"",fsk:(L.fsk||[]).slice(),zcap:L.zcap||2,shard:(L.shard||[]).map(([a,c])=>LSQ(a,c)),fx:null,fxLast:-1};
     for(let i=0;i<90;i++)if(P.board[i])td.pid[i]=sd(P.board[i])+i;
@@ -11122,9 +11132,11 @@ const BHTD=(()=>{
     if(m.by==="r"){td.rf={chk:0,hurt:0,dmg:0,cap:0};td.lastR={f:m.f,t:m.t,p:up(pc)};td.thr=null;td.pf=up(pc)==="P"&&RW(m.t)<RW(m.f)?1:0;   /* lastR：直路衝鋒、拐彎避風看上一步誰走的 */
       if(td.run&&td.pf&&td.run.left>0&&td.rnd<td.run.until){td.run.left--;heal(td,4);if(td.run.left<=0)td.run=null}   /* 跑腿賺錢：兵往前走 1 步回 4（最多 3 次） */
       if(m.cap&&sd(m.cap)==="b"){td.rf.cap=1;const pj=tv&&td.pj.includes(tv),eye=!!tf&&tf===td.eye;td.pj=td.pj.filter(x=>x!==tv);td.frz=td.frz.filter(x=>x!==tv);
-        hitEn(td,capDmg(m.cap,pc,td.me.atk,eye,pj),m.t,eye?"陣眼擒子":"擒子");spAdd(td,1);
+        const mk=!!tv&&!!td.cmb&&td.cmb.r===td.rnd&&td.cmb.tags.includes(tv),cb=comboOf({base:capDmg(m.cap,pc,td.me.atk,eye,pj),eye,pj,mk}),cp=up(pc),vp=up(m.cap);
+        td.capN=td.capR===td.rnd-1?(+td.capN||0)+1:1;td.capR=td.rnd;if(mk)td.cmb=null;   /* 連續擒子：連著幾回合都擒到子（演出印章用，不加扣點） */
+        hitEn(td,cb.n,m.t,eye?"陣眼擒子":"擒子",null,{cap:1,cp,vp,weak:VALV[cp]<VALV[vp]?1:0,eye:eye?1:0,pj:pj?1:0,combo:cb.k,bonus:cb.bonus,streak:td.capN});spAdd(td,1+cb.sp);
         if(td.fx&&td.fx.id==="cfx"&&!td.fx.used&&tv&&tv===td.fx.tag){td.fx.used=1;hitMe(td,1,m.t,"殘卒反星")}}
-      if(m.ck)hitEn(td,5,b.indexOf("k"),"將軍");if(td.shard&&td.shard.includes(m.t)){ev(td,{k:"shard",sq:m.t});hitMe(td,3,m.t,"星碎格")}}
+      if(m.ck){const ch=chkDmg(td.ckR,td.rnd);td.ckR=td.rnd;hitEn(td,ch.n,b.indexOf("k"),ch.chain?"連環逼宮":"將軍",null,{chk:1,chain:ch.chain?1:0})}if(td.shard&&td.shard.includes(m.t)){ev(td,{k:"shard",sq:m.t});hitMe(td,3,m.t,"星碎格")}}
     else{td.rnd++;if(!(td.seal>=td.rnd))spAdd(td,1);   /* 開發者 11/13：每回合 +1 靈力（擒子再 +1）；原本只靠擒子，沒吃子就整局放不出招。陣眼被擒封靈的那一回合不加 */
       if(m.cap&&sd(m.cap)==="r"){
         const sh=tv?shTake(td,tv):0,raw=Math.min(CAPMAX,Math.round(CAPB[up(m.cap)]*CAPM[up(pc)])),n=Math.max(0,raw-sh);if(td.en.sp<td.en.spMax){td.en.sp++;ev(td,{k:"esp",n:1})}
@@ -11197,7 +11209,8 @@ const BHTD=(()=>{
   function rookThreats(b,C){let A=[];try{A=C.legal(b,"b")}catch(e){return[]}const o=[];for(const[f,t]of A)if(b[t]==="R"&&!o.includes(f))o.push(f);return o.sort((a,c)=>a-c)}
   /* 馬腿解圍：q 是己方子、上下左右相鄰有己方傌（蹩住馬腿）→ 回傳己方半場離 q 最近、合法、而且不是那些傌馬腿的空格（同距離取左上）；沒有＝null */
   function legDest(b,q,C){if(!b[q]||sd(b[q])!=="r")return null;const H=nbr(q,OR).filter(h=>b[h]==="N");if(!H.length)return null;const legs=new Set();for(const h of H)for(const z of nbr(h,OR))legs.add(z);
-    const D=[];for(let z=45;z<90;z++)if(z!==q&&!b[z]&&!legs.has(z))D.push(z);D.sort((a,c)=>Math.abs(RW(a)-RW(q))+Math.abs(CL(a)-CL(q))-Math.abs(RW(c)-RW(q))-Math.abs(CL(c)-CL(q))||a-c);
+    const fw=z=>sd(b[q])==="r"?RW(z)<RW(q):RW(z)>RW(q);   /* 開發者 11/13：不往前移（照被移動子那一方的前進方向），只到左右或後方 */
+    const D=[];for(let z=45;z<90;z++)if(z!==q&&!b[z]&&!legs.has(z)&&!fw(z))D.push(z);D.sort((a,c)=>Math.abs(RW(a)-RW(q))+Math.abs(CL(a)-CL(q))-Math.abs(RW(c)-RW(q))-Math.abs(CL(c)-CL(q))||a-c);
     for(const z of D)if(mvOk(b,q,z,C))return z;return null}
   const NJ=[[-2,-1],[-2,1],[2,-1],[2,1],[-1,-2],[1,-2],[-1,2],[1,2]];
   function knightHits(b){const o=[];for(let s=0;s<90;s++){if(b[s]!=="N")continue;for(const[dr,dc]of NJ){const r=RW(s)+dr,c=CL(s)+dc;if(r<0||r>9||c<0||c>8)continue;const q=r*9+c;if(b[q]&&sd(b[q])==="b"&&b[q]!=="k"&&!o.includes(q))o.push(q)}}return o}
@@ -11215,7 +11228,7 @@ const BHTD=(()=>{
   S({id:"shen1",ch:"x_shuai",lv:1,nm:"重金懸賞",cost:3,cls:"回元氣",d:"回 15 元氣",heal:1,cao:"data/bhtd/cao/cao_x_shen.webp",run:x=>{heal(x.td,15)}});
   S({id:"shen2",ch:"x_shuai",lv:6,nm:"庭院小息",cost:2,cls:"回元氣",d:"回 8；這回合被將軍過，改回 12",heal:1,run:x=>{heal(x.td,x.td.rf.chk?12:8)}});
   S({id:"shen3",ch:"x_shuai",lv:12,nm:"帥令安軍",cost:2,cls:"控制",d:"解除己方 1 子的定身或鎖",tg:x=>frozenMine(x.td),none:"沒有被定身或鎖住的子",run:(x,t)=>unfreeze(x,t[0])});
-  S({id:"shen4",ch:"x_shuai",lv:17,nm:"當票回春",cost:3,cls:"回元氣",d:"回 12；元氣低於一半再回 5",heal:1,run:x=>{heal(x.td,12+(x.td.me.hp<x.td.me.max/2?5:0))}});
+  S({id:"shen4",ch:"x_shuai",lv:17,nm:"當票回春",cost:3,cls:"回元氣",d:"回 12；己方元氣低於一半再回 5",heal:1,run:x=>{heal(x.td,12+(x.td.me.hp<x.td.me.max/2?5:0))}});
   S({id:"shen5",ch:"x_shuai",lv:23,nm:"九宮守心",cost:3,cls:"回元氣",d:"帥站在九宮正中心才能用：接下來 3 回合，每回合結束回 4（帥離開正中心就停）",heal:1,
     need:x=>x.b[76]==="K"?null:"帥要站在九宮正中心",run:x=>{x.td.hot=[{until:x.td.rnd+3}];ev(x.td,{k:"hot",sq:76})}});   /* 再放一次＝重新算 3 回合，不疊加 */
   /* 鐵連城（仕）坦克 */
@@ -11231,9 +11244,9 @@ const BHTD=(()=>{
   S({id:"bu1",ch:"x_bing",lv:1,nm:"神行百里",cost:1,cls:"控制",d:"交換己方 2 子位置（換完要合法）",steps:2,cao:"data/bhtd/cao/cao_x_bu.webp",
     tg:(x,pk)=>{if(!pk.length)return own(x.b,(p,q)=>own(x.b).some(z=>swOk(x.b,q,z,x.C)));return own(x.b).filter(z=>swOk(x.b,pk[0],z,x.C))},none:"沒有可以交換的兩顆子",
     run:(x,t)=>{const b=x.P.board,a=t[0],c=t[1],pa=b[a],pc=b[c],ta=x.td.pid[a],tc=x.td.pid[c];edit(x.P,x.C,{[a]:pc,[c]:pa});x.td.pid[a]=tc;x.td.pid[c]=ta;ev(x.td,{k:"sw",sq:a,t:c,src:"sk"})}});
-  S({id:"bu2",ch:"x_bing",lv:6,nm:"勇往直前",cost:1,cls:"靈力",d:"上一步有己方兵往前走，得 2 靈力",need:x=>x.td.pf?null:"上一步要有兵往前走",run:x=>{spAdd(x.td,2)}});
+  S({id:"bu2",ch:"x_bing",lv:6,nm:"勇往直前",cost:1,cls:"靈力",d:"上一回合有己方兵往前走，得 2 靈力",need:x=>x.td.pf?null:"上一步要有兵往前走",run:x=>{spAdd(x.td,2)}});
   S({id:"bu3",ch:"x_bing",lv:12,nm:"跑腿賺錢",cost:2,cls:"回元氣",d:"3 回合內，己方兵每往前走 1 步回 4（最多 3 次）",run:x=>{x.td.run={left:3,until:x.td.rnd+3};ev(x.td,{k:"run",n:3})}});   /* 元氣滿也能先放；結算在 move() 紅方分支 */
-  S({id:"bu4",ch:"x_bing",lv:17,nm:"步步為營",cost:2,cls:"護盾",d:"己方 1 顆兵，下一次虛空鎖鎖不住它（魔王關才用得到）",tg:x=>own(x.b,p=>p==="P").filter(q=>!x.td.li.includes(x.td.pid[q])),none:"沒有可以護住的兵",run:(x,t)=>{x.td.li.push(x.td.pid[t[0]]);ev(x.td,{k:"sh",sq:t[0],n:0})}});
+  S({id:"bu4",ch:"x_bing",lv:17,nm:"步步為營",cost:2,cls:"護盾",d:"己方 1 顆兵，下一次虛空鎖鎖不住它",tg:x=>own(x.b,p=>p==="P").filter(q=>!x.td.li.includes(x.td.pid[q])),none:"沒有可以護住的兵",run:(x,t)=>{x.td.li.push(x.td.pid[t[0]]);ev(x.td,{k:"sh",sq:t[0],n:0})}});
   S({id:"bu5",ch:"x_bing",lv:23,nm:"揚州快步",cost:1,cls:"靈力",d:"下一招耗靈 −2（最少 1）",run:x=>{x.td.disc=2;ev(x.td,{k:"sp",n:0})}});
   /* 齊轍（俥）主攻輸出 */
   S({id:"qi1",ch:"x_swordboy",lv:1,nm:"一劍破甲",cost:4,cls:"攻擊",d:"移除敵方 1 顆兵、仕或相",cao:"data/bhtd/cao/cao_x_qi.webp",tg:x=>foe(x.b,(p,q)=>"pab".includes(p)&&rmOk(x.b,q,x.C)),none:"沒有可以移除的卒、士、象",run:(x,t)=>rm(x,t[0])});
@@ -11261,7 +11274,7 @@ const BHTD=(()=>{
     run:(x,t)=>{const h=netHits(x.b,false).find(o=>o.t===t[0]),s=h&&h.scr,ps=s!=null?x.b[s]:null;hitPiece(x.td,t[0],8,"隔子星花");if(ps&&sd(ps)==="b"&&ps!=="k")hitPiece(x.td,s,4,"隔子星花")}});
   S({id:"lei3",ch:"x_martialgirl",lv:12,nm:"花火連環",cost:3,cls:"團攻",d:"最多 3 顆破甲敵子各扣 6",need:x=>foe(x.b,(p,q)=>x.td.pj.includes(x.td.pid[q])).length?null:"場上沒有破甲的敵子",
     run:x=>{const L=foe(x.b,(p,q)=>x.td.pj.includes(x.td.pid[q])).sort((a,c)=>VALV[up(x.b[c])]-VALV[up(x.b[a])]).slice(0,3);for(const q of L)hitPiece(x.td,q,6,"花火連環")}});
-  S({id:"lei4",ch:"x_martialgirl",lv:17,nm:"火網標記",cost:2,cls:"輔助",d:"2 回合內，炮隔兩子瞄到的敵子也標成破甲",run:x=>{x.td.fn2=x.td.rnd+2;markNet(x.td,x.b,true)}});
+  S({id:"lei4",ch:"x_martialgirl",lv:17,nm:"火網標記",cost:2,cls:"輔助",d:"2 回合內，炮架火網隔兩子瞄到的敵子也標成破甲",run:x=>{x.td.fn2=x.td.rnd+2;markNet(x.td,x.b,true)}});
   S({id:"lei5",ch:"x_martialgirl",lv:23,nm:"煙幕護耳",cost:2,cls:"護盾",d:"己方 1 子躲進煙幕：下回合敵子不能吃它（沒有別步就照常）",tg:x=>own(x.b,p=>p!=="K"),
     run:(x,t)=>{const tag=x.td.pid[t[0]];x.td.noTake=x.td.noTake.filter(o=>o.tag!==tag);x.td.noTake.push({tag,until:x.td.rnd+1});ev(x.td,{k:"ntk",sq:t[0]})}});
   /* 駱躍梅（傌）遊俠救援 */
@@ -11272,8 +11285,8 @@ const BHTD=(()=>{
   S({id:"luo2",ch:"x_miaogirl",lv:6,nm:"紅馬跳影",cost:2,cls:"攻擊",d:"跟己方傌呈日字的 1 顆非帥將敵子：扣 10",tg:x=>knightHits(x.b),none:"傌的日字點上沒有敵子",run:(x,t)=>{hitPiece(x.td,t[0],10,"紅馬跳影")}});
   S({id:"luo3",ch:"x_miaogirl",lv:12,nm:"拐彎避風",cost:2,cls:"護盾",d:"上一步是己方傌走的（拐了彎），得 1 層護盾",need:x=>x.td.lastR&&x.td.lastR.p==="N"?null:"上一步要是傌走的",run:x=>{x.td.gd++;ev(x.td,{k:"gd",n:1})}});
   S({id:"luo4",ch:"x_miaogirl",lv:17,nm:"驛鈴回氣",cost:2,cls:"回元氣",d:"回 6；這場下一次復活己方子時，再回 10",heal:1,run:x=>{heal(x.td,6);x.td.revB=1}});
-  S({id:"luo5",ch:"x_miaogirl",lv:23,nm:"馬腿解圍",cost:2,cls:"輔助",d:"己方 1 顆傌被自己人蹩住馬腿時，把蹩腿的那顆己方子瞬移到己方半場最近的合法空位",
-    tg:x=>own(x.b,(p,q)=>legDest(x.b,q,x.C)!=null),none:"沒有被自己人蹩住的傌",run:(x,t)=>{const z=legDest(x.b,t[0],x.C);if(z==null)return"找不到可以移過去的空位";tp(x,t[0],z)}});
+  S({id:"luo5",ch:"x_miaogirl",lv:23,nm:"馬腿解圍",cost:2,cls:"輔助",d:"己方 1 顆傌被自己人蹩住馬腿時，把蹩腿的那顆己方子瞬移到己方半場最近的合法空位（只往左右或後方，不往前）",
+    tg:x=>own(x.b,(p,q)=>legDest(x.b,q,x.C)!=null),none:"沒有被自己人蹩住、又能往左右或後方挪開的傌",run:(x,t)=>{const z=legDest(x.b,t[0],x.C);if(z==null)return"找不到可以移過去的空位";tp(x,t[0],z)}});
   function rm(x,q){const tag=x.td.pid[q];edit(x.P,x.C,{[q]:null});delete x.td.pid[q];x.td.pj=x.td.pj.filter(t=>t!==tag);x.td.frz=x.td.frz.filter(t=>t!==tag);ev(x.td,{k:"rm",sq:q,src:"sk"})}
   function tp(x,f,t){const p=x.P.board[f],tag=x.td.pid[f];edit(x.P,x.C,{[f]:null,[t]:p});delete x.td.pid[f];x.td.pid[t]=tag;ev(x.td,{k:"tp",sq:f,t,src:"sk"})}
   const SKM={};for(const s of SK)SKM[s.id]=s;
@@ -11288,21 +11301,36 @@ const BHTD=(()=>{
   function cast(P,b,C){const td=tdFix(P.td),id=String(b&&b.k||""),s=SKM[id];if(!s)return{err:"沒有這招"};const w=why(P,id,C);if(w)return{err:w};
     const tg=Array.isArray(b.tg)?b.tg.slice(0,4):[];if(s.tg){if(tg.length<s.steps)return{err:"還沒選好目標"};
       for(let i=0;i<s.steps;i++){const L=targets(P,id,tg.slice(0,i),C),v=tg[i],ok=L.some(o=>o&&typeof o==="object"?o.v===v:o===+v);if(!ok)return{err:"這個目標不能用"};if(typeof L[0]!=="object")tg[i]=+v}}
-    const cost=costOf(td,id),d0=td.disc;td.disc=0;const r=s.run(ctx(P,C),tg);if(typeof r==="string"){td.disc=d0;return{err:r}}
+    const cost=costOf(td,id),d0=td.disc;td.disc=0;const pre=tg.map(v=>typeof v==="number"?td.pid[v]:null),s0=td.seq;const r=s.run(ctx(P,C),tg);if(typeof r==="string"){td.disc=d0;return{err:r}}
+    {const tags=pre.concat(td.ev.filter(e=>e.s>s0&&typeof e.sq==="number"&&/^(hit|frz|lock|ncap|mark)$/.test(e.k)).map(e=>td.pid[e.sq])).filter((t,i,a)=>t&&t[0]==="b"&&a.indexOf(t)===i&&alive(td,t));if(tags.length)td.cmb={r:td.rnd,tags}}   /* 奇謀連擊：這招點到、打到、定住的敵子記下來，同一回合走棋吃掉它就連擊 */
     td.me.sp=Math.max(0,td.me.sp-cost);td.castR=td.rnd;ev(td,{k:"cast",id,nm:s.nm});return endOf(td,"r")||{ok:true}}
-  return{CH,LV,TL,SK,SKM,EYE0,PCN,PBN,CAPB,CAPM,FSK,LSQ,stats,depthOf,startFen,lvPlan,lvCheck,canStand,boot,move,roundEnd,engine,pick,psBonus,foeDecide,foeMarks,foeEst,targets,why,cast,costOf,capDmg,netHits,sqOf,gatePick,G,tdFix}})();
+  return{CH,LV,TL,SK,SKM,EYE0,PCN,PBN,CAPB,CAPM,CAPMAX,VALV,FSK,LSQ,comboOf,chkDmg,stats,depthOf,startFen,lvPlan,lvCheck,canStand,boot,move,roundEnd,engine,pick,psBonus,foeDecide,foeMarks,foeEst,targets,why,cast,costOf,capDmg,netHits,sqOf,gatePick,G,tdFix}})();
 if(typeof window!=="undefined")window.XQ_TD=BHTD;
 /* ================= ② 畫面 ================= */
 const BHTD_ON=true;   /* false＝黑洞照舊下一般象棋（bhStart 不開關卡卡片） */
 const BHTD_FXN={full:"完整",lite:"簡化",off:"關閉"};
 let BHTD_ST=null,BHTD_BUSY=false,BHTD_TG=null,BHTD_RAF=0,BHTD_MK="",BHTD_SEEN={},BHTD_HK="";
+/* ===== 11/14 黑洞塔防爽度第一批（story/黑洞塔防爽度_Gemini提案與審查_1114.md；開發者 11/14 選定第一批）=====
+   ① 一鍵三段視角（頂欄右上「👁」）：全局俯視 68°（預設）／臨陣斜角 48°／純淨平面 2D；存檔鍵 bhtdView，記住玩家的選擇。
+      3D 兩種＝park3d 固定鏡頭（ex.tdCam，不能拖曳轉、不能捏合；拖曳改成拿棋子）；平面＝08b render 照 bhtlFlat→bhtdFlat 當 PARK_OFF（不改玩家的 park3d 設定）。
+   ② 手機直拿滿版（平板、電腦橫向也用橫拿版面）：極簡頂欄＋對峙資訊列（#bhtdEn）＋滿寬棋盤（#bbox 固定定位）＋招式列 4 顆＋輔助列（提示、取消選取、⋯）；橫拿：左資訊、中棋盤、右招式 2×2（絕招固定右下）。
+   ③ 落子：park3d 改成投影後最近交叉點＋吸附（遠端也至少 60px 可點）、拖曳時棋子浮在手指上方 45px、放開不合法 200ms 彈回；選中子底光、落點水墨點、可吃紅準星（疊在 #bhtdOv）。
+      放招兩段式：點招 → 盤上高亮目標 → 點目標；不用選目標的招「再點一次」才放。電腦思考時可以先預選下一手的子（只高亮、不送出，輪到你自動選起來）。
+   ④ 打擊演出三版（設定「戰鬥演出：完整／簡化／關閉」；系統開了減少動態一律走「關閉」那版）：一般擒子、以弱克強（停格 90ms＋微震 3px）、連續擒子印章、將軍（紅墨波紋＋邊緣淡紅暗角 ≤25%）、
+      放絕招（鏡頭推近 15%＋草書 1.2 秒）、打倒魔王；不准全螢幕白閃、同屏粒子 ≤15。 */
+const BHTD_VW={top:"全局俯視",tilt:"臨陣斜角",flat:"純淨平面"},BHTD_VWD={top:"68° 看全盤",tilt:"48° 看立體",flat:"2D 平面棋盤"};
+let BHTD_PRE=null,BHTD_HINT=null,BHTD_LIVE={},BHTD_VMT=0;   /* PRE＝電腦思考時預選的子 {id,n,sq}；HINT＝提示高亮 {f,t,until}；LIVE＝這次看過還沒下完的盤（打倒魔王演出只播一次） */
+const bhtdView=()=>{let v="top";try{v=store.get("bhtdView","top")}catch(e){}return BHTD_VW[v]?v:"top"};
+function bhtdFlat(st){return bhtdIs(st)&&bhtdView()==="flat"}   /* 07bhtl bhtlFlat 問這裡：選了純淨平面＝這盤用平面棋盤 */
+const bhtdRM=()=>{try{return matchMedia("(prefers-reduced-motion: reduce)").matches}catch(e){return false}};
+const bhtdFxLv=()=>bhtdRM()?0:({full:2,lite:1,off:0})[bhtdFxMode()];   /* 2 完整、1 簡化、0 關閉或減少動態 */
 const bhtdIs=st=>!!(st&&st.td&&typeof bhIs==="function"&&bhIs(st));
 /* 11/13 開發者：塔防局黑子還沒全上場，盤面評語「紅方大占上風，約領先 N 個兵」會誤導。00-util 的 evt／evLink 先問這裡：正在下（或剛下完）塔防局、畫面在對局頁＝不講評語。
    用 function 宣告（00-util 用 typeof 檢查，載入順序不影響）；BHTD_ST 是 let，載入前被叫到會丟錯，包 try */
 function bhtdMuteEv(){try{return!!(BHTD_ST&&bhtdIs(BHTD_ST))&&typeof location!=="undefined"&&/^#\/journey\/play/.test(location.hash||"")}catch(e){return false}}
 const bhtdC=()=>typeof window!=="undefined"&&window.XQCore;
 function bhtdProg(){const P=store.get("bhtd",null);return P&&typeof P==="object"?Object.assign({c:{},w:{},l:{},sk:{}},P):{c:{},w:{},l:{},sk:{}}}   /* 存檔鍵 bhtd：破過哪幾關、各關輸贏次數、每位角色帶哪 4 招（05b JOURNEY_KEYS） */
-const bhtdFxMode=()=>{const v=store.get("bhtdFx","full");return BHTD_FXN[v]?v:"full"};   /* 設定「戰鬥演出」：完整＝草書＋法器＋特效；簡化＝跳過草書；關閉＝閃 0.5 秒招名就生效（存檔鍵 bhtdFx） */
+const bhtdFxMode=()=>{const v=store.get("bhtdFx","full");return BHTD_FXN[v]?v:"full"};   /* 設定「戰鬥演出」（存檔鍵 bhtdFx）：完整＝草書 1.2 秒＋法器＋打擊演出；簡化＝草書 0.8 秒、少停格；關閉＝不播草書與震動，只留文字（11/14） */
 const bhtdChar=()=>{let c="";try{c=(typeof myChar==="function"&&myChar())||store.get("pChar","")}catch(e){}return BHTD.CH[c]?c:"x_swordboy"};
 const bhtdL=()=>{try{return typeof xpInfo==="function"?xpInfo().L:1}catch(e){return 1}};
 const bhtdDiff=()=>{try{return typeof diffNow==="function"?diffNow():2}catch(e){return 2}};
@@ -11316,25 +11344,65 @@ function bhtdTags(V){const t=[];if(V.tpl)t.push("星門："+V.tpl);if(V.ps)t.pus
 const bhtdKid=()=>{try{return typeof fmKid==="function"&&!!fmKid()}catch(e){return false}};
 function bhtdCss(){if(document.getElementById("bhtdCss"))return;const s=document.createElement("style");s.id="bhtdCss";s.textContent=`
 body.bhtd-on #acts button[aria-label="悔棋"],body.bhtd-on #acts button[aria-label="寶物"]{display:none!important}
-#bhtdEn,#bhtdMe{font-family:var(--serif);color:#f1e7cf;background:rgba(10,10,30,.78);border-radius:12px;padding:5px 9px;margin:4px 8px;box-sizing:border-box;user-select:none;-webkit-user-select:none}
-.bt-top{display:flex;align-items:baseline;gap:8px;font-size:12.5px;white-space:nowrap;overflow:hidden}.bt-top b{color:#FFE08A}.bt-top small{color:#c9bfe8}
-.bt-bar{position:relative;height:16px;border-radius:99px;background:rgba(255,255,255,.12);overflow:hidden;margin:3px 0}
+#bhtdEn,#bhtdMe{font-family:var(--serif);color:#f1e7cf;background:rgba(10,10,30,.86);border-radius:12px;padding:5px 9px;margin:4px 8px;box-sizing:border-box;user-select:none;-webkit-user-select:none}
+.bt-ttl{display:flex;align-items:baseline;gap:8px;font-size:12.5px;white-space:nowrap;overflow:hidden;margin-bottom:3px}.bt-ttl b{color:#FFE08A}.bt-ttl small{color:#c9bfe8}
+.bt-r1,.bt-r2{display:flex;align-items:center;gap:6px;min-width:0;min-height:22px}.bt-r2{margin-top:4px}
+.bt-av{flex:none;width:22px;height:22px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-style:normal;font-weight:800;font-size:12.5px;line-height:1;box-sizing:border-box}
+.bt-av.en{color:#FFE6A3;background:radial-gradient(circle at 40% 35%,#3a2f6a,#120f2a);border:1.5px solid #b46bff}.bt-av.me{color:#B3121F;background:radial-gradient(circle at 40% 35%,#fff6dd,#e9cf95);border:1.5px solid #FFE08A}
+.bt-bar{position:relative;flex:0 0 44%;height:18px;border-radius:99px;background:rgba(255,255,255,.12);overflow:hidden}
 .bt-bar i{position:absolute;inset:0 auto 0 0;border-radius:99px;transition:width .5s;background:linear-gradient(90deg,#8a1020,#e0483a)}
 .bt-bar.en i{background:linear-gradient(90deg,#4a1a7a,#b04ae0)}
-.bt-bar b{position:relative;display:block;text-align:center;font-size:11.5px;line-height:16px;text-shadow:0 1px 2px #000;font-weight:700}
-.bt-gate{font-size:11.5px;color:#d9b8ff;white-space:nowrap}
-.bt-row{display:flex;align-items:center;gap:8px}.bt-row .bt-bar{flex:1}
-.bt-sp{display:flex;gap:3px}.bt-sp i{width:11px;height:11px;border-radius:50%;border:1.5px solid #6fb8ff;box-sizing:border-box}.bt-sp i.on{background:radial-gradient(circle,#dff1ff,#3d8bff);box-shadow:0 0 6px #3d8bff}
-.bt-st{font-size:12px;white-space:nowrap}
-.bt-sks{display:grid;grid-template-columns:repeat(4,1fr);gap:5px;margin-top:5px}
-.bt-sk{font:inherit;color:#f6eedd;background:linear-gradient(180deg,#2c2450,#171433);border:1.5px solid #8f7bd8;border-radius:12px;padding:4px 2px;min-height:44px;cursor:pointer;line-height:1.15}
+.bt-bar b{position:relative;display:block;text-align:center;font-size:11.5px;line-height:18px;text-shadow:0 1px 2px #000;font-weight:700;white-space:nowrap;overflow:hidden}
+.bt-ln{flex:1;min-width:0;font-size:12px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;color:#d9b8ff}
+.bt-ln button{font:inherit;font-size:12px;color:#ffd0c8;background:rgba(160,20,30,.4);border:1px solid rgba(255,90,80,.7);border-radius:99px;padding:1px 8px;max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;cursor:pointer}
+.bt-think{display:inline-block;padding:1px 10px;border-radius:99px;color:#f0e6ff;background:linear-gradient(90deg,rgba(120,80,200,.18),rgba(190,150,255,.6),rgba(120,80,200,.18));background-size:200% 100%;animation:btThink 1.4s linear infinite}
+@keyframes btThink{to{background-position:-200% 0}}
+.bt-gate{color:#d9b8ff}
+.bt-sp{display:flex;gap:3px;flex:none}.bt-sp i{width:11px;height:11px;border-radius:50%;border:1.5px solid #6fb8ff;box-sizing:border-box}.bt-sp i.on{background:radial-gradient(circle,#dff1ff,#3d8bff);box-shadow:0 0 6px #3d8bff}
+.bt-st{flex:1;min-width:0;font-size:11.5px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.bt-rnd{flex:none;font-size:11px;color:#c9bfe8}
+.bt-sks{display:grid;grid-template-columns:repeat(4,1fr);gap:6px;margin-top:5px}
+.bt-sk{position:relative;font:inherit;color:#f6eedd;background:linear-gradient(180deg,#2c2450,#171433);border:1.5px solid #8f7bd8;border-radius:12px;padding:4px 2px;min-height:48px;cursor:pointer;line-height:1.15;touch-action:manipulation}
 .bt-sk b{display:block;font-size:13px;letter-spacing:.04em}.bt-sk small{font-size:10.5px;color:#9fd0ff}
 .bt-sk.off{opacity:.42;filter:grayscale(.7)}.bt-sk.on{border-color:#FFE08A;box-shadow:0 0 10px #FFE08A}
-.bt-tip{font-size:12px;color:#FFE08A;margin-top:4px;display:flex;gap:8px;align-items:center;justify-content:center}.bt-tip button{font:inherit;font-size:12px;color:#f1e7cf;background:rgba(255,255,255,.12);border:1px solid rgba(255,255,255,.3);border-radius:99px;padding:3px 12px}
-@media (orientation:landscape) and (max-height:600px){
-body.bh-full #bhtdEn{position:fixed;z-index:43;top:calc(var(--bhTop,56px) + 34px);left:50%;transform:translateX(-50%);width:min(40vw,330px);margin:0;padding:3px 8px}
-body.bh-full #bhtdMe{position:fixed;z-index:43;bottom:calc(4px + env(safe-area-inset-bottom,0px));left:50%;transform:translateX(-50%);width:min(42vw,420px);margin:0;padding:4px 8px}
-body.bh-full .bt-sk{min-height:38px}}
+.bt-sk.ult{border-color:#E8C77A;background:linear-gradient(180deg,#4a3418,#1d1430)}.bt-sk.ult::after{content:"絕";position:absolute;top:-7px;right:-3px;font-size:10.5px;font-weight:800;color:#2a1a06;background:#FFE08A;border-radius:99px;padding:0 5px;line-height:16px}
+.bt-sk.arm{border-color:#FFE08A;box-shadow:0 0 0 2px #FFE08A,0 0 14px #FFB000;animation:btArm 1s ease-in-out infinite}@keyframes btArm{50%{box-shadow:0 0 0 2px #FFE08A,0 0 22px #FFB000}}
+.bt-sk.pulse{animation:btArm .5s ease-in-out 3}
+.bt-aux{display:flex;align-items:center;gap:6px;margin-top:6px}.bt-aux button{flex:1;font:inherit;font-size:13.5px;color:#f1e7cf;background:rgba(255,255,255,.1);border:1px solid rgba(255,255,255,.28);border-radius:12px;min-height:44px;cursor:pointer;touch-action:manipulation}.bt-aux button.bt-more{flex:0 0 52px}
+.bt-tip{font-size:12.5px;color:#FFE08A;margin-top:4px;display:flex;gap:8px;align-items:center;justify-content:center}.bt-tip button{font:inherit;font-size:12px;color:#f1e7cf;background:rgba(255,255,255,.12);border:1px solid rgba(255,255,255,.3);border-radius:99px;padding:3px 12px;min-height:30px}
+body.bhtd-on #topRight button[aria-label="回棋盤模式"],body.bhtd-on #topRight button[aria-label="去園子下棋（3D）"],body.bhtd-on .xqbot,body.bhtd-on .pzoom,body.bhtd-on .gpad,body.bhtd-on .pkview,body.bhtd-on .pk2d,body.bhtd-on .pk2d-tip,body.bhtd-on .gs-ui,body.bhtd-on .gs-pop,body.bhtd-on .un-ui,body.bhtd-on .tele-ui,body.bhtd-on .pk3d-back{display:none!important}
+#bhtdView{display:inline-flex!important;align-items:center;gap:3px;font:600 12px var(--serif);white-space:nowrap;padding:0 8px!important;min-width:44px}#bhtdView small{font-size:11.5px}
+#bhtdViewM{position:fixed;z-index:9300;top:calc(var(--bhTop,48px) + 4px);right:calc(6px + env(safe-area-inset-right,0px));width:min(250px,80vw);box-sizing:border-box;background:rgba(10,10,30,.96);border:1px solid #E8C77A;border-radius:12px;padding:6px;color:#f1e7cf;font-family:var(--serif);box-shadow:0 8px 20px rgba(0,0,0,.5)}
+#bhtdViewM button{display:flex;width:100%;align-items:center;gap:8px;font:inherit;font-size:14px;color:inherit;background:transparent;border:0;border-radius:8px;padding:8px;min-height:44px;text-align:left;cursor:pointer}
+#bhtdViewM button.on{background:rgba(255,224,138,.16);color:#FFE08A;font-weight:700}#bhtdViewM button small{margin-left:auto;font-size:11.5px;color:#c9bfe8;font-weight:400}
+#bhtdViewM p{font-size:12px;color:#c9bfe8;margin:4px 6px 2px;line-height:1.5}
+@media (orientation:portrait){
+body.bhtd-on{--btMeH:132px}
+body.bhtd-on #topbar{min-height:40px!important;padding-top:calc(1px + env(safe-area-inset-top,0px))!important;padding-bottom:1px!important}
+body.bhtd-on #topbar #back{height:38px;min-height:38px}body.bhtd-on #topbar h1{font-size:15px}
+body.bhtd-on #topRight .stm-btn,body.bhtd-on #fcmBtn{display:none!important}
+body.bhtd-on .view.fixed>#pTop,body.bhtd-on .view.fixed>#pBot,body.bhtd-on .view.fixed>#stat,body.bhtd-on .view.fixed>.rule-note,body.bhtd-on .view.fixed>.evline,body.bhtd-on .view.fixed>#strip,body.bhtd-on .view.fixed>#acts{display:none!important}
+body.bhtd-on #bhtdEn{position:fixed;z-index:43;left:0;right:0;top:var(--bhTop,44px);height:56px;margin:0;border-radius:0;padding:4px 8px;background:rgba(8,8,24,.95)}
+body.bhtd-on #bhtdEn .bt-ttl{display:none}
+body.bhtd-on .view.fixed>#bbox{position:fixed!important;left:0!important;right:0!important;top:calc(var(--bhTop,44px) + 56px)!important;bottom:calc(var(--btMeH) + env(safe-area-inset-bottom,0px))!important;width:auto!important;height:auto!important;max-height:none!important;min-height:0!important;margin:0!important;padding:0!important;z-index:40;background:#05060d;border-radius:0!important;overflow:hidden;align-self:stretch!important;justify-self:stretch!important}
+body.bhtd-on .view.fixed>#bbox .park3d{border-radius:0!important}
+body.bhtd-on .view.fixed>#bbox>svg{width:100%!important;height:100%!important;max-width:none!important;max-height:none!important;margin:0!important}
+body.bhtd-on #bhtdMe{position:fixed;z-index:43;left:0;right:0;bottom:0;margin:0;border-radius:0;padding:6px 8px calc(6px + env(safe-area-inset-bottom,0px));background:rgba(8,8,24,.95)}
+body.bhtd-on #bhtdMe>.bt-sks,body.bhtd-on #bhtdMe>.bt-aux{max-width:560px;margin-left:auto;margin-right:auto}
+body.bhtd-on .bt-sks{grid-template-columns:repeat(4,minmax(0,1fr));gap:8px;margin-top:0}body.bhtd-on .bt-sk{height:68px}
+body.bhtd-on #bhtdMe .bt-tip{position:absolute;left:8px;right:8px;top:-38px;margin:0;padding:3px 8px;border-radius:99px;background:rgba(10,10,30,.92);border:1px solid rgba(255,224,138,.6)}}
+@media (orientation:portrait) and (max-height:700px){body.bhtd-on{--btMeH:116px}body.bhtd-on .bt-sk{height:58px}body.bhtd-on .bt-aux button{min-height:40px}body.bhtd-on #bhtdEn{height:54px;padding-top:3px}body.bhtd-on .view.fixed>#bbox{top:calc(var(--bhTop,44px) + 54px)!important}}
+@media (orientation:landscape){
+body.bhtd-on #topbar{min-height:40px!important;padding-top:1px!important;padding-bottom:1px!important}body.bhtd-on #topbar #back{height:38px;min-height:38px}body.bhtd-on #topRight .stm-btn,body.bhtd-on #fcmBtn{display:none!important}
+body.bh-full.bhtd-on #pTop,body.bh-full.bhtd-on #pBot,body.bh-full.bhtd-on #stat,body.bh-full.bhtd-on #acts,body.bh-full.bhtd-on .view.fixed>.rule-note,body.bh-full.bhtd-on .view.fixed>.evline,body.bh-full.bhtd-on .view.fixed>#strip{display:none!important}
+body.bh-full.bhtd-on .view.fixed:has(>#bbox):has(>#acts)>#bbox,body.bh-full.bhtd-on .view.fixed>#bbox{position:fixed!important;top:var(--bhTop,44px)!important;bottom:0!important;left:calc(184px + env(safe-area-inset-left,0px))!important;right:calc(176px + env(safe-area-inset-right,0px))!important;width:auto!important;height:auto!important;max-height:none!important;margin:0!important;padding:0!important;z-index:40;background:#05060d;align-self:stretch!important;justify-self:stretch!important}
+body.bh-full.bhtd-on .view.fixed>#bbox>svg{width:100%!important;height:100%!important;max-width:none!important;max-height:none!important}
+body.bh-full.bhtd-on #bhtdEn{position:fixed;z-index:43;top:var(--bhTop,44px);bottom:0;left:0;width:calc(184px + env(safe-area-inset-left,0px));margin:0;border-radius:0;padding:6px 8px 6px calc(8px + env(safe-area-inset-left,0px));overflow-y:auto;background:rgba(8,8,24,.95)}
+body.bh-full.bhtd-on #bhtdEn .bt-ttl{flex-direction:column;gap:0;white-space:normal}
+body.bh-full.bhtd-on #bhtdEn .bt-r1,body.bh-full.bhtd-on #bhtdEn .bt-r2{flex-wrap:wrap;row-gap:5px;margin-top:8px}body.bh-full.bhtd-on #bhtdEn .bt-bar{flex:1 1 0}
+body.bh-full.bhtd-on #bhtdEn .bt-ln,body.bh-full.bhtd-on #bhtdEn .bt-st{flex:1 1 100%;white-space:normal}
+body.bh-full.bhtd-on #bhtdMe{position:fixed;z-index:43;top:var(--bhTop,44px);bottom:0;right:0;width:calc(176px + env(safe-area-inset-right,0px));margin:0;border-radius:0;padding:6px calc(6px + env(safe-area-inset-right,0px)) 6px 6px;display:flex;flex-direction:column;justify-content:flex-end;background:rgba(8,8,24,.95)}
+body.bh-full.bhtd-on .bt-sks{grid-template-columns:repeat(2,76px);gap:6px;justify-content:center;margin:0}body.bh-full.bhtd-on .bt-sk{height:76px}
+body.bh-full.bhtd-on .bt-aux{flex-wrap:wrap;gap:5px}body.bh-full.bhtd-on .bt-aux button{min-height:40px;font-size:12.5px}body.bh-full.bhtd-on #bhtdMe .bt-tip{flex-wrap:wrap;margin:0 0 6px}}
 #bhtdOv{position:fixed;inset:0;pointer-events:none;z-index:42;overflow:hidden}
 body.bhtd-tg #bhtlTip{pointer-events:none;opacity:.35}
 #bhtdOv svg{position:absolute;inset:0;width:100%;height:100%}
@@ -11352,7 +11420,10 @@ body.bhtd-tg #bhtlTip{pointer-events:none;opacity:.35}
 .bt-mk.gt{font-size:12px;font-weight:800;color:#f3e6ff;background:rgba(60,16,110,.88);border:1px solid #b46bff;border-radius:99px;padding:1px 7px;white-space:nowrap;box-shadow:0 0 8px rgba(180,107,255,.7)}
 body.bhtd-on #bbox .pkname{display:none!important}
 .bt-mk.pj{font-size:11px;font-weight:700;color:#fff;background:#d2601a;border-radius:6px;padding:0 3px;margin:calc(var(--c)*-.42) 0 0 calc(var(--c)*.42);box-shadow:0 0 6px #ff9a3c}
-.bt-mk.frz{font-size:calc(var(--c)*.42);margin-top:calc(var(--c)*-.5);filter:drop-shadow(0 0 4px #fff7c0)}
+.bt-mk.frz{width:calc(var(--c)*1.15);height:calc(var(--c)*1.15);border-radius:50%;box-shadow:0 0 0 1.5px rgba(255,255,255,.95),0 0 8px 2px rgba(8,18,60,.6)}
+.bt-mk.frz::before{content:"";position:absolute;inset:0;border-radius:50%;background:repeating-conic-gradient(#0d1b4f 0deg 10deg,#8aa6ff 10deg 12deg,#0d1b4f 12deg 22deg,#f2f5ff 22deg 30deg);-webkit-mask:radial-gradient(farthest-side,transparent calc(100% - 6px),#000 calc(100% - 5.5px));mask:radial-gradient(farthest-side,transparent calc(100% - 6px),#000 calc(100% - 5.5px))}
+.bt-mk.frz::after{content:"";position:absolute;inset:6px;border-radius:50%;box-shadow:0 0 0 1.5px rgba(255,255,255,.9)}
+.bt-mk.frz i{position:absolute;right:-5px;bottom:-5px;z-index:1;min-width:17px;height:17px;box-sizing:border-box;padding:0 3px;border-radius:99px;background:#0d1b4f;border:1.5px solid #fff;color:#fff;font:700 11px/14px sans-serif;font-style:normal;text-align:center;box-shadow:0 1px 3px rgba(0,0,0,.6)}
 .bt-mk.sh{font-size:10.5px;font-weight:700;color:#e8f4ff;background:#2b6fd6;border-radius:6px;padding:0 3px;margin:calc(var(--c)*-.42) calc(var(--c)*.42) 0 0}
 .bt-mk.shard{width:calc(var(--c)*.8);height:calc(var(--c)*.8);border-radius:8px;transform:translate(-50%,-50%) rotate(45deg);background:radial-gradient(circle,rgba(200,110,255,.55),rgba(120,40,200,.15) 70%);box-shadow:0 0 12px 3px rgba(190,100,255,.6);border:1.5px solid rgba(230,180,255,.8)}
 .bt-mk.fr{width:calc(var(--c)*.95);height:calc(var(--c)*.95);border-radius:50%;border:3px solid #ff3b30;box-shadow:0 0 12px #ff3b30;animation:btEye 1.2s ease-in-out infinite}
@@ -11403,7 +11474,33 @@ body.bhtd-on #bbox .pkname{display:none!important}
 .bt-sklist input{display:none}
 .bt-seg{display:inline-flex;gap:4px}.bt-seg button{font:inherit;font-size:12.5px;border:1.5px solid var(--line,#ccc);background:transparent;color:inherit;border-radius:99px;padding:3px 10px;cursor:pointer}.bt-seg button.on{border-color:#7a3fb0;background:rgba(122,63,176,.15);font-weight:700}
 .bt-rule{font-size:12.5px;line-height:1.7;text-align:left}
-@media (prefers-reduced-motion:reduce){.bt-mk.eye,.bt-mk.gate,.bt-mk.tg,.bt-mk.thr{animation:none}.bt-fl{animation-duration:.01s}.bt-cao,.bt-cao .ink{animation-duration:.01s}}`;document.head.append(s)}
+.bt-mk.selg{width:calc(var(--c)*1.2);height:calc(var(--c)*1.2);border-radius:50%;background:radial-gradient(circle,rgba(255,224,138,0) 34%,rgba(255,224,138,.7) 46%,rgba(255,190,80,.35) 56%,rgba(255,190,80,0) 72%)}
+.bt-mk.ink{width:calc(var(--c)*.34);height:calc(var(--c)*.34);border-radius:50%;background:radial-gradient(circle at 42% 38%,#4a4466,#0b0a14 68%);box-shadow:0 0 0 2px rgba(244,236,216,.9),0 0 8px rgba(0,0,0,.7)}
+.bt-mk.aim{width:calc(var(--c)*1.02);height:calc(var(--c)*1.02);border-radius:50%;border:3px solid #ff3b30;box-shadow:0 0 10px #ff3b30,inset 0 0 8px rgba(255,59,48,.5);box-sizing:border-box}
+.bt-mk.aim::before,.bt-mk.aim::after{content:"";position:absolute;left:50%;top:-14%;bottom:-14%;width:3px;margin-left:-1.5px;background:linear-gradient(#ff3b30 0 24%,transparent 24% 76%,#ff3b30 76%)}.bt-mk.aim::after{transform:rotate(90deg)}
+.bt-mk.pre{width:calc(var(--c)*1.05);height:calc(var(--c)*1.05);border-radius:50%;border:3px dashed #FFE08A;box-shadow:0 0 12px rgba(255,224,138,.7);box-sizing:border-box}
+.bt-mk.hf,.bt-mk.ht{width:calc(var(--c)*1.05);height:calc(var(--c)*1.05);border-radius:50%;border:3px solid #7CFFB0;box-shadow:0 0 14px #7CFFB0;box-sizing:border-box;animation:btEye 1s ease-in-out infinite}.bt-mk.ht{border-style:dashed}
+.bt-fl.cap{color:#fff;font-size:24px;animation:btCap .9s ease-out forwards}@keyframes btCap{0%{opacity:0;transform:translate(-50%,-50%)}15%{opacity:1}100%{opacity:0;transform:translate(-50%,calc(-50% - 30px))}}
+.bt-fl.big{font-size:36px;color:#FFD36A;text-shadow:0 0 10px #FF9A00,0 2px 6px #000;animation:btBig 1.15s ease-out forwards}.bt-fl.big.l1{animation-duration:1s}
+@keyframes btBig{0%{opacity:0;transform:translate(-50%,-50%) scale(.6)}16%{opacity:1;transform:translate(-50%,-50%) scale(1.3)}30%{transform:translate(-50%,-50%) scale(1)}80%{opacity:1;transform:translate(-50%,-80%)}100%{opacity:0;transform:translate(-50%,-95%)}}
+.bt-fl.big.qm{font-size:26px;color:#FFE6A8}.bt-fl.big.ck{color:#ff8a7a;text-shadow:0 0 10px #c0281e,0 2px 6px #000}
+.bt-fl.wk0{color:#b3121f;font-size:22px;font-weight:900;text-shadow:0 0 3px #fff,0 0 6px #fff;animation:btStatic 1.2s linear forwards}
+.bt-fl.st0{animation:btStatic .6s linear forwards}.bt-fl.ck0{color:#ff6a5a;font-size:17px;animation-duration:1.4s}
+@keyframes btStatic{0%{opacity:0}20%,70%{opacity:1}100%{opacity:0}}
+.bt-stamp{position:fixed;z-index:44;right:12px;top:34%;pointer-events:none;font-family:"XQ twkai","XQ wenkai",var(--serif);font-size:28px;font-weight:900;line-height:1.05;color:#fff4ee;background:#c0281e;border:3px double #ffe2c8;border-radius:8px;padding:8px 6px;writing-mode:vertical-rl;letter-spacing:.08em;box-shadow:0 4px 12px rgba(0,0,0,.45);transform:rotate(-6deg);animation:btStampIn .32s ease-out,btStampOut .4s ease-in 1.3s forwards}
+.bt-stamp.s1{animation:btStampOut .4s ease-in 1.3s forwards}
+@keyframes btStampIn{from{transform:translateX(130%) rotate(-6deg)}}@keyframes btStampOut{to{opacity:0}}
+.bt-vig{position:fixed;inset:0;z-index:42;pointer-events:none;background:radial-gradient(ellipse at center,rgba(200,20,20,0) 55%,rgba(200,20,20,.25) 100%);animation:btVig .75s ease-out forwards}@keyframes btVig{0%{opacity:0}25%{opacity:1}100%{opacity:0}}
+.bt-fx.rip{border-radius:50%;border:4px solid rgba(190,16,28,.9);box-shadow:0 0 12px rgba(190,16,28,.6)}
+.bt-fx.ckf{border-radius:50%;border:3px solid #ff3b30;box-shadow:0 0 10px #ff3b30;animation:btBlink .5s ease-out forwards}@keyframes btBlink{0%,100%{opacity:0}40%{opacity:1}}
+.bt-fx.ckd{border-radius:50%;border:4px dashed #d71920;animation:btStatic 1.4s linear forwards}
+.bt-fx.dot{border-radius:50%;background:#15121f;box-shadow:0 0 4px rgba(255,214,120,.6);animation:btDot .9s ease-out forwards}
+@keyframes btDot{0%{opacity:1;transform:translate(-50%,-50%)}100%{opacity:0;transform:translate(calc(-50% + var(--dx)),calc(-50% + var(--dy))) scale(.4)}}
+.bt-ban{position:fixed;z-index:9450;left:50%;top:40%;transform:translate(-50%,-50%);pointer-events:none;font-family:"XQ twkai","XQ wenkai",var(--serif);font-size:min(10vw,46px);font-weight:900;color:#FFE08A;text-shadow:0 0 14px #FF9A00,0 3px 8px #000;white-space:nowrap;animation:btBan 1.8s ease-out forwards}
+.bt-ban.l1{animation:btBan1 1.4s ease-out forwards}.bt-ban.l0{animation:btStatic 1.8s linear forwards}
+@keyframes btBan{0%{opacity:0;transform:translate(-50%,-50%) scale(.6)}15%{opacity:1;transform:translate(-50%,-50%) scale(1.15)}30%{transform:translate(-50%,-50%) scale(1)}80%{opacity:1}100%{opacity:0}}@keyframes btBan1{0%{opacity:0}20%,75%{opacity:1}100%{opacity:0}}
+.bt-shake{animation:btShake .12s linear 1}@keyframes btShake{25%{transform:translateY(-3px)}75%{transform:translateY(3px)}}
+@media (prefers-reduced-motion:reduce){.bt-mk.eye,.bt-mk.gate,.bt-mk.tg,.bt-mk.thr,.bt-mk.hf,.bt-mk.ht,.bt-think,.bt-sk.arm,.bt-sk.pulse{animation:none}.bt-fl,.bt-fl.big,.bt-fl.cap{animation:btStatic 1s linear forwards}.bt-stamp{animation:btStampOut .4s ease-in 1.3s forwards}.bt-cao,.bt-cao .ink{animation-duration:.01s}.bt-shake{animation:none}}`;   /* 減少動態：跳字不飄不放大，只淡入淡出（原本 .01 秒等於看不到） */document.head.append(s)}
 /* ---------- 關卡卡片（bhStart 叫：接受棋局、按「入局」之後） ---------- */
 function bhtdSelect(k,cover){if(typeof bhtlNeed==="function"&&bhtlNeed()){bhtlOffer(k,cover);return}   /* 第一次進塔防：先問要不要下練習賽（07bhtl-tdlearn.js） */
   bhtdCss();const ck=bhtdChar(),L=bhtdL(),st=BHTD.stats(ck,L),diff=bhtdDiff(),P=bhtdProg(),pool=BHTD.SK.filter(s=>s.ch===st.ck),un=pool.filter(s=>s.lv<=L);
@@ -11428,43 +11525,67 @@ function bhtdSelect(k,cover){if(typeof bhtlNeed==="function"&&bhtlNeed()){bhtlOf
     const f=e.target.closest("[data-fx]");if(f){store.set("bhtdFx",f.dataset.fx);m.querySelectorAll("[data-fx]").forEach(x=>x.classList.toggle("on",x===f))}})}
 function bhtdOpen(){bhtdSelect(store.get("era","classic"),false)}   /* 本機試玩：主控台 bhtdOpen() */
 if(typeof window!=="undefined")window.bhtdOpen=bhtdOpen;
-function bhtdStart(n,k,cover,sk){const C=bhtdC();if(!C)return toast("規則程式還沒載好");const ck=bhtdChar(),L=bhtdL(),diff=bhtdDiff(),ai=BHTD.depthOf(n,diff),P=bhtdProg();
+/* 開發者 11/13（實打驗收）：同一關有沒下完的塔防盤，卡片上換了招再按出戰 → 先問「接著下舊盤」還是「開新盤（用新選的招）」；招沒變＝直接接著下。
+   how：未給＝先查；"go"＝照常（沒有同關舊盤）；"old"＝接舊盤（不再扣星芒）；"new"＝丟掉舊盤、用新選的招開新盤 */
+const bhtdSkKey=a=>(Array.isArray(a)?a.slice():[]).sort().join(",");
+function bhtdStart(n,k,cover,sk,how){const C=bhtdC();if(!C)return toast("規則程式還沒載好");
+  if(!how){api("/play/state").then(st=>{const td=st&&st.td,same=td&&st.journey==="bh:td"+n&&!st.result&&st.moves&&st.moves.length;
+      if(!same)return bhtdStart(n,k,cover,sk,"go");if(bhtdSkKey(td.sk)===bhtdSkKey(sk))return bhtdStart(n,k,cover,sk,"old");
+      const nm=a=>a.map(id=>BHTD.SKM[id]?BHTD.SKM[id].nm:id).join("、");
+      modal(`<div class="em">🌀</div><h2>第 ${n} 關還有一盤沒下完</h2><p class="muted">那一盤下到第 ${td.rnd+1} 回合，帶的是：${esc(nm(td.sk))}。</p><p class="muted">剛剛選的是：${esc(nm(sk))}。</p>`,
+        [["▶ 接著下舊盤",()=>bhtdStart(n,k,cover,sk,"old")],["⚔ 開新盤（用新選的招）",()=>bhtdStart(n,k,cover,sk,"new")],["取消",null,true]])}).catch(()=>bhtdStart(n,k,cover,sk,"go"));return}
+  const ck=bhtdChar(),L=bhtdL(),diff=bhtdDiff(),ai=BHTD.depthOf(n,diff),P=bhtdProg();
   P.sk[ck]=sk;P.last=n;store.set("bhtd",P);try{bhPreload()}catch(e){}
   const R0=store.get("bhRet",null);store.set("bhRet",{k:k||(R0&&R0.k)||store.get("era","classic"),cover:k?cover!==false:!!(R0&&R0.cover),at:Date.now(),first:!((+store.get("bhCount",0)||0)>0)});store.set("park3d",true);
-  let xm=0;try{if(typeof dglXmTake==="function"){const st0=BHTD.stats(ck,L);xm=dglXmTake(Math.min(st0.sp,BHTD.LV[n-1].sp0||0),st0.sp)}}catch(e){xm=0}   /* 開發者 11/13 平日體力：身上的星芒帶進來當開局靈力，用掉的扣掉（m/07dgl-stamina.js；boot 的 cfg.xm） */
+  let xm=0;try{if(how!=="old"&&typeof dglXmTake==="function"){const st0=BHTD.stats(ck,L);xm=dglXmTake(Math.min(st0.sp,BHTD.LV[n-1].sp0||0),st0.sp)}}catch(e){xm=0}   /* 開發者 11/13 平日體力：身上的星芒帶進來當開局靈力，用掉的扣掉（m/07dgl-stamina.js；boot 的 cfg.xm） */
   jStart("bh:td"+n,{human:"r",lx:Math.min(18,ai.depth),journey:"bh:td"+n,lv:{fen:BHTD.startFen(n,C),turn:"r"},td:{lv:n,ch:ck,L,diff,sk,xm}},()=>{const was=/^#\/journey\/play/.test(location.hash);location.hash="#/journey/play";
     if(was)try{window.dispatchEvent(new Event("xq-play"))}catch(e){}if(xm)setTimeout(()=>toast(`✦ 帶進 ${xm} 點星芒，開局靈力 +${xm}`),6200);
-    setTimeout(()=>{try{bhBell()}catch(e){}toast(`✦ 第 ${n} 關・${BHTD.LV[n-1].nm}——星樞推算 ${ai.depth} 步`)},900);setTimeout(()=>toast("✦ 星樞："+BHTD.LV[n-1].say),3600)})}
+    setTimeout(()=>{try{bhBell()}catch(e){}toast(`✦ 第 ${n} 關・${BHTD.LV[n-1].nm}——星樞推算 ${ai.depth} 步`)},900);setTimeout(()=>toast("✦ 星樞："+BHTD.LV[n-1].say),3600)},how==="new")}   /* "new"＝jStart 第 4 個參數 force：不接舊盤 */
 /* ---------- 對局中（bhTick 叫） ---------- */
-function bhtdHide(){if(typeof document==="undefined")return;document.body&&document.body.classList.remove("bhtd-on","bhtd-tg");for(const id of["bhtdEn","bhtdMe","bhtdOv"]){const e=document.getElementById(id);if(e)e.remove()}BHTD_TG=null;BHTD_MK="";BHTD_HK="";if(BHTD_RAF){cancelAnimationFrame(BHTD_RAF);BHTD_RAF=0}if(typeof bhtlHide==="function")bhtlHide()}
+function bhtdHide(){if(typeof document==="undefined")return;document.body&&document.body.classList.remove("bhtd-on","bhtd-tg");for(const id of["bhtdEn","bhtdMe","bhtdOv","bhtdView","bhtdViewM"]){const e=document.getElementById(id);if(e)e.remove()}BHTD_TG=null;BHTD_PRE=null;BHTD_HINT=null;BHTD_MK="";BHTD_HK="";if(BHTD_RAF){cancelAnimationFrame(BHTD_RAF);BHTD_RAF=0}if(typeof bhtlHide==="function")bhtlHide()}
 function bhtdTick(st){if(typeof document==="undefined")return;if(!bhtdIs(st)){if(BHTD_ST||document.getElementById("bhtdMe"))bhtdHide();BHTD_ST=null;return}
   const fresh=!BHTD_ST||BHTD_ST.id!==st.id;BHTD_ST=st;bhtdCss();document.body.classList.add("bhtd-on");if(fresh){BHTD_TG=null;BHTD_HK=""}
   const bb=document.getElementById("bbox");if(!bb||!bb.parentNode)return;
-  let en=document.getElementById("bhtdEn");if(!en){en=document.createElement("div");en.id="bhtdEn";const pt=document.getElementById("pTop");(pt||bb).after(en)}
+  let en=document.getElementById("bhtdEn");if(!en){en=document.createElement("div");en.id="bhtdEn";const pt=document.getElementById("pTop");(pt||bb).after(en);en.addEventListener("click",bhtdEnClick)}
   let me=document.getElementById("bhtdMe");if(!me){me=document.createElement("div");me.id="bhtdMe";bb.after(me);me.addEventListener("click",bhtdHudClick);BHTD_HK=""}   /* 11/13 實打驗收：對局頁重畫把舊的 #bhtdMe 拿掉、新建的是空的，BHTD_HK 還記著舊內容就不重畫 → 第一盤招式鈕整排空白到走第一步 */
   if(!document.getElementById("bhtdOv")){const o=document.createElement("div");o.id="bhtdOv";o.innerHTML=`<svg aria-hidden="true"></svg><div class="mks"></div>`;document.body.append(o);o.addEventListener("click",bhtdOvClick)}
-  bhtdHudPaint();bhtdEvents(st);if(!BHTD_RAF)BHTD_RAF=requestAnimationFrame(bhtdFrame);if(typeof bhtlTick==="function")bhtlTick(st)}   /* 練習賽旁白、聚光燈、進階機制第一次的提示（07bhtl-tdlearn.js） */
+  if(BHTD_TG&&!bhtdMyTurn(st)){BHTD_TG=null;BHTD_MK=""}   /* 換手了：選到一半的招收掉 */
+  bhtdHudPaint();bhtdEvents(st);try{bhtdViewUi(st);bhtdTitle(st);bhtdPreTick(st);bhtdWinTick(st)}catch(e){console.warn("[bhtd]",e)}if(!BHTD_RAF)BHTD_RAF=requestAnimationFrame(bhtdFrame);if(typeof bhtlTick==="function")bhtlTick(st)}   /* 練習賽旁白、聚光燈、進階機制第一次的提示（07bhtl-tdlearn.js） */
 const bhtdMyTurn=st=>!!st&&!st.result&&st.turn===st.human&&!st.thinking;
 function bhtdPv(st){return{td:st.td,board:st.board.slice(),moves:st.moves||[],pos:[],human:st.human,turn:st.turn}}
+/* 絕招：這場帶的招裡耗靈最多的那招（一樣多取解鎖修為高的）；固定排在最後（直拿最右、橫拿 2×2 右下） */
+function bhtdUlt(td){let u=null;for(const id of td.sk||[]){const S=BHTD.SKM[id];if(!S)continue;const U=u&&BHTD.SKM[u];if(!U||S.cost>U.cost||(S.cost===U.cost&&S.lv>U.lv))u=id}return(td.sk||[]).length>1?u:null}
 function bhtdHudPaint(){const st=BHTD_ST,en=document.getElementById("bhtdEn"),me=document.getElementById("bhtdMe");if(!st||!en||!me)return;const td=st.td,C=bhtdC(),Pv=bhtdPv(st),V=BHTD.LV[td.lv-1]||{};
   const g=td.gate,gl=g?(g.at-td.rnd<=0?"本回合結束落下":`${g.at-td.rnd} 回合後落下 ${g.p.length} 子`):"星門已盡";
-  const eh=`<div class="bt-top"><b>${td.lv?`第 ${td.lv} 關・`:"練習賽・"}${esc(td.nm)}</b><small>星樞推算 ${td.ai?td.ai.depth:1} 步・第 ${td.rnd+1} 回合</small></div><div class="bt-bar en"><i style="width:${Math.round(100*td.en.hp/Math.max(1,td.en.max))}%"></i><b>${td.boss?"星樞卒將":"星樞"}元氣 ${td.en.hp}／${td.en.max}</b></div><div class="bt-gate">✦ 紫墨星門：${gl}${td.en.spMax?`<span class="bt-esp" title="星樞靈力 ${td.en.sp}／${td.en.spMax}">${Array.from({length:td.en.spMax},(_,i)=>`<i class="${i<td.en.sp?"on":""}"></i>`).join("")}</span>`:""}</div>${bhtdForeHTML(st)}`;
+  /* 11/14：舊版兩行式（標題＋星樞元氣＋星門＋預告卡）換成對峙資訊列（上排星樞、下排自己） */
+  const myT=bhtdMyTurn(st),fx=td.fx&&!st.result?BHTD.FSK[td.fx.id]:null,gn=g?Math.max(0,g.at-td.rnd):0;
+  const line=!st.result&&!myT?`<span class="bt-think">星樞推演中…</span>`:fx?`<button type="button" data-x="fore">⚠ ${esc(fx.nm)}・預估 −${BHTD.foeEst(td,st.board)}</button>`:`<span class="bt-gate">✦ ${g?(gn<=0?"星門本回合落子":`星門 ${gn} 回合後落 ${g.p.length} 子`):"星門已盡"}</span>`;
+  const esp=td.en.spMax?`<span class="bt-esp" title="星樞靈力 ${td.en.sp}／${td.en.spMax}">${Array.from({length:td.en.spMax},(_,i)=>`<i class="${i<td.en.sp?"on":""}"></i>`).join("")}</span>`:"";
+  const ci0=(td.ci||[]).length,eyeOk0=BHTD.sqOf(td,td.eye)!=null,sts=`${td.gd?"🛡×"+td.gd:""}${ci0?" 🛡將":""}${td.disc?" ⚡−"+td.disc:""}${(td.hot||[]).length?" 守心":""}${td.noCross>=td.rnd?" 護棚":""}${td.run?" 跑腿×"+td.run.left:""}${td.revB?" 驛鈴":""}${td.seal>td.rnd?" ⛓停招":""}${eyeOk0?"":" ✧陣眼失"}`;
+  const eh=`<div class="bt-ttl"><b>${td.lv?`第 ${td.lv} 關・`:"練習賽・"}${esc(td.nm)}</b><small>星樞推算 ${td.ai?td.ai.depth:1} 步・第 ${td.rnd+1} 回合</small></div>
+<div class="bt-r1"><i class="bt-av en" aria-hidden="true">${td.boss?"卒":"將"}</i><div class="bt-bar en"><i style="width:${Math.round(100*td.en.hp/Math.max(1,td.en.max))}%"></i><b>${td.boss?"星樞卒將":"星樞"} ${td.en.hp}／${td.en.max}</b></div>${esp}<div class="bt-ln" aria-live="polite">${line}</div></div>
+<div class="bt-r2"><i class="bt-av me" aria-hidden="true">${BHTD.PCN[td.pc]||"帥"}</i><div class="bt-bar me"><i style="width:${Math.round(100*td.me.hp/Math.max(1,td.me.max))}%"></i><b>${esc(td.cn)} ${td.me.hp}／${td.me.max}</b></div><div class="bt-sp" title="靈力 ${td.me.sp}／${td.me.spMax}">${Array.from({length:td.me.spMax},(_,i)=>`<i class="${i<td.me.sp?"on":""}"></i>`).join("")}</div><span class="bt-st">${sts}</span><small class="bt-rnd">第 ${td.rnd+1} 回</small></div>`;
   if(en.dataset.h!==eh){en.dataset.h=eh;en.innerHTML=eh}
   document.body.classList.toggle("bhtd-tg",!!BHTD_TG);   /* 11/13 實打驗收：選目標時，進階機制小卡（#bhtlTip）蓋在最上面兩排，點不到底下的目標格 → 選目標期間變半透明、點得穿 */
   const my=bhtdMyTurn(st),ci=(td.ci||[]).length,eyeOk=BHTD.sqOf(td,td.eye)!=null;let sks="",tip="";
-  if(BHTD_TG){const S=BHTD.SKM[BHTD_TG.id];tip=`<div class="bt-tip">🎯 ${esc(S.nm)}：${BHTD_TG.pk.length&&S.steps>1?"再選第 2 個":"點盤上發光的格"}<button type="button" data-x="cancel">取消</button></div>`}
-  else if(!st.result)sks=`<div class="bt-sks">${td.sk.map(id=>{const S=BHTD.SKM[id];if(!S)return"";const w=!my?(st.turn!==st.human?"等星樞走完":"請稍候"):BHTD_BUSY?"演出中":C?BHTD.why(Pv,id,C):"";const c=BHTD.costOf(td,id);
-    return`<button type="button" class="bt-sk${w?" off":""}" data-k="${id}" data-w="${esc(w||"")}" aria-label="${esc(S.nm)}，耗 ${c} 靈力${w?"，"+esc(w):""}"><b>${esc(S.nm)}</b><small>${"●".repeat(c)} ${c} 靈</small></button>`}).join("")}</div>`;
-  const mh=`<div class="bt-row"><div class="bt-bar"><i style="width:${Math.round(100*td.me.hp/Math.max(1,td.me.max))}%"></i><b>${esc(td.cn)}元氣 ${td.me.hp}／${td.me.max}</b></div><div class="bt-sp" title="靈力 ${td.me.sp}／${td.me.spMax}">${Array.from({length:td.me.spMax},(_,i)=>`<i class="${i<td.me.sp?"on":""}"></i>`).join("")}</div><span class="bt-st">${td.gd?"🛡×"+td.gd:""}${ci?" 🛡將":""}${td.disc?" ⚡−"+td.disc:""}${(td.hot||[]).length?" 守心":""}${td.noCross>=td.rnd?" 護棚":""}${td.run?" 跑腿×"+td.run.left:""}${td.revB?" 驛鈴":""}${td.seal>td.rnd?" ⛓停招":""}${eyeOk?"":" ✧陣眼失"}</span></div>${tip}${sks}`;
+  if(BHTD_TG){const S=BHTD.SKM[BHTD_TG.id];tip=`<div class="bt-tip">${BHTD_TG.arm?`✦ 再點一次「${esc(S.nm)}」放出`:`🎯 ${esc(S.nm)}：${BHTD_TG.pk.length&&S.steps>1?"再選第 2 個":"點盤上發光的格"}`}<button type="button" data-x="cancel">取消</button></div>`}
+  const ult=bhtdUlt(td),ord=td.sk.filter(id=>id!==ult).concat(ult?[ult]:[]);
+  if(!st.result)sks=`<div class="bt-sks">${ord.map(id=>{const S=BHTD.SKM[id];if(!S)return"";const w=!my?(st.turn!==st.human?"等星樞走完":"請稍候"):BHTD_BUSY?"演出中":C?BHTD.why(Pv,id,C):"";const c=BHTD.costOf(td,id),arm=BHTD_TG&&BHTD_TG.id===id;
+    return`<button type="button" class="bt-sk${w?" off":""}${id===ult?" ult":""}${arm?" arm":""}" data-k="${id}" data-w="${esc(w||"")}" aria-label="${esc(S.nm)}${id===ult?"（絕招）":""}，耗 ${c} 靈力${w?"，"+esc(w):""}"><b>${esc(S.nm)}</b><small>${"●".repeat(c)} ${c} 靈</small></button>`}).join("")}</div>`;
+  sks+=`<div class="bt-aux"><button type="button" data-x="hint">💡 提示</button><button type="button" data-x="desel">✕ 取消選取</button><button type="button" class="bt-more" data-x="more" aria-label="更多：認輸、重開本關、戰鬥演出">⋯</button></div>`;
+  const mh=`${tip}${sks}`;   /* 11/14：自己的元氣、靈力搬到上面的對峙資訊列；這裡只剩招式列與輔助列 */
   if(BHTD_HK!==mh){BHTD_HK=mh;me.innerHTML=mh}}
 /* 星樞預告卡（第 151 題）：招名、效果、「若不處理預估扣幾點」；兒童模式多一行建議 */
 function bhtdForeHTML(st){const td=st.td,fx=td.fx;if(!fx||st.result)return"";const F=BHTD.FSK[fx.id];if(!F)return"";const est=BHTD.foeEst(td,st.board);
   const kid=bhtdKid()?(fx.id==="zhs"?"建議：吃掉過河的卒，或擋住它們":fx.id==="cfx"?"建議：先別吃那顆發紅光的卒，或先開護盾":"建議：先開護盾或回元氣"):"";
   return`<div class="bt-fore">⚠ 星樞預告：<b>${esc(F.nm)}</b>（下回合結束發動）・${esc(F.d.replace("{c}",td.zcap))}<br>若不處理，預估扣你 <b>${est}</b> 元氣${kid?`<br><span class="kid">💡 ${esc(kid)}</span>`:""}</div>`}
 function bhtdHudClick(e){const x=e.target.closest("[data-x]");if(x&&x.dataset.x==="cancel"){BHTD_TG=null;BHTD_MK="";bhtdHudPaint();return}
+  if(x&&x.dataset.x==="hint"){vibrate(5);bhtdHint();return}if(x&&x.dataset.x==="desel"){vibrate(5);bhtdDesel();return}if(x&&x.dataset.x==="more"){vibrate(5);bhtdMore();return}
   const b=e.target.closest(".bt-sk");if(!b)return;const w=b.dataset.w;if(w){toast("✦ "+w);return}vibrate(8);bhtdUse(b.dataset.k)}
-function bhtdUse(id){const st=BHTD_ST,S=BHTD.SKM[id],C=bhtdC();if(!st||!S||!C||BHTD_BUSY)return;if(typeof bhtlCastOk==="function"&&!bhtlCastOk(st))return;const w=BHTD.why(bhtdPv(st),id,C);if(w)return toast("✦ "+w);
-  if(!S.tg)return bhtdPlay(id,[]);BHTD_TG={id,pk:[]};BHTD_MK="";bhtdHudPaint();toast("🎯 "+S.nm+"："+S.d)}
+function bhtdUse(id){const st=BHTD_ST,S=BHTD.SKM[id],C=bhtdC();if(!st||!S||!C||BHTD_BUSY)return;
+  if(BHTD_TG&&BHTD_TG.id===id){const arm=BHTD_TG.arm;BHTD_TG=null;BHTD_MK="";bhtdHudPaint();if(arm)bhtdPlay(id,[]);return}   /* 11/14 兩段式：再點同一顆＝放出（不用選目標的招）或取消選目標 */
+  if(typeof bhtlCastOk==="function"&&!bhtlCastOk(st))return;const w=BHTD.why(bhtdPv(st),id,C);if(w)return toast("✦ "+w);
+  if(!S.tg){if(typeof bhtlIs==="function"&&bhtlIs(st))return bhtdPlay(id,[]);BHTD_TG={id,pk:[],arm:1};BHTD_MK="";bhtdHudPaint();return}   /* 練習賽照舊一點就放 */BHTD_TG={id,pk:[]};BHTD_MK="";bhtdHudPaint();toast("🎯 "+S.nm+"："+S.d)}
 /* 選目標：點盤上的發光格（#bhtdOv 的按鈕）；長街破陣第二步選橫線／直線 */
 function bhtdOvClick(e){const b=e.target.closest(".bt-mk.tg");if(!b||!BHTD_TG||!BHTD_ST)return;e.stopPropagation();vibrate(8);const T=BHTD_TG,S=BHTD.SKM[T.id];T.pk.push(+b.dataset.sq);bhtdNextPick(T,S)}
 function bhtdNextPick(T,S){const C=bhtdC();if(T.pk.length>=S.steps){BHTD_TG=null;BHTD_MK="";bhtdHudPaint();bhtdPlay(T.id,T.pk.slice());return}
@@ -11473,13 +11594,17 @@ function bhtdNextPick(T,S){const C=bhtdC();if(T.pk.length>=S.steps){BHTD_TG=null
   if(!L.length){BHTD_TG=null;BHTD_MK="";bhtdHudPaint();toast("沒有可以配對的目標");return}BHTD_MK="";bhtdHudPaint()}
 /* 格子 → 螢幕座標：3D 巨盤用 park3d screenOf；平面棋盤照 01-board 的 SVG（560×620、格距 60、邊 40） */
 /* 3D 盤（park3d 畫在 #bbox）時，地面類記號貼平在盤面：用相鄰兩格的投影當透視的 x、z 單位向量，組成 CSS matrix（元素 1 個 --c 寬＝盤面 1 格） */
-const BHTD_GND=/\b(eye|gate|shard|fb|fr|tg|trap|thr)\b/;
+const BHTD_GND=/\b(eye|gate|shard|fb|fr|tg|trap|thr|frz|selg|ink|aim|pre|hf|ht)\b/;   /* 11/14：選中子底光、落點水墨點、可吃紅準星、預選、提示也貼地 */   /* frz：3D 盤上定身鎖鏈圈貼地（剩幾回合的小數字跟著貼地） */
 function bhtd3d(){try{const bb=document.getElementById("bbox");return!!(typeof PARK!=="undefined"&&PARK&&PARK.v&&PARK.host===bb&&PARK.v.el&&PARK.v.el.isConnected&&PARK.v.el.style.display!=="none"&&PARK.v.screenOf)}catch(e){return false}}
 function bhtdGnd(q,p,cell){const c=q%9,r=q/9|0,sx=c<8?1:-1,sz=r<9?1:-1,a=bhtdXY(q+sx),b=bhtdXY(q+9*sz);if(!a||!b||!cell)return null;
   const M=[(a.x-p.x)*sx/cell,(a.y-p.y)*sx/cell,(b.x-p.x)*sz/cell,(b.y-p.y)*sz/cell,0,0];return M.every(Number.isFinite)?M.map(n=>+n.toFixed(4)).join(","):null}
 function bhtdXY(sq){try{const bb=document.getElementById("bbox");if(typeof PARK!=="undefined"&&PARK&&PARK.v&&PARK.host===bb&&PARK.v.el&&PARK.v.el.isConnected&&PARK.v.el.style.display!=="none"&&PARK.v.screenOf)return PARK.v.screenOf(sq);
     const sv=bb&&bb.querySelector("svg");if(!sv)return null;const r=sv.getBoundingClientRect();if(!r.width)return null;const k=Math.min(r.width/560,r.height/620),ox=r.left+(r.width-560*k)/2,oy=r.top+(r.height-620*k)/2;return{x:ox+(40+sq%9*60)*k,y:oy+(40+(sq/9|0)*60)*k}}catch(e){return null}}
 function bhtdMarks(st){const td=st.td,L=[],C=bhtdC(),b=st.board;
+  /* 11/14 塔防固定鏡頭（3D）：選中子底光、合法落點水墨點、可吃處紅準星環（park3d 不畫它自己的綠點紅圈）；平面棋盤照 01-board 原本的畫法 */
+  try{if(!st.result&&typeof PARK!=="undefined"&&PARK&&PARK.last&&PARK.v&&PARK.v.tdCam&&PARK.v.tdCam()&&bhtd3d()){const o=PARK.last.o||{};if(o.sel>=0){L.push({k:"selg",sq:o.sel});for(const t of o.targets||[])L.push({k:b[t]?"aim":"ink",sq:t})}}}catch(e){}
+  if(BHTD_PRE&&BHTD_PRE.id===st.id&&!st.result&&!bhtdMyTurn(st))L.push({k:"pre",sq:BHTD_PRE.sq});
+  if(BHTD_HINT){if(Date.now()<BHTD_HINT.until&&!st.result){L.push({k:"hf",sq:BHTD_HINT.f});if(BHTD_HINT.t!=null)L.push({k:"ht",sq:BHTD_HINT.t})}else BHTD_HINT=null}
   if(BHTD_TG){const T=BHTD_TG;for(const q of T.pk)L.push({k:"tg pk",sq:q});const S=BHTD.SKM[T.id],cand=C?BHTD.targets(bhtdPv(st),T.id,T.pk,C):[];if(cand.length&&typeof cand[0]!=="object")for(const q of cand)if(!T.pk.includes(q)&&(typeof bhtlTgOk!=="function"||bhtlTgOk(st,T,q)))L.push({k:"tg",sq:q,b:1})}   /* 練習賽：只亮教學指定的目標 */
   const eye=BHTD.sqOf(td,td.eye);if(eye!=null)L.push({k:"eye",sq:eye});
   if(td.gate&&!st.result){const n=Math.max(0,td.gate.at-td.rnd),g3=bhtd3d();td.gate.sq.concat(td.gate.fk||[]).forEach(q=>{if(g3){L.push({k:"gate",sq:q});L.push({k:"gt",sq:q,t:`門 ${n}`})}else L.push({k:"gate",sq:q,t:`<b>門</b><i>${n}</i>`})})}   /* 假門跟真門畫得一樣；3D 盤上圈貼地、數字另起直立標籤 */
@@ -11491,7 +11616,7 @@ function bhtdMarks(st){const td=st.td,L=[],C=bhtdC(),b=st.board;
   for(const o of td.noCap||[])if(o.until>td.rnd)badge(o.tag,"nc","迷");for(const o of td.noTake||[])if(o.until>td.rnd)badge(o.tag,"nt","藏");
   if(td.lockW)badge(td.lockW.tag,"nc","鎖");for(const o of td.pair||[]){badge(o.a,"nt","燕");badge(o.b,"nt","燕")}
   for(const t of td.pj){const q=BHTD.sqOf(td,t);if(q!=null)L.push({k:"pj",sq:q,t:"破"})}
-  for(const t of td.frz){const q=BHTD.sqOf(td,t);if(q!=null)L.push({k:"frz",sq:q,t:"💨"})}
+  for(const t of td.frz){const q=BHTD.sqOf(td,t);if(q==null)continue;const o=(td.frzQ||[]).find(x=>x.tag===t),n=1+(o?o.n:0);L.push({k:"frz",sq:q,t:`<i>${n}</i>`})}   /* 定身：深藍鎖鏈圈＋還要停幾回合（這回合 1＋排隊的；開發者 11/13 換掉 💨） */
   const shv={};for(const s of td.sh){const q=BHTD.sqOf(td,s.tag);if(q!=null)shv[q]=(shv[q]||0)+s.v}for(const q in shv)L.push({k:"sh",sq:+q,t:"盾"+shv[q]});
   return L}
 function bhtdFrame(){BHTD_RAF=0;const st=BHTD_ST,o=document.getElementById("bhtdOv");if(!st||!o||!bhtdIs(st))return;
@@ -11506,15 +11631,16 @@ function bhtdFrame(){BHTD_RAF=0;const st=BHTD_ST,o=document.getElementById("bhtd
   BHTD_RAF=requestAnimationFrame(bhtdFrame)}
 /* ---------- 扣元氣跳字、招式特效（看 td.ev 新增的事件） ---------- */
 function bhtdBarXY(id){const e=document.getElementById(id);if(!e)return{x:innerWidth/2,y:innerHeight/2};const r=e.getBoundingClientRect();return{x:r.left+r.width/2,y:r.top+r.height*.35}}
-function bhtdFloat(t,p,cls,fs){if(!p)return;const d=document.createElement("div");d.className="bt-fl "+(cls||"");d.textContent=t;d.style.left=p.x+"px";d.style.top=p.y+"px";if(fs)d.style.fontSize=fs+"px";document.body.append(d);setTimeout(()=>d.remove(),1400)}
-function bhtdFx(kind,sq){const p=bhtdXY(sq);if(!p)return;const a=bhtdXY(40),c=bhtdXY(41),cell=a&&c?Math.hypot(c.x-a.x,c.y-a.y):40,d=document.createElement("div");d.className="bt-fx "+kind;const s=cell*(kind==="ring"?1:1.8);
+function bhtdFloat(t,p,cls,fs){if(!p)return;const d=document.createElement("div");d.className="bt-fl "+(cls||"");d.textContent=t;d.style.left=p.x+"px";d.style.top=p.y+"px";if(fs)d.style.fontSize=fs+"px";document.body.append(d);try{const w=d.offsetWidth*1.15/2+8,W=innerWidth;if(w*2<W)d.style.left=Math.max(w,Math.min(W-w,p.x))+"px"}catch(e){}   /* 11/13 實打：a9 的「銅鎖：敢動就定身」被切掉一半 → 靠邊往內收（1.15＝動畫最大放大） */setTimeout(()=>d.remove(),1400)}
+function bhtdFx(kind,sq,o){const p=bhtdXY(sq);if(!p)return;if(document.querySelectorAll(".bt-fx").length>=15)return;   /* 同屏粒子最多 15 顆 */const a=bhtdXY(40),c=bhtdXY(41),cell=a&&c?Math.hypot(c.x-a.x,c.y-a.y):40,d=document.createElement("div");d.className="bt-fx "+kind;const s=cell*({ring:1,rip:1.5,ckf:1.15,ckd:1.15,dot:.22})[kind]||cell*1.8;if(o&&o.dx!=null){d.style.setProperty("--dx",o.dx+"px");d.style.setProperty("--dy",o.dy+"px")}
   d.style.cssText+=`left:${p.x}px;top:${p.y}px;width:${s}px;height:${s}px`;if(kind==="gold")d.innerHTML=`<img src="data/bhtd/fx/burst.webp" alt="" onerror="this.remove()">`;if(kind==="ink")d.innerHTML=`<img src="data/bhtd/fx/ink_splash.webp" alt="" onerror="this.remove()">`;
   document.body.append(d);setTimeout(()=>d.remove(),900)}
 function bhtdEvents(st){const td=st.td,id=st.id;if(BHTD_SEEN[id]==null){BHTD_SEEN[id]=td.seq;return}const s0=BHTD_SEEN[id];if(td.seq<=s0)return;BHTD_SEEN[id]=td.seq;
   td.ev.filter(e=>e.s>s0).forEach((e,i)=>setTimeout(()=>{try{bhtdEv(e,st)}catch(x){}try{if(typeof bhtlTip==="function")bhtlTip(e,st)}catch(x){}},i*160))}   /* bhtlTip：進階機制第一次出現跳一句（07bhtl-tdlearn.js） */
 function bhtdEv(e,st){const at=q=>q!=null?bhtdXY(q):null;
+  if(e.k==="hit"&&e.sd==="b"&&e.cap){bhtdCapFx(e);return}if(e.k==="hit"&&e.sd==="b"&&e.chk){bhtdChkFx(e);return}   /* 11/14 擒子、將軍：打擊演出三版 */
   if(e.k==="hit"&&e.sd==="b"){bhtdFloat("−"+e.n,at(e.sq)||bhtdBarXY("bhtdEn"),"dmg",Math.min(48,18+e.n*2.2));if(e.src==="sk"&&e.sq!=null)bhtdFx("gold",e.sq);if(e.why==="過河"||e.why==="將軍")bhtdFloat(e.why+" −"+e.n,bhtdBarXY("bhtdEn"),"info")}
-  else if(e.k==="hit"&&e.sd==="r"){bhtdFloat((/^(過河|九宮星核|卒海過河|引力撕裂|殘卒反星|星碎格)$/.test(e.why||"")?e.why+" ":"")+"−"+e.n,/^(過河|九宮星核|卒海過河|引力撕裂)$/.test(e.why||"")?bhtdBarXY("bhtdMe"):at(e.sq)||bhtdBarXY("bhtdMe"),"hurt",Math.min(40,16+e.n*2));if(e.why==="被將軍")bhtdFloat("被將軍 −5",bhtdBarXY("bhtdMe"),"info")}
+  else if(e.k==="hit"&&e.sd==="r"){bhtdFloat((e.why==="過河"?"防線受壓 ":/^(九宮星核|卒海過河|引力撕裂|殘卒反星|星碎格)$/.test(e.why||"")?e.why+" ":"")+"−"+e.n,   /* 11/14 跳字：敵子過河扣我方＝「防線受壓 −1」 *//^(過河|九宮星核|卒海過河|引力撕裂)$/.test(e.why||"")?bhtdBarXY("bhtdMe"):at(e.sq)||bhtdBarXY("bhtdMe"),"hurt",Math.min(40,16+e.n*2));if(e.why==="被將軍")bhtdFloat("被將軍 −5",bhtdBarXY("bhtdMe"),"info")}
   else if(e.k==="trap"||e.k==="thr"){for(const q of e.sq||[])bhtdFx(e.k==="trap"?"ring":"spark",q);bhtdFloat(e.k==="trap"?"仕角守門 "+(e.sq||[]).length+" 點":"認轍：追俥的敵子 "+(e.sq||[]).length+" 顆",bhtdBarXY("bhtdMe"),"info",15)}   /* sq 是陣列，不能走下面的 at() */
   else if(e.k==="lock"){bhtdFx("ring",e.sq);bhtdFloat("銅鎖：敢動就定身",at(e.sq),"info",15)}
   else if(e.k==="ncap"){bhtdFx("smoke",e.sq);bhtdFloat("迷煙：不能吃子",at(e.sq),"info",15)}
@@ -11539,7 +11665,7 @@ function bhtdEv(e,st){const at=q=>q!=null?bhtdXY(q):null;
   else if(e.k==="fore"){const F=BHTD.FSK[e.id];if(F){toast("⚠ 星樞預告："+F.nm+"——下回合結束發動");try{bhBell()}catch(x){}}}
   else if(e.k==="fake"){bhtdFx("smoke",e.sq);bhtdFloat("假門散了",at(e.sq),"info",15)}
   else if(e.k==="miss"){const F=BHTD.FSK[e.id];if(F)bhtdFloat(F.nm+" 落空",bhtdBarXY("bhtdEn"),"heal",16)}
-  else if(e.k==="eye"){toast("✧ 陣眼子被擒！靈力散盡，招式停 1 回合");vibrate([20,40,20])}
+  else if(e.k==="eye"){toast("✧ 陣眼子被擒！靈力散盡，招式停 1 回合");vibrate([20,40,20]);bhtdFloat("陣眼受損・靈力歸零",bhtdBarXY("bhtdEn"),"hurt",20)}
   else if(e.k==="rm"){if(e.sq!=null)bhtdFx("ink",e.sq);bhtdFloat("破",at(e.sq),"dmg",30)}
   else if(e.k==="tp"||e.k==="sw"||e.k==="rev"){if(e.sq!=null)bhtdFx("spark",e.sq);if(e.t!=null)bhtdFx("spark",e.t);if(e.k==="rev")bhtdFloat("回營",at(e.sq),"heal",20)}}
 /* ---------- 放招演出：草書招名（寫出 1 秒→停 1 秒→化墨 0.5 秒）＋法器共鳴（park3d itemCast）→ 生效；點一下畫面＝直接結算 ---------- */
@@ -11548,12 +11674,16 @@ function bhtdPlay(id,tg){const st=BHTD_ST,S=BHTD.SKM[id];if(!st||!S||BHTD_BUSY)r
   const close=()=>{if(closed)return;closed=true;ov.classList.add("out");setTimeout(()=>ov.remove(),320)};
   const fire=()=>{if(fired)return;fired=true;close();api("/play/td",{k:id,tg}).catch(e=>toast(e.message)).finally(()=>{BHTD_BUSY=false;BHTD_HK="";bhtdHudPaint()})};
   ov.addEventListener("pointerdown",e=>{e.preventDefault();e.stopPropagation();if(ih)try{ih.skip()}catch(x){}fire()});
-  try{vibrate([8,30,8])}catch(e){}
-  if(mode==="off"){ov.innerHTML=`<div class="bt-flash">${esc(S.nm)}</div>`;setTimeout(fire,500);return}
-  if(mode==="full"){ov.innerHTML=`<div class="bt-cao"><div class="pp"></div><div class="ink">${S.cao?`<img src="${esc(S.cao)}" alt="${esc(S.nm)}">`:`<span class="tx">${esc(S.nm)}</span>`}</div><div class="who">${esc(td.cn)}・${esc(S.nm)}</div></div>`;
+  try{vibrate([8,30,8])}catch(e){}const LV=bhtdFxLv(),ult=id===bhtdUlt(td),tq=(tg||[]).filter(q=>typeof q==="number");
+  if(LV===0){ov.innerHTML=`<div class="bt-flash" style="animation:none">${esc(S.nm)}</div>`;setTimeout(fire,350);return}   /* 關閉／減少動態：跳過草書與角色動作，招名靜態一下就生效 */
+  if(LV===1){ov.innerHTML=`<div class="bt-cao" style="animation-duration:.8s"><div class="pp"></div><div class="ink" style="animation-duration:.8s">${S.cao?`<img src="${esc(S.cao)}" alt="${esc(S.nm)}">`:`<span class="tx">${esc(S.nm)}</span>`}</div><div class="who">${esc(td.cn)}・${esc(S.nm)}</div></div>`;
+    const im1=ov.querySelector(".ink img");if(im1)im1.onerror=()=>{im1.replaceWith(Object.assign(document.createElement("span"),{className:"tx",textContent:S.nm}))};
+    setTimeout(()=>{fire();for(const q of tq)bhtdFx("spark",q)},800);return}   /* 簡化：不拉鏡頭、不播法器，草書 0.8 秒＋目標格光效 */
+  if(mode==="full"){ov.innerHTML=`<div class="bt-cao" style="animation-duration:1.2s"><div class="pp"></div><div class="ink" style="animation-duration:1.2s">${S.cao?`<img src="${esc(S.cao)}" alt="${esc(S.nm)}">`:`<span class="tx">${esc(S.nm)}</span>`}</div><div class="who">${esc(td.cn)}・${esc(S.nm)}</div></div>`;
     const im=ov.querySelector(".ink img");if(im)im.onerror=()=>{im.replaceWith(Object.assign(document.createElement("span"),{className:"tx",textContent:S.nm}))}}
-  const lead=mode==="full"?2.5:.5,eye=BHTD.sqOf(td,td.eye),k=(BHTD.CH[td.ch]||{}).pc||"K",sq=eye!=null?eye:st.board.indexOf(k)>=0?st.board.indexOf(k):st.board.indexOf("K");
+  const lead=mode==="full"?1.2:.5,eye=BHTD.sqOf(td,td.eye),   /* 11/14：草書 2.5 秒縮成 1.2 秒 */k=(BHTD.CH[td.ch]||{}).pc||"K",sq=eye!=null?eye:st.board.indexOf(k)>=0?st.board.indexOf(k):st.board.indexOf("K");
   try{const bb=document.getElementById("bbox");if(typeof PARK!=="undefined"&&PARK&&PARK.v&&PARK.host===bb&&PARK.v.itemCast&&PARK.v.el&&PARK.v.el.style.display!=="none")ih=PARK.v.itemCast({sq,K:k,spin:Math.max(.2,lead-.3),act:fire,done:()=>{}})}catch(e){ih=null}
+  if(ult&&sq>=0)try{const bb=document.getElementById("bbox");if(typeof PARK!=="undefined"&&PARK&&PARK.v&&PARK.host===bb&&PARK.v.tdPush){PARK.v.tdPush(sq,1100);PARK.v.act(sq,"cheer",1600)}}catch(e){}   /* 放絕招：鏡頭往陣眼子推近 15%、角色歡呼 */
   setTimeout(()=>{if(!ih)fire();else if(mode==="full")close()},lead*1000);setTimeout(fire,lead*1000+1800)}   /* 物件沒載到、2D 棋盤：草書播完就生效；保險：最晚 lead＋1.8 秒一定生效 */
 /* ---------- 結算 ---------- */
 function bhtdEnd(st){if(!st||!st.td||!st.result)return;const P=bhtdProg(),n=st.td.lv,win=st.result.w===st.human;if(win){if(!P.c[n])P.c[n]=Date.now();P.w[n]=(P.w[n]||0)+1}else P.l[n]=(P.l[n]||0)+1;store.set("bhtd",P)}
@@ -11564,11 +11694,88 @@ function bhtdResult(st,win,draw0,XPR){const td=st.td,n=td.lv,V=BHTD.LV[n-1],nx=B
     <p style="font-size:13.5px">扣掉星樞元氣 <b>${td.dealt}</b>・你被扣 <b>${td.taken}</b>・剩餘元氣 ${td.me.hp}／${td.me.max}</p>${tip?`<p class="muted" style="font-size:13px">💡 ${esc(tip)}</p>`:""}${bhSay(L)}${all?`<p class="pl-say">✦ 星樞：「星域一……竟被你們踏平了。更深的星淵，還在後頭。」</p>`:""}${XPR||""}`,
     win&&nx?[[`下一關：${nx.nm} ›`,()=>bhtdStart(n+1,k,cv,sk)],[BL,bhReturn],["再看一下星盤",null,true]]:win?[[BL,bhReturn],["再看一下星盤",null,true]]:[["↻ 重打本關",()=>bhtdStart(n,k,cv,sk)],[BL,bhReturn],["再看一下星盤",null,true]],"res")}
 /* 3D：第 6 關守關＝黑將換成星樞卒（xs_zu）、放大 1.45 倍（park3d ex.bhBoss） */
-function bhtdParkEx(st){return bhtdIs(st)&&st.td.boss?{bhBoss:st.td.boss}:{bhBoss:null}}
+function bhtdParkEx(st){if(!bhtdIs(st))return{bhBoss:null,tdCam:null};const v=bhtdView();return{bhBoss:st.td.boss||null,tdCam:v==="flat"?null:v,tdFx:bhtdFxLv()}}   /* 11/14：固定鏡頭（全局俯視／臨陣斜角）、打擊演出等級 */
+/* ---------- 11/14 對峙資訊列：點「⚠ 預告」看完整說明 ---------- */
+function bhtdEnClick(e){const x=e.target.closest("[data-x]"),st=BHTD_ST;if(!x||!st)return;if(x.dataset.x==="fore"){const td=st.td,F=td.fx&&BHTD.FSK[td.fx.id];if(!F)return;vibrate(5);
+  toast(`⚠ 星樞預告「${F.nm}」（下回合結束發動）：${F.d.replace("{c}",td.zcap)}・若不處理，預估扣你 ${BHTD.foeEst(td,st.board)} 元氣`)}}
+/* ---------- 11/14 一鍵三段視角：頂欄右上「👁」點一下換下一種（全局俯視 → 臨陣斜角 → 純淨平面），同時彈出小選單可以直接點；選單最後一行是轉橫向的靜態提示 ---------- */
+function bhtdViewUi(st){if(typeof document==="undefined")return;const tr=document.getElementById("topRight");if(!tr)return;let b=document.getElementById("bhtdView");
+  if(st&&typeof bhtlIs==="function"&&bhtlIs(st)){if(b)b.remove();return}   /* 練習賽整盤平面，不給換視角 */
+  if(!b){b=document.createElement("button");b.type="button";b.id="bhtdView";b.className="ib";b.addEventListener("click",e=>{e.stopPropagation();vibrate(5);bhtdSetView(({top:"tilt",tilt:"flat",flat:"top"})[bhtdView()]);bhtdViewMenu(true)});tr.prepend(b)}
+  const v=bhtdView();if(b.dataset.v!==v){b.dataset.v=v;b.innerHTML=`<span aria-hidden="true">👁</span><small>${BHTD_VW[v]}</small>`;b.setAttribute("aria-label","視角："+BHTD_VW[v]+"（點一下換下一種）");b.title="視角："+BHTD_VW[v]}}
+function bhtdViewOut(e){const t=e.target;if(t&&t.closest&&(t.closest("#bhtdViewM")||t.closest("#bhtdView")))return;bhtdViewMenu(false)}
+function bhtdViewMenu(show){let m=document.getElementById("bhtdViewM");clearTimeout(BHTD_VMT);if(!show){if(m)m.remove();removeEventListener("pointerdown",bhtdViewOut,true);return}
+  if(!m){m=document.createElement("div");m.id="bhtdViewM";m.setAttribute("role","menu");m.setAttribute("aria-label","視角");document.body.append(m);
+    m.addEventListener("click",e=>{const b=e.target.closest("[data-v]");if(!b)return;e.stopPropagation();vibrate(5);bhtdSetView(b.dataset.v);bhtdViewMenu(false)});setTimeout(()=>addEventListener("pointerdown",bhtdViewOut,true),0)}
+  const v=bhtdView();let port=false;try{port=matchMedia("(orientation:portrait)").matches}catch(e){}
+  m.innerHTML=Object.keys(BHTD_VW).map(k=>`<button type="button" role="menuitemradio" aria-checked="${k===v}" data-v="${k}" class="${k===v?"on":""}">${k===v?"●":"○"} ${BHTD_VW[k]}<small>${BHTD_VWD[k]}</small></button>`).join("")+(port?"<p>📱 手機轉成橫向，星盤會更大</p>":"");
+  BHTD_VMT=setTimeout(()=>bhtdViewMenu(false),6000)}
+function bhtdSetView(v){if(!BHTD_VW[v]||v===bhtdView())return;try{store.set("bhtdView",v);if(v!=="flat")store.set("park3d",true)}catch(e){}
+  try{if(v!=="flat"&&typeof PARK!=="undefined"&&PARK&&PARK.v&&PARK.v.setTdCam)PARK.v.setTdCam(v,bhtdFxLv())}catch(e){}
+  BHTD_MK="";try{if(typeof window!=="undefined"&&window.cgPlay&&cgPlay.rr)cgPlay.rr()}catch(e){}bhtdViewUi()}   /* 平面↔3D：08b 重畫（PARK_OFF 照 bhtlFlat→bhtdFlat） */
+/* 頂欄標題換成關卡名（極簡頂欄；對峙列不再放標題） */
+function bhtdTitle(st){const t=document.getElementById("title");if(!t||!st||!st.td)return;const td=st.td,s=" "+`${td.lv?`第 ${td.lv} 關・`:"練習賽・"}${td.nm}`;let sp=t.querySelector(".bt-tt");
+  if(!sp){for(const n of t.childNodes)if(n.nodeType===3)n.nodeValue="";sp=document.createElement("span");sp.className="bt-tt";t.append(sp)}if(sp.dataset.s!==s){sp.dataset.s=s;sp.textContent=s}}
+/* ---------- 11/14 電腦思考時預選下一手（只高亮、不送出）：07pm pmvTap 一開頭問這裡（塔防局不排預走）；輪到你時自動選起那顆子（08b cgPlay.tap） ---------- */
+function bhtdPmv(st,me,i,ex){if(!bhtdIs(st)||st.result)return null;const p=st.board&&st.board[i],mine=!!p&&(p===p.toUpperCase()?"r":"b")===me;
+  BHTD_PRE=mine&&!(BHTD_PRE&&BHTD_PRE.id===st.id&&BHTD_PRE.sq===i)?{id:st.id,n:(st.moves||[]).length,sq:i}:null;
+  try{if(typeof pmvSt==="function"){const S=pmvSt();S.q=null;S.sel=null}}catch(e){}if(BHTD_PRE)vibrate(5);BHTD_MK="";try{if(ex&&ex.redraw)ex.redraw()}catch(e){}return true}
+function bhtdPreTick(st){const P=BHTD_PRE;if(!P)return;if(P.id!==st.id||st.result){BHTD_PRE=null;return}
+  if(bhtdMyTurn(st)&&(st.moves||[]).length>P.n){BHTD_PRE=null;const q=P.sq;if(st.board[q]&&(st.legal||[]).some(([f])=>f===q))setTimeout(()=>{try{if(window.cgPlay&&cgPlay.sel()<0)cgPlay.tap(q)}catch(e){}},0)}}
+/* ---------- 11/14 輔助列：提示、取消選取、⋯（沒有「回合結束」：象棋走一步就換手） ---------- */
+function bhtdDesel(){let did=false;if(BHTD_TG){BHTD_TG=null;did=true}if(BHTD_PRE){BHTD_PRE=null;did=true}if(BHTD_HINT){BHTD_HINT=null;did=true}BHTD_MK="";
+  try{const s=window.cgPlay&&cgPlay.sel?cgPlay.sel():-1;if(s>=0){cgPlay.tap(s);did=true}}catch(e){}bhtdHudPaint();if(!did)toast("目前沒有選取")}
+/* 提示（不用提示棋、不問引擎）：照塔防規則挑一件最該做的事——能擒子就挑扣最多的（過河子優先）→ 星樞預告 → 星門快落子就去堵 → 有招可放 → 一般建議；起點終點綠框亮 3.5 秒 */
+function bhtdHint(){const st=BHTD_ST;if(!st||st.result)return;const td=st.td,b=st.board;if(!bhtdMyTurn(st))return toast("💡 等星樞走完，再幫你看");
+  const show=(f,t,msg)=>{BHTD_HINT={f,t,until:Date.now()+3500};BHTD_MK="";toast("💡 "+msg)},nm=p=>p===p.toUpperCase()?BHTD.PCN[p]:BHTD.PBN[p.toUpperCase()];let best=null;
+  for(const[f,t]of st.legal||[]){const v=b[t];if(!v||v===v.toUpperCase()||!b[f])continue;const eye=td.pid[f]===td.eye,pj=td.pj.includes(td.pid[t]),d=BHTD.capDmg(v,b[f],td.me.atk,eye,pj),cr=(t/9|0)>=5?3:0;if(!best||d+cr>best.sc)best={f,t,d,sc:d+cr,cr}}
+  if(best)return show(best.f,best.t,`${nm(b[best.f])}吃${nm(b[best.t])}：扣星樞 ${best.d} 元氣${best.cr?"，還少一顆咬你的過河子":""}`);
+  if(td.fx){const F=BHTD.FSK[td.fx.id];if(F)return toast(`💡 星樞預告「${F.nm}」：${F.d.replace("{c}",td.zcap)}`)}
+  if(td.gate&&td.gate.at-td.rnd<=1){const m=(st.legal||[]).find(([,t])=>td.gate.sq.includes(t));if(m)return show(m[0],m[1],"站上星門，把援軍堵住")}
+  const C=bhtdC(),id=C&&td.sk.find(x=>!BHTD.why(bhtdPv(st),x,C));if(id){const S=BHTD.SKM[id],bt=document.querySelector(`#bhtdMe .bt-sk[data-k="${id}"]`);if(bt){bt.classList.remove("pulse");void bt.offsetWidth;bt.classList.add("pulse")}return toast(`💡 靈力夠了，可以放「${S.nm}」：${S.d}`)}
+  toast("💡 先護好陣眼子；敵子過河、停進九宮都會扣你的元氣")}
+/* ⋯：戰鬥演出、視角、認輸、重開本關（直拿時底下的動作列收起來了） */
+function bhtdMore(){const st=BHTD_ST;if(!st)return;const td=st.td,n=td.lv,R=store.get("bhRet",null),fx=bhtdFxMode(),vw=bhtdView();
+  const seg=(O,k,cur)=>`<span class="bt-seg">${Object.keys(O).map(x=>`<button type="button" data-${k}="${x}" class="${x===cur?"on":""}">${O[x]}</button>`).join("")}</span>`;
+  const resign=()=>{const b=[...document.querySelectorAll("#acts button")].find(x=>/認輸|Resign/.test((x.getAttribute("aria-label")||"")+x.textContent));if(b)b.click();else api("/play/resign").catch(e=>toast(e.message))};
+  const again=()=>modal(`<h2 style="font-size:19px">重開第 ${n} 關？</h2><p class="muted">這一盤會放掉，用同樣的招重新開局。</p>`,[["↻ 重開",()=>bhtdStart(n,R&&R.k,R?R.cover!==false:false,td.sk,"new")],["取消",null,true]]);
+  const m=modal(`<div class="em">🌀</div><h2 style="font-size:19px">${esc(td.lv?`第 ${td.lv} 關・${td.nm}`:td.nm)}</h2><p class="bt-me">戰鬥演出：${seg(BHTD_FXN,"fx",fx)}</p><p class="bt-me">視角：${seg(BHTD_VW,"vw",vw)}</p>`,
+    [...(st.result?[]:[["🏳 認輸",resign]]),...(n&&!st.result?[["↻ 重開本關",again]]:[]),[st.result?"關閉":"繼續下棋",null,true]]   /* 「戰鬥演出：關閉」也叫關閉，收視窗的鈕改叫繼續下棋 */,"prolog bt-sel");
+  if(!m)return;m.addEventListener("click",e=>{const f=e.target.closest("[data-fx]");if(f){vibrate(5);store.set("bhtdFx",f.dataset.fx);m.querySelectorAll("[data-fx]").forEach(x=>x.classList.toggle("on",x===f));
+      try{if(typeof PARK!=="undefined"&&PARK&&PARK.v&&PARK.v.setTdCam&&PARK.v.tdCam())PARK.v.setTdCam(PARK.v.tdCam(),bhtdFxLv())}catch(_){}return}
+    const v=e.target.closest("[data-vw]");if(v){bhtdSetView(v.dataset.vw);m.querySelectorAll("[data-vw]").forEach(x=>x.classList.toggle("on",x===v))}})}
+/* ---------- 11/14 打擊演出三版（bhtdFxLv：2 完整、1 簡化、0 關閉／減少動態）；不准全螢幕白閃、同屏粒子 ≤15（bhtdFx 擋） ---------- */
+function bhtdStop(ms){try{const bb=document.getElementById("bbox");if(typeof PARK!=="undefined"&&PARK&&PARK.v&&PARK.host===bb&&PARK.v.hitStop)PARK.v.hitStop(ms)}catch(e){}}   /* 停格：3D 動畫停 ms 毫秒 */
+function bhtdShake(){const bb=document.getElementById("bbox");if(!bb)return;bb.classList.remove("bt-shake");void bb.offsetWidth;bb.classList.add("bt-shake");setTimeout(()=>bb.classList.remove("bt-shake"),170)}   /* 上下微震 3px、120ms */
+function bhtdTone(fr,dur,drum){try{if(typeof withAudio!=="function"||typeof AC==="undefined"||!AC||typeof sxmDst!=="function")return;withAudio(()=>{const t=AC.currentTime+.01,o=AC.createOscillator(),g=AC.createGain();o.type=drum?"sine":"triangle";
+  o.frequency.setValueAtTime(fr,t);if(drum)o.frequency.exponentialRampToValueAtTime(fr*.5,t+dur);g.gain.setValueAtTime(0,t);g.gain.linearRampToValueAtTime(drum?.5:.18,t+.012);g.gain.exponentialRampToValueAtTime(.0008,t+dur);o.connect(g);g.connect(sxmDst("piece"));o.start(t);o.stop(t+dur+.05)})}catch(e){}}
+function bhtdVig(){const d=document.createElement("div");d.className="bt-vig";d.setAttribute("aria-hidden","true");document.body.append(d);setTimeout(()=>d.remove(),800)}   /* 邊緣淡紅暗角（最濃 25%） */
+function bhtdInk(sq,n){for(let i=0;i<n;i++){const a=i/n*Math.PI*2+Math.random()*.5,r=30+Math.random()*26;bhtdFx("dot",sq,{dx:Math.round(Math.cos(a)*r),dy:Math.round(Math.sin(a)*r)})}}   /* 墨點炸開 */
+const BHTD_CN=["","一","二","三","四","五","六","七","八","九","十"];
+function bhtdStamp(n,L){if(!L){bhtdFloat("連續擒子 ×"+n,bhtdBarXY("bhtdEn"),"st0",18);return}document.querySelectorAll(".bt-stamp").forEach(x=>x.remove());
+  const d=document.createElement("div");d.className="bt-stamp"+(L===1?" s1":"");d.textContent=(BHTD_CN[Math.min(10,n)]||n)+"連斬";d.setAttribute("aria-hidden","true");document.body.append(d);setTimeout(()=>d.remove(),1800);if(L>=2)bhtdTone([523,659,784][Math.min(2,n-2)],.35)}   /* 朱紅印章，音階 C5→E5→G5 */
+/* 擒子：一般「擒敵 −3」、以弱克強、陣眼神威、破甲貫穿、陣眼貫穿；奇謀連擊 ×2 另跳一行；連續擒子蓋印章（跳字照第 154 題 Gemini 文案） */
+function bhtdCapFx(e){const L=bhtdFxLv(),p=(e.sq!=null&&bhtdXY(e.sq))||bhtdBarXY("bhtdEn"),pc=!!e.combo&&e.combo.indexOf("pierce")>=0,lab=e.weak?"以弱克強！":pc?"陣眼貫穿！":e.eye?"陣眼神威！":e.pj?"破甲貫穿！":"",t=(lab||"擒敵 ")+"−"+e.n;
+  if(e.weak){if(L>=2){bhtdStop(90);bhtdShake();if(e.sq!=null){bhtdFx("gold",e.sq);bhtdInk(e.sq,6)}bhtdFloat(t,p,"big")}else if(L===1){bhtdStop(40);bhtdFloat(t,p,"big l1")}else bhtdFloat("−"+e.n+"（弱克強）",p,"wk0")}
+  else if(lab)bhtdFloat(t,p,L?"dmg":"dmg st0",L?Math.min(34,22+e.n*1.2):22);
+  else bhtdFloat(t,p,L?"cap":"cap st0");
+  if(e.combo&&e.combo.indexOf("qm")>=0)setTimeout(()=>bhtdFloat("奇謀連擊 ×2",{x:p.x,y:p.y-46},L?"big qm":"dmg st0",L?null:18),L?240:0);
+  if(e.streak>=2)setTimeout(()=>bhtdStamp(e.streak,L),L?380:0)}
+/* 將軍：完整＝敵將腳下紅墨波紋＋邊緣淡紅暗角＋低沉鼓聲；簡化＝紅框閃一次；關閉＝粗紅虛線框＋「將軍（扣 5 元氣）」 */
+function bhtdChkFx(e){const L=bhtdFxLv(),k=e.sq,p=(k!=null&&k>=0&&bhtdXY(k))||bhtdBarXY("bhtdEn"),t=(e.chain?"連環逼宮！":"將軍 ")+"−"+e.n;
+  if(L>=2){if(k>=0){bhtdFx("rip",k);setTimeout(()=>bhtdFx("rip",k),180)}bhtdVig();bhtdTone(110,.45,1);bhtdFloat(t,p,e.chain?"big ck":"dmg",28)}
+  else if(L===1){if(k>=0)bhtdFx("ckf",k);bhtdFloat(t,p,"dmg",26)}
+  else{if(k>=0)bhtdFx("ckd",k);bhtdFloat(e.chain?"連環逼宮（扣 7 元氣）":"將軍（扣 5 元氣）",p,"st0 ck0")}}
+/* 打倒魔王／破陣：這次看著它下完才播（重新整理打開已經下完的盤不播）；完整＝停格 150ms＋墨點散開＋金字橫幅（七星歡呼由 park3d 照結果播）；簡化＝橫幅淡入淡出；關閉＝靜態橫幅 */
+function bhtdWinTick(st){const id=st.id;if(!st.result){BHTD_LIVE[id]=1;return}if(BHTD_LIVE[id]!==1)return;BHTD_LIVE[id]=2;if(st.result.w===st.human&&!(typeof bhtlIs==="function"&&bhtlIs(st)))setTimeout(()=>bhtdWinFx(st),250)}
+function bhtdWinFx(st){const L=bhtdFxLv(),td=st.td,k=(st.board||[]).indexOf("k"),why=String(st.result&&st.result.why||""),t=td.boss?"打倒星樞卒將！":/元氣/.test(why)?"星樞潰散！":"破陣！";
+  if(L>=2){bhtdStop(150);if(k>=0)bhtdInk(k,12)}const d=document.createElement("div");d.className="bt-ban"+(L===1?" l1":L===0?" l0":"");d.textContent=t;d.setAttribute("role","status");document.body.append(d);setTimeout(()=>d.remove(),1900)}
+/* 平面棋盤拖曳（01-board）：塔防局棋子浮在手指上方 45px、放開照浮起那顆的位置找落點；px＝回螢幕像素，不然回棋盤座標（SVG 單位） */
+function bhtdLift(svg,px){try{if(typeof document==="undefined"||!document.body.classList.contains("bhtd-on"))return px?0:14;if(px)return 45;const m=svg.getScreenCTM();return m&&m.a?45/m.a:14}catch(e){return px?0:14}}
 /* 設定「角色」分頁：🌀 黑洞戰鬥演出 */
 function bhtdSetMount(v){const pane=v&&v.querySelector&&v.querySelector('[data-pane="bot"]');if(!pane||pane.querySelector("#bhtdSet"))return;bhtdCss();
   const t=document.createElement("div");t.className="sec-t";t.textContent="🌀 黑洞戰鬥演出";const c=document.createElement("div");c.className="card";c.id="bhtdSet";
-  const paint=()=>{const fx=bhtdFxMode();c.innerHTML=`<div class="bt-seg">${Object.keys(BHTD_FXN).map(x=>`<button type="button" data-fx="${x}" class="${x===fx?"on":""}">${BHTD_FXN[x]}</button>`).join("")}</div><p class="muted" style="font-size:12.5px;margin:6px 0 0">完整＝草書招名＋法器共鳴＋招式特效；簡化＝跳過草書；關閉＝只閃一下招名就生效。放招演出中點一下畫面也能直接結算。</p>`};
+  const paint=()=>{const fx=bhtdFxMode();c.innerHTML=`<div class="bt-seg">${Object.keys(BHTD_FXN).map(x=>`<button type="button" data-fx="${x}" class="${x===fx?"on":""}">${BHTD_FXN[x]}</button>`).join("")}</div><p class="muted" style="font-size:12.5px;margin:6px 0 0">完整＝草書招名 1.2 秒＋法器共鳴＋擒子停格、微震；簡化＝草書 0.8 秒、少停格；關閉＝不播草書與震動，只留文字。手機設了「減少動態」一律用「關閉」這一版。放招演出中點一下畫面也能直接結算。</p>`};
   paint();c.addEventListener("click",e=>{const b=e.target.closest("[data-fx]");if(!b)return;vibrate(5);store.set("bhtdFx",b.dataset.fx);paint()});pane.append(t,c)}
 if(typeof Settings==="function"){const f0=Settings;Settings=function(v){const r=f0.apply(this,arguments);try{bhtdSetMount(v)}catch(e){console.error(e)}return r}}
 if(typeof window!=="undefined")addEventListener("hashchange",()=>{if(!/^#\/journey\/play/.test(location.hash))bhtdHide()});
@@ -11626,7 +11833,7 @@ function bhtlNeed(){const S=bhtlSt();if(S.done||S.skip)return false;let P={c:{},
   return !Object.keys(P.c||{}).length&&!Object.keys(P.w||{}).length&&!Object.keys(P.l||{}).length}   /* 11/13 18:00 以後已經玩過塔防的人不自動邀請 */
 const bhtlIs=st=>!!st&&st.journey===BHTL_ID&&!!st.td;
 /* 11/13 手機實測：3D 全盤遠景相鄰格約 20px，中兵模型擋住卒的腳下點不到 → 練習賽整盤用平面棋盤（08b render 把它當 PARK_OFF，跟錯棋重練同一套，不改玩家的 park3d 設定；下一盤照原本設定） */
-function bhtlFlat(st){return bhtlIs(st)}
+function bhtlFlat(st){return bhtlIs(st)||(typeof bhtdFlat==="function"&&bhtdFlat(st))}   /* 11/14：正式關卡選了「純淨平面」視角也走這條（07bht-td.js bhtdFlat） */
 /* 練習賽進行中（旁白泡泡在）：01-board 的術語、記譜第一次提示先不跳，免得壓在泡泡上；練完照常出現 */
 function bhtlHush(){return !!BHTL_ST||!!(typeof document!=="undefined"&&document.getElementById("bhtlBox"))}
 function bhtlGuide(){let c="";try{c=bhtdChar()}catch(e){}const k=c==="x_spiritgirl"?"x_shi":"x_spiritgirl";return{k,n:BHTD.CH[k].n}}   /* 田飛燕講；玩家選的是她就換鐵連城 */
@@ -11664,13 +11871,13 @@ function bhtlFrame(){BHTL_RAF=0;const st=BHTL_ST;if(!st||!bhtlIs(st)||!/^#\/jour
   const L=bhtlSpots(st,s);bhtlSpotDraw(L);bhtlPlace(L);BHTL_RAF=requestAnimationFrame(bhtlFrame)}
 /* 聚光燈要指的地方：格子 {sq} 或畫面元素 {el}；hand＝手指指這一個。格子從 TL 劇本算（red／blk 的起點終點） */
 function bhtlSpots(st,s){const T=BHTD.TL,R=T.red.map(u=>[bhtlSq(u.slice(0,2)),bhtlSq(u.slice(2,4))]),B=T.blk.map(u=>bhtlSq(u.slice(2,4))),eye=BHTD.sqOf(st.td,st.td.eye);
-  if(s==="t0")return[{el:"#bhtdEn .bt-bar"},{el:"#bhtdMe .bt-bar"}];
+  if(s==="t0")return[{el:"#bhtdEn .bt-bar.en"},{el:"#bhtdEn .bt-bar.me"}];   /* 11/14：自己的元氣、靈力搬到上面的對峙資訊列（下排） */
   if(s==="t1")return[{sq:R[0][1]},{sq:R[0][0],hand:1}];
-  if(s==="t1b")return[{el:"#bhtdMe .bt-sp"},{el:"#bhtdMe .bt-bar"},{sq:B[0]}];
+  if(s==="t1b")return[{el:"#bhtdEn .bt-sp"},{el:"#bhtdEn .bt-bar.me"},{sq:B[0]}];
   if(s==="t2")return[{sq:R[1][1]},{sq:R[1][0],hand:1},{el:"#bhtdEn .bt-gate"}];
   if(s==="w2")return[{sq:R[1][1]}];
-  if(s==="t2b")return[{sq:R[1][1]},{el:"#bhtdEn .bt-bar"}];
-  if(s==="t3")return[{el:"#bhtdMe .bt-sp"},{el:"#bhtdMe .bt-sk",hand:1}];
+  if(s==="t2b")return[{sq:R[1][1]},{el:"#bhtdEn .bt-bar.en"}];
+  if(s==="t3")return[{el:"#bhtdEn .bt-sp"},{el:"#bhtdMe .bt-sk",hand:1}];
   if(s==="t3g"&&typeof BHTD_TG!=="undefined"&&BHTD_TG){const u=(T.tg[BHTD_TG.id]||[])[BHTD_TG.pk.length];return u?[{sq:bhtlSq(u),hand:1}]:[]}
   if(s==="t4")return eye!=null?[{sq:eye}]:[];
   if(s==="t5")return[{sq:R[2][0],hand:1},{sq:R[2][1]}];
@@ -15815,7 +16022,7 @@ try{rdCss()}catch(e){}
    共用的是 shwMount(o)：o.cfg＝座標表（見 SHW_SHIP），o.root＝攔點選的範圍，o.frame＝跟原圖一樣大的框（座標的 100%），o.layer＋o.before＝角色插在哪，
      o.sel／o.keyOf＝哪些是入口、入口的代號，o.find＝用代號找回入口，o.mem＝記住位置用的名字，o.gate＝回 false 時先不出現（渡口等下船過場播完）。
    座標表：W、H＝原圖像素；el＝鏡頭俯角（度）；h(y)＝角色身高佔圖高的比例；N＝節點［左%, 上%］（量的是腳底踩的地面）；E＝可以走的路（"a-b"，避開桌子、牆、樹、桅杆，不出地面）；
-     HS＝入口 → ［停靠點, 面向的位置 左%, 上%, 動作 bow／wave／cheer］；home＝起點；look0＝站著時面向哪裡。停靠點都選在東西「前面」（腳比東西低），角色疊在圖上才不會像站在桌上。
+     HS＝入口 → ［停靠點, 面向的位置 左%, 上%, 動作 bow／wave／cheer］；home＝起點；look0＝站著時面向哪裡。xr＝點空地走路算數的左右範圍（不寫＝0～100；11/14 首頁三屏長卷是 -100～200，左右兩屏在圖框外面）。dmax＝一趟路最多走幾秒（不寫＝1.2；長卷過橋到西市、觀星臺路長，放寬到 2.2 秒才不像用衝的）。停靠點都選在東西「前面」（腳比東西低），角色疊在圖上才不會像站在桌上。
    開關：SHIP_WALK_ON（星槎，07f-ship.js 的 Voyage 呼叫 shipWalk）、SHW_PORT_ON（渡口，包一層 portWind）、SHW_YZ_ON（驛站，包一層 yzInn）；SHW_PORT／SHW_YZ 有座標表的朝代才走。樣式在 shwCss */
 const SHIP_WALK_ON=true,SHW_PORT_ON=true,SHW_YZ_ON=true;   /* 開發者 11/8 說全開 */
 /* 回饋 808／816／820（開發者 11/9）：角色矮，遇到桌子就跳上去（820 起桌面是可以走的高台，見 shwTblAt 上面的說明）——座標表多一個 T:{桌面節點:{hy:桌下地板的 y%}}；桌面節點只連一條邊到桌邊的地板節點，
@@ -15974,7 +16181,7 @@ const shwLen=(C,pts)=>{let L=0;for(let i=1;i<pts.length;i++)L+=shwPx(C,pts[i-1],
 function shwNext(S){const g=S.go;if(!g)return;const ph=g.seq.shift();if(!ph)return;const C=S.C;
   if(ph.k==="h"){g.ph="hop";g.a=ph.a;g.b=ph.b;g.up=ph.up;g.tb=ph.tb;g.fn=ph.fn;g.th=0;S.curE=null;S.x=ph.a[0];S.y=ph.a[1];
     g.h0=ph.up?ph.a[1]:shwTHy(C.TB[ph.tb],ph.a);g.h1=ph.up?shwTHy(C.TB[ph.tb],ph.b):ph.b[1];return}
-  if(g.fd==="in"){S.box.style.opacity="";S.box.style.transition=""}g.fd=ph.fade||null;g.ph=null;g.pts=ph.pts;g.segE=ph.segE||[];g.onT=ph.onT||null;g.L=shwLen(C,ph.pts);g.t=0;g.dur=g.L?Math.max(g.free?.35:.6,Math.min(1.2,.3+g.L/650))*(typeof dglSlow==="function"?dglSlow():1):0;if(g.fd){S.box.style.transition="none";if(g.dur)g.dur=Math.max(.7,g.dur)}}
+  if(g.fd==="in"){S.box.style.opacity="";S.box.style.transition=""}g.fd=ph.fade||null;g.ph=null;g.pts=ph.pts;g.segE=ph.segE||[];g.onT=ph.onT||null;g.L=shwLen(C,ph.pts);g.t=0;g.dur=g.L?Math.max(g.free?.35:.6,Math.min(C.dmax||1.2,.3+g.L/650))*(typeof dglSlow==="function"?dglSlow():1):0;if(g.fd){S.box.style.transition="none";if(g.dur)g.dur=Math.max(.7,g.dur)}}
 /* 808：一跳（u 0→1）：先蹲（0～0.16）、空中照弧線走並拉長（0.16～0.86）、落地蹲一下；身高參考的 y 從 h0 換到 h1 */
 function shwHop(S,a,b,u,h0,h1){S.hy=h0+(h1-h0)*u;if(shwRM()){S.x=a[0]+(b[0]-a[0])*u;S.y=a[1]+(b[1]-a[1])*u;S.sq=null;return}const p0=.16,p1=.86;
   if(u<p0){const k=u/p0;S.x=a[0];S.y=a[1];S.sq=[1+.12*k,1-.16*k];S.hy=h0}
@@ -16010,7 +16217,7 @@ function shwClick(S,e){if(S.pass||!S.ready||!S.box.isConnected)return;const g=S.
      往旁邊最近的路點衝一小段（短路程最少 0.35 秒）；連點兩下就衝兩次。點到小人身上＝點角色（開選單），不走路；0.4 秒內在同一處再點一下也不重走 */
   {const cv=S.box.querySelector("canvas"),r=cv&&cv.getBoundingClientRect();   /* 小人是 pointer-events:none，點選會穿到底圖：用位置判斷是不是點在小人身上（畫布中間 70% 寬、85% 高） */
     if(r&&r.width>0&&!(e.target.closest&&e.target.closest(".shw-me,.shw-hint,.shw-menu"))&&e.clientX>=r.left+r.width*.15&&e.clientX<=r.right-r.width*.15&&e.clientY>=r.top+r.height*.1&&e.clientY<=r.bottom-r.height*.05){e.stopPropagation();e.preventDefault();const h=S.o.layer.querySelector(".shw-me");if(h&&h.style.display!=="none"&&e.isTrusted)h.click();return}}
-  if(!shwFreeOk(S,e))return;const p=shwPt(S,e);if(!(p[0]>=0&&p[0]<=100&&p[1]>=0&&p[1]<=100))return;
+  if(!shwFreeOk(S,e))return;const p=shwPt(S,e),xr=S.C.xr||[0,100];if(!(p[0]>=xr[0]&&p[0]<=xr[1]&&p[1]>=0&&p[1]<=100))return;
   {const now=Date.now(),L=S.lastTap;S.lastTap={t:now,p};if(L&&now-L.t<400&&Math.hypot(p[0]-L.p[0],p[1]-L.p[1])<6){e.stopPropagation();e.preventDefault();return}}
   /* 回饋 816／820：點到桌面＝走到最近的桌邊跳上去、再在桌面上繞過障礙走到點的地方（點在障礙上＝走到旁邊最近的可站處）；人已經在桌上＝直接在桌面上走過去；不觸發別的 */
   if(WALK_HOP_ON&&S.C.TB){const tn=shwTblAt(S.C,p);if(tn){e.stopPropagation();e.preventDefault();shwInk(S,p);vibrate(5);shwGo(S,{free:1,tbl:tn,tap:p});return}}const q=shwNear(S.C,p);if(!q)return;shwInk(S,p);shwGo(S,{free:1,q,tap:p})}   /* 意見回饋 782：點空地＝走到路網上離那裡最近的點，走到只換待機 */
@@ -16248,7 +16455,7 @@ function shwBotCss(){if(document.getElementById("shwBotCss"))return;const s=docu
 .shw-menu button:active{background:#e9d9b4}`;document.head.append(s)}
 /* 回饋 804：泡泡別蓋住標籤（⚔ 古戰場等）：疊到標籤就往有空的那一邊挪，再不行就放到腳下；都擠，才沉到標籤底下（z 190＜標籤 200） */
 function shwSayFit(el,L,below){try{el.style.marginLeft=el.style.marginTop=el.style.maxWidth="";el.classList.remove("side","low");const labs=[...L.querySelectorAll(".shp-spot,.po-sight")].filter(b=>b.offsetParent&&getComputedStyle(b).opacity!=="0").map(b=>b.getBoundingClientRect());
-  const LR=L.getBoundingClientRect(),cl=()=>{const a=Math.max(LR.left,0)+4,b=Math.min(LR.right,innerWidth)-4;if(el.getBoundingClientRect().width>b-a)el.style.maxWidth=Math.floor(b-a)+"px";const q=el.getBoundingClientRect();let d=0;if(q.left<a)d=a-q.left;else if(q.right>b)d=b-q.right;if(d){el.style.marginLeft=((parseFloat(el.style.marginLeft)||0)+d)+"px";el.classList.add("side")}};   /* 11/9 開發者截圖：角色站在左邊說長句，泡泡超出畫面左邊被切掉；最後一律推回畫面裡 */
+  const LR0=L.getBoundingClientRect(),LR=L.classList&&L.classList.contains("hmp-on")&&L.parentNode&&L.parentNode.getBoundingClientRect?L.parentNode.getBoundingClientRect():LR0,cl=()=>{const a=Math.max(LR.left,0)+4,b=Math.min(LR.right,innerWidth)-4;if(el.getBoundingClientRect().width>b-a)el.style.maxWidth=Math.floor(b-a)+"px";const q=el.getBoundingClientRect();if(LR!==LR0&&(q.right<a||q.left>b))return;let d=0;if(q.left<a)d=a-q.left;else if(q.right>b)d=b-q.right;if(d){el.style.marginLeft=((parseFloat(el.style.marginLeft)||0)+d)+"px";el.classList.add("side")}};   /* 11/9 開發者截圖：角色站在左邊說長句，泡泡超出畫面左邊被切掉；最後一律推回畫面裡。11/14 首頁三屏長卷（07hmp，.hmp-on）：圖框比畫面寬三倍，改量外面那層裁切框；角色在別屏（泡泡整個在畫面外）就不推進來 */
   for(const mw of["","44%","34%"]){el.style.maxWidth=mw;const r=el.getBoundingClientRect(),w=r.width,hit=(dx,dy)=>labs.filter(q=>!(q.right<r.left+dx+2||q.left>r.right+dx-2||q.bottom<r.top+dy+2||q.top>r.bottom+dy-2));
     const h0=hit(0,0);if(!h0.length){if(mw)el.classList.add("side");cl();return}
     const up=Math.min(...h0.map(q=>q.top))-r.bottom-6,C=[[-(w/2+24),0],[w/2+24,0],[-(w+30),0],[w+30,0],[0,up],[-w/3,up],[w/3,up]];if(below)C.push([0,below],[-w/3,below],[w/3,below],[-w/2,below],[w/2,below]);
@@ -17167,9 +17374,9 @@ const ZM_EDGE=24;
 function zmAttach(C,E,o){if(!ZOOM_ON||!C||!E||C.dataset.zm)return;C.dataset.zm="1";zmCss();C.classList.add("zm-c");o=o||{};
   let s=1,tx=0,ty=0,sup=0;const cl=(v,a,b)=>Math.max(a,Math.min(b,v));
   const ovX=B=>!!o.panX&&B.ew-B.W>2;   /* 回饋 837：沒放大時圖左右有沒有被裁 */
-  const box=()=>({W:C.clientWidth,H:C.clientHeight,ox:E.offsetLeft,oy:E.offsetTop,ew:E.offsetWidth,eh:E.offsetHeight});
+  const box=()=>{let x=null;try{x=o.ext?o.ext():null}catch(e){x=null}return{W:C.clientWidth,H:C.clientHeight,ox:E.offsetLeft,oy:E.offsetTop,ew:E.offsetWidth,eh:E.offsetHeight,el:x&&x.l||0,er:x&&x.r||0}};   /* 11/14 首頁三屏長卷：o.ext()＝圖層左右還有多少（左右兩屏），放大後拖曳的範圍算到那裡 */
   const apply=()=>{const B=box();s=cl(s,1,ZM_MAX);if(s<=1.001){s=1;ty=0;if(!ovX(B))tx=0}   /* 回饋 837：1 倍時圖比框寬，保留左右位移 */
-    tx=cl(tx,B.W-s*(B.ox+B.ew),-s*B.ox);ty=cl(ty,B.H-s*(B.oy+B.eh),-s*B.oy);
+    tx=cl(tx,B.W-s*(B.ox+B.ew+B.er),-s*(B.ox-B.el));ty=cl(ty,B.H-s*(B.oy+B.eh),-s*B.oy);
     if(s===1&&Math.abs(tx)<.5){tx=0;E.style.transform="";E.style.transformOrigin=""}else if(s===1){E.style.transformOrigin="";E.style.transform=`translate(${tx.toFixed(1)}px,0px)`}else{E.style.transformOrigin="0 0";E.style.transform=`translate(${(tx+(s-1)*B.ox).toFixed(1)}px,${(ty+(s-1)*B.oy).toFixed(1)}px) scale(${s.toFixed(3)})`}
     C.classList.toggle("zm-on",s>1);try{zmEdge(B)}catch(e){}if(o.onPan)try{o.onPan(s)}catch(e){}};
   /* 回饋 837：左右拖曳提示（只有 panX 的框才有） */
@@ -17208,9 +17415,9 @@ function zmAttach(C,E,o){if(!ZOOM_ON||!C||!E||C.dataset.zm)return;C.dataset.zm="
   if(window.ResizeObserver){const ro=new ResizeObserver(()=>{if(!C.isConnected){ro.disconnect();return}if(s>1||o.panX)apply()});ro.observe(C);if(o.panX)ro.observe(E)}   /* 回饋 837：圖框大小變了（shpMapFit 重排）也重新夾住左右位移 */
   C.zm={reset,get s(){return s},set:(ns,mx,my)=>zoomAt(ns,[mx,my],s,[tx,ty],[mx,my])};apply()}
 /* 渡口、驛站：.shp-page.cq 外面包一層裁切框，接手原本的外距 */
-function zmPage(v){const P=v&&v.querySelector(".shp-page.cq");if(!P||P.dataset.zm||!ZOOM_ON)return;let W=P.parentNode;
+function zmPage(v,o){const P=v&&v.querySelector(".shp-page.cq");if(!P||P.dataset.zm||!ZOOM_ON)return;let W=P.parentNode;   /* o：zmAttach 的選項（首頁三屏長卷傳 ext） */
   if(!W.classList.contains("zm-wrap")){W=document.createElement("div");W.className="zm-wrap";const cs=getComputedStyle(P);W.style.margin=cs.margin;P.style.margin="0";P.parentNode.insertBefore(W,P);W.append(P)}
-  P.dataset.zm="1";zmAttach(W,P)}
+  P.dataset.zm="1";zmAttach(W,P,o||undefined)}
 /* 回饋 837（星槎甲板可左右看）：星槎圖比畫面寬（手機直拿）時可以左右拖；拖的時候照 07f shpMapFit 的規則重排貼邊的入口標籤（裁到邊的往內推、拖進畫面就回原位），1 倍時才排 */
 function zmShipPush(M,s){if(s>1||!M||!M.isConnected)return;const I=M.querySelector(".shp-in");if(!I)return;const R=M.getBoundingClientRect(),m=8,mx=M.classList.contains("zm-px")?30:8,capH=(M.querySelector(".shp-cap")||{}).offsetHeight||0;   /* 左右留 30px 給拖曳提示 ‹ › */
   I.querySelectorAll(".shp-hs").forEach(b=>{b.style.marginLeft="";b.style.marginTop="";const q=b.getBoundingClientRect();if(!q.width)return;let dx=0,dy=0;
@@ -17506,7 +17713,7 @@ function hmwBase(){return true}   /* 開發者 11/13 選「iPad 先一律用寬�
 const hmwSrc=k=>HMW[k]?`data/homemap/${HMW[k].f}.webp?v=${HMW_IMGV}`:`data/homemap/home.webp?v=${HM_IMGV}`;
 /* 入口座標表（含大字）：寬版用寬版那組座標，大字照 HM_SPOTS */
 const hmwSpots=k=>HMW[k]?HMW[k].S.map(([id,x,y])=>[id,x,y,(HM_SPOTS.find(s=>s[0]===id)||[])[3]]):HM_SPOTS;
-const hmwWalkCfg=k=>Object.assign({},SHW_PG0,HMW[k]?HMW[k].walk:SHW_HOMEMAP);
+const hmwWalkCfg=(k,P)=>{const c=Object.assign({},SHW_PG0,HMW[k]?HMW[k].walk:SHW_HOMEMAP);return!HMW[k]&&P&&P.dataset&&P.dataset.hmp&&typeof hmpWalk==="function"?hmpWalk(c):c};   /* 11/14 三屏長卷（07hmp-pano.js）：原圖、這一頁有長卷時，路網延伸到左邊西市、右邊觀星臺 */
 /* 量 P 在 #view 裡的可用寬高（跟 07t3 r07Wide、07fl xflPort 同一套算法） */
 function hmwMeasure(V,P){const vr=V.getBoundingClientRect(),pr=P.getBoundingClientRect(),pb=parseFloat(getComputedStyle(V).paddingBottom)||0;
   return{W:pr.width,av:V.clientHeight-pb-(pr.top-vr.top+V.scrollTop),vw:V.clientWidth,vh:document.documentElement.clientHeight||innerHeight}}
@@ -17515,15 +17722,17 @@ const hmwPick=m=>hmwBase()?hmwKind(m.W,m.av,m.vw,m.vh):"";
 function hmwSet(P,k){const im=P.querySelector(":scope>img");if(!im)return;P.dataset.hmw=k;
   for(const[id,x,y]of hmwSpots(k)){const b=P.querySelector("#"+id);if(!b)continue;b.style.left=x+"%";b.style.top=y+"%";delete b.dataset.ttL;b.style.marginLeft=""}   /* ttL 是 07t3 記的原位，換座標要清掉，不然會被還原回舊位置 */
   if(HMW[k])P.style.setProperty("--hmSlT",HMW[k].sl+"%");else P.style.removeProperty("--hmSlT");
-  const src=hmwSrc(k);if(im.getAttribute("src")!==src){
+  const src=!k&&P._hmSrc0?P._hmSrc0:hmwSrc(k);if(im.getAttribute("src")!==src){   /* 11/14：換回原圖＝換回這一頁原本那張（千秋時光之苑、季節／夜景變體），不是一律 home.webp（三屏長卷左右兩屏是照那張挑的） */
     im.onerror=()=>{const kk=P.dataset.hmw;if(kk&&HMW[kk]){HMW_BAD[kk]=1;hmwSet(P,"")}};
     im.addEventListener("load",()=>{if(!P.isConnected)return;try{if(typeof ttFill==="function")ttFill()}catch(e){}try{if(typeof spfSoon==="function")spfSoon(0)}catch(e){}},{once:true});
     im.src=src}
+  try{if(typeof hmpSet==="function")hmpSet(P,k)}catch(e){}   /* 11/14 三屏長卷：寬版圖沒有長卷，換寬版＝收掉左右兩屏；換回原圖＝有長卷就再打開（要在重掛走路角色之前） */
   hmwWalk(P,k)}
 /* 走路角色掛的是哪一組節點（P._hmwW）跟現在不同＝收掉舊的（07w 的框一拿掉，畫面迴圈、3D 畫布自己收），用新的那組重掛 */
-function hmwWalk(P,k){if(!P.dataset.shw||(P._hmwW||"")===k)return;const V=P.parentNode;if(!V)return;
-  P.querySelectorAll(":scope>.shw,:scope>.shw-me,:scope>.shw-hint,:scope>.shw-say,:scope>.shw-menu,:scope>.hm-me").forEach(e=>e.remove());delete P.dataset.shw;P.classList.remove("shw-iso");P._hmwW=k;
-  try{if(typeof shwPage==="function"&&SHIP_WALK_ON){shwPage(V,hmwWalkCfg(k),"home");hmMe(P)}}catch(e){}}
+const hmwWKey=(P,k)=>k+(P.dataset.hmp?"|p":"");   /* 11/14：有沒有三屏長卷也算在「哪一組節點」裡 */
+function hmwWalk(P,k){if(!P.dataset.shw||(P._hmwW||"")===hmwWKey(P,k))return;const V=P.parentNode;if(!V)return;
+  P.querySelectorAll(":scope>.shw,:scope>.shw-me,:scope>.shw-hint,:scope>.shw-say,:scope>.shw-menu,:scope>.hm-me").forEach(e=>e.remove());delete P.dataset.shw;P.classList.remove("shw-iso");P._hmwW=hmwWKey(P,k);
+  try{if(typeof shwPage==="function"&&SHIP_WALK_ON){shwPage(V,hmwWalkCfg(k,P),"home");hmMe(P)}}catch(e){}}
 /* 07fl 包的 r07Wide 每次排版前問這裡：不是首頁＝null；比例跨過門檻＝原地換掉、回 "wait"（圖載好會再排一次）；其他＝目前用的那一種（""＝原圖） */
 function hmwSync(V,P){if(!V||!P||!P.classList.contains("home-page")||P.dataset.hmw==null)return null;const k=hmwPick(hmwMeasure(V,P)),cur=P.dataset.hmw;
   if(k!==cur){hmwSet(P,k);return"wait"}
@@ -17553,9 +17762,10 @@ ${typeof WALK_BOT_MERGE!=="undefined"&&WALK_BOT_MERGE?"":"body.hm-on.shw-on .xqb
    畫好後把超出畫面的標籤往內推回 8px（只動 marginLeft，不改座標表），轉向、縮放時重算 */
 /* v5 改善單 R07（桌面／矮螢幕）：寬螢幕時 07t3 r07Wide 把地圖限寬置中（或靠左＋側欄選單），圖比畫面窄，貼邊標籤要推回「圖和畫面重疊的那一塊」裡（圖的框 overflow:hidden，推到畫面內還是會被圖切掉）；
    手機直向圖比畫面寬（左右各裁約 20px），重疊那一塊就是畫面本身，結果跟原本一樣。推完通知 r07HitSoon 重算點選範圍 */
-function hmClamp(P){if(P.dataset)P.dataset.hmc="1";const vw=document.documentElement.clientWidth,pad=8,pr=P.getBoundingClientRect(),L=Math.max(pad,pr.left+pad),R=Math.min(vw-pad,pr.right-pad);P.querySelectorAll(".shp-spot").forEach(b=>{const m0=parseFloat(b.style.marginLeft)||0,r=b.getBoundingClientRect();if(!r.width)return;
+/* 11/14 三屏長卷（07hmp-pano.js）：鏡頭是 P 的 style.left（左右平移），量的時候扣掉，一律照「鏡頭在中間」算；左右兩屏的標籤（.hmp-side）不在中間這一屏，不推 */
+function hmClamp(P){if(P.dataset)P.dataset.hmc="1";const vw=document.documentElement.clientWidth,pad=8,ox=parseFloat(P.style&&P.style.left)||0,pr=P.getBoundingClientRect(),L=Math.max(pad,pr.left-ox+pad),R=Math.min(vw-pad,pr.right-ox-pad);P.querySelectorAll(".shp-spot").forEach(b=>{if(b.classList&&b.classList.contains("hmp-side"))return;const m0=parseFloat(b.style.marginLeft)||0,r=b.getBoundingClientRect();if(!r.width)return;
   /* 開發者 11/12 hspx「回棋鎮的時候，今日推薦都會左右抖一下」：原本先把 marginLeft 清掉再量、再推回去，貼邊的標籤會先彈出去再回來；改成從目前位置扣掉現在的推移量算出原位，值有變才改 */
-  const l=r.left-m0,rr=r.right-m0,dx=l<L?L-l:rr>R?R-rr:0,nv=dx?Math.round(dx)+"px":"";if(b.style.marginLeft!==nv)b.style.marginLeft=nv});if(typeof r07HitSoon==="function")r07HitSoon()}
+  const l=r.left-ox-m0,rr=r.right-ox-m0,dx=l<L?L-l:rr>R?R-rr:0,nv=dx?Math.round(dx)+"px":"";if(b.style.marginLeft!==nv)b.style.marginLeft=nv});if(typeof r07HitSoon==="function")r07HitSoon()}
 /* 首頁主張紙條（ChatGPT 77 號方案一）：新手一直顯示；其他人每天第一次 3 秒後淡出（store hmSloganDay）；不能點、不擋地圖標籤 */
 function hmSlogan(P,nw){const d=typeof localDay==="function"?localDay():new Date().toDateString();if(!nw&&store.get("hmSloganDay","")===d)return;
   const s=document.createElement("div");s.className="hm-slogan";s.setAttribute("role","note");s.textContent="看懂一步，敢下一盤";const f=P.querySelector(":scope>.shp-spot");if(f)P.insertBefore(s,f);else P.append(s);if(nw)return;   /* 第 14 輪：紙條在圖最上方，旁白也先念它（排在入口前面） */
@@ -17611,10 +17821,12 @@ function homeMap(v){const home=v.querySelector(".home");if(!home||v.querySelecto
   const d=document.createElement("div");
   /* 11/13 寬版圖：先放一個空框量可用寬高，照比例挑圖（hmwPick），只載要用的那一張 */
   let hk="";try{if(HMW_ON&&hmwBase()){const t=document.createElement("div");t.className="shp-page cq home-page";v.insertBefore(t,home);hk=hmwPick(hmwMeasure(v,t));t.remove()}}catch(e){hk=""}
+  const wv=typeof sw7HomeWx==="function"&&!hk?sw7HomeWx():"";   /* 11/14：季節／夜景變體先算好（三屏長卷要照這張挑左右兩屏） */
   d.innerHTML=`<div class="shp-page cq home-page" data-hmw="${hk}"${hk?` style="--hmSlT:${HMW[hk].sl}%"`:""}><img src="${hk?hmwSrc(hk):`data/homemap/${typeof hbIsCl==="function"&&hbIsCl()?"home_classic":"home"}.webp?v=${HM_IMGV}`}" alt="${typeof hbIsCl==="function"&&hbIsCl()?"千秋時光之苑":"楚河渡口棋鎮"}"><div class="hm-fx" aria-hidden="true"></div>${hmFocusOrder(hmwSpots(hk)).map(([id,x,y])=>`<button class="shp-spot" id="${id}" style="left:${x}%;top:${y}%" aria-label="${esc(id==="hmQuick"?HM_PVP_AL:hmAl(lab(id)))}"><b>${esc(lab(id))}</b></button>`).join("")}${inst?'<button class="hm-inst" id="hmInst" aria-label="加到主畫面">📲 加到主畫面</button>':""}</div>`;
-  const P=d.firstElementChild;v.insertBefore(P,home);home.classList.add("hb-hidden");
+  const P=d.firstElementChild;v.insertBefore(P,home);home.classList.add("hb-hidden");P._hmSrc0=hk?`data/homemap/${typeof hbIsCl==="function"&&hbIsCl()?"home_classic":"home"}.webp?v=${HM_IMGV}`:P.querySelector(":scope>img").getAttribute("src");
   if(hk){const im1=P.querySelector(":scope>img");im1.onerror=()=>{const kk=P.dataset.hmw;if(kk&&HMW[kk]){HMW_BAD[kk]=1;hmwSet(P,"")}}}   /* 寬版載不到＝退回原圖 */if(typeof hbCss==="function")hbCss();else home.style.display="none";
-  {const wv=typeof sw7HomeWx==="function"&&!hk?sw7HomeWx():"",im0=P.querySelector(":scope>img");if(wv&&im0){const pre=new Image();pre.onload=()=>{if(!im0.isConnected)return;try{if(typeof sw7SeaTurn==="function"&&sw7SeaTurn(P,im0,pre.src))return}catch(e){}im0.src=pre.src};pre.src="data/homemap/home_"+wv+".webp?v="+HM_IMGV}}   /* 回饋 811：下雪、下雨天換積雪版 home_snow／雨景版 home_rain（07w7-seasons.js 判斷；先載好再換，載不到留原圖） */
+  try{if(typeof hmpInit==="function")hmpInit(P,hk,wv)}catch(e){}   /* 11/14 三屏長卷（07hmp-pano.js）：千秋時光之苑、原圖、這個變體有長卷＝左右各接一屏 */
+  {const im0=P.querySelector(":scope>img");if(wv&&im0){const pre=new Image();pre.onload=()=>{if(!im0.isConnected)return;P._hmSrc0=pre.src;try{if(typeof sw7SeaTurn==="function"&&sw7SeaTurn(P,im0,pre.src))return}catch(e){}im0.src=pre.src};pre.src="data/homemap/home_"+wv+".webp?v="+HM_IMGV}}   /* 回饋 811：下雪、下雨天換積雪版 home_snow／雨景版 home_rain（07w7-seasons.js 判斷；先載好再換，載不到留原圖） */
   const GO={hmShip:"#/adventure",hmBattle:"#/hub/battle",hmLearn:"#/hub/learn"};
   for(const[id]of HM_SPOTS){const b=P.querySelector("#"+id);if(!b)continue;   /* 寬版只換座標，id 跟點了去哪都一樣 */
     b.onclick=()=>{vibrate(5);if(GO[id]){location.hash=GO[id];return}if(id==="hmRec"){if(typeof TODAY_MAP_ON!=="undefined"&&TODAY_MAP_ON){location.hash="#/today";return}hmRecSheet();return}if(id==="hmQuick"){try{sessionStorage.setItem("xqFromHome","1")}catch(e){}location.hash="#/pvp"}}}   /* 11/11：記下從首頁進來（07y hbFromHome：回首頁、不走後園） */
@@ -17623,9 +17835,9 @@ function homeMap(v){const home=v.querySelector(".home");if(!home||v.querySelecto
   /* v5 改善單 R07：轉向／縮放時 07t3 ttFill 要 120ms 後才重排圖的寬度，這裡等 300ms 再推標籤（原本 resize 當下就推，量到的是還沒重排的舊圖） */
   {const cl=()=>{if(!P.isConnected)return;try{hmClamp(P)}catch(e){}},rs=()=>{if(!P.isConnected){removeEventListener("resize",rs);return}setTimeout(cl,300)};addEventListener("resize",rs);cl();requestAnimationFrame(cl);setTimeout(cl,60);setTimeout(cl,700);   /* 11/13 開發者截圖「今日推薦會左右抖一下」：原本 60 毫秒後才推回畫面內，第一幀先畫在超出畫面的位置；改成建好立刻推、下一幀前再推一次 */const im=P.querySelector(":scope>img");if(im)im.addEventListener("load",cl)}
   if(typeof shpFit==="function")shpFit(v);
-  try{if(typeof shwPage==="function"&&SHIP_WALK_ON){P._hmwW=hk;shwPage(v,hmwWalkCfg(hk),"home");hmMe(P)}}catch(e){}
+  try{if(typeof shwPage==="function"&&SHIP_WALK_ON){P._hmwW=hmwWKey(P,hk);shwPage(v,hmwWalkCfg(hk,P),"home");hmMe(P)}}catch(e){}
   try{hmTail(P)}catch(e){}
-  try{if(typeof zmPage==="function")zmPage(v)}catch(e){}
+  try{if(typeof zmPage==="function")zmPage(v,typeof hmpZoomOpt==="function"?hmpZoomOpt(P):null)}catch(e){}   /* 11/14：三屏長卷時放大後可以拖到左右兩屏 */
   document.body.classList.add("hm-on");const t=setInterval(()=>{if(!P.isConnected){clearInterval(t);if(!document.querySelector(".home-page"))document.body.classList.remove("hm-on")}},800)}
 if(typeof Home==="function"){const f0=Home;Home=function(v,hub){const r=f0.apply(this,arguments);try{if(HOME_MAP_ON&&!hub)homeMap(v)}catch(e){}return r}}
 /* 開發者 11/11 選 ChatGPT UI 報告 UI-03：所有場景標籤（首頁、學習、對戰、設定、渡口…的 .shp-spot）上下各多 9px、左右各多 4px 的透明點選範圍，
@@ -17663,7 +17875,7 @@ let R07_LAST=[];
 function r07Hit(){if(!R07_HIT_ON)return;const G=new Map(),V=document.getElementById("view"),vr=V?V.getBoundingClientRect():null;R07_LAST=[];
   document.querySelectorAll(R07_HIT_SEL).forEach(e=>{if(!e.getClientRects().length||!e.offsetWidth)return;const C=e.offsetParent;if(!C)return;if(!G.has(C))G.set(C,[]);G.get(C).push(e)});
   G.forEach((E,C)=>{const cr=C.getBoundingClientRect(),k=C.offsetWidth?cr.width/C.offsetWidth:1;if(!k||!cr.width)return;
-    const E2=E.filter(e=>getComputedStyle(e).visibility!=="hidden");if(!E2.length)return;
+    const pano=!!(vr&&C.classList&&C.classList.contains("hmp-on")),E2=E.filter(e=>{if(getComputedStyle(e).visibility==="hidden")return false;if(!pano)return true;const q=e.getBoundingClientRect();return q.right>vr.left&&q.left<vr.right});if(!E2.length)return;   /* 11/14 首頁三屏長卷（07hmp）：鏡頭照不到的那兩屏標籤這次不算（照舊用樣式的 44×44 底線），鏡頭停好會再算一次 */
     const clip=getComputedStyle(C).overflowX!=="visible",W=cr.width/k,Hh=cr.height/k;let l=clip?0:-1e9,r=clip?W:1e9;
     if(vr&&V.contains(C)){l=Math.max(l,(vr.left-cr.left)/k);r=Math.min(r,(vr.right-cr.left)/k)}
     const L=E2.map(e=>{const q=e.getBoundingClientRect();return{x:(q.left-cr.left)/k,y:(q.top-cr.top)/k,w:q.width/k,h:q.height/k}});
@@ -18609,6 +18821,151 @@ function xsdPage(v){setTop("🀄 暗棋","#/ximarket/tea");try{setTabs(true,"#/"
   if(S0&&S0.n>0){X.S=S0;xsdSay(XSD_TX.open);xsdDraw();toast("🀄 接著上次那一局");if(S0.cur===1)xsdCpu()}
   else xsdStart(true);
   return{stop(){X.tm.forEach(clearTimeout);removeEventListener("resize",onR);if(XSD===X)XSD=null}}}
+/* ================= 🏞 首頁三屏長卷：往左走是西市、往右走是觀星臺（開發者 11/14：「我希望首頁有角色往左邊走會看到西市，往右邊走會看到觀星臺那種感覺」；前綴 hmp／HMP，11/14 grep 過沒撞名）=================
+   圖：park/homemap_xsm/pano_<首頁變體>.png（2304×1376，三等分；白天預設那張叫 pano_full_day.png）→ tools/homemap_pano.py 切成左右兩屏 → art/homemap/home_<變體>_pano_l.webp（西市）、_pano_r.webp（觀星臺）；
+     中間那一屏就是現成的首頁圖（home_<變體>.webp，一模一樣），所以中間的入口、走路節點、殘影、月亮、雨雪、轉場…座標全部照舊，不用換算。
+   只在千秋時光之苑（07y hbIsCl）、用原圖（不是 iPad 寬版 p34／l1610）、而且這個變體有長卷（HMP_PANO）時才打開；沒有就完全照舊單張。變體照 07z 開頁當下 07w7 sw7HomeWx() 算的那張（季節、夜景）。
+   做法：左右兩屏是 .home-page（P）裡的兩張圖（.hmp-w，各多蓋中間那屏靠邊 12.5%＝長卷接縫的融接帶，寬 112.5%，跟著 P 一起被 07t3 補滿、07fl 排版、07x 縮放），P 不再裁邊（overflow:visible），由外面那層 .zm-wrap 裁。
+     鏡頭＝P 的 style.left（左屏＝+P 寬、右屏＝-P 寬）：不用 transform，底部那條 position:fixed 的大按鈕才不會跟著跑；07z hmClamp、07t3 ttFill 量標籤時扣掉這個位移。
+     座標：照中間那一屏的 %，左屏是 -100～0、右屏是 100～200（長卷像素 x → (x-768)/768×100）。
+   鏡頭怎麼動：
+     ① 走路角色（07w）走過橋頭（左邊木板 x＜-6、右邊木板 x＞106）鏡頭自動滑過去；走回來（x＞-1／x＜101）滑回中間。約 0.75 秒；減少動態時直接切。
+     ② 手指左右滑（沒放大時；直向照舊捲頁）、滑鼠拖：放開吸附到三屏之一（拖超過 18% 寬或甩一下就換屏）。從畫面左右邊緣 24px 內起手的不接（讓給系統返回手勢）。兩指縮放交給 07x（放大後可以拖到左右兩屏：zmPage 傳 ext）。
+     ③ 左右邊各一顆「‹」「›」按鈕（無障礙：不能只能滑；旁白念「往左看：西市」等）。中間那屏橋頭原本的「🏮 西市」「🔭 觀星臺」（07xsm／07gxt，照各自解鎖條件）改成「← 西市」「觀星臺 →」，點了把鏡頭滑過去。
+     ④ 鍵盤、旁白移到另一屏的入口，鏡頭跟過去。返回首頁時停在上次那一屏（HMP_LAST，同一次開 App 內）。
+   左屏「🏮 西市」標在市門上方、右屏「🔭 觀星臺」標在渾儀上方（標籤只放大字），解鎖條件照 07xsm xsmOpen、07gxt gxtOpen；沒解鎖那一屏照樣看得到建築、不放標籤。點了角色走過橋再進 #/ximarket、#/guanxing。
+   路網（HMP_WALK，量 pano_full_day.png）：左岸告示牌 brd → 平台左緣 → 木板橋 → 西市市門前；右岸 rs → 右邊書頁平台 → 木板橋到觀星臺石牆下（木板盡頭就是入口，不穿欄杆上臺）。
+   季節／夜景的飄雲、晨昏色、夜色、雨霧那幾層（07w7 .sw7-fx 的 cl／tint／night／tone／mist）照抄一份蓋到左右兩屏（飄雲對齊動畫時間）；雨絲雪點（畫布）只在中間那屏。
+   左右邊的「‹」「›」放在雲弈閣、今日推薦兩個標籤中間的高度；中間那屏有箭頭標籤時，同方向的按鈕旁白不重複念（aria-hidden、不進 Tab），手指照樣點得到。
+   手機橫放（07t3 側欄模式）外框只露出圖那一欄；桌面置中（r07-fit）左右兩屏露在兩旁（寬螢幕多看到一點）。iPad 寬版圖（p34／l1610）不開長卷，照舊。
+   純計算 hmpVar／hmpSrc／hmpScr／hmpFollow／hmpSnap／hmpWalk 不碰 DOM，測試 xiangqi-lab/tools/test-home-pano.js 用 vm 跑 */
+const HMP_ON=true,HMP_IMGV="1114";   /* 圖的版本：同檔名換圖時改掉，手機才會重抓 */
+/* 有長卷的首頁變體（07w7 sw7HomeWx 的回傳；沒有回傳＝classic）。tools/homemap_pano.py 最後會印出該有哪些 */
+const HMP_PANO={classic:1,classic_spring:1,classic_spring_night:1,classic_summer:1,classic_summer_night:1,classic_autumn:1,classic_autumn_night:1,classic_winter:1,classic_winter_night:1};   /* 11/14 九張到齊；新增變體先跑 tools/homemap_pano.py 再加進來，沒加的變體照舊單張 */
+const HMP_MS=750;   /* 鏡頭滑一屏的時間（毫秒） */
+/* 左右兩屏的入口：[id, 大字, 旁白, 左%, 上%, 哪一屏, 去哪]（量 pano_full_day.png，換算成中間那屏的 %） */
+const HMP_SIDE=[["hmpXsm","🏮 西市","西市",-31,27,-1,"#/ximarket"],["hmpGxt","🔭 觀星臺","觀星臺",134,31,1,"#/guanxing"]];
+/* 中間那屏橋頭的入口（07xsm、07gxt 放的）改成箭頭：[id, 大字, 旁白, 往哪一屏] */
+const HMP_ARROW=[["hmXsm","← 西市","往左看：西市",-1],["hmGxt","觀星臺 →","往右看：觀星臺",1]];
+/* 路網延伸（腳底，%）：xr＝點空地走路的左右範圍（07w） */
+const HMP_WALK={xr:[-100,200],dmax:2.2,
+  N:{lbr:[-3,58],lp1:[-14,56.8],lp2:[-26,56.5],mk:[-33,55.5],m2:[-50,58],rp0:[92,60.5],rp1:[103,59.8],rp2:[116,60.4]},
+  E:"brd-lbr lbr-lp1 lp1-lp2 lp2-mk mk-m2 rs-rp0 rp0-rp1 rp1-rp2",
+  HS:{hmpXsm:["mk",-31,40,"bow"],hmpGxt:["rp2",134,44,"bow"]}};
+const HMP_CAM={lIn:-6,lOut:-1,rIn:106,rOut:101};   /* 鏡頭跟角色：走到 x＜lIn 往左、x＞rIn 往右；在左屏走回 x＞lOut、在右屏走回 x＜rOut 回中間 */
+const HMP_BAD={};   /* 這次開 App 載不到的長卷（退回單張，不再試） */
+let HMP_LAST=0;   /* 上次停在哪一屏（-1 西市、0 中間、1 觀星臺）；只記在記憶體 */
+/* ---------- 純計算 ---------- */
+/* 這一頁該用哪個長卷：hk＝07z 寬版代號（有＝不用）、wv＝07w7 變體（空＝classic）、cl＝千秋時光之苑；回傳變體名或 "" */
+function hmpVar(hk,wv,cl){if(!HMP_ON||hk||!cl)return"";const v=wv||"classic";return HMP_PANO[v]&&!HMP_BAD[v]?v:""}
+const hmpSrc=(v,s)=>`data/homemap/home_${v}_pano_${s}.webp?v=${HMP_IMGV}`;
+/* x%（中間那屏的 %）在哪一屏 */
+const hmpScr=x=>x<0?-1:x>100?1:0;
+/* 鏡頭跟角色（有一點黏性，站在橋頭附近不會來回晃）：x＝角色腳底 %、cur＝上次算的那一屏 */
+function hmpFollow(x,cur){if(!isFinite(x))return cur||0;if(x<HMP_CAM.lIn)return-1;if(x>HMP_CAM.rIn)return 1;if(cur===-1)return x>HMP_CAM.lOut?0:-1;if(cur===1)return x<HMP_CAM.rOut?0:1;return 0}
+/* 手指放開：i0 起手那一屏、dx 拖了多少 px（往右拖＝看左邊）、w 一屏寬、v 放手時的速度 px/ms → 吸附到哪一屏 */
+function hmpSnap(i0,dx,w,v){let d=0;if(w>0&&Math.abs(dx)>w*.18)d=dx>0?-1:1;else if(Math.abs(v||0)>.45&&Math.abs(dx)>16)d=v>0?-1:1;return Math.max(-1,Math.min(1,(i0||0)+d))}
+/* 首頁的走路座標表加上左右兩屏 */
+function hmpWalk(c){return Object.assign({},c,{xr:HMP_WALK.xr,dmax:HMP_WALK.dmax,N:Object.assign({},c.N,HMP_WALK.N),E:(c.E||"")+" "+HMP_WALK.E,HS:Object.assign({},c.HS,HMP_WALK.HS),_e:null})}
+const hmpEase=t=>t<.5?4*t*t*t:1-Math.pow(-2*t+2,3)/2;
+/* ---------- 畫面 ---------- */
+function hmpCss(){if(document.getElementById("hmpCss"))return;const s=document.createElement("style");s.id="hmpCss";s.textContent=`
+.home-page.hmp-on{overflow:visible}
+.hmp-w{position:absolute;top:0;width:112.5%;height:100%;overflow:hidden}.hmp-w.l{left:-100%}.hmp-w.r{left:87.5%}
+.hmp-w>img{display:block;width:100%;height:100%}.hmp-fx{position:absolute;top:0;bottom:0;width:88.889%;pointer-events:none;overflow:hidden}.hmp-w.l>.hmp-fx{left:0}.hmp-w.r>.hmp-fx{right:0}
+.hmp-nav{position:absolute;top:calc(34.7% - 24px);z-index:7;width:34px;height:48px;margin:0;padding:0;border:0;border-radius:12px;background:rgba(24,18,12,.5);box-shadow:0 0 0 1px rgba(214,176,92,.55),0 2px 8px rgba(0,0,0,.3);color:#fff6e0;font:900 24px/1 var(--serif,serif);cursor:pointer;-webkit-tap-highlight-color:transparent;opacity:.82}
+.hmp-nav[hidden]{display:none}.hmp-nav:active{transform:scale(.94)}.hmp-nav:focus-visible{outline:2px solid #f2c94c;outline-offset:2px;opacity:1}
+.hmp-nav::before{content:"";position:absolute;inset:-6px -5px}`;document.head.append(s)}
+const hmpRM=()=>{try{return matchMedia("(prefers-reduced-motion: reduce)").matches}catch(e){return false}};
+const hmpOn=P=>!!(P&&P.dataset&&P.dataset.hmp);
+const hmpBox=P=>P.parentNode&&P.parentNode.classList&&P.parentNode.classList.contains("zm-wrap")?P.parentNode:null;
+/* 07z homeMap 建好 P 就呼叫：算這一頁用不用長卷；用＝放左右兩屏、鏡頭停在上次那一屏 */
+function hmpInit(P,hk,wv){if(!P)return;P._hmpWv=wv||"";P.dataset.hmp="";let cl=false;try{cl=typeof hbIsCl==="function"&&hbIsCl()}catch(e){}
+  const v=hmpVar(hk,wv,cl);if(v)hmpWings(P,v);P._hmpI=v?HMP_LAST:0;hmpPlace(P)}
+/* 放左右兩屏的圖（載不到＝這個變體不用長卷，07z hmwSet 原地退回單張） */
+function hmpWings(P,v){hmpCss();P.dataset.hmp=v;P.classList.add("hmp-on");
+  for(const s of["l","r"]){let w=P.querySelector(":scope>.hmp-w."+s);if(!w){w=document.createElement("div");w.className="hmp-w "+s;w.setAttribute("aria-hidden","true");w.innerHTML='<img alt="" draggable="false"><div class="hmp-fx"></div>';
+      if(s==="r"){const l=P.querySelector(":scope>.hmp-w.l");if(l)l.after(w);else P.prepend(w)}else P.prepend(w)}   /* 放在最前面：兩屏的圖各多蓋中間那屏靠邊 12.5%（季節長卷接縫的融接），殘影、雨雪、標籤都在它上面 */
+    const wi=w.querySelector("img");wi.onerror=()=>{HMP_BAD[v]=1;try{if(P.isConnected&&typeof hmwSet==="function")hmwSet(P,P.dataset.hmw||"")}catch(e){}};if(wi.getAttribute("src")!==hmpSrc(v,s))wi.src=hmpSrc(v,s)}
+  hmpFxSync(P)}
+function hmpUnwings(P){P.dataset.hmp="";P.classList.remove("hmp-on");P.querySelectorAll(":scope>.hmp-w").forEach(e=>e.remove());P._hmpI=0;P.style.left=""}
+/* 07z hmwSet（轉向、改視窗大小換寬版／原圖）在重掛走路角色之前呼叫：寬版＝收掉；原圖＝有長卷再打開 */
+function hmpSet(P,k){if(!P)return;let cl=false;try{cl=typeof hbIsCl==="function"&&hbIsCl()}catch(e){}const v=hmpVar(k,P._hmpWv,cl);if(v===(P.dataset.hmp||""))return;
+  if(v){hmpWings(P,v);P._hmpI=HMP_LAST}else hmpUnwings(P);hmpPlace(P);try{hmpLabels(P)}catch(e){}hmpNavUpd(P)}
+/* 07z homeMap 傳給 07x zmPage：放大後可以拖到左右兩屏 */
+function hmpZoomOpt(P){return{ext:()=>{if(!hmpOn(P))return null;const w=P.offsetWidth;return{l:w,r:w}}}}
+/* 鏡頭：P 的 style.left；i＝-1／0／1 */
+function hmpPlace(P){const i=hmpOn(P)?P._hmpI||0:0,w=P.offsetWidth;P.style.left=i&&w?Math.round(-i*w)+"px":"";hmpLayout(P)}
+function hmpCam(P,i,anim){if(!P||!P.isConnected)return;i=hmpOn(P)?Math.max(-1,Math.min(1,i|0)):0;const w=P.offsetWidth,to=-i*w,from=parseFloat(P.style.left)||0;P._hmpI=i;HMP_LAST=i;
+  cancelAnimationFrame(P._hmpA||0);P._hmpA=0;
+  const done=()=>{P.style.left=i?Math.round(to)+"px":"";hmpNavUpd(P);try{if(typeof r07HitSoon==="function")r07HitSoon(60)}catch(e){}};
+  if(!anim||hmpRM()||!w||Math.abs(to-from)<1){done();return}
+  const t0=performance.now(),D=HMP_MS*Math.min(1.2,Math.max(.5,Math.abs(to-from)/w));
+  const st=now=>{if(!P.isConnected)return;const u=Math.min(1,(now-t0)/D);P.style.left=(from+(to-from)*hmpEase(u)).toFixed(1)+"px";if(u<1)P._hmpA=requestAnimationFrame(st);else{P._hmpA=0;done()}};P._hmpA=requestAnimationFrame(st)}
+/* 07t3 側欄模式（手機橫放：圖靠左、右邊是入口選單）只露出圖那一欄；鄰屏按鈕貼著圖的左右邊（桌面置中時也是） */
+function hmpLayout(P){const C=hmpBox(P);if(!C)return;const V=document.getElementById("view"),w=P.offsetWidth,base=P.offsetLeft-(parseFloat(P.style.left)||0),cw=C.clientWidth;
+  C.style.clipPath=hmpOn(P)&&V&&V.classList.contains("r07-side")?`inset(0 ${Math.max(0,Math.round(cw-(base+w)))}px 0 ${Math.max(0,Math.round(base))}px)`:"";
+  const L=Math.max(0,base),R=Math.min(cw,base+w);C.querySelectorAll(":scope>.hmp-nav").forEach(b=>{if(b.classList.contains("l"))b.style.left=Math.round(L+4)+"px";else b.style.left=Math.round(R-38)+"px"})}
+/* 鄰屏按鈕：中間＝‹ 西市、› 觀星臺；左屏只有 ›、右屏只有 ‹（回中間）。上下放在雲弈閣（25.5%）和今日推薦（44%）兩個標籤點選範圍的正中間（34.7%），375×667、390×844 都不疊到 */
+function hmpNavUpd(P){const C=hmpBox(P);if(!C)return;const on=hmpOn(P),i=P._hmpI||0,xs=!!P.querySelector("#hmpXsm,#hmXsm"),gx=!!P.querySelector("#hmpGxt,#hmGxt");
+  for(const b of C.querySelectorAll(":scope>.hmp-nav")){const l=b.classList.contains("l"),show=on&&(l?i>-1:i<1);b.hidden=!show;
+    b.setAttribute("aria-label",l?(i===1?"往左看：回到苑中":"往左看"+(xs?"：西市":"")):(i===-1?"往右看：回到苑中":"往右看"+(gx?"：觀星臺":"")));
+    /* 中間那屏橋頭已經有「← 西市」「觀星臺 →」箭頭（同一件事）：這顆按鈕旁白、Tab 不再念一次，手指照樣點得到 */
+    const dup=on&&i===0&&!!P.querySelector(l?":scope>#hmXsm":":scope>#hmGxt");if(dup){b.setAttribute("aria-hidden","true");b.tabIndex=-1}else{b.removeAttribute("aria-hidden");b.removeAttribute("tabindex")}}}
+/* 左右兩屏的入口、中間那屏的箭頭（照 07xsm／07gxt 的解鎖條件；長卷關掉時還原） */
+const hmpOpen=id=>{try{return id==="hmpXsm"?typeof xsmOpen==="function"&&xsmOpen():typeof gxtOpen==="function"&&gxtOpen()}catch(e){return false}};
+const hmpSeen=id=>{try{return!!store.get(id==="hmpXsm"?"xsmSeen":"gxtSeen",0)}catch(e){return true}};
+function hmpLabels(P){const on=hmpOn(P);
+  for(const[id,t,al,d]of HMP_ARROW){const b=P.querySelector("#"+id);if(!b)continue;
+    if(on){if(!b._hmpO)b._hmpO={h:b.innerHTML,a:b.getAttribute("aria-label"),c:b.onclick};b.innerHTML=`<b>${esc(t)}</b>`;b.setAttribute("aria-label",al);b.onclick=e=>{e.stopPropagation();vibrate(5);hmpCam(P,d,true)}}
+    else if(b._hmpO){b.innerHTML=b._hmpO.h;if(b._hmpO.a!=null)b.setAttribute("aria-label",b._hmpO.a);b.onclick=b._hmpO.c;delete b._hmpO}}
+  for(const s of HMP_SIDE){const want=on&&hmpOpen(s[0]);let b=P.querySelector("#"+s[0]);if(!want){if(b)b.remove();continue}if(b)continue;
+    b=document.createElement("button");b.type="button";b.id=s[0];b.className="shp-spot hmp-side"+(hmpSeen(s[0])?"":" hot");b.style.left=s[3]+"%";b.style.top=s[4]+"%";b.setAttribute("aria-label",s[2]);b.innerHTML=`<b>${esc(s[1])}</b>`;
+    b.onclick=e=>{e.stopPropagation();vibrate(5);location.hash=s[6]};
+    /* 旁白、Tab：中間那屏的入口念完，再念左屏西市、右屏觀星臺（底部那一條照舊最後） */
+    const mids=P.querySelectorAll(":scope>.shp-spot:not(.hmp-side)"),after=s[0]==="hmpGxt"&&P.querySelector(":scope>#hmpXsm")||mids[mids.length-1]||null;
+    if(after)after.after(b);else P.insertBefore(b,P.querySelector(":scope>.hm-go-bar"))}
+  hmpNavUpd(P)}
+/* 季節、晨昏、夜色、雨霧、飄雲那幾層（07w7 .sw7-fx）照抄到左右兩屏；雨絲雪點的畫布不抄。
+   飄雲（.sw7-cl）的花紋每一屏寬重複一次，抄過去的那份把動畫時間對齊原本那份，接縫兩邊的雲才連得起來 */
+function hmpFxSync(P){const fx=P.querySelector(":scope>.sw7-fx"),S=fx?[...fx.querySelectorAll(":scope>.sw7-cl,:scope>.sw7-night,:scope>.sw7-tone,:scope>.sw7-tint,:scope>.sw7-mist")]:[],h=S.map(e=>e.outerHTML).join("");
+  P.querySelectorAll(":scope>.hmp-w>.hmp-fx").forEach(f=>{if(f.innerHTML!==h)f.innerHTML=h;
+    try{[...f.children].forEach((c,i)=>{const o=S[i];if(!o||!c.classList.contains("sw7-cl")||!o.getAnimations||!c.getAnimations)return;const a=o.getAnimations()[0],b=c.getAnimations()[0];if(a&&b&&a.currentTime!=null&&Math.abs((b.currentTime||0)-a.currentTime)>50)b.currentTime=a.currentTime})}catch(e){}})}
+/* 拖曳、跟角色、焦點、按鈕（每個 P 掛一次） */
+function hmpCtl(P){if(P._hmpCtl)return;P._hmpCtl=1;const C=hmpBox(P)||P;hmpCss();
+  if(C!==P)for(const d of[-1,1]){const b=document.createElement("button");b.type="button";b.className="hmp-nav "+(d<0?"l":"r");b.hidden=true;b.innerHTML=`<span aria-hidden="true">${d<0?"‹":"›"}</span>`;
+    b.onclick=e=>{e.stopPropagation();vibrate(5);hmpCam(P,(P._hmpI||0)+d,true)};C.append(b)}
+  let D=null,sup=0;const zs=()=>C.zm&&C.zm.s||1,lim=v=>{const w=P.offsetWidth,m=Math.max(0,Math.abs(v)-w);return Math.sign(v)*(Math.min(Math.abs(v),w)+m*.3)};
+  const start=(x,y,ed)=>{if(!hmpOn(P)||zs()>1.001){D=null;return}D={x0:x,y0:y,t:performance.now(),l0:parseFloat(P.style.left)||0,i0:P._hmpI||0,mv:0,no:!!ed,lx:x,lt:performance.now(),v:0}};
+  const move=(x,y,e)=>{if(!D||D.no)return false;const dx=x-D.x0,dy=y-D.y0;if(!D.mv){if(Math.hypot(dx,dy)<8)return false;if(Math.abs(dx)<Math.abs(dy)*1.2||zs()>1.001){D.no=1;return false}D.mv=1;cancelAnimationFrame(P._hmpA||0);P._hmpA=0}
+    const now=performance.now();if(now>D.lt)D.v=(x-D.lx)/(now-D.lt);D.lx=x;D.lt=now;P.style.left=lim(D.l0+dx).toFixed(1)+"px";if(e&&e.cancelable)e.preventDefault();return true};
+  const end=x=>{const d=D;D=null;if(!d||!d.mv)return;sup=Date.now()+450;hmpCam(P,hmpSnap(d.i0,x-d.x0,P.offsetWidth,d.v),true)};
+  C.addEventListener("touchstart",e=>{const t=e.touches;if(t.length!==1){if(D&&D.mv){const d=D;D=null;hmpCam(P,d.i0,true)}else D=null;return}start(t[0].clientX,t[0].clientY,t[0].clientX<24||t[0].clientX>innerWidth-24)},{passive:true});
+  C.addEventListener("touchmove",e=>{if(!D)return;if(e.touches.length!==1){const d=D;D=null;if(d.mv)hmpCam(P,d.i0,true);return}move(e.touches[0].clientX,e.touches[0].clientY,e)},{passive:false});
+  const tend=e=>{if(!D||e.touches.length)return;const c=e.changedTouches&&e.changedTouches[0];end(c?c.clientX:D.lx)};C.addEventListener("touchend",tend);C.addEventListener("touchcancel",tend);
+  C.addEventListener("pointerdown",e=>{if(e.pointerType!=="mouse"||e.button!==0||e.target.closest(".hmp-nav,.zm-rs"))return;start(e.clientX,e.clientY,false)});
+  C.addEventListener("pointermove",e=>{if(!D||e.pointerType!=="mouse")return;const was=D.mv;if(move(e.clientX,e.clientY,null)&&!was)try{C.setPointerCapture(e.pointerId)}catch(err){}});
+  const pup=e=>{if(e.pointerType!=="mouse"||!D)return;end(e.clientX)};C.addEventListener("pointerup",pup);C.addEventListener("pointercancel",pup);
+  /* 點左右兩屏的入口（側欄選單、旁白轉過來的點選，鏡頭還在別屏）：角色開始走的同時鏡頭就滑過去，不等走過橋頭 */
+  C.addEventListener("click",e=>{const b=e.target.closest&&e.target.closest(".hmp-side");if(!b||!hmpOn(P)||sup>Date.now())return;const i=hmpScr(parseFloat(b.style.left));if(i!==(P._hmpI||0))hmpCam(P,i,true)},true);
+  /* 拖過放開的那一下不算點選（比 07w 點哪走哪、入口都早） */
+  const kill=e=>{if(!C.isConnected){document.removeEventListener("click",kill,true);return}if(sup>Date.now()&&C.contains(e.target)){sup=0;e.stopPropagation();e.preventDefault()}};document.addEventListener("click",kill,true);
+  /* 鍵盤、旁白移到另一屏的入口：鏡頭跟過去 */
+  P.addEventListener("focusin",e=>{if(!hmpOn(P))return;const b=e.target.closest&&e.target.closest(".shp-spot");if(!b||!P.contains(b))return;const x=parseFloat(b.dataset.ttL!=null?b.dataset.ttL:b.style.left);if(!isFinite(x))return;const i=hmpScr(x);if(i!==(P._hmpI||0))hmpCam(P,i,true)});
+  /* 走路角色走過橋頭：鏡頭跟過去（看 07w 每格寫的 translate，跟 07y hbHide 一樣換成 %） */
+  let box=null,mo=null,ch=null;const bind=()=>{const b=P.querySelector(":scope>.shw");if(b===box)return;if(mo)mo.disconnect();box=b;ch=null;if(!b)return;
+    mo=new MutationObserver(()=>{if(!box.isConnected||!P.isConnected){mo.disconnect();return}const m=/translate\(([-\d.]+)px/.exec(box.style.transform),W=P.clientWidth;if(!m||!W)return;const x=+m[1]/W*100;
+      if(ch==null){ch=hmpFollow(x,hmpScr(x));return}const n=hmpFollow(x,ch);if(n===ch)return;ch=n;if(hmpOn(P)&&!D&&n!==(P._hmpI||0))hmpCam(P,n,true)});mo.observe(b,{attributes:true,attributeFilter:["style"]})};
+  /* 07w7 換季、晨昏、雨霧（.sw7-fx 晚一點才放進來）：那一層有變就照抄到左右兩屏 */
+  let fx=null,m3=null;const fxBind=()=>{const f=P.querySelector(":scope>.sw7-fx");if(f===fx)return;if(m3)m3.disconnect();fx=f;hmpFxSync(P);if(!f)return;
+    m3=new MutationObserver(()=>{if(!P.isConnected){m3.disconnect();return}if(m3.q)return;m3.q=requestAnimationFrame(()=>{m3.q=0;hmpFxSync(P)})});m3.observe(f,{childList:true,attributes:true,subtree:true,attributeFilter:["class","style"]})};
+  try{const m2=new MutationObserver(()=>{if(!P.isConnected){m2.disconnect();return}bind();fxBind()});m2.observe(P,{childList:true})}catch(e){}bind();fxBind();
+  /* 圖框大小變了（補滿高度、轉向、側欄）：鏡頭照屏數重擺 */
+  if(window.ResizeObserver){const ro=new ResizeObserver(()=>{if(!P.isConnected){ro.disconnect();return}if(!D&&!P._hmpA)hmpPlace(P);else hmpLayout(P)});ro.observe(P);if(C!==P)ro.observe(C)}
+  hmpNavUpd(P);hmpPlace(P)}
+/* 07xsm、07gxt 放好橋頭的入口之後（它們也包 Home）再整理標籤、掛手勢 */
+function hmpMount(v){const P=v&&v.querySelector(".home-page");if(!P)return;hmpLabels(P);hmpCtl(P)}
+if(typeof Home==="function"){const f0=Home;Home=function(v,hub){const r=f0.apply(this,arguments);try{if(!hub)hmpMount(v)}catch(e){}return r}}
 /* ================= 🏮 線上大廳滿版水墨圖「千燈天井」（開發者 11/8 定案：Gemini 方案 1＋9 精簡版；史學顧問核過，必改的素材另外換圖）=================
    規劃：story/gemini_app/37 號 md；圖：park/lobbymap/lobby_v4.png（AI 桌的棋盤程式畫完整開局）＋綠幕素材（棋桌、燈籠亮暗、茶客剪影）→ art/lobbymap/ → data/lobbymap/。
    包一層 Lobby(v)：原本的大廳清單（#lb，paint() 每 15 秒和有人進出時重畫）照舊畫、照舊綁好所有按鈕，只是收進「📜 名冊」抽屜（點竹簡從下方拉出來）；
@@ -19670,7 +20027,7 @@ function ttFill(){const V=document.getElementById("view");if(!V)return;const P=V
     try{if(r07Wide(V,P,vr,pr,nw,nh))return}catch(e){}   /* v5 改善單 R07：寬螢幕、橫放的矮螢幕另外排（見 r07Wide）；手機直向不會進去 */
     if(!W||av-H<2||av>H*1.25)return;const set=h=>{const w=Math.round(h*nw/nh);Object.assign(P.style,{maxWidth:"none",width:w+"px",marginLeft:Math.round((W-w)/2)+"px"})};V.classList.add("tt-fillx");set(av);
     {const ex=V.scrollHeight-V.clientHeight;if(ex>0&&ex<40)set(av-ex)}   /* 圖下還有一點邊距（.pad 之類）就扣掉，免得多出幾 px 可以捲 */
-    requestAnimationFrame(()=>P.querySelectorAll(".shp-spot,.po-sight").forEach(b=>{if(b.dataset.ttL==null)b.dataset.ttL=b.style.left;const q=b.getBoundingClientRect(),m=6;let d=0;if(q.left<vr.left+m)d=vr.left+m-q.left;else if(q.right>vr.right-m)d=vr.right-m-q.right;if(d)b.style.left="calc("+b.dataset.ttL+" + "+Math.round(d)+"px)"}))};
+    requestAnimationFrame(()=>{const ox=parseFloat(P.style.left)||0;P.querySelectorAll(".shp-spot,.po-sight").forEach(b=>{if(b.classList.contains("hmp-side"))return;if(b.dataset.ttL==null)b.dataset.ttL=b.style.left;const q=b.getBoundingClientRect(),m=6,ql=q.left-ox,qr=q.right-ox;let d=0;if(ql<vr.left+m)d=vr.left+m-ql;else if(qr>vr.right-m)d=vr.right-m-qr;if(d)b.style.left="calc("+b.dataset.ttL+" + "+Math.round(d)+"px)"})})};   /* 11/14 首頁三屏長卷（07hmp）：鏡頭是 P 的 style.left，量的時候扣掉；左右兩屏的標籤（.hmp-side）不推 */
   if(im.complete&&im.naturalWidth)go();else im.addEventListener("load",go,{once:true})}
 /* v5 改善單 R07（桌面／矮螢幕）：評測 1440×900 首頁內容約 2586px 高、844×390 場景頁約 1518px——滿版圖照畫面寬度放，寬螢幕就變成要先往下捲一大片背景才找得到入口。
    只在「畫面比可用高度寬」或「寬 600px 以上」、而且圖照寬度放會比可用高度高時才處理；手機直向（寬 390～440、比高度窄）永遠不進來，版面跟原本一模一樣。
@@ -24198,6 +24555,7 @@ function CpuGame(v,practicePage,mode){
   setTabs(false);gameLayout(v);
   let st=null,sel=-1,shownResult=null,busy=false,pHint=null;   // pHint：錯棋重練時在棋盤上畫 Pikafish 的建議
   const bd=Board(i=>tap(i));v.querySelector("#bbox").append(bd.svg);
+  try{window.cgPlay={tap:i=>tap(i),sel:()=>sel,rr:()=>{if(st)render(st)}}}catch(e){}   /* 11/14 黑洞塔防（07bht-td.js）：取消選取、預選的子輪到你時選起來、換視角立刻重畫 */
   // 🏯 朝代擂台：在公園 3D 裡打（意見回饋 319），沒開公園時先帶你去公園
   const arenaStart=(era,lv)=>{if(!parkOn()){store.set("park3d",true);setTimeout(()=>{draw();topBar()},0)}if(PARK&&PARK.era!==era){try{PARK.v.destroy()}catch(e){}PARK=null}
     store.set("cpuRanked",false);shownResult=null;sel=-1;post("/play/new",{human:"r",level:lv,arena:era,dx:typeof diffDx==="function"?diffDx():0}).then(()=>{toast(`🏯 ${ARENA[era].name}：${ARENA[era].hi}`)})};
@@ -25603,7 +25961,7 @@ function Library(v,c0){
         const list=()=>{const q=s2(b.querySelector("#ps").value.trim()),box=b.querySelector("#pl");box.innerHTML="";
           const all=[{name:"",count:data.items.length}].concat(pl).filter(p=>!q||s2(p.name).includes(q)).slice(0,120);
           for(const p of all){const x=document.createElement("button");const hb=p.name&&bios&&bios[p.name];
-            x.innerHTML=`<span>${p.name?esc(p.name)+(p.revoked?" ＊":""):"全部棋手"}${p.name===libState.player?' <span class="badge">已選</span>':""}</span><span class="muted">${hb?'<span class="bio-i" role="button" aria-label="生平">ⓘ</span> ':""}${p.count} 局</span>`;
+            x.innerHTML=`<span>${p.name?esc(p.name)+(p.revoked?" ＊":""):"全部棋手"}${p.name===libState.player?' <span class="badge">已選</span>':""}</span><span class="muted">${hb?'<span class="bio-i" role="button" tabindex="0" aria-label="生平">ⓘ</span> ':""}${p.count} 局</span>`;
             x.onclick=e=>{if(e.target.closest(".bio-i"))return bioSheet(p.name);libState.player=p.name;libState.limit=60;closeSheet();filter(true)};box.append(x)}};
         getBios().then(()=>{if(b.isConnected)list()});
         b.querySelector("#ps").oninput=list;list()};paint()})}
@@ -28641,7 +28999,7 @@ function pmvSay(t){try{if(typeof axSay==="function")axSay(t)}catch(e){}}
 function pmvVib(x){try{if(typeof vibrate==="function")vibrate(x)}catch(e){}}
 function pmvClear(){const S=pmvSt();S.q=null;S.sel=null;S.tries=0}
 /* 08b tap 在「還沒輪到你」時先問這個；回傳 true＝當成預走處理掉了。ex＝{flat:平面棋盤嗎, redraw:重畫} */
-function pmvTap(st,me,i,ex){ex=ex||{};if(!pmvOn()||ex.flat===false||!st||st.result||!Array.isArray(st.moves)||!st.board)return false;
+function pmvTap(st,me,i,ex){ex=ex||{};if(typeof bhtdPmv==="function"){const r=bhtdPmv(st,me,i,ex);if(r!=null)return r}   /* 11/14 黑洞塔防：電腦思考時只預選下一手的子（高亮、不排預走；07bht-td.js） */if(!pmvOn()||ex.flat===false||!st||st.result||!Array.isArray(st.moves)||!st.board)return false;
   const S=pmvSt(),b=st.board,n=st.moves.length,re=()=>{try{if(ex.redraw)ex.redraw()}catch(e){}};
   if(S.q&&S.q.gid===st.id){const q=S.q;S.q=null;S.sel=pmvMine(b[i],me)&&i!==q.f?{gid:st.id,n,sq:i}:null;pmvVib(5);pmvSay("已取消預走");re();return true}
   S.q=null;
@@ -28944,7 +29302,8 @@ const I18N_EN={
   "下了船，每走一會兒就要花一點定軌力；下完一盤棋、解完一題都能補回來。":"Off the raft, walking around slowly uses orbit stamina; finishing a game or solving a puzzle tops it up.","在人間走動，每過一會兒就要花一點定軌力；下完一盤棋、解完一題都能補回來。":"Moving around the human world slowly uses orbit stamina; finishing a game or solving a puzzle tops it up.",
   "定軌力微弱，星槎旅人要歇一會兒啦。":"Orbit stamina is low - time for the raft traveler to rest a while.","在星槎上歇息，回到 15 就能再下船。":"Resting on the Star Raft; at 15 you can go ashore again.","在星槎上歇息：每分鐘回 3，回到 15 就能再下船":"Resting on the Star Raft: restores 3 per minute; at 15 you can go ashore again",
   "人間會用，星槎會回":"Drains in the human world, refills on the Star Raft","滿格加成":"Full bonus","穩定加成":"Steady bonus","未達加成":"No bonus yet","歸零會化墨退場":"At 0 you dissolve into ink","人間":"Human world","／分":"/min","下棋解題":"Games & puzzles","下棋／解題":"Games / puzzles","黑洞過關":"Black Hole clear","歸零回星槎":"At 0: back to the raft","黑洞對局裡不扣定軌力。":"Black Hole games don't use orbit stamina.","心定則棋穩：定軌力一半以上，下棋、解題得到的修為多一成；滿格多兩成。":"Steady mind, steady play: with orbit stamina at half or more, games and puzzles give 10% more XP; when full, 20% more.","解題過關得，星宿黑洞用":"Earn it from puzzles and stages; spend it on stars and Black Holes","來源":"Earn","用途":"Spend","主線":"Main story","星宿":"Lunar mansions","點／宿":"each","已點亮":"Lit","黑洞開局靈力":"Black Hole starting spirit","在觀星臺可以點亮二十八宿星圖：每宿 2 點。":"At the Observatory you can light up the Chart of the 28 Lunar Mansions: 2 points per mansion.","最多補到靈力上限。":"It fills up to your spirit cap at most.","修為越高，三項越強":"More XP, stronger in all three","星芒變開局靈力":"Starglow becomes starting spirit","定軌力細則":"Orbit stamina details","星芒細則":"Starglow details","黑洞細則":"Black Hole details","快回星槎":"Head back to the raft soon","定軌力用完了":"Orbit stamina used up","這一盤下完、這一題解完，就要回星槎歇息。":"After this game or puzzle you'll return to the Star Raft to rest.","化墨退場中":"Dissolved into ink","下船倒數":"Ashore in","分鐘":"min","可下船":"Go ashore","平日體力已關閉":"Daily stamina is off","不扣、不退場、無加成":"No drain, no ink exit, no bonus","平日體力已在設定裡關掉：定軌力不扣、不會化墨退場，也沒有「心定則棋穩」修為加成。":"Daily stamina is turned off in Settings: orbit stamina doesn't drain, you won't dissolve into ink, and there's no \"steady mind\" XP bonus.",   /* 11/14 角色卡視覺化（07dgl） */
-  "臺灣暗棋":"Taiwanese Dark Chess","暗棋規則":"Dark Chess rules","完整規則":"Full rules","暗棋是在臺灣很流行的象棋玩法：棋子先蓋著，翻開才知道是哪一顆。":"Dark chess is a xiangqi game that is very popular in Taiwan: all pieces start face down, and you only find out what a piece is when you turn it over.","翻開才知道是哪顆棋；大吃小，兵能吃帥，炮要隔一顆跳著吃。":"Turn a piece over to see what it is. Bigger captures smaller, a soldier can capture the general, and a cannon captures by jumping over one piece.","32 顆棋蓋在 4×8 格裡，輪流翻棋或走棋；大可吃小、同級可吃，兵可吃帥、帥不可吃兵，炮隔一子跳吃，不連吃；50 手沒有吃子也沒有翻棋就算和棋。":"32 pieces lie face down on a 4×8 board. Take turns turning a piece over or moving one. A piece can capture smaller or equal pieces; a soldier can capture the general, but the general cannot capture a soldier; a cannon captures by jumping over exactly one piece; only one capture per turn. If 50 moves pass with no capture and no piece turned over, the game is a draw.","棋子大小：帥（將）＞仕（士）＞相（象）＞俥（車）＞傌（馬）＞炮（包）＞兵（卒）。":"Piece ranks: General > Advisor > Elephant > Chariot > Horse > Cannon > Soldier.","輪到你時，翻開一顆蓋著的棋，或把自己的一顆棋走一格（上下左右）。第一顆翻出什麼顏色，翻的人就執那一色。吃光對方，或對方輪到時翻不了也走不了，就贏了。":"On your turn, turn over a face-down piece or move one of your pieces one square (up, down, left or right). Whoever turns over the first piece plays that piece's color. You win by capturing all of the opponent's pieces, or when the opponent cannot turn over or move anything on their turn.","先翻，才知命。":"Turn it over to learn your fate.","頭一翻就是帥？好兆頭。":"A general on the very first flip? Good omen.","頭一翻就是將？好兆頭。":"A general on the very first flip? Good omen.","小兵也能扳倒大帥，這就是暗棋。":"Even a little soldier can topple the general. That's dark chess.","茶還熱著，再翻一局。":"The tea is still warm. Flip another game.","未定":"Not yet","紅":"Red","黑":"Black","（新手）":"(Beginner)","（一般）":"(Normal)","電腦難度":"Computer level","一般":"Normal","新手：電腦偶爾會看漏、走錯，適合剛學。":"Beginner: the computer sometimes misses things or makes mistakes. Good for learning.","一般：電腦會認真算。":"Normal: the computer thinks it through.","電腦難度：新手":"Computer level: Beginner","電腦難度：一般":"Computer level: Normal","暗棋棋盤":"Dark chess board","空格":"empty","蓋著的棋":"face-down piece","吃！":"Capture!","你吃到：":"You captured:","電腦吃到：":"Computer captured:","輪到你（紅）：翻一顆，或走一步。":"Your turn (Red): turn a piece over or make a move.","輪到你（黑）：翻一顆，或走一步。":"Your turn (Black): turn a piece over or make a move.","輪到你：先翻一顆，翻出什麼顏色你就執那一色。":"Your turn: turn a piece over first. You will play the color it shows.","電腦思考中":"Computer is thinking","這顆現在走不了，也吃不到。":"This piece can't move or capture right now.","那是電腦的棋。先點你自己的棋，再點要去的地方。":"That's the computer's piece. Tap one of your own pieces first, then tap where it should go.","這局電腦贏了":"The computer won this game","電腦的棋子被你吃光了。":"You captured all of the computer's pieces.","你的棋子被吃光了。":"All of your pieces were captured.","電腦沒有棋可走了。":"The computer has no moves left.","你沒有棋可走了。":"You have no moves left.","你認輸了。":"You resigned.","回茶坊":"Back to the teahouse","開始翻棋":"Start","規則":"Rules","認輸？":"Resign?","認輸的話，這局算輸。":"If you resign, this game counts as a loss.","這局電腦先翻。":"The computer goes first this game.","這局你先翻。":"You go first this game.","這局電腦先翻（新手）":"The computer goes first this game (Beginner)","這局你先翻（新手）":"You go first this game (Beginner)","這局電腦先翻（一般）":"The computer goes first this game (Normal)","這局你先翻（一般）":"You go first this game (Normal)","接著上次那一局":"Picking up your last game",   /* 11/14 西市聽雨茶坊臺灣暗棋（07xsd） */
+  "臺灣暗棋":"Taiwanese Dark Chess","暗棋規則":"Dark Chess rules","完整規則":"Full rules","暗棋是在臺灣很流行的象棋玩法：棋子先蓋著，翻開才知道是哪一顆。":"Dark chess is a xiangqi game that is very popular in Taiwan: all pieces start face down, and you only find out what a piece is when you turn it over.","翻開才知道是哪顆棋；大吃小，兵能吃帥，炮要隔一顆跳著吃。":"Turn a piece over to see what it is. Bigger captures smaller, a soldier can capture the general, and a cannon captures by jumping over one piece.","32 顆棋蓋在 4×8 格裡，輪流翻棋或走棋；大可吃小、同級可吃，兵可吃帥、帥不可吃兵，炮隔一子跳吃，不連吃；50 手沒有吃子也沒有翻棋就算和棋。":"32 pieces lie face down on a 4×8 board. Take turns turning a piece over or moving one. A piece can capture smaller or equal pieces; a soldier can capture the general, but the general cannot capture a soldier; a cannon captures by jumping over exactly one piece; only one capture per turn. If 50 moves pass with no capture and no piece turned over, the game is a draw.","棋子大小：帥（將）＞仕（士）＞相（象）＞俥（車）＞傌（馬）＞炮（包）＞兵（卒）。":"Piece ranks: General > Advisor > Elephant > Chariot > Horse > Cannon > Soldier.","輪到你時，翻開一顆蓋著的棋，或把自己的一顆棋走一格（上下左右）。第一顆翻出什麼顏色，翻的人就執那一色。吃光對方，或對方輪到時翻不了也走不了，就贏了。":"On your turn, turn over a face-down piece or move one of your pieces one square (up, down, left or right). Whoever turns over the first piece plays that piece's color. You win by capturing all of the opponent's pieces, or when the opponent cannot turn over or move anything on their turn.","先翻，才知命。":"Turn it over to learn your fate.","頭一翻就是帥？好兆頭。":"A general on the very first flip? Good omen.","頭一翻就是將？好兆頭。":"A general on the very first flip? Good omen.","小兵也能扳倒大帥，這就是暗棋。":"Even a little soldier can topple the general. That's dark chess.","茶還熱著，再翻一局。":"The tea is still warm. Flip another game.","未定":"Not yet","紅":"Red","黑":"Black","（新手）":"(Beginner)","（一般）":"(Normal)","電腦難度":"Computer level","一般":"Normal","新手：電腦偶爾會看漏、走錯，適合剛學。":"Beginner: the computer sometimes misses things or makes mistakes. Good for learning.","一般：電腦會認真算。":"Normal: the computer thinks it through.","電腦難度：新手":"Computer level: Beginner","電腦難度：一般":"Computer level: Normal","暗棋棋盤":"Dark chess board","空格":"empty","蓋著的棋":"face-down piece","吃！":"Capture!","你吃到：":"You captured:","電腦吃到：":"Computer captured:","輪到你（紅）：翻一顆，或走一步。":"Your turn (Red): turn a piece over or make a move.","輪到你（黑）：翻一顆，或走一步。":"Your turn (Black): turn a piece over or make a move.","輪到你：先翻一顆，翻出什麼顏色你就執那一色。":"Your turn: turn a piece over first. You will play the color it shows.","電腦思考中":"Computer is thinking","這顆現在走不了，也吃不到。":"This piece can't move or capture right now.","那是電腦的棋。先點你自己的棋，再點要去的地方。":"That's the computer's piece. Tap one of your own pieces first, then tap where it should go.","這局電腦贏了":"The computer won this game","電腦的棋子被你吃光了。":"You captured all of the computer's pieces.","你的棋子被吃光了。":"All of your pieces were captured.","電腦沒有棋可走了。":"The computer has no moves left.","你沒有棋可走了。":"You have no moves left.","你認輸了。":"You resigned.","回茶坊":"Back to Teahouse","開始翻棋":"Start","規則":"Rules","認輸？":"Resign?","認輸的話，這局算輸。":"If you resign, this game counts as a loss.","這局電腦先翻。":"The computer goes first this game.","這局你先翻。":"You go first this game.","這局電腦先翻（新手）":"The computer goes first this game (Beginner)","這局你先翻（新手）":"You go first this game (Beginner)","這局電腦先翻（一般）":"The computer goes first this game (Normal)","這局你先翻（一般）":"You go first this game (Normal)","接著上次那一局":"Picking up your last game",   /* 11/14 西市聽雨茶坊臺灣暗棋（07xsd） */
+  "← 西市":"← West Market","觀星臺 →":"Star Terrace →","往左看：西市":"Look left: West Market","往右看：觀星臺":"Look right: Star Terrace","往左看":"Look left","往右看":"Look right","往左看：回到苑中":"Look left: back to the Garden","往右看：回到苑中":"Look right: back to the Garden",   /* 11/14 首頁三屏長卷（07hmp） */
   "星淵靈氣入體，旅人精神百倍！":"Abyss spirit flows in - the traveler is full of energy!","化墨退場中：在星槎上歇到 15 才能再下船。":"Dissolved into ink: rest on the Star Raft until 15 before going ashore.","定軌力用完了：這一盤下完、這一題解完，就要回星槎歇息。":"Orbit stamina is used up: after this game or puzzle you'll return to the Star Raft to rest.",
   "跑了一天的馳道，車輪都要轉不動了……歇一會兒吧。":"A whole day on the imperial roads - even the wheels can barely turn... let's rest a while.","渡口的船都靠岸了，我們也該歇一歇啦！":"All the ferry boats have docked - time for us to rest too!","哈——欠！我說話都小聲了，這可不得了，快休息！":"Yaaawn! Even my voice has gone quiet - that's serious, let's rest!",
   "草原的風都吹不走睡意了，我們回星槎睡一覺吧。":"Not even the grassland wind can blow my sleepiness away - let's go back to the raft and nap.","呼……人間的風有點重，我緩一緩就好。":"Phew... the air down here feels heavy. I just need a moment.","……休整，是為了下一場勝仗。":"...Resting is for the next victory.","跑了一整天的腿，腳都軟了，今天先到這兒吧！":"Running errands all day, my legs are jelly - let's stop here for today!",
@@ -28955,6 +29314,18 @@ const I18N_EN={
   "點一顆星：已點亮的看說明，還沒點亮的花星芒點亮。":"Tap a star: lit ones show their notes; unlit ones cost starglow to light.",
   "已打開平日體力：定軌力回滿，在人間會慢慢用掉":"Daily stamina on: orbit stamina refilled; it slowly drains in the human world","已關閉平日體力：定軌力不扣、不會化墨退場；星芒照常":"Daily stamina off: no drain and no ink exit; starglow works as usual",
   "想再打開：設定 → 👘 換造型，裡面的「平日體力」。":"To turn it back on: Settings → 👘 Outfit, then \"Daily stamina\".",
+  /* 黑洞塔防爽度第一批（07bht-td.js、park3d 塔防固定鏡頭，開發者 11/14）：視角、對峙資訊列、輔助列、打擊演出跳字 */
+  "全局俯視":"Overview","臨陣斜角":"Battle angle","純淨平面":"Flat board","68° 看全盤":"68°, whole board","48° 看立體":"48°, see the 3D pieces","2D 平面棋盤":"2D flat board",
+  "手機轉成橫向，星盤會更大":"Turn your phone sideways for a bigger star board","視角":"View","點一下換下一種":"tap for the next one","星樞推演中":"Star Pivot is thinking",
+  "星門本回合落子":"Star gate drops this round","星門已盡":"No more star gates","目前沒有選取":"Nothing is selected","✕ 取消選取":"✕ Deselect","絕招":"Ultimate",
+  "更多：認輸、重開本關、戰鬥演出":"More: resign, restart stage, battle effects","戰鬥演出":"Battle effects","完整":"Full","簡化":"Simple","重開本關":"Restart stage","重開":"Restart","繼續下棋":"Keep playing",
+  "這一盤會放掉，用同樣的招重新開局。":"This game will be abandoned and restarted with the same moves.","等星樞走完，再幫你看":"Wait for the Star Pivot to move, then I'll take a look",
+  "站上星門，把援軍堵住":"Stand on the star gate to block reinforcements","先護好陣眼子；敵子過河、停進九宮都會扣你的元氣":"Protect your formation eye first; enemy pieces across the river or in your palace drain your vitality",
+  "奇謀連擊 ×2":"Clever Combo ×2","陣眼受損・靈力歸零":"Formation eye hit · spirit drops to zero","星樞潰散！":"The Star Pivot collapses!","破陣！":"Formation broken!","打倒星樞卒將！":"Star Pivot Pawn General defeated!","卒海過河":"Pawn Tide","殘卒反星":"Last Pawn Strikes Back","引力撕裂":"Gravity Rift",
+  "將軍（扣 5 元氣）":"Check (−5 vitality)","連環逼宮（扣 7 元氣）":"Chain Check (−7 vitality)","星樞卒將":"Star Pivot Pawn General",
+  "點棋子走棋":"Tap a piece to move","也可以拖曳":"or drag it","右上 👁 換視角":"👁 at top right changes the view",
+  "完整＝草書招名 1.2 秒＋法器共鳴＋擒子停格、微震；簡化＝草書 0.8 秒、少停格；關閉＝不播草書與震動，只留文字。手機設了「減少動態」一律用「關閉」這一版。放招演出中點一下畫面也能直接結算。":"Full = 1.2 s calligraphy + artifact resonance + hit-stop and a light shake on captures; Simple = 0.8 s calligraphy, less hit-stop; Off = no calligraphy or shaking, text only. If your phone has Reduce Motion on, Off is always used. Tap the screen during a cast to resolve it right away.",
+  "星淵初探":"First Look into the Abyss","墨河微瀾":"Ripples on the Ink River","星門乍現":"Star Gates Appear","雙門夾道":"Twin Gates","星樞列陣":"Star Pivot in Formation","守關・星樞卒將":"Gate Boss · Star Pivot Pawn General",
   /* 觀星臺（07gxt-guanxing.js，開發者 11/13） */
   /* 黑洞塔防練習賽（07bhtl-tdlearn.js，開發者 11/13） */
   "鐵連城":"Tie Liancheng","練習賽":"Practice match","星淵試陣":"Abyss Trial","練習賽・星淵試陣":"Practice match · Abyss Trial","約 2 分鐘・不算輸贏":"About 2 minutes · no win or loss recorded",
@@ -29446,7 +29817,30 @@ const I18N_PAT=[
   [/^(\d+)\s*分鐘前更新$/,m=>"updated "+m[1]+" min ago"],
   [/^可邀請\s*(\d+)$/,m=>"Can invite "+m[1]],
   [/^第\s*(\d+)\s*格$/,m=>"Slot "+m[1]],
-  [/^約\s*([\d.]+)\s*(MB|KB|GB)$/,m=>"about "+m[1]+" "+m[2]]
+  [/^約\s*([\d.]+)\s*(MB|KB|GB)$/,m=>"about "+m[1]+" "+m[2]],
+  /* 黑洞塔防爽度第一批（07bht-td.js，11/14） */
+  [/^第\s*(\d+)\s*關$/,m=>"Stage "+m[1]],
+  [/^第\s*(\d+)\s*回$/,m=>"Round "+m[1]],
+  [/^星門\s*(\d+)\s*回合後落\s*(\d+)\s*子$/,m=>"Star gate drops "+m[2]+" in "+m[1]+(m[1]==="1"?" round":" rounds")],
+  [/^預估\s*[−-]\s*(\d+)$/,m=>"est. −"+m[1]],
+  [/^(\d+)\s*靈$/,m=>m[1]+" spirit"],
+  [/^(星樞卒將|星樞|齊轍|田飛燕|雷借花|駱躍梅|沈方庭|鐵連城|步越溪)\s*(\d+)／(\d+)$/,(m,T)=>{const r=T(m[1]);return r==null?null:r+" "+m[2]+"/"+m[3]}],
+  [/^再點一次「(.+)」放出$/,(m,T)=>{const r=T(m[1]);return "Tap \""+(r==null?m[1]:r)+"\" again to cast"}],
+  [/^擒敵\s*[−-]\s*(\d+)$/,m=>"Capture −"+m[1]],
+  [/^以弱克強！\s*[−-]\s*(\d+)$/,m=>"Weak beats strong! −"+m[1]],
+  [/^陣眼神威！\s*[−-]\s*(\d+)$/,m=>"Formation eye strikes! −"+m[1]],
+  [/^破甲貫穿！\s*[−-]\s*(\d+)$/,m=>"Armor pierced! −"+m[1]],
+  [/^陣眼貫穿！\s*[−-]\s*(\d+)$/,m=>"Eye pierce! −"+m[1]],
+  [/^連環逼宮！\s*[−-]\s*(\d+)$/,m=>"Chain Check! −"+m[1]],
+  [/^將軍\s*[−-]\s*(\d+)$/,m=>"Check −"+m[1]],
+  [/^防線受壓\s*[−-]\s*(\d+)$/,m=>"Defense under pressure −"+m[1]],
+  [/^[−-](\d+)（弱克強）$/,m=>"−"+m[1]+" (weak beats strong)"],
+  [/^連續擒子\s*×\s*(\d+)$/,m=>"Capture streak ×"+m[1]],
+  [/^([二三四五六七八九十])連斬$/,m=>(I18N_NUM[m[1]]||m[1])+"-capture streak"],
+  [/^重開第\s*(\d+)\s*關？$/,m=>"Restart stage "+m[1]+"?"],
+  [/^(.)吃(.)：扣星樞\s*(\d+)\s*元氣(，還少一顆咬你的過河子)?$/,m=>{const P=x=>I18N_PN[I18N_PL[x]]||x;return P(m[1])+" takes "+P(m[2])+": −"+m[3]+" Star Pivot vitality"+(m[4]?", and one less piece biting you across the river":"")}],
+  [/^靈力夠了，可以放「(.+?)」：(.+)$/,(m,T)=>{const a=T(m[1]),b=T(m[2]);return "Enough spirit to cast \""+(a==null?m[1]:a)+"\""+(b==null?"":": "+b)}],
+  [/^星樞預告「(.+?)」：(.+)$/,(m,T)=>{const a=T(m[1]),b=T(m[2]);return "Star Pivot warning \""+(a==null?m[1]:a)+"\""+(b==null?"":": "+b)}]
 ];
 /* 中文數字（一～九十九）或阿拉伯數字（含全形）→ 數字 */
 function i18nCnNum(s){s=String(s==null?"":s).replace(/[０-９]/g,c=>String.fromCharCode(c.charCodeAt(0)-0xFEE0));if(/^\d+$/.test(s))return+s;
@@ -30566,7 +30960,7 @@ function mnvPlay(era,opt){opt=opt||{};const CH=MNV_CH[era];if(!CH){if(opt.onLeav
     <div class="mnv-ch l" aria-hidden="true"><div class="mnv-cw"><img alt=""></div></div><div class="mnv-ch r" aria-hidden="true"><div class="mnv-cw"><img alt=""></div></div>
     <div class="mnv-tl" aria-hidden="true"></div><div class="mnv-hold" aria-live="polite"></div>
     <div class="mnv-top"><button class="mnv-b" type="button" data-k="leave">‹ ${esc(mnvT("vn.leave","離開"))}</button><span class="sp"></span><button class="mnv-b" type="button" data-k="log">${esc(mnvT("vn.log","回看"))}</button><button class="mnv-b" type="button" data-k="skip">${esc(mnvT("vn.skip","跳過"))}</button></div>
-    <div class="mnv-o"></div><div class="mnv-bubs" role="button" tabindex="0" aria-live="polite"></div>
+    <div class="mnv-o"></div><div class="mnv-bubs" role="button" tabindex="0" aria-live="polite" aria-label="對話：點一下繼續"></div>
     <div class="mnv-box" role="button" tabindex="0" aria-label="${esc(mnvT("vn.next","下一句"))}"><div class="mnv-nm"></div><p class="mnv-tx" aria-live="polite"></p><span class="mnv-nx" aria-hidden="true">▼</span></div>`;
   document.body.append(o);requestAnimationFrame(()=>requestAnimationFrame(()=>{o.classList.add("on");bk.classList.add("on")}));try{MNF.on=true}catch(e){}
   o.addEventListener("scroll",()=>{if(o.scrollLeft||o.scrollTop){o.scrollLeft=0;o.scrollTop=0}});   /* 圖層 768 寬、右邊立繪往外推：鍵盤 Tab 或捲動到按鈕時整個畫面會被橫捲（11/14 375×667 實測）；overflow:clip＋捲回 0 */
