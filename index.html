@@ -1613,7 +1613,7 @@ html[data-lefty] .tskip{right:auto;left:14px}
       if(!window.caches)return go();caches.keys().then(function(ks){return Promise.all(ks.filter(function(k){return k.indexOf("xqlab-app-")===0}).map(function(k){return caches.delete(k)}))})
         .then(function(){return navigator.serviceWorker&&navigator.serviceWorker.getRegistration()}).then(function(r){return r&&r.update()}).catch(function(){}).then(go)}};setTimeout(chk,4000)})();
 </script>
-<script>window.XQ_OFFLINE=true;window.XQ_BUILD="20261114-1106";</script>
+<script>window.XQ_OFFLINE=true;window.XQ_BUILD="20261114-1129";</script>
 <script src="core.js"></script>
 <script src="engine.js"></script>
 <script src="local.js"></script>
@@ -10977,10 +10977,11 @@ const BHTD=(()=>{
   /* 七星：本命子、初始與 Lv100 的元氣／攻擊倍率／靈力上限（第 147 題 ChatGPT 修正表；開發者選初始元氣 ChatGPT 版、攻擊倍率穩健版）
      def＝防禦倍率（開發者 11/14 新增；越小越硬）：只乘我方「被擒子」「被將軍」扣的元氣，四捨五入、至少扣 1、單次最多 12（defDmg）。
        Lv1 → Lv100 照攻擊同一條成長曲線 G(L)；坦克鐵連城最硬 ×0.90→×0.72，攻擊型步越溪、雷借花稍軟 ×1.00→×0.85，其他照定位在中間
-     sp＝靈力上限 [Lv1, Lv100]，spT＝成長型（開發者 11/14「上限拉開＋早晚熟」，spCurve）：avg 平均＝G(L)、early 早熟＝√G(L)、late 晚熟＝((L−1)/99)^1.8 */
-  const CH={x_swordboy:{k:"qi",n:"齊轍",pc:"R",hp:[56,100],atk:[.92,1.25],sp:[5,7],spT:"avg",def:[.97,.82]},x_spiritgirl:{k:"tian",n:"田飛燕",pc:"B",hp:[50,94],atk:[1.08,1.35],sp:[5,8],spT:"early",def:[.92,.76]},
-    x_martialgirl:{k:"lei",n:"雷借花",pc:"C",hp:[51,90],atk:[1.00,1.42],sp:[5,9],spT:"avg",def:[1.00,.85]},x_miaogirl:{k:"luo",n:"駱躍梅",pc:"N",hp:[49,88],atk:[1.05,1.38],sp:[5,8],spT:"avg",def:[.95,.80]},
-    x_shuai:{k:"shen",n:"沈方庭",pc:"K",hp:[47,86],atk:[1.07,1.34],sp:[6,9],spT:"early",def:[.94,.79]},x_shi:{k:"tie",n:"鐵連城",pc:"A",hp:[58,102],atk:[1.04,1.30],sp:[5,6],spT:"late",def:[.90,.72]},x_bing:{k:"bu",n:"步越溪",pc:"P",hp:[48,90],atk:[1.12,1.45],sp:[4,9],spT:"late",def:[1.00,.85]}};
+     sp＝靈力上限 [Lv1, Lv100]，spT＝成長型（開發者 11/14「上限拉開＋早晚熟」，spCurve）：avg 平均＝G(L)、early 早熟＝√G(L)、late 晚熟＝((L−1)/99)^1.8
+     11/14 晚（1106 上線後）開發者選「數字放大＋回靈隨修為長」：靈力全部 ×SPK（10）；rg＝每回合回靈 [Lv1, Lv100]，跟 sp 同一條 spCurve，四捨五入（星樞沒有每回合回靈，吃子回 ESP_GAIN） */
+  const CH={x_swordboy:{k:"qi",n:"齊轍",pc:"R",hp:[56,100],atk:[.92,1.25],sp:[50,70],spT:"avg",rg:[10,15],def:[.97,.82]},x_spiritgirl:{k:"tian",n:"田飛燕",pc:"B",hp:[50,94],atk:[1.08,1.35],sp:[50,80],spT:"early",rg:[10,18],def:[.92,.76]},
+    x_martialgirl:{k:"lei",n:"雷借花",pc:"C",hp:[51,90],atk:[1.00,1.42],sp:[50,90],spT:"avg",rg:[10,18],def:[1.00,.85]},x_miaogirl:{k:"luo",n:"駱躍梅",pc:"N",hp:[49,88],atk:[1.05,1.38],sp:[50,80],spT:"avg",rg:[10,18],def:[.95,.80]},
+    x_shuai:{k:"shen",n:"沈方庭",pc:"K",hp:[47,86],atk:[1.07,1.34],sp:[60,90],spT:"early",rg:[10,18],def:[.94,.79]},x_shi:{k:"tie",n:"鐵連城",pc:"A",hp:[58,102],atk:[1.04,1.30],sp:[50,60],spT:"late",rg:[10,12],def:[.90,.72]},x_bing:{k:"bu",n:"步越溪",pc:"P",hp:[48,90],atk:[1.12,1.45],sp:[40,90],spT:"late",rg:[10,20],def:[1.00,.85]}};
   const EYE0={K:85,A:86,B:87,N:88,R:89,C:70,P:58};   /* 陣眼子＝主角本命子：帥只有一顆；其他取紅方右手邊那顆（兵取中兵） */
   const PCN={K:"帥",A:"仕",B:"相",N:"傌",R:"俥",C:"炮",P:"兵"},PBN={K:"將",A:"士",B:"象",N:"馬",R:"車",C:"砲",P:"卒"};
   /* 擒子：被吃子基礎 × 吃子者倍率 × 攻擊倍率（陣眼子再 ×1.5），四捨五入，單次最多 12（第 15 節） */
@@ -10989,10 +10990,12 @@ const BHTD=(()=>{
   const G=(L,tau)=>{L=Math.max(1,Math.min(100,+L||1));return(1-Math.exp(-(L-1)/tau))/(1-Math.exp(-99/tau))};
   /* 靈力上限成長曲線（11/14）：回傳 0～1；avg＝跟攻擊同一條 G、early＝開根號（前期長得快）、late＝凸曲線 ((L−1)/99)^SP_LATE（前期慢、後期暴衝） */
   const SP_LATE=1.8;
+  /* 靈力單位（11/14 晚 ×10）：SPK＝1 個舊單位；CAP_SP＝擒子回靈；ESP_GAIN＝星樞吃子回靈；XM_CAP＝星芒最多換幾點開局靈力（星芒上限 20 × SPK）；ESP_MAX＝星樞靈力上限 */
+  const SPK=10,CAP_SP=10,ESP_GAIN=10,XM_CAP=200,ESP_MAX=50;
   function spCurve(t,L,tau){L=Math.max(1,Math.min(100,+L||1));const g=G(L,tau);return t==="early"?Math.sqrt(g):t==="late"?Math.pow((L-1)/99,SP_LATE):g}
   /* 主角數值：數值(L)＝初始＋(Lv100−初始)×G(L)；τ 預設 42（之後照天賦頁 r：42÷√(r÷6%)，限 36～52）；天賦倍率 tal v0.1 固定 1.0（全局乘區，乘元氣與攻擊；防禦是越小越硬，所以除以 tal） */
   function stats(ck,L,o){o=o||{};const c=CH[ck]||CH.x_swordboy,tau=Math.max(36,Math.min(52,+o.tau||42)),tal=Math.max(1,Math.min(1.15,+o.tal||1)),g=G(L,tau),lp=a=>a[0]+(a[1]-a[0])*g;
-    return{ck:CH[ck]?ck:"x_swordboy",n:c.n,pc:c.pc,L:Math.max(1,Math.min(100,Math.round(+L||1))),hp:Math.round(lp(c.hp)*tal),atk:r2(lp(c.atk)*tal),def:r2(lp(c.def)/tal),sp:Math.round(c.sp[0]+(c.sp[1]-c.sp[0])*spCurve(c.spT,L,tau)),g:r2(g),tau}}
+    return{ck:CH[ck]?ck:"x_swordboy",n:c.n,pc:c.pc,L:Math.max(1,Math.min(100,Math.round(+L||1))),hp:Math.round(lp(c.hp)*tal),atk:r2(lp(c.atk)*tal),def:r2(lp(c.def)/tal),sp:Math.round(c.sp[0]+(c.sp[1]-c.sp[0])*spCurve(c.spT,L,tau)),spRegen:Math.round(c.rg[0]+(c.rg[1]-c.rg[0])*spCurve(c.spT,L,tau)),g:r2(g),tau}}
   /* 防禦（11/14）：原本要扣的 n × 防禦倍率，四捨五入、至少扣 1（n 是 0 就是 0）、單次最多 12。用在我方被擒子、被將軍、星樞三招（卒海過河、引力撕裂、殘卒反星；開發者 11/14 選 B）；過河、九宮、星碎格不套；星樞那邊不套 */
   /* 畫面顯示用（開發者 11/14：不用倍數，改成以 100 為基準、越大越強的數值；內部計算照舊用倍率）：攻擊力＝四捨五入(攻擊倍率×100)、防禦力＝四捨五入(100÷防禦倍率) */
   const atkPt=a=>Math.round((+a>0?+a:1)*100),defPt=d=>Math.round(100/(+d>0?+d:1));
@@ -11004,23 +11007,23 @@ const BHTD=(()=>{
      en＝開局元氣、靈力不對稱 {hp0 星樞開局元氣, sp0 星樞開局靈力}；shard＝星碎格 [路,線]（踩上去扣自己 3 元氣，敵我都算）。
      r3＝三星回合數（11/14 第二批：在 r3 回合內過關拿第三顆星；先用估的，實打後再調）；fsk＝這關星樞會用的棋兵招（卒海過河 zhs、殘卒反星 cfx；守關招牌 引力撕裂 ylsl），zcap＝卒海過河最多扣幾點（第 1～3 關 2、第 4～6 關 3） */
   const LV=[
-    {n:1,nm:"星淵初探",hp:28,r3:14,sp0:1,open:[["k",5,10],["a",4,10],["a",6,10],["p",1,7],["p",3,7],["p",5,7],["p",7,7],["p",9,7]],waves:[],auto:{first:5,every:4},
+    {n:1,nm:"星淵初探",hp:28,r3:14,sp0:10,open:[["k",5,10],["a",4,10],["a",6,10],["p",1,7],["p",3,7],["p",5,7],["p",7,7],["p",9,7]],waves:[],auto:{first:5,every:4},
       tpl:"後援",ps:"保將",fsk:["zhs","cfx"],zcap:2,say:"只有將、士和五個卒——先看清楚：過河的子，每回合都在咬你的元氣。",tip:"吃掉過河的卒，可以少扣元氣"},
-    {n:2,nm:"墨河微瀾",hp:31,r3:14,sp0:1,open:[["k",5,10],["a",4,10],["a",6,10],["p",1,6],["p",3,6],["p",5,6],["p",7,6],["p",9,6]],waves:[],auto:{first:2,every:3,early:1},
+    {n:2,nm:"墨河微瀾",hp:31,r3:14,sp0:10,open:[["k",5,10],["a",4,10],["a",6,10],["p",1,6],["p",3,6],["p",5,6],["p",7,6],["p",9,6]],waves:[],auto:{first:2,every:3,early:1},
       tpl:"早壓",ps:"搶過河",shard:[[2,6],[8,5]],fsk:["zhs","cfx"],zcap:2,say:"五個卒已經推到河岸——墨河起了波瀾。紫光的星碎格，踩上去會扣自己 3 元氣。",tip:"卒還沒過河前先擋住它"},
-    {n:3,nm:"星門乍現",hp:34,r3:16,sp0:1,open:[["k",5,10],["a",4,10],["a",6,10]],waves:[{at:2,p:[["p",1,7]],fake:1},{at:4,p:[["p",9,7]],fake:1},{at:6,p:[["p",3,7]],fake:1},{at:8,p:[["p",7,7]],fake:1},{at:10,p:[["p",5,7]],fake:1}],auto:{first:13,every:3,fake:1},
+    {n:3,nm:"星門乍現",hp:34,r3:16,sp0:10,open:[["k",5,10],["a",4,10],["a",6,10]],waves:[{at:2,p:[["p",1,7]],fake:1},{at:4,p:[["p",9,7]],fake:1},{at:6,p:[["p",3,7]],fake:1},{at:8,p:[["p",7,7]],fake:1},{at:10,p:[["p",5,7]],fake:1}],auto:{first:13,every:3,fake:1},
       tpl:"假門",ps:"愛吃子",fsk:["zhs","cfx"],zcap:2,say:"開局只有將與雙士；卒每 2 回合從星門落下。小心：有一道是假門。",tip:"站上星門可以堵住援軍"},
-    {n:4,nm:"雙門夾道",hp:37,r3:16,sp0:1,open:[["k",5,10],["a",4,10],["a",6,10],["p",1,7],["p",9,7]],waves:[{at:2,p:[["p",3,7],["p",7,7]]},{at:4,p:[["p",5,7]]}],auto:{first:7,every:3,pair:1},
+    {n:4,nm:"雙門夾道",hp:37,r3:16,sp0:10,open:[["k",5,10],["a",4,10],["a",6,10],["p",1,7],["p",9,7]],waves:[{at:2,p:[["p",3,7],["p",7,7]]},{at:4,p:[["p",5,7]]}],auto:{first:7,every:3,pair:1},
       tpl:"左右夾",ps:"搶過河",shard:[[2,5],[5,6],[8,5]],fsk:["zhs","cfx"],zcap:3,say:"左右兩道星門同時開——卒從兩翼夾過來。",tip:"兩翼都要留子守"},
-    {n:5,nm:"星樞列陣",hp:40,r3:14,sp0:1,en:{hp0:20,sp0:5},open:[["k",5,10],["a",4,10],["a",6,10],["b",3,10],["b",7,10],["p",1,6],["p",3,6],["p",5,6],["p",7,6],["p",9,6]],waves:[],auto:{first:3,every:4,burst:1},
+    {n:5,nm:"星樞列陣",hp:40,r3:14,sp0:10,en:{hp0:20,sp0:50},open:[["k",5,10],["a",4,10],["a",6,10],["b",3,10],["b",7,10],["p",1,6],["p",3,6],["p",5,6],["p",7,6],["p",9,6]],waves:[],auto:{first:3,every:4,burst:1},
       tpl:"一口氣落 4 顆",ps:"愛架砲",fsk:["zhs","cfx"],zcap:3,say:"雁行列陣：五卒在河岸，雙象在後。星樞只剩一半元氣，但靈力全滿——小心它的招。",tip:"星樞靈力滿了，先處理預告的那一招"},
-    {n:6,nm:"守關・星樞卒將",hp:52,r3:20,sp0:1,en:{sp0:3},boss:{k:"P",s:1.45},open:[["k",5,10],["a",4,10],["a",6,10],["p",1,5],["p",3,5],["p",7,5],["p",5,7],["p",9,7]],waves:[],auto:{first:3,every:4,burst:2},
+    {n:6,nm:"守關・星樞卒將",hp:52,r3:20,sp0:10,en:{sp0:30},boss:{k:"P",s:1.45},open:[["k",5,10],["a",4,10],["a",6,10],["p",1,5],["p",3,5],["p",7,5],["p",5,7],["p",9,7]],waves:[],auto:{first:3,every:4,burst:2},
       tpl:"一口氣落 4 顆",ps:"保將",shard:[[4,6],[6,6],[2,4],[8,4]],fsk:["ylsl","zhs","cfx"],zcap:3,say:"星樞卒將坐鎮九宮，三個卒已經過河——元氣打光，或將死它。",tip:"引力撕裂要扣 5（防禦可減少）：先開護盾或回元氣"}];
   /* ===== 練習賽「星淵試陣」（開發者 11/13 選方案 A：story/黑洞塔防練習賽教學規劃_1113.md；畫面與流程在 07bhtl-tdlearn.js）=====
      fen＝專用開局（紅方七種子各一顆都站在 EYE0，選誰都有陣眼子；多一顆兵給星樞吃）；不補滿 16 子（nofill）；星樞元氣 8、推算 1 步、沒有靈力也不放招（noEsp）；
      我方靈力開局＝上限 −spGap；只帶第 1 招。劇本：紅 red、星樞 blk（local.js 的 lv.mirror 照走）、收尾 fin＝red 最後一步；tg＝第 1 招在 T3 要點的格（ICCS，照順序）。
      7 位 × 各修為都要：第 2 回合結束堵住星門、放招時靈力夠、收尾前星樞剩 1～5、將軍扣 5 打光（xiangqi-lab/tools/test-bhtl.js） */
-  const TL={n:0,nm:"星淵試陣",fen:"4k4/9/9/9/9/2p1p4/2P1P4/7C1/9/4KABNR",hp:8,spGap:2,noEsp:1,nofill:1,open:[],waves:[{at:2,p:[["p",9,7]]}],fsk:[],
+  const TL={n:0,nm:"星淵試陣",fen:"4k4/9/9/9/9/2p1p4/2P1P4/7C1/9/4KABNR",hp:8,spGap:20,noEsp:1,nofill:1,open:[],waves:[{at:2,p:[["p",9,7]]}],fsk:[],
     red:["e3e4","i0i6","i6e6"],blk:["c4c3","c3d3"],tg:{qi1:["d3"],tian1:["h2","d0"],lei1:["d3"],luo1:["c3"],shen1:[],tie1:[],bu1:["h2","h0"]}};
   const LSQ=(lu,xi)=>(10-xi)*9+(lu-1);
   const STD={k:1,a:2,b:2,n:2,r:2,c:2,p:5},HOME={k:[4],a:[3,5],b:[2,6],n:[1,7],r:[0,8],c:[19,25],p:[31,27,35,29,33]};
@@ -11083,7 +11086,7 @@ const BHTD=(()=>{
        加成後一樣受單次上限 12 限制；原本就超過 12 的（12＋破甲 1）照原本的數字，不因為連擊反而變少。回 {n 扣幾點, sp 多回幾靈, k 連擊種類, bonus 實際多扣}
      chkDmg：紅方將軍扣幾點。上一回合也將軍（prevR＝這回合−1）＝連環逼宮，5 → 7；中斷一回合就回到 5 */
   function comboOf(o){o=o||{};const base=Math.max(0,Math.round(+o.base||0)),mk=!!o.mk,pc=!!(o.eye&&o.pj),bonus=(mk?(o.qx?4:2):0)+(pc?1:0);   /* qx＝天賦「奇謀連鎖」：奇謀連擊再多扣 2（11/14 第二批） */
-    const n=bonus?Math.max(base,Math.min(CAPMAX,base+bonus)):base;return{n,sp:mk?1:0,k:mk&&pc?"qm+pierce":mk?"qm":pc?"pierce":"",bonus:n-base}}
+    const n=bonus?Math.max(base,Math.min(CAPMAX,base+bonus)):base;return{n,sp:mk?CAP_SP:0,k:mk&&pc?"qm+pierce":mk?"qm":pc?"pierce":"",bonus:n-base}}
   function chkDmg(prevR,rnd){const chain=prevR!=null&&prevR===rnd-1;return{n:chain?7:5,chain}}
   function heal(td,n){const a=Math.round(n*td.me.max/50),h0=td.me.hp;td.me.hp=Math.min(td.me.max,td.me.hp+a);ev(td,{k:"heal",n:td.me.hp-h0});return td.me.hp-h0}
   function spAdd(td,n){const s0=td.me.sp;td.me.sp=Math.min(td.me.spMax,td.me.sp+n);if(td.me.sp>s0)ev(td,{k:"sp",n:td.me.sp-s0});return td.me.sp-s0}
@@ -11107,9 +11110,9 @@ const BHTD=(()=>{
     edit(P,C,ch);for(const q of put){td.pid[q]="bw"+(++td.wn);ev(td,{k:"drop",sq:q,p:P.board[q]})}for(const q of g.fk||[])ev(td,{k:"fake",sq:q});td.waves.shift();gateNext(td,P.board)}
   /* ---------- 星樞棋兵招（第 151 題 ChatGPT 溫和版；星域一只有卒的 2 招，第 6 關守關另有招牌「引力撕裂」）：一回合最多 1 招、先預告一回合 ----------
      招式資料表：nm 招名、cost 耗靈、d 說明（{n}＝預估）；預告時 td.fx＝{id,at:哪一回合結束結算,tag:點名的子,est:若不處理預估扣幾點} */
-  const FSK={zhs:{nm:"卒海過河",cost:2,d:"下回合結束時，每顆已過河的黑卒再扣你 1 元氣（最多 {c}；防禦可減少，至少扣 1）"},
-    cfx:{nm:"殘卒反星",cost:1,d:"點名的卒下回合被吃，你扣 1 元氣（已是最少，防禦減不了；只生效一次）"},   /* 11/13 去重定稿：拿掉「它吃子多扣 1」（跟躍馬突營重複） */
-    ylsl:{nm:"引力撕裂",cost:3,d:"下回合結束時，直接扣你 5 元氣（防禦可減少，護盾可以擋）"}};
+  const FSK={zhs:{nm:"卒海過河",cost:20,d:"下回合結束時，每顆已過河的黑卒再扣你 1 元氣（最多 {c}；防禦可減少，至少扣 1）"},
+    cfx:{nm:"殘卒反星",cost:10,d:"點名的卒下回合被吃，你扣 1 元氣（已是最少，防禦減不了；只生效一次）"},   /* 11/13 去重定稿：拿掉「它吃子多扣 1」（跟躍馬突營重複） */
+    ylsl:{nm:"引力撕裂",cost:30,d:"下回合結束時，直接扣你 5 元氣（防禦可減少，護盾可以擋）"}};
   const bPawns=b=>{const o=[];for(let q=0;q<90;q++)if(b[q]==="p")o.push(q);return o};
   function foeDecide(P,C){const td=P.td,b=P.board,sp=td.en.sp,F=td.fsk||[],pw=bPawns(b),cr=pw.filter(q=>RW(q)>=5).length;
     if(F.includes("ylsl")&&sp>=FSK.ylsl.cost)return{id:"ylsl",est:defDmg(5,td.me&&td.me.def)};
@@ -11129,7 +11132,8 @@ const BHTD=(()=>{
     else if(!fx.used)ev(td,{k:"miss",id:fx.id})}
   /* td v3（11/13 十八招去重定稿）新欄位；舊存檔（v2）讀進來時補預設值。move／roundEnd／engine／why／cast 開頭都叫 */
   const TD3={hot:[],frzQ:[],trap:[],lockW:null,run:null,noCross:-1,noCap:[],noTake:[],pair:[],revB:0,lastR:null,thr:null};
-  function tdFix(td){if(td&&td.me&&td.me.def===undefined)td.me.def=stats(td.ch,td.L).def;   /* 11/14 防禦：舊盤（沒有 def）照角色與修為補上 */
+  function tdFix(td){if(td&&td.me&&td.me.def===undefined)td.me.def=stats(td.ch,td.L).def;
+    if(td&&td.me&&td.spk===undefined){for(const o of[td.me,td.en])if(o){o.sp=Math.round((+o.sp||0)*SPK);o.spMax=Math.round((+o.spMax||0)*SPK)}td.disc=Math.round((+td.disc||0)*SPK);td.me.spMax=Math.max(td.me.spMax,stats(td.ch,td.L).sp);td.me.spRg=stats(td.ch,td.L).spRegen;td.spk=SPK}   /* 11/14 晚靈力 ×10：舊盤（沒有 spk）的靈力、上限、折扣一起放大，補上每回合回靈 */   /* 11/14 防禦：舊盤（沒有 def）照角色與修為補上 */
     if(td&&td.ckR===undefined){td.cmb=null;td.ckR=-9;td.capR=-9;td.capN=0}   /* 11/14 連擊欄位：舊盤補上（不動版本號） */
     if(td&&td.hi===undefined){td.hi={mx:null,cb:0,ey:0};td.eyeX=(td.lost||[]).filter(o=>o.tag===td.eye).length;td.tal=Array.isArray(td.tal)?td.tal:[];td.r3=td.r3||((LV[td.lv-1]||{}).r3||0);td.hzU=0;td.fmR=-9;td.pjT={}}   /* 11/14 第二批：高光、陣眼被擒次數（三星）、天賦；舊盤補上 */
     if(!td||td.v>=3)return td;for(const k in TD3)if(td[k]===undefined)td[k]=Array.isArray(TD3[k])?[]:TD3[k];td.rf=Object.assign({chk:0,hurt:0,dmg:0,cap:0},td.rf||{});td.v=3;return td}
@@ -11137,8 +11141,8 @@ const BHTD=(()=>{
   function boot(cfg,P,C){cfg=cfg||{};const tl=cfg.lv==="tl",rd=!tl&&cfg.raid&&RAIDM[cfg.raid.id]?{id:cfg.raid.id,v:(Math.round(+cfg.raid.v)||0)&3}:null,n=tl||rd?0:Math.max(1,Math.min(LV.length,Math.round(+cfg.lv)||1)),L=tl?TL:rd?raidLv(rd.id,rd.v):LV[n-1],st=stats(cfg.ch,cfg.L,cfg),ai=tl?{depth:1,base:1,err:0,mpv:1,margin:300}:depthOf(rd?RAID_AI:n,cfg.diff),pl=lvPlan(L),E=L.en||{};   /* 練習賽 lv "tl"：td.lv＝0；星淵急襲 cfg.raid＝{id 模板, v 星門變化}：td.lv＝0、td.rd */
     const tal=tl?[]:talValid(cfg.tal),hy=tal.includes("htgy")?TAL_HP:0;   /* 天賦（練習賽照劇本，不帶天賦）：厚土固元＝元氣上限 +8 */
     const pool=SK.filter(s=>s.ch===st.ck&&s.lv<=st.L).map(s=>s.id),sk=tl?pool.filter(id=>SKM[id].lv===1).slice(0,1):(Array.isArray(cfg.sk)?cfg.sk:[]).filter((x,i,a)=>pool.includes(x)&&a.indexOf(x)===i).slice(0,4);
-    const td={v:3,lv:n,nm:L.nm,ch:st.ck,cn:st.n,pc:st.pc,L:st.L,diff:Math.max(1,Math.min(5,+cfg.diff||2)),
-      me:{hp:st.hp+hy,max:st.hp+hy,sp:tl?Math.max(0,st.sp-(L.spGap||0)):Math.min(st.sp,(L.sp0||0)+Math.max(0,Math.min(10,Math.round(+cfg.xm||0)))+(tal.includes("xhcr")?1:0)),spMax:st.sp,atk:st.atk,def:st.def},en:{hp:Math.min(L.hp,E.hp0||L.hp),max:L.hp,sp:L.noEsp?0:Math.min(5,E.sp0||0),spMax:L.noEsp?0:5},rnd:0,sk:sk.length?sk:pool.slice(0,4),castR:-1,
+    const td={v:3,spk:SPK,lv:n,nm:L.nm,ch:st.ck,cn:st.n,pc:st.pc,L:st.L,diff:Math.max(1,Math.min(5,+cfg.diff||2)),
+      me:{hp:st.hp+hy,max:st.hp+hy,sp:tl?Math.max(0,st.sp-(L.spGap||0)):Math.min(st.sp,(L.sp0||0)+Math.max(0,Math.min(XM_CAP,Math.round(+cfg.xm||0)))+(tal.includes("xhcr")?TAL_SP:0)),spMax:st.sp,spRg:st.spRegen,atk:st.atk,def:st.def},en:{hp:Math.min(L.hp,E.hp0||L.hp),max:L.hp,sp:L.noEsp?0:Math.min(ESP_MAX,E.sp0||0),spMax:L.noEsp?0:ESP_MAX},rnd:0,sk:sk.length?sk:pool.slice(0,4),castR:-1,
       pid:{},eye:"r"+EYE0[st.pc],lost:[],pj:[],frz:[],frzR:[],li:[],sh:[],gd:0,ci:[],seal:0,disc:0,fn2:-1,pf:0,rf:{chk:0,hurt:0,dmg:0,cap:0},
       hot:[],frzQ:[],trap:[],lockW:null,run:null,noCross:-1,noCap:[],noTake:[],pair:[],revB:0,lastR:null,thr:null,cmb:null,ckR:-9,capR:-9,capN:0,   /* 連擊：cmb＝這回合放招標記的敵子 {r,tags}；ckR＝上一次將軍的回合；capR／capN＝連續擒子 */
       waves:pl.waves.map(w=>({at:w.at,ps:w.ps.map(x=>x.slice()),fake:w.fake})),gate:null,wn:0,ev:[],seq:0,ai,boss:L.boss||null,dealt:0,taken:0,
@@ -11155,17 +11159,17 @@ const BHTD=(()=>{
       if(m.cap&&sd(m.cap)==="b"){td.rf.cap=1;const pj=tv&&td.pj.includes(tv),eye=!!tf&&tf===td.eye;td.pj=td.pj.filter(x=>x!==tv);if(td.pjT&&tv)delete td.pjT[tv];td.frz=td.frz.filter(x=>x!==tv);
         const mk=!!tv&&!!td.cmb&&td.cmb.r===td.rnd&&td.cmb.tags.includes(tv),cb=comboOf({base:capDmg(m.cap,pc,td.me.atk,eye,pj),eye,pj,mk,qx:hasT(td,"qmls")}),cp=up(pc),vp=up(m.cap),wk=VALV[cp]<VALV[vp];
         td.capN=td.capR===td.rnd-1?(+td.capN||0)+1:1;td.capR=td.rnd;if(mk)td.cmb=null;   /* 連續擒子：連著幾回合都擒到子（演出印章用，不加扣點） */
-        hitEn(td,cb.n,m.t,eye?"陣眼擒子":"擒子",null,{cap:1,cp,vp,weak:wk?1:0,eye:eye?1:0,pj:pj?1:0,combo:cb.k,bonus:cb.bonus,streak:td.capN});spAdd(td,1+cb.sp);
-        if(wk&&hasT(td,"fmbl")&&td.fmR!==td.rnd){td.fmR=td.rnd;spAdd(td,1);ev(td,{k:"tal",id:"fmbl",sq:m.t})}   /* 天賦「鋒芒畢露」：以弱克強再回 1 靈（每回合 1 次） */
+        hitEn(td,cb.n,m.t,eye?"陣眼擒子":"擒子",null,{cap:1,cp,vp,weak:wk?1:0,eye:eye?1:0,pj:pj?1:0,combo:cb.k,bonus:cb.bonus,streak:td.capN});spAdd(td,CAP_SP+cb.sp);
+        if(wk&&hasT(td,"fmbl")&&td.fmR!==td.rnd){td.fmR=td.rnd;spAdd(td,TAL_SP);ev(td,{k:"tal",id:"fmbl",sq:m.t})}   /* 天賦「鋒芒畢露」：以弱克強再回 10 靈（每回合 1 次） */
         {const H=td.hi||(td.hi={mx:null,cb:0,ey:0});if(!H.mx||cb.n>H.mx.n)H.mx={n:cb.n,cp,vp};H.cb=Math.max(H.cb,td.capN);if(eye)H.ey++}   /* 本局高光 */
         if(td.fx&&td.fx.id==="cfx"&&!td.fx.used&&tv&&tv===td.fx.tag){td.fx.used=1;hitMe(td,defDmg(1,td.me.def),m.t,"殘卒反星")}}
       if(m.ck){const ch=chkDmg(td.ckR,td.rnd);td.ckR=td.rnd;hitEn(td,ch.n,b.indexOf("k"),ch.chain?"連環逼宮":"將軍",null,{chk:1,chain:ch.chain?1:0})}if(td.shard&&td.shard.includes(m.t)){ev(td,{k:"shard",sq:m.t});hitMe(td,3,m.t,"星碎格")}}
-    else{td.rnd++;if(!(td.seal>=td.rnd))spAdd(td,1);   /* 開發者 11/13：每回合 +1 靈力（擒子再 +1）；原本只靠擒子，沒吃子就整局放不出招。陣眼被擒封靈的那一回合不加 */
+    else{td.rnd++;if(!(td.seal>=td.rnd))spAdd(td,+td.me.spRg||SPK);   /* 開發者 11/13：每回合回靈（擒子再 +CAP_SP）；11/14 晚：每回合回靈＝stats 的 spRegen（Lv1 都是 10，隨修為長）。陣眼被擒封靈的那一回合不加 */
       if(m.cap&&sd(m.cap)==="r"){
-        const sh=tv?shTake(td,tv):0,raw=defDmg(Math.min(CAPMAX,Math.round(CAPB[up(m.cap)]*CAPM[up(pc)])),td.me.def),n=Math.max(0,raw-sh);   /* 順序（11/14 防禦）：先乘防禦（至少 1、最多 12）→ 再扣小盾 → hitMe 裡最後才看護盾（整次抵消） */if(td.en.sp<td.en.spMax){td.en.sp++;ev(td,{k:"esp",n:1})}
+        const sh=tv?shTake(td,tv):0,raw=defDmg(Math.min(CAPMAX,Math.round(CAPB[up(m.cap)]*CAPM[up(pc)])),td.me.def),n=Math.max(0,raw-sh);   /* 順序（11/14 防禦）：先乘防禦（至少 1、最多 12）→ 再扣小盾 → hitMe 裡最後才看護盾（整次抵消） */if(td.en.sp<td.en.spMax){const e0=td.en.sp;td.en.sp=Math.min(td.en.spMax,e0+ESP_GAIN);ev(td,{k:"esp",n:td.en.sp-e0})}
         if(sh)ev(td,{k:"shuse",sq:m.t,n:Math.min(sh,raw)});if(n)hitMe(td,n,m.t,"被擒");
         if(tv)td.lost.push({p:up(m.cap),tag:tv,home:+tv.slice(1)});td.li=td.li.filter(x=>x!==tv);td.frzR=td.frzR.filter(x=>x!==tv);
-        if(tv&&tv===td.eye){td.eyeX=(+td.eyeX||0)+1;if(hasT(td,"xzht")&&!td.hzU){td.hzU=1;td.me.sp=Math.max(0,td.me.sp-2);ev(td,{k:"eye2",sq:m.t})}else{td.me.sp=0;td.seal=td.rnd+1;ev(td,{k:"eye",sq:m.t})}}   /* 天賦「星陣護體」：陣眼子第一次被擒只扣 2 靈、不停招 */
+        if(tv&&tv===td.eye){td.eyeX=(+td.eyeX||0)+1;if(hasT(td,"xzht")&&!td.hzU){td.hzU=1;td.me.sp=Math.max(0,td.me.sp-TAL_EYE_SP);ev(td,{k:"eye2",sq:m.t})}else{td.me.sp=0;td.seal=td.rnd+1;ev(td,{k:"eye",sq:m.t})}}   /* 天賦「星陣護體」：陣眼子第一次被擒只扣 20 靈、不停招 */
         const pi=tv?td.pair.findIndex(o=>o.until>=td.rnd&&(o.a===tv||o.b===tv)):-1;   /* 雙燕斜護：一隻被擒，另一隻下一次被擒不扣（整次小盾） */
         if(pi>=0){const o=td.pair.splice(pi,1)[0],mate=o.a===tv?o.b:o.a,ms=sqOf(td,mate);if(ms!=null){td.sh.push({tag:mate,v:CAPMAX,until:td.rnd+3});ev(td,{k:"sh",sq:ms,n:0,src:"pair"})}}}
       if(tf&&sd(pc)==="b"&&pc!=="k"){
@@ -11250,72 +11254,72 @@ const BHTD=(()=>{
      x＝{P,td,b:盤面,C:XQCore}；效果一律用上面的共用工具：heal、spAdd、shAdd（小盾）、hitPiece（打某顆子扣元氣，乘攻擊倍率、破甲多 1、上限 12）、freeze（定身）、rm（移除）、tp（瞬移）、edit（改盤面） */
   const SK=[];const S=o=>SK.push(Object.assign({steps:o.tg?1:0,cao:null},o));
   /* 沈方庭（帥）團補師 */
-  S({id:"shen1",ch:"x_shuai",lv:1,nm:"重金懸賞",cost:3,cls:"回元氣",d:"回 15 元氣",heal:1,cao:"data/bhtd/cao/cao_x_shen.webp",run:x=>{heal(x.td,15)}});
-  S({id:"shen2",ch:"x_shuai",lv:6,nm:"庭院小息",cost:2,cls:"回元氣",d:"回 8；這回合被將軍過，改回 12",heal:1,run:x=>{heal(x.td,x.td.rf.chk?12:8)}});
-  S({id:"shen3",ch:"x_shuai",lv:12,nm:"帥令安軍",cost:2,cls:"控制",d:"解除己方 1 子的定身或鎖",tg:x=>frozenMine(x.td),none:"沒有被定身或鎖住的子",run:(x,t)=>unfreeze(x,t[0])});
-  S({id:"shen4",ch:"x_shuai",lv:17,nm:"當票回春",cost:3,cls:"回元氣",d:"回 12；己方元氣低於一半再回 5",heal:1,run:x=>{heal(x.td,12+(x.td.me.hp<x.td.me.max/2?5:0))}});
-  S({id:"shen5",ch:"x_shuai",lv:23,nm:"九宮守心",cost:3,cls:"回元氣",d:"帥站在九宮正中心才能用：接下來 3 回合，每回合結束回 4（帥離開正中心就停）",heal:1,
+  S({id:"shen1",ch:"x_shuai",lv:1,nm:"重金懸賞",cost:30,cls:"回元氣",d:"回 15 元氣",heal:1,cao:"data/bhtd/cao/cao_x_shen.webp",run:x=>{heal(x.td,15)}});
+  S({id:"shen2",ch:"x_shuai",lv:6,nm:"庭院小息",cost:20,cls:"回元氣",d:"回 8；這回合被將軍過，改回 12",heal:1,run:x=>{heal(x.td,x.td.rf.chk?12:8)}});
+  S({id:"shen3",ch:"x_shuai",lv:12,nm:"帥令安軍",cost:20,cls:"控制",d:"解除己方 1 子的定身或鎖",tg:x=>frozenMine(x.td),none:"沒有被定身或鎖住的子",run:(x,t)=>unfreeze(x,t[0])});
+  S({id:"shen4",ch:"x_shuai",lv:17,nm:"當票回春",cost:30,cls:"回元氣",d:"回 12；己方元氣低於一半再回 5",heal:1,run:x=>{heal(x.td,12+(x.td.me.hp<x.td.me.max/2?5:0))}});
+  S({id:"shen5",ch:"x_shuai",lv:23,nm:"九宮守心",cost:30,cls:"回元氣",d:"帥站在九宮正中心才能用：接下來 3 回合，每回合結束回 4（帥離開正中心就停）",heal:1,
     need:x=>x.b[76]==="K"?null:"帥要站在九宮正中心",run:x=>{x.td.hot=[{until:x.td.rnd+3}];ev(x.td,{k:"hot",sq:76})}});   /* 再放一次＝重新算 3 回合，不疊加 */
   /* 鐵連城（仕）坦克 */
-  S({id:"tie1",ch:"x_shi",lv:1,nm:"鐵壁銅牆",cost:2,cls:"護盾",d:"護盾：抵消下一次扣元氣",cao:"data/bhtd/cao/cao_x_tie.webp",run:x=>{x.td.gd++;ev(x.td,{k:"gd",n:1})}});
-  S({id:"tie2",ch:"x_shi",lv:6,nm:"仕角守門",cost:2,cls:"控制",d:"2 回合內，己方仕斜角相鄰的空點變成「守門點」：敵子走進去就定身 1 回合",
+  S({id:"tie1",ch:"x_shi",lv:1,nm:"鐵壁銅牆",cost:20,cls:"護盾",d:"護盾：抵消下一次扣元氣",cao:"data/bhtd/cao/cao_x_tie.webp",run:x=>{x.td.gd++;ev(x.td,{k:"gd",n:1})}});
+  S({id:"tie2",ch:"x_shi",lv:6,nm:"仕角守門",cost:20,cls:"控制",d:"2 回合內，己方仕斜角相鄰的空點變成「守門點」：敵子走進去就定身 1 回合",
     need:x=>gateSq(x.b).length?null:"仕的斜角沒有空點",run:x=>{const L=gateSq(x.b);for(const q of L)x.td.trap.push({sq:q,until:x.td.rnd+2});ev(x.td,{k:"trap",sq:L})}});
-  S({id:"tie3",ch:"x_shi",lv:12,nm:"銅鎖止步",cost:3,cls:"控制",d:"銅鎖扣住敵方 1 顆非帥將子：它下回合如果走動，走完就定身 2 回合（不動就沒事）",tg:x=>foe(x.b),
+  S({id:"tie3",ch:"x_shi",lv:12,nm:"銅鎖止步",cost:30,cls:"控制",d:"銅鎖扣住敵方 1 顆非帥將子：它下回合如果走動，走完就定身 2 回合（不動就沒事）",tg:x=>foe(x.b),
     run:(x,t)=>{x.td.lockW={tag:x.td.pid[t[0]],at:x.td.rnd+1};ev(x.td,{k:"lock",sq:t[0]})}});
-  S({id:"tie4",ch:"x_shi",lv:17,nm:"近侍護帥",cost:3,cls:"護盾",d:"帥的斜角相鄰每有 1 顆己方仕，得 1 層護盾（最多 2 層；一顆都沒有不能用）",
+  S({id:"tie4",ch:"x_shi",lv:17,nm:"近侍護帥",cost:30,cls:"護盾",d:"帥的斜角相鄰每有 1 顆己方仕，得 1 層護盾（最多 2 層；一顆都沒有不能用）",
     need:x=>kAdv(x.b)?null:"帥的斜角沒有己方仕",run:x=>{const n=Math.min(2,kAdv(x.b));x.td.gd+=n;ev(x.td,{k:"gd",n})}});
-  S({id:"tie5",ch:"x_shi",lv:23,nm:"盾陣回靈",cost:1,cls:"靈力",d:"這回合每被扣 4 元氣，得 1 靈力（最多 3）",need:x=>(x.td.rf.dmg||0)>=4?null:"這回合被扣不到 4 元氣",run:x=>{spAdd(x.td,Math.min(3,Math.floor(x.td.rf.dmg/4)))}});
+  S({id:"tie5",ch:"x_shi",lv:23,nm:"盾陣回靈",cost:10,cls:"靈力",d:"這回合每被扣 4 元氣，得 10 靈力（最多 30）",need:x=>(x.td.rf.dmg||0)>=4?null:"這回合被扣不到 4 元氣",run:x=>{spAdd(x.td,SPK*Math.min(3,Math.floor(x.td.rf.dmg/4)))}});
   /* 步越溪（兵）輔助成長 */
-  S({id:"bu1",ch:"x_bing",lv:1,nm:"神行百里",cost:1,cls:"控制",d:"交換己方 2 子位置（換完要合法）",steps:2,cao:"data/bhtd/cao/cao_x_bu.webp",
+  S({id:"bu1",ch:"x_bing",lv:1,nm:"神行百里",cost:10,cls:"控制",d:"交換己方 2 子位置（換完要合法）",steps:2,cao:"data/bhtd/cao/cao_x_bu.webp",
     tg:(x,pk)=>{if(!pk.length)return own(x.b,(p,q)=>own(x.b).some(z=>swOk(x.b,q,z,x.C)));return own(x.b).filter(z=>swOk(x.b,pk[0],z,x.C))},none:"沒有可以交換的兩顆子",
     run:(x,t)=>{const b=x.P.board,a=t[0],c=t[1],pa=b[a],pc=b[c],ta=x.td.pid[a],tc=x.td.pid[c];edit(x.P,x.C,{[a]:pc,[c]:pa});x.td.pid[a]=tc;x.td.pid[c]=ta;ev(x.td,{k:"sw",sq:a,t:c,src:"sk"})}});
-  S({id:"bu2",ch:"x_bing",lv:6,nm:"勇往直前",cost:1,cls:"靈力",d:"上一回合有己方兵往前走，得 2 靈力",need:x=>x.td.pf?null:"上一步要有兵往前走",run:x=>{spAdd(x.td,2)}});
-  S({id:"bu3",ch:"x_bing",lv:12,nm:"跑腿賺錢",cost:2,cls:"回元氣",d:"3 回合內，己方兵每往前走 1 步回 4（最多 3 次）",run:x=>{x.td.run={left:3,until:x.td.rnd+3};ev(x.td,{k:"run",n:3})}});   /* 元氣滿也能先放；結算在 move() 紅方分支 */
-  S({id:"bu4",ch:"x_bing",lv:17,nm:"步步為營",cost:2,cls:"護盾",d:"己方 1 顆兵，下一次虛空鎖鎖不住它",tg:x=>own(x.b,p=>p==="P").filter(q=>!x.td.li.includes(x.td.pid[q])),none:"沒有可以護住的兵",run:(x,t)=>{x.td.li.push(x.td.pid[t[0]]);ev(x.td,{k:"sh",sq:t[0],n:0})}});
-  S({id:"bu5",ch:"x_bing",lv:23,nm:"揚州快步",cost:1,cls:"靈力",d:"下一招耗靈 −2（最少 1）",run:x=>{x.td.disc=2;ev(x.td,{k:"sp",n:0})}});
+  S({id:"bu2",ch:"x_bing",lv:6,nm:"勇往直前",cost:10,cls:"靈力",d:"上一回合有己方兵往前走，得 20 靈力",need:x=>x.td.pf?null:"上一步要有兵往前走",run:x=>{spAdd(x.td,2*SPK)}});
+  S({id:"bu3",ch:"x_bing",lv:12,nm:"跑腿賺錢",cost:20,cls:"回元氣",d:"3 回合內，己方兵每往前走 1 步回 4（最多 3 次）",run:x=>{x.td.run={left:3,until:x.td.rnd+3};ev(x.td,{k:"run",n:3})}});   /* 元氣滿也能先放；結算在 move() 紅方分支 */
+  S({id:"bu4",ch:"x_bing",lv:17,nm:"步步為營",cost:20,cls:"護盾",d:"己方 1 顆兵，下一次虛空鎖鎖不住它",tg:x=>own(x.b,p=>p==="P").filter(q=>!x.td.li.includes(x.td.pid[q])),none:"沒有可以護住的兵",run:(x,t)=>{x.td.li.push(x.td.pid[t[0]]);ev(x.td,{k:"sh",sq:t[0],n:0})}});
+  S({id:"bu5",ch:"x_bing",lv:23,nm:"揚州快步",cost:10,cls:"靈力",d:"下一招耗靈 −20（最少 10）",run:x=>{x.td.disc=2*SPK;ev(x.td,{k:"sp",n:0})}});
   /* 齊轍（俥）主攻輸出 */
-  S({id:"qi1",ch:"x_swordboy",lv:1,nm:"一劍破甲",cost:4,cls:"攻擊",d:"移除敵方 1 顆兵、仕或相",cao:"data/bhtd/cao/cao_x_qi.webp",tg:x=>foe(x.b,(p,q)=>"pab".includes(p)&&rmOk(x.b,q,x.C)),none:"沒有可以移除的卒、士、象",run:(x,t)=>rm(x,t[0])});
-  S({id:"qi2",ch:"x_swordboy",lv:6,nm:"直路衝鋒",cost:2,cls:"攻擊",d:"上一步是己方俥走的才能用：俥直走了幾格，就扣「格數 × 2」（最多 10）",need:x=>x.td.lastR&&x.td.lastR.p==="R"?null:"上一步要是俥走的",
+  S({id:"qi1",ch:"x_swordboy",lv:1,nm:"一劍破甲",cost:40,cls:"攻擊",d:"移除敵方 1 顆兵、仕或相",cao:"data/bhtd/cao/cao_x_qi.webp",tg:x=>foe(x.b,(p,q)=>"pab".includes(p)&&rmOk(x.b,q,x.C)),none:"沒有可以移除的卒、士、象",run:(x,t)=>rm(x,t[0])});
+  S({id:"qi2",ch:"x_swordboy",lv:6,nm:"直路衝鋒",cost:20,cls:"攻擊",d:"上一步是己方俥走的才能用：俥直走了幾格，就扣「格數 × 2」（最多 10）",need:x=>x.td.lastR&&x.td.lastR.p==="R"?null:"上一步要是俥走的",
     run:x=>{const r=x.td.lastR,d=Math.abs(RW(r.f)-RW(r.t))+Math.abs(CL(r.f)-CL(r.t));hitRaw(x.td,Math.min(10,d*2),"直路衝鋒")}});
-  S({id:"qi3",ch:"x_swordboy",lv:12,nm:"輪牌護身",cost:2,cls:"護盾",d:"己方 1 顆俥得小盾 10",tg:x=>own(x.b,p=>p==="R"),none:"場上沒有俥",run:(x,t)=>shAdd(x.td,t[0],10)});
-  S({id:"qi4",ch:"x_swordboy",lv:17,nm:"認轍尋路",cost:1,cls:"輔助",d:"標出下一步能擒到己方俥的所有敵子",need:x=>rookThreats(x.b,x.C).length?null:"現在沒有敵子擒得到俥",
+  S({id:"qi3",ch:"x_swordboy",lv:12,nm:"輪牌護身",cost:20,cls:"護盾",d:"己方 1 顆俥得小盾 10",tg:x=>own(x.b,p=>p==="R"),none:"場上沒有俥",run:(x,t)=>shAdd(x.td,t[0],10)});
+  S({id:"qi4",ch:"x_swordboy",lv:17,nm:"認轍尋路",cost:10,cls:"輔助",d:"標出下一步能擒到己方俥的所有敵子",need:x=>rookThreats(x.b,x.C).length?null:"現在沒有敵子擒得到俥",
     run:x=>{const L=rookThreats(x.b,x.C);x.td.thr={q:L};ev(x.td,{k:"thr",sq:L})}});   /* 標記留到紅方走下一步（move 清掉） */
-  S({id:"qi5",ch:"x_swordboy",lv:23,nm:"長街破陣",cost:3,cls:"團攻",d:"指定一條橫線或直線，最多 3 顆非帥將敵子各扣 6",steps:2,
+  S({id:"qi5",ch:"x_swordboy",lv:23,nm:"長街破陣",cost:30,cls:"團攻",d:"指定一條橫線或直線，最多 3 顆非帥將敵子各扣 6",steps:2,
     tg:(x,pk)=>{if(!pk.length)return foe(x.b);const q=pk[0],h=lineFoes(x.b,q,"h").length,v=lineFoes(x.b,q,"v").length;return[{v:"h",l:`橫線（${Math.min(3,h)} 顆）`,n:h},{v:"v",l:`直線（${Math.min(3,v)} 顆）`,n:v}].filter(o=>o.n>0)},
     run:(x,t)=>{for(const q of lineFoes(x.b,t[0],t[1]).slice(0,3))hitPiece(x.td,q,6,"長街破陣")}});
   /* 田飛燕（相）守護控場 */
-  S({id:"tian1",ch:"x_spiritgirl",lv:1,nm:"飛燕還巢",cost:3,cls:"輔助",d:"己方 1 顆大子（俥、炮、傌）瞬移回己方底線空格",steps:2,cao:"data/bhtd/cao/cao_x_tian.webp",
+  S({id:"tian1",ch:"x_spiritgirl",lv:1,nm:"飛燕還巢",cost:30,cls:"輔助",d:"己方 1 顆大子（俥、炮、傌）瞬移回己方底線空格",steps:2,cao:"data/bhtd/cao/cao_x_tian.webp",
     tg:(x,pk)=>{const D=[81,82,83,84,85,86,87,88,89];if(!pk.length)return own(x.b,(p,q)=>"RNC".includes(p)&&D.some(z=>mvOk(x.b,q,z,x.C)));return D.filter(z=>mvOk(x.b,pk[0],z,x.C))},none:"沒有可以回到底線的大子",run:(x,t)=>tp(x,t[0],t[1])});
-  S({id:"tian2",ch:"x_spiritgirl",lv:6,nm:"青玉護棚",cost:2,cls:"團防",d:"2 回合內，敵子過河每回合扣的元氣不算（停進九宮多扣的 2 照扣）",run:x=>{x.td.noCross=x.td.rnd+2;ev(x.td,{k:"ncx",n:0})}});
-  S({id:"tian3",ch:"x_spiritgirl",lv:12,nm:"象眼迷煙",cost:2,cls:"控制",d:"己方半場內 1 顆敵子，2 回合內不能吃子（還可以走）",tg:x=>foe(x.b,(p,q)=>RW(q)>=5),none:"己方半場沒有敵子",
+  S({id:"tian2",ch:"x_spiritgirl",lv:6,nm:"青玉護棚",cost:20,cls:"團防",d:"2 回合內，敵子過河每回合扣的元氣不算（停進九宮多扣的 2 照扣）",run:x=>{x.td.noCross=x.td.rnd+2;ev(x.td,{k:"ncx",n:0})}});
+  S({id:"tian3",ch:"x_spiritgirl",lv:12,nm:"象眼迷煙",cost:20,cls:"控制",d:"己方半場內 1 顆敵子，2 回合內不能吃子（還可以走）",tg:x=>foe(x.b,(p,q)=>RW(q)>=5),none:"己方半場沒有敵子",
     run:(x,t)=>{const tag=x.td.pid[t[0]];x.td.noCap=x.td.noCap.filter(o=>o.tag!==tag);x.td.noCap.push({tag,until:x.td.rnd+2});ev(x.td,{k:"ncap",sq:t[0]})}});
-  S({id:"tian4",ch:"x_spiritgirl",lv:17,nm:"渡口清茶",cost:2,cls:"回元氣",d:"回 10；這回合己方擒過子就不能用（要靜下來才喝得了茶）",heal:1,need:x=>x.td.rf.cap?"剛擒過子，靜下來才喝得了茶":null,run:x=>{heal(x.td,10)}});
-  S({id:"tian5",ch:"x_spiritgirl",lv:23,nm:"雙燕斜護",cost:3,cls:"團防",d:"指定 2 顆斜向相鄰的己方子結成一對：2 回合內其中一顆被擒，另一顆下一次被擒不扣元氣",steps:2,
+  S({id:"tian4",ch:"x_spiritgirl",lv:17,nm:"渡口清茶",cost:20,cls:"回元氣",d:"回 10；這回合己方擒過子就不能用（要靜下來才喝得了茶）",heal:1,need:x=>x.td.rf.cap?"剛擒過子，靜下來才喝得了茶":null,run:x=>{heal(x.td,10)}});
+  S({id:"tian5",ch:"x_spiritgirl",lv:23,nm:"雙燕斜護",cost:30,cls:"團防",d:"指定 2 顆斜向相鄰的己方子結成一對：2 回合內其中一顆被擒，另一顆下一次被擒不扣元氣",steps:2,
     tg:(x,pk)=>{if(!pk.length)return own(x.b,(p,q)=>diagMates(x.b,q).length>0);return diagMates(x.b,pk[0])},none:"沒有斜向相鄰的兩顆子",
     run:(x,t)=>{x.td.pair.push({a:x.td.pid[t[0]],b:x.td.pid[t[1]],until:x.td.rnd+2});ev(x.td,{k:"pair",sq:t[0],t:t[1]})}});
   /* 雷借花（炮）遠程範圍——煙火、火花，不用鎖鏈（開發者 11/13 第 150 題） */
-  S({id:"lei1",ch:"x_martialgirl",lv:1,nm:"煙火震懾",cost:2,cls:"控制",d:"敵方 1 顆非帥將子下回合不能動",cao:"data/bhtd/cao/cao_x_lei.webp",tg:x=>foe(x.b),run:(x,t)=>freeze(x,t[0])});
-  S({id:"lei2",ch:"x_martialgirl",lv:6,nm:"隔子星花",cost:2,cls:"攻擊",d:"己方炮隔一子瞄到的 1 顆非帥將敵子扣 8；當炮架的那顆如果也是敵子，再扣它 4",tg:x=>netHits(x.b,false).map(h=>h.t),none:"炮隔一子瞄不到敵子",
+  S({id:"lei1",ch:"x_martialgirl",lv:1,nm:"煙火震懾",cost:20,cls:"控制",d:"敵方 1 顆非帥將子下回合不能動",cao:"data/bhtd/cao/cao_x_lei.webp",tg:x=>foe(x.b),run:(x,t)=>freeze(x,t[0])});
+  S({id:"lei2",ch:"x_martialgirl",lv:6,nm:"隔子星花",cost:20,cls:"攻擊",d:"己方炮隔一子瞄到的 1 顆非帥將敵子扣 8；當炮架的那顆如果也是敵子，再扣它 4",tg:x=>netHits(x.b,false).map(h=>h.t),none:"炮隔一子瞄不到敵子",
     run:(x,t)=>{const h=netHits(x.b,false).find(o=>o.t===t[0]),s=h&&h.scr,ps=s!=null?x.b[s]:null;hitPiece(x.td,t[0],8,"隔子星花");if(ps&&sd(ps)==="b"&&ps!=="k")hitPiece(x.td,s,4,"隔子星花")}});
-  S({id:"lei3",ch:"x_martialgirl",lv:12,nm:"花火連環",cost:3,cls:"團攻",d:"最多 3 顆破甲敵子各扣 6",need:x=>foe(x.b,(p,q)=>x.td.pj.includes(x.td.pid[q])).length?null:"場上沒有破甲的敵子",
+  S({id:"lei3",ch:"x_martialgirl",lv:12,nm:"花火連環",cost:30,cls:"團攻",d:"最多 3 顆破甲敵子各扣 6",need:x=>foe(x.b,(p,q)=>x.td.pj.includes(x.td.pid[q])).length?null:"場上沒有破甲的敵子",
     run:x=>{const L=foe(x.b,(p,q)=>x.td.pj.includes(x.td.pid[q])).sort((a,c)=>VALV[up(x.b[c])]-VALV[up(x.b[a])]).slice(0,3);for(const q of L)hitPiece(x.td,q,6,"花火連環")}});
-  S({id:"lei4",ch:"x_martialgirl",lv:17,nm:"火網標記",cost:2,cls:"輔助",d:"2 回合內，炮架火網隔兩子瞄到的敵子也標成破甲",run:x=>{x.td.fn2=x.td.rnd+2;markNet(x.td,x.b,true)}});
-  S({id:"lei5",ch:"x_martialgirl",lv:23,nm:"煙幕護耳",cost:2,cls:"護盾",d:"己方 1 子躲進煙幕：下回合敵子不能吃它（沒有別步就照常）",tg:x=>own(x.b,p=>p!=="K"),
+  S({id:"lei4",ch:"x_martialgirl",lv:17,nm:"火網標記",cost:20,cls:"輔助",d:"2 回合內，炮架火網隔兩子瞄到的敵子也標成破甲",run:x=>{x.td.fn2=x.td.rnd+2;markNet(x.td,x.b,true)}});
+  S({id:"lei5",ch:"x_martialgirl",lv:23,nm:"煙幕護耳",cost:20,cls:"護盾",d:"己方 1 子躲進煙幕：下回合敵子不能吃它（沒有別步就照常）",tg:x=>own(x.b,p=>p!=="K"),
     run:(x,t)=>{const tag=x.td.pid[t[0]];x.td.noTake=x.td.noTake.filter(o=>o.tag!==tag);x.td.noTake.push({tag,until:x.td.rnd+1});ev(x.td,{k:"ntk",sq:t[0]})}});
   /* 駱躍梅（傌）遊俠救援 */
-  S({id:"luo1",ch:"x_miaogirl",lv:1,nm:"回營",cost:5,cls:"復活",d:"復活己方 1 顆被擒的子，放回原位（原位有子不能用）",cao:"data/bhtd/cao/cao_x_luo.webp",
+  S({id:"luo1",ch:"x_miaogirl",lv:1,nm:"回營",cost:50,cls:"復活",d:"復活己方 1 顆被擒的子，放回原位（原位有子不能用）",cao:"data/bhtd/cao/cao_x_luo.webp",
     tg:x=>x.td.lost.filter(o=>{if(x.b[o.home]||!canStand(o.p,o.home))return false;const t=x.b.slice();t[o.home]=o.p;return okAfter(t,x.C,rc0(x.b,x.C))}).map(o=>o.home).filter((q,i,a)=>a.indexOf(q)===i),none:"沒有能回營的子（原位被佔住、或還沒有子被擒）",
     run:(x,t)=>{const i=x.td.lost.findIndex(o=>o.home===t[0]);if(i<0)return"找不到這顆子";const o=x.td.lost.splice(i,1)[0];edit(x.P,x.C,{[o.home]:o.p});x.td.pid[o.home]=o.tag;ev(x.td,{k:"rev",sq:o.home,src:"sk"});
       if(x.td.revB){x.td.revB=0;heal(x.td,10)}}});   /* 驛鈴回氣：之前放過＝這次復活再回 10（之後做千里回營也要加） */
-  S({id:"luo2",ch:"x_miaogirl",lv:6,nm:"紅馬跳影",cost:2,cls:"攻擊",d:"跟己方傌呈日字的 1 顆非帥將敵子：扣 10",tg:x=>knightHits(x.b),none:"傌的日字點上沒有敵子",run:(x,t)=>{hitPiece(x.td,t[0],10,"紅馬跳影")}});
-  S({id:"luo3",ch:"x_miaogirl",lv:12,nm:"拐彎避風",cost:2,cls:"護盾",d:"上一步是己方傌走的（拐了彎），得 1 層護盾",need:x=>x.td.lastR&&x.td.lastR.p==="N"?null:"上一步要是傌走的",run:x=>{x.td.gd++;ev(x.td,{k:"gd",n:1})}});
-  S({id:"luo4",ch:"x_miaogirl",lv:17,nm:"驛鈴回氣",cost:2,cls:"回元氣",d:"回 6；這場下一次復活己方子時，再回 10",heal:1,run:x=>{heal(x.td,6);x.td.revB=1}});
-  S({id:"luo5",ch:"x_miaogirl",lv:23,nm:"馬腿解圍",cost:2,cls:"輔助",d:"己方 1 顆傌被自己人蹩住馬腿時，把蹩腿的那顆己方子瞬移到己方半場最近的合法空位（只往左右或後方，不往前）",
+  S({id:"luo2",ch:"x_miaogirl",lv:6,nm:"紅馬跳影",cost:20,cls:"攻擊",d:"跟己方傌呈日字的 1 顆非帥將敵子：扣 10",tg:x=>knightHits(x.b),none:"傌的日字點上沒有敵子",run:(x,t)=>{hitPiece(x.td,t[0],10,"紅馬跳影")}});
+  S({id:"luo3",ch:"x_miaogirl",lv:12,nm:"拐彎避風",cost:20,cls:"護盾",d:"上一步是己方傌走的（拐了彎），得 1 層護盾",need:x=>x.td.lastR&&x.td.lastR.p==="N"?null:"上一步要是傌走的",run:x=>{x.td.gd++;ev(x.td,{k:"gd",n:1})}});
+  S({id:"luo4",ch:"x_miaogirl",lv:17,nm:"驛鈴回氣",cost:20,cls:"回元氣",d:"回 6；這場下一次復活己方子時，再回 10",heal:1,run:x=>{heal(x.td,6);x.td.revB=1}});
+  S({id:"luo5",ch:"x_miaogirl",lv:23,nm:"馬腿解圍",cost:20,cls:"輔助",d:"己方 1 顆傌被自己人蹩住馬腿時，把蹩腿的那顆己方子瞬移到己方半場最近的合法空位（只往左右或後方，不往前）",
     tg:x=>own(x.b,(p,q)=>legDest(x.b,q,x.C)!=null),none:"沒有被自己人蹩住、又能往左右或後方挪開的傌",run:(x,t)=>{const z=legDest(x.b,t[0],x.C);if(z==null)return"找不到可以移過去的空位";tp(x,t[0],z)}});
   function rm(x,q){const tag=x.td.pid[q];edit(x.P,x.C,{[q]:null});delete x.td.pid[q];x.td.pj=x.td.pj.filter(t=>t!==tag);x.td.frz=x.td.frz.filter(t=>t!==tag);ev(x.td,{k:"rm",sq:q,src:"sk"})}
   function tp(x,f,t){const p=x.P.board[f],tag=x.td.pid[f];edit(x.P,x.C,{[f]:null,[t]:p});delete x.td.pid[f];x.td.pid[t]=tag;ev(x.td,{k:"tp",sq:f,t,src:"sk"})}
   const SKM={};for(const s of SK)SKM[s.id]=s;
-  const costOf=(td,id)=>{const s=SKM[id];if(!s)return 99;return td.disc>0?Math.max(1,s.cost-td.disc):s.cost};
+  const costOf=(td,id)=>{const s=SKM[id];if(!s)return 99;return td.disc>0?Math.max(SPK,s.cost-td.disc):s.cost};
   const ctx=(P,C)=>({P,td:P.td,b:P.board,C});
   /* 下一步可以點哪些（UI 和 cast 驗證共用）：回傳格子陣列，或長街破陣第二步的 {v,l} 選項 */
   function targets(P,id,pk,C){const s=SKM[id];if(!s||!s.tg)return[];try{return s.tg(ctx(P,C),pk||[])||[]}catch(e){return[]}}
@@ -11335,9 +11339,9 @@ const BHTD=(()=>{
      ② 結算：三星 starsOf、差一點 nearOf、星塵 dustOf、標題評語 gradeOf／GRADE／GSAY、七星「再來一場」AGAIN。
      ③ 星淵急襲 RAID：中局殘陣模板（雙方各 9～11 子，只減子不加子：開局＋星門每種子都不超過標準數量），星樞元氣 RAID_HP；
         raidLv 照星門變化 v（0～3：左右鏡像、換一道門）組成關卡；raidCheck 開局合法檢查、raidSane 不是一開局就必輸必贏（xiangqi-lab/tools/test-bhtd-r2.js 全部模板都驗） */
-  const TAL_HP=8,TAL_GM_MAX=2;
-  const TAL=[{id:"xhcr",t:1,nm:"星火初燃",cost:20,d:"開局靈力 +1"},{id:"htgy",t:1,nm:"厚土固元",cost:20,d:"元氣上限 +8"},
-    {id:"fmbl",t:2,nm:"鋒芒畢露",cost:35,d:"小子吃大子，再回 1 靈力（每回合 1 次）"},{id:"xzht",t:2,nm:"星陣護體",cost:35,d:"陣眼子第一次被吃，靈力不歸零，只扣 2"},
+  const TAL_HP=8,TAL_GM_MAX=2,TAL_SP=10,TAL_EYE_SP=20;   /* TAL_SP＝星火初燃開局靈力、鋒芒畢露回靈；TAL_EYE_SP＝星陣護體只扣多少靈（11/14 晚 ×10） */
+  const TAL=[{id:"xhcr",t:1,nm:"星火初燃",cost:20,d:"開局靈力 +10"},{id:"htgy",t:1,nm:"厚土固元",cost:20,d:"元氣上限 +8"},
+    {id:"fmbl",t:2,nm:"鋒芒畢露",cost:35,d:"小子吃大子，再回 10 靈力（每回合 1 次）"},{id:"xzht",t:2,nm:"星陣護體",cost:35,d:"陣眼子第一次被吃，靈力不歸零，只扣 20"},
     {id:"qmls",t:3,nm:"奇謀連鎖",cost:40,d:"奇謀連擊再多扣 2（一次最多扣 12）"},{id:"cyhw",t:3,nm:"赤焰火網",cost:40,d:"炮打出的破甲，用過再留 1 回合"},
     {id:"qxgm",t:4,nm:"七星共鳴",cost:50,d:"每 2 顆過河的己方子，回合結束回 1 元氣（每回合最多 2）"}];
   const TALM={};for(const x of TAL)TALM[x.id]=x;const TAL_ALL=TAL.reduce((a,x)=>a+x.cost,0);
@@ -11403,7 +11407,7 @@ const BHTD=(()=>{
   const RAIDM={};for(const T of RAID)RAIDM[T.id]=T;
   /* 星門變化 v：bit0＝左右鏡像、bit1＝換一道門（往中間挪 2 路，那一格站不了就不挪） */
   function raidWaves(T,v){v=(Math.round(+v)||0)&3;return(T.w||[]).map(w=>({at:w.at,fake:!!w.fake,p:w.p.map(([p,lu,xi])=>{let L=v&1?10-lu:lu;if(v&2){const L2=L+(L<=5?2:-2);if(canStand(p,LSQ(L2,xi)))L=L2}return[p,L,xi]})}))}
-  function raidLv(id,v){const T=RAIDM[id]||RAID[0];return{n:0,nm:"星淵急襲・"+T.nm,hp:RAID_HP,sp0:1,open:[],waves:raidWaves(T,v),nofill:1,tpl:"急襲",ps:T.ps||"",fsk:["zhs","cfx"],zcap:2,r3:T.r3}}
+  function raidLv(id,v){const T=RAIDM[id]||RAID[0];return{n:0,nm:"星淵急襲・"+T.nm,hp:RAID_HP,sp0:10,open:[],waves:raidWaves(T,v),nofill:1,tpl:"急襲",ps:T.ps||"",fsk:["zhs","cfx"],zcap:2,r3:T.r3}}
   function raidBoard(T,C){const b=new Array(90).fill(null);for(const[p,lu,xi]of T.r.concat(T.b))b[LSQ(lu,xi)]=p;return b}
   function raidFen(id,C){return C.fen(raidBoard(RAIDM[id]||RAID[0],C),"r").split(" ")[0]}
   /* 急襲開局合法檢查（照 lvCheck 的規矩，只減子不加子）：每顆子站得住、不重疊、子數不超過標準（黑方含星門）、雙方各 9～11 子、紅方七種子都有、
@@ -11430,8 +11434,8 @@ const BHTD=(()=>{
     for(const s of["r","b"]){const w=free(s,s==="r"?"b":"r");if(w)err.push(w)}
     const mat=L=>L.reduce((a,x)=>a+VALV[up(x[0])],0),mr=mat(T.r),mb=mat(T.b)+mat([].concat(...(T.w||[]).map(w=>w.p)));if(Math.abs(mr-mb)>RAID_MAT)err.push(`子力差太多（紅 ${mr}、黑 ${mb}）`);
     return err}
-  return{CH,LV,TL,SK,SKM,EYE0,PCN,PBN,CAPB,CAPM,CAPMAX,CHK_HIT,VALV,FSK,LSQ,comboOf,chkDmg,stats,defDmg,atkPt,defPt,spCurve,depthOf,startFen,lvPlan,lvCheck,canStand,boot,move,roundEnd,engine,pick,psBonus,foeDecide,foeMarks,foeEst,targets,why,cast,costOf,capDmg,netHits,sqOf,gatePick,G,tdFix,
-    TAL,TALM,TAL_ALL,TAL_HP,talValid,talSpent,talWhy,talBuy,talReset,DUST,dustOf,starsOf,nearOf,rndOf,GRADE,GSAY,gradeOf,AGAIN,RAID,RAIDM,RAID_HP,RAID_AI,RAID_MAT,raidWaves,raidLv,raidFen,raidCheck,raidSane}})();
+  return{CH,LV,TL,SK,SKM,EYE0,PCN,PBN,CAPB,CAPM,CAPMAX,CHK_HIT,VALV,FSK,LSQ,comboOf,chkDmg,stats,defDmg,atkPt,defPt,spCurve,SPK,CAP_SP,ESP_GAIN,XM_CAP,ESP_MAX,depthOf,startFen,lvPlan,lvCheck,canStand,boot,move,roundEnd,engine,pick,psBonus,foeDecide,foeMarks,foeEst,targets,why,cast,costOf,capDmg,netHits,sqOf,gatePick,G,tdFix,
+    TAL,TALM,TAL_ALL,TAL_HP,TAL_SP,TAL_EYE_SP,talValid,talSpent,talWhy,talBuy,talReset,DUST,dustOf,starsOf,nearOf,rndOf,GRADE,GSAY,gradeOf,AGAIN,RAID,RAIDM,RAID_HP,RAID_AI,RAID_MAT,raidWaves,raidLv,raidFen,raidCheck,raidSane}})();
 if(typeof window!=="undefined")window.XQ_TD=BHTD;
 /* ================= ② 畫面 ================= */
 const BHTD_ON=true;   /* false＝黑洞照舊下一般象棋（bhStart 不開關卡卡片） */
@@ -11477,7 +11481,7 @@ body.bhtd-on #acts button[aria-label="悔棋"],body.bhtd-on #acts button[aria-la
 .bt-av{flex:none;width:22px;height:22px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-style:normal;font-weight:800;font-size:12.5px;line-height:1;box-sizing:border-box}
 .bt-av.en{color:#FFE6A3;background:radial-gradient(circle at 40% 35%,#3a2f6a,#120f2a);border:1.5px solid #b46bff}.bt-av.me{color:#B3121F;background:radial-gradient(circle at 40% 35%,#fff6dd,#e9cf95);border:1.5px solid #FFE08A}
 .bt-bar{position:relative;flex:0 0 44%;height:18px;border-radius:99px;background:rgba(255,255,255,.12);overflow:hidden}
-.bt-r2>.bt-bar{flex-shrink:1;min-width:100px}.bt-sp.many{gap:2px}.bt-sp.many i{width:9px;height:9px}   /* 11/14 靈力上限拉開到 9＋攻擊力／防禦力小字：靈力 7 顆以上點變小、自己的元氣條可以縮，手機直拿一排放得下 */
+.bt-r2>.bt-bar{flex-shrink:1;min-width:100px}   /* 11/14：自己的元氣條可以縮，靈力條＋攻擊力／防禦力小字在手機直拿一排放得下 */
 .bt-bar i{position:absolute;inset:0 auto 0 0;border-radius:99px;transition:width .5s;background:linear-gradient(90deg,#8a1020,#e0483a)}
 .bt-bar.en i{background:linear-gradient(90deg,#4a1a7a,#b04ae0)}
 .bt-bar b{position:relative;display:block;text-align:center;font-size:11.5px;line-height:18px;text-shadow:0 1px 2px #000;font-weight:700;white-space:nowrap;overflow:hidden}
@@ -11486,7 +11490,7 @@ body.bhtd-on #acts button[aria-label="悔棋"],body.bhtd-on #acts button[aria-la
 .bt-think{display:inline-block;padding:1px 10px;border-radius:99px;color:#f0e6ff;background:linear-gradient(90deg,rgba(120,80,200,.18),rgba(190,150,255,.6),rgba(120,80,200,.18));background-size:200% 100%;animation:btThink 1.4s linear infinite}
 @keyframes btThink{to{background-position:-200% 0}}
 .bt-gate{color:#d9b8ff}
-.bt-sp{display:flex;gap:3px;flex:none}.bt-sp i{width:11px;height:11px;border-radius:50%;border:1.5px solid #6fb8ff;box-sizing:border-box}.bt-sp i.on{background:radial-gradient(circle,#dff1ff,#3d8bff);box-shadow:0 0 6px #3d8bff}
+.bt-sp,.bt-esp{position:relative;flex:0 0 66px;height:15px;border-radius:99px;overflow:hidden;box-sizing:border-box;background:rgba(111,184,255,.14);border:1px solid rgba(111,184,255,.6)}.bt-sp>i,.bt-esp>i{position:absolute;left:0;top:0;bottom:0;background:linear-gradient(90deg,#2f6fd6,#7cc4ff);transition:width .35s}.bt-sp>b,.bt-esp>b{position:relative;display:block;text-align:center;font:700 10.5px/13px var(--serif);color:#fff;text-shadow:0 0 3px #000,0 0 2px #000;font-variant-numeric:tabular-nums;white-space:nowrap}   /* 11/14 晚：靈力 ×10 後改成藍條＋數字（不再一顆一顆圓點） */
 .bt-st{flex:1;min-width:0;font-size:11.5px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.bt-rnd{flex:none;font-size:11px;color:#c9bfe8}.bt-ad{flex:none;font-size:10px;line-height:1.15;color:#c9bfe8;text-align:right;white-space:nowrap;font-variant-numeric:tabular-nums}
 .bt-sks{display:grid;grid-template-columns:repeat(4,1fr);gap:6px;margin-top:5px}
 .bt-sk{position:relative;font:inherit;color:#f6eedd;background:linear-gradient(180deg,#2c2450,#171433);border:1.5px solid #8f7bd8;border-radius:12px;padding:4px 2px;min-height:48px;cursor:pointer;line-height:1.15;touch-action:manipulation}
@@ -11561,7 +11565,7 @@ body.bhtd-on #bbox .pkname{display:none!important}
 .bt-mk.bd{font-size:10.5px;font-weight:700;color:#fff;border-radius:6px;padding:0 3px}.bt-mk.bd.nc{background:#5d5d72;box-shadow:0 0 6px #c9c9e0;margin:calc(var(--c)*.42) 0 0 calc(var(--c)*.42)}.bt-mk.bd.nt{background:#2f7d6b;box-shadow:0 0 6px #8fe0c8;margin:calc(var(--c)*.42) calc(var(--c)*.42) 0 0}
 .bt-mk.fb{width:calc(var(--c)*.9);height:calc(var(--c)*.9);border-radius:50%;background:radial-gradient(circle,rgba(255,60,40,.45),rgba(255,60,40,0) 70%);box-shadow:0 0 14px 4px rgba(255,70,50,.55)}
 .bt-fore{margin-top:3px;font-size:12px;line-height:1.45;color:#ffd0c8;background:rgba(160,20,30,.35);border:1px solid rgba(255,90,80,.6);border-radius:8px;padding:3px 7px;white-space:normal}.bt-fore b{color:#fff}.bt-fore .kid{color:#ffe08a}
-.bt-esp{display:inline-flex;gap:2px;margin-left:6px;vertical-align:middle}.bt-esp i{width:8px;height:8px;border-radius:50%;border:1.5px solid #c58cff;box-sizing:border-box}.bt-esp i.on{background:#b04ae0;box-shadow:0 0 5px #b04ae0}
+.bt-esp{display:inline-block;flex:0 0 58px;width:58px;margin-left:6px;vertical-align:middle;background:rgba(197,140,255,.14);border-color:rgba(197,140,255,.6)}.bt-esp>i{background:linear-gradient(90deg,#8a2fc0,#d08cff)}
 .bt-mk.tg{pointer-events:auto;width:calc(var(--c)*.9);height:calc(var(--c)*.9);border-radius:50%;border:3px solid #FFE08A;background:rgba(255,224,138,.18);cursor:pointer;animation:btTg 1s ease-in-out infinite;padding:0}
 @keyframes btTg{50%{box-shadow:0 0 16px 6px rgba(255,224,138,.65)}}
 .bt-mk.tg.pk{border-color:#7fe0ff;background:rgba(127,224,255,.3)}
@@ -11667,16 +11671,16 @@ function bhtdSelect(k,cover){if(typeof bhtlNeed==="function"&&bhtlNeed()){bhtlOf
   const rcard=()=>{const ai=BHTD.depthOf(BHTD.RAID_AI,diff),dr=BHTD.DUST.raid;
     return`<button type="button" class="bt-card bt-rdc${sel==="rd"?" on":""}${rdOk?"":" lock"}" data-n="rd" aria-label="${esc(`星淵急襲，${rdOk?"可挑戰":"未解鎖（先破第 1 關）"}，中局殘陣，3～5 分鐘，星樞推算 ${ai.depth} 步，星樞元氣 ${BHTD.RAID_HP}，星塵 ${dr[1]}～${dr[3]}`)}"><span class="hd"><small>⚡</small><b>星淵急襲</b><span class="st">推算 ${ai.depth} 步・元氣 ${BHTD.RAID_HP}</span></span><small class="tg">${esc(`中局殘陣・3～5 分鐘・星塵 ${dr[1]}～${dr[3]}`)}</small><small class="ok" aria-hidden="true">${rdOk?"⚡ "+D.r.w:"🔒 未解鎖"}</small></button>`};
   const cards=()=>BHTD.LV.map(V=>card(V.n)).join("")+rcard();
-  const skHTML=()=>pool.map(s=>`<label class="${pk.includes(s.id)?"on":""}${s.lv>L?" lk":""}" data-id="${s.id}" title="${esc(s.d)}">${s.lv>L?"🔒 Lv"+s.lv+" ":""}${esc(s.nm)}・${s.cost}靈</label>`).join("");
+  const skHTML=()=>pool.map(s=>`<label class="${pk.includes(s.id)?"on":""}${s.lv>L?" lk":""}" data-id="${s.id}" title="${esc(s.d)}">${s.lv>L?"🔒 Lv"+s.lv+" ":""}${esc(s.nm)}・${s.cost} 靈</label>`).join("");
   const eyeN=BHTD.PCN[st.pc],fx=bhtdFxMode(),tn=D.t.length;
   const later=opt.after?[BL,()=>{try{bhReturn()}catch(e){}},true]:["之後再來",()=>{try{bhMus(null);if(cover!==false&&k&&typeof shipDockCover==="function")shipDockCover(k,()=>{})}catch(e){}},true];
   const m=modal(`<div class="em">🌀</div><h2>星淵遠征・星域一</h2>
-    <p class="bt-me">陣眼：<b>${esc(st.n)}</b>（Lv ${st.L}）・元氣 <b>${st.hp}</b>・靈力上限 <b>${st.sp}</b>・攻擊力 <b>${BHTD.atkPt(st.atk)}</b>・防禦力 <b>${BHTD.defPt(st.def)}</b>・陣眼子＝發星光的${eyeN}</p>
+    <p class="bt-me">陣眼：<b>${esc(st.n)}</b>（Lv ${st.L}）・元氣 <b>${st.hp}</b>・靈力上限 <b>${st.sp}</b>・每回合回靈 <b>${st.spRegen}</b>・攻擊力 <b>${BHTD.atkPt(st.atk)}</b>・防禦力 <b>${BHTD.defPt(st.def)}</b>・陣眼子＝發星光的${eyeN}</p>
     <div class="bt-dust"><span>✦ <span>星塵</span> <b>${D.d}</b>${tn?` ・<span>天賦</span> <b>${tn}</b>／${BHTD.TAL.length}`:""}</span><button type="button" class="btn ghost" data-tb="1">🌌 天賦</button></div>
     ${typeof bhtlCard==="function"?bhtlCard():""}<div class="bt-cards">${cards()}</div>
     <p class="bt-me" style="margin-bottom:0">帶上場的招式（最多 4 招）：</p><div class="bt-sklist">${skHTML()}</div>
     <p class="bt-me">戰鬥演出：<span class="bt-seg">${Object.keys(BHTD_FXN).map(x=>`<button type="button" data-fx="${x}" class="${x===fx?"on":""}">${BHTD_FXN[x]}</button>`).join("")}</span></p>
-    <details class="bt-rule"><summary>陣地規則</summary>雙方各有元氣（紅條）。星樞的子過河後，每回合每顆扣你 1 元氣，停進你的九宮再多扣 2；你的子過河也一樣扣星樞。被將軍扣 5。你的子被吃、被將軍，還有星樞招式扣你的元氣，都會被你的防禦力減少（至少扣 1）；過河、九宮、星碎格照原本扣。擒子扣對方元氣（越弱的子吃越強的子扣得越多，一次最多 12），還 +1 靈力；每回合也會自動 +1 靈力。<br>炮隔一子瞄到的敵子會「破甲」，下次打它多扣 1。紫墨星門會在預告的格子落下星樞的援軍，站上去可以堵住。<br>發星光的是陣眼子：用它吃子扣元氣 ×1.5；它被吃，靈力全散、招式停 1 回合。<br>一回合放一招，放招不佔走棋。將死或把星樞元氣打光都算贏；你的元氣歸零就輸，可以重打本關。<br>過關得星塵：三星是過關、陣眼子沒被吃、在規定回合內過關。星塵拿去點天賦（只在黑洞有用）。${typeof bhtlCard==="function"?`<br><button type="button" class="btn ghost" data-tl="1">▶ 再玩一次練習賽</button>`:""}</details>`,
+    <details class="bt-rule"><summary>陣地規則</summary>雙方各有元氣（紅條）。星樞的子過河後，每回合每顆扣你 1 元氣，停進你的九宮再多扣 2；你的子過河也一樣扣星樞。被將軍扣 5。你的子被吃、被將軍，還有星樞招式扣你的元氣，都會被你的防禦力減少（至少扣 1）；過河、九宮、星碎格照原本扣。擒子扣對方元氣（越弱的子吃越強的子扣得越多，一次最多 12），還 +10 靈力；每回合也會自動回靈力（修為越高回越多）。<br>炮隔一子瞄到的敵子會「破甲」，下次打它多扣 1。紫墨星門會在預告的格子落下星樞的援軍，站上去可以堵住。<br>發星光的是陣眼子：用它吃子扣元氣 ×1.5；它被吃，靈力全散、招式停 1 回合。<br>一回合放一招，放招不佔走棋。將死或把星樞元氣打光都算贏；你的元氣歸零就輸，可以重打本關。<br>過關得星塵：三星是過關、陣眼子沒被吃、在規定回合內過關。星塵拿去點天賦（只在黑洞有用）。${typeof bhtlCard==="function"?`<br><button type="button" class="btn ghost" data-tl="1">▶ 再玩一次練習賽</button>`:""}</details>`,
     [["⚔ 出戰",()=>{if(sel==="rd")bhtdRaid(k,cover,pk);else bhtdStart(sel,k,cover,pk)}],later],"prolog bt-sel");
   if(!m)return;const paint=()=>{m.querySelector(".bt-cards").innerHTML=cards();m.querySelector(".bt-sklist").innerHTML=skHTML()};
   m.addEventListener("click",e=>{const tl=e.target.closest("[data-tl]");if(tl&&typeof bhtlStart==="function"){vibrate(5);m.remove();bhtlStart(k,cover);return}   /* 練習賽卡、規則裡的「再玩一次練習賽」 */
@@ -11690,6 +11694,8 @@ if(typeof window!=="undefined")window.bhtdOpen=bhtdOpen;
 /* 開發者 11/13（實打驗收）：同一關有沒下完的塔防盤，卡片上換了招再按出戰 → 先問「接著下舊盤」還是「開新盤（用新選的招）」；招沒變＝直接接著下。
    how：未給＝先查；"go"＝照常（沒有同關舊盤）；"old"＝接舊盤（不再扣星芒）；"new"＝丟掉舊盤、用新選的招開新盤。q＝結果視窗「再刷一場」：不播關卡開場的長台詞 */
 const bhtdSkKey=a=>(Array.isArray(a)?a.slice():[]).sort().join(",");
+/* 天賦「星火初燃」開局多給的靈力（星芒換靈力時先算進去，免得多扣星芒） */
+const bhtdTalSp=t=>BHTD.talValid(t).includes("xhcr")?BHTD.TAL_SP:0;
 function bhtdStart(n,k,cover,sk,how,q){const C=bhtdC();if(!C)return toast("規則程式還沒載好");
   if(how!=="old"){const lk=bhtdLock();if(lk){toast("🌫 "+lk);return}}   /* 11/14：定軌力用完＝黑洞入口關著（接著下沒下完的那盤照常） */
   if(!how){api("/play/state").then(st=>{const td=st&&st.td,same=td&&st.journey==="bh:td"+n&&!st.result&&st.moves&&st.moves.length;
@@ -11700,9 +11706,9 @@ function bhtdStart(n,k,cover,sk,how,q){const C=bhtdC();if(!C)return toast("規�
   const ck=bhtdChar(),L=bhtdL(),diff=bhtdDiff(),ai=BHTD.depthOf(n,diff),P=bhtdProg(),tal=bhtdDust().t;   /* tal：點亮的天賦（只在黑洞塔防生效，boot 的 cfg.tal） */
   P.sk[ck]=sk;P.last=n;store.set("bhtd",P);try{bhPreload()}catch(e){}
   const R0=store.get("bhRet",null);store.set("bhRet",{k:k||(R0&&R0.k)||store.get("era","classic"),cover:k?cover!==false:!!(R0&&R0.cover),at:Date.now(),first:!((+store.get("bhCount",0)||0)>0)});store.set("park3d",true);
-  let xm=0;try{if(how!=="old"&&typeof dglXmTake==="function"){const st0=BHTD.stats(ck,L);xm=dglXmTake(Math.min(st0.sp,BHTD.LV[n-1].sp0||0),st0.sp)}}catch(e){xm=0}   /* 開發者 11/13 平日體力：身上的星芒帶進來當開局靈力，用掉的扣掉（m/07dgl-stamina.js；boot 的 cfg.xm） */
+  let xm=0;try{if(how!=="old"&&typeof dglXmTake==="function"){const st0=BHTD.stats(ck,L);xm=dglXmTake(Math.min(st0.sp,(BHTD.LV[n-1].sp0||0)+bhtdTalSp(tal)),st0.sp,BHTD.SPK)}}catch(e){xm=0}   /* 開發者 11/13 平日體力：身上的星芒帶進來當開局靈力，用掉的扣掉（m/07dgl-stamina.js；boot 的 cfg.xm）；11/14 晚：1 點星芒＝SPK 點靈力，xm 是換到的靈力點數 */
   jStart("bh:td"+n,{human:"r",lx:Math.min(18,ai.depth),journey:"bh:td"+n,lv:{fen:BHTD.startFen(n,C),turn:"r"},td:{lv:n,ch:ck,L,diff,sk,xm,tal}},()=>{const was=/^#\/journey\/play/.test(location.hash);location.hash="#/journey/play";
-    if(was)try{window.dispatchEvent(new Event("xq-play"))}catch(e){}if(xm)setTimeout(()=>toast(`✦ 帶進 ${xm} 點星芒，開局靈力 +${xm}`),q?2400:6200);
+    if(was)try{window.dispatchEvent(new Event("xq-play"))}catch(e){}if(xm)setTimeout(()=>toast(`✦ 帶進 ${Math.ceil(xm/BHTD.SPK)} 點星芒，開局靈力 +${xm}`),q?2400:6200);
     setTimeout(()=>{try{bhBell()}catch(e){}toast(`✦ 第 ${n} 關・${BHTD.LV[n-1].nm}——星樞推算 ${ai.depth} 步`)},q?300:900);if(!q)setTimeout(()=>toast("✦ 星樞："+BHTD.LV[n-1].say),3600)},how==="new")}   /* "new"＝jStart 第 4 個參數 force：不接舊盤 */
 /* ---------- 11/14 第二批：星淵急襲（3～5 分鐘的中局殘陣；每場從 BHTD.RAID 隨機抽一組＋星門變化；星塵照表現 6～10、不給修為）---------- */
 let BHTD_RDL="";   /* 上一場抽到的模板（再刷不連抽同一組） */
@@ -11711,9 +11717,9 @@ function bhtdRaid(k,cover,sk,q){const C=bhtdC();if(!C)return toast("規則程式
   const ck=bhtdChar(),L=bhtdL(),diff=bhtdDiff(),ai=BHTD.depthOf(BHTD.RAID_AI,diff),P=bhtdProg(),tal=bhtdDust().t,pool=BHTD.RAID.filter(T=>T.id!==BHTD_RDL),T=pool[Math.floor(Math.random()*pool.length)]||BHTD.RAID[0],v=Math.floor(Math.random()*4);
   BHTD_RDL=T.id;if(Array.isArray(sk)&&sk.length){P.sk[ck]=sk;store.set("bhtd",P)}try{bhPreload()}catch(e){}
   const R0=store.get("bhRet",null);store.set("bhRet",{k:k||(R0&&R0.k)||store.get("era","classic"),cover:k?cover!==false:!!(R0&&R0.cover),at:Date.now(),first:!((+store.get("bhCount",0)||0)>0)});store.set("park3d",true);
-  let xm=0;try{if(typeof dglXmTake==="function"){const st0=BHTD.stats(ck,L);xm=dglXmTake(Math.min(st0.sp,1),st0.sp)}}catch(e){xm=0}
+  let xm=0;try{if(typeof dglXmTake==="function"){const st0=BHTD.stats(ck,L);xm=dglXmTake(Math.min(st0.sp,BHTD.SPK+bhtdTalSp(tal)),st0.sp,BHTD.SPK)}}catch(e){xm=0}
   jStart("bh:rd",{human:"r",lx:Math.min(18,ai.depth),journey:"bh:rd",lv:{fen:BHTD.raidFen(T.id,C),turn:"r"},td:{raid:{id:T.id,v},ch:ck,L,diff,sk,xm,tal}},()=>{const was=/^#\/journey\/play/.test(location.hash);location.hash="#/journey/play";
-    if(was)try{window.dispatchEvent(new Event("xq-play"))}catch(e){}if(xm)setTimeout(()=>toast(`✦ 帶進 ${xm} 點星芒，開局靈力 +${xm}`),2400);
+    if(was)try{window.dispatchEvent(new Event("xq-play"))}catch(e){}if(xm)setTimeout(()=>toast(`✦ 帶進 ${Math.ceil(xm/BHTD.SPK)} 點星芒，開局靈力 +${xm}`),2400);
     setTimeout(()=>{try{bhBell()}catch(e){}toast(`⚡ 星淵急襲・${T.nm}——星樞元氣 ${BHTD.RAID_HP}`)},q?300:900)},true)}
 /* ---------- 11/14 第二批：星塵與天賦（存檔鍵 bhtdDust，05b JOURNEY_KEYS）----------
    d＝星塵、t＝點亮的天賦、s＝各關最佳星數、r＝急襲 {n 場數, w 勝場}、g＝發過星塵的盤（最近 20 盤，重新整理不重發）、la＝上一盤的結算（結果視窗重開照樣顯示） */
@@ -11759,18 +11765,18 @@ function bhtdHudPaint(){const st=BHTD_ST,en=document.getElementById("bhtdEn"),me
   /* 11/14：舊版兩行式（標題＋星樞元氣＋星門＋預告卡）換成對峙資訊列（上排星樞、下排自己） */
   const myT=bhtdMyTurn(st),fx=td.fx&&!st.result?BHTD.FSK[td.fx.id]:null,gn=g?Math.max(0,g.at-td.rnd):0;
   const line=!st.result&&!myT?`<span class="bt-think">星樞推演中…</span>`:fx?`<button type="button" data-x="fore">⚠ ${esc(fx.nm)}・預估 −${BHTD.foeEst(td,st.board)}</button>`:`<span class="bt-gate">✦ ${g?(gn<=0?"星門本回合落子":`星門 ${gn} 回合後落 ${g.p.length} 子`):"星門已盡"}</span>`;
-  const esp=td.en.spMax?`<span class="bt-esp" title="星樞靈力 ${td.en.sp}／${td.en.spMax}">${Array.from({length:td.en.spMax},(_,i)=>`<i class="${i<td.en.sp?"on":""}"></i>`).join("")}</span>`:"";
+  const esp=td.en.spMax?`<span class="bt-esp" title="星樞靈力 ${td.en.sp}／${td.en.spMax}"><i style="width:${Math.round(100*td.en.sp/Math.max(1,td.en.spMax))}%"></i><b><span class="ax-sr">星樞靈力 </span>${td.en.sp}／${td.en.spMax}</b></span>`:"";
   const ci0=(td.ci||[]).length,eyeOk0=BHTD.sqOf(td,td.eye)!=null,sts=`${td.gd?"🛡×"+td.gd:""}${ci0?" 🛡將":""}${td.disc?" ⚡−"+td.disc:""}${(td.hot||[]).length?" 守心":""}${td.noCross>=td.rnd?" 護棚":""}${td.run?" 跑腿×"+td.run.left:""}${td.revB?" 驛鈴":""}${td.seal>td.rnd?" ⛓停招":""}${eyeOk0?"":" ✧陣眼失"}`;
   const eh=`<div class="bt-ttl"><b>${esc(bhtdName(td))}</b><small>星樞推算 ${td.ai?td.ai.depth:1} 步・第 ${td.rnd+1} 回合</small></div>
 <div class="bt-r1"><i class="bt-av en" aria-hidden="true">${td.boss?"卒":"將"}</i><div class="bt-bar en"><i style="width:${Math.round(100*td.en.hp/Math.max(1,td.en.max))}%"></i><b>${td.boss?"星樞卒將":"星樞"} ${td.en.hp}／${td.en.max}</b></div>${esp}<div class="bt-ln" aria-live="polite">${line}</div></div>
-<div class="bt-r2"><i class="bt-av me" aria-hidden="true">${BHTD.PCN[td.pc]||"帥"}</i><div class="bt-bar me"><i style="width:${Math.round(100*td.me.hp/Math.max(1,td.me.max))}%"></i><b>${esc(td.cn)} ${td.me.hp}／${td.me.max}</b></div><div class="bt-sp${td.me.spMax>6?" many":""}" title="靈力 ${td.me.sp}／${td.me.spMax}">${Array.from({length:td.me.spMax},(_,i)=>`<i class="${i<td.me.sp?"on":""}"></i>`).join("")}</div><span class="bt-st">${sts}</span><small class="bt-ad" title="攻擊力 ${BHTD.atkPt(td.me.atk)}・防禦力 ${BHTD.defPt(td.me.def)}"><span>攻擊力</span> ${BHTD.atkPt(td.me.atk)}<br><span>防禦力</span> ${BHTD.defPt(td.me.def)}</small><small class="bt-rnd">第 ${td.rnd+1} 回</small></div>`;
+<div class="bt-r2"><i class="bt-av me" aria-hidden="true">${BHTD.PCN[td.pc]||"帥"}</i><div class="bt-bar me"><i style="width:${Math.round(100*td.me.hp/Math.max(1,td.me.max))}%"></i><b>${esc(td.cn)} ${td.me.hp}／${td.me.max}</b></div><div class="bt-sp" title="靈力 ${td.me.sp}／${td.me.spMax}・每回合回 ${+td.me.spRg||BHTD.SPK}"><i style="width:${Math.round(100*td.me.sp/Math.max(1,td.me.spMax))}%"></i><b><span class="ax-sr">靈力 </span>${td.me.sp}／${td.me.spMax}</b></div><span class="bt-st">${sts}</span><small class="bt-ad" title="攻擊力 ${BHTD.atkPt(td.me.atk)}・防禦力 ${BHTD.defPt(td.me.def)}"><span>攻擊力</span> ${BHTD.atkPt(td.me.atk)}<br><span>防禦力</span> ${BHTD.defPt(td.me.def)}</small><small class="bt-rnd">第 ${td.rnd+1} 回</small></div>`;
   if(en.dataset.h!==eh){en.dataset.h=eh;en.innerHTML=eh}
   document.body.classList.toggle("bhtd-tg",!!BHTD_TG);   /* 11/13 實打驗收：選目標時，進階機制小卡（#bhtlTip）蓋在最上面兩排，點不到底下的目標格 → 選目標期間變半透明、點得穿 */
   const my=bhtdMyTurn(st),ci=(td.ci||[]).length,eyeOk=BHTD.sqOf(td,td.eye)!=null;let sks="",tip="";
   if(BHTD_TG){const S=BHTD.SKM[BHTD_TG.id];tip=`<div class="bt-tip">${BHTD_TG.arm?`✦ 再點一次「${esc(S.nm)}」放出`:`🎯 ${esc(S.nm)}：${BHTD_TG.pk.length&&S.steps>1?"再選第 2 個":"點盤上發光的格"}`}<button type="button" data-x="cancel">取消</button></div>`}
   const ult=bhtdUlt(td),ord=td.sk.filter(id=>id!==ult).concat(ult?[ult]:[]);
   if(!st.result)sks=`<div class="bt-sks">${ord.map(id=>{const S=BHTD.SKM[id];if(!S)return"";const w=!my?(st.turn!==st.human?"等星樞走完":"請稍候"):BHTD_BUSY?"演出中":C?BHTD.why(Pv,id,C):"";const c=BHTD.costOf(td,id),arm=BHTD_TG&&BHTD_TG.id===id;
-    return`<button type="button" class="bt-sk${w?" off":""}${id===ult?" ult":""}${arm?" arm":""}" data-k="${id}" data-w="${esc(w||"")}" aria-label="${esc(S.nm)}${id===ult?"（絕招）":""}，耗 ${c} 靈力${w?"，"+esc(w):""}"><b>${esc(S.nm)}</b><small>${"●".repeat(c)} ${c} 靈</small></button>`}).join("")}</div>`;
+    return`<button type="button" class="bt-sk${w?" off":""}${id===ult?" ult":""}${arm?" arm":""}" data-k="${id}" data-w="${esc(w||"")}" aria-label="${esc(S.nm)}${id===ult?"（絕招）":""}，耗 ${c} 靈力${w?"，"+esc(w):""}"><b>${esc(S.nm)}</b><small>${c} 靈</small></button>`}).join("")}</div>`;
   sks+=`<div class="bt-aux"><button type="button" data-x="hint">💡 提示</button><button type="button" data-x="desel">✕ 取消選取</button><button type="button" class="bt-more" data-x="more" aria-label="更多：認輸、重開本關、戰鬥演出">⋯</button></div>`;
   const mh=`${tip}${sks}`;   /* 11/14：自己的元氣、靈力搬到上面的對峙資訊列；這裡只剩招式列與輔助列 */
   if(BHTD_HK!==mh){BHTD_HK=mh;me.innerHTML=mh}}
@@ -11860,11 +11866,11 @@ function bhtdEv(e,st){const at=q=>q!=null?bhtdXY(q):null;
   else if(e.k==="drop"){if(e.sq!=null)bhtdFx("ink",e.sq);bhtdFloat("星門落子",at(e.sq),"info");try{bhBell()}catch(x){}}
   else if(e.k==="block")bhtdFloat("堵住星門！",at(e.sq),"heal",18);
   else if(e.k==="shard"){bhtdFx("smoke",e.sq);bhtdFloat("星碎格 −3",at(e.sq),"info",18)}
-  else if(e.k==="esp")bhtdFloat("星樞 +1 靈",bhtdBarXY("bhtdEn"),"info",14);
+  else if(e.k==="esp")bhtdFloat("星樞 +"+(e.n||BHTD.ESP_GAIN)+" 靈",bhtdBarXY("bhtdEn"),"info",14);
   else if(e.k==="fore"){const F=BHTD.FSK[e.id];if(F){toast("⚠ 星樞預告："+F.nm+"——下回合結束發動");try{bhBell()}catch(x){}}}
   else if(e.k==="fake"){bhtdFx("smoke",e.sq);bhtdFloat("假門散了",at(e.sq),"info",15)}
   else if(e.k==="miss"){const F=BHTD.FSK[e.id];if(F)bhtdFloat(F.nm+" 落空",bhtdBarXY("bhtdEn"),"heal",16)}
-  else if(e.k==="eye2"){toast("✧ 星陣護體：陣眼子被擒，只散 2 靈力");vibrate([20,40,20]);bhtdFloat("星陣護體",bhtdBarXY("bhtdMe"),"sp",18)}   /* 11/14 第二批天賦 */
+  else if(e.k==="eye2"){toast("✧ 星陣護體：陣眼子被擒，只散 "+BHTD.TAL_EYE_SP+" 靈力");vibrate([20,40,20]);bhtdFloat("星陣護體",bhtdBarXY("bhtdMe"),"sp",18)}   /* 11/14 第二批天賦 */
   else if(e.k==="tal"){const T=BHTD.TALM[e.id];if(T)bhtdFloat(T.nm,e.id==="qxgm"?bhtdBarXY("bhtdMe"):(e.sq!=null&&bhtdXY(e.sq))||bhtdBarXY("bhtdMe"),e.id==="qxgm"?"heal":"sp",16)}
   else if(e.k==="eye"){toast("✧ 陣眼子被擒！靈力散盡，招式停 1 回合");vibrate([20,40,20]);bhtdFloat("陣眼受損・靈力歸零",bhtdBarXY("bhtdEn"),"hurt",20)}
   else if(e.k==="rm"){if(e.sq!=null)bhtdFx("ink",e.sq);bhtdFloat("破",at(e.sq),"dmg",30)}
@@ -12015,10 +12021,10 @@ const BHTL_ID="bh:tl";
 const BHTL_TX={
   t0:["醒醒，這裡是星淵的棋盤。","對面下黑棋的，是這座星盤的主人，叫星樞。","上面紫色長條是星樞的元氣，下面紅色的是我們的。元氣就像血——把星樞的元氣打到 0，我們就贏。"],
   t1:["看那顆卒，已經過河，跑到我們這邊了。","過了河的子，每回合都會咬掉我們 1 點元氣。","用中兵吃掉它！"],
-  t1b:["吃子會扣星樞的元氣，還多 1 點靈力——就是下面那排藍色小圓點。","哎呀，星樞也會吃我們的子，被吃一樣扣元氣。","那顆卒還站在河這邊，剛剛又咬了我們 1。"],
+  t1b:["吃子會扣星樞的元氣，還多 10 點靈力——就是你名字旁邊那條藍色的靈力條。","哎呀，星樞也會吃我們的子，被吃一樣扣元氣。","那顆卒還站在河這邊，剛剛又咬了我們 1。"],
   t2:["紫色轉圈的是星門。星樞的棋子不會一次到齊，會從星門一顆一顆掉下來。","圈上的數字是倒數，數到 0 就落下。","派俥站上去，把門堵住！"],
   t2b:["堵住了！只要有子站在門上，援軍就下不來。","還有——我們的俥也過了河。過河的子，一樣每回合咬星樞 1 點。"],
-  t3:["藍點滿了！靈力每回合會多 1，吃子再多 1。","滿了就能放招式。點下面發亮的招式鈕。","放招不算走棋，放完還能再走一步；一回合只能放一招。"],
+  t3:["藍條滿了！靈力每回合會自己回 10，吃子再多 10。","滿了就能放招式。點下面發亮的招式鈕。","放招不算走棋，放完還能再走一步；一回合只能放一招。"],
   t3w:["看招！"],
   t4:["看那顆發金光的子——那是你的本命子，叫陣眼子。","用它吃子，對方扣的元氣是平常的 1.5 倍。","可是它被吃掉，靈力會全散，招式也要停一回合。"],
   t4q:"陣眼子被吃掉，會怎樣？",t4no:"再想想——它是你的陣眼，丟了會很傷。",t4a:["靈力全散、停招一回合","什麼事都沒有"],
@@ -12036,7 +12042,7 @@ const BHTL_SK={qi1:{g:"點那顆發亮的卒，一劍把它打出棋盤。",a:"�
   lei1:{g:"點那顆卒，用煙火把它定住。",a:"被定住的子，下回合不能動。"},luo1:{g:"剛剛被吃掉的兵，可以叫它回營——點那個發亮的點。",a:"兵回來了！原位空著，被吃的子就能叫回來。"},
   shen1:{a:"元氣補回來了。"},tie1:{a:"下一次扣元氣，護盾會整個擋掉。"},bu1:{g:"點炮，再點傌，兩顆子會換位置。",a:"換個位置，有時候就能解圍。"}};
 /* 進階機制第一次出現時的一句（正式關卡；練習賽不跳） */
-const BHTL_TIP={fore:"星樞要放招了！紅框的子會被波及。下回合結束前先處理，就能少扣元氣。",esp:"星樞吃到子也會長靈力（紫色小圓點），滿了就會放招。",
+const BHTL_TIP={fore:"星樞要放招了！紅框的子會被波及。下回合結束前先處理，就能少扣元氣。",esp:"星樞吃到子也會長靈力（紫色細條），夠了就會放招。",
   pj:"炮隔一顆子瞄到的敵子會破甲：下次打它，多扣 1。",pal:"敵子停進我們的九宮，每回合多扣 2！先把它趕走或吃掉。",ck:"被將軍會扣 5 元氣（防禦可減少），先保帥。",
   eye:"陣眼子被吃了：靈力散光，招式停一回合，之後會慢慢回來。",shard:"紫色菱形是星碎格：誰踩上去，誰扣 3 元氣——我們和星樞都一樣。",
   fake:"有兩道門看起來一模一樣，其中一道是假門，落子時才會散掉。",gd:"護盾擋掉了這一次扣元氣。",sh:"小盾：這顆子被吃時少扣幾點，最多撐 3 回合。",
@@ -18303,8 +18309,8 @@ const dglXmAdd=(x,n)=>Math.max(0,Math.min(DGL_XM_MAX,(Math.round(+x)||0)+(Math.r
 /* 心定則棋穩（開發者 11/13 晚選）：定軌力一半以上修為 ×1.1、滿格 ×1.2；零頭累積在 fx，滿 1 才多給（修為常一次只給 1、2 點，直接四捨五入等於沒加） */
 const dglXpMul=r=>{const v=dglShow(r);return v>=DGL_MAX?1.2:v>=DGL_MAX/2?1.1:1};   /* 11/14 開發者：加成照畫面上看到的數字（dglShow 進位後），29.5 顯示 30 就給 ×1.2 */
 function dglXpBonus(n,r,fx){n=Math.round(+n)||0;fx=+fx||0;if(n<=0)return{n,fx};fx+=n*(dglXpMul(r)-1);const add=Math.floor(fx+1e-9);return{n:n+add,fx:Math.max(0,Math.round((fx-add)*1e6)/1e6)}}
-/* 星芒帶進黑洞：開局靈力 sp0（已照上限截過）加上星芒，不超過靈力上限；used＝真的用掉幾點 */
-function dglXmUse(sp0,spMax,xm){spMax=Math.max(0,+spMax||0);sp0=Math.max(0,Math.min(spMax,+sp0||0));const sp=Math.min(spMax,sp0+Math.max(0,Math.round(+xm)||0));return{sp,used:sp-sp0}}
+/* 星芒帶進黑洞：開局靈力 sp0（已照上限截過）加上星芒 × k（11/14 晚靈力 ×10：1 點星芒＝k 點靈力，預設 1），不超過靈力上限；used＝真的用掉幾點星芒（最後一點不滿 k 也算一點，補到上限） */
+function dglXmUse(sp0,spMax,xm,k){k=Math.max(1,Math.round(+k)||1);spMax=Math.max(0,+spMax||0);sp0=Math.max(0,Math.min(spMax,+sp0||0));const sp=Math.min(spMax,sp0+Math.max(0,Math.round(+xm)||0)*k);return{sp,used:Math.ceil((sp-sp0)/k-1e-9)}}
 const dglTiredLine=c=>(DGL_TIRED[c]||[])[1]||DGL_TIRED0;
 /* 地點頁的小頭像＋兩條（開發者 11/13 晚「每個人間地點都有兩條」）：人間的頁、不是對局／解題頁、不是首頁（首頁用頂欄 meChip）；o.off＝設定關了平日體力 */
 function dglLocOn(h,o){o=o||{};if(o.off)return false;return dglZone(h,o)==="land"&&!dglBusy(h)&&dglKey(h)!=="/"}
@@ -18336,7 +18342,7 @@ function dglXiuLine(i){const s=DGL_XIU[i];if(!s)return"";const X=DGL_XIANG[s[1]]
 /* 角色卡（開發者 11/14 採用 ChatGPT 設計稿 story/chatgpt_app/回覆_角色卡設計_1114.md）：
    DGL_ICO＝角色卡用到的圖示對照表，之後換水墨圖示只改這裡；值寫 "img:路徑" 就畫成圖片（dglIc），其他當文字（emoji）。
    DGL_XM_GET＝解殘局、主線過關各得幾點星芒；DGL_CD_LOW＝角色卡「快回星槎」的門檻（畫面上看到的數字 ≤ 這個） */
-const DGL_ICO={red:"🔴",blue:"🔵",land:"⛰️",ship:"🚢",game:"♟️",puz:"🧩",bh:"🌀",zero:"🖌️",flag:"🚩",main:"📜",xiu:"🌌",xm:"✨",hp:"❤️",sp:"🔷",atk:"⚔️",def:"🛡️",ttl:"🏅",off:"⏸️"};
+const DGL_ICO={red:"🔴",blue:"🔵",land:"⛰️",ship:"🚢",game:"♟️",puz:"🧩",bh:"🌀",zero:"🖌️",flag:"🚩",main:"📜",xiu:"🌌",xm:"✨",hp:"❤️",sp:"🔷",atk:"⚔️",def:"🛡️",rg:"🔄",ttl:"🏅",off:"⏸️"};
 const DGL_XM_GET=1,DGL_CD_LOW=5;
 /* 角色卡的定軌力狀態：off 設定關了、out 化墨退場中（在星槎歇息）、due 用完了（這盤下完就退場）、low 快用完、full 滿格 ×1.2、half 一半以上 ×1.1、none 一半以下沒加成。
    加成照畫面上看到的數字（dglShow，跟頂欄、卡片上的「30／30」一致；dglXpMul 也照 dglShow，看到的就是實際給的） */
@@ -18357,7 +18363,7 @@ function dglSt(){const o=store.get("dgl",null);return o&&typeof o==="object"?o:{
 function dglXm(){return dglXmAdd(dglSt().x,0)}
 function dglXmGive(n){const o=dglSt(),x0=dglXmAdd(o.x,0);o.x=dglXmAdd(x0,n);store.set("dgl",o);return o.x-x0}
 /* 07bht-td.js bhtdStart 呼叫：回傳這一局帶進去幾點（＝用掉的），同時從身上扣掉 */
-function dglXmTake(sp0,spMax){try{if(!DGL_ON)return 0;const o=dglSt(),U=dglXmUse(sp0,spMax,dglXmAdd(o.x,0));if(U.used>0){o.x=dglXmAdd(o.x,-U.used);store.set("dgl",o)}return U.used}catch(e){return 0}}
+function dglXmTake(sp0,spMax,k){try{if(!DGL_ON)return 0;const o=dglSt(),U=dglXmUse(sp0,spMax,dglXmAdd(o.x,0),k);if(U.used>0){o.x=dglXmAdd(o.x,-U.used);store.set("dgl",o)}return U.sp-Math.max(0,Math.min(Math.max(0,+spMax||0),+sp0||0))}catch(e){return 0}}   /* 回傳換到幾點靈力（k＝1 時跟用掉的星芒一樣） */
 /* 設定頁「平日體力（定軌力／星芒）」開關（開發者 11/13 晚、第 16 輪評比第 2 項）：store dglOff（設定，不跟存檔走），預設 false＝開著。
    關掉：定軌力不扣、不化墨退場、沒有心定則棋穩加成、不走慢不暈墨，頂欄與地點頁的兩條藏起來（html[data-dgloff]）；星芒照常累積、照常帶進黑洞、照常點亮星圖 */
 function dglUserOff(){try{return!!store.get("dglOff",false)}catch(e){return false}}
@@ -18415,7 +18421,7 @@ html[data-era=qin] #meChip .dgl-bars i,html[data-era=wudai] #meChip .dgl-bars i{
 .dgl-kad>span{display:flex;align-items:center;justify-content:space-between;gap:6px;min-width:0;min-height:48px;padding:4px 12px;border-radius:14px;background:color-mix(in srgb,currentColor 6%,transparent)}
 .dgl-kad small{display:flex;align-items:center;gap:4px;font-size:15px;font-weight:800}.dgl-kad b{font-size:22px;line-height:1.1;font-variant-numeric:tabular-nums}
 .dgl-kadn{margin:4px 2px 2px}
-.dgl-me .dgl-kst{grid-template-columns:repeat(2,1fr)}
+.dgl-me .dgl-kst{grid-template-columns:repeat(6,1fr)}.dgl-me .dgl-kst>span{grid-column:span 2}.dgl-me .dgl-kst>span:nth-child(n+4){grid-column:span 3}   /* 11/14 晚五格：上排元氣、靈力上限、每回合回靈，下排攻擊力、防禦力 */
 .dgl-khero.out img{opacity:.45;filter:grayscale(1)}
 .dgl-kc{position:relative;border:1px solid color-mix(in srgb,currentColor 16%,transparent);border-radius:16px;padding:4px 10px 10px 12px;margin:8px 0}
 .dgl-kwarn{background:linear-gradient(90deg,color-mix(in srgb,currentColor 13%,transparent),transparent 42%)}
@@ -18585,8 +18591,8 @@ function dglCardAD(lv){try{const c=dglName();if(typeof BHTD==="undefined"||!BHTD
 function dglMeCard(){try{const c=dglName();if(!c||typeof BHTD==="undefined"||typeof bhtdL!=="function"||!(typeof gxtOpen==="function"&&gxtOpen()))return null;
   dglCss();const S=BHTD.stats(c,bhtdL()),d=document.createElement("section");d.className="card dgl-kc dgl-me";
   d.innerHTML=`<div class="dgl-kh"><h3 class="dgl-kt">${dglIc("bh")}<span>黑洞裡的你</span></h3><span class="dgl-kbd blue"><span>修為</span> Lv ${S.L}</span></div>
-    <div class="dgl-kst"><span><small>${dglIc("hp")}<span>元氣</span></small><b>${S.hp}</b></span><span><small>${dglIc("sp")}<span>靈力上限</span></small><b>${S.sp}</b></span><span><small>${dglIc("atk")}<span>攻擊力</span></small><b>${BHTD.atkPt(S.atk)}</b></span><span><small>${dglIc("def")}<span>防禦力</span></small><b>${BHTD.defPt(S.def)}</b></span></div>
-    <p class="dgl-ks"><span>修為越高，四項越強；身上的星芒進黑洞會變成開局靈力。</span></p>`;return d}catch(e){return null}}
+    <div class="dgl-kst"><span><small>${dglIc("hp")}<span>元氣</span></small><b>${S.hp}</b></span><span><small>${dglIc("sp")}<span>靈力上限</span></small><b>${S.sp}</b></span><span><small>${dglIc("rg")}<span>每回合回靈</span></small><b>${S.spRegen}</b></span><span><small>${dglIc("atk")}<span>攻擊力</span></small><b>${BHTD.atkPt(S.atk)}</b></span><span><small>${dglIc("def")}<span>防禦力</span></small><b>${BHTD.defPt(S.def)}</b></span></div>
+    <p class="dgl-ks"><span>修為越高，五項越強；身上的星芒進黑洞會變成開局靈力（1 點換 10 靈）。</span></p>`;return d}catch(e){return null}}
 /* ---------- 計時與事件 ---------- */
 function dglHello(z,busy){if(z!=="land"||busy||document.getElementById("dglOut")||document.querySelector(".walkc"))return;const o=dglSt();if(o.f1)return;
   const fs=DGL.fromZ==="ship";if(!fs&&DGL.s.r>DGL_HELLO)return;o.f1=Date.now();store.set("dgl",o);
@@ -29546,7 +29552,7 @@ const I18N_EN={
   "臺灣暗棋":"Taiwanese Dark Chess","暗棋規則":"Dark Chess rules","完整規則":"Full rules","暗棋是在臺灣很流行的象棋玩法：棋子先蓋著，翻開才知道是哪一顆。":"Dark chess is a xiangqi game that is very popular in Taiwan: all pieces start face down, and you only find out what a piece is when you turn it over.","翻開才知道是哪顆棋；大吃小，兵能吃帥，炮要隔一顆跳著吃。":"Turn a piece over to see what it is. Bigger captures smaller, a soldier can capture the general, and a cannon captures by jumping over one piece.","32 顆棋蓋在 4×8 格裡，輪流翻棋或走棋；大可吃小、同級可吃，兵可吃帥、帥不可吃兵，炮隔一子跳吃，不連吃；50 手沒有吃子也沒有翻棋就算和棋。":"32 pieces lie face down on a 4×8 board. Take turns turning a piece over or moving one. A piece can capture smaller or equal pieces; a soldier can capture the general, but the general cannot capture a soldier; a cannon captures by jumping over exactly one piece; only one capture per turn. If 50 moves pass with no capture and no piece turned over, the game is a draw.","棋子大小：帥（將）＞仕（士）＞相（象）＞俥（車）＞傌（馬）＞炮（包）＞兵（卒）。":"Piece ranks: General > Advisor > Elephant > Chariot > Horse > Cannon > Soldier.","輪到你時，翻開一顆蓋著的棋，或把自己的一顆棋走一格（上下左右）。第一顆翻出什麼顏色，翻的人就執那一色。吃光對方，或對方輪到時翻不了也走不了，就贏了。":"On your turn, turn over a face-down piece or move one of your pieces one square (up, down, left or right). Whoever turns over the first piece plays that piece's color. You win by capturing all of the opponent's pieces, or when the opponent cannot turn over or move anything on their turn.","先翻，才知命。":"Turn it over to learn your fate.","頭一翻就是帥？好兆頭。":"A general on the very first flip? Good omen.","頭一翻就是將？好兆頭。":"A general on the very first flip? Good omen.","小兵也能扳倒大帥，這就是暗棋。":"Even a little soldier can topple the general. That's dark chess.","茶還熱著，再翻一局。":"The tea is still warm. Flip another game.","未定":"Not yet","紅":"Red","黑":"Black","（新手）":"(Beginner)","（一般）":"(Normal)","電腦難度":"Computer level","一般":"Normal","新手：電腦偶爾會看漏、走錯，適合剛學。":"Beginner: the computer sometimes misses things or makes mistakes. Good for learning.","一般：電腦會認真算。":"Normal: the computer thinks it through.","電腦難度：新手":"Computer level: Beginner","電腦難度：一般":"Computer level: Normal","暗棋棋盤":"Dark chess board","空格":"empty","蓋著的棋":"face-down piece","吃！":"Capture!","你吃到：":"You captured:","電腦吃到：":"Computer captured:","輪到你（紅）：翻一顆，或走一步。":"Your turn (Red): turn a piece over or make a move.","輪到你（黑）：翻一顆，或走一步。":"Your turn (Black): turn a piece over or make a move.","輪到你：先翻一顆，翻出什麼顏色你就執那一色。":"Your turn: turn a piece over first. You will play the color it shows.","電腦思考中":"Computer is thinking","這顆現在走不了，也吃不到。":"This piece can't move or capture right now.","那是電腦的棋。先點你自己的棋，再點要去的地方。":"That's the computer's piece. Tap one of your own pieces first, then tap where it should go.","這局電腦贏了":"The computer won this game","電腦的棋子被你吃光了。":"You captured all of the computer's pieces.","你的棋子被吃光了。":"All of your pieces were captured.","電腦沒有棋可走了。":"The computer has no moves left.","你沒有棋可走了。":"You have no moves left.","你認輸了。":"You resigned.","回茶坊":"Back to Teahouse","開始翻棋":"Start","規則":"Rules","認輸？":"Resign?","認輸的話，這局算輸。":"If you resign, this game counts as a loss.","這局電腦先翻。":"The computer goes first this game.","這局你先翻。":"You go first this game.","這局電腦先翻（新手）":"The computer goes first this game (Beginner)","這局你先翻（新手）":"You go first this game (Beginner)","這局電腦先翻（一般）":"The computer goes first this game (Normal)","這局你先翻（一般）":"You go first this game (Normal)","接著上次那一局":"Picking up your last game",   /* 11/14 西市聽雨茶坊臺灣暗棋（07xsd） */
   "← 西市":"← West Market","觀星臺 →":"Star Terrace →","往左看：西市":"Look left: West Market","往右看：觀星臺":"Look right: Star Terrace","往左看":"Look left","往右看":"Look right","往左看：回到苑中":"Look left: back to the Garden","往右看：回到苑中":"Look right: back to the Garden",   /* 11/14 首頁三屏長卷（07hmp） */
   "下船後會慢慢用掉，回星槎就補回來":"Drains slowly once ashore; refills on the Star Raft","快用完了，回星槎歇一下吧":"Almost out. Rest on the Star Raft for a bit","這盤下完，就回星槎歇息":"After this game, back to the Star Raft to rest","化墨退場中・":"Dissolved into ink · ","分鐘後可以下船":"min until you can go ashore","解殘局、過主線章節就會得到":"Earned by solving endgames and clearing story chapters","現在滿格，下棋、解題得到的修為":"Full now: XP from games and puzzles","現在一半以上，下棋、解題得到的修為":"Half or more now: XP from games and puzzles","到一半以上，下棋、解題得到的修為":"At half or more, XP from games and puzzles","；滿格":"; when full","修為越高，三項越強；身上的星芒進黑洞會變成開局靈力。":"More XP makes all three stronger; your Starglow becomes starting spirit in the Black Hole.","黑洞過關回 20，一天最多回 20；關掉 App 再打開就回滿。":"Clearing a Black Hole stage restores 20, up to 20 a day; closing and reopening the App refills it.",   /* 11/14 角色卡極簡版（07dgl） */
-  "紅血":"Red","藍血":"Blue","攻擊力":"Attack","防禦力":"Defense","修為越高，攻擊力和防禦力越強（黑洞裡用）":"Higher XP makes Attack and Defense stronger (used in the Black Hole)","修為越高，四項越強；身上的星芒進黑洞會變成開局靈力。":"More XP makes all four stronger; your Starglow becomes starting spirit in the Black Hole.",   /* 11/14 角色卡五項：紅血（定軌力）、藍血（星芒）、攻擊力、防禦（07dgl） */
+  "紅血":"Red","每回合回靈":"Spirit per round","藍血":"Blue","攻擊力":"Attack","防禦力":"Defense","修為越高，攻擊力和防禦力越強（黑洞裡用）":"Higher XP makes Attack and Defense stronger (used in the Black Hole)","修為越高，五項越強；身上的星芒進黑洞會變成開局靈力（1 點換 10 靈）。":"More XP makes all five stronger; your Starglow becomes starting spirit in the Black Hole (1 point = 10 spirit).",   /* 11/14 角色卡五項：紅血（定軌力）、藍血（星芒）、攻擊力、防禦（07dgl） */
   "星淵靈氣入體，旅人精神百倍！":"Abyss spirit flows in - the traveler is full of energy!","化墨退場中：在星槎上歇到 15 才能再下船。":"Dissolved into ink: rest on the Star Raft until 15 before going ashore.","定軌力用完了：這一盤下完、這一題解完，就要回星槎歇息。":"Orbit stamina is used up: after this game or puzzle you'll return to the Star Raft to rest.",
   "跑了一天的馳道，車輪都要轉不動了……歇一會兒吧。":"A whole day on the imperial roads - even the wheels can barely turn... let's rest a while.","渡口的船都靠岸了，我們也該歇一歇啦！":"All the ferry boats have docked - time for us to rest too!","哈——欠！我說話都小聲了，這可不得了，快休息！":"Yaaawn! Even my voice has gone quiet - that's serious, let's rest!",
   "草原的風都吹不走睡意了，我們回星槎睡一覺吧。":"Not even the grassland wind can blow my sleepiness away - let's go back to the raft and nap.","呼……人間的風有點重，我緩一緩就好。":"Phew... the air down here feels heavy. I just need a moment.","……休整，是為了下一場勝仗。":"...Resting is for the next victory.","跑了一整天的腿，腳都軟了，今天先到這兒吧！":"Running errands all day, my legs are jelly - let's stop here for today!",
@@ -29570,7 +29576,7 @@ const I18N_EN={
   "完整＝草書招名 1.2 秒＋法器共鳴＋擒子停格、微震；簡化＝草書 0.8 秒、少停格；關閉＝不播草書與震動，只留文字。手機設了「減少動態」一律用「關閉」這一版。放招演出中點一下畫面也能直接結算。":"Full = 1.2 s calligraphy + artifact resonance + hit-stop and a light shake on captures; Simple = 0.8 s calligraphy, less hit-stop; Off = no calligraphy or shaking, text only. If your phone has Reduce Motion on, Off is always used. Tap the screen during a cast to resolve it right away.",
   "星淵初探":"First Look into the Abyss","墨河微瀾":"Ripples on the Ink River","星門乍現":"Star Gates Appear","雙門夾道":"Twin Gates","星樞列陣":"Star Pivot in Formation","守關・星樞卒將":"Gate Boss · Star Pivot Pawn General",
   /* 黑洞塔防爽度第二批（07bht-td.js、07dgl-stamina.js、07gxt-guanxing.js，開發者 11/14）：星塵天賦、結算三星與評語、七星再來一場、星淵急襲、黑洞的定軌力 */
-  "星淵大捷・完勝歸來":"Abyss Triumph · A Flawless Return","力克星樞・險中求勝":"Star Pivot Overcome · A Narrow Win","殘血破陣・絕處逢生":"Last-Gasp Breakthrough · Back from the Brink","星局未竟・重整旗鼓":"Star Game Unfinished · Regroup and Return","兵不血刃，星樞大陣在你面前如入無人之境！":"Not a drop of blood spilled - you walked through the Star Pivot's formation as if it were empty!","招式與棋路完美契合，這局的節奏堪稱典範。":"Your skills and your moves fit together perfectly - this game's rhythm was a model.","星門未開便已定局，你對陣眼子的保護無懈可擊。":"It was decided before the star gates even opened, and you kept your formation eye perfectly safe.","雖然防線一度吃緊，但關鍵時刻的那步擒子扭轉了乾坤。":"Your line was tight for a while, but that key capture turned the tide.","有驚無險！若能再早兩步封住星門，這局會更輕鬆。":"A close call! Seal the star gates two moves earlier and this one gets easier.","頂住了星樞的猛攻，這份定力值得再挑戰更高難度！":"You held off the Star Pivot's onslaught - that composure is ready for a tougher challenge!","差一點就被星樞翻盤了！好在最後一擊精準命中要害。":"The Star Pivot nearly turned it around! Luckily your last strike hit the weak spot.","真是驚心動魄的一局！建議回頭點亮「厚土固元」天賦增加容錯。":"What a nail-biter! Try lighting the 'Solid Earth' talent for more room for error.","贏得極其艱難，但也證明了你絕不輕言放棄的棋風！":"A hard-fought win - and proof that you never give up!","星樞攻勢太猛，別氣餒，點顆天賦再回來討回公道！":"The Star Pivot pushed hard. Don't lose heart: light a talent and come back for a rematch!","這局敵子過河太快，下次試著用炮架火網先削弱他們吧。":"Enemy pieces crossed the river too fast this time. Next time, wear them down first with your cannon fire net.","勝敗乃兵家常事，點擊重打，剛才的失誤一定能補回來！":"Win some, lose some. Tap to play again - you can make up for that slip!","車輪還沒停呢！剛才那條直線我還能衝得更快，再跑一趟！":"The wheels haven't stopped yet! I can charge down that straight line even faster - one more run!","渡口的風正順，星河也還亮著，趁現在我們再擺一局吧！":"The ferry wind is fair and the star river still shines - let's set up another game while we can!","嘿嘿，沒有打雷只有滿天星火，這仗打得真痛快，再放一輪！":"Heh, no thunder, just a sky full of star sparks - what a great fight! Let's fire off another round!","草原上的雄鷹從不嫌飛得遠，這點風浪算什麼，再來比過！":"The grassland eagle never minds flying far. These waves are nothing - let's go again!","咳……我氣息還穩得很，剛才那步棋我還有更好的解法，再試一次！":"Ahem... my breath is still steady. I had a better answer for that move - let me try again!","陣腳已穩，護主之責未盡。只要你還要下，我隨時奉陪到底。":"Our footing is firm, and my duty to guard you isn't done. As long as you want to play, I'm with you.","別看我個子小，剛才我也立大功啦！快開下一局，我還要往前衝！":"I may be small, but I did great just now too! Start the next game - I want to keep charging!","星火初燃":"First Spark","開局靈力 +1":"+1 spirit at the start","厚土固元":"Solid Earth","元氣上限 +8":"+8 max vitality","鋒芒畢露":"Sharp Edge","小子吃大子，再回 1 靈力（每回合 1 次）":"When a smaller piece takes a bigger one, gain 1 more spirit (once per round)","星陣護體":"Star Ward","陣眼子第一次被吃，靈力不歸零，只扣 2":"The first time your formation eye is captured, spirit isn't wiped out - you only lose 2","奇謀連鎖":"Clever Chain","奇謀連擊再多扣 2（一次最多扣 12）":"Clever Combo takes 2 more (at most 12 at a time)","赤焰火網":"Blazing Net","炮打出的破甲，用過再留 1 回合":"Armor breaks from your cannons stay 1 more round after use","七星共鳴":"Seven Stars Resonance","每 2 顆過河的己方子，回合結束回 1 元氣（每回合最多 2）":"For every 2 of your pieces across the river, regain 1 vitality at the end of the round (up to 2 per round)","星塵":"Stardust","天賦":"Talents","星塵天賦":"Stardust Talents","已用":"Used","點亮":"Lit","回選關":"Back to stages","全部重置（星塵全退）":"Reset all (full stardust refund)","要點下一層，先點亮上一層的一個。":"To use the next tier, first light one talent in the tier before it.","天賦只在黑洞有用，線上和一般對局不受影響。":"Talents only work in the black hole; online and regular games are not affected.","不在對局裡時，可以免費全部重置，星塵全退。":"Outside a game you can reset everything for free and get all your stardust back.","先點亮上一層的一個天賦":"Light one talent in the previous tier first","已經點亮了":"Already lit","沒有這個天賦":"No such talent","星塵不夠":"Not enough stardust","還沒有點亮的天賦":"No talents lit yet","星淵急襲":"Abyss Raid","中局殘陣":"Midgame position","才開星淵急襲":"to open the Abyss Raid","換一場急襲":"Another raid","可挑戰":"Open","過關得星塵：三星是過關、陣眼子沒被吃、在規定回合內過關。星塵拿去點天賦（只在黑洞有用）。":"Clearing a stage earns stardust. The three stars are: clear it, keep your formation eye safe, and clear it within the round limit. Spend stardust on talents (black hole only).","過關":"Clear","陣眼子沒被吃":"Eye kept safe","回合內":"rounds max","限時過關":"Clear in time","首通":"First clear","三星首達":"First 3 stars","急襲":"Raid","共":"Total","最高一擊":"Best hit","最高連擊":"Best streak","陣眼擒子":"Eye captures","返回星盤":"Back to star map","再刷一場（＋星塵）":"Play again (+stardust)","陣眼子被擒":"Formation eye captured","只散 2 靈力":"only 2 spirit lost","人間黑洞會用，星槎會回":"Drains in the human world and the black hole, refills on the Star Raft","人間・黑洞":"Human world · Black hole","／日":"/day","黑洞過關回定軌力，一天最多 20。":"Clearing a black hole stage restores orbit stamina, up to 20 a day.","定軌力用完時，黑洞入口也會關。":"When orbit stamina runs out, the black hole entrance closes too.","定軌力用完了，黑洞入口先關著":"Orbit stamina is used up, so the black hole entrance is closed for now","定軌力用完了，黑洞入口先關著：這盤下完先回星槎歇息":"Orbit stamina is used up, so the black hole entrance is closed: after this game, rest on the Star Raft","定軌力用完":"orbit stamina used up","暫時關閉":"temporarily closed","雙炮巡河":"Twin Cannons on Patrol","單車破陣":"Lone Chariot Breakthrough","馬炮爭先":"Horse and Cannon Race","雙車對峙":"Twin Chariots Face Off","兵臨城下":"Soldiers at the Gates","九宮危局":"Palace in Peril","單騎救主":"Lone Rider to the Rescue","炮鎮中路":"Cannon Holds the Center","雙馬盤河":"Twin Horses at the River","殘局對攻":"Endgame Exchange","左翼突破":"Left-Wing Breakthrough","星門夾擊":"Star Gate Pincer",
+  "星淵大捷・完勝歸來":"Abyss Triumph · A Flawless Return","力克星樞・險中求勝":"Star Pivot Overcome · A Narrow Win","殘血破陣・絕處逢生":"Last-Gasp Breakthrough · Back from the Brink","星局未竟・重整旗鼓":"Star Game Unfinished · Regroup and Return","兵不血刃，星樞大陣在你面前如入無人之境！":"Not a drop of blood spilled - you walked through the Star Pivot's formation as if it were empty!","招式與棋路完美契合，這局的節奏堪稱典範。":"Your skills and your moves fit together perfectly - this game's rhythm was a model.","星門未開便已定局，你對陣眼子的保護無懈可擊。":"It was decided before the star gates even opened, and you kept your formation eye perfectly safe.","雖然防線一度吃緊，但關鍵時刻的那步擒子扭轉了乾坤。":"Your line was tight for a while, but that key capture turned the tide.","有驚無險！若能再早兩步封住星門，這局會更輕鬆。":"A close call! Seal the star gates two moves earlier and this one gets easier.","頂住了星樞的猛攻，這份定力值得再挑戰更高難度！":"You held off the Star Pivot's onslaught - that composure is ready for a tougher challenge!","差一點就被星樞翻盤了！好在最後一擊精準命中要害。":"The Star Pivot nearly turned it around! Luckily your last strike hit the weak spot.","真是驚心動魄的一局！建議回頭點亮「厚土固元」天賦增加容錯。":"What a nail-biter! Try lighting the 'Solid Earth' talent for more room for error.","贏得極其艱難，但也證明了你絕不輕言放棄的棋風！":"A hard-fought win - and proof that you never give up!","星樞攻勢太猛，別氣餒，點顆天賦再回來討回公道！":"The Star Pivot pushed hard. Don't lose heart: light a talent and come back for a rematch!","這局敵子過河太快，下次試著用炮架火網先削弱他們吧。":"Enemy pieces crossed the river too fast this time. Next time, wear them down first with your cannon fire net.","勝敗乃兵家常事，點擊重打，剛才的失誤一定能補回來！":"Win some, lose some. Tap to play again - you can make up for that slip!","車輪還沒停呢！剛才那條直線我還能衝得更快，再跑一趟！":"The wheels haven't stopped yet! I can charge down that straight line even faster - one more run!","渡口的風正順，星河也還亮著，趁現在我們再擺一局吧！":"The ferry wind is fair and the star river still shines - let's set up another game while we can!","嘿嘿，沒有打雷只有滿天星火，這仗打得真痛快，再放一輪！":"Heh, no thunder, just a sky full of star sparks - what a great fight! Let's fire off another round!","草原上的雄鷹從不嫌飛得遠，這點風浪算什麼，再來比過！":"The grassland eagle never minds flying far. These waves are nothing - let's go again!","咳……我氣息還穩得很，剛才那步棋我還有更好的解法，再試一次！":"Ahem... my breath is still steady. I had a better answer for that move - let me try again!","陣腳已穩，護主之責未盡。只要你還要下，我隨時奉陪到底。":"Our footing is firm, and my duty to guard you isn't done. As long as you want to play, I'm with you.","別看我個子小，剛才我也立大功啦！快開下一局，我還要往前衝！":"I may be small, but I did great just now too! Start the next game - I want to keep charging!","星火初燃":"First Spark","開局靈力 +10":"+10 spirit at the start","厚土固元":"Solid Earth","元氣上限 +8":"+8 max vitality","鋒芒畢露":"Sharp Edge","小子吃大子，再回 10 靈力（每回合 1 次）":"When a smaller piece takes a bigger one, gain 10 more spirit (once per round)","星陣護體":"Star Ward","陣眼子第一次被吃，靈力不歸零，只扣 20":"The first time your formation eye is captured, spirit isn't wiped out - you only lose 20","奇謀連鎖":"Clever Chain","奇謀連擊再多扣 2（一次最多扣 12）":"Clever Combo takes 2 more (at most 12 at a time)","赤焰火網":"Blazing Net","炮打出的破甲，用過再留 1 回合":"Armor breaks from your cannons stay 1 more round after use","七星共鳴":"Seven Stars Resonance","每 2 顆過河的己方子，回合結束回 1 元氣（每回合最多 2）":"For every 2 of your pieces across the river, regain 1 vitality at the end of the round (up to 2 per round)","星塵":"Stardust","天賦":"Talents","星塵天賦":"Stardust Talents","已用":"Used","點亮":"Lit","回選關":"Back to stages","全部重置（星塵全退）":"Reset all (full stardust refund)","要點下一層，先點亮上一層的一個。":"To use the next tier, first light one talent in the tier before it.","天賦只在黑洞有用，線上和一般對局不受影響。":"Talents only work in the black hole; online and regular games are not affected.","不在對局裡時，可以免費全部重置，星塵全退。":"Outside a game you can reset everything for free and get all your stardust back.","先點亮上一層的一個天賦":"Light one talent in the previous tier first","已經點亮了":"Already lit","沒有這個天賦":"No such talent","星塵不夠":"Not enough stardust","還沒有點亮的天賦":"No talents lit yet","星淵急襲":"Abyss Raid","中局殘陣":"Midgame position","才開星淵急襲":"to open the Abyss Raid","換一場急襲":"Another raid","可挑戰":"Open","過關得星塵：三星是過關、陣眼子沒被吃、在規定回合內過關。星塵拿去點天賦（只在黑洞有用）。":"Clearing a stage earns stardust. The three stars are: clear it, keep your formation eye safe, and clear it within the round limit. Spend stardust on talents (black hole only).","過關":"Clear","陣眼子沒被吃":"Eye kept safe","回合內":"rounds max","限時過關":"Clear in time","首通":"First clear","三星首達":"First 3 stars","急襲":"Raid","共":"Total","最高一擊":"Best hit","最高連擊":"Best streak","陣眼擒子":"Eye captures","返回星盤":"Back to star map","再刷一場（＋星塵）":"Play again (+stardust)","陣眼子被擒":"Formation eye captured","只散 2 靈力":"only 2 spirit lost","人間黑洞會用，星槎會回":"Drains in the human world and the black hole, refills on the Star Raft","人間・黑洞":"Human world · Black hole","／日":"/day","黑洞過關回定軌力，一天最多 20。":"Clearing a black hole stage restores orbit stamina, up to 20 a day.","定軌力用完時，黑洞入口也會關。":"When orbit stamina runs out, the black hole entrance closes too.","定軌力用完了，黑洞入口先關著":"Orbit stamina is used up, so the black hole entrance is closed for now","定軌力用完了，黑洞入口先關著：這盤下完先回星槎歇息":"Orbit stamina is used up, so the black hole entrance is closed: after this game, rest on the Star Raft","定軌力用完":"orbit stamina used up","暫時關閉":"temporarily closed","雙炮巡河":"Twin Cannons on Patrol","單車破陣":"Lone Chariot Breakthrough","馬炮爭先":"Horse and Cannon Race","雙車對峙":"Twin Chariots Face Off","兵臨城下":"Soldiers at the Gates","九宮危局":"Palace in Peril","單騎救主":"Lone Rider to the Rescue","炮鎮中路":"Cannon Holds the Center","雙馬盤河":"Twin Horses at the River","殘局對攻":"Endgame Exchange","左翼突破":"Left-Wing Breakthrough","星門夾擊":"Star Gate Pincer",
   "沈方庭":"Shen Fangting","步越溪":"Bu Yuexi","未解鎖":"Locked","下一關":"Next stage",
   /* 觀星臺（07gxt-guanxing.js，開發者 11/13） */
   /* 黑洞塔防練習賽（07bhtl-tdlearn.js，開發者 11/13） */
@@ -29583,12 +29589,12 @@ const I18N_EN={
   "醒醒，這裡是星淵的棋盤。":"Wake up, this is the board of the Star Abyss.","對面下黑棋的，是這座星盤的主人，叫星樞。":"The one playing black across from us is the master of this star board, the Star Pivot.",
   "上面紫色長條是星樞的元氣，下面紅色的是我們的。元氣就像血——把星樞的元氣打到 0，我們就贏。":"The purple bar on top is the Star Pivot's vitality; the red one below is ours. Vitality is like health - bring the Star Pivot's to 0 and we win.",
   "看那顆卒，已經過河，跑到我們這邊了。":"Look at that pawn, it has crossed the river onto our side.","過了河的子，每回合都會咬掉我們 1 點元氣。":"A piece that has crossed the river bites 1 vitality from us every round.","用中兵吃掉它！":"Capture it with the middle pawn!",
-  "吃子會扣星樞的元氣，還多 1 點靈力——就是下面那排藍色小圓點。":"Capturing takes vitality from the Star Pivot and gives us 1 spirit - the row of little blue dots below.",
+  "吃子會扣星樞的元氣，還多 10 點靈力——就是你名字旁邊那條藍色的靈力條。":"Capturing takes vitality from the Star Pivot and gives us 10 spirit - that's the blue spirit bar next to your name.",
   "哎呀，星樞也會吃我們的子，被吃一樣扣元氣。":"Oops, the Star Pivot captures our pieces too, and that costs us vitality as well.","那顆卒還站在河這邊，剛剛又咬了我們 1。":"That pawn is still on our side of the river, and it just bit us for 1 again.",
   "紫色轉圈的是星門。星樞的棋子不會一次到齊，會從星門一顆一顆掉下來。":"The spinning purple circle is a star gate. The Star Pivot's pieces don't arrive all at once; they drop in one by one through star gates.",
   "圈上的數字是倒數，數到 0 就落下。":"The number on the circle is a countdown; at 0 a piece drops in.","派俥站上去，把門堵住！":"Send the chariot to stand on it and block the gate!",
   "堵住了！只要有子站在門上，援軍就下不來。":"Blocked! As long as a piece stands on the gate, reinforcements can't come down.","還有——我們的俥也過了河。過河的子，一樣每回合咬星樞 1 點。":"And our chariot has crossed the river too. Our crossed pieces bite the Star Pivot for 1 every round as well.",
-  "藍點滿了！靈力每回合會多 1，吃子再多 1。":"The blue dots are full! Spirit grows by 1 each round, plus 1 more for each capture.","滿了就能放招式。點下面發亮的招式鈕。":"When it's full you can cast a move. Tap the glowing move button below.",
+  "藍條滿了！靈力每回合會自己回 10，吃子再多 10。":"The blue bar is full! Spirit refills 10 each round, plus 10 more for each capture.","滿了就能放招式。點下面發亮的招式鈕。":"When it's full you can cast a move. Tap the glowing move button below.",
   "放招不算走棋，放完還能再走一步；一回合只能放一招。":"Casting doesn't use your turn - you can still move afterwards. Only one move per round.","看招！":"Here it comes!",
   "看那顆發金光的子——那是你的本命子，叫陣眼子。":"See the piece glowing gold? That's your life piece, called the formation eye.","用它吃子，對方扣的元氣是平常的 1.5 倍。":"Captures made with it cost the opponent 1.5 times the usual vitality.",
   "可是它被吃掉，靈力會全散，招式也要停一回合。":"But if it is captured, all your spirit is lost and you can't cast for one round.","陣眼子被吃掉，會怎樣？":"What happens if the formation eye is captured?",
@@ -29604,7 +29610,7 @@ const I18N_EN={
   "剛剛被吃掉的兵，可以叫它回營——點那個發亮的點。":"The pawn we just lost can be called back to camp - tap the glowing point.","兵回來了！原位空著，被吃的子就能叫回來。":"The pawn is back! If its home square is empty, a captured piece can return.",
   "元氣補回來了。":"Vitality restored.","下一次扣元氣，護盾會整個擋掉。":"The shield will block the next vitality loss completely.","點炮，再點傌，兩顆子會換位置。":"Tap the cannon, then the horse, and they will swap places.","換個位置，有時候就能解圍。":"Sometimes a swap is all it takes to escape trouble.",
   "星樞要放招了！紅框的子會被波及。下回合結束前先處理，就能少扣元氣。":"The Star Pivot is about to cast! Pieces in red frames will be hit. Deal with it before next round ends to lose less vitality.",
-  "星樞吃到子也會長靈力（紫色小圓點），滿了就會放招。":"The Star Pivot also gains spirit (purple dots) when it captures, and casts when full.","炮隔一顆子瞄到的敵子會破甲：下次打它，多扣 1。":"An enemy piece your cannon targets over one screen gets armor-broken: the next hit on it takes 1 more.",
+  "星樞吃到子也會長靈力（紫色細條），夠了就會放招。":"The Star Pivot also gains spirit (the thin purple bar) when it captures, and casts when it has enough.","炮隔一顆子瞄到的敵子會破甲：下次打它，多扣 1。":"An enemy piece your cannon targets over one screen gets armor-broken: the next hit on it takes 1 more.",
   "敵子停進我們的九宮，每回合多扣 2！先把它趕走或吃掉。":"An enemy piece in our palace costs 2 more each round! Chase it out or capture it.","被將軍會扣 5 元氣（防禦可減少），先保帥。":"Being checked costs 5 vitality (Defense can reduce it) - protect the marshal first.",
   "陣眼子被吃了：靈力散光，招式停一回合，之後會慢慢回來。":"Your formation eye was captured: spirit is gone and moves stop for a round, then spirit slowly returns.","紫色菱形是星碎格：誰踩上去，誰扣 3 元氣——我們和星樞都一樣。":"Purple diamonds are star-shard squares: whoever steps on one loses 3 vitality - us and the Star Pivot alike.",
   "有兩道門看起來一模一樣，其中一道是假門，落子時才會散掉。":"Two gates look exactly alike; one is fake and only vanishes when the piece drops.","護盾擋掉了這一次扣元氣。":"The shield blocked this vitality loss.","小盾：這顆子被吃時少扣幾點，最多撐 3 回合。":"Small shield: if this piece is captured you lose a few less points; it lasts up to 3 rounds.",
