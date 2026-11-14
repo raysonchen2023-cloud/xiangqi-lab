@@ -1613,7 +1613,7 @@ html[data-lefty] .tskip{right:auto;left:14px}
       if(!window.caches)return go();caches.keys().then(function(ks){return Promise.all(ks.filter(function(k){return k.indexOf("xqlab-app-")===0}).map(function(k){return caches.delete(k)}))})
         .then(function(){return navigator.serviceWorker&&navigator.serviceWorker.getRegistration()}).then(function(r){return r&&r.update()}).catch(function(){}).then(go)}};setTimeout(chk,4000)})();
 </script>
-<script>window.XQ_OFFLINE=true;window.XQ_BUILD="20261114-0858";</script>
+<script>window.XQ_OFFLINE=true;window.XQ_BUILD="20261114-0942";</script>
 <script src="core.js"></script>
 <script src="engine.js"></script>
 <script src="local.js"></script>
@@ -18911,14 +18911,15 @@ function hmpNavUpd(P){const C=hmpBox(P);if(!C)return;const on=hmpOn(P),i=P._hmpI
   for(const b of C.querySelectorAll(":scope>.hmp-nav")){const l=b.classList.contains("l"),show=on&&(l?i>-1:i<1);b.hidden=!show;
     b.setAttribute("aria-label",l?(i===1?"往左看：回到苑中":"往左看"+(xs?"：西市":"")):(i===-1?"往右看：回到苑中":"往右看"+(gx?"：觀星臺":"")));
     /* 中間那屏橋頭已經有「← 西市」「觀星臺 →」箭頭（同一件事）：這顆按鈕旁白、Tab 不再念一次，手指照樣點得到 */
-    const dup=on&&i===0&&!!P.querySelector(l?":scope>#hmXsm":":scope>#hmGxt");if(dup){b.setAttribute("aria-hidden","true");b.tabIndex=-1}else{b.removeAttribute("aria-hidden");b.removeAttribute("tabindex")}}}
+    const q=P.querySelector(l?":scope>#hmXsm":":scope>#hmGxt"),dup=on&&i===0&&!!q&&!q.hidden;if(dup){b.setAttribute("aria-hidden","true");b.tabIndex=-1}else{b.removeAttribute("aria-hidden");b.removeAttribute("tabindex")}}}
 /* 左右兩屏的入口、中間那屏的箭頭（照 07xsm／07gxt 的解鎖條件；長卷關掉時還原） */
 const hmpOpen=id=>{try{return id==="hmpXsm"?typeof xsmOpen==="function"&&xsmOpen():typeof gxtOpen==="function"&&gxtOpen()}catch(e){return false}};
 const hmpSeen=id=>{try{return!!store.get(id==="hmpXsm"?"xsmSeen":"gxtSeen",0)}catch(e){return true}};
 function hmpLabels(P){const on=hmpOn(P);
   for(const[id,t,al,d]of HMP_ARROW){const b=P.querySelector("#"+id);if(!b)continue;
-    if(on){if(!b._hmpO)b._hmpO={h:b.innerHTML,a:b.getAttribute("aria-label"),c:b.onclick};b.innerHTML=`<b>${esc(t)}</b>`;b.setAttribute("aria-label",al);b.onclick=e=>{e.stopPropagation();vibrate(5);hmpCam(P,d,true)}}
-    else if(b._hmpO){b.innerHTML=b._hmpO.h;if(b._hmpO.a!=null)b.setAttribute("aria-label",b._hmpO.a);b.onclick=b._hmpO.c;delete b._hmpO}}
+    /* 11/14 開發者：中間橋頭這兩顆「← 西市」「觀星臺 →」太佔版面，長卷開著時藏起來，只靠兩側 ‹ › 小箭頭指引左右還有路 */
+    if(on){if(!b._hmpO)b._hmpO={x:b.hidden};b.hidden=true}
+    else if(b._hmpO){b.hidden=b._hmpO.x;delete b._hmpO}}
   for(const s of HMP_SIDE){const want=on&&hmpOpen(s[0]);let b=P.querySelector("#"+s[0]);if(!want){if(b)b.remove();continue}if(b)continue;
     b=document.createElement("button");b.type="button";b.id=s[0];b.className="shp-spot hmp-side"+(hmpSeen(s[0])?"":" hot");b.style.left=s[3]+"%";b.style.top=s[4]+"%";b.setAttribute("aria-label",s[2]);b.innerHTML=`<b>${esc(s[1])}</b>`;
     b.onclick=e=>{e.stopPropagation();vibrate(5);location.hash=s[6]};
