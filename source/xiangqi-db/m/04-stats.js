@@ -463,7 +463,7 @@ async function skillPentagon(box){
   box.querySelectorAll("[data-go]").forEach(b=>b.onclick=()=>{vibrate(5);location.hash=b.dataset.go});return{G,A}}
 /* 意見回饋 301：記錄練習時間（對局、測驗、猜著法、錯棋重練的畫面開著、而且 2 分鐘內有操作，每 15 秒記 0.25 分鐘） */
 let PRACT_ACT=Date.now();addEventListener("pointerdown",()=>PRACT_ACT=Date.now(),{passive:true});
-setInterval(()=>{try{if(document.visibilityState!=="visible"||Date.now()-PRACT_ACT>120000)return;const r=(location.hash.split("/")[1]||"");
+(typeof bgpEvery==="function"?bgpEvery:setInterval)(()=>{try{if(document.visibilityState!=="visible"||Date.now()-PRACT_ACT>120000)return;const r=(location.hash.split("/")[1]||"");
   if(!["cpu","pvp","quiz","guess","redo"].includes(r))return;const d=localDay(),m=store.get("practiceMin",{});m[d]=Math.round(((m[d]||0)+.25)*100)/100;
   const ks=Object.keys(m).sort();while(ks.length>400)delete m[ks.shift()];store.set("practiceMin",m)}catch(e){}},15000);
 /* 意見回饋 307：後台每天用大家的資料校正的參數（題目難度、各段位的成長參數），從大廳拿，不用等改版 */

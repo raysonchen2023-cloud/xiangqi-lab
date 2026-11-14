@@ -6,6 +6,16 @@ const XQ_CDN="https://xiangqi-cdn.pages.dev/";
 const xqCdnRel=u=>{try{const x=new URL(u,location.href);if(x.origin!==location.origin)return"";const b=location.pathname.replace(/[^/]*$/,""),p=x.pathname.startsWith(b)?decodeURI(x.pathname.slice(b.length)):"";return/^(data|engine)\//.test(p)?p:""}catch(e){return""}};
 addEventListener("error",e=>{const t=e.target;if(!t||!t.tagName||!/^(IMG|AUDIO|SOURCE|VIDEO)$/.test(t.tagName)||t.dataset.cdnTry)return;const r=xqCdnRel(t.currentSrc||t.src||"");if(!r)return;t.dataset.cdnTry="1";t.src=XQ_CDN+r},true);
 {const f0=window.fetch;if(f0)window.fetch=function(i,o){return f0.apply(this,arguments).then(res=>{if(res&&res.status===404){const r=xqCdnRel(typeof i==="string"?i:i&&i.url||"");if(r)return f0.call(window,XQ_CDN+r,{mode:"cors",credentials:"omit"}).then(x=>x.ok?x:res,()=>res)}return res})}}
+/* 評比第 17、18 輪第 5 項（開發者 11/14 選）：App 切到背景（document.hidden、pagehide）時，App 自己能停的計時器、動畫、預載都停下來，回前景再接著。
+   bgpHid()＝現在在背景；bgpOn(fn)＝切背景／回前景時叫 fn(在背景?)，回傳取消函式；bgpEvery(fn,ms)＝背景會自動停的 setInterval（回前景重新起算，不補背景期間的拍子），bgpStop(id) 停掉。
+   線上對局心跳、棋鐘（net.js、local.js、各對局頁的鐘）不用這個，照舊跑 */
+const BGP={hid:typeof document!=="undefined"&&!!document.hidden,ev:new Set(),iv:new Map(),n:0};
+function bgpHid(){return BGP.hid||!!(typeof document!=="undefined"&&document.hidden)}
+function bgpOn(fn){BGP.ev.add(fn);return()=>BGP.ev.delete(fn)}
+function bgpEvery(fn,ms){const k=++BGP.n;BGP.iv.set(k,{fn,ms,t:bgpHid()?0:setInterval(fn,ms)});return k}
+function bgpStop(k){const o=BGP.iv.get(k);if(o){clearInterval(o.t);BGP.iv.delete(k)}}
+function bgpSet(h){h=!!h;if(h===BGP.hid)return;BGP.hid=h;for(const o of BGP.iv.values()){clearInterval(o.t);o.t=h?0:setInterval(o.fn,o.ms)}for(const f of[...BGP.ev])try{f(h)}catch(e){}}
+if(typeof document!=="undefined"&&document.addEventListener){document.addEventListener("visibilitychange",()=>bgpSet(document.hidden));addEventListener("pagehide",()=>bgpSet(true));addEventListener("pageshow",()=>{if(!document.hidden)bgpSet(false)})}
 const $=s=>document.querySelector(s);
 const NAMES={r:{K:"帥",A:"仕",B:"相",N:"傌",R:"俥",C:"炮",P:"兵"},b:{K:"將",A:"士",B:"象",N:"馬",R:"車",C:"砲",P:"卒"}};
 const CN=["","一","二","三","四","五","六","七","八","九"],PLAYER={r:"紅方",b:"黑方"};
@@ -234,7 +244,7 @@ async function wakeSync(){if(wakeBusy)return;wakeBusy=true;try{let need=false;
   else if(!need&&wakeLk){const r=wakeLk;wakeLk=null;try{await r.release()}catch(e){}}}finally{wakeBusy=false}}
 function keepAwake(key,pred){if(pred)WAKE[key]={f:pred,seen:false,at:Date.now()};else delete WAKE[key];setTimeout(wakeSync,50)}
 document.addEventListener("visibilitychange",()=>{if(document.visibilityState==="visible")wakeSync()});
-setInterval(()=>{if(wakeLk||Object.keys(WAKE).length)wakeSync()},3000);
+bgpEvery(()=>{if(wakeLk||Object.keys(WAKE).length)wakeSync()},3000);   /* 評比第 17、18 輪第 5 項：在背景不用每 3 秒檢查（回前景時上面 visibilitychange 會重新要求） */
 function sheet(title,build){
   try{if(!(history.state&&history.state.xqSheet)){const d=NAV_D+1;history.pushState({xqSheet:1,d},"",location.href);NAV_D=d;navMark(d,true,true)}}catch(e){}   /* 意見回饋 607：卡片那一層也登記（goUp 會跳過它） */
   document.querySelectorAll("#scrim,#sheet").forEach(e=>e.remove());const sc=document.createElement("div");sc.className="scrim";sc.id="scrim";

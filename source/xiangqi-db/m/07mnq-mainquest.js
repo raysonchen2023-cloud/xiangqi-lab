@@ -128,8 +128,8 @@ function mnqGift(k,era,after){mnqCss();const G=MNQ_GIFT[k];if(!G)return;const go
   if(k==="a6"){items=[["♪",el+"的配樂"],["🌲","景點線索"],["📜","札記一頁・"+el]];btn=["♪ 打開遠征令",()=>mnqPanel()];if(got)mnqMusicAdd(era)}
   if(k==="a2"&&got)mnqA2Pick();
   const o=document.createElement("div");o.id="mnqGf";o.setAttribute("role","dialog");o.setAttribute("aria-modal","true");o.setAttribute("aria-label",G.nm);
-  o.innerHTML=`<div class="gf-st"><div class="gf-ray"></div><div class="gf-seal">${esc(G.seal)}</div></div><h2>${esc(G.nm)}${el&&k==="a6"?"・"+esc(el):""}</h2><p class="gf-say">${esc(G.say)}</p>
-    <div class="gf-it">${items.map(([i,t])=>`<div><span>${i}</span>${esc(t)}</div>`).join("")}</div><div class="gf-b"><button type="button" id="mnqGf1">${esc(btn[0])}</button><button type="button" class="g" id="mnqGf2">收下</button></div>`;
+  o.innerHTML=`<div class="gf-st"><div class="gf-ray"></div><div class="gf-seal" data-noi18n>${esc(G.seal)}</div></div><h2>${esc(G.nm)}${el&&k==="a6"?"・"+esc(el):""}</h2><p class="gf-say">${esc(G.say)}</p>
+    <div class="gf-it">${items.map(([i,t])=>`<div><span>${i}</span>${esc(t)}</div>`).join("")}</div><div class="gf-b"><button type="button" id="mnqGf1">${esc(btn[0])}</button><button type="button" class="g" id="mnqGf2" data-i18n="mnq.accept">收下</button></div>`;
   document.body.append(o);requestAnimationFrame(()=>o.classList.add("on"));try{if(typeof rfxSound==="function")rfxSound(false);else mnfSfx("bell")}catch(e){}
   const close=f=>{o.classList.remove("on");setTimeout(()=>o.remove(),360);mnqHomeSync();if(f)f();else if(after)setTimeout(after,200)};   /* 按鈕的事直接做（iPhone 要在點選當下開始放配樂） */
   o.querySelector("#mnqGf1").onclick=()=>{if(typeof vibrate==="function")vibrate(8);close(btn[1])};o.querySelector("#mnqGf2").onclick=()=>close(null);
@@ -251,4 +251,4 @@ function mnqIdle(){try{if(typeof TITLE!=="undefined"&&TITLE)return false;if(docu
 function mnqReach(){try{const E=mnqEnv();if(!E.at||!MNQ_CHAP[E.at])return;const S=mnqSt();if(S.reach[E.at])return;S.reach[E.at]=Date.now();mnqSave(S)}catch(e){}}   /* 星槎第一次停到有主線資料的那一朝：記下來，那一章就開放（之後開走也不會再關） */
 function mnqTick(auto){try{mnqReach();const v=document.getElementById("view");if(v&&!document.getElementById("mnqNext"))mnqHomeBtn(v);mnqHomeSync();if(!auto||!mnqIdle())return;const n=mnqNextOf(mnqSt(),mnqEnv());if(n.k==="gift")mnqGift(n.g,n.era)}catch(e){}}
 /* 首頁第一次畫出來時（m.html 載入途中就 route 了）這個模組還沒包到 homeMap：計時器順便補上按鈕 */
-if(typeof window!=="undefined"&&typeof document!=="undefined"){let qa=false;try{qa=localStorage.getItem("xq_mnqQa")==="1"}catch(e){}const auto=!navigator.webdriver||qa;setInterval(()=>mnqTick(auto),2500);setTimeout(()=>mnqTick(false),0)}
+if(typeof window!=="undefined"&&typeof document!=="undefined"){let qa=false;try{qa=localStorage.getItem("xq_mnqQa")==="1"}catch(e){}const auto=!navigator.webdriver||qa;(typeof bgpEvery==="function"?bgpEvery:setInterval)(()=>mnqTick(auto),2500);setTimeout(()=>mnqTick(false),0)}

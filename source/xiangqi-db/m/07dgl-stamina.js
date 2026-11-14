@@ -276,7 +276,7 @@ function dglSay(t,card){if(document.body.classList.contains("shw-on")&&document.
 /* ---------- 走路角色：頭上小條、走慢、打哈欠、累了的台詞（07w shwLoad 掛好角色後呼叫） ---------- */
 function dglWalkHook(S){if(!dglLive()||!S||!S.box)return;dglCss();DGL.walk.add(S);const L=S.o&&S.o.layer||S.box.parentNode;
   if(L&&!(S.dglHead&&S.dglHead.isConnected)){const e=document.createElement("div");e.className="dgl-head";e.setAttribute("aria-hidden","true");e.innerHTML=dglBarsHTML+'<span class="z">🥱</span>';L.append(e);S.dglHead=e}
-  if(!S.dglY)S.dglY=Date.now()-14e3;if(!DGL.wt)DGL.wt=setInterval(dglWalkTick,300);dglPaint();
+  if(!S.dglY)S.dglY=Date.now()-14e3;if(!DGL.wt)DGL.wt=(typeof bgpEvery==="function"?bgpEvery:setInterval)(dglWalkTick,300);dglPaint();
   if(dglTired(DGL.s.r))setTimeout(()=>dglTiredSay(false),2600)}
 function dglWalkTick(){const now=Date.now(),tired=dglTired(DGL.s.r);
   for(const S of[...DGL.walk]){const e=S.dglHead;if(!S.box.isConnected){if(e)e.remove();DGL.walk.delete(S);continue}if(!e)continue;
@@ -285,7 +285,7 @@ function dglWalkTick(){const now=Date.now(),tired=dglTired(DGL.s.r);
     const k=+m[3],ch=parseFloat(cv.style.height)||cv.clientHeight,T=parseFloat(cv.style.top)||0,top=+m[2]+(T+ch*.12)*k;
     Object.assign(e.style,{display:"block",left:(+m[1]).toFixed(1)+"px",top:(top-6).toFixed(1)+"px"});
     if(!S.go&&!dglRM()&&now-S.dglY>2e4){S.dglY=now;dglYawn(S)}}
-  if(!DGL.walk.size){clearInterval(DGL.wt);DGL.wt=0}}
+  if(!DGL.walk.size){(typeof bgpStop==="function"?bgpStop:clearInterval)(DGL.wt);DGL.wt=0}}
 function dglYawn(S){try{if(S.anim)S.anim("bow",.45)}catch(e){}S.box.classList.add("dgl-yawn");if(S.dglHead)S.dglHead.classList.add("yawn");
   setTimeout(()=>{S.box.classList.remove("dgl-yawn");if(S.dglHead)S.dglHead.classList.remove("yawn");try{if(!S.go&&S.anim)S.anim("idle",1)}catch(e){}},2400)}
 function dglTiredSay(force){const now=Date.now();if(dglBusy(location.hash)||document.getElementById("dglOut"))return;if(!force&&now-DGL.say<18e4)return;
@@ -412,4 +412,4 @@ if(DGL_ON&&typeof window!=="undefined"){
     toast(t.checked?"已打開平日體力：定軌力回滿，在人間會慢慢用掉":"已關閉平日體力：定軌力不扣、不會化墨退場；星芒照常")});
   addEventListener("hashchange",()=>{DGL.done=0;setTimeout(dglTick,700)});
   document.addEventListener("visibilitychange",()=>{DGL.last=Date.now()});
-  setInterval(dglTick,2000)}
+  (typeof bgpEvery==="function"?bgpEvery:setInterval)(dglTick,2000)}

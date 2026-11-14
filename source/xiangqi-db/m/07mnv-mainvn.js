@@ -17,7 +17,7 @@
    跳過＝快轉到這一場結束（選項不記、調查點不看），解題和儀式照樣要做；離開＝存到上一場，下次從這一場開頭接著看。
    解題卡（mnvPz）：試看（P.trial）→ 自己走；自己來／幫我看（標出要動的子、候選著、走過去會被吃的格子）／陪我走（演一步，下一個決定交回玩家）；
      走錯時棋盤上播一手真正的反駁再停住（按「退回重想」），錯 2 次自動「幫我看」；題庫沒列的走法用規則往下算（mnvMate）也算對；不設倒數。
-   減少動態：不推拉、不呼吸、不打字、不震動、氣泡一起出現，換圖直接切。介面字用 07i18n 的鍵（vn.*），故事台詞不翻。
+   減少動態：不推拉、不呼吸、不打字、不震動、氣泡一起出現，換圖直接切。介面字用 07i18n 的鍵（vn.*），英文台詞由 i18nStoryData 在播放前轉換。
    名稱前綴 mnv／MNV（11/14 grep m/*.js 確認沒人用）。 */
 /* 說話的人：im＝立繪 data/vn/<im>.webp（七星，park/wuxia_final 綠幕去背）；npc＝場景裡的人，只出名字框 */
 const MNV_WHO={zhe:{nm:"阿轍",fn:"齊轍",im:"x_swordboy"},yan:{nm:"燕子",fn:"田飛燕",im:"x_spiritgirl"},hua:{nm:"花兒",fn:"雷借花",im:"x_martialgirl"},mei:{nm:"小梅",fn:"駱躍梅",im:"x_miaogirl"},
@@ -338,10 +338,10 @@ function mnvDid(r,N,P){if(!r)return[];const L=[],T=r.trial||[],bad=((P&&P.trial&
   if(r.moves)L.push([mnvT("vn.sMoves","走了 {n} 手（最少 {m} 手）",{n:r.moves,m:N||2})]);return L}
 /* ---------- 播放器：mnvPlay(章代號,{from 從第幾場, label, pz 危機題資料, onScene(id,毫秒,跳過), onChoice(key,值), onSolved(P,r)→儀式資料, onEnd(1 主按鈕|2 次按鈕), onRetry(P,r), onLeave}) ---------- */
 const MNV_LEAVE={leave:1};
-function mnvPlay(era,opt){opt=opt||{};const CH=MNV_CH[era];if(!CH){if(opt.onLeave)opt.onLeave();return null}mnvCss();
+function mnvPlay(era,opt){opt=opt||{};const CH=typeof i18nStoryData==="function"?i18nStoryData(MNV_CH[era]):MNV_CH[era];if(!CH){if(opt.onLeave)opt.onLeave();return null}mnvCss();
   let rm=false;try{rm=matchMedia("(prefers-reduced-motion:reduce)").matches}catch(e){}
   for(const id of["mnvPg","mnvBk"]){const x=document.getElementById(id);if(x)x.remove()}
-  const I=typeof MNF_IMG!=="undefined"?MNF_IMG:{},W=MNV_WHO,lead=CH.lead,SEEN=new Set(),CLUE=new Map();   /* SEEN：這次播放已經用全名介紹過的七星；CLUE：調查點看到的線索（方案選擇時列出來） */
+  const I=typeof MNF_IMG!=="undefined"?MNF_IMG:{},W=typeof i18nStoryData==="function"?i18nStoryData(MNV_WHO):MNV_WHO,lead=CH.lead,SEEN=new Set(),CLUE=new Map();   /* SEEN：這次播放已經用全名介紹過的七星；CLUE：調查點看到的線索（方案選擇時列出來） */
   const bk=document.createElement("div");bk.id="mnvBk";bk.setAttribute("aria-hidden","true");document.body.append(bk);
   const o=document.createElement("div");o.id="mnvPg";o.setAttribute("role","dialog");o.setAttribute("aria-modal","true");o.setAttribute("aria-label",opt.label||CH.card.t);
   o.innerHTML=`<div class="mnv-im"><div class="mnv-bg"></div></div><div class="mnv-vg"></div><div class="mnv-fbl" aria-hidden="true"></div>
@@ -524,7 +524,7 @@ function mnvPlay(era,opt){opt=opt||{};const CH=MNV_CH[era];if(!CH){if(opt.onLeav
     if(dead)return;await endCard()}
   /* 章末卡：印＋你做了什麼（獨立找到、看過反駁、用了幫我看……，不給總星等）；「再試這盤棋」再解一次（結果另外記） */
   async function endCard(){const E=CH.end,P=opt.pz||MNF_QTE[CH.qte],N=Math.ceil(((P&&P.line)||[1,1,1]).length/2);setCast([null,null]);setBg(E.bg,[1.2,40,62],1);box.style.visibility="hidden";if(!rm)sfx("bell");
-    for(;;){const D=mnvDid(pzR,N,P);const k=await card("mnv-end",`<div class="seal" aria-hidden="true">${esc(E.seal)}<br>之印</div><h2>${esc(E.t)}</h2><p>${esc(E.s)}</p>${D.length?`<ul aria-label="${esc(mnvT("vn.did","你做了什麼"))}">${D.map(([t,g])=>`<li${g?' class="gold"':""}>${esc(t)}</li>`).join("")}</ul>`:""}`,[E.b,E.g]);
+    for(;;){const D=mnvDid(pzR,N,P);const k=await card("mnv-end",`<div class="seal" aria-hidden="true" data-noi18n>${esc(E.seal)}<br>之印</div><h2>${esc(E.t)}</h2><p>${esc(E.s)}</p>${D.length?`<ul aria-label="${esc(mnvT("vn.did","你做了什麼"))}">${D.map(([t,g])=>`<li${g?' class="gold"':""}>${esc(t)}</li>`).join("")}</ul>`:""}`,[E.b,E.g]);
       if(k===2){box.style.visibility="";o.classList.add("nsk");const r=await new Promise(res=>{away(true);mnvPz(o,P,Object.assign(pzUi(),{away:()=>{}}),res)});
         o.classList.remove("nsk");if(r){pzR=r;try{if(opt.onRetry)opt.onRetry(P,r)}catch(e){}}box.style.visibility="hidden";continue}
       close();try{if(opt.onEnd)opt.onEnd(k)}catch(e){}return}}
@@ -536,7 +536,7 @@ function mnvPlay(era,opt){opt=opt||{};const CH=MNV_CH[era];if(!CH){if(opt.onLeav
       help:[每一步「幫我看」的說明…], walk:[每一步「陪我走」的說明…], wrong:{著法:{say,re 反駁著法}}, miss:[[人,字]…] 走錯後的台詞, win 解開的台詞}
    r＝{mist 走錯幾次, help 用過幫我看, walk 陪走幾步, trial:[看過的試看], moves 走了幾手（含走錯）, perfect 不用幫忙、沒試看、一次走對, hint, lv, demo 全部陪走, cn 走法}
    新手三段支援（不設倒數）：自己來（什麼都不標）／幫我看（藍框要動的子、箭頭候選著、紅圈走過去會被吃的格子）／陪我走（演一步並說明，下一個決定交回玩家） */
-function mnvPz(host,P,ui,done){const C=typeof window!=="undefined"&&window.XQCore;ui=ui||{};const say=ui.say||(()=>{}),talk=ui.line||((w,t)=>say(t));
+function mnvPz(host,P,ui,done){if(typeof i18nStoryData==="function")P=i18nStoryData(P);const C=typeof window!=="undefined"&&window.XQCore;ui=ui||{};const say=ui.say||(()=>{}),talk=ui.line||((w,t)=>say(t));
   if(!C||!P||typeof Board!=="function"){setTimeout(()=>done({mist:0,hint:true,lv:0,help:false,walk:1,trial:[],moves:0,perfect:false,demo:true,cn:"",skip:1}),300);return null}
   const S1=P.vsay||P.say||"",S2=P.vsay2||S1,side=P.side||"r",opp=C.opp(side),b0=C.parseFen(String(P.fen).split(" ")[0]),lines=[P.line||[],...(P.alt||[])].map(L=>L.slice()),N0=Math.ceil(lines[0].length/2),T=P.trial;
   const w=document.createElement("div");w.className="mnv-pz";

@@ -306,7 +306,7 @@ function shwBreath(S){if(!SHW_BR_ON||shwRM())return;const C=S.C,L=S.o.layer,I=S.
   M.classList.add("shw-brfirst");setTimeout(()=>M.classList.remove("shw-brfirst"),4800);
   setTimeout(()=>{if(!document.hidden)keys().forEach((h,i)=>glow(h,i*140))},500);
   let last=Date.now(),i=0,nx=0;M.addEventListener("pointerdown",()=>{last=Date.now()},true);
-  const it=setInterval(()=>{if(!S.box.isConnected||!M.isConnected){clearInterval(it);return}const now=Date.now();if(document.hidden||S.go||now-last<20000||now<nx)return;
+  const it=(typeof bgpEvery==="function"?bgpEvery:setInterval)(()=>{if(!S.box.isConnected||!M.isConnected){(typeof bgpStop==="function"?bgpStop:clearInterval)(it);return}const now=Date.now();if(document.hidden||S.go||now-last<20000||now<nx)return;
     const K=keys();if(!K.length)return;glow(K[i++%K.length]);nx=now+7000},1000)}
 {const f1=shwStay;shwStay=function(S){f1(S);try{if(!S.o.br0){S.o.br0=1;shwBreath(S)}}catch(e){}}}
 {const f0=shwOpen;shwOpen=function(S){const g=S.go,X=S.o.X;try{if(g&&!g.free&&(g.ph==="hop"||g.t<g.dur||(g.seq&&g.seq.length))){const C=S.C;S.sq=null;S.curE=null;   /* 走到一半再點同一個入口＝直接開：角色淡一下站到入口前，不卡在半路（Gemini 第二次評估第 7 節第 1 項，開發者選定） */
@@ -407,8 +407,8 @@ function xqSheetDup(S){try{const b=S.b;b.querySelectorAll(".xqs-dup").forEach(x=
 function xqSheetMove(v,P,S){const V=document.getElementById("view")||v,F=Node.DOCUMENT_POSITION_FOLLOWING;
   const ok=c=>{if(c===S.el||c.classList.contains("xqs")||c.classList.contains("xqs-s")||c.matches("script,style,template,link"))return false;const cs=getComputedStyle(c);return cs.position!=="fixed"&&cs.position!=="absolute"&&cs.display!=="none"};   /* 藏起來的（display:none）先不搬，等它出現（每秒看一次）再搬 */
   const mv=()=>{if(!P.isConnected)return;const L=[];const walk=el=>{for(const c of[...el.children]){if(c===P)continue;if(c.contains(P)){walk(c);continue}if((P.compareDocumentPosition(c)&F)&&ok(c))L.push(c)}};walk(V);L.forEach(c=>S.b.append(c))};
-  mv();const it=setInterval(()=>{if(!P.isConnected){clearInterval(it);return}mv()},1000);const mo=new MutationObserver(()=>{if(!P.isConnected){mo.disconnect();return}mv()});let e=P.parentNode;while(e&&V.contains(e)){mo.observe(e,{childList:true});if(e===V)break;e=e.parentNode}
-  return()=>{mo.disconnect();clearInterval(it)}}
+  mv();const it=(typeof bgpEvery==="function"?bgpEvery:setInterval)(()=>{if(!P.isConnected){(typeof bgpStop==="function"?bgpStop:clearInterval)(it);return}mv()},1000);const mo=new MutationObserver(()=>{if(!P.isConnected){mo.disconnect();return}mv()});let e=P.parentNode;while(e&&V.contains(e)){mo.observe(e,{childList:true});if(e===V)break;e=e.parentNode}
+  return()=>{mo.disconnect();(typeof bgpStop==="function"?bgpStop:clearInterval)(it)}}
 /* 828：各頁原本「點圖上標籤＝捲到圖下某一塊」的寫法不用改——那一塊搬進面板後，玩家剛點過（1.5 秒內）時對它 scrollIntoView＝打開面板並捲到那裡；
    不是玩家點的（頁面自己捲）就不打開，也不捲動整頁。 */
 let XQS_UT=0;addEventListener("click",()=>{XQS_UT=Date.now()},true);
@@ -520,7 +520,7 @@ async function shwLoad(S){
   if(window.ResizeObserver){const ro=new ResizeObserver(()=>{if(!S.box.isConnected||S.gen!==G){ro.disconnect();return}fit()});ro.observe(S.I)}fit();
   let last=performance.now(),acc=0,fr=0,t0=last;
   const end=()=>{try{cv.remove()}catch(e){}if(S.gen!==G)return void(()=>{try{r.dispose();r.forceContextLoss()}catch(e){}})();S.ready=false;S.go=null;if(!document.querySelector(".shw.on"))document.body.classList.remove("shw-on");try{r.dispose();r.forceContextLoss()}catch(e){}};
-  const loop=now=>{if(!S.box.isConnected||!S.M.isConnected||S.gen!==G){end();return}requestAnimationFrame(loop);if(document.hidden){last=now;return}
+  const loop=now=>{if(!S.box.isConnected||!S.M.isConnected||S.gen!==G){end();return}if(typeof bgpHid==="function"&&bgpHid()){last=now;const off=bgpOn(h=>{if(!h){off();requestAnimationFrame(loop)}});return}requestAnimationFrame(loop);if(document.hidden){last=now;return}   /* 評比第 17、18 輪第 5 項：在背景不排下一格，回前景再接著走 */
     if(!S.ready){if(S.o.gate&&!S.o.gate()){last=now;return}S.ready=true;fit();shwStay(S)}
     if(!S.go&&now-(S.lk||0)>1000){S.lk=now;S.lit();const g2=shwLookG();if(g2!==S.lg){S.lg=g2;shwLoad(S).catch(()=>{S.box.remove();S.ready=false;document.body.classList.remove("shw-on")});return}}
     const dt=Math.min(.05,(now-last)/1000);last=now;acc+=dt;const g=S.go;let walk=false;

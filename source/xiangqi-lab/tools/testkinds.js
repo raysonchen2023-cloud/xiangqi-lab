@@ -77,7 +77,9 @@ const CLASSIFIED = new Set([
   "test-net-start.js"   /* 11/13 開局那一方第一步之前的每步 3 分鐘：每步剩餘照走、判超時不分岔、坐黑判得出紅方超時、重抓不往後挪（net.js arr／ackTurn myStart；行為 4） */,
   "test-redblue-public.js",   /* 11/13 第 17 輪 F3 公開紅藍隊攻擊重現：tools/redblue-cases.js 逐案攻擊＋正常對照；還沒修的用 todo 保持失敗 */
   "test-release-sync.js",   /* 11/13 第 17 輪 F1 同版閘門 tools/release-sync-check.js：版本不一致、刻意不發布的行、不該公開的檔都要擋 */
-  "test-reload-guard.js"   /* 11/13 開發者 P1 iPhone 3D 絕殺後頁面重載又直接開第二盤：更新延後、對局頁網址改寫、重載後不開新局、勝負先寫入、賽後分析等特效、異常重載紀錄（m/02r-reloadguard.js；行為 8、混合 2、原始碼 2） */
+  "test-reload-guard.js",   /* 11/13 開發者 P1 iPhone 3D 絕殺後頁面重載又直接開第二盤：更新延後、對局頁網址改寫、重載後不開新局、勝負先寫入、賽後分析等特效、異常重載紀錄（m/02r-reloadguard.js；行為 8、混合 2、原始碼 2） */
+  "test-era-lang.js",   /* 11/14 評比第 17、18 輪 B3 朝代（07-legend storyBookOf／storyEraSync）、B5 英文介面主線（07mnq、07mnf、07t、07bhtl 介面字、首頁下一步、語言範圍說明）、第 18 輪第 4 項舊 8 碼轉移碼停收；11/14 晚加英文頂欄（時辰、登船、節氣、官階、修為）與禮包 Accept 鍵（行為 14、混合 3、原始碼 1） */
+  "test-preload-bg.js"   /* 11/14 評比第 17、18 輪第 5 項背景暫停與按需預載：00-util bgpEvery／bgpOn、09b 預載前景／背景／恢復三段、分區 z:<分區>、別朝代先不下載、閒置才補選讀、省流量、preload-list --retier（行為 12、混合 1、原始碼 1） */
 ]);
 /* 還沒逐項分類的檔（統計列為「待分類」）；新測試檔先放這裡，分好類再移到 CLASSIFIED */
 const PENDING = new Set([]);

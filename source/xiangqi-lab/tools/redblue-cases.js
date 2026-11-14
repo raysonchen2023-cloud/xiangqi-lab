@@ -84,11 +84,12 @@ async function honestClock() {
 /* ================= R03（威脅模型 I5）：轉移碼頻道名反推轉移碼 ================= */
 function xferCtx() {
   const SET = rdM("05-settings.js"), SAVE = rdM("05b-save.js");
-  const ctx = { TextEncoder, TextDecoder, crypto: webcrypto, XQNet: { root: () => "ROOT" }, localStorage: { getItem: () => null }, setTimeout };
+  const net = { calls: 0 }, hit = () => { net.calls++; return Promise.resolve(null) };   /* 假的 XQNet：記 App 有沒有去讀、寫、訂閱任何主題 */
+  const ctx = { TextEncoder, TextDecoder, crypto: webcrypto, XQNet: { root: () => "ROOT", getRetained: hit, putRetained: hit, sub: hit, subscribe: hit }, localStorage: { getItem: () => null, setItem: () => { }, removeItem: () => { } }, setTimeout };
   ctx.window = ctx; vm.createContext(ctx);
   vm.runInContext(cut(SET, "/* XFER:BEGIN", "/* XFER:END */") + cut(SAVE, "/* XFER2:BEGIN", "/* XFER2:END */") + cut(SAVE, "/* XFER4:BEGIN", "/* XFER4:END */")
-    + "\nglobalThis.__X={xfKeys,xf4Keys,xf4Code,XF4_IT,XF4_LEN,XF4_SALT,XF_ABC,XF_TTL,XF4_V3_UNTIL};", ctx);
-  return ctx.__X;
+    + "\nglobalThis.__X={xfKeys,xf4Keys,xf4Code,xf4Download,XF4_IT,XF4_LEN,XF4_SALT,XF_ABC,XF_TTL,XF4_OLD};", ctx);
+  ctx.__X.net = net; return ctx.__X;
 }
 const v3fast = c => crypto.createHash("sha256").update("xqlab-xfer-id:" + c).digest().subarray(0, 10).toString("hex");
 async function xferV4() {
@@ -111,8 +112,11 @@ async function xferLegacy8() {
   const X = xferCtx(), code = Array.from({ length: 8 }, () => X.XF_ABC[crypto.randomInt(X.XF_ABC.length)]).join("");
   const K = await X.xfKeys(code), pre = code.slice(0, 5), t0 = Date.now();
   let found = null; for (const a of X.XF_ABC) for (const b of X.XF_ABC) for (const c of X.XF_ABC) if (!found && v3fast(pre + a + b + c) === K.id) found = pre + a + b + c;
-  const accepted = Date.now() <= X.XF4_V3_UNTIL;
-  return { codeLength: 8, knownPrefix: 5, recovered: found === code, ms: Date.now() - t0, appAcceptsUntil: new Date(X.XF4_V3_UNTIL).toISOString(), appStillAccepts: accepted,
+  /* 評比第 18 輪第 4 項起 8 碼停收：反推出碼也沒用，App 的下載（畫面用的 xfDownload＝xf4Download）看到 8 碼就丟停用提示，不讀不寫任何主題 */
+  let refused = "";
+  try { await X.xf4Download(code) } catch (e) { refused = String(e && e.message || e) }
+  const accepted = !(refused === X.XF4_OLD && X.net.calls === 0);
+  return { codeLength: 8, knownPrefix: 5, recovered: found === code, ms: Date.now() - t0, appRefuses: refused, appNetCalls: X.net.calls, appStillAccepts: accepted,
     attackSucceeded: found === code && accepted };
 }
 
@@ -238,9 +242,9 @@ const CASES = [
   { id: "R03-v4", threat: "I5", expect: "blocked", title: "從公開的轉移碼頻道名反推 10 碼轉移碼（v4）",
     attack: "已知前 7 碼，用一次 SHA-256（舊算法）試後 3 碼全部 29,791 組；再量 PBKDF2-SHA512 30 萬次的速度推估 GPU 窮舉", control: "同一組 10 碼兩次導出的頻道 id 相同（新手機打對碼找得到）",
     expected: "快速攻擊找不到；一張 GPU 窮舉最壞 100 年以上", run: xferV4, control_run: xferV4Roundtrip },
-  { id: "R03-legacy8", threat: "I5", expect: "open", title: "舊版 App 產生的 8 碼轉移碼（v3）：頻道名一次 SHA-256，可以快速反推",
-    attack: "隨機 8 碼，已知前 5 碼，用 SHA-256 試後 3 碼", control: "同 R03-v4 的對照",
-    expected: "修好後：App 不再收 8 碼（XF4_V3_UNTIL 到期後自動拒收）", why: "為了舊版 App 的玩家還能換手機，8 碼收到 2027-01-01（臺灣時間）；到期後這一案會變成「預期失敗卻通過」，要改成 blocked",
+  { id: "R03-legacy8", threat: "I5", expect: "blocked", title: "舊版 App 產生的 8 碼轉移碼（v3）：頻道名一次 SHA-256，可以快速反推",
+    attack: "隨機 8 碼，已知前 5 碼，用 SHA-256 試後 3 碼；反推出來的碼拿去 App 的下載", control: "同 R03-v4 的對照",
+    expected: "已修（評比第 18 輪第 4 項，開發者選「現在就停收」）：8 碼不收，App 不讀不寫任何主題、直接提示重新產生；反推得出碼也拿不到資料",
     run: xferLegacy8, control_run: xferV4Roundtrip },
   { id: "R01-bot", threat: "T9", expect: "blocked", title: "千秋盃虛擬棋客的座位：第三者冒充棋客（sv 2，裁判台代簽）",
     attack: "裁判台開的一盤（簽名版本 sv 2；紅方棋客有裁判台的一次性金鑰、黑方有金鑰的真人），第三者送：①沒簽名的棋客落子 ②自己的金鑰冒簽 ③棋客在別盤的真簽名搬過來 ④棋客舊的那步換更大的 rev 重送",

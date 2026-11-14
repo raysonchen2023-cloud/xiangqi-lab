@@ -145,6 +145,8 @@ function hwReport(code,H,labels,name){const R=hwRec(code),N=H.items.length,X=H.i
   H.items.forEach((it,i)=>L.push((i+1)+". "+((labels&&labels[i])||(it.k==="c"?"殘局 ":"主題題 ")+it.id)+"："+hwResTxt(X[i])));
   L.push("（象棋千秋・作業代碼 "+code.slice(0,12)+(code.length>12?"…":"")+"）","教練在 App「🧑‍🏫 教練作業 → 收成績」貼上整段就能彙整（下面這行有校驗碼，請不要改）：",hwSign(code,H,name));return L.join("\n")}
 /* 每題的名稱（殘局：題型〈出處〉；主題訓練：題名＋主題） */
+/* Preserve classical study titles while translating their UI category separately. */
+function hwLabelHTML(label){const s=String(label||""),i=s.indexOf("〈");return i<0?esc(s):`<span>${esc(s.slice(0,i))}</span><span data-noi18n>${esc(s.slice(i))}</span>`}
 async function hwLabels(H){const out=H.items.map(x=>(x.k==="c"?"殘局 ":"主題題 ")+x.id);let CD=null,QD=null;
   if(H.items.some(x=>x.k==="c"))CD=await cjData().catch(()=>null);if(H.items.some(x=>x.k==="q"))QD=await api("/quiz/data").catch(()=>null);
   H.items.forEach((x,i)=>{if(x.k==="c"&&CD&&CD.byId[x.id]){const P=CD.byId[x.id];out[i]="殘局・"+P.t+"〈"+((P.src||{}).title||x.id)+"〉"}
@@ -274,7 +276,7 @@ function HwMake(v){setTop("🧑‍🏫 教練作業","#/canju");if(typeof setTab
         ${thRow}
         <div class="muted" style="font-size:13px">${Dr.th&&TV.mode!=="open"?"":P.length+" 題・"}由易到難・點題卡加入或取消</div>
         <div class="items hw-cards" style="padding:0">${P.slice(0,Dr.lim).map(x=>{const on=has(x.k,x.id),key=x.k+":"+x.id,did="hwd-"+x.k+"-"+x.id;
-          return`<button type="button" class="item hw-card${on?" on":""}" data-add="${esc(key)}" data-fk="add:${esc(key)}" aria-pressed="${on}" aria-label="${esc(x.name)}，${on?"已加入":"未加入"}" aria-describedby="${esc(did)}${x.tags.length?" "+esc(did)+"-t":""}"><span class="lb" aria-hidden="true">${on?"✓":"＋"}</span><span class="tx"><b>${esc(x.name)}</b><span id="${esc(did)}">${esc(x.sub)}</span>${x.tags.length?`<span class="hw-tg" id="${esc(did)}-t">${esc(x.tags.join("、"))}</span>`:""}</span></button>`}).join("")}</div>
+          return`<button type="button" class="item hw-card${on?" on":""}" data-add="${esc(key)}" data-fk="add:${esc(key)}" aria-pressed="${on}" aria-label="${esc(x.name)}，${on?"已加入":"未加入"}" aria-describedby="${esc(did)}${x.tags.length?" "+esc(did)+"-t":""}"><span class="lb" aria-hidden="true">${on?"✓":"＋"}</span><span class="tx"><b data-noi18n>${esc(x.name)}</b><span id="${esc(did)}">${x.sub.split(" · ").map(t=>`<span${/^《.*》$/.test(t)?" data-noi18n":""}>${esc(t)}</span>`).join(" · ")}</span>${x.tags.length?`<span class="hw-tg" id="${esc(did)}-t">${esc(x.tags.join("、"))}</span>`:""}</span></button>`}).join("")}</div>
         ${P.length>Dr.lim?`<button class="btn ghost" id="hwMore" data-fk="more">再顯示 40 題（還有 ${P.length-Dr.lim} 題）</button>`:""}
         ${N?`<div class="hw-bar"><button type="button" class="btn ghost" id="hwSeeSel" data-fk="see">查看已選（${N}）・排序與產生連結</button></div>`:""}`;
       v.scrollTop=y;
@@ -629,7 +631,7 @@ function HwGrade(v){setTop("🧑‍🏫 教練作業","#/canju");if(typeof setTa
     const recs=Object.values(A[cur].st||{}),T=hwGradeTab(recs,H,labels[cur]),cls={first:"first",late:"late",ans:"ans",no:"no"};
     box.innerHTML=`<div class="card"><b>🧑‍🏫 ${esc(T.title)}</b><div class="muted" style="font-size:13px">${T.students.length} 位學生・${H.items.length} 題${T.worst.length?"・⚠ 最多人沒一次答對：第 "+T.worst.map(i=>i+1).join("、")+" 題（"+T.rows[T.worst[0]].wrong+" 人）":""}</div>
       <div class="hw-tw" style="margin-top:8px"><table class="hw-tab"><thead><tr><th>題目</th>${T.students.map((n,k)=>`<th>${esc(n)}<small>${esc(T.dates[k])}</small></th>`).join("")}<th>沒一次答對</th></tr></thead><tbody>
-        ${T.rows.map(r=>`<tr class="${T.worst.includes(r.i)?"worst":""}"><td>${r.i+1}. ${esc(r.label)}${T.worst.includes(r.i)?" ⚠":""}</td>${r.cells.map(c=>`<td class="${cls[c.k]}">${c.k==="first"?"✅ 一次對":c.k==="late"?"✔ 第 "+c.n+" 次":c.k==="ans"?"👁 看答案":esc(c.t)}${c.s!=null?`<small>${hwTime(c.s*1000)}</small>`:""}${c.c&&(hwBad(c.c.k)||c.c.k==="slow")?`<small>${esc(c.c.t)}</small>`:""}</td>`).join("")}<td><b>${r.wrong}</b>${r.undone?`<small>沒做 ${r.undone}</small>`:""}</td></tr>`).join("")}
+        ${T.rows.map(r=>`<tr class="${T.worst.includes(r.i)?"worst":""}"><td>${r.i+1}. ${hwLabelHTML(r.label)}${T.worst.includes(r.i)?" ⚠":""}</td>${r.cells.map(c=>`<td class="${cls[c.k]}">${c.k==="first"?"✅ 一次對":c.k==="late"?"✔ 第 "+c.n+" 次":c.k==="ans"?"👁 看答案":esc(c.t)}${c.s!=null?`<small>${hwTime(c.s*1000)}</small>`:""}${c.c&&(hwBad(c.c.k)||c.c.k==="slow")?`<small>${esc(c.c.t)}</small>`:""}</td>`).join("")}<td><b>${r.wrong}</b>${r.undone?`<small>沒做 ${r.undone}</small>`:""}</td></tr>`).join("")}
         <tr><td>完成</td>${T.tot.map(t=>`<td>${t.done}／${H.items.length}</td>`).join("")}<td></td></tr><tr><td>第一次就答對</td>${T.tot.map(t=>`<td>${t.first}</td>`).join("")}<td></td></tr>
         <tr><td>看答案</td>${T.tot.map(t=>`<td>${t.ans}</td>`).join("")}<td></td></tr><tr><td>總用時</td>${T.tot.map(t=>`<td>${hwTime(t.s*1000)}</td>`).join("")}<td></td></tr></tbody></table></div>
       <div class="opt" style="margin:10px 0 0"><button class="on" id="hgCsv">⬇ 匯出 CSV</button><button id="hgCp">📋 複製 CSV</button><button id="hgDel">🗑 清掉這份</button></div>

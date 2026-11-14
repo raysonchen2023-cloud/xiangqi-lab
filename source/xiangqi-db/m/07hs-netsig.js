@@ -139,4 +139,4 @@ function nsgTick(){try{nsgKeyHook(window.XQNet);const N=window.XQNet,on=/^#\/pvp
   else nsgBoxOff(P&&P.st==="ok")}catch(e){}}
 /* 對方回來了（或離開這頁）：還開著的「對方沒有回應」視窗收掉 */
 function nsgBoxOff(back){if(NSG.box){try{NSG.box.remove()}catch(e){}NSG.box=null;if(back)try{toast("對方回來了，棋局繼續")}catch(e){}}}
-setInterval(nsgTick,1000);
+(typeof bgpEvery==="function"?bgpEvery:setInterval)(nsgTick,1000);

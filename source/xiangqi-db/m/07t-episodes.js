@@ -41,7 +41,7 @@ function epCount(S){if(EP_DEV)return;const d=localDay();if(S.d!==d){S.d=d;S.n=0}
 function epHere(){try{return shipHere()}catch(e){return"classic"}}
 const epRead=k=>!!(store.get("shipRead",{})||{})[k];
 const epNk=(c,by)=>by===EP_K.M&&c===EP_K.Y?"燕子姊姊":c===EP_K.F?"方庭":((WX_CHARS[c]||{}).nk||(WX_CHARS[c]||{}).n||"");
-function epTx(s,by){const me=epMe(),M=WX_CHARS[me]||{};return String(s).replace(/\{@([SYHMFLX])\}/g,(m,k)=>epNk(EP_K[k],by)).replace(/\{名\}/g,epNk(me,by)).replace(/\{你\}/g,M.sx==="f"?"妳":"你")}
+function epTx(s,by){const me=epMe(),M=WX_CHARS[me]||{};return (typeof i18nStoryText==="function"?i18nStoryText(s):String(s)).replace(/\{@([SYHMFLX])\}/g,(m,k)=>typeof i18nStoryText==="function"?i18nStoryText(epNk(EP_K[k],by)):epNk(EP_K[k],by)).replace(/\{名\}/g,()=>typeof i18nStoryText==="function"?i18nStoryText(epNk(me,by)):epNk(me,by)).replace(/\{你\}/g,typeof i18nLang==="function"&&i18nLang()==="en"?"you":M.sx==="f"?"妳":"你")}
 const epOne=a=>a[Math.floor(Math.random()*a.length)];
 function epCss(){if(document.getElementById("epCss"))return;const s=document.createElement("style");s.id="epCss";s.textContent=`
 .v7.ep{max-width:min(84vw,310px)}
@@ -362,7 +362,7 @@ async function ep4Game(kind,cs,why){epCss();const C=window.XQCore;let D=null;try
   const tick=setInterval(()=>{if(end)return;if(location.hash!==h0||!ov.isConnected){finish(true);return}const s=60-Math.floor((Date.now()-t0)/1000);$("#ep4T").textContent=Math.max(0,s);if(s<=0)finish()},250);
   $("#ep4Q").onclick=()=>{vibrate(5);finish()};
   function finish(quiet){if(end)return;end=true;clearInterval(tick);if(quiet){ov.remove();return}
-    ov.innerHTML=`<h3>🌙 一分鐘到了</h3><p style="font-size:17px;margin:4px 0 8px">答對 <b>${score}</b> 題</p>`+epSay(cs[0],score>=5?"好眼力！":"看得仔細，就是好棋。")+epSay(cs[1],EP4_END[cs[1]][why==="night"?0:1])+epSay(cs[0],EP4_END[cs[0]][why==="night"?0:1])
+    ov.innerHTML=`<h3>🌙 一分鐘到了</h3><p style="font-size:17px;margin:4px 0 8px"><b>答對 ${score} 題</b></p>`+epSay(cs[0],score>=5?"好眼力！":"看得仔細，就是好棋。")+epSay(cs[1],EP4_END[cs[1]][why==="night"?0:1])+epSay(cs[0],EP4_END[cs[0]][why==="night"?0:1])
       +`<div class="ep-card">說書人：「燈芯結了一朵燈花——老一輩說，這是好兆頭。」<br>挑一樣帶走：</div><div class="ep-row"><button class="btn" id="ep4X">✨ 修為 +${EP_XP[4]}</button><button class="btn" id="ep4H">🪔 燈花：提示棋 1 顆</button></div>`;
     const take=f=>{const S=epSt(),k="ep4:"+ep4Key();if(S.nr===k){ov.remove();return}S.nr=k;epSave(S);f();ov.remove();if(why==="night")setTimeout(()=>toast("🌙 夜深了，早點休息"),600)};
     $("#ep4X").onclick=()=>{vibrate(8);take(()=>addXP(EP_XP[4],"插曲","ep4:"+ep4Key()))};

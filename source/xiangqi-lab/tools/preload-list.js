@@ -24,7 +24,15 @@ const FIRST=[
 ];
 const SMALL_LIST=300*1024;   /* 300 KB 以下的 .json／.txt 清單也放首批（大的題庫、問答在背景） */
 /* 11/11 學習、對戰四季日夜圖（<名>_<季>[_night].webp，208 張）放背景：首批只等原圖，不然每個人開 App 要多等十幾 MB */
-const tierOf=(u,size)=>{if(/^data\/hubmap\/[a-z_]+_(spring|summer|autumn|winter)(_night)?\.webp$/.test(u))return 1;if(/^data\/homemap\/home_[a-z_]+_pano_[lr]\.webp$/.test(u))return 1;   /* 11/14 首頁三屏長卷的左右屏（18 張約 2.9 MB）放背景：晚到只是左右兩屏晚一點出現 */const first=FIRST.some(r=>r.test(u))||(/\.(json|txt)$/.test(u)&&size<=SMALL_LIST);if(!first)return 1;return eraOf(u)||0};
+/* 評比第 17、18 輪第 5 項（開發者 11/14 選「按需預載」）：大素材分區，第四格寫 "z:<分區>"，App 第一次走進 pages 列的頁才下載整區（09b preNeed），之前背景也不補。
+   舊版 App 不認得這種層級：當成背景（不是 0、也不是目前朝代），照舊在背景下載，不會壞。
+   別的朝代的檔不用另外標：App 看網址裡的朝代（eraOf）就知道，換到那一朝才下載。主線電影與對話（data/story*、vn）、配樂（data/bgm）本來就不在 DIRS，用到才抓 */
+const ZONES={
+  bh:{re:/^data\/(gxground|guanxing)\//,pages:["guanxing"]},   /* 黑洞玩法：觀星臺、十三星系的對戰地面（塔防、魔王特效 data/bhtd 不在 DIRS，07bhf 用到才抓） */
+  xm:{re:/^data\/ximarket\//,pages:["ximarket"]}                /* 西市、聽雨茶坊 */
+};
+const zoneOf=u=>{for(const z in ZONES)if(ZONES[z].re.test(u))return z;return null};
+const tierOf=(u,size)=>{{const z=zoneOf(u);if(z)return"z:"+z}if(/^data\/hubmap\/[a-z_]+_(spring|summer|autumn|winter)(_night)?\.webp$/.test(u))return 1;if(/^data\/homemap\/home_[a-z_]+_pano_[lr]\.webp$/.test(u))return 1;   /* 11/14 首頁三屏長卷的左右屏（18 張約 2.9 MB）放背景：晚到只是左右兩屏晚一點出現 */const first=FIRST.some(r=>r.test(u))||(/\.(json|txt)$/.test(u)&&size<=SMALL_LIST);if(!first)return 1;return eraOf(u)||0};
 /* 各頁要先有的檔（資料夾規則）。鍵＝網址第一段，或「第一段/第二段」；""＝首頁。
    對局頁（cpu、arena…）要的棋盤、棋子、園子都在目前朝代的首批裡——App 進每一頁前都會順便確認目前朝代的首批（玩家換了朝代時才會用到） */
 const PAGES={
@@ -56,11 +64,21 @@ function makePreload(SITE){
   /* 存在「不跟版本走」快取的大檔（特級大師對局）：記大小和指紋，App 發現內容換了就把手機裡的舊檔刪掉，下次用到時重抓 */
   const big=["data/gmgames.json"].filter(u=>fs.existsSync(path.join(SITE,u))).map(u=>{const p=path.join(SITE,u);return[u,fs.statSync(p).size,crypto.createHash("sha1").update(fs.readFileSync(p)).digest("hex").slice(0,8)]});
   const first=items.filter(x=>x[3]!==1);
-  return{v:ph.digest("hex").slice(0,10),n:items.length,bytes:items.reduce((t,x)=>t+x[1],0),first0:first.filter(x=>x[3]===0).reduce((t,x)=>t+x[1],0),items,big,pages:PAGES}}
+  return{v:ph.digest("hex").slice(0,10),n:items.length,bytes:items.reduce((t,x)=>t+x[1],0),first0:first.filter(x=>x[3]===0).reduce((t,x)=>t+x[1],0),items,big,pages:PAGES,zones:zonesOut()}}
+/* preload.json 的 zones：{分區:{pages:[走進哪些頁算進這一區]}}（正規式不放進去，App 只看第四格） */
+const zonesOut=()=>{const o={};for(const z in ZONES)o[z]={pages:ZONES[z].pages.slice()};return o};
+/* 以線上的 preload.json 為底，只改層級（第四格）、補 zones，不新增、不刪檔、不改大小指紋（版本 v 只看網址、大小、指紋，所以 v 不變）：
+     node xiangqi-lab/tools/preload-list.js --retier <輸入 preload.json> <輸出檔> */
+function retier(M){const o=JSON.parse(JSON.stringify(M));o.items=o.items.map(([u,sz,h,t])=>{const z=zoneOf(u);return[u,sz,h,z?"z:"+z:t===undefined?tierOf(u,sz):t]});
+  o.zones=zonesOut();o.first0=o.items.filter(x=>x[3]===0).reduce((t,x)=>t+x[1],0);return o}
 /* 某個朝代的玩家用手機、Q 版（沒有真實 3D、朝代地圖只抓手機版）時，首批的檔（跟 App 09b-preload.js 的篩法一樣） */
 const firstItems=(M,e)=>M.items.filter(x=>(x[3]===0||x[3]===e)&&!/^data\/tripo_app\//.test(x[0])&&!(/^data\/eramap\/.+\.webp$/.test(x[0])&&!/_m\.webp$/.test(x[0])));
 const firstBytes=(M,e)=>firstItems(M,e).reduce((t,x)=>t+x[1],0);
-module.exports={makePreload,eraOf,ERAS,PAGES,firstItems,firstBytes};
+module.exports={makePreload,eraOf,ERAS,PAGES,ZONES,zoneOf,tierOf,retier,firstItems,firstBytes};
+if(require.main===module&&process.argv[2]==="--retier"){const[,inp,out]=process.argv.slice(2);if(!inp||!out){console.log("用法：node preload-list.js --retier <輸入 preload.json> <輸出檔>");process.exit(1)}
+  const M0=JSON.parse(fs.readFileSync(inp,"utf8")),M=retier(M0);fs.writeFileSync(out,JSON.stringify(M));let n=0;const by={};
+  for(let i=0;i<M.items.length;i++)if(M.items[i][3]!==M0.items[i][3]){n++;const k=String(M0.items[i][3])+"→"+M.items[i][3];by[k]=(by[k]||0)+1}
+  console.log("版本",M0.v,"→",M.v,"；",M.items.length,"個檔，改層級",n,"個",JSON.stringify(by));process.exit(0)}
 if(require.main===module){const[site,out]=process.argv.slice(2);if(!site||!out){console.log("用法：node preload-list.js <site 資料夾> <輸出檔>");process.exit(1)}
   const M=makePreload(site);fs.writeFileSync(out,JSON.stringify(M));
   const MB=b=>(b/1048576).toFixed(1)+" MB";console.log("全部",M.n,"個檔",MB(M.bytes),"；首批（不分朝代）",MB(M.first0));

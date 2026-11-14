@@ -558,7 +558,7 @@ function storyBookOf(h){h=String(h||"");
      這幾頁回傳 -1＝「照舊」：從故事點進來就留在故事朝代，從首頁點進來就是自己的朝代 */
   if(/^#\/(me|profile)(\/|$)/.test(h))return -1;
   if(/^#\/journey\/inn(\/|$)/.test(h))return 0;   /* 意見回饋 697（開發者 11/6）：驛站一律是星槎停靠那一朝的驛站，不帶故事的朝代 */
-  if(/^#\/journey\/play/.test(h)){const P=store.get("jPending",null);return !P?-1:String(P.id||"").startsWith("inn:")?0:String(P.id||"").startsWith("b2h")?2:1}   /* 驛站裡的對局沒有闖關紀錄 */
+  if(/^#\/journey\/play/.test(h)){const P=store.get("jPending",null),id=String(P&&P.id||"");return !P?-1:id.startsWith("b2h")?2:/^h\d+$/.test(id)?1:0}   /* 11/14 評比第 17、18 輪 B3：只有石桌往事的關卡（第一集 h01～h36、第二集 b2h）才換故事朝代；以前反過來「不是驛站、第二集就當第一集」，黑洞一族（bh: 練習賽、塔防、急襲、黑洞對戰；gx: 十三星系）、園子（park）、挑戰角色（char:）、星槎對戰（bt:）都被換成元朝、跳元末明初的說明 */
   if(/^#\/(journey|legend)(\/|$)/.test(h))return 1;
   return 0}
 function storyEraSync(){try{const b=storyBookOf(location.hash),cur=store.get("era","classic"),saved=store.get("eraUser",null);let to=null;if(b<0)return;

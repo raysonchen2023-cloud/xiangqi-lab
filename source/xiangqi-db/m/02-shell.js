@@ -288,7 +288,7 @@ async function homeStatus(box,tries){
 // 外觀自動下載：App 打開 3 秒後，把所有朝代的棋盤、棋子圖和字形抓下來並先解碼（約 2.8 MB，存在手機裡），第一次切換外觀才不會卡
 const LOOK_IMGS=[];
 {const k=store.get("sndStyle","wood");if(/^s\d\d$/.test(k))setTimeout(()=>loadSfx(k),1500)}
-setTimeout(async()=>{await window.PRE_FIRST;if(navigator.connection&&navigator.connection.saveData)return;   /* 回饋 845（開發者 11/9 選：折衷先載）：各朝棋盤、棋子的預覽等首批載完才抓，不跟首批搶網路 */
+setTimeout(async()=>{await window.PRE_FIRST;if(typeof preOptWait==="function")await preOptWait();if(navigator.connection&&navigator.connection.saveData)return;   /* 評比第 17、18 輪第 5 項：選讀，等 App 在前景、閒置、不省流量（09b preOptWait） */   /* 回饋 845（開發者 11/9 選：折衷先載）：各朝棋盤、棋子的預覽等首批載完才抓，不跟首批搶網路 */
   const boards=[...new Set(Object.keys(BOARD_IMG).map(k=>BOARD_IMG_FILE[k]||k))],urls=[];
   for(const k of boards)urls.push(`data/boards/${k}.webp`);for(const k in PIECE_INK)for(const s of"rb")urls.push(`data/pieces/${k}-${s}.webp`);
   let i=0;const next=()=>{if(i>=urls.length){for(const k of GLY_ERAS)needGly(k,()=>{});return}
@@ -297,11 +297,12 @@ setTimeout(async()=>{await window.PRE_FIRST;if(navigator.connection&&navigator.c
 // 特級大師對局（33 MB）自動下載：App 打開 20 秒後，沒下載過就在背景抓一次（存在手機裡，離線也能看）
 if(OFF)setTimeout(async()=>{try{await window.PRE_FIRST;if(!navigator.onLine||(navigator.connection&&navigator.connection.saveData))return;const c=await caches.open("xqlab-data");   /* 回饋 845（開發者 11/9 選：折衷先載）：首批載完才開始抓 */
   if(await c.match(new URL("data/gmgames.json",location.href).href))return;if(window.PRE_ENG)await window.PRE_ENG.catch(()=>{});   /* 回饋 845：引擎（下棋要用）先下載完再抓大師對局 */
+  if(typeof preOptWait==="function"){await preOptWait();if(await c.match(new URL("data/gmgames.json",location.href).href))return}   /* 評比第 17、18 輪第 5 項：大師對局（33 MB）是選讀，等 App 在前景、閒置、不省流量才抓 */
   await fetch("data/gmgames.json");}catch(e){}},20000);
 // Pikafish 引擎自動下載：App 打開 5 秒後，沒下載過就在背景下載（約 48 MB，只要一次；開了「省數據模式」就不自動下載）
 if(OFF&&window.XQEngine&&XQEngine.prefetch)setTimeout(async()=>{try{await window.PRE_FIRST;   /* 回饋 845（開發者 11/9 選：折衷先載）：首批載完才開始抓引擎（49 MB），不跟首批搶網路 */
   if(await XQ.engineCached()||!navigator.onLine||(navigator.connection&&navigator.connection.saveData))return;
-  const pe=XQEngine.prefetch();window.PRE_ENG=pe.finally(()=>{window.PRE_ENG=null});   /* 回饋 845：引擎下載中，外觀的背景下載讓路（09b-preload.js preBg 只留 1 個） */
+  const pe=XQEngine.prefetch();window.PRE_ENG=pe.finally(()=>{window.PRE_ENG=null;if(typeof PRE!=="undefined"&&PRE.bgKick)PRE.bgKick(500)});   /* 回饋 845：引擎下載中，外觀的背景下載讓路（09b-preload.js preBg 只留 1 個） */
   await pe;toast("✅ Pikafish 引擎已自動下載完成，離線也能下棋");const h=document.querySelector("#hStatus");if(h&&h.isConnected)homeStatus(h)}catch(e){}},5000);
 // 從背景切回 App：首頁的連線燈號重新檢查（手機網路要一點時間恢復，所以等一下再測）
 // 一般玩家：只有「雙人對戰邀請」（帶 seat）的連線才留著；單純連電腦的連結（舊的分享網址）一律清掉，不會出現連不到電腦

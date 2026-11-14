@@ -100,7 +100,7 @@ function setMap(v){const root=v.querySelector(".pad.home");if(!root||v.querySele
   const secOf=(x,head)=>{if(!x)return[];const L=[x];if(!isH(x)){const pv=[];let p=x.previousElementSibling;while(p&&!(p.matches&&p.matches("summary"))){pv.unshift(p);if(isH(p))break;p=p.previousElementSibling}if(pv.length&&isH(pv[0]))L.unshift(...(head?[pv[0]]:pv))}
     if(!head){let n=x.nextElementSibling;while(n&&!isH(n)&&!(n.matches&&n.matches("summary"))){L.push(n);n=n.nextElementSibling}}return L};
   const pick=k=>{const i=k.indexOf(":"),t=k.slice(0,i),q=k.slice(i+1);
-    if(t==="title"){const h=[...root.querySelectorAll(".sec-t")].find(x=>x.textContent.trim()===q);return h?secOf(h):[]}
+    if(t==="title"){const h=[...root.querySelectorAll(".sec-t")].find(x=>(x.dataset.smTitle||x.textContent).trim()===q);return h?secOf(h):[]}
     const el=root.querySelector(q);if(!el)return[];if(t==="btn")return[el];const x=topOf(el);if(!x)return[];return t==="el"?[x]:secOf(x,t==="head")};
   const epBack=()=>{for(const[n,ph]of moved){if(ph.parentNode){ph.parentNode.insertBefore(n,ph);ph.remove()}}moved=[];EW.innerHTML=""};
   const epOpen=id=>{if(!ES)return false;epBack();const seen=new Set();let n=0;

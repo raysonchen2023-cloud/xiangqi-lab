@@ -55,7 +55,7 @@ try{if(typeof window!=="undefined"&&typeof document!=="undefined"&&typeof localS
   addEventListener("xq-result",()=>{RLG_END=Date.now();if(rlgIsGame(location.hash))rlgSave({h:location.hash,a:RLG_END,end:RLG_END,d3:rlg3d()})});
   document.addEventListener("visibilitychange",()=>{if(document.hidden)rlgSave({vh:Date.now(),d3:rlg3d()});else rlgSave({a:Date.now(),vh:0,ph:0})});
   addEventListener("pagehide",()=>rlgSave({ph:Date.now()}));addEventListener("pageshow",e=>{if(e.persisted)rlgSave({a:Date.now(),ph:0,vh:0})});
-  setInterval(()=>{if(!document.hidden)rlgSave({a:Date.now(),h:location.hash,d3:rlg3d()})},5000)}}catch(e){}
+  (typeof bgpEvery==="function"?bgpEvery:setInterval)(()=>{if(!document.hidden)rlgSave({a:Date.now(),h:location.hash,d3:rlg3d()})},5000)}}catch(e){}
 /* 開發者模式：設定頁「系統」分頁最下面看得到最近 10 次 */
 const RLG_WN={upd:"新版套用（markDone）",coi:"跨來源隔離重整（xqReload）",other:"其他＝可能是系統回收記憶體"};
 const rlgT=t=>{const d=new Date(t),z=x=>String(x).padStart(2,"0");return`${d.getMonth()+1}/${d.getDate()} ${z(d.getHours())}:${z(d.getMinutes())}:${z(d.getSeconds())}`};

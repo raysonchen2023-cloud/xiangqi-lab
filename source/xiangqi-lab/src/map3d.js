@@ -422,7 +422,9 @@
     /* ---------- 動畫迴圈 ---------- */
     let last=performance.now();
     const v3=new T.Vector3();
-    function frame(now){if(stopped)return;if(!document.body.contains(el)){destroy();return}requestAnimationFrame(frame);
+    /* 評比第 17、18 輪第 5 項：App 在背景時不再排下一格，回前景（visibilitychange）再接著畫 */
+    let frz=0;const onVis=()=>{if(!stopped&&frz&&!document.hidden){frz=0;document.removeEventListener("visibilitychange",onVis);requestAnimationFrame(frame)}};
+    function frame(now){if(stopped)return;if(!document.body.contains(el)){destroy();return}if(document.hidden){last=now;if(!frz){frz=1;document.addEventListener("visibilitychange",onVis)}return}requestAnimationFrame(frame);
       const dt=Math.min(.05,(now-last)/1000);last=now;if(document.hidden||el.style.display==="none"||!ready)return;
       if(el.clientWidth&&Math.abs(el.clientWidth-W)>1)fit();
       if(flyT>0){flyT-=dt;if(flyT<=0)ease=9}
@@ -443,7 +445,7 @@
     fit();placeCam();requestAnimationFrame(frame);
     const onRs=()=>{if(el.style.display!=="none")fit()};window.addEventListener("resize",onRs);
 
-    function destroy(){if(stopped)return;stopped=true;window.removeEventListener("resize",onRs);
+    function destroy(){if(stopped)return;stopped=true;document.removeEventListener("visibilitychange",onVis);window.removeEventListener("resize",onRs);
       sc.traverse(o=>{if(o.geometry)o.geometry.dispose();if(o.material){const ms=Array.isArray(o.material)?o.material:[o.material];ms.forEach(m=>{if(m.map)m.map.dispose();if(m.alphaMap)m.alphaMap.dispose();m.dispose()})}});
       try{rd.dispose();rd.forceContextLoss()}catch(e){}el.remove();if(opt.onDestroy)opt.onDestroy()}
 

@@ -2,7 +2,7 @@
 //   把 xiangqi-db/m/05-settings.js 的 XFER 區段、m/05b-save.js 的 XFER2、XFER4 區段一起切出來放進 vm，換上假的 XQNet（記憶體裡的保留訊息）、
 //   假的 IndexedDB、node 內建的 WebCrypto／CompressionStream；每個 vm 環境＝一支手機。
 //   要擋的：錯碼、過期、重放、竄改其中一段（改字、調換、拿別次上傳的段）、竄改說明（段數、期限、密文、整份換掉）；
-//   要過的：正常轉移、舊 v3 的 8 碼照收但帶警告、期限過了舊碼拒收；主題 id 不能再用一次 SHA-256 反推。
+//   要過的：正常轉移；主題 id 不能再用一次 SHA-256 反推。舊 v3 的 8 碼（評比第 18 輪第 4 項起）已停收：不連線、直接提示重新產生。
 // 用法：node --test xiangqi-lab/tools/test-xfer4.js
 "use strict";
 const assert = require("node:assert/strict"), test = require("node:test"), fs = require("fs"), path = require("path"), vm = require("vm"), nodeCrypto = require("node:crypto");
@@ -43,7 +43,7 @@ function phone(S, o) {
   };
   ctx.window = ctx; vm.createContext(ctx);
   vm.runInContext("Date.now=()=>__clock.now?__clock.now:new Date().getTime();", ctx);
-  vm.runInContext(BLOCK1 + "\n" + BLOCK2 + "\n" + BLOCK4 + "\nglobalThis.__X={xfUpload,xfDownload,xf2Upload,xf2Download,xf2Check,xf4Upload,xf4Download,xf4Keys,xf4Code,xfWipe,XF_TTL,XF4_IT,XF4_V3_UNTIL,XF4_USED};", ctx, { filename: "05-settings+05b-save(XFER/XFER2/XFER4)" });
+  vm.runInContext(BLOCK1 + "\n" + BLOCK2 + "\n" + BLOCK4 + "\nglobalThis.__X={xfUpload,xfDownload,xf2Upload,xf2Download,xf2Check,xf4Upload,xf4Download,xf4Keys,xf4Code,xfWipe,XF_TTL,XF4_IT,XF4_OLD,XF4_USED};", ctx, { filename: "05-settings+05b-save(XFER/XFER2/XFER4)" });
   return { ctx, X: ctx.__X, store };
 }
 const xTopics = S => [...S.ret.keys()].filter(t => t.startsWith(ROOT + "/x/"));
@@ -179,17 +179,16 @@ test("重放：收完以後有人把錄下來的訊息再放回去，同一支�
   await assert.rejects(phone(S, { ls: {} }).X.xf4Download(CODE), /過期/);
 });
 
-test("舊 v3 的 8 碼：期限內照收、帶「安全性較低，建議重新產生」；期限過了拒收並請對方更新", async () => {
-  const S = server(), A = phone(S, { ls: OLD_LS, games: BIG() }), B = phone(S, { ls: {} });
-  S.clock.now = Date.UTC(2026, 10, 13, 8);
+test("舊 v3 的 8 碼已停收：伺服器上真的有舊手機傳的 v3 資料也不收；不讀、不訂閱任何主題，直接提示「已經停用、請重新產生」；這支手機的存檔不動", async () => {
+  const S = server(), A = phone(S, { ls: OLD_LS, games: BIG() }), B = phone(S, { ls: { m_xp: "77", xq_me: JSON.stringify({ id: "NEWphone0000" }) } });
   await A.X.xf2Upload("ABCD2345");   /* 舊版 App 的舊手機 */
-  const D = await B.X.xf4Download("abcd-2345");   /* 畫面用的 xfDownload 在 05b-save 最後換成 xf4Download（原始碼測試檢查） */
-  assert.deepEqual(J(D.data), OLD_LS); assert.equal(D.games.play.length, 4000);
-  assert.match(D.xfWarn, /安全性較低/); assert.match(D.xfWarn, /重新產生/);
-  const S2 = server(), A2 = phone(S2, { ls: OLD_LS }), B2 = phone(S2, { ls: {} });
-  S2.clock.now = A2.X.XF4_V3_UNTIL - 60000; await A2.X.xf2Upload("WXYZ6789");
-  S2.clock.now = A2.X.XF4_V3_UNTIL + 1000;
-  await assert.rejects(B2.X.xf4Download("WXYZ6789"), /停止支援/);
+  const before = new Map(B.store), gets0 = S.gets.size, puts0 = S.puts.length;
+  for (const c of ["abcd-2345", "ABCD2345", " abcd 2345 "]) await assert.rejects(B.X.xf4Download(c), e => e.message === B.X.XF4_OLD);   /* 畫面用的 xfDownload 在 05b-save 最後換成 xf4Download（原始碼測試檢查） */
+  assert.match(B.X.XF4_OLD, /8 碼/); assert.match(B.X.XF4_OLD, /已經停用/); assert.match(B.X.XF4_OLD, /重新產生/);
+  assert.equal(S.gets.size, gets0, "沒有去讀任何主題"); assert.equal(S.puts.length, puts0, "沒有寫任何主題");
+  assert.deepEqual(new Map(B.store), before, "新手機本來的存檔不動");
+  assert.ok(xTopics(S).length > 0, "舊手機傳的 v3 資料還在伺服器上（停收不是因為資料不見）");
+  await assert.rejects(B.X.xf4Download("ABCDE2345"), /轉移碼是 10 碼/, "9 碼：長度不對");
 });
 
 test("回條偽造（沒有碼就做不出 ah）：舊手機不當成已轉移", async () => {
@@ -199,12 +198,13 @@ test("回條偽造（沒有碼就做不出 ah）：舊手機不當成已轉移",
   assert.notEqual((await A.X.xf2Check()).st, "moved");
 });
 
-test("〔原始碼〕畫面接線：xfSend 產生 10 碼（5-5 顯示）、xfRecv 收 10 碼和舊 8 碼並顯示警告；05b-save 最後把 xfUpload／xfDownload 換成 v4；PBKDF2 用 deriveBits 512", () => {
+test("〔原始碼〕畫面接線：xfSend 產生 10 碼（5-5 顯示）、xfRecv 只收 10 碼、8 碼在連線前就顯示停用提示；05b-save 最後把 xfUpload／xfDownload 換成 v4；PBKDF2 用 deriveBits 512", () => {
   const send = SET.slice(SET.indexOf("async function xfSend"), SET.indexOf("async function xfRecv"));
   assert.match(send, /const code=xf4Code\(\),shown=code\.slice\(0,5\)\+"-"\+code\.slice\(5\)/);
   assert.doesNotMatch(send, /Uint8Array\(8\)/);
   const recv = SET.slice(SET.indexOf("async function xfRecv"), SET.indexOf("/* 意見回饋 491（開發者）"));
-  assert.match(recv, /code\.length!==10&&code\.length!==8/); assert.match(recv, /D\.xfWarn\?/); assert.match(recv, /maxlength="11"/);
+  assert.match(recv, /if\(code\.length===8\)return msg\(typeof XF4_OLD==="string"\?XF4_OLD:/); assert.ok(recv.indexOf("code.length===8") < recv.indexOf("xfDownload(code"), "8 碼在呼叫 xfDownload 之前就擋下"); assert.doesNotMatch(recv, /xfWarn/); assert.match(recv, /maxlength="11"/);
+  assert.doesNotMatch(BLOCK4, /XF4_V3_UNTIL|xf2Download\(/, "v4 下載不再走 v3");
   const i2 = SAVE.indexOf("{xfUpload=xf2Upload;xfDownload=xf2Download}"), i4 = SAVE.indexOf("{xfUpload=xf4Upload;xfDownload=xf4Download}");
   assert.ok(i2 > 0 && i4 > i2, "v4 換在 v3 後面（最後生效的是 v4）");
   assert.match(BLOCK4, /deriveBits\(\{name:"PBKDF2",salt:te\.encode\(XF4_SALT\),iterations:XF4_IT,hash:"SHA-512"\},base,512\)/);

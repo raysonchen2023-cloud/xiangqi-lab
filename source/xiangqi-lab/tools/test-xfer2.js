@@ -5,7 +5,8 @@
 //   ② 可以重試：上傳、下載每段自動再試；下載停在第幾段，再按一次從那段接著下（前面的不再抓）
 //   ③ 用過、過期、作廢、偽造回條、兩台同時輸入同一組碼
 //   ④ 舊手機收到「已轉到新手機」的回條；不記轉移碼本身
-//   ⑤ 跟舊版相容：舊版新手機收新版的、新版新手機收舊版的
+//   ⑤ 跟舊版相容：舊版新手機收新版的、新版新手機收舊版的（只測 XFER2 區段的函式本身；評比第 18 輪第 4 項起畫面不再收 8 碼，
+//      畫面用的 xfDownload 最後換成 v4 的 xf4Download，8 碼在連線前就擋下，見 test-xfer4.js）
 // 用法：node --test xiangqi-lab/tools/test-xfer2.js
 "use strict";
 const assert = require("node:assert/strict"), test = require("node:test"), fs = require("fs"), path = require("path"), vm = require("vm"), nodeCrypto = require("node:crypto");
@@ -158,7 +159,7 @@ test("③ 回條偽造（不知道轉移碼，做不出 ah）：舊手機不當�
   assert.notEqual(r.st, "moved"); assert.equal(A.store.has("xq_xfMoved"), false);
 });
 
-test("⑤ 相容：舊版 App 的新手機（05-settings 原本的 xfDownload）收得了新版舊手機傳的 v3；新版新手機收得了舊版舊手機傳的 v2", async () => {
+test("⑤ 相容（XFER2 區段的函式本身）：舊版 App 的新手機（05-settings 原本的 xfDownload）收得了 v3；xf2Download 解得開 v2（畫面已停收 8 碼，不再走這條）", async () => {
   const S = server(), A = phone(S, { ls: OLD_LS, games: BIG() }), B = phone(S, { ls: {} });
   await A.X.xf2Upload("ABCD2345");
   const D = await B.X.xfDownload("ABCD2345");
@@ -185,4 +186,9 @@ test("〔原始碼〕畫面接線：05b-save 把畫面用的 xfUpload／xfDownlo
   assert.ok(H.indexOf("//#include m/05-settings.js") < H.indexOf("//#include m/05b-save.js"));
   assert.match(SAVE, /localStorage\.getItem\("xq_xfOut"\)\)xf2Watch\(\)/);
   assert.match(SET, /const U=await xfUpload\(code\)/, "xfSend 呼叫時才找 xfUpload（拿到換過的）");
+  /* 評比第 18 輪第 4 項：最後生效的是 v4（xf4Download），8 碼停收；畫面 xfRecv 看到 8 碼就顯示停用提示、不呼叫 xfDownload */
+  assert.ok(SAVE.indexOf("{xfUpload=xf4Upload;xfDownload=xf4Download}") > SAVE.indexOf("{xfUpload=xf2Upload;xfDownload=xf2Download}"), "v4 換在 v3 後面");
+  assert.match(SAVE, /if\(c\.length===8\)throw new Error\(XF4_OLD\)/);
+  const recv = SET.slice(SET.indexOf("async function xfRecv"), SET.indexOf("/* 意見回饋 491（開發者）"));
+  assert.ok(recv.indexOf("code.length===8") > 0 && recv.indexOf("code.length===8") < recv.indexOf("xfDownload(code"), "8 碼在連線前就擋下");
 });

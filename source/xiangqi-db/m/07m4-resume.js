@@ -92,7 +92,7 @@ function rsCard(L,after){if(L.cj){const r=L.cj;rsAsk(r.t+":"+(r.rk||"")+":"+r.id
 /* 冷啟動：等開頭畫面、載入畫面、其他視窗都關掉，而且人在首頁，才問一次 */
 function rsBoot(){if(!RS_ON)return;try{if(sessionStorage.getItem("rsBoot"))return;sessionStorage.setItem("rsBoot","1")}catch(e){}
   let tries=0;const home=()=>/^(#\/?(home)?)?$/.test(location.hash),busy=()=>document.getElementById("preov")||document.body.classList.contains("xqt-on")||document.querySelector(".modal,#sheet,.kx,.kx-dim");
-  const tick=async()=>{if(++tries>90)return;if(busy())return setTimeout(tick,700);if(!home())return;
+  const tick=async()=>{if(typeof bgpHid==="function"&&bgpHid()){const off=bgpOn(h=>{if(!h){off();tick()}});return}if(++tries>90)return;if(busy())return setTimeout(tick,700);if(!home())return;   /* 評比第 17、18 輪第 5 項：在背景不每 0.7 秒看，回前景再接著等 */
     try{if(window.XQNet&&XQNet.playing&&XQNet.playing())return}catch(e){}
     try{await rsSweep()}catch(e){}const L=rsLatest();if(!L||!home()||busy())return;
     if(L.g&&rsAsked().includes(L.g.id))return;rsCard(L,()=>{try{route()}catch(e){}})};

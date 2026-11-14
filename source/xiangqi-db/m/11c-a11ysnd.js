@@ -239,11 +239,11 @@ function axsWrapEngine(){const X=window.XQEngine;if(!X||X._axs)return;X._axs=1;c
 const AXS_XP="//text()[(contains(.,'載入中') or contains(.,'讀取中') or contains(.,'下載中')) and string-length(normalize-space(.))<=30 and not(ancestor::script) and not(ancestor::style) and not(ancestor::*[@id='axLive']) and not(ancestor::*[@aria-hidden='true'])]";
 function axsDomBusy(){if(document.getElementById("preov"))return"載入";try{const r=document.evaluate(AXS_XP,document.body,null,7,null);
     for(let i=0;i<Math.min(r.snapshotLength,12);i++){const n=r.snapshotItem(i),el=n.parentElement;if(el&&el.getClientRects().length)return/下載中/.test(n.nodeValue)?"下載":"載入"}}catch(e){}return""}
-setInterval(()=>{try{axsWrapEngine()}catch(e){}if(document.hidden)return;
+(typeof bgpEvery==="function"?bgpEvery:setInterval)(()=>{try{axsWrapEngine()}catch(e){}if(document.hidden)return;
   if(axsOn())for(const id of["pBot","pTop"]){const c=document.querySelector("#"+id+" .clk");if(!c){const S=axsSt();delete S.clk[id];continue}
     let s=null;try{s=axmClockSec(c.textContent)}catch(e){}axsClockTick(id,s)}
   if(!axmOn())return;try{axsParkBtn()}catch(e){}},1000);
-setInterval(()=>{if(document.hidden||!axmOn())return;const S=axsSt(),tk=[...S.tasks.values()],dm=tk.length?"":axsDomBusy(),busy=!!(tk.length||dm);
+(typeof bgpEvery==="function"?bgpEvery:setInterval)(()=>{if(document.hidden||!axmOn())return;const S=axsSt(),tk=[...S.tasks.values()],dm=tk.length?"":axsDomBusy(),busy=!!(tk.length||dm);
   const say=axsLoadStep(S.load,busy,Date.now(),tk[0]||dm||"載入");if(say)try{axSay(say)}catch(e){}},400);
 /* ---------- 第 6 輪 F3：設定 → 聲音 的音量分類（四條滑桿、各自靜音、全部靜音）；05-settings 畫完聲音頁叫 sxmMount(v) ----------
    放進聲音頁三張卡片：🔔 棋子聲（#snd）放「全部靜音」＋棋子音效＋提示音＋圖鑑、文件按鈕；🎵 語音報棋（#snd2）放語音；🕯 氛圍（#snd3）放背景音樂與鼓聲。

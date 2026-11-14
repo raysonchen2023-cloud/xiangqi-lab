@@ -5,6 +5,7 @@
 //   e 清除：新手機解開後伺服器上的說明和分段全部清掉（第二次輸入找不到）；過期的碼會被拒收而且順手清掉；上傳到一半失敗會把已上傳的清掉；
 //     tools/mqtt-prune.js 的 judgeX：過期、沒有期限、只剩分段的整組清，還在期限內的不動
 //   g 新手機用自己的裝置代號（舊的留給舊手機），不帶「正在下哪一盤」和舊代號的刪除請求
+//   （這支測的是 XFER 區段 v2 的函式本身，所以照舊用 8 碼；評比第 18 輪第 4 項起畫面不再收 8 碼，見 test-xfer4.js）
 // 用法：node --test xiangqi-lab/tools/test-xfer.js
 "use strict";
 const assert = require("node:assert/strict"), test = require("node:test"), fs = require("fs"), path = require("path"), vm = require("vm"), nodeCrypto = require("node:crypto");
@@ -175,6 +176,7 @@ test("〔原始碼〕畫面接線：xfRecv 取代前先換代號、合併棋譜�
   const recv = SET.slice(SET.indexOf("async function xfRecv"), SET.indexOf("/* 意見回饋 491（開發者）"));
   assert.match(recv, /const L=xfLocalize\(D\.data,meInfo\(\)\.id\);try\{await xfGamesPut\(D\.games\|\|\{\}\)\}catch\(e\)\{\}XQSave\.load\(L\.data,/);
   assert.match(recv, /xfDownload\(code,/);
+  assert.ok(recv.indexOf("if(code.length===8)return msg(") > 0 && recv.indexOf("if(code.length===8)return msg(") < recv.indexOf("xfDownload(code,"), "評比第 18 輪第 4 項：8 碼在呼叫 xfDownload 之前就顯示停用提示（不連線）");
   const send = SET.slice(SET.indexOf("async function xfSend"), SET.indexOf("async function xfRecv"));
   assert.match(send, /xfUpload\(code\)/); assert.match(send, /xfWipe\(U\.K,U\.n\)/);
   assert.doesNotMatch(BLOCK, /sheet\(|modal\(|toast\(/, "XFER 那段不碰畫面");

@@ -590,7 +590,9 @@
     const nearest=(L,px,py)=>{let b=null,bd=1e18;for(const p of L){const d=(p[0]-px)*(p[0]-px)+(p[1]-py)*(p[1]-py);if(d<bd){bd=d;b=p}}return b};
     const reset=()=>{root.position.y=0;root.position.x=0;P.bot.rotation.set(0,0,0);P.hat.position.set(0,0,0);P.hat.rotation.set(0,0,0);P.torso.scale.y=1;root.rotation.set(0,face,0);P.torso.position.y=1.02;P.torso.rotation.set(0,0,0);P.head.rotation.set(0,0,0);B.closed=0;B.face="smile";
       R(B,0,0,0,-.3);R(B,1,0,0,.3);P.legs[0].rotation.set(0,0,0);P.legs[1].rotation.set(0,0,0)};
-    function frame(now){if(stopped)return;requestAnimationFrame(frame);if(document.hidden){last=now;return}
+    /* 評比第 17、18 輪第 5 項：App 在背景時不再排下一格（回前景由 onVis 接著畫），計時器也用背景會停的 bgpEvery（m/00-util.js） */
+    let frz=0;const onVis=()=>{if(!stopped&&frz&&!document.hidden){frz=0;document.removeEventListener("visibilitychange",onVis);requestAnimationFrame(frame)}};
+    function frame(now){if(stopped)return;if(document.hidden){last=now;if(!frz){frz=1;document.addEventListener("visibilitychange",onVis)}return}requestAnimationFrame(frame);
       const dt=Math.min(.1,(now-last)/1000);last=now;acc+=dt;if(acc<1/30)return;const t=acc;acc=0;
       reset();const dx=tx-x,dy=ty-y,dist=Math.hypot(dx,dy);let walking=false;if(dist<=2)dodge=false;
       if(drag){ACTS.carry.f(0,B,now/1000)}
@@ -679,7 +681,7 @@
       if(was){x=tx=p[0];y=ty=p[1];dodge=false;return}   /* 藏著的時候直接換位置，不要從禁區上走過去 */
       if(Math.hypot(p[0]-tx,p[1]-ty)>2){tx=p[0];ty=p[1];dodge=Math.hypot(p[0]-x,p[1]-y)>2;if(dodge&&!celeb)act=null}};
     const isModal=()=>!!document.querySelector(".modal .box");
-    const boardT=setInterval(()=>{if(celeb)return;const sr=sheetRect();
+    const boardT=(window.bgpEvery||setInterval)(()=>{if(celeb)return;const sr=sheetRect();
       if(sr){sheetMode=true;act=null;if(isModal()||sr.top-6<H+40){box.style.opacity="0";hit.style.pointerEvents="none"}else{box.style.opacity="";hit.style.pointerEvents="auto";if(!drag){tx=bounds().x1-4;ty=Math.max(0,sr.top-H)}}return}
       if(sheetMode){sheetMode=false;box.style.opacity="";hit.style.pointerEvents="auto";if(!boardMode){if(parked){const p=store.get("botPos",null);if(p){tx=p.x*innerWidth;ty=p.y*innerHeight}}else wander()}}
       const r=bigBoard();
@@ -714,7 +716,7 @@
         if(ps.parked){tx=ps.x;ty=ps.y}else wander()},5200)};
     let curG=grade(),curL=meSex()+meReal();xsLoad();
     const onLook=()=>{if(meSex()+meReal()!==curL){curL=meSex()+meReal();XS.cur="";rebuild()}else{XS.sex=null;xsLoad()}};window.addEventListener("xq-look",onLook);   /* 意見回饋 497：選完角色馬上換，不等計時器 */
-    const eraT=setInterval(()=>{const g=grade();if(g!==curG){const up=g<curG,from=curG;curG=g;rebuild();if(up)celebrate(g,from);else{doAct("shrug");say(`降成${RK(g)}了…再加油！`,3.2)}}
+    const eraT=(window.bgpEvery||setInterval)(()=>{const g=grade();if(g!==curG){const up=g<curG,from=curG;curG=g;rebuild();if(up)celebrate(g,from);else{doAct("shrug");say(`降成${RK(g)}了…再加油！`,3.2)}}
       if(meSex()+meReal()!==curL){curL=meSex()+meReal();XS.cur="";rebuild()}
       if(eraK()!==curK||BP()!==curP){rebuild();if(typeof needGly==="function")needGly(curK,()=>{if(!stopped)rebuild()})}},1500);
     if(typeof needGly==="function"&&!(typeof GLY!=="undefined"&&GLY[curK]))needGly(curK,()=>{if(!stopped)rebuild()});
@@ -722,7 +724,7 @@
     const setScale=v=>{SC=Math.min(2,Math.max(.6,+v||1));store.set("botSize",SC);applySize();XS.cur=""};
     const onResize=()=>{const b=bounds();x=Math.min(x,b.x1);y=Math.min(y,b.y1);tx=Math.min(tx,b.x1);ty=Math.min(ty,b.y1)};window.addEventListener("resize",onResize);
     return{act:k=>doAct(typeof k==="number"?comboAct(k):k),say:(s,d,o)=>say(s,d,false,o&&o.auto?1:0,true),setScale,   /* 11/11 問題 2：BOT.say(字, 秒, {auto:1})＝這句是對局中的閒話，有說明文字或棋盤時就不冒 */rebuild,count:COMBO.length,lines:LINES.length,
-      stop(){stopped=true;window.removeEventListener("pointerdown",pDown,true);window.removeEventListener("pointermove",pMove,true);window.removeEventListener("pointerup",pUp,true);window.removeEventListener("pointercancel",pUp,true);clearInterval(eraT);clearInterval(boardT);window.removeEventListener("xq-look",onLook);window.removeEventListener("xq-call",onCall);window.removeEventListener("xq-result",onResult);window.removeEventListener("resize",onResize);window.removeEventListener("hashchange",onHash);try{rd.dispose()}catch(e){}box.remove()}}}
+      stop(){stopped=true;window.removeEventListener("pointerdown",pDown,true);window.removeEventListener("pointermove",pMove,true);window.removeEventListener("pointerup",pUp,true);window.removeEventListener("pointercancel",pUp,true);(window.bgpStop||clearInterval)(eraT);(window.bgpStop||clearInterval)(boardT);document.removeEventListener("visibilitychange",onVis);window.removeEventListener("xq-look",onLook);window.removeEventListener("xq-call",onCall);window.removeEventListener("xq-result",onResult);window.removeEventListener("resize",onResize);window.removeEventListener("hashchange",onHash);try{rd.dispose()}catch(e){}box.remove()}}}
   // 瘦長版（公園 3D 棋盤的 Pikafish）：身體窄、高，手腳往內收，戴圓眼鏡
   function thinify(B,noGlass){const tz=B.torso;tz.children.forEach(o=>{if(o===B.head||B.arms.includes(o))return;o.scale.x*=.6;o.scale.y*=1.18;o.position.y*=1.18});
     B.arms.forEach(a=>{a.position.x*=.62;a.scale.set(.85,1.1,.85)});B.legs.forEach(l=>{l.position.x*=.7;l.scale.set(.8,1.25,.8)});B.head.scale.set(.88,1.02,.9);B.head.position.y+=.08;tz.position.y+=.1;

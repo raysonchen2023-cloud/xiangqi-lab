@@ -378,4 +378,4 @@ function qqRelicHeld(id){const P=store.get("evPawn",null),H=store.get("evHeld",n
   return false}
 setTimeout(()=>{try{qqPool();if(typeof relicsData==="function")relicsData()}catch(e){}},3000);
 setTimeout(()=>{try{if(journey())qqSettle()}catch(e){}},9000);
-addEventListener("hashchange",()=>setTimeout(()=>{try{qqStashBadge()}catch(e){}},350));setTimeout(()=>{try{qqStashBadge()}catch(e){}},2500);setInterval(()=>{try{qqStashBadge()}catch(e){}},30000);
+addEventListener("hashchange",()=>setTimeout(()=>{try{qqStashBadge()}catch(e){}},350));setTimeout(()=>{try{qqStashBadge()}catch(e){}},2500);(typeof bgpEvery==="function"?bgpEvery:setInterval)(()=>{try{qqStashBadge()}catch(e){}},30000);

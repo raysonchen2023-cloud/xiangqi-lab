@@ -207,7 +207,7 @@ function homeMap(v){const home=v.querySelector(".home");if(!home||v.querySelecto
   try{if(typeof shwPage==="function"&&SHIP_WALK_ON){P._hmwW=hmwWKey(P,hk);shwPage(v,hmwWalkCfg(hk,P),"home");hmMe(P)}}catch(e){}
   try{hmTail(P)}catch(e){}
   try{if(typeof zmPage==="function")zmPage(v,typeof hmpZoomOpt==="function"?hmpZoomOpt(P):null)}catch(e){}   /* 11/14：三屏長卷時放大後可以拖到左右兩屏 */
-  document.body.classList.add("hm-on");const t=setInterval(()=>{if(!P.isConnected){clearInterval(t);if(!document.querySelector(".home-page"))document.body.classList.remove("hm-on")}},800)}
+  document.body.classList.add("hm-on");const t=(typeof bgpEvery==="function"?bgpEvery:setInterval)(()=>{if(!P.isConnected){(typeof bgpStop==="function"?bgpStop:clearInterval)(t);if(!document.querySelector(".home-page"))document.body.classList.remove("hm-on")}},800)}
 if(typeof Home==="function"){const f0=Home;Home=function(v,hub){const r=f0.apply(this,arguments);try{if(HOME_MAP_ON&&!hub)homeMap(v)}catch(e){}return r}}
 /* 開發者 11/11 選 ChatGPT UI 報告 UI-03：所有場景標籤（首頁、學習、對戰、設定、渡口…的 .shp-spot）上下各多 9px、左右各多 4px 的透明點選範圍，
    看起來一樣大，手指點偏一點也點得到（設定頁的小標籤原本只有約 24px 高）；::after 已經拿去做呼吸光，這裡用 ::before */

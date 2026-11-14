@@ -400,7 +400,7 @@ function sw7AgeCard(){if(typeof vibrate==="function")vibrate(5);const b=sw7Born(
 function sw7HomeInfo(){if(!SW7_ON||(typeof CLK_ON!=="undefined"&&CLK_ON))return;   /* 回饋 858（時辰鐘）：改由 07w8 的頂欄星晷顯示 */const h=document.getElementById("title");if(!h||!["","#","#/"].includes(location.hash))return;sw7Css();let e=h.querySelector(".sw7-hd");if(!e){e=document.createElement("button");e.type="button";e.className="sw7-hd";e.onclick=ev=>{ev.stopPropagation();sw7AgeCard()};h.append(e)}
   const N=new Date(),b=sw7Born(),tm=sw7Term(N);e.textContent=[b?`⛵ 船上第 ${sw7OnDay(b,N)} 天`:"⛵ 還沒登船",tm,sw7Shi(N)].filter(Boolean).join("・");e.setAttribute("aria-label","看船齡和今天的時間："+e.textContent)}
 if(typeof Home==="function"){const f0=Home;Home=function(v,hub){const r=f0.apply(this,arguments);if(!hub){setTimeout(()=>{try{sw7HomeInfo()}catch(e){}},0);setTimeout(()=>{try{sw7HomeInfo()}catch(e){}},600)}return r}}
-setInterval(()=>{try{if(document.querySelector("#title .sw7-hd"))sw7HomeInfo()}catch(e){}},60000);
+(typeof bgpEvery==="function"?bgpEvery:setInterval)(()=>{try{if(document.querySelector("#title .sw7-hd"))sw7HomeInfo()}catch(e){}},60000);
 
 /* ---------- ④ 朝代過場：千秋穿梭字幕底下一句 ---------- */
 /* 各站故事場景的大約年份（秦直道、漢通西域、赤壁、竹林、劉宋渡江、隋開運河、盛唐長安、五代、南宋臨安元宵、元延祐、明萬曆、清乾隆南巡），只拿來算相差幾百年 */

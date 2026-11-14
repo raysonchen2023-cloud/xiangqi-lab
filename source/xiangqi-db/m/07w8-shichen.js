@@ -144,7 +144,7 @@ function clkSync(){if(!CLK_ON)return;const tb=document.getElementById("topbar"),
   if(prev===now)clkMode(now);else requestAnimationFrame(()=>requestAnimationFrame(()=>{clkMode(now);clkPaint()}))}
 if(CLK_ON&&typeof setTop==="function"){const f0=setTop;setTop=function(){const r=f0.apply(this,arguments);try{clkSync()}catch(e){}return r}}
 if(CLK_ON){addEventListener("hashchange",()=>setTimeout(()=>{try{clkSync()}catch(e){}},0));addEventListener("resize",()=>{try{clkPlace()}catch(e){}});
-  setInterval(()=>{try{if(CLK.el&&CLK.el.isConnected&&!document.hidden)clkPaint()}catch(e){}},30000);
+  (typeof bgpEvery==="function"?bgpEvery:setInterval)(()=>{try{if(CLK.el&&CLK.el.isConnected&&!document.hidden)clkPaint()}catch(e){}},30000);
   document.addEventListener("visibilitychange",()=>{try{if(!document.hidden&&CLK.el&&CLK.el.isConnected)clkPaint()}catch(e){}})}
 /* 千秋穿梭過場一開始就算在船上（音樂淡下去）；過場完換頁時 setTop 會再判斷一次 */
 if(CLK_ON&&typeof qianqiu==="function"){const q0=qianqiu;qianqiu=function(){const r=q0.apply(this,arguments);setTimeout(()=>{try{clkSnd(true);if(CLK.box&&CLK.box.isConnected){CLK.mode="ship";clkMode("ship")}}catch(e){}},0);return r}}

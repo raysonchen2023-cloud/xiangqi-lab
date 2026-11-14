@@ -76,7 +76,7 @@ function lhWatch(){const S=lhSt();if(S.obs)return;try{const mo=new MutationObser
   const tb=document.getElementById("topbar"),v=document.getElementById("view");if(tb)mo.observe(tb,{subtree:true,childList:true,attributes:true,attributeFilter:["hidden","class","style"]});
   if(v)mo.observe(v,{childList:true,subtree:true});mo.observe(document.body,{childList:true});S.obs=mo}catch(e){}
   addEventListener("resize",lhKick);addEventListener("hashchange",()=>setTimeout(lhKick,60));document.addEventListener("transitionend",lhKick,true);
-  setInterval(()=>{if(lhOn())lhKick()},1500)}   /* 保險：面板開關（class 變化）不一定觸發上面的監聽 */
+  (typeof bgpEvery==="function"?bgpEvery:setInterval)(()=>{if(lhOn())lhKick()},1500)}   /* 保險：面板開關（class 變化）不一定觸發上面的監聽 */
 /* 滿版面板左下角的「✕ 收起」（按原本那顆 ✕）；只建一次，沒開左撇子模式時 CSS 藏著 */
 function lhPanelFoot(){for(const[ps,xs]of lhPanels())for(const p of document.querySelectorAll(ps)){if(p.querySelector(":scope > .lh-x"))continue;const x=p.querySelector(xs);if(!x)continue;
   const b=document.createElement("button");b.type="button";b.className="lh-x";b.setAttribute("aria-label",x.getAttribute("aria-label")||"收起");

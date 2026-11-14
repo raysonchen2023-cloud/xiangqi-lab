@@ -289,9 +289,9 @@ if(typeof document!=="undefined"){document.addEventListener("visibilitychange",(
   for(const ev of["pointerdown","touchend"])document.addEventListener(ev,()=>{if(!MNF.need||!MNF.au||!MNF.mus)return;MNF.need=false;const p=MNF.au.play();if(p&&p.catch)p.catch(()=>{MNF.need=true})},{passive:true,capture:true})}
 /* ---------- 角色立繪（第一版用 2D 立繪 data/xs/prev_<角色>.webp；3D 七星之後再接） ---------- */
 function mnfWho(k){let me="";try{me=typeof myChar==="function"&&myChar()||""}catch(e){}if(k==="me")return me||"x_swordboy";if(k==="guide")return me==="x_swordboy"?"x_miaogirl":"x_swordboy";return k}
-function mnfPre(id,set){const F=MNF_FILMS[id];if(!F)return;const ld=u=>{const im=new Image();im.decoding="async";im.src=u};for(const S of F.shots){const I=MNF_IMG[S.img];if(I)ld(I.u)}const RS=MNF_RITE_SET[set]||MNF_RITE_SET.c1;if(mnfQteIn(F).length){ld(MNF_IMG[RS.hand].u);ld(MNF_IMG[RS.up].u)}   /* 有危機題＝解開後要演儀式：兩張圖先載好，交叉淡入時才不會現抓 */if(F.mus&&mnfMusOk())mnfBlob(F.mus)}
+const MNF_PRED=new Set();function mnfPre(id,set){const F=MNF_FILMS[id];if(!F||MNF_PRED.has(id+"|"+set)||(typeof bgpHid==="function"&&bgpHid()))return;MNF_PRED.add(id+"|"+set);   /* 11/14：同一部片只預載一次、App 在背景時不抓 */const ld=u=>{const im=new Image();im.decoding="async";im.src=u};for(const S of F.shots){const I=MNF_IMG[S.img];if(I)ld(I.u)}const RS=MNF_RITE_SET[set]||MNF_RITE_SET.c1;if(mnfQteIn(F).length){ld(MNF_IMG[RS.hand].u);ld(MNF_IMG[RS.up].u)}   /* 有危機題＝解開後要演儀式：兩張圖先載好，交叉淡入時才不會現抓 */if(F.mus&&mnfMusOk())mnfBlob(F.mus)}
 /* ---------- 播放器 ---------- */
-function mnfPlay(id,opt){opt=opt||{};const F=opt.film||MNF_FILMS[id];if(!F){if(opt.onDone)opt.onDone({skipped:true,missing:true});return null}mnfCss();
+function mnfPlay(id,opt){opt=opt||{};const sourceFilm=opt.film||MNF_FILMS[id],F=typeof i18nStoryData==="function"?i18nStoryData(sourceFilm):sourceFilm;if(!F){if(opt.onDone)opt.onDone({skipped:true,missing:true});return null}mnfCss();
   let rm=false;try{rm=matchMedia("(prefers-reduced-motion:reduce)").matches}catch(e){}
   /* 上一段（keepMusic 接續）留著最後一格墊在下面，新的一段淡入後才拿掉：段落之間不會閃出首頁 */
   for(const x of[document.getElementById("mnfPg"),document.getElementById("mnfBk")])if(x){if(x.dataset.hand==="1"&&!rm){x.dataset.hand="0";setTimeout(()=>x.remove(),900)}else x.remove()}   /* 900ms 內同 id 兩個：新的在後面、疊在上面；樣式都靠 id，所以不改名 */
@@ -367,7 +367,7 @@ function mnfPlay(id,opt){opt=opt||{};const F=opt.film||MNF_FILMS[id];if(!F){if(o
       who.className=wc;who.style.backgroundImage=wu;who.dataset.u=wu;void who.offsetWidth;who.classList.add("on")}
     if(S.big&&t>=S.big[0]&&!fired.big){fired.big=1;big.textContent=S.big[1];big.classList.add("on")}
     if(S.board!=null&&t>=S.board&&!fired.bd&&typeof bhxBoardSvg==="function"){fired.bd=1;st.insertAdjacentHTML("beforeend",bhxBoardSvg());const B=st.lastElementChild&&st.lastElementChild.classList.contains("bx-bd")?st.lastElementChild:null,cs=Math.max(W/MNF_W,H/MNF_H);if(B&&S.bq){B.classList.add("q");B.style.transform=mnfQuadM(S.bq.map(cover))}else if(B){B.style.top=cover([0,S.bp?S.bp[0]:819])[1]+"px";B.style.width=(S.bp?S.bp[1]:480)*cs+"px"}}
-    if(S.seal&&t>=S.seal[0]&&!fired.seal){fired.seal=1;const d=document.createElement("div");d.className="mnf-seal";const c=cover(S.src||[384,720]);d.style.left=c[0]+"px";d.style.top=c[1]+"px";d.innerHTML=esc(S.seal[1])+"<br>之印";st.append(d);requestAnimationFrame(()=>d.classList.add("on"))}
+    if(S.seal&&t>=S.seal[0]&&!fired.seal){fired.seal=1;const d=document.createElement("div");d.className="mnf-seal";d.setAttribute("data-noi18n","");const c=cover(S.src||[384,720]);d.style.left=c[0]+"px";d.style.top=c[1]+"px";d.innerHTML=esc(S.seal[1])+"<br>之印";st.append(d);requestAnimationFrame(()=>d.classList.add("on"))}
     g.clearRect(0,0,W,H);if(!rm)mnfFx(g,S,t,W,H,P,add,onScr,cover,fired);
     raf=requestAnimationFrame(frame)};
   setShot(0);raf=requestAnimationFrame(frame);MNF.cur={finish,skip,clock};return MNF.cur}
@@ -396,7 +396,7 @@ function mnfFx(g,S,t,W,H,P,add,onScr,cover,fired){const src=onScr(cover(S.src||[
     const tw=q.k==="t"?.5+.5*Math.sin(q.l*.15+q.x):1;g.fillStyle=`rgba(${q.col},${al*.9*tw})`;g.beginPath();g.arc(q.x,q.y,q.r,0,6.2832);g.fill()}
   g.globalCompositeOperation="source-over"}
 /* ---------- 危機解題（QTE）：P＝{fen,side,line:[著法…],big,say,hint,presel}；done({mist,hint,demo,cn}) ---------- */
-function mnfQte(host,P,done){const C=typeof window!=="undefined"&&window.XQCore;
+function mnfQte(host,P,done){if(typeof i18nStoryData==="function")P=i18nStoryData(P);const C=typeof window!=="undefined"&&window.XQCore;
   if(!C||!P||typeof Board!=="function"){setTimeout(()=>done({mist:0,hint:false,demo:true,cn:"",skip:1}),600);return}
   const w=document.createElement("div");w.className="mnf-q";w.innerHTML=`<div class="mnf-qi"><div class="mnf-qw"></div><p class="mnf-qs">${esc(P.say||"")}</p><p class="mnf-qh" aria-live="polite"></p><div class="mnf-qd"></div></div>`;host.append(w);
   const wrap=w.querySelector(".mnf-qw"),hintE=w.querySelector(".mnf-qh"),dE=w.querySelector(".mnf-qd");
@@ -452,6 +452,7 @@ function mnfSolveRite(o){o=o||{};mnfCss();let rm=false;try{rm=matchMedia("(prefe
   const place=(k,f)=>{const w=W(),h=H(),s=Math.max(w/IW,h/IH)*k,ox=Math.min(0,Math.max(w-IW*s,w*.5-f[0]*s)),oy=Math.min(0,Math.max(h-IH*s,h*.42-f[1]*s));
     im.style.width=IW*s+"px";im.style.height=IH*s+"px";im.style.transform=`translate(${ox}px,${oy}px)`};
   dot.style.left=R.fx[0]/IW*100+"%";dot.style.top=R.fx[1]/IH*100+"%";dot.style.width=R.dw+"%";dot.style.transform=`translate(-50%,-50%) rotate(${R.rot}deg)`;
+  if(typeof i18nStoryText==="function")for(const key of Object.keys(TX))TX[key]=i18nStoryText(TX[key]);
   const n=Math.max(...Object.values(TX).map(mnfLen));d.style.setProperty("--mnfs",Math.max(15,Math.min(28,Math.floor((W()-36)/(n*1.12))))+"px");
   const say=t=>{sub.classList.remove("on");sub.textContent=t;void sub.offsetWidth;sub.classList.add("on")};
   const K=o.fast?.55:1,T=[],at=(s,f)=>T.push(setTimeout(f,(rm?Math.min(s*1000,s*300):s*1000)*K));let fin=false,k0=performance.now(),raf=0;   /* o.fast：對話場景解題後的短版（約 5 秒，開發者 11/14 新腳本第 7 場） */

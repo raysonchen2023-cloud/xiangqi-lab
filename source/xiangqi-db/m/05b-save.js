@@ -241,19 +241,18 @@ function xf2Watch(){clearTimeout(XF2_T);XF2_T=null;let O=null;try{O=JSON.parse(l
     if(r.st==="pending"||(r.st==="unknown"&&Date.now()<=(+O.exp||0)))XF2_T=setTimeout(xf2Watch,45000)}).catch(()=>{XF2_T=setTimeout(xf2Watch,45000)})}
 if(typeof xfUpload==="function"&&typeof xfDownload==="function"){xfUpload=xf2Upload;xfDownload=xf2Download}
 /* ---------- 📱 轉移碼 v4（紅藍隊 r15 R03＝威脅模型 I5，11/13；測試 xiangqi-lab/tools/test-xfer4.js、重現 review_loop/rounds/r15/redblue/repro-xfer-topic-bruteforce-v4.js）----------
-   v3 的毛病：主題 id＝SHA-256("xqlab-xfer-id:"+碼) 前 80 位元，只算一次、沒有鹽；碼 8 碼（31^8≈2^39.6），看得到主題名就能用 GPU 幾分鐘反推出碼。
-   說明（n、exp、h）是明文、分段雜湊也是明文，知道碼的人還能在新手機下載前把整份換掉。
+   v3（8 碼）強度不夠，已停收，見 threat-model I5。v3 的說明（n、exp、h）和分段雜湊也是明文，知道碼的人還能在新手機下載前把整份換掉。
    v4：① xf4Keys 只做一次 PBKDF2-HMAC-SHA512（30 萬次，鹽 "xqlab-xfer-v4"）deriveBits 512 位元：前 256 位元＝AES-GCM 金鑰，後 256 位元切成主題 id（80 位元）和回條 ah（176 位元）。
       猜一次碼就要算一次完整的 PBKDF2，主題 id、回條都不能拿來快速比對。SHA-512 一個區塊剛好 512 位元，攻擊的人不能只算一半省時間。
    ② 碼 10 碼（31^10≈2^49.5），xf4Code 用拒絕取樣（不偏向前幾個字）；字元集照舊（沒有 I、L、O、0、1）。
    ③ 說明 {v:4,n,exp,c}：c＝AES-GCM 加密的 {sid（這次上傳的隨機代號）,gz,at}，AAD＝版本、種類、段數、期限；每一段各自加密（自己的 iv），AAD 再加 sid 和第幾段。
       改說明的 n 或 exp、換掉、調換順序、拿別次上傳的段來混、截短，都解不開；期限沒有金鑰就改不了。
    ④ 一次性：新手機收完清掉各段、說明換成回條；這支手機記住收過的 sid（xq_xfUsed，存檔取代後也留著），同一份資料被人重放也不收；過期的不收、順手清掉。
-   ⑤ 舊的 8 碼（v3）到 XF4_V3_UNTIL 前照收（走 xf2Download），回傳的資料帶 xfWarn，畫面提示「安全性較低，建議重新產生」；之後一律拒收。 */
+   ⑤ 舊的 8 碼（v3）：評比第 18 輪第 4 項（開發者選「現在就停收」）起一律不收。xf4Download 一看到 8 碼就丟 XF4_OLD（不連線、不讀也不訂閱任何主題），
+      畫面 xfRecv（05-settings.js）也先擋下、直接顯示 XF4_OLD；新版本來就只產生 10 碼。停收只影響「輸入舊碼」這條路：這支手機的存檔、10 碼轉移、匯出匯入檔案都照舊。 */
 /* XFER4:BEGIN（只用 crypto、XQNet、XQSave、localStorage、05-settings 的 XFER 區段和上面的 XFER2 區段；test-xfer4.js 三段一起切出來在 node 跑） */
 const XF4_LEN=10,XF4_IT=300000,XF4_SALT="xqlab-xfer-v4",XF4_PB=90000,XF4_USED="xq_xfUsed",XF4_GOT=new Map();
-const XF4_V3_UNTIL=Date.UTC(2026,11,31,16);   /* 舊 8 碼收到臺灣時間 2027-01-01 00:00 為止（開發者可改） */
-const XF4_WARN="這組是舊版 App 產生的 8 碼轉移碼，安全性較低（比較容易被猜出來）。建議兩支手機都更新 App，在舊手機重新產生 10 碼的轉移碼再搬一次。";
+const XF4_OLD="這是舊版的 8 碼轉移碼，已經停用。請在舊手機打開 App（會自動更新），重新產生一組新的轉移碼。";   /* 評比第 18 輪第 4 項：8 碼停收（英文在 07i18n） */
 const xf4Hx=u=>Array.from(u,x=>x.toString(16).padStart(2,"0")).join("");
 function xf4Code(){const a=[],N=XF_ABC.length,lim=256-256%N;while(a.length<XF4_LEN)for(const x of crypto.getRandomValues(new Uint8Array(16)))if(x<lim&&a.length<XF4_LEN)a.push(XF_ABC[x%N]);return a.join("")}
 async function xf4Keys(code){const te=new TextEncoder(),c=xfNorm(code),base=await crypto.subtle.importKey("raw",te.encode(c),"PBKDF2",false,["deriveBits"]);
@@ -277,11 +276,10 @@ async function xf4Upload(code){const c=xfNorm(code);if(c.length!==XF4_LEN)throw 
   try{localStorage.setItem("xq_xfOut",JSON.stringify({id:K.id,ah:K.ah,exp,at:Date.now()}))}catch(e){}
   try{if(typeof xf2Watch==="function")xf2Watch()}catch(e){}
   return{K,exp,n,kb:Math.ceil(parts.reduce((a,p)=>a+p.length,0)/1024),games:Object.values(games).reduce((a,l)=>a+l.length,0)}}
-/* 新手機：10 碼走 v4；8 碼是舊版（v3），期限內照收但帶 xfWarn。回解開的資料，錯誤丟 Error（訊息直接給使用者看） */
+/* 新手機：10 碼走 v4；8 碼是舊版（v3），已停收：連線之前就丟 XF4_OLD。回解開的資料，錯誤丟 Error（訊息直接給使用者看） */
 async function xf4Download(code,prog){const c=xfNorm(code);
-  if(c.length===8){if(Date.now()>XF4_V3_UNTIL)throw new Error("這是舊版 App 的 8 碼轉移碼，已經停止支援：請把舊手機的 App 更新到最新版，再重新產生 10 碼的轉移碼");
-    const D=await xf2Download(c,prog);if(D&&typeof D==="object")D.xfWarn=XF4_WARN;return D}
-  if(c.length!==XF4_LEN)throw new Error("轉移碼是 10 碼（舊版 App 產生的是 8 碼）");
+  if(c.length===8)throw new Error(XF4_OLD);
+  if(c.length!==XF4_LEN)throw new Error("轉移碼是 10 碼");
   const K=await xf4Keys(c),lost="找不到這組轉移碼：可能打錯、過期，或已經用過了",fake="說明對不上：轉移碼不對，或資料已經被換掉了。請在舊手機重新產生轉移碼";
   let m=null;for(let k=0;k<2&&!m;k++)m=await XQNet.getRetained(K.topic("m"),k?6000:10000);if(!m)throw new Error(lost);
   let M=null;try{M=JSON.parse(m)}catch(e){}

@@ -412,7 +412,12 @@ test("〔混合〕鍵值化接線：08b／05／09b 用到的鍵 I18N_KEY 都有�
   assert.ok(used.size >= 45, "用到的鍵太少：" + used.size);
   const miss = [...used].filter(k => !Object.prototype.hasOwnProperty.call(K, k)); assert.deepEqual(miss, [], "I18N_KEY 少了：" + miss.join("、"));
   assert.ok(pairs.length >= 35, "鍵與原文的配對太少：" + pairs.length);
-  for (const [f, k, zh] of pairs) assert.equal(T(zh), K[k], f + "：" + k + "（" + zh + "）");
+  for (const [f, k, zh] of pairs) {
+    if (k === "set.section.privacy" || k === "set.section.advanced") {
+      assert.equal(T(zh), null, "Section source labels remain guarded");
+      assert.ok(SET.includes('data-sm-title="' + zh + '" data-i18n="' + k + '"'), "Section lookup has a stable source label");
+    } else assert.equal(T(zh), K[k], f + "：" + k + "（" + zh + "）");
+  }
   assert.match(CPU, /^function cgT\(k,z,v\)\{return typeof i18nT==="function"\?i18nT\(k,z,v\):z\}$/m, "08b 的小掛勾有 typeof 保護");
   assert.match(CPU, /\(undoLeft\(\)\?cgT\("game\.undoN","悔棋（"\+undoLeft\(\)\+"）",\{n:undoLeft\(\)\}\):cgT\("game\.undo","悔棋"\)\)/, "悔棋鈕剩幾張用 {n}");
   assert.match(SET, /setTop\(typeof i18nT==="function"\?i18nT\("set\.title","設定"\):"設定",false,/);
@@ -455,6 +460,15 @@ test("鍵值化：data-i18n 的元素原文改字也換得對（設定分頁、�
   assert.deepEqual(seen(doc.body).filter(s => CJK.test(s)), [], "沒有中文");
   ctx.i18nRevert(doc.body); assert.equal(doc.body.innerHTML, html0, "切回繁中一字不差");
   const z = loadFull(null); z.doc.body.innerHTML = html0; assert.equal(z.MO.cb, null); assert.equal(z.doc.body.innerHTML, html0, "繁中模式什麼都不換");
+});
+test("Privacy section headings translate without changing source lookup labels", () => {
+  const { ctx, doc } = loadFull("en");
+  doc.body.innerHTML = '<div data-sm-title="隱私" data-i18n="set.section.privacy">隱私</div><div data-sm-title="進階" data-i18n="set.section.advanced">進階</div>';
+  ctx.i18nApply(doc.body);
+  assert.equal(doc.body.textContent, "PrivacyAdvanced");
+  assert.deepEqual(doc.body.querySelectorAll("[data-sm-title]").map(x => x.getAttribute("data-sm-title")), ["隱私", "進階"]);
+  ctx.i18nRevert(doc.body);
+  assert.equal(doc.body.textContent, "隱私進階");
 });
 test("鍵值化＋MutationObserver：程式之後改了有鍵元素的字（改文字節點、整個 textContent 換掉），英文照鍵重換", () => {
   const { MO, doc } = loadFull("en");

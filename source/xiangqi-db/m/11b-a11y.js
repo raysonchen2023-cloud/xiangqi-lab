@@ -138,7 +138,7 @@ document.addEventListener("keydown",e=>{if(!axmOn()||e.ctrlKey||e.metaKey||e.alt
   else if(k==="?"||k==="？"){e.preventDefault();axSay(AXM_HELP);try{if(typeof axsHelp==="function")axsHelp()}catch(x){}}});   /* 第 4 輪 P16.5：? 鍵另外開說明卡，裡面有「🧭 空間導覽」（11c-a11ysnd.js） */
 /* 棋鐘：每秒變的字不放 aria-live（會一直念），改成 role=timer；跨過 5 分、1 分、30 秒、10 秒時念一次 */
 /* 第 5 輪 P16.4 文字備援：提示音開著（沒開螢幕報讀模式也一樣）也念；超時改念在 assertive（11c axsAlert） */
-{const last={};setInterval(()=>{if(!(axmOn()||(typeof axsOn==="function"&&axsOn()))||document.hidden)return;for(const[id,w]of[["pBot","你"],["pTop","對手"]]){const c=document.querySelector("#"+id+" .clk");if(!c){delete last[id];continue}
+{const last={};(typeof bgpEvery==="function"?bgpEvery:setInterval)(()=>{if(!(axmOn()||(typeof axsOn==="function"&&axsOn()))||document.hidden)return;for(const[id,w]of[["pBot","你"],["pTop","對手"]]){const c=document.querySelector("#"+id+" .clk");if(!c){delete last[id];continue}
     const s=axmClockSec(c.textContent),say=axmClockSay(last[id],s,w);last[id]=s;if(say){if(s<=0&&typeof axsAlert==="function")axsAlert(say);else axSay(say)}}},1000)}
 /* 對話框：補 role／aria-modal／名字；焦點移進去、Tab 鎖在裡面；關掉後焦點回原處 */
 const AXM_DLG=new Map();let axmN=0;
@@ -186,7 +186,7 @@ axmApply();
 if(fzSysOn())try{fzApply()}catch(e){}
 /* 自動提示一次：用 Tab 鍵、系統減少動態效果、強制色彩 */
 function axmAsk(why){if(axmOn()||store.get("axmAsk",0))return;
-  const busy=()=>!!document.querySelector(".modal,#sheet.show,#preov,#bhxPg,#mnfPg,#mnfRite,#xqTitle:not(.out)");   /* 11/14 r17 B4：開了「減少動態效果」6 秒後問，常常蓋在開場／開章電影或標題畫面上（略過鈕點不到）；電影、標題畫面也算忙，播完才問 */
+  const busy=()=>!!document.querySelector(".modal,#sheet.show,#preov,#bhxPg,#mnfPg,#mnfRite,#mnvPg,#mnqCard,#mnqGf,#xqTitle:not(.out)");   /* 電影、對話章節與任務／授印卡播放中，延後詢問，避免覆蓋故事和解題操作。 */
   if(busy()){if((axmAsk.n=(axmAsk.n||0)+1)<60)setTimeout(()=>axmAsk(why),5000);return}   /* 電影可能好幾分鐘：最多等 5 分鐘 */
   store.set("axmAsk",1);const fc=!!(window.matchMedia&&matchMedia("(forced-colors: active)").matches);
   const B=[["♿ 開啟螢幕報讀與鍵盤模式",()=>axmSet(true)]];if(fc&&!axmHct())B.push(["開啟高對比主題",()=>axmHctSet(true),true]);B.push(["先不用",()=>{try{toast("之後可以在設定房間的 🔒 小鎖匣 → ♿ 無障礙打開")}catch(e){}},true]);

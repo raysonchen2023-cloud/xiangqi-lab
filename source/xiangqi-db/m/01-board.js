@@ -215,7 +215,7 @@ async function bgmNow(){const el=document.getElementById("bgmNow");if(!el)return
   const k=BGM.src.replace(/^data\/bgm\//,""),T=(await bgmTitles())||{},t=T[k];el.style.display="flex";
   /* 意見回饋 623（開發者）：曲名後面加樂器名稱（檔名就是樂器，例如 classic/zheng_1.mp3＝古箏） */
   const ins={zheng:"古箏",bianzhong:"編鐘",paixiao:"排簫",xun:"塤",ruan:"阮",konghou:"箜篌",dizi:"笛子",pipa:"琵琶",xiao:"洞簫",qin:"古琴",morinkhuur:"馬頭琴",sanxian:"三弦",erhu:"二胡"}[(k.split("/").pop()||"").replace(/_\d+\.\w+$/,"")]||"";
-  el.innerHTML=`<span style="flex:1;min-width:0">♪ 正在播放${t?`《${esc(t)}》`:""}${ins?`・${ins}`:""}</span><button class="btn ghost" id="bgmNext" style="flex:none;width:auto;margin:0;padding:4px 12px;font-size:13px;white-space:nowrap">換一首</button>`;
+  el.innerHTML=`<span style="flex:1;min-width:0"><span>♪ 正在播放</span>${t?`<span data-noi18n>《${esc(t)}》</span>`:""}${ins?`・<span>${ins}</span>`:""}</span><button class="btn ghost" id="bgmNext" style="flex:none;width:auto;margin:0;padding:4px 12px;font-size:13px;white-space:nowrap">換一首</button>`;
   el.querySelector("#bgmNext").onclick=()=>{vibrate(5);bgmSync(true)}}
 /* hspx（開發者 11/12 黑洞篇 5 首主題曲，story/118）：指定曲目（data/bgm/blackhole/bh_N.mp3），黑洞對局依局面換；null＝回到朝代配樂輪播 */
 function bgmForce(file){file=file||null;if((BGM.force||null)===file)return;BGM.force=file;try{bgmSync(true)}catch(e){}}

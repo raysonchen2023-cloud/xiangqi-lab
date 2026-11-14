@@ -577,5 +577,5 @@ function bhxQuestTick(){try{const J=journey();if(!J||!store.get("bhxLand",null))
 function bhxQuest(hm,D){const c=typeof myChar==="function"?myChar():null,C=c&&WX_CHARS[c],nk=C?(C.nk||C.n):"我",el=eraLabel(hm);
   modal(`<div class="em">📜</div><h2>任務：回到${esc(el)}</h2>${C?`<p class="pl-say"><img src="data/xs/prev_${c}.webp" alt="" onerror="this.remove()" style="width:44px;height:44px;border-radius:50%;object-fit:cover;vertical-align:middle;margin-right:6px">${esc(C.n)}：「星槎可以載我們回${esc(el)}。那裡的石桌，還有一盤等我的棋。」</p>`:""}<p class="muted" style="font-size:13px">家鄉朝代的園子裡，有${esc(nk)}的主場棋局和千秋殘局。搭星槎起航就能過去。</p>`,
     [["⛵ 起航前往"+el,()=>{location.hash="#/adventure";setTimeout(()=>{try{shipGoTo(hm)}catch(e){}},700)}],["之後再去",null,true]],"prolog")}
-if(typeof window!=="undefined"&&typeof document!=="undefined"&&!navigator.webdriver)setInterval(bhxQuestTick,15000);
+if(typeof window!=="undefined"&&typeof document!=="undefined"&&!navigator.webdriver)(typeof bgpEvery==="function"?bgpEvery:setInterval)(bhxQuestTick,15000);
 if(typeof window!=="undefined"&&typeof document!=="undefined"&&!navigator.webdriver){let n=0;const tk=()=>{n++;let ok=false;try{ok=bhxOldAsk()}catch(e){}if(!ok&&n<40&&!store.get("bhXuAsk",null)&&bhxNeed())setTimeout(tk,3000)};setTimeout(tk,5000)}
