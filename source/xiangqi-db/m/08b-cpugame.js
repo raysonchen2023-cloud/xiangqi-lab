@@ -187,18 +187,19 @@ function CpuGame(v,practicePage,mode){
         dl=(a,b,u)=>{if(a==null||b==null)return"";const d=b-a;return`<b style="color:${d>0?UP:d<0?DN:"var(--muted)"}">${d>0?"+":d<0?"−":"±"}${Math.abs(d)}${u||""}</b>`};
         let rec="";if(KIND(st)==="cpu"&&!(st.ranked&&st.moves.length<2)){const C=st.cpuRate||{};let W=C.w||0,L=C.l||0,D=C.d||0;for(const[k,r]of Object.entries(st.record||{})){if(k==="0")continue;W+=r.w||0;L+=r.l||0;D+=r.d||0}
           const N=W+L+D,pc=(w,n)=>n>0?Math.round(w*100/n):null,p0=pc(W-(res==="w"?1:0),N-1),p1=pc(W,N),me=st.ranked?C:(st.record||{})[st.level]||{};
-          rec=`<div>📊 ${st.ranked?"晉級賽":"第 "+st.level+" 級"}：${me.w||0} 勝 ${me.l||0} 負${me.d?" "+me.d+" 和":""}（這盤 +1 ${res==="w"?"勝":res==="l"?"負":"和"}）${p1!=null?`<br>跟電腦總勝率 ${p0!=null&&p0!==p1?p0+"% → ":""}<b>${p1}%</b>${p0!=null&&p0!==p1?" "+dl(p0,p1):""}`:""}</div>`}
+          rec=`<div class="rg-l"><i aria-hidden="true">📊</i><span>${st.ranked?"晉級賽":"第 "+st.level+" 級"}：${me.w||0} 勝 ${me.l||0} 負${me.d?" "+me.d+" 和":""}<span class="rg-n">（這盤 +1 ${res==="w"?"勝":res==="l"?"負":"和"}）</span></span></div>${p1!=null?`<div class="rg-l"><i></i><span>跟電腦總勝率 ${p0!=null&&p0!==p1?p0+"% → ":""}<b>${p1}%</b>${p0!=null&&p0!==p1?" "+dl(p0,p1):""}</span></div>`:""}`}
         let n=0,seen=false;const box=()=>document.querySelector(".modal.res .resgrow"),
         ngH=(c,acc,ref)=>{if(!c||KIND(st)!=="cpu")return"";let h="";const g0=ngGet(),j=g0&&g0.from!==gid&&g0.shown===gid?ngJudge(g0,c,acc):null;   /* 下一盤目標（04-stats ngPick／ngJudge） */
-          if(j)h+=`<br>🎯 上盤目標「${NG_TXT(g0)}」：<b style="color:${j.ok?UP:DN}">${j.ok?"✅ 達成":"差一點"}</b>（這盤${j.got}）`;
-          const nx=ngPick(c,ref!=null?ref:acc);if(nx){store.set("nextGoal",{...nx,from:gid,at:Date.now()});h+=`<br>🎯 下一盤目標：<b>${NG_TXT(nx)}</b>`}else if(j)store.set("nextGoal",null);return h},
+          if(j)h+=`<div class="rg-l"><i aria-hidden="true">🎯</i><span>上盤目標「${NG_TXT(g0)}」：<b style="color:${j.ok?UP:DN}">${j.ok?"✅ 達成":"差一點"}</b><span class="rg-n">（這盤${j.got}）</span></span></div>`;
+          const nx=ngPick(c,ref!=null?ref:acc);if(nx){store.set("nextGoal",{...nx,from:gid,at:Date.now()});h+=`<div class="rg-l"><i aria-hidden="true">🎯</i><span>下一盤目標：<b>${NG_TXT(nx)}</b></span></div>`}else if(j)store.set("nextGoal",null);return h},
         paint=(d,why,c)=>{const e=document.querySelector(".modal.res .resgrow .rg-sk");if(!e)return;e.classList.remove("muted");
           if(why||!d){e.classList.add("muted");e.textContent=why||"這盤還沒評完等，評完會算進「我的棋力」。";return}
           if(d.hu){e.classList.add("muted");e.textContent=`這盤用過提示或悔棋，不算進「我的棋力」${d.acc!=null?`（這盤每步準確度 ${d.acc}）`:""}。`;return}
           /* 統計審查：差異在正常起伏內就說「跟平常差不多」、「持平」，明顯的才上色（04-stats skillDiff 的 z、dT、big）。數學修正 11/11：五邊形改指數加權後 dT＝t1−t0（同一個數字），不再有「這盤比平常好、綜合卻下降」 */
           const zw=d.z==null?"":d.z>=2?`<b style="color:${UP}">明顯比平常好</b>`:d.z>=1?`<span style="color:${UP}">比平常好一點</span>`:d.z<=-2?`<b style="color:${DN}">明顯比平常差</b>`:d.z<=-1?`<span style="color:${DN}">比平常差一點</span>`:"跟平常差不多";
-          e.innerHTML=`📈 這盤每步準確度 <b>${d.acc==null?"—":d.acc}</b>${zw?`・${zw}（最近平均 ${d.avg}）`:""}<br>`+
-            (d.t0==null?`我的棋力綜合 <b>${d.t1==null?"—":d.t1}</b>（第一盤評好等的棋）`:`我的棋力綜合 <b>${d.t1==null?"—":d.t1}</b>・${d.dT==null||Math.abs(d.dT)<2?"持平":`這盤對綜合是<b style="color:${d.dT>0?UP:DN}">${d.dT>0?"加分":"扣分"}</b>`}${d.big?`（主要是${d.big.k}${d.big.d>0?"進步":"退步"}）`:""}`)+ngH(c,d.acc,d.avg)},
+          /* 開發者 11/15「修正這邊的換行排版」：一項一列（圖示一欄、字縮排對齊），括號說明不拆開，放不下就整段換到下一行 */
+          e.innerHTML=`<div class="rg-l"><i aria-hidden="true">📈</i><span>這盤每步準確度 <b>${d.acc==null?"—":d.acc}</b>${zw?`・${zw}<span class="rg-n">（最近平均 ${d.avg}）</span>`:""}</span></div>`+
+            `<div class="rg-l"><i></i><span>`+(d.t0==null?`我的棋力綜合 <b>${d.t1==null?"—":d.t1}</b><span class="rg-n">（第一盤評好等的棋）</span>`:`我的棋力綜合 <b>${d.t1==null?"—":d.t1}</b>・${d.dT==null||Math.abs(d.dT)<2?"持平":`這盤對綜合是<b style="color:${d.dT>0?UP:DN}">${d.dT>0?"加分":"扣分"}</b>`}${d.big?`<span class="rg-n">（主要是${d.big.k}${d.big.d>0?"進步":"退步"}）</span>`:""}`)+`</span></div>`+ngH(c,d.acc,d.avg)},
         tick=()=>{n++;const b=box();if(b)seen=true;else if(!seen){if(n<40)setTimeout(tick,700);return}   /* hspx P0 開發者 11/13「點下我的棋力沒反應」：結果視窗要等將死動畫播完才出來，第一次 tick（0.6 秒）時還不在，查完狀態就結束、不再排下一次——按鈕沒綁上、分析文字也停在「正在評這盤」。視窗還沒出來就每 0.7 秒再等（最多約 28 秒）；按鈕改用下面的全域點擊委派 */
           if((seen&&!b)||(!seen&&n>8))return;
           api("/play/state").then(s=>{if(!s||s.id!==gid)return;const mine=(s.moves||[]).filter(m=>m.by===hu);if(!mine.length)return paint(null,"這盤沒走幾步，不算進「我的棋力」。");
@@ -207,7 +208,7 @@ function CpuGame(v,practicePage,mode){
             const left=mine.filter(m=>!qNow(m)).length,sk=document.querySelector(".modal.res .resgrow .rg-sk.muted");
             if(n<45){if(sk)sk.textContent=`📈 還有 ${left} 步在分析，評完就知道棋力變化…`;setTimeout(tick,2000)}else paint(null,`📈 還有 ${left} 步還沒分析完，打開「📊 檢討」會接著分析；評完會算進「我的棋力」。`)}).catch(()=>{})};
         setTimeout(tick,600);
-        return`<div class="resgrow" style="width:100%;max-width:300px;box-sizing:border-box;margin:8px auto 2px;padding:8px 12px;border:1px solid var(--line);border-radius:12px;font-size:14px;line-height:1.7;text-align:left">${rec}<div class="rg-sk muted">📈 電腦分析（Pikafish）正在評這盤，評完就知道棋力變化…</div><button type="button" class="rg-go" style="display:block;margin:2px 0 0 auto;padding:2px 0;border:0;background:none;color:var(--accent);font:inherit;font-size:13.5px;font-weight:900;cursor:pointer">看我的棋力 ›</button></div>`};
+        return`<style>.resgrow .rg-l{display:flex;gap:6px;align-items:baseline}.resgrow .rg-l>i{flex:0 0 1.35em;font-style:normal;text-align:center}.resgrow .rg-l>span{flex:1;min-width:0}.resgrow .rg-n{white-space:nowrap}</style><div class="resgrow" style="width:100%;max-width:300px;box-sizing:border-box;margin:8px auto 2px;padding:8px 12px;border:1px solid var(--line);border-radius:12px;font-size:14px;line-height:1.7;text-align:left">${rec}<div class="rg-sk muted">📈 電腦分析（Pikafish）正在評這盤，評完就知道棋力變化…</div><button type="button" class="rg-go" style="display:block;margin:2px 0 0 auto;padding:2px 0;border:0;background:none;color:var(--accent);font:inherit;font-size:13.5px;font-weight:900;cursor:pointer">看我的棋力 ›</button></div>`};
       /* ChatGPT 改善單 T01（開發者 11/11 核准）：首頁「快下一盤」（FH，不算段位的快局）下完、我方走過 3 步以上——結算視窗的主要按鈕改成「🔎 看懂這盤最關鍵的一步」（mflOpen），
          上面那顆「這盤先看這一步」小鈕就不重複放；「再來一局」「去茶肆正式上桌」退成次要。從首頁接著下的晉級賽、盲棋、其他模式照舊 */
       /* ChatGPT v6 重評（11/11）：一般挑戰電腦（含晉級賽、練功房）結算也要一鍵看關鍵著——不再限首頁快局；盲棋、練習、故事、擂台照舊 */

@@ -10,7 +10,8 @@ var XQ=(function(){
   const stateRebuild=S=>{S.rc=C.ruleConfigOf(S);if(!(S.ed&&S.ed.length))return C.stateRebuild(S);return tdRebuild(S)};
   /* 黑洞陣地塔防（開發者 11/13，m/07bht-td.js）：招式移除敵子、星門落子這類「不是走棋的盤面變化」記在 S.ed＝[{n:第幾手之後,s:{格:子或 null}}]；
      重放時照順序在那一手之後套上，盤面、pos 才跟當時一樣。沒有 ed 的對局完全照舊（C.stateRebuild） */
-  function tdRebuild(S){const old=S.moves||[],E=S.ed,ap=n=>{let hit=false;for(const e of E)if(e&&e.n===n&&e.s){hit=true;for(const k in e.s)S.board[+k]=e.s[k]||null}return hit};
+  /* 11/15 星門圍城（m/07bhg-gatesiege.js）：ed 那一筆帶 ps＝套完換手（部署後備用掉主要行動，沒有走棋） */
+  function tdRebuild(S){const old=S.moves||[],E=S.ed,ap=n=>{let hit=false;for(const e of E)if(e&&e.n===n&&e.s){hit=true;for(const k in e.s)S.board[+k]=e.s[k]||null;if(e.ps)S.turn=S.turn==="r"?"b":"r"}return hit};
     S.moves=[];S.board=parseFen(S.start||START);S.turn=S.startTurn||"r";ap(0);S.pos=[fen(S.board,S.turn)];
     for(const o of old){const m=C.stateApply(S,o.f,o.t);for(const k of["q","loss","ev","bv","bmt","pmt","rr","bc","bm","bp"])if(o[k]!==undefined)m[k]=o[k];if(ap(S.moves.length))S.pos[S.pos.length-1]=fen(S.board,S.turn)}
     S.repetition=null;return S}
@@ -512,7 +513,7 @@ var XQ=(function(){
     else if(p==="/play/move"){const f=+b.f,t=+b.t;if(P.result)throw new Error("這局已經結束");if(P.turn!==P.human)throw new Error("還沒輪到你");
       if(!legal(P.board,P.turn).some(([x,y])=>x===f&&y===t))throw new Error("這步不合法");playApply(f,t);setTimeout(playEngine,0)}
     else if(p==="/play/td"){if(!P.td||!window.XQ_TD)throw new Error("這盤沒有招式");if(P.result)throw new Error("這局已經結束");if(P.turn!==P.human)throw new Error("還沒輪到你");   /* 黑洞陣地塔防：放招（不佔走棋） */
-      const o=window.XQ_TD.cast(P,b,C)||{};if(o.err)throw new Error(o.err);if(o.end)playEnd(o.end.w,o.end.why);savePlay();try{window.dispatchEvent(new Event("xq-play"))}catch(e){}}
+      const o=window.XQ_TD.cast(P,b,C)||{};if(o.err)throw new Error(o.err);if(o.end)playEnd(o.end.w,o.end.why);savePlay();if(o.pass&&!P.result)setTimeout(playEngine,0);try{window.dispatchEvent(new Event("xq-play"))}catch(e){}}   /* o.pass：星門圍城部署後備＝用掉這一手，換電腦走 */
     else if(p==="/play/undo"){if(P.ranked)throw new Error("積分挑戰不能悔棋");if(P.td)throw new Error("黑洞陣地戰不能悔棋");/* 意見回饋 651：開發者 597 決定擂台也能用悔棋符，這裡原本還擋著（382 的舊規則），App 先扣了悔棋符、悔棋卻失敗——拿掉 *//* 意見回饋 380：電腦（擂主）還在想的時候也能悔棋——引擎算完會發現步數變了、自動丟掉那步 */
       const floor=P.practice?P.practice.base:0;if(P.moves.length<=floor)throw new Error(P.practice?"已經回到練習的起點":"你還沒走棋，不用悔棋");if(!P.moves.slice(floor).some(m=>m.by===P.human))throw new Error("你還沒走棋，不用悔棋");
       while(P.moves.length>floor){const m=P.moves.pop();if(m.by===P.human)break}P.undoN=(P.undoN||0)+1;P.result=null;P.hint=null;stateRebuild(P);savePlay();setTimeout(playEngine,0)}

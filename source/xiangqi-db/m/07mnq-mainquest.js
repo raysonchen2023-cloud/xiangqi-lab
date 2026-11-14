@@ -145,6 +145,7 @@ function mnqTaskCard(n){mnqCss();n=n||mnqNextOf(mnqSt(),mnqEnv());const old=docu
 /* ---------- 一章：開章 → 危機（解題＋儀式）→ 章末；照 MNQ_CHAP[朝代] 的資料走 ---------- */
 /* 危機題題號：SHIP_PLAN[朝代].story 是函式＝照本命子換題（第一章船艙站）、是字串＝固定那一題（第二章 xs-qin-0）；都沒有就用 MNF_QTE 的預設題 */
 function mnqQteId(era){era=era||"classic";const C=MNQ_CHAP[era]||MNQ_CHAP.classic;let pc="俥";try{const c=typeof myChar==="function"&&myChar();pc=(c&&WX_CHARS[c].pc)||store.get("botPiece","俥")||"俥"}catch(e){}
+  if(era==="classic")return{id:MNF_QTE[C.qte].id,pc,byPc:false};   /* 11/15 開發者：本命是相、仕、帥的人拿到「把相走開才將死」看不懂，第一章破局一律用俥一路衝到底那題 */
   let id=MNF_QTE[C.qte].id,byPc=false;try{const PL=typeof SHIP_PLAN!=="undefined"&&SHIP_PLAN[era];
     if(PL&&typeof PL.story==="function"){id=PL.story(pc);byPc=true}else if(PL&&typeof PL.story==="string")id=PL.story;else if(era==="classic"&&typeof SHIP_PC!=="undefined"&&SHIP_PC[pc]){id="xs-classic-"+SHIP_PC[pc];byPc=true}}catch(e){}return{id,pc,byPc}}
 /* 危機題＝那一站的劇情局（一盞茶題庫 cjData 併進來的 ship-set.json）；載不到就用預設那題（記進度時會對題號，不會記錯題）；固定題而且就是預設題＝直接用 MNF_QTE（含 alt 兩解、wrong 台詞） */
@@ -194,7 +195,7 @@ function mnqGo(n){n=n||mnqNextOf(mnqSt(),mnqEnv());if(typeof vibrate==="function
 /* ---------- 首頁「下一步」：包一層 07z homeMap，放在底部那一條的最上面（同一個直排容器，不會跟入口標籤、大按鈕疊在一起） ---------- */
 function mnqHomeBtn(v){const P=v&&v.querySelector&&v.querySelector(".home-page"),bar=P&&P.querySelector(".hm-go-bar");if(!bar||bar.querySelector(".mnq-next"))return;mnqCss();
   const b=document.createElement("button");b.type="button";b.className="mnq-next";b.id="mnqNext";bar.insertBefore(b,bar.firstChild);
-  b.onclick=e=>{e.stopPropagation();mnqGo()};mnqHomeSync();
+  b.onclick=e=>{e.stopPropagation();if(typeof stqHomeGo==="function"&&stqHomeGo())return;mnqGo()};mnqHomeSync();   /* 11/15 新手練習（07stq）：首頁這顆改成「更多玩法」清單／練習做到一半＝接著練 */
   const dg=()=>{if(!P.isConnected)return;try{mnqDodge(P,bar)}catch(e){}},rs=()=>{if(!P.isConnected){removeEventListener("resize",rs);return}setTimeout(dg,320)};addEventListener("resize",rs);requestAnimationFrame(dg);setTimeout(dg,90);setTimeout(dg,760)}
 /* 11/13 第 16 輪 device-fit：iPhone Duo 闔起（466×678）等矮螢幕，底部那條多了「下一步」變高，蓋到圖上的「同桌對弈」標籤。
    被底部那條蓋到的標籤用 marginTop 往上推到它上面（跟 07z hmClamp 用 marginLeft 推左右同一套，先歸零再量，不會越推越多），推完通知 r07HitSoon 重算點選範圍 */
@@ -202,7 +203,8 @@ function mnqDodge(P,bar){const R=bar.getBoundingClientRect();if(!R.height)return
   P.querySelectorAll(".shp-spot").forEach(s=>{if(bar.contains(s))return;const was=s.classList.contains("mnq-dg");if(was){s.style.marginTop="";s.classList.remove("mnq-dg")}const q=s.getBoundingClientRect();if(!q.width)return;
     if(q.bottom>R.top-6&&q.top<R.bottom&&q.right>R.left-4&&q.left<R.right+4){s.style.marginTop=-Math.ceil(q.bottom-R.top+6)+"px";s.classList.add("mnq-dg");mv++}});   /* 11/14 r17 B1：mnq-dg＝這裡推的，05 fzPull 看到就不清（以前 0.4 秒後被它清掉又疊回去）；沒推過的不動別人的 marginTop */
   if(mv&&typeof r07HitSoon==="function")try{r07HitSoon()}catch(e){}}
-function mnqHomeSync(){const b=document.getElementById("mnqNext");if(!b)return;const n=mnqNextOf(mnqSt(),mnqEnv()),t="⛵ 下一步・"+mnqNextTxt(n);
+function mnqHomeSync(){const b=document.getElementById("mnqNext");if(!b)return;const sh=typeof stqHome==="function"?stqHome():null;if(sh){if(b.dataset.t!==sh.t){b.dataset.t=sh.t;b.textContent=sh.t;b.setAttribute("aria-label",sh.t)}return}   /* 11/15 新手練習（07stq）：字由 stqHome 決定（「更多玩法」或接著練），舊的「下一步」只在 STQ_ON 關掉時才出現 */
+  const n=mnqNextOf(mnqSt(),mnqEnv()),t="⛵ 下一步・"+mnqNextTxt(n);
   if(b.dataset.t!==t){b.dataset.t=t;b.textContent=t;b.setAttribute("aria-label","下一步："+mnqNextTxt(n))}if(n.k==="film")try{const C=MNQ_CHAP[n.era]||{};if(C.vn)mnvPre(C.vn);else mnfPre(n.id,C.set)}catch(e){}}
 if(typeof homeMap==="function"){const f0=homeMap;homeMap=function(v){const r=f0.apply(this,arguments);try{mnqHomeBtn(v)}catch(e){}return r}}
 /* ---------- 星槎遠征令面板 ---------- */
@@ -247,8 +249,9 @@ if(typeof window!=="undefined"&&typeof window.XQ_TITLE==="function"){const f2=wi
 /* ---------- 自動跳禮包：首頁、星槎頁，沒有別的視窗時 ---------- */
 function mnqIdle(){try{if(typeof TITLE!=="undefined"&&TITLE)return false;if(document.hidden)return false;if(!/^(#\/?|#\/adventure\/?)?$/.test(location.hash||""))return false;
   const pv=document.getElementById("preov");if(pv&&getComputedStyle(pv).display!=="none"&&pv.getBoundingClientRect().height>0)return false;   /* 開 App 的下載畫面還在 */
-  return!document.querySelector(".modal,#sheet,#mnfPg,#mnvPg,#mnfRite,#mnqGf,#mnqCard,#bhxPg,#bhxVx,.rfx,.qp-ov")}catch(e){return false}}
+  return!document.querySelector(".modal,#sheet,#mnfPg,#mnvPg,#mnfRite,#mnqGf,#mnqCard,#bhxPg,#bhxVx,.rfx,.qp-ov,#stqPg")}catch(e){return false}}
 function mnqReach(){try{const E=mnqEnv();if(!E.at||!MNQ_CHAP[E.at])return;const S=mnqSt();if(S.reach[E.at])return;S.reach[E.at]=Date.now();mnqSave(S)}catch(e){}}   /* 星槎第一次停到有主線資料的那一朝：記下來，那一章就開放（之後開走也不會再關） */
-function mnqTick(auto){try{mnqReach();const v=document.getElementById("view");if(v&&!document.getElementById("mnqNext"))mnqHomeBtn(v);mnqHomeSync();if(!auto||!mnqIdle())return;const n=mnqNextOf(mnqSt(),mnqEnv());if(n.k==="gift")mnqGift(n.g,n.era)}catch(e){}}
+function mnqTick(auto){try{mnqReach();if(typeof stqHold==="function"&&stqHold()){const v0=document.getElementById("view");if(v0&&!document.getElementById("mnqNext"))mnqHomeBtn(v0);mnqHomeSync();return}   /* 11/15 新手練習還沒做完（07stq 先給了預設角色）：不自動跳授印禮，畢業時才一次領 */
+  const v=document.getElementById("view");if(v&&!document.getElementById("mnqNext"))mnqHomeBtn(v);mnqHomeSync();if(!auto||!mnqIdle())return;const n=mnqNextOf(mnqSt(),mnqEnv());if(n.k==="gift")mnqGift(n.g,n.era)}catch(e){}}
 /* 首頁第一次畫出來時（m.html 載入途中就 route 了）這個模組還沒包到 homeMap：計時器順便補上按鈕 */
 if(typeof window!=="undefined"&&typeof document!=="undefined"){let qa=false;try{qa=localStorage.getItem("xq_mnqQa")==="1"}catch(e){}const auto=!navigator.webdriver||qa;(typeof bgpEvery==="function"?bgpEvery:setInterval)(()=>mnqTick(auto),2500);setTimeout(()=>mnqTick(false),0)}

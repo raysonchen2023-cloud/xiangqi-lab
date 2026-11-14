@@ -354,7 +354,7 @@ test("畫面數值（開發者 11/14）：攻擊力＝四捨五入(倍率×100)�
   assert.equal(B.defPt(.95),105);assert.equal(B.defPt(.72),139);assert.equal(B.defPt(1),100);assert.equal(B.defPt(.85),118);assert.equal(B.defPt(0),100);assert.equal(B.defPt("x"),100);
   for(const k in DEF){let pa=0,pd=0;for(let L=1;L<=100;L++){const s=B.stats(k,L),a=B.atkPt(s.atk),d=B.defPt(s.def);assert.ok(a>=pa&&d>=pd,k+" 修為越高數值不會變小");pa=a;pd=d}}
   for(const L of[1,50,100])for(const k in DEF)if(k!=="x_shi")assert.ok(B.defPt(B.stats("x_shi",L).def)>B.defPt(B.stats(k,L).def),"鐵連城防禦力最高");
-  assert.ok(SRC.includes("・攻擊力 <b>${BHTD.atkPt(st.atk)}</b>・防禦力 <b>${BHTD.defPt(st.def)}</b>・"),"選關卡片");
+  assert.ok(!SRC.includes('<p class="bt-me">陣眼：'),"11/15 開發者「每一個關卡字太多，用極簡」：選關卡片不再列陣眼數值（攻擊力、防禦力在角色卡）");
   assert.ok(SRC.includes("<span>攻擊力</span> ${BHTD.atkPt(td.me.atk)}<br><span>防禦力</span> ${BHTD.defPt(td.me.def)}"),"塔防 HUD");
   assert.ok(!/攻擊 ×\$\{|防禦 ×\$\{|×\$\{\(\+td\.me\.(atk|def)/.test(SRC),"不再顯示攻擊／防禦倍數")});
 /* ===== 11/14 靈力上限拉開＋早晚熟（spCurve）===== */
@@ -401,6 +401,6 @@ test("〔原始碼〕畫面：塔防頂部靈力＝藍條＋數字（不再一�
   assert.ok(SRC.includes('<div class="bt-sp" title="靈力 ${td.me.sp}／${td.me.spMax}・每回合回 ${+td.me.spRg||BHTD.SPK}"><i style="width:${Math.round(100*td.me.sp/Math.max(1,td.me.spMax))}%"></i><b><span class="ax-sr">靈力 </span>${td.me.sp}／${td.me.spMax}</b></div>'),"我方靈力條");
   assert.ok(SRC.includes('<b><span class="ax-sr">星樞靈力 </span>${td.en.sp}／${td.en.spMax}</b></span>'),"星樞靈力條");
   assert.ok(!/Array\.from\(\{length:td\.(me|en)\.spMax\}/.test(SRC),"不再畫圓點");assert.ok(SRC.includes("<small>${c} 靈</small>")&&!SRC.includes('"●".repeat(c)'),"招式鈕只寫數字");
-  assert.ok(SRC.includes("・靈力上限 <b>${st.sp}</b>・每回合回靈 <b>${st.spRegen}</b>・"),"選關卡片");
+  assert.ok(!SRC.includes('<span class="st">推算 ${ai.depth} 步') && SRC.includes('<small class="ok" aria-hidden="true">${ok}</small>'),"11/15 極簡：關卡卡片只留關名與狀態，推算步數、元氣只寫在讀屏標籤");
   assert.ok(SRC.includes("toast(`✦ 帶進 ${Math.ceil(xm/BHTD.SPK)} 點星芒，開局靈力 +${xm}`)"),"星芒幾點、換到幾點靈力");
   assert.ok(SRC.includes("還 +10 靈力；每回合也會自動回靈力（修為越高回越多）。"),"陣地規則")});

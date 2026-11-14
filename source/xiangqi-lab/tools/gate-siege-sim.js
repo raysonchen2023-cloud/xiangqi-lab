@@ -1,0 +1,127 @@
+#!/usr/bin/env node
+// 黑洞・星門圍城 gate-siege-v1 腳本對照（ChatGPT 提案一第十三節「程式及引擎可先做」）：只用 node，不開任何瀏覽器。
+//   紅方＝固定腳本（不是人類玩家）；星樞＝App 同一份 GSV.engine＋GSV.pick（Pikafish 候選＋全部合法步的一步塔防評估）。
+//   引擎：App 自己的網頁版 Pikafish（site/engine/pikafish.js＋.wasm＋.nnue）在 Node 裡跑，Threads=1、Hash=16MB、每次搜尋前 ucinewgame（同種子可重現）。
+//   規則：m/07bhg-gatesiege.js 的 GSV（vm 載入，跟 App 同一份）；走子、裁判用 site/core.js。
+// 腳本：ignore 忽視入侵（照引擎最佳、刻意不吃入侵卒、不放招）／rush 無腦進攻（能吃就吃最大的、能放攻擊招就放）／hoard 只屯靈力（照引擎最佳、不放招不部署）／
+//       heal 只補血（照引擎最佳、能補就補）／smart 會回援、拆陣（塔防評估：吃入侵卒、拆護陣、擋星門、預告扣血時開盾、低血補血、集火、部署）。
+// 用法：node xiangqi-lab/tools/gate-siege-sim.js [--seeds 20] [--lv 1,3,6] [--scripts ignore,rush,hoard,heal,smart] [--hi]（--hi：smart 另跑 Lv23）[--out 檔名]
+//   每回合記 HP、SP、紅方動作與原因、星樞的步；結果寫 tmp/gate-siege/（JSON），摘要印在終端機。
+"use strict";
+const fs=require("fs"),path=require("path"),vm=require("vm");
+const ROOT=path.join(__dirname,"..",".."),LAB=path.join(ROOT,"xiangqi-lab");
+const C=require(path.join(LAB,"site","core.js"));
+const ctx={console,Math,JSON};vm.createContext(ctx);vm.runInContext(fs.readFileSync(path.join(ROOT,"xiangqi-db","m","07bhg-gatesiege.js"),"utf8")+"\n;this.GSV=GSV;",ctx);const G=ctx.GSV;
+const arg=(k,d)=>{const i=process.argv.indexOf(k);return i>0?process.argv[i+1]:d};
+const SEEDS=+arg("--seeds",20),LVS=String(arg("--lv","1,3,6")).split(",").map(Number),SCR=String(arg("--scripts","ignore,rush,hoard,heal,smart")).split(","),HI=process.argv.includes("--hi");
+const TW=new Date(Date.now()+8*3600e3).toISOString().slice(0,10);   /* 臺灣日期 */
+const OUT=arg("--out",path.join(ROOT,"tmp","gate-siege","sim-"+TW+".json"));
+const RED_MPV=8,MAX_RND=60,CHS=Object.keys(G.CH);
+function rng(seed){let a=seed>>>0;return()=>{a=(a+0x6D2B79F5)>>>0;let t=a;t=Math.imul(t^(t>>>15),t|1);t^=t+Math.imul(t^(t>>>7),t|61);return((t^(t>>>14))>>>0)/4294967296}}
+/* ---------- App 的網頁版 Pikafish（在 Node 裡跑；照 ai-batch.js 的 newEngine，多支援 searchmoves） ---------- */
+const EDIR=path.join(LAB,"site","engine");let PM=null,NNUE=null;
+async function newEngine(){PM=PM||require(path.join(EDIR,"pikafish.js"));NNUE=NNUE||fs.readFileSync(path.join(EDIR,"pikafish.nnue"));
+  let waiters=[];const onLine=l=>{for(const w of waiters.slice())w(l)};
+  const mod=await PM({arguments:[],locateFile:f=>path.join(EDIR,f),mainScriptUrlOrBlob:path.join(EDIR,"pikafish.js"),print:onLine,printErr:()=>{},preRun:[m=>m.FS.writeFile("/pikafish.nnue",NNUE)]});
+  const send=c=>mod.ccall("uci_command",null,["string"],[c]);
+  const until=(pred,each)=>new Promise(res=>{const w=l=>{if(each)each(l);if(pred(l)){waiters=waiters.filter(x=>x!==w);res(l)}};waiters.push(w)});
+  const ask=(c,pred,each)=>{const p=until(pred,each);send(c);return p};
+  await ask("uci",l=>l==="uciok");send("setoption name Threads value 1");send("setoption name Hash value 16");await ask("isready",l=>l==="readyok");
+  let mpvNow=0;
+  async function search(fenStr,depth,mpv,sm){send("ucinewgame");await ask("isready",l=>l==="readyok");if(mpv!==mpvNow){send("setoption name MultiPV value "+mpv);mpvNow=mpv}
+    send("position fen "+fenStr);const info=new Map();
+    const best=await ask("go depth "+depth+(sm&&sm.length?" searchmoves "+sm.join(" "):""),l=>l.startsWith("bestmove"),l=>{if(!l.startsWith("info ")||!l.includes(" pv "))return;
+      const m=l.match(/ multipv (\d+)/),sc=l.match(/ score (cp|mate) (-?\d+)/),pv=l.match(/ pv (.+)$/);if(!sc||!pv)return;let v=+sc[2];if(sc[1]==="mate")v=v>0?30000-v:-30000-v;
+      info.set(m?+m[1]:1,{k:m?+m[1]:1,v,mv:pv[1].trim().split(/\s+/)[0]})});
+    return{best:best.split(/\s+/)[1],lines:[...info.values()].sort((a,b)=>a.k-b.k)}}
+  return{search,close(){try{send("quit")}catch(e){}}}}
+/* 紅方腳本的引擎深度＝那一關星樞的深度（雙方看棋一樣深，比的是塔防決策） */
+const redDepth=P=>P.td.depth||2;
+/* ---------- 一盤 ---------- */
+function newGame(lv,ch,L){const start=G.startFen(lv,C),P={start,startTurn:"r",board:C.parseFen(start),turn:"r",moves:[],human:"r",ed:[]};P.pos=[C.fen(P.board,"r")];
+  P.td=G.boot({mode:G.MODE,lv,ch,L,sk:G.skOf(ch,L).slice(0,4)},P,C);return P}
+const fenOf=P=>C.fen(P.board,P.turn)+" - - 0 1";
+const clamp=v=>Math.max(-1500,Math.min(1500,v));
+async function engLines(E,P,depth,mpv,sm){if(!E)return{lines:[]};return E.search(fenOf(P),depth,mpv,sm)}
+function vOf(r,u){const L=r.lines||[];const x=L.find(z=>z.mv===u);if(x)return x.v;return L.length?Math.min(...L.map(z=>z.v))-80:0}
+const capVal=p=>G.CAPB[String(p).toUpperCase()]||0;
+/* 試放一招（不改原盤）：回傳放完的 P 副本，失敗回 null */
+function tryCast(P,o){const P2={board:P.board.slice(),turn:P.turn,td:JSON.parse(JSON.stringify(P.td)),moves:P.moves.slice(),pos:P.pos.slice(),ed:JSON.parse(JSON.stringify(P.ed||[])),human:"r"};const r=G.cast(P2,o,C);return r.err?null:{P2,r}}
+function cast(P,o){const r=G.cast(P,o,C);return r.err?null:r}
+function firstTargets(P,id){const S=G.SKM[id];if(!S.tg)return[[]];const out=[];const rec=pk=>{if(out.length>=24)return;if(pk.length>=S.tg.length){out.push(pk);return}for(const x of G.targets(P,id,pk,C).slice(0,8))rec(pk.concat([typeof x==="object"?x.v:x]))};rec([]);return out}
+const qRaw=(td,to)=>td.q.filter(e=>e.to===to).reduce((a,e)=>a+e.raw,0);
+/* 攻擊招的實際效果：放完佇列裡多了多少打星樞的傷害 */
+function attackVal(P,id){let best=null;for(const tg of firstTargets(P,id)){const x=tryCast(P,{k:id,tg});if(!x)continue;const d=qRaw(x.P2.td,"b")-qRaw(P.td,"b")+(x.r&&0);const rm=id==="qi1"?1:0;if(!best||d>best.d)best={id,tg,d,rm}}return best}
+const ATK=["qi2","lei2","luo2","qi5","lei3"],HEALS=["gheal","shen1","shen2","shen4","tian4","luo4"],SHIELDS=["gguard","tie1","luo3","tie4","tian2"];
+const usable=(P,id)=>(G.SKM[id]&&(G.SKM[id].gen||P.td.sk.includes(id)))&&!G.why(P,id,C);
+/* ---------- 紅方腳本：回傳 {act:"move",f,t,why} 或 {act:"dep",…}；放招在 decide 裡直接放（可能先放再走） ---------- */
+async function redTurn(E,P,script,R){const td=P.td,log=[];let r=null;const legal=C.legal(P.board,"r");
+  const engBest=async(filter)=>{r=r||await engLines(E,P,redDepth(P),RED_MPV);let L=legal.filter(filter||(()=>true));if(!L.length)L=legal;let b=null,bv=-1e9;
+    for(const[f,t]of L){const v=vOf(r,C.iccs(f,t))+R()*15;if(v>bv){bv=v;b=[f,t]}}return b};
+  if(script==="hoard")return{mv:await engBest(),why:"引擎最佳",sk:log};
+  if(script==="ignore")return{mv:await engBest(([f,t])=>!(P.board[t]&&G.tagOf(td,td.ids[t])==="inv")),why:"引擎最佳（不吃入侵卒）",sk:log};
+  if(script==="heal"){for(const id of HEALS)if(usable(P,id)&&td.me.hp<=td.me.max-10){if(cast(P,{k:id,tg:[]})){log.push(id);break}}return{mv:await engBest(),why:"引擎最佳",sk:log}}
+  if(script==="rush"){const caps=legal.filter(([f,t])=>P.board[t]);let mv=null;
+    if(caps.length){r=r||await engLines(E,P,redDepth(P),RED_MPV);caps.sort((a,b)=>capVal(P.board[b[1]])-capVal(P.board[a[1]])||vOf(r,C.iccs(...b))-vOf(r,C.iccs(...a)));mv=caps[0]}
+    if(mv&&usable(P,"gfocus")&&G.targets(P,"gfocus",[],C).includes(mv[1])){if(cast(P,{k:"gfocus",tg:[mv[1]]}))log.push("gfocus")}
+    if(!log.length)for(const id of ["qi1",...ATK]){if(!usable(P,id))continue;const a=attackVal(P,id);if(a&&(a.d>0||a.rm)){if(cast(P,{k:id,tg:a.tg})){log.push(id);break}}}
+    return{mv:mv||await engBest(),why:mv?"能吃就吃最大的":"引擎最佳",sk:log}}
+  /* smart：塔防評估 */
+  r=r||await engLines(E,P,redDepth(P),RED_MPV);const W=G.W_HP,E0=td.en,dB0=G.defOf(td,"b");
+  const gateSq=new Map();for(const w of td.waves)if(w.st==="wait"&&w.at===td.rnd+1)gateSq.set(w.sq,w.dl?14:6);
+  let best=null,bv=-1e9,bw="";
+  for(const[f,t]of legal){const u=C.iccs(f,t),v=clamp(vOf(r,u));const P2=G.simR(P,f,t,C),dq=qRaw(P2.td,"b")-qRaw(td,"b");let s=v+W*dq,why="";
+    const vid=td.ids[t],tag=P.board[t]?G.tagOf(td,vid):"";
+    if(tag==="inv"){const k=td.arm[vid]?2.5:G.redHalf(t)?1.6:.7;s+=W*k*G.dmg(G.INV,E0.atk,td.me.def);why="回援：吃入侵卒"}
+    if(tag==="guard"){const after=G.defOf(P2.td,"b"),gain=Math.max(0,E0.hp)*(1-(100+after)/(100+dB0));s+=W*.8*gain;why="拆陣"}
+    if(gateSq.has(t)){s+=W*gateSq.get(t);why=why||"擋星門"}
+    if(dq>0&&!why)why="擒子／將軍";s+=R()*15;if(s>bv){bv=s;best=[f,t];bw=why||"引擎＋塔防評估"}}
+  /* 招：一回合一招，照順序挑第一個划算的 */
+  const pv=G.preview(td,P.board),inc=pv.loss,armedCanEat=legal.some(([f,t])=>P.board[t]&&td.arm[td.ids[t]]);
+  const hpF=td.me.hp/td.me.max;
+  const tryList=[];
+  if(hpF<.45)for(const id of HEALS)tryList.push([id,"低血補血"]);
+  if(inc>=6&&!armedCanEat&&!td.me.sh.v)for(const id of SHIELDS)tryList.push([id,"預告扣血，開盾"]);
+  if(best&&P.board[best[1]]&&G.targets(P,"gfocus",[],C).includes(best[1])&&capVal(P.board[best[1]])>=6)tryList.push(["gfocus","集火"]);
+  for(const id of ATK)tryList.push([id,"攻擊招"]);
+  if(td.sk.includes("qi1"))tryList.push(["qi1","破甲：拆護陣／除入侵"]);
+  if(td.sk.includes("luo1")&&td.lost.some(x=>"RCN".includes(x.p)))tryList.push(["luo1","回營"]);
+  for(const[id,why]of tryList){if(!usable(P,id))continue;
+    if(id==="gfocus"){if(cast(P,{k:id,tg:[best[1]]})){log.push(id+"："+why);break}continue}
+    if(id==="qi1"){const T=G.targets(P,"qi1",[],C).filter(q=>{const tg=G.tagOf(td,td.ids[q]);return tg==="guard"||(tg==="inv"&&td.arm[td.ids[q]])});if(T.length&&cast(P,{k:id,tg:[T[0]]})){log.push(id+"："+why);break}continue}
+    if(id==="luo1"){const T=G.targets(P,"luo1",[],C).filter(q=>td.lost.some(x=>x.home===q&&"RCN".includes(x.p)));if(T.length&&td.me.sp>=60&&cast(P,{k:id,tg:[T[0]]})){log.push(id+"："+why);break}continue}
+    if(ATK.includes(id)){const a=attackVal(P,id);if(a&&a.d>=5&&cast(P,{k:id,tg:a.tg})){log.push(id+"："+why);break}continue}
+    const tgs=firstTargets(P,id);if(tgs.length&&cast(P,{k:id,tg:tgs[0]})){log.push(id+"："+why);break}}
+  /* 部署：場上非帥的子 ≤5、靈力夠、這步沒有擒子機會 → 放最大的後備子（用掉這一步） */
+  const nOwn=P.board.filter(x=>x&&x===x.toUpperCase()&&x!=="K").length,bestCap=best&&P.board[best[1]];
+  if(nOwn<=5&&!bestCap&&td.me.sp>=G.DEP_COST&&!G.why(P,"dep",C)){for(const p of["R","C","N","P","B","A"]){if(!td.res.includes(p))continue;const T=G.targets(P,"dep",[p],C);if(T.length){const o=cast(P,{k:"dep",p,tg:[T[0]]});if(o)return{dep:{p,sq:T[0]},why:"兵力不足，部署後備"+G.PCN[p],sk:log}}}}
+  /* 放了會改盤面的招（換位、移除、復活）之後，原本挑的步可能不合法：重挑 */
+  if(!C.legal(P.board,"r").some(([a,b])=>a===best[0]&&b===best[1])){const L=C.legal(P.board,"r");best=L[0];bw="招式改了盤面，重挑"}
+  return{mv:best,why:bw,sk:log}}
+async function play(E,lv,script,seed,ch,L){const R=rng(seed*7919+lv*131+script.length),P=newGame(lv,ch,L),td=P.td,rounds=[],src={r:{},b:{}};let end=null,cur=null,ply=0,seen=td.seq;
+  const tally=()=>{for(const e of td.ev)if(e.s>seen&&e.k==="hit"){const k=e.why;src[e.to][k]=(src[e.to][k]||0)+e.loss;src[e.to].abs=(src[e.to].abs||0)+e.abs}seen=td.seq};
+  while(!end&&td.rnd<MAX_RND&&ply<400){ply++;
+    if(P.turn==="r"){const d=await redTurn(E,P,script,R);cur={r:td.rnd+1,red:d.dep?"部署"+G.PCN[d.dep.p]+"@"+C.iccs(d.dep.sq,d.dep.sq).slice(0,2):C.iccs(d.mv[0],d.mv[1]),why:d.why,sk:d.sk};
+      tally();if(d.dep){if(P.turn!=="b")throw new Error("部署沒換手");continue}
+      const m=C.stateApply(P,d.mv[0],d.mv[1]);const e=G.move(P,m,C);const j=C.judgeState(P);end=j||(e&&e.end)||null;if(end)break;continue}
+    const cfg=G.engine(P,C),r=await engLines(E,P,cfg.depth,cfg.mpv,cfg.sm),u=G.pick(r,cfg,R);const f=G.uSq(u,0),t=G.uSq(u,2);
+    if(!C.legal(P.board,"b").some(([a,b])=>a===f&&b===t))throw new Error("星樞給了不合法的步 "+u);
+    const m=C.stateApply(P,f,t);const e=G.move(P,m,C);tally();const j=C.judgeState(P);end=j||(e&&e.end)||null;
+    if(cur){cur.blk=u;cur.me=td.me.hp;cur.en=td.en.hp;cur.msp=td.me.sp;cur.esp=td.en.sp;cur.msh=td.me.sh.v;rounds.push(cur);cur=null}}
+  if(!end)end={w:null,why:`${MAX_RND} 回合上限（腳本對照才有的截斷，不是遊戲規則）`};
+  return{src,lv,script,seed,ch,L,w:end.w,why:end.why,rnd:td.rnd,me:td.me.hp,meMax:td.me.max,en:td.en.hp,enMax:td.en.max,dealt:td.me.dealt,taken:td.me.taken,icpt:td.icpt,dep:td.dep,used:td.used,rounds}}
+async function main(){let E=null,engNote="";try{E=await newEngine();engNote="App 網頁版 Pikafish（site/engine/pikafish.wasm）在 Node "+process.version+" 裡跑"}catch(e){engNote="Pikafish 在 Node 載入失敗（"+e.message+"），改用規則內建評估（引擎分數一律 0）"}
+  console.log("引擎：",engNote);const runs=[],t0=Date.now();const plan=[];
+  for(const lv of LVS)for(const s of SCR)for(let i=1;i<=SEEDS;i++)plan.push({lv,s,seed:i,ch:CHS[(i-1)%7],L:1});
+  if(HI)for(const lv of LVS)for(let i=1;i<=SEEDS;i++)plan.push({lv,s:"smart",seed:i,ch:CHS[(i-1)%7],L:23,tag:"smart-L23"});
+  for(const[k,p]of plan.entries()){const g=await play(E,p.lv,p.s,p.seed,p.ch,p.L);g.tag=p.tag||p.s;runs.push(g);if((k+1)%20===0)console.log(`  ${k+1}/${plan.length}  ${((Date.now()-t0)/1000).toFixed(0)} 秒`)}
+  const sum={};for(const g of runs){const k=g.lv+"|"+g.tag,S=sum[k]||(sum[k]={lv:g.lv,tag:g.tag,n:0,w:0,d:0,l:0,rnd:0,me:0,en:0,dealt:0,taken:0,icpt:0,dep:0,why:{},sk:{},sr:{},sb:{}});
+    for(const x in g.src.r)S.sr[x]=(S.sr[x]||0)+g.src.r[x];for(const x in g.src.b)S.sb[x]=(S.sb[x]||0)+g.src.b[x];
+    S.n++;if(g.w==="r")S.w++;else if(g.w==="b")S.l++;else S.d++;S.rnd+=g.rnd;S.me+=Math.max(0,g.me)/g.meMax;S.en+=Math.max(0,g.en)/g.enMax;S.dealt+=g.dealt;S.taken+=g.taken;S.icpt+=g.icpt;S.dep+=g.dep;S.why[g.why]=(S.why[g.why]||0)+1;for(const id in g.used)S.sk[id]=(S.sk[id]||0)+g.used[id]}
+  const rows=Object.values(sum).map(S=>({lv:S.lv,script:S.tag,n:S.n,win:S.w,draw:S.d,loss:S.l,avgRounds:+(S.rnd/S.n).toFixed(1),myHpLeft:+(S.me/S.n*100).toFixed(0)+"%",foeHpLeft:+(S.en/S.n*100).toFixed(0)+"%",
+    dealt:+(S.dealt/S.n).toFixed(1),taken:+(S.taken/S.n).toFixed(1),icpt:+(S.icpt/S.n).toFixed(2),dep:+(S.dep/S.n).toFixed(2),why:S.why,skills:S.sk,takenBy:Object.fromEntries(Object.entries(S.sr).map(([k,v])=>[k,+(v/S.n).toFixed(1)])),dealtBy:Object.fromEntries(Object.entries(S.sb).map(([k,v])=>[k,+(v/S.n).toFixed(1)]))}));
+  fs.mkdirSync(path.dirname(OUT),{recursive:true});fs.writeFileSync(OUT,JSON.stringify({meta:{date:new Date().toISOString(),tool:"xiangqi-lab/tools/gate-siege-sim.js",engine:engNote,redDepth:"同那一關星樞的深度（第 1 關 2、第 3、6 關 3）",redMpv:RED_MPV,maxRounds:MAX_RND,seeds:SEEDS,levels:LVS,scripts:SCR,hi:HI,ms:Date.now()-t0,
+    note:"紅方是固定腳本，不是人類玩家；只證明這些條件下的行為，不能當真人勝率"},summary:rows,runs},null,1));
+  for(const x of rows)console.log(`第${x.lv}關 ${x.script.padEnd(9)} 勝${x.win} 和${x.draw} 敗${x.loss}  平均${x.avgRounds}回合  我剩${x.myHpLeft} 星樞剩${x.foeHpLeft}  造成${x.dealt} 受到${x.taken} 截援${x.icpt} 部署${x.dep}  受到來源${JSON.stringify(x.takenBy)}  造成來源${JSON.stringify(x.dealtBy)}`);
+  console.log("寫到",OUT,"共",((Date.now()-t0)/1000).toFixed(0),"秒");if(E)E.close();process.exit(0)}
+main().catch(e=>{console.error(e);process.exit(1)});

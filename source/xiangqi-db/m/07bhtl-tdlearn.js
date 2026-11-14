@@ -68,7 +68,7 @@ function bhtlStep(st){if(!st||!st.td)return"wait";if(st.result)return"end";const
 const bhtlSq=u=>{try{return bhtdC().parseSq(u)}catch(e){return-1}};
 /* ---------- 入口 ---------- */
 function bhtlCard(){bhtlCss();const dn=!!bhtlSt().done;
-  return`<button type="button" class="bt-card bt-tl${dn?" done":""}" data-tl="1" aria-label="${esc("練習賽・星淵試陣，約 2 分鐘，不算輸贏"+(dn?"，已練過":"，推薦先練"))}"><span class="hd"><small>練習賽</small><b>星淵試陣</b><span class="st">約 2 分鐘・不算輸贏</span></span><small class="tg">吃過河的卒、堵星門、放招、認陣眼子</small><small class="ok" aria-hidden="true">${dn?"✓ 已練過":"推薦先練"}</small></button>`}
+  return`<button type="button" class="bt-card bt-tl${dn?" done":""}" data-tl="1" aria-label="${esc("練習賽・星淵試陣，約 2 分鐘，不算輸贏"+(dn?"，已練過":"，推薦先練"))}"><span class="hd"><small>練習賽</small><b>星淵試陣</b></span><small class="ok" aria-hidden="true">${dn?"✓ 已練過":"推薦先練"}</small></button>`}
 function bhtlOffer(k,cover){bhtlCss();
   modal(`<div class="em">🌀</div><h2>第一次來星淵？</h2>${bhtlSay(BHTL_TX.offer)}<p class="muted" style="font-size:13px">${esc(BHTL_TX.free)}</p>`,
     [["▶ 先練一盤",()=>bhtlStart(k,cover)],["我會了，直接選關",()=>{bhtlSave({skip:Date.now()});bhtdSelect(k,cover)},true]],"prolog")}

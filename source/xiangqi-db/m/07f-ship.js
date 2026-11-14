@@ -442,7 +442,7 @@ function shipGateSay(N){vibrate([20,40,20]);const here=shipHere()===N.k;sheet(N.
 function ShipSail(v){setTop("⛵ 起航",null,[["🏠",()=>goHome(),"回首頁"]]);setTabs(false);   /* 11/13 開發者：左上角「‹ 回星槎」拿掉，改成船板上的場景大字標籤 ssUp（跟渡口一樣） */v.className="view";const ap=shipAppr(),k=shipHere(),nx=ap?null:shipNextStop(),allIn=!ap&&!nx&&!!shipDockList(),I=xpInfo(),[sx,sy]=SAIL_SPOT;
   let card,sp=[],cap,sub;
   if(nx){const Ln=SHIP_LESSON[nx]||{},Hn=typeof HIST!=="undefined"?HIST[nx]:null,lvH=SHIP_LV[shipOrder().indexOf(nx)]||0;cap="⛵ 下一站・"+esc(shipShort(nx));sub="現在停靠："+esc(shipShort(k));
-    card=`<b>${esc(shipShort(nx))}・${esc(SHIP_STOP[nx].place)}</b>${Ln.pre?`<p class="shp-say">說書人：「${esc(Ln.pre)}」</p>`:""}<p>📘 棋理：${esc(Ln.t||"")}${Hn?`<br>📜 這一朝的棋：${esc(Hn.t)}`:""}</p>${lvH?`<p class="muted">建議修為 Lv ${lvH}（你現在 Lv ${I.L}；只是建議，隨時都能開）</p>`:""}`;
+    card=`<b>${esc(shipShort(nx))}・${esc(SHIP_STOP[nx].place)}</b>${Ln.pre?`<p class="shp-say">說書人：「${esc(Ln.pre)}」</p>`:""}<p>📘 棋理：${esc(Ln.t||"")}${Hn?`<br>📜 這一朝的棋：${esc(Hn.t)}`:""}</p>`;
     const N=shipSailNeed();if(N)card+=shipGoalHTML(N);else card+=shipReadyHTML();sp=[["ssGo",sx,sy,"⛵ 起航",N?"還差一步・"+esc(shipShort(nx)):"開往"+esc(shipShort(nx)),N?"":"hot"]]}
   else if(allIn){cap="🏁 旅程終點";sub="十三站都停靠過了";card=`<b>${esc(SHIP_END.t)}</b><p>${SHIP_END.x.map(esc).join("<br>")}</p>`+(shipFinaleOpen()?"":`<p class="shp-say">說書人：「雲河到了盡頭，但好多渡口走馬看花呢。」</p><p>點航線回到舊朝代，把沒解完的殘局補齊，才能看見真正的終局！</p>`);sp=[["ssDb",sx,sy,"🏆 看特級大師對局","棋譜"],...(typeof chdEndSpot==="function"?chdEndSpot():[])]}   /* 意見回饋 774 破關卡（07q-chardiff.js） */
   else{cap="⛵ 起航";sub=ap?"說書人的學徒":"";card=ap?`<b>📜 十三站都能去</b><p>說書人的學徒不用照順序起航；回星槎頁，在航線上點想去的那一站。</p>`:`<b>還沒選角色</b><p>回星槎頁，從頭開始這段旅程。</p>`;sp=[["ssBack",sx,sy,"🌌 看航線","回星槎頁"]]}

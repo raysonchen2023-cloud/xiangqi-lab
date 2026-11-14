@@ -388,10 +388,11 @@ function cardHTML(set) {
 }
 test("角色卡畫面（整個模組＋假的 sheet）：11/14 極簡版——每塊只有名稱、數字、一條、一句話；刻度、膠囊、來源→用途、加成都收進「？」；黑洞那塊不在卡上", () => {
   const full = cardHTML();
-  for (const k of ["<span>下船後會慢慢用掉，回星槎就補回來</span>", "<span>解殘局、過主線章節就會得到</span>", 'data-k="full"', 'aria-label="定軌力細則"', 'aria-label="星芒細則"', 'aria-expanded="false"', "width:100.0%",
-    "<span>現在滿格，下棋、解題得到的修為</span> ×1.2", "<span>已點亮</span> 0／28"]) assert.ok(full.includes(k), "滿格少了：" + k);
-  for (const k of ["dgl-kcp", "dgl-ktk", "dgl-kmk", "dgl-kflow", "dgl-kbd", "黑洞裡的你", "人間黑洞會用", "歸零會化墨退場"]) assert.ok(!full.includes(k), "極簡版不該有：" + k);
-  assert.equal((full.match(/class="dgl-kmore"[^>]* hidden/g) || []).length, 2, "細則預設收著");
+  /* 11/15 經典狀態欄：平常的說明句收進底下一顆「？ 細則」（一塊 dgl-kmore，紅血、藍血、攻防三組），卡上只留狀態警告 */
+  for (const k of ["<li>下船後會慢慢用掉，回星槎就補回來。</li>", "<li>解殘局、過主線章節就會得到。</li>", 'data-k="full"', 'data-q="all"', 'aria-controls="dglQ_all"', 'aria-expanded="false"', "width:100.0%",
+    "<span>現在滿格，下棋、解題得到的修為</span> ×1.2", "<span>已點亮</span> 0／28", '<p class="dgl-kmh">體力・定軌力</p>', '<p class="dgl-kmh">靈力・星芒</p>']) assert.ok(full.includes(k), "滿格少了：" + k);
+  for (const k of ["dgl-kcp", "dgl-ktk", "dgl-kmk", "dgl-kflow", "dgl-kbd", "黑洞裡的你", "人間黑洞會用", "歸零會化墨退場", '<p class="dgl-kl">']) assert.ok(!full.includes(k), "極簡版不該有：" + k);
+  assert.equal((full.match(/class="dgl-kmore"[^>]* hidden/g) || []).length, 1, "細則預設收著（只有一塊）");
   assert.ok(full.includes("在人間（下船以後）每分鐘少 1；在星槎上不會少。") && !full.includes("黑洞對局裡不扣定軌力。") && full.includes("最多補到靈力上限。"), "細則照實（11/14 刪掉「黑洞對局裡不扣定軌力」）");
   assert.ok(full.includes("黑洞過關回 20，一天最多回 20；關掉 App 再打開就回滿。") && full.includes("定軌力用完時，黑洞入口也會關。"), "11/14 細則：黑洞每日上限（跟過關回多少併成一條）、入口會關");
   const half = cardHTML(c => { c.DGL.s.r = 20 }); assert.ok(half.includes("<span>現在一半以上，下棋、解題得到的修為</span> ×1.1") && half.includes("width:66.7%"));
@@ -400,7 +401,7 @@ test("角色卡畫面（整個模組＋假的 sheet）：11/14 極簡版——�
   const due = cardHTML(c => { c.DGL.s.r = 0; c.DGL.s.due = true }); assert.ok(due.includes("<span>這盤下完，就回星槎歇息</span>"));
   const out = cardHTML(c => { c.DGL.s.r = 6; c.DGL.s.out = true });
   for (const k of ['<span>化墨退場中・</span><b class="dgl-knum">3</b> <span>分鐘後可以下船</span>', 'data-k="out:3"', "dgl-khero out", "width:20.0%"]) assert.ok(out.includes(k), "退場中少了：" + k);
-  assert.ok(!out.includes("下船後會慢慢用掉"), "退場中只說幾分鐘後可以下船");
+  assert.equal((out.match(/<p class="dgl-kl">/g) || []).length, 1, "退場中卡上只有一句：幾分鐘後可以下船");
   assert.ok(SRC.includes("function dglMeCard(") && /if\(typeof dglMeCard==="function"\)\{const x=dglMeCard\(\);if\(x\)pad\.append\(x\)\}/.test(fs.readFileSync(path.join(M, "07-legend.js"), "utf8")), "黑洞三數字搬到我的角色頁（Me 呼叫 dglMeCard）");
   const off = cardHTML((c, st) => { st.dglOff = true });
   assert.ok(off.includes("平日體力已關閉") && off.includes("不扣、不退場、無加成") && !off.includes("dgl-kbar") && off.includes('data-k="off"'), "關掉：兩條都不畫、只放提示");
@@ -413,13 +414,19 @@ const withBH = (c, ch, L) => { c.BHTD = realBHTD(); c.myChar = () => ch; c.xpInf
 function i18nT() { const I = rd(path.join(M, "07i18n.js")), x = {}; vm.createContext(x); vm.runInContext(I.slice(I.indexOf("\n", I.indexOf("#I18N-PURE-BEGIN")) + 1, I.indexOf("/* #I18N-PURE-END */")) + ";this.T=i18nText", x); return x.T }
 test("角色卡五項：頭部名字＋修為 Lv（大字）、紅血（定軌力）、藍血（星芒）、攻擊力與防禦兩格＋一行小字、我的角色頁；讀屏照順序念「紅血 定軌力 30／30」", () => {
   const h = cardHTML(c => withBH(c, "x_spiritgirl", 1));
-  const order = ['class="dgl-khero', "<b>田飛燕</b>", '<span class="dgl-klv"><span>修為</span> Lv 1</span>', '<span>紅血</span> <small class="dgl-ksub">定軌力</small></h3><span class="dgl-kv" data-dgl="r">30／30</span>',
-    '<span>藍血</span> <small class="dgl-ksub">星芒</small></h3><span class="dgl-kv" data-dgl="x">0／20</span>', '<span>攻擊力</span></small><b>108</b>', '<span>防禦力</span></small><b>109</b>',
-    "<span>修為越高，攻擊力和防禦力越強（黑洞裡用）</span>", "🙂 我的角色頁"];
+  /* 11/15 經典狀態欄：頭部（名字、修為、經驗條）→ 面板（紅血、藍血兩條緊貼，再一排攻防）→ 底下「？ 細則」＋我的角色頁 → 收著的細則 */
+  const order = ['class="dgl-khero', "<b>田飛燕</b>", '<span class="dgl-klv"><span>修為</span> Lv 1</span>', 'class="dgl-kpan', '<span>體力</span> <small class="dgl-ksub">定軌力</small></span>', '<span class="dgl-kv" data-dgl="r">30／30</span>',
+    '<span>靈力</span> <small class="dgl-ksub">星芒</small></span>', '<span class="dgl-kv" data-dgl="x">0／20</span>', '<span>攻擊力</span></small><b>108</b>', '<span>防禦力</span></small><b>109</b>',
+    "</section>", 'data-q="all"', "🙂 我的角色頁", "<li>修為越高，攻擊力和防禦力越強（黑洞裡用）。</li>"];
   let at = -1; for (const k of order) { const i = h.indexOf(k); assert.ok(i > at, "順序或內容不對：" + k); at = i }
-  assert.ok(h.includes('aria-label="定軌力細則"') && h.includes('aria-label="星芒細則"') && h.includes("dgl-kbar dgl-r") && h.includes("dgl-kbar dgl-b"), "紅條、藍條、兩個「？」照舊");
+  assert.ok(h.includes('data-q="all"') && h.includes("dgl-kbar dgl-r") && h.includes("dgl-kbar dgl-b"), "紅條、藍條、一顆「？ 細則」");
+  /* 11/15 開發者「角色卡：天賦／體力／靈力／攻擊／防禦／技能」：天賦在最上、技能在攻防下面，兩列都可點 */
+  const ts = cardHTML(c => { withBH(c, "x_spiritgirl", 6); c.bhtdTal = () => {}; c.bhtdDust = () => ({ t: ["a", "b"] }) });
+  let at2 = -1; for (const k of ['data-go="tal"', "<span>已點亮</span> 2／", "<span>體力</span>", "<span>靈力</span>", "<span>攻擊力</span>", "<span>防禦力</span>", 'data-go="sk"', "<span>已學會</span> 2／5"]) { const i = ts.indexOf(k); assert.ok(i > at2, "六項順序或內容不對：" + k); at2 = i }
+  assert.ok(!h.includes('data-go="tal"'), "黑洞天賦程式沒載入：天賦、技能兩列不畫");
+  const xh = cardHTML(c => { withBH(c, "x_spiritgirl", 4); c.xpInfo = () => ({ L: 4, rest: 43, need: 140 }) }); assert.ok(xh.includes("width:30.7%") && xh.includes("<span>距離下一級</span> 43／140"), "頭部經驗條：43／140");
   const t = h.replace(/<[^>]*>/g, " ").replace(/\s+/g, " ");
-  assert.ok(t.includes("紅血 定軌力 30／30") && t.includes("藍血 星芒 0／20") && t.includes("攻擊力 108") && t.includes("防禦力 109"), "去掉標籤後念得出來：" + t.slice(0, 200));
+  assert.ok(t.includes("體力 定軌力 30／30") && t.includes("靈力 星芒 0／20") && t.includes("攻擊力 108") && t.includes("防禦力 109"), "去掉標籤後念得出來：" + t.slice(0, 200));
   const dk = h.slice(h.indexOf('class="dgl-kad"')); assert.ok(!/×/.test(dk.slice(0, dk.indexOf("dgl-kme"))), "攻擊力、防禦力那一列和說明句不出現倍數 ×");
   assert.ok(SRC.includes('sheet("🙂 我的角色",') && !SRC.includes('sheet("🙂 "+(nm'), "11/14 選 B：卡片標題固定「我的角色」，名字只在頭部出現一次");
   assert.equal(h.split("田飛燕").length - 1, 1, "卡片內容裡名字只出現一次");
@@ -427,11 +434,11 @@ test("角色卡五項：頭部名字＋修為 Lv（大字）、紅血（定軌�
   assert.ok(!cardHTML().includes("dgl-kad"), "黑洞模組沒載入：攻擊力、防禦那一列不畫");
   assert.ok(!cardHTML(c => { c.BHTD = realBHTD(); c.myChar = () => "" }).includes("dgl-kad"), "還沒選角色也不畫");
   const out = cardHTML(c => { withBH(c, "x_bing", 50); c.DGL.s.r = 6; c.DGL.s.out = true });
-  assert.ok(out.includes("dgl-khero out") && out.includes('<span>化墨退場中・</span><b class="dgl-knum">3</b>') && out.includes("<span>紅血</span>") && out.includes("dgl-kad"), "化墨退場中：紅血那塊照退場倒數，五項都在");
+  assert.ok(out.includes("dgl-khero out") && out.includes('<span>化墨退場中・</span><b class="dgl-knum">3</b>') && out.includes("<span>體力</span>") && out.includes("dgl-kad"), "化墨退場中：紅血那塊照退場倒數，五項都在");
   const low = cardHTML(c => { withBH(c, "x_bing", 50); c.DGL.s.r = 4 }); assert.ok(low.includes("dgl-kwarn") && low.includes("<span>快用完了，回星槎歇一下吧</span>"));
   const off = cardHTML((c, st) => { withBH(c, "x_bing", 50); st.dglOff = true });
-  assert.ok(off.includes("平日體力已關閉") && !off.includes("dgl-kbar") && !off.includes("<span>紅血</span>") && off.includes("<span>藍血</span>") && off.includes("dgl-kad"), "關掉平日體力：紅血那塊只寫已關閉、藍血沒有條，攻擊力防禦照畫");
-  const T = i18nT(); for (const s of ["紅血", "藍血", "攻擊力", "防禦力", "修為越高，攻擊力和防禦力越強（黑洞裡用）", "修為越高，五項越強；身上的星芒進黑洞會變成開局靈力（1 點換 10 靈）。", "每回合回靈"]) { const e = T(s); assert.ok(e && !/[㐀-鿿]/.test(e), s + " → " + e) }
+  assert.ok(off.includes("平日體力已關閉") && !off.includes("dgl-kbar") && !off.includes("<span>體力</span>") && off.includes("<span>靈力</span>") && off.includes("dgl-kad"), "關掉平日體力：紅血那塊只寫已關閉、藍血沒有條，攻擊力防禦照畫");
+  const T = i18nT(); for (const s of ["體力", "靈力", "體力・定軌力", "靈力・星芒", "細則", "距離下一級", "攻擊力", "防禦力", "修為越高，攻擊力和防禦力越強（黑洞裡用）", "修為越高，五項越強；身上的星芒進黑洞會變成開局靈力（1 點換 10 靈）。", "每回合回靈"]) { const e = T(s); assert.ok(e && !/[㐀-鿿]/.test(e), s + " → " + e) }
 });
 test("我的角色頁「黑洞裡的你」：元氣、靈力上限、每回合回靈、攻擊力、防禦力五格（上 3 下 2）", () => {
   const st = {}, c = loadFull(st, "#/me"); withBH(c, "x_shi", 100); c.bhtdL = () => 100; c.gxtOpen = () => true;
