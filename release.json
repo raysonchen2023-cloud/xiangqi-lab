@@ -1,8 +1,8 @@
 {
- "version": "20261114-1209",
- "checkedAt": "2026-11-14T04:09:34.987Z",
- "html": "26b431de745a",
- "sw": "0244b98201aa",
+ "version": "20261114-1407",
+ "checkedAt": "2026-11-14T06:07:46.417Z",
+ "html": "99ddb00dc72b",
+ "sw": "db119cee93a5",
  "scripts": 4,
  "modules": {
   "00-util.js": "7addbcf20a30",
@@ -134,11 +134,6 @@
    "module": "07s4-passmap.js",
    "lines": 1,
    "sourceModified": "2026-11-13T03:19:39.481Z"
-  },
-  {
-   "module": "07hs-netsig.js",
-   "lines": 3,
-   "sourceModified": "2026-11-13T14:00:29.777Z"
   }
  ]
 }
