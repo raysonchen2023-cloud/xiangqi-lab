@@ -1613,7 +1613,7 @@ html[data-lefty] .tskip{right:auto;left:14px}
       if(!window.caches)return go();caches.keys().then(function(ks){return Promise.all(ks.filter(function(k){return k.indexOf("xqlab-app-")===0}).map(function(k){return caches.delete(k)}))})
         .then(function(){return navigator.serviceWorker&&navigator.serviceWorker.getRegistration()}).then(function(r){return r&&r.update()}).catch(function(){}).then(go)}};setTimeout(chk,4000)})();
 </script>
-<script>window.XQ_OFFLINE=true;window.XQ_BUILD="20261114-1407";</script>
+<script>window.XQ_OFFLINE=true;window.XQ_BUILD="20261115-0549";</script>
 <script src="core.js"></script>
 <script src="engine.js"></script>
 <script src="local.js"></script>
@@ -1629,6 +1629,16 @@ const XQ_CDN="https://xiangqi-cdn.pages.dev/";
 const xqCdnRel=u=>{try{const x=new URL(u,location.href);if(x.origin!==location.origin)return"";const b=location.pathname.replace(/[^/]*$/,""),p=x.pathname.startsWith(b)?decodeURI(x.pathname.slice(b.length)):"";return/^(data|engine)\//.test(p)?p:""}catch(e){return""}};
 addEventListener("error",e=>{const t=e.target;if(!t||!t.tagName||!/^(IMG|AUDIO|SOURCE|VIDEO)$/.test(t.tagName)||t.dataset.cdnTry)return;const r=xqCdnRel(t.currentSrc||t.src||"");if(!r)return;t.dataset.cdnTry="1";t.src=XQ_CDN+r},true);
 {const f0=window.fetch;if(f0)window.fetch=function(i,o){return f0.apply(this,arguments).then(res=>{if(res&&res.status===404){const r=xqCdnRel(typeof i==="string"?i:i&&i.url||"");if(r)return f0.call(window,XQ_CDN+r,{mode:"cors",credentials:"omit"}).then(x=>x.ok?x:res,()=>res)}return res})}}
+/* 評比第 17、18 輪第 5 項（開發者 11/14 選）：App 切到背景（document.hidden、pagehide）時，App 自己能停的計時器、動畫、預載都停下來，回前景再接著。
+   bgpHid()＝現在在背景；bgpOn(fn)＝切背景／回前景時叫 fn(在背景?)，回傳取消函式；bgpEvery(fn,ms)＝背景會自動停的 setInterval（回前景重新起算，不補背景期間的拍子），bgpStop(id) 停掉。
+   線上對局心跳、棋鐘（net.js、local.js、各對局頁的鐘）不用這個，照舊跑 */
+const BGP={hid:typeof document!=="undefined"&&!!document.hidden,ev:new Set(),iv:new Map(),n:0};
+function bgpHid(){return BGP.hid||!!(typeof document!=="undefined"&&document.hidden)}
+function bgpOn(fn){BGP.ev.add(fn);return()=>BGP.ev.delete(fn)}
+function bgpEvery(fn,ms){const k=++BGP.n;BGP.iv.set(k,{fn,ms,t:bgpHid()?0:setInterval(fn,ms)});return k}
+function bgpStop(k){const o=BGP.iv.get(k);if(o){clearInterval(o.t);BGP.iv.delete(k)}}
+function bgpSet(h){h=!!h;if(h===BGP.hid)return;BGP.hid=h;for(const o of BGP.iv.values()){clearInterval(o.t);o.t=h?0:setInterval(o.fn,o.ms)}for(const f of[...BGP.ev])try{f(h)}catch(e){}}
+if(typeof document!=="undefined"&&document.addEventListener){document.addEventListener("visibilitychange",()=>bgpSet(document.hidden));addEventListener("pagehide",()=>bgpSet(true));addEventListener("pageshow",()=>{if(!document.hidden)bgpSet(false)})}
 const $=s=>document.querySelector(s);
 const NAMES={r:{K:"帥",A:"仕",B:"相",N:"傌",R:"俥",C:"炮",P:"兵"},b:{K:"將",A:"士",B:"象",N:"馬",R:"車",C:"砲",P:"卒"}};
 const CN=["","一","二","三","四","五","六","七","八","九"],PLAYER={r:"紅方",b:"黑方"};
@@ -1857,7 +1867,7 @@ async function wakeSync(){if(wakeBusy)return;wakeBusy=true;try{let need=false;
   else if(!need&&wakeLk){const r=wakeLk;wakeLk=null;try{await r.release()}catch(e){}}}finally{wakeBusy=false}}
 function keepAwake(key,pred){if(pred)WAKE[key]={f:pred,seen:false,at:Date.now()};else delete WAKE[key];setTimeout(wakeSync,50)}
 document.addEventListener("visibilitychange",()=>{if(document.visibilityState==="visible")wakeSync()});
-setInterval(()=>{if(wakeLk||Object.keys(WAKE).length)wakeSync()},3000);
+bgpEvery(()=>{if(wakeLk||Object.keys(WAKE).length)wakeSync()},3000);   /* 評比第 17、18 輪第 5 項：在背景不用每 3 秒檢查（回前景時上面 visibilitychange 會重新要求） */
 function sheet(title,build){
   try{if(!(history.state&&history.state.xqSheet)){const d=NAV_D+1;history.pushState({xqSheet:1,d},"",location.href);NAV_D=d;navMark(d,true,true)}}catch(e){}   /* 意見回饋 607：卡片那一層也登記（goUp 會跳過它） */
   document.querySelectorAll("#scrim,#sheet").forEach(e=>e.remove());const sc=document.createElement("div");sc.className="scrim";sc.id="scrim";
@@ -2196,7 +2206,7 @@ async function bgmNow(){const el=document.getElementById("bgmNow");if(!el)return
   const k=BGM.src.replace(/^data\/bgm\//,""),T=(await bgmTitles())||{},t=T[k];el.style.display="flex";
   /* 意見回饋 623（開發者）：曲名後面加樂器名稱（檔名就是樂器，例如 classic/zheng_1.mp3＝古箏） */
   const ins={zheng:"古箏",bianzhong:"編鐘",paixiao:"排簫",xun:"塤",ruan:"阮",konghou:"箜篌",dizi:"笛子",pipa:"琵琶",xiao:"洞簫",qin:"古琴",morinkhuur:"馬頭琴",sanxian:"三弦",erhu:"二胡"}[(k.split("/").pop()||"").replace(/_\d+\.\w+$/,"")]||"";
-  el.innerHTML=`<span style="flex:1;min-width:0">♪ 正在播放${t?`《${esc(t)}》`:""}${ins?`・${ins}`:""}</span><button class="btn ghost" id="bgmNext" style="flex:none;width:auto;margin:0;padding:4px 12px;font-size:13px;white-space:nowrap">換一首</button>`;
+  el.innerHTML=`<span style="flex:1;min-width:0"><span>♪ 正在播放</span>${t?`<span data-noi18n>《${esc(t)}》</span>`:""}${ins?`・<span>${ins}</span>`:""}</span><button class="btn ghost" id="bgmNext" style="flex:none;width:auto;margin:0;padding:4px 12px;font-size:13px;white-space:nowrap">換一首</button>`;
   el.querySelector("#bgmNext").onclick=()=>{vibrate(5);bgmSync(true)}}
 /* hspx（開發者 11/12 黑洞篇 5 首主題曲，story/118）：指定曲目（data/bgm/blackhole/bh_N.mp3），黑洞對局依局面換；null＝回到朝代配樂輪播 */
 function bgmForce(file){file=file||null;if((BGM.force||null)===file)return;BGM.force=file;try{bgmSync(true)}catch(e){}}
@@ -3253,7 +3263,7 @@ async function homeStatus(box,tries){
 // 外觀自動下載：App 打開 3 秒後，把所有朝代的棋盤、棋子圖和字形抓下來並先解碼（約 2.8 MB，存在手機裡），第一次切換外觀才不會卡
 const LOOK_IMGS=[];
 {const k=store.get("sndStyle","wood");if(/^s\d\d$/.test(k))setTimeout(()=>loadSfx(k),1500)}
-setTimeout(async()=>{await window.PRE_FIRST;if(navigator.connection&&navigator.connection.saveData)return;   /* 回饋 845（開發者 11/9 選：折衷先載）：各朝棋盤、棋子的預覽等首批載完才抓，不跟首批搶網路 */
+setTimeout(async()=>{await window.PRE_FIRST;if(typeof preOptWait==="function")await preOptWait();if(navigator.connection&&navigator.connection.saveData)return;   /* 評比第 17、18 輪第 5 項：選讀，等 App 在前景、閒置、不省流量（09b preOptWait） */   /* 回饋 845（開發者 11/9 選：折衷先載）：各朝棋盤、棋子的預覽等首批載完才抓，不跟首批搶網路 */
   const boards=[...new Set(Object.keys(BOARD_IMG).map(k=>BOARD_IMG_FILE[k]||k))],urls=[];
   for(const k of boards)urls.push(`data/boards/${k}.webp`);for(const k in PIECE_INK)for(const s of"rb")urls.push(`data/pieces/${k}-${s}.webp`);
   let i=0;const next=()=>{if(i>=urls.length){for(const k of GLY_ERAS)needGly(k,()=>{});return}
@@ -3262,11 +3272,12 @@ setTimeout(async()=>{await window.PRE_FIRST;if(navigator.connection&&navigator.c
 // 特級大師對局（33 MB）自動下載：App 打開 20 秒後，沒下載過就在背景抓一次（存在手機裡，離線也能看）
 if(OFF)setTimeout(async()=>{try{await window.PRE_FIRST;if(!navigator.onLine||(navigator.connection&&navigator.connection.saveData))return;const c=await caches.open("xqlab-data");   /* 回饋 845（開發者 11/9 選：折衷先載）：首批載完才開始抓 */
   if(await c.match(new URL("data/gmgames.json",location.href).href))return;if(window.PRE_ENG)await window.PRE_ENG.catch(()=>{});   /* 回饋 845：引擎（下棋要用）先下載完再抓大師對局 */
+  if(typeof preOptWait==="function"){await preOptWait();if(await c.match(new URL("data/gmgames.json",location.href).href))return}   /* 評比第 17、18 輪第 5 項：大師對局（33 MB）是選讀，等 App 在前景、閒置、不省流量才抓 */
   await fetch("data/gmgames.json");}catch(e){}},20000);
 // Pikafish 引擎自動下載：App 打開 5 秒後，沒下載過就在背景下載（約 48 MB，只要一次；開了「省數據模式」就不自動下載）
 if(OFF&&window.XQEngine&&XQEngine.prefetch)setTimeout(async()=>{try{await window.PRE_FIRST;   /* 回饋 845（開發者 11/9 選：折衷先載）：首批載完才開始抓引擎（49 MB），不跟首批搶網路 */
   if(await XQ.engineCached()||!navigator.onLine||(navigator.connection&&navigator.connection.saveData))return;
-  const pe=XQEngine.prefetch();window.PRE_ENG=pe.finally(()=>{window.PRE_ENG=null});   /* 回饋 845：引擎下載中，外觀的背景下載讓路（09b-preload.js preBg 只留 1 個） */
+  const pe=XQEngine.prefetch();window.PRE_ENG=pe.finally(()=>{window.PRE_ENG=null;if(typeof PRE!=="undefined"&&PRE.bgKick)PRE.bgKick(500)});   /* 回饋 845：引擎下載中，外觀的背景下載讓路（09b-preload.js preBg 只留 1 個） */
   await pe;toast("✅ Pikafish 引擎已自動下載完成，離線也能下棋");const h=document.querySelector("#hStatus");if(h&&h.isConnected)homeStatus(h)}catch(e){}},5000);
 // 從背景切回 App：首頁的連線燈號重新檢查（手機網路要一點時間恢復，所以等一下再測）
 // 一般玩家：只有「雙人對戰邀請」（帶 seat）的連線才留著；單純連電腦的連結（舊的分享網址）一律清掉，不會出現連不到電腦
@@ -3516,7 +3527,7 @@ try{if(typeof window!=="undefined"&&typeof document!=="undefined"&&typeof localS
   addEventListener("xq-result",()=>{RLG_END=Date.now();if(rlgIsGame(location.hash))rlgSave({h:location.hash,a:RLG_END,end:RLG_END,d3:rlg3d()})});
   document.addEventListener("visibilitychange",()=>{if(document.hidden)rlgSave({vh:Date.now(),d3:rlg3d()});else rlgSave({a:Date.now(),vh:0,ph:0})});
   addEventListener("pagehide",()=>rlgSave({ph:Date.now()}));addEventListener("pageshow",e=>{if(e.persisted)rlgSave({a:Date.now(),ph:0,vh:0})});
-  setInterval(()=>{if(!document.hidden)rlgSave({a:Date.now(),h:location.hash,d3:rlg3d()})},5000)}}catch(e){}
+  (typeof bgpEvery==="function"?bgpEvery:setInterval)(()=>{if(!document.hidden)rlgSave({a:Date.now(),h:location.hash,d3:rlg3d()})},5000)}}catch(e){}
 /* 開發者模式：設定頁「系統」分頁最下面看得到最近 10 次 */
 const RLG_WN={upd:"新版套用（markDone）",coi:"跨來源隔離重整（xqReload）",other:"其他＝可能是系統回收記憶體"};
 const rlgT=t=>{const d=new Date(t),z=x=>String(x).padStart(2,"0");return`${d.getMonth()+1}/${d.getDate()} ${z(d.getHours())}:${z(d.getMinutes())}:${z(d.getSeconds())}`};
@@ -4375,7 +4386,7 @@ async function skillPentagon(box){
   box.querySelectorAll("[data-go]").forEach(b=>b.onclick=()=>{vibrate(5);location.hash=b.dataset.go});return{G,A}}
 /* 意見回饋 301：記錄練習時間（對局、測驗、猜著法、錯棋重練的畫面開著、而且 2 分鐘內有操作，每 15 秒記 0.25 分鐘） */
 let PRACT_ACT=Date.now();addEventListener("pointerdown",()=>PRACT_ACT=Date.now(),{passive:true});
-setInterval(()=>{try{if(document.visibilityState!=="visible"||Date.now()-PRACT_ACT>120000)return;const r=(location.hash.split("/")[1]||"");
+(typeof bgpEvery==="function"?bgpEvery:setInterval)(()=>{try{if(document.visibilityState!=="visible"||Date.now()-PRACT_ACT>120000)return;const r=(location.hash.split("/")[1]||"");
   if(!["cpu","pvp","quiz","guess","redo"].includes(r))return;const d=localDay(),m=store.get("practiceMin",{});m[d]=Math.round(((m[d]||0)+.25)*100)/100;
   const ks=Object.keys(m).sort();while(ks.length>400)delete m[ks.shift()];store.set("practiceMin",m)}catch(e){}},15000);
 /* 意見回饋 307：後台每天用大家的資料校正的參數（題目難度、各段位的成長參數），從大廳拿，不用等改版 */
@@ -4922,7 +4933,7 @@ function Weekly(v){setTop("👨‍👩‍👧 學習週報","#/stats");if(typeof
     .catch(e=>{if(v.isConnected)box.innerHTML=`<div class="card muted">⚠ 週報整理失敗：${esc(e&&e.message||e)}</div>`});
   return{}}
 /* ================= 📱 換手機轉移碼（開發者決定，Gemini 效能審閱 P0-1）=================
-   （11/13 起新產生的是 10 碼 v4，見 05b-save.js 的 XFER4 區段；這裡的 8 碼 v2 和 XFER2 的 v3 只留著收舊版 App 的碼）
+   （11/13 起新產生的是 10 碼 v4，見 05b-save.js 的 XFER4 區段；評比第 18 輪第 4 項起舊的 8 碼停收，這裡的 8 碼 v2 和 XFER2 的 v3 只留著給測試對照，畫面不再走）
    舊手機：整份存檔（XQSave.dump）壓縮 → 用 8 碼轉移碼推出 AES-GCM 金鑰加密 → 分段發到 MQTT 留存頻道（頻道名是轉移碼的雜湊，沒有碼找不到）
    新手機：輸入轉移碼 → 收齊 → 解密、解壓 → 確認後取代這支手機的資料 → 刪掉頻道上的資料（一次性）→ 重開
    公開伺服器上只有加密過的資料；30 分鐘後失效 */
@@ -4981,12 +4992,12 @@ async function xfSend(){if(!OFF||!window.XQNet||!window.XQSave||!crypto.subtle)r
       b.querySelector("#xfX").onclick=()=>{xfWipe(U.K,U.n);toast("這組轉移碼已作廢");closeSheet()}}
     catch(e){b.innerHTML=`<p>⚠ ${esc(e.message||String(e))}</p>`}})}
 async function xfRecv(){if(!OFF||!window.XQNet||!window.XQSave||!crypto.subtle)return toast("這個瀏覽器不支援轉移碼");
-  sheet("📱 輸入轉移碼",b=>{b.innerHTML='<p>輸入舊手機上顯示的 10 碼（舊版 App 是 8 碼）：</p><input id="xfC" inputmode="text" autocomplete="off" autocapitalize="characters" maxlength="11" placeholder="ABCDE-23456" style="width:100%;font:900 26px ui-monospace,monospace;letter-spacing:.12em;text-align:center;padding:10px;border-radius:12px;border:1px solid var(--line);background:var(--card);color:inherit"><button class="btn" id="xfGo" style="width:100%;margin-top:10px">下載資料</button><p class="muted" id="xfM" style="font-size:13px"></p>';
+  sheet("📱 輸入轉移碼",b=>{b.innerHTML='<p>輸入舊手機上顯示的 10 碼轉移碼：</p><input id="xfC" inputmode="text" autocomplete="off" autocapitalize="characters" maxlength="11" placeholder="ABCDE-23456" style="width:100%;font:900 26px ui-monospace,monospace;letter-spacing:.12em;text-align:center;padding:10px;border-radius:12px;border:1px solid var(--line);background:var(--card);color:inherit"><button class="btn" id="xfGo" style="width:100%;margin-top:10px">下載資料</button><p class="muted" id="xfM" style="font-size:13px"></p>';
     const msg=t=>{b.querySelector("#xfM").textContent=t};
-    b.querySelector("#xfGo").onclick=async()=>{const code=xfNorm(b.querySelector("#xfC").value);if(code.length!==10&&code.length!==8)return msg("轉移碼是 10 碼（舊版 App 產生的是 8 碼）");msg(code.length===8?"⚠ 舊版 8 碼轉移碼，安全性較低。連線中…":"連線中…");
+    b.querySelector("#xfGo").onclick=async()=>{const code=xfNorm(b.querySelector("#xfC").value);if(code.length===8)return msg(typeof XF4_OLD==="string"?XF4_OLD:"這是舊版的 8 碼轉移碼，已經停用。");if(code.length!==10)return msg("轉移碼是 10 碼");msg("連線中…");   /* 評比第 18 輪第 4 項：8 碼停收，不連線（XF4_OLD 在 05b-save.js 的 XFER4 區段） */
       let D=null;try{D=await xfDownload(code,(i,n)=>msg(`下載中… ${i}／${n}`))}catch(e){return msg(e&&e.message||"解不開：轉移碼不對，或資料已經被換掉了")}
       const n=Object.keys(D&&D.data||{}).length;if(!n)return msg("收到的資料是空的");const ng=Object.values(D.games||{}).reduce((a,l)=>a+(Array.isArray(l)?l.length:0),0);
-      modal(`<div class="em">📱</div><h2>用舊手機的資料取代這支手機？</h2><p class="muted">收到 ${n} 筆資料${ng?`、${ng} 盤棋譜`:""}（${new Date(D.at).toLocaleString()} 產生）。這支手機原本的修為、戰績和設定會被換掉；棋譜是合併，這支手機原有的不會刪。這支手機會保留自己的裝置代號。這組轉移碼已經用掉，取消的話要在舊手機重新產生。</p>${D.xfWarn?`<p class="muted" style="color:var(--warn,#c60)">⚠ ${esc(D.xfWarn)}</p>`:""}`,
+      modal(`<div class="em">📱</div><h2>用舊手機的資料取代這支手機？</h2><p class="muted">收到 ${n} 筆資料${ng?`、${ng} 盤棋譜`:""}（${new Date(D.at).toLocaleString()} 產生）。這支手機原本的修為、戰績和設定會被換掉；棋譜是合併，這支手機原有的不會刪。這支手機會保留自己的裝置代號。這組轉移碼已經用掉，取消的話要在舊手機重新產生。</p>`,
         [["取代並重新開啟",async()=>{const L=xfLocalize(D.data,meInfo().id);try{await xfGamesPut(D.games||{})}catch(e){}XQSave.load(L.data,async()=>{try{await slotPutAll(D.slots||{})}catch(e){}location.replace(location.pathname+"#/");setTimeout(()=>location.reload(),80)})}],["取消",null,true]])}})}
 /* 意見回饋 491（開發者）：第一次進 App 先選「男生／女生」，再取名字；老玩家更新到這版也會跳一次
    意見回饋 604（開發者）：不再問 Q 版還是真實版，一律用真實 3D（之後可以在「設定 → 角色」改）；名字欄先填好「棋友＋4 位 16 進位」 */
@@ -5264,8 +5275,8 @@ function Settings(v){
         <tr><td>Google Apps Script</td><td>意見回饋管理頁（接 Google 表單和試算表）</td></tr>
         <tr><td>JSON</td><td>棋譜、題庫、故事、朝代資料</td></tr></table>
         <div class="muted" style="font-size:12px;margin-top:4px">線上大廳用 MQTT 通訊協定連線；Pikafish 的神經網路權重另外下載。</div></details>`:""}</div>
-    ${OFF?'<div class="sec-t">隱私</div><div class="card muted" style="font-size:13.5px;line-height:1.7">'+'App 每 7 天（或名字、段位改變時）會把你在大廳顯示的名字（用「稱號」就是稱號）、裝置代號（這支手機固定的一組隨機碼）、線上段位、使用時間摘要（總時間和最常待的地方）、App 版本、手機種類和螢幕大小送到開發者的 Google 表單，方便查問題、校正難度；不會送棋譜或存檔。另外會匿名記下你在哪一頁停很久、哪裡點了沒反應、哪個走法看不懂（每次開 App 換一組亂數，不含名字和裝置代號），用來改善不好懂的地方。跟電腦下完一盤，也會匿名送出這盤你每一步的評估分數和評語、總分、電腦級數、你的段位（用 App 自己產生的匿名碼，不含名字、裝置代號、棋譜和存檔），用來校正評分方式。做測驗、殘局、讀譜的對錯和秒數、新手引導走到哪一步、成長曲線，也會匿名送出（不含名字和裝置代號），用來校正題目難度、改善新手引導。卡住的地方保留 90 天，對局評分和學習進度保留一年，過期就刪；關掉開關後，手機裡還沒送出的也一起丟掉。意見回饋和檢舉在處理完後保留一年（有停權的保留到停權結束），玩家登記在最後一次登記後保留一年；線上大廳的戰績摘要 90 天沒更新就清，對局棋譜保留 30 天。你可以用下面的開關關掉；家長關閉線上大廳時也不會送。你按「意見回饋」或「檢舉」時，會另外送出你寫的內容和附的截圖（檢舉還會附對方最近的快捷語）。App 不會用網路位置查你在哪裡；線上大廳要不要顯示城市，由你在下面自己選（預設不顯示；用「稱號」的人一律不顯示）。'+'<label style="display:flex;align-items:center;gap:8px;margin-top:8px;color:var(--ink,inherit)"><span style="flex:1">📨 送出玩家登記給開發者</span><input type="checkbox" class="sw" id="repS" aria-label="送出玩家登記給開發者"></label>'+'<label style="display:flex;align-items:center;gap:8px;margin-top:8px;color:var(--ink,inherit)"><span style="flex:1">📍 匿名記錄卡住的地方</span><input type="checkbox" class="sw" id="stkS" aria-label="匿名記錄卡住的地方"></label>'+'<label style="display:flex;align-items:center;gap:8px;margin-top:8px;color:var(--ink,inherit)"><span style="flex:1">📊 匿名送出對局評分（校正分數用）</span><input type="checkbox" class="sw" id="cpaS" aria-label="匿名送出對局評分"></label>'+'<label style="display:flex;align-items:center;gap:8px;margin-top:8px;color:var(--ink,inherit)"><span style="flex:1">📈 匿名送出學習進度（新手引導、作答、成長曲線）</span><input type="checkbox" class="sw" id="lrnS" aria-label="匿名送出學習進度"></label>'+'<label style="display:flex;align-items:center;gap:8px;margin-top:8px;color:var(--ink,inherit)"><span style="flex:1">🏙 大廳顯示我的城市</span><select id="myCityS" style="font:inherit;padding:4px 6px;border-radius:8px">'+[["","不顯示"],...CITY_ZH.map(([,z])=>[z,z])].map(([v,l])=>'<option value="'+v+'"'+(String(store.get("myCity","")||"").replace(/^台北$/,"臺北")===v?" selected":"")+'>'+l+'</option>').join("")+'</select></label>'+'<button type="button" class="btn ghost" id="srvDelB" style="width:100%;margin-top:10px;font-size:13.5px">🗑 申請刪除我在伺服器上的資料</button><div id="srvDelSt" style="font-size:12.5px;margin-top:4px">'+esc(srvDelLine())+'</div>'+'<label class="row" style="justify-content:space-between;padding:8px 0;margin-top:6px"><span><b>🩺 每天自動送匿名健康摘要</b><br><span class="muted" style="font-size:12.5px">預設關。打開後每天最多一次，把錯誤次數、卡頓、啟動時間、App 版本、裝置類型送給開發者；不含名字、裝置代號、棋譜、存檔</span></span><input type="checkbox" class="sw" id="teleSw" aria-label="每天自動送匿名健康摘要"></label>'+'<button type="button" class="btn ghost" id="healB" style="width:100%;margin-top:10px;font-size:13.5px">📊 本機使用與健康紀錄</button>'+xqDocBtns()+'</div>':''}
-    ${OFF?'<div class="sec-t">進階</div><div class="card"><label class="row" style="justify-content:space-between"><span><b>開發者模式</b><br><span class="muted">一般玩家不用打開。打開後才會顯示連線電腦、AI 對戰等開發者功能</span></span><input type="checkbox" class="sw" id="dm"></label></div>'
+    ${OFF?'<div class="sec-t" data-sm-title="隱私" data-i18n="set.section.privacy">隱私</div><div class="card muted" style="font-size:13.5px;line-height:1.7">'+'App 每 7 天（或名字、段位改變時）會把你在大廳顯示的名字（用「稱號」就是稱號）、裝置代號（這支手機固定的一組隨機碼）、線上段位、使用時間摘要（總時間和最常待的地方）、App 版本、手機種類和螢幕大小送到開發者的 Google 表單，方便查問題、校正難度；不會送棋譜或存檔。另外會匿名記下你在哪一頁停很久、哪裡點了沒反應、哪個走法看不懂（每次開 App 換一組亂數，不含名字和裝置代號），用來改善不好懂的地方。跟電腦下完一盤，也會匿名送出這盤你每一步的評估分數和評語、總分、電腦級數、你的段位（用 App 自己產生的匿名碼，不含名字、裝置代號、棋譜和存檔），用來校正評分方式。做測驗、殘局、讀譜的對錯和秒數、新手引導走到哪一步、成長曲線，也會匿名送出（不含名字和裝置代號），用來校正題目難度、改善新手引導。卡住的地方保留 90 天，對局評分和學習進度保留一年，過期就刪；關掉開關後，手機裡還沒送出的也一起丟掉。意見回饋和檢舉在處理完後保留一年（有停權的保留到停權結束），玩家登記在最後一次登記後保留一年；線上大廳的戰績摘要 90 天沒更新就清，對局棋譜保留 30 天。你可以用下面的開關關掉；家長關閉線上大廳時也不會送。你按「意見回饋」或「檢舉」時，會另外送出你寫的內容和附的截圖（檢舉還會附對方最近的快捷語）。App 不會用網路位置查你在哪裡；線上大廳要不要顯示城市，由你在下面自己選（預設不顯示；用「稱號」的人一律不顯示）。'+'<label style="display:flex;align-items:center;gap:8px;margin-top:8px;color:var(--ink,inherit)"><span style="flex:1">📨 送出玩家登記給開發者</span><input type="checkbox" class="sw" id="repS" aria-label="送出玩家登記給開發者"></label>'+'<label style="display:flex;align-items:center;gap:8px;margin-top:8px;color:var(--ink,inherit)"><span style="flex:1">📍 匿名記錄卡住的地方</span><input type="checkbox" class="sw" id="stkS" aria-label="匿名記錄卡住的地方"></label>'+'<label style="display:flex;align-items:center;gap:8px;margin-top:8px;color:var(--ink,inherit)"><span style="flex:1">📊 匿名送出對局評分（校正分數用）</span><input type="checkbox" class="sw" id="cpaS" aria-label="匿名送出對局評分"></label>'+'<label style="display:flex;align-items:center;gap:8px;margin-top:8px;color:var(--ink,inherit)"><span style="flex:1">📈 匿名送出學習進度（新手引導、作答、成長曲線）</span><input type="checkbox" class="sw" id="lrnS" aria-label="匿名送出學習進度"></label>'+'<label style="display:flex;align-items:center;gap:8px;margin-top:8px;color:var(--ink,inherit)"><span style="flex:1">🏙 大廳顯示我的城市</span><select id="myCityS" style="font:inherit;padding:4px 6px;border-radius:8px">'+[["","不顯示"],...CITY_ZH.map(([,z])=>[z,z])].map(([v,l])=>'<option value="'+v+'"'+(String(store.get("myCity","")||"").replace(/^台北$/,"臺北")===v?" selected":"")+'>'+l+'</option>').join("")+'</select></label>'+'<button type="button" class="btn ghost" id="srvDelB" style="width:100%;margin-top:10px;font-size:13.5px">🗑 申請刪除我在伺服器上的資料</button><div id="srvDelSt" style="font-size:12.5px;margin-top:4px">'+esc(srvDelLine())+'</div>'+'<label class="row" style="justify-content:space-between;padding:8px 0;margin-top:6px"><span><b>🩺 每天自動送匿名健康摘要</b><br><span class="muted" style="font-size:12.5px">預設關。打開後每天最多一次，把錯誤次數、卡頓、啟動時間、App 版本、裝置類型送給開發者；不含名字、裝置代號、棋譜、存檔</span></span><input type="checkbox" class="sw" id="teleSw" aria-label="每天自動送匿名健康摘要"></label>'+'<button type="button" class="btn ghost" id="healB" style="width:100%;margin-top:10px;font-size:13.5px">📊 本機使用與健康紀錄</button>'+xqDocBtns()+'</div>':''}
+    ${OFF?'<div class="sec-t" data-sm-title="進階" data-i18n="set.section.advanced">進階</div><div class="card"><label class="row" style="justify-content:space-between"><span><b>開發者模式</b><br><span class="muted">一般玩家不用打開。打開後才會顯示連線電腦、AI 對戰等開發者功能</span></span><input type="checkbox" class="sw" id="dm"></label></div>'
       +(DEVMODE()?'<div class="items" style="padding:0;margin-top:8px"><button class="item" id="fa"><span class="lb">📋</span><span class="tx"><b>意見回饋管理</b><span>看所有回饋和截圖，決定玩家的回饋要不要修</span></span><span class="muted">›</span></button><button class="item" id="cn"><span class="lb">🖥</span><span class="tx"><b>連線到開發者的電腦</b><span>看 AI 對戰、同步大師棋譜</span></span><span class="muted">›</span></button><button class="item" id="dvt"><span class="lb">🧪</span><span class="tx"><b>開發者測試台</b><span>不用等機率：直接掉進黑洞、叫出小黑洞／星門、開任一星系、重設黑洞篇進度</span></span><span class="muted">›</span></button><button class="item" id="rb"><span class="lb">🔄</span><span class="tx"><b>重置虛擬玩家</b><span>32 位棋友的積分、戰績、練習紀錄歸零；舊資料留在電腦上</span></span><span class="muted">›</span></button></div>':""):""}${OFF?'<div class="sec-t">📱 換手機</div><div class="card"><div class="row" style="gap:8px;flex-wrap:nowrap"><button class="btn" id="xfOut" style="flex:1;min-width:0;margin:0;white-space:nowrap;padding-left:6px;padding-right:6px">📤 舊手機產生碼</button><button class="btn ghost" id="xfIn" style="flex:1;min-width:0;margin:0;white-space:nowrap;padding-left:6px;padding-right:6px">📥 新手機輸入碼</button></div></div>':""}</div></div>`;
   let tbRefresh=()=>{};
   const showTab=()=>{if(stab==="look")tbRefresh();v.querySelectorAll("#sgTabs button").forEach(b=>b.classList.toggle("on",b.dataset.k===stab));v.querySelectorAll("[data-pane]").forEach(x=>x.hidden=x.dataset.pane!==stab)};
@@ -6050,19 +6061,18 @@ function xf2Watch(){clearTimeout(XF2_T);XF2_T=null;let O=null;try{O=JSON.parse(l
     if(r.st==="pending"||(r.st==="unknown"&&Date.now()<=(+O.exp||0)))XF2_T=setTimeout(xf2Watch,45000)}).catch(()=>{XF2_T=setTimeout(xf2Watch,45000)})}
 if(typeof xfUpload==="function"&&typeof xfDownload==="function"){xfUpload=xf2Upload;xfDownload=xf2Download}
 /* ---------- 📱 轉移碼 v4（紅藍隊 r15 R03＝威脅模型 I5，11/13；測試 xiangqi-lab/tools/test-xfer4.js、重現 review_loop/rounds/r15/redblue/repro-xfer-topic-bruteforce-v4.js）----------
-   v3 的毛病：主題 id＝SHA-256("xqlab-xfer-id:"+碼) 前 80 位元，只算一次、沒有鹽；碼 8 碼（31^8≈2^39.6），看得到主題名就能用 GPU 幾分鐘反推出碼。
-   說明（n、exp、h）是明文、分段雜湊也是明文，知道碼的人還能在新手機下載前把整份換掉。
+   v3（8 碼）強度不夠，已停收，見 threat-model I5。v3 的說明（n、exp、h）和分段雜湊也是明文，知道碼的人還能在新手機下載前把整份換掉。
    v4：① xf4Keys 只做一次 PBKDF2-HMAC-SHA512（30 萬次，鹽 "xqlab-xfer-v4"）deriveBits 512 位元：前 256 位元＝AES-GCM 金鑰，後 256 位元切成主題 id（80 位元）和回條 ah（176 位元）。
       猜一次碼就要算一次完整的 PBKDF2，主題 id、回條都不能拿來快速比對。SHA-512 一個區塊剛好 512 位元，攻擊的人不能只算一半省時間。
    ② 碼 10 碼（31^10≈2^49.5），xf4Code 用拒絕取樣（不偏向前幾個字）；字元集照舊（沒有 I、L、O、0、1）。
    ③ 說明 {v:4,n,exp,c}：c＝AES-GCM 加密的 {sid（這次上傳的隨機代號）,gz,at}，AAD＝版本、種類、段數、期限；每一段各自加密（自己的 iv），AAD 再加 sid 和第幾段。
       改說明的 n 或 exp、換掉、調換順序、拿別次上傳的段來混、截短，都解不開；期限沒有金鑰就改不了。
    ④ 一次性：新手機收完清掉各段、說明換成回條；這支手機記住收過的 sid（xq_xfUsed，存檔取代後也留著），同一份資料被人重放也不收；過期的不收、順手清掉。
-   ⑤ 舊的 8 碼（v3）到 XF4_V3_UNTIL 前照收（走 xf2Download），回傳的資料帶 xfWarn，畫面提示「安全性較低，建議重新產生」；之後一律拒收。 */
+   ⑤ 舊的 8 碼（v3）：評比第 18 輪第 4 項（開發者選「現在就停收」）起一律不收。xf4Download 一看到 8 碼就丟 XF4_OLD（不連線、不讀也不訂閱任何主題），
+      畫面 xfRecv（05-settings.js）也先擋下、直接顯示 XF4_OLD；新版本來就只產生 10 碼。停收只影響「輸入舊碼」這條路：這支手機的存檔、10 碼轉移、匯出匯入檔案都照舊。 */
 /* XFER4:BEGIN（只用 crypto、XQNet、XQSave、localStorage、05-settings 的 XFER 區段和上面的 XFER2 區段；test-xfer4.js 三段一起切出來在 node 跑） */
 const XF4_LEN=10,XF4_IT=300000,XF4_SALT="xqlab-xfer-v4",XF4_PB=90000,XF4_USED="xq_xfUsed",XF4_GOT=new Map();
-const XF4_V3_UNTIL=Date.UTC(2026,11,31,16);   /* 舊 8 碼收到臺灣時間 2027-01-01 00:00 為止（開發者可改） */
-const XF4_WARN="這組是舊版 App 產生的 8 碼轉移碼，安全性較低（比較容易被猜出來）。建議兩支手機都更新 App，在舊手機重新產生 10 碼的轉移碼再搬一次。";
+const XF4_OLD="這是舊版的 8 碼轉移碼，已經停用。請在舊手機打開 App（會自動更新），重新產生一組新的轉移碼。";   /* 評比第 18 輪第 4 項：8 碼停收（英文在 07i18n） */
 const xf4Hx=u=>Array.from(u,x=>x.toString(16).padStart(2,"0")).join("");
 function xf4Code(){const a=[],N=XF_ABC.length,lim=256-256%N;while(a.length<XF4_LEN)for(const x of crypto.getRandomValues(new Uint8Array(16)))if(x<lim&&a.length<XF4_LEN)a.push(XF_ABC[x%N]);return a.join("")}
 async function xf4Keys(code){const te=new TextEncoder(),c=xfNorm(code),base=await crypto.subtle.importKey("raw",te.encode(c),"PBKDF2",false,["deriveBits"]);
@@ -6086,11 +6096,10 @@ async function xf4Upload(code){const c=xfNorm(code);if(c.length!==XF4_LEN)throw 
   try{localStorage.setItem("xq_xfOut",JSON.stringify({id:K.id,ah:K.ah,exp,at:Date.now()}))}catch(e){}
   try{if(typeof xf2Watch==="function")xf2Watch()}catch(e){}
   return{K,exp,n,kb:Math.ceil(parts.reduce((a,p)=>a+p.length,0)/1024),games:Object.values(games).reduce((a,l)=>a+l.length,0)}}
-/* 新手機：10 碼走 v4；8 碼是舊版（v3），期限內照收但帶 xfWarn。回解開的資料，錯誤丟 Error（訊息直接給使用者看） */
+/* 新手機：10 碼走 v4；8 碼是舊版（v3），已停收：連線之前就丟 XF4_OLD。回解開的資料，錯誤丟 Error（訊息直接給使用者看） */
 async function xf4Download(code,prog){const c=xfNorm(code);
-  if(c.length===8){if(Date.now()>XF4_V3_UNTIL)throw new Error("這是舊版 App 的 8 碼轉移碼，已經停止支援：請把舊手機的 App 更新到最新版，再重新產生 10 碼的轉移碼");
-    const D=await xf2Download(c,prog);if(D&&typeof D==="object")D.xfWarn=XF4_WARN;return D}
-  if(c.length!==XF4_LEN)throw new Error("轉移碼是 10 碼（舊版 App 產生的是 8 碼）");
+  if(c.length===8)throw new Error(XF4_OLD);
+  if(c.length!==XF4_LEN)throw new Error("轉移碼是 10 碼");
   const K=await xf4Keys(c),lost="找不到這組轉移碼：可能打錯、過期，或已經用過了",fake="說明對不上：轉移碼不對，或資料已經被換掉了。請在舊手機重新產生轉移碼";
   let m=null;for(let k=0;k<2&&!m;k++)m=await XQNet.getRetained(K.topic("m"),k?6000:10000);if(!m)throw new Error(lost);
   let M=null;try{M=JSON.parse(m)}catch(e){}
@@ -7738,7 +7747,7 @@ function storyBookOf(h){h=String(h||"");
      這幾頁回傳 -1＝「照舊」：從故事點進來就留在故事朝代，從首頁點進來就是自己的朝代 */
   if(/^#\/(me|profile)(\/|$)/.test(h))return -1;
   if(/^#\/journey\/inn(\/|$)/.test(h))return 0;   /* 意見回饋 697（開發者 11/6）：驛站一律是星槎停靠那一朝的驛站，不帶故事的朝代 */
-  if(/^#\/journey\/play/.test(h)){const P=store.get("jPending",null);return !P?-1:String(P.id||"").startsWith("inn:")?0:String(P.id||"").startsWith("b2h")?2:1}   /* 驛站裡的對局沒有闖關紀錄 */
+  if(/^#\/journey\/play/.test(h)){const P=store.get("jPending",null),id=String(P&&P.id||"");return !P?-1:id.startsWith("b2h")?2:/^h\d+$/.test(id)?1:0}   /* 11/14 評比第 17、18 輪 B3：只有石桌往事的關卡（第一集 h01～h36、第二集 b2h）才換故事朝代；以前反過來「不是驛站、第二集就當第一集」，黑洞一族（bh: 練習賽、塔防、急襲、黑洞對戰；gx: 十三星系）、園子（park）、挑戰角色（char:）、星槎對戰（bt:）都被換成元朝、跳元末明初的說明 */
   if(/^#\/(journey|legend)(\/|$)/.test(h))return 1;
   return 0}
 function storyEraSync(){try{const b=storyBookOf(location.hash),cur=store.get("era","classic"),saved=store.get("eraUser",null);let to=null;if(b<0)return;
@@ -10809,7 +10818,7 @@ function bhxQuestTick(){try{const J=journey();if(!J||!store.get("bhxLand",null))
 function bhxQuest(hm,D){const c=typeof myChar==="function"?myChar():null,C=c&&WX_CHARS[c],nk=C?(C.nk||C.n):"我",el=eraLabel(hm);
   modal(`<div class="em">📜</div><h2>任務：回到${esc(el)}</h2>${C?`<p class="pl-say"><img src="data/xs/prev_${c}.webp" alt="" onerror="this.remove()" style="width:44px;height:44px;border-radius:50%;object-fit:cover;vertical-align:middle;margin-right:6px">${esc(C.n)}：「星槎可以載我們回${esc(el)}。那裡的石桌，還有一盤等我的棋。」</p>`:""}<p class="muted" style="font-size:13px">家鄉朝代的園子裡，有${esc(nk)}的主場棋局和千秋殘局。搭星槎起航就能過去。</p>`,
     [["⛵ 起航前往"+el,()=>{location.hash="#/adventure";setTimeout(()=>{try{shipGoTo(hm)}catch(e){}},700)}],["之後再去",null,true]],"prolog")}
-if(typeof window!=="undefined"&&typeof document!=="undefined"&&!navigator.webdriver)setInterval(bhxQuestTick,15000);
+if(typeof window!=="undefined"&&typeof document!=="undefined"&&!navigator.webdriver)(typeof bgpEvery==="function"?bgpEvery:setInterval)(bhxQuestTick,15000);
 if(typeof window!=="undefined"&&typeof document!=="undefined"&&!navigator.webdriver){let n=0;const tk=()=>{n++;let ok=false;try{ok=bhxOldAsk()}catch(e){}if(!ok&&n<40&&!store.get("bhXuAsk",null)&&bhxNeed())setTimeout(tk,3000)};setTimeout(tk,5000)}
 /* ================= 幻譜星門・十三星系（開發者 11/12，story/115、117 的「開發者決定」；前綴 gx） =================
    入口：① 戰勝過黑洞的人，挑戰電腦時幻影棋客頭上的小黑洞變成「星門」（07bh bhOrbKind 回 "gate"，park3d 畫張開的黑洞＋中心小棋盤＋外圍 13 點星光），點了開星圖；
@@ -13149,7 +13158,7 @@ function qqRelicHeld(id){const P=store.get("evPawn",null),H=store.get("evHeld",n
   return false}
 setTimeout(()=>{try{qqPool();if(typeof relicsData==="function")relicsData()}catch(e){}},3000);
 setTimeout(()=>{try{if(journey())qqSettle()}catch(e){}},9000);
-addEventListener("hashchange",()=>setTimeout(()=>{try{qqStashBadge()}catch(e){}},350));setTimeout(()=>{try{qqStashBadge()}catch(e){}},2500);setInterval(()=>{try{qqStashBadge()}catch(e){}},30000);
+addEventListener("hashchange",()=>setTimeout(()=>{try{qqStashBadge()}catch(e){}},350));setTimeout(()=>{try{qqStashBadge()}catch(e){}},2500);(typeof bgpEvery==="function"?bgpEvery:setInterval)(()=>{try{qqStashBadge()}catch(e){}},30000);
 /* ================= 📚 千秋大百科・🎁 珍品開箱（Gemini 評估 11/8，開發者核准）=================
    收集品分散在很多地方（修為、官階、寶物、珍品、印章、路引、稱號、棋話、正文、消寒圖…），玩家記不住哪裡拿、有什麼用。
    開發者決定不硬合併系統，只做一個總入口 #/codex：每類一張卡（圖示、名稱、已收 X／Y 進度條、一句白話：是什麼、去哪裡拿、有什麼用），點了跳到那個收藏冊或取得的地方。
@@ -14191,7 +14200,7 @@ function rsCard(L,after){if(L.cj){const r=L.cj;rsAsk(r.t+":"+(r.rk||"")+":"+r.id
 /* 冷啟動：等開頭畫面、載入畫面、其他視窗都關掉，而且人在首頁，才問一次 */
 function rsBoot(){if(!RS_ON)return;try{if(sessionStorage.getItem("rsBoot"))return;sessionStorage.setItem("rsBoot","1")}catch(e){}
   let tries=0;const home=()=>/^(#\/?(home)?)?$/.test(location.hash),busy=()=>document.getElementById("preov")||document.body.classList.contains("xqt-on")||document.querySelector(".modal,#sheet,.kx,.kx-dim");
-  const tick=async()=>{if(++tries>90)return;if(busy())return setTimeout(tick,700);if(!home())return;
+  const tick=async()=>{if(typeof bgpHid==="function"&&bgpHid()){const off=bgpOn(h=>{if(!h){off();tick()}});return}if(++tries>90)return;if(busy())return setTimeout(tick,700);if(!home())return;   /* 評比第 17、18 輪第 5 項：在背景不每 0.7 秒看，回前景再接著等 */
     try{if(window.XQNet&&XQNet.playing&&XQNet.playing())return}catch(e){}
     try{await rsSweep()}catch(e){}const L=rsLatest();if(!L||!home()||busy())return;
     if(L.g&&rsAsked().includes(L.g.id))return;rsCard(L,()=>{try{route()}catch(e){}})};
@@ -15267,7 +15276,7 @@ function epCount(S){if(EP_DEV)return;const d=localDay();if(S.d!==d){S.d=d;S.n=0}
 function epHere(){try{return shipHere()}catch(e){return"classic"}}
 const epRead=k=>!!(store.get("shipRead",{})||{})[k];
 const epNk=(c,by)=>by===EP_K.M&&c===EP_K.Y?"燕子姊姊":c===EP_K.F?"方庭":((WX_CHARS[c]||{}).nk||(WX_CHARS[c]||{}).n||"");
-function epTx(s,by){const me=epMe(),M=WX_CHARS[me]||{};return String(s).replace(/\{@([SYHMFLX])\}/g,(m,k)=>epNk(EP_K[k],by)).replace(/\{名\}/g,epNk(me,by)).replace(/\{你\}/g,M.sx==="f"?"妳":"你")}
+function epTx(s,by){const me=epMe(),M=WX_CHARS[me]||{};return (typeof i18nStoryText==="function"?i18nStoryText(s):String(s)).replace(/\{@([SYHMFLX])\}/g,(m,k)=>typeof i18nStoryText==="function"?i18nStoryText(epNk(EP_K[k],by)):epNk(EP_K[k],by)).replace(/\{名\}/g,()=>typeof i18nStoryText==="function"?i18nStoryText(epNk(me,by)):epNk(me,by)).replace(/\{你\}/g,typeof i18nLang==="function"&&i18nLang()==="en"?"you":M.sx==="f"?"妳":"你")}
 const epOne=a=>a[Math.floor(Math.random()*a.length)];
 function epCss(){if(document.getElementById("epCss"))return;const s=document.createElement("style");s.id="epCss";s.textContent=`
 .v7.ep{max-width:min(84vw,310px)}
@@ -15588,7 +15597,7 @@ async function ep4Game(kind,cs,why){epCss();const C=window.XQCore;let D=null;try
   const tick=setInterval(()=>{if(end)return;if(location.hash!==h0||!ov.isConnected){finish(true);return}const s=60-Math.floor((Date.now()-t0)/1000);$("#ep4T").textContent=Math.max(0,s);if(s<=0)finish()},250);
   $("#ep4Q").onclick=()=>{vibrate(5);finish()};
   function finish(quiet){if(end)return;end=true;clearInterval(tick);if(quiet){ov.remove();return}
-    ov.innerHTML=`<h3>🌙 一分鐘到了</h3><p style="font-size:17px;margin:4px 0 8px">答對 <b>${score}</b> 題</p>`+epSay(cs[0],score>=5?"好眼力！":"看得仔細，就是好棋。")+epSay(cs[1],EP4_END[cs[1]][why==="night"?0:1])+epSay(cs[0],EP4_END[cs[0]][why==="night"?0:1])
+    ov.innerHTML=`<h3>🌙 一分鐘到了</h3><p style="font-size:17px;margin:4px 0 8px"><b>答對 ${score} 題</b></p>`+epSay(cs[0],score>=5?"好眼力！":"看得仔細，就是好棋。")+epSay(cs[1],EP4_END[cs[1]][why==="night"?0:1])+epSay(cs[0],EP4_END[cs[0]][why==="night"?0:1])
       +`<div class="ep-card">說書人：「燈芯結了一朵燈花——老一輩說，這是好兆頭。」<br>挑一樣帶走：</div><div class="ep-row"><button class="btn" id="ep4X">✨ 修為 +${EP_XP[4]}</button><button class="btn" id="ep4H">🪔 燈花：提示棋 1 顆</button></div>`;
     const take=f=>{const S=epSt(),k="ep4:"+ep4Key();if(S.nr===k){ov.remove();return}S.nr=k;epSave(S);f();ov.remove();if(why==="night")setTimeout(()=>toast("🌙 夜深了，早點休息"),600)};
     $("#ep4X").onclick=()=>{vibrate(8);take(()=>addXP(EP_XP[4],"插曲","ep4:"+ep4Key()))};
@@ -16541,7 +16550,7 @@ function shwBreath(S){if(!SHW_BR_ON||shwRM())return;const C=S.C,L=S.o.layer,I=S.
   M.classList.add("shw-brfirst");setTimeout(()=>M.classList.remove("shw-brfirst"),4800);
   setTimeout(()=>{if(!document.hidden)keys().forEach((h,i)=>glow(h,i*140))},500);
   let last=Date.now(),i=0,nx=0;M.addEventListener("pointerdown",()=>{last=Date.now()},true);
-  const it=setInterval(()=>{if(!S.box.isConnected||!M.isConnected){clearInterval(it);return}const now=Date.now();if(document.hidden||S.go||now-last<20000||now<nx)return;
+  const it=(typeof bgpEvery==="function"?bgpEvery:setInterval)(()=>{if(!S.box.isConnected||!M.isConnected){(typeof bgpStop==="function"?bgpStop:clearInterval)(it);return}const now=Date.now();if(document.hidden||S.go||now-last<20000||now<nx)return;
     const K=keys();if(!K.length)return;glow(K[i++%K.length]);nx=now+7000},1000)}
 {const f1=shwStay;shwStay=function(S){f1(S);try{if(!S.o.br0){S.o.br0=1;shwBreath(S)}}catch(e){}}}
 {const f0=shwOpen;shwOpen=function(S){const g=S.go,X=S.o.X;try{if(g&&!g.free&&(g.ph==="hop"||g.t<g.dur||(g.seq&&g.seq.length))){const C=S.C;S.sq=null;S.curE=null;   /* 走到一半再點同一個入口＝直接開：角色淡一下站到入口前，不卡在半路（Gemini 第二次評估第 7 節第 1 項，開發者選定） */
@@ -16642,8 +16651,8 @@ function xqSheetDup(S){try{const b=S.b;b.querySelectorAll(".xqs-dup").forEach(x=
 function xqSheetMove(v,P,S){const V=document.getElementById("view")||v,F=Node.DOCUMENT_POSITION_FOLLOWING;
   const ok=c=>{if(c===S.el||c.classList.contains("xqs")||c.classList.contains("xqs-s")||c.matches("script,style,template,link"))return false;const cs=getComputedStyle(c);return cs.position!=="fixed"&&cs.position!=="absolute"&&cs.display!=="none"};   /* 藏起來的（display:none）先不搬，等它出現（每秒看一次）再搬 */
   const mv=()=>{if(!P.isConnected)return;const L=[];const walk=el=>{for(const c of[...el.children]){if(c===P)continue;if(c.contains(P)){walk(c);continue}if((P.compareDocumentPosition(c)&F)&&ok(c))L.push(c)}};walk(V);L.forEach(c=>S.b.append(c))};
-  mv();const it=setInterval(()=>{if(!P.isConnected){clearInterval(it);return}mv()},1000);const mo=new MutationObserver(()=>{if(!P.isConnected){mo.disconnect();return}mv()});let e=P.parentNode;while(e&&V.contains(e)){mo.observe(e,{childList:true});if(e===V)break;e=e.parentNode}
-  return()=>{mo.disconnect();clearInterval(it)}}
+  mv();const it=(typeof bgpEvery==="function"?bgpEvery:setInterval)(()=>{if(!P.isConnected){(typeof bgpStop==="function"?bgpStop:clearInterval)(it);return}mv()},1000);const mo=new MutationObserver(()=>{if(!P.isConnected){mo.disconnect();return}mv()});let e=P.parentNode;while(e&&V.contains(e)){mo.observe(e,{childList:true});if(e===V)break;e=e.parentNode}
+  return()=>{mo.disconnect();(typeof bgpStop==="function"?bgpStop:clearInterval)(it)}}
 /* 828：各頁原本「點圖上標籤＝捲到圖下某一塊」的寫法不用改——那一塊搬進面板後，玩家剛點過（1.5 秒內）時對它 scrollIntoView＝打開面板並捲到那裡；
    不是玩家點的（頁面自己捲）就不打開，也不捲動整頁。 */
 let XQS_UT=0;addEventListener("click",()=>{XQS_UT=Date.now()},true);
@@ -16755,7 +16764,7 @@ async function shwLoad(S){
   if(window.ResizeObserver){const ro=new ResizeObserver(()=>{if(!S.box.isConnected||S.gen!==G){ro.disconnect();return}fit()});ro.observe(S.I)}fit();
   let last=performance.now(),acc=0,fr=0,t0=last;
   const end=()=>{try{cv.remove()}catch(e){}if(S.gen!==G)return void(()=>{try{r.dispose();r.forceContextLoss()}catch(e){}})();S.ready=false;S.go=null;if(!document.querySelector(".shw.on"))document.body.classList.remove("shw-on");try{r.dispose();r.forceContextLoss()}catch(e){}};
-  const loop=now=>{if(!S.box.isConnected||!S.M.isConnected||S.gen!==G){end();return}requestAnimationFrame(loop);if(document.hidden){last=now;return}
+  const loop=now=>{if(!S.box.isConnected||!S.M.isConnected||S.gen!==G){end();return}if(typeof bgpHid==="function"&&bgpHid()){last=now;const off=bgpOn(h=>{if(!h){off();requestAnimationFrame(loop)}});return}requestAnimationFrame(loop);if(document.hidden){last=now;return}   /* 評比第 17、18 輪第 5 項：在背景不排下一格，回前景再接著走 */
     if(!S.ready){if(S.o.gate&&!S.o.gate()){last=now;return}S.ready=true;fit();shwStay(S)}
     if(!S.go&&now-(S.lk||0)>1000){S.lk=now;S.lit();const g2=shwLookG();if(g2!==S.lg){S.lg=g2;shwLoad(S).catch(()=>{S.box.remove();S.ready=false;document.body.classList.remove("shw-on")});return}}
     const dt=Math.min(.05,(now-last)/1000);last=now;acc+=dt;const g=S.go;let walk=false;
@@ -18061,7 +18070,7 @@ function homeMap(v){const home=v.querySelector(".home");if(!home||v.querySelecto
   try{if(typeof shwPage==="function"&&SHIP_WALK_ON){P._hmwW=hmwWKey(P,hk);shwPage(v,hmwWalkCfg(hk,P),"home");hmMe(P)}}catch(e){}
   try{hmTail(P)}catch(e){}
   try{if(typeof zmPage==="function")zmPage(v,typeof hmpZoomOpt==="function"?hmpZoomOpt(P):null)}catch(e){}   /* 11/14：三屏長卷時放大後可以拖到左右兩屏 */
-  document.body.classList.add("hm-on");const t=setInterval(()=>{if(!P.isConnected){clearInterval(t);if(!document.querySelector(".home-page"))document.body.classList.remove("hm-on")}},800)}
+  document.body.classList.add("hm-on");const t=(typeof bgpEvery==="function"?bgpEvery:setInterval)(()=>{if(!P.isConnected){(typeof bgpStop==="function"?bgpStop:clearInterval)(t);if(!document.querySelector(".home-page"))document.body.classList.remove("hm-on")}},800)}
 if(typeof Home==="function"){const f0=Home;Home=function(v,hub){const r=f0.apply(this,arguments);try{if(HOME_MAP_ON&&!hub)homeMap(v)}catch(e){}return r}}
 /* 開發者 11/11 選 ChatGPT UI 報告 UI-03：所有場景標籤（首頁、學習、對戰、設定、渡口…的 .shp-spot）上下各多 9px、左右各多 4px 的透明點選範圍，
    看起來一樣大，手指點偏一點也點得到（設定頁的小標籤原本只有約 24px 高）；::after 已經拿去做呼吸光，這裡用 ::before */
@@ -18519,7 +18528,7 @@ function dglSay(t,card){if(document.body.classList.contains("shw-on")&&document.
 /* ---------- 走路角色：頭上小條、走慢、打哈欠、累了的台詞（07w shwLoad 掛好角色後呼叫） ---------- */
 function dglWalkHook(S){if(!dglLive()||!S||!S.box)return;dglCss();DGL.walk.add(S);const L=S.o&&S.o.layer||S.box.parentNode;
   if(L&&!(S.dglHead&&S.dglHead.isConnected)){const e=document.createElement("div");e.className="dgl-head";e.setAttribute("aria-hidden","true");e.innerHTML=dglBarsHTML+'<span class="z">🥱</span>';L.append(e);S.dglHead=e}
-  if(!S.dglY)S.dglY=Date.now()-14e3;if(!DGL.wt)DGL.wt=setInterval(dglWalkTick,300);dglPaint();
+  if(!S.dglY)S.dglY=Date.now()-14e3;if(!DGL.wt)DGL.wt=(typeof bgpEvery==="function"?bgpEvery:setInterval)(dglWalkTick,300);dglPaint();
   if(dglTired(DGL.s.r))setTimeout(()=>dglTiredSay(false),2600)}
 function dglWalkTick(){const now=Date.now(),tired=dglTired(DGL.s.r);
   for(const S of[...DGL.walk]){const e=S.dglHead;if(!S.box.isConnected){if(e)e.remove();DGL.walk.delete(S);continue}if(!e)continue;
@@ -18528,7 +18537,7 @@ function dglWalkTick(){const now=Date.now(),tired=dglTired(DGL.s.r);
     const k=+m[3],ch=parseFloat(cv.style.height)||cv.clientHeight,T=parseFloat(cv.style.top)||0,top=+m[2]+(T+ch*.12)*k;
     Object.assign(e.style,{display:"block",left:(+m[1]).toFixed(1)+"px",top:(top-6).toFixed(1)+"px"});
     if(!S.go&&!dglRM()&&now-S.dglY>2e4){S.dglY=now;dglYawn(S)}}
-  if(!DGL.walk.size){clearInterval(DGL.wt);DGL.wt=0}}
+  if(!DGL.walk.size){(typeof bgpStop==="function"?bgpStop:clearInterval)(DGL.wt);DGL.wt=0}}
 function dglYawn(S){try{if(S.anim)S.anim("bow",.45)}catch(e){}S.box.classList.add("dgl-yawn");if(S.dglHead)S.dglHead.classList.add("yawn");
   setTimeout(()=>{S.box.classList.remove("dgl-yawn");if(S.dglHead)S.dglHead.classList.remove("yawn");try{if(!S.go&&S.anim)S.anim("idle",1)}catch(e){}},2400)}
 function dglTiredSay(force){const now=Date.now();if(dglBusy(location.hash)||document.getElementById("dglOut"))return;if(!force&&now-DGL.say<18e4)return;
@@ -18655,7 +18664,7 @@ if(DGL_ON&&typeof window!=="undefined"){
     toast(t.checked?"已打開平日體力：定軌力回滿，在人間會慢慢用掉":"已關閉平日體力：定軌力不扣、不會化墨退場；星芒照常")});
   addEventListener("hashchange",()=>{DGL.done=0;setTimeout(dglTick,700)});
   document.addEventListener("visibilitychange",()=>{DGL.last=Date.now()});
-  setInterval(dglTick,2000)}
+  (typeof bgpEvery==="function"?bgpEvery:setInterval)(dglTick,2000)}
 /* ================= 🏮 西市：首頁橋左邊的生活場景（開發者 11/13；文案照 story/西市文案定稿草案_1113.md，第五節 18 項全照推薦；前綴 xsm／XSM，11/13 grep 過沒撞名：xm 已被 01-board 的混音器用掉）=================
    路由 #/ximarket（西市外景）、#/ximarket/tea（聽雨茶坊內景）、#/ximarket/dark（茶坊的臺灣暗棋，07xsd）（02-shell）。
    入口：首頁橋左邊一個「🏮 西市」場景標籤（#hmXsm；跟 07gxt 觀星臺一樣包 07z 的 Home／hmwSet，不改 HM_SPOTS、不動 07y；原圖、iPad 直版 p34、橫版 l1610 各一組座標 XSM_HOME，避開左岸告示牌）。
@@ -20104,7 +20113,7 @@ function setMap(v){const root=v.querySelector(".pad.home");if(!root||v.querySele
   const secOf=(x,head)=>{if(!x)return[];const L=[x];if(!isH(x)){const pv=[];let p=x.previousElementSibling;while(p&&!(p.matches&&p.matches("summary"))){pv.unshift(p);if(isH(p))break;p=p.previousElementSibling}if(pv.length&&isH(pv[0]))L.unshift(...(head?[pv[0]]:pv))}
     if(!head){let n=x.nextElementSibling;while(n&&!isH(n)&&!(n.matches&&n.matches("summary"))){L.push(n);n=n.nextElementSibling}}return L};
   const pick=k=>{const i=k.indexOf(":"),t=k.slice(0,i),q=k.slice(i+1);
-    if(t==="title"){const h=[...root.querySelectorAll(".sec-t")].find(x=>x.textContent.trim()===q);return h?secOf(h):[]}
+    if(t==="title"){const h=[...root.querySelectorAll(".sec-t")].find(x=>(x.dataset.smTitle||x.textContent).trim()===q);return h?secOf(h):[]}
     const el=root.querySelector(q);if(!el)return[];if(t==="btn")return[el];const x=topOf(el);if(!x)return[];return t==="el"?[x]:secOf(x,t==="head")};
   const epBack=()=>{for(const[n,ph]of moved){if(ph.parentNode){ph.parentNode.insertBefore(n,ph);ph.remove()}}moved=[];EW.innerHTML=""};
   const epOpen=id=>{if(!ES)return false;epBack();const seen=new Set();let n=0;
@@ -24305,7 +24314,7 @@ function sw7AgeCard(){if(typeof vibrate==="function")vibrate(5);const b=sw7Born(
 function sw7HomeInfo(){if(!SW7_ON||(typeof CLK_ON!=="undefined"&&CLK_ON))return;   /* 回饋 858（時辰鐘）：改由 07w8 的頂欄星晷顯示 */const h=document.getElementById("title");if(!h||!["","#","#/"].includes(location.hash))return;sw7Css();let e=h.querySelector(".sw7-hd");if(!e){e=document.createElement("button");e.type="button";e.className="sw7-hd";e.onclick=ev=>{ev.stopPropagation();sw7AgeCard()};h.append(e)}
   const N=new Date(),b=sw7Born(),tm=sw7Term(N);e.textContent=[b?`⛵ 船上第 ${sw7OnDay(b,N)} 天`:"⛵ 還沒登船",tm,sw7Shi(N)].filter(Boolean).join("・");e.setAttribute("aria-label","看船齡和今天的時間："+e.textContent)}
 if(typeof Home==="function"){const f0=Home;Home=function(v,hub){const r=f0.apply(this,arguments);if(!hub){setTimeout(()=>{try{sw7HomeInfo()}catch(e){}},0);setTimeout(()=>{try{sw7HomeInfo()}catch(e){}},600)}return r}}
-setInterval(()=>{try{if(document.querySelector("#title .sw7-hd"))sw7HomeInfo()}catch(e){}},60000);
+(typeof bgpEvery==="function"?bgpEvery:setInterval)(()=>{try{if(document.querySelector("#title .sw7-hd"))sw7HomeInfo()}catch(e){}},60000);
 
 /* ---------- ④ 朝代過場：千秋穿梭字幕底下一句 ---------- */
 /* 各站故事場景的大約年份（秦直道、漢通西域、赤壁、竹林、劉宋渡江、隋開運河、盛唐長安、五代、南宋臨安元宵、元延祐、明萬曆、清乾隆南巡），只拿來算相差幾百年 */
@@ -24565,7 +24574,7 @@ function clkSync(){if(!CLK_ON)return;const tb=document.getElementById("topbar"),
   if(prev===now)clkMode(now);else requestAnimationFrame(()=>requestAnimationFrame(()=>{clkMode(now);clkPaint()}))}
 if(CLK_ON&&typeof setTop==="function"){const f0=setTop;setTop=function(){const r=f0.apply(this,arguments);try{clkSync()}catch(e){}return r}}
 if(CLK_ON){addEventListener("hashchange",()=>setTimeout(()=>{try{clkSync()}catch(e){}},0));addEventListener("resize",()=>{try{clkPlace()}catch(e){}});
-  setInterval(()=>{try{if(CLK.el&&CLK.el.isConnected&&!document.hidden)clkPaint()}catch(e){}},30000);
+  (typeof bgpEvery==="function"?bgpEvery:setInterval)(()=>{try{if(CLK.el&&CLK.el.isConnected&&!document.hidden)clkPaint()}catch(e){}},30000);
   document.addEventListener("visibilitychange",()=>{try{if(!document.hidden&&CLK.el&&CLK.el.isConnected)clkPaint()}catch(e){}})}
 /* 千秋穿梭過場一開始就算在船上（音樂淡下去）；過場完換頁時 setTop 會再判斷一次 */
 if(CLK_ON&&typeof qianqiu==="function"){const q0=qianqiu;qianqiu=function(){const r=q0.apply(this,arguments);setTimeout(()=>{try{clkSnd(true);if(CLK.box&&CLK.box.isConnected){CLK.mode="ship";clkMode("ship")}}catch(e){}},0);return r}}
@@ -25794,14 +25803,21 @@ const LD_Q=[["ld01_liubo","戰國・六博與象棋","菎蔽象棋，有六簙�
   ["ld09_nansong","南宋・臨安棋待詔","寧失一子，不失一先。","棋諺"],["ld10_mingpu","明・刻書坊刻棋譜","一著不慎，滿盤皆輸。","俗諺"]];
 function ldShow(ov){const im=ov.querySelectorAll(".ld-img img"),tt=ov.querySelector(".ld-tt"),qt=ov.querySelector(".ld-qt"),sr=ov.querySelector(".ld-src"),Q=ov.querySelector(".ld-q");
   let i=Math.floor(Math.random()*LD_Q.length),k=0;
-  const go=()=>{if(!ov.isConnected)return;const [id,t,q,s]=LD_Q[i%LD_Q.length],a=im[k],b=im[1-k];
+  const go=()=>{if(!ov.isConnected)return;if(bgpHid()){const off=bgpOn(h=>{if(!h){off();go()}});return}const [id,t,q,s]=LD_Q[i%LD_Q.length],a=im[k],b=im[1-k];
     const on=()=>{if(!ov.isConnected)return;a.classList.add("on");b.classList.remove("on");Q.classList.remove("on");setTimeout(()=>{tt.textContent=t;qt.textContent=q;sr.textContent="── "+s;Q.classList.add("on")},350);k=1-k;i++;setTimeout(go,5200)};
     a.onload=on;a.onerror=()=>{i++;setTimeout(go,400)};a.src="data/loading/"+id+".webp"};go()}
 /* 回饋 845（開發者 11/9 選：折衷先載）：開 App 只先載「進首頁和第一盤棋需要的」——preload.json 每一項第四格是層級（0＝首批；"<朝代>"＝目前在那一朝才算首批；1＝背景，
    由 xiangqi-lab/tools/preload-list.js 照資料夾規則算），載完就進首頁。其餘在背景慢慢下載：下棋時、App 在背景時、某一頁正在等圖時都暫停，頂端一條細線顯示進度。
    玩家走進一頁而那頁要的圖還沒下載到（preload.json 的 pages 規則＋目前朝代的首批）：只為那一頁蓋水墨暈開的等待畫面，優先下載，好了才進（preGate，02-shell.js 的 route() 呼叫）。
    舊玩家全部載過的照舊不重下；換過內容（指紋不同）的檔還沒換新前，記錄裡留舊指紋，下次開 App 或走進用到它的頁之前一定先換新。 */
-const PRE={M:null,c:null,pend:new Map(),fly:new Map(),PH:{},NH:{},got:0,first:false,bgN:0,bgT:0,bgTotal:0,bgGot0:0,gate:null,pass:null};
+/* 評比第 17、18 輪第 5 項（開發者 11/14 選「背景暫停與按需預載」）：
+   ① 切到背景（00-util bgpHid／bgpOn）：預載佇列整個停、正在下載的背景檔中斷（不算失敗、不重試計數），回前景從還沒下載完的接著，下載好的不再下載。
+   ② 按需：首批照舊；preload.json 第四格 "z:<分區>"（黑洞觀星臺 bh、西市 xm…，preload-list.js 的 ZONES）和別的朝代的檔「先不下載」，
+      第一次走進那一區（preload.json 的 zones[分區].pages）或換到那個朝代時，才由 preGate 的水墨等待畫面下載；進過的分區記在 preZ，之後在背景補齊。
+   ③ 其餘選讀（目前朝代的園子四季、古戰場、關卡圖、真實 3D…）只在 App 在前景、首批好了 30 秒以後、玩家 4 秒沒動、不是省流量（saveData、2G／3G）時慢慢補（一次最多 2 個）；
+      背景下載沒有東西可做就整個停下，不再每 5 秒輪詢，等回前景、換頁、連上網路、網路型態改變、等待畫面收掉時才再看 */
+const PRE={M:null,c:null,pend:new Map(),fly:new Map(),ac:new Map(),PH:{},NH:{},got:0,first:false,bgN:0,bgT:0,bgTotal:0,bgGot0:0,gate:null,pass:null,zOpen:null,firstAt:0,inAt:0};
+const PRE_IDLE_WAIT=30000,PRE_IDLE_IN=4000;   /* 首批好了 30 秒後、玩家 4 秒沒碰畫面才開始補選讀 */
 let PRE_FIRST_OK=()=>{};window.PRE_FIRST=new Promise(r=>{PRE_FIRST_OK=r});   /* 回饋 845：首批好了（或根本不用下載）才開始抓引擎、大師對局這些大檔（02-shell.js），不跟首批搶網路 */
 const PRE_ERAS=["classic","qin","han","sanguo","weijin","nanbei","sui","tang","wudai","song","yuan","ming","qing"],PRE_ERA_RE=new RegExp("[/_.]("+PRE_ERAS.join("|")+")([/_.-]|$)");
 const preEraOf=u=>{const m=PRE_ERA_RE.exec(u);return m?m[1]:null};
@@ -25810,6 +25826,17 @@ const preIsFirst=(x,e)=>preFirstOf(x.t,e)||x.u==="data/tripo_app/"+store.get("pC
 const PRE_PLAY=/^#\/(cpu|arena|pvp|qqev|journey\/play|redo\/play|canju\/.|battle\/[^/]+\/.|ship\/(lv|pz)|shelf\/[^/]+\/[^/]+\/game)/;   /* 正在下棋的頁：背景下載暫停，確保對局不卡 */
 const PRE_LATE=/^data\/(battles|relics|tripo_app|qa|inkfx)\//;   /* 背景裡最後才抓的大宗（古戰場、珍品、真實 3D…）；故事插圖、人物比較常一進來就看，排前面 */
 const preAbs=u=>new URL(u,new URL(".",location.href).href).href;
+/* 省流量：瀏覽器說要省數據（saveData）或連線是 2G／3G 時，選讀內容一律不補 */
+function preThrift(){const c=navigator.connection;return!!(c&&(c.saveData||/^(slow-2g|2g|3g)$/.test(c.effectiveType||"")))}
+const preZoneOf=x=>typeof x.t==="string"&&x.t.slice(0,2)==="z:"?x.t.slice(2):null;
+function preZOpen(){if(!PRE.zOpen){let a=[];try{a=store.get("preZ",[])}catch(e){}PRE.zOpen=new Set(Array.isArray(a)?a:[])}return PRE.zOpen}
+/* 背景能不能補這個檔（pc＝玩家自己的真實 3D 模型網址，迴圈裡先算好傳進來）：0＝必要（目前朝代的首批、進過的分區，前景就補）、1＝選讀（前景＋閒置＋不省流量才補）、-1＝先不下載（別的朝代、還沒進過的分區：走進去時 preGate 才下載） */
+function preKind(x,e,pc){if(preFirstOf(x.t,e)||x.u===(pc||"data/tripo_app/"+store.get("pChar","")+".glb"))return 0;const z=preZoneOf(x);if(z)return preZOpen().has(z)?0:-1;const r=preEraOf(x.u);return r&&r!==e?-1:1}
+/* 現在能不能補選讀：ok＝可以；不行時 d＝還要等幾毫秒（只有「首批剛好、玩家剛動過」這種等時間的才有，其他要等事件，d＝0） */
+function preOpt(){if(bgpHid()||!navigator.onLine||PRE.gate||PRE_PLAY.test(location.hash)||preThrift()||window.PRE_ENG||(PRE.M&&!PRE.firstAt))return{ok:false,d:0};
+  const now=Date.now(),d=Math.max(0,PRE.firstAt+PRE_IDLE_WAIT-now,PRE.inAt+PRE_IDLE_IN-now);return{ok:!d,d}}
+/* 給 02-shell.js 的選讀大檔（大師對局、各朝外觀預覽）：等到可以補選讀才往下；在背景不輪詢，回前景再看 */
+function preOptWait(){return new Promise(ok=>{const f=()=>{const o=preOpt();if(o.ok)return ok();if(bgpHid()){const off=bgpOn(h=>{if(!h){off();f()}});return}setTimeout(f,o.d||15000)};f()})}
 function preSaveH(now){clearTimeout(PRE.hT);const go=()=>{if(!PRE.M)return;const o={};for(const u in PRE.NH){if(PRE.pend.has(u)){if(PRE.PH[u])o[u]=PRE.PH[u]}else o[u]=PRE.NH[u]}
     store.set("preH",o);if(!PRE.pend.size)store.set(PRE_KEY,PRE.M.v)};   /* 還沒換新的檔留舊指紋，下次才知道還要重抓 */
   if(now)go();else PRE.hT=setTimeout(go,3000)}
@@ -25817,25 +25844,39 @@ function preSaveH(now){clearTimeout(PRE.hT);const go=()=>{if(!PRE.M)return;const
 async function preFont(x){const m=x.fr&&/^data\/fonts\/xq-(\w+)\.woff2$/.exec(x.u);if(!m||!window.FontFace)return;
   try{const r=await PRE.c.match(preAbs(x.u));if(!r)return;const ff=new FontFace("XQ "+m[1],await r.arrayBuffer(),{display:"swap"});await ff.load();document.fonts.add(ff)}catch(e){}}
 /* 意見回饋 605：請求帶 ?pre=1 讓 service worker 放行，只由這裡存一次；每個請求有逾時（20 秒＋每 MB 10 秒）。同一個檔同時只下載一次（背景和等待畫面共用） */
-function preGet(x){if(PRE.fly.has(x.u))return PRE.fly.get(x.u);const ac=new AbortController(),to=setTimeout(()=>ac.abort(),20000+x.sz/1048576*10000);
+function preGet(x){if(PRE.fly.has(x.u))return PRE.fly.get(x.u);const ac=new AbortController(),to=setTimeout(()=>ac.abort(),20000+x.sz/1048576*10000);PRE.ac.set(x.u,ac);
   const p=fetch(preAbs(x.u)+"?pre=1"+(x.fr?"&fresh="+x.h:""),{cache:x.fr?"no-store":"default",signal:ac.signal}).then(r=>{if(!r.ok)throw new Error(r.status);return PRE.c.put(preAbs(x.u),r)})
-    .then(()=>{if(PRE.pend.get(x.u)===x){PRE.pend.delete(x.u);PRE.got+=x.sz}preFont(x);preSaveH()},e=>{x.tries=(x.tries||0)+1;x.wait=Date.now()+30000;throw e})
-    .finally(()=>{clearTimeout(to);PRE.fly.delete(x.u)});
+    .then(()=>{if(PRE.pend.get(x.u)===x){PRE.pend.delete(x.u);PRE.got+=x.sz}preFont(x);preSaveH()},e=>{if(ac.bgAb){const b=new Error("bg");b.bgAb=true;throw b}x.tries=(x.tries||0)+1;x.wait=Date.now()+30000;throw e})   /* 切到背景中斷的不算失敗 */
+    .finally(()=>{clearTimeout(to);PRE.fly.delete(x.u);if(PRE.ac.get(x.u)===ac)PRE.ac.delete(x.u)});
   PRE.fly.set(x.u,p);return p}
-const prePool=(list,MAXN,MAXB,onDone)=>new Promise(ok=>{let n=0,b=0;const L=list.slice();const next=()=>{if(!L.length&&!n)return ok();
-  while(L.length&&n<MAXN&&(n===0||b+L[0].sz<=MAXB)){const x=L.shift();n++;b+=x.sz;preGet(x).then(()=>onDone(x,true),()=>onDone(x,false)).finally(()=>{n--;b-=x.sz;next()})}};next()});
-/* 背景下載：一次最多 4 個（不搶正在玩的網路），目前朝代的先，古戰場、關卡圖這些大宗最後；失敗的 30 秒後再試，最多三次 */
-function preBg(){const kick=d=>{clearTimeout(PRE.bgT);PRE.bgT=setTimeout(tick,d)};
-  const tick=()=>{PRE.bgT=0;preLine();if(!PRE.pend.size){preSaveH(true);return}
-    if(document.hidden||!navigator.onLine||PRE.gate||PRE_PLAY.test(location.hash))return kick(2000);
-    const e=store.get("era","classic"),now=Date.now();let left=false;
+/* 一批一起下載（首批、等待畫面）：在背景時不開新的下載，回前景再接著；切到背景被中斷的檔放回佇列最前面 */
+const prePool=(list,MAXN,MAXB,onDone)=>new Promise(ok=>{let n=0,b=0,w=null;const L=list.slice();const next=()=>{if(!L.length&&!n)return ok();
+  if(bgpHid()){if(!w)w=bgpOn(h=>{if(h)return;const f=w;w=null;f();next()});return}
+  while(L.length&&n<MAXN&&(n===0||b+L[0].sz<=MAXB)){const x=L.shift();n++;b+=x.sz;preGet(x).then(()=>onDone(x,true),er=>{if(er&&er.bgAb)L.unshift(x);else onDone(x,false)}).finally(()=>{n--;b-=x.sz;next()})}};next()});
+/* 切到背景：背景下載整個停、正在下載的中斷（記錄先存）；回前景接著補 */
+bgpOn(h=>{if(h){clearTimeout(PRE.bgT);PRE.bgT=0;for(const ac of PRE.ac.values()){ac.bgAb=true;try{ac.abort()}catch(e){}}if(PRE.M)preSaveH(true)}else if(PRE.bgKick)PRE.bgKick(800)});
+/* 背景下載：必要的（目前朝代首批、進過的分區）一次最多 4 個，選讀的最多 2 個而且要閒置；目前朝代的先，古戰場、關卡圖這些大宗最後；失敗的 30 秒後再試，最多三次。
+   沒有能做的就停下（不輪詢），等 bgKick：回前景、換頁、連上網路、網路型態改變、等待畫面收掉、引擎下載完 */
+function preBg(){const kick=d=>{clearTimeout(PRE.bgT);PRE.bgT=0;if(!bgpHid())PRE.bgT=setTimeout(tick,d)};
+  const tick=()=>{PRE.bgT=0;if(!PRE.pend.size){preLine();preSaveH(true);return}
+    if(bgpHid()||!navigator.onLine||PRE.gate||PRE_PLAY.test(location.hash)){preLine();return}
+    const e=store.get("era","classic"),now=Date.now(),O=preOpt(),pc="data/tripo_app/"+store.get("pChar","")+".glb";let wait=0,rest=0;
     const MAXN=window.PRE_ENG?1:4;   /* 引擎（49 MB，下棋要用）下載中：外觀只留 1 個，讓引擎先到 */
-    while(PRE.bgN<MAXN){let best=null,br=9;for(const x of PRE.pend.values()){if((x.tries||0)>=3)continue;left=true;if(PRE.fly.has(x.u)||x.wait>now)continue;
-        const r=(preEraOf(x.u)===e?0:2)+(PRE_LATE.test(x.u)?1:0);if(r<br){br=r;best=x;if(!r)break}}
-      if(!best)break;PRE.bgN++;preGet(best).catch(()=>{}).finally(()=>{PRE.bgN--;kick(30)})}
-    if(!left&&!PRE.bgN){preSaveH(true);preLine();return}   /* 剩下的都失敗三次：先停，下次開 App 再補 */
-    kick(5000)};
+    while(PRE.bgN<MAXN){let best=null,br=99;rest=0;
+      for(const x of PRE.pend.values()){if((x.tries||0)>=3)continue;const k=preKind(x,e,pc);if(k<0)continue;rest+=x.sz;if(PRE.fly.has(x.u))continue;
+        if(x.wait>now){wait=wait?Math.min(wait,x.wait-now):x.wait-now;continue}
+        if(k===1&&(!O.ok||PRE.bgOpt>=2))continue;
+        const r=k*4+(preEraOf(x.u)===e?0:2)+(PRE_LATE.test(x.u)?1:0);if(r<br){br=r;best=x;if(!r)break}}
+      if(!best)break;const opt=preKind(best,e,pc)===1;PRE.bgN++;if(opt)PRE.bgOpt=(PRE.bgOpt||0)+1;
+      preGet(best).catch(()=>{}).finally(()=>{PRE.bgN--;if(opt)PRE.bgOpt--;kick(opt?600:30)})}   /* 選讀慢慢補：每個檔之間隔一下 */
+    PRE.bgRest=rest;preLine();
+    if(PRE.bgN)return;   /* 有在下載：下載完會再叫 */
+    if(!rest){preSaveH(true);return}   /* 剩下的都是先不下載的（別的朝代、沒進過的分區）或失敗三次的：先停 */
+    const d=Math.max(wait,O.ok?0:O.d);if(d)kick(d+50)};   /* 只剩等時間的（重試、閒置）才排下一次；其他等事件 */
   PRE.bgKick=kick;kick(0)}
+addEventListener("hashchange",()=>{if(PRE.bgKick&&!PRE.bgT)PRE.bgKick(1500)});addEventListener("online",()=>{if(PRE.bgKick)PRE.bgKick(1000)});
+try{const c=navigator.connection;if(c&&c.addEventListener)c.addEventListener("change",()=>{if(PRE.bgKick)PRE.bgKick(1000)})}catch(e){}
+for(const t of["pointerdown","keydown","wheel"])addEventListener(t,()=>{PRE.inAt=Date.now()},{capture:true,passive:true});
 /* 頂端一條細線＝背景下載進度（下棋時不顯示）；關於頁要顯示「已下載 X／全部 Y」可以用 preStat() */
 /* 11/11 ChatGPT 介面報告 P1（story/99_ChatGPT介面報告處理.md）：開 App 的全頁等待畫面只講「正在準備棋盤」＋開局必要資源（首批 first：preload.json 第四格 0／目前朝代）的實際進度；
    背景下載的檔數、容量移到「設定 → 關於」（preStatRow）；從教練作業連結（#/hw…）進來的，等待畫面結束後確定還在那份作業（preBackTo）。
@@ -25846,15 +25887,18 @@ function preUi(o){o=o||{};const main="正在準備棋盤";if(o.phase==="check")r
 /* 可以操作了＝全頁等待畫面該收掉：沒有清單（離線、舊瀏覽器）、首批都到了、或玩家按了「先進去逛」 */
 const preCanPlay=o=>!!(o&&(o.noList||o.skip||!(+o.firstLeft>0)));
 /* 背景下載狀態（設定 → 關於）：S＝preStat() */
-function preBgText(S){if(!S)return"";if(!S.left)return"全部下載好了";return"還有 "+S.left+" 個檔在背景下載（約 "+Math.max(1,Math.round((+S.leftBytes||0)/1048576))+" MB）"}
+function preBgText(S){if(!S)return"";if(!S.left)return S.later?"常用的都下載好了；其他朝代、西市、觀星臺第一次去時才下載":"全部下載好了";return(S.thrift?"省流量中：還有 "+S.left+" 個檔暫停下載":"還有 "+S.left+" 個檔在背景下載")+"（約 "+Math.max(1,Math.round((+S.leftBytes||0)/1048576))+" MB）"}
 function preStatRow(){let S=null;try{S=preStat()}catch(e){}const t=preBgText(S);return t?`<div class="row" style="justify-content:space-between;gap:8px"><span class="muted">背景下載</span><b style="text-align:right">${t}</b></div>`:""}
 /* 開 App 時的網址是教練作業（#/hw、#/hw/<編碼>…），等待畫面收掉時網址被換掉了就回去 */
 const preBackTo=(h0,now)=>/^#\/(hw|daily)(\/|$)/.test(String(h0||""))&&now!==h0?h0:null;
-function preStat(){const M=PRE.M;if(!M)return null;let lb=0;for(const x of PRE.pend.values())lb+=x.sz;return{n:M.items.length-PRE.pend.size,all:M.items.length,left:PRE.pend.size,leftBytes:lb,bytes:M.items.reduce((t,x)=>t+x[1],0)}}
-function preLine(){let el=document.getElementById("preline");const on=PRE.first&&PRE.pend.size&&PRE.bgTotal&&!PRE_PLAY.test(location.hash)&&!PRE.gate;
+function preStat(){const M=PRE.M;if(!M)return null;const e=store.get("era","classic"),pc="data/tripo_app/"+store.get("pChar","")+".glb";let lb=0,left=0,later=0,laterBytes=0;
+  for(const x of PRE.pend.values()){if(preKind(x,e,pc)<0){later++;laterBytes+=x.sz}else{left++;lb+=x.sz}}   /* later＝先不下載的（別的朝代、沒進過的分區） */
+  return{n:M.items.length-PRE.pend.size,all:M.items.length,left,leftBytes:lb,later,laterBytes,thrift:preThrift(),bytes:M.items.reduce((t,x)=>t+x[1],0)}}
+function preLine(){let el=document.getElementById("preline");const done=Math.max(0,PRE.got-PRE.bgGot0),rest=+PRE.bgRest||0;
+  const on=PRE.first&&PRE.pend.size&&PRE.bgN>0&&rest>0&&!PRE_PLAY.test(location.hash)&&!PRE.gate&&!bgpHid();   /* 評比第 17、18 輪第 5 項：只在真的有在背景下載時顯示；分母＝已補的＋還能補的（先不下載的不算） */
   if(!on){if(el)el.remove();return}
   if(!el){el=document.createElement("div");el.id="preline";el.setAttribute("aria-hidden","true");el.innerHTML="<i></i>";document.body.append(el)}
-  el.firstChild.style.width=Math.max(2,Math.min(100,(PRE.got-PRE.bgGot0)*100/PRE.bgTotal)).toFixed(1)+"%"}
+  el.firstChild.style.width=Math.max(2,Math.min(100,done*100/(done+rest))).toFixed(1)+"%"}
 function preCss(){if(document.getElementById("precss"))return;const s=document.createElement("style");s.id="precss";
   s.textContent=`#preline{position:fixed;left:0;right:0;top:var(--safeT,0px);height:2px;z-index:9000;pointer-events:none;background:rgba(255,240,210,.08)}#preline i{display:block;height:100%;width:0;background:rgba(222,186,120,.75);transition:width .6s}
 #pgate{position:fixed;inset:0;z-index:9998;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:14px;background:#F3ECDD;transition:opacity .35s;overflow:hidden}#pgate.out{opacity:0;pointer-events:none}
@@ -25866,7 +25910,10 @@ function preCss(){if(document.getElementById("precss"))return;const s=document.c
 /* 走進一頁要先有的檔：preload.json 的 pages 規則（{e}＝目前朝代、{1}＝網址第二段）＋目前朝代的首批（玩家換了朝代時，新朝代的棋盤、圖示還沒到） */
 function preNeed(p){if(!PRE.M||!PRE.pend.size)return[];const P=PRE.M.pages||{},e=store.get("era","classic"),k1=p[0]||"",k2=p.slice(0,2).join("/"),now=Date.now();
   const a1=String(p[1]||"").replace(/[^\w-]/g,""),pats=[...(P[k2]||[]),...(k2!==k1?P[k1]||[]:[])].map(s=>{try{return new RegExp(s.split("{e}").join(e).split("{1}").join(a1))}catch(x){return null}}).filter(Boolean);
-  const out=[];for(const x of PRE.pend.values()){if((x.tries||0)>=3||x.wait>now)continue;if(preIsFirst(x,e)||pats.some(r=>r.test(x.u)))out.push(x)}return out}
+  /* 評比第 17、18 輪第 5 項：走進某個分區的頁（preload.json zones[分區].pages 有這頁的鍵）＝第一次進那一區：整區一起下載，記在 preZ，之後在背景補齊 */
+  const Z=PRE.M.zones||{},zs=Object.keys(Z).filter(z=>Array.isArray(Z[z]&&Z[z].pages)&&Z[z].pages.some(k=>k===k1||k===k2));
+  if(zs.length){const o=preZOpen();let ch=false;for(const z of zs)if(!o.has(z)){o.add(z);ch=true}if(ch)try{store.set("preZ",[...o])}catch(x){}}
+  const out=[];for(const x of PRE.pend.values()){if((x.tries||0)>=3||x.wait>now)continue;if(preIsFirst(x,e)||pats.some(r=>r.test(x.u))||zs.length&&zs.includes(preZoneOf(x)))out.push(x)}return out}
 function preGateOff(){PRE.gate=null;const g=document.getElementById("pgate");if(g&&!g.classList.contains("out")){g.classList.add("out");setTimeout(()=>{if(g.classList.contains("out"))g.remove()},400)}if(PRE.bgKick)PRE.bgKick(300)}
 /* 02-shell.js route() 一開始呼叫：這頁的圖都在了就回 false（照常畫）；還缺就蓋等待畫面、優先下載，好了再 route() 一次，回 true */
 function preGate(p){try{const h0=location.hash;
@@ -25892,7 +25939,7 @@ async function preloadAll(){if(!OFF||!("caches" in window))return PRE_FIRST_OK()
   let ov=null,bar=null,txt=null;const ovMake=()=>{ov=document.createElement("div");ov.id="preov";keepAwake("preload",()=>!!document.getElementById("preov"));
     ov.innerHTML=`<div class="ld-img"><img alt=""><img alt=""></div><div class="ld-q"><div class="ld-tt"></div><div class="ld-qt"></div><div class="ld-src"></div></div>
       <div class="pre-in"><div class="pre-t">象棋千秋</div><div class="pre-s">${preUi({phase:"check"}).main}</div>
-      <div class="pre-bar"><i></i></div><div class="pre-n" role="status">${preUi({phase:"check"}).sub}</div><div class="pre-h">準備好就能下棋；其他朝代和故事的圖之後在背景下載，進度在「設定 → 關於」。</div><button class="pre-skip" type="button" hidden>先進去逛（背景繼續下載）</button></div>`;
+      <div class="pre-bar"><i></i></div><div class="pre-n" role="status">${preUi({phase:"check"}).sub}</div><div class="pre-h">準備好就能下棋；其他朝代、西市、觀星臺的圖第一次去時才下載，其餘之後慢慢補，進度在「設定 → 關於」。</div><button class="pre-skip" type="button" hidden>先進去逛（背景繼續下載）</button></div>`;
     let dk=false;try{dk=!!sessionStorage.getItem("xqDarkLoad");if(dk)sessionStorage.removeItem("xqDarkLoad")}catch(e){}   /* 11/12 開發者 iPhone 17 Pro Max 實機錄影：舊玩家開新旅程，選角後會重開一次，原本跳出米白載入頁很突兀；改成跟開場電影一樣的星空底 */
     if(dk){ov.classList.add("pv-dark");const s=ov.querySelector(".pre-s");if(s)s.textContent="星槎靠岸中…"}
     document.body.append(ov);bar=ov.querySelector(".pre-bar i");txt=ov.querySelector(".pre-n");if(!dk)ldShow(ov);
@@ -25919,7 +25966,7 @@ async function preloadAll(){if(!OFF||!("caches" in window))return PRE_FIRST_OK()
   const show=()=>{if(!ov)return;const U=preUi({phase:"load",n:first.length,total,got});if(U.done){txt.textContent=U.sub;bar.style.width="100%";const o=ov;ov=null;setTimeout(()=>{o.classList.add("out");setTimeout(()=>o.remove(),400);preEnd()},250);return}if(U.pct!=null)bar.style.width=U.pct+"%";txt.textContent=U.sub};show();
   /* 意見回饋 605（網路專家實測）：GitHub Pages 是 HTTP/2，首批最多同時 24 個、傳輸中不超過約 6 MB */
   await prePool(first,24,6*1048576,x=>{got+=x.sz;show()});
-  window.__preFirstMs=Math.round(performance.now());   /* 首批花多久（量測用） */
+  window.__preFirstMs=Math.round(performance.now());PRE.firstAt=Date.now();   /* 首批花多久（量測用）；選讀從這之後 30 秒才開始補 */
   PRE.first=true;PRE_FIRST_OK();preSaveH(true);preCss();
   if(ov){txt.textContent=preUi({phase:"done"}).sub;setTimeout(()=>{if(ov){ov.classList.add("out");setTimeout(()=>ov&&ov.remove(),400)}preEnd()},250)}
   PRE.bgGot0=PRE.got;for(const x of PRE.pend.values())PRE.bgTotal+=x.sz;
@@ -27037,6 +27084,8 @@ function hwReport(code,H,labels,name){const R=hwRec(code),N=H.items.length,X=H.i
   H.items.forEach((it,i)=>L.push((i+1)+". "+((labels&&labels[i])||(it.k==="c"?"殘局 ":"主題題 ")+it.id)+"："+hwResTxt(X[i])));
   L.push("（象棋千秋・作業代碼 "+code.slice(0,12)+(code.length>12?"…":"")+"）","教練在 App「🧑‍🏫 教練作業 → 收成績」貼上整段就能彙整（下面這行有校驗碼，請不要改）：",hwSign(code,H,name));return L.join("\n")}
 /* 每題的名稱（殘局：題型〈出處〉；主題訓練：題名＋主題） */
+/* Preserve classical study titles while translating their UI category separately. */
+function hwLabelHTML(label){const s=String(label||""),i=s.indexOf("〈");return i<0?esc(s):`<span>${esc(s.slice(0,i))}</span><span data-noi18n>${esc(s.slice(i))}</span>`}
 async function hwLabels(H){const out=H.items.map(x=>(x.k==="c"?"殘局 ":"主題題 ")+x.id);let CD=null,QD=null;
   if(H.items.some(x=>x.k==="c"))CD=await cjData().catch(()=>null);if(H.items.some(x=>x.k==="q"))QD=await api("/quiz/data").catch(()=>null);
   H.items.forEach((x,i)=>{if(x.k==="c"&&CD&&CD.byId[x.id]){const P=CD.byId[x.id];out[i]="殘局・"+P.t+"〈"+((P.src||{}).title||x.id)+"〉"}
@@ -27166,7 +27215,7 @@ function HwMake(v){setTop("🧑‍🏫 教練作業","#/canju");if(typeof setTab
         ${thRow}
         <div class="muted" style="font-size:13px">${Dr.th&&TV.mode!=="open"?"":P.length+" 題・"}由易到難・點題卡加入或取消</div>
         <div class="items hw-cards" style="padding:0">${P.slice(0,Dr.lim).map(x=>{const on=has(x.k,x.id),key=x.k+":"+x.id,did="hwd-"+x.k+"-"+x.id;
-          return`<button type="button" class="item hw-card${on?" on":""}" data-add="${esc(key)}" data-fk="add:${esc(key)}" aria-pressed="${on}" aria-label="${esc(x.name)}，${on?"已加入":"未加入"}" aria-describedby="${esc(did)}${x.tags.length?" "+esc(did)+"-t":""}"><span class="lb" aria-hidden="true">${on?"✓":"＋"}</span><span class="tx"><b>${esc(x.name)}</b><span id="${esc(did)}">${esc(x.sub)}</span>${x.tags.length?`<span class="hw-tg" id="${esc(did)}-t">${esc(x.tags.join("、"))}</span>`:""}</span></button>`}).join("")}</div>
+          return`<button type="button" class="item hw-card${on?" on":""}" data-add="${esc(key)}" data-fk="add:${esc(key)}" aria-pressed="${on}" aria-label="${esc(x.name)}，${on?"已加入":"未加入"}" aria-describedby="${esc(did)}${x.tags.length?" "+esc(did)+"-t":""}"><span class="lb" aria-hidden="true">${on?"✓":"＋"}</span><span class="tx"><b data-noi18n>${esc(x.name)}</b><span id="${esc(did)}">${x.sub.split(" · ").map(t=>`<span${/^《.*》$/.test(t)?" data-noi18n":""}>${esc(t)}</span>`).join(" · ")}</span>${x.tags.length?`<span class="hw-tg" id="${esc(did)}-t">${esc(x.tags.join("、"))}</span>`:""}</span></button>`}).join("")}</div>
         ${P.length>Dr.lim?`<button class="btn ghost" id="hwMore" data-fk="more">再顯示 40 題（還有 ${P.length-Dr.lim} 題）</button>`:""}
         ${N?`<div class="hw-bar"><button type="button" class="btn ghost" id="hwSeeSel" data-fk="see">查看已選（${N}）・排序與產生連結</button></div>`:""}`;
       v.scrollTop=y;
@@ -27521,7 +27570,7 @@ function HwGrade(v){setTop("🧑‍🏫 教練作業","#/canju");if(typeof setTa
     const recs=Object.values(A[cur].st||{}),T=hwGradeTab(recs,H,labels[cur]),cls={first:"first",late:"late",ans:"ans",no:"no"};
     box.innerHTML=`<div class="card"><b>🧑‍🏫 ${esc(T.title)}</b><div class="muted" style="font-size:13px">${T.students.length} 位學生・${H.items.length} 題${T.worst.length?"・⚠ 最多人沒一次答對：第 "+T.worst.map(i=>i+1).join("、")+" 題（"+T.rows[T.worst[0]].wrong+" 人）":""}</div>
       <div class="hw-tw" style="margin-top:8px"><table class="hw-tab"><thead><tr><th>題目</th>${T.students.map((n,k)=>`<th>${esc(n)}<small>${esc(T.dates[k])}</small></th>`).join("")}<th>沒一次答對</th></tr></thead><tbody>
-        ${T.rows.map(r=>`<tr class="${T.worst.includes(r.i)?"worst":""}"><td>${r.i+1}. ${esc(r.label)}${T.worst.includes(r.i)?" ⚠":""}</td>${r.cells.map(c=>`<td class="${cls[c.k]}">${c.k==="first"?"✅ 一次對":c.k==="late"?"✔ 第 "+c.n+" 次":c.k==="ans"?"👁 看答案":esc(c.t)}${c.s!=null?`<small>${hwTime(c.s*1000)}</small>`:""}${c.c&&(hwBad(c.c.k)||c.c.k==="slow")?`<small>${esc(c.c.t)}</small>`:""}</td>`).join("")}<td><b>${r.wrong}</b>${r.undone?`<small>沒做 ${r.undone}</small>`:""}</td></tr>`).join("")}
+        ${T.rows.map(r=>`<tr class="${T.worst.includes(r.i)?"worst":""}"><td>${r.i+1}. ${hwLabelHTML(r.label)}${T.worst.includes(r.i)?" ⚠":""}</td>${r.cells.map(c=>`<td class="${cls[c.k]}">${c.k==="first"?"✅ 一次對":c.k==="late"?"✔ 第 "+c.n+" 次":c.k==="ans"?"👁 看答案":esc(c.t)}${c.s!=null?`<small>${hwTime(c.s*1000)}</small>`:""}${c.c&&(hwBad(c.c.k)||c.c.k==="slow")?`<small>${esc(c.c.t)}</small>`:""}</td>`).join("")}<td><b>${r.wrong}</b>${r.undone?`<small>沒做 ${r.undone}</small>`:""}</td></tr>`).join("")}
         <tr><td>完成</td>${T.tot.map(t=>`<td>${t.done}／${H.items.length}</td>`).join("")}<td></td></tr><tr><td>第一次就答對</td>${T.tot.map(t=>`<td>${t.first}</td>`).join("")}<td></td></tr>
         <tr><td>看答案</td>${T.tot.map(t=>`<td>${t.ans}</td>`).join("")}<td></td></tr><tr><td>總用時</td>${T.tot.map(t=>`<td>${hwTime(t.s*1000)}</td>`).join("")}<td></td></tr></tbody></table></div>
       <div class="opt" style="margin:10px 0 0"><button class="on" id="hgCsv">⬇ 匯出 CSV</button><button id="hgCp">📋 複製 CSV</button><button id="hgDel">🗑 清掉這份</button></div>
@@ -28178,7 +28227,7 @@ document.addEventListener("keydown",e=>{if(!axmOn()||e.ctrlKey||e.metaKey||e.alt
   else if(k==="?"||k==="？"){e.preventDefault();axSay(AXM_HELP);try{if(typeof axsHelp==="function")axsHelp()}catch(x){}}});   /* 第 4 輪 P16.5：? 鍵另外開說明卡，裡面有「🧭 空間導覽」（11c-a11ysnd.js） */
 /* 棋鐘：每秒變的字不放 aria-live（會一直念），改成 role=timer；跨過 5 分、1 分、30 秒、10 秒時念一次 */
 /* 第 5 輪 P16.4 文字備援：提示音開著（沒開螢幕報讀模式也一樣）也念；超時改念在 assertive（11c axsAlert） */
-{const last={};setInterval(()=>{if(!(axmOn()||(typeof axsOn==="function"&&axsOn()))||document.hidden)return;for(const[id,w]of[["pBot","你"],["pTop","對手"]]){const c=document.querySelector("#"+id+" .clk");if(!c){delete last[id];continue}
+{const last={};(typeof bgpEvery==="function"?bgpEvery:setInterval)(()=>{if(!(axmOn()||(typeof axsOn==="function"&&axsOn()))||document.hidden)return;for(const[id,w]of[["pBot","你"],["pTop","對手"]]){const c=document.querySelector("#"+id+" .clk");if(!c){delete last[id];continue}
     const s=axmClockSec(c.textContent),say=axmClockSay(last[id],s,w);last[id]=s;if(say){if(s<=0&&typeof axsAlert==="function")axsAlert(say);else axSay(say)}}},1000)}
 /* 對話框：補 role／aria-modal／名字；焦點移進去、Tab 鎖在裡面；關掉後焦點回原處 */
 const AXM_DLG=new Map();let axmN=0;
@@ -28226,7 +28275,7 @@ axmApply();
 if(fzSysOn())try{fzApply()}catch(e){}
 /* 自動提示一次：用 Tab 鍵、系統減少動態效果、強制色彩 */
 function axmAsk(why){if(axmOn()||store.get("axmAsk",0))return;
-  const busy=()=>!!document.querySelector(".modal,#sheet.show,#preov,#bhxPg,#mnfPg,#mnfRite,#xqTitle:not(.out)");   /* 11/14 r17 B4：開了「減少動態效果」6 秒後問，常常蓋在開場／開章電影或標題畫面上（略過鈕點不到）；電影、標題畫面也算忙，播完才問 */
+  const busy=()=>!!document.querySelector(".modal,#sheet.show,#preov,#bhxPg,#mnfPg,#mnfRite,#mnvPg,#mnqCard,#mnqGf,#xqTitle:not(.out)");   /* 電影、對話章節與任務／授印卡播放中，延後詢問，避免覆蓋故事和解題操作。 */
   if(busy()){if((axmAsk.n=(axmAsk.n||0)+1)<60)setTimeout(()=>axmAsk(why),5000);return}   /* 電影可能好幾分鐘：最多等 5 分鐘 */
   store.set("axmAsk",1);const fc=!!(window.matchMedia&&matchMedia("(forced-colors: active)").matches);
   const B=[["♿ 開啟螢幕報讀與鍵盤模式",()=>axmSet(true)]];if(fc&&!axmHct())B.push(["開啟高對比主題",()=>axmHctSet(true),true]);B.push(["先不用",()=>{try{toast("之後可以在設定房間的 🔒 小鎖匣 → ♿ 無障礙打開")}catch(e){}},true]);
@@ -28474,11 +28523,11 @@ function axsWrapEngine(){const X=window.XQEngine;if(!X||X._axs)return;X._axs=1;c
 const AXS_XP="//text()[(contains(.,'載入中') or contains(.,'讀取中') or contains(.,'下載中')) and string-length(normalize-space(.))<=30 and not(ancestor::script) and not(ancestor::style) and not(ancestor::*[@id='axLive']) and not(ancestor::*[@aria-hidden='true'])]";
 function axsDomBusy(){if(document.getElementById("preov"))return"載入";try{const r=document.evaluate(AXS_XP,document.body,null,7,null);
     for(let i=0;i<Math.min(r.snapshotLength,12);i++){const n=r.snapshotItem(i),el=n.parentElement;if(el&&el.getClientRects().length)return/下載中/.test(n.nodeValue)?"下載":"載入"}}catch(e){}return""}
-setInterval(()=>{try{axsWrapEngine()}catch(e){}if(document.hidden)return;
+(typeof bgpEvery==="function"?bgpEvery:setInterval)(()=>{try{axsWrapEngine()}catch(e){}if(document.hidden)return;
   if(axsOn())for(const id of["pBot","pTop"]){const c=document.querySelector("#"+id+" .clk");if(!c){const S=axsSt();delete S.clk[id];continue}
     let s=null;try{s=axmClockSec(c.textContent)}catch(e){}axsClockTick(id,s)}
   if(!axmOn())return;try{axsParkBtn()}catch(e){}},1000);
-setInterval(()=>{if(document.hidden||!axmOn())return;const S=axsSt(),tk=[...S.tasks.values()],dm=tk.length?"":axsDomBusy(),busy=!!(tk.length||dm);
+(typeof bgpEvery==="function"?bgpEvery:setInterval)(()=>{if(document.hidden||!axmOn())return;const S=axsSt(),tk=[...S.tasks.values()],dm=tk.length?"":axsDomBusy(),busy=!!(tk.length||dm);
   const say=axsLoadStep(S.load,busy,Date.now(),tk[0]||dm||"載入");if(say)try{axSay(say)}catch(e){}},400);
 /* ---------- 第 6 輪 F3：設定 → 聲音 的音量分類（四條滑桿、各自靜音、全部靜音）；05-settings 畫完聲音頁叫 sxmMount(v) ----------
    放進聲音頁三張卡片：🔔 棋子聲（#snd）放「全部靜音」＋棋子音效＋提示音＋圖鑑、文件按鈕；🎵 語音報棋（#snd2）放語音；🕯 氛圍（#snd3）放背景音樂與鼓聲。
@@ -28862,7 +28911,7 @@ function nsgTick(){try{nsgKeyHook(window.XQNet);const N=window.XQNet,on=/^#\/pvp
   else nsgBoxOff(P&&P.st==="ok")}catch(e){}}
 /* 對方回來了（或離開這頁）：還開著的「對方沒有回應」視窗收掉 */
 function nsgBoxOff(back){if(NSG.box){try{NSG.box.remove()}catch(e){}NSG.box=null;if(back)try{toast("對方回來了，棋局繼續")}catch(e){}}}
-setInterval(nsgTick,1000);
+(typeof bgpEvery==="function"?bgpEvery:setInterval)(nsgTick,1000);
 /* ================= 🎬 純淨畫面・🙈 老闆鍵・⏸ 中斷恢復（評比循環第 12 輪 F4、X10）=================
    F4 純淨畫面（評比 P38.1、P58.3、P69.4；評審「電競賽事導播」「辦公室摸魚員工」）：
      對局頁（gameLayout 畫的：#view 裡有 #bbox、#acts）右上角多一顆 🎬，點了只留棋盤、雙方名字與棋鐘、著法；
@@ -29165,7 +29214,7 @@ function lhWatch(){const S=lhSt();if(S.obs)return;try{const mo=new MutationObser
   const tb=document.getElementById("topbar"),v=document.getElementById("view");if(tb)mo.observe(tb,{subtree:true,childList:true,attributes:true,attributeFilter:["hidden","class","style"]});
   if(v)mo.observe(v,{childList:true,subtree:true});mo.observe(document.body,{childList:true});S.obs=mo}catch(e){}
   addEventListener("resize",lhKick);addEventListener("hashchange",()=>setTimeout(lhKick,60));document.addEventListener("transitionend",lhKick,true);
-  setInterval(()=>{if(lhOn())lhKick()},1500)}   /* 保險：面板開關（class 變化）不一定觸發上面的監聽 */
+  (typeof bgpEvery==="function"?bgpEvery:setInterval)(()=>{if(lhOn())lhKick()},1500)}   /* 保險：面板開關（class 變化）不一定觸發上面的監聽 */
 /* 滿版面板左下角的「✕ 收起」（按原本那顆 ✕）；只建一次，沒開左撇子模式時 CSS 藏著 */
 function lhPanelFoot(){for(const[ps,xs]of lhPanels())for(const p of document.querySelectorAll(ps)){if(p.querySelector(":scope > .lh-x"))continue;const x=p.querySelector(xs);if(!x)continue;
   const b=document.createElement("button");b.type="button";b.className="lh-x";b.setAttribute("aria-label",x.getAttribute("aria-label")||"收起");
@@ -29513,7 +29562,7 @@ function dqResult(v,k,t){const r=dqRec(k),T=dqStats(t),sl=DQ.SLOT[dqSlot(k)];
      ④ 換語言一律重新載入（跟 zh.js 繁簡切換一樣），預設繁中、不自動切；手機是英文系統只跳一次小提示告訴他設定裡可以選。
      ⑤ 讀螢幕（11b-a11y.js）的每步念法、格子念法換成英文：axmMoveLine／axmCellLabel／axmPcName 在英文時換成這裡的版本（指定，不是重新宣告，不撞名），
         axSay、axsAlert 包一層先翻再念。英文記譜用 WXF（C2.5、H8+7；同一路兩子用 +C.5／-R+1），念法寫成完整英文「Cannon 2 traverses to 5」。
-   不翻：棋子上的字（帥俥傌…照舊）、3D 園子畫布裡的字、劇情與說明文件、角色台詞；這些看 art/docs/i18n.md 的「還沒翻的」。
+   不翻：棋子與印章上的字、3D 園子畫布裡的字、未收錄的劇情與說明文件。第一、二章現有主線與七星星夜茶話會已有英文，範圍見 art/docs/i18n.md。
    不要放進字典的字：隱私、官階、進階（07s2／07s4／07m5 用畫面上的字找段落）、下船、上星槎（07w9）、估計棋力（07y9）、正在對戰（07x3）、取代這支手機（07s4）——I18N_GUARD，測試會檢查。
    ⑥ 第 15 輪 X3（評審 P41.1、P41.2、P42.1、P71.2）：字典擴大到設定說明小字、線上大廳與安全、連線狀態小卡、一盞茶、每日同題、棋譜庫、千秋盃、星槎入口；
       核心流程「鍵值化」：I18N_KEY＋i18nT("鍵","中文")／data-i18n="鍵"（08b 對局頁與結果、05-settings 標題、09b 線上結果、底欄），原文改字也不會失效；
@@ -29529,6 +29578,255 @@ const I18N_NUM={"一":1,"二":2,"三":3,"四":4,"五":5,"六":6,"七":7,"八":8,
 const I18N_MON=["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"];
 /* 字典：鍵＝畫面上的繁中（不含前後圖示、全形驚嘆號問號等，那些 i18nText 會自己處理）；值＝英文 */
 const I18N_EN={
+"正在播放":"Now playing",
+"編鐘":"Bronze bells",
+"排簫":"Panpipes",
+"塤":"Xun",
+"阮":"Ruan",
+"箜篌":"Konghou harp",
+"笛子":"Dizi flute",
+"琵琶":"Pipa",
+"洞簫":"Xiao flute",
+"古琴":"Guqin",
+"馬頭琴":"Morin khuur",
+"三弦":"Sanxian",
+"二胡":"Erhu",
+  "空杯獨弈":"A Solo Game, an Empty Cup",
+  "🧑‍🏫 作業成績：…\n…\nXQHW1.……":"Assignment results: …\n…\nXQHW1.…",
+  "這個作業連結不完整（可能複製時少了一段）。請教練重新傳一次連結。":"This assignment link is incomplete. Ask your coach to send the full link again.",
+  "校驗碼對不上（成績被改過，或複製時少了一段）":"Checksum mismatch (results altered or incompletely copied)",
+"App 每 7 天（或名字、段位改變時）會把你在大廳顯示的名字（用「稱號」就是稱號）、裝置代號（這支手機固定的一組隨機碼）、線上段位、使用時間摘要（總時間和最常待的地方）、App 版本、手機種類和螢幕大小送到開發者的 Google 表單，方便查問題、校正難度；不會送棋譜或存檔。另外會匿名記下你在哪一頁停很久、哪裡點了沒反應、哪個走法看不懂（每次開 App 換一組亂數，不含名字和裝置代號），用來改善不好懂的地方。跟電腦下完一盤，也會匿名送出這盤你每一步的評估分數和評語、總分、電腦級數、你的段位（用 App 自己產生的匿名碼，不含名字、裝置代號、棋譜和存檔），用來校正評分方式。做測驗、殘局、讀譜的對錯和秒數、新手引導走到哪一步、成長曲線，也會匿名送出（不含名字和裝置代號），用來校正題目難度、改善新手引導。卡住的地方保留 90 天，對局評分和學習進度保留一年，過期就刪；關掉開關後，手機裡還沒送出的也一起丟掉。意見回饋和檢舉在處理完後保留一年（有停權的保留到停權結束），玩家登記在最後一次登記後保留一年；線上大廳的戰績摘要 90 天沒更新就清，對局棋譜保留 30 天。你可以用下面的開關關掉；家長關閉線上大廳時也不會送。你按「意見回饋」或「檢舉」時，會另外送出你寫的內容和附的截圖（檢舉還會附對方最近的快捷語）。App 不會用網路位置查你在哪裡；線上大廳要不要顯示城市，由你在下面自己選（預設不顯示；用「稱號」的人一律不顯示）。":"Every 7 days, or when your name or rank changes, the app sends your lobby display name (or title), device ID (a random code fixed to this device), online rank, usage summary (total time and most-used areas), app version, device type and screen size to the developer's Google Form for troubleshooting and difficulty calibration. Game records and saves are not included. Anonymous difficulty signals record long pauses, unresponsive taps and unclear moves, using a new random code each session without your name or device ID. After computer games, anonymous per-move evaluations, comments, overall score, computer level and your rank are sent for scoring calibration; these exclude your name, device ID, game record and save. Anonymous quiz, puzzle and study accuracy, time, tutorial progress and growth curves are sent to improve difficulty and guidance. Difficulty signals expire after 90 days; game evaluations and learning progress after one year. Turning off a switch also discards unsent data. Feedback and reports are kept for one year after resolution (or until a suspension ends); registration for one year after the last submission. Lobby summaries expire after 90 days without updates; game records after 30 days. You can turn these off below; disabling the lobby in parental controls also stops submission. Feedback and reports include your message and attached screenshots; reports also include the other player's recent preset messages. The app does not use network location to locate you. Choose whether to show your city below; it is hidden by default and always hidden for title-only names.",
+"。不含名字、裝置代號、棋譜、存檔。回報問題時，如果你願意，可以按「複製」貼給開發者。從 2026-11-14 開始記。":". It contains no name, device ID, game records or saves. When reporting a problem, you may copy it and share it with the developer. Recording began on 2026-11-14.",
+  "石桌松蔭":"Shade by the Stone Table","古箏":"Guzheng",
+  "只存在這支手機":"Stored only on this device","App 不會自動送出":"The app does not send this automatically",
+  "用過的天數":"Days used","開 App 次數":"App launches","啟動時間（中位數）":"Startup time (median)",
+  "卡頓（長任務）":"Long tasks","圖片載入":"Images loaded","程式載入":"Scripts loaded","資料檔載入":"Data files loaded",
+  "儲存空間":"Storage","最常用的功能":"Most-used features","主場":"Home","複製":"Copy","存成檔案":"Save as file","清除":"Clear",
+  "申請刪除伺服器上的資料？":"Request deletion of server data?","開發者收到後會刪掉":"The developer will delete the following after receiving your request",
+  "意見回饋試算表裡，這支手機送過的意見回饋、檢舉和玩家登記（用裝置代號找）":"Feedback, reports and player registration sent from this device to the feedback spreadsheet (identified by device ID)",
+  "線上大廳伺服器上你的戰績摘要和對局棋譜（上線狀態和戰績摘要，手機現在就先清）":"Your game summary and game records on the lobby server (presence and game summary are cleared from the device now)",
+  "匿名資料（卡住的地方、對局評分、學習進度）沒有名字和裝置代號，對不到你，所以不需要、也沒辦法刪，會照期限自動刪掉。這筆刪除請求本身會留一年，當作處理紀錄。別人手機上存的對局紀錄刪不到。手機裡的進度不會動（要刪請用隱私說明最下面的「刪除這支手機的全部資料」）。送出後也會關掉「📨 送出玩家登記」。":"Anonymous difficulty signals, game evaluations and learning progress contain no name or device ID, so they cannot be linked to you for deletion. They expire automatically. This deletion request is kept for one year as a processing record. Records on other players' devices cannot be deleted. Your local progress stays; to erase it, use Delete all data on this device at the end of the privacy notice. Sending this request also turns off player registration.",
+  "送出申請":"Send request","匯入":"Import","題目":"Puzzle","完成":"Completed","匯出 CSV":"Export CSV","複製 CSV":"Copy CSV",
+  "校驗碼對不上（被改過或沒貼完整）":"Checksum mismatch (altered or incomplete report)",
+  "背景音樂已開始播放，可到設定→聲音調整":"Music is playing. Adjust it in Settings → Sound.",
+  "小帥Q版":"Little General — Chibi",
+  "關掉後定軌力不扣、不會化墨退場回星槎，也沒有「心定則棋穩」修為加成，頂欄和各地點的兩條收起來；星芒照常累積，進黑洞、點亮星圖照樣能用":"When off, Stability is not spent and you will not be sent back to the raft. Its cultivation bonus and both status bars are hidden. Starlight still accumulates and can be used for the Black Hole and star chart.",
+  "怎麼跟":"How to",
+  "互動":"interact",
+  "問":"Ask",
+  "問題":"a question",
+  "目前的官階":"Current official rank",
+  "到「挑戰電腦 → 🥇 晉級賽」贏棋升段，":"Win ranked computer games to advance your chess rank.",
+  "就跟著升官（九品官 → 一品官），官服、頂戴、腰帶都會換":"Your official rank rises from Grade 9 to Grade 1, changing your robe, hat and belt.",
+  "背景音樂與鼓聲":"Music and drums",
+  "朝代古風曲、過場鼓聲":"Dynasty music and transition drums",
+  "換一首":"Next track",
+  "「吃！」「將軍！」":"Capture! / Check!",
+  "音量":"Volume",
+  "全部靜音":"Mute all",
+  "棋子音效":"Piece sounds",
+  "落子、吃子、將軍「鏘」、開局鼓鑼":"Moves, captures, check and opening drums",
+  "提示音":"Audio cues",
+  "聲音方位與動作提示音（🎧 開了才有）":"Position and action cues (headphone mode required)",
+  "音效圖鑑":"Sound guide",
+  "系統・隱私・家長":"System · Privacy · Parents",
+  "聲音方位與動作提示音":"Position and action cues",
+  "以左右聲像提示棋子在第幾路，不同動作不同音色；可先試聽。（現在跟著螢幕報讀模式）":"Stereo position indicates the file; each action has a distinct sound. Try the preview. Currently follows screen reader mode.",
+  "試聽左右":"Preview left / right",
+  "家長與護眼":"Parents and eye breaks",
+  "護眼提醒":"Eye-break reminders",
+  "開（每玩 30 分鐘，看遠方 20 秒）":"On (look into the distance for 20 seconds every 30 minutes)",
+  "每天最多玩":"Daily play limit",
+  "不限制":"No limit",
+  "幾點以後不能玩":"Stop playing after",
+  "今天玩了":"Played today",
+  "開啟兒童模式（家長）":"Enable child mode (parent)",
+  "家長修改":"Parent controls",
+  "兒童模式說明":"About child mode",
+  "大廳安全須知":"Lobby safety",
+  "時間到了，正在下的那盤可以下完，下完就回首頁休息；明天自動重新算。家長答對確認題，可以再加 15 或 30 分鐘。遊玩時間＝App 畫面開著的時間。":"When time is up, finish the current game, then return home for a break. The allowance resets tomorrow. Parents can answer a verification question to add 15 or 30 minutes. Play time counts while the app is visible.",
+  "隱私與資料使用":"Privacy and data use",
+  "我的名字":"My name",
+  "這個名字會顯示在線上大廳和對戰裡。":"This name appears in the online lobby and games.",
+  "難度只管星槎裡的電腦對手和千秋殘局的題目。隨時可以換；已經停靠的站、學會的棋理都不會收回。":"Difficulty affects raft computer opponents and journey puzzles. Change it anytime; visited stops and learned lessons stay unlocked.",
+  "新手～入門1・練子力、一步殺、不漏子":"Beginner to Novice 1 · Pieces, mate in one and avoiding losses",
+  "入局":"First Steps",
+  "破陣":"Breakthrough",
+  "國手":"Master",
+  "千秋":"Qianqiu",
+  "入門2～業1・練2～3 步殺、捉雙、抽將":"Novice 2 to Amateur 1 · Mates in 2–3, forks and checking attacks",
+  "業2～業4・練多步殺、棄子攻殺、基本殘局":"Amateur 2–4 · Longer mates, sacrifices and basic endgames",
+  "業5～業7・練長殺、大師收官、防守妙手":"Amateur 5–7 · Long mating lines, master endgames and defence",
+  "業8 以上・練大師實戰的關鍵著、古譜校錯":"Amateur 8+ · Master decisions and corrections to classical studies",
+  "錯誤":"Bug",
+  "申冤":"Appeal",
+  "建議":"Suggestion",
+  "招諫":"Suggestions box",
+  "延恩":"Appeals box",
+  "寫信":"Write a message",
+  "立軸山水":"Landscape scroll",
+  "青瓷畫缸":"Celadon scroll jar",
+  "筆架和石硯":"Brush rack and inkstone",
+  "太湖石":"Taihu rock",
+  "窗外的竹子":"Bamboo outside",
+  "香几上的油盞":"Oil lamp",
+  "蠟丸":"Wax seals",
+  "薛濤箋":"Letter paper",
+  "收起":"Close",
+  "類型":"Type",
+  "東西壞了":"Something is broken",
+  "想要新功能":"Feature request",
+  "想說的話":"Your message",
+  "內容":"Message",
+  "附件（選填）":"Attachments (optional)",
+  "截圖":"Screenshot",
+  "最多 4 張":"Up to 4 images",
+  "檔案":"File",
+  "程式碼、文字檔":"Code or text files",
+  "聯絡方式（選填）":"Contact (optional)",
+  "蓋印送出":"Seal and send",
+  "會一起附上：你的線上 ID、名字、段位、App 版本、裝置類型和目前畫面，方便找問題。":"Your online ID, name, rank, app version, device type and current screen are included to help diagnose the issue.",
+  "還沒有修正紀錄":"No fixes recorded yet",
+  "請先寫下內容":"Please write a message first.",
+  "貼上學生傳來的成績":"Paste students' results",
+  "學生在作業頁按「📋 複製成績」傳給你的整段文字，可以好幾位一起貼。App 會檢查每份的校驗碼（被改過會標出來）；成績只存在這支手機，不會上傳。":"Paste the full text students send using Copy results. You can paste several reports at once. Checksums flag altered reports; results stay on this device and are not uploaded.",
+  "貼上成績":"Paste results",
+  "沒有找到成績。請貼學生「📋 複製成績」的整段文字（最後一行是 XQHW1. 開頭）。":"No results found. Paste the complete Copy results text; the final line starts with XQHW1.",
+  "還沒有成績。學生做完作業後，請他按「📋 複製成績」把整段傳給你，貼到上面。":"No results yet. Ask students to use Copy results after their assignment, then paste their full report above.",
+  "這份作業的編號壞掉了":"This assignment ID is invalid",
+  "沒一次答對":"Not correct on first attempt",
+  "一次對":"First try",
+  "第一次就答對":"Correct on first attempt",
+  "總用時":"Total time",
+  "清掉這份":"Delete these results",
+  "「沒一次答對」＝第 2 次以後才答對，或看了答案；沒做的另外算。CSV 可以用 Excel、Google 試算表打開。":"Not correct on first attempt means solved after a retry or viewed the answer. Unattempted puzzles are counted separately. Open CSV files in Excel or Google Sheets.",
+  "錯因與弱點":"Attempts and areas to practise",
+  "錯因只看「走錯幾次、用時、有沒有看答案」，不猜學生在想什麼。":"Categories use mistakes, time and answer views only. They do not infer what a student was thinking.",
+  "這份作業大家都一次就對":"Everyone solved this assignment on the first attempt",
+  "這份作業最弱的主題":"Topics needing practice",
+  "學生":"Student",
+  "作業":"Assignment",
+  "題數":"Puzzles",
+  "一次就對":"First-try success",
+  "最弱的主題":"Topics to practise",
+  "想很久":"Long thinking time",
+  "計算不穩":"Calculation needs practice",
+  "多次試錯":"Repeated attempts",
+  "不會解":"Answer viewed",
+  "沒做完":"Unfinished",
+  "一次就對，但超過 3 分鐘：會，還不熟":"Solved first try, but took over 3 minutes; more practice may help.",
+  "第 2～3 次才答對：方向對，算得不夠深或漏看一步":"Solved on attempt 2–3; review the calculation for missed moves.",
+  "第 4 次以後才答對：比較像在猜，建議回頭看這個主題的基本型":"Solved on attempt 4 or later; revisit the basic pattern.",
+  "看了答案：這個主題還沒學會":"The answer was viewed; revisit this topic.",
+  "打開過但沒有答對、也沒看答案":"Opened but not solved; answer not viewed.",
+  "清掉這份作業在這支手機上的所有學生成績？":"Delete all students' results for this assignment on this device?",
+  "校驗碼對不上（可能被改過或沒貼完整），這份不收":"Checksum mismatch. The report may be altered or incomplete; it was not imported.",
+  "教練作業":"Coach assignments","出作業":"Create assignment","收成績":"Collect results",
+  "挑題目組成一份作業":"Choose puzzles for an assignment",
+  "學生打開連結就照順序做；做完畫面會顯示每題第幾次答對、用了多久，可以「複製成績」傳回給你，再到「收成績」彙整。題號都編在網址裡，不需要伺服器，也不收集任何資料。":"Students open the link and solve the puzzles in order. Their results show attempts and time for each puzzle. They can copy their results and send them to you to collect here. Puzzle IDs are stored in the link; no server or data collection is needed.",
+  "從下面點題卡加進來":"Tap puzzle cards below to add them","產生作業連結":"Create assignment link",
+  "主題訓練題":"Tactics practice","選主題":"Choose a theme","由易到難":"Easiest first","點題卡加入或取消":"Tap cards to add or remove",
+  "例如：第 3 週・馬後炮":"Example: Week 3 — Horse and cannon","連將":"Repeated checks","棄子":"Sacrifice",
+  /* ChatGPT: English UI audit, 2026-11-14. */
+  "總覽":"Overview",
+  "課簿・對局紀錄":"Game history",
+  "手卷・我的成長":"My progress",
+  "棋桌・電腦":"Computer games",
+  "紗燈・線上":"Online games",
+  "抽將":"Check and win material",
+  "捉雙":"Fork",
+  "閃擊":"Discovered attack",
+  "牽制":"Pin",
+  "引離":"Deflection",
+  "悶宮":"Smothered mate",
+  "嗨！我是小帥。長按我，可以問我任何象棋問題！":"Hi, I'm Xiaoshuai! Press and hold me to ask a xiangqi question.",
+  "躺著跟你揮揮手":"Waves to you while lying down",
+  "要開「螢幕報讀與鍵盤模式」嗎？":"Turn on screen reader and keyboard mode?",
+  "你的系統開了「減少動態效果」。開了以後下棋用平面棋盤，每一格都念得出來，方向鍵移動、Enter 選子落子，每一步也會念出來，裝飾動畫會關掉。":"Your system has Reduce Motion enabled. This mode uses a flat board, reads each square and move aloud, and turns off decorative animations. Use arrow keys to navigate and Enter to select or move a piece.",
+  "看起來你在用鍵盤操作。開了以後下棋用平面棋盤，每一格都念得出來，方向鍵移動、Enter 選子落子，每一步也會念出來，裝飾動畫會關掉。":"It looks like you are using a keyboard. This mode uses a flat board, reads each square and move aloud, and turns off decorative animations. Use arrow keys to navigate and Enter to select or move a piece.",
+  "你的系統開了強制色彩（高對比）。開了以後下棋用平面棋盤，每一格都念得出來，方向鍵移動、Enter 選子落子，每一步也會念出來，裝飾動畫會關掉。":"Your system has forced colors (high contrast) enabled. This mode uses a flat board, reads each square and move aloud, and turns off decorative animations. Use arrow keys to navigate and Enter to select or move a piece.",
+  "先不用":"Not now",
+  "原本的樣式，可配淺色／深色":"Original style, available in light or dark",
+  "秦・玄黑":"Qin · Black lacquer",
+  "秦尚黑：黑漆、青銅、回紋":"Qin's favored black: lacquer, bronze, and geometric borders",
+  "漢・漆朱":"Han · Red lacquer",
+  "漢代漆器：朱紅配黑、雲氣紋":"Han lacquerware: red and black, with cloud motifs",
+  "三國・烽火":"Three Kingdoms · Beacon fires",
+  "鐵甲、戰旗、赤壁之火":"Iron armor, battle banners, and the fires of Red Cliffs",
+  "魏晉・竹林":"Wei–Jin · Bamboo grove",
+  "竹林七賢：竹青、淡墨":"The Seven Sages: bamboo green and pale ink",
+  "南北朝・石窟":"Northern & Southern Dynasties · Grottoes",
+  "雲岡龍門：砂岩、蓮花、石青":"Yungang and Longmen: sandstone, lotus flowers, and mineral blue",
+  "隋・運河":"Sui · Grand Canal",
+  "大運河：水波、青灰":"The Grand Canal: rippling water and blue-gray",
+  "唐・三彩":"Tang · Three-color glaze",
+  "盛唐：赭紅、金、三彩、寶相花":"High Tang: ochre red, gold, three-color glaze, and floral motifs",
+  "五代・夜宴":"Five Dynasties · Night banquet",
+  "韓熙載夜宴圖：夜色、硃砂、石綠":"The Night Revels of Han Xizai: night tones, cinnabar, and mineral green",
+  "宋・汝窯":"Song · Ru ware",
+  "雨過天青：素雅、冰裂紋":"Sky blue after rain: understated colors and crackled glaze",
+  "元・青花":"Yuan · Blue-and-white porcelain",
+  "青花瓷：鈷藍、白釉、纏枝":"Blue-and-white porcelain: cobalt, white glaze, and scrolling vines",
+  "明・宮牆":"Ming · Palace walls",
+  "紫禁城：紅牆、黃琉璃、萬字紋":"The Forbidden City: red walls, yellow glazed tiles, and interlocking motifs",
+  "清・琺瑯":"Qing · Enamel",
+  "明黃、景泰藍、龍鱗紋":"Imperial yellow, cloisonne, and dragon-scale patterns",
+  "跟著頁面風格":"Match the page style",
+  "立體木紋":"Raised wood",
+  "經典木紋":"Classic wood",
+  "淺色楓木":"Light maple",
+  "青竹":"Green bamboo",
+  "湖水藍":"Lake blue",
+  "石板灰":"Slate gray",
+  "宣紙":"Xuan paper",
+  "紅木":"Rosewood",
+  "大理石":"Marble",
+  "黑金":"Black and gold",
+  "夜間":"Night",
+  "千秋休閒":"Qianqiu casual",
+  "臺灣棋規":"Taiwan rules",
+  "雲河星槎、渡口出現「🌀 立體」按鈕，按了才會詢問「動作與方向」權限；螢幕報讀模式預設不出現（現在跟著螢幕報讀模式）":"Adds a 3D button to the Star Raft and ferry. Motion and orientation permission is requested only when you tap it. Hidden by default in screen reader mode (currently follows that mode).",
+  "省電模式":"Power saving",
+  "3D 園子降一點畫質、停掉飄落葉和晃動，沒在動的時候少畫幾次，舊手機比較不燙、不耗電":"Lowers 3D garden detail, stops falling leaves and swaying, and draws fewer frames while idle to reduce load on older phones.",
+  "自動":"Auto",
+  "目前：還沒進過園子（進園子下一會兒再回來看）":"Status: no garden session yet. Play there briefly, then check again.",
+  "3D 效能量測（10 秒）":"3D performance check (10 seconds)",
+  "畫裡可以點的東西：":"Objects you can explore:",
+  "舢板":"Sampan",
+  "垂柳":"Weeping willow",
+  "青石拱橋":"Stone arch bridge",
+  "石鼓凳":"Drum-shaped stone stool",
+  "千秋松":"Qianqiu pine",
+  "遠山":"Distant mountains",
+  "粉牆黛瓦":"White walls and dark tiles",
+  "船形茶碾":"Boat-shaped tea grinder",
+  "木茶碾":"Wooden tea grinder",
+  "竹夾和竹則":"Bamboo tongs and tea scoop",
+  "生鐵鍑":"Cast-iron cauldron",
+  "陶臼和木杵":"Earthenware mortar and wooden pestle",
+  "長柄瓢":"Long-handled ladle",
+  "陶釜":"Earthenware kettle",
+  "陶風爐":"Earthenware brazier",
+  "白梅和太湖石":"White plum blossoms and Taihu rock",
+  "銅燭台":"Bronze candlestick",
+  "素面圓柱和柱礎":"Plain round pillars and their bases",
+  "直欞欄杆":"Straight-baluster railing",
+  "露明的樑和椽子":"Exposed beams and rafters",
+  "欄杆外的竹和松":"Bamboo and pine beyond the railing",
+  "盡頭敞開的門":"Open door at the far end",
+  "白絹紗燈":"White silk lantern",
+  "白紗燈籠":"White gauze lantern",
+  "素面書案":"Plain writing desk",
+  "廊邊的窗":"Window by the corridor",
+  "羅漢床":"Luohan daybed",
+  "棋盒":"Piece box",
+  "腳踏":"Footstool",
+  "硯台":"Inkstone",
+  "琴桌":"Qin table",
+  "香几":"Incense stand",
+  "燈檠":"Lamp stand",
+  "↩ 掀簾・回雲弈閣":"↩ Back to Play",
+  "↩ 掀簾・回觀星閣":"↩ Back to Play",
   /* 頂欄、底欄、共用按鈕 */
   "象棋千秋":"Xiangqi Qianqiu","首頁":"Home","線上":"Online","棋譜":"Library","設定":"Settings","返回":"Back","回首頁":"Home","更多":"More",
   "關閉":"Close","取消":"Cancel","確定":"OK","繼續":"Continue","結束":"End","下一步":"Next","上一步":"Previous","自動播放":"Autoplay","分享給朋友":"Share with friends",
@@ -29985,12 +30283,73 @@ const I18N_EN={
   "想留著，先按「不要刪」，到設定用「📱 換手機」把存檔搬到別支手機。":"To keep it, tap \"Don't delete\" first, then use \"📱 Move to a new phone\" in Settings to move your save to another phone.","字級可以到「最大」2 倍，預設跟著手機的字級：在設定房間的「🖌 字體」。鍵盤：B 棋盤、R 讀盤面、S 狀態、M 上一步、W 我在哪、? 說明。":"Text can go up to \"Largest\" (2x) and follows the phone's text size by default: see \"🖌 Font\" in the settings room. Keyboard: B board, R read the board, S status, M last move, W where am I, ? help.",
   "臺北":"Taipei","想跟家人朋友下棋，可以用":"To play with family and friends, use","（同一支手機兩個人輪流下）；挑戰電腦、石桌往事、殘局、棋譜都照常可以玩。":"(two players take turns on one phone); playing the computer, Stone Table Tales, endgames and the game library all still work.",
   "這張說明只會自動跳一次":"This guide pops up automatically only once","手機已把檢舉送出去":"the phone has sent the report","現在送不出去，檢舉先存在這支手機，有網路會自動補送":"it can't be sent right now; the report is saved on this phone and will be sent automatically when online",
-  "局面還原（沒有存檔，要留下來請自己走幾步再按 💾 存成棋譜）":"Set up position (not saved; to keep it, play a few moves and tap 💾 Save as game record)","棋風":"Style"
+  "局面還原（沒有存檔，要留下來請自己走幾步再按 💾 存成棋譜）":"Set up position (not saved; to keep it, play a few moves and tap 💾 Save as game record)","棋風":"Style",
+  /* 主線「星槎遠征令」、首頁「下一步」、三個大禮包（07mnq-mainquest.js，評比第 17、18 輪 B5：P41.1、P41.4）；章名＝朝代（已有）＋副標，「古典・河圖初渡」照「・」切段各自翻 */
+  "河圖初渡":"Crossing the River Chart","日落之前":"Before Sunset","長安星火":"Sparks over Chang'an","赤壁連環":"Chained Ships at Red Cliffs","竹林清談":"Talks in the Bamboo Grove",
+  "飛燕過河":"Swallow over the River","運河聽潮":"Tides of the Grand Canal","長安燈會":"Lantern Festival in Chang'an","驛路風旗":"Wind Flags on the Post Road","汴梁點茶":"Whisked Tea in Bianliang",
+  "草原星路":"Star Road over the Grassland","徽州當鋪":"The Huizhou Pawnshop","揚州急遞":"Express Post to Yangzhou","古典":"Classic","經典":"Classic","青石園":"Bluestone Garden",
+  "秦朝":"Qin dynasty","漢朝":"Han dynasty","隋朝":"Sui dynasty","唐朝":"Tang dynasty","宋朝":"Song dynasty","元朝":"Yuan dynasty","明朝":"Ming dynasty","清朝":"Qing dynasty",
+  "破局":"Break the Deadlock","古典之印":"Classic Seal","秦之印":"Qin Seal","星槎遠征令":"Star Raft Expedition Orders","星槎遠征札記":"Star Raft Expedition Journal",
+  "七星授印禮":"Seven Stars Seal Ceremony","七星授印":"Seven Stars Seal","七星授印已成，雲河星槎為你點亮第一段航路":"The Seven Stars have granted their seal; the Cloud River Star Raft lights the first stretch of your route",
+  "破局錦囊":"Breakthrough Pouch","你破開第一局迷霧，這份錦囊記下你的初勝":"You broke through the first fog; this pouch records your first win",
+  "朝代遠征補給":"Dynasty Expedition Supplies","新朝渡口已至，請收下此地的樂聲、線索與圖鑑":"You have reached a new dynasty's ferry; take this place's music, clue and codex page",
+  "遠征補給":"Expedition supplies","贏第一盤":"Win your first game","家鄉":"Home","回家鄉":"Back home","家鄉棋盤":"Home board","雲河新使":"New Envoy of the Cloud River","初勝":"First Victory",
+  "圖鑑入門卷":"Codex starter scroll","開始第一章":"Start Chapter 1","一盞茶額外題":"Bonus Teatime puzzle","去解額外題":"Solve the bonus puzzle","景點線索":"Landmark clue","札記一頁":"One journal page",
+  "打開遠征令":"Open Expedition Orders","出發":"Set off","這一章即將開放":"This chapter is coming soon","即將開放":"Coming soon","試玩":"Preview","再看一次":"Watch again","前往":"Go",
+  "配樂收藏":"Music collection","先看完上一章":"Finish the previous chapter first","下架的章從頭試":"Retry withdrawn chapters from the start","清掉這幾章的進度":"clears these chapters' progress",
+  "已關閉試玩，重新載入…":"Preview off, reloading…","已打開試玩，重新載入…":"Preview on, reloading…","已清掉，重新打開遠征令":"Cleared; reopening Expedition Orders",
+  "解開一盤，殘譜就多一行字，桌邊的刻痕也亮回一小段。":"Solve one, and the broken manual gains a line; a little more of the carving on the table edge lights up again.",
+  "收下七星授印禮，星槎遠征令開始":"Received the Seven Stars Seal Ceremony; the Star Raft Expedition Orders begin","第一次下贏電腦，收下破局錦囊":"First win against the computer; received the Breakthrough Pouch",
+  "航線亮燈":"Route lantern lit","這一朝還沒有留下足跡。":"No footprints in this dynasty yet.","星路歷程":"Star route log",
+  "主線「星槎遠征令」的札記：收下七星授印禮就有第一頁，每到一個新朝代多一頁，還有那一朝的配樂收藏。":"Journal of the main quest, Star Raft Expedition Orders: the first page comes with the Seven Stars Seal Ceremony, and each new dynasty adds a page and that dynasty's music.",
+  "頁":"pages","選好角色，收下七星授印禮":"Pick a character and receive the Seven Stars Seal Ceremony","第一次跟電腦下贏，收下破局錦囊":"Win against the computer for the first time and receive the Breakthrough Pouch",
+  /* 主線電影的任務卡、略過、危機題、殘局解開儀式的標籤（07mnf-mainfilm.js）；電影字幕、儀式字幕是劇情，照規則不翻 */
+  "破局！":"Break the Deadlock!","上船，出發！":"All aboard, set off!","收下古典之印":"Accept the Classic Seal","收下秦之印":"Accept the Qin Seal","找路！":"Find the way!","車有路了":"The cart has a way through",
+  "略過":"Skip","主線電影":"Main story film","一步，打開河口！":"One move to open the river mouth!","看你的本命棋子：一路衝到底！":"Look at your life piece: charge all the way!",
+  "看藍框那顆棋子。":"Look at the piece in the blue frame.","看軍師演示":"Watch the strategist's demo","軍師：看好了——":"Strategist: watch closely…","殘譜補上一行":"A line added to the broken manual","千秋棋話":"Qianqiu Chess Tales",
+  "先找乾地，再直走！":"Find dry ground first, then go straight!","別硬衝！旁邊哪一路是空的？":"Don't force it! Which file beside it is open?","黑士一進，就把俥吃回去。":"One step by the black advisor and it captures the chariot back.",
+  "替俥找路":"Find a path for the chariot","俥怎麼走":"How the chariot moves","俥可以直走或橫走，中間不能有棋子擋著。先找一條沒被擋住的路，再去威脅對方的將。":"The chariot moves straight along a file or rank with nothing in between. First find a path that isn't blocked, then threaten the opponent's general.",
+  "跟剛才的車一樣：別硬拉。點紅俥，自己走。":"Don't force it. Tap the red chariot to find a path.","黑將躲開了。再走一步，讓它無路可走。":"The general moved aside. Find the finishing move.",
+  "先試看兩條路會怎樣（試看不算數）。":"First preview what each path does (previews don't count).","正面硬衝":"Charge straight ahead","俥一衝，黑士一進就吃回來，路斷了。":"The chariot charges, the black advisor steps up and captures it: the path is cut.",
+  "先橫移":"Slide sideways first","八路上下都空，黑將只能往旁邊躲。接下來呢？":"File 8 is open top to bottom, so the black general can only step aside. What next?",
+  "藍框是俥。箭頭是走得通的路；紅圈那格走過去會被吃。":"The blue frame is the chariot. Arrows show open paths; moving to a red-ringed square gets it captured.",
+  "黑將躲開了。看看俥現在能不能沿空的那一路直衝到底。":"The general moved aside. Can your chariot use the open file?","先看俥能走到哪些地方。":"First see where the chariot can go.",
+  "比較兩條通路，哪一條能接著威脅黑將？":"Compare the two paths: which one keeps threatening the black general?","俥先往左橫走到八路（九路也行）：那一路上下都空著。":"Slide the chariot left to file 8 first (file 9 works too): that file is open top to bottom.",
+  "黑將躲開了。俥沿著空的那一路直衝到底，將軍！":"The black general stepped aside. Charge the chariot down the open file: check!","我先走一步：俥往左橫走到八路，這一路沒有棋子擋。":"I'll make the first move: the chariot slides left to file 8, where nothing blocks it.",
+  "黑將往旁邊躲。我再走一步：俥直衝到底線，將軍！":"The black general steps aside. My next move: the chariot charges to the back rank, check!","這裡還過不去。先看它怎麼擋。":"Can't get through here yet. See how it blocks first.","換條能走的路，再試。":"Try again with a path that works.",
+  "對話：點一下繼續":"Dialogue: tap to continue",
+  /* 星夜茶話會、石桌邊歇一歇（07t-episodes.js 第 4 種插曲）：標題、按鈕、眼力題；角色台詞、說書人的話是劇情，照規則不翻 */
+  "星夜茶話會":"Starry Night Tea Party","石桌邊歇一歇":"A Break by the Stone Table","1 分鐘眼力題，二選一":"1-minute eye test, pick one","一步將軍":"Check in one move","傌的將軍點":"Horse checking squares",
+  "點出走一步就能將軍的紅子（有好幾顆就點其中一顆）。":"Tap a red piece that can give check in one move (if there are several, tap any one).",
+  "點出所有「紅傌站上去就將軍」的格子（臥槽、掛角都算；被擋住馬腳的不算）。":"Tap every square where a red horse would give check (corner and side checks count; blocked horse legs don't).",
+  "今天先不玩，直接去睡":"Not tonight, off to bed","先不玩":"Not now","提早結束":"End early","一分鐘到了":"Time's up","挑一樣帶走":"Pick one to take","燈花":"Lamp flower",
+  "夜深了，早點休息":"It's late, get some rest","收下一朵燈花":"Received a lamp flower","先不理":"Dismiss","插曲":"Interlude",
+  /* 黑洞練習賽、黑洞局轉橫向提示（07bhtl-tdlearn.js、07bh-blackhole.js） */
+  "不算輸贏":"no win or loss recorded","規則程式還沒載好":"The rules engine hasn't loaded yet","星槎回航":"Return to the Star Raft","手機轉成橫向，黑洞星盤會滿版":"Turn your phone sideways to fill the screen with the black hole board",
+  /* 石桌往事換朝代的提示（07-legend.js storyEraSync） */
+  "故事發生在元末明初，畫面換成元朝風格；離開故事會換回你原本的朝代":"The story is set in the late Yuan and early Ming, so the screens switch to the Yuan style; leaving the story switches back to your own dynasty",
+  "故事發生在明朝，畫面換成明朝風格；離開故事會換回你原本的朝代":"The story is set in the Ming dynasty, so the screens switch to the Ming style; leaving the story switches back to your own dynasty",
+  /* 換手機轉移碼（05-settings xfRecv、05b-save XFER4；評比第 18 輪第 4 項 8 碼停收） */
+  "這是舊版的 8 碼轉移碼，已經停用。請在舊手機打開 App（會自動更新），重新產生一組新的轉移碼。":"This is an old 8-character transfer code and it is no longer accepted. Open the app on your old phone (it updates itself) and create a new transfer code.",
+  "這是舊版的 8 碼轉移碼，已經停用。":"This is an old 8-character transfer code and it is no longer accepted.","轉移碼是 10 碼":"Transfer codes have 10 characters","輸入舊手機上顯示的 10 碼轉移碼":"Enter the 10-character transfer code shown on your old phone",
+  "輸入轉移碼":"Enter transfer code","下載資料":"Download data","連線中…":"Connecting…",
+  /* 所有頁面共用的頂欄（開發者 11/14 選定）：時辰鐘旁的小字（07w8-shichen.js clkPaint）、登船天數與節氣、右上角的官階與修為（07-legend.js meChip、06-cpu.js RANKT）。
+     時辰全站一律寫成現代鐘點（11 pm–1 am…），英文玩家一看就懂；鐘面上的地支是 SVG 圖案，照舊 */
+  "子時":"11 pm–1 am","丑時":"1–3 am","寅時":"3–5 am","卯時":"5–7 am","辰時":"7–9 am","巳時":"9–11 am","午時":"11 am–1 pm","未時":"1–3 pm","申時":"3–5 pm","酉時":"5–7 pm","戌時":"7–9 pm","亥時":"9–11 pm",
+  "小寒":"Minor Cold","大寒":"Major Cold","立春":"Start of Spring","雨水":"Rain Water","驚蟄":"Awakening of Insects","春分":"Spring Equinox","清明":"Clear and Bright","穀雨":"Grain Rain",
+  "立夏":"Start of Summer","小滿":"Grain Buds","芒種":"Grain in Ear","夏至":"Summer Solstice","小暑":"Minor Heat","大暑":"Major Heat","立秋":"Start of Autumn","處暑":"End of Heat",
+  "白露":"White Dew","秋分":"Autumn Equinox","寒露":"Cold Dew","霜降":"Frost's Descent","立冬":"Start of Winter","小雪":"Minor Snow","大雪":"Major Snow","冬至":"Winter Solstice",
+  "還沒登船":"Not aboard","雲河無歲月":"Timeless on the Cloud River","雲河無歲月：在星槎上，時辰不走。點了看船齡":"Timeless on the Cloud River: aboard the Star Raft, the hours stand still. Tap to see the raft's age",
+  "徹侯":"Marquis","關內侯":"Marquis Within the Pass","大庶長":"Grand Chief of the Multitude","左庶長":"Left Chief of the Multitude","五大夫":"Fifth Grandee","公大夫":"Ducal Grandee","大夫":"Grandee","上造":"Senior Builder","公士":"Gentleman Soldier",
+  "萬石官":"10,000-bushel official","中二千石官":"Full 2,000-bushel official","二千石官":"2,000-bushel official","比二千石官":"Lesser 2,000-bushel official","千石官":"1,000-bushel official",
+  "六百石官":"600-bushel official","四百石官":"400-bushel official","二百石官":"200-bushel official","百石官":"100-bushel official",
+  "全部下載好了":"All downloaded","常用的都下載好了；其他朝代、西市、觀星臺第一次去時才下載":"Everyday files are ready; other eras, the West Market and the Star Terrace download the first time you visit","準備好了":"Ready","下載開局要用的棋盤和棋子…":"Downloading the boards and pieces you need to start…","背景下載":"Background download","先進去逛（背景繼續下載）":"Go in now (keeps downloading)","準備好就能下棋；其他朝代、西市、觀星臺的圖第一次去時才下載，其餘之後慢慢補，進度在「設定 → 關於」。":"You can play as soon as this is ready. Other eras, the West Market and the Star Terrace download the first time you visit; the rest fills in later. Progress is under Settings → About."
 };
 /* 第 15 輪 X3「鍵值化」：核心流程（對局頁工具列與狀態列、認輸／悔棋確認、結果視窗、挑戰電腦開新局、設定頁標題、底欄）不靠整句比對，
    模組裡寫 i18nT("鍵","中文")（中文時原樣回傳）或在元素上標 data-i18n="鍵"（英文模式換掉那個元素自己的最後一段字；data-i18n-n 是 {n} 的值）。
    原文改字也不會失效；鍵名＝「區.項」，值是英文（含前後圖示）。測試會檢查模組用到的鍵這裡都有。 */
 const I18N_KEY={
+  "set.section.privacy":"Privacy","set.section.advanced":"Advanced",
   "tab.home":"Home","tab.online":"Online","tab.library":"Library","tab.settings":"Settings",
   "cpu.title":"Play the computer","game.items":"Items","game.undo":"Undo","game.new":"New","game.resign":"Resign","game.review":"Review","game.setup":"Setup","game.peek":"Peek","game.undoN":"Undo ({n})",
   "game.resignAsk":"Resign this game?","game.thinking":"🤔 Thinking…","game.check":"⚠ Check!","game.yourMove":"👉 Your move","game.stuck":"Computer taking too long?","game.stuckNew":"🔄 Start a new game",
@@ -29998,6 +30357,7 @@ const I18N_KEY={
   "res.win":"You won!","res.draw":"Draw","res.lose":"You lost this one","res.review":"📊 Review","res.home":"🏠 Home","res.viewBoard":"View board","res.again":"Play again","res.nextLevel":"Next level ›",
   "res.keyMove":"🔎 Understand the key move of this game ›","res.rankedAgain":"Play another ranked game ›","res.quickNote":"This was a quick game; it doesn't count toward your rank.",
   "net.win.r":"Red ({n}) wins","net.win.b":"Black ({n}) wins",
+  "mnq.accept":"Accept",   /* 主線禮包的「收下」按鈕（07mnq #mnqGf2；開發者 11/14：別處的「收下」照字典 Received） */
   "vn.next":"Next","vn.log":"Log","vn.skip":"Skip","vn.leave":"Leave","vn.keep":"Keep watching","vn.skipAsk":"Skip this scene?","vn.close":"Back to the story","vn.you":"You",
   "vn.scene":"Scene {n}","vn.seen":"viewed {n}/{m}","vn.hold":"Holding: {x}","vn.give":"Give it to {x}.","vn.giveTo":"Better give it to {x}.","vn.cont":"Continue","vn.restart":"From scene 1","vn.resume":"Last time: scene {n}, {s}",
   "vn.how":"How it moves","vn.hint":"Hint","vn.hintN":"Hint ({n}/3)","vn.hintP":"Hint: ","vn.lv":"Hint {n}/3","vn.walk":"Walk me through","vn.walking":"Walking you through","vn.solo":"On your own","vn.mist":"{n} wrong",
@@ -30021,9 +30381,35 @@ const I18N_AGUARD=["回首頁","回星槎","聲控走棋","回棋盤模式","去
 const I18N_XSD_PC={帥:"General",將:"General",仕:"Advisor",士:"Advisor",相:"Elephant",象:"Elephant",俥:"Chariot",車:"Chariot",傌:"Horse",馬:"Horse",炮:"Cannon",包:"Cannon",兵:"Soldier",卒:"Soldier"};   /* 暗棋動態句的棋子名（字典裡的棋子名是 WXF 記譜字母，不適合整句） */
 const i18nXsdPc=(c,p)=>(c?(c==="紅"?"Red ":"Black "):"")+(I18N_XSD_PC[p]||p);
 const I18N_PAT=[
+  [/^(\d+) 天$/,m=>m[1]+" days"],
+  [/^(\d+) 次$/,m=>m[1]+" times"],
+  [/^(\d+) 毫秒$/,m=>m[1]+" ms"],
+  [/^(\d+) 次・共 ([\d.]+) 秒$/,m=>m[1]+" tasks · "+m[2]+" s total"],
+  [/^(\d+) 次・([\d.]+) MB$/,m=>m[1]+" loads · "+m[2]+" MB"],
+  [/^(\d+) 人次$/,m=>m[1]+" attempts"],
+  [/^連續玩 (\d+) 分鐘提醒休息$/,m=>"Break reminder after "+m[1]+" minutes"],
+  [/^電腦段位積分 (\d+) 分・再 (\d+) 分升(.+)$/,(m,t)=>{const rank=t(m[3]);return rank?"Computer rating: "+m[1]+" · "+m[2]+" points to "+rank:null}],
+  [/^正在播放《([^》]+)》・(.+)$/,(m,t)=>{const name=t(m[1]),instrument=t(m[2]);return name&&instrument?"Now playing: "+name+" · "+instrument:null}],
+  [/^(.+)・現在$/,(m,t)=>{const name=t(m[1]);return name?name+" · Current":null}],
+  [/^讀到 (\d+) 份成績$/,m=>"Imported "+m[1]+" reports"],
+  [/^第 (\d+) 份：(.+)$/,(m,t)=>{const reason=t(m[2]);return reason?"Report "+m[1]+": "+reason:null}],
+  [/^第 (\d+) 次$/,m=>"Attempt "+m[1]],
+  [/^沒做 (\d+)$/,m=>"Unattempted: "+m[1]],
+  [/^(\d+) 位學生・(\d+) 題(?:・⚠ 最多人沒一次答對：第 ([\d、]+) 題（(\d+) 人）)?$/,m=>m[1]+(m[1]==="1"?" student · ":" students · ")+m[2]+(m[2]==="1"?" puzzle":" puzzles")+(m[3]?" · Most retries: puzzle "+m[3].replaceAll("、",", ")+" ("+m[4]+" students)":"")],
+  [/^每位學生的弱點（這支手機收過的 (\d+) 份作業合計）$/,m=>"Practice needs by student ("+m[1]+" assignments on this device)"],
+  [/^(.+) (\d+)／(\d+) 人次$/,(m,t)=>{const topic=t(m[1]);return topic?topic+": "+m[2]+" / "+m[3]+" attempts":null}],
+  [/^(.+)（錯 (\d+)／(\d+)）$/,(m,t)=>{const topic=t(m[1]);return topic?topic+" ("+m[2]+" / "+m[3]+" missed)":null}],
+  [/^(?:(\d+) 題・)?由易到難・點題卡加入或取消$/,m=>(m[1]?m[1]+" puzzles · ":"")+"Easiest first · Tap cards to add or remove"],
+  [/^已選 (\d+)／(\d+) 題$/,m=>"Selected "+m[1]+" / "+m[2]+" puzzles"],
+  [/^查看已選（(\d+)）・排序與產生連結$/,m=>"Selected ("+m[1]+") · Order and share"],
+  [/^第 (\d+) 題往前移$/,m=>"Move puzzle "+m[1]+" up"],
+  [/^移除第 (\d+) 題$/,m=>"Remove puzzle "+m[1]],
+  [/^(.+?)・差 ([\d,]+) 分升段$/,(m,t)=>{const rank=t(m[1]);return rank==null?null:rank+" · "+m[2]+" pts to promotion"}],
+  [/^對手照段位「(.+)」配 · (.+) · 算段位分$/,(m,t)=>{const rank=t(m[1]),side=t(m[2]);return rank==null||side==null?null:"Matched to "+rank+" · "+side+" · rated"}],
+  [/^再顯示 (\d+) 題（還有 (\d+) 題）$/,m=>"Show "+m[1]+" more puzzles ("+m[2]+" remaining)"],
   [/^(你|電腦)翻開了(紅|黑)(.)$/,m=>(m[1]==="你"?"You turned over ":"The computer turned over ")+i18nXsdPc(m[2],m[3])],
-  [/^(你|電腦)的(.)走了一格$/,m=>(m[1]==="你"?"Your ":"The computer\u2019s ")+i18nXsdPc("",m[2])+" moved one square"],
-  [/^(你|電腦)的(.)吃掉了(紅|黑)(.)$/,m=>(m[1]==="你"?"Your ":"The computer\u2019s ")+i18nXsdPc("",m[2])+" captured "+i18nXsdPc(m[3],m[4])],
+  [/^(你|電腦)的(.)走了一格$/,m=>(m[1]==="你"?"Your ":"The computer's ")+i18nXsdPc("",m[2])+" moved one square"],
+  [/^(你|電腦)的(.)吃掉了(紅|黑)(.)$/,m=>(m[1]==="你"?"Your ":"The computer's ")+i18nXsdPc("",m[2])+" captured "+i18nXsdPc(m[3],m[4])],
   [/^暗棋棋盤，電腦難度：(新手|一般)$/,m=>"Dark chess board, computer level: "+(m[1]==="新手"?"Beginner":"Normal")],
   [/^紀錄：勝\s*(\d+)・和\s*(\d+)・負\s*(\d+)$/,m=>"Record: "+m[1]+" won \u00b7 "+m[2]+" drawn \u00b7 "+m[3]+" lost"],
   [/^連續\s*(\d+)\s*手沒有吃子、也沒有翻棋。?$/,m=>m[1]+" moves in a row with no capture and no piece turned over."],
@@ -30112,7 +30498,42 @@ const I18N_PAT=[
   [/^星淵急襲・(.+?)——星樞元氣\s*(\d+)$/,(m,T)=>{const r=T(m[1]);return r==null?null:"Abyss Raid · "+r+" - Star Pivot vitality "+m[2]}],
   [/^天賦全部重置，退回\s*(\d+)\s*星塵$/,m=>"All talents reset: "+m[1]+" stardust refunded"],
   [/^定軌力用完了，黑洞入口先關著：在星槎歇到\s*(\d+)\s*再來$/,m=>"Orbit stamina is used up, so the black hole entrance is closed: rest on the Star Raft until "+m[1]+", then come back"],
-  [/^今天靠黑洞回的定軌力已經滿\s*(\d+)\s*了$/,m=>"You've already regained the daily maximum of "+m[1]+" orbit stamina from the black hole today"]
+  [/^今天靠黑洞回的定軌力已經滿\s*(\d+)\s*了$/,m=>"You've already regained the daily maximum of "+m[1]+" orbit stamina from the black hole today"],
+  /* 主線「星槎遠征令」、首頁「下一步」、任務卡、札記、星夜茶話會（07mnq、07mnf、07t，評比第 17、18 輪 B5） */
+  [/^下一步・(.+)$/,(m,T)=>{const r=T(m[1]);return r==null?null:"Next: "+r}],
+  [/^第([一二三四五六七八九十]{1,3})章$/,m=>{const n=i18nCnNum(m[1]);return n?"Chapter "+n:null}],
+  [/^第([一二三四五六七八九十]{1,3})章即將開放$/,m=>{const n=i18nCnNum(m[1]);return n?"Chapter "+n+" coming soon":null}],
+  [/^開往(.+)$/,(m,T)=>{const r=T(m[1]);return r==null?null:"Heading to "+r}],
+  [/^停靠(.+?)後開放$/,(m,T)=>{const r=T(m[1]);return r==null?null:"Opens after docking at "+r}],
+  [/^星槎停靠(.+?)，這一章就開放$/,(m,T)=>{const r=T(m[1]);return r==null?null:"This chapter opens once the Star Raft docks at "+r}],
+  [/^星槎停到(.+?)，收下遠征補給$/,(m,T)=>{const r=T(m[1]);return r==null?null:"The Star Raft reached "+r+"; received expedition supplies"}],
+  [/^看完(第一場|最後一場)?「(.+)」$/,(m,T)=>{const r=T(m[2]);return r==null?null:"Watched "+(m[1]==="第一場"?"the first scene ":m[1]?"the last scene ":"")+"\""+r+"\""}],
+  [/^(\d{1,2})月(\d{1,2})日\s+(\d{1,2}:\d\d)$/,m=>I18N_MON[(+m[1]-1+12)%12]+" "+(+m[2])+", "+m[3]],
+  [/^航線亮了\s*(\d+)／(\d+)\s*盞$/,m=>"Route lanterns lit: "+m[1]+"/"+m[2]],
+  [/^航線亮燈\s*(\d+)／(\d+)$/,m=>"Route lanterns: "+m[1]+"/"+m[2]],
+  [/^配樂\s*(\d+)\s*首$/,m=>m[1]+(m[1]==="1"?" track":" tracks")],
+  [/^([一-龥]+)的配樂$/,(m,T)=>{const r=T(m[1]);return r==null?null:"Music of the "+r}],
+  [/^提示棋\s*×\s*(\d+)$/,m=>"Hint tokens ×"+m[1]],
+  [/^提示棋\s*(\d+)\s*顆$/,m=>m[1]+(m[1]==="1"?" hint token":" hint tokens")],
+  [/^提示棋\s*\+(\d+)$/,m=>"Hint tokens +"+m[1]],
+  [/^看你的本命棋子「([帥將仕士相象傌馬俥車炮砲兵卒])」$/,m=>"Look at your life piece, the "+I18N_PN[I18N_PL[m[1]]]],
+  [/^《千秋棋話》(.*)$/,(m,T)=>{if(!m[1])return"Qianqiu Chess Tales";const r=T(m[1]);return r==null?null:"Qianqiu Chess Tales · "+r}],
+  [/^殘譜\s*(\d+)／(\d+)\s*行$/,m=>"Broken manual: "+m[1]+"/"+m[2]+" lines"],
+  [/^(\d+)\s*分鐘$/,m=>m[1]+" min"],
+  [/^約\s*(\d+)\s*分鐘$/,m=>"about "+m[1]+" min"],
+  [/^答對\s*(\d+)\s*題$/,m=>m[1]+" correct"],
+  [/^修為\s*\+(\d+)$/,m=>"XP +"+m[1]],
+  /* 所有頁面共用的頂欄（開發者 11/14 選定）：登船天數、官階、修為、時辰鐘的讀螢幕標籤 */
+  [/^第\s*(\d+)\s*天$/,m=>"Day "+m[1]],
+  [/^船上第\s*(\d+)\s*天$/,m=>"Day "+m[1]+" aboard"],
+  [/^修為\s*Lv\s*(\d+)$/,m=>"XP Lv "+m[1]],
+  [/^([一二三四五六七八九])品官$/,m=>"Rank "+I18N_NUM[m[1]]+" official"],
+  [/^現在是(.時)（[^，]+，\s*\d+\s*點到\s*\d+\s*點）(?:，節氣(.+?))?。點了看船齡和十二時辰$/,(m,T)=>{const h=T(m[1]),t=m[2]?T(m[2]):"";return h==null||t==null?null:"It's now "+h+(t?", solar term: "+t:"")+". Tap for the raft's age and the twelve double-hours"}],
+  [/^看船齡和今天的時間：(.+)$/,(m,T)=>{const r=T(m[1]);return r==null?null:"Raft age and today's time: "+r}],
+  [/^已收\s*(\d+)(?:／(\d+))?(?:\s+(.+))?$/,(m,T)=>{const u=m[3]?T(m[3]):"";return u==null?null:"Collected "+m[1]+(m[2]?"/"+m[2]:"")+(u?" "+u:"")}],
+  [/^下載開局要用的棋盤和棋子\s*(\d+)%$/,m=>"Downloading the boards and pieces you need to start "+m[1]+"%"],
+  [/^還有 (\d+) 個檔在背景下載（約 (\d+) MB）$/,m=>m[1]+" files still downloading in the background (about "+m[2]+" MB)"],
+  [/^省流量中：還有 (\d+) 個檔暫停下載（約 (\d+) MB）$/,m=>"Data saver on: "+m[1]+" files paused (about "+m[2]+" MB)"]
 ];
 /* 中文數字（一～九十九）或阿拉伯數字（含全形）→ 數字 */
 function i18nCnNum(s){s=String(s==null?"":s).replace(/[０-９]/g,c=>String.fromCharCode(c.charCodeAt(0)-0xFEE0));if(/^\d+$/.test(s))return+s;
@@ -30131,11 +30552,217 @@ function i18nWxf(cn){const r=i18nMove(cn);return r?r.wxf:null}
 const I18N_SEP=/(，|、|；|・|：|。|！|？|（|）|「|」|…|～)/;
 const I18N_SEPEN={"，":", ","、":", ","；":"; ","・":" · ","：":": ","。":". ","！":"! ","？":"? ","（":" (","）":") ","「":" \"","」":"\" ","…":"…","～":"-"};
 function i18nTidy(s){return String(s).replace(/\s+/g," ").replace(/ +([,.;:!?)…])/g,"$1").replace(/\( +/g,"(").replace(/" +"/g,"\" \"").trim()}
+/* ChatGPT 11/14: story English; source dialogue and identifiers remain authoritative. */
+const I18N_STORY_EN={
+  "阿轍": "A-Zhe",
+  "燕子": "Yanzi",
+  "花兒": "Hua'er",
+  "小梅": "Xiaomei",
+  "庭哥": "Ting",
+  "城子": "Cheng",
+  "溪兒": "Xi'er",
+  "老伯": "Old man",
+  "軍爺": "Guard",
+  "父親": "Father",
+  "小阿轍": "Young A-Zhe",
+  "坡腳的老伯拉不動車，車軸也快撐不住了。": "The old man at the foot of the slope cannot move his cart. Its axle is close to breaking.",
+  "跟阿轍一起穩住木車，幫大家把路讓出來。": "Help A-Zhe steady the cart and clear the way for everyone.",
+  "去看木車": "Look at the cart",
+  "看路的人": "Reading the Road",
+  "沒有……我爹的車不在這裡。": "No... Dad's cart isn't here.",
+  "你看一眼就認得？": "You can tell just by looking?",
+  "車轅有道舊疤。遠遠也不會認錯。": "There's an old scar on the shaft. I'd know it from a long way off.",
+  "輪印": "Wheel tracks",
+  "我爹看輪印，就知道車裝得重不重。": "Dad can tell how heavy a cart is just from its tracks.",
+  "坡腳傳來木頭細細的裂聲。": "A faint crack comes from the wood at the foot of the slope.",
+  "等一下。那輛車的聲音不對。": "Wait. That cart doesn't sound right.",
+  "木量尺": "Wooden measuring stick",
+  "這裡的車過得去，別處來的也得過得去。我爹說的。": "If our cart can get through, other people's carts should too. That's what Dad says.",
+  "查查路上的輪印。": "Look at the wheel tracks.",
+  "越拉越陷": "Pulling It Deeper",
+  "日頭落下以前，這幾袋都得送到。別堵著後頭的人。": "These sacks must be delivered before sunset. Don't hold up the carts behind you.",
+  "我再拉一下……": "I'll give it another pull...",
+  "拉直些。路就在前面，往哪裡拐？": "Pull straight. The road's right ahead. Why turn aside?",
+  "……拉直。走直。": "...Pull straight. Go straight.",
+  "肩背一緊": "His shoulders tense.",
+  "旁邊那塊地乾，為什麼不走那裡？": "The ground over there is dry. Why not go that way?",
+  "車輪": "Cart wheel",
+  "輪子陷在泥裡，一拉又滑回去。": "The wheel is stuck in the mud. Each pull just sends it sliding back.",
+  "土袋": "Sacks of earth",
+  "土袋全擠在歪的那一邊，車太重。": "All the sacks have shifted to the leaning side. The cart is too heavy.",
+  "車軸": "Axle",
+  "軸頭裂了一道，再壓就斷。": "The end of the axle is cracked. More weight will snap it.",
+  "想好了，叫老伯": "Ready: call the old man",
+  "先看清楚：車輪、土袋、車軸。": "Look closely at the wheel, the sacks, and the axle.",
+  "要老伯先怎麼做？": "What should the old man do first?",
+  "繼續拉": "Keep pulling",
+  "輪子動了一下，又陷回泥裡。車身更歪了。": "The wheel turns a little, then sinks back into the mud. The cart leans farther.",
+  "停！先別拉！": "Stop! Don't pull yet!",
+  "先鋪板": "Lay boards first",
+  "車還太重，板子塞不進輪子底下。": "The cart's still too heavy. I can't get a board under the wheel.",
+  "這車沉得像頭牛，先卸幾袋吧！": "This cart's as heavy as an ox! Let's unload a few sacks.",
+  "先卸重": "Unload some weight",
+  "先別拉，車要倒了。軸頭裂了，再壓下去車斷在這裡。": "Don't pull! The cart's tipping. The axle is cracked. Keep forcing it and it'll break right here.",
+  "先卸幾袋，後頭的人才過得來。": "Unload a few sacks first, so the carts behind can get through.",
+  "我會看輪子": "I Know Wheels",
+  "你會修？": "Can you fix it?",
+  "我……我沒自己補過這麼重的車。": "I... I've never repaired a cart this heavy on my own.",
+  "停頓，看向老伯": "He pauses and looks at the old man.",
+  "裂軸": "Cracked axle",
+  "我會看輪子。裂的地方得請老伯幫忙。": "I know wheels. I'll need your help with the crack.",
+  "先穩住。我來看看裂到哪裡。": "Steady it first. Let me see how far it's split.",
+  "快點。": "Hurry.",
+  "看一眼排隊的車": "He glances at the waiting carts.",
+  "腰牌": "Waist token",
+  "阿轍腰上的腰牌，輪紋裡卡著泥。他沒去擦。": "Mud is caught in the wheel pattern on A-Zhe's token. He leaves it there.",
+  "請老伯看看裂軸。阿轍腰上的腰牌也可以看。": "Ask the old man to check the axle. You can also look at A-Zhe's waist token.",
+  "大家各做一點": "Everyone Lends a Hand",
+  "城子先用肩膀抵住車輪，車身不再往下滑。": "Cheng braces the wheel with his shoulder. The cart stops sliding.",
+  "我抵著，你們慢慢來。": "I've got it. Take your time.",
+  "先商量怎麼移車：照你想的順序點三件事，再按「開始」。": "Plan the move: tap the three tasks in order, then tap Start.",
+  "合力移車": "Move the cart together",
+  "卸下土袋": "Unload the sacks",
+  "泥邊鋪木板": "Lay boards beside the mud",
+  "車還是太重，輪子往泥裡又沉了一點。": "The cart is still too heavy. The wheel sinks a little deeper.",
+  "不行，再拉軸頭就斷了！": "No! Another pull and the axle will snap!",
+  "唔，塞不進去！輪子陷得太深了。": "Ugh, it won't fit! The wheel's sunk too deep.",
+  "我來搭把手，先卸幾袋土！": "I'll help. Let's unload a few sacks of earth first!",
+  "又滑回來了。泥地撐不住。": "It's sliding back. The mud won't hold.",
+  "快，墊上木板，輪子才踩得住！": "Quick, lay the boards! Give the wheel something firm.",
+  "卸下來的土，我幫忙送，別全堆在腳邊。": "I'll carry the earth away. Don't pile it around our feet.",
+  "筐口我扶著。": "I'll hold the basket.",
+  "放這裡？好，你們慢慢卸。": "Here? All right. Unload it slowly.",
+  "溪兒、花兒把土袋一袋袋卸下，車身輕了。": "Xi'er and Hua'er lift off the sacks one by one, lightening the cart.",
+  "小梅在泥邊鋪好木板。": "Xiaomei lays boards beside the mud.",
+  "燕子收起地上的繩頭，庭哥在坡邊指出空處。": "Yanzi gathers the loose rope. Ting points out a clear space by the slope.",
+  "可不能叫人說，我把好好的車弄壞了。": "I can't have people saying I broke a perfectly good cart.",
+  "先顧車。": "Let's see to the cart first.",
+  "想說又停住": "He starts to speak, then stops.",
+  "缺個楔子。": "We need a wedge.",
+  "父親教的結": "The Knot Dad Taught Me",
+  "削平木楔、綁好繩結": "Trim the wedge and tie the rope",
+  "阿轍手上的木楔，有一邊削偏了。": "One side of A-Zhe's wooden wedge is uneven.",
+  "木楔削平，敲進軸頭。": "The wedge is trimmed smooth and tapped into the axle.",
+  "阿轍把繩子繞了三圈，打了個結。": "A-Zhe winds the rope three times and ties a knot.",
+  "城子抵住輪子，大家合力一推——": "Cheng braces the wheel. Everyone pushes together...",
+  "車輪壓上木板，停到了乾地上。": "The wheel rolls onto the boards. The cart comes to rest on dry ground.",
+  "你爹也是做這個的？": "Does your dad do this too?",
+  "趕糧車。": "He drives a grain cart.",
+  "難怪。這個結有人教過。": "Thought so. Someone taught you that knot.",
+  "回去叫你爹看看，這楔子削得還成。": "Show your dad when you get home. That's a decent wedge you've made.",
+  "……嗯。": "...Mm.",
+  "低頭摸了摸腰牌": "He looks down and touches his token.",
+  "那天為什麼轉彎": "Why He Turned That Day",
+  "還有地方疼？": "Does anything still hurt?",
+  "我一直怪他，為什麼偏要走那條路。": "I kept blaming him for taking that road.",
+  "那個雨夜": "That Rainy Night",
+  "爹，官糧不送了嗎？": "Dad, aren't we delivering the government grain?",
+  "先送你去看病。": "I'm taking you to a doctor first.",
+  "伸手探了探他的額頭": "He reaches out to feel his son's forehead.",
+  "他知道會誤期。": "He knew he'd be late.",
+  "……還是先顧我。": "...He still put me first.",
+  "阿轍擦掉腰牌輪紋裡的泥。": "A-Zhe wipes the mud from the wheel pattern on his token.",
+  "爹沒有走歪路。": "Dad wasn't taking the wrong road.",
+  "剛才那輛車，越急著拉，陷得越深。": "The harder we rushed to pull that cart, the deeper it sank.",
+  "阿轍哥，剛才怎麼停了那麼久？": "A-Zhe, why did you stop for so long just now?",
+  "還沒看明白。總得再看看。": "I hadn't figured it out yet. I needed another look.",
+  "一起看路": "Look at the Road Together",
+  "窗外，老伯扶著車到了窄處，招手請後頭的人稍等。": "Outside, the old man reaches a narrow stretch with his cart and waves for those behind to wait.",
+  "等回去，我想讓爹看看這個結。": "When we get back, I want Dad to see this knot.",
+  "阿轍，下回你要是看見路堵住了，先叫我。": "A-Zhe, next time you see a blocked road, call me first.",
+  "叫妳做什麼？": "What for?",
+  "一起看啊。你以為彎路隨便拐就能走？": "To look together! You think just any detour will do?",
+  "這一次，先笑的人是阿轍。": "This time, A-Zhe is the first to smile.",
+  "先看清楚，再決定怎麼走。": "Look carefully, then choose your way.",
+  "再試這盤棋": "Try this puzzle again",
+  "……睡不著，就看一會兒棋。一會兒就好。": "...Can't sleep. Just looking at some chess. Only for a little while.",
+  "這一站走了好幾天了。先放下那題，看點別的。": "We've been at this stop for days. Leave that puzzle for a bit. Try something else.",
+  "這麼晚還醒著？我沏了一壺淡茶，不濃，喝了好睡。": "Still awake this late? I've made some weak tea. Nothing too strong to keep you up.",
+  "這一站卡了好幾天了吧？先別想那題，喝口茶，玩點別的。": "Stuck here for days? Put that puzzle aside. Have some tea and try something else.",
+  "{名}也睡不著？那我們小聲玩一局，就一局！": "Can't sleep either, {名}? Let's play quietly. Just one game!",
+  "那題好難對不對？我也解不出來！先玩點別的嘛！": "That puzzle's hard, right? I can't solve it either! Let's try something else!",
+  "嘿嘿，我也還醒著！星星好亮，來玩個小的嘛。": "Hehe, I'm still up too! Look at all those stars. Let's play something quick.",
+  "前面堵住了？那就先拐個彎，玩點別的呀！": "Road blocked? Take a little detour. Let's play something else!",
+  "{名}也還沒睡？城子說夜裡不該熬著……那，只玩一會兒。": "You're still awake too, {名}? Cheng says we shouldn't stay up... Well, just for a little while.",
+  "我想了幾天也沒想通。不如先換個題目，讓眼睛歇一歇。": "I've thought about it for days and still don't understand. Let's try another puzzle and rest our eyes.",
+  "……一會兒。然後去睡。": "...A little while. Then bed.",
+  "……卡住了。先歇。": "...Stuck. Take a break.",
+  "睡不著喔？我數星星，{你}數棋子，誰先數完誰先睡！": "Can't sleep? I'll count stars, {你} count pieces. Whoever finishes first goes to bed!",
+  "那題先放著，又不會跑掉啦！我們玩個快的！": "Leave that puzzle for now. It won't run away! Let's play a quick one!",
+  "睡飽了，路才走得直。去睡吧。": "A good night's sleep keeps you on the right road. Off to bed.",
+  "歇夠了，再回去看那題，路就看得清。": "Rest first. You'll see the way through that puzzle more clearly.",
+  "好了，茶也喝完了。去睡吧，明天的棋，明天再下。": "Well, the tea's gone. Off to bed. Tomorrow's chess can wait until tomorrow.",
+  "歇一歇再看，那題就沒那麼難了。": "Take a break, then look again. It may not seem so hard.",
+  "呵——我都打呵欠了。{名}快去睡！": "Ahh... Even I'm yawning. Get some sleep, {名}!",
+  "好啦，玩夠了！那題明天一定解得開！": "All right, that's enough for now! We'll solve that puzzle tomorrow!",
+  "星星也要睡覺啦，{名}也去睡嘛。": "Even the stars need sleep. You too, {名}.",
+  "繞一圈回來，說不定就看見路了呀。": "After a little detour, you might spot the way through.",
+  "城子說得對，夜深了。明日再見。": "Cheng's right. It's late. See you tomorrow.",
+  "換個時候再看，也許就懂了。不必急。": "Try again another time. You may understand it then. No hurry.",
+  "去睡。": "Go to sleep.",
+  "……先歇。明天再看。": "...Rest first. Look again tomorrow.",
+  "睡吧睡吧，明天我跑腿叫{你}起床！": "Sleep, sleep! I'll run over and wake {你} tomorrow!",
+  "歇夠了再一步一步來，不急不急！": "Once you've rested, we'll take it step by step. No rush!",
+  "楚河渡口，星槎醒了。": "At the Chu River ferry, the Star Raft awakens.",
+  "說書人：今日，渡第一條河。": "Storyteller: Today, we cross our first river.",
+  "棋路，原來就是水路。": "A path through the board is a path through the water.",
+  "遠方河面，墨色翻湧。": "Far downriver, dark ink churns across the water.",
+  "墨石封河，先替星槎開路！": "Ink-dark rocks block the river. Clear a passage for the Star Raft!",
+  "河口通了，星槎出發！": "The river is clear. The Star Raft sets sail!",
+  "渡口，已在身後。": "The ferry landing fades behind us.",
+  "河圖光點，落入棋盤。": "Lights from the River Chart settle onto the board.",
+  "收下這枚古典之印。": "Accept the Classical Seal.",
+  "遠方城樓，等著下一盤棋。": "Beyond the distant city walls, another game awaits.",
+  "齊轍：爹的車，會在這條路上嗎？": "Qi Zhe: Could Dad's cart be somewhere on this road?",
+  "坡腳的車，輪子陷進泥裡。": "At the foot of the slope, a cart wheel sinks into the mud.",
+  "小吏：日頭落下前，全送到！": "Clerk: Deliver it all before sunset!",
+  "「大道不走，偏要走歪路。」": "\"You left the main road to take that crooked path.\"",
+  "齊轍：先別拉！車要倒了！": "Qi Zhe: Don't pull! The cart's tipping!",
+  "等回去，和爹一起看路。": "When I get home, Dad and I will look at the road together.",
+  "小梅：下回路堵了，先叫我。": "Xiaomei: Next time the road's blocked, call me first.",
+  "收下這枚秦之印。": "Accept the Qin Seal.",
+  "說書人的手，慢慢移開。": "The storyteller slowly lifts his hand.",
+  "刻痕，亮回一小段。": "Another short stretch of the carving glows.",
+  "補上一行。": "Another line is restored.",
+  "解開一盤，刻痕亮一段。": "Solve a position, and another stretch of the carving lights up.",
+  "這一行，早已補上。": "This line has already been restored.",
+  "這一行，還空著。": "This line is still blank.",
+  "下次，自己補上它。": "Next time, fill it in yourself.",
+  "燕子姊姊": "Yanzi",
+  "方庭": "Fangting",
+  "客官，夜深了。老朽點一盞燈，陪你們看一分鐘的棋，看完就去歇著。": "It's late, young guests. I'll light a lamp. One minute of chess together, then off to rest.",
+  "客官，同一題盯久了，眼睛會累。換一分鐘的小題，鬆鬆眼。": "Staring at the same puzzle tires your eyes, young guests. Try a different little puzzle for a minute.",
+  "攥緊的手，慢慢鬆開。": "His clenched hand slowly opens.",
+  "刻痕，又亮回一段。": "Another stretch of the carving lights up.",
+  "缺槽，仍舊空著。": "The recess is still empty.",
+  "好眼力！": "Sharp eyes!",
+  "看得仔細，就是好棋。": "Good chess starts with a careful look.",
+  "說書人：「燈芯結了一朵燈花——老一輩說，這是好兆頭。」": "Storyteller: \"The wick has flowered. The old folk say it's a good omen.\""
+};
+function i18nStoryText(text,lang){
+  text=String(text==null?"":text);
+  const language=lang||(typeof i18nLang==="function"?i18nLang():"tw");
+  if(language!=="en")return text;
+  if(Object.prototype.hasOwnProperty.call(I18N_STORY_EN,text))return I18N_STORY_EN[text];
+  return i18nText(text)||text;
+}
+function i18nStoryData(value,lang){
+  const language=lang||(typeof i18nLang==="function"?i18nLang():"tw");
+  if(language!=="en")return value;
+  if(typeof value==="string")return i18nStoryText(value,"en");
+  if(Array.isArray(value))return value.map(item=>i18nStoryData(item,"en"));
+  if(value&&typeof value==="object"){
+    return Object.fromEntries(Object.entries(value).map(([key,item])=>
+      [key,key==="seal"?item:i18nStoryData(item,"en")]));
+  }
+  return value;
+}
 const I18N_CACHE=new Map();
 /* 翻一句：翻得完整回英文；沒有中文回 null（不用換）；還剩中文也回 null（不換） */
-function i18nText(s){s=String(s==null?"":s);if(!I18N_CJK.test(s)||s.length>600)return null;if(I18N_CACHE.has(s))return I18N_CACHE.get(s);
+function i18nText(s){s=String(s==null?"":s);if(!I18N_CJK.test(s)||(s.length>600&&!Object.prototype.hasOwnProperty.call(I18N_EN,s)))return null;if(I18N_CACHE.has(s))return I18N_CACHE.get(s);
   let r=i18nCore(s.trim(),0);if(r!=null&&I18N_CJK.test(r))r=null;if(I18N_CACHE.size>4000)I18N_CACHE.clear();I18N_CACHE.set(s,r);return r}
 function i18nCore(s,depth){if(!s)return"";if(!I18N_CJK.test(s))return s;if(depth>10)return null;
+  if(Object.prototype.hasOwnProperty.call(I18N_STORY_EN,s))return I18N_STORY_EN[s];
   if(Object.prototype.hasOwnProperty.call(I18N_EN,s))return I18N_EN[s];
   for(const[re,fn]of I18N_PAT){const m=s.match(re);if(m){const r=fn(m,x=>i18nCore(String(x).trim(),depth+1));if(r!=null)return r}}
   /* 前後的圖示、符號（♟ ⚔ 👉 › ！…）留著，中間那段去翻 */
@@ -30182,8 +30809,9 @@ function i18nPick(k){const cur=i18nCur();if(k===cur)return;const re=()=>setTimeo
 function i18nSheet(){const cur=i18nCur(),L=[["tw","繁體中文","zh-Hant"],["cn","简体中文","zh-Hans"],["en","English","en"]];   /* zh-lint-ok：簡體選項本來就用簡體字顯示 */
   sheet("🌐 語言 Language",b=>{
     b.innerHTML=`<div class="opt" data-nocc style="flex-wrap:wrap">${L.map(([k,l,h])=>`<button type="button" data-lang="${k}" lang="${h}"${cur===k?' class="on" aria-pressed="true"':' aria-pressed="false"'}>${l}</button>`).join("")}</div>
-      <p class="muted" style="font-size:12.5px;line-height:1.6;margin:10px 2px 0" lang="en">English covers the main screens: tab bar, games against the computer, the game page and results, settings, the online lobby, Teatime endgames, the Daily Puzzle, the game library and the Qianqiu Cup. Story text, dialogue and guides stay in Chinese.</p>
-      <p class="muted" style="font-size:12.5px;line-height:1.6;margin:6px 2px 0">英文介面目前涵蓋底欄、跟電腦對局、對局頁與結果、設定、線上大廳、一盞茶殘局、每日同題、棋譜庫和千秋盃；劇情、台詞和說明文件仍是中文。</p>
+      <p class="muted" id="i18nScopeEn" style="font-size:12.5px;line-height:1.6;margin:10px 2px 0" lang="en"><b>In English:</b> the tab bar and menus, games against the computer, the game page and results, settings, the online lobby, Teatime endgames, the Daily Puzzle, the game library, the Qianqiu Cup, and the main quest (Star Raft Expedition Orders): its buttons, task cards, chapter names, gifts and puzzle hints. Chapters 1 and 2 also have English film captions and dialogue, as do the Starry Night Tea Party greetings and farewells.</p>
+      <p class="muted" style="font-size:12.5px;line-height:1.6;margin:4px 2px 0" lang="en"><b>Chinese only for now:</b> other story scenes (Stone Table Tales and the novel), other character lines, scene history notes, the full privacy statement and the guides.</p>
+      <p class="muted" data-noi18n style="font-size:12.5px;line-height:1.6;margin:6px 2px 0">英文介面目前涵蓋：底欄與選單、跟電腦對局、對局頁與結果、設定、線上大廳、一盞茶殘局、每日同題、棋譜庫、千秋盃，以及主線「星槎遠征令」的按鈕、任務卡、章名、禮包和解題提示；第一、二章現有電影與對話、七星星夜茶話會開場與收尾也已翻譯。其他劇情仍只有中文：石桌往事、長篇、其他角色台詞、場景史料、隱私說明全文和說明文件。</p>
       <button type="button" class="lk" data-xqdoc="i18n" style="margin-top:8px">🌐 About the English UI / 英文介面說明</button>`;
     b.querySelectorAll("[data-lang]").forEach(x=>x.onclick=()=>{try{vibrate(5)}catch(e){}closeSheet();i18nPick(x.dataset.lang)})})}
 /* ================= 畫面：掃描文字節點、屬性，換成英文；原文記起來可以還原 ================= */
@@ -30237,11 +30865,26 @@ function i18nTabKeys(){try{document.querySelectorAll("#tabbar [data-go]").forEac
 /* 防爆版：英文字比較長，只在英文模式（html[lang=en]）縮底欄、工具列、分頁的字，按鈕與說明允許換行；不動 m.css */
 const I18N_CSS=["html[lang=en] .tabbar button{font-size:10.5px;letter-spacing:-.1px;white-space:nowrap}",
   "html[lang=en] #acts button{font-size:12px;line-height:1.15;white-space:normal;overflow-wrap:break-word}",
+  "html[lang=en] #tbb{flex-wrap:wrap}html[lang=en] #tbb button{flex:1 1 calc(50% - 8px);min-width:0;white-space:normal;padding:8px 6px;font-size:13px}",
   "html[lang=en] .st-tabs button{font-size:12.5px;padding-left:2px;padding-right:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}",
   "html[lang=en] #title{white-space:nowrap;overflow:hidden;text-overflow:ellipsis;min-width:0}",
   "html[lang=en] .modal .row button,html[lang=en] .modal .btn,html[lang=en] .opt button,html[lang=en] .pill,html[lang=en] .btn{white-space:normal;line-height:1.25;overflow-wrap:break-word}",
   "html[lang=en] .lvl button span,html[lang=en] .cpu-chip small{font-size:10px;letter-spacing:-.2px}",
-  "html[lang=en] .muted,html[lang=en] .sec-t,html[lang=en] .card,html[lang=en] .item .tx span,html[lang=en] .cpu-lb{overflow-wrap:break-word;hyphens:auto}"].join("\n");
+  "html[lang=en] .muted,html[lang=en] .sec-t,html[lang=en] .card,html[lang=en] .item .tx span,html[lang=en] .cpu-lb{overflow-wrap:break-word;hyphens:auto}",
+  /* 評比第 17、18 輪 B5：主線（首頁「下一步」、禮包、任務卡、電影大字、危機題說明）英文比較長，拿掉字距、允許換行；對話場景「（試過）」是 CSS 的字，英文換掉 */
+  "html[lang=en] .mnq-next{white-space:normal;letter-spacing:0;font-size:16px;text-align:center}",
+  "html[lang=en] #mnqGf h2,html[lang=en] #mnqCard b,html[lang=en] #mnqCard .cd-k,html[lang=en] #mnfPg .mnf-card b{letter-spacing:.02em;overflow-wrap:break-word}",
+  "html[lang=en] #mnqGf button,html[lang=en] #mnqCard button,html[lang=en] #mnfPg .mnf-card button{letter-spacing:0;font-size:18px;white-space:normal}",
+  "html[lang=en] #mnfPg .mnf-big{white-space:normal;letter-spacing:.02em;font-size:clamp(30px,calc(var(--mnfw,100vw)*.09),56px);line-height:1.1;padding:0 14px}",
+  "html[lang=en] #mnfPg .mnf-qs{white-space:normal;font-size:17px}",
+  "html[lang=en] #mnfPg .mnf-sub,html[lang=en] #mnfRite .mnf-sub{white-space:normal;overflow-wrap:break-word;letter-spacing:.01em;padding:.4em 14px;box-sizing:border-box;font-size:clamp(16px,4.6vw,22px);line-height:1.45}",
+  "html[lang=en] #mnvPg .mnv-o button.tried::after{content:' (tried)'}",
+  /* 11/14 頂欄英文：時辰鐘旁的小字比中文長，375 寬會跑到右上角頭像底下；限寬、字縮小、放不下用刪節號（點一下看船齡卡片有全文） */
+  "html[lang=en] .clk-sm{max-width:calc(100vw - 214px)}",
+  "html[lang=en] .clk-sm>span{min-width:0;overflow:hidden}",
+  "html[lang=en] .clk-sm .clk-sl>span,html[lang=en] .clk-sm .clk-ss{font-size:10px;letter-spacing:0;overflow:hidden;text-overflow:ellipsis}",
+  "html[lang=en] .clk-sm .clk-sl>b{letter-spacing:0;white-space:nowrap}"].join("\n");
+
 function i18nCss(){try{if(document.getElementById("i18nCss"))return;const s=document.createElement("style");s.id="i18nCss";s.textContent=I18N_CSS;(document.head||document.body).appendChild(s)}catch(e){}}
 /* 英文系統、還沒選過語言：開 App 4 秒後提示一次（不自動切） */
 function i18nHintOnce(){try{if(i18nSuggest()!=="en"||store.get("langHint",false))return;setTimeout(()=>{try{if(store.get("langHint",false))return;store.set("langHint",true);toast("🌐 English UI: Settings ⚙ → 🌐 (top right)")}catch(e){}},4000)}catch(e){}}
@@ -30699,9 +31342,9 @@ if(typeof document!=="undefined"){document.addEventListener("visibilitychange",(
   for(const ev of["pointerdown","touchend"])document.addEventListener(ev,()=>{if(!MNF.need||!MNF.au||!MNF.mus)return;MNF.need=false;const p=MNF.au.play();if(p&&p.catch)p.catch(()=>{MNF.need=true})},{passive:true,capture:true})}
 /* ---------- 角色立繪（第一版用 2D 立繪 data/xs/prev_<角色>.webp；3D 七星之後再接） ---------- */
 function mnfWho(k){let me="";try{me=typeof myChar==="function"&&myChar()||""}catch(e){}if(k==="me")return me||"x_swordboy";if(k==="guide")return me==="x_swordboy"?"x_miaogirl":"x_swordboy";return k}
-function mnfPre(id,set){const F=MNF_FILMS[id];if(!F)return;const ld=u=>{const im=new Image();im.decoding="async";im.src=u};for(const S of F.shots){const I=MNF_IMG[S.img];if(I)ld(I.u)}const RS=MNF_RITE_SET[set]||MNF_RITE_SET.c1;if(mnfQteIn(F).length){ld(MNF_IMG[RS.hand].u);ld(MNF_IMG[RS.up].u)}   /* 有危機題＝解開後要演儀式：兩張圖先載好，交叉淡入時才不會現抓 */if(F.mus&&mnfMusOk())mnfBlob(F.mus)}
+const MNF_PRED=new Set();function mnfPre(id,set){const F=MNF_FILMS[id];if(!F||MNF_PRED.has(id+"|"+set)||(typeof bgpHid==="function"&&bgpHid()))return;MNF_PRED.add(id+"|"+set);   /* 11/14：同一部片只預載一次、App 在背景時不抓 */const ld=u=>{const im=new Image();im.decoding="async";im.src=u};for(const S of F.shots){const I=MNF_IMG[S.img];if(I)ld(I.u)}const RS=MNF_RITE_SET[set]||MNF_RITE_SET.c1;if(mnfQteIn(F).length){ld(MNF_IMG[RS.hand].u);ld(MNF_IMG[RS.up].u)}   /* 有危機題＝解開後要演儀式：兩張圖先載好，交叉淡入時才不會現抓 */if(F.mus&&mnfMusOk())mnfBlob(F.mus)}
 /* ---------- 播放器 ---------- */
-function mnfPlay(id,opt){opt=opt||{};const F=opt.film||MNF_FILMS[id];if(!F){if(opt.onDone)opt.onDone({skipped:true,missing:true});return null}mnfCss();
+function mnfPlay(id,opt){opt=opt||{};const sourceFilm=opt.film||MNF_FILMS[id],F=typeof i18nStoryData==="function"?i18nStoryData(sourceFilm):sourceFilm;if(!F){if(opt.onDone)opt.onDone({skipped:true,missing:true});return null}mnfCss();
   let rm=false;try{rm=matchMedia("(prefers-reduced-motion:reduce)").matches}catch(e){}
   /* 上一段（keepMusic 接續）留著最後一格墊在下面，新的一段淡入後才拿掉：段落之間不會閃出首頁 */
   for(const x of[document.getElementById("mnfPg"),document.getElementById("mnfBk")])if(x){if(x.dataset.hand==="1"&&!rm){x.dataset.hand="0";setTimeout(()=>x.remove(),900)}else x.remove()}   /* 900ms 內同 id 兩個：新的在後面、疊在上面；樣式都靠 id，所以不改名 */
@@ -30777,7 +31420,7 @@ function mnfPlay(id,opt){opt=opt||{};const F=opt.film||MNF_FILMS[id];if(!F){if(o
       who.className=wc;who.style.backgroundImage=wu;who.dataset.u=wu;void who.offsetWidth;who.classList.add("on")}
     if(S.big&&t>=S.big[0]&&!fired.big){fired.big=1;big.textContent=S.big[1];big.classList.add("on")}
     if(S.board!=null&&t>=S.board&&!fired.bd&&typeof bhxBoardSvg==="function"){fired.bd=1;st.insertAdjacentHTML("beforeend",bhxBoardSvg());const B=st.lastElementChild&&st.lastElementChild.classList.contains("bx-bd")?st.lastElementChild:null,cs=Math.max(W/MNF_W,H/MNF_H);if(B&&S.bq){B.classList.add("q");B.style.transform=mnfQuadM(S.bq.map(cover))}else if(B){B.style.top=cover([0,S.bp?S.bp[0]:819])[1]+"px";B.style.width=(S.bp?S.bp[1]:480)*cs+"px"}}
-    if(S.seal&&t>=S.seal[0]&&!fired.seal){fired.seal=1;const d=document.createElement("div");d.className="mnf-seal";const c=cover(S.src||[384,720]);d.style.left=c[0]+"px";d.style.top=c[1]+"px";d.innerHTML=esc(S.seal[1])+"<br>之印";st.append(d);requestAnimationFrame(()=>d.classList.add("on"))}
+    if(S.seal&&t>=S.seal[0]&&!fired.seal){fired.seal=1;const d=document.createElement("div");d.className="mnf-seal";d.setAttribute("data-noi18n","");const c=cover(S.src||[384,720]);d.style.left=c[0]+"px";d.style.top=c[1]+"px";d.innerHTML=esc(S.seal[1])+"<br>之印";st.append(d);requestAnimationFrame(()=>d.classList.add("on"))}
     g.clearRect(0,0,W,H);if(!rm)mnfFx(g,S,t,W,H,P,add,onScr,cover,fired);
     raf=requestAnimationFrame(frame)};
   setShot(0);raf=requestAnimationFrame(frame);MNF.cur={finish,skip,clock};return MNF.cur}
@@ -30806,7 +31449,7 @@ function mnfFx(g,S,t,W,H,P,add,onScr,cover,fired){const src=onScr(cover(S.src||[
     const tw=q.k==="t"?.5+.5*Math.sin(q.l*.15+q.x):1;g.fillStyle=`rgba(${q.col},${al*.9*tw})`;g.beginPath();g.arc(q.x,q.y,q.r,0,6.2832);g.fill()}
   g.globalCompositeOperation="source-over"}
 /* ---------- 危機解題（QTE）：P＝{fen,side,line:[著法…],big,say,hint,presel}；done({mist,hint,demo,cn}) ---------- */
-function mnfQte(host,P,done){const C=typeof window!=="undefined"&&window.XQCore;
+function mnfQte(host,P,done){if(typeof i18nStoryData==="function")P=i18nStoryData(P);const C=typeof window!=="undefined"&&window.XQCore;
   if(!C||!P||typeof Board!=="function"){setTimeout(()=>done({mist:0,hint:false,demo:true,cn:"",skip:1}),600);return}
   const w=document.createElement("div");w.className="mnf-q";w.innerHTML=`<div class="mnf-qi"><div class="mnf-qw"></div><p class="mnf-qs">${esc(P.say||"")}</p><p class="mnf-qh" aria-live="polite"></p><div class="mnf-qd"></div></div>`;host.append(w);
   const wrap=w.querySelector(".mnf-qw"),hintE=w.querySelector(".mnf-qh"),dE=w.querySelector(".mnf-qd");
@@ -30862,6 +31505,7 @@ function mnfSolveRite(o){o=o||{};mnfCss();let rm=false;try{rm=matchMedia("(prefe
   const place=(k,f)=>{const w=W(),h=H(),s=Math.max(w/IW,h/IH)*k,ox=Math.min(0,Math.max(w-IW*s,w*.5-f[0]*s)),oy=Math.min(0,Math.max(h-IH*s,h*.42-f[1]*s));
     im.style.width=IW*s+"px";im.style.height=IH*s+"px";im.style.transform=`translate(${ox}px,${oy}px)`};
   dot.style.left=R.fx[0]/IW*100+"%";dot.style.top=R.fx[1]/IH*100+"%";dot.style.width=R.dw+"%";dot.style.transform=`translate(-50%,-50%) rotate(${R.rot}deg)`;
+  if(typeof i18nStoryText==="function")for(const key of Object.keys(TX))TX[key]=i18nStoryText(TX[key]);
   const n=Math.max(...Object.values(TX).map(mnfLen));d.style.setProperty("--mnfs",Math.max(15,Math.min(28,Math.floor((W()-36)/(n*1.12))))+"px");
   const say=t=>{sub.classList.remove("on");sub.textContent=t;void sub.offsetWidth;sub.classList.add("on")};
   const K=o.fast?.55:1,T=[],at=(s,f)=>T.push(setTimeout(f,(rm?Math.min(s*1000,s*300):s*1000)*K));let fin=false,k0=performance.now(),raf=0;   /* o.fast：對話場景解題後的短版（約 5 秒，開發者 11/14 新腳本第 7 場） */
@@ -30901,7 +31545,7 @@ function mnfSolveRite(o){o=o||{};mnfCss();let rm=false;try{rm=matchMedia("(prefe
    跳過＝快轉到這一場結束（選項不記、調查點不看），解題和儀式照樣要做；離開＝存到上一場，下次從這一場開頭接著看。
    解題卡（mnvPz）：試看（P.trial）→ 自己走；自己來／幫我看（標出要動的子、候選著、走過去會被吃的格子）／陪我走（演一步，下一個決定交回玩家）；
      走錯時棋盤上播一手真正的反駁再停住（按「退回重想」），錯 2 次自動「幫我看」；題庫沒列的走法用規則往下算（mnvMate）也算對；不設倒數。
-   減少動態：不推拉、不呼吸、不打字、不震動、氣泡一起出現，換圖直接切。介面字用 07i18n 的鍵（vn.*），故事台詞不翻。
+   減少動態：不推拉、不呼吸、不打字、不震動、氣泡一起出現，換圖直接切。介面字用 07i18n 的鍵（vn.*），英文台詞由 i18nStoryData 在播放前轉換。
    名稱前綴 mnv／MNV（11/14 grep m/*.js 確認沒人用）。 */
 /* 說話的人：im＝立繪 data/vn/<im>.webp（七星，park/wuxia_final 綠幕去背）；npc＝場景裡的人，只出名字框 */
 const MNV_WHO={zhe:{nm:"阿轍",fn:"齊轍",im:"x_swordboy"},yan:{nm:"燕子",fn:"田飛燕",im:"x_spiritgirl"},hua:{nm:"花兒",fn:"雷借花",im:"x_martialgirl"},mei:{nm:"小梅",fn:"駱躍梅",im:"x_miaogirl"},
@@ -31222,10 +31866,10 @@ function mnvDid(r,N,P){if(!r)return[];const L=[],T=r.trial||[],bad=((P&&P.trial&
   if(r.moves)L.push([mnvT("vn.sMoves","走了 {n} 手（最少 {m} 手）",{n:r.moves,m:N||2})]);return L}
 /* ---------- 播放器：mnvPlay(章代號,{from 從第幾場, label, pz 危機題資料, onScene(id,毫秒,跳過), onChoice(key,值), onSolved(P,r)→儀式資料, onEnd(1 主按鈕|2 次按鈕), onRetry(P,r), onLeave}) ---------- */
 const MNV_LEAVE={leave:1};
-function mnvPlay(era,opt){opt=opt||{};const CH=MNV_CH[era];if(!CH){if(opt.onLeave)opt.onLeave();return null}mnvCss();
+function mnvPlay(era,opt){opt=opt||{};const CH=typeof i18nStoryData==="function"?i18nStoryData(MNV_CH[era]):MNV_CH[era];if(!CH){if(opt.onLeave)opt.onLeave();return null}mnvCss();
   let rm=false;try{rm=matchMedia("(prefers-reduced-motion:reduce)").matches}catch(e){}
   for(const id of["mnvPg","mnvBk"]){const x=document.getElementById(id);if(x)x.remove()}
-  const I=typeof MNF_IMG!=="undefined"?MNF_IMG:{},W=MNV_WHO,lead=CH.lead,SEEN=new Set(),CLUE=new Map();   /* SEEN：這次播放已經用全名介紹過的七星；CLUE：調查點看到的線索（方案選擇時列出來） */
+  const I=typeof MNF_IMG!=="undefined"?MNF_IMG:{},W=typeof i18nStoryData==="function"?i18nStoryData(MNV_WHO):MNV_WHO,lead=CH.lead,SEEN=new Set(),CLUE=new Map();   /* SEEN：這次播放已經用全名介紹過的七星；CLUE：調查點看到的線索（方案選擇時列出來） */
   const bk=document.createElement("div");bk.id="mnvBk";bk.setAttribute("aria-hidden","true");document.body.append(bk);
   const o=document.createElement("div");o.id="mnvPg";o.setAttribute("role","dialog");o.setAttribute("aria-modal","true");o.setAttribute("aria-label",opt.label||CH.card.t);
   o.innerHTML=`<div class="mnv-im"><div class="mnv-bg"></div></div><div class="mnv-vg"></div><div class="mnv-fbl" aria-hidden="true"></div>
@@ -31408,7 +32052,7 @@ function mnvPlay(era,opt){opt=opt||{};const CH=MNV_CH[era];if(!CH){if(opt.onLeav
     if(dead)return;await endCard()}
   /* 章末卡：印＋你做了什麼（獨立找到、看過反駁、用了幫我看……，不給總星等）；「再試這盤棋」再解一次（結果另外記） */
   async function endCard(){const E=CH.end,P=opt.pz||MNF_QTE[CH.qte],N=Math.ceil(((P&&P.line)||[1,1,1]).length/2);setCast([null,null]);setBg(E.bg,[1.2,40,62],1);box.style.visibility="hidden";if(!rm)sfx("bell");
-    for(;;){const D=mnvDid(pzR,N,P);const k=await card("mnv-end",`<div class="seal" aria-hidden="true">${esc(E.seal)}<br>之印</div><h2>${esc(E.t)}</h2><p>${esc(E.s)}</p>${D.length?`<ul aria-label="${esc(mnvT("vn.did","你做了什麼"))}">${D.map(([t,g])=>`<li${g?' class="gold"':""}>${esc(t)}</li>`).join("")}</ul>`:""}`,[E.b,E.g]);
+    for(;;){const D=mnvDid(pzR,N,P);const k=await card("mnv-end",`<div class="seal" aria-hidden="true" data-noi18n>${esc(E.seal)}<br>之印</div><h2>${esc(E.t)}</h2><p>${esc(E.s)}</p>${D.length?`<ul aria-label="${esc(mnvT("vn.did","你做了什麼"))}">${D.map(([t,g])=>`<li${g?' class="gold"':""}>${esc(t)}</li>`).join("")}</ul>`:""}`,[E.b,E.g]);
       if(k===2){box.style.visibility="";o.classList.add("nsk");const r=await new Promise(res=>{away(true);mnvPz(o,P,Object.assign(pzUi(),{away:()=>{}}),res)});
         o.classList.remove("nsk");if(r){pzR=r;try{if(opt.onRetry)opt.onRetry(P,r)}catch(e){}}box.style.visibility="hidden";continue}
       close();try{if(opt.onEnd)opt.onEnd(k)}catch(e){}return}}
@@ -31420,7 +32064,7 @@ function mnvPlay(era,opt){opt=opt||{};const CH=MNV_CH[era];if(!CH){if(opt.onLeav
       help:[每一步「幫我看」的說明…], walk:[每一步「陪我走」的說明…], wrong:{著法:{say,re 反駁著法}}, miss:[[人,字]…] 走錯後的台詞, win 解開的台詞}
    r＝{mist 走錯幾次, help 用過幫我看, walk 陪走幾步, trial:[看過的試看], moves 走了幾手（含走錯）, perfect 不用幫忙、沒試看、一次走對, hint, lv, demo 全部陪走, cn 走法}
    新手三段支援（不設倒數）：自己來（什麼都不標）／幫我看（藍框要動的子、箭頭候選著、紅圈走過去會被吃的格子）／陪我走（演一步並說明，下一個決定交回玩家） */
-function mnvPz(host,P,ui,done){const C=typeof window!=="undefined"&&window.XQCore;ui=ui||{};const say=ui.say||(()=>{}),talk=ui.line||((w,t)=>say(t));
+function mnvPz(host,P,ui,done){if(typeof i18nStoryData==="function")P=i18nStoryData(P);const C=typeof window!=="undefined"&&window.XQCore;ui=ui||{};const say=ui.say||(()=>{}),talk=ui.line||((w,t)=>say(t));
   if(!C||!P||typeof Board!=="function"){setTimeout(()=>done({mist:0,hint:true,lv:0,help:false,walk:1,trial:[],moves:0,perfect:false,demo:true,cn:"",skip:1}),300);return null}
   const S1=P.vsay||P.say||"",S2=P.vsay2||S1,side=P.side||"r",opp=C.opp(side),b0=C.parseFen(String(P.fen).split(" ")[0]),lines=[P.line||[],...(P.alt||[])].map(L=>L.slice()),N0=Math.ceil(lines[0].length/2),T=P.trial;
   const w=document.createElement("div");w.className="mnv-pz";
@@ -31619,8 +32263,8 @@ function mnqGift(k,era,after){mnqCss();const G=MNQ_GIFT[k];if(!G)return;const go
   if(k==="a6"){items=[["♪",el+"的配樂"],["🌲","景點線索"],["📜","札記一頁・"+el]];btn=["♪ 打開遠征令",()=>mnqPanel()];if(got)mnqMusicAdd(era)}
   if(k==="a2"&&got)mnqA2Pick();
   const o=document.createElement("div");o.id="mnqGf";o.setAttribute("role","dialog");o.setAttribute("aria-modal","true");o.setAttribute("aria-label",G.nm);
-  o.innerHTML=`<div class="gf-st"><div class="gf-ray"></div><div class="gf-seal">${esc(G.seal)}</div></div><h2>${esc(G.nm)}${el&&k==="a6"?"・"+esc(el):""}</h2><p class="gf-say">${esc(G.say)}</p>
-    <div class="gf-it">${items.map(([i,t])=>`<div><span>${i}</span>${esc(t)}</div>`).join("")}</div><div class="gf-b"><button type="button" id="mnqGf1">${esc(btn[0])}</button><button type="button" class="g" id="mnqGf2">收下</button></div>`;
+  o.innerHTML=`<div class="gf-st"><div class="gf-ray"></div><div class="gf-seal" data-noi18n>${esc(G.seal)}</div></div><h2>${esc(G.nm)}${el&&k==="a6"?"・"+esc(el):""}</h2><p class="gf-say">${esc(G.say)}</p>
+    <div class="gf-it">${items.map(([i,t])=>`<div><span>${i}</span>${esc(t)}</div>`).join("")}</div><div class="gf-b"><button type="button" id="mnqGf1">${esc(btn[0])}</button><button type="button" class="g" id="mnqGf2" data-i18n="mnq.accept">收下</button></div>`;
   document.body.append(o);requestAnimationFrame(()=>o.classList.add("on"));try{if(typeof rfxSound==="function")rfxSound(false);else mnfSfx("bell")}catch(e){}
   const close=f=>{o.classList.remove("on");setTimeout(()=>o.remove(),360);mnqHomeSync();if(f)f();else if(after)setTimeout(after,200)};   /* 按鈕的事直接做（iPhone 要在點選當下開始放配樂） */
   o.querySelector("#mnqGf1").onclick=()=>{if(typeof vibrate==="function")vibrate(8);close(btn[1])};o.querySelector("#mnqGf2").onclick=()=>close(null);
@@ -31742,5 +32386,5 @@ function mnqIdle(){try{if(typeof TITLE!=="undefined"&&TITLE)return false;if(docu
 function mnqReach(){try{const E=mnqEnv();if(!E.at||!MNQ_CHAP[E.at])return;const S=mnqSt();if(S.reach[E.at])return;S.reach[E.at]=Date.now();mnqSave(S)}catch(e){}}   /* 星槎第一次停到有主線資料的那一朝：記下來，那一章就開放（之後開走也不會再關） */
 function mnqTick(auto){try{mnqReach();const v=document.getElementById("view");if(v&&!document.getElementById("mnqNext"))mnqHomeBtn(v);mnqHomeSync();if(!auto||!mnqIdle())return;const n=mnqNextOf(mnqSt(),mnqEnv());if(n.k==="gift")mnqGift(n.g,n.era)}catch(e){}}
 /* 首頁第一次畫出來時（m.html 載入途中就 route 了）這個模組還沒包到 homeMap：計時器順便補上按鈕 */
-if(typeof window!=="undefined"&&typeof document!=="undefined"){let qa=false;try{qa=localStorage.getItem("xq_mnqQa")==="1"}catch(e){}const auto=!navigator.webdriver||qa;setInterval(()=>mnqTick(auto),2500);setTimeout(()=>mnqTick(false),0)}
+if(typeof window!=="undefined"&&typeof document!=="undefined"){let qa=false;try{qa=localStorage.getItem("xq_mnqQa")==="1"}catch(e){}const auto=!navigator.webdriver||qa;(typeof bgpEvery==="function"?bgpEvery:setInterval)(()=>mnqTick(auto),2500);setTimeout(()=>mnqTick(false),0)}
 </script></body></html>

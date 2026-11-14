@@ -2600,7 +2600,9 @@
     const benchStep=now=>{const B=BENCH,p=Math.min(1,(now-B.t0)/B.ms);yaw=tyaw=B.y0+p*TAU;zoom=tzoom=B.z0*(1+.25*Math.sin(p*TAU*2));pitch=tpitch=B.p0;if(p>=1)benchEnd()};
     const benchRec=now=>{const B=BENCH;if(!B)return;if(B.last)B.dt.push(now-B.last);B.last=now;B.calls+=rd.info.render.calls;B.tris+=rd.info.render.triangles;B.n++};
     const bench=(cb,ms)=>{if(BENCH||!shown)return false;rd.info.autoReset=false;BENCH={t0:performance.now(),ms:ms||10000,y0:tyaw,z0:tzoom,p0:tpitch,dt:[],calls:0,tris:0,n:0,last:0,cb:cb||(()=>{})};pwPoke(200);return true};
-    function frame(now){if(stopped)return;if(!document.body.contains(el)){destroy();return}requestAnimationFrame(frame);
+    /* 評比第 17、18 輪第 5 項：App 在背景時不再排下一格，回前景（visibilitychange）再接著畫 */
+    let frz=0;const onVis=()=>{if(!stopped&&frz&&!document.hidden){frz=0;document.removeEventListener("visibilitychange",onVis);requestAnimationFrame(frame)}};
+    function frame(now){if(stopped)return;if(!document.body.contains(el)){destroy();return}if(document.hidden){last=now;PW.fw.t0=0;PF.live=false;if(!frz){frz=1;document.addEventListener("visibilitychange",onVis)}return}requestAnimationFrame(frame);
       if(document.hidden||el.style.display==="none"){last=now;PW.fw.t0=0;PF.live=false;return}
       if(BENCH)benchStep(now);
       if(IN.ph==="hold"||IN.ph==="run"){const k=introK(now-IN.t0,IN.hold,IN.dur);if(now-IN.t0>=IN.hold+IN.dur)inEnd(true);else if(k<=0){tyaw=0;tpitch=0;tzoom=1}else{IN.ph="run";yaw=tyaw=0;pitch=tpitch=.5*k;zoom=tzoom=1+(HOME.z-1)*k}}   /* 11/11 入座運鏡：先停在坐著看，再 ease 到 topfit */
@@ -2689,7 +2691,7 @@
     try{if(opt.view)setViewF(opt.view);else if(HFIT()&&!inStart(typeof opt.intro==="string"?opt.intro:null,false)){if(typeof opt.intro==="string")INTRO_SEEN.add(opt.intro);goTopFit(true)}}catch(e){}   /* opt.view＝玩家存過的視角（06-cpu 傳 store parkView）；沒存過的手機直式＝topfit */
     requestAnimationFrame(frame);setTimeout(waitShow,80);
     const onRs=()=>{if(el.style.display!=="none")fit()};window.addEventListener("resize",onRs);
-    function destroy(){if(stopped)return;stopped=true;PF.live=false;try{if(WX)WX.dispose()}catch(e){}WX=null;window.removeEventListener("resize",onRs);
+    function destroy(){if(stopped)return;stopped=true;document.removeEventListener("visibilitychange",onVis);PF.live=false;try{if(WX)WX.dispose()}catch(e){}WX=null;window.removeEventListener("resize",onRs);
       try{sc.traverse(o=>{const ms=o.material?(Array.isArray(o.material)?o.material:[o.material]):[];for(const m of ms){if(m&&m.map)freeTex(m.map);m&&m.dispose&&m.dispose()}if(o.geometry)o.geometry.dispose()});for(const k in faceCache){freeTex(faceCache[k]);delete faceCache[k]}}catch(e){}
       try{rd.dispose();rd.forceContextLoss()}catch(e){}el.remove();opt.onDestroy&&opt.onDestroy()}
     // 意見回饋 244：切回平面棋盤時只藏起來、暫停繪製（不拆掉 3D 場景），再切回公園就直接顯示，不用重新載入
