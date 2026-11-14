@@ -1613,7 +1613,7 @@ html[data-lefty] .tskip{right:auto;left:14px}
       if(!window.caches)return go();caches.keys().then(function(ks){return Promise.all(ks.filter(function(k){return k.indexOf("xqlab-app-")===0}).map(function(k){return caches.delete(k)}))})
         .then(function(){return navigator.serviceWorker&&navigator.serviceWorker.getRegistration()}).then(function(r){return r&&r.update()}).catch(function(){}).then(go)}};setTimeout(chk,4000)})();
 </script>
-<script>window.XQ_OFFLINE=true;window.XQ_BUILD="20261114-0804";</script>
+<script>window.XQ_OFFLINE=true;window.XQ_BUILD="20261114-0835";</script>
 <script src="core.js"></script>
 <script src="engine.js"></script>
 <script src="local.js"></script>
@@ -17865,7 +17865,7 @@ function dglWhen(s,o){if(!s.due)return null;if(o.zone==="ship")return"rest";if(o
 function dglGate(s,h,o){if(dglOpen(h,o))return null;if(s.due)return"exit";if(s.out)return"rest";return null}
 const dglXmAdd=(x,n)=>Math.max(0,Math.min(DGL_XM_MAX,(Math.round(+x)||0)+(Math.round(+n)||0)));
 /* 心定則棋穩（開發者 11/13 晚選）：定軌力一半以上修為 ×1.1、滿格 ×1.2；零頭累積在 fx，滿 1 才多給（修為常一次只給 1、2 點，直接四捨五入等於沒加） */
-const dglXpMul=r=>(+r||0)>=DGL_MAX?1.2:(+r||0)>=DGL_MAX/2?1.1:1;
+const dglXpMul=r=>{const v=dglShow(r);return v>=DGL_MAX?1.2:v>=DGL_MAX/2?1.1:1};   /* 11/14 開發者：加成照畫面上看到的數字（dglShow 進位後），29.5 顯示 30 就給 ×1.2 */
 function dglXpBonus(n,r,fx){n=Math.round(+n)||0;fx=+fx||0;if(n<=0)return{n,fx};fx+=n*(dglXpMul(r)-1);const add=Math.floor(fx+1e-9);return{n:n+add,fx:Math.max(0,Math.round((fx-add)*1e6)/1e6)}}
 /* 星芒帶進黑洞：開局靈力 sp0（已照上限截過）加上星芒，不超過靈力上限；used＝真的用掉幾點 */
 function dglXmUse(sp0,spMax,xm){spMax=Math.max(0,+spMax||0);sp0=Math.max(0,Math.min(spMax,+sp0||0));const sp=Math.min(spMax,sp0+Math.max(0,Math.round(+xm)||0));return{sp,used:sp-sp0}}
@@ -17897,6 +17897,16 @@ function dglXiuLight(o,i){i=Math.round(+i);if(!(i>=0&&i<DGL_XIU.length))return{o
 /* 點亮後的說明：宿名、四象與方位、第幾宿、大致在今天哪個星座＋補充一句 */
 function dglXiuLine(i){const s=DGL_XIU[i];if(!s)return"";const X=DGL_XIANG[s[1]],n=DGL_XIU.filter((y,j)=>j<=i&&y[1]===s[1]).length;
   return`${s[0]}宿：${X[0]}七宿的第${"一二三四五六七"[n-1]}宿（${X[1]}），大致在今天的${s[2]}。${s[3]}`}
+/* 角色卡（開發者 11/14 採用 ChatGPT 設計稿 story/chatgpt_app/回覆_角色卡設計_1114.md）：
+   DGL_ICO＝角色卡用到的圖示對照表，之後換水墨圖示只改這裡；值寫 "img:路徑" 就畫成圖片（dglIc），其他當文字（emoji）。
+   DGL_XM_GET＝解殘局、主線過關各得幾點星芒；DGL_CD_LOW＝角色卡「快回星槎」的門檻（畫面上看到的數字 ≤ 這個） */
+const DGL_ICO={red:"🔴",blue:"🔵",land:"⛰️",ship:"🚢",game:"♟️",puz:"🧩",bh:"🌀",zero:"🖌️",flag:"🚩",main:"📜",xiu:"🌌",xm:"✨",hp:"❤️",sp:"🔷",atk:"⚔️",off:"⏸️"};
+const DGL_XM_GET=1,DGL_CD_LOW=5;
+/* 角色卡的定軌力狀態：off 設定關了、out 化墨退場中（在星槎歇息）、due 用完了（這盤下完就退場）、low 快用完、full 滿格 ×1.2、half 一半以上 ×1.1、none 一半以下沒加成。
+   加成照畫面上看到的數字（dglShow，跟頂欄、卡片上的「30／30」一致；dglXpMul 也照 dglShow，看到的就是實際給的） */
+function dglCardSt(s,off){if(off)return"off";s=s||{};if(s.out)return"out";if(s.due)return"due";const v=dglShow(s.r);if(v<=DGL_CD_LOW)return"low";const m=dglXpMul(v);return m>=dglXpMul(DGL_MAX)?"full":m>1?"half":"none"}
+/* 化墨退場後還要幾分鐘能下船（星槎上每分鐘回 DGL_SHIP，回到 DGL_BACK 才能下船；無條件進位） */
+const dglBackMin=r=>Math.max(0,Math.ceil((DGL_BACK-(+r||0))/DGL_SHIP-1e-9));
 /* #DGL-PURE-END */
 
 const DGL={s:dglNew(),last:Date.now(),done:0,pz:0,say:0,lastZ:"",fromZ:"",walk:new Set(),wt:0,ft:0};
@@ -17948,13 +17958,55 @@ html[data-era=qin] #meChip .dgl-bars i,html[data-era=wudai] #meChip .dgl-bars i{
 .dgl-out p{margin:0;color:#2a1f15;font:700 17px/1.5 var(--serif,serif);text-align:center;padding:0 24px;opacity:0;animation:dglTx .5s .5s ease forwards}
 @keyframes dglTx{to{opacity:1}}
 .dgl-out.rm,.dgl-out.rm *{animation:none!important}.dgl-out.rm{background:rgba(244,236,220,.9)}.dgl-out.rm p{opacity:1}.dgl-out.rm .dgl-o-fig img{filter:grayscale(1);opacity:.45}.dgl-out.rm .dgl-o-fig i{display:none}
-.dgl-cd-top{display:flex;gap:10px;align-items:center;margin-bottom:6px}.dgl-cd-top img{width:54px;height:64px;object-fit:contain}.dgl-cd-top b{font-size:16px}.dgl-cd-top small{display:block;opacity:.8;font-size:12.5px}
-.dgl-cd-sec{border:1px solid color-mix(in srgb,currentColor 18%,transparent);border-radius:12px;padding:8px 10px;margin:8px 0}
 .dgl-cd-h{display:flex;justify-content:space-between;align-items:baseline;font-size:15px}.dgl-cd-h span{font-weight:700}
 .dgl-cd-bar{height:8px;margin:5px 0 4px;background:color-mix(in srgb,currentColor 14%,transparent)}
-.dgl-cd ul{margin:4px 0 0;padding-left:18px;font-size:13.5px;line-height:1.55}
-.dgl-cd-st{display:flex;gap:8px;margin:6px 0}.dgl-cd-st span{flex:1;text-align:center;border-radius:10px;padding:6px 4px;background:color-mix(in srgb,currentColor 7%,transparent);font-size:12.5px}.dgl-cd-st b{display:block;font-size:18px}
-.dgl-cd-warn{margin:6px 0;padding:6px 10px;border-radius:10px;background:color-mix(in srgb,#cf3b2e 12%,transparent);font-size:13.5px}
+.dgl-ic{font-style:normal;flex:none;line-height:1}img.dgl-ic{width:1.15em;height:1.15em;object-fit:contain}
+.dgl-khero{display:flex;gap:12px;align-items:center;margin:0 0 2px}.dgl-khero img{width:52px;height:62px;object-fit:contain;flex:none}
+.dgl-khero b{display:block;font-size:17px;line-height:1.35}.dgl-khero div>span{display:block;font-size:15px;color:var(--muted,#7A6A58)}
+.dgl-khero.out img{opacity:.45;filter:grayscale(1)}
+.dgl-kc{position:relative;border:1px solid color-mix(in srgb,currentColor 16%,transparent);border-radius:16px;padding:4px 10px 10px 12px;margin:8px 0}
+.dgl-kwarn{background:linear-gradient(90deg,color-mix(in srgb,currentColor 13%,transparent),transparent 42%)}
+.dgl-kh{display:flex;align-items:center;gap:6px;min-height:44px}
+.dgl-kt{display:flex;align-items:center;gap:6px;margin:0 auto 0 0;min-width:0;font-size:18px;font-weight:900;white-space:nowrap}
+html[lang=en] .dgl-kt{white-space:normal;line-height:1.2}
+.dgl-kv{flex:none;font-size:24px;font-weight:900;line-height:1;white-space:nowrap;font-variant-numeric:tabular-nums}
+.dgl-kq{flex:none;display:grid;place-items:center;width:44px;height:44px;margin:0 -8px 0 -4px;padding:0;border:0;border-radius:50%;background:none;color:inherit;font:inherit;cursor:pointer;-webkit-tap-highlight-color:transparent}
+.dgl-kq span{display:grid;place-items:center;width:28px;height:28px;border-radius:50%;border:1.5px solid color-mix(in srgb,currentColor 45%,transparent);font-size:16px;font-weight:900;line-height:1}
+.dgl-kq[aria-expanded=true] span{background:color-mix(in srgb,currentColor 16%,transparent)}
+.dgl-kq:focus-visible{outline:2px solid #3d85d6;outline-offset:-2px}
+.dgl-kln{display:flex;flex-wrap:wrap;align-items:center;gap:4px 8px}
+.dgl-kl{display:flex;align-items:center;gap:5px;flex:1 1 auto;margin:0;font-size:17px;font-weight:800;line-height:1.4}
+.dgl-kwarn .dgl-kl{color:var(--red,#B3261E)}
+.dgl-ks{display:flex;align-items:center;flex-wrap:wrap;gap:4px;margin:2px 0 0;font-size:14px;line-height:1.4;color:var(--muted,#7A6A58)}.dgl-ks b{color:var(--ink,#2A1F15)}
+.dgl-knum{font-size:20px}
+.dgl-kbd{flex:none;display:inline-flex;align-items:center;gap:3px;min-height:26px;padding:0 10px;border-radius:999px;font-size:14px;font-weight:800;white-space:nowrap;color:var(--muted,#7A6A58);background:color-mix(in srgb,currentColor 12%,transparent)}
+.dgl-kbd.on{color:var(--red,#B3261E);background:color-mix(in srgb,#cf3b2e 15%,transparent)}
+.dgl-kbd.blue{color:color-mix(in srgb,#2f6fbd 70%,var(--ink,#2A1F15));background:color-mix(in srgb,#3d85d6 15%,transparent)}
+.dgl-kbw{position:relative;margin:10px 0 0}
+.dgl-kbar{display:block;position:relative;height:12px;border-radius:6px;overflow:hidden;background:color-mix(in srgb,currentColor 13%,transparent)}
+.dgl-kbar b{position:absolute;left:0;top:0;bottom:0;border-radius:6px;transition:width .6s ease}
+.dgl-kwarn .dgl-kbar.dgl-r b{background:#9e2f24}
+.dgl-kbar.dgl-b b{background:repeating-linear-gradient(135deg,#3d85d6 0 7px,#6aa3e3 7px 10px)}
+.dgl-kmk{position:absolute;top:-3px;width:2px;height:18px;margin-left:-1px;border-radius:1px;background:color-mix(in srgb,currentColor 50%,transparent)}
+.dgl-ktks{position:relative;height:38px;margin-top:2px}
+.dgl-ktk{position:absolute;top:0;display:flex;flex-direction:column;align-items:center;transform:translateX(-50%);font-size:14px;line-height:1.25;white-space:nowrap;color:var(--muted,#7A6A58)}
+.dgl-ktk>span{display:flex;align-items:center;gap:2px}.dgl-ktk small{font-size:14px}
+.dgl-ktk.end{left:auto!important;right:0;transform:none;align-items:flex-end}
+.dgl-ktk.on{color:var(--red,#B3261E);font-weight:800}
+.dgl-kcps{display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-top:4px}
+.dgl-kcp{display:flex;align-items:center;justify-content:center;gap:4px;min-height:34px;padding:3px 6px;border-radius:12px;font-size:14px;font-weight:700;line-height:1.25;text-align:center;background:color-mix(in srgb,#cf3b2e 9%,transparent)}
+.dgl-kct{min-width:0}.dgl-knw{white-space:nowrap}
+.dgl-kflow{display:grid;grid-template-columns:1fr auto 1fr;gap:6px;margin-top:8px}
+.dgl-kfb{display:flex;flex-direction:column;gap:2px;min-width:0;padding:6px 8px;border-radius:12px;background:color-mix(in srgb,#3d85d6 9%,transparent)}
+.dgl-kfb small{font-size:14px;color:var(--muted,#7A6A58)}.dgl-kfb .dgl-kxn{margin:-2px 0 2px 1.4em}
+.dgl-kfb .dgl-kcp{justify-content:flex-start;min-height:0;padding:1px 0;border-radius:0;background:none;text-align:left}
+.dgl-kar{align-self:center;font-style:normal;font-size:22px;font-weight:900;color:#3d85d6}
+.dgl-kst{display:grid;grid-template-columns:repeat(3,1fr);gap:6px;margin-top:8px}
+.dgl-kst>span{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;min-width:0;min-height:64px;padding:4px 2px;border-radius:12px;text-align:center;background:color-mix(in srgb,currentColor 6%,transparent)}
+.dgl-kst small{display:flex;align-items:center;justify-content:center;flex-wrap:wrap;gap:2px;font-size:14px;font-weight:700}.dgl-kst b{font-size:24px;line-height:1.1;font-variant-numeric:tabular-nums}
+.dgl-kmore{margin:8px 0 0;padding:6px 10px;border-radius:12px;background:color-mix(in srgb,currentColor 5%,transparent)}.dgl-kmore[hidden]{display:none}
+.dgl-kmore ul{margin:0;padding-left:18px;font-size:14px;line-height:1.55}
+.dgl-kme{width:100%;min-height:48px;margin-top:4px}
 .dgl-loc{display:flex;align-items:center;gap:5px;flex:none;border:0;border-radius:999px;padding:2px 9px 2px 3px;margin-left:4px;min-height:44px;background:color-mix(in srgb,var(--ink,#2a1f15) 6%,transparent);color:inherit;font:inherit;cursor:pointer}
 html[data-era=qin] .dgl-loc,html[data-era=wudai] .dgl-loc{background:rgba(255,248,236,.16)}
 .dgl-loc img{width:24px;height:32px;object-fit:contain;flex:none}.dgl-loc .dgl-bars{display:flex;flex-direction:column;gap:5px;width:40px}
@@ -17970,7 +18022,7 @@ html[data-dgloff] #meChip .dgl-bars,html[data-dgloff] .dgl-loc,html[data-dgloff]
 .dgl-xt-s b{font:900 19px/1.1 var(--serif,serif)}.dgl-xt-s small{font-size:11px;margin-top:2px;opacity:.9;white-space:nowrap}
 .dgl-xt-s.on{background:radial-gradient(circle at 50% 38%,#3d4d8c,#161c3a);color:#ffe7a3;border-color:#d6b25a;box-shadow:0 0 9px rgba(255,212,120,.45)}
 .dgl-xt-s.sel{outline:2px solid #3d85d6;outline-offset:1px}
-@media (prefers-reduced-motion:reduce){.dgl-flash i.dgl-r,.shw.dgl-yawn canvas{animation:none}.dgl-bars i b,.dgl-head i b,.dgl-float i b{transition:none}}`;document.head.append(s)}
+@media (prefers-reduced-motion:reduce){.dgl-flash i.dgl-r,.shw.dgl-yawn canvas{animation:none}.dgl-bars i b,.dgl-head i b,.dgl-float i b,.dgl-cd-bar b,.dgl-kbar b{transition:none}}`;document.head.append(s)}
 const dglBarsHTML='<i class="dgl-r"><b></b></i><i class="dgl-b"><b></b></i>';
 
 /* ---------- 畫面：首頁頭像下兩條、浮動小卡、頭上小條 ---------- */
@@ -17979,7 +18031,8 @@ function dglPaint(){if(!DGL_ON||typeof document==="undefined")return;const r=dgl
   document.querySelectorAll("[data-dgl=r]").forEach(e=>e.textContent=r+"／"+DGL_MAX);document.querySelectorAll("[data-dgl=x]").forEach(e=>e.textContent=x+"／"+DGL_XM_MAX);
   const b=document.getElementById("meChip");if(b&&b.querySelector(".dgl-bars"))b.title=`定軌力 ${r}／${DGL_MAX}・星芒 ${x}／${DGL_XM_MAX}`;
   const L=document.getElementById("dglLoc");if(L){const t=`我的角色：定軌力 ${r}／${DGL_MAX}，星芒 ${x}／${DGL_XM_MAX}`;if(L.title!==t){L.title=t;L.setAttribute("aria-label",t)}}
-  const off=dglUserOff(),H=document.documentElement;if(H.hasAttribute("data-dgloff")!==off)H.toggleAttribute("data-dgloff",off)}
+  const off=dglUserOff(),H=document.documentElement;if(H.hasAttribute("data-dgloff")!==off)H.toggleAttribute("data-dgloff",off);
+  const cd=document.querySelector(".dgl-cd[data-k]");if(cd&&DGL.cdDraw&&cd.dataset.k!==dglCardKey())DGL.cdDraw()}   /* 角色卡開著、狀態變了（例如退場倒數少一分、回到能下船）就重畫 */
 /* 地點頁（人間、不是對局解題頁、不是首頁）：頂欄最右邊放小頭像＋兩條，點了開角色卡；包一層 setTop 換頁就跟著放／收，每 2 秒（dglTick）再對一次 */
 function dglLocSync(h,fit){if(typeof document==="undefined")return;h=h==null?location.hash:h;const tb=document.getElementById("topbar");let e=document.getElementById("dglLoc");
   const on=!!tb&&DGL_ON&&dglLocOn(h,{off:dglUserOff(),bh:dglBh(h),travel:!!document.querySelector(".travel.qq")});
@@ -18038,23 +18091,51 @@ function dglRouteGate(){try{if(!dglLive())return false;const h=location.hash,g=d
     if(g==="exit"){dglExitNow(true);return true}
     navReplace("#/adventure");setTimeout(()=>toast(`🌫 定軌力 ${dglShow(DGL.s.r)}／${DGL_MAX}：在星槎上歇到 ${DGL_BACK} 才能再下船`),450);return true}catch(e){return false}}
 
-/* ---------- 角色卡（點頭像） ---------- */
-function dglCard(){dglCss();const r=dglShow(DGL.s.r),x=dglXm(),s=DGL.s;let nm="",im="",rk="",lv=1;try{nm=meName();im=meImg();rk=rankInfo().name;lv=xpInfo().L}catch(e){}
-  let bh="";try{const c=dglName();if(c&&typeof BHTD!=="undefined"&&typeof bhtdL==="function"){const st=BHTD.stats(c,bhtdL());
-    bh=`<div class="dgl-cd-sec"><div class="dgl-cd-h"><b>🌀 黑洞裡的你</b><span>修為 Lv ${st.L}</span></div><div class="dgl-cd-st"><span>元氣<b>${st.hp}</b></span><span>靈力上限<b>${st.sp}</b></span><span>攻擊<b>×${st.atk.toFixed(2)}</b></span></div><p class="muted" style="font-size:12.5px;margin:2px 0 0">修為愈高，這三樣都會慢慢長。進黑洞時，身上的星芒會變成開局靈力。</p></div>`}}catch(e){}
-  const off=dglUserOff(),warn=off?"":s.out?`<p class="dgl-cd-warn">🌫 化墨退場中：在星槎上歇到 ${DGL_BACK} 才能再下船。</p>`:s.due?`<p class="dgl-cd-warn">🌫 定軌力用完了：這一盤下完、這一題解完，就要回星槎歇息。</p>`:"";
-  const St=dglSt(),xn=dglXiuN(St.t),ttl=(Math.round(+St.tw)||0)&16;
-  sheet("🙂 "+(nm||"我的角色"),b=>{b.innerHTML=`<div class="dgl-cd">
-    <div class="dgl-cd-top">${im?`<img src="${esc(im)}" alt="">`:""}<div><b>${esc(nm)}</b><small>${esc(rk)}・修為 Lv ${lv}${ttl?`・🏅 ${DGL_XIU_TITLE}`:""}</small></div></div>${warn}
-    ${off?`<div class="dgl-cd-sec"><div class="dgl-cd-h"><b>定軌力（紅）</b><span>已關閉</span></div>
-      <ul><li>平日體力已在設定裡關掉：定軌力不扣、不會化墨退場，也沒有「心定則棋穩」修為加成。</li><li>想再打開：設定 → 👘 換造型，裡面的「平日體力」。</li></ul></div>`:
-    `<div class="dgl-cd-sec"><div class="dgl-cd-h"><b>定軌力（紅）</b><span data-dgl="r">${r}／${DGL_MAX}</span></div><div class="dgl-cd-bar dgl-r"><b></b></div>
-      <ul><li>在人間（下船以後）每分鐘少 ${DGL_DRAIN}；在星槎上不會少。</li><li>下完一盤棋、解完一題，各回 ${DGL_GAME}。</li><li>黑洞過關回 ${DGL_BH}；關掉 App 再打開就回滿。</li><li>用完了會化墨退場，回星槎歇息：船上每分鐘回 ${DGL_SHIP}，回到 ${DGL_BACK} 就能再下船。</li><li>線上大廳、千秋盃不用定軌力。</li><li>心定則棋穩：定軌力一半以上，下棋、解題得到的修為多一成；滿格多兩成。</li></ul></div>`}
-    <div class="dgl-cd-sec"><div class="dgl-cd-h"><b>星芒（藍）</b><span data-dgl="x">${x}／${DGL_XM_MAX}</span></div><div class="dgl-cd-bar dgl-b"><b></b></div>
-      <ul><li>解殘局、主線過關，各得 1 點，最多存 ${DGL_XM_MAX} 點。</li><li>在觀星臺可以點亮二十八宿星圖：每宿 ${DGL_XIU_COST} 點（已點亮 ${xn}／${DGL_XIU.length}）。</li><li>進黑洞時，星芒會變成開局靈力（一次最多帶 10 點），用掉多少扣多少。</li><li>提示照舊免費，不用花星芒。</li></ul></div>
-    ${bh}<button type="button" class="btn" id="dglMe" style="width:100%;margin-top:6px">🙂 我的角色頁</button></div>`;
-    b.querySelector("#dglMe").onclick=()=>{closeSheet();location.hash="#/me"};dglPaint()})}
-
+/* ---------- 角色卡（點頭像）：開發者 11/14 採用 ChatGPT 角色卡設計（story/chatgpt_app/回覆_角色卡設計_1114.md 第 1～5 節）。
+   每塊「一句大字＋圖示膠囊」，原本的條列細則收進每塊右上角的「？」（點了展開、再點收起）。規則字都從 DGL_* 常數組；圖示查 DGL_ICO（dglIc）。
+   數字跟中文分在不同的文字節點（07i18n 逐節點查字典，規則數字改了英文也不會失效）。卡片開著時狀態一變（dglCardKey）就重畫，展開的「？」保持展開 ---------- */
+const dglIc=k=>{const v=String(DGL_ICO[k]||"");return/^img:/.test(v)?`<img class="dgl-ic" src="${esc(v.slice(4))}" alt="" aria-hidden="true">`:`<i class="dgl-ic" aria-hidden="true">${v}</i>`};
+function dglCardKey(){const st=dglCardSt(DGL.s,dglUserOff());return st+(st==="out"?":"+dglBackMin(DGL.s.r):"")}
+/* 「？」鈕（44×44；讀屏念「定軌力細則」＋展開／收起）與它收著的細則 */
+const dglCdQ=(id,lab,open)=>`<button type="button" class="dgl-kq" data-q="${id}" aria-expanded="${open?"true":"false"}" aria-controls="dglQ_${id}" aria-label="${lab}"><span aria-hidden="true">？</span></button>`;
+const dglCdMore=(id,open,L)=>`<div class="dgl-kmore" id="dglQ_${id}"${open?"":" hidden"}><ul>${L.map(t=>`<li>${t}</li>`).join("")}</ul></div>`;
+/* 膠囊：圖示＋字＋數字＋單位（各自一個節點；數字和單位不拆行，英文長字換行時圖示也不會單獨掉一行） */
+const dglCdCp=(ic,lab,num,unit)=>`<span class="dgl-kcp">${ic}<span class="dgl-kct">${lab?`<span>${lab}</span>`:""}${num!=null?` <span class="dgl-knw"><b>${num}</b>${unit?(/^／/.test(unit)?"":" ")+`<span>${unit}</span>`:""}</span>`:""}</span></span>`;
+function dglCard(){dglCss();let nm="";try{nm=meName()}catch(e){}const Q=new Set();
+  sheet("🙂 "+(nm||"我的角色"),b=>{const draw=()=>{const s=DGL.s,r=dglShow(s.r),x=dglXm(),off=dglUserOff(),st=dglCardSt(s,off),k=dglCardKey(),sy=b.scrollTop;
+    let im="",rk="",lv=1;try{im=meImg();rk=rankInfo().name;lv=xpInfo().L}catch(e){}
+    const Sx=dglSt(),xn=dglXiuN(Sx.t),ttl=(Math.round(+Sx.tw)||0)&16,half=DGL_MAX/2,m1=dglXpMul(half),m2=dglXpMul(DGL_MAX),mu=dglXpMul(r),warn=st==="low"||st==="due"||st==="out";
+    const gp=dglCdCp(dglIc("game")+dglIc("puz"),DGL_GAME===DGL_PUZ?"下棋解題":"下棋／解題","+"+DGL_GAME+(DGL_GAME===DGL_PUZ?"":"／+"+DGL_PUZ));
+    let red;
+    if(off)red=`<section class="dgl-kc dgl-koff"><div class="dgl-kh"><h3 class="dgl-kt">${dglIc("off")}<span>平日體力已關閉</span></h3>${dglCdQ("r","定軌力細則",Q.has("r"))}</div>
+      <p class="dgl-kl"><span>不扣、不退場、無加成</span></p>${dglCdMore("r",Q.has("r"),["平日體力已在設定裡關掉：定軌力不扣、不會化墨退場，也沒有「心定則棋穩」修為加成。","想再打開：設定 → 👘 換造型，裡面的「平日體力」。"])}</section>`;
+    else{const big=st==="out"?"化墨退場中":st==="due"?"定軌力用完了":st==="low"?"快回星槎":"人間會用，星槎會回",bic=st==="out"||st==="due"?dglIc("zero"):st==="low"?dglIc("ship"):"";
+      const sub=st==="out"?`${dglIc("ship")}<span>下船倒數</span> <b class="dgl-knum">${dglBackMin(s.r)}</b> <span>分鐘</span>`:st==="due"?"<span>這一盤下完、這一題解完，就要回星槎歇息。</span>":`${dglIc("zero")}<span>歸零會化墨退場</span>`;
+      const bd=mu>=m2?`<span class="dgl-kbd on"><span>滿格加成</span> ×${m2}</span>`:mu>1?`<span class="dgl-kbd on"><span>穩定加成</span> ×${m1}</span>`:`<span class="dgl-kbd">未達加成</span>`;
+      const pc=v=>Math.max(0,Math.min(100,100*v/DGL_MAX)),T=st==="out"?[[DGL_BACK,dglIc("flag")+`<b>${DGL_BACK}</b>`,"<span>可下船</span>",true]]:[[half,`<b>${Math.ceil(half)}</b>`,`×${m1}`,mu>=m1],[DGL_MAX,`<b>${DGL_MAX}</b>`,`×${m2}`,mu>=m2]];
+      const mk=T.map(t=>`<i class="dgl-kmk" style="left:${Math.min(pc(t[0]),99.4).toFixed(1)}%"></i>`).join(""),tk=T.map(t=>`<span class="dgl-ktk${t[3]?" on":""}${pc(t[0])>=88?" end":""}" style="left:${pc(t[0]).toFixed(1)}%"><span>${t[1]}</span><small>${t[2]}</small></span>`).join("");
+      const cps=st==="out"?dglCdCp(dglIc("ship"),"星槎","+"+DGL_SHIP,"／分")+gp:dglCdCp(dglIc("land"),"人間","−"+DGL_DRAIN,"／分")+gp+dglCdCp(dglIc("bh"),"黑洞過關","+"+DGL_BH)+dglCdCp(dglIc("zero"),"歸零回星槎");
+      red=`<section class="dgl-kc${warn?" dgl-kwarn":""}"><div class="dgl-kh"><h3 class="dgl-kt">${dglIc("red")}<span>定軌力</span></h3><span class="dgl-kv" data-dgl="r">${r}／${DGL_MAX}</span>${dglCdQ("r","定軌力細則",Q.has("r"))}</div>
+        <div class="dgl-kln"><p class="dgl-kl">${bic}<span>${big}</span></p>${bd}</div><p class="dgl-ks">${sub}</p>
+        <div class="dgl-kbw" aria-hidden="true"><div class="dgl-kbar dgl-r"><b style="width:${(100*r/DGL_MAX).toFixed(1)}%"></b></div>${mk}</div><div class="dgl-ktks" aria-hidden="true">${tk}</div>
+        <div class="dgl-kcps">${cps}</div>
+        ${dglCdMore("r",Q.has("r"),[`在人間（下船以後）每分鐘少 ${DGL_DRAIN}；在星槎上不會少。`,"黑洞對局裡不扣定軌力。",`下完一盤棋、解完一題，各回 ${DGL_GAME}。`,`黑洞過關回 ${DGL_BH}；關掉 App 再打開就回滿。`,`用完了會化墨退場，回星槎歇息：船上每分鐘回 ${DGL_SHIP}，回到 ${DGL_BACK} 就能再下船。`,"線上大廳、千秋盃不用定軌力。","心定則棋穩：定軌力一半以上，下棋、解題得到的修為多一成；滿格多兩成。"])}</section>`}
+    const xs=`<section class="dgl-kc"><div class="dgl-kh"><h3 class="dgl-kt">${dglIc("blue")}<span>星芒</span></h3><span class="dgl-kv" data-dgl="x">${x}／${DGL_XM_MAX}</span>${dglCdQ("x","星芒細則",Q.has("x"))}</div>
+      <p class="dgl-kl"><span>解題過關得，星宿黑洞用</span></p>${off?"":`<div class="dgl-kbw" aria-hidden="true"><div class="dgl-kbar dgl-b"><b style="width:${(100*x/DGL_XM_MAX).toFixed(1)}%"></b></div></div>`}
+      <div class="dgl-kflow"><div class="dgl-kfb"><small>來源</small>${dglCdCp(dglIc("puz"),"殘局","+"+DGL_XM_GET)}${dglCdCp(dglIc("main"),"主線","+"+DGL_XM_GET)}</div><i class="dgl-kar" aria-hidden="true">→</i>
+        <div class="dgl-kfb"><small>用途</small>${dglCdCp(dglIc("xiu"),"星宿",DGL_XIU_COST,"點／宿")}<small class="dgl-kxn"><span>已點亮</span> ${xn}／${DGL_XIU.length}</small>${dglCdCp(dglIc("bh"),"黑洞開局靈力")}</div></div>
+      ${dglCdMore("x",Q.has("x"),[`解殘局、主線過關，各得 ${DGL_XM_GET} 點，最多存 ${DGL_XM_MAX} 點。`,`在觀星臺可以點亮二十八宿星圖：每宿 ${DGL_XIU_COST} 點。`,"進黑洞時，星芒會變成開局靈力，用掉多少扣多少。","最多補到靈力上限。","提示照舊免費，不用花星芒。"])}</section>`;
+    let bh="";try{const c=dglName();if(c&&typeof BHTD!=="undefined"&&typeof bhtdL==="function"){const S=BHTD.stats(c,bhtdL());
+      bh=`<section class="dgl-kc"><div class="dgl-kh"><h3 class="dgl-kt">${dglIc("bh")}<span>黑洞裡的你</span></h3><span class="dgl-kbd blue"><span>修為</span> Lv ${S.L}</span>${dglCdQ("bh","黑洞細則",Q.has("bh"))}</div>
+        <p class="dgl-kl"><span>修為越高，三項越強</span></p>
+        <div class="dgl-kst"><span><small>${dglIc("hp")}<span>元氣</span></small><b>${S.hp}</b></span><span><small>${dglIc("sp")}<span>靈力上限</span></small><b>${S.sp}</b></span><span><small>${dglIc("atk")}<span>攻擊</span></small><b>×${S.atk.toFixed(2)}</b></span></div>
+        <p class="dgl-ks">${dglIc("xm")}<span>星芒變開局靈力</span></p>${dglCdMore("bh",Q.has("bh"),["修為愈高，這三樣都會慢慢長。進黑洞時，身上的星芒會變成開局靈力。"])}</section>`}}catch(e){}
+    const hero=`<div class="dgl-khero${st==="out"?" out":""}">${im?`<img src="${esc(im)}" alt="">`:""}<div><b>${esc(rk)}</b><span><span>修為</span> Lv ${lv}${ttl?` ・🏅 <span>${DGL_XIU_TITLE}</span>`:""}</span></div></div>`;
+    b.innerHTML=`<div class="dgl-cd" data-k="${k}">${hero}${red}${xs}${bh}<button type="button" class="btn dgl-kme" id="dglMe">🙂 我的角色頁</button></div>`;
+    b.querySelector("#dglMe").onclick=()=>{closeSheet();location.hash="#/me"};
+    b.querySelectorAll(".dgl-kq").forEach(e=>e.onclick=()=>{const id=e.dataset.q,o=!Q.has(id),p=b.querySelector("#dglQ_"+id);if(o)Q.add(id);else Q.delete(id);e.setAttribute("aria-expanded",o?"true":"false");if(p)p.hidden=!o;try{vibrate(5)}catch(z){}});
+    b.scrollTop=sy;dglPaint()};
+  DGL.cdDraw=draw;draw()})}
 /* ---------- 計時與事件 ---------- */
 function dglHello(z,busy){if(z!=="land"||busy||document.getElementById("dglOut")||document.querySelector(".walkc"))return;const o=dglSt();if(o.f1)return;
   const fs=DGL.fromZ==="ship";if(!fs&&DGL.s.r>DGL_HELLO)return;o.f1=Date.now();store.set("dgl",o);
@@ -18077,8 +18158,8 @@ function dglTick(){if(!DGL_ON)return;const now=Date.now(),dt=Math.max(0,Math.min
 function dglBhEnd(st){if(!dglLive()||!st||!st.result||!st.result.w||st.result.w!==st.human)return;const j=String(st.journey||"");if(!/^bh:/.test(j)||j==="bh:tl"||(typeof BHX_ID!=="undefined"&&j===BHX_ID))return;
   const g=dglGain(DGL.s,DGL_BH);dglPaint();setTimeout(()=>toast(g.n>0?`✨ 星淵靈氣入體，旅人精神百倍！定軌力 +${Math.round(g.n)}`:"✨ 星淵靈氣入體，旅人精神百倍！"),1600)}
 /* 解完一題（addXP 的解題類，同一題常有兩筆，3 秒內只算一次）、主線過關 */
-function dglXP(why){if(!DGL_ON)return;const w=String(why||""),now=Date.now();if(DGL_MAIN_WHY.includes(w)){dglXmGive(1);dglPaint();return}if(!DGL_PUZ_WHY.includes(w))return;
-  DGL.done=now;if(now-DGL.pz<3000)return;DGL.pz=now;if(dglLive())dglGain(DGL.s,DGL_PUZ);dglXmGive(1);dglPaint()}   /* 關了體力：星芒照給 */
+function dglXP(why){if(!DGL_ON)return;const w=String(why||""),now=Date.now();if(DGL_MAIN_WHY.includes(w)){dglXmGive(DGL_XM_GET);dglPaint();return}if(!DGL_PUZ_WHY.includes(w))return;
+  DGL.done=now;if(now-DGL.pz<3000)return;DGL.pz=now;if(dglLive())dglGain(DGL.s,DGL_PUZ);dglXmGive(DGL_XM_GET);dglPaint()}   /* 關了體力：星芒照給 */
 
 /* ---------- 設定頁開關（05-settings.js 角色分頁呼叫 dglSetRow；切換由下面的 change 監聽） ---------- */
 function dglSetRow(){if(!DGL_ON)return"";return`<div class="sec-t">平日體力</div><label class="card row" style="justify-content:space-between;gap:10px;margin-bottom:6px"><span><b>平日體力（定軌力／星芒）</b><br><span class="muted" style="font-size:12.5px">關掉後定軌力不扣、不會化墨退場回星槎，也沒有「心定則棋穩」修為加成，頂欄和各地點的兩條收起來；星芒照常累積，進黑洞、點亮星圖照樣能用</span></span><input type="checkbox" class="sw" id="dglSw" aria-label="平日體力（定軌力／星芒）"${dglUserOff()?"":" checked"}></label>`}
@@ -28560,6 +28641,7 @@ const I18N_EN={
   "修為愈高，這三樣都會慢慢長。進黑洞時，身上的星芒會變成開局靈力。":"All three grow as your cultivation rises. Entering the Black Hole turns your starglow into starting spirit.",
   "下了船，每走一會兒就要花一點定軌力；下完一盤棋、解完一題都能補回來。":"Off the raft, walking around slowly uses orbit stamina; finishing a game or solving a puzzle tops it up.","在人間走動，每過一會兒就要花一點定軌力；下完一盤棋、解完一題都能補回來。":"Moving around the human world slowly uses orbit stamina; finishing a game or solving a puzzle tops it up.",
   "定軌力微弱，星槎旅人要歇一會兒啦。":"Orbit stamina is low - time for the raft traveler to rest a while.","在星槎上歇息，回到 15 就能再下船。":"Resting on the Star Raft; at 15 you can go ashore again.","在星槎上歇息：每分鐘回 3，回到 15 就能再下船":"Resting on the Star Raft: restores 3 per minute; at 15 you can go ashore again",
+  "人間會用，星槎會回":"Drains in the human world, refills on the Star Raft","滿格加成":"Full bonus","穩定加成":"Steady bonus","未達加成":"No bonus yet","歸零會化墨退場":"At 0 you dissolve into ink","人間":"Human world","／分":"/min","下棋解題":"Games & puzzles","下棋／解題":"Games / puzzles","黑洞過關":"Black Hole clear","歸零回星槎":"At 0: back to the raft","黑洞對局裡不扣定軌力。":"Black Hole games don't use orbit stamina.","心定則棋穩：定軌力一半以上，下棋、解題得到的修為多一成；滿格多兩成。":"Steady mind, steady play: with orbit stamina at half or more, games and puzzles give 10% more XP; when full, 20% more.","解題過關得，星宿黑洞用":"Earn it from puzzles and stages; spend it on stars and Black Holes","來源":"Earn","用途":"Spend","主線":"Main story","星宿":"Lunar mansions","點／宿":"each","已點亮":"Lit","黑洞開局靈力":"Black Hole starting spirit","在觀星臺可以點亮二十八宿星圖：每宿 2 點。":"At the Observatory you can light up the Chart of the 28 Lunar Mansions: 2 points per mansion.","最多補到靈力上限。":"It fills up to your spirit cap at most.","修為越高，三項越強":"More XP, stronger in all three","星芒變開局靈力":"Starglow becomes starting spirit","定軌力細則":"Orbit stamina details","星芒細則":"Starglow details","黑洞細則":"Black Hole details","快回星槎":"Head back to the raft soon","定軌力用完了":"Orbit stamina used up","這一盤下完、這一題解完，就要回星槎歇息。":"After this game or puzzle you'll return to the Star Raft to rest.","化墨退場中":"Dissolved into ink","下船倒數":"Ashore in","分鐘":"min","可下船":"Go ashore","平日體力已關閉":"Daily stamina is off","不扣、不退場、無加成":"No drain, no ink exit, no bonus","平日體力已在設定裡關掉：定軌力不扣、不會化墨退場，也沒有「心定則棋穩」修為加成。":"Daily stamina is turned off in Settings: orbit stamina doesn't drain, you won't dissolve into ink, and there's no \"steady mind\" XP bonus.",   /* 11/14 角色卡視覺化（07dgl） */
   "星淵靈氣入體，旅人精神百倍！":"Abyss spirit flows in - the traveler is full of energy!","化墨退場中：在星槎上歇到 15 才能再下船。":"Dissolved into ink: rest on the Star Raft until 15 before going ashore.","定軌力用完了：這一盤下完、這一題解完，就要回星槎歇息。":"Orbit stamina is used up: after this game or puzzle you'll return to the Star Raft to rest.",
   "跑了一天的馳道，車輪都要轉不動了……歇一會兒吧。":"A whole day on the imperial roads - even the wheels can barely turn... let's rest a while.","渡口的船都靠岸了，我們也該歇一歇啦！":"All the ferry boats have docked - time for us to rest too!","哈——欠！我說話都小聲了，這可不得了，快休息！":"Yaaawn! Even my voice has gone quiet - that's serious, let's rest!",
   "草原的風都吹不走睡意了，我們回星槎睡一覺吧。":"Not even the grassland wind can blow my sleepiness away - let's go back to the raft and nap.","呼……人間的風有點重，我緩一緩就好。":"Phew... the air down here feels heavy. I just need a moment.","……休整，是為了下一場勝仗。":"...Resting is for the next victory.","跑了一整天的腿，腳都軟了，今天先到這兒吧！":"Running errands all day, my legs are jelly - let's stop here for today!",
