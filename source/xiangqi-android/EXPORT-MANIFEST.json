@@ -1,6 +1,6 @@
 {
  "schema": "xq-android-export/1",
- "madeAt": "2026-11-14T05:52:17.977Z",
+ "madeAt": "2026-11-14T06:18:20.920Z",
  "files": 89,
  "treeSha256": "aaeeb2f59811b18ec645515054348b826083bc23bd2aa0856d3d159c9790449d",
  "note": "樹雜湊＝每個檔「相對路徑＋NUL＋SHA-256」照路徑排序、換行連起來再算 SHA-256（跟 clean-rebuild.js 的 source.treeSha256 同一種算法）",

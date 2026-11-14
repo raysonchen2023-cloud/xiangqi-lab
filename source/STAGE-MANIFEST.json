@@ -1,7 +1,7 @@
 {
  "ref": "origin/main",
- "commit": "52723cf83437223285f176ee8694212db7c2c7f8",
- "madeAt": "2026-11-14T05:52:17.129Z",
+ "commit": "03c4fe164549bbb0c3066e04418b999f63c5da33",
+ "madeAt": "2026-11-14T06:18:19.930Z",
  "files": {
   "xiangqi-db/m/00-util.js": "local=live",
   "xiangqi-db/m/01-board.js": "local=live",
@@ -105,7 +105,7 @@
   "xiangqi-db/m/11c-a11ysnd.js": "local=live",
   "xiangqi-db/m/07cb-colorblind.js": "local=live",
   "xiangqi-db/m/07hp-haptics.js": "local=live",
-  "xiangqi-db/m/07hs-netsig.js": "live",
+  "xiangqi-db/m/07hs-netsig.js": "local=live",
   "xiangqi-db/m/07fm-focus.js": "local=live",
   "xiangqi-db/m/07lh-lefty.js": "local=live",
   "xiangqi-db/m/07pm-premove.js": "local=live",
@@ -172,6 +172,8 @@
   "xiangqi-lab/tools/qa/p0-regress.js": "local",
   "xiangqi-lab/tools/qa/perf-bench.js": "local",
   "xiangqi-lab/tools/qa/touch-stress.js": "local",
+  "xiangqi-lab/tools/redblue-cases.js": "local",
+  "xiangqi-lab/tools/redblue-run.js": "local",
   "xiangqi-lab/tools/release-sync-check.js": "local",
   "xiangqi-lab/tools/release-verify.js": "local",
   "xiangqi-lab/tools/sheet-retention.gs": "local",
@@ -224,6 +226,7 @@
   "xiangqi-lab/tools/test-net-guard.js": "local",
   "xiangqi-lab/tools/test-net-reconnect.js": "local",
   "xiangqi-lab/tools/test-net-start.js": "local",
+  "xiangqi-lab/tools/test-noscore.js": "local",
   "xiangqi-lab/tools/test-oss-scan.js": "local",
   "xiangqi-lab/tools/test-p0-regress.js": "local",
   "xiangqi-lab/tools/test-park-firstflat.js": "local",
@@ -242,6 +245,7 @@
   "xiangqi-lab/tools/test-qixing.js": "local",
   "xiangqi-lab/tools/test-quiz-check-exit.js": "local",
   "xiangqi-lab/tools/test-r17-qa.js": "local",
+  "xiangqi-lab/tools/test-redblue-public.js": "local",
   "xiangqi-lab/tools/test-release-sync.js": "local",
   "xiangqi-lab/tools/test-reload-guard.js": "local",
   "xiangqi-lab/tools/test-reply-risk.js": "local",
@@ -367,9 +371,7 @@
  "liveDiffers": [
   "m/05-settings.js",
   "m/07y-hubmap.js",
-  "m/07s4-passmap.js",
-  "m/07hs-netsig.js",
-  "src/net.js"
+  "m/07s4-passmap.js"
  ],
  "absentModules": [],
  "excludedTests": {
@@ -399,9 +401,6 @@
   "test-cup-sign.js": "要 require 千秋盃裁判台 cup-host.js（營運程式，不公開）",
   "test-redblue.js": "要 require 千秋盃裁判台 cup-host.js（營運程式，不公開）；公開的攻擊重現改用 test-redblue-public.js（R01 用測試自己產生的裁判台金鑰，不需要 cup-host.js）",
   "test-net-notes.js": "要 require 千秋盃裁判台 cup-host.js（營運程式，不公開）",
-  "redblue-cases.js": "1209 線上 net.js 還沒有 NS／scoreGate 修法，公開等於公開對線上版的攻擊腳本；等新 net.js 隨 App 發布後同版公開",
-  "redblue-run.js": "1209 線上 net.js 還沒有 NS／scoreGate 修法，公開等於公開對線上版的攻擊腳本；等新 net.js 隨 App 發布後同版公開",
-  "test-redblue-public.js": "1209 線上 net.js 還沒有 NS／scoreGate 修法，公開等於公開對線上版的攻擊腳本；等新 net.js 隨 App 發布後同版公開",
   "test-varengine.js": "測的新引擎 src/varengine.js 還沒發布（不放）",
   "var-train.js": "新引擎的訓練工具（還沒發布，不放）",
   "var-budget.js": "新引擎的訓練工具（還沒發布，不放）",
@@ -413,11 +412,10 @@
   "test-threat-weaknet.js": "threat-model.md 對照表要找 test-net-sign.js（上面已排除，見該行）",
   "test-ui-redundancy.js": "有一項檢查開發者刻意不發布的 07y-hubmap.js 段落",
   "test-foss-audit.js": "倉庫多了 source/ 以後，foss-audit.js 會把 source/ 裡的規則文字當成追蹤 SDK（要先讓它跳過 source/）",
-  "test-noscore.js": "指令排除：測的計分入口三道門（net.js 的 NS 區段、scoreGate）還在開發者電腦上、1209 發布版沒有（公開副本 5/14；開發者電腦上 14/14）；隨新 net.js 發布時放回",
   "test-layout-r16.js": "指令排除：有一項〔混合〕檢查（07y CY_SPOT 首頁 han 與 sanguo 的 44×44 點選範圍重疊）在開發者電腦上同樣失敗（10/11）：測試或座標待開發者處理；其他 10 項通過"
  },
- "version": "20261114-1209",
- "indexSha1": "26b431de745a",
+ "version": "20261114-1407",
+ "indexSha1": "99ddb00dc72b",
  "toLF": [
   "xiangqi-lab/tools/build-site.js"
  ],

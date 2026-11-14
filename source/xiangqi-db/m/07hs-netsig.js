@@ -47,7 +47,9 @@ const nsgEsc=s=>String(s==null?"":s).replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt
 const nsgT=(k,z,v)=>typeof i18nT==="function"?i18nT(k,z,v):z;
 function nsgNotes(L){const out=[];try{for(const e of Array.isArray(L)?L:[]){if(!e)continue;const n=Math.max(1,+e.n||1);
   if(e.k==="late")out.push(e.keep?nsgT("net.note.lateKeep",`對方有一步晚到 ${n} 分鐘才送到，這盤改算友誼賽，你的勝場照算`,{n}):nsgT("net.note.late",`對方有一步晚到 ${n} 分鐘才送到，已照規則收下`,{n}));
-  else if(e.k==="act")out.push(nsgT("net.note.act",`擋下 ${n} 個沒有簽名的動作（可能有人冒充）`,{n}))}}catch(err){}return out}
+  else if(e.k==="act")out.push(nsgT("net.note.act",`擋下 ${n} 個沒有簽名的動作（可能有人冒充）`,{n}));
+  /* 評比第 16 輪第 5 項（net.js 的 NS 區段）：棋鐘可信度不足，這盤整盤（兩端、觀眾、伺服器）改為不計分。by：me＝這支手機宣告、opp＝對方宣告、x＝觀眾；why：late 晚到、clock 棋鐘少扣 */
+  else if(e.k==="ns")out.push(e.by==="me"?(e.why==="clock"?nsgT("net.note.nsClock",`對方的棋鐘比這邊量的少扣了 ${n} 分鐘，這盤改為不計分（雙方都不加減分）`,{n}):nsgT("net.note.nsLate",`對方有一步晚了 ${n} 分鐘才到，這盤改為不計分（雙方都不加減分）`,{n})):e.by==="opp"?nsgT("net.note.nsOpp","對方回報這盤棋鐘不可信，改為不計分（雙方都不加減分）"):nsgT("net.note.nsSeen","這盤棋鐘不可信，改為不計分"))}}catch(err){}return out}
 function nsgNoteHtml(L){const a=nsgNotes(L);if(!a.length)return"";setTimeout(()=>{try{document.querySelectorAll(".nsg-note").forEach(t=>{if(typeof toastFit==="function")toastFit(t)})}catch(e){}},0);
   return a.map(s=>`<p class="nsg-note" style="font-size:1.05em;font-weight:700;margin:6px 0">${nsgEsc(s)}</p>`).join("")}
 const nsgHm=t=>{const d=new Date(t);return[d.getHours(),d.getMinutes(),d.getSeconds()].map(v=>String(v).padStart(2,"0")).join(":")};

@@ -50,9 +50,8 @@ const TEST_SKIP = {
   /* test-android-build.js：11/13 第 17 輪起 xiangqi-android 建置鏈也匯出到 source/xiangqi-android/（含 Service Worker 修法截圖），對 1942 公開副本 19/19，拿掉排除 */
   "test-redblue.js": "要 require 千秋盃裁判台 cup-host.js（營運程式，不公開）；公開的攻擊重現改用 test-redblue-public.js（R01 用測試自己產生的裁判台金鑰，不需要 cup-host.js）",   /* 11/13 第 17 輪 F1 */
   "test-net-notes.js": "要 require 千秋盃裁判台 cup-host.js（營運程式，不公開）",
-  /* 11/14 開發者決定（1209 同版發布）：紅藍隊重現工具先不公開；新 net.js（NS／scoreGate）隨 App 發布那一版再一起放回 */
-  ...Object.fromEntries(["redblue-cases.js", "redblue-run.js", "test-redblue-public.js"].map(f => [f,
-    "1209 線上 net.js 還沒有 NS／scoreGate 修法，公開等於公開對線上版的攻擊腳本；等新 net.js 隨 App 發布後同版公開"])),   /* 11/13 第 17 輪對 1942 實測：公開副本 0/1 */
+  /* 11/14 1209 同版發布時紅藍隊重現工具（redblue-cases.js、redblue-run.js、test-redblue-public.js）先不公開；
+     1407 起 net.js 的 NS／scoreGate 修法上線，開發者同意同版公開，拿掉排除（test-noscore.js 也一起放回） */   /* 11/13 第 17 輪對 1942 實測：公開副本 0/1 */
   "test-varengine.js": "測的新引擎 src/varengine.js 還沒發布（不放）", "var-train.js": "新引擎的訓練工具（還沒發布，不放）", "var-budget.js": "新引擎的訓練工具（還沒發布，不放）",
   "test-ximarket.js": WHY_ASSET + "（西市圖 art/ximarket 原圖、data/ximarket 只放 CDN；1209 公開副本 8/11）",
   "test-home-wide.js": WHY_ASSET + "（首頁寬版圖只放 CDN）", "test-mainquest.js": WHY_ASSET + "（主線電影配樂只放 CDN）", "test-guanxing.js": WHY_ASSET + "（觀星臺圖只放 CDN）",
