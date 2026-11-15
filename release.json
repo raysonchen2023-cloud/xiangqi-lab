@@ -1,8 +1,8 @@
 {
- "version": "20261115-1546",
- "checkedAt": "2026-11-15T07:46:49.938Z",
- "html": "b70ef653ec7d",
- "sw": "81c92890df3b",
+ "version": "20261115-1602",
+ "checkedAt": "2026-11-15T08:02:39.020Z",
+ "html": "ab63432a4941",
+ "sw": "e191d0fcedcd",
  "scripts": 4,
  "modules": {
   "00-util.js": "8c2b1d4f725f",
@@ -24,9 +24,9 @@
   "07e-garden2.js": "23fcaecb532a",
   "07f-ship.js": "d449bdb2e489",
   "07o-shipmore.js": "3e3ebb9d732b",
-  "07bh-blackhole.js": "1d4a25481727",
+  "07bh-blackhole.js": "f8c1a7f25f96",
   "07gx-galaxy.js": "f79b141f237d",
-  "07bht-td.js": "1dc065fafbc9",
+  "07bht-td.js": "e10a195823cd",
   "07bhtl-tdlearn.js": "f7e849d5aa2b",
   "07bhf-bossfx.js": "8516daf7973e",
   "07bhg-gatesiege.js": "653649262101",
@@ -133,11 +133,6 @@
    "module": "07y-hubmap.js",
    "lines": 5,
    "sourceModified": "2026-11-13T18:59:11.775Z"
-  },
-  {
-   "module": "07x4-lobbysafe.js",
-   "lines": 42,
-   "sourceModified": "2026-11-15T06:58:28.365Z"
   },
   {
    "module": "07s4-passmap.js",
