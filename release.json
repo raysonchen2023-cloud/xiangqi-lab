@@ -1,8 +1,8 @@
 {
- "version": "20261116-0701",
- "checkedAt": "2026-11-15T23:01:38.240Z",
- "html": "d47f4386622f",
- "sw": "df0bc2242d6b",
+ "version": "20261116-0725",
+ "checkedAt": "2026-11-15T23:25:20.735Z",
+ "html": "b6e71a5da439",
+ "sw": "3dc93e6ce08b",
  "scripts": 4,
  "modules": {
   "00-util.js": "8c2b1d4f725f",
@@ -31,7 +31,7 @@
   "07bht-td.js": "346a16b1129c",
   "07bhtl-tdlearn.js": "a5f8c01c394e",
   "07bhf-bossfx.js": "8516daf7973e",
-  "07bhg-gatesiege.js": "8e1903b84a7f",
+  "07bhg-gatesiege.js": "0224215c10a1",
   "07bhw-wheel.js": "923517a41879",
   "07dv-devtest.js": "077191672ec5",
   "07dw-perfhud.js": "a3755bd4af6c",
@@ -62,7 +62,7 @@
   "07y-hubmap.js": "aab3b113c3f7",
   "07z-homemap.js": "197a9b09b681",
   "07gxt-guanxing.js": "09ae52d320b1",
-  "07dgl-stamina.js": "8c1f517eb27c",
+  "07dgl-stamina.js": "5efd2b575866",
   "07xsm-ximarket.js": "1efd4cc82cf4",
   "07xsd-xsmdark.js": "14cf67001b41",
   "07hmp-pano.js": "723e4ffde0dc",
@@ -132,31 +132,6 @@
    "sourceModified": "2026-11-15T05:38:18.553Z"
   },
   {
-   "module": "07pty-party.js",
-   "lines": 19,
-   "sourceModified": "2026-11-15T23:00:09.378Z"
-  },
-  {
-   "module": "07bht-td.js",
-   "lines": 70,
-   "sourceModified": "2026-11-15T22:57:04.504Z"
-  },
-  {
-   "module": "07bhtl-tdlearn.js",
-   "lines": 11,
-   "sourceModified": "2026-11-15T22:57:04.507Z"
-  },
-  {
-   "module": "07bhg-gatesiege.js",
-   "lines": 36,
-   "sourceModified": "2026-11-15T22:57:04.505Z"
-  },
-  {
-   "module": "07bhw-wheel.js",
-   "lines": 27,
-   "sourceModified": "2026-11-15T22:57:04.506Z"
-  },
-  {
    "module": "07y-hubmap.js",
    "lines": 6,
    "sourceModified": "2026-11-15T12:49:16.045Z"
@@ -165,11 +140,6 @@
    "module": "07s4-passmap.js",
    "lines": 1,
    "sourceModified": "2026-11-13T03:19:39.481Z"
-  },
-  {
-   "module": "07i18n.js",
-   "lines": 14,
-   "sourceModified": "2026-11-15T23:00:09.479Z"
   }
  ]
 }
