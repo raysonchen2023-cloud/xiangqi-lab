@@ -1,8 +1,8 @@
 {
- "version": "20261115-0849",
- "checkedAt": "2026-11-15T00:49:21.804Z",
- "html": "73fb304cda56",
- "sw": "851d8711497d",
+ "version": "20261115-0954",
+ "checkedAt": "2026-11-15T01:54:48.517Z",
+ "html": "c46a286d192d",
+ "sw": "54828cea6112",
  "scripts": 4,
  "modules": {
   "00-util.js": "8c2b1d4f725f",
@@ -12,8 +12,8 @@
   "03-home-quiz.js": "24d24f013354",
   "04-stats.js": "8e8827930351",
   "04c-weekly.js": "326899d53f7b",
-  "05-settings.js": "6cbf2915814f",
-  "05b-save.js": "14ae76dffef9",
+  "05-settings.js": "3301f7ee027f",
+  "05b-save.js": "d647b889e7ee",
   "05c-health.js": "a1bcf3e541ac",
   "05d-telemetry.js": "98d12b742868",
   "06-cpu.js": "1bfd156c07ab",
@@ -29,8 +29,8 @@
   "07bht-td.js": "2168d1a07534",
   "07bhtl-tdlearn.js": "f7e849d5aa2b",
   "07bhf-bossfx.js": "8516daf7973e",
-  "07bhg-gatesiege.js": "e61b12d66091",
-  "07bhw-wheel.js": "1304cccb636b",
+  "07bhg-gatesiege.js": "3847dc8fb52c",
+  "07bhw-wheel.js": "93f04df0e897",
   "07dv-devtest.js": "077191672ec5",
   "07dw-perfhud.js": "a3755bd4af6c",
   "07g-battle.js": "6c2de94250f9",
@@ -95,7 +95,7 @@
   "07w8-shichen.js": "7e3e39d9d44f",
   "07w9-exits.js": "bd206ffef683",
   "08-scene.js": "86969cd488ba",
-  "08b-cpugame.js": "a822875be668",
+  "08b-cpugame.js": "da4dc2db20c7",
   "08s-simul.js": "2126db3ab684",
   "09-askbot.js": "4e6983c50d4c",
   "09b-preload.js": "321324d3e7bd",
@@ -114,19 +114,20 @@
   "07lh-lefty.js": "a1e6ad13d30d",
   "07pm-premove.js": "52061c9a3011",
   "07dq-daily.js": "c1076bdd0ee8",
-  "07i18n.js": "c935038938c1",
+  "07i18n.js": "8d08fd68e330",
   "07sp-spotfit.js": "f7f205a79901",
   "07fl-fill.js": "6d07e97dc32f",
   "07mnf-mainfilm.js": "59f288419ad1",
   "07mnv-mainvn.js": "348063327d1e",
-  "07stq-starter.js": "e339c2a1a125",
-  "07mnq-mainquest.js": "99e396eb9ba1"
+  "07stq-starter.js": "b44714400376",
+  "07mnq-mainquest.js": "39ec14fdf87d",
+  "07grw-growth.js": "117c06a5604a"
  },
  "differsFromSource": [
   {
    "module": "05-settings.js",
    "lines": 1,
-   "sourceModified": "2026-11-14T13:01:17.159Z"
+   "sourceModified": "2026-11-15T01:03:37.882Z"
   },
   {
    "module": "07y-hubmap.js",
