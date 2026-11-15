@@ -19,25 +19,25 @@ function load(o) {
     eraLabel: k => ({ qin: "秦朝", yuan: "元朝", sanguo: "三國" }[k] || k), xpInfo: () => ({ L: 3 }),
     document: { getElementById: () => ({}), createElement: () => ({}), head: { append() { } } },
     sheet: (t, build) => { const b = { innerHTML: "", querySelector: () => ({}), querySelectorAll: () => [] }; build(b); log.sheets.push({ t, html: b.innerHTML }) },
-    dglCss() { }, dglIc: () => "🔒 " };
+    dglCss() { }, dglIc: () => "🔒 ", dglMx: () => 53 };
   if (!o.noBh) { ctx.BHTD = BHTD; ctx.bhtdDust = () => ({ t: ["a", "b"] }); ctx.bhtdTal = (back, lab) => log.tal.push(lab) }
-  vm.createContext(ctx); vm.runInContext(SRC + "\n;this.__X={PTY,ptyStatHTML,ptyCardHTML,ptyTalHTML,ptySkills,ptySkPool};", ctx);
+  vm.createContext(ctx); vm.runInContext(SRC + "\n;this.__X={PTY,ptyStatHTML,ptyCardHTML,ptyTalHTML,ptyTeamHTML,ptySkills,ptySkPool};", ctx);
   const X = ctx.__X, P = X.PTY.blank(); P.m.x_swordboy = { xp: X.PTY.base(3), at: 0, how: "start" }; P.m.x_miaogirl = { xp: 0, at: 0, how: "ship" }; P.pool = 5; DB.party = P;
   return Object.assign(X, { log, P });
 }
 
-test("〔行為〕每位一排四格：體力＝黑洞裡的元氣、靈力＝靈力上限、攻擊力、防禦力，照這位自己的等級算", () => {
+test("〔行為〕每位一排三格：靈力上限、攻擊力、防禦力，照這位自己的等級算；體力不再每位各寫各的（全隊一個數，寫在卡冊最上面）", () => {
   const K = load(), a = K.ptyStatHTML("x_swordboy", 3), b = K.ptyStatHTML("x_miaogirl", 1);
-  assert.equal(a, '<div class="pty-st"><span><small>體力</small><b>53</b></span><span><small>靈力上限</small><b>50</b></span><span><small>攻擊力</small><b>103</b></span><span><small>防禦力</small><b>80</b></span></div>', "11/16 體力統一：黑洞的靈力是上限，寫「靈力上限」，跟角色卡上人間存著的「靈力 n／20」分開");
-  assert.ok(b.includes("<small>體力</small><b>51</b>") && b.includes("<small>攻擊力</small><b>101</b>"), "等級不同，數字不同");
+  assert.equal(a, '<div class="pty-st"><span><small>靈力上限</small><b>50</b></span><span><small>攻擊力</small><b>103</b></span><span><small>防禦力</small><b>80</b></span></div>', "黑洞的靈力是上限，寫「靈力上限」，跟角色卡上人間存著的「靈力 n／20」分開");
+  assert.ok(b.includes("<small>攻擊力</small><b>101</b>") && !a.includes("體力") && !b.includes("體力"), "等級不同，數字不同；每位的卡上沒有體力");
   assert.equal(K.ptyStatHTML("x_shuai", 3), "", "黑洞資料裡沒有這位就不畫");
   assert.equal(load({ noBh: 1 }).ptyStatHTML("x_swordboy", 3), "", "黑洞模組沒載入就不畫，卡冊照樣開得起來");
 });
 
-test("〔行為〕卡片：已加入的有四格與可以點的「招式 n／N」；還沒加入的沒有；招式數照這位的等級", () => {
+test("〔行為〕卡片：已加入的有三格與可以點的「招式 n／N」；還沒加入的沒有；招式數照這位的等級", () => {
   const K = load(), A = K.ptyCardHTML(K.P, "x_swordboy", 3), B = K.ptyCardHTML(K.P, "x_miaogirl", 3), C = K.ptyCardHTML(K.P, "x_shuai", 3);
   assert.ok(A.includes('class="pty-st"') && A.includes('<button type="button" class="pty-row" data-a="sk"><span>招式</span><b>1／2</b><i aria-hidden="true">›</i></button>'), "齊轍 Lv 3：兩招學會一招");
-  assert.ok(B.includes('<b>1／1</b>') && B.includes("<small>體力</small><b>51</b>"), "小梅 Lv 1");
+  assert.ok(B.includes('<b>1／1</b>') && B.includes("<small>攻擊力</small><b>101</b>"), "小梅 Lv 1");
   assert.ok(!C.includes("pty-st") && !C.includes('data-a="sk"') && C.includes("？？？"), "還沒加入的只有剪影那一張");
   const m = A.slice(A.indexOf('<div class="pty-m">'), A.indexOf('<div class="pty-xp"')); assert.ok(!m.includes("招式"), "原本那一行小字裡的「招式 n／N」拿掉，不重複");
   assert.ok(!load({ noBh: 1 }).ptyCardHTML(K.P, "x_swordboy", 3).includes("pty-row"), "沒有黑洞模組時沒有招式列");
@@ -64,9 +64,16 @@ test("〔行為〕招式清單：標題是這位的名字；學會的排前面�
 });
 
 test("〔原始碼〕接線：卡冊畫天賦列；點招式開清單、點天賦開天賦樹；天賦樹的返回鈕照從哪裡進來的寫", () => {
-  assert.ok(SRC.includes('<p class="pty-m pty-cap">${ptyCapSay(L)}</p>`+ptyTalHTML()+PTY.ORDER.map(c=>ptyCardHTML(P,c,L)).join("")'));
+  assert.ok(SRC.includes('<p class="pty-m pty-cap">${ptyCapSay(L)}</p>`+ptyTeamHTML()+ptyTalHTML()+PTY.ORDER.map(c=>ptyCardHTML(P,c,L)).join("")'));
   assert.ok(SRC.includes('if(a==="sk"){closeSheet();setTimeout(()=>ptySkills(c),60);return}'));
   assert.ok(SRC.includes('closeSheet();setTimeout(()=>bhtdTal(()=>ptySheet(),"‹ 回雲河七星"),60)'));
   assert.ok(TD.includes("function bhtdTal(back,backL){bhtdCss();") && TD.includes('[[backL||"‹ 回選關",()=>{if(back)back()}]') && TD.includes("bhtdTal(back,backL)},true]]"), "沒給第二個參數照舊「回選關」；重置後重畫也帶著");
   assert.ok(DGL.includes('bhtdTal(()=>dglCard(),"‹ 回我的角色")'));
+});
+
+test("〔行為〕卡冊最上面一列全隊體力：就是人間體力的上限、也是進黑洞開局的體力（07dgl dglMx），不能點；沒有黑洞模組時不畫", () => {
+  const K = load();
+  assert.equal(K.ptyTeamHTML(), '<div class="pty-row top pty-team"><span>全隊體力</span><small>（人間、黑洞都是這個數）</small><b>53</b></div>');
+  assert.equal(load({ noBh: 1 }).ptyTeamHTML(), "");
+  assert.ok(SRC.includes(".pty-st{grid-column:1/-1;display:grid;grid-template-columns:repeat(3,1fr);"), "每位的數值從四格變三格");
 });

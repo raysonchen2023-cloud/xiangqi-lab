@@ -35,6 +35,14 @@ const DGL_BH_DAY=20,DGL_DAY_SH=1;   /* 11/14：一天最多靠黑洞回幾點；
    ③ 關掉 App 再打開不再回滿：記住體力（store "dgl" 的 r、ra、ro），離開的時間照星槎上的速度回（dglWake）；切到背景再回來也一樣。
    ④ 卡冊上黑洞的「靈力」改叫「靈力上限」（07pty-party.js），人間的存量照舊叫靈力。 */
 const DGL_M1=1.2,DGL_M2=1.5;
+/* 同一天 RPG 數值盤查（story/160_…md）查到上面那版（0635）的問題，開發者再用選單定：
+   ⑤ 加成的門檻不再是「滿格／一半」。0635 的滿格只維持半分鐘左右（上限 57 是 32 秒、100 是 18 秒，數字越大掉 1 點越快），在人間下一盤棋根本拿不到 ×1.5。
+      改成三分之二以上 ×DGL_M2、三分之一以上 ×DGL_M1（內部 DGL_T2、DGL_T1）：下船後前 10 分鐘、10～20 分鐘、最後 10 分鐘三段，跟上限的數字大小無關。
+   ⑥ 上限不取陪你走那一位自己的，改取「全隊體力」＝黑洞開局實際看到的那個數字（已加入的照各自等級、沒加入的用木棋靈，七種棋子平均；點了天賦厚土固元再加），
+      人間、卡冊、黑洞三個地方才是同一個數。（①改掉；②③④照舊。）
+   ⑦ 不用問的三個洞：重解已經拿過修為的舊題，不再回體力、不再給靈力（原本可以反覆解同一題一直拿）；進對局頁不到 DGL_GAME_MIN 就結束的那一盤（一開局就認輸）不回體力；
+      設定裡把平日體力關掉再打開，不再回滿（跟重開 App 一樣接著原本的值）。 */
+const DGL_T1=10,DGL_T2=20,DGL_GAME_MIN=6e4;
 const DGL_SHIP_RE=/^\/(adventure|ship(\/|$)|shelf(\/|$)|canju\/s\/|canju\/q\/|canju\/e\/5\/|qqev(\/|$))/;
 const DGL_FREE_RE=/^\/((lobby|pvp|join|watch|cup|settings|feedback|fbadmin|weekly|terms|me|profile)(\/|$)|coop\/lobby(\/|$)|connect=)/;
 const DGL_OPEN_RE=/^\/($|hub\/|(db|codex|stats|openings)(\/|$))/;
@@ -80,7 +88,7 @@ function dglWhen(s,o){if(!s.due)return null;if(o.zone==="ship")return"rest";if((
 function dglGate(s,h,o){if(dglOpen(h,o))return null;if(s.due)return"exit";if(s.out)return"rest";return null}
 const dglXmAdd=(x,n)=>Math.max(0,Math.min(DGL_XM_MAX,(Math.round(+x)||0)+(Math.round(+n)||0)));
 /* 心定則棋穩（開發者 11/13 晚選）：定軌力一半以上修為 ×1.1、滿格 ×1.2；零頭累積在 fx，滿 1 才多給（修為常一次只給 1、2 點，直接四捨五入等於沒加） */
-const dglXpMul=(r,mx)=>{const M=+mx>0?Math.round(+mx):DGL_MAX,v=dglDisp(r,M);return v>=M?DGL_M2:v>=M/2?DGL_M1:1};   /* 11/14 開發者：加成照畫面上看到的數字（進位後），差一點點滿、畫面顯示滿格就給滿格的；11/16：倍率改 DGL_M2／DGL_M1，數字照 mx 那把尺 */
+const dglXpMul=(r,mx)=>{const M=+mx>0?Math.round(+mx):DGL_MAX,v=dglDisp(r,M);return v>=dglU(DGL_T2,M)?DGL_M2:v>=dglU(DGL_T1,M)?DGL_M1:1};   /* 11/14 開發者：加成照畫面上看到的數字（進位後），差一點點滿、畫面顯示滿格就給滿格的；11/16：倍率改 DGL_M2／DGL_M1，數字照 mx 那把尺 */
 function dglXpBonus(n,r,fx,mx){n=Math.round(+n)||0;fx=+fx||0;if(n<=0)return{n,fx};fx+=n*(dglXpMul(r,mx)-1);const add=Math.floor(fx+1e-9);return{n:n+add,fx:Math.max(0,Math.round((fx-add)*1e6)/1e6)}}
 /* 星芒帶進黑洞：開局靈力 sp0（已照上限截過）加上星芒 × k（11/14 晚靈力 ×10：1 點星芒＝k 點靈力，預設 1），不超過靈力上限；used＝真的用掉幾點星芒（最後一點不滿 k 也算一點，補到上限） */
 function dglXmUse(sp0,spMax,xm,k){k=Math.max(1,Math.round(+k)||1);spMax=Math.max(0,+spMax||0);sp0=Math.max(0,Math.min(spMax,+sp0||0));const sp=Math.min(spMax,sp0+Math.max(0,Math.round(+xm)||0)*k);return{sp,used:Math.ceil((sp-sp0)/k-1e-9)}}
@@ -133,7 +141,12 @@ const dglBackMin=r=>Math.max(0,Math.ceil((DGL_BACK-(+r||0))/DGL_SHIP-1e-9));
 const DGL={s:dglNew(),last:Date.now(),done:0,pz:0,say:0,lastZ:"",fromZ:"",walk:new Set(),wt:0,ft:0,kt:0,hid:0};
 try{if(DGL_ON)DGL.s=dglWake(store.get("dgl",null),Date.now())}catch(e){}   /* 11/16 ③：重開 App 接著上次的體力，離開的時間照星槎上的速度回 */
 /* 這把尺的上限（11/16 ①）：陪你走的那一位（myChar＝pChar，07pty ptySetLook 會同步）在黑洞裡的元氣，照他自己的等級；沒有旅程、黑洞模組沒載入＝DGL_MAX */
-function dglMx(){try{const c=dglName();if(c&&typeof BHTD!=="undefined"&&BHTD.CH&&BHTD.CH[c]&&typeof ptyLv==="function"){const h=Math.round(+BHTD.stats(c,ptyLv(c)).hp);if(h>0)return h}}catch(e){}return DGL_MAX}
+function dglMx(){try{if(typeof BHTD==="undefined"||!BHTD.stats||!BHTD.CH)return DGL_MAX;let h=0;
+    const S=typeof ptySquad==="function"?ptySquad():null,q=S&&BHTD.squad?BHTD.squad(S,{}):null;   /* 11/16 ⑥ 全隊體力：跟 07bht boot 的 hp0 同一個算法（七種棋子所屬角色的平均；沒加入的是木棋靈） */
+    if(q){const P=Object.keys(q);h=Math.round(P.reduce((a,pc)=>a+(+q[pc].hp||0),0)/P.length)}
+    else{const c=dglName();if(c&&BHTD.CH[c]&&typeof ptyLv==="function")h=Math.round(+BHTD.stats(c,ptyLv(c)).hp)}   /* 沒有旅程：黑洞用的是自己那一位 */
+    if(!(h>0))return DGL_MAX;try{if(typeof bhtdDust==="function"&&(bhtdDust().t||[]).includes("htgy"))h+=Math.round(+BHTD.TAL_HP||0)}catch(e){}   /* 天賦厚土固元：黑洞開局會多這幾點，這裡也算進去 */
+    return h}catch(e){}return DGL_MAX}
 /* 記住體力（11/16 ③）：寫進 store "dgl"（讀了再寫，不蓋掉星芒、星圖那些欄位）；設定關了平日體力時不記 */
 function dglKeep(){try{if(!dglLive())return;const o=dglSt();o.r=Math.round(DGL.s.r*100)/100;o.ra=Date.now();o.ro=DGL.s.out||DGL.s.due?1:0;store.set("dgl",o);DGL.kt=o.ra}catch(e){}}
 const dglRM=()=>{try{return matchMedia("(prefers-reduced-motion: reduce)").matches}catch(e){return false}};
@@ -359,7 +372,7 @@ function dglCard(){dglCss();let nm="";try{nm=meName()}catch(e){}const Q=new Set(
     const Sx=dglSt(),xn=dglXiuN(Sx.t),ttl=(Math.round(+Sx.tw)||0)&16,m1=DGL_M1,m2=DGL_M2,mu=dglXpMul(s.r,mx),warn=st==="low"||st==="due"||st==="out";
     /* 11/14 開發者看手機截圖：「對新手玩家這內容還是太複雜」→ 選「所有人都極簡」：每塊只留圖示、名稱、數字、一條、一句話；
        刻度、膠囊、來源→用途、加成徽章都收進「？」；黑洞三個數字搬到我的角色頁（dglMeCard），黑洞選關卡片本來也有 */
-    const bonus=mu>=m2?`<span>現在滿格，下棋、解題得到的修為</span> ×${m2}`:mu>1?`<span>現在一半以上，下棋、解題得到的修為</span> ×${m1}`:`<span>到一半以上，下棋、解題得到的修為</span> ×${m1}<span>；滿格</span> ×${m2}`;
+    const t1=dglU(DGL_T1,mx),t2=dglU(DGL_T2,mx),bonus=mu>=m2?`<span>現在體力</span> ${t2} <span>以上，得到的修為</span> ×${m2}`:mu>1?`<span>現在體力</span> ${t1} <span>以上，得到的修為</span> ×${m1}<span>；到</span> ${t2} <span>以上是</span> ×${m2}`:`<span>體力到</span> ${t1} <span>以上，得到的修為</span> ×${m1}<span>；到</span> ${t2} <span>以上是</span> ×${m2}`;   /* 11/16 ⑤：寫出門檻是幾點；盤查第 22 項：加成其實所有修為都乘，不只下棋、解題，字跟著改 */
     /* 開發者 11/15「體力／靈力／攻擊／防禦的排版照 RPG 遊戲設計師調整」→ 選「經典狀態欄」：
        頭部＝頭像＋名字＋修為 Lv＋經驗條；下面一塊面板＝紅血、藍血兩條緊貼（名稱｜條｜數字），再一排攻擊力、防禦力；
        平常的說明句都收進底下「？ 細則」，卡上只留狀態警告（快用完、這盤下完要歇、化墨退場倒數） */
@@ -378,7 +391,7 @@ function dglCard(){dglCss();let nm="";try{nm=meName()}catch(e){}const Q=new Set(
     const ad=dglCardAD(lv);
     const grp=(t,L)=>`<p class="dgl-kmh">${t}</p><ul>${L.map(z=>`<li>${z}</li>`).join("")}</ul>`;
     const more=`<div class="dgl-kmore" id="dglQ_all"${Q.has("all")?"":" hidden"}>`+(off?grp("平日體力",["平日體力已在設定裡關掉：定軌力不扣、不會化墨退場，也沒有「心定則棋穩」修為加成。","想再打開：設定 → 👘 換造型，裡面的「平日體力」。"]):
-        grp("體力・定軌力",[...(mx!==DGL_MAX?[`<span>體力上限跟陪你走的那一位在黑洞裡的體力一樣，現在是</span> ${mx}<span>；換人陪你走、升級都會跟著變。</span>`]:[]),"下船後會慢慢用掉，回星槎就補回來。",bonus,`<span>在人間（下船以後）大約</span> ${Math.round(DGL_MAX/DGL_DRAIN)} <span>分鐘用完；在星槎上不會少。</span>`,`<span>下完一盤棋、解完一題，各回</span> ${dglU(DGL_GAME,mx)} <span>點。</span>`,`<span>黑洞過關回</span> ${dglU(DGL_BH,mx)} <span>點，一天最多回</span> ${dglU(DGL_BH_DAY,mx)} <span>點。</span>`,"離開 App 的時間也會慢慢回，跟在星槎上歇息一樣。","定軌力用完時，黑洞入口也會關。",`<span>用完了會化墨退場，回星槎歇息：大約</span> ${Math.ceil(DGL_BACK/DGL_SHIP)} <span>分鐘回到</span> ${dglU(DGL_BACK,mx)} <span>點，就能再下船。</span>`,"線上大廳、千秋盃不用定軌力。"]))+
+        grp("體力・定軌力",[...(mx!==DGL_MAX?[`<span>體力上限是全隊的體力，進黑洞開局也是這個數，現在是</span> ${mx}<span>；夥伴加入、升級都會跟著變。</span>`]:[]),"下船後會慢慢用掉，回星槎就補回來。",bonus,`<span>在人間（下船以後）大約</span> ${Math.round(DGL_MAX/DGL_DRAIN)} <span>分鐘用完；在星槎上不會少。</span>`,`<span>下完一盤棋、解完一題，各回</span> ${dglU(DGL_GAME,mx)} <span>點。</span>`,`<span>黑洞過關回</span> ${dglU(DGL_BH,mx)} <span>點，一天最多回</span> ${dglU(DGL_BH_DAY,mx)} <span>點。</span>`,"離開 App 的時間也會慢慢回，跟在星槎上歇息一樣。","定軌力用完時，黑洞入口也會關。",`<span>用完了會化墨退場，回星槎歇息：大約</span> ${Math.ceil(DGL_BACK/DGL_SHIP)} <span>分鐘回到</span> ${dglU(DGL_BACK,mx)} <span>點，就能再下船。</span>`,"線上大廳、千秋盃不用定軌力。"]))+
       grp("靈力・星芒",["解殘局、過主線章節就會得到。",`解殘局、主線過關，各得 ${DGL_XM_GET} 點，最多存 ${DGL_XM_MAX} 點。`,`在觀星臺可以點亮二十八宿星圖：每宿 ${DGL_XIU_COST} 點。`,`<span>已點亮</span> ${xn}／${DGL_XIU.length}`,"進黑洞時，星芒會變成開局靈力，用掉多少扣多少。","最多補到靈力上限。","提示照舊免費，不用花星芒。"])+
       (ad?grp("攻擊力・防禦力",["修為越高，攻擊力和防禦力越強（黑洞裡用）。","以 100 為基準，數字越大越強。"]):"")+`</div>`;
     /* 開發者 11/15「角色卡：天賦／體力／靈力／攻擊／防禦／技能；天賦點進去是角色的天賦，技能點進去是目前學會的招式」：
@@ -398,7 +411,7 @@ function dglCardTS(lv){try{const c=dglName();if(typeof ptyLv==="function")lv=pty
   return{tal:row("tal","tal","天賦",`<span>已點亮</span> ${tn}／${BHTD.TAL.length}`),sk:row("sk","sk","技能",`<span>已學會</span> ${un.length}／${pool.length}`)}}catch(e){return null}}
 /* 技能清單：已學會的在前（名稱、靈力、效果），還沒學會的灰著寫幾級學會 */
 function dglSkills(lv){let c="";try{c=dglName()}catch(e){}try{if(typeof ptyLv==="function")lv=ptyLv(c)}catch(e){}if(typeof BHTD==="undefined"||!BHTD.CH||!BHTD.CH[c])return;const S=BHTD.stats(c,lv),pool=BHTD.SK.filter(s=>s.ch===S.ck).slice().sort((a,b)=>(a.lv>lv)-(b.lv>lv)||a.lv-b.lv);
-  sheet("技能",b=>{b.innerHTML=`<div class="dgl-cd">${pool.map(s=>{const lk=s.lv>lv;return`<div class="dgl-ski${lk?" lk":""}"><div class="dgl-skh"><b>${lk?dglIc("lock"):""}${esc(s.nm)}</b><span>${lk?`<span>修為</span> Lv ${s.lv}`:`${s.cost} <span>靈</span>`}</span></div><p>${esc(s.d||"")}</p></div>`}).join("")}<p class="dgl-ks"><span>在黑洞裡使用，一場最多帶 4 招</span></p><button type="button" class="btn dgl-kme" id="dglSkB">‹ 回我的角色</button></div>`;
+  sheet("技能",b=>{b.innerHTML=`<div class="dgl-cd">${pool.map(s=>{const lk=s.lv>lv;return`<div class="dgl-ski${lk?" lk":""}"><div class="dgl-skh"><b>${lk?dglIc("lock"):""}${esc(s.nm)}</b><span>${lk?`Lv ${s.lv} <span>學會</span>`:`${s.cost} <span>靈</span>`}</span></div><p>${esc(s.d||"")}</p></div>`}).join("")}<p class="dgl-ks"><span>在黑洞裡使用，一場最多帶 4 招</span></p><button type="button" class="btn dgl-kme" id="dglSkB">‹ 回我的角色</button></div>`;
     b.querySelector("#dglSkB").onclick=()=>{closeSheet();setTimeout(dglCard,60)}})}
 /* 11/14 開發者「修為／攻擊力／防禦／紅血／藍血」：角色卡第 4 列＝攻擊力、防禦力兩格（顯示 BHTD.atkPt／defPt 的數值，100 為基準、越大越強）（BHTD.stats 照角色與修為；黑洞模組沒載入、沒選角色就整列不畫） */
 function dglCardAD(lv){try{const c=dglName();if(typeof ptyLv==="function")lv=ptyLv(c);if(typeof BHTD==="undefined"||!BHTD.CH||!BHTD.CH[c])return"";const S=BHTD.stats(c,lv);
@@ -421,6 +434,7 @@ function dglTick(){if(!DGL_ON)return;const now=Date.now(),dt=Math.max(0,Math.min
   const h=location.hash;try{dglLocSync(h)}catch(e){}
   if(dglUserOff()){dglPaint();dglFx("free",true);return}   /* 設定關了體力：不扣、不退場、不暈墨、不打招呼 */
   const z=dglZoneNow(h),busy=dglBusy(h);if(z!==DGL.lastZ){DGL.fromZ=DGL.lastZ;DGL.lastZ=z}
+  if(busy&&!DGL.wasBusy)DGL.bt=now;DGL.wasBusy=busy;   /* 11/16 ⑦：這一盤從什麼時候開始算（進對局頁的那一刻） */
   if(busy&&!DGL.done&&document.querySelector(".modal.res,#cjNext"))DGL.done=now;
   const ev=dglStep(DGL.s,dt,z);if(ev.includes("low"))dglTiredSay(true);
   if(ev.includes("back"))toast(`✨ 定軌力回到 ${dglU(DGL_BACK,dglMx())}，可以下船了。`);
@@ -432,15 +446,17 @@ function dglTick(){if(!DGL_ON)return;const now=Date.now(),dt=Math.max(0,Math.min
 function dglBhEnd(st){if(!dglLive()||!st||!st.result||!st.result.w||st.result.w!==st.human)return;const j=String(st.journey||"");if(!/^bh:/.test(j)||/^bh:gs/.test(j)||j==="bh:tl"||(typeof BHX_ID!=="undefined"&&j===BHX_ID))return;
   const o=dglSt(),day=dglDay(),cap=dglBhCap(o,day,DGL_BH),g=dglGain(DGL.s,cap);if(g.n>0){dglBhUse(o,day,g.n);store.set("dgl",o)}dglPaint();   /* 11/14：一天最多靠黑洞回 DGL_BH_DAY（實際回了多少才算，滿格沒回到的不算） */
   setTimeout(()=>toast(g.n>0?`✨ 星淵靈氣入體，旅人精神百倍！定軌力 +${dglU(g.n,dglMx())}`:cap<=0?`✨ 今天靠黑洞回的定軌力已經滿 ${dglU(DGL_BH_DAY,dglMx())} 了`:"✨ 星淵靈氣入體，旅人精神百倍！"),1600)}
+/* 下完一盤（xq-result）：回 DGL_GAME。11/15 開發者選：星門圍城試玩（07bhg 對局中 body.gsv-on）不回 */
+function dglOnResult(){const now=Date.now(),long=!DGL.bt||now-DGL.bt>=DGL_GAME_MIN;DGL.done=now;DGL.bt=now;if(long&&dglLive()&&!document.body.classList.contains("gsv-on"))dglGain(DGL.s,DGL_GAME);dglPaint()}
 /* 解完一題（addXP 的解題類，同一題常有兩筆，3 秒內只算一次）、主線過關 */
-function dglXP(why){if(!DGL_ON)return;const w=String(why||""),now=Date.now();if(DGL_MAIN_WHY.includes(w)){dglXmGive(DGL_XM_GET);dglPaint();return}if(!DGL_PUZ_WHY.includes(w))return;
-  DGL.done=now;if(now-DGL.pz<3000)return;DGL.pz=now;if(dglLive())dglGain(DGL.s,DGL_PUZ);dglXmGive(DGL_XM_GET);dglPaint()}   /* 關了體力：星芒照給 */
+function dglXP(why,gave){if(!DGL_ON)return;gave=gave!==false;const w=String(why||""),now=Date.now();if(DGL_MAIN_WHY.includes(w)){if(gave){dglXmGive(DGL_XM_GET);dglPaint()}return}if(!DGL_PUZ_WHY.includes(w))return;   /* 11/16 ⑦：gave＝這一筆修為有沒有真的給（同一題拿過就沒有）；沒給＝重解舊題，不回體力、不給靈力 */
+  DGL.done=now;if(!gave||now-DGL.pz<3000)return;DGL.pz=now;if(dglLive())dglGain(DGL.s,DGL_PUZ);dglXmGive(DGL_XM_GET);dglPaint()}   /* 關了體力：星芒照給 */
 
 /* ---------- 設定頁開關（05-settings.js 角色分頁呼叫 dglSetRow；切換由下面的 change 監聽） ---------- */
 function dglSetRow(){if(!DGL_ON)return"";return`<div class="sec-t">平日體力</div><label class="card row" style="justify-content:space-between;gap:10px;margin-bottom:6px"><span><b>平日體力（定軌力／星芒）</b><br><span class="muted" style="font-size:12.5px">關掉後定軌力不扣、不會化墨退場回星槎，也沒有「心定則棋穩」修為加成，頂欄和各地點的兩條收起來；星芒照常累積，進黑洞、點亮星圖照樣能用</span></span><input type="checkbox" class="sw" id="dglSw" aria-label="平日體力（定軌力／星芒）"${dglUserOff()?"":" checked"}></label>`}
 /* 切換：兩個方向都回滿、清掉退場記號（關掉前在船上歇息的人不會卡住；再打開＝像重開 App 一樣滿格） */
-function dglSetOff(off){off=!!off;store.set("dglOff",off);DGL.s=dglNew();DGL.done=0;DGL.fx=0;
-  try{if(off){const o=dglSt();delete o.r;delete o.ra;delete o.ro;store.set("dgl",o)}else dglKeep()}catch(e){}   /* 11/16 ③：關掉＝不留體力紀錄；再打開＝從滿格記起 */
+function dglSetOff(off){off=!!off;if(off){try{dglKeep()}catch(e){}}store.set("dglOff",off);DGL.done=0;DGL.fx=0;   /* 11/16 ⑦：關掉前先把體力記下來；再打開＝跟重開 App 一樣接著那個值、關著的時間照星槎上的速度回，不再一開就回滿（原本切一下開關就滿了） */
+  if(off)DGL.s=dglNew();else{try{DGL.s=dglWake(store.get("dgl",null),Date.now())}catch(e){DGL.s=dglNew()}try{dglKeep()}catch(e){}}
   if(typeof document!=="undefined"){try{const v=document.getElementById("dglVig");if(v)v.remove()}catch(e){}try{dglFloatOff()}catch(e){}try{dglPaint();dglLocSync()}catch(e){}}return off}
 
 /* ---------- 二十八宿星圖（觀星臺「二十八宿」入口，07gxt-guanxing.js GXT_ACT 呼叫） ---------- */
@@ -466,9 +482,9 @@ function dglXiuBuy(i,draw){const o=dglSt(),R=dglXiuLight(o,i);
 if(typeof setTop==="function"){const f0=setTop;setTop=function(){const r=f0.apply(this,arguments);try{dglLocSync(null,1)}catch(e){}return r}}   /* 換頁就放／收地點頁的兩條 */
 if(typeof meChip==="function"){const f0=meChip;meChip=function(){const r=f0.apply(this,arguments);try{dglChip()}catch(e){}return r}}
 if(typeof bhGameEnd==="function"){const f0=bhGameEnd;bhGameEnd=function(st){const r=f0.apply(this,arguments);try{dglBhEnd(st)}catch(e){}return r}}
-if(typeof addXP==="function"){const f0=addXP;addXP=function(n,why){const a=Array.prototype.slice.call(arguments);try{if(dglLive()&&+n>0){const B=dglXpBonus(n,DGL.s.r,DGL.fx,dglMx());DGL.fx=B.fx;a[0]=B.n}}catch(e){}const r=f0.apply(this,a);try{dglXP(why)}catch(e){}return r}}
+if(typeof addXP==="function"){const f0=addXP;addXP=function(n,why){const a=Array.prototype.slice.call(arguments);try{if(dglLive()&&+n>0){const B=dglXpBonus(n,DGL.s.r,DGL.fx,dglMx());DGL.fx=B.fx;a[0]=B.n}}catch(e){}let x0=0,gave=true;try{x0=+store.get("xp",0)||0}catch(e){}const r=f0.apply(this,a);try{gave=(+store.get("xp",0)||0)>x0}catch(e){}try{dglXP(why,gave)}catch(e){}return r}}   /* 11/16 ⑦：addXP 自己會擋同一題重複拿；看累計修為有沒有變多，才知道這一筆有沒有真的給 */
 if(DGL_ON&&typeof window!=="undefined"){
-  addEventListener("xq-result",()=>{DGL.done=Date.now();if(dglLive()&&!document.body.classList.contains("gsv-on"))dglGain(DGL.s,DGL_GAME);dglPaint()});   /* 11/15 開發者選：星門圍城試玩（07bhg 對局中 body.gsv-on）不回定軌力，過關也不回（dglBhEnd 排除 bh:gs） */
+  addEventListener("xq-result",dglOnResult);   /* 11/16 ⑦：進對局頁（或上一盤結束）不到 DGL_GAME_MIN 就結束的那一盤不回體力（一開局就認輸）；DGL.bt 由 dglTick 在進對局頁時記 */   /* 11/15 開發者選：星門圍城試玩（07bhg 對局中 body.gsv-on）不回定軌力，過關也不回（dglBhEnd 排除 bh:gs） */
   document.addEventListener("change",e=>{const t=e.target;if(!t||t.id!=="dglSw")return;try{vibrate(5)}catch(x){}dglSetOff(!t.checked);
     toast(t.checked?"已打開平日體力：定軌力回滿，在人間會慢慢用掉":"已關閉平日體力：定軌力不扣、不會化墨退場；星芒照常")});
   addEventListener("hashchange",()=>{DGL.done=0;setTimeout(dglTick,700)});

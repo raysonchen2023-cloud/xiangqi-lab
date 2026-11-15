@@ -287,7 +287,8 @@ const I18N_EN={
   /* 平日體力：定軌力、星芒、化墨退場（07dgl-stamina.js，開發者 11/13） */
   "定軌力":"Orbit stamina","星芒":"Starglow","定軌力（紅）":"Orbit stamina (red)","星芒（藍）":"Starglow (blue)","元氣":"Vitality","靈力上限":"Spirit cap","攻擊":"Attack","黑洞裡的你":"You in the Black Hole","我的角色頁":"My character page",
   "定軌力耗盡，化墨退場——回星槎歇息。":"Orbit stamina spent: dissolving into ink. Back to the Star Raft to rest.","在人間（下船以後）每分鐘少 1；在星槎上不會少。":"In the human world (after leaving the raft) it drops 1 per minute; on the Star Raft it doesn't drop.",
-  "體力上限跟陪你走的那一位在黑洞裡的體力一樣，現在是":"Your stamina cap equals your companion's stamina in the Black Hole; right now it is","；換人陪你走、升級都會跟著變。":"; it changes when you switch companion or level up.",
+  "體力上限是全隊的體力，進黑洞開局也是這個數，現在是":"Your stamina cap is the whole team's stamina, the same number you start a Black Hole stage with; right now it is","；夥伴加入、升級都會跟著變。":"; it changes when companions join or level up.",
+  "現在體力":"Stamina now at","體力到":"With stamina at","以上，得到的修為":"or more, the XP you earn is","；到":"; at","以上是":"or more it is","學會":"unlocks","全隊體力":"Team stamina","（人間、黑洞都是這個數）":"(the same number in the Black Hole and in the human world)",
   "在人間（下船以後）大約":"In the human world (after leaving the raft) it lasts about","分鐘用完；在星槎上不會少。":"minutes; on the Star Raft it doesn't drop.","下完一盤棋、解完一題，各回":"Finishing a game or solving a puzzle each restores","點。":".",
   "黑洞過關回":"Clearing a Black Hole stage restores","點，一天最多回":", with a daily limit of","離開 App 的時間也會慢慢回，跟在星槎上歇息一樣。":"Time away from the App also restores it, just like resting on the Star Raft.",
   "用完了會化墨退場，回星槎歇息：大約":"When it runs out you dissolve into ink and rest on the Star Raft: in about","分鐘回到":"minutes it is back to","點，就能再下船。":", and you can go ashore again.",
