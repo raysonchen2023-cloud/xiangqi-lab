@@ -663,19 +663,19 @@ const gradeFor=x=>GRADES.find(g=>x>=g[1]);
 const rnd=n=>Math.ceil(n/2);
 /* 開發者 11/6（第二裁判：同一個 Pikafish 深算對照）：評語分界線放寬成 正著<30／穩著≤60／緩著≤150／失著≤400／敗著>400 分；存檔裡舊的評語照「少幾分」重算（妙著照舊） */
 function qNow(m){if(!m||!m.q)return m&&m.q;const q0=({"妙手":"妙著","正手":"正著","優著":"穩著","良著":"緩著","錯著":"失著","露著":"敗著"})[m.q]||m.q;if(m.loss==null||q0==="妙著"||q0==="—")return q0;const l=m.loss;return l<30?"正著":l<=60?"穩著":l<=150?"緩著":l<=400?"失著":"敗著"}
-/* ================= 影子模式：勝率尺度的新算法（開發者 11/11 照三方審查「新算法修好必改後走影子模式」） =================
+/* ================= 影子模式：預期得分尺度的新算法（開發者 11/11 照三方審查「新算法修好必改後走影子模式」） =================
    畫面一律顯示舊算法（qNow／gameReport／talk／reportSheet 的分數、評語、評級一個字都沒改）；新算法只在背景算：
-   ・mxShadowReport(rep,win)：拿 gameReport 的結果再算一份新的每步勝率損失、評語、一盤總分、評級，不動 rep。
+   ・mxShadowReport(rep,win)：拿 gameReport 的結果再算一份新的每步預期得分損失、評語、一盤總分、評級，不動 rep。
    ・05b-save.js 的 cpa*：跟電腦下完一盤，新舊總分存在 store "mxShadow"（最近 200 盤），並匿名送 t:"cpu"（設定 → 隱私可關）。
    ・開發者模式：賽後報告最下面多一塊「🛠 新算法（影子模式）」並列新舊（reportSheet），孩子看不到。
    三方審查（story/75_數學模型新算法_三方審查整理.md）的上線前必改 1～4 都在這一段：
    ①存檔還原 bug：沒有 bv（最佳著法評估原值）時，最佳評估＝ev「先夾到 ±2000」再加 loss（loss 本來就是兩邊夾過才相減）；不存 dw、一律重算（k 改了不會留下過時的 dw）。
    ②殺棋特例（Lichess lila modules/tree/src/main/Advice.scala 的 MateAdvice 分界）：走進對方的強制殺棋、錯過自己的強制殺棋直接決定評語，另外標「送殺」「漏殺」。
-   ③一盤總分不沿用舊門檻：Lichess 的合成（依局勢波動加權的平均、調和平均各半，lila AccuracyPercent.scala），上限規則改看「勝率掉 ≥ capDw% 的步數」，
+   ③一盤總分不沿用舊門檻：Lichess 的合成（依局勢波動加權的平均、調和平均各半，lila AccuracyPercent.scala），上限規則改看「預期得分掉 ≥ capDw% 的步數」，
      S／A／B／C 門檻放在 MXS.gr，等影子資料（≥100 人、≥1000 盤）用分位對應重訂（tools/calibrate-grades.js）。
-     意見表 1046（11/15）：勝率尺度在大劣時每步只掉一點點，慢慢輸掉的盤每步準確度都很高——模擬（業餘中段）輸掉的盤 100% 拿 S／A（舊算法 0%）。
-     先保守補一條「輸棋」上限 MXS.lose：這方最後評到的勝率 ≤ 10%（約 −600 分以下），或呼叫端給了結果（mxShadowReport(rep,win)，05b-save 的 cpaDone 有給）而這方輸了 → 最高 79（B）；版本升 2。分數本身照 Lichess 不動，只多一個上限。
-     上限不用「整盤自己掉的勝率合計」：合計跟手數成正比（150 手的和棋也會超過 100%），長的盤會被冤枉；用最後的局面最直接。
+     意見表 1046（11/15）：預期得分尺度在大劣時每步只掉一點點，慢慢輸掉的盤每步準確度都很高——模擬（業餘中段）輸掉的盤 100% 拿 S／A（舊算法 0%）。
+     先保守補一條「輸棋」上限 MXS.lose：這方最後評到的預期得分 ≤ 10%（約 −600 分以下），或呼叫端給了結果（mxShadowReport(rep,win)，05b-save 的 cpaDone 有給）而這方輸了 → 最高 79（B）；版本升 2。分數本身照 Lichess 不動，只多一個上限。
+     上限不用「整盤自己掉的預期得分合計」：合計跟手數成正比（150 手的和棋也會超過 100%），長的盤會被冤枉；用最後的局面最直接。
      之後有影子資料再看要不要分段位、改門檻（cpu-games.jsonl 每盤有 res 和每步原值，可以離線重算，不用另外收資料）。
    ④k、評語門檻集中在 MXS：門檻 th 由 k 和均勢 cp 分界算出來，k 改了門檻自動跟著改；改了任何一個數字就把 MXS.ver 加 1（匿名資料帶著版本）。
    core.js（xiangqi-referee.js 的 classifyRaw）只多回傳 bv，評語照舊；新算法全部在這裡。 */
@@ -684,16 +684,17 @@ function qNow(m){if(!m||!m.q)return m&&m.q;const q0=({"妙手":"妙著","正手"
      改成終局四態 end："w" 贏、"l" 輸、"d" 和、"?" 不知道；只有「已知輸」或「不知道結果而且局面不利」才套輸棋上限；局面不利另外標 behind（只是估計，不等於輸）。
    ②上限寫死 79，只有 A 門檻是 80 時才代表「最高 B」；門檻用資料重訂後（例如 A 變 79）79 分又會拿 A。改成「第幾個門檻減 1」（mxCapOf），上限代表的等級跟著門檻走。
    另外照重評建議三個版本一起算，之後用影子資料比較、不先認定哪個對：raw 不封頂、s0 只看重大錯誤的上限、score 再加輸棋上限（存在本機 mxShadow，匿名送出的欄位沒有增加）。
-   這條曲線校正時是用勝 1、和 0.5、負 0 擬合（tools/calibrate-wdl.js），量的是「預期得分」＝P(勝)＋0.5×P(和)，不是贏棋機率；程式裡沿用 win／勝率的名字，對外說明要寫預期得分。 */
+   這條曲線校正時是用勝 1、和 0.5、負 0 擬合（tools/calibrate-wdl.js），量的是「預期得分」＝P(勝)＋0.5×P(和)，不是贏棋機率；變數、函式沿用 win 的名字（mxWin、dw、W…），註解和開發者頁一律寫預期得分（11/15 第二次重評第 3 項統一用語）。
+   外部公式的固定參考版本（lila commit、檔案雜湊）、公式對照與逐條自訂差異：story/數學模型_外部公式參考.md；邊界測試在 tools/test-mathmodel-79.js。 */
 const MXS={ver:3,      /* 11/15 意見表 1046：1→2（多了 lose 上限）；同日 2→3（已知勝負優先、上限跟著門檻） */
-  k:0.00368208,          /* 勝率曲線斜率 Win%(cp)＝100／(1＋e^(−k·cp))：先沿用 Lichess（lichess.org/page/accuracy）；之後用 t:"cpu" 真人對局分段位擬合（tools/calibrate-wdl.js），不可用引擎自對局（Pikafish 自己的曲線 +150 就 96%，會灌水） */
+  k:0.00368208,          /* 預期得分曲線斜率（Lichess 叫 Win%）Win%(cp)＝100／(1＋e^(−k·cp))：先沿用 Lichess（lichess.org/page/accuracy）；之後用 t:"cpu" 真人對局分段位擬合（tools/calibrate-wdl.js），不可用引擎自對局（Pikafish 自己的曲線 +150 就 96%，會灌水） */
   cp:[30,60,150,400],    /* 均勢時的評語分界（開發者 11/6 深算驗證過的 cp）；th＝Win%(cp)−50 由 k 算出（下一行） */
   mate:20000,            /* |評估| ≥ 這個＝有殺（engine.js 把 mate n 換成 ±(30000−n)；跟 evText 同一個分界） */
   walk:[-700,-1000],     /* 走進對方殺棋：走之前（最佳著法）的評估 > −700 → 敗著；−1000～−700 → 失著；更差 → 緩著 */
   miss:[700,1000],       /* 錯過自己的殺棋：走完的評估 ≤ 700 → 敗著；700～1000 → 失著；> 1000 → 緩著 */
   hm:.5,                 /* 一盤準確度＝(1−hm)·波動加權平均＋hm·調和平均（Lichess 各半） */
-  win:[2,8],wt:[.5,12],  /* 波動權重：視窗＝總手數/10 夾在 2～8；視窗內勝率的標準差夾在 0.5～12（Lichess） */
-  capDw:10,              /* 上限規則看「勝率掉 ≥ 10%」的步數（Claude 複審 #4 修法 (b)），送殺、漏殺判成失著／敗著的也算 */
+  win:[2,8],wt:[.5,12],  /* 波動權重：視窗＝總手數/10 夾在 2～8；視窗內預期得分的標準差夾在 0.5～12（Lichess） */
+  capDw:10,              /* 上限規則看「預期得分掉 ≥ 10%」的步數（Claude 複審 #4 修法 (b)），送殺、漏殺判成失著／敗著的也算 */
   cap:{n:[3,6],r:[.1,.2],g:[1,2],blun:0},   /* 上限結構照舊：≥3 步或 ≥10% 最高 B（g 1＝A 門檻減 1）、≥6 步或 ≥20% 最高 C（g 2＝B 門檻減 1）、有敗著最高 A（blun 0＝S 門檻減 1）；gr＝[90,80,70,60] 時就是原本的 79／69／89 */
   lose:[10,1],           /* 輸棋上限（意見表 1046）：已知這盤輸了，或不知道結果而這方最後評到的預期得分 ≤ 10% → 最高 B（1＝A 門檻減 1，原本的 79）；保守值，待影子資料重訂 */
   gr:[90,80,70,60],      /* S／A／B／C 門檻：暫用舊的，待校正 */
@@ -702,7 +703,7 @@ MXS.th=MXS.cp.map(c=>mxWin(c)-50);   /* 均勢時跟 cp 分界逐點對齊（k�
 function mxClamp(v){return Math.max(-2000,Math.min(2000,+v||0))}
 function mxCapOf(i){return MXS.gr[i]-1}   /* 上限＝第 i 個門檻（0 S、1 A、2 B、3 C）減 1：最高只到下一級 */
 function mxWin(cp){return 100/(1+Math.exp(-MXS.k*mxClamp(cp)))}
-function mxAccDw(dw){return Math.max(0,Math.min(100,103.1668*Math.exp(-0.04354*Math.max(0,+dw||0))-3.1669))}   /* Lichess 每步準確度（沒加 +1 的不確定加分，跟 Lichess 的差別寫在合併說明.md） */
+function mxAccDw(dw){return Math.max(0,Math.min(100,103.1668*Math.exp(-0.04354*Math.max(0,+dw||0))-3.1669))}   /* Lichess 每步準確度（沒加 +1 的不確定加分；跟 Lichess 的差別逐條列在 story/數學模型_外部公式參考.md） */
 function mxGradeDw(dw){const t=MXS.th;return dw<t[0]?"正著":dw<=t[1]?"穩著":dw<=t[2]?"緩著":dw<=t[3]?"失著":"敗著"}
 /* 一步的最佳、實際評估（走的那一方視角）：b 最佳著法、p 實際走完；bk＝b 是原值（有 bv）還是還原的；eq＝不知道是哪一方或沒有 ev，只能當均勢（b＝loss、p＝0） */
 function mxEv(m){if(!m||m.loss==null||!isFinite(+m.loss))return null;const l=Math.max(0,+m.loss),sg=m.by==="r"?1:m.by==="b"?-1:0;
@@ -718,7 +719,7 @@ function mxShMove(m){const q0=qNow(m);if(!q0||q0==="—")return null;const e=mxE
   return{b:e.b,p:e.p,bk:e.bk,dw,acc:mxAccDw(dw),q0,q,mt,mh}}
 /* 一方的新總分（rep＝gameReport 的結果；照 rep.plies 的 phase、by、ply） */
 function mxShSide(rep,s,wn){const P=rep&&rep.plies||[],X=[];for(const m of P){if(m.by!==s)continue;const x=mxShMove(m);if(x)X.push({m,x})}if(!X.length)return null;
-  const W=[50];let last=50;for(const m of P){if(m.ev!=null&&isFinite(+m.ev))last=mxWin(+m.ev);W.push(last)}   /* 每一手走完的勝率（紅方視角），第 0 個＝開局前；沒評到的手沿用上一手 */
+  const W=[50];let last=50;for(const m of P){if(m.ev!=null&&isFinite(+m.ev))last=mxWin(+m.ev);W.push(last)}   /* 每一手走完的預期得分（紅方視角），第 0 個＝開局前；沒評到的手沿用上一手 */
   const ws=Math.max(MXS.win[0],Math.min(MXS.win[1],Math.floor(P.length/10))),sdv=a=>{const u=a.reduce((x,y)=>x+y,0)/a.length;return Math.sqrt(a.reduce((x,y)=>x+(y-u)**2,0)/a.length)},win=[];
   for(let i=0;i<Math.min(ws,W.length)-2;i++)win.push(W.slice(0,ws));for(let i=0;i+ws<=W.length;i++)win.push(W.slice(i,i+ws));if(W.length<ws)win.push(W.slice());
   const wOf=ply=>{const a=win[ply-1];return a?Math.max(MXS.wt[0],Math.min(MXS.wt[1],sdv(a))):1};
@@ -740,8 +741,20 @@ function mxShHtml(R,X){if(!X||!R||R.score==null)return"";const QS=["妙著","正
     <tr><td>準確度</td><td>${R.base.toFixed(1)}</td><td>${X.base.toFixed(1)}<br><small class="muted" style="font-weight:400">波動加權 ${X.wm.toFixed(1)}・調和 ${X.hmean.toFixed(1)}</small></td></tr>
     <tr><td>上限</td><td>${R.cap}</td><td>${X.cap}<br><small class="muted" style="font-weight:400">${{w:"已知贏",l:"已知輸",d:"已知和","?":"結果未知"}[X.end]}${X.behind?`・局面不利（最後預期得分 ${X.fin.toFixed(0)}%）`:""}${X.lost?"・套輸棋上限":""}</small></td></tr>
     <tr><td>三個版本</td><td>—</td><td>${X.raw}／${X.s0}／${X.score}<br><small class="muted" style="font-weight:400">不封頂／只看重大錯誤／再加輸棋上限</small></td></tr>${QS.map(q=>`<tr><td>${q}</td><td>${R.cnt[q]||0}</td><td>${X.cnt[q]||0}</td></tr>`).join("")}</table>
-    ${df.length?`<div class="muted" style="font-size:12.5px;line-height:1.6;margin-top:6px">評語不一樣的步：${df.slice(0,30).map(v=>`第 ${v.ply} 手 ${esc(v.cn||"")} ${v.q0}→${v.q}（勝率 −${v.dw.toFixed(1)}%${v.mt===1?"・送殺":v.mt===2?"・漏殺"+(v.mh?"（推估）":""):""}）`).join("；")}</div>`:""}
-    <p class="muted" style="font-size:12px;margin:6px 0 0">MXS v${MXS.ver}：k＝${MXS.k}、評語門檻 ${MXS.th.map(t=>t.toFixed(2)).join("／")}%、殺棋分界 ${MXS.walk.join("／")}・${MXS.miss.join("／")}、S／A／B／C ${MXS.gr.join("／")}、已知輸（或結果未知而預期得分 ≤ ${MXS.lose[0]}%）最高 ${mxCapOf(MXS.lose[1])}（都還沒用真人資料校正）${X.bk<X.n?`；${X.n-X.bk} 步沒有最佳評估原值（舊存檔或舊快取），用 ev 夾值＋loss 還原`:""}</p></details>`}
+    ${df.length?`<div class="muted" style="font-size:12.5px;line-height:1.6;margin-top:6px">評語不一樣的步：${df.slice(0,30).map(v=>`第 ${v.ply} 手 ${esc(v.cn||"")} ${v.q0}→${v.q}（預期得分 −${v.dw.toFixed(1)}%${v.mt===1?"・送殺":v.mt===2?"・漏殺"+(v.mh?"（推估）":""):""}）`).join("；")}</div>`:""}
+    <p class="muted" style="font-size:12px;margin:6px 0 0">MXS v${MXS.ver}：k＝${MXS.k}、評語門檻 ${MXS.th.map(t=>t.toFixed(2)).join("／")}%、殺棋分界 ${MXS.walk.join("／")}・${MXS.miss.join("／")}、S／A／B／C ${MXS.gr.join("／")}、已知輸（或結果未知而預期得分 ≤ ${MXS.lose[0]}%）最高 ${mxCapOf(MXS.lose[1])}（都還沒用真人資料校正）${X.bk<X.n?`；${X.n-X.bk} 步沒有最佳評估原值（舊存檔或舊快取），用 ev 夾值＋loss 還原`:""}</p>
+    <div class="row" style="gap:8px;margin-top:8px;flex-wrap:wrap"><button class="pill" data-mxexp="file">💾 匯出本機影子紀錄（JSON 檔）</button><button class="pill" data-mxexp="copy">📋 複製到剪貼簿</button></div>
+    <p class="muted" style="font-size:12px;margin:4px 0 0">只匯出這台裝置存的 mxShadow（最近 200 盤的新舊總分和三個候選分數），不上傳；給 tools/mx-compare.js 離線比較用。</p></details>`}
+/* 11/15 ChatGPT 第二次重評第 2 項：本機自願匯出（只有開發者模式有這兩顆，reportSheet 綁 data-mxexp）。把手機裡的影子紀錄 store "mxShadow" 整份存成 JSON 檔或複製到剪貼簿；
+   不上傳、不走 XQNet，匿名送出的 t:"cpu" 欄位沒有增加。玩家端要不要也有這顆，待開發者決定（現在沒有）。
+   格式（tools/mx-compare.js 讀這個；欄位說明在 story/數學模型_預先驗證方案_v1.md 附錄 A）：{app, kind:"xq-mxshadow", fmt:1, at, build, mxs:MXS 全部常數, cap:200, n, games:[{id, o, n, x, v, at, b?, g?}]}，games 舊到新 */
+function mxShExportPack(){const all=store.get("mxShadow",{})||{},games=Object.keys(all).sort((a,b)=>(all[a].at||0)-(all[b].at||0)).map(id=>({id,...all[id]}));
+  return{app:"象棋千秋",kind:"xq-mxshadow",fmt:1,at:Date.now(),build:String(window.XQ_BUILD||"").slice(0,20),mxs:JSON.parse(JSON.stringify(MXS)),cap:200,n:games.length,games}}
+function mxShExport(how){try{if(!(typeof DEVMODE==="function"&&DEVMODE()))return;const P=mxShExportPack(),tx=JSON.stringify(P),d=new Date(P.at),p2=x=>String(x).padStart(2,"0"),fn=`xq-mxshadow-${d.getFullYear()}${p2(d.getMonth()+1)}${p2(d.getDate())}-${p2(d.getHours())}${p2(d.getMinutes())}.json`;
+  if(!P.n)return toast("這台裝置還沒有影子紀錄（跟電腦下完一盤、評完等才會有）");
+  if(how==="copy")return navigator.clipboard.writeText(tx).then(()=>toast(`已複製 ${P.n} 盤的影子紀錄（沒有上傳）`),()=>toast("這台裝置不能複製，改按存成檔案"));
+  const a=document.createElement("a");a.href=URL.createObjectURL(new Blob([tx],{type:"application/json"}));a.download=fn;a.style.display="none";document.body.append(a);a.click();setTimeout(()=>{URL.revokeObjectURL(a.href);a.remove()},4000);
+  toast(`已存成 ${fn}（${P.n} 盤，沒有上傳）`)}catch(e){toast("匯出失敗："+(e&&e.message||e))}}
 function gameReport(board0,moves){
   moves=(moves||[]).map(m=>m&&m.q&&m.loss!=null&&qNow(m)!==m.q?{...m,q:qNow(m)}:m);
   const b=board0.slice(),out={r:null,b:null},plies=[];let endFrom=null;
@@ -803,6 +816,7 @@ function reportSheet(rep,opts){let s=opts.side||"r";
       ${R.talk.map(t=>`<div class="rp-t${t.bad?" bad":t.good?" good":""}"${t.ply?` data-p="${t.ply}"`:""}><b>${esc(t.t)}</b>${esc(t.x)}${t.ply&&opts.goto?'<span class="go">看這步 ›</span>':""}${t.bad&&t.ply&&opts.retry&&opts.retry.side===s?`<div style="margin-top:7px"><button class="pill" data-re="${t.ply}" style="font-weight:800">↻ 從這步再下一次</button></div>`:""}</div>`).join("")}
       <p class="muted" style="font-size:12px;margin-top:12px">評級：S≥90、A≥80、B≥70、C≥60、D&lt;60。每步準確度依「比 Pikafish 最佳著法少幾分」換算（大優時的失誤也照算），再加妙著分。有敗著最高 A；失著＋敗著 3 步以上（或 10%）最高 B；6 步以上（或 20%）最高 C。開局＝前 10 回合；殘局＝雙方車馬炮合計剩 6 個以下。</p>${SH?mxShHtml(R,SH[s]):""}`);
     b.querySelectorAll("[data-sd]").forEach(x=>x.onclick=()=>{s=x.dataset.sd;paint()});
+    b.querySelectorAll("[data-mxexp]").forEach(x=>x.onclick=()=>{vibrate(5);mxShExport(x.dataset.mxexp)});   /* 開發者模式才有這兩顆（mxShHtml） */
     if(opts.goto)b.querySelectorAll("[data-p]").forEach(x=>x.onclick=()=>{closeSheet();opts.goto(+x.dataset.p)});
     if(opts.retry)b.querySelectorAll("[data-re]").forEach(x=>x.onclick=e=>{e.stopPropagation();vibrate(8);opts.retry.go(+x.dataset.re)})};paint()})}
 /* 開發者 11/11 選「複盤錯著重下」（規劃書 D01）：看完報告，在失著／敗著那一條直接按「↻ 從這步再下一次」，從那一步之前的局面跟電腦（第 16 級）重下，

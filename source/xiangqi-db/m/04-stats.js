@@ -330,7 +330,7 @@ function setProf(x){const p={...store.get("pubProf",{}),...x,v:1,at:Date.now()};
    三、樣本：實戰軸不到 30 步、殺法不到 10 題＝樣本還少：畫虛線、淡色，不拿來挑「建議先練」。全 App 只有這裡一個「建議先練」。
    四、公平：用過提示或悔棋的那盤（local.js 存檔時記 hintN／undoN）整盤不算；舊存檔沒有這兩欄就照算。 */
 /* 數學修正 11/11（審查 3-B、4.2；開發者 11/11 照三方審查「先上不改分數的部分」）：
-   ・每步準確度「不改」：照舊 100·e^(−損失/200)（SK.acc）。勝率尺度的新算法只在影子模式背景算（05-settings.js 的 MXS／mxShadowReport），畫面不顯示。
+   ・每步準確度「不改」：照舊 100·e^(−損失/200)（SK.acc）。預期得分尺度的新算法只在影子模式背景算（05-settings.js 的 MXS／mxShadowReport），畫面不顯示。
      意見表 1046（11/15）：快取 talentCache5 → talentCache6（三方審查必改 7「合併時別漏了 talentCache5 → 6」）——11/11 以前存的列沒有 id／lv／A，
      五軸的 σ 只能退回 SK.SD0、skillDiff 認不到盤；升版讓每一列都用現在的欄位重算一次（只讀手機裡已評好等的棋譜，沒評完的照舊放 pend），舊的 talentCache5 刪掉。分數本身不變。
    ・五軸的時間窗統一：每一盤的權重 λ^(盤序)，λ＝2^(−1/HL)（半衰期 15 盤，有效視窗約 22 盤），三個階段用同一批最近的盤，不再各自往回找 150 步（殘局軸原本反映的是很舊的自己）。
@@ -385,12 +385,14 @@ async function skillRows(){
    綜合＝三個階段加權合起來的每步準確度（＝全部步的準確度平均），穩定另外看、不進綜合（原本穩定軸跟階段分重複扣大錯，審查 3-A） */
 /* 開發者 11/11 照三方審查（Claude 複審 #11）：權重用「全部的盤」的盤序 j（R 已經新到舊排好），不是「這一軸有資料的第幾盤」，三個階段才真的看同一段時間；gn 只算這一軸有資料的盤數（畫面寫「近 X 盤」） */
 function mxAxisPt(R,pick,lam,sd0){let S=0,N=0,n0=0,gn=0,j=-1;const J=[];
-  for(const g of R){j++;const x=pick(g);if(!(x&&x[1]>0))continue;const w=Math.pow(lam,j);S+=w*x[0];N+=w*x[1];n0+=x[1];gn++;J.push([w,x[0],x[1],x[2]])}
+  for(const g of R){j++;const x=pick(g);if(!(x&&x[1]>0))continue;const w=Math.pow(lam,j);S+=w*x[0];N+=w*x[1];n0+=x[1];gn++;J.push([w,x[0],x[1],x[2],j])}
   if(!N)return{v:null,m:null,se:null,n:0,n0:0,g:0};const m=S/N;
   /* 標準誤：以盤為群集 SE²＝Σ(W_j·(ā_j−m))²／(ΣW_j)²（W_j＝w_j·n_j；Cameron & Miller 2015 的 cluster-robust 寫法）；盤數 <4 或算出來比模型值小就用 σ²·deff·Σ(w²n)／(Σw·n)² */
-  let s1=0,s2=0,sv=0,sn=0;for(const[w,s,n,ss]of J){const d=s/n-m;s1+=w*n*w*n*d*d;s2+=w*w*n;if(ss!=null){sv+=ss;sn+=n}}
+  /* 11/15 ChatGPT 第二次重評第 4 項：另外留下每一盤對這一軸的影響量 iu＝[盤序 j, W_j·(ā_j−m)／ΣW]（Σiu²＝群集 SE²；兩軸的 Σiu_a·iu_b＝共變異，mxPairSe 用）、
+     有效盤數 ne＝(ΣW)²／ΣW²（Kish）、模型值 sm。se 的算法沒有動（畫面上各軸的 ± 照舊） */
+  let s1=0,s2=0,sv=0,sn=0,sq=0;const iu=[];for(const[w,s,n,ss,i]of J){const d=s/n-m;s1+=w*n*w*n*d*d;s2+=w*w*n;sq+=w*n*w*n;iu.push([i,w*n*d/N]);if(ss!=null){sv+=ss;sn+=n}}
   const sdm=sn>1?Math.sqrt(Math.max(0,sv/sn)):sd0,seM=Math.sqrt(sdm*sdm*(gn>=8?1:SK.DEFF)*s2)/N,seC=gn>=4?Math.sqrt(s1)/N:0;   /* 盤數夠（≥8）時以群集估計為主，模型值只當下限（deff 不再乘；模擬 sim-pick-se.js：乘了會把 se 高估 1.5 倍、抓不到真的弱項） */
-  return{v:Math.round(m),m,se:Math.max(seM,seC),n:Math.round(N),n0,g:gn}}
+  return{v:Math.round(m),m,se:Math.max(seM,seC),n:Math.round(N),n0,g:gn,ne:N*N/sq,sm:seM,iu}}
 function skillAxes(G,IR){const R=(G||[]).filter(g=>g&&g.pa&&!g.hu).sort((a,b)=>(b.t||0)-(a.t||0)),out=[],lam=Math.pow(.5,1/SK.HL),CAL=mxCal(),AX=CAL.ax,NR=(()=>{try{return window.XQNet&&XQNet.rating?XQNet.rating().rank:null}catch(e){return null}})();
   const sq=g=>{if(!g.A||!g.A.length)return null;const m=g.A.reduce((a,b)=>a+b,0)/g.A.length;return g.A.reduce((a,b)=>a+(b-m)*(b-m),0)};   /* 這盤每步準確度的離均差平方和（估 σ 用）；舊列沒有 A → 用 SK.SD0 */
   for(const[k,l]of[["open","開局"],["mid","中局"],["end","殘局"]]){const a=mxAxisPt(R,g=>{const x=g.pa[k];return x?[x[0],x[1],x[1]===g.n?sq(g):null]:null},lam,SK.SD0);out.push({k:l,...a,u:"步",key:k})}
@@ -402,7 +404,7 @@ function skillAxes(G,IR){const R=(G||[]).filter(g=>g&&g.pa&&!g.hu).sort((a,b)=>(
   const st=mxAxisPt(R,g=>g.n?[100*(g.n-(g.bad||0)),g.n,null]:null,lam,45);let best=0,bn=0,j=0;for(const g of R){const w=Math.pow(lam,j++);if(!g.n)continue;best+=w*(g.best||0);bn+=w*g.n}
   out.push({k:"穩定",...st,u:"步",key:"stab",best:bn?Math.round(best*100/bn):null});
   for(const a of out){a.ok=a.v!=null&&a.n>=(a.u==="題"?SK.QMIN:SK.MIN);a.go=SK.GO[a.k];
-    const B=AX&&a.key&&AX.byRank&&NR&&AX.byRank[NR]&&AX.byRank[NR][a.key];if(B&&B.n>=30&&B.sd>0&&a.m!=null){a.z=(a.m-B.mu)/B.sd;a.zse=a.se/B.sd;a.grp=B.n}else{a.z=null;a.zse=null}}
+    const B=AX&&a.key&&AX.byRank&&NR&&AX.byRank[NR]&&AX.byRank[NR][a.key];if(B&&B.n>=30&&B.sd>0&&a.m!=null){a.z=(a.m-B.mu)/B.sd;a.zse=a.se/B.sd;a.zs=B.sd;a.grp=B.n}else{a.z=null;a.zse=null}}
   return out}
 /* 綜合＝三個階段合起來的每步準確度（各軸 m 用加權步數合成），附標準誤 */
 function mxTotal(A){let s=0,n=0,v=0;for(const a of A){if(a.pct||a.key==="stab"||a.m==null||!a.n)continue;s+=a.m*a.n;n+=a.n;v+=a.se*a.se*a.n*a.n}return n?{v:Math.round(s/n),m:s/n,se:Math.sqrt(v)/n,n}:null}
@@ -416,10 +418,29 @@ function mxTotal(A){let s=0,n=0,v=0;for(const a of A){if(a.pct||a.key==="stab"||
    8 分、0.8 是工程判斷（sim/sim-pick-conf.js 看各級出現的比例）
    開發者 11/15 選「改成溫和說法」（ChatGPT 重評：沒有階段難度基準時約 38% 會誤報——開局本來就容易拿高分，中局、殘局被當成弱項；資料越多只會越有信心地說錯）：
      沒有同段位基準（grp 不成立）時，hi、mid 都不回傳 weak／maybe，改回傳 soft（conf "soft"，lv 記原本是 hi 還是 mid）→「最近〇〇分數較低，想練一題嗎？」，地圖也不畫朱圈；有基準才用上面的 hi、mid */
+/* 11/15 ChatGPT 第二次重評第 4 項（story/chatgpt_app/數學模型77修正後_三視角重評_2026-11-15.md 四-3）：上面的 2·√(se_lo²＋se_hi²) 有兩個問題，改掉（溫和說法、回傳欄位照舊）——
+   ①同一盤的開局、中局、殘局彼此相關，兩個標準誤平方直接相加沒有估共變異。改成以盤為單位的配對估計 mxPairSe：
+     Var(A−B)＝Σ_j(iu_jA−iu_jB)²＝Var(A)＋Var(B)−2Cov(A,B)，iu＝mxAxisPt 留下的每盤影響量（時間窗權重照舊：半衰期 15 盤）；缺某一階段的盤那一邊是 0，只進另一邊的變異、不進共變異。
+     盤少時群集估計偏小：乘 ne／(ne−1)（ne＝兩軸有效盤數 Kish 取小的），而且不低於只算步與步之間起伏的模型值 √(sm_A²＋sm_B²)（每一步的起伏在兩個階段之間不會互相抵銷）。兩軸有一軸不到 4 盤就退回原本的相加。
+     有同段位基準（z 尺度）時每盤影響量先除以基準的標準差，再加基準平均數自己的誤差 1／人數（兩軸各一份，當成獨立，偏保守）。
+   ②「先挑最高、最低再比」有選擇效應：k 項兩兩比較共 m＝k(k−1)／2 組（2 項 1 組、3 項 3 組、4 項 6 組），用 Bonferroni 把整個挑選程序的誤報率壓在 5%（hi）／10%（mid）：
+     臨界值＝t 分布 1−α／(2m) 分位、自由度 ne−1（MX_ZC 是常態的值，mxTcrit 用 Cornish–Fisher 展開換成 t；跟精確值比 df 9 以上差 < 0.004，df 4 低 0.01～0.07、df 3 低 0.02～0.24——那時有殘局的盤只有四、五盤，下限 sm 還乘著 DEFF，模擬的誤報率 ≤ 1.3%）。原本固定的 2、1.64 是「只比一組、盤數無限多」的值。
+     不用整盤重抽（bootstrap）：同一份資料每次打開五邊形要說一樣的話（重抽要另外固定亂數種子），修正臨界值是定值、好測試。模擬（xiangqi-lab/tools/sim-phase-pair.js，每格 4000 位假設的玩家）：
+     三個階段真的一樣時說出 hi 的比例，原本 3～17%、修正臨界值 0.5～4.3%、重抽 2.3～5.4%（連續的盤彼此相關時 5.5%／8.7%）；重抽在 20 盤以下漏報少一點（比較不保守），40 盤以上差不多；重抽算一次約是 16 倍（兩種手機都算得動）。
+     代價是漏報變多：殘局真的差 8.6 分、40 盤時，沒有以 hi 指出殘局的比例 17% → 35%（80 盤 8% → 18%）。10 盤左右（有殘局的只有五、六盤）幾乎一律是「資料還少」。
+   模擬的區間覆蓋率、誤報率、漏報率寫在 story/數學模型_階段差異配對估計_實作紀錄.md。沒有同段位基準時仍然只回傳 soft（開發者 11/15 選定；有基準也不會自動消除選擇效應，所以兩邊都用修正後的臨界值）。
+   「資料還少」和「未看出明顯差異」的分界照舊是 th > 8 分（z 尺度 0.8），但 th 變大了（約 2.4～3 個標準誤），所以 20～40 盤時「資料還少」會比以前多 */
+const MX_ZC={1:[1.96,1.645],3:[2.394,2.128],6:[2.638,2.394]};   /* m 組比較、整體雙側 5%／10% 的常態臨界值 z(1−α／(2m)) */
+function mxTcrit(z,df){if(!(df>0)||!isFinite(df))return z;const d=Math.max(2,df),q=z*z;return z+z*(q+1)/(4*d)+z*(5*q*q+16*q+3)/(96*d*d)+z*(3*q*q*q+19*q*q+17*q-15)/(384*d*d*d)}
+function mxPairSe(a,b,grp){const ka=grp&&a.zs?1/a.zs:1,kb=grp&&b.zs?1/b.zs:1,ind=(grp?a.zse:a.se)**2+(grp?b.zse:b.se)**2,ne=Math.min(a.ne||a.g||Infinity,b.ne||b.g||Infinity),bl=grp?(a.grp?1/a.grp:0)+(b.grp?1/b.grp:0):0;
+  if(!a.iu||!b.iu||Math.min(a.g||0,b.g||0)<4||!(ne>1))return{se:Math.sqrt(ind+bl),ne,pair:false};
+  const D=new Map();for(const[i,x]of a.iu)D.set(i,[x*ka,0]);for(const[i,x]of b.iu){const o=D.get(i);if(o)o[1]=x*kb;else D.set(i,[0,x*kb])}
+  let v=0,c=0,va=0,vb=0,nb=0;for(const[x,y]of D.values()){v+=(x-y)*(x-y);c+=x*y;va+=x*x;vb+=y*y;if(x&&y)nb++}
+  return{se:Math.sqrt(Math.max(v*ne/(ne-1),(a.sm*ka)**2+(b.sm*kb)**2)+bl),ne,pair:true,r:va>0&&vb>0?c/Math.sqrt(va*vb):0,nb}}   /* r＝兩軸估計值的相關、nb＝兩個階段都有的盤數（開發、測試看） */
 function skillPick(A){const grp=A.filter(a=>a.ok&&!a.pct).every(a=>a.z!=null)&&A.some(a=>a.z!=null),ok=A.filter(a=>a.ok&&!a.pct&&(grp||a.key!=="stab"));if(ok.length<2)return{none:true,conf:"lo"};
-  const val=a=>grp?a.z:a.m,sev=a=>grp?a.zse:a.se,s=ok.slice().sort((a,b)=>val(a)-val(b)),lo=s[0],hi=s[s.length-1],gap=val(hi)-val(lo),se=Math.sqrt(sev(lo)**2+sev(hi)**2),th=2*se;
-  if(!grp&&gap>=1.64*se)return{soft:lo,hi,th,grp,conf:"soft",lv:gap>=th?"hi":"mid"};
-  return gap>=th?{weak:lo,hi,th,grp,conf:"hi"}:gap>=1.64*se?{maybe:lo,hi,th,grp,conf:"mid"}:{even:true,lo,hi,th,grp,conf:th>(grp?.8:8)?"lo":"even"}}
+  const val=a=>grp?a.z:a.m,s=ok.slice().sort((a,b)=>val(a)-val(b)),lo=s[0],hi=s[s.length-1],gap=val(hi)-val(lo),P=mxPairSe(lo,hi,grp),zc=MX_ZC[ok.length*(ok.length-1)/2]||MX_ZC[6],th=mxTcrit(zc[0],P.ne-1)*P.se,tm=mxTcrit(zc[1],P.ne-1)*P.se;
+  if(!grp&&gap>=tm)return{soft:lo,hi,th,grp,conf:"soft",lv:gap>=th?"hi":"mid"};
+  return gap>=th?{weak:lo,hi,th,grp,conf:"hi"}:gap>=tm?{maybe:lo,hi,th,grp,conf:"mid"}:{even:true,lo,hi,th,grp,conf:th>(grp?.8:8)?"lo":"even"}}
 /* 開發者 11/11「下完一局接著看到我的成長變化」：這一盤（挑戰電腦 id）算進去前、後的我的棋力——跟五邊形同一套（skillRows／skillAxes，綜合＝樣本夠的準確度軸平均）。
    回傳 {hu 用過提示或悔棋, acc 這盤每步準確度, avg 這盤之前最近約 150 步的平均, t0／t1 綜合前後, ax 四個準確度軸前後}；這盤還沒評好等＝null */
 /* 開發者 11/11 選「下一盤目標」（ChatGPT 15 號方案 2「下一盤只練一件事」＋Gemini 76 號方案 4「零失誤挑戰」合併）：
@@ -466,7 +487,7 @@ async function skillPentagon(box){
   box.innerHTML=penSVG(A.map(a=>[a.k,a.v,a.v!=null&&!a.ok,a.pct&&a.v!=null?a.txt:a.k==="殺法"&&a.v==null?"未測":""]))+`<div class="row" style="justify-content:space-between;margin-top:4px"><span class="muted">最近 ${nG} 盤${st.best!=null?`・走出好棋 ${st.best}%`:""}</span><b>${total==null?"綜合 —":`綜合 ${total} 分<small class="muted" style="font-weight:400"> ±${Math.round(1.28*TT.se)}</small>`}</b></div>
     ${tip}<div class="skl">${A.map(rowH).join("")}</div>
     <p class="muted" style="font-size:12px;margin:6px 0 0;line-height:1.6">虛線、淡色＝樣本還少（實戰不到 ${SK.MIN} 步、殺法不到 ${SK.QMIN} 題），先參考就好。「±」＝十次裡大約八次會落在這個範圍。${hu?`用過提示或悔棋的 ${hu} 盤不算。`:""}${smN?`車輪戰、盲棋的 ${smN} 盤不算。`:""}</p>
-    <details style="margin-top:6px"><summary class="muted">五項怎麼算？</summary><p class="muted" style="line-height:1.7;margin:6px 0 0">每一步的準確度＝100×e^(−少掉的分數÷200)（100＝走到電腦首選；比首選少 1 兵約 61 分），跟賽後報告同一條式子。開局、中局、殘局：最近的對局裡該階段每一步準確度的平均，越近的盤越重（半衰期 ${SK.HL} 盤，三個階段看的是同一段時間），跟賽後報告每盤的開局、中局、殘局分同一把尺。穩定：最近對局裡沒有失著、敗著的步數比例。綜合：開局、中局、殘局合起來的每步準確度。「走出好棋」＝正著、妙著（跟電腦首選差不到 30 分）的步數比例。殺法：棋力測驗的殺法、戰術題；${cal.thQ?"分數＝勝過多少用這個 App 的棋友（匿名資料算的）":"現在棋友資料還不夠多，先用測驗估的段位表示（等資料夠了會改成勝過多少棋友）"}，跟準確度不是同一把尺，不進綜合。建議先練：差距超過正常起伏（約 2 個標準誤）才說「建議先練」，接近（1.64～2 個）說「可能先看」，再小就是「資料還少」或「目前未看出明顯差異」${cal.ax?"，而且是跟同段位棋友比":"；現在還沒有同段位棋友的資料可以比（開局本來就比較容易拿高分），所以只會問「最近哪一項分數較低，想練一題嗎？」，不會說哪一項是弱項，等資料夠了才改成跟同段位比"}。只算 Pikafish 評過等的著法；用過提示或悔棋的那盤不算；還沒評等的對局，打開賽後報告評等後就會算進來。進步得多快看「📈 我的成長」。</p></details>`;
+    <details style="margin-top:6px"><summary class="muted">五項怎麼算？</summary><p class="muted" style="line-height:1.7;margin:6px 0 0">每一步的準確度＝100×e^(−少掉的分數÷200)（100＝走到電腦首選；比首選少 1 兵約 61 分），跟賽後報告同一條式子。開局、中局、殘局：最近的對局裡該階段每一步準確度的平均，越近的盤越重（半衰期 ${SK.HL} 盤，三個階段看的是同一段時間），跟賽後報告每盤的開局、中局、殘局分同一把尺。穩定：最近對局裡沒有失著、敗著的步數比例。綜合：開局、中局、殘局合起來的每步準確度。「走出好棋」＝正著、妙著（跟電腦首選差不到 30 分）的步數比例。殺法：棋力測驗的殺法、戰術題；${cal.thQ?"分數＝勝過多少用這個 App 的棋友（匿名資料算的）":"現在棋友資料還不夠多，先用測驗估的段位表示（等資料夠了會改成勝過多少棋友）"}，跟準確度不是同一把尺，不進綜合。建議先練：最高和最低兩項的差距超過正常起伏才說「建議先練」，只差一點說「可能先看」，再小就是「資料還少」或「目前未看出明顯差異」；正常起伏是把同一盤的各階段放在一起估的，而且因為是從幾項裡挑最高、最低來比，門檻比只比兩項時高（約 2.4～3 個標準誤）${cal.ax?"，而且是跟同段位棋友比":"；現在還沒有同段位棋友的資料可以比（開局本來就比較容易拿高分），所以只會問「最近哪一項分數較低，想練一題嗎？」，不會說哪一項是弱項，等資料夠了才改成跟同段位比"}。只算 Pikafish 評過等的著法；用過提示或悔棋的那盤不算；還沒評等的對局，打開賽後報告評等後就會算進來。進步得多快看「📈 我的成長」。</p></details>`;
   box.querySelectorAll("[data-go]").forEach(b=>b.onclick=()=>{vibrate(5);location.hash=b.dataset.go});return{G,A}}
 /* 意見回饋 301：記錄練習時間（對局、測驗、猜著法、錯棋重練的畫面開著、而且 2 分鐘內有操作，每 15 秒記 0.25 分鐘） */
 let PRACT_ACT=Date.now();addEventListener("pointerdown",()=>PRACT_ACT=Date.now(),{passive:true});

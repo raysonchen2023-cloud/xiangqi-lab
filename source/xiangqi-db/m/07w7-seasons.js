@@ -57,10 +57,12 @@ function sw7Css(){if(document.getElementById("sw7Css"))return;const s=document.c
 .sw7-tint{position:absolute;inset:0;mix-blend-mode:multiply;transition:opacity 2s}
 .sw7-night{position:absolute;inset:0;transition:opacity 2s;background:linear-gradient(180deg,rgba(12,18,52,.62) 0%,rgba(16,24,58,.52) 45%,rgba(10,14,40,.6) 100%)}   /* 11/9 iPhone 上 multiply 混色沒作用，不透明的藍整片蓋住圖；改成半透明深藍、不靠混色 */
 .sw7-cl{position:absolute;left:0;width:200%;background-image:var(--sw7cl);background-repeat:repeat-x;background-size:50% 100%;will-change:transform;animation:sw7cl 110s linear infinite}
+.sw7-fx.sw7-span>.sw7-cl{width:calc(100% + 100%/var(--sw7n,3));background-size:calc(100%/(var(--sw7n,3) + 1)) 100%;--sw7cx:calc(-100%/(var(--sw7n,3) + 1))}
+.sw7-span3>.hmp-w>.hmp-fx{display:none}
 .sw7-cl.a{top:60%;height:44%;opacity:.5}.sw7-cl.b{top:74%;height:30%;opacity:.38;animation-duration:70s}.sw7-cl.c{top:-6%;height:24%;opacity:.28;animation-duration:150s}
 .sw7-cl.nt{filter:brightness(.5) saturate(.7)}
 .sw7-cl.c.k-learn{top:8%;height:20%;opacity:.62}   /* hspx 11/10：藏譜石窟的山頭畫到一半就淡進天空，用一條雲帶包住山頂 */
-@keyframes sw7cl{from{transform:translateX(0)}to{transform:translateX(-50%)}}
+@keyframes sw7cl{from{transform:translateX(0)}to{transform:translateX(var(--sw7cx,-50%))}}
 @media (prefers-reduced-motion:reduce){.sw7-cl{animation:none}}
 .sw7-moon{position:absolute;inset:0;transition:opacity 2s;background:radial-gradient(30% 16% at 80% 9%,rgba(200,210,240,.28),rgba(200,210,240,0) 70%)}
 .sw7-tint.dawn{background:linear-gradient(180deg,rgba(112,166,196,.24),rgba(140,186,198,.14) 55%,rgba(160,196,204,.1))}
@@ -303,6 +305,9 @@ function sw7FxSpan(img){const W=img.offsetWidth;let L=img.offsetLeft,Rr=L+W;cons
   return{L,W:Rr-L}}
 function sw7Size(R,force){const img=R.img,H=img.offsetHeight,sp=sw7FxSpan(img),W=sp.W;if(!W||!H)return;
   R.box.style.width=W+"px";R.box.style.height=H+"px";R.box.style.left=sp.L+"px";R.box.style.top=img.offsetTop+"px";
+  /* 11/15 開發者「西市和觀星臺交界處的背景顏色深淺不一致」：上面那次把整層效果拉寬到三屏後，飄雲、霧、晨昏色、夜色在左右兩屏疊了兩份（這一層＋07hmp 抄到兩側的 .hmp-fx），兩側比中間暗一截、接縫是一條直線；
+     飄雲的花紋也被拉成三屏寬。這一層蓋滿三屏時（sw7-span）：兩側抄的那份藏起來（.sw7-span3>.hmp-w>.hmp-fx），飄雲改回每一屏寬重複一次、每圈走一屏（--sw7n＝這一層是幾屏寬） */
+  {const n=img.offsetWidth?Math.round(W/img.offsetWidth*100)/100:1,on=n>1.5;R.box.classList.toggle("sw7-span",on);if(on)R.box.style.setProperty("--sw7n",String(n));else R.box.style.removeProperty("--sw7n");try{if(R.P&&R.P.classList)R.P.classList.toggle("sw7-span3",on)}catch(e){}}
   if(!R.cv||(!force&&W===R.W&&H===R.H))return;const z=R.z||1,dpr=Math.min(1.5,window.devicePixelRatio||1),bs=Math.min(dpr*Math.min(z,2),2048/W);
   if(R.W&&R.H)for(const p of R.A){p.x*=W/R.W;p.y*=H/R.H}
   const first=!R.W;R.W=W;R.H=H;R.cv.width=Math.round(W*bs);R.cv.height=Math.round(H*bs);R.cx.setTransform(bs,0,0,bs,0,0);

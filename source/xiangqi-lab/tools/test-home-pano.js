@@ -137,3 +137,14 @@ test("〔原始碼〕11/14 開發者：長卷開著時中間橋頭「← 西市�
   assert.match(SRC_P, /else if\(b\._hmpO\)\{b\.hidden=b\._hmpO\.x;delete b\._hmpO\}/, "長卷關掉時還原");
   assert.match(SRC_P, /dup=on&&i===0&&!!q&&!q\.hidden/, "標籤藏起來時，兩側箭頭的旁白、Tab 不要被關掉");
 });
+
+test("〔原始碼〕11/15 開發者「西市和觀星臺交界處的背景顏色深淺不一致」：效果層蓋滿三屏時，兩側不再疊第二份飄雲與霧，飄雲維持每一屏重複一次", () => {
+  const W7 = M("m/07w7-seasons.js");
+  /* 這一層拉寬（sw7-span）時在首頁那層掛 sw7-span3，07hmp 抄到兩側的 .hmp-fx 藏起來：不然兩側有兩份、中間一份，接縫是一條直線 */
+  assert.ok(W7.includes('R.box.classList.toggle("sw7-span",on)') && W7.includes('R.P.classList.toggle("sw7-span3",on)'), "sw7Size 掛 sw7-span／sw7-span3");
+  assert.ok(W7.includes(".sw7-span3>.hmp-w>.hmp-fx{display:none}"), "兩側抄的那份藏起來");
+  /* 飄雲原本「每一個容器寬重複一次、每圈走一個容器寬」：容器變三屏寬後要改回一屏（--sw7n＝容器是幾屏寬） */
+  assert.ok(W7.includes(".sw7-fx.sw7-span>.sw7-cl{width:calc(100% + 100%/var(--sw7n,3));background-size:calc(100%/(var(--sw7n,3) + 1)) 100%;--sw7cx:calc(-100%/(var(--sw7n,3) + 1))}"), "飄雲的寬度、花紋、位移照屏數換算");
+  assert.ok(W7.includes("@keyframes sw7cl{from{transform:translateX(0)}to{transform:translateX(var(--sw7cx,-50%))}}"), "位移用變數，沒拉寬時照舊 −50%");
+  assert.ok(W7.includes('R.box.style.setProperty("--sw7n",String(n))') && /on=n>1\.5/.test(W7), "不到一屏半不算拉寬（其他頁照舊）");
+});

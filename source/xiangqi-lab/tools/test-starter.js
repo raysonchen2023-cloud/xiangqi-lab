@@ -237,12 +237,18 @@ test("〔原始碼〕接點：m.html 在 07mnq 前面 include；05b titleScreen 
   assert.ok(MNQ.includes(".rfx,.qp-ov,#stqPg\")"));
   const G = SRC.slice(SRC.indexOf("function stqGrad("), SRC.indexOf("function stqPickView("));
   assert.ok(G.includes('mnqGrant("a1")'), "一次領授印禮的入門物品");
-  assert.ok(!/mnqGift\(|mnqChapter\(|mnfPlay\(|bhXuStart\(|prologue\(/.test(SRC), "不演授印禮儀式、不播第一章電影、不走黑洞序局");
+  /* 11/15 更多玩法清單（stqMore）多了一顆玩家自己按才開的「第一章」入口；練習流程本身（清單以外的程式）照樣不演、不播 */
+  const FLOW = SRC.slice(0, SRC.indexOf("function stqMore(")) + SRC.slice(SRC.indexOf("function stqAuto("));
+  assert.ok(!/mnqGift\(|mnqChapter\(|mnfPlay\(|bhXuStart\(|prologue\(/.test(FLOW), "不演授印禮儀式、不播第一章電影、不走黑洞序局");
+  assert.equal((SRC.match(/mnqChapter\(/g) || []).length, 1, "整支只有更多玩法清單那一顆會開第一章");
   assert.ok(SRC.includes("journeyRepick(c)") && SRC.includes("obCarousel(box,L,"), "選角用現有的 obCarousel、換人用 journeyRepick");
   assert.ok(SRC.includes("我會下棋，直接開始"), "右上角跳過鈕");
   const MORE = SRC.slice(SRC.indexOf("function stqMore("), SRC.indexOf("function stqAuto("));
   for (const s of ["對弈電腦", "一盞茶殘局", "棋力測驗", "新手訓練營"]) assert.ok(MORE.includes(s), s);
   assert.ok(!/黑洞|塔防|guanxing|bhtd/.test(MORE), "更多玩法先不放黑洞塔防");
+  /* 11/15 第一章入口：首頁「下一步」打開的更多玩法清單也有一顆（原本只在設定 → 氛圍）；有角色或看過才放，看完叫「再看第一章」，按了關清單再開第一章 */
+  assert.ok(MORE.includes('if(lit||M.gift.a1||MNQ_SEGS.classic.some(id=>M.seg[id])||mnqEnv().hasChar)c1=lit?"再看第一章":"看第一章"'), "第一章入口的條件與文字");
+  assert.ok(MORE.includes('data-k="c1"') && MORE.includes("河圖初渡") && MORE.includes('closeSheet();setTimeout(()=>{try{mnqChapter("classic")}catch(e){}},250)'), "按了開第一章");
   /* 07mnf 第一章電影、授印禮儀式的程式還在（只是不再是必經路線） */
   assert.ok(MNQ.includes("function mnqGift(") && MNQ.includes('classic:{segs:["c1o","c1m","c1e"]'));
 });

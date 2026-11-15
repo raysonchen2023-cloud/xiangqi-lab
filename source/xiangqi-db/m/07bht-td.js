@@ -489,7 +489,7 @@ let BHTD_ST=null,BHTD_BUSY=false,BHTD_TG=null,BHTD_RAF=0,BHTD_MK="",BHTD_SEEN={}
 const BHTD_VW={top:"全局俯視",tilt:"臨陣斜角",flat:"純淨平面"},BHTD_VWD={top:"68° 看全盤",tilt:"48° 看立體",flat:"2D 平面棋盤"};
 let BHTD_PRE=null,BHTD_HINT=null,BHTD_LIVE={},BHTD_VMT=0;   /* PRE＝電腦思考時預選的子 {id,n,sq}；HINT＝提示高亮 {f,t,until}；LIVE＝這次看過還沒下完的盤（打倒魔王演出只播一次） */
 const bhtdView=()=>{let v="top";try{v=store.get("bhtdView","top")}catch(e){}return BHTD_VW[v]?v:"top"};
-function bhtdFlat(st){return(typeof gsvFlat==="function"&&gsvFlat(st))||(bhtdIs(st)&&bhtdView()==="flat")}   /* 11/15：星門圍城試玩一律平面棋盤 */   /* 07bhtl bhtlFlat 問這裡：選了純淨平面＝這盤用平面棋盤 */
+function bhtdFlat(st){return(typeof gsvFlat==="function"&&gsvFlat(st))||(bhtdIs(st)&&bhtdView()==="flat")}   /* 11/15：星門圍城自己記視角（存檔鍵 gsvView，沒選過＝平面；07bhg-gatesiege.js gsvFlat） */   /* 07bhtl bhtlFlat 問這裡：選了純淨平面＝這盤用平面棋盤 */
 const bhtdRM=()=>{try{return matchMedia("(prefers-reduced-motion: reduce)").matches}catch(e){return false}};
 const bhtdFxLv=()=>bhtdRM()?0:({full:2,lite:1,off:0})[bhtdFxMode()];   /* 2 完整、1 簡化、0 關閉或減少動態 */
 const bhtdIs=st=>!!(st&&st.td&&st.td.mode!=="gate-siege-v1"&&typeof bhIs==="function"&&bhIs(st));   /* 11/15：星門圍城試玩（07bhg-gatesiege.js）的盤不歸這裡畫 */
@@ -958,7 +958,7 @@ function bhtdResult(st,win,draw0,XPR){const td=st.td,rd=!!td.rd,n=td.lv,V=rd?{}:
     [...(win&&nx?[[`下一關：${nx.nm} ›`,()=>bhtdStart(n+1,k,cv,sk),"bt-nx"]]:[]),["返回星盤",()=>bhtdSelect(k,cv,{after:1,rd}),"bt-back"],["↻ 再刷一場（＋星塵）",()=>{if(rd)bhtdRaid(k,cv,sk,1);else bhtdStart(n,k,cv,sk,"new",1)}],["再看一下星盤",null,"bt-look"]],"res bt-res");
   if(!m)return;const b=m.querySelectorAll(".mb .btn");if(b.length>=2)b[b.length-2].classList.add("bt-again")}   /* modal 的第三格字串會加 ghost；主色的再刷鈕另外補上 bt-again（寬、排在右邊） */
 /* 3D：第 6 關守關＝黑將換成星樞卒（xs_zu）、放大 1.45 倍（park3d ex.bhBoss） */
-function bhtdParkEx(st){if(!bhtdIs(st))return{bhBoss:null,tdCam:null};const v=bhtdView();return{bhBoss:st.td.boss||null,tdCam:v==="flat"?null:v,tdFx:bhtdFxLv()}}   /* 11/14：固定鏡頭（全局俯視／臨陣斜角）、打擊演出等級 */
+function bhtdParkEx(st){if(!bhtdIs(st))return typeof gsvParkEx==="function"?gsvParkEx(st):{bhBoss:null,tdCam:null};   /* 11/15 星門圍城切 3D：固定鏡頭照它自己記的視角（07bhg-gatesiege.js gsvParkEx；不是星門圍城的盤一樣回空的） */const v=bhtdView();return{bhBoss:st.td.boss||null,tdCam:v==="flat"?null:v,tdFx:bhtdFxLv()}}   /* 11/14：固定鏡頭（全局俯視／臨陣斜角）、打擊演出等級 */
 /* ---------- 11/14 對峙資訊列：點「⚠ 預告」看完整說明 ---------- */
 function bhtdEnClick(e){const x=e.target.closest("[data-x]"),st=BHTD_ST;if(!x||!st)return;if(x.dataset.x==="fore"){const td=st.td,F=td.fx&&BHTD.FSK[td.fx.id];if(!F)return;vibrate(5);
   toast(`⚠ 星樞預告「${F.nm}」（下回合結束發動）：${F.d.replace("{c}",td.zcap)}・若不處理，預估扣你 ${BHTD.foeEst(td,st.board)} 元氣`)}}

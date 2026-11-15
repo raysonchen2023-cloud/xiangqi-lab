@@ -185,13 +185,15 @@ const ax=(m,se,o)=>({k:o.k,v:Math.round(m),m,se,n:200,g:20,u:"步",key:o.key,ok:
 const axes=(o,mi,e,se)=>[ax(o,se,{k:"開局",key:"open"}),ax(mi,se,{k:"中局",key:"mid"}),ax(e,se,{k:"殘局",key:"end"}),{k:"殺法",v:null,txt:"",est:true,n:0,g:0,u:"題",pct:1,ok:false,go:["#/quiz","棋力測驗"]},{...ax(90,1,{k:"穩定",key:"stab"}),best:60}];
 /* 有同段位基準的五軸：z 分數（開局、中局、殘局、穩定都有 z，skillPick 才走 grp） */
 const axesZ=(zo,zm,ze,zse)=>{const A=axes(80,79,78,3),Z=[zo,zm,ze,null,.2];A.forEach((a,i)=>{if(Z[i]!=null){a.z=Z[i];a.zse=zse}});return A};
-test("第一步：建議先練三級信心（有同段位基準時）——差距 ≥2 個標準誤＝hi、1.64～2＝mid；不到 1.64 且門檻還寬＝lo、資料夠又差不多＝even、樣本不夠＝lo",()=>{
+/* 11/15 第二次重評第 4 項：門檻從固定的 2／1.64 個標準誤改成修正後的臨界值（幾項裡挑最高最低：3 項 3 組、4 項 6 組，Bonferroni；t 分布、自由度＝有效盤數−1），細節測試在 test-mathmodel-79.js。
+   這裡手造的五軸每軸 20 盤：4 項（有基準）hi ≥ 2.94 個標準誤、mid ≥ 2.63；3 項（沒有基準）hi ≥ 2.63、mid ≥ 2.29 */
+test("第一步：建議先練三級信心（有同段位基準時）——差距超過修正後的門檻＝hi、只差一點＝mid；再小而且門檻還寬＝lo、資料夠又差不多＝even、樣本不夠＝lo",()=>{
   const K=loadSk(null);
   const hi=K.skillPick(axesZ(.6,.5,-1.5,.3));assert.equal(hi.conf,"hi");assert.equal(hi.weak.k,"殘局");assert.equal(hi.grp,true);
-  const mid=K.skillPick(axesZ(.6,.5,-.2,.3));assert.equal(mid.conf,"mid");assert.equal(mid.maybe.k,"殘局");assert.equal(mid.weak,undefined,"中信心不回傳 weak（地圖朱圈只畫高信心）");
+  const mid=K.skillPick(axesZ(.6,.5,-.58,.3));assert.equal(mid.conf,"mid");assert.equal(mid.maybe.k,"殘局");assert.equal(mid.weak,undefined,"中信心不回傳 weak（地圖朱圈只畫高信心）");
   /* 開發者 11/15 選「改成溫和說法」：沒有同段位基準時，原本的 hi、mid 都只回傳 soft，不回傳 weak／maybe（地圖朱圈只看 weak，所以也不畫） */
   const s1=K.skillPick(axes(80,78,60,2));assert.equal(s1.conf,"soft");assert.equal(s1.soft.k,"殘局");assert.equal(s1.lv,"hi");assert.equal(s1.weak,undefined);assert.equal(s1.maybe,undefined);
-  const s2=K.skillPick(axes(80,79,72,3));assert.equal(s2.conf,"soft");assert.equal(s2.lv,"mid");assert.equal(s2.weak,undefined);assert.equal(s2.maybe,undefined);
+  const s2=K.skillPick(axes(80,79,70,3));assert.equal(s2.conf,"soft");assert.equal(s2.lv,"mid");assert.equal(s2.weak,undefined);assert.equal(s2.maybe,undefined);
   assert.match(rd(path.join(M,"07z2-statmap.js")),/if\(pk&&pk\.weak\)\{/,"地圖朱圈只看 weak");
   const lo=K.skillPick(axes(80,79,78,3));assert.equal(lo.conf,"lo");assert.ok(lo.even);
   const ev=K.skillPick(axes(80,79.5,79,1));assert.equal(ev.conf,"even");
@@ -202,11 +204,11 @@ test("第一步：五邊形的三級說法——「🎯 建議先練」「🔎 �
   async function paint(A){const K=loadSk(null),box={isConnected:true,innerHTML:"",querySelectorAll:()=>[]};const ctx={console,isFinite,store:{get:(k,d)=>d,set(){}},SK:K.SK,mxTotal:K.mxTotal,skillPick:K.skillPick,mxCal:K.mxCal,
       skillRows:async()=>({G:[{hu:0}],smN:0}),skillAxes:()=>A,tlIRT:()=>null,setProf(){},penSVG:()=>""};vm.createContext(ctx);vm.runInContext(SP+";this.f=skillPentagon",ctx);await ctx.f(box);return box.innerHTML.split('<div class="skl">')[0]}   /* 只看上面的建議那段（「五項怎麼算」說明裡三種說法都有寫） */
   const h1=await paint(axesZ(.6,.5,-1.5,.3));assert.match(h1,/🎯 建議先練：殘局/);assert.doesNotMatch(h1,/可能先看|資料還少/);
-  const h2=await paint(axesZ(.6,.5,-.2,.3));assert.match(h2,/🔎 可能先看：殘局/);assert.doesNotMatch(h2,/建議先練：/);
+  const h2=await paint(axesZ(.6,.5,-.58,.3));assert.match(h2,/🔎 可能先看：殘局/);assert.doesNotMatch(h2,/建議先練：/);
   const h3=await paint(axes(80,79,78,3));assert.match(h3,/📋 資料還少，先多下幾盤/);assert.doesNotMatch(h3,/建議先練：|可能先看：/);
   const h4=await paint(axes(80,79.5,79,1));assert.match(h4,/目前未看出明顯差異/);assert.doesNotMatch(h4,/差不多|資料還少|建議先練：|可能先看：/);
   /* 開發者 11/15：沒有同段位基準時改成溫和說法，不說弱項 */
-  for(const A of[axes(80,78,60,2),axes(80,79,72,3)]){const h=await paint(A);assert.match(h,/💡 最近殘局分數較低（\d+ 分），想練一題嗎？/);assert.match(h,/這還不能說殘局是弱項/);assert.doesNotMatch(h,/建議先練：|可能先看：/)}
+  for(const A of[axes(80,78,60,2),axes(80,79,70,3)]){const h=await paint(A);assert.match(h,/💡 最近殘局分數較低（\d+ 分），想練一題嗎？/);assert.match(h,/這還不能說殘局是弱項/);assert.doesNotMatch(h,/建議先練：|可能先看：/)}
 });
 test("第一步：真的五軸（skillAxes 從每盤的列算）——殘局一直差 20 分、40 盤＝建議先練殘局；只有 2 盤＝不給建議",()=>{
   const K=loadSk(null),row=(i,e)=>({t:1e6-i,hu:0,n:30,bad:2,best:15,pa:{open:[10*82,10],mid:[12*80,12],end:[8*e,8]},A:[...Array(10).fill(82),...Array(12).fill(80),...Array(8).fill(e)]});

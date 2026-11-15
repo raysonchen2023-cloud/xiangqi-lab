@@ -1,10 +1,10 @@
 /* ---------- 黑洞・星門圍城 gate-siege-v1（開發者 11/15：ChatGPT 提案《黑洞塔防重設計_星門圍城》第十二節 A＋《72關、修為招式與AI融合》第 9 節第 1、3、6 關切片、第 11 節 35 招映射）----------
-   候選試玩：跟舊版 BHTD v3（07bht-td.js）並存，不覆蓋舊戰局；journey "bh:gs1"～"bh:gs6"（11/15 補第 2、4、5 關），td.mode＝"gate-siege-v1"、td.mv＝模式版本。前綴 GSV／gsv（全域先 grep 過沒撞名）。
+   候選試玩：跟舊版 BHTD v3（07bht-td.js）並存，不覆蓋舊戰局；journey "bh:gs1"～"bh:gs12"（11/15 補第 2、4、5 關、第二章第 7～12 關），td.mode＝"gate-siege-v1"、td.mv＝模式版本。前綴 GSV／gsv（全域先 grep 過沒撞名）。
    分三塊：
    ① GSV＝純規則（不碰畫面；node 測試 xiangqi-lab/tools/test-gate-siege.js 用 vm 直接載這支檔；腳本對照 xiangqi-lab/tools/gate-siege-sim.js 也用同一份）：
       雙方同式傷害 dmg、數值盾池、靈力預算（每回合正向收入上限 10）、回復總量 40%、冷卻、每回合至多一招、紅 8 子＋後備部署、敵 16 子波次預算、預告、合法生成、
       入侵卒、護陣卒、截援、星核同批次結算（雙方同時歸零判和）、八回合無進展判和、七星 35 招（修為 1／6／12／17／23 解鎖、最多帶 4 招）、星樞候選評估 pick。
-   ② 畫面（gsv*）：選關卡片 gsvSelect、對局 HUD（#gsvEn、#gsvMe、#gsvOv）、結果視窗；一律平面棋盤（bhtdFlat 問 gsvIs）。
+   ② 畫面（gsv*）：選關卡片 gsvSelect、對局 HUD（#gsvEn、#gsvMe、#gsvOv）、結果視窗；預設平面棋盤，11/15 起可以切 3D 星盤（視角 gsvView、記號的 3D 對位，說明在檔尾 gsvFlat 那一段）。
    ③ 接線：包一層 window.XQ_TD（local.js 只認這個），td.mode 是星門圍城就交給 GSV，其他照舊交給 BHTD。
    入口：黑洞關卡卡片（bhtdSelect）的「🌠 星門圍城」；本機主控台 gsvOpen()。
    存檔鍵 gsv＝{mv:"gate-siege-v1",c:{關:{w,l,d,best}},sk:{角色:[招]}}，跟舊版三星（bhtd、bhtdDust）分開。 */
@@ -36,7 +36,8 @@ const GSV=(()=>{
      dp＝補給點 {id,sq:[路,線],al:允許棋種}；open＝敵開場 [子,路,線,標記]；waves＝{at:第幾回合結束落下,p:[[子,路,線,標記]…]}（開場＋波次＝剛好 16）。
      標記：inv＝入侵卒（停在我方半場：進來那回合預告，下個回合結束還在才扣）、guard＝護陣卒（每顆在場星樞 DEF+20）、drain＝奪靈馬（擒子再扣你 8 靈）。
      esp0＝星樞開場靈力；esk＝星樞會用的招（esh 星樞護盾：目前沒有關卡用、zjhl 卒將號令：第 6 關、pao 隔山星砲：第 5 關）；ph＝分段（星樞 HP 降到 hp 比例就解鎖 esk 那一招，只解鎖、不加兵、不當下打）；
-     depth＝星樞候選搜尋深度（提案一第十一節前五關 2、2、3、3、4；第 6 關 3）。 */
+     depth＝星樞候選搜尋深度（提案一第十一節前五關 2、2、3、3、4；第 6 關 3；第二章都是 3，不超過 4，手機上才不會想太久）。
+     第二章（第 7～12 關）另外有：esk 的 cqzr 長驅直入、dll 斷路令；guard 也會掛在車上（護陣車，第 10 關）；arep＝星樞不靠將軍走出重複局面（只開在第二章，見 repCnt）。 */
   const RED=[["K",5,1],["A",4,1],["B",3,1],["N",2,1],["R",1,1],["C",2,3],["P",5,4],["P",7,4]],RES=["A","B","N","R","C","P","P","P"];
   const DP=[{id:"左",sq:[1,4],al:"RNCP"},{id:"右",sq:[9,4],al:"RNCP"},{id:"仕",sq:[6,1],al:"A"},{id:"相",sq:[7,1],al:"B"}];
   const LV={
@@ -68,11 +69,50 @@ const GSV=(()=>{
     6:{n:6,nm:"守關・星樞卒將",th:"章末守關",hp:160,atk:105,def:30,esp0:35,esk:["zjhl"],depth:3,rs:14,boss:1,
       open:[["k",5,10],["a",4,10],["a",6,10],["b",3,10],["b",7,10],["c",8,8],["p",3,7,"inv"],["p",7,7,"inv"],["p",1,7,"guard"],["p",9,7,"guard"]],
       waves:[{at:2,p:[["n",2,10],["n",8,10]]},{at:4,p:[["r",1,10],["p",5,7,"inv"]]},{at:6,p:[["r",9,10],["c",2,8]]}],
-      say:"星樞卒將坐鎮：兩顆入侵卒在河邊待命、兩顆護陣卒，還會預告「卒將號令」。",tip:"「卒將號令」要靠號令卒留在你的半場；吃掉號令卒就能取消"}};
+      say:"星樞卒將坐鎮：兩顆入侵卒在河邊待命、兩顆護陣卒，還會預告「卒將號令」。",tip:"「卒將號令」要靠號令卒留在你的半場；吃掉號令卒就能取消"},
+    /* ===== 第二章「俥路調度」第 7～12 關（11/15；章名、關名照提案二第 3 節；提案沒給數值、擺法、敵方招式，都是我設計的候選值）=====
+       這一章的星樞招：cqzr 長驅直入（車不動、直路一路空到你的底線才打：擋一子、吃車、車離開原位就取消）、dll 斷路令（你的俥下回合結束還在敵方半場才打：退回來就取消）。
+       數值是 11/15 腳本對照（舊 smart Lv1＋Lv23、40 種子、HP×ATK 網格）挑的：每關兩種修為都不是 0 勝、星樞剩 HP 大致一關比一關多；比第 5、6 關的 ATK 低，是因為這一章車來得早、又多了大招。
+       第 7 關：第 3 回合一顆車從右門落在 i 路，落下那一刻 i 路一路空到你的底線（落下那次結算就預告）；你的俥在另一邊，前兩回合先調子（或用補給點）去守口。入侵卒第 5 回合才來，只考一件事 */
+    7:{n:7,nm:"直路守口",th:"守住直路",hp:120,atk:95,def:25,esp0:35,esk:["cqzr"],depth:3,rs:14,arep:1,
+      open:[["k",5,10],["a",4,10],["a",6,10],["b",3,10],["b",7,10],["c",8,8],["n",2,10],["p",1,7],["p",5,7],["p",7,7]],
+      waves:[{at:3,p:[["r",9,10]]},{at:5,p:[["p",3,7,"inv"],["n",8,10]]},{at:7,p:[["r",1,10],["c",2,8],["p",9,7,"inv"]]}],
+      say:"星樞的車會落在一條空到你底線的直路上，接著預告「長驅直入」——守住那條路的口。",tip:"「長驅直入」要車不動、直路一路空到你的底線才打得到：在那條路上擋一子（補給點也行）、吃掉那顆車就取消"},
+    /* 第 8 關：右門的車（長驅直入）和左門的入侵卒同一回合落下（第 2 回合），第 4 回合右邊再來一顆入侵卒——俥只有一隻，要走橫線換翼，另一邊先用便宜的子或補給點頂住。
+       試過把車延到第 3 回合、或用第 7 關的開場：舊腳本 0/40 勝，所以留這個擺法（見實作紀錄） */
+    8:{n:8,nm:"橫俥回援",th:"橫線調度",hp:125,atk:100,def:25,esp0:35,esk:["cqzr"],depth:3,rs:14,arep:1,
+      open:[["k",5,10],["a",4,10],["a",6,10],["b",3,10],["b",7,10],["c",8,8],["n",2,10],["p",5,7],["p",3,7]],
+      waves:[{at:2,p:[["r",9,10],["p",1,7,"inv"]]},{at:4,p:[["p",7,7,"inv"],["n",8,10]]},{at:6,p:[["r",1,10],["c",2,8],["p",9,7,"inv"]]}],
+      say:"右邊的車要長驅直入、左邊的入侵卒同一回合到——俥只有一隻，走橫線回援。",tip:"俥停在通暢的橫線上，一步就能換到另一翼；另一邊先用便宜的子、或花 20 靈部署到補給點頂住"},
+    /* 第 9 關（反例）：兩顆護陣卒引你的俥深入；星樞開場就夠靈力放「斷路令」。吃完要不要馬上退、還是開盾硬吃第二顆，自己算 */
+    9:{n:9,nm:"留一道退路",th:"深入要能回來",hp:130,atk:100,def:25,esp0:40,esk:["dll"],depth:3,rs:14,arep:1,
+      open:[["k",5,10],["a",4,10],["a",6,10],["b",3,10],["b",7,10],["c",8,8],["p",1,7,"guard"],["p",9,7,"guard"],["p",5,7]],
+      waves:[{at:2,p:[["p",3,7,"inv"],["n",2,10]]},{at:4,p:[["p",7,7,"inv"],["n",8,10]]},{at:6,p:[["r",1,10],["r",9,10],["c",2,8]]}],
+      say:"護陣卒在等你的俥深入——星樞會預告「斷路令」，進去之前先留一道退路。",tip:"「斷路令」只打回合結束時還在敵方半場的那顆俥：留一步能退回自己半場的路，退回來就取消"},
+    /* 第 10 關：護陣車（在場星樞 DEF+20）站在 a8、有象看著，開局就捉你的俥。兌掉＝拆陣＋解除這條路的長驅，但你少一隻俥（後備俥要花 20 靈、一步棋部署）；不兌就要找子接手守口 */
+    10:{n:10,nm:"交換要道",th:"兌子的取捨",hp:150,atk:95,def:25,esp0:35,esk:["cqzr"],depth:3,rs:14,arep:1,
+      open:[["k",5,10],["a",4,10],["a",6,10],["b",3,10],["b",7,10],["r",1,8,"guard"],["c",8,8],["p",3,7],["p",5,7],["p",7,7]],
+      waves:[{at:2,p:[["p",9,7,"inv"]]},{at:4,p:[["n",2,10],["n",8,10]]},{at:6,p:[["r",9,10],["c",2,8],["p",1,7,"inv"]]}],
+      say:"護陣車佔著要道、正捉著你的俥——兌掉它拆陣，還是留著俥另找子守口？",tip:"護陣車在場星樞 DEF+20：用俥兌掉它就拆陣、那條直路也安全了；兌完可以花 20 靈把後備俥部署回來"},
+    /* 第 11 關（組合）：長驅直入＋斷路令＋護陣＋入侵。俥只有一隻：守口、拆陣、退路要同一步顧到 */
+    11:{n:11,nm:"一俥兩用",th:"一步兩用",hp:150,atk:100,def:25,esp0:40,esk:["dll","cqzr"],depth:3,rs:14,arep:1,
+      open:[["k",5,10],["a",4,10],["a",6,10],["b",3,10],["b",7,10],["c",8,8],["n",2,10],["p",1,7,"guard"],["p",3,7],["p",5,7]],
+      waves:[{at:2,p:[["r",9,10],["p",7,7,"inv"]]},{at:4,p:[["r",1,10],["n",8,10]]},{at:6,p:[["c",2,8],["p",9,7,"inv"]]}],
+      say:"星樞兩招都會用：俥深入就「斷路令」、直路空了就「長驅直入」——一步要兩用。",tip:"俥沿著自己要守的那條直路進退：進去拆陣、退回來時順手守口，一步做兩件事"},
+    /* 第 12 關（章末守關）：兩顆車各躲在一顆護陣卒後面（右邊那顆開場就在，左邊那顆第 4 回合落下；兩顆都開場就在的那一版，腳本 7～13 回合就被將死）。
+       拆掉護陣卒＝打開那條直路（長驅直入），俥深入又會被斷路令點名。不加新規則，考這一章學過的 */
+    12:{n:12,nm:"守關・斷路營",th:"章末守關",hp:170,atk:100,def:30,esp0:35,esk:["dll","cqzr"],depth:3,rs:14,arep:1,boss:1,
+      open:[["k",5,10],["a",4,10],["a",6,10],["b",3,10],["b",7,10],["r",9,10],["c",8,8],["n",2,10],["p",1,7,"guard"],["p",9,7,"guard"]],
+      waves:[{at:2,p:[["p",3,7,"inv"],["p",7,7,"inv"]]},{at:4,p:[["r",1,10],["n",8,10]]},{at:6,p:[["c",2,8],["p",5,7,"inv"]]}],
+      say:"斷路營：星樞的車躲在護陣卒後面，拆陣就等於打開一條直路。",tip:"拆掉護陣卒之後那條直路就空了：先安排好誰守口、俥怎麼退，再動手拆陣"}};
   const LVN=Object.keys(LV).map(Number);
+  /* 章（選關畫面分章用；11/15 加第二章）：t＝章次、nm＝章名（提案二第 3 節）、lv＝這一章的關 */
+  const CHP=[{n:1,t:"第一章",nm:"星門入侵",lv:[1,2,3,4,5,6]},{n:2,t:"第二章",nm:"俥路調度",lv:[7,8,9,10,11,12]}];
   /* 星樞的招（敵方每回合最多一招，也要付靈力、有冷卻） */
   const ESK={esh:{nm:"星樞護盾",cost:20,cd:3,d:"星樞得 20 點護盾，兩回合到期"},zjhl:{nm:"卒將號令",sn:"號令",cost:40,cd:4,base:28,d:"預告一回合：下回合結束時，號令卒還在你的半場，就對你的星核造成基礎 28 傷害；號令卒被吃或不在你的半場就取消"},
-    pao:{nm:"隔山星砲",sn:"星砲",cost:40,cd:4,base:30,d:"預告一回合：指定一門砲、砲架和你的一顆子。下回合結束時三顆都還在原線上、中間只隔這一個砲架、砲還能合法吃到它，就對你的星核造成基礎 30 傷害；移走目標、吃掉砲或砲架、多擋一子就取消（不換砲、不換架）"}};
+    pao:{nm:"隔山星砲",sn:"星砲",cost:40,cd:4,base:30,d:"預告一回合：指定一門砲、砲架和你的一顆子。下回合結束時三顆都還在原線上、中間只隔這一個砲架、砲還能合法吃到它，就對你的星核造成基礎 30 傷害；移走目標、吃掉砲或砲架、多擋一子就取消（不換砲、不換架）"},
+    cqzr:{nm:"長驅直入",sn:"長驅",cost:40,cd:4,base:26,keep:.7,d:"預告一回合：指定一顆還沒過河的車和它所在的直路。下回合結束時這顆車還在原位、從它到你的底線整條直路都是空的，就對你的星核造成基礎 26 傷害；在那條直路上擋一子、吃掉這顆車、或車離開原位（被定身也算）就取消（不換車、不換路）"},
+    dll:{nm:"斷路令",sn:"斷路",cost:40,cd:4,base:24,d:"預告一回合：指定你一顆在敵方半場的俥。下回合結束時這顆俥還在敵方半場，就對你的星核造成基礎 24 傷害；把俥退回自己的半場就取消（俥被吃也取消，不換目標）"}};
   /* ===== 招式（提案二第 11 節 35 招逐招映射；費用／冷卻是候選值）=====
      tg：要選的目標（每一步一格）；info＝純情報、不占招、不扣費。通用招（g*）每位都有：集火、士相護線、緊急回復；部署 dep 是主要行動。 */
   const SK=[
@@ -173,7 +213,7 @@ const GSV=(()=>{
       me:core({hp:st.hp,atk:st.atk,def:st.def,sp0:SP0,spMax:st.sp}),en:core({hp:V.hp,atk:V.atk,def:V.def,sp0:V.esp0,spMax:100}),
       sk:skPick(st.ck,st.L,cfg.sk),cd:{},cdAt:{},used:{},sk1:-1,res:pl.res.slice(),dep:0,dp:pl.dp,ids:{},meta:{},lost:[],
       waves:pl.waves,arm:{},icpt:0,ctl:{frz:[],noCap:[],noTake:[],trap:null,lock:[],imm:{}},buf:{},fx:null,ecd:{},np:0,last:{r:null,b:null},log:[],rs:V.rs,esk:V.esk.slice(),depth:V.depth,
-      phs:(V.ph||[]).map(o=>({hp:o.hp,esk:o.esk})),phn:0};
+      phs:(V.ph||[]).map(o=>({hp:o.hp,esk:o.esk})),phn:0,arep:V.arep?1:0};
     let ri=0,bi=0;for(let q=0;q<90;q++){const p=P.board[q];if(!p)continue;const red=sd(p)==="r",id=red?"r"+(++ri):"b"+(++bi);td.ids[q]=id;
       const o=pl.open.find(x=>x[1]===q);td.meta[id]={p,home:q,tag:!red&&o?o[2]:""}}
     ev(td,{k:"start",nm:V.nm});return td}
@@ -224,7 +264,15 @@ const GSV=(()=>{
      卒將號令：有入侵卒在你的半場當號令卒。隔山星砲：有一門砲現在能合法隔一子吃到你的子（帥除外），挑棋種最大的目標；鎖定砲、砲架、目標三顆子 ID */
   const DECL={zjhl:(P,C)=>{const td=P.td;for(const q in td.ids){const id=td.ids[q];if(tagOf(td,id)==="inv"&&redHalf(+q))return{src:id}}return null},
     pao:(P,C)=>{const td=P.td,b=P.board;let o=null,ov=-1;for(const[f,t]of banMoves(td,b,L_(b,"b",C),true)){if(b[f]!=="c"||!b[t]||sd(b[t])!=="r"||b[t]==="K")continue;const s=scrOf(b,f,t),v=CAPB[up(b[t])];
-      if(s!=null&&v>ov){ov=v;o={src:td.ids[f],scr:td.ids[s],tg:td.ids[t]}}}return o&&o.src&&o.scr&&o.tg?o:null}};
+      if(s!=null&&v>ov){ov=v;o={src:td.ids[f],scr:td.ids[s],tg:td.ids[t]}}}return o&&o.src&&o.scr&&o.tg?o:null},
+    /* 長驅直入（第二章）：有一顆還沒過河、沒被定身的車，從它到你的底線整條直路是空的；挑最靠近河的（一樣近取右邊）。鎖定車的 ID 和當時的格 sq0（不換車、不換路）。
+       已經過河的車不算（沉到你底線的車前面沒有格子，那就擋不了） */
+    cqzr:(P,C)=>{const td=P.td,b=P.board;for(let q=44;q>=0;q--)if(b[q]==="r"&&td.ids[q]&&!frozen(td,td.ids[q])&&laneOpen(b,q))return{src:td.ids[q],sq0:q};return null},
+    /* 斷路令（第二章）：你有一顆俥在敵方半場；挑最深入的（一樣深取左邊）。鎖定那顆俥的 ID */
+    dll:(P,C)=>{const td=P.td,b=P.board;for(let q=0;q<45;q++)if(b[q]==="R"&&td.ids[q])return{src:td.ids[q]};return null}};
+  const frozen=(td,id)=>td.ctl.frz.some(o=>o.id===id&&o.until>td.rnd);
+  /* 車 q 到紅方底線（含底線那一格）整條直路都是空的 */
+  function laneOpen(b,q){for(let r=RW(q)+1;r<10;r++)if(b[r*9+CL(q)])return false;return true}
   function foeDeclare(P,C,R){const td=P.td,E=td.en;if(td.efx===R||td.fx)return;
     for(const k of td.esk){if(!DECL[k]||!eOk(td,k))continue;const o=DECL[k](P,C);if(!o)continue;
       E.sp-=ESK[k].cost;td.ecd[k]=ESK[k].cd;td.ecdAt=Object.assign({},td.ecdAt,{[k]:td.rnd});td.fx=Object.assign({id:k},o,{at:td.rnd+1,base:ESK[k].base});td.efx=R;
@@ -237,6 +285,9 @@ const GSV=(()=>{
     if(F.id==="zjhl")return redHalf(sq)?sq:null;
     if(F.id==="pao"){const s=sqOfId(td,F.scr),t=sqOfId(td,F.tg);if(s==null||t==null||b[sq]!=="c"||!b[t]||sd(b[t])!=="r"||scrOf(b,sq,t)!==s)return null;
       if(C&&!banMoves(td,b,L_(b,"b",C),true).some(([f,x])=>f===sq&&x===t))return null;return t}
+    /* 長驅直入＝車還在預告時那一格、沒被定身、直路還是一路空到你的底線（回底線那一格）；斷路令＝那顆俥還在敵方半場（回俥的格） */
+    if(F.id==="cqzr")return sq===F.sq0&&b[sq]==="r"&&!frozen(td,F.src)&&laneOpen(b,sq)?81+CL(sq):null;
+    if(F.id==="dll")return b[sq]==="R"&&!redHalf(sq)?sq:null;
     return null}
   /* 入侵：這次結算會扣的（已預告、還在我方半場）；pre＝不改狀態，只看（畫面「本輪若不處理」、AI 都用這個） */
   function invHits(td){const H=[];for(const q in td.ids){const id=td.ids[q],sq=+q;if(tagOf(td,id)!=="inv"||!redHalf(sq))continue;if(td.arm[id])H.push({id,sq,base:inPal(sq,"r")?INV_PAL:INV})}
@@ -411,7 +462,9 @@ const GSV=(()=>{
   const uSq=(u,i)=>(9-(+u[i+1]))*9+(u.charCodeAt(i)-97);
   const clone=o=>JSON.parse(JSON.stringify(o));
   function engine(P,C){const td=P.td;let sm=null;const A=L_(P.board,P.turn,C),L=banMoves(td,P.board,A);if(L.length&&L.length<A.length)sm=L.map(([f,t])=>C.iccs(f,t));
-    return{gsv:1,depth:td.depth||2,mpv:8,err:0,margin:0,sm,b:P.board.slice(),td:clone(td),C,turn:P.turn}}
+    return{gsv:1,depth:td.depth||2,mpv:8,err:0,margin:0,sm,b:P.board.slice(),td:clone(td),C,turn:P.turn,rep:td.arep?repCnt(P):null}}
+  /* 第二章起（關卡資料 arep:1）：星樞不靠將軍把同一個局面走出第三次（長將判負是它自己輸掉）。rep＝這盤每個局面到現在出現過幾次（P.pos）。第 1～6 關、車輪戰沒開，選步照舊 */
+  function repCnt(P){const o={};for(const f of P.pos||[])o[f]=(o[f]||0)+1;return o}
   function simB(cfg,f,t){const C=cfg.C,P2={board:cfg.b.slice(),turn:"b",td:clone(cfg.td),moves:[],pos:[C.fen(cfg.b,"b")],ed:[],human:"r"};const m=C.stateApply(P2,f,t),r=move(P2,m,C);return{P2,m,end:r&&r.end}}
   /* 下一回合紅方一步能不能讓星樞輸（將死、或擒子＋將軍的一批傷害打空星核）；只看紅方一步，不看紅方的招 */
   function lethalR(P2,C){const b=P2.board,td=P2.td,E=td.en,room=E.hp+E.sh.v;let mate=false,core=false;
@@ -423,6 +476,9 @@ const GSV=(()=>{
     const dR=(M0.hp+M0.sh.v)-(td.me.hp+td.me.sh.v),dB=(E0.hp+E0.sh.v)-(td.en.hp+td.en.sh.v);
     let s=W_HP*(dR-dB)+Math.max(-ENG_CLAMP,Math.min(ENG_CLAMP,v));
     for(const h of invHits(td))s+=W_HP*.7*dmg(h.base,td.en.atk,td.me.def);
+    /* 第二章：自己預告的大招（ESK 有 keep 的，目前只有長驅直入）走完這步條件還成立，算進威脅（星樞才會留著車等它發動）；將軍走出重複局面：第二次扣分、第三次當成快輸（只有 cfg.rep 有給才看） */
+    const F=td.fx;if(F&&ESK[F.id]&&ESK[F.id].keep&&fxSq(td,S.P2.board,C)!=null)s+=W_HP*ESK[F.id].keep*dmg(F.base,td.en.atk,td.me.def);
+    if(cfg.rep&&S.m.ck){const n=cfg.rep[S.P2.pos[S.P2.pos.length-1]]||0;if(n>=2)s-=4.5e6;else if(n===1)s-=W_HP*20}
     const L=lethalR(S.P2,C);if(L.mate)s-=5e6;else if(L.core)s-=4e6;return s}
   function pick(r,cfg,rnd){rnd=rnd||Math.random;const C=cfg.C,b=cfg.b,L=(r&&r.lines||[]).filter(x=>x&&x.mv);let A=banMoves(cfg.td,b,L_(b,"b",C));if(!A.length)A=L_(b,"b",C);
     const known=new Map(L.map(x=>[x.mv,x.v])),lo=L.length?Math.min(...L.map(x=>x.v)):0;let best=null,bv=-Infinity;
@@ -430,7 +486,7 @@ const GSV=(()=>{
     return best||(r&&r.best)}
   /* 給腳本對照、測試用：一步模擬紅方（不改原狀態） */
   function simR(P,f,t,C){const P2={board:P.board.slice(),turn:"r",td:clone(P.td),moves:[],pos:[C.fen(P.board,"r")],ed:[],human:"r"};const m=C.stateApply(P2,f,t);move(P2,m,C);return P2}
-  return{MODE,MV,CH,LV,LVN,SK,SKM,GEN,ESK,PCN,PBN,STD,CAPB,CHK,CHK_GAP,FOCUS,INV,INV_PAL,INV_MAX,GUARD,SH_CAP,SH_LIFE,DEP_COST,DEP_MAX,ICPT_DRAIN,ICPT_GAIN,NOPROG,HEAL_PCT,SP0,RG,CAP_SP,INC_CAP,GROW,W_HP,DRAIN,
+  return{MODE,MV,CH,LV,LVN,CHP,SK,SKM,GEN,ESK,PCN,PBN,STD,CAPB,CHK,CHK_GAP,FOCUS,INV,INV_PAL,INV_MAX,GUARD,SH_CAP,SH_LIFE,DEP_COST,DEP_MAX,ICPT_DRAIN,ICPT_GAIN,NOPROG,HEAL_PCT,SP0,RG,CAP_SP,INC_CAP,GROW,W_HP,DRAIN,
     G,stats,dmg,absorb,plan,startBoard,startFen,lvCheck,spawnOk,canStand,facing,boot,move,settle,cast,why,targets,costOf,depOk,skOf,skPick,fore,gateNm,preview,threats,invHits,defOf,guards,fxSq,scrOf,
     cannonHits,horseHits,marks,banMoves,engine,pick,simB,simR,scoreB,lethalR,sqOfId,tagOf,uSq,LSQ,inPal,redHalf}})();
 /* ================= ③ 接線：local.js 只認 window.XQ_TD。星門圍城的盤交給 GSV，其他（舊版塔防、急襲、練習賽）照舊交給 BHTD ================= */
@@ -483,6 +539,7 @@ body.gsv-on .view.fixed>#bbox>svg{width:100%!important;height:100%!important;max
 .gsv-rules{font-size:13.5px;line-height:1.7;text-align:left}.gsv-rules li{margin:2px 0}
 .gsv-sel .box{max-width:min(96vw,560px)}.gsv-cards{display:grid;gap:6px;margin:8px 0}.gsv-card{display:block;width:100%;text-align:left;font:inherit;color:inherit;background:var(--card,#fff);border:2px solid var(--line,#ddd);border-radius:12px;padding:7px 10px;cursor:pointer;min-height:44px}
 .gsv-card.on{border-color:#7a3fb0;box-shadow:0 0 0 2px rgba(122,63,176,.25)}.gsv-card small{display:block;font-size:12px;color:var(--muted,#777)}
+.gsv-chs{display:flex;gap:6px;margin:8px 0 0}.gsv-chb{flex:1 1 0;min-width:0;font:inherit;font-size:13.5px;color:inherit;background:transparent;border:2px solid var(--line,#ddd);border-radius:99px;padding:4px 6px;min-height:44px;cursor:pointer}.gsv-chb.on{border-color:#7a3fb0;background:rgba(122,63,176,.12);font-weight:700}
 .gsv-skl{display:flex;flex-wrap:wrap;gap:6px}.gsv-skl label{font-size:12.5px;border:1.5px solid var(--line,#ccc);border-radius:99px;padding:3px 9px;cursor:pointer}.gsv-skl label.on{border-color:#7a3fb0;background:rgba(122,63,176,.12)}.gsv-skl label.lk{opacity:.4}
 .bt-sel .bt-card.bt-gsvc{border-style:double;border-width:3px;border-color:#b46bff}
 @media (orientation:portrait) and (max-height:700px){body.gsv-on{--gsvMeH:176px}.gsv-sk{min-height:40px}.gsv-sks.gen .gsv-sk{min-height:36px}}
@@ -492,10 +549,27 @@ body.gsv-on .view.fixed>#bbox>svg{width:100%!important;height:100%!important;max
  #gsvEn .gsv-r,#gsvMe .gsv-r{flex-wrap:wrap;white-space:normal}.gsv-ln{flex:1 1 100%}
  .gsv-sks{grid-template-columns:repeat(2,minmax(0,1fr))}.gsv-tip{position:static;margin-bottom:6px;flex-wrap:wrap;border-radius:10px}
  body.gsv-on .view.fixed>#bbox{top:var(--bhTop,44px)!important;bottom:0!important;left:calc(200px + env(safe-area-inset-left,0px))!important;right:calc(210px + env(safe-area-inset-right,0px))!important}}
+/* 11/15 星門圍城也能切 3D 星盤：頂欄「👁」視角鈕與小選單（樣式照舊版塔防 #bhtdView／#bhtdViewM）；3D 區裡黑洞自由鏡頭用的鈕（棋距、望遠鏡…）和場名收起來；
+   頂欄上「回棋盤模式／去園子下棋（3D）」那顆收起來（有「👁」了；手機「⋯ 更多」裡那顆照樣能按，06-cpu parkBtn→gsvParkBtn）。
+   3D 記號：貼地的加 g3（transform-origin 要 0 0，矩陣由 07bht bhtdGnd 算）；lb＝貼地記號的直立文字標籤；tg.hit＝選目標時角色身上的透明點擊區 */
+body.gsv-on #topRight button[aria-label="回棋盤模式"],body.gsv-on #topRight button[aria-label="去園子下棋（3D）"],body.gsv-on .gs-ui,body.gsv-on .gs-pop,body.gsv-on .un-ui,body.gsv-on .tele-ui,body.gsv-on #bbox .pkname{display:none!important}
+body.gsv-on .view.fixed>#bbox .park3d{border-radius:0!important}
+#gsvView{display:inline-flex!important;align-items:center;gap:3px;font:600 12px var(--serif);white-space:nowrap;padding:0 8px!important;min-width:44px}#gsvView small{font-size:11.5px}
+#gsvViewM{position:fixed;z-index:9300;top:calc(var(--bhTop,48px) + 4px);right:calc(6px + env(safe-area-inset-right,0px));width:min(250px,80vw);box-sizing:border-box;background:rgba(10,10,30,.96);border:1px solid #E8C77A;border-radius:12px;padding:6px;color:#f1e7cf;font-family:var(--serif);box-shadow:0 8px 20px rgba(0,0,0,.5)}
+#gsvViewM button{display:flex;width:100%;align-items:center;gap:8px;font:inherit;font-size:14px;color:inherit;background:transparent;border:0;border-radius:8px;padding:8px;min-height:44px;text-align:left;cursor:pointer}
+#gsvViewM button.on{background:rgba(255,224,138,.16);color:#FFE08A;font-weight:700}#gsvViewM button small{margin-left:auto;font-size:11.5px;color:#c9bfe8;font-weight:400}
+#gsvViewM p{font-size:12px;color:#c9bfe8;margin:4px 6px 2px;line-height:1.5}
+.gsv-mk.g3{transform-origin:0 0}
+.gsv-mk.bd.g3h{margin:0;z-index:2;box-shadow:0 1px 3px rgba(0,0,0,.6)}
+#gsvOv .bt-mk.gt{font-size:clamp(8px,calc(var(--c)*.34),11px);line-height:1.08;padding:1px 3px;width:1.7em;box-sizing:content-box;white-space:normal;text-align:center;border-radius:6px}
+.gsv-mk.lb{font-size:11px;line-height:1.4;padding:0 5px;border-radius:99px;color:#f1e7cf;background:rgba(10,10,30,.82);border:1px solid rgba(255,255,255,.4);white-space:nowrap}.gsv-mk.lb.lbdp{color:#7fe0ff;border-color:rgba(127,224,255,.7)}
+.gsv-mk.tg.hit{border:0;background:transparent;animation:none;border-radius:10px}
+@media (orientation:portrait){body.gsv-3d .gsv-tip{position:fixed;top:calc(var(--bhTop,44px) + var(--gsvEnH,62px) - 32px);left:8px;right:8px}}
+@media (orientation:landscape){body.bh-full.gsv-on .view.fixed:has(>#bbox):has(>#acts)>#bbox{top:var(--bhTop,44px)!important;bottom:0!important;left:calc(200px + env(safe-area-inset-left,0px))!important;right:calc(210px + env(safe-area-inset-right,0px))!important;width:auto!important;height:auto!important}}
 @media (prefers-reduced-motion:reduce){.gsv-mk.tg{animation:none}}`;document.head.append(s)}
 /* ---------- 選關卡片（黑洞關卡卡片的「🌠 星門圍城」、主控台 gsvOpen()） ---------- */
 function gsvCard(){   /* 11/15 開發者試玩後「有挑戰性、沒有那麼無腦獲勝了，可以上線」：開給所有玩家（原本只給開發者） */
-  return`<button type="button" class="bt-card bt-gsvc" data-gsv="1" aria-label="星門圍城，第 1～6 關"><div class="hd"><b>🌠 星門圍城</b></div></button>`}
+  return`<button type="button" class="bt-card bt-gsvc" data-gsv="1" aria-label="星門圍城，兩章共 12 關"><div class="hd"><b>🌠 星門圍城</b></div></button>`}
 const gsvChar=()=>{let c="";try{c=(typeof myChar==="function"&&myChar())||store.get("pChar","")}catch(e){}return GSV.CH[c]?c:"x_swordboy"};
 const gsvL=()=>{try{return typeof xpInfo==="function"?xpInfo().L:1}catch(e){return 1}};
 function gsvRulesHTML(){return`<ul class="gsv-rules">
@@ -503,25 +577,32 @@ function gsvRulesHTML(){return`<ul class="gsv-rules">
 <li>傷害一律同一條算式：基礎 × 攻方 ATK／100 × 100／(100＋守方 DEF)，至少 1；護盾是數值池（上限 30、兩回合到期），盾可以吸到 0。</li>
 <li>擒子基礎：卒 4、士象 6、馬砲 10、車 14；真正將軍 18（同一星核兩回合內最多算一次）；集火擒子 +8。</li>
 <li><b>入侵卒</b>（標「侵」）進到你的半場會先預告，下個回合結束還在就扣你 12（進你的九宮 20），最多算兩顆。其他子過河不扣血。</li>
-<li><b>護陣卒</b>（標「陣」）每顆讓星樞 DEF +20；吃掉就拆掉那 20。</li>
+<li><b>護陣卒</b>（標「陣」）每顆讓星樞 DEF +20；吃掉就拆掉那 20。第二章有的關卡是<b>護陣車</b>，一樣標「陣」、一樣 +20。</li>
 <li><b>奪靈馬</b>（標「奪」）真的擒到你的子時，再扣你 8 靈力（每回合最多一次）。</li>
 <li><b>星樞大招</b>一律先預告一回合、寫明取消條件：卒將號令（號令卒被吃或離開你的半場就取消）；隔山星砲（砲、砲架、目標任一顆離開原線、中間多擋一子、或砲不能合法吃到目標，就取消）。有的關卡星樞 HP 掉到 60%、30% 才解鎖新的大招（只解鎖，不加兵、不當下打）。</li>
+<li>第二章的大招：<b>長驅直入</b>（標「驅」的車還沒過河、留在原位，而且從它到你的底線整條直路都是空的才打：在那條路上擋一子、吃掉那顆車、或它離開原位就取消；補給點也能拿來擋）；<b>斷路令</b>（標「斷」的那顆俥，下回合結束還在敵方半場才打：退回自己的半場就取消）。</li>
 <li>援軍從星門落下，至少前兩回合就看得到。你的子站在門上擋一次＝延遲；下回合還擋著＝取消（截援：星樞靈力 −10，第一次截援你回 6 靈）。</li>
 <li>每回合：可以先放一招（每回合最多一招），再走一步棋，或花 20 靈力把後備子部署到補給點（部署用掉這一步，每局最多 2 次）。</li>
 <li>靈力：開場 35、每回合回 4、擒子 +6，每回合收入最多 10。回復總量每局最多最大 HP 的 40%。</li>
 <li>回合結束一起結算：<b>雙方星核同一批結算同時歸零＝和局</b>；連續 8 回合沒有進展也判和。</li></ul>`}
 function gsvOpen(){gsvSelect(store.get("era","classic"),false)}
 if(typeof window!=="undefined")window.gsvOpen=gsvOpen;
-function gsvSelect(k,cover){gsvCss();const ck=gsvChar(),L=gsvL(),st=GSV.stats(ck,L),P=gsvProg(),pool=GSV.SK.filter(s=>s.ch===st.ck);let sel=P.last&&GSV.LV[P.last]?P.last:1;
-  let pk=GSV.skPick(st.ck,L,P.sk[st.ck]);
+/* 選關分章（11/15 加第二章）：上面一排章的分頁（GSV.CHP），下面只列這一章的六關；每關還是只有「第 n 關・關名」。只組字串、不碰畫面（測試直接叫）。P＝gsvProg()、sel＝選中的關、chp＝正在看的章 */
+function gsvChapHTML(P,sel,chp){const H=GSV.CHP.find(c=>c.n===chp)||GSV.CHP[0];
   const card=n=>{const V=GSV.LV[n],R=P.c[n]||{},rec=R.w||R.l||R.d?`勝 ${R.w||0}・和 ${R.d||0}・敗 ${R.l||0}`:"還沒打過",best=R.best?`・最佳 ${R.best.rnd} 回合／剩 ${R.best.hp} HP`:"";
     /* 11/15 開發者「每一個關卡字太多，用極簡」：卡上只留關名＋打過的戰績，數值和說明只給讀屏 */
     return`<button type="button" class="gsv-card${n===sel?" on":""}" data-n="${n}" aria-label="${esc(`第 ${n} 關 ${V.nm}（${V.th}），星樞 HP ${V.hp}、ATK ${V.atk}、DEF ${V.def}，推算 ${V.depth} 步，${rec}${best}。${V.say}`)}"><b>第 ${n} 關・${esc(V.nm)}</b>${R.w||R.l||R.d?`<small aria-hidden="true">${R.w?"✓ ":""}${rec}</small>`:""}</button>`};
+  return`<div class="gsv-chs" role="tablist">${GSV.CHP.map(c=>`<button type="button" class="gsv-chb${c.n===H.n?" on":""}" role="tab" aria-selected="${c.n===H.n}" data-ch="${c.n}"><span>${esc(c.t)}</span>・<span>${esc(c.nm)}</span></button>`).join("")}</div><div class="gsv-cards">${H.lv.map(card).join("")}</div>`}
+function gsvSelect(k,cover){gsvCss();const ck=gsvChar(),L=gsvL(),st=GSV.stats(ck,L),P=gsvProg(),pool=GSV.SK.filter(s=>s.ch===st.ck);let sel=P.last&&GSV.LV[P.last]?P.last:1;
+  let pk=GSV.skPick(st.ck,L,P.sk[st.ck]),chp=(GSV.CHP.find(c=>c.lv.includes(sel))||GSV.CHP[0]).n;   /* 一開始停在上次打的那一關所在的章 */
   const skH=()=>pool.map(s=>`<label class="${pk.includes(s.id)?"on":""}${s.lv>L?" lk":""}" data-id="${s.id}" title="${esc(s.d)}">${s.lv>L?"🔒 Lv"+s.lv+" ":""}${esc(s.nm)}・${s.cost} 靈</label>`).join("");
-  const m=modal(`<div class="em">🌠</div><h2>星門圍城</h2><div class="gsv-cards">${GSV.LVN.map(card).join("")}</div><p style="font-size:13px;margin-bottom:2px">招式（最多 4 招）</p><div class="gsv-skl">${skH()}</div>
+  const m=modal(`<div class="em">🌠</div><h2>星門圍城</h2><div class="gsv-chap">${gsvChapHTML(P,sel,chp)}</div><p style="font-size:13px;margin-bottom:2px">招式（最多 4 招）</p><div class="gsv-skl">${skH()}</div>
     <details><summary>星門圍城規則</summary>${gsvRulesHTML()}</details>`,
     [["⚔ 出戰",()=>gsvStart(sel,k,cover,pk)],["‹ 回黑洞關卡",()=>{try{if(typeof bhtdSelect==="function")bhtdSelect(k,cover)}catch(e){}},true]],"prolog gsv-sel");
-  if(!m)return;m.addEventListener("click",e=>{const c=e.target.closest(".gsv-card");if(c){sel=+c.dataset.n;try{vibrate(5)}catch(z){}m.querySelector(".gsv-cards").innerHTML=GSV.LVN.map(card).join("");return}
+  if(!m)return;m.addEventListener("click",e=>{const c=e.target.closest(".gsv-card"),t=e.target.closest(".gsv-chb");
+    /* 換章：選中的關不在這一章就改選這一章的第一關（「出戰」打的永遠是畫面上亮著的那一關） */
+    if(t){chp=+t.dataset.ch;const H=GSV.CHP.find(x=>x.n===chp);if(H&&!H.lv.includes(sel))sel=H.lv[0]}else if(c)sel=+c.dataset.n;
+    if(c||t){try{vibrate(5)}catch(z){}m.querySelector(".gsv-chap").innerHTML=gsvChapHTML(P,sel,chp);return}
     const l=e.target.closest(".gsv-skl label");if(l){e.preventDefault();const s=GSV.SKM[l.dataset.id];if(s.lv>L){toast(`🔒 修為 Lv ${s.lv} 解鎖「${s.nm}」`);return}
       if(pk.includes(s.id)){if(pk.length>1)pk=pk.filter(x=>x!==s.id)}else if(pk.length<4)pk=pk.concat([s.id]);else{toast("最多帶 4 招");return}m.querySelector(".gsv-skl").innerHTML=skH()}})}
 function gsvStart(n,k,cover,sk,force){const C=gsvC();if(!C)return toast("規則程式還沒載好");const V=GSV.LV[n];if(!V)return toast("沒有這一關");
@@ -530,7 +611,7 @@ function gsvStart(n,k,cover,sk,force){const C=gsvC();if(!C)return toast("規則�
   jStart("bh:gs"+n,{human:"r",lx:V.depth,journey:"bh:gs"+n,lv:{fen:GSV.startFen(n,C),turn:"r"},td:{mode:GSV.MODE,lv:n,ch:ck,L,sk:P.sk[ck]}},()=>{const was=/^#\/journey\/play/.test(location.hash);location.hash="#/journey/play";
     if(was)try{window.dispatchEvent(new Event("xq-play"))}catch(e){}setTimeout(()=>toast(`🌠 星門圍城・第 ${n} 關・${V.nm}`),700);setTimeout(()=>toast("✦ 星樞："+V.say),3200)},!!force)}
 /* ---------- 對局中（07bh bhTick 叫） ---------- */
-function gsvHide(){if(typeof document==="undefined")return;document.body&&document.body.classList.remove("gsv-on");for(const id of["gsvEn","gsvMe","gsvOv"]){const e=document.getElementById(id);if(e)e.remove()}GSV_TG=null;GSV_MK="";GSV_HK=""}
+function gsvHide(){if(typeof document==="undefined")return;document.body&&document.body.classList.remove("gsv-on","gsv-3d");for(const id of["gsvEn","gsvMe","gsvOv","gsvView"]){const e=document.getElementById(id);if(e)e.remove()}GSV_TG=null;GSV_MK="";GSV_HK="";GSV_P3=0;try{gsvViewMenu(false)}catch(e){}}   /* 11/15：頂欄「👁」視角鈕、視角小選單一起收 */
 function gsvTick(st){if(typeof document==="undefined")return;if(!gsvIs(st)||!/^#\/journey\/play/.test(location.hash||"")){if(GSV_ST||document.getElementById("gsvMe"))gsvHide();GSV_ST=null;return}
   const fresh=!GSV_ST||GSV_ST.id!==st.id;GSV_ST=st;gsvCss();document.body.classList.add("gsv-on");if(fresh){GSV_TG=null;GSV_INFO=false;GSV_HK=""}
   const bb=document.getElementById("bbox");if(!bb||!bb.parentNode)return;
@@ -538,7 +619,7 @@ function gsvTick(st){if(typeof document==="undefined")return;if(!gsvIs(st)||!/^#
   let me=document.getElementById("gsvMe");if(!me){me=document.createElement("div");me.id="gsvMe";en.after(me);me.addEventListener("click",gsvClick);GSV_HK=""}
   if(!document.getElementById("gsvOv")){const o=document.createElement("div");o.id="gsvOv";o.innerHTML=`<div class="mks"></div>`;document.body.append(o);o.addEventListener("click",gsvOvClick)}
   if(GSV_TG&&!gsvMy(st))GSV_TG=null;
-  gsvPaint();gsvEvents(st);if(!GSV_RAF)GSV_RAF=requestAnimationFrame(gsvFrame)}
+  gsvPaint();gsvEvents(st);try{gsvViewUi()}catch(e){console.warn("[gsv]",e)}if(!GSV_RAF)GSV_RAF=requestAnimationFrame(gsvFrame)}   /* 11/15：頂欄右上「👁」視角鈕（全局俯視／臨陣斜角／純淨平面） */
 const gsvPct=(a,b)=>Math.max(0,Math.min(100,Math.round(a/Math.max(1,b)*100)));
 function gsvFoeLine(td){const F=GSV.fore(td);if(!F.length)return`<span>援軍都下來了</span>`;const g=F[0],cnt={};for(const w of g.ws){const k=GSV.gateNm(w.sq)+"・"+GSV.PBN[w.p.toUpperCase()];cnt[k]=(cnt[k]||0)+1}
   return`<button type="button" data-x="fore"><span>下一波</span>：${Object.keys(cnt).map(k=>esc(k)+"×"+cnt[k]).join("、")}・<b>${g.inR}</b> <span>回合後</span></button>`}
@@ -577,12 +658,14 @@ function gsvOvClick(e){const b=e.target.closest(".gsv-mk.tg");if(!b||!GSV_TG||!G
   const L=GSV.targets(GSV_ST,T.id,T.pk,C);if(L.length&&typeof L[0]==="object"){GSV_TG=null;GSV_MK="";GSV_HK="";gsvPaint();modal(`<h2 style="font-size:19px">${esc(S.nm)}</h2><p class="muted">打哪一條線？</p>`,L.map(o=>[o.l,()=>gsvPlay(T.id,T.pk.concat([o.v]))]).concat([["取消",null,true]]));return}
   if(!L.length){GSV_TG=null;toast("沒有可以配對的目標")}GSV_MK="";GSV_HK="";gsvPaint()}
 function gsvPlay(id,tg,p){if(GSV_BUSY)return;GSV_BUSY=true;GSV_HK="";gsvPaint();api("/play/td",{k:id,tg,p}).catch(e=>toast(e.message)).finally(()=>{GSV_BUSY=false;GSV_HK="";gsvPaint()})}
-/* 盤上記號：星門（倒數）、入侵卒（侵／預告中）、護陣卒（陣）、號令卒（令）、集火目標、守門點、定身、補給點；選目標時是可以點的發光格 */
+/* 盤上記號：星門（倒數）、入侵卒（侵／預告中）、護陣卒／護陣車（陣）、號令卒（令）、長驅直入的車（驅）、斷路令點名的俥（斷）、集火目標、守門點、定身、補給點；選目標時是可以點的發光格 */
 function gsvMarks(st){const td=st.td,L=[],C=gsvC(),b=st.board;
   for(const g of GSV.fore(td))for(const w of g.ws)L.push({sq:w.sq,k:"gate",t:`門<i>${g.inR}</i>`});
   for(const q in td.ids){const id=td.ids[q],t=GSV.tagOf(td,id),sq=+q;if(t==="inv")L.push({sq,k:"bd "+(td.arm[id]?"arm":"inv"),t:td.arm[id]?"侵!":"侵"});if(t==="guard")L.push({sq,k:"bd guard",t:"陣"});if(t==="drain")L.push({sq,k:"bd drain",t:"奪"})}
-  if(td.fx){const F=td.fx,q=GSV.sqOfId(td,F.src);if(q!=null)L.push({sq:q,k:"bd src",t:F.id==="pao"?"砲":"令"});   /* 隔山星砲：砲標「砲」、砲架標「架」、目標畫紅圈 */
-    if(F.id==="pao"){const s=GSV.sqOfId(td,F.scr),t=GSV.sqOfId(td,F.tg);if(s!=null)L.push({sq:s,k:"bd src",t:"架"});if(t!=null)L.push({sq:t,k:"ring"})}}
+  if(td.fx){const F=td.fx,q=GSV.sqOfId(td,F.src);if(q!=null)L.push({sq:q,k:"bd src",t:({pao:"砲",cqzr:"驅",dll:"斷"})[F.id]||"令"});   /* 隔山星砲：砲標「砲」、砲架標「架」、目標畫紅圈 */
+    if(F.id==="pao"){const s=GSV.sqOfId(td,F.scr),t=GSV.sqOfId(td,F.tg);if(s!=null)L.push({sq:s,k:"bd src",t:"架"});if(t!=null)L.push({sq:t,k:"ring"})}
+    /* 第二章：長驅直入＝車標「驅」、那條直路在你底線的口畫紅圈；斷路令＝被點名的俥標「斷」加紅圈。條件已經不成立（擋住了、退回來了）就不畫圈 */
+    if(F.id==="cqzr"||F.id==="dll"){const t=GSV.fxSq(td,b,C);if(t!=null)L.push({sq:t,k:"ring"})}}
   if(td.fc&&td.fc.r===td.rnd)L.push({sq:td.fc.sq,k:"ring fc"});
   if(td.ctl.trap&&td.ctl.trap.until>td.rnd)for(const q of td.ctl.trap.sqs)L.push({sq:q,k:"trap"});
   for(const o of td.ctl.frz)if(o.until>td.rnd){const q=GSV.sqOfId(td,o.id);if(q!=null)L.push({sq:q,k:"bd frz",t:"定"})}
@@ -592,10 +675,19 @@ function gsvMarks(st){const td=st.td,L=[],C=gsvC(),b=st.board;
   else if(gsvMy(st))for(const d of td.dp)if(!b[d.sq])L.push({sq:d.sq,k:"dp",t:"補"});
   return L}
 function gsvFrame(){GSV_RAF=0;const st=GSV_ST,o=document.getElementById("gsvOv");if(!st||!o||!gsvIs(st))return;if(!/^#\/journey\/play/.test(location.hash)){gsvHide();return}
-  const xy=q=>typeof bhtdXY==="function"?bhtdXY(q):null,L=gsvMarks(st),key=JSON.stringify(L),box=o.querySelector(".mks");
-  if(key!==GSV_MK){GSV_MK=key;box.innerHTML=L.map(m=>m.b?`<button type="button" class="gsv-mk ${m.k}" data-sq="${m.sq}" aria-label="目標 ${m.sq}"></button>`:`<div class="gsv-mk ${m.k}" data-sq="${m.sq}">${m.t||""}</div>`).join("")}
+  if((++GSV_FN%60)===0)setTimeout(()=>{try{if(!document.body.classList.contains("gsv-on"))return;gsvVwFix();if(!document.getElementById("gsvView"))gsvViewUi()}catch(e){}},0);   /* 每秒：3D 開不起來就退回平面；頂欄重畫把「👁」清掉了就補回去。排到這一格之後才做：gsvVwFix 會叫對局頁重畫（→gsvTick），在這裡面直接叫會多排一條 gsvFrame */
+  /* 11/15 3D 星盤（park3d 畫在 #bbox）：記號換成 3D 那一份（gsvMk3），塔防鏡頭開著才疊選中底光、落點、準星、頭頂漢字牌；平面棋盤照原本的畫法 */
+  const xy=q=>typeof bhtdXY==="function"?bhtdXY(q):null,g3=gsv3d(),pv=g3?PARK.v:null,tc=!!(pv&&pv.tdCam&&pv.tdCam());let L=gsvMarks(st);
+  {const B=document.body;if(B&&B.classList.contains("gsv-3d")!==g3)B.classList.toggle("gsv-3d",g3)}   /* body.gsv-3d：3D 專用的版面（選目標的提示條搬到上面那條 HUD，不蓋棋盤底線） */
+  if(g3){const po=(!st.result&&tc&&PARK.last&&PARK.last.o)||{};L=gsvMk3(L,st.board,{sel:po.sel>=0?po.sel:-1,targets:po.targets,pnm:tc&&!!pv.headOf})}
+  const key=(g3?"3":"")+JSON.stringify(L),box=o.querySelector(".mks");
+  if(key!==GSV_MK){GSV_MK=key;box.innerHTML=L.map(m=>{const c=(m.c==="bt"?"bt-mk ":"gsv-mk ")+m.k;return m.b?`<button type="button" class="${c}" data-sq="${m.sq}"${m.h?` tabindex="-1" aria-hidden="true"`:` aria-label="目標 ${m.sq}"`}></button>`:`<div class="${c}" data-sq="${m.sq}">${m.t||""}</div>`}).join("")}
   const a=xy(40),c=xy(41),cell=a&&c?Math.max(18,Math.min(90,Math.hypot(c.x-a.x,c.y-a.y))):36;o.style.setProperty("--c",cell+"px");
-  for(const el of box.children){const p=xy(+el.dataset.sq);if(!p){el.style.display="none";continue}el.style.display="";el.style.transform=`translate(${p.x}px,${p.y}px) translate(-50%,-50%)`}
+  for(const el of box.children){const q=+el.dataset.sq,kd=g3?gsvMkKind(el.className):"",p=kd==="head"?pv.headOf(q):xy(q);if(!p){el.style.display="none";continue}el.style.display="";
+    if(!g3){el.style.transform=`translate(${p.x}px,${p.y}px) translate(-50%,-50%)`;continue}
+    const M=kd==="gnd"&&typeof bhtdGnd==="function"?bhtdGnd(q,p,cell):null,P3=gsvPos3(kd,el.className,p,cell,M,pv.headOf&&(el.classList.contains("hit")||el.classList.contains("bd")&&st.board[q])?pv.headOf(q):null);
+    el.classList.toggle("g3",!!P3.m);el.classList.toggle("g3h",!!P3.hd);if(P3.w){el.style.width=P3.w+"px";el.style.height=P3.h+"px"}
+    el.style.transform=`translate(${P3.x}px,${P3.y}px)`+(P3.m?` matrix(${P3.m})`:"")+" translate(-50%,-50%)"}
   GSV_RAF=requestAnimationFrame(gsvFrame)}
 /* 跳字：看 td.ev 新增的事件（拆陣、盾吸收、入侵、截援…都寫原因，不只跳總數） */
 function gsvBarXY(id){const e=document.getElementById(id);if(!e)return{x:innerWidth/2,y:innerHeight/2};const r=e.getBoundingClientRect();return{x:r.left+r.width/2,y:r.top+r.height*.5}}
@@ -628,6 +720,67 @@ function gsvResult(st,win,draw0,XPR){gsvCss();const td=st.td,n=td.lv,V=GSV.LV[n]
     <p style="font-size:13px;text-align:center">截援 ${td.icpt} 次・部署 ${td.dep} 次・用過的招：${esc(used)}</p>${!win&&V.tip?`<p class="muted" style="font-size:13px">💡 ${esc(V.tip)}</p>`:""}
     <p class="muted" style="font-size:12px">試玩紀錄只存在星門圍城自己的紀錄裡，不算原本的三星。</p>${XPR||""}`,
     [["↻ 再打一次",()=>gsvStart(n,k,cv,td.sk,true)],["返回選關",()=>gsvSelect(k,cv),true],["再看一下星盤",null,true]],"res")}
-/* 平面棋盤：07bht bhtdFlat 問這裡 */
-function gsvFlat(st){return gsvIs(st)}
+/* ---------- 11/15 星門圍城也能切 3D 星盤（開發者：「星門圍城也可以切換成 3D 模式，像星淵對戰那樣」）----------
+   視角三種跟舊版塔防同一套（07bht BHTD_VW：全局俯視／臨陣斜角／純淨平面；頂欄右上「👁」點一下換下一種＋小選單），存檔鍵 gsvView 自己記：沒選過＝平面（星門圍城的預設不變），不跟舊版的 bhtdView 連動。
+   3D＝黑洞巨盤＋park3d 塔防固定鏡頭（07bht bhtdParkEx 問 gsvParkEx）：一指拖空白繞整球、兩指縮放、放手回正、腳下光環、敵方描邊都是 park3d 開了塔防鏡頭就有的。
+   盤上記號照類名分三種（gsvMkKind）：圈、框、可點的目標貼平在盤面（07bht bhtdGnd），徽章和文字直立，漢字牌貼在頭頂（park3d headOf）；座標一律走 07bht bhtdXY。
+   頂欄「去園子下棋（3D）／回棋盤模式」那顆（手機收在「⋯ 更多」）：06-cpu parkBtn 一開頭問 gsvParkBtn，星門圍城對局中＝切到 3D／回平面。
+   3D 開不起來（裝置不支援、載入失敗：06-cpu parkDraw 會把 park3d 關掉）→ 視角存回平面，照平面棋盤下。車輪戰（07bhw）不走這裡，照舊平面。 */
+let GSV_P3=0,GSV_V3="top",GSV_VMT=0,GSV_FN=0;   /* P3＝這盤已經要過 3D（park3d 開著）；V3＝上一次用的 3D 視角（「更多」那顆切回 3D 用）；VMT＝視角小選單的計時；FN＝gsvFrame 數格 */
+const gsvVwOk=v=>v==="top"||v==="tilt"||v==="flat";
+function gsvVwNorm(v,foc){return gsvVwOk(v)&&!foc?v:"flat"}   /* 存的值 → 這盤真正用的視角：沒存過、不認得、專注棋盤／螢幕報讀模式（focusOn）＝平面 */
+function gsvVwNext(v){return({top:"tilt",tilt:"flat",flat:"top"})[v]||"top"}   /* 「👁」點一下的順序跟舊版塔防一樣 */
+function gsvParkTo(v,last){return v==="flat"?(last==="tilt"?"tilt":"top"):"flat"}   /* 「更多」那顆：平面 → 上一次的 3D 視角（沒有就全局俯視）；已經在 3D → 回平面 */
+function gsvP3Step(v,p3,asked){return v==="flat"||p3===true?null:asked?(p3===false?"fail":null):"ask"}   /* 要 3D 時怎麼動 park3d：ask＝第一次，把它打開；fail＝開過卻被關掉（3D 開不起來）；null＝不用動 */
+const gsvVw=()=>{let v="flat",f=false;try{v=store.get("gsvView","flat")}catch(e){}try{f=typeof focusOn==="function"&&!!focusOn()}catch(e){}return gsvVwNorm(v,f)};
+function gsvP3Sync(){const v=gsvVw();if(v==="flat"){GSV_P3=0;return v}GSV_V3=v;let p=null;try{p=store.get("park3d",null)}catch(e){}const s=gsvP3Step(v,p,GSV_P3);
+  if(s==="ask"){try{store.set("park3d",true)}catch(e){}GSV_P3=1}else if(s==="fail"){GSV_P3=0;try{store.set("gsvView","flat")}catch(e){}return"flat"}else if(p===true)GSV_P3=1;return v}
+/* 平面棋盤：07bht bhtdFlat 問這裡（08b render 一開頭、頂欄還沒畫）；選了 3D 就在這裡先把 park3d 打開 */
+function gsvFlat(st){if(!gsvIs(st))return false;try{return gsvP3Sync()==="flat"}catch(e){return true}}   /* 出錯（這支還沒載完就被問到）＝平面 */
+function gsvParkEx(st){if(!gsvIs(st))return{bhBoss:null,tdCam:null};let v="flat";try{v=gsvP3Sync()}catch(e){}return{bhBoss:null,tdCam:v==="flat"?null:v,tdFx:typeof bhtdFxLv==="function"?bhtdFxLv():2}}
+function gsv3d(){try{return typeof bhtd3d==="function"&&!!bhtd3d()}catch(e){return false}}
+function gsvSetView(v){if(!gsvVwOk(v)||v===gsvVw())return;
+  if(v!=="flat")try{if(typeof focusOn==="function"&&focusOn()){const fb=!!store.get("focusBoard",false);if(fb)store.set("focusBoard",false);
+      if(focusOn()){if(fb)store.set("focusBoard",true);toast("純淨畫面、螢幕報讀模式用平面棋盤");return}if(typeof focusApply==="function")focusApply()}}catch(e){}   /* 照 06-cpu parkBtn：專注棋盤模式開著又要 3D＝把專注模式關掉；純淨畫面、螢幕報讀還開著就不切（那兩種一律平面） */
+  try{store.set("gsvView",v);if(v!=="flat"){store.set("park3d",true);GSV_P3=1;GSV_V3=v}}catch(e){}
+  try{if(v!=="flat"&&typeof PARK!=="undefined"&&PARK&&PARK.v&&PARK.v.setTdCam)PARK.v.setTdCam(v,typeof bhtdFxLv==="function"?bhtdFxLv():2)}catch(e){}
+  GSV_MK="";try{if(typeof window!=="undefined"&&window.cgPlay&&window.cgPlay.rr)window.cgPlay.rr()}catch(e){}gsvViewUi()}   /* 平面↔3D：08b 重畫（PARK_OFF 照 bhtlFlat→bhtdFlat→gsvFlat），頂欄那顆的字也跟著換 */
+function gsvVwFix(){if(gsvVw()==="flat"||gsvP3Sync()!=="flat")return;GSV_MK="";gsvViewUi();try{if(typeof window!=="undefined"&&window.cgPlay&&window.cgPlay.rr)window.cgPlay.rr()}catch(e){}}   /* gsvFrame 每秒查一次：3D 載入失敗是事後才把 park3d 關掉的，那時沒有人重畫 */
+function gsvParkBtn(){const st=GSV_ST;if(!st||!gsvIs(st)||typeof document==="undefined"||!document.body||!document.body.classList.contains("gsv-on"))return false;
+  const to=gsvParkTo(gsvVw(),GSV_V3),go=()=>{try{gsvSetView(to);if(gsvVw()===to)toast(to==="flat"?"回到平面棋盤":"🌀 3D 星盤（右上 👁 換視角）")}catch(e){console.warn("[gsv]",e)}};try{vibrate(8)}catch(e){}
+  /* 11/15 實機：從「⋯ 更多」那張卡片按的時候，卡片在瀏覽器歷史多墊了一層（00-util sheet 的 xqSheet），當下就重畫頂欄會把返回鍵算成「回這一頁自己」（字變成「回園子對局」、按了不動）——等卡片關掉、那一層退掉再切 */
+  let inSheet=false;try{inSheet=!!(history.state&&history.state.xqSheet)}catch(e){}if(inSheet)setTimeout(go,320);else go();return true}
+function gsvViewUi(){if(typeof document==="undefined"||typeof BHTD_VW==="undefined")return;const tr=document.getElementById("topRight");if(!tr)return;let b=document.getElementById("gsvView");
+  if(!b){b=document.createElement("button");b.type="button";b.id="gsvView";b.className="ib";b.addEventListener("click",e=>{e.stopPropagation();try{vibrate(5)}catch(z){}gsvSetView(gsvVwNext(gsvVw()));gsvViewMenu(true)});tr.prepend(b)}
+  const v=gsvVw();if(b.dataset.v!==v){b.dataset.v=v;b.innerHTML=`<span aria-hidden="true">👁</span><small>${BHTD_VW[v]}</small>`;b.setAttribute("aria-label","視角："+BHTD_VW[v]+"（點一下換下一種）");b.title="視角："+BHTD_VW[v]}}
+function gsvViewOut(e){const t=e.target;if(t&&t.closest&&(t.closest("#gsvViewM")||t.closest("#gsvView")))return;gsvViewMenu(false)}
+function gsvViewMenu(show){if(typeof document==="undefined")return;let m=document.getElementById("gsvViewM");clearTimeout(GSV_VMT);if(!show){if(m)m.remove();removeEventListener("pointerdown",gsvViewOut,true);return}
+  if(!m){m=document.createElement("div");m.id="gsvViewM";m.setAttribute("role","menu");m.setAttribute("aria-label","視角");document.body.append(m);
+    m.addEventListener("click",e=>{const b=e.target.closest("[data-v]");if(!b)return;e.stopPropagation();try{vibrate(5)}catch(z){}gsvSetView(b.dataset.v);gsvViewMenu(false)});setTimeout(()=>addEventListener("pointerdown",gsvViewOut,true),0)}
+  const v=gsvVw();let port=false;try{port=matchMedia("(orientation:portrait)").matches}catch(e){}
+  m.innerHTML=Object.keys(BHTD_VW).map(k=>`<button type="button" role="menuitemradio" aria-checked="${k===v}" data-v="${k}" class="${k===v?"on":""}">${k===v?"●":"○"} ${BHTD_VW[k]}<small>${BHTD_VWD[k]}</small></button>`).join("")+(port?"<p>📱 手機轉成橫向，星盤會更大</p>":"");
+  GSV_VMT=setTimeout(()=>gsvViewMenu(false),6000)}
+/* 3D 星盤上的記號（純函式，node 測試 test-gate-siege-3d.js）。gsvMkKind(類名)：head＝棋子頭頂（漢字牌 pnm）；up＝直立（徽章 bd、文字標籤 lb／gt、選目標的直立點擊區 hit）；
+   gnd＝貼平在盤面（星門 gate、紅圈 ring、守門點 trap、補給點 dp、可點的目標 tg，還有舊版塔防的選中底光 selg、落點 ink、準星 aim）。
+   不認得的類名一律直立：之後新加的記號，圈狀的沿用 ring／gate／trap／dp 這幾個類名就會貼地，徽章用 bd 就直立，不用改這裡 */
+const GSV_GND=/\b(gate|ring|trap|dp|tg|selg|ink|aim)\b/;
+function gsvMkKind(k){k=String(k||"");return/\bpnm\b/.test(k)?"head":/\b(bd|lb|gt|hit)\b/.test(k)?"up":GSV_GND.test(k)?"gnd":"up"}
+const gsvMkTx=t=>String(t||"").replace(/<i>/g," ").replace(/<[^>]*>/g,"").trim();
+/* gsvMk3(平面記號, 盤面, o)：換成 3D 用的一份。貼地的記號不放字（會被透視壓扁）：字另起一塊直立標籤（星門用舊版塔防的「門 N」gt，其他用 lb）；
+   可點的目標在有棋子的格多一塊直立的透明點擊區（hit：從腳到頭，點在角色身上也算；排在貼地目標圈的下面，圈優先）；
+   o.sel／o.targets＝選中子底光、落點水墨點、可吃紅準星（塔防鏡頭下 park3d 不畫自己的綠點紅圈）；o.pnm＝每顆子頭頂一塊漢字牌。這幾種直接用舊版塔防的類名與樣式（c:"bt"＝bt-mk）。
+   疊放順序：貼地圈 → 直立點擊區 → 貼地目標鈕 → 直立徽章與標籤 → 漢字牌 */
+function gsvMk3(L,b,o){o=o||{};b=b||[];const G=[],H=[],B=[],U=[],P=[];
+  if(o.sel>=0){G.push({sq:o.sel,k:"selg",c:"bt"});for(const t of o.targets||[])G.push({sq:t,k:b[t]?"aim":"ink",c:"bt"})}
+  for(const m of L||[]){const kd=gsvMkKind(m.k);if(kd!=="gnd"){(kd==="head"?P:U).push(m);continue}
+    if(m.b){B.push(m);if(b[m.sq])H.push({sq:m.sq,k:"tg hit",b:1,h:1});continue}
+    const t=gsvMkTx(m.t);G.push(t?Object.assign({},m,{t:""}):m);if(t)U.push(/\bgate\b/.test(m.k)?{sq:m.sq,k:"gt",c:"bt",t}:{sq:m.sq,k:"lb lb"+String(m.k).split(" ")[0],t})}
+  if(o.pnm)for(let q=0;q<90;q++){const p=b[q];if(!p)continue;const r=p===p.toUpperCase();P.push({sq:q,k:"pnm "+(r?"r":"b"),c:"bt",t:(r?GSV.PCN[p]:GSV.PBN[p.toUpperCase()])||""})}
+  return G.concat(H,B,U,P)}
+/* 一個記號在 3D 星盤上放哪（純函式）：kd＝gsvMkKind；p＝那一格（腳下）的螢幕座標；M＝bhtdGnd 算的貼地矩陣（算不出來就直立）；head＝頭頂的螢幕座標（只有 hit 用）。
+   回 {x,y}，貼地多 m（CSS matrix），直立點擊區多 w、h（px）；「門 N」照舊版塔防抬高 .62 格 */
+function gsvPos3(kd,cls,p,cell,M,head){cls=String(cls||"");if(kd==="gnd"&&M)return{x:p.x,y:p.y,m:M};
+  if(/\bbd\b/.test(cls)&&head)return{x:head.x+cell*.55,y:head.y-cell*.5,hd:1};   /* 11/15 實機：徽章放腳邊會被角色和漢字牌擋掉一半（侵、侵!）——那一格有棋子就掛在頭頂漢字牌的右上角（hd＝不要再套腳邊的偏移） */
+  if(/\bhit\b/.test(cls)&&head)return{x:(p.x+head.x)/2,y:(p.y+head.y)/2,w:cell*.7,h:Math.max(cell*.5,Math.hypot(head.x-p.x,head.y-p.y))};
+  return{x:p.x,y:p.y-(/\bgt\b/.test(cls)?cell*.62:0)}}
 

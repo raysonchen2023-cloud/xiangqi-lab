@@ -1,5 +1,5 @@
 #!/usr/bin/env node
-// 勝率曲線 W(cp)＝1／(1＋e^(−k·cp)) 的 k：用「真人跟電腦下的局面評估 → 這盤最後勝負」擬合，分段位各估一個 k。
+// 預期得分曲線（＝P(勝)＋0.5×P(和)；Lichess 叫 Win%，不是贏棋機率）W(cp)＝1／(1＋e^(−k·cp)) 的 k：用「真人跟電腦下的局面評估 → 這盤最後勝負」擬合，分段位各估一個 k。
 // 開發者 11/11 照三方審查改寫（原本在 mathfix/tools/calibrate-wdl.js）：
 //   ・資料來源只用 App 匿名送回的 t:"cpu"（collect-anon.js 存的 xiangqi-db/cpu-games.jsonl）。
 //   ・刪掉原本的來源 (a)「電腦自對局」——不可用：Pikafish 的分數是照引擎長時間自對局正規化的（src/uci.cpp win_rate_model：+150 分≈96% 期望得分，

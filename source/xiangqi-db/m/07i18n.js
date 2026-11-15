@@ -802,10 +802,18 @@ const I18N_EN={
   "再點一次同一顆招就放出":"Tap the same skill again to cast","點盤上發光的補給點":"Tap a glowing supply point","點盤上發光的目標":"Tap a glowing target","再打一次":"Play again","返回選關":"Back to stages",
   "不分勝負":"Draw","星門失守":"The gates fell","情報":"Intel","顯示中":"Showing","打哪一條線？":"Which line?","沒有可以配對的目標":"No target can be paired",
   "單線守口":"Hold one lane","拆陣破甲":"Break the guard","章末守關":"Chapter gatekeeper",
+  /* 11/15 星門圍城切 3D 星盤（07bhg-gatesiege.js gsvParkBtn、gsvSetView 的提示；視角名稱沿用舊版塔防那幾條） */
+  "回到平面棋盤":"Back to the flat board","🌀 3D 星盤（右上 👁 換視角）":"🌀 3D star board (tap 👁 at the top right to change the view)","純淨畫面、螢幕報讀模式用平面棋盤":"Clean view and screen-reader mode use the flat board",
   /* 11/15 星門圍城補第 2、4、5 關：主題、星樞大招、分段跳字（帶數字的不翻） */
   "分兵與回援":"Split and fall back","雙門取捨":"Two gates, one move","三段攻勢":"Three-phase assault","隔山星砲":"Over-the-Hill Star Cannon","卒將號令":"Pawn General's Command",
   "⚠ 星樞預告：隔山星砲":"⚠ Star Core warning: Over-the-Hill Star Cannon","⚠ 星樞預告：卒將號令":"⚠ Star Core warning: Pawn General's Command","隔山星砲取消":"Star Cannon cancelled","卒將號令取消":"Command cancelled",
   "✦ 星樞解鎖：隔山星砲":"✦ Star Core unlocks: Over-the-Hill Star Cannon","✦ 星樞解鎖：卒將號令":"✦ Star Core unlocks: Pawn General's Command","奪靈馬":"Spirit-Draining Horse",
+  /* 11/15 星門圍城第二章「俥路調度」第 7～12 關：章名、關名、主題、星樞大招與跳字（帶數字的不翻） */
+  "第一章":"Chapter 1","第二章":"Chapter 2","星門入侵":"Star Gate Invasion","俥路調度":"Chariot Lanes",
+  "直路守口":"Hold the Open File","橫俥回援":"Chariot Across to the Rescue","留一道退路":"Leave a Way Back","交換要道":"Trade for the Key Lane","一俥兩用":"One Chariot, Two Jobs","守關・斷路營":"Gate Boss · Cut-Off Camp",
+  "守住直路":"Guard the file","橫線調度":"Shift along the rank","深入要能回來":"Go deep, but get back","兌子的取捨":"When to trade","一步兩用":"One move, two jobs",
+  "長驅直入":"Straight Down the File","斷路令":"Cut-Off Order","護陣車":"Guard Chariot",
+  "⚠ 星樞預告：長驅直入":"⚠ Star Core warning: Straight Down the File","⚠ 星樞預告：斷路令":"⚠ Star Core warning: Cut-Off Order","長驅直入取消":"Straight Down the File cancelled","斷路令取消":"Cut-Off Order cancelled",
   "重金懸賞":"Bounty","庭院小息":"Courtyard Rest","帥令安軍":"Marshal's Order","當票回春":"Pawn-Ticket Revival","九宮守心":"Palace Heart","鐵壁銅牆":"Iron Wall","仕角守門":"Advisor Gate","銅鎖止步":"Bronze Lock",
   "近侍護帥":"Bodyguard","盾陣回靈":"Shield Spirit","神行百里":"Swift Swap","勇往直前":"Forward Spirit","跑腿賺錢":"Errand Runner","步步為營":"Step by Step","揚州快步":"Yangzhou Quickstep",
   "一劍破甲":"Armor-Piercing Sword","直路衝鋒":"Straight Charge","輪牌護身":"Shield Rota","認轍尋路":"Track Reader","長街破陣":"Long Street Breaker","飛燕還巢":"Swallow Home","青玉護棚":"Jade Canopy",
@@ -817,6 +825,8 @@ const I18N_EN={
   "這盤這輪走過了":"Already moved here this round","陣眼被吃：這盤封招一輪":"Eye piece lost: no skills on this board for one round","這一輪已經放過一招":"Already used a skill this round","封招":"Sealed",
   "入侵預告":"Invasion warning","援軍":"Reinforcements","拆陣":"Guard broken","截援":"Intercepted","重開這一場？":"Restart this match?","試玩不給星塵、修為、定軌力":"Trial: no Stardust, XP or orbit stamina",
   "點發光的目標":"Tap a glowing target","點發光的補給點":"Tap a glowing supply point","再點一次同一招就放出":"Tap the same skill again to cast","這盤已結束":"This board is finished","各盤":"Boards",
+  /* 11/15 黑洞車輪戰・三盤版（三盤拿兩勝＋危險預警）：縮圖狀態、危險提示、比數；縮圖角標的單字（危、侵、眼、門、封）跟盤上記號一樣不翻 */
+  "三盤拿兩勝":"Win 2 of 3 boards","已走":"Moved","敗":"L","比數":"Score","星核危急":"Core in danger","入侵卒要扣血":"Invaders about to hit","陣眼受威脅":"Eye piece under attack","援軍將至":"Reinforcements incoming",
   "把俥走到發亮的格子":"Move the chariot to the glowing square","用俥吃掉發亮的黑子":"Capture the glowing black piece with the chariot","走一步，讓黑將被攻擊":"Make one move that attacks the black general","黑將只能逃到綠點，一步將死它":"The general can only flee to the green dots. Mate it in one","換個擺法，一樣封住退路":"New setup: block the escape again","跟電腦各走四步":"Play four moves each against the computer","對了！":"Correct!","完成！":"Done!","這一步封住了退路":"This move blocked the escape","不是這格，再試一次":"Not that square. Try again","不是這顆，再試一次":"Not that piece. Try again","要吃掉發亮的那顆":"Capture the glowing piece","這步沒有攻擊到黑將":"That move doesn't attack the general","將軍了，可是黑將還能逃":"Check, but the general can still escape","藍框就是答案，點點看":"The blue frames show the answer. Try it","電腦想一下…":"The computer is thinking…","過關！可以接著下完":"Passed! You can keep playing","你贏了！":"You won!","這盤輸了，再來一次":"You lost this one. Try again","先動俥":"Move the chariot first","新手練習":"Beginner practice","新手練習進度":"Beginner practice progress","我會下棋，直接開始":"I can play, start now","💡 提示":"💡 Hint","完成練習":"Finish practice","新手練習完成":"Practice complete","入門物品領好了":"Starter items received","🏅 稱號「雲河新使」":"🏅 Title: New Envoy of the Cloud River","💡 提示棋 ×5":"💡 Hint tokens ×5","🏠 家鄉棋盤":"🏠 Home board","📜 圖鑑第一頁":"📜 First codex page","選一位角色":"Choose a character","🔰 繼續新手練習":"🔰 Continue beginner practice","更多玩法":"More ways to play","對弈電腦":"Play the computer","⛵ 星槎遠征令":"⛵ Star Raft Expedition Orders","點棋子走棋・拖空白處轉看四周・右上 👁 換視角":"Tap a piece to move · drag empty space to look around · 👁 top right to switch view","距離下一級":"To next level","細則":"Details","角色狀態":"Character status","攻擊力・防禦力":"Attack · Defense","以 100 為基準，數字越大越強。":"100 is the baseline; higher is stronger.","下船後會慢慢用掉，回星槎就補回來。":"Drains slowly once ashore; refills on the Star Raft.","解殘局、過主線章節就會得到。":"Earned by solving endgames and clearing story chapters.","修為越高，攻擊力和防禦力越強（黑洞裡用）。":"Higher XP makes Attack and Defense stronger (used in the Black Hole).","體力":"Stamina","靈力":"Spirit","體力・定軌力":"Stamina · Orbit stamina","靈力・星芒":"Spirit · Starglow",
   "招式（最多 4 招）":"Skills (up to 4)",
   "技能":"Skills","已學會":"Learned","在黑洞裡使用，一場最多帶 4 招":"Used in the Black Hole; bring up to 4 per battle","‹ 回我的角色":"‹ Back to my character","靈":"spirit",

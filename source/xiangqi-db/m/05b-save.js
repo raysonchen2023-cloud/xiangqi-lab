@@ -570,7 +570,7 @@ function stkBoot(){try{if(STK.sid)return;const a=new Uint8Array(8);crypto.getRan
   setInterval(()=>{try{if(document.hidden||!stkOn())return;const idle=Date.now()-STK.act;if(idle>120000&&STK.idle<0){STK.idle=stkEv("idle",null)}if(idle>180000&&!STK.live){STK.live=1;stkSend(1)}}catch(e){}},5000)}catch(e){}}
 stkBoot();
 /* ---------- 跟電腦下完一盤的匿名評分資料 t:"cpu"（開發者 11/11 照三方審查：「同時開始收新的匿名對局資料」）＋影子模式的背景存檔 ----------
-   為什麼要：新算法（05-settings.js 的 MXS、mxShadowReport，影子模式）的勝率曲線 k、評語門檻、殺棋分界、S／A／B 門檻，都要用真人（孩子）的對局分段位校正
+   為什麼要：新算法（05-settings.js 的 MXS、mxShadowReport，影子模式）的預期得分曲線 k、評語門檻、殺棋分界、S／A／B 門檻，都要用真人（孩子）的對局分段位校正
      （tools/calibrate-wdl.js、tools/calibrate-grades.js 讀 xiangqi-db/cpu-games.jsonl）。三方審查一致：不可用引擎自對局校正。
    什麼時候：跟電腦下完一盤（08b-cpugame.js 發 xq-result）後，每 3 秒問一次 /play/state，等我方每一步都評完等（最多約 5 分鐘）；
      換到下一盤或逾時，就送已經評好的部分（full:0）。錯棋重練、練習題（practice）不送；同一盤只處理一次（store cpaSent 記最近 60 盤的編號，只存在手機裡）。
@@ -598,7 +598,7 @@ function cpaRnd(n){const a=new Uint8Array(n);crypto.getRandomValues(a);return[..
 function cpaDone(st,full){try{if(!st||!st.id||!st.result)return;const sent=store.get("cpaSent",[])||[];if(sent.includes(st.id))return;store.set("cpaSent",sent.concat(st.id).slice(-60));
   if(typeof gameReport!=="function"||typeof mxShadowReport!=="function"||!window.XQCore)return;
   const hu=st.human,rep=gameReport(XQCore.parseFen(st.start||XQCore.START),st.moves||[]),R=rep.sides[hu],X=mxShadowReport(rep,st.result.w||"")[hu];if(!R||R.score==null||!X)return;   /* 意見表 1046：把勝負帶進去（這裡一定有結果：w 是贏的那方，空的＝和棋），已知輸的盤新總分最高 B（MXS.lose）；已知贏、和不套 */
-  const all=store.get("mxShadow",{})||{};all[st.id]={o:[R.score,R.grade[0]],n:[X.score,X.grade],x:[X.raw,X.s0,X.end],v:MXS.ver,at:Date.now()};   /* x＝[不封頂, 只看重大錯誤, 終局]：三個版本留在本機比較（11/15 ChatGPT 重評），不送出 */const ks=Object.keys(all);if(ks.length>200)for(const k of ks.sort((a,b)=>all[a].at-all[b].at).slice(0,ks.length-200))delete all[k];store.set("mxShadow",all);
+  const all=store.get("mxShadow",{})||{};all[st.id]={o:[R.score,R.grade[0]],n:[X.score,X.grade],x:[X.raw,X.s0,X.end],v:MXS.ver,at:Date.now(),b:Math.round(X.base*10)/10,g:[(st.moves||[]).length,X.n,full?1:0,String(st.kind||"cpu").slice(0,10),+st.level||0,st.cpuRate&&st.cpuRate.rank?String(st.cpuRate.rank).slice(0,8):null]};   /* x＝[不封頂, 只看重大錯誤, 終局]：三個版本留在本機比較（11/15 ChatGPT 重評），不送出。同日第二次重評第 2 項再加 b＝base（未加妙著獎勵、未套上限，小數 1 位）、g＝[總手數, 我方評過的步數, 我方每步都評完(1), 對局種類, 電腦級數, 我的電腦積分段位]，給離線比較 tools/mx-compare.js 按局長、段位分組；一樣只存本機（開發者模式可以自己匯出，05-settings.js mxShExport），匿名送出的欄位沒有動 */const ks=Object.keys(all);if(ks.length>200)for(const k of ks.sort((a,b)=>all[a].at-all[b].at).slice(0,ks.length-200))delete all[k];store.set("mxShadow",all);
   if(!cpaOn()||!window.XQNet||!XQNet.shareIRT||X.n<4)return;
   let aid=store.get("anonId",null);if(!aid){aid=Math.random().toString(36).slice(2,10);store.set("anonId",aid)}
   const PH={open:0,mid:1,end:2},rd=v=>v==null||!isFinite(+v)?null:Math.round(+v),C=st.cpuRate||{},GI=g=>"SABCD".indexOf(g);let nrk=null;try{nrk=XQNet.rating?XQNet.rating().rank:null}catch(e){}

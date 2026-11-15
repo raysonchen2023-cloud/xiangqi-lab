@@ -447,7 +447,7 @@ function pkSwTap(ex,i){const L0=PARK&&PARK.last,s0=L0&&L0.o&&L0.o.sel>=0?L0.o.se
     b.classList.remove("pulse");void b.offsetWidth;b.classList.add("pulse");setTimeout(()=>{tp.classList.add("out");b.classList.remove("pulse");setTimeout(()=>tp.remove(),450)},5000)}catch(e){}}
 // 意見回饋 241：在公園裡按鈕換成「▦」（回棋盤模式），在棋盤模式是「🌳」（去公園）
 const parkIcon=()=>parkOn()?"▦":"🌳",parkLabel=()=>parkOn()?"回棋盤模式":"去園子下棋（3D）";
-const parkBtn=redraw=>[parkIcon(),e=>{const fo=focusOn()&&!PARK_LK&&!PARK_OFF;   /* 專注棋盤模式開著又按「去園子」：等於把專注模式關掉 */
+const parkBtn=redraw=>[parkIcon(),e=>{if(typeof gsvParkBtn==="function"&&gsvParkBtn())return;   /* 11/15 黑洞星門圍城對局中：這顆（手機收在「⋯ 更多」裡）＝切到 3D 星盤／回平面棋盤，視角由 07bhg-gatesiege.js 記（gsvView），它自己重畫 */const fo=focusOn()&&!PARK_LK&&!PARK_OFF;   /* 專注棋盤模式開著又按「去園子」：等於把專注模式關掉 */
   if(fo){store.set("focusBoard",false);focusApply();store.set("park3d",true)}else store.set("park3d",!parkOn());vibrate(8);toast(parkOn()?`${fo?"已關閉專注棋盤模式。":""}🌳 園子 3D 棋盤：${BOTN()}坐在對面跟你下（拖曳可以看四周）`:"回到棋盤模式");
   const b=e&&e.currentTarget;if(b){b.textContent=parkIcon();b.title=parkLabel()}redraw()},parkLabel()];
 // ================= 🧪 擺盤推演（意見回饋 250）：對局中跳到另一張棋盤，從當下局面紅黑兩邊都自己走，試各種變化；不影響正在下的那盤 =================
