@@ -1,8 +1,8 @@
 {
- "version": "20261115-1527",
- "checkedAt": "2026-11-15T07:27:22.177Z",
- "html": "0d8b55204954",
- "sw": "e58ccb608993",
+ "version": "20261115-1546",
+ "checkedAt": "2026-11-15T07:46:49.938Z",
+ "html": "b70ef653ec7d",
+ "sw": "81c92890df3b",
  "scripts": 4,
  "modules": {
   "00-util.js": "8c2b1d4f725f",
@@ -26,7 +26,7 @@
   "07o-shipmore.js": "3e3ebb9d732b",
   "07bh-blackhole.js": "1d4a25481727",
   "07gx-galaxy.js": "f79b141f237d",
-  "07bht-td.js": "93a06a7e1d38",
+  "07bht-td.js": "1dc065fafbc9",
   "07bhtl-tdlearn.js": "f7e849d5aa2b",
   "07bhf-bossfx.js": "8516daf7973e",
   "07bhg-gatesiege.js": "653649262101",
@@ -66,7 +66,7 @@
   "07hmp-pano.js": "723e4ffde0dc",
   "07x2-lobbymap.js": "492b0f6f7013",
   "07x3-rostermap.js": "ad71f65833df",
-  "07x4-lobbysafe.js": "c8b34c8400f2",
+  "07x4-lobbysafe.js": "6fb0777e0ef7",
   "07s2-setmap.js": "fc8b521d4320",
   "07t2-tabink.js": "1dddba96e53c",
   "07t3-tabtube.js": "b11f68cb3deb",
@@ -133,6 +133,11 @@
    "module": "07y-hubmap.js",
    "lines": 5,
    "sourceModified": "2026-11-13T18:59:11.775Z"
+  },
+  {
+   "module": "07x4-lobbysafe.js",
+   "lines": 42,
+   "sourceModified": "2026-11-15T06:58:28.365Z"
   },
   {
    "module": "07s4-passmap.js",
