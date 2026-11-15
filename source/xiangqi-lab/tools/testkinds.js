@@ -93,6 +93,8 @@ const CLASSIFIED = new Set([
   "test-park-garden-1115.js",   /* 11/15 開發者園子三個回報（park3d.js）：俯視時遮篷屋脊墨線收掉、香爐挪到棋盤木框外、幻影棋客半透明（行為 1、混合 1、原始碼 2） */
   "test-sw-offline.js",   /* 11/15 hspx 離線 3D 角色變小帥：sw.js 安裝時先存 3D 模型載入器（GLTFLoader.mjs 和它 import 的 .mjs），一般檔案也存 .mjs */
   "test-fb888.js",   /* 11/15 意見回饋 888 iPad 首頁兩指放大縮不回（07x 整頁放大救援、回首頁回 1 倍）、889 669×869 首頁一窄條（07z HMW_PORT 0.89／HMW_SQ、07fl XFL_HOME_MAX）、890 插曲全螢幕頁讓開狀態列（07t .ep-ov）（行為 11、原始碼 3） */
+  "test-bhtd-view-1115.js",   /* 11/15 開發者「黑洞對戰 default 開成全局俯視」（m/07bht-td.js bhtdView）：記成臨陣斜角的重設回全局俯視一次，之後自己選的照舊記住（行為 5、原始碼 1） */
+  "test-siege-wheel-bench.js",   /* 11/15 第 19 輪評審第 8 項：星門圍城＋車輪戰真引擎基準工具 tools/siege-wheel-bench.js（載 App 原檔、同種子兩次相同、每局欄位齊全、覆寫只改記憶體、摘要與倒掛算法、合併報表；真引擎那幾項在 Node 裡跑 App 的 Pikafish，載不了就略過；行為 9、原始碼 1） */
   "test-preload-bg.js"   /* 11/14 評比第 17、18 輪第 5 項背景暫停與按需預載：00-util bgpEvery／bgpOn、09b 預載前景／背景／恢復三段、分區 z:<分區>、別朝代先不下載、閒置才補選讀、省流量、preload-list --retier（行為 12、混合 1、原始碼 1） */
 ]);
 /* 還沒逐項分類的檔（統計列為「待分類」）；新測試檔先放這裡，分好類再移到 CLASSIFIED */

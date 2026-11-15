@@ -488,7 +488,7 @@ let BHTD_ST=null,BHTD_BUSY=false,BHTD_TG=null,BHTD_RAF=0,BHTD_MK="",BHTD_SEEN={}
       放絕招（鏡頭推近 15%＋草書 1.2 秒）、打倒魔王；不准全螢幕白閃、同屏粒子 ≤15。 */
 const BHTD_VW={top:"全局俯視",tilt:"臨陣斜角",flat:"純淨平面"},BHTD_VWD={top:"68° 看全盤",tilt:"48° 看立體",flat:"2D 平面棋盤"};
 let BHTD_PRE=null,BHTD_HINT=null,BHTD_LIVE={},BHTD_VMT=0;   /* PRE＝電腦思考時預選的子 {id,n,sq}；HINT＝提示高亮 {f,t,until}；LIVE＝這次看過還沒下完的盤（打倒魔王演出只播一次） */
-const bhtdView=()=>{let v="top";try{v=store.get("bhtdView","top")}catch(e){}return BHTD_VW[v]?v:"top"};
+const bhtdView=()=>{let v="top";try{if(!store.get("bhtdViewR",0)){store.set("bhtdViewR",1);if(store.get("bhtdView","top")==="tilt")store.set("bhtdView","top")}v=store.get("bhtdView","top")}catch(e){}return BHTD_VW[v]?v:"top"};   /* 11/15 開發者「黑洞對戰 default 開成全局俯視，不然 48° 立體看不清楚線」：預設本來就是全局俯視，但視角鈕點一下就換下一種、會記住，停在「臨陣斜角」的人每次進來都是斜的；這一版把記成斜角的重設回全局俯視一次（bhtdViewR），之後自己再選的照舊記住；選純淨平面的不動 */
 function bhtdFlat(st){return(typeof gsvFlat==="function"&&gsvFlat(st))||(bhtdIs(st)&&bhtdView()==="flat")}   /* 11/15：星門圍城自己記視角（存檔鍵 gsvView，沒選過＝平面；07bhg-gatesiege.js gsvFlat） */   /* 07bhtl bhtlFlat 問這裡：選了純淨平面＝這盤用平面棋盤 */
 const bhtdRM=()=>{try{return matchMedia("(prefers-reduced-motion: reduce)").matches}catch(e){return false}};
 const bhtdFxLv=()=>bhtdRM()?0:({full:2,lite:1,off:0})[bhtdFxMode()];   /* 2 完整、1 簡化、0 關閉或減少動態 */
