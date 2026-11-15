@@ -1,7 +1,7 @@
 {
  "ref": "origin/main",
- "commit": "befead3bb8d5de1952e78daffd14fa1ff78580e3",
- "madeAt": "2026-11-15T06:57:58.176Z",
+ "commit": "794c6b0c740de266b4e6846c3c74b677740e2421",
+ "madeAt": "2026-11-15T07:29:13.608Z",
  "files": {
   "xiangqi-db/m/00-util.js": "local=live",
   "xiangqi-db/m/01-board.js": "local=live",
@@ -64,7 +64,7 @@
   "xiangqi-db/m/07hmp-pano.js": "local=live",
   "xiangqi-db/m/07x2-lobbymap.js": "local=live",
   "xiangqi-db/m/07x3-rostermap.js": "local=live",
-  "xiangqi-db/m/07x4-lobbysafe.js": "live",
+  "xiangqi-db/m/07x4-lobbysafe.js": "local=live",
   "xiangqi-db/m/07s2-setmap.js": "local=live",
   "xiangqi-db/m/07t2-tabink.js": "local=live",
   "xiangqi-db/m/07t3-tabtube.js": "local=live",
@@ -249,6 +249,7 @@
   "xiangqi-lab/tools/test-oss-scan.js": "local",
   "xiangqi-lab/tools/test-p0-regress.js": "local",
   "xiangqi-lab/tools/test-park-firstflat.js": "local",
+  "xiangqi-lab/tools/test-park-garden-1115.js": "local",
   "xiangqi-lab/tools/test-park-weather.js": "local",
   "xiangqi-lab/tools/test-park3d-bench.js": "local",
   "xiangqi-lab/tools/test-park3d-capbase.js": "local",
@@ -396,7 +397,6 @@
  "liveDiffers": [
   "m/05-settings.js",
   "m/07y-hubmap.js",
-  "m/07x4-lobbysafe.js",
   "m/07s4-passmap.js",
   "src/sw.js"
  ],
@@ -439,10 +439,11 @@
   "test-threat-weaknet.js": "threat-model.md 對照表要找 test-net-sign.js（上面已排除，見該行）",
   "test-ui-redundancy.js": "有一項檢查開發者刻意不發布的 07y-hubmap.js 段落",
   "test-foss-audit.js": "倉庫多了 source/ 以後，foss-audit.js 會把 source/ 裡的規則文字當成追蹤 SDK（要先讓它跳過 source/）",
-  "test-layout-r16.js": "指令排除：有一項〔混合〕檢查（07y CY_SPOT 首頁 han 與 sanguo 的 44×44 點選範圍重疊）在開發者電腦上同樣失敗（10/11）：測試或座標待開發者處理；其他 10 項通過"
+  "test-layout-r16.js": "指令排除：有一項〔混合〕檢查（07y CY_SPOT 首頁 han 與 sanguo 的 44×44 點選範圍重疊）在開發者電腦上同樣失敗（10/11）：測試或座標待開發者處理；其他 10 項通過",
+  "test-siege-wheel-bench.js": "指令排除：星門圍城與車輪戰的引擎基準工具（siege-wheel-bench.js）還在做，做完下一版一起公開"
  },
- "version": "20261115-1448",
- "indexSha1": "8bce1383c592",
+ "version": "20261115-1527",
+ "indexSha1": "0d8b55204954",
  "toLF": [
   "xiangqi-lab/tools/build-site.js"
  ],

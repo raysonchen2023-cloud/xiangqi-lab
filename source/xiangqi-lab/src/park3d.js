@@ -1023,7 +1023,8 @@
           [1,2].forEach(n=>{const src=base+"cloud"+n+".webp?v="+CLOUD_V,go=()=>{const im=imgCache[src];if(!im||!im.naturalWidth)return;const t=texOf(im);
             CLS.forEach(([s,sz],i)=>{if(i%2!==n-1)return;s.material.map=t;s.material.needsUpdate=true;const w=sz*1.5;s.scale.set(w,w*im.naturalHeight/im.naturalWidth,1)})};if(loadImg(src,go))go()})}
         /* 桌角一個青瓷小香爐（茶杯的對角），爐頂飄淡淡的白煙（程式畫、會往上飄散） */
-        use("censer",im=>{const x=5.9,z=-4.4,c=card(im,{x,y:.015,z,h:1.5,tilt:.3}),b=lastB(c);if(b)Object.assign(b,{cup:[x,z],hb:0});
+        /* 11/15 開發者截圖（平視時香爐壓在棋盤右上角上）：原本放在 (5.9,-4.4)，立牌左半邊插進棋盤的木框（棋盤半寬 5.45），低角度看就像擺在棋盤角上；往外挪到木框外的桌面（左緣 5.56），還在桌緣（半徑 8.2）裡面；俯視時右上角仍露出一小半 */
+        use("censer",im=>{const x=6.35,z=-3.6,c=card(im,{x,y:.015,z,h:1.5,tilt:.3}),b=lastB(c);if(b)Object.assign(b,{cup:[x,z],hb:0});
           const st=radial("rgba(255,255,255,.85)","rgba(255,255,255,.35)");for(let i=0;i<4;i++){const s=new T.Sprite(new T.SpriteMaterial({map:st,transparent:true,opacity:0,depthWrite:false,toneMapped:false,fog:false}));root.add(s);if(X.bills)X.bills.push({m:s,y:0,tilt:0,smk:[x,1.25,z,i/4]})}})}
       // 茶杯：從斜上方看的手繪茶碗，立牌整張正對鏡頭、下緣貼著杯托前緣（Pikafish 一杯、我一杯，位置跟原本一樣）
       /* 意見回饋 423：茶杯看起來沒有平放——原本立牌的下緣往「舊的鏡頭位置 (0,16,9.2)」挪，鏡頭拉高、繞桌轉之後杯子就歪、浮、滑到杯影外面。
@@ -1310,7 +1311,7 @@
         cur(PX*2,[0,EY-.9,-PZ-.05],0);cur(PZ*2,[-PX-.05,EY-.9,0],PI/2);cur(PZ*2,[PX+.05,EY-.9,0],PI/2);
         sc.add(CG);
         CANO={x:PX*.9,z:PZ*.9,y:EY,rm,vm,cm,ink,fbm,RF,CUR,down:0,want:0,wet:0,snow:0,c0:new T.Color(C.roof),
-          tick(dt,cy){const above=cy>EY+1.5,op=above?.12:.9;rm.opacity+=(op-rm.opacity)*Math.min(1,dt*4);vm.opacity=Math.min(.92,rm.opacity+.06);ink.opacity=above?.1:.85;cm.opacity=above?.6:.88;fbm.opacity=above?.3:1;fbm.depthWrite=!above;
+          tick(dt,cy){const above=cy>EY+1.5,op=above?.12:.9;rm.opacity+=(op-rm.opacity)*Math.min(1,dt*4);vm.opacity=Math.min(.92,rm.opacity+.06);ink.opacity=above?0:.85;ink.visible=!above;   /* 11/15 開發者截圖「這邊有一條線」：俯視時人字頂兩片的屋脊墨線疊在一起，剛好落在棋盤正中，看起來像一條直線；鏡頭在篷頂上方時墨線整個收掉（篷面自己還留一層淡影） */cm.opacity=above?.6:.88;fbm.opacity=above?.3:1;fbm.depthWrite=!above;
             if(this.want>this.down)this.down=Math.min(this.want,this.down+dt*2.4);else if(this.want<this.down)this.down=Math.max(this.want,this.down-dt*1.2);
             for(const c of CUR){c.m.scale.y=.04+.96*this.down;c.roll.visible=this.down<.15}
             const col=this.c0.clone();if(this.wet)col.multiplyScalar(1-.15*this.wet);if(this.snow)col.lerp(new T.Color(1,1,1),this.snow);rm.color.copy(col)}}}catch(e){console.warn(e)}
@@ -1605,6 +1606,17 @@
     // 手繪 Pikafish 面板的大小與位置：高度、腳底高度、前後位置、往鏡頭微微傾斜
     const SPR_H=11.2,SPR_Y=SY-2.5,SPR_Z=BZ+2.6,SPR_TILT=-.18;
     let oppSpr=null;const POSES=["idle","think","move","happy","sad","surprise"];
+    /* 11/15 開發者「花園的幻影棋客一樣要跟在電腦對戰選難度時，用有點透明的方式呈現 3D 幻影棋客角色」：對手是幻影棋客（cus k:pika／k:pika2）時整個人半透明、慢慢呼吸
+       （跟雅間那張淡墨立繪同一個意思：.53～.67，五秒一輪；省電時停在當下，減少動態固定 .6）。
+       做法：角色身上每個材質複製一份改成透明（照寫深度，自己不會透出背面和身體裡面），每 20 格重看一次（模型晚到、水墨模式換材質都會補上）；
+       胸前的字牌本來每格自己算透明度，再乘一次；不投影子。2D 立牌一樣淡。別的對手不進來 */
+    let OPPG=null;const OPPG_RM=(()=>{try{return matchMedia("(prefers-reduced-motion: reduce)").matches}catch(e){return false}})();
+    const oppGhost=()=>{const G=OPPG,op=G.op=OPPG_RM?.6:.6+Math.sin(pwT()/1000*1.26)*.07;
+      if(oppSpr&&oppSpr.sp&&oppSpr.sp.material){oppSpr.sp.material.transparent=true;oppSpr.sp.material.opacity=op}
+      if(G.n++%20===0){G.ms.clear();const mk=x=>{if(!x||!x.clone)return x;if(x.userData&&x.userData.gh){G.ms.add(x);return x}const g=x.clone();g.userData=Object.assign({},g.userData,{gh:1,o0:x.opacity==null?1:x.opacity});g.transparent=true;g.depthWrite=true;G.ms.add(g);return g};
+        opp.g.traverse(m=>{if(!m.isMesh&&!m.isSprite)return;if(m.name==="meGly"){if(!m.userData.ghW&&m.onBeforeRender){m.userData.ghW=1;const f=m.onBeforeRender;m.onBeforeRender=function(){f.apply(this,arguments);try{if(OPPG)this.material.opacity*=OPPG.op}catch(e){}}}return}
+          m.castShadow=false;m.material=Array.isArray(m.material)?m.material.map(mk):mk(m.material)})}
+      for(const g of G.ms)g.opacity=g.userData.o0*op};
     const killSpr=()=>{if(oppSpr){sc.remove(oppSpr.sp);oppSpr.sp.material.dispose();oppSpr=null}opp.g.visible=true};
     const makeSpr=look=>{const base=look.sprite,meta=look.spriteMeta,ch=look.p||"將",red="帥仕相俥傌炮兵".includes(ch),ims={};let n=0;
       const done=()=>{if(++n<POSES.length||oppKey!==JSON.stringify(look))return;
@@ -1626,7 +1638,7 @@
     /* 開發者 11/11：車輪戰的真實 3D 棋客（look.stool，08s-simul.js SIM_SEAT）是坐在木凳上的靜態模型：凳面對齊座高 SY、凳腳落在地面 FL；桌上對面右角立一面這位棋客的棋位牌（XQBot3D.plate）。換人時拿掉 */
     /* hspx（開發者 11/12 圈起桌角那顆立著的「馬」說 fix it）：棋位牌立在桌緣像掉出來的棋子，不再擺；只留換人時清掉舊牌 */
     let oppPl=null;const oppPlate=look=>{if(oppPl){sc.remove(oppPl);oppPl=null}if(true||!look||!window.XQBot3D||!XQBot3D.plate)return;try{oppPl=XQBot3D.plate(look.p,.7);oppPl.position.set(6.3,.02,-6.75);sc.add(oppPl)}catch(e){oppPl=null}};
-    const setOpp=look=>{const k=JSON.stringify(look||null);if(k===oppKey)return;oppKey=k;killSpr();oppPlate(null);if(!look){opp.g.clear();opp.B=null;return}if(look.flat&&look.sprite&&look.spriteMeta){opp.g.clear();opp.B=null;makeSpr(look);return}buildActor(opp,look);opp.g.visible=true;opp.g.position.y=SY-.9;opp.g.userData.y0=null;
+    const setOpp=look=>{const k=JSON.stringify(look||null);if(k===oppKey)return;oppKey=k;OPPG=look&&/^k:pika2?$/.test(String(look.cus||""))?{n:0,op:.6,ms:new Set()}:null;killSpr();oppPlate(null);if(!look){opp.g.clear();opp.B=null;return}if(look.flat&&look.sprite&&look.spriteMeta){opp.g.clear();opp.B=null;makeSpr(look);return}buildActor(opp,look);opp.g.visible=true;opp.g.position.y=SY-.9;opp.g.userData.y0=null;
       /* 意見回饋 577：對手用真實 3D（站姿模型）時一樣改成坐著：臀部落在長榻的座面（SY），腿沉進座位裡 */
       if(opp.B&&opp.B.glbP)opp.B.glbP.then(ok=>{if(!ok||oppKey!==k||!opp.B||!opp.B.glb)return;try{opp.g.updateMatrixWorld(true);let b=new T.Box3().setFromObject(opp.B.glb),H=b.max.y-b.min.y;if(Array.isArray(look.stool)&&look.stool[0]>0){opp.B.glb.scale.multiplyScalar((SY-FL)/(look.stool[0]*H));opp.g.updateMatrixWorld(true);b=new T.Box3().setFromObject(opp.B.glb);opp.g.position.y-=b.min.y-FL;oppPlate(look)}else opp.g.position.y-=b.min.y-(SY-H*.27);opp.g.userData.y0=null}catch(e){}}).catch(()=>{})};   /* 開發者：園子的路人棋友、故事人物用 Gemini 畫好的形象（平面立牌） */   /* 意見回饋 377：對手（Pikafish、擂主）一律用 3D 立體的，繞著桌子轉也是立體的 */
     // 我這一側的小帥：平常是自己的；觀戰時換成棋盤近端那一方玩家的小帥（意見回饋 259）
@@ -2429,6 +2441,7 @@
       lk.y+=4*orb*(1-low)+4.5*low;
       cam.position.set(PIV.x+Math.sin(az)*Math.cos(elF)*R,PIV.y+Math.sin(elF)*R,PIV.z+Math.cos(az)*Math.cos(elF)*R);
       const c=Math.cos(yaw),s2=Math.sin(yaw);cam.lookAt(PIV.x+lk.x*c+lk.z*s2,PIV.y+lk.y,PIV.z-lk.x*s2+lk.z*c);cam.rotateX(CAMV.dp);
+      if(OPPG)try{oppGhost()}catch(e){}   /* 11/15 幻影棋客半透明 */
       for(const b of bills){const m=b.m;if(b.cup){const[fx,fz]=b.cup,cx=cam.position.x-fx,cy=cam.position.y-.015,cz=cam.position.z-fz,e=Math.atan2(cy,Math.hypot(cx,cz)),t=clamp((b.hb*Math.cos(e)+.03)/Math.max(cy,.5),0,.5);
           m.position.set(fx+cx*t,.015+cy*t,fz+cz*t)}
         else if(b.anchor){const dx0=cam.position.x-b.anchor[0],dz0=cam.position.z-b.anchor[1],d0=Math.hypot(dx0,dz0)||1;m.position.set(b.anchor[0]-dx0/d0*b.back,b.y,b.anchor[1]-dz0/d0*b.back)}
