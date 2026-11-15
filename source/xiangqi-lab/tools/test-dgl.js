@@ -412,21 +412,24 @@ test("角色卡畫面（整個模組＋假的 sheet）：11/14 極簡版——�
 function realBHTD() { const x = { console, Math, JSON }; vm.createContext(x); vm.runInContext(rd(path.join(M, "07bht-td.js")).split("/* ================= ② 畫面 ================= */")[0] + "\n;this.B=BHTD;", x); return x.B }
 const withBH = (c, ch, L) => { c.BHTD = realBHTD(); c.myChar = () => ch; c.xpInfo = () => ({ L }); c.meImg = () => ""; c.rankInfo = () => ({ name: "七品" }) };
 function i18nT() { const I = rd(path.join(M, "07i18n.js")), x = {}; vm.createContext(x); vm.runInContext(I.slice(I.indexOf("\n", I.indexOf("#I18N-PURE-BEGIN")) + 1, I.indexOf("/* #I18N-PURE-END */")) + ";this.T=i18nText", x); return x.T }
-test("角色卡五項：頭部名字＋修為 Lv（大字）、紅血（定軌力）、藍血（星芒）、攻擊力與防禦兩格＋一行小字、我的角色頁；讀屏照順序念「紅血 定軌力 30／30」", () => {
+test("角色卡五項：頭部名字＋修為 Lv（大字）、紅血、藍血（卡面不寫定軌力、星芒，細則裡才有）、攻擊力與防禦兩格、我的角色頁；讀屏照順序念「體力 30／30」", () => {
   const h = cardHTML(c => withBH(c, "x_spiritgirl", 1));
   /* 11/15 經典狀態欄：頭部（名字、修為、經驗條）→ 面板（紅血、藍血兩條緊貼，再一排攻防）→ 底下「？ 細則」＋我的角色頁 → 收著的細則 */
-  const order = ['class="dgl-khero', "<b>田飛燕</b>", '<span class="dgl-klv"><span>修為</span> Lv 1</span>', 'class="dgl-kpan', '<span>體力</span> <small class="dgl-ksub">定軌力</small></span>', '<span class="dgl-kv" data-dgl="r">30／30</span>',
-    '<span>靈力</span> <small class="dgl-ksub">星芒</small></span>', '<span class="dgl-kv" data-dgl="x">0／20</span>', '<span>攻擊力</span></small><b>108</b>', '<span>防禦力</span></small><b>109</b>',
-    "</section>", 'data-q="all"', "🙂 我的角色頁", "<li>修為越高，攻擊力和防禦力越強（黑洞裡用）。</li>"];
+  /* 11/15 晚開發者「根據 RPG 熱門遊戲重新設計」「精簡／美化／排版，不要出現定軌力和星芒（細節再提即可）」：立繪放大加框、「？」搬到頭部右上角、體力靈力拿掉小字、底下只留主要按鈕 */
+  const order = ['class="dgl-khero', 'class="dgl-kfig"', "<b>田飛燕</b>", '<span class="dgl-klv"><span>修為</span> Lv 1</span>', 'class="dgl-kq dgl-kqt" data-q="all"', 'class="dgl-kpan', '<div class="dgl-krow dgl-k2">', '<span>體力</span></span>', '<span class="dgl-kv" data-dgl="r">30／30</span>',
+    '<span>靈力</span></span>', '<span class="dgl-kv" data-dgl="x">0／20</span>', '<span>攻擊力</span></small><b>108</b>', '<span>防禦力</span></small><b>109</b>',
+    "</section>", "🙂 我的角色頁", "<li>修為越高，攻擊力和防禦力越強（黑洞裡用）。</li>"];
   let at = -1; for (const k of order) { const i = h.indexOf(k); assert.ok(i > at, "順序或內容不對：" + k); at = i }
   assert.ok(h.includes('data-q="all"') && h.includes("dgl-kbar dgl-r") && h.includes("dgl-kbar dgl-b"), "紅條、藍條、一顆「？ 細則」");
-  /* 11/15 開發者「角色卡：天賦／體力／靈力／攻擊／防禦／技能」：天賦在最上、技能在攻防下面，兩列都可點 */
+  /* 11/15 開發者「角色卡：天賦／體力／靈力／攻擊／防禦／技能」：天賦、技能都可點；11/15 晚改成跟攻擊力、防禦力排成四格（天賦、技能兩格並排在攻防下面） */
   const ts = cardHTML(c => { withBH(c, "x_spiritgirl", 6); c.bhtdTal = () => {}; c.bhtdDust = () => ({ t: ["a", "b"] }) });
-  let at2 = -1; for (const k of ['data-go="tal"', "<span>已點亮</span> 2／", "<span>體力</span>", "<span>靈力</span>", "<span>攻擊力</span>", "<span>防禦力</span>", 'data-go="sk"', "<span>已學會</span> 2／5"]) { const i = ts.indexOf(k); assert.ok(i > at2, "六項順序或內容不對：" + k); at2 = i }
+  let at2 = -1; for (const k of ["<span>體力</span>", "<span>靈力</span>", "<span>攻擊力</span>", "<span>防禦力</span>", '<div class="dgl-kts">', 'data-go="tal"', "<span>已點亮</span> 2／", 'data-go="sk"', "<span>已學會</span> 2／5"]) { const i = ts.indexOf(k); assert.ok(i > at2, "六項順序或內容不對：" + k); at2 = i }
+  /* 卡面（收著的細則以前）不出現「定軌力」「星芒」；這兩個詞留在細則裡 */
+  { const face = h.slice(0, h.indexOf('id="dglQ_all"')), more = h.slice(h.indexOf('id="dglQ_all"')); assert.ok(face.length > 200 && !/定軌力|星芒/.test(face), "卡面不寫定軌力、星芒"); assert.ok(more.includes("體力・定軌力") && more.includes("靈力・星芒"), "細則裡才提"); assert.ok(!h.includes("dgl-ksub") && !h.includes("dgl-kqb"), "小字和底下那顆「？ 細則」都拿掉了"); assert.equal(h.split('data-q="all"').length, 2, "細則鈕只有頭部那一顆") }
   assert.ok(!h.includes('data-go="tal"'), "黑洞天賦程式沒載入：天賦、技能兩列不畫");
   const xh = cardHTML(c => { withBH(c, "x_spiritgirl", 4); c.xpInfo = () => ({ L: 4, rest: 43, need: 140 }) }); assert.ok(xh.includes("width:30.7%") && xh.includes("<span>距離下一級</span> 43／140"), "頭部經驗條：43／140");
   const t = h.replace(/<[^>]*>/g, " ").replace(/\s+/g, " ");
-  assert.ok(t.includes("體力 定軌力 30／30") && t.includes("靈力 星芒 0／20") && t.includes("攻擊力 108") && t.includes("防禦力 109"), "去掉標籤後念得出來：" + t.slice(0, 200));
+  assert.ok(t.includes("體力 30／30") && t.includes("靈力 0／20") && t.includes("攻擊力 108") && t.includes("防禦力 109"), "去掉標籤後念得出來：" + t.slice(0, 200));
   const dk = h.slice(h.indexOf('class="dgl-kad"')); assert.ok(!/×/.test(dk.slice(0, dk.indexOf("dgl-kme"))), "攻擊力、防禦力那一列和說明句不出現倍數 ×");
   assert.ok(SRC.includes('sheet("🙂 我的角色",') && !SRC.includes('sheet("🙂 "+(nm'), "11/14 選 B：卡片標題固定「我的角色」，名字只在頭部出現一次");
   assert.equal(h.split("田飛燕").length - 1, 1, "卡片內容裡名字只出現一次");

@@ -1,7 +1,7 @@
 {
  "ref": "origin/main",
- "commit": "6fc591bac0ac2062ca6e71f41820760705fbed3f",
- "madeAt": "2026-11-15T11:16:52.855Z",
+ "commit": "4d0a4c07724bb95a76eb53ccd30270cf3b7ad2dd",
+ "madeAt": "2026-11-15T11:30:26.200Z",
  "files": {
   "xiangqi-db/m/00-util.js": "local=live",
   "xiangqi-db/m/01-board.js": "local=live",
@@ -466,8 +466,8 @@
   "test-party-battle.js": "指令排除：七星各自等級的黑洞戰鬥規則還在開發者電腦上做，對應的程式還沒發布",
   "test-party-core.js": "指令排除：七星陸續加入與各自等級還在開發者電腦上做，對應的模組（07pty-party.js）還沒發布"
  },
- "version": "20261115-1915",
- "indexSha1": "c8df10f08a11",
+ "version": "20261115-1928",
+ "indexSha1": "d33cbfe9906f",
  "toLF": [
   "xiangqi-lab/tools/build-site.js"
  ],
