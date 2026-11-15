@@ -157,10 +157,10 @@ test("〔原始碼〕接線：m.html 在星門圍城後面 include；關卡卡�
   assert.ok(!/\r/.test(fs.readFileSync(path.join(ROOT,"xiangqi-db/m/07bhw-wheel.js"),"utf8")),"LF");
   assert.ok(!/[\x00-\x08\x0b\x0c\x0e-\x1f]/.test(WSRC),"沒有控制字元")});
 
-test("關卡卡片：開發者模式才有，卡上只有「車輪戰・試玩」", ()=>{
+test("關卡卡片：11/15 開發者「可以上線」→ 所有玩家都看得到，卡上只有「車輪戰」", ()=>{
   const on=load({DEVMODE:()=>true}),off=load({DEVMODE:()=>false});
-  const h=vm.runInContext("whlCard()",on);assert.match(h,/data-whl="1"/);assert.equal(h.replace(/<[^>]+>/g,""),"車輪戰・試玩");
-  assert.equal(vm.runInContext("whlCard()",off),"");assert.equal(vm.runInContext("whlCard()",load()),"","沒有 DEVMODE 也不出現")});
+  const h=vm.runInContext("whlCard()",on);assert.match(h,/data-whl="1"/);assert.equal(h.replace(/<[^>]+>/g,""),"車輪戰");
+  assert.equal(vm.runInContext("whlCard()",off),h,"不是開發者也一樣");assert.equal(vm.runInContext("whlCard()",load()),h,"沒有 DEVMODE 也出現")});
 
 test("名稱不撞：07bhw-wheel.js 宣告的頂層名字，m/ 和 src/ 其他檔都沒有宣告", ()=>{
   const names=new Set();for(const m of WSRC.matchAll(/^(?:const|let|function|var)\s+([A-Za-z_$][\w$]*)/gm))names.add(m[1]);for(const m of WSRC.matchAll(/^let ([^;]+);/gm))for(const x of m[1].matchAll(/(?:^|,)\s*([A-Za-z_$][\w$]*)\s*=/g))names.add(x[1]);

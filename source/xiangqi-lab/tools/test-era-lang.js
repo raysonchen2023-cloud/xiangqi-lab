@@ -198,7 +198,10 @@ test("英文模式：首頁「⛵ 下一步・…」照 mnqNextOf 的每一種�
   ];
   const texts = new Set();
   for (const [S, E] of cases) texts.add(Q.mnqNextTxt(Q.mnqNextOf(S, E)));
-  assert.ok([...texts].some(t => /^第.章即將開放$/.test(t)), "有「第二章即將開放」這一種：" + [...texts].join("｜"));
+  /* 11/15 星槎遠征令拿掉（07mnq MNQ_PANEL_ON＝false）：主線做完是「更多玩法」，不再算出「第N章即將開放」 */
+  assert.ok(!/MNQ_PANEL_ON=true/.test(MNQ), "遠征令面板維持拿掉");
+  assert.ok(![...texts].some(t => /即將開放/.test(t)), "不再有「即將開放」：" + [...texts].join("｜"));
+  assert.ok(texts.has("更多玩法"), "主線做完帶去更多玩法：" + [...texts].join("｜"));
   /* 第二章上線後（或開發者試玩）的「開往秦・第二章」、遠征令面板 */
   for (const [e] of Q.MNQ_CH.slice(1)) texts.add("開往" + Q.mnqShort(e) + "・第" + Q.MNQ_CN[Q.MNQ_CH.findIndex(c => c[0] === e)] + "章");
   texts.add("星槎遠征令");

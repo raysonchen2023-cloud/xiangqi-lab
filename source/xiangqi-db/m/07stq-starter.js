@@ -10,7 +10,7 @@
    畢業（第六個任務按「完成練習」或按跳過）：mnqGrant("a1") 一次領七星授印禮的入門物品（稱號、提示棋 5、家鄉棋盤、圖鑑第一頁），不演儀式；
      做完六個任務的人蓋「練」字朱印（借 07mnq 的 mnqStamp／mnqRay 動畫，一下就好）；接著選角（05 obCarousel），選完回首頁。
    預設角色：本命棋子是俥的齊轍（x_swordboy）。一開始就用 stqJourney 建一段旅程（跟 05b journeyStart 同樣的鍵，但不走黑洞序局、不出序幕），選角時換人用 05b journeyRepick。
-   首頁原本的「⛵ 下一步」：07mnq 的 mnqHomeSync／按鈕先問 stqHome()，改成「更多玩法」清單（stqMore：對弈電腦、一盞茶殘局、棋力測驗、新手訓練營；有遠征令進度的人另有一顆遠征令）；
+   首頁原本的「⛵ 下一步」：07mnq 的 mnqHomeSync／按鈕先問 stqHome()，改成「更多玩法」清單（stqMore：對弈電腦、一盞茶殘局、棋力測驗、新手訓練營；有遠征令進度的人另有一顆遠征令——11/15 遠征令拿掉，那顆跟著 07mnq MNQ_PANEL_ON 關掉）；
      練習還沒做完（重新整理、從別頁回來）＝「🔰 繼續新手練習」。黑洞塔防不放。
    老玩家（選過角、有對局或解題紀錄、存檔格、舊玩家過渡、做過第一章或授印禮、做過黑洞序局、秒開局…）：stqOldOf 判斷，記 {st:"old"}，不跳任務、不發獎勵。
    存檔 store "stq"（localStorage m_stq；整支手機一份、不在 JOURNEY_KEYS：做過一次，開新旅程也不重來）＝
@@ -232,7 +232,7 @@ function stqPick(c){const U=STQ_UI;
 /* ---------- 首頁按鈕（07mnq mnqHomeSync／按鈕先問這裡）：{t:字}；null＝照 07mnq 原本的「下一步」 ---------- */
 function stqHome(){if(!STQ_ON)return null;const S=stqSt0();if(S&&S.st==="run")return{k:"run",t:"🔰 繼續新手練習"};return{k:"more",t:"更多玩法"}}
 function stqHomeGo(){const h=stqHome();if(!h)return false;if(h.k==="run"){if(stqCan())stqOpen();return true}stqMore();return true}
-function stqMore(){stqCss();let mq=false;try{const M=mnqSt();mq=!!(M.gift.a1||Object.keys(M.seg).length)}catch(e){}
+function stqMore(){stqCss();let mq=false;if(typeof MNQ_PANEL_ON!=="undefined"&&MNQ_PANEL_ON)try{const M=mnqSt();mq=!!(M.gift.a1||Object.keys(M.seg).length)}catch(e){}   /* 11/15 遠征令拿掉（07mnq MNQ_PANEL_ON＝false）：不放「⛵ 星槎遠征令」那顆 */
   const L=[["🤖","對弈電腦",typeof CpuRoom==="function"?"#/cpuroom":"#/cpu"],["🍵","一盞茶殘局","#/canju"],["📝","棋力測驗","#/quiz"],["🔰","新手訓練營","#/camp"]];
   sheet("更多玩法",b=>{b.innerHTML=`<div class="stq-more">${L.map(([i,t,h])=>`<button type="button" class="item" data-h="${h}"><span class="lb" style="font-size:22px">${i}</span><span class="tx"><b>${esc(t)}</b></span></button>`).join("")}${mq?`<button type="button" class="btn ghost" data-k="mnq" style="width:100%">⛵ 星槎遠征令</button>`:""}</div>`;
     b.querySelectorAll("[data-h]").forEach(x=>x.onclick=()=>{try{vibrate(6)}catch(e){}closeSheet();location.hash=x.dataset.h});

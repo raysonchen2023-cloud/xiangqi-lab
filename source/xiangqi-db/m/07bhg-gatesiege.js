@@ -6,7 +6,7 @@
       入侵卒、護陣卒、截援、星核同批次結算（雙方同時歸零判和）、八回合無進展判和、七星 35 招（修為 1／6／12／17／23 解鎖、最多帶 4 招）、星樞候選評估 pick。
    ② 畫面（gsv*）：選關卡片 gsvSelect、對局 HUD（#gsvEn、#gsvMe、#gsvOv）、結果視窗；一律平面棋盤（bhtdFlat 問 gsvIs）。
    ③ 接線：包一層 window.XQ_TD（local.js 只認這個），td.mode 是星門圍城就交給 GSV，其他照舊交給 BHTD。
-   入口：黑洞關卡卡片（bhtdSelect）的「🌠 星門圍城・試玩」；本機主控台 gsvOpen()。
+   入口：黑洞關卡卡片（bhtdSelect）的「🌠 星門圍城」；本機主控台 gsvOpen()。
    存檔鍵 gsv＝{mv:"gate-siege-v1",c:{關:{w,l,d,best}},sk:{角色:[招]}}，跟舊版三星（bhtd、bhtdDust）分開。 */
 const GSV=(()=>{
   const MODE="gate-siege-v1",MV=1;
@@ -455,8 +455,9 @@ body.gsv-on .view.fixed>#bbox>svg{width:100%!important;height:100%!important;max
  .gsv-sks{grid-template-columns:repeat(2,minmax(0,1fr))}.gsv-tip{position:static;margin-bottom:6px;flex-wrap:wrap;border-radius:10px}
  body.gsv-on .view.fixed>#bbox{top:var(--bhTop,44px)!important;bottom:0!important;left:calc(200px + env(safe-area-inset-left,0px))!important;right:calc(210px + env(safe-area-inset-right,0px))!important}}
 @media (prefers-reduced-motion:reduce){.gsv-mk.tg{animation:none}}`;document.head.append(s)}
-/* ---------- 選關卡片（黑洞關卡卡片的「🌠 星門圍城・試玩」、主控台 gsvOpen()） ---------- */
-function gsvCard(){if(!(typeof DEVMODE==="function"&&DEVMODE()))return"";return`<button type="button" class="bt-card bt-gsvc" data-gsv="1" aria-label="星門圍城・試玩：新玩法候選，第 1、3、6 關"><div class="hd"><b>🌠 星門圍城・試玩</b></div></button>`}
+/* ---------- 選關卡片（黑洞關卡卡片的「🌠 星門圍城」、主控台 gsvOpen()） ---------- */
+function gsvCard(){   /* 11/15 開發者試玩後「有挑戰性、沒有那麼無腦獲勝了，可以上線」：開給所有玩家（原本只給開發者） */
+  return`<button type="button" class="bt-card bt-gsvc" data-gsv="1" aria-label="星門圍城，第 1、3、6 關"><div class="hd"><b>🌠 星門圍城</b></div></button>`}
 const gsvChar=()=>{let c="";try{c=(typeof myChar==="function"&&myChar())||store.get("pChar","")}catch(e){}return GSV.CH[c]?c:"x_swordboy"};
 const gsvL=()=>{try{return typeof xpInfo==="function"?xpInfo().L:1}catch(e){return 1}};
 function gsvRulesHTML(){return`<ul class="gsv-rules">
@@ -477,7 +478,7 @@ function gsvSelect(k,cover){gsvCss();const ck=gsvChar(),L=gsvL(),st=GSV.stats(ck
     /* 11/15 開發者「每一個關卡字太多，用極簡」：卡上只留關名＋打過的戰績，數值和說明只給讀屏 */
     return`<button type="button" class="gsv-card${n===sel?" on":""}" data-n="${n}" aria-label="${esc(`第 ${n} 關 ${V.nm}（${V.th}），星樞 HP ${V.hp}、ATK ${V.atk}、DEF ${V.def}，推算 ${V.depth} 步，${rec}${best}。${V.say}`)}"><b>第 ${n} 關・${esc(V.nm)}</b>${R.w||R.l||R.d?`<small aria-hidden="true">${R.w?"✓ ":""}${rec}</small>`:""}</button>`};
   const skH=()=>pool.map(s=>`<label class="${pk.includes(s.id)?"on":""}${s.lv>L?" lk":""}" data-id="${s.id}" title="${esc(s.d)}">${s.lv>L?"🔒 Lv"+s.lv+" ":""}${esc(s.nm)}・${s.cost} 靈</label>`).join("");
-  const m=modal(`<div class="em">🌠</div><h2>星門圍城・試玩</h2><div class="gsv-cards">${GSV.LVN.map(card).join("")}</div><p style="font-size:13px;margin-bottom:2px">招式（最多 4 招）</p><div class="gsv-skl">${skH()}</div>
+  const m=modal(`<div class="em">🌠</div><h2>星門圍城</h2><div class="gsv-cards">${GSV.LVN.map(card).join("")}</div><p style="font-size:13px;margin-bottom:2px">招式（最多 4 招）</p><div class="gsv-skl">${skH()}</div>
     <details><summary>星門圍城規則</summary>${gsvRulesHTML()}</details>`,
     [["⚔ 出戰",()=>gsvStart(sel,k,cover,pk)],["‹ 回黑洞關卡",()=>{try{if(typeof bhtdSelect==="function")bhtdSelect(k,cover)}catch(e){}},true]],"prolog gsv-sel");
   if(!m)return;m.addEventListener("click",e=>{const c=e.target.closest(".gsv-card");if(c){sel=+c.dataset.n;try{vibrate(5)}catch(z){}m.querySelector(".gsv-cards").innerHTML=GSV.LVN.map(card).join("");return}

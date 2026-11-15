@@ -108,14 +108,15 @@ function whlProg(){let o=null;try{o=store.get("whl",null)}catch(e){}const P=o&&t
   return{mv:WHL.MODE,c:Object.assign({w:0,l:0},P.c),g:Array.isArray(P.g)?P.g:[],auto:P.auto!==false,sk:Object.assign({},P.sk),cur:P.cur&&P.cur.mode===WHL.MODE&&P.cur.mv===WHL.MV&&Array.isArray(P.cur.bs)?P.cur:null}}
 function whlSave(){const P=whlProg();P.cur=WHL_M;store.set("whl",P)}
 /* 黑洞關卡卡片（07bht-td.js bhtdSelect，星門圍城那張後面）：只在開發者模式顯示，卡上只寫名稱（開發者 11/15：關卡字要極簡） */
-function whlCard(){if(!(typeof DEVMODE==="function"&&DEVMODE()))return"";return`<button type="button" class="bt-card bt-whlc" data-whl="1" aria-label="車輪戰・試玩"><div class="hd"><b>車輪戰・試玩</b></div></button>`}
+function whlCard(){   /* 11/15 開發者「可以上線」：開給所有玩家（原本只給開發者） */
+  return`<button type="button" class="bt-card bt-whlc" data-whl="1" aria-label="車輪戰"><div class="hd"><b>車輪戰</b></div></button>`}
 function whlOpen(){if(typeof GSV==="undefined")return;const P=whlProg();if(P.cur&&!P.cur.over){WHL_M=P.cur;WHL_Q={run:null,list:[]};whlShow();return}whlSetup()}
 if(typeof window!=="undefined")window.whlOpen=whlOpen;
 const whlCk=()=>{let c="";try{c=(typeof myChar==="function"&&myChar())||store.get("pChar","")}catch(e){}return GSV.CH[c]?c:"x_swordboy"};
 const whlL=()=>{try{return typeof xpInfo==="function"?xpInfo().L:1}catch(e){return 1}};
 function whlSetup(){whlCss();const ck=whlCk(),L=whlL(),P=whlProg(),pool=GSV.SK.filter(s=>s.ch===ck);let pk=GSV.skPick(ck,L,P.sk[ck]);
   const skH=()=>pool.map(s=>`<label class="${pk.includes(s.id)?"on":""}${s.lv>L?" lk":""}" data-id="${s.id}" title="${esc(s.d)}">${s.lv>L?"🔒 ":""}${esc(s.nm)}</label>`).join("");
-  const m=modal(`<div class="em">🎡</div><h2>車輪戰・試玩</h2><p class="muted">兩盤都贏才過關</p><p style="font-size:13px;margin-bottom:2px">招式（最多 4 招）</p><div class="whl-skl">${skH()}</div>`,
+  const m=modal(`<div class="em">🎡</div><h2>車輪戰</h2><p class="muted">兩盤都贏才過關</p><p style="font-size:13px;margin-bottom:2px">招式（最多 4 招）</p><div class="whl-skl">${skH()}</div>`,
     [["開始",()=>whlNew(pk)],["返回",null,true]],"prolog whl-sel");
   if(!m)return;m.addEventListener("click",e=>{const l=e.target.closest(".whl-skl label");if(!l)return;e.preventDefault();const s=GSV.SKM[l.dataset.id];if(s.lv>L){toast(`🔒 修為 Lv ${s.lv} 解鎖「${s.nm}」`);return}
     if(pk.includes(s.id)){if(pk.length>1)pk=pk.filter(x=>x!==s.id)}else if(pk.length<4)pk=pk.concat([s.id]);else{toast("最多帶 4 招");return}m.querySelector(".whl-skl").innerHTML=skH()})}
@@ -160,8 +161,8 @@ function whlCss(){if(document.getElementById("whlCss"))return;const s=document.c
 .bt-sel .bt-card.bt-whlc{border-style:double;border-width:3px;border-color:#d9a400}
 @media (prefers-reduced-motion:reduce){.whl-bd.hop,.whl-mk.tg,.whl-fl{animation:none}.whl-fl{display:none}}`;document.head.append(s)}
 function whlShow(){if(typeof document==="undefined")return;whlCss();let ov=document.getElementById("whlOv");
-  if(!ov){ov=document.createElement("div");ov.id="whlOv";ov.setAttribute("role","dialog");ov.setAttribute("aria-label","車輪戰・試玩");
-    ov.innerHTML=`<div class="whl-top"><b>車輪戰・試玩</b><span class="whl-rd"></span><button type="button" data-x="set" aria-label="設定">⚙</button><button type="button" data-x="quit" aria-label="離開">✕</button></div>
+  if(!ov){ov=document.createElement("div");ov.id="whlOv";ov.setAttribute("role","dialog");ov.setAttribute("aria-label","車輪戰");
+    ov.innerHTML=`<div class="whl-top"><b>車輪戰</b><span class="whl-rd"></span><button type="button" data-x="set" aria-label="設定">⚙</button><button type="button" data-x="quit" aria-label="離開">✕</button></div>
       <div class="whl-ths" role="tablist" aria-label="各盤"></div><div class="whl-en"></div><div class="whl-bw"><div class="whl-bd"><div class="whl-mks"></div></div></div><div class="whl-msg" aria-live="polite"></div><div class="whl-me"></div>`;
     document.body.append(ov);WHL_BD=Board(sq=>whlTap(sq));const bd=ov.querySelector(".whl-bd");bd.insertBefore(WHL_BD.svg,bd.firstChild);
     ov.addEventListener("click",whlClick);addEventListener("resize",whlFit);addEventListener("hashchange",whlHide)}
@@ -278,5 +279,5 @@ async function whlPump(){if(!WHL_LIVE||!WHL_M||WHL_Q.run)return;const C=whlC();i
 /* 整場結算一次 */
 function whlEnd(){const M=WHL_M;if(!M||!M.over)return;const x=WHL.record(whlProg(),M);x.prog.cur=M;store.set("whl",x.prog);if(!WHL_LIVE||WHL_SEEN===M.id)return;WHL_SEEN=M.id;
   const win=M.over.win,res=M.bs.map(B=>`第 ${B.i+1} 盤 ${whlResTx(B)||"—"}`).join("・");
-  setTimeout(()=>{if(!WHL_LIVE)return;modal(`<div class="em">${win?"✨":"🌀"}</div><h2>${win?"過關":"未過關"}</h2><p class="muted">${esc(M.over.why)}・${esc(res)}</p><p class="muted" style="font-size:12px">試玩不給星塵、修為、定軌力</p>`,
+  setTimeout(()=>{if(!WHL_LIVE)return;try{if(typeof grwArm==="function")grwArm("whl")}catch(e){}/* 11/15 對戰後的角色成長（07grw） */modal(`<div class="em">${win?"✨":"🌀"}</div><h2>${win?"過關":"未過關"}</h2><p class="muted">${esc(M.over.why)}・${esc(res)}</p><p class="muted" style="font-size:12px">試玩不給星塵、修為、定軌力</p>`,
     [["再來一場",()=>whlSetup()],["離開",()=>whlHide(),true],["看棋盤",null,true]],"res")},900)}

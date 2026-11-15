@@ -14,7 +14,10 @@
    存檔 store "mnq"（JOURNEY_KEYS 的 m_mnq，讀檔、開新旅程跟著換）＝{seg:{c1o,c1m,c1e,c2o…:看完時間}, qte:{c1,c2…:{mist,hint,demo,at}}, lamp:{朝代:亮燈時間}, reach:{朝代:星槎第一次停到的時間}, gift:{a1,a2,a6:{朝代:時間}},
      title:{xin,chu}, page:[札記頁朝代], music:["朝代/檔名"], clue:{朝代:線索}, a2cj:額外題號}。
    自動跳禮包（mnqTick）只在首頁、星槎頁、沒有別的視窗時；無頭瀏覽器（navigator.webdriver）不自動跳，免得擋到別的自動測試（localStorage xq_mnqQa＝"1" 才跳，給本模組的實測用）。
-   名稱前綴 mnq／MNQ（11/13 已 grep 確認沒人用）。 */
+   名稱前綴 mnq／MNQ（11/13 已 grep 確認沒人用）。
+   11/15 開發者決定主線電影只做第一章，其他朝代不做（第二章已下架）→「星槎遠征令」面板整個拿掉（開關 MNQ_PANEL_ON＝false；程式留著沒刪）：
+     入口全拿掉（下一步最後一格改成「更多玩法」k:"more"、遠征補給的按鈕、千秋大百科、07stq 更多玩法清單那顆），玩家看不到 13 章清單和「即將開放」；
+     ♪ 配樂收藏搬到設定 → 聲音 → 氛圍（背景音樂那張卡，05-settings 呼叫 mnqSndRow），同一處留「🎬 再看第一章」；札記清單 mnqNotes 從千秋大百科進。 */
 const MNQ_CH=[["classic","古典・河圖初渡"],["qin","秦・日落之前"],["han","漢・長安星火"],["sanguo","三國・赤壁連環"],["weijin","魏晉・竹林清談"],["nanbei","南北朝・飛燕過河"],["sui","隋・運河聽潮"],
   ["tang","唐・長安燈會"],["wudai","五代・驛路風旗"],["song","宋・汴梁點茶"],["yuan","元・草原星路"],["ming","明・徽州當鋪"],["qing","清・揚州急遞"]];
 /* 主線各章的資料（11/14 接第二章時整理）：加一章＝這裡加一筆，07mnf 加圖（MNF_IMG）、三段電影（MNF_FILMS）、危機題（MNF_QTE）、儀式圖組（MNF_RITE_SET），流程程式不用改。
@@ -40,6 +43,7 @@ const mnqShort=era=>String((MNQ_CH.find(c=>c[0]===era)||[0,era])[1]).split("・"
 const MNQ_GIFT={a1:{nm:"七星授印禮",seal:"授",say:"七星授印已成，雲河星槎為你點亮第一段航路。"},a2:{nm:"破局錦囊",seal:"勝",say:"你破開第一局迷霧，這份錦囊記下你的初勝。"},
   a6:{nm:"朝代遠征補給",seal:"補",say:"新朝渡口已至，請收下此地的樂聲、線索與圖鑑。"}};
 const MNQ_HINT_A1=5;
+const MNQ_PANEL_ON=false;   /* 11/15 開發者選「整個拿掉」星槎遠征令面板：false＝所有入口都不出現（mnqPanel 改開配樂收藏），true＝退回舊面板 */
 /* ---------- 存檔、環境 ---------- */
 function mnqSt(){let s=null;try{s=store.get("mnq",null)}catch(e){}s=s&&typeof s==="object"?s:{};for(const k of["seg","qte","lamp","gift","title","clue","reach","vn"])if(!s[k]||typeof s[k]!=="object")s[k]={};
   if(!s.gift.a6||typeof s.gift.a6!=="object")s.gift.a6={};for(const k of["page","music"])if(!Array.isArray(s[k]))s[k]=[];return s}
@@ -65,6 +69,7 @@ function mnqNextOf(S,E){S=S||{seg:{},gift:{a6:{}},lamp:{}};E=E||{};const G=S.gif
   if(E.home&&E.at!==E.home&&!A6[E.home])return{k:"home",era:E.home,t:"回"+(E.homeLabel||"家鄉")};
   const nx=MNQ_CH.find(([e])=>MNQ_CHAP[e]&&!mnqDone(S,e));
   if(nx)return{k:"ship",era:nx[0],t:"開往"+mnqShort(nx[0])+"・第"+MNQ_CN[mnqChN(nx[0])-1]+"章"};   /* 下一章有資料、還沒停到那一朝：帶去星槎開船 */
+  if(!MNQ_PANEL_ON)return{k:"more",t:"更多玩法"};   /* 11/15 遠征令拿掉：主線做完就帶去「更多玩法」，不再說第幾章即將開放 */
   const soon=MNQ_CH.findIndex(([e])=>!MNQ_CHAP[e]);
   return soon<0?{k:"panel",t:"星槎遠征令"}:{k:"panel",t:"星槎遠征令",soon:soon+1}}
 /* 主線解題比例（定案 ≤30%）：每段電影的秒數 vs 危機題預估秒數 */
@@ -117,6 +122,8 @@ function mnqCss(){if(document.getElementById("mnqCss"))return;const s=document.c
 .mnq-note-ev li::before{content:"";position:absolute;left:-21px;top:6px;width:10px;height:10px;border-radius:50%;background:#c8963e;box-shadow:0 0 0 3px rgba(200,150,62,.25)}
 .mnq-note-ev b{display:block;font-size:13px;color:#8a6a3b;font-weight:700}.mnq-note-ev span{font:600 16px var(--serif,serif)}
 .mnq-mu{display:flex;align-items:center;gap:8px;width:100%;min-height:46px;padding:6px 12px;margin:0 0 6px;border-radius:12px;border:1px solid rgba(138,90,43,.3);background:rgba(246,238,220,.5);font:700 17px var(--serif,serif);color:inherit;text-align:left}
+.mnq-sr{display:flex;align-items:center;justify-content:space-between;gap:8px;width:100%;min-height:48px;padding:8px 0;border:0;border-top:1px solid var(--line);background:none;color:inherit;font:inherit;text-align:left;cursor:pointer}
+.mnq-sr small{display:block;font-size:13px;color:var(--muted)}.mnq-sr>i{flex:none;font-style:normal;font-size:22px;color:var(--muted)}.mnq-sr:focus-visible{outline:3px solid #E8C77A;outline-offset:2px}
 #mnqGf{justify-content:safe center}
 @media (max-height:740px){#mnqGf{gap:10px;padding-top:14px}#mnqGf .gf-st{width:120px;height:120px}#mnqGf .gf-seal{inset:14px;font-size:50px;border-width:5px}#mnqGf h2{font-size:27px}#mnqGf .gf-say{font-size:15px}#mnqGf .gf-it{gap:6px}#mnqGf .gf-it div{padding:6px 12px;font-size:17px}#mnqGf button{min-height:48px;font-size:19px}#mnqGf button.g{min-height:44px}}
 @media (prefers-reduced-motion:reduce){.mnq-next,#mnqGf *{animation:none!important}#mnqGf .gf-seal,#mnqGf .gf-it{opacity:1;transform:rotate(-6deg)}#mnqGf .gf-it{transform:none}}`;document.head.append(s)}
@@ -125,7 +132,7 @@ function mnqGift(k,era,after){mnqCss();const G=MNQ_GIFT[k];if(!G)return;const go
   const el=era&&typeof eraLabel==="function"?eraLabel(era):"";let items=[],btn=null;
   if(k==="a1"){items=[["🏠","家鄉棋盤・"+(E.homeLabel||"經典")],["🏅","稱號「雲河新使」"],["💡","提示棋 ×"+MNQ_HINT_A1],["📜","圖鑑入門卷"],["⛵","第一章・河圖初渡"]];btn=["⛵ 開始第一章",()=>mnqChapter("classic")]}
   if(k==="a2"){items=[["🏅","稱號「初勝」"],["🍵","一盞茶額外題"]];btn=["🍵 去解額外題",async()=>{const id=await mnqA2Pick();location.hash=id?"#/canju/"+encodeURIComponent(id):"#/canju"}]}
-  if(k==="a6"){items=[["♪",el+"的配樂"],["🌲","景點線索"],["📜","札記一頁・"+el]];btn=["♪ 打開遠征令",()=>mnqPanel()];if(got)mnqMusicAdd(era)}
+  if(k==="a6"){items=[["♪",el+"的配樂"],["🌲","景點線索"],["📜","札記一頁・"+el]];btn=MNQ_PANEL_ON?["♪ 打開遠征令",()=>mnqPanel()]:["♪ 配樂收藏",()=>mnqMusic()];if(got)mnqMusicAdd(era)}
   if(k==="a2"&&got)mnqA2Pick();
   const o=document.createElement("div");o.id="mnqGf";o.setAttribute("role","dialog");o.setAttribute("aria-modal","true");o.setAttribute("aria-label",G.nm);
   o.innerHTML=`<div class="gf-st"><div class="gf-ray"></div><div class="gf-seal" data-noi18n>${esc(G.seal)}</div></div><h2>${esc(G.nm)}${el&&k==="a6"?"・"+esc(el):""}</h2><p class="gf-say">${esc(G.say)}</p>
@@ -191,6 +198,7 @@ function mnqGo(n){n=n||mnqNextOf(mnqSt(),mnqEnv());if(typeof vibrate==="function
   if(n.k==="film")return mnqChapter(n.era||"classic");
   if(n.k==="cpu"){const go=()=>{location.hash="#/cpu"};try{api("/play/new",{human:"r",lx:1,ranked:false}).then(go,go)}catch(e){go()}return}
   if(n.k==="home"||n.k==="ship"){location.hash="#/adventure";setTimeout(()=>{try{shipGoTo(n.era)}catch(e){}},700);return}   /* ship：下一章要星槎停到那一朝才開放（航線還沒開到那一站時 shipGoTo 自己會說） */
+  if(n.k==="more"||!MNQ_PANEL_ON){if(typeof stqMore==="function")return stqMore();location.hash="#/cpu";return}   /* 11/15 遠征令拿掉：更多玩法清單（07stq） */
   mnqPanel()}
 /* ---------- 首頁「下一步」：包一層 07z homeMap，放在底部那一條的最上面（同一個直排容器，不會跟入口標籤、大按鈕疊在一起） ---------- */
 function mnqHomeBtn(v){const P=v&&v.querySelector&&v.querySelector(".home-page"),bar=P&&P.querySelector(".hm-go-bar");if(!bar||bar.querySelector(".mnq-next"))return;mnqCss();
@@ -207,9 +215,9 @@ function mnqHomeSync(){const b=document.getElementById("mnqNext");if(!b)return;c
   const n=mnqNextOf(mnqSt(),mnqEnv()),t="⛵ 下一步・"+mnqNextTxt(n);
   if(b.dataset.t!==t){b.dataset.t=t;b.textContent=t;b.setAttribute("aria-label","下一步："+mnqNextTxt(n))}if(n.k==="film")try{const C=MNQ_CHAP[n.era]||{};if(C.vn)mnvPre(C.vn);else mnfPre(n.id,C.set)}catch(e){}}
 if(typeof homeMap==="function"){const f0=homeMap;homeMap=function(v){const r=f0.apply(this,arguments);try{mnqHomeBtn(v)}catch(e){}return r}}
-/* ---------- 星槎遠征令面板 ---------- */
+/* ---------- 星槎遠征令面板（11/15 MNQ_PANEL_ON＝false：拿掉，萬一還有人叫就改開配樂收藏） ---------- */
 let MNQ_AU=null;
-function mnqPanel(){mnqCss();const S=mnqSt(),E=mnqEnv(),n=mnqNextOf(S,E);
+function mnqPanel(){if(!MNQ_PANEL_ON)return mnqMusic();mnqCss();const S=mnqSt(),E=mnqEnv(),n=mnqNextOf(S,E);
   sheet("⛵ 星槎遠征令",b=>{const lit=MNQ_CH.filter(c=>S.lamp[c[0]]).length;
     b.innerHTML=`<p style="margin:0 0 8px;font:800 17px var(--serif,serif)">航線亮了 ${lit}／13 盞</p><div class="mnq-rt">${MNQ_CH.map(([e,nm],i)=>{const on=!!S.lamp[e],has=!!MNQ_SEGS[e],pk=MNQ_PEEK&&has&&!!(MNQ_CHAP_ALL[e]&&MNQ_CHAP_ALL[e].off),ok=on||pk||mnqOpen(S,E,e),cur=ok&&!on;
       return`<button type="button" class="mnq-ln ${on?"on":cur?"cur":"off"}" data-e="${e}"${ok?"":' aria-disabled="true"'}><span class="lp">${on?"🏮":i+1}</span>${esc(nm)}<em>${pk&&!on?"🛠 試玩":on?"再看一次":cur?"前往":has?"停靠"+esc(mnqShort(e))+"後開放":"即將開放"}</em></button>`}).join("")}</div>
@@ -219,6 +227,25 @@ function mnqPanel(){mnqCss();const S=mnqSt(),E=mnqEnv(),n=mnqNextOf(S,E);
     b.querySelectorAll(".mnq-ln").forEach(x=>x.onclick=()=>{const e=x.dataset.e;if(!MNQ_SEGS[e]){toast("這一章即將開放");return}if(!S.lamp[e]&&!(MNQ_PEEK&&MNQ_CHAP_ALL[e].off)&&!mnqOpen(S,E,e)){toast(MNQ_CH.slice(0,mnqChN(e)-1).every(([p])=>!MNQ_CHAP[p]||mnqDone(S,p))?"星槎停靠"+mnqShort(e)+"，這一章就開放":"先看完上一章");return}closeSheet();setTimeout(()=>mnqChapter(e),250)});
     if(S.music.length&&typeof bgmTitles==="function")bgmTitles().then(T=>b.querySelectorAll(".mnq-mu").forEach(x=>{const t=(T||{})[x.dataset.m];if(t)x.querySelector(".mnq-mt").textContent="《"+t+"》"})).catch(()=>{});
     b.querySelectorAll(".mnq-mu").forEach(x=>x.onclick=()=>mnqListen(x));mnqDevRow(b)})}
+/* ---------- 11/15 ♪ 配樂收藏（從遠征令面板搬出來）：收藏資料、解鎖規則照舊（S.music；朝代遠征補給收那一朝前 2 首）；入口＝設定 → 聲音 → 氛圍（mnqSndRow）、遠征補給的按鈕 ---------- */
+function mnqMusic(){mnqCss();const S=mnqSt();
+  sheet("♪ 配樂收藏",b=>{b.innerHTML=S.music.length?S.music.map(m=>`<button type="button" class="mnq-mu" data-m="${esc(m)}">▶ <span class="mnq-mt">${esc(m)}</span></button>`).join(""):`<p class="muted">星槎停到新朝代，就會收進那一朝的配樂。</p>`;
+    if(S.music.length&&typeof bgmTitles==="function")bgmTitles().then(T=>b.querySelectorAll(".mnq-mu").forEach(x=>{const t=(T||{})[x.dataset.m];if(t)x.querySelector(".mnq-mt").textContent="《"+t+"》"})).catch(()=>{});
+    b.querySelectorAll(".mnq-mu").forEach(x=>x.onclick=()=>mnqListen(x))})}
+/* 札記清單（從遠征令面板搬出來）：千秋大百科「星槎遠征札記」、札記頁的返回鈕開這裡 */
+function mnqNotes(){mnqCss();const S=mnqSt();
+  sheet("📜 星槎遠征札記",b=>{b.innerHTML=S.page.length?S.page.map(e=>`<button type="button" class="item mnq-pg" data-pg="${e}"><span class="lb" style="font-size:20px">📜</span><span class="tx"><b>${esc((MNQ_CH.find(c=>c[0]===e)||[0,e])[1])}</b><span>${esc(S.clue[e]||(e==="classic"?MNQ_NOTE0:""))}</span></span><span class="mnq-pg-go" aria-hidden="true">›</span></button>`).join(""):`<p class="muted">這一朝還沒有留下足跡。</p>`;
+    b.querySelectorAll(".mnq-pg").forEach(x=>x.onclick=()=>mnqNote(x.dataset.pg))})}
+/* 設定 → 聲音 → 氛圍（05-settings.js 背景音樂那張卡 #snd3 呼叫）：♪ 配樂收藏（有收藏才出現）、🎬 再看第一章（收過授印禮或看過第一章才出現；還沒看完寫「看第一章」）。
+   設定頁重畫會再叫一次：先拿掉舊的 #mnqSnd 再放 */
+function mnqSndRow(box){if(!box||!box.querySelector)return;mnqCss();const old=box.querySelector("#mnqSnd");if(old)old.remove();
+  const S=mnqSt(),lit=!!S.lamp.classic,ch=!!(S.gift.a1||lit||(MNQ_SEGS.classic||[]).some(id=>S.seg[id]));if(!S.music.length&&!ch)return;
+  const d=document.createElement("div");d.id="mnqSnd";
+  d.innerHTML=(S.music.length?`<button type="button" class="mnq-sr" data-k="mu"><span><b>♪ 配樂收藏</b><small>配樂 ${S.music.length} 首</small></span><i aria-hidden="true">›</i></button>`:"")+
+    (ch?`<button type="button" class="mnq-sr" data-k="c1"><span><b>${lit?"🎬 再看第一章":"🎬 看第一章"}</b><small>河圖初渡</small></span><i aria-hidden="true">›</i></button>`:"");
+  box.append(d);
+  const mu=d.querySelector("[data-k=mu]");if(mu)mu.onclick=()=>{try{vibrate(5)}catch(e){}mnqMusic()};
+  const c1=d.querySelector("[data-k=c1]");if(c1)c1.onclick=()=>{try{vibrate(5)}catch(e){}mnqChapter("classic")}}
 /* 遠征令最下面的開發者列（開發者模式或本機才有）：試玩下架的章（開關＋重新載入）、把下架的章進度清掉從頭試 */
 function mnqDevRow(b){if(!mnqPeekOk())return;const off=Object.entries(MNQ_CHAP_ALL).filter(([,c])=>c.off).map(([e])=>e);if(!off.length)return;const d=document.createElement("div");d.className="mnq-dev";
   d.innerHTML=`<div class="sec-t">🛠 開發者</div><button type="button" class="mnq-mu" data-k="pk">${MNQ_PEEK?"✅":"⬜"} 試玩下架的章（${esc(off.map(mnqShort).join("、"))}）：${MNQ_PEEK?"開":"關"}</button>${MNQ_PEEK?`<button type="button" class="mnq-mu" data-k="rs">↺ 下架的章從頭試（清掉這幾章的進度）</button>`:""}`;b.append(d);
@@ -227,7 +254,7 @@ function mnqDevRow(b){if(!mnqPeekOk())return;const off=Object.entries(MNQ_CHAP_A
 /* 札記頁（開發者 11/13 晚：遠征令裡的札記卡片看起來點得開、其實點不開）：章名、札記全文、星路歷程（收禮、到站、看完電影、亮燈，照時間排） */
 const MNQ_NOTE0="解開一盤，殘譜就多一行字，桌邊的刻痕也亮回一小段。";
 function mnqNoteEv(S,e){const ev=[],add=(t,s)=>{if(+t>0)ev.push([+t,s])},nm=(MNQ_CH.find(c=>c[0]===e)||[0,e])[1];
-  if(e==="classic"){add(S.gift.a1,"收下七星授印禮，星槎遠征令開始");add(S.title.chu,"第一次下贏電腦，收下破局錦囊")}
+  if(e==="classic"){add(S.gift.a1,MNQ_PANEL_ON?"收下七星授印禮，星槎遠征令開始":"收下七星授印禮，星槎啟航");add(S.title.chu,"第一次下贏電腦，收下破局錦囊")}
   else add(S.gift.a6[e],"星槎停到"+String(nm).split("・")[0]+"，收下遠征補給");
   const sg=MNQ_SEGS[e]||[];if(MNQ_CHAP[e]&&MNQ_CHAP[e].vn){if(sg.length){add(S.seg[sg[0]],"看完第一場「"+(MNQ_SEG_NM[sg[0]]||"")+"」");add(S.seg[sg[sg.length-1]],"看完最後一場「"+(MNQ_SEG_NM[sg[sg.length-1]]||"")+"」")}}   /* 對話場景一章八場：札記只記頭尾 */
   else for(const id of sg)add(S.seg[id],"看完「"+(MNQ_SEG_NM[id]||id)+"」");
@@ -236,14 +263,15 @@ function mnqNote(e){mnqCss();const S=mnqSt(),nm=(MNQ_CH.find(c=>c[0]===e)||[0,e]
   const d=t=>{const x=new Date(t);return`${x.getMonth()+1}月${x.getDate()}日 ${String(x.getHours()).padStart(2,"0")}:${String(x.getMinutes()).padStart(2,"0")}`};
   sheet("📜 "+nm,b=>{b.innerHTML=`<div class="mnq-note">${tx?`<p class="mnq-note-tx">${esc(tx)}</p>`:""}
     <div class="sec-t">✦ 星路歷程</div>${ev.length?`<ol class="mnq-note-ev">${ev.map(x=>`<li><b>${esc(d(x[0]))}</b><span>${esc(x[1])}</span></li>`).join("")}</ol>`:`<p class="muted">這一朝還沒有留下足跡。</p>`}
-    <button type="button" class="btn" id="mnqNoteBack" style="width:100%;margin-top:10px">↩ 回星槎遠征令</button></div>`;
-    b.querySelector("#mnqNoteBack").onclick=()=>mnqPanel()})}
+    <button type="button" class="btn" id="mnqNoteBack" style="width:100%;margin-top:10px">${MNQ_PANEL_ON?"↩ 回星槎遠征令":"↩ 回星槎遠征札記"}</button></div>`;
+    b.querySelector("#mnqNoteBack").onclick=()=>MNQ_PANEL_ON?mnqPanel():mnqNotes()})}
 function mnqListen(x){const rel=x.dataset.m;if(MNQ_AU&&MNQ_AU.rel===rel&&!MNQ_AU.a.paused){MNQ_AU.a.pause();x.firstChild.textContent="▶ ";mnfBgmBack();return}
   if(MNQ_AU)try{MNQ_AU.a.pause()}catch(e){}const a=new Audio();MNQ_AU={a,rel};MNF.on=true;try{if(typeof BGM!=="undefined"&&BGM.a)BGM.a.pause()}catch(e){}a.volume=mnfLevel();
   mnfBlob(rel).then(u=>{if(!u||MNQ_AU.a!==a)return;a.src=u;a.play().catch(()=>{})});a.onended=()=>mnfBgmBack();document.querySelectorAll(".mnq-mu").forEach(y=>{y.firstChild.textContent=y===x?"⏸ ":"▶ "})}
 /* ---------- 接進現有系統：千秋大百科一類、稱號 ---------- */
 try{if(typeof CODEX!=="undefined"&&Array.isArray(CODEX)&&!CODEX.some(c=>c.id==="mnq"))CODEX.push({id:"mnq",g:"story",ic:"⛵",nm:"星槎遠征札記",
-  say:"主線「星槎遠征令」的札記：收下七星授印禮就有第一頁，每到一個新朝代多一頁，還有那一朝的配樂收藏。",v:()=>{const S=mnqSt();return{x:S.page.length,y:13,u:"頁",s:`航線亮燈 ${Object.keys(S.lamp).length}／13・配樂 ${S.music.length} 首`}},go:()=>mnqPanel()})}catch(e){}
+  say:MNQ_PANEL_ON?"主線「星槎遠征令」的札記：收下七星授印禮就有第一頁，每到一個新朝代多一頁，還有那一朝的配樂收藏。":"星槎的札記：收下七星授印禮就有第一頁，每到一個新朝代多一頁。配樂收藏在設定 → 聲音。",
+  v:()=>{const S=mnqSt();return{x:S.page.length,y:13,u:"頁",s:MNQ_PANEL_ON?`航線亮燈 ${Object.keys(S.lamp).length}／13・配樂 ${S.music.length} 首`:`配樂 ${S.music.length} 首`}},go:()=>MNQ_PANEL_ON?mnqPanel():mnqNotes()})}catch(e){}   /* 11/15 遠征令拿掉：不再寫「航線亮燈 n／13」，點了開札記清單 */
 if(typeof cxTitles==="function"){const f1=cxTitles;cxTitles=function(){const L=f1.apply(this,arguments);try{const T=mnqSt().title;L.push({t:"雲河新使",how:"選好角色，收下七星授印禮",got:!!T.xin,g:"etc"},{t:"初勝",how:"第一次跟電腦下贏，收下破局錦囊",got:!!T.chu,g:"etc"})}catch(e){}return L}}
 if(typeof window!=="undefined"&&typeof window.XQ_TITLE==="function"){const f2=window.XQ_TITLE;window.XQ_TITLE=()=>{let r="";try{r=f2()}catch(e){}if(r)return r;try{const T=mnqSt().title;return T.chu?"初勝":T.xin?"雲河新使":""}catch(e){return""}}}
 /* ---------- 自動跳禮包：首頁、星槎頁，沒有別的視窗時 ---------- */

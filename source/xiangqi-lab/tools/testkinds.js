@@ -81,6 +81,7 @@ const CLASSIFIED = new Set([
   "test-era-lang.js",   /* 11/14 評比第 17、18 輪 B3 朝代（07-legend storyBookOf／storyEraSync）、B5 英文介面主線（07mnq、07mnf、07t、07bhtl 介面字、首頁下一步、語言範圍說明）、第 18 輪第 4 項舊 8 碼轉移碼停收；11/14 晚加英文頂欄（時辰、登船、節氣、官階、修為）與禮包 Accept 鍵（行為 14、混合 3、原始碼 1） */
   "test-wheel.js",   /* 11/15 黑洞車輪戰・兩盤原型 wheel-v1（m/07bhw-wheel.js 的 WHL 純規則：共用靈力、一輪一招、陣眼封招、總輪、引擎佇列與退路、過關判定、結算、存檔接續；接線原始碼） */
   "test-gate-siege.js",   /* 11/15 黑洞・星門圍城 gate-siege-v1 候選（m/07bhg-gatesiege.js 的 GSV 純規則、local.js tdRebuild 部署換手、接線原始碼；第 1、3、6 關） */
+  "test-growth.js",   /* 11/15 對戰後的角色成長（m/07grw-growth.js）：快照比對只列有變化的、升級那句、體力只比同一次開 App、結果視窗插入時機（延後、逾時）、減少動態不跳數字；遠征令拿掉、配樂收藏與再看第一章搬到設定聲音頁（07mnq）；08b／07bhw／05b／m.html 接點（行為 9、混合 1、原始碼 4） */
   "test-starter.js",   /* 11/15 新手練習「先走再學」（m/07stq-starter.js）：六任務題目合法、第 4、5 題一步殺照規則判斷、跳過補齊不重複、老玩家判定、存檔版本、電腦退路、05b／07mnq／m.html 接點（行為 5、混合 3、原始碼 4） */
   "test-sw-offline.js",   /* 11/15 hspx 離線 3D 角色變小帥：sw.js 安裝時先存 3D 模型載入器（GLTFLoader.mjs 和它 import 的 .mjs），一般檔案也存 .mjs */
   "test-preload-bg.js"   /* 11/14 評比第 17、18 輪第 5 項背景暫停與按需預載：00-util bgpEvery／bgpOn、09b 預載前景／背景／恢復三段、分區 z:<分區>、別朝代先不下載、閒置才補選讀、省流量、preload-list --retier（行為 12、混合 1、原始碼 1） */

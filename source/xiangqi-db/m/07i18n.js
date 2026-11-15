@@ -741,7 +741,12 @@ const I18N_EN={
   "遠征補給":"Expedition supplies","贏第一盤":"Win your first game","家鄉":"Home","回家鄉":"Back home","家鄉棋盤":"Home board","雲河新使":"New Envoy of the Cloud River","初勝":"First Victory",
   "圖鑑入門卷":"Codex starter scroll","開始第一章":"Start Chapter 1","一盞茶額外題":"Bonus Teatime puzzle","去解額外題":"Solve the bonus puzzle","景點線索":"Landmark clue","札記一頁":"One journal page",
   "打開遠征令":"Open Expedition Orders","出發":"Set off","這一章即將開放":"This chapter is coming soon","即將開放":"Coming soon","試玩":"Preview","再看一次":"Watch again","前往":"Go",
-  "配樂收藏":"Music collection","先看完上一章":"Finish the previous chapter first","下架的章從頭試":"Retry withdrawn chapters from the start","清掉這幾章的進度":"clears these chapters' progress",
+  "配樂收藏":"Music collection","先看完上一章":"Finish the previous chapter first",
+  /* 11/15 遠征令面板拿掉：配樂收藏、再看第一章搬到設定 → 聲音（07mnq mnqSndRow、mnqMusic、mnqNotes） */
+  "再看第一章":"Rewatch Chapter 1","看第一章":"Watch Chapter 1","星槎停到新朝代，就會收進那一朝的配樂。":"When the Star Raft reaches a new dynasty, that dynasty's music is added here.",
+  "角色成長":"Character growth",
+  "收下七星授印禮，星槎啟航":"Received the Seven Stars Seal Ceremony; the Star Raft sets sail",
+  "星槎的札記：收下七星授印禮就有第一頁，每到一個新朝代多一頁。配樂收藏在設定 → 聲音。":"The Star Raft journal: the first page comes with the Seven Stars Seal Ceremony, and each new dynasty adds a page. The music collection is in Settings → Sound.","下架的章從頭試":"Retry withdrawn chapters from the start","清掉這幾章的進度":"clears these chapters' progress",
   "已關閉試玩，重新載入…":"Preview off, reloading…","已打開試玩，重新載入…":"Preview on, reloading…","已清掉，重新打開遠征令":"Cleared; reopening Expedition Orders",
   "解開一盤，殘譜就多一行字，桌邊的刻痕也亮回一小段。":"Solve one, and the broken manual gains a line; a little more of the carving on the table edge lights up again.",
   "收下七星授印禮，星槎遠征令開始":"Received the Seven Stars Seal Ceremony; the Star Raft Expedition Orders begin","第一次下贏電腦，收下破局錦囊":"First win against the computer; received the Breakthrough Pouch",
@@ -810,7 +815,8 @@ const I18N_EN={
   "點發光的目標":"Tap a glowing target","點發光的補給點":"Tap a glowing supply point","再點一次同一招就放出":"Tap the same skill again to cast","這盤已結束":"This board is finished","各盤":"Boards",
   "把俥走到發亮的格子":"Move the chariot to the glowing square","用俥吃掉發亮的黑子":"Capture the glowing black piece with the chariot","走一步，讓黑將被攻擊":"Make one move that attacks the black general","黑將只能逃到綠點，一步將死它":"The general can only flee to the green dots. Mate it in one","換個擺法，一樣封住退路":"New setup: block the escape again","跟電腦各走四步":"Play four moves each against the computer","對了！":"Correct!","完成！":"Done!","這一步封住了退路":"This move blocked the escape","不是這格，再試一次":"Not that square. Try again","不是這顆，再試一次":"Not that piece. Try again","要吃掉發亮的那顆":"Capture the glowing piece","這步沒有攻擊到黑將":"That move doesn't attack the general","將軍了，可是黑將還能逃":"Check, but the general can still escape","藍框就是答案，點點看":"The blue frames show the answer. Try it","電腦想一下…":"The computer is thinking…","過關！可以接著下完":"Passed! You can keep playing","你贏了！":"You won!","這盤輸了，再來一次":"You lost this one. Try again","先動俥":"Move the chariot first","新手練習":"Beginner practice","新手練習進度":"Beginner practice progress","我會下棋，直接開始":"I can play, start now","💡 提示":"💡 Hint","完成練習":"Finish practice","新手練習完成":"Practice complete","入門物品領好了":"Starter items received","🏅 稱號「雲河新使」":"🏅 Title: New Envoy of the Cloud River","💡 提示棋 ×5":"💡 Hint tokens ×5","🏠 家鄉棋盤":"🏠 Home board","📜 圖鑑第一頁":"📜 First codex page","選一位角色":"Choose a character","🔰 繼續新手練習":"🔰 Continue beginner practice","更多玩法":"More ways to play","對弈電腦":"Play the computer","⛵ 星槎遠征令":"⛵ Star Raft Expedition Orders","點棋子走棋・拖空白處轉看四周・右上 👁 換視角":"Tap a piece to move · drag empty space to look around · 👁 top right to switch view","距離下一級":"To next level","細則":"Details","角色狀態":"Character status","攻擊力・防禦力":"Attack · Defense","以 100 為基準，數字越大越強。":"100 is the baseline; higher is stronger.","下船後會慢慢用掉，回星槎就補回來。":"Drains slowly once ashore; refills on the Star Raft.","解殘局、過主線章節就會得到。":"Earned by solving endgames and clearing story chapters.","修為越高，攻擊力和防禦力越強（黑洞裡用）。":"Higher XP makes Attack and Defense stronger (used in the Black Hole).","體力":"Stamina","靈力":"Spirit","體力・定軌力":"Stamina · Orbit stamina","靈力・星芒":"Spirit · Starglow",
   "招式（最多 4 招）":"Skills (up to 4)",
-  "技能":"Skills","已學會":"Learned","在黑洞裡使用，一場最多帶 4 招":"Used in the Black Hole; bring up to 4 per battle","‹ 回我的角色":"‹ Back to my character","靈":"spirit"
+  "技能":"Skills","已學會":"Learned","在黑洞裡使用，一場最多帶 4 招":"Used in the Black Hole; bring up to 4 per battle","‹ 回我的角色":"‹ Back to my character","靈":"spirit",
+  "星門圍城":"Star Gate Siege"
 };
 /* 第 15 輪 X3「鍵值化」：核心流程（對局頁工具列與狀態列、認輸／悔棋確認、結果視窗、挑戰電腦開新局、設定頁標題、底欄）不靠整句比對，
    模組裡寫 i18nT("鍵","中文")（中文時原樣回傳）或在元素上標 data-i18n="鍵"（英文模式換掉那個元素自己的最後一段字；data-i18n-n 是 {n} 的值）。
@@ -990,6 +996,7 @@ const I18N_PAT=[
   [/^約\s*(\d+)\s*分鐘$/,m=>"about "+m[1]+" min"],
   [/^答對\s*(\d+)\s*題$/,m=>m[1]+" correct"],
   [/^修為\s*\+(\d+)$/,m=>"XP +"+m[1]],
+  [/^修為升到\s*Lv\s*(\d+)！$/,m=>"XP up to Lv "+m[1]+"!"],   /* 11/15 對戰後的角色成長（07grw-growth.js） */
   /* 所有頁面共用的頂欄（開發者 11/14 選定）：登船天數、官階、修為、時辰鐘的讀螢幕標籤 */
   [/^第\s*(\d+)\s*天$/,m=>"Day "+m[1]],
   [/^船上第\s*(\d+)\s*天$/,m=>"Day "+m[1]+" aboard"],
