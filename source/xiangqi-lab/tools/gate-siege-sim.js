@@ -13,7 +13,13 @@
 const fs=require("fs"),path=require("path"),vm=require("vm");
 const ROOT=path.join(__dirname,"..",".."),LAB=path.join(ROOT,"xiangqi-lab");
 const C=require(path.join(LAB,"site","core.js"));
-const ctx={console,Math,JSON};vm.createContext(ctx);vm.runInContext(fs.readFileSync(path.join(ROOT,"xiangqi-db","m","07bhg-gatesiege.js"),"utf8")+"\n;this.GSV=GSV;",ctx);const G=ctx.GSV;
+/* 11/15 七星改版：--src 檔＝載入別份規則檔（例如改版前的備份）當基準；--squad 第1天|第3天|第8天|練很高＝帶隊伍等級組合（每種棋子各用自己角色的等級，木棋靈＝修為一半），隊長固定齊轍 */
+const SRCF=(()=>{const i=process.argv.indexOf("--src");return i>0?process.argv[i+1]:path.join(ROOT,"xiangqi-db","m","07bhg-gatesiege.js")})();
+const ctx={console,Math,JSON};vm.createContext(ctx);vm.runInContext(fs.readFileSync(SRCF,"utf8")+"\n;this.GSV=GSV;",ctx);const G=ctx.GSV;
+const SQUADS={"第1天":{lead:3,lv:{R:3},wood:1},"第3天":{lead:6,lv:{R:6,N:4,K:4,A:4},wood:3},"第8天":{lead:9,lv:{R:9,N:8,K:7,A:7,B:7,P:7,C:7},wood:4},"練很高":{lead:20,lv:{R:20,N:18,K:18,A:18,B:18,P:18,C:18},wood:10}};
+const PCOF={R:"x_swordboy",N:"x_miaogirl",B:"x_spiritgirl",A:"x_shi",K:"x_shuai",C:"x_martialgirl",P:"x_bing"};
+const SQN=(()=>{const i=process.argv.indexOf("--squad");return i>0?process.argv[i+1]:null})();if(SQN&&!SQUADS[SQN])throw new Error("--squad 只有："+Object.keys(SQUADS).join("、"));
+const SQ=SQN?Object.fromEntries(Object.entries(PCOF).map(([pc,ck])=>{const v=SQUADS[SQN].lv[pc];return[pc,v?{ck,L:v}:{ck,L:SQUADS[SQN].wood,wood:1}]})):null;
 const arg=(k,d)=>{const i=process.argv.indexOf(k);return i>0?process.argv[i+1]:d};
 /* --patch 檔.json：調數值用，{"4":{"hp":120,"waves":[…]}} 蓋掉那一關的欄位再跑（不改 App 的檔；結果 meta.patch 會記下來） */
 const PATCH=arg("--patch",null),PATCHED=PATCH?JSON.parse(fs.readFileSync(PATCH,"utf8")):null;if(PATCHED)for(const k in PATCHED){if(!G.LV[k])throw new Error("--patch 沒有第 "+k+" 關");Object.assign(G.LV[k],PATCHED[k]);const e=G.lvCheck(+k,C);if(e.length)throw new Error("--patch 第 "+k+" 關不合法："+e.join("；"))}
@@ -44,7 +50,7 @@ async function newEngine(){PM=PM||require(path.join(EDIR,"pikafish.js"));NNUE=NN
 const redDepth=P=>P.td.depth||2;
 /* ---------- 一盤 ---------- */
 function newGame(lv,ch,L){const start=G.startFen(lv,C),P={start,startTurn:"r",board:C.parseFen(start),turn:"r",moves:[],human:"r",ed:[]};P.pos=[C.fen(P.board,"r")];
-  P.td=G.boot({mode:G.MODE,lv,ch,L,sk:G.skOf(ch,L).slice(0,4),hard:HARDV?1:0},P,C);return P}   /* --hard：困難版（GSV.lvOf 的那一組參數） */
+  P.td=G.boot(Object.assign({mode:G.MODE,lv,ch,L,sk:G.skOf(ch,L).slice(0,4),hard:HARDV?1:0},SQ?{sq:SQ}:{}),P,C);return P}   /* --hard：困難版（GSV.lvOf 的那一組參數） */
 const fenOf=P=>C.fen(P.board,P.turn)+" - - 0 1";
 const clamp=v=>Math.max(-1500,Math.min(1500,v));
 async function engLines(E,P,depth,mpv,sm){if(!E)return{lines:[]};return E.search(fenOf(P),depth,mpv,sm)}
@@ -154,7 +160,7 @@ async function play(E,lv,script,seed,ch,L){const R=rng(seed*7919+lv*131+script.l
   return{src,lv,script,seed,ch,L,hard:td.hard?1:0,st:end.w==="r"?G.stars(td,P.board):null,gk:end.w==="r"?Object.fromEntries(Object.keys(G.GOAL).filter(k=>k!=="hp").map(k=>[k,G.GOAL[k].ok(td,P.board)?1:0])):null,tl:td.tl,w:end.w,why:end.why,rnd:td.rnd,me:td.me.hp,meMax:td.me.max,en:td.en.hp,enMax:td.en.max,dealt:td.me.dealt,taken:td.me.taken,icpt:td.icpt,dep:td.dep,used:td.used,fx,drain:xs.drain,ph:xs.ph,rounds}}
 async function main(){let E=null,engNote="";try{E=await newEngine();engNote="App 網頁版 Pikafish（site/engine/pikafish.wasm）在 Node "+process.version+" 裡跑"}catch(e){engNote="Pikafish 在 Node 載入失敗（"+e.message+"），改用規則內建評估（引擎分數一律 0）"}
   console.log("引擎：",engNote);const runs=[],t0=Date.now();const plan=[];
-  for(const lv of LVS)for(const s of SCR)for(let i=1;i<=SEEDS;i++)plan.push({lv,s,seed:i,ch:CHS[(i-1)%7],L:1});
+  for(const lv of LVS)for(const s of SCR)for(let i=1;i<=SEEDS;i++)plan.push(SQ?{lv,s,seed:i,ch:"x_swordboy",L:SQUADS[SQN].lead,tag:"squad-"+SQN}:{lv,s,seed:i,ch:CHS[(i-1)%7],L:1});
   if(HI)for(const lv of LVS)for(let i=1;i<=SEEDS;i++)plan.push({lv,s:"smart",seed:i,ch:CHS[(i-1)%7],L:23,tag:"smart-L23"});
   for(const[k,p]of plan.entries()){const g=await play(E,p.lv,p.s,p.seed,p.ch,p.L);g.tag=p.tag||p.s;runs.push(g);if((k+1)%20===0)console.log(`  ${k+1}/${plan.length}  ${((Date.now()-t0)/1000).toFixed(0)} 秒`)}
   const sum={};for(const g of runs){const k=g.lv+"|"+g.tag,S=sum[k]||(sum[k]={lv:g.lv,tag:g.tag,n:0,w:0,d:0,l:0,rnd:0,me:0,en:0,dealt:0,taken:0,icpt:0,dep:0,why:{},sk:{},sr:{},sb:{},fx:{},drain:0,ph:{}});

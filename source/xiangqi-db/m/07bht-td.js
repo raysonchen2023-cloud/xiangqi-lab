@@ -33,6 +33,12 @@ const BHTD=(()=>{
   /* 主角數值：數值(L)＝初始＋(Lv100−初始)×G(L)；τ 預設 42（之後照天賦頁 r：42÷√(r÷6%)，限 36～52）；天賦倍率 tal v0.1 固定 1.0（全局乘區，乘元氣與攻擊；防禦是越小越硬，所以除以 tal） */
   function stats(ck,L,o){o=o||{};const c=CH[ck]||CH.x_swordboy,tau=Math.max(36,Math.min(52,+o.tau||42)),tal=Math.max(1,Math.min(1.15,+o.tal||1)),g=G(L,tau),lp=a=>a[0]+(a[1]-a[0])*g;
     return{ck:CH[ck]?ck:"x_swordboy",n:c.n,pc:c.pc,L:Math.max(1,Math.min(100,Math.round(+L||1))),hp:Math.round(lp(c.hp)*tal),atk:r2(lp(c.atk)*tal),def:r2(lp(c.def)/tal),sp:Math.round(c.sp[0]+(c.sp[1]-c.sp[0])*spCurve(c.spT,L,tau)),spRegen:Math.round(c.rg[0]+(c.rg[1]-c.rg[0])*spCurve(c.spT,L,tau)),g:r2(g),tau}}
+  /* 11/15 七星改版（開發者選單，story/七星各自等級_戰鬥規則草案_1115.md）：每種棋子各用自己角色的等級（同 07bhg-gatesiege.js 的 squad）。
+     cfg.sq＝{R:{ck,L},N:…}（開局設定沒帶就問 07pty-party.js 的 ptySquad()；練習賽不帶；木棋靈＝同一位角色、等級＝修為一半），天賦倍率照樣套；有 sq 時我方擒子用「吃子那顆」的攻擊倍率、被擒用「被吃那顆」的防禦倍率、
+     被將軍與星樞招用帥的防禦倍率、元氣上限＝七種的平均；招式（hitEn 的 td.me.atk）、靈力、畫面上的攻防仍是隊長那組。沒有 sq（練習賽、沒有旅程）＝舊規則 */
+  const PCS=["R","N","B","A","K","C","P"];
+  function squad(S,o){if(!S||typeof S!=="object")return null;const r={};for(const pc of PCS){const x=S[pc];if(!x||!CH[x.ck])return null;const t=stats(x.ck,x.L,o);r[pc]={ck:t.ck,L:t.L,atk:t.atk,def:t.def,hp:t.hp,wood:x.wood?1:0}}return r}
+  const atkR=(td,pc)=>td&&td.sq&&td.sq[pc]?td.sq[pc].atk:td.me.atk,defR=(td,pc)=>td&&td.sq&&td.sq[pc]?td.sq[pc].def:td.me.def;
   /* 防禦（11/14）：原本要扣的 n × 防禦倍率，四捨五入、至少扣 1（n 是 0 就是 0）、單次最多 12。用在我方被擒子、被將軍、星樞三招（卒海過河、引力撕裂、殘卒反星；開發者 11/14 選 B）；過河、九宮、星碎格不套；星樞那邊不套 */
   /* 畫面顯示用（開發者 11/14：不用倍數，改成以 100 為基準、越大越強的數值；內部計算照舊用倍率）：攻擊力＝四捨五入(攻擊倍率×100)、防禦力＝四捨五入(100÷防禦倍率) */
   const atkPt=a=>Math.round((+a>0?+a:1)*100),defPt=d=>Math.round(100/(+d>0?+d:1));
@@ -105,7 +111,7 @@ const BHTD=(()=>{
       for(const i of two?[1,2]:[1]){const q=L[i];if(q!=null&&sd(b[q])==="b"&&b[q]!=="k"&&!out.some(x=>x.t===q))out.push({c:s,t:q,scr:L[0]})}}}return out}   /* scr＝炮架（隔子星花用；舊呼叫只用 t） */
   function markNet(td,b,two){for(const h of netHits(b,two)){const tag=td.pid[h.t];if(tag&&!td.pj.includes(tag)){td.pj.push(tag);ev(td,{k:"mark",sq:h.t})}}}
   /* 扣元氣：hitMe 先吃護盾（整次抵消）；hitEn 敵方沒有護盾 */
-  function hitMe(td,n,sq,why){n=Math.max(0,Math.round(n));if(!n)return 0;if(td.gd>0){td.gd--;ev(td,{k:"absorb",sq,why});return 0}td.me.hp=Math.max(0,td.me.hp-n);td.taken+=n;td.rf.hurt=1;td.rf.dmg=(td.rf.dmg||0)+n;ev(td,{k:"hit",sd:"r",n,sq,why});return n}
+  function hitMe(td,n,sq,why,x){n=Math.max(0,Math.round(n));if(!n)return 0;if(td.gd>0){td.gd--;ev(td,{k:"absorb",sq,why});return 0}td.me.hp=Math.max(0,td.me.hp-n);td.taken+=n;td.rf.hurt=1;td.rf.dmg=(td.rf.dmg||0)+n;ev(td,Object.assign({k:"hit",sd:"r",n,sq,why},x||{}));return n}
   function hitEn(td,n,sq,why,src,x){n=Math.max(0,Math.round(n));if(!n)return 0;td.en.hp=Math.max(0,td.en.hp-n);td.dealt+=n;ev(td,Object.assign({k:"hit",sd:"b",n,sq,why,src},x||{}));return n}   /* x：演出用的附加欄位（擒子的棋種、弱吃強、連擊） */
   /* 打某一顆黑子造成的扣元氣（招式）：基礎×攻擊倍率，破甲多扣 1（用掉），單次最多 12 */
   function hitPiece(td,sq,base,why){const tag=td.pid[sq],pj=tag&&td.pj.includes(tag);if(pj)pjUse(td,tag);return hitEn(td,Math.min(CAPMAX,Math.round(base*td.me.atk)+(pj?1:0)),sq,why,"sk")}
@@ -162,10 +168,10 @@ const BHTD=(()=>{
     if(fx.id==="zhs"){const cr=bPawns(b).filter(q=>RW(q)>=5);return{red:[],blk:cr}}
     const q=sqOf(td,fx.tag);if(q==null)return{red:[],blk:[]};let red=[];try{if(C)red=C.legal(b,"r").filter(([,t])=>t===q).map(([f])=>f).filter((f,i,a)=>a.indexOf(f)===i)}catch(e){red=[]}
     return{red,blk:[q]}}   /* 殘卒反星：紅框＝吃得到那顆卒的紅子（吃了扣你 1） */
-  function foeEst(td,b){const fx=td&&td.fx;if(!fx)return 0;if(fx.id==="zhs")return td.gd>0?0:defDmg(Math.min(td.zcap,bPawns(b).filter(q=>RW(q)>=5).length),td.me.def);if(fx.id==="ylsl")return td.gd>0?0:defDmg(5,td.me.def);return 1}   /* 11/14 開發者選 B：星樞三招也套防禦，預估照實際扣的算 */
+  function foeEst(td,b){const fx=td&&td.fx;if(!fx)return 0;if(fx.id==="zhs")return td.gd>0?0:defDmg(Math.min(td.zcap,bPawns(b).filter(q=>RW(q)>=5).length),defR(td,"K"));if(fx.id==="ylsl")return td.gd>0?0:defDmg(5,defR(td,"K"));return 1}   /* 11/14 開發者選 B：星樞三招也套防禦，預估照實際扣的算 */
   function foeResolve(td,b){const fx=td.fx;if(!fx||td.rnd<fx.at)return;td.fx=null;td.fxLast=td.rnd;
-    if(fx.id==="zhs"){const n=defDmg(Math.min(td.zcap,bPawns(b).filter(q=>RW(q)>=5).length),td.me.def);if(n)hitMe(td,n,null,"卒海過河");else ev(td,{k:"miss",id:fx.id})}   /* 11/14 開發者選 B：星樞三招扣我方也套防禦（先防禦、至少 1、最多 12 → hitMe 裡護盾整次抵消；這三招沒有單顆子的小盾） */
-    else if(fx.id==="ylsl")hitMe(td,defDmg(5,td.me.def),b.indexOf("K"),"引力撕裂");
+    if(fx.id==="zhs"){const n=defDmg(Math.min(td.zcap,bPawns(b).filter(q=>RW(q)>=5).length),defR(td,"K"));if(n)hitMe(td,n,null,"卒海過河");else ev(td,{k:"miss",id:fx.id})}   /* 11/14 開發者選 B：星樞三招扣我方也套防禦（先防禦、至少 1、最多 12 → hitMe 裡護盾整次抵消；這三招沒有單顆子的小盾） */
+    else if(fx.id==="ylsl")hitMe(td,defDmg(5,defR(td,"K")),b.indexOf("K"),"引力撕裂");
     else if(!fx.used)ev(td,{k:"miss",id:fx.id})}
   /* td v3（11/13 十八招去重定稿）新欄位；舊存檔（v2）讀進來時補預設值。move／roundEnd／engine／why／cast 開頭都叫 */
   const TD3={hot:[],frzQ:[],trap:[],lockW:null,run:null,noCross:-1,noCap:[],noTake:[],pair:[],revB:0,lastR:null,thr:null};
@@ -175,11 +181,11 @@ const BHTD=(()=>{
     if(td&&td.hi===undefined){td.hi={mx:null,cb:0,ey:0};td.eyeX=(td.lost||[]).filter(o=>o.tag===td.eye).length;td.tal=Array.isArray(td.tal)?td.tal:[];td.r3=td.r3||((LV[td.lv-1]||{}).r3||0);td.hzU=0;td.fmR=-9;td.pjT={}}   /* 11/14 第二批：高光、陣眼被擒次數（三星）、天賦；舊盤補上 */
     if(!td||td.v>=3)return td;for(const k in TD3)if(td[k]===undefined)td[k]=Array.isArray(TD3[k])?[]:TD3[k];td.rf=Object.assign({chk:0,hurt:0,dmg:0,cap:0},td.rf||{});td.v=3;return td}
   /* ---------- 開局 ---------- */
-  function boot(cfg,P,C){cfg=cfg||{};const tl=cfg.lv==="tl",rd=!tl&&cfg.raid&&RAIDM[cfg.raid.id]?{id:cfg.raid.id,v:(Math.round(+cfg.raid.v)||0)&3}:null,n=tl||rd?0:Math.max(1,Math.min(LV.length,Math.round(+cfg.lv)||1)),L=tl?TL:rd?raidLv(rd.id,rd.v):LV[n-1],st=stats(cfg.ch,cfg.L,cfg),ai=tl?{depth:1,base:1,err:0,mpv:1,margin:300}:depthOf(rd?RAID_AI:n,cfg.diff),pl=lvPlan(L),E=L.en||{};   /* 練習賽 lv "tl"：td.lv＝0；星淵急襲 cfg.raid＝{id 模板, v 星門變化}：td.lv＝0、td.rd */
+  function boot(cfg,P,C){cfg=cfg||{};const tl=cfg.lv==="tl",rd=!tl&&cfg.raid&&RAIDM[cfg.raid.id]?{id:cfg.raid.id,v:(Math.round(+cfg.raid.v)||0)&3}:null,n=tl||rd?0:Math.max(1,Math.min(LV.length,Math.round(+cfg.lv)||1)),L=tl?TL:rd?raidLv(rd.id,rd.v):LV[n-1],st=stats(cfg.ch,cfg.L,cfg),sq=tl?null:squad((cfg.sq!==undefined?cfg.sq:(typeof ptySquad==="function"?ptySquad():null)),cfg),hp0=sq?Math.round(PCS.reduce((a,pc)=>a+sq[pc].hp,0)/PCS.length):st.hp,ai=tl?{depth:1,base:1,err:0,mpv:1,margin:300}:depthOf(rd?RAID_AI:n,cfg.diff),pl=lvPlan(L),E=L.en||{};   /* 練習賽 lv "tl"：td.lv＝0；星淵急襲 cfg.raid＝{id 模板, v 星門變化}：td.lv＝0、td.rd */
     const tal=tl?[]:talValid(cfg.tal),hy=tal.includes("htgy")?TAL_HP:0;   /* 天賦（練習賽照劇本，不帶天賦）：厚土固元＝元氣上限 +8 */
     const pool=SK.filter(s=>s.ch===st.ck&&s.lv<=st.L).map(s=>s.id),sk=tl?pool.filter(id=>SKM[id].lv===1).slice(0,1):(Array.isArray(cfg.sk)?cfg.sk:[]).filter((x,i,a)=>pool.includes(x)&&a.indexOf(x)===i).slice(0,4);
     const td={v:3,spk:SPK,lv:n,nm:L.nm,ch:st.ck,cn:st.n,pc:st.pc,L:st.L,diff:Math.max(1,Math.min(5,+cfg.diff||2)),
-      me:{hp:st.hp+hy,max:st.hp+hy,sp:tl?Math.max(0,st.sp-(L.spGap||0)):Math.min(st.sp,(L.sp0||0)+Math.max(0,Math.min(XM_CAP,Math.round(+cfg.xm||0)))+(tal.includes("xhcr")?TAL_SP:0)),spMax:st.sp,spRg:st.spRegen,atk:st.atk,def:st.def},en:{hp:Math.min(L.hp,E.hp0||L.hp),max:L.hp,sp:L.noEsp?0:Math.min(ESP_MAX,E.sp0||0),spMax:L.noEsp?0:ESP_MAX},rnd:0,sk:sk.length?sk:pool.slice(0,4),castR:-1,
+      sq,me:{hp:hp0+hy,max:hp0+hy,sp:tl?Math.max(0,st.sp-(L.spGap||0)):Math.min(st.sp,(L.sp0||0)+Math.max(0,Math.min(XM_CAP,Math.round(+cfg.xm||0)))+(tal.includes("xhcr")?TAL_SP:0)),spMax:st.sp,spRg:st.spRegen,atk:st.atk,def:st.def},en:{hp:Math.min(L.hp,E.hp0||L.hp),max:L.hp,sp:L.noEsp?0:Math.min(ESP_MAX,E.sp0||0),spMax:L.noEsp?0:ESP_MAX},rnd:0,sk:sk.length?sk:pool.slice(0,4),castR:-1,
       pid:{},eye:"r"+EYE0[st.pc],lost:[],pj:[],frz:[],frzR:[],li:[],sh:[],gd:0,ci:[],seal:0,disc:0,fn2:-1,pf:0,rf:{chk:0,hurt:0,dmg:0,cap:0},
       hot:[],frzQ:[],trap:[],lockW:null,run:null,noCross:-1,noCap:[],noTake:[],pair:[],revB:0,lastR:null,thr:null,cmb:null,ckR:-9,capR:-9,capN:0,   /* 連擊：cmb＝這回合放招標記的敵子 {r,tags}；ckR＝上一次將軍的回合；capR／capN＝連續擒子 */
       waves:pl.waves.map(w=>({at:w.at,ps:w.ps.map(x=>x.slice()),fake:w.fake})),gate:null,wn:0,ev:[],seq:0,ai,boss:L.boss||null,dealt:0,taken:0,
@@ -194,17 +200,17 @@ const BHTD=(()=>{
     if(m.by==="r"){td.rf={chk:0,hurt:0,dmg:0,cap:0};td.lastR={f:m.f,t:m.t,p:up(pc)};td.thr=null;td.pf=up(pc)==="P"&&RW(m.t)<RW(m.f)?1:0;   /* lastR：直路衝鋒、拐彎避風看上一步誰走的 */
       if(td.run&&td.pf&&td.run.left>0&&td.rnd<td.run.until){td.run.left--;heal(td,4);if(td.run.left<=0)td.run=null}   /* 跑腿賺錢：兵往前走 1 步回 4（最多 3 次） */
       if(m.cap&&sd(m.cap)==="b"){td.rf.cap=1;const pj=tv&&td.pj.includes(tv),eye=!!tf&&tf===td.eye;td.pj=td.pj.filter(x=>x!==tv);if(td.pjT&&tv)delete td.pjT[tv];td.frz=td.frz.filter(x=>x!==tv);
-        const mk=!!tv&&!!td.cmb&&td.cmb.r===td.rnd&&td.cmb.tags.includes(tv),cb=comboOf({base:capDmg(m.cap,pc,td.me.atk,eye,pj),eye,pj,mk,qx:hasT(td,"qmls")}),cp=up(pc),vp=up(m.cap),wk=VALV[cp]<VALV[vp];
+        const mk=!!tv&&!!td.cmb&&td.cmb.r===td.rnd&&td.cmb.tags.includes(tv),cb=comboOf({base:capDmg(m.cap,pc,atkR(td,up(pc)),eye,pj),eye,pj,mk,qx:hasT(td,"qmls")}),cp=up(pc),vp=up(m.cap),wk=VALV[cp]<VALV[vp];
         td.capN=td.capR===td.rnd-1?(+td.capN||0)+1:1;td.capR=td.rnd;if(mk)td.cmb=null;   /* 連續擒子：連著幾回合都擒到子（演出印章用，不加扣點） */
         hitEn(td,cb.n,m.t,eye?"陣眼擒子":"擒子",null,{cap:1,cp,vp,weak:wk?1:0,eye:eye?1:0,pj:pj?1:0,combo:cb.k,bonus:cb.bonus,streak:td.capN});spAdd(td,CAP_SP+cb.sp);
         if(wk&&hasT(td,"fmbl")&&td.fmR!==td.rnd){td.fmR=td.rnd;spAdd(td,TAL_SP);ev(td,{k:"tal",id:"fmbl",sq:m.t})}   /* 天賦「鋒芒畢露」：以弱克強再回 10 靈（每回合 1 次） */
         {const H=td.hi||(td.hi={mx:null,cb:0,ey:0});if(!H.mx||cb.n>H.mx.n)H.mx={n:cb.n,cp,vp};H.cb=Math.max(H.cb,td.capN);if(eye)H.ey++}   /* 本局高光 */
-        if(td.fx&&td.fx.id==="cfx"&&!td.fx.used&&tv&&tv===td.fx.tag){td.fx.used=1;hitMe(td,defDmg(1,td.me.def),m.t,"殘卒反星")}}
+        if(td.fx&&td.fx.id==="cfx"&&!td.fx.used&&tv&&tv===td.fx.tag){td.fx.used=1;hitMe(td,defDmg(1,defR(td,"K")),m.t,"殘卒反星")}}
       if(m.ck){const ch=chkDmg(td.ckR,td.rnd);td.ckR=td.rnd;hitEn(td,ch.n,b.indexOf("k"),ch.chain?"連環逼宮":"將軍",null,{chk:1,chain:ch.chain?1:0})}if(td.shard&&td.shard.includes(m.t)){ev(td,{k:"shard",sq:m.t});hitMe(td,3,m.t,"星碎格")}}
     else{td.rnd++;if(!(td.seal>=td.rnd))spAdd(td,+td.me.spRg||SPK);   /* 開發者 11/13：每回合回靈（擒子再 +CAP_SP）；11/14 晚：每回合回靈＝stats 的 spRegen（Lv1 都是 10，隨修為長）。陣眼被擒封靈的那一回合不加 */
       if(m.cap&&sd(m.cap)==="r"){
-        const sh=tv?shTake(td,tv):0,raw=defDmg(Math.min(CAPMAX,Math.round(CAPB[up(m.cap)]*CAPM[up(pc)])),td.me.def),n=Math.max(0,raw-sh);   /* 順序（11/14 防禦）：先乘防禦（至少 1、最多 12）→ 再扣小盾 → hitMe 裡最後才看護盾（整次抵消） */if(td.en.sp<td.en.spMax){const e0=td.en.sp;td.en.sp=Math.min(td.en.spMax,e0+ESP_GAIN);ev(td,{k:"esp",n:td.en.sp-e0})}
-        if(sh)ev(td,{k:"shuse",sq:m.t,n:Math.min(sh,raw)});if(n)hitMe(td,n,m.t,"被擒");
+        const sh=tv?shTake(td,tv):0,raw=defDmg(Math.min(CAPMAX,Math.round(CAPB[up(m.cap)]*CAPM[up(pc)])),defR(td,up(m.cap))),n=Math.max(0,raw-sh);   /* 順序（11/14 防禦）：先乘防禦（至少 1、最多 12）→ 再扣小盾 → hitMe 裡最後才看護盾（整次抵消） */if(td.en.sp<td.en.spMax){const e0=td.en.sp;td.en.sp=Math.min(td.en.spMax,e0+ESP_GAIN);ev(td,{k:"esp",n:td.en.sp-e0})}
+        if(sh)ev(td,{k:"shuse",sq:m.t,n:Math.min(sh,raw)});if(n)hitMe(td,n,m.t,"被擒",{vp:up(m.cap)});
         if(tv)td.lost.push({p:up(m.cap),tag:tv,home:+tv.slice(1)});td.li=td.li.filter(x=>x!==tv);td.frzR=td.frzR.filter(x=>x!==tv);
         if(tv&&tv===td.eye){td.eyeX=(+td.eyeX||0)+1;if(hasT(td,"xzht")&&!td.hzU){td.hzU=1;td.me.sp=Math.max(0,td.me.sp-TAL_EYE_SP);ev(td,{k:"eye2",sq:m.t})}else{td.me.sp=0;td.seal=td.rnd+1;ev(td,{k:"eye",sq:m.t})}}   /* 天賦「星陣護體」：陣眼子第一次被擒只扣 20 靈、不停招 */
         const pi=tv?td.pair.findIndex(o=>o.until>=td.rnd&&(o.a===tv||o.b===tv)):-1;   /* 雙燕斜護：一隻被擒，另一隻下一次被擒不扣（整次小盾） */
@@ -212,7 +218,7 @@ const BHTD=(()=>{
       if(tf&&sd(pc)==="b"&&pc!=="k"){
         if(td.trap.some(o=>o.sq===m.t&&o.until>=td.rnd)){freezeN(td,tf,1);ev(td,{k:"frz",sq:m.t,src:"trap"})}   /* 仕角守門：走進守門點 → 定身 1 回合 */
         if(td.lockW&&td.lockW.tag===tf&&td.lockW.at===td.rnd){td.lockW=null;freezeN(td,tf,2);ev(td,{k:"frz",sq:m.t,src:"lock",n:2})}}   /* 銅鎖止步：鎖住的子這回合走了 → 定身 2 回合 */
-      if(m.ck){td.rf.chk=1;const i=ciOk(td);if(i>=0){td.ci.splice(i,1);ev(td,{k:"ci",sq:b.indexOf("K")})}else hitMe(td,defDmg(CHK_HIT,td.me.def),b.indexOf("K"),"被將軍")}   /* 被將軍：免將先擋 → 5×防禦 → 護盾 */
+      if(m.ck){td.rf.chk=1;const i=ciOk(td);if(i>=0){td.ci.splice(i,1);ev(td,{k:"ci",sq:b.indexOf("K")})}else hitMe(td,defDmg(CHK_HIT,defR(td,"K")),b.indexOf("K"),"被將軍")}   /* 被將軍：免將先擋 → 5×防禦 → 護盾 */
       if(td.shard&&td.shard.includes(m.t)){ev(td,{k:"shard",sq:m.t});hitEn(td,3,m.t,"星碎格")}   /* 星碎格：踩上去扣自己 3 元氣（敵我都算） */
       roundEnd(P,C)}
     return endOf(td,m.by)}
@@ -471,7 +477,7 @@ const BHTD=(()=>{
     for(const s of["r","b"]){const w=free(s,s==="r"?"b":"r");if(w)err.push(w)}
     const mat=L=>L.reduce((a,x)=>a+VALV[up(x[0])],0),mr=mat(T.r),mb=mat(T.b)+mat([].concat(...(T.w||[]).map(w=>w.p)));if(Math.abs(mr-mb)>RAID_MAT)err.push(`子力差太多（紅 ${mr}、黑 ${mb}）`);
     return err}
-  return{CH,LV,TL,SK,SKM,EYE0,PCN,PBN,CAPB,CAPM,CAPMAX,CHK_HIT,VALV,FSK,LSQ,comboOf,chkDmg,stats,defDmg,atkPt,defPt,spCurve,SPK,CAP_SP,ESP_GAIN,XM_CAP,ESP_MAX,depthOf,startFen,lvPlan,lvCheck,canStand,boot,move,roundEnd,engine,pick,psBonus,foeDecide,foeMarks,foeEst,targets,why,cast,costOf,capDmg,netHits,sqOf,gatePick,G,tdFix,
+  return{CH,LV,TL,SK,SKM,EYE0,PCN,PBN,CAPB,CAPM,CAPMAX,CHK_HIT,VALV,FSK,LSQ,comboOf,chkDmg,stats,defDmg,atkPt,defPt,squad,atkR,defR,spCurve,SPK,CAP_SP,ESP_GAIN,XM_CAP,ESP_MAX,depthOf,startFen,lvPlan,lvCheck,canStand,boot,move,roundEnd,engine,pick,psBonus,foeDecide,foeMarks,foeEst,targets,why,cast,costOf,capDmg,netHits,sqOf,gatePick,G,tdFix,
     TAL,TALM,TAL_ALL,TAL_HP,TAL_SP,TAL_EYE_SP,talValid,talSpent,talWhy,talBuy,talReset,DUST,dustOf,starsOf,nearOf,rndOf,GRADE,GSAY,gradeOf,AGAIN,RAID,RAIDM,RAID_HP,RAID_AI,RAID_MAT,raidWaves,raidLv,raidFen,raidCheck,raidSane}})();
 if(typeof window!=="undefined")window.XQ_TD=BHTD;
 /* ================= ② 畫面 ================= */
@@ -499,8 +505,8 @@ function bhtdMuteEv(){try{return!!(BHTD_ST&&bhtdIs(BHTD_ST))&&typeof location!==
 const bhtdC=()=>typeof window!=="undefined"&&window.XQCore;
 function bhtdProg(){const P=store.get("bhtd",null);return P&&typeof P==="object"?Object.assign({c:{},w:{},l:{},sk:{}},P):{c:{},w:{},l:{},sk:{}}}   /* 存檔鍵 bhtd：破過哪幾關、各關輸贏次數、每位角色帶哪 4 招（05b JOURNEY_KEYS） */
 const bhtdFxMode=()=>{const v=store.get("bhtdFx","full");return BHTD_FXN[v]?v:"full"};   /* 設定「戰鬥演出」（存檔鍵 bhtdFx）：完整＝草書 1.2 秒＋法器＋打擊演出；簡化＝草書 0.8 秒、少停格；關閉＝不播草書與震動，只留文字（11/14） */
-const bhtdChar=()=>{let c="";try{c=(typeof myChar==="function"&&myChar())||store.get("pChar","")}catch(e){}return BHTD.CH[c]?c:"x_swordboy"};
-const bhtdL=()=>{try{return typeof xpInfo==="function"?xpInfo().L:1}catch(e){return 1}};
+const bhtdChar=()=>{let c="";try{c=typeof ptyLead==="function"?ptyLead():((typeof myChar==="function"&&myChar())||store.get("pChar",""))}catch(e){}return BHTD.CH[c]?c:"x_swordboy"};   /* 11/15 七星改版：出戰的是隊長（07pty-party.js），不再是選角那一位 */
+const bhtdL=c=>{try{if(typeof ptyLv==="function")return ptyLv(c||bhtdChar());return typeof xpInfo==="function"?xpInfo().L:1}catch(e){return 1}};   /* 11/15 七星改版：等級看那位角色自己的（不超過修為），不再整隊共用修為 */
 const bhtdDiff=()=>{try{return typeof diffNow==="function"?diffNow():2}catch(e){return 2}};
 const bhtdOpenLv=(P,n)=>n===1||!!P.c[n-1];
 /* 關卡卡片上的小變化標籤（第 151 題）：星門節奏、星樞性格、開局不對稱、星碎格、星樞會用的招 */
@@ -607,6 +613,7 @@ body.bhtd-on #bbox .pkname{display:none!important}
 .bt-mk.tg{pointer-events:auto;width:calc(var(--c)*.9);height:calc(var(--c)*.9);border-radius:50%;border:3px solid #FFE08A;background:rgba(255,224,138,.18);cursor:pointer;animation:btTg 1s ease-in-out infinite;padding:0}
 @keyframes btTg{50%{box-shadow:0 0 16px 6px rgba(255,224,138,.65)}}
 .bt-mk.tg.pk{border-color:#7fe0ff;background:rgba(127,224,255,.3)}
+.bt-fl-av{width:1.5em;height:1.5em;border-radius:50%;object-fit:cover;object-position:50% 12%;vertical-align:middle;margin-right:.2em;background:#2a2450;border:2px solid rgba(255,255,255,.55)}
 .bt-fl{position:fixed;z-index:44;pointer-events:none;transform:translate(-50%,-50%);font-family:var(--serif);font-weight:800;white-space:nowrap;text-shadow:0 2px 6px #000,0 0 2px #000;animation:btFl 1.3s ease-out forwards}
 .bt-fl.dmg{color:#FFD36A}.bt-fl.hurt{color:#ff6a5a}.bt-fl.heal{color:#8ff0a4}.bt-fl.sp{color:#8fd0ff}.bt-fl.info{color:#e9dcff;font-size:14px}
 @keyframes btFl{0%{opacity:0;transform:translate(-50%,-30%) scale(.6)}15%{opacity:1;transform:translate(-50%,-60%) scale(1.15)}100%{opacity:0;transform:translate(-50%,-160%) scale(1)}}
@@ -882,7 +889,7 @@ function bhtdFrame(){BHTD_RAF=0;const st=BHTD_ST,o=document.getElementById("bhtd
   BHTD_RAF=requestAnimationFrame(bhtdFrame)}
 /* ---------- 扣元氣跳字、招式特效（看 td.ev 新增的事件） ---------- */
 function bhtdBarXY(id){const e=document.getElementById(id);if(!e)return{x:innerWidth/2,y:innerHeight/2};const r=e.getBoundingClientRect();return{x:r.left+r.width/2,y:r.top+r.height*.35}}
-function bhtdFloat(t,p,cls,fs){if(!p)return;const d=document.createElement("div");d.className="bt-fl "+(cls||"");d.textContent=t;d.style.left=p.x+"px";d.style.top=p.y+"px";if(fs)d.style.fontSize=fs+"px";document.body.append(d);try{const w=d.offsetWidth*1.15/2+8,W=innerWidth;if(w*2<W)d.style.left=Math.max(w,Math.min(W-w,p.x))+"px"}catch(e){}   /* 11/13 實打：a9 的「銅鎖：敢動就定身」被切掉一半 → 靠邊往內收（1.15＝動畫最大放大） */setTimeout(()=>d.remove(),1400)}
+function bhtdFloat(t,p,cls,fs,av){if(!p)return;const d=document.createElement("div");d.className="bt-fl "+(cls||"");d.textContent=t;if(av){const i=document.createElement("img");i.className="bt-fl-av";i.src=av;i.alt="";d.prepend(i)}   /* av：11/15 七星改版，誰打的小頭像（07pty ptyAv） */d.style.left=p.x+"px";d.style.top=p.y+"px";if(fs)d.style.fontSize=fs+"px";document.body.append(d);try{const w=d.offsetWidth*1.15/2+8,W=innerWidth;if(w*2<W)d.style.left=Math.max(w,Math.min(W-w,p.x))+"px"}catch(e){}   /* 11/13 實打：a9 的「銅鎖：敢動就定身」被切掉一半 → 靠邊往內收（1.15＝動畫最大放大） */setTimeout(()=>d.remove(),1400)}
 function bhtdFx(kind,sq,o){const p=bhtdXY(sq);if(!p)return;if(document.querySelectorAll(".bt-fx").length>=15)return;   /* 同屏粒子最多 15 顆 */const a=bhtdXY(40),c=bhtdXY(41),cell=a&&c?Math.hypot(c.x-a.x,c.y-a.y):40,d=document.createElement("div");d.className="bt-fx "+kind;const s=cell*({ring:1,rip:1.5,ckf:1.15,ckd:1.15,dot:.22})[kind]||cell*1.8;if(o&&o.dx!=null){d.style.setProperty("--dx",o.dx+"px");d.style.setProperty("--dy",o.dy+"px")}
   d.style.cssText+=`left:${p.x}px;top:${p.y}px;width:${s}px;height:${s}px`;if(kind==="gold")d.innerHTML=`<img src="data/bhtd/fx/burst.webp" alt="" onerror="this.remove()">`;if(kind==="ink")d.innerHTML=`<img src="data/bhtd/fx/ink_splash.webp" alt="" onerror="this.remove()">`;
   document.body.append(d);setTimeout(()=>d.remove(),900)}
@@ -891,7 +898,7 @@ function bhtdEvents(st){const td=st.td,id=st.id;if(BHTD_SEEN[id]==null){BHTD_SEE
 function bhtdEv(e,st){const at=q=>q!=null?bhtdXY(q):null;
   if(e.k==="hit"&&e.sd==="b"&&e.cap){bhtdCapFx(e);return}if(e.k==="hit"&&e.sd==="b"&&e.chk){bhtdChkFx(e);return}   /* 11/14 擒子、將軍：打擊演出三版 */
   if(e.k==="hit"&&e.sd==="b"){bhtdFloat("−"+e.n,at(e.sq)||bhtdBarXY("bhtdEn"),"dmg",Math.min(48,18+e.n*2.2));if(e.src==="sk"&&e.sq!=null)bhtdFx("gold",e.sq);if(e.why==="過河"||e.why==="將軍")bhtdFloat(e.why+" −"+e.n,bhtdBarXY("bhtdEn"),"info")}
-  else if(e.k==="hit"&&e.sd==="r"){bhtdFloat((e.why==="過河"?"防線受壓 ":/^(九宮星核|卒海過河|引力撕裂|殘卒反星|星碎格)$/.test(e.why||"")?e.why+" ":"")+"−"+e.n,   /* 11/14 跳字：敵子過河扣我方＝「防線受壓 −1」 *//^(過河|九宮星核|卒海過河|引力撕裂)$/.test(e.why||"")?bhtdBarXY("bhtdMe"):at(e.sq)||bhtdBarXY("bhtdMe"),"hurt",Math.min(40,16+e.n*2));if(e.why==="被將軍")bhtdFloat("被將軍 −5",bhtdBarXY("bhtdMe"),"info")}
+  else if(e.k==="hit"&&e.sd==="r"){bhtdFloat((e.why==="過河"?"防線受壓 ":/^(九宮星核|卒海過河|引力撕裂|殘卒反星|星碎格)$/.test(e.why||"")?e.why+" ":"")+"−"+e.n,   /* 11/14 跳字：敵子過河扣我方＝「防線受壓 −1」 *//^(過河|九宮星核|卒海過河|引力撕裂)$/.test(e.why||"")?bhtdBarXY("bhtdMe"):at(e.sq)||bhtdBarXY("bhtdMe"),"hurt",Math.min(40,16+e.n*2),e.vp&&typeof ptyAv==="function"?ptyAv(e.vp):null);if(e.why==="被將軍")bhtdFloat("被將軍 −5",bhtdBarXY("bhtdMe"),"info")}
   else if(e.k==="trap"||e.k==="thr"){for(const q of e.sq||[])bhtdFx(e.k==="trap"?"ring":"spark",q);bhtdFloat(e.k==="trap"?"仕角守門 "+(e.sq||[]).length+" 點":"認轍：追俥的敵子 "+(e.sq||[]).length+" 顆",bhtdBarXY("bhtdMe"),"info",15)}   /* sq 是陣列，不能走下面的 at() */
   else if(e.k==="lock"){bhtdFx("ring",e.sq);bhtdFloat("銅鎖：敢動就定身",at(e.sq),"info",15)}
   else if(e.k==="ncap"){bhtdFx("smoke",e.sq);bhtdFloat("迷煙：不能吃子",at(e.sq),"info",15)}
@@ -997,7 +1004,7 @@ function bhtdDesel(){let did=false;if(BHTD_TG){BHTD_TG=null;did=true}if(BHTD_PRE
 /* 提示（不用提示棋、不問引擎）：照塔防規則挑一件最該做的事——能擒子就挑扣最多的（過河子優先）→ 星樞預告 → 星門快落子就去堵 → 有招可放 → 一般建議；起點終點綠框亮 3.5 秒 */
 function bhtdHint(){const st=BHTD_ST;if(!st||st.result)return;const td=st.td,b=st.board;if(!bhtdMyTurn(st))return toast("💡 等星樞走完，再幫你看");
   const show=(f,t,msg)=>{BHTD_HINT={f,t,until:Date.now()+3500};BHTD_MK="";toast("💡 "+msg)},nm=p=>p===p.toUpperCase()?BHTD.PCN[p]:BHTD.PBN[p.toUpperCase()];let best=null;
-  for(const[f,t]of st.legal||[]){const v=b[t];if(!v||v===v.toUpperCase()||!b[f])continue;const eye=td.pid[f]===td.eye,pj=td.pj.includes(td.pid[t]),d=BHTD.capDmg(v,b[f],td.me.atk,eye,pj),cr=(t/9|0)>=5?3:0;if(!best||d+cr>best.sc)best={f,t,d,sc:d+cr,cr}}
+  for(const[f,t]of st.legal||[]){const v=b[t];if(!v||v===v.toUpperCase()||!b[f])continue;const eye=td.pid[f]===td.eye,pj=td.pj.includes(td.pid[t]),d=BHTD.capDmg(v,b[f],BHTD.atkR(td,String(b[f]).toUpperCase()),eye,pj),cr=(t/9|0)>=5?3:0;if(!best||d+cr>best.sc)best={f,t,d,sc:d+cr,cr}}
   if(best)return show(best.f,best.t,`${nm(b[best.f])}吃${nm(b[best.t])}：扣星樞 ${best.d} 元氣${best.cr?"，還少一顆咬你的過河子":""}`);
   if(td.fx){const F=BHTD.FSK[td.fx.id];if(F)return toast(`💡 星樞預告「${F.nm}」：${F.d.replace("{c}",td.zcap)}`)}
   if(td.gate&&td.gate.at-td.rnd<=1){const m=(st.legal||[]).find(([,t])=>td.gate.sq.includes(t));if(m)return show(m[0],m[1],"站上星門，把援軍堵住")}
@@ -1024,10 +1031,10 @@ const BHTD_CN=["","一","二","三","四","五","六","七","八","九","十"];
 function bhtdStamp(n,L){if(!L){bhtdFloat("連續擒子 ×"+n,bhtdBarXY("bhtdEn"),"st0",18);return}document.querySelectorAll(".bt-stamp").forEach(x=>x.remove());
   const d=document.createElement("div");d.className="bt-stamp"+(L===1?" s1":"");d.textContent=(BHTD_CN[Math.min(10,n)]||n)+"連斬";d.setAttribute("aria-hidden","true");document.body.append(d);setTimeout(()=>d.remove(),1800);if(L>=2)bhtdTone([523,659,784][Math.min(2,n-2)],.35)}   /* 朱紅印章，音階 C5→E5→G5 */
 /* 擒子：一般「擒敵 −3」、以弱克強、陣眼神威、破甲貫穿、陣眼貫穿；奇謀連擊 ×2 另跳一行；連續擒子蓋印章（跳字照第 154 題 Gemini 文案） */
-function bhtdCapFx(e){const L=bhtdFxLv(),p=(e.sq!=null&&bhtdXY(e.sq))||bhtdBarXY("bhtdEn"),pc=!!e.combo&&e.combo.indexOf("pierce")>=0,lab=e.weak?"以弱克強！":pc?"陣眼貫穿！":e.eye?"陣眼神威！":e.pj?"破甲貫穿！":"",t=(lab||"擒敵 ")+"−"+e.n;
-  if(e.weak){if(L>=2){bhtdStop(90);bhtdShake();if(e.sq!=null){bhtdFx("gold",e.sq);bhtdInk(e.sq,6)}bhtdFloat(t,p,"big")}else if(L===1){bhtdStop(40);bhtdFloat(t,p,"big l1")}else bhtdFloat("−"+e.n+"（弱克強）",p,"wk0")}
-  else if(lab)bhtdFloat(t,p,L?"dmg":"dmg st0",L?Math.min(34,22+e.n*1.2):22);
-  else bhtdFloat(t,p,L?"cap":"cap st0");
+function bhtdCapFx(e){const av=typeof ptyAv==="function"?ptyAv(e.cp):null,L=bhtdFxLv(),p=(e.sq!=null&&bhtdXY(e.sq))||bhtdBarXY("bhtdEn"),pc=!!e.combo&&e.combo.indexOf("pierce")>=0,lab=e.weak?"以弱克強！":pc?"陣眼貫穿！":e.eye?"陣眼神威！":e.pj?"破甲貫穿！":"",t=(lab||"擒敵 ")+"−"+e.n;
+  if(e.weak){if(L>=2){bhtdStop(90);bhtdShake();if(e.sq!=null){bhtdFx("gold",e.sq);bhtdInk(e.sq,6)}bhtdFloat(t,p,"big",null,av)}else if(L===1){bhtdStop(40);bhtdFloat(t,p,"big l1",null,av)}else bhtdFloat("−"+e.n+"（弱克強）",p,"wk0",null,av)}
+  else if(lab)bhtdFloat(t,p,L?"dmg":"dmg st0",L?Math.min(34,22+e.n*1.2):22,av);
+  else bhtdFloat(t,p,L?"cap":"cap st0",null,av);
   if(e.combo&&e.combo.indexOf("qm")>=0)setTimeout(()=>bhtdFloat("奇謀連擊 ×2",{x:p.x,y:p.y-46},L?"big qm":"dmg st0",L?null:18),L?240:0);
   if(e.streak>=2)setTimeout(()=>bhtdStamp(e.streak,L),L?380:0)}
 /* 將軍：完整＝敵將腳下紅墨波紋＋邊緣淡紅暗角＋低沉鼓聲；簡化＝紅框閃一次；關閉＝粗紅虛線框＋「將軍（扣 5 元氣）」 */

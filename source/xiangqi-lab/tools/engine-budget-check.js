@@ -37,7 +37,8 @@ function sample(items,n,seed){const idx=[];items.forEach((g,i)=>{if(eligible(g))
   return{pool:idx.length,games:pick.sort((a,b)=>a-b).map(i=>items[i])}}
 const winnerOf=g=>g.result==="紅勝"?"r":g.result==="黑勝"?"b":"";
 /* ---------- App 的網頁版 Pikafish（在 Node 裡跑）；lim：{nodes}｜{movetime}｜{depth}。每次搜尋前 ucinewgame ---------- */
-async function newEngine(){
+async function newEngine(o){   /* o.keepHash＝搜尋之間不清雜湊表（App 實際上就是留著的；tools/engine-budget-pgn.js 的對照檔用），要清的時候呼叫 newGame()。不給＝每次搜尋前都清，跟原本一樣 */
+  const KEEP=!!(o&&o.keepHash);
   const PM=require(path.join(EDIR,"pikafish.js")),NNUE=fs.readFileSync(path.join(EDIR,"pikafish.nnue"));
   let waiters=[];const onLine=l=>{for(const w of waiters.slice())w(l)};
   const mod=await PM({arguments:[],locateFile:f=>path.join(EDIR,f),mainScriptUrlOrBlob:path.join(EDIR,"pikafish.js"),print:onLine,printErr:()=>{},preRun:[m=>m.FS.writeFile("/pikafish.nnue",NNUE)]});
@@ -46,7 +47,7 @@ async function newEngine(){
   const ask=(c,pred,each)=>{const p=until(pred,each);send(c);return p};
   await ask("uci",l=>l==="uciok");send("setoption name Threads value "+THREADS);send("setoption name Hash value "+HASH);await ask("isready",l=>l==="readyok");
   const st={n:0,nodes:0,nopv:0};let q=Promise.resolve();
-  function search(pos,lim,multipv){const job=async()=>{send("ucinewgame");await ask("isready",l=>l==="readyok");st.n++;
+  function search(pos,lim,multipv){const job=async()=>{if(!KEEP){send("ucinewgame");await ask("isready",l=>l==="readyok")}st.n++;
       send("setoption name MultiPV value "+(multipv||1));send("position fen "+pos.fen+" - - 0 1");
       const info=new Map();let nodes=0,depth=0;
       const best=await ask(lim.nodes?"go nodes "+lim.nodes:lim.movetime?"go movetime "+lim.movetime:"go depth "+lim.depth,l=>l.startsWith("bestmove"),l=>{if(!l.startsWith("info "))return;
@@ -57,7 +58,8 @@ async function newEngine(){
       st.nodes+=nodes;if(!info.size)st.nopv++;
       return{best:best.split(/\s+/)[1],lines:[...info.values()].sort((a,b)=>a.k-b.k),nopv:!info.size,nodes,depth}};
     const r=q.then(job);q=r.catch(()=>{});return r}
-  return{search,st,close(){try{send("quit")}catch(e){}}}}
+  const newGame=()=>{const r=q.then(async()=>{send("ucinewgame");await ask("isready",l=>l==="readyok")});q=r.catch(()=>{});return r};
+  return{search,st,newGame,close(){try{send("quit")}catch(e){}}}}
 /* ---------- App 的賽後報告與影子模式（m/05-settings.js 原檔的一段，唯讀） ---------- */
 const SETTINGS=path.join(DBD,"m","05-settings.js");
 function loadReport(file){const S=fs.readFileSync(file||SETTINGS,"utf8").replace(/\r\n/g,"\n"),i=S.indexOf("const GRADES="),j=S.indexOf("\n/* ChatGPT 數值盤查 11/11 P1：一步的殺棋訊號",i);if(i<0||j<i)throw new Error("05-settings.js 找不到 GRADES…gameReport 那一段");
@@ -66,14 +68,15 @@ function loadReport(file){const S=fs.readFileSync(file||SETTINGS,"utf8").replace
 /* ---------- 一盤、一個預算：照 App 的 classifyRaw 逐步評等，再算兩方的分數 ----------
    evalFn(board, side, ms, multipv)＝core.js 要的 evalPos（回 {lines,dead}）。回 {moves:[每一步的評等], sides:{r,b}, searches, nodes} */
 async function analyzeGame(g,evalFn,A,o){o=o||{};   /* o.resume＝上次做到一半存下來的 {moves,searches,nodes,depth,ms}；o.deadline＝到這個時間（毫秒）就停，回 {partial:…} */
-  const R=o.resume||{moves:[],searches:0,nodes:0,depth:[],ms:0},prev=global.evalPos,t0=Date.now(),all=g.lines[0].moves;let b=C.parseFen(C.START),s="r",lt=null;const moves=R.moves.slice(),st={searches:R.searches,nodes:R.nodes,depth:R.depth.slice()};
+  /* g.start（90 格的盤面陣列）＋g.startTurn＝不是標準開局的盤（tools/engine-budget-pgn.js 讀 PGN 的 [FEN] 用）；沒給就是標準開局紅先，跟原本一樣 */
+  const R=o.resume||{moves:[],searches:0,nodes:0,depth:[],ms:0},prev=global.evalPos,t0=Date.now(),all=g.lines[0].moves,B0=()=>g.start?g.start.slice():C.parseFen(C.START);let b=B0(),s=g.startTurn||"r",lt=null;const moves=R.moves.slice(),st={searches:R.searches,nodes:R.nodes,depth:R.depth.slice()};
   for(const m of moves){b=C.make(b,m.f,m.t);lt=m.t;s=C.opp(s)}
   global.evalPos=async(bd,sd,ms,mpv)=>{const r=await evalFn(bd,sd,ms,mpv);st.searches++;if(r&&r.nodes)st.nodes+=r.nodes;if(r&&r.depth)st.depth.push(r.depth);return r};
   try{for(let i=moves.length;i<all.length;i++){if(o.deadline&&Date.now()>o.deadline)return{partial:{moves,searches:st.searches,nodes:st.nodes,depth:st.depth,ms:R.ms+Date.now()-t0}};
       const[f,t]=all[i],c=await C.classifyRaw(b,s,f,t,undefined,lt);if(!c)break;
       moves.push({f,t,by:s,q:c.q,loss:c.loss,ev:c.ev,bv:c.bv,bmt:c.bmt,pmt:c.pmt,bm:c.bm,hit:c.bm===C.iccs(f,t)?1:0});b=C.make(b,f,t);lt=t;s=C.opp(s)}}
   finally{global.evalPos=prev}
-  const rep=A.gameReport(C.parseFen(C.START),moves),sh=A.mxShadowReport(rep,winnerOf(g)),sides={};
+  const rep=A.gameReport(B0(),moves),sh=A.mxShadowReport(rep,winnerOf(g)),sides={};
   for(const k of["r","b"]){const R2=rep.sides[k],X=sh[k];sides[k]=R2&&R2.score!=null&&X?{old:R2.score,oldG:R2.grade[0],oldBase:r2(R2.base),base:r2(X.base),raw:X.raw,s0:X.s0,score:X.score,grade:X.grade,acpl:X.alt.acpl,mm:X.alt.mm,er:X.alt.er,n:X.n,labels:X.mv.map(v=>v.q)}:null}
   return{moves,sides,searches:st.searches,nodes:st.nodes,depthMed:qt(st.depth,.5),ms:R.ms+Date.now()-t0}}
 /* 引擎＋節點預算 → evalFn；沒有合法著＝終局（跟 src/local.js 的 window.evalPos 一樣） */

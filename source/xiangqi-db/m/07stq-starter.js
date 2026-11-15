@@ -94,6 +94,7 @@ function stqJourney(c){const C=WX_CHARS[c];if(!C||journey())return false;
   store.set("slotCur",curSlot()||1);store.set("pChar",c);store.set("pSex",C.sx);store.set("pStyle","real");store.set("botPiece",C.pc);store.set("onboard1",true);
   const hm=jHomePick(c);store.set("journey",{c,sx:C.sx,born:Date.now(),v:1,era:2,home:hm,re:2,stq:1});
   if(hm){store.set("era",hm);store.set("eraUser",null);store.set("shipDock",["classic",hm]);try{applyEra()}catch(e){}}
+  try{if(typeof ptyFresh==="function")ptyFresh()}catch(e){}   /* 11/15 七星改版：新旅程的隊伍只有齊轍（跟 05b journeyStart 一樣） */
   store.set("playSec",0);store.set("diff",2);if(store.get("oppLook",null)==null)store.set("oppLook","real");
   try{if(!myName())setMyName(defaultName())}catch(e){}
   try{saveNow(true)}catch(e){}try{window.dispatchEvent(new Event("xq-look"))}catch(e){}return true}
@@ -216,9 +217,9 @@ function stqGrad(how){const U=STQ_UI;if(!U)return;U.gid++;U.busy=true;U.end=true
     try{if(typeof mnqGrant==="function")mnqGrant("a1")}catch(e){}}
   let nh=5;try{nh=MNQ_HINT_A1}catch(e){}
   U.pg.innerHTML=`<div class="stq-end">${all?`<div class="stq-st"><div class="gf-ray"></div><div class="stq-seal" data-noi18n>練</div></div>`:""}<h2>${all?"新手練習完成":"入門物品領好了"}</h2>
-    <div class="stq-it"><div>🏅 稱號「雲河新使」</div><div>💡 提示棋 ×${nh}</div><div>🏠 家鄉棋盤</div><div>📜 圖鑑第一頁</div></div><button type="button" class="stq-go">選一位角色</button></div>`;
+    <div class="stq-it"><div>🏅 稱號「雲河新使」</div><div>💡 提示棋 ×${nh}</div><div>🏠 家鄉棋盤</div><div>📜 圖鑑第一頁</div></div><button type="button" class="stq-go">出發</button></div>`;
   if(all)try{if(typeof rfxSound==="function")rfxSound(false);else if(typeof mnfSfx==="function")mnfSfx("bell")}catch(e){}
-  const b=U.pg.querySelector(".stq-go");b.onclick=()=>{try{vibrate(8)}catch(e){}stqPickView()};try{b.focus({preventScroll:true})}catch(e){}}
+  const b=U.pg.querySelector(".stq-go");b.onclick=()=>{try{vibrate(8)}catch(e){}stqPick(STQ_C0)};try{b.focus({preventScroll:true})}catch(e){}}   /* 11/15 七星改版：不再選角，畢業直接用齊轍出發（其他六位在星槎旅程中加入）；stqPickView 留著不呼叫 */
 function stqPickView(){const U=STQ_UI;if(!U)return;
   U.pg.innerHTML=`<p class="stq-g">選一位角色</p><div class="stq-pk"></div>`;
   let L=[];try{L=obPicks()}catch(e){}const box=U.pg.querySelector(".stq-pk");

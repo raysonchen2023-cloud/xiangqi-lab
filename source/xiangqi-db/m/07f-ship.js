@@ -249,7 +249,7 @@ function shipGalMark(k,id,o){const G=store.get("shipGal",{})||{},first=!G[id];G[
 function shipStale1(id){try{const P=SHIP_BANK&&SHIP_BANK.D.byId[id];if(!P||!P.stale||store.get("shipStale",false))return false;store.set("shipStale",true);return true}catch(e){return false}}
 /* 解開（看答案的不會呼叫）：記下這題和有沒有用提示；第一次解開修為 +15；3 題都解開＝學會了（shipLearn） */
 function shipMark(k,id,o){const A=store.get("shipSolved",{})||{},E=A[k]||(A[k]={}),old=shipRec(k,id),h=o&&o.hint?1:0,first=!old;
-  if(first)E[id]={at:Date.now(),h};else if(old.h&&!h)E[id]={at:old.at||Date.now(),h:0,up:Date.now()};store.set("shipSolved",A);
+  if(first)E[id]={at:Date.now(),h};else if(old.h&&!h)E[id]={at:old.at||Date.now(),h:0,up:Date.now()};store.set("shipSolved",A);try{if(first&&typeof ptyOnSolve==="function")ptyOnSolve(k,id)}catch(e){}   /* 11/15 七星改版：解開下船幫忙的那一題，他就加入（07pty-party.js） */
   const L=shipPuzzles(k)||[],n=L.filter(x=>shipRec(k,x)).length;let learned=false;
   if(L.length&&n>=L.length&&!shipLearned(k)){const M=store.get("shipLearn",{})||{};M[k]=Date.now();store.set("shipLearn",M);learned=true}
   if(first&&typeof addXP==="function")setTimeout(()=>addXP(15,"千秋殘局",`ship:${k}:${id}`),1600);
@@ -275,12 +275,12 @@ function diffSheet(after){sheet("🎚 航行難度",b=>{const cur=diffNow(),sg=d
   b.querySelectorAll("[data-df]").forEach(x=>x.onclick=()=>{vibrate(5);const n=+x.dataset.df;store.set("diff",n);closeSheet();toast("🎚 航行難度換成「"+DIFF[n-1].n+"」");try{saveNow(true)}catch(e){}if(after)after()})})}
 
 /* ---------- 起航：往下一站開——先播千秋穿梭（只播經過的那幾朝，意見回饋 697），再出停靠封面（2.6 秒、點一下跳過），再看這一站主場角色的開場 ---------- */
-function shipSailGo(done){{const N=shipSailNeed();if(N){shipGateSay(N);return}}const from=shipAt(),k=shipSail();if(!k)return;shipEra(k);vibrate([10,40,10]);try{saveNow(true)}catch(e){}
+function shipSailGo(done){{const pb=typeof ptySailBlock==="function"?ptySailBlock():null;if(pb){ptyGateSay(pb);return}}   /* 11/15 七星改版：這一站還有人沒幫，不起航 */{const N=shipSailNeed();if(N){shipGateSay(N);return}}const from=shipAt(),k=shipSail();if(!k)return;shipEra(k);vibrate([10,40,10]);try{saveNow(true)}catch(e){}
   qianqiu(from,k,()=>{if(typeof bhMaybe==="function")bhMaybe(k,()=>shipDockCover(k,done),true);else shipDockCover(k,done)},"sail")}   /* hspx（開發者 11/12）：穿梭完 10% 偏航進黑洞（07bh-blackhole.js），不下就照常停靠 */
 function shipDockCover(k,done){const Ls=SHIP_LESSON[k]||{},T=SHIP_STOP[k],c=document.createElement("div");let fin=false;c.className="ecover";
   c.innerHTML=`<i style="background-image:url(data/inn/${k}_ink.webp),url(data/inn/${k}.webp)"></i><div><span class="es">${esc((ARENA[k]||{}).seal||"⛵")}</span><b>${esc(shipShort(k))}</b><small>⛵ 星槎停靠・${esc(T.place)}</small></div>`;
   document.body.append(c);requestAnimationFrame(()=>c.classList.add("on"));
-  const arrive=()=>{if(fin)return;fin=true;c.classList.remove("on");setTimeout(()=>c.remove(),500);const W=shipWho(k,Ls.openBy);
+  const arrive=()=>{if(fin)return;fin=true;c.classList.remove("on");setTimeout(()=>c.remove(),500);if(typeof ptyArrive==="function"&&ptyArrive(k,done))return;   /* 11/15 七星改版：這一站有人要加入，先出下船場景（他還不在船上，不能由他開口） */const W=shipWho(k,Ls.openBy);
     modal(`<img src="${W.img}" alt="" onerror="this.remove()"><h2>${esc(shipShort(k))}・${esc(T.place)}</h2>${Ls.open?`<p class="pl-say">${esc(W.n)}：「${esc(Ls.open)}」</p>`:""}<p>📘 棋話一頁：<b>${esc(Ls.t||"")}</b></p>`,[["看這一站",()=>{if(done)done()}]],"prolog")};
   c.onclick=arrive;setTimeout(arrive,2600)}
 
@@ -635,7 +635,7 @@ function yunheData(){return YUNHE_P||(YUNHE_P=fetch("data/canju/yunhe-novel.json
 /* 意見回饋 688：依選角而不同的第一人稱故事線 data/canju/yunhe-pov.json（tools/yunhe_pov_export.js 產生）。選了雲河七星的某一位（myChar()）：他當主角的 2 章換成第一人稱整章，其他 12 章在原章後面加「我在旁邊看見的」；
    學徒、小帥舊旅程、沒選角的照舊讀原章。yunheOrig＝true 看原本（第三人稱）的版本（只存在這台裝置）。載不到這份檔就照舊顯示原章，不擋讀。 */
 function yunhePov(){return YUNHE_POV_P||(YUNHE_POV_P=fetch("data/canju/yunhe-pov.json").then(r=>r.ok?r.json():null).catch(()=>null).then(x=>{if(!x)YUNHE_POV_P=null;return x}))}
-const YUNHE_POV_ON=false;   /* 意見回饋 742（開發者 11/7）：不用第一人稱說故事，一律讀原版；第一人稱稿留在 yunhe-pov.json，要再開就改成 true */
+const YUNHE_POV_ON=false;   /* 意見回饋 742（開發者 11/7）：不用第一人稱說故事，一律讀原版；第一人稱稿留在 yunhe-pov.json，要再開就改成 true。11/15 七星改版把前九章改寫成「六顆星散落」，第一人稱稿還是照舊前九章寫的，再開之前要先重寫 */
 function yunheMine(P){if(!YUNHE_POV_ON)return null;const me=typeof myChar==="function"?myChar():"";return me&&P&&P.chars&&P.chars[me]?P.chars[me]:null}
 const yunheOrig=()=>!!store.get("yunheOrig",false);
 /* 這一章照目前的設定要怎麼讀：{c 章（title、paras、marks）, pov＝1 第一人稱整章, side＝旁觀段落 or null} */

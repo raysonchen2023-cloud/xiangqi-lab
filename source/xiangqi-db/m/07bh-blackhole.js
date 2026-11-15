@@ -355,7 +355,10 @@ function bhxAfter(){bhxEnd();if(!(MODAL_HOLD>Date.now()))opVol(.25,1.2);   /* �
 function bhxSeven(){let c="";for(let i=0;i<7;i++){const a=i*Math.PI*2/7-Math.PI/2,x=(50+30*Math.cos(a)).toFixed(1),y=(50+30*Math.sin(a)).toFixed(1);c+=`<circle cx='${x}' cy='${y}' r='8' fill='#c8102e' stroke='#E8C77A' stroke-width='1.6'/>`}
   return"data:image/svg+xml,"+encodeURIComponent(`<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><rect width='100' height='100' fill='#120a26'/>${c}</svg>`)}
 /* hspx 開發者 11/12（選「在流星畫面直接點一顆星」）：七顆星落進七個朝代小景後停住，大字「哪一顆星，是你？」；點小景跳那位角色的小卡，「就是這顆星」＝選定 */
-function bhxPick(o,cap,cb){o.dataset.pick="1";if(cap){cap.textContent="哪一顆星，是你？";cap.classList.add("on")}
+/* 11/15 七星改版（開發者選單：不再選角，一律齊轍開局，其他六位在星槎旅程中陸續加入）：七顆流星不再讓玩家點，紅色那顆（俥・齊轍）自己落下，其餘六顆劃向遠方（「六顆星散落」）。
+   原本的點星選角改名 bhxPickChoose 留著不呼叫，要回復時把下面這行換回去 */
+function bhxPick(o,cap,cb){const k="x_swordboy";try{store.set("bhxPick",k)}catch(e){}if(cap){cap.textContent="紅色的那顆星，落了下來。";cap.classList.add("on")}setTimeout(()=>cb(k),1400)}
+function bhxPickChoose(o,cap,cb){o.dataset.pick="1";if(cap){cap.textContent="哪一顆星，是你？";cap.classList.add("on")}
   const W=o.clientWidth||innerWidth,H=o.clientHeight||innerHeight,s=Math.max(W/768,H/1376),ox=(W-768*s)/2,oy=(H-1376*s)/2,box=document.createElement("div");box.className="bx-pks";o.append(box);
   for(const k in BHX_SPOT){const C=WX_CHARS[k];if(!C)continue;const b=document.createElement("button");b.type="button";b.className="bx-pk";b.style.left=(ox+BHX_SPOT[k][0]*s)+"px";b.style.top=(oy+BHX_SPOT[k][1]*s)+"px";
     b.setAttribute("aria-label",`${C.pc}・${C.n}，${typeof eraLabel==="function"?eraLabel(CHAR_ERA[k]):""}`);b.innerHTML=`<span>${esc(C.pc)}・${esc(C.n)}</span>`;

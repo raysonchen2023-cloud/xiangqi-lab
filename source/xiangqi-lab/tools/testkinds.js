@@ -15,6 +15,8 @@ const DIR = __dirname;
 const SKIP = new Set(["test-home-focus.js", "testkinds.js"]);
 /* 11/12 已逐項分類（開發者稽核 story/102_評比灌水誠實稽核.md 第 3 項） */
 const CLASSIFIED = new Set([
+  "test-engine-budget-pgn.js",   /* 11/15 引擎預算敏感度 PGN 版 tools/engine-budget-pgn.js（用 App 匯出的帶評語棋譜重做＋手機評語 vs 電腦各檔；自編棋譜與假的評估函式，不啟動引擎；行為 8、原始碼 1） */
+  "test-mathmodel-82.js",   /* 11/15 數學模型（ChatGPT 第五次重評的改善單＋引擎預算敏感度）：算法對照每一對各自算人數與來源（單人 120 盤不能借別人的人數）、探索性的標籤與「可比較的 k／3 項」、方案 v1.3、引擎預算敏感度工具 engine-budget-check.js 的抽樣／續跑／比較（用假的評估函式，不啟動引擎）（行為 6、混合 1、原始碼 2） */
   "test-mathmodel-81.js",   /* 11/15 數學模型（ChatGPT 第四次重評的改善單＋開發者決定）：離線工具原始格式先驗再轉型（null、字串、缺識別欄位不進分母；真正的 0 分留著）、新舊配對盤數、弱項建議的放行條件 SK.PICKOK（沒有基準時畫面不變）、三種對照算法與算法三角對照、本機紀錄多存標準開局與提示悔棋、Wilson 完整精度、方案 v1.2／外部公式參考 v2／manifest 說明（行為 14、混合 3、原始碼 4） */
   "test-mathmodel-80.js",   /* 11/15 數學模型（ChatGPT 第三次重評的改善單）：離線工具的資料資格篩選與共同有效盤集合（重現的 score＝999、full:0 兩個漏洞）、模擬比例的 Monte Carlo 區間與固定情境／判定、HAC／區塊重抽離線對照、SK.PICK 與版本雜湊紀錄 mx-manifest、預先驗證方案 v1.1（行為 13、原始碼 2） */
   "test-mathmodel-79.js",   /* 11/15 數學模型驗證閉環（ChatGPT 第二次重評第 2～4 項）：本機影子紀錄與開發者匯出、匿名欄位不變、離線比較 mx-compare.js（完整盤、截斷長局）、Lichess 固定版本的數值與殺棋分界整點、用語統一、階段差異配對估計＋選擇效應修正與模擬（行為 20、混合 1、原始碼 3） */
@@ -87,6 +89,12 @@ const CLASSIFIED = new Set([
   "test-wheel-3d.js",   /* 11/15 車輪戰 3D（m/07bhw-wheel.js 的 ③；park3d.js 新增 ex.bkey／setTdPad／busy）：視角三態與記住、預設平面、整場一個 3D 實例、換盤直接擺好、哪張完整哪兩張簡化、簡化棋盤的棋子與狀態、點簡化棋盤換盤、鏡頭飛行、3D 開不起來退回平面、離開後資源與畫面收乾淨；DOM、three、park3d 都是假的，3D 畫面本身沒有實機驗收（行為 17、混合 3、原始碼 3） */
   "test-gate-siege.js",   /* 11/15 黑洞・星門圍城 gate-siege-v1 候選（m/07bhg-gatesiege.js 的 GSV 純規則、local.js tdRebuild 部署換手、接線原始碼；第 1、3、6 關） */
   "test-siege-wheel-bench.js",   /* 11/15 第 19 輪評審第 8 項：星門圍城＋車輪戰真引擎基準工具 tools/siege-wheel-bench.js（載 App 原檔、同種子兩次相同、每局欄位齊全、覆寫只改記憶體、摘要與倒掛算法、合併報表；真引擎那幾項在 Node 裡跑 App 的 Pikafish，載不了就略過；行為 9、原始碼 1） */
+  "test-party-battle.js",   /* 11/15 七星各自等級的黑洞戰鬥規則（07bhg GSV、07bht BHTD 的 squad：擒子看吃子那顆、被擒看被吃那顆、元氣七種平均、成長放大；07pty squadOf）；本機未發布，test-party- 前綴排除（行為 6、原始碼 1） */
+  "test-party-core.js",   /* 11/15 七星陸續加入與各自等級（m/07pty-party.js 的 PTY 純規則、存檔層、接線原始碼；本機未發布，公開證據用 test-party- 前綴排除）（行為 15、原始碼 2） */
+  "test-party-wood.js",   /* 11/15 木棋靈（還沒加入的紅子在黑洞巨盤用的木雕棋子人）：x_wood.glb 骨架與五動作、park3d gntWood 切換、DISK；本機未發布 */
+  "test-party-novel.js",   /* 11/15 聽書正文前九章換成「六顆星散落」改寫定稿（yunhe-novel.json、重點句 yunhe-keylines.json、匯出工具）；本機未發布 */
+  "test-party-hero.js",   /* 11/15 齊轍換新造型（3D 調色版、立繪、預覽圖、對話立繪、DISK、tasks.json、大棋盤背牌、點物件）；本機未發布 */
+  "test-party-prologue.js",   /* 11/15 星槎序章 9 關（m/07bhg-gatesiege.js 31～39：擺法、引擎驗過的殘局、吃光卒／援軍擋完過關、解鎖看加入、第 1 關要破 C1、隊長換人）；本機未發布 */
   "test-gate-siege-3d.js",   /* 11/15 星門圍城切 3D 星盤（m/07bhg-gatesiege.js 檔尾 gsvFlat 那一段）：視角三態與記住、不再一律平面、舊版塔防與車輪戰不受影響、記號 3D 分類（貼地／直立／頭頂）、gsvFrame 兩種座標、「更多」那顆（06-cpu parkBtn）、3D 開不起來退回平面；DOM 與 park3d 都是假的，3D 畫面本身沒有實機驗收（行為 19、混合 3、原始碼 3） */
   "test-growth.js",   /* 11/15 對戰後的角色成長（m/07grw-growth.js）：快照比對只列有變化的、升級那句、體力只比同一次開 App、結果視窗插入時機（延後、逾時）、減少動態不跳數字；遠征令拿掉、配樂收藏與再看第一章搬到設定聲音頁（07mnq）；08b／07bhw／05b／m.html 接點（行為 9、混合 1、原始碼 4） */
   "test-starter.js",   /* 11/15 新手練習「先走再學」（m/07stq-starter.js）：六任務題目合法、第 4、5 題一步殺照規則判斷、跳過補齊不重複、老玩家判定、存檔版本、電腦退路、05b／07mnq／m.html 接點（行為 5、混合 3、原始碼 4） */
@@ -94,9 +102,6 @@ const CLASSIFIED = new Set([
   "test-park-garden-1115.js",   /* 11/15 開發者園子三個回報（park3d.js）：俯視時遮篷屋脊墨線收掉、香爐挪到棋盤木框外、幻影棋客半透明（行為 1、混合 1、原始碼 2） */
   "test-bhtd-view-1115.js",   /* 11/15 開發者「黑洞對戰 default 開成全局俯視」（m/07bht-td.js bhtdView）：記成臨陣斜角的重設回全局俯視一次，之後自己選的照舊記住（行為 5、原始碼 1） */
   "test-bh-drift-raid-1115.js",   /* 11/15 開發者選「星槎偏航＝突發的星淵急襲短戰」（m/07bh-blackhole.js bhStart／bhOffer、m/07bht-td.js bhtdRaidDrift）：急襲已開直接開打、沒開照舊選關、觀星臺入口不受影響（行為 7、原始碼 1） */
-  "test-sw-offline.js",   /* 11/15 hspx 離線 3D 角色變小帥：sw.js 安裝時先存 3D 模型載入器（GLTFLoader.mjs 和它 import 的 .mjs），一般檔案也存 .mjs */
-  "test-fb888.js",   /* 11/15 意見回饋 888 iPad 首頁兩指放大縮不回（07x 整頁放大救援、回首頁回 1 倍）、889 669×869 首頁一窄條（07z HMW_PORT 0.89／HMW_SQ、07fl XFL_HOME_MAX）、890 插曲全螢幕頁讓開狀態列（07t .ep-ov）（行為 11、原始碼 3） */
-  "test-mathmodel-82.js",   /* 11/15 數學模型（ChatGPT 第五次重評的改善單＋引擎預算敏感度）：算法對照每一對各自算人數與來源（單人 120 盤不能借別人的人數）、探索性的標籤與「可比較的 k／3 項」、方案 v1.3、引擎預算敏感度工具 engine-budget-check.js 的抽樣／續跑／比較（用假的評估函式，不啟動引擎）（行為 6、混合 1、原始碼 2） */
   "test-fb897-1115.js",   /* 11/15 意見回饋 897：黑洞對局頁的返回鈕照來源回去（不再一律「回星槎」；m/07gxt-guanxing.js gxtBhBack、m/07-legend.js jBack）；楚河漢界改深色粗邊＋亮字、盤底那面補河界與自發光（src/park3d.js）（行為 8、原始碼 3） */
   "test-figview-ghost-1115.js",   /* 11/15 開發者「這個也要一致用有透明度的設定」「13 星系的幻影棋手一樣」：點對手頭像開的 3D 檢視視窗裡，幻影棋客半透明、慢慢呼吸（m/06-cpu.js fig3d 的 FGH／fgGhost，跟 park3d oppGhost 同一組數字）；別的角色不受影響（行為 5、原始碼 2） */
   "test-home-bar-1115.js",   /* 11/15 開發者首頁截圖：回報問題移到快速對局下面、改成跟快速對局／更多玩法同一種大按鈕，三顆的底都帶透明度（m/07z-homemap.js hmGoBar 與樣式）（原始碼 3） */
@@ -104,6 +109,8 @@ const CLASSIFIED = new Set([
   "test-watcher-sway-1115.js",   /* 11/15 開發者線上觀戰截圖「紅圈處會一直旋轉」：圍觀小人待機時身體不再左右晃（從上面看腰帶那根深色直條像蹺蹺板一直轉），改成只有頭微微歪（src/park3d.js 每格動作）（原始碼 3） */
   "test-gx-parkinfo-1115.js",   /* 11/15 開發者紫淵對局截圖「修正」：幻譜星門的星系裡點遠方，跳那個星系自己的說明卡，不再跳玩家主題的遠景（山水亭橋）、也不撿朝代珍品（m/07gx-galaxy.js gxParkInfo、m/06-cpu.js parkInfo）（行為 4、原始碼 1） */
   "test-gx-gatepano.js",   /* 11/15 開發者選星頁截圖「重新繪製滿版環景的幻譜星門讓玩家選」「觀星臺有什麼神秘的力量」：直式整個畫面是一圈水墨環景、星球各自去背疊上去、左右拖曳繞一圈（m/07gxp-gatepano.js）；說明卡兩版共用與星碑共鳴文案（m/07gx-galaxy.js）；從星圖石碑進星門的過場（m/07gxt-guanxing.js gxtGate）（行為 9、混合 1、原始碼 3） */
+  "test-sw-offline.js",   /* 11/15 hspx 離線 3D 角色變小帥：sw.js 安裝時先存 3D 模型載入器（GLTFLoader.mjs 和它 import 的 .mjs），一般檔案也存 .mjs */
+  "test-fb888.js",   /* 11/15 意見回饋 888 iPad 首頁兩指放大縮不回（07x 整頁放大救援、回首頁回 1 倍）、889 669×869 首頁一窄條（07z HMW_PORT 0.89／HMW_SQ、07fl XFL_HOME_MAX）、890 插曲全螢幕頁讓開狀態列（07t .ep-ov）（行為 11、原始碼 3） */
   "test-preload-bg.js"   /* 11/14 評比第 17、18 輪第 5 項背景暫停與按需預載：00-util bgpEvery／bgpOn、09b 預載前景／背景／恢復三段、分區 z:<分區>、別朝代先不下載、閒置才補選讀、省流量、preload-list --retier（行為 12、混合 1、原始碼 1） */
 ]);
 /* 還沒逐項分類的檔（統計列為「待分類」）；新測試檔先放這裡，分好類再移到 CLASSIFIED */

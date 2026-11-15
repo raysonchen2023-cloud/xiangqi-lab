@@ -10,6 +10,7 @@ const C=require(path.join(ROOT,"xiangqi-lab/site/core.js"));
 const rd=p=>fs.readFileSync(path.join(ROOT,p),"utf8").replace(/\r\n/g,"\n");
 const SRC=rd("xiangqi-db/m/07bhg-gatesiege.js");
 const ctx={console,Math,JSON};vm.createContext(ctx);vm.runInContext(SRC+"\n;this.GSV=GSV;",ctx);const G=ctx.GSV;
+const MAIN=G.LVN.filter(n=>n<=12);   /* 11/15 七星改版第二期：主線第 1～12 關；序章 31～39 的斷言在 test-party-prologue.js */
 const J=x=>JSON.parse(JSON.stringify(x));
 const Q=(lu,xi)=>G.LSQ(lu,xi);
 /* local.js 的 tdRebuild 原文拿出來測（同一份程式） */
@@ -38,13 +39,13 @@ test("同式傷害與數值盾：提案一第十節算術例（23／17／21、�
   assert.deepEqual(J(G.absorb({v:8},8)),{abs:8,loss:0},"盾剛好用完：損血 0，不再保底扣 1");
   assert.equal(Math.round(1000*(1-100/130))/10,23.1,"DEF30 減傷約 23.1%")});
 
-test("七星數值（提案一 5.4）＋修為窄幅加成：Lv1 原值、Lv100 最多 HP+5%、ATK+5、DEF+5；開場靈力 35、每回合 4", ()=>{
+test("七星數值（提案一 5.4）＋等級加成：Lv1 原值、Lv100 最多 HP+80%、ATK+35、DEF+18（11/15 七星改版放大，原本 +5%／+5／+5）；開場靈力 35、每回合 4", ()=>{
   const T={x_swordboy:[105,110,20,90],x_spiritgirl:[100,95,45,100],x_martialgirl:[95,115,20,100],x_miaogirl:[95,105,25,100],x_shuai:[90,100,30,110],x_shi:[115,90,50,90],x_bing:[100,105,20,100]};
-  for(const k in T){const s=G.stats(k,1),z=G.stats(k,100);assert.deepEqual([s.hp,s.atk,s.def,s.sp],T[k],k);assert.equal(z.hp,Math.round(T[k][0]*1.05));assert.equal(z.atk,T[k][1]+5);assert.equal(z.def,T[k][2]+5);assert.equal(z.sp,T[k][3],"靈力容量不隨修為長");assert.equal(s.sp0,35);assert.equal(s.rg,4)}});
+  for(const k in T){const s=G.stats(k,1),z=G.stats(k,100);assert.deepEqual([s.hp,s.atk,s.def,s.sp],T[k],k);assert.equal(z.hp,Math.round(T[k][0]*1.8));assert.equal(z.atk,T[k][1]+35);assert.equal(z.def,T[k][2]+18);assert.equal(z.sp,T[k][3],"靈力容量不隨修為長");assert.equal(s.sp0,35);assert.equal(s.rg,4)}});
 
 test("關卡：第 1～12 關開局＋星門合法（敵剛好 16 子、紅 8＋後備 8、星門在敵半場、補給點各棋種都有合法點、不照面、沒人被將）", ()=>{
-  assert.deepEqual(J(G.LVN),[1,2,3,4,5,6,7,8,9,10,11,12],"11/15 補第 2、4、5 關、第二章第 7～12 關");
-  for(const n of G.LVN){assert.deepEqual(J(G.lvCheck(n,C)),[],"第 "+n+" 關");const pl=G.plan(n),b=G.startBoard(n);
+  assert.deepEqual(J(MAIN),[1,2,3,4,5,6,7,8,9,10,11,12],"11/15 補第 2、4、5 關、第二章第 7～12 關");assert.deepEqual(J(G.LVN.filter(n=>n>12)),[31,32,33,34,35,36,37,38,39],"11/15 七星改版：序章 31～39");
+  for(const n of MAIN){assert.deepEqual(J(G.lvCheck(n,C)),[],"第 "+n+" 關");const pl=G.plan(n),b=G.startBoard(n);
     assert.equal(pl.red.length,8);assert.equal(pl.res.length,8);assert.equal(pl.open.length+pl.waves.length,16,"敵方總預算 16");
     assert.equal(b.filter(x=>x&&x===x.toLowerCase()).length,pl.open.length);for(const w of pl.waves)assert.equal(G.spawnOk(b,w.p,w.sq,C),"","開局盤上每顆援軍的門都能落")}
   assert.equal(G.plan(1).open.length,8);assert.equal(G.plan(3).open.length,9);assert.equal(G.plan(6).open.length,10);
@@ -69,7 +70,7 @@ test("第 2、4、5 關照提案一第七節：數值、開場子數、援軍回
   const P5=game(5);assert.deepEqual(J(P5.td.esk),[]);assert.deepEqual(J(P5.td.phs),[{hp:.6,esk:"pao"},{hp:.3,esk:"zjhl"}]);assert.equal(G.defOf(P5.td,"b"),80)});
 
 test("七角色 × 十二關 × Lv1／Lv23 都能開局：有合法起手、帶得到本命招、通用招與部署都在", ()=>{
-  for(const ch in G.CH)for(const n of G.LVN)for(const L of[1,23]){const P=game(n,{ch,L});assert.ok(C.legal(P.board,"r").length>0);assert.ok(P.td.sk.length>=1&&P.td.sk.length<=4);
+  for(const ch in G.CH)for(const n of MAIN)for(const L of[1,23]){const P=game(n,{ch,L});assert.ok(C.legal(P.board,"r").length>0);assert.ok(P.td.sk.length>=1&&P.td.sk.length<=4);
     assert.equal(G.SKM[P.td.sk[0]].ch,ch);assert.equal(G.why(P,"dep",C),"",`${ch} 第 ${n} 關開局就能部署`);assert.equal(P.td.me.sp,35)}});
 
 test("檢查器抓得到錯：子數超過、門格有子、落出將軍會被擋", ()=>{
@@ -208,12 +209,12 @@ test("招式：控制不能排空星樞合法步；定身／迷煙／煙幕照 e
 
 test("招式：攻擊招走同一個傷害算式（直路衝鋒、隔子星花、紅馬跳影、長街破陣、花火連環）；回靈招占招、受收入上限，收入滿了不能放", ()=>{
   const P=custom(1,[["K",5,1],["k",4,10],["R",1,1],["p",1,7]],{ch:"x_swordboy",L:30,sk:["qi2","qi5"],waves:false}),td=P.td;td.me.sp=100;
-  mv(P,Q(1,1),Q(1,4));bq(P);assert.equal(G.why(P,"qi2",C),"");castOk(P,{k:"qi2"});assert.equal(td.q[0].raw,G.dmg(6,110,10),"直走 3 格 ×2＝6");
+  mv(P,Q(1,1),Q(1,4));bq(P);assert.equal(G.why(P,"qi2",C),"");castOk(P,{k:"qi2"});assert.equal(td.q[0].raw,G.dmg(6,G.stats("x_swordboy",30).atk,10),"直走 3 格 ×2＝6");
   const P2=custom(1,[["K",5,1],["k",4,10],["R",1,1],["C",2,3],["p",2,6],["n",2,8]],{ch:"x_martialgirl",L:30,sk:["lei2","lei3","lei4"],waves:false});P2.td.me.sp=100;
-  assert.deepEqual(J(G.targets(P2,"lei2",[],C)),[Q(2,8)]);castOk(P2,{k:"lei2",tg:[Q(2,8)]});assert.equal(P2.td.q[0].raw,G.dmg(12,115,10),"炮架是敵子：8＋4");
-  const P3=custom(1,[["K",5,1],["k",4,10],["R",1,1],["N",3,3],["p",4,5]],{ch:"x_miaogirl",L:30,sk:["luo2"],waves:false});P3.td.me.sp=100;castOk(P3,{k:"luo2",tg:[Q(4,5)]});assert.equal(P3.td.q[0].raw,G.dmg(10,105,10));
+  assert.deepEqual(J(G.targets(P2,"lei2",[],C)),[Q(2,8)]);castOk(P2,{k:"lei2",tg:[Q(2,8)]});assert.equal(P2.td.q[0].raw,G.dmg(12,G.stats("x_martialgirl",30).atk,10),"炮架是敵子：8＋4");
+  const P3=custom(1,[["K",5,1],["k",4,10],["R",1,1],["N",3,3],["p",4,5]],{ch:"x_miaogirl",L:30,sk:["luo2"],waves:false});P3.td.me.sp=100;castOk(P3,{k:"luo2",tg:[Q(4,5)]});assert.equal(P3.td.q[0].raw,G.dmg(10,G.stats("x_miaogirl",30).atk,10));
   const P4=custom(1,[["K",5,1],["k",4,10],["R",1,1],["p",1,5],["n",1,8],["c",1,9],["r",1,10]],{ch:"x_swordboy",L:30,sk:["qi5"],waves:false});P4.td.me.sp=100;
-  castOk(P4,{k:"qi5",tg:[Q(1,1),"col"]});assert.equal(P4.td.q[0].raw,G.dmg(18,110,10),"最近 3 顆合成一擊 6×3");
+  castOk(P4,{k:"qi5",tg:[Q(1,1),"col"]});assert.equal(P4.td.q[0].raw,G.dmg(18,G.stats("x_swordboy",30).atk,10),"最近 3 顆合成一擊 6×3");
   /* 回靈：勇往直前 */
   const P5=custom(1,[["K",5,1],["k",4,10],["R",1,1],["P",3,4]],{ch:"x_bing",L:30,sk:["bu2"],waves:false}),t5=P5.td;mv(P5,Q(3,4),Q(3,5));bq(P5);const s0=t5.me.sp;castOk(P5,{k:"bu2"});assert.equal(t5.me.sp,s0+6);
   assert.equal(G.why(P5,"gheal",C),"這回合已經用過一招（每回合最多一招）","零費回靈招也占這回合的招");
@@ -295,11 +296,11 @@ test("分段（第 5 關）：星樞 HP 降到 60% 解鎖隔山星砲、30% 解�
 
 /* ===== 第二章「俥路調度」第 7～12 關（11/15）===== */
 test("第二章「俥路調度」第 7～12 關：章與關名照提案二第 3 節；數值在提案範圍內；每關的學習點擺得出來；深度不超過 4；星樞不長將（arep）十二關都開（第一章由 GSV.AREP1 一個開關管），第 1～6 關的數值沒動", ()=>{
-  assert.deepEqual(J(G.CHP.map(c=>[c.n,c.t,c.nm,c.lv])),[[1,"第一章","星門入侵",[1,2,3,4,5,6]],[2,"第二章","俥路調度",[7,8,9,10,11,12]]]);
-  assert.deepEqual(J([].concat(...G.CHP.map(c=>c.lv))),J(G.LVN),"每一關都在某一章裡、沒有重複");
+  assert.deepEqual(J(G.CHP.map(c=>[c.n,c.t,c.nm,c.lv])),[[0,"序章","星槎序章",[31,32,33,34,35,36,37,38,39]],[1,"第一章","星門入侵",[1,2,3,4,5,6]],[2,"第二章","俥路調度",[7,8,9,10,11,12]]]);
+  assert.deepEqual(J([].concat(...G.CHP.map(c=>c.lv)).sort((a,b)=>a-b)),J(G.LVN),"每一關都在某一章裡、沒有重複");
   /* 關名、星樞 HP／ATK／DEF、開場靈力、會用的招、敵開場子數、援軍回合 */
   const T={7:["直路守口",120,95,25,35,["cqzr"],10,[3,5,7]],8:["橫俥回援",125,100,25,35,["cqzr"],9,[2,4,6]],9:["留一道退路",130,100,25,40,["dll"],9,[2,4,6]],
-    10:["交換要道",150,95,25,35,["cqzr"],10,[2,4,6]],11:["一俥兩用",150,100,25,40,["dll","cqzr"],10,[2,4,6]],12:["守關・斷路營",170,100,30,35,["dll","cqzr"],10,[2,4,6]]};
+    10:["交換要道",150,95,25,35,["cqzr"],10,[2,4,6]],11:["一俥兩用",150,100,25,40,["dll","cqzr"],10,[2,4,6]],12:["守關・斷路營",200,100,40,35,["dll","cqzr"],10,[2,4,6]]};
   for(const n in T){const V=G.LV[n],pl=G.plan(+n);assert.deepEqual(J([V.nm,V.hp,V.atk,V.def,V.esp0,V.esk,pl.open.length,V.waves.map(w=>w.at)]),T[n],"第 "+n+" 關");assert.deepEqual(J(G.lvCheck(+n,C)),[]);
     assert.ok(V.depth<=4,"深度不超過 4（手機）");assert.equal(V.arep,1);assert.ok(V.say&&V.tip&&V.th,"有一句開場、輸了的提示、主題");
     assert.ok(V.hp>=100&&V.hp<=(V.boss?220:180)&&(!V.boss||V.hp>=140),"提案二：一般關 100–180、章末 140–220");
@@ -408,10 +409,10 @@ function uiOff(){for(const k of["document","store","toast","vibrate","modal","jS
 
 test("〔混合〕選關分章：分頁兩顆（章名照提案二）、每章只列自己的六關、每關只有「第 n 關・關名」加一排星；開打前一行寫這一關的三個目標；新關的獎勵照舊（journey 開頭 bh:gs＝不給修為、不回定軌力）", ()=>{
   const H=ctx.gsvChapHTML,P={c:{3:{w:1,l:2,d:0,best:{rnd:20,hp:30}}}},A={all:true};   /* P＝改版前的舊存檔：沒有 h、勝場沒有 st */
-  const h1=H(P,3,1,A);assert.deepEqual(tabsOf(h1),[[1,"第一章","星門入侵",true,"true"],[2,"第二章","俥路調度",false,"false"]]);
+  const h1=H(P,3,1,A);assert.deepEqual(tabsOf(h1),[[0,"序章","星槎序章",false,"false"],[1,"第一章","星門入侵",true,"true"],[2,"第二章","俥路調度",false,"false"]]);
   assert.deepEqual(cardsOf(h1).map(x=>x[0]),[1,2,3,4,5,6]);assert.deepEqual(cardsOf(h1).filter(x=>x[2]==="on").map(x=>x[0]),[3],"選中的那一關亮著");assert.equal(cardsOf(h1)[0][1],"第 1 關・星淵初探");
-  const h2=H(P,7,2,A);assert.deepEqual(cardsOf(h2).map(x=>x[1]),[7,8,9,10,11,12].map(n=>`第 ${n} 關・${G.LV[n].nm}`));assert.ok(tabsOf(h2)[1][3]&&!tabsOf(h2)[0][3],"第二章那顆分頁亮著");
-  assert.deepEqual(cardsOf(H(P,3,2,A)).filter(x=>x[2]==="on"),[],"看別章時，選中的關不在這一章就沒有卡亮著");assert.deepEqual(cardsOf(H(P,1,9,A)).map(x=>x[0]),[1,2,3,4,5,6],"章號不對就回第一章");
+  const h2=H(P,7,2,A);assert.deepEqual(cardsOf(h2).map(x=>x[1]),[7,8,9,10,11,12].map(n=>`第 ${n} 關・${G.LV[n].nm}`));assert.ok(tabsOf(h2)[2][3]&&!tabsOf(h2)[1][3],"第二章那顆分頁亮著");
+  assert.deepEqual(cardsOf(H(P,3,2,A)).filter(x=>x[2]==="on"),[],"看別章時，選中的關不在這一章就沒有卡亮著");assert.deepEqual(cardsOf(H(P,1,9,A)).map(x=>x[0]),[31,32,33,34,35,36,37,38,39],"章號不對就回第一個分頁（11/15 七星改版：序章）");
   /* 極簡：卡上除了關名只有星數和打過的戰績；數值、說明只在讀屏 aria-label */
   assert.ok(!/星樞 HP|ATK|DEF/.test(h2.replace(/aria-label="[^"]*"/g,"")));assert.match(h1,/<small aria-hidden="true">✓ 勝 1・和 0・敗 2<\/small>/);assert.equal((h2.match(/<small/g)||[]).length,0,"沒打過的不顯示戰績");
   assert.deepEqual(cardsOf(h1).map(x=>x[3]),["☆☆☆","☆☆☆","★☆☆","☆☆☆","☆☆☆","☆☆☆"],"舊存檔有勝場、沒有星的紀錄＝1 星");
@@ -421,9 +422,10 @@ test("〔混合〕選關分章：分頁兩顆（章名照提案二）、每章�
   assert.match(SRC,/const J="bh:gs"\+n\+\(hard\?"h":""\)/);for(const j of["bh:gs7","bh:gs12","bh:gs7h"])assert.ok(ctx.gsvIs({td:{mode:G.MODE},journey:j}),j);
   assert.match(rd("xiangqi-db/m/07dgl-stamina.js"),/\/\^bh:gs\/\.test\(j\)/);assert.match(rd("xiangqi-db/m/07bht-td.js"),/function bhtdNoXp\(st\)\{[^}]*gsvIs\(st\)/)});
 
-test("逐關解鎖：第 1 關永遠開、破前一關才開下一關（第二章要破第 6 關）、打贏過的關保持開（改版不把老玩家鎖回去）；鎖住的卡只有 🔒 加一句；開發者模式／本機／主控台 gsvAll 全開；主控台直接 gsvStart 鎖住的關不開", ()=>{
-  const W=(...ns)=>({c:Object.fromEntries(ns.map(n=>[n,{w:1}]))}),open=(P,h,all)=>G.LVN.filter(n=>!G.lockWhy(P,n,h,all));
-  assert.deepEqual(J(open({c:{}})),[1]);assert.deepEqual(J(open(null)),[1],"沒有存檔");assert.deepEqual(J(open(W(1))),[1,2]);
+test("逐關解鎖：第 1 關要先破序章 C1（11/15 七星改版；改版前打過主線的存檔不鎖）、破前一關才開下一關（第二章要破第 6 關）、打贏過的關保持開（改版不把老玩家鎖回去）；鎖住的卡只有 🔒 加一句；開發者模式／本機／主控台 gsvAll 全開；主控台直接 gsvStart 鎖住的關不開", ()=>{
+  const W=(...ns)=>({c:Object.fromEntries(ns.map(n=>[n,{w:1}]))}),open=(P,h,all)=>MAIN.filter(n=>!G.lockWhy(P,n,h,all));
+  assert.deepEqual(J(open({c:{}})),[]);assert.deepEqual(J(open(null)),[],"沒有存檔");assert.equal(G.lockWhy({c:{}},1),"破序章 C1 開放");assert.deepEqual(J(open(W(37))),[1],"破了序章 C1");
+  assert.deepEqual(J(open({c:{2:{w:0,l:1,d:0}}})),[1],"改版前打過主線（輸了也算）的存檔，第 1 關不鎖回去");assert.deepEqual(J(open(W(1))),[1,2]);
   assert.deepEqual(J(open(W(1,2,3,4,5))),[1,2,3,4,5,6]);assert.equal(G.lockWhy(W(1,2,3,4,5),7),"破第 6 關開放","第二章要破第 6 關");assert.deepEqual(J(open(W(1,2,3,4,5,6))),[1,2,3,4,5,6,7]);
   assert.deepEqual(J(open(W(3,9))),[1,3,4,9,10],"老玩家跳著打贏過的關還是開的，它的下一關也開");
   assert.equal(G.lockWhy({c:{1:{w:0,l:5,d:2}}},2),"破第 1 關開放","輸過、和過不算破關");assert.equal(open({c:{}},0,true).length,12,"開發者全開");
@@ -439,11 +441,11 @@ test("逐關解鎖：第 1 關永遠開、破前一關才開下一關（第二�
     assert.equal(ctx.gsvDevAll(),false,"一般玩家");ctx.location={hostname:"localhost"};assert.equal(ctx.gsvDevAll(),true);ctx.location={hostname:"127.0.0.1"};assert.equal(ctx.gsvDevAll(),true);
     assert.equal(ctx.gsvAll(false),false,"本機要看鎖起來的樣子");assert.equal(ctx.gsvAll(null),true);ctx.location={hostname:"xiangqi.example"};assert.equal(ctx.gsvDevAll(),false);
     ctx.DEVMODE=()=>true;assert.equal(ctx.gsvDevAll(),true,"開發者模式");delete ctx.DEVMODE;assert.equal(ctx.gsvAll(true),true);ctx.gsvAll(null);
-    /* 沒打過的玩家：只有第 1 關；點鎖住的卡、點第二章、點困難都不會改選 */
-    ctx.gsvSelect("classic",false);assert.deepEqual(cardsOf(U.M.h).map(x=>[x[0],x[2]]),[[1,"on"],[2,"lk"],[3,"lk"],[4,"lk"],[5,"lk"],[6,"lk"]]);assert.deepEqual(U.go(),[1,0]);
-    U.click(".gsv-card",{n:"2",lk:"破第 1 關開放"});assert.match(U.toast,/第 2 關：破第 1 關開放/);assert.deepEqual(U.go(),[1,0]);
-    U.click(".gsv-chb",{ch:"2"});assert.ok(cardsOf(U.html[".gsv-chap"]).every(x=>x[2]==="lk"),"第二章整章鎖著");assert.match(U.html[".gsv-chap"],/<p class="gsv-gl">第 1 關：/);assert.deepEqual(U.go(),[1,0],"還是打第 1 關（下面那一行寫著）");
-    U.click(".gsv-mdb",{md:"1"});assert.match(U.toast,/普通版才開困難版/);assert.deepEqual(U.go(),[1,0]);
+    /* 沒打過的玩家：預設停在序章 A1（11/15 七星改版；這裡沒有 ptyHas＝不看加入，三階段的第一關都開）；點鎖住的卡、點第二章、點困難都不會改選 */
+    ctx.gsvSelect("classic",false);assert.deepEqual(cardsOf(U.M.h).map(x=>[x[0],x[2]]),[[31,"on"],[32,"lk"],[33,"lk"],[34,""],[35,"lk"],[36,"lk"],[37,""],[38,"lk"],[39,"lk"]]);assert.deepEqual(U.go(),[31,0]);
+    U.click(".gsv-card",{n:"2",lk:"破第 1 關開放"});assert.match(U.toast,/第 2 關：破第 1 關開放/);assert.deepEqual(U.go(),[31,0]);
+    U.click(".gsv-chb",{ch:"2"});assert.ok(cardsOf(U.html[".gsv-chap"]).every(x=>x[2]==="lk"),"第二章整章鎖著");assert.match(U.html[".gsv-chap"],/<p class="gsv-gl">序章 A1：/);assert.deepEqual(U.go(),[31,0],"還是打序章 A1（下面那一行寫著）");
+    U.click(".gsv-mdb",{md:"1"});assert.match(U.toast,/普通版才開困難版/);assert.deepEqual(U.go(),[31,0]);
     /* 破了第 1、6 關的存檔：第 2、7 關開；第 6 關可以切困難版 */
     U.DB.gsv={mv:G.MODE,c:{1:{w:1},6:{w:2,st:[1,1,0]}}};ctx.gsvSelect("classic",false);assert.deepEqual(cardsOf(U.M.h).map(x=>[x[0],x[2],x[3]]),[[1,"on","★☆☆"],[2,"","☆☆☆"],[3,"lk",""],[4,"lk",""],[5,"lk",""],[6,"","★★☆"]]);
     U.click(".gsv-chb",{ch:"2"});assert.deepEqual(cardsOf(U.html[".gsv-chap"]).map(x=>[x[0],x[2]]),[[7,"on"],[8,"lk"],[9,"lk"],[10,"lk"],[11,"lk"],[12,"lk"]]);assert.deepEqual(U.go(),[7,0]);
@@ -454,6 +456,7 @@ test("逐關解鎖：第 1 關永遠開、破前一關才開下一關（第二�
     U.DB={};ctx.gsvAll(true);ctx.gsvSelect("classic",false);assert.ok(cardsOf(U.M.h).every(x=>x[2]!=="lk"));U.click(".gsv-chb",{ch:"2"});U.click(".gsv-card",{n:"12"});assert.deepEqual(U.go(),[12,0]);ctx.gsvAll(null);
     /* 真的 gsvStart：鎖住的關（主控台直接叫也一樣）只跳一句、不開局；開著的照開；困難版 journey 還是 bh:gs 開頭、帶 hard、深度照困難版 */
     REAL_START(5,"classic",false);assert.equal(U.js,null);assert.match(U.toast,/🔒 第 5 關：破第 4 關開放/);REAL_START(1,"classic",false,null,false,1);assert.equal(U.js,null);assert.match(U.toast,/第 1 關困難版：先破普通版/);
+    REAL_START(1,"classic",false);assert.equal(U.js,null);assert.match(U.toast,/第 1 關：破序章 C1 開放/,"11/15 七星改版：新存檔要先破序章 C1");U.DB.gsv={mv:G.MODE,c:{37:{w:1}}};
     REAL_START(1,"classic",false);assert.equal(U.js.id,"bh:gs1");assert.equal(U.js.o.td.hard,0);assert.equal(U.js.o.lx,2);assert.equal(U.DB.gsv.last,1);
     ctx.gsvAll(true);REAL_START(5,"classic",false,null,false,1);assert.equal(U.js.id,"bh:gs5h");assert.equal(U.js.o.journey,"bh:gs5h");assert.deepEqual(J(U.js.o.td),{mode:G.MODE,lv:5,ch:"x_swordboy",L:1,sk:["qi1"],hard:1});
     assert.equal(U.js.o.lx,G.lvOf(5,1).depth);assert.equal(U.js.o.lv.fen,G.startFen(5,C),"困難版同一個開局");assert.equal(U.DB.gsv.lastH,1)}finally{uiOff()}});
@@ -461,7 +464,7 @@ test("逐關解鎖：第 1 關永遠開、破前一關才開下一關（第二�
 test("三星：第 1 星＝過關，另外兩顆每關各一個條件（跟那一關的學習點有關）、各自累積；條件逐種判定；舊存檔有勝場沒有星＝1 星；困難版的星另外記", ()=>{
   const TXT={1:["入侵沒扣到血","剩餘 HP 50% 以上"],2:["入侵卒全部清掉","入侵沒扣到血"],3:["護陣全部拆掉","剩餘 HP 40% 以上"],4:["沒被奪靈","截援一次"],5:["護陣全部拆掉","星樞大招一次都沒中"],6:["星樞大招一次都沒中","剩餘 HP 40% 以上"],
     7:["星樞大招一次都沒中","俥沒被吃"],8:["入侵沒扣到血","星樞大招一次都沒中"],9:["星樞大招一次都沒中","護陣全部拆掉"],10:["護陣全部拆掉","過關時場上有俥"],11:["星樞大招一次都沒中","俥沒被吃"],12:["護陣全部拆掉","星樞大招一次都沒中"]};
-  for(const n of G.LVN){const g=G.goals(n),pl=G.plan(n),V=G.LV[n];assert.deepEqual(J(g.map(x=>x.t)),["過關",...TXT[n]],"第 "+n+" 關");assert.notEqual(g[1].k,g[2].k);
+  for(const n of MAIN){const g=G.goals(n),pl=G.plan(n),V=G.LV[n];assert.deepEqual(J(g.map(x=>x.t)),["過關",...TXT[n]],"第 "+n+" 關");assert.notEqual(g[1].k,g[2].k);
     /* 條件要對得上這一關有的東西：有入侵卒才考入侵、有護陣才考拆陣、有大招（或分段會解鎖）才考大招、有奪靈馬才考奪靈 */
     const has=t=>pl.open.some(x=>x[2]===t)||pl.waves.some(w=>w.tag===t);
     for(const x of g.slice(1)){if(x.k==="inv0"||x.k==="invClr")assert.ok(has("inv"),n+" 入侵");if(x.k==="guard0")assert.ok(has("guard"),n+" 護陣");if(x.k==="drain0")assert.ok(has("drain"),n+" 奪靈");if(x.k==="esk0")assert.ok(V.esk.length||(V.ph||[]).length,n+" 大招")}}
@@ -531,7 +534,7 @@ test("困難版：同一關同一個擺法和波次、不加血量；星樞多�
   /* 深度、開場靈力、ATK、會用的招 */
   const HT={1:[3,40,100,["esh"]],2:[3,40,105,["esh"]],3:[4,40,110,["esh"]],4:[4,40,110,["esh"]],5:[4,40,120,[]],6:[4,50,115,["zjhl","pao"]],7:[4,50,105,["cqzr","dll"]],8:[4,50,110,["cqzr","dll"]],
     9:[4,55,110,["dll","cqzr"]],10:[4,50,105,["cqzr","dll"]],11:[4,55,110,["dll","cqzr","esh"]],12:[4,50,110,["dll","cqzr","esh"]]};
-  for(const n of G.LVN){const V=G.LV[n],X=G.lvOf(n,1),P=game(n,{hard:1}),P0=game(n);assert.equal(G.lvOf(n,0),V,"普通版就是原本那一份");assert.equal(G.lvOf(n),V);
+  for(const n of MAIN){const V=G.LV[n],X=G.lvOf(n,1),P=game(n,{hard:1}),P0=game(n);assert.equal(G.lvOf(n,0),V,"普通版就是原本那一份");assert.equal(G.lvOf(n),V);
     assert.deepEqual(J([X.depth,X.esp0,X.atk,X.esk]),HT[n],"第 "+n+" 關困難版");assert.ok(X.depth<=4&&X.depth>=V.depth);assert.deepEqual(J([X.hp,X.def,X.open,X.waves,X.nm]),J([V.hp,V.def,V.open,V.waves,V.nm]),"血量、防禦、擺法、波次不變");
     assert.equal(X.arep,1);assert.equal(X.atk,V.atk+G.HARD.atk);assert.equal(X.esp0,V.esp0+G.HARD.esp0);for(const k of V.esk)assert.ok(X.esk.includes(k),"原本會的招都還在");
     assert.deepEqual(J([P.td.hard,P.td.arep,P.td.depth,P.td.en.sp,P.td.en.atk,P.td.en.max,P.td.esk]),J([1,1,X.depth,X.esp0,X.atk,V.hp,X.esk]));assert.equal(P.start,P0.start,"同一個開局");assert.deepEqual(J(P.td.waves),J(P0.td.waves));

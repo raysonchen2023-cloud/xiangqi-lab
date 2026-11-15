@@ -364,27 +364,27 @@ function dglCard(){dglCss();let nm="";try{nm=meName()}catch(e){}const Q=new Set(
        天賦＝黑洞星塵天賦樹（bhtdTal，看完回角色卡）、技能＝這位角色的黑洞招式清單（dglSkills）；黑洞模組沒載入、沒選角色就不畫這兩列 */
     const ts=dglCardTS(lv);
     const pan=`<section class="dgl-kpan${warn?" dgl-kwarn":""}" aria-label="角色狀態">${red}${xs}${line?`<p class="dgl-kl">${line}</p>`:""}${ad}${ts?`<div class="dgl-kts">${ts.tal}${ts.sk}</div>`:""}</section>`;
-    b.innerHTML=`<div class="dgl-cd" data-k="${k}">${hero}${pan}<div class="dgl-kfoot"><button type="button" class="btn dgl-kme" id="dglMe">🙂 我的角色頁</button></div>${more}</div>`;
-    b.querySelector("#dglMe").onclick=()=>{closeSheet();location.hash="#/me"};
+    b.innerHTML=`<div class="dgl-cd" data-k="${k}">${hero}${pan}<div class="dgl-kfoot"><button type="button" class="btn dgl-kme" id="dglMe">🙂 我的角色頁</button>${typeof ptySheet==="function"&&typeof journey==="function"&&journey()?`<button type="button" class="btn dgl-kme" id="dglPty">雲河七星</button>`:""}</div>${more}</div>`;
+    b.querySelector("#dglMe").onclick=()=>{closeSheet();location.hash="#/me"};{const e=b.querySelector("#dglPty");if(e)e.onclick=()=>{closeSheet();setTimeout(ptySheet,60)}}   /* 11/15 七星改版：七位各自的等級、星輝、隊長在卡冊（07pty-party.js） */
     b.querySelectorAll("[data-go]").forEach(e=>e.onclick=()=>{try{vibrate(5)}catch(z){}if(e.dataset.go==="tal"){closeSheet();setTimeout(()=>bhtdTal(()=>dglCard()),60)}else dglSkills(lv)});
     b.querySelectorAll(".dgl-kq").forEach(e=>e.onclick=()=>{const id=e.dataset.q,o=!Q.has(id),p=b.querySelector("#dglQ_"+id);if(o)Q.add(id);else Q.delete(id);e.setAttribute("aria-expanded",o?"true":"false");if(p)p.hidden=!o;try{vibrate(5)}catch(z){}});
     b.scrollTop=sy;dglPaint()};
   DGL.cdDraw=draw;draw()})}
 /* 角色卡的天賦、技能兩列（可點）：天賦＝已點亮幾個／共幾個（bhtdDust().t）；技能＝這位角色已學會幾招／共幾招（BHTD.SK 照修為解鎖） */
-function dglCardTS(lv){try{const c=dglName();if(typeof BHTD==="undefined"||!BHTD.CH||!BHTD.CH[c]||typeof bhtdTal!=="function")return null;const S=BHTD.stats(c,lv),pool=BHTD.SK.filter(s=>s.ch===S.ck),un=pool.filter(s=>s.lv<=lv);
+function dglCardTS(lv){try{const c=dglName();if(typeof ptyLv==="function")lv=ptyLv(c);   /* 11/15 七星改版：天賦、技能看這位角色自己的等級 */if(typeof BHTD==="undefined"||!BHTD.CH||!BHTD.CH[c]||typeof bhtdTal!=="function")return null;const S=BHTD.stats(c,lv),pool=BHTD.SK.filter(s=>s.ch===S.ck),un=pool.filter(s=>s.lv<=lv);
   let tn=0;try{tn=(bhtdDust().t||[]).length}catch(e){}
   const row=(go,ic,nm,v)=>`<button type="button" class="dgl-krow dgl-kgo" data-go="${go}"><span class="dgl-kt">${dglIc(ic)}<span>${nm}</span></span><span class="dgl-ks">${v}</span><span class="dgl-kchev" aria-hidden="true">›</span></button>`;
   return{tal:row("tal","tal","天賦",`<span>已點亮</span> ${tn}／${BHTD.TAL.length}`),sk:row("sk","sk","技能",`<span>已學會</span> ${un.length}／${pool.length}`)}}catch(e){return null}}
 /* 技能清單：已學會的在前（名稱、靈力、效果），還沒學會的灰著寫幾級學會 */
-function dglSkills(lv){let c="";try{c=dglName()}catch(e){}if(typeof BHTD==="undefined"||!BHTD.CH||!BHTD.CH[c])return;const S=BHTD.stats(c,lv),pool=BHTD.SK.filter(s=>s.ch===S.ck).slice().sort((a,b)=>(a.lv>lv)-(b.lv>lv)||a.lv-b.lv);
+function dglSkills(lv){let c="";try{c=dglName()}catch(e){}try{if(typeof ptyLv==="function")lv=ptyLv(c)}catch(e){}if(typeof BHTD==="undefined"||!BHTD.CH||!BHTD.CH[c])return;const S=BHTD.stats(c,lv),pool=BHTD.SK.filter(s=>s.ch===S.ck).slice().sort((a,b)=>(a.lv>lv)-(b.lv>lv)||a.lv-b.lv);
   sheet("技能",b=>{b.innerHTML=`<div class="dgl-cd">${pool.map(s=>{const lk=s.lv>lv;return`<div class="dgl-ski${lk?" lk":""}"><div class="dgl-skh"><b>${lk?dglIc("lock"):""}${esc(s.nm)}</b><span>${lk?`<span>修為</span> Lv ${s.lv}`:`${s.cost} <span>靈</span>`}</span></div><p>${esc(s.d||"")}</p></div>`}).join("")}<p class="dgl-ks"><span>在黑洞裡使用，一場最多帶 4 招</span></p><button type="button" class="btn dgl-kme" id="dglSkB">‹ 回我的角色</button></div>`;
     b.querySelector("#dglSkB").onclick=()=>{closeSheet();setTimeout(dglCard,60)}})}
 /* 11/14 開發者「修為／攻擊力／防禦／紅血／藍血」：角色卡第 4 列＝攻擊力、防禦力兩格（顯示 BHTD.atkPt／defPt 的數值，100 為基準、越大越強）（BHTD.stats 照角色與修為；黑洞模組沒載入、沒選角色就整列不畫） */
-function dglCardAD(lv){try{const c=dglName();if(typeof BHTD==="undefined"||!BHTD.CH||!BHTD.CH[c])return"";const S=BHTD.stats(c,lv);
+function dglCardAD(lv){try{const c=dglName();if(typeof ptyLv==="function")lv=ptyLv(c);if(typeof BHTD==="undefined"||!BHTD.CH||!BHTD.CH[c])return"";const S=BHTD.stats(c,lv);
   return`<div class="dgl-kad"><span><small>${dglIc("atk")}<span>攻擊力</span></small><b>${BHTD.atkPt(S.atk)}</b></span><span><small>${dglIc("def")}<span>防禦力</span></small><b>${BHTD.defPt(S.def)}</b></span></div>`}catch(e){return""}}
 /* 我的角色頁（07-legend Me）多一張「黑洞裡的你」：11/14 從角色卡搬過來；黑洞（觀星臺）解鎖後才出現 */
 function dglMeCard(){try{const c=dglName();if(!c||typeof BHTD==="undefined"||typeof bhtdL!=="function"||!(typeof gxtOpen==="function"&&gxtOpen()))return null;
-  dglCss();const S=BHTD.stats(c,bhtdL()),d=document.createElement("section");d.className="card dgl-kc dgl-me";
+  dglCss();const S=BHTD.stats(c,bhtdL(c)),d=document.createElement("section");d.className="card dgl-kc dgl-me";
   d.innerHTML=`<div class="dgl-kh"><h3 class="dgl-kt">${dglIc("bh")}<span>黑洞裡的你</span></h3><span class="dgl-kbd blue"><span>修為</span> Lv ${S.L}</span></div>
     <div class="dgl-kst"><span><small>${dglIc("hp")}<span>元氣</span></small><b>${S.hp}</b></span><span><small>${dglIc("sp")}<span>靈力上限</span></small><b>${S.sp}</b></span><span><small>${dglIc("rg")}<span>每回合回靈</span></small><b>${S.spRegen}</b></span><span><small>${dglIc("atk")}<span>攻擊力</span></small><b>${BHTD.atkPt(S.atk)}</b></span><span><small>${dglIc("def")}<span>防禦力</span></small><b>${BHTD.defPt(S.def)}</b></span></div>
     <p class="dgl-ks"><span>修為越高，五項越強；身上的星芒進黑洞會變成開局靈力（1 點換 10 靈）。</span></p>`;return d}catch(e){return null}}

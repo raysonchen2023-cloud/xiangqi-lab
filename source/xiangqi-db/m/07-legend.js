@@ -236,7 +236,7 @@ function Me(v){Profile(v);setTop("🙂 我的角色","#/");setTabs(true,"#/");co
     d.querySelectorAll(".mwall img").forEach(im=>{if(!im.complete)im.addEventListener("load",fit,{once:true})})}}if(circ){circ.style.display="none";pad.append(circ)}if(typeof gardenMeCard==="function")pad.append(gardenMeCard());if(typeof codexMeCard==="function")pad.append(codexMeCard());if(typeof chdMeCard==="function"){const x=chdMeCard();if(x)pad.append(x)}if(typeof dglMeCard==="function"){const x=dglMeCard();if(x)pad.append(x)}   /* 意見回饋 658：園子棋友的羈絆、棋史卡 */
   const on=(id,fn)=>{const e=v.querySelector(id);if(e)e.onclick=()=>{vibrate(5);fn(e)}};
   on("#meFig2",f=>{const st=v.querySelector("#meSt");if(st){st.classList.remove("tap");void st.offsetWidth;st.classList.add("tap")}const im=f.querySelector("img");if(!f.dataset.g3)setTimeout(()=>meFigOpen(im&&im.src),220)});   /* 584：舞台已經是 3D 就不用再開大圖 */
-  on("#meNm",()=>nameSheet(false));on("#meOb",()=>journeyLock());on("#mePc",()=>{if(myChar())return pieceLock();store.set("setTab","bot");location.hash="#/settings"});   /* 意見回饋 668：角色選定就鎖住；雲河七星的棋子也鎖住 */
+  on("#meNm",()=>nameSheet(false));on("#meOb",()=>{if(typeof ptySheet==="function"&&journey())return ptySheet();journeyLock()});on("#mePc",()=>{if(typeof ptySheet==="function"&&myChar())return ptySheet();if(myChar())return pieceLock();store.set("setTab","bot");location.hash="#/settings"});   /* 11/15 七星改版：不再鎖角色，改開「雲河七星」卡冊（換隊長、換陪你走的人） */   /* 意見回饋 668：角色選定就鎖住；雲河七星的棋子也鎖住 */
   on("#meRk",rankSheet);on("#meXp",xpSheet);meFig3d(v);
   v.querySelectorAll(".mw[data-c]").forEach(b=>b.onclick=()=>{const o=circ&&circ.querySelector(`[data-c="${b.dataset.c}"]`);if(o)o.click()})}
 function Profile(v){setTop("🎒 棋童資料","#/adventure");setTabs(true,"#/");v.className="view";const I=xpInfo(),H=hintInfo(),B=bag(),Sx=jSecrets(),S=jStars(),Js=jStages(),L=legendState(),star=Js.reduce((a,x)=>a+(S[x.id]||0),0);
@@ -278,7 +278,7 @@ function xpChip(t,big){let c=document.getElementById("xpchip");if(!c){c=document
 function addXP(n,why,key){if(!n)return;
   if(key){const K=store.get("xpKeys",{});if(K[key])return;K[key]=1;const ks=Object.keys(K);if(ks.length>4000)for(const k of ks.slice(0,1000))delete K[k];store.set("xpKeys",K)}
   const today=localDay();let bonus=0;if(store.get("xpDay","")!==today){store.set("xpDay",today);bonus=20}
-  const b=xpInfo(),x=b.total+n+bonus;store.set("xp",x);const a=xpInfo(x);
+  const b=xpInfo(),x=b.total+n+bonus;store.set("xp",x);const a=xpInfo(x);try{if(typeof ptyOnXp==="function")ptyOnXp(n+bonus)}catch(e){}   /* 11/15 七星改版：修為加多少，全隊自動拿一半、另一半進星輝（07pty-party.js） */
   if(a.L>b.L){vibrate([20,40,20,40,60]);xpChip(`🎉 修行升級！Lv ${a.L}・${a.title}${a.title!==b.title?"（新稱號）":""}`,true)}else xpChip(`+${n+bonus} 修為${bonus?"（今日第一次練習 +20）":""}`)}
 function xpSheet(){const I=xpInfo();sheet("🀄 棋道修行",b=>{b.innerHTML=`<div style="text-align:center"><div style="font-size:40px;font-weight:900;font-family:var(--serif)">Lv ${I.L}</div><div style="font-size:18px"><b>${I.title}</b></div>
     ${I.need?`<div class="st-bar" style="margin:8px 0 2px"><i style="width:${Math.round(I.rest*100/I.need)}%"></i></div><div class="muted">${I.rest} / ${I.need} 修為（累積 ${I.total}）</div>`:'<div class="muted">已到最高等級</div>'}</div>

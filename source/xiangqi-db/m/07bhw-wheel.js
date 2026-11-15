@@ -151,8 +151,8 @@ function whlCard(){   /* 11/15 開發者「可以上線」：開給所有玩家�
   return`<button type="button" class="bt-card bt-whlc" data-whl="1" aria-label="車輪戰"><div class="hd"><b>車輪戰</b></div></button>`}
 function whlOpen(){if(typeof GSV==="undefined")return;const P=whlProg();if(P.cur&&!P.cur.over){WHL_M=P.cur;WHL_Q={run:null,list:[]};const C=whlC();WHL_CUR=C?Math.max(0,WHL.hop(WHL_M,-1,C)):0;WHL_SEL=-1;WHL_TG=null;WHL_EVS={};whlShow();return}whlSetup()}
 if(typeof window!=="undefined")window.whlOpen=whlOpen;
-const whlCk=()=>{let c="";try{c=(typeof myChar==="function"&&myChar())||store.get("pChar","")}catch(e){}return GSV.CH[c]?c:"x_swordboy"};
-const whlL=()=>{try{return typeof xpInfo==="function"?xpInfo().L:1}catch(e){return 1}};
+const whlCk=()=>{let c="";try{c=typeof ptyLead==="function"?ptyLead():((typeof myChar==="function"&&myChar())||store.get("pChar",""))}catch(e){}return GSV.CH[c]?c:"x_swordboy"};   /* 11/15 七星改版：出戰的是隊長（07pty-party.js） */
+const whlL=c=>{try{if(typeof ptyLv==="function")return ptyLv(c||whlCk());return typeof xpInfo==="function"?xpInfo().L:1}catch(e){return 1}};   /* 11/15 七星改版：等級看隊長自己的 */
 function whlSetup(){whlCss();const ck=whlCk(),L=whlL(),P=whlProg(),pool=GSV.SK.filter(s=>s.ch===ck);let pk=GSV.skPick(ck,L,P.sk[ck]);
   const skH=()=>pool.map(s=>`<label class="${pk.includes(s.id)?"on":""}${s.lv>L?" lk":""}" data-id="${s.id}" title="${esc(s.d)}">${s.lv>L?"🔒 ":""}${esc(s.nm)}</label>`).join("");
   const m=modal(`<div class="em">🎡</div><h2>車輪戰</h2><p class="muted">三盤拿兩勝</p><p style="font-size:13px;margin-bottom:2px">招式（最多 4 招）</p><div class="whl-skl">${skH()}</div>`,
@@ -350,11 +350,13 @@ function whlCast(id,tg,p){const M=WHL_M,i=WHL_CUR,C=whlC();if(!M||!C)return;cons
 function whlSet(){const P=whlProg();modal(`<h2 style="font-size:19px">設定</h2>`,[[P.auto?"自動跳盤：開":"自動跳盤：關",()=>{const Q=whlProg();Q.auto=!Q.auto;Q.cur=WHL_M;store.set("whl",Q);toast(Q.auto?"走完自動跳下一盤":"不自動跳盤")}],
     ["重開",()=>confirmBox("重開這一場？",()=>whlSetup(),"重開")],["關閉",null,true]])}
 /* 跳字：只顯示目前這盤、看著的時候發生的事件 */
-function whlFloat(t,sq,cls){if(WHL_PK&&whl3Float(t,sq,cls))return;   /* 11/15 3D：跳字放在那一格的螢幕位置（park3d screenOf） */const bd=document.querySelector("#whlOv .whl-bd");if(!bd||whlRM())return;const f=document.createElement("div");f.className="whl-fl "+(cls||"");f.textContent=t;
+/* 11/15 七星改版：擒子跳字旁的小頭像（07pty ptyAv） */
+function whlAv(f,av){if(!av)return;const i=document.createElement("img");i.src=av;i.alt="";i.style.cssText="width:1.5em;height:1.5em;border-radius:50%;object-fit:cover;object-position:50% 12%;vertical-align:middle;margin-right:.2em;background:#2a2450";f.prepend(i)}
+function whlFloat(t,sq,cls,av){if(WHL_PK&&whl3Float(t,sq,cls,av))return;   /* 11/15 3D：跳字放在那一格的螢幕位置（park3d screenOf） */const bd=document.querySelector("#whlOv .whl-bd");if(!bd||whlRM())return;const f=document.createElement("div");f.className="whl-fl "+(cls||"");f.textContent=t;whlAv(f,av);
   if(sq!=null){f.style.left=((40+(sq%9)*60)/560*100)+"%";f.style.top=((40+(sq/9|0)*60)/620*100)+"%"}else f.style.top=cls==="dmg"?"12%":"86%";bd.append(f);setTimeout(()=>f.remove(),1400)}
 function whlEvents(M,i){const td=M.bs[i].P.td,s0=WHL_EVS[i];WHL_EVS[i]=td.seq;if(s0==null||td.seq<=s0)return;
   td.ev.filter(e=>e.s>s0).forEach((e,k)=>setTimeout(()=>{try{
-    if(e.k==="hit"&&e.loss)whlFloat(`−${e.loss}`,null,e.to==="b"?"dmg":"hurt");else if(e.k==="warn")whlFloat("入侵預告",e.sq,"hurt");else if(e.k==="spawn")whlFloat("援軍",e.sq,"");
+    if(e.k==="hit"&&e.loss)whlFloat(`−${e.loss}`,null,e.to==="b"?"dmg":"hurt",e.why==="cap"&&typeof ptyAv==="function"?ptyAv(e.to==="b"?e.cp:e.vp):null);else if(e.k==="warn")whlFloat("入侵預告",e.sq,"hurt");else if(e.k==="spawn")whlFloat("援軍",e.sq,"");
     else if(e.k==="guard")whlFloat("拆陣",e.sq,"");else if(e.k==="heal"&&e.n)whlFloat(`+${e.n}`,null,"heal");else if(e.k==="icpt")whlFloat("截援",e.sq,"")}catch(x){}},k*200))}
 /* 引擎幫浦：一次只算一盤（WHL.step 管佇列）；算完存檔、重畫，再看下一個 */
 async function whlPump(){if(!WHL_LIVE||!WHL_M||WHL_Q.run)return;const C=whlC();if(!C)return;WHL.queue(WHL_Q,WHL_M);if(!WHL_Q.list.length)return;
@@ -522,6 +524,6 @@ function whl3Down(e){WHL_3DN={x:e.clientX,y:e.clientY,t:Date.now(),id:e.pointerI
 function whl3Up(e){const d=WHL_3DN;WHL_3DN=null;if(!d||d.id!==e.pointerId||Date.now()-d.t>700||Math.hypot(e.clientX-d.x,e.clientY-d.y)>10||WHL_FLY||!WHL_M||!WHL_PK||!WHL_SIDE||!whl3Shown())return;
   const pv=WHL_PK,main=[0,8,89,81].map(q=>pv.screenOf(q)),j=whlHitSide({x:e.clientX,y:e.clientY},main.every(Boolean)?main:null,WHL_3SL.map(s=>{const Q=WHL_SIDE.quad(s.slot);return Q?{i:s.i,q:Q.q}:null}));
   if(j>=0){try{vibrate(5)}catch(z){}WHL_HOP++;whlGo(j,true)}}
-function whl3Float(t,sq,cls){const o=typeof document!=="undefined"&&document.getElementById("whl3Ov"),pv=WHL_PK;if(!o||!pv||!whl3Shown())return false;if(whlRM())return true;let p=null;
+function whl3Float(t,sq,cls,av){const o=typeof document!=="undefined"&&document.getElementById("whl3Ov"),pv=WHL_PK;if(!o||!pv||!whl3Shown())return false;if(whlRM())return true;let p=null;
   if(sq!=null)p=pv.screenOf(sq);else try{const r=pv.el.getBoundingClientRect();p={x:r.left+r.width/2,y:r.top+r.height*(cls==="dmg"?.12:.86)}}catch(e){}
-  if(!p)return true;const f=document.createElement("div");f.className="whl-fl "+(cls||"");f.textContent=t;f.style.left=Math.round(p.x)+"px";f.style.top=Math.round(p.y)+"px";o.append(f);setTimeout(()=>f.remove(),1400);return true}
+  if(!p)return true;const f=document.createElement("div");f.className="whl-fl "+(cls||"");f.textContent=t;whlAv(f,av);f.style.left=Math.round(p.x)+"px";f.style.top=Math.round(p.y)+"px";o.append(f);setTimeout(()=>f.remove(),1400);return true}

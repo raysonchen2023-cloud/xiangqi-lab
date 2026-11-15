@@ -1757,18 +1757,23 @@
        黑方＝星樞的棋子：墨色立起來的大棋子、星光金字，面向玩家、輕輕浮動。
        sync 每次重排都會拿掉全部棋子再擺：巨盤模式把拿掉的放回池子（gntPool）重用，不重新載模型 */
     const GNT_X={K:"x_shuai",A:"x_shi",B:"x_spiritgirl",N:"x_miaogirl",R:"x_swordboy",C:"x_martialgirl",P:"x_bing"},GNT_CH={K:"帥",A:"仕",B:"相",N:"傌",R:"俥",C:"炮",P:"兵"},GNT_H=1.55;
+    /* 開發者 11/15「七星陸續加入」：還沒加入的那種紅子用無名「木棋靈」（data/tripo_app/x_wood.glb，七種共用；試做紀錄 xiangqi-db/art_try/wood_spirit_1115/紀錄.md），
+       前後都貼本命字圓牌（量法：棋子圓心離腳底 0.368、半徑 0.273、盤面內圈 0.82，模型外框寬 0.746）；問 App 的 ptyHas（m/07pty-party.js），沒有這支（舊版、單獨開 3D）就照舊全部用七星 */
+    const GNT_WOOD="x_wood",GNT_WOODG={u:.5,v:.632,r:.334},gntWood=K=>{try{return typeof window.ptyHas==="function"&&!!GNT_X[K]&&!window.ptyHas(GNT_X[K])}catch(e){return false}};
     /* 開發者 11/12「棋子字太小了，要符合角色背後的棋子」：七星背上本來都揹著一顆大木棋子；從背面正交圖量出那顆棋子的中心（u 由背面看的左邊、v 由頭頂）和半徑，
        圓牌半徑＝棋面（外框的 85%），蓋在他自己的棋子上（量法：scratchpad backs.html）。田飛燕、駱躍梅、雷借花的棋子被頭髮或披風遮住，圓牌貼在遮住的地方 */
     /* 開發者 11/12「宇宙的黑方也是 3D 棋子嗎？如果不是請製作」→ 選「新畫 7 位星樞棋兵」：Gemini 立繪 park/xingshu/xs_*.png → Tripo 靜態站姿 data/tripo_app/xs_*.glb；
        跟七星一樣站在格點上、面向對方、背上補本命字（量法同上）。模型沒骨架，所以不做動作 */
     const GNT_XS={K:"xs_jiang",A:"xs_shi",B:"xs_xiang",N:"xs_ma",R:"xs_che",C:"xs_pao",P:"xs_zu"},GNT_GLYB={K:{u:.5,v:.54,r:.425},A:{u:.5,v:.47,r:.444},B:{u:.5,v:.48,r:.453},N:{u:.5,v:.44,r:.453},R:{u:.5,v:.5,r:.434},C:{u:.49,v:.53,r:.425},P:{u:.5,v:.48,r:.425}};
-    const GNT_GLY={K:{u:.5,v:.636,r:.368},A:{u:.49,v:.6,r:.378},B:{u:.53,v:.64,r:.36},N:{u:.5,v:.63,r:.34},R:{u:.5,v:.584,r:.374},C:{u:.5,v:.6,r:.34},P:{u:.5,v:.67,r:.415}};
+    /* 開發者 11/15 齊轍換新造型（art_try/swordboy_hero_1115）：棋子改在肚子前、背後是披風，背牌照「被遮住就貼在遮住的地方」貼在棋子背後那個高度（DISK 圓心離腳底 0.383），
+       半徑照實際大小跟其他六位相近（外框寬 0.861，含張開的披風）；離線背面圖核對過 */
+    const GNT_GLY={K:{u:.5,v:.636,r:.368},A:{u:.49,v:.6,r:.378},B:{u:.53,v:.64,r:.36},N:{u:.5,v:.63,r:.34},R:{u:.5,v:.617,r:.31},C:{u:.5,v:.6,r:.34},P:{u:.5,v:.67,r:.415}};
     const gntPool={},gntCnt={},gntFigs=[],gntStones=[];
     const gntShadow=root=>{const KT=window.XQTOON_KIT;root.traverse(m=>{if(!m.isMesh||m.name==="meGly")return;if(KT&&KT.isHull&&KT.isHull(m)){m.visible=false;m.userData.gntOff=1;return}   /* 水墨描邊的黑殼：半透明的分身會透出一整片黑，分身不描邊 */const ms=(Array.isArray(m.material)?m.material:[m.material]).map(x=>{const c=x.clone();c.transparent=true;c.opacity=.52;c.depthWrite=false;if(c.color)c.color.lerp(new T.Color(0x8FB4FF),.45);if(c.emissive)c.emissive.set(0x1A3A7A);return c});m.material=Array.isArray(m.material)?ms:ms[0];m.castShadow=false})};
-    const gntFig=(p,K,blk,bm)=>{const n=gntCnt[p]=(gntCnt[p]||0)+1,body=n===1,g=new T.Group(),inner=new T.Group();g.add(inner);g.userData={p,pk:bm?p+"@"+bm.k:p,th:GNT_H*.55*(bm?bm.s||1:1),giant:1,body};if(bm)g.scale.setScalar(bm.s||1);
+    const gntFig=(p,K,blk,bm)=>{const wd=!blk&&gntWood(K),n=gntCnt[p]=(gntCnt[p]||0)+1,body=n===1,g=new T.Group(),inner=new T.Group();g.add(inner);g.userData={p,pk:bm?p+"@"+bm.k:wd?p+"@w":p,wood:wd?1:0,th:GNT_H*.55*(bm?bm.s||1:1),giant:1,body};if(bm)g.scale.setScalar(bm.s||1);
       /* 開發者 11/12「底下踩著的棋子不用放上去，只要站角色即可」：不再墊本命棋子底座，角色直接站在棋盤格點上；
          「把棋子放在每個 3D 角色背後，然後他們要面向對方」：本命字圓牌貼在背上（gly.back），角色轉身面向敵陣（gntTake 依 flip 轉 180 度），玩家從後面看得到字 */
-      let B=null;try{B=window.XQBot3D&&XQBot3D.figure?XQBot3D.figure({glb:"data/tripo_app/"+(blk?GNT_XS[bm?bm.k:K]:GNT_X[K])+".glb",p:blk?NAMES.b[K]:GNT_CH[K],gly:Object.assign({back:1,front:blk?{u:.5,v:.64,r:.26}:{u:.5,v:.66,r:.28}},(blk?GNT_GLYB:GNT_GLY)[bm?bm.k:K])}):null}catch(e){B=null}   /* 開發者 11/12「雙方正面也要把棋子貼上去」：胸前再貼一個（bot3d.js gly.front） */
+      let B=null;try{B=window.XQBot3D&&XQBot3D.figure?XQBot3D.figure({glb:"data/tripo_app/"+(blk?GNT_XS[bm?bm.k:K]:wd?GNT_WOOD:GNT_X[K])+".glb",p:blk?NAMES.b[K]:GNT_CH[K],gly:wd?Object.assign({back:1,front:GNT_WOODG},GNT_WOODG):Object.assign({back:1,front:blk?{u:.5,v:.64,r:.26}:{u:.5,v:.66,r:.28}},(blk?GNT_GLYB:GNT_GLY)[bm?bm.k:K])}):null}catch(e){B=null}   /* 開發者 11/12「雙方正面也要把棋子貼上去」：胸前再貼一個（bot3d.js gly.front） */
       if(!B)return gntStone(p);inner.add(B.bot);g.userData.B=B;gntFigs.push(g);
       /* 放大倍數、位置一律在 inner 自己的座標算（量世界座標再扣掉 inner 的世界位置），不然角色會被拉回棋盤中心 */
       const fitTo=(obj,H)=>{inner.scale.setScalar(1);B.bot.position.set(0,0,0);g.updateMatrixWorld(true);const b=new T.Box3().setFromObject(obj),h=b.max.y-b.min.y;if(!(h>0))return false;
@@ -1867,7 +1872,7 @@
       const L=gntStarLay(board).filter(o=>o.s===sideOf(cp)&&o.k===K),tgt=L[L.length-1]||null;
       const after=C0=>{gntDrop(cap);capDone();const fin=()=>layoutCaptured(board);if(tgt&&!RDM)gntFly(C0,tgt,fin);else fin()};
       if(!RDM&&mv&&mv.K){if(red)gntSuck(cap,{K:mv.K==="K"?"K":"B",f:mv.f,t:mv.t},C0=>{gntSpark(C0,0xFFD98A,big?120:80,1.6,.7);after(C0)});else gntSuck(cap,mv,after)}else gntBurst(cap,red,big,spd,after)};   /* hspx 開發者 11/12「星樞棋兵被吃掉後，也要有消失在黑洞的動畫」：紅方撞完，被吃的子背後開黑洞往後吸走（帥＝腳下黑洞往下沉），洞關起來噴金色星塵 */   /* 黑方星樞棋兵吃子：黑洞吸入；紅方照舊星爆 */
-    const gntTake=p=>{const bm=p==="k"&&GBOSS&&GNT_XS[GBOSS.k]?GBOSS:null,q=gntPool[bm?p+"@"+bm.k:p];let g=q&&q.pop();if(g&&g.userData.ped){const[pb,pf,K]=g.userData.ped;pb.material=bMat(true);pf.material=fMat(NAMES.r[K],true)}   /* 換造型（refreshLook）會把舊的棋子材質丟掉，重用的底座要換新的 */if(!g){const K=p.toUpperCase();g=sideOf(p)==="r"?(GNT_X[K]?gntFig(p,K):gntStone(p)):(GNT_XS[K]?gntFig(p,K,true,bm):gntStone(p))}g.visible=true;if(g.userData.capS0){g.scale.setScalar(g.userData.capS0);delete g.userData.capS0}g.rotation.set(0,g.userData.B?((sideOf(p)==="r")!==flip?PI:0):0,0);if(p==="k")gntTxHide(g,!!(GBOSS&&GBOSS.k==="taixu"));sc.add(g);return g};
+    const gntTake=p=>{const bm=p==="k"&&GBOSS&&GNT_XS[GBOSS.k]?GBOSS:null,q=gntPool[bm?p+"@"+bm.k:sideOf(p)==="r"&&gntWood(p.toUpperCase())?p+"@w":p];let g=q&&q.pop();if(g&&g.userData.ped){const[pb,pf,K]=g.userData.ped;pb.material=bMat(true);pf.material=fMat(NAMES.r[K],true)}   /* 換造型（refreshLook）會把舊的棋子材質丟掉，重用的底座要換新的 */if(!g){const K=p.toUpperCase();g=sideOf(p)==="r"?(GNT_X[K]?gntFig(p,K):gntStone(p)):(GNT_XS[K]?gntFig(p,K,true,bm):gntStone(p))}g.visible=true;if(g.userData.capS0){g.scale.setScalar(g.userData.capS0);delete g.userData.capS0}g.rotation.set(0,g.userData.B?((sideOf(p)==="r")!==flip?PI:0):0,0);if(p==="k")gntTxHide(g,!!(GBOSS&&GBOSS.k==="taixu"));sc.add(g);return g};
     /* 11/14 太虛星尊（ex.bhBoss＝{k:"taixu"}）：黑將照常是一顆棋子（走子、將軍、將死的邏輯都不動），只把它的外觀藏起來；
        魔王模型和三招魔法由 App 的 m/07bhf-bossfx.js 用 fxApi() 接 bossfx3d.js 畫，魔王每一格跟著這顆將的位置走。換回別的守關或一般局時外觀放回來 */
     const gntTxHide=(g,on)=>{const u=g.userData;if(on){if(u.txHid)return;u.txHid=g.children.filter(c=>c.visible);u.txHid.forEach(c=>{c.visible=false})}else if(u.txHid){u.txHid.forEach(c=>{c.visible=true});delete u.txHid}};
