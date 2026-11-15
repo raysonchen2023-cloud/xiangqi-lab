@@ -1613,7 +1613,7 @@ html[data-lefty] .tskip{right:auto;left:14px}
       if(!window.caches)return go();caches.keys().then(function(ks){return Promise.all(ks.filter(function(k){return k.indexOf("xqlab-app-")===0}).map(function(k){return caches.delete(k)}))})
         .then(function(){return navigator.serviceWorker&&navigator.serviceWorker.getRegistration()}).then(function(r){return r&&r.update()}).catch(function(){}).then(go)}};setTimeout(chk,4000)})();
 </script>
-<script>window.XQ_OFFLINE=true;window.XQ_BUILD="20261115-0954";</script>
+<script>window.XQ_OFFLINE=true;window.XQ_BUILD="20261115-1041";</script>
 <script src="core.js"></script>
 <script src="engine.js"></script>
 <script src="local.js"></script>
@@ -4095,7 +4095,7 @@ function oppHist(){try{return(window.XQNet&&XQNet.rating?XQNet.rating().hist:[])
 function pvpMySide(it,id){if(!it)return null;if(it.mine==="r"||it.mine==="b")return it.mine;const rid=id!=null?id:it.id;
   const h=oppHist().find(x=>x.rid===rid);if(h&&(h.sd==="r"||h.sd==="b"))return h.sd;
   const me=myName();return me&&it.red===me?"r":me&&it.black===me?"b":null}
-/* 一盤的純準確度：talentCache5 那列 pa（開局／中局／殘局各＝[準確度加總, 步數]）三段加總÷步數；沒有 pa 的舊列回 null */
+/* 一盤的純準確度：talentCache6 那列 pa（開局／中局／殘局各＝[準確度加總, 步數]）三段加總÷步數；沒有 pa 的舊列回 null */
 const rowAcc=g=>{if(!g||!g.pa)return null;let s=0,n=0;for(const k of["open","mid","end"]){const x=g.pa[k];if(x&&x[1]){s+=+x[0]||0;n+=x[1]}}return n?s/n:null};
 function oppSnapSave(ps){const ids=new Set(oppHist().map(h=>h.oid).filter(Boolean));if(!ids.size)return;const S=store.get("oppSnap",{});let ch=false;
   for(const p of ps||[])if(p&&ids.has(p.id)){S[p.id]={id:p.id,name:p.name,pts:p.pts,w:p.w,l:p.l,d:p.d,city:p.city||"",kind:p.kind||"",at:p.at||Date.now()};ch=true}if(ch)store.set("oppSnap",S)}
@@ -4205,13 +4205,13 @@ function histList(box,reps){let kind=store.get("histKind","all"),res="",limit=40
     let h=`<div class="st-seg">${[["all","全部"],["cpu","🤖 電腦"],["pvp","👥 對人"]].map(([k,l])=>`<button data-k="${k}" class="${kind===k?"on":""}">${l}<small>${cnt(k)}</small></button>`).join("")}</div>
       <div class="st-res">${[["","全部"],["w","勝"],["l","負"],["d","和"]].map(([k,l])=>`<button data-r="${k}" class="${res===k?"on":""}">${l}</button>`).join("")}</div>`;
     if(!L.length)h+=`<div class="st-list st-empty" style="margin-top:12px">${all.length?"沒有符合的對局":"還沒有下完的對局。去挑戰電腦或線上對戰下一盤吧！"}</div>`;
-    const TC5=store.get("talentCache5",{});let mon="",grp=[];const out=[],flush=()=>{if(grp.length)out.push(`<div class="st-list">${grp.join("")}</div>`);grp=[]};
+    const TC5=store.get("talentCache6",{});let mon="",grp=[];const out=[],flush=()=>{if(grp.length)out.push(`<div class="st-list">${grp.join("")}</div>`);grp=[]};
     /* 意見回饋（開發者 11/6 分數審查）：gameId 是 UTC 時間，月份標題和日期改用本地時間（臺灣清晨的棋不再跑到前一天／前一個月）；id 不是時間格式的舊存檔照字面切 */
     const ld=id=>{const t=tlTime(id);if(!t)return{m:id.slice(0,7),y:id.slice(0,4),mo:+id.slice(5,7),d:id.slice(5,10).replace("-","/")};const dt=new Date(t),p=n=>String(n).padStart(2,"0");return{m:`${dt.getFullYear()}-${p(dt.getMonth()+1)}`,y:dt.getFullYear(),mo:dt.getMonth()+1,d:`${p(dt.getMonth()+1)}/${p(dt.getDate())}`}};
     for(const x of L.slice(0,limit)){const id=String(x.it.id),LD=ld(id),m=LD.m;
       if(m!==mon){flush();mon=m;out.push(`<div class="st-mon">${LD.y} 年 ${LD.mo} 月</div>`)}
       /* 意見回饋 351：人機、真人每一盤都標出我這盤的評等（S／A／B…）：賽後報告算過的、或天賦頁評好的都用
-         意見回饋（開發者 11/6 分數審查）：評等改成優先用 talentCache5 的純準確度（跟五邊形同一把尺），沒有才用 reports；
+         意見回饋（開發者 11/6 分數審查）：評等改成優先用 talentCache6 的純準確度（跟五邊形同一把尺），沒有才用 reports；
          舊 reports 裡 pvp 執黑的那筆存的是對手的分數（存檔時沒記 side），認得出是執黑就不用它 */
       const r=resOf(x.it,x.side),tc=TC5[x.c+"/"+x.it.id],ta=rowAcc(tc),rp=reps[x.it.id],rpOk=rp&&!(x.c==="pvp"&&!rp.side&&x.side==="b")&&!(rp.side&&x.side&&rp.side!==x.side),
         R=ta!=null?{score:Math.round(ta),grade:gradeFor(Math.round(ta))[0]}:rpOk?rp:null,nr=x.c==="pvp"&&nh.find(hh=>hh.rid===x.it.id);
@@ -4227,7 +4227,7 @@ function histList(box,reps){let kind=store.get("histKind","all"),res="",limit=40
     box.querySelectorAll("[data-r]").forEach(b=>b.onclick=()=>{res=b.dataset.r;limit=40;paint()});
     box.querySelectorAll("[data-id]").forEach(b=>b.onclick=e=>{const oi=e.target.closest(".opp-i");if(oi){e.stopPropagation();return oppCard(oi.dataset.oid,oi.dataset.on)}vibrate(5);if(b.dataset.c==="play"&&!reps[b.dataset.id])store.set("openReport","play/"+b.dataset.id);location.hash=`#/db/${b.dataset.c}/${encodeURIComponent(b.dataset.id)}`});
     const mo=box.querySelector("#more");if(mo)mo.onclick=()=>{limit+=40;paint()}}
-  paint();load();return{paint}}   /* 意見回饋（開發者 11/6 分數審查）：回傳 paint，五邊形算完 talentCache5 有新列時可以重畫評等 */
+  paint();load();return{paint}}   /* 意見回饋（開發者 11/6 分數審查）：回傳 paint，五邊形算完 talentCache6 有新列時可以重畫評等 */
 /* 意見回饋 307、415：五角形圖（自己的戰績頁、棋友資料卡共用）。A＝[[名稱,分數,樣本還少?],…]；
    樣本還少的那一軸：連到它的邊畫虛線、點畫空心、數字變淡 */
 function penSVG(A,maxW){const W=300,H=270,cx=150,cy=142,R0=92,K=A.length,pt=(i,v)=>{const a=-Math.PI/2+i*2*Math.PI/5,r=R0*(v||0)/100;return[cx+r*Math.cos(a),cy+r*Math.sin(a)]};
@@ -4253,7 +4253,9 @@ function setProf(x){const p={...store.get("pubProf",{}),...x,v:1,at:Date.now()};
    三、樣本：實戰軸不到 30 步、殺法不到 10 題＝樣本還少：畫虛線、淡色，不拿來挑「建議先練」。全 App 只有這裡一個「建議先練」。
    四、公平：用過提示或悔棋的那盤（local.js 存檔時記 hintN／undoN）整盤不算；舊存檔沒有這兩欄就照算。 */
 /* 數學修正 11/11（審查 3-B、4.2；開發者 11/11 照三方審查「先上不改分數的部分」）：
-   ・每步準確度「不改」：照舊 100·e^(−損失/200)（SK.acc）。勝率尺度的新算法只在影子模式背景算（05-settings.js 的 MXS／mxShadowReport），畫面不顯示，所以快取照舊叫 talentCache5、不用重算。
+   ・每步準確度「不改」：照舊 100·e^(−損失/200)（SK.acc）。勝率尺度的新算法只在影子模式背景算（05-settings.js 的 MXS／mxShadowReport），畫面不顯示。
+     意見表 1046（11/15）：快取 talentCache5 → talentCache6（三方審查必改 7「合併時別漏了 talentCache5 → 6」）——11/11 以前存的列沒有 id／lv／A，
+     五軸的 σ 只能退回 SK.SD0、skillDiff 認不到盤；升版讓每一列都用現在的欄位重算一次（只讀手機裡已評好等的棋譜，沒評完的照舊放 pend），舊的 talentCache5 刪掉。分數本身不變。
    ・五軸的時間窗統一：每一盤的權重 λ^(盤序)，λ＝2^(−1/HL)（半衰期 15 盤，有效視窗約 22 盤），三個階段用同一批最近的盤，不再各自往回找 150 步（殘局軸原本反映的是很舊的自己）。
      盤序用「全部的盤」排（Claude 複審 #11：原本是「這一軸有資料的第幾盤」，殘局只有一半的盤有，時間窗會長一倍）。
      指數加權還有一個好處：加進新的一盤，軸的變化方向一定跟「這盤 − 原本」同號（滑動視窗有 14% 反號：其實是新盤減掉被擠出去的舊盤）。
@@ -4270,14 +4272,15 @@ function mxCal(){const C=store.get("calib",null)||{};return{tal:C.tal&&C.tal.peo
 function mxPct(x,Q){if(!Q||!Q.length)return null;const n=Q.length,p=i=>100*(i+1)/(n+1);if(x<=Q[0])return Math.max(1,Math.round(p(0)*Math.max(0,1-(Q[0]-x)/Math.max(1e-6,Q[1]-Q[0]))));
   for(let i=0;i<n-1;i++)if(x<=Q[i+1]){const f=(x-Q[i])/Math.max(1e-6,Q[i+1]-Q[i]);return Math.round(p(i)+f*(p(i+1)-p(i)))}return Math.min(99,Math.round(p(n-1)+(100-p(n-1))*Math.min(1,(x-Q[n-1])/Math.max(1e-6,Q[n-1]-Q[n-2]))))}
 const mxTierName=th=>MX_RK[Math.max(0,Math.min(MX_RK.length-1,Math.round(th/QZ.S+QZ.MID)))];
-/* 每盤一列（我的棋力、我的成長共用，存在 talentCache5；開發者 11/11：每步準確度照舊，快取不升版；新欄位 id／lv／A 只有新算的列有，舊列沒有就退回 SK.SD0）：我這邊評過等的步——各階段準確度加總 pa＝[加總,步數]、首選 best、失著＋敗著 bad、
+/* 每盤一列（我的棋力、我的成長共用，存在 talentCache6；開發者 11/11：每步準確度照舊；11/15 意見表 1046 升版 5→6，每列都有 id／lv／A，萬一還是缺就退回 SK.SD0）：我這邊評過等的步——各階段準確度加總 pa＝[加總,步數]、首選 best、失著＋敗著 bad、
    這盤用過提示或悔棋 hu；舊的列沒有 pa 就重新讀那盤算一次。只有我這邊每一步都評好才存快取，還沒評完的回傳在 pend */
 async function skillRows(){
   const me=myName(),games=[];
   for(const c of["play","pvp"]){let d;try{d=await api("/db/items?c="+c+"&limit=200")}catch(e){continue}
     for(const it of d.items){const side=c==="play"?(it.red==="你"?"r":"b"):pvpMySide(it);if(side)games.push({c,id:it.id,side,res:String(it.result||""),opp:side==="r"?it.black:it.red})}}   /* 意見回饋（開發者 11/6 分數審查）：pvp 用 pvpMySide 認自己 */
   games.sort((a,b)=>String(a.id).localeCompare(String(b.id)));
-  const cache=store.get("talentCache5",{}),G=[],pend=[];let ch=false,smN=0;
+  try{localStorage.removeItem("m_talentCache5")}catch(e){}   /* 意見表 1046：舊版快取（沒有 id／lv／A）整份丟掉，不混算 */
+  const cache=store.get("talentCache6",{}),G=[],pend=[];let ch=false,smN=0;
   /* 改善單 R08 車輪戰審查（11/11）：先拿掉車輪戰、盲棋再取最近 150 盤，一場 10 桌不會擠掉一般對局的名額，也不用白評那些盤 */
   {const EX=/-(s\d+|b)$/;smN=games.filter(g=>EX.test(String(g.id))).length;const keep=games.filter(g=>!EX.test(String(g.id)));games.length=0;games.push(...keep)}
   for(const g of games.slice(-150)){const key=g.c+"/"+g.id;let row=cache[key];
@@ -4297,7 +4300,7 @@ async function skillRows(){
           if(!miss){cache[key]=row;ch=true}}}}
     /* 開發者 11/11 選（統計複查）：車輪戰的盤（id 結尾 -s桌號）同時下很多盤、注意力分散，不算進我的棋力、準確度、成長曲線、等級分；照樣評等，檢討看得到 */
     if(row&&!row.skip){if(/-(s\d+|b)$/.test(g.id))smN++;else G.push(row)}}   /* 11/11：盲棋（id 結尾 -b）也不算 */
-  if(ch)store.set("talentCache5",cache);
+  if(ch)store.set("talentCache6",cache);
   return{G,pend,smN}}
 /* 五軸的分數。G＝skillRows 的列，IR＝tlIRT(測驗紀錄)。每軸回傳 {k 名稱, v 分數, n 步數或題數, u 單位, g 盤數, ok 樣本夠, go [入口, 名稱]} */
 /* 數學修正 11/11（審查 3-A、3-B）：每軸＝指數加權平均（同一個時間窗）＋標準誤 se；穩定＝沒有失著、敗著的步數比例（0～100，跟準確度一樣「越高越好、100 滿分」，不再是 100−300×失誤率）。
@@ -4715,7 +4718,7 @@ function Stats(v){
   // 總覽＝三個重點數字＋棋力五邊形＋各模式勝負對照表＋對局紀錄；其他分頁各自的段位卡和細表
   const NET=!!(OFF&&window.XQNet),pct=(w,n)=>n?Math.round(w*100/n)+"%":"—";
   const reps=store.get("reports",{}),qz=store.get("quizBest",null);
-  /* 意見回饋（開發者 11/6 分數審查）：總覽的「賽後報告平均」改成「每步準確度」——跟五邊形同一批資料（skillRows／talentCache5），
+  /* 意見回饋（開發者 11/6 分數審查）：總覽的「賽後報告平均」改成「每步準確度」——跟五邊形同一批資料（skillRows／talentCache6），
      每盤 pa 三階段加總÷步數的純準確度，排除用過提示或悔棋的盤，從最近一盤往回取到約 SK.WIN 步（跟五邊形同視窗）；等級用同一個 gradeFor。
      不再讀 store.reports（那只有打開過賽後報告的盤、含妙著加分和 69／79／89 上限、沒排除提示悔棋） */
   const accKPI=G=>{const R=(G||[]).filter(g=>g&&g.pa&&!g.hu&&rowAcc(g)!=null).sort((a,b)=>(b.t||0)-(a.t||0));let s=0,n=0,gn=0;
@@ -5599,7 +5602,7 @@ const rnd=n=>Math.ceil(n/2);
 function qNow(m){if(!m||!m.q)return m&&m.q;const q0=({"妙手":"妙著","正手":"正著","優著":"穩著","良著":"緩著","錯著":"失著","露著":"敗著"})[m.q]||m.q;if(m.loss==null||q0==="妙著"||q0==="—")return q0;const l=m.loss;return l<30?"正著":l<=60?"穩著":l<=150?"緩著":l<=400?"失著":"敗著"}
 /* ================= 影子模式：勝率尺度的新算法（開發者 11/11 照三方審查「新算法修好必改後走影子模式」） =================
    畫面一律顯示舊算法（qNow／gameReport／talk／reportSheet 的分數、評語、評級一個字都沒改）；新算法只在背景算：
-   ・mxShadowReport(rep)：拿 gameReport 的結果再算一份新的每步勝率損失、評語、一盤總分、評級，不動 rep。
+   ・mxShadowReport(rep,win)：拿 gameReport 的結果再算一份新的每步勝率損失、評語、一盤總分、評級，不動 rep。
    ・05b-save.js 的 cpa*：跟電腦下完一盤，新舊總分存在 store "mxShadow"（最近 200 盤），並匿名送 t:"cpu"（設定 → 隱私可關）。
    ・開發者模式：賽後報告最下面多一塊「🛠 新算法（影子模式）」並列新舊（reportSheet），孩子看不到。
    三方審查（story/75_數學模型新算法_三方審查整理.md）的上線前必改 1～4 都在這一段：
@@ -5607,9 +5610,13 @@ function qNow(m){if(!m||!m.q)return m&&m.q;const q0=({"妙手":"妙著","正手"
    ②殺棋特例（Lichess lila modules/tree/src/main/Advice.scala 的 MateAdvice 分界）：走進對方的強制殺棋、錯過自己的強制殺棋直接決定評語，另外標「送殺」「漏殺」。
    ③一盤總分不沿用舊門檻：Lichess 的合成（依局勢波動加權的平均、調和平均各半，lila AccuracyPercent.scala），上限規則改看「勝率掉 ≥ capDw% 的步數」，
      S／A／B／C 門檻放在 MXS.gr，等影子資料（≥100 人、≥1000 盤）用分位對應重訂（tools/calibrate-grades.js）。
+     意見表 1046（11/15）：勝率尺度在大劣時每步只掉一點點，慢慢輸掉的盤每步準確度都很高——模擬（業餘中段）輸掉的盤 100% 拿 S／A（舊算法 0%）。
+     先保守補一條「輸棋」上限 MXS.lose：這方最後評到的勝率 ≤ 10%（約 −600 分以下），或呼叫端給了結果（mxShadowReport(rep,win)，05b-save 的 cpaDone 有給）而這方輸了 → 最高 79（B）；版本升 2。分數本身照 Lichess 不動，只多一個上限。
+     上限不用「整盤自己掉的勝率合計」：合計跟手數成正比（150 手的和棋也會超過 100%），長的盤會被冤枉；用最後的局面最直接。
+     之後有影子資料再看要不要分段位、改門檻（cpu-games.jsonl 每盤有 res 和每步原值，可以離線重算，不用另外收資料）。
    ④k、評語門檻集中在 MXS：門檻 th 由 k 和均勢 cp 分界算出來，k 改了門檻自動跟著改；改了任何一個數字就把 MXS.ver 加 1（匿名資料帶著版本）。
    core.js（xiangqi-referee.js 的 classifyRaw）只多回傳 bv，評語照舊；新算法全部在這裡。 */
-const MXS={ver:1,
+const MXS={ver:2,      /* 11/15 意見表 1046：1→2（多了 lose 上限） */
   k:0.00368208,          /* 勝率曲線斜率 Win%(cp)＝100／(1＋e^(−k·cp))：先沿用 Lichess（lichess.org/page/accuracy）；之後用 t:"cpu" 真人對局分段位擬合（tools/calibrate-wdl.js），不可用引擎自對局（Pikafish 自己的曲線 +150 就 96%，會灌水） */
   cp:[30,60,150,400],    /* 均勢時的評語分界（開發者 11/6 深算驗證過的 cp）；th＝Win%(cp)−50 由 k 算出（下一行） */
   mate:20000,            /* |評估| ≥ 這個＝有殺（engine.js 把 mate n 換成 ±(30000−n)；跟 evText 同一個分界） */
@@ -5619,6 +5626,7 @@ const MXS={ver:1,
   win:[2,8],wt:[.5,12],  /* 波動權重：視窗＝總手數/10 夾在 2～8；視窗內勝率的標準差夾在 0.5～12（Lichess） */
   capDw:10,              /* 上限規則看「勝率掉 ≥ 10%」的步數（Claude 複審 #4 修法 (b)），送殺、漏殺判成失著／敗著的也算 */
   cap:{n:[3,6],r:[.1,.2],v:[79,69],blun:89},   /* 上限結構照舊：≥3 步或 ≥10% 最高 79、≥6 步或 ≥20% 最高 69、有敗著最高 89——數字待分位對應 */
+  lose:[10,79],          /* 輸棋局面上限（意見表 1046）：這方最後評到的勝率 ≤ 10%（或已知這盤輸了）→ 最高 79（B）；保守值，待影子資料重訂 */
   gr:[90,80,70,60],      /* S／A／B／C 門檻：暫用舊的，待校正 */
   bonus:[2,6]};          /* 妙著每個 +2、最多 +6（照舊） */
 MXS.th=MXS.cp.map(c=>mxWin(c)-50);   /* 均勢時跟 cp 分界逐點對齊（k＝0.00368208 時 2.758／5.502／13.47／31.35%）；mxWin、mxClamp 都是 function 宣告（會提升），這一行在載入時就能算 */
@@ -5639,7 +5647,7 @@ function mxShMove(m){const q0=qNow(m);if(!q0||q0==="—")return null;const e=mxE
     else if(e.p<M&&(e.bk?e.b>=M:e.b>=2000&&e.p<1900)){mt=2;mh=e.bk?0:1;q=e.p<=MXS.miss[0]?"敗著":e.p<=MXS.miss[1]?"失著":"緩著"}}
   return{b:e.b,p:e.p,bk:e.bk,dw,acc:mxAccDw(dw),q0,q,mt,mh}}
 /* 一方的新總分（rep＝gameReport 的結果；照 rep.plies 的 phase、by、ply） */
-function mxShSide(rep,s){const P=rep&&rep.plies||[],X=[];for(const m of P){if(m.by!==s)continue;const x=mxShMove(m);if(x)X.push({m,x})}if(!X.length)return null;
+function mxShSide(rep,s,wn){const P=rep&&rep.plies||[],X=[];for(const m of P){if(m.by!==s)continue;const x=mxShMove(m);if(x)X.push({m,x})}if(!X.length)return null;
   const W=[50];let last=50;for(const m of P){if(m.ev!=null&&isFinite(+m.ev))last=mxWin(+m.ev);W.push(last)}   /* 每一手走完的勝率（紅方視角），第 0 個＝開局前；沒評到的手沿用上一手 */
   const ws=Math.max(MXS.win[0],Math.min(MXS.win[1],Math.floor(P.length/10))),sdv=a=>{const u=a.reduce((x,y)=>x+y,0)/a.length;return Math.sqrt(a.reduce((x,y)=>x+(y-u)**2,0)/a.length)},win=[];
   for(let i=0;i<Math.min(ws,W.length)-2;i++)win.push(W.slice(0,ws));for(let i=0;i+ws<=W.length;i++)win.push(W.slice(i,i+ws));if(W.length<ws)win.push(W.slice());
@@ -5647,20 +5655,21 @@ function mxShSide(rep,s){const P=rep&&rep.plies||[],X=[];for(const m of P){if(m.
   let sw=0,sa=0,sh=0;const cnt={},ph={};for(const{m,x}of X){const w=wOf(m.ply);sw+=w;sa+=w*x.acc;sh+=1/Math.max(1,x.acc);cnt[x.q]=(cnt[x.q]||0)+1;const o=ph[m.phase]||(ph[m.phase]={s:0,n:0});o.s+=x.acc;o.n++}   /* 調和平均的每一步至少算 1 分（0 分會讓調和平均變 0） */
   const wm=sa/sw,hmean=X.length/sh,base=(1-MXS.hm)*wm+MXS.hm*hmean,C=MXS.cap,bonus=Math.min(MXS.bonus[1],MXS.bonus[0]*(cnt["妙著"]||0)),
     bad=X.filter(({x})=>x.dw>=MXS.capDw||x.q==="失著"||x.q==="敗著").length,blun=cnt["敗著"]||0,br=bad/X.length,
-    cap=bad>=C.n[1]||br>=C.r[1]?C.v[1]:bad>=C.n[0]||br>=C.r[0]?C.v[0]:blun?C.blun:100,score=Math.min(cap,Math.round(base+bonus)),gi=MXS.gr.findIndex(g=>score>=g);
-  return{score,grade:"SABCD"[gi<0?4:gi],base,wm,hmean,bonus,cap,cnt,n:X.length,bk:X.filter(({x})=>x.bk).length,
+    fin=s==="r"?last:100-last,lost=fin<=MXS.lose[0]||(wn==="r"||wn==="b")&&wn!==s,   /* fin＝這方最後評到的勝率（last 是紅方視角）；lost＝輸棋局面或知道這盤輸了（wn＝贏的那方，意見表 1046；認輸時局面常還沒到 −600） */
+    cap=Math.min(bad>=C.n[1]||br>=C.r[1]?C.v[1]:bad>=C.n[0]||br>=C.r[0]?C.v[0]:blun?C.blun:100,lost?MXS.lose[1]:100),score=Math.min(cap,Math.round(base+bonus)),gi=MXS.gr.findIndex(g=>score>=g);
+  return{score,grade:"SABCD"[gi<0?4:gi],base,wm,hmean,bonus,cap,fin,lost,cnt,n:X.length,bk:X.filter(({x})=>x.bk).length,
     ph:Object.fromEntries(Object.entries(ph).map(([k,o])=>[k,{score:Math.round(o.s/o.n),n:o.n}])),
     mv:X.map(({m,x})=>({ply:m.ply,cn:m.cn,ph:m.phase,loss:m.loss,...x}))}}
-function mxShadowReport(rep){return{ver:MXS.ver,r:mxShSide(rep,"r"),b:mxShSide(rep,"b")}}
+function mxShadowReport(rep,win){return{ver:MXS.ver,r:mxShSide(rep,"r",win),b:mxShSide(rep,"b",win)}}   /* win（可省略）：贏的那方 "r"／"b"，和棋 ""；不知道就只看最後的局面 */
 /* 開發者模式才看得到：賽後報告並列新舊（三方審查：新舊兩個數字不給孩子看，會困惑） */
 function mxShHtml(R,X){if(!X||!R||R.score==null)return"";const QS=["妙著","正著","穩著","緩著","失著","敗著"],df=X.mv.filter(v=>v.q!==v.q0||v.mt);
   return`<details style="margin-top:12px"><summary class="muted">🛠 新算法（影子模式，只有開發者看得到）</summary>
     <table class="ttab" style="margin-top:6px"><tr><th></th><th>畫面（舊）</th><th>影子（新）</th></tr>
     <tr><td>總分</td><td>${R.score}（${R.grade[0]}）</td><td>${X.score}（${X.grade}）</td></tr>
     <tr><td>準確度</td><td>${R.base.toFixed(1)}</td><td>${X.base.toFixed(1)}<br><small class="muted" style="font-weight:400">波動加權 ${X.wm.toFixed(1)}・調和 ${X.hmean.toFixed(1)}</small></td></tr>
-    <tr><td>上限</td><td>${R.cap}</td><td>${X.cap}</td></tr>${QS.map(q=>`<tr><td>${q}</td><td>${R.cnt[q]||0}</td><td>${X.cnt[q]||0}</td></tr>`).join("")}</table>
+    <tr><td>上限</td><td>${R.cap}</td><td>${X.cap}${X.lost?`<br><small class="muted" style="font-weight:400">輸棋（最後勝率 ${X.fin.toFixed(0)}%）</small>`:""}</td></tr>${QS.map(q=>`<tr><td>${q}</td><td>${R.cnt[q]||0}</td><td>${X.cnt[q]||0}</td></tr>`).join("")}</table>
     ${df.length?`<div class="muted" style="font-size:12.5px;line-height:1.6;margin-top:6px">評語不一樣的步：${df.slice(0,30).map(v=>`第 ${v.ply} 手 ${esc(v.cn||"")} ${v.q0}→${v.q}（勝率 −${v.dw.toFixed(1)}%${v.mt===1?"・送殺":v.mt===2?"・漏殺"+(v.mh?"（推估）":""):""}）`).join("；")}</div>`:""}
-    <p class="muted" style="font-size:12px;margin:6px 0 0">MXS v${MXS.ver}：k＝${MXS.k}、評語門檻 ${MXS.th.map(t=>t.toFixed(2)).join("／")}%、殺棋分界 ${MXS.walk.join("／")}・${MXS.miss.join("／")}、S／A／B／C ${MXS.gr.join("／")}（都還沒用真人資料校正）${X.bk<X.n?`；${X.n-X.bk} 步沒有最佳評估原值（舊存檔或舊快取），用 ev 夾值＋loss 還原`:""}</p></details>`}
+    <p class="muted" style="font-size:12px;margin:6px 0 0">MXS v${MXS.ver}：k＝${MXS.k}、評語門檻 ${MXS.th.map(t=>t.toFixed(2)).join("／")}%、殺棋分界 ${MXS.walk.join("／")}・${MXS.miss.join("／")}、S／A／B／C ${MXS.gr.join("／")}、輸棋局面（勝率 ≤ ${MXS.lose[0]}%）最高 ${MXS.lose[1]}（都還沒用真人資料校正）${X.bk<X.n?`；${X.n-X.bk} 步沒有最佳評估原值（舊存檔或舊快取），用 ev 夾值＋loss 還原`:""}</p></details>`}
 function gameReport(board0,moves){
   moves=(moves||[]).map(m=>m&&m.q&&m.loss!=null&&qNow(m)!==m.q?{...m,q:qNow(m)}:m);
   const b=board0.slice(),out={r:null,b:null},plies=[];let endFrom=null;
@@ -6417,7 +6426,7 @@ window.XQ_ANON_OK=x=>!lrnAnonType(x)||lrnAnonOn();
 function cpaRnd(n){const a=new Uint8Array(n);crypto.getRandomValues(a);return[...a].map(x=>(x%36).toString(36)).join("")}
 function cpaDone(st,full){try{if(!st||!st.id||!st.result)return;const sent=store.get("cpaSent",[])||[];if(sent.includes(st.id))return;store.set("cpaSent",sent.concat(st.id).slice(-60));
   if(typeof gameReport!=="function"||typeof mxShadowReport!=="function"||!window.XQCore)return;
-  const hu=st.human,rep=gameReport(XQCore.parseFen(st.start||XQCore.START),st.moves||[]),R=rep.sides[hu],X=mxShadowReport(rep)[hu];if(!R||R.score==null||!X)return;
+  const hu=st.human,rep=gameReport(XQCore.parseFen(st.start||XQCore.START),st.moves||[]),R=rep.sides[hu],X=mxShadowReport(rep,st.result.w||"")[hu];if(!R||R.score==null||!X)return;   /* 意見表 1046：把勝負帶進去，輸掉的盤新總分最高 79（MXS.lose） */
   const all=store.get("mxShadow",{})||{};all[st.id]={o:[R.score,R.grade[0]],n:[X.score,X.grade],v:MXS.ver,at:Date.now()};const ks=Object.keys(all);if(ks.length>200)for(const k of ks.sort((a,b)=>all[a].at-all[b].at).slice(0,ks.length-200))delete all[k];store.set("mxShadow",all);
   if(!cpaOn()||!window.XQNet||!XQNet.shareIRT||X.n<4)return;
   let aid=store.get("anonId",null);if(!aid){aid=Math.random().toString(36).slice(2,10);store.set("anonId",aid)}
@@ -10445,7 +10454,7 @@ const BHX_IMGS=[];
 function bhxPreImg(){if(BHX_IMGS.length)return;try{const U=new Set(["data/park/bh_far2.webp"]);for(const k in BHX_PG){const p=BHX_PG[k];if(p.img)U.add(p.img);if(p.imgN)U.add(p.imgN)}
   for(const u of U){const im=new Image();im.decoding="async";im.src=u;BHX_IMGS.push(im);if(im.decode)im.decode().catch(()=>{})}}catch(e){}}
 function bhxCss(){if(document.getElementById("bhxCss"))return;const s=document.createElement("style");s.id="bhxCss";s.textContent=`
-#bhxPg{position:fixed;inset:0;z-index:9000;background-color:#05060d;background-position:center;background-size:cover;background-repeat:no-repeat;color:#f6efe0;display:flex;flex-direction:column;justify-content:center;align-items:center;padding:24px 22px calc(24px + env(safe-area-inset-bottom,0px));text-align:center;cursor:pointer;opacity:0;transition:opacity .6s;overflow:hidden}
+#bhxPg{position:fixed;inset:0;z-index:9000;background-color:#05060d;background-position:center;background-size:cover;background-repeat:no-repeat;color:#f6efe0;display:flex;flex-direction:column;justify-content:center;align-items:center;padding:max(24px,calc(12px + env(safe-area-inset-top,0px))) 22px calc(24px + env(safe-area-inset-bottom,0px));text-align:center;cursor:pointer;opacity:0;transition:opacity .6s;overflow:hidden}
 #bhxPg.on{opacity:1}
 #bhxPg::before{content:"";position:absolute;inset:0;background:radial-gradient(ellipse at 50% 55%,rgba(5,6,13,.1),rgba(5,6,13,.6));pointer-events:none}
 #bhxPg>*{position:relative}
@@ -11559,6 +11568,7 @@ body.bhtd-tg #bhtlTip{pointer-events:none;opacity:.35}
 /* 11/13 開發者截圖「主角的金環很違和、門跑到盤外」：門原本整個元素在轉（動畫的 transform 蓋掉 bhtdFrame 寫的位置，門被釘在左上角）；改成只有 ::before 的虛線圈在轉。
    3D 盤（g3）：地面類記號照盤面透視貼平（bhtdGnd 算的 matrix，transform-origin 要 0 0），金環不再像貼紙浮在角色身上、拿掉 ✦；門的數字另起直立小標籤 gt；3D 區頂端重複的「黑洞・星樞棋局」場名（.pkname）在塔防局藏起來，免得擋到最遠那一排 */
 .bt-mk.g3{transform-origin:0 0}.bt-mk.eye.g3::after{top:-2.1em}.bt-mk.eye.g3{border-width:3px;background:radial-gradient(circle,rgba(255,214,120,.38),rgba(255,214,120,0) 72%)}
+.bt-mk.pnm{font-size:clamp(11px,calc(var(--c)*.4),17px);font-weight:900;line-height:1;padding:2px 4px;border-radius:5px;margin-top:-.55em;white-space:nowrap;box-shadow:0 1px 4px rgba(0,0,0,.65)}.bt-mk.pnm.r{background:#FFF8EA;color:#B3121F;border:1px solid #E9C46A}.bt-mk.pnm.b{background:#14204A;color:#fff;border:1px solid #6FE7FF}
 .bt-mk.gt{font-size:12px;font-weight:800;color:#f3e6ff;background:rgba(60,16,110,.88);border:1px solid #b46bff;border-radius:99px;padding:1px 7px;white-space:nowrap;box-shadow:0 0 8px rgba(180,107,255,.7)}
 body.bhtd-on #bbox .pkname{display:none!important}
 .bt-mk.pj{font-size:11px;font-weight:700;color:#fff;background:#d2601a;border-radius:6px;padding:0 3px;margin:calc(var(--c)*-.42) 0 0 calc(var(--c)*.42);box-shadow:0 0 6px #ff9a3c}
@@ -11834,12 +11844,14 @@ function bhtdMarks(st){const td=st.td,L=[],C=bhtdC(),b=st.board;
   for(const t of td.pj){const q=BHTD.sqOf(td,t);if(q!=null)L.push({k:"pj",sq:q,t:"破"})}
   for(const t of td.frz){const q=BHTD.sqOf(td,t);if(q==null)continue;const o=(td.frzQ||[]).find(x=>x.tag===t),n=1+(o?o.n:0);L.push({k:"frz",sq:q,t:`<i>${n}</i>`})}   /* 定身：深藍鎖鏈圈＋還要停幾回合（這回合 1＋排隊的；開發者 11/13 換掉 💨） */
   const shv={};for(const s of td.sh){const q=BHTD.sqOf(td,s.tag);if(q!=null)shv[q]=(shv[q]||0)+s.v}for(const q in shv)L.push({k:"sh",sq:+q,t:"盾"+shv[q]});
+  /* 11/15 開發者選 Gemini 方案 1（意見回饋 1136「黑洞塔防棋子太小，看不清誰是誰」）：3D 塔防鏡頭下每顆子頭上一塊面向鏡頭的漢字牌（我方白底朱字、敵方深藍底白字），排最後＝疊在其他標記上面；位置用 park3d headOf（bhtdFrame） */
+  try{if(typeof PARK!=="undefined"&&PARK&&PARK.v&&PARK.v.headOf&&PARK.v.tdCam&&PARK.v.tdCam()&&bhtd3d())for(let q=0;q<90;q++){const p=b[q];if(!p)continue;const r=p===p.toUpperCase();L.push({k:"pnm "+(r?"r":"b"),sq:q,t:NAMES[r?"r":"b"][p.toUpperCase()]||""})}}catch(e){}
   return L}
 function bhtdFrame(){BHTD_RAF=0;const st=BHTD_ST,o=document.getElementById("bhtdOv");if(!st||!o||!bhtdIs(st))return;
   if(!/^#\/journey\/play/.test(location.hash)){bhtdHide();return}
   const L=bhtdMarks(st),key=JSON.stringify(L),box=o.querySelector(".mks");if(key!==BHTD_MK){BHTD_MK=key;box.innerHTML=L.map(m=>m.b?`<button type="button" class="bt-mk ${m.k}" data-sq="${m.sq}" aria-label="目標 ${m.sq}"></button>`:`<div class="bt-mk ${m.k}" data-sq="${m.sq}">${m.t||""}</div>`).join("")}
   const a=bhtdXY(40),c=bhtdXY(41),cell=a&&c?Math.max(18,Math.min(90,Math.hypot(c.x-a.x,c.y-a.y))):36;o.style.setProperty("--c",cell+"px");
-  const g3=bhtd3d();for(const el of box.children){const q=+el.dataset.sq,p=bhtdXY(q);if(!p){el.style.display="none";continue}el.style.display="";
+  const g3=bhtd3d();for(const el of box.children){const q=+el.dataset.sq,p=el.classList.contains("pnm")?(PARK&&PARK.v&&PARK.v.headOf?PARK.v.headOf(q):null):bhtdXY(q);if(!p){el.style.display="none";continue}el.style.display="";
     const M=g3&&BHTD_GND.test(el.className)?bhtdGnd(q,p,cell):null,up=el.classList.contains("gt")?cell*.62:0;el.classList.toggle("g3",!!M);
     el.style.transform=`translate(${p.x}px,${p.y-up}px)`+(M?` matrix(${M})`:"")+" translate(-50%,-50%)"+(!M&&el.classList.contains("shard")?" rotate(45deg)":"")}
   /* 炮線：紅炮隔一子瞄到的敵子（回合結束就會破甲），淡橘虛線 */
@@ -16160,7 +16172,10 @@ function epCss(){if(document.getElementById("epCss"))return;const s=document.cre
 .ep-say.me{flex-direction:row-reverse;text-align:right}
 .ep-row{display:flex;gap:8px;margin-top:10px}.ep-row .btn{flex:1;margin:0}
 .ep-card{margin-top:10px;padding:10px 12px;border:1px dashed var(--line);border-radius:12px;line-height:1.7}
-.ep-ov{position:fixed;inset:0;z-index:60;background:var(--bg);display:flex;flex-direction:column;overflow:auto;padding:10px 12px calc(14px + env(safe-area-inset-bottom))}
+.ep-ov{position:fixed;inset:0;z-index:60;background:var(--bg);display:flex;flex-direction:column;overflow:auto;padding:calc(10px + var(--safeT,env(safe-area-inset-top,0px))) max(12px,env(safe-area-inset-right,0px)) calc(14px + env(safe-area-inset-bottom)) max(12px,env(safe-area-inset-left,0px))}
+html.gapfix .ep-ov{padding-top:calc(34px + var(--safeT,env(safe-area-inset-top,0px)))}
+/* 意見回饋 890（開發者 iPhone 主畫面 App 440×894 動態島：插曲「星夜茶話會」一分鐘眼力題結算頁、插曲「不速之客」最上面那行被狀態列和動態島蓋住）：
+  這種全螢幕插曲頁蓋在頂欄上面（z-index 60），原本上緣只留 10px；改成跟頂欄一樣讓開安全區（--safeT＝env(safe-area-inset-top)，02-shell 讀不到時補的值），新版 iOS 頂端模糊漸層（gapfix）再多讓 24px；橫放時左右讓開瀏海 */
 .ep-ov h3{margin:2px 0 4px;font-family:var(--serif);font-size:18px}.ep-ov .boardbox{padding:4px 0}.ep-ov .boardbox svg{max-width:440px}
 .ep-st{min-height:24px;font-weight:700;text-align:center;margin:4px 0}.ep-tm{font:900 22px var(--sans);text-align:center;color:var(--accent)}
 .ep-letter{position:relative;padding:14px 14px 18px;border-radius:10px;background:#f6efe0;color:#2a2018;font:17px/2.1 "Noto Serif TC",var(--serif);border:1px solid #d9c9a6;box-shadow:inset 0 0 30px rgba(120,90,40,.15)}
@@ -18472,7 +18487,31 @@ function zmCss(){if(document.getElementById("zmCss"))return;const s=document.cre
 @keyframes zmTip{0%{opacity:0}12%{opacity:1}80%{opacity:1}100%{opacity:0}}@media (prefers-reduced-motion:reduce){.zm-ex b,.zm-tip{animation:none}}
 /* 意見回饋 884（iPad 玩家「不知道按了什麼，首頁長這樣無法縮小」）：放大後只有雙擊能還原、畫面上沒有任何提示；放大時上方出現「還原大小」 */
 .zm-rs{display:none;position:absolute;top:10px;left:50%;transform:translateX(-50%);z-index:6;min-height:40px;padding:6px 16px;border:0;border-radius:20px;background:rgba(24,18,12,.78);color:#fff6e0;font:700 15px/1.2 var(--serif,serif);box-shadow:0 0 0 1px rgba(214,176,92,.55),0 2px 8px rgba(0,0,0,.35);cursor:pointer;white-space:nowrap}
-.zm-c.zm-on>.zm-rs{display:block}`;document.head.append(s)}
+.zm-c.zm-on>.zm-rs{display:block}
+/* 意見回饋 888：被系統整頁放大（iOS 不理 viewport 的 user-scalable=no）時，圖框改回系統手勢，兩指才縮得回去；右上那顆「還原大小」跟著看得到的範圍走 */
+html.zm-vvz .zm-c,html.zm-vvz .zm-c.zm-on{touch-action:auto}
+#zmVvb{display:block;position:fixed;z-index:2147483000;transform-origin:50% 0;margin:0}`;document.head.append(s)}
+/* ---------- 意見回饋 888（玩家 iPad 主畫面 App 820×1148：「首頁用兩指放大後就無法縮小，要重開 App 才能恢復」）----------
+   原因：兩指縮放有兩種。07x 自己的（transform 放大圖框，1～2.5 倍，縮得回去，884 還加了「還原大小」）；另一種是 iOS 整頁放大——
+     viewport 寫了 user-scalable=no，但 iOS 10 起 Safari／主畫面 App 不理它；手指有一隻落在圖框外（頂欄、底部分頁、iPad 兩側模糊底那一塊）就會整頁放大。
+     整頁放大後畫面幾乎都是圖框，圖框對兩指手勢一律 preventDefault（touchstart、gesturestart）又是 touch-action:pan-y，系統的縮小手勢全被擋掉＝縮不回去；884 的「還原大小」只管 07x 自己的倍數。
+   修法：① 沒被系統放大時，整份文件擋 gesturestart／gesturechange（iOS 才有的事件），一開始就不會整頁放大；
+     ② 萬一已經整頁放大（visualViewport.scale＞1.01）：圖框不再搶兩指、不擋 gesturestart，CSS 改回 touch-action:auto，兩指就能縮回；畫面上方出現「⤢ 還原大小」（跟著看得到的範圍走、反向縮放保持原大）；
+     ③ 雙擊（電腦：雙按）圖框、按「還原大小」、回首頁（goHome、網址換回 #/）：07x 回 1 倍，整頁放大用「暫時把 viewport 改成 maximum-scale=1」請 iOS 縮回。
+   純計算 zmNat（給倍數判斷是不是整頁放大了）測試在 xiangqi-lab/tools/test-fb888.js（假 DOM＋vm 跑兩指、雙擊、回首頁、整頁放大救援） */
+const ZM_VV_EPS=1.01;
+function zmVV(){try{const v=typeof window!=="undefined"&&window.visualViewport;return v&&v.scale>0?v.scale:1}catch(e){return 1}}
+function zmNat(sc){return(sc==null?zmVV():sc)>ZM_VV_EPS}
+/* 請 iOS 把整頁放大縮回 1 倍：暫時加 maximum-scale=1，0.4 秒後換回原本的 viewport；沒有整頁放大就不動 */
+function zmVVReset(){if(!zmNat())return false;const m=document.querySelector('meta[name="viewport"]');if(!m)return false;const c0=m.getAttribute("content")||"";if(c0.indexOf("maximum-scale")>=0)return false;
+  m.setAttribute("content",c0+",maximum-scale=1");setTimeout(()=>{try{m.setAttribute("content",c0)}catch(e){}},400);return true}
+/* 全部回 1 倍：畫面上每個 07x 圖框＋整頁放大；quiet＝回首頁那種不用提示 */
+function zmFixAll(quiet){document.querySelectorAll(".zm-c").forEach(C=>{try{if(C.zm&&C.zm.s>1)C.zm.reset()}catch(e){}});const r=zmVVReset();
+  if(!quiet&&r)setTimeout(()=>{try{if(zmNat()&&typeof toast==="function")toast("兩指往內捏，就能縮回原本大小")}catch(e){}},700);return r}
+/* 整頁放大時：html 加 zm-vvz（圖框改回系統手勢）、放一顆跟著看得到的範圍走的「還原大小」 */
+function zmVvSync(){const z=zmNat(),R=document.documentElement;R.classList.toggle("zm-vvz",z);let b=document.getElementById("zmVvb");if(!z){if(b)b.hidden=true;return}
+  zmCss();if(!b){b=document.createElement("button");b.type="button";b.id="zmVvb";b.className="zm-rs";b.textContent="⤢ 還原大小";b.addEventListener("click",e=>{e.preventDefault();e.stopPropagation();zmFixAll()});document.body.append(b)}
+  const v=window.visualViewport;b.hidden=false;if(!v)return;Object.assign(b.style,{left:(v.offsetLeft+v.width/2).toFixed(1)+"px",top:(v.offsetTop+10/v.scale).toFixed(1)+"px",transform:"translateX(-50%) scale("+(1/v.scale).toFixed(3)+")"})}
 /* C＝看得到的框（裁切範圍），E＝被縮放的圖層（座標的 100%） */
 /* 回饋 837（星槎甲板可左右看）：第三個參數 o.panX＝圖比框寬時，沒放大也能左右拖（單指水平拖、滑鼠拖），進頁停在原本置中的位置；o.onPan＝每次位移後呼叫（星槎用來重排貼邊的標籤）。
    直向的手勢照舊捲頁面；從畫面左右邊緣 24px 內起手的不接（讓給右邊緣往內滑、iOS 左緣返回等系統手勢）；拖過放開的那一下不算點選（同縮放） */
@@ -18497,24 +18536,24 @@ function zmAttach(C,E,o){if(!ZOOM_ON||!C||!E||C.dataset.zm)return;C.dataset.zm="
   {const b=document.createElement("button");b.type="button";b.className="zm-rs";b.textContent="⤢ 還原大小";b.addEventListener("click",e=>{e.preventDefault();e.stopPropagation();reset()});C.append(b)}   /* 意見回饋 884：放大時才看得到（.zm-on） */
   /* 觸控：兩指縮放（以兩指中點為準，也跟著平移）、放大時單指拖曳、雙擊還原 */
   let T=null,last=null;
-  C.addEventListener("touchstart",e=>{const t=e.touches;if(t.length>=2){const a=loc(t[0].clientX,t[0].clientY),b=loc(t[1].clientX,t[1].clientY);T={pinch:1,d0:Math.hypot(a[0]-b[0],a[1]-b[1])||1,m0:[(a[0]+b[0])/2,(a[1]+b[1])/2],s0:s,t0:[tx,ty],moved:1};sup=1;e.preventDefault()}
+  C.addEventListener("touchstart",e=>{const t=e.touches;if(t.length>=2){if(zmNat()){T=null;return}   /* 意見回饋 888：已經被系統整頁放大＝兩指交給系統縮回，不搶、不 preventDefault */const a=loc(t[0].clientX,t[0].clientY),b=loc(t[1].clientX,t[1].clientY);T={pinch:1,d0:Math.hypot(a[0]-b[0],a[1]-b[1])||1,m0:[(a[0]+b[0])/2,(a[1]+b[1])/2],s0:s,t0:[tx,ty],moved:1};sup=1;e.preventDefault()}
     else if(t.length===1){const p=loc(t[0].clientX,t[0].clientY);T={p0:p,t0:[tx,ty],moved:0,at:Date.now(),edge:t[0].clientX<ZM_EDGE||t[0].clientX>innerWidth-ZM_EDGE}}},{passive:false});   /* 回饋 837：edge＝從畫面邊緣起手 */
   C.addEventListener("touchmove",e=>{if(!T)return;const t=e.touches;
     if(T.pinch&&t.length>=2){e.preventDefault();const a=loc(t[0].clientX,t[0].clientY),b=loc(t[1].clientX,t[1].clientY),d=Math.hypot(a[0]-b[0],a[1]-b[1]);zoomAt(T.s0*d/T.d0,[(a[0]+b[0])/2,(a[1]+b[1])/2],T.s0,T.t0,T.m0);return}
     if(!T.pinch&&t.length===1&&s>1){const p=loc(t[0].clientX,t[0].clientY),dx=p[0]-T.p0[0],dy=p[1]-T.p0[1];if(!T.moved&&Math.hypot(dx,dy)<8)return;T.moved=1;sup=1;e.preventDefault();tx=T.t0[0]+dx;ty=T.t0[1]+dy;apply()}
     /* 回饋 837：沒放大、圖比框寬：先判斷方向，水平才接（左右拖），直向放給頁面捲動；邊緣起手不接 */
-    else if(!T.pinch&&t.length===1&&s===1&&!T.no&&ovX(box())){const p=loc(t[0].clientX,t[0].clientY),dx=p[0]-T.p0[0],dy=p[1]-T.p0[1];
+    else if(!T.pinch&&t.length===1&&s===1&&!T.no&&ovX(box())&&!zmNat()){const p=loc(t[0].clientX,t[0].clientY),dx=p[0]-T.p0[0],dy=p[1]-T.p0[1];
       if(!T.moved){if(Math.hypot(dx,dy)<8)return;if(T.edge||Math.abs(dx)<Math.abs(dy)*1.2){T.no=1;return}}T.moved=1;sup=1;e.preventDefault();tx=T.t0[0]+dx;apply()}},{passive:false});
   const tend=e=>{if(!T)return;if(e.touches.length)return;const was=T;T=null;if(was.pinch||was.moved){sup=Date.now()+450;return}
-    const now=Date.now(),p=was.p0;if(s>1&&last&&now-last.t<320&&Math.hypot(p[0]-last.p[0],p[1]-last.p[1])<30){last=null;sup=now+450;reset();return}last={t:now,p}};
+    const now=Date.now(),p=was.p0;if((s>1||zmNat())&&last&&now-last.t<320&&Math.hypot(p[0]-last.p[0],p[1]-last.p[1])<30){last=null;sup=now+450;reset();zmVVReset();return}last={t:now,p}};   /* 意見回饋 888：整頁放大時雙擊也還原 */
   C.addEventListener("touchend",tend);C.addEventListener("touchcancel",tend);
-  C.addEventListener("gesturestart",e=>e.preventDefault());
+  C.addEventListener("gesturestart",e=>{if(!zmNat())e.preventDefault()});   /* 意見回饋 888：整頁放大時不擋，系統才縮得回去 */
   /* 電腦：ctrl＋滾輪縮放、放大後滑鼠拖曳、雙按還原 */
   C.addEventListener("wheel",e=>{if(!e.ctrlKey)return;e.preventDefault();const m=loc(e.clientX,e.clientY);zoomAt(s*Math.exp(-e.deltaY*.0025),m,s,[tx,ty],m)},{passive:false});
   let D=null;C.addEventListener("pointerdown",e=>{if(e.pointerType!=="mouse"||e.button!==0||(s<=1&&!ovX(box())))return;   /* 回饋 837：圖比框寬時沒放大也能用滑鼠左右拖 */D={p0:loc(e.clientX,e.clientY),t0:[tx,ty],moved:0}});
   C.addEventListener("pointermove",e=>{if(!D||e.pointerType!=="mouse")return;const p=loc(e.clientX,e.clientY),dx=p[0]-D.p0[0],dy=p[1]-D.p0[1];if(!D.moved&&Math.hypot(dx,dy)<5)return;if(!D.moved)try{C.setPointerCapture(e.pointerId)}catch(err){}D.moved=1;tx=D.t0[0]+dx;if(s>1)ty=D.t0[1]+dy;apply()});
   const pup=e=>{if(!D)return;if(D.moved)sup=Date.now()+300;D=null};C.addEventListener("pointerup",pup);C.addEventListener("pointercancel",pup);
-  C.addEventListener("dblclick",e=>{if(s>1){e.preventDefault();reset()}});
+  C.addEventListener("dblclick",e=>{if(s>1||zmNat()){e.preventDefault();reset();zmVVReset()}});
   /* 拖曳、縮放後放開的那一下不算點選（掛在 document 捕獲，比圖上的入口、07w 點哪走哪都早） */
   const kill=e=>{if(!C.isConnected){document.removeEventListener("click",kill,true);return}if(!C.contains(e.target))return;if(sup===1||sup>Date.now()){sup=0;e.stopPropagation();e.preventDefault()}};
   document.addEventListener("click",kill,true);
@@ -18532,6 +18571,12 @@ function zmShipPush(M,s){if(s>1||!M||!M.isConnected)return;const I=M.querySelect
 if(typeof shpPx==="function"){const f0=shpPx;shpPx=function(M){const r=f0.apply(this,arguments);try{if(M){let q=0;zmAttach(M,M.querySelector(".shp-in"),{panX:1,onPan:z=>{if(q)return;q=requestAnimationFrame(()=>{q=0;zmShipPush(M,z)})}})}}catch(e){}return r}}
 if(typeof portWind==="function"){const f0=portWind;portWind=function(v,k){const r=f0.apply(this,arguments);try{zmPage(v)}catch(e){}return r}}
 if(typeof yzInn==="function"){const f0=yzInn;yzInn=function(v,k){const r=f0.apply(this,arguments);try{zmPage(v)}catch(e){}return r}}
+/* 意見回饋 888：① 沒被系統放大時擋掉整頁兩指放大（iOS 的 gesture 事件）；② 整頁放大了就換成救援模式（zmVvSync）；③ 回首頁一律回 1 倍 */
+(()=>{if(!ZOOM_ON||typeof document==="undefined"||!document.addEventListener)return;
+  const g=e=>{if(!zmNat())try{e.preventDefault()}catch(x){}};document.addEventListener("gesturestart",g,{passive:false});document.addEventListener("gesturechange",g,{passive:false});
+  try{const v=typeof window!=="undefined"&&window.visualViewport;if(v){let q=0;const f=()=>{if(q)return;q=requestAnimationFrame(()=>{q=0;try{zmVvSync()}catch(e){}})};v.addEventListener("resize",f);v.addEventListener("scroll",f)}}catch(e){}
+  if(typeof addEventListener==="function")addEventListener("hashchange",()=>{try{if(typeof navKey==="function"&&navKey(location.hash)==="/")zmFixAll(true)}catch(e){}});
+  if(typeof goHome==="function"){const f0=goHome;goHome=function(){try{zmFixAll(true)}catch(e){}return f0.apply(this,arguments)}}})();
 /* ================= 🏯 學習、對戰兩頁的滿版水墨圖（開發者 11/8 定案：📚 學習＝方案 1「千秋翰林書院」（宋代）、⚔ 對戰＝方案 8「徽州深院茶樓」（明代））=================
    規劃：story/gemini_app/34、35 號 md（Gemini 十案）；圖：park/hubmap/（learn_v4、battle_v3 定稿，史學顧問 11/8 核過、局部修圖）→ art/hubmap/（process_art.py 的 HUBMAP）→ data/hubmap/。
    包一層 Home(v,hub)：原本的卡片照舊畫出來（即時狀態、點了做什麼都不變），只是藏起來；上面換成一張滿版圖，每個入口一個金框標籤：
@@ -18790,7 +18835,13 @@ const SHW_HOMEMAP={el:40,h:[.05,60,.0008],look0:[50,99],
    轉向、改視窗大小：07fl 包的 r07Wide 每次先問 hmwSync，比例跨過門檻就原地換圖、換座標、重掛走路角色，圖載好再重排一次。
    純計算 hmwKind／hmwSpots／hmwSrc 不碰 DOM，自動測試 xiangqi-lab/tools/test-home-wide.js 用 vm 跑 */
 const HMW_ON=true,HMW_IMGV="0910";   /* 寬版圖的版本：同檔名換圖時改掉，手機才會重抓 */
-const HMW_PORT=[0.6,0.85],HMW_LAND=1.3,HMW_LMIN=600;
+const HMW_PORT=[0.6,0.89],HMW_LAND=1.3,HMW_LMIN=600;   /* 回饋 889：直版上限 0.85 → 0.89（HMW_LAND 已不用，留著給舊說明對照） */
+/* 意見回饋 889（iPhone 主畫面 App 669×869，可用寬÷可用高約 0.87）：原本 0.85～1.3 這段「接近正方形」哪一種寬版都不用，退回原圖縮到等高置中＝中間一窄條、兩側模糊。
+   改成：① 0.6～0.89 直版 p34（直版上下最多裁 16%＝安全區 t 6%＋b 10%，0.75÷0.84≈0.89 以下 cover 剛好蓋滿）；
+     ② 0.89～1.04 用原圖（或季節／夜景／朝代變體），交給 07fl 首頁的直向填滿（XFL_HOME_MAX 1.04）：填滿寬度、上下裁，入口都留在看得到的範圍——直版在這段 cover 不滿（1.04 時只蓋 86% 寬）；
+     ③ 1.04 以上橫版 l1610（短邊 600 以上才算，手機橫放照舊）：1.04～1.22 上下各留一點模糊（1.04 時約 86% 高），1.22 以上蓋滿。
+   1.04＝直版、橫版用 cover 蓋到的比例一樣的那一點；原圖填滿寬度到 1.04 以上，最下面的入口會太靠近底部那條大按鈕，所以不再往上放寬 */
+const HMW_SQ=1.04;
 /* f 檔名、w/h 母圖尺寸、S 入口錨點（左%、上%；home-wide-coords.md，橫版大船太擠可改 53／14）、sl 主張紙條離看得到的上緣多少（圖高 %）、
    safe 最多裁掉多少（每邊，圖寬／圖高的比例：直版左右 6%、橫版上下 5%＝清單的安全區；另一個方向照錨點離邊多遠給寬一點，下緣都沒有地標） */
 const HM_SPOTS_P34=[["hmShip",54,15],["hmBattle",25,26],["hmLearn",80,26],["hmRec",23,44],["hmQuick",53,47.5]];
@@ -18812,8 +18863,8 @@ const HMW={p34:{f:"home_p34",w:1536,h:2048,S:HM_SPOTS_P34,sl:1.4,safe:{l:.06,r:.
 const HMW_BAD={};   /* 這次開 App 載不到的寬版（退回原圖，不再試） */
 /* 純計算：W 可用寬、av 可用高、vw #view 寬、vh 畫面高 → "p34"／"l1610"／""（原圖） */
 function hmwKind(W,av,vw,vh){if(!HMW_ON||!(W>0&&av>=120))return"";const r=W/av;
-  if(r>=HMW_PORT[0]&&r<=HMW_PORT[1]&&(vw>=600||vw>av))return HMW_BAD.p34?"":"p34";
-  if(r>=HMW_LAND&&Math.min(vw,vh)>=HMW_LMIN)return HMW_BAD.l1610?"":"l1610";return""}
+  if(r>=HMW_PORT[0]&&r<=HMW_PORT[1]&&(vw>=600||vw>av))return HMW_BAD.p34?"":"p34";   /* 回饋 889：0.85～0.89 也用直版；0.89～1.04＝原圖交給 07fl 填滿寬度 */
+  if(r>HMW_SQ&&Math.min(vw,vh)>=HMW_LMIN)return HMW_BAD.l1610?"":"l1610";return""}   /* 回饋 889：1.04～1.3 也用橫版（原本 HMW_LAND＝1.3 起） */
 /* 現在這頁該用原圖（沒有變體）才有寬版：經典世界、季節／晨昏／夜景／雨雪圖都不換 */
 function hmwBase(){try{return!(typeof sw7HomeWx==="function"&&sw7HomeWx())}catch(e){return true}}   /* 開發者 11/15「首頁天氣的問題」→ 選「用四季長卷拼成寬版」：首頁有季節／夜景／雨雪變體（07w7 sw7HomeWx 有回傳）就用那張變體＋三屏長卷鋪滿 iPad，跟學習、對戰同一季；沒有變體才用寬版原圖。以下是 11/13 舊說明：開發者 11/13 選「iPad 先一律用寬版原圖」：寬版只有原圖（白天、預設世界）一張；原本經典世界、節氣天氣（季節、雨雪）時退回直式變體圖，iPad 上幾乎看不到寬版。改成 iPad／摺疊機寬版一律優先（暫時沒有季節、日夜變化），手機照舊 */
 const hmwSrc=k=>HMW[k]?`data/homemap/${HMW[k].f}.webp?v=${HMW_IMGV}`:`data/homemap/home.webp?v=${HM_IMGV}`;
@@ -20082,7 +20133,7 @@ function hmpCtl(P){if(P._hmpCtl)return;P._hmpCtl=1;const C=hmpBox(P)||P;hmpCss()
   if(C!==P)for(const d of[-1,1]){const b=document.createElement("button");b.type="button";b.className="hmp-nav "+(d<0?"l":"r");b.hidden=true;b.innerHTML=`<span aria-hidden="true">${d<0?"‹":"›"}</span>`;
     b.onclick=e=>{e.stopPropagation();vibrate(5);hmpCam(P,(P._hmpI||0)+d,true)};C.append(b)}
   let D=null,sup=0;const zs=()=>C.zm&&C.zm.s||1,lim=v=>{const w=P.offsetWidth,m=Math.max(0,Math.abs(v)-w);return Math.sign(v)*(Math.min(Math.abs(v),w)+m*.3)};
-  const start=(x,y,ed)=>{if(!hmpOn(P)||zs()>1.001){D=null;return}D={x0:x,y0:y,t:performance.now(),l0:parseFloat(P.style.left)||0,i0:P._hmpI||0,mv:0,no:!!ed,lx:x,lt:performance.now(),v:0}};
+  const start=(x,y,ed)=>{if(!hmpOn(P)||zs()>1.001||(typeof zmNat==="function"&&zmNat())){D=null;return}   /* 意見回饋 888：被系統整頁放大時單指拖曳交給系統（看放大後的別處），不換屏 */D={x0:x,y0:y,t:performance.now(),l0:parseFloat(P.style.left)||0,i0:P._hmpI||0,mv:0,no:!!ed,lx:x,lt:performance.now(),v:0}};
   const move=(x,y,e)=>{if(!D||D.no)return false;const dx=x-D.x0,dy=y-D.y0;if(!D.mv){if(Math.hypot(dx,dy)<8)return false;if(Math.abs(dx)<Math.abs(dy)*1.2||zs()>1.001){D.no=1;return false}D.mv=1;cancelAnimationFrame(P._hmpA||0);P._hmpA=0}
     const now=performance.now();if(now>D.lt)D.v=(x-D.lx)/(now-D.lt);D.lx=x;D.lt=now;P.style.left=lim(D.l0+dx).toFixed(1)+"px";if(e&&e.cancelable)e.preventDefault();return true};
   const end=x=>{const d=D;D=null;if(!d||!d.mv)return;sup=Date.now()+450;hmpCam(P,hmpSnap(d.i0,x-d.x0,P.offsetWidth,d.v),true)};
@@ -30863,7 +30914,7 @@ const I18N_EN={
   "很少失誤":"rarely makes mistakes","幾乎不失誤":"almost never makes mistakes","不放水":"no mercy","人類幾乎贏不了":"nearly unbeatable for humans","段位與開新局":"Rank and new game","換難度":"Change level",
   /* 對局頁：工具列、狀態列、確認框 */
   "寶物":"Items","悔棋":"Undo","新局":"New","認輸":"Resign","檢討":"Review","擺盤":"Setup","偷看":"Peek","思考中":"Thinking","已預走":"Premove set","被將軍":"in check","⚠ 被將軍！":"⚠ Check!",
-  "提示":"Hint","輪到你":"Your move","輪到你走":"Your move","輪到電腦":"Computer's move","等電腦":"Waiting for the computer","電腦想太久了？":"Computer taking too long?","重新開一局":"Start a new game","還原大小":"Reset zoom","確定認輸？":"Resign this game?",
+  "提示":"Hint","輪到你":"Your move","輪到你走":"Your move","輪到電腦":"Computer's move","等電腦":"Waiting for the computer","電腦想太久了？":"Computer taking too long?","重新開一局":"Start a new game","還原大小":"Reset zoom","兩指往內捏，就能縮回原本大小":"Pinch in with two fingers to zoom back out","確定認輸？":"Resign this game?",
   "悔棋以後，這一盤不算進「我的棋力」（輸贏照常算）。":"After an undo, this game no longer counts toward \"My strength\" (the result still counts).","用悔棋符":"Use undo token",
   "你還沒走棋，不用悔棋":"You haven't moved yet; nothing to undo","沒有悔棋符了":"No undo tokens left","這個難度不限次數":"unlimited at this difficulty",
   "均勢":"Even","雙方差不多":"roughly equal","領先非常多":"far ahead","能將死對方":"can force checkmate",
@@ -31734,9 +31785,9 @@ function i18nPick(k){const cur=i18nCur();if(k===cur)return;const re=()=>setTimeo
 function i18nSheet(){const cur=i18nCur(),L=[["tw","繁體中文","zh-Hant"],["cn","简体中文","zh-Hans"],["en","English","en"]];   /* zh-lint-ok：簡體選項本來就用簡體字顯示 */
   sheet("🌐 語言 Language",b=>{
     b.innerHTML=`<div class="opt" data-nocc style="flex-wrap:wrap">${L.map(([k,l,h])=>`<button type="button" data-lang="${k}" lang="${h}"${cur===k?' class="on" aria-pressed="true"':' aria-pressed="false"'}>${l}</button>`).join("")}</div>
-      <p class="muted" id="i18nScopeEn" style="font-size:12.5px;line-height:1.6;margin:10px 2px 0" lang="en"><b>In English:</b> the tab bar and menus, games against the computer, the game page and results, settings, the online lobby, Teatime endgames, the Daily Puzzle, the game library, the Qianqiu Cup, and the main quest (Star Raft Expedition Orders): its buttons, task cards, chapter names, gifts and puzzle hints. Chapters 1 and 2 also have English film captions and dialogue, as do the Starry Night Tea Party greetings and farewells.</p>
+      <p class="muted" id="i18nScopeEn" style="font-size:12.5px;line-height:1.6;margin:10px 2px 0" lang="en"><b>In English:</b> the tab bar and menus, games against the computer, the game page and results, settings, the online lobby, Teatime endgames, the Daily Puzzle, the game library, the Qianqiu Cup, and the main quest, Chapter 1 “Classic · First Crossing of the River Chart”: its task cards, chapter name and puzzle hints. Chapter 1 also has English film captions and dialogue, as do the Starry Night Tea Party greetings and farewells.</p>
       <p class="muted" style="font-size:12.5px;line-height:1.6;margin:4px 2px 0" lang="en"><b>Chinese only for now:</b> other story scenes (Stone Table Tales and the novel), other character lines, scene history notes, the full privacy statement and the guides.</p>
-      <p class="muted" data-noi18n style="font-size:12.5px;line-height:1.6;margin:6px 2px 0">英文介面目前涵蓋：底欄與選單、跟電腦對局、對局頁與結果、設定、線上大廳、一盞茶殘局、每日同題、棋譜庫、千秋盃，以及主線「星槎遠征令」的按鈕、任務卡、章名、禮包和解題提示；第一、二章現有電影與對話、七星星夜茶話會開場與收尾也已翻譯。其他劇情仍只有中文：石桌往事、長篇、其他角色台詞、場景史料、隱私說明全文和說明文件。</p>
+      <p class="muted" data-noi18n style="font-size:12.5px;line-height:1.6;margin:6px 2px 0">英文介面目前涵蓋：底欄與選單、跟電腦對局、對局頁與結果、設定、線上大廳、一盞茶殘局、每日同題、棋譜庫、千秋盃，以及主線第一章「古典・河圖初渡」的任務卡、章名和解題提示；第一章電影與對話、七星星夜茶話會開場與收尾也已翻譯。其他劇情仍只有中文：石桌往事、長篇、其他角色台詞、場景史料、隱私說明全文和說明文件。</p>
       <button type="button" class="lk" data-xqdoc="i18n" style="margin-top:8px">🌐 About the English UI / 英文介面說明</button>`;
     b.querySelectorAll("[data-lang]").forEach(x=>x.onclick=()=>{try{vibrate(5)}catch(e){}closeSheet();i18nPick(x.dataset.lang)})})}
 /* ================= 畫面：掃描文字節點、屬性，換成英文；原文記起來可以還原 ================= */
@@ -31885,7 +31936,10 @@ let spfT=0;function spfSoon(ms){clearTimeout(spfT);spfT=setTimeout(()=>{spfAll()
    開關 XFL_ON；純計算 xflGate／xflPlan 不碰 DOM，自動測試 xiangqi-lab/tools/test-ipad-fill.js 用 vm 跑 */
 const XFL_ON=true,XFL_PORT_MAX=0.85,XFL_TOPW=0.5,XFL_STEPS=48;
 /* 要不要用 ① 直向填滿：跟 r07Wide 同一個門檻（寬 600 以上或比可用高度寬，而且照寬度放會比可用高度高），再加上「接近直向」 */
-function xflGate(vw,av,W,nw,nh){if(!(W>0&&av>=120&&nw>0&&nh>0))return false;if(!(vw>=600||vw>av))return false;if(W*nh/nw-av<2)return false;return W/av<=XFL_PORT_MAX}
+function xflGate(vw,av,W,nw,nh,mx){if(!(W>0&&av>=120&&nw>0&&nh>0))return false;if(!(vw>=600||vw>av))return false;if(W*nh/nw-av<2)return false;return W/av<=(mx||XFL_PORT_MAX)}   /* mx：首頁另給門檻（XFL_HOME_MAX） */
+/* 意見回饋 889（iPhone 主畫面 App 669×869 首頁元朝夜景只剩中間一窄條＋兩側模糊）：首頁用原圖時（季節／夜景／朝代變體沒有寬版圖；沒變體但比例在 0.89～1.04，見 07z HMW_SQ），0.85～1.04 這段接近正方形的畫面原本不進 ① ，縮到等高置中。
+   首頁的入口都集中在圖的中段（上 15%～48%），① 本來就會先確認每個入口都看得到、擺不進才少放大，所以首頁的門檻放寬到 1.04（跟 07z HMW_SQ 同一點）：填滿寬度、上下多裁一些；別的場景頁照舊 0.85 */
+const XFL_HOME_MAX=1.04;
 /* 純計算：o={W 可用寬, av 可用高, nw/nh 圖原尺寸, off 圖上面還有多少內容（>8＝不能裁上面）, items:[{c 中心在圖高的比例, h 高(px)}]}
    回傳 {w 圖寬, H 圖高, top 裁掉上面幾 px, crop 總共裁幾 px, fill w÷W}；每個東西要看得到中間 min(h/2,30)+6 px（大塊點選區只要中間那段看得到） */
 function xflPlan(o){const W=o.W,av=o.av,nw=o.nw||768,nh=o.nh||1376,H0=W*nh/nw,fitH=av,lockTop=(o.off||0)>8,its=(o.items||[]).filter(q=>q&&isFinite(q.c));
@@ -31948,7 +32002,7 @@ function xflVis(P,pr){const V=document.getElementById("view");if(!V||!V.classLis
   const vr=V.getBoundingClientRect(),pb=parseFloat(getComputedStyle(V).paddingBottom)||0;return{t:Math.max(pr.top,vr.top),b:Math.min(pr.bottom,vr.top+V.clientHeight-pb)}}
 /* ① 直向填滿：成功回傳 true（r07Wide 就不再排） */
 function xflPort(V,P,nw,nh){const vr=V.getBoundingClientRect(),pr=P.getBoundingClientRect(),pb=parseFloat(getComputedStyle(V).paddingBottom)||0,off=pr.top-vr.top+V.scrollTop,av=V.clientHeight-pb-off,W=pr.width,vw=V.clientWidth;
-  if(!xflGate(vw,av,W,nw,nh))return false;
+  if(!xflGate(vw,av,W,nw,nh,/(^|\s)home-page(\s|$)/.test(P.className||"")?XFL_HOME_MAX:0))return false;   /* 回饋 889：首頁放寬到 1.04 */
   const items=xflItems(P,pr),pl=xflPlan({W,av,nw,nh,off,items});if(!pl)return false;
   if(typeof r07Off==="function")xflR07Off(V);
   if(P.dataset.xflMt==null)P.dataset.xflMt=P.style.marginTop||"";
@@ -33163,9 +33217,10 @@ function stqBegin(){const now=Date.now();stqSave({v:STQ_V,st:"run",at:now,n:0,do
   stqOpen()}
 /* ---------- 樣式 ---------- */
 function stqCss(){if(document.getElementById("stqCss"))return;try{if(typeof mnqCss==="function")mnqCss()}catch(e){}const s=document.createElement("style");s.id="stqCss";s.textContent=`
-#stqPg{--text:#2a2018;--muted:#6f5f4c;--card:#FFF8EC;--line:#d8c8b0;position:fixed;inset:0;z-index:9300;display:flex;flex-direction:column;align-items:center;gap:8px;padding:calc(10px + env(safe-area-inset-top,0px)) 8px calc(12px + env(safe-area-inset-bottom,0px));background:#f3ead7;color:#3b2a1a;opacity:0;transition:opacity .3s;overflow:auto}
+#stqPg{--text:#2a2018;--muted:#6f5f4c;--card:#FFF8EC;--line:#d8c8b0;position:fixed;inset:0;z-index:9300;display:flex;flex-direction:column;align-items:center;gap:8px;padding:calc(10px + env(safe-area-inset-top,0px)) 8px calc(12px + env(safe-area-inset-bottom,0px));background:#f3ead7;color:#3b2a1a;opacity:0;transition:opacity .3s;overflow-x:hidden;overflow-y:auto}   /* 畢業的放射光 380px 比窄手機寬：只准上下捲，不出水平捲軸 */
 #stqPg.on{opacity:1}
-#stqPg .stq-top{display:flex;align-items:center;justify-content:space-between;gap:8px;width:min(560px,100%)}
+#stqPg .stq-top{display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:8px;width:min(560px,100%)}
+@media (max-width:350px){#stqPg .stq-top{justify-content:center}}
 #stqPg .stq-lp{display:flex;gap:5px;flex:none}
 #stqPg .stq-lp span{width:26px;height:26px;border-radius:50%;display:flex;align-items:center;justify-content:center;font:800 13px/1 var(--serif,serif);background:#cdbb98;color:#5b4a3a}
 #stqPg .stq-lp span.on{background:radial-gradient(circle,#fff3c4,#f2b33d 60%,#b8741a);color:#7a3a10;box-shadow:0 0 10px rgba(242,179,61,.85)}
@@ -33214,7 +33269,7 @@ function stqLoad(n){const U=STQ_UI;if(!U)return;const C=XQCore,T=STQ_T[n];U.n=n;
   const nx=U.pg.querySelector(".stq-nx");if(nx)nx.hidden=true;stqLamps();stqGoal();stqDraw()}
 /* 棋盤上加畫的東西（viewBox 560×620，第一格中心 40,40，每格 60）：亮格、綠色逃點、封住後的 ✗（05b fwX） */
 function stqMarkSq(svg,i,kind){const NS="http://www.w3.org/2000/svg",x=40+i%9*60,y=40+(i/9|0)*60;let e;
-  if(kind==="esc"){e=document.createElementNS(NS,"circle");e.setAttribute("cx",x);e.setAttribute("cy",y);e.setAttribute("r","17");e.setAttribute("fill","rgba(46,160,90,.4)");e.setAttribute("stroke","#1f7a45");e.setAttribute("stroke-width","4");e.setAttribute("stroke-dasharray","6 4")}
+  if(kind==="esc"){e=document.createElementNS(NS,"circle");e.setAttribute("cx",x);e.setAttribute("cy",y);e.setAttribute("r","22");e.setAttribute("fill","rgba(46,180,96,.55)");e.setAttribute("stroke","#15803d");e.setAttribute("stroke-width","5");e.setAttribute("stroke-dasharray","7 4")}   /* 11/15 逃點原本 r17、四成透明，手機上偏小偏淡：放大到 r22（棋子半徑 26 以內，不壓到格線外）、顏色加深 */
   else{e=document.createElementNS(NS,"rect");e.setAttribute("x",x-28);e.setAttribute("y",y-28);e.setAttribute("width","56");e.setAttribute("height","56");e.setAttribute("rx","10");e.setAttribute("fill","rgba(242,201,76,.38)");e.setAttribute("stroke","#d08a00");e.setAttribute("stroke-width","5")}
   e.setAttribute("pointer-events","none");e.setAttribute("aria-hidden","true");svg.append(e)}
 function stqDraw(B2){const U=STQ_UI;if(!U)return;const C=XQCore,T=STQ_T[U.n],B=B2||U.B;
@@ -33394,7 +33449,7 @@ function mnqCss(){if(document.getElementById("mnqCss"))return;const s=document.c
 .mnq-next{display:flex;align-items:center;justify-content:center;gap:6px;min-width:220px;max-width:100%;min-height:50px;padding:8px 22px;border:2px solid #8a5a2b;border-radius:14px;background:linear-gradient(#f8f0dc,#e6d3a6);color:#3b2a1a;font:900 19px/1.2 var(--serif,serif);letter-spacing:.06em;white-space:nowrap;box-shadow:0 4px 14px rgba(0,0,0,.35);cursor:pointer;-webkit-tap-highlight-color:transparent;animation:mnqGlow 2.4s ease-in-out infinite}
 .mnq-next:active{transform:translateY(1px)}.mnq-next:focus-visible{outline:3px solid #f2c94c;outline-offset:3px}
 @keyframes mnqGlow{50%{box-shadow:0 4px 14px rgba(0,0,0,.35),0 0 0 4px rgba(242,201,76,.45)}}
-#mnqGf,#mnqCard{position:fixed;inset:0;z-index:9200;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:16px;padding:24px 18px calc(24px + env(safe-area-inset-bottom,0px));text-align:center;color:#fff7e6;background:radial-gradient(circle at 50% 38%,rgba(70,36,10,.95),rgba(0,0,0,.97) 72%);opacity:0;transition:opacity .35s;overflow:auto}
+#mnqGf,#mnqCard{position:fixed;inset:0;z-index:9200;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:16px;padding:max(24px,calc(12px + env(safe-area-inset-top,0px))) 18px calc(24px + env(safe-area-inset-bottom,0px));text-align:center;color:#fff7e6;background:radial-gradient(circle at 50% 38%,rgba(70,36,10,.95),rgba(0,0,0,.97) 72%);opacity:0;transition:opacity .35s;overflow:auto}
 #mnqGf.on,#mnqCard.on{opacity:1}
 #mnqGf .gf-st{position:relative;width:180px;height:180px;flex:none}
 #mnqGf .gf-ray{position:absolute;left:50%;top:50%;width:440px;height:440px;margin:-220px;border-radius:50%;background:repeating-conic-gradient(rgba(255,214,120,.5) 0 7deg,transparent 7deg 20deg);-webkit-mask:radial-gradient(circle,#000 0 12%,transparent 62%);mask:radial-gradient(circle,#000 0 12%,transparent 62%);opacity:0;animation:mnqRay .8s .5s ease-out forwards,mnqSpin 18s .5s linear infinite;pointer-events:none}
