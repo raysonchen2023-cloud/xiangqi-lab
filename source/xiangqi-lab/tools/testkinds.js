@@ -15,12 +15,13 @@ const DIR = __dirname;
 const SKIP = new Set(["test-home-focus.js", "testkinds.js"]);
 /* 11/12 已逐項分類（開發者稽核 story/102_評比灌水誠實稽核.md 第 3 項） */
 const CLASSIFIED = new Set([
+  "test-mathmodel-81.js",   /* 11/15 數學模型（ChatGPT 第四次重評的改善單＋開發者決定）：離線工具原始格式先驗再轉型（null、字串、缺識別欄位不進分母；真正的 0 分留著）、新舊配對盤數、弱項建議的放行條件 SK.PICKOK（沒有基準時畫面不變）、三種對照算法與算法三角對照、本機紀錄多存標準開局與提示悔棋、Wilson 完整精度、方案 v1.2／外部公式參考 v2／manifest 說明（行為 14、混合 3、原始碼 4） */
   "test-mathmodel-80.js",   /* 11/15 數學模型（ChatGPT 第三次重評的改善單）：離線工具的資料資格篩選與共同有效盤集合（重現的 score＝999、full:0 兩個漏洞）、模擬比例的 Monte Carlo 區間與固定情境／判定、HAC／區塊重抽離線對照、SK.PICK 與版本雜湊紀錄 mx-manifest、預先驗證方案 v1.1（行為 13、原始碼 2） */
   "test-mathmodel-79.js",   /* 11/15 數學模型驗證閉環（ChatGPT 第二次重評第 2～4 項）：本機影子紀錄與開發者匯出、匿名欄位不變、離線比較 mx-compare.js（完整盤、截斷長局）、Lichess 固定版本的數值與殺棋分界整點、用語統一、階段差異配對估計＋選擇效應修正與模擬（行為 20、混合 1、原始碼 3） */
   "test-mathmodel-1046.js",   /* 11/15 意見表 1046 數學模型（三方審查第一步＋第二步）：影子模式必改 1～4（存檔還原、送殺漏殺、輸棋上限 MXS.lose、k 與門檻）、K 48／32、升段保護、一般棋友 100 人門控、建議先練三級信心、talentCache6（行為 17、混合 4、原始碼 1） */
   "test-i18n.js",   /* 11/13 第 14 輪 F1 英文介面架構（m/07i18n.js；行為 31、混合 2、原始碼 4） */
   "test-p0-regress.js",   /* 11/13 三個 P0 發布版完整流程回歸 tools/qa/p0-regress.js 的純函式（行為 12、原始碼 1） */
-  "test-handoff-facts.js",   /* 11/13 交接單事實段自動產生＋核對公開連結 review_loop/handoff-facts.js（行為 9、原始碼 1；評比工具不在公開副本時整檔跳過） */
+  "test-handoff-facts.js",   /* 11/13 交接單事實段自動產生＋核對公開連結 review_loop/handoff-facts.js（行為 10、原始碼 1；評比工具不在公開副本時整檔跳過；11/15 加 evidence.md 四欄格式） */
   "test-evidence-shots.js",   /* 11/13 第 15 輪 F1／F2／X2 可重現畫面證據包＋英文防爆版檢查（tools/qa/evidence-shots.js 的純函式；行為 16、原始碼 1） */
   "test-android-build.js",   /* 11/13 第 15 輪 F3、F4 Android debug APK 編譯＋可重現檢查 repro-check.js、建置與工具鏈紀錄（行為 9、混合 2、原始碼 1）；11/13 Service Worker 標頭修法正式採用（混合 +1、原始碼 +1） */
   "test-android-roadmap.js",   /* 11/13 第 14 輪 F3 Android 路線圖＋可重現驗證包：verify-all.js、xiangqi-android 骨架檢查、F-Droid 草稿、make-www（行為 8、混合 1）；11/13 骨架檢查 native.swclient（行為 +1） */
@@ -83,6 +84,7 @@ const CLASSIFIED = new Set([
   "test-reload-guard.js",   /* 11/13 開發者 P1 iPhone 3D 絕殺後頁面重載又直接開第二盤：更新延後、對局頁網址改寫、重載後不開新局、勝負先寫入、賽後分析等特效、異常重載紀錄（m/02r-reloadguard.js；行為 8、混合 2、原始碼 2） */
   "test-era-lang.js",   /* 11/14 評比第 17、18 輪 B3 朝代（07-legend storyBookOf／storyEraSync）、B5 英文介面主線（07mnq、07mnf、07t、07bhtl 介面字、首頁下一步、語言範圍說明）、第 18 輪第 4 項舊 8 碼轉移碼停收；11/14 晚加英文頂欄（時辰、登船、節氣、官階、修為）與禮包 Accept 鍵（行為 14、混合 3、原始碼 1） */
   "test-wheel.js",   /* 11/15 黑洞車輪戰 wheel-v1（m/07bhw-wheel.js 的 WHL 純規則：共用靈力、一輪一招、陣眼封招、總輪、引擎佇列與退路、過關判定、結算、存檔接續；三盤版：輪轉、兩勝／兩敗／和局、危險預警、跳盤、舊存檔相容、決定性、縮圖字串；接線原始碼） */
+  "test-wheel-3d.js",   /* 11/15 車輪戰 3D（m/07bhw-wheel.js 的 ③；park3d.js 新增 ex.bkey／setTdPad／busy）：視角三態與記住、預設平面、整場一個 3D 實例、換盤直接擺好、哪張完整哪兩張簡化、簡化棋盤的棋子與狀態、點簡化棋盤換盤、鏡頭飛行、3D 開不起來退回平面、離開後資源與畫面收乾淨；DOM、three、park3d 都是假的，3D 畫面本身沒有實機驗收（行為 17、混合 3、原始碼 3） */
   "test-gate-siege.js",   /* 11/15 黑洞・星門圍城 gate-siege-v1 候選（m/07bhg-gatesiege.js 的 GSV 純規則、local.js tdRebuild 部署換手、接線原始碼；第 1、3、6 關） */
   "test-gate-siege-3d.js",   /* 11/15 星門圍城切 3D 星盤（m/07bhg-gatesiege.js 檔尾 gsvFlat 那一段）：視角三態與記住、不再一律平面、舊版塔防與車輪戰不受影響、記號 3D 分類（貼地／直立／頭頂）、gsvFrame 兩種座標、「更多」那顆（06-cpu parkBtn）、3D 開不起來退回平面；DOM 與 park3d 都是假的，3D 畫面本身沒有實機驗收（行為 19、混合 3、原始碼 3） */
   "test-growth.js",   /* 11/15 對戰後的角色成長（m/07grw-growth.js）：快照比對只列有變化的、升級那句、體力只比同一次開 App、結果視窗插入時機（延後、逾時）、減少動態不跳數字；遠征令拿掉、配樂收藏與再看第一章搬到設定聲音頁（07mnq）；08b／07bhw／05b／m.html 接點（行為 9、混合 1、原始碼 4） */

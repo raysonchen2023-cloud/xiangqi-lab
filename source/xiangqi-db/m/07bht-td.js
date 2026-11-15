@@ -840,7 +840,7 @@ function bhtdNextPick(T,S){const C=bhtdC();if(T.pk.length>=S.steps){BHTD_TG=null
 /* 3D 盤（park3d 畫在 #bbox）時，地面類記號貼平在盤面：用相鄰兩格的投影當透視的 x、z 單位向量，組成 CSS matrix（元素 1 個 --c 寬＝盤面 1 格） */
 const BHTD_GND=/\b(eye|gate|shard|fb|fr|tg|trap|thr|frz|selg|ink|aim|pre|hf|ht)\b/;   /* 11/14：選中子底光、落點水墨點、可吃紅準星、預選、提示也貼地 */   /* frz：3D 盤上定身鎖鏈圈貼地（剩幾回合的小數字跟著貼地） */
 function bhtd3d(){try{const bb=document.getElementById("bbox");return!!(typeof PARK!=="undefined"&&PARK&&PARK.v&&PARK.host===bb&&PARK.v.el&&PARK.v.el.isConnected&&PARK.v.el.style.display!=="none"&&PARK.v.screenOf)}catch(e){return false}}
-function bhtdGnd(q,p,cell){const c=q%9,r=q/9|0,sx=c<8?1:-1,sz=r<9?1:-1,a=bhtdXY(q+sx),b=bhtdXY(q+9*sz);if(!a||!b||!cell)return null;
+function bhtdGnd(q,p,cell,xy){xy=xy||bhtdXY;   /* 11/15 車輪戰 3D（07bhw-wheel.js）：3D 不掛在對局頁的 #bbox，格子→螢幕座標由它自己給（第四個參數）；沒給照舊用 bhtdXY */const c=q%9,r=q/9|0,sx=c<8?1:-1,sz=r<9?1:-1,a=xy(q+sx),b=xy(q+9*sz);if(!a||!b||!cell)return null;
   const M=[(a.x-p.x)*sx/cell,(a.y-p.y)*sx/cell,(b.x-p.x)*sz/cell,(b.y-p.y)*sz/cell,0,0];return M.every(Number.isFinite)?M.map(n=>+n.toFixed(4)).join(","):null}
 function bhtdXY(sq){try{const bb=document.getElementById("bbox");if(typeof PARK!=="undefined"&&PARK&&PARK.v&&PARK.host===bb&&PARK.v.el&&PARK.v.el.isConnected&&PARK.v.el.style.display!=="none"&&PARK.v.screenOf)return PARK.v.screenOf(sq);
     const sv=bb&&bb.querySelector("svg");if(!sv)return null;const r=sv.getBoundingClientRect();if(!r.width)return null;const k=Math.min(r.width/560,r.height/620),ox=r.left+(r.width-560*k)/2,oy=r.top+(r.height-620*k)/2;return{x:ox+(40+sq%9*60)*k,y:oy+(40+(sq/9|0)*60)*k}}catch(e){return null}}

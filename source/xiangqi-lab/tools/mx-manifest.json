@@ -1,12 +1,12 @@
 {
- "note": "由 tools/mx-manifest.js --write 產生，不要手改。",
+ "note": "由 tools/mx-manifest.js --write 產生，不要手改。這是本機的追溯與一致性檢查，不是第三方認證，也不是正式站同版的證明。",
  "at": "2026-11-15",
  "mxs": {
-  "ver": 3,
-  "sha": "8b4afd9715822db6f9d2ea69f7db56fc68ca70a487419010df783d9a0b8d384a"
+  "ver": 4,
+  "sha": "06f391ec77629b7b4c6677eeb99763898a0f8e6c0ada388dc2af5aa113ce4f8f"
  },
  "pick": {
-  "ver": 2,
+  "ver": 3,
   "sk": {
    "WIN": 150,
    "MIN": 30,
@@ -14,23 +14,28 @@
    "HL": 15,
    "DEFF": 3,
    "SD0": 26,
-   "PICK": 2
+   "PICK": 3,
+   "PICKOK": 0
   },
-  "sha": "b4d18520278ad237aba64d2dcc726fbc95c08f48d7720a3382387642095a27ba"
+  "sha": "143a568a28ca35e009a9a349000c8d3925db29407a6e87c70e4cc88f61aca766"
  },
  "compare": {
-  "ver": 2,
-  "sha": "6dbd666747de52fa879ca5500526a46007b4fed2329c6420e89cb416884c7bc8"
+  "ver": 3,
+  "sha": "a4360ec131674a9864112356fed67dc88f07628188992fa96c7600b3a719a684"
  },
  "sim": {
-  "ver": 2,
-  "sha": "4f620acf1610217fd9eb821c0ba5a89732f0e7dc783b1fa854129b1126d009d2"
+  "ver": 3,
+  "sha": "2f8ca2e64e6eb9b67f4e65fb1aeac5b1f56d005c0f69df0394d9c030819fef95"
  },
  "docs": {
-  "planVer": "v1.1",
+  "planVer": "v1.2",
   "plan": {
+   "file": "story/數學模型_預先驗證方案_v1.2.md",
+   "sha": "16675e337a692c2c20dd9f2811f259c8f6f49217654e352a47eede15bb952cbf"
+  },
+  "planV11": {
    "file": "story/數學模型_預先驗證方案_v1.1.md",
-   "sha": "2a144dd99b87b0f9a6f6c266bc09c167d4e814d35a75b97fa48d14176adf7356"
+   "sha": "60d82d553fb7fd47227a6ef0005a1a8ae7534171a9e720aa3b35a066cd47eadb"
   },
   "planV1": {
    "file": "story/數學模型_預先驗證方案_v1.md",
@@ -38,7 +43,7 @@
   },
   "ref": {
    "file": "story/數學模型_外部公式參考.md",
-   "sha": "f0acbbc55008e67f78296ca3a6ea1defa8d5298486051d5095d741ed23c114f9"
+   "sha": "af30c64b0b976b453109e92716597258301c5a35860c100b61c97011904fa8fe"
   }
  }
 }

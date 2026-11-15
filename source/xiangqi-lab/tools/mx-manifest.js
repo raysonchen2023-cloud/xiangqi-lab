@@ -1,6 +1,9 @@
 #!/usr/bin/env node
 // 數學模型的「版本＋程式雜湊」紀錄（11/15 ChatGPT 第三次重評第五節、第六節 P2：給 skillPick 與驗證工具獨立版本，記錄固定方案與程式雜湊，
 //   MXS 版本不變時也追得到建議程序的變更）。
+// **這是什麼、不是什麼**（11/15 ChatGPT 第四次重評第四節第 2 點）：這是開發者電腦上的**本機追溯與一致性檢查**——看「現在磁碟上的程式、文件」跟「上次記下來的版本與雜湊」一不一致。
+//   它不是第三方認證，不是「正式站跟本機同版」的證明（它不看線上的檔案），也不保證整個端到端的評分流程都涵蓋到（只雜湊下面列的那幾段）。
+//   紀錄檔跟程式放在同一個資料夾、同一個人就能重寫（--write），所以它防的是「不小心改了沒升版」，不是防竄改。
 // 記五樣東西，各有自己的版本號，互不代替：
 //   mxs      影子模式的新準確度公式      版本 MXS.ver（m/05-settings.js）   雜湊：const MXS={ … mxShadowReport 那一段
 //   pick     「建議先練」的判斷程序      版本 SK.PICK（m/04-stats.js）      雜湊：SK 的數字常數＋mxAxisPt … skillPick 那一段
@@ -16,8 +19,8 @@
 "use strict";
 const fs = require("fs"), path = require("path"), crypto = require("crypto"), vm = require("vm");
 const LAB = path.join(__dirname, ".."), DBD = path.join(LAB, "../xiangqi-db"), FILE = path.join(__dirname, "mx-manifest.json");
-const PLAN = "story/數學模型_預先驗證方案_v1.1.md", PLAN_VER = "v1.1";   /* 現行的預先驗證方案 */
-const DOCS = { plan: PLAN, planV1: "story/數學模型_預先驗證方案_v1.md", ref: "story/數學模型_外部公式參考.md" };
+const PLAN = "story/數學模型_預先驗證方案_v1.2.md", PLAN_VER = "v1.2";   /* 現行的預先驗證方案 */
+const DOCS = { plan: PLAN, planV11: "story/數學模型_預先驗證方案_v1.1.md", planV1: "story/數學模型_預先驗證方案_v1.md", ref: "story/數學模型_外部公式參考.md" };
 const rd = f => fs.readFileSync(f, "utf8").replace(/\r\n/g, "\n"), sha = s => crypto.createHash("sha256").update(s, "utf8").digest("hex");
 /* 拿掉區塊註解、整行的 // 註解、行尾空白、空行（這幾段程式裡沒有含 "/*" 的字串或正規式） */
 const code = s => s.replace(/\/\*[\s\S]*?\*\//g, "").split("\n").map(l => l.replace(/\s+$/, "")).filter(l => l && !/^\s*\/\//.test(l)).join("\n");
@@ -47,7 +50,7 @@ function main() {
   const now = compute();
   if (process.argv.includes("--write")) { const old = fs.existsSync(FILE) ? JSON.parse(rd(FILE)) : null, D = diff(now, old).filter(d => d.kind === "code");
     if (D.length && !process.argv.includes("--force")) { for (const d of D) console.error("✖ " + d.msg); console.error("沒有寫入。（真的只是重排、沒有改算法：加 --force）"); process.exit(1) }
-    fs.writeFileSync(FILE, JSON.stringify({ note: "由 tools/mx-manifest.js --write 產生，不要手改。", at: new Date().toISOString().slice(0, 10), ...now }, null, 1) + "\n"); console.log("寫好了：" + FILE) }
+    fs.writeFileSync(FILE, JSON.stringify({ note: "由 tools/mx-manifest.js --write 產生，不要手改。這是本機的追溯與一致性檢查，不是第三方認證，也不是正式站同版的證明。", at: new Date().toISOString().slice(0, 10), ...now }, null, 1) + "\n"); console.log("寫好了：" + FILE) }
   const rec = fs.existsSync(FILE) ? JSON.parse(rd(FILE)) : null; if (!rec) { console.error("還沒有 mx-manifest.json，先跑 --write"); process.exit(1) }
   console.log(`MXS.ver ${now.mxs.ver}（${now.mxs.sha.slice(0, 12)}）｜SK.PICK ${now.pick.ver}（${now.pick.sha.slice(0, 12)}）｜MXC_VER ${now.compare ? now.compare.ver : "—"}｜SIM_VER ${now.sim ? now.sim.ver : "—"}｜方案 ${now.docs.planVer}（${now.docs.plan ? now.docs.plan.sha.slice(0, 12) : "沒有檔"}）`);
   const D = diff(now, rec); if (!D.length) { console.log("跟紀錄一致。"); return } for (const d of D) console.error("✖ " + d.msg); process.exit(1);

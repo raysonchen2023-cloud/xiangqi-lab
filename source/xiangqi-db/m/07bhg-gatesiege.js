@@ -121,8 +121,12 @@ const GSV=(()=>{
      改版前存下來、還沒打完的盤沒有 td.tl：靠它的條件一律算沒達成 */
   const GOAL={inv0:{t:"入侵沒扣到血",ok:td=>!!td.tl&&td.tl.inv===0},esk0:{t:"星樞大招一次都沒中",ok:td=>!!td.tl&&td.tl.n===0},drain0:{t:"沒被奪靈",ok:td=>!!td.tl&&td.tl.drain===0},
     rook:{t:"俥沒被吃",ok:td=>!!td.tl&&!td.tl.lost.includes("R")},rookOn:{t:"過關時場上有俥",ok:(td,b)=>(b||[]).includes("R")},dep:{t:"部署過後備",ok:td=>td.dep>=1},icpt:{t:"截援一次",ok:td=>td.icpt>=1},
-    guard0:{t:"護陣全部拆掉",ok:td=>guards(td)===0},hp:{t:v=>`剩餘 HP ${v}% 以上`,ok:(td,b,v)=>td.me.hp>0&&td.me.hp*100>=td.me.max*v}};
-  const STG={1:[["inv0"],["hp",50]],2:[["dep"],["inv0"]],3:[["guard0"],["hp",40]],4:[["drain0"],["icpt"]],5:[["guard0"],["esk0"]],6:[["esk0"],["hp",40]],
+    guard0:{t:"護陣全部拆掉",ok:td=>guards(td)===0},
+    /* 入侵卒全部清掉：過關時場上沒有入侵卒，而且入侵卒的援軍都落下過（或被你截掉）——還沒落下的那一顆不算清掉，太早打完拿不到。只看 td 現況，不靠 td.tl */
+    invClr:{t:"入侵卒全部清掉",ok:td=>!Object.keys(td.ids).some(q=>tagOf(td,td.ids[q])==="inv")&&!(td.waves||[]).some(w=>w.tag==="inv"&&w.st==="wait")},hp:{t:v=>`剩餘 HP ${v}% 以上`,ok:(td,b,v)=>td.me.hp>0&&td.me.hp*100>=td.me.max*v}};
+  /* 11/15 開發者用選單決定：第 2 關第 2 星從「部署過後備」（腳本每盤都拿到，太容易）換成「入侵卒全部清掉」（左翼兩顆、右翼一顆都處理掉＝分兵與回援）。
+     已經上線過：星照位置存（st[1]），舊條件下亮過的那一顆不會掉，只是之後要再拿就照新條件。困難版同一張表，一起換 */
+  const STG={1:[["inv0"],["hp",50]],2:[["invClr"],["inv0"]],3:[["guard0"],["hp",40]],4:[["drain0"],["icpt"]],5:[["guard0"],["esk0"]],6:[["esk0"],["hp",40]],
     7:[["esk0"],["rook"]],8:[["inv0"],["esk0"]],9:[["esk0"],["guard0"]],10:[["guard0"],["rookOn"]],11:[["esk0"],["rook"]],12:[["guard0"],["esk0"]]};
   /* 這一關的三個目標 [{k,v,t}]（第一個固定是過關）；沒有設目標的盤只有過關一個 */
   function goals(n){return[{k:"win",t:"過關"}].concat((STG[n]||[]).map(([k,v])=>({k,v,t:typeof GOAL[k].t==="function"?GOAL[k].t(v):GOAL[k].t})))}

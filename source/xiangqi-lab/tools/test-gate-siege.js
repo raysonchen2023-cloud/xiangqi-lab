@@ -459,12 +459,12 @@ test("逐關解鎖：第 1 關永遠開、破前一關才開下一關（第二�
     assert.equal(U.js.o.lx,G.lvOf(5,1).depth);assert.equal(U.js.o.lv.fen,G.startFen(5,C),"困難版同一個開局");assert.equal(U.DB.gsv.lastH,1)}finally{uiOff()}});
 
 test("三星：第 1 星＝過關，另外兩顆每關各一個條件（跟那一關的學習點有關）、各自累積；條件逐種判定；舊存檔有勝場沒有星＝1 星；困難版的星另外記", ()=>{
-  const TXT={1:["入侵沒扣到血","剩餘 HP 50% 以上"],2:["部署過後備","入侵沒扣到血"],3:["護陣全部拆掉","剩餘 HP 40% 以上"],4:["沒被奪靈","截援一次"],5:["護陣全部拆掉","星樞大招一次都沒中"],6:["星樞大招一次都沒中","剩餘 HP 40% 以上"],
+  const TXT={1:["入侵沒扣到血","剩餘 HP 50% 以上"],2:["入侵卒全部清掉","入侵沒扣到血"],3:["護陣全部拆掉","剩餘 HP 40% 以上"],4:["沒被奪靈","截援一次"],5:["護陣全部拆掉","星樞大招一次都沒中"],6:["星樞大招一次都沒中","剩餘 HP 40% 以上"],
     7:["星樞大招一次都沒中","俥沒被吃"],8:["入侵沒扣到血","星樞大招一次都沒中"],9:["星樞大招一次都沒中","護陣全部拆掉"],10:["護陣全部拆掉","過關時場上有俥"],11:["星樞大招一次都沒中","俥沒被吃"],12:["護陣全部拆掉","星樞大招一次都沒中"]};
   for(const n of G.LVN){const g=G.goals(n),pl=G.plan(n),V=G.LV[n];assert.deepEqual(J(g.map(x=>x.t)),["過關",...TXT[n]],"第 "+n+" 關");assert.notEqual(g[1].k,g[2].k);
     /* 條件要對得上這一關有的東西：有入侵卒才考入侵、有護陣才考拆陣、有大招（或分段會解鎖）才考大招、有奪靈馬才考奪靈 */
     const has=t=>pl.open.some(x=>x[2]===t)||pl.waves.some(w=>w.tag===t);
-    for(const x of g.slice(1)){if(x.k==="inv0")assert.ok(has("inv"),n+" 入侵");if(x.k==="guard0")assert.ok(has("guard"),n+" 護陣");if(x.k==="drain0")assert.ok(has("drain"),n+" 奪靈");if(x.k==="esk0")assert.ok(V.esk.length||(V.ph||[]).length,n+" 大招")}}
+    for(const x of g.slice(1)){if(x.k==="inv0"||x.k==="invClr")assert.ok(has("inv"),n+" 入侵");if(x.k==="guard0")assert.ok(has("guard"),n+" 護陣");if(x.k==="drain0")assert.ok(has("drain"),n+" 奪靈");if(x.k==="esk0")assert.ok(V.esk.length||(V.ph||[]).length,n+" 大招")}}
   assert.deepEqual(J(G.goals(101).map(x=>x.t)),["過關"],"沒有設目標的盤（車輪戰）只有過關");
   const ok=(k,P,v)=>G.GOAL[k].ok(P.td,P.board,v);
   /* 入侵沒扣到血：真的被入侵卒扣到才算失敗；盾吸光不算扣到 */
@@ -500,7 +500,31 @@ test("三星：第 1 星＝過關，另外兩顆每關各一個條件（跟那�
     ctx.gsvResult(st(S2,"c","bh:gs3","b"),false,false,"");assert.match(noSpan(U.M.h),/<p class="gsv-gl">★ 過關　★ 護陣全部拆掉　★ 剩餘 HP 40% 以上<\/p>/,"輸了：只列紀錄裡有的");
     ctx.gsvResult(st(SH,"f","bh:gs3h","r"),true,false,"");assert.match(U.M.h,/第 3 關・星門乍現（困難版）/);assert.deepEqual(U.go(),[3,1]);assert.ok(!/🔓/.test(U.M.h));
     const N1=custom(2,KS,{waves:false});ctx.gsvEnd(st(N1,"g","bh:gs2","r"));ctx.gsvResult(st(N1,"g","bh:gs2","r"),true,false,"");assert.match(U.M.h,/🔓 第 3 關、這一關的困難版開放了/,"第一次破關");
-    assert.match(noSpan(U.M.h),/<b>★ 過關<\/b>　<i>☆ 部署過後備<\/i>　<b>★ 入侵沒扣到血<\/b>/)}finally{uiOff()}});
+    assert.match(noSpan(U.M.h),/<b>★ 過關<\/b>　<b>★ 入侵卒全部清掉<\/b>　<b>★ 入侵沒扣到血<\/b>/)}finally{uiOff()}});
+
+test("第 2 關第 2 星換成「入侵卒全部清掉」（11/15 開發者決定；原本「部署過後備」太容易）：場上沒有入侵卒、入侵卒的援軍也都落下過或被截掉才算；已經上線過，舊條件下亮過的星不會掉；困難版一起換", ()=>{
+  assert.deepEqual(J(G.STG[2]),[["invClr"],["inv0"]]);assert.deepEqual(J(G.goals(2).map(g=>g.t)),["過關","入侵卒全部清掉","入侵沒扣到血"]);assert.ok(!G.LVN.some(n=>G.STG[n].some(x=>x[0]==="dep")),"沒有哪一關還在用「部署過後備」");
+  const ok=P=>G.GOAL.invClr.ok(P.td,P.board),star2=P=>G.stars(P.td,P.board)[1];
+  /* 真正的第 2 關開局：開場一顆入侵卒在 c7，還有兩顆沒落下（第 2 回合左門、第 4 回合右門） */
+  const P=game(2);assert.equal(P.td.waves.filter(w=>w.tag==="inv").length,2);assert.ok(!ok(P),"開場：場上有、後面還有");
+  /* 場上的吃掉了，可是右門那一顆還沒落下：不算（太早打完拿不到） */
+  const A=custom(2,[...KS,["p",1,5,"inv"]]);A.td.waves=A.td.waves.filter(w=>w.tag==="inv"&&w.at===4);assert.equal(A.td.waves.length,1);assert.ok(!ok(A));mv(A,Q(1,1),Q(1,5));assert.ok(!ok(A),"場上清了，右門那顆還在等");
+  A.td.waves[0].st="in";assert.ok(ok(A),"都落下過、場上也沒有了");A.td.waves[0].st="cut";assert.ok(ok(A),"被你截掉的援軍也算處理掉");
+  /* 落下來還在場上（不管過河沒有）：不算；吃掉才算。一劍破甲移除的也算清掉 */
+  const B=custom(2,[...KS,["p",9,7,"inv"]],{waves:false});assert.ok(!ok(B));assert.equal(star2(B),0);assert.equal(G.stars(B.td,B.board)[2],1,"第 3 星（入侵沒扣到血）是另一回事：沒清掉、但也沒被扣到");
+  B.td.me.sp=100;castOk(B,{k:"qi1",tg:[Q(9,7)]});assert.ok(ok(B));assert.equal(star2(B),1);
+  /* 反過來：清掉了，可是之前被扣過血——第 2 星有、第 3 星沒有。兩顆不等價 */
+  const D=custom(2,[...KS,["p",1,5,"inv"]],{waves:false});D.td.arm[D.td.ids[Q(1,5)]]=1;rq(D);bq(D);assert.ok(D.td.tl.inv>0);mv(D,Q(1,2),Q(1,5));assert.deepEqual(J(G.stars(D.td,D.board)),[1,1,0]);
+  /* 不靠 td.tl：改版前存下來的盤也判得出來 */
+  const O=custom(2,KS,{waves:false});delete O.td.tl;assert.ok(ok(O));assert.deepEqual(J(G.stars(O.td,O.board)),[1,1,0]);
+  /* 舊存檔：第 2 關第 2 星在舊條件下亮過（st[1]＝1）。卡片、目標那一行照樣亮；再贏一盤沒達成新條件也不會掉；普通、困難各記各的 */
+  const U=uiOn({gsv:{mv:G.MODE,c:{1:{w:1,st:[1,0,0]},2:{w:2,l:0,d:0,st:[1,1,0]}},h:{2:{w:1,l:0,d:0,st:[1,1,1]}}}});try{const st=(X,id,j)=>({id,journey:j,td:X.td,board:X.board,result:{w:"r",why:"星樞星核歸零"},human:"r"});
+    assert.deepEqual(J(G.recStars(U.DB.gsv.c[2],2)),[1,1,0]);const h=ctx.gsvChapHTML(ctx.gsvProg(),2,1);assert.equal(cardsOf(h)[1][3],"★★☆");assert.match(noSpan(h),/<p class="gsv-gl">第 2 關：★ 過關　★ 入侵卒全部清掉　<i>☆ 入侵沒扣到血<\/i><\/p>/);
+    const B2=custom(2,[...KS,["p",9,7,"inv"]],{waves:false});assert.deepEqual(J(G.stars(B2.td,B2.board)),[1,0,1]);ctx.gsvEnd(st(B2,"x1","bh:gs2"));assert.deepEqual(U.DB.gsv.c[2].st,[1,1,1],"這一盤沒清掉入侵卒：舊的第 2 星留著，第 3 星補上");assert.equal(U.DB.gsv.c[2].w,3);
+    ctx.gsvResult(st(B2,"x1","bh:gs2"),true,false,"");assert.match(noSpan(U.M.h),/<b>★ 過關<\/b>　★ 入侵卒全部清掉　<b>★ 入侵沒扣到血<\/b>/,"以前拿過的不加粗、照樣是 ★");
+    const BH=custom(2,[...KS,["p",9,7,"inv"]],{waves:false,hard:1});ctx.gsvEnd(st(BH,"x2","bh:gs2h"));assert.deepEqual(U.DB.gsv.h[2].st,[1,1,1]);assert.equal(U.DB.gsv.h[2].w,2);assert.match(noSpan(ctx.gsvChapHTML(ctx.gsvProg(),2,1,{hard:1})),/第 2 關・困難：★ 過關　★ 入侵卒全部清掉　★ 入侵沒扣到血/,"困難版用同一張條件表");
+    /* 還沒拿過的人照新條件：只部署、沒清掉入侵卒，拿不到第 2 星 */
+    U.DB.gsv={mv:G.MODE,c:{}};const N=custom(2,[...KS,["p",9,7,"inv"]],{waves:false});N.td.dep=2;ctx.gsvEnd(st(N,"x3","bh:gs2"));assert.deepEqual(U.DB.gsv.c[2].st,[1,0,1])}finally{uiOff()}});
 
 test("困難版：同一關同一個擺法和波次、不加血量；星樞多想一步（最多 4）、不長將、開場靈力 +15、ATK +10，每關再多一招或分段提早；普通版參數原封不動；車輪戰的盤不受解鎖／三星／困難版／不長將影響", ()=>{
   const LV0=JSON.stringify(G.LV);

@@ -95,12 +95,13 @@ test("舊版塔防不受影響：它的盤照 bhtdView（沒選過＝全局俯�
   assert.equal(X.gsvFlat(old),false);assert.equal(X.gsvFlat(cpu),false);assert.deepEqual(J(X.bhtdParkEx(cpu)),{bhBoss:null,tdCam:null},"不是黑洞的盤照舊回空的");
   assert.equal(X.bhtdFlat(cpu),false)});
 
-test("〔混合〕車輪戰維持平面：它的盤不是 journey bh:gs（gsvIs 不認），視角、鏡頭、「更多」那顆都不碰；07bhw-wheel.js 沒有接任何 3D 的東西", ()=>{
+test("〔混合〕車輪戰的盤不走星門圍城的視角：它的盤不是 journey bh:gs（gsvIs 不認），星門圍城的視角、鏡頭、「更多」那顆都不碰；車輪戰有自己的視角設定（whlView）和自己的 3D 實例，不讀寫 gsvView", ()=>{
   const E=boot({store:{gsvView:JSON.stringify("top"),park3d:"true"}}),X=E.X,G=X.GSV,st=game(E,1);
   const w=Object.assign({},st,{id:"w1",journey:null});w.td=Object.assign({},st.td,{pool:{sp:35}});   /* 車輪戰：單盤規則用 GSV，但不開 journey */
   assert.equal(w.td.mode,G.MODE);assert.equal(X.gsvIs(w),false);assert.equal(X.gsvFlat(w),false);assert.equal(J(X.gsvParkEx(w)).tdCam,null);assert.equal(X.bhtdFlat(w),false);
   E.run("GSV_ST=null");assert.equal(X.gsvParkBtn(),false);
-  for(const k of["gsvFlat","gsvParkEx","gsvSetView","gsvView","gsvMk3","parkDraw","PARK.","park3d","setTdCam","headOf","screenOf"])assert.ok(!WHL.includes(k),"07bhw-wheel.js 不該出現 "+k);
+  /* 11/15 開發者要求車輪戰也加 3D（test-wheel-3d.js）：原本這裡擋「07bhw-wheel.js 不能出現任何 3D 字樣」，已經過時；改成只擋它去動星門圍城自己的視角狀態 */
+  for(const k of["gsvFlat(","gsvParkEx(","gsvSetView(","gsvParkBtn(","\"gsvView\"","GSV_V3=","GSV_P3="])assert.ok(!WHL.includes(k),"07bhw-wheel.js 不該呼叫或讀寫星門圍城的 "+k);   /* 註解裡提到名字不算 */
   assert.match(WHL,/WHL_BD=Board\(/,"車輪戰自己開平面棋盤（01-board Board）")});
 
 /* ====================== 盤上記號：分類 ====================== */

@@ -2,7 +2,7 @@
 //   必改 1 存檔還原：沒有 bv 的舊存檔，走進殺棋（−29990）還原後不能變成「正著、100 分」；有 bv、沒 bv、紅黑兩方算出來的勝率差都跟直接算一樣。
 //   必改 2 殺棋特例：送殺、漏殺直接決定評語並標 mt（審查的兩個例子：+2000 有殺不殺掉到 +900 不能是穩著；−213 走進殺棋不能只算緩著）。
 //   必改 3 一盤總分不灌水：輸掉的盤（最後勝率 ≤ 10%，或呼叫端給了勝負）新總分最高 79；模擬「被強電腦慢慢磨輸」輸棋拿 S／A 從 4～10 成降到 1 成以下；畫面的舊分數不受影響。
-//   必改 4 參數位置：評語門檻由 k 算出、k 改了門檻跟著改；MXS.ver＝3；calibrate-grades.js 只用最新版本的盤。
+//   必改 4 參數位置：評語門檻由 k 算出、k 改了門檻跟著改；MXS.ver＝4（11/15 殺棋整點對齊 Lichess、加對照算法）；calibrate-grades.js 只用最新版本的盤。
 //   11/15 ChatGPT 重評（整體 B−）重現的兩個邏輯衝突：①已知贏棋、和棋不能因為最後的局面不利被標成輸棋（終局四態 end）；
 //     ②上限要跟著 S／A／B 門檻走（門檻校正後「輸棋最高 B」仍然成立）、分位對應遇到同分堆積時門檻不能重疊。
 //   第一步：K 維持 48／32（不降到 24）、升段馬上／降段有保護；「一般棋友」至少 100 人、「勝過 X%」至少 200 人；建議先練三級信心的說法；快取 talentCache5 → 6。
@@ -114,12 +114,12 @@ test("必改 3：模擬被強電腦磨輸（三個段位各 300 盤）：輸棋�
 const LOG=[];const t_log=s=>LOG.push(s);test.after(()=>{if(LOG.length)console.log("# "+LOG.join("\n# "))});
 test("必改 3：mxShadowReport 不動 rep（畫面的舊分數、評語照舊）；開發者並列表寫出「輸棋」上限",()=>{
   const{plies}=slowGame(LV.初學,mkRnd(5)),rep={plies},before=JSON.stringify(rep),sh=X.mxShadowReport(rep,"b");assert.equal(JSON.stringify(rep),before);
-  const R={score:70,grade:["B"],base:70.2,cap:79,cnt:{}},h=X.mxShHtml(R,sh.r);assert.match(h,/已知輸[^<]*套輸棋上限/);assert.match(h,/MXS v3/);assert.match(h,/已知輸（或結果未知而預期得分 ≤ 10%）最高 79/);assert.match(h,/不封頂／只看重大錯誤／再加輸棋上限/);
+  const R={score:70,grade:["B"],base:70.2,cap:79,cnt:{}},h=X.mxShHtml(R,sh.r);assert.match(h,/已知輸[^<]*套輸棋上限/);assert.match(h,/MXS v4/);assert.match(h,/已知輸（或結果未知而預期得分 ≤ 10%）最高 79/);assert.match(h,/不封頂／只看重大錯誤／再加輸棋上限/);
 });
 
 // ====================== 必改 4：參數位置、版本 ======================
 test("必改 4：評語門檻由 k 算出（k＝0.00368208 時跟 30／60／150／400 分逐點對齊）；把 k 改成 0.005，門檻自動跟著變",()=>{
-  assert.equal(X.MXS.ver,3);assert.deepEqual(Array.from(X.MXS.lose),[10,1]);
+  assert.equal(X.MXS.ver,4);assert.deepEqual(Array.from(X.MXS.lose),[10,1]);
   assert.deepEqual(Array.from(X.MXS.th,t=>+t.toFixed(2)),[2.76,5.5,13.47,31.35]);
   for(const[i,c]of X.MXS.cp.entries()){assert.equal(X.mxGradeDw(W(c-1)-50),["正著","穩著","緩著","失著"][i]);assert.notEqual(X.mxGradeDw(W(c+2)-50),["正著","穩著","緩著","失著"][i])}
   const Y=loadSh(SH.replace("k:0.00368208,","k:0.005,"));assert.equal(Y.MXS.k,0.005);
@@ -189,6 +189,7 @@ const axesZ=(zo,zm,ze,zse)=>{const A=axes(80,79,78,3),Z=[zo,zm,ze,null,.2];A.for
    這裡手造的五軸每軸 20 盤：4 項（有基準）hi ≥ 2.94 個標準誤、mid ≥ 2.63；3 項（沒有基準）hi ≥ 2.63、mid ≥ 2.29 */
 test("第一步：建議先練三級信心（有同段位基準時）——差距超過修正後的門檻＝hi、只差一點＝mid；再小而且門檻還寬＝lo、資料夠又差不多＝even、樣本不夠＝lo",()=>{
   const K=loadSk(null);
+  K.SK.PICKOK=1;   /* SK.PICK 3（11/15）：有同段位基準還要「推論程序已放行」才給 weak／maybe；這裡測的是放行以後的三級說法。沒放行（現在的預設）的行為在 test-mathmodel-81.js */
   const hi=K.skillPick(axesZ(.6,.5,-1.5,.3));assert.equal(hi.conf,"hi");assert.equal(hi.weak.k,"殘局");assert.equal(hi.grp,true);
   const mid=K.skillPick(axesZ(.6,.5,-.58,.3));assert.equal(mid.conf,"mid");assert.equal(mid.maybe.k,"殘局");assert.equal(mid.weak,undefined,"中信心不回傳 weak（地圖朱圈只畫高信心）");
   /* 開發者 11/15 選「改成溫和說法」：沒有同段位基準時，原本的 hi、mid 都只回傳 soft，不回傳 weak／maybe（地圖朱圈只看 weak，所以也不畫） */
@@ -201,10 +202,11 @@ test("第一步：建議先練三級信心（有同段位基準時）——差�
 });
 test("第一步：五邊形的三級說法——「🎯 建議先練」「🔎 可能先看」「📋 資料還少，先多下幾盤」，資料夠又差不多才說「差不多」",async()=>{
   const SP=sl(ST,"async function skillPentagon(","\n/* 意見回饋 301","skillPentagon");
-  async function paint(A){const K=loadSk(null),box={isConnected:true,innerHTML:"",querySelectorAll:()=>[]};const ctx={console,isFinite,store:{get:(k,d)=>d,set(){}},SK:K.SK,mxTotal:K.mxTotal,skillPick:K.skillPick,mxCal:K.mxCal,
+  async function paint(A,rel){const K=loadSk(null);if(rel)K.SK.PICKOK=1;const box={isConnected:true,innerHTML:"",querySelectorAll:()=>[]};const ctx={console,isFinite,store:{get:(k,d)=>d,set(){}},SK:K.SK,mxTotal:K.mxTotal,skillPick:K.skillPick,mxCal:K.mxCal,
       skillRows:async()=>({G:[{hu:0}],smN:0}),skillAxes:()=>A,tlIRT:()=>null,setProf(){},penSVG:()=>""};vm.createContext(ctx);vm.runInContext(SP+";this.f=skillPentagon",ctx);await ctx.f(box);return box.innerHTML.split('<div class="skl">')[0]}   /* 只看上面的建議那段（「五項怎麼算」說明裡三種說法都有寫） */
-  const h1=await paint(axesZ(.6,.5,-1.5,.3));assert.match(h1,/🎯 建議先練：殘局/);assert.doesNotMatch(h1,/可能先看|資料還少/);
-  const h2=await paint(axesZ(.6,.5,-.58,.3));assert.match(h2,/🔎 可能先看：殘局/);assert.doesNotMatch(h2,/建議先練：/);
+  const h1=await paint(axesZ(.6,.5,-1.5,.3),1);   /* 有基準而且已放行（SK.PICKOK＝1）才有「建議先練」「可能先看」 */
+  assert.match(h1,/🎯 建議先練：殘局/);assert.doesNotMatch(h1,/可能先看|資料還少/);
+  const h2=await paint(axesZ(.6,.5,-.58,.3),1);assert.match(h2,/🔎 可能先看：殘局/);assert.doesNotMatch(h2,/建議先練：/);
   const h3=await paint(axes(80,79,78,3));assert.match(h3,/📋 資料還少，先多下幾盤/);assert.doesNotMatch(h3,/建議先練：|可能先看：/);
   const h4=await paint(axes(80,79.5,79,1));assert.match(h4,/目前未看出明顯差異/);assert.doesNotMatch(h4,/差不多|資料還少|建議先練：|可能先看：/);
   /* 開發者 11/15：沒有同段位基準時改成溫和說法，不說弱項 */

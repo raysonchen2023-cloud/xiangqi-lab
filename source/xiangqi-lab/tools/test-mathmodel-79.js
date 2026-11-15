@@ -41,7 +41,7 @@ test("第 2 項：下完一盤，本機 mxShadow 存 raw／s0／score／終局�
   const P=phone(),mv=game(mkRnd(3),40,LV[1]);P.cpaDone(stOf("g1",mv,"b"),1);
   const X=P.mxShadowReport({plies:mv},"b").r,rec=P.mem.mxShadow.g1;
   assert.deepEqual(rec.n,[X.score,X.grade]);assert.deepEqual(rec.x,[X.raw,X.s0,"l"]);assert.equal(rec.v,P.MXS.ver);assert.equal(rec.b,Math.round(X.base*10)/10);
-  assert.deepEqual(rec.g,[80,X.n,1,"cpu",5,"業2"]);assert.deepEqual(rec.o,[80,"A"]);
+  assert.deepEqual(rec.g,[80,X.n,1,"cpu",5,"業2",1,0,0]);assert.deepEqual(rec.a,[X.alt.acpl,X.alt.mm,X.alt.mmN,X.alt.er]);   /* 11/15 開發者決定：g 多三格（標準開局、提示、悔棋）、a＝對照算法；都只存本機 */assert.deepEqual(rec.o,[80,"A"]);
 });
 test("第 2 項：匿名送出的 t:\"cpu\" 欄位一個都沒有增加（跟 11/15 以前同一份清單）；raw、s0、本機多存的 b／g 都沒有送出去；逐步資料最多 150 步",()=>{
   const P=phone(),mv=game(mkRnd(4),170,LV[1]);P.cpaDone(stOf("g2",mv,"r"),1);assert.equal(P.sent.length,1);const x=P.sent[0];
@@ -109,12 +109,12 @@ test("第 2 項：整支工具跑一次（本機匯出檔＋cpu-games.jsonl）�
   L.push(JSON.stringify({...played(404,50,1,"r").cpu,aid:"p1",g:"oldver",mx:2}));L.push(JSON.stringify({...played(405,50,1,"r").cpu,aid:"p1",g:"tst",test:1}));L.push(L[0]);L.push("{壞掉的一行");
   const fl=path.join(dir,"exp.json"),fc=path.join(dir,"cpu.jsonl"),fo=path.join(dir,"out.json");fs.writeFileSync(fl,JSON.stringify(D.mxShExportPack()));fs.writeFileSync(fc,L.join("\n")+"\n");
   const so=cp.execFileSync(process.execPath,[MXC,"--local",fl,"--cpu",fc,"--json",fo],{encoding:"utf8"}),J=JSON.parse(fs.readFileSync(fo,"utf8")).summary;fs.rmSync(dir,{recursive:true,force:true});
-  /* 11/15 第三次重評後（工具 v2，細節測試在 test-mathmodel-80.js）：資料有效性、納入條件、能不能唯一反推三者分開。本機紀錄沒有存是不是標準開局 → 不進驗證母體，只進描述 */
-  assert.equal(J.total,38,"5 本機＋30＋3 長局");assert.deepEqual(J.otherVer,{v2:1});assert.equal(J.trunc.n,3);assert.equal(J.invalid,0);assert.equal(J.eligible,33);assert.equal(J.ineligible,5);assert.deepEqual(J.excluded.primary,{stdU:5});
+  /* 11/15 第三次重評後（工具 v2，細節測試在 test-mathmodel-80.js）：資料有效性、納入條件、能不能唯一反推三者分開。本機紀錄 11/15 起多存標準開局與提示悔棋（g 9 格），所以這裡的 5 盤本機紀錄也進驗證母體（工具 v3） */
+  assert.equal(J.total,38,"5 本機＋30＋3 長局");assert.deepEqual(J.otherVer,{v2:1});assert.equal(J.trunc.n,3);assert.equal(J.invalid,0);assert.equal(J.eligible,38);assert.equal(J.ineligible,0);assert.deepEqual(J.excluded.primary,{});
   assert.match(so,/略過 測試 1、重複 1、盲棋 0、壞行 1/);assert.match(so,/逐步資料被截斷的長局（超過 150 步）：3 盤/);assert.match(so,/## 驗證母體：按終局/);assert.match(so,/## 驗證母體：按段位/);assert.match(so,/## 驗證母體：按局長（總手數）/);assert.match(so,/### 121 手以上/);assert.match(so,/## 分母核對/);assert.match(so,/截斷：逐步資料只有前 150 步/);
-  const V=J.verify;assert.deepEqual(Object.keys(V.byEnd).sort(),["和","贏","輸"].sort());assert.ok(V.byRank["入門以下"]&&V.byRank["業1～業5"]&&V.byRank["業6 以上"]);assert.equal(V.bySrc.cpu.n,33);assert.equal(V.bySrc.local,undefined);assert.equal(J.describe.bySrc.local.n,5);assert.equal(J.describe.all.n,38);
+  const V=J.verify;assert.deepEqual(Object.keys(V.byEnd).sort(),["和","贏","輸"].sort());assert.ok(V.byRank["入門以下"]&&V.byRank["業1～業5"]&&V.byRank["業6 以上"]);assert.equal(V.bySrc.cpu.n,33);assert.equal(V.bySrc.local.n,5);assert.equal(J.describe.bySrc.local.n,5);assert.equal(J.describe.all.n,38);
   for(const id of["p9/long0","p9/long1","p9/long2"])assert.ok(J.unsure.some(u=>u.id===id&&u.trunc),id+" 要列在「無法精確重算」");
-  assert.equal(V.all.own.score,33);assert.ok(V.all.own.raw<33,"有的盤 raw 反推不出唯一值");assert.equal(V.all.common,33-J.exclRate.all.unsure);for(const k of["base","raw","s0","score"])assert.equal(V.all[k].n,V.all.common,k+" 的分布要用共同有效盤集合");
+  assert.equal(V.all.own.score,38);assert.ok(V.all.own.raw<38,"有的盤 raw 反推不出唯一值");assert.equal(V.all.common,38-J.exclRate.all.unsure);for(const k of["base","raw","s0","score"])assert.equal(V.all[k].n,V.all.common,k+" 的分布要用共同有效盤集合");
   assert.ok(V.all.rawMinusS0.mean>=0&&V.all.s0MinusScore.mean>=0,"raw ≥ s0 ≥ score");assert.ok(V.byEnd["贏"].s0MinusScore.max===0&&V.byEnd["和"].s0MinusScore.max===0,"贏、和的盤沒有輸棋上限，s0＝score");
 });
 
@@ -138,14 +138,14 @@ test("第 3 項：每步準確度＝Lichess 的式子少 +1（不確定加分）
   const x=X0.mxShSide({plies:[{ply:1,by:"r",phase:"mid",cn:"",ev:-100,bv:0,loss:100,q:"緩著"}]},"r").mv[0];assert.ok(Math.abs(x.dw-9.1026)<1e-3);assert.ok(Math.abs(x.acc-(LI.acc(x.dw)-1))<.01);
 });
 const mvM=(best,played)=>({loss:Math.max(0,clamp(best)-clamp(played)),ev:played,bv:best,by:"r",q:"失著"});
-test("第 3 項：送殺分界整點（走之前的評估 −699／−700／−701／−999／−1000／−1001）——現行行為固定下來；跟 Lichess 只差在 −700 整點（Lichess 敗著、本案失著）",()=>{
+test("第 3 項：送殺分界整點（走之前的評估 −699／−700／−701／−999／−1000／−1001）——現行行為固定下來；MXS v4 起跟 Lichess 完全一樣（v3 以前 −700 整點算失著）",()=>{
   const got={},dif=[];for(const b of[-699,-700,-701,-999,-1000,-1001]){const x=X0.mxShSide({plies:[{ply:1,phase:"mid",cn:"",...mvM(b,-29990)}]},"r").mv[0];assert.equal(x.mt,1);got[b]=x.q;if(x.q!==LI.mateCreated(b))dif.push(b)}
-  assert.deepEqual(got,{"-699":"敗著","-700":"失著","-701":"失著","-999":"失著","-1000":"緩著","-1001":"緩著"});assert.deepEqual(dif,[-700]);
+  assert.deepEqual(got,{"-699":"敗著","-700":"敗著","-701":"失著","-999":"失著","-1000":"緩著","-1001":"緩著"});assert.deepEqual(dif,[],"六個整點都跟 Lichess 一樣");
 });
-test("第 3 項：漏殺分界整點（走完的評估 +699／+700／+701／+999／+1000／+1001）——現行行為固定下來；跟 Lichess 只差在 +1000 整點（Lichess 緩著、本案失著）",()=>{
+test("第 3 項：漏殺分界整點（走完的評估 +699／+700／+701／+999／+1000／+1001）——現行行為固定下來；MXS v4 起跟 Lichess 完全一樣（v3 以前 +1000 整點算失著）",()=>{
   const got={},dif=[];for(const p of[699,700,701,999,1000,1001]){const x=X0.mxShSide({plies:[{ply:1,phase:"mid",cn:"",...mvM(29990,p)}]},"r").mv[0];assert.equal(x.mt,2);got[p]=x.q;if(x.q!==LI.mateLost(p))dif.push(p)}
-  assert.deepEqual(got,{699:"敗著",700:"敗著",701:"失著",999:"失著",1000:"失著",1001:"緩著"});assert.deepEqual(dif,[1000]);
-  assert.deepEqual([Array.from(X0.MXS.walk),Array.from(X0.MXS.miss)],[[-700,-1000],[700,1000]]);assert.equal(X0.MXS.ver,3,"這次沒有改 MXS 的任何數字或算法，版本不變");
+  assert.deepEqual(got,{699:"敗著",700:"敗著",701:"失著",999:"失著",1000:"緩著",1001:"緩著"});assert.deepEqual(dif,[],"六個整點都跟 Lichess 一樣");
+  assert.deepEqual([Array.from(X0.MXS.walk),Array.from(X0.MXS.miss)],[[-700,-1000],[700,1000]]);assert.equal(X0.MXS.ver,4,"殺棋整點對齊 Lichess 是算法改動，版本 3→4");assert.ok(W(1500)>99.5,"評估封頂維持 ±2000（開發者 11/15 決定不對齊 ±1000）");
 });
 test("〔混合〕第 3 項：影子模式的註解和開發者頁不再寫「勝率」，統一成預期得分；玩家畫面其他功能的「勝率」（戰績）沒有動",()=>{
   const blk=sl(S,"/* ================= 影子模式","\nfunction gameReport(","影子模式整段");assert.doesNotMatch(blk,/勝率/);assert.match(blk,/預期得分＝P\(勝\)＋0\.5×P\(和\)|「預期得分」＝P\(勝\)＋0\.5×P\(和\)/);
@@ -211,8 +211,9 @@ test("第 4 項：回傳欄位照舊（weak／maybe／soft／even／conf／th／
 test("第 4 項：有同段位基準（z 尺度、四軸 6 組）才回傳 weak／maybe；門檻加上基準平均數自己的誤差（1／人數）",()=>{
   const B=n=>({mu:80,sd:8,n}),mk=n=>loadSk({ax:{people:n,byRank:{業2:{open:B(n),mid:B(n),end:B(n),stab:{mu:95,sd:5,n}}}}},"業2"),rnd=mkRnd(24);
   const T=Array.from({length:60},()=>{const g=(rnd()-.5)*8;return[82+g,81+g+(rnd()-.5)*4,58+g+(rnd()-.5)*4]}),G=rowsOf(T,10);
-  const K30=mk(30),A=K30.skillAxes(G,null),p=K30.skillPick(A);assert.equal(p.grp,true);assert.equal(p.conf,"hi");assert.equal(p.weak.k,"殘局");assert.equal(p.soft,undefined);
-  const lo=p.weak,hi=p.hi,P30=K30.mxPairSe(lo,hi,true),K500=mk(500),A5=K500.skillAxes(G,null),p5=K500.skillPick(A5),P500=K500.mxPairSe(p5.weak,p5.hi,true);
+  const K30=mk(30);K30.SK.PICKOK=1;   /* SK.PICK 3：這一項測的是放行以後；沒放行時有基準也只回傳 soft（test-mathmodel-81.js） */
+  const A=K30.skillAxes(G,null),p=K30.skillPick(A);assert.equal(p.grp,true);assert.equal(p.conf,"hi");assert.equal(p.weak.k,"殘局");assert.equal(p.soft,undefined);
+  const lo=p.weak,hi=p.hi,P30=K30.mxPairSe(lo,hi,true),K500=(k=>{k.SK.PICKOK=1;return k})(mk(500)),A5=K500.skillAxes(G,null),p5=K500.skillPick(A5),P500=K500.mxPairSe(p5.weak,p5.hi,true);
   assert.ok(Math.abs(P30.se**2-P500.se**2-(2/30-2/500))<1e-9,"基準 30 人比 500 人多出 2／30−2／500 的變異");assert.ok(p.th>p5.th);assert.ok(Math.abs(p.th-K30.mxTcrit(2.638,P30.ne-1)*P30.se)<1e-9,"四軸＝6 組比較");
 });
 test("第 4 項：模擬（tools/sim-phase-pair.js，三個階段真的一樣、40 盤、600 位假設的玩家）——整個挑選程序說出 hi 的比例 ≤ 5%、hi 或 mid ≤ 10%，都比原本低；事先指定一組的 95% 區間覆蓋率 ≥ 93%",t=>{
@@ -229,5 +230,5 @@ test("第 4 項：模擬（殘局真的差 8.6 分、40 盤、ρ＝+0.7）——
 });
 test("〔原始碼〕第 4 項：skillPick 用配對估計和修正後的臨界值，不再有固定的 2·√(se²＋se²)、1.64；畫面程式（07z2-statmap）照舊只看 weak",()=>{
   const sp=sl(ST,"function skillPick(","\n/* 開發者 11/11「下完一局","skillPick");assert.match(sp,/mxPairSe\(lo,hi,grp\)/);assert.match(sp,/MX_ZC\[ok\.length\*\(ok\.length-1\)\/2\]/);assert.doesNotMatch(sp,/1\.64\*se|th=2\*se/);
-  assert.match(sp,/if\(!grp&&gap>=tm\)return\{soft:lo,hi,th,grp,conf:"soft",lv:gap>=th\?"hi":"mid"\}/);assert.match(rd(path.join(M,"07z2-statmap.js")),/if\(pk&&pk\.weak\)\{/);
+  assert.match(sp,/if\(!\(grp&&SK\.PICKOK\)&&gap>=tm\)return\{soft:lo,hi,th,grp,conf:"soft",lv:gap>=th\?"hi":"mid"\}/);assert.match(rd(path.join(M,"07z2-statmap.js")),/if\(pk&&pk\.weak\)\{/);
 });

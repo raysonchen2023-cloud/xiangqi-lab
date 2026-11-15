@@ -804,6 +804,8 @@ const I18N_EN={
   "單線守口":"Hold one lane","拆陣破甲":"Break the guard","章末守關":"Chapter gatekeeper",
   /* 11/15 星門圍城切 3D 星盤（07bhg-gatesiege.js gsvParkBtn、gsvSetView 的提示；視角名稱沿用舊版塔防那幾條） */
   "回到平面棋盤":"Back to the flat board","🌀 3D 星盤（右上 👁 換視角）":"🌀 3D star board (tap 👁 at the top right to change the view)","純淨畫面、螢幕報讀模式用平面棋盤":"Clean view and screen-reader mode use the flat board",
+  /* 11/15 車輪戰 3D（07bhw-wheel.js）：3D 開不起來的提示、進 3D 的過場副標 */
+  "這台裝置沒辦法顯示 3D，先用棋盤模式":"This device cannot show 3D. Using the flat board for now.","三張星盤":"Three star boards",
   /* 11/15 星門圍城補第 2、4、5 關：主題、星樞大招、分段跳字（帶數字的不翻） */
   "分兵與回援":"Split and fall back","雙門取捨":"Two gates, one move","三段攻勢":"Three-phase assault","隔山星砲":"Over-the-Hill Star Cannon","卒將號令":"Pawn General's Command",
   "⚠ 星樞預告：隔山星砲":"⚠ Star Core warning: Over-the-Hill Star Cannon","⚠ 星樞預告：卒將號令":"⚠ Star Core warning: Pawn General's Command","隔山星砲取消":"Star Cannon cancelled","卒將號令取消":"Command cancelled",
@@ -815,7 +817,7 @@ const I18N_EN={
   "長驅直入":"Straight Down the File","斷路令":"Cut-Off Order","護陣車":"Guard Chariot",
   /* 11/15 星門圍城逐關解鎖、三星、困難版：選關的普通／困難、鎖住的原因、三星條件（帶數字的不翻） */
   "普通":"Normal","困難":"Hard","先破普通版":"Clear Normal first","入侵沒扣到血":"No HP lost to invaders","星樞大招一次都沒中":"Never hit by a Star Core ultimate","沒被奪靈":"No Spirit drained",
-  "俥沒被吃":"No Chariot lost","過關時場上有俥":"A Chariot on the board at the end","部署過後備":"Deployed a reserve","截援一次":"Intercepted once","護陣全部拆掉":"All guards broken",
+  "俥沒被吃":"No Chariot lost","過關時場上有俥":"A Chariot on the board at the end","部署過後備":"Deployed a reserve","截援一次":"Intercepted once","護陣全部拆掉":"All guards broken","入侵卒全部清掉":"All invaders cleared",
   "⚠ 星樞預告：長驅直入":"⚠ Star Core warning: Straight Down the File","⚠ 星樞預告：斷路令":"⚠ Star Core warning: Cut-Off Order","長驅直入取消":"Straight Down the File cancelled","斷路令取消":"Cut-Off Order cancelled",
   "重金懸賞":"Bounty","庭院小息":"Courtyard Rest","帥令安軍":"Marshal's Order","當票回春":"Pawn-Ticket Revival","九宮守心":"Palace Heart","鐵壁銅牆":"Iron Wall","仕角守門":"Advisor Gate","銅鎖止步":"Bronze Lock",
   "近侍護帥":"Bodyguard","盾陣回靈":"Shield Spirit","神行百里":"Swift Swap","勇往直前":"Forward Spirit","跑腿賺錢":"Errand Runner","步步為營":"Step by Step","揚州快步":"Yangzhou Quickstep",

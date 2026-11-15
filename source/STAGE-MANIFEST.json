@@ -1,14 +1,14 @@
 {
  "ref": "origin/main",
- "commit": "95f982b639a06fad599598607cd9116b2b9e8f31",
- "madeAt": "2026-11-15T05:25:12.820Z",
+ "commit": "befead3bb8d5de1952e78daffd14fa1ff78580e3",
+ "madeAt": "2026-11-15T06:57:58.176Z",
  "files": {
   "xiangqi-db/m/00-util.js": "local=live",
   "xiangqi-db/m/01-board.js": "local=live",
   "xiangqi-db/m/02-shell.js": "local=live",
   "xiangqi-db/m/02r-reloadguard.js": "local=live",
   "xiangqi-db/m/03-home-quiz.js": "local=live",
-  "xiangqi-db/m/04-stats.js": "live",
+  "xiangqi-db/m/04-stats.js": "local=live",
   "xiangqi-db/m/04c-weekly.js": "local=live",
   "xiangqi-db/m/05-settings.js": "live",
   "xiangqi-db/m/05b-save.js": "local=live",
@@ -64,7 +64,7 @@
   "xiangqi-db/m/07hmp-pano.js": "local=live",
   "xiangqi-db/m/07x2-lobbymap.js": "local=live",
   "xiangqi-db/m/07x3-rostermap.js": "local=live",
-  "xiangqi-db/m/07x4-lobbysafe.js": "local=live",
+  "xiangqi-db/m/07x4-lobbysafe.js": "live",
   "xiangqi-db/m/07s2-setmap.js": "local=live",
   "xiangqi-db/m/07t2-tabink.js": "local=live",
   "xiangqi-db/m/07t3-tabtube.js": "local=live",
@@ -236,6 +236,8 @@
   "xiangqi-lab/tools/test-lefty.js": "local",
   "xiangqi-lab/tools/test-mathmodel-1046.js": "local",
   "xiangqi-lab/tools/test-mathmodel-79.js": "local",
+  "xiangqi-lab/tools/test-mathmodel-80.js": "local",
+  "xiangqi-lab/tools/test-mathmodel-81.js": "local",
   "xiangqi-lab/tools/test-mp-p2.js": "local",
   "xiangqi-lab/tools/test-mvt-hold.js": "local",
   "xiangqi-lab/tools/test-name-safe.js": "local",
@@ -286,6 +288,7 @@
   "xiangqi-lab/tools/test-touch-fixes.js": "local",
   "xiangqi-lab/tools/test-ui-1113.js": "local",
   "xiangqi-lab/tools/test-verify-daily.js": "local",
+  "xiangqi-lab/tools/test-wheel-3d.js": "local",
   "xiangqi-lab/tools/test-wheel.js": "local",
   "xiangqi-lab/tools/test-xfer.js": "local",
   "xiangqi-lab/tools/test-xfer2.js": "local",
@@ -391,9 +394,9 @@
   "xiangqi-android/EXPORT-MANIFEST.json": "產生（每個檔的 SHA-256、樹雜湊、排除了什麼）"
  },
  "liveDiffers": [
-  "m/04-stats.js",
   "m/05-settings.js",
   "m/07y-hubmap.js",
+  "m/07x4-lobbysafe.js",
   "m/07s4-passmap.js",
   "src/sw.js"
  ],
@@ -436,11 +439,10 @@
   "test-threat-weaknet.js": "threat-model.md 對照表要找 test-net-sign.js（上面已排除，見該行）",
   "test-ui-redundancy.js": "有一項檢查開發者刻意不發布的 07y-hubmap.js 段落",
   "test-foss-audit.js": "倉庫多了 source/ 以後，foss-audit.js 會把 source/ 裡的規則文字當成追蹤 SDK（要先讓它跳過 source/）",
-  "test-layout-r16.js": "指令排除：有一項〔混合〕檢查（07y CY_SPOT 首頁 han 與 sanguo 的 44×44 點選範圍重疊）在開發者電腦上同樣失敗（10/11）：測試或座標待開發者處理；其他 10 項通過",
-  "test-mathmodel-80.js": "指令排除：這支測試檢查的建議先練程序版本常數（SK.PICK）與版本紀錄，開發者電腦上已經加了，對應的 04-stats.js 還沒發布；下一版發布後放回來"
+  "test-layout-r16.js": "指令排除：有一項〔混合〕檢查（07y CY_SPOT 首頁 han 與 sanguo 的 44×44 點選範圍重疊）在開發者電腦上同樣失敗（10/11）：測試或座標待開發者處理；其他 10 項通過"
  },
- "version": "20261115-1318",
- "indexSha1": "e7f9062ea3a4",
+ "version": "20261115-1448",
+ "indexSha1": "8bce1383c592",
  "toLF": [
   "xiangqi-lab/tools/build-site.js"
  ],

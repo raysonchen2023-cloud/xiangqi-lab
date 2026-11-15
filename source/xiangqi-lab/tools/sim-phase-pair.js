@@ -28,7 +28,7 @@
 //   情境、種子（SEED0＋情境序號×10＋盤數序號）、樣本數都寫死在下面；--reps／--boot 只是讓測試跑小一點，正式數字用預設值。
 "use strict";
 const fs = require("fs"), path = require("path"), vm = require("vm");
-const SIM_VER = 2;   /* 這支模擬的版本：1＝79；2＝比例附區間、固定情境表、HAC／區塊重抽對照、判定規則。改了情境、種子或判定規則就加 1，並更新 tools/mx-manifest.json */
+const SIM_VER = 3;   /* 這支模擬的版本：1＝79；2＝比例附區間、固定情境表、HAC／區塊重抽對照、判定規則；3＝區間內部保留完整精度（判定不受顯示取整影響）、有同段位基準那一段明寫是「假設已放行」。改了情境、種子或判定規則就加 1，並更新 tools/mx-manifest.json */
 const LAB = path.join(__dirname, ".."), STATS = path.join(LAB, "../xiangqi-db/m/04-stats.js");
 const argv = require.main === module ? process.argv.slice(2) : [], opt = (k, d) => { const i = argv.indexOf(k); return i >= 0 ? argv[i + 1] : d };
 const STATS_FILE = opt("--stats", null) ? path.resolve(opt("--stats", null)) : STATS, QUICK = argv.includes("--quick"), REPS = +opt("--reps", QUICK ? 300 : 4000), BREPS = +opt("--boot", QUICK ? 60 : 1000), BN = 199, JSON_OUT = opt("--json", null);
@@ -69,8 +69,11 @@ function loadApp(file, calib, rank) {
 /* ---------- 亂數、區間 ---------- */
 function mkRnd(a) { return () => { a |= 0; a = a + 0x6D2B79F5 | 0; let t = Math.imul(a ^ a >>> 15, 1 | a); t = t + Math.imul(t ^ t >>> 7, 61 | t) ^ t; return ((t ^ t >>> 14) >>> 0) / 4294967296 } }
 function gauss(rnd) { let u = 0; while (u < 1e-12) u = rnd(); return Math.sqrt(-2 * Math.log(u)) * Math.cos(2 * Math.PI * rnd()) }
-/* 比例的 95% Monte Carlo 區間（Wilson）；回百分比 {p, lo, hi, k, n} */
-function wilson(k, n) { if (!n) return null; const z = 1.959964, p = k / n, d = 1 + z * z / n, c = (p + z * z / (2 * n)) / d, h = z * Math.sqrt(p * (1 - p) / n + z * z / (4 * n * n)) / d; return { p: +(100 * p).toFixed(1), lo: +(100 * Math.max(0, c - h)).toFixed(1), hi: +(100 * Math.min(1, c + h)).toFixed(1), k, n } }
+/* 比例的 95% Monte Carlo 區間（Wilson）；回百分比 {p, lo, hi, k, n}——**沒有取整**。judge 一律用這個完整精度的值；顯示（fc、r1）才取小數 1 位。
+   SIM_VER 2 是先取 1 位小數再判定：上界 5.04% 會被取成 5.0%、判成「通過」（第四次重評第三節第 3 題）。
+   逐格的 95% 區間不是整張表同時有 95% 的保證；要發布「全部情境通過」的正式結論，要另訂同時性的做法或用沒用過的種子做確認批次。 */
+function wilson(k, n) { if (!n) return null; const z = 1.959964, p = k / n, d = 1 + z * z / n, c = (p + z * z / (2 * n)) / d, h = z * Math.sqrt(p * (1 - p) / n + z * z / (4 * n * n)) / d; return { p: 100 * p, lo: 100 * Math.max(0, c - h), hi: 100 * Math.min(1, c + h), k, n } }
+const r1 = v => v == null ? null : +(+v).toFixed(1);
 /* 判定：dir "le"＝越小越好（誤報），"ge"＝越大越好（覆蓋率） */
 function judge(ci, target, dir) { if (!ci) return "沒有資料"; return dir === "le" ? (ci.hi <= target ? "通過" : ci.lo > target ? "未通過" : "待驗證") : (ci.lo >= target ? "通過" : ci.hi < target ? "未通過" : "待驗證") }
 const worst = a => a.includes("未通過") ? "未通過" : a.includes("待驗證") ? "待驗證" : a.includes("沒有資料") ? "沒有資料" : "通過";
@@ -162,11 +165,11 @@ function run(K, name, S, G, reps, seed, boot) {   /* boot＝前幾位玩家另�
   const out = { name, G, reps, seed, target, truth: tv, pairs: {}, cat: {}, rate: {}, ci: {} };
   for (const [k, c] of Object.entries(cv)) { if (!c.n) continue; const mu = c.d / c.n, sd = Math.sqrt(Math.max(0, c.d2 / c.n - mu * mu)), [a, b] = k.split("-"), W = x => wilson(x, c.n);
     out.pairs[k] = { n: c.n, trueDiff: +(tv[a] - tv[b]).toFixed(2), bias: +(mu - (tv[a] - tv[b])).toFixed(2), sd: +sd.toFixed(2), ne: +(c.ne / c.n).toFixed(1), nb: +(c.nb / c.n).toFixed(1), r: +(c.r / c.n).toFixed(2), floorPct: +(100 * c.fl / c.n).toFixed(1),
-      covNew: W(c.cNew).p, covOld: W(c.cOld).p, covRaw: W(c.cRaw).p, covHac: W(c.cHac).p, covNewCi: W(c.cNew), covOldCi: W(c.cOld), covHacCi: W(c.cHac), seNew: +(c.seNew / c.n / sd).toFixed(2), seOld: +(c.seOld / c.n / sd).toFixed(2), seRaw: +(c.seRaw / c.n / sd).toFixed(2), seHac: +(c.seHac / c.n / sd).toFixed(2) } }
-  for (const w of ["new", "old"]) out.cat[w] = Object.fromEntries(["soft-hi", "soft-mid", "lo", "even", "none"].map(k => [k, wilson(cat[w][k] || 0, reps).p]));
+      covNew: r1(W(c.cNew).p), covOld: r1(W(c.cOld).p), covRaw: r1(W(c.cRaw).p), covHac: r1(W(c.cHac).p), covNewCi: W(c.cNew), covOldCi: W(c.cOld), covHacCi: W(c.cHac), seNew: +(c.seNew / c.n / sd).toFixed(2), seOld: +(c.seOld / c.n / sd).toFixed(2), seRaw: +(c.seRaw / c.n / sd).toFixed(2), seHac: +(c.seHac / c.n / sd).toFixed(2) } }
+  for (const w of ["new", "old"]) out.cat[w] = Object.fromEntries(["soft-hi", "soft-mid", "lo", "even", "none"].map(k => [k, r1(wilson(cat[w][k] || 0, reps).p)]));
   for (const m of METH.concat(BMETH)) { const f = fl[m]; if (!f.n) { out.rate[m] = null; out.ci[m] = null; continue }
     const C = { hi: wilson(f.hi, f.n), any: wilson(f.any, f.n), ...(target ? { missHi: wilson(f.n - f.hitHi, f.n), missAny: wilson(f.n - f.hitAny, f.n), wrongHi: wilson(f.wrongHi, f.n) } : {}) };
-    out.ci[m] = C; out.rate[m] = { n: f.n, ...Object.fromEntries(Object.entries(C).map(([k, v]) => [k, v.p])) } }
+    out.ci[m] = C; out.rate[m] = { n: f.n, ...Object.fromEntries(Object.entries(C).map(([k, v]) => [k, r1(v.p)])) } }
   /* 判定（只判 App 現在用的那一種；有真正差異的情境不判誤報） */
   const covS = Object.values(out.pairs).map(p => judge(p.covNewCi, JUDGE.cov, "ge"));
   out.verdict = { hi: target ? null : judge(out.ci.new.hi, JUDGE.hi, "le"), any: target ? null : judge(out.ci.new.any, JUDGE.any, "le"), cov: worst(covS) };
@@ -181,14 +184,14 @@ function runGrp(name, S, G, reps, seed, nBase) {
   for (let r = 0; r < reps; r++) {
     /* 基準平均數自己有誤差：每次用 nBase 人估出來（平均 ± sd/√n；四軸各自獨立抽——真的基準四軸來自同一批人，可能相關，這裡沒有模擬） */
     const B = n => ({ mu: t0.m + sdA * gauss(rnd) / Math.sqrt(n), sd: sdA, n }), ax = { people: nBase, byRank: { 業1: { open: B(nBase), mid: B(nBase), end: B(nBase), stab: { mu: t0.stab + sdS * gauss(rnd) / Math.sqrt(nBase), sd: sdS, n: nBase } } } };
-    const K = GRP_K(); K.setCalib({ ax }); const A = K.skillAxes(player(rnd, G, S), null); if (A.filter(a => a.ok && !a.pct).length === 4) n4++;
+    const K = GRP_K(); K.SK.PICKOK = 1; K.setCalib({ ax }); const A = K.skillAxes(player(rnd, G, S), null); if (A.filter(a => a.ok && !a.pct).length === 4) n4++;
     for (const [w, p] of [["new", K.skillPick(A)], ["old", oldPick(A)]]) { if (!p.grp) continue; if (p.weak) c[w].hi++; if (p.weak || p.maybe) c[w].any++ }
   }
-  return { name, G, reps, seed, nBase, four: wilson(n4, reps).p, new: { hi: wilson(c.new.hi, reps), any: wilson(c.new.any, reps) }, old: { hi: wilson(c.old.hi, reps), any: wilson(c.old.any, reps) } };
+  return { name, G, reps, seed, nBase, four: r1(wilson(n4, reps).p), new: { hi: wilson(c.new.hi, reps), any: wilson(c.new.any, reps) }, old: { hi: wilson(c.old.hi, reps), any: wilson(c.old.any, reps) } };
 }
 
 /* ---------- 主程式 ---------- */
-const fc = c => c ? `${c.p}（${c.lo}～${c.hi}）` : "—";
+const fc = c => c ? `${r1(c.p)}（${r1(c.lo)}～${r1(c.hi)}）` : "—";
 function main() {
   const K = loadApp(STATS_FILE); if (!K.mxPairSe) { console.error("04-stats.js 還沒有 mxPairSe（配對估計還沒接進去）"); process.exit(1) }
   const gs = QUICK ? [10, 40] : GS, res = [], t0 = Date.now();
@@ -223,7 +226,7 @@ function main() {
   for (const r of res) if (r.target === "end") P(`| ${r.name} | ${(r.truth.open - r.truth.end).toFixed(1)} | ${r.G} | ${fc(r.ci.old.missHi)} | ${fc(r.ci.new.missHi)} | ${fc(r.ci.hac.missHi)} | ${fc(r.ci.boot && r.ci.boot.missHi)} | ${fc(r.ci.block && r.ci.block.missHi)} | ${r.rate.old.missAny}／${r.rate.new.missAny} | ${r.rate.old.wrongHi}／${r.rate.new.wrongHi} |`);
   P(""); P("## ④ 畫面上各種說法的比例（沒有同段位基準；之前 → App，%；每格的 Monte Carlo 區間半寬 ≤ 1.6 個百分點）"); P("| 情境 | 盤數 | 溫和提問（原本會是 hi） | 溫和提問（原本會是 mid） | 資料還少 | 未看出明顯差異 | 樣本不夠 |"); P("|---|---|---|---|---|---|---|");
   for (const r of res) P(`| ${r.name} | ${r.G} | ${["soft-hi", "soft-mid", "lo", "even", "none"].map(k => f(r.cat.old[k]) + " → " + f(r.cat.new[k])).join(" | ")} |`);
-  P(""); P("## ⑤ 有同段位基準（z 尺度，開局、中局、殘局、穩定四軸 6 組比較；四軸的真值都等於基準）"); P("| 情境 | 盤數 | 基準人數 | 種子 | 四軸都夠的比例 % | 建議先練（hi）：之前 | App（目標 ≤5） | hi 或 mid：之前 | App（目標 ≤10） |"); P("|---|---|---|---|---|---|---|---|---|");
+  P(""); P("## ⑤ 有同段位基準（z 尺度，開局、中局、殘局、穩定四軸 6 組比較；四軸的真值都等於基準）——**假設推論程序已放行（SK.PICKOK＝1）時**的誤報；App 現在 PICKOK＝" + (K.SK.PICKOK == null ? "?" : K.SK.PICKOK) + "，有基準也只給描述性提示"); P("| 情境 | 盤數 | 基準人數 | 種子 | 四軸都夠的比例 % | 建議先練（hi）：之前 | App（目標 ≤5） | hi 或 mid：之前 | App（目標 ≤10） |"); P("|---|---|---|---|---|---|---|---|---|");
   for (const g of grp) P(`| ${g.name} | ${g.G} | ${g.nBase} | ${g.seed} | ${g.four} | ${fc(g.old.hi)} | ${fc(g.new.hi)} | ${fc(g.old.any)} | ${fc(g.new.any)} |`);
   P(""); P("## ⑥ 算一次要多久（這台電腦，毫秒）"); P("| 盤數 | skillAxes＋skillPick（App） | 另外加 HAC 的挑選 | 另外加整盤重抽 199 次 | 另外加區塊重抽 199 次 |"); P("|---|---|---|---|---|"); for (const [G, t] of Object.entries(tm)) P(`| ${G} | ${t.axesPick} | ${t.hac} | ${t.boot199} | ${t.block199} |`);
   P(""); P(`（共 ${((Date.now() - t0) / 1000).toFixed(0)} 秒）`);

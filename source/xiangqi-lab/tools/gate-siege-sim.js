@@ -151,7 +151,7 @@ async function play(E,lv,script,seed,ch,L){const R=rng(seed*7919+lv*131+script.l
     const m=C.stateApply(P,f,t);const e=G.move(P,m,C);tally();const j=C.judgeState(P);end=j||(e&&e.end)||null;
     if(cur){cur.blk=u;cur.me=td.me.hp;cur.en=td.en.hp;cur.msp=td.me.sp;cur.esp=td.en.sp;cur.msh=td.me.sh.v;rounds.push(cur);cur=null}}
   if(!end)end={w:null,why:`${MAX_RND} 回合上限（腳本對照才有的截斷，不是遊戲規則）`};
-  return{src,lv,script,seed,ch,L,hard:td.hard?1:0,st:end.w==="r"?G.stars(td,P.board):null,w:end.w,why:end.why,rnd:td.rnd,me:td.me.hp,meMax:td.me.max,en:td.en.hp,enMax:td.en.max,dealt:td.me.dealt,taken:td.me.taken,icpt:td.icpt,dep:td.dep,used:td.used,fx,drain:xs.drain,ph:xs.ph,rounds}}
+  return{src,lv,script,seed,ch,L,hard:td.hard?1:0,st:end.w==="r"?G.stars(td,P.board):null,gk:end.w==="r"?Object.fromEntries(Object.keys(G.GOAL).filter(k=>k!=="hp").map(k=>[k,G.GOAL[k].ok(td,P.board)?1:0])):null,tl:td.tl,w:end.w,why:end.why,rnd:td.rnd,me:td.me.hp,meMax:td.me.max,en:td.en.hp,enMax:td.en.max,dealt:td.me.dealt,taken:td.me.taken,icpt:td.icpt,dep:td.dep,used:td.used,fx,drain:xs.drain,ph:xs.ph,rounds}}
 async function main(){let E=null,engNote="";try{E=await newEngine();engNote="App 網頁版 Pikafish（site/engine/pikafish.wasm）在 Node "+process.version+" 裡跑"}catch(e){engNote="Pikafish 在 Node 載入失敗（"+e.message+"），改用規則內建評估（引擎分數一律 0）"}
   console.log("引擎：",engNote);const runs=[],t0=Date.now();const plan=[];
   for(const lv of LVS)for(const s of SCR)for(let i=1;i<=SEEDS;i++)plan.push({lv,s,seed:i,ch:CHS[(i-1)%7],L:1});

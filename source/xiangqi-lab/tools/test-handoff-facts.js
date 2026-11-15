@@ -24,6 +24,21 @@ test("evidence.md：版本、通過數（千分位）、三類項數、產生時
   assert.equal(H.parseEvidence("# 別的文件"), null);
 });
 
+test("evidence.md 四欄格式（11/14 起：共 N 項＝通過／失敗／略過，類別表帶略過數）：通過數、總數、三類項數都讀得到，不再是 null（第 17、18 輪事實段印過 null／null）", () => {
+  const t = "# 驗證紀錄（版本 20261115-1318）\n\n- 產生時間：2026/11/15 13:29:07（臺灣時間）\n- 結果（四欄分開，不要只看總數）：共 1446 項＝**通過 1434**、**失敗 0**、**略過 12**（這個環境跑不了）；另有**預期失敗 2**（還沒修的漏洞）\n\n| 類別 | 項數 | 這類測試證明了什麼 |\n|---|---:|---|\n| 行為 | 1018 項（通過 1013、略過 5） | x |\n| 混合 | 63 項（通過 63） | y |\n| 原始碼比對 | 142 項（通過 141、略過 1） | z |\n| 待分類 | 223 項（通過 217、略過 6） | w |\n";
+  const e = H.parseEvidence(t);
+  assert.equal(e.version, "20261115-1318"); assert.equal(e.pass, 1434); assert.equal(e.total, 1446); assert.match(e.generated, /2026\/11\/15 13:29:07/);
+  assert.deepEqual(e.kinds, { 行為: { all: 1018, pass: 1013 }, 混合: { all: 63, pass: 63 }, 原始碼: { all: 142, pass: 141 } });
+  /* 千分位也認；兩種寫法都有時用舊的「A／N 項通過」那一句 */
+  const k = H.parseEvidence("# 驗證紀錄（版本 20270101-0000）\n- 結果：共 1,446 項＝**通過 1,434**、**失敗 0**\n");
+  assert.equal(k.pass, 1434); assert.equal(k.total, 1446); assert.deepEqual(k.kinds, {});
+  const both = H.parseEvidence("# 驗證紀錄（版本 20270101-0000）\n- 結果：**10／12 項通過**；共 99 項＝**通過 98**\n");
+  assert.equal(both.pass, 10); assert.equal(both.total, 12);
+  /* 事實段那一行印出數字，不印 null */
+  const F = { live: { evidence: { parsed: e } } };
+  assert.equal(String(e.pass) + "／" + String(e.total), "1434／1446"); assert.ok(F.live.evidence.parsed.kinds.行為.all === 1018);
+});
+
 const LOG = "854ff3c\t2026-11-13T09:31:00+08:00\t20261113-0931 iPad 寬版圖\n9c2dbac\t2026-11-13T08:35:00+08:00\t說明文件同步到 20261113-0825：威脅模型\na7d096d\t2026-11-13T08:28:00+08:00\t20261113-0825 修正\nb1b2b3b\t2026-11-13T08:20:00+08:00\t20261113-0820 上一輪\nc1c2c3c\t2026-11-13T07:00:00+08:00\t20261113-0700 更早\n";
 test("git log 解析與本輪發布清單：從上一輪線上版之後算（沒有版本號的提交也算）；找不到就列最近幾筆並註明", () => {
   const L = H.parseGitLog(LOG);

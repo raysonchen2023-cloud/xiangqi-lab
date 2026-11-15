@@ -403,6 +403,7 @@ function pkBench(){const v=typeof PARK!=="undefined"&&PARK&&PARK.v;if(!v||!v.ben
 /* 回饋 871（開發者 11/12「車輪戰出現小帥妹過場動畫」）：ex.quietMate＝不播入座運鏡（坐著看小帥／小帥妹 1.8 秒再拉到俯視）、不讓小帥說「我是小帥妹，幫你加油！」。
    車輪戰（08s-simul.js）的開場只有 simIntro 棋館過場；ex.gate 也一定要給（沒給 gate／arena 時 park3d 的載入畫面是「小帥妹走去園子」） */
 function parkDraw(host,bd,board,o,ex){
+  if(typeof whl3dOn==="function"&&whl3dOn())return;   /* 11/15 車輪戰 3D 開著（07bhw-wheel.js，全螢幕蓋在上面、自己有一個 3D 實例）：底下被蓋住的對局頁先不建 3D，全場只留一個實例（iPhone 記憶體）；離開車輪戰時它會叫對局頁重畫 */
   // 關掉公園：同一個棋盤的公園只藏起來（意見回饋 244：來回切換不用每次重建 3D 場景，比較順）
   {const tg=host.querySelector(".pkname");if(tg)tg.hidden=!parkOn();const pv0=host.querySelector(".pkview");if(pv0)pv0.hidden=!parkOn();const ap=host.querySelector(".ax-park");if(ap)ap.hidden=!parkOn();pkSwUi(host)}   /* 回饋 847：平面棋盤時收起「改用平面棋盤」 */   /* 11/11 v6 第 3 點：「▦ 平面棋盤」／「🌳 回園子」（pkSwUi 在下面） */
   if(!parkOn()){if(PARK&&PARK.host===host){if(PARK.v.hide)PARK.v.hide();else{PARK.v.destroy();PARK=null}}bd.svg.style.display="";botVis(true);return}
