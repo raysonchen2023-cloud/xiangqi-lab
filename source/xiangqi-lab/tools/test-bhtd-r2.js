@@ -190,7 +190,7 @@ test("急襲 raidLv：星門變化會換位置（鏡像／換一道門），落�
 
 /* ====================== ④ 接線 ====================== */
 test("〔原始碼〕存檔鍵 bhtdDust（排在 bhtd 前面，其他測試要的順序不動）；急襲不給修為；定軌力入口鎖；結果視窗兩顆鈕", ()=>{
-  const SV=rd("xiangqi-db/m/05b-save.js");assert.ok(SV.includes('"xsdLv","bhtdDust","bhtd","bhtdFx","bhtl","gsv","xsmSeen","dgl","gxtSeen"].map(k=>"m_"+k)'));
+  const SV=rd("xiangqi-db/m/05b-save.js");assert.ok(SV.includes('"xsdLv","bhtdDust","bhtd","bhtdFx","bhtl","gsv","whl","xsmSeen","dgl","gxtSeen"].map(k=>"m_"+k)'));
   assert.ok(rd("xiangqi-db/m/07-legend.js").includes('&&!(typeof bhtdNoXp==="function"&&bhtdNoXp(st)))addXP(st.result.w===st.human?40:15,"對局","g:"+st.id)'),"急襲不給修為");
   assert.ok(SRC.includes('function bhtdNoXp(st){return!!(st&&st.td&&st.td.rd&&String(st.journey||"")==="bh:rd")||(typeof gsvIs==="function"&&gsvIs(st))}'),"急襲、星門圍城試玩（11/15）都不給修為");
   assert.ok(SRC.includes('jStart("bh:rd"')&&SRC.includes("td:{raid:{id:T.id,v},ch:ck,L,diff,sk,xm,tal}"),"急襲開局帶模板、變化、天賦");

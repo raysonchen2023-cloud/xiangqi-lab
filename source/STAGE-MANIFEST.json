@@ -1,7 +1,7 @@
 {
  "ref": "origin/main",
- "commit": "1c4db7e82d6693939623e45da28be7879c7d82ec",
- "madeAt": "2026-11-14T23:41:58.689Z",
+ "commit": "9125f1c7aaa1214a9cd5f3b6e386113549eeddac",
+ "madeAt": "2026-11-15T00:23:49.563Z",
  "files": {
   "xiangqi-db/m/00-util.js": "local=live",
   "xiangqi-db/m/01-board.js": "local=live",
@@ -28,6 +28,7 @@
   "xiangqi-db/m/07bhtl-tdlearn.js": "local=live",
   "xiangqi-db/m/07bhf-bossfx.js": "local=live",
   "xiangqi-db/m/07bhg-gatesiege.js": "local=live",
+  "xiangqi-db/m/07bhw-wheel.js": "local=live",
   "xiangqi-db/m/07dv-devtest.js": "local=live",
   "xiangqi-db/m/07dw-perfhud.js": "local=live",
   "xiangqi-db/m/07g-battle.js": "local=live",
@@ -273,6 +274,7 @@
   "xiangqi-lab/tools/test-touch-fixes.js": "local",
   "xiangqi-lab/tools/test-ui-1113.js": "local",
   "xiangqi-lab/tools/test-verify-daily.js": "local",
+  "xiangqi-lab/tools/test-wheel.js": "local",
   "xiangqi-lab/tools/test-xfer.js": "local",
   "xiangqi-lab/tools/test-xfer2.js": "local",
   "xiangqi-lab/tools/test-xfer4.js": "local",
@@ -422,8 +424,8 @@
   "test-foss-audit.js": "倉庫多了 source/ 以後，foss-audit.js 會把 source/ 裡的規則文字當成追蹤 SDK（要先讓它跳過 source/）",
   "test-layout-r16.js": "指令排除：有一項〔混合〕檢查（07y CY_SPOT 首頁 han 與 sanguo 的 44×44 點選範圍重疊）在開發者電腦上同樣失敗（10/11）：測試或座標待開發者處理；其他 10 項通過"
  },
- "version": "20261115-0732",
- "indexSha1": "cd5147784138",
+ "version": "20261115-0822",
+ "indexSha1": "0bae74776f7a",
  "toLF": [
   "xiangqi-lab/tools/build-site.js"
  ],

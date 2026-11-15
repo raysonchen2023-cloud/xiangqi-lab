@@ -224,15 +224,15 @@ const GSV=(()=>{
     if(a&&z)end={w:null,why:"雙方星核同一批結算同時歸零，判和"};else if(z)end={w:"r",why:"星樞星核歸零"};else if(a)end={w:"b",why:"我方星核歸零"};
     /* 5. 星門（先落子、延遲、取消） */
     let spawned=0;if(!end)spawned=gates(P,C);
-    /* 6. 靈力：每完整回合回復（受每回合收入上限） */
-    if(!end){spGain(M,RG);spGain(E,RG)}
+    /* 6. 靈力：每完整回合回復（受每回合收入上限）。td.pool＝黑洞車輪戰（07bhw-wheel.js）共用靈力池：我方不在這裡回、收入上限也不在這裡歸零，改由車輪戰的總輪處理 */
+    if(!end){if(!td.pool)spGain(M,RG);spGain(E,RG)}
     /* 7. 無進展 */
     const prog=td.np<0||hp0[0]!==M.hp||hp0[1]!==E.hp||spawned>0;td.np=prog?0:td.np+1;
     if(!end&&td.np>=NOPROG)end={w:null,why:"連續 8 回合沒有進展，依星門圍城規則判和"};
     /* 8. 冷卻（放招那回合不減）、到期 */
     for(const k in td.cd)if(td.cd[k]>0&&td.cdAt[k]!==R)td.cd[k]--;
     for(const k in td.ecd)if(td.ecd[k]>0&&!(td.ecdAt&&td.ecdAt[k]===R))td.ecd[k]--;
-    td.rnd=R+1;M.inc=0;E.inc=0;td.fc=null;
+    td.rnd=R+1;if(!td.pool)M.inc=0;E.inc=0;td.fc=null;
     for(const c of[M,E])if(c.sh.v>0&&td.rnd>=c.sh.exp)c.sh={v:0,exp:0};
     const C2=td.ctl;C2.frz=active(C2.frz,td.rnd);C2.noCap=active(C2.noCap,td.rnd);C2.noTake=active(C2.noTake,td.rnd);C2.lock=active(C2.lock,td.rnd);if(C2.trap&&C2.trap.until<=td.rnd)C2.trap=null;
     for(const k of["qi3","qyhp","pair","bu3","disc","net2"]){const o=td.buf[k];if(o&&o.until!=null&&o.until<=td.rnd)delete td.buf[k]}
