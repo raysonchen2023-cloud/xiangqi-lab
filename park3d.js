@@ -2712,7 +2712,8 @@
         {const e=endPose(opp,oppRes,B,1.0);if(e){hx=e[0];hy=e[1]}}
         lerp(B.head.rotation,"x",hx);lerp(B.head.rotation,"y",hy);lerp(B.head.rotation,"z",hz);tick(opp)}
       watchers.forEach(W=>{const B=W.B,ph=W.ph;if(B.torso.userData.y0==null)B.torso.userData.y0=B.torso.position.y;B.torso.position.y=B.torso.userData.y0+.015*Math.sin(s*1.7+ph);
-        B.bot.rotation.z=.03*Math.sin(s*.6+ph);R(B,0,.35,0,-.15);R(B,1,.35,0,.15);if(W.chin)R(B,1,-2.2,-.45,.7);
+        B.head.rotation.z=.03*Math.sin(s*.6+ph);   /* 開發者 11/15「紅圈處會一直旋轉」：原本整個身體左右晃，從上面看腰帶那根深色直條像蹺蹺板一直轉；改成只有頭微微歪，身體不晃 */
+        R(B,0,.35,0,-.15);R(B,1,.35,0,.15);if(W.chin)R(B,1,-2.2,-.45,.7);
         lerp(B.head.rotation,"x",.42+.06*Math.sin(s*.5+ph));lerp(B.head.rotation,"y",.15*Math.sin(s*.3+ph));
         if(W.react>0){W.react-=t;R(B,0,-.5,0,-1.3);R(B,1,-.5,0,1.3);B.bot.rotation.x=-.14*Math.min(1,W.react*2)}else if(B.bot.rotation.x)B.bot.rotation.x=0;   /* 11/10 絕殺驚呼：被將軍時舉手往前傾 */
         W.blinkT-=t;const bl=W.blinkT<0;if(W.blinkT<-.12)W.blinkT=2+Math.random()*3;try{XQBot3D.faceApply(B,W.chin?"flat":"smile",bl,false)}catch(e){}});
