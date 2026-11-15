@@ -1613,7 +1613,7 @@ html[data-lefty] .tskip{right:auto;left:14px}
       if(!window.caches)return go();caches.keys().then(function(ks){return Promise.all(ks.filter(function(k){return k.indexOf("xqlab-app-")===0}).map(function(k){return caches.delete(k)}))})
         .then(function(){return navigator.serviceWorker&&navigator.serviceWorker.getRegistration()}).then(function(r){return r&&r.update()}).catch(function(){}).then(go)}};setTimeout(chk,4000)})();
 </script>
-<script>window.XQ_OFFLINE=true;window.XQ_BUILD="20261115-2156";</script>
+<script>window.XQ_OFFLINE=true;window.XQ_BUILD="20261115-2323";</script>
 <script src="core.js"></script>
 <script src="engine.js"></script>
 <script src="local.js"></script>
@@ -10935,7 +10935,9 @@ const GX_LIST=[
   {id:"tengshe",n:"騰蛇",t:"騰蛇・陷星幻影",c:"#2E9E5B",rule:"陷阱局：棋盤上藏著陷阱",off:1,p:[42.9,62.7,42.8,69.6]},
   {id:"beichen",n:"北辰",t:"北辰・不滅幻影",c:"#F7D774",c2:"#05040A",rule:"不滅局：要將死他兩次——第一次只破了星核，他會帶著全新的一軍、強一級重來",goal:"連贏兩盤",say:"十三億次推演，你終於來了。",seal:"北辰的星核，還在跳。",twice:1,p:[49.8,48.5,50.4,61.6]}];
 const GX_ORD=["ziyuan","taisu","tianyuan","yaoguang","kaiyang","yuxiu","quanxing","gouchen","beichen"],GX_DOCK={3:3,6:6,8:9};
-const GX_TXT={gate:"裂痕剝落，十三點微光在深淵中重組。",invite:"這門，我好像替你開過。",open:"十三點星光，排成未完棋譜。",pick:"選一顆吧，別選我算過的。",go:"落子入門",stay:"先走此局",enter:"星槎折返，卻抵達更遠處。",win:"這一敗，竟不在舊譜。",lose:"無妨，你會回到這步。",all:"第十四顆，尚未落子。",ship:"黑洞歸來，星槎多了一道無名星門。",mirror:"這一局，是你自己算出來的。"};
+const GX_TXT={gate:"裂痕剝落，十三點微光在深淵中重組。",invite:"這門，我好像替你開過。",open:"十三點星光，排成未完棋譜。",pick:"選一顆吧，別選我算過的。",go:"落子入門",stay:"先走此局",enter:"星槎折返，卻抵達更遠處。",win:"這一敗，竟不在舊譜。",lose:"無妨，你會回到這步。",all:"第十四顆，尚未落子。",ship:"黑洞歸來，星槎多了一道無名星門。",mirror:"這一局，是你自己算出來的。",
+  /* 11/15 星碑共鳴（story/gemini_app/157 Gemini 規劃、開發者選定）：觀星臺的星圖石碑是人間的「錨」——幻影棋客開了門、星槎駛出了路，石碑把星軌定在碑前 */
+  stele:"觸碑生墨，神識已渡星河。",orbit:"十三殘局，皆在星軌之中。",off:"星軌未明，此局尚不可解。",lock:"前陣未破，暗星仍隱深淵。",allp:"諸陣已破，深淵明鏡始現。"};
 const gxGet=id=>GX_LIST.find(g=>g.id===id)||null;
 const gxIs=st=>!!st&&String(st.journey||"").startsWith("gx:");
 /* 開發者 11/12 選「三檔自選＋實測校正」（story/128：Gemini、ChatGPT 規劃，模型照 ChatGPT）：
@@ -11062,14 +11064,112 @@ function gxMap(o){o=o||{};gxCss();vibrate(8);const old=document.querySelector(".
   document.body.append(ov);const close=()=>{ov.remove()};   /* hspx 開發者 11/12（截圖圈右上角「先走此局」）：右上角那顆其實是離開星門，卻寫成劇情文案「先走此局」，看起來像「開始這一局」，又跟卡片裡的同名鍵重複（卡片裡那顆還被擠成直排）→ 右上角改成 ✕（44×44、螢幕報讀念「離開幻譜星門」），卡片裡的拿掉 */
   ov.querySelector(".gx-x").onclick=()=>{vibrate(5);close()};
   const card=ov.querySelector("#gxCard"),pick=id=>{vibrate(5);ov.querySelectorAll(".gx-st,.gx-14").forEach(b=>b.classList.toggle("sel",b.dataset.gx===id));
-    if(id==="mirror"){card.innerHTML=`<h3>第十四顆・鏡像</h3><p>${esc(GX_TXT.all)}</p><p>這一盤你執黑；對面照你自己最常贏的開局走前兩步，再用全力跟你下。</p><div class="gx-btns"><button class="gx-go" type="button">${esc(GX_TXT.go)}</button></div>`}
-    else{const g=gxGet(id),lk=gxLock(id),dn=S[id];card.innerHTML=`<h3>${esc(g.t)}</h3><p>${esc(g.rule)}</p>${g.goal?`<p>勝利條件：${esc(g.goal)}</p>`:""}${g.say?`<p style="font-style:italic">「${esc(g.say)}」</p>`:""}<p class="muted" style="color:#a99f88;font-size:13px">${dn?"✦ 已得"+esc((GX_MODES[dn.t!=null?dn.t:1]||GX_MODES[1])[3])+"，可以再挑戰更高一檔":lk?"🔒 "+esc(lk):"不計積分、不扣分"}</p>`+
-      `<div class="gx-btns">${GX_MODES.map(([k,l,d,seal])=>`<button class="gx-go" type="button" data-m="${k}"${lk?" disabled":""} aria-label="${esc(l)}：電腦${d?(d>0?"強":"弱")+Math.abs(d)+"級":"跟你差不多"}，過關得${esc(seal)}">${esc(l)}<small style="display:block;font-size:11px;opacity:.8">${esc(seal)}</small></button>`).join("")}</div>`}
-    card.querySelectorAll(".gx-go").forEach(go=>go.onclick=()=>{if(go.disabled)return;close();toast("🌌 "+GX_TXT.enter);setTimeout(()=>gxStart(id,false,go.dataset.m),300)})};   /* 三檔：data-m＝easy／std／hard；鏡像那顆沒有 data-m，照上次的檔 */
+    card.innerHTML=gxCardHtml(id,S);gxCardGo(card,id,close)};
   ov.querySelectorAll("[data-gx]").forEach(b=>b.onclick=()=>pick(b.dataset.gx));if(o.pick)pick(o.pick)}
+/* 選了一顆星之後說明卡的內容與三顆難度鍵（橫幅星圖和 11/15 的滿版環景 07gxp 共用）。
+   11/15 星碑共鳴的文案：星軌未通的星、前一位還沒打贏的星，引言換成一句批註（GX_TXT.off／lock） */
+function gxCardHtml(id,S){
+  if(id==="mirror")return`<h3>第十四顆・鏡像</h3><p>${esc(GX_TXT.all)}</p><p>這一盤你執黑；對面照你自己最常贏的開局走前兩步，再用全力跟你下。</p><div class="gx-btns"><button class="gx-go" type="button">${esc(GX_TXT.go)}</button></div>`;
+  const g=gxGet(id),lk=gxLock(id),dn=S[id],say=g.off?GX_TXT.off:lk&&!dn?GX_TXT.lock:g.say||"";   /* 還沒輪到的主宰先不開口：換成一句批註 */
+  return`<h3>${esc(g.t)}</h3><p>${esc(g.rule)}</p>${g.goal?`<p>勝利條件：${esc(g.goal)}</p>`:""}${say?`<p style="font-style:italic">「${esc(say)}」</p>`:""}<p class="muted" style="color:#a99f88;font-size:13px">${dn?"✦ 已得"+esc((GX_MODES[dn.t!=null?dn.t:1]||GX_MODES[1])[3])+"，可以再挑戰更高一檔":lk?"🔒 "+esc(lk):"不計積分、不扣分"}</p>`+
+    `<div class="gx-btns">${GX_MODES.map(([k,l,d,seal])=>`<button class="gx-go" type="button" data-m="${k}"${lk?" disabled":""} aria-label="${esc(l)}：電腦${d?(d>0?"強":"弱")+Math.abs(d)+"級":"跟你差不多"}，過關得${esc(seal)}">${esc(l)}<small style="display:block;font-size:11px;opacity:.8">${esc(seal)}</small></button>`).join("")}</div>`}
+function gxCardGo(card,id,close){card.querySelectorAll(".gx-go").forEach(go=>go.onclick=()=>{if(go.disabled)return;close();toast("🌌 "+GX_TXT.enter);setTimeout(()=>gxStart(id,false,go.dataset.m),300)})}   /* 三檔：data-m＝easy／std／hard；鏡像那顆沒有 data-m，照上次的檔 */
 /* 星槎圖上的「🌌 幻譜星門」熱點（07f Voyage 畫完叫）：第一次出現先說旁白 */
 function gxShipHs(v){if(!gxOpen())return;const hl=v.querySelector(".shp-hl");if(!hl||hl.querySelector("[data-gxhs]"))return;const b=document.createElement("button");b.className="shp-hs";b.dataset.gxhs="1";b.type="button";b.style.cssText="left:30%;top:12%";b.textContent="🌌 幻譜星門";
   b.onclick=()=>{vibrate(5);if(!store.get("gxShip",0)){store.set("gxShip",1);modal(`<div class="em">🌌</div><h2>幻譜星門</h2><p class="pl-say">✦ ${esc(GX_TXT.ship)}</p>`,[["推開星門",()=>gxMap()],["先不要",null,true]],"prolog");return}gxMap()};hl.append(b)}
+/* ================= 幻譜星門・滿版環景的選星頁（開發者 11/15；前綴 gxp／GXP，全域先 grep 過沒撞名）=================
+   開發者 11/15（手機選星頁截圖）：「重新繪製滿版環景的幻譜星門讓玩家選」。原本是一張橫幅星圖放在直式畫面上面四分之一，下面一大片空的黑底。
+   規劃 story/gemini_app/157（Gemini），開發者選：構圖「深淵凌空」（浮在星門口，整個畫面都是水墨星門）、背景與星球分開。
+   畫面：直式（寬 ÷ 高 小於 0.9）時，整個畫面是一圈左右相連的水墨環景（data/gxgate/pano.webp，1752×1376，Gemini 畫三張直幅、tools/gx_gate_pano.py 接成一圈），
+     高度填滿、左右拖曳繞一圈。星球是各自一張去背圖（data/gxgate/<代號>.webp，沿用舊星圖的畫，tools/gx_gate_planets.py），由這裡疊上去：
+     已得星印＝金色光圈、下一顆要打的＝紫色呼吸光、前一位還沒打贏＝稍暗帶鎖、星軌未通＝灰暗。北辰就是背景上的黑洞；九個全破後，黑洞正對面多一顆「鏡像」。
+     順序：從黑洞往右繞一圈——紫淵、太素、天垣、搖光、（對面）、開陽、玉宿、權星、勾陳，最後回到黑洞口的北辰；星軌未通的四顆在下排。
+     上面是標題與關閉鍵，下面是一排位置小點（只是指示，不能點）與說明卡（內容、三顆難度鍵跟橫幅版同一份：07gx gxCardHtml／gxCardGo）。
+   橫向、平板橫放、電腦（寬 ÷ 高 0.9 以上）照舊用橫幅星圖；環景圖載不到（離線又沒存過）也退回橫幅星圖。
+   做法：包住 07gx 的 gxMap（呼叫的地方都不用改）。純計算 gxpOn／gxpGeom／gxpSx／gxpDelta／gxpNext／gxpIds 不碰 DOM，測試 xiangqi-lab/tools/test-gx-gatepano.js 用 vm 跑 */
+const GXP_ON=true,GXP_V="1115";   /* 圖的版本：同檔名換圖時改掉，手機才會重抓 */
+const GXP_W=1752,GXP_H=1376,GXP_K=1.3;   /* 環景一圈的寬高（像素）；星球畫得比原圖大 1.3 倍，好認也好點 */
+/* 每顆星在環景圖上的位置：[球心 x, 球心 y, 去背圖寬, 去背圖高, 球半徑]（像素；北辰＝黑洞，沒有去背圖，半徑是金色光環） */
+const GXP_P={ziyuan:[1080,350,248,248,55],taisu:[1290,600,100,100,44],tianyuan:[1500,360,268,268,49],yaoguang:[1670,640,90,90,39],
+  kaiyang:[130,560,152,110,40],yuxiu:[300,330,96,96,42],quanxing:[480,600,90,90,39],gouchen:[610,350,114,114,51],beichen:[824,683,0,0,96],
+  jiyue:[1110,780,84,84,36],xuanbing:[1460,790,102,102,45],shuchen:[330,780,102,102,45],tengshe:[600,790,84,84,36],mirror:[1745,420,112,112,50]};
+const gxpRM=()=>{try{return matchMedia("(prefers-reduced-motion: reduce)").matches}catch(e){return false}};
+/* 用環景版？直式而且夠高 */
+const gxpOn=(vw,vh)=>GXP_ON&&vh>=480&&vw>0&&vw/vh<.9;
+const gxpGeom=(vw,vh)=>{const sc=vh/GXP_H;return{sc,W:GXP_W*sc,vw,vh}};
+/* 星球球心在畫面上的 x：X＝畫面左緣在環景上的位置；一圈只畫一顆，快要從左邊滑進來時（距離一圈的尾巴不到 m）就先擺到左邊外面 */
+const gxpSx=(px,X,G,m)=>{let d=((px*G.sc-X)%G.W+G.W)%G.W;if(d>G.W-m)d-=G.W;return d};
+const gxpCenter=(id,G)=>{const p=GXP_P[id];return p?p[0]*G.sc-G.vw/2:0};
+const gxpDelta=(from,to,W)=>((to-from+W/2)%W+W)%W-W/2;   /* 環上最短的那一段（正＝往右） */
+/* 下一顆要打的：照解鎖順序第一顆還沒拿到星印、也沒被鎖住的；都拿到了＝鏡像（九個全破）或北辰 */
+function gxpNext(S,all){for(const id of GX_ORD)if(!S[id]&&!gxLock(id))return id;return all?"mirror":"beichen"}
+const gxpIds=all=>GX_ORD.concat(GX_LIST.filter(g=>g.off).map(g=>g.id),all?["mirror"]:[]);
+function gxpCss(){if(document.getElementById("gxpCss"))return;const s=document.createElement("style");s.id="gxpCss";s.textContent=`
+.gx-ov.gxp{display:block;overflow:hidden;background:#0b0d1c}
+.gxp-sky{position:absolute;inset:0;overflow:hidden;background:#0b0d1c 0 0/auto 100% repeat-x;touch-action:none;cursor:grab}
+.gxp-p{position:absolute;left:0;top:0;border:0;background:none;padding:0;margin:0;border-radius:50%;display:flex;align-items:center;justify-content:center;-webkit-tap-highlight-color:transparent;will-change:transform}
+.gxp-i{display:block;position:relative;z-index:1;pointer-events:none;user-select:none;-webkit-user-drag:none}
+.gxp-p::before{content:"";position:absolute;left:50%;top:50%;width:calc(var(--r)*2 + 30px);height:calc(var(--r)*2 + 30px);transform:translate(-50%,-50%);border-radius:50%;pointer-events:none;opacity:0}
+.gxp-p.on::before{opacity:1;background:radial-gradient(closest-side,rgba(255,206,96,0) 62%,rgba(255,206,96,.8) 76%,rgba(255,206,96,0) 100%)}
+.gxp-p.nx::before{opacity:1;background:radial-gradient(closest-side,rgba(160,120,255,0) 60%,rgba(160,120,255,.78) 76%,rgba(160,120,255,0) 100%);animation:gxpNx 2.2s ease-in-out infinite}
+.gxp-p.sel::before{opacity:1;animation:none;background:none;width:calc(var(--r)*2 + 12px);height:calc(var(--r)*2 + 12px);box-shadow:0 0 0 3px #fff,0 0 18px 7px rgba(160,120,255,.85)}
+.gxp-p.off .gxp-i{filter:grayscale(.9) brightness(.55)}.gxp-p.lk .gxp-i{filter:saturate(.55) brightness(.85)}
+.gxp-l{position:absolute;left:50%;top:calc(50% + var(--r) + 3px);transform:translateX(-50%);z-index:2;white-space:nowrap;pointer-events:none;font:900 clamp(15px,4.4vw,19px)/1.2 var(--serif,serif);color:#fff3cf;
+  text-shadow:0 0 2px #05060d,0 0 4px #05060d,0 1px 3px #05060d,1px 0 0 #05060d,-1px 0 0 #05060d,0 -1px 0 #05060d}
+.gxp-p.on .gxp-l{color:#ffd76a}.gxp-p.off .gxp-l{color:#b9b3a6}.gxp-l i{font-style:normal;font-size:.8em;margin-left:3px}
+@keyframes gxpNx{0%,100%{transform:translate(-50%,-50%) scale(.94);opacity:.55}50%{transform:translate(-50%,-50%) scale(1.06);opacity:1}}
+@media (prefers-reduced-motion:reduce){.gxp-p.nx::before{animation:none}}
+.gxp-top{position:absolute;left:0;right:0;top:0;z-index:3;padding-bottom:22px;pointer-events:none;background:linear-gradient(rgba(5,6,13,.94),rgba(5,6,13,.62) 62%,rgba(5,6,13,0))}
+.gxp-top .gx-x{pointer-events:auto}.gxp-top .gx-say{margin-bottom:0}
+.gxp-bot{position:absolute;left:0;right:0;bottom:0;z-index:3;pointer-events:none;background:linear-gradient(rgba(5,6,13,0),rgba(5,6,13,.72) 46%)}
+.gxp-bot .gx-card{pointer-events:auto;max-height:44vh;overflow:auto;margin-top:2px}
+.gxp-dots{display:flex;justify-content:center;gap:9px;padding:10px 6px 6px}
+.gxp-d{width:8px;height:8px;border-radius:50%;background:rgba(241,231,207,.55);box-shadow:0 0 0 1.5px rgba(5,6,13,.85);transition:transform .15s}
+.gxp-d.on{background:#ffd76a}.gxp-d.off{background:rgba(140,134,120,.6)}.gxp-d.nx{background:#b58cff}.gxp-d.cur{transform:scale(1.75)}.gxp-d.sel{box-shadow:0 0 0 2px #fff}`;document.head.append(s)}
+/* 一顆星的按鈕（S 星印、nxt 下一顆要打的） */
+function gxpStar(id,S,nxt){const mir=id==="mirror",g=mir?{n:"第十四顆",t:"第十四顆・鏡像"}:gxGet(id),lk=mir?"":gxLock(id),dn=!mir&&!!S[id],p=GXP_P[id];
+  const cls=(dn?" on":g.off?" off":lk?" lk":"")+(id===nxt?" nx":"");
+  return`<button class="gxp-p${cls}" type="button" data-gx="${id}" aria-label="${esc(g.t)}${dn?"，已得星印":lk?"，"+esc(lk):""}">${p[2]?`<img class="gxp-i" src="data/gxgate/${id}.webp?v=${GXP_V}" alt="" draggable="false">`:""}<span class="gxp-l">${esc(g.n)}${dn?"<i>✦</i>":lk&&!g.off?"<i>🔒</i>":""}</span></button>`}
+function gxpMap(o,flat){o=o||{};gxCss();gxpCss();vibrate(8);const old=document.querySelector(".gx-ov");if(old)old.remove();
+  const S=gxSeals(),all=gxAllDone(),ids=gxpIds(all),nxt=gxpNext(S,all),ov=document.createElement("div");ov.className="gx-ov gxp";ov.setAttribute("role","dialog");ov.setAttribute("aria-label","幻譜星門・十三星系");ov.tabIndex=-1;
+  const first=!store.get("gxSeen",0);store.set("gxSeen",1);
+  const say=o.from==="orb"?`✦ ${esc(first?GX_TXT.gate:GX_TXT.open)}<br>幻影棋客：「${esc(GX_TXT.invite)}」`:`✦ ${esc(all?GX_TXT.allp:o.from==="stele"?GX_TXT.orbit:GX_TXT.open)}`;
+  ov.innerHTML=`<div class="gxp-top"><div class="gx-top"><b>🌌 幻譜星門</b><button class="gx-x" type="button" aria-label="離開幻譜星門">✕</button></div><p class="gx-say">${say}</p></div>`+
+    `<div class="gxp-sky">${ids.map(id=>gxpStar(id,S,nxt)).join("")}</div>`+
+    `<div class="gxp-bot"><div class="gxp-dots" aria-hidden="true">${ids.map(id=>`<span class="gxp-d${S[id]?" on":(gxGet(id)||{}).off?" off":id===nxt?" nx":""}" data-gx="${id}"></span>`).join("")}</div>`+
+    `<div class="gx-card" id="gxCard"><p>幻影棋客：「${esc(GX_TXT.pick)}」</p><p class="muted" style="color:#a99f88;font-size:13px">左右拖曳繞一圈，點一顆星看看。打贏一位主宰，下一顆星就會亮。</p></div></div>`;
+  document.body.append(ov);
+  const sky=ov.querySelector(".gxp-sky"),btns=[...sky.querySelectorAll(".gxp-p")],dots=[...ov.querySelectorAll(".gxp-d")],card=ov.querySelector("#gxCard"),RM=gxpRM();
+  let G=gxpGeom(1,1),X=0,drag=null,moved=false,vx=0,raf=0,cur=null,shut=false;
+  const size=()=>{G=gxpGeom(ov.clientWidth||innerWidth,ov.clientHeight||innerHeight);
+    for(const b of btns){const p=GXP_P[b.dataset.gx],k=G.sc*(p[2]?GXP_K:1),r=p[4]*k,w=Math.max(p[2]*k,r*2,56),h=Math.max(p[3]*k,r*2,56);
+      b.style.width=w+"px";b.style.height=h+"px";b.style.setProperty("--r",r+"px");b._w=w;b._h=h;b._y=p[1]*G.sc;const im=b.querySelector(".gxp-i");if(im){im.style.width=p[2]*k+"px";im.style.height=p[3]*k+"px"}}};
+  const lay=()=>{const m=190*G.sc*GXP_K;sky.style.backgroundPositionX=(-X)+"px";let best=null,bd=1e9;
+    for(const b of btns){const x=gxpSx(GXP_P[b.dataset.gx][0],X,G,m);b.style.transform=`translate3d(${x-b._w/2}px,${b._y-b._h/2}px,0)`;const d=Math.abs(x-G.vw/2);if(d<bd){bd=d;best=b.dataset.gx}}
+    for(const d of dots)d.classList.toggle("cur",d.dataset.gx===best)};
+  const setX=x=>{X=((x%G.W)+G.W)%G.W;lay()},stop=()=>{cancelAnimationFrame(raf);raf=0};
+  const glide=()=>{if(shut||Math.abs(vx)<.02){raf=0;return}setX(X-vx*16);vx*=.94;raf=requestAnimationFrame(glide)};
+  const slide=(d,smooth)=>{stop();if(!smooth||RM||Math.abs(d)<2){setX(X+d);return}const x0=X,t0=performance.now();
+    const st=now=>{if(shut)return;const u=Math.min(1,(now-t0)/380),e=1-Math.pow(1-u,3);setX(x0+d*e);raf=u<1?requestAnimationFrame(st):0};raf=requestAnimationFrame(st)};
+  const goTo=(id,smooth)=>slide(gxpDelta(X,gxpCenter(id,G),G.W),smooth);
+  const mv=e=>{if(!drag||e.pointerId!==drag.id)return;const dx=e.clientX-drag.x;if(!moved&&Math.abs(dx)<8)return;moved=true;const now=performance.now(),dt=now-drag.lt;if(dt>0)vx=Math.max(-2.5,Math.min(2.5,.7*vx+.3*((e.clientX-drag.lx)/dt)));drag.lx=e.clientX;drag.lt=now;setX(drag.X0-dx)};
+  const up=e=>{if(!drag||e.pointerId!==drag.id)return;drag=null;if(moved){if(!RM&&Math.abs(vx)>.05)raf=requestAnimationFrame(glide);setTimeout(()=>{moved=false},0)}};
+  const rs=()=>{if(shut)return;const vw=ov.clientWidth||innerWidth,vh=ov.clientHeight||innerHeight;if(!gxpOn(vw,vh)){close();gxMap(Object.assign({},o,{pick:cur||o.pick}));return}const c=cur||dots.filter(d=>d.classList.contains("cur")).map(d=>d.dataset.gx)[0]||nxt;size();stop();setX(gxpCenter(c,G))};
+  const key=e=>{if(e.key==="Escape"){e.preventDefault();close()}else if(e.key==="ArrowRight"||e.key==="ArrowLeft"){e.preventDefault();slide((e.key==="ArrowRight"?1:-1)*G.vw*.5,true)}};
+  const close=()=>{if(shut)return;shut=true;stop();removeEventListener("pointermove",mv);removeEventListener("pointerup",up);removeEventListener("pointercancel",up);removeEventListener("resize",rs);ov.remove()};
+  sky.addEventListener("pointerdown",e=>{if(e.button)return;stop();drag={x:e.clientX,X0:X,lx:e.clientX,lt:performance.now(),id:e.pointerId};moved=false;vx=0});
+  addEventListener("pointermove",mv);addEventListener("pointerup",up);addEventListener("pointercancel",up);addEventListener("resize",rs);
+  sky.addEventListener("click",e=>{if(moved){e.stopPropagation();e.preventDefault()}},true);   /* 拖曳放手不算點到星 */
+  sky.addEventListener("wheel",e=>{e.preventDefault();stop();setX(X+(Math.abs(e.deltaX)>Math.abs(e.deltaY)?e.deltaX:e.deltaY))},{passive:false});
+  ov.addEventListener("keydown",key);
+  ov.querySelector(".gx-x").onclick=()=>{vibrate(5);close()};
+  const pick=(id,move)=>{vibrate(5);cur=id;for(const b of btns)b.classList.toggle("sel",b.dataset.gx===id);for(const d of dots)d.classList.toggle("sel",d.dataset.gx===id);card.innerHTML=gxCardHtml(id,S);gxCardGo(card,id,close);if(move!==false)goTo(id,true)};
+  for(const b of btns){b.onclick=()=>pick(b.dataset.gx);b.addEventListener("focus",()=>{try{if(!drag&&b.matches(":focus-visible"))goTo(b.dataset.gx,true)}catch(e){}})}   /* 用鍵盤走到一顆星＝轉過去看它 */
+  size();setX(gxpCenter(o.pick||nxt,G));if(o.pick)pick(o.pick,false);
+  /* 背景先載好再換上（還沒到之前是深色底，星球先在）；載不到（離線又沒存過）＝退回橫幅星圖 */
+  const src=`data/gxgate/pano.webp?v=${GXP_V}`,im0=new Image();im0.onload=()=>{if(shut)return;sky.style.backgroundImage=`url("${src}")`;ov.classList.add("rdy")};im0.onerror=()=>{if(shut)return;close();flat(o)};im0.src=src}
+/* 包住 07gx 的 gxMap：直式用環景版，其他照舊 */
+if(typeof gxMap==="function"){const gxpF0=gxMap;gxMap=function(o){let on=false;try{on=gxpOn(innerWidth,innerHeight)}catch(e){}if(!on)return gxpF0.apply(this,arguments);try{return gxpMap(o,gxpF0)}catch(e){try{const x=document.querySelector(".gx-ov.gxp");if(x)x.remove()}catch(_){}return gxpF0.apply(this,arguments)}}}
 /* ---------- 黑洞・陣地塔防 v0.1（開發者 11/13 定案：story/新手體驗定案_141_兩輪討論.md 第十～十九節；十八招 story/七星十八招_合併審查.md）----------
    只在黑洞局（journey "bh:td<關>"）生效；序局 bh:xu、其他對局完全不受影響。前綴 bhtd／BHTD（全域先 grep 過沒撞名）。
    分兩塊：
@@ -19731,7 +19831,52 @@ function gxtExPos(P){const s=P.querySelector(".ex-spot");if(!s)return;if(!s.id)s
 const gxtBhLock=()=>{try{return typeof dglBhLock==="function"&&dglBhLock()}catch(e){return false}};
 const gxtBhMsg=()=>{try{return typeof dglBhLockMsg==="function"?dglBhLockMsg():"定軌力用完了，黑洞入口先關著"}catch(e){return"定軌力用完了，黑洞入口先關著"}};
 function gxtTd(){if(gxtBhLock()){toast("🌫 "+gxtBhMsg());return}try{sessionStorage.setItem("gxtFrom","1")}catch(e){}if(typeof bhtdOpen==="function")bhtdOpen();else toast("🌌 "+GXT_OFF)}
-const GXT_ACT={gxtTd:gxtTd,gxtGx:()=>{if(typeof gxMap==="function")gxMap();else toast("🌌 "+GXT_OFF)},gxtSky:()=>{if(typeof dglXiuSheet==="function")dglXiuSheet();else toast("🌌 "+GXT_OFF)}};
+/* ---------- 星碑共鳴：從星圖石碑進幻譜星門的過場（開發者 11/15）----------
+   開發者：「請 gemini 規劃觀星臺有什麼神秘的力量，可以直接通聯或前往 13 星系」→ 規劃 story/gemini_app/157，他選「星碑共鳴」，過場「直接做完整版」。
+   設定：幻影棋客開了門、星槎駛出了路，觀星臺的星圖石碑是人間的「錨」；碰了石碑，神識順著天頂黑洞的光柱進幻譜星門，肉身留在臺上。
+   完整版（約 4.9 秒）：碑上星點亮起 → 金光從碑腳沿地面匯到渾儀腳下、再沿光柱衝上天頂 → 視角跟著衝進黑洞 → 潑墨蓋滿畫面、一句「觸碑生墨，神識已渡星河。」→ 墨散開就是選星頁。
+   簡化版（約 1.5 秒）：墨色淡入、那一句、淡出。系統設「減少動態」的人，或這次開 App 已經看過完整版（sessionStorage gxtGateFx），就用簡化版。過場中點一下畫面＝跳過。
+   全部疊在一層蓋住畫面的 .gxt-fx 上（場景用一張替身圖放大，不動原本的頁面）；過場中離開這一頁＝收掉、不開星門。時間表 gxtGatePlan 是純計算，測試用 vm 跑 */
+const GXT_GATE={p:{st:[18,43],ft:[18,58],mid:[50,65],bh:[50,8]},w:{st:[40,44],ft:[40,58],mid:[50,66],bh:[50,12]}};   /* 場景圖上的位置（%）：碑上星圖、碑腳、渾儀腳下、天頂黑洞（直幅量 gx_tai、寬版量 gx_tai_w） */
+const gxtRM=()=>{try{return matchMedia("(prefers-reduced-motion: reduce)").matches}catch(e){return false}};
+const gxtGatePlan=(rm,seen)=>rm||seen?{kind:"lite",ink:0,say:260,open:950,end:1500}:{kind:"full",beam:700,rise:1800,ink:2650,say:3250,open:4200,end:4900};   /* 各段開始的時間（毫秒） */
+function gxtGateCss(){if(document.getElementById("gxtGateCss"))return;const s=document.createElement("style");s.id="gxtGateCss";s.textContent=`
+.gxt-fx{position:fixed;inset:0;z-index:9600;overflow:hidden;touch-action:none}
+.gxt-fx-s{position:absolute;background-size:100% 100%;opacity:0;will-change:transform}
+.gxt-fx-d{position:absolute;width:7px;height:7px;margin:-3.5px;border-radius:50%;background:#ffe9a8;box-shadow:0 0 8px 3px rgba(255,206,96,.9);opacity:0}
+.gxt-fx svg{position:absolute;inset:0;width:100%;height:100%}
+.gxt-fx-k{position:absolute;border-radius:50%;background:radial-gradient(closest-side,#05060d 58%,rgba(5,6,13,.85) 70%,rgba(5,6,13,0) 100%);transform:translate(-50%,-50%) scale(0)}
+.gxt-fx-b{position:absolute;inset:0;background:#05060d;opacity:0}
+.gxt-fx-t{position:absolute;left:0;right:0;top:44%;text-align:center;padding:0 20px;font:900 clamp(19px,5.6vw,26px)/1.5 var(--serif,serif);color:#ffe08a;letter-spacing:.12em;opacity:0;text-shadow:0 0 12px rgba(255,206,96,.5)}`;document.head.append(s)}
+function gxtGate(){if(typeof gxMap!=="function"){toast("🌌 "+GXT_OFF);return}
+  const P=document.querySelector(".gxt-page"),im=P&&P.querySelector(":scope>img"),open=()=>gxMap({from:"stele"});
+  if(!P||!im||gxtGate.busy||typeof document.body.animate!=="function"){open();return}
+  let seen=false;try{seen=sessionStorage.getItem("gxtGateFx")==="1";sessionStorage.setItem("gxtGateFx","1")}catch(e){}
+  const T=gxtGatePlan(gxtRM(),seen),C=GXT_GATE[P.dataset.gxt?"w":"p"],R=im.getBoundingClientRect(),pt=a=>[R.left+R.width*a[0]/100,R.top+R.height*a[1]/100],st=pt(C.st),ft=pt(C.ft),mid=pt(C.mid),bh=pt(C.bh);
+  const D=Math.hypot(innerWidth,innerHeight),tm=[],line=typeof GX_TXT!=="undefined"&&GX_TXT.stele||"觸碑生墨，神識已渡星河。";let opened=false,done=false,h="";
+  gxtGateCss();gxtGate.busy=true;const fx=document.createElement("div");fx.className="gxt-fx";fx.setAttribute("aria-hidden","true");
+  if(T.kind==="full"){h+=`<div class="gxt-fx-s" style="left:${R.left}px;top:${R.top}px;width:${R.width}px;height:${R.height}px;background-image:url('${im.currentSrc||im.src}');transform-origin:${C.bh[0]}% ${C.bh[1]}%"></div>`;
+    for(let i=0;i<7;i++){const a=i/7*Math.PI*2,r=R.width*(.018+.022*((i*37)%10)/10);h+=`<i class="gxt-fx-d" style="left:${st[0]+Math.cos(a)*r}px;top:${st[1]+Math.sin(a)*r}px"></i>`}
+    h+=`<svg><path d="M${ft[0]} ${ft[1]} L${mid[0]} ${mid[1]} L${bh[0]} ${bh[1]}" pathLength="1" fill="none" stroke="#ffe08a" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" stroke-dasharray="1" stroke-dashoffset="1" style="filter:drop-shadow(0 0 6px rgba(255,206,96,.95))"/></svg>`;
+    for(let i=0;i<5;i++)h+=`<i class="gxt-fx-k" style="left:${bh[0]+(i%2?1:-1)*D*.05*i}px;top:${bh[1]+D*.07*i}px;width:${D*(1.1+.35*i)}px;height:${D*(1.1+.35*i)}px"></i>`}
+  fx.innerHTML=h+`<div class="gxt-fx-b"></div><div class="gxt-fx-t">${esc(line)}</div>`;document.body.append(fx);
+  const q=s=>fx.querySelector(s),qa=s=>[...fx.querySelectorAll(s)],A=(el,kf,o)=>{try{return el.animate(kf,Object.assign({fill:"forwards",easing:"ease"},o))}catch(e){return null}};
+  const at=(ms,f)=>tm.push(setTimeout(()=>{if(!done)try{f()}catch(e){}},ms));
+  const end=()=>{tm.forEach(clearTimeout);removeEventListener("hashchange",bail);fx.remove();gxtGate.busy=false};
+  const bail=()=>{if(done)return;done=true;end()};   /* 過場中離開這一頁＝收掉，不開星門 */
+  const finish=fast=>{if(done)return;done=true;const a=A(fx,[{opacity:1},{opacity:0}],{duration:fast?180:T.end-T.open,easing:"ease-out"});if(a&&a.finished)a.finished.then(end,end);else end()};
+  const doOpen=()=>{if(opened)return;opened=true;try{open()}catch(e){}};
+  addEventListener("hashchange",bail);fx.onclick=()=>{vibrate(5);doOpen();finish(true)};   /* 點一下＝跳過 */
+  if(T.kind==="full"){
+    qa(".gxt-fx-d").forEach((d,i)=>A(d,[{opacity:0,transform:"scale(.3)"},{opacity:1,transform:"scale(1.25)",offset:.6},{opacity:.85,transform:"scale(1)"}],{duration:420,delay:i*85}));
+    at(T.beam,()=>A(q("path"),[{strokeDashoffset:1},{strokeDashoffset:0}],{duration:T.rise-T.beam,easing:"cubic-bezier(.5,0,.3,1)"}));
+    at(T.rise,()=>{const s=q(".gxt-fx-s");A(s,[{opacity:0},{opacity:1}],{duration:140});A(s,[{transform:"scale(1)"},{transform:"scale(7)"}],{duration:T.ink-T.rise+350,easing:"cubic-bezier(.6,0,.9,.5)"});
+      qa(".gxt-fx-d").forEach(d=>A(d,[{opacity:.85},{opacity:0}],{duration:200}));A(q("svg"),[{opacity:1},{opacity:0}],{duration:500,delay:250})});
+    at(T.ink,()=>{qa(".gxt-fx-k").forEach((k,i)=>A(k,[{transform:"translate(-50%,-50%) scale(0)"},{transform:"translate(-50%,-50%) scale(1)"}],{duration:520,delay:i*70,easing:"cubic-bezier(.2,.7,.3,1)"}));A(q(".gxt-fx-b"),[{opacity:0},{opacity:1}],{duration:380,delay:330})})}
+  else at(T.ink,()=>A(q(".gxt-fx-b"),[{opacity:0},{opacity:1}],{duration:240}));
+  at(T.say,()=>A(q(".gxt-fx-t"),[{opacity:0,transform:"translateY(6px)"},{opacity:1,transform:"none"}],{duration:420}));
+  at(T.open,()=>{doOpen();finish(false)})}
+const GXT_ACT={gxtTd:gxtTd,gxtGx:()=>gxtGate(),gxtSky:()=>{if(typeof dglXiuSheet==="function")dglXiuSheet();else toast("🌌 "+GXT_OFF)}};
 function GxtPage(v){setTop("🔭 觀星臺","#/");setTabs(true,"#/");v.className="view";
   if(!gxtOpen()){toast("🔭 觀星臺還沒出現");navReplace("#/");return{}}
   gxtCss();try{store.set("gxtSeen",1)}catch(e){}

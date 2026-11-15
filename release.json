@@ -1,8 +1,8 @@
 {
- "version": "20261115-2156",
- "checkedAt": "2026-11-15T13:56:50.901Z",
- "html": "5b1d0736c679",
- "sw": "08da6dbfc0f9",
+ "version": "20261115-2323",
+ "checkedAt": "2026-11-15T15:23:36.390Z",
+ "html": "9622b31bdded",
+ "sw": "d976b52b27f7",
  "scripts": 4,
  "modules": {
   "00-util.js": "8c2b1d4f725f",
@@ -26,11 +26,12 @@
   "07f-ship.js": "d5e09e6c808c",
   "07o-shipmore.js": "3e3ebb9d732b",
   "07bh-blackhole.js": "943fff8e62eb",
-  "07gx-galaxy.js": "ff7e8af2c623",
+  "07gx-galaxy.js": "5fe05571e18e",
+  "07gxp-gatepano.js": "77bc897060cb",
   "07bht-td.js": "3c2223ec17ae",
   "07bhtl-tdlearn.js": "f7e849d5aa2b",
   "07bhf-bossfx.js": "8516daf7973e",
-  "07bhg-gatesiege.js": "c9fabf8f98c3",
+  "07bhg-gatesiege.js": "0fdb2c8aca7c",
   "07bhw-wheel.js": "f4eefe6b6583",
   "07dv-devtest.js": "077191672ec5",
   "07dw-perfhud.js": "a3755bd4af6c",
@@ -60,7 +61,7 @@
   "07x-zoom.js": "719656ee2360",
   "07y-hubmap.js": "aab3b113c3f7",
   "07z-homemap.js": "197a9b09b681",
-  "07gxt-guanxing.js": "0a89a246a78d",
+  "07gxt-guanxing.js": "a010580da27d",
   "07dgl-stamina.js": "74aee6ed1f1d",
   "07xsm-ximarket.js": "1efd4cc82cf4",
   "07xsd-xsmdark.js": "14cf67001b41",
@@ -168,7 +169,7 @@
   {
    "module": "07bhg-gatesiege.js",
    "lines": 112,
-   "sourceModified": "2026-11-15T13:02:47.295Z"
+   "sourceModified": "2026-11-15T14:29:03.435Z"
   },
   {
    "module": "07bhw-wheel.js",
