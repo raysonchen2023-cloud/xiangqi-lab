@@ -1,7 +1,7 @@
 {
  "ref": "origin/main",
- "commit": "4d0a4c07724bb95a76eb53ccd30270cf3b7ad2dd",
- "madeAt": "2026-11-15T11:30:26.200Z",
+ "commit": "a85899de9ed828cdc0c2f25d1cda264d0c5ffcf9",
+ "madeAt": "2026-11-15T11:39:14.251Z",
  "files": {
   "xiangqi-db/m/00-util.js": "local=live",
   "xiangqi-db/m/01-board.js": "local=live",
@@ -169,7 +169,6 @@
   "xiangqi-lab/tools/onboard-funnel.js": "local",
   "xiangqi-lab/tools/oss-scan.js": "local",
   "xiangqi-lab/tools/oss-stage.js": "local",
-  "xiangqi-lab/tools/party-td-bench.js": "local",
   "xiangqi-lab/tools/pikafish-verify.js": "local",
   "xiangqi-lab/tools/preload-list.js": "local",
   "xiangqi-lab/tools/qa/colorblind-scan.js": "local",
@@ -418,6 +417,7 @@
   "m/07dgl-stamina.js",
   "m/07s4-passmap.js",
   "m/07stq-starter.js",
+  "src/park3d.js",
   "src/sw.js"
  ],
  "absentModules": [
@@ -464,7 +464,8 @@
   "test-layout-r16.js": "指令排除：有一項〔混合〕檢查（07y CY_SPOT 首頁 han 與 sanguo 的 44×44 點選範圍重疊）在開發者電腦上同樣失敗（10/11）：測試或座標待開發者處理；其他 10 項通過",
   "test-party.js": "指令排除：七星陸續加入的新功能還在開發者電腦上做，對應的程式還沒發布",
   "test-party-battle.js": "指令排除：七星各自等級的黑洞戰鬥規則還在開發者電腦上做，對應的程式還沒發布",
-  "test-party-core.js": "指令排除：七星陸續加入與各自等級還在開發者電腦上做，對應的模組（07pty-party.js）還沒發布"
+  "test-party-core.js": "指令排除：七星陸續加入與各自等級還在開發者電腦上做，對應的模組（07pty-party.js）還沒發布",
+  "test-party-wood.js": "指令排除：七星改版的木棋靈還在開發者電腦上做，對應的程式還沒發布"
  },
  "version": "20261115-1928",
  "indexSha1": "d33cbfe9906f",
@@ -496,5 +497,10 @@
     "files": 1
    }
   ]
+ },
+ "droppedTools": {
+  "pattern": "xiangqi-lab/tools/party-*",
+  "why": "七星陸續加入與各自等級還在開發者電腦上做，對應的程式還沒發布；這些離線對照工具等那一版發布再公開",
+  "count": 1
  }
 }

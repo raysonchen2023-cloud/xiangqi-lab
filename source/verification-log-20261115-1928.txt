@@ -1,6 +1,6 @@
 《象棋千秋》可重現驗證紀錄（verify-all.js）
 ========================================
-執行時間：2026-11-15T11:30:27.889Z（UTC）＝ 2026-11-15 19:30:27（臺灣時間）
+執行時間：2026-11-15T11:39:16.427Z（UTC）＝ 2026-11-15 19:39:16（臺灣時間）
 Node.js：v24.20.0；作業系統：win32 10.0.26300 x64
 倉庫資料夾：<倉庫資料夾>
 倉庫 commit：（不是 git 檢出；用下面的雜湊對照）
@@ -16,7 +16,7 @@ verify-all.js SHA-256：4204127ad2dd75bb8f95ed79039156af8cc4e52bfabd0ff04890588e
   engine/pikafish.wasm  7fb6fc805a36ced6a55626a9513b7dda821b0bbb5e830fa17f120f1550a9a331  (d568cded4f5b)
   engine/pikafish.js  dd5498bfb76381598d453a612d74e5e1955835452324c4d0b962a64fb44438f7  (77eca54d3204)
   engine/pikafish.nnue  7d13d73569a9b571ba0eb20cf1596247bc2a42738967e61afef6482b231e900e  (3a043e259a72)
-source/ 資料夾：405 個檔，樹雜湊 SHA-256 0120d1bc884916dedd30632a063c232da89143c88728f130b29c983e186e45c8
+source/ 資料夾：404 個檔，樹雜湊 SHA-256 08d585a8faee45f9c4544145096956d32194ca327bbb5be5b66d1b4c646fe6c4
 Pikafish 建置紀錄：<倉庫資料夾>\pikafish-src\build-record.json  SHA-256 489173747f8de4abec4f9dda704538fecb24af4c02f294e57b8f7ead857ad738
 （樹雜湊＝每個檔「相對路徑＋NUL＋SHA-256＋換行」照路徑排序後再算 SHA-256）
 
@@ -64,7 +64,7 @@ Pikafish 建置紀錄：<倉庫資料夾>\pikafish-src\build-record.json  SHA-25
   
   ✔ 全部符合（△ 是照實列出的缺口，不算失敗）
 ----------------------------------------
-第 4 步 run-tests：通過（結束代碼 0，128.9 秒）
+第 4 步 run-tests：通過（結束代碼 0，133.4 秒）
 指令（在倉庫資料夾執行）：node source/run-tests.js
 工具 SHA-256：8bb3d8506adec7c119e694a0620858ecf79d366ccc43368454192fce41f824b9
 輸出：
