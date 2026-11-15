@@ -2372,9 +2372,11 @@
     let TDK="",TDD=30,TDO=[0,0],TDPU=null,TDPAD=[16,2,4,2];const TDE={top:68,tilt:48},TDF={top:38,tilt:44},TDL=new T.Vector3(),TDV=new T.Vector3();
     /* 開發者 11/15（意見回饋 1134）：大棋盤視角下一指在空白處拖曳＝繞著棋盤轉看環景（左右＝繞一圈、上下＝抬高放低），放手 1.5 秒後自動慢慢回到預設視角；預設視角不變
        TDOR.yaw／el：相對預設視角的旋轉、仰角差（弧度）；hold＝手指還按著；rel＝放手的時間；t＝上一格的時間（回正照實際經過時間算，掉格也一樣快） */
-    const TDOR={yaw:0,el:0,hold:0,rel:0,t:0,rm:(()=>{try{return matchMedia("(prefers-reduced-motion: reduce)").matches}catch(e){return false}})()};   /* rm：減少動態＝放手 1.5 秒後直接切回，不滑 */
-    const tdOrbBack=now=>{const dt=Math.min(100,now-(TDOR.t||now));TDOR.t=now;if(TDOR.hold||(!TDOR.yaw&&!TDOR.el))return;if(now-TDOR.rel<1500){pwPoke(100);return}
-      if(TDOR.rm){TDOR.yaw=TDOR.el=0;return}TDOR.yaw-=Math.round(TDOR.yaw/(2*PI))*2*PI;const k=1-Math.exp(-dt/260);TDOR.yaw*=1-k;TDOR.el*=1-k;if(Math.abs(TDOR.yaw)<.002&&Math.abs(TDOR.el)<.002)TDOR.yaw=TDOR.el=0;pwPoke(100)};
+    /* 11/15 hspx「黑洞塔防用手指移動視角的時候也可以放大縮小」：兩指捏合＝拉近拉遠（TDOR.z＝距離倍數，0.55～1.6），跟轉視角一起放手後慢慢回到預設；TDPT＝手指位置（只在塔防鏡頭用） */
+    const TDPT=new Map();
+    const TDOR={yaw:0,el:0,z:1,pin:null,hold:0,rel:0,t:0,rm:(()=>{try{return matchMedia("(prefers-reduced-motion: reduce)").matches}catch(e){return false}})()};   /* rm：減少動態＝放手 1.5 秒後直接切回，不滑 */
+    const tdOrbBack=now=>{const dt=Math.min(100,now-(TDOR.t||now));TDOR.t=now;if(TDOR.hold||(!TDOR.yaw&&!TDOR.el&&TDOR.z===1))return;if(now-TDOR.rel<1500){pwPoke(100);return}
+      if(TDOR.rm){TDOR.yaw=TDOR.el=0;TDOR.z=1;return}TDOR.yaw-=Math.round(TDOR.yaw/(2*PI))*2*PI;const k=1-Math.exp(-dt/260);TDOR.yaw*=1-k;TDOR.el*=1-k;TDOR.z=1+(TDOR.z-1)*(1-k);if(Math.abs(TDOR.yaw)<.002&&Math.abs(TDOR.el)<.002&&Math.abs(TDOR.z-1)<.002){TDOR.yaw=TDOR.el=0;TDOR.z=1}pwPoke(100)};
     const tdBox=(e,d)=>{cam.clearViewOffset();cam.position.set(0,TOP+Math.sin(e)*d,Math.cos(e)*d);cam.up.set(0,1,0);cam.lookAt(TDL.set(0,TOP,0));cam.updateMatrixWorld();cam.updateProjectionMatrix();
       const hf=TOP+GNT_H*FIGK*1.05,P=[];for(const x of[-4.5*GS,4.5*GS]){P.push([x,TOP,5*GS],[x,TOP,-5*GS],[x,hf,-4.5*GS],[x,hf*.5+TOP*.5,4.5*GS])}
       let x0=1e9,x1=-1e9,y0=1e9,y1=-1e9;for(const[x,y,z]of P){TDV.set(x,y,z).project(cam);const px=(TDV.x+1)/2*W,py=(1-TDV.y)/2*H;x0=Math.min(x0,px);x1=Math.max(x1,px);y0=Math.min(y0,py);y1=Math.max(y1,py)}return{x0,x1,y0,y1}};
@@ -2382,12 +2384,12 @@
       for(let k=0;k<26;k++){const m=(lo+hi)/2;if(ok(m))hi=m;else lo=m}const b=tdBox(e,hi),cx=TDPAD[3]+(W-TDPAD[1]-TDPAD[3])/2,cy=TDPAD[0]+(H-TDPAD[0]-TDPAD[2])/2;return{d:hi,o:[(b.x0+b.x1)/2-cx,(b.y0+b.y1)/2-cy]}};
     const tdCam=()=>{const e0=TDE[TDC]*PI/180,f=TDF[TDC];if(cam.near!==.5)cam.near=.5;if(cam.fov!==f)cam.fov=f;
       const k=W+"x"+H+"|"+GS+"|"+TDC+"|"+FIGK+"|"+TDPAD.join(",");if(k!==TDK){TDK=k;const r=tdFit(e0);TDD=r.d;TDO=r.o}
-      tdOrbBack(performance.now());const e=clamp(e0+TDOR.el,12*PI/180,86*PI/180),ya=TDOR.yaw,ow=1-Math.min(1,(Math.abs(ya)+Math.abs(e-e0))/.35);   /* ow：轉開時棋盤置中的偏移慢慢收掉，轉回來再補上 */
-      let d=TDD,lx=0,lz=0;if(TDPU){const p=clamp((performance.now()-TDPU.t0)/TDPU.d,0,1),u=Math.sin(p*PI);d*=1-.15*u;lx=TDPU.x*u*.35;lz=TDPU.z*u*.35;if(p>=1)TDPU=null;else pwPoke(60)}
+      tdOrbBack(performance.now());const e=clamp(e0+TDOR.el,12*PI/180,86*PI/180),ya=TDOR.yaw,ow=1-Math.min(1,(Math.abs(ya)+Math.abs(e-e0)+Math.abs(TDOR.z-1))/.35);   /* ow：轉開、拉近時棋盤置中的偏移慢慢收掉，回來再補上 */
+      let d=TDD*TDOR.z,lx=0,lz=0;if(TDPU){const p=clamp((performance.now()-TDPU.t0)/TDPU.d,0,1),u=Math.sin(p*PI);d*=1-.15*u;lx=TDPU.x*u*.35;lz=TDPU.z*u*.35;if(p>=1)TDPU=null;else pwPoke(60)}
       const hz=Math.cos(e)*d;cam.position.set(lx+Math.sin(ya)*hz,TOP+Math.sin(e)*d,lz+Math.cos(ya)*hz);cam.up.set(0,1,0);cam.lookAt(TDL.set(lx,TOP,lz));cam.setViewOffset(W,H,TDO[0]*ow,TDO[1]*ow,W,H);cam.updateProjectionMatrix();gntClear(false)};
     /* 換固定鏡頭／換角色縮放：七星、星樞棋兵照 FIGK 縮放（fitTo 記的 fs × FIGK） */
     const tdFig=()=>{for(const g of gntFigs){const inn=g.children[0];if(inn&&inn.userData&&inn.userData.fs)inn.scale.setScalar(inn.userData.fs*FIGK)}};
-    const tdSet=(m,fx)=>{m=GIANT&&(m==="top"||m==="tilt")?m:null;if(fx!=null)TDFX=fx;if(m===TDC&&CAMV.td===m)return;TDC=m;CAMV.td=m;TDOR.yaw=TDOR.el=TDOR.hold=0;   /* 11/14 修：TDC 是整個模組共用的，CAMV.td 是這個 3D 實例自己的——第二次進塔防（換關、重打、再刷）會建新實例，原本看 TDC 一樣就 return，新實例的 CAMV.td 一直沒設，鏡頭走自由鏡頭（偏一邊、左右被切），切一次視角才好 */if(m){TELE=null;GFOC=null;if(zoom<1)zoom=tzoom=1}TDK="";TDPU=null;const k=m==="top"?.82:1;if(k!==FIGK){FIGK=k;tdFig()}
+    const tdSet=(m,fx)=>{m=GIANT&&(m==="top"||m==="tilt")?m:null;if(fx!=null)TDFX=fx;if(m===TDC&&CAMV.td===m)return;TDC=m;CAMV.td=m;TDOR.yaw=TDOR.el=TDOR.hold=0;TDOR.z=1;TDOR.pin=null;TDPT.clear();   /* 11/14 修：TDC 是整個模組共用的，CAMV.td 是這個 3D 實例自己的——第二次進塔防（換關、重打、再刷）會建新實例，原本看 TDC 一樣就 return，新實例的 CAMV.td 一直沒設，鏡頭走自由鏡頭（偏一邊、左右被切），切一次視角才好 */if(m){TELE=null;GFOC=null;if(zoom<1)zoom=tzoom=1}TDK="";TDPU=null;const k=m==="top"?.82:1;if(k!==FIGK){FIGK=k;tdFig()}
       if(!m){cam.clearViewOffset();cam.updateProjectionMatrix();if(CAMV.fov){cam.fov=CAMV.fov;cam.updateProjectionMatrix()}}tdDragEnd(true);try{if(el.isConnected)fit()}catch(e){}try{if(m)hint.textContent="點棋子走棋・拖空白處轉看四周・右上 👁 換視角"}catch(e){}try{el.classList.toggle("tdcam",!!m)}catch(e){}pwPoke(600)};
     const gntCam=()=>{GFL.set(0,0,-.6*GS);if(CAMV.td){TELE=null;if(zoom!==1||tzoom!==1)zoom=tzoom=1;return tdCam()}   /* 11/14 修：塔防固定鏡頭要排在望遠鏡、放大前面——開場「入座運鏡」跑完會把 zoom 停在首頁視角（小於 1），原本先走 gntCamNear，進關後棋盤偏一邊、左右被切，要切一次視角才正常 */if(TELE)return gntTele();if(zoom<1)return gntCamNear();   /* 塔防固定鏡頭（CAMV.td＝TDC；tdSet 開的時候已經把望遠鏡、放大收掉） */if(cam.near!==.5){cam.near=.5;cam.updateProjectionMatrix()}GFT.copy(GFL);gntClear(false);
       const near=0,far=smooth(1.05,2.6,zoom),mix=(a,b,k)=>a.map((v,j)=>v+(b[j]-v)*k);let v=mix(GNT_V[1],GNT_V[0],near);v=mix(v,GNT_V[2],far);v=v.map(x=>x*GS);   /* 格距放大，鏡頭跟著等比拉遠 */
@@ -2504,13 +2506,18 @@
     const tdGhostAt=(d,x,y)=>{if(d)d.style.transform="translate("+Math.round(x)+"px,"+Math.round(y)+"px) scale(1.12)"};
     const tdDragEnd=snap=>{const P=TDP;if(!P||!P.drag)return;const D=P.drag;P.drag=null;const g=pieces[D.i];const fin=()=>{try{D.el.remove()}catch(e){}if(g&&g.userData.tdHid){g.visible=true;delete g.userData.tdHid}pwPoke(200)};
       if(snap||RDM||TDFX<1){fin();return}const s=screenOf(D.i);if(!s){fin();return}D.el.style.transition="transform .2s ease-out";tdGhostAt(D.el,s.x,s.y);setTimeout(fin,210)};
-    const tdDown=e=>{if(TDP&&TDP.drag)tdDragEnd(true);inEnd(false);try{cvs.setPointerCapture(e.pointerId)}catch(_){}const i=pick(e.clientX,e.clientY);TDP={id:e.pointerId,x:e.clientX,y:e.clientY,i,drag:null,moved:false}};
-    const tdMove=e=>{const P=TDP;if(!P||e.pointerId!==P.id)return;const dx=e.clientX-P.x,dy=e.clientY-P.y;if(!P.moved&&Math.hypot(dx,dy)<10)return;P.moved=true;
+    const tdDown=e=>{TDPT.set(e.pointerId,{x:e.clientX,y:e.clientY});
+      if(TDPT.size>=2){if(TDP&&TDP.drag)return;const A=[...TDPT.values()];TDOR.pin={d0:Math.max(20,Math.hypot(A[0].x-A[1].x,A[0].y-A[1].y)),z0:TDOR.z};TDOR.hold=1;if(TDP){TDP.no=1;TDP.orb=null;TDP.moved=true}try{cvs.setPointerCapture(e.pointerId)}catch(_){}return}   /* 第二根手指＝開始捏合（正在拖棋子時不理） */
+      if(TDP&&TDP.drag)tdDragEnd(true);inEnd(false);try{cvs.setPointerCapture(e.pointerId)}catch(_){}const i=pick(e.clientX,e.clientY);TDP={id:e.pointerId,x:e.clientX,y:e.clientY,i,drag:null,moved:false}};
+    const tdMove=e=>{if(TDPT.has(e.pointerId))TDPT.set(e.pointerId,{x:e.clientX,y:e.clientY});
+      if(TDOR.pin){const A=[...TDPT.values()];if(A.length>=2){const d=Math.max(20,Math.hypot(A[0].x-A[1].x,A[0].y-A[1].y));TDOR.z=clamp(TDOR.pin.z0*TDOR.pin.d0/d,.55,1.6);pwPoke(100)}return}   /* 兩指張開＝拉近（距離倍數變小） */
+      const P=TDP;if(!P||e.pointerId!==P.id)return;const dx=e.clientX-P.x,dy=e.clientY-P.y;if(!P.moved&&Math.hypot(dx,dy)<10)return;P.moved=true;
       if(P.orb){TDOR.yaw=P.orb.yaw-(e.clientX-P.orb.x)*.008;TDOR.el=clamp(P.orb.el+(e.clientY-P.orb.y)*.005,-.9,.5);pwPoke(100);return}   /* 空白處拖曳＝繞著棋盤轉（上限：仰角 12°～86°，tdCam 再夾一次） */
       if(!P.drag&&!P.no){const i=P.i,B=SNAP.b;if(!(i>=0&&B&&B[i]&&sideOf(B[i])===SNAP.me)){P.no=1;P.orb={yaw:TDOR.yaw,el:TDOR.el,x:e.clientX,y:e.clientY};TDOR.hold=1;return}if(selI!==i&&opt.onTap)opt.onTap(i);if(selI!==i||!pieces[i]){P.no=1;return}
         const el2=tdGhost(i);if(!el2){P.no=1;return}const g=pieces[i];g.visible=false;g.userData.tdHid=1;P.drag={i,el:el2};try{if(navigator.vibrate)navigator.vibrate(8)}catch(_){}}
       if(P.drag){tdGhostAt(P.drag.el,e.clientX,e.clientY-TDUP);pwPoke(100)}};
-    const tdUp=e=>{const P=TDP;if(!P||e.pointerId!==P.id)return;TDP=null;if(P.orb){TDOR.hold=0;TDOR.rel=performance.now();pwPoke(1700);return}
+    const tdUp=e=>{TDPT.delete(e.pointerId);if(TDOR.pin){if(TDPT.size<2){TDOR.pin=null;TDOR.hold=0;TDOR.rel=performance.now();TDP=null;pwPoke(1700)}return}   /* 捏合放手：剩下的那根手指不再拖、不算點擊 */
+      const P=TDP;if(!P||e.pointerId!==P.id)return;TDP=null;if(P.orb){TDOR.hold=0;TDOR.rel=performance.now();pwPoke(1700);return}
       if(P.drag){TDP={drag:P.drag};const i=pick(e.clientX,e.clientY-TDUP),ok=i>=0&&selI>=0&&SNAP.t.includes(i);if(ok){tdDragEnd(true);if(opt.onTap)opt.onTap(i)}else{tdDragEnd(false);if(i===-2&&tapAmb)showAmb(tapAmb)}TDP=null;return}
       if(P.moved)return;const i=pick(e.clientX,e.clientY);if(i===-2){if(tapAmb)showAmb(tapAmb);return}if(i>=0){if(opt.onTap)opt.onTap(i);return}
       if(selI>=0&&opt.onTap)opt.onTap(selI)};   /* 點棋盤外＝取消選取 */
@@ -2529,7 +2536,7 @@
       try{const now=performance.now();
       if(now-lastTap<320&&(tyaw||tpitch!==HOME.p||tzoom!==HOME.z)){reset();lastTap=0;return}lastTap=now;let fg=null;if(GIANT)try{fg=gntFocus(e.clientX,e.clientY,70)}catch(_){}const i=pick(e.clientX,e.clientY);if(i===-2){if(tapAmb)showAmb(tapAmb);return}if(i>=0){if(opt.onTap)opt.onTap(i);return}if(fg)return;   /* 黑洞：點到角色＝鎖定放大中心，不開旁邊物件的介紹 */
       if(opt.onInfo){const k=infoPick();if(k)opt.onInfo(k)}}finally{if(inH)inEnd(true)}};
-    cvs.addEventListener("pointerup",up);cvs.addEventListener("pointercancel",e=>{if(TDC){tdDragEnd(true);TDP=null;if(TDOR.hold){TDOR.hold=0;TDOR.rel=performance.now();pwPoke(1700)}return}ptrs.delete(e.pointerId);if(ptrs.size<2)pinch=null;down=null;if(IN.ph==="held")inEnd(true)});
+    cvs.addEventListener("pointerup",up);cvs.addEventListener("pointercancel",e=>{if(TDC){tdDragEnd(true);TDP=null;TDPT.delete(e.pointerId);TDOR.pin=null;if(TDOR.hold){TDOR.hold=0;TDOR.rel=performance.now();pwPoke(1700)}return}ptrs.delete(e.pointerId);if(ptrs.size<2)pinch=null;down=null;if(IN.ph==="held")inEnd(true)});
     // 觸控板捏合（瀏覽器送 ctrl＋滾輪）也能縮放；iOS Safari 的 gesture 事件擋掉，免得整頁被放大
     cvs.addEventListener("wheel",e=>{if(!e.ctrlKey||TDC)return;e.preventDefault();inEnd(false);userZ=true;tzoom=clamp(tzoom*Math.exp(e.deltaY*.01),ZMIN,ZMAX)},{passive:false});
     for(const ev of["gesturestart","gesturechange"])el.addEventListener(ev,e=>e.preventDefault(),{passive:false});

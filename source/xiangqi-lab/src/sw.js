@@ -4,7 +4,7 @@
 const VERSION="__VERSION__";
 const APP_CACHE="xqlab-app-"+VERSION,ENGINE_CACHE="xqlab-engine";
 const APP_FILES=["./","index.html","core.js","engine.js","local.js","manifest.json","icon.svg","icon-180.png","icon-512.png","icon-512-mask.png","qrcode.min.js","jsQR.min.js","net.js","zh.js","opencc-cn2t.js","opencc-t2cn.js","bot3d.js","park3d.js","engine/pikafish.js","engine/pikafish.wasm",
-  "data/books.json","data/shiqingyaqu.json","data/juzhongmi.json","data/meihuapu.json","data/kaiju.json","data/canju.json","data/xuyinchuan.json","data/big-books.json","data/quiz.json","data/terms.json","data/gmbios.json","three.min.js","map3d.js","data/park-legend.json","data/park-novel.json","data/preload.json"];   /* 意見回饋 422：3D 程式和故事也一起先存 */
+  "data/books.json","data/shiqingyaqu.json","data/juzhongmi.json","data/meihuapu.json","data/kaiju.json","data/canju.json","data/xuyinchuan.json","data/big-books.json","data/quiz.json","data/terms.json","data/gmbios.json","three.min.js","map3d.js","GLTFLoader.mjs","three-shim.mjs","BufferGeometryUtils.mjs","data/park-legend.json","data/park-novel.json","data/preload.json"];   /* 意見回饋 422：3D 程式和故事也一起先存 */
 /* 回饋 853（開發者 11/9：圖和大檔改由 Cloudflare 提供，網址不變）：
    data/、engine/ 的檔改去 Cloudflare Pages（CDN）拿，快取鍵照舊用原本的同源網址——舊玩家手機裡已經存的檔全部繼續有效，不會重下載。
    CDN 失敗（網路錯、10 秒沒回應、404、5xx、內容指紋對不上）就退回原本的 GitHub 網址；CDN_ON=false 就完全照舊走 GitHub。
@@ -106,5 +106,5 @@ self.addEventListener("fetch",e=>{
       try{return isolate(await fetch(req.url,{cache:"no-store",credentials:"same-origin"}))}catch(err){return new Response("離線中",{status:503})}}
     const hit=await c.match(req,{ignoreSearch:true});if(hit)return isolate(hit);
     // 一般的 js／json 檔：抓到就存進這一版的快取（特級大師對局上面已經另外存了）
-    try{const res=await viaCdn(req,rel,url,"no-cache",()=>fetch(req,{cache:"no-cache"}));if(res.ok&&url.pathname.match(/\.(js|json|svg|wasm)$/)&&!isBig)c.put(req,res.clone());return isolate(res)}
+    try{const res=await viaCdn(req,rel,url,"no-cache",()=>fetch(req,{cache:"no-cache"}));if(res.ok&&url.pathname.match(/\.(m?js|json|svg|wasm)$/)&&!isBig)c.put(req,res.clone());return isolate(res)}
     catch(err){return new Response("離線中，找不到 "+url.pathname,{status:503,headers:{"content-type":"text/plain; charset=utf-8"}})}})())});

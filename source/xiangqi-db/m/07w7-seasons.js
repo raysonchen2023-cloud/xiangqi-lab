@@ -296,8 +296,13 @@ function sw7Loop(t){SW7.raf=0;if(document.hidden)return;let n=0;for(const R of S
 function sw7Kick(){if(!SW7.raf&&!document.hidden){SW7.last=0;SW7.raf=requestAnimationFrame(sw7Loop)}}
 /* 兩指縮放（07x 用 transform 放大整頁）：照圖在螢幕上的大小（getBoundingClientRect）重算縮放倍數，畫布解析度跟著提高 */
 function sw7Zoom(R){const w=R.img.offsetWidth;if(!w)return;const z=Math.max(1,R.img.getBoundingClientRect().width/w);if(Math.abs(z-(R.z||1))>.03){R.z=z;sw7Size(R,true)}}
-function sw7Size(R,force){const img=R.img,W=img.offsetWidth,H=img.offsetHeight;if(!W||!H)return;
-  R.box.style.width=W+"px";R.box.style.height=H+"px";R.box.style.left=img.offsetLeft+"px";R.box.style.top=img.offsetTop+"px";
+/* 11/15 意見回饋 894、895（開發者）「首頁有下雨，觀星臺／西市沒有」：首頁開著三屏長卷（07hmp，.hmp-on）時，雨雪畫布從左屏西市一路蓋到右屏觀星臺，不只中間那張 */
+function sw7FxSpan(img){const W=img.offsetWidth;let L=img.offsetLeft,Rr=L+W;const P=img.parentNode;
+  if(P&&P.classList&&P.classList.contains("hmp-on")){const ir=img.getBoundingClientRect(),k=ir.width?W/ir.width:1;   /* 左右兩屏包在長卷那層裡，用畫面上的位置換算回中間那張的座標；只算跟中間那張差不多高的（不算小人、按鈕） */
+    for(const o of P.querySelectorAll("img"))if(o!==img){const r=o.getBoundingClientRect();if(r.width>ir.width*.5&&Math.abs(r.height-ir.height)<ir.height*.2){L=Math.min(L,img.offsetLeft+(r.left-ir.left)*k);Rr=Math.max(Rr,img.offsetLeft+(r.right-ir.left)*k)}}}
+  return{L,W:Rr-L}}
+function sw7Size(R,force){const img=R.img,H=img.offsetHeight,sp=sw7FxSpan(img),W=sp.W;if(!W||!H)return;
+  R.box.style.width=W+"px";R.box.style.height=H+"px";R.box.style.left=sp.L+"px";R.box.style.top=img.offsetTop+"px";
   if(!R.cv||(!force&&W===R.W&&H===R.H))return;const z=R.z||1,dpr=Math.min(1.5,window.devicePixelRatio||1),bs=Math.min(dpr*Math.min(z,2),2048/W);
   if(R.W&&R.H)for(const p of R.A){p.x*=W/R.W;p.y*=H/R.H}
   const first=!R.W;R.W=W;R.H=H;R.cv.width=Math.round(W*bs);R.cv.height=Math.round(H*bs);R.cx.setTransform(bs,0,0,bs,0,0);
