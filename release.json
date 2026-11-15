@@ -1,8 +1,8 @@
 {
- "version": "20261115-1041",
- "checkedAt": "2026-11-15T02:42:02.756Z",
- "html": "8e94cf6bd0c9",
- "sw": "127d91e66fd3",
+ "version": "20261115-1132",
+ "checkedAt": "2026-11-15T03:32:41.941Z",
+ "html": "06c57f632908",
+ "sw": "e36261ef6094",
  "scripts": 4,
  "modules": {
   "00-util.js": "8c2b1d4f725f",
@@ -10,10 +10,10 @@
   "02-shell.js": "2dcb96ddf79a",
   "02r-reloadguard.js": "9e8193a7d297",
   "03-home-quiz.js": "24d24f013354",
-  "04-stats.js": "4ebe5d7685fb",
+  "04-stats.js": "a55d0aefce3f",
   "04c-weekly.js": "326899d53f7b",
-  "05-settings.js": "659c5867a65d",
-  "05b-save.js": "64bdbb6aae81",
+  "05-settings.js": "cfff854a409b",
+  "05b-save.js": "d90d32a496ea",
   "05c-health.js": "a1bcf3e541ac",
   "05d-telemetry.js": "98d12b742868",
   "06-cpu.js": "1bfd156c07ab",
@@ -29,7 +29,7 @@
   "07bht-td.js": "511e0e270024",
   "07bhtl-tdlearn.js": "f7e849d5aa2b",
   "07bhf-bossfx.js": "8516daf7973e",
-  "07bhg-gatesiege.js": "3847dc8fb52c",
+  "07bhg-gatesiege.js": "974538b6e775",
   "07bhw-wheel.js": "93f04df0e897",
   "07dv-devtest.js": "077191672ec5",
   "07dw-perfhud.js": "a3755bd4af6c",
@@ -114,7 +114,7 @@
   "07lh-lefty.js": "a1e6ad13d30d",
   "07pm-premove.js": "52061c9a3011",
   "07dq-daily.js": "c1076bdd0ee8",
-  "07i18n.js": "73cefaa780de",
+  "07i18n.js": "adab3b8cb19b",
   "07sp-spotfit.js": "f7f205a79901",
   "07fl-fill.js": "a671f9a96f4f",
   "07mnf-mainfilm.js": "59f288419ad1",
@@ -127,7 +127,12 @@
   {
    "module": "05-settings.js",
    "lines": 1,
-   "sourceModified": "2026-11-15T02:29:43.710Z"
+   "sourceModified": "2026-11-15T03:23:27.415Z"
+  },
+  {
+   "module": "07bhg-gatesiege.js",
+   "lines": 69,
+   "sourceModified": "2026-11-15T03:21:17.654Z"
   },
   {
    "module": "07y-hubmap.js",
@@ -138,6 +143,11 @@
    "module": "07s4-passmap.js",
    "lines": 1,
    "sourceModified": "2026-11-13T03:19:39.481Z"
+  },
+  {
+   "module": "07i18n.js",
+   "lines": 4,
+   "sourceModified": "2026-11-15T03:23:42.296Z"
   }
  ]
 }
