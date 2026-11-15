@@ -121,7 +121,10 @@ function hmCss(){if(document.getElementById("hmCss"))return;const s=document.cre
 .hm-me{position:absolute;z-index:3;background:transparent;border:0;padding:0;border-radius:40%;cursor:pointer;-webkit-tap-highlight-color:transparent}
 .hm-go-bar{position:fixed;left:50%;bottom:calc(14px + env(safe-area-inset-bottom));transform:translateX(-50%);z-index:30;display:flex;flex-direction:column;align-items:center;gap:8px;width:max-content;max-width:calc(100vw - 32px);pointer-events:none}
 .hm-go-bar>*{pointer-events:auto}.hm-go-bar .hm-inst{position:relative;left:auto;bottom:auto;transform:none}.hm-slogan{position:absolute;left:50%;top:1.4%;transform:translateX(-50%);z-index:5;padding:6px 18px;border-radius:6px;border:1px solid rgba(90,58,26,.35);background:rgba(246,238,220,.92);box-shadow:0 2px 10px rgba(0,0,0,.18);color:#3b2a1a;font:900 17px/1.3 var(--serif,serif);letter-spacing:.18em;white-space:nowrap;pointer-events:none;transition:opacity .8s}.hm-slogan.out{opacity:0}
-.hm-pills{display:flex;gap:8px;justify-content:center;flex-wrap:wrap}.hm-fb{font-size:14px;padding:8px 16px}
+.hm-pills{display:flex;gap:8px;justify-content:center;flex-wrap:wrap}
+.hm-go-bar .hm-fb{display:flex;align-items:center;justify-content:center;gap:6px;min-width:220px;max-width:100%;min-height:44px;padding:8px 22px;border:2px solid #f2c94c;border-radius:var(--btn-r,10px);background:rgba(20,16,12,.72);color:#ffe08a;font:900 17px/1.2 var(--serif,serif);letter-spacing:.06em;box-shadow:0 4px 14px rgba(0,0,0,.35);-webkit-tap-highlight-color:transparent}
+.hm-go-bar .hm-fb::before{content:none}.hm-go-bar .hm-fb:active{transform:translateY(1px);filter:brightness(.95)}
+.hm-go-bar .hm-go{background:color-mix(in srgb,var(--btn-main,#A8321F) 78%,transparent)}.hm-go-bar .mnq-next{background:linear-gradient(rgba(248,240,220,.8),rgba(230,211,166,.8))}   /* 開發者 11/15「回報問題／快速對戰／更多玩法都用有透明度」：三顆的底都帶透明度，底下的首頁圖透得出來（快速對局原本的底色在 m.css、更多玩法在 07mnq，這裡蓋過去；不認得 color-mix 的舊瀏覽器照舊不透明） */
 .hm-go{display:flex;flex-direction:column;align-items:center;gap:2px;min-width:220px;max-width:100%;min-height:52px;padding:9px 26px;border:2px solid #f2c94c;border-radius:999px;background:linear-gradient(180deg,#b3261e,#7d1611);color:#fff6dc;box-shadow:0 4px 14px rgba(0,0,0,.38),inset 0 1px 0 rgba(255,255,255,.25);font:900 19px/1.15 var(--serif,serif);letter-spacing:.06em;cursor:pointer;-webkit-tap-highlight-color:transparent}
 .hm-go small{font:700 12px/1.2 var(--serif,serif);letter-spacing:0;color:#ffe08a;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:100%}.hm-go small:empty{display:none}
 .hm-go:active{transform:translateY(1px);filter:brightness(.95)}
@@ -152,8 +155,11 @@ function hmGoBar(P,nw){const bar=document.createElement("div");bar.className="hm
   const set=r=>{R=r;b.innerHTML=`<span>${esc(r.t)}</span><small>${esc(r.s||"")}</small>`;b.setAttribute("aria-label",r.t+(r.s?"："+r.s:""))};set(R);
   const row=document.createElement("div");row.className="hm-pills";const ib=P.querySelector("#hmInst");if(ib)row.append(ib);
   /* 開發者 11/11「把意見回饋放在明顯的首頁地方，讓玩家一眼看出可以回報問題」：大按鈕正上方固定一顆「💬 回報問題」（原本只在設定頁裡） */
-  const fb=document.createElement("button");fb.type="button";fb.className="hm-inst hm-fb";fb.id="hmFb";fb.textContent="💬 回報問題";fb.setAttribute("aria-label","回報問題");fb.onclick=e=>{e.stopPropagation();vibrate(5);if(typeof feedbackSheet==="function")feedbackSheet();else location.hash="#/settings"};row.append(fb);
-  bar.append(row);bar.append(b);P.append(bar);
+  const fb=document.createElement("button");fb.type="button";fb.className="hm-inst hm-fb";fb.id="hmFb";fb.textContent="💬 回報問題";fb.setAttribute("aria-label","回報問題");fb.onclick=e=>{e.stopPropagation();vibrate(5);if(typeof feedbackSheet==="function")feedbackSheet();else location.hash="#/settings"};
+  /* 開發者 11/15（截圖：回報問題夾在「更多玩法」和快速對局中間）「把回報問題移到快速對戰下面」「回報問題的按鈕也用快速對戰／更多玩法的 UI 風格」：
+     回報問題排在大按鈕下面，外形跟上面兩顆同一家（一樣寬、一樣的圓角方塊、粗邊、大字；樣式 .hm-go-bar .hm-fb），用深底金字當第三顆，44 高、本身就夠點，不用再撐透明點選範圍；
+     「加到主畫面」照舊是小膠囊、在大按鈕上面（沒有它的時候上面那列不放，免得多一段空隙） */
+  if(ib)bar.append(row);bar.append(b);bar.append(fb);P.append(bar);
   /* ChatGPT 改善單 T01（開發者 11/11 核准）安全接續：按鈕一開始是「快下一盤」（fresh＝開新局），問完 /play/state 才知道有沒有下到一半的棋要改成「▶ 接著下」。
      這中間就按下去，/play/new 會把桌上那盤沒下完的挑戰電腦換掉（晉級賽還會算輸）——所以先等那一問（RD，最多 1.5 秒）再照最新的 R 走 */
   let RD=Promise.resolve();

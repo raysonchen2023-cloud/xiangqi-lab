@@ -1,7 +1,7 @@
 {
  "ref": "origin/main",
- "commit": "ea572ff516da48825b4592a4a364b9dbd7841c24",
- "madeAt": "2026-11-15T10:27:10.478Z",
+ "commit": "6fc591bac0ac2062ca6e71f41820760705fbed3f",
+ "madeAt": "2026-11-15T11:16:52.855Z",
  "files": {
   "xiangqi-db/m/00-util.js": "local=live",
   "xiangqi-db/m/01-board.js": "local=live",
@@ -169,6 +169,7 @@
   "xiangqi-lab/tools/onboard-funnel.js": "local",
   "xiangqi-lab/tools/oss-scan.js": "local",
   "xiangqi-lab/tools/oss-stage.js": "local",
+  "xiangqi-lab/tools/party-td-bench.js": "local",
   "xiangqi-lab/tools/pikafish-verify.js": "local",
   "xiangqi-lab/tools/preload-list.js": "local",
   "xiangqi-lab/tools/qa/colorblind-scan.js": "local",
@@ -223,6 +224,7 @@
   "xiangqi-lab/tools/test-fb888.js": "local",
   "xiangqi-lab/tools/test-fb897-1115.js": "local",
   "xiangqi-lab/tools/test-fdroid-evidence.js": "local",
+  "xiangqi-lab/tools/test-figview-ghost-1115.js": "local",
   "xiangqi-lab/tools/test-gate-siege-3d.js": "local",
   "xiangqi-lab/tools/test-gate-siege.js": "live（上一版公開的那份；本機那份跟著還沒發布的程式改過）",
   "xiangqi-lab/tools/test-growth.js": "local",
@@ -230,6 +232,7 @@
   "xiangqi-lab/tools/test-haptics.js": "local",
   "xiangqi-lab/tools/test-health-funnel.js": "local",
   "xiangqi-lab/tools/test-health.js": "local",
+  "xiangqi-lab/tools/test-home-bar-1115.js": "local",
   "xiangqi-lab/tools/test-home-order.js": "local",
   "xiangqi-lab/tools/test-home-pano.js": "local",
   "xiangqi-lab/tools/test-homeclamp.js": "local",
@@ -463,8 +466,8 @@
   "test-party-battle.js": "指令排除：七星各自等級的黑洞戰鬥規則還在開發者電腦上做，對應的程式還沒發布",
   "test-party-core.js": "指令排除：七星陸續加入與各自等級還在開發者電腦上做，對應的模組（07pty-party.js）還沒發布"
  },
- "version": "20261115-1818",
- "indexSha1": "20f5c617d3d3",
+ "version": "20261115-1915",
+ "indexSha1": "c8df10f08a11",
  "toLF": [
   "xiangqi-lab/tools/build-site.js"
  ],

@@ -63,6 +63,16 @@ async function fig3d(host,look,o){o=o||{};
   r.setPixelRatio(Math.min(2,devicePixelRatio||1));r.setSize(W,H);if(look&&look.glb&&T.sRGBEncoding!=null)r.outputEncoding=T.sRGBEncoding;r.domElement.style.cssText="position:absolute;inset:0;width:100%;height:100%;touch-action:none";host.append(r.domElement);
   const sc=new T.Scene();sc.add(new T.HemisphereLight(0xFFF6E8,0x6A5A48,1.15));const d=new T.DirectionalLight(0xFFFFFF,.85);d.position.set(3,6,5);sc.add(d);
   let B;try{B=XQBot3D.figure(look||{})}catch(e){r.dispose();return null}
+  /* 11/15 開發者（截圖：對局頁點幻影棋客的頭像）「這個也要一致用有透明度的設定」「13 星系的幻影棋手一樣也是要有透明度設定」：
+     對手是幻影棋客（cus k:pika／k:pika2；幻譜星門十三星系的幻影用的也是這個形象）時，檢視視窗裡的 3D 跟雅間那張淡墨立繪、園子裡坐著的他一樣半透明、慢慢呼吸
+     （.53～.67，五秒一輪；減少動態固定 .6）。做法同 park3d.js 的 oppGhost：每個材質複製一份改成透明（照寫深度，自己不會透出背面和身體裡面），
+     每 20 格重看一次（模型晚到會補上）；胸前的字牌本來每格自己算透明度，再乘一次。別的角色不進來 */
+  const FGH=look&&/^k:pika2?$/.test(String(look.cus||""))?{n:0,op:.6,ms:new Set(),rm:(()=>{try{return matchMedia("(prefers-reduced-motion: reduce)").matches}catch(e){return false}})()}:null;
+  const fgGhost=t=>{const G=FGH,op=G.op=G.rm?.6:.6+Math.sin(t*1.26)*.07;
+    if(G.n++%20===0){G.ms.clear();const mk=x=>{if(!x||!x.clone)return x;if(x.userData&&x.userData.gh){G.ms.add(x);return x}const g=x.clone();g.userData=Object.assign({},g.userData,{gh:1,o0:x.opacity==null?1:x.opacity});g.transparent=true;g.depthWrite=true;G.ms.add(g);return g};
+      B.bot.traverse(m=>{if(!m.isMesh&&!m.isSprite)return;if(m.name==="meGly"){if(!m.userData.ghW&&m.onBeforeRender){m.userData.ghW=1;const f=m.onBeforeRender;m.onBeforeRender=function(){f.apply(this,arguments);try{this.material.opacity*=G.op}catch(e){}}}return}
+        m.material=Array.isArray(m.material)?m.material.map(mk):mk(m.material)})}
+    for(const g of G.ms)g.opacity=g.userData.o0*op};
   const root=new T.Group();root.add(B.bot);sc.add(root);root.updateMatrixWorld(true);
   const box=new T.Box3().setFromObject(B.bot),c=box.getCenter(new T.Vector3()),sz=box.getSize(new T.Vector3());B.bot.position.sub(c);const by=B.bot.position.y;
   const tn=Math.tan(15*Math.PI/180),D0=o.tight?Math.max(sz.y/(2*tn*.94),sz.x/(2*tn*(W/H)*.9)):Math.max(sz.y,sz.x)*2.6;
@@ -87,7 +97,7 @@ async function fig3d(host,look,o){o=o||{};
       x.addEventListener("pointerdown",e=>e.stopPropagation());x.onclick=e=>{e.stopPropagation();vibrate(5);setZ(zf*f)};zb.append(x)}host.append(zb)}
   const loop=()=>{if(!host.isConnected){try{r.dispose()}catch(e){}const fi=document.querySelector(".fig-item");if(fi)fi.remove();return}requestAnimationFrame(loop);if(document.hidden)return;const t=(performance.now()-t0)/1000;
     if(!drag){if(o.spin)ry+=v;else if(!moved)ry=Math.sin(t*.45)*.38}root.rotation.y=ry;B.bot.position.y=by+Math.sin(t*1.6)*sz.y*.012;
-    try{if(XQBot3D.faceApply)XQBot3D.faceApply(B,"open",(t%4)<.12,false)}catch(e){}r.render(sc,cam)};loop();
+    try{if(XQBot3D.faceApply)XQBot3D.faceApply(B,"open",(t%4)<.12,false)}catch(e){}if(FGH)try{fgGhost(t)}catch(e){}r.render(sc,cam)};loop();
   return{B,r}}
 /* 意見回饋 400：點人物看大幅完整的 3D 小人，左右拖曳可以轉；3D 載入失敗就顯示畫像 */
 async function figView(look,title,html,btns,img){sheet(title,async b=>{
