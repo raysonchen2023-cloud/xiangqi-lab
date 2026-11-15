@@ -1,8 +1,8 @@
 {
- "version": "20261115-1915",
- "checkedAt": "2026-11-15T11:15:32.961Z",
- "html": "c8df10f08a11",
- "sw": "f6a20dbd4d24",
+ "version": "20261115-1928",
+ "checkedAt": "2026-11-15T11:28:59.876Z",
+ "html": "d33cbfe9906f",
+ "sw": "3a5ebe835f7e",
  "scripts": 4,
  "modules": {
   "00-util.js": "8c2b1d4f725f",
@@ -61,7 +61,7 @@
   "07y-hubmap.js": "7c606e4f759b",
   "07z-homemap.js": "197a9b09b681",
   "07gxt-guanxing.js": "0a89a246a78d",
-  "07dgl-stamina.js": "037987662a36",
+  "07dgl-stamina.js": "74aee6ed1f1d",
   "07xsm-ximarket.js": "1efd4cc82cf4",
   "07xsd-xsmdark.js": "14cf67001b41",
   "07hmp-pano.js": "723e4ffde0dc",
@@ -178,7 +178,7 @@
   {
    "module": "07dgl-stamina.js",
    "lines": 6,
-   "sourceModified": "2026-11-15T09:46:30.758Z"
+   "sourceModified": "2026-11-15T11:24:53.954Z"
   },
   {
    "module": "07s4-passmap.js",
