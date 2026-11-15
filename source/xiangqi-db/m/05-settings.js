@@ -679,7 +679,13 @@ function qNow(m){if(!m||!m.q)return m&&m.q;const q0=({"妙手":"妙著","正手"
      之後有影子資料再看要不要分段位、改門檻（cpu-games.jsonl 每盤有 res 和每步原值，可以離線重算，不用另外收資料）。
    ④k、評語門檻集中在 MXS：門檻 th 由 k 和均勢 cp 分界算出來，k 改了門檻自動跟著改；改了任何一個數字就把 MXS.ver 加 1（匿名資料帶著版本）。
    core.js（xiangqi-referee.js 的 classifyRaw）只多回傳 bv，評語照舊；新算法全部在這裡。 */
-const MXS={ver:2,      /* 11/15 意見表 1046：1→2（多了 lose 上限） */
+/* 11/15 ChatGPT 重評（story/chatgpt_app/數學模型1046修正後_三視角重評_2026-11-15.md，整體 B−）先修的兩個邏輯衝突，版本 2→3：
+   ①已知結果要優先於最後的局面：原本「最後評到 ≤ 10%」排在前面，已知贏棋、和棋（對手超時、認輸，或和棋時引擎評估不在 0 附近）也被標成輸棋、封頂 79。
+     改成終局四態 end："w" 贏、"l" 輸、"d" 和、"?" 不知道；只有「已知輸」或「不知道結果而且局面不利」才套輸棋上限；局面不利另外標 behind（只是估計，不等於輸）。
+   ②上限寫死 79，只有 A 門檻是 80 時才代表「最高 B」；門檻用資料重訂後（例如 A 變 79）79 分又會拿 A。改成「第幾個門檻減 1」（mxCapOf），上限代表的等級跟著門檻走。
+   另外照重評建議三個版本一起算，之後用影子資料比較、不先認定哪個對：raw 不封頂、s0 只看重大錯誤的上限、score 再加輸棋上限（存在本機 mxShadow，匿名送出的欄位沒有增加）。
+   這條曲線校正時是用勝 1、和 0.5、負 0 擬合（tools/calibrate-wdl.js），量的是「預期得分」＝P(勝)＋0.5×P(和)，不是贏棋機率；程式裡沿用 win／勝率的名字，對外說明要寫預期得分。 */
+const MXS={ver:3,      /* 11/15 意見表 1046：1→2（多了 lose 上限）；同日 2→3（已知勝負優先、上限跟著門檻） */
   k:0.00368208,          /* 勝率曲線斜率 Win%(cp)＝100／(1＋e^(−k·cp))：先沿用 Lichess（lichess.org/page/accuracy）；之後用 t:"cpu" 真人對局分段位擬合（tools/calibrate-wdl.js），不可用引擎自對局（Pikafish 自己的曲線 +150 就 96%，會灌水） */
   cp:[30,60,150,400],    /* 均勢時的評語分界（開發者 11/6 深算驗證過的 cp）；th＝Win%(cp)−50 由 k 算出（下一行） */
   mate:20000,            /* |評估| ≥ 這個＝有殺（engine.js 把 mate n 換成 ±(30000−n)；跟 evText 同一個分界） */
@@ -688,12 +694,13 @@ const MXS={ver:2,      /* 11/15 意見表 1046：1→2（多了 lose 上限） *
   hm:.5,                 /* 一盤準確度＝(1−hm)·波動加權平均＋hm·調和平均（Lichess 各半） */
   win:[2,8],wt:[.5,12],  /* 波動權重：視窗＝總手數/10 夾在 2～8；視窗內勝率的標準差夾在 0.5～12（Lichess） */
   capDw:10,              /* 上限規則看「勝率掉 ≥ 10%」的步數（Claude 複審 #4 修法 (b)），送殺、漏殺判成失著／敗著的也算 */
-  cap:{n:[3,6],r:[.1,.2],v:[79,69],blun:89},   /* 上限結構照舊：≥3 步或 ≥10% 最高 79、≥6 步或 ≥20% 最高 69、有敗著最高 89——數字待分位對應 */
-  lose:[10,79],          /* 輸棋局面上限（意見表 1046）：這方最後評到的勝率 ≤ 10%（或已知這盤輸了）→ 最高 79（B）；保守值，待影子資料重訂 */
+  cap:{n:[3,6],r:[.1,.2],g:[1,2],blun:0},   /* 上限結構照舊：≥3 步或 ≥10% 最高 B（g 1＝A 門檻減 1）、≥6 步或 ≥20% 最高 C（g 2＝B 門檻減 1）、有敗著最高 A（blun 0＝S 門檻減 1）；gr＝[90,80,70,60] 時就是原本的 79／69／89 */
+  lose:[10,1],           /* 輸棋上限（意見表 1046）：已知這盤輸了，或不知道結果而這方最後評到的預期得分 ≤ 10% → 最高 B（1＝A 門檻減 1，原本的 79）；保守值，待影子資料重訂 */
   gr:[90,80,70,60],      /* S／A／B／C 門檻：暫用舊的，待校正 */
   bonus:[2,6]};          /* 妙著每個 +2、最多 +6（照舊） */
 MXS.th=MXS.cp.map(c=>mxWin(c)-50);   /* 均勢時跟 cp 分界逐點對齊（k＝0.00368208 時 2.758／5.502／13.47／31.35%）；mxWin、mxClamp 都是 function 宣告（會提升），這一行在載入時就能算 */
 function mxClamp(v){return Math.max(-2000,Math.min(2000,+v||0))}
+function mxCapOf(i){return MXS.gr[i]-1}   /* 上限＝第 i 個門檻（0 S、1 A、2 B、3 C）減 1：最高只到下一級 */
 function mxWin(cp){return 100/(1+Math.exp(-MXS.k*mxClamp(cp)))}
 function mxAccDw(dw){return Math.max(0,Math.min(100,103.1668*Math.exp(-0.04354*Math.max(0,+dw||0))-3.1669))}   /* Lichess 每步準確度（沒加 +1 的不確定加分，跟 Lichess 的差別寫在合併說明.md） */
 function mxGradeDw(dw){const t=MXS.th;return dw<t[0]?"正著":dw<=t[1]?"穩著":dw<=t[2]?"緩著":dw<=t[3]?"失著":"敗著"}
@@ -718,21 +725,23 @@ function mxShSide(rep,s,wn){const P=rep&&rep.plies||[],X=[];for(const m of P){if
   let sw=0,sa=0,sh=0;const cnt={},ph={};for(const{m,x}of X){const w=wOf(m.ply);sw+=w;sa+=w*x.acc;sh+=1/Math.max(1,x.acc);cnt[x.q]=(cnt[x.q]||0)+1;const o=ph[m.phase]||(ph[m.phase]={s:0,n:0});o.s+=x.acc;o.n++}   /* 調和平均的每一步至少算 1 分（0 分會讓調和平均變 0） */
   const wm=sa/sw,hmean=X.length/sh,base=(1-MXS.hm)*wm+MXS.hm*hmean,C=MXS.cap,bonus=Math.min(MXS.bonus[1],MXS.bonus[0]*(cnt["妙著"]||0)),
     bad=X.filter(({x})=>x.dw>=MXS.capDw||x.q==="失著"||x.q==="敗著").length,blun=cnt["敗著"]||0,br=bad/X.length,
-    fin=s==="r"?last:100-last,lost=fin<=MXS.lose[0]||(wn==="r"||wn==="b")&&wn!==s,   /* fin＝這方最後評到的勝率（last 是紅方視角）；lost＝輸棋局面或知道這盤輸了（wn＝贏的那方，意見表 1046；認輸時局面常還沒到 −600） */
-    cap=Math.min(bad>=C.n[1]||br>=C.r[1]?C.v[1]:bad>=C.n[0]||br>=C.r[0]?C.v[0]:blun?C.blun:100,lost?MXS.lose[1]:100),score=Math.min(cap,Math.round(base+bonus)),gi=MXS.gr.findIndex(g=>score>=g);
-  return{score,grade:"SABCD"[gi<0?4:gi],base,wm,hmean,bonus,cap,fin,lost,cnt,n:X.length,bk:X.filter(({x})=>x.bk).length,
+    fin=s==="r"?last:100-last,end=wn==="r"||wn==="b"?(wn===s?"w":"l"):wn===""?"d":"?",behind=fin<=MXS.lose[0],lost=end==="l"||end==="?"&&behind,   /* fin＝這方最後評到的預期得分（last 是紅方視角）；end＝終局四態（wn＝贏的那方，和棋 ""，省略＝不知道）；已知贏、和不套輸棋上限（認輸、超時贏的盤，局面可能還在 −600 以下） */
+    capE=bad>=C.n[1]||br>=C.r[1]?mxCapOf(C.g[1]):bad>=C.n[0]||br>=C.r[0]?mxCapOf(C.g[0]):blun?mxCapOf(C.blun):100,cap=Math.min(capE,lost?mxCapOf(MXS.lose[1]):100),
+    raw=Math.round(base+bonus),s0=Math.min(capE,raw),score=Math.min(cap,raw),gi=MXS.gr.findIndex(g=>score>=g);   /* 三個版本：raw 不封頂、s0 只看重大錯誤、score 再加輸棋上限 */
+  return{score,grade:"SABCD"[gi<0?4:gi],raw,s0,base,wm,hmean,bonus,cap,capE,fin,end,behind,lost,cnt,n:X.length,bk:X.filter(({x})=>x.bk).length,
     ph:Object.fromEntries(Object.entries(ph).map(([k,o])=>[k,{score:Math.round(o.s/o.n),n:o.n}])),
     mv:X.map(({m,x})=>({ply:m.ply,cn:m.cn,ph:m.phase,loss:m.loss,...x}))}}
-function mxShadowReport(rep,win){return{ver:MXS.ver,r:mxShSide(rep,"r",win),b:mxShSide(rep,"b",win)}}   /* win（可省略）：贏的那方 "r"／"b"，和棋 ""；不知道就只看最後的局面 */
+function mxShadowReport(rep,win){return{ver:MXS.ver,r:mxShSide(rep,"r",win),b:mxShSide(rep,"b",win)}}   /* win：贏的那方 "r"／"b"，已知和棋 ""；省略（undefined、null）＝不知道結果，只能看最後的局面 */
 /* 開發者模式才看得到：賽後報告並列新舊（三方審查：新舊兩個數字不給孩子看，會困惑） */
 function mxShHtml(R,X){if(!X||!R||R.score==null)return"";const QS=["妙著","正著","穩著","緩著","失著","敗著"],df=X.mv.filter(v=>v.q!==v.q0||v.mt);
   return`<details style="margin-top:12px"><summary class="muted">🛠 新算法（影子模式，只有開發者看得到）</summary>
     <table class="ttab" style="margin-top:6px"><tr><th></th><th>畫面（舊）</th><th>影子（新）</th></tr>
     <tr><td>總分</td><td>${R.score}（${R.grade[0]}）</td><td>${X.score}（${X.grade}）</td></tr>
     <tr><td>準確度</td><td>${R.base.toFixed(1)}</td><td>${X.base.toFixed(1)}<br><small class="muted" style="font-weight:400">波動加權 ${X.wm.toFixed(1)}・調和 ${X.hmean.toFixed(1)}</small></td></tr>
-    <tr><td>上限</td><td>${R.cap}</td><td>${X.cap}${X.lost?`<br><small class="muted" style="font-weight:400">輸棋（最後勝率 ${X.fin.toFixed(0)}%）</small>`:""}</td></tr>${QS.map(q=>`<tr><td>${q}</td><td>${R.cnt[q]||0}</td><td>${X.cnt[q]||0}</td></tr>`).join("")}</table>
+    <tr><td>上限</td><td>${R.cap}</td><td>${X.cap}<br><small class="muted" style="font-weight:400">${{w:"已知贏",l:"已知輸",d:"已知和","?":"結果未知"}[X.end]}${X.behind?`・局面不利（最後預期得分 ${X.fin.toFixed(0)}%）`:""}${X.lost?"・套輸棋上限":""}</small></td></tr>
+    <tr><td>三個版本</td><td>—</td><td>${X.raw}／${X.s0}／${X.score}<br><small class="muted" style="font-weight:400">不封頂／只看重大錯誤／再加輸棋上限</small></td></tr>${QS.map(q=>`<tr><td>${q}</td><td>${R.cnt[q]||0}</td><td>${X.cnt[q]||0}</td></tr>`).join("")}</table>
     ${df.length?`<div class="muted" style="font-size:12.5px;line-height:1.6;margin-top:6px">評語不一樣的步：${df.slice(0,30).map(v=>`第 ${v.ply} 手 ${esc(v.cn||"")} ${v.q0}→${v.q}（勝率 −${v.dw.toFixed(1)}%${v.mt===1?"・送殺":v.mt===2?"・漏殺"+(v.mh?"（推估）":""):""}）`).join("；")}</div>`:""}
-    <p class="muted" style="font-size:12px;margin:6px 0 0">MXS v${MXS.ver}：k＝${MXS.k}、評語門檻 ${MXS.th.map(t=>t.toFixed(2)).join("／")}%、殺棋分界 ${MXS.walk.join("／")}・${MXS.miss.join("／")}、S／A／B／C ${MXS.gr.join("／")}、輸棋局面（勝率 ≤ ${MXS.lose[0]}%）最高 ${MXS.lose[1]}（都還沒用真人資料校正）${X.bk<X.n?`；${X.n-X.bk} 步沒有最佳評估原值（舊存檔或舊快取），用 ev 夾值＋loss 還原`:""}</p></details>`}
+    <p class="muted" style="font-size:12px;margin:6px 0 0">MXS v${MXS.ver}：k＝${MXS.k}、評語門檻 ${MXS.th.map(t=>t.toFixed(2)).join("／")}%、殺棋分界 ${MXS.walk.join("／")}・${MXS.miss.join("／")}、S／A／B／C ${MXS.gr.join("／")}、已知輸（或結果未知而預期得分 ≤ ${MXS.lose[0]}%）最高 ${mxCapOf(MXS.lose[1])}（都還沒用真人資料校正）${X.bk<X.n?`；${X.n-X.bk} 步沒有最佳評估原值（舊存檔或舊快取），用 ev 夾值＋loss 還原`:""}</p></details>`}
 function gameReport(board0,moves){
   moves=(moves||[]).map(m=>m&&m.q&&m.loss!=null&&qNow(m)!==m.q?{...m,q:qNow(m)}:m);
   const b=board0.slice(),out={r:null,b:null},plies=[];let endFrom=null;

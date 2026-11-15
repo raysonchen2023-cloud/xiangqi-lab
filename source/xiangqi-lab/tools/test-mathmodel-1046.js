@@ -2,7 +2,9 @@
 //   必改 1 存檔還原：沒有 bv 的舊存檔，走進殺棋（−29990）還原後不能變成「正著、100 分」；有 bv、沒 bv、紅黑兩方算出來的勝率差都跟直接算一樣。
 //   必改 2 殺棋特例：送殺、漏殺直接決定評語並標 mt（審查的兩個例子：+2000 有殺不殺掉到 +900 不能是穩著；−213 走進殺棋不能只算緩著）。
 //   必改 3 一盤總分不灌水：輸掉的盤（最後勝率 ≤ 10%，或呼叫端給了勝負）新總分最高 79；模擬「被強電腦慢慢磨輸」輸棋拿 S／A 從 4～10 成降到 1 成以下；畫面的舊分數不受影響。
-//   必改 4 參數位置：評語門檻由 k 算出、k 改了門檻跟著改；MXS.ver＝2；calibrate-grades.js 只用最新版本的盤。
+//   必改 4 參數位置：評語門檻由 k 算出、k 改了門檻跟著改；MXS.ver＝3；calibrate-grades.js 只用最新版本的盤。
+//   11/15 ChatGPT 重評（整體 B−）重現的兩個邏輯衝突：①已知贏棋、和棋不能因為最後的局面不利被標成輸棋（終局四態 end）；
+//     ②上限要跟著 S／A／B 門檻走（門檻校正後「輸棋最高 B」仍然成立）、分位對應遇到同分堆積時門檻不能重疊。
 //   第一步：K 維持 48／32（不降到 24）、升段馬上／降段有保護；「一般棋友」至少 100 人、「勝過 X%」至少 200 人；建議先練三級信心的說法；快取 talentCache5 → 6。
 // 全部用 vm 載入 App 裡真正的程式片段（05-settings、04-stats、src/local.js、src/net.js），不開瀏覽器。
 "use strict";
@@ -70,7 +72,8 @@ const oldScore=ms=>{const n=ms.length,base=ms.reduce((a,m)=>a+100*Math.exp(-m.lo
 test("必改 3：慢慢輸掉的一盤（每步只少 25 分、最後 −1800）：沒有上限時新總分是 S／A，現在最高 79，cap、fin、lost 寫在結果裡",()=>{
   const plies=[];let E=0;for(let i=0;i<120&&E>-1800;i++){const s=i%2?"b":"r",sg=s==="r"?1:-1,best=sg*E,L=s==="r"?30:0,played=best-L;E=sg*played;plies.push({ply:i+1,by:s,phase:i<20?"open":"mid",cn:"",ev:sg*played,bv:sg*best,loss:L,q:oldQ(L)})}
   const r=X.mxShSide({plies},"r");assert.ok(r.lost);assert.ok(r.fin<=10);assert.equal(r.cap,79);assert.ok(r.score<=79&&r.grade!=="S"&&r.grade!=="A","新總分 "+r.score);
-  const Y=loadSh(SH.replace("lose:[10,79]","lose:[-1,100]")),r0=Y.mxShSide({plies},"r");assert.ok(r0.score>=80,"沒有輸棋上限時（之前的算法）："+r0.score);
+  assert.ok(r.s0>=80,"沒有輸棋上限時（s0＝只看重大錯誤，之前的算法）："+r.s0);assert.ok(r.raw>=r.s0&&r.s0>=r.score,"三個版本：不封頂 ≥ 只看重大錯誤 ≥ 再加輸棋上限");
+  assert.equal(r.end,"?");assert.equal(r.behind,true);
   const b=X.mxShSide({plies},"b");assert.ok(!b.lost,"贏的那方不受影響");assert.equal(b.cap,100);
 });
 test("〔混合〕必改 3：知道勝負時（認輸，最後只有 −500）也算輸棋；和棋、贏棋、不給勝負都不套",()=>{
@@ -80,11 +83,30 @@ test("〔混合〕必改 3：知道勝負時（認輸，最後只有 −500）�
   assert.equal(X.mxShadowReport(rep,"r").r.lost,false);assert.equal(X.mxShadowReport(rep,"").r.lost,false);assert.equal(X.mxShadowReport(rep).r.lost,false);
   assert.match(SV,/mxShadowReport\(rep,st\.result\.w\|\|""\)/,"05b-save cpaDone 要把勝負帶進去");
 });
+/* 11/15 ChatGPT 重評重現的邊界：每步都沒有損失（準確度約 100），但紅方最後評估 −700（預期得分約 7%）——贏棋可能來自對手超時、認輸，和棋也不一定評在 0 附近 */
+const flat700=()=>{const plies=[];for(let i=0;i<40;i++){const s=i%2?"b":"r";plies.push({ply:i+1,by:s,phase:i<20?"open":"mid",cn:"",ev:-700,bv:-700,loss:0,q:"正著"})}return{plies}};
+test("ChatGPT 重評 ①：已知結果優先於最後的局面——已知紅勝、已知和棋不套輸棋上限（原本三種都封頂 79）；已知輸、結果未知而局面不利才套",()=>{
+  const rep=flat700(),w=X.mxShadowReport(rep,"r").r,d=X.mxShadowReport(rep,"").r,u=X.mxShadowReport(rep).r,l=X.mxShadowReport(rep,"b").r;
+  for(const x of[w,d,u,l]){assert.ok(x.base>99,"基礎準確度 "+x.base);assert.ok(x.fin<10,"最後預期得分 "+x.fin);assert.equal(x.behind,true,"局面不利另外標，不等於輸")}
+  assert.deepEqual([w.end,d.end,u.end,l.end],["w","d","?","l"]);
+  assert.equal(w.lost,false);assert.equal(w.score,100);assert.equal(w.grade,"S");
+  assert.equal(d.lost,false);assert.equal(d.score,100);
+  assert.equal(u.lost,true);assert.equal(u.score,79);assert.equal(l.lost,true);assert.equal(l.score,79);
+  assert.equal(X.mxShadowReport(rep,null).r.end,"?","null 也算不知道，不能當和棋");
+  /* 黑方視角：最後預期得分約 93%，已知黑輸（紅勝）照樣套上限——已知結果蓋過局面 */
+  const bl=X.mxShadowReport(rep,"r").b;assert.equal(bl.behind,false);assert.equal(bl.lost,true);assert.equal(bl.score,79);
+  const h=X.mxShHtml({score:90,grade:["S"],base:99,cap:100,cnt:{}},w);assert.match(h,/已知贏・局面不利（最後預期得分 \d+%）/);assert.doesNotMatch(h,/套輸棋上限/);
+});
+test("ChatGPT 重評 ②：上限跟著門檻走——門檻校正成 [95,79,78,77] 時，已知輸的盤最高 78（還是 B），不會因為 A 門檻降到 79 又拿到 A",()=>{
+  const Y=loadSh(SH.replace("gr:[90,80,70,60]","gr:[95,79,78,77]")),l=Y.mxShadowReport(flat700(),"b").r;
+  assert.equal(l.cap,78);assert.equal(l.score,78);assert.equal(l.grade,"B");
+  assert.doesNotMatch(SH,/v:\[79,69\]|blun:89|lose:\[10,79\]/,"上限不能再寫死分數");
+  assert.deepEqual([0,1,2].map(i=>X.MXS.gr[i]-1),[89,79,69],"預設門檻下跟原本的 89／79／69 一樣");
+});
 test("必改 3：模擬被強電腦磨輸（三個段位各 300 盤）：輸棋拿 S／A 在新算法 ≤ 10%，而且每個段位都比之前的影子算法少（之前最多到 100%）",()=>{
-  const Y=loadSh(SH.replace("lose:[10,79]","lose:[-1,100]"));
   let top=0;for(const[name,P]of Object.entries(LV)){const rnd=mkRnd(99+name.length);let nL=0,saN=0,saY=0,saO=0;
     for(let g=0;g<300;g++){const{plies,E}=slowGame(P,rnd);if(E>-500)continue;nL++;const rep={plies};
-      if(X.mxShadowReport(rep,"b").r.score>=80)saN++;if(Y.mxShSide(rep,"r").score>=80)saY++;if(oldScore(plies.filter(m=>m.by==="r"))>=80)saO++}
+      const xr=X.mxShadowReport(rep,"b").r;if(xr.score>=80)saN++;if(xr.s0>=80)saY++;   /* s0＝只看重大錯誤、不套輸棋上限＝之前的影子算法 */if(oldScore(plies.filter(m=>m.by==="r"))>=80)saO++}
     const p=v=>v/Math.max(1,nL);t_log(`${name}：輸 ${nL} 盤，拿 S／A 舊 ${(p(saO)*100).toFixed(0)}%、之前的影子 ${(p(saY)*100).toFixed(0)}%、現在 ${(p(saN)*100).toFixed(0)}%`);
     assert.ok(nL>=200,name+" 輸的盤太少");assert.ok(p(saN)<=.10,`${name} 現在 ${p(saN)}`);assert.ok(p(saN)<p(saY),`${name} 要比之前少`);top=Math.max(top,p(saY))}
   assert.ok(top>=.4,`之前的影子至少一個段位要灌水到 40% 以上（${top}）——不然這個模擬證明不了什麼`);
@@ -92,12 +114,12 @@ test("必改 3：模擬被強電腦磨輸（三個段位各 300 盤）：輸棋�
 const LOG=[];const t_log=s=>LOG.push(s);test.after(()=>{if(LOG.length)console.log("# "+LOG.join("\n# "))});
 test("必改 3：mxShadowReport 不動 rep（畫面的舊分數、評語照舊）；開發者並列表寫出「輸棋」上限",()=>{
   const{plies}=slowGame(LV.初學,mkRnd(5)),rep={plies},before=JSON.stringify(rep),sh=X.mxShadowReport(rep,"b");assert.equal(JSON.stringify(rep),before);
-  const R={score:70,grade:["B"],base:70.2,cap:79,cnt:{}},h=X.mxShHtml(R,sh.r);assert.match(h,/輸棋（最後勝率 \d+%）/);assert.match(h,/MXS v2/);assert.match(h,/輸棋局面（勝率 ≤ 10%）最高 79/);
+  const R={score:70,grade:["B"],base:70.2,cap:79,cnt:{}},h=X.mxShHtml(R,sh.r);assert.match(h,/已知輸[^<]*套輸棋上限/);assert.match(h,/MXS v3/);assert.match(h,/已知輸（或結果未知而預期得分 ≤ 10%）最高 79/);assert.match(h,/不封頂／只看重大錯誤／再加輸棋上限/);
 });
 
 // ====================== 必改 4：參數位置、版本 ======================
 test("必改 4：評語門檻由 k 算出（k＝0.00368208 時跟 30／60／150／400 分逐點對齊）；把 k 改成 0.005，門檻自動跟著變",()=>{
-  assert.equal(X.MXS.ver,2);assert.deepEqual(Array.from(X.MXS.lose),[10,79]);
+  assert.equal(X.MXS.ver,3);assert.deepEqual(Array.from(X.MXS.lose),[10,1]);
   assert.deepEqual(Array.from(X.MXS.th,t=>+t.toFixed(2)),[2.76,5.5,13.47,31.35]);
   for(const[i,c]of X.MXS.cp.entries()){assert.equal(X.mxGradeDw(W(c-1)-50),["正著","穩著","緩著","失著"][i]);assert.notEqual(X.mxGradeDw(W(c+2)-50),["正著","穩著","緩著","失著"][i])}
   const Y=loadSh(SH.replace("k:0.00368208,","k:0.005,"));assert.equal(Y.MXS.k,0.005);
@@ -109,6 +131,15 @@ test("必改 4：calibrate-grades.js 只用最新 MXS 版本的盤（v1、v2 的
   for(let i=0;i<60;i++){const v=i<30?1:2,o=60+i%40,s=o+(v===1?9:2);L.push(JSON.stringify({aid:"p"+(i%25),g:"g"+i,mx:v,full:1,res:i%3?"w":"l",crk:"業3",o:[o,0,o],s:[s,0,s]}))}
   fs.writeFileSync(f,L.join("\n")+"\n");const so=cp.execFileSync(process.execPath,[path.join(__dirname,"calibrate-grades.js"),f,out],{encoding:"utf8"});
   assert.match(so,/只用 MXS v2 的 30 盤/);assert.match(so,/讀到 30 盤/);fs.rmSync(dir,{recursive:true,force:true});
+});
+test("ChatGPT 重評 ②：calibrate-grades.js 遇到同分堆積（80 盤 79 分、20 盤 95 分）門檻不重疊——原本 [95,79,79,79]，現在強制各差 1 分並警告不可靠",t=>{
+  if(!fs.existsSync(path.join(__dirname,"calibrate-grades.js")))return t.skip("沒有 calibrate-grades.js（校正工具只在開發者電腦，公開副本沒有）");
+  const dir=fs.mkdtempSync(path.join(os.tmpdir(),"cg1046b-")),f=path.join(dir,"cpu.jsonl"),out=path.join(dir,"fit.json"),L=[];
+  for(let i=0;i<100;i++){const s=i<80?79:95;L.push(JSON.stringify({aid:"p"+i,g:"g"+i,mx:3,full:1,res:i<80?"l":"w",crk:"業3",o:[70,2,70],s:[s,0,s]}))}
+  fs.writeFileSync(f,L.join("\n")+"\n");const so=cp.execFileSync(process.execPath,[path.join(__dirname,"calibrate-grades.js"),f,out,"--target","10,30,30,20,10"],{encoding:"utf8"});
+  const J=JSON.parse(fs.readFileSync(out,"utf8"));fs.rmSync(dir,{recursive:true,force:true});
+  assert.deepEqual(J.grRaw,[95,79,79,79],"分位原值（重評報告的例子）");assert.deepEqual(J.gr,[95,79,78,77]);assert.equal(J.tied,2);assert.equal(J.enough,false,"有重疊就不能建議換");
+  for(let i=1;i<4;i++)assert.ok(J.gr[i]<J.gr[i-1]);assert.match(so,/同分堆積/);assert.match(so,/不要直接換/);
 });
 
 // ====================== 第一步：段位 K、升段保護 ======================
@@ -125,6 +156,13 @@ test("第一步：升段馬上升；降段要掉到下限再減半個段寬、�
     R.pts=lo-w/2-1;R.l++;rankHold(R,lo+3);assert.equal(R.rk,i2,name+" 升段後不到 3 盤不降");
     R.l+=2;rankHold(R,R.pts);assert.equal(R.rk,rankIdx(R.pts),name+" 滿 3 盤、掉過半個段寬才降");
     const Q={pts:lo+10,w:30,l:30,d:0,rk:i2,pn:0};Q.pts=lo-w/2+5;Q.l++;rankHold(Q,lo+10);assert.equal(Q.rk,i2,name+" 只比下限低一點不降")}
+});
+test("〔混合〕開發者 11/15 選「改照積分挑對手」：晉級賽開局的對手段位用積分（rankIdx），不用保護後的顯示段位（heldIdx）；保護期間兩者差一段",()=>{
+  const{RANKS,rankIdx,rankHold,heldIdx}=loadRank(LO,"src/local.js"),i2=RANKS.findIndex(r=>r[0]==="業2"),lo=RANKS[i2][1];
+  const R={pts:lo+3,w:20,l:20,d:0};rankHold(R,lo-5);R.pts=lo-10;R.l++;rankHold(R,lo+3);   /* 剛升上業2 又掉回下限以下 10 分：徽章還是業2 */
+  assert.equal(heldIdx(R),i2,"徽章受保護");assert.equal(rankIdx(R.pts),i2-1,"積分對應的是低一段");
+  assert.match(LO,/ranked:!!ranked,rk:ranked\?rankIdx\(cpuRate\(\)\.pts\):null,/,"開局的對手段位照積分");assert.doesNotMatch(LO,/rk:ranked\?heldIdx\(cpuRate\(\)\)/);
+  assert.match(LO,/const CR=cpuRate\(\),ci=heldIdx\(CR\)/,"顯示給玩家看的段位照舊用保護後的");
 });
 
 // ====================== 第一步：百分位門控、建議先練三級信心、快取升版 ======================
@@ -145,10 +183,16 @@ test("第一步：殺法軸沒有 ≥200 人的分位表時顯示段位名（不
 });
 const ax=(m,se,o)=>({k:o.k,v:Math.round(m),m,se,n:200,g:20,u:"步",key:o.key,ok:true,z:null,zse:null,go:["#/x","去練"]});
 const axes=(o,mi,e,se)=>[ax(o,se,{k:"開局",key:"open"}),ax(mi,se,{k:"中局",key:"mid"}),ax(e,se,{k:"殘局",key:"end"}),{k:"殺法",v:null,txt:"",est:true,n:0,g:0,u:"題",pct:1,ok:false,go:["#/quiz","棋力測驗"]},{...ax(90,1,{k:"穩定",key:"stab"}),best:60}];
-test("第一步：建議先練三級信心——差距 ≥2 個標準誤＝hi、1.64～2＝mid、不到 1.64 且門檻還寬＝lo、資料夠又差不多＝even、樣本不夠＝lo",()=>{
+/* 有同段位基準的五軸：z 分數（開局、中局、殘局、穩定都有 z，skillPick 才走 grp） */
+const axesZ=(zo,zm,ze,zse)=>{const A=axes(80,79,78,3),Z=[zo,zm,ze,null,.2];A.forEach((a,i)=>{if(Z[i]!=null){a.z=Z[i];a.zse=zse}});return A};
+test("第一步：建議先練三級信心（有同段位基準時）——差距 ≥2 個標準誤＝hi、1.64～2＝mid；不到 1.64 且門檻還寬＝lo、資料夠又差不多＝even、樣本不夠＝lo",()=>{
   const K=loadSk(null);
-  const hi=K.skillPick(axes(80,78,60,2));assert.equal(hi.conf,"hi");assert.equal(hi.weak.k,"殘局");
-  const mid=K.skillPick(axes(80,79,72,3));assert.equal(mid.conf,"mid");assert.equal(mid.maybe.k,"殘局");assert.equal(mid.weak,undefined,"中信心不回傳 weak（地圖朱圈只畫高信心）");
+  const hi=K.skillPick(axesZ(.6,.5,-1.5,.3));assert.equal(hi.conf,"hi");assert.equal(hi.weak.k,"殘局");assert.equal(hi.grp,true);
+  const mid=K.skillPick(axesZ(.6,.5,-.2,.3));assert.equal(mid.conf,"mid");assert.equal(mid.maybe.k,"殘局");assert.equal(mid.weak,undefined,"中信心不回傳 weak（地圖朱圈只畫高信心）");
+  /* 開發者 11/15 選「改成溫和說法」：沒有同段位基準時，原本的 hi、mid 都只回傳 soft，不回傳 weak／maybe（地圖朱圈只看 weak，所以也不畫） */
+  const s1=K.skillPick(axes(80,78,60,2));assert.equal(s1.conf,"soft");assert.equal(s1.soft.k,"殘局");assert.equal(s1.lv,"hi");assert.equal(s1.weak,undefined);assert.equal(s1.maybe,undefined);
+  const s2=K.skillPick(axes(80,79,72,3));assert.equal(s2.conf,"soft");assert.equal(s2.lv,"mid");assert.equal(s2.weak,undefined);assert.equal(s2.maybe,undefined);
+  assert.match(rd(path.join(M,"07z2-statmap.js")),/if\(pk&&pk\.weak\)\{/,"地圖朱圈只看 weak");
   const lo=K.skillPick(axes(80,79,78,3));assert.equal(lo.conf,"lo");assert.ok(lo.even);
   const ev=K.skillPick(axes(80,79.5,79,1));assert.equal(ev.conf,"even");
   const A=axes(80,79,60,2);A[1].ok=false;A[2].ok=false;const no=K.skillPick(A);assert.equal(no.conf,"lo");assert.ok(no.none);
@@ -157,15 +201,17 @@ test("第一步：五邊形的三級說法——「🎯 建議先練」「🔎 �
   const SP=sl(ST,"async function skillPentagon(","\n/* 意見回饋 301","skillPentagon");
   async function paint(A){const K=loadSk(null),box={isConnected:true,innerHTML:"",querySelectorAll:()=>[]};const ctx={console,isFinite,store:{get:(k,d)=>d,set(){}},SK:K.SK,mxTotal:K.mxTotal,skillPick:K.skillPick,mxCal:K.mxCal,
       skillRows:async()=>({G:[{hu:0}],smN:0}),skillAxes:()=>A,tlIRT:()=>null,setProf(){},penSVG:()=>""};vm.createContext(ctx);vm.runInContext(SP+";this.f=skillPentagon",ctx);await ctx.f(box);return box.innerHTML.split('<div class="skl">')[0]}   /* 只看上面的建議那段（「五項怎麼算」說明裡三種說法都有寫） */
-  const h1=await paint(axes(80,78,60,2));assert.match(h1,/🎯 建議先練：殘局/);assert.doesNotMatch(h1,/可能先看|資料還少/);
-  const h2=await paint(axes(80,79,72,3));assert.match(h2,/🔎 可能先看：殘局/);assert.doesNotMatch(h2,/建議先練：/);
+  const h1=await paint(axesZ(.6,.5,-1.5,.3));assert.match(h1,/🎯 建議先練：殘局/);assert.doesNotMatch(h1,/可能先看|資料還少/);
+  const h2=await paint(axesZ(.6,.5,-.2,.3));assert.match(h2,/🔎 可能先看：殘局/);assert.doesNotMatch(h2,/建議先練：/);
   const h3=await paint(axes(80,79,78,3));assert.match(h3,/📋 資料還少，先多下幾盤/);assert.doesNotMatch(h3,/建議先練：|可能先看：/);
-  const h4=await paint(axes(80,79.5,79,1));assert.match(h4,/差不多/);assert.doesNotMatch(h4,/資料還少|建議先練：|可能先看：/);
+  const h4=await paint(axes(80,79.5,79,1));assert.match(h4,/目前未看出明顯差異/);assert.doesNotMatch(h4,/差不多|資料還少|建議先練：|可能先看：/);
+  /* 開發者 11/15：沒有同段位基準時改成溫和說法，不說弱項 */
+  for(const A of[axes(80,78,60,2),axes(80,79,72,3)]){const h=await paint(A);assert.match(h,/💡 最近殘局分數較低（\d+ 分），想練一題嗎？/);assert.match(h,/這還不能說殘局是弱項/);assert.doesNotMatch(h,/建議先練：|可能先看：/)}
 });
 test("第一步：真的五軸（skillAxes 從每盤的列算）——殘局一直差 20 分、40 盤＝建議先練殘局；只有 2 盤＝不給建議",()=>{
   const K=loadSk(null),row=(i,e)=>({t:1e6-i,hu:0,n:30,bad:2,best:15,pa:{open:[10*82,10],mid:[12*80,12],end:[8*e,8]},A:[...Array(10).fill(82),...Array(12).fill(80),...Array(8).fill(e)]});
-  const G=Array.from({length:40},(_,i)=>row(i,i%2?58:62)),p=K.skillPick(K.skillAxes(G,null));assert.equal(p.conf,"hi");assert.equal(p.weak.k,"殘局");
-  const p2=K.skillPick(K.skillAxes(G.slice(0,2),null));assert.notEqual(p2.conf,"hi");
+  const G=Array.from({length:40},(_,i)=>row(i,i%2?58:62)),p=K.skillPick(K.skillAxes(G,null));assert.equal(p.conf,"soft");assert.equal(p.lv,"hi");assert.equal(p.soft.k,"殘局");   /* 沒有同段位基準：差距再明顯也只溫和提問（11/15） */
+  const p2=K.skillPick(K.skillAxes(G.slice(0,2),null));assert.notEqual(p2.lv,"hi");assert.equal(p2.weak,undefined);
 });
 test("〔原始碼〕第一步：五邊形、成長頁的快取 talentCache5 → talentCache6（必改 7），舊的 talentCache5 刪掉",()=>{
   assert.doesNotMatch(ST,/store\.(get|set)\("talentCache5"/);

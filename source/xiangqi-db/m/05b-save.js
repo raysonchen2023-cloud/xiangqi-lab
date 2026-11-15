@@ -597,8 +597,8 @@ window.XQ_ANON_OK=x=>!lrnAnonType(x)||lrnAnonOn();
 function cpaRnd(n){const a=new Uint8Array(n);crypto.getRandomValues(a);return[...a].map(x=>(x%36).toString(36)).join("")}
 function cpaDone(st,full){try{if(!st||!st.id||!st.result)return;const sent=store.get("cpaSent",[])||[];if(sent.includes(st.id))return;store.set("cpaSent",sent.concat(st.id).slice(-60));
   if(typeof gameReport!=="function"||typeof mxShadowReport!=="function"||!window.XQCore)return;
-  const hu=st.human,rep=gameReport(XQCore.parseFen(st.start||XQCore.START),st.moves||[]),R=rep.sides[hu],X=mxShadowReport(rep,st.result.w||"")[hu];if(!R||R.score==null||!X)return;   /* 意見表 1046：把勝負帶進去，輸掉的盤新總分最高 79（MXS.lose） */
-  const all=store.get("mxShadow",{})||{};all[st.id]={o:[R.score,R.grade[0]],n:[X.score,X.grade],v:MXS.ver,at:Date.now()};const ks=Object.keys(all);if(ks.length>200)for(const k of ks.sort((a,b)=>all[a].at-all[b].at).slice(0,ks.length-200))delete all[k];store.set("mxShadow",all);
+  const hu=st.human,rep=gameReport(XQCore.parseFen(st.start||XQCore.START),st.moves||[]),R=rep.sides[hu],X=mxShadowReport(rep,st.result.w||"")[hu];if(!R||R.score==null||!X)return;   /* 意見表 1046：把勝負帶進去（這裡一定有結果：w 是贏的那方，空的＝和棋），已知輸的盤新總分最高 B（MXS.lose）；已知贏、和不套 */
+  const all=store.get("mxShadow",{})||{};all[st.id]={o:[R.score,R.grade[0]],n:[X.score,X.grade],x:[X.raw,X.s0,X.end],v:MXS.ver,at:Date.now()};   /* x＝[不封頂, 只看重大錯誤, 終局]：三個版本留在本機比較（11/15 ChatGPT 重評），不送出 */const ks=Object.keys(all);if(ks.length>200)for(const k of ks.sort((a,b)=>all[a].at-all[b].at).slice(0,ks.length-200))delete all[k];store.set("mxShadow",all);
   if(!cpaOn()||!window.XQNet||!XQNet.shareIRT||X.n<4)return;
   let aid=store.get("anonId",null);if(!aid){aid=Math.random().toString(36).slice(2,10);store.set("anonId",aid)}
   const PH={open:0,mid:1,end:2},rd=v=>v==null||!isFinite(+v)?null:Math.round(+v),C=st.cpuRate||{},GI=g=>"SABCD".indexOf(g);let nrk=null;try{nrk=XQNet.rating?XQNet.rating().rank:null}catch(e){}

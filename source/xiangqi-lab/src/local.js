@@ -304,7 +304,7 @@ var XQ=(function(){
     // 積分挑戰下到一半就開新局：算輸
     forfeit(P);
     const pm=pre&&Array.isArray(pre.moves)?pre.moves.filter(m=>Number.isInteger(m.f)&&Number.isInteger(m.t)).slice(0,300):[];
-    P={id:gameId(),human,level:ranked?0:level,ranked:!!ranked,rk:ranked?heldIdx(cpuRate()):null,moves:pm,result:null,hint:null,practice:pre?{...(pre.info||{}),base:pm.length}:null,reward:!ranked&&!pre&&!!reward,arena:!ranked&&!pre&&!reward&&arena||null,journey:nk==="journey"?journey:null};   /* 數學修正 11/11：對手照顯示的段位（遲滯後） */
+    P={id:gameId(),human,level:ranked?0:level,ranked:!!ranked,rk:ranked?rankIdx(cpuRate().pts):null,   /* 開發者 11/15 選「改照積分挑對手」（ChatGPT 重評）：顯示段位的升段保護只管徽章；對手強度照實際積分對應的那一段（原本照保護後的 heldIdx，剛升段又掉分的那幾盤對手偏強、勝率約 35～38%） */moves:pm,result:null,hint:null,practice:pre?{...(pre.info||{}),base:pm.length}:null,reward:!ranked&&!pre&&!!reward,arena:!ranked&&!pre&&!reward&&arena||null,journey:nk==="journey"?journey:null};   /* 數學修正 11/11 原本是「對手照顯示的段位（遲滯後）」，11/15 改照積分，見這行 rk 的說明 */
     {const L=nk==="journey"?lvStart(lv):null;if(L){P.start=L.start;P.startTurn=L.startTurn;if(L.noPerp)P.noPerp=true;if(L.mirror&&L.mirror.length)P.mirror=L.mirror}}
     const rp=rulePref();P.rc=C.ruleConfig(nk==="cpu"&&!reward&&(!ranked||C.RULESETS[rp].rated)?rp:C.RULESET_DEFAULT,ranked?"ranked":pre?"puzzle":"casual");   /* 晉級賽只用可計分的棋規：千秋休閒規則或臺灣棋規正式版（原型不行） */
     stateRebuild(P);if(P.practice&&P.turn!==human)throw new Error("這步不是你走的");savePlay()}

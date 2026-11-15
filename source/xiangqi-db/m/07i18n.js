@@ -802,6 +802,10 @@ const I18N_EN={
   "再點一次同一顆招就放出":"Tap the same skill again to cast","點盤上發光的補給點":"Tap a glowing supply point","點盤上發光的目標":"Tap a glowing target","再打一次":"Play again","返回選關":"Back to stages",
   "不分勝負":"Draw","星門失守":"The gates fell","情報":"Intel","顯示中":"Showing","打哪一條線？":"Which line?","沒有可以配對的目標":"No target can be paired",
   "單線守口":"Hold one lane","拆陣破甲":"Break the guard","章末守關":"Chapter gatekeeper",
+  /* 11/15 星門圍城補第 2、4、5 關：主題、星樞大招、分段跳字（帶數字的不翻） */
+  "分兵與回援":"Split and fall back","雙門取捨":"Two gates, one move","三段攻勢":"Three-phase assault","隔山星砲":"Over-the-Hill Star Cannon","卒將號令":"Pawn General's Command",
+  "⚠ 星樞預告：隔山星砲":"⚠ Star Core warning: Over-the-Hill Star Cannon","⚠ 星樞預告：卒將號令":"⚠ Star Core warning: Pawn General's Command","隔山星砲取消":"Star Cannon cancelled","卒將號令取消":"Command cancelled",
+  "✦ 星樞解鎖：隔山星砲":"✦ Star Core unlocks: Over-the-Hill Star Cannon","✦ 星樞解鎖：卒將號令":"✦ Star Core unlocks: Pawn General's Command","奪靈馬":"Spirit-Draining Horse",
   "重金懸賞":"Bounty","庭院小息":"Courtyard Rest","帥令安軍":"Marshal's Order","當票回春":"Pawn-Ticket Revival","九宮守心":"Palace Heart","鐵壁銅牆":"Iron Wall","仕角守門":"Advisor Gate","銅鎖止步":"Bronze Lock",
   "近侍護帥":"Bodyguard","盾陣回靈":"Shield Spirit","神行百里":"Swift Swap","勇往直前":"Forward Spirit","跑腿賺錢":"Errand Runner","步步為營":"Step by Step","揚州快步":"Yangzhou Quickstep",
   "一劍破甲":"Armor-Piercing Sword","直路衝鋒":"Straight Charge","輪牌護身":"Shield Rota","認轍尋路":"Track Reader","長街破陣":"Long Street Breaker","飛燕還巢":"Swallow Home","青玉護棚":"Jade Canopy",

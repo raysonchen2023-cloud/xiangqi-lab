@@ -24,7 +24,7 @@ const round=M=>{for(const B of M.bs)if(!B.P.result){rq(M,B.i);bq(M,B.i)}};
 const seeded=s=>()=>{s=(s*16807)%2147483647;return s/2147483647};
 
 test("兩盤固定短中局：開局合法（沒人被將、不照面、紅方有步）、援軍門開局能落、子數不超過標準；只有一波；不出現在星門圍城選關", ()=>{
-  assert.deepEqual(J(W.LVS),[101,102]);assert.deepEqual(J(G.LVN),[1,3,6],"GSV.LVN 開機就算好了，車輪戰的盤不會跑進星門圍城選關");
+  assert.deepEqual(J(W.LVS),[101,102]);assert.deepEqual(J(G.LVN),[1,2,3,4,5,6],"GSV.LVN 開機就算好了，車輪戰的盤不會跑進星門圍城選關");
   for(const lv of W.LVS){const b=G.startBoard(lv),pl=G.plan(lv);assert.ok(!C.inCheck(b,"r")&&!C.inCheck(b,"b"),"開局沒人被將");assert.ok(!G.facing(b));assert.ok(C.legal(b,"r").length>0);
     assert.equal(G.LV[lv].waves.length,1,"較少波次：一波");for(const w of pl.waves)assert.equal(G.spawnOk(b,w.p,w.sq,C),"","援軍落點合法");
     const cnt={};for(const[p]of pl.open)cnt[p]=(cnt[p]||0)+1;for(const w of pl.waves)cnt[w.p]=(cnt[w.p]||0)+1;for(const p in cnt)assert.ok(cnt[p]<=G.STD[p],`${p} 不超過標準子數`);

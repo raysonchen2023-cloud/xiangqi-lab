@@ -412,10 +412,13 @@ function mxTotal(A){let s=0,n=0,v=0;for(const a of A){if(a.pct||a.key==="stab"||
      hi  差距 ≥ 2 個標準誤 →「建議先練〇〇」（回傳 weak；07z2-statmap 只看 weak，地圖上的朱圈只畫高信心的）
      mid 1.64 ≤ 差距／標準誤 < 2（單側 95%）→「可能先看〇〇」（回傳 maybe，不回傳 weak）
      lo  樣本不夠（none），或差距 < 1.64 個標準誤而且門檻還很寬（2 個標準誤 > 8 分，約 20 盤以下；z 尺度 > 0.8）→「資料還少，先多下幾盤」
-     even 差距 < 1.64 個標準誤、門檻已經夠窄（資料夠多）→ 各項差不多
-   8 分、0.8 是工程判斷（sim/sim-pick-conf.js 看各級出現的比例） */
+     even 差距 < 1.64 個標準誤、門檻已經夠窄（資料夠多）→ 目前未看出明顯差異
+   8 分、0.8 是工程判斷（sim/sim-pick-conf.js 看各級出現的比例）
+   開發者 11/15 選「改成溫和說法」（ChatGPT 重評：沒有階段難度基準時約 38% 會誤報——開局本來就容易拿高分，中局、殘局被當成弱項；資料越多只會越有信心地說錯）：
+     沒有同段位基準（grp 不成立）時，hi、mid 都不回傳 weak／maybe，改回傳 soft（conf "soft"，lv 記原本是 hi 還是 mid）→「最近〇〇分數較低，想練一題嗎？」，地圖也不畫朱圈；有基準才用上面的 hi、mid */
 function skillPick(A){const grp=A.filter(a=>a.ok&&!a.pct).every(a=>a.z!=null)&&A.some(a=>a.z!=null),ok=A.filter(a=>a.ok&&!a.pct&&(grp||a.key!=="stab"));if(ok.length<2)return{none:true,conf:"lo"};
   const val=a=>grp?a.z:a.m,sev=a=>grp?a.zse:a.se,s=ok.slice().sort((a,b)=>val(a)-val(b)),lo=s[0],hi=s[s.length-1],gap=val(hi)-val(lo),se=Math.sqrt(sev(lo)**2+sev(hi)**2),th=2*se;
+  if(!grp&&gap>=1.64*se)return{soft:lo,hi,th,grp,conf:"soft",lv:gap>=th?"hi":"mid"};
   return gap>=th?{weak:lo,hi,th,grp,conf:"hi"}:gap>=1.64*se?{maybe:lo,hi,th,grp,conf:"mid"}:{even:true,lo,hi,th,grp,conf:th>(grp?.8:8)?"lo":"even"}}
 /* 開發者 11/11「下完一局接著看到我的成長變化」：這一盤（挑戰電腦 id）算進去前、後的我的棋力——跟五邊形同一套（skillRows／skillAxes，綜合＝樣本夠的準確度軸平均）。
    回傳 {hu 用過提示或悔棋, acc 這盤每步準確度, avg 這盤之前最近約 150 步的平均, t0／t1 綜合前後, ax 四個準確度軸前後}；這盤還沒評好等＝null */
@@ -450,9 +453,10 @@ async function skillPentagon(box){
   setProf({pen:A.map(a=>a.v),penK:A.map(a=>a.k),penS:A.map(a=>a.n),penL:A.map(a=>a.v!=null&&!a.ok?1:0),penT:A.map(a=>a.txt||""),penN:nG});
   /* 開發者 11/11 照三方審查：建議先練分三級信心（skillPick 的 conf）——高「建議先練〇〇」、中「可能先看〇〇」、低「資料還少，先多下幾盤」；資料夠多、差距又在正常起伏內才說「差不多」 */
   const thTx=pk.th!=null?(pk.grp?`${pk.th.toFixed(1)} 個標準差`:`${Math.round(pk.th)} 分`):"",
-    tip=pk.weak?`<button class="btn" data-go="${pk.weak.go[0]}" style="width:100%;margin-top:10px">🎯 建議先練：${pk.weak.k}（${pk.weak.v} 分）・${pk.weak.go[1]} ›</button><div class="muted" style="font-size:12px;margin-top:4px;text-align:center">${pk.grp?"跟同段位棋友比，這一項落後最多（差距超過正常起伏）":`開局、中局、殘局裡最低，而且跟最高的差距（${pk.hi.v}−${pk.weak.v}）超過正常起伏（約 ${thTx}）；穩定、殺法另外看`}</div>`
+    tip=pk.soft?`<button class="btn ghost" data-go="${pk.soft.go[0]}" style="width:100%;margin-top:10px">💡 最近${pk.soft.k}分數較低（${pk.soft.v} 分），想練一題嗎？・${pk.soft.go[1]} ›</button><div class="muted" style="font-size:12px;margin-top:4px;text-align:center">開局、中局、殘局裡最低（${pk.hi.v}−${pk.soft.v}）。三個階段的難度本來就不一樣（開局通常比較容易拿高分），這還不能說${pk.soft.k}是弱項；等有同段位棋友的資料可以比，才會建議先練哪一項</div>`
+    :pk.weak?`<button class="btn" data-go="${pk.weak.go[0]}" style="width:100%;margin-top:10px">🎯 建議先練：${pk.weak.k}（${pk.weak.v} 分）・${pk.weak.go[1]} ›</button><div class="muted" style="font-size:12px;margin-top:4px;text-align:center">${pk.grp?"跟同段位棋友比，這一項落後最多（差距超過正常起伏）":`開局、中局、殘局裡最低，而且跟最高的差距（${pk.hi.v}−${pk.weak.v}）超過正常起伏（約 ${thTx}）；穩定、殺法另外看`}</div>`
     :pk.maybe?`<button class="btn ghost" data-go="${pk.maybe.go[0]}" style="width:100%;margin-top:10px">🔎 可能先看：${pk.maybe.k}（${pk.maybe.v} 分）・${pk.maybe.go[1]} ›</button><div class="muted" style="font-size:12px;margin-top:4px;text-align:center">${pk.grp?"跟同段位棋友比，這一項好像落後一點":`開局、中局、殘局裡最低（${pk.hi.v}−${pk.maybe.v}）`}，但差距只比正常起伏（約 ${thTx}）小一點，還不能確定；再下幾盤會更準</div>`
-    :pk.even&&pk.conf==="even"?`<p class="muted" style="margin:8px 0 0;line-height:1.6">${pk.grp?"跟同段位棋友比，各項":"開局、中局、殘局"}差不多（${pk.lo.k} ${pk.lo.v}～${pk.hi.k} ${pk.hi.v}，差距在正常起伏 ${thTx} 以內），還看不出明顯的弱項。想再上一層，挑一項按「去練」。</p>`
+    :pk.even&&pk.conf==="even"?`<p class="muted" style="margin:8px 0 0;line-height:1.6">${pk.grp?"跟同段位棋友比，各項":"開局、中局、殘局"}目前未看出明顯差異（${pk.lo.k} ${pk.lo.v}～${pk.hi.k} ${pk.hi.v}，差距在正常起伏 ${thTx} 以內）。想再上一層，挑一項按「去練」。</p>`   /* 11/15 ChatGPT 重評：未達顯著不等於已證明一樣，「差不多」改成「目前未看出明顯差異」 */
     :pk.even?`<p class="muted" style="margin:8px 0 0;line-height:1.6">📋 資料還少，先多下幾盤。現在${pk.grp?"各項":"開局、中局、殘局"}的差距（${pk.lo.k} ${pk.lo.v}～${pk.hi.k} ${pk.hi.v}）還在正常起伏（約 ${thTx}）以內，看不出哪一項比較弱${pk.grp?"":"；如果想挑一個練，殘局的步數通常最少、最值得多下幾盤"}。</p>`
     :`<p class="muted" style="margin:8px 0 0;line-height:1.6">📋 資料還少，先多下幾盤。開局、中局、殘局每項要有 ${SK.MIN} 步（至少兩項夠了），才能告訴你先練哪一項；多下幾盤挑戰電腦就有了。</p>`;
   /* 開發者 11/12：「我的戰績五邊形的殺法都是—」——殺法只從棋力測驗的殺法、戰術題算（滿 3 題才估得出），沒分數時原本只寫「—」、按鈕卻叫人去主題訓練（練了也不會有分數）。
@@ -462,7 +466,7 @@ async function skillPentagon(box){
   box.innerHTML=penSVG(A.map(a=>[a.k,a.v,a.v!=null&&!a.ok,a.pct&&a.v!=null?a.txt:a.k==="殺法"&&a.v==null?"未測":""]))+`<div class="row" style="justify-content:space-between;margin-top:4px"><span class="muted">最近 ${nG} 盤${st.best!=null?`・走出好棋 ${st.best}%`:""}</span><b>${total==null?"綜合 —":`綜合 ${total} 分<small class="muted" style="font-weight:400"> ±${Math.round(1.28*TT.se)}</small>`}</b></div>
     ${tip}<div class="skl">${A.map(rowH).join("")}</div>
     <p class="muted" style="font-size:12px;margin:6px 0 0;line-height:1.6">虛線、淡色＝樣本還少（實戰不到 ${SK.MIN} 步、殺法不到 ${SK.QMIN} 題），先參考就好。「±」＝十次裡大約八次會落在這個範圍。${hu?`用過提示或悔棋的 ${hu} 盤不算。`:""}${smN?`車輪戰、盲棋的 ${smN} 盤不算。`:""}</p>
-    <details style="margin-top:6px"><summary class="muted">五項怎麼算？</summary><p class="muted" style="line-height:1.7;margin:6px 0 0">每一步的準確度＝100×e^(−少掉的分數÷200)（100＝走到電腦首選；比首選少 1 兵約 61 分），跟賽後報告同一條式子。開局、中局、殘局：最近的對局裡該階段每一步準確度的平均，越近的盤越重（半衰期 ${SK.HL} 盤，三個階段看的是同一段時間），跟賽後報告每盤的開局、中局、殘局分同一把尺。穩定：最近對局裡沒有失著、敗著的步數比例。綜合：開局、中局、殘局合起來的每步準確度。「走出好棋」＝正著、妙著（跟電腦首選差不到 30 分）的步數比例。殺法：棋力測驗的殺法、戰術題；${cal.thQ?"分數＝勝過多少用這個 App 的棋友（匿名資料算的）":"現在棋友資料還不夠多，先用測驗估的段位表示（等資料夠了會改成勝過多少棋友）"}，跟準確度不是同一把尺，不進綜合。建議先練：差距超過正常起伏（約 2 個標準誤）才說「建議先練」，接近（1.64～2 個）說「可能先看」，再小就是「資料還少」或「差不多」${cal.ax?"，而且是跟同段位棋友比":"；等同段位棋友的資料夠了，會改成跟同段位比（開局本來就比較容易拿高分）"}。只算 Pikafish 評過等的著法；用過提示或悔棋的那盤不算；還沒評等的對局，打開賽後報告評等後就會算進來。進步得多快看「📈 我的成長」。</p></details>`;
+    <details style="margin-top:6px"><summary class="muted">五項怎麼算？</summary><p class="muted" style="line-height:1.7;margin:6px 0 0">每一步的準確度＝100×e^(−少掉的分數÷200)（100＝走到電腦首選；比首選少 1 兵約 61 分），跟賽後報告同一條式子。開局、中局、殘局：最近的對局裡該階段每一步準確度的平均，越近的盤越重（半衰期 ${SK.HL} 盤，三個階段看的是同一段時間），跟賽後報告每盤的開局、中局、殘局分同一把尺。穩定：最近對局裡沒有失著、敗著的步數比例。綜合：開局、中局、殘局合起來的每步準確度。「走出好棋」＝正著、妙著（跟電腦首選差不到 30 分）的步數比例。殺法：棋力測驗的殺法、戰術題；${cal.thQ?"分數＝勝過多少用這個 App 的棋友（匿名資料算的）":"現在棋友資料還不夠多，先用測驗估的段位表示（等資料夠了會改成勝過多少棋友）"}，跟準確度不是同一把尺，不進綜合。建議先練：差距超過正常起伏（約 2 個標準誤）才說「建議先練」，接近（1.64～2 個）說「可能先看」，再小就是「資料還少」或「目前未看出明顯差異」${cal.ax?"，而且是跟同段位棋友比":"；現在還沒有同段位棋友的資料可以比（開局本來就比較容易拿高分），所以只會問「最近哪一項分數較低，想練一題嗎？」，不會說哪一項是弱項，等資料夠了才改成跟同段位比"}。只算 Pikafish 評過等的著法；用過提示或悔棋的那盤不算；還沒評等的對局，打開賽後報告評等後就會算進來。進步得多快看「📈 我的成長」。</p></details>`;
   box.querySelectorAll("[data-go]").forEach(b=>b.onclick=()=>{vibrate(5);location.hash=b.dataset.go});return{G,A}}
 /* 意見回饋 301：記錄練習時間（對局、測驗、猜著法、錯棋重練的畫面開著、而且 2 分鐘內有操作，每 15 秒記 0.25 分鐘） */
 let PRACT_ACT=Date.now();addEventListener("pointerdown",()=>PRACT_ACT=Date.now(),{passive:true});

@@ -41,8 +41,8 @@ test("七星數值（提案一 5.4）＋修為窄幅加成：Lv1 原值、Lv100 
   const T={x_swordboy:[105,110,20,90],x_spiritgirl:[100,95,45,100],x_martialgirl:[95,115,20,100],x_miaogirl:[95,105,25,100],x_shuai:[90,100,30,110],x_shi:[115,90,50,90],x_bing:[100,105,20,100]};
   for(const k in T){const s=G.stats(k,1),z=G.stats(k,100);assert.deepEqual([s.hp,s.atk,s.def,s.sp],T[k],k);assert.equal(z.hp,Math.round(T[k][0]*1.05));assert.equal(z.atk,T[k][1]+5);assert.equal(z.def,T[k][2]+5);assert.equal(z.sp,T[k][3],"靈力容量不隨修為長");assert.equal(s.sp0,35);assert.equal(s.rg,4)}});
 
-test("關卡：第 1、3、6 關開局＋星門合法（敵剛好 16 子、紅 8＋後備 8、星門在敵半場、補給點各棋種都有合法點、不照面、沒人被將）", ()=>{
-  assert.deepEqual(J(G.LVN),[1,3,6]);
+test("關卡：第 1～6 關開局＋星門合法（敵剛好 16 子、紅 8＋後備 8、星門在敵半場、補給點各棋種都有合法點、不照面、沒人被將）", ()=>{
+  assert.deepEqual(J(G.LVN),[1,2,3,4,5,6],"11/15 補第 2、4、5 關");
   for(const n of G.LVN){assert.deepEqual(J(G.lvCheck(n,C)),[],"第 "+n+" 關");const pl=G.plan(n),b=G.startBoard(n);
     assert.equal(pl.red.length,8);assert.equal(pl.res.length,8);assert.equal(pl.open.length+pl.waves.length,16,"敵方總預算 16");
     assert.equal(b.filter(x=>x&&x===x.toLowerCase()).length,pl.open.length);for(const w of pl.waves)assert.equal(G.spawnOk(b,w.p,w.sq,C),"","開局盤上每顆援軍的門都能落")}
@@ -52,7 +52,22 @@ test("關卡：第 1、3、6 關開局＋星門合法（敵剛好 16 子、紅 8
   const P=game(1);assert.equal(P.td.me.sp,35);assert.equal(P.td.en.sp,25);assert.equal(game(6).td.en.sp,35);
   assert.deepEqual(J(G.fore(P.td).map(g=>g.at)),[2,5],"開局就看得到前兩波");assert.ok(G.fore(P.td)[0].inR>=2,"至少提前兩個完整回合")});
 
-test("七角色 × 三關 × Lv1／Lv23 都能開局：有合法起手、帶得到本命招、通用招與部署都在", ()=>{
+test("第 2、4、5 關照提案一第七節：數值、開場子數、援軍回合、深度；每關的學習點擺得出來（左先右後、雙門同時、三段解鎖）", ()=>{
+  const T={2:[110,95,20,9,[2,4,7],2],4:[135,100,30,10,[2,4,6],3],5:[150,110,40,10,[2,4,6],4]};
+  for(const n in T){const V=G.LV[n],pl=G.plan(+n);assert.deepEqual(J([V.hp,V.atk,V.def,pl.open.length,V.waves.map(w=>w.at),V.depth]),T[n],"第 "+n+" 關");assert.deepEqual(J(G.lvCheck(+n,C)),[]);
+    assert.ok(V.say&&V.tip&&V.th,"有一句開場、輸了的提示、主題")}
+  assert.deepEqual([2,4,5].map(n=>G.LV[n].nm),["墨河微瀾","雙門夾道","星樞列陣"],"關名照提案二第一章");
+  /* 第 2 關：入侵卒左翼先到（開場 c7＋第 2 回合左門）、右翼後到（第 4 回合右門） */
+  const W2=G.plan(2).waves.filter(w=>w.tag==="inv");assert.deepEqual(J(W2.map(w=>[w.at,G.gateNm(w.sq)])),[[2,"左門"],[4,"右門"]]);
+  assert.ok(G.plan(2).open.some(([p,q,t])=>t==="inv"&&G.gateNm(q)==="左門"),"開場那顆入侵卒在左翼");
+  /* 第 4 關：每一波都是左右兩扇門同時落；第 2 回合兩顆入侵卒一起來；開場一匹奪靈馬 */
+  for(const at of[2,4,6]){const ws=G.plan(4).waves.filter(w=>w.at===at);assert.deepEqual(J(ws.map(w=>G.gateNm(w.sq)).sort()),["右門","左門"],`第 ${at} 回合兩門同時`)}
+  assert.equal(G.plan(4).waves.filter(w=>w.at===2&&w.tag==="inv").length,2);assert.deepEqual(J(G.plan(4).open.filter(x=>x[2]==="drain").map(x=>x[0])),["n"],"奪靈馬是一匹馬");
+  /* 第 5 關：開場兩顆護陣、第 2 回合兩顆入侵；開局沒有大招，60%／30% 才解鎖 */
+  assert.equal(G.plan(5).open.filter(x=>x[2]==="guard").length,2);assert.equal(G.plan(5).waves.filter(w=>w.at===2&&w.tag==="inv").length,2);
+  const P5=game(5);assert.deepEqual(J(P5.td.esk),[]);assert.deepEqual(J(P5.td.phs),[{hp:.6,esk:"pao"},{hp:.3,esk:"zjhl"}]);assert.equal(G.defOf(P5.td,"b"),80)});
+
+test("七角色 × 六關 × Lv1／Lv23 都能開局：有合法起手、帶得到本命招、通用招與部署都在", ()=>{
   for(const ch in G.CH)for(const n of G.LVN)for(const L of[1,23]){const P=game(n,{ch,L});assert.ok(C.legal(P.board,"r").length>0);assert.ok(P.td.sk.length>=1&&P.td.sk.length<=4);
     assert.equal(G.SKM[P.td.sk[0]].ch,ch);assert.equal(G.why(P,"dep",C),"",`${ch} 第 ${n} 關開局就能部署`);assert.equal(P.td.me.sp,35)}});
 
@@ -238,6 +253,45 @@ test("星樞招：護盾（受擊 ≥8 開，20 靈、冷卻 3；目前沒有關
   mv(P2,Q(3,1),Q(3,5));bq(P2);assert.equal(t2.fx,null);assert.ok(t2.ev.some(e=>e.k==="eskOff"),"號令卒被吃：取消");
   const P3=custom(6,[["K",5,1],["k",4,10],["R",1,1],["p",3,5,"inv"]],{waves:false}),t3=P3.td;t3.en.sp=60;round(P3);const h=t3.me.hp;round(P3);assert.ok(t3.ev.some(e=>e.k==="eskHit"));assert.ok(h-t3.me.hp>=G.dmg(28,105,20))});
 
+test("奪靈馬（第 4 關）：真的擒到子才扣你 8 靈力（不夠就扣到 0）；沒標記的馬不扣；只是走到旁邊不扣", ()=>{
+  const pcs=tag=>[["K",5,1],["k",4,10],["R",1,1],["N",3,3],["n",2,5,tag],["p",9,7]];
+  const P=custom(4,pcs("drain"),{waves:false}),td=P.td;rq(P);assert.equal(td.me.sp,35);mv(P,Q(2,5),Q(3,3));
+  const e=td.ev.find(x=>x.k==="drain");assert.ok(e,"有奪靈事件（跳字用）");assert.equal(e.n,G.DRAIN);assert.equal(e.sq,Q(3,3));assert.equal(td.me.sp,35-8+4,"扣 8、回合結束照常回 4");
+  const P2=custom(4,pcs(""),{waves:false});rq(P2);mv(P2,Q(2,5),Q(3,3));assert.ok(!P2.td.ev.some(x=>x.k==="drain"),"普通馬擒子不扣靈");assert.equal(P2.td.me.sp,39);
+  const P3=custom(4,pcs("drain"),{waves:false});P3.td.me.sp=3;rq(P3);mv(P3,Q(2,5),Q(3,3));assert.equal(P3.td.ev.find(x=>x.k==="drain").n,3,"靈力不夠 8 就扣到 0");
+  const P4=custom(4,pcs("drain"),{waves:false});rq(P4);mv(P4,Q(2,5),Q(1,3));assert.ok(!P4.td.ev.some(x=>x.k==="drain"),"沒擒子不扣");assert.equal(P4.td.me.sp,39)});
+
+test("隔山星砲（第 5 關新大招）：預告一回合、鎖定砲／砲架／目標；三顆都在、只隔這個架、砲能合法吃到才發動；移走目標、吃砲、吃架（換一顆子當架也不算）、多擋一子、砲被定身都取消", ()=>{
+  /* 黑砲 i8、砲架黑卒 i6、目標紅傌 i3；a 線的紅俥用來原地來回或跑去破解 */
+  const mk=(extra,o)=>{const P=custom(5,[["K",5,1],["k",4,10],["R",1,1],["c",9,8],["p",9,6],["N",9,3],...(extra||[])],Object.assign({waves:false},o));P.td.esk=["pao"];P.td.en.sp=60;return P};
+  const P=mk(),td=P.td;round(P);
+  assert.ok(td.fx&&td.fx.id==="pao","結算後宣告");assert.equal(td.fx.at,td.rnd+1,"下一回合結束才發動（預告一整回合）");assert.equal(td.en.sp,60+4-40,"付 40 靈");assert.equal(td.ecd.pao,4);
+  assert.deepEqual([td.fx.src,td.fx.scr,td.fx.tg],[td.ids[Q(9,8)],td.ids[Q(9,6)],td.ids[Q(9,3)]],"鎖定三顆子的 ID");assert.ok(td.ev.some(e=>e.k==="esk"&&e.id==="pao"&&e.sq===Q(9,8)));
+  const pv=G.preview(td,P.board,C);assert.deepEqual(J(pv.L.map(x=>[x.k,x.id,x.sq,x.raw])),[["esk","pao",Q(9,3),G.dmg(30,110,20)]],"畫面「本輪若不處理」跟結算同一個算式");
+  const h=td.me.hp;round(P);assert.ok(td.ev.some(e=>e.k==="eskHit"&&e.id==="pao"));assert.equal(h-td.me.hp,G.dmg(30,110,20),"三顆都在：基礎 30");assert.equal(td.fx,null);
+  assert.ok(td.ev.some(e=>e.k==="hit"&&e.why==="esk"&&e.id==="pao"),"跳字事件帶招名");
+  const off=(P,doIt,msg)=>{round(P);assert.equal(P.td.fx&&P.td.fx.id,"pao");const h=P.td.me.hp;doIt(P);bq(P);assert.equal(P.td.fx,null);assert.ok(P.td.ev.some(e=>e.k==="eskOff"&&e.id==="pao"),msg);assert.equal(P.td.me.hp,h,msg+"：不扣血")};
+  off(mk(),P=>mv(P,Q(9,3),Q(8,1)),"目標走開");
+  off(mk([["R",1,8]]),P=>mv(P,Q(1,8),Q(9,8)),"吃掉砲");
+  off(mk([["R",1,6]]),P=>mv(P,Q(1,6),Q(9,6)),"吃掉砲架：紅俥站上去也是一個架，但不是鎖定的那顆，不換架");
+  off(mk([["R",1,5]]),P=>mv(P,Q(1,5),Q(9,5)),"中間多擋一子（炮架數改變）");
+  off(mk([],{ch:"x_martialgirl"}),P=>{P.td.me.sp=100;castOk(P,{k:"lei1",tg:[Q(9,8)]});rq(P)},"砲被定身：不能合法吃到目標");
+  /* 沒有砲能合法隔一子吃到紅子（帥不算）：不宣告、不扣星樞靈力 */
+  const P6=custom(5,[["K",5,1],["k",4,10],["R",1,1],["c",9,8],["N",9,3]],{waves:false});P6.td.esk=["pao"];P6.td.en.sp=60;round(P6);assert.equal(P6.td.fx,null);assert.equal(P6.td.en.sp,64)});
+
+test("分段（第 5 關）：星樞 HP 降到 60% 解鎖隔山星砲、30% 解鎖卒將號令；只解鎖不當下打、不加兵；還沒發動的預告不被蓋掉", ()=>{
+  const P=custom(5,[["K",5,1],["k",4,10],["R",1,1],["c",9,8],["p",9,6],["N",9,3],["p",3,5,"inv"]],{waves:false}),td=P.td;td.en.sp=100;
+  round(P);assert.deepEqual(J(td.esk),[],"91 以上還在第一段");assert.equal(td.fx,null,"第一段沒有大招（號令卒在場也不放）");
+  td.en.hp=91;round(P);assert.deepEqual(J(td.esk),[]);
+  td.en.hp=90;const h=td.me.hp,nb=P.board.filter(Boolean).length;round(P);assert.deepEqual(J(td.esk),["pao"],"剛好 60%：解鎖");assert.ok(td.ev.some(e=>e.k==="phase"&&e.n===2&&e.id==="pao"));
+  assert.equal(td.me.hp,h-G.dmg(12,110,20),"解鎖那一批只有原本的入侵傷害，沒有大招傷害");assert.equal(P.board.filter(Boolean).length,nb,"不加兵");assert.equal(td.fx&&td.fx.id,"pao","解鎖後照預告規則宣告（下一回合才打）");
+  td.en.hp=44;td.fx.at=td.rnd+2;const fx0=J(td.fx);round(P);assert.deepEqual(J(td.esk),["pao","zjhl"],"30%：再解鎖卒將號令");assert.ok(td.ev.some(e=>e.k==="phase"&&e.n===3&&e.id==="zjhl"));
+  assert.deepEqual(J(td.fx),fx0,"還沒發動的隔山星砲不被新階段蓋掉");
+  /* 一次掉過兩個門檻：兩段一起解鎖 */
+  const P2=custom(5,KS,{waves:false});P2.td.en.hp=10;round(P2);assert.deepEqual(J(P2.td.esk),["pao","zjhl"]);assert.equal(P2.td.phn,2);
+  /* 舊存檔沒有 phs：照舊 */
+  const P3=custom(6,KS,{waves:false});delete P3.td.phs;delete P3.td.phn;P3.td.en.hp=10;assert.doesNotThrow(()=>round(P3));assert.deepEqual(J(P3.td.esk),["zjhl"])});
+
 test("星樞選步：一步能打空你的星核就打；會被你下一步將死的步不走；全部合法步都評（不在 Pikafish 前幾名也算）", ()=>{
   const P=custom(1,[["K",5,1],["k",4,10],["R",9,9],["N",6,3],["r",6,9],["p",1,7]],{waves:false}),td=P.td;td.me.hp=2;mv(P,Q(9,9),Q(9,8));
   const cfg=G.engine(P,C),u=G.pick({lines:[{mv:C.iccs(Q(1,7),Q(1,6)),v:50}]},cfg,()=>0);assert.equal(u,C.iccs(Q(6,9),Q(6,3)),"擒傌把你的星核打空（不在引擎給的候選裡也找得到）");
@@ -249,9 +303,11 @@ test("星樞選步：一步能打空你的星核就打；會被你下一步將�
   assert.ok(!bad.includes(u2),"引擎把會被將死的步排前面也不選："+u2)});
 
 test("決定性重播：同一個種子、同一串動作，td 完全一樣（傷害、靈力、冷卻、波次、事件 ID）", ()=>{
-  const run=seed=>{let a=seed>>>0;const R=()=>{a=(a+0x6D2B79F5)>>>0;let t=a;t=Math.imul(t^(t>>>15),t|1);t^=t+Math.imul(t^(t>>>7),t|61);return((t^(t>>>14))>>>0)/4294967296};
-    const P=game(3,{ch:"x_martialgirl",L:23});for(let i=0;i<40&&!P.td.over;i++){const L=C.legal(P.board,P.turn);if(!L.length)break;const m=L[Math.floor(R()*L.length)];const e=mv(P,m[0],m[1]);if(e&&e.end)break;if(C.judgeState(P))break}return JSON.stringify(P.td)};
-  assert.equal(run(7),run(7));assert.notEqual(run(7),run(8))});
+  const run=(seed,lv)=>{let a=seed>>>0;const R=()=>{a=(a+0x6D2B79F5)>>>0;let t=a;t=Math.imul(t^(t>>>15),t|1);t^=t+Math.imul(t^(t>>>7),t|61);return((t^(t>>>14))>>>0)/4294967296};
+    const P=game(lv||3,{ch:"x_martialgirl",L:23});if(lv===5)P.td.en.hp=60;   /* 第 5 關：先壓到 40% 讓分段、隔山星砲進得來 */for(let i=0;i<40&&!P.td.over;i++){const L=C.legal(P.board,P.turn);if(!L.length)break;const m=L[Math.floor(R()*L.length)];const e=mv(P,m[0],m[1]);if(e&&e.end)break;if(C.judgeState(P))break}return JSON.stringify(P.td)};
+  assert.equal(run(7),run(7));assert.notEqual(run(7),run(8));
+  for(const lv of[2,4,5])assert.equal(run(11,lv),run(11,lv),"第 "+lv+" 關（奪靈馬、分段、隔山星砲）也決定性");
+  assert.ok(JSON.parse(run(11,5)).ev.length>0)});
 
 test("〔原始碼〕接線：m.html include、XQ_TD 包一層只轉星門圍城、舊版 bhtdIs 排除、平面棋盤、07bh 結算與結果視窗、入口卡片、local.js 部署換手、testkinds 登記", ()=>{
   assert.match(rd("xiangqi-db/m.html"),/\/\/#include m\/07bhf-bossfx\.js\n\/\/#include m\/07bhg-gatesiege\.js/);
