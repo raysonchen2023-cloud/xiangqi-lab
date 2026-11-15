@@ -1613,7 +1613,7 @@ html[data-lefty] .tskip{right:auto;left:14px}
       if(!window.caches)return go();caches.keys().then(function(ks){return Promise.all(ks.filter(function(k){return k.indexOf("xqlab-app-")===0}).map(function(k){return caches.delete(k)}))})
         .then(function(){return navigator.serviceWorker&&navigator.serviceWorker.getRegistration()}).then(function(r){return r&&r.update()}).catch(function(){}).then(go)}};setTimeout(chk,4000)})();
 </script>
-<script>window.XQ_OFFLINE=true;window.XQ_BUILD="20261115-1602";</script>
+<script>window.XQ_OFFLINE=true;window.XQ_BUILD="20261115-1818";</script>
 <script src="core.js"></script>
 <script src="engine.js"></script>
 <script src="local.js"></script>
@@ -7769,7 +7769,7 @@ function innSheet(v){setTimeout(innDrop,1200);const I=xpInfo(),Sx=jSecrets(),nx=
 const parkLv=()=>Math.max(1,Math.min(8,1+Math.floor(xpInfo().L/3)+(store.get("parkAdj",0)||0)));
 function jName(j){if(!j)return"石桌往事";if(j==="park")return"園子";if(String(j).startsWith("gx:")){const g=typeof gxGet==="function"?gxGet(String(j).slice(3)):null;return"幻譜星門・"+(g?g.t:"第十四顆")}if(String(j).startsWith("bh:"))return"黑洞・星樞棋局";if(String(j).startsWith("bt:")){const c=typeof battleCardJ==="function"?battleCardJ(j):null;return"古戰場・"+(c?c.name:"讓子對弈")}if(String(j).startsWith("char:")){const c=JCHAR[String(j).slice(5)];return c?"大廳・"+c.name:"大廳"}if(String(j).startsWith("inn:")){const x=INN.concat(SECRETS).find(z=>"inn:"+z.id===j)||(typeof igAct==="function"?igAct(j):null);return x?"驛站・"+x.name:"驛站"}
   const s=jFindStage(j);return s?(s.book===2?"紙譜新局・":ROAD_NAME+"・")+s.name:ROAD_NAME}
-const jBack=j=>String(j||"").startsWith("gx:")?"#/adventure":String(j||"").startsWith("bh:")?"#/adventure":String(j||"").startsWith("bt:")?"#/battle":String(j||"").startsWith("char:")?"#/lobby":j==="park"?"#/port":String(j||"").startsWith("inn:")?"#/journey/inn":(()=>{const R=jRunGet(j);if(R&&!R.done)return"#/journey/"+j;const s=jFindStage(j);return s?jChapterHref(s):"#/shelf/1"})();
+const jBack=j=>String(j||"").startsWith("gx:")?"#/adventure":String(j||"").startsWith("bh:")?(typeof gxtBhBack==="function"?gxtBhBack(j):"#/adventure"):String(j||"").startsWith("bt:")?"#/battle":String(j||"").startsWith("char:")?"#/lobby":j==="park"?"#/port":String(j||"").startsWith("inn:")?"#/journey/inn":(()=>{const R=jRunGet(j);if(R&&!R.done)return"#/journey/"+j;const s=jFindStage(j);return s?jChapterHref(s):"#/shelf/1"})();
 const jPlace=j=>String(j||"").startsWith("gx:")?"幻譜星門":String(j||"").startsWith("bh:")?"星槎":String(j||"").startsWith("bt:")?"古戰場":j==="park"?"渡口":String(j||"").startsWith("inn:")?"驛站":String(j||"").startsWith("char:")?"大廳":(()=>{const s=jFindStage(j);return s?"第"+CNUM(s.n)+"回":"石桌往事"})();   /* 意見回饋 735：章回棋路併進書的目錄，回到書 */
 /* 意見回饋 413：石桌往事只留一盤（雲河棋路、驛站、園子、守關共用一格）。要開的跟手上那盤不是同一個對手時先問，不會悄悄蓋掉；同一個對手就接著下；force＝重下這一盤 */
 async function jStart(id,b,go,force){let st;try{st=await api("/play/state")}catch(e){toast(e.message);return}
@@ -19750,6 +19750,10 @@ if(typeof gxShipHs==="function"){const f2=gxShipHs;gxShipHs=function(v){const r=
 /* ---------- 從觀星臺開的塔防：打完回觀星臺 ---------- */
 function gxtFromTd(){try{return sessionStorage.getItem("gxtFrom")==="1"}catch(e){return false}}
 function gxtBackLb(){return gxtFromTd()?"🔭 回觀星臺":"⛵ 星槎回航"}
+/* 意見回饋 897（開發者 11/15 截圖：黑洞對局頁左上角「‹ 回星槎」圈起來，「不應該出現這個入口」）：黑洞對局頁的返回鈕原本一律回星槎（07-legend.js jBack），
+   還沒登船的人、開場序局、從觀星臺進來的人都會看到一顆通往星槎的鈕。改成照實際從哪裡來：從觀星臺開的回觀星臺；開場序局回首頁；
+   星槎偏航進來的（bhRet.cover）而且真的有航程才回星槎；其餘回首頁。字由 02-shell.js 照去處自動寫（回觀星臺／回首頁／回星槎） */
+function gxtBhBack(j){try{if(gxtFromTd())return"#/guanxing";if(String(j||"")==="bh:xu")return"#/";const R=store.get("bhRet",null);if(R&&R.cover&&typeof shipDockList==="function"&&shipDockList())return"#/adventure"}catch(e){}return"#/"}
 if(typeof bhReturn==="function"){const f3=bhReturn;bhReturn=function(){if(!gxtFromTd())return f3.apply(this,arguments);try{sessionStorage.removeItem("gxtFrom")}catch(e){}store.set("bhRet",null);location.hash="#/guanxing"}}
 if(typeof bhStart==="function"){const f4=bhStart;bhStart=function(){try{sessionStorage.removeItem("gxtFrom")}catch(e){}return f4.apply(this,arguments)}}   /* 星槎偏航進黑洞＝照舊回星槎 */
 /* ================= 🔋 平日體力：定軌力（紅）＋星芒（藍）＋化墨退場（開發者 11/13 選定）=================
