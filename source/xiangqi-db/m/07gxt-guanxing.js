@@ -73,7 +73,7 @@ function gxtExPos(P){const s=P.querySelector(".ex-spot");if(!s)return;if(!s.id)s
 /* 11/14：定軌力用完＝黑洞入口關著（07dgl dglBhLock；設定關掉平日體力的人不受影響），渾儀、星槎「星淵」都先問 */
 const gxtBhLock=()=>{try{return typeof dglBhLock==="function"&&dglBhLock()}catch(e){return false}};
 const gxtBhMsg=()=>{try{return typeof dglBhLockMsg==="function"?dglBhLockMsg():"定軌力用完了，黑洞入口先關著"}catch(e){return"定軌力用完了，黑洞入口先關著"}};
-function gxtTd(){if(gxtBhLock()){toast("🌫 "+gxtBhMsg());return}try{sessionStorage.setItem("gxtFrom","1")}catch(e){}if(typeof bhtdOpen==="function")bhtdOpen();else toast("🌌 "+GXT_OFF)}
+function gxtTd(){if(gxtBhLock()){toast("🌫 "+gxtBhMsg());return}try{sessionStorage.setItem("gxtFrom","1")}catch(e){}if(typeof bhtdOpen!=="function"){toast("🌌 "+GXT_OFF);return}gxtFx("td",()=>bhtdOpen())}   /* 11/16：先播渾儀的短過場（gxtFx，下面） */
 /* ---------- 星碑共鳴：從星圖石碑進幻譜星門的過場（開發者 11/15）----------
    開發者：「請 gemini 規劃觀星臺有什麼神秘的力量，可以直接通聯或前往 13 星系」→ 規劃 story/gemini_app/157，他選「星碑共鳴」，過場「直接做完整版」。
    設定：幻影棋客開了門、星槎駛出了路，觀星臺的星圖石碑是人間的「錨」；碰了石碑，神識順著天頂黑洞的光柱進幻譜星門，肉身留在臺上。
@@ -90,6 +90,10 @@ function gxtGateCss(){if(document.getElementById("gxtGateCss"))return;const s=do
 .gxt-fx svg{position:absolute;inset:0;width:100%;height:100%}
 .gxt-fx-k{position:absolute;border-radius:50%;background:radial-gradient(closest-side,#05060d 58%,rgba(5,6,13,.85) 70%,rgba(5,6,13,0) 100%);transform:translate(-50%,-50%) scale(0)}
 .gxt-fx-b{position:absolute;inset:0;background:#05060d;opacity:0}
+.gxt-fx-r{position:absolute;border:3px solid #ffe9a8;border-radius:50%;box-shadow:0 0 14px 2px rgba(255,206,96,.95),inset 0 0 10px rgba(255,206,96,.7);opacity:0;transform:translate(-50%,-50%)}
+.gxt-fx-g{position:absolute;border-radius:50%;background:radial-gradient(closest-side,#eaf4ff,rgba(120,170,255,.75) 45%,rgba(120,170,255,0));opacity:0;transform:translate(-50%,-50%)}
+.gxt-fx-m{position:absolute;inset:0;background:#05060d;opacity:0}
+.gxt-fx-t.sky{text-shadow:0 0 6px #05060d,0 0 12px #05060d,0 0 12px rgba(255,206,96,.5)}
 .gxt-fx-t{position:absolute;left:0;right:0;top:44%;text-align:center;padding:0 20px;font:900 clamp(19px,5.6vw,26px)/1.5 var(--serif,serif);color:#ffe08a;letter-spacing:.12em;opacity:0;text-shadow:0 0 12px rgba(255,206,96,.5)}`;document.head.append(s)}
 function gxtGate(){if(typeof gxMap!=="function"){toast("🌌 "+GXT_OFF);return}
   const P=document.querySelector(".gxt-page"),im=P&&P.querySelector(":scope>img"),open=()=>gxMap({from:"stele"});
@@ -119,9 +123,48 @@ function gxtGate(){if(typeof gxMap!=="function"){toast("🌌 "+GXT_OFF);return}
   else at(T.ink,()=>A(q(".gxt-fx-b"),[{opacity:0},{opacity:1}],{duration:240}));
   at(T.say,()=>A(q(".gxt-fx-t"),[{opacity:0,transform:"translateY(6px)"},{opacity:1,transform:"none"}],{duration:420}));
   at(T.open,()=>{doOpen();finish(false)})}
+/* ---------- 其他入口的短過場（開發者 11/16）----------
+   開發者：「點擊這一頁每一個入口後，可以先有個動畫過場或是其他方式來說明怎麼進到這個對應入口的頁面，不然玩家會覺得怎麼進來的」
+   → Gemini 討論 story/gemini_app/158，他選「每個入口短過場＋回來站在器物前」。每件器物一種看得出差別的演出，加一句話：
+     青銅渾儀＝星淵遠征：三道金環繞著渾儀轉、中間的光漲開，墨色蓋上來，「撥轉渾儀，定軌星淵之途。」
+     天頂黑洞＝黑洞車輪戰：視角朝天頂的黑洞衝上去，墨色蓋上來，「仰觀天頂，身入萬劫星漩。」
+     右側星空＝二十八宿：星空裡幾顆星亮起、連成一線，「引星連脈，喚醒四方真靈。」（不蓋黑，星圖面板直接滑上來）
+   這次開 App 每件器物第一次約 2.7 秒，之後約 1.7 秒（同一段演出快轉）；系統設「減少動態」只淡入那一句（約 1.1 秒）。點一下跳過；離開這一頁就收掉。
+   回來站在器物前：走路角色的位置 07w 本來就記著（SHW_MEM "gxt"），從玩法回到觀星臺時人還站在那件器物前。
+   時間表 gxtFxPlan 是純計算；今日異象、自由擺陣做好時在 GXT_FXT／GXT_FXP 各加一項 */
+const GXT_FXT={td:"撥轉渾儀，定軌星淵之途。",simul:"仰觀天頂，身入萬劫星漩。",sky:"引星連脈，喚醒四方真靈。"};
+const GXT_FXP={p:{td:[50,52,15],sky:[80,17,9]},w:{td:[50.5,51.5,5],sky:[80,11,5]}};   /* 場景圖上的位置：[左%, 上%, 半徑佔圖寬 %]（渾儀的球心、右側星空） */
+const gxtFxPlan=(rm,seen)=>rm?{kind:"min",say:120,open:750,end:1150}:seen?{kind:"lite",say:600,open:1250,end:1700}:{kind:"full",say:1150,open:2150,end:2750};   /* 各段開始的時間（毫秒）：那一句話、開畫面、收掉 */
+function gxtFx(id,open){let P=null,im=null,ok=false;try{P=document.querySelector(".gxt-page");im=P&&P.querySelector(":scope>img");ok=!!(P&&im&&GXT_FXT[id]&&!gxtFx.busy&&!gxtGate.busy&&typeof document.body.animate==="function")}catch(e){}
+  if(!ok){open();return}
+  let seen=false;try{seen=sessionStorage.getItem("gxtFx:"+id)==="1";sessionStorage.setItem("gxtFx:"+id,"1")}catch(e){}
+  const T=gxtFxPlan(gxtRM(),seen),k=P.dataset.gxt?"w":"p",R=im.getBoundingClientRect(),pt=a=>[R.left+R.width*a[0]/100,R.top+R.height*a[1]/100],tm=[];let opened=false,done=false,h="";
+  gxtGateCss();gxtFx.busy=true;const fx=document.createElement("div");fx.className="gxt-fx";fx.setAttribute("aria-hidden","true");
+  if(T.kind!=="min"){
+    if(id==="td"){const c=GXT_FXP[k].td,p=pt(c),r=R.width*c[2]/100;for(let i=0;i<3;i++)h+=`<i class="gxt-fx-r" style="left:${p[0]}px;top:${p[1]}px;width:${r*2}px;height:${r*2}px"></i>`;h+=`<i class="gxt-fx-g" style="left:${p[0]}px;top:${p[1]}px;width:${r*.7}px;height:${r*.7}px"></i>`}
+    else if(id==="simul")h+=`<div class="gxt-fx-s" style="left:${R.left}px;top:${R.top}px;width:${R.width}px;height:${R.height}px;background-image:url('${im.currentSrc||im.src}');transform-origin:${GXT_GATE[k].bh[0]}% ${GXT_GATE[k].bh[1]}%"></div>`;
+    else if(id==="sky"){const c=GXT_FXP[k].sky,p=pt(c),r=R.width*c[2]/100,S=[[-1,-.3],[-.45,.35],[.05,-.15],[.5,.4],[1,-.2],[.55,-.75],[.05,-.15]].map(q=>[p[0]+q[0]*r,p[1]+q[1]*r]);
+      h+=`<svg><polyline points="${S.map(q=>q[0].toFixed(1)+","+q[1].toFixed(1)).join(" ")}" pathLength="1" fill="none" stroke="#ffe08a" stroke-width="2.2" stroke-linejoin="round" stroke-dasharray="1" stroke-dashoffset="1" style="filter:drop-shadow(0 0 4px rgba(255,206,96,.9))"/></svg>`+S.slice(0,6).map(q=>`<i class="gxt-fx-d" style="left:${q[0]}px;top:${q[1]}px"></i>`).join("")}}
+  fx.innerHTML=(id==="simul"?"":`<div class="gxt-fx-m"></div>`)+h+(id==="sky"?"":`<div class="gxt-fx-b"></div>`)+`<div class="gxt-fx-t${id==="sky"?" sky":""}">${esc(GXT_FXT[id])}</div>`;document.body.append(fx);   /* 渾儀、星空兩段先把場景壓暗一半（.gxt-fx-m 墊在金環、星線底下）：觀星臺白天是淺色的圖，不壓暗金色看不見；星空那一段不全黑，就停在這個暗度 */
+  const q=s=>fx.querySelector(s),qa=s=>[...fx.querySelectorAll(s)],A=(el,kf,o)=>{try{return el.animate(kf,Object.assign({fill:"forwards",easing:"ease"},o))}catch(e){return null}};
+  const at=(ms,f)=>tm.push(setTimeout(()=>{if(!done)try{f()}catch(e){}},ms));
+  const end=()=>{tm.forEach(clearTimeout);removeEventListener("hashchange",bail);fx.remove();gxtFx.busy=false};
+  const bail=()=>{if(done)return;done=true;end()};
+  const finish=fast=>{if(done)return;done=true;const a=A(fx,[{opacity:1},{opacity:0}],{duration:fast?180:T.end-T.open,easing:"ease-out"});if(a&&a.finished)a.finished.then(end,end);else end()};
+  const doOpen=()=>{if(opened)return;opened=true;try{open()}catch(e){}};
+  addEventListener("hashchange",bail);fx.onclick=()=>{vibrate(5);doOpen();finish(true)};   /* 點一下＝跳過 */
+  if(T.kind!=="min"){
+    if(id==="td"){qa(".gxt-fx-r").forEach((r,i)=>A(r,[{opacity:0,transform:`translate(-50%,-50%) rotate(${i*60}deg) scaleY(.35)`},{opacity:1,offset:.1,transform:`translate(-50%,-50%) rotate(${i*60+20}deg) scaleY(.35)`},{opacity:1,transform:`translate(-50%,-50%) rotate(${i*60+220}deg) scaleY(.35)`}],{duration:T.open,easing:"ease-in"}));
+      A(q(".gxt-fx-g"),[{opacity:0,transform:"translate(-50%,-50%) scale(.4)"},{opacity:1,offset:.5,transform:"translate(-50%,-50%) scale(1)"},{opacity:1,transform:"translate(-50%,-50%) scale(9)"}],{duration:T.say+250,easing:"ease-in"})}
+    else if(id==="simul"){const s=q(".gxt-fx-s");A(s,[{opacity:0},{opacity:1}],{duration:120});A(s,[{transform:"scale(1)"},{transform:"scale(6)"}],{duration:T.say+200,easing:"cubic-bezier(.5,0,.8,.6)"})}
+    else if(id==="sky"){qa(".gxt-fx-d").forEach((d,i)=>A(d,[{opacity:0,transform:"scale(.3)"},{opacity:1,transform:"scale(1.25)"},{opacity:.9,transform:"scale(1)"}],{duration:300,delay:i*T.say/8}));A(q("polyline"),[{strokeDashoffset:1},{strokeDashoffset:0}],{duration:T.say,easing:"ease-in-out"})}}
+  if(id!=="sky")at(Math.max(0,T.say-380),()=>A(q(".gxt-fx-b"),[{opacity:0},{opacity:1}],{duration:340}));
+  if(id!=="simul")A(q(".gxt-fx-m"),[{opacity:0},{opacity:.55}],{duration:260});
+  at(T.say,()=>A(q(".gxt-fx-t"),[{opacity:0,transform:"translateY(6px)"},{opacity:1,transform:"none"}],{duration:300}));
+  at(T.open,()=>{doOpen();finish(id==="sky")})}   /* 星圖面板是從底下滑上來的，過場層要收得快，那句話才不會壓在面板上 */
 /* 天頂黑洞＝黑洞車輪戰：跟渾儀一樣，定軌力用完時黑洞入口關著 */
-function gxtWheel(){if(gxtBhLock()){toast("🌫 "+gxtBhMsg());return}if(typeof whlOpen==="function")whlOpen();else toast("🌌 "+GXT_OFF)}
-const GXT_ACT={gxtTd:gxtTd,gxtSimul:gxtWheel,gxtGx:()=>gxtGate(),gxtSky:()=>{if(typeof dglXiuSheet==="function")dglXiuSheet();else toast("🌌 "+GXT_OFF)}};
+function gxtWheel(){if(gxtBhLock()){toast("🌫 "+gxtBhMsg());return}if(typeof whlOpen!=="function"){toast("🌌 "+GXT_OFF);return}gxtFx("simul",()=>whlOpen())}
+const GXT_ACT={gxtTd:gxtTd,gxtSimul:gxtWheel,gxtGx:()=>gxtGate(),gxtSky:()=>{if(typeof dglXiuSheet!=="function"){toast("🌌 "+GXT_OFF);return}gxtFx("sky",()=>dglXiuSheet())}};
 function GxtPage(v){setTop("🔭 觀星臺","#/");setTabs(true,"#/");v.className="view";
   if(!gxtOpen()){toast("🔭 觀星臺還沒出現");navReplace("#/");return{}}
   gxtCss();try{store.set("gxtSeen",1)}catch(e){}

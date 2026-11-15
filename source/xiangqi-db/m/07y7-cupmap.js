@@ -98,14 +98,16 @@ function cp2Side(side,P8,win){const W=100,H=380,rows=8,top=18,step=(H-top*2)/(ro
     const x0=side==="l"?nx+nw:nx;s+=`<path d="M${x0} ${y}H${j1}" stroke="${w?"#b8322a":"rgba(50,34,20,.65)"}" stroke-width="${w?2.4:1.4}" fill="none"/>`}
   for(let k=0;k<4;k++){const a=yOf(2*k),b=yOf(2*k+1),m=(a+b)/2,on=win.r2&&win.r2[k];s+=`<path d="M${j1} ${a}V${b}" stroke="rgba(50,34,20,.65)" stroke-width="1.4"/>`+`<path d="M${j1} ${m}H${j2}" stroke="${on?"#b8322a":"rgba(50,34,20,.65)"}" stroke-width="${on?2.4:1.4}"/>`}
   for(let k=0;k<2;k++){const a=(yOf(4*k)+yOf(4*k+1))/2,b=(yOf(4*k+2)+yOf(4*k+3))/2,on=win.r3&&win.r3[k];s+=`<path d="M${j2} ${a}V${b}" stroke="rgba(50,34,20,.65)" stroke-width="1.4"/>`+`<path d="M${j2} ${(a+b)/2}H${j3}" stroke="${on?"#b8322a":"rgba(50,34,20,.65)"}" stroke-width="${on?2.4:1.4}"/>`}
-  s+=`<path d="M${j3} ${(yOf(0)+yOf(1)+yOf(2)+yOf(3))/4}V${(yOf(4)+yOf(5)+yOf(6)+yOf(7))/4}" stroke="rgba(50,34,20,.65)" stroke-width="1.4"/>`;
+  s+=`<path d="M${j3} ${(yOf(0)+yOf(1)+yOf(2)+yOf(3))/4}V${(yOf(4)+yOf(5)+yOf(6)+yOf(7))/4}" stroke="rgba(50,34,20,.65)" stroke-width="1.4"/>`+`<path d="M${j3} ${H/2}H${side==="l"?W:0}" stroke="rgba(50,34,20,.65)" stroke-width="1.4"/>`;   /* 11/16：這一扇的出線畫到紙邊，接中扇進來的那一條 */
   return`<svg viewBox="0 0 ${W} ${H}" preserveAspectRatio="none">${s}</svg>`}
-/* 中扇：兩位決賽者、擂主 */
+/* 中扇：兩位決賽者、擂主。hspx 開發者 11/16（手機截圖圈中扇）「紅圈畫起來怪怪」：原本兩側進來的線畫進決賽格裡面（空格是半透明的，線整條透出來）、
+   往上收的線從格子側邊出去，而且進線的高度（150）跟左右兩扇出線的高度對不上（兩扇的出線在中扇這張紙的 196）。
+   改成：兩側的線到格子邊就停、高度對齊兩扇；兩格從上緣正中往上收到擂主格；「擂主虛位以待」移到擂主格上方 */
 function cp2Mid(fa,fb,ch,ttl){const W=300,H=260,box=(x,y,w,h,p,big,on)=>`<rect x="${x}" y="${y}" width="${w}" height="${h}" rx="3" fill="${p?(on?"#c8402c":"#d8705a"):"rgba(216,112,90,.22)"}" stroke="rgba(90,30,16,.55)" stroke-width="1"/>`+(p?`<text x="${x+w/2}" y="${y+h/2+(big?9:6)}" text-anchor="middle" font-size="${big?26:17}" font-weight="900" fill="${on?"#fff6dc":"#2a160c"}" font-family="var(--kai,serif)">${esc(cp2Nm(p))}</text>`:"");
   return`<svg viewBox="0 0 ${W} ${H}" preserveAspectRatio="none"><text x="150" y="26" text-anchor="middle" font-size="18" font-weight="900" fill="#3a2010" font-family="var(--kai,serif)" letter-spacing="3">${esc(ttl)}</text>
-    <path d="M0 150H70M300 150H230M110 150V112H190V150" fill="none" stroke="rgba(50,34,20,.65)" stroke-width="1.6"/><path d="M150 112V98" stroke="${ch?"#b8322a":"rgba(50,34,20,.65)"}" stroke-width="${ch?3:1.6}"/>
-    ${box(20,132,90,36,fa,0,ch&&fa&&ch.id===fa.id)}${box(190,132,90,36,fb,0,ch&&fb&&ch.id===fb.id)}${box(85,44,130,54,ch,1,1)}
-    <text x="150" y="196" text-anchor="middle" font-size="14" fill="#4a3020" font-family="var(--serif,serif)">${ch?"本週擂主":"擂主虛位以待"}</text></svg>`}
+    <path d="M0 196H20M300 196H280M65 178V144H235V178" fill="none" stroke="rgba(50,34,20,.65)" stroke-width="1.6"/><path d="M150 144V112" stroke="${ch?"#b8322a":"rgba(50,34,20,.65)"}" stroke-width="${ch?3:1.6}"/>
+    ${box(20,178,90,36,fa,0,ch&&fa&&ch.id===fa.id)}${box(190,178,90,36,fb,0,ch&&fb&&ch.id===fb.id)}${box(85,58,130,54,ch,1,1)}
+    <text x="150" y="50" text-anchor="middle" font-size="14" fill="#4a3020" font-family="var(--serif,serif)">${ch?"本週擂主":"擂主虛位以待"}</text></svg>`}
 /* 大掛盤：棋盤＋棋子＋兩位棋手 */
 function cp2Board(fen,red,blk,cap){const W=200,H=450,ox=22,oy=74,c=19.5;let g="";
   for(let i=0;i<9;i++)g+=`<line x1="${ox+i*c}" y1="${oy}" x2="${ox+i*c}" y2="${oy+(i%8?4:9)*c}"/>`+(i%8?`<line x1="${ox+i*c}" y1="${oy+5*c}" x2="${ox+i*c}" y2="${oy+9*c}"/>`:"");

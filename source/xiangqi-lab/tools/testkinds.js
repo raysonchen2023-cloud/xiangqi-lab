@@ -113,6 +113,8 @@ const CLASSIFIED = new Set([
   "test-sw-offline.js",   /* 11/15 hspx 離線 3D 角色變小帥：sw.js 安裝時先存 3D 模型載入器（GLTFLoader.mjs 和它 import 的 .mjs），一般檔案也存 .mjs */
   "test-fb888.js",   /* 11/15 意見回饋 888 iPad 首頁兩指放大縮不回（07x 整頁放大救援、回首頁回 1 倍）、889 669×869 首頁一窄條（07z HMW_PORT 0.89／HMW_SQ、07fl XFL_HOME_MAX）、890 插曲全螢幕頁讓開狀態列（07t .ep-ov）（行為 11、原始碼 3） */
   "test-bhtd-select-1116.js",   /* 11/16 開發者「重新設計排版 太亂了 玩家不知道到底要玩哪個」「車輪戰和星門圍城也都能上線」：星淵遠征選關視窗改成一顆主按鈕（主卡＋關卡小格＋其他玩法＋收起來的出戰設定，m/07bht-td.js bhtdSelect）；觀星臺的黑洞車輪戰解鎖（m/07gxt-guanxing.js gxtWheel）（行為 1、原始碼 5） */
+  "test-ship-tasklist-1116.js",   /* hspx 11/16 開發者（手機截圖「還不能起航」）「修正，然後剛剛我完成兩題千秋殘局 在啟航清單上卻沒有更新 還是顯示0/2」：清單一列兩行、「去」不再佔滿整列；那兩題是在船艙站解的，清單標題和解局那一項寫出站名；看答案走完的題不算，清單會講有幾題（m/07f-ship.js shipTaskList、shipTasks、shipGateSay）（行為 4、混合 1、原始碼 1） */
+  "test-gxt-fx-1116.js",   /* 11/16 開發者（觀星臺）「點擊這一頁每一個入口後，可以先有個動畫過場…不然玩家會覺得怎麼進來的」：渾儀、天頂黑洞、右側星空各一段短過場與一句話（m/07gxt-guanxing.js gxtFx、gxtFxPlan）（行為 4、原始碼 1） */
   "test-preload-bg.js"   /* 11/14 評比第 17、18 輪第 5 項背景暫停與按需預載：00-util bgpEvery／bgpOn、09b 預載前景／背景／恢復三段、分區 z:<分區>、別朝代先不下載、閒置才補選讀、省流量、preload-list --retier（行為 12、混合 1、原始碼 1） */
 ]);
 /* 還沒逐項分類的檔（統計列為「待分類」）；新測試檔先放這裡，分好類再移到 CLASSIFIED */

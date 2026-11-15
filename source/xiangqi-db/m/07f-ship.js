@@ -418,7 +418,8 @@ function shipBuddy(){try{const c=myChar(),W=c&&WX_CHARS[c];return W?(W.nk||W.n):
 function shipTasks(k){const S=(store.get("shipSolved",{})||{})[k]||{},sv=Object.keys(S).length,G=(store.get("shipGames",{})||{})[k]|0,Wn=(store.get("shipWins",{})||{})[k]|0,
   Pl=SHIP_PLAN[k]||{},sid=Pl.story?(typeof Pl.story==="function"?Pl.story(shipPiece(k)):Pl.story):null,rd=!!(store.get("shipRead",{})||{})[k],sd=!!(sid&&(S[sid]||(store.get("shipGal",{})||{})[sid])),
   ar=!!(store.get("shipArena",{})||{})[k],lv=SHIP_LV[shipOrder().indexOf(k)]||0;let L=1;try{L=xpInfo().L|0}catch(e){}
-  return[{ic:"♟",t:"解局",d:"解開這一站 2 題千秋殘局",p:Math.min(sv,2)+"/2",ok:sv>=2,go:"#/ship/pz"},
+  let pk=0;try{const Lz=shipPuzzles(k),C=(store.get("cj",null)||{}).solved;if(Lz&&C)pk=Lz.slice(0,SHIP_PER).filter(id=>!S[id]&&C[id]&&C[id].a).length}catch(e){}   /* 11/16「完成兩題卻還是 0/2」：開發者那兩題是在船艙站解的（匿名作答紀錄 04:44、04:45 是船艙的題），清單看的是航線最前面的漢站——清單標題和這一項都寫出站名；另外看答案走完的不算解開，也講明白（題庫還沒載好時 Lz＝null，不講） */
+  return[{ic:"♟",t:"解局",d:"解開「"+shipShort(k)+"」這一站 2 題千秋殘局"+(pk&&sv<2?"（有 "+pk+" 題是看答案走完的，不算；不看答案再解一次就算）":""),p:Math.min(sv,2)+"/2",ok:sv>=2,go:"#/ship/pz"},
     {ic:"🌳",t:"對弈",d:"在這一朝贏 1 盤棋，或下滿 3 盤（20 手以上，輸贏都算）",p:Wn?"贏了":Math.min(G,3)+"/3 盤",ok:Wn>=1||G>=3,go:"#/journey/park"},
     {ic:"📖",t:"聽書",d:"讀這一站的故事一章，並解開章末那一局",p:((rd?1:0)+(sd?1:0))+"/2",ok:rd&&sd,go:"#/ship/read/"+k},
     {ic:"🏯",t:"打擂",d:"挑戰這一朝的擂主：贏，或撐過 30 手",p:ar?"✓":"0/1",ok:ar,go:"#/arena"},
@@ -426,18 +427,20 @@ function shipTasks(k){const S=(store.get("shipSolved",{})||{})[k]||{},sv=Object.
 function shipSailNeed(){try{if(!SAIL_GATE_ON||shipAppr()||!shipNextStop())return null;const k=shipFront();if(!k)return null;const i=shipOrder().indexOf(k);
   if(i<=1)return(store.get("shipLessonSeen",{})||{})[k]||Object.keys((store.get("shipSolved",{})||{})[k]||{}).length?null:{k,first:true};
   const T=shipTasks(k),n=T.filter(x=>x.ok).length;return n>=SAIL_NEED?null:{k,T,n}}catch(e){return null}}
-function shipTaskList(N,go){return'<ul style="list-style:none;margin:6px 0 0;padding:0">'+N.T.map((x,i)=>'<li style="display:flex;gap:6px;align-items:baseline;padding:3px 0;'+(x.ok?'opacity:.7':'')+'"><span>'+(x.ok?"✅":"⬜")+'</span><span style="flex:1"><b>'+x.ic+" "+x.t+'</b>　'+esc(x.d)+'</span><span class="muted" style="white-space:nowrap">'+esc(x.p)+'</span>'+(go&&!x.ok&&x.go?'<button class="btn ghost" data-sg="'+i+'" style="padding:2px 10px;font-size:13px">去</button>':'')+'</li>').join("")+'</ul>'}
+/* hspx 開發者 11/16（手機截圖）：清單每一列的字被擠成一行一個字——.btn 預設 width:100%，「去」把整列佔滿。改成兩行：上面勾、名字、進度、「去」（按鈕只有自己那麼寬），下面一行說明 */
+function shipTaskList(N,go){return'<ul style="list-style:none;margin:6px 0 0;padding:0">'+N.T.map((x,i)=>'<li style="padding:8px 0;border-top:1px solid rgba(128,128,128,.25);'+(x.ok?'opacity:.7':'')+'"><div style="display:flex;gap:8px;align-items:center"><span>'+(x.ok?"✅":"⬜")+'</span><b style="flex:1;min-width:0">'+x.ic+" "+x.t+'</b><span class="muted" style="white-space:nowrap">'+esc(x.p)+'</span>'+(go&&!x.ok&&x.go?'<button class="btn ghost" data-sg="'+i+'" style="flex:none;width:auto;min-width:64px;min-height:44px;margin:0;padding:4px 16px;font-size:15px">去</button>':'')+'</div><div class="muted" style="margin:2px 0 0 30px;font-size:14px;line-height:1.55">'+esc(x.d)+'</div></li>').join("")+'</ul>'}
 function shipGoalHTML(N){if(!N)return"";const nm=esc(shipShort(N.k));
   if(N.first)return'<p class="shs-goal"><b>【本站目標】</b>翻開'+nm+'的《棋話》，看一頁棋理（0/1）</p>';
   return'<div class="shs-goal"><b>【本站歷練】完成 '+SAIL_NEED+' 件事即可起航（'+N.n+'/'+SAIL_NEED+'）</b><br><span class="muted">挑選你喜歡的任務，下棋、解題、看故事都可以喔！</span><br>'+N.T.map(x=>(x.ok?"✅":"⬜")+x.t).join("　")+'<br><span class="muted">按「起航」看每一件怎麼做</span></div>'}
 function shipReadyHTML(){try{const k=shipFront();if(!k||shipAppr()||shipOrder().indexOf(k)<2||shipSailNeed())return"";return'<p class="shp-say">'+esc(shipBuddy())+'：「行李收好啦！星槎準備出發！」</p><p>我們已經在這裡大顯身手了，快按起航鍵吧！</p>'}catch(e){return""}}
 function shipGateSay(N){vibrate([20,40,20]);const here=shipHere()===N.k;sheet(N.first?"⚓ 船錨卡住了":"⛵ 還不能起航",b=>{
   b.innerHTML=(N.first?'<p class="shp-say">說書人：「先翻開這一站的《棋話》看一頁，船錨就拉得起來。」</p>'+shipGoalHTML(N)+(here?'<div class="row" style="gap:8px;margin-top:10px"><button class="btn" id="sgL">📘 看《棋話》</button></div>':'')
-    :'<p class="shp-say">'+esc(shipBuddy())+'：「等一下啦，我們還沒逛完這裡呢！」</p><p>清單上還有好多好玩的事，陪我再解一題殘局嘛。</p><p><b>【本站歷練】（'+N.n+'/'+SAIL_NEED+'）</b></p>'+shipTaskList(N,here))+
+    :'<p class="shp-say">'+esc(shipBuddy())+'：「等一下啦，我們還沒逛完這裡呢！」</p><p>清單上還有好多好玩的事，陪我再解一題殘局嘛。</p><p><b>【'+esc(shipShort(N.k))+'・本站歷練】（'+N.n+'/'+SAIL_NEED+'）</b></p><div id="sgList">'+shipTaskList(N,here)+'</div>')+
     (here?"":'<p class="muted">要先回到「'+esc(shipShort(N.k))+'」那一站。按下面這顆，星槎會自動開回去。</p><div class="row" style="gap:8px;margin-top:10px"><button class="btn" id="sgGo">⛵ 回'+esc(shipShort(N.k))+(N.first?'，翻開《棋話》':'那一站')+'</button></div>');   /* 開發者 11/13 晚截圖：新手不知道「航線」在哪，只有一行字、沒有可以按的東西 */
   const e=b.querySelector("#sgL");if(e)e.onclick=()=>{closeSheet();location.hash="#/ship/lesson"};
   const g=b.querySelector("#sgGo");if(g)g.onclick=()=>{closeSheet();shipGoTo(N.k,()=>{location.hash=N.first?"#/ship/lesson":"#/adventure"})};
-  b.querySelectorAll("[data-sg]").forEach(x=>x.onclick=()=>{const t=N.T[+x.dataset.sg];closeSheet();if(t&&t.go)location.hash=t.go})})}
+  const bind=()=>b.querySelectorAll("[data-sg]").forEach(x=>x.onclick=()=>{const t=N.T[+x.dataset.sg];closeSheet();if(t&&t.go)location.hash=t.go});bind();
+  if(!N.first&&shipPuzzles(N.k)===null)shipBank().then(()=>{const N2=shipSailNeed(),L=b.querySelector("#sgList");if(!N2||N2.first||N2.k!==N.k||!L||!L.isConnected)return;N=N2;L.innerHTML=shipTaskList(N,here);bind()}).catch(()=>{})})}   /* 題庫載好再畫一次，「看答案的不算」那句才出得來 */
 /* 起航 #/ship/sail：船尾舵與帆；天上寫下一站（說書人預告、棋理、這一朝的棋、建議修為），舵旁的星光＝起航。十三站都停靠過＝旅程終點卡 */
 function ShipSail(v){setTop("⛵ 起航",null,[["🏠",()=>goHome(),"回首頁"]]);setTabs(false);   /* 11/13 開發者：左上角「‹ 回星槎」拿掉，改成船板上的場景大字標籤 ssUp（跟渡口一樣） */v.className="view";const ap=shipAppr(),k=shipHere(),nx=ap?null:shipNextStop(),allIn=!ap&&!nx&&!!shipDockList(),I=xpInfo(),[sx,sy]=SAIL_SPOT;
   let card,sp=[],cap,sub;

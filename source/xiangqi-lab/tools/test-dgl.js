@@ -341,7 +341,7 @@ test("〔原始碼〕接線：設定頁角色分頁呼叫 dglSetRow；觀星臺 
   const ST = rd(path.join(M, "05-settings.js")), bot = ST.indexOf('<div data-pane="bot">'), row = ST.indexOf('${typeof dglSetRow==="function"?dglSetRow():""}');
   assert.ok(bot > 0 && row > bot, "在角色分頁"); assert.ok(ST.indexOf('id="botT"') > row, "在顯示設定前面");
   assert.match(ST, /^const XQ_SIZES=(\/\*__SIZES__\*\/null|\{"pre":\d+[^\n]*\});$/m, "XQ_SIZES 那行沒動（開發者電腦是佔位；公開 source/ 是從線上 index.html 切出來、建置時已填入大小的那行）");
-  assert.ok(rd(path.join(M, "07gxt-guanxing.js")).includes('gxtSky:()=>{if(typeof dglXiuSheet==="function")dglXiuSheet()'));
+  assert.ok(rd(path.join(M, "07gxt-guanxing.js")).includes('gxtSky:()=>{if(typeof dglXiuSheet!=="function"){toast("🌌 "+GXT_OFF);return}gxtFx("sky",()=>dglXiuSheet())}'));   /* 11/16：先播右側星空的短過場（gxtFx），再開星圖 */
   assert.ok(SRC.includes('if(typeof setTop==="function"){const f0=setTop;setTop=function(){const r=f0.apply(this,arguments);try{dglLocSync(null,1)}'), "包一層 setTop");
   assert.ok(SRC.includes("在觀星臺可以點亮二十八宿星圖"), "角色卡的星芒說明");
   const HTML = rd(path.join(ROOT, "xiangqi-db/m.html")), order = [...HTML.matchAll(/\/\/#include m\/([\w-]+\.js)/g)].map(m => m[1]);
