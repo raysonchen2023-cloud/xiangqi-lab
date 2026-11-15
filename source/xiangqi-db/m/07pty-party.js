@@ -100,7 +100,7 @@ const PTY_GOAL={x_miaogirl:"去大漠驛站，救出戴笠帽的孩子",x_shuai:
   x_spiritgirl:"去竹林溪邊，找那個一直在等人的孩子",x_bing:"去運河工地，找半塊布的主人",x_martialgirl:"去逃荒路上，找那個怕打雷的孩子"};
 function ptyCss(){if(document.getElementById("ptyCss"))return;const s=document.createElement("style");s.id="ptyCss";s.textContent=`
 .pty-top{display:flex;gap:10px;justify-content:space-between;align-items:center;margin:0 0 10px;font-size:14px}
-.pty-top b{font-size:16px}.pty-pool{color:#2b6cb0}
+.pty-top b{font-size:16px}.pty-pool{color:#2b6cb0}.pty-top{margin-bottom:4px}.pty-cap{margin:0 0 10px}
 .pty-c{display:grid;grid-template-columns:64px 1fr;gap:4px 10px;align-items:start;padding:10px;border:1px solid var(--line,#d8cfbf);border-radius:12px;margin:0 0 10px;background:var(--card,#fffaf0)}
 .pty-c img{width:64px;height:85px;object-fit:cover;object-position:top;border-radius:8px;background:#efe6d6}
 .pty-c.lk img{filter:brightness(0) opacity(.55)}.pty-c.lk{opacity:.85}
@@ -111,6 +111,9 @@ function ptyCss(){if(document.getElementById("ptyCss"))return;const s=document.c
 .pty-xp{height:7px;border-radius:4px;background:#e8dfcf;overflow:hidden;margin:4px 0}.pty-xp b{display:block;height:100%;background:#d4a017}
 .pty-a{grid-column:1/-1;display:flex;flex-wrap:wrap;gap:6px;margin-top:4px}.pty-a .btn{flex:1 1 0;width:auto;min-width:0;min-height:40px;margin:0;padding:6px 8px;font-size:14px;white-space:nowrap}
 `;document.head.append(s)}
+/* 開發者 11/16「角色等級不能超過修為，這句話玩家看不懂」（選單選「直接講結果」）：不解釋規則，直接說夥伴現在最高能練到幾級、怎樣才會再往上。
+   同一條規則的另外兩處一起改：卡片上練滿的註記「（到修為上限）」→「（練滿了，等你升級）」；練滿還按＋星輝的提示 →「已經跟你一樣高了，等你升級再練」 */
+const ptyCapSay=L=>L>=100?"夥伴最高練到 Lv 100":`夥伴最高練到 Lv ${L}，你升級才會再往上`;
 function ptyCardHTML(P,c,L){const C=(typeof WX_CHARS!=="undefined"&&WX_CHARS[c])||{n:c},era=typeof eraLabel==="function"&&typeof CHAR_ERA!=="undefined"?eraLabel(CHAR_ERA[c]):"";
   const img=`<img src="data/xs/prev_${c}.webp" alt="">`;
   if(!PTY.has(P,c)){const j=PTY.JOIN[c],at=j&&typeof eraLabel==="function"?eraLabel(j.st):"";const goal=P.hint&&P.hint[c]&&PTY_GOAL[c];
@@ -119,14 +122,14 @@ function ptyCardHTML(P,c,L){const C=(typeof WX_CHARS!=="undefined"&&WX_CHARS[c])
   let sk="";try{if(typeof BHTD!=="undefined"&&BHTD.SK){const pool=BHTD.SK.filter(s=>s.ch===c);sk=`・<span>招式</span> ${pool.filter(s=>s.lv<=lv).length}／${pool.length}`}}catch(e){}
   const tg=(P.lead===c?`<span class="pty-tag">隊長</span>`:"")+(P.look===c?`<span class="pty-tag look">陪你走</span>`:"");
   return`<div class="pty-c" data-c="${c}">${img}<div><div class="pty-n">${esc(C.n)}<small>${esc(C.nk||"")}</small>${tg}</div>
-    <div class="pty-m">${esc(C.pc||"")}・${esc(era)}・Lv ${lv}${top?"（到修為上限）":""}${sk}</div><div class="pty-xp" aria-hidden="true"><b style="width:${pct.toFixed(1)}%"></b></div></div>
+    <div class="pty-m">${esc(C.pc||"")}・${esc(era)}・Lv ${lv}${top?(L>=100?"（練滿了）":"（練滿了，等你升級）"):""}${sk}</div><div class="pty-xp" aria-hidden="true"><b style="width:${pct.toFixed(1)}%"></b></div></div>
     <div class="pty-a">${top?"":`<button type="button" class="btn" data-a="give"${P.pool>0?"":" disabled"}>＋星輝</button>`}${P.lead===c?"":`<button type="button" class="btn ghost" data-a="lead">設為隊長</button>`}${P.look===c?"":`<button type="button" class="btn ghost" data-a="look">帶${ptyTa(c)}出門</button>`}</div></div>`}
 function ptySheet(){if(typeof sheet!=="function")return;const P0=ptyGet();if(!P0){try{toast("還沒有開始旅程")}catch(e){}return}ptyCss();
   sheet("🌟 雲河七星",b=>{const draw=()=>{const P=ptyGet(),L=ptyL(),sy=b.scrollTop;
-    b.innerHTML=`<div class="pty-top"><span><span>修為</span> <b>Lv ${L}</b>（<span>角色等級不能超過修為</span>）</span><span class="pty-pool">✨ <span>星輝</span> <b>${P.pool|0}</b></span></div>`+PTY.ORDER.map(c=>ptyCardHTML(P,c,L)).join("")+
+    b.innerHTML=`<div class="pty-top"><span><span>你的修為</span> <b>Lv ${L}</b></span><span class="pty-pool">✨ <span>星輝</span> <b>${P.pool|0}</b></span></div><p class="pty-m pty-cap">${ptyCapSay(L)}</p>`+PTY.ORDER.map(c=>ptyCardHTML(P,c,L)).join("")+
       `<p class="pty-m">下棋、解題、黑洞過關得到的修為，一半自動分給隊上每一位，另一半變成星輝，由你分給想練的人。隊長是黑洞裡放招的那一位；「陪你走」是首頁上跟著你的那一位。</p>`;
     b.querySelectorAll(".pty-c[data-c]").forEach(el=>{const c=el.dataset.c;el.querySelectorAll("[data-a]").forEach(btn=>btn.onclick=()=>{try{vibrate(5)}catch(e){}const a=btn.dataset.a;
-      if(a==="give"){const P2=ptyGet(),L2=ptyL(),lv=PTY.lv(P2,c,L2),want=PTY.base(Math.min(L2,lv+1))-P2.m[c].xp;const g=ptyGive(c,want>0?want:P2.pool);try{toast(g?`✨ 給了 ${g} 星輝`:"已經到修為上限了")}catch(e){}}
+      if(a==="give"){const P2=ptyGet(),L2=ptyL(),lv=PTY.lv(P2,c,L2),want=PTY.base(Math.min(L2,lv+1))-P2.m[c].xp;const g=ptyGive(c,want>0?want:P2.pool);try{toast(g?`✨ 給了 ${g} 星輝`:"已經跟你一樣高了，等你升級再練")}catch(e){}}
       else if(a==="lead"){if(ptySetLead(c))try{toast("隊長換成"+WX_CHARS[c].n)}catch(e){}}
       else if(a==="look"){if(ptySetLook(c)){try{toast(WX_CHARS[c].n+"陪你走")}catch(e){}try{closeSheet()}catch(e){}setTimeout(()=>{try{if(typeof route==="function")route()}catch(e){}},260);return}}   /* 換人後關卡冊、重畫首頁，右上頭像和小人馬上換 */
       draw()})});b.scrollTop=sy};draw()})}

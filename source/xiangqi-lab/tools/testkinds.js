@@ -15,6 +15,7 @@ const DIR = __dirname;
 const SKIP = new Set(["test-home-focus.js", "testkinds.js"]);
 /* 11/12 已逐項分類（開發者稽核 story/102_評比灌水誠實稽核.md 第 3 項） */
 const CLASSIFIED = new Set([
+  "test-pty-capsay-1116.js",   /* 11/16 開發者「角色等級不能超過修為，這句話玩家看不懂」：雲河七星隊伍頁同一條規則的三處文字改成講結果（m/07pty-party.js ptyCapSay、練滿的註記與提示）（行為 1、原始碼 2） */
   "test-engine-budget-pgn.js",   /* 11/15 引擎預算敏感度 PGN 版 tools/engine-budget-pgn.js（用 App 匯出的帶評語棋譜重做＋手機評語 vs 電腦各檔；自編棋譜與假的評估函式，不啟動引擎；行為 8、原始碼 1） */
   "test-mathmodel-82.js",   /* 11/15 數學模型（ChatGPT 第五次重評的改善單＋引擎預算敏感度）：算法對照每一對各自算人數與來源（單人 120 盤不能借別人的人數）、探索性的標籤與「可比較的 k／3 項」、方案 v1.3、引擎預算敏感度工具 engine-budget-check.js 的抽樣／續跑／比較（用假的評估函式，不啟動引擎）（行為 6、混合 1、原始碼 2） */
   "test-mathmodel-81.js",   /* 11/15 數學模型（ChatGPT 第四次重評的改善單＋開發者決定）：離線工具原始格式先驗再轉型（null、字串、缺識別欄位不進分母；真正的 0 分留著）、新舊配對盤數、弱項建議的放行條件 SK.PICKOK（沒有基準時畫面不變）、三種對照算法與算法三角對照、本機紀錄多存標準開局與提示悔棋、Wilson 完整精度、方案 v1.2／外部公式參考 v2／manifest 說明（行為 14、混合 3、原始碼 4） */

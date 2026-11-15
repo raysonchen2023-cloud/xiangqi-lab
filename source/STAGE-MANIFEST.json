@@ -1,7 +1,7 @@
 {
  "ref": "origin/main",
- "commit": "a1c4f945160dee901776d023ad9bc5f4ba80b443",
- "madeAt": "2026-11-15T19:59:22.426Z",
+ "commit": "5a4a7711a8476ba66e0c9e312cc9e8ae3e828a7f",
+ "madeAt": "2026-11-15T20:15:10.536Z",
  "files": {
   "xiangqi-db/m/00-util.js": "local=live",
   "xiangqi-db/m/01-board.js": "local=live",
@@ -283,6 +283,7 @@
   "xiangqi-lab/tools/test-preload-bg.js": "local",
   "xiangqi-lab/tools/test-premove-online3d.js": "local",
   "xiangqi-lab/tools/test-provenance.js": "local",
+  "xiangqi-lab/tools/test-pty-capsay-1116.js": "local",
   "xiangqi-lab/tools/test-pv-stepper.js": "local",
   "xiangqi-lab/tools/test-qixing.js": "local",
   "xiangqi-lab/tools/test-quiz-check-exit.js": "local",
@@ -467,8 +468,8 @@
   "test-party-novel.js": "指令排除：要讀只在開發者電腦與 CDN 的聽書稿（art/canju/yunhe-novel.json），公開副本沒有這個檔",
   "test-party-wood.js": "指令排除：要讀只在開發者電腦與 CDN 的木棋靈模型與骨架工具，公開副本沒有這些檔"
  },
- "version": "20261116-0353",
- "indexSha1": "d0040e57fd42",
+ "version": "20261116-0413",
+ "indexSha1": "77fb48261202",
  "toLF": [
   "xiangqi-lab/tools/build-site.js"
  ],
