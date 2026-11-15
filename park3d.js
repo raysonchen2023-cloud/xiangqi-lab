@@ -2087,6 +2087,12 @@
         for(const[[a1,b1],[a2,b2]]of pkcbCross(s,F.thick))objs.push(fxLine([[x+a1,y+b1,z],[x+a2,y+b2,z]],F.x,.95));objs.push(fxGlow(x,y,z,F.glow,.6))}
       if(objs.length)fxFade(objs,.5,.9)};
     let pieces={},prevB=null,prevLast=null,anims=[],captured=[],capNear=true,lastCapB=null,CAPBS=null,CAPPK=null,CAPKEY=null;   /* CAPBASE：被吃子的基準、這盤畫過的最多顆數、哪一盤 */
+    /* 11/15 黑洞車輪戰 3D（m/07bhw-wheel.js）：同一個 3D 實例輪流畫三盤。draw 的 ex.bkey＝這次畫的是哪一盤；跟上次不一樣＝換了一盤：
+       不拿上一盤的局面比對（不然碰巧對得上的子會被當成「走過去」，從上一盤的位置飛過來），拖到一半的棋子放下、進行中的走子吃子動畫當場收尾，整盤直接擺好（sync）。
+       沒給 bkey 的（其他所有對局）不會進來，照舊 */
+    let BKEY=null;
+    const bkeySwap=k=>{if(k===BKEY)return;const was=BKEY;BKEY=k;if(was===null)return;try{if(TDP&&TDP.drag)tdDragEnd(true)}catch(e){}TDP=null;
+      for(let n=0;n<12&&anims.length;n++){const cur=anims;anims=[];for(const a of cur)try{a.f(1);a.end&&a.end()}catch(e){}}CAPBUSY=0;prevB=null;prevLast=null};
     // 提示記號
     const markG=new T.Group();sc.add(markG);
     const disc=(i,col,r,op)=>{const m=new T.Mesh(new T.CircleGeometry(r,32),new T.MeshBasicMaterial({color:col,transparent:true,opacity:op,depthWrite:false}));m.rotation.x=-PI/2;const[x,z]=pos(i);m.position.set(x,TOP+.012,z);markG.add(m);return m};
@@ -2269,7 +2275,7 @@
       {const lk=JSON.stringify(ex.look?[ex.look.k,ex.look.img,!!ex.look.gly,ex.look.pset,ex.look.pieces&&ex.look.pieces.r,ex.look.grid,!!ex.look.hc,!!ex.look.cb]:null);   /* 11/13：高對比／色弱模式切換也要重畫棋面（PKCB） */if(lk!==lookKey){lookKey=lk;LOOK=ex.look||null;
         if(LOOK){let n=0;const L0=[LOOK.img,LOOK.pieces&&LOOK.pieces.r,LOOK.pieces&&LOOK.pieces.b,...(LOOK.pset?PSRC(LOOK.pset):[])],done=()=>{if(++n>=L0.length&&LOOK===ex.look)refreshLook()};L0.forEach(src=>{if(!src||loadImg(src,done))done()})}
         refreshLook()}}
-      if(nf!==flip){flip=nf;prevB=null}if(GIANT)try{gntPad(o);gsUI();unUI();teleUI();storySet(ex.bhStars);gntHorseLock(o.sel!=null?o.sel:-1,board)}catch(e){}   /* 搖桿：翻盤更新後才算方向；棋距拉桿 */
+      if(nf!==flip){flip=nf;prevB=null}if(GIANT)try{gntPad(o);gsUI();unUI();teleUI();storySet(ex.bhStars);gntHorseLock(o.sel!=null?o.sel:-1,board)}catch(e){}if(ex.bkey!==undefined)bkeySwap(ex.bkey);   /* 11/15 車輪戰 3D：換了一盤就直接擺好（bkeySwap） */   /* 搖桿：翻盤更新後才算方向；棋距拉桿 */
       const L=o.last&&o.last.f!=null&&o.last.t!=null?o.last:null,lk=L?L.f+"-"+L.t:"";
       const moved=prevB&&L&&lk!==prevLast&&board[L.t]&&board[L.t]===prevB[L.f]&&!board[L.f]&&pieces[L.f]&&board.filter(Boolean).length>=prevB.filter(Boolean).length-1;
       if(moved){const g=pieces[L.f],cap=pieces[L.t];delete pieces[L.f];pieces[L.t]=g;const[x0,z0]=pos(L.f),[x1,z1]=pos(L.t);
@@ -2741,7 +2747,9 @@
       piece:(c,r)=>{if(!(c>=0&&c<=8&&r>=0&&r<=9)||c%1||r%1)return null;const g=pieces[r*9+c];return g&&g.userData&&g.userData.giant?g:null},
       find:p=>{for(const i in pieces){const g=pieces[i];if(g&&g.userData&&g.userData.p===p)return g}return null},
       board:bplane,mirror:MG,hook(f){FXH.add(f);return()=>FXH.delete(f)},view:()=>({yaw,pitch,zoom,tele:!!TELE,under:UNDER}),poke:ms=>pwPoke(+ms||1500),shown:()=>shown&&el.style.display!=="none"}:null,   /* 11/14 正式交出黑洞巨盤的場景、鏡頭、格子座標（c 路 0～8、r 列 0＝黑方底線，翻盤也對）、棋子、星盤網格、倒影群組、繪製掛勾，給太虛星尊魔法 bossfx3d.js 用（m/07bhf-bossfx.js）；不是巨盤＝null */
-      hide(){el.style.display="none"},show(){if(el.style.display==="none"){el.style.display="";fit()}}}}
+      hide(){el.style.display="none"},show(){if(el.style.display==="none"){el.style.display="";fit()}},
+      /* 11/15 車輪戰 3D（m/07bhw-wheel.js）新增的兩個介面，別的模式不叫：setTdPad＝塔防固定鏡頭框棋盤時四邊的留白（上右下左 px；上面多留一塊給另外兩張簡化棋盤）；busy＝還有走子、吃子動畫在播（換盤前先等它播完） */
+      setTdPad(p){const q=Array.isArray(p)&&p.length===4&&p.every(n=>n>=0&&n<1e4)?p.map(n=>Math.round(n)):[16,2,4,2];if(q.join(",")!==TDPAD.join(",")){TDPAD=q;pwPoke(400)}},busy:()=>anims.length>0||CAPBUSY>0||!!CINE}}
   /* 11/11 省電模式：power()＝現在的設定和自動判斷結果（開著的園子每秒自己重判，不用通知）；perf()＝最近一座園子近 10 秒的效能計數（同 window.__PK.perf） */
   window.XQPark3D={create,power(){pwBat();const m=pwMode();return Object.assign({mode:m},pwDecide(m,pwSig()))},perf:()=>PF};
 })();
