@@ -1,7 +1,7 @@
 {
  "ref": "origin/main",
- "commit": "a85899de9ed828cdc0c2f25d1cda264d0c5ffcf9",
- "madeAt": "2026-11-15T11:39:14.251Z",
+ "commit": "e233a554ef69aa1c265c81ae981d7ed9e918bdfd",
+ "madeAt": "2026-11-15T14:02:05.761Z",
  "files": {
   "xiangqi-db/m/00-util.js": "local=live",
   "xiangqi-db/m/01-board.js": "local=live",
@@ -14,7 +14,7 @@
   "xiangqi-db/m/05b-save.js": "live",
   "xiangqi-db/m/05c-health.js": "local=live",
   "xiangqi-db/m/05d-telemetry.js": "local=live",
-  "xiangqi-db/m/06-cpu.js": "local=live",
+  "xiangqi-db/m/06-cpu.js": "live",
   "xiangqi-db/m/06c-cup.js": "local=live",
   "xiangqi-db/m/07-legend.js": "live",
   "xiangqi-db/m/07c-canju.js": "local=live",
@@ -148,7 +148,7 @@
   "xiangqi-lab/tools/collect-anon.js": "local",
   "xiangqi-lab/tools/cup-key.js": "local",
   "xiangqi-lab/tools/daily-roster.js": "local",
-  "xiangqi-lab/tools/engine-budget-check.js": "local",
+  "xiangqi-lab/tools/engine-budget-check.js": "live（上一版公開的那份；本機那份跟著還沒發布的程式改過）",
   "xiangqi-lab/tools/fill-sizes.js": "local",
   "xiangqi-lab/tools/fixes-export.snippet.js": "local",
   "xiangqi-lab/tools/fixtures/ai-batch-positions.json": "local",
@@ -227,6 +227,7 @@
   "xiangqi-lab/tools/test-gate-siege-3d.js": "local",
   "xiangqi-lab/tools/test-gate-siege.js": "live（上一版公開的那份；本機那份跟著還沒發布的程式改過）",
   "xiangqi-lab/tools/test-growth.js": "local",
+  "xiangqi-lab/tools/test-gx-parkinfo-1115.js": "local",
   "xiangqi-lab/tools/test-handoff-facts.js": "local",
   "xiangqi-lab/tools/test-haptics.js": "local",
   "xiangqi-lab/tools/test-health-funnel.js": "local",
@@ -288,7 +289,7 @@
   "xiangqi-lab/tools/test-ruleset.js": "local",
   "xiangqi-lab/tools/test-save-file.js": "local",
   "xiangqi-lab/tools/test-ship-tilt.js": "local",
-  "xiangqi-lab/tools/test-siege-wheel-bench.js": "local",
+  "xiangqi-lab/tools/test-siege-wheel-bench.js": "live（上一版公開的那份；本機那份跟著還沒發布的程式改過）",
   "xiangqi-lab/tools/test-sound-mix.js": "local",
   "xiangqi-lab/tools/test-spotfit.js": "local",
   "xiangqi-lab/tools/test-starter.js": "local",
@@ -299,6 +300,7 @@
   "xiangqi-lab/tools/test-touch-fixes.js": "local",
   "xiangqi-lab/tools/test-ui-1113.js": "local",
   "xiangqi-lab/tools/test-verify-daily.js": "local",
+  "xiangqi-lab/tools/test-watcher-sway-1115.js": "local",
   "xiangqi-lab/tools/test-wheel-3d.js": "local",
   "xiangqi-lab/tools/test-wheel.js": "local",
   "xiangqi-lab/tools/test-xfer.js": "local",
@@ -407,6 +409,7 @@
  "liveDiffers": [
   "m/05-settings.js",
   "m/05b-save.js",
+  "m/06-cpu.js",
   "m/07-legend.js",
   "m/07f-ship.js",
   "m/07bh-blackhole.js",
@@ -465,10 +468,14 @@
   "test-party.js": "指令排除：七星陸續加入的新功能還在開發者電腦上做，對應的程式還沒發布",
   "test-party-battle.js": "指令排除：七星各自等級的黑洞戰鬥規則還在開發者電腦上做，對應的程式還沒發布",
   "test-party-core.js": "指令排除：七星陸續加入與各自等級還在開發者電腦上做，對應的模組（07pty-party.js）還沒發布",
-  "test-party-wood.js": "指令排除：七星改版的木棋靈還在開發者電腦上做，對應的程式還沒發布"
+  "test-party-wood.js": "指令排除：七星改版的木棋靈還在開發者電腦上做，對應的程式還沒發布",
+  "test-party-hero.js": "指令排除：七星改版的主角設定還在開發者電腦上做，對應的程式還沒發布",
+  "test-party-novel.js": "指令排除：七星改版的劇情文字還在開發者電腦上做，對應的程式還沒發布",
+  "test-party-prologue.js": "指令排除：七星改版的序章關卡還在開發者電腦上做，對應的程式還沒發布",
+  "test-fb-todo.js": "指令排除：要讀管理頁的 Apps Script 原始碼（tools/feedback-api.gs，營運用、不公開），公開副本沒有這個檔"
  },
- "version": "20261115-1928",
- "indexSha1": "d33cbfe9906f",
+ "version": "20261115-2156",
+ "indexSha1": "5b1d0736c679",
  "toLF": [
   "xiangqi-lab/tools/build-site.js"
  ],
@@ -502,5 +509,12 @@
   "pattern": "xiangqi-lab/tools/party-*",
   "why": "七星陸續加入與各自等級還在開發者電腦上做，對應的程式還沒發布；這些離線對照工具等那一版發布再公開",
   "count": 1
+ },
+ "droppedTools2": {
+  "files": [
+   "xiangqi-lab/tools/engine-budget-pgn.js",
+   "xiangqi-lab/tools/test-engine-budget-pgn.js"
+  ],
+  "why": "用真實對局重做引擎預算敏感度的離線分析工具與測試，分析與報告還沒核對完；核對後再公開"
  }
 }

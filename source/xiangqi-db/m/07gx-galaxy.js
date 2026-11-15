@@ -109,8 +109,15 @@ function gxResultModal(st,win,draw0,XPR){const r=gxSettle(st)||{ok:win},id=Strin
    開發者 11/12：每個星系有自己的地貌當對戰地面（data/gxground/<星系>.webp，Gemini 畫、無縫可重複；規劃 story/星系地面規劃.md）；第十四顆・鏡像沿用北辰的星空黑鏡水面 */
 const gxGround=id=>"data/gxground/"+(id==="mirror"?"beichen":id)+".webp";
 function gxParkEx(st){if(!gxIs(st))return null;const id=String(st.journey).slice(3),g=id==="mirror"?{n:"第十四顆",c:"#FFFFFF",say:GX_TXT.mirror}:gxGet(id);if(!g)return null;
-  return{bg:"data/park/blackhole_360.webp",ground:gxGround(id),indoor:true,era:"classic",bgName:"🌌 幻譜星門・"+g.n,gx:{c:g.c,c2:g.c2||null},oppHello:g.say,quietMate:true,watchers:[],crowd:null,
+  return{bg:"data/park/blackhole_360.webp",ground:gxGround(id),indoor:true,era:"classic",bgName:"🌌 幻譜星門・"+g.n,gx:{c:g.c,c2:g.c2||null,id},oppHello:g.say,quietMate:true,watchers:[],crowd:null,
     gate:{img:["data/park/galaxy_map.webp"],icon:"🌌",title:g.t||g.n,sub:GX_TXT.enter,bg:"#05060d",quiet:true}}}
+/* 開發者 11/15（紫淵對局截圖，圈起背景）「修正」：在星系裡點遠方，跳出來的是玩家主題的遠景說明（經典古風「山水亭橋」），還可能撿到朝代的珍品。
+   星系不是人間的園子：點遠方＝這個星系自己的說明卡（守在這裡的是誰、這一關的規則與過關條件），不走朝代那一套。06-cpu.js parkInfo 先問這裡，回 true＝處理好了 */
+function gxParkInfo(k){let id=null;try{const x=typeof PARK!=="undefined"&&PARK&&PARK.last&&PARK.last.ex&&PARK.last.ex.gx;id=x&&x.id||null}catch(e){}
+  if(!id||!(k==="bg"||/^(pano|map):/.test(String(k))))return false;
+  const g=id==="mirror"?{n:"第十四顆",t:"第十四顆・鏡像的你",rule:"鏡像局：你執黑，對面先照你自己最常贏的開局走前兩步",goal:"將死他",say:GX_TXT.mirror}:gxGet(id);if(!g)return false;
+  const who=String(g.t||g.n).split("・")[1]||"幻影棋客";
+  sheet("🌌 幻譜星門・"+g.n,b=>{b.innerHTML=`<div class="muted" style="margin:-4px 0 8px">十三星系・${esc(g.n)}的星空</div><p style="line-height:1.8;margin:0;font-size:16px">這裡不是人間的園子，是幻譜星門後面的「${esc(g.n)}」，守在這裡的是${esc(who)}。${esc(g.rule||"")}。${g.goal?"過關條件："+esc(g.goal)+"。":""}</p>${g.say?`<p class="muted" style="line-height:1.8;margin:10px 0 0;font-size:15px">「${esc(g.say)}」</p>`:""}`});return true}
 /* 一般挑戰電腦：打過的星系，幻影棋客偶爾（每盤四分之一機率）在開場提起 */
 function gxHello(st){const S=gxSeals(),ks=Object.keys(S).filter(k=>gxGet(k));if(!ks.length||!st||!st.id)return null;let h=0;for(const c of String(st.id))h=(h*31+c.charCodeAt(0))>>>0;if(h%4)return null;return gxGet(ks[h%ks.length]).seal}
 /* 星圖：全螢幕，13 顆星可點；點一顆看規則、按「落子入門」開那一關 */

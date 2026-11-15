@@ -310,6 +310,7 @@ function oppLine(op,era){if(!OPPL||!OPPL.lines)return null;const L=OPPL.lines,c=
   return{name:(op&&op.npc&&op.npc!=="me"?op.npc:null)||(OPPL.nm&&OPPL.nm[id])||"對手",say:a[OPPL_I[id]]}}
 function parkInfo(k){if(k==="orb"&&typeof bhOrbTap==="function")return bhOrbTap();   /* 幻影棋客頭上的小黑洞（07bh） */
   const era=store.get("era","classic"),E=PARK_INFO[era]||PARK_INFO.classic,[en,yr]=E._;vibrate(5);
+  if(typeof gxParkInfo==="function"&&gxParkInfo(k))return;   /* 開發者 11/15：幻譜星門的星系裡點遠方＝那個星系的說明，不是玩家主題的遠景（07gx-galaxy.js） */
   if(OFF&&PARK_J==="park"&&typeof secretFind==="function"&&secretFind(era,k))return;   /* 意見回饋 315：秘境棋友 */
   if(k==="table"&&PARK_J==="park"&&typeof histCard==="function"){histCard(era);return}   /* 意見回饋 658（C 象棋從哪裡來）：石桌往事的園子裡點石桌＝這個朝代的棋史卡（秘境棋友上一行先檢查） */
   if(k==="lantern"&&PARK_J==="park"&&typeof xhLantern==="function"){xhLantern(era);return}   /* 意見回饋 658（D 九九消寒圖）：石桌往事的園子裡點燈籠＝節令小卡（秘境棋友先檢查；燈籠的介紹寫在小卡最下面） */
