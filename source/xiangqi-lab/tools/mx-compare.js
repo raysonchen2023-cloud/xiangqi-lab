@@ -1,6 +1,6 @@
 #!/usr/bin/env node
-// 影子模式候選分數的離線比較（11/15 ChatGPT 第二次重評第 2 項；之後每一輪重評再補）。工具版本 MXC_VER 3。
-// 四個分數是什麼（完整的資料字典在 xiangqi-db/story/數學模型_預先驗證方案_v1.2.md 附錄 A）：
+// 影子模式候選分數的離線比較（11/15 ChatGPT 第二次重評第 2 項；之後每一輪重評再補）。工具版本 MXC_VER 4。
+// 四個分數是什麼（完整的資料字典在 xiangqi-db/story/數學模型_預先驗證方案_v1.3.md 附錄 A）：
 //   base   未加妙著獎勵、未套上限的聚合品質（波動加權平均、調和平均各半）。小數。
 //   raw    ＝round(base＋妙著獎勵)。含獎勵、四捨五入、沒有封頂——不是純準確度，也不保證落在 0～100（base 100、妙著 3 個就是 106）。
 //   s0     ＝min(重大錯誤上限, raw)。只看重大錯誤。
@@ -27,8 +27,15 @@
 //   ③某一個分數能不能唯一反推（每個分數各自的 how）：跟⓪①②無關。截斷的長局 score、base 是原值，可以進驗證母體；raw、s0 反推不出唯一值時只留範圍。
 //   比較不同候選時一律用「共同有效盤集合」（同一批盤的 base、raw、s0、score 都確定）。**舊總分不是每一盤都有**：舊分那一列與 score−舊分只用「共同盤裡有舊分的」那幾盤（新舊配對），盤數另外寫。
 //   反推不出唯一值不是隨機缺漏：另外按終局、段位、局長報排除率，並用範圍的上下界算**平均數**的敏感度（上下界只對平均數有效，對相關、κ 無效——工具不對相關做這種界限）。
-// 算法三角對照（MXS v4；預先驗證方案 v1.2 第十節）：base 跟 acpl、mm、er 的等級相關（Spearman）、五等分的分級一致性（二次加權 κ）、分歧最大的盤、分歧集中在哪一組。
-//   **這幾種算法都用同一個引擎對同一批著法的評估，彼此不獨立；一致只代表「換一種公認的算法，排序差不多」，不代表測到了真正的棋力，不能取代人類評閱。**
+// 算法之間的排序比較（MXS v4；預先驗證方案 v1.3 第十節；MXC_VER 4 照 ChatGPT 第五次重評第三、四節改）：base 跟 acpl、mm、er 的等級相關（Spearman）、五等分的分級一致性（二次加權 κ）、
+//   排序差最多的盤、差異集中在哪一組。**標籤是探索性的分流，不是合格線**：
+//   ・這幾種算法都用同一個引擎對同一批著法的評估，彼此不獨立；base、acpl、er 更是同一組損失資料的不同摘要，相關高本來就會出現，不是額外的驗證。
+//   ・「排序關聯較高／中等／較低」只描述這批資料裡盤的排序像不像。關聯較低（ρ < 0.4）不代表哪個算法失效；關聯較高也不代表準確度或棋力已經驗證。
+//   ・五等分的 κ 只比相對分組：把所有分數平移 20 分，κ 一樣是 1——證明不了絕對分數、S～D 或公平性。
+//   ・100 盤不等於 100 個獨立玩家。**人數門檻按每一對自己的資料算**（那一對兩邊都有值的盤，數它們的匿名碼）：不到 20 人標「少數人探索」，只有 1 人標「單人探索」，
+//     不借別的對照、別的來源的人數（重評重現的漏洞：ACPL 那 120 盤全部來自同一個人，卻借另外 20 個只有失誤率的人過了人數門檻）。
+//   ・總結的規格：只看盤數足夠（≥ 100 盤、算得出相關）的項目，寫成「可比較的 k／3 項」；人數足夠（跨玩家）與不足（探索）的分開講，各自報其中最低的一級。
+//     不要求三項都有才總結；資料不足的項目不算好也不算壞，只是不在 k 裡。
 // 只描述、不做檢定：同一個人的很多盤彼此相關，這裡的盤數不是獨立樣本。切換與否照預先驗證方案，不看這支的平均數決定。
 // 版本：只比跟現在 MXS.ver 相同的盤（常數不同的版本不混）；其他版本只報盤數。
 // 用法：node tools/mx-compare.js [--local 匯出檔.json]… [--cpu cpu-games.jsonl] [--include-test] [--json 輸出.json]
@@ -36,10 +43,11 @@
 "use strict";
 const fs = require("fs"), path = require("path"), vm = require("vm");
 const DB = path.basename(path.join(__dirname, "..")) === "xiangqi-db" ? path.join(__dirname, "..") : path.join(__dirname, "..", "..", "xiangqi-db");
-const MXC_VER = 3;   /* 這支工具的版本：1＝79（只篩版本）；2＝資料有效性／納入條件／唯一反推三者分開、共同有效盤集合；3＝原始格式先驗再轉型（不收數字字串、null 不是 0、缺識別欄位不進驗證）、新舊配對盤數、算法三角對照、本機紀錄的標準開局與提示悔棋。改了篩選或統計的做法就加 1，並更新 tools/mx-manifest.json */
+const MXC_VER = 4;   /* 這支工具的版本：1＝79（只篩版本）；2＝資料有效性／納入條件／唯一反推三者分開、共同有效盤集合；3＝原始格式先驗再轉型（不收數字字串、null 不是 0、缺識別欄位不進驗證）、新舊配對盤數、算法三角對照、本機紀錄的標準開局與提示悔棋；4＝算法對照每一對各自算人數與來源、標籤改成探索性的「排序關聯較高／中等／較低」、總結寫可比較的 k／3 項。改了篩選或統計的做法就加 1，並更新 tools/mx-manifest.json */
 const CUT = 150;   /* m/05b-save.js：m:X.mv.slice(0,150) */
 const RULES = { minPlies: 20, needFull: true, needStd: true, needId: true };   /* 納入條件：預先驗證方案第四節。要改先改方案（留修訂紀錄） */
-const TRI = { minN: 100, minPeople: 20, mmMin: 10, hi: .7, lo: .4, kMin: 25 };   /* 算法三角對照的判讀規則（方案 v1.2 第十節，事先固定）：盤數／人數起點、首選一致率至少要有幾步有記首選、相關 ≥0.7 同方向、<0.4 分歧、五等分至少要幾盤 */
+const TRI = { minN: 100, minPeople: 20, mmMin: 10, hi: .7, lo: .4, kMin: 25 };   /* 算法對照的分流數字（方案 v1.3 第十節；探索性的，不是通過條件，也不靠調高它們補效度）：每一對的盤數起點／跨玩家的人數起點、首選一致率至少要有幾步有記首選、ρ ≥0.7 排序關聯較高、<0.4 較低、五等分至少要幾盤 */
+const TRI_LV = ["排序關聯較高", "排序關聯中等", "排序關聯較低"];
 const BANDS = [["入門以下", /^(新手|入門)/], ["業1～業5", /^業[1-5]$/], ["業6 以上", /^(業[6-9]|專)/]];
 const LENS = [["40 手以下", n => n <= 40], ["41～80 手", n => n <= 80], ["81～120 手", n => n <= 120], ["121 手以上", n => n > 120]];
 const ENDS = { w: "贏", l: "輸", d: "和", "?": "未知" };
@@ -198,7 +206,7 @@ function block(G, gr) {
 /* 描述用（所有讀得到、資料有效的盤，含不合納入條件的）：每個分數各算各的、各寫各的盤數，不比較候選 */
 function describe(G, gr) { const v = k => G.filter(g => k === "base" ? g.base.how === "exact" : sure(g[k])).map(g => g[k].v); return { n: G.length, base: dist(v("base")), raw: dist(v("raw"), gr), s0: dist(v("s0"), gr), score: dist(v("score"), gr), old: dist(G.map(g => g.old), [90, 80, 70, 60]) } }
 
-/* ---------- 算法三角對照 ---------- */
+/* ---------- 算法之間的排序比較（探索性；MXC_VER 3 叫「算法三角對照」） ---------- */
 /* 等級（同分取平均等級） */
 function ranks(a) { const o = a.map((v, i) => [v, i]).sort((p, q) => p[0] - q[0]), r = new Array(a.length); for (let i = 0; i < o.length;) { let j = i; while (j + 1 < o.length && o[j + 1][0] === o[i][0]) j++; const m = (i + j) / 2 + 1; for (let k = i; k <= j; k++)r[o[k][1]] = m; i = j + 1 } return r }
 /* Spearman 等級相關；不到 3 盤或有一邊全部同分回 null */
@@ -211,22 +219,36 @@ function kappaW(a, b, k) { const n = a.length; if (!n || n !== b.length) return 
 /* 一律轉成「越高越好」：acpl、er 取負號 */
 const ALTS = [["acpl", "每步平均失分（越低越好，取負號）", g => g.alt.acpl == null ? null : -g.alt.acpl], ["mm", "首選一致率", g => g.alt.mm == null || g.alt.mmN < TRI.mmMin ? null : g.alt.mm], ["er", "失誤率（越低越好，取負號）", g => g.alt.er == null ? null : -g.alt.er]];
 const baseOf = g => g.base.how === "exact" ? g.base.v : null, r3 = v => v == null ? null : +v.toFixed(3);
-function pairStat(G, fa, fb) { const P = G.map(g => [fa(g), fb(g)]).filter(p => p[0] != null && p[1] != null), x = P.map(p => p[0]), y = P.map(p => p[1]); return { n: P.length, rho: r3(spearman(x, y)), kappa: P.length >= TRI.kMin ? r3(kappaW(quint(x), quint(y), 5)) : null } }
-/* G＝合資格的盤。回各對的相關與分級一致性、判讀、分歧最大的盤、各分組的分歧 */
+/* 一對算法：只用兩邊都有值的盤。除了 n、ρ、κ，同時算「這一對自己的」人數、來源與每人盤數——人數門檻只看這裡的 people */
+function pairStat(G, fa, fb) {
+  const P = G.map(g => [fa(g), fb(g), g]).filter(p => p[0] != null && p[1] != null), x = P.map(p => p[0]), y = P.map(p => p[1]), per = new Map(), src = { cpu: 0, local: 0 };
+  for (const p of P) { const g = p[2], k = g.aid || "（沒有識別）"; per.set(k, (per.get(k) || 0) + 1); src[g.src === "local" ? "local" : "cpu"]++ }
+  const c = [...per.values()].sort((a, b) => a - b), n = P.length;
+  return { n, people: c.length, src, perPerson: n ? { min: c[0], med: qt(c, .5), max: c[c.length - 1], topPct: +(100 * c[c.length - 1] / n).toFixed(1) } : null, rho: r3(spearman(x, y)), kappa: n >= TRI.kMin ? r3(kappaW(quint(x), quint(y), 5)) : null };
+}
+/* 一對的標籤（探索性的分流，不是合格線）。ok＝盤數足夠而且算得出相關；level＝排序關聯較高／中等／較低；
+   scope＝這一對自己的人數：≥ TRI.minPeople「跨玩家」、1 人「單人探索」、其餘「少數人探索」。label 是報表上那一格的字 */
+function readPair(s) {
+  const ok = s.n >= TRI.minN && s.rho != null, level = !ok ? null : s.rho >= TRI.hi ? TRI_LV[0] : s.rho < TRI.lo ? TRI_LV[2] : TRI_LV[1], scope = !ok ? null : s.people >= TRI.minPeople ? "跨玩家" : s.people === 1 ? "單人探索" : "少數人探索";
+  return { ok, level, scope, label: !ok ? "資料不足" : scope === "跨玩家" ? level : `〔${scope}${scope === "少數人探索" ? "：" + s.people + " 人" : ""}〕${level}` };
+}
+/* G＝合資格的盤。回各對的相關、分級一致性、各對自己的人數與來源、標籤、總結、排序差最多的盤、各分組 */
 function triangulate(G, keys) {
-  const T = G.filter(g => baseOf(g) != null && ALTS.some(a => a[2](g) != null)), people = new Set(T.map(g => g.aid).filter(Boolean)).size, vs = {}, among = {};
+  keys = keys || {}; const T = G.filter(g => baseOf(g) != null && ALTS.some(a => a[2](g) != null)), people = new Set(T.map(g => g.aid).filter(Boolean)).size, vs = {}, among = {};
   for (const [k, , f] of ALTS) vs[k] = pairStat(T, baseOf, f);
   for (let i = 0; i < ALTS.length; i++)for (let j = i + 1; j < ALTS.length; j++)among[ALTS[i][0] + "~" + ALTS[j][0]] = pairStat(T, ALTS[i][2], ALTS[j][2]);
   const scoreVs = pairStat(T, g => sure(g.score) ? g.score.v : null, baseOf), oldVs = pairStat(T, g => g.old, baseOf);
-  /* 判讀（事先固定，TRI）：每一對各自判；整體取最差。盤數或人數不到起點 → 資料不足，不管相關多高 */
-  const read = s => s.n < TRI.minN || s.rho == null ? "資料不足" : s.rho >= TRI.hi ? "同方向" : s.rho < TRI.lo ? "分歧" : "部分一致", each = Object.fromEntries(Object.entries(vs).map(([k, s]) => [k, read(s)])), have = Object.values(each).filter(v => v !== "資料不足");
-  const fewPeople = T.some(g => g.src === "cpu") && people < TRI.minPeople, verdict = !have.length || fewPeople ? "資料不足" : have.includes("分歧") ? "分歧" : have.every(v => v === "同方向") ? "同方向" : "部分一致";
-  /* 每盤的分歧：base 的等級百分位 − 對照算法等級百分位的平均（只用這盤有的那幾種），取絕對值 */
+  /* 每一對各自判（readPair）；each＝報表上的字。總結：只看盤數足夠的項目（k／3）；跨玩家與探索分開，各報其中最低的一級 */
+  const read = Object.fromEntries(Object.entries(vs).map(([k, s]) => [k, readPair(s)])), each = Object.fromEntries(Object.entries(read).map(([k, r]) => [k, r.label]));
+  const okR = Object.values(read).filter(r => r.ok), cross = okR.filter(r => r.scope === "跨玩家"), expl = okR.filter(r => r.scope !== "跨玩家"), lowest = a => a.length ? TRI_LV[Math.max(...a.map(r => TRI_LV.indexOf(r.level)))] : null;
+  const summary = { comparable: okR.length, of: ALTS.length, cross: { n: cross.length, lowest: lowest(cross) }, explore: { n: expl.length, lowest: lowest(expl), single: expl.filter(r => r.scope === "單人探索").length } };
+  const verdict = `可比較的 ${summary.comparable}／${summary.of} 項` + (!okR.length ? "：資料不足" : "：" + [cross.length ? `跨玩家 ${cross.length} 項，其中最低的是「${summary.cross.lowest}」` : null, expl.length ? `單人或少數人探索 ${expl.length} 項，其中最低的是「${summary.explore.lowest}」（不能說成跨玩家的結果）` : null].filter(Boolean).join("；"));
+  /* 每盤的排序差：base 的等級百分位 − 對照算法等級百分位的平均（只用這盤有的那幾種） */
   const pct = f => { const idx = T.map((g, i) => [f(g), i]).filter(p => p[0] != null), r = ranks(idx.map(p => p[0])), out = new Array(T.length).fill(null); idx.forEach((p, i) => { out[p[1]] = (r[i] - .5) / idx.length }); return out };
   const pb = pct(baseOf), pa = ALTS.map(a => pct(a[2])), gap = T.map((g, i) => { const v = pa.map(p => p[i]).filter(x => x != null); return v.length && pb[i] != null ? pb[i] - v.reduce((a, b) => a + b, 0) / v.length : null });
-  const top = T.map((g, i) => ({ id: g.id, src: g.src, end: g.end, plies: g.plies, rank: g.rank, base: g.base.v, acpl: g.alt.acpl, mm: g.alt.mm, er: g.alt.er, gap: gap[i] == null ? null : +gap[i].toFixed(3) })).filter(x => x.gap != null).sort((a, b) => Math.abs(b.gap) - Math.abs(a.gap)).slice(0, 10);
-  const byGroup = {}; for (const [nm, [key, names]] of Object.entries(keys)) { byGroup[nm] = {}; for (const v of names) { const I = T.map((g, i) => i).filter(i => key(T[i]) === v && gap[i] != null); if (!I.length) continue; const S = I.map(i => T[i]); byGroup[nm][v] = { n: I.length, meanAbsGap: +(I.reduce((s, i) => s + Math.abs(gap[i]), 0) / I.length).toFixed(3), meanGap: +(I.reduce((s, i) => s + gap[i], 0) / I.length).toFixed(3), rho: Object.fromEntries(ALTS.map(a => [a[0], pairStat(S, baseOf, a[2]).rho])) } } }
-  return { n: T.length, people: people || null, rules: { ...TRI }, vs, among, scoreVsBase: scoreVs, oldVsBase: oldVs, each, verdict, top, byGroup };
+  const top = T.map((g, i) => ({ id: g.id, src: g.src, aid: g.aid || null, end: g.end, plies: g.plies, rank: g.rank, base: g.base.v, acpl: g.alt.acpl, mm: g.alt.mm, er: g.alt.er, gap: gap[i] == null ? null : +gap[i].toFixed(3) })).filter(x => x.gap != null).sort((a, b) => Math.abs(b.gap) - Math.abs(a.gap)).slice(0, 10);
+  const byGroup = {}; for (const [nm, [key, names]] of Object.entries(keys)) { byGroup[nm] = {}; for (const v of names) { const I = T.map((g, i) => i).filter(i => key(T[i]) === v && gap[i] != null); if (!I.length) continue; const S = I.map(i => T[i]); byGroup[nm][v] = { n: I.length, people: new Set(S.map(g => g.aid).filter(Boolean)).size, meanAbsGap: +(I.reduce((s, i) => s + Math.abs(gap[i]), 0) / I.length).toFixed(3), meanGap: +(I.reduce((s, i) => s + gap[i], 0) / I.length).toFixed(3), rho: Object.fromEntries(ALTS.map(a => [a[0], pairStat(S, baseOf, a[2]).rho])) } } }
+  return { n: T.length, people: people || null, rules: { ...TRI }, levels: TRI_LV.slice(), vs, among, scoreVsBase: scoreVs, oldVsBase: oldVs, read, each, summary, verdict, top, byGroup };
 }
 
 function summarize(games, K) {
@@ -281,19 +303,19 @@ function report(S, metas) {
   P("| 分組 | 這個版本的盤 | 資料無效 | 不合納入條件 | 驗證母體（佔 %） | 其中 raw 或 s0 反推不出唯一值（佔驗證母體 %） | 共同有效 |"); P("|---|---|---|---|---|---|---|");
   const rr = (nm, r) => P(`| ${nm} | ${r.n} | ${r.invalid} | ${r.inelig} | ${r.eligible}（${f(r.eligPct)}%） | ${r.unsure}（${f(r.unsurePct)}%） | ${r.common} |`);
   rr("全部", S.exclRate.all); for (const [k, t] of [["byEnd", "終局"], ["byRank", "段位"], ["byLen", "局長"], ["byHint", "提示悔棋"], ["bySrc", "來源"]]) for (const [nm, r] of Object.entries(S.exclRate[k])) rr(`${t}：${nm}`, r);
-  /* 算法三角對照 */
-  const T = S.tri, AN = { acpl: "每步平均失分 ACPL", mm: "首選一致率", er: "失誤率" };
-  P(""); P(`## 算法三角對照（驗證母體裡有 base 和至少一種對照算法的 ${T.n} 盤${T.people ? `、${T.people} 個匿名碼` : ""}）`);
-  P("**這幾種算法都用同一個引擎對同一批著法的評估，彼此不獨立。一致只代表「換一種公認的算法，盤的排序差不多」；不代表測到了真正的棋力，不能取代人類評閱或學習成效的證據。**");
-  P(`判讀規則（事先固定）：每一對至少 ${T.rules.minN} 盤（匿名資料另外要 ≥ ${T.rules.minPeople} 個匿名碼），不到就是「資料不足」；等級相關 ≥ ${T.rules.hi}＝同方向、< ${T.rules.lo}＝分歧、中間＝部分一致。首選一致率只算有記首選 ≥ ${T.rules.mmMin} 步的盤。五等分的分級一致性至少 ${T.rules.kMin} 盤。`);
-  P(""); P("| base 對上 | 盤數 | 等級相關 ρ（對照算法已轉成越高越好） | 五等分的二次加權 κ | 判讀 |"); P("|---|---|---|---|---|");
-  for (const [k, s] of Object.entries(T.vs)) P(`| ${AN[k]} | ${s.n} | ${f(s.rho)} | ${f(s.kappa)} | ${T.each[k]} |`);
-  P(`| （參考）score | ${T.scoreVsBase.n} | ${f(T.scoreVsBase.rho)} | ${f(T.scoreVsBase.kappa)} | — |`); P(`| （參考）畫面上的舊總分 | ${T.oldVsBase.n} | ${f(T.oldVsBase.rho)} | ${f(T.oldVsBase.kappa)} | — |`);
-  P(`- 對照算法彼此：${Object.entries(T.among).map(([k, s]) => `${k.split("~").map(x => AN[x]).join(" 對 ")} ρ ${f(s.rho)}（${s.n} 盤）`).join("；")}`);
-  P(`- **整體判讀：${T.verdict}**（不算進任何放行條件）`);
-  if (T.top.length) { P(""); P("分歧最大的盤（base 的等級百分位 − 對照算法等級百分位的平均；正＝base 排得比對照算法高）："); P("| 盤 | 來源 | 終局 | 總手數 | 段位 | base | ACPL | 首選一致率 | 失誤率 | 分歧 |"); P("|---|---|---|---|---|---|---|---|---|---|"); for (const u of T.top) P(`| ${u.id} | ${u.src} | ${ENDS[u.end]} | ${f(u.plies)} | ${f(u.rank)} | ${u.base} | ${f(u.acpl)} | ${f(u.mm)} | ${f(u.er)} | ${u.gap} |`)
-    P(""); P("分歧集中在哪一組（平均的絕對分歧；各組自己的等級相關）："); P("| 分組 | 盤數 | 平均絕對分歧 | 平均分歧（正＝base 偏高） | ρ：base 對 ACPL／首選一致率／失誤率 |"); P("|---|---|---|---|---|");
-    for (const [nm, t] of [["byEnd", "終局"], ["byRank", "段位"], ["byLen", "局長"]]) for (const [v, s] of Object.entries(T.byGroup[nm])) P(`| ${t}：${v} | ${s.n} | ${s.meanAbsGap} | ${s.meanGap} | ${f(s.rho.acpl)}／${f(s.rho.mm)}／${f(s.rho.er)} |`) }
+  /* 算法之間的排序比較（探索性） */
+  const T = S.tri, AN = { acpl: "每步平均失分 ACPL", mm: "首選一致率", er: "失誤率" }, pp = s => !s.n ? "—" : `${s.people} 人（匿名 ${s.src.cpu} 盤、本機 ${s.src.local} 盤；每人 ${s.perPerson.min}～${s.perPerson.max} 盤，最多的一人佔 ${s.perPerson.topPct}%）`;
+  P(""); P(`## 算法之間的排序比較（探索性的分流標籤，不是合格線）——驗證母體裡有 base 和至少一種對照算法的 ${T.n} 盤`);
+  P("**這幾種算法都用同一個引擎對同一批著法的評估，彼此不獨立；base、ACPL、失誤率更是同一組損失資料的不同摘要，相關高本來就會出現。標籤只描述「這批資料裡，盤的排序像不像」——不是準確度，不是棋力已經驗證，不能取代人類評閱或學習成效的證據。關聯較低也不代表哪個算法失效。**");
+  P(`分流數字（事先固定、探索性）：每一對至少 ${T.rules.minN} 盤才給標籤（100 盤不等於 100 個獨立玩家）；等級相關 ≥ ${T.rules.hi}＝排序關聯較高、< ${T.rules.lo}＝較低、中間＝中等。人數按每一對自己的資料算：≥ ${T.rules.minPeople} 人才算跨玩家，1 人標「單人探索」，其餘標「少數人探索」。首選一致率只算有記首選 ≥ ${T.rules.mmMin} 步的盤。五等分的 κ 至少 ${T.rules.kMin} 盤，而且只比相對分組（證明不了絕對分數、S～D 或公平性）。`);
+  P(""); P("| base 對上 | 這一對的盤數 | 這一對的人數與來源 | 等級相關 ρ（對照算法已轉成越高越好） | 五等分的二次加權 κ | 標籤 |"); P("|---|---|---|---|---|---|");
+  for (const [k, s] of Object.entries(T.vs)) P(`| ${AN[k]} | ${s.n} | ${pp(s)} | ${f(s.rho)} | ${f(s.kappa)} | ${T.each[k]} |`);
+  P(`| （參考）score | ${T.scoreVsBase.n} | ${pp(T.scoreVsBase)} | ${f(T.scoreVsBase.rho)} | ${f(T.scoreVsBase.kappa)} | — |`); P(`| （參考）畫面上的舊總分 | ${T.oldVsBase.n} | ${pp(T.oldVsBase)} | ${f(T.oldVsBase.rho)} | ${f(T.oldVsBase.kappa)} | — |`);
+  P(`- 對照算法彼此：${Object.entries(T.among).map(([k, s]) => `${k.split("~").map(x => AN[x]).join(" 對 ")} ρ ${f(s.rho)}（${s.n} 盤、${s.people} 人）`).join("；")}`);
+  P(`- **總結（只看盤數足夠的項目；跨玩家與探索分開）：${T.verdict}**。不算進任何放行條件。`);
+  if (T.top.length) { P(""); P("排序差最多的盤（base 的等級百分位 − 對照算法等級百分位的平均；正＝base 排得比對照算法高）："); P("| 盤 | 來源 | 終局 | 總手數 | 段位 | base | ACPL | 首選一致率 | 失誤率 | 排序差 |"); P("|---|---|---|---|---|---|---|---|---|---|"); for (const u of T.top) P(`| ${u.id} | ${u.src} | ${ENDS[u.end]} | ${f(u.plies)} | ${f(u.rank)} | ${u.base} | ${f(u.acpl)} | ${f(u.mm)} | ${f(u.er)} | ${u.gap} |`)
+    P(""); P("排序差集中在哪一組（平均的絕對排序差；各組自己的等級相關）："); P("| 分組 | 盤數 | 人數 | 平均絕對排序差 | 平均排序差（正＝base 偏高） | ρ：base 對 ACPL／首選一致率／失誤率 |"); P("|---|---|---|---|---|---|");
+    for (const [nm, t] of [["byEnd", "終局"], ["byRank", "段位"], ["byLen", "局長"]]) for (const [v, s] of Object.entries(T.byGroup[nm] || {})) P(`| ${t}：${v} | ${s.n} | ${s.people} | ${s.meanAbsGap} | ${s.meanGap} | ${f(s.rho.acpl)}／${f(s.rho.mm)}／${f(s.rho.er)} |`) }
   P(""); P(`## 描述：所有讀得到、資料有效的盤（${S.readable} 盤，**含不合納入條件的 ${S.ineligible} 盤；不是驗證母體，不能拿來比較候選**）`);
   for (const [nm, d] of Object.entries({ 全部: S.describe.all, ...(Object.keys(S.describe.bySrc).length > 1 ? S.describe.bySrc : {}) })) { P(""); P(`### ${nm}（${d.n} 盤；每一列的盤數不一樣，各算各的）`); P(HEAD[0]); P(HEAD[1]); P(row("base", d.base)); P(row("raw（只算確定的）", d.raw)); P(row("s0（只算確定的）", d.s0)); P(row("score", d.score)); P(row("畫面上的舊總分", d.old)) }
   const tab = (A, why) => { P("| 盤 | 來源 | 終局 | 總手數／送出的步數 | score | base | raw 範圍 | s0 範圍 | 原因 |"); P("|---|---|---|---|---|---|---|---|---|"); for (const u of A.slice(0, 200)) P(`| ${u.id} | ${u.src} | ${ENDS[u.end]} | ${u.plies == null ? "?" : u.plies}／${u.own == null ? "?" : u.own} | ${f(u.score)} | ${f(u.base)} | ${u.raw ? u.raw.join("～") : "—"} | ${u.s0 ? u.s0.join("～") : "—"} | ${why(u)} |`); if (A.length > 200) P("（只列前 200 盤）") };
@@ -310,4 +332,4 @@ function main() {
   const S = summarize(games, K); console.log(report(S, metas)); const out = one("--json"); if (out) fs.writeFileSync(path.resolve(out), JSON.stringify({ metas, summary: S }, null, 1));
 }
 if (require.main === module) main();
-module.exports = { loadMXS, schemaCpu, schemaLocal, normLocal, deriveCpu, eligibility, readLocal, readCpu, summarize, triangulate, spearman, kappaW, quint, ranks, report, CUT, RULES, TRI, REASONS, MXC_VER };
+module.exports = { loadMXS, schemaCpu, schemaLocal, normLocal, deriveCpu, eligibility, readLocal, readCpu, summarize, triangulate, pairStat, readPair, spearman, kappaW, quint, ranks, report, CUT, RULES, TRI, TRI_LV, REASONS, MXC_VER };

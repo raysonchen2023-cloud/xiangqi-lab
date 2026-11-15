@@ -96,6 +96,8 @@ const CLASSIFIED = new Set([
   "test-bh-drift-raid-1115.js",   /* 11/15 開發者選「星槎偏航＝突發的星淵急襲短戰」（m/07bh-blackhole.js bhStart／bhOffer、m/07bht-td.js bhtdRaidDrift）：急襲已開直接開打、沒開照舊選關、觀星臺入口不受影響（行為 7、原始碼 1） */
   "test-sw-offline.js",   /* 11/15 hspx 離線 3D 角色變小帥：sw.js 安裝時先存 3D 模型載入器（GLTFLoader.mjs 和它 import 的 .mjs），一般檔案也存 .mjs */
   "test-fb888.js",   /* 11/15 意見回饋 888 iPad 首頁兩指放大縮不回（07x 整頁放大救援、回首頁回 1 倍）、889 669×869 首頁一窄條（07z HMW_PORT 0.89／HMW_SQ、07fl XFL_HOME_MAX）、890 插曲全螢幕頁讓開狀態列（07t .ep-ov）（行為 11、原始碼 3） */
+  "test-mathmodel-82.js",   /* 11/15 數學模型（ChatGPT 第五次重評的改善單＋引擎預算敏感度）：算法對照每一對各自算人數與來源（單人 120 盤不能借別人的人數）、探索性的標籤與「可比較的 k／3 項」、方案 v1.3、引擎預算敏感度工具 engine-budget-check.js 的抽樣／續跑／比較（用假的評估函式，不啟動引擎）（行為 6、混合 1、原始碼 2） */
+  "test-fb897-1115.js",   /* 11/15 意見回饋 897：黑洞對局頁的返回鈕照來源回去（不再一律「回星槎」；m/07gxt-guanxing.js gxtBhBack、m/07-legend.js jBack）；楚河漢界改深色粗邊＋亮字、盤底那面補河界與自發光（src/park3d.js）（行為 8、原始碼 3） */
   "test-preload-bg.js"   /* 11/14 評比第 17、18 輪第 5 項背景暫停與按需預載：00-util bgpEvery／bgpOn、09b 預載前景／背景／恢復三段、分區 z:<分區>、別朝代先不下載、閒置才補選讀、省流量、preload-list --retier（行為 12、混合 1、原始碼 1） */
 ]);
 /* 還沒逐項分類的檔（統計列為「待分類」）；新測試檔先放這裡，分好類再移到 CLASSIFIED */

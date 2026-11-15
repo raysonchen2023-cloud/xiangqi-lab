@@ -117,5 +117,9 @@ if(typeof gxShipHs==="function"){const f2=gxShipHs;gxShipHs=function(v){const r=
 /* ---------- 從觀星臺開的塔防：打完回觀星臺 ---------- */
 function gxtFromTd(){try{return sessionStorage.getItem("gxtFrom")==="1"}catch(e){return false}}
 function gxtBackLb(){return gxtFromTd()?"🔭 回觀星臺":"⛵ 星槎回航"}
+/* 意見回饋 897（開發者 11/15 截圖：黑洞對局頁左上角「‹ 回星槎」圈起來，「不應該出現這個入口」）：黑洞對局頁的返回鈕原本一律回星槎（07-legend.js jBack），
+   還沒登船的人、開場序局、從觀星臺進來的人都會看到一顆通往星槎的鈕。改成照實際從哪裡來：從觀星臺開的回觀星臺；開場序局回首頁；
+   星槎偏航進來的（bhRet.cover）而且真的有航程才回星槎；其餘回首頁。字由 02-shell.js 照去處自動寫（回觀星臺／回首頁／回星槎） */
+function gxtBhBack(j){try{if(gxtFromTd())return"#/guanxing";if(String(j||"")==="bh:xu")return"#/";const R=store.get("bhRet",null);if(R&&R.cover&&typeof shipDockList==="function"&&shipDockList())return"#/adventure"}catch(e){}return"#/"}
 if(typeof bhReturn==="function"){const f3=bhReturn;bhReturn=function(){if(!gxtFromTd())return f3.apply(this,arguments);try{sessionStorage.removeItem("gxtFrom")}catch(e){}store.set("bhRet",null);location.hash="#/guanxing"}}
 if(typeof bhStart==="function"){const f4=bhStart;bhStart=function(){try{sessionStorage.removeItem("gxtFrom")}catch(e){}return f4.apply(this,arguments)}}   /* 星槎偏航進黑洞＝照舊回星槎 */

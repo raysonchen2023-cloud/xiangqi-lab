@@ -95,7 +95,7 @@ test("P1：整支工具跑一次（命令列）——報表先核對分母、再
   if(!fs.existsSync(MXC))return t.skip(NO_MXC);const dir=fs.mkdtempSync(path.join(os.tmpdir(),"mx80-")),K=require(MXC).loadMXS(),L=GOOD().map(g=>JSON.stringify(g.cpu));
   L.push(JSON.stringify({aid:"synthetic",g:"inconsistent",mx:K.MXS.ver,n:20,full:1,std:1,kind:"cpu",crk:"業2",res:"w",s:[999,0,80],o:[80,1,80],m:[[1,1,0,0,1,0,1,1,0]]}));L.push(JSON.stringify(played(7400,50,1,"r",{full:0}).cpu));
   const fc=path.join(dir,"cpu.jsonl"),fo=path.join(dir,"o.json");fs.writeFileSync(fc,L.join("\n")+"\n");const so=cp.execFileSync(process.execPath,[MXC,"--cpu",fc,"--json",fo],{encoding:"utf8"}),J=JSON.parse(fs.readFileSync(fo,"utf8")).summary;fs.rmSync(dir,{recursive:true,force:true});
-  assert.equal(J.toolVer,3);assert.equal(J.total,26);assert.equal(J.invalid,1);assert.equal(J.ineligible,1);assert.equal(J.eligible,24);assert.ok(J.verify.all.score.max<=100);assert.equal(J.verify.all.n,24);
+  assert.equal(J.toolVer,4);assert.equal(J.total,26);assert.equal(J.invalid,1);assert.equal(J.ineligible,1);assert.equal(J.eligible,24);assert.ok(J.verify.all.score.max<=100);assert.equal(J.verify.all.n,24);
   assert.match(so,/這個版本 \*\*26\*\* 盤/);assert.match(so,/\*\*驗證母體 24 盤\*\*/);assert.match(so,/資料無效：分數超出範圍或大小順序不對 \| 1 \|/);assert.match(so,/我方沒有每一步都評完（full:0） \| 1 \|/);assert.match(so,/\| 合計 \| 2（＝26−24） \|/);assert.match(so,/不是驗證母體，不能拿來比較候選/);
 });
 
@@ -152,7 +152,7 @@ test("P2：建議先練的判斷程序有自己的版本 SK.PICK（現在 3）�
 test("P2：版本紀錄跟現在的程式、文件一致（tools/mx-manifest.json）；程式改了而版本沒升、或版本升了紀錄沒更新，都會被擋下；只改註解不算",t=>{
   if(!fs.existsSync(MAN)||!fs.existsSync(MANJ))return t.skip(NO_MAN);const X=require(MAN),now=X.compute(),rec=JSON.parse(rd(MANJ));
   assert.deepEqual(X.diff(now,rec),[],"程式或文件跟 mx-manifest.json 不一致："+X.diff(now,rec).map(d=>d.msg).join("；"));
-  assert.equal(rec.mxs.ver,4);assert.equal(rec.pick.ver,3);assert.equal(rec.compare.ver,3);assert.equal(rec.sim.ver,3);assert.equal(rec.docs.planVer,"v1.2");assert.match(rec.docs.plan.file,/預先驗證方案_v1\.2\.md$/);for(const k of["mxs","pick","compare","sim"])assert.match(rec[k].sha,/^[0-9a-f]{64}$/);
+  assert.equal(rec.mxs.ver,4);assert.equal(rec.pick.ver,3);assert.equal(rec.compare.ver,4);assert.equal(rec.sim.ver,3);assert.equal(rec.docs.planVer,"v1.3");assert.match(rec.docs.plan.file,/預先驗證方案_v1\.3\.md$/);for(const k of["mxs","pick","compare","sim"])assert.match(rec[k].sha,/^[0-9a-f]{64}$/);
   assert.deepEqual(rec.pick.sk,{WIN:150,MIN:30,QMIN:10,HL:15,DEFF:3,SD0:26,PICK:3,PICKOK:0});
   /* 改了 skillPick 的一個數字（8 分的分界 → 9），版本沒動 → 擋 */
   const a="conf:th>(grp?.8:8)?\"lo\":\"even\"";assert.ok(ST.includes(a));const d1=X.diff(X.compute({stats:ST.replace(a,"conf:th>(grp?.8:9)?\"lo\":\"even\"")}),rec);assert.equal(d1.length,1);assert.equal(d1[0].part,"pick");assert.equal(d1[0].kind,"code");

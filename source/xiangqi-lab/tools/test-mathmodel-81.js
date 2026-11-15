@@ -177,28 +177,28 @@ test("算法三角對照：等級相關與二次加權 κ 的算法跟手算一�
   /* 2×2 手算：觀察一致 3/4、期望一致 1/2 → κ＝0.5（兩級時加權 κ＝一般的 κ） */
   assert.ok(Math.abs(X.kappaW([0,0,1,1],[0,1,1,1],2)-.5)<1e-12);
 });
-test("算法三角對照：判讀規則事先固定——不到 100 盤一律資料不足（相關再高也一樣）；≥0.7 同方向、<0.4 分歧；分歧最大的盤與各組的分歧列得出來；報表寫明「彼此不獨立、不能取代人類評閱」",t=>{
+test("算法對照：分流規則事先固定——不到 100 盤一律資料不足（相關再高也一樣）；ρ ≥0.7 排序關聯較高、<0.4 較低；只有一個人的資料標「單人探索」；排序差最多的盤與各組列得出來；報表寫明「彼此不獨立、不是合格線」（標籤與人數的細節在 test-mathmodel-82.js）",t=>{
   if(!fs.existsSync(MXC))return t.skip(NO_MXC);const X=require(MXC),K=X.loadMXS(),v=K.MXS.ver;assert.deepEqual({...X.TRI},{minN:100,minPeople:20,mmMin:10,hi:.7,lo:.4,kMin:25});
   const rnd=mkRnd(7),mk=(n,f)=>Array.from({length:n},(_,i)=>{const b=60+rnd()*35,a=f(b,i);return X.normLocal({id:"t"+i,v,o:[80,"A"],n:[Math.round(b),"A"],x:[Math.round(b),Math.round(b),["w","d"][i%2]],b:Math.round(b*10)/10,g:[60+(i%4)*40,40,1,"cpu",5,["新手","業2","業7"][i%3],1,0,0],a},"本機匯出#1")});
   /* 對照算法跟 base 幾乎同序（加一點雜訊） */
   const same=(b)=>[Math.round((100-b)*3+rnd()*6),Math.round(b-20+rnd()*4),40,Math.round((100-b)/4+rnd()*2)];
-  const few=X.summarize(mk(60,same),K).tri;assert.equal(few.n,60);assert.ok(few.vs.acpl.rho>.9);assert.equal(few.verdict,"資料不足","60 盤：相關 0.9 以上也是資料不足");assert.deepEqual(few.each,{acpl:"資料不足",mm:"資料不足",er:"資料不足"});
-  const A=X.summarize(mk(150,same),K),T=A.tri;assert.equal(T.n,150);for(const k of["acpl","mm","er"]){assert.equal(T.vs[k].n,150);assert.ok(T.vs[k].rho>=.7,k+" ρ "+T.vs[k].rho);assert.ok(T.vs[k].kappa>.6)}assert.equal(T.verdict,"同方向");assert.ok(T.among["acpl~er"].rho>.8);
-  /* 首選一致率跟 base 無關、失誤率半相關 → 整體取最差 */
-  const mixed=X.summarize(mk(150,(b)=>[Math.round((100-b)*3),Math.round(rnd()*100),40,Math.round((100-b)/4+rnd()*14)]),K).tri;assert.equal(mixed.each.acpl,"同方向");assert.equal(mixed.each.mm,"分歧");assert.ok(["部分一致","同方向"].includes(mixed.each.er));assert.equal(mixed.verdict,"分歧");
+  const few=X.summarize(mk(60,same),K).tri;assert.equal(few.n,60);assert.ok(few.vs.acpl.rho>.9);assert.equal(few.verdict,"可比較的 0／3 項：資料不足","60 盤：相關 0.9 以上也是資料不足");assert.deepEqual(few.each,{acpl:"資料不足",mm:"資料不足",er:"資料不足"});
+  const A=X.summarize(mk(150,same),K),T=A.tri;assert.equal(T.n,150);for(const k of["acpl","mm","er"]){assert.equal(T.vs[k].n,150);assert.ok(T.vs[k].rho>=.7,k+" ρ "+T.vs[k].rho);assert.ok(T.vs[k].kappa>.6);assert.equal(T.each[k],"〔單人探索〕排序關聯較高")}assert.equal(T.verdict,"可比較的 3／3 項：單人或少數人探索 3 項，其中最低的是「排序關聯較高」（不能說成跨玩家的結果）");assert.ok(T.among["acpl~er"].rho>.8);
+  /* 首選一致率跟 base 無關、失誤率半相關 → 總結報其中最低的一級 */
+  const mixed=X.summarize(mk(150,(b)=>[Math.round((100-b)*3),Math.round(rnd()*100),40,Math.round((100-b)/4+rnd()*14)]),K).tri;assert.equal(mixed.each.acpl,"〔單人探索〕排序關聯較高");assert.equal(mixed.each.mm,"〔單人探索〕排序關聯較低");assert.ok(["排序關聯中等","排序關聯較高"].includes(mixed.read.er.level));assert.equal(mixed.summary.explore.lowest,"排序關聯較低");assert.equal(mixed.summary.comparable,3);
   /* 有記首選不到 10 步的盤，首選一致率不算 */
-  const thin=X.summarize(mk(150,(b)=>[Math.round((100-b)*3),50,9,Math.round((100-b)/4)]),K).tri;assert.equal(thin.vs.mm.n,0);assert.equal(thin.each.mm,"資料不足");assert.equal(thin.verdict,"同方向","剩下兩種都同方向");
+  const thin=X.summarize(mk(150,(b)=>[Math.round((100-b)*3),50,9,Math.round((100-b)/4)]),K).tri;assert.equal(thin.vs.mm.n,0);assert.equal(thin.each.mm,"資料不足");assert.equal(thin.verdict,"可比較的 2／3 項：單人或少數人探索 2 項，其中最低的是「排序關聯較高」（不能說成跨玩家的結果）","少了一項就寫 2／3，不寫成三項都比過");
   /* 分歧最大的盤：故意把一盤的 ACPL 弄得跟 base 相反 */
   const G=mk(150,same);G[0].base={v:99,how:"exact"};G[0].alt={acpl:400,mm:5,mmN:40,er:60};const D=X.summarize(G,K).tri;assert.equal(D.top[0].id,"t0");assert.ok(D.top[0].gap>.8);assert.equal(D.top.length,10);
   assert.deepEqual(Object.keys(D.byGroup).sort(),["byEnd","byLen","byRank"]);assert.equal(Object.values(D.byGroup.byEnd).reduce((s,x)=>s+x.n,0),150);assert.ok(D.byGroup.byRank["業1～業5"].rho.acpl!=null);
-  const txt=X.report(X.summarize(G,K),[]);assert.match(txt,/## 算法三角對照/);assert.match(txt,/彼此不獨立。一致只代表/);assert.match(txt,/不能取代人類評閱或學習成效的證據/);assert.match(txt,/整體判讀：[^（]+\*\*（不算進任何放行條件）/);assert.match(txt,/分歧最大的盤/);assert.match(txt,/分歧集中在哪一組/);
+  const txt=X.report(X.summarize(G,K),[]);assert.match(txt,/## 算法之間的排序比較（探索性的分流標籤，不是合格線）/);assert.match(txt,/彼此不獨立/);assert.match(txt,/不能取代人類評閱或學習成效的證據/);assert.match(txt,/總結（只看盤數足夠的項目；跨玩家與探索分開）：可比較的 3／3 項[^*]+\*\*。不算進任何放行條件/);assert.match(txt,/排序差最多的盤/);assert.match(txt,/排序差集中在哪一組/);assert.doesNotMatch(txt,/同方向|部分一致|整體判讀/);
 });
-test("算法三角對照：用 App 真正算出來的合成對局跑一次——只用驗證母體；匿名資料沒有首選一致率；匿名碼不到 20 個時整體是資料不足",t=>{
+test("算法對照：用 App 真正算出來的合成對局跑一次——只用驗證母體；匿名資料沒有首選一致率；匿名碼只有 9 個時標「少數人探索：9 人」，不算跨玩家",t=>{
   if(!fs.existsSync(MXC))return t.skip(NO_MXC);const X=require(MXC),K=X.loadMXS(),G=Array.from({length:120},(_,i)=>played(8600+i,30+(i*7)%80,i%3,["r","b",""][i%3])),bad=played(8900,50,1,"r",{start:1});
   const A=X.summarize(G.map(g=>X.deriveCpu(g.cpu,K)).concat(X.deriveCpu(bad.cpu,K)),K),T=A.tri;assert.equal(A.eligible,120);assert.equal(T.n,120,"不合納入條件的那一盤不進對照");assert.equal(T.people,9);
-  assert.equal(T.vs.mm.n,0);assert.ok(T.vs.acpl.rho>.5,"同一批著法、同一個引擎評估：ACPL 跟 base 本來就會相關（"+T.vs.acpl.rho+"）");assert.ok(T.vs.er.rho>.3);assert.equal(T.verdict,"資料不足","只有 9 個匿名碼");
-  const L=X.summarize(G.map(g=>X.normLocal(g.loc,"本機匯出#1")),K).tri;assert.equal(L.vs.mm.n,120);assert.ok(L.vs.mm.rho>.3);assert.notEqual(L.verdict,"資料不足");
-  t.diagnostic(`合成 120 盤：base 對 ACPL ρ ${T.vs.acpl.rho}（κ ${T.vs.acpl.kappa}）、對失誤率 ρ ${T.vs.er.rho}；本機紀錄多一個首選一致率 ρ ${L.vs.mm.rho}；本機整體判讀「${L.verdict}」——合成資料，只驗證工具會算，不是結論`);
+  assert.equal(T.vs.mm.n,0);assert.ok(T.vs.acpl.rho>.5,"同一批著法、同一個引擎評估：ACPL 跟 base 本來就會相關（"+T.vs.acpl.rho+"）");assert.ok(T.vs.er.rho>.3);assert.equal(T.vs.acpl.people,9);assert.match(T.each.acpl,/^〔少數人探索：9 人〕排序關聯/);assert.equal(T.each.mm,"資料不足");assert.equal(T.summary.comparable,2);assert.equal(T.summary.cross.n,0,"只有 9 個匿名碼：沒有一項算跨玩家");
+  const L=X.summarize(G.map(g=>X.normLocal(g.loc,"本機匯出#1")),K).tri;assert.equal(L.vs.mm.n,120);assert.ok(L.vs.mm.rho>.3);assert.equal(L.summary.comparable,3);assert.equal(L.summary.explore.single,3,"一份本機檔＝一個人：三項都是單人探索");assert.equal(L.summary.cross.n,0);
+  t.diagnostic(`合成 120 盤：base 對 ACPL ρ ${T.vs.acpl.rho}（κ ${T.vs.acpl.kappa}）、對失誤率 ρ ${T.vs.er.rho}；本機紀錄多一個首選一致率 ρ ${L.vs.mm.rho}；本機總結「${L.verdict}」——合成資料，只驗證工具會算，不是結論`);
 });
 
 // ====================== P2：Wilson 精度 ======================
@@ -217,7 +217,7 @@ test("〔混合〕P2：judge 用沒有取整的區間——上界 5.02% 顯示�
 // ====================== 文件與版本紀錄 ======================
 test("〔原始碼〕manifest 的說明寫明它是本機追溯與一致性檢查，不是第三方認證、不是正式站同版證明",t=>{
   if(!fs.existsSync(MAN))return t.skip(NO_MAN);const s=rd(MAN);assert.match(s,/本機追溯與一致性檢查/);assert.match(s,/不是第三方認證/);assert.match(s,/不是「正式站跟本機同版」的證明/);assert.match(s,/不是防竄改/);
-  const X=require(MAN);assert.equal(X.PLAN_VER,"v1.2");assert.deepEqual(Object.keys(X.DOCS).sort(),["plan","planV1","planV11","ref"]);
+  const X=require(MAN);assert.equal(X.PLAN_VER,"v1.3");assert.deepEqual(Object.keys(X.DOCS).sort(),["plan","planV1","planV11","planV12","ref"]);
   const j=path.join(__dirname,"mx-manifest.json");if(fs.existsSync(j))assert.match(JSON.parse(rd(j)).note,/不是第三方認證/);
 });
 test("〔原始碼〕預先驗證方案 v1.2：B1 差 1 級的規則、截點的敏感度與適用範圍、上下界只對單調統計量有效、已決定的事、算法三角對照能回答與不能回答什麼；v1.1、v1 保留",t=>{
@@ -228,6 +228,6 @@ test("〔原始碼〕預先驗證方案 v1.2：B1 差 1 級的規則、截點的
 });
 test("〔原始碼〕外部公式參考 v2：殺棋整點寫成跟 Lichess 相同、封頂維持 ±2000；三種對照算法各有定義、固定的出處與適用限制",t=>{
   const f=path.join(DBD,"story/數學模型_外部公式參考.md");if(!fs.existsSync(f))return t.skip("沒有 story/數學模型_外部公式參考.md（文件只在開發者電腦，公開副本沒有）");const D=rd(f);
-  for(const k of["版本 v2","`MXS` v4","**相同**（`MXS` v4 起；v3 以前 −700 整點算失著）","**相同**（`MXS` v4 起；v3 以前 +1000 整點算失著）","評估封頂維持 ±2000","## 五、對照算法","modules/analyse/src/main/AccuracyCP.scala","0468854063ae0b73a1f0697e82008ee988ca304c","Intrinsic Chess Ratings","25(1), 834–839","彼此不獨立","不能跟 Lichess 或任何西洋棋的 ACPL 數字比大小","不是他們的 Intrinsic Performance Rating","沒有做「表現等級分」","| v2 | 2026-11-15 |"])assert.ok(D.includes(k),"外部公式參考裡要有「"+k+"」");
+  for(const k of["版本 v3","`MXS` v4","**相同**（`MXS` v4 起；v3 以前 −700 整點算失著）","**相同**（`MXS` v4 起；v3 以前 +1000 整點算失著）","評估封頂維持 ±2000","## 五、對照算法","modules/analyse/src/main/AccuracyCP.scala","0468854063ae0b73a1f0697e82008ee988ca304c","Intrinsic Chess Ratings","25(1), 834–839","彼此不獨立","不能跟 Lichess 或任何西洋棋的 ACPL 數字比大小","不是「Regan 棋力」、不是 Intrinsic Performance Rating（IPR），也不是反作弊的證據","本案沒有重現這篇的方法","不是重現他們的研究","沒有做「表現等級分」","| v2 | 2026-11-15 |","| v3 | 2026-11-15 |"])assert.ok(D.includes(k),"外部公式參考裡要有「"+k+"」");
   assert.doesNotMatch(D,/\*\*只差在 [−+]\d+ 整點\*\*/,"對照表不該再寫「只差在整點」");
 });

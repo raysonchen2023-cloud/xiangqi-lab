@@ -20,16 +20,20 @@
   "sha": "143a568a28ca35e009a9a349000c8d3925db29407a6e87c70e4cc88f61aca766"
  },
  "compare": {
-  "ver": 3,
-  "sha": "a4360ec131674a9864112356fed67dc88f07628188992fa96c7600b3a719a684"
+  "ver": 4,
+  "sha": "d24759be17286fa90a3fca96091fd7ca3c9d46fefc5f3327340c851a87118ffe"
  },
  "sim": {
   "ver": 3,
   "sha": "2f8ca2e64e6eb9b67f4e65fb1aeac5b1f56d005c0f69df0394d9c030819fef95"
  },
  "docs": {
-  "planVer": "v1.2",
+  "planVer": "v1.3",
   "plan": {
+   "file": "story/數學模型_預先驗證方案_v1.3.md",
+   "sha": "4bd08620f9f38b30f78b363eb83fe643d295d9ce9853af143165cefc1f854810"
+  },
+  "planV12": {
    "file": "story/數學模型_預先驗證方案_v1.2.md",
    "sha": "16675e337a692c2c20dd9f2811f259c8f6f49217654e352a47eede15bb952cbf"
   },
@@ -43,7 +47,7 @@
   },
   "ref": {
    "file": "story/數學模型_外部公式參考.md",
-   "sha": "af30c64b0b976b453109e92716597258301c5a35860c100b61c97011904fa8fe"
+   "sha": "0020da97b0779320071725033cb84487685fa2c4ab2cc9b0415e1bac48f8c0ee"
   }
  }
 }

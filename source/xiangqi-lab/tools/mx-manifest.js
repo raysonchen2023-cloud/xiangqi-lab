@@ -19,8 +19,8 @@
 "use strict";
 const fs = require("fs"), path = require("path"), crypto = require("crypto"), vm = require("vm");
 const LAB = path.join(__dirname, ".."), DBD = path.join(LAB, "../xiangqi-db"), FILE = path.join(__dirname, "mx-manifest.json");
-const PLAN = "story/數學模型_預先驗證方案_v1.2.md", PLAN_VER = "v1.2";   /* 現行的預先驗證方案 */
-const DOCS = { plan: PLAN, planV11: "story/數學模型_預先驗證方案_v1.1.md", planV1: "story/數學模型_預先驗證方案_v1.md", ref: "story/數學模型_外部公式參考.md" };
+const PLAN = "story/數學模型_預先驗證方案_v1.3.md", PLAN_VER = "v1.3";   /* 現行的預先驗證方案 */
+const DOCS = { plan: PLAN, planV12: "story/數學模型_預先驗證方案_v1.2.md", planV11: "story/數學模型_預先驗證方案_v1.1.md", planV1: "story/數學模型_預先驗證方案_v1.md", ref: "story/數學模型_外部公式參考.md" };
 const rd = f => fs.readFileSync(f, "utf8").replace(/\r\n/g, "\n"), sha = s => crypto.createHash("sha256").update(s, "utf8").digest("hex");
 /* 拿掉區塊註解、整行的 // 註解、行尾空白、空行（這幾段程式裡沒有含 "/*" 的字串或正規式） */
 const code = s => s.replace(/\/\*[\s\S]*?\*\//g, "").split("\n").map(l => l.replace(/\s+$/, "")).filter(l => l && !/^\s*\/\//.test(l)).join("\n");

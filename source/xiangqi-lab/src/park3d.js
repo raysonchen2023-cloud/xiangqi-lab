@@ -170,8 +170,11 @@
      「楚河」「漢界」用程式寫發光金字（Gemini 不寫字，免得寫錯） */
   let BRIVER=null;
   function drawRiver(g,w,h,onReady){const im=loadImg(BRIVER,onReady);if(!im)return;const u=w/BW,X=c=>(c+1.2)*u,Y=r=>(r+1.2)*u,x0=X(0)-.03*u,x1=X(8)+.03*u,y0=Y(4)+.05*u,y1=Y(5)-.05*u,ry=(y0+y1)/2,T4=[["楚",1.2],["河",2.6],["漢",5.4],["界",6.8]];
-    g.save();g.drawImage(im,x0,y0,x1-x0,y1-y0);g.font=`900 ${.6*u}px ${SERIF}`;g.textAlign="center";g.textBaseline="middle";
-    g.shadowColor="rgba(255,200,110,.95)";g.shadowBlur=.25*u;g.fillStyle="#FFE3A0";for(const[t,c]of T4)g.fillText(t,X(c),ry);g.shadowBlur=0;g.lineWidth=.025*u;g.strokeStyle="rgba(120,70,20,.8)";for(const[t,c]of T4)g.strokeText(t,X(c),ry);g.restore()}
+    /* 意見回饋 897（開發者 11/15「黑洞大棋盤鏡像的楚河漢界沒有明顯的字跡，上下兩邊都要完美鏡像對稱」）：原本淡金字寫在亮金星河上、只有一圈細褐邊，正面和鏡像面都讀不出來。
+       改成先鋪一圈深色粗邊（墨紫）、再填亮白金字，外面留一點金色光暈；字稍微放大。正面（bplane）和鏡像面（BRV）用的是同一支，兩面一起變清楚、位置一樣 */
+    g.save();g.drawImage(im,x0,y0,x1-x0,y1-y0);g.font=`900 ${.66*u}px ${SERIF}`;g.textAlign="center";g.textBaseline="middle";g.lineJoin="round";
+    g.shadowColor="rgba(255,196,96,.98)";g.shadowBlur=.32*u;g.lineWidth=.13*u;g.strokeStyle="rgba(22,12,40,.94)";for(const[t,c]of T4)g.strokeText(t,X(c),ry);
+    g.shadowBlur=0;g.fillStyle="#FFE9A8";for(const[t,c]of T4)g.fillText(t,X(c),ry);g.restore()}
   /* 開發者 11/12「黑洞的大棋盤不夠大，請 Gemini 重新設計黑洞風格的神秘棋盤」：Gemini 畫的星石盤面底圖（bh_board.webp，無格線），格線、九宮由程式用淡金色畫上（才跟棋子位置對齊），河界照舊疊星河 */
   let BBOARD=null;
   function drawBhBoard(g,w,h,onReady){const u=w/BW,im=loadImg(BBOARD,onReady);g.fillStyle="#0A0B1E";g.fillRect(0,0,w,h);if(im)g.drawImage(im,0,0,w,h);
@@ -1454,7 +1457,14 @@
          在格線同高度（略低一點，格線畫在上面）再鋪一面朝上的「河界層」BRV：透明貼圖上只畫星河長條＋楚河漢界金字（同一支 drawRiver，字從上面看是正的），
          只朝上（FrontSide）：從上面、平視看得到；按 ⇅ 鑽到底下時自動被剔除，不跟 BU 的正字疊在一起 */
       const rtex=cv(MOB?1040:1560,MOB?1140:1710,(g,w,h)=>drawRiver(g,w,h,()=>{try{const c=rtex.image,x=c.getContext("2d");x.clearRect(0,0,c.width,c.height);drawRiver(x,c.width,c.height,null);rtex.needsUpdate=true}catch(e){}}));
-      BRV=new T.Mesh(new T.PlaneGeometry(BW,BH),new T.MeshBasicMaterial({map:rtex,transparent:true,opacity:.75,depthWrite:false,toneMapped:false,side:T.FrontSide}));BRV.rotation.x=-PI/2;BRV.position.y=gy-.003;BRV.scale.set(GS,GS,1);BRV.userData.giant=1;sc.add(BRV)}
+      BRV=new T.Mesh(new T.PlaneGeometry(BW,BH),new T.MeshBasicMaterial({map:rtex,transparent:true,opacity:.95,depthWrite:false,toneMapped:false,side:T.FrontSide}));BRV.rotation.x=-PI/2;BRV.position.y=gy-.003;BRV.scale.set(GS,GS,1);BRV.userData.giant=1;sc.add(BRV);   /* 意見回饋 897：鏡像面的河界原本不透明度 .75，隔著半透明的盤面更淡；提到 .95 */
+      /* 意見回饋 897「上下兩邊都是完美鏡像對稱」：按 ⇅ 鑽到底下時看到的是盤底那面 BU，它跟正面同一個會受光的材質，而燈都在上面，
+         所以底下那面整片偏暗、楚河漢界幾乎看不到。在 BU 外側再貼一層不受光的河界 BRD（跟 BRV 同一張貼圖、用 BU 那份左右反過來的 UV，從底下看字是正的）。
+         掛在 BU 底下：BU 藏它就藏、BU 縮放它就跟著縮放，三次繪製的順序都不用改；renderOrder 1＝畫在 BU 之後，才不會被那層暗色蓋掉 */
+      const BRD=new T.Mesh(ug,new T.MeshBasicMaterial({map:rtex,transparent:true,opacity:.8,depthWrite:false,toneMapped:false,side:T.FrontSide}));BRD.position.z=.006;BRD.renderOrder=1;BU.add(BRD);
+      /* 同一則回饋：BU 本身也換成自己的材質（從正面那份複製，半透明、不寫深度都一樣），多加同一張星盤貼圖的自發光，
+         燈照不到的底面才看得到星雲、花邊、兵炮位記號，亮度實測調到跟正面差不多（.85）。只朝下那面看得到，從上面、平視的畫面不變 */
+      const um=bm.clone();um.emissive=new T.Color(0xffffff);um.emissiveMap=btex;um.emissiveIntensity=.85;BU.material=um}
     const gsBoard=()=>{bplane.scale.set(GS,GS,1);if(BU)BU.scale.set(GS,GS,1);if(BRV)BRV.scale.set(GS,GS,1);if(BFR)BFR.scale.set(GS,1,GS);GWB.forEach(m=>m.scale.set(GS,1,GS))};if(GIANT)gsBoard();   /* 黑洞巨盤：棋盤、木框照格距倍率放大 */
     // 茶杯：Pikafish（對面）一杯、我一杯（意見回饋 215）
     const teaCup=(x,z)=>{const cup=new T.Group();cup.position.set(x,0,z);sc.add(cup);const por=M(0xF4F1EA,{roughness:.25}),blue=M(0x2D5DA8,{roughness:.3});const a=new T.Mesh(new T.CylinderGeometry(.75,.75,.08,32),por);a.position.y=.04;cup.add(a);
