@@ -12,7 +12,10 @@
    開關 XFL_ON；純計算 xflGate／xflPlan 不碰 DOM，自動測試 xiangqi-lab/tools/test-ipad-fill.js 用 vm 跑 */
 const XFL_ON=true,XFL_PORT_MAX=0.85,XFL_TOPW=0.5,XFL_STEPS=48;
 /* 要不要用 ① 直向填滿：跟 r07Wide 同一個門檻（寬 600 以上或比可用高度寬，而且照寬度放會比可用高度高），再加上「接近直向」 */
-function xflGate(vw,av,W,nw,nh){if(!(W>0&&av>=120&&nw>0&&nh>0))return false;if(!(vw>=600||vw>av))return false;if(W*nh/nw-av<2)return false;return W/av<=XFL_PORT_MAX}
+function xflGate(vw,av,W,nw,nh,mx){if(!(W>0&&av>=120&&nw>0&&nh>0))return false;if(!(vw>=600||vw>av))return false;if(W*nh/nw-av<2)return false;return W/av<=(mx||XFL_PORT_MAX)}   /* mx：首頁另給門檻（XFL_HOME_MAX） */
+/* 意見回饋 889（iPhone 主畫面 App 669×869 首頁元朝夜景只剩中間一窄條＋兩側模糊）：首頁用原圖時（季節／夜景／朝代變體沒有寬版圖；沒變體但比例在 0.89～1.04，見 07z HMW_SQ），0.85～1.04 這段接近正方形的畫面原本不進 ① ，縮到等高置中。
+   首頁的入口都集中在圖的中段（上 15%～48%），① 本來就會先確認每個入口都看得到、擺不進才少放大，所以首頁的門檻放寬到 1.04（跟 07z HMW_SQ 同一點）：填滿寬度、上下多裁一些；別的場景頁照舊 0.85 */
+const XFL_HOME_MAX=1.04;
 /* 純計算：o={W 可用寬, av 可用高, nw/nh 圖原尺寸, off 圖上面還有多少內容（>8＝不能裁上面）, items:[{c 中心在圖高的比例, h 高(px)}]}
    回傳 {w 圖寬, H 圖高, top 裁掉上面幾 px, crop 總共裁幾 px, fill w÷W}；每個東西要看得到中間 min(h/2,30)+6 px（大塊點選區只要中間那段看得到） */
 function xflPlan(o){const W=o.W,av=o.av,nw=o.nw||768,nh=o.nh||1376,H0=W*nh/nw,fitH=av,lockTop=(o.off||0)>8,its=(o.items||[]).filter(q=>q&&isFinite(q.c));
@@ -75,7 +78,7 @@ function xflVis(P,pr){const V=document.getElementById("view");if(!V||!V.classLis
   const vr=V.getBoundingClientRect(),pb=parseFloat(getComputedStyle(V).paddingBottom)||0;return{t:Math.max(pr.top,vr.top),b:Math.min(pr.bottom,vr.top+V.clientHeight-pb)}}
 /* ① 直向填滿：成功回傳 true（r07Wide 就不再排） */
 function xflPort(V,P,nw,nh){const vr=V.getBoundingClientRect(),pr=P.getBoundingClientRect(),pb=parseFloat(getComputedStyle(V).paddingBottom)||0,off=pr.top-vr.top+V.scrollTop,av=V.clientHeight-pb-off,W=pr.width,vw=V.clientWidth;
-  if(!xflGate(vw,av,W,nw,nh))return false;
+  if(!xflGate(vw,av,W,nw,nh,/(^|\s)home-page(\s|$)/.test(P.className||"")?XFL_HOME_MAX:0))return false;   /* 回饋 889：首頁放寬到 1.04 */
   const items=xflItems(P,pr),pl=xflPlan({W,av,nw,nh,off,items});if(!pl)return false;
   if(typeof r07Off==="function")xflR07Off(V);
   if(P.dataset.xflMt==null)P.dataset.xflMt=P.style.marginTop||"";

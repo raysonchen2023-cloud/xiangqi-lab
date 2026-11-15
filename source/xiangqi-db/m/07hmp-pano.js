@@ -114,7 +114,7 @@ function hmpCtl(P){if(P._hmpCtl)return;P._hmpCtl=1;const C=hmpBox(P)||P;hmpCss()
   if(C!==P)for(const d of[-1,1]){const b=document.createElement("button");b.type="button";b.className="hmp-nav "+(d<0?"l":"r");b.hidden=true;b.innerHTML=`<span aria-hidden="true">${d<0?"‹":"›"}</span>`;
     b.onclick=e=>{e.stopPropagation();vibrate(5);hmpCam(P,(P._hmpI||0)+d,true)};C.append(b)}
   let D=null,sup=0;const zs=()=>C.zm&&C.zm.s||1,lim=v=>{const w=P.offsetWidth,m=Math.max(0,Math.abs(v)-w);return Math.sign(v)*(Math.min(Math.abs(v),w)+m*.3)};
-  const start=(x,y,ed)=>{if(!hmpOn(P)||zs()>1.001){D=null;return}D={x0:x,y0:y,t:performance.now(),l0:parseFloat(P.style.left)||0,i0:P._hmpI||0,mv:0,no:!!ed,lx:x,lt:performance.now(),v:0}};
+  const start=(x,y,ed)=>{if(!hmpOn(P)||zs()>1.001||(typeof zmNat==="function"&&zmNat())){D=null;return}   /* 意見回饋 888：被系統整頁放大時單指拖曳交給系統（看放大後的別處），不換屏 */D={x0:x,y0:y,t:performance.now(),l0:parseFloat(P.style.left)||0,i0:P._hmpI||0,mv:0,no:!!ed,lx:x,lt:performance.now(),v:0}};
   const move=(x,y,e)=>{if(!D||D.no)return false;const dx=x-D.x0,dy=y-D.y0;if(!D.mv){if(Math.hypot(dx,dy)<8)return false;if(Math.abs(dx)<Math.abs(dy)*1.2||zs()>1.001){D.no=1;return false}D.mv=1;cancelAnimationFrame(P._hmpA||0);P._hmpA=0}
     const now=performance.now();if(now>D.lt)D.v=(x-D.lx)/(now-D.lt);D.lx=x;D.lt=now;P.style.left=lim(D.l0+dx).toFixed(1)+"px";if(e&&e.cancelable)e.preventDefault();return true};
   const end=x=>{const d=D;D=null;if(!d||!d.mv)return;sup=Date.now()+450;hmpCam(P,hmpSnap(d.i0,x-d.x0,P.offsetWidth,d.v),true)};

@@ -412,7 +412,7 @@ const I18N_EN={
   "很少失誤":"rarely makes mistakes","幾乎不失誤":"almost never makes mistakes","不放水":"no mercy","人類幾乎贏不了":"nearly unbeatable for humans","段位與開新局":"Rank and new game","換難度":"Change level",
   /* 對局頁：工具列、狀態列、確認框 */
   "寶物":"Items","悔棋":"Undo","新局":"New","認輸":"Resign","檢討":"Review","擺盤":"Setup","偷看":"Peek","思考中":"Thinking","已預走":"Premove set","被將軍":"in check","⚠ 被將軍！":"⚠ Check!",
-  "提示":"Hint","輪到你":"Your move","輪到你走":"Your move","輪到電腦":"Computer's move","等電腦":"Waiting for the computer","電腦想太久了？":"Computer taking too long?","重新開一局":"Start a new game","還原大小":"Reset zoom","確定認輸？":"Resign this game?",
+  "提示":"Hint","輪到你":"Your move","輪到你走":"Your move","輪到電腦":"Computer's move","等電腦":"Waiting for the computer","電腦想太久了？":"Computer taking too long?","重新開一局":"Start a new game","還原大小":"Reset zoom","兩指往內捏，就能縮回原本大小":"Pinch in with two fingers to zoom back out","確定認輸？":"Resign this game?",
   "悔棋以後，這一盤不算進「我的棋力」（輸贏照常算）。":"After an undo, this game no longer counts toward \"My strength\" (the result still counts).","用悔棋符":"Use undo token",
   "你還沒走棋，不用悔棋":"You haven't moved yet; nothing to undo","沒有悔棋符了":"No undo tokens left","這個難度不限次數":"unlimited at this difficulty",
   "均勢":"Even","雙方差不多":"roughly equal","領先非常多":"far ahead","能將死對方":"can force checkmate",
@@ -1283,9 +1283,9 @@ function i18nPick(k){const cur=i18nCur();if(k===cur)return;const re=()=>setTimeo
 function i18nSheet(){const cur=i18nCur(),L=[["tw","繁體中文","zh-Hant"],["cn","简体中文","zh-Hans"],["en","English","en"]];   /* zh-lint-ok：簡體選項本來就用簡體字顯示 */
   sheet("🌐 語言 Language",b=>{
     b.innerHTML=`<div class="opt" data-nocc style="flex-wrap:wrap">${L.map(([k,l,h])=>`<button type="button" data-lang="${k}" lang="${h}"${cur===k?' class="on" aria-pressed="true"':' aria-pressed="false"'}>${l}</button>`).join("")}</div>
-      <p class="muted" id="i18nScopeEn" style="font-size:12.5px;line-height:1.6;margin:10px 2px 0" lang="en"><b>In English:</b> the tab bar and menus, games against the computer, the game page and results, settings, the online lobby, Teatime endgames, the Daily Puzzle, the game library, the Qianqiu Cup, and the main quest (Star Raft Expedition Orders): its buttons, task cards, chapter names, gifts and puzzle hints. Chapters 1 and 2 also have English film captions and dialogue, as do the Starry Night Tea Party greetings and farewells.</p>
+      <p class="muted" id="i18nScopeEn" style="font-size:12.5px;line-height:1.6;margin:10px 2px 0" lang="en"><b>In English:</b> the tab bar and menus, games against the computer, the game page and results, settings, the online lobby, Teatime endgames, the Daily Puzzle, the game library, the Qianqiu Cup, and the main quest, Chapter 1 “Classic · First Crossing of the River Chart”: its task cards, chapter name and puzzle hints. Chapter 1 also has English film captions and dialogue, as do the Starry Night Tea Party greetings and farewells.</p>
       <p class="muted" style="font-size:12.5px;line-height:1.6;margin:4px 2px 0" lang="en"><b>Chinese only for now:</b> other story scenes (Stone Table Tales and the novel), other character lines, scene history notes, the full privacy statement and the guides.</p>
-      <p class="muted" data-noi18n style="font-size:12.5px;line-height:1.6;margin:6px 2px 0">英文介面目前涵蓋：底欄與選單、跟電腦對局、對局頁與結果、設定、線上大廳、一盞茶殘局、每日同題、棋譜庫、千秋盃，以及主線「星槎遠征令」的按鈕、任務卡、章名、禮包和解題提示；第一、二章現有電影與對話、七星星夜茶話會開場與收尾也已翻譯。其他劇情仍只有中文：石桌往事、長篇、其他角色台詞、場景史料、隱私說明全文和說明文件。</p>
+      <p class="muted" data-noi18n style="font-size:12.5px;line-height:1.6;margin:6px 2px 0">英文介面目前涵蓋：底欄與選單、跟電腦對局、對局頁與結果、設定、線上大廳、一盞茶殘局、每日同題、棋譜庫、千秋盃，以及主線第一章「古典・河圖初渡」的任務卡、章名和解題提示；第一章電影與對話、七星星夜茶話會開場與收尾也已翻譯。其他劇情仍只有中文：石桌往事、長篇、其他角色台詞、場景史料、隱私說明全文和說明文件。</p>
       <button type="button" class="lk" data-xqdoc="i18n" style="margin-top:8px">🌐 About the English UI / 英文介面說明</button>`;
     b.querySelectorAll("[data-lang]").forEach(x=>x.onclick=()=>{try{vibrate(5)}catch(e){}closeSheet();i18nPick(x.dataset.lang)})})}
 /* ================= 畫面：掃描文字節點、屬性，換成英文；原文記起來可以還原 ================= */

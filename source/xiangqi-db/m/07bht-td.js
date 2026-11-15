@@ -586,6 +586,7 @@ body.bhtd-tg #bhtlTip{pointer-events:none;opacity:.35}
 /* 11/13 開發者截圖「主角的金環很違和、門跑到盤外」：門原本整個元素在轉（動畫的 transform 蓋掉 bhtdFrame 寫的位置，門被釘在左上角）；改成只有 ::before 的虛線圈在轉。
    3D 盤（g3）：地面類記號照盤面透視貼平（bhtdGnd 算的 matrix，transform-origin 要 0 0），金環不再像貼紙浮在角色身上、拿掉 ✦；門的數字另起直立小標籤 gt；3D 區頂端重複的「黑洞・星樞棋局」場名（.pkname）在塔防局藏起來，免得擋到最遠那一排 */
 .bt-mk.g3{transform-origin:0 0}.bt-mk.eye.g3::after{top:-2.1em}.bt-mk.eye.g3{border-width:3px;background:radial-gradient(circle,rgba(255,214,120,.38),rgba(255,214,120,0) 72%)}
+.bt-mk.pnm{font-size:clamp(11px,calc(var(--c)*.4),17px);font-weight:900;line-height:1;padding:2px 4px;border-radius:5px;margin-top:-.55em;white-space:nowrap;box-shadow:0 1px 4px rgba(0,0,0,.65)}.bt-mk.pnm.r{background:#FFF8EA;color:#B3121F;border:1px solid #E9C46A}.bt-mk.pnm.b{background:#14204A;color:#fff;border:1px solid #6FE7FF}
 .bt-mk.gt{font-size:12px;font-weight:800;color:#f3e6ff;background:rgba(60,16,110,.88);border:1px solid #b46bff;border-radius:99px;padding:1px 7px;white-space:nowrap;box-shadow:0 0 8px rgba(180,107,255,.7)}
 body.bhtd-on #bbox .pkname{display:none!important}
 .bt-mk.pj{font-size:11px;font-weight:700;color:#fff;background:#d2601a;border-radius:6px;padding:0 3px;margin:calc(var(--c)*-.42) 0 0 calc(var(--c)*.42);box-shadow:0 0 6px #ff9a3c}
@@ -861,12 +862,14 @@ function bhtdMarks(st){const td=st.td,L=[],C=bhtdC(),b=st.board;
   for(const t of td.pj){const q=BHTD.sqOf(td,t);if(q!=null)L.push({k:"pj",sq:q,t:"破"})}
   for(const t of td.frz){const q=BHTD.sqOf(td,t);if(q==null)continue;const o=(td.frzQ||[]).find(x=>x.tag===t),n=1+(o?o.n:0);L.push({k:"frz",sq:q,t:`<i>${n}</i>`})}   /* 定身：深藍鎖鏈圈＋還要停幾回合（這回合 1＋排隊的；開發者 11/13 換掉 💨） */
   const shv={};for(const s of td.sh){const q=BHTD.sqOf(td,s.tag);if(q!=null)shv[q]=(shv[q]||0)+s.v}for(const q in shv)L.push({k:"sh",sq:+q,t:"盾"+shv[q]});
+  /* 11/15 開發者選 Gemini 方案 1（意見回饋 1136「黑洞塔防棋子太小，看不清誰是誰」）：3D 塔防鏡頭下每顆子頭上一塊面向鏡頭的漢字牌（我方白底朱字、敵方深藍底白字），排最後＝疊在其他標記上面；位置用 park3d headOf（bhtdFrame） */
+  try{if(typeof PARK!=="undefined"&&PARK&&PARK.v&&PARK.v.headOf&&PARK.v.tdCam&&PARK.v.tdCam()&&bhtd3d())for(let q=0;q<90;q++){const p=b[q];if(!p)continue;const r=p===p.toUpperCase();L.push({k:"pnm "+(r?"r":"b"),sq:q,t:NAMES[r?"r":"b"][p.toUpperCase()]||""})}}catch(e){}
   return L}
 function bhtdFrame(){BHTD_RAF=0;const st=BHTD_ST,o=document.getElementById("bhtdOv");if(!st||!o||!bhtdIs(st))return;
   if(!/^#\/journey\/play/.test(location.hash)){bhtdHide();return}
   const L=bhtdMarks(st),key=JSON.stringify(L),box=o.querySelector(".mks");if(key!==BHTD_MK){BHTD_MK=key;box.innerHTML=L.map(m=>m.b?`<button type="button" class="bt-mk ${m.k}" data-sq="${m.sq}" aria-label="目標 ${m.sq}"></button>`:`<div class="bt-mk ${m.k}" data-sq="${m.sq}">${m.t||""}</div>`).join("")}
   const a=bhtdXY(40),c=bhtdXY(41),cell=a&&c?Math.max(18,Math.min(90,Math.hypot(c.x-a.x,c.y-a.y))):36;o.style.setProperty("--c",cell+"px");
-  const g3=bhtd3d();for(const el of box.children){const q=+el.dataset.sq,p=bhtdXY(q);if(!p){el.style.display="none";continue}el.style.display="";
+  const g3=bhtd3d();for(const el of box.children){const q=+el.dataset.sq,p=el.classList.contains("pnm")?(PARK&&PARK.v&&PARK.v.headOf?PARK.v.headOf(q):null):bhtdXY(q);if(!p){el.style.display="none";continue}el.style.display="";
     const M=g3&&BHTD_GND.test(el.className)?bhtdGnd(q,p,cell):null,up=el.classList.contains("gt")?cell*.62:0;el.classList.toggle("g3",!!M);
     el.style.transform=`translate(${p.x}px,${p.y-up}px)`+(M?` matrix(${M})`:"")+" translate(-50%,-50%)"+(!M&&el.classList.contains("shard")?" rotate(45deg)":"")}
   /* 炮線：紅炮隔一子瞄到的敵子（回合結束就會破甲），淡橘虛線 */

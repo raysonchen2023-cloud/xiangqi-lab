@@ -103,9 +103,10 @@ function stqBegin(){const now=Date.now();stqSave({v:STQ_V,st:"run",at:now,n:0,do
   stqOpen()}
 /* ---------- 樣式 ---------- */
 function stqCss(){if(document.getElementById("stqCss"))return;try{if(typeof mnqCss==="function")mnqCss()}catch(e){}const s=document.createElement("style");s.id="stqCss";s.textContent=`
-#stqPg{--text:#2a2018;--muted:#6f5f4c;--card:#FFF8EC;--line:#d8c8b0;position:fixed;inset:0;z-index:9300;display:flex;flex-direction:column;align-items:center;gap:8px;padding:calc(10px + env(safe-area-inset-top,0px)) 8px calc(12px + env(safe-area-inset-bottom,0px));background:#f3ead7;color:#3b2a1a;opacity:0;transition:opacity .3s;overflow:auto}
+#stqPg{--text:#2a2018;--muted:#6f5f4c;--card:#FFF8EC;--line:#d8c8b0;position:fixed;inset:0;z-index:9300;display:flex;flex-direction:column;align-items:center;gap:8px;padding:calc(10px + env(safe-area-inset-top,0px)) 8px calc(12px + env(safe-area-inset-bottom,0px));background:#f3ead7;color:#3b2a1a;opacity:0;transition:opacity .3s;overflow-x:hidden;overflow-y:auto}   /* 畢業的放射光 380px 比窄手機寬：只准上下捲，不出水平捲軸 */
 #stqPg.on{opacity:1}
-#stqPg .stq-top{display:flex;align-items:center;justify-content:space-between;gap:8px;width:min(560px,100%)}
+#stqPg .stq-top{display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:8px;width:min(560px,100%)}
+@media (max-width:350px){#stqPg .stq-top{justify-content:center}}
 #stqPg .stq-lp{display:flex;gap:5px;flex:none}
 #stqPg .stq-lp span{width:26px;height:26px;border-radius:50%;display:flex;align-items:center;justify-content:center;font:800 13px/1 var(--serif,serif);background:#cdbb98;color:#5b4a3a}
 #stqPg .stq-lp span.on{background:radial-gradient(circle,#fff3c4,#f2b33d 60%,#b8741a);color:#7a3a10;box-shadow:0 0 10px rgba(242,179,61,.85)}
@@ -154,7 +155,7 @@ function stqLoad(n){const U=STQ_UI;if(!U)return;const C=XQCore,T=STQ_T[n];U.n=n;
   const nx=U.pg.querySelector(".stq-nx");if(nx)nx.hidden=true;stqLamps();stqGoal();stqDraw()}
 /* 棋盤上加畫的東西（viewBox 560×620，第一格中心 40,40，每格 60）：亮格、綠色逃點、封住後的 ✗（05b fwX） */
 function stqMarkSq(svg,i,kind){const NS="http://www.w3.org/2000/svg",x=40+i%9*60,y=40+(i/9|0)*60;let e;
-  if(kind==="esc"){e=document.createElementNS(NS,"circle");e.setAttribute("cx",x);e.setAttribute("cy",y);e.setAttribute("r","17");e.setAttribute("fill","rgba(46,160,90,.4)");e.setAttribute("stroke","#1f7a45");e.setAttribute("stroke-width","4");e.setAttribute("stroke-dasharray","6 4")}
+  if(kind==="esc"){e=document.createElementNS(NS,"circle");e.setAttribute("cx",x);e.setAttribute("cy",y);e.setAttribute("r","22");e.setAttribute("fill","rgba(46,180,96,.55)");e.setAttribute("stroke","#15803d");e.setAttribute("stroke-width","5");e.setAttribute("stroke-dasharray","7 4")}   /* 11/15 逃點原本 r17、四成透明，手機上偏小偏淡：放大到 r22（棋子半徑 26 以內，不壓到格線外）、顏色加深 */
   else{e=document.createElementNS(NS,"rect");e.setAttribute("x",x-28);e.setAttribute("y",y-28);e.setAttribute("width","56");e.setAttribute("height","56");e.setAttribute("rx","10");e.setAttribute("fill","rgba(242,201,76,.38)");e.setAttribute("stroke","#d08a00");e.setAttribute("stroke-width","5")}
   e.setAttribute("pointer-events","none");e.setAttribute("aria-hidden","true");svg.append(e)}
 function stqDraw(B2){const U=STQ_UI;if(!U)return;const C=XQCore,T=STQ_T[U.n],B=B2||U.B;

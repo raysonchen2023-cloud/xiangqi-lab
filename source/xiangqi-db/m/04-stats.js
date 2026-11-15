@@ -172,7 +172,7 @@ function oppHist(){try{return(window.XQNet&&XQNet.rating?XQNet.rating().hist:[])
 function pvpMySide(it,id){if(!it)return null;if(it.mine==="r"||it.mine==="b")return it.mine;const rid=id!=null?id:it.id;
   const h=oppHist().find(x=>x.rid===rid);if(h&&(h.sd==="r"||h.sd==="b"))return h.sd;
   const me=myName();return me&&it.red===me?"r":me&&it.black===me?"b":null}
-/* 一盤的純準確度：talentCache5 那列 pa（開局／中局／殘局各＝[準確度加總, 步數]）三段加總÷步數；沒有 pa 的舊列回 null */
+/* 一盤的純準確度：talentCache6 那列 pa（開局／中局／殘局各＝[準確度加總, 步數]）三段加總÷步數；沒有 pa 的舊列回 null */
 const rowAcc=g=>{if(!g||!g.pa)return null;let s=0,n=0;for(const k of["open","mid","end"]){const x=g.pa[k];if(x&&x[1]){s+=+x[0]||0;n+=x[1]}}return n?s/n:null};
 function oppSnapSave(ps){const ids=new Set(oppHist().map(h=>h.oid).filter(Boolean));if(!ids.size)return;const S=store.get("oppSnap",{});let ch=false;
   for(const p of ps||[])if(p&&ids.has(p.id)){S[p.id]={id:p.id,name:p.name,pts:p.pts,w:p.w,l:p.l,d:p.d,city:p.city||"",kind:p.kind||"",at:p.at||Date.now()};ch=true}if(ch)store.set("oppSnap",S)}
@@ -282,13 +282,13 @@ function histList(box,reps){let kind=store.get("histKind","all"),res="",limit=40
     let h=`<div class="st-seg">${[["all","全部"],["cpu","🤖 電腦"],["pvp","👥 對人"]].map(([k,l])=>`<button data-k="${k}" class="${kind===k?"on":""}">${l}<small>${cnt(k)}</small></button>`).join("")}</div>
       <div class="st-res">${[["","全部"],["w","勝"],["l","負"],["d","和"]].map(([k,l])=>`<button data-r="${k}" class="${res===k?"on":""}">${l}</button>`).join("")}</div>`;
     if(!L.length)h+=`<div class="st-list st-empty" style="margin-top:12px">${all.length?"沒有符合的對局":"還沒有下完的對局。去挑戰電腦或線上對戰下一盤吧！"}</div>`;
-    const TC5=store.get("talentCache5",{});let mon="",grp=[];const out=[],flush=()=>{if(grp.length)out.push(`<div class="st-list">${grp.join("")}</div>`);grp=[]};
+    const TC5=store.get("talentCache6",{});let mon="",grp=[];const out=[],flush=()=>{if(grp.length)out.push(`<div class="st-list">${grp.join("")}</div>`);grp=[]};
     /* 意見回饋（開發者 11/6 分數審查）：gameId 是 UTC 時間，月份標題和日期改用本地時間（臺灣清晨的棋不再跑到前一天／前一個月）；id 不是時間格式的舊存檔照字面切 */
     const ld=id=>{const t=tlTime(id);if(!t)return{m:id.slice(0,7),y:id.slice(0,4),mo:+id.slice(5,7),d:id.slice(5,10).replace("-","/")};const dt=new Date(t),p=n=>String(n).padStart(2,"0");return{m:`${dt.getFullYear()}-${p(dt.getMonth()+1)}`,y:dt.getFullYear(),mo:dt.getMonth()+1,d:`${p(dt.getMonth()+1)}/${p(dt.getDate())}`}};
     for(const x of L.slice(0,limit)){const id=String(x.it.id),LD=ld(id),m=LD.m;
       if(m!==mon){flush();mon=m;out.push(`<div class="st-mon">${LD.y} 年 ${LD.mo} 月</div>`)}
       /* 意見回饋 351：人機、真人每一盤都標出我這盤的評等（S／A／B…）：賽後報告算過的、或天賦頁評好的都用
-         意見回饋（開發者 11/6 分數審查）：評等改成優先用 talentCache5 的純準確度（跟五邊形同一把尺），沒有才用 reports；
+         意見回饋（開發者 11/6 分數審查）：評等改成優先用 talentCache6 的純準確度（跟五邊形同一把尺），沒有才用 reports；
          舊 reports 裡 pvp 執黑的那筆存的是對手的分數（存檔時沒記 side），認得出是執黑就不用它 */
       const r=resOf(x.it,x.side),tc=TC5[x.c+"/"+x.it.id],ta=rowAcc(tc),rp=reps[x.it.id],rpOk=rp&&!(x.c==="pvp"&&!rp.side&&x.side==="b")&&!(rp.side&&x.side&&rp.side!==x.side),
         R=ta!=null?{score:Math.round(ta),grade:gradeFor(Math.round(ta))[0]}:rpOk?rp:null,nr=x.c==="pvp"&&nh.find(hh=>hh.rid===x.it.id);
@@ -304,7 +304,7 @@ function histList(box,reps){let kind=store.get("histKind","all"),res="",limit=40
     box.querySelectorAll("[data-r]").forEach(b=>b.onclick=()=>{res=b.dataset.r;limit=40;paint()});
     box.querySelectorAll("[data-id]").forEach(b=>b.onclick=e=>{const oi=e.target.closest(".opp-i");if(oi){e.stopPropagation();return oppCard(oi.dataset.oid,oi.dataset.on)}vibrate(5);if(b.dataset.c==="play"&&!reps[b.dataset.id])store.set("openReport","play/"+b.dataset.id);location.hash=`#/db/${b.dataset.c}/${encodeURIComponent(b.dataset.id)}`});
     const mo=box.querySelector("#more");if(mo)mo.onclick=()=>{limit+=40;paint()}}
-  paint();load();return{paint}}   /* 意見回饋（開發者 11/6 分數審查）：回傳 paint，五邊形算完 talentCache5 有新列時可以重畫評等 */
+  paint();load();return{paint}}   /* 意見回饋（開發者 11/6 分數審查）：回傳 paint，五邊形算完 talentCache6 有新列時可以重畫評等 */
 /* 意見回饋 307、415：五角形圖（自己的戰績頁、棋友資料卡共用）。A＝[[名稱,分數,樣本還少?],…]；
    樣本還少的那一軸：連到它的邊畫虛線、點畫空心、數字變淡 */
 function penSVG(A,maxW){const W=300,H=270,cx=150,cy=142,R0=92,K=A.length,pt=(i,v)=>{const a=-Math.PI/2+i*2*Math.PI/5,r=R0*(v||0)/100;return[cx+r*Math.cos(a),cy+r*Math.sin(a)]};
@@ -330,7 +330,9 @@ function setProf(x){const p={...store.get("pubProf",{}),...x,v:1,at:Date.now()};
    三、樣本：實戰軸不到 30 步、殺法不到 10 題＝樣本還少：畫虛線、淡色，不拿來挑「建議先練」。全 App 只有這裡一個「建議先練」。
    四、公平：用過提示或悔棋的那盤（local.js 存檔時記 hintN／undoN）整盤不算；舊存檔沒有這兩欄就照算。 */
 /* 數學修正 11/11（審查 3-B、4.2；開發者 11/11 照三方審查「先上不改分數的部分」）：
-   ・每步準確度「不改」：照舊 100·e^(−損失/200)（SK.acc）。勝率尺度的新算法只在影子模式背景算（05-settings.js 的 MXS／mxShadowReport），畫面不顯示，所以快取照舊叫 talentCache5、不用重算。
+   ・每步準確度「不改」：照舊 100·e^(−損失/200)（SK.acc）。勝率尺度的新算法只在影子模式背景算（05-settings.js 的 MXS／mxShadowReport），畫面不顯示。
+     意見表 1046（11/15）：快取 talentCache5 → talentCache6（三方審查必改 7「合併時別漏了 talentCache5 → 6」）——11/11 以前存的列沒有 id／lv／A，
+     五軸的 σ 只能退回 SK.SD0、skillDiff 認不到盤；升版讓每一列都用現在的欄位重算一次（只讀手機裡已評好等的棋譜，沒評完的照舊放 pend），舊的 talentCache5 刪掉。分數本身不變。
    ・五軸的時間窗統一：每一盤的權重 λ^(盤序)，λ＝2^(−1/HL)（半衰期 15 盤，有效視窗約 22 盤），三個階段用同一批最近的盤，不再各自往回找 150 步（殘局軸原本反映的是很舊的自己）。
      盤序用「全部的盤」排（Claude 複審 #11：原本是「這一軸有資料的第幾盤」，殘局只有一半的盤有，時間窗會長一倍）。
      指數加權還有一個好處：加進新的一盤，軸的變化方向一定跟「這盤 − 原本」同號（滑動視窗有 14% 反號：其實是新盤減掉被擠出去的舊盤）。
@@ -347,14 +349,15 @@ function mxCal(){const C=store.get("calib",null)||{};return{tal:C.tal&&C.tal.peo
 function mxPct(x,Q){if(!Q||!Q.length)return null;const n=Q.length,p=i=>100*(i+1)/(n+1);if(x<=Q[0])return Math.max(1,Math.round(p(0)*Math.max(0,1-(Q[0]-x)/Math.max(1e-6,Q[1]-Q[0]))));
   for(let i=0;i<n-1;i++)if(x<=Q[i+1]){const f=(x-Q[i])/Math.max(1e-6,Q[i+1]-Q[i]);return Math.round(p(i)+f*(p(i+1)-p(i)))}return Math.min(99,Math.round(p(n-1)+(100-p(n-1))*Math.min(1,(x-Q[n-1])/Math.max(1e-6,Q[n-1]-Q[n-2]))))}
 const mxTierName=th=>MX_RK[Math.max(0,Math.min(MX_RK.length-1,Math.round(th/QZ.S+QZ.MID)))];
-/* 每盤一列（我的棋力、我的成長共用，存在 talentCache5；開發者 11/11：每步準確度照舊，快取不升版；新欄位 id／lv／A 只有新算的列有，舊列沒有就退回 SK.SD0）：我這邊評過等的步——各階段準確度加總 pa＝[加總,步數]、首選 best、失著＋敗著 bad、
+/* 每盤一列（我的棋力、我的成長共用，存在 talentCache6；開發者 11/11：每步準確度照舊；11/15 意見表 1046 升版 5→6，每列都有 id／lv／A，萬一還是缺就退回 SK.SD0）：我這邊評過等的步——各階段準確度加總 pa＝[加總,步數]、首選 best、失著＋敗著 bad、
    這盤用過提示或悔棋 hu；舊的列沒有 pa 就重新讀那盤算一次。只有我這邊每一步都評好才存快取，還沒評完的回傳在 pend */
 async function skillRows(){
   const me=myName(),games=[];
   for(const c of["play","pvp"]){let d;try{d=await api("/db/items?c="+c+"&limit=200")}catch(e){continue}
     for(const it of d.items){const side=c==="play"?(it.red==="你"?"r":"b"):pvpMySide(it);if(side)games.push({c,id:it.id,side,res:String(it.result||""),opp:side==="r"?it.black:it.red})}}   /* 意見回饋（開發者 11/6 分數審查）：pvp 用 pvpMySide 認自己 */
   games.sort((a,b)=>String(a.id).localeCompare(String(b.id)));
-  const cache=store.get("talentCache5",{}),G=[],pend=[];let ch=false,smN=0;
+  try{localStorage.removeItem("m_talentCache5")}catch(e){}   /* 意見表 1046：舊版快取（沒有 id／lv／A）整份丟掉，不混算 */
+  const cache=store.get("talentCache6",{}),G=[],pend=[];let ch=false,smN=0;
   /* 改善單 R08 車輪戰審查（11/11）：先拿掉車輪戰、盲棋再取最近 150 盤，一場 10 桌不會擠掉一般對局的名額，也不用白評那些盤 */
   {const EX=/-(s\d+|b)$/;smN=games.filter(g=>EX.test(String(g.id))).length;const keep=games.filter(g=>!EX.test(String(g.id)));games.length=0;games.push(...keep)}
   for(const g of games.slice(-150)){const key=g.c+"/"+g.id;let row=cache[key];
@@ -374,7 +377,7 @@ async function skillRows(){
           if(!miss){cache[key]=row;ch=true}}}}
     /* 開發者 11/11 選（統計複查）：車輪戰的盤（id 結尾 -s桌號）同時下很多盤、注意力分散，不算進我的棋力、準確度、成長曲線、等級分；照樣評等，檢討看得到 */
     if(row&&!row.skip){if(/-(s\d+|b)$/.test(g.id))smN++;else G.push(row)}}   /* 11/11：盲棋（id 結尾 -b）也不算 */
-  if(ch)store.set("talentCache5",cache);
+  if(ch)store.set("talentCache6",cache);
   return{G,pend,smN}}
 /* 五軸的分數。G＝skillRows 的列，IR＝tlIRT(測驗紀錄)。每軸回傳 {k 名稱, v 分數, n 步數或題數, u 單位, g 盤數, ok 樣本夠, go [入口, 名稱]} */
 /* 數學修正 11/11（審查 3-A、3-B）：每軸＝指數加權平均（同一個時間窗）＋標準誤 se；穩定＝沒有失著、敗著的步數比例（0～100，跟準確度一樣「越高越好、100 滿分」，不再是 100−300×失誤率）。
@@ -792,7 +795,7 @@ function Stats(v){
   // 總覽＝三個重點數字＋棋力五邊形＋各模式勝負對照表＋對局紀錄；其他分頁各自的段位卡和細表
   const NET=!!(OFF&&window.XQNet),pct=(w,n)=>n?Math.round(w*100/n)+"%":"—";
   const reps=store.get("reports",{}),qz=store.get("quizBest",null);
-  /* 意見回饋（開發者 11/6 分數審查）：總覽的「賽後報告平均」改成「每步準確度」——跟五邊形同一批資料（skillRows／talentCache5），
+  /* 意見回饋（開發者 11/6 分數審查）：總覽的「賽後報告平均」改成「每步準確度」——跟五邊形同一批資料（skillRows／talentCache6），
      每盤 pa 三階段加總÷步數的純準確度，排除用過提示或悔棋的盤，從最近一盤往回取到約 SK.WIN 步（跟五邊形同視窗）；等級用同一個 gradeFor。
      不再讀 store.reports（那只有打開過賽後報告的盤、含妙著加分和 69／79／89 上限、沒排除提示悔棋） */
   const accKPI=G=>{const R=(G||[]).filter(g=>g&&g.pa&&!g.hu&&rowAcc(g)!=null).sort((a,b)=>(b.t||0)-(a.t||0));let s=0,n=0,gn=0;

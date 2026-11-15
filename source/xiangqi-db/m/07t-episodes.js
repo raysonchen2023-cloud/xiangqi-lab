@@ -51,7 +51,10 @@ function epCss(){if(document.getElementById("epCss"))return;const s=document.cre
 .ep-say.me{flex-direction:row-reverse;text-align:right}
 .ep-row{display:flex;gap:8px;margin-top:10px}.ep-row .btn{flex:1;margin:0}
 .ep-card{margin-top:10px;padding:10px 12px;border:1px dashed var(--line);border-radius:12px;line-height:1.7}
-.ep-ov{position:fixed;inset:0;z-index:60;background:var(--bg);display:flex;flex-direction:column;overflow:auto;padding:10px 12px calc(14px + env(safe-area-inset-bottom))}
+.ep-ov{position:fixed;inset:0;z-index:60;background:var(--bg);display:flex;flex-direction:column;overflow:auto;padding:calc(10px + var(--safeT,env(safe-area-inset-top,0px))) max(12px,env(safe-area-inset-right,0px)) calc(14px + env(safe-area-inset-bottom)) max(12px,env(safe-area-inset-left,0px))}
+html.gapfix .ep-ov{padding-top:calc(34px + var(--safeT,env(safe-area-inset-top,0px)))}
+/* 意見回饋 890（開發者 iPhone 主畫面 App 440×894 動態島：插曲「星夜茶話會」一分鐘眼力題結算頁、插曲「不速之客」最上面那行被狀態列和動態島蓋住）：
+  這種全螢幕插曲頁蓋在頂欄上面（z-index 60），原本上緣只留 10px；改成跟頂欄一樣讓開安全區（--safeT＝env(safe-area-inset-top)，02-shell 讀不到時補的值），新版 iOS 頂端模糊漸層（gapfix）再多讓 24px；橫放時左右讓開瀏海 */
 .ep-ov h3{margin:2px 0 4px;font-family:var(--serif);font-size:18px}.ep-ov .boardbox{padding:4px 0}.ep-ov .boardbox svg{max-width:440px}
 .ep-st{min-height:24px;font-weight:700;text-align:center;margin:4px 0}.ep-tm{font:900 22px var(--sans);text-align:center;color:var(--accent)}
 .ep-letter{position:relative;padding:14px 14px 18px;border-radius:10px;background:#f6efe0;color:#2a2018;font:17px/2.1 "Noto Serif TC",var(--serif);border:1px solid #d9c9a6;box-shadow:inset 0 0 30px rgba(120,90,40,.15)}

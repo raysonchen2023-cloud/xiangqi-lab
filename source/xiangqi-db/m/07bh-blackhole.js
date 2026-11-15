@@ -203,7 +203,7 @@ const BHX_IMGS=[];
 function bhxPreImg(){if(BHX_IMGS.length)return;try{const U=new Set(["data/park/bh_far2.webp"]);for(const k in BHX_PG){const p=BHX_PG[k];if(p.img)U.add(p.img);if(p.imgN)U.add(p.imgN)}
   for(const u of U){const im=new Image();im.decoding="async";im.src=u;BHX_IMGS.push(im);if(im.decode)im.decode().catch(()=>{})}}catch(e){}}
 function bhxCss(){if(document.getElementById("bhxCss"))return;const s=document.createElement("style");s.id="bhxCss";s.textContent=`
-#bhxPg{position:fixed;inset:0;z-index:9000;background-color:#05060d;background-position:center;background-size:cover;background-repeat:no-repeat;color:#f6efe0;display:flex;flex-direction:column;justify-content:center;align-items:center;padding:24px 22px calc(24px + env(safe-area-inset-bottom,0px));text-align:center;cursor:pointer;opacity:0;transition:opacity .6s;overflow:hidden}
+#bhxPg{position:fixed;inset:0;z-index:9000;background-color:#05060d;background-position:center;background-size:cover;background-repeat:no-repeat;color:#f6efe0;display:flex;flex-direction:column;justify-content:center;align-items:center;padding:max(24px,calc(12px + env(safe-area-inset-top,0px))) 22px calc(24px + env(safe-area-inset-bottom,0px));text-align:center;cursor:pointer;opacity:0;transition:opacity .6s;overflow:hidden}
 #bhxPg.on{opacity:1}
 #bhxPg::before{content:"";position:absolute;inset:0;background:radial-gradient(ellipse at 50% 55%,rgba(5,6,13,.1),rgba(5,6,13,.6));pointer-events:none}
 #bhxPg>*{position:relative}

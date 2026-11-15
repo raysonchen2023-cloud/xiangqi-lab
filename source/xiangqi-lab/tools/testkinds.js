@@ -15,6 +15,7 @@ const DIR = __dirname;
 const SKIP = new Set(["test-home-focus.js", "testkinds.js"]);
 /* 11/12 已逐項分類（開發者稽核 story/102_評比灌水誠實稽核.md 第 3 項） */
 const CLASSIFIED = new Set([
+  "test-mathmodel-1046.js",   /* 11/15 意見表 1046 數學模型（三方審查第一步＋第二步）：影子模式必改 1～4（存檔還原、送殺漏殺、輸棋上限 MXS.lose、k 與門檻）、K 48／32、升段保護、一般棋友 100 人門控、建議先練三級信心、talentCache6（行為 17、混合 4、原始碼 1） */
   "test-i18n.js",   /* 11/13 第 14 輪 F1 英文介面架構（m/07i18n.js；行為 31、混合 2、原始碼 4） */
   "test-p0-regress.js",   /* 11/13 三個 P0 發布版完整流程回歸 tools/qa/p0-regress.js 的純函式（行為 12、原始碼 1） */
   "test-handoff-facts.js",   /* 11/13 交接單事實段自動產生＋核對公開連結 review_loop/handoff-facts.js（行為 9、原始碼 1；評比工具不在公開副本時整檔跳過） */
@@ -83,7 +84,9 @@ const CLASSIFIED = new Set([
   "test-gate-siege.js",   /* 11/15 黑洞・星門圍城 gate-siege-v1 候選（m/07bhg-gatesiege.js 的 GSV 純規則、local.js tdRebuild 部署換手、接線原始碼；第 1、3、6 關） */
   "test-growth.js",   /* 11/15 對戰後的角色成長（m/07grw-growth.js）：快照比對只列有變化的、升級那句、體力只比同一次開 App、結果視窗插入時機（延後、逾時）、減少動態不跳數字；遠征令拿掉、配樂收藏與再看第一章搬到設定聲音頁（07mnq）；08b／07bhw／05b／m.html 接點（行為 9、混合 1、原始碼 4） */
   "test-starter.js",   /* 11/15 新手練習「先走再學」（m/07stq-starter.js）：六任務題目合法、第 4、5 題一步殺照規則判斷、跳過補齊不重複、老玩家判定、存檔版本、電腦退路、05b／07mnq／m.html 接點（行為 5、混合 3、原始碼 4） */
+  "test-td-orbit.js",   /* 11/15 開發者：黑洞塔防一指拖曳改成跟開場黑洞對戰一樣繞整球（gntUp、上下不設限），放手回近的正面或盤底 */
   "test-sw-offline.js",   /* 11/15 hspx 離線 3D 角色變小帥：sw.js 安裝時先存 3D 模型載入器（GLTFLoader.mjs 和它 import 的 .mjs），一般檔案也存 .mjs */
+  "test-fb888.js",   /* 11/15 意見回饋 888 iPad 首頁兩指放大縮不回（07x 整頁放大救援、回首頁回 1 倍）、889 669×869 首頁一窄條（07z HMW_PORT 0.89／HMW_SQ、07fl XFL_HOME_MAX）、890 插曲全螢幕頁讓開狀態列（07t .ep-ov）（行為 11、原始碼 3） */
   "test-preload-bg.js"   /* 11/14 評比第 17、18 輪第 5 項背景暫停與按需預載：00-util bgpEvery／bgpOn、09b 預載前景／背景／恢復三段、分區 z:<分區>、別朝代先不下載、閒置才補選讀、省流量、preload-list --retier（行為 12、混合 1、原始碼 1） */
 ]);
 /* 還沒逐項分類的檔（統計列為「待分類」）；新測試檔先放這裡，分好類再移到 CLASSIFIED */

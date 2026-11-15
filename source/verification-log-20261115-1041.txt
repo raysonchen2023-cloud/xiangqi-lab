@@ -1,22 +1,22 @@
 《象棋千秋》可重現驗證紀錄（verify-all.js）
 ========================================
-執行時間：2026-11-15T01:56:08.997Z（UTC）＝ 2026-11-15 09:56:08（臺灣時間）
+執行時間：2026-11-15T02:50:17.248Z（UTC）＝ 2026-11-15 10:50:17（臺灣時間）
 Node.js：v24.20.0；作業系統：win32 10.0.26300 x64
 倉庫資料夾：<倉庫資料夾>
 倉庫 commit：（不是 git 檢出；用下面的雜湊對照）
-release.json：版本 20261115-0954、html c46a286d192d、sw 54828cea6112
+release.json：版本 20261115-1041、html 8e94cf6bd0c9、sw 127d91e66fd3
 verify-all.js SHA-256：4204127ad2dd75bb8f95ed79039156af8cc4e52bfabd0ff04890588e4414af2b
 
 成品 SHA-256（SHA-1 前 12 碼）：
-  index.html  815d01ee52fe88fe81ba68b70bf9544ef09728ca052936d93a30a6c739a2f0b1  (c46a286d192d)
-  sw.js  3d71d7b9e6285689a6f75c0f9195effde8852c0ba0ea551041ccfbc079722c3f  (54828cea6112)
-  release.json  1bd172dfd02fb926887fa108455e125675a42e6c675afce0357a7a32fb769d35  (6a5560ed9387)
+  index.html  3ef5096649136e7d69f17e127f5982a46358b3e4080f09f6e5619ddd5a23f77a  (8e94cf6bd0c9)
+  sw.js  53ac59c7a41c9b0e1b86a31f94fa01a8a70b1cbb9a1a69db722e4cf2ed420df2  (127d91e66fd3)
+  release.json  38ad3f41c03a91be6b86f2332059e66b614491ecd3594df283cb1a05600293ee  (05077121a029)
   core.js  fdaea59621ff94d664218f14c1a11b9abe0d4566da7d3e45733caf34fa7a50d3  (972b7ec035c7)
-  engine.js  f22e34a95627fa0bdb68f72aa2983b6acb4b85e0226b5ae9dd7e4d5d93d9bb76  (fe5340a774c8)
+  engine.js  e29baeb7161f3eb7e7246a58aba4d4b80c9c296532f820bb5baa1865af251536  (ce8dcc4b84c5)
   engine/pikafish.wasm  7fb6fc805a36ced6a55626a9513b7dda821b0bbb5e830fa17f120f1550a9a331  (d568cded4f5b)
   engine/pikafish.js  dd5498bfb76381598d453a612d74e5e1955835452324c4d0b962a64fb44438f7  (77eca54d3204)
   engine/pikafish.nnue  7d13d73569a9b571ba0eb20cf1596247bc2a42738967e61afef6482b231e900e  (3a043e259a72)
-source/ 資料夾：381 個檔，樹雜湊 SHA-256 dc0a8814f3a11308b477b3065976a6d163e9b18f74f01cfd3de921d4e2ea351f
+source/ 資料夾：384 個檔，樹雜湊 SHA-256 171c11ab98e4a1f8a59cdd31be51398898c12218ed87be784733b99b08618986
 Pikafish 建置紀錄：<倉庫資料夾>\pikafish-src\build-record.json  SHA-256 489173747f8de4abec4f9dda704538fecb24af4c02f294e57b8f7ead857ad738
 （樹雜湊＝每個檔「相對路徑＋NUL＋SHA-256＋換行」照路徑排序後再算 SHA-256）
 
@@ -32,10 +32,10 @@ Pikafish 建置紀錄：<倉庫資料夾>\pikafish-src\build-record.json  SHA-25
 工具 SHA-256：4874be00c4f2fce8b777204299e23339abf56c472ee57bc2e603a5edaaf00e78
 輸出：
   成品核對：<倉庫資料夾>
-    ✔ release.json：版本 20261115-0954、html c46a286d192d、sw 54828cea6112（檢查時間 2026-11-15T01:54:48.517Z）
-    ✔ index.html SHA-1 前 12 碼 c46a286d192d，跟 release.json 一致
-    ✔ sw.js SHA-1 前 12 碼 54828cea6112，跟 release.json 一致
-    ✔ 版本號：index.html 20261115-0954、sw.js 20261115-0954、release.json 20261115-0954，三個一樣
+    ✔ release.json：版本 20261115-1041、html 8e94cf6bd0c9、sw 127d91e66fd3（檢查時間 2026-11-15T02:42:02.756Z）
+    ✔ index.html SHA-1 前 12 碼 8e94cf6bd0c9，跟 release.json 一致
+    ✔ sw.js SHA-1 前 12 碼 127d91e66fd3，跟 release.json 一致
+    ✔ 版本號：index.html 20261115-1041、sw.js 20261115-1041、release.json 20261115-1041，三個一樣
     ✔ release.json 自己註明有 3 支模組跟當時的原始碼不同（05-settings.js、07y-hubmap.js、07s4-passmap.js）；原始模組不公開，外部核對不了這一欄
   
   ✔ index.html、sw.js 跟 release.json 一致
@@ -64,7 +64,7 @@ Pikafish 建置紀錄：<倉庫資料夾>\pikafish-src\build-record.json  SHA-25
   
   ✔ 全部符合（△ 是照實列出的缺口，不算失敗）
 ----------------------------------------
-第 4 步 run-tests：通過（結束代碼 0，102.6 秒）
+第 4 步 run-tests：通過（結束代碼 0，124.7 秒）
 指令（在倉庫資料夾執行）：node source/run-tests.js
 工具 SHA-256：8bb3d8506adec7c119e694a0620858ecf79d366ccc43368454192fce41f824b9
 輸出：
@@ -98,6 +98,7 @@ Pikafish 建置紀錄：<倉庫資料夾>\pikafish-src\build-record.json  SHA-25
   test-evidence-shots.js	16/16	0/0	1/1	0/0
   test-family.js	14/14	0/0	4/4	0/0
   test-fb871.js	8/8	2/2	2/2	0/0
+  test-fb888.js	11/11	0/0	3/3	0/0
   test-fdroid-evidence.js	7/8（略過 1）	0/0	1/1	0/0
   test-gate-siege.js	23/23	0/0	1/1	0/0
   test-growth.js	9/9	1/1	4/4	0/0
@@ -115,6 +116,7 @@ Pikafish 建置紀錄：<倉庫資料夾>\pikafish-src\build-record.json  SHA-25
   test-ipad-fill.js	9/9	0/0	1/1	0/0
   test-land3d.js	2/2	0/0	1/1	0/0
   test-lefty.js	10/10	0/0	2/2	0/0
+  test-mathmodel-1046.js	15/17（略過 2）	4/4	1/1	0/0
   test-mp-p2.js	7/7	0/0	1/1	0/0
   test-mvt-hold.js	0/0	6/6	1/1	0/0
   test-name-safe.js	10/10	0/0	4/4	0/0
@@ -160,6 +162,7 @@ Pikafish 建置紀錄：<倉庫資料夾>\pikafish-src\build-record.json  SHA-25
   test-starter.js	5/5	3/3	4/4	0/0
   test-stats-kill.js	0/0	2/2	3/3	0/0
   test-sw-offline.js	0/0	0/0	2/2	0/0
+  test-td-orbit.js	1/1	0/0	3/3	0/0
   test-telemetry.js	12/12	0/0	2/2	0/0
   test-touch-fixes.js	5/5	2/2	5/5	0/0
   test-ui-1113.js	5/5	0/0	0/0	0/0
@@ -170,16 +173,18 @@ Pikafish 建置紀錄：<倉庫資料夾>\pikafish-src\build-record.json  SHA-25
   test-xfer4.js	10/10	0/0	1/1	0/0
   test-xqs-tb.js	0/0	4/4	2/2	0/0
   test-xsm-dark.js	0/0	0/0	0/0	15/15
-  合計	922/924（略過 2）	53/53	126/126	216/222（略過 6）
+  合計	949/953（略過 4）	57/57	133/133	216/222（略過 6）
   
-  交接單引用：行為 922/924（略過 2）、混合 53/53、原始碼比對 126/126、待分類 216/222（略過 6），共 1325 項。
+  交接單引用：行為 949/953（略過 4）、混合 57/57、原始碼比對 133/133、待分類 216/222（略過 6），共 1365 項。
   待分類的檔：test-bhfx.js、test-bhtd-combo.js、test-bhtd-r2.js、test-bhtd-rules.js、test-bhtl.js、test-dgl.js、test-home-pano.js、test-i18n-story.js、test-noscore.js、test-park3d-capbase.js、test-r17-qa.js、test-xsm-dark.js
-  四欄合計：通過 1317、失敗 0、略過 8、預期失敗 2（其中預期失敗卻通過 0）；三類項數合計 1325（含略過），預期失敗另計。
+  四欄合計：通過 1355、失敗 0、略過 10、預期失敗 2（其中預期失敗卻通過 0）；三類項數合計 1365（含略過），預期失敗另計。
   略過的項目（這個環境跑不了、沒有執行，不算通過）：
     ﹣ test-bhfx.js：④ 載入量：一般首頁不載 bossfx3d.js、不預載 data/bhtd；素材都放在 art/bhtd（build-site 複製到 data/bhtd）（要讀只在開發者電腦的素材 art/bhtd（魔王模型、特效圖只放 CDN；公開副本沒有，開發者電腦上照跑））
     ﹣ test-fdroid-evidence.js：真的公開倉庫（本機 git origin/main，不連網）：成品跟 release.json 一致、Pikafish 跟建置紀錄一致（沒有 site/.git）
     ﹣ test-handoff-facts.js：評比循環工具不在這個副本，跳過（沒有 handoff-facts.js）
     ﹣ test-home-pano.js：登記的每個變體都有左右兩屏的圖（864×1376＝一屏 768＋多蓋中間那屏 96），中間那屏也在；而且工具的 BAND 跟樣式的 112.5% 對得上（要讀只在開發者電腦的出圖工具 tools/homemap_pano.py 和 art/homemap 原圖（公開副本沒有；開發者電腦上照跑））
+    ﹣ test-mathmodel-1046.js：必改 1：真實引擎資料（xiangqi-db/analysis-cache.json）裡走進殺棋的步，還原後都不是正著、穩著（沒有 analysis-cache.json）
+    ﹣ test-mathmodel-1046.js：必改 4：calibrate-grades.js 只用最新 MXS 版本的盤（v1、v2 的新總分算法不同，不混算）（沒有 calibrate-grades.js（校正工具只在開發者電腦，公開副本沒有））
     ﹣ test-noscore.js：千秋盃虛擬棋客由裁判台代簽：開局寫棋客座位的一次性公開金鑰（sv 2）；棋客的棋步、認輸有簽名，真人、觀眾、裁判台都收；簽好名的盤照常計分（要千秋盃裁判台 cup-host.js 和 lobby-bots.js（營運程式，不公開；開發者電腦上照跑））
     ﹣ test-noscore.js：冒充棋客、重放：沒簽名的棋客認輸、用自己的金鑰冒簽、把棋客在別盤的真簽名搬過來、把棋客舊的那步換更大的 rev 重送——真人、觀眾、裁判台都不收，積分和賽果都不變（要千秋盃裁判台 cup-host.js 和 lobby-bots.js（營運程式，不公開；開發者電腦上照跑））
     ﹣ test-noscore.js：簽署完成前禁止計分入口：舊裁判台（sv 1）開的盤、棋客座位沒有金鑰——棋客沒簽名的認輸照舊收（相容），但這盤不進正式積分（要千秋盃裁判台 cup-host.js 和 lobby-bots.js（營運程式，不公開；開發者電腦上照跑））

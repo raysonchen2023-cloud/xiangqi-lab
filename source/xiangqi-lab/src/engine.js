@@ -51,8 +51,12 @@ var XQEngine=(function(){
       if(my!==LG)throw new Error("電腦棋手已重新啟動");mod=m;
       send("uci");await untilT(l=>l==="uciok",null,20000);
       const th=Math.max(1,Math.min(4,(navigator.hardwareConcurrency||2)-1));
-      send("setoption name Threads value "+th);send("setoption name Hash value 64");
+      /* 11/15 意見回饋 896（iOS 下黑洞玩一陣子整頁被系統重開）：量到進黑洞後 JS 多 120 MB、3D 貼圖約 240 MB；
+         iPhone／iPad 上雜湊表 64→16 MB（App 的搜尋都很淺，16 MB 夠用），神經網路讀進引擎後把記憶體檔案系統裡那份 nnue 刪掉（約 50 MB） */
+      const ios=/iP(hone|ad|od)/.test(navigator.userAgent)||(/Macintosh/.test(navigator.userAgent)&&navigator.maxTouchPoints>1);
+      send("setoption name Threads value "+th);send("setoption name Hash value "+(ios?16:64));
       send("isready");await untilT(l=>l==="readyok",null,20000);
+      try{m.FS.unlink("/pikafish.nnue")}catch(e){}
       XQEngine.threads=th})();
     const L=loading;L.catch(()=>{if(my===LG&&loading===L)reset()});return L}
   /* 11/13 晚：整個重來（local.js 等太久時叫）：停掉引擎、清掉卡住的排隊，下次搜尋重新啟動 */

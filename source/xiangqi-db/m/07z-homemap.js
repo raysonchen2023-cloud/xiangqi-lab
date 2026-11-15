@@ -53,7 +53,13 @@ const SHW_HOMEMAP={el:40,h:[.05,60,.0008],look0:[50,99],
    轉向、改視窗大小：07fl 包的 r07Wide 每次先問 hmwSync，比例跨過門檻就原地換圖、換座標、重掛走路角色，圖載好再重排一次。
    純計算 hmwKind／hmwSpots／hmwSrc 不碰 DOM，自動測試 xiangqi-lab/tools/test-home-wide.js 用 vm 跑 */
 const HMW_ON=true,HMW_IMGV="0910";   /* 寬版圖的版本：同檔名換圖時改掉，手機才會重抓 */
-const HMW_PORT=[0.6,0.85],HMW_LAND=1.3,HMW_LMIN=600;
+const HMW_PORT=[0.6,0.89],HMW_LAND=1.3,HMW_LMIN=600;   /* 回饋 889：直版上限 0.85 → 0.89（HMW_LAND 已不用，留著給舊說明對照） */
+/* 意見回饋 889（iPhone 主畫面 App 669×869，可用寬÷可用高約 0.87）：原本 0.85～1.3 這段「接近正方形」哪一種寬版都不用，退回原圖縮到等高置中＝中間一窄條、兩側模糊。
+   改成：① 0.6～0.89 直版 p34（直版上下最多裁 16%＝安全區 t 6%＋b 10%，0.75÷0.84≈0.89 以下 cover 剛好蓋滿）；
+     ② 0.89～1.04 用原圖（或季節／夜景／朝代變體），交給 07fl 首頁的直向填滿（XFL_HOME_MAX 1.04）：填滿寬度、上下裁，入口都留在看得到的範圍——直版在這段 cover 不滿（1.04 時只蓋 86% 寬）；
+     ③ 1.04 以上橫版 l1610（短邊 600 以上才算，手機橫放照舊）：1.04～1.22 上下各留一點模糊（1.04 時約 86% 高），1.22 以上蓋滿。
+   1.04＝直版、橫版用 cover 蓋到的比例一樣的那一點；原圖填滿寬度到 1.04 以上，最下面的入口會太靠近底部那條大按鈕，所以不再往上放寬 */
+const HMW_SQ=1.04;
 /* f 檔名、w/h 母圖尺寸、S 入口錨點（左%、上%；home-wide-coords.md，橫版大船太擠可改 53／14）、sl 主張紙條離看得到的上緣多少（圖高 %）、
    safe 最多裁掉多少（每邊，圖寬／圖高的比例：直版左右 6%、橫版上下 5%＝清單的安全區；另一個方向照錨點離邊多遠給寬一點，下緣都沒有地標） */
 const HM_SPOTS_P34=[["hmShip",54,15],["hmBattle",25,26],["hmLearn",80,26],["hmRec",23,44],["hmQuick",53,47.5]];
@@ -75,8 +81,8 @@ const HMW={p34:{f:"home_p34",w:1536,h:2048,S:HM_SPOTS_P34,sl:1.4,safe:{l:.06,r:.
 const HMW_BAD={};   /* 這次開 App 載不到的寬版（退回原圖，不再試） */
 /* 純計算：W 可用寬、av 可用高、vw #view 寬、vh 畫面高 → "p34"／"l1610"／""（原圖） */
 function hmwKind(W,av,vw,vh){if(!HMW_ON||!(W>0&&av>=120))return"";const r=W/av;
-  if(r>=HMW_PORT[0]&&r<=HMW_PORT[1]&&(vw>=600||vw>av))return HMW_BAD.p34?"":"p34";
-  if(r>=HMW_LAND&&Math.min(vw,vh)>=HMW_LMIN)return HMW_BAD.l1610?"":"l1610";return""}
+  if(r>=HMW_PORT[0]&&r<=HMW_PORT[1]&&(vw>=600||vw>av))return HMW_BAD.p34?"":"p34";   /* 回饋 889：0.85～0.89 也用直版；0.89～1.04＝原圖交給 07fl 填滿寬度 */
+  if(r>HMW_SQ&&Math.min(vw,vh)>=HMW_LMIN)return HMW_BAD.l1610?"":"l1610";return""}   /* 回饋 889：1.04～1.3 也用橫版（原本 HMW_LAND＝1.3 起） */
 /* 現在這頁該用原圖（沒有變體）才有寬版：經典世界、季節／晨昏／夜景／雨雪圖都不換 */
 function hmwBase(){try{return!(typeof sw7HomeWx==="function"&&sw7HomeWx())}catch(e){return true}}   /* 開發者 11/15「首頁天氣的問題」→ 選「用四季長卷拼成寬版」：首頁有季節／夜景／雨雪變體（07w7 sw7HomeWx 有回傳）就用那張變體＋三屏長卷鋪滿 iPad，跟學習、對戰同一季；沒有變體才用寬版原圖。以下是 11/13 舊說明：開發者 11/13 選「iPad 先一律用寬版原圖」：寬版只有原圖（白天、預設世界）一張；原本經典世界、節氣天氣（季節、雨雪）時退回直式變體圖，iPad 上幾乎看不到寬版。改成 iPad／摺疊機寬版一律優先（暫時沒有季節、日夜變化），手機照舊 */
 const hmwSrc=k=>HMW[k]?`data/homemap/${HMW[k].f}.webp?v=${HMW_IMGV}`:`data/homemap/home.webp?v=${HM_IMGV}`;
