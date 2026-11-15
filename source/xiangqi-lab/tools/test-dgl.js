@@ -225,7 +225,8 @@ test("〔原始碼〕接線：m.html 在觀星臺後面 include；route 開頭�
   assert.match(W, /typeof dglSlow==="function"\?dglSlow\(\):1/); assert.match(W, /typeof dglWalkHook==="function"\)dglWalkHook\(S\)/);
   const TD = rd(path.join(M, "07bht-td.js"));
   assert.match(TD, /xm=dglXmTake\(/); assert.match(TD, /td:\{lv:n,ch:ck,L,diff,sk,xm,tal\}/); assert.match(TD, /\(L\.sp0\|\|0\)\+Math\.max\(0,Math\.min\(XM_CAP,Math\.round\(\+cfg\.xm\|\|0\)\)\)/); assert.match(TD, /XM_CAP=200/);
-  assert.equal((TD.match(/dglXmTake\([^;]*,st0\.sp,BHTD\.SPK\)/g) || []).length, 2, "主線關、急襲都照 1 點星芒＝SPK 點靈力換");
+  assert.equal((TD.match(/dglXmTake\([^;]*,(?:st0\.sp|spM),BHTD\.SPK\)/g) || []).length, 2, "主線關、急襲都照 1 點星芒＝SPK 點靈力換");
+  assert.match(TD, /const spM=bhtdSpMax\(\);xm=dglXmTake\(Math\.min\(spM,[^;]*,spM,BHTD\.SPK\)/, "11/16 全隊招式：主線關開局星芒換靈力的上限改看全隊平均 bhtdSpMax()");
   for (const f of ["meChip", "bhGameEnd", "addXP"]) assert.match(SRC, new RegExp(`if\\(typeof ${f}==="function"\\)\\{const f0=${f};${f}=function`), "包一層 " + f);
 });
 

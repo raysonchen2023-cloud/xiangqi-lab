@@ -28,10 +28,16 @@ test("星門圍城：成長放大到跟塔防一樣明顯（Lv 20 元氣約 +32%
   const a=G.stats("x_swordboy",1),b=G.stats("x_swordboy",20);assert.equal(b.hp,Math.round(105*(1+.8*((1-Math.exp(-19/42))/(1-Math.exp(-99/42))))));
   assert.ok(b.hp-a.hp>=30&&b.hp-a.hp<=36,"元氣約 +32%");assert.equal(b.atk-a.atk,14);assert.equal(b.def-a.def,7)});
 
-test("星門圍城：有 sq 時元氣上限＝七種棋子的平均；招式、靈力仍是隊長那組；沒有 sq＝舊規則（整隊一組）", ()=>{
+test("星門圍城：有 sq 時元氣上限＝七種棋子的平均；11/16 取消隊長、全隊招式：靈力上限、攻防也是七種平均，招式池＝已加入的每一位照各自等級學會的；沒有 sq＝舊規則（整隊一組）", ()=>{
   const S=SQ(),P=gs([["K",5,1],["k",4,10],["R",1,1]],{sq:S}),td=P.td,avg=Math.round(G.PCS.reduce((s,pc)=>s+G.stats(S[pc].ck,S[pc].L).hp,0)/7);
+  const avgK=k=>G.PCS.reduce((s,pc)=>s+G.stats(S[pc].ck,S[pc].L)[k],0)/7;
   assert.equal(td.me.hp,avg);assert.equal(td.me.hpMax!=null?td.me.hpMax:td.me.max!=null?td.me.max:avg,avg);
-  assert.equal(td.me.atk,G.stats("x_swordboy",10).atk,"隊長那組給招式用");assert.equal(td.sq.N.atk,G.stats("x_miaogirl",30).atk);assert.equal(td.sq.C.wood,1);
+  assert.ok(Math.abs(td.me.atk-avgK("atk"))<1e-9,"攻擊＝七種平均（不再是隊長那組）");assert.ok(Math.abs(td.me.def-avgK("def"))<1e-9,"防禦＝七種平均");assert.equal(td.me.spMax,Math.round(avgK("sp")),"靈力上限＝七種平均");
+  assert.equal(td.sq.N.atk,G.stats("x_miaogirl",30).atk);assert.equal(td.sq.C.wood,1);assert.equal(td.sq.N.sp,G.stats("x_miaogirl",30).sp,"squad() 多帶 sp");
+  const pool=J(G.skOfSq(td.sq));assert.ok(pool.length>0);for(const id of pool){const s=G.SKM[id];assert.ok(G.PCS.some(pc=>S[pc].ck===s.ch&&!S[pc].wood&&s.lv<=S[pc].L),id+" 是已加入的夥伴照自己等級學會的")}
+  assert.ok(!pool.some(id=>["x_spiritgirl","x_martialgirl","x_bing"].includes(G.SKM[id].ch)),"木棋靈（還沒加入）的招不算");assert.ok(pool.some(id=>G.SKM[id].ch==="x_miaogirl")&&pool.some(id=>G.SKM[id].ch==="x_swordboy"),"不只隊長那位");
+  assert.deepEqual(J(td.sk),pool.slice(0,4),"沒選過＝前 4 招");assert.ok(td.sk.length<=4);
+  const mid=pool.filter(id=>G.SKM[id].ch==="x_miaogirl")[0];assert.deepEqual(J(G.skPickSq(td.sq,[mid,"zz",mid])),[mid],"存的招照帶、不認得的與重複的拿掉");
   const O=gs([["K",5,1],["k",4,10],["R",1,1]],{});assert.equal(O.td.sq,null);assert.equal(O.td.me.hp,G.stats("x_swordboy",10).hp)});
 
 test("星門圍城：我方擒子用「吃子那顆」的攻擊（傌吃＝小梅 Lv30）；同一盤沒有 sq 時用隊長的攻擊", ()=>{
@@ -46,11 +52,16 @@ test("星門圍城：我方被擒用「被吃那顆」的防禦（俥被吃＝�
   const e=P.td.ev.find(x=>x.k==="cap"&&x.by==="b");assert.ok(e,"黑方擒子有記事件");assert.equal(e.raw,G.dmg(G.CAPB.R,P.td.en.atk,G.stats("x_swordboy",1).def));
   assert.equal(G.defR(P.td,"K"),G.stats("x_shuai",40).def);assert.equal(G.atkR(P.td,"N"),G.stats("x_miaogirl",30).atk)});
 
-test("塔防：有 sq 時元氣上限＝七種的平均（天賦照樣套）；練習賽不帶；沒有 sq＝舊規則", ()=>{
+test("塔防：有 sq 時元氣上限＝七種的平均（天賦照樣套）；11/16 取消隊長：靈力上限、每回合回靈、攻防也是七種平均、招式池是全隊的；練習賽不帶；沒有 sq＝舊規則", ()=>{
   const S=SQ(),P={board:C.parseFen(B.startFen(1,C)),turn:"r",moves:[],pos:[]};const td=B.boot({lv:1,ch:"x_swordboy",L:10,diff:2,sq:S},P,C);
   const avg=Math.round(B.PCS?0:0)+Math.round(["R","N","B","A","K","C","P"].reduce((s,pc)=>s+B.stats(S[pc].ck,S[pc].L,{}).hp,0)/7);
   assert.equal(td.me.max,avg);assert.equal(B.atkR(td,"N"),B.stats("x_miaogirl",30,{}).atk);assert.equal(B.defR(td,"A"),B.stats("x_shi",6,{}).def);
-  assert.equal(td.me.atk,B.stats("x_swordboy",10,{}).atk,"隊長那組給招式、畫面");
+  const avgK=k=>["R","N","B","A","K","C","P"].reduce((s,pc)=>s+B.stats(S[pc].ck,S[pc].L,{diff:2})[k],0)/7;
+  assert.ok(Math.abs(td.me.atk-avgK("atk"))<1e-9,"攻擊＝七種平均（不再是隊長那組）");assert.ok(Math.abs(td.me.def-avgK("def"))<1e-9,"防禦＝七種平均");
+  assert.equal(td.me.spMax,Math.round(avgK("sp")),"靈力上限＝七種平均");assert.equal(td.me.spRg,Math.round(avgK("spRegen")),"每回合回靈＝七種平均");assert.equal(td.sq.N.spRegen,B.stats("x_miaogirl",30,{diff:2}).spRegen,"squad() 多帶 spRegen");
+  const own=c=>B.SK.filter(s=>s.ch===c).map(s=>s.id),mz=B.SK.find(s=>s.ch==="x_miaogirl"&&s.lv<=30).id,wd=B.SK.find(s=>s.ch==="x_bing"&&s.lv<=1).id;
+  const t2=B.boot({lv:1,ch:"x_swordboy",L:10,diff:2,sq:S,sk:[mz,wd]},{board:C.parseFen(B.startFen(1,C)),turn:"r",moves:[],pos:[]},C);assert.deepEqual(J(t2.sk),[mz],"夥伴（小梅）的招能帶；木棋靈（步越溪）的不能");
+  assert.ok(td.sk.length>0&&td.sk.length<=4&&td.sk.every(id=>!own("x_bing").includes(id)&&!own("x_spiritgirl").includes(id)&&!own("x_martialgirl").includes(id)),"沒選過＝全隊已學會的前 4 招，不含木棋靈的");
   const tl=B.boot({lv:"tl",ch:"x_swordboy",L:1,sq:S},{board:C.parseFen(B.startFen("tl",C)),turn:"r",moves:[],pos:[]},C);assert.equal(tl.sq,null,"練習賽照劇本");
   const O=B.boot({lv:1,ch:"x_swordboy",L:10,diff:2},{board:C.parseFen(B.startFen(1,C)),turn:"r",moves:[],pos:[]},C);assert.equal(O.sq,null);assert.equal(O.me.max,B.stats("x_swordboy",10,{diff:2}).hp)});
 
@@ -58,7 +69,7 @@ test("〔原始碼〕扣血接點：兩種規則的擒子／被擒／將軍／�
   const GS=rd("xiangqi-db/m/07bhg-gatesiege.js"),TD=rd("xiangqi-db/m/07bht-td.js");
   assert.ok(GS.includes("{vp,cp:pt,fc:fc?1:0,tag:gtag,def:def0,atk:atkR(td,pt)}"));assert.ok(GS.includes('queue(td,"r",CAPB[vp],"cap",{vp,cp:pt,def:defR(td,vp)})'));
   assert.ok(GS.includes('const defOf=(td,side)=>side==="b"?td.en.def+GUARD*guards(td):defR(td,"K");'));
-  assert.ok(GS.includes('squad((cfg.sq!==undefined?cfg.sq:(typeof ptySquad==="function"?ptySquad():null)))'));assert.ok(GS.includes("td:{mode:GSV.MODE,lv:n,ch:ck,L,sk:P.sk[ck],hard}}"),"星門圍城開局呼叫原樣");
+  assert.ok(GS.includes('squad((cfg.sq!==undefined?cfg.sq:(typeof ptySquad==="function"?ptySquad():null)))'));assert.ok(GS.includes('td:{mode:GSV.MODE,lv:n,ch:ck,L,sk:P.sk["*"],hard}}'),"星門圍城開局呼叫（11/16 全隊招式：招式存在 P.sk[\"*\"]）");
   assert.ok(TD.includes("capDmg(m.cap,pc,atkR(td,up(pc)),"));assert.ok(TD.includes("*CAPM[up(pc)])),defR(td,up(m.cap)))"));assert.ok(TD.includes('defDmg(CHK_HIT,defR(td,"K"))'));
   assert.ok(TD.includes('squad((cfg.sq!==undefined?cfg.sq:(typeof ptySquad==="function"?ptySquad():null)),cfg)'));assert.ok(TD.includes("td:{lv:n,ch:ck,L,diff,sk,xm,tal}"),"塔防開局呼叫原樣");
   assert.ok(!/td\.me\.def\),b\.indexOf\("K"\)/.test(TD),"被將軍不再用整隊防禦");

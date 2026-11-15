@@ -32,9 +32,9 @@ function mv(P,u){const f=sq(u.slice(0,2)),t=sq(u.slice(2,4));assert.ok(C.legal(P
 const LVS=[1,6,12,17,23,30,60,100];
 
 // ====================== ① 規則：劇本 ======================
-test("練習賽開局：專用 FEN、紅方七種子都在 EYE0、合法（沒人被將、不照面、紅方有步）；設定照規劃", ()=>{
-  const b=C.parseFen(B.startFen("tl",C));
-  for(const[p,q]of Object.entries(J(B.EYE0)))assert.equal(b[q],p,`陣眼子 ${p} 要在格 ${q}`);
+test("練習賽開局：專用 FEN、紅方七種子各至少一顆（11/16 取消陣眼子，EYE0 拿掉）、合法（沒人被將、不照面、紅方有步）；設定照規劃", ()=>{
+  const b=C.parseFen(B.startFen("tl",C));assert.equal(B.EYE0,undefined,"EYE0 拿掉");
+  for(const p of"KABNRCP")assert.ok(b.includes(p),`紅方要有 ${p}`);
   assert.ok(!C.inCheck(b,"r")&&!C.inCheck(b,"b"));assert.ok(C.legal(b,"r").length>0);
   assert.equal(T.hp,8);assert.equal(T.red.length,3);assert.equal(T.blk.length,2,"星樞照劇本走 2 步（local.js lv.mirror 上限 4）");
   assert.ok(T.blk.every(u=>/^[a-i][0-9][a-i][0-9]$/.test(u)),"mirror 格式");
@@ -53,7 +53,7 @@ for(const ch of Object.keys(B.CH))test(`劇本 ${B.CH[ch].n}：Lv ${LVS.join("�
     assert.equal(B.why(P,id,C),null,tag+" 第 1 招放得出來");
     const tg=(T.tg[id]||[]).map(sq);const r=B.cast(P,{k:id,tg},C);assert.ok(r&&!r.err,tag+" 放招："+(r&&r.err));
     if(P.ed&&P.ed.length){const S={start:P.start,startTurn:"r",moves:P.moves.map(m=>({f:m.f,t:m.t})),ed:J(P.ed)};tdRebuild(S);assert.deepEqual(J(S.board),J(P.board),tag+" tdRebuild 重放一樣")}
-    assert.ok(B.sqOf(td,td.eye)!=null,tag+" 陣眼子在盤上");
+    assert.equal(td.eye,undefined,tag+" 11/16 取消陣眼子：練習賽沒有陣眼子");
     const h=td.en.hp;assert.ok(h>=1&&h<=5,tag+" 收尾前星樞剩 1～5："+h);
     const e=mv(P,T.red[2]);assert.ok(e&&e.end&&e.end.w==="r",tag+" 將軍打光");assert.equal(e.end.why,"星樞元氣歸零");assert.ok(td.me.hp>0,tag+" 我方元氣 >0");
     assert.ok(td.ev.some(x=>x.k==="hit"&&x.why==="將軍"),tag+" 將軍扣 5")}
@@ -83,7 +83,7 @@ test("第一次才邀請：沒練過、沒跳過、塔防沒輸贏＝邀請；�
   m.b.find(x=>x[0]==="▶ 先練一盤")[1]();const j=K.log.jStart[0];assert.equal(j.id,"bh:tl");assert.equal(j.b.td.lv,"tl");assert.deepEqual(J(j.b.lv.mirror),J(T.blk));assert.equal(j.f,undefined,"不傳 force");
   assert.equal(K.mem.park3d,undefined,"不動玩家的 park3d 設定");assert.equal(JSON.parse(K.mem.bhRet).k,"tang");
 });
-test("步驟從盤面算、說明看過才往下；走錯不送出（第 2 次給黃框）；放招、選目標只准教學那一步", ()=>{
+test("步驟從盤面算、說明看過才往下；走錯不送出（第 2 次給黃框）；放招、選目標只准教學那一步；11/16 取消陣眼子：t4 問答拿掉，放完招直接 t5", ()=>{
   const K=tlKit({ch:"x_martialgirl"}),c=K.ctx;const P=game("x_martialgirl",1);const st=()=>Object.assign({},P,{id:"g1",journey:"bh:tl",human:"r",thinking:false,result:P.result||null});
   c.__st=st;const step=()=>run(K,"bhtlStep(__st())"),guard=(f,t)=>{c.__g=[f,t];return run(K,"bhtlGuard(__st(),__g[0],__g[1])")};
   assert.equal(step(),"t0");assert.ok(guard(sq("e3"),sq("e4")),"說明還沒看完不能走");run(K,'bhtlMark(__st(),"t0")');assert.equal(step(),"t1");
@@ -93,7 +93,9 @@ test("步驟從盤面算、說明看過才往下；走錯不送出（第 2 次�
   mv(P,T.red[1]);assert.equal(step(),"w2");mv(P,T.blk[1]);assert.equal(step(),"t2b");run(K,'bhtlMark(__st(),"t2b")');assert.equal(step(),"t3");
   assert.ok(guard(sq("i6"),sq("e6")),"還沒放招不能收尾");assert.equal(run(K,"bhtlCastOk(__st())"),true,"t3 可以放招");
   assert.equal(run(K,'bhtlTgOk(__st(),{id:"lei1",pk:[]},'+sq("d3")+")"),true);assert.equal(run(K,'bhtlTgOk(__st(),{id:"lei1",pk:[]},'+sq("c3")+")"),false,"只亮教學指定的格");
-  B.cast(P,{k:"lei1",tg:[sq("d3")]},C);assert.equal(step(),"t4");assert.ok(guard(sq("i6"),sq("e6")),"先回答問題");run(K,'bhtlMark(__st(),"t4")');assert.equal(step(),"t5");
+  B.cast(P,{k:"lei1",tg:[sq("d3")]},C);assert.equal(step(),"t5","放完招直接收尾（沒有 t4）");
+  const X=vm.runInContext("BHTL_TX",c);for(const k of["t4","t4q","t4no","t4a","ask","eye"])assert.equal(X[k],undefined,"BHTL_TX 沒有 "+k);assert.equal(X.kid.t4,undefined);
+  assert.equal(X.sum[3],"將軍也會扣星樞的元氣");assert.ok(!JSON.stringify(X).includes("陣眼"),"旁白不再提陣眼子");
   assert.equal(guard(sq("i6"),sq("e6")),null,"收尾那一步送出");const e=mv(P,T.red[2]);P.result={w:e.end.w,why:e.end.why};assert.equal(step(),"end");
   run(K,"bhtlEnd(__st())");const S=JSON.parse(K.mem.bhtl);assert.ok(S.done);assert.equal(S.n,1);assert.equal(S.cur,null);
 });

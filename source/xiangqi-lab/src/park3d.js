@@ -2264,7 +2264,10 @@
     /* 11/14 正式交給外掛特效（太虛星尊魔法 bossfx3d.js，經 fxApi().hook）的繪製掛勾：每一格畫三次，每一次 render 前叫一次——
        "main"＝主畫面（星盤藏著）、"mirror"＝盤底倒影（棋子已搬進 MG；省電或盤上沒子時這次不畫、也不叫）、"board"＝只畫半透明星盤 */
     const FXH=new Set(),fxH=k=>{for(const f of FXH)try{f(k)}catch(e){}};
-    const gntMirror=()=>{if(!MG)return;if(BGL&&BGL.scale.x!==GS)BGL.scale.set(GS,1,GS);if(BRV&&BRV.scale.x!==GS)BRV.scale.set(GS,GS,1);const L=[];for(const k in pieces){const g=pieces[k];if(g&&g.parent===sc&&g.visible)L.push(g)}
+    const gntMirror=()=>{if(!MG)return;if(BGL&&BGL.scale.x!==GS)BGL.scale.set(GS,1,GS);if(BRV&&BRV.scale.x!==GS)BRV.scale.set(GS,GS,1);
+      /* 11/16 開發者「正面的楚河漢界字會重疊，另一面不會」：BRV 在鏡像高度、朝上，俯視時隔著半透明盤面跟正面貼圖的字幾乎疊在一起變重影（盤底看時正面那層被剔除，所以不疊）。
+         照鏡頭仰角淡出：40° 以上不畫、20° 以下照舊 .95（低角度看倒影時河界還在，11/13 要的鏡像面河界不拿掉），中間漸變 */
+      if(BRV){const a=Math.atan2(cam.position.y-TOP,Math.hypot(cam.position.x,cam.position.z))*180/PI,op=a>=40?0:a<=20?.95:.95*(40-a)/20;if(BRV.material.opacity!==op){BRV.material.opacity=op;BRV.visible=op>0}}const L=[];for(const k in pieces){const g=pieces[k];if(g&&g.parent===sc&&g.visible)L.push(g)}
       for(const g of L)MG.add(g);   /* 先把棋子移進 MG，下面藏東西時才不會連棋子一起藏 */
       const hid=[],lt=[],fl=[],bg=sc.background;for(const o of sc.children){if(o.isLight)lt.push([o,o.position.y]);else if(o.visible&&o!==MG){o.visible=false;hid.push(o)}}
       BU.visible=false;bplane.visible=false;sc.background=null;
@@ -2410,7 +2413,8 @@
     const TDOR={yaw:0,el:0,z:1,pin:null,hold:0,rel:0,t:0,rm:(()=>{try{return matchMedia("(prefers-reduced-motion: reduce)").matches}catch(e){return false}})()};   /* rm：減少動態＝放手 1.5 秒後直接切回，不滑 */
     /* 11/15 開發者「不是這種鏡像反轉，參考遊戲最開頭的黑洞對戰」：改成跟自由鏡頭一樣繞整球——上下拖曳不設上下限，一路轉過頭頂就到棋盤底下，頭頂方向照 gntUp 連續轉（轉過頭頂畫面自然顛倒、盤底鏡像角色是正的），不再到盤底突然翻面；
        放手回到比較近的那個預設：正面（仰角＝預設）或盤底（翻過頭頂的預設＝仰角＋180°），在盤底放手就停在盤底 */
-    const tdElT=()=>{if(!TDC)return 0;const w=x=>x-Math.round(x/(2*PI))*2*PI,dF=w(TDOR.el),dB=w(TDOR.el-PI);return Math.abs(dF)<=Math.abs(dB)?TDOR.el-dF:TDOR.el-dB};
+    /* 11/16 開發者「放開手後，棋盤會轉向到錯的一邊」→ 選單選「一律回正面」：不再停在盤底（盤底的預設繞到黑方那一側，紅方跑到畫面上方），放手後一律慢慢轉回正面（紅方在下、從上往下看） */
+    const tdElT=()=>{if(!TDC)return 0;const w=x=>x-Math.round(x/(2*PI))*2*PI;return TDOR.el-w(TDOR.el)};
     const tdOrbBack=now=>{const dt=Math.min(100,now-(TDOR.t||now));TDOR.t=now;const elT=tdElT();if(TDOR.hold||(!TDOR.yaw&&Math.abs(TDOR.el-elT)<1e-9&&TDOR.z===1))return;if(now-TDOR.rel<1500){pwPoke(100);return}
       if(TDOR.rm){TDOR.yaw=0;TDOR.el=elT;TDOR.z=1;return}TDOR.yaw-=Math.round(TDOR.yaw/(2*PI))*2*PI;const k=1-Math.exp(-dt/260);TDOR.yaw*=1-k;TDOR.el=elT+(TDOR.el-elT)*(1-k);TDOR.z=1+(TDOR.z-1)*(1-k);if(Math.abs(TDOR.yaw)<.002&&Math.abs(TDOR.el-elT)<.002&&Math.abs(TDOR.z-1)<.002){TDOR.yaw=0;TDOR.el=elT;TDOR.z=1}pwPoke(100)};
     const tdBox=(e,d)=>{cam.clearViewOffset();cam.position.set(0,TOP+Math.sin(e)*d,Math.cos(e)*d);cam.up.set(0,1,0);cam.lookAt(TDL.set(0,TOP,0));cam.updateMatrixWorld();cam.updateProjectionMatrix();

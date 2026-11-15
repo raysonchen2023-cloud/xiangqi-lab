@@ -18,7 +18,7 @@ const SRCF=(()=>{const i=process.argv.indexOf("--src");return i>0?process.argv[i
 const ctx={console,Math,JSON};vm.createContext(ctx);vm.runInContext(fs.readFileSync(SRCF,"utf8")+"\n;this.GSV=GSV;",ctx);const G=ctx.GSV;
 const SQUADS={"第1天":{lead:3,lv:{R:3},wood:1},"第3天":{lead:6,lv:{R:6,N:4,K:4,A:4},wood:3},"第8天":{lead:9,lv:{R:9,N:8,K:7,A:7,B:7,P:7,C:7},wood:4},"練很高":{lead:20,lv:{R:20,N:18,K:18,A:18,B:18,P:18,C:18},wood:10}};
 const PCOF={R:"x_swordboy",N:"x_miaogirl",B:"x_spiritgirl",A:"x_shi",K:"x_shuai",C:"x_martialgirl",P:"x_bing"};
-const SQN=(()=>{const i=process.argv.indexOf("--squad");return i>0?process.argv[i+1]:null})();if(SQN&&!SQUADS[SQN])throw new Error("--squad 只有："+Object.keys(SQUADS).join("、"));
+const SQN=(()=>{const i=process.argv.indexOf("--squad");return i>0?process.argv[i+1]:null})();const PICK=(()=>{const i=process.argv.indexOf("--pick");return i>0?process.argv[i+1]:null})();   /* 11/16 --pick best＝全隊最強 4 招 */if(SQN&&!SQUADS[SQN])throw new Error("--squad 只有："+Object.keys(SQUADS).join("、"));
 const SQ=SQN?Object.fromEntries(Object.entries(PCOF).map(([pc,ck])=>{const v=SQUADS[SQN].lv[pc];return[pc,v?{ck,L:v}:{ck,L:SQUADS[SQN].wood,wood:1}]})):null;
 const arg=(k,d)=>{const i=process.argv.indexOf(k);return i>0?process.argv[i+1]:d};
 /* --patch 檔.json：調數值用，{"4":{"hp":120,"waves":[…]}} 蓋掉那一關的欄位再跑（不改 App 的檔；結果 meta.patch 會記下來） */
@@ -50,7 +50,8 @@ async function newEngine(){PM=PM||require(path.join(EDIR,"pikafish.js"));NNUE=NN
 const redDepth=P=>P.td.depth||2;
 /* ---------- 一盤 ---------- */
 function newGame(lv,ch,L){const start=G.startFen(lv,C),P={start,startTurn:"r",board:C.parseFen(start),turn:"r",moves:[],human:"r",ed:[]};P.pos=[C.fen(P.board,"r")];
-  P.td=G.boot(Object.assign({mode:G.MODE,lv,ch,L,sk:G.skOf(ch,L).slice(0,4),hard:HARDV?1:0},SQ?{sq:SQ}:{}),P,C);return P}   /* --hard：困難版（GSV.lvOf 的那一組參數） */
+  const sk0=SQ&&typeof G.skOfSq==="function"?(PICK==="best"?G.skOfSq(G.squad(SQ)).map(id=>G.SKM[id]).sort((x,y)=>y.lv-x.lv||y.cost-x.cost).slice(0,4).map(s=>s.id):null):G.skOf(ch,L).slice(0,4);   /* 11/16 全隊招式：--squad 時招式池＝全隊；--pick best＝挑等級最高的 4 招 */
+  P.td=G.boot(Object.assign({mode:G.MODE,lv,ch,L,sk:sk0,hard:HARDV?1:0},SQ?{sq:SQ}:{}),P,C);return P}   /* --hard：困難版（GSV.lvOf 的那一組參數） */
 const fenOf=P=>C.fen(P.board,P.turn)+" - - 0 1";
 const clamp=v=>Math.max(-1500,Math.min(1500,v));
 async function engLines(E,P,depth,mpv,sm){if(!E)return{lines:[]};return E.search(fenOf(P),depth,mpv,sm)}

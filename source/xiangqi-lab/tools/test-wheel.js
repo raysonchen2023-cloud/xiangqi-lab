@@ -37,12 +37,14 @@ test("三盤固定短中局：開局合法（沒人被將、不照面、紅方�
     assert.ok(pl.open.length+pl.waves.length<16,"短中局：敵方少於 16 子")}
   const M=W.newMatch({ch:"x_swordboy",L:1,id:"a"},C);assert.equal(M.bs.length,3);assert.equal(W.NEED,2);assert.equal(M.need,2,"三盤版 need＝2（三盤拿兩勝）");assert.equal(M.sp.v,W.SP0);assert.equal(M.sp.max,G.stats("x_swordboy",1).sp);
   assert.equal(new Set(M.bs.map(B=>B.nm)).size,3,"三盤名稱不一樣");assert.equal(new Set(M.bs.map(B=>B.P.start)).size,3,"三盤擺法不一樣");
-  for(const B of M.bs){assert.equal(B.P.td.pool,1);assert.equal(B.P.td.mode,G.MODE);assert.ok(B.eye);assert.deepEqual(kinds(M,B.i),[],"開局沒有危險角標")}
+  for(const B of M.bs){assert.equal(B.P.td.pool,1);assert.equal(B.P.td.mode,G.MODE);assert.equal(B.eye,undefined,"11/16 取消陣眼子：每盤沒有 B.eye");assert.equal(B.seal,-1);assert.deepEqual(kinds(M,B.i),[],"開局沒有危險角標")}
   assert.equal(W.newMatch({ch:"x_swordboy",L:1,id:"a2",lvs:[101,102]},C).need,2,"兩盤（舊版）沒指定 need＝兩盤皆勝")});
 
-test("陣眼子＝本命子那一種（帥改仕），七位都找得到；各盤各一顆", ()=>{
-  const want={x_swordboy:"R",x_spiritgirl:"B",x_martialgirl:"C",x_miaogirl:"N",x_shuai:"A",x_shi:"A",x_bing:"P"};
-  for(const ch in want){const M=W.newMatch({ch,L:1,id:"e"+ch},C);for(const B of M.bs){const td=B.P.td,q=G.sqOfId(td,B.eye);assert.equal(B.P.board[q],want[ch],ch)}}});
+test("11/16 取消陣眼子：WHL.EYE／WHL.eyeOf 拿掉；七位開局各盤都沒有陣眼子（B.eye 不存在、seal 一直 -1）；move 回傳沒有 eye", ()=>{
+  assert.equal(W.EYE,undefined);assert.equal(W.eyeOf,undefined);assert.equal(typeof W.sealed,"function","sealed 留著給改版前的舊盤");
+  for(const ch of["x_swordboy","x_spiritgirl","x_martialgirl","x_miaogirl","x_shuai","x_shi","x_bing"]){const M=W.newMatch({ch,L:1,id:"e"+ch},C);
+    for(const B of M.bs){assert.ok(!("eye" in B),ch+" 第 "+(B.i+1)+" 盤沒有 eye 欄位");assert.equal(B.seal,-1,ch);assert.equal(B.P.td.eye,undefined,ch);assert.equal(W.sealed(M,B.i),false)}
+    const P=M.bs[0].P,x=C.legal(P.board,"r")[0],r=W.move(M,0,x[0],x[1],C);assert.ok(r.ok&&!("eye" in r),ch+" move 回傳沒有 eye")}});
 
 test("共用靈力不疊加：兩盤都走完一輪只回一次（+6），GSV 每盤結算不再各回 4；擒子回靈兩盤合計受同一個收入上限 10", ()=>{
   const M=match();round(M);assert.equal(M.R,1);assert.equal(M.sp.v,W.SP0+W.RG,"一個總輪只回一次");
@@ -71,15 +73,16 @@ test("一輪最多一招、招式只作用在目前這盤；冷卻與每局次�
   /* 每局次數：緊急回復每局 2 次，算全場 */
   assert.equal(G.SKM.gheal.max,2)});
 
-test("陣眼子被吃：只封該盤招式一輪（下一個總輪），不動共用靈力；各盤血量獨立", ()=>{
-  const M=match({id:"t4",boards:[tiny([["R",1,5],["r",1,7]]),tiny()]}),A=M.bs[0],B=M.bs[1];const eyeSq=G.sqOfId(A.P.td,A.eye);
-  assert.equal(eyeSq,Q(1,5),"齊轍的陣眼是俥（盤上掃到的第一顆：a5）");
+test("11/16 取消陣眼子：俥（原本齊轍的陣眼）被吃不封招、不動共用靈力；各盤血量獨立；改版前的舊盤（seal 有值）照樣封一輪就解", ()=>{
+  const M=match({id:"t4",boards:[tiny([["R",1,5],["r",1,7]]),tiny()]}),A=M.bs[0],B=M.bs[1];
   assert.ok(!W.move(M,0,Q(5,1),Q(5,2),C).err);const sp0=J(M.sp),hpB=B.P.td.me.hp;
-  const r=W.reply(M,0,Q(1,7),Q(1,5),C);assert.ok(r.ok&&r.eye,"黑車吃掉陣眼");assert.deepEqual(J(M.sp),sp0,"共用靈力不動");
-  assert.ok(A.P.td.me.hp<A.P.td.me.max,"A 盤被擒扣血");assert.equal(B.P.td.me.hp,hpB,"B 盤血量不受影響");assert.equal(A.seal,1);
+  const r=W.reply(M,0,Q(1,7),Q(1,5),C);assert.ok(r.ok&&!("eye" in r),"黑車吃掉俥：回傳沒有 eye");assert.deepEqual(J(M.sp),sp0,"共用靈力不動");
+  assert.ok(A.P.td.me.hp<A.P.td.me.max,"A 盤被擒扣血");assert.equal(B.P.td.me.hp,hpB,"B 盤血量不受影響");assert.equal(A.seal,-1,"不封招");
   rq(M,1);bq(M,1);assert.equal(M.R,1);
-  assert.equal(W.why(M,0,"gheal",C),"陣眼被吃：這盤封招一輪");assert.equal(W.cast(M,0,{k:"gheal"},C).err,"陣眼被吃：這盤封招一輪");
-  assert.notEqual(W.why(M,1,"gheal",C),"陣眼被吃：這盤封招一輪","另一盤不封");assert.equal(W.why(M,0,"dep",C),"","封的是招式，部署照常");
+  assert.doesNotMatch(W.why(M,0,"gheal",C),/封招|陣眼/,"被擒不停招");assert.equal(W.sealed(M,0),false);
+  /* 改版前沒下完的舊盤：seal 還在 → 照舊封這一輪（只封招式、部署照常、另一盤不封） */
+  A.seal=M.R;assert.equal(W.why(M,0,"gheal",C),"這盤封招一輪");assert.equal(W.cast(M,0,{k:"gheal"},C).err,"這盤封招一輪");
+  assert.notEqual(W.why(M,1,"gheal",C),"這盤封招一輪","另一盤不封");assert.equal(W.why(M,0,"dep",C),"","封的是招式，部署照常");
   W.move(M,0,Q(5,2),Q(5,1),C);W.reply(M,0,Q(4,10),Q(4,9),C);round2(M,1);assert.equal(M.R,2);assert.equal(W.why(M,0,"gheal",C),"","封一輪就解");
   function round2(M,i){rq(M,i);bq(M,i)}});
 
@@ -198,50 +201,51 @@ test("和局規則（我訂的）：和局那盤不算勝也不算敗；還可�
 test("危險預警・將與危：被將軍；已預告的入侵就會歸零（sure）、加上星樞最痛的一步才歸零（可能）；差 1 點血就不算", ()=>{
   /* 將：黑車 e8 對著紅帥 e1 */
   const A=match3({id:"d1",boards:[tiny([["r",5,8]]),tiny(),tiny()]});assert.deepEqual(kinds(A,0),["chk"]);assert.equal(W.danger(A,0,C)[0].rank,W.DG.chk);assert.deepEqual(kinds(A,1),[]);
-  /* 危（可能）：黑車 a7 下一步吃俥 a1 還帶將軍 → 擒子＋將軍兩筆；HP 剛好等於這一擊＝危，多 1 點就只剩「眼」 */
+  /* 危（可能）：黑車 a7 下一步吃俥 a1 還帶將軍 → 擒子＋將軍兩筆；HP 剛好等於這一擊＝危，多 1 點就沒有角標（11/16 取消陣眼子：原本還有「眼」） */
   const B=match3({id:"d2",boards:[tiny([["r",1,7]]),tiny(),tiny()]}),td=B.bs[0].P.td,hit=G.dmg(G.CAPB.R,td.en.atk,td.me.def)+G.dmg(G.CHK,td.en.atk,td.me.def);
-  assert.deepEqual(kinds(B,0),["eye"],"滿血：只有陣眼受威脅");td.me.hp=hit;assert.deepEqual(kinds(B,0),["core","eye"]);assert.equal(W.danger(B,0,C)[0].sure,false,"要星樞真的走那一步才歸零");assert.equal(W.danger(B,0,C)[0].loss,hit);
-  td.me.hp=hit+1;assert.deepEqual(kinds(B,0),["eye"]);td.me.hp=hit;td.me.sh={v:1,exp:99};assert.deepEqual(kinds(B,0),["eye"],"盾吸掉 1 點就不會歸零");
-  td.me.sh={v:0,exp:0};td.me.lastChk=td.rnd;assert.deepEqual(kinds(B,0),["eye"],"剛被將軍扣過（兩回合內不重複扣）：少一筆就不到");
+  assert.deepEqual(kinds(B,0),[],"滿血：沒有危險（不再標陣眼受威脅）");td.me.hp=hit;assert.deepEqual(kinds(B,0),["core"]);assert.equal(W.danger(B,0,C)[0].sure,false,"要星樞真的走那一步才歸零");assert.equal(W.danger(B,0,C)[0].loss,hit);
+  td.me.hp=hit+1;assert.deepEqual(kinds(B,0),[]);td.me.hp=hit;td.me.sh={v:1,exp:99};assert.deepEqual(kinds(B,0),[],"盾吸掉 1 點就不會歸零");
+  td.me.sh={v:0,exp:0};td.me.lastChk=td.rnd;assert.deepEqual(kinds(B,0),[],"剛被將軍扣過（兩回合內不重複扣）：少一筆就不到");
   /* 危（sure）：入侵卒已預告，下一次結算的入侵傷害 ≥ HP */
   const D=match3({id:"d3",boards:[tiny([["p",3,5,"inv"]]),tiny(),tiny()]});rq(D,0);bq(D,0);const t3=D.bs[0].P.td,inv=G.dmg(G.INV,t3.en.atk,t3.me.def);
   assert.deepEqual(kinds(D,0),["inv"]);t3.me.hp=inv;assert.deepEqual(kinds(D,0),["core","inv"]);assert.equal(W.danger(D,0,C)[0].sure,true,"光是已預告的入侵就歸零");
   /* 真的結算：不處理就輸掉這一盤 */
   for(const i of[1,2]){rq(D,i);bq(D,i)}rq(D,0);bq(D,0);assert.equal(D.bs[0].P.result&&D.bs[0].P.result.w,"b","預警說會歸零，不處理真的歸零")});
 
-test("危險預警・侵、眼、門：入侵卒預告後才算、盾吸光不算；陣眼子要星樞下一步真的吃得到（定身就不算）；援軍這回合結束落下才標", ()=>{
+test("危險預警・侵、門：入侵卒預告後才算、盾吸光不算；援軍這回合結束落下才標（11/16 取消陣眼子：「眼」拿掉，星樞吃得到俥也不標）", ()=>{
   /* 侵：入侵卒在我方半場，第一次結算只預告（還不會扣）；預告後＝下一次結算要扣 */
   const M=match3({id:"d4",boards:[tiny([["p",3,5,"inv"]]),tiny(),tiny()]}),td=M.bs[0].P.td;assert.deepEqual(kinds(M,0),[],"還沒預告：下一次結算不會扣");
   rq(M,0);assert.deepEqual(kinds(M,0),[],"星樞還在想的盤不標（局面未定）");bq(M,0);assert.equal(W.stOf(M,0),"wait");
   const d=W.danger(M,0,C);assert.deepEqual(J(d.map(x=>x.k)),["inv"],"這輪走過的盤也標（下一輪要先救）");assert.equal(d[0].loss,G.dmg(G.INV,td.en.atk,td.me.def));assert.equal(d[0].loss,G.preview(td,M.bs[0].P.board,C).loss,"跟星門圍城的結算預覽同一個數");
   td.me.sh={v:30,exp:99};assert.deepEqual(kinds(M,0),[],"盾吸光就不會扣血");td.me.sh={v:0,exp:0};
   const hp0=td.me.hp;for(const i of[1,2]){rq(M,i);bq(M,i)}assert.equal(W.stOf(M,0),"me");assert.deepEqual(kinds(M,0),["inv"]);rq(M,0);bq(M,0);assert.equal(td.me.hp,hp0-d[0].loss,"不處理：真的扣這麼多");
-  /* 眼：黑車 a7 能吃俥 a1（齊轍的陣眼）；被定身就吃不到；陣眼不在了就不標 */
-  const E=match3({id:"d5",boards:[tiny(),tiny([["r",1,7]]),tiny()]}),B=E.bs[1],te=B.P.td;assert.deepEqual(kinds(E,1),["eye"]);assert.equal(W.danger(E,1,C)[0].sq,Q(1,1));
-  te.ctl.frz.push({id:te.ids[Q(1,7)],until:te.rnd+1});assert.deepEqual(kinds(E,1),[],"定身的子吃不到");te.ctl.frz=[];
-  const F=match3({id:"d6",boards:[tiny(),tiny([["r",1,7],["P",1,4]]),tiny()]});assert.deepEqual(kinds(F,1),[],"中間有子擋住：吃不到");
-  B.eye=null;assert.deepEqual(kinds(E,1),[],"沒有陣眼子（已經被吃）");
+  /* 原本的「眼」：黑車 a7 能吃俥 a1（齊轍原本的陣眼）——11/16 取消陣眼子後不標 */
+  const E=match3({id:"d5",boards:[tiny(),tiny([["r",1,7]]),tiny()]});assert.deepEqual(kinds(E,1),[],"星樞吃得到俥也不標「眼」");assert.ok(!J(W.danger(E,1,C)).some(d=>d.k==="eye"));
   /* 門：第 3 盤（援門）援軍第 2 回合結束落下 → 第 1 回合不標、第 2 回合標、落下後不標 */
   const T=match3({id:"d7",boards:[tiny(),tiny(),undefined]}),t3=T.bs[2].P.td;assert.equal(G.fore(t3)[0].inR,2);assert.deepEqual(kinds(T,2),[]);
   t3.rnd=1;assert.deepEqual(kinds(T,2),["gate"]);assert.equal(W.danger(T,2,C)[0].n,2,"兩顆援軍");t3.waves.forEach(w=>{w.st="in"});assert.deepEqual(kinds(T,2),[]);
-  /* 排序與分級：危 > 將 > 侵 > 眼 > 門；門只是提醒（不到立即危險） */
-  assert.deepEqual(J(W.DG),{core:5,chk:4,inv:3,eye:2,gate:1});assert.equal(W.DG_HOT,2);
+  /* 排序與分級：危 > 將 > 侵 > 門（11/16 取消陣眼子：沒有眼）；門只是提醒（不到立即危險） */
+  assert.deepEqual(J(W.DG),{core:5,chk:4,inv:3,gate:1});assert.equal(W.DG_HOT,2);
   /* 下完的盤、整場結束：不標 */
   const Z=match3({id:"d8",boards:[tiny([["r",5,8]]),tiny(),tiny()]});assert.deepEqual(kinds(Z,0),["chk"]);Z.bs[0].P.result={w:"b",why:"測試"};assert.deepEqual(kinds(Z,0),[]);
   /* 純函式：不改狀態、叫幾次都一樣 */
-  const s0=JSON.stringify(E),a=JSON.stringify(W.danger(E,1,C)),b=JSON.stringify(W.danger(E,1,C));W.hop(E,0,C);W.dgAlert(E,0,C);assert.equal(a,b);assert.equal(JSON.stringify(E),s0,"危險判斷不改任何狀態")});
+  const PZ=match3({id:"d9",boards:[tiny(),tiny([["r",5,8]]),tiny()]});assert.deepEqual(kinds(PZ,1),["chk"]);
+  const s0=JSON.stringify(PZ),a=JSON.stringify(W.danger(PZ,1,C)),b=JSON.stringify(W.danger(PZ,1,C));W.hop(PZ,0,C);W.dgAlert(PZ,0,C);assert.equal(a,b);assert.equal(JSON.stringify(PZ),s0,"危險判斷不改任何狀態")});
 
 test("自動跳盤先去有立即危險的盤；「先救」提示只在別的盤比現在這盤嚴重時出現；門不搶順序", ()=>{
   /* 第 3 盤被將軍：走完第 1 盤先跳第 3 盤（不是照順序的第 2 盤） */
   const M=match3({id:"h1",boards:[tiny(),tiny(),tiny([["r",5,8]])]});assert.equal(W.hop(M,0,C),2);assert.deepEqual(J(W.dgAlert(M,0,C)),{i:2,k:"chk",rank:4});assert.deepEqual(J(W.dgAlert(M,1,C)),{i:2,k:"chk",rank:4});
   assert.equal(W.dgAlert(M,2,C),null,"已經在最危險的盤：不提示");
-  /* 兩盤都有危險：先去嚴重的（將 > 眼）；一樣嚴重照順序 */
-  const N=match3({id:"h2",boards:[tiny(),tiny([["r",1,7]]),tiny([["r",5,8]])]});assert.equal(W.hop(N,0,C),2);assert.deepEqual(J(W.dgAlert(N,1,C)),{i:2,k:"chk",rank:4},"現在這盤只是陣眼受威脅，別盤被將軍");assert.equal(W.dgAlert(N,2,C),null);
-  const S=match3({id:"h3",boards:[tiny([["r",1,7]]),tiny([["r",1,7]]),tiny([["r",1,7]])]});assert.equal(W.hop(S,0,C),1,"一樣嚴重：照順序");assert.equal(W.hop(S,1,C),2);assert.equal(W.hop(S,2,C),0);assert.equal(W.dgAlert(S,0,C),null,"現在這盤一樣嚴重：不提示");
-  /* 危險的盤這輪走過了（不能再走）：不跳、不提示；下一輪又能走才提示 */
-  const A=match3({id:"h4",boards:[tiny(),tiny(),tiny([["r",1,7]])]});assert.equal(W.hop(A,0,C),2);
-  assert.ok(!W.move(A,2,Q(5,1),Q(5,2),C).err);assert.ok(!W.reply(A,2,Q(4,10),Q(4,9),C).err);assert.equal(W.stOf(A,2),"wait");assert.deepEqual(kinds(A,2),["eye"],"角標還在");
+  /* 兩盤都有危險：先去嚴重的（危 > 將）；一樣嚴重照順序（11/16 取消陣眼子：原本用「眼」當較輕的那盤，改成「危」比「將」） */
+  const N=match3({id:"h2",boards:[tiny(),tiny([["r",1,7]]),tiny([["r",5,8]])]}),tn=N.bs[1].P.td;tn.me.hp=G.dmg(G.CAPB.R,tn.en.atk,tn.me.def)+G.dmg(G.CHK,tn.en.atk,tn.me.def);
+  assert.deepEqual(kinds(N,1),["core"]);assert.equal(W.hop(N,0,C),1,"危比將嚴重");assert.deepEqual(J(W.dgAlert(N,2,C)),{i:1,k:"core",rank:5},"現在這盤被將軍，別盤星核危急");assert.equal(W.dgAlert(N,1,C),null);
+  const N2=match3({id:"h2b",boards:[tiny(),tiny([["r",1,7]]),tiny([["r",5,8]])]});assert.equal(W.hop(N2,0,C),2);assert.deepEqual(J(W.dgAlert(N2,1,C)),{i:2,k:"chk",rank:4},"現在這盤沒有立即危險（俥被瞄著也不算），別盤被將軍");assert.equal(W.dgAlert(N2,2,C),null);
+  const S=match3({id:"h3",boards:[tiny([["r",5,8]]),tiny([["r",5,8]]),tiny([["r",5,8]])]});assert.equal(W.hop(S,0,C),1,"一樣嚴重：照順序");assert.equal(W.hop(S,1,C),2);assert.equal(W.hop(S,2,C),0);assert.equal(W.dgAlert(S,0,C),null,"現在這盤一樣嚴重：不提示");
+  /* 危險的盤這輪走過了（不能再走）：不跳、不提示；下一輪又能走才提示（入侵卒預告後角標一直在） */
+  const A=match3({id:"h4",boards:[tiny(),tiny(),tiny([["p",3,5,"inv"]])]});assert.deepEqual(kinds(A,2),[],"還沒預告");
+  rq(A,2);bq(A,2);assert.equal(W.stOf(A,2),"wait");assert.deepEqual(kinds(A,2),["inv"],"角標還在");
   assert.equal(W.hop(A,0,C),1,"走過的盤不跳");assert.equal(W.dgAlert(A,0,C),null);
+  rq(A,0);bq(A,0);rq(A,1);bq(A,1);assert.equal(A.R,1);assert.equal(W.stOf(A,2),"me");assert.equal(W.hop(A,0,C),2,"下一輪又能走：先去危險盤");assert.deepEqual(J(W.dgAlert(A,0,C)),{i:2,k:"inv",rank:3});
   /* 只有門（提醒）：照順序、不提示 */
   const T=match3({id:"h5",boards:[tiny(),tiny(),undefined]});T.bs[2].P.td.rnd=1;assert.deepEqual(kinds(T,2),["gate"]);assert.equal(W.hop(T,0,C),1,"門不搶順序");assert.equal(W.dgAlert(T,0,C),null);
   /* 現在這盤走完、星樞回完、換輪後自己最危險：留在這盤 */
@@ -264,7 +268,8 @@ test("舊的兩盤存檔相容：進行中的兩盤對局照舊能下完（兩�
   /* 舊存檔＝兩盤、need 2（兩盤原型 whlNew 存的樣子）。欄位名單照兩盤原型抄下來，改了格式這裡會叫 */
   const old=W.newMatch({ch:"x_swordboy",L:1,need:2,id:"old2",lvs:[101,102]},C);
   assert.deepEqual(Object.keys(old).sort(),["L","R","bs","cd","cdAt","ch","cn","id","log","mode","mv","need","over","pc","sk","sk1","sp","used"].sort(),"整場的欄位跟兩盤原型一樣（沒有新增必填欄位）");
-  assert.deepEqual(Object.keys(old.bs[0]).sort(),["P","acted","eye","i","lv","nm","seal"].sort());assert.equal(old.mode,"wheel-v1");assert.equal(old.mv,1);
+  assert.deepEqual(Object.keys(old.bs[0]).sort(),["P","acted","i","lv","nm","seal"].sort(),"11/16 取消陣眼子：每盤少了 eye");assert.equal(old.mode,"wheel-v1");assert.equal(old.mv,1);
+  {const E=JSON.parse(JSON.stringify(old));E.bs[1].eye="r3";E.bs[1].seal=E.R;assert.ok(W.okSave(E),"改版前存的（帶 eye、seal）照樣接續");assert.equal(W.sealed(E,1),true,"舊盤的封招照舊");assert.equal(W.why(E,1,"gheal",C),"這盤封招一輪")}
   const red=(M,i,rnd)=>{const P=M.bs[i].P,L=C.legal(P.board,"r"),x=L[Math.floor(rnd()*L.length)];return W.move(M,i,x[0],x[1],C)};
   red(old,0,seeded(3));const M=JSON.parse(JSON.stringify(old));assert.ok(W.okSave(M),"舊的兩盤存檔可以接續");assert.equal(M.bs.length,2);assert.equal(M.need,2);
   assert.deepEqual(J(W.needs(M)),[0],"讀回來：輪星樞的盤會排進引擎");assert.equal(W.hop(M,0,C),1,"自動跳盤照舊");assert.deepEqual(J(W.tally(M)),{w:0,l:0,d:0,open:2,n:2});
@@ -294,17 +299,17 @@ test("縮圖與提示（字串）：三張縮圖、盤號、狀態、危險角�
   const M=U.WHL.newMatch({ch:"x_swordboy",L:1,id:"u1",boards:[tiny(),tiny([["r",1,7]]),tiny([["r",5,8]])]},C);
   const h=run(M,"whlThumbs(M_)");assert.equal((h.match(/<button /g)||[]).length,3,"三張縮圖");for(const n of[1,2,3])assert.ok(h.includes(`<b class="whl-no">${n}</b>`),"盤號 "+n);
   assert.equal((h.match(/class="whl-tb me on"/g)||[]).length,1,"目前這盤只有一張標 on");assert.equal((h.match(/class="whl-mini"/g)||[]).length,3);assert.equal((h.match(/class="whl-hp"/g)||[]).length,3,"每盤我方血條");assert.equal((h.match(/class="whl-hp en"/g)||[]).length,3,"每盤星樞血條");
-  assert.ok(h.includes('<i class="whl-dg eye">眼</i>'));assert.ok(h.includes('<i class="whl-dg chk">將</i>'));assert.equal((h.match(/whl-dg /g)||[]).length,2,"沒危險的盤沒有角標");assert.equal((h.match(/ hot"/g)||[]).length,2,"立即危險的盤外框會亮");
+  assert.ok(!h.includes('whl-dg eye')&&!h.includes(">眼<"),"11/16 取消陣眼子：沒有「眼」角標");assert.ok(h.includes('<i class="whl-dg chk">將</i>'));assert.equal((h.match(/whl-dg /g)||[]).length,1,"沒危險的盤沒有角標");assert.equal((h.match(/ hot"/g)||[]).length,1,"立即危險的盤外框會亮");
   assert.match(h,/aria-label="第 3 盤，輪到我・被將軍，/);
-  assert.equal(run(M,"whlMsg(M_,0)"),"輪到你・第 1 盤");assert.equal(run(M,"whlMsg(M_,2)"),"被將軍！");assert.equal(run(M,"whlMsg(M_,1)"),"陣眼受威脅！");
+  assert.equal(run(M,"whlMsg(M_,0)"),"輪到你・第 1 盤");assert.equal(run(M,"whlMsg(M_,2)"),"被將軍！");assert.equal(run(M,"whlMsg(M_,1)"),"輪到你・第 2 盤","俥被瞄著不再說陣眼受威脅");
   const al=run(M,"whlAlert(M_,0)");assert.match(al,/class="whl-al" data-go="2"/);assert.equal(al.replace(/<[^>]+>/g,""),"3被將軍","先救鈕只有盤號和一句");assert.equal(run(M,"whlAlert(M_,2)"),"");
   /* 狀態字：已走、思考中、勝敗和；封招角標 */
   const N=U.WHL.newMatch({ch:"x_swordboy",L:1,id:"u2",boards:[tiny(),tiny(),tiny()]},C);U.WHL.move(N,0,Q(1,1),Q(1,3),C);let t=run(N,"whlThumbs(M_)");assert.ok(t.includes('<span class="whl-st">思考中</span>'));
   U.WHL.reply(N,0,Q(4,10),Q(4,9),C);N.bs[1].seal=N.R;N.bs[2].P.result={w:"r",why:"x"};t=run(N,"whlThumbs(M_)");
   assert.ok(t.includes('<span class="whl-st">已走</span>'));assert.ok(t.includes('<i class="whl-sl">封</i>'));assert.ok(t.includes('<span class="whl-st w">勝</span>'));assert.equal((t.match(/whl-sl/g)||[]).length,1);
   N.bs[2].P.result={w:"b",why:"x"};assert.ok(run(N,"whlThumbs(M_)").includes('<span class="whl-st l">敗</span>'));N.bs[2].P.result={w:null,why:"x"};assert.ok(run(N,"whlThumbs(M_)").includes('<span class="whl-st">和</span>'));
-  /* 五種角標：字都不一樣、樣式各有一條規則 */
-  const DGU=vm.runInContext("WHL_DG",U),chars=Object.keys(U.WHL.DG).map(k=>DGU[k][0]);assert.equal(new Set(chars).size,5);for(const k of Object.keys(U.WHL.DG)){assert.equal(DGU[k][0].length,1);assert.ok(WSRC.includes(".whl-dg."+k+"{"),"角標樣式 "+k)}});
+  /* 四種角標（11/16 取消陣眼子：原本五種）：字都不一樣、樣式各有一條規則 */
+  const DGU=vm.runInContext("WHL_DG",U),chars=Object.keys(U.WHL.DG).map(k=>DGU[k][0]);assert.equal(new Set(chars).size,4);assert.equal(DGU.eye,undefined,"WHL_DG 沒有 eye");for(const k of Object.keys(U.WHL.DG)){assert.equal(DGU[k][0].length,1);assert.ok(WSRC.includes(".whl-dg."+k+"{"),"角標樣式 "+k)}});
 
 test("〔原始碼〕三盤版畫面：縮圖三欄（舊兩盤兩欄）、比數、開場一句「三盤拿兩勝」、新對局用 WHL.NEED、減少動態時不閃", ()=>{
   assert.ok(WSRC.includes(".whl-ths{flex:none;display:grid;grid-template-columns:repeat(3,minmax(0,1fr))"));assert.ok(WSRC.includes(".whl-ths.n2{grid-template-columns:repeat(2,minmax(0,1fr))}"));
@@ -312,7 +317,8 @@ test("〔原始碼〕三盤版畫面：縮圖三欄（舊兩盤兩欄）、比�
   assert.ok(WSRC.includes('<p class="muted">三盤拿兩勝</p>'));assert.ok(!WSRC.includes("兩盤都贏才過關"),"舊的一句話拿掉了");assert.ok(WSRC.includes("WHL.newMatch({ch:ck,L,sk,need:WHL.NEED},C)"));
   assert.ok(WSRC.includes("cur:WHL.okSave(P.cur)?P.cur:null"),"存檔先驗過才接續");assert.ok(/function whlNext\(i\)\{[^\n]*WHL\.hop\(M,i,C\)\}/.test(WSRC),"自動跳盤走 WHL.hop");
   assert.ok(/prefers-reduced-motion:reduce\)\{[^}]*\.whl-tb\.hot,\.whl-al\{animation:none\}/.test(WSRC));
-  const I=rd("xiangqi-db/m/07i18n.js");for(const k of["三盤拿兩勝","星核危急","入侵卒要扣血","陣眼受威脅","援軍將至","已走","比數","敗"])assert.ok(I.includes(`"${k}":"`),"英文字典有「"+k+"」")});
+  const I=rd("xiangqi-db/m/07i18n.js");for(const k of["三盤拿兩勝","星核危急","入侵卒要扣血","援軍將至","已走","比數","敗"])assert.ok(I.includes(`"${k}":"`),"英文字典有「"+k+"」");
+  assert.ok(!WSRC.includes("陣眼受威脅")&&!WSRC.includes("陣眼被吃："),"11/16 取消陣眼子：畫面不再有陣眼受威脅、陣眼被吃封招")});
 
 test("〔原始碼〕接線：m.html 在星門圍城後面 include；關卡卡片只在開發者模式出現、只寫名稱；主控台 whlOpen；JOURNEY_KEYS 有 whl；GSV 共用靈力掛勾；testkinds 有登記", ()=>{
   const H=rd("xiangqi-db/m.html");assert.ok(H.indexOf("//#include m/07bhw-wheel.js")>H.indexOf("//#include m/07bhg-gatesiege.js"));

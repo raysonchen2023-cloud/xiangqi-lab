@@ -294,9 +294,9 @@ test("離開的幾種情況：換頁（hashchange）造成的不叫對局頁重�
   X.whlHide();E.tick(0);assert.equal(E.log.rr,1,"之後離開才叫（3D 開過）")});
 
 /* ====================== 盤上記號、跳字 ====================== */
-test("〔混合〕3D 盤上記號重用星門圍城那一套：可點的目標補上 tg、星門拆成貼地圈＋直立「門 N」、眼／侵／陣是直立徽章；貼地矩陣用車輪戰自己的座標（bhtdGnd 第四個參數）", ()=>{
+test("〔混合〕3D 盤上記號重用星門圍城那一套：可點的目標補上 tg、星門拆成貼地圈＋直立「門 N」、侵／陣是直立徽章（11/16 取消陣眼子：盤上沒有「眼」記號）；貼地矩陣用車輪戰自己的座標（bhtdGnd 第四個參數）", ()=>{
   const E=boot({store:{whlView:JSON.stringify("top")}}),X=E.X,made=E.park(),S=start(E),pv=made[0],M=S.M,b=M.bs[0].P.board,L0=J(X.whlMarks(M,0)),L=J(X.whl3Marks(M,0));
-  assert.ok(L0.some(m=>m.k==="gate"&&/^門\d+$/.test(m.t))&&L0.some(m=>m.k==="bd eye"),"平面記號有星門和陣眼");
+  assert.ok(L0.some(m=>m.k==="gate"&&/^門\d+$/.test(m.t)),"平面記號有星門");assert.ok(!L0.some(m=>/\beye\b/.test(m.k))&&!L.some(m=>/\beye\b/.test(m.k)),"平面、3D 都沒有陣眼記號");
   assert.ok(L.filter(m=>m.k==="gate").every(m=>/^門<i>\d+<\/i>$/.test(m.t)));for(const m of L)assert.ok(["gnd","up"].includes(X.gsvMkKind(m.k)));assert.equal(X.gsvMkKind("bd eye"),"up");
   E.run("WHL_TG={id:'dep',p:'R',pk:[]};WHL_HK=''");const T=J(X.whl3Marks(M,0)).filter(m=>m.b);assert.ok(T.length>0&&T.every(m=>m.k==="tg"));E.run("WHL_TG=null;WHL_HK=''");
   /* bhtdGnd：給了座標函式就用它（不去問對局頁的 #bbox） */
@@ -306,7 +306,7 @@ test("〔混合〕3D 盤上記號重用星門圍城那一套：可點的目標�
   assert.ok(R.some(r=>r.cls==="bt-mk selg g3"&&r.sq===own));assert.ok(R.some(r=>/^bt-mk (ink|aim) g3$/.test(r.cls)));
   for(const r of R.filter(r=>/ g3$/.test(r.cls))){const p=xy(r.sq);assert.equal(r.tf,`translate(${p.x}px,${p.y}px) matrix(1,0,0,1,0,0) translate(-50%,-50%)`)}
   const pn=R.filter(r=>/^bt-mk pnm /.test(r.cls));assert.equal(pn.length,b.filter(Boolean).length);for(const r of pn){const p=xy(r.sq);assert.equal(r.tf,`translate(${p.x}px,${p.y-40}px) translate(-50%,-50%)`)}
-  const eye=R.find(r=>/^gsv-mk bd eye/.test(r.cls));assert.ok(eye&&eye.html==="眼"&&/g3h/.test(eye.cls),"陣眼徽章掛在頭頂漢字牌旁邊");assert.ok(R.some(r=>r.cls==="bt-mk gt"&&/^門 \d+$/.test(r.html)));assert.ok(R.some(r=>r.cls==="gsv-mk gate g3"&&r.html===""));
+  assert.ok(!R.some(r=>/\beye\b/.test(r.cls)||r.html==="眼"),"沒有陣眼徽章");assert.ok(R.some(r=>r.cls==="bt-mk gt"&&/^門 \d+$/.test(r.html)));assert.ok(R.some(r=>r.cls==="gsv-mk gate g3"&&r.html===""));
   /* 可點的目標：車輪戰的點擊處理認得 gsv-mk tg */
   X.whlTap(own);E.run("WHL_TG={id:'dep',p:'R',pk:[]};WHL_HK=''");X.whlPaint();X.whl3Frame();const tg=o.querySelector(".mks").querySelectorAll(".tg");assert.ok(tg.length>0);assert.match(WS,/const mk=e\.target\.closest\("\.whl-mk\.tg,\.gsv-mk\.tg"\)/)});
 
@@ -323,7 +323,7 @@ test("〔原始碼〕版面：3D 開著時平面主棋盤收起來、3D 區填�
   assert.match(P3,/if\(box&&\/\^\(sticky\|fixed\)\$\/\.test\(getComputedStyle\(box\)\.position\)\)/,"park3d 照 sticky／fixed 的容器高度排版");
   assert.ok(css.includes("#whlOv.v3 .whl-mini svg,#whlOv.v3 .whl-hp{display:none}#whlOv.v3 .whl-no{position:static;display:block}"),"縮圖變小：小棋盤、血條收掉，盤號留著");assert.ok(!/#whlOv\.v3 \.whl-(dg|sl|st)[^{]*\{[^}]*display:none/.test(css),"狀態字、危險角標、封招不能收");
   for(const k of[".pzoom",".gpad",".pkview",".pk2d",".gs-ui",".gs-pop",".un-ui",".tele-ui",".pkname"])assert.ok(css.includes("#whlOv .whl-3d "+k),"要收起來："+k);
-  assert.ok(css.includes("#whl3Ov{position:fixed;inset:0;z-index:9001;pointer-events:none"));assert.ok(css.includes(".pk-veil #whl3Ov{visibility:hidden}"),"3D 過場時記號先藏");assert.ok(css.includes("#whl3Ov .gsv-mk.bd.eye{"));
+  assert.ok(css.includes("#whl3Ov{position:fixed;inset:0;z-index:9001;pointer-events:none"));assert.ok(css.includes(".pk-veil #whl3Ov{visibility:hidden}"),"3D 過場時記號先藏");assert.ok(!css.includes(".bd.eye{"),"11/16 取消陣眼子：沒有「眼」徽章的樣式");
   assert.match(css,/\.whl-sb\{position:absolute;left:0;top:0;pointer-events:auto;[^}]*min-height:30px/);assert.ok(css.includes("@media (prefers-reduced-motion:reduce){.whl-sb.hot{animation:none}}"));
   assert.ok(WS.includes('<div class="whl-bw"><div class="whl-bd"><div class="whl-mks"></div></div><div class="whl-3d"></div></div>'));assert.ok(WS.includes('ov.append(o)}'),"記號層掛在 #whlOv 裡（不會蓋到跳出來的視窗）");
   assert.ok(WS.includes('<div class="whl-msg" aria-live="polite"></div>')&&WS.includes("${whlAlert(M,i)}"),"提示列和「先救」鈕照舊")});

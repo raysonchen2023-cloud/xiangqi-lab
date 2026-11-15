@@ -15,6 +15,11 @@ const DIR = __dirname;
 const SKIP = new Set(["test-home-focus.js", "testkinds.js"]);
 /* 11/12 已逐項分類（開發者稽核 story/102_評比灌水誠實稽核.md 第 3 項） */
 const CLASSIFIED = new Set([
+  "test-newjourney-entry-1116.js",   /* 11/16 開發者「目前已經沒辦法新的旅程了嗎 假設有其他玩家想重玩的話 應該還是要跟存檔讀檔的格子」：存檔與讀檔面板最下面補一顆不管幾格有存檔都在的「開始新的旅程」，開選格頁（m/05b-save.js saveList）（行為 3、原始碼 2） */
+  "test-pty-stats-1116.js",   /* 11/16 開發者（雲河七星卡冊截圖）「讓這頁也能看到角色的體力/靈力/攻擊力/防禦力/天賦/招式」：每張卡多一排四格（每位自己的黑洞數值）與可以點的招式列，卡冊最上面一列全隊共用的天賦；天賦樹的返回鈕照從哪裡進來的寫（m/07pty-party.js ptyStatHTML、ptySkills、ptyTalHTML；07bht-td.js bhtdTal；07dgl-stamina.js）（行為 5、原始碼 1） */
+  "test-ship-tasklist-1116.js",   /* hspx 11/16 開發者（手機截圖「還不能起航」）「修正，然後剛剛我完成兩題千秋殘局 在啟航清單上卻沒有更新 還是顯示0/2」：清單一列兩行、「去」不再佔滿整列；那兩題是在船艙站解的，清單標題和解局那一項寫出站名；看答案走完的題不算，清單會講有幾題（m/07f-ship.js shipTaskList、shipTasks、shipGateSay）（行為 4、混合 1、原始碼 1） */
+  "test-gxt-fx-1116.js",   /* 11/16 開發者（觀星臺）「點擊這一頁每一個入口後，可以先有個動畫過場…不然玩家會覺得怎麼進來的」：渾儀、天頂黑洞、右側星空各一段短過場與一句話（m/07gxt-guanxing.js gxtFx、gxtFxPlan）（行為 4、原始碼 1） */
+  "test-bhtd-select-1116.js",   /* 11/16 開發者「重新設計排版 太亂了 玩家不知道到底要玩哪個」「車輪戰和星門圍城也都能上線」：星淵遠征選關視窗改成一顆主按鈕（主卡＋關卡小格＋其他玩法＋收起來的出戰設定，m/07bht-td.js bhtdSelect）；觀星臺的黑洞車輪戰解鎖（m/07gxt-guanxing.js gxtWheel）（行為 1、原始碼 5） */
   "test-pty-capsay-1116.js",   /* 11/16 開發者「角色等級不能超過修為，這句話玩家看不懂」：雲河七星隊伍頁同一條規則的三處文字改成講結果（m/07pty-party.js ptyCapSay、練滿的註記與提示）（行為 1、原始碼 2） */
   "test-engine-budget-pgn.js",   /* 11/15 引擎預算敏感度 PGN 版 tools/engine-budget-pgn.js（用 App 匯出的帶評語棋譜重做＋手機評語 vs 電腦各檔；自編棋譜與假的評估函式，不啟動引擎；行為 8、原始碼 1） */
   "test-mathmodel-82.js",   /* 11/15 數學模型（ChatGPT 第五次重評的改善單＋引擎預算敏感度）：算法對照每一對各自算人數與來源（單人 120 盤不能借別人的人數）、探索性的標籤與「可比較的 k／3 項」、方案 v1.3、引擎預算敏感度工具 engine-budget-check.js 的抽樣／續跑／比較（用假的評估函式，不啟動引擎）（行為 6、混合 1、原始碼 2） */
@@ -96,6 +101,8 @@ const CLASSIFIED = new Set([
   "test-party-novel.js",   /* 11/15 聽書正文前九章換成「六顆星散落」改寫定稿（yunhe-novel.json、重點句 yunhe-keylines.json、匯出工具）；本機未發布 */
   "test-party-hero.js",   /* 11/15 齊轍換新造型（3D 調色版、立繪、預覽圖、對話立繪、DISK、tasks.json、大棋盤背牌、點物件）；本機未發布 */
   "test-party-prologue.js",   /* 11/15 星槎序章 9 關（m/07bhg-gatesiege.js 31～39：擺法、引擎驗過的殘局、吃光卒／援軍擋完過關、解鎖看加入、第 1 關要破 C1、隊長換人）；本機未發布 */
+  "test-park3d-river-1116.js",   /* 11/16 黑洞大棋盤全局俯視：放手一律回正面、鏡像河界層照仰角淡出（正面楚河漢界不重影） */
+  "test-raid-label-1116.js",   /* 11/16 黑洞選關的星淵急襲卡：戰績寫「贏 N 次／還沒打過」，不再只放閃電加數字 */
   "test-gate-siege-3d.js",   /* 11/15 星門圍城切 3D 星盤（m/07bhg-gatesiege.js 檔尾 gsvFlat 那一段）：視角三態與記住、不再一律平面、舊版塔防與車輪戰不受影響、記號 3D 分類（貼地／直立／頭頂）、gsvFrame 兩種座標、「更多」那顆（06-cpu parkBtn）、3D 開不起來退回平面；DOM 與 park3d 都是假的，3D 畫面本身沒有實機驗收（行為 19、混合 3、原始碼 3） */
   "test-growth.js",   /* 11/15 對戰後的角色成長（m/07grw-growth.js）：快照比對只列有變化的、升級那句、體力只比同一次開 App、結果視窗插入時機（延後、逾時）、減少動態不跳數字；遠征令拿掉、配樂收藏與再看第一章搬到設定聲音頁（07mnq）；08b／07bhw／05b／m.html 接點（行為 9、混合 1、原始碼 4） */
   "test-starter.js",   /* 11/15 新手練習「先走再學」（m/07stq-starter.js）：六任務題目合法、第 4、5 題一步殺照規則判斷、跳過補齊不重複、老玩家判定、存檔版本、電腦退路、05b／07mnq／m.html 接點（行為 5、混合 3、原始碼 4） */
@@ -112,11 +119,6 @@ const CLASSIFIED = new Set([
   "test-gx-gatepano.js",   /* 11/15 開發者選星頁截圖「重新繪製滿版環景的幻譜星門讓玩家選」「觀星臺有什麼神秘的力量」：直式整個畫面是一圈水墨環景、星球各自去背疊上去、左右拖曳繞一圈（m/07gxp-gatepano.js）；說明卡兩版共用與星碑共鳴文案（m/07gx-galaxy.js）；從星圖石碑進星門的過場（m/07gxt-guanxing.js gxtGate）（行為 9、混合 1、原始碼 3） */
   "test-sw-offline.js",   /* 11/15 hspx 離線 3D 角色變小帥：sw.js 安裝時先存 3D 模型載入器（GLTFLoader.mjs 和它 import 的 .mjs），一般檔案也存 .mjs */
   "test-fb888.js",   /* 11/15 意見回饋 888 iPad 首頁兩指放大縮不回（07x 整頁放大救援、回首頁回 1 倍）、889 669×869 首頁一窄條（07z HMW_PORT 0.89／HMW_SQ、07fl XFL_HOME_MAX）、890 插曲全螢幕頁讓開狀態列（07t .ep-ov）（行為 11、原始碼 3） */
-  "test-bhtd-select-1116.js",   /* 11/16 開發者「重新設計排版 太亂了 玩家不知道到底要玩哪個」「車輪戰和星門圍城也都能上線」：星淵遠征選關視窗改成一顆主按鈕（主卡＋關卡小格＋其他玩法＋收起來的出戰設定，m/07bht-td.js bhtdSelect）；觀星臺的黑洞車輪戰解鎖（m/07gxt-guanxing.js gxtWheel）（行為 1、原始碼 5） */
-  "test-ship-tasklist-1116.js",   /* hspx 11/16 開發者（手機截圖「還不能起航」）「修正，然後剛剛我完成兩題千秋殘局 在啟航清單上卻沒有更新 還是顯示0/2」：清單一列兩行、「去」不再佔滿整列；那兩題是在船艙站解的，清單標題和解局那一項寫出站名；看答案走完的題不算，清單會講有幾題（m/07f-ship.js shipTaskList、shipTasks、shipGateSay）（行為 4、混合 1、原始碼 1） */
-  "test-gxt-fx-1116.js",   /* 11/16 開發者（觀星臺）「點擊這一頁每一個入口後，可以先有個動畫過場…不然玩家會覺得怎麼進來的」：渾儀、天頂黑洞、右側星空各一段短過場與一句話（m/07gxt-guanxing.js gxtFx、gxtFxPlan）（行為 4、原始碼 1） */
-  "test-pty-stats-1116.js",   /* 11/16 開發者（雲河七星卡冊截圖）「讓這頁也能看到角色的體力/靈力/攻擊力/防禦力/天賦/招式」：每張卡多一排四格（每位自己的黑洞數值）與可以點的招式列，卡冊最上面一列全隊共用的天賦；天賦樹的返回鈕照從哪裡進來的寫（m/07pty-party.js ptyStatHTML、ptySkills、ptyTalHTML；07bht-td.js bhtdTal；07dgl-stamina.js）（行為 5、原始碼 1） */
-  "test-newjourney-entry-1116.js",   /* 11/16 開發者「目前已經沒辦法新的旅程了嗎 假設有其他玩家想重玩的話 應該還是要跟存檔讀檔的格子」：存檔與讀檔面板最下面補一顆不管幾格有存檔都在的「開始新的旅程」，開選格頁（m/05b-save.js saveList）（行為 3、原始碼 2） */
   "test-preload-bg.js"   /* 11/14 評比第 17、18 輪第 5 項背景暫停與按需預載：00-util bgpEvery／bgpOn、09b 預載前景／背景／恢復三段、分區 z:<分區>、別朝代先不下載、閒置才補選讀、省流量、preload-list --retier（行為 12、混合 1、原始碼 1） */
 ]);
 /* 還沒逐項分類的檔（統計列為「待分類」）；新測試檔先放這裡，分好類再移到 CLASSIFIED */

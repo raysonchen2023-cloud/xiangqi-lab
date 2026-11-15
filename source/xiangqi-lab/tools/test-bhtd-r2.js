@@ -69,18 +69,22 @@ test("鋒芒畢露：以弱克強再回 10 靈（一般擒子不加）；記在 
   assert.equal(a.td.en.hp,b.td.en.hp,"扣星樞的元氣不變");
 });
 
-test("星陣護體：陣眼子第一次被吃只扣 20 靈、不停招；第二次照舊歸零；沒天賦照舊歸零停招", ()=>{
-  const F="4k4/9/9/9/9/r8/P8/9/9/3K5";
-  const play=tal=>{const P=custom(F,{ch:"x_bing",xm:30,tal});assert.equal(P.td.eye,"r"+sq(6,0));mv(P,sq(9,3),sq(8,3));const sp0=P.td.me.sp;mv(P,sq(5,0),sq(6,0));return{P,sp0}};
-  const n=play([]);assert.equal(n.P.td.me.sp,0);assert.ok(n.P.td.seal>n.P.td.rnd-1&&n.P.td.seal>=n.P.td.rnd,"停招");assert.equal(n.P.td.eyeX,1);
-  const t=play(["xhcr","xzht"]);assert.equal(t.P.td.me.sp,Math.max(0,Math.min(t.P.td.me.spMax,t.sp0+t.P.td.me.spRg)-20),"回合回靈後再扣 20");assert.ok(!(t.P.td.seal>=t.P.td.rnd),"不停招");assert.equal(t.P.td.hzU,1);assert.equal(t.P.td.eyeX,1,"三星照樣記陣眼被吃");
-  assert.ok(t.P.td.ev.some(e=>e.k==="eye2")&&!t.P.td.ev.some(e=>e.k==="eye"));
+test("星陣護體（11/16 取消陣眼子後改）：第一顆己子被擒時回 20 靈（受上限）、只觸發一次；沒天賦什麼都不發生（不歸零、不停招）", ()=>{
+  const F="4k4/9/9/9/9/r8/P1P6/9/9/3K5";
+  const play=tal=>{const P=custom(F,{ch:"x_bing",xm:30,tal});assert.equal(P.td.eye,undefined,"新盤沒有陣眼子");mv(P,sq(9,3),sq(8,3));P.td.me.sp=0;const sp0=0;mv(P,sq(5,0),sq(6,0));return{P,sp0}};   /* 先把靈力清 0，免得頂到上限看不出 +20 */
+  const n=play([]);assert.equal(n.P.td.me.sp,Math.min(n.P.td.me.spMax,n.sp0+n.P.td.me.spRg),"只有回合回靈，沒有歸零");assert.equal(n.P.td.seal,0,"不停招（seal 一直是開局的 0）");assert.ok(!(n.P.td.seal>=n.P.td.rnd));assert.equal(n.P.td.eyeX,undefined);
+  assert.equal(n.P.td.lost.length,1);assert.ok(!n.P.td.ev.some(e=>e.k==="xzht"||e.k==="eye"||e.k==="eye2"));
+  const t=play(["xhcr","xzht"]),M=t.P.td.me.spMax;assert.equal(t.P.td.me.sp,Math.min(M,Math.min(M,t.sp0+t.P.td.me.spRg)+B.TAL_EYE_SP),"回合回靈後再回 20");assert.equal(B.TAL_EYE_SP,20);assert.equal(t.P.td.me.sp,t.P.td.me.spRg+20,"0＋回合回靈＋20");
+  assert.equal(t.P.td.seal,0,"不停招");assert.equal(t.P.td.hzU,1);assert.deepEqual(J(t.P.td.ev.filter(e=>e.k==="xzht").map(e=>({k:e.k,sq:e.sq}))),[{k:"xzht",sq:sq(6,0)}]);
+  t.P.td.me.sp=0;mv(t.P,sq(8,3),sq(9,3));const s1=t.P.td.me.sp;mv(t.P,sq(6,0),sq(6,2));assert.equal(t.P.td.lost.length,2);
+  assert.equal(t.P.td.me.sp,Math.min(M,s1+t.P.td.me.spRg),"第二顆被擒不再回");assert.equal(t.P.td.ev.filter(e=>e.k==="xzht").length,1);
+  assert.equal(B.TAL.find(x=>x.id==="xzht").d,"第一顆己子被吃時，回 20 靈力");
 });
 
 test("奇謀連鎖：奇謀連擊再多扣 2（共多 4），單次上限 12 照舊；沒有奇謀連擊不加", ()=>{
   assert.deepEqual(J(B.comboOf({base:5,mk:true,qx:true})),{n:9,sp:10,k:"qm",bonus:4});
   assert.equal(B.comboOf({base:10,mk:true,qx:true}).n,12,"封頂 12");assert.equal(B.comboOf({base:5,qx:true}).n,5,"沒放招標記不加");
-  assert.equal(B.comboOf({base:13,mk:true,qx:true}).n,13,"原本 13 不會變少");assert.equal(B.comboOf({base:4,eye:true,pj:true,mk:true,qx:true}).n,9);
+  assert.equal(B.comboOf({base:13,mk:true,qx:true}).n,13,"原本 13 不會變少");assert.equal(B.comboOf({base:4,eye:true,pj:true,mk:true,qx:true}).n,8,"11/16 取消陣眼貫穿：eye＋pj 不再多 1");
 });
 
 test("赤焰火網：招式打過的破甲多留到下一回合結束（共 2 回合）；沒天賦打一次就消失", ()=>{
@@ -104,10 +108,12 @@ test("七星共鳴（固定、不隨機）：每 2 顆過河的己方子回合�
 });
 
 /* ====================== ② 結算 ====================== */
-test("三星：★1 過關、★2 陣眼子沒被吃、★3 在 r3 回合內；輸了全灰；每關都有 r3", ()=>{
-  const td={rnd:9,r3:14,eyeX:0,en:{hp:3}};
+test("三星：★1 過關、★2 被擒不超過 2 顆（11/16 取消陣眼子，原本陣眼子沒被吃）、★3 在 r3 回合內；輸了全灰；每關都有 r3", ()=>{
+  const td={rnd:9,r3:14,lost:[],en:{hp:3}},L=n=>Array.from({length:n},(_,i)=>({p:"P",tag:"r"+i,home:i}));
   assert.deepEqual(J(B.starsOf(td,true)),[true,true,true]);assert.deepEqual(J(B.starsOf(Object.assign({},td,{rnd:13}),true)),[true,true,true],"第 14 回合過關算");
-  assert.deepEqual(J(B.starsOf(Object.assign({},td,{rnd:14}),true)),[true,true,false]);assert.deepEqual(J(B.starsOf(Object.assign({},td,{eyeX:1}),true)),[true,false,true]);
+  assert.deepEqual(J(B.starsOf(Object.assign({},td,{rnd:14}),true)),[true,true,false]);assert.deepEqual(J(B.starsOf(Object.assign({},td,{lost:L(3)}),true)),[true,false,true],"被擒 3 顆");
+  assert.deepEqual(J(B.starsOf(Object.assign({},td,{lost:L(2)}),true)),[true,true,true],"被擒 2 顆還算");assert.deepEqual(J(B.starsOf({rnd:9,r3:14,en:{hp:3}},true)),[true,true,true],"沒有 lost 欄位當 0 顆");
+  assert.deepEqual(J(B.starsOf(Object.assign({},td,{eyeX:1}),true)),[true,true,true],"舊盤的 eyeX 不再算");
   assert.deepEqual(J(B.starsOf(td,false)),[false,false,false]);
   for(const V of B.LV)assert.ok(V.r3>=8&&V.r3<=30,"第 "+V.n+" 關 r3＝"+V.r3);for(const T of B.RAID)assert.ok(T.r3>=8&&T.r3<=30,T.id);
   const P=custom(KFEN,{lv:3});assert.equal(P.td.r3,B.LV[2].r3);
@@ -125,13 +131,13 @@ test("星塵：主線照星數 3／4／6、守關 +4、首通 +10、第一次三
   assert.equal(Math.ceil((B.TAL_ALL-main)/8),12);assert.equal(Math.ceil(B.TAL_ALL/8),30);
 });
 
-test("差一點：多幾回合、陣眼子被吃、兩個都差、輸了；額外星塵＝拿滿三星多拿的", ()=>{
-  const td={rnd:15,r3:14,eyeX:0,en:{hp:4}},fl={first:false,s3:true};
+test("差一點：多幾回合、被擒超過 2 顆（11/16 取消陣眼子，k 從 eye 改 lost）、兩個都差、輸了；額外星塵＝拿滿三星多拿的", ()=>{
+  const td={rnd:15,r3:14,lost:[],en:{hp:4}},fl={first:false,s3:true},L3=[1,2,3].map(i=>({p:"P",tag:"r"+i,home:i}));
   assert.deepEqual(J(B.nearOf(td,true,fl)),{k:"rnd",d:2,x:10});
-  assert.deepEqual(J(B.nearOf(Object.assign({},td,{rnd:3,eyeX:1}),true,fl)),{k:"eye",d:1,x:10});
-  assert.equal(B.nearOf(Object.assign({},td,{eyeX:2}),true,fl).k,"both");assert.equal(B.nearOf(Object.assign({},td,{eyeX:2}),true,fl).x,11,"1 星 3 → 三星 6＋8");
-  assert.deepEqual(J(B.nearOf(Object.assign({},td,{en:{hp:4,max:28}}),false,fl)),{k:"lose",hp:4,max:28,x:0});assert.equal(B.nearOf({rnd:3,r3:14,eyeX:0,en:{hp:0}},true,fl).k,"");
-  assert.equal(B.nearOf(td,true,{raid:true}).x,2,"急襲 2 星 8 → 三星 10");assert.equal(B.nearOf(Object.assign({},td,{eyeX:1}),true,{raid:true}).x,4,"急襲 1 星 6 → 10");
+  assert.deepEqual(J(B.nearOf(Object.assign({},td,{rnd:3,lost:L3}),true,fl)),{k:"lost",d:1,x:10});
+  assert.equal(B.nearOf(Object.assign({},td,{lost:L3}),true,fl).k,"both");assert.equal(B.nearOf(Object.assign({},td,{lost:L3}),true,fl).x,11,"1 星 3 → 三星 6＋8");
+  assert.deepEqual(J(B.nearOf(Object.assign({},td,{en:{hp:4,max:28}}),false,fl)),{k:"lose",hp:4,max:28,x:0});assert.equal(B.nearOf({rnd:3,r3:14,lost:[],en:{hp:0}},true,fl).k,"");
+  assert.equal(B.nearOf(td,true,{raid:true}).x,2,"急襲 2 星 8 → 三星 10");assert.equal(B.nearOf(Object.assign({},td,{lost:L3}),true,{raid:true}).x,4,"急襲 1 星 6 → 10");
 });
 
 test("標題與評語：大勝（≥35 且三星）、險勝（10～34）、慘勝（1～9）、落敗；落敗不用化墨退場；慘勝那句照審查改", ()=>{
@@ -174,12 +180,13 @@ test("急襲不是一開局就必輸／必贏（規則檢查：沒有一步殺�
 test("急襲開局：四種星門變化都開得起來；星樞元氣 25、推算步數照前段關卡、td.lv＝0、td.rd 記模板與變化；跑 12 回合星門照常落、局面都合法", ()=>{
   for(const T of B.RAID)for(let v=0;v<4;v++){const fen=B.raidFen(T.id,C),P=custom(fen,{raid:{id:T.id,v},ch:"x_bing",tal:["xhcr"]}),td=P.td;
     assert.equal(td.lv,0);assert.deepEqual(J(td.rd),{id:T.id,v});assert.equal(td.en.hp,25);assert.equal(td.en.max,25);assert.equal(td.nm,"星淵急襲・"+T.nm);
-    assert.equal(td.ai.depth,B.depthOf(B.RAID_AI,2).depth);assert.equal(td.r3,T.r3);assert.ok(B.sqOf(td,td.eye)!=null,"陣眼子在場上");
+    assert.equal(td.ai.depth,B.depthOf(B.RAID_AI,2).depth);assert.equal(td.r3,T.r3);assert.equal(td.eye,undefined,"11/16 取消陣眼子：急襲也沒有陣眼子");
     assert.equal(P.board.filter(Boolean).length,T.r.length+T.b.length);
     let end=null;for(let i=0;i<12&&!end;i++){end=round(P);const b=P.board;assert.ok(b.indexOf("K")>=0&&b.indexOf("k")>=0);if(!end){assert.ok(!C.inCheck(b,"b"),T.id+" v"+v+" 第 "+i+" 回合輪紅方時黑方被將");}}
     const blk=P.board.filter(p=>p&&p===p.toLowerCase()).length;assert.ok(blk<=16)}
   const bad=custom(B.raidFen("r01",C),{raid:{id:"zz",v:1}});assert.equal(bad.td.rd,null,"不認得的模板＝照一般關卡");
-  for(const T of B.RAID)for(const ck of Object.keys(B.CH)){const P=custom(B.raidFen(T.id,C),{raid:{id:T.id,v:0},ch:ck}),q=B.sqOf(P.td,P.td.eye);assert.equal(P.board[q],B.CH[ck].pc,T.id+" "+ck+" 的陣眼子要是本命子那一種（不是剛好站在原位的別的子）")}
+  for(const T of B.RAID)for(const ck of Object.keys(B.CH)){const P=custom(B.raidFen(T.id,C),{raid:{id:T.id,v:0},ch:ck});assert.equal(P.td.eye,undefined,T.id+" "+ck+"：11/16 取消陣眼子，七位開急襲都沒有陣眼子");assert.equal(P.td.hi.ey,undefined);
+    for(const p of"KABNRCP")assert.ok(P.board.includes(p),T.id+" "+ck+" 紅方七種子各至少一顆："+p)}
 });
 
 test("急襲 raidLv：星門變化會換位置（鏡像／換一道門），落點都在黑方半場、站得住", ()=>{
@@ -212,8 +219,8 @@ test("〔原始碼〕07bht 沒有 CR、控制字元、長行 // 註解；新的�
   for(const n of new Set(decl))assert.ok(!new RegExp("(?:const|let|var|function)\\s+"+n.replace(/\$/g,"\\$")+"\\b").test(others),"撞名："+n);
   const I=rd("xiangqi-db/m/07i18n.js"),i=I.indexOf("#I18N-PURE-BEGIN"),j=I.indexOf("/* #I18N-PURE-END */"),c2={};vm.createContext(c2);vm.runInContext(I.slice(I.indexOf("\n",i)+1,j)+";this.T=i18nText",c2);
   const S=[...B.TAL.map(x=>x.nm),...B.TAL.map(x=>x.d),...Object.values(B.GRADE),...[].concat(...Object.values(B.GSAY)),...Object.values(B.AGAIN),...B.RAID.map(T=>T.nm),...B.RAID.map(T=>"星淵急襲・"+T.nm),
-    "星塵天賦","返回星盤","↻ 再刷一場（＋星塵）","最高一擊","最高連擊","陣眼擒子","陣眼子沒被吃","回合內","第 3 層","星塵 35","最佳 2 星","兵吃車","差一點！再少 2 回合就三星，額外 +8 星塵","差一點！陣眼子別被吃，就能三星，額外 +10 星塵",
-    "差一點！陣眼子別被吃、再少 1 回合，就能三星，額外 +11 星塵","差一點！星樞只剩 4 元氣，打光就過關","中局殘陣・3～5 分鐘・星塵 6～10","⚡ 星淵急襲・雙炮巡河——星樞元氣 25","↺ 天賦全部重置，退回 40 星塵",
+    "星塵天賦","返回星盤","↻ 再刷一場（＋星塵）","最高一擊","最高連擊","被擒","被擒不超過 2 顆","回合內","第 3 層","星塵 35","最佳 2 星","兵吃車","差一點！再少 2 回合就三星，額外 +8 星塵","差一點！被擒別超過 2 顆，就能三星，額外 +10 星塵",
+    "差一點！被擒別超過 2 顆、再少 1 回合，就能三星，額外 +11 星塵","差一點！星樞只剩 4 元氣，打光就過關","中局殘陣・3～5 分鐘・星塵 6～10","⚡ 星淵急襲・雙炮巡河——星樞元氣 25","↺ 天賦全部重置，退回 40 星塵",
     "要點下一層，先點亮上一層的一個。","天賦只在黑洞有用，線上和一般對局不受影響。","不在對局裡時，可以免費全部重置，星塵全退。","✧ 星塵不夠（要 35）","✧ 先點亮上一層的一個天賦",
     "人間黑洞會用，星槎會回","人間・黑洞","黑洞過關回定軌力，一天最多 20。","定軌力用完時，黑洞入口也會關。","🌫 定軌力用完了，黑洞入口先關著：在星槎歇到 15 再來","今天靠黑洞回的定軌力已經滿 20 了","星淵遠征，定軌力用完，暫時關閉"];
   for(const s of S){const t=c2.T(s);assert.ok(t&&!/[㐀-鿿]/.test(t),s+" → "+t)}

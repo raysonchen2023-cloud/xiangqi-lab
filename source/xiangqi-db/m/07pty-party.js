@@ -4,8 +4,8 @@
    經驗：修為每加 n，已加入的每位自動 +n×50%，另外 n×50% 進「星輝」池，玩家在角色卡分給想練的人；角色等級不能超過修為（頂到的那份轉進星輝，不浪費）。
    新加入的角色從「修為 −2」級起步（至少 1）。沒加入的位置用無名木棋靈，等級＝修為的一半。
    存檔鍵 party（跟存檔格走，05b JOURNEY_KEYS）：
-     {v:1, m:{角色:{xp, at 加入時間, how:"start"|"ship"|"old"}}, pool 星輝, lead 隊長（黑洞出戰放招的人）, look 首頁小人（跟 pChar 同步）, seen:{角色:1 加入卡看過}, hint:{角色:1 修為提醒過}}
-   舊存檔（有 journey、沒有 party）第一次讀到時轉換一次：齊轍＋原本選的角色＋停靠過他任一主場站的人；每位等級＝當時的修為；原本選的那位當隊長和首頁小人。
+     {v:1, m:{角色:{xp, at 加入時間, how:"start"|"ship"|"old"}}, pool 星輝, lead（11/16 取消隊長，留著讀舊存檔、不再用）, look 首頁小人（跟 pChar 同步）, seen:{角色:1 加入卡看過}, hint:{角色:1 修為提醒過}}
+   舊存檔（有 journey、沒有 party）第一次讀到時轉換一次：齊轍＋原本選的角色＋停靠過他任一主場站的人；每位等級＝當時的修為；原本選的那位當首頁小人。
    前綴 pty／PTY（先 grep 過沒撞名）。PTY＝純規則，不碰 store 與畫面（node 測試 xiangqi-lab/tools/test-party-core.js 用 vm 直接載這支檔）。 */
 const PTY=(()=>{
   const ORDER=["x_swordboy","x_miaogirl","x_shuai","x_shi","x_spiritgirl","x_bing","x_martialgirl"];
@@ -74,9 +74,15 @@ function ptyWoodSay(pcs){try{const S=ptySquad();if(!S||!(pcs||[]).some(pc=>S[pc]
 function ptyHas(c){return PTY.has(ptyGet(),c)}
 /* 角色等級：沒有旅程時照舊用修為（序局、試玩） */
 function ptyLv(c){const P=ptyGet(),L=ptyL();if(!P)return L;return PTY.has(P,c)?PTY.lv(P,c,L):PTY.wood(L)}
-/* 隊長：黑洞三種玩法（塔防 bhtdChar、星門圍城 gsvChar、車輪戰 whlCk）取角色都問這裡 */
-function ptyLead(){const P=ptyGet();if(P)return P.lead;let c="";try{c=(typeof myChar==="function"&&myChar())||""}catch(e){}return c||PTY.START}
-function ptySetLead(c){const P=ptyGet();if(!P||!PTY.has(P,c))return false;P.lead=c;ptySave(P);return true}
+/* 11/16 開發者「不要有隊長這個設定」：沒有隊長了。黑洞三種玩法（塔防 bhtdChar、星門圍城 gsvChar、車輪戰 whlCk）畫面上的名字、頭像＝首頁小人（陪你走的那位，純外觀）；
+   數值看全隊（ptySquad），招式＝全隊已學會的（ptyLearned／ptyPick）。ptyLead 留著當 ptyLook 的別名，舊程式叫到也不會壞 */
+function ptyLook(){const P=ptyGet();if(P)return P.look;let c="";try{c=(typeof myChar==="function"&&myChar())||""}catch(e){}return c||PTY.START}
+const ptyLead=()=>ptyLook();
+/* 11/16「黑洞裡可以用每個人的招式」：SK＝那個玩法的招式表（每招有 ch、lv）。
+   ptyLearned＝已加入的每一位、照各自等級已學會的招（照加入順序）；ptyPick＝從存的那份挑出還合法的（最多 4 招，空的就帶前 4 招）；ptyGroups＝選關畫面照夥伴分組（沒學會的也列，帶 lv 鎖） */
+function ptyLearned(SK){const P=ptyGet();if(!P)return[];const o=[];for(const c of PTY.ORDER){if(!PTY.has(P,c))continue;const L=ptyLv(c);for(const s of SK||[])if(s.ch===c&&s.lv<=L)o.push(s)}return o}
+function ptyPick(SK,saved){const ok=ptyLearned(SK).map(s=>s.id),a=(Array.isArray(saved)?saved:[]).filter((id,i,A)=>ok.includes(id)&&A.indexOf(id)===i).slice(0,4);return a.length?a:ok.slice(0,4)}
+function ptyGroups(SK){const P=ptyGet();if(!P)return[];return PTY.ORDER.filter(c=>PTY.has(P,c)).map(c=>({c,nm:ptyNm(c),L:ptyLv(c),sk:(SK||[]).filter(s=>s.ch===c)})).filter(g=>g.sk.length)}
 /* 首頁小人：跟 pChar 同步（myChar／myLook／bot3d 都讀 pChar），本命棋子 botPiece 跟著換 */
 function ptySetLook(c){const P=ptyGet();if(!P||!PTY.has(P,c)||typeof WX_CHARS==="undefined"||!WX_CHARS[c])return false;const C=WX_CHARS[c];
   P.look=c;ptySave(P);store.set("pChar",c);if(C.sx)store.set("pSex",C.sx);if(C.pc)store.set("botPiece",C.pc);
@@ -94,7 +100,7 @@ function ptyFresh(){const P=PTY.fresh(Date.now());ptySave(P);return P}
 function ptyJoin(c,how){const P=ptyGet();if(!P)return false;const j=PTY.join(P,c,ptyL(),Date.now(),how);if(j)ptySave(P);return j}
 
 /* ===== 雲河七星卡冊（我的角色頁「🔒 旅程」「棋子」、角色卡底部「🌟 雲河七星」都開這裡） =====
-   已加入：頭像、名字・小名、本命棋子、朝代、等級（上限＝修為）、經驗條、招式學會幾招、＋星輝、設為隊長、帶他出門。
+   已加入：頭像、名字・小名、本命棋子、朝代、等級（上限＝修為）、經驗條、招式學會幾招、＋星輝、帶他出門。
    還沒加入：剪影＋本命棋子＋「星槎停靠〇〇時相遇」；修為提醒過的改寫那一站的目的。 */
 const PTY_GOAL={x_miaogirl:"去大漠驛站，救出戴笠帽的孩子",x_shuai:"去赤壁江上，接回被困的兩個孩子",x_shi:"去赤壁江上，接回被困的兩個孩子",
   x_spiritgirl:"去竹林溪邊，找那個一直在等人的孩子",x_bing:"去運河工地，找半塊布的主人",x_martialgirl:"去逃荒路上，找那個怕打雷的孩子"};
@@ -121,7 +127,7 @@ function ptyCss(){if(document.getElementById("ptyCss"))return;const s=document.c
    每張卡多一排四格（體力＝黑洞裡的元氣、靈力＝靈力上限、攻擊力、防禦力，BHTD.stats 照這位的等級；跟我的角色頁「黑洞裡的你」同一組數字）、一列「招式 n／N ›」（點開這位的招式清單）；
    卡冊最上面一列「天賦（全隊共用）已點亮 n／N ›」開星塵天賦樹，看完回卡冊。黑洞模組沒載入就不畫。 */
 function ptyStatHTML(c,lv){try{if(typeof BHTD==="undefined"||!BHTD.stats||!BHTD.CH||!BHTD.CH[c])return"";const S=BHTD.stats(c,lv),g=(t,v)=>`<span><small>${t}</small><b>${v}</b></span>`;
-  return`<div class="pty-st">${g("靈力上限",S.sp)}${g("攻擊力",BHTD.atkPt(S.atk))}${g("防禦力",BHTD.defPt(S.def))}</div>`}catch(e){return""}}
+  return`<div class="pty-st">${g("靈力上限",S.sp)}${g("攻擊力",BHTD.atkPt(S.atk))}${g("防禦力",BHTD.defPt(S.def))}</div>`}catch(e){return""}}   /* 11/16 體力統一：「體力」＝這位的體力上限，陪你走的那一位就是角色卡上「體力 n／這個數」的上限（07dgl dglMx）；黑洞的靈力是上限，改叫「靈力上限」，跟人間存著的「靈力 n／20」分開 */
 const ptySkPool=c=>{try{return typeof BHTD!=="undefined"&&BHTD.SK?BHTD.SK.filter(s=>s.ch===c):[]}catch(e){return[]}};
 /* 11/16 全隊體力（RPG 數值盤查第 4 項，開發者選「三處都用全隊體力」）：人間的體力上限、進黑洞開局的體力是同一個數（07dgl dglMx：七種棋子所屬角色的平均），卡冊最上面寫這一個數；每位的卡不再各寫各的體力，只留靈力上限、攻擊力、防禦力 */
 function ptyTeamHTML(){try{const mx=typeof dglMx==="function"&&typeof BHTD!=="undefined"?dglMx():0;if(!(mx>0))return"";return`<div class="pty-row top pty-team"><span>全隊體力</span><small>（人間、黑洞都是這個數）</small><b>${mx}</b></div>`}catch(e){return""}}
@@ -141,26 +147,26 @@ function ptyCardHTML(P,c,L){const C=(typeof WX_CHARS!=="undefined"&&WX_CHARS[c])
     return`<div class="pty-c lk">${img}<div><div class="pty-n">？？？<small>${esc(C.pc||"")}</small></div><div class="pty-m">${goal?esc(goal):`星槎停靠${esc(at)}時相遇`}</div></div></div>`}
   const lv=PTY.lv(P,c,L),x=P.m[c].xp,b0=PTY.base(lv),nd=PTY.need(lv),top=lv>=L,pct=top?100:Math.max(0,Math.min(100,100*(x-b0)/nd));
   const skP=ptySkPool(c),skN=skP.filter(s=>s.lv<=lv).length;   /* 11/16：招式從那一行小字搬成一列可以點的「招式 n／N ›」 */
-  const tg=(P.lead===c?`<span class="pty-tag">隊長</span>`:"")+(P.look===c?`<span class="pty-tag look">陪你走</span>`:"");
+  const tg=P.look===c?`<span class="pty-tag look">陪你走</span>`:"";
   return`<div class="pty-c" data-c="${c}">${img}<div><div class="pty-n">${esc(C.n)}<small>${esc(C.nk||"")}</small>${tg}</div>
     <div class="pty-m">${esc(C.pc||"")}・${esc(era)}・Lv ${lv}${top?(L>=100?"（練滿了）":"（練滿了，等你升級）"):""}</div><div class="pty-xp" aria-hidden="true"><b style="width:${pct.toFixed(1)}%"></b></div></div>
     ${ptyStatHTML(c,lv)}${skP.length?`<button type="button" class="pty-row" data-a="sk"><span>招式</span><b>${skN}／${skP.length}</b><i aria-hidden="true">›</i></button>`:""}
-    ${(a=>a?`<div class="pty-a">${a}</div>`:"")(`${top?"":`<button type="button" class="btn" data-a="give"${P.pool>0?"":" disabled"}>＋星輝</button>`}${P.lead===c?"":`<button type="button" class="btn ghost" data-a="lead">設為隊長</button>`}${P.look===c?"":`<button type="button" class="btn ghost" data-a="look">帶${ptyTa(c)}出門</button>`}`)}</div>`}   /* 三顆都不用出現時（練滿的隊長又正陪你走）不留一條空白 */
+    ${(a=>a?`<div class="pty-a">${a}</div>`:"")(`${top?"":`<button type="button" class="btn" data-a="give"${P.pool>0?"":" disabled"}>＋星輝</button>`}${P.look===c?"":`<button type="button" class="btn ghost" data-a="look">帶${ptyTa(c)}出門</button>`}`)}</div>`}   /* 兩顆都不用出現時（練滿了又正陪你走）不留一條空白 */
 function ptySheet(){if(typeof sheet!=="function")return;const P0=ptyGet();if(!P0){try{toast("還沒有開始旅程")}catch(e){}return}ptyCss();
   sheet("🌟 雲河七星",b=>{const draw=()=>{const P=ptyGet(),L=ptyL(),sy=b.scrollTop;
     b.innerHTML=`<div class="pty-top"><span><span>你的修為</span> <b>Lv ${L}</b></span><span class="pty-pool">✨ <span>星輝</span> <b>${P.pool|0}</b></span></div><p class="pty-m pty-cap">${ptyCapSay(L)}</p>`+ptyTeamHTML()+ptyTalHTML()+PTY.ORDER.map(c=>ptyCardHTML(P,c,L)).join("")+
-      `<p class="pty-m">下棋、解題、黑洞過關得到的修為，一半自動分給隊上每一位，另一半變成星輝，由你分給想練的人。隊長是黑洞裡放招的那一位；「陪你走」是首頁上跟著你的那一位。</p>`;
+      `<p class="pty-m">下棋、解題、黑洞過關得到的修為，一半自動分給隊上每一位，另一半變成星輝，由你分給想練的人。黑洞裡全隊已學會的招都能帶（一場最多 4 招）；「陪你走」是首頁上跟著你的那一位。</p>`;
     {const t=b.querySelector('[data-top="tal"]');if(t)t.onclick=()=>{try{vibrate(5)}catch(e){}closeSheet();setTimeout(()=>bhtdTal(()=>ptySheet(),"‹ 回雲河七星"),60)}}   /* 07bht bhtdTal 第二個參數＝返回鈕的字（沒給照舊「回選關」） */
     b.querySelectorAll(".pty-c[data-c]").forEach(el=>{const c=el.dataset.c;el.querySelectorAll("[data-a]").forEach(btn=>btn.onclick=()=>{try{vibrate(5)}catch(e){}const a=btn.dataset.a;
       if(a==="sk"){closeSheet();setTimeout(()=>ptySkills(c),60);return}
       if(a==="give"){const P2=ptyGet(),L2=ptyL(),lv=PTY.lv(P2,c,L2),want=PTY.base(Math.min(L2,lv+1))-P2.m[c].xp;const g=ptyGive(c,want>0?want:P2.pool);try{toast(g?`✨ 給了 ${g} 星輝`:"已經跟你一樣高了，等你升級再練")}catch(e){}}
-      else if(a==="lead"){if(ptySetLead(c))try{toast("隊長換成"+WX_CHARS[c].n)}catch(e){}}
+
       else if(a==="look"){if(ptySetLook(c)){try{toast(WX_CHARS[c].n+"陪你走")}catch(e){}try{closeSheet()}catch(e){}setTimeout(()=>{try{if(typeof route==="function")route()}catch(e){}},260);return}}   /* 換人後關卡冊、重畫首頁，右上頭像和小人馬上換 */
       draw()})});b.scrollTop=sy};draw()})}
 
 /* ===== 星槎上的加入劇情（設計書第三節；台詞暫定，照小說前九章改寫稿 story/chatgpt_app/86_*定稿合集.md，之後交 Gemini 潤稿） =====
    ① 到站（07f-ship.js shipDockCover 的 arrive 先問 ptyArrive）：這一站有人要加入 → 下船場景（他的困難），「去幫他」直接開那一題（shipHref）。
-   ② 解開那一題（07f-ship.js shipMark 末尾問 ptyOnSolve）：他加入 → 加入卡（同行的一句、設為隊長、帶他出門）。
+   ② 解開那一題（07f-ship.js shipMark 末尾問 ptyOnSolve）：他加入 → 加入卡（同行的一句、帶他出門）。
    ③ 起航（07f-ship.js shipSailNeed 先問 ptySailBlock）：還沒幫他，不能離開這一站。
    ④ 修為到了（ptyOnXp）：說書人提醒一次，帶你去星槎；不會自動加入。 */
 const PTY_MEET={han:"驛站前圍著幾名驛卒。中間站著一個戴褐色笠帽的女孩，帽頂一顆紅琉璃珠，正是書頁上浮出的那一顆。驛卒說她是越境的胡人，把她和一封驛書一起扣下了。沙暴快來了，老驛騎急著要把驛書送出去。",
@@ -187,8 +193,8 @@ function ptyOnSolve(k,id){let P=null;try{P=ptyGet()}catch(e){}if(!P)return;const
 function ptyJoinCardLater(L,n){setTimeout(()=>{if(document.querySelector(".modal")&&n<20)return ptyJoinCardLater(L,n+1);ptyJoinCard(L)},n?1500:2500)}
 function ptyJoinCard(L){if(typeof modal!=="function"||!L||!L.length)return;const P=ptyGet();if(!P)return;
   const nm=L.map(ptyNm).join("、"),c=L[0];
-  modal(`<img src="data/xs/prev_${c}.webp" alt="" onerror="this.remove()"><h2>${esc(nm)}加入了！</h2>${L.map(x=>PTY_SAY[x]?`<p class="pl-say">${esc(ptyNm(x))}：「${esc(PTY_SAY[x])}」</p>`:"").join("")}<p class="muted">在「雲河七星」卡冊可以換隊長、換陪你走的人，也可以分星輝給${ptyTa(L)}。</p>`,
-    [["設為隊長",()=>{ptySetLead(c);try{toast("隊長換成"+ptyNm(c))}catch(e){}}],["帶"+ptyTa(L)+"出門",()=>{ptySetLook(c)},true],["好",null,true]],"prolog");
+  modal(`<img src="data/xs/prev_${c}.webp" alt="" onerror="this.remove()"><h2>${esc(nm)}加入了！</h2>${L.map(x=>PTY_SAY[x]?`<p class="pl-say">${esc(ptyNm(x))}：「${esc(PTY_SAY[x])}」</p>`:"").join("")}<p class="muted">${ptyTa(L)}的招式黑洞裡就能帶；在「雲河七星」卡冊可以換陪你走的人，也可以分星輝給${ptyTa(L)}。</p>`,
+    [["帶"+ptyTa(L)+"出門",()=>{ptySetLook(c)}],["好",null,true]],"prolog");
   const P2=ptyGet();for(const x of L)P2.seen[x]=1;ptySave(P2)}
 /* ③ 起航閘門：回 null＝不擋 */
 function ptySailBlock(){let P=null;try{P=ptyGet()}catch(e){}if(!P||typeof shipFront!=="function")return null;const k=shipFront();if(!k)return null;const L=PTY.pendingAt(P,k);if(!L.length)return null;

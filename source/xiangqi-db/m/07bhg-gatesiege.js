@@ -30,9 +30,9 @@ const GSV=(()=>{
   /* 11/15 七星改版（開發者選單，story/七星各自等級_戰鬥規則草案_1115.md）：每種棋子各用自己角色的等級。
      cfg.sq＝{R:{ck,L},N:…,B,A,K,C,P}（開局設定沒帶就問 07pty-party.js 的 ptySquad()，所以 gsvStart／whlNew／local.js 都不用改；node 測試裡沒有 ptySquad＝舊規則）（還沒加入的是木棋靈：同一位角色的數值、等級＝修為一半）；有 sq 時
      我方擒子／將軍用「動的那顆」的 ATK、我方被擒用「被吃那顆」的 DEF、被將軍／入侵／星樞招用帥的 DEF、元氣上限＝七種的平均；
-     招式、靈力、隊長那組（td.me.atk／def）照舊給招式用。沒有 sq＝舊規則（整隊一組） */
+     11/16 取消隊長：靈力上限、我方攻防也是七種平均，招式傷害看放招那位的攻擊。沒有 sq＝舊規則（整隊一組） */
   const PCS=["R","N","B","A","K","C","P"];
-  function squad(S){if(!S||typeof S!=="object")return null;const o={};for(const pc of PCS){const x=S[pc];if(!x||!CH[x.ck])return null;const t=stats(x.ck,x.L);o[pc]={ck:t.ck,L:t.L,atk:t.atk,def:t.def,hp:t.hp,wood:x.wood?1:0}}return o}
+  function squad(S){if(!S||typeof S!=="object")return null;const o={};for(const pc of PCS){const x=S[pc];if(!x||!CH[x.ck])return null;const t=stats(x.ck,x.L);o[pc]={ck:t.ck,L:t.L,atk:t.atk,def:t.def,hp:t.hp,sp:t.sp,wood:x.wood?1:0}}return o}
   const atkR=(td,pc)=>td.sq&&td.sq[pc]?td.sq[pc].atk:td.me.atk,defR=(td,pc)=>td.sq&&td.sq[pc]?td.sq[pc].def:td.me.def;
   /* 同式傷害（提案一 5.1）：未吸收傷害＝max(1, round(基礎 × 攻方ATK/100 × 100/(100+守方DEF)))；基礎 0 就是 0 */
   function dmg(base,atk,def){base=+base||0;if(base<=0)return 0;return Math.max(1,Math.round(base*(+atk||100)/100*100/(100+Math.max(0,+def||0))))}
@@ -97,12 +97,14 @@ const GSV=(()=>{
       waves:[{at:2,p:[["p",3,7,"inv"],["n",2,10]]},{at:4,p:[["p",7,7,"inv"],["n",8,10]]},{at:6,p:[["r",1,10],["r",9,10],["c",2,8]]}],
       say:"護陣卒在等你的俥深入——星樞會預告「斷路令」，進去之前先留一道退路。",tip:"「斷路令」只打回合結束時還在敵方半場的那顆俥：留一步能退回自己半場的路，退回來就取消"},
     /* 第 10 關：護陣車（在場星樞 DEF+20）站在 a8、有象看著，開局就捉你的俥。兌掉＝拆陣＋解除這條路的長驅，但你少一隻俥（後備俥要花 20 靈、一步棋部署）；不兌就要找子接手守口 */
-    10:{n:10,nm:"交換要道",th:"兌子的取捨",hp:150,atk:95,def:25,esp0:35,esk:["cqzr"],depth:3,rs:14,arep:1,
+    10:{n:10,nm:"交換要道",th:"兌子的取捨",hp:200,atk:95,def:35,   /* 11/16 全隊招式後腳本第 3 天 0%→90%，開發者選單「先調」→ hp 150→200、def 25→35（試算約 0～40%）；第 11 關同 */
+      esp0:35,esk:["cqzr"],depth:3,rs:14,arep:1,
       open:[["k",5,10],["a",4,10],["a",6,10],["b",3,10],["b",7,10],["r",1,8,"guard"],["c",8,8],["p",3,7],["p",5,7],["p",7,7]],
       waves:[{at:2,p:[["p",9,7,"inv"]]},{at:4,p:[["n",2,10],["n",8,10]]},{at:6,p:[["r",9,10],["c",2,8],["p",1,7,"inv"]]}],
       say:"護陣車佔著要道、正捉著你的俥——兌掉它拆陣，還是留著俥另找子守口？",tip:"護陣車在場星樞 DEF+20：用俥兌掉它就拆陣、那條直路也安全了；兌完可以花 20 靈把後備俥部署回來"},
     /* 第 11 關（組合）：長驅直入＋斷路令＋護陣＋入侵。俥只有一隻：守口、拆陣、退路要同一步顧到 */
-    11:{n:11,nm:"一俥兩用",th:"一步兩用",hp:150,atk:100,def:25,esp0:40,esk:["dll","cqzr"],depth:3,rs:14,arep:1,
+    11:{n:11,nm:"一俥兩用",th:"一步兩用",hp:200,atk:100,def:35,   /* 11/16 全隊招式後 10%→50%，同上調（試算約 0～30%） */
+      esp0:40,esk:["dll","cqzr"],depth:3,rs:14,arep:1,
       open:[["k",5,10],["a",4,10],["a",6,10],["b",3,10],["b",7,10],["c",8,8],["n",2,10],["p",1,7,"guard"],["p",3,7],["p",5,7]],
       waves:[{at:2,p:[["r",9,10],["p",7,7,"inv"]]},{at:4,p:[["r",1,10],["n",8,10]]},{at:6,p:[["c",2,8],["p",9,7,"inv"]]}],
       say:"星樞兩招都會用：俥深入就「斷路令」、直路空了就「長驅直入」——一步要兩用。",tip:"俥沿著自己要守的那條直路進退：進去拆陣、退回來時順手守口，一步做兩件事"},
@@ -182,7 +184,13 @@ const GSV=(()=>{
     31:[["inv0"],["fast",10]],32:[["fast",4],["nosk"]],33:[["fast",10],["nosk"]],34:[["fast",14],["hp",70]],35:[["fast",8],["nosk"]],36:[["inv0"],["hp",60]],
     37:[["hp",50],["rook"]],38:[["fast",6],["nosk"]],39:[["inv0"],["hp",50]]};
   /* 這一關的三個目標 [{k,v,t}]（第一個固定是過關）；沒有設目標的盤只有過關一個 */
-  function goals(n){return[{k:"win",t:"過關"}].concat((STG[n]||[]).map(([k,v])=>({k,v,t:typeof GOAL[k].t==="function"?GOAL[k].t(v):GOAL[k].t})))}
+  /* 11/16 開發者「對方 HP 還沒歸 0 為什麼莫名其妙就破關了」（序章 B3）→ 選單選「保留並寫清楚」：序章另外的過關條件（LV.win）寫給玩家看。
+     winTxt(n)＝條件本身（沒有就空字串）；winNow(td,盤面)＝對局中的進度那一句（gsvFoeLine 放在上方那一行） */
+  function winTxt(n){const W=(LV[n]||{}).win;if(!W)return"";return W.clr?`吃光${PBN[up(W.clr)]}`:W.wv?"援軍都擋下來、入侵卒清光":""}
+  function winNow(td,b){const W=td&&td.win;if(!W)return"";const wait=k=>(td.waves||[]).filter(w=>w.st==="wait"&&(!k||w.p===k));
+    if(W.clr){const n=(b||[]).filter(x=>x===W.clr).length+wait(W.clr).length;return`過關：吃光${PBN[up(W.clr)]}（還剩 ${n} 顆）`}
+    if(W.wv){const wv=new Set(wait().map(w=>w.wv)).size,inv=Object.keys(td.ids).filter(q=>tagOf(td,td.ids[q])==="inv").length;return`過關：擋下援軍（還有 ${wv} 波）、清光入侵卒（場上 ${inv} 顆）`}return""}
+  function goals(n){return[{k:"win",t:winTxt(n)?`過關（${winTxt(n)}也算）`:"過關"}].concat((STG[n]||[]).map(([k,v])=>({k,v,t:typeof GOAL[k].t==="function"?GOAL[k].t(v):GOAL[k].t})))}
   /* 這一局過關時拿到哪幾顆 [1,0／1,0／1]；recStars＝紀錄裡已經有的（舊存檔沒有 st：有勝場算 1 星）；兩個照位置取大的就是新的紀錄 */
   function stars(td,b){return goals(td.lv).map((g,i)=>i===0||GOAL[g.k].ok(td,b,g.v)?1:0)}
   function recStars(R,n){const N=goals(n).length;return Array.from({length:N},(x,i)=>R&&Array.isArray(R.st)?(R.st[i]?1:0):(i===0&&R&&R.w>0?1:0))}
@@ -243,6 +251,10 @@ const GSV=(()=>{
   const GEN=SK.filter(s=>s.gen).map(s=>s.id);
   const skOf=(ck,L)=>SK.filter(s=>s.ch===ck&&s.lv<=(+L||1)).map(s=>s.id);
   /* 帶上場的招：只收這位角色已解鎖的，最多 4 招；沒選就帶前 4 招 */
+  /* 11/16 開發者「黑洞裡可以用每個人的招式」「不要有隊長這個設定」：有隊伍（sq）時，本命招池＝已加入（不是木棋靈）的每一位、照各自等級已學會的招（通用招照舊另外有），一場最多 4 招不限誰的 */
+  const JOIN_ORD=["x_swordboy","x_miaogirl","x_shuai","x_shi","x_spiritgirl","x_bing","x_martialgirl"];   /* 預設招照七星加入順序（跟 07pty-party.js ptyPick 一致，齊轍的先）；SK 表本身照角色分組，順序不同 */
+  const skOfSq=sq=>SK.filter(s=>!s.gen&&PCS.some(pc=>sq[pc]&&sq[pc].ck===s.ch&&!sq[pc].wood&&s.lv<=sq[pc].L)).sort((a,b)=>JOIN_ORD.indexOf(a.ch)-JOIN_ORD.indexOf(b.ch)).map(s=>s.id);
+  function skPickSq(sq,sk){const ok=skOfSq(sq),a=(Array.isArray(sk)?sk:[]).filter((id,i,A)=>ok.includes(id)&&A.indexOf(id)===i).slice(0,4);return a.length?a:ok.slice(0,4)}
   function skPick(ck,L,sk){const ok=skOf(ck,L),a=(Array.isArray(sk)?sk:[]).filter((id,i,A)=>ok.includes(id)&&A.indexOf(id)===i).slice(0,4);return a.length?a:ok.slice(0,4)}
   /* ===== 盤面工具 ===== */
   const AP=[[7,3],[7,5],[8,4],[9,3],[9,5]],BP=[[9,2],[9,6],[7,0],[7,4],[7,8],[5,2],[5,6]];
@@ -295,9 +307,10 @@ const GSV=(()=>{
   /* ===== 開局 ===== */
   function core(o){return{hp:o.hp,max:o.hp,atk:o.atk,def:o.def,sp:o.sp0,spMax:o.spMax,sh:{v:0,exp:0},inc:0,lastChk:-9,heal:0,healMax:Math.floor(o.hp*HEAL_PCT),lastLoss:0,dealt:0,taken:0}}
   function boot(cfg,P,C){cfg=cfg||{};const n=+cfg.lv,V=lvOf(n,cfg.hard);if(!V)throw new Error("星門圍城沒有第 "+cfg.lv+" 關");const pl=plan(n),st=stats(cfg.ch,cfg.L),sq=squad((cfg.sq!==undefined?cfg.sq:(typeof ptySquad==="function"?ptySquad():null))),hp0=sq?Math.round(PCS.reduce((a,pc)=>a+sq[pc].hp,0)/PCS.length):st.hp;   /* cfg.hard＝困難版：V 換成 lvOf 的那一組，擺法、波次不變 */
+    const avgQ=k=>PCS.reduce((a,pc)=>a+(+sq[pc][k]||0),0)/PCS.length;   /* 11/16 取消隊長：靈力上限、我方攻防＝七種平均（元氣本來就是）；招式傷害在 cast 換成放招那位的攻擊 */
     const td={mode:MODE,mv:MV,lv:n,nm:V.nm,ch:st.ck,cn:st.n,nk:st.nk,L:st.L,rnd:0,seq:0,ev:[],q:[],over:null,
-      me:core({hp:hp0,atk:st.atk,def:st.def,sp0:SP0,spMax:st.sp}),sq,en:core({hp:V.hp,atk:V.atk,def:V.def,sp0:V.esp0,spMax:100}),
-      sk:skPick(st.ck,st.L,cfg.sk),cd:{},cdAt:{},used:{},sk1:-1,res:pl.res.slice(),dep:0,dp:pl.dp,ids:{},meta:{},lost:[],
+      me:core({hp:hp0,atk:sq?avgQ("atk"):st.atk,def:sq?avgQ("def"):st.def,sp0:SP0,spMax:sq?Math.round(avgQ("sp")):st.sp}),sq,en:core({hp:V.hp,atk:V.atk,def:V.def,sp0:V.esp0,spMax:100}),
+      sk:sq?skPickSq(sq,cfg.sk):skPick(st.ck,st.L,cfg.sk),cd:{},cdAt:{},used:{},sk1:-1,res:pl.res.slice(),dep:0,dp:pl.dp,ids:{},meta:{},lost:[],
       waves:pl.waves,arm:{},icpt:0,ctl:{frz:[],noCap:[],noTake:[],trap:null,lock:[],imm:{}},buf:{},fx:null,ecd:{},np:0,last:{r:null,b:null},log:[],rs:V.rs,esk:V.esk.slice(),depth:V.depth,
       phs:(V.ph||[]).map(o=>({hp:o.hp,esk:o.esk})),phn:0,arep:V.arep||(AREP1&&CHP.find(c=>c.n===1).lv.includes(n))?1:0,hard:V.hard?1:0,tl:{inv:0,n:0,drain:0,lost:""},win:V.win||null,noprog:V.noprog||NOPROG};
     let ri=0,bi=0;for(let q=0;q<90;q++){const p=P.board[q];if(!p)continue;const red=sd(p)==="r",id=red?"r"+(++ri):"b"+(++bi);td.ids[q]=id;
@@ -511,9 +524,9 @@ const GSV=(()=>{
       ev(td,{k:"dep",p,sq,cost:DEP_COST});return{ok:1,pass:1}}
     if(S.info)return{ok:1,info:1};
     if(S.tg){const need=S.tg.length;if(tg.length<need)return{err:"還沒選好目標"};for(let i=0;i<need;i++){const T=targets(P,id,tg.slice(0,i),C),v=tg[i];if(!T.some(x=>(typeof x==="object"?x.v:x)===v))return{err:"這個目標不行"}}}
-    const c=costOf(td,id);const run=RUN[id];if(!run)return{err:"這一招還沒做"};const r=run({P,td,b,C,R,M,E:td.en},tg);if(r&&r.err)return r;
+    const c=costOf(td,id);const run=RUN[id];if(!run)return{err:"這一招還沒做"};const a0=M.atk;if(td.sq&&CH[S.ch])M.atk=atkR(td,CH[S.ch].pc);let r;try{r=run({P,td,b,C,R,M,E:td.en},tg)}finally{M.atk=a0}   /* 11/16 全隊招式：招式傷害看放招那位的攻擊 */if(r&&r.err)return r;
     M.sp-=c;if(td.buf.disc&&c>0&&id!=="bu5"&&td.buf.disc.until>R)delete td.buf.disc;td.cd[id]=S.cd;td.cdAt[id]=R;td.sk1=R;td.used[id]=(td.used[id]||0)+1;
-    ev(td,Object.assign({k:"skill",id,nm:S.nm,cost:c,tg},r||{}));return{ok:1}}
+    ev(td,Object.assign({k:"skill",id,nm:S.nm,cost:c,tg,ch:S.ch},r||{}));return{ok:1}}
   const RUN={
     shen1:X=>({n:heal(X.td,15,"重金懸賞")}),shen2:X=>({n:heal(X.td,X.td.last.b&&X.td.last.b.ck?12:8,"庭院小息")}),
     shen4:X=>({n:heal(X.td,X.M.hp*2<X.M.max?17:12,"當票回春")}),shen5:X=>{X.td.buf.shen5={n:3};return{}},
@@ -576,7 +589,7 @@ const GSV=(()=>{
     return best||(r&&r.best)}
   /* 給腳本對照、測試用：一步模擬紅方（不改原狀態） */
   function simR(P,f,t,C){const P2={board:P.board.slice(),turn:"r",td:clone(P.td),moves:[],pos:[C.fen(P.board,"r")],ed:[],human:"r"};const m=C.stateApply(P2,f,t);move(P2,m,C);return P2}
-  return{MODE,MV,CH,PCS,squad,atkR,defR,LV,LVN,CHP,AREP1,GOAL,STG,HARD,HARDX,goals,stars,recStars,lockWhy,lvName,PRO_NEED,lvOf,SK,SKM,GEN,ESK,PCN,PBN,STD,CAPB,CHK,CHK_GAP,FOCUS,INV,INV_PAL,INV_MAX,GUARD,SH_CAP,SH_LIFE,DEP_COST,DEP_MAX,ICPT_DRAIN,ICPT_GAIN,NOPROG,HEAL_PCT,SP0,RG,CAP_SP,INC_CAP,GROW,W_HP,DRAIN,
+  return{MODE,MV,CH,PCS,squad,atkR,defR,LV,LVN,CHP,AREP1,GOAL,STG,HARD,HARDX,goals,stars,recStars,lockWhy,lvName,PRO_NEED,winTxt,winNow,lvOf,SK,SKM,GEN,skOfSq,skPickSq,ESK,PCN,PBN,STD,CAPB,CHK,CHK_GAP,FOCUS,INV,INV_PAL,INV_MAX,GUARD,SH_CAP,SH_LIFE,DEP_COST,DEP_MAX,ICPT_DRAIN,ICPT_GAIN,NOPROG,HEAL_PCT,SP0,RG,CAP_SP,INC_CAP,GROW,W_HP,DRAIN,
     G,stats,dmg,absorb,plan,startBoard,startFen,lvCheck,spawnOk,canStand,facing,boot,move,settle,cast,why,targets,costOf,depOk,skOf,skPick,fore,gateNm,preview,threats,invHits,defOf,guards,fxSq,scrOf,
     cannonHits,horseHits,marks,banMoves,engine,pick,simB,simR,scoreB,lethalR,sqOfId,tagOf,uSq,LSQ,inPal,redHalf}})();
 /* ================= ③ 接線：local.js 只認 window.XQ_TD。星門圍城的盤交給 GSV，其他（舊版塔防、急襲、練習賽）照舊交給 BHTD ================= */
@@ -639,7 +652,7 @@ body.gsv-on .view.fixed>#bbox>svg{width:100%!important;height:100%!important;max
 .gsv-card.on{border-color:#7a3fb0;box-shadow:0 0 0 2px rgba(122,63,176,.25)}.gsv-card small{display:block;font-size:12px;color:var(--muted,#777)}
 .gsv-chs{display:flex;gap:6px;margin:8px 0 0}.gsv-chb{flex:1 1 0;min-width:0;font:inherit;font-size:13.5px;color:inherit;background:transparent;border:2px solid var(--line,#ddd);border-radius:99px;padding:4px 6px;min-height:44px;cursor:pointer}.gsv-chb.on{border-color:#7a3fb0;background:rgba(122,63,176,.12);font-weight:700}
 .gsv-mds{margin-top:6px}.gsv-mds .gsv-chb{min-height:40px;font-size:13px}.gsv-card.lk{opacity:.55}.gsv-s3{float:right;letter-spacing:1px;color:#b8860b;font-size:14px}.gsv-gl{font-size:12.5px;line-height:1.6;margin:6px 0 2px;text-align:center}.gsv-gl i{font-style:normal;opacity:.6}
-.gsv-skl{display:flex;flex-wrap:wrap;gap:6px}.gsv-skl label{font-size:12.5px;border:1.5px solid var(--line,#ccc);border-radius:99px;padding:3px 9px;cursor:pointer}.gsv-skl label.on{border-color:#7a3fb0;background:rgba(122,63,176,.12)}.gsv-skl label.lk{opacity:.4}
+.gsv-skl{display:flex;flex-wrap:wrap;gap:6px}.gsv-skl .gsv-skg{flex-basis:100%;margin:6px 0 0;font-size:12.5px;font-weight:700}.gsv-skl .gsv-skg small{font-weight:400;opacity:.7}.gsv-skl label{font-size:12.5px;border:1.5px solid var(--line,#ccc);border-radius:99px;padding:3px 9px;cursor:pointer}.gsv-skl label.on{border-color:#7a3fb0;background:rgba(122,63,176,.12)}.gsv-skl label.lk{opacity:.4}
 .bt-sel .bt-card.bt-gsvc{border-style:double;border-width:3px;border-color:#b46bff}
 @media (orientation:portrait) and (max-height:700px){body.gsv-on{--gsvMeH:176px}.gsv-sk{min-height:40px}.gsv-sks.gen .gsv-sk{min-height:36px}}
 @media (orientation:landscape){body.gsv-on{--gsvEnH:0px;--gsvMeH:0px}
@@ -669,12 +682,9 @@ body.gsv-on .view.fixed>#bbox .park3d{border-radius:0!important}
 /* ---------- 選關卡片（黑洞關卡卡片的「🌠 星門圍城」、主控台 gsvOpen()） ---------- */
 function gsvCard(){   /* 11/15 開發者試玩後「有挑戰性、沒有那麼無腦獲勝了，可以上線」：開給所有玩家（原本只給開發者） */
   return`<button type="button" class="bt-card bt-gsvc" data-gsv="1" aria-label="星門圍城，兩章共 12 關"><div class="hd"><b>🌠 星門圍城</b></div></button>`}
-const gsvChar=()=>{let c="";try{c=typeof ptyLead==="function"?ptyLead():((typeof myChar==="function"&&myChar())||store.get("pChar",""))}catch(e){}return GSV.CH[c]?c:"x_swordboy"};   /* 11/15 七星改版：出戰的是隊長（07pty-party.js） */
+const gsvChar=()=>{let c="";try{c=typeof ptyLook==="function"?ptyLook():((typeof myChar==="function"&&myChar())||store.get("pChar",""))}catch(e){}return GSV.CH[c]?c:"x_swordboy"};   /* 11/15 七星改版：出戰的是隊長（07pty-party.js） */
 /* 11/15 七星改版第二期：選關解鎖看誰加入了（序章 B、C 階段）；沒有 07pty-party.js（舊版）就不看 */
 const gsvHas=()=>{try{return typeof ptyHas==="function"?ptyHas:null}catch(e){return null}};
-/* 隊長的本命棋子不在這一關的盤上（序章 B1 只有傌…）：開戰前換成盤上已加入、等級最高的那位（設計書第六節）；回 {ck,L,from} 或 null */
-function gsvCapt(n,ck){try{const pc=(GSV.CH[ck]||{}).pc,pl=GSV.plan(n),on=new Set((pl?pl.red:[]).map(x=>String(x[0]).toUpperCase()));if(!pc||on.has(pc)||typeof ptySquad!=="function")return null;
-  const S=ptySquad();if(!S)return null;const c=GSV.PCS.filter(q=>on.has(q)&&S[q]&&!S[q].wood).sort((a,b)=>(S[b].L||0)-(S[a].L||0))[0];return c?{ck:S[c].ck,L:S[c].L,from:ck}:null}catch(e){return null}}
 const gsvL=c=>{try{if(typeof ptyLv==="function")return ptyLv(c||gsvChar());return typeof xpInfo==="function"?xpInfo().L:1}catch(e){return 1}};   /* 11/15 七星改版：等級看隊長自己的 */
 function gsvRulesHTML(){return`<ul class="gsv-rules">
 <li>雙方各有一顆<b>星核</b>（HP、ATK、DEF、靈力）。棋子照普通象棋走、照常被吃掉離場；真正將死仍然直接贏。</li>
@@ -704,12 +714,12 @@ function gsvChapHTML(P,sel,chp,o){o=o||{};const H=GSV.CHP.find(c=>c.n===chp)||GS
   return`<div class="gsv-chs" role="tablist">${GSV.CHP.map(c=>`<button type="button" class="gsv-chb${c.n===H.n?" on":""}" role="tab" aria-selected="${c.n===H.n}" data-ch="${c.n}"><span>${esc(c.t)}</span>・<span>${esc(c.nm)}</span></button>`).join("")}</div>
 <div class="gsv-chs gsv-mds">${[["普通",0],["困難",1]].map(([t,v])=>`<button type="button" class="gsv-chb gsv-mdb${v===hard?" on":""}" data-md="${v}" aria-pressed="${v===hard}">${t}</button>`).join("")}</div>
 <div class="gsv-cards">${H.lv.map(card).join("")}</div><p class="gsv-gl">${esc(GSV.lvName(sel))}${hard?"・困難":""}：${gsvStarsHTML(sel,GSV.recStars(T[sel],sel))}</p>`}
-function gsvSelect(k,cover){gsvCss();const ck=gsvChar(),L=gsvL(),st=GSV.stats(ck,L),P=gsvProg(),pool=GSV.SK.filter(s=>s.ch===st.ck);let sel=P.last&&GSV.LV[P.last]?P.last:1;
+function gsvSelect(k,cover){gsvCss();const ck=gsvChar(),L=gsvL(),st=GSV.stats(ck,L),P=gsvProg(),pool=typeof ptyGroups==="function"?ptyGroups(GSV.SK.filter(s=>!s.gen)):[{c:st.ck,nm:st.n,L,sk:GSV.SK.filter(s=>s.ch===st.ck)}];   /* 11/16 全隊招式：照夥伴分組 */let sel=P.last&&GSV.LV[P.last]?P.last:1;
   const all=gsvDevAll(),has=gsvHas();if(GSV.lockWhy(P,sel,0,all,has))sel=GSV.LVN.find(n=>!GSV.lockWhy(P,n,0,all,has))||GSV.CHP[0].lv[0];let hard=P.lastH&&!GSV.lockWhy(P,sel,1,all)?1:0;   /* 上次打的關現在鎖著（不該發生）就回第 1 關；上次打困難版就停在困難版 */
-  let pk=GSV.skPick(st.ck,L,P.sk[st.ck]),chp=(GSV.CHP.find(c=>c.lv.includes(sel))||GSV.CHP[0]).n;   /* 一開始停在上次打的那一關所在的章 */
+  let pk=typeof ptyPick==="function"?ptyPick(GSV.SK,P.sk["*"]||P.sk[st.ck]):GSV.skPick(st.ck,L,P.sk[st.ck]),chp=(GSV.CHP.find(c=>c.lv.includes(sel))||GSV.CHP[0]).n;   /* 一開始停在上次打的那一關所在的章 */
   const chH=()=>gsvChapHTML(P,sel,chp,{hard,all,has});
-  const skH=()=>pool.map(s=>`<label class="${pk.includes(s.id)?"on":""}${s.lv>L?" lk":""}" data-id="${s.id}" title="${esc(s.d)}">${s.lv>L?"🔒 Lv"+s.lv+" ":""}${esc(s.nm)}・${s.cost} 靈</label>`).join("");
-  const m=modal(`<div class="em">🌠</div><h2>星門圍城</h2><div class="gsv-chap">${chH()}</div><p style="font-size:13px;margin-bottom:2px">招式（最多 4 招）</p><div class="gsv-skl">${skH()}</div>
+  const skH=()=>pool.map(g=>`<p class="gsv-skg">${esc(g.nm)} <small>Lv ${g.L}</small></p>`+g.sk.map(s=>`<label class="${pk.includes(s.id)?"on":""}${s.lv>g.L?" lk":""}" data-id="${s.id}" title="${esc(s.d)}">${s.lv>g.L?"🔒 Lv"+s.lv+" ":""}${esc(s.nm)}・${s.cost} 靈</label>`).join("")).join("");
+  const m=modal(`<div class="em">🌠</div><h2>星門圍城</h2><div class="gsv-chap">${chH()}</div><p style="font-size:13px;margin-bottom:2px">招式（全隊已學會的都能帶，最多 4 招）</p><div class="gsv-skl">${skH()}</div>
     <details><summary>星門圍城規則</summary>${gsvRulesHTML()}</details>`,
     [["⚔ 出戰",()=>gsvStart(sel,k,cover,pk,false,hard)],["‹ 回黑洞關卡",()=>{try{if(typeof bhtdSelect==="function")bhtdSelect(k,cover)}catch(e){}},true]],"prolog gsv-sel");
   if(!m)return;m.addEventListener("click",e=>{const c=e.target.closest(".gsv-card"),md=e.target.closest(".gsv-mdb"),t=md?null:e.target.closest(".gsv-chb");
@@ -719,17 +729,16 @@ function gsvSelect(k,cover){gsvCss();const ck=gsvChar(),L=gsvL(),st=GSV.stats(ck
     else if(t){chp=+t.dataset.ch;const H=GSV.CHP.find(x=>x.n===chp),f=H&&!H.lv.includes(sel)?H.lv.find(n=>!GSV.lockWhy(P,n,hard,all,has)):null;if(f)sel=f}
     else if(c){if(c.dataset.lk){toast(`🔒 ${GSV.lvName(+c.dataset.n)}：${c.dataset.lk}`);return}sel=+c.dataset.n}
     if(c||t||md){try{vibrate(5)}catch(z){}m.querySelector(".gsv-chap").innerHTML=chH();return}
-    const l=e.target.closest(".gsv-skl label");if(l){e.preventDefault();const s=GSV.SKM[l.dataset.id];if(s.lv>L){toast(`🔒 修為 Lv ${s.lv} 解鎖「${s.nm}」`);return}
+    const l=e.target.closest(".gsv-skl label");if(l){e.preventDefault();const s=GSV.SKM[l.dataset.id];{const Lc=typeof ptyLv==="function"?ptyLv(s.ch):L;if(s.lv>Lc){toast(`🔒 ${typeof ptyNm==="function"?ptyNm(s.ch):""} Lv ${s.lv} 解鎖「${s.nm}」`);return}}
       if(pk.includes(s.id)){if(pk.length>1)pk=pk.filter(x=>x!==s.id)}else if(pk.length<4)pk=pk.concat([s.id]);else{toast("最多帶 4 招");return}m.querySelector(".gsv-skl").innerHTML=skH()}})}
 /* hard＝困難版（第 6 個參數，11/15 加；前五個照舊）。鎖住的關不開（主控台直接叫也一樣，只跳一句原因）；開發者全開時不擋。
    journey 困難版是 "bh:gs<n>h"：還是 bh:gs 開頭，不給修為、不回定軌力那幾處照樣認得 */
 function gsvStart(n,k,cover,sk,force,hard){const C=gsvC();if(!C)return toast("規則程式還沒載好");hard=hard?1:0;const V=GSV.lvOf(n,hard);if(!V)return toast("沒有這一關");
   let ck=gsvChar(),L=gsvL();const P=gsvProg(),lk=GSV.lockWhy(P,n,hard,gsvDevAll(),gsvHas());if(lk)return toast(`🔒 ${GSV.lvName(n)}${hard?"困難版":""}：${lk}`);
-  const sw=gsvCapt(n,ck);if(sw){ck=sw.ck;L=sw.L}   /* 換隊長：招式用新隊長上次帶的 */
-  P.sk[ck]=GSV.skPick(ck,L,sw?P.sk[ck]:sk);P.last=n;P.lastH=hard;store.set("gsv",P);const J="bh:gs"+n+(hard?"h":"");
+  P.sk["*"]=typeof ptyPick==="function"?ptyPick(GSV.SK,sk):GSV.skPick(ck,L,sk);   /* 11/16 取消隊長：存全隊那一份；畫面上的名字、頭像＝首頁小人（ck） */P.last=n;P.lastH=hard;store.set("gsv",P);const J="bh:gs"+n+(hard?"h":"");
   const R0=store.get("bhRet",null);store.set("bhRet",{k:k||(R0&&R0.k)||store.get("era","classic"),cover:k?cover!==false:!!(R0&&R0.cover),at:Date.now(),first:false});
-  jStart(J,{human:"r",lx:V.depth,journey:J,lv:Object.assign({fen:GSV.startFen(n,C),turn:"r"},V.pro?{noPerpetual:true}:{}),td:{mode:GSV.MODE,lv:n,ch:ck,L,sk:P.sk[ck],hard}},()=>{const was=/^#\/journey\/play/.test(location.hash);location.hash="#/journey/play";
-    if(was)try{window.dispatchEvent(new Event("xq-play"))}catch(e){}setTimeout(()=>toast(`🌠 星門圍城・${GSV.lvName(n)}・${V.nm}${hard?"（困難版）":""}`),700);if(sw)setTimeout(()=>toast(`這一關盤上沒有${GSV.PCN[GSV.CH[sw.from].pc]}，改由${GSV.CH[ck].n}當隊長`),1900);{const ws=typeof ptyWoodSay==="function"?ptyWoodSay(GSV.plan(n).red.map(x=>String(x[0]).toUpperCase())):"";if(ws)setTimeout(()=>toast(ws),5200)}setTimeout(()=>toast("✦ 星樞："+V.say),3200)},!!force)}
+  jStart(J,{human:"r",lx:V.depth,journey:J,lv:Object.assign({fen:GSV.startFen(n,C),turn:"r"},V.pro?{noPerpetual:true}:{}),td:{mode:GSV.MODE,lv:n,ch:ck,L,sk:P.sk["*"],hard}},()=>{const was=/^#\/journey\/play/.test(location.hash);location.hash="#/journey/play";
+    if(was)try{window.dispatchEvent(new Event("xq-play"))}catch(e){}setTimeout(()=>toast(`🌠 星門圍城・${GSV.lvName(n)}・${V.nm}${hard?"（困難版）":""}`),700);{const ws=typeof ptyWoodSay==="function"?ptyWoodSay(GSV.plan(n).red.map(x=>String(x[0]).toUpperCase())):"";if(ws)setTimeout(()=>toast(ws),5200)}setTimeout(()=>toast("✦ 星樞："+V.say),3200);if(GSV.winTxt(n))setTimeout(()=>toast(`🎯 這一關不用打穿星核：${GSV.winTxt(n)}就過關`),4400)},!!force)}
 /* ---------- 對局中（07bh bhTick 叫） ---------- */
 function gsvHide(){if(typeof document==="undefined")return;document.body&&document.body.classList.remove("gsv-on","gsv-3d");for(const id of["gsvEn","gsvMe","gsvOv","gsvView"]){const e=document.getElementById(id);if(e)e.remove()}GSV_TG=null;GSV_MK="";GSV_HK="";GSV_P3=0;try{gsvViewMenu(false)}catch(e){}}   /* 11/15：頂欄「👁」視角鈕、視角小選單一起收 */
 function gsvTick(st){if(typeof document==="undefined")return;if(!gsvIs(st)||!/^#\/journey\/play/.test(location.hash||"")){if(GSV_ST||document.getElementById("gsvMe"))gsvHide();GSV_ST=null;return}
@@ -741,15 +750,15 @@ function gsvTick(st){if(typeof document==="undefined")return;if(!gsvIs(st)||!/^#
   if(GSV_TG&&!gsvMy(st))GSV_TG=null;
   gsvPaint();gsvEvents(st);try{gsvViewUi()}catch(e){console.warn("[gsv]",e)}if(!GSV_RAF)GSV_RAF=requestAnimationFrame(gsvFrame)}   /* 11/15：頂欄右上「👁」視角鈕（全局俯視／臨陣斜角／純淨平面） */
 const gsvPct=(a,b)=>Math.max(0,Math.min(100,Math.round(a/Math.max(1,b)*100)));
-function gsvFoeLine(td){const F=GSV.fore(td);if(!F.length)return`<span>援軍都下來了</span>`;const g=F[0],cnt={};for(const w of g.ws){const k=GSV.gateNm(w.sq)+"・"+GSV.PBN[w.p.toUpperCase()];cnt[k]=(cnt[k]||0)+1}
-  return`<button type="button" data-x="fore"><span>下一波</span>：${Object.keys(cnt).map(k=>esc(k)+"×"+cnt[k]).join("、")}・<b>${g.inR}</b> <span>回合後</span></button>`}
+function gsvFoeLine(td,b){const F=GSV.fore(td),wn=GSV.winNow(td,b),W=wn?`<span class="gsv-win">${esc(wn)}</span>`:"";if(!F.length)return W||`<span>援軍都下來了</span>`;   /* 11/16 序章另外的過關條件：進度放最前面 */const g=F[0],cnt={};for(const w of g.ws){const k=GSV.gateNm(w.sq)+"・"+GSV.PBN[w.p.toUpperCase()];cnt[k]=(cnt[k]||0)+1}
+  return W+(W?"・":"")+`<button type="button" data-x="fore"><span>下一波</span>：${Object.keys(cnt).map(k=>esc(k)+"×"+cnt[k]).join("、")}・<b>${g.inR}</b> <span>回合後</span></button>`}
 function gsvPaint(){const st=GSV_ST,en=document.getElementById("gsvEn"),me=document.getElementById("gsvMe");if(!st||!en||!me)return;const td=st.td,C=gsvC(),M=td.me,E=td.en,my=gsvMy(st);
   const pv=GSV.preview(td,st.board,C),thr=C&&my?GSV.threats(st.board,C).length:0,def=GSV.defOf(td,"b"),g=GSV.guards(td);
   const fx=td.fx?`<button type="button" class="gsv-fx" data-x="fx">⚠ ${esc(GSV.ESK[td.fx.id].nm)}</button>`:"";
   const hk=JSON.stringify([td.seq,st.turn,!!st.result,GSV_TG&&[GSV_TG.id,GSV_TG.pk,GSV_TG.p],GSV_INFO,GSV_BUSY]);if(hk===GSV_HK)return;GSV_HK=hk;
   en.innerHTML=`<div class="gsv-r"><span class="gsv-nm en">星樞</span><div class="gsv-bar en"><i style="width:${gsvPct(E.hp,E.max)}%"></i><b>HP ${Math.max(0,E.hp)}／${E.max}</b></div>
     <span class="gsv-st">DEF <b>${def}</b>${g?`（<span>護陣</span> +${g*GSV.GUARD}）`:""}</span>${E.sh.v?`<span class="gsv-sh">🛡${E.sh.v}</span>`:""}<span class="gsv-st">靈 <b>${E.sp}</b></span></div>
-    <div class="gsv-r"><span class="gsv-ln">${gsvFoeLine(td)}</span>${fx}</div>`;
+    <div class="gsv-r"><span class="gsv-ln">${gsvFoeLine(td,st.board)}</span>${fx}</div>`;
   const sk=id=>{const S=GSV.SKM[id],w=C?GSV.why(st,id,C):"…",cd=td.cd[id]||0,cost=GSV.costOf(td,id),on=GSV_TG&&GSV_TG.id===id;
     const lab=id==="dep"?`<b>部署</b><small>${GSV.DEP_COST} 靈・後備 ${td.res.length}</small>`:`<b>${esc(S.nm)}</b><small>${S.info?(GSV_INFO?"顯示中":"情報"):cd?`冷卻 ${cd}`:`${cost} 靈`}</small>`;
     return`<button type="button" class="gsv-sk${w&&!(S&&S.info)?" off":""}${on||(S&&S.info&&GSV_INFO)?" on":""}" data-k="${id}"${w?` data-w="${esc(w)}"`:""} aria-label="${esc((S?S.nm:"部署後備")+"："+(S?S.d:"花 20 靈力把一顆後備子放到補給點，用掉這一步")+(w?"（"+w+"）":""))}">${lab}</button>`};
@@ -837,7 +846,10 @@ function gsvEnd(st){if(!gsvIs(st)||!st.result)return;const P=gsvProg(),n=st.td.l
 function gsvResult(st,win,draw0,XPR){gsvCss();const td=st.td,n=td.lv,V=GSV.LV[n]||{},R=store.get("bhRet",null),k=R&&R.k,cv=R&&R.cover,M=td.me,E=td.en,why=st.result.why||"";
   const used=Object.keys(td.used).filter(id=>GSV.SKM[id]).map(id=>GSV.SKM[id].nm+(td.used[id]>1?"×"+td.used[id]:"")).join("、")||"沒有";
   /* 三顆星：紀錄裡有的（gsvEnd 存的）＋這一局過關拿到的（不管 gsvEnd 先叫後叫都對）。下一關剛開：多一句 */
-  const P=gsvProg(),hd=td.hard?1:0,now=win?GSV.stars(td,st.board):null,rec=GSV.recStars((hd?P.h:P.c)[n],n).map((x,i)=>x||(now&&now[i])?1:0),nx=win&&!hd&&GSV.LVN.includes(n)&&((P.c[n]||{}).w||0)<=1?`<p style="font-size:13px;text-align:center">🔓 ${GSV.LVN.includes(n+1)?`第 ${n+1} 關、`:""}這一關的困難版開放了</p>`:"";
+  const P=gsvProg(),hd=td.hard?1:0,now=win?GSV.stars(td,st.board):null,rec=GSV.recStars((hd?P.h:P.c)[n],n).map((x,i)=>x||(now&&now[i])?1:0),nx=win&&!hd&&GSV.LVN.includes(n)&&((P.c[n]||{}).w||0)<=1?(()=>{   /* 11/16：列出「這一局之前鎖著、贏了以後開了」的關（照 lockWhy 和誰加入了），用 lvName；不再寫死 n+1 */
+    const has=gsvHas(),R0=P.c[n]||{},at=o=>Object.assign({},P,{c:Object.assign({},P.c,{[n]:Object.assign({},R0,o)})}),P0=at({w:0,l:Math.max(1,R0.l||0)}),P1=at({w:Math.max(1,R0.w||0)});   /* P0＝這一關打過但沒贏（「打過主線」那條照舊成立，只差勝負） */
+    const op=GSV.LVN.filter(k=>k!==n&&GSV.lockWhy(P0,k,0,false,has)&&!GSV.lockWhy(P1,k,0,false,has)).map(k=>GSV.lvName(k));
+    return`<p style="font-size:13px;text-align:center">🔓 ${op.length?op.join("、")+"、":""}這一關的困難版開放了</p>`})():"";
   modal(`<div class="em">${win?"✨":draw0?"🤝":"🌀"}</div><h2>${win?"破陣":draw0?"不分勝負":"星門失守"}</h2><p class="muted">${esc(why)}・🌠 星門圍城・${esc(GSV.lvName(n))}・${esc(V.nm||td.nm)}${hd?"（困難版）":""}</p>
     <p class="gsv-gl">${gsvStarsHTML(n,rec,now)}</p>${nx}
     <p style="font-size:13.5px;text-align:center">打了 <b>${td.rnd}</b> 回合・你造成 <b>${M.dealt}</b>・你受到 <b>${M.taken}</b>・剩 HP ${Math.max(0,M.hp)}／${M.max}・星樞剩 ${Math.max(0,E.hp)}／${E.max}</p>

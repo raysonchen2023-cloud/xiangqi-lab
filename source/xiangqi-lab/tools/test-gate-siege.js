@@ -300,10 +300,11 @@ test("第二章「俥路調度」第 7～12 關：章與關名照提案二第 3 
   assert.deepEqual(J([].concat(...G.CHP.map(c=>c.lv)).sort((a,b)=>a-b)),J(G.LVN),"每一關都在某一章裡、沒有重複");
   /* 關名、星樞 HP／ATK／DEF、開場靈力、會用的招、敵開場子數、援軍回合 */
   const T={7:["直路守口",120,95,25,35,["cqzr"],10,[3,5,7]],8:["橫俥回援",125,100,25,35,["cqzr"],9,[2,4,6]],9:["留一道退路",130,100,25,40,["dll"],9,[2,4,6]],
-    10:["交換要道",150,95,25,35,["cqzr"],10,[2,4,6]],11:["一俥兩用",150,100,25,40,["dll","cqzr"],10,[2,4,6]],12:["守關・斷路營",200,100,40,35,["dll","cqzr"],10,[2,4,6]]};
+    10:["交換要道",200,95,35,35,["cqzr"],10,[2,4,6]],11:["一俥兩用",200,100,35,40,["dll","cqzr"],10,[2,4,6]],   /* 11/16 全隊招式後開發者選單「先調」：第 10、11 關 hp 150→200、def 25→35 */
+    12:["守關・斷路營",200,100,40,35,["dll","cqzr"],10,[2,4,6]]};
   for(const n in T){const V=G.LV[n],pl=G.plan(+n);assert.deepEqual(J([V.nm,V.hp,V.atk,V.def,V.esp0,V.esk,pl.open.length,V.waves.map(w=>w.at)]),T[n],"第 "+n+" 關");assert.deepEqual(J(G.lvCheck(+n,C)),[]);
     assert.ok(V.depth<=4,"深度不超過 4（手機）");assert.equal(V.arep,1);assert.ok(V.say&&V.tip&&V.th,"有一句開場、輸了的提示、主題");
-    assert.ok(V.hp>=100&&V.hp<=(V.boss?220:180)&&(!V.boss||V.hp>=140),"提案二：一般關 100–180、章末 140–220");
+    assert.ok(V.hp>=100&&V.hp<=(V.boss?220:(+n===10||+n===11)?200:180)&&(!V.boss||V.hp>=140),"提案二：一般關 100–180、章末 140–220（11/16 全隊招式後開發者選單把第 10、11 關調到 200，這兩關例外）");
     for(const k of V.esk)assert.ok(G.ESK[k].base>=24&&G.ESK[k].base<=36&&G.ESK[k].cost>0&&G.ESK[k].cd>0,"提案一：敵方大招基礎 24～36、要付靈力、有冷卻")}
   /* 11/15 開發者用選單決定：第一章也擋掉星樞長將（封測玩家不能等它自己判負）。第 1～6 關的關卡資料不帶旗標，由 AREP1 一個開關管（改回 0 就是下午的選步） */
   assert.equal(G.AREP1,1);for(const n of[1,2,3,4,5,6]){assert.ok(!G.LV[n].arep);assert.equal(game(n).td.arep,G.AREP1?1:0)}assert.equal(game(7).td.arep,1);assert.ok(G.LV[12].boss&&!G.LV[11].boss);
@@ -502,6 +503,7 @@ test("三星：第 1 星＝過關，另外兩顆每關各一個條件（跟那�
     ctx.gsvResult(st(S1,"a","bh:gs3","r"),true,false,"");assert.match(noSpan(U.M.h),/<p class="gsv-gl"><b>★ 過關<\/b>　<b>★ 護陣全部拆掉<\/b>　★ 剩餘 HP 40% 以上<\/p>/);assert.deepEqual(U.go(),[3,0]);
     ctx.gsvResult(st(S2,"c","bh:gs3","b"),false,false,"");assert.match(noSpan(U.M.h),/<p class="gsv-gl">★ 過關　★ 護陣全部拆掉　★ 剩餘 HP 40% 以上<\/p>/,"輸了：只列紀錄裡有的");
     ctx.gsvResult(st(SH,"f","bh:gs3h","r"),true,false,"");assert.match(U.M.h,/第 3 關・星門乍現（困難版）/);assert.deepEqual(U.go(),[3,1]);assert.ok(!/🔓/.test(U.M.h));
+    U.DB.gsv={mv:G.MODE,c:{}};   /* 11/16：解鎖提示改成只列「這一局之前鎖著、贏了才開」的關，前面已經打贏過第 3 關的存檔不會再說第 3 關開放；這裡用乾淨的存檔 */
     const N1=custom(2,KS,{waves:false});ctx.gsvEnd(st(N1,"g","bh:gs2","r"));ctx.gsvResult(st(N1,"g","bh:gs2","r"),true,false,"");assert.match(U.M.h,/🔓 第 3 關、這一關的困難版開放了/,"第一次破關");
     assert.match(noSpan(U.M.h),/<b>★ 過關<\/b>　<b>★ 入侵卒全部清掉<\/b>　<b>★ 入侵沒扣到血<\/b>/)}finally{uiOff()}});
 

@@ -43,10 +43,14 @@ test("〔行為〕卡片：已加入的有三格與可以點的「招式 n／N�
   assert.ok(!load({ noBh: 1 }).ptyCardHTML(K.P, "x_swordboy", 3).includes("pty-row"), "沒有黑洞模組時沒有招式列");
 });
 
-test("〔行為〕練滿的隊長又正陪你走：三顆按鈕都不用出現，不留一條空的按鈕列；其他人照舊三顆", () => {
+test("〔行為〕練滿的又正陪你走：按鈕都不用出現，不留一條空的按鈕列；其他人照舊（11/16 取消隊長：每張卡最多兩顆＝＋星輝、帶他出門，沒有「隊長」標籤與「設為隊長」）", () => {
   const K = load(), A = K.ptyCardHTML(K.P, "x_swordboy", 3), B = K.ptyCardHTML(K.P, "x_miaogirl", 3);
   assert.ok(!A.includes('class="pty-a"')); assert.ok(B.includes('class="pty-a"'));
-  for (const a of ["give", "lead", "look"]) assert.ok(B.includes(`data-a="${a}"`), a);
+  for (const a of ["give", "look"]) assert.ok(B.includes(`data-a="${a}"`), a);
+  for (const h of [A, B]) { assert.ok(!h.includes('data-a="lead"') && !h.includes("隊長"), "沒有隊長標籤、沒有設為隊長鈕"); assert.ok((h.match(/data-a="(?:give|look|lead)"/g) || []).length <= 2, "最多兩顆鈕") }
+  assert.ok(SRC.includes("黑洞裡全隊已學會的招都能帶（一場最多 4 招）"), "卡冊說明行改成全隊招式");
+  assert.ok(SRC.includes('[["帶"+ptyTa(L)+"出門",()=>{ptySetLook(c)}],["好",null,true]],"prolog")'), "加入卡只有「帶…出門」「好」");
+  assert.ok(!/function ptySetLead\b/.test(SRC), "ptySetLead 刪掉");
 });
 
 test("〔行為〕卡冊最上面一列天賦：寫明全隊共用、已點亮幾個；沒有天賦樹可以開時不畫", () => {

@@ -7,7 +7,7 @@
    - 各盤血量獨立；靈力全場共用一池（td.pool＝1：GSV 結算時不回我方靈力、不歸零收入上限，改成總輪回一次）。
    - 全場每個總輪最多一個主動招，只作用在目前這盤；冷卻、每局次數也是全場共用（同一位角色、同一組招）。
    - 每盤每個總輪走一個主要行動（走棋或部署）；所有還在下的盤都走過、星樞都回完＝總輪結束（回共用靈力、減冷卻）。入侵、波次照本盤回合；沒操作的盤不會自己走。
-   - 陣眼子（本命子那一種，帥＝仕）被吃：只封該盤招式一輪，不動共用靈力。
+   - 11/16 開發者選單「取消陣眼子」：原本「陣眼子被吃只封該盤招式一輪」拿掉（seal 留著讓改版前沒下完的盤收尾）。
    - 過關：拿下 need 盤（三盤版 need＝2＝三盤拿兩勝；舊的兩盤版 need＝2＝兩盤皆勝）；已經不可能拿到 need 盤就結束、未過關。
    - 單一引擎輪流算：佇列每盤最多一個工作；結果回來先核對（同一場、同一盤、同一手數、同一事件序號）不對就丟；逾時或出錯用 GSV.pick 的規則評估挑合法步，不會卡在思考中。
    - 整場結算一次（store whl.g 記過的場次不重領）；獎勵照星門圍城試玩：不給星塵、修為、定軌力。
@@ -20,7 +20,6 @@ const WHL=(G=>{
   const SP0=40,RG=6;
   const TMO=5000,TMO0=15000,WAIT=700;   /* 引擎逾時：載好 5 秒、還沒載好 15 秒（第一次要下載）；星樞回應最少等 0.7 秒 */
   const REWARD={dust:0,xp:0,sta:0};   /* 照星門圍城試玩：不給星塵、修為、定軌力 */
-  const EYE={R:"R",N:"N",C:"C",B:"B",A:"A",K:"A",P:"P"};   /* 陣眼子＝本命子那一種；帥不會被吃，沈方庭改用仕 */
   /* 11/15 開發者決定擋掉「星樞自己長將判負、送玩家贏」的漏洞（星門圍城第一章 GSV.AREP1）：車輪戰三盤也開 arep（星樞不靠將軍走出重複局面） */
   /* 三盤固定短中局（星門圍城規則、只有一波援軍、星樞 HP 較低）。座標 [子,路,線,標記] 照 GSV。登記在 GSV.LV 的 101～103（GSV.LVN 開機就算好了，不會出現在星門圍城選關） */
   const BD={
@@ -38,18 +37,19 @@ const WHL=(G=>{
   if(G)for(const k in BD)G.LV[k]=Object.assign({n:+k},BD[k]);
   const clone=o=>JSON.parse(JSON.stringify(o));
   /* ===== 開一場 ===== */
-  function eyeOf(td,pc){const want=EYE[pc]||"R";for(let q=0;q<90;q++){const id=td.ids[q];if(id&&id[0]==="r"&&td.meta[id]&&td.meta[id].p===want)return id}return null}
   /* o.pcs：測試用自訂盤面 [[子,路,線,標記]…]（數值、波次照 lv）；o.waves===false＝不要援軍 */
   function mkP(lv,id,cfg,C,o){o=o||{};let start;
     if(o.pcs){const b=new Array(90).fill(null);for(const[p,lu,xi]of o.pcs)b[G.LSQ(lu,xi)]=p;start=C.fen(b,"r").split(" ")[0]}else start=G.startFen(lv,C);
     const P={id,start,startTurn:"r",board:C.parseFen(start),turn:"r",moves:[],human:"r",ed:[],result:null};P.pos=[C.fen(P.board,"r")];
-    P.td=G.boot({mode:G.MODE,lv,ch:cfg.ch,L:cfg.L,sk:cfg.sk},P,C);P.td.pool=1;
+    P.td=G.boot(Object.assign({mode:G.MODE,lv,ch:cfg.ch,L:cfg.L,sk:cfg.sk},cfg.sq!==undefined?{sq:cfg.sq}:{}),P,C);P.td.pool=1;
     if(o.pcs)for(const[p,lu,xi,tg]of o.pcs){const k=P.td.ids[G.LSQ(lu,xi)];if(k&&P.td.meta[k])P.td.meta[k].tag=tg||""}
     if(o.waves===false)P.td.waves=[];return P}
-  function newMatch(cfg,C){cfg=cfg||{};const st=G.stats(cfg.ch,cfg.L),lvs=(cfg.lvs||LVS).slice(),n=lvs.length,sk=G.skPick(st.ck,st.L,cfg.sk);
-    const id=cfg.id||("w"+Date.now().toString(36)),c2={ch:st.ck,L:st.L,sk};
-    const M={mode:MODE,mv:MV,id,need:Math.max(1,Math.min(n,+cfg.need||(n>=3?NEED:n))),ch:st.ck,cn:st.n,pc:st.pc,L:st.L,sk,R:0,sp:{v:SP0,max:st.sp,inc:0},cd:{},cdAt:{},used:{},sk1:-1,over:null,log:[],
-      bs:lvs.map((lv,i)=>{const P=mkP(lv,id+"-"+(i+1),c2,C,cfg.boards&&cfg.boards[i]);return{i,lv,nm:(G.LV[lv]||{}).nm||"",P,acted:-1,seal:-1,eye:eyeOf(P.td,st.pc)}})};
+  function newMatch(cfg,C){cfg=cfg||{};const st=G.stats(cfg.ch,cfg.L),lvs=(cfg.lvs||LVS).slice(),n=lvs.length;
+    /* 11/16 取消隊長、全隊招式：有隊伍時招式池＝全隊已學會的（G.skPickSq），共用靈力上限＝七種平均；每一盤帶同一份隊伍（c2.sq），boot 才會挑出同一組招 */
+    const S0=cfg.sq!==undefined?cfg.sq:(typeof ptySquad==="function"?ptySquad():null),SQ=G.squad(S0),sk=SQ?G.skPickSq(SQ,cfg.sk):G.skPick(st.ck,st.L,cfg.sk),spM=SQ?Math.round(Object.keys(SQ).reduce((a,k)=>a+SQ[k].sp,0)/Object.keys(SQ).length):st.sp;
+    const id=cfg.id||("w"+Date.now().toString(36)),c2={ch:st.ck,L:st.L,sk,sq:S0};
+    const M={mode:MODE,mv:MV,id,need:Math.max(1,Math.min(n,+cfg.need||(n>=3?NEED:n))),ch:st.ck,cn:st.n,pc:st.pc,L:st.L,sk,R:0,sp:{v:SP0,max:spM,inc:0},cd:{},cdAt:{},used:{},sk1:-1,over:null,log:[],
+      bs:lvs.map((lv,i)=>{const P=mkP(lv,id+"-"+(i+1),c2,C,cfg.boards&&cfg.boards[i]);return{i,lv,nm:(G.LV[lv]||{}).nm||"",P,acted:-1,seal:-1}})};
     lg(M,{k:"start",n,need:M.need});return M}
   function lg(M,o){o.R=M.R;M.log.push(o);if(M.log.length>60)M.log.splice(0,M.log.length-60);return o}
   /* ===== 共用靈力、冷卻：每次碰某一盤的 GSV 之前先 sync（把全場的值放進那盤的 td），碰完 back（收回來） ===== */
@@ -60,7 +60,7 @@ const WHL=(G=>{
   function why0(M,i){const s=stOf(M,i);if(!M.bs[i])return"沒有這一盤";if(M.over)return"這場已經結束";if(s==="done")return"這盤已經下完";if(s==="think")return"星樞思考中";if(s==="wait")return"這盤這輪走過了";return""}
   const isSkill=id=>id!=="dep"&&!!(G.SKM[id]&&!G.SKM[id].info);
   const sealed=(M,i)=>M.bs[i].seal>=M.R;
-  function why(M,i,id,C){const w=why0(M,i);if(w)return w;if(isSkill(id)){if(sealed(M,i))return"陣眼被吃：這盤封招一輪";if(M.sk1===M.R)return"這一輪已經放過一招"}sync(M,i);return G.why(M.bs[i].P,id,C)}
+  function why(M,i,id,C){const w=why0(M,i);if(w)return w;if(isSkill(id)){if(sealed(M,i))return"這盤封招一輪";if(M.sk1===M.R)return"這一輪已經放過一招"}sync(M,i);return G.why(M.bs[i].P,id,C)}
   /* ===== 玩家：走棋、放招、部署 ===== */
   function move(M,i,f,t,C){const w=why0(M,i);if(w)return{err:w};const B=M.bs[i],P=B.P;if(!C.legal(P.board,"r").some(([a,b])=>a===f&&b===t))return{err:"這步不合法"};
     sync(M,i);const m=C.stateApply(P,f,t),r=G.move(P,m,C);back(M,i);B.acted=M.R;judge(M,i,C,r);advance(M);return{ok:1,m}}
@@ -69,9 +69,8 @@ const WHL=(G=>{
     lg(M,{k:"cast",i,id});if(r.end&&!B.P.result)B.P.result={w:r.end.w,why:r.end.why};advance(M);return r}
   /* ===== 星樞回一步（引擎或退路挑好的步） ===== */
   function reply(M,i,f,t,C){const B=M.bs[i],P=B&&B.P;if(!B||M.over||P.result||P.turn!=="b")return{err:"不是星樞的回合"};if(!C.legal(P.board,"b").some(([a,b])=>a===f&&b===t))return{err:"這步不合法"};
-    sync(M,i);const vid=P.td.ids[t]||null,eye=!!(vid&&B.eye&&vid===B.eye&&P.board[t]);const m=C.stateApply(P,f,t),r=G.move(P,m,C);back(M,i);
-    if(eye){B.seal=M.R+1;lg(M,{k:"eye",i})}
-    judge(M,i,C,r);advance(M);return{ok:1,m,eye}}
+    sync(M,i);const m=C.stateApply(P,f,t),r=G.move(P,m,C);back(M,i);
+    judge(M,i,C,r);advance(M);return{ok:1,m}}
   function judge(M,i,C,tdr){const P=M.bs[i].P;if(P.result)return;let r=C.judgeState(P);if(!r&&tdr&&tdr.end)r=tdr.end;if(!r&&P.td.over)r=P.td.over;if(r){P.result={w:r.w,why:r.why};lg(M,{k:"end",i,w:r.w,why:r.why})}}
   /* 比數：w 我拿下的盤、l 星樞拿下的盤、d 和、open 還在下 */
   function tally(M){let w=0,l=0,d=0,open=0;for(const B of M.bs){const r=B.P.result;if(!r)open++;else if(r.w==="r")w++;else if(r.w==="b")l++;else d++}return{w,l,d,open,n:M.bs.length}}
@@ -80,20 +79,19 @@ const WHL=(G=>{
   function verdict(M){const n=M.bs.length,need=Math.max(1,Math.min(n,M.need||n)),T=tally(M),w=T.w;
     if(w>=need)return{win:true,w,l:T.l,d:T.d,n,need,why:need===n?`${n} 盤全勝`:`${n} 盤拿下 ${w} 盤`};
     if(w+T.open<need)return{win:false,w,l:T.l,d:T.d,n,need,why:need===n?`要 ${n} 盤全勝`:`要拿下 ${need} 盤`};return null}
-  /* ===== 危險預警（三盤版；合併稿「危險提示分種類：被將軍、星門援軍將至、陣眼子受威脅（或可能致命），不能只靠紅色」）=====
+  /* ===== 危險預警（三盤版；合併稿「危險提示分種類：被將軍、星門援軍將至（11/16 取消陣眼子：原本的「陣眼子受威脅」拿掉），不能只靠紅色」）=====
      只看輪紅方走的盤（me／wait）；星樞還在想的盤局面未定、已結束的盤不用救＝空。純函式：不改狀態、不用亂數。依嚴重程度排：
      core 危（5）：已預告的入侵＋大招（GSV.preview）再加星樞下一步最痛的一擊（擒子＋將軍，照 GSV 的 dmg），套盾後 ≥ 我方星核 HP＝下一次結算可能歸零；sure＝光是已預告的就歸零
-     chk 將（4）：我方被將軍。inv 侵（3）：已預告的入侵卒／大招下一次結算會扣血（套盾後 >0）。eye 眼（2）：星樞下一步能合法吃到陣眼子。gate 門（1）：援軍這個本盤回合結束就落下
+     chk 將（4）：我方被將軍。inv 侵（3）：已預告的入侵卒／大招下一次結算會扣血（套盾後 >0）。gate 門（1）：援軍這個本盤回合結束就落下
      DG_HOT 以上＝立即危險（自動跳盤先去、畫面出「先救」鈕）；門只是提醒，只在縮圖上標 */
-  const DG={core:5,chk:4,inv:3,eye:2,gate:1},DG_HOT=2;
-  function danger(M,i,C){const s=stOf(M,i);if(s!=="me"&&s!=="wait")return[];const B=M.bs[i],td=B.P.td,b=B.P.board,me=td.me,E=td.en,L=[],pv=G.preview(td,b,C),eq=G.sqOfId(td,B.eye);let hit=0,eye=false;
+  const DG={core:5,chk:4,inv:3,gate:1},DG_HOT=2;
+  function danger(M,i,C){const s=stOf(M,i);if(s!=="me"&&s!=="wait")return[];const B=M.bs[i],td=B.P.td,b=B.P.board,me=td.me,E=td.en,L=[],pv=G.preview(td,b,C);let hit=0;
     for(const[f,t]of G.banMoves(td,b,C.legal(b,"b"),true)){const v=b[t];if(v==="K")continue;let raw=0;if(v&&v===v.toUpperCase())raw+=G.dmg(G.CAPB[v],E.atk,me.def);
-      if(td.rnd-me.lastChk>=G.CHK_GAP&&C.inCheck(C.make(b,f,t),"r"))raw+=G.dmg(G.CHK,E.atk,me.def);if(raw>hit)hit=raw;if(eq!=null&&t===eq)eye=true}
+      if(td.rnd-me.lastChk>=G.CHK_GAP&&C.inCheck(C.make(b,f,t),"r"))raw+=G.dmg(G.CHK,E.atk,me.def);if(raw>hit)hit=raw}
     const loss=G.absorb(me.sh,pv.raw+hit).loss,F=G.fore(td);
     if(loss>=me.hp)L.push({k:"core",rank:DG.core,loss,sure:pv.loss>=me.hp});
     if(C.inCheck(b,"r"))L.push({k:"chk",rank:DG.chk});
     if(pv.loss>0)L.push({k:"inv",rank:DG.inv,loss:pv.loss,n:pv.L.length});
-    if(eye)L.push({k:"eye",rank:DG.eye,sq:eq});
     if(F.length&&F[0].inR<=1)L.push({k:"gate",rank:DG.gate,n:F[0].ws.length});
     return L}
   /* 走完第 i 盤之後跳去哪一盤：輪到我的盤裡，有立即危險的先去（最嚴重的；一樣嚴重照 i 後面的順序）；都沒有危險就 i 後面第一個輪到我的盤；沒得去回 -1。i＝-1：從第 1 盤找起（接續時用） */
@@ -136,7 +134,7 @@ const WHL=(G=>{
     if(!M||!M.over)return{prog:P,none:true};if(P.g.includes(M.id))return{prog:P,dup:true,rw:{dust:0,xp:0,sta:0}};
     const bk=M.bs.length>=3?"best3":"best";   /* 最快過關輪數：三盤版另外記（跟舊的兩盤版不能比） */
     if(M.over.win){P.c.w++;if(!P.c[bk]||M.R<P.c[bk].R)P.c[bk]={R:M.R}}else P.c.l++;P.g=P.g.concat([M.id]).slice(-30);return{prog:P,dup:false,rw:Object.assign({},REWARD)}}
-  return{MODE,MV,SP0,RG,TMO,TMO0,WAIT,REWARD,EYE,BD,LVS,NEED,DG,DG_HOT,newMatch,eyeOf,sync,back,stOf,why,move,cast,reply,tally,verdict,danger,hop,dgAlert,okSave,advance,needs,key,live,queue,choose,step,record,sealed}})(typeof GSV!=="undefined"?GSV:null);
+  return{MODE,MV,SP0,RG,TMO,TMO0,WAIT,REWARD,BD,LVS,NEED,DG,DG_HOT,newMatch,sync,back,stOf,why,move,cast,reply,tally,verdict,danger,hop,dgAlert,okSave,advance,needs,key,live,queue,choose,step,record,sealed}})(typeof GSV!=="undefined"?GSV:null);
 /* ================= ② 畫面 ================= */
 let WHL_M=null,WHL_Q={run:null,list:[]},WHL_CUR=0,WHL_SEL=-1,WHL_TG=null,WHL_INFO=false,WHL_BD=null,WHL_HOP=0,WHL_LIVE=false,WHL_SEEN="",WHL_EVS={},WHL_HK="";
 /* 11/15 車輪戰 3D（說明在檔尾）：PK＝這一場唯一的 3D 實例（park3d 巨盤）；3S＝""沒開／"load"載入中／"on"；SIDE＝另外兩張簡化棋盤的工具組；FLY＝正在飛去哪一盤（這段時間不收點擊）；3O＝這盤的選取（給 3D 記號用） */
@@ -151,13 +149,13 @@ function whlCard(){   /* 11/15 開發者「可以上線」：開給所有玩家�
   return`<button type="button" class="bt-card bt-whlc" data-whl="1" aria-label="車輪戰"><div class="hd"><b>車輪戰</b></div></button>`}
 function whlOpen(){if(typeof GSV==="undefined")return;const P=whlProg();if(P.cur&&!P.cur.over){WHL_M=P.cur;WHL_Q={run:null,list:[]};const C=whlC();WHL_CUR=C?Math.max(0,WHL.hop(WHL_M,-1,C)):0;WHL_SEL=-1;WHL_TG=null;WHL_EVS={};whlShow();return}whlSetup()}
 if(typeof window!=="undefined")window.whlOpen=whlOpen;
-const whlCk=()=>{let c="";try{c=typeof ptyLead==="function"?ptyLead():((typeof myChar==="function"&&myChar())||store.get("pChar",""))}catch(e){}return GSV.CH[c]?c:"x_swordboy"};   /* 11/15 七星改版：出戰的是隊長（07pty-party.js） */
-const whlL=c=>{try{if(typeof ptyLv==="function")return ptyLv(c||whlCk());return typeof xpInfo==="function"?xpInfo().L:1}catch(e){return 1}};   /* 11/15 七星改版：等級看隊長自己的 */
-function whlSetup(){whlCss();const ck=whlCk(),L=whlL(),P=whlProg(),pool=GSV.SK.filter(s=>s.ch===ck);let pk=GSV.skPick(ck,L,P.sk[ck]);
-  const skH=()=>pool.map(s=>`<label class="${pk.includes(s.id)?"on":""}${s.lv>L?" lk":""}" data-id="${s.id}" title="${esc(s.d)}">${s.lv>L?"🔒 ":""}${esc(s.nm)}</label>`).join("");
-  const m=modal(`<div class="em">🎡</div><h2>車輪戰</h2><p class="muted">三盤拿兩勝</p><p style="font-size:13px;margin-bottom:2px">招式（最多 4 招）</p><div class="whl-skl">${skH()}</div>`,
+const whlCk=()=>{let c="";try{c=typeof ptyLook==="function"?ptyLook():((typeof myChar==="function"&&myChar())||store.get("pChar",""))}catch(e){}return GSV.CH[c]?c:"x_swordboy"};   /* 11/16 取消隊長：畫面上的名字、頭像＝首頁小人（07pty-party.js ptyLook）；招式看全隊 */
+const whlL=c=>{try{if(typeof ptyLv==="function")return ptyLv(c||whlCk());return typeof xpInfo==="function"?xpInfo().L:1}catch(e){return 1}};   /* 首頁小人那位的等級（只顯示用） */
+function whlSetup(){whlCss();const ck=whlCk(),L=whlL(),P=whlProg(),pool=typeof ptyGroups==="function"?ptyGroups(GSV.SK.filter(s=>!s.gen)):[{c:ck,nm:(GSV.CH[ck]||{}).n||"",L,sk:GSV.SK.filter(s=>s.ch===ck)}];let pk=typeof ptyPick==="function"?ptyPick(GSV.SK,P.sk["*"]||P.sk[ck]):GSV.skPick(ck,L,P.sk[ck]);   /* 11/16 全隊招式：照夥伴分組 */
+  const skH=()=>pool.map(g=>`<p class="whl-skg">${esc(g.nm)} <small>Lv ${g.L}</small></p>`+g.sk.map(s=>`<label class="${pk.includes(s.id)?"on":""}${s.lv>g.L?" lk":""}" data-id="${s.id}" title="${esc(s.d)}">${s.lv>g.L?"🔒 ":""}${esc(s.nm)}</label>`).join("")).join("");
+  const m=modal(`<div class="em">🎡</div><h2>車輪戰</h2><p class="muted">三盤拿兩勝</p><p style="font-size:13px;margin-bottom:2px">招式（全隊已學會的都能帶，最多 4 招）</p><div class="whl-skl">${skH()}</div>`,
     [["開始",()=>whlNew(pk)],["返回",null,true]],"prolog whl-sel");
-  if(!m)return;m.addEventListener("click",e=>{const l=e.target.closest(".whl-skl label");if(!l)return;e.preventDefault();const s=GSV.SKM[l.dataset.id];if(s.lv>L){toast(`🔒 修為 Lv ${s.lv} 解鎖「${s.nm}」`);return}
+  if(!m)return;m.addEventListener("click",e=>{const l=e.target.closest(".whl-skl label");if(!l)return;e.preventDefault();const s=GSV.SKM[l.dataset.id];{const Lc=typeof ptyLv==="function"?ptyLv(s.ch):L;if(s.lv>Lc){toast(`🔒 ${typeof ptyNm==="function"?ptyNm(s.ch):""} Lv ${s.lv} 解鎖「${s.nm}」`);return}}
     if(pk.includes(s.id)){if(pk.length>1)pk=pk.filter(x=>x!==s.id)}else if(pk.length<4)pk=pk.concat([s.id]);else{toast("最多帶 4 招");return}m.querySelector(".whl-skl").innerHTML=skH()})}
 function whlNew(sk){const C=whlC();if(!C)return toast("規則程式還沒載好");const ck=whlCk(),L=whlL();
   WHL_M=WHL.newMatch({ch:ck,L,sk,need:WHL.NEED},C);WHL_Q={run:null,list:[]};WHL_CUR=0;WHL_SEL=-1;WHL_TG=null;WHL_EVS={};
@@ -178,7 +176,7 @@ function whlCss(){if(document.getElementById("whlCss"))return;const s=document.c
 .whl-st{color:#c9bfe8;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.whl-st.w{color:#9fffb0;font-weight:800}.whl-st.l{color:#ff9a8a;font-weight:800}
 .whl-dg,.whl-sl{position:absolute;left:-4px;min-width:18px;height:18px;box-sizing:border-box;display:flex;align-items:center;justify-content:center;font-style:normal;font-size:11px;font-weight:900;line-height:1;pointer-events:none}
 .whl-dg{top:-6px}.whl-dg.core{background:#ff3b30;color:#fff;border-radius:50%;box-shadow:0 0 8px #ff3b30}.whl-dg.chk{background:#fff;color:#c0281e;border:2px solid #c0281e;border-radius:4px}.whl-dg.inv{background:#c0281e;color:#fff;border-radius:6px}
-.whl-dg.eye{background:#d9a400;color:#1a1000;border-radius:6px}.whl-dg.gate{background:#2a1050;color:#f0dcff;border:1.5px dashed #b46bff;border-radius:50%}
+.whl-dg.gate{background:#2a1050;color:#f0dcff;border:1.5px dashed #b46bff;border-radius:50%}
 .whl-sl{bottom:-5px;background:#0d1b4f;color:#cfe0ff;border:1px solid #8aa6ff;border-radius:6px}
 .whl-hp{position:relative;height:6px;border-radius:99px;background:rgba(255,255,255,.14);overflow:hidden}.whl-hp s{position:absolute;inset:0 auto 0 0;background:#e0483a;border-radius:99px}.whl-hp.en s{background:#b04ae0}
 .whl-en,.whl-me{flex:none;padding:3px 8px}.whl-r{display:flex;align-items:center;gap:6px;min-height:22px;font-size:12px;white-space:nowrap;min-width:0}.whl-r+.whl-r{margin-top:3px}
@@ -194,7 +192,7 @@ function whlCss(){if(document.getElementById("whlCss"))return;const s=document.c
 .whl-mk{position:absolute;transform:translate(-50%,-50%);pointer-events:none;display:flex;align-items:center;justify-content:center;font-weight:800;box-sizing:border-box}
 .whl-mk.gate{width:10.4%;height:9.4%;border-radius:50%;border:2.5px dashed #b46bff;background:radial-gradient(circle,rgba(120,40,200,.42),rgba(40,10,80,.1) 70%);color:#f0dcff;font-size:11px}
 .whl-mk.bd{font-size:10px;color:#fff;border-radius:6px;padding:0 3px;line-height:1.35;margin:-3.6% 0 0 3.8%}.whl-mk.bd.inv{background:#c0281e}.whl-mk.bd.arm{background:#ff3b30;box-shadow:0 0 8px #ff3b30}.whl-mk.bd.guard{background:#2b6fd6}
-.whl-mk.bd.eye{background:#d9a400;color:#1a1000;margin:3.6% 0 0 -3.8%}.whl-mk.bd.frz{background:#0d1b4f;border:1px solid #8aa6ff;margin:3.6% 0 0 3.8%}
+.whl-mk.bd.frz{background:#0d1b4f;border:1px solid #8aa6ff;margin:3.6% 0 0 3.8%}
 .whl-mk.ring{width:10%;height:9%;border-radius:50%;border:3px solid #ff3b30}.whl-mk.ring.ifo{border-color:#ff8a1a;border-style:dashed}
 .whl-mk.tg{pointer-events:auto;width:10%;height:9%;border-radius:50%;border:3px solid #FFE08A;background:rgba(255,224,138,.22);cursor:pointer;padding:0;animation:whlTg 1s ease-in-out infinite}
 @keyframes whlTg{50%{box-shadow:0 0 14px 5px rgba(255,224,138,.6)}}
@@ -208,7 +206,7 @@ function whlCss(){if(document.getElementById("whlCss"))return;const s=document.c
 .whl-sk{font:inherit;color:#f6eedd;background:linear-gradient(180deg,#2c2450,#171433);border:1.5px solid #8f7bd8;border-radius:10px;padding:2px;min-height:44px;cursor:pointer;line-height:1.15;touch-action:manipulation}
 .whl-sk.gen{background:linear-gradient(180deg,#22304a,#121a2c);border-color:#5f8fc8}.whl-sk b{display:block;font-size:12px}.whl-sk small{font-size:10.5px;color:#9fd0ff}.whl-sk.off{opacity:.45;filter:grayscale(.7)}.whl-sk.on{border-color:#FFE08A;box-shadow:0 0 0 2px #FFE08A}
 .whl-tip{display:flex;gap:8px;justify-content:center;align-items:center;font-size:12.5px;color:#FFE08A}.whl-tip button{font:inherit;font-size:12px;color:#f1e7cf;background:rgba(255,255,255,.12);border:1px solid rgba(255,255,255,.3);border-radius:99px;padding:1px 12px;min-height:30px}
-.whl-skl{display:flex;flex-wrap:wrap;gap:6px}#whlOv img.eic,.whl-skl img.eic{width:1.15em;height:1.15em;vertical-align:-.18em;object-fit:contain}.whl-skl label{font-size:12.5px;border:1.5px solid var(--line,#ccc);border-radius:99px;padding:3px 9px;cursor:pointer}.whl-skl label.on{border-color:#7a3fb0;background:rgba(122,63,176,.12)}.whl-skl label.lk{opacity:.4}
+.whl-skl{display:flex;flex-wrap:wrap;gap:6px}.whl-skl .whl-skg{flex-basis:100%;margin:6px 0 0;font-size:12.5px;font-weight:700}.whl-skl .whl-skg small{font-weight:400;opacity:.7}#whlOv img.eic,.whl-skl img.eic{width:1.15em;height:1.15em;vertical-align:-.18em;object-fit:contain}.whl-skl label{font-size:12.5px;border:1.5px solid var(--line,#ccc);border-radius:99px;padding:3px 9px;cursor:pointer}.whl-skl label.on{border-color:#7a3fb0;background:rgba(122,63,176,.12)}.whl-skl label.lk{opacity:.4}
 .bt-sel .bt-card.bt-whlc{border-style:double;border-width:3px;border-color:#d9a400}
 /* 11/15 車輪戰 3D：頂欄「👁」視角鈕與小選單（樣式照星門圍城 #gsvView／#gsvViewM）；#whlOv.v3＝3D 開著：平面主棋盤收起來、3D 區（.whl-3d，park3d 掛在裡面）填滿中間，
    三張縮圖縮成一排小膠囊（盤號、狀態、危險角標都留著；小棋盤和血條收掉，另外兩盤的棋子改看 3D 裡那兩張簡化棋盤）。
@@ -223,7 +221,6 @@ function whlCss(){if(document.getElementById("whlCss"))return;const s=document.c
 #whlOv .whl-3d .park3d{border-radius:0!important}
 #whl3Ov{position:fixed;inset:0;z-index:9001;pointer-events:none;overflow:hidden;font-family:var(--serif)}.pk-veil #whl3Ov{visibility:hidden}
 #whl3Ov .bt-mk.gt{font-size:clamp(8px,calc(var(--c)*.34),11px);line-height:1.08;padding:1px 3px;width:1.7em;box-sizing:content-box;white-space:normal;text-align:center;border-radius:6px}
-#whl3Ov .gsv-mk.bd.eye{background:#d9a400;color:#1a1000}
 .whl-sb{position:absolute;left:0;top:0;pointer-events:auto;display:inline-flex;align-items:center;gap:4px;font:inherit;font-size:12px;font-weight:800;color:#f1e7cf;background:rgba(10,10,30,.86);border:1.5px solid rgba(255,255,255,.4);border-radius:99px;padding:0 9px 0 3px;min-height:30px;white-space:nowrap;cursor:pointer;touch-action:manipulation}
 .whl-sb>b{width:20px;height:20px;border-radius:50%;background:#2a2450;border:1px solid rgba(255,255,255,.55);color:#fff;font-size:12px;line-height:20px;text-align:center}
 .whl-sb.me{border-color:#FFE08A;color:#ffd36a}.whl-sb.think{border-style:dashed}.whl-sb.done{opacity:.85}.whl-sb.w{color:#9fffb0}.whl-sb.l{color:#ff9a8a}.whl-sb.hot{border-color:#ff5a4a;animation:whlHot 1.1s ease-in-out infinite}
@@ -248,7 +245,7 @@ function whlFit(){const ov=document.getElementById("whlOv");if(!ov)return;const 
 const whlPct=(a,b)=>Math.max(0,Math.min(100,Math.round(a/Math.max(1,b)*100)));
 const WHL_ST={me:"輪到我",think:"思考中",wait:"已走",done:"已結束"};
 /* 危險預警的字：縮圖角標一個字（形狀、顏色、字都不一樣，不只靠紅色）、提示用短句 */
-const WHL_DG={core:["危","星核危急"],chk:["將","被將軍"],inv:["侵","入侵卒要扣血"],eye:["眼","陣眼受威脅"],gate:["門","援軍將至"]};
+const WHL_DG={core:["危","星核危急"],chk:["將","被將軍"],inv:["侵","入侵卒要扣血"],gate:["門","援軍將至"]};
 function whlResTx(B){const r=B.P.result;return!r?"":!r.w?"和":r.w==="r"?"勝":"敗"}
 /* 縮圖：簡單的 2D 小棋盤（不用圖） */
 function whlMini(b){let s='<svg viewBox="0 0 90 100" aria-hidden="true"><rect width="90" height="100" rx="4" fill="#e6cb98"/><g stroke="#6b4a24" stroke-width=".6">';
@@ -266,7 +263,7 @@ function whlMsg(M,i){const B=M.bs[i],s=WHL.stOf(M,i),C=whlC();if(M.over)return M
   if(s==="think")return"星樞思考中…";if(s==="wait")return"這盤這輪走過了";
   if(WHL_TG)return WHL_TG.arm?"再點一次同一招就放出":WHL_TG.id==="dep"?"點發光的補給點":"點發光的目標";
   const D=C?WHL.danger(M,i,C)[0]:null;if(D&&D.rank>=WHL.DG_HOT)return WHL_DG[D.k][1]+"！";
-  if(WHL.sealed(M,i))return"陣眼被吃：這盤封招一輪";return`輪到你・第 ${i+1} 盤`}
+  if(WHL.sealed(M,i))return"這盤封招一輪";return`輪到你・第 ${i+1} 盤`}
 /* 「先救」鈕：別的盤有立即危險、比現在這盤嚴重才出現（盤號＋一句），點了切過去 */
 function whlAlert(M,i){const C=whlC(),A=C?WHL.dgAlert(M,i,C):null;if(!A)return"";const t=WHL_DG[A.k][1];
   return`<button type="button" class="whl-al" data-go="${A.i}" aria-label="${esc(`先救第 ${A.i+1} 盤：${t}`)}"><i>${A.i+1}</i><span>${esc(t)}</span></button>`}
@@ -294,11 +291,10 @@ function whlPaint(){const M=WHL_M,ov=typeof document!=="undefined"&&document.get
       <div class="whl-bar sp" title="共用靈力"><i style="width:${whlPct(M.sp.v,M.sp.max)}%"></i><b>靈 ${M.sp.v}／${M.sp.max}</b></div>${M2.sh.v?`<span class="whl-sh">🛡${M2.sh.v}</span>`:""}</div>
     <div class="whl-sks">${M.sk.map(sk).join("")}${GSV.GEN.map(sk).join("")}${sk("dep")}</div>`;
   whlEvents(M,i)}
-/* 盤上記號：星門（倒數）、入侵卒（侵）、護陣卒（陣）、陣眼子（眼）、這輪會扣的入侵（紅圈）、定身；選目標時是可以點的發光格 */
+/* 盤上記號：星門（倒數）、入侵卒（侵）、護陣卒（陣）、這輪會扣的入侵（紅圈）、定身；選目標時是可以點的發光格 */
 function whlMarks(M,i){const B=M.bs[i],P=B.P,td=P.td,b=P.board,C=whlC(),L=[],my=WHL.stOf(M,i)==="me";
   for(const g of GSV.fore(td))for(const w of g.ws)L.push({sq:w.sq,k:"gate",t:`門${g.inR}`});
   for(const q in td.ids){const id=td.ids[q],t=GSV.tagOf(td,id),sq=+q;if(t==="inv")L.push({sq,k:"bd "+(td.arm[id]?"arm":"inv"),t:td.arm[id]?"侵!":"侵"});if(t==="guard")L.push({sq,k:"bd guard",t:"陣"})}
-  {const q=GSV.sqOfId(td,B.eye);if(q!=null)L.push({sq:q,k:"bd eye",t:"眼"})}
   for(const o of td.ctl.frz)if(o.until>td.rnd){const q=GSV.sqOfId(td,o.id);if(q!=null)L.push({sq:q,k:"bd frz",t:"定"})}
   for(const h of GSV.invHits(td))L.push({sq:h.sq,k:"ring"});
   if(WHL_INFO&&C){const R=new Set();for(const[f,t]of C.legal(b,"b"))if(b[t]==="R")R.add(f);for(const q of R)L.push({sq:q,k:"ring ifo"})}
@@ -363,7 +359,7 @@ async function whlPump(){if(!WHL_LIVE||!WHL_M||WHL_Q.run)return;const C=whlC();i
   const E=typeof XQEngine!=="undefined"&&XQEngine&&XQEngine.search?XQEngine:null,Q=WHL_Q;let r=null;
   try{r=await WHL.step(()=>WHL_M,Q,C,{search:E?(p,l,m)=>E.search(p,l,m):null,tmo:E&&E.ready?WHL.TMO:WHL.TMO0,min:WHL.WAIT,wait:ms=>new Promise(z=>setTimeout(z,ms))})}catch(e){r={err:e}}
   if(r&&r.via==="tmo")try{if(E&&E.abort)E.abort()}catch(e){}
-  if(r&&r.ok){whlSave();if(r.eye&&WHL_LIVE)toast(`第 ${r.i+1} 盤陣眼被吃：封招一輪`)}
+  if(r&&r.ok)whlSave();
   if(r&&r.ok&&r.src!=="eng"&&WHL_LIVE&&typeof DEVMODE==="function"&&DEVMODE())try{console.info("[whl] 星樞用規則評估挑步",r.via,r.src)}catch(e){}
   WHL_HK="";whlPaint();if(WHL_M&&WHL_M.over){whlEnd();return}if(Q===WHL_Q)setTimeout(whlPump,0)}
 /* 整場結算一次 */

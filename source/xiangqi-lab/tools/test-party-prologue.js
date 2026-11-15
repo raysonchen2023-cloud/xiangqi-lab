@@ -71,23 +71,26 @@ test("解鎖：A1 一開始就開；B1 要駱躍梅加入、C1 要沈方庭和�
 
 test("三星：殘局關看快不快、靠不靠招（星樞沒有傷害來源，HP 星一定拿到）；困難版只套通用的 HARD", ()=>{
   for(const n of PRO){const g=G.goals(n);assert.equal(g.length,3);assert.notEqual(g[1].k,g[2].k)}
-  assert.deepEqual(J(G.goals(32).map(g=>g.t)),["過關","4 回合內過關","不用招也過關"]);assert.deepEqual(J(G.goals(36).map(g=>g.t)),["過關","入侵沒扣到血","剩餘 HP 60% 以上"]);
+  assert.deepEqual(J(G.goals(32).map(g=>g.t)),["過關","4 回合內過關","不用招也過關"]);assert.deepEqual(J(G.goals(36).map(g=>g.t)),["過關（援軍都擋下來、入侵卒清光也算）","入侵沒扣到血","剩餘 HP 60% 以上"]);
   assert.equal(G.GOAL.fast.ok({rnd:4},null,4),true);assert.equal(G.GOAL.fast.ok({rnd:5},null,4),false);
   assert.equal(G.GOAL.nosk.ok({used:{}}),true);assert.equal(G.GOAL.nosk.ok({used:{qi1:1}}),false);
   for(const n of PRO){const V=G.LV[n],X=G.lvOf(n,1);assert.equal(X.hard,1);assert.equal(X.depth,Math.min(4,V.depth+1));assert.equal(X.esp0,V.esp0+15);assert.equal(X.atk,V.atk+10);assert.equal(X.hp,V.hp,"不加血");assert.deepEqual(J(X.red),J(V.red))}
   assert.equal(G.lvOf(32,0),G.LV[32]);
 });
 
-test("開戰：序章不判長將（noPerpetual）、關名照 lvName；隊長的本命棋子不在盤上就換人（B1 只有傌→駱躍梅）", ()=>{
+test("開戰：序章不判長將（noPerpetual）、關名照 lvName；11/16 取消隊長、全隊招式：gsvCapt（換隊長）拿掉，B1 只有傌也照樣帶全隊已學會的招", ()=>{
   assert.match(SRC,/lv:Object\.assign\(\{fen:GSV\.startFen\(n,C\),turn:"r"\},V\.pro\?\{noPerpetual:true\}:\{\}\)/);
   assert.match(SRC,/toast\(`🌠 星門圍城・\$\{GSV\.lvName\(n\)\}・/);
-  assert.equal(ctx.gsvCapt(34,"x_swordboy"),null,"沒有 07pty-party.js 就不換");
-  ctx.ptySquad=()=>({R:{ck:"x_swordboy",L:6},N:{ck:"x_miaogirl",L:4},B:{ck:"x_spiritgirl",L:1,wood:1},A:{ck:"x_shi",L:1,wood:1},K:{ck:"x_shuai",L:1,wood:1},C:{ck:"x_martialgirl",L:1,wood:1},P:{ck:"x_bing",L:1,wood:1}});
-  try{assert.deepEqual(J(ctx.gsvCapt(34,"x_swordboy")),{ck:"x_miaogirl",L:4,from:"x_swordboy"});
-    assert.equal(ctx.gsvCapt(31,"x_swordboy"),null,"俥在盤上就不換");assert.equal(ctx.gsvCapt(35,"x_swordboy"),null);
-    assert.equal(ctx.gsvCapt(31,"x_miaogirl").ck,"x_swordboy","隊長是駱躍梅、A 關沒有傌：換成齊轍");
-    assert.equal(ctx.gsvCapt(1,"x_swordboy"),null,"主線關紅方一定有俥")}finally{delete ctx.ptySquad}
-  assert.match(SRC,/const sw=gsvCapt\(n,ck\);if\(sw\)\{ck=sw\.ck;L=sw\.L\}/);assert.match(SRC,/改由\$\{GSV\.CH\[ck\]\.n\}當隊長/);
+  assert.equal(ctx.gsvCapt,undefined,"gsvCapt 整段拿掉");assert.ok(!SRC.includes("gsvCapt")&&!SRC.includes("當隊長"),"不再換隊長、不再講誰當隊長");
+  assert.ok(SRC.includes('P.sk["*"]=typeof ptyPick==="function"?ptyPick(GSV.SK,sk):GSV.skPick(ck,L,sk);'),"gsvStart 存全隊那一份 P.sk[\"*\"]");
+  assert.ok(SRC.includes('td:{mode:GSV.MODE,lv:n,ch:ck,L,sk:P.sk["*"],hard}}'),"開局帶 P.sk[\"*\"]");
+  const S={R:{ck:"x_swordboy",L:6},N:{ck:"x_miaogirl",L:4},B:{ck:"x_spiritgirl",L:1,wood:1},A:{ck:"x_shi",L:1,wood:1},K:{ck:"x_shuai",L:1,wood:1},C:{ck:"x_martialgirl",L:1,wood:1},P:{ck:"x_bing",L:1,wood:1}};
+  const fen=G.startFen(34,C),P={start:fen,startTurn:"r",board:C.parseFen(fen),turn:"r",moves:[],human:"r",ed:[]};P.pos=[C.fen(P.board,"r")];
+  assert.ok(!P.board.includes("R")&&P.board.includes("N"),"B1 只有傌（沒有俥）");
+  const td=G.boot({mode:G.MODE,lv:34,ch:"x_swordboy",L:6,sk:[],sq:S},P,C),pool=J(G.skOfSq(td.sq));
+  assert.deepEqual(J(td.sk),pool.slice(0,4),"招式池＝已加入的每一位照自己等級學會的，最多 4 招");assert.equal(td.ch,"x_swordboy","畫面上的名字、頭像照首頁小人，不換人");
+  for(const id of pool){const k=G.SKM[id];assert.ok(["x_swordboy","x_miaogirl"].includes(k.ch),id+" 只有已加入的兩位")}
+  for(const id of td.sk){const k=G.SKM[id];assert.ok(k.lv<=S[k.ch==="x_swordboy"?"R":"N"].L,id+" 照各自等級")}
 });
 
 test("第一次在大星盤上看到木棋靈：齊轍說一句，每個存檔只說一次（party.wood，norm 保留）", ()=>{
@@ -97,4 +100,28 @@ test("第一次在大星盤上看到木棋靈：齊轍說一句，每個存檔�
   assert.match(PS,/function ptyWoodSay\(pcs\)\{[^\n]*S\[pc\]&&S\[pc\]\.wood[^\n]*if\(P\.wood\)return"";P\.wood=1;ptySave\(P\)/);
   assert.match(PS,/星辰之力還沒補齊，這些棋靈先幫我們卡位，我們去把大家找回來。/);
   assert.match(SRC,/ptyWoodSay\(GSV\.plan\(n\)\.red\.map\(/,"星門圍城開戰時問一次");
+});
+
+test("11/16「對方 HP 還沒歸 0 為什麼莫名其妙就破關了」→ 保留並寫清楚：三星第一顆、開戰提示、對局上方那一行都寫過關條件與進度", ()=>{
+  assert.equal(G.winTxt(31),"吃光卒");assert.equal(G.winTxt(34),"吃光卒");assert.equal(G.winTxt(36),"援軍都擋下來、入侵卒清光");assert.equal(G.winTxt(32),"");assert.equal(G.winTxt(5),"");
+  assert.equal(G.goals(31)[0].t,"過關（吃光卒也算）");assert.equal(G.goals(5)[0].t,"過關","主線照舊");
+  const P={board:G.startBoard(31),turn:"r",moves:[]};P.td=G.boot({lv:31,ch:"x_swordboy",L:3,sq:null},P,C);
+  assert.equal(G.winNow(P.td,P.board),"過關：吃光卒（還剩 4 顆）","盤上 3 顆＋星門還沒落的 1 顆");
+  const Q={board:G.startBoard(36),turn:"r",moves:[]};Q.td=G.boot({lv:36,ch:"x_swordboy",L:3,sq:null},Q,C);
+  assert.equal(G.winNow(Q.td,Q.board),"過關：擋下援軍（還有 3 波）、清光入侵卒（場上 0 顆）");
+  const R={board:G.startBoard(5),turn:"r",moves:[]};R.td=G.boot({lv:5,ch:"x_swordboy",L:3,sq:null},R,C);assert.equal(G.winNow(R.td,R.board),"","主線沒有這一句");
+  assert.match(SRC,/function gsvFoeLine\(td,b\)\{const F=GSV\.fore\(td\),wn=GSV\.winNow\(td,b\)/);assert.match(SRC,/\$\{gsvFoeLine\(td,st\.board\)\}/);
+  assert.match(SRC,/toast\(`🎯 這一關不用打穿星核：\$\{GSV\.winTxt\(n\)\}就過關`\)/);
+});
+
+test("11/16 結果畫面的解鎖提示：用關名（序章 C1，不是「第 37 關」），只列這一局之前鎖著、贏了才開的（照誰加入了）", ()=>{
+  assert.ok(!/第 \$\{n\+1\} 關、/.test(SRC),"不再寫死 n+1");
+  assert.match(SRC,/GSV\.LVN\.filter\(k=>k!==n&&GSV\.lockWhy\(P0,k,0,false,has\)&&!GSV\.lockWhy\(P1,k,0,false,has\)\)\.map\(k=>GSV\.lvName\(k\)\)/);
+  /* 同一套比對直接跑：破 B3（36）時帥仕還沒加入 → C1 不算開；破 C1（37）→ 第 1 關開 */
+  const has=L=>c=>L.includes(c),open=(P,n,h)=>{const R0=P.c[n]||{},at=o=>Object.assign({},P,{c:Object.assign({},P.c,{[n]:Object.assign({},R0,o)})}),P0=at({w:0,l:Math.max(1,R0.l||0)}),P1=at({w:Math.max(1,R0.w||0)});
+    return G.LVN.filter(k=>k!==n&&G.lockWhy(P0,k,0,false,h)&&!G.lockWhy(P1,k,0,false,h)).map(k=>G.lvName(k))};
+  const W=(...ns)=>({c:Object.fromEntries(ns.map(n=>[n,{w:1}]))});
+  assert.deepEqual(J(open(W(31,32,33,34,35,36),36,has(["x_swordboy","x_miaogirl"]))),[],"帥仕還沒加入：破 B3 不說 C1 開放");
+  assert.deepEqual(J(open(W(31,32,33,34,35,36),36,()=>true)),[],"C 階段第一關只看加入、不用破 B3：帥仕加入時就開了，破 B3 不會多開");
+  assert.deepEqual(J(open(W(37),37,()=>true)),["第 1 關","序章 C2"]);
 });

@@ -30,7 +30,7 @@ test("〔原始碼〕意見回饋 1136：頭頂漢字牌（headOf＋07bht-td pnm
   assert.ok(/\.bt-mk\.pnm\.r\{background:#FFF8EA;color:#B3121F/.test(TD) && /\.bt-mk\.pnm\.b\{background:#14204A;color:#fff/.test(TD), "我方白底朱字、敵方深藍底白字");
 });
 
-test("放手回正：回到比較近的正面（仰角差 0）或盤底（仰角差 ±180°）", () => {
+test("放手回正：一律回正面（11/16 開發者「放開手後，棋盤會轉向到錯的一邊」選單選「一律回正面」；不再停在盤底）", () => {
   const m = SRC.match(/const tdElT=\(\)=>\{if\(!TDC\)return 0;([\s\S]*?)\};/);
   assert.ok(m, "找得到 tdElT");
   const make = el => new Function("TDC", "TDOR", "PI", "return (()=>{if(!TDC)return 0;" + m[1] + "})()")("tilt", { el }, PI);
@@ -38,9 +38,9 @@ test("放手回正：回到比較近的正面（仰角差 0）或盤底（仰角
   assert.ok(near(make(0), 0));
   assert.ok(near(make(.4), 0), "稍微抬高放手＝回正面");
   assert.ok(near(make(-1.2), 0), "還沒過一半＝回正面");
-  assert.ok(near(make(-2), -PI), "轉過一半＝停在盤底");
-  assert.ok(near(make(-PI - .3), -PI), "盤底附近＝停在盤底");
+  assert.ok(near(make(-2), 0), "轉過一半也回正面");
+  assert.ok(near(make(-PI - .3), -2 * PI), "盤底附近放手：繼續轉到正面（同一個角度），不停在盤底");
   assert.ok(near(make(-2 * PI + .2), -2 * PI), "繞一整圈回到正面（同一個角度，不倒轉回去）");
-  assert.ok(near(make(3.5), PI), "往另一邊轉到盤底也一樣");
+  assert.ok(near(make(3.5), 2 * PI), "往另一邊轉到盤底也一樣回正面");
   assert.strictEqual(new Function("TDC", "TDOR", "PI", "return (()=>{if(!TDC)return 0;" + m[1] + "})()")(null, { el: 2 }, PI), 0, "不是塔防鏡頭＝0");
 });

@@ -87,17 +87,22 @@ test("〔行為〕存檔層：沒有旅程就沒有隊伍、等級照修為；�
   const A=world({store:{xp:500}});assert.equal(A.c.ptyGet(),null);assert.equal(A.c.ptyLv("x_bing"),A.c.PTY.lvOf(500));
   const B=world({store:{journey:{c:"x_martialgirl"},shipDock:["classic","song","qin","han"],xp:T.base(6)}});const P=B.c.ptyGet();
   assert.deepEqual(J(B.c.PTY.members(P)),["x_swordboy","x_miaogirl","x_martialgirl"]);assert.ok(B.S.get("party"),"轉換完存起來");
-  assert.equal(B.c.ptyLv("x_martialgirl"),6);assert.equal(B.c.ptyLead(),"x_martialgirl");
+  assert.equal(B.c.ptyLv("x_martialgirl"),6);assert.equal(B.c.ptyLook(),"x_martialgirl","11/16 取消隊長：黑洞三玩法看首頁小人 ptyLook");assert.equal(vm.runInContext("ptyLead()",B.c),"x_martialgirl","ptyLead 留著當 ptyLook 的別名");
   B.S.set("shipDock",["classic","song","qin","han","sanguo"]);assert.deepEqual(J(B.c.PTY.members(B.c.ptyGet())),["x_swordboy","x_miaogirl","x_martialgirl"],"已經有隊伍就不再照停靠站重算");
   assert.equal(B.c.ptyLv("x_bing"),3,"沒加入的（木棋靈）＝修為的一半")});
 
-test("〔行為〕存檔層：修為加了就分給全隊與星輝；換首頁小人會同步 pChar、本命棋子並通知小人換人；不在隊上的不能當隊長", ()=>{
+test("〔行為〕存檔層：修為加了就分給全隊與星輝；換首頁小人會同步 pChar、本命棋子並通知小人換人；11/16 取消隊長：沒有 ptySetLead、ptyLead 跟著首頁小人；全隊招式 ptyLearned／ptyPick／ptyGroups", ()=>{
   const W=world({store:{journey:{c:"x_swordboy"},party:T.fresh(0),xp:T.base(3)}});W.c.ptyJoin("x_miaogirl");
   const x0=J(W.S.get("party").m);W.c.ptyOnXp(40);const P=W.S.get("party");
   assert.equal(P.m.x_swordboy.xp,x0.x_swordboy.xp+20);assert.equal(P.m.x_miaogirl.xp,x0.x_miaogirl.xp+20);assert.equal(P.pool,20);
   assert.ok(W.c.ptySetLook("x_miaogirl"));assert.equal(W.S.get("pChar"),"x_miaogirl");assert.equal(W.S.get("botPiece"),"傌");assert.ok(W.ev.includes("xq-look"));
-  assert.equal(W.c.ptySetLead("x_bing"),false);assert.ok(W.c.ptySetLead("x_miaogirl"));assert.equal(W.c.ptyLead(),"x_miaogirl");
-  assert.equal(W.c.ptySetLook("x_bing"),false,"還沒加入的不能陪你走")});
+  assert.equal(W.c.ptySetLead,undefined,"ptySetLead 刪掉");assert.equal(W.c.ptyLook(),"x_miaogirl");assert.equal(vm.runInContext("ptyLead()",W.c),"x_miaogirl","ptyLead＝ptyLook 的別名");
+  assert.equal(W.c.ptySetLook("x_bing"),false,"還沒加入的不能陪你走");assert.equal(W.c.ptyLook(),"x_miaogirl");
+  const SK=[{id:"a",ch:"x_swordboy",lv:1},{id:"b",ch:"x_swordboy",lv:99},{id:"c",ch:"x_miaogirl",lv:1},{id:"d",ch:"x_bing",lv:1},{id:"e",ch:"x_miaogirl",lv:2},{id:"f",ch:"x_swordboy",lv:2}];
+  assert.deepEqual(J(W.c.ptyLearned(SK).map(s=>s.id)),["a","f","c","e"].filter(id=>{const s=SK.find(x=>x.id===id);return s.lv<=W.c.ptyLv(s.ch)}),"已加入的每一位照自己等級學會的（木棋靈步越溪的不算）");
+  const ok=J(W.c.ptyLearned(SK).map(s=>s.id));assert.deepEqual(J(W.c.ptyPick(SK,["c","d","b","c"])),["c"],"存的那份：沒學會、沒加入、重複的拿掉");assert.deepEqual(J(W.c.ptyPick(SK,[])),ok.slice(0,4),"空的帶前 4 招");
+  assert.deepEqual(J(W.c.ptyGroups(SK).map(g=>[g.c,g.sk.map(s=>s.id)])),[["x_swordboy",["a","b","f"]],["x_miaogirl",["c","e"]]],"照夥伴分組，沒學會的也列");
+  assert.equal(W.S.get("party").lead!==undefined,true,"party.lead 欄位留著讀舊存檔")});
 
 test("〔行為〕星槎：停在漢朝、還沒幫小梅就不能起航；解開下船那一題她就加入；題目先在聽書裡解過，起航時補加入、不擋", ()=>{
   const W=world({store:{journey:{c:"x_swordboy"},party:T.fresh(0),shipDock:["classic","qin","han"],xp:T.base(4)}});
@@ -113,13 +118,13 @@ test("〔行為〕修為到了只提醒一次、不加入", ()=>{
   const W=world({store:{journey:{c:"x_swordboy"},party:T.fresh(0),xp:T.base(5)}});W.c.ptyOnXp(10);const P=W.S.get("party");
   assert.deepEqual(J(Object.keys(P.hint)),["x_miaogirl","x_shuai","x_shi"]);assert.deepEqual(J(W.c.PTY.members(P)),["x_swordboy"])});
 
-test("〔原始碼〕接線：新旅程一律齊轍並建隊伍、party 跟存檔格走、修為分給全隊、黑洞三玩法看隊長與他的等級、序局不讓選角、新手畢業直接出發、星槎三個接點、卡冊入口、m.html 有這支檔", ()=>{
+test("〔原始碼〕接線：新旅程一律齊轍並建隊伍、party 跟存檔格走、修為分給全隊、黑洞三玩法看首頁小人（11/16 取消隊長：ptyLook）與他的等級、序局不讓選角、新手畢業直接出發、星槎三個接點、卡冊入口、m.html 有這支檔", ()=>{
   const M=f=>rd("xiangqi-db/m/"+f);
   assert.match(SAVE,/async function journeyStart\(n,c,nm,df\)\{c="x_swordboy";/);assert.ok(SAVE.includes('if(typeof ptyFresh==="function")ptyFresh()'));
   assert.ok(SAVE.includes('const JOURNEY_KEYS=["sw7Box","pSex","pChar","pStyle","party",'));assert.ok(SAVE.includes("if(P&&P.look)want=P.look"),"開機修正 pChar 改看首頁小人");
   assert.ok(LEG.includes('if(typeof ptyOnXp==="function")ptyOnXp(n+bonus)'));assert.ok(LEG.includes('if(typeof ptySheet==="function"&&journey())return ptySheet()'));
   for(const[f,ch,lv]of[["07bht-td.js","bhtdChar","bhtdL"],["07bhg-gatesiege.js","gsvChar","gsvL"],["07bhw-wheel.js","whlCk","whlL"]]){const s=M(f);
-    assert.ok(s.includes(`const ${ch}=()=>{let c="";try{c=typeof ptyLead==="function"?ptyLead():`),f+" 取隊長");assert.ok(s.includes(`const ${lv}=c=>{try{if(typeof ptyLv==="function")return ptyLv(c||${ch}());`),f+" 取那位的等級")}
+    assert.ok(s.includes(`const ${ch}=()=>{let c="";try{c=typeof ptyLook==="function"?ptyLook():`),f+" 取首頁小人（11/16 取消隊長：改叫 ptyLook）");assert.ok(!s.includes("ptySetLead"),f+" 不再叫 ptySetLead");assert.ok(s.includes(`const ${lv}=c=>{try{if(typeof ptyLv==="function")return ptyLv(c||${ch}());`),f+" 取那位的等級")}
   const BH=M("07bh-blackhole.js");assert.match(BH,/function bhxPick\(o,cap,cb\)\{const k="x_swordboy";/);assert.ok(BH.includes("function bhxPickChoose(o,cap,cb)"),"舊的點星選角留著");
   const STQ=M("07stq-starter.js");assert.ok(STQ.includes('class="stq-go">出發</button>'));assert.ok(STQ.includes("stqPick(STQ_C0)"));
   const SH=M("07f-ship.js");assert.ok(SH.includes('if(first&&typeof ptyOnSolve==="function")ptyOnSolve(k,id)'));assert.ok(SH.includes('if(pb){ptyGateSay(pb);return}'));assert.ok(SH.includes('if(typeof ptyArrive==="function"&&ptyArrive(k,done))return;'));

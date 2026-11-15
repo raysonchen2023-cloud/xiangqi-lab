@@ -18,6 +18,8 @@
      node xiangqi-lab/tools/siege-wheel-bench.js --mode siege --lv 1,2,3 --ver normal,hard --players greedy,eng4,td --seeds 20 --out tmp/siege-wheel-bench/a.json
      node xiangqi-lab/tools/siege-wheel-bench.js --mode wheel --players greedy,eng4,td --seeds 20 --out tmp/siege-wheel-bench/wheel.json
      node xiangqi-lab/tools/siege-wheel-bench.js --report tmp/siege-wheel-bench/base --md tmp/siege-wheel-bench/base/摘要.md      合併資料夾裡所有結果出總表
+   11/16（取消隊長、全隊招式、取消陣眼子）：--squad 第1天|第3天|第8天|練很高＝帶隊伍等級組合（同 gate-siege-sim.js；ch 固定齊轍、L＝那個組合的修為，模擬環境的 ptySquad 回這一隊，新舊規則檔都照 App 的方式讀到）；
+     --pick best＝全隊已學會的招裡挑等級最高的 4 招（規則檔有 GSV.skOfSq 才有用，舊檔照舊）；--src-dir 資料夾＝從那裡讀 07bht／07bhg／07bhw（例如改版前的備份）當基準
    下法後面加 @N（例如 --players td@2）＝開局變化：每一盤玩家的前 N 個主要行動在「不白送子」的步裡隨機走，之後才照那種下法。
    其他參數：--seed0 1（起始種子）、--L 1（修為等級）、--tt move|game、--patch 檔.json、--set "LV.3.atk=95;HARD.atk=5"（臨時覆寫數值試算，只改記憶體裡那一份）、--md 檔.md、--quiet */
 "use strict";
@@ -44,8 +46,8 @@ function sources(){const o={};for(const f of APP_FILES)o["xiangqi-db/m/"+f]=sha(
 const sqName=q=>C.iccs(q,q).slice(0,2);
 const cmpKey=(a,b)=>{for(let i=0;i<a.length;i++)if(a[i]!==b[i])return a[i]>b[i]?1:-1;return 0};
 /* ---------- 載入 App 的程式（原檔，不改、不另外寫一份） ---------- */
-function loadApp(){const win={};const ctx={console,Math,JSON,Date,setTimeout,clearTimeout,Promise,window:win,addEventListener(){},location:{hash:"",hostname:""}};vm.createContext(ctx);
-  const src=APP_FILES.map(f=>fs.readFileSync(path.join(MDIR,f),"utf8")).join("\n")+"\n;this.GSV=GSV;this.WHL=WHL;this.BHTD=BHTD;";
+function loadApp(dir){const win={};const ctx={console,Math,JSON,Date,setTimeout,clearTimeout,Promise,window:win,addEventListener(){},location:{hash:"",hostname:""}};vm.createContext(ctx);
+  const src=APP_FILES.map(f=>fs.readFileSync(path.join(dir||MDIR,f),"utf8")).join("\n")+"\n;this.GSV=GSV;this.WHL=WHL;this.BHTD=BHTD;";
   vm.runInContext(src,ctx,{filename:"xiangqi-db-m.js"});
   if(!win.XQ_TD||!win.XQ_TD.gsv)throw new Error("window.XQ_TD 沒有包上星門圍城那一層（07bhg 的接線沒跑到）");
   return{G:ctx.GSV,W:ctx.WHL,XQ:win.XQ_TD,ctx}}
@@ -169,13 +171,20 @@ function mkTally(td){const src={r:{},b:{}},fx={},xs={drain:0,ph:1};let seen=td.s
 const wavesOf=(G,lv)=>(G.LV[lv].waves||[]).map(w=>"第"+w.at+"回合："+w.p.map(([p,lu,xi,tg])=>p+"@"+sqName(G.LSQ(lu,xi))+(tg?"("+tg+")":"")).join(" "));
 /* 這一盤星樞實際用的參數（已經套困難版、覆寫）；arep＝星樞不長將，照開局後 td 裡的值（第一章由 GSV.AREP1 決定，不寫在關卡資料裡） */
 const foeOf=(V,td)=>({hp:V.hp,atk:V.atk,def:V.def,esp0:V.esp0,esk:(V.esk||[]).slice(),ph:V.ph?JSON.parse(JSON.stringify(V.ph)):null,depth:V.depth,arep:td&&td.arep?1:0});
+/* 11/16：隊伍等級組合（同 gate-siege-sim.js 的 SQUADS）、全隊最強 4 招 */
+const SQUADS={"第1天":{lead:3,lv:{R:3},wood:1},"第3天":{lead:6,lv:{R:6,N:4,K:4,A:4},wood:3},"第8天":{lead:9,lv:{R:9,N:8,K:7,A:7,B:7,P:7,C:7},wood:4},"練很高":{lead:20,lv:{R:20,N:18,K:18,A:18,B:18,P:18,C:18},wood:10}};
+const SQ_PC={R:"x_swordboy",N:"x_miaogirl",B:"x_spiritgirl",A:"x_shi",K:"x_shuai",C:"x_martialgirl",P:"x_bing"};
+const squadOf=n=>Object.fromEntries(Object.entries(SQ_PC).map(([pc,ck])=>{const v=SQUADS[n].lv[pc];return[pc,v?{ck,L:v}:{ck,L:SQUADS[n].wood,wood:1}]}));
+const bestSk=(G,S)=>typeof G.skOfSq==="function"?G.skOfSq(G.squad(S)).map(id=>G.SKM[id]).sort((a,b)=>b.lv-a.lv||b.cost-a.cost).slice(0,4).map(s=>s.id):null;
+const useSq=(A,o)=>{if(o.sq)A.ctx.ptySquad=()=>JSON.parse(JSON.stringify(o.sq));else delete A.ctx.ptySquad};
 /* ---------- 星門圍城一局（順序照 src/local.js：playNew → XQ_TD.boot；playEngine；playApply；/play/td） ---------- */
 async function playSiege(A,E,PL,o){const G=A.G,XQ=A.XQ,lv=+o.lv,hard=o.hard?1:0,seed=+o.seed,L=+o.L||1,player=o.player,CHS=Object.keys(G.CH),ch=o.ch||CHS[(seed-1)%CHS.length];
   const V=G.lvOf(lv,hard);if(!V)throw new Error("星門圍城沒有第 "+lv+" 關");
   const key="siege|"+lv+"|"+hard+"|"+seed,rndB=rng(seedOf(key+"|星樞")),R=rng(seedOf(key+"|"+player)),t0=Date.now(),n0=E.st.n,sm0=E.st.sm,np0=E.st.nopv;
   if(E.tt==="game")await E.fresh();
   const J="bh:gs"+lv+(hard?"h":""),start=G.startFen(lv,C),P={id:"bench-"+J+"-"+player+"-"+seed,human:"r",start,startTurn:"r",moves:[],result:null,journey:J};
-  C.stateRebuild(P);P.td=XQ.boot({mode:G.MODE,lv,ch,L,sk:G.skPick(ch,L,null),hard},P,C);
+  useSq(A,o);const sk0=o.sq&&typeof G.skOfSq==="function"?(o.pick==="best"?bestSk(G,o.sq):null):G.skPick(ch,L,null);
+  C.stateRebuild(P);P.td=XQ.boot({mode:G.MODE,lv,ch,L,sk:sk0,hard},P,C);
   const td=P.td,log=[],TL=mkTally(td),depths=new Set();let cut=0,mpv=0;
   const end=(w,why)=>{if(!P.result)P.result={w,why}};
   const apply=(f,t)=>{C.stateApply(P,f,t);const tdE=XQ.move(P,P.moves[P.moves.length-1],C);let r=C.judgeState(P);if(r&&P.noPerp&&/長將|長捉|長打/.test(r.why))r=null;if(!r&&tdE&&tdE.end)r=tdE.end;if(r)end(r.w,r.why)};
@@ -199,7 +208,7 @@ async function playSiege(A,E,PL,o){const G=A.G,XQ=A.XQ,lv=+o.lv,hard=o.hard?1:0,
 async function playWheel(A,E,PL,o){const G=A.G,W=A.W,seed=+o.seed,L=+o.L||1,player=o.player,CHS=Object.keys(G.CH),ch=o.ch||CHS[(seed-1)%CHS.length];
   const key="wheel|"+seed,rndB=rng(seedOf(key+"|星樞")),R=rng(seedOf(key+"|"+player)),t0=Date.now(),n0=E.st.n,sm0=E.st.sm,np0=E.st.nopv;
   if(E.tt==="game")await E.fresh();
-  const M=W.newMatch({ch,L,id:"bench-whl-"+player+"-"+seed},C),Q={run:null,list:[]},log=[],via={},depths=new Set();let cur=-1,acts=0,cut=0,mpv=8;
+  useSq(A,o);const M=W.newMatch(Object.assign({ch,L,id:"bench-whl-"+player+"-"+seed},o.sq&&o.pick==="best"&&typeof G.skOfSq==="function"?{sk:bestSk(G,o.sq)}:{}),C),Q={run:null,list:[]},log=[],via={},depths=new Set();let cur=-1,acts=0,cut=0,mpv=8;
   const opens=M.bs.map(B=>({lv:B.lv,nm:B.nm,fen:B.P.start+" w",waves:wavesOf(G,B.lv),foe:foeOf(G.LV[B.lv],B.P.td)}));for(const B of M.bs)depths.add(B.P.td.depth||2);
   const play=PL.get(player);
   const foe=async()=>{for(let g=0;g<20&&!M.over&&W.needs(M).length;g++){const x=await W.step(()=>M,Q,C,{search:(p,l,m)=>E.search(p,l,m),tmo:WHEEL_TMO,rnd:rndB});
@@ -274,15 +283,16 @@ async function main(argv){const a=args(argv),quiet=a.has("--quiet"),say=(...x)=>
   if(a.has("--report")){const src=a.val("--report"),R=readDir(src);if(!R.runs.length){console.error("找不到基準結果："+src);return 1}const md=mdReport(R.metas,R.runs),out=a.val("--md",null);
     if(out){fs.mkdirSync(path.dirname(out),{recursive:true});fs.writeFileSync(out,md)}const all=a.val("--out",null);if(all)fs.writeFileSync(all,JSON.stringify({meta:Object.assign({},R.metas[0],{merged:R.files.map(f=>path.basename(f))}),summary:summarize(R.runs),inversions:inversions(summarize(R.runs).siege),runs:R.runs},null,1));
     say(md);return 0}
-  const mode=a.val("--mode","all"),A=loadApp(),G=A.G;
+  const mode=a.val("--mode","all"),A=loadApp(a.val("--src-dir",null)),G=A.G,SQN=a.val("--squad",null),PICK=a.val("--pick",null);if(SQN&&!SQUADS[SQN])throw new Error("--squad 只有："+Object.keys(SQUADS).join("、"));
+  const sqx=SQN?{sq:squadOf(SQN),ch:"x_swordboy",squad:SQN,pick:PICK}:{};   /* 11/16 --squad／--pick */
   let patch=null;if(a.val("--patch",null))patch=JSON.parse(fs.readFileSync(a.val("--patch"),"utf8"));if(a.val("--set",null))patch=mergePatch(patch,parseSet(a.val("--set")));applyPatch(A,patch);
   const SEEDS=+a.val("--seeds",20),S0=+a.val("--seed0",1),Lx=+a.val("--L",1),LVS=String(a.val("--lv","1,2,3,4,5,6,7,8,9,10,11,12")).split(",").map(Number),VERS=String(a.val("--ver","normal,hard")).split(","),PLS=String(a.val("--players","greedy,eng4,td")).split(",");
   const TW=new Date(Date.now()+8*3600e3).toISOString().slice(0,16).replace(/[-:T]/g,""),OUT=a.val("--out",path.join(ROOT,"tmp","siege-wheel-bench","bench-"+TW+".json")),MD=a.val("--md",null);
   const PL=mkPlayers(A);for(const p of PLS)PL.get(p);for(const lv of LVS)if(!G.LV[lv])throw new Error("沒有第 "+lv+" 關");
   let E;try{E=await newEngine({tt:a.val("--tt","move")})}catch(e){console.error("Pikafish 在 Node 載入失敗（"+(e&&e.message)+"）。這支基準一定要真引擎，不退回規則評估。");return 2}
   say("引擎：",E.note);const plan=[];
-  if(mode==="siege"||mode==="all")for(const lv of LVS)for(const v of VERS)for(const p of PLS)for(let i=0;i<SEEDS;i++)plan.push({mode:"siege",lv,hard:v==="hard"?1:0,player:p,seed:S0+i,L:Lx});
-  if(mode==="wheel"||mode==="all")for(const p of PLS)for(let i=0;i<SEEDS;i++)plan.push({mode:"wheel",player:p,seed:S0+i,L:Lx});
+  if(mode==="siege"||mode==="all")for(const lv of LVS)for(const v of VERS)for(const p of PLS)for(let i=0;i<SEEDS;i++)plan.push(Object.assign({mode:"siege",lv,hard:v==="hard"?1:0,player:p,seed:S0+i,L:SQN?SQUADS[SQN].lead:Lx},sqx));
+  if(mode==="wheel"||mode==="all")for(const p of PLS)for(let i=0;i<SEEDS;i++)plan.push(Object.assign({mode:"wheel",player:p,seed:S0+i,L:SQN?SQUADS[SQN].lead:Lx},sqx));
   const runs=[],t0=Date.now();
   for(const[k,p]of plan.entries()){runs.push(p.mode==="siege"?await playSiege(A,E,PL,p):await playWheel(A,E,PL,p));if((k+1)%20===0||k+1===plan.length)say("  "+(k+1)+"/"+plan.length+"  "+((Date.now()-t0)/1000).toFixed(0)+" 秒")}
   const meta={schema:SCHEMA,tool:TOOL,date:new Date().toISOString(),node:process.version,engine:E.note,engineCfg:{threads:E.threads,hash:E.hash,tt:E.tt,redMpv:RED_MPV,wheelTmoMs:WHEEL_TMO},sources:sources(),
@@ -292,5 +302,5 @@ async function main(argv){const a=args(argv),quiet=a.has("--quiet"),say=(...x)=>
   for(const r of sum.siege)say("第"+r.lv+"關 "+VERN[r.ver]+" "+r.player.padEnd(7)+" 勝"+r.win+" 和"+r.draw+" 敗"+r.loss+(r.cut?" 截斷"+r.cut:"")+"  平均"+r.avgRounds+"回合／"+r.avgPlies+"步  我剩"+r.meHpPct+"% 星樞剩"+r.enHpPct+"%  "+r.why.slice(0,2).map(([x,v])=>x+"×"+v).join("；"));
   for(const r of sum.wheel)say("車輪戰 "+r.player.padEnd(7)+" 過關"+r.win+" 未過關"+r.loss+(r.cut?" 截斷"+r.cut:"")+"  平均"+r.avgRounds+"總輪  "+r.boards.map(b=>b.nm+" "+b.win+"勝"+b.draw+"和"+b.loss+"敗").join("、"));
   say("寫到",OUT,"共",((Date.now()-t0)/1000).toFixed(0),"秒");E.close();return 0}
-module.exports={SCHEMA,TOOL,NOTE,RUN_KEYS,PLAYER_DOC,rng,seedOf,loadApp,applyPatch,parseSet,mergePatch,newEngine,mkPlayers,playSiege,playWheel,summarize,inversions,mdReport,stable,wilson,sources,main};
+module.exports={SCHEMA,TOOL,NOTE,RUN_KEYS,PLAYER_DOC,SQUADS,squadOf,bestSk,rng,seedOf,loadApp,applyPatch,parseSet,mergePatch,newEngine,mkPlayers,playSiege,playWheel,summarize,inversions,mdReport,stable,wilson,sources,main};
 if(require.main===module)main(process.argv.slice(2)).then(c=>process.exit(c||0),e=>{console.error(e);process.exit(1)});

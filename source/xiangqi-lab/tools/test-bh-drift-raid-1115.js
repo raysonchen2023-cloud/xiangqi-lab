@@ -8,14 +8,16 @@ const M = path.join(__dirname, "..", "..", "xiangqi-db", "m");
 const BH = fs.readFileSync(path.join(M, "07bh-blackhole.js"), "utf8"), TD = fs.readFileSync(path.join(M, "07bht-td.js"), "utf8");
 const cut = (s, a, b) => { const i = s.indexOf(a); assert.ok(i >= 0, "找得到 " + a); const j = s.indexOf(b, i); assert.ok(j > i, "找得到結尾 " + b); return s.slice(i, j + b.length) };
 const DRIFT = cut(TD, "function bhtdRaidDrift(k,cover){", "}catch(e){return false}}");
+/* 11/16 取消隊長、全隊招式：急襲帶的招改由 bhtdPick（bhtdLearned＝全隊已學會的招）決定，一起拿來跑 */
+const PICK = cut(TD, "const bhtdLearned=", "return a.length?a:un.slice(0,4).map(s=>s.id)};");
 const START = cut(BH, "function bhStart(k,cover){", 'setTimeout(()=>toast("✦ 星樞："+BH_TXT.voice[1]),900)})}');
 
 /* 假的塔防環境：SK 六招（Lv1、1、6、12、17、23），角色 x_swordboy */
 const mkDrift = o => { const calls = [];
-  const env = { bhtdProg: () => o.P, bhtdRdOpen: P => !!(P && P.c && P.c[1]), bhtlNeed: o.need == null ? undefined : () => o.need, bhtdChar: () => "x_swordboy", bhtdL: () => o.L || 1,
+  const env = { ptyLearned: o.team ? SK => SK.filter(s => o.team.includes(s.id)) : undefined, bhtdProg: () => o.P, bhtdRdOpen: P => !!(P && P.c && P.c[1]), bhtlNeed: o.need == null ? undefined : () => o.need, bhtdChar: () => "x_swordboy", bhtdL: () => o.L || 1,
     BHTD: { stats: ck => ({ ck }), SK: [["a", 1], ["b", 1], ["c", 6], ["d", 12], ["e", 17], ["f", 23]].map(([id, lv]) => ({ id, lv, ch: "x_swordboy" })).concat([{ id: "z", lv: 1, ch: "x_shi" }]) },
     bhtdRaid: (k, cover, pk) => { if (o.boom) throw new Error("x"); calls.push([k, cover, pk]) } };
-  const f = new Function(...Object.keys(env), DRIFT + "return bhtdRaidDrift")(...Object.values(env)); return { f, calls } };
+  const f = new Function(...Object.keys(env), PICK + DRIFT + "return bhtdRaidDrift")(...Object.values(env)); return { f, calls } };
 
 test("〔行為〕急襲還沒開（沒破第 1 關）、或要先下練習賽：不接手，照舊開選關", () => {
   let x = mkDrift({ P: { c: {}, sk: {} } }); assert.equal(x.f("han", true), false); assert.equal(x.calls.length, 0);
@@ -23,13 +25,18 @@ test("〔行為〕急襲還沒開（沒破第 1 關）、或要先下練習賽�
   x = mkDrift({ P: null }); assert.equal(x.f("han", true), false);
 });
 
-test("〔行為〕急襲已開：直接開一場；招式＝上次選的（還沒解鎖的、別的角色的拿掉，最多 4 招），沒選過就前四招", () => {
+test("〔行為〕急襲已開：直接開一場；招式＝上次選的（還沒解鎖的拿掉；11/16 全隊招式：有隊伍時全隊已學會的都能帶，最多 4 招），沒選過就前四招", () => {
   let x = mkDrift({ P: { c: { 1: 1 }, sk: { x_swordboy: ["b", "f", "z", "a"] } }, L: 6 });
   assert.equal(x.f("tang", true), true); assert.deepEqual(x.calls, [["tang", true, ["b", "a"]]]);
   x = mkDrift({ P: { c: { 1: 1 }, sk: {} }, L: 23, need: false });
   assert.equal(x.f("song", undefined), true); assert.deepEqual(x.calls[0][2], ["a", "b", "c", "d"], "沒選過＝已解鎖的前四招");
   x = mkDrift({ P: { c: { 1: 1 }, sk: { x_swordboy: ["f"] } }, L: 1 });
   x.f("qin", true); assert.deepEqual(x.calls[0][2], ["a", "b"], "存的招都還沒解鎖＝退回前幾招");
+  /* 11/16 全隊招式：有隊伍時招式池＝全隊已學會的（別的夥伴的也能帶），存在 P.sk["*"]，比舊的單人那份優先 */
+  x = mkDrift({ P: { c: { 1: 1 }, sk: { "*": ["z", "b", "f"], x_swordboy: ["a"] } }, team: ["a", "b", "z"] });
+  x.f("han", true); assert.deepEqual(x.calls[0][2], ["z", "b"], "P.sk[\"*\"]：夥伴的招也算、沒學會的拿掉");
+  x = mkDrift({ P: { c: { 1: 1 }, sk: {} }, team: ["a", "b", "c", "d", "e", "z"] });
+  x.f("han", true); assert.deepEqual(x.calls[0][2], ["a", "b", "c", "d"], "沒選過＝全隊已學會的前四招（一場最多 4 招）");
 });
 
 test("〔行為〕開急襲時出錯：回 false，讓偏航退回選關，不會卡住", () => {

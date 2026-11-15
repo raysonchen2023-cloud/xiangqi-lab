@@ -17,12 +17,12 @@ const mv=(P,f,t)=>{const m=C.stateApply(P,f,t);return B.move(P,m,C)};
 const sq=(r,c)=>r*9+c;
 const lastHit=P=>J(P.td.ev.filter(e=>e.k==="hit"&&e.sd==="b").slice(-1)[0]||null);
 
-test("comboOf：奇謀連擊 ×2 多扣 2、回 10 靈；陣眼貫穿多扣 1；兩個都有＝多扣 3", ()=>{
+test("comboOf：奇謀連擊 ×2 多扣 2、回 10 靈；11/16 取消陣眼子：沒有陣眼貫穿（eye＋pj 不再多扣）", ()=>{
   assert.deepEqual(J(B.comboOf({base:5})),{n:5,sp:0,k:"",bonus:0},"沒有連擊＝原本的數字");
   assert.deepEqual(J(B.comboOf({base:5,mk:true})),{n:7,sp:10,k:"qm",bonus:2});
-  assert.deepEqual(J(B.comboOf({base:6,eye:true,pj:true})),{n:7,sp:0,k:"pierce",bonus:1});
-  assert.deepEqual(J(B.comboOf({base:4,eye:true,pj:true,mk:true})),{n:7,sp:10,k:"qm+pierce",bonus:3});
-  assert.equal(B.comboOf({base:6,eye:true}).bonus,0,"陣眼子吃沒破甲的子不算貫穿");assert.equal(B.comboOf({base:6,pj:true}).bonus,0,"破甲目標被別的子吃不算貫穿");
+  assert.deepEqual(J(B.comboOf({base:6,eye:true,pj:true})),{n:6,sp:0,k:"",bonus:0},"陣眼貫穿取消：照原本的數字");
+  assert.deepEqual(J(B.comboOf({base:4,eye:true,pj:true,mk:true})),{n:6,sp:10,k:"qm",bonus:2},"只剩奇謀連擊");
+  assert.equal(B.comboOf({base:6,eye:true}).bonus,0);assert.equal(B.comboOf({base:6,pj:true}).bonus,0,"破甲目標被吃不算貫穿");
 });
 
 test("comboOf：單次扣元氣上限 12 照舊；原本就 13（12＋破甲）的不會因為連擊變少", ()=>{
@@ -53,10 +53,10 @@ test("奇謀連擊：要同一回合；放招標記後隔一回合才吃＝沒�
   mv(P,sq(7,2),q);const e=lastHit(P);assert.equal(e.combo,"");assert.equal(e.n,B.capDmg("p","R",P.td.me.atk,false,false));
 });
 
-test("陣眼貫穿（接 move）：齊轍的陣眼俥吃掉破甲的卒＝原本（陣眼 ×1.5＋破甲 1）再多扣 1", ()=>{
-  const P=custom("3ak4/9/9/9/9/8p/9/9/9/3K4R w",{ch:"x_swordboy"}),q=sq(5,8);assert.equal(P.td.eye,"r89");P.td.pj.push(P.td.pid[q]);
-  const base=B.capDmg("p","R",P.td.me.atk,true,true);mv(P,89,q);const e=lastHit(P);
-  assert.equal(e.combo,"pierce");assert.equal(e.n,Math.min(12,base+1));assert.equal(e.eye,1);assert.equal(e.pj,1);assert.equal(e.why,"陣眼擒子");
+test("11/16 取消陣眼子（接 move）：齊轍的俥（原本的陣眼子）吃掉破甲的卒＝只有破甲 1，沒有 ×1.5、沒有陣眼貫穿", ()=>{
+  const P=custom("3ak4/9/9/9/9/8p/9/9/9/3K4R w",{ch:"x_swordboy"}),q=sq(5,8);assert.equal(P.td.eye,undefined,"新盤沒有 td.eye");P.td.pj.push(P.td.pid[q]);
+  const base=B.capDmg("p","R",P.td.me.atk,false,true);assert.equal(B.capDmg("p","R",P.td.me.atk,true,true),base,"eye 參數不再加成");mv(P,89,q);const e=lastHit(P);
+  assert.equal(e.combo,"");assert.equal(e.n,base);assert.equal(e.eye,undefined);assert.equal(e.pj,1);assert.equal(e.why,"擒子");
 });
 
 test("弱吃強、連續擒子：事件帶棋種（演出用），兵吃俥標 weak；連兩回合擒子 streak＝2", ()=>{

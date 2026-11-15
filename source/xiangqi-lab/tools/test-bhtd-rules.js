@@ -34,22 +34,22 @@ test("星樞推算步數：第 1 關 1 步 → 第 6 關 2 步、第 36 關 8 �
   assert.equal(B.depthOf(1,1).depth,1,"聽書最少 1 步");assert.equal(B.depthOf(6,3).depth,3);assert.equal(B.depthOf(6,4).depth,4);assert.equal(B.depthOf(6,5).depth,5);assert.equal(B.depthOf(36,5).depth,10);
   const e=[1,2,3,4,5].map(n=>B.depthOf(n,2).err);for(let i=1;i<e.length;i++)assert.ok(e[i]<e[i-1],"失誤率遞減 "+e);assert.ok(B.depthOf(6,2).err>B.depthOf(5,2).err,"升到 2 步的那關失誤率回到高點")});
 
-test("擒子扣元氣＝基礎×吃子者倍率×攻擊倍率（陣眼 ×1.5），四捨五入、單次最多 12，破甲多 1", ()=>{
-  assert.equal(B.capDmg("r","P",1.12,false,false),11,"步越溪兵吃俥 4×2.5×1.12＝11.2");assert.equal(B.capDmg("r","P",1.12,true,false),12,"陣眼再 ×1.5 封頂 12");
+test("擒子扣元氣＝基礎×吃子者倍率×攻擊倍率（11/16 取消陣眼子：沒有 ×1.5），四捨五入、單次最多 12，破甲多 1", ()=>{
+  assert.equal(B.capDmg("r","P",1.12,false,false),11,"步越溪兵吃俥 4×2.5×1.12＝11.2");assert.equal(B.capDmg("r","P",1.12,true,false),11,"eye 參數不再 ×1.5");
   assert.equal(B.capDmg("p","R",.92,false,false),1,"齊轍俥吃兵");assert.equal(B.capDmg("p","R",.92,false,true),2,"破甲 +1");assert.equal(B.capDmg("c","N",1,false,false),5,"3×1.5×1＝4.5→5");
   assert.equal(B.capDmg("r","P",1.12,true,true),12,"破甲也不超過 12")});
 
 test("開局（第 151 題座標）：第 1 關將、雙士、5 卒原位；每關開局＋星門＝16 子；敵方元氣 28→52；第 5 關星樞半血滿靈", ()=>{
   const P=game(1),nb=P.board.filter(p=>p&&p===p.toLowerCase()).length;assert.equal(nb,8);assert.equal(B.startFen(1,C).split("/")[0],"3aka3");assert.equal(B.startFen(1,C).split("/")[3],"p1p1p1p1p");
   assert.equal(nb+P.td.waves.reduce((a,w)=>a+w.ps.length,0),16);assert.equal(P.td.en.hp,28);assert.equal(P.td.me.hp,56);assert.equal(P.td.me.sp,10);
-  assert.equal(P.td.gate.at,5,"後援：第 5 回合才第一波");assert.equal(P.td.eye,"r89","齊轍的陣眼＝右俥");
+  assert.equal(P.td.gate.at,5,"後援：第 5 回合才第一波");assert.equal(P.td.eye,undefined,"11/16 取消陣眼子：新盤沒有 td.eye");assert.equal(B.EYE0,undefined,"EYE0 拿掉");
   for(let n=1;n<=6;n++){const Q=game(n);const k=Q.board.filter(p=>p&&p===p.toLowerCase()).length;assert.equal(k+Q.td.waves.reduce((a,w)=>a+w.ps.length,0),16,"第 "+n+" 關")}
   assert.equal(B.startFen(2,C).split("/")[4],"p1p1p1p1p","第 2 關 5 卒在黑方河岸線（第 6 線）");assert.equal(B.startFen(3,C).split("/").slice(0,6).join("/"),"3aka3/9/9/9/9/9","第 3 關只有將與雙士");
   assert.equal(B.startFen(4,C).split("/")[3],"p7p","第 4 關卒 1/7、9/7");assert.equal(B.startFen(6,C).split("/")[5],"p1p3p2","第 6 關三卒已過河 1/5、3/5、7/5");
   const W3=game(3).td.waves.slice(0,5);assert.deepEqual(J(W3.map(w=>w.at)),[2,4,6,8,10],"第 3 關卒每 2 回合一波");assert.ok(W3.every(w=>w.fake&&w.ps[0][0]==="p"));
   const W4=game(4).td.waves;assert.equal(W4[0].at,2);assert.deepEqual(J(W4[0].ps.map(x=>x[1])),[B.LSQ(3,7),B.LSQ(7,7)],"左右夾：第 2 回合落卒 3/7、7/7");
   const Q5=game(5);assert.equal(Q5.td.en.hp,20);assert.equal(Q5.td.en.max,40);assert.equal(Q5.td.en.sp,50);assert.equal(Q5.td.en.spMax,50);assert.ok(Q5.td.waves.some(w=>w.ps.length===4),"一口氣落 4 顆");
-  assert.deepEqual(J(B.LV.map(l=>l.hp)),[28,31,34,37,40,52]);assert.ok(game(6).td.boss,"第 6 關守關");assert.equal(game(1,{ch:"x_bing"}).td.eye,"r58","步越溪的陣眼＝中兵")});
+  assert.deepEqual(J(B.LV.map(l=>l.hp)),[28,31,34,37,40,52]);assert.ok(game(6).td.boss,"第 6 關守關");assert.equal(game(1,{ch:"x_bing"}).td.eye,undefined,"11/16 取消陣眼子：步越溪也沒有陣眼子")});
 
 test("開局合法檢查器：6 關全過；抓得到象站錯（ChatGPT 原稿雙象 3/8、7/8）、子數超過、開局將軍、跟紅子重疊", ()=>{
   for(const L of B.LV)assert.deepEqual(J(B.lvCheck(L,C)),[],"第 "+L.n+" 關");
@@ -91,11 +91,13 @@ test("招式：一劍破甲移除卒、耗 40 靈；一回合一招；靈力不�
   assert.match(B.why(P,"qi2",C)||"",/一回合一招|已經放過/);P.td.castR=-1;assert.match(B.why(P,"qi1",C)||"",/靈力不夠/);
   assert.match(B.cast(P,{k:"qi1",tg:[4]},C).err,/靈力|目標/)});
 
-test("陣眼子：用它吃子 ×1.5；它被吃＝靈力歸零、招式停 1 回合", ()=>{
-  const P=game(1,{ch:"x_bing"});const eye=58;P.board[sq(3,4)]=null;delete P.td.pid[31];P.board[sq(5,4)]="r";P.td.pid[sq(5,4)]="bz";   /* 黑車到兵前 */
-  const h0=P.td.en.hp;mv(P,eye,sq(5,4));assert.equal(h0-P.td.en.hp,12,"4×2.5×1.12×1.5＝16.8→12");assert.equal(P.td.me.sp,20,"擒子 +10 靈力");
-  const Q=game(1,{ch:"x_bing"});Q.td.me.sp=30;Q.board[sq(5,4)]="r";Q.td.pid[sq(5,4)]="bz";Q.turn="b";mv(Q,sq(5,4),58);
-  assert.equal(Q.td.me.sp,0);assert.ok(Q.td.seal>Q.td.rnd);assert.match(B.why(Q,"bu1",C)||"",/陣眼/)});
+test("11/16 取消陣眼子：本命子（步越溪的中兵）吃子沒有 ×1.5；它被吃＝靈力不歸零、招式不停", ()=>{
+  const P=game(1,{ch:"x_bing"});const pawn=58;P.board[sq(3,4)]=null;delete P.td.pid[31];P.board[sq(5,4)]="r";P.td.pid[sq(5,4)]="bz";   /* 黑車到兵前 */
+  const h0=P.td.en.hp;mv(P,pawn,sq(5,4));assert.equal(h0-P.td.en.hp,11,"4×2.5×1.12＝11.2→11（沒有陣眼 ×1.5）");assert.equal(P.td.me.sp,20,"擒子 +10 靈力");
+  assert.ok(!P.td.ev.some(e=>e.why==="陣眼擒子"),"沒有陣眼擒子");
+  const Q=game(1,{ch:"x_bing"});Q.td.me.sp=30;Q.board[sq(5,4)]="r";Q.td.pid[sq(5,4)]="bz";Q.turn="b";mv(Q,sq(5,4),pawn);
+  assert.equal(Q.td.me.sp,Math.min(Q.td.me.spMax,30+Q.td.me.spRg),"只有回合回靈，沒歸零");assert.ok(!(Q.td.seal>=Q.td.rnd),"不停招");assert.equal(Q.td.lost.length,1,"記一顆被擒");
+  assert.doesNotMatch(B.why(Q,"bu1",C)||"",/陣眼|停招/)});
 
 test("定身：煙火震懾的那顆子，星樞這一步不能走（searchmoves），敵方沒別步時照常走", ()=>{
   const P=game(1,{ch:"x_martialgirl"});P.td.me.sp=20;assert.ok(B.cast(P,{k:"lei1",tg:[27]},C).ok);P.turn="b";
@@ -392,7 +394,7 @@ test("靈力 ×10：七星 35 招、星樞三招耗靈都是 10 的倍數；擒�
   R.td.en.sp=45;put(R,63,"r","bq2");R.turn="b";mv(R,63,64);assert.equal(R.td.en.sp,50,"不超過 50");
   const Q=sk("x_bing","bu5");assert.ok(B.cast(Q,{k:"bu5"},C).ok);assert.equal(Q.td.disc,20);assert.equal(B.costOf(Q.td,"bu1"),10,"10−20 最少 10");Q.td.disc=20;assert.equal(B.costOf(Q.td,"bu3"),10);
   assert.match(B.SKM.bu5.d,/−20（最少 10）/);assert.match(B.SKM.tie5.d,/得 10 靈力（最多 30）/);
-  assert.equal(B.TAL_SP,10);assert.equal(B.TAL_EYE_SP,20);assert.match(B.TALM.xhcr.d,/\+10/);assert.match(B.TALM.fmbl.d,/10 靈力/);assert.match(B.TALM.xzht.d,/只扣 20/)});
+  assert.equal(B.TAL_SP,10);assert.equal(B.TAL_EYE_SP,20);assert.match(B.TALM.xhcr.d,/\+10/);assert.match(B.TALM.fmbl.d,/10 靈力/);assert.match(B.TALM.xzht.d,/回 20 靈力/,"11/16 星陣護體改：第一顆己子被吃回 20")});
 test("舊盤（1106 以前存的，沒有 spk）：靈力、上限、星樞靈力、折扣自動 ×10，補上每回合回靈；新盤不會再乘一次", ()=>{
   const P=game(1,{ch:"x_miaogirl",L:50});assert.equal(P.td.spk,10);const sp=P.td.me.sp,mx=P.td.me.spMax;B.tdFix(P.td);assert.equal(P.td.me.sp,sp);assert.equal(P.td.me.spMax,mx);
   const O=game(1,{ch:"x_miaogirl",L:50});delete O.td.spk;delete O.td.me.spRg;O.td.me.sp=3;O.td.me.spMax=7;O.td.en.sp=2;O.td.en.spMax=5;O.td.disc=2;B.tdFix(O.td);
