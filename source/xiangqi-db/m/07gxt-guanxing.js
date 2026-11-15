@@ -74,7 +74,52 @@ function gxtExPos(P){const s=P.querySelector(".ex-spot");if(!s)return;if(!s.id)s
 const gxtBhLock=()=>{try{return typeof dglBhLock==="function"&&dglBhLock()}catch(e){return false}};
 const gxtBhMsg=()=>{try{return typeof dglBhLockMsg==="function"?dglBhLockMsg():"定軌力用完了，黑洞入口先關著"}catch(e){return"定軌力用完了，黑洞入口先關著"}};
 function gxtTd(){if(gxtBhLock()){toast("🌫 "+gxtBhMsg());return}try{sessionStorage.setItem("gxtFrom","1")}catch(e){}if(typeof bhtdOpen==="function")bhtdOpen();else toast("🌌 "+GXT_OFF)}
-const GXT_ACT={gxtTd:gxtTd,gxtGx:()=>{if(typeof gxMap==="function")gxMap();else toast("🌌 "+GXT_OFF)},gxtSky:()=>{if(typeof dglXiuSheet==="function")dglXiuSheet();else toast("🌌 "+GXT_OFF)}};
+/* ---------- 星碑共鳴：從星圖石碑進幻譜星門的過場（開發者 11/15）----------
+   開發者：「請 gemini 規劃觀星臺有什麼神秘的力量，可以直接通聯或前往 13 星系」→ 規劃 story/gemini_app/157，他選「星碑共鳴」，過場「直接做完整版」。
+   設定：幻影棋客開了門、星槎駛出了路，觀星臺的星圖石碑是人間的「錨」；碰了石碑，神識順著天頂黑洞的光柱進幻譜星門，肉身留在臺上。
+   完整版（約 4.9 秒）：碑上星點亮起 → 金光從碑腳沿地面匯到渾儀腳下、再沿光柱衝上天頂 → 視角跟著衝進黑洞 → 潑墨蓋滿畫面、一句「觸碑生墨，神識已渡星河。」→ 墨散開就是選星頁。
+   簡化版（約 1.5 秒）：墨色淡入、那一句、淡出。系統設「減少動態」的人，或這次開 App 已經看過完整版（sessionStorage gxtGateFx），就用簡化版。過場中點一下畫面＝跳過。
+   全部疊在一層蓋住畫面的 .gxt-fx 上（場景用一張替身圖放大，不動原本的頁面）；過場中離開這一頁＝收掉、不開星門。時間表 gxtGatePlan 是純計算，測試用 vm 跑 */
+const GXT_GATE={p:{st:[18,43],ft:[18,58],mid:[50,65],bh:[50,8]},w:{st:[40,44],ft:[40,58],mid:[50,66],bh:[50,12]}};   /* 場景圖上的位置（%）：碑上星圖、碑腳、渾儀腳下、天頂黑洞（直幅量 gx_tai、寬版量 gx_tai_w） */
+const gxtRM=()=>{try{return matchMedia("(prefers-reduced-motion: reduce)").matches}catch(e){return false}};
+const gxtGatePlan=(rm,seen)=>rm||seen?{kind:"lite",ink:0,say:260,open:950,end:1500}:{kind:"full",beam:700,rise:1800,ink:2650,say:3250,open:4200,end:4900};   /* 各段開始的時間（毫秒） */
+function gxtGateCss(){if(document.getElementById("gxtGateCss"))return;const s=document.createElement("style");s.id="gxtGateCss";s.textContent=`
+.gxt-fx{position:fixed;inset:0;z-index:9600;overflow:hidden;touch-action:none}
+.gxt-fx-s{position:absolute;background-size:100% 100%;opacity:0;will-change:transform}
+.gxt-fx-d{position:absolute;width:7px;height:7px;margin:-3.5px;border-radius:50%;background:#ffe9a8;box-shadow:0 0 8px 3px rgba(255,206,96,.9);opacity:0}
+.gxt-fx svg{position:absolute;inset:0;width:100%;height:100%}
+.gxt-fx-k{position:absolute;border-radius:50%;background:radial-gradient(closest-side,#05060d 58%,rgba(5,6,13,.85) 70%,rgba(5,6,13,0) 100%);transform:translate(-50%,-50%) scale(0)}
+.gxt-fx-b{position:absolute;inset:0;background:#05060d;opacity:0}
+.gxt-fx-t{position:absolute;left:0;right:0;top:44%;text-align:center;padding:0 20px;font:900 clamp(19px,5.6vw,26px)/1.5 var(--serif,serif);color:#ffe08a;letter-spacing:.12em;opacity:0;text-shadow:0 0 12px rgba(255,206,96,.5)}`;document.head.append(s)}
+function gxtGate(){if(typeof gxMap!=="function"){toast("🌌 "+GXT_OFF);return}
+  const P=document.querySelector(".gxt-page"),im=P&&P.querySelector(":scope>img"),open=()=>gxMap({from:"stele"});
+  if(!P||!im||gxtGate.busy||typeof document.body.animate!=="function"){open();return}
+  let seen=false;try{seen=sessionStorage.getItem("gxtGateFx")==="1";sessionStorage.setItem("gxtGateFx","1")}catch(e){}
+  const T=gxtGatePlan(gxtRM(),seen),C=GXT_GATE[P.dataset.gxt?"w":"p"],R=im.getBoundingClientRect(),pt=a=>[R.left+R.width*a[0]/100,R.top+R.height*a[1]/100],st=pt(C.st),ft=pt(C.ft),mid=pt(C.mid),bh=pt(C.bh);
+  const D=Math.hypot(innerWidth,innerHeight),tm=[],line=typeof GX_TXT!=="undefined"&&GX_TXT.stele||"觸碑生墨，神識已渡星河。";let opened=false,done=false,h="";
+  gxtGateCss();gxtGate.busy=true;const fx=document.createElement("div");fx.className="gxt-fx";fx.setAttribute("aria-hidden","true");
+  if(T.kind==="full"){h+=`<div class="gxt-fx-s" style="left:${R.left}px;top:${R.top}px;width:${R.width}px;height:${R.height}px;background-image:url('${im.currentSrc||im.src}');transform-origin:${C.bh[0]}% ${C.bh[1]}%"></div>`;
+    for(let i=0;i<7;i++){const a=i/7*Math.PI*2,r=R.width*(.018+.022*((i*37)%10)/10);h+=`<i class="gxt-fx-d" style="left:${st[0]+Math.cos(a)*r}px;top:${st[1]+Math.sin(a)*r}px"></i>`}
+    h+=`<svg><path d="M${ft[0]} ${ft[1]} L${mid[0]} ${mid[1]} L${bh[0]} ${bh[1]}" pathLength="1" fill="none" stroke="#ffe08a" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" stroke-dasharray="1" stroke-dashoffset="1" style="filter:drop-shadow(0 0 6px rgba(255,206,96,.95))"/></svg>`;
+    for(let i=0;i<5;i++)h+=`<i class="gxt-fx-k" style="left:${bh[0]+(i%2?1:-1)*D*.05*i}px;top:${bh[1]+D*.07*i}px;width:${D*(1.1+.35*i)}px;height:${D*(1.1+.35*i)}px"></i>`}
+  fx.innerHTML=h+`<div class="gxt-fx-b"></div><div class="gxt-fx-t">${esc(line)}</div>`;document.body.append(fx);
+  const q=s=>fx.querySelector(s),qa=s=>[...fx.querySelectorAll(s)],A=(el,kf,o)=>{try{return el.animate(kf,Object.assign({fill:"forwards",easing:"ease"},o))}catch(e){return null}};
+  const at=(ms,f)=>tm.push(setTimeout(()=>{if(!done)try{f()}catch(e){}},ms));
+  const end=()=>{tm.forEach(clearTimeout);removeEventListener("hashchange",bail);fx.remove();gxtGate.busy=false};
+  const bail=()=>{if(done)return;done=true;end()};   /* 過場中離開這一頁＝收掉，不開星門 */
+  const finish=fast=>{if(done)return;done=true;const a=A(fx,[{opacity:1},{opacity:0}],{duration:fast?180:T.end-T.open,easing:"ease-out"});if(a&&a.finished)a.finished.then(end,end);else end()};
+  const doOpen=()=>{if(opened)return;opened=true;try{open()}catch(e){}};
+  addEventListener("hashchange",bail);fx.onclick=()=>{vibrate(5);doOpen();finish(true)};   /* 點一下＝跳過 */
+  if(T.kind==="full"){
+    qa(".gxt-fx-d").forEach((d,i)=>A(d,[{opacity:0,transform:"scale(.3)"},{opacity:1,transform:"scale(1.25)",offset:.6},{opacity:.85,transform:"scale(1)"}],{duration:420,delay:i*85}));
+    at(T.beam,()=>A(q("path"),[{strokeDashoffset:1},{strokeDashoffset:0}],{duration:T.rise-T.beam,easing:"cubic-bezier(.5,0,.3,1)"}));
+    at(T.rise,()=>{const s=q(".gxt-fx-s");A(s,[{opacity:0},{opacity:1}],{duration:140});A(s,[{transform:"scale(1)"},{transform:"scale(7)"}],{duration:T.ink-T.rise+350,easing:"cubic-bezier(.6,0,.9,.5)"});
+      qa(".gxt-fx-d").forEach(d=>A(d,[{opacity:.85},{opacity:0}],{duration:200}));A(q("svg"),[{opacity:1},{opacity:0}],{duration:500,delay:250})});
+    at(T.ink,()=>{qa(".gxt-fx-k").forEach((k,i)=>A(k,[{transform:"translate(-50%,-50%) scale(0)"},{transform:"translate(-50%,-50%) scale(1)"}],{duration:520,delay:i*70,easing:"cubic-bezier(.2,.7,.3,1)"}));A(q(".gxt-fx-b"),[{opacity:0},{opacity:1}],{duration:380,delay:330})})}
+  else at(T.ink,()=>A(q(".gxt-fx-b"),[{opacity:0},{opacity:1}],{duration:240}));
+  at(T.say,()=>A(q(".gxt-fx-t"),[{opacity:0,transform:"translateY(6px)"},{opacity:1,transform:"none"}],{duration:420}));
+  at(T.open,()=>{doOpen();finish(false)})}
+const GXT_ACT={gxtTd:gxtTd,gxtGx:()=>gxtGate(),gxtSky:()=>{if(typeof dglXiuSheet==="function")dglXiuSheet();else toast("🌌 "+GXT_OFF)}};
 function GxtPage(v){setTop("🔭 觀星臺","#/");setTabs(true,"#/");v.className="view";
   if(!gxtOpen()){toast("🔭 觀星臺還沒出現");navReplace("#/");return{}}
   gxtCss();try{store.set("gxtSeen",1)}catch(e){}

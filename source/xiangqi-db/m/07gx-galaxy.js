@@ -20,7 +20,9 @@ const GX_LIST=[
   {id:"tengshe",n:"騰蛇",t:"騰蛇・陷星幻影",c:"#2E9E5B",rule:"陷阱局：棋盤上藏著陷阱",off:1,p:[42.9,62.7,42.8,69.6]},
   {id:"beichen",n:"北辰",t:"北辰・不滅幻影",c:"#F7D774",c2:"#05040A",rule:"不滅局：要將死他兩次——第一次只破了星核，他會帶著全新的一軍、強一級重來",goal:"連贏兩盤",say:"十三億次推演，你終於來了。",seal:"北辰的星核，還在跳。",twice:1,p:[49.8,48.5,50.4,61.6]}];
 const GX_ORD=["ziyuan","taisu","tianyuan","yaoguang","kaiyang","yuxiu","quanxing","gouchen","beichen"],GX_DOCK={3:3,6:6,8:9};
-const GX_TXT={gate:"裂痕剝落，十三點微光在深淵中重組。",invite:"這門，我好像替你開過。",open:"十三點星光，排成未完棋譜。",pick:"選一顆吧，別選我算過的。",go:"落子入門",stay:"先走此局",enter:"星槎折返，卻抵達更遠處。",win:"這一敗，竟不在舊譜。",lose:"無妨，你會回到這步。",all:"第十四顆，尚未落子。",ship:"黑洞歸來，星槎多了一道無名星門。",mirror:"這一局，是你自己算出來的。"};
+const GX_TXT={gate:"裂痕剝落，十三點微光在深淵中重組。",invite:"這門，我好像替你開過。",open:"十三點星光，排成未完棋譜。",pick:"選一顆吧，別選我算過的。",go:"落子入門",stay:"先走此局",enter:"星槎折返，卻抵達更遠處。",win:"這一敗，竟不在舊譜。",lose:"無妨，你會回到這步。",all:"第十四顆，尚未落子。",ship:"黑洞歸來，星槎多了一道無名星門。",mirror:"這一局，是你自己算出來的。",
+  /* 11/15 星碑共鳴（story/gemini_app/157 Gemini 規劃、開發者選定）：觀星臺的星圖石碑是人間的「錨」——幻影棋客開了門、星槎駛出了路，石碑把星軌定在碑前 */
+  stele:"觸碑生墨，神識已渡星河。",orbit:"十三殘局，皆在星軌之中。",off:"星軌未明，此局尚不可解。",lock:"前陣未破，暗星仍隱深淵。",allp:"諸陣已破，深淵明鏡始現。"};
 const gxGet=id=>GX_LIST.find(g=>g.id===id)||null;
 const gxIs=st=>!!st&&String(st.journey||"").startsWith("gx:");
 /* 開發者 11/12 選「三檔自選＋實測校正」（story/128：Gemini、ChatGPT 規劃，模型照 ChatGPT）：
@@ -147,11 +149,16 @@ function gxMap(o){o=o||{};gxCss();vibrate(8);const old=document.querySelector(".
   document.body.append(ov);const close=()=>{ov.remove()};   /* hspx 開發者 11/12（截圖圈右上角「先走此局」）：右上角那顆其實是離開星門，卻寫成劇情文案「先走此局」，看起來像「開始這一局」，又跟卡片裡的同名鍵重複（卡片裡那顆還被擠成直排）→ 右上角改成 ✕（44×44、螢幕報讀念「離開幻譜星門」），卡片裡的拿掉 */
   ov.querySelector(".gx-x").onclick=()=>{vibrate(5);close()};
   const card=ov.querySelector("#gxCard"),pick=id=>{vibrate(5);ov.querySelectorAll(".gx-st,.gx-14").forEach(b=>b.classList.toggle("sel",b.dataset.gx===id));
-    if(id==="mirror"){card.innerHTML=`<h3>第十四顆・鏡像</h3><p>${esc(GX_TXT.all)}</p><p>這一盤你執黑；對面照你自己最常贏的開局走前兩步，再用全力跟你下。</p><div class="gx-btns"><button class="gx-go" type="button">${esc(GX_TXT.go)}</button></div>`}
-    else{const g=gxGet(id),lk=gxLock(id),dn=S[id];card.innerHTML=`<h3>${esc(g.t)}</h3><p>${esc(g.rule)}</p>${g.goal?`<p>勝利條件：${esc(g.goal)}</p>`:""}${g.say?`<p style="font-style:italic">「${esc(g.say)}」</p>`:""}<p class="muted" style="color:#a99f88;font-size:13px">${dn?"✦ 已得"+esc((GX_MODES[dn.t!=null?dn.t:1]||GX_MODES[1])[3])+"，可以再挑戰更高一檔":lk?"🔒 "+esc(lk):"不計積分、不扣分"}</p>`+
-      `<div class="gx-btns">${GX_MODES.map(([k,l,d,seal])=>`<button class="gx-go" type="button" data-m="${k}"${lk?" disabled":""} aria-label="${esc(l)}：電腦${d?(d>0?"強":"弱")+Math.abs(d)+"級":"跟你差不多"}，過關得${esc(seal)}">${esc(l)}<small style="display:block;font-size:11px;opacity:.8">${esc(seal)}</small></button>`).join("")}</div>`}
-    card.querySelectorAll(".gx-go").forEach(go=>go.onclick=()=>{if(go.disabled)return;close();toast("🌌 "+GX_TXT.enter);setTimeout(()=>gxStart(id,false,go.dataset.m),300)})};   /* 三檔：data-m＝easy／std／hard；鏡像那顆沒有 data-m，照上次的檔 */
+    card.innerHTML=gxCardHtml(id,S);gxCardGo(card,id,close)};
   ov.querySelectorAll("[data-gx]").forEach(b=>b.onclick=()=>pick(b.dataset.gx));if(o.pick)pick(o.pick)}
+/* 選了一顆星之後說明卡的內容與三顆難度鍵（橫幅星圖和 11/15 的滿版環景 07gxp 共用）。
+   11/15 星碑共鳴的文案：星軌未通的星、前一位還沒打贏的星，引言換成一句批註（GX_TXT.off／lock） */
+function gxCardHtml(id,S){
+  if(id==="mirror")return`<h3>第十四顆・鏡像</h3><p>${esc(GX_TXT.all)}</p><p>這一盤你執黑；對面照你自己最常贏的開局走前兩步，再用全力跟你下。</p><div class="gx-btns"><button class="gx-go" type="button">${esc(GX_TXT.go)}</button></div>`;
+  const g=gxGet(id),lk=gxLock(id),dn=S[id],say=g.off?GX_TXT.off:lk&&!dn?GX_TXT.lock:g.say||"";   /* 還沒輪到的主宰先不開口：換成一句批註 */
+  return`<h3>${esc(g.t)}</h3><p>${esc(g.rule)}</p>${g.goal?`<p>勝利條件：${esc(g.goal)}</p>`:""}${say?`<p style="font-style:italic">「${esc(say)}」</p>`:""}<p class="muted" style="color:#a99f88;font-size:13px">${dn?"✦ 已得"+esc((GX_MODES[dn.t!=null?dn.t:1]||GX_MODES[1])[3])+"，可以再挑戰更高一檔":lk?"🔒 "+esc(lk):"不計積分、不扣分"}</p>`+
+    `<div class="gx-btns">${GX_MODES.map(([k,l,d,seal])=>`<button class="gx-go" type="button" data-m="${k}"${lk?" disabled":""} aria-label="${esc(l)}：電腦${d?(d>0?"強":"弱")+Math.abs(d)+"級":"跟你差不多"}，過關得${esc(seal)}">${esc(l)}<small style="display:block;font-size:11px;opacity:.8">${esc(seal)}</small></button>`).join("")}</div>`}
+function gxCardGo(card,id,close){card.querySelectorAll(".gx-go").forEach(go=>go.onclick=()=>{if(go.disabled)return;close();toast("🌌 "+GX_TXT.enter);setTimeout(()=>gxStart(id,false,go.dataset.m),300)})}   /* 三檔：data-m＝easy／std／hard；鏡像那顆沒有 data-m，照上次的檔 */
 /* 星槎圖上的「🌌 幻譜星門」熱點（07f Voyage 畫完叫）：第一次出現先說旁白 */
 function gxShipHs(v){if(!gxOpen())return;const hl=v.querySelector(".shp-hl");if(!hl||hl.querySelector("[data-gxhs]"))return;const b=document.createElement("button");b.className="shp-hs";b.dataset.gxhs="1";b.type="button";b.style.cssText="left:30%;top:12%";b.textContent="🌌 幻譜星門";
   b.onclick=()=>{vibrate(5);if(!store.get("gxShip",0)){store.set("gxShip",1);modal(`<div class="em">🌌</div><h2>幻譜星門</h2><p class="pl-say">✦ ${esc(GX_TXT.ship)}</p>`,[["推開星門",()=>gxMap()],["先不要",null,true]],"prolog");return}gxMap()};hl.append(b)}
