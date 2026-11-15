@@ -809,7 +809,7 @@ function bhtdAward(st){const td=st&&st.td;if(!td||!st.result||st.journey==="bh:t
   if(!done){D.d+=du.n;if(!rd&&ns>best)D.s[n]=ns;if(rd){D.r.n++;if(win)D.r.w++}D.g=D.g.concat([st.id]).slice(-20)}
   const A={id:st.id,win,S,dust:du,near,total:D.d,rd,n,r3:+td.r3||0};D.la=A;try{store.set("bhtdDust",D)}catch(e){}return A}
 /* 天賦樹（選關卡片「🌌 天賦」）：4 層 7 個，點亮花星塵；下一層要上一層至少一個；關卡外免費全部重置。back＝回選關卡片 */
-function bhtdTal(back){bhtdCss();
+function bhtdTal(back,backL){bhtdCss();
   const body=()=>{const D=bhtdDust(),sp=BHTD.talSpent(D.t);
     const node=x=>{const on=D.t.includes(x.id),w=on?"":BHTD.talWhy(D.t,x.id,D.d),lk=!on&&w==="先點亮上一層的一個天賦";
       return`<button type="button" class="bt-tn${on?" on":lk?" lk":w?" poor":""}" data-tal="${x.id}" aria-label="${esc(`${x.nm}，${x.d}，${on?"已點亮":`星塵 ${x.cost}`}${w&&!on?"，"+w:""}`)}"><b>${on?"✦ ":lk?"🔒 ":""}${esc(x.nm)}</b><small>${esc(x.d)}</small><i>${on?"已點亮":`<span>星塵</span> ${x.cost}`}</i></button>`};
@@ -817,7 +817,7 @@ function bhtdTal(back){bhtdCss();
       [1,2,3,4].map(t=>`<div class="bt-tier"><small>第 ${t} 層</small><div class="bt-trow">${BHTD.TAL.filter(x=>x.t===t).map(node).join("")}</div></div>`).join("")+
       `<p class="bt-trule">要點下一層，先點亮上一層的一個。<br>天賦只在黑洞有用，線上和一般對局不受影響。<br>不在對局裡時，可以免費全部重置，星塵全退。</p>`};
   const m=modal(`<div class="em">🌌</div><h2>星塵天賦</h2><div class="bt-talb">${body()}</div>`,
-    [["‹ 回選關",()=>{if(back)back()}],["↺ 全部重置（星塵全退）",()=>{const D=bhtdDust(),n=BHTD.talReset(D);store.set("bhtdDust",D);toast(n?`↺ 天賦全部重置，退回 ${n} 星塵`:"還沒有點亮的天賦");bhtdTal(back)},true]],"prolog bt-sel bt-tal");
+    [[backL||"‹ 回選關",()=>{if(back)back()}],["↺ 全部重置（星塵全退）",()=>{const D=bhtdDust(),n=BHTD.talReset(D);store.set("bhtdDust",D);toast(n?`↺ 天賦全部重置，退回 ${n} 星塵`:"還沒有點亮的天賦");bhtdTal(back,backL)},true]],"prolog bt-sel bt-tal");
   if(!m)return;m.addEventListener("click",e=>{const b=e.target.closest("[data-tal]");if(!b)return;const id=b.dataset.tal,x=BHTD.TALM[id],D=bhtdDust();if(!x)return;
     if(D.t.includes(id)){toast(`✦ ${x.nm}：${x.d}`);return}const r=BHTD.talBuy(D,id);if(!r.ok){toast("✧ "+r.why);return}
     store.set("bhtdDust",D);try{vibrate([10,40,10])}catch(z){}toast(`✦ 點亮「${x.nm}」：${x.d}`);m.querySelector(".bt-talb").innerHTML=body()})}

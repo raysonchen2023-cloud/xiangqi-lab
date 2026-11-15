@@ -1,7 +1,7 @@
 {
  "ref": "origin/main",
- "commit": "49e5ce27e955993978efc449d5d0fbb68e35db45",
- "madeAt": "2026-11-15T21:21:27.169Z",
+ "commit": "2ffa91a584622b6767ef6a784cb43c483872ada2",
+ "madeAt": "2026-11-15T22:01:16.510Z",
  "files": {
   "xiangqi-db/m/00-util.js": "local=live",
   "xiangqi-db/m/01-board.js": "local=live",
@@ -286,6 +286,7 @@
   "xiangqi-lab/tools/test-premove-online3d.js": "local",
   "xiangqi-lab/tools/test-provenance.js": "local",
   "xiangqi-lab/tools/test-pty-capsay-1116.js": "local",
+  "xiangqi-lab/tools/test-pty-stats-1116.js": "local",
   "xiangqi-lab/tools/test-pv-stepper.js": "local",
   "xiangqi-lab/tools/test-qixing.js": "local",
   "xiangqi-lab/tools/test-quiz-check-exit.js": "local",
@@ -476,8 +477,8 @@
   "test-park3d-river-1116.js": "指令排除：黑洞大棋盤「放手回正面、河界不重影」的修改還在開發者電腦上做，對應的程式還沒發布",
   "test-raid-label-1116.js": "指令排除：黑洞選關「星淵急襲」卡的文字修改還在開發者電腦上做，對應的程式還沒發布"
  },
- "version": "20261116-0518",
- "indexSha1": "e121d16506da",
+ "version": "20261116-0600",
+ "indexSha1": "acad5eb44ad4",
  "toLF": [
   "xiangqi-lab/tools/build-site.js"
  ],
