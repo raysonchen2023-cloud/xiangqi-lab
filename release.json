@@ -1,8 +1,8 @@
 {
- "version": "20261116-0353",
- "checkedAt": "2026-11-15T19:53:12.736Z",
- "html": "d0040e57fd42",
- "sw": "754ab995bf42",
+ "version": "20261116-0413",
+ "checkedAt": "2026-11-15T20:13:19.127Z",
+ "html": "77fb48261202",
+ "sw": "6d1fa415c933",
  "scripts": 4,
  "modules": {
   "00-util.js": "8c2b1d4f725f",
@@ -19,7 +19,7 @@
   "06-cpu.js": "c449e9d66852",
   "06c-cup.js": "edc2e989a25e",
   "07-legend.js": "348c58c92f8b",
-  "07pty-party.js": "43a902269146",
+  "07pty-party.js": "4a8b8362e673",
   "07c-canju.js": "1a57b36ca4e3",
   "07d-garden.js": "cc746ff05fc7",
   "07e-garden2.js": "23fcaecb532a",
