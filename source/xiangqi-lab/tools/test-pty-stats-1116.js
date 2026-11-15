@@ -28,7 +28,7 @@ function load(o) {
 
 test("〔行為〕每位一排四格：體力＝黑洞裡的元氣、靈力＝靈力上限、攻擊力、防禦力，照這位自己的等級算", () => {
   const K = load(), a = K.ptyStatHTML("x_swordboy", 3), b = K.ptyStatHTML("x_miaogirl", 1);
-  assert.equal(a, '<div class="pty-st"><span><small>體力</small><b>53</b></span><span><small>靈力</small><b>50</b></span><span><small>攻擊力</small><b>103</b></span><span><small>防禦力</small><b>80</b></span></div>');
+  assert.equal(a, '<div class="pty-st"><span><small>體力</small><b>53</b></span><span><small>靈力上限</small><b>50</b></span><span><small>攻擊力</small><b>103</b></span><span><small>防禦力</small><b>80</b></span></div>', "11/16 體力統一：黑洞的靈力是上限，寫「靈力上限」，跟角色卡上人間存著的「靈力 n／20」分開");
   assert.ok(b.includes("<small>體力</small><b>51</b>") && b.includes("<small>攻擊力</small><b>101</b>"), "等級不同，數字不同");
   assert.equal(K.ptyStatHTML("x_shuai", 3), "", "黑洞資料裡沒有這位就不畫");
   assert.equal(load({ noBh: 1 }).ptyStatHTML("x_swordboy", 3), "", "黑洞模組沒載入就不畫，卡冊照樣開得起來");

@@ -121,7 +121,7 @@ function ptyCss(){if(document.getElementById("ptyCss"))return;const s=document.c
    每張卡多一排四格（體力＝黑洞裡的元氣、靈力＝靈力上限、攻擊力、防禦力，BHTD.stats 照這位的等級；跟我的角色頁「黑洞裡的你」同一組數字）、一列「招式 n／N ›」（點開這位的招式清單）；
    卡冊最上面一列「天賦（全隊共用）已點亮 n／N ›」開星塵天賦樹，看完回卡冊。黑洞模組沒載入就不畫。 */
 function ptyStatHTML(c,lv){try{if(typeof BHTD==="undefined"||!BHTD.stats||!BHTD.CH||!BHTD.CH[c])return"";const S=BHTD.stats(c,lv),g=(t,v)=>`<span><small>${t}</small><b>${v}</b></span>`;
-  return`<div class="pty-st">${g("體力",S.hp)}${g("靈力",S.sp)}${g("攻擊力",BHTD.atkPt(S.atk))}${g("防禦力",BHTD.defPt(S.def))}</div>`}catch(e){return""}}
+  return`<div class="pty-st">${g("體力",S.hp)}${g("靈力上限",S.sp)}${g("攻擊力",BHTD.atkPt(S.atk))}${g("防禦力",BHTD.defPt(S.def))}</div>`}catch(e){return""}}
 const ptySkPool=c=>{try{return typeof BHTD!=="undefined"&&BHTD.SK?BHTD.SK.filter(s=>s.ch===c):[]}catch(e){return[]}};
 function ptyTalHTML(){try{if(typeof BHTD==="undefined"||!BHTD.TAL||typeof bhtdTal!=="function"||typeof bhtdDust!=="function")return"";const n=(bhtdDust().t||[]).length;
   return`<button type="button" class="pty-row top" data-top="tal"><span>天賦</span><small>（全隊共用）</small><b><span>已點亮</span> ${n}／${BHTD.TAL.length}</b><i aria-hidden="true">›</i></button>`}catch(e){return""}}

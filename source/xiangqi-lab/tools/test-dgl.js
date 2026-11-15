@@ -16,7 +16,7 @@ function loadPure() {
   const i = SRC.indexOf("#DGL-PURE-BEGIN"), j = SRC.indexOf("/* #DGL-PURE-END */");
   assert.ok(i > 0 && j > i, "找不到 #DGL-PURE 區段");
   const ctx = {}; vm.createContext(ctx);
-  vm.runInContext(SRC.slice(SRC.indexOf("\n", i) + 1, j) + ";this.R={DGL_MAX,DGL_DRAIN,DGL_SHIP,DGL_BACK,DGL_GAME,DGL_PUZ,DGL_BH,DGL_LOW,DGL_XM_MAX,DGL_SLOW,DGL_SAFE,DGL_TIRED,DGL_TIRED0,dglZone,dglOpen,dglBusy,dglNew,dglShow,dglTired,dglSlowOf,dglStep,dglGain,dglExit,dglCanLand,dglWhen,dglGate,dglXmAdd,dglXmUse,dglTiredLine,dglXpMul,dglXpBonus,dglLocOn,DGL_XIU_COST,DGL_XIANG_XP,DGL_XIU_ALL_XP,DGL_XIU_TITLE,DGL_XIANG,DGL_XIU,dglXiuMask,dglXiuHas,dglXiuN,dglXiangDone,dglXiuLight,dglXiuLine,dglCardSt,dglBackMin,DGL_ICO,DGL_CD_LOW,DGL_XM_GET,DGL_BH_DAY,DGL_DAY_SH,dglBhLocked,dglDay,dglBhCap,dglBhUse}", ctx, { filename: "07dgl(純函式)" });
+  vm.runInContext(SRC.slice(SRC.indexOf("\n", i) + 1, j) + ";this.R={DGL_MAX,DGL_DRAIN,DGL_SHIP,DGL_BACK,DGL_GAME,DGL_PUZ,DGL_BH,DGL_LOW,DGL_XM_MAX,DGL_SLOW,DGL_SAFE,DGL_TIRED,DGL_TIRED0,dglZone,dglOpen,dglBusy,dglNew,dglShow,dglTired,dglSlowOf,dglStep,dglGain,dglExit,dglCanLand,dglWhen,dglGate,dglXmAdd,dglXmUse,dglTiredLine,dglXpMul,dglXpBonus,dglLocOn,DGL_XIU_COST,DGL_XIANG_XP,DGL_XIU_ALL_XP,DGL_XIU_TITLE,DGL_XIANG,DGL_XIU,dglXiuMask,dglXiuHas,dglXiuN,dglXiangDone,dglXiuLight,dglXiuLine,dglCardSt,dglBackMin,DGL_ICO,DGL_CD_LOW,DGL_XM_GET,DGL_BH_DAY,DGL_DAY_SH,dglBhLocked,dglDay,dglBhCap,dglBhUse,dglDisp,dglU,dglWake,DGL_M1,DGL_M2}", ctx, { filename: "07dgl(純函式)" });
   return ctx.R;
 }
 const R = loadPure(), MIN = 6e4;
@@ -28,12 +28,13 @@ test("常數：定軌力上限 30、人間每分鐘扣 1、星槎每分鐘回 3�
   assert.ok(R.DGL_BH > R.DGL_GAME * 5, "黑洞過關要回很多");
 });
 
-test("心定則棋穩：定軌力一半以上修為 ×1.1、滿格 ×1.2；零頭累積滿 1 才多給；負數與 0 不動", () => {
-  assert.deepEqual([R.dglXpMul(30), R.dglXpMul(29.5), R.dglXpMul(15), R.dglXpMul(14.9), R.dglXpMul(14), R.dglXpMul(0)], [1.2, 1.2, 1.1, 1.1, 1, 1]);   /* 11/14 加成照畫面數字（進位）：29.5 顯示 30、14.9 顯示 15 */
-  assert.deepEqual(J(R.dglXpBonus(10, 30, 0)), { n: 12, fx: 0 });
+test("心定則棋穩：定軌力一半以上修為 ×1.2、滿格 ×1.5（11/16 開發者選「加大滿格獎勵，不另外罰」，原本 ×1.1／×1.2）；零頭累積滿 1 才多給；負數與 0 不動", () => {
+  assert.deepEqual([R.DGL_M1, R.DGL_M2], [1.2, 1.5]);
+  assert.deepEqual([R.dglXpMul(30), R.dglXpMul(29.5), R.dglXpMul(15), R.dglXpMul(14.9), R.dglXpMul(14), R.dglXpMul(0)], [1.5, 1.5, 1.2, 1.2, 1, 1]);   /* 11/14 加成照畫面數字（進位）：29.5 顯示 30、14.9 顯示 15 */
+  assert.deepEqual(J(R.dglXpBonus(10, 30, 0)), { n: 15, fx: 0 });
   let fx = 0, sum = 0;
   for (let i = 0; i < 10; i++) { const B = R.dglXpBonus(1, 20, fx); fx = B.fx; sum += B.n; }
-  assert.equal(sum, 11, "一次 1 點、×1.1，十次要多給 1 點");
+  assert.equal(sum, 12, "一次 1 點、×1.2，十次要多給 2 點");
   assert.ok(fx >= 0 && fx < 1);
   assert.deepEqual(J(R.dglXpBonus(5, 10, 0.7)), { n: 5, fx: 0.7 }, "不到一半沒加成，零頭照留");
   assert.deepEqual(J(R.dglXpBonus(-3, 30, 0)), { n: -3, fx: 0 });
@@ -315,10 +316,10 @@ test("設定關閉體力：在人間待 40 分鐘定軌力不扣、不化墨退�
   st.dgl.x = 4; const o = c.dglSt(), r = c.dglXiuLight(o, 4); assert.ok(r.ok); assert.equal(o.x, 2, "星圖照樣能點");
 });
 
-test("體力開著（預設）：地點頁頂欄放兩條、對局頁和首頁不放；滿格修為 ×1.2；人間 31 分鐘扣到 0 化墨退場，之後進人間的頁被擋回星槎", () => {
+test("體力開著（預設）：地點頁頂欄放兩條、對局頁和首頁不放；滿格修為 ×1.5；人間 31 分鐘扣到 0 化墨退場，之後進人間的頁被擋回星槎", () => {
   const st = {}, c = loadFull(st, "#/port");
   assert.equal(c.dglUserOff(), false, "預設開著"); assert.match(c.dglSetRow(), / checked/);
-  c.addXP(10, "殘局"); assert.equal(c.xp[0][0], 12, "滿格 ×1.2");
+  c.addXP(10, "殘局"); assert.equal(c.xp[0][0], 15, "滿格 ×1.5");
   c.dglTick(); assert.ok(c.reg.dglLoc, "渡口頂欄放了 #dglLoc"); assert.equal(c.reg.dglLoc.parentNode, c.tb); assert.match(c.reg.dglLoc["a_aria-label"], /定軌力 \d+／30，星芒 \d+／20/);
   c.location.hash = "#/cpu"; c.dglTick(); assert.equal(c.reg.dglLoc, undefined, "對局頁收起來");
   c.location.hash = "#/"; c.dglLocSync(); assert.equal(c.reg.dglLoc, undefined, "首頁不放（頂欄已有）");
@@ -352,7 +353,7 @@ test("〔原始碼〕接線：設定頁角色分頁呼叫 dglSetRow；觀星臺 
 });
 
 /* ---------- ⑤ 11/14 角色卡視覺化（開發者採用 ChatGPT 設計稿 story/chatgpt_app/回覆_角色卡設計_1114.md）：五種狀態、退場倒數、圖示對照表、規則字從常數組 ---------- */
-test("角色卡狀態：滿格 ×1.2、15 以上 ×1.1、15 以下沒加成、≤5 快用完、用完（due）、化墨退場中、設定關掉", () => {
+test("角色卡狀態：滿格 ×1.5、一半以上 ×1.2、一半以下沒加成、≤5 快用完、用完（due）、化墨退場中、設定關掉", () => {
   const S = (r, o) => Object.assign({ r, out: false, due: false }, o || {});
   assert.equal(R.dglCardSt(S(30)), "full"); assert.equal(R.dglCardSt(S(29.5)), "full", "畫面顯示 30 就寫滿格（跟看到的數字一致）"); assert.equal(R.dglCardSt(S(14.5)), "half", "畫面顯示 15");
   assert.equal(R.dglCardSt(S(15)), "half"); assert.equal(R.dglCardSt(S(14)), "none"); assert.equal(R.dglCardSt(S(6)), "none");
@@ -377,7 +378,7 @@ test("圖示對照表 DGL_ICO：角色卡用到的圖示都在表裡（之後換
   const emo = card.replace(/"🙂 我的角色"|🙂 我的角色頁|→ 👘 換造型/g, "").match(/\p{Extended_Pictographic}/gu);   /* 11/14：標題固定「🙂 我的角色」；稱號的 🏅 改走 DGL_ICO.ttl */
   assert.equal(emo, null, "卡片程式直接寫了 emoji：" + emo);
   assert.ok(!/最多帶 10|黑洞對局裡不扣定軌力/.test(SRC), "不寫舊規則（星芒最多補到靈力上限；11/14 起黑洞照人間扣）");
-  assert.ok(card.includes("一天最多回 ${DGL_BH_DAY}") && card.includes("每分鐘少 ${DGL_DRAIN}"), "11/14 細則：黑洞過關一天最多、每分鐘少幾點，數字照常數組");
+  assert.ok(card.includes("${dglU(DGL_BH_DAY,mx)}") && card.includes("${Math.round(DGL_MAX/DGL_DRAIN)}") && card.includes("${dglU(DGL_BACK,mx)}"), "細則：黑洞過關一天最多回多少、大約幾分鐘用完、回到多少能下船，數字照常數組再換到陪你走那一位的尺（11/16）");
   assert.ok(!/[>（ ]\+?(20|30|15|3|2)(<|／| 點)/.test(card.replace(/\$\{[^}]*\}/g, "")), "規則數字要從 DGL_* 組");
 });
 
@@ -389,22 +390,24 @@ function cardHTML(set) {
 test("角色卡畫面（整個模組＋假的 sheet）：11/14 極簡版——每塊只有名稱、數字、一條、一句話；刻度、膠囊、來源→用途、加成都收進「？」；黑洞那塊不在卡上", () => {
   const full = cardHTML();
   /* 11/15 經典狀態欄：平常的說明句收進底下一顆「？ 細則」（一塊 dgl-kmore，紅血、藍血、攻防三組），卡上只留狀態警告 */
-  for (const k of ["<li>下船後會慢慢用掉，回星槎就補回來。</li>", "<li>解殘局、過主線章節就會得到。</li>", 'data-k="full"', 'data-q="all"', 'aria-controls="dglQ_all"', 'aria-expanded="false"', "width:100.0%",
-    "<span>現在滿格，下棋、解題得到的修為</span> ×1.2", "<span>已點亮</span> 0／28", '<p class="dgl-kmh">體力・定軌力</p>', '<p class="dgl-kmh">靈力・星芒</p>']) assert.ok(full.includes(k), "滿格少了：" + k);
+  for (const k of ["<li>下船後會慢慢用掉，回星槎就補回來。</li>", "<li>解殘局、過主線章節就會得到。</li>", 'data-k="full:30"', 'data-q="all"', 'aria-controls="dglQ_all"', 'aria-expanded="false"', "width:100.0%",
+    "<span>現在滿格，下棋、解題得到的修為</span> ×1.5", "<span>已點亮</span> 0／28", '<p class="dgl-kmh">體力・定軌力</p>', '<p class="dgl-kmh">靈力・星芒</p>']) assert.ok(full.includes(k), "滿格少了：" + k);
   for (const k of ["dgl-kcp", "dgl-ktk", "dgl-kmk", "dgl-kflow", "dgl-kbd", "黑洞裡的你", "人間黑洞會用", "歸零會化墨退場", '<p class="dgl-kl">']) assert.ok(!full.includes(k), "極簡版不該有：" + k);
   assert.equal((full.match(/class="dgl-kmore"[^>]* hidden/g) || []).length, 1, "細則預設收著（只有一塊）");
-  assert.ok(full.includes("在人間（下船以後）每分鐘少 1；在星槎上不會少。") && !full.includes("黑洞對局裡不扣定軌力。") && full.includes("最多補到靈力上限。"), "細則照實（11/14 刪掉「黑洞對局裡不扣定軌力」）");
-  assert.ok(full.includes("黑洞過關回 20，一天最多回 20；關掉 App 再打開就回滿。") && full.includes("定軌力用完時，黑洞入口也會關。"), "11/14 細則：黑洞每日上限（跟過關回多少併成一條）、入口會關");
-  const half = cardHTML(c => { c.DGL.s.r = 20 }); assert.ok(half.includes("<span>現在一半以上，下棋、解題得到的修為</span> ×1.1") && half.includes("width:66.7%"));
-  const none = cardHTML(c => { c.DGL.s.r = 10 }); assert.ok(none.includes("<span>到一半以上，下棋、解題得到的修為</span> ×1.1") && none.includes("下船後會慢慢用掉") && !none.includes("dgl-kwarn"));
+  assert.ok(full.includes("<li><span>在人間（下船以後）大約</span> 30 <span>分鐘用完；在星槎上不會少。</span></li>") && !full.includes("黑洞對局裡不扣定軌力。") && full.includes("最多補到靈力上限。"), "細則照實（11/14 刪掉「黑洞對局裡不扣定軌力」；11/16 改寫成大約幾分鐘用完）");
+  assert.ok(full.includes("<li><span>黑洞過關回</span> 20 <span>點，一天最多回</span> 20 <span>點。</span></li>") && full.includes("定軌力用完時，黑洞入口也會關。"), "11/14 細則：黑洞每日上限（跟過關回多少併成一條）、入口會關");
+  assert.ok(full.includes("<li>離開 App 的時間也會慢慢回，跟在星槎上歇息一樣。</li>") && !full.includes("關掉 App 再打開就回滿") && full.includes("<span>分鐘回到</span> 15 <span>點，就能再下船。</span>"), "11/16：不再寫「關掉 App 再打開就回滿」");
+  assert.ok(!full.includes("體力上限跟陪你走的那一位"), "沒有旅程、黑洞模組沒載入時上限照舊 30，不多寫那一句");
+  const half = cardHTML(c => { c.DGL.s.r = 20 }); assert.ok(half.includes("<span>現在一半以上，下棋、解題得到的修為</span> ×1.2") && half.includes("width:66.7%"));
+  const none = cardHTML(c => { c.DGL.s.r = 10 }); assert.ok(none.includes("<span>到一半以上，下棋、解題得到的修為</span> ×1.2") && none.includes("下船後會慢慢用掉") && !none.includes("dgl-kwarn"));
   const low = cardHTML(c => { c.DGL.s.r = 4 }); assert.ok(low.includes("<span>快用完了，回星槎歇一下吧</span>") && low.includes("dgl-kwarn"));
   const due = cardHTML(c => { c.DGL.s.r = 0; c.DGL.s.due = true }); assert.ok(due.includes("<span>這盤下完，就回星槎歇息</span>"));
   const out = cardHTML(c => { c.DGL.s.r = 6; c.DGL.s.out = true });
-  for (const k of ['<span>化墨退場中・</span><b class="dgl-knum">3</b> <span>分鐘後可以下船</span>', 'data-k="out:3"', "dgl-khero out", "width:20.0%"]) assert.ok(out.includes(k), "退場中少了：" + k);
+  for (const k of ['<span>化墨退場中・</span><b class="dgl-knum">3</b> <span>分鐘後可以下船</span>', 'data-k="out:3:30"', "dgl-khero out", "width:20.0%"]) assert.ok(out.includes(k), "退場中少了：" + k);
   assert.equal((out.match(/<p class="dgl-kl">/g) || []).length, 1, "退場中卡上只有一句：幾分鐘後可以下船");
   assert.ok(SRC.includes("function dglMeCard(") && /if\(typeof dglMeCard==="function"\)\{const x=dglMeCard\(\);if\(x\)pad\.append\(x\)\}/.test(fs.readFileSync(path.join(M, "07-legend.js"), "utf8")), "黑洞三數字搬到我的角色頁（Me 呼叫 dglMeCard）");
   const off = cardHTML((c, st) => { st.dglOff = true });
-  assert.ok(off.includes("平日體力已關閉") && off.includes("不扣、不退場、無加成") && !off.includes("dgl-kbar") && off.includes('data-k="off"'), "關掉：兩條都不畫、只放提示");
+  assert.ok(off.includes("平日體力已關閉") && off.includes("不扣、不退場、無加成") && !off.includes("dgl-kbar") && off.includes('data-k="off:30"'), "關掉：兩條都不畫、只放提示");
   assert.ok(off.includes("想再打開：設定 → 👘 換造型，裡面的「平日體力」。"));
 });
 
@@ -449,4 +452,79 @@ test("我的角色頁「黑洞裡的你」：元氣、靈力上限、每回合�
   for (const k of ["<span>元氣</span>", "<span>靈力上限</span></small><b>60</b>", "<span>每回合回靈</span></small><b>12</b>", "<span>攻擊力</span></small><b>130</b>", "<span>防禦力</span></small><b>139</b>", "修為越高，五項越強"]) assert.ok(h.includes(k), "少了：" + k);
   assert.ok(!/×/.test(h), "黑洞卡不出現倍數 ×");
   assert.ok(SRC.includes(".dgl-me .dgl-kst{grid-template-columns:repeat(6,1fr)}.dgl-me .dgl-kst>span{grid-column:span 2}.dgl-me .dgl-kst>span:nth-child(n+4){grid-column:span 3}"), "五格排成上 3 下 2");
+});
+
+/* ---------- ⑧ 11/16 體力統一（開發者：「這樣人間體力不一樣 玩家會很困惑 而且人間體力歸0後 也只會回到星槎上 根本不會有什麼懲罰」；Gemini 討論 story/gemini_app/159，選單四項）----------
+   ① 上限＝陪你走那一位在黑洞裡的體力，內部照舊 0～30 算、畫面換尺 ② 滿格 ×1.5、一半以上 ×1.2 ③ 記住體力，離開的時間照星槎上的速度回 ④ 卡冊寫「靈力上限」（test-pty-stats-1116.js） */
+test("畫面上的數字換到陪你走那一位的尺：現在幾點無條件進位（跟原本一樣）、規則裡的量四捨五入至少 1；沒給尺＝照舊 30", () => {
+  assert.deepEqual([R.dglDisp(30, 57), R.dglDisp(29.5, 57), R.dglDisp(15, 57), R.dglDisp(0.01, 57), R.dglDisp(0, 57), R.dglDisp(40, 57)], [57, 57, 29, 1, 0, 57]);
+  assert.deepEqual([R.dglDisp(29.5), R.dglDisp(29.5, 30), R.dglDisp(14.2, 0)], [30, 30, 15], "沒給尺、尺就是 30：跟 dglShow 一樣");
+  assert.deepEqual([R.dglU(15, 57), R.dglU(2, 57), R.dglU(20, 57), R.dglU(1, 100), R.dglU(0.3, 57), R.dglU(0, 57)], [29, 4, 38, 3, 1, 0]);
+  assert.deepEqual([R.dglU(15), R.dglU(2, 30)], [15, 2]);
+  assert.deepEqual([R.dglXpMul(29.5, 57), R.dglXpMul(29.4, 57), R.dglXpMul(14.9, 57), R.dglXpMul(14, 57)], [1.5, 1.2, 1.2, 1], "加成照那把尺上看到的數字：顯示 57／57 才是滿格、顯示 29 以上是一半以上");
+  assert.equal(R.dglCardSt({ r: 29.5, out: false, due: false }, false, 57), "full"); assert.equal(R.dglCardSt({ r: 29.4, out: false, due: false }, false, 57), "half");
+  assert.deepEqual(J(R.dglXpBonus(10, 30, 0, 57)), { n: 15, fx: 0 });
+});
+
+test("重開 App、切回前景：離開的時間照星槎上的速度回（每分鐘 3）；沒有紀錄＝滿的；當時用完了、還沒回到 15 就照舊歇著；時間倒退不回也不扣", () => {
+  const T0 = 5e9;
+  deqA(R.dglWake(null, T0), { r: 30, out: false, due: false }); deqA(R.dglWake({ x: 3 }, T0), { r: 30, out: false, due: false }, "只有星芒、沒有體力紀錄（舊存檔）＝滿的");
+  deqA(R.dglWake({ r: "x", ra: T0 }, T0), { r: 30, out: false, due: false });
+  deqA(R.dglWake({ r: 10, ra: T0, ro: 0 }, T0 + 2 * MIN), { r: 16, out: false, due: false }, "離開 2 分鐘回 6");
+  deqA(R.dglWake({ r: 10, ra: T0, ro: 0 }, T0), { r: 10, out: false, due: false }, "滑掉馬上重開：不回滿");
+  deqA(R.dglWake({ r: 0, ra: T0, ro: 1 }, T0 + 2 * MIN), { r: 6, out: true, due: false }, "用完了才離開 2 分鐘：還在歇");
+  deqA(R.dglWake({ r: 0, ra: T0, ro: 1 }, T0 + 5 * MIN), { r: 15, out: false, due: false }, "離開 5 分鐘：回到 15，可以下船");
+  deqA(R.dglWake({ r: 0, ra: T0, ro: 0 }, T0 + MIN), { r: 3, out: true, due: false }, "存的時候剛好是 0 也算用完了");
+  deqA(R.dglWake({ r: 3, ra: T0, ro: 1 }, T0 + 60 * MIN), { r: 30, out: false, due: false }, "離開很久：滿的，不超過上限");
+  deqA(R.dglWake({ r: 12, ra: T0, ro: 0 }, T0 - 10 * MIN), { r: 12, out: false, due: false }, "手機時間被往回調：不回也不扣");
+  deqA(R.dglWake({ r: 99, ra: T0, ro: 0 }, T0), { r: 30, out: false, due: false }, "存壞的數字夾在 0～30");
+});
+
+const withHero = c => { c.BHTD = { CH: { x_a: {} }, stats: () => ({ hp: 57 }), atkPt: () => 100, defPt: () => 100, SK: [], TAL: [] }; c.ptyLv = () => 3; c.myChar = () => "x_a" };
+test("整個模組：有陪你走的角色時，畫面寫「定軌力 n／57」、節奏不變（15 分鐘剩一半）、加成照新倍率；沒有就照舊 30", () => {
+  const st = {}, c = loadFull(st, "#/port"); assert.equal(c.dglMx(), 30, "沒有旅程、黑洞模組沒載入＝30");
+  withHero(c); assert.equal(c.dglMx(), 57);
+  c.dglTick(); assert.match(c.reg.dglLoc["a_aria-label"], /定軌力 57／57，星芒 \d+／20/);
+  c.ticks(15); assert.ok(Math.abs(c.DGL.s.r - 15) < 0.2, "內部照舊每分鐘扣 1：15 分鐘剩一半"); assert.match(c.reg.dglLoc["a_aria-label"], /定軌力 29／57/);
+  c.addXP(10, "殘局"); assert.equal(c.xp[0][0], 12, "一半以上 ×1.2");
+  c.ticks(17); assert.equal(c.DGL.s.out, true, "大約 30 分鐘用完、化墨退場（解題回的那一點多撐兩分鐘）");
+  c.myChar = () => "x_none"; assert.equal(c.dglMx(), 30, "黑洞資料裡沒有這位＝30");
+});
+
+test("整個模組：體力記在 store \"dgl\"（不蓋掉星芒）；重開接著上次的值、照離開時間回；用完了離開，回來還沒回到一半就還在星槎歇", () => {
+  const st = { dgl: { x: 7, t: 3 } }, c = loadFull(st, "#/port"); assert.equal(c.DGL.s.r, 30, "舊存檔沒有體力紀錄＝滿的");
+  c.ticks(10); assert.ok(Math.abs(st.dgl.r - 20) < 0.6, "每 15 秒記一次：" + st.dgl.r); assert.ok(st.dgl.ra > 1e9); assert.equal(st.dgl.ro, 0); assert.equal(st.dgl.x, 7); assert.equal(st.dgl.t, 3);
+  const st2 = { dgl: Object.assign({}, st.dgl, { r: 20, ra: 1e9 }) }; assert.equal(loadFull(st2, "#/port").DGL.s.r, 20, "滑掉馬上重開：接著 20，不回滿");
+  const st3 = { dgl: Object.assign({}, st.dgl, { r: 20, ra: 1e9 - 2 * MIN }) }; assert.equal(loadFull(st3, "#/port").DGL.s.r, 26, "離開 2 分鐘：回 6");
+  c.ticks(22); assert.equal(c.DGL.s.out, true); assert.equal(st.dgl.ro, 1, "退場的當下就記");
+  const st4 = { dgl: Object.assign({}, st.dgl, { r: 0, ra: 1e9 - MIN }) }, c4 = loadFull(st4, "#/port"); assert.equal(c4.DGL.s.out, true);
+  c4.location.hash = "#/cpu"; assert.equal(c4.dglRouteGate(), true, "重開後照舊擋回星槎"); assert.equal(c4.location.hash, "#/adventure");
+  const st5 = { dgl: Object.assign({}, st.dgl, { r: 0, ra: 1e9 - 6 * MIN }) }; assert.equal(loadFull(st5, "#/port").DGL.s.out, false, "離開 6 分鐘：可以下船了");
+});
+
+test("整個模組：設定關掉平日體力＝不留體力紀錄（星芒留著）；再打開從滿格記起", () => {
+  const st = { dgl: { x: 4 } }, c = loadFull(st, "#/port"); c.ticks(5); assert.ok(st.dgl.r < 26);
+  c.dglSetOff(true); assert.ok(!("r" in st.dgl) && !("ra" in st.dgl) && !("ro" in st.dgl)); assert.equal(st.dgl.x, 4);
+  c.ticks(5); assert.ok(!("r" in st.dgl), "關著的時候不記");
+  c.dglSetOff(false); assert.equal(st.dgl.r, 30); assert.equal(st.dgl.x, 4);
+});
+
+test("角色卡：有陪你走的角色時，紅條寫「n／57」、細則多一句上限跟誰一樣、規則裡的量都換到 57 那把尺；不再寫「關掉 App 再打開就回滿」", () => {
+  const h = cardHTML(c => { withHero(c); c.DGL.s.r = 20 });
+  for (const k of ['<span class="dgl-kv" data-dgl="r">38／57</span>', "width:66.7%", 'data-k="half:57"', "<li><span>體力上限跟陪你走的那一位在黑洞裡的體力一樣，現在是</span> 57<span>；換人陪你走、升級都會跟著變。</span></li>",
+    "<li><span>下完一盤棋、解完一題，各回</span> 4 <span>點。</span></li>", "<li><span>黑洞過關回</span> 38 <span>點，一天最多回</span> 38 <span>點。</span></li>", "<span>分鐘回到</span> 29 <span>點，就能再下船。</span>", "<span>現在一半以上，下棋、解題得到的修為</span> ×1.2"]) assert.ok(h.includes(k), "少了：" + k);
+  assert.ok(!h.includes("關掉 App 再打開就回滿"));
+});
+
+test("〔原始碼〕體力統一的接線：開 App 接著上次的體力；背景回來補回；每 15 秒與離開時記；修為加成照那把尺；新字有英文", () => {
+  assert.ok(SRC.includes('try{if(DGL_ON)DGL.s=dglWake(store.get("dgl",null),Date.now())}catch(e){}'));
+  assert.ok(SRC.includes('if(document.hidden){DGL.hid=now;dglKeep()}else{if(DGL.hid&&dglLive()){const ev=dglStep(DGL.s,now-DGL.hid,"ship")'), "切到背景記時間，回來把那段時間照星槎上的速度補回");
+  assert.ok(SRC.includes('addEventListener("pagehide",()=>{dglKeep()})') && SRC.includes("if(now-DGL.kt>15e3||ev.length||w)dglKeep();"));
+  assert.ok(SRC.includes("const B=dglXpBonus(n,DGL.s.r,DGL.fx,dglMx());"));
+  assert.ok(/function dglMx\(\)\{try\{const c=dglName\(\);[^\n]*BHTD\.stats\(c,ptyLv\(c\)\)\.hp/.test(SRC), "上限＝陪你走那一位（myChar）照自己等級的黑洞體力");
+  const I = rd(path.join(M, "07i18n.js")), i = I.indexOf("#I18N-PURE-BEGIN"), j = I.indexOf("/* #I18N-PURE-END */"), ctx = {}; vm.createContext(ctx);
+  vm.runInContext(I.slice(I.indexOf("\n", i) + 1, j) + ";this.T=i18nText", ctx);
+  for (const s of ["體力上限跟陪你走的那一位在黑洞裡的體力一樣，現在是", "；換人陪你走、升級都會跟著變。", "在人間（下船以後）大約", "分鐘用完；在星槎上不會少。", "下完一盤棋、解完一題，各回", "點。", "黑洞過關回", "點，一天最多回",
+    "離開 App 的時間也會慢慢回，跟在星槎上歇息一樣。", "用完了會化墨退場，回星槎歇息：大約", "分鐘回到", "點，就能再下船。", "靈力上限", "在星槎上歇息：大約 5 分鐘回到 29，就能再下船", "在星槎上歇息，回到 29 就能再下船。", "✨ 定軌力回到 29，可以下船了。",
+    "🌫 定軌力耗盡：在星槎上歇到 29 才能再下船", "🌫 定軌力 12／57：在星槎上歇到 29 才能再下船"]) { const t = ctx.T(s); assert.ok(t && !/[㐀-鿿]/.test(t), s + " → " + t) }
 });

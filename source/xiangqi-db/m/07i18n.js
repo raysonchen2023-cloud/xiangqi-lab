@@ -287,6 +287,10 @@ const I18N_EN={
   /* 平日體力：定軌力、星芒、化墨退場（07dgl-stamina.js，開發者 11/13） */
   "定軌力":"Orbit stamina","星芒":"Starglow","定軌力（紅）":"Orbit stamina (red)","星芒（藍）":"Starglow (blue)","元氣":"Vitality","靈力上限":"Spirit cap","攻擊":"Attack","黑洞裡的你":"You in the Black Hole","我的角色頁":"My character page",
   "定軌力耗盡，化墨退場——回星槎歇息。":"Orbit stamina spent: dissolving into ink. Back to the Star Raft to rest.","在人間（下船以後）每分鐘少 1；在星槎上不會少。":"In the human world (after leaving the raft) it drops 1 per minute; on the Star Raft it doesn't drop.",
+  "體力上限跟陪你走的那一位在黑洞裡的體力一樣，現在是":"Your stamina cap equals your companion's stamina in the Black Hole; right now it is","；換人陪你走、升級都會跟著變。":"; it changes when you switch companion or level up.",
+  "在人間（下船以後）大約":"In the human world (after leaving the raft) it lasts about","分鐘用完；在星槎上不會少。":"minutes; on the Star Raft it doesn't drop.","下完一盤棋、解完一題，各回":"Finishing a game or solving a puzzle each restores","點。":".",
+  "黑洞過關回":"Clearing a Black Hole stage restores","點，一天最多回":", with a daily limit of","離開 App 的時間也會慢慢回，跟在星槎上歇息一樣。":"Time away from the App also restores it, just like resting on the Star Raft.",
+  "用完了會化墨退場，回星槎歇息：大約":"When it runs out you dissolve into ink and rest on the Star Raft: in about","分鐘回到":"minutes it is back to","點，就能再下船。":", and you can go ashore again.",
   "下完一盤棋、解完一題，各回 2。":"Finishing a game or solving a puzzle restores 2 each.","黑洞過關回 20；關掉 App 再打開就回滿。":"Clearing a Black Hole stage restores 20; closing and reopening the app refills it.",
   "用完了會化墨退場，回星槎歇息：船上每分鐘回 3，回到 15 就能再下船。":"When it runs out you dissolve into ink and rest on the Star Raft: it restores 3 per minute there, and at 15 you can go ashore again.","線上大廳、千秋盃不用定軌力。":"The online lobby and the Qianqiu Cup don't use orbit stamina.",
   "解殘局、主線過關，各得 1 點，最多存 5 點。":"Solving endgames and clearing main-story stages earn 1 each, up to 5.","進黑洞時，星芒會變成開局靈力，用掉多少扣多少。":"Entering the Black Hole turns starglow into starting spirit; only what is used is spent.","提示照舊免費，不用花星芒。":"Hints stay free; they never cost starglow.",
@@ -989,6 +993,11 @@ const I18N_PAT=[
   [/^差一點！陣眼子別被吃、再少\s*(\d+)\s*回合，就能三星，額外\s*\+(\d+)\s*星塵$/,m=>"So close! Keep your formation eye safe and finish "+m[1]+(m[1]==="1"?" round":" rounds")+" faster for 3 stars: +"+m[2]+" more stardust"],
   [/^星淵急襲・(.+?)——星樞元氣\s*(\d+)$/,(m,T)=>{const r=T(m[1]);return r==null?null:"Abyss Raid · "+r+" - Star Pivot vitality "+m[2]}],
   [/^天賦全部重置，退回\s*(\d+)\s*星塵$/,m=>"All talents reset: "+m[1]+" stardust refunded"],
+  [/^在星槎上歇息：大約\s*(\d+)\s*分鐘回到\s*(\d+)，就能再下船$/,m=>"Resting on the Star Raft: about "+m[1]+" min to get back to "+m[2]+", then you can go ashore again"],   /* 11/16 體力統一：數字照陪你走那一位的尺，不再是固定的 15、30 */
+  [/^在星槎上歇息，回到\s*(\d+)\s*就能再下船。?$/,m=>"Resting on the Star Raft; at "+m[1]+" you can go ashore again."],
+  [/^定軌力回到\s*(\d+)，可以下船了。?$/,m=>"Orbit stamina is back to "+m[1]+": you can go ashore."],
+  [/^定軌力耗盡：在星槎上歇到\s*(\d+)\s*才能再下船$/,m=>"Orbit stamina spent: rest on the Star Raft until "+m[1]+" before going ashore"],
+  [/^定軌力\s*(\d+)／(\d+)：在星槎上歇到\s*(\d+)\s*才能再下船$/,m=>"Orbit stamina "+m[1]+"/"+m[2]+": rest on the Star Raft until "+m[3]+" before going ashore"],
   [/^定軌力用完了，黑洞入口先關著：在星槎歇到\s*(\d+)\s*再來$/,m=>"Orbit stamina is used up, so the black hole entrance is closed: rest on the Star Raft until "+m[1]+", then come back"],
   [/^今天靠黑洞回的定軌力已經滿\s*(\d+)\s*了$/,m=>"You've already regained the daily maximum of "+m[1]+" orbit stamina from the black hole today"],
   /* 主線「星槎遠征令」、首頁「下一步」、任務卡、札記、星夜茶話會（07mnq、07mnf、07t，評比第 17、18 輪 B5） */

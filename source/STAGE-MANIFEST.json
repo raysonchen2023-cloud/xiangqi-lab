@@ -1,7 +1,7 @@
 {
  "ref": "origin/main",
- "commit": "2ffa91a584622b6767ef6a784cb43c483872ada2",
- "madeAt": "2026-11-15T22:01:16.510Z",
+ "commit": "9914a8f399049a14ee2926e98f44b1f30f55968e",
+ "madeAt": "2026-11-15T22:37:11.253Z",
  "files": {
   "xiangqi-db/m/00-util.js": "local=live",
   "xiangqi-db/m/01-board.js": "local=live",
@@ -17,7 +17,7 @@
   "xiangqi-db/m/06-cpu.js": "local=live",
   "xiangqi-db/m/06c-cup.js": "local=live",
   "xiangqi-db/m/07-legend.js": "local=live",
-  "xiangqi-db/m/07pty-party.js": "local=live",
+  "xiangqi-db/m/07pty-party.js": "live",
   "xiangqi-db/m/07c-canju.js": "local=live",
   "xiangqi-db/m/07d-garden.js": "local=live",
   "xiangqi-db/m/07e-garden2.js": "local=live",
@@ -27,10 +27,10 @@
   "xiangqi-db/m/07gx-galaxy.js": "local=live",
   "xiangqi-db/m/07gxp-gatepano.js": "local=live",
   "xiangqi-db/m/07bht-td.js": "live",
-  "xiangqi-db/m/07bhtl-tdlearn.js": "local=live",
+  "xiangqi-db/m/07bhtl-tdlearn.js": "live",
   "xiangqi-db/m/07bhf-bossfx.js": "local=live",
   "xiangqi-db/m/07bhg-gatesiege.js": "live",
-  "xiangqi-db/m/07bhw-wheel.js": "local=live",
+  "xiangqi-db/m/07bhw-wheel.js": "live",
   "xiangqi-db/m/07dv-devtest.js": "local=live",
   "xiangqi-db/m/07dw-perfhud.js": "local=live",
   "xiangqi-db/m/07g-battle.js": "local=live",
@@ -424,8 +424,11 @@
  },
  "liveDiffers": [
   "m/05-settings.js",
+  "m/07pty-party.js",
   "m/07bht-td.js",
+  "m/07bhtl-tdlearn.js",
   "m/07bhg-gatesiege.js",
+  "m/07bhw-wheel.js",
   "m/07y-hubmap.js",
   "m/07s4-passmap.js",
   "src/park3d.js",
@@ -477,8 +480,8 @@
   "test-park3d-river-1116.js": "指令排除：黑洞大棋盤「放手回正面、河界不重影」的修改還在開發者電腦上做，對應的程式還沒發布",
   "test-raid-label-1116.js": "指令排除：黑洞選關「星淵急襲」卡的文字修改還在開發者電腦上做，對應的程式還沒發布"
  },
- "version": "20261116-0600",
- "indexSha1": "acad5eb44ad4",
+ "version": "20261116-0635",
+ "indexSha1": "2630e4969842",
  "toLF": [
   "xiangqi-lab/tools/build-site.js"
  ],
