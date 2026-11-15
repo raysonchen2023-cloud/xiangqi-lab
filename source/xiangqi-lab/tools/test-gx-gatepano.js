@@ -120,7 +120,7 @@ test("〔行為〕石碑過場的時間表：完整版各段依序、不超過 5
 });
 
 test("〔原始碼〕點星圖石碑＝播過場再開選星頁；點一下跳過、離開這一頁就收掉、不支援動畫的瀏覽器直接開", () => {
-  assert.ok(GXT.includes("const GXT_ACT={gxtTd:gxtTd,gxtGx:()=>gxtGate(),gxtSky:")); assert.ok(GXT.includes('open=()=>gxMap({from:"stele"})'));
+  assert.ok(GXT.includes("const GXT_ACT={gxtTd:gxtTd,") && GXT.includes("gxtGx:()=>gxtGate(),gxtSky:")); assert.ok(GXT.includes('open=()=>gxMap({from:"stele"})'));
   assert.ok(GXT.includes('if(!P||!im||gxtGate.busy||typeof document.body.animate!=="function"){open();return}'));
   assert.ok(GXT.includes('fx.onclick=()=>{vibrate(5);doOpen();finish(true)}')); assert.ok(GXT.includes('addEventListener("hashchange",bail)') && GXT.includes('removeEventListener("hashchange",bail)'));
   assert.ok(GXT.includes('sessionStorage.getItem("gxtGateFx")==="1"') && GXT.includes("gxtGatePlan(gxtRM(),seen)")); assert.ok(GXT.includes(".gxt-fx{position:fixed;inset:0;z-index:9600;"), "蓋在選星頁（9500）上面，墨散開才露出來");

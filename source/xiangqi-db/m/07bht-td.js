@@ -650,6 +650,17 @@ body.bhtd-on #bbox .pkname{display:none!important}
 .bt-dust{display:flex;align-items:center;justify-content:space-between;gap:8px;margin:6px 0 2px;font-size:13.5px}.bt-dust b{font-size:16px;color:#7a3fb0}
 .bt-dust .btn{width:auto;flex:none;margin:0;padding:8px 14px;min-height:44px;font-size:14px}
 .bt-sel .bt-card.bt-rdc{border-style:dashed;border-color:#b46bff}.bt-sel .bt-card.bt-rdc .hd b{color:#7a3fb0}
+.bt-next{display:flex;flex-direction:column;align-items:center;gap:2px;margin:8px 0 4px;padding:12px 12px 12px;border:2px solid #7a3fb0;border-radius:14px;background:rgba(122,63,176,.07);text-align:center}
+.bt-nk{font-size:12.5px;font-weight:800;color:#7a3fb0}.bt-nn{font-size:19px;line-height:1.35}.bt-ns{font-size:13px;font-weight:700;color:#2f8a3a}
+.bt-next .btn.bt-go{width:100%;margin:8px 0 0;min-height:50px;font-size:18px}
+.bt-sec{margin:10px 2px 4px;font-size:12.5px;font-weight:700;color:var(--muted,#777);text-align:left}
+.bt-sel2 .bt-cards{grid-template-columns:repeat(3,1fr);gap:6px;margin:0}@media (min-width:900px){.bt-sel2 .bt-cards{grid-template-columns:repeat(6,1fr)}}
+.bt-sel2 .bt-cards .bt-card{min-height:46px;padding:5px 4px;display:flex;align-items:center;justify-content:center;gap:7px}.bt-sel2 .bt-cards .bt-card>b{font-size:18px;line-height:1.25}
+.bt-sel2 .bt-cards .bt-card .ok{position:static;padding:0;background:none;font-size:12.5px;line-height:1.3}
+.bt-alts{display:grid;grid-template-columns:1fr 1fr;gap:6px}
+.bt-sel2 .bt-alts .bt-card{min-height:48px;padding:8px 6px;text-align:center;border-style:solid;border-width:2px;border-color:var(--line,#ddd)}.bt-sel2 .bt-alts .bt-card.on{border-color:#7a3fb0}
+.bt-sel2 .bt-alts .bt-card .hd{justify-content:center;padding-right:0}.bt-sel2 .bt-alts .bt-card .ok{position:static;display:inline-block;margin-top:2px}
+.bt-set{margin:12px 0 0;text-align:left}.bt-set>summary{min-height:44px;display:flex;align-items:center;gap:4px;font-size:14px;font-weight:700;cursor:pointer}.bt-set>summary small{font-weight:400;color:var(--muted,#777)}.bt-set>summary{list-style:none}.bt-set>summary::-webkit-details-marker{display:none}.bt-set>summary::before{content:"▸";display:inline-block;width:1em}.bt-set[open]>summary::before{content:"▾"}
 .bt-tal .box{max-width:min(96vw,560px)}
 .bt-tier{margin:8px 0 0;text-align:left}.bt-tier>small{display:block;font-size:12px;font-weight:700;color:var(--muted,#777);margin:0 2px 4px}
 .bt-trow{display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:6px}
@@ -708,30 +719,43 @@ function bhtdSelect(k,cover){if(typeof bhtlNeed==="function"&&bhtlNeed()){bhtlOf
   bhtdCss();const ck=bhtdChar(),L=bhtdL(),st=BHTD.stats(ck,L),diff=bhtdDiff(),P=bhtdProg(),D=bhtdDust(),pool=BHTD.SK.filter(s=>s.ch===st.ck),un=pool.filter(s=>s.lv<=L),rdOk=bhtdRdOpen(P);
   let sel=1;for(let n=1;n<=BHTD.LV.length;n++)if(bhtdOpenLv(P,n))sel=n;if(P.last&&bhtdOpenLv(P,P.last)&&!P.c[P.last])sel=P.last;if(opt.rd&&rdOk)sel="rd";
   let pk=((P.sk||{})[st.ck]||[]).filter(id=>un.some(s=>s.id===id)).slice(0,4);if(!pk.length)pk=un.slice(0,4).map(s=>s.id);
-  const card=n=>{const V=BHTD.LV[n-1],ai=BHTD.depthOf(n,diff),op=bhtdOpenLv(P,n),dn=!!P.c[n],s3=Math.max(0,Math.min(3,+D.s[n]||0));
+  const card=(n,info)=>{const V=BHTD.LV[n-1],ai=BHTD.depthOf(n,diff),op=bhtdOpenLv(P,n),dn=!!P.c[n],s3=Math.max(0,Math.min(3,+D.s[n]||0));
     const hp=(V.en&&V.en.hp0?V.en.hp0+"／":"")+V.hp,ok=op?(dn?(s3?"★".repeat(s3)+"☆".repeat(3-s3):"✓ 已破陣"):"可挑戰"):"🔒 未解鎖";   /* 開發者 11/13：關名、推算步數、元氣一行；說明跨整張卡最多兩行；狀態在右上角（11/14 第二批：破過的關改成最佳星數） */
-    const okL=op?(dn?(s3?`最佳 ${s3} 星`:"已破陣"):"可挑戰"):"未解鎖";
-    return`<button type="button" class="bt-card${n===sel?" on":""}${op?"":" lock"}${dn?" done":""}" data-n="${n}" aria-label="${esc(`第 ${n} 關 ${V.nm}，${okL}${op?"":"（先破上一關）"}，星樞推算 ${ai.depth} 步，星樞元氣 ${hp}；${bhtdTags(V).join("；")}`)}"><span class="hd"><small>第 ${n} 關</small><b>${esc(V.nm)}</b></span><small class="ok" aria-hidden="true">${ok}</small></button>`};
+    const okL=op?(dn?(s3?`最佳 ${s3} 星`:"已破陣"):"可挑戰"):"未解鎖",okS=op?(dn?(s3?"★".repeat(s3)+"☆".repeat(3-s3):"✓"):"挑戰"):"🔒";
+    if(info)return{V,op,dn,ok,okL};   /* 上面那張「要打的這一關」主卡要用同一份資料 */
+    /* 11/16 開發者（選關視窗截圖）「重新設計排版 太亂了 玩家不知道到底要玩哪個」（選單選「一顆主按鈕」）：關卡縮成一排小格（關號＋星數），關名與狀態寫在上面的主卡 */
+    return`<button type="button" class="bt-card${n===sel?" on":""}${op?"":" lock"}${dn?" done":""}" data-n="${n}" aria-label="${esc(`第 ${n} 關 ${V.nm}，${okL}${op?"":"（先破上一關）"}，星樞推算 ${ai.depth} 步，星樞元氣 ${hp}；${bhtdTags(V).join("；")}`)}"><b aria-hidden="true">${n}</b><small class="ok" aria-hidden="true">${okS}</small></button>`};
   /* 星淵急襲卡（破第 1 關才開）：中局殘陣、3～5 分鐘、星塵照表現 */
   const rcard=()=>{const ai=BHTD.depthOf(BHTD.RAID_AI,diff),dr=BHTD.DUST.raid;
     return`<button type="button" class="bt-card bt-rdc${sel==="rd"?" on":""}${rdOk?"":" lock"}" data-n="rd" aria-label="${esc(`星淵急襲，${rdOk?"可挑戰":"未解鎖（先破第 1 關）"}，中局殘陣，3～5 分鐘，星樞推算 ${ai.depth} 步，星樞元氣 ${BHTD.RAID_HP}，星塵 ${dr[1]}～${dr[3]}`)}"><span class="hd"><small>⚡</small><b>星淵急襲</b></span><small class="ok" aria-hidden="true">${rdOk?"⚡ "+D.r.w:"🔒 未解鎖"}</small></button>`};
-  const cards=()=>BHTD.LV.map(V=>card(V.n)).join("")+rcard();
+  const cards=()=>BHTD.LV.map(V=>card(V.n)).join("");
+  /* 其他玩法：星門圍城、車輪戰（點了進各自的畫面）、星淵急襲（點了換成要打的那一場）、練習賽 */
+  const alts=()=>`${typeof gsvCard==="function"?gsvCard():""}${typeof whlCard==="function"?whlCard():""}${rcard()}${typeof bhtlCard==="function"?bhtlCard():""}`;
+  /* 最上面的主卡：現在要打的是哪一場＋出戰鈕（一打開就是下一關，不用找） */
+  const nextHTML=()=>{let kind,name,sub;
+    if(sel==="rd"){kind="⚡ 急襲";name="星淵急襲";sub="中局殘陣・約 3～5 分鐘"}
+    else{const I=card(sel,1);kind=I.dn?"再打一次":"下一關";name=`第 ${sel} 關　${I.V.nm}`;sub=I.dn?I.ok:""}
+    return`<small class="bt-nk">${esc(kind)}</small><b class="bt-nn">${esc(name)}</b>${sub?`<small class="bt-ns">${esc(sub)}</small>`:""}<button type="button" class="btn bt-go" data-go="1">⚔ 出戰</button>`};
   const skHTML=()=>pool.map(s=>`<label class="${pk.includes(s.id)?"on":""}${s.lv>L?" lk":""}" data-id="${s.id}" title="${esc(s.d)}">${s.lv>L?"🔒 Lv"+s.lv+" ":""}${esc(s.nm)}・${s.cost} 靈</label>`).join("");
-  const eyeN=BHTD.PCN[st.pc],fx=bhtdFxMode(),tn=D.t.length;
+  const eyeN=BHTD.PCN[st.pc],fx=bhtdFxMode(),tn=D.t.length,setS=()=>`（帶 ${pk.length} 招）`;
   const later=opt.after?[BL,()=>{try{bhReturn()}catch(e){}},true]:["之後再來",()=>{try{bhMus(null);if(cover!==false&&k&&typeof shipDockCover==="function")shipDockCover(k,()=>{})}catch(e){}},true];
   const m=modal(`<div class="em">🌀</div><h2>星淵遠征・星域一</h2>
     <div class="bt-dust"><span>✦ <span>星塵</span> <b>${D.d}</b>${tn?` ・<span>天賦</span> <b>${tn}</b>／${BHTD.TAL.length}`:""}</span><button type="button" class="btn ghost" data-tb="1">🌌 天賦</button></div>
-    ${typeof bhtlCard==="function"?bhtlCard():""}<div class="bt-cards">${cards()}</div>${typeof gsvCard==="function"?gsvCard():""}${typeof whlCard==="function"?whlCard():""}
+    <div class="bt-next">${nextHTML()}</div>
+    <p class="bt-sec">關卡</p><div class="bt-cards">${cards()}</div>
+    <p class="bt-sec">其他玩法</p><div class="bt-alts">${alts()}</div>
+    <details class="bt-set"><summary>出戰設定<small class="bt-sets">${setS()}</small></summary>
     <p class="bt-me" style="margin-bottom:0">招式（最多 4 招）</p><div class="bt-sklist">${skHTML()}</div>
     <p class="bt-me">戰鬥演出：<span class="bt-seg">${Object.keys(BHTD_FXN).map(x=>`<button type="button" data-fx="${x}" class="${x===fx?"on":""}">${BHTD_FXN[x]}</button>`).join("")}</span></p>
-    <details class="bt-rule"><summary>陣地規則</summary>雙方各有元氣（紅條）。星樞的子過河後，每回合每顆扣你 1 元氣，停進你的九宮再多扣 2；你的子過河也一樣扣星樞。被將軍扣 5。你的子被吃、被將軍，還有星樞招式扣你的元氣，都會被你的防禦力減少（至少扣 1）；過河、九宮、星碎格照原本扣。擒子扣對方元氣（越弱的子吃越強的子扣得越多，一次最多 12），還 +10 靈力；每回合也會自動回靈力（修為越高回越多）。<br>炮隔一子瞄到的敵子會「破甲」，下次打它多扣 1。紫墨星門會在預告的格子落下星樞的援軍，站上去可以堵住。<br>發星光的是陣眼子：用它吃子扣元氣 ×1.5；它被吃，靈力全散、招式停 1 回合。<br>一回合放一招，放招不佔走棋。將死或把星樞元氣打光都算贏；你的元氣歸零就輸，可以重打本關。<br>過關得星塵：三星是過關、陣眼子沒被吃、在規定回合內過關。星塵拿去點天賦（只在黑洞有用）。${typeof bhtlCard==="function"?`<br><button type="button" class="btn ghost" data-tl="1">▶ 再玩一次練習賽</button>`:""}</details>`,
-    [["⚔ 出戰",()=>{if(sel==="rd")bhtdRaid(k,cover,pk);else bhtdStart(sel,k,cover,pk)}],later],"prolog bt-sel");
-  if(!m)return;const paint=()=>{m.querySelector(".bt-cards").innerHTML=cards();m.querySelector(".bt-sklist").innerHTML=skHTML()};
-  m.addEventListener("click",e=>{const tl=e.target.closest("[data-tl]");if(tl&&typeof bhtlStart==="function"){vibrate(5);m.remove();bhtlStart(k,cover);return}   /* 練習賽卡、規則裡的「再玩一次練習賽」 */
+    <details class="bt-rule"><summary>陣地規則</summary>雙方各有元氣（紅條）。星樞的子過河後，每回合每顆扣你 1 元氣，停進你的九宮再多扣 2；你的子過河也一樣扣星樞。被將軍扣 5。你的子被吃、被將軍，還有星樞招式扣你的元氣，都會被你的防禦力減少（至少扣 1）；過河、九宮、星碎格照原本扣。擒子扣對方元氣（越弱的子吃越強的子扣得越多，一次最多 12），還 +10 靈力；每回合也會自動回靈力（修為越高回越多）。<br>炮隔一子瞄到的敵子會「破甲」，下次打它多扣 1。紫墨星門會在預告的格子落下星樞的援軍，站上去可以堵住。<br>發星光的是陣眼子：用它吃子扣元氣 ×1.5；它被吃，靈力全散、招式停 1 回合。<br>一回合放一招，放招不佔走棋。將死或把星樞元氣打光都算贏；你的元氣歸零就輸，可以重打本關。<br>過關得星塵：三星是過關、陣眼子沒被吃、在規定回合內過關。星塵拿去點天賦（只在黑洞有用）。${typeof bhtlCard==="function"?`<br><button type="button" class="btn ghost" data-tl="1">▶ 再玩一次練習賽</button>`:""}</details></details>`,
+    [later],"prolog bt-sel bt-sel2");   /* 出戰鈕搬到最上面的主卡裡（data-go），底下只留「之後再來」 */
+  if(!m)return;const paint=()=>{m.querySelector(".bt-next").innerHTML=nextHTML();m.querySelector(".bt-cards").innerHTML=cards();m.querySelector(".bt-alts").innerHTML=alts();m.querySelector(".bt-sklist").innerHTML=skHTML();m.querySelector(".bt-sets").textContent=setS()};
+  m.addEventListener("click",e=>{if(e.target.closest("[data-go]")){vibrate(5);m.remove();if(sel==="rd")bhtdRaid(k,cover,pk);else bhtdStart(sel,k,cover,pk);return}
+    const tl=e.target.closest("[data-tl]");if(tl&&typeof bhtlStart==="function"){vibrate(5);m.remove();bhtlStart(k,cover);return}   /* 練習賽卡、規則裡的「再玩一次練習賽」 */
     if(e.target.closest("[data-gsv]")&&typeof gsvSelect==="function"){vibrate(5);m.remove();gsvSelect(k,cover);return}   /* 11/15 星門圍城・試玩（07bhg-gatesiege.js） */
     if(e.target.closest("[data-whl]")&&typeof whlOpen==="function"){vibrate(5);m.remove();whlOpen();return}   /* 11/15 黑洞車輪戰・試玩（07bhw-wheel.js；只有開發者模式看得到卡） */
     if(e.target.closest("[data-tb]")){vibrate(5);m.remove();bhtdTal(()=>bhtdSelect(k,cover,Object.assign({},opt,{rd:sel==="rd"})));return}   /* 🌌 天賦：看完回到這張卡 */
-    const c=e.target.closest(".bt-card");if(c){if(c.dataset.n==="rd"){if(!rdOk){toast("🔒 先破第 1 關，才開星淵急襲");return}vibrate(5);sel="rd";paint();return}
+    const c=e.target.closest(".bt-card");if(c){if(c.dataset.n==="rd"){if(!rdOk){toast("🔒 先破第 1 關，才開星淵急襲");return}vibrate(5);sel="rd";paint();try{m.scrollTo({top:0,behavior:bhtdRM()?"auto":"smooth"})}catch(x){}return}   /* 選了急襲：捲回最上面，看得到主卡換成急襲 */
       const n=+c.dataset.n;if(!bhtdOpenLv(P,n)){toast("🔒 先破第 "+(n-1)+" 關");return}vibrate(5);sel=n;paint();return}
     const l=e.target.closest(".bt-sklist label");if(l){const id=l.dataset.id,s=BHTD.SKM[id];if(s.lv>L){toast(`🔒 修為 Lv ${s.lv} 解鎖「${s.nm}」`);return}e.preventDefault();vibrate(5);if(pk.includes(id)){if(pk.length>1)pk=pk.filter(x=>x!==id)}else if(pk.length<4)pk.push(id);else toast("一場最多帶 4 招");paint();return}
     const f=e.target.closest("[data-fx]");if(f){store.set("bhtdFx",f.dataset.fx);m.querySelectorAll("[data-fx]").forEach(x=>x.classList.toggle("on",x===f))}})}

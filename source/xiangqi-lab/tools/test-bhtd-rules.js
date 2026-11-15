@@ -401,6 +401,6 @@ test("〔原始碼〕畫面：塔防頂部靈力＝藍條＋數字（不再一�
   assert.ok(SRC.includes('<div class="bt-sp" title="靈力 ${td.me.sp}／${td.me.spMax}・每回合回 ${+td.me.spRg||BHTD.SPK}"><i style="width:${Math.round(100*td.me.sp/Math.max(1,td.me.spMax))}%"></i><b><span class="ax-sr">靈力 </span>${td.me.sp}／${td.me.spMax}</b></div>'),"我方靈力條");
   assert.ok(SRC.includes('<b><span class="ax-sr">星樞靈力 </span>${td.en.sp}／${td.en.spMax}</b></span>'),"星樞靈力條");
   assert.ok(!/Array\.from\(\{length:td\.(me|en)\.spMax\}/.test(SRC),"不再畫圓點");assert.ok(SRC.includes("<small>${c} 靈</small>")&&!SRC.includes('"●".repeat(c)'),"招式鈕只寫數字");
-  assert.ok(!SRC.includes('<span class="st">推算 ${ai.depth} 步') && SRC.includes('<small class="ok" aria-hidden="true">${ok}</small>'),"11/15 極簡：關卡卡片只留關名與狀態，推算步數、元氣只寫在讀屏標籤");
+  assert.ok(!SRC.includes('<span class="st">推算 ${ai.depth} 步') && SRC.includes('<b aria-hidden="true">${n}</b><small class="ok" aria-hidden="true">${okS}</small>'),"11/15 極簡、11/16 再縮成小格：關卡只留關號與星數（關名寫在上面的主卡），推算步數、元氣只寫在讀屏標籤");
   assert.ok(SRC.includes("toast(`✦ 帶進 ${Math.ceil(xm/BHTD.SPK)} 點星芒，開局靈力 +${xm}`)"),"星芒幾點、換到幾點靈力");
   assert.ok(SRC.includes("還 +10 靈力；每回合也會自動回靈力（修為越高回越多）。"),"陣地規則")});

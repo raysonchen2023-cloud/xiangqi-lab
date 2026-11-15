@@ -1,7 +1,7 @@
 {
  "ref": "origin/main",
- "commit": "5a4a7711a8476ba66e0c9e312cc9e8ae3e828a7f",
- "madeAt": "2026-11-15T20:15:10.536Z",
+ "commit": "ccf4b080e2d2a7b8e909d6094da75e44dad9c92c",
+ "madeAt": "2026-11-15T20:33:11.910Z",
  "files": {
   "xiangqi-db/m/00-util.js": "local=live",
   "xiangqi-db/m/01-board.js": "local=live",
@@ -210,6 +210,7 @@
   "xiangqi-lab/tools/test-bhtd-combo.js": "local",
   "xiangqi-lab/tools/test-bhtd-r2.js": "local",
   "xiangqi-lab/tools/test-bhtd-rules.js": "local",
+  "xiangqi-lab/tools/test-bhtd-select-1116.js": "local",
   "xiangqi-lab/tools/test-bhtd-view-1115.js": "local",
   "xiangqi-lab/tools/test-bhtl.js": "local",
   "xiangqi-lab/tools/test-blitz.js": "local",
@@ -307,7 +308,7 @@
   "xiangqi-lab/tools/test-starter.js": "local",
   "xiangqi-lab/tools/test-stats-kill.js": "local",
   "xiangqi-lab/tools/test-sw-offline.js": "local",
-  "xiangqi-lab/tools/test-td-orbit.js": "local",
+  "xiangqi-lab/tools/test-td-orbit.js": "live（上一版公開的那份；本機那份跟著還沒發布的程式改過）",
   "xiangqi-lab/tools/test-telemetry.js": "local",
   "xiangqi-lab/tools/test-touch-fixes.js": "local",
   "xiangqi-lab/tools/test-ui-1113.js": "local",
@@ -422,6 +423,7 @@
   "m/05-settings.js",
   "m/07y-hubmap.js",
   "m/07s4-passmap.js",
+  "src/park3d.js",
   "src/sw.js"
  ],
  "absentModules": [],
@@ -466,10 +468,11 @@
   "test-fb-todo.js": "指令排除：要讀管理頁的 Apps Script 原始碼（tools/feedback-api.gs，營運用、不公開），公開副本沒有這個檔",
   "test-party-hero.js": "指令排除：要讀只在開發者電腦與 CDN 的素材與出圖工具（齊轍的模型、立繪原圖、骨架工具），公開副本沒有這些檔",
   "test-party-novel.js": "指令排除：要讀只在開發者電腦與 CDN 的聽書稿（art/canju/yunhe-novel.json），公開副本沒有這個檔",
-  "test-party-wood.js": "指令排除：要讀只在開發者電腦與 CDN 的木棋靈模型與骨架工具，公開副本沒有這些檔"
+  "test-party-wood.js": "指令排除：要讀只在開發者電腦與 CDN 的木棋靈模型與骨架工具，公開副本沒有這些檔",
+  "test-park3d-river-1116.js": "指令排除：黑洞大棋盤「放手回正面、河界不重影」的修改還在開發者電腦上做，對應的程式還沒發布"
  },
- "version": "20261116-0413",
- "indexSha1": "77fb48261202",
+ "version": "20261116-0431",
+ "indexSha1": "bc9319b668ba",
  "toLF": [
   "xiangqi-lab/tools/build-site.js"
  ],
