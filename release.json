@@ -1,8 +1,8 @@
 {
- "version": "20261115-0822",
- "checkedAt": "2026-11-15T00:22:45.964Z",
- "html": "0bae74776f7a",
- "sw": "c43112d68bf5",
+ "version": "20261115-0849",
+ "checkedAt": "2026-11-15T00:49:21.804Z",
+ "html": "73fb304cda56",
+ "sw": "851d8711497d",
  "scripts": 4,
  "modules": {
   "00-util.js": "8c2b1d4f725f",
@@ -91,7 +91,7 @@
   "07w6-sceneinfo.js": "f2eb0a0a8b6d",
   "07w6b-scenedata.js": "834d49f27096",
   "07w6c-scenepoem.js": "8b310494b149",
-  "07w7-seasons.js": "7af79a9028d1",
+  "07w7-seasons.js": "752ffb415d63",
   "07w8-shichen.js": "7e3e39d9d44f",
   "07w9-exits.js": "bd206ffef683",
   "08-scene.js": "86969cd488ba",
