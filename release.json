@@ -1,8 +1,8 @@
 {
- "version": "20261115-1257",
- "checkedAt": "2026-11-15T04:58:39.255Z",
- "html": "143602a39123",
- "sw": "398afe83eb69",
+ "version": "20261115-1318",
+ "checkedAt": "2026-11-15T05:18:27.209Z",
+ "html": "e7f9062ea3a4",
+ "sw": "0401402a257a",
  "scripts": 4,
  "modules": {
   "00-util.js": "8c2b1d4f725f",
@@ -10,7 +10,7 @@
   "02-shell.js": "2dcb96ddf79a",
   "02r-reloadguard.js": "9e8193a7d297",
   "03-home-quiz.js": "24d24f013354",
-  "04-stats.js": "ced17bcabe4d",
+  "04-stats.js": "37145d450acf",
   "04c-weekly.js": "326899d53f7b",
   "05-settings.js": "97279208afa5",
   "05b-save.js": "3295c85291f4",
@@ -29,8 +29,8 @@
   "07bht-td.js": "96880ffb9ebf",
   "07bhtl-tdlearn.js": "f7e849d5aa2b",
   "07bhf-bossfx.js": "8516daf7973e",
-  "07bhg-gatesiege.js": "850c2e6ef8d1",
-  "07bhw-wheel.js": "ff68739e3109",
+  "07bhg-gatesiege.js": "b0a8188b82c9",
+  "07bhw-wheel.js": "9b6a1bb9fda1",
   "07dv-devtest.js": "077191672ec5",
   "07dw-perfhud.js": "a3755bd4af6c",
   "07g-battle.js": "6c2de94250f9",
@@ -114,7 +114,7 @@
   "07lh-lefty.js": "a1e6ad13d30d",
   "07pm-premove.js": "52061c9a3011",
   "07dq-daily.js": "c1076bdd0ee8",
-  "07i18n.js": "6ca9e12448e1",
+  "07i18n.js": "47630bde56bd",
   "07sp-spotfit.js": "f7f205a79901",
   "07fl-fill.js": "a671f9a96f4f",
   "07mnf-mainfilm.js": "59f288419ad1",
@@ -125,14 +125,14 @@
  },
  "differsFromSource": [
   {
+   "module": "04-stats.js",
+   "lines": 6,
+   "sourceModified": "2026-11-15T05:06:55.513Z"
+  },
+  {
    "module": "05-settings.js",
    "lines": 1,
    "sourceModified": "2026-11-15T04:13:23.864Z"
-  },
-  {
-   "module": "07bhg-gatesiege.js",
-   "lines": 44,
-   "sourceModified": "2026-11-15T04:58:18.919Z"
   },
   {
    "module": "07y-hubmap.js",
