@@ -1613,7 +1613,7 @@ html[data-lefty] .tskip{right:auto;left:14px}
       if(!window.caches)return go();caches.keys().then(function(ks){return Promise.all(ks.filter(function(k){return k.indexOf("xqlab-app-")===0}).map(function(k){return caches.delete(k)}))})
         .then(function(){return navigator.serviceWorker&&navigator.serviceWorker.getRegistration()}).then(function(r){return r&&r.update()}).catch(function(){}).then(go)}};setTimeout(chk,4000)})();
 </script>
-<script>window.XQ_OFFLINE=true;window.XQ_BUILD="20261116-0518";</script>
+<script>window.XQ_OFFLINE=true;window.XQ_BUILD="20261116-0600";</script>
 <script src="core.js"></script>
 <script src="engine.js"></script>
 <script src="local.js"></script>
@@ -8652,7 +8652,26 @@ function ptyCss(){if(document.getElementById("ptyCss"))return;const s=document.c
 .pty-m{font-size:13px;color:var(--muted,#6b6257)}
 .pty-xp{height:7px;border-radius:4px;background:#e8dfcf;overflow:hidden;margin:4px 0}.pty-xp b{display:block;height:100%;background:#d4a017}
 .pty-a{grid-column:1/-1;display:flex;flex-wrap:wrap;gap:6px;margin-top:4px}.pty-a .btn{flex:1 1 0;width:auto;min-width:0;min-height:40px;margin:0;padding:6px 8px;font-size:14px;white-space:nowrap}
+.pty-st{grid-column:1/-1;display:grid;grid-template-columns:repeat(4,1fr);gap:6px;margin-top:4px}
+.pty-st>span{display:flex;flex-direction:column;align-items:center;gap:1px;padding:5px 2px;border-radius:8px;background:rgba(128,110,80,.12)}
+.pty-st small{font-size:12px;color:var(--muted,#6b6257);white-space:nowrap}.pty-st b{font-size:16px;line-height:1.2}
+.pty-row{display:flex;align-items:center;gap:8px;width:100%;min-height:44px;margin:0;padding:8px 12px;border:1px solid var(--line,#d8cfbf);border-radius:10px;background:var(--card,#fffaf0);color:inherit;font-size:14px;text-align:left}
+.pty-row>span:first-child{font-weight:700}.pty-row small{color:var(--muted,#6b6257);font-size:12.5px}.pty-row b{margin-left:auto;font-weight:700}.pty-row i{font-style:normal;color:var(--muted,#6b6257)}
+.pty-c .pty-row{grid-column:1/-1;margin-top:2px}.pty-row.top{margin:0 0 10px}
 `;document.head.append(s)}
+/* 開發者 11/16（卡冊截圖）「讓這頁也能看到角色的體力/靈力/攻擊力/防禦力/天賦/招式」（選單：體力、靈力＝每位自己的黑洞數值；天賦是全隊共用的，放卡冊最上面一列）：
+   每張卡多一排四格（體力＝黑洞裡的元氣、靈力＝靈力上限、攻擊力、防禦力，BHTD.stats 照這位的等級；跟我的角色頁「黑洞裡的你」同一組數字）、一列「招式 n／N ›」（點開這位的招式清單）；
+   卡冊最上面一列「天賦（全隊共用）已點亮 n／N ›」開星塵天賦樹，看完回卡冊。黑洞模組沒載入就不畫。 */
+function ptyStatHTML(c,lv){try{if(typeof BHTD==="undefined"||!BHTD.stats||!BHTD.CH||!BHTD.CH[c])return"";const S=BHTD.stats(c,lv),g=(t,v)=>`<span><small>${t}</small><b>${v}</b></span>`;
+  return`<div class="pty-st">${g("體力",S.hp)}${g("靈力",S.sp)}${g("攻擊力",BHTD.atkPt(S.atk))}${g("防禦力",BHTD.defPt(S.def))}</div>`}catch(e){return""}}
+const ptySkPool=c=>{try{return typeof BHTD!=="undefined"&&BHTD.SK?BHTD.SK.filter(s=>s.ch===c):[]}catch(e){return[]}};
+function ptyTalHTML(){try{if(typeof BHTD==="undefined"||!BHTD.TAL||typeof bhtdTal!=="function"||typeof bhtdDust!=="function")return"";const n=(bhtdDust().t||[]).length;
+  return`<button type="button" class="pty-row top" data-top="tal"><span>天賦</span><small>（全隊共用）</small><b><span>已點亮</span> ${n}／${BHTD.TAL.length}</b><i aria-hidden="true">›</i></button>`}catch(e){return""}}
+/* 這位的招式清單：學會的在前（名稱、靈力、效果），還沒學會的灰著寫幾級學會；看完回卡冊（版面沿用角色卡的技能清單 07dgl dglSkills） */
+function ptySkills(c){if(typeof sheet!=="function")return;const lv=ptyLv(c),pool=ptySkPool(c).slice().sort((a,b)=>(a.lv>lv)-(b.lv>lv)||a.lv-b.lv);if(!pool.length)return;try{if(typeof dglCss==="function")dglCss()}catch(e){}ptyCss();
+  let nm=c;try{nm=WX_CHARS[c].n}catch(e){}const lock=()=>{try{return typeof dglIc==="function"?dglIc("lock"):"🔒 "}catch(e){return"🔒 "}};
+  sheet(nm+"的招式",b=>{b.innerHTML=`<div class="dgl-cd">${pool.map(s=>{const lk=s.lv>lv;return`<div class="dgl-ski${lk?" lk":""}"><div class="dgl-skh"><b>${lk?lock():""}${esc(s.nm)}</b><span>${lk?`Lv ${s.lv} <span>學會</span>`:`${s.cost} <span>靈</span>`}</span></div><p>${esc(s.d||"")}</p></div>`}).join("")}<p class="dgl-ks"><span>在黑洞裡使用，一場最多帶 4 招</span></p><button type="button" class="btn dgl-kme" id="ptySkB">‹ 回雲河七星</button></div>`;
+    b.querySelector("#ptySkB").onclick=()=>{closeSheet();setTimeout(ptySheet,60)}})}
 /* 開發者 11/16「角色等級不能超過修為，這句話玩家看不懂」（選單選「直接講結果」）：不解釋規則，直接說夥伴現在最高能練到幾級、怎樣才會再往上。
    同一條規則的另外兩處一起改：卡片上練滿的註記「（到修為上限）」→「（練滿了，等你升級）」；練滿還按＋星輝的提示 →「已經跟你一樣高了，等你升級再練」 */
 const ptyCapSay=L=>L>=100?"夥伴最高練到 Lv 100":`夥伴最高練到 Lv ${L}，你升級才會再往上`;
@@ -8661,16 +8680,19 @@ function ptyCardHTML(P,c,L){const C=(typeof WX_CHARS!=="undefined"&&WX_CHARS[c])
   if(!PTY.has(P,c)){const j=PTY.JOIN[c],at=j&&typeof eraLabel==="function"?eraLabel(j.st):"";const goal=P.hint&&P.hint[c]&&PTY_GOAL[c];
     return`<div class="pty-c lk">${img}<div><div class="pty-n">？？？<small>${esc(C.pc||"")}</small></div><div class="pty-m">${goal?esc(goal):`星槎停靠${esc(at)}時相遇`}</div></div></div>`}
   const lv=PTY.lv(P,c,L),x=P.m[c].xp,b0=PTY.base(lv),nd=PTY.need(lv),top=lv>=L,pct=top?100:Math.max(0,Math.min(100,100*(x-b0)/nd));
-  let sk="";try{if(typeof BHTD!=="undefined"&&BHTD.SK){const pool=BHTD.SK.filter(s=>s.ch===c);sk=`・<span>招式</span> ${pool.filter(s=>s.lv<=lv).length}／${pool.length}`}}catch(e){}
+  const skP=ptySkPool(c),skN=skP.filter(s=>s.lv<=lv).length;   /* 11/16：招式從那一行小字搬成一列可以點的「招式 n／N ›」 */
   const tg=(P.lead===c?`<span class="pty-tag">隊長</span>`:"")+(P.look===c?`<span class="pty-tag look">陪你走</span>`:"");
   return`<div class="pty-c" data-c="${c}">${img}<div><div class="pty-n">${esc(C.n)}<small>${esc(C.nk||"")}</small>${tg}</div>
-    <div class="pty-m">${esc(C.pc||"")}・${esc(era)}・Lv ${lv}${top?(L>=100?"（練滿了）":"（練滿了，等你升級）"):""}${sk}</div><div class="pty-xp" aria-hidden="true"><b style="width:${pct.toFixed(1)}%"></b></div></div>
-    <div class="pty-a">${top?"":`<button type="button" class="btn" data-a="give"${P.pool>0?"":" disabled"}>＋星輝</button>`}${P.lead===c?"":`<button type="button" class="btn ghost" data-a="lead">設為隊長</button>`}${P.look===c?"":`<button type="button" class="btn ghost" data-a="look">帶${ptyTa(c)}出門</button>`}</div></div>`}
+    <div class="pty-m">${esc(C.pc||"")}・${esc(era)}・Lv ${lv}${top?(L>=100?"（練滿了）":"（練滿了，等你升級）"):""}</div><div class="pty-xp" aria-hidden="true"><b style="width:${pct.toFixed(1)}%"></b></div></div>
+    ${ptyStatHTML(c,lv)}${skP.length?`<button type="button" class="pty-row" data-a="sk"><span>招式</span><b>${skN}／${skP.length}</b><i aria-hidden="true">›</i></button>`:""}
+    ${(a=>a?`<div class="pty-a">${a}</div>`:"")(`${top?"":`<button type="button" class="btn" data-a="give"${P.pool>0?"":" disabled"}>＋星輝</button>`}${P.lead===c?"":`<button type="button" class="btn ghost" data-a="lead">設為隊長</button>`}${P.look===c?"":`<button type="button" class="btn ghost" data-a="look">帶${ptyTa(c)}出門</button>`}`)}</div>`}   /* 三顆都不用出現時（練滿的隊長又正陪你走）不留一條空白 */
 function ptySheet(){if(typeof sheet!=="function")return;const P0=ptyGet();if(!P0){try{toast("還沒有開始旅程")}catch(e){}return}ptyCss();
   sheet("🌟 雲河七星",b=>{const draw=()=>{const P=ptyGet(),L=ptyL(),sy=b.scrollTop;
-    b.innerHTML=`<div class="pty-top"><span><span>你的修為</span> <b>Lv ${L}</b></span><span class="pty-pool">✨ <span>星輝</span> <b>${P.pool|0}</b></span></div><p class="pty-m pty-cap">${ptyCapSay(L)}</p>`+PTY.ORDER.map(c=>ptyCardHTML(P,c,L)).join("")+
+    b.innerHTML=`<div class="pty-top"><span><span>你的修為</span> <b>Lv ${L}</b></span><span class="pty-pool">✨ <span>星輝</span> <b>${P.pool|0}</b></span></div><p class="pty-m pty-cap">${ptyCapSay(L)}</p>`+ptyTalHTML()+PTY.ORDER.map(c=>ptyCardHTML(P,c,L)).join("")+
       `<p class="pty-m">下棋、解題、黑洞過關得到的修為，一半自動分給隊上每一位，另一半變成星輝，由你分給想練的人。隊長是黑洞裡放招的那一位；「陪你走」是首頁上跟著你的那一位。</p>`;
+    {const t=b.querySelector('[data-top="tal"]');if(t)t.onclick=()=>{try{vibrate(5)}catch(e){}closeSheet();setTimeout(()=>bhtdTal(()=>ptySheet(),"‹ 回雲河七星"),60)}}   /* 07bht bhtdTal 第二個參數＝返回鈕的字（沒給照舊「回選關」） */
     b.querySelectorAll(".pty-c[data-c]").forEach(el=>{const c=el.dataset.c;el.querySelectorAll("[data-a]").forEach(btn=>btn.onclick=()=>{try{vibrate(5)}catch(e){}const a=btn.dataset.a;
+      if(a==="sk"){closeSheet();setTimeout(()=>ptySkills(c),60);return}
       if(a==="give"){const P2=ptyGet(),L2=ptyL(),lv=PTY.lv(P2,c,L2),want=PTY.base(Math.min(L2,lv+1))-P2.m[c].xp;const g=ptyGive(c,want>0?want:P2.pool);try{toast(g?`✨ 給了 ${g} 星輝`:"已經跟你一樣高了，等你升級再練")}catch(e){}}
       else if(a==="lead"){if(ptySetLead(c))try{toast("隊長換成"+WX_CHARS[c].n)}catch(e){}}
       else if(a==="look"){if(ptySetLook(c)){try{toast(WX_CHARS[c].n+"陪你走")}catch(e){}try{closeSheet()}catch(e){}setTimeout(()=>{try{if(typeof route==="function")route()}catch(e){}},260);return}}   /* 換人後關卡冊、重畫首頁，右上頭像和小人馬上換 */
@@ -12171,7 +12193,7 @@ function bhtdAward(st){const td=st&&st.td;if(!td||!st.result||st.journey==="bh:t
   if(!done){D.d+=du.n;if(!rd&&ns>best)D.s[n]=ns;if(rd){D.r.n++;if(win)D.r.w++}D.g=D.g.concat([st.id]).slice(-20)}
   const A={id:st.id,win,S,dust:du,near,total:D.d,rd,n,r3:+td.r3||0};D.la=A;try{store.set("bhtdDust",D)}catch(e){}return A}
 /* 天賦樹（選關卡片「🌌 天賦」）：4 層 7 個，點亮花星塵；下一層要上一層至少一個；關卡外免費全部重置。back＝回選關卡片 */
-function bhtdTal(back){bhtdCss();
+function bhtdTal(back,backL){bhtdCss();
   const body=()=>{const D=bhtdDust(),sp=BHTD.talSpent(D.t);
     const node=x=>{const on=D.t.includes(x.id),w=on?"":BHTD.talWhy(D.t,x.id,D.d),lk=!on&&w==="先點亮上一層的一個天賦";
       return`<button type="button" class="bt-tn${on?" on":lk?" lk":w?" poor":""}" data-tal="${x.id}" aria-label="${esc(`${x.nm}，${x.d}，${on?"已點亮":`星塵 ${x.cost}`}${w&&!on?"，"+w:""}`)}"><b>${on?"✦ ":lk?"🔒 ":""}${esc(x.nm)}</b><small>${esc(x.d)}</small><i>${on?"已點亮":`<span>星塵</span> ${x.cost}`}</i></button>`};
@@ -12179,7 +12201,7 @@ function bhtdTal(back){bhtdCss();
       [1,2,3,4].map(t=>`<div class="bt-tier"><small>第 ${t} 層</small><div class="bt-trow">${BHTD.TAL.filter(x=>x.t===t).map(node).join("")}</div></div>`).join("")+
       `<p class="bt-trule">要點下一層，先點亮上一層的一個。<br>天賦只在黑洞有用，線上和一般對局不受影響。<br>不在對局裡時，可以免費全部重置，星塵全退。</p>`};
   const m=modal(`<div class="em">🌌</div><h2>星塵天賦</h2><div class="bt-talb">${body()}</div>`,
-    [["‹ 回選關",()=>{if(back)back()}],["↺ 全部重置（星塵全退）",()=>{const D=bhtdDust(),n=BHTD.talReset(D);store.set("bhtdDust",D);toast(n?`↺ 天賦全部重置，退回 ${n} 星塵`:"還沒有點亮的天賦");bhtdTal(back)},true]],"prolog bt-sel bt-tal");
+    [[backL||"‹ 回選關",()=>{if(back)back()}],["↺ 全部重置（星塵全退）",()=>{const D=bhtdDust(),n=BHTD.talReset(D);store.set("bhtdDust",D);toast(n?`↺ 天賦全部重置，退回 ${n} 星塵`:"還沒有點亮的天賦");bhtdTal(back,backL)},true]],"prolog bt-sel bt-tal");
   if(!m)return;m.addEventListener("click",e=>{const b=e.target.closest("[data-tal]");if(!b)return;const id=b.dataset.tal,x=BHTD.TALM[id],D=bhtdDust();if(!x)return;
     if(D.t.includes(id)){toast(`✦ ${x.nm}：${x.d}`);return}const r=BHTD.talBuy(D,id);if(!r.ok){toast("✧ "+r.why);return}
     store.set("bhtdDust",D);try{vibrate([10,40,10])}catch(z){}toast(`✦ 點亮「${x.nm}」：${x.d}`);m.querySelector(".bt-talb").innerHTML=body()})}
@@ -20626,7 +20648,7 @@ function dglCard(){dglCss();let nm="";try{nm=meName()}catch(e){}const Q=new Set(
     const pan=`<section class="dgl-kpan${warn?" dgl-kwarn":""}" aria-label="角色狀態">${red}${xs}${line?`<p class="dgl-kl">${line}</p>`:""}${ad}${ts?`<div class="dgl-kts">${ts.tal}${ts.sk}</div>`:""}</section>`;
     b.innerHTML=`<div class="dgl-cd" data-k="${k}">${hero}${pan}<div class="dgl-kfoot"><button type="button" class="btn dgl-kme" id="dglMe">🙂 我的角色頁</button>${typeof ptySheet==="function"&&typeof journey==="function"&&journey()?`<button type="button" class="btn dgl-kme" id="dglPty">雲河七星</button>`:""}</div>${more}</div>`;
     b.querySelector("#dglMe").onclick=()=>{closeSheet();location.hash="#/me"};{const e=b.querySelector("#dglPty");if(e)e.onclick=()=>{closeSheet();setTimeout(ptySheet,60)}}   /* 11/15 七星改版：七位各自的等級、星輝、隊長在卡冊（07pty-party.js） */
-    b.querySelectorAll("[data-go]").forEach(e=>e.onclick=()=>{try{vibrate(5)}catch(z){}if(e.dataset.go==="tal"){closeSheet();setTimeout(()=>bhtdTal(()=>dglCard()),60)}else dglSkills(lv)});
+    b.querySelectorAll("[data-go]").forEach(e=>e.onclick=()=>{try{vibrate(5)}catch(z){}if(e.dataset.go==="tal"){closeSheet();setTimeout(()=>bhtdTal(()=>dglCard(),"‹ 回我的角色"),60)}else dglSkills(lv)});   /* 11/16：天賦樹的返回鈕照從哪裡進來的寫（原本一律寫「回選關」） */
     b.querySelectorAll(".dgl-kq").forEach(e=>e.onclick=()=>{const id=e.dataset.q,o=!Q.has(id),p=b.querySelector("#dglQ_"+id);if(o)Q.add(id);else Q.delete(id);e.setAttribute("aria-expanded",o?"true":"false");if(p)p.hidden=!o;try{vibrate(5)}catch(z){}});
     b.scrollTop=sy;dglPaint()};
   DGL.cdDraw=draw;draw()})}
