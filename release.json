@@ -1,8 +1,8 @@
 {
- "version": "20261115-2323",
- "checkedAt": "2026-11-15T15:23:36.390Z",
- "html": "9622b31bdded",
- "sw": "d976b52b27f7",
+ "version": "20261116-0353",
+ "checkedAt": "2026-11-15T19:53:12.736Z",
+ "html": "d0040e57fd42",
+ "sw": "754ab995bf42",
  "scripts": 4,
  "modules": {
   "00-util.js": "8c2b1d4f725f",
@@ -132,69 +132,14 @@
    "sourceModified": "2026-11-15T05:38:18.553Z"
   },
   {
-   "module": "05b-save.js",
-   "lines": 9,
-   "sourceModified": "2026-11-15T09:39:50.694Z"
-  },
-  {
-   "module": "06-cpu.js",
-   "lines": 1,
-   "sourceModified": "2026-11-15T13:42:32.584Z"
-  },
-  {
-   "module": "07-legend.js",
-   "lines": 2,
-   "sourceModified": "2026-11-15T10:02:05.179Z"
-  },
-  {
-   "module": "07pty-party.js",
-   "lines": 172,
-   "sourceModified": "2026-11-15T13:02:47.294Z"
-  },
-  {
-   "module": "07f-ship.js",
-   "lines": 4,
-   "sourceModified": "2026-11-15T11:45:53.408Z"
-  },
-  {
-   "module": "07bh-blackhole.js",
-   "lines": 4,
-   "sourceModified": "2026-11-15T09:39:25.781Z"
-  },
-  {
-   "module": "07bht-td.js",
-   "lines": 28,
-   "sourceModified": "2026-11-15T10:07:52.337Z"
-  },
-  {
-   "module": "07bhg-gatesiege.js",
-   "lines": 112,
-   "sourceModified": "2026-11-15T14:29:03.435Z"
-  },
-  {
-   "module": "07bhw-wheel.js",
-   "lines": 8,
-   "sourceModified": "2026-11-15T10:07:52.341Z"
-  },
-  {
    "module": "07y-hubmap.js",
    "lines": 6,
    "sourceModified": "2026-11-15T12:49:16.045Z"
   },
   {
-   "module": "07dgl-stamina.js",
-   "lines": 6,
-   "sourceModified": "2026-11-15T11:24:53.954Z"
-  },
-  {
    "module": "07s4-passmap.js",
    "lines": 1,
    "sourceModified": "2026-11-13T03:19:39.481Z"
-  },
-  {
-   "module": "07stq-starter.js",
-   "lines": 3,
-   "sourceModified": "2026-11-15T09:49:50.142Z"
   }
  ]
 }
