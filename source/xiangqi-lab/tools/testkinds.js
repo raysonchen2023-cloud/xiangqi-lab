@@ -15,6 +15,7 @@ const DIR = __dirname;
 const SKIP = new Set(["test-home-focus.js", "testkinds.js"]);
 /* 11/12 已逐項分類（開發者稽核 story/102_評比灌水誠實稽核.md 第 3 項） */
 const CLASSIFIED = new Set([
+  "test-mathmodel-80.js",   /* 11/15 數學模型（ChatGPT 第三次重評的改善單）：離線工具的資料資格篩選與共同有效盤集合（重現的 score＝999、full:0 兩個漏洞）、模擬比例的 Monte Carlo 區間與固定情境／判定、HAC／區塊重抽離線對照、SK.PICK 與版本雜湊紀錄 mx-manifest、預先驗證方案 v1.1（行為 13、原始碼 2） */
   "test-mathmodel-79.js",   /* 11/15 數學模型驗證閉環（ChatGPT 第二次重評第 2～4 項）：本機影子紀錄與開發者匯出、匿名欄位不變、離線比較 mx-compare.js（完整盤、截斷長局）、Lichess 固定版本的數值與殺棋分界整點、用語統一、階段差異配對估計＋選擇效應修正與模擬（行為 20、混合 1、原始碼 3） */
   "test-mathmodel-1046.js",   /* 11/15 意見表 1046 數學模型（三方審查第一步＋第二步）：影子模式必改 1～4（存檔還原、送殺漏殺、輸棋上限 MXS.lose、k 與門檻）、K 48／32、升段保護、一般棋友 100 人門控、建議先練三級信心、talentCache6（行為 17、混合 4、原始碼 1） */
   "test-i18n.js",   /* 11/13 第 14 輪 F1 英文介面架構（m/07i18n.js；行為 31、混合 2、原始碼 4） */

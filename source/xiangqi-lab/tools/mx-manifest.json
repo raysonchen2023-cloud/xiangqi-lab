@@ -1,0 +1,44 @@
+{
+ "note": "由 tools/mx-manifest.js --write 產生，不要手改。",
+ "at": "2026-11-15",
+ "mxs": {
+  "ver": 3,
+  "sha": "8b4afd9715822db6f9d2ea69f7db56fc68ca70a487419010df783d9a0b8d384a"
+ },
+ "pick": {
+  "ver": 2,
+  "sk": {
+   "WIN": 150,
+   "MIN": 30,
+   "QMIN": 10,
+   "HL": 15,
+   "DEFF": 3,
+   "SD0": 26,
+   "PICK": 2
+  },
+  "sha": "b4d18520278ad237aba64d2dcc726fbc95c08f48d7720a3382387642095a27ba"
+ },
+ "compare": {
+  "ver": 2,
+  "sha": "6dbd666747de52fa879ca5500526a46007b4fed2329c6420e89cb416884c7bc8"
+ },
+ "sim": {
+  "ver": 2,
+  "sha": "4f620acf1610217fd9eb821c0ba5a89732f0e7dc783b1fa854129b1126d009d2"
+ },
+ "docs": {
+  "planVer": "v1.1",
+  "plan": {
+   "file": "story/數學模型_預先驗證方案_v1.1.md",
+   "sha": "2a144dd99b87b0f9a6f6c266bc09c167d4e814d35a75b97fa48d14176adf7356"
+  },
+  "planV1": {
+   "file": "story/數學模型_預先驗證方案_v1.md",
+   "sha": "9bd8eff5eeb7c7384bf3423f56455913bfafcdcfd6ae7efacfe341954dbf9838"
+  },
+  "ref": {
+   "file": "story/數學模型_外部公式參考.md",
+   "sha": "f0acbbc55008e67f78296ca3a6ea1defa8d5298486051d5095d741ed23c114f9"
+  }
+ }
+}

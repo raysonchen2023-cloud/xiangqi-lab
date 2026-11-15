@@ -109,12 +109,13 @@ test("第 2 項：整支工具跑一次（本機匯出檔＋cpu-games.jsonl）�
   L.push(JSON.stringify({...played(404,50,1,"r").cpu,aid:"p1",g:"oldver",mx:2}));L.push(JSON.stringify({...played(405,50,1,"r").cpu,aid:"p1",g:"tst",test:1}));L.push(L[0]);L.push("{壞掉的一行");
   const fl=path.join(dir,"exp.json"),fc=path.join(dir,"cpu.jsonl"),fo=path.join(dir,"out.json");fs.writeFileSync(fl,JSON.stringify(D.mxShExportPack()));fs.writeFileSync(fc,L.join("\n")+"\n");
   const so=cp.execFileSync(process.execPath,[MXC,"--local",fl,"--cpu",fc,"--json",fo],{encoding:"utf8"}),J=JSON.parse(fs.readFileSync(fo,"utf8")).summary;fs.rmSync(dir,{recursive:true,force:true});
-  assert.equal(J.n,38,"5 本機＋30＋3 長局");assert.deepEqual(J.otherVer,{v2:1});assert.equal(J.trunc,3);assert.equal(J.incons,0);
-  assert.match(so,/略過 測試 1、重複 1、盲棋 0、壞行 1/);assert.match(so,/逐步資料被截斷（超過 150 步的長局）：3 盤/);assert.match(so,/## 按終局/);assert.match(so,/## 按段位/);assert.match(so,/## 按局長（總手數）/);assert.match(so,/### 121 手以上/);assert.match(so,/截斷：逐步資料只有前 150 步/);
-  assert.deepEqual(Object.keys(J.byEnd).sort(),["和","贏","輸"].sort());assert.ok(J.byRank["入門以下"]&&J.byRank["業1～業5"]&&J.byRank["業6 以上"]);assert.equal(J.bySrc.local.n,5);assert.equal(J.bySrc.cpu.n,33);
+  /* 11/15 第三次重評後（工具 v2，細節測試在 test-mathmodel-80.js）：資料有效性、納入條件、能不能唯一反推三者分開。本機紀錄沒有存是不是標準開局 → 不進驗證母體，只進描述 */
+  assert.equal(J.total,38,"5 本機＋30＋3 長局");assert.deepEqual(J.otherVer,{v2:1});assert.equal(J.trunc.n,3);assert.equal(J.invalid,0);assert.equal(J.eligible,33);assert.equal(J.ineligible,5);assert.deepEqual(J.excluded.primary,{stdU:5});
+  assert.match(so,/略過 測試 1、重複 1、盲棋 0、壞行 1/);assert.match(so,/逐步資料被截斷的長局（超過 150 步）：3 盤/);assert.match(so,/## 驗證母體：按終局/);assert.match(so,/## 驗證母體：按段位/);assert.match(so,/## 驗證母體：按局長（總手數）/);assert.match(so,/### 121 手以上/);assert.match(so,/## 分母核對/);assert.match(so,/截斷：逐步資料只有前 150 步/);
+  const V=J.verify;assert.deepEqual(Object.keys(V.byEnd).sort(),["和","贏","輸"].sort());assert.ok(V.byRank["入門以下"]&&V.byRank["業1～業5"]&&V.byRank["業6 以上"]);assert.equal(V.bySrc.cpu.n,33);assert.equal(V.bySrc.local,undefined);assert.equal(J.describe.bySrc.local.n,5);assert.equal(J.describe.all.n,38);
   for(const id of["p9/long0","p9/long1","p9/long2"])assert.ok(J.unsure.some(u=>u.id===id&&u.trunc),id+" 要列在「無法精確重算」");
-  assert.equal(J.all.raw.n,J.n-J.all.unsure.raw,"不確定的盤沒有算進 raw 的分布");assert.ok(J.all.unsure.raw>=1);assert.ok(J.all.rawMinusS0.mean>=0&&J.all.s0MinusScore.mean>=0,"raw ≥ s0 ≥ score");
-  assert.ok(J.byEnd["贏"].s0MinusScore.max===0&&J.byEnd["和"].s0MinusScore.max===0,"贏、和的盤沒有輸棋上限，s0＝score");
+  assert.equal(V.all.own.score,33);assert.ok(V.all.own.raw<33,"有的盤 raw 反推不出唯一值");assert.equal(V.all.common,33-J.exclRate.all.unsure);for(const k of["base","raw","s0","score"])assert.equal(V.all[k].n,V.all.common,k+" 的分布要用共同有效盤集合");
+  assert.ok(V.all.rawMinusS0.mean>=0&&V.all.s0MinusScore.mean>=0,"raw ≥ s0 ≥ score");assert.ok(V.byEnd["贏"].s0MinusScore.max===0&&V.byEnd["和"].s0MinusScore.max===0,"贏、和的盤沒有輸棋上限，s0＝score");
 });
 
 // ====================== 第 3 項：外部公式參考（Lichess 固定版本）與邊界 ======================

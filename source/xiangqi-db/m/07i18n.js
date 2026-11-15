@@ -813,6 +813,9 @@ const I18N_EN={
   "直路守口":"Hold the Open File","橫俥回援":"Chariot Across to the Rescue","留一道退路":"Leave a Way Back","交換要道":"Trade for the Key Lane","一俥兩用":"One Chariot, Two Jobs","守關・斷路營":"Gate Boss · Cut-Off Camp",
   "守住直路":"Guard the file","橫線調度":"Shift along the rank","深入要能回來":"Go deep, but get back","兌子的取捨":"When to trade","一步兩用":"One move, two jobs",
   "長驅直入":"Straight Down the File","斷路令":"Cut-Off Order","護陣車":"Guard Chariot",
+  /* 11/15 星門圍城逐關解鎖、三星、困難版：選關的普通／困難、鎖住的原因、三星條件（帶數字的不翻） */
+  "普通":"Normal","困難":"Hard","先破普通版":"Clear Normal first","入侵沒扣到血":"No HP lost to invaders","星樞大招一次都沒中":"Never hit by a Star Core ultimate","沒被奪靈":"No Spirit drained",
+  "俥沒被吃":"No Chariot lost","過關時場上有俥":"A Chariot on the board at the end","部署過後備":"Deployed a reserve","截援一次":"Intercepted once","護陣全部拆掉":"All guards broken",
   "⚠ 星樞預告：長驅直入":"⚠ Star Core warning: Straight Down the File","⚠ 星樞預告：斷路令":"⚠ Star Core warning: Cut-Off Order","長驅直入取消":"Straight Down the File cancelled","斷路令取消":"Cut-Off Order cancelled",
   "重金懸賞":"Bounty","庭院小息":"Courtyard Rest","帥令安軍":"Marshal's Order","當票回春":"Pawn-Ticket Revival","九宮守心":"Palace Heart","鐵壁銅牆":"Iron Wall","仕角守門":"Advisor Gate","銅鎖止步":"Bronze Lock",
   "近侍護帥":"Bodyguard","盾陣回靈":"Shield Spirit","神行百里":"Swift Swap","勇往直前":"Forward Spirit","跑腿賺錢":"Errand Runner","步步為營":"Step by Step","揚州快步":"Yangzhou Quickstep",

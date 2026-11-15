@@ -334,3 +334,8 @@ test("名稱不撞：07bhw-wheel.js 宣告的頂層名字，m/ 和 src/ 其他�
   assert.ok(names.has("WHL")&&names.has("whlOpen")&&names.has("WHL_M"));
   const dirs=["xiangqi-db/m","xiangqi-lab/src"];for(const d of dirs)for(const f of fs.readdirSync(path.join(ROOT,d)).filter(f=>/\.(js|mjs)$/.test(f)&&f!=="07bhw-wheel.js")){const s=rd(d+"/"+f);
     for(const n of names)assert.ok(!new RegExp("(?:^|[\\s;{}(,])(?:const|let|var|function)\\s+"+n.replace(/\$/g,"\\$")+"\\b").test(s),`${d}/${f} 也宣告了 ${n}`)}});
+
+test("〔原始碼〕11/15 開發者決定擋掉星樞長將判負的漏洞：車輪戰三盤（GSV.LV 101～103）也開 arep", () => {
+  const W = require("fs").readFileSync(require("path").join(__dirname, "..", "..", "xiangqi-db", "m", "07bhw-wheel.js"), "utf8");
+  for (const n of [101, 102, 103]) { const i = W.indexOf("    " + n + ":{nm:"), line = i < 0 ? "" : W.slice(i, W.indexOf("\n", i)); assert.ok(line.includes("esk:[],depth:2,rs:8,arep:1,"), "第 " + n + " 盤要有 arep:1：" + line.slice(0, 80)); }
+});
