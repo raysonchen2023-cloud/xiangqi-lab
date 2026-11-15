@@ -120,7 +120,16 @@ var XQNet=(function(){
      選「稱號」時回系統給的稱號（例如「長安小棋童」），選「我取的名字」回空字串＝照舊用自取的名字。存檔裡的名字（xq_me）不動；
      自己畫面上看到的對局（game()、fetchGame()）和自己的聊天，換回自己取的名字（realNm） */
   const pubNm=m=>{try{return typeof window.XQ_PUBNAME==="function"?String(window.XQ_PUBNAME(m)||"").slice(0,16):""}catch(e){return""}};
-  const me=()=>{const m=window.meInfo?meInfo():{id:"anon"+Math.random().toString(36).slice(2,8),name:""};return{id:m.id,name:pubNm(m)||m.name||("棋友"+m.id.slice(0,4))}};
+  /* 評比第 19 輪第 3 項（紅藍隊 R05-wire，威脅模型 I6）：送出端最後一道。對外送的名字（自己的；開局時寫進對局狀態的對方名字；戰績摘要裡的對手名字）
+     用 m/07x4-lobbysafe.js 的 XQ_NAMESAFE（跟顯示端同一個 lbnBad、lbnPick）再檢查一次，不合格改送系統稱號（照代號算，跟別人畫面上看到的那個一樣）。
+     XQ_NAMESAFE 不在：有 XQ_PUBNAME（舊版 07x4，自己的名字它檢查過了）就照舊；兩個都不在（只有 net.js）＝沒有人檢查，自由名字一律不送，改送「棋友＋代號」。
+     只管新送出去的東西：存檔（xq_me、xq_rate）不改，別人已經放在伺服器上的對局狀態也不改（簽名會壞），那些靠顯示端 lbnShow */
+  const nmSafe=()=>{try{const N=window.XQ_NAMESAFE;return N&&typeof N.bad==="function"&&typeof N.pick==="function"?N:null}catch(e){return null}};
+  const outMemo=new Map();
+  const outNm=(id,nm)=>{id=id==null?"":String(id);nm=nm==null?"":String(nm);const d="棋友"+id.slice(0,4);if(!nm)return d;
+    const N=nmSafe();if(!N)return typeof window.XQ_PUBNAME==="function"?nm:d;
+    const q=id+"\n"+nm;let v=outMemo.get(q);if(v==null){try{v=String(N.pick(id,nm,{})||d)}catch(e){v=d}if(outMemo.size>200)outMemo.clear();outMemo.set(q,v)}return v};
+  const me=()=>{const m=window.meInfo?meInfo():{id:"anon"+Math.random().toString(36).slice(2,8),name:""};return{id:m.id,name:outNm(m.id,pubNm(m)||m.name)}};
   const realNm=()=>{let m=null;try{m=window.meInfo?meInfo():null}catch(e){}return m&&m.name||me().name};
   const locG=g=>{if(!g||!g.red||!g.black)return g;const i=me().id,rn=realNm();let o=g;for(const k of["red","black"])if(o[k].id===i&&rn&&o[k].name!==rn){if(o===g)o=Object.assign({},g);o[k]=Object.assign({},o[k],{name:rn})}return o};
   let gvS=null,gvN="",gvL=null;
@@ -226,7 +235,7 @@ var XQNet=(function(){
     R.pts=Math.max(0,R.pts-(+h.d||0));if(R[h.res]>0)R[h.res]--;if(h.k0!=null&&RANKS[h.k0]){R.rk=h.k0;R.pn=h.p0}R.hist.splice(i,1);ls.set("rate",R);pubHist()}
   /* 意見回饋 283：把自己最近 30 盤的摘要公開放在大廳（保留訊息），別人點你的資料卡就能看你的線上棋譜和戰績分析 */
   function pubHist(){if(!cli||!cli.up||selfBan())return;const m=me(),R=rec();   /* 回饋 852：停權中不公開戰績摘要 */
-    cli.pub(`${ROOT}/h/${m.id}`,JSON.stringify({v:1,id:m.id,name:m.name,at:Date.now(),list:R.hist.slice(0,30).map(h=>({gid:h.gid,id:h.rid,opp:h.opp,oid:h.oid,res:h.res,why:h.why,n:h.n,at:h.at,sd:h.sd||null})),prof:(()=>{try{return typeof window.XQ_prof==="function"?window.XQ_prof():null}catch(e){return null}})()}),true)}   /* 意見回饋 307：附上自己的戰力五角形和天賦摘要 */
+    cli.pub(`${ROOT}/h/${m.id}`,JSON.stringify({v:1,id:m.id,name:m.name,at:Date.now(),list:R.hist.slice(0,30).map(h=>({gid:h.gid,id:h.rid,opp:h.opp?outNm(h.oid,h.opp):h.opp,oid:h.oid,res:h.res,why:h.why,n:h.n,at:h.at,sd:h.sd||null})),prof:(()=>{try{return typeof window.XQ_prof==="function"?window.XQ_prof():null}catch(e){return null}})()}),true)}   /* 意見回饋 307：附上自己的戰力五角形和天賦摘要 */
   /* 意見回饋 301：匿名答題結果（題號、對錯、秒數，沒有名字和代號）送到大廳的 irt 頻道，開發者電腦收集後校正題目難度 */
   /* 11/11 隱私文件盤點：家長關掉線上大廳（07x4 把它當成 XQ_SELFBANNED）時，匿名資料（卡關、對局評分、作答…）也不送、不排隊——設定頁說明早就這樣寫 */
   /* 資料保留期限（開發者 11/11）：「📈 匿名送出學習進度」關掉時（05b-save.js 的 window.XQ_ANON_OK 回 false），新手流程、作答、成長曲線不排隊也不送；排隊中的也在送出前再擋一次 */
@@ -331,7 +340,7 @@ var XQNet=(function(){
         if(ok){sgAccepted(x);seeking=0;G=null;enter(x.gid);waitGame(x.gid,true);emit("matched",{name:x.from.name})}}
       else if(x.type==="invite"){if(blk(x.from.id)||selfBan()){const m=me();cli&&cli.pub(`${ROOT}/i/${x.from.id}`,JSON.stringify({type:"decline",gid:x.gid,from:{id:m.id,name:m.name,pts:myPts(),tc:tcPref(),rules:RULE_ID,rs:rsPref()},at:Date.now()}))}else emit("invite",x)}   /* 回饋 841：封鎖的人送來的邀請，不跳視窗、直接婉拒 */
       else if(x.type==="accept"&&pending&&pending.gid===x.gid){const m=me(),auto=pending.auto;pending=null;clearTimeout(pendT);seeking=0;
-        let red={id:m.id,name:m.name,pts:myPts(),pk:PK||undefined},black={id:x.from.id,name:x.from.name,pts:+x.from.pts||0,pk:sgPk(x.from.pk)};if(Math.random()<.5)[red,black]=[black,red];   // 紅黑一律隨機（意見回饋 191）
+        let red={id:m.id,name:m.name,pts:myPts(),pk:PK||undefined},black={id:x.from.id,name:outNm(x.from.id,x.from.name),pts:+x.from.pts||0,pk:sgPk(x.from.pk)};if(Math.random()<.5)[red,black]=[black,red];   // 紅黑一律隨機（意見回饋 191）
         const tc=tcPref(),now=Date.now();
         G={rules:RULE_ID,rc:netRc(x.from.rs),gid:x.gid,id:new Date().toISOString().replace(/[:.]/g,"-").slice(0,19),rev:1,red,black,moves:[],result:null,draw:null,at:now,tc,clk:{r:tc*60000,b:tc*60000},tk:now,tkN:0};
         arr={n:0,t:now};myStart=G.gid+"|"+G.id;   /* 11/13（Android 三方實測 P2 之後發現）：開局的這一方以前沒記「這一手從什麼時候起算」（arr），turnAt 一直回「現在」：自己是紅方時每步剩餘停在 3:00、對方合理判超時也不收（分岔）；自己是黑方時紅方不走永遠判不了超時。開局就記；自己是黑方時再照回音（ackTurn）往後挪 */

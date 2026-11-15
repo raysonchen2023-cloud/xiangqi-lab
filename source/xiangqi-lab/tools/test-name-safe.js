@@ -16,7 +16,7 @@ const ESC_SRC = line(UTIL, "const esc=");
 const PURE = [ESC_SRC, line(SAFE, "const LBS_PLACE="), line(SAFE, "const LBS_ROLE="), line(SAFE, "function lbsHash("), line(SAFE, "const lbsTitleAt="),
   cut(SAFE, "/* ---------- 紅藍隊 R05", "/* ---------- 名字安全顯示：以上", "07x4 的名字安全顯示")].join("\n");
 const J = x => x === undefined ? x : JSON.parse(JSON.stringify(x));
-const T = (() => { const ctx = {}; vm.createContext(ctx); vm.runInContext(PURE + "\n;this.T={esc,lbnBad,lbnPick,lbnIsTitle,lbnTitleOf,lbsTitleAt,lbsHash,LBN_WHY,LBS_PLACE,LBS_ROLE,LBN_BAD_WORDS};", ctx); return ctx.T })();
+const T = (() => { const ctx = {}; vm.createContext(ctx); vm.runInContext(PURE + "\n;this.T={esc,lbnBad,lbnPick,lbnIsTitle,lbnTitleOf,lbsTitleAt,lbsHash,LBN_WHY,LBS_PLACE,LBS_ROLE,LBN_BAD_WORDS,lbnWords,lbnStrip,lbnLeet,lbnZy};", ctx); return ctx.T })();
 
 /* 惡意名字案例庫：[名字, 預期原因]（原因照 lbnBad 檢查的先後：len、invis、empty、mark、html、url、mail、digit、contact、imp、rude） */
 const BAD = [
@@ -44,7 +44,15 @@ const BAD = [
   ["asshole", "rude"], ["dumbass", "rude"], ["shit", "rude"], ["Bullshit", "rude"], ["shitty", "rude"], ["ass", "rude"], ["kiss my ass", "rude"], ["a.s.s", "rude"],
   ["cunt", "rude"], ["pussy", "rude"], ["dickhead", "rude"], ["penis", "rude"], ["porn", "rude"], ["sex", "rude"], ["SexyGirl", "rude"], ["sexy girl", "rude"],
   ["slut", "rude"], ["whore", "rude"], ["nigger", "rude"], ["faggot", "rude"], ["retard", "rude"], ["Nazi", "rude"], ["Hitler", "rude"], ["idiot", "rude"],
-  ["moron", "rude"], ["STFU", "rude"], ["小明ass", "rude"], ["boobs", "rude"], ["rape", "rude"], ["killyourself", "rude"]
+  ["moron", "rude"], ["STFU", "rude"], ["小明ass", "rude"], ["boobs", "rude"], ["rape", "rude"], ["killyourself", "rude"],
+  /* 評比第 19 輪第 3 項（紅藍隊 R05-bypass）：諧音、注音、形近字、拆字、數字符號代字母。前 18 個就是 redblue-cases.js 的 NAME_BYPASS */
+  ["淦你娘", "rude"], ["干你娘", "rude"], ["ㄍㄢˋ你娘", "rude"], ["phuck", "rude"], ["fuk u", "rude"], ["sh1t", "rude"], ["a$$hole", "rude"], ["b1tch", "rude"],
+  ["賴我", "contact"], ["ㄌㄞˊ我", "contact"], ["賴：abc", "contact"], ["電報小明", "contact"], ["TG小明", "contact"], ["Iine小明", "contact"], ["1ine小明", "contact"],
+  ["管里員", "imp"], ["Adm1n", "imp"], ["4dmin", "imp"],
+  ["开發者", "imp"], ["開発者", "imp"], ["係統公告", "imp"], ["公吿", "imp"], ["宮方", "imp"], ["Offic1al", "imp"], ["m0derator", "imp"],
+  ["加ㄌㄞˋ", "contact"], ["賴ID小明", "contact"], ["我的賴", "contact"], ["＋賴 abc", "contact"], ["L1NE小明", "contact"], ["tg:abc", "contact"], ["电报", "contact"],
+  ["S H 1 T", "rude"], ["s.h.1.t", "rude"], ["5hit", "rude"], ["a55hole", "rude"],["b!tch", "rude"], ["p0rn", "rude"], ["ㄎㄠˋㄅㄟˇ", "rude"], ["ㄍㄢ ㄋㄧˇ ㄋㄧㄤˊ", "rude"],
+  ["靠腰", "rude"], ["草尼馬", "rude"], ["艹你", "rude"], ["弓雖女干", "rude"], ["淦林娘", "rude"], ["fuk ya", "rude"], ["phuk", "rude"], ["fukyou", "rude"]
 ];
 /* 正常但容易誤擋的名字（不雅字詞清單 0 誤擋）：中文的單字（幹、操、屌…）出現在正常詞裡；英文 Scunthorpe 問題（短字藏在長字裡） */
 const NEAR = ["能幹", "幹部", "樹幹", "才幹", "苦幹實幹", "幹勁十足", "小明很能幹", "體操", "操場", "操盤手", "情操高尚", "早操", "雞排", "雞腿飯", "小雞", "雞蛋糕",
@@ -54,7 +62,10 @@ const NEAR = ["能幹", "幹部", "樹幹", "才幹", "苦幹實幹", "幹勁十
   "assassin", "Class", "Glass", "Bass", "Cassie", "Assad", "Sussex", "Essex", "Middlesex", "Sexton", "Sextant", "Dickens", "Dickson", "Dick Chen", "Scunthorpe",
   "Penistone", "Hancock", "Peacock", "Hitchcock", "Cockburn", "Cocktail", "Ashita", "Matsushita", "Shiitake", "Arsenal", "Analyn", "Canal", "Grape", "Drape",
   "Rapeseed", "Nazir", "Fagan", "Titus", "Tito", "Pussycat", "Cumming", "Moroni", "Idiotes", "Hello Kitty", "Shih Tzu", "Twain", "Fuk Wing", "Kao", "Ho Chen",
-  "Wanda", "Bitcoin", "Pornchai", "Therapist", "Grassy", "Kassandra", "Massimo", "Lassie", "Harassment"];
+  "Wanda", "Bitcoin", "Pornchai", "Therapist", "Grassy", "Kassandra", "Massimo", "Lassie", "Harassment",
+  /* 評比第 19 輪第 3 項：容易被新加的規則（賴、注音、數字符號代字母、形近字、諧音詞組）誤擋的正常名字；完整 231 個在 redblue-cases.js 的 NAME_GOOD_MORE */
+  "賴小明", "賴Kevin", "賴Ida", "信賴我", "耍賴我最行", "賴床大王", "上官芳", "里長伯", "電視報", "TGIF", "MTG玩家", "Fukuoka", "Fukushima", "Fuku", "Phuket", "Phuc",
+  "A55", "F4", "R2D2", "Sh1rt", "C0ckpit", "Cl4ss", "M4ria", "P!nk", "Ke$ha", "Messi10", "Ivan", "Iris", "LG粉絲", "Milford", "ㄍㄢ", "ㄌㄞ", "ㄐㄧ排", "ㄘㄠ莓", "干貝", "不干我事", "江淦", "靠山", "草莓", "弓箭手"];
 /* 正常名字：中文名、英文名、帶「小」「阿」的暱稱、emoji、全形、日韓文、App 自己給的預設名字 */
 const GOOD = ["小明", "阿華", "小美", "阿嬤愛下棋", "王小明", "陳大文", "李阿伯", "林家小妹", "象棋小王子", "楚河漢界", "小兵過河", "炮打翻山", "馬走日字",
   "阿公的棋友", "小胖", "阿肥", "阿偉", "小寶貝", "棋聖", "臥龍先生", "張三丰", "歐陽小鳳", "一心一意", "三三", "七七", "九九八十一", "一二三木頭人", "十全十美",
@@ -119,6 +130,25 @@ test("〔原始碼〕不雅字詞清單 LBN_BAD_WORDS：獨立常數、註解寫
   const en = [...B.enAny.source.split("|"), ...B.enW.source.split("|")];
   assert.ok(en.length >= 40, "英文詞數：" + en.length);
   assert.ok(!B.enAny.source.split("|").some(w => /^(?:ass|sex|cunt|cock|tit|anal|rape|nazi|shit|dick|porn|fag)$/.test(w)), "會藏在正常英文字裡的短字要放 enW（要字邊界）");
+});
+test("① 第 19 輪 R05-bypass：數字符號換回字母（lbnLeet）——字母少於 2 個或比數字符號少的不換；正常英文名字每次換一個字母成數字符號（a→4、e→3、i→1、o→0、s→5、t→7、s→$、i→!），換回字母這一步沒有多擋任何一個；英文不雅字換同樣寫法照樣擋", () => {
+  for (const [a, one, b] of [["m4ria", "i", "maria"], ["sh1t", "i", "shit"], ["1ine", "l", "line"], ["1ine", "i", "iine"], ["a$$hole", "i", "asshole"], ["a55", "i", "a55"], ["f4", "i", "f4"], ["2b", "i", "2b"],
+    ["gt500", "i", "gt500"], ["messi10", "i", "messiio"], ["小明4dmin", "i", "小明admin"], ["kevin", "i", "kevin"], ["0912", "i", "0912"]]) assert.equal(T.lbnLeet(a, one), b, a);
+  assert.equal(T.lbnZy("ㄍㄢˋ你ㄋㄧㄤˊ"), "幹你娘"); assert.equal(T.lbnZy("ㄅㄆㄇ"), "ㄅㄆㄇ");
+  const MAP = [["a", "4"], ["e", "3"], ["i", "1"], ["o", "0"], ["s", "5"], ["t", "7"], ["s", "$"], ["i", "!"]];
+  const vars = nm => { const out = []; for (const [a, b] of MAP) for (let i = 0; i < nm.length; i++) if (nm[i].toLowerCase() === a) out.push(nm.slice(0, i) + b + nm.slice(i + 1)); return out };
+  const en = [...NEAR, ...GOOD].filter(n => /^[A-Za-z .-]+$/.test(n)), okV = en.flatMap(vars);
+  assert.ok(en.length >= 70 && okV.length >= 300, "正常英文名字 " + en.length + " 個、變體 " + okV.length + " 個");
+  /* 數字、符號本來就算字的邊界（原本就有的規則：ass4ssin 的 ass 後面是 4、Su5sex 的 sex 前面是 5，照原樣比就擋）。
+     這裡查的是第 19 輪加的「換回字母再比」沒有多擋：被擋的每一個，照原樣比（lbnWords）本來就擋 */
+  const plain = v => { const n = v.normalize("NFKC").toLowerCase(); return T.lbnWords(n, T.lbnStrip(n)) };
+  const wrong = okV.filter(v => T.lbnBad(v) && !plain(v)).map(v => v + "→" + T.lbnBad(v));
+  assert.deepEqual(wrong, [], "換回字母以後才被擋的：" + wrong.join("、"));
+  assert.ok(okV.filter(v => !T.lbnBad(v)).length >= okV.length * 0.9, "九成以上的寫法照原樣顯示");
+  const rude = BAD.filter(x => x[1] === "rude" && /^[A-Za-z]+$/.test(x[0]) && x[0].length >= 3).map(x => x[0]), badV = rude.flatMap(vars);
+  assert.ok(rude.length >= 25 && badV.length >= 60, "英文不雅字 " + rude.length + " 個、變體 " + badV.length + " 個");
+  const miss = badV.filter(v => !T.lbnBad(v));
+  assert.deepEqual(miss, [], "沒擋到：" + miss.join("、"));
 });
 test("① 稱號：同一個代號每次都一樣、跟自己選稱號的第一個候選相同；兒童在看一律稱號；自己照原樣；沒名字沒代號就空白", () => {
   const id = "a1b2c3d4e5", t = T.lbnTitleOf(id, "x");
@@ -198,6 +228,16 @@ test("② 自動改送稱號：XQ_PUBNAME（net.js 在線狀態、邀請、戰�
   P.R.setMyName("小華"); assert.equal(P.st.pub, 2, "合格改合格：對外名字變了也重送");
   P.R.setMyName("小華"); assert.equal(P.st.pub, 2, "名字沒變不重送");
   P.R.setMyName("官方客服"); assert.equal(P.window.XQ_PUBNAME(P.meInfo()), t, "又改成不合格：送原本那個稱號"); assert.equal(P.st.pub, 3);
+});
+test("② 第 19 輪 R05-wire：整支 07x4 載入後有 window.XQ_NAMESAFE（src/net.js 送出端最後一道用的），跟顯示端 lbnShow、自己名字的 XQ_PUBNAME 是同一套判定", () => {
+  const X = phone({ ls: { xq_pubNm: '"n"' } }), N = X.window.XQ_NAMESAFE;
+  assert.equal(typeof N.bad, "function"); assert.equal(typeof N.pick, "function");
+  for (const nm of ["sh1t", "賴我", "管里員", "ㄍㄢˋ你娘", "加我LINE 12345", "小明", "賴小明", "A55", "Fuk Wing", "棋友28AB", "長安小棋童"]) {
+    assert.equal(N.pick("p1", nm, {}), X.R.lbnShow("p1", nm), nm + "：送出端和顯示端給同一個名字");
+    const me = phone({ myName: nm, ls: { xq_pubNm: '"n"' } });
+    assert.equal(!!me.window.XQ_NAMESAFE.bad(nm), !!me.window.XQ_PUBNAME(me.meInfo()), nm + "：XQ_PUBNAME（自己的名字要不要改送稱號）和 XQ_NAMESAFE 判定一樣");
+  }
+  assert.match(fs.readFileSync(path.join(__dirname, "../src/net.js"), "utf8"), /const N=window\.XQ_NAMESAFE;/, "net.js 送出端問 XQ_NAMESAFE");
 });
 test("② 稱號三選一：線上沒人用的 3 個候選（第一組含現在的稱號）、「換一組」換 3 個新的、點一個存進 xq_pubTitle 並重送；撞名自動換照舊", () => {
   const busy = []; for (let i = 0; i < 576; i += 2) busy.push({ id: "o" + i, name: phone().R.lbsTitleAt(i) });   /* 線上一半的稱號有人用 */

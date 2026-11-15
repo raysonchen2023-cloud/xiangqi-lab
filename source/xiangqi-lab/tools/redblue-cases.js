@@ -201,31 +201,115 @@ function nameSafe() {
     cut(SAFE, "/* ---------- 紅藍隊 R05", "/* ---------- 名字安全顯示：以上")].join("\n");
   const ctx = {}; vm.createContext(ctx); vm.runInContext(PURE + "\n;this.T={esc,lbnBad,lbnPick};", ctx); return ctx.T;
 }
-/* 攻擊輸入：諧音、注音、拆字、數字代字母、形近字。目前的檢查（lbnBad）沒有諧音字典，這些都會照原樣顯示 */
+/* 攻擊輸入：諧音、注音、拆字、數字代字母、形近字。評比第 19 輪第 3 項以前 lbnBad 沒有諧音字典，這 18 個都照原樣顯示；
+   第 19 輪起 lbnBad 會先把注音、數字符號換回字再比一次，詞表加了諧音、形近字、拆字的詞組（m/07x4-lobbysafe.js 的 lbnAlt、LBN_BAD_WORDS、LBN_RE）。這 18 個一個字都沒改 */
 const NAME_BYPASS = ["淦你娘", "干你娘", "ㄍㄢˋ你娘", "phuck", "fuk u", "sh1t", "a$$hole", "b1tch", "賴我", "ㄌㄞˊ我", "賴：abc", "電報小明", "TG小明", "Iine小明", "1ine小明", "管里員", "Adm1n", "4dmin"];
+/* 同一類的其他寫法（不在最初那 18 個裡：修的是規則，不是只背那 18 個） */
+const NAME_BYPASS_MORE = ["sh!t", "5hit", "b!tch", "8itch", "@sshole", "a55hole", "f4ggot", "n1gga", "p0rn", "s3x", "t1ts", "b00bs", "c0ck", "s.h.1.t", "S H 1 T", "ｓｈ１ｔ", "SH1T",
+  "ㄍㄢˋ妳", "ㄍㄢ ㄋㄧˇ ㄋㄧㄤˊ", "ㄎㄠˋㄅㄟˇ", "ㄐㄧ ㄅㄞ", "ㄘㄠˋ你媽", "加ㄌㄞˋ", "ㄐㄧㄚ我", "ㄌㄞˋ我abc",
+  "賴ID小明", "賴id:abc", "我的賴", "+賴", "＋賴 abc", "賴＝abc", "賴 : abc", "加我賴",
+  "@dmin", "adm!n", "0fficial", "Offic1al", "m0derator", "deve1oper", "L1NE小明", "l1ne abc", "|ine小明", "T.G 小明", "tg:abc", "電報abc",
+  "管裡員", "管哩員", "開発者", "係統公告", "公吿欄", "宮方", "倌方客服",
+  "淦你", "淦林娘", "干妳娘", "贛你娘", "靠腰", "靠邀喔", "草尼馬", "艹你", "弓雖女干", "phuk", "phuq u", "fuq", "fuk  u", "fuk.u", "fuk ya", "fukyou", "fuk off", "Fuk U"];
+/* 容易被這些新規則誤擋的正常名字：姓賴的、信賴、上官芳、日本和泰國地名、型號和背號、字母數字混寫的英文名、I 開頭的英文名、注音暱稱、有「干」「靠」「草」的正常詞 */
+const NAME_GOOD_MORE = ["賴小明", "賴Kevin", "賴清德", "賴Ida", "小賴", "阿賴", "賴皮鬼", "信賴我", "依賴", "耍賴我最行", "別賴我", "無賴", "賴床大王", "賴在家", "姓賴",
+  "上官芳", "官芳", "里長伯", "管家", "管樂團", "理員外", "發者", "開發區", "系列", "統一", "告白", "公雞", "公主", "宮廷", "客人", "服務生", "站台", "長官",
+  "電力公司", "報紙", "電視報", "發電廠", "報到", "TGIF", "Tgood", "Stg", "MTG玩家", "tgv",
+  "Fukuoka", "Fukushima", "Fuku", "Fuk Wing", "Fukui", "Phuket", "Phuc", "Phuong", "Tofu King", "Kungfu", "Fuka",
+  "A55", "F4", "2B", "R2D2", "C3PO", "H2O", "O2", "U2", "3Q", "B612", "7-11", "No1", "K1", "F1賽車", "MP3", "PS5", "X1", "4ever", "2pac", "Mr.3", "E.T", "S.H.E", "5G", "4G", "1G", "A4", "B4", "3M",
+  "Messi10", "Kobe24", "Curry30", "LeBron23", "Tom2", "Amy07", "阿明88", "小華99", "棋王007", "Leo7", "Sam5", "Max1", "Ben10", "Ace1", "Neo1",
+  "Le0", "M4ria", "J0hn", "S1mon", "N1ck", "D4vid", "Tim3", "Ch3ss", "Xiangq1", "L1n", "Ch1n", "An1ta", "T1ger", "As1a", "Gr4ss", "P4ss", "B4ss", "Cl4ss", "Mass1mo", "T1tan", "T1to",
+  "H1tch", "B1t", "B1tcoin", "R1ch", "Sh1p", "Sh1rt", "Sc0tt", "C0co", "C0ckpit", "P!nk", "Ke$ha", "A$AP", "Hello!", "Wow!!", "Go!Go!", "Yes!", "Hi!", "OK!", "Nice1", "Cool5", "Class5", "Bass5", "Pass3",
+  "Ian", "Iris", "Ivy", "Ivan", "Isaac", "Ida", "III", "AI棋手", "IU", "MIT", "NIKE", "TITAN", "IBM", "ICE", "Irene", "Ike", "Illinois", "Iowa", "Inter", "IKEA", "Idol", "IQ180",
+  "LG粉絲", "LGBT", "lg", "Olga", "Algae", "Lily", "Bill", "Will", "Milk", "Silk", "Film", "Golf", "Wolf", "Elf", "Half", "Self", "Alf", "Ralf", "Milford", "Milfoil",
+  "ㄅㄆㄇ", "ㄏㄏ", "ㄎㄎ", "ㄅ一ㄤˋ", "好ㄘ", "ㄌㄞ", "ㄍㄢ", "ㄋㄧ好", "ㄇㄚ麻", "ㄨㄛ愛棋", "ㄐㄧ排", "ㄎㄠ肉", "ㄅㄟ極熊", "ㄅㄞ託", "ㄌㄧㄣ先生", "ㄐㄧㄚ油", "ㄉㄧㄠ魚", "ㄘㄠ莓",
+  "干貝", "干杯", "不干我事", "若干", "餅干", "淦", "江淦", "贛州", "贛江", "靠山", "靠得住", "可靠", "腰果", "邀請", "草莓", "小草", "馬尼拉", "尼馬", "弓箭手", "女王", "美女", "干將莫邪",
+  "將軍", "車馬炮", "老帥", "小卒過河", "象棋高手", "飛相局", "仙人指路", "中炮對屏風馬"];
 /* 對照：已經擋得住的惡意名字（要換成稱號）、正常名字（要照原樣） */
 const NAME_KNOWN_BAD = ["加我LINE 12345", "www.xx.com", "abc@gmail", "0912345678", "官方客服", "幹你娘", "fuck", "<img src=x>", "小​明"];
 const NAME_GOOD = ["小明", "阿嬤愛下棋", "楚河漢界", "能幹", "體操", "assassin", "Scunthorpe", "Dickens", "Hello Kitty", "棋聖"];
 async function nameBypass() {
-  const T = nameSafe(), pass = NAME_BYPASS.filter(n => !T.lbnBad(n));
-  return { tried: NAME_BYPASS.length, shownAsIs: pass, attackSucceeded: pass.length > 0 };
+  const T = nameSafe(), all = NAME_BYPASS.concat(NAME_BYPASS_MORE), pass = all.filter((n, i) => !T.lbnBad(n) || T.lbnPick("p" + i, n, {}) === n);
+  return { tried: all.length, first18: NAME_BYPASS.length, shownAsIs: pass, attackSucceeded: pass.length > 0 };
+}
+async function nameBypassControl() {
+  /* 對照：R05-display 的正常名字＋容易被新規則誤擋的正常名字，都要照原樣（0 誤擋） */
+  const T = nameSafe(), all = NAME_GOOD.concat(NAME_GOOD_MORE), wrong = all.filter(n => T.lbnBad(n) || T.lbnPick("p1", n, {}) !== n).map(n => n + "→" + T.lbnBad(n));
+  return { good: all.length, goodBlocked: wrong, ok: !wrong.length };
 }
 async function nameControl() {
   const T = nameSafe(), missed = NAME_KNOWN_BAD.filter(n => !T.lbnBad(n)), wrong = NAME_GOOD.filter(n => T.lbnBad(n));
   return { knownBad: NAME_KNOWN_BAD.length, knownBadMissed: missed, good: NAME_GOOD.length, goodBlocked: wrong, ok: !missed.length && !wrong.length };
 }
+/* R05-wire：送出端。評比第 19 輪第 3 項以前，net.js 只問外層（07x4 的 XQ_PUBNAME）；外層沒擋（或根本沒有外層）時，meInfo 給什麼名字就送什麼。
+   第 19 輪起 net.js 的 me()、開局、戰績摘要都過 outNm（07x4 的 XQ_NAMESAFE＝顯示端同一個 lbnBad、lbnPick）。
+   這裡跑的手機都是真正的 src/net.js。「改過的 App」用「沒有名字檢查、外層說名字沒問題」的手機模擬（它原樣送出不合格的名字）。
+   伺服器是公開的 MQTT、不檢查內容：改過的 App 自己送什麼，別人的 App 擋不了它送，只能不幫它轉送、顯示時換掉（見每一段的紀錄和案例表的說明） */
+const WIRE_BAD = "加我LINE 12345";
+const wireLeaks = (B, P, bad) => [...new Set(B.log.filter(l => l.from === P.tag && String(l.payload).includes(bad)).map(l => l.topic.split("/")[2]))];
+const wireRet = (h, B, k, id) => JSON.parse(B.retained.get(`${h.ROOT}/${k}/${id}`) || "{}");
+async function wireStart(S, A, K) {
+  let inv = null; K.net.on("invite", x => { inv = x });
+  A.net.invite({ id: K.id, name: "" }); await S.run(500); if (!inv) return null;
+  const from = H.J(inv.from); K.net.respond(inv, true); await S.run(1500);
+  const g = A.net.game(); return g ? { gid: g.gid, from } : null;
+}
+async function wireResign(S, loser, winner) {   /* 各走一步（沒走滿兩步的盤不計分、不進戰績摘要），再由 loser 認輸 */
+  const red = loser.net.side() === "r" ? loser : winner, black = red === loser ? winner : loser;
+  H.move(red, "h2e2"); await S.run(2000); H.move(black, "h7e7"); await S.run(2000);
+  const w = winner.net.side(); loser.net.update(n => { n.result = { w, why: (w === "r" ? "黑" : "紅") + "方認輸" }; n.draw = null }); await S.run(5000); winner.net.pubProf(); await S.run(1500) }
 async function nameWire() {
-  /* 送出端不擋：改過的 App（或還沒更新的舊版）把不合格的名字照樣送上大廳；伺服器（MQTT）不檢查，舊版 App 收到就照原樣顯示 */
-  const h = harness(), { S, B } = h.world(), bad = "加我LINE 12345";
-  const P = h.phone(S, B, { id: "eeee5555", name: bad }); P.net.start(); await S.run(2500);
-  const u = JSON.parse(B.retained.get(`${h.ROOT}/u/eeee5555`) || "{}");
-  return { sentName: u.name === bad ? "（原樣送出）" : u.name, attackSucceeded: u.name === bad };
+  const h = harness(), T = nameSafe(), bad = WIRE_BAD, out = {};
+  { /* ① 正式 App 的組合（net.js＋07x4 的名字檢查），外層沒擋（沒有 XQ_PUBNAME，meInfo 直接給不合格的名字）：上線、邀請、開局、聊天、戰績摘要，這支手機送出去的每一則都不能有那個名字 */
+    const { S, B } = h.world(), P = h.phone(S, B, { id: "eeee5555", name: bad }), K = h.phone(S, B, { id: "bbbb2222", name: "乙" });
+    P.net.start(); K.net.start(); await S.run(2500);
+    const u = wireRet(h, B, "u", P.id), g = await wireStart(S, P, K);
+    if (!g) throw new Error("①開不了局，重現無效");
+    P.net.say(P.net.side(), "你好"); await S.run(500); await wireResign(S, K, P);
+    const G = B.game(g.gid), mine = G.red.id === P.id ? G.red : G.black;
+    out.app = { presence: u.name, sameAsDisplay: u.name === T.lbnPick(P.id, bad, {}), inviteFrom: g.from.name, inGame: mine.name, summary: wireRet(h, B, "h", P.id).name, leakedOn: wireLeaks(B, P, bad) };
+  }
+  { /* ② 只有 net.js（沒有 07x4 的名字檢查、也沒有 XQ_PUBNAME）：沒有人檢查，自由名字一律不送，改送「棋友＋代號」 */
+    const { S, B } = h.world(), P = h.phone(S, B, { id: "eeee5555", name: bad, noNameSafe: true }); P.net.start(); await S.run(2500);
+    out.bare = { presence: wireRet(h, B, "u", P.id).name, leakedOn: wireLeaks(B, P, bad) };
+  }
+  { /* ③ 改過的 App（X）原樣送出不合格的名字、接受小明的邀請：小明的手機開局時不把那個名字寫進公開的對局狀態，戰績摘要也不帶 */
+    const { S, B } = h.world(), X = h.phone(S, B, { id: "cccc3333", name: bad, noNameSafe: true, ctx: { XQ_PUBNAME: () => "" } }), P = h.phone(S, B, { id: "ffff6666", name: "小明" });
+    X.net.start(); P.net.start(); await S.run(2500);
+    const sent = wireRet(h, B, "u", X.id).name === bad, g = await wireStart(S, P, X);
+    if (!sent || !g) throw new Error("③改過的 App 沒有原樣送出、或開不了局，重現無效");
+    await wireResign(S, X, P);
+    const G = B.game(g.gid), his = G.red.id === X.id ? G.red : G.black, L = wireRet(h, B, "h", P.id).list || [];
+    out.relay = { attackerSentAsIs: sent, nameInGame: his.name, sameAsDisplay: his.name === T.lbnPick(X.id, bad, {}), oppInSummary: L[0] && L[0].opp, leakedOn: wireLeaks(B, P, bad) };
+  }
+  { /* ④ 改過的 App 當邀請的人（對局狀態是它開的，裡面它自己的名字是它寫的）：小明的戰績摘要不帶那個名字。
+       擋不了的照實記在 stateRelayed：小明每走一步、結束時會把整份對局狀態重送，裡面有對方自己寫的名字（簽名和雜湊鏈算到名字，不能改） */
+    const { S, B } = h.world(), X = h.phone(S, B, { id: "cccc3333", name: bad, noNameSafe: true, ctx: { XQ_PUBNAME: () => "" } }), P = h.phone(S, B, { id: "ffff6666", name: "小明" });
+    X.net.start(); P.net.start(); await S.run(2500);
+    const g = await wireStart(S, X, P); if (!g) throw new Error("④開不了局，重現無效");
+    await wireResign(S, X, P);
+    const L = wireRet(h, B, "h", P.id).list || [], lk = wireLeaks(B, P, bad), saved = P.hist()[0] || {};
+    out.relay2 = { savedOppUnchanged: saved.opp === bad, oppInSummary: L[0] && L[0].opp, summaryLeaked: lk.includes("h") || lk.includes("u") || lk.includes("i"), stateRelayed: lk.includes("g") };
+  }
+  const leaked = out.app.presence === bad || out.app.leakedOn.length > 0 || out.bare.leakedOn.length > 0 || out.relay.leakedOn.length > 0 || out.relay2.summaryLeaked || !out.relay2.oppInSummary;
+  return Object.assign(out, { attackSucceeded: leaked });
 }
 async function nameWireControl() {
-  /* 對照：正常名字照樣上線、大廳看得到 */
-  const h = harness(), { S, B } = h.world(), P = h.phone(S, B, { id: "ffff6666", name: "小明" }); P.net.start(); await S.run(2500);
-  const u = JSON.parse(B.retained.get(`${h.ROOT}/u/ffff6666`) || "{}");
-  return { ok: u.name === "小明" };
+  /* 對照：正常名字照樣上線、邀請、開局、進戰績摘要；選了稱號照樣送稱號；沒取名字照舊是「棋友＋代號」；
+     舊版外層（只有 XQ_PUBNAME、沒有 XQ_NAMESAFE：新 net.js 配到還沒更新的 07x4）正常名字照舊送 */
+  const h = harness(), { S, B } = h.world();
+  const P = h.phone(S, B, { id: "ffff6666", name: "小明" }), K = h.phone(S, B, { id: "bbbb2222", name: "乙" });
+  const Tt = h.phone(S, B, { id: "dddd4444", name: "小華", ctx: { XQ_PUBNAME: () => "長安小棋童" } }), E = h.phone(S, B, { id: "9abc0000", name: "" });
+  const O = h.phone(S, B, { id: "aaaa7777", name: "阿嬤愛下棋", noNameSafe: true, ctx: { XQ_PUBNAME: () => "" } });
+  for (const x of [P, K, Tt, E, O]) x.net.start(); await S.run(2500);
+  const g = await wireStart(S, P, K); if (!g) return { ok: false, why: "開不了局" };
+  await wireResign(S, K, P);
+  const G = B.game(g.gid), L = wireRet(h, B, "h", P.id).list || [];
+  const r = { presence: wireRet(h, B, "u", P.id).name, inviteFrom: g.from.name, inGame: [G.red.name, G.black.name].sort(), oppInSummary: L[0] && L[0].opp,
+    titled: wireRet(h, B, "u", Tt.id).name, noName: wireRet(h, B, "u", E.id).name, oldShell: wireRet(h, B, "u", O.id).name };
+  r.ok = r.presence === "小明" && r.inviteFrom === "小明" && JSON.stringify(r.inGame) === JSON.stringify(["乙", "小明"].sort()) && r.oppInSummary === "乙"
+    && r.titled === "長安小棋童" && r.noName === "棋友9abc" && r.oldShell === "阿嬤愛下棋";
+  return r;
 }
 
 /* ================= 案例表 ================= */
@@ -257,13 +341,19 @@ const CASES = [
     attack: NAME_KNOWN_BAD.length + " 個惡意名字（例如 加我LINE 12345、www.xx.com、官方客服、零寬字元）", control: NAME_GOOD.length + " 個正常名字（含 能幹、體操、assassin、Scunthorpe 這類容易誤擋的）",
     expected: "惡意的全部換成系統稱號、正常的照原樣（完整案例庫 64＋70＋32＋576 組在 test-name-safe.js）", run: async () => { const r = await nameControl(); return { knownBadMissed: r.knownBadMissed, attackSucceeded: r.knownBadMissed.length > 0 } },
     control_run: async () => { const r = await nameControl(); return { goodBlocked: r.goodBlocked, ok: !r.goodBlocked.length } } },
-  { id: "R05-bypass", threat: "I6", expect: "open", title: "諧音、注音、拆字、數字代字母的名字繞過檢查",
-    attack: NAME_BYPASS.length + " 個：" + NAME_BYPASS.join("、"), control: "同 R05-display 的正常名字",
-    expected: "修好後：這些都換成稱號，正常名字仍 0 誤擋", why: "lbnBad 只有詞表和正規化（全形、空白、標點），沒有諧音／形近字字典；加字典要另外量誤擋",
-    run: nameBypass, control_run: async () => { const r = await nameControl(); return { ok: !r.goodBlocked.length } } },
-  { id: "R05-wire", threat: "I6", expect: "open", title: "送出端不擋：不合格的名字照樣送上大廳，舊版 App 照原樣顯示",
-    attack: "名字設成「加我LINE 12345」的手機上線（模擬改過的 App 或還沒更新的舊版：不走 07x4 的 XQ_PUBNAME）", control: "名字「小明」照常上線",
-    expected: "修好後：伺服器或簽名機制擋下不合格的名字", why: "大廳是公開 MQTT，沒有自己的伺服器檢查；新版只管這支手機怎麼顯示（20261113-1345 起），舊版 App 沒有 lbnShow",
+  { id: "R05-bypass", threat: "I6", expect: "blocked", title: "諧音、注音、拆字、數字代字母的名字繞過檢查",
+    attack: (NAME_BYPASS.length + NAME_BYPASS_MORE.length) + " 個：最初的 " + NAME_BYPASS.length + " 個（" + NAME_BYPASS.join("、") + "）＋同一類的其他寫法 " + NAME_BYPASS_MORE.length + " 個（sh!t、ㄎㄠˋㄅㄟˇ、賴ID小明、Offic1al、管裡員、fuk ya…）",
+    control: "R05-display 的正常名字＋容易被新規則誤擋的 " + NAME_GOOD_MORE.length + " 個（賴小明、信賴我、上官芳、Fukuoka、Fuk Wing、A55、Messi10、M4ria、Ivan、LG粉絲、ㄍㄢ、干貝…）",
+    expected: "已修（評比第 19 輪第 3 項）：全部換成稱號，正常名字 0 誤擋。lbnBad 先把注音、數字符號換回字再比一次，詞表加諧音、形近字、拆字的詞組。"
+      + "擋不住的（照實列）：字典不可能列完，沒列到的諧音、小寫 l 冒充大寫 I（LlNE）、圖片字還是照原樣顯示，靠預設稱號、兒童模式一律稱號、檢舉、封鎖",
+    run: nameBypass, control_run: nameBypassControl },
+  { id: "R05-wire", threat: "I6", expect: "blocked", title: "送出端：不合格的名字不經外層檢查，直接交給 net.js 送上大廳",
+    attack: "真正的 src/net.js：①名字是「" + WIRE_BAD + "」、外層沒擋（沒有 XQ_PUBNAME）的手機上線、邀請、開局、聊天、送戰績摘要 ②同一支手機連 07x4 的名字檢查都沒有（只有 net.js）"
+      + " ③改過的 App 原樣送出那個名字、接受小明的邀請（小明的手機開局） ④改過的 App 邀請小明（它開局）、下完",
+    control: "名字「小明」照常上線、邀請、開局、進戰績摘要；選稱號的照樣送稱號；沒取名字照舊「棋友＋代號」；新 net.js 配到舊版外層（只有 XQ_PUBNAME）正常名字照舊送",
+    expected: "已修（評比第 19 輪第 3 項）：①②這支手機送出去的每一則都沒有那個名字（①送的是顯示端會給他的同一個稱號，②送「棋友＋代號」）；③④小明的手機不把那個名字寫進它開的對局、戰績摘要。"
+      + "擋不住的（照實列）：伺服器是公開的 MQTT、不檢查內容，改過的 App 自己送的在線狀態、邀請、它開的對局狀態裡的名字照樣在伺服器上（④的紀錄 stateRelayed：對手重送整份對局狀態時也帶著，簽名算到名字、不能改）；"
+      + "還沒更新的舊版 App 會照原樣顯示那些，新版（20261113-1345 起）顯示時換成稱號。要從源頭擋，得有自己的伺服器或伺服器端的主題權限",
     run: nameWire, control_run: nameWireControl },
 ];
 
@@ -277,4 +367,4 @@ function runCase(c) {
   })());
   return memo.get(c.id);
 }
-module.exports = { CASES, runCase, NAME_BYPASS, NAME_KNOWN_BAD, NAME_GOOD };
+module.exports = { CASES, runCase, NAME_BYPASS, NAME_BYPASS_MORE, NAME_KNOWN_BAD, NAME_GOOD, NAME_GOOD_MORE, WIRE_BAD, nameSafe };

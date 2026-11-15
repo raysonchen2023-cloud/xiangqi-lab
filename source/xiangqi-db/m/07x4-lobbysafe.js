@@ -208,6 +208,13 @@ function lbsSetMode(k,after){if(k===lbsMode())return after&&after();
      後面也不能接（line、ig、fb 後面接 id 例外），所以 Caroline、Tiger、Badminton 不會被擋。App 自己給的預設名字「棋友＋4 碼」不算 4 位數字。
    lbnPick(代號, 名字, {me, kid})：要顯示的名字。自己＝照原樣；名字本來就是系統稱號＝照原樣；兒童在看（kid）＝一律稱號；不合格＝稱號。
      稱號用代號算 lbsTitleAt(lbsHash(代號))，同一個人每次都一樣（跟他自己選稱號時的第一個候選相同）；沒有代號就用名字算。
+   評比第 19 輪第 3 項（紅藍隊 R05-bypass、R05-wire）：
+     繞過：lbnBad 用原樣比完，再用「變體」各比一次 contact、imp、rude（lbnAlt）——注音換成字（ㄍㄢˋ→幹、ㄌㄞˊ→賴，LBN_ZY）、
+       數字和符號代字母（sh1t、a$$hole、4dmin、Adm1n；1 當 i 和 l 各試一次、大寫 I 當 l：Iine、1ine，lbnLeet）；一段英數裡字母少於 2 個或比數字符號少就不換（A55、F4、2B 不動）。
+       諧音字、形近字、拆字不做整句代換（「上官芳」會變成「上官方」），只在詞表加詞組：淦你、干你娘、管里員、公吿、弓雖女干…；「賴」當 LINE 只擋賴我、賴 id、賴：、＋賴、我的賴（lbnLai），賴小明、信賴我不擋。
+       字典不可能列完：沒列到的諧音還是會照原樣顯示，靠預設稱號、檢舉、封鎖補。
+     送出端：src/net.js 對外送名字前（自己的名字、開局時寫進對局的對方名字、戰績摘要裡的對手名字）用同一個 lbnBad、lbnPick 再檢查一次（window.XQ_NAMESAFE，在這一段後面），
+       所以送出（XQ_PUBNAME、net.js）和顯示（lbnShow）是同一套規則。舊存檔、舊版送來的名字不改資料，只在送出和顯示的當下判斷。
    這一段到「名字安全顯示：以上」只用 String、RegExp、Set、LBS_PLACE、LBS_ROLE、lbsHash、lbsTitleAt，xiangqi-lab/tools/test-name-safe.js 直接切出來測 */
 const LBN_D="0-9"+String.fromCharCode(0x3007,0x96F6,0x4E00,0x4E8C,0x4E09,0x56DB,0x4E94,0x516D,0x4E03,0x516B,0x4E5D,0x58F9,0x8CB3,0x8D30,0x8CAE,0x53C3,0x53C1,0x8086,0x4F0D,0x9678,0x9646,0x67D2,0x634C,0x7396);   /* 〇零一到九、大寫壹到玖（含簡體的貳、參、陸）；用字碼組：zh-lint 不准原始碼出現簡體字，i18n 測試也不會把它當成畫面文字 */
 const LBN_RE={
@@ -220,9 +227,12 @@ const LBN_RE={
   mail:/@\s*[a-z0-9]/,
   mailK:/gmail|yahoo|hotmail|outlook|icloud|protonmail/,
   digit:new RegExp("["+LBN_D+"](?:[\\s\\-_.,，、/|~～·・]?["+LBN_D+"]){3,}"),
-  contactK:/加我|加賴|加赖|私訊|私讯|私聊|密我|微信|weixin|wechat|telegram|whatsapp|instagram|discord|facebook|臉書|脸书|推特|twitter|抖音|tiktok|小紅書|小红书|youtube|手機號|手机号|電話|电话|聯絡我|联系我|聯繫我/,
-  contactW:/(?:^|[^a-z])(?:line|ig|fb)(?:id|[^a-z]|$)/,
-  impK:/官方|公告|開發者|开发者|開發團隊|开发团队|裁判|客服|系統|系统|管理員|管理员|版主|站長|站长|工作人員|工作人员|官網|官网/,
+  contactK:/加我|加賴|加赖|私訊|私讯|私聊|密我|微信|weixin|wechat|telegram|電報|电报|whatsapp|instagram|discord|facebook|臉書|脸书|推特|twitter|抖音|tiktok|小紅書|小红书|youtube|手機號|手机号|電話|电话|聯絡我|联系我|聯繫我/,
+  contactW:/(?:^|[^a-z])(?:line|ig|fb|tg)(?:id|[^a-z]|$)/,
+  laiOk:/[耍依信仰倚誣抵無要別别都全怪]賴/g,
+  laiK:/賴我|賴id(?![a-z])|賴帳號|賴账号|我的賴|我賴是/,
+  laiN:/賴\s*[:=]|\+\s*賴/,
+  impK:/官方|宮方|倌方|公告|公吿|[開开][發发発]者|[開开][發发発][團团][隊队]|裁判|客服|[系係][統统]|管[理里裡哩][員员]|版主|站[長长]|工作人[員员]|官[網网]/,
   impW:/(?:^|[^a-z])(?:admin|official|moderator|developer|sysop)/,
   dflt:/^棋友[0-9A-F]{4}$/
 };
@@ -231,18 +241,38 @@ const LBN_RE={
    中文一律寫詞組，不寫單字：寫「幹你」不寫「幹」（能幹、幹部、樹幹），寫「操你」不寫「操」（體操、操場），寫「去死吧」不寫「去死」（失去死黨）；
      只有沒有正常用法的字（屄、肏）才寫單字。簡體字可以直接寫在正規式裡（zh-lint 不掃正規式）。
    英文 enAny：出現在哪裡都擋（fuck、bitch…）。enW：前後都不能接英文字母才擋（Scunthorpe 問題：assassin、class、Dickens、Sussex、Ashita、Hancock、therapist 不擋），
-     可以寫字尾變化，例如 shit(?:s|ty)?。人名本身就是正常英文名的（Dick）不放。 */
+     可以寫字尾變化，例如 shit(?:s|ty)?。人名本身就是正常英文名的（Dick）不放。
+   英文 enN（第 19 輪）：兩個字的片語，只在還留著空白標點的名字上比，中間一定要隔開（fuk u 擋；Fukuoka、Fuk Wing 不擋）。
+   第 19 輪加的諧音詞組（淦你、干你娘、靠腰…）一樣只寫詞組；數字符號代字母（sh1t）、注音（ㄍㄢˋ）不用寫進來，lbnAlt 會先換回字母和字再比這份清單。 */
 const LBN_BAD_WORDS={
-  zhSwear:/幹你|幹妳|幹您|幹林|幹拎|幹恁|恁娘|姦你|操你|操妳|操您|操他媽|屌你|屌妳|他媽的|你媽的|妳媽的|去你媽|你媽死|你老母|草泥馬|草泥马|他妈的|你妈的|操你妈|去你妈|靠北|靠杯|靠夭|雞掰|雞歪|機掰|機歪|基掰|鸡巴|雞巴|屄|肏|傻逼|傻b|煞筆|牛逼|懶叫|懶趴|仆街|撲街|冚家鏟|含撚/,
-  zhSex:/做愛|做爱|性交|口交|肛交|性愛|性爱|援交|約炮|约炮|一夜情|嫖妓|嫖娼|賣淫|卖淫|妓女|強姦|强奸|強暴|强暴|輪姦|迷姦|戀童|恋童|陰莖|阴茎|陰道|阴道|陰蒂|自慰|手淫|打手槍|擼管|射精|精液|奶子|巨乳|爆乳|裸體|裸体|裸照|裸聊|a片|黃片|黄片|色情片|淫蕩|淫荡|淫賤|淫娃|淫穢|騷貨|骚货|破麻|婊子/,
+  zhSwear:/幹你|幹妳|幹您|幹林|幹拎|幹恁|恁娘|姦你|操你|操妳|操您|操他媽|屌你|屌妳|他媽的|你媽的|妳媽的|去你媽|你媽死|你老母|草泥馬|草泥马|他妈的|你妈的|操你妈|去你妈|靠北|靠杯|靠夭|雞掰|雞歪|機掰|機歪|基掰|鸡巴|雞巴|屄|肏|傻逼|傻b|煞筆|牛逼|懶叫|懶趴|仆街|撲街|冚家鏟|含撚|干你娘|干妳娘|干你媽|干你妈|干林娘|干拎娘|干恁娘|淦你|淦妳|淦您|淦林|淦拎|淦恁|贛你娘|贛林娘|靠腰|靠邀|靠盃|草尼馬|艹你/,
+  zhSex:/做愛|做爱|性交|口交|肛交|性愛|性爱|援交|約炮|约炮|一夜情|嫖妓|嫖娼|賣淫|卖淫|妓女|強姦|强奸|強暴|强暴|輪姦|迷姦|戀童|恋童|陰莖|阴茎|陰道|阴道|陰蒂|自慰|手淫|打手槍|擼管|射精|精液|奶子|巨乳|爆乳|裸體|裸体|裸照|裸聊|a片|黃片|黄片|色情片|淫蕩|淫荡|淫賤|淫娃|淫穢|騷貨|骚货|破麻|婊子|弓雖女干|弓虽女干/,
   zhHate:/支那|黑鬼|尼哥|黑奴|娘炮|人妖|死gay|死同性戀|台巴子|高麗棒子|日本鬼子|白皮豬|猶太豬|納粹|纳粹|希特勒/,
   zhAttack:/去死吧|你去死|快去死|死全家|全家死光|白癡|白痴|智障|腦殘|脑残|低能兒|廢物(?!利用)|废物|人渣|賤人|贱人|賤貨|贱货|雜種|杂种|畜生|畜牲|王八蛋|狗娘養|狗娘养|龜兒子|孬種|死肥豬|死胖子/,
-  enAny:/fuck|fvck|sexy|motherf|bitch|bastard|asshole|dumbass|jackass|dickhead|bullshit|shithead|nigger|nigga|faggot|whore|wanker|blowjob|jerkoff|dildo|pornhub|killyourself/,
-  enW:/shit(?:s|ty)?|ass(?:es)?|arse|cunts?|cocks?|puss(?:y|ies)|penis|vaginas?|porno?|sex(?:ual)?|sluts?|fags?|retard(?:s|ed)?|rape[sd]?|rapists?|nazis?|hitler|twat|wank|boobs?|boobies|tits|titties|milf|idiots?|morons?|stfu|nmsl|fck/
+  enAny:/fuck|fvck|sexy|motherf|bitch|bastard|asshole|dumbass|jackass|dickhead|bullshit|shithead|nigger|nigga|faggot|whore|wanker|blowjob|jerkoff|dildo|pornhub|killyourself|phuck|fukyou|fukoff/,
+  enW:/shit(?:s|ty)?|ass(?:es)?|arse|cunts?|cocks?|puss(?:y|ies)|penis|vaginas?|porno?|sex(?:ual)?|sluts?|fags?|retard(?:s|ed)?|rape[sd]?|rapists?|nazis?|hitler|twat|wank|boobs?|boobies|tits|titties|milf|idiots?|morons?|stfu|nmsl|fck|phuk|phuq|fuq/,
+  enN:/fuk[^a-z]+(?:u|ya)/
 };
-let LBN_BADW=null;
-function lbnRude(n,k){if(!LBN_BADW)LBN_BADW=new RegExp("(?:^|[^a-z])(?:"+LBN_BAD_WORDS.enW.source+")(?![a-z])");const B=LBN_BAD_WORDS;
-  return B.zhSwear.test(k)||B.zhSex.test(k)||B.zhHate.test(k)||B.zhAttack.test(k)||B.enAny.test(k)||LBN_BADW.test(n)||LBN_BADW.test(k)}
+let LBN_BADW=null,LBN_BADN=null;
+function lbnRude(n,k){if(!LBN_BADW){LBN_BADW=new RegExp("(?:^|[^a-z])(?:"+LBN_BAD_WORDS.enW.source+")(?![a-z])");LBN_BADN=new RegExp("(?:^|[^a-z])(?:"+LBN_BAD_WORDS.enN.source+")(?![a-z])")}const B=LBN_BAD_WORDS;
+  return B.zhSwear.test(k)||B.zhSex.test(k)||B.zhHate.test(k)||B.zhAttack.test(k)||B.enAny.test(k)||LBN_BADW.test(n)||LBN_BADW.test(k)||LBN_BADN.test(n)}
+/* 第 19 輪 R05-bypass：變體。lbnStrip＝拿掉空白標點（跟 lbnBad 的 k 同一條）；lbnLai＝「賴」當 LINE；lbnZy＝注音換成字；lbnLeet＝數字符號換回字母（one＝1 要當 i 還是 l）；
+   lbnWords＝contact、imp、rude 三類；lbnAlt＝要多比的變體（跟原樣一樣的不重複比） */
+const lbnStrip=s=>s.replace(/[\s\p{P}\p{S}\p{Z}_]/gu,"");
+function lbnLai(n,k){return LBN_RE.laiN.test(n)||LBN_RE.laiK.test(k.replace(LBN_RE.laiOk,""))||LBN_RE.laiK.test(n.replace(LBN_RE.laiOk,""))}
+const LBN_ZY=[[/ㄋㄧㄤ/g,"娘"],[/ㄌㄧㄣ/g,"林"],[/ㄐㄧㄚ/g,"加"],[/ㄉㄧㄠ/g,"屌"],[/ㄍㄢ/g,"幹"],[/ㄘㄠ/g,"操"],[/ㄌㄞ/g,"賴"],[/ㄎㄠ/g,"靠"],[/ㄅㄟ/g,"北"],[/ㄅㄞ/g,"掰"],[/ㄋㄧ/g,"你"],[/ㄇㄚ/g,"媽"],[/ㄨㄛ/g,"我"],[/ㄐㄧ/g,"雞"]];
+function lbnZy(n){let z=n.replace(/[ˊˇˋ˙ˉ]/g,"");for(const p of LBN_ZY)z=z.replace(p[0],p[1]);return z}
+const LBN_LEET={"0":"o","1":"i","3":"e","4":"a","5":"s","7":"t","8":"b","$":"s","@":"a","!":"i","|":"l"};
+function lbnLeet(s,one){return s.replace(/[a-z0-9$@!|]+/g,t=>{const a=t.replace(/[^a-z]/g,"").length;if(a<2||a*2<t.length||a===t.length)return t;let o="";for(const c of t)o+=c==="1"?one:LBN_LEET[c]||c;return o})}
+function lbnWords(n,k){if(LBN_RE.contactK.test(k)||LBN_RE.contactW.test(n)||LBN_RE.contactW.test(k)||lbnLai(n,k))return"contact";
+  if(LBN_RE.impK.test(k)||LBN_RE.impW.test(n)||LBN_RE.impW.test(k))return"imp";
+  if(lbnRude(n,k))return"rude";
+  return""}
+function lbnAlt(r,n,k){const out=[],seen=new Set([n+"\n"+k]),add=(a,b)=>{const q=a+"\n"+b;if(!seen.has(q)){seen.add(q);out.push([a,b])}};
+  if(/[ㄅ-ㄯ]/.test(n)){const z=lbnZy(n);add(z,lbnStrip(z))}
+  const a=lbnLeet(n,"i"),ka=lbnLeet(k,"i");add(a,lbnStrip(a));add(ka,ka);
+  const nb=r.replace(/I/g,"l").toLowerCase().replace(/[。｡]/g,"."),b=lbnLeet(nb,"l"),kb=lbnLeet(lbnStrip(nb),"l");add(b,lbnStrip(b));add(kb,kb);
+  return out}
 const LBN_WHY={len:"太長",empty:"是空白的",invis:"有看不見的字",mark:"有疊在一起的符號",html:"有角括號",url:"像網址",mail:"像 Email",digit:"有 4 位以上的數字",contact:"像聯絡方式（LINE、IG、加我…）",imp:"像官方或開發者（官方、公告、裁判、客服、系統…）",rude:"有不雅或罵人的字"};
 let LBN_TSET=null;
 function lbnIsTitle(nm){if(!LBN_TSET){LBN_TSET=new Set();for(const a of LBS_PLACE)for(const b of LBS_ROLE)LBN_TSET.add(a+b)}return LBN_TSET.has(String(nm))}
@@ -252,20 +282,21 @@ function lbnBad(nm){const s=nm==null?"":String(nm);
   if(LBN_RE.invis.test(s.replace(LBN_RE.zwj,"$1")))return"invis";
   if(!s.replace(/[\s　]/g,""))return"empty";
   if(LBN_RE.mark.test(s))return"mark";
-  let n=s;try{n=s.normalize("NFKC")}catch(e){}n=n.toLowerCase().replace(/[。｡]/g,".");
+  let r=s;try{r=s.normalize("NFKC")}catch(e){}const n=r.toLowerCase().replace(/[。｡]/g,".");
   if(LBN_RE.html.test(n))return"html";
-  const k=n.replace(/[\s\p{P}\p{S}\p{Z}_]/gu,"");
+  const k=lbnStrip(n);
   if(LBN_RE.url.test(n)||LBN_RE.urlK.test(k))return"url";
   if(LBN_RE.mail.test(n)||LBN_RE.mailK.test(k))return"mail";
   if(LBN_RE.digit.test(n)||LBN_RE.digit.test(k))return"digit";
-  if(LBN_RE.contactK.test(k)||LBN_RE.contactW.test(n)||LBN_RE.contactW.test(k))return"contact";
-  if(LBN_RE.impK.test(k)||LBN_RE.impW.test(n)||LBN_RE.impW.test(k))return"imp";
-  if(lbnRude(n,k))return"rude";
+  let w=lbnWords(n,k);if(w)return w;
+  for(const v of lbnAlt(r,n,k)){w=lbnWords(v[0],v[1]);if(w)return w}
   return""}
 function lbnTitleOf(id,nm){id=id==null?"":String(id);return lbsTitleAt(lbsHash(id||"n:"+String(nm==null?"":nm)))}
 function lbnPick(id,nm,o){o=o||{};nm=nm==null?"":String(nm);if(o.me)return nm;if(lbnIsTitle(nm))return nm;if(!nm&&(id==null||id===""))return"";
   if(o.kid||lbnBad(nm))return lbnTitleOf(id,nm);return nm}
 /* ---------- 名字安全顯示：以上 ---------- */
+/* 第 19 輪 R05-wire：src/net.js 對外送名字前問這個（跟顯示端同一個 lbnBad、lbnPick）；net.js 找不到它、也沒有 XQ_PUBNAME 時，自由名字一律不送，改送「棋友＋代號」 */
+window.XQ_NAMESAFE={bad:lbnBad,pick:lbnPick};
 /* 兒童在看：07m5 的兒童模式（大廳本來就關著，這裡管棋譜、戰績這些還看得到名字的地方），或自己在大廳選了「稱號」（回饋 842：新玩家預設，App 拿它當「可能是小朋友」） */
 const LBN_KID_T=true;
 function lbnKid(){try{if(typeof fmKid==="function"&&fmKid())return true}catch(e){}try{return LBN_KID_T&&lbsMode()==="t"}catch(e){return false}}

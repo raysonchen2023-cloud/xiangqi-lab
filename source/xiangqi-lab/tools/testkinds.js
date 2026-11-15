@@ -79,22 +79,23 @@ const CLASSIFIED = new Set([
   "test-mainquest.js"   /* 11/13 新手體驗第一波：主線電影播放器 07mnf、星槎遠征令／下一步／大禮包 07mnq、殘局解開儀式、電影中通知排隊（行為 8、原始碼 3） */,
   "test-varengine.js"   /* 11/13 黑洞超展開新引擎 src/varengine.js＋worker：走法、擺棋規則、非標準陣容、將死困斃、今日異象、level／weaken；11/13 定案點數＋堆疊加價＋沈方庭九宮優惠（行為 20） */,
   "test-net-start.js"   /* 11/13 開局那一方第一步之前的每步 3 分鐘：每步剩餘照走、判超時不分岔、坐黑判得出紅方超時、重抓不往後挪（net.js arr／ackTurn myStart；行為 4） */,
-  "test-redblue-public.js",   /* 11/13 第 17 輪 F3 公開紅藍隊攻擊重現：tools/redblue-cases.js 逐案攻擊＋正常對照；還沒修的用 todo 保持失敗 */
+  "test-redblue-public.js",   /* 11/13 第 17 輪 F3 公開紅藍隊攻擊重現：tools/redblue-cases.js 逐案攻擊＋正常對照；還沒修的用 todo 保持失敗；11/15 第 19 輪第 3 項 R05-bypass、R05-wire 修好改一般測試，另補名字送出端、正常名字、舊版相容（行為 33、原始碼 1；公開副本沒有舊版 net.js 複本，少 4 項） */
   "test-release-sync.js",   /* 11/13 第 17 輪 F1 同版閘門 tools/release-sync-check.js：版本不一致、刻意不發布的行、不該公開的檔都要擋 */
   "test-reload-guard.js",   /* 11/13 開發者 P1 iPhone 3D 絕殺後頁面重載又直接開第二盤：更新延後、對局頁網址改寫、重載後不開新局、勝負先寫入、賽後分析等特效、異常重載紀錄（m/02r-reloadguard.js；行為 8、混合 2、原始碼 2） */
   "test-era-lang.js",   /* 11/14 評比第 17、18 輪 B3 朝代（07-legend storyBookOf／storyEraSync）、B5 英文介面主線（07mnq、07mnf、07t、07bhtl 介面字、首頁下一步、語言範圍說明）、第 18 輪第 4 項舊 8 碼轉移碼停收；11/14 晚加英文頂欄（時辰、登船、節氣、官階、修為）與禮包 Accept 鍵（行為 14、混合 3、原始碼 1） */
   "test-wheel.js",   /* 11/15 黑洞車輪戰 wheel-v1（m/07bhw-wheel.js 的 WHL 純規則：共用靈力、一輪一招、陣眼封招、總輪、引擎佇列與退路、過關判定、結算、存檔接續；三盤版：輪轉、兩勝／兩敗／和局、危險預警、跳盤、舊存檔相容、決定性、縮圖字串；接線原始碼） */
   "test-wheel-3d.js",   /* 11/15 車輪戰 3D（m/07bhw-wheel.js 的 ③；park3d.js 新增 ex.bkey／setTdPad／busy）：視角三態與記住、預設平面、整場一個 3D 實例、換盤直接擺好、哪張完整哪兩張簡化、簡化棋盤的棋子與狀態、點簡化棋盤換盤、鏡頭飛行、3D 開不起來退回平面、離開後資源與畫面收乾淨；DOM、three、park3d 都是假的，3D 畫面本身沒有實機驗收（行為 17、混合 3、原始碼 3） */
   "test-gate-siege.js",   /* 11/15 黑洞・星門圍城 gate-siege-v1 候選（m/07bhg-gatesiege.js 的 GSV 純規則、local.js tdRebuild 部署換手、接線原始碼；第 1、3、6 關） */
+  "test-siege-wheel-bench.js",   /* 11/15 第 19 輪評審第 8 項：星門圍城＋車輪戰真引擎基準工具 tools/siege-wheel-bench.js（載 App 原檔、同種子兩次相同、每局欄位齊全、覆寫只改記憶體、摘要與倒掛算法、合併報表；真引擎那幾項在 Node 裡跑 App 的 Pikafish，載不了就略過；行為 9、原始碼 1） */
   "test-gate-siege-3d.js",   /* 11/15 星門圍城切 3D 星盤（m/07bhg-gatesiege.js 檔尾 gsvFlat 那一段）：視角三態與記住、不再一律平面、舊版塔防與車輪戰不受影響、記號 3D 分類（貼地／直立／頭頂）、gsvFrame 兩種座標、「更多」那顆（06-cpu parkBtn）、3D 開不起來退回平面；DOM 與 park3d 都是假的，3D 畫面本身沒有實機驗收（行為 19、混合 3、原始碼 3） */
   "test-growth.js",   /* 11/15 對戰後的角色成長（m/07grw-growth.js）：快照比對只列有變化的、升級那句、體力只比同一次開 App、結果視窗插入時機（延後、逾時）、減少動態不跳數字；遠征令拿掉、配樂收藏與再看第一章搬到設定聲音頁（07mnq）；08b／07bhw／05b／m.html 接點（行為 9、混合 1、原始碼 4） */
   "test-starter.js",   /* 11/15 新手練習「先走再學」（m/07stq-starter.js）：六任務題目合法、第 4、5 題一步殺照規則判斷、跳過補齊不重複、老玩家判定、存檔版本、電腦退路、05b／07mnq／m.html 接點（行為 5、混合 3、原始碼 4） */
   "test-td-orbit.js",   /* 11/15 開發者：黑洞塔防一指拖曳改成跟開場黑洞對戰一樣繞整球（gntUp、上下不設限），放手回近的正面或盤底 */
   "test-park-garden-1115.js",   /* 11/15 開發者園子三個回報（park3d.js）：俯視時遮篷屋脊墨線收掉、香爐挪到棋盤木框外、幻影棋客半透明（行為 1、混合 1、原始碼 2） */
+  "test-bhtd-view-1115.js",   /* 11/15 開發者「黑洞對戰 default 開成全局俯視」（m/07bht-td.js bhtdView）：記成臨陣斜角的重設回全局俯視一次，之後自己選的照舊記住（行為 5、原始碼 1） */
+  "test-bh-drift-raid-1115.js",   /* 11/15 開發者選「星槎偏航＝突發的星淵急襲短戰」（m/07bh-blackhole.js bhStart／bhOffer、m/07bht-td.js bhtdRaidDrift）：急襲已開直接開打、沒開照舊選關、觀星臺入口不受影響（行為 7、原始碼 1） */
   "test-sw-offline.js",   /* 11/15 hspx 離線 3D 角色變小帥：sw.js 安裝時先存 3D 模型載入器（GLTFLoader.mjs 和它 import 的 .mjs），一般檔案也存 .mjs */
   "test-fb888.js",   /* 11/15 意見回饋 888 iPad 首頁兩指放大縮不回（07x 整頁放大救援、回首頁回 1 倍）、889 669×869 首頁一窄條（07z HMW_PORT 0.89／HMW_SQ、07fl XFL_HOME_MAX）、890 插曲全螢幕頁讓開狀態列（07t .ep-ov）（行為 11、原始碼 3） */
-  "test-bhtd-view-1115.js",   /* 11/15 開發者「黑洞對戰 default 開成全局俯視」（m/07bht-td.js bhtdView）：記成臨陣斜角的重設回全局俯視一次，之後自己選的照舊記住（行為 5、原始碼 1） */
-  "test-siege-wheel-bench.js",   /* 11/15 第 19 輪評審第 8 項：星門圍城＋車輪戰真引擎基準工具 tools/siege-wheel-bench.js（載 App 原檔、同種子兩次相同、每局欄位齊全、覆寫只改記憶體、摘要與倒掛算法、合併報表；真引擎那幾項在 Node 裡跑 App 的 Pikafish，載不了就略過；行為 9、原始碼 1） */
   "test-preload-bg.js"   /* 11/14 評比第 17、18 輪第 5 項背景暫停與按需預載：00-util bgpEvery／bgpOn、09b 預載前景／背景／恢復三段、分區 z:<分區>、別朝代先不下載、閒置才補選讀、省流量、preload-list --retier（行為 12、混合 1、原始碼 1） */
 ]);
 /* 還沒逐項分類的檔（統計列為「待分類」）；新測試檔先放這裡，分好類再移到 CLASSIFIED */

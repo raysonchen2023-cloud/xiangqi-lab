@@ -1,7 +1,7 @@
 {
  "ref": "origin/main",
- "commit": "7891bb430eafdac505984bc7976519aef1bf914f",
- "madeAt": "2026-11-15T07:49:29.795Z",
+ "commit": "3e3e568d7409fa33305b3cdee8c7638aa9dbb2c7",
+ "madeAt": "2026-11-15T08:04:47.429Z",
  "files": {
   "xiangqi-db/m/00-util.js": "local=live",
   "xiangqi-db/m/01-board.js": "local=live",
@@ -64,7 +64,7 @@
   "xiangqi-db/m/07hmp-pano.js": "local=live",
   "xiangqi-db/m/07x2-lobbymap.js": "local=live",
   "xiangqi-db/m/07x3-rostermap.js": "local=live",
-  "xiangqi-db/m/07x4-lobbysafe.js": "live",
+  "xiangqi-db/m/07x4-lobbysafe.js": "local=live",
   "xiangqi-db/m/07s2-setmap.js": "local=live",
   "xiangqi-db/m/07t2-tabink.js": "local=live",
   "xiangqi-db/m/07t3-tabtube.js": "local=live",
@@ -198,6 +198,7 @@
   "xiangqi-lab/tools/test-android-oldwebview.js": "local",
   "xiangqi-lab/tools/test-asian-rules.js": "local",
   "xiangqi-lab/tools/test-askbot-city.js": "local",
+  "xiangqi-lab/tools/test-bh-drift-raid-1115.js": "local",
   "xiangqi-lab/tools/test-bhfx.js": "local",
   "xiangqi-lab/tools/test-bhmate.js": "local",
   "xiangqi-lab/tools/test-bhtd-combo.js": "local",
@@ -401,9 +402,7 @@
  "liveDiffers": [
   "m/05-settings.js",
   "m/07y-hubmap.js",
-  "m/07x4-lobbysafe.js",
   "m/07s4-passmap.js",
-  "src/net.js",
   "src/sw.js"
  ],
  "absentModules": [],
@@ -448,8 +447,8 @@
   "test-layout-r16.js": "指令排除：有一項〔混合〕檢查（07y CY_SPOT 首頁 han 與 sanguo 的 44×44 點選範圍重疊）在開發者電腦上同樣失敗（10/11）：測試或座標待開發者處理；其他 10 項通過",
   "test-party.js": "指令排除：七星陸續加入的新功能還在開發者電腦上做，對應的程式還沒發布"
  },
- "version": "20261115-1546",
- "indexSha1": "b70ef653ec7d",
+ "version": "20261115-1602",
+ "indexSha1": "ab63432a4941",
  "toLF": [
   "xiangqi-lab/tools/build-site.js"
  ],

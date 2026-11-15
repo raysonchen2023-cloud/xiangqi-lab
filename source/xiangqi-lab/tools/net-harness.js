@@ -8,6 +8,14 @@ const LAB = path.join(__dirname, "..");
 const NET_SRC = fs.readFileSync(process.env.XQ_NET_SRC || path.join(LAB, "src/net.js"), "utf8")   /* XQ_NET_SRC：反向驗證時換成改壞的 net.js */, webcrypto = require("node:crypto").webcrypto;
 const CORE_SRC = fs.readFileSync(path.join(LAB, "site/core.js"), "utf8");
 const CHECK_LINE = (fs.readFileSync(path.join(LAB, "src/local.js"), "utf8").match(/^\s*window\.XQ_netCheck=.*$/m) || [])[0];
+/* 評比第 19 輪第 3 項（紅藍隊 R05-wire）：正式 App 裡 net.js 旁邊一定有 m/07x4-lobbysafe.js 的名字檢查（window.XQ_NAMESAFE＝lbnBad、lbnPick）。
+   每支手機照樣放進去：從 07x4 切出「名字安全顯示」那一段和它對外的那一行（原樣，不另外寫一份）。phone 的 o.noNameSafe＝不放（只有 net.js，測「沒有人檢查就不送自由名字」） */
+const NAMESAFE_SRC = (() => {
+  const s = fs.readFileSync(path.join(process.env.XQ_M_DIR || path.join(LAB, "..", "xiangqi-db", "m"), "07x4-lobbysafe.js"), "utf8").split("\r\n").join("\n");
+  const line = h => { const l = s.split("\n").find(x => x.startsWith(h)); if (!l) throw new Error("07x4-lobbysafe.js 找不到 " + h); return l };
+  const i = s.indexOf("/* ---------- 紅藍隊 R05"), j = s.indexOf("/* ---------- 名字安全顯示：以上", i + 1); if (i < 0 || j < i) throw new Error("07x4-lobbysafe.js 找不到名字安全顯示區段");
+  return "(function(){" + [line("const LBS_PLACE="), line("const LBS_ROLE="), line("function lbsHash("), line("const lbsTitleAt="), s.slice(i, j), line("window.XQ_NAMESAFE=")].join("\n") + "\n})();";
+})();
 const C = require("../site/core.js");
 const ROOT = "xqlab-r7k2q/v1";
 const te = new TextEncoder(), td = new TextDecoder();
@@ -190,6 +198,7 @@ function phone(S, B, o) {
   if (o.seed) { ctx.__rnd = seeded(o.seed); vm.runInContext("Math.random=__rnd;", ctx) }   /* o.seed：這支手機的 Math.random 用固定種子（紅黑、gid、重連亂數都可重現） */
   vm.runInContext(CORE_SRC, ctx, { filename: "core.js" });
   vm.runInContext("(function(){const{legal,stateRebuild,stateApply,judgeState}=XQCore;" + CHECK_LINE + "})();", ctx, { filename: "local.js(XQ_netCheck)" });
+  if (!o.noNameSafe) vm.runInContext(NAMESAFE_SRC, ctx, { filename: "07x4-lobbysafe.js(名字安全顯示)" });
   vm.runInContext(o.src || NET_SRC, ctx, { filename: o.src ? "net-legacy.js" : "net.js" });
   P.ctx = ctx; P.net = ctx.XQNet; P.storage = ctx.localStorage; P.id = o.id; P.idb = ctx.indexedDB;
   P.fire = t => (P.win[t] || []).forEach(f => f({}));
@@ -228,4 +237,4 @@ async function startGame(S, B, o) {
   return { A, K, red, black, gid: g.gid };
 }
 
-module.exports = { assert, test, fs, path, vm, LAB, NET_SRC, C, ROOT, Sched, Broker, phone, seeded, memStorage, fakeIDB, settle, PEND, J, MV, move, core, T0, world, noErrors, startGame };
+module.exports = { assert, test, fs, path, vm, LAB, NET_SRC, NAMESAFE_SRC, C, ROOT, Sched, Broker, phone, seeded, memStorage, fakeIDB, settle, PEND, J, MV, move, core, T0, world, noErrors, startGame };

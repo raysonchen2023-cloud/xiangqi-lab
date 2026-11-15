@@ -752,6 +752,11 @@ function bhtdStart(n,k,cover,sk,how,q){const C=bhtdC();if(!C)return toast("規�
 /* ---------- 11/14 第二批：星淵急襲（3～5 分鐘的中局殘陣；每場從 BHTD.RAID 隨機抽一組＋星門變化；星塵照表現 6～10、不給修為）---------- */
 let BHTD_RDL="";   /* 上一場抽到的模板（再刷不連抽同一組） */
 const bhtdRdOpen=P=>!!(P&&P.c&&P.c[1]);   /* 破第 1 關才開 */
+/* 11/15 開發者選「星槎偏航＝突發的星淵急襲短戰」（07bh-blackhole.js bhStart 問這裡）：急襲已開就直接開一場，招式照選關視窗的預設（上次選的、沒選過就前四招）；
+   回傳 true＝這邊接手了（開打，或被定軌力擋下、bhtdRaid 自己提示）；false＝急襲還沒開或要先下練習賽，照舊開選關 */
+function bhtdRaidDrift(k,cover){try{const P=bhtdProg();if(!bhtdRdOpen(P)||(typeof bhtlNeed==="function"&&bhtlNeed()))return false;
+  const ck=bhtdChar(),L=bhtdL(),st=BHTD.stats(ck,L),un=BHTD.SK.filter(s=>s.ch===st.ck&&s.lv<=L);let pk=((P.sk||{})[st.ck]||[]).filter(id=>un.some(s=>s.id===id)).slice(0,4);if(!pk.length)pk=un.slice(0,4).map(s=>s.id);
+  bhtdRaid(k,cover,pk);return true}catch(e){return false}}
 function bhtdRaid(k,cover,sk,q){const C=bhtdC();if(!C)return toast("規則程式還沒載好");const lk=bhtdLock();if(lk){toast("🌫 "+lk);return}
   const ck=bhtdChar(),L=bhtdL(),diff=bhtdDiff(),ai=BHTD.depthOf(BHTD.RAID_AI,diff),P=bhtdProg(),tal=bhtdDust().t,pool=BHTD.RAID.filter(T=>T.id!==BHTD_RDL),T=pool[Math.floor(Math.random()*pool.length)]||BHTD.RAID[0],v=Math.floor(Math.random()*4);
   BHTD_RDL=T.id;if(Array.isArray(sk)&&sk.length){P.sk[ck]=sk;store.set("bhtd",P)}try{bhPreload()}catch(e){}
