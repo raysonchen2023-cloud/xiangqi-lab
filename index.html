@@ -1613,7 +1613,7 @@ html[data-lefty] .tskip{right:auto;left:14px}
       if(!window.caches)return go();caches.keys().then(function(ks){return Promise.all(ks.filter(function(k){return k.indexOf("xqlab-app-")===0}).map(function(k){return caches.delete(k)}))})
         .then(function(){return navigator.serviceWorker&&navigator.serviceWorker.getRegistration()}).then(function(r){return r&&r.update()}).catch(function(){}).then(go)}};setTimeout(chk,4000)})();
 </script>
-<script>window.XQ_OFFLINE=true;window.XQ_BUILD="20261116-1258";</script>
+<script>window.XQ_OFFLINE=true;window.XQ_BUILD="20261116-1318";</script>
 <script src="core.js"></script>
 <script src="engine.js"></script>
 <script src="local.js"></script>
@@ -5948,6 +5948,7 @@ const JOURNEY_KEYS=["sw7Box","pSex","pChar","pStyle","party","botPiece","onboard
   "npcBond","npcAsk","npcAskSeen","parkNpc","parkNpcLast","npcPity","parkAdj","visitGone","secrets","secretClue","secretSpots","secretWins","relics","relicSolved","relicAt","histSeen","histSolved","histTitle",
   "innCur","innDrop","innAdj","innGuest","resumeLast","xhMake","xhMei","xhTitle","yuDay","yuHint","yuRoute","yuTitle","cupDrop","cupGot","cj","cjRun","shipAt","shipSolved","shipGames","shipLessonSeen","shipWins","shipArena","cjRunS","jRunS","battleSeal","battleTitle","battleVol","battleGrand","battleVolY","battleVolLegacy","battleMig","battleSeal0","cjRunB","jRunB","battlePlan","diff","shipDock","shipLearn","undoFree","shipGal","shipStale","shipRead","shipMore","evLog","evPawn","evHeld","evStash","jRunE","cjRunE","rdLog","firstWin","wkRead","visit7","chd","ep","cjRunEp","wmDays","wmPg","wmBm","wmScr","wmEcho","jRunW","sealGold","sealIntro","jRunC","rsHint","buddy","cjRunBd","ouyu","jRunO","mnq","grw","xsdRec","xsdRun","ulkFx","sg2Tal","xsdLv","bhtdDust","bhtd","bhtdFx","bhtl","gsv","whl","xsmSeen","dgl","gxtSeen"].map(k=>"m_"+k)   /* 對戰後的角色成長（07grw-growth.js，開發者 11/15）：grw＝上次結算給玩家看過的角色數值快照 */   /* 黑洞塔防爽度第二批（07bht-td.js，開發者 11/14）：bhtdDust＝星塵、點亮的天賦、各關最佳星數、星淵急襲場數、發過星塵的盤（排在 bhtd 前面：test-bhtl 要 "bhtd","bhtdFx","bhtl" 相連） */   /* 聽雨茶坊的臺灣暗棋（07xsd-xsmdark.js，開發者 11/14）：xsdRec＝勝、和、負局數；xsdRun＝下到一半的那一盤（離開自動保留）；xsdLv＝電腦難度（新手／一般，沒選過＝新手） */   /* 西市（07xsm-ximarket.js，開發者 11/13）：xsmSeen＝去過西市了沒（首頁「🏮 西市」不再發亮、第一次的介紹卡只跳一次） */   /* 平日體力（07dgl-stamina.js，開發者 11/13）：dgl＝身上的星芒、第一次下船的說明看過了沒（定軌力本身不存，關 App 再開回滿） */   /* 黑洞陣地塔防（07bht-td.js，開發者 11/13）：bhtd＝破過哪幾關、各關輸贏、每位角色帶的 4 招；bhtdFx＝戰鬥演出（完整／簡化／關閉）；bhtl＝塔防練習賽練過／跳過、練了幾次、進階機制第一次的提示看過哪些（07bhtl-tdlearn.js） */   /* 七星遇見玩法（07q-buddy.js，開發者 11/9）：buddy＝旅伴闖禍、驛站飛書、心結的進度，cjRunBd＝這兩種殘局解到一半的那一題 */   /* 回饋 856（開發者 11/9：女棋手分普通／稀有／傳說、機率加保底）：npcPity＝稀有、傳說女棋手的保底計數（06-cpu.js parkNpcNew） */   /* 回饋 838（開發者 11/9 選：全模式中斷接續）：jRunC＝新手訓練營玩到一半的那一課、rsHint＝對局裡用掉的提示棋黃框（主題訓練 jpRun、棋力測驗 quizRun 跟 themeStat、quizLog 一樣是棋手本人的，各格共用，不放這裡） */   /* 千秋印（07i2-seal.js，開發者 11/9）：sealGold＝各朝第一次鑄成金印的時間與修為已發、sealIntro＝看過「集章簿換成千秋印譜」說明卡。Gemini 遊玩樂趣評估（開發者 11/8 核准）：visit7＝七星來訪的次數、說過的話、小任務（07j-visit.js）；evStash＝千秋穿梭收進囊中、12 小時內再處理的突發事件（07h-qqev.js）；firstWin＝新手秒開局下過（或跳過）了；wkRead＝學習週報每天記一筆讀懂地圖比例，算「比上週」。意見回饋 737 第二期：rdLog＝讀過哪些棋譜、猜著法每盤答對幾手（壓縮成字串）。意見回饋 674：星槎在看哪一站、千秋殘局解開的題、正在解的那一題；675：航行難度、已停靠的站、學會的棋理、這盤用了幾次免費悔棋；685：七星同局圖鑑與熱身解開的題、看過困斃說明、讀過《雲河七星》哪幾章 */
   .concat(["cpuRate","bonusKeys","record","arenaStamps","play","play2","playPrev","playBak"].map(k=>"xq_"+k));   /* 評比循環第 2 輪：playPrev（上一版，存檔壞掉時讀）、playBak（被別的分頁換掉的棋）跟著存檔格走；保存紀錄 xq_saveLog 是這支手機的，不跟格子走 */
+JOURNEY_KEYS.push("m_bhDrift1");   /* 11/16 hspx P1（開發者「還沒起航偏離軌道就馬上跳出觀星臺和西市的過場」）：bhDrift1＝這一趟第一次起航必定偏航用過了沒（07bh bhFirstDrift），原本整支手機共用，舊旅程用過、新旅程就不偏航。另外加一行，不動上面清單的字（好幾支測試比對清單結尾） */
 const JK=new Set(JOURNEY_KEYS),SLOT_N=3;
 /* 意見回饋 668：舊玩家判斷要在首頁畫出來以前做（首頁會順手寫一些旅程鍵，例如 lingN），所以這裡直接讀 localStorage；null＝已經過渡過了 */
 /* 開發者 11/6 修：全新玩家第一次打開，開機時就會寫進 era、jStars、playSec 這些鍵，原本的判斷會把新玩家當成舊玩家，跳出「存檔功能上線了、角色是小帥Q版」。改成只看真的玩過才會有的鍵（新手引導做完、修為、戰績、故事進度） */
@@ -20916,7 +20917,8 @@ const gxtWon=(w,P,G)=>(+w||0)>0||!!(P&&P.c&&typeof P.c==="object"&&Object.keys(P
 function gxtGsvWon(G){if(!G||typeof G!=="object")return false;const won=T=>!!T&&typeof T==="object"&&Object.values(T).some(r=>r&&(+r.w||0)>0);
   if(won(G.c)||won(G.h))return true;return!!G.v2&&typeof G.v2==="object"&&Object.values(G.v2).some(won)}
 function gxtOpen(){if(!GXT_ON)return false;   /* 11/16 開發者「我把開發者試玩打開，但我還沒啟航掉入黑洞，就可以看到觀星臺」，選單「場景入口照玩家進度」：全部解鎖試玩也不打開觀星臺入口 */
-  try{return gxtWon(store.get("bhWin",0),typeof bhtdProg==="function"?bhtdProg():store.get("bhtd",null),store.get("gsv",null))}catch(e){return false}}
+  /* 11/16 hspx P1（開發者「我剛剛才到星槎上……還沒起航偏離軌道就馬上跳出觀星臺和西市的過場動畫」），選單「打贏星門圍城才開」：只算這一趟旅程的勝場——舊黑洞的 bhWin 是整支手機共用（不在存檔清單），舊旅程贏過、新旅程一降落就開，不再算 */
+  try{return gxtWon(0,typeof bhtdProg==="function"?bhtdProg():store.get("bhtd",null),store.get("gsv",null))}catch(e){return false}}
 /* 直幅 "" 或寬版 "w"：W 可用寬、av 可用高、vw／vh 畫面寬高 */
 function gxtKind(W,av,vw,vh){if(!(W>0&&av>=120))return"";return W/av>=GXT_LAND&&Math.min(vw,vh)>=GXT_LMIN?"w":""}
 /* 白天？卯（05–07）～申（15–17）；時辰序號照 07w8 clkIdx（子＝0：23–01） */
@@ -21698,7 +21700,8 @@ const xsmWalkCfg=()=>Object.assign({},typeof SHW_PG0!=="undefined"?SHW_PG0:{},XS
 /* 解鎖：領過七星授印禮（M＝07mnq 的存檔 "mnq"） */
 const xsmGot=M=>!!(M&&typeof M==="object"&&M.gift&&typeof M.gift==="object"&&M.gift.a1);
 function xsmOpen(){if(!XSM_ON)return false;   /* 11/16 選單「場景入口照玩家進度」：全部解鎖試玩也不打開西市入口 */
-  try{return xsmGot(store.get("mnq",null))}catch(e){return false}}
+  /* 11/16 hspx P1 選單「打贏星門圍城才開」：跟觀星臺同一個條件（07gxt gxtWon：這一趟旅程的星門圍城或舊塔防贏過）；原本收下七星授印禮就開，新旅程一降落很快就拿到。xsmGot 留著不用 */
+  try{return typeof gxtWon==="function"&&gxtWon(0,typeof bhtdProg==="function"?bhtdProg():store.get("bhtd",null),store.get("gsv",null))}catch(e){return false}}
 /* 白天？卯（05–07）～申（15–17）；時辰序號照 07w8 clkIdx（子＝0：23–01） */
 function xsmDay(d){d=d||new Date();let i;try{i=typeof clkIdx==="function"?clkIdx(d):NaN}catch(e){i=NaN}if(!(i>=0))i=Math.floor(((d.getHours()+1)%24)/2);return i>=3&&i<=8}
 /* 想要白天／夜景 → 實際用哪一張（那張載不到就換另一張；兩張都壞就照原本那張） */
@@ -25368,7 +25371,7 @@ const STM_AREAS=[
   ["yard","🏡","個人小院","角色、戰績、收藏",[["我的角色","#/me","角色 頭像 官階 修為"],["我的戰績","#/stats","戰績 勝率 成長"],["學習週報","#/weekly","週報 一週"],["行囊","#/ship/bag","行囊 寶物 收藏"],["珍品冊","#/me/relics","珍品 收藏"],["千秋大百科","#/codex","百科 文化 圖鑑"],["九九消寒圖","#/xiaohan","消寒 節氣 冬天"]]],
   ["svc","⚙️","服務亭","設定、回首頁",[["回首頁","#/","首頁 回家"],["今日推薦（首頁告示牌）","#/today","推薦 今天 每日 告示 榜文"],["設定","#/settings","設定 家長 回饋 存檔 字級 隱私 音樂"]]]];
 /* 11/16 觀星臺、西市（首頁棋鎮兩側的新地點）：還沒開放就灰掉、寫怎麼開；開放條件照 07gxt gxtOpen、07xsm xsmOpen（模組沒載到＝當作開著） */
-const STM_LOCK={gxt:()=>typeof gxtOpen==="function"&&!gxtOpen()?"搭星槎起航會偏航進黑洞，打贏一盤就開放":"",xsm:()=>typeof xsmOpen==="function"&&!xsmOpen()?"領過七星授印禮後開放":""};
+const STM_LOCK={gxt:()=>typeof gxtOpen==="function"&&!gxtOpen()?"搭星槎起航會偏航進黑洞，打贏一盤就開放":"",xsm:()=>typeof xsmOpen==="function"&&!xsmOpen()?"搭星槎起航會偏航進黑洞，打贏一盤就開放":""};
 const stmLockWhy=e=>{try{const f=e[3]&&STM_LOCK[e[3]];return f?f():""}catch(x){return""}};
 /* hspx 11/11「地圖底圖請找 gemini 繪製」：data/sitemap/sitemap.webp（768×1376，park/sitemap/sitemap_a.png）。
    hit＝點得到的範圍、card＝圖上那張空白直條紙籤（地名直書貼在上面），單位都是圖寬／圖高的 %，照圖量的；paper＝圖上沒有紙籤（修圖時被燈籠杆取代），標籤自己帶宣紙底。
@@ -27103,8 +27106,8 @@ const SW7_PAGES=[
   {k:"terms",re:/data\/termsmap\//,m:"semi",rg:"s",sky:[[[0,0],[768,0],[768,1376],[0,1376]]]},
   {k:"redo",re:/data\/redomap\/redo_/,m:"semi",rg:"s",sky:[[[77,53],[731,144],[731,920],[80,813]]],fg:[[[60,633],[731,853],[731,891],[60,667]],[[80,713],[731,920],[731,945],[80,740]],[[60,640],[95,640],[95,811],[60,811]],[[296,700],[320,700],[320,793],[296,793]],[[516,760],[540,760],[540,860],[516,860]],[[0,53],[731,127],[731,153],[0,80]]],tr:[[[80,140],[149,100],[260,105],[360,100],[409,160],[400,300],[300,300],[149,305],[80,289]],[[425,140],[529,140],[529,189],[425,189]]]},
   {k:"theme",re:/data\/thememap\//,m:"semi",rg:"s",sky:[[[0,267],[80,333],[213,467],[300,560],[300,747],[213,773],[120,853],[53,907],[0,920]],[[768,267],[688,333],[555,467],[468,560],[468,747],[555,773],[648,853],[715,907],[768,920]]],fg:[[[44,400],[73,173],[127,173],[133,447],[133,867],[127,1053],[80,1053],[44,907]],[[197,333],[247,333],[247,880],[197,880]],[[267,440],[301,440],[301,800],[267,800]],[[637,173],[696,173],[731,400],[731,907],[696,1053],[651,1053],[637,873]],[[523,333],[573,333],[573,880],[523,880]],[[469,440],[501,440],[501,800],[469,800]]]},
-  {k:"shipMap",re:/data\/shipmap\/ship_map/,m:"out",rg:"cl",W:896,H:1200},
-  {k:"shipDeck",re:/data\/shipmap\/page_(sail|lesson)/,m:"out",rg:"cl"},
+  {k:"shipMap",re:/data\/shipmap\/ship_map/,m:"out",rg:"cl",W:896,H:1200,fix:1},   /* fix＝固定顏色（11/16 開發者「只有星槎沒有歲月都是固定顏色」，選單「只有星槎固定」）：星槎頁、甲板不套節氣天氣、霧、時辰色調；船艙等照首頁天氣 */
+  {k:"shipDeck",re:/data\/shipmap\/page_(sail|lesson)/,m:"out",rg:"cl",fix:1},
   {k:"portClassic",re:/data\/shipmap\/port_classic/,m:"out",rg:"cl"},
   {k:"port_qin",re:/data\/shipmap\/port_qin(_c|_f)?\.webp/,m:"out",rg:"n"},
   {k:"port_han",re:/data\/shipmap\/port_han(_c|_f)?\.webp/,m:"out",rg:"nw"},
@@ -27140,7 +27143,7 @@ function sw7TermFor(P,o){return P&&P.dataset&&P.dataset.sw7Term||sw7Term()}   /*
 const SW7_TOWN=/^(home|homeAlt|today|todayN|learn|battle|lobby|canju|terms|redo|theme|shipMap|shipDeck)$/;   /* 回饋 858（開發者 11/10）「兩邊場景的天氣不同」：星槎航線圖、甲板也跟著停靠那一朝渡口的天氣（停在船艙＝雲河自己的天氣） */
 function sw7Rg(o){if(!o||!o.rg)return"";if(o.rg==="cl"){const h=SW7_PAGES.find(x=>x.k==="home");if(h&&h!==o)return sw7Rg(h)}   /* 11/16 開發者（船艙截圖）「這邊的天氣錯了，要跟首頁對齊天氣」：雲河自己的地方（船艙渡口、船艙驛站、航線圖、甲板，rg "cl"）一律跟首頁同一個地區，同一時間同一種天氣 */
 if(!SW7_TOWN.test(o.k||""))return o.rg;let e="";try{e=typeof hbDockEra==="function"?hbDockEra():""}catch(x){}const q=e&&SW7_PAGES.find(x=>x.k==="port_"+e);return q&&q.rg||o.rg}
-function sw7WxFor(P,o){if(!o||o.m==="in"||!o.rg)return null;return sw7Precip(sw7TermFor(P,o),sw7Rg(o))}
+function sw7WxFor(P,o){if(!o||o.m==="in"||!o.rg||o.fix)return null;return sw7Precip(sw7TermFor(P,o),sw7Rg(o))}
 /* 首頁換底圖（07z-homemap.js 問這裡）：大雪節氣那幾天、或小雪～大寒正在下雪＝積雪版 snow；正在下雨＝雨景版 rain；其他＝""（原圖）；設定關掉也是 "" */
 const SW7_SNOWY=new Set(["小雪","大雪","冬至","小寒","大寒"]);
 /* 開發者 11/9「首頁變秋天的時候還是綠色的葉子，冬天也不會變，要符合天氣和大自然」：首頁照季節換整張圖（同一張原圖改的，構圖、入口、走路的路都不變）——
@@ -27330,7 +27333,7 @@ function sw7Leaf(R,o,src){const t=sw7TermFor(R.P,o),par=o&&o.tr&&o.tr.length&&(s
 /* 照現在的設定、節氣、天氣、時辰把這一頁的疊層排好；沒變就只更新晨昏色的濃淡 */
 /* 11/9 開發者截圖：圖還沒下載完（剛換版要重抓）時，月夜層會把空白頁塗成一片藍；圖載好才蓋，載好再補畫一次 */
 function sw7ImgOk(R){const im=R.img;if(im.complete&&im.naturalWidth>0)return true;if(!R.wl){R.wl=1;im.addEventListener("load",()=>{R.wl=0;R.sig="";try{sw7Fill(R)}catch(e){}},{once:true})}return false}
-function sw7Fill(R){const P=R.P,box=R.box,on=sw7On(),img=R.img,src=img.getAttribute("src")||"",o=sw7Page(src),hn=o&&/^(home|homeAlt|learn|battle|lobby)$/.test(o.k)&&!/_(dawn|dusk|night)\./.test(src)&&sw7ImgOk(R)?sw7HomeNightA(null,SW7_HSEA[sw7TermFor(P,o)]||""):0,night=/night/i.test(src)||P.classList.contains("td-night")||hn>0,
+function sw7Fill(R){const P=R.P,box=R.box,on=sw7On()&&!(sw7Page(R.img.getAttribute("src")||"")||{}).fix,img=R.img,src=img.getAttribute("src")||"",o=sw7Page(src),hn=o&&/^(home|homeAlt|learn|battle|lobby)$/.test(o.k)&&!/_(dawn|dusk|night)\./.test(src)&&sw7ImgOk(R)?sw7HomeNightA(null,SW7_HSEA[sw7TermFor(P,o)]||""):0,night=/night/i.test(src)||P.classList.contains("td-night")||hn>0,
     td=P.classList.contains("td-page"),ov=P.dataset.sw7Term||"",out=on&&o&&o.m!=="in",term=sw7TermFor(P,o),rm=sw7RM(),
     pw=out?(ov?(term==="冬至"?{t:"snow",a:.8}:null):sw7WxFor(P,o)):null,A0=out&&!pw?SW7_AMB[term]||null:null,tone=ov?sw7SeaOf(term):"";
   let k=pw?pw.t:A0?A0[0]:"";if(td&&!pw&&sw7TdHas(term))k="";
