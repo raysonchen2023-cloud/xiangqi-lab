@@ -20,7 +20,7 @@
      wmScr＝{a/b:{k 拿到第幾卷(0～3)、4＝解開,at [時間],ask {女:1},q 題號,done}}；wmEcho＝{p {id,k,i,at} 等著說的那一場,done {戰役 id:時間},q {戰役 id:題號}}；jRunW＝守局的進度。 */
 const WM_PIGEON_ON=true,WM_BENMING_ON=true,WM_SCROLL_ON=true,WM_ECHO_ON=true;   /* 開發者 11/8 說四案打開 */
 const WM_FLAG={pg:()=>WM_PIGEON_ON,bm:()=>WM_BENMING_ON,scr:()=>WM_SCROLL_ON,echo:()=>WM_ECHO_ON},WM_NAME={pg:"🕊 飛鴿傳譜",bm:"🀄 本命子之道",scr:"📜 千秋殘譜",echo:"⚔ 古戰場的迴響"};
-function wmOn(k){try{if(WM_FLAG[k]()===true)return true;return typeof DEVMODE==="function"&&DEVMODE()&&!!(store.get("wmDev",{})||{})[k]}catch(e){return false}}
+function wmOn(k){try{if(WM_FLAG[k]()===true)return true;return (typeof DEVTOOLS==="function"&&DEVTOOLS())&&!!(store.get("wmDev",{})||{})[k]}catch(e){return false}}
 const wmAny=()=>Object.keys(WM_FLAG).some(wmOn);
 const wmN=s=>PARK_NPC.find(n=>n.id.slice(0,3)===s)||null,wmS=n=>n&&n.id?n.id.slice(0,3):"";
 const WM_PC={俥:"車",相:"象",炮:"砲",傌:"馬",帥:"將",仕:"士",兵:"卒"};
@@ -417,7 +417,7 @@ function wmBondAfter(N){const n=bondOf(N.id).n,box=document.querySelector("#shee
   if(give){const ok=box.querySelector("#gdOk");if(ok){const f=ok.onclick;ok.onclick=e=>{if(f)f(e);setTimeout(()=>wmScrGive(due.line),300)}}}}
 
 /* ---------- 入口：驛站清單、信箱、新信數、珍品冊 ---------- */
-function wmInnHTML(){wmPgSync();const rows=wmPgRows("classic"),sc=wmScrHTML(),dev=typeof DEVMODE==="function"&&DEVMODE();if(!rows&&!sc&&!dev)return"";
+function wmInnHTML(){wmPgSync();const rows=wmPgRows("classic"),sc=wmScrHTML(),dev=(typeof DEVTOOLS==="function"&&DEVTOOLS());if(!rows&&!sc&&!dev)return"";
   return`<div class="sec-t">🌸 女棋手的故事</div><div class="items" style="padding:0">${rows}${sc}</div>${rows||sc?"":`<div class="card muted" style="font-size:13px">（開發者模式才看得到這一區）</div>`}${dev?wmDevHTML():""}`}
 function wmInnBind(box,v){wmPgBind(box,()=>{if(box.isConnected)gardenInn(v)});wmScrBind(box);wmDevBind(box,v)}
 if(typeof gardenInn==="function"){const gi0=gardenInn;gardenInn=function(v){const r=gi0.apply(this,arguments);try{const box=v.querySelector("#gardenBox");if(box){const d=document.createElement("div");d.className="wm-inn";d.innerHTML=wmInnHTML();if(d.innerHTML){box.append(d);wmInnBind(d,v)}}}catch(e){console.warn(e)}return r}}

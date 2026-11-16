@@ -9,7 +9,13 @@ function dvtForced(){try{return localStorage.getItem("xq_bhForce")==="1"}catch(e
 function dvtSheet(){if(!dvtOn())return toast("要先打開開發者模式");
   sheet("🧪 開發者測試台",b=>{const all=!!store.get("dvtGxAll",0),S=typeof gxSeals==="function"?gxSeals():{};
     const row=(id,ic,t,d)=>`<button class="item" id="${id}"><span class="lb">${ic}</span><span class="tx"><b>${esc(t)}</b><span>${esc(d)}</span></span><span class="muted">›</span></button>`;
+    const un=!!store.get("dvtUnlock",false),tl=!!store.get("dvtTools",false),LG=(()=>{const L=store.get("devLog",[]);return Array.isArray(L)?L.slice().reverse():[]})();
     b.innerHTML=`<p class="muted" style="margin:0 0 8px">只有開發者看得到。不計分；要恢復一般狀態按最下面「重設黑洞篇進度」。</p>
+      <div class="sec-t">👁 開發者視角</div><p class="muted" style="margin:0 0 6px;font-size:13px">兩個都關＝你看到的跟玩家一模一樣（意見回饋管理照舊）。</p><div class="items" style="padding:0">
+        ${row("dvU",un?"✅":"🔓","全部解鎖試玩："+(un?"開":"關"),"觀星臺、西市、第二集、星門圍城全部關卡、故事預覽全文、下架的章都打開（測完記得關）")}
+        ${row("dvW",tl?"✅":"🛠","頁面上顯示開發者小工具："+(tl?"開":"關"),"消寒圖日期預覽、渡口與船艙動態切換、手機空間明細、程式語言清單、背景音樂診斷、新版更新說明等")}
+        ${row("dvL","🧪","自我檢查紀錄（"+LG.length+" 筆）","3D、動態效果自我檢查沒過時記在這裡，不再跳出提示")}
+      </div>
       <div class="sec-t">🌀 黑洞</div><div class="items" style="padding:0">
         ${row("dvA","🌀","馬上掉進黑洞","跳出偏航視窗（接受→七星星盤對局；先回航線→什麼都不發生）")}
         ${row("dvB","♟","直接開星樞星盤對局","跳過視窗，直接進黑洞巨盤（難度＝實力＋1）")}
@@ -34,6 +40,11 @@ function dvtSheet(){if(!dvtOn())return toast("要先打開開發者模式");
       </div>`;
     const G=b.querySelector("#dvG");if(G&&typeof GX_ORD!=="undefined"){G.innerHTML=GX_ORD.concat(["mirror"]).map(id=>{const g=id==="mirror"?{n:"第十四顆"}:gxGet(id)||{};return`<button class="pill" data-gx="${id}" style="margin:2px">${S[id]?"⭐":""}${esc(g.n||g.t||id)}</button>`}).join("")}
     const q=s=>b.querySelector(s),re=()=>{closeSheet();setTimeout(dvtSheet,250)};
+    /* 11/16 開發者視角跟玩家一樣（02-shell DEVUNLOCK／DEVTOOLS／devNote）：切完重新整理目前這一頁，解鎖、小工具才會照新的狀態畫 */
+    q("#dvU").onclick=()=>{store.set("dvtUnlock",!un);toast(un?"🔓 全部解鎖試玩：關（跟玩家一樣）":"🔓 全部解鎖試玩：開");closeSheet();setTimeout(()=>{try{route()}catch(e){}},250)};
+    q("#dvW").onclick=()=>{store.set("dvtTools",!tl);toast(tl?"🛠 開發者小工具：關（跟玩家一樣）":"🛠 開發者小工具：開");closeSheet();setTimeout(()=>{try{route()}catch(e){}},250)};
+    q("#dvL").onclick=()=>{closeSheet();setTimeout(()=>sheet("🧪 自我檢查紀錄",b2=>{b2.innerHTML=(LG.length?`<div class="items" style="padding:0">${LG.map(([t,s])=>`<div class="item"><span class="tx"><b>${esc(s)}</b><span>${esc(new Date(t).toLocaleString())}</span></span></div>`).join("")}</div><button class="btn ghost" id="dvLc" style="width:100%;margin-top:10px">清掉紀錄</button>`:`<p class="muted">還沒有紀錄。</p>`)+`<button class="btn" id="dvLb" style="width:100%;margin-top:8px">‹ 回測試台</button>`;
+      const c=b2.querySelector("#dvLc");if(c)c.onclick=()=>{store.set("devLog",[]);closeSheet();setTimeout(dvtSheet,250)};b2.querySelector("#dvLb").onclick=()=>{closeSheet();setTimeout(dvtSheet,250)}}),250)};
     q("#dvA").onclick=()=>{closeSheet();if(typeof bhOffer==="function")bhOffer(dvtHere(),()=>toast("先回航線（測試）"),false)};
     q("#dvB").onclick=()=>{closeSheet();if(typeof bhStart==="function")bhStart(dvtHere(),false)};
     b.querySelectorAll("[data-tx]").forEach(x=>x.onclick=()=>{closeSheet();if(typeof bhfxTry==="function")setTimeout(()=>bhfxTry(x.dataset.tx),300)});   /* 11/14 太虛星尊魔法 3D（07bhf-bossfx.js） */

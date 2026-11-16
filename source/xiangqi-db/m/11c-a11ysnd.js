@@ -180,7 +180,7 @@ function axsBusy(label,p){if(!p||typeof p.then!=="function")return p;const S=axs
 /* ---------- 以下接到畫面 ---------- */
 /* 設定 → 系統 → ♿ 無障礙 裡的一列（11b axmSetRows 呼叫） */
 /* 第 5 輪：說明改成 40 字內（axsNote），細節（九種聲音、音量、靜音鍵）移到「🎼 音效圖鑑」；開發者模式多一顆「🔍 聲音事件紀錄」。按鈕至少 44px 高 */
-function axsSetRow(){const on=axsOn(),pf=axsPref(),B='style="width:auto;margin:0;padding:6px 12px;font-size:13.5px;min-height:44px"';let dev=false;try{dev=typeof DEVMODE==="function"&&!!DEVMODE()}catch(e){}
+function axsSetRow(){const on=axsOn(),pf=axsPref(),B='style="width:auto;margin:0;padding:6px 12px;font-size:13.5px;min-height:44px"';let dev=false;try{dev=(typeof DEVTOOLS==="function"&&DEVTOOLS())}catch(e){}
   return`<label class="row" style="justify-content:space-between;padding:8px 2px;gap:10px"><span style="min-width:0"><b>🎧 聲音方位與動作提示音</b><br><span class="muted" style="font-size:12.5px">${axsNote()}${pf==null?"（現在跟著螢幕報讀模式）":""}</span></span><input type="checkbox" class="sw" id="axsSw"${on?" checked":""} aria-label="聲音方位與動作提示音"></label>`
     +`<div class="row" style="gap:8px;flex-wrap:wrap;padding:2px 2px 8px"><button type="button" class="btn ghost" id="axsTry" ${B}>🔈 試聽左右</button><button type="button" class="btn ghost axs-dx" ${B}>🎼 音效圖鑑</button><button type="button" class="btn ghost" data-xqdoc="tour" ${B}>🧭 空間導覽</button>${dev?`<button type="button" class="btn ghost axs-lg" ${B}>🔍 聲音事件紀錄</button>`:""}</div>`}
 /* 第 5 輪 P16.4 音效圖鑑：九種提示音一列一個（名稱、代表什麼、聲音長怎樣、▶ 試聽），下面左／中／右試聽 */

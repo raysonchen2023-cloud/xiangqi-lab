@@ -50,7 +50,7 @@ const gxtWon=(w,P,G)=>(+w||0)>0||!!(P&&P.c&&typeof P.c==="object"&&Object.keys(P
 /* 11/16 出入口盤查：黑洞只剩星門圍城以後，打贏只寫進存檔 gsv（07sg2 sg2End：c／h＝各關勝敗、v2＝各關各難度），不記 bhWin、bhtd；新玩家觀星臺永遠不出現。G＝gsv 存檔，任何一關贏過就算 */
 function gxtGsvWon(G){if(!G||typeof G!=="object")return false;const won=T=>!!T&&typeof T==="object"&&Object.values(T).some(r=>r&&(+r.w||0)>0);
   if(won(G.c)||won(G.h))return true;return!!G.v2&&typeof G.v2==="object"&&Object.values(G.v2).some(won)}
-function gxtOpen(){if(!GXT_ON)return false;try{if(typeof DEVMODE==="function"&&DEVMODE())return true}catch(e){}
+function gxtOpen(){if(!GXT_ON)return false;try{if((typeof DEVUNLOCK==="function"&&DEVUNLOCK()))return true}catch(e){}
   try{return gxtWon(store.get("bhWin",0),typeof bhtdProg==="function"?bhtdProg():store.get("bhtd",null),store.get("gsv",null))}catch(e){return false}}
 /* 直幅 "" 或寬版 "w"：W 可用寬、av 可用高、vw／vh 畫面寬高 */
 function gxtKind(W,av,vw,vh){if(!(W>0&&av>=120))return"";return W/av>=GXT_LAND&&Math.min(vw,vh)>=GXT_LMIN?"w":""}

@@ -38,7 +38,7 @@ const xsmWalkCfg=()=>Object.assign({},typeof SHW_PG0!=="undefined"?SHW_PG0:{},XS
 /* ---------- 純計算 ---------- */
 /* 解鎖：領過七星授印禮（M＝07mnq 的存檔 "mnq"） */
 const xsmGot=M=>!!(M&&typeof M==="object"&&M.gift&&typeof M.gift==="object"&&M.gift.a1);
-function xsmOpen(){if(!XSM_ON)return false;try{if(typeof DEVMODE==="function"&&DEVMODE())return true}catch(e){}
+function xsmOpen(){if(!XSM_ON)return false;try{if((typeof DEVUNLOCK==="function"&&DEVUNLOCK()))return true}catch(e){}
   try{return xsmGot(store.get("mnq",null))}catch(e){return false}}
 /* 白天？卯（05–07）～申（15–17）；時辰序號照 07w8 clkIdx（子＝0：23–01） */
 function xsmDay(d){d=d||new Date();let i;try{i=typeof clkIdx==="function"?clkIdx(d):NaN}catch(e){i=NaN}if(!(i>=0))i=Math.floor(((d.getHours()+1)%24)/2);return i>=3&&i<=8}

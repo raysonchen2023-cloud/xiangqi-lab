@@ -640,7 +640,7 @@ function gsvProg(){let o=null;try{o=store.get("gsv",null)}catch(e){}const P=o&&t
 /* 開發者全開（驗收後面的關用）：開發者模式（02-shell DEVMODE）或本機 localhost／127.0.0.1 自動全開。主控台 gsvAll(true)＝這一頁強制全開、gsvAll(false)＝強制照玩家的解鎖（在本機要看鎖起來的樣子用這個）、gsvAll(null)＝回自動。
    只放在記憶體，重新整理就回自動；不寫進存檔 */
 let GSV_ALL=null;
-function gsvDevAll(){if(GSV_ALL!=null)return GSV_ALL;try{if(typeof DEVMODE==="function"&&DEVMODE())return true}catch(e){}try{return/^(localhost|127\.0\.0\.1)$/.test(location.hostname)}catch(e){return false}}
+function gsvDevAll(){if(GSV_ALL!=null)return GSV_ALL;try{return!!(typeof DEVUNLOCK==="function"&&DEVUNLOCK())}catch(e){return false}}   /* 11/16 開發者視角跟玩家一樣：開發者模式、本機都不再自動全開，要到開發者測試台開「🔓 全部解鎖試玩」（02-shell DEVUNLOCK） */
 function gsvAll(v){GSV_ALL=v==null?null:!!v;return gsvDevAll()}
 if(typeof window!=="undefined")window.gsvAll=gsvAll;
 function gsvCss(){if(document.getElementById("gsvCss"))return;try{if(typeof bhtdCss==="function")bhtdCss()}catch(e){}const s=document.createElement("style");s.id="gsvCss";s.textContent=`

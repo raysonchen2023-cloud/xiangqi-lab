@@ -438,10 +438,10 @@ test("逐關解鎖：第 1 關要先破序章 C1（11/15 七星改版；改版�
   const hh=ctx.gsvChapHTML(W(3),3,1,{hard:1});assert.deepEqual(cardsOf(hh).map(x=>[x[0],x[2]]),[[1,"lk"],[2,"lk"],[3,"on"],[4,"lk"],[5,"lk"],[6,"lk"]]);assert.match(hh,/data-lk="先破普通版"/);
   assert.match(hh,/class="gsv-chb gsv-mdb on" data-md="1" aria-pressed="true">困難<\/button>/);assert.match(h,/class="gsv-chb gsv-mdb on" data-md="0" aria-pressed="true">普通<\/button>/);
   const U=uiOn();try{
-    /* 開發者全開：自動看開發者模式或本機網址；主控台 gsvAll(true／false／null) 蓋過去 */
-    assert.equal(ctx.gsvDevAll(),false,"一般玩家");ctx.location={hostname:"localhost"};assert.equal(ctx.gsvDevAll(),true);ctx.location={hostname:"127.0.0.1"};assert.equal(ctx.gsvDevAll(),true);
-    assert.equal(ctx.gsvAll(false),false,"本機要看鎖起來的樣子");assert.equal(ctx.gsvAll(null),true);ctx.location={hostname:"xiangqi.example"};assert.equal(ctx.gsvDevAll(),false);
-    ctx.DEVMODE=()=>true;assert.equal(ctx.gsvDevAll(),true,"開發者模式");delete ctx.DEVMODE;assert.equal(ctx.gsvAll(true),true);ctx.gsvAll(null);
+    /* 開發者全開：11/16 起只看開發者測試台「全部解鎖試玩」（02-shell DEVUNLOCK），開發者模式、本機網址都不再自動全開；主控台 gsvAll(true／false／null) 蓋過去 */
+    assert.equal(ctx.gsvDevAll(),false,"一般玩家");ctx.location={hostname:"localhost"};assert.equal(ctx.gsvDevAll(),false,"本機也跟玩家一樣");ctx.DEVUNLOCK=()=>true;assert.equal(ctx.gsvDevAll(),true,"測試台全部解鎖試玩");
+    assert.equal(ctx.gsvAll(false),false,"本機要看鎖起來的樣子");assert.equal(ctx.gsvAll(null),true);delete ctx.DEVUNLOCK;ctx.location={hostname:"xiangqi.example"};assert.equal(ctx.gsvDevAll(),false);
+    ctx.DEVMODE=()=>true;assert.equal(ctx.gsvDevAll(),false,"開發者模式不再自動全開");delete ctx.DEVMODE;assert.equal(ctx.gsvAll(true),true);ctx.gsvAll(null);
     /* 沒打過的玩家：預設停在序章 A1（11/15 七星改版；這裡沒有 ptyHas＝不看加入，三階段的第一關都開）；點鎖住的卡、點第二章、點困難都不會改選 */
     ctx.gsvSelect("classic",false);assert.deepEqual(cardsOf(U.M.h).map(x=>[x[0],x[2]]),[[31,"on"],[32,"lk"],[33,"lk"],[34,""],[35,"lk"],[36,"lk"],[37,""],[38,"lk"],[39,"lk"]]);assert.deepEqual(U.go(),[31,0]);
     U.click(".gsv-card",{n:"2",lk:"破第 1 關開放"});assert.match(U.toast,/第 2 關：破第 1 關開放/);assert.deepEqual(U.go(),[31,0]);

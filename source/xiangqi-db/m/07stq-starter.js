@@ -72,7 +72,7 @@ function stqEnvNow(){const E={};try{E.J=!!journey()}catch(e){}try{E.slots=Object
   try{const M=mnqSt();E.mnq=!!(M.gift.a1||Object.keys(M.seg).length||Object.keys(M.lamp).length)}catch(e){}
   try{E.bh=!!store.get("bhXuDone",null)}catch(e){}try{E.restored=!!sessionStorage.getItem("xqRestored")}catch(e){}return E}
 function stqCan(){try{let qa=false;try{qa=localStorage.getItem("xq_stqQa")==="1"}catch(e){}return(!navigator.webdriver||qa)&&!!window.XQCore&&typeof Board==="function"}catch(e){return false}}
-function stqPeekOk(){try{if(/^(localhost|127\.\d+\.\d+\.\d+|\[::1\])$/.test(location.hostname))return true;return typeof DEVMODE==="function"&&!!DEVMODE()}catch(e){return false}}
+function stqPeekOk(){try{return!!(typeof DEVUNLOCK==="function"&&DEVUNLOCK())}catch(e){return false}}   /* 11/16 開發者視角跟玩家一樣：本機不再自動生效，要開發者測試台「🔓 全部解鎖試玩」開著 */
 /* 練習中（還沒畢業）：07mnq 的 mnqTick 看到就不自動跳授印禮 */
 function stqHold(){if(!STQ_ON)return false;const S=stqSt0();return!!(S&&S.st==="run")}
 /* ---------- 開 App：05b titleScreen 第一行問這裡；回 true＝這裡接手了 ---------- */

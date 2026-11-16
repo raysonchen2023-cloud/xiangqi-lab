@@ -28,7 +28,7 @@ function page({ hash = "#/", ls = {}, nav = "navigate", now = Date.parse("2026-1
     document: { hidden: false, body, querySelector: q => sel.some(s => q.split(",").includes(s)) ? {} : null, getElementById: () => null, createElement: () => ({ style: {}, setAttribute() { }, remove() { } }), addEventListener: (t, f) => L.push(["doc:" + t, f]) },
     addEventListener: (t, f) => L.push([t, f]), setTimeout: (f, t) => { timers.push({ f, t }); return timers.length }, setInterval: (f, t) => { timers.push({ f, t, iv: 1 }); return 0 },
     MODAL_HOLD: modalHold, esc: s => String(s).replace(/[&<>"]/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" })[c]),
-    DEVMODE: () => dev, i18nT: (k, z) => z,
+    DEVMODE: () => dev, DEVTOOLS: () => dev, i18nT: (k, z) => z,
   };
   ctx.window = ctx; vm.createContext(ctx);
   vm.runInContext(RLG + "\n;this.R={rlgHold,rlgPrep,rlgMenu,rlgClassify,rlgFxBusy,rlgLogHTML,rlgSetMount,rlgIsGame};", ctx, { filename: "02r-reloadguard.js" });

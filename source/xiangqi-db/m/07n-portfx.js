@@ -8,7 +8,7 @@
    沒過、WebGL 或 highp 不能用、prefers-reduced-motion，都退回原本的單張圖。離開這頁迴圈自己停並釋放 WebGL */
 const PFX_ON=true;   /* 船艙動態預設開關（開發者 11/9 回饋 765「可以預設打開」）；localStorage m_portGL 為 1 開、0 關，沒設照這個 */
 const pfxOn=()=>{const v=store.get("portGL",-1);return v==-1?PFX_ON:v==1};
-function pfxDev(P){if(!(typeof DEVMODE==="function"&&DEVMODE())||P.querySelector(".shp-gldev"))return;const on=pfxOn();   /* 只有開發者模式看得到：切換船艙動態（存在 m_portGL），樣式借星槎的 .shp-gldev */
+function pfxDev(P){if(!(typeof DEVTOOLS==="function"&&DEVTOOLS())||P.querySelector(".shp-gldev"))return;const on=pfxOn();   /* 只有開發者模式看得到：切換船艙動態（存在 m_portGL），樣式借星槎的 .shp-gldev */
   const b=document.createElement("button");b.type="button";b.className="shp-gldev"+(on?" on":"");b.style.position="absolute";b.textContent=on?"🧪 船艙動態：開":"🧪 船艙動態：關";P.appendChild(b);
   b.onclick=e=>{e.stopPropagation();vibrate(5);store.set("portGL",on?0:1);toast(on?"已關掉船艙動態":"已打開船艙動態");route()}}
 const PFX_SZ=[[768,1376],[384,688],[512,512],[512,512]],PFX_PT=[[439,404],[716,527],[224,705],[457,924],[105,1248],[733,1192],[493,624],[619,155]],PFX_M=9;
@@ -76,7 +76,7 @@ function portFx(v,k){const P=v&&v.querySelector(".shp-page.cq");if(!P||k!=="clas
       if(!window.ResizeObserver)meas();SPX.cx+=(SPX.tx-SPX.cx)*SPX.k;SPX.cy+=(SPX.ty-SPX.cy)*SPX.k;
       if(W&&H){const w=Math.round(Math.min(W*(devicePixelRatio||1),960)),h=Math.round(w*H/W);if(w!==bw||h!==bh){cv.width=bw=w;cv.height=bh=h;gl.viewport(0,0,w,h)}
         if(first){const d=pfxTest(gl,()=>{gl.uniform2f(U.par,0,0);gl.uniform1f(U.bob,0);gl.uniform1f(U.t,0);gl.uniform1f(U.k,0);gl.drawArrays(gl.TRIANGLE_STRIP,0,4)},bw,bh,im[0],768,1376,PFX_PT);SPX.pfxDiff=d;
-          if(!(d<40)){SPX.el=null;const x=gl.getExtension("WEBGL_lose_context");if(x)x.loseContext();fail();if(typeof DEVMODE==="function"&&DEVMODE())toast("🧪 船艙動態自我檢查沒過（差 "+Math.round(d)+"），先用單張圖");return}}
+          if(!(d<40)){SPX.el=null;const x=gl.getExtension("WEBGL_lose_context");if(x)x.loseContext();fail();if(typeof devNote==="function")devNote("🧪 船艙動態自我檢查沒過（差 "+Math.round(d)+"），先用單張圖");return}}
         /* 視差最大 9px、浮島起伏 3px（CSS px），週期 6.8 秒、各島相位不同；portdepth.py 已檢查不會拉破 */
         const s=W/768,t=(now-t0)/1000,px=PFX_M*SPX.cx,py=PFX_M*SPX.cy;
         gl.uniform2f(U.par,px/s,py/s);gl.uniform1f(U.bob,3/s);gl.uniform1f(U.t,t%88660);gl.uniform1f(U.k,1);gl.drawArrays(gl.TRIANGLE_STRIP,0,4);

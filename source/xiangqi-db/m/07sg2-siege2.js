@@ -609,8 +609,12 @@ function sg2Retired(st){if(typeof document==="undefined"||!st||!st.td||sg2On(st)
   el.innerHTML=`<span>黑洞改版了：現在只有星門圍城，每顆子都有自己的體力、攻防。這一盤是舊玩法，沒辦法接著下。</span><button type="button" id="sg2RetGo">去星門圍城</button>`;
   const b=el.querySelector("#sg2RetGo");if(b)b.onclick=()=>{el.remove();const R=store.get("bhRet",null);gsvSelect(R&&R.k||store.get("era","classic"),!!(R&&R.cover))};return true}
 /* 偏航：打過序章 C1（或改版前打過主線）才直接開一場；開哪一關＝已開放的主線關裡隨機一關、難度中 */
-function sg2DriftOk(){try{const P=gsvProg();return SG2G.ORD.some(n=>!SG2G.lockWhy(P,n,false,null))}catch(e){return false}}
-function sg2Drift(k,cover){if(!sg2DriftOk())return false;const P=gsvProg(),L=SG2G.ORD.filter(n=>!SG2G.lockWhy(P,n,false,null));if(!L.length)return false;
+/* 11/16 開發者選單「第一次起航必定偏航」：主線還沒有開放的關（新玩家）＝直接打序章裡第一個開著、還沒贏過的關（A1），難度照序章固定易 */
+function sg2ProNext(P){const has=gsvHas(),won=n=>!!((P.c&&P.c[n]&&P.c[n].w>0)||(P.v2&&P.v2[n]&&[1,2,3].some(d=>P.v2[n][d]&&P.v2[n][d].w>0)));
+  return SG2G.GRP[0].lv.find(n=>!won(n)&&!SG2G.lockWhy(P,n,false,has))}
+function sg2DriftOk(){try{const P=gsvProg();return SG2G.ORD.some(n=>!SG2G.lockWhy(P,n,false,null))||sg2ProNext(P)!=null}catch(e){return false}}
+function sg2Drift(k,cover){if(!sg2DriftOk())return false;const P=gsvProg(),L=SG2G.ORD.filter(n=>!SG2G.lockWhy(P,n,false,null));
+  if(!L.length){const n=sg2ProNext(P);if(n==null)return false;gsvStart(n,k,cover,null,true,0,1);return true}
   const n=L[Math.floor(Math.random()*L.length)];gsvStart(n,k,cover,(P.sk&&P.sk["*"])||null,true,0,2);return true}
 const sg2Rec=(P,n,d)=>((P.v2||{})[n]||{})[d]||{};
 function sg2CardHTML(P,n,d,sel,o){const V=GSV.LV[n],R=sg2Rec(P,n,d),lk=SG2G.lockWhy(P,n,o.all,o.has),LN=SG2G.nameOf(n),st=R.st||[0,0,0],rec=R.w||R.l||R.d?`勝 ${R.w||0}・和 ${R.d||0}・敗 ${R.l||0}`:"";

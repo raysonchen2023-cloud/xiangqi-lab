@@ -64,5 +64,5 @@ function rlgLogHTML(){const G=rlgLs(RLG_LOG),L=Array.isArray(G)?G:[];
     (L.length?L.map(x=>`<div style="padding:7px 0;border-top:1px solid var(--line);font-size:13.5px;line-height:1.6"><b>${esc(rlgT(x.at))}</b>・${esc(RLG_WN[x.why]||String(x.why||""))}${x.why==="other"?(x.bg?"（App 在背景時）":"（畫面開著時）"):""}<br>`+
       `<span class="muted">頁面 ${esc(String(x.h||""))}・${x.d3?"3D 棋盤":"平面／非棋盤"}・${x.je!=null?"對局剛結束 "+x.je+" 秒":"不是剛下完"}${x.nav?"・"+esc(x.nav):""}</span></div>`).join("")
       :'<p class="muted" style="font-size:13.5px">還沒有紀錄。只存在這支手機，不會送出去。</p>')+`</details>`}
-function rlgSetMount(v){try{if(!(typeof DEVMODE==="function"&&DEVMODE()))return;const pane=v.querySelector('[data-pane="more"]');if(!pane||pane.querySelector("#rlgSet"))return;pane.insertAdjacentHTML("beforeend",rlgLogHTML())}catch(e){}}
+function rlgSetMount(v){try{if(!(typeof DEVTOOLS==="function"&&DEVTOOLS()))return;const pane=v.querySelector('[data-pane="more"]');if(!pane||pane.querySelector("#rlgSet"))return;pane.insertAdjacentHTML("beforeend",rlgLogHTML())}catch(e){}}
 if(typeof Settings==="function"){const f0=Settings;Settings=function(v){const r=f0.apply(this,arguments);try{rlgSetMount(v)}catch(e){}return r}}

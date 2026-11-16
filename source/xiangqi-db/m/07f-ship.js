@@ -396,7 +396,7 @@ function ShipShelf(v){setTop("📚 書架","#/adventure");setTabs(false);v.class
     ["sb1",SHELF_SPOT[0][0],SHELF_SPOT[0][1],"🪨 第一集・石桌往事","讀到第"+CNUM(L.n)+"回・"+esc(ROAD_NAME)+" "+p1+"／"+J.length+" 關"],
     ["sb2",SHELF_SPOT[1][0],SHELF_SPOT[1][1],(b1?"📜":"🔒")+" 第二集・紙譜新局",b1?"明朝隆慶・過了 "+p2+"／"+J2.length+" 關":"第一集 "+J.length+" 關都過了才會打開",b1?"":"lk"],
     ["sb3",SHELF_SPOT[2][0],SHELF_SPOT[2][1],"🌌 雲河七星・合集","第 1～14 章・全書"]]);
-  shpOn(v,"#sb1",()=>{location.hash="#/shelf/1"});shpOn(v,"#sb2",()=>{if(!book1Done()&&!DEVMODE())return toast("🔒 讀完第一集、36 關都過了，第二集就會打開");location.hash="#/shelf/2"});
+  shpOn(v,"#sb1",()=>{location.hash="#/shelf/1"});shpOn(v,"#sb2",()=>{if(!book1Done()&&!(typeof DEVUNLOCK==="function"&&DEVUNLOCK()))return toast("🔒 讀完第一集、36 關都過了，第二集就會打開");location.hash="#/shelf/2"});
   shpOn(v,"#sb3",()=>{SHIP_RD_BACK="#/ship/shelf";location.hash="#/ship/read"});shpFit(v);return{}}
 const SHELF_SPOT=[[31,36],[66,57],[31,80]];
 /* 行囊 #/ship/bag：羅盤＝航行難度、包袱＝棋童資料、木箱＝存檔與讀檔（意見回饋 735：人物與年表只留在《石桌往事》書末附錄，卷軸不再是入口；BAG_SPOT[1] 現在放 📚 千秋大百科 #/codex，07i-codex.js） */
@@ -527,7 +527,7 @@ function shpPx(M){const box=M&&M.querySelector(".shp-px");if(!box)return;const c
       if(!window.ResizeObserver)meas();SPX.cx+=(SPX.tx-SPX.cx)*SPX.k;SPX.cy+=(SPX.ty-SPX.cy)*SPX.k;
       if(W){const w=Math.round(Math.min(W*(devicePixelRatio||1),1120)),h=Math.round(w*H/W);if(w!==bw||h!==bh){cv.width=bw=w;cv.height=bh=h;gl.viewport(0,0,w,h)}
         if(first){const d=shpGlTest(gl,U,bw,bh,im[5]);SPX.glDiff=d;if(!(d<40)){SPX.el=null;box.remove();if(hl)hl.style.transform="";const x=gl.getExtension("WEBGL_lose_context");if(x)x.loseContext();
-          if(typeof DEVMODE==="function"&&DEVMODE())toast("🧪 新立體自我檢查沒過（差 "+Math.round(d)+"），先用單張圖");return}}
+          if(typeof devNote==="function")devNote("🧪 新立體自我檢查沒過（差 "+Math.round(d)+"），先用單張圖");return}}
         /* 起伏 2.6px、轉動 ±0.33°、桅頂橫搖 5px（都以 CSS px 計），週期 7.4 秒；視差最大 12px，兩者相加也不會拉破（depth.py 已檢查） */
         const s=W/896,t=(now-t0)/1000,ph=t*2*Math.PI/7.4,bob=2.6*Math.sin(ph),rot=.0058*Math.sin(ph+.9),rl=5*Math.sin(ph+.5),px=SHP_PXM*SPX.cx,py=SHP_PXM*SPX.cy;
         gl.uniform2f(U.par,px/s,py/s);gl.uniform2f(U.roll,.805*rl/s,.594*rl/s);gl.uniform1f(U.bob,bob/s);gl.uniform1f(U.rot,rot);gl.uniform1f(U.t,t%88660);gl.drawArrays(gl.TRIANGLE_STRIP,0,4);

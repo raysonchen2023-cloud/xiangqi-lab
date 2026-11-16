@@ -61,7 +61,7 @@ test("第 2 項：自願匯出只在開發者模式——不是開發者模式�
   const h=D.mxShHtml({score:80,grade:["A"],base:80,cap:100,cnt:{}},D.mxShadowReport({plies:game(mkRnd(8),30,LV[1])}).r);assert.match(h,/data-mxexp="file"/);assert.match(h,/data-mxexp="copy"/);assert.match(h,/不上傳/);
 });
 test("〔原始碼〕第 2 項：匯出鈕只接在開發者模式才畫的影子區塊（reportSheet 只有 DEVMODE 才算 SH、才呼叫 mxShHtml）；mxShExport 裡沒有任何送出",()=>{
-  assert.match(S,/const SH=\(\(\)=>\{try\{return typeof DEVMODE==="function"&&DEVMODE\(\)\?mxShadowReport\(rep\):null/);assert.match(S,/\$\{SH\?mxShHtml\(R,SH\[s\]\):""\}/);
+  assert.match(S,/const SH=\(\(\)=>\{try\{return \(typeof DEVTOOLS==="function"&&DEVTOOLS\(\)\)\?mxShadowReport\(rep\):null/);   /* 11/16 開發者視角跟玩家一樣：影子區塊改看測試台「頁面上顯示開發者小工具」 */assert.match(S,/\$\{SH\?mxShHtml\(R,SH\[s\]\):""\}/);
   const ex=sl(S,"function mxShExportPack(","\nfunction gameReport(","mxShExport");assert.doesNotMatch(ex,/XQNet|shareIRT|fetch\(|sendBeacon|XMLHttpRequest/);assert.match(ex,/if\(!\(typeof DEVMODE==="function"&&DEVMODE\(\)\)\)return/);
 });
 

@@ -429,7 +429,7 @@ if(typeof qianqiu==="function"){const qq0=qianqiu;qianqiu=function(from,to,done,
 
 /* ---------- 設定 → 角色：🎐 旅途插曲（開關、稱號、開發者的立即觸發） ---------- */
 function epSetHTML(){if(!journey()||!myChar())return"";const S=epSt(),T=Object.keys(S.sw.t||{}).map(p=>EP5_TITLE[p]).filter(Boolean),nm=EP2_MAIL.filter(M=>(S.m[M.id]||{}).done).length,
-    dv=typeof DEVMODE==="function"&&DEVMODE();
+    dv=(typeof DEVTOOLS==="function"&&DEVTOOLS());
   return`<div class="sec-t">🎐 旅途插曲</div><div class="card"><label class="row" style="justify-content:space-between"><span><b>旅途插曲</b><br><span class="muted">七星吵架、漏字信、不速之客、星夜茶話、大掃除；一天最多 2 次，不會扣東西</span></span><input type="checkbox" class="sw" id="epSw" ${store.get("epOff",false)?"":"checked"}></label>
     ${T.length||nm?`<div class="muted" style="font-size:13px;margin-top:6px">${T.length?"🏅 稱號："+T.map(esc).join("、"):""}${T.length&&nm?"<br>":""}${nm?"📜 補好的信："+nm+"／"+EP2_MAIL.length+" 封":""}</div>`:""}
     ${dv?`<div style="border-top:1px solid var(--line);margin:8px 0 6px"></div><div class="muted" style="font-size:12.5px">🧪 開發者：立即觸發（不算次數、不看開關和機率）</div><div class="row" style="gap:6px;flex-wrap:wrap;margin-top:6px">${[[1,"⚡ 吵架"],[2,"💧 漏字信"],[3,"🌀 不速之客"],[4,"🌙 茶話會"],[5,"🧹 大掃除"]].map(([k,l])=>`<button class="pill" data-epdev="${k}">${l}</button>`).join("")}</div>`:""}</div>`}

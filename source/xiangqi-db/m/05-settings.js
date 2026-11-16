@@ -104,7 +104,7 @@ const XQ_SIZES={"pre":397868793,"code":14535256,"eng":51511005,"gm":33668932,"bg
 const szMB=b=>b>=1073741824?(b/1073741824).toFixed(1)+" GB":Math.max(1,Math.round(b/1048576))+" MB";
 function aboutSizes(){const S=XQ_SIZES,bg=typeof preStatRow==="function"?preStatRow():"";if(!S)return bg;const opt=S.opt||[];   /* 意見回饋 662：玩家只看總數，細項只在開發者模式顯示；11/11 ChatGPT 介面報告 P1：開 App 等待畫面不再寫容量，背景下載狀態放這裡（09b preStatRow） */
   return `<div class="row" style="justify-content:space-between"><span class="muted">整包下載</span><b>約 ${szMB(S.all)}</b></div>${bg}
-      <div class="row" style="justify-content:space-between"><span class="muted">這支手機已用</span><b id="aUse">計算中…</b></div>${DEVMODE()?`
+      <div class="row" style="justify-content:space-between"><span class="muted">這支手機已用</span><b id="aUse">計算中…</b></div>${(typeof DEVTOOLS==="function"&&DEVTOOLS())?`
       <details style="margin:2px 0 4px"><summary class="muted">🛠 下載大小細項（開發者）</summary><div class="muted" style="font-size:12.5px;line-height:1.75">・開 App 時先載好（程式、圖片、音效、字型）：${szMB(S.pre+S.code)}<br>・背景自動下載：棋力引擎 ${szMB(S.eng)}、特級大師對局 ${szMB(S.gm)}<br>・用到時才下載：背景音樂 ${szMB(S.bgm)}、其他圖片 ${szMB(S.other)}${opt.length?`<br>・選購：${opt.map(x=>esc(x[0])+" "+szMB(x[1])).join("、")}`:""}</div></details>`:""}`}
 function aboutUsage(el){try{if(!navigator.storage||!navigator.storage.estimate){el.textContent="這個瀏覽器查不到";return}
   navigator.storage.estimate().then(e=>{el.textContent=szMB(e.usage||0)}).catch(()=>{el.textContent="查不到"})}catch(e){el.textContent="查不到"}}
@@ -330,7 +330,7 @@ function Settings(v){
       <div class="row" style="justify-content:space-between;align-items:center"><span class="muted">版本</span><span class="row" style="gap:8px;align-items:center"><b>${esc(window.XQ_BUILD&&!/__BUILD__/.test(window.XQ_BUILD)?window.XQ_BUILD:"開發中")}</b>${OFF?'<button class="pill" id="aUpd">檢查更新</button>':""}</span></div>   <!-- 意見回饋 531：系統更新從首頁搬到這裡 -->
       ${aboutSizes()}   <!-- 意見回饋 661：整包大小、這支手機已用多少 -->
       <button class="btn ghost" id="aLic" style="width:100%;margin-top:8px">📜 關於與開源授權</button>   <!-- 開發者 11/11 選規劃書方案 10 -->
-      ${DEVMODE()?`<details style="margin-top:4px"><summary class="muted">${/* 意見回饋 355：開發者模式才看得到 */""}🛠 用了哪些語言寫的（開發者）</summary>
+      ${(typeof DEVTOOLS==="function"&&DEVTOOLS())?`<details style="margin-top:4px"><summary class="muted">${/* 意見回饋 355：開發者模式才看得到 */""}🛠 用了哪些語言寫的（開發者）</summary>
         <table class="st-lv" style="font-size:13px;margin-top:6px"><tr><th>語言</th><th>用在哪裡</th></tr>
         <tr><td>JavaScript</td><td>App 主程式、離線的對局和棋譜資料庫、線上大廳、3D 園子（three.js）</td></tr>
         <tr><td>HTML／CSS</td><td>所有畫面的版面、顏色、動畫</td></tr>
@@ -420,7 +420,7 @@ function Settings(v){
       {const x=mvB.querySelector('[data-t="capSound"]');if(x)sdB.append(x.closest("label"))}
       {const vr=mvB.querySelector("#vcRow"),s2=v.querySelector("#snd2");if(vr&&s2)s2.append(vr)}
       {const s3=v.querySelector("#snd3");for(const k of["gateDrum","bgm"]){const x=mvB.querySelector(`[data-t="${k}"]`);if(x&&s3)s3.append(x.closest("label"))}
-        if(s3){const nw=document.createElement("div");nw.id="bgmNow";nw.style.cssText="display:none;align-items:center;gap:8px;padding:0 2px 8px;font-size:13.5px;opacity:.8";s3.append(nw);bgmNow();if(typeof mnqSndRow==="function")try{mnqSndRow(s3)}catch(e){}   /* 11/15 星槎遠征令拿掉：♪ 配樂收藏、🎬 再看第一章搬到這張卡（07mnq） */if(DEVMODE()){const dg=document.createElement("div");dg.style.cssText="padding:0 2px 8px;font-size:12px;opacity:.75;word-break:break-all";dg.innerHTML=`<span id="bgmDg"></span> <button class="btn ghost" id="bgmTest" style="width:auto;margin:4px 0 0;padding:3px 10px;font-size:12.5px">▶ 測試背景音樂</button>`;s3.append(dg);const up=()=>{const e=dg.querySelector("#bgmDg");if(e)e.textContent="🛠 "+bgmDiag()};up();dg.querySelector("#bgmTest").onclick=()=>{if(BGM.a&&BGM.a.paused){BGM.a=null;BGM.src=""}bgmSync();setTimeout(up,300);setTimeout(up,1500);setTimeout(up,4000)}}}}
+        if(s3){const nw=document.createElement("div");nw.id="bgmNow";nw.style.cssText="display:none;align-items:center;gap:8px;padding:0 2px 8px;font-size:13.5px;opacity:.8";s3.append(nw);bgmNow();if(typeof mnqSndRow==="function")try{mnqSndRow(s3)}catch(e){}   /* 11/15 星槎遠征令拿掉：♪ 配樂收藏、🎬 再看第一章搬到這張卡（07mnq） */if((typeof DEVTOOLS==="function"&&DEVTOOLS())){const dg=document.createElement("div");dg.style.cssText="padding:0 2px 8px;font-size:12px;opacity:.75;word-break:break-all";dg.innerHTML=`<span id="bgmDg"></span> <button class="btn ghost" id="bgmTest" style="width:auto;margin:4px 0 0;padding:3px 10px;font-size:12.5px">▶ 測試背景音樂</button>`;s3.append(dg);const up=()=>{const e=dg.querySelector("#bgmDg");if(e)e.textContent="🛠 "+bgmDiag()};up();dg.querySelector("#bgmTest").onclick=()=>{if(BGM.a&&BGM.a.paused){BGM.a=null;BGM.src=""}bgmSync();setTimeout(up,300);setTimeout(up,1500);setTimeout(up,4000)}}}}
       [...sdB.children].slice(1).forEach(x=>x.style.borderTop="1px solid var(--line)")}
     if(typeof sxmMount==="function")sxmMount(v);   /* 第 6 輪 F3：三張聲音卡片加音量分類（滑桿、靜音、全部靜音，11c-a11ysnd.js） */
     v.querySelectorAll("[data-vc]").forEach(x=>x.onclick=()=>{const k=x.dataset.vc;v.querySelectorAll("[data-vc]").forEach(y=>y.classList.toggle("on",y===x));
@@ -812,7 +812,7 @@ function talk(s,plies,graded,ph,score){if(score==null)return[];const sg=s==="r"?
   return T.sort((a,b)=>(a.ply||0)-(b.ply||0))}
 // 報告畫面（底部選單）。opts：{title, side:預設看哪一方, names:{r,b}, goto(ply)}
 function reportSheet(rep,opts){let s=opts.side||"r";
-  const SH=(()=>{try{return typeof DEVMODE==="function"&&DEVMODE()?mxShadowReport(rep):null}catch(e){return null}})();   /* 開發者 11/11 影子模式：只有開發者模式算、最下面並列新舊（mxShHtml）；一般玩家的畫面完全照舊 */
+  const SH=(()=>{try{return (typeof DEVTOOLS==="function"&&DEVTOOLS())?mxShadowReport(rep):null}catch(e){return null}})();   /* 開發者 11/11 影子模式：只有開發者模式算、最下面並列新舊（mxShHtml）；一般玩家的畫面完全照舊 */
   sheet(opts.title||"賽後報告",b=>{const paint=()=>{const R=rep.sides[s],nm=opts.names||{r:"紅方",b:"黑方"};
     const PN=[["open","開局"],["mid","中局"],["end","殘局"]],QS=["妙著","正著","穩著","緩著","失著","敗著"];
     b.innerHTML=(opts.note?`<p class="muted" style="font-size:12.5px;margin:0 0 8px;line-height:1.6">${esc(opts.note)}<br>每一手的分數是 Pikafish 短時間思考的估計，局面複雜時可能會變；想看得更深，在那一步按 🔍 分析。</p>`:"")+`<div class="opt">${["r","b"].map(x=>`<button data-sd="${x}" class="${x===s?"on":""}">${x==="r"?"🔴":"⚫"} ${esc(nm[x])}</button>`).join("")}</div>`+

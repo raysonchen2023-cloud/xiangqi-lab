@@ -65,7 +65,7 @@ window.addEventListener("hashchange",rdPopClose);document.addEventListener("keyd
 const jChapterHref=s=>s?"#/shelf/"+(s.book===2?2:1)+"/"+s.n+"/game":"#/shelf/1";
 function BookChapter(v,b,n,tab){b=b===2?2:1;n=Math.max(1,+n|0);const game=tab==="game";setTop((b===1?"🪨":"📜")+" 第"+CNUM(n)+"回","^#/shelf/"+b);setTabs(false);v.className="view";v.innerHTML='<div class="pad muted">載入中…</div>';
   Promise.all([b===1?legendData():legendData2(),game?null:rdAidQ()]).then(([D,RA])=>{if(!v.isConnected)return;const c=D&&D.chapters[n-1];if(!c){navReplace("#/shelf/"+b);return}   /* RA＝閱讀輔助（百字精華、名詞小辭典），載不到是 null */
-    const S=jStars(),J=b===1?jStages():jStages2(),N=D.chapters.length,s=J[n-1]||null,zn=s?(S[s.id]||0):0,pv=DEVMODE()&&(b===1?LEGEND_PREVIEW:LEGEND2_PREVIEW);
+    const S=jStars(),J=b===1?jStages():jStages2(),N=D.chapters.length,s=J[n-1]||null,zn=s?(S[s.id]||0):0,pv=(typeof DEVUNLOCK==="function"&&DEVUNLOCK())&&(b===1?LEGEND_PREVIEW:LEGEND2_PREVIEW);
     const open=pv||(b===1?(n<=1||n<=legendState().n):(book1Done()&&(n===1||!!(J[n-2]&&S[J[n-2].id]))));
     if(!open){v.innerHTML=`<div class="pad"><div class="card muted" style="line-height:1.8">🔒 第${CNUM(n)}回還沒打開：${b===2&&!book1Done()?"第一集 36 關都過了，第二集才會打開。":"先過第"+CNUM(n-1)+"回的棋。"}<br><a href="#/shelf/${b}">回目錄</a></div></div>`;return}
     const sOk=!!s&&(b===1?jOpen(J,n-1):true),nextOk=n<N&&(zn>0||pv),lvn=s?(b===1?s.lvName||s.name:((c.lv||{}).name||s.lvName||"")):"";
@@ -114,7 +114,7 @@ async function legendTimeline(keep,bk){bk=bk===2?2:1;const D=await (bk===2?legen
     b.querySelectorAll("[data-pp]").forEach(x=>x.onclick=()=>{const n=x.dataset.pp,p=P.find(z=>z.name===n),L=PEOPLE_LOOK[n];if(!L&&!PIMG[n])return;vibrate(5);const sh=document.getElementById("sheet"),keep=[sh?sh.scrollTop:0,sh&&sh.querySelector(".sh-b")?sh.querySelector(".sh-b").scrollTop:0];const pid=(m=>m?(m[1]==="npc"?"n:":"p:")+m[2]:/legend\/liu|journey\/char_liu_old/.test(PIMG[n]||"")?"j:liu_old":null)(String(PIMG[n]||"").match(/(people|npc)\/(\w+)\.webp/)),NPC=typeof PARK_NPC!=="undefined"?PARK_NPC.find(z=>z.name===n):null;   /* 意見回饋 719：賣豆花的小販這類園子棋友（data/npc/）也接上 3D 模型 n_<id>，棋子字照園子名單；原本只認 people/，找不到模型就顯示下半身不完整的畫像 */
       figView(L||pid?oppFig({p:L?L.pc:NPC&&NPC.pc||"將",e:"classic",g:9,npc:n,hat:L&&L.hat,hc:L&&L.hc,robe:L&&L.robe,cus:pid}):null,"🪨 "+n,`${ageLine(ageOfP(p))}<p class="muted" style="font-size:13.5px;line-height:1.7;margin:0">${esc(p&&p.note||"")}</p>`,[["← 回人物列表",()=>legendTimeline(keep,bk)],["關閉",()=>closeSheet(),true]],PIMG[n]||null)})})}
 /* 意見回饋 674：石桌往事、紙譜新局搬到星槎的書架（#/shelf/1、#/shelf/2）；#/adventure 改成雲河星槎頁（07f-ship.js）。SHELF()＝目前那一本書的網址 */
-const SHELF=b=>"#/shelf/"+(b||(store.get("legBook",1)===2&&(book1Done()||DEVMODE())?2:1));
+const SHELF=b=>"#/shelf/"+(b||(store.get("legBook",1)===2&&(book1Done()||(typeof DEVUNLOCK==="function"&&DEVUNLOCK()))?2:1));
 function legendBook(){closeSheet();LEGEND_PREVIEW=false;location.hash=SHELF()}
 /* 意見回饋 316：石桌往事改成一整頁——上面是你的棋童小卡，中間是雲河棋路、驛站、棋童資料、人物年表，下面是章節 */
 /* 第二集《紙譜新局》（開發者 11/4）：石桌往事頁上面切換第一集、第二集 */
@@ -133,7 +133,7 @@ function jGo(s){if(!s)return;vibrate(5);if(s.book===2||s.t==="lv"||s.t==="puz")l
 const BOOK_META={1:{t:"石桌往事",ic:"🪨",sub:"第一集・元末明初",one:"元末烽火裡，一張石桌、一盤沒下完的棋",fb:"data/stonetable/scene.webp"},
   2:{t:"紙譜新局",ic:"📜",sub:"第二集・明朝隆慶",one:"明朝隆慶年間，一顆借來的骨卒",fb:"data/levels/b2cg01_dawn_sweep.webp"}};
 function Adventure2(v){store.set("legBook",2);return Adventure(v)}
-function Adventure(v){const bk=store.get("legBook",1)===2&&(book1Done()||DEVMODE())?2:1,M=BOOK_META[bk];if(bk===1)LEGEND_PREVIEW=false;else LEGEND2_PREVIEW=false;
+function Adventure(v){const bk=store.get("legBook",1)===2&&(book1Done()||(typeof DEVUNLOCK==="function"&&DEVUNLOCK()))?2:1,M=BOOK_META[bk];if(bk===1)LEGEND_PREVIEW=false;else LEGEND2_PREVIEW=false;
   setTop(M.ic+" "+M.t,"^#/ship/shelf");setTabs(false);v.className="view";v.innerHTML='<div class="pad muted">載入中…</div>';
   if(bk===1)setTimeout(()=>{if(/^#\/shelf\/1/.test(location.hash))try{jarCheck()}catch(e){}},900);   /* 原本打開章回棋路頁才補發的棋罐獎勵，改在第一集目錄補 */
   (bk===1?legendData():legendData2()).then(D=>{if(!v.isConnected)return;if(!D){v.innerHTML='<div class="pad"><div class="card muted">故事載入失敗，等一下再試</div></div>';return}
@@ -153,7 +153,7 @@ function Adventure(v){const bk=store.get("legBook",1)===2&&(book1Done()||DEVMODE
     const groups=bk===1?JR.map((R,ri)=>({n:roadSeg(ri),ks:Array.from({length:R.ch[1]-R.ch[0]+1},(_,j)=>R.ch[0]+j),gate:R.lv>1&&J.some(s=>s.r===ri)&&!jLvOk(J.find(s=>s.r===ri))?`🔒 Lv ${R.lv} 或棋罐 ${JAR_GATE[ri]} 子才能進・下船到驛站找人下棋就能升級`:""}))
       :[...new Set(D.chapters.map(c=>c.actName||""))].map(a=>({n:a,ks:D.chapters.filter(c=>(c.actName||"")===a).map(c=>c.n),gate:""}));
     const zi=k=>{const n=zn(k),rd=!!RD[k]&&!n;return`<span class="bk-zi${rd?" rd":""}" aria-label="${n?"收了 "+n+" 顆子":rd?"讀過了，還沒闖":"還沒收子"}">${ZI.map((z,i)=>`<i class="${i<n?"on":""}">${i<n?z:rd?"・":""}</i>`).join("")}</span>`};
-    const row=k=>{const o=openK(k)||(bk===1&&LEGEND_PREVIEW&&DEVMODE());return`<button class="bk-row${k===cur&&!done?" cur":""}" data-k="${k}"${o?"":" disabled"}><span class="bk-no">${CNUM(k)}</span><span class="bk-tt">${o?esc(title(k)):"？？？"}${k===cur&&!done?" 🔖":""}${o?"":`<small>🔒 ${bk===2&&!b1?"第一集 36 關都過了才會打開":"先過第"+CNUM(k-1)+"回的棋"}</small>`}</span>${zi(k)}</button>`};
+    const row=k=>{const o=openK(k)||(bk===1&&LEGEND_PREVIEW&&(typeof DEVUNLOCK==="function"&&DEVUNLOCK()));return`<button class="bk-row${k===cur&&!done?" cur":""}" data-k="${k}"${o?"":" disabled"}><span class="bk-no">${CNUM(k)}</span><span class="bk-tt">${o?esc(title(k)):"？？？"}${k===cur&&!done?" 🔖":""}${o?"":`<small>🔒 ${bk===2&&!b1?"第一集 36 關都過了才會打開":"先過第"+CNUM(k-1)+"回的棋"}</small>`}</span>${zi(k)}</button>`};
     const toc=groups.map(g=>{const got=g.ks.reduce((a,k)=>a+zn(k),0);return`<div class="bk-g"><div class="bk-gh"><b>${esc(g.n)}</b><span>${got}／${g.ks.length*3} 子</span></div>${g.gate?`<p class="bk-gate">${esc(g.gate)}</p>`:""}${g.ks.map(row).join("")}</div>`}).join("");
     const ppl=(D.people||[]).length;   /* 第二集有 people.json 之後，附錄也出現人物與年表 */
     v.innerHTML=`<div class="bk-page"><div class="bk-cover bk${bk}"><div class="bk-fb" style="background-image:url(${M.fb})"></div><img src="data/shipmap/book${bk}_cover.webp" alt="" onerror="this.remove()"><i class="bk-star s1"></i><i class="bk-star s2"></i><i class="bk-star s3"></i>
@@ -164,7 +164,7 @@ function Adventure(v){const bk=store.get("legBook",1)===2&&(book1Done()||DEVMODE
         <div class="bk-th">目　錄</div>${toc}
         ${ppl||bk===1?`<div class="bk-th">附　錄</div>`:""}<div class="bk-apx">${ppl?'<button class="bk-ap" id="bkTl">📅 人物與年表 ›</button>':""}${bk===1?'<button class="bk-ap" id="bkMap">🗺 雲河地圖 ›</button>':""}</div>
         <p class="muted" style="font-size:12px;margin-top:10px">${bk===1||ppl?"故事是虛構的；年表裡標 📜 的是真實歷史。":"故事是虛構的。"}${bk===2&&!b1?"<br>🔒 讀完第一集、36 關都過了才會打開":""}</p>
-        ${DEVMODE()?'<button class="lk" id="bkDev" style="margin-top:4px">👁 開發者預覽全文（玩家看不到這個按鈕）</button>':""}</div></div>`;
+        ${(typeof DEVUNLOCK==="function"&&DEVUNLOCK())?'<button class="lk" id="bkDev" style="margin-top:4px">👁 開發者預覽全文（玩家看不到這個按鈕）</button>':""}</div></div>`;
     const on=(q,fn)=>{const e=v.querySelector(q);if(e)e.onclick=()=>{vibrate(5);fn()}};
     const rd=k=>bk===1?legendRead(k):legendRead2(k);
     on("#bkRead",()=>rd(done?1:cur));on("#bkGo",()=>{if(stOk(cur))return jGo(sc);toast(gateTxt(sc)?gateTxt(sc).replace("🔒 ","等級不夠：")+"・下船到 🏮 驛站找人下棋練等，或回前面的回多收幾顆子":"先過前一回的棋")});
@@ -551,7 +551,7 @@ function jStages2(){if(JS2_CACHE)return JS2_CACHE;return JS2_CACHE=(typeof JL2!=
    做法：進故事時把玩家原本的朝代存在 eraUser，再把 era 改成故事的朝代；離開時從 eraUser 還原。App 在故事裡被關掉，下次打開不在故事頁就會自動還原 */
 const STORY_ERA={1:"yuan",2:"ming"};
 function storyBookOf(h){h=String(h||"");
-  if(/^#\/shelf\//.test(h))return h.startsWith("#/shelf/2")&&(book1Done()||DEVMODE())?2:1;   /* 意見回饋 674：書架上的書才算故事線；#/adventure（星槎頁）照自己的朝代，讀故事換的元、明不算星槎停靠 */
+  if(/^#\/shelf\//.test(h))return h.startsWith("#/shelf/2")&&(book1Done()||(typeof DEVUNLOCK==="function"&&DEVUNLOCK()))?2:1;   /* 意見回饋 674：書架上的書才算故事線；#/adventure（星槎頁）照自己的朝代，讀故事換的元、明不算星槎停靠 */
   if(/^#\/journey\/b2h/.test(h))return 2;
   if(/^#\/journey\/park/.test(h))return 0;   /* 園子可以自己挑朝代（穿越），不算故事線 */
   /* 意見回饋 618（開發者）：從石桌往事點進去的棋童資料（我的角色）、驛站、驛站裡的對局都維持故事的朝代，只有去園子才換。
@@ -630,7 +630,7 @@ function Journey(v,sid){
   if(sid==="inn")return innSheet(v);
   if(sid==="park")return ParkGate(v);
   if(sid&&/~v$/.test(sid)){const bs=jFindStage(sid.slice(0,-2));if(!bs||!jHid()[bs.id]){navReplace("#/shelf/1");return{}}return jVarLevel(v,bs)}   /* 隱藏關卡（開發者 11/5，用原本變體的做法） */
-  if(sid&&/^b2h\d\d$/.test(sid)){const L2=jStages2(),i=L2.findIndex(x=>x.id===sid);if(i<0||!((i===0&&book1Done())||S[L2[i-1].id]||DEVMODE())){navReplace(SHELF());return{}}return jLevel(v,L2[i])}
+  if(sid&&/^b2h\d\d$/.test(sid)){const L2=jStages2(),i=L2.findIndex(x=>x.id===sid);if(i<0||!((i===0&&book1Done())||S[L2[i-1].id]||(typeof DEVUNLOCK==="function"&&DEVUNLOCK()))){navReplace(SHELF());return{}}return jLevel(v,L2[i])}
   if(sid){const i=L.findIndex(x=>x.id===sid);if(i<0||!jOpen(L,i)){navReplace("#/shelf/1");return{}}return L[i].t==="lv"?jLevel(v,L[i]):jPuzzle(v,L[i])}
   store.set("legBook",1);navReplace("#/shelf/1");return{}}   /* 意見回饋 735：章回棋路併進第一集的目錄（每回一行就有收子），#/journey 舊網址轉過去；3D 雲河地圖在書末附錄 */
 /* 意見回饋 394：雲河棋路 3D 沙盤（map3d.js）——一指轉、兩指縮放；點站看進度，按「出發」開那一站下一個還沒過的關。3D 載入失敗就顯示平面地圖 */
@@ -643,7 +643,7 @@ function jMap3d(L,S){sheet("🗺 "+ROAD_NAME,async b=>{
   try{const v="?v="+encodeURIComponent(window.XQ_BUILD||"");await loadScript(OFF?"three.min.js":"/m/three.min.js");await loadScript((OFF?"map3d.js":"/m/map3d.js")+v);if(!window.XQMap3D)throw new Error("3D 地圖載入失敗")}
   catch(e){flat();return}
   if(!host.isConnected)return;
-  let m;try{m=window.XQMap3D.create(host,{stations,heightMode:"color",debug:DEVMODE(),onPick:(st,act)=>{if(act!=="enter")return;
+  let m;try{m=window.XQMap3D.create(host,{stations,heightMode:"color",debug:(typeof DEVTOOLS==="function"&&DEVTOOLS()),onPick:(st,act)=>{if(act!=="enter")return;
     const ri=JR.findIndex(R=>R.k===st.id),list=L.filter(s=>s.r===ri),nx=list.find(s=>!S[s.id]&&jOpen(L,L.indexOf(s)))||list.find(s=>jOpen(L,L.indexOf(s)));
     if(!nx)return toast(!jLvOk({r:ri})?`「${roadSeg(ri)}」要 Lv ${JR[ri].lv} 或棋罐 ${JAR_GATE[ri]} 子：去 🏮 驛站練等，或回前面的關卡多收幾顆子`:"先過前一"+ROAD_UNIT+"的關卡");closeSheet();location.hash=jChapterHref(nx)}})}
   catch(e){flat();return}

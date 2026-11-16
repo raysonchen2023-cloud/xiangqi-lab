@@ -237,3 +237,9 @@ test("星樞的 3 招（story/169）：易不放；難：車體力不到一半�
   const F=mk(3,[["K",4,1],["k",5,10],["P",3,6],["r",9,8],["c",2,8]]);assert.equal(SG2G.enemySkill(F,C),"fall");assert.equal(F.board.includes("P")&&F.td.s.b[Q(3,6)]==="P",false,"星落打死了兵");assert.equal(F.td.lostN,1);
   const M=mk(2,[["K",4,1],["k",5,10],["R",1,1],["r",9,8]]);M.td.s.h[Q(9,8)]=2;assert.equal(SG2G.enemySkill(M,C),"heal");M.td.rnd=1;M.td.s.h[Q(9,8)]=2;M.td.ecR=-1;assert.equal(SG2G.enemySkill(M,C),null,"中：隔不到 3 回合不放");
   M.td.rnd=3;M.td.ecR=-1;M.td.ecd={};assert.equal(SG2G.enemySkill(M,C),"heal","中：隔 3 回合可以再放")});
+
+test("偏航（11/16 第一次起航必定偏航）：主線還沒開的新玩家直接打序章第一個沒贏過的關（A1、易）；有主線開著就照舊隨機主線、中",()=>{
+  const S=rd("xiangqi-db/m/07sg2-siege2.js");
+  assert.ok(S.includes("if(!L.length){const n=sg2ProNext(P);if(n==null)return false;gsvStart(n,k,cover,null,true,0,1);return true}"));
+  assert.ok(S.includes("return SG2G.ORD.some(n=>!SG2G.lockWhy(P,n,false,null))||sg2ProNext(P)!=null"),"新玩家也算可以偏航進來");
+  assert.ok(S.includes("return SG2G.GRP[0].lv.find(n=>!won(n)&&!SG2G.lockWhy(P,n,false,has))"))});

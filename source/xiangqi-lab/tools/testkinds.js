@@ -16,6 +16,7 @@ const SKIP = new Set(["test-home-focus.js", "testkinds.js"]);
 /* 11/12 已逐項分類（開發者稽核 story/102_評比灌水誠實稽核.md 第 3 項） */
 const CLASSIFIED = new Set([
   "test-newjourney-entry-1116.js",   /* 11/16 開發者「目前已經沒辦法新的旅程了嗎 假設有其他玩家想重玩的話 應該還是要跟存檔讀檔的格子」：存檔與讀檔面板最下面補一顆不管幾格有存檔都在的「開始新的旅程」，開選格頁（m/05b-save.js saveList）（行為 4、原始碼 2；11/16 加「回開頭畫面」） */
+  "test-devview-1116.js",   /* 11/16 開發者「除了意見回饋欄的按鈕，其他都要讓開發者的視角和玩家一樣，要看開發者的內容要到開發者測試台」：DEVUNLOCK／DEVTOOLS／devNote、測試台「👁 開發者視角」 */
   "test-gxt-unlock-1116.js",   /* 11/16 出入口盤查：黑洞只剩星門圍城後，打贏只寫 gsv，觀星臺解鎖原本只看 bhWin／bhtd，新玩家永遠看不到觀星臺；gxtOpen 加看 gsv 勝場 */
   "test-pty-stats-1116.js",
   "test-pty-statbar-1116.js",   /* 11/16 開發者「找rpg參考煙雨江湖的排版然後優化」「靈力隨著等級上升，顯示當前等級的靈力」，選單「資源條＋攻防一行」：卡冊數值區改成體力條、靈力條＋攻防一行 */   /* 11/16 開發者（雲河七星卡冊截圖）「讓這頁也能看到角色的體力/靈力/攻擊力/防禦力/天賦/招式」：每張卡多一排四格（每位自己的黑洞數值）與可以點的招式列，卡冊最上面一列全隊共用的天賦；天賦樹的返回鈕照從哪裡進來的寫（m/07pty-party.js ptyStatHTML、ptySkills、ptyTalHTML；07bht-td.js bhtdTal；07dgl-stamina.js）（行為 5、原始碼 1） */

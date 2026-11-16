@@ -32,7 +32,7 @@ const MNQ_CHAP_ALL={
 for(const c of Object.values(MNQ_CHAP_ALL))if(c.vn&&typeof MNV_CH!=="undefined"&&MNV_CH[c.vn]){c.segs=MNV_CH[c.vn].sc.map(x=>x.id);c.nm=Object.fromEntries(MNV_CH[c.vn].sc.map(x=>[x.id,x.nm]))}
 /* 開發者試玩下架的章（11/14）：只在開發者模式（02 DEVMODE）或本機（localhost／127.x）才生效；開關是這支手機的 localStorage xq_mnqPeek＝"1"（遠征令面板最下面的「🛠 開發者」按鈕切換，切完重新載入）。
    一般玩家：沒有開發者模式，就算有人手動設了 xq_mnqPeek 也不生效，照樣看到「即將開放」 */
-function mnqPeekOk(){try{if(typeof location!=="undefined"&&/^(localhost|127\.\d+\.\d+\.\d+|\[::1\])$/.test(location.hostname))return true;return typeof DEVMODE==="function"&&!!DEVMODE()}catch(e){return false}}
+function mnqPeekOk(){try{return!!(typeof DEVUNLOCK==="function"&&DEVUNLOCK())}catch(e){return false}}   /* 11/16 開發者視角跟玩家一樣：本機不再自動生效，要開發者測試台「🔓 全部解鎖試玩」開著 */
 const MNQ_PEEK=(()=>{try{return mnqPeekOk()&&localStorage.getItem("xq_mnqPeek")==="1"}catch(e){return false}})();
 const MNQ_CHAP=Object.fromEntries(Object.entries(MNQ_CHAP_ALL).filter(([,c])=>!c.off||MNQ_PEEK));   /* 上線中的章；下架的章在各處都當成「即將開放」（開發者試玩開著時例外） */
 const MNQ_SEGS=Object.fromEntries(Object.entries(MNQ_CHAP).map(([e,c])=>[e,c.segs]));

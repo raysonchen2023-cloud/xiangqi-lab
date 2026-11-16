@@ -36,7 +36,7 @@ const RLD_LINK={
   "yuan|蒙古包":["yuan_nasij","yuan_bow"],"yuan|站赤":["yuan_paizi","yuan_baochao"],
   "qing|瘦西湖":["qing_qianlong"]};
 const rdEraOf=id=>String(id).split("_")[0];
-function rdForce(){try{return typeof DEVMODE==="function"&&DEVMODE()?String(store.get("relicDropForce","")||""):""}catch(e){return""}}
+function rdForce(){try{return (typeof DEVTOOLS==="function"&&DEVTOOLS())?String(store.get("relicDropForce","")||""):""}catch(e){return""}}
 function rdRollTier(){const r=Math.random()*100;return r<RLD_TIER.legend?"legend":r<RLD_TIER.legend+RLD_TIER.rare?"rare":"common"}
 function rdPickW(L){const w=x=>RLD_TIER[x.it.rarity]||10,tot=L.reduce((a,x)=>a+w(x),0);let r=Math.random()*tot;for(const x of L){r-=w(x);if(r<=0)return x}return L[L.length-1]}
 function rdIntro(kind,era,name){let t="";try{if(kind==="y"&&typeof YZ_SIGHT!=="undefined"&&YZ_SIGHT[era])t=YZ_SIGHT[era][1];else if(typeof PORT_SIGHT!=="undefined"){const s=(PORT_SIGHT[era]||[]).find(z=>z[0]===name);if(s)t=s[3]}}catch(e){}
@@ -66,7 +66,7 @@ async function relicSightDrop(kind,era,name){
   if(typeof relicFx==="function")relicFx(e,it,{from:`在〈${name}〉撿到一件${en}的珍品`,cnt:`${en}的珍品 ${n}／${N}`}).then(show);else show();return true}
 /* 珍品冊：等級小印、冊頂說明、開發者的必中選單 */
 const rdMark=r=>RELIC_DROP_ON&&RLD_SEAL[r]?`<span class="rd-seal rd-${r}">${RLD_SEAL[r]}</span>`:"";
-function rdBookTop(){if(!RELIC_DROP_ON)return"";const K=(typeof RELIC_RK!=="undefined"&&RELIC_RK)||{},F=rdForce(),dev=typeof DEVMODE==="function"&&DEVMODE();
+function rdBookTop(){if(!RELIC_DROP_ON)return"";const K=(typeof RELIC_RK!=="undefined"&&RELIC_RK)||{},F=rdForce(),dev=(typeof DEVTOOLS==="function"&&DEVTOOLS());
   const RD_HOW={common:"常見",rare:"少見",legend:"很難得"};const key=["common","rare","legend"].map(r=>K[r]?`<span class="rd-k"><i class="rd-tile" style="border-color:${K[r][1]}">🏺${RLD_SEAL[r]?`<span class="rd-seal rd-${r}">${RLD_SEAL[r]}</span>`:""}</i><span><b style="color:${K[r][1]}">${esc(K[r][0])}</b><small>${RD_HOW[r]}</small></span></span>`:"").join("");   /* 回饋 836（開發者 11/9「看不太懂這邊的分類」）：原本的小方框像勾選框；改成跟冊子裡一樣的小格子（框色＋右上角的稀、傳印），旁邊寫等級和有多難找到 */
   return`<div class="rd-key muted"><div class="rd-kt">珍品格子的外框顏色，代表它有多難找到：</div>${key}</div>${dev?`<label class="rd-dev muted">🛠 景點必中（開發者）<select id="rdForce">${[["","關"],["any","必中・隨機等級"],["common","必中・普通"],["rare","必中・稀有"],["legend","必中・傳說"]].map(([v,t])=>`<option value="${v}"${v===F?" selected":""}>${t}</option>`).join("")}</select></label>`:""}`}
 function rdBookBind(b){const s=b.querySelector("#rdForce");if(s)s.onchange=()=>{store.set("relicDropForce",s.value);toast(s.value?"渡口、驛站景點：下一次點必中":"景點必中已關")}}

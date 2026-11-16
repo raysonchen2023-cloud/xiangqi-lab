@@ -1,7 +1,7 @@
 {
  "ref": "origin/main",
- "commit": "fcde11732ee1b6bafe7e9ddd7c0be9a050942163",
- "madeAt": "2026-11-16T02:48:16.021Z",
+ "commit": "bfa7bf64df60b465c3b7dfd71c58fed1133a98c8",
+ "madeAt": "2026-11-16T03:08:59.701Z",
  "files": {
   "xiangqi-db/m/00-util.js": "local=live",
   "xiangqi-db/m/01-board.js": "local=live",
@@ -11,7 +11,7 @@
   "xiangqi-db/m/04-stats.js": "local=live",
   "xiangqi-db/m/04c-weekly.js": "local=live",
   "xiangqi-db/m/05-settings.js": "live",
-  "xiangqi-db/m/05b-save.js": "local=live",
+  "xiangqi-db/m/05b-save.js": "live",
   "xiangqi-db/m/05c-health.js": "local=live",
   "xiangqi-db/m/05d-telemetry.js": "local=live",
   "xiangqi-db/m/06-cpu.js": "local=live",
@@ -23,7 +23,7 @@
   "xiangqi-db/m/07e-garden2.js": "local=live",
   "xiangqi-db/m/07f-ship.js": "local=live",
   "xiangqi-db/m/07o-shipmore.js": "local=live",
-  "xiangqi-db/m/07bh-blackhole.js": "live",
+  "xiangqi-db/m/07bh-blackhole.js": "local=live",
   "xiangqi-db/m/07gx-galaxy.js": "local=live",
   "xiangqi-db/m/07gxp-gatepano.js": "local=live",
   "xiangqi-db/m/07bht-td.js": "local=live",
@@ -86,7 +86,7 @@
   "xiangqi-db/m/07z3-openmap.js": "local=live",
   "xiangqi-db/m/07z4-studymap.js": "local=live",
   "xiangqi-db/m/07z5-cpuroom.js": "local=live",
-  "xiangqi-db/m/07z6-sitemap.js": "local=live",
+  "xiangqi-db/m/07z6-sitemap.js": "live",
   "xiangqi-db/m/07z7-lesson.js": "local=live",
   "xiangqi-db/m/07z8-grablab.js": "local=live",
   "xiangqi-db/m/07w6-sceneinfo.js": "local=live",
@@ -94,9 +94,9 @@
   "xiangqi-db/m/07w6c-scenepoem.js": "local=live",
   "xiangqi-db/m/07w7-seasons.js": "local=live",
   "xiangqi-db/m/07w8-shichen.js": "local=live",
-  "xiangqi-db/m/07w9-exits.js": "local=live",
+  "xiangqi-db/m/07w9-exits.js": "live",
   "xiangqi-db/m/08-scene.js": "local=live",
-  "xiangqi-db/m/08b-cpugame.js": "live",
+  "xiangqi-db/m/08b-cpugame.js": "local=live",
   "xiangqi-db/m/08s-simul.js": "local=live",
   "xiangqi-db/m/09-askbot.js": "local=live",
   "xiangqi-db/m/09b-preload.js": "local=live",
@@ -115,7 +115,7 @@
   "xiangqi-db/m/07lh-lefty.js": "local=live",
   "xiangqi-db/m/07pm-premove.js": "local=live",
   "xiangqi-db/m/07dq-daily.js": "local=live",
-  "xiangqi-db/m/07i18n.js": "local=live",
+  "xiangqi-db/m/07i18n.js": "live",
   "xiangqi-db/m/07sp-spotfit.js": "local=live",
   "xiangqi-db/m/07fl-fill.js": "local=live",
   "xiangqi-db/m/07mnf-mainfilm.js": "local=live",
@@ -123,7 +123,7 @@
   "xiangqi-db/m/07stq-starter.js": "local=live",
   "xiangqi-db/m/07mnq-mainquest.js": "local=live",
   "xiangqi-db/m/07grw-growth.js": "local=live",
-  "xiangqi-db/m.html": "local",
+  "xiangqi-db/m.html": "local（拿掉線上沒有的 include）",
   "xiangqi-db/m.css": "local",
   "xiangqi-db/m/README.md": "local（各模組說明）",
   "xiangqi-db/tools/mhtml.js": "local",
@@ -146,7 +146,7 @@
   "xiangqi-lab/tools/analysis-cases.json": "local",
   "xiangqi-lab/tools/analysis-cases.snap.md": "local",
   "xiangqi-lab/tools/blitz-measure.js": "local",
-  "xiangqi-lab/tools/build-site.js": "local",
+  "xiangqi-lab/tools/build-site.js": "live（上一版公開的那份；本機那份跟著還沒發布的工作改過）",
   "xiangqi-lab/tools/calibrate-wdl.js": "local",
   "xiangqi-lab/tools/collect-anon.js": "local",
   "xiangqi-lab/tools/cup-key.js": "local",
@@ -215,10 +215,12 @@
   "xiangqi-lab/tools/test-bhtd-select-1116.js": "local",
   "xiangqi-lab/tools/test-bhtd-view-1115.js": "local",
   "xiangqi-lab/tools/test-bhtl.js": "local",
+  "xiangqi-lab/tools/test-bhx-allstars-1116.js": "local",
   "xiangqi-lab/tools/test-blitz.js": "local",
   "xiangqi-lab/tools/test-clock-pv.js": "local",
   "xiangqi-lab/tools/test-colorblind.js": "local",
   "xiangqi-lab/tools/test-cpuroom-copy.js": "local",
+  "xiangqi-lab/tools/test-devview-1116.js": "local",
   "xiangqi-lab/tools/test-dgl.js": "local",
   "xiangqi-lab/tools/test-docbtns.js": "local",
   "xiangqi-lab/tools/test-docs-md.js": "local",
@@ -251,7 +253,7 @@
   "xiangqi-lab/tools/test-human-ai.js": "local",
   "xiangqi-lab/tools/test-human-p1.js": "local",
   "xiangqi-lab/tools/test-i18n-story.js": "local",
-  "xiangqi-lab/tools/test-i18n.js": "local",
+  "xiangqi-lab/tools/test-i18n.js": "live（上一版公開的那份；本機那份跟著還沒發布的工作改過）",
   "xiangqi-lab/tools/test-ipad-fill.js": "local",
   "xiangqi-lab/tools/test-land3d.js": "local",
   "xiangqi-lab/tools/test-layout-r16.js": "local",
@@ -433,14 +435,17 @@
  },
  "liveDiffers": [
   "m/05-settings.js",
-  "m/07bh-blackhole.js",
+  "m/05b-save.js",
   "m/07y-hubmap.js",
   "m/07s4-passmap.js",
-  "m/08b-cpugame.js",
-  "src/park3d.js",
+  "m/07z6-sitemap.js",
+  "m/07w9-exits.js",
+  "m/07i18n.js",
   "src/sw.js"
  ],
- "absentModules": [],
+ "absentModules": [
+  "m/07ulk-unlockfx.js"
+ ],
  "excludedTests": {
   "test-a11y-p16.js": "要讀不公開的開發資料（story/ 規劃稿、tools/review_loop、style_loop 評比資料）",
   "test-ai-levels.js": "要讀不公開的開發資料（story/ 規劃稿、tools/review_loop、style_loop 評比資料）",
@@ -484,11 +489,9 @@
   "test-party-novel.js": "指令排除：要讀只在開發者電腦與 CDN 的聽書稿（art/canju/yunhe-novel.json），公開副本沒有這個檔",
   "test-party-wood.js": "指令排除：要讀只在開發者電腦與 CDN 的木棋靈模型與骨架工具，公開副本沒有這些檔"
  },
- "version": "20261116-1043",
- "indexSha1": "153f93415403",
- "toLF": [
-  "xiangqi-lab/tools/build-site.js"
- ],
+ "version": "20261116-1100",
+ "indexSha1": "ccc89305da24",
+ "toLF": [],
  "scrubbed": [
   "xiangqi-lab/tools/qa/colorblind-scan.js（1 處）",
   "xiangqi-lab/tools/qa/device-fit.js（1 處）",
@@ -515,8 +518,12 @@
    }
   ]
  },
- "pinnedToPrevious": {},
+ "pinnedToPrevious": {
+  "xiangqi-lab/tools/build-site.js": 1,
+  "xiangqi-lab/tools/test-i18n.js": 1
+ },
  "droppedUnreleased": {
-  "xiangqi-lab/tools/test-bhx-allstars-1116.js": "還沒發布的工作新加的檔，這一版不公開"
+  "xiangqi-lab/tools/test-sitemap-places-1116.js": "還沒發布的工作新加的檔，這一版不公開",
+  "xiangqi-lab/tools/test-unlock-fx-1116.js": "還沒發布的工作新加的檔，這一版不公開"
  }
 }

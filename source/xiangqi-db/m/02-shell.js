@@ -131,7 +131,7 @@ function route(){
   if(p[0]==="ship"&&p[1]==="pz"&&typeof ShipPz==="function"){store.set("dbReturn",null);return screen=ShipPz(v)}   /* 意見回饋 709：千秋殘局獨立一頁 */
   if(p[0]==="ship"&&typeof SHIP_PG!=="undefined"&&Object.prototype.hasOwnProperty.call(SHIP_PG,p[1])){store.set("dbReturn",null);return screen=SHIP_PG[p[1]](v)}   /* 意見回饋 709：這站棋理、書架、行囊、起航各一頁（07f-ship.js） */
   if(p[0]==="ship"&&p[1]==="read"&&typeof ShipRead==="function"){store.set("dbReturn",null);return screen=ShipRead(v,p[2]||"",p[3]||"")}   /* 意見回饋 685：《雲河七星》正文（07f-ship.js）：#/ship/read＝書架合集、#/ship/read/<站>[/mark|/after] */
-  if(p[0]==="shelf"){store.set("dbReturn",null);const b=p[1]==="2"&&(book1Done()||DEVMODE())?2:1;if(p[1]!==String(b)){navReplace("#/shelf/"+b);return}store.set("legBook",b);return screen=p[2]&&typeof BookChapter==="function"?BookChapter(v,b,p[2],p[3]||""):Adventure(v)}   /* 意見回饋 735 第二期：#/shelf/<集>/<回>[/game]＝一回一頁 */   /* 意見回饋 674：星槎書架上的兩本書；第二集照舊要第一集 36 關都過 */
+  if(p[0]==="shelf"){store.set("dbReturn",null);const b=p[1]==="2"&&(book1Done()||(typeof DEVUNLOCK==="function"&&DEVUNLOCK()))?2:1;if(p[1]!==String(b)){navReplace("#/shelf/"+b);return}store.set("legBook",b);return screen=p[2]&&typeof BookChapter==="function"?BookChapter(v,b,p[2],p[3]||""):Adventure(v)}   /* 意見回饋 735 第二期：#/shelf/<集>/<回>[/game]＝一回一頁 */   /* 意見回饋 674：星槎書架上的兩本書；第二集照舊要第一集 36 關都過 */
   if(p[0]==="profile"||p[0]==="me"){screen=Me(v);if(p[1]==="relics"&&typeof relicBook==="function"){const h=location.hash;setTimeout(()=>{if(location.hash===h)relicBook()},120)}return screen}   /* 意見回饋 536：棋童資料併進「我的角色」；644：#/me/relics 直接打開珍品冊（藏局解完、問小帥都帶到這裡） */
   if(p[0]==="terms")return screen=Terms(v,p[1]);
   // AI 對局在開發者的電腦上，要連上電腦才看得到；一般玩家（或連線已被清掉）從舊連結進來時說明清楚，不要卡在「載入中」（意見回饋 135）
@@ -218,7 +218,7 @@ if(OFF&&"serviceWorker" in navigator){
     if(0){const t=document.createElement("button");t.className="toast upd";t.style.cssText="bottom:auto;top:calc(64px + var(--safeT));pointer-events:auto;z-index:300";
       t.textContent="🆕 有新版本"+(v?"（"+v+"）":"")+"，點這裡在背景更新，下完這盤換頁時套用";t.onclick=doUpdate;document.body.append(t);return}
     /* 意見回饋 622（開發者）：更新內容只有開發者看得到；一般玩家只在「你回報的問題修好了」（checkFixes）看到自己回報的那幾則 */
-    try{if(!(typeof DEVMODE==="function"&&DEVMODE()))note=""}catch(e){note=""}
+    try{if(!(typeof DEVTOOLS==="function"&&DEVTOOLS()))note=""}catch(e){note=""}
     modal(`<div class="em">🆕</div><h2>有新版本</h2>${note?`<p style="text-align:left;white-space:pre-wrap">${esc(note)}</p>`:""}<p class="muted">${v?"版本 "+esc(v)+"<br>":""}在背景更新，你可以留在這個畫面繼續做事，換到別的頁面時才套用新版。你的戰績、棋譜和設定都會保留。</p>`,[["背景更新",doUpdate],["稍後",()=>{shown=false},true]],"keep")}   /* 意見回饋 607：keep＝換頁也不關 */
   window.XQ_notifyNew=notifyNew;
   window.XQ_checkUpdate=async()=>{chk(true);const[a,n]=await Promise.all([appVer(),netVer()]);return{a,n}};
@@ -425,6 +425,12 @@ if(OFF&&window.XQNet){XQNet.start();
 const APP_HOME="https://raysonchen2023-cloud.github.io/xiangqi-lab/";
 // 開發者模式：電腦網頁一律是；手機要在 設定→進階 自己打開。掃過電腦 QR code 的玩家也只是玩家，看不到「電腦」相關的字
 const DEVMODE=()=>!OFF||!!store.get("devMode",false);
+/* 11/16 開發者「除了意見回饋欄的按鈕，其他都要讓開發者的視角和玩家一樣，要看開發者的內容要到開發者測試台」（選單：測試台加總開關、本機也跟玩家一樣、自我檢查提示收進測試台紀錄）：
+   DEVMODE 只管意見回饋管理、測試台入口和玩家看不到的差別（不送匿名資料等）；會改變畫面的特例改看開發者測試台（07dv）的兩個開關，預設都關＝跟玩家一樣。
+   DEVUNLOCK＝「🔓 全部解鎖試玩」（觀星臺、西市、第二集、星門圍城全部關卡、故事預覽、下架的章…）；DEVTOOLS＝「🛠 頁面上顯示開發者小工具」；devNote＝自我檢查沒過時記一筆（測試台「自我檢查紀錄」，最多 30 筆） */
+const DEVUNLOCK=()=>DEVMODE()&&!!store.get("dvtUnlock",false);
+const DEVTOOLS=()=>DEVMODE()&&!!store.get("dvtTools",false);
+function devNote(t){try{const L=store.get("devLog",[]),A=Array.isArray(L)?L:[];A.push([Date.now(),String(t)]);store.set("devLog",A.slice(-30))}catch(e){}}
 // 開發者登入：在 App 裡檢查（只放「帳號＋密碼」的雜湊值，不放明碼）。這只是畫面開關；
 // 回饋資料放在 Google 的意見回饋管理頁，只有登入開發者 Google 帳號才打得開，那才是真正的保護。
 const DEV_HASH="81c6d32f5f50f465602de00d0b4896216b2f5ccb497c57809486282d9cca0779";

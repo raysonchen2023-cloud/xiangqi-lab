@@ -53,7 +53,7 @@ void main(){vec2 p=v,o=vec2(0.);
     d*=.65+1.4*texture2D(Mf,vec2((q.x-xc)/480.+float(i)*.31,(h-t*24.)/420.)).a+.6*texture2D(Mi,vec2((q.x-xc)/420.-t*.015,(h-t*30.)/380.)).a;
     col=mix(col,s.z>.5?mix(vec3(.11,.1,.1),vec3(.48,.47,.46),hh):vec3(.82,.81,.79),clamp(d,0.,1.)*k*(s.z>.5?.72:.42));}}
   gl_FragColor=vec4(col,1.);}`;
-function pwdDev(P){if(!(typeof DEVMODE==="function"&&DEVMODE())||P.querySelector(".pw-dev"))return;const on=pwdOn();
+function pwdDev(P){if(!(typeof DEVTOOLS==="function"&&DEVTOOLS())||P.querySelector(".pw-dev"))return;const on=pwdOn();
   const b=document.createElement("button");b.type="button";b.className="shp-gldev pw-dev"+(on?" on":"");b.style.cssText="position:absolute;left:10px;bottom:10px;z-index:3";b.textContent=on?"🧪 渡口風：開":"🧪 渡口風：關";P.appendChild(b);
   b.onclick=e=>{e.stopPropagation();vibrate(5);store.set("portWind",on?0:1);toast(on?"已關掉渡口的風":"已打開渡口的風（測試中）");route()}}
 /* 這裡有畫煙或沙塵的朝代，把 07k-inkfx 在這張圖上的 smoke／dust 拿掉並重建疊層（燈火、波光、薄霧、火星照常）；回傳還原用的函式 */
@@ -86,7 +86,7 @@ function pwdRun(P,img,C,k){if(img.naturalWidth!==768||img.naturalHeight!==1376)r
       if(!window.ResizeObserver)meas();
       if(W&&H){const w=Math.round(Math.min(W*(devicePixelRatio||1),960)),h=Math.round(w*H/W);if(w!==bw||h!==bh){cv.width=bw=w;cv.height=bh=h;gl.viewport(0,0,w,h)}
         if(first){const d=pfxTest(gl,()=>draw(0,0),bw,bh,img,768,1376,PWD_PT.map(([x,y])=>[Math.round(x*7.68),Math.round(y*13.76)]));P.dataset.pwDiff=d.toFixed(1);
-          if(!(d<40)){const x=gl.getExtension("WEBGL_lose_context");if(x)x.loseContext();fail();if(typeof DEVMODE==="function"&&DEVMODE())toast("🧪 渡口風自我檢查沒過（差 "+Math.round(d)+"），先用原圖");return}}
+          if(!(d<40)){const x=gl.getExtension("WEBGL_lose_context");if(x)x.loseContext();fail();if(typeof devNote==="function")devNote("🧪 渡口風自我檢查沒過（差 "+Math.round(d)+"），先用原圖");return}}
         draw(((now-t0)/1000)%88660,1);
         if(first){first=false;img.style.visibility="hidden";P.classList.add("pw-on");undo=pwdIfx(img,k)}
         if(++fr%30===0&&cv.previousElementSibling!==img)img.after(cv)}   /* inkfx 疊層之後才掛上來時，會插在圖跟 canvas 中間；把 canvas 移回圖的正後面，疊層就在上面 */

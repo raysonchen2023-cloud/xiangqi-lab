@@ -126,7 +126,7 @@ function xhSol(y){if(XH_SOL[y])return XH_SOL[y];const Y=(y-2000)/1000,jd=2451900
 const xhDN=k=>Math.floor(Date.parse(k+"T00:00:00Z")/864e5),xhKey=n=>new Date(n*864e5).toISOString().slice(0,10),xhMD=k=>(+k.slice(5,7))+"/"+(+k.slice(8,10));
 /* 現在是哪一季、第幾天：season＝那一季冬至的年份（開發者預覽是 "dev"）；pre＝還沒上線（2026 年冬至以前）；active＝在九九裡；ended＝九九過了 */
 function xhNow(){const today=localDay(),T=xhDN(today),y=+today.slice(0,4);let sy=y;if(T<xhDN(xhSol(y)))sy=y-1;
-  const dev=typeof DEVMODE==="function"&&DEVMODE()?(store.get("xhDev",0)|0):0;
+  const dev=(typeof DEVTOOLS==="function"&&DEVTOOLS())?(store.get("xhDev",0)|0):0;
   if(dev>0){const day=Math.min(82,dev);return{season:"dev",dev:true,start:xhKey(T-day+1),end:xhKey(T-day+81),day,active:day<=81,ended:day>81,pre:false,next:xhSol(sy+1),cd:xhDN(xhSol(sy+1))-T}}
   const start=xhSol(sy),day=T-xhDN(start)+1,next=xhSol(sy+1);return{season:String(sy),start,end:xhKey(xhDN(start)+80),day,active:day>=1&&day<=81,ended:day>81,pre:sy<XH_FROM,next,cd:xhDN(next)-T}}
 const xhMei=season=>(store.get("xhMei",{})||{})[season]||{};
@@ -171,7 +171,7 @@ function XiaohanPage(v){const bk=(()=>{const h=store.get("xhBack","");return typ
   const HOW=`<details class="card"><summary><b>怎麼玩</b></summary><p class="muted" style="line-height:1.7;margin:6px 0 0">冬至那天起，每天開放一瓣（第幾天就是第幾瓣）。點那一瓣、或按「解今天這一瓣」，不看答案解開，花瓣就染紅。<br>漏掉的日子可以補做，一天最多補 ${XH_MAKE} 瓣；九九過了也能慢慢補。<br>每開滿一朵（9 瓣）修為 +10，81 瓣都染完得到稱號「九九消寒」，修為 +30。這些題不算今日茶單。</p></details>`;
   const draw=()=>{if(!v.isConnected)return;const N=xhNow(),st=xhStateFn(N),M=xhMei(N.season),cnt=Object.keys(M).length,mk=xhMake(),mkLeft=Math.max(0,XH_MAKE-mk.n);
     const opens=[];for(let i=0;i<81;i++)if(st(i)==="open")opens.push(i);const t=N.active?N.day-1:-1;
-    const dev=typeof DEVMODE==="function"&&DEVMODE()?`<div class="card xh-dev">🛠 開發者預覽${N.dev?`：假裝是第 ${N.day} 天${N.day>81?"（九九已過）":""}（另存在 "dev"，不動真的進度）<div class="xh-devb"><button class="btn ghost" data-dv="-1">−1 天</button><button class="btn ghost" data-dv="1">＋1 天</button><button class="btn ghost" data-dv="9">＋9 天</button><button class="btn ghost" data-dv="0">結束預覽</button></div>`:`<div class="xh-devb"><button class="btn ghost" data-dv="1">從冬至第 1 天開始預覽</button></div>`}</div>`:"";
+    const dev=(typeof DEVTOOLS==="function"&&DEVTOOLS())?`<div class="card xh-dev">🛠 開發者預覽${N.dev?`：假裝是第 ${N.day} 天${N.day>81?"（九九已過）":""}（另存在 "dev"，不動真的進度）<div class="xh-devb"><button class="btn ghost" data-dv="-1">−1 天</button><button class="btn ghost" data-dv="1">＋1 天</button><button class="btn ghost" data-dv="9">＋9 天</button><button class="btn ghost" data-dv="0">結束預覽</button></div>`:`<div class="xh-devb"><button class="btn ghost" data-dv="1">從冬至第 1 天開始預覽</button></div>`}</div>`:"";
     let head,acts="";
     if(N.pre){head=`<div class="xh-cd"><b>❄ 還有 ${N.cd} 天到冬至</b><span>${N.next.slice(0,4)} 年冬至是 ${xhMD(N.next)}。那天起 81 天，每天一題殘局，解開就染一瓣梅花。</span></div>`}
     else{const b=N.active?Math.floor(t/9):8;head=`<div class="xh-cd"><b>${N.active?`❄ 今天是${XH_NINE[b]}第 ${t%9+1} 天`:"🌸 九九過完了"}</b><span>${N.dev?"預覽":N.season+" 年冬至"}（${xhMD(N.start)}）起・到 ${xhMD(N.end)}・已染 <b>${cnt}</b>／81 瓣${N.ended?`・下一個冬至 ${xhMD(N.next)}（還有 ${N.cd} 天）`:""}</span></div>`;
