@@ -1,8 +1,8 @@
 {
- "version": "20261116-1130",
- "checkedAt": "2026-11-16T03:36:10.085Z",
- "html": "1e4c2fe533de",
- "sw": "a756d79c0ebd",
+ "version": "20261116-1154",
+ "checkedAt": "2026-11-16T03:58:32.738Z",
+ "html": "5f62bc9ffd5b",
+ "sw": "644e55645225",
  "scripts": 4,
  "modules": {
   "00-util.js": "8c2b1d4f725f",
@@ -25,7 +25,7 @@
   "07e-garden2.js": "06a2203be497",
   "07f-ship.js": "22079862126f",
   "07o-shipmore.js": "3e3ebb9d732b",
-  "07bh-blackhole.js": "f55dbd6bc8bf",
+  "07bh-blackhole.js": "dcd6f3fd4b95",
   "07gx-galaxy.js": "c63e653cf14c",
   "07gxp-gatepano.js": "77bc897060cb",
   "07bht-td.js": "c097c2946509",
@@ -62,7 +62,7 @@
   "07x-zoom.js": "719656ee2360",
   "07y-hubmap.js": "aab3b113c3f7",
   "07z-homemap.js": "169fd8c3dee6",
-  "07gxt-guanxing.js": "a9bfd9a2fb2f",
+  "07gxt-guanxing.js": "c4f6bc7b665a",
   "07dgl-stamina.js": "6e323161a533",
   "07xsm-ximarket.js": "dca70b208836",
   "07xsd-xsmdark.js": "14cf67001b41",
@@ -95,7 +95,7 @@
   "07w6-sceneinfo.js": "f2eb0a0a8b6d",
   "07w6b-scenedata.js": "834d49f27096",
   "07w6c-scenepoem.js": "8b310494b149",
-  "07w7-seasons.js": "3a5ca814caa7",
+  "07w7-seasons.js": "1a3c12e183c8",
   "07w8-shichen.js": "7e3e39d9d44f",
   "07w9-exits.js": "3bd35e437b9c",
   "08-scene.js": "86969cd488ba",
@@ -141,7 +141,7 @@
   {
    "module": "07bh-blackhole.js",
    "lines": 11,
-   "sourceModified": "2026-11-16T03:12:24.452Z"
+   "sourceModified": "2026-11-16T03:38:03.667Z"
   },
   {
    "module": "07y-hubmap.js",
