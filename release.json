@@ -1,8 +1,8 @@
 {
- "version": "20261116-0725",
- "checkedAt": "2026-11-15T23:25:20.735Z",
- "html": "b6e71a5da439",
- "sw": "3dc93e6ce08b",
+ "version": "20261116-0855",
+ "checkedAt": "2026-11-16T00:55:20.929Z",
+ "html": "57cdbf821082",
+ "sw": "92bfdde4d696",
  "scripts": 4,
  "modules": {
   "00-util.js": "8c2b1d4f725f",
@@ -13,7 +13,7 @@
   "04-stats.js": "10ceed08a1bd",
   "04c-weekly.js": "326899d53f7b",
   "05-settings.js": "25b66bdaf283",
-  "05b-save.js": "836fc4a37f16",
+  "05b-save.js": "0d36a3d6acd4",
   "05c-health.js": "a1bcf3e541ac",
   "05d-telemetry.js": "98d12b742868",
   "06-cpu.js": "c449e9d66852",
@@ -31,8 +31,9 @@
   "07bht-td.js": "346a16b1129c",
   "07bhtl-tdlearn.js": "a5f8c01c394e",
   "07bhf-bossfx.js": "8516daf7973e",
-  "07bhg-gatesiege.js": "0224215c10a1",
+  "07bhg-gatesiege.js": "c6a59ebc43fe",
   "07bhw-wheel.js": "923517a41879",
+  "07sg2-siege2.js": "6ee8702d9140",
   "07dv-devtest.js": "077191672ec5",
   "07dw-perfhud.js": "a3755bd4af6c",
   "07g-battle.js": "6c2de94250f9",
@@ -97,7 +98,7 @@
   "07w8-shichen.js": "7e3e39d9d44f",
   "07w9-exits.js": "bd206ffef683",
   "08-scene.js": "86969cd488ba",
-  "08b-cpugame.js": "da4dc2db20c7",
+  "08b-cpugame.js": "bf1c6400d1eb",
   "08s-simul.js": "2126db3ab684",
   "09-askbot.js": "4e6983c50d4c",
   "09b-preload.js": "321324d3e7bd",
@@ -132,6 +133,16 @@
    "sourceModified": "2026-11-15T05:38:18.553Z"
   },
   {
+   "module": "07bhg-gatesiege.js",
+   "lines": 15,
+   "sourceModified": "2026-11-16T00:20:33.942Z"
+  },
+  {
+   "module": "07sg2-siege2.js",
+   "lines": 464,
+   "sourceModified": "2026-11-16T00:54:43.240Z"
+  },
+  {
    "module": "07y-hubmap.js",
    "lines": 6,
    "sourceModified": "2026-11-15T12:49:16.045Z"
@@ -140,6 +151,11 @@
    "module": "07s4-passmap.js",
    "lines": 1,
    "sourceModified": "2026-11-13T03:19:39.481Z"
+  },
+  {
+   "module": "08b-cpugame.js",
+   "lines": 1,
+   "sourceModified": "2026-11-16T00:20:53.814Z"
   }
  ]
 }
