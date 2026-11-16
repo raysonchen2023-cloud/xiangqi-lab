@@ -1,10 +1,10 @@
-# 驗證紀錄（版本 20261116-1703）
+# 驗證紀錄（版本 20261116-1743）
 
 這一頁讓任何人核對：這一版的程式跑過下面這些自動測試，以及每一項測試到底驗了什麼。
 
-- 產生時間：2026/11/16 17:29:03（臺灣時間）
-- 結果（四欄分開，不要只看總數）：共 1814 項＝**通過 1797**、**失敗 0**、**略過 17**（這個環境跑不了、沒有執行，不算通過；逐項原因見〈略過〉）；另有**預期失敗 0**
-- 測試對象：公開倉庫的 `source/`（切自 commit `f39acb98e37a`），對應的發布版：`20261116-1703`。開發者電腦上還沒發布的修改不在這份測試裡。
+- 產生時間：2026/11/16 17:52:29（臺灣時間）
+- 結果（四欄分開，不要只看總數）：共 1821 項＝**通過 1804**、**失敗 0**、**略過 17**（這個環境跑不了、沒有執行，不算通過；逐項原因見〈略過〉）；另有**預期失敗 0**
+- 測試對象：公開倉庫的 `source/`（切自 commit `f9dbf150455d`），對應的發布版：`20261116-1743`。開發者電腦上還沒發布的修改不在這份測試裡。
 - `source/` 沒放的測試檔（和少數只給它們用的工具）有43 個（要讀不公開的資料、要接不公開的營運程式，或指令排除），原因逐檔寫在 `source/STAGE-MANIFEST.json` 的 excludedTests。
 
 ## 略過（沒有執行，不算通過）
@@ -33,10 +33,10 @@
 
 | 類別 | 項數 | 這類測試證明了什麼 |
 |---|---:|---|
-| 行為 | 1211 項（通過 1206、略過 5） | 真的把 App 的程式跑起來（載入網站上的模組、抽出函式呼叫、用假的畫面／計時器／伺服器走一遍流程），再檢查結果對不對。 |
-| 混合 | 74 項（通過 73、略過 1） | 一半真的執行程式，一半只是檢查原始碼裡有沒有某段字。 |
+| 行為 | 1212 項（通過 1207、略過 5） | 真的把 App 的程式跑起來（載入網站上的模組、抽出函式呼叫、用假的畫面／計時器／伺服器走一遍流程），再檢查結果對不對。 |
+| 混合 | 75 項（通過 74、略過 1） | 一半真的執行程式，一半只是檢查原始碼裡有沒有某段字。 |
 | 原始碼比對 | 202 項（通過 197、略過 5） | 只檢查原始碼裡有沒有某段字（例如某個按鈕的程式碼、某條樣式規則）。**只證明程式碼存在，不證明功能會動。** |
-| 待分類 | 327 項（通過 321、略過 6） | `test-bhfx.js`、`test-bhtd-combo.js`、`test-bhtd-r2.js`、`test-bhtd-rules.js`、`test-bhtl.js`、`test-bhx-allstars-1116.js`、`test-bhx-hold-1116.js`、`test-bhx-resume-1116.js`、`test-bhx-skip-1116.js`、`test-dgl.js`、`test-eng-over-1116.js`、`test-ghost-game-1116.js`、`test-gxd-daily-1116.js`、`test-home-pano.js`、`test-i18n-story.js`、`test-noscore.js`、`test-park3d-capbase.js`、`test-port-yz-color-1116.js`、`test-pty-events-1116.js`、`test-r17-qa.js`、`test-siege2-local.js`、`test-siege2.js`、`test-sitemap-places-1116.js`、`test-upd-notitle-1116.js`、`test-xsm-dark.js`、`test-xsm-stalls-1116.js` 這幾個檔還沒逐項分類，暫不算進上面三類。 |
+| 待分類 | 332 項（通過 326、略過 6） | `test-bhfx.js`、`test-bhtd-combo.js`、`test-bhtd-r2.js`、`test-bhtd-rules.js`、`test-bhtl.js`、`test-bhx-allstars-1116.js`、`test-bhx-hold-1116.js`、`test-bhx-resume-1116.js`、`test-bhx-skip-1116.js`、`test-dgl.js`、`test-eng-over-1116.js`、`test-ghost-game-1116.js`、`test-gxd-daily-1116.js`、`test-home-pano.js`、`test-i18n-story.js`、`test-noscore.js`、`test-park3d-capbase.js`、`test-park3d-ghostptr-1116.js`、`test-port-yz-color-1116.js`、`test-pty-events-1116.js`、`test-r17-qa.js`、`test-siege2-local.js`、`test-siege2.js`、`test-sitemap-places-1116.js`、`test-upd-notitle-1116.js`、`test-xsm-dark.js`、`test-xsm-stalls-1116.js` 這幾個檔還沒逐項分類，暫不算進上面三類。 |
 
 - 測試名稱開頭有〔原始碼〕〔混合〕就是那一類；沒有標籤的是行為類（下面的索引另外標〔行為〕）。
 - **測試由開發用的 AI 撰寫，不等於第三方驗證；原始碼比對只證明程式碼存在。**
@@ -612,6 +612,7 @@
 | test-park3d-capbase.js | — | 0 | 0 | 0 | 5 | 5／5 |
 | test-park3d-cbfx.js | — | 7 | 0 | 1 |  | 8／8 |
 | test-park3d-colorblind.js | — | 11 | 0 | 2 |  | 13／13 |
+| test-park3d-ghostptr-1116.js | — | 0 | 0 | 0 | 5 | 5／5 |
 | test-park3d-power.js | — | 16 | 0 | 1 |  | 17／17 |
 | test-park3d-river-1116.js | — | 2 | 0 | 0 |  | 2／2 |
 | test-park3d-tap.js | — | 12 | 0 | 0 |  | 12／12 |
@@ -624,7 +625,7 @@
 | test-preload-bg.js | — | 12 | 1 | 1 |  | 14／14 |
 | test-premove-online3d.js | — | 12 | 0 | 3 |  | 15／15 |
 | test-provenance.js | — | 4 | 0 | 1 |  | 5／5 |
-| test-pty-capsay-1116.js | — | 1 | 0 | 2 |  | 3／3 |
+| test-pty-capsay-1116.js | — | 1 | 1 | 2 |  | 4／4 |
 | test-pty-events-1116.js | — | 0 | 0 | 0 | 8 | 8／8 |
 | test-pty-statbar-1116.js | — | 2 | 0 | 1 |  | 3／3 |
 | test-pty-stats-1116.js | — | 6 | 0 | 1 |  | 7／7 |
@@ -654,7 +655,7 @@
 | test-sitemap-places-1116.js | — | 0 | 0 | 0 | 2 | 2／2 |
 | test-sound-mix.js | — | 18 | 1 | 3 |  | 22／22 |
 | test-spotfit.js | — | 8 | 0 | 0 |  | 8／8 |
-| test-starter.js | — | 5 | 3 | 4 |  | 12／12 |
+| test-starter.js | — | 6 | 3 | 4 |  | 13／13 |
 | test-stats-kill.js | — | 0 | 2 | 3 |  | 5／5 |
 | test-sw-offline.js | — | 0 | 0 | 2 |  | 2／2 |
 | test-td-orbit.js | — | 1 | 0 | 3 |  | 4／4 |
@@ -2082,6 +2083,14 @@
 - ✔ 〔原始碼〕park3d：draw 用 pkcbMarks 畫提示、look 的 hc／cb 換了會重畫棋面、新記號不經色調映射、高對比棋面與側邊用 PKCB
 - ✔ 〔原始碼〕06-cpu：hc 含 cbMode、parkLook 只在高對比棋子時才不畫風格底圖；07cb：cbApply 呼叫 cbPark；說明文件兩份一樣、3D 已套用
 
+### test-park3d-ghostptr-1116.js
+
+- ✔ 〔待分類〕〔行為〕正常：一根手指點下去、放開＝選子
+- ✔ 〔待分類〕〔行為〕P0：上一根手指沒送放開（殘留），下一根手指按下去照常拖曳轉動、照常點擊選子，不被當成兩指捏合
+- ✔ 〔待分類〕〔行為〕兩指捏合照常：第二根手指（不是 isPrimary）不會清掉第一根；殘留時捏合的距離也照真的兩根算
+- ✔ 〔待分類〕〔行為〕失去追蹤（lostpointercapture）沒送 pointerup 也當放開；正常放開之後再來不會出錯
+- ✔ 〔待分類〕〔原始碼〕pointerdown 一進來先 ptrGhost（塔防的 TDPT 一起清）
+
 ### test-park3d-power.js
 
 - ✔ 〔行為〕入座運鏡時間曲線：前 1.8 秒停在坐著看、之後 0.8 秒 ease 到 topfit
@@ -2241,6 +2250,7 @@
 - ✔ 〔行為〕〔行為〕最上面那一行說明：講夥伴現在最高能練到幾級、怎樣才會再往上；修為滿級時不再說「你升級」
 - ✔ 〔原始碼〕畫面上不再出現「角色等級不能超過修為」「到修為上限」這兩種說法
 - ✔ 〔原始碼〕夥伴練滿：卡片註記與按＋星輝的提示都改成講結果；練滿的人照舊沒有＋星輝鈕
+- ✔ 〔混合〕11/16 開發者「要怎麼升級？」→ 選單「寫還差幾點＋去哪裡賺」：最上面寫還差幾點；有夥伴練滿時多一行去哪裡賺修為＋去下一盤
 
 ### test-pty-events-1116.js
 
@@ -2714,6 +2724,7 @@
 - ✔ 〔原始碼〕第六個任務不會卡在「電腦想一下」：引擎沒載好不等下載、用規則內建著法；引擎有載好也有 2.5 秒時限；4 個回合過關後可以接著下
 - ✔ 〔原始碼〕接點：m.html 在 07mnq 前面 include；05b titleScreen 先問 stqBoot；07mnq 首頁鈕問 stqHome／stqHomeGo、mnqTick 練習中不自動跳授印禮、mnqIdle 認得 #stqPg；畢業領 a1、選角用 journeyRepick
 - ✔ 〔原始碼〕模組規矩：前綴 stq／STQ 只在這支宣告；長行沒有 // 行內註解；沒有反斜線控制字元
+- ✔ 〔行為〕〔行為〕11/16 開發者「如果一開始沒選第一章 這邊要顯示第一章讓玩家知道」：首頁那顆在第一章還沒看完時寫「📖 第一章」、看過一部分寫「接著看」、看完回「更多玩法」，按了開第一章
 
 ### test-stats-kill.js
 

@@ -238,9 +238,10 @@ test("〔原始碼〕接點：m.html 在 07mnq 前面 include；05b titleScreen 
   const G = SRC.slice(SRC.indexOf("function stqGrad("), SRC.indexOf("function stqPickView("));
   assert.ok(G.includes('mnqGrant("a1")'), "一次領授印禮的入門物品");
   /* 11/15 更多玩法清單（stqMore）多了一顆玩家自己按才開的「第一章」入口；練習流程本身（清單以外的程式）照樣不演、不播 */
-  const FLOW = SRC.slice(0, SRC.indexOf("function stqMore(")) + SRC.slice(SRC.indexOf("function stqAuto("));
+  /* 11/16 首頁那顆在第一章還沒看完時寫「📖 第一章」（stqC1／stqHome／stqHomeGo），也是玩家自己按才開 */
+  const FLOW = SRC.slice(0, SRC.indexOf("/* 11/16 開發者「如果一開始沒選第一章")) + SRC.slice(SRC.indexOf("function stqAuto("));
   assert.ok(!/mnqGift\(|mnqChapter\(|mnfPlay\(|bhXuStart\(|prologue\(/.test(FLOW), "不演授印禮儀式、不播第一章電影、不走黑洞序局");
-  assert.equal((SRC.match(/mnqChapter\(/g) || []).length, 1, "整支只有更多玩法清單那一顆會開第一章");
+  assert.equal((SRC.match(/mnqChapter\(/g) || []).length, 2, "整支只有更多玩法清單那一顆、首頁那顆（第一章還沒看完）會開第一章");
   assert.ok(SRC.includes("journeyRepick(c)") && SRC.includes("obCarousel(box,L,"), "選角用現有的 obCarousel、換人用 journeyRepick");
   assert.ok(SRC.includes("我會下棋，直接開始"), "右上角跳過鈕");
   const MORE = SRC.slice(SRC.indexOf("function stqMore("), SRC.indexOf("function stqAuto("));
@@ -264,4 +265,13 @@ test("〔原始碼〕模組規矩：前綴 stq／STQ 只在這支宣告；長行
   }
   assert.ok(!/[^:"'\\]\/\/ /.test(SRC.split("\n").filter(l => l.length > 300).join("\n")), "長行中間不要有 // 註解");
   assert.ok(!/[\u0000-\u0008\u000b\u000c\u000e-\u001f]/.test(SRC), "有控制字元");
+});
+
+test("〔行為〕11/16 開發者「如果一開始沒選第一章 這邊要顯示第一章讓玩家知道」：首頁那顆在第一章還沒看完時寫「📖 第一章」、看過一部分寫「接著看」、看完回「更多玩法」，按了開第一章", () => {
+  const a = SRC.indexOf("function stqC1("), b = SRC.indexOf("function stqMore(");
+  const mk = M => { const log = []; const o = new Function("STQ_ON", "stqSt0", "mnqSt", "MNQ_SEGS", "mnqChapter", "stqCan", "stqOpen", "stqMore", SRC.slice(a, b) + ";return{stqHome,stqHomeGo}")(true, () => ({ st: "done" }), () => M, { classic: ["s1", "s2"] }, e => log.push(e), () => true, () => { }, () => log.push("more")); return { o, log } };
+  let K = mk({ seg: {}, lamp: {} }); assert.deepEqual(K.o.stqHome(), { k: "c1", t: "📖 第一章" }); K.o.stqHomeGo(); assert.deepEqual(K.log, ["classic"]);
+  K = mk({ seg: { s1: 1 }, lamp: {} }); assert.equal(K.o.stqHome().t, "📖 接著看第一章");
+  K = mk({ seg: { s1: 1, s2: 1 }, lamp: {} }); assert.deepEqual(K.o.stqHome(), { k: "more", t: "更多玩法" }); K.o.stqHomeGo(); assert.deepEqual(K.log, ["more"]);
+  K = mk({ seg: {}, lamp: { classic: 1 } }); assert.equal(K.o.stqHome().k, "more", "看完（點過燈）");
 });

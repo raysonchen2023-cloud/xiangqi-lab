@@ -106,7 +106,7 @@ const PTY_GOAL={x_miaogirl:"去大漠驛站，救出戴笠帽的孩子",x_shuai:
   x_spiritgirl:"去竹林溪邊，找那個一直在等人的孩子",x_bing:"去運河工地，找半塊布的主人",x_martialgirl:"去逃荒路上，找那個怕打雷的孩子"};
 function ptyCss(){if(document.getElementById("ptyCss"))return;const s=document.createElement("style");s.id="ptyCss";s.textContent=`
 .pty-top{display:flex;gap:10px;justify-content:space-between;align-items:center;margin:0 0 10px;font-size:14px}
-.pty-top b{font-size:16px}.pty-pool{color:#2b6cb0}.pty-top{margin-bottom:4px}.pty-cap{margin:0 0 10px}
+.pty-top b{font-size:16px}.pty-pool{color:#2b6cb0}.pty-top{margin-bottom:4px}.pty-cap{margin:0 0 10px}.pty-how{margin:-4px 0 6px}.pty-xpgo{display:block;width:100%;margin:0 0 12px}
 .pty-c{display:grid;grid-template-columns:64px 1fr;gap:4px 10px;align-items:start;padding:10px;border:1px solid var(--line,#d8cfbf);border-radius:12px;margin:0 0 10px;background:var(--card,#fffaf0)}
 .pty-c img{width:64px;height:85px;object-fit:cover;object-position:top;border-radius:8px;background:#efe6d6}
 .pty-c.lk img{filter:brightness(0) opacity(.55)}.pty-c.lk{opacity:.85}
@@ -161,7 +161,11 @@ function ptySkills(c){if(typeof sheet!=="function")return;const lv=ptyLv(c),pool
     b.querySelector("#ptySkB").onclick=()=>{closeSheet();setTimeout(ptySheet,60)}})}
 /* 開發者 11/16「角色等級不能超過修為，這句話玩家看不懂」（選單選「直接講結果」）：不解釋規則，直接說夥伴現在最高能練到幾級、怎樣才會再往上。
    同一條規則的另外兩處一起改：卡片上練滿的註記「（到修為上限）」→「（練滿了，等你升級）」；練滿還按＋星輝的提示 →「已經跟你一樣高了，等你升級再練」 */
-const ptyCapSay=L=>L>=100?"夥伴最高練到 Lv 100":`夥伴最高練到 Lv ${L}，你升級才會再往上`;
+const ptyCapSay=(L,nd)=>L>=100?"夥伴最高練到 Lv 100":nd>0?`夥伴最高練到 Lv ${L}，你的修為再 ${nd} 點升 Lv ${L+1}，才會再往上`:`夥伴最高練到 Lv ${L}，你升級才會再往上`;
+/* 11/16 開發者「要怎麼升級？」（截圖圈「練滿了，等你升級」）→ 選單「寫還差幾點＋去哪裡賺」：最上面那行寫還差幾點；有夥伴練滿時，下面多一行去哪裡賺修為＋「去下一盤」（點數同 addXP：對局贏 40 輸 15、千秋殘局 15） */
+const ptyXpNd=()=>{try{const X=xpInfo();return X.L<100?Math.max(1,X.need-X.rest):0}catch(e){return 0}};
+function ptyXpHow(P,L){if(L>=100||!PTY.ORDER.some(c=>PTY.has(P,c)&&PTY.lv(P,c,L)>=L))return"";
+  return`<p class="pty-m pty-how">下一盤電腦（贏 +40、輸 +15）、解千秋殘局（+15）、打星門圍城，都會加修為。</p><button type="button" class="btn ghost pty-xpgo" id="ptyXpGo">♟ 去下一盤</button>`}
 function ptyCardHTML(P,c,L){const C=(typeof WX_CHARS!=="undefined"&&WX_CHARS[c])||{n:c},era=typeof eraLabel==="function"&&typeof CHAR_ERA!=="undefined"?eraLabel(CHAR_ERA[c]):"";
   const img=`<img src="data/xs/prev_${c}.webp" alt="">`;
   if(!PTY.has(P,c)){const j=PTY.JOIN[c],at=j&&typeof eraLabel==="function"?eraLabel(j.st):"";const goal=P.hint&&P.hint[c]&&PTY_GOAL[c];
@@ -175,8 +179,9 @@ function ptyCardHTML(P,c,L){const C=(typeof WX_CHARS!=="undefined"&&WX_CHARS[c])
     ${(a=>a?`<div class="pty-a">${a}</div>`:"")(`${top?"":`<button type="button" class="btn" data-a="give"${P.pool>0?"":" disabled"}>＋星輝</button>`}${P.look===c?"":`<button type="button" class="btn ghost" data-a="look">帶${ptyTa(c)}出門</button>`}`)}</div>`}   /* 兩顆都不用出現時（練滿了又正陪你走）不留一條空白 */
 function ptySheet(){if(typeof sheet!=="function")return;const P0=ptyGet();if(!P0){try{toast("還沒有開始旅程")}catch(e){}return}ptyCss();
   sheet("🌟 雲河七星",b=>{const draw=()=>{const P=ptyGet(),L=ptyL(),sy=b.scrollTop;
-    b.innerHTML=`<div class="pty-top"><span><span>你的修為</span> <b>Lv ${L}</b></span><span class="pty-pool">✨ <span>星輝</span> <b>${P.pool|0}</b></span></div><p class="pty-m pty-cap">${ptyCapSay(L)}</p>`+ptyTeamHTML()+ptyTalHTML()+PTY.ORDER.map(c=>ptyCardHTML(P,c,L)).join("")+
+    b.innerHTML=`<div class="pty-top"><span><span>你的修為</span> <b>Lv ${L}</b></span><span class="pty-pool">✨ <span>星輝</span> <b>${P.pool|0}</b></span></div><p class="pty-m pty-cap">${ptyCapSay(L,ptyXpNd())}</p>`+ptyXpHow(P,L)+ptyTeamHTML()+ptyTalHTML()+PTY.ORDER.map(c=>ptyCardHTML(P,c,L)).join("")+
       `<p class="pty-m">下棋、解題、黑洞過關得到的修為，一半自動分給隊上每一位，另一半變成星輝，由你分給想練的人。黑洞裡全隊已學會的招都會帶上場；「陪你走」是首頁上跟著你的那一位。</p>`;
+    {const g=b.querySelector("#ptyXpGo");if(g)g.onclick=()=>{try{vibrate(5)}catch(e){}closeSheet();location.hash="#/cpu"}}
     {const t=b.querySelector('[data-top="tal"]');if(t)t.onclick=()=>{try{vibrate(5)}catch(e){}closeSheet();setTimeout(()=>{if(typeof sg2TalSheet==="function"&&typeof SG2G!=="undefined")sg2TalSheet(()=>ptySheet(),"‹ 回雲河七星");else bhtdTal(()=>ptySheet(),"‹ 回雲河七星")},60)}}   /* 07bht bhtdTal 第二個參數＝返回鈕的字（沒給照舊「回選關」） */
     b.querySelectorAll(".pty-c[data-c]").forEach(el=>{const c=el.dataset.c;el.querySelectorAll("[data-a]").forEach(btn=>btn.onclick=()=>{try{vibrate(5)}catch(e){}const a=btn.dataset.a;
       if(a==="sk"){closeSheet();setTimeout(()=>ptySkills(c),60);return}

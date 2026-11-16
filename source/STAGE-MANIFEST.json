@@ -1,7 +1,7 @@
 {
  "ref": "origin/main",
- "commit": "f39acb98e37a88051df7e6b19204fc661538295d",
- "madeAt": "2026-11-16T09:23:45.257Z",
+ "commit": "f9dbf150455db56898119709da9c52538357604b",
+ "madeAt": "2026-11-16T09:47:06.198Z",
  "files": {
   "xiangqi-db/m/00-util.js": "local=live",
   "xiangqi-db/m/01-board.js": "local=live",
@@ -17,7 +17,7 @@
   "xiangqi-db/m/06-cpu.js": "local=live",
   "xiangqi-db/m/06c-cup.js": "local=live",
   "xiangqi-db/m/07-legend.js": "local=live",
-  "xiangqi-db/m/07pty-party.js": "live",
+  "xiangqi-db/m/07pty-party.js": "local=live",
   "xiangqi-db/m/07c-canju.js": "local=live",
   "xiangqi-db/m/07d-garden.js": "local=live",
   "xiangqi-db/m/07e-garden2.js": "local=live",
@@ -31,7 +31,7 @@
   "xiangqi-db/m/07bhf-bossfx.js": "local=live",
   "xiangqi-db/m/07bhg-gatesiege.js": "local=live",
   "xiangqi-db/m/07bhw-wheel.js": "local=live",
-  "xiangqi-db/m/07sg2-siege2.js": "live",
+  "xiangqi-db/m/07sg2-siege2.js": "local=live",
   "xiangqi-db/m/07dv-devtest.js": "local=live",
   "xiangqi-db/m/07dw-perfhud.js": "local=live",
   "xiangqi-db/m/07g-battle.js": "local=live",
@@ -117,7 +117,7 @@
   "xiangqi-db/m/07lh-lefty.js": "local=live",
   "xiangqi-db/m/07pm-premove.js": "local=live",
   "xiangqi-db/m/07dq-daily.js": "local=live",
-  "xiangqi-db/m/07i18n.js": "live",
+  "xiangqi-db/m/07i18n.js": "local=live",
   "xiangqi-db/m/07sp-spotfit.js": "local=live",
   "xiangqi-db/m/07fl-fill.js": "local=live",
   "xiangqi-db/m/07mnf-mainfilm.js": "local=live",
@@ -292,6 +292,7 @@
   "xiangqi-lab/tools/test-park3d-capbase.js": "local",
   "xiangqi-lab/tools/test-park3d-cbfx.js": "local",
   "xiangqi-lab/tools/test-park3d-colorblind.js": "local",
+  "xiangqi-lab/tools/test-park3d-ghostptr-1116.js": "local",
   "xiangqi-lab/tools/test-park3d-power.js": "local",
   "xiangqi-lab/tools/test-park3d-river-1116.js": "local",
   "xiangqi-lab/tools/test-park3d-tap.js": "local",
@@ -454,11 +455,8 @@
  },
  "liveDiffers": [
   "m/05-settings.js",
-  "m/07pty-party.js",
-  "m/07sg2-siege2.js",
   "m/07y-hubmap.js",
   "m/07s4-passmap.js",
-  "m/07i18n.js",
   "src/sw.js"
  ],
  "absentModules": [],
@@ -507,8 +505,8 @@
   "test-unlock-fx-1116.js": "指令排除：要讀只在開發者電腦與 CDN 的場景圖（data/guanxing、homemap 等），公開副本沒有這些圖",
   "test-i18n-ext-1116.js": "指令排除：要讀英文外掛字典 xiangqi-db/i18n-en.json（只放在 CDN 的 data/i18n-en.json，公開副本沒有）"
  },
- "version": "20261116-1703",
- "indexSha1": "7add761e371a",
+ "version": "20261116-1743",
+ "indexSha1": "329aa27978af",
  "toLF": [],
  "scrubbed": [
   "xiangqi-lab/tools/qa/colorblind-scan.js（1 處）",
@@ -535,9 +533,5 @@
     "files": 1
    }
   ]
- },
- "pinnedToPrevious": {
-  "xiangqi-lab/tools/test-pty-capsay-1116.js": "工作區已改成下一版（七星卡冊升級提示，還沒上線）；這一版照 20261116-1703 上線時的內容",
-  "xiangqi-lab/tools/test-pty-stats-1116.js": "工作區已改成下一版（七星卡冊升級提示，還沒上線）；這一版照 20261116-1703 上線時的內容"
  }
 }

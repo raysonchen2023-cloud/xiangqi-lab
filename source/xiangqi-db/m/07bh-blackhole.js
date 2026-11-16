@@ -461,8 +461,8 @@ const OP_FILM1={n:1,end:89.5,shots:[
   {at:65,img:"p8",kb:[[1.0,50,45],[1.22,62,56]],fx:"whirl",say:[[65.4,"天上星盤傾斜。"],[67.8,"一角滑入暗彎。"],[70.2,"墨色漩渦初開。"],[72.4,"誰也望不到底。"]]},
   {at:75,img:"p5",kb:[[1,50,32],[1.4,50,26]],fx:"whirl",sfx:[[76,"suck"]],say:[[75.4,"黑洞張開無聲。"],[78.2,"星槎被河牽去。"],[81.0,"棋聲在深處響。"],[83.8,"一步一步未停。"]],nar:[86.4,"黑非惡，只是深。"]}]};
 const OP_FILM2={n:3,end:60,shots:[
-  {at:0,img:"p2",ly:[[8.6,"p15",1.4]],grow:1,kb:[[1.12,52,40],[1.0,50,52]],fx:"stone",splash:9.4,say:[[0.6,"五色石曾補天。"],[3.2,"另有一角青石。"],[5.8,"一枚界石相隨。"],[8.4,"同落雲河深處。"]],nar:[9.9,"它記住萬年棋聲。"]},
-  {at:12.5,img:"p15",ly:[[12.6,"p16",2.2],[16.6,"p3",1.4]],grow:1,kb:[[1.0,50,52],[1.22,44,60]],fx:"steam",say:[[12.8,"青石後來成桌。"],[15.4,"桌上仍有星河。"],[18.0,"河邊少了界石。"],[20.6,"七碗茶正等候。"]]},
+  {at:0,img:"p2",ly:[[8.6,"p15",1.4]],kb:[[1.12,52,40],[1.0,50,52]],fx:"stone",splash:9.4,say:[[0.6,"五色石曾補天。"],[3.2,"另有一角青石。"],[5.8,"一枚界石相隨。"],[8.4,"同落雲河深處。"]],nar:[9.9,"它記住萬年棋聲。"]},
+  {at:12.5,img:"p15",ly:[[12.6,"p16",2.2],[16.6,"p3",1.4]],kb:[[1.0,50,52],[1.22,44,60]],fx:"steam",say:[[12.8,"青石後來成桌。"],[15.4,"桌上仍有星河。"],[18.0,"河邊少了界石。"],[20.6,"七碗茶正等候。"]]},
   {at:23,img:"p9",kb:[[1.25,50,70],[1.0,50,35]],fx:"steam",say:[[23.3,"茶氣飄出船外。"],[25.4,"在河上織小路。"],[27.4,"七點紅光在前。"]],nar:[28.0,"茶未入口，緣已同船。"]},
   {at:30,img:"p4",fx:"dark",say:[[30.0,"七段歲月在岸。"],[32.2,"七個孩子將醒。"],[34.2,"本命棋子先亮。"]],meteor:36}]};
 /* hspx 開發者 11/12「想製作從沒有裂縫到破洞的動畫」「要有漸漸裂掉變成棋桌的過程畫面」：
@@ -471,13 +471,15 @@ const OP_FILM2={n:3,end:60,shots:[
    → 青瓷洗成灰白青石（p16）→ 線沉回石裡、只留河 → 星槎上的青石桌（p3，河光接到缺口）。圖都是 Gemini 畫的（開發者逐張看過）；棋盤線由程式畫（Gemini 畫的線數不對） */
 const BHX_DUST={p11:{c:[392,560]},p12:{c:[390,560],rad:[190,245],tip:[402,808]},p1:{c:[390,360],rad:[105,125],tip:[396,515],band:1000}};   /* 落塵：裂口中心、破洞半徑、下緣出口、銀河高度（圖上像素） */
 const BHX_BD3={cx:388,cy:750,rx:262,ry:118,th:52.7*Math.PI/180,S:.17,g0:10.0,f0:15.4,f1:16.6};   /* 雲河上那塊圓青石的頂面橢圓（p15／p16 同一個位置）、河帶指向缺口的角度、棋盤大小；g0 開始長線、f0～f1 線沉回石裡 */
+/* 11/16 開發者「第一章的動畫裡面不要再做用線畫成棋盤的樣子 前面有出現過 看了很膩」：p2、p15 兩幕拿掉 grow（不再長棋盤線）；bhxGrowSvg／bhxGrowTick 留著沒人叫 */
 function bhxGrowSvg(st){const B=BHX_BD3,ex=[Math.cos(B.th),Math.sin(B.th)],ey=[-Math.sin(B.th),Math.cos(B.th)],P=(a,b)=>{const u=(a*ex[0]+b*ey[0])*B.S,v=(a*ex[1]+b*ey[1])*B.S;return[B.cx+u*B.rx,B.cy+v*B.ry]};
   const L=[],seg=(a0,b0,a1,b1,s,d,keep)=>L.push({p:P(a0,b0),q:P(a1,b1),s,d,keep:!!keep}),g=B.g0,rk=i=>-4.5+i;
-  const ext=r=>{let a=4;while(a<8){const u=(a*ex[0]+r*ey[0])*B.S,v=(a*ex[1]+r*ey[1])*B.S;if(u*u+v*v>.95)break;a+=.1}return a};
-  for(const r of[rk(4),rk(5)]){const e=ext(r);seg(-e,r,e,r,g,1.4,1)}   /* 河帶兩邊先亮，一路延伸到桌緣（流向缺口） */
+  for(const r of[rk(4),rk(5)])seg(-4,r,4,r,g,1.4,1);   /* 河帶兩邊先亮（11/16 開發者「棋盤的線有錯 超出去」：不再延伸到桌緣，跟其他橫線一樣只到棋盤邊） */
   [[3,6],[2,7],[1,8],[0,9]].forEach(([a,b],i)=>{seg(-4,rk(a),4,rk(a),g+.6+i*.6,1.2);seg(-4,rk(b),4,rk(b),g+.6+i*.6,1.2)});   /* 其餘橫線由河往外一條條長 */
   for(let f=-4;f<=4;f++){const s=g+.8+Math.abs(f)*.15;seg(f,rk(4),f,rk(0),s,2.2);seg(f,rk(5),f,rk(9),s,2.2);if(f===-4||f===4)seg(f,rk(4),f,rk(5),s,.5)}   /* 9 條直線從河邊往兩岸長，邊線跨河 */
   for(const[b0,b1]of[[rk(0),rk(2)],[rk(7),rk(9)]]){seg(-1,b0,1,b1,g+3.2,.8);seg(1,b0,-1,b1,g+3.2,.8)}   /* 兩個九宮 X */
+  {const D=.11,K=.24,mk=(f,r)=>{for(const sx of[-1,1]){if(Math.abs(f+sx*D)>4)continue;for(const sy of[-1,1]){const ax=f+sx*D,ay=r+sy*D;seg(ax+sx*K,ay,ax,ay,g+3.6,.5);seg(ax,ay,ax,ay+sy*K,g+3.6,.5)}}};
+    for(const r of[2,7])for(const f of[-3,3])mk(f,rk(r));for(const r of[3,6])for(const f of[-4,-2,0,2,4])mk(f,rk(r))}   /* 11/16 開發者「少了L線」：炮位、兵卒位四角的 L 形記號（同 bhxBoardSvg 的大小；靠邊的只畫朝內那一側） */
   const ns="http://www.w3.org/2000/svg",svg=document.createElementNS(ns,"svg");svg.setAttribute("class","fm-gr");svg.setAttribute("viewBox","0 0 768 1376");svg.setAttribute("preserveAspectRatio","xMidYMid slice");svg.setAttribute("aria-hidden","true");
   svg.style.cssText="position:absolute;inset:0;width:100%;height:100%;pointer-events:none";
   svg.innerHTML=`<defs><filter id="fmGlw" x="-20%" y="-20%" width="140%" height="140%"><feGaussianBlur stdDeviation="2.4" result="b"/><feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge></filter><clipPath id="fmClp"><ellipse cx="${B.cx}" cy="${B.cy}" rx="${(B.rx*.99).toFixed(1)}" ry="${(B.ry*.99).toFixed(1)}"/></clipPath></defs><g clip-path="url(#fmClp)"${bhxLowDevice()?"":' filter="url(#fmGlw)"'} stroke="#fff3cf" stroke-width="2.2" stroke-linecap="round" fill="none"></g>`;

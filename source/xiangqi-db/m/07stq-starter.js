@@ -232,8 +232,10 @@ function stqPick(c){const U=STQ_UI;
     const S=stqSt();if(S.st==="done"){S.c=c;S.pick=Date.now();stqSave(S)}try{if(typeof fnStep==="function")fnStep("pick")}catch(e){}try{saveNow(true)}catch(e){}try{window.dispatchEvent(new Event("xq-look"))}catch(e){}}
   stqClose();try{if(/^(#\/?)?$/.test(location.hash||""))route();else goHome()}catch(e){}}
 /* ---------- 首頁按鈕（07mnq mnqHomeSync／按鈕先問這裡）：{t:字}；null＝照 07mnq 原本的「下一步」 ---------- */
-function stqHome(){if(!STQ_ON)return null;const S=stqSt0();if(S&&S.st==="run")return{k:"run",t:"🔰 繼續新手練習"};return{k:"more",t:"更多玩法"}}
-function stqHomeGo(){const h=stqHome();if(!h)return false;if(h.k==="run"){if(stqCan())stqOpen();return true}stqMore();return true}
+/* 11/16 開發者「如果一開始沒選第一章 這邊要顯示第一章讓玩家知道」：第一章還沒看完（07mnq lamp.classic＝看完）首頁這顆寫「📖 第一章」（看過一部分寫「接著看」），按了直接開；看完才回「更多玩法」 */
+function stqC1(){try{if(typeof mnqChapter!=="function"||typeof mnqSt!=="function"||typeof MNQ_SEGS==="undefined"||!MNQ_SEGS.classic)return null;const S=mnqSt(),seg=S.seg||{};if((S.lamp||{}).classic||MNQ_SEGS.classic.every(id=>seg[id]))return null;return MNQ_SEGS.classic.some(id=>seg[id])?"📖 接著看第一章":"📖 第一章"}catch(e){return null}}
+function stqHome(){if(!STQ_ON)return null;const S=stqSt0();if(S&&S.st==="run")return{k:"run",t:"🔰 繼續新手練習"};const c1=stqC1();if(c1)return{k:"c1",t:c1};return{k:"more",t:"更多玩法"}}
+function stqHomeGo(){const h=stqHome();if(!h)return false;if(h.k==="run"){if(stqCan())stqOpen();return true}if(h.k==="c1"){try{mnqChapter("classic")}catch(e){}return true}stqMore();return true}
 function stqMore(){stqCss();let mq=false;if(typeof MNQ_PANEL_ON!=="undefined"&&MNQ_PANEL_ON)try{const M=mnqSt();mq=!!(M.gift.a1||Object.keys(M.seg).length)}catch(e){}   /* 11/15 遠征令拿掉（07mnq MNQ_PANEL_ON＝false）：不放「⛵ 星槎遠征令」那顆 */
   const L=[["🤖","對弈電腦",typeof CpuRoom==="function"?"#/cpuroom":"#/cpu"],["🍵","一盞茶殘局","#/canju"],["📝","棋力測驗","#/quiz"],["🔰","新手訓練營","#/camp"]];
   /* 11/15 第一章入口原本只在「設定 → 氛圍」（07mnq mnqSndRow）：首頁「下一步」打開的這張清單也放一顆（有角色或看過任何一段才放；看完＝「再看第一章」） */
