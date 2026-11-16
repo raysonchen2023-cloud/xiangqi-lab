@@ -446,7 +446,7 @@ const I18N_EN={
   "可以吃":"can capture","可以走到這裡":"can move here","剛走到這裡":"just moved here","預定落點":"planned destination","再按一次落子":"press again to move","空":"empty",
   "還沒有走棋":"No moves yet","還沒有擺棋子":"No pieces on the board","沒有棋子":"no pieces","你的時間到了":"Your time is up","你的時間到了，超時":"Your time is up: time out","頁面":"Page",
   /* 設定頁：開關底下的說明小字、各列、提示（05-settings、11b-a11y、07f、07w7） */
-  "還沒取名字":"No name yet","換一顆棋子":"Change your piece","從主畫面點圖示打開：全螢幕、沒網路也能下棋":"Open it from the home screen icon: full screen, and you can play offline","開發中":"in development","檢查更新":"Check for updates","語言":"Language",
+  "還沒取名字":"No name yet","換一顆棋子":"Change your piece","從主畫面點圖示打開：全螢幕、沒網路也能下棋":"Open it from the home screen icon: full screen, and you can play offline","開發中":"in development","檢查更新":"Check for updates","新版由 App Store 更新":"Updates come from the App Store","語言":"Language",
   "語言 Language":"Language","用在哪裡":"Used for","送出玩家登記給開發者":"Send player registration to the developer","匿名記錄卡住的地方":"Anonymously record where I get stuck","匿名送出對局評分":"Send game scores anonymously","校正分數用":"for score calibration",
   "匿名送出學習進度":"Send learning progress anonymously","新手引導":"onboarding","作答":"answers","成長曲線":"growth curve","大廳顯示我的城市":"Show my city in the lobby","不顯示":"Don't show","申請刪除我在伺服器上的資料":"Request deletion of my data on the server",
   "每天自動送匿名健康摘要":"Send an anonymous health summary daily","預設關。打開後每天最多一次，把錯誤次數、卡頓、啟動時間、App 版本、裝置類型送給開發者；不含名字、裝置代號、棋譜、存檔":"Off by default. When on, at most once a day it sends error counts, stutters, startup time, app version and device type to the developer; no names, device ID, game records or saves",

@@ -195,7 +195,7 @@ function hmTail(P){const bar=P.querySelector(":scope>.hm-go-bar");if(!bar)return
   const fix=()=>{if(!P.isConnected||bar.parentNode!==P)return;const a=document.activeElement;let n=bar.nextSibling;while(n){const nx=n.nextSibling;if(!(a&&n.contains&&n.contains(a)))P.insertBefore(n,bar);n=nx}};
   fix();let mo=null;try{mo=new MutationObserver(()=>{if(!P.isConnected){mo.disconnect();return}fix()});mo.observe(P,{childList:true})}catch(e){}return mo}
 function homeMap(v){const home=v.querySelector(".home");if(!home||v.querySelector(".home-page"))return;hmCss();
-  const nw=hmNew(),standalone=matchMedia("(display-mode: standalone)").matches||navigator.standalone,inst=OFF&&!standalone&&!(store.get("instAsk",null)||{}).no;
+  const nw=hmNew(),standalone=isStandalone(),inst=OFF&&!standalone&&!(store.get("instAsk",null)||{}).no;   /* 11/16 iMac 實機：原生 App 的 UA 有 XQQianqiuApp，自己判斷 display-mode 會漏掉、首頁出現「📲 加到主畫面」；改用 02-shell 的 isStandalone() */
   /* 開發者 11/11（截圖圈出石桌「著一盤」和底部「立即對局」重複，選「石桌改成同桌對弈」）：石桌旁本來就擺兩張石凳＝兩人面對面下（#/pvp）；
      跟電腦下、接著下、新手第一次都交給底部大按鈕（hmGoBar），石桌不再有新手天光和「第一次下象棋？」 */
   const lab=id=>id==="hmQuick"?HM_PVP_NM:id==="hmLearn"?xqHubName("learn"):id==="hmBattle"?xqHubName("battle"):HM_SPOTS.find(s=>s[0]===id)[3];

@@ -8,7 +8,7 @@ function standaloneOnlineWarn(v){if(OFF||!(matchMedia("(display-mode: standalone
   v.prepend(c);c.querySelector("#gh").onclick=async()=>{let u=APP_HOME;try{const r=await api("/remote");u=(r.urls||[]).find(x=>x.includes("#connect="))||u}catch(e){}location.href=u}}
 function Home(v,hub){   /* hub：沒有＝首頁三張大卡；"battle"＝對戰頁；"learn"＝學習頁（開發者看 Gemini UI／UX 審閱後決定） */
   const RI=DEVREMOTE()?XQ.remoteInfo():null;  // 這支手機連過主人的電腦嗎
-  const standalone=matchMedia("(display-mode: standalone)").matches||navigator.standalone;
+  const standalone=isStandalone();   /* 11/16：原生 App（UA 有 XQQianqiuApp）也算已安裝，不顯示加到主畫面卡，同 07z-homemap */
   setTop("象棋千秋",false,OFF?[].concat(RI?[["🔗",connectSheet,"連線到電腦"]]:[]).concat(!hub&&DEVMODE()&&typeof openFbAdmin==="function"?[["📋",openFbAdmin,"意見回饋管理"]]:[])  :[["👥",whoSheet,"誰在線上"]]);   /* 11/10 開發者：首頁只留 📋 圖示，放在頂欄右上角角色頭像左邊 */meChip();   /* 意見回饋 570：📋 移到設定頁 */   /* 意見回饋 536：首頁左上角的頭像，點了進「我的角色」；531：首頁右上角的「分享給朋友」「意見回饋」拿掉（都在 設定 → 系統） */setTabs(true,"#/");   /* 意見回饋 409：意見回饋按鈕放在首頁最右上角 */
   if(hub){setTop(typeof xqHubName==="function"?xqHubName(hub==="battle"?"battle":"learn"):(hub==="battle"?"⚔ 對戰":"📚 學習"),"#/");setTabs(true,"#/")}
   const T=(k,go,ic,t,id,s,x,cta)=>`<button class="tile strip ${k}${x||""}" data-go="${go}"><span class="ic">${ic}</span><span class="tx"><span class="t">${t}</span><span class="s"${id?` id="${id}"`:""}>${s}</span></span><b class="go">${cta||"›"}</b></button>`;

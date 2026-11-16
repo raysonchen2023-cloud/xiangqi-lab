@@ -500,7 +500,7 @@ function fwPaint(box,more){fwCSS();const C=window.XQCore,B0=C.parseFen(more?FW_F
    store "funnel"（整支手機一份，不在存檔清單裡：開新旅程、讀檔都不會重來） */
 let FN=null,FN_T=0,FN_PRE=0,FN_PM=0;
 function fnDev(){const u=navigator.userAgent||"";return/iPad|Tablet/i.test(u)||(/Macintosh/.test(u)&&navigator.maxTouchPoints>1)?"tablet":/Mobi|Android|iPhone|iPod/i.test(u)?"phone":"desktop"}
-function fnTest(){try{return localStorage.getItem("xq_netRoot")!=null||/^(localhost|127\.|\[::1\])|\.localhost$/.test(location.hostname)}catch(e){return false}}
+function fnTest(){try{return localStorage.getItem("xq_netRoot")!=null||(!window.XQ_NATIVE&&/^(localhost|127\.|\[::1\])|\.localhost$/.test(location.hostname))}catch(e){return false}}
 function fnSend(){try{if(!FN||!window.XQNet||!XQNet.shareIRT)return;XQNet.shareIRT({t:"fun",v:1,iid:FN.id,s:{...FN.s},ver:String(window.XQ_BUILD||"").slice(0,20),dev:FN.dev,...(FN.test?{test:1}:{})})}catch(e){}}
 function fnStep(k){try{if(!FN||FN.end||FN.s[k]!=null)return;FN.s[k]=Math.max(0,Math.round((Date.now()-FN.t0)/1000));if(k==="g1e"||Date.now()-FN.t0>14*864e5)FN.end=1;store.set("funnel",FN);fnSend();if(FN.end&&FN_T){clearInterval(FN_T);FN_T=0}}catch(e){}}
 function fnTick(){try{if(!FN||FN.end)return;const pv=document.getElementById("preov");if(pv)FN_PRE=1;

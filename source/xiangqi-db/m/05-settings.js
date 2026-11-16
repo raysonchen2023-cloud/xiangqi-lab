@@ -209,7 +209,7 @@ function wipeDb(n,ms){return new Promise(res=>{let done=false,fresh=false;const 
       tx.oncomplete=()=>{try{db.close()}catch(e){}fin("done")};tx.onerror=tx.onabort=()=>{try{db.close()}catch(e){}fin("error",tx.error&&tx.error.name)}}catch(e){try{db.close()}catch(_){}fin("error",e.name)}}}catch(e){fin("error",e.name)}})}
 const WIPE_NAME={"xqlab":"對局紀錄和棋譜","xqlab-save":"目前的進度","xqlab-slots":"存檔格"},WIPE_WHY={error:"刪的時候出錯",blocked:"被另一個開著的 App 分頁擋住",timeout:"手機太久沒回應"};
 async function wipeAllData(){toast("正在刪除這支手機的資料…");
-  try{window.XQNet&&XQNet.forget&&XQNet.forget()}catch(e){}await new Promise(r=>setTimeout(r,500));   /* 伺服器上保留的在線狀態、戰績摘要先清掉 */
+  try{window.XQNet&&XQNet.forget&&XQNet.forget()}catch(e){}try{window.XQNative&&XQNative.daily&&XQNative.daily.disable()}catch(e){}await new Promise(r=>setTimeout(r,500));   /* 伺服器上保留的在線狀態、戰績摘要先清掉 */
   try{Storage.prototype.setItem=function(){}}catch(e){}
   for(const S of[localStorage,sessionStorage])try{Object.keys(S).filter(k=>/^(m_|xq|rsAsked|rsBoot|btAt|pq_)/.test(k)).forEach(k=>S.removeItem(k))}catch(e){}
   const R=[];for(const n of["xqlab","xqlab-save","xqlab-slots"])R.push(await wipeDb(n));
@@ -219,7 +219,7 @@ async function wipeAllData(){toast("正在刪除這支手機的資料…");
   try{IDBObjectStore.prototype.put=IDBObjectStore.prototype.add=function(){throw new Error("資料刪除中")}}catch(e){}
   try{history.replaceState(null,"",location.pathname+"#/")}catch(e){}location.reload()}
 /* 意見回饋 531：檢查更新（設定 → 系統 → 關於） */
-async function updCheck(b){b.disabled=true;b.textContent="檢查中…";const r=window.XQ_checkUpdate?await XQ_checkUpdate():{};
+async function updCheck(b){if(window.XQ_NATIVE){b.disabled=true;b.textContent="新版由 App Store 更新";return}b.disabled=true;b.textContent="檢查中…";const r=window.XQ_checkUpdate?await XQ_checkUpdate():{};
   if(!r.n){b.textContent="沒有網路";b.disabled=false;return}if(r.a===r.n){b.textContent="✓ 已是最新版";return}b.textContent="下載新版中…";setTimeout(()=>location.reload(),6000)}
 /* 回饋 846（開發者 11/9 選：字級放大）：App 內字級 小／標準／大／特大＝0.9／1／1.15／1.3 倍。
    html 上掛 data-fz 和 --fz（標準就拿掉 data-fz，畫面跟以前一模一樣）；m.css 照 --fz 放大面板、卡片、對局文字、小說、設定頁、頂欄標題，
@@ -504,7 +504,7 @@ function shrinkImage(file){return new Promise((ok,no)=>{const u=URL.createObject
   im.onerror=()=>{URL.revokeObjectURL(u);no(new Error("讀不到這張圖片"))};im.src=u})}
 async function feedbackInfo(){const m=meInfo(),r=window.XQNet&&XQNet.rating?XQNet.rating():null;
   return{id:m.id||"",name:m.name||"",rank:r?`${r.rank} ${r.pts}分（${r.w}勝${r.l}負${r.d}和）`:"",ver:(A=>{const run=window.XQ_BUILD&&!/__/.test(XQ_BUILD)?XQ_BUILD:"";return run&&A&&A!==run?`${run}（已下載 ${A}，換頁後套用）`:(A||run)})(await appVer())||"",
-    dev:(MY_KIND||"其他")+((matchMedia("(display-mode: standalone)").matches||navigator.standalone)?"・主畫面App":"・瀏覽器")+`・${innerWidth}x${innerHeight}`+(DEVMODE()&&typeof bgmDiag==="function"?"・"+bgmDiag():""),page:location.hash||"#/",role:DEVMODE()?"開發者":"玩家"}}
+    dev:(MY_KIND||"其他")+(/XQQianqiuApp\//.test(navigator.userAgent)?"・原生App":(matchMedia("(display-mode: standalone)").matches||navigator.standalone)?"・主畫面App":"・瀏覽器")+`・${innerWidth}x${innerHeight}`+(DEVMODE()&&typeof bgmDiag==="function"?"・"+bgmDiag():""),page:location.hash||"#/",role:DEVMODE()?"開發者":"玩家"}}
 async function postForm(rec){const F=FEEDBACK_FORM;if(!F.action)throw new Error("表單還沒設定");
   const body=new URLSearchParams();for(const k in F.entries)if(F.entries[k]&&rec[k]!=null)body.append(F.entries[k],String(rec[k]).slice(0,k==="img"?31000:k==="text"?45000:2000));
   // 用 sendBeacon「送出就好、不等回覆」：App 為了跑 Pikafish 開了嚴格的跨網域模式，fetch 讀不到 Google 的回覆會被當成失敗（其實已經送到），造成重複送出
@@ -608,7 +608,7 @@ const useFmt=ms=>{const m=Math.round(ms/60000);return m>=60?`${Math.floor(m/60)}
 function useSummary(){const S=store.get("useStat",null);if(!S||!S.t)return"";const P={...(S.p||{})};if(P.ship){P["雲河星槎"]=(P["雲河星槎"]||0)+P.ship;delete P.ship}   /* 意見回饋 724：星槎新頁（#/ship/...）以前記成 ship，併進雲河星槎 */
   const top=Object.entries(P).sort((a,b)=>b[1]-a[1]).slice(0,3).map(([k,v])=>`${k} ${useFmt(v)}`);return`總共用了 ${useFmt(S.t)}・最常待：${top.join("、")}`}
 // 線上 ID 登記：名字或段位有變、或超過 7 天，就送一筆「玩家」紀錄到同一個表單（意見回饋 708：多用了 30 分鐘以上、距離上次超過一天也送，時間才跟得上）
-async function reportPlayer(){if(!OFF||!FEEDBACK_FORM.action)return;if(navigator.webdriver)return;if(typeof fnTest==="function"&&fnTest())return;   /* 11/12：Claude 在內建瀏覽器設了測試房（xq_netRoot）拍截圖，還是送出玩家登記「棋友28AB」被當成真人；設了測試房或本機就不送 */   /* 意見回饋 652：自動化測試（Playwright 等）開的 App 不送玩家登記，名單才分得清真人 */if(/^(localhost|127\.|\[::1\])/.test(location.hostname))return;   /* 電腦本機測試不送玩家紀錄（第 502、504 列是測試時誤送的） */if(store.get("repOff",false)||(typeof fmNetOff==="function"&&fmNetOff()))return;   /* 上架隱私整理 11/10：玩家可以在設定關掉登記，家長關掉線上大廳時也不送 */const i=await feedbackInfo();try{const pn=typeof window.XQ_PUBNAME==="function"?window.XQ_PUBNAME(meInfo()):"";if(pn)i.name=pn}catch(e){}i.page="";   /* 登記只送大廳對外的名字（選稱號就是稱號），不送玩家自取的名字，也不送目前在哪一頁 */const key=i.id+"|"+i.name+"|"+i.rank.split(" ")[0]+"|k1",last=store.get("playerRep",null);   /* |k1：11/14 加本人證明，舊版登記過的玩家更新後馬上補送一次（帶驗證碼） */
+async function reportPlayer(){if(!OFF||!FEEDBACK_FORM.action)return;if(navigator.webdriver)return;if(typeof fnTest==="function"&&fnTest())return;   /* 11/12：Claude 在內建瀏覽器設了測試房（xq_netRoot）拍截圖，還是送出玩家登記「棋友28AB」被當成真人；設了測試房或本機就不送 */   /* 意見回饋 652：自動化測試（Playwright 等）開的 App 不送玩家登記，名單才分得清真人 */if(!window.XQ_NATIVE&&/^(localhost|127\.|\[::1\])/.test(location.hostname))return;   /* 電腦本機測試不送玩家紀錄（第 502、504 列是測試時誤送的） */if(store.get("repOff",false)||(typeof fmNetOff==="function"&&fmNetOff()))return;   /* 上架隱私整理 11/10：玩家可以在設定關掉登記，家長關掉線上大廳時也不送 */const i=await feedbackInfo();try{const pn=typeof window.XQ_PUBNAME==="function"?window.XQ_PUBNAME(meInfo()):"";if(pn)i.name=pn}catch(e){}i.page="";   /* 登記只送大廳對外的名字（選稱號就是稱號），不送玩家自取的名字，也不送目前在哪一頁 */const key=i.id+"|"+i.name+"|"+i.rank.split(" ")[0]+"|k1",last=store.get("playerRep",null);   /* |k1：11/14 加本人證明，舊版登記過的玩家更新後馬上補送一次（帶驗證碼） */
   const ut=((store.get("useStat",null)||{}).t)||0;if(last&&last.k===key&&Date.now()-last.at<7*864e5&&!(Date.now()-last.at>864e5&&ut-(last.u||0)>=18e5))return;
   let kv="";try{if(typeof srvKeyV==="function")kv="🔑 "+await srvKeyV(srvKey())}catch(e){}
   if(await sendRecord(Object.assign(i,{type:"👤 玩家",text:[useSummary(),kv].filter(Boolean).join("\n"),contact:""})))store.set("playerRep",{k:key,at:Date.now(),u:ut})}

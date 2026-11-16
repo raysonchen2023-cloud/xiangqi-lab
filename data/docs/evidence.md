@@ -1,10 +1,10 @@
-# 驗證紀錄（版本 20261116-2008）
+# 驗證紀錄（版本 20261117-0005）
 
 這一頁讓任何人核對：這一版的程式跑過下面這些自動測試，以及每一項測試到底驗了什麼。
 
-- 產生時間：2026/11/16 20:16:29（臺灣時間）
-- 結果（四欄分開，不要只看總數）：共 1854 項＝**通過 1837**、**失敗 0**、**略過 17**（這個環境跑不了、沒有執行，不算通過；逐項原因見〈略過〉）；另有**預期失敗 0**
-- 測試對象：公開倉庫的 `source/`（切自 commit `192a5bc09877`），對應的發布版：`20261116-2008`。開發者電腦上還沒發布的修改不在這份測試裡。
+- 產生時間：2026/11/17 00:12:55（臺灣時間）
+- 結果（四欄分開，不要只看總數）：共 1860 項＝**通過 1843**、**失敗 0**、**略過 17**（這個環境跑不了、沒有執行，不算通過；逐項原因見〈略過〉）；另有**預期失敗 0**
+- 測試對象：公開倉庫的 `source/`（切自 commit `8d9d8938eea2`），對應的發布版：`20261117-0005`。開發者電腦上還沒發布的修改不在這份測試裡。
 - `source/` 沒放的測試檔（和少數只給它們用的工具）有43 個（要讀不公開的資料、要接不公開的營運程式，或指令排除），原因逐檔寫在 `source/STAGE-MANIFEST.json` 的 excludedTests。
 
 ## 略過（沒有執行，不算通過）
@@ -36,7 +36,7 @@
 | 行為 | 1212 項（通過 1207、略過 5） | 真的把 App 的程式跑起來（載入網站上的模組、抽出函式呼叫、用假的畫面／計時器／伺服器走一遍流程），再檢查結果對不對。 |
 | 混合 | 75 項（通過 74、略過 1） | 一半真的執行程式，一半只是檢查原始碼裡有沒有某段字。 |
 | 原始碼比對 | 202 項（通過 197、略過 5） | 只檢查原始碼裡有沒有某段字（例如某個按鈕的程式碼、某條樣式規則）。**只證明程式碼存在，不證明功能會動。** |
-| 待分類 | 365 項（通過 359、略過 6） | `test-bh-sg-bgm-1116.js`、`test-bhfx.js`、`test-bhtd-combo.js`、`test-bhtd-r2.js`、`test-bhtd-rules.js`、`test-bhtl.js`、`test-bhx-allstars-1116.js`、`test-bhx-hold-1116.js`、`test-bhx-resume-1116.js`、`test-bhx-skip-1116.js`、`test-dgl.js`、`test-eng-over-1116.js`、`test-extra-bgm-1116.js`、`test-ghost-game-1116.js`、`test-gxd-daily-1116.js`、`test-home-pano.js`、`test-i18n-story.js`、`test-noscore.js`、`test-park3d-capbase.js`、`test-park3d-ghostptr-1116.js`、`test-pjc-joincut-1116.js`、`test-port-yz-color-1116.js`、`test-pty-events-1116.js`、`test-r17-qa.js`、`test-siege2-local.js`、`test-siege2.js`、`test-sitemap-places-1116.js`、`test-upd-notitle-1116.js`、`test-xsm-counter-1116.js`、`test-xsm-dark.js`、`test-xsm-stalls-1116.js` 這幾個檔還沒逐項分類，暫不算進上面三類。 |
+| 待分類 | 371 項（通過 365、略過 6） | `test-bh-sg-bgm-1116.js`、`test-bhfx.js`、`test-bhtd-combo.js`、`test-bhtd-r2.js`、`test-bhtd-rules.js`、`test-bhtl.js`、`test-bhx-allstars-1116.js`、`test-bhx-hold-1116.js`、`test-bhx-resume-1116.js`、`test-bhx-skip-1116.js`、`test-dgl.js`、`test-eng-over-1116.js`、`test-extra-bgm-1116.js`、`test-ghost-game-1116.js`、`test-gxd-daily-1116.js`、`test-home-pano.js`、`test-i18n-story.js`、`test-ios-native-1116.js`、`test-noscore.js`、`test-park3d-capbase.js`、`test-park3d-ghostptr-1116.js`、`test-pjc-joincut-1116.js`、`test-port-yz-color-1116.js`、`test-pty-events-1116.js`、`test-r17-qa.js`、`test-siege2-local.js`、`test-siege2.js`、`test-sitemap-places-1116.js`、`test-upd-notitle-1116.js`、`test-xsm-counter-1116.js`、`test-xsm-dark.js`、`test-xsm-stalls-1116.js` 這幾個檔還沒逐項分類，暫不算進上面三類。 |
 
 - 測試名稱開頭有〔原始碼〕〔混合〕就是那一類；沒有標籤的是行為類（下面的索引另外標〔行為〕）。
 - **測試由開發用的 AI 撰寫，不等於第三方驗證；原始碼比對只證明程式碼存在。**
@@ -260,13 +260,14 @@
 ### E14 檢舉追蹤編號與狀態
 
 - 從哪一版：2330
-- 自動測試：18 項（行為 16、原始碼比對 2）
+- 自動測試：19 項（行為 16、原始碼比對 2、待分類 1）
   - ✔ 〔原始碼〕01-board 的格子說明用 axmCellLabel（翻轉時用畫面上的格子編號 k）
   - ✔ 〔行為〕清單齊全：英文六個畫面＋繁中六個功能、編號不重複、每項都寫要證明什麼與評審細項
   - ✔ 〔行為〕檔名：B<編號>-<id>-<尺寸>.png，符合 manifest 的檔名規則；防爆版頁面都有名字
   - ✔ 〔行為〕fmKidPurge：丟掉排隊中的匿名資料和玩家登記，意見回饋拿掉 ID／名字／段位／聯絡方式／截圖／頁面，檢舉和刪除請求原樣
   - ✔ 〔行為〕玩家登記：reportPlayer 平常會送，兒童模式（或家長關大廳）完全不送
   - ✔ 〔行為〕意見回饋：兒童模式時 postForm 只送文字；玩家登記直接吞掉不送；檢舉照送
+  - ✔ 〔待分類〕N2 reportPlayer：本機網址不送的判斷要排除 App
   - ✔ 〔原始碼〕第 2 項：匯出鈕只接在開發者模式才畫的影子區塊（reportSheet 只有 DEVMODE 才算 SH、才呼叫 mxShHtml）；mxShExport 裡沒有任何送出
   - ✔ 〔行為〕編號格式：R-月日-四碼，四碼不含 0 O 1 I L
   - ✔ 〔行為〕編號不重複：跟手機裡已有的撞到就重抽
@@ -587,6 +588,7 @@
 | test-human-p1.js | — | 0 | 2 | 1 |  | 3／3 |
 | test-i18n-story.js | — | 0 | 0 | 0 | 8 | 8／8 |
 | test-i18n.js | — | 55 | 4 | 4 |  | 63／63 |
+| test-ios-native-1116.js | — | 0 | 0 | 0 | 6 | 6／6 |
 | test-ipad-fill.js | — | 9 | 0 | 1 |  | 10／10 |
 | test-land3d.js | — | 2 | 0 | 1 |  | 3／3 |
 | test-layout-r16.js | — | 5 | 1 | 5 |  | 11／11 |
@@ -1742,6 +1744,15 @@
 - ✔ 〔行為〕鍵值化＋MutationObserver：程式之後改了有鍵元素的字（改文字節點、整個 textContent 換掉），英文照鍵重換
 - ✔ 〔行為〕英文模式不換別的模組拿來找按鈕的 aria-label／title（I18N_AGUARD），其他屬性照換
 - ✔ 〔混合〕底欄照 data-go 標鍵（m.html 的字改了也一樣）；英文開機注入只對 html[lang=en] 生效的防爆版樣式，繁中不注入、m.css 沒動到
+
+### test-ios-native-1116.js
+
+- ✔ 〔待分類〕N3 fnTest：App 裡（XQ_NATIVE）127.0.0.1 不是測試機
+- ✔ 〔待分類〕N3 fnTest：電腦本機與設了測試房照舊是測試機
+- ✔ 〔待分類〕N2 reportPlayer：本機網址不送的判斷要排除 App
+- ✔ 〔待分類〕N4 updCheck：App 裡說明由 App Store 更新
+- ✔ 〔待分類〕N5 wipeAllData：一併取消每日提醒
+- ✔ 〔待分類〕App 首頁不顯示「📲 加到主畫面」（11/16 iMac 實機）：isStandalone() 認得原生 App 的 UA，首頁兩處改用它
 
 ### test-ipad-fill.js
 
