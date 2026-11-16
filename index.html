@@ -1613,7 +1613,7 @@ html[data-lefty] .tskip{right:auto;left:14px}
       if(!window.caches)return go();caches.keys().then(function(ks){return Promise.all(ks.filter(function(k){return k.indexOf("xqlab-app-")===0}).map(function(k){return caches.delete(k)}))})
         .then(function(){return navigator.serviceWorker&&navigator.serviceWorker.getRegistration()}).then(function(r){return r&&r.update()}).catch(function(){}).then(go)}};setTimeout(chk,4000)})();
 </script>
-<script>window.XQ_OFFLINE=true;window.XQ_BUILD="20261116-1203";</script>
+<script>window.XQ_OFFLINE=true;window.XQ_BUILD="20261116-1214";</script>
 <script src="core.js"></script>
 <script src="engine.js"></script>
 <script src="local.js"></script>
@@ -15003,7 +15003,7 @@ function dvtSheet(){if(!dvtOn())return toast("要先打開開發者模式");
     const un=!!store.get("dvtUnlock",false),tl=!!store.get("dvtTools",false),LG=(()=>{const L=store.get("devLog",[]);return Array.isArray(L)?L.slice().reverse():[]})();
     b.innerHTML=`<p class="muted" style="margin:0 0 8px">只有開發者看得到。不計分；要恢復一般狀態按最下面「重設黑洞篇進度」。</p>
       <div class="sec-t">👁 開發者視角</div><p class="muted" style="margin:0 0 6px;font-size:13px">兩個都關＝你看到的跟玩家一模一樣（意見回饋管理照舊）。</p><div class="items" style="padding:0">
-        ${row("dvU",un?"✅":"🔓","全部解鎖試玩："+(un?"開":"關"),"觀星臺、西市、第二集、星門圍城全部關卡、故事預覽全文、下架的章都打開（測完記得關）")}
+        ${row("dvU",un?"✅":"🔓","全部解鎖試玩："+(un?"開":"關"),"星門圍城全部關卡、第二集、故事預覽全文、下架的章都打開；觀星臺、西市入口照玩家進度（測完記得關）")}
         ${row("dvW",tl?"✅":"🛠","頁面上顯示開發者小工具："+(tl?"開":"關"),"消寒圖日期預覽、渡口與船艙動態切換、手機空間明細、程式語言清單、背景音樂診斷、新版更新說明等")}
         ${row("dvL","🧪","自我檢查紀錄（"+LG.length+" 筆）","3D、動態效果自我檢查沒過時記在這裡，不再跳出提示")}
       </div>
@@ -20893,7 +20893,7 @@ const gxtWon=(w,P,G)=>(+w||0)>0||!!(P&&P.c&&typeof P.c==="object"&&Object.keys(P
 /* 11/16 出入口盤查：黑洞只剩星門圍城以後，打贏只寫進存檔 gsv（07sg2 sg2End：c／h＝各關勝敗、v2＝各關各難度），不記 bhWin、bhtd；新玩家觀星臺永遠不出現。G＝gsv 存檔，任何一關贏過就算 */
 function gxtGsvWon(G){if(!G||typeof G!=="object")return false;const won=T=>!!T&&typeof T==="object"&&Object.values(T).some(r=>r&&(+r.w||0)>0);
   if(won(G.c)||won(G.h))return true;return!!G.v2&&typeof G.v2==="object"&&Object.values(G.v2).some(won)}
-function gxtOpen(){if(!GXT_ON)return false;try{if((typeof DEVUNLOCK==="function"&&DEVUNLOCK()))return true}catch(e){}
+function gxtOpen(){if(!GXT_ON)return false;   /* 11/16 開發者「我把開發者試玩打開，但我還沒啟航掉入黑洞，就可以看到觀星臺」，選單「場景入口照玩家進度」：全部解鎖試玩也不打開觀星臺入口 */
   try{return gxtWon(store.get("bhWin",0),typeof bhtdProg==="function"?bhtdProg():store.get("bhtd",null),store.get("gsv",null))}catch(e){return false}}
 /* 直幅 "" 或寬版 "w"：W 可用寬、av 可用高、vw／vh 畫面寬高 */
 function gxtKind(W,av,vw,vh){if(!(W>0&&av>=120))return"";return W/av>=GXT_LAND&&Math.min(vw,vh)>=GXT_LMIN?"w":""}
@@ -21675,7 +21675,7 @@ const xsmWalkCfg=()=>Object.assign({},typeof SHW_PG0!=="undefined"?SHW_PG0:{},XS
 /* ---------- 純計算 ---------- */
 /* 解鎖：領過七星授印禮（M＝07mnq 的存檔 "mnq"） */
 const xsmGot=M=>!!(M&&typeof M==="object"&&M.gift&&typeof M.gift==="object"&&M.gift.a1);
-function xsmOpen(){if(!XSM_ON)return false;try{if((typeof DEVUNLOCK==="function"&&DEVUNLOCK()))return true}catch(e){}
+function xsmOpen(){if(!XSM_ON)return false;   /* 11/16 選單「場景入口照玩家進度」：全部解鎖試玩也不打開西市入口 */
   try{return xsmGot(store.get("mnq",null))}catch(e){return false}}
 /* 白天？卯（05–07）～申（15–17）；時辰序號照 07w8 clkIdx（子＝0：23–01） */
 function xsmDay(d){d=d||new Date();let i;try{i=typeof clkIdx==="function"?clkIdx(d):NaN}catch(e){i=NaN}if(!(i>=0))i=Math.floor(((d.getHours()+1)%24)/2);return i>=3&&i<=8}
