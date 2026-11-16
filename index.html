@@ -1613,7 +1613,7 @@ html[data-lefty] .tskip{right:auto;left:14px}
       if(!window.caches)return go();caches.keys().then(function(ks){return Promise.all(ks.filter(function(k){return k.indexOf("xqlab-app-")===0}).map(function(k){return caches.delete(k)}))})
         .then(function(){return navigator.serviceWorker&&navigator.serviceWorker.getRegistration()}).then(function(r){return r&&r.update()}).catch(function(){}).then(go)}};setTimeout(chk,4000)})();
 </script>
-<script>window.XQ_OFFLINE=true;window.XQ_BUILD="20261116-1502";</script>
+<script>window.XQ_OFFLINE=true;window.XQ_BUILD="20261116-1703";</script>
 <script src="core.js"></script>
 <script src="engine.js"></script>
 <script src="local.js"></script>
@@ -2218,11 +2218,11 @@ function bgmList(){return BGM.list||(BGM.list=fetch("data/bgm/index.json").then(
 const BGM_BASE=/\.github\.io$/.test(location.hostname)?XQ_CDN:"";
 function bgmBlob(rel){const U=BGM.u||(BGM.u={});if(U[rel])return Promise.resolve(U[rel]);
   return U[rel]=fetch(BGM_BASE+rel,BGM_BASE?{mode:"cors",credentials:"omit"}:undefined).then(r=>{if(!r.ok)throw new Error("http"+r.status);return r.blob()}).then(b=>U[rel]=URL.createObjectURL(b)).catch(e=>{delete U[rel];BGM.err="下載"+((e&&e.message)||"");return null})}
-function bgmPick(era,L,next){if(!next&&BGM.era===era&&BGM.src)return;BGM.era=era;let n=Math.floor(Math.random()*L.length);if(L.length>1&&n===BGM.last)n=(n+1)%L.length;BGM.last=n;BGM.src=`data/bgm/${era}/${L[n]}`;
+function bgmPick(era,L,next){if(!next&&BGM.era===era&&BGM.src)return;BGM.era=era;let n=Math.floor(Math.random()*L.length);if(L.length>1&&n===BGM.last)n=(n+1)%L.length;BGM.last=n;BGM.src=/\//.test(L[n])?`data/bgm/${L[n]}`:`data/bgm/${era}/${L[n]}`;   /* 11/16 開發者（西市四攤）：bgmForce 也收「朝代/檔名」（例如 han/paixiao_6.mp3），也收一組陣列（輪流放）；黑洞照舊只寫檔名＝blackhole 資料夾 */
   const U=BGM.u||{};for(const k of Object.keys(U))if(k!==BGM.src&&typeof U[k]==="string"&&U[k]!==BGM.cur){try{URL.revokeObjectURL(U[k])}catch(e){}delete U[k]}bgmBlob(BGM.src)}
 async function bgmSync(next){if(typeof OP!=="undefined"&&OP.on){if(BGM.a)BGM.a.pause();return}   /* 開場配樂（07bh OP）播的時候一般配樂暫停 */
   const on=!!store.get("bgm",true)&&!document.hidden&&sxmGain("bgm")>0,era=BGM.force?"blackhole":store.get("era","classic");   /* 第 6 輪 F3：背景音樂音量 0、靜音、全部靜音＝暫停 */
-  if(!on){if(BGM.a)BGM.a.pause();return}const L=BGM.force?[BGM.force]:((BGM.L||await bgmList())||{})[era]||[];if(!L.length){if(BGM.a)BGM.a.pause();return}
+  if(!on){if(BGM.a)BGM.a.pause();return}const L=BGM.force?[].concat(BGM.force):((BGM.L||await bgmList())||{})[era]||[];if(!L.length){if(BGM.a)BGM.a.pause();return}
   if(!BGM.a){BGM.a=new Audio();BGM.a.volume=sxmBgmVol(sxmMix());BGM.a.preload="auto";BGM.cur="";BGM.a.onended=()=>bgmSync(true);BGM.a.onplay=BGM.a.onpause=()=>bgmNow();BGM.a.onerror=()=>{const x=BGM.a&&BGM.a.error;BGM.err="media"+(x?x.code:"")}}
   bgmPick(era,L,next);const u=(BGM.u||{})[BGM.src];
   if(typeof u!=="string"){const want=BGM.src;bgmBlob(want).then(x=>{if(x&&BGM.src===want&&store.get("bgm",true))bgmSync()});return}
@@ -5729,7 +5729,7 @@ function mxShHtml(R,X){if(!X||!R||R.score==null)return"";const QS=["妙著","正
     <tr><td>準確度</td><td>${R.base.toFixed(1)}</td><td>${X.base.toFixed(1)}<br><small class="muted" style="font-weight:400">波動加權 ${X.wm.toFixed(1)}・調和 ${X.hmean.toFixed(1)}</small></td></tr>
     <tr><td>上限</td><td>${R.cap}</td><td>${X.cap}<br><small class="muted" style="font-weight:400">${{w:"已知贏",l:"已知輸",d:"已知和","?":"結果未知"}[X.end]}${X.behind?`・局面不利（最後預期得分 ${X.fin.toFixed(0)}%）`:""}${X.lost?"・套輸棋上限":""}</small></td></tr>
     <tr><td>三個版本</td><td>—</td><td>${X.raw}／${X.s0}／${X.score}<br><small class="muted" style="font-weight:400">不封頂／只看重大錯誤／再加輸棋上限</small></td></tr>
-    <tr><td>對照算法</td><td>—</td><td>每步平均失分 ${X.alt.acpl}<br>首選一致率 ${X.alt.mm==null?"—":X.alt.mm+"%"}<small class="muted" style="font-weight:400">（${X.alt.mmN} 步有記首選）</small><br>失誤率 ${X.alt.er}／100 步<br><small class="muted" style="font-weight:400">都用同一個引擎的評估，彼此不獨立；只當交叉參照</small></td></tr>${QS.map(q=>`<tr><td>${q}</td><td>${R.cnt[q]||0}</td><td>${X.cnt[q]||0}</td></tr>`).join("")}</table>
+    <tr><td>對照算法</td><td>—</td><td>每步平均失分 ${X.alt.acpl}<br>首選一致率 ${X.alt.mm==null?"—":X.alt.mm+"%"}<small class="muted" style="font-weight:400">（${X.alt.mmN} 步有記首選・只當粗略參考）</small><br>失誤率 ${X.alt.er}／100 步<br><small class="muted" style="font-weight:400">都用同一個引擎的評估，彼此不獨立；只當交叉參照</small></td></tr>${QS.map(q=>`<tr><td>${q}</td><td>${R.cnt[q]||0}</td><td>${X.cnt[q]||0}</td></tr>`).join("")}</table>
     ${df.length?`<div class="muted" style="font-size:12.5px;line-height:1.6;margin-top:6px">評語不一樣的步：${df.slice(0,30).map(v=>`第 ${v.ply} 手 ${esc(v.cn||"")} ${v.q0}→${v.q}（預期得分 −${v.dw.toFixed(1)}%${v.mt===1?"・送殺":v.mt===2?"・漏殺"+(v.mh?"（推估）":""):""}）`).join("；")}</div>`:""}
     <p class="muted" style="font-size:12px;margin:6px 0 0">MXS v${MXS.ver}：k＝${MXS.k}、評語門檻 ${MXS.th.map(t=>t.toFixed(2)).join("／")}%、殺棋分界 ${MXS.walk.join("／")}・${MXS.miss.join("／")}、S／A／B／C ${MXS.gr.join("／")}、已知輸（或結果未知而預期得分 ≤ ${MXS.lose[0]}%）最高 ${mxCapOf(MXS.lose[1])}（都還沒用真人資料校正）${X.bk<X.n?`；${X.n-X.bk} 步沒有最佳評估原值（舊存檔或舊快取），用 ev 夾值＋loss 還原`:""}</p>
     <div class="row" style="gap:8px;margin-top:8px;flex-wrap:wrap"><button class="pill" data-mxexp="file">💾 匯出本機影子紀錄（JSON 檔）</button><button class="pill" data-mxexp="copy">📋 複製到剪貼簿</button></div>
@@ -5950,7 +5950,9 @@ const JOURNEY_KEYS=["sw7Box","pSex","pChar","pStyle","party","botPiece","onboard
   "npcBond","npcAsk","npcAskSeen","parkNpc","parkNpcLast","npcPity","parkAdj","visitGone","secrets","secretClue","secretSpots","secretWins","relics","relicSolved","relicAt","histSeen","histSolved","histTitle",
   "innCur","innDrop","innAdj","innGuest","resumeLast","xhMake","xhMei","xhTitle","yuDay","yuHint","yuRoute","yuTitle","cupDrop","cupGot","cj","cjRun","shipAt","shipSolved","shipGames","shipLessonSeen","shipWins","shipArena","cjRunS","jRunS","battleSeal","battleTitle","battleVol","battleGrand","battleVolY","battleVolLegacy","battleMig","battleSeal0","cjRunB","jRunB","battlePlan","diff","shipDock","shipLearn","undoFree","shipGal","shipStale","shipRead","shipMore","evLog","evPawn","evHeld","evStash","jRunE","cjRunE","rdLog","firstWin","wkRead","visit7","chd","ep","cjRunEp","wmDays","wmPg","wmBm","wmScr","wmEcho","jRunW","sealGold","sealIntro","jRunC","rsHint","buddy","cjRunBd","ouyu","jRunO","mnq","grw","xsdRec","xsdRun","ulkFx","sg2Tal","xsdLv","bhtdDust","bhtd","bhtdFx","bhtl","gsv","whl","xsmSeen","dgl","gxtSeen"].map(k=>"m_"+k)   /* 對戰後的角色成長（07grw-growth.js，開發者 11/15）：grw＝上次結算給玩家看過的角色數值快照 */   /* 黑洞塔防爽度第二批（07bht-td.js，開發者 11/14）：bhtdDust＝星塵、點亮的天賦、各關最佳星數、星淵急襲場數、發過星塵的盤（排在 bhtd 前面：test-bhtl 要 "bhtd","bhtdFx","bhtl" 相連） */   /* 聽雨茶坊的臺灣暗棋（07xsd-xsmdark.js，開發者 11/14）：xsdRec＝勝、和、負局數；xsdRun＝下到一半的那一盤（離開自動保留）；xsdLv＝電腦難度（新手／一般，沒選過＝新手） */   /* 西市（07xsm-ximarket.js，開發者 11/13）：xsmSeen＝去過西市了沒（首頁「🏮 西市」不再發亮、第一次的介紹卡只跳一次） */   /* 平日體力（07dgl-stamina.js，開發者 11/13）：dgl＝身上的星芒、第一次下船的說明看過了沒（定軌力本身不存，關 App 再開回滿） */   /* 黑洞陣地塔防（07bht-td.js，開發者 11/13）：bhtd＝破過哪幾關、各關輸贏、每位角色帶的 4 招；bhtdFx＝戰鬥演出（完整／簡化／關閉）；bhtl＝塔防練習賽練過／跳過、練了幾次、進階機制第一次的提示看過哪些（07bhtl-tdlearn.js） */   /* 七星遇見玩法（07q-buddy.js，開發者 11/9）：buddy＝旅伴闖禍、驛站飛書、心結的進度，cjRunBd＝這兩種殘局解到一半的那一題 */   /* 回饋 856（開發者 11/9：女棋手分普通／稀有／傳說、機率加保底）：npcPity＝稀有、傳說女棋手的保底計數（06-cpu.js parkNpcNew） */   /* 回饋 838（開發者 11/9 選：全模式中斷接續）：jRunC＝新手訓練營玩到一半的那一課、rsHint＝對局裡用掉的提示棋黃框（主題訓練 jpRun、棋力測驗 quizRun 跟 themeStat、quizLog 一樣是棋手本人的，各格共用，不放這裡） */   /* 千秋印（07i2-seal.js，開發者 11/9）：sealGold＝各朝第一次鑄成金印的時間與修為已發、sealIntro＝看過「集章簿換成千秋印譜」說明卡。Gemini 遊玩樂趣評估（開發者 11/8 核准）：visit7＝七星來訪的次數、說過的話、小任務（07j-visit.js）；evStash＝千秋穿梭收進囊中、12 小時內再處理的突發事件（07h-qqev.js）；firstWin＝新手秒開局下過（或跳過）了；wkRead＝學習週報每天記一筆讀懂地圖比例，算「比上週」。意見回饋 737 第二期：rdLog＝讀過哪些棋譜、猜著法每盤答對幾手（壓縮成字串）。意見回饋 674：星槎在看哪一站、千秋殘局解開的題、正在解的那一題；675：航行難度、已停靠的站、學會的棋理、這盤用了幾次免費悔棋；685：七星同局圖鑑與熱身解開的題、看過困斃說明、讀過《雲河七星》哪幾章 */
   .concat(["cpuRate","bonusKeys","record","arenaStamps","play","play2","playPrev","playBak"].map(k=>"xq_"+k));   /* 評比循環第 2 輪：playPrev（上一版，存檔壞掉時讀）、playBak（被別的分頁換掉的棋）跟著存檔格走；保存紀錄 xq_saveLog 是這支手機的，不跟格子走 */
+JOURNEY_KEYS.push("m_gxdOmen","m_gxdFree","m_gxdDone");   /* 11/16 開發者：觀星臺今日異象（當天成績）、自由擺陣（上次擺的陣、難度、戰績）、結算過的那一盤（07gxd-daily.js）；另加一行，不動上面清單的字 */
 JOURNEY_KEYS.push("m_bhDrift1");   /* 11/16 hspx P1（開發者「還沒起航偏離軌道就馬上跳出觀星臺和西市的過場」）：bhDrift1＝這一趟第一次起航必定偏航用過了沒（07bh bhFirstDrift），原本整支手機共用，舊旅程用過、新旅程就不偏航。另外加一行，不動上面清單的字（好幾支測試比對清單結尾） */
+JOURNEY_KEYS.push("m_xsmStall");   /* 11/16 開發者（西市四攤，07xsm-ximarket.js）：xsmStall＝找棋子（這一副找到第幾顆、湊齊幾副、哪天找過）、老槐樹下今天是誰來、見過了沒、小禮收了沒。另外加一行，不動上面清單的字（好幾支測試比對清單結尾） */
 const JK=new Set(JOURNEY_KEYS),SLOT_N=3;
 /* 意見回饋 668：舊玩家判斷要在首頁畫出來以前做（首頁會順手寫一些旅程鍵，例如 lingN），所以這裡直接讀 localStorage；null＝已經過渡過了 */
 /* 開發者 11/6 修：全新玩家第一次打開，開機時就會寫進 era、jStars、playSec 這些鍵，原本的判斷會把新玩家當成舊玩家，跳出「存檔功能上線了、角色是小帥Q版」。改成只看真的玩過才會有的鍵（新手引導做完、修為、戰績、故事進度） */
@@ -7800,8 +7802,8 @@ function innSheet(v){setTimeout(innDrop,1200);const I=xpInfo(),Sx=jSecrets(),nx=
 const parkLv=()=>Math.max(1,Math.min(8,1+Math.floor(xpInfo().L/3)+(store.get("parkAdj",0)||0)));
 function jName(j){if(!j)return"石桌往事";if(j==="park")return"園子";if(String(j).startsWith("gx:")){const g=typeof gxGet==="function"?gxGet(String(j).slice(3)):null;return"幻譜星門・"+(g?g.t:"第十四顆")}if(String(j).startsWith("bh:"))return"黑洞・星樞棋局";if(String(j).startsWith("bt:")){const c=typeof battleCardJ==="function"?battleCardJ(j):null;return"古戰場・"+(c?c.name:"讓子對弈")}if(String(j).startsWith("char:")){const c=JCHAR[String(j).slice(5)];return c?"大廳・"+c.name:"大廳"}if(String(j).startsWith("inn:")){const x=INN.concat(SECRETS).find(z=>"inn:"+z.id===j)||(typeof igAct==="function"?igAct(j):null);return x?"驛站・"+x.name:"驛站"}
   const s=jFindStage(j);return s?(s.book===2?"紙譜新局・":ROAD_NAME+"・")+s.name:ROAD_NAME}
-const jBack=j=>String(j||"").startsWith("gx:")?"#/adventure":String(j||"").startsWith("bh:")?(typeof gxtBhBack==="function"?gxtBhBack(j):"#/adventure"):String(j||"").startsWith("bt:")?"#/battle":String(j||"").startsWith("char:")?"#/lobby":j==="park"?"#/port":String(j||"").startsWith("inn:")?"#/journey/inn":(()=>{const R=jRunGet(j);if(R&&!R.done)return"#/journey/"+j;const s=jFindStage(j);return s?jChapterHref(s):"#/shelf/1"})();
-const jPlace=j=>String(j||"").startsWith("gx:")?"幻譜星門":String(j||"").startsWith("bh:")?"星槎":String(j||"").startsWith("bt:")?"古戰場":j==="park"?"渡口":String(j||"").startsWith("inn:")?"驛站":String(j||"").startsWith("char:")?"大廳":(()=>{const s=jFindStage(j);return s?"第"+CNUM(s.n)+"回":"石桌往事"})();   /* 意見回饋 735：章回棋路併進書的目錄，回到書 */
+const jBack=j=>String(j||"").startsWith("gx:")?"#/adventure":String(j||"").startsWith("gxd:")?"#/guanxing":String(j||"").startsWith("bh:")?(typeof gxtBhBack==="function"?gxtBhBack(j):"#/adventure"):String(j||"").startsWith("bt:")?"#/battle":String(j||"").startsWith("char:")?"#/lobby":j==="park"?"#/port":String(j||"").startsWith("inn:")?"#/journey/inn":(()=>{const R=jRunGet(j);if(R&&!R.done)return"#/journey/"+j;const s=jFindStage(j);return s?jChapterHref(s):"#/shelf/1"})();   /* 11/16 開發者：gxd:＝觀星臺的今日異象、自由擺陣（07gxd-daily.js），返回鈕回觀星臺（jPlace 叫「觀星臺」） */
+const jPlace=j=>String(j||"").startsWith("gx:")?"幻譜星門":String(j||"").startsWith("gxd:")?"觀星臺":String(j||"").startsWith("bh:")?"星槎":String(j||"").startsWith("bt:")?"古戰場":j==="park"?"渡口":String(j||"").startsWith("inn:")?"驛站":String(j||"").startsWith("char:")?"大廳":(()=>{const s=jFindStage(j);return s?"第"+CNUM(s.n)+"回":"石桌往事"})();   /* 意見回饋 735：章回棋路併進書的目錄，回到書 */
 /* 意見回饋 413：石桌往事只留一盤（雲河棋路、驛站、園子、守關共用一格）。要開的跟手上那盤不是同一個對手時先問，不會悄悄蓋掉；同一個對手就接著下；force＝重下這一盤 */
 async function jStart(id,b,go,force){let st;try{st=await api("/play/state")}catch(e){toast(e.message);return}
   const cur=st.journey&&!st.result&&st.moves&&st.moves.length?{journey:st.journey,n:st.moves.length}:null,o=(st.others||[]).find(z=>z.kind==="journey");let g=cur||(o?{journey:o.journey,n:o.n}:null);
@@ -10174,7 +10176,7 @@ function shpMapFit(v){requestAnimationFrame(()=>{const M=v.querySelector&&v.quer
     if(dx)b.style.marginLeft=Math.round(dx)+"px";if(dy)b.style.marginTop=Math.round(dy)+"px"})})}
 
 /* ---------- 星槎頁 #/adventure ---------- */
-function Voyage(v){setTop("⛵ 雲河星槎","#/");setTabs(true,"#/");v.className="view";
+function Voyage(v){setTop("⛵ 雲河星槎","#/");setTabs(true,"#/");v.className="view";if(typeof bhDockLate==="function")bhDockLate();   /* 11/16：偏航打完沒按回航、從左上角回來，補跑到站（07bh） */
   const paint=()=>{const ap=shipAppr(),D=shipDocked(),k=shipHere(),T=SHIP_STOP[k],O=ap?SHIP_ROUTE:shipOrder(),I=xpInfo(),nx=ap?null:shipNextStop();
     v.innerHTML=`<div class="pad shp">
       <div class="shp-map full"><div class="shp-in"><img class="shp-base" src="data/shipmap/ship_map.webp?v=${SHP_IMGV}" alt="雲河星槎">${shpPxHtml()}<div class="px-sw px-hw"><div class="shp-hl"><button class="shp-hs" data-hs="parks" style="left:13%;top:37%">🪨 千秋石枰</button><button class="shp-hs" data-hs="lesson" style="left:80%;top:17%">📘 棋話一頁</button><button class="shp-hs${shipLearned(k)?"":" hot"}" data-hs="pz" style="left:50%;top:43%${typeof shipMoreGold==="function"?shipMoreGold(k):""}">♟ 千秋殘局${shipLearned(k)?(typeof shipMoreHs==="function"?shipMoreHs(k):" ✓"):""}</button><button class="shp-hs" data-hs="shelf" style="left:22%;top:53%">📚 書架</button><button class="shp-hs" data-hs="read" style="left:33%;top:73%">📖 讀這一章</button><button class="shp-hs" data-hs="bag" style="left:52%;top:79%">🎒 行囊</button><button class="shp-hs${shipLearned(k)&&nx?" hot":""}" data-hs="sail" style="left:17%;top:85%">⛵ 起航</button><button class="shp-hs" data-hs="port" style="left:80%;top:73%">⚓ 下船</button></div></div></div><div class="hc shp-cap"><b>⛵ ${esc(shipShort(k))}・${esc(T.place)}</b><small>🀄 Lv ${I.L}・《千秋棋話》${shipPages()}／13 頁・停靠 ${D.length}／13・🎚 ${esc(diffOf().n)}</small></div></div>
@@ -10618,7 +10620,7 @@ function bhForced(){try{return localStorage.getItem("xq_bhForce")==="1"}catch(e)
 /* 星槎起航（shipSailGo、shipGoTo）播完千秋穿梭時叫：沒偏航就照原流程 next() */
 /* 11/16 開發者選單「第一次起航必定偏航」：觀星臺還沒開（07gxt gxtOpen）、也還沒用過這一次＝這一趟起航必定偏航；用過就記 bhDrift1（不管接不接、贏不贏，之後照 10%） */
 function bhFirstDrift(){try{return!store.get("bhDrift1",0)&&!(typeof gxtOpen==="function"&&gxtOpen())}catch(e){return false}}
-function bhMaybe(k,next,cover){let hit=false;try{const f1=!!k&&bhFirstDrift();if(f1)store.set("bhDrift1",1);hit=bhForced()||f1||Math.random()<BH_P}catch(e){}   /* 11/16：小黑洞拿掉，bhMark「下一次起航必定偏航」不再用（舊存檔的 bhMark 留著不讀） */   /* bhMark：點過幻影棋客頭上的小黑洞，下一次起航必定偏航 */if(!hit||!k)return next();bhOffer(k,next,cover)}
+function bhMaybe(k,next,cover){let hit=false,f1=false;try{f1=!!k&&bhFirstDrift();hit=bhForced()||f1||Math.random()<BH_P}catch(e){}   /* 11/16 開發者「第一次的偏航發生，必須強制過去」：第一次偏航（f1）傳給 bhOffer，視窗只留接受；按下接受才記 bhDrift1 */   /* 11/16：小黑洞拿掉，bhMark「下一次起航必定偏航」不再用（舊存檔的 bhMark 留著不讀） */   /* bhMark：點過幻影棋客頭上的小黑洞，下一次起航必定偏航 */if(!hit||!k)return next();bhOffer(k,next,cover,f1)}
 /* 11/12 hspx「進黑洞要等 6～7 秒」：偏航視窗一跳出來就在背景先載 3D（three、園子程式）、14 個角色模型（一個接一個解析，不卡畫面）和黑洞的圖，
    玩家讀文字、按「入局」的時間拿來載入；不下這盤也只是先放進快取。一次 App 只做一次 */
 let BH_PRE=null;const BH_GLB=["x_shuai","x_shi","x_spiritgirl","x_miaogirl","x_swordboy","x_martialgirl","x_bing","xs_jiang","xs_shi","xs_xiang","xs_ma","xs_che","xs_pao","xs_zu"];
@@ -10630,9 +10632,9 @@ function bhPreload(){if(BH_PRE||typeof document==="undefined")return BH_PRE;
    觀星臺照進度打關卡；偏航不再開同一張選關視窗，直接進一場三到五分鐘的急襲殘陣（07bht-td.js bhtdRaidDrift，星塵照表現給、可以不接）。
    急襲要破過第 1 關才有：還沒破的人（多半是第一次偏航）照舊走原本的說明與選關 */
 const bhDriftRaid=()=>{if(typeof sg2DriftOk==="function")return sg2DriftOk();try{return typeof bhtdRdOpen==="function"&&typeof bhtdProg==="function"&&typeof bhtdRaidDrift==="function"&&!(typeof bhtlNeed==="function"&&bhtlNeed())&&bhtdRdOpen(bhtdProg())}catch(e){return false}};
-function bhOffer(k,next,cover){const n=store.get("bhCount",0)||0,rd=bhDriftRaid();bhMus("fall");vibrate([20,60,20]);try{bhPreload()}catch(e){}
-  modal(`<div class="em">🌀</div><h2>${n||rd?"星槎偏航":esc(BHX_FD.title)}</h2><p>${esc(BH_TXT.fall)}</p>${n?bhSay(BH_TXT.again):rd?"":BHX_FD.desc.map(t=>`<p class="muted" style="font-size:13px">${esc(t)}</p>`).join("")}<p class="muted" style="font-size:13px">${rd?(typeof SG2G!=="undefined"?"星渦裡浮著一盤星門圍城：打贏有星塵"+(typeof gxtOpen==="function"&&!gxtOpen()?"，棋鎮右邊的觀星臺也會開":"")+"。要接嗎？不接也不扣任何東西，星槎照原本的航線停靠。":"星渦裡浮著一盤下到一半的殘陣：這是一場星淵急襲，三到五分鐘分勝負，打贏有星塵。要接嗎？不接也不扣任何東西，星槎照原本的航線停靠。"):"墨色星渦的中心，浮著一張巨大的棋盤。要下這一盤嗎？不下也不扣任何東西，星槎照原本的航線停靠。"}</p>`,
-    [[rd?"⚡ 接受急襲":"🌀 接受棋局",()=>rd?bhStart(k,cover):bhIntro(k,cover)],["先回航線",()=>{bhMus(null);if(next)next()},true]],"prolog")}
+function bhOffer(k,next,cover,f1){const n=store.get("bhCount",0)||0,rd=bhDriftRaid();bhMus("fall");vibrate([20,60,20]);try{bhPreload()}catch(e){}
+  modal(`<div class="em">🌀</div><h2>${n||rd?"星槎偏航":esc(BHX_FD.title)}</h2><p>${esc(BH_TXT.fall)}</p>${n?bhSay(BH_TXT.again):rd?"":BHX_FD.desc.map(t=>`<p class="muted" style="font-size:13px">${esc(t)}</p>`).join("")}<p class="muted" style="font-size:13px">${rd?(typeof SG2G!=="undefined"?"星渦裡浮著一盤星門圍城：打贏有星塵"+(typeof gxtOpen==="function"&&!gxtOpen()?"，棋鎮右邊的觀星臺也會開":"")+(f1?"。星槎被星渦牽住，得先下完這一盤，才會照原本的航線停靠。":"。要接嗎？不接也不扣任何東西，星槎照原本的航線停靠。"):"星渦裡浮著一盤下到一半的殘陣：這是一場星淵急襲，三到五分鐘分勝負，打贏有星塵。要接嗎？不接也不扣任何東西，星槎照原本的航線停靠。"):(f1?"墨色星渦的中心，浮著一張巨大的棋盤。星槎被星渦牽住，得先下完這一盤，才會照原本的航線停靠。":"墨色星渦的中心，浮著一張巨大的棋盤。要下這一盤嗎？不下也不扣任何東西，星槎照原本的航線停靠。")}</p>`,
+    [[rd?"⚡ 接受急襲":"🌀 接受棋局",()=>{if(f1)try{store.set("bhDrift1",1)}catch(e){}rd?bhStart(k,cover):bhIntro(k,cover)}]].concat(f1?[]:[["先回航線",()=>{bhMus(null);if(next)next()},true]]),"prolog")}
 function bhIntro(k,cover){try{bhPreload()}catch(e){}modal(`<div class="em">♟</div><h2>星樞棋局</h2>${bhSay(BH_TXT.wake)}<p class="pl-say">✦ ${esc(BH_TXT.voice[0])}：「${esc(BH_TXT.voice[1])}」</p><p class="muted" style="font-size:13px">${esc(BH_TXT.rule)}<br>不計積分、不扣分。可以用＋／－或兩指縮放：拉遠看整盤，放大到最近就站在棋盤上。</p>`,
   [["入局",()=>bhStart(k,cover)]],"prolog")}
 /* 難度見 bhLevel（實力＋1）；bhAdj 只是記錄輸贏，不再調難度 */
@@ -10692,6 +10694,10 @@ function bhResultModal(st,win,draw0,XPR){if(st&&st.journey===BHX_ID){bhxAfter();
   modal(`<div class="em">${win?"✨":draw0?"🤝":"🌀"}</div><h2>${win?"星光開門":draw0?"不分勝負":"星渦退去"}</h2><p class="muted">${esc(st.result.why||"")}・🌀 黑洞・星樞棋局（不計積分、不扣分）</p>${bhSay(L)}${win&&fst?`<p class="pl-say">✦ 星樞：「${esc(BHX_FD.win)}」</p>`:""}${XPR||""}`,
     [["⛵ 星槎回航",bhReturn],["再看一下星盤",null,true]],"res")}
 /* 回航：回到星槎，原本是起航就照常出那一站的停靠封面 */
+/* 11/16 開發者「到了漢之後，要怎麼找到駱角？」：偏航打完星門圍城，結果視窗只有再打一次／返回選關，用左上角回星槎不會跑到站（shipDockCover → 07pty ptyArrive），
+   那一站要加入的人（漢朝驛站的駱躍梅）下船場景就沒出來。星槎頁（07f Voyage）打開時叫這裡：偏航留下的回航記號還在＝補跑一次到站。剛進黑洞的 15 秒內不動（bhRet.at，同 07dgl） */
+function bhDockLate(){try{const R=store.get("bhRet",null);if(!R||!R.cover||!R.k||typeof shipDockCover!=="function")return false;if(Date.now()-(+R.at||0)<15e3)return false;
+  store.set("bhRet",null);setTimeout(()=>{try{shipDockCover(R.k,()=>{})}catch(e){}},400);return true}catch(e){return false}}
 function bhReturn(){const R=store.get("bhRet",null);store.set("bhRet",null);location.hash="#/adventure";if(R&&R.first)setTimeout(()=>toast(BHX_FD.back),1200);
   if(R&&R.cover&&R.k&&typeof shipDockCover==="function")setTimeout(()=>{try{shipDockCover(R.k,()=>{})}catch(e){}},400)}
 /* ---------- 11/16 開發者（主要工作階段轉告）：幻影棋客頭上的小黑洞「在目前最新的遊戲設計好像變得沒有用處」→ 整個拿掉 ----------
@@ -11196,11 +11202,11 @@ if(typeof window!=="undefined"&&typeof document!=="undefined"&&!navigator.webdri
    解鎖：第一次從黑洞回來開第 1 個（紫淵），贏一位開下一位；第 4、7、9 位分別要星槎停靠過 3、6、9 站。贏了留一枚星印（store gxSeal），之後挑戰電腦時幻影棋客偶爾提起。
    九個全破：星圖中央出現無名空軌——「第十四顆」＝鏡像的自己：你執黑，電腦執紅、先照你自己最常贏的開局走前兩步，再交給引擎。 */
 const GX_LIST=[
-  {id:"ziyuan",off:1,n:"紫淵",t:"紫淵・破軍幻影",c:"#9B5CFF",rule:"重炮陣：他的兩個象換成炮，一共四門炮",goal:"將死他",say:"這般殺陣，我已演練過萬次。",seal:"紫淵的炮火，你還記得嗎？",fen:"rncakacnr/9/1c5c1/p1p1p1p1p/9/9/P1P1P1P1P/1C5C1/9/RNBAKABNR",p:[17.9,20.9,18.5,31.3]},
+  {id:"ziyuan",n:"紫淵",t:"紫淵・破軍幻影",c:"#9B5CFF",rule:"重炮陣：他的兩個象換成炮，一共四門炮",goal:"將死他",say:"這般殺陣，我已演練過萬次。",seal:"紫淵的炮火，你還記得嗎？",fen:"rncakacnr/9/1c5c1/p1p1p1p1p/9/9/P1P1P1P1P/1C5C1/9/RNBAKABNR",p:[17.9,20.9,18.5,31.3]},
   {id:"taisu",n:"太素",t:"太素・無生幻影",c:"#E8EEF8",rule:"生存戰：撐過 40 步不輸",goal:"你走滿 40 步沒輸，或將死他",say:"守得此局，便是守住輪迴。",seal:"太素的霧，還在你的棋裡。",survive:40,p:[33.8,15.7,33.8,24.6]},
   {id:"tianyuan",n:"天垣",t:"天垣・奪衡幻影",c:"#F2C14E",rule:"奪子計：先吃掉他 3 顆車、馬、炮",goal:"先吃掉他 3 顆車馬炮，或將死他；他先吃掉你 3 顆車馬炮就算輸",say:"得失之間，皆是早定之數。",seal:"天垣記得你吃過的每一顆子。",grab:3,p:[50.8,15.7,51,25.1]},
-  {id:"yaoguang",off:1,n:"搖光",t:"搖光・萬炮幻影",c:"#FF4A2E",rule:"全炮局：他的車、馬全換成炮，一共六門炮",goal:"將死他",say:"炮聲再起時，昨日又重現。",seal:"搖光的炮聲，偶爾還會回來。",fen:"ccbakabcc/9/1c5c1/p1p1p1p1p/9/9/P1P1P1P1P/1C5C1/9/RNBAKABNR",p:[40.2,39.1,40.4,45.1]},
-  {id:"kaiyang",off:1,n:"開陽",t:"開陽・八駿幻影",c:"#FFD9A0",c2:"#2A3A8A",rule:"八駿圖：他沒有車、炮，卒全換成馬，一共八匹馬",goal:"將死他",say:"八面威風，亦走不出這方寸。",seal:"開陽的馬蹄聲，我算過。",fen:"1nbakabn1/9/1n7/n1n1n1n1n/9/9/P1P1P1P1P/1C5C1/9/RNBAKABNR",p:[59.6,30.6,62.1,38.5]},
+  {id:"yaoguang",n:"搖光",t:"搖光・萬炮幻影",c:"#FF4A2E",rule:"全炮局：他的車、馬全換成炮，一共六門炮",goal:"將死他",say:"炮聲再起時，昨日又重現。",seal:"搖光的炮聲，偶爾還會回來。",fen:"ccbakabcc/9/1c5c1/p1p1p1p1p/9/9/P1P1P1P1P/1C5C1/9/RNBAKABNR",p:[40.2,39.1,40.4,45.1]},
+  {id:"kaiyang",n:"開陽",t:"開陽・八駿幻影",c:"#FFD9A0",c2:"#2A3A8A",rule:"八駿圖：他沒有車、炮，卒全換成馬，一共八匹馬",goal:"將死他",say:"八面威風，亦走不出這方寸。",seal:"開陽的馬蹄聲，我算過。",fen:"1nbakabn1/9/1n7/n1n1n1n1n/9/9/P1P1P1P1P/1C5C1/9/RNBAKABNR",p:[59.6,30.6,62.1,38.5]},
   {id:"yuxiu",n:"玉宿",t:"玉宿・殘星幻影",c:"#3FD08A",rule:"殘星局：連解 3 個殘局",goal:"三個殘局都要贏（輸一盤就從第一局重來）",say:"萬物走到盡頭，皆是這步棋。",seal:"玉宿的殘局，你解得比我快。",canju:3,p:[70.4,38.8,72.9,46.3]},
   {id:"quanxing",n:"權星",t:"權星・讓命幻影",c:"#9AA3AE",rule:"讓子局：他讓你雙車，但用第 18 級全力",goal:"將死他",say:"讓你雙車，結局亦無更改。",seal:"權星讓過的車，後來都回來了。",remove:["a9","i9"],lx:18,p:[61.7,48.1,63.3,55.5]},
   {id:"jiyue",n:"璣月",t:"璣月・暗流幻影",c:"#4D7CFF",rule:"暗流局：他的棋子藏在霧裡",off:1,p:[59.3,63.4,59.3,70.1]},
@@ -11209,9 +11215,8 @@ const GX_LIST=[
   {id:"gouchen",n:"勾陳",t:"勾陳・亂序幻影",c:"#7A2BB5",rule:"亂陣局：雙方的車、馬、炮位置一起打亂（兩邊一樣）",goal:"將死他",say:"偏門左道？不過是另一條舊路。",seal:"勾陳打亂的陣，你排回來了。",shuffle:1,p:[51.3,83.3,51.3,92.4]},
   {id:"tengshe",n:"騰蛇",t:"騰蛇・陷星幻影",c:"#2E9E5B",rule:"陷阱局：棋盤上藏著陷阱",off:1,p:[42.9,62.7,42.8,69.6]},
   {id:"beichen",n:"北辰",t:"北辰・不滅幻影",c:"#F7D774",c2:"#05040A",rule:"不滅局：要將死他兩次——第一次只破了星核，他會帶著全新的一軍、強一級重來",goal:"連贏兩盤",say:"十三億次推演，你終於來了。",seal:"北辰的星核，還在跳。",twice:1,p:[49.8,48.5,50.4,61.6]}];
-/* 11/16 開發者（紫淵卡在「思考中」）選單「先關成星軌未通」：Pikafish 不收棋子數超過正規的局面（每方最多 2 炮、2 馬…），紫淵（四炮）、搖光（六炮）、開陽（八馬）先標 off、從解鎖順序拿掉；
-   原本第 4、7、9 位要停靠 3、6、9 站：玉宿接搖光的 3 站，權星、北辰照舊 6、9 站。之後有能下變體的引擎再放回來 */
-const GX_ORD=["taisu","tianyuan","yuxiu","quanxing","gouchen","beichen"],GX_DOCK={2:3,3:6,5:9};
+/* 11/16 開發者：紫淵、搖光、開陽一度關成星軌未通（1337，Pikafish 不收四炮、六炮、八馬）；1502 起子數超過的局面改由 Magellan（XQVar）下，選單「放回並照模擬調級」放回來，解鎖順序還原 */
+const GX_ORD=["ziyuan","taisu","tianyuan","yaoguang","kaiyang","yuxiu","quanxing","gouchen","beichen"],GX_DOCK={3:3,6:6,8:9};
 const GX_TXT={gate:"裂痕剝落，十三點微光在深淵中重組。",invite:"這門，我好像替你開過。",open:"十三點星光，排成未完棋譜。",pick:"選一顆吧，別選我算過的。",go:"落子入門",stay:"先走此局",enter:"星槎折返，卻抵達更遠處。",win:"這一敗，竟不在舊譜。",lose:"無妨，你會回到這步。",all:"第十四顆，尚未落子。",ship:"黑洞歸來，星槎多了一道無名星門。",mirror:"這一局，是你自己算出來的。",
   /* 11/15 星碑共鳴（story/gemini_app/157 Gemini 規劃、開發者選定）：觀星臺的星圖石碑是人間的「錨」——幻影棋客開了門、星槎駛出了路，石碑把星軌定在碑前 */
   stele:"觸碑生墨，神識已渡星河。",orbit:"十三殘局，皆在星軌之中。",off:"星軌未明，此局尚不可解。",lock:"前陣未破，暗星仍隱深淵。",allp:"諸陣已破，深淵明鏡始現。"};
@@ -11221,7 +11226,7 @@ const gxIs=st=>!!st&&String(st.journey||"").startsWith("gx:");
    電腦級數＝玩家實力 P（bhLevel）＋規則修正 R＋模式修正 M（輕鬆 −2／標準 0／挑戰 +2），夾在 1～18；北辰第二盤再 +1；權星固定 18（他的身分就是讓雙車的全力 AI）。
    R 先用 ChatGPT 的表（四炮少象、生存戰偏易；八馬、亂陣、陷阱偏難），之後用電腦自我對弈量勝率再調。星印分銀（輕鬆）／星（標準）／金（挑戰），取最高。
    輸了：結果視窗給一句這一關的訣竅；連輸 3 次以上多一顆「改用輕鬆再來」（不自動偷偷降級，讓玩家自己選） */
-const GX_R={ziyuan:-1,taisu:-1,tianyuan:0,yaoguang:0,kaiyang:1,yuxiu:0,gouchen:1,beichen:2,xuanbing:0,shuchen:1,jiyue:1,tengshe:2,mirror:0};
+const GX_R={ziyuan:-1,taisu:-1,tianyuan:0,yaoguang:2,kaiyang:3,yuxiu:0,gouchen:1,beichen:2,xuanbing:0,shuchen:1,jiyue:1,tengshe:2,mirror:0};   /* 11/16 Magellan 雙方同級自己對下各 16 盤（scratchpad vartrain/sim.js）：玩家那方得分 紫淵 38%、搖光 81%、開陽 91%（標準 50%）→ 搖光 0→+2、開陽 +1→+3、紫淵維持 −1 */
 const GX_MODES=[["easy","輕鬆",-2,"銀印"],["std","標準",0,"星印"],["hard","挑戰",2,"金印"]];
 const GX_HINT={ziyuan:"四門炮要有炮架才兇：先兌掉中路的子，少給他架炮；他沒有象，底線是弱點。",taisu:"生存戰不用贏：多兌子、少冒險，車守兩翼，撐滿 40 步就算過。",
   tianyuan:"奪子計比的是車馬炮：先把自己的大子連起來互相保護，再找他沒人保護的子。",yaoguang:"六門炮沒有車馬，近身就弱：用馬和兵靠近，同一條線上別放兩顆子讓他架炮。",
@@ -11254,7 +11259,7 @@ async function gxCanjuPick(lv){let A=[];try{A=(((await (await fetch("data/canju/
   const out=[];while(out.length<3&&C.length){const i=Math.floor(Math.random()*C.length);out.push({fen:C[i].fen,t:C[i].t||"殘局",id:C[i].id});C.splice(i,1)}return out}
 /* 開一關。run＝這一關的進度（玉宿第幾局、北辰第幾盤） */
 async function gxStart(id,again,mode){const g=id==="mirror"?{id:"mirror",n:"第十四顆",t:"第十四顆・鏡像",say:GX_TXT.mirror}:gxGet(id);if(!g)return;
-  if(id!=="mirror"){const no=gxLock(id);if(no){toast("🌌 "+no);return}}else if(!gxAllDone()){toast("🌌 開放的星系都打完，第十四顆才會出現");return}
+  if(id!=="mirror"){const no=gxLock(id);if(no){toast("🌌 "+no);return}}else if(!gxAllDone()){toast("🌌 九個星系都打完，第十四顆才會出現");return}
   const base=typeof bhLevel==="function"?bhLevel():8;let R=store.get("gxRun",null);if(!R||R.id!==id||!again)R={id,k:0,ph:1};
   if(mode&&GX_MODES.some(m=>m[0]===mode))R.m=mode;if(!R.m)R.m=store.get("gxMode","std");store.set("gxMode",R.m);   /* 三檔：重試沿用同一檔 */
   const b={human:"r",lx:gxLx(g,R,base),journey:"gx:"+id};
@@ -14570,6 +14575,7 @@ const SG2G=(()=>{
       ctl:{frz:[],lock:[],noCap:[],noTake:[],trap:null,imm:{}},buf:{},hurt:{r:0,b:0},hurt0:{r:0,b:0},last:{r:null,b:null},kmax:k>=0?S.x[k]:1,r3:r3Of(n,diff),rlim:SG2.RND_MAX,sq:sq||null};
     td.esp=ESP0;td.ecd={};td.elast=-99;td.ecR=-1;
     td.tal=talOf(cfg);talApply(td);if(k>=0)td.kmax=S.x[k];if(+V.sp0>0)for(const c in td.sp)td.sp[c]=Math.min(td.spMax[c],+V.sp0);td.pro=V.pro?1:0;
+    {const F=typeof dglXiangFx==="function"?dglXiangFx():null;if(F){if(F.kHp>0&&k>=0){S.x[k]+=F.kHp;td.kmax=S.x[k]}if(F.sp0>0)for(const c in td.sp)td.sp[c]=Math.min(td.spMax[c],td.sp[c]+F.sp0);td.xf=F}}   /* 11/16 二十八宿四象點齊的永久效果（07dgl dglXiangFx）：帥體力、開局靈力；每回合靈力在 roundEnd、過關星塵在結算 */
     ev(td,{k:"start",nm:V.nm,diff});return td}
   /* ===== 合法步（招式的限制：定身的不能動、不能攻擊的不攻擊、受保護的不能打）；全部濾光就照規則全部（不會因為招式變成困斃） ===== */
   function legal(P,C,side){const td=P.td,S=td.s;side=side||P.turn;const L=SG2.legal(S,side);if(side!=="b")return L;const R=td.rnd,c=td.ctl;
@@ -14617,7 +14623,7 @@ const SG2G=(()=>{
     if(!end){const nx=P.turn;if(!SG2.legal(S,nx).length)end={w:opp(nx),why:SG2.inCheck(S,nx)?"將死":"困斃"}}
     if(end){td.over=end;ev(td,{k:"end",w:end.w,why:end.why})}return{m,end}}
   /* ===== 回合結束（黑方走完）：回靈、到期、九宮守心、星門落子、回合上限 ===== */
-  function roundEnd(P,C){const td=P.td,S=td.s;td.rnd++;const R=td.rnd;for(const ck in td.sp)spAdd(td,ck,RG);espAdd(td,ERG);td.hurt0=td.hurt;td.hurt={r:0,b:0};
+  function roundEnd(P,C){const td=P.td,S=td.s;td.rnd++;const R=td.rnd;for(const ck in td.sp)spAdd(td,ck,RG+((td.xf&&td.xf.rg)||0));espAdd(td,ERG);td.hurt0=td.hurt;td.hurt={r:0,b:0};
     for(let q=0;q<90;q++)if(S.g[q]&&S.ge[q]<R){S.g[q]=0;S.ge[q]=0}
     for(const k of["frz","lock","noCap","noTake"])td.ctl[k]=act(td.ctl[k],R);if(td.ctl.trap&&td.ctl.trap.until<R)td.ctl.trap=null;
     for(const k in td.ctl.imm)if(td.ctl.imm[k]<R)delete td.ctl.imm[k];
@@ -14913,7 +14919,7 @@ const SG2_XP=[0,20,40,60],SG2_DUST=[0,3,4,6];
 /* 這一盤的獎勵（sg2End、sg2Result 都叫；同一盤只發一次，記在 bhtdDust.la／g 跟 07bht 同一套）：回 {xp, dust, total} */
 function sg2Award(st){const td=st&&st.td;if(!sg2On(st)||!st.result)return null;let D=null;try{D=typeof bhtdDust==="function"?bhtdDust():null}catch(e){}if(!D)return null;
   if(D.la&&D.la.id===st.id)return D.la;const win=st.result.w===st.human,ns=win?SG2G.stars(td).filter(Boolean).length:0,P=gsvProg(),R=((P.v2||{})[td.lv]||{})[td.diff]||{};
-  const first=win&&!(R.w>(D.g.includes(st.id)?1:0)),xp=first?SG2_XP[td.diff]||0:0,dust=win?SG2_DUST[ns]||0:0,done=D.g.includes(st.id);
+  const first=win&&!(R.w>(D.g.includes(st.id)?1:0)),xp=first?SG2_XP[td.diff]||0:0,dust=win?(SG2_DUST[ns]||0)+((typeof dglXiangFx==="function"&&dglXiangFx().dust)||0):0,done=D.g.includes(st.id);
   if(!done){D.d+=dust;D.g=D.g.concat([st.id]).slice(-20);try{if(xp&&typeof addXP==="function")addXP(xp,"星門圍城","gs2:"+td.lv+":"+td.diff)}catch(e){}}
   const A={id:st.id,win,xp,dust,total:D.d,first};D.la=A;try{store.set("bhtdDust",D)}catch(e){}return A}
 function sg2End(st){if(!sg2On(st)||!st.result)return;try{sg2Award(st)}catch(e){console.warn("[sg2]",e)}const P=gsvProg();if(P.g.includes(st.id))return;const td=st.td,n=td.lv,d=td.diff;P.v2=Object.assign({},P.v2);P.v2[n]=Object.assign({},P.v2[n]);
@@ -15082,7 +15088,7 @@ function dvtSheet(){if(!dvtOn())return toast("要先打開開發者模式");
     q("#dvD").onclick=()=>{store.set("dvtGxAll",all?0:1);toast(all?"全部星系解鎖：關":"全部星系解鎖：開");re()};
     q("#dvE").onclick=()=>{closeSheet();if(typeof gxMap==="function")gxMap({})};
     b.querySelectorAll("[data-gx]").forEach(x=>x.onclick=()=>{if(!store.get("dvtGxAll",0))return toast("先打開「全部星系解鎖」");closeSheet();if(typeof gxStart==="function")gxStart(x.dataset.gx)});
-    q("#dvF").onclick=()=>{if(typeof GX_ORD==="undefined")return;const S2={};for(const k of GX_ORD)S2[k]=Date.now();store.set("gxSeal",S2);toast("⭐ 開放星系的星印都拿到了");re()};
+    q("#dvF").onclick=()=>{if(typeof GX_ORD==="undefined")return;const S2={};for(const k of GX_ORD)S2[k]=Date.now();store.set("gxSeal",S2);toast("⭐ 九枚星印都拿到了");re()};
     q("#dvH").onclick=()=>{closeSheet();if(typeof simIntro==="function"&&typeof parseFen==="function")setTimeout(()=>simIntro({id:"dvt-demo",n:10,tb:Array.from({length:10},()=>({board:parseFen(START)}))},()=>{}),300)};
     q("#dvP").onclick=()=>{const on=typeof phudToggle==="function"&&phudToggle();toast(on?"📈 效能浮標：開":"📈 效能浮標：關");re()};   /* 第 9 輪 Gemini：效能浮標（07dw-perfhud.js） */
     q("#dvR").onclick=()=>confirmBox("清掉黑洞篇和十三星系的全部進度？（只影響這支手機）",()=>{for(const k of DVT_KEYS)store.set(k,null);dvtForce(false);toast("🧹 黑洞篇進度清掉了");re()},"清掉")})}
@@ -19935,9 +19941,11 @@ function bdPlanCard(c){if(!BUDDY_ON||!c||!c.flag||!Array.isArray(c.flag.opts)||!
   const opts=c.flag.opts.map((o,j)=>{const d=D.o[j];if(!d||D.w[j]!==o.who||d[0]===me||!WX_CHARS[d[0]]||!bdJoined(d[0]))return o;n++;   /* 獻策的人還沒加入：這一策退回原本的史實軍師 */
     const re=o.ok?`${o.re}　📜 歷史上提這一策的是${o.who}：${String(o.say||"")}`:/^一位/.test(o.who)?o.re:`${o.re}　📜 當時這樣主張的是${o.who}。`;
     return{...o,who:bdNk(d[0])+"・"+d[1],say:bdTx(d[2],d[0]),re}});
-  return n?{...c,flag:{...c.flag,opts}}:null}
+  BD_PLAN_N=n;BD_PLAN_T=opts.length;return n?{...c,flag:{...c.flag,opts}}:null}
+/* 11/16 開發者選單「照人數改字」：三策都是旅伴才寫「三位旅伴…」；有史實軍師混在裡面（獻策的人還沒加入）就寫「旅伴與軍師各獻一策」 */
+let BD_PLAN_N=0,BD_PLAN_T=0;
 function bdPlanDom(v){try{setTop("⭐ 七星獻策","^#/battle")}catch(e){}let n=0;const fix=()=>{if(!v.isConnected)return;const h=v.querySelector(".bt-cn .lvh b"),p=[...v.querySelectorAll(".bt-cn p b")].find(b=>/三位軍師/.test(b.textContent));
-  if(h)h.textContent=h.textContent.replace("軍師獻策","七星獻策");if(p){p.textContent="三位旅伴照自己本命子的脾氣各獻一策，你採用哪一策？";return}if(++n<40)setTimeout(fix,150)};fix()}
+  if(h)h.textContent=h.textContent.replace("軍師獻策","七星獻策");if(p){p.textContent=BD_PLAN_N>=BD_PLAN_T?"三位旅伴照自己本命子的脾氣各獻一策，你採用哪一策？":"旅伴與軍師各獻一策，你採用哪一策？";return}if(++n<40)setTimeout(fix,150)};fix()}
 
 /* ---------- 掛勾（都是包一層，不改原函式） ---------- */
 if(typeof portWind==="function"){const bdPw0=portWind;portWind=function(v,k){const r=bdPw0.apply(this,arguments);try{bdPort(v,k)}catch(e){console.warn(e)}return r}}
@@ -20915,7 +20923,7 @@ html[data-hicon] .shp-spot.hot::before,html[data-hicon] .shp-hs.hot::before{left
      日夜照人間時辰（07w8 clkIdx，頂欄時辰鐘同一個判斷）：卯時～申時（約 05:00～17:00）白天版，酉時～寅時夜景；頁面開著跨過時辰會自己換；白天圖載不到退回夜景（GXT_BAD）。
      直幅／寬版：可用寬 ÷ 可用高 ≥ GXT_LAND 而且畫面短邊 ≥ 600 用寬版（跟首頁寬版同一個短邊門檻；手機橫放照舊直幅＋07t3 側欄選單）；轉向、改視窗大小時原地換圖、換座標。
    標籤只放大字（記憶「場景標籤只放大字」），跟圖上器物對應：
-     天頂墨色黑洞＝黑洞車輪戰（11/16 開張：07bhw whlOpen）、星圖石碑＝十三星系（07gx gxMap）、青銅渾儀＝星淵遠征（07bht bhtdOpen 關卡卡片）、圭表＝今日異象（星軌未通）、石棋桌＝自由擺陣（星軌未通）、
+     天頂墨色黑洞＝黑洞車輪戰（11/16 開張：07bhw whlOpen）、星圖石碑＝十三星系（07gx gxMap）、青銅渾儀＝星淵遠征（07bht bhtdOpen 關卡卡片）、圭表＝今日異象、石棋桌＝自由擺陣（11/16 開發者：兩個都開張，07gxd-daily.js gxdOmen／gxdFree）、
      右側星空＝二十八宿（11/13 晚：花星芒點亮星圖，07dgl-stamina.js dglXiuSheet）。
      星軌未通＝標籤看得到但灰、帶鎖，點了跳一行「星軌未通，敬請期待」。
    出口照場景頁慣例走 07w9 圖上出口（EXITS "/guanxing"，右下石階）：從首頁來寫「🏘 回棋鎮」、從星槎來 07w9 exFix 自動改「↩ 回星槎」；寬版時這裡把出口挪到寬版圖的石階。
@@ -20929,8 +20937,8 @@ const GXT_SPOTS=[
   ["gxtSimul","天頂黑洞",50,19,50,24,0],   /* 11/16 黑洞新規則：車輪戰拿掉，天頂黑洞改通往星門圍城 */   /* 天頂黑洞下方的光柱；11/16 開發者「車輪戰和星門圍城也都能上線」（選單：解鎖，點了直接開車輪戰 07bhw whlOpen） */
   ["gxtGx","十三星系",18,32.5,39.5,32,0],   /* 星圖石碑頂上 */
   /* 11/16 開發者（觀星臺截圖圈天頂黑洞與渾儀）「紅圈入口內容一樣 請修正和優化」，選單「只留天頂黑洞」：渾儀上的「星門圍城」標籤拿掉（gxtTd 留著，舊連結叫得到） */
-  ["gxtOmen","今日異象",76,42,62,50,1],   /* 圭表石柱頂上（寬版在石柱右邊、圭面上方） */
-  ["gxtFree","自由擺陣",31,70,44,71,1],   /* 石棋桌上方 */
+  ["gxtOmen","今日異象",76,42,62,50,0],   /* 圭表石柱頂上（寬版在石柱右邊、圭面上方）；11/16 開發者：開張（07gxd gxdOmen，每天所有人同一盤變體陣容） */
+  ["gxtFree","自由擺陣",31,70,44,71,0],   /* 石棋桌上方；11/16 開發者：開張（07gxd gxdFree，點數預算自己擺 16 子跟電腦下） */
   ["gxtSky","二十八宿",80,26,80,15,0]];   /* 開發者 11/13 晚：星芒點亮二十八宿星圖（07dgl dglXiuSheet）；直幅在右側山頭上方的星空、寬版在右上星空 */
 const GXT_EXIT={p:[86,90],w:[68,86]};   /* 出口（右下石階）：直幅跟 07w9 EXITS 同一組 */
 const GXT_HOME={"":[84,56],p34:[82,57],l1610:[75,69]};   /* 首頁橋右側（home 768×1376、home_p34、home_l1610 各量一次；經典世界、季節圖跟原圖同構圖） */
@@ -21043,9 +21051,12 @@ function gxtGate(){if(typeof gxMap!=="function"){toast("🌌 "+GXT_OFF);return}
      右側星空＝二十八宿：星空裡幾顆星亮起、連成一線，「引星連脈，喚醒四方真靈。」（不蓋黑，星圖面板直接滑上來）
    這次開 App 每件器物第一次約 2.7 秒，之後約 1.7 秒（同一段演出快轉）；系統設「減少動態」只淡入那一句（約 1.1 秒）。點一下跳過；離開這一頁就收掉。
    回來站在器物前：走路角色的位置 07w 本來就記著（SHW_MEM "gxt"），從玩法回到觀星臺時人還站在那件器物前。
-   時間表 gxtFxPlan 是純計算；今日異象、自由擺陣做好時在 GXT_FXT／GXT_FXP 各加一項 */
-const GXT_FXT={td:"撥轉渾儀，定軌星淵之途。",simul:"仰觀天頂，身入萬劫星漩。",sky:"引星連脈，喚醒四方真靈。"};
-const GXT_FXP={p:{td:[50,52,15],sky:[80,17,9]},w:{td:[50.5,51.5,5],sky:[80,11,5]}};   /* 場景圖上的位置：[左%, 上%, 半徑佔圖寬 %]（渾儀的球心、右側星空） */
+   時間表 gxtFxPlan 是純計算。
+   11/16 開發者（今日異象、自由擺陣開張）再加兩段：
+     圭表＝今日異象：石柱頂亮起一團星光，金色的「圭影」沿著地上的石圭畫過去，墨色蓋上來，「圭影移轉，今日異象現形。」
+     石棋桌＝自由擺陣：十六顆星點（金八、藍八）從桌心散開，再落回桌上排成兩列，墨色蓋上來，「拂開石桌，親手重排星陣。」 */
+const GXT_FXT={td:"撥轉渾儀，定軌星淵之途。",simul:"仰觀天頂，身入萬劫星漩。",sky:"引星連脈，喚醒四方真靈。",omen:"圭影移轉，今日異象現形。",free:"拂開石桌，親手重排星陣。"};
+const GXT_FXP={p:{td:[50,52,15],sky:[80,17,9],omen:[73,46,4],gui:[74,57,95,59.5],free:[31,75,13]},w:{td:[50.5,51.5,5],sky:[80,11,5],omen:[57.4,47,2],gui:[58,58.6,65.4,62.2],free:[44,77,4.4]}};   /* 場景圖上的位置：[左%, 上%, 半徑佔圖寬 %]（渾儀的球心、右側星空、圭表石柱頂、石棋桌桌心）；gui＝石圭（地上的刻度石）從柱腳到尾端 [左,上,左,上]（11/16 量 gx_tai 768×1376、gx_tai_w 1376×768） */
 const gxtFxPlan=(rm,seen)=>rm?{kind:"min",say:120,open:750,end:1150}:seen?{kind:"lite",say:600,open:1250,end:1700}:{kind:"full",say:1150,open:2150,end:2750};   /* 各段開始的時間（毫秒）：那一句話、開畫面、收掉 */
 function gxtFx(id,open){let P=null,im=null,ok=false;try{P=document.querySelector(".gxt-page");im=P&&P.querySelector(":scope>img");ok=!!(P&&im&&GXT_FXT[id]&&!gxtFx.busy&&!gxtGate.busy&&typeof document.body.animate==="function")}catch(e){}
   if(!ok){open();return}
@@ -21056,7 +21067,10 @@ function gxtFx(id,open){let P=null,im=null,ok=false;try{P=document.querySelector
     if(id==="td"){const c=GXT_FXP[k].td,p=pt(c),r=R.width*c[2]/100;for(let i=0;i<3;i++)h+=`<i class="gxt-fx-r" style="left:${p[0]}px;top:${p[1]}px;width:${r*2}px;height:${r*2}px"></i>`;h+=`<i class="gxt-fx-g" style="left:${p[0]}px;top:${p[1]}px;width:${r*.7}px;height:${r*.7}px"></i>`}
     else if(id==="simul")h+=`<div class="gxt-fx-s" style="left:${R.left}px;top:${R.top}px;width:${R.width}px;height:${R.height}px;background-image:url('${im.currentSrc||im.src}');transform-origin:${GXT_GATE[k].bh[0]}% ${GXT_GATE[k].bh[1]}%"></div>`;
     else if(id==="sky"){const c=GXT_FXP[k].sky,p=pt(c),r=R.width*c[2]/100,S=[[-1,-.3],[-.45,.35],[.05,-.15],[.5,.4],[1,-.2],[.55,-.75],[.05,-.15]].map(q=>[p[0]+q[0]*r,p[1]+q[1]*r]);
-      h+=`<svg><polyline points="${S.map(q=>q[0].toFixed(1)+","+q[1].toFixed(1)).join(" ")}" pathLength="1" fill="none" stroke="#ffe08a" stroke-width="2.2" stroke-linejoin="round" stroke-dasharray="1" stroke-dashoffset="1" style="filter:drop-shadow(0 0 4px rgba(255,206,96,.9))"/></svg>`+S.slice(0,6).map(q=>`<i class="gxt-fx-d" style="left:${q[0]}px;top:${q[1]}px"></i>`).join("")}}
+      h+=`<svg><polyline points="${S.map(q=>q[0].toFixed(1)+","+q[1].toFixed(1)).join(" ")}" pathLength="1" fill="none" stroke="#ffe08a" stroke-width="2.2" stroke-linejoin="round" stroke-dasharray="1" stroke-dashoffset="1" style="filter:drop-shadow(0 0 4px rgba(255,206,96,.9))"/></svg>`+S.slice(0,6).map(q=>`<i class="gxt-fx-d" style="left:${q[0]}px;top:${q[1]}px"></i>`).join("")}
+    else if(id==="omen"){const c=GXT_FXP[k].omen,g=GXT_FXP[k].gui,p=pt(c),r=R.width*c[2]/100,a=pt([g[0],g[1]]),z=pt([g[2],g[3]]);   /* 11/16：圭表石柱頂一團星光＋石圭上一道金色圭影 */
+      h+=`<i class="gxt-fx-g" style="left:${p[0]}px;top:${p[1]}px;width:${r*2}px;height:${r*2}px"></i><svg><path d="M${a[0].toFixed(1)} ${a[1].toFixed(1)} L${z[0].toFixed(1)} ${z[1].toFixed(1)}" pathLength="1" fill="none" stroke="#ffe08a" stroke-width="4" stroke-linecap="round" stroke-dasharray="1" stroke-dashoffset="1" style="filter:drop-shadow(0 0 6px rgba(255,206,96,.95))"/></svg>`}
+    else if(id==="free"){const p=pt(GXT_FXP[k].free);for(let i=0;i<16;i++)h+=`<i class="gxt-fx-d" style="left:${p[0]}px;top:${p[1]}px${i>7?";background:#cfe0ff;box-shadow:0 0 8px 3px rgba(140,180,255,.9)":""}"></i>`}}   /* 11/16：石棋桌桌心十六顆星點（前八金＝紅方、後八藍＝黑方） */
   fx.innerHTML=(id==="simul"?"":`<div class="gxt-fx-m"></div>`)+h+(id==="sky"?"":`<div class="gxt-fx-b"></div>`)+`<div class="gxt-fx-t${id==="sky"?" sky":""}">${esc(GXT_FXT[id])}</div>`;document.body.append(fx);   /* 渾儀、星空兩段先把場景壓暗一半（.gxt-fx-m 墊在金環、星線底下）：觀星臺白天是淺色的圖，不壓暗金色看不見；星空那一段不全黑，就停在這個暗度 */
   const q=s=>fx.querySelector(s),qa=s=>[...fx.querySelectorAll(s)],A=(el,kf,o)=>{try{return el.animate(kf,Object.assign({fill:"forwards",easing:"ease"},o))}catch(e){return null}};
   const at=(ms,f)=>tm.push(setTimeout(()=>{if(!done)try{f()}catch(e){}},ms));
@@ -21069,14 +21083,19 @@ function gxtFx(id,open){let P=null,im=null,ok=false;try{P=document.querySelector
     if(id==="td"){qa(".gxt-fx-r").forEach((r,i)=>A(r,[{opacity:0,transform:`translate(-50%,-50%) rotate(${i*60}deg) scaleY(.35)`},{opacity:1,offset:.1,transform:`translate(-50%,-50%) rotate(${i*60+20}deg) scaleY(.35)`},{opacity:1,transform:`translate(-50%,-50%) rotate(${i*60+220}deg) scaleY(.35)`}],{duration:T.open,easing:"ease-in"}));
       A(q(".gxt-fx-g"),[{opacity:0,transform:"translate(-50%,-50%) scale(.4)"},{opacity:1,offset:.5,transform:"translate(-50%,-50%) scale(1)"},{opacity:1,transform:"translate(-50%,-50%) scale(9)"}],{duration:T.say+250,easing:"ease-in"})}
     else if(id==="simul"){const s=q(".gxt-fx-s");A(s,[{opacity:0},{opacity:1}],{duration:120});A(s,[{transform:"scale(1)"},{transform:"scale(6)"}],{duration:T.say+200,easing:"cubic-bezier(.5,0,.8,.6)"})}
-    else if(id==="sky"){qa(".gxt-fx-d").forEach((d,i)=>A(d,[{opacity:0,transform:"scale(.3)"},{opacity:1,transform:"scale(1.25)"},{opacity:.9,transform:"scale(1)"}],{duration:300,delay:i*T.say/8}));A(q("polyline"),[{strokeDashoffset:1},{strokeDashoffset:0}],{duration:T.say,easing:"ease-in-out"})}}
+    else if(id==="sky"){qa(".gxt-fx-d").forEach((d,i)=>A(d,[{opacity:0,transform:"scale(.3)"},{opacity:1,transform:"scale(1.25)"},{opacity:.9,transform:"scale(1)"}],{duration:300,delay:i*T.say/8}));A(q("polyline"),[{strokeDashoffset:1},{strokeDashoffset:0}],{duration:T.say,easing:"ease-in-out"})}
+    else if(id==="omen"){A(q(".gxt-fx-g"),[{opacity:0,transform:"translate(-50%,-50%) scale(.3)"},{opacity:1,offset:.35,transform:"translate(-50%,-50%) scale(1.25)"},{opacity:.9,transform:"translate(-50%,-50%) scale(1)"}],{duration:T.say});
+      A(q("path"),[{strokeDashoffset:1},{strokeDashoffset:0}],{duration:Math.round(T.say*.75),delay:Math.round(T.say*.2),easing:"ease-in-out"})}
+    else if(id==="free"){const r=R.width*GXT_FXP[k].free[2]/100;qa(".gxt-fx-d").forEach((d,i)=>{const a=i/16*Math.PI*2,ox=Math.cos(a)*r*1.6,oy=Math.sin(a)*r*.9,gx=((i%8)-3.5)*r*.24,gy=(i>7?1:-1)*r*.16;   /* 先散成一圈，再落回桌面排成兩列（桌面是斜看的，上下壓扁） */
+      A(d,[{opacity:0,transform:"translate(0,0) scale(.4)"},{opacity:1,offset:.4,transform:`translate(${ox.toFixed(1)}px,${oy.toFixed(1)}px) scale(1.2)`},{opacity:1,transform:`translate(${gx.toFixed(1)}px,${gy.toFixed(1)}px) scale(1)`}],{duration:T.say,easing:"ease-in-out"})})}}
   if(id!=="sky")at(Math.max(0,T.say-380),()=>A(q(".gxt-fx-b"),[{opacity:0},{opacity:1}],{duration:340}));
   if(id!=="simul")A(q(".gxt-fx-m"),[{opacity:0},{opacity:.55}],{duration:260});
   at(T.say,()=>A(q(".gxt-fx-t"),[{opacity:0,transform:"translateY(6px)"},{opacity:1,transform:"none"}],{duration:300}));
   at(T.open,()=>{doOpen();finish(id==="sky")})}   /* 星圖面板是從底下滑上來的，過場層要收得快，那句話才不會壓在面板上 */
 /* 天頂黑洞＝黑洞車輪戰：跟渾儀一樣，定軌力用完時黑洞入口關著 */
 function gxtWheel(){if(gxtBhLock()){toast("🌫 "+gxtBhMsg());return}if(typeof gsvOpen==="function"&&typeof SG2G!=="undefined"){gxtFx("simul",()=>gsvOpen());return}if(typeof whlOpen!=="function"){toast("🌌 "+GXT_OFF);return}gxtFx("simul",()=>whlOpen())}   /* 11/16：天頂黑洞也開星門圍城選關 */
-const GXT_ACT={gxtTd:gxtTd,gxtSimul:()=>{try{sessionStorage.setItem("gxtFrom","1")}catch(e){}gxtWheel()},gxtGx:()=>gxtGate(),gxtSky:()=>{if(typeof dglXiuSheet!=="function"){toast("🌌 "+GXT_OFF);return}gxtFx("sky",()=>dglXiuSheet())}};
+const GXT_ACT={gxtTd:gxtTd,gxtSimul:()=>{try{sessionStorage.setItem("gxtFrom","1")}catch(e){}gxtWheel()},gxtGx:()=>gxtGate(),gxtSky:()=>{if(typeof dglXiuSheet!=="function"){toast("🌌 "+GXT_OFF);return}gxtFx("sky",()=>dglXiuSheet())},
+  gxtOmen:()=>{if(typeof gxdOmen!=="function"){toast("🌌 "+GXT_OFF);return}gxtFx("omen",()=>gxdOmen())},gxtFree:()=>{if(typeof gxdFree!=="function"){toast("🌌 "+GXT_OFF);return}gxtFx("free",()=>gxdFree())}};   /* 11/16 開發者：今日異象、自由擺陣（07gxd-daily.js）；不是黑洞入口，定軌力用完也照開 */
 function GxtPage(v){setTop("🔭 觀星臺","#/");setTabs(true,"#/");v.className="view";
   if(!gxtOpen()){toast("🔭 觀星臺還沒出現");navReplace("#/");return{}}
   gxtCss();try{store.set("gxtSeen",1)}catch(e){}
@@ -21229,7 +21248,7 @@ function dglLocOn(h,o){o=o||{};if(o.off)return false;return dglZone(h,o)==="land
 /* 二十八宿星圖（開發者 11/13 晚：星芒在人間也有用，觀星臺「二十八宿」入口）。每宿 [宿名, 四象序號, 大致所在的今星座, 補充一句]，順序照傳統：
    東方蒼龍角→箕、北方玄武斗→壁、西方白虎奎→參、南方朱雀井→軫。星座對照與補充句都待史學顧問核。
    點亮紀錄放 store "dgl"（跟存檔走）：t＝28 位元遮罩（第 i 位＝第 i 宿）、tw＝拿過的獎（0～3 位＝四象點齊、第 4 位＝全亮＋稱號），不另開存檔鍵 */
-const DGL_XIU_COST=2,DGL_XIANG_XP=10,DGL_XIU_ALL_XP=30,DGL_XIU_TITLE="觀星客";
+const DGL_XIU_COST=2,DGL_XIU_STAR_XP=10,DGL_XIANG_XP=30,DGL_XIU_ALL_XP=100,DGL_XIU_TITLE="觀星客";   /* 11/16 開發者「5項還沒做的請開始做」（Gemini 158 號、開發者選「照這組做」）：每點亮一宿修為 +10、一方七宿點齊 +30、全亮 +100＋稱號；原本只有點齊 +10、全亮 +30，已點亮的人在 dglXiuSync 補差額 */
 const DGL_XIANG=[["東方蒼龍","東方"],["北方玄武","北方"],["西方白虎","西方"],["南方朱雀","南方"]];
 const DGL_XIU=[["角",0,"室女座","角宿一是室女座最亮的星。"],["亢",0,"室女座",""],["氐",0,"天秤座",""],["房",0,"天蠍座","房宿古稱「天駟」。"],
   ["心",0,"天蠍座","心宿二是天蠍座最亮的星，古稱「大火」；《詩經》「七月流火」說的就是它。"],["尾",0,"天蠍座",""],["箕",0,"人馬座","名字取自簸箕。"],
@@ -21654,7 +21673,15 @@ function dglXsCss(){if(document.getElementById("dglXsCss"))return;const s=docume
 #dglXs .xs-pan p{margin:4px 0 0}#dglXs .xs-pan .go{width:100%;margin-top:8px}
 @media (prefers-reduced-motion:reduce){#dglXs svg .on circle{filter:none}}`;document.head.append(s)}
 /* 二十八宿星圖（觀星臺「二十八宿」07gxt gxtSky 開這裡） */
-function dglXiuSheet(){if(typeof document==="undefined")return;dglCss();dglXsCss();const old=document.getElementById("dglXs");if(old)old.remove();
+/* 11/16 開發者選單：四象七宿點齊的黑洞（星門圍城）永久效果——東方蒼龍每回合靈力 +1、北方玄武開局靈力 +10、西方白虎過關星塵 +1、南方朱雀帥的體力 +10（07sg2 開局、roundEnd、結算讀這裡） */
+const DGL_XIANG_FX=[{rg:1},{sp0:10},{dust:1},{kHp:10}],DGL_XIANG_FXT=["每回合靈力 +1","開局靈力 +10","過關星塵 +1","帥的體力 +10"];
+function dglXiangFx(){const F={rg:0,sp0:0,dust:0,kHp:0};try{const tw=Math.round(+dglSt().tw)||0;DGL_XIANG_FX.forEach((x,k)=>{if(tw&(1<<k))for(const n in x)F[n]+=x[n]})}catch(e){}return F}
+/* 二十八宿修為：照現在點亮的狀態把該給的都給（addXP 的 key 只給一次）。每宿 dglxs:i；點齊、全亮用 dglxt3:（舊版用 dglxt: 給過 10／30 的，只補差額） */
+function dglXiuSync(){try{if(typeof addXP!=="function")return;const o=dglSt(),t=dglXiuMask(o.t),tw=Math.round(+o.tw)||0,K=store.get("xpKeys",{})||{};
+  for(let i=0;i<DGL_XIU.length;i++)if(dglXiuHas(t,i))addXP(DGL_XIU_STAR_XP,"星圖","dglxs:"+i);
+  for(let k=0;k<4;k++)if(tw&(1<<k)&&!K["dglxt3:"+k])addXP(K["dglxt:"+k]?DGL_XIANG_XP-10:DGL_XIANG_XP,"星圖","dglxt3:"+k);
+  if(tw&16&&!K["dglxt3:all"])addXP(K["dglxt:all"]?DGL_XIU_ALL_XP-30:DGL_XIU_ALL_XP,"星圖","dglxt3:all")}catch(e){}}
+function dglXiuSheet(){if(typeof document==="undefined")return;dglXiuSync();dglCss();dglXsCss();const old=document.getElementById("dglXs");if(old)old.remove();
   const A=dglXsAngles(),o=document.createElement("div");o.id="dglXs";o.setAttribute("role","dialog");o.setAttribute("aria-modal","true");o.setAttribute("aria-label","二十八宿星圖");let sel=-1;
   const draw=()=>{const S=dglSt(),t=dglXiuMask(S.t),n=dglXiuN(t),H=DGL_HUMAN;let G=null;try{G=store.get("gsv",null)}catch(e){}const lf=H?Math.floor(dglXm()/DGL_XIU_COST):dglXiuLeft(S,G),ttl=(Math.round(+S.tw)||0)&16;
     const on=sel>=0&&dglXiuHas(t,sel),info=sel<0?(lf?"點一宿看說明，再按「點亮」。":"打贏星門圍城的一關，就能再點亮一宿。"):on?dglXiuLine(sel):`${DGL_XIU[sel][0]}宿：${DGL_XIANG[DGL_XIU[sel][1]][0]}的一宿。${lf?"可以點亮。":"打贏星門圍城的一關，就能點亮它。"}`;
@@ -21673,7 +21700,7 @@ function dglXiuList(){dglCss();sheet("🌌 二十八宿星圖",b=>{
   const draw=sel=>{const o=dglSt(),t=dglXiuMask(o.t),x=dglXm(),n=dglXiuN(t),ttl=(Math.round(+o.tw)||0)&16,H=DGL_HUMAN;let G=null;try{G=store.get("gsv",null)}catch(e){}const lf=dglXiuLeft(o,G);
     const info=sel>=0&&dglXiuHas(t,sel)?esc(dglXiuLine(sel)):H?"點一顆星：已點亮的看說明，還沒點亮的花星芒點亮。":"點一顆星：已點亮的看說明；打贏星門圍城的一關，就能再點亮一宿。";
     b.innerHTML=`<div class="dgl-cd dgl-xt">${H?`<div class="dgl-cd-h"><b>星芒（藍）</b><span data-dgl="x">${x}／${DGL_XM_MAX}</span></div><div class="dgl-cd-bar dgl-b"><b></b></div>`:`<div class="dgl-cd-h"><b>可以點亮</b><span>${lf} <span>宿</span></span></div>`}
-      <p class="muted" style="font-size:13px;margin:4px 2px 0;line-height:1.55">${H?`每點亮一宿花 ${DGL_XIU_COST} 點星芒。`:"星門圍城每第一次打贏一關，就能點亮一宿。"}一方七宿點齊，修為 +${DGL_XIANG_XP}；二十八宿全亮，修為 +${DGL_XIU_ALL_XP}，得到稱號「${DGL_XIU_TITLE}」。<br>已點亮 ${n}／${DGL_XIU.length}${ttl?`・🏅 ${DGL_XIU_TITLE}`:""}</p>
+      <p class="muted" style="font-size:13px;margin:4px 2px 0;line-height:1.55">${H?`每點亮一宿花 ${DGL_XIU_COST} 點星芒。`:"星門圍城每第一次打贏一關，就能點亮一宿。"}每點亮一宿，修為 +${DGL_XIU_STAR_XP}；一方七宿點齊，修為 +${DGL_XIANG_XP}，星門圍城再多一項永久效果（${DGL_XIANG.map((x,k)=>x[0]+"："+DGL_XIANG_FXT[k]).join("、")}）；二十八宿全亮，修為 +${DGL_XIU_ALL_XP}，得到稱號「${DGL_XIU_TITLE}」。<br>已點亮 ${n}／${DGL_XIU.length}${ttl?`・🏅 ${DGL_XIU_TITLE}`:""}</p>
       <p class="dgl-xt-info" aria-live="polite">${info}</p>
       ${DGL_XIANG.map((X,k)=>{const L=DGL_XIU.map((s,i)=>[s,i]).filter(([s])=>s[1]===k),m=L.filter(([,i])=>dglXiuHas(t,i)).length;
         return`<div class="dgl-xt-g"><div class="dgl-xt-h"><b>${X[0]}</b><span>${m}／7${m===7?" ✓":""}</span></div><div class="dgl-xt-row">${L.map(([s,i])=>{const on=dglXiuHas(t,i);
@@ -21684,8 +21711,7 @@ function dglXiuList(){dglCss();sheet("🌌 二十八宿星圖",b=>{
 function dglXiuBuy(i,draw){const o=dglSt();let G=null;try{G=store.get("gsv",null)}catch(e){}const R=dglXiuLight(o,i,DGL_HUMAN?null:dglXiuLeft(o,G));
   if(!R.ok){if(R.why==="poor")toast(`✧ 星芒不夠：還差 ${R.need} 點（解殘局、主線過關可以得到）`);else if(R.why==="win")toast("✧ 先去打贏星門圍城的一關，就能點亮這一宿");return}
   store.set("dgl",o);try{vibrate([10,40,10])}catch(e){}draw(i);
-  try{if(R.xiang>=0)addXP(DGL_XIANG_XP,"星圖","dglxt:"+R.xiang)}catch(e){}
-  try{if(R.all)addXP(DGL_XIU_ALL_XP,"星圖","dglxt:all")}catch(e){}
+  dglXiuSync();
   toast(R.all?`🏅 二十八宿全部點亮！得到稱號「${DGL_XIU_TITLE}」`:R.xiang>=0?`✨ ${DGL_XIANG[R.xiang][0]}七宿點齊了！`:`✦ 點亮${DGL_XIU[i][0]}宿`)}
 
 if(typeof setTop==="function"){const f0=setTop;setTop=function(){const r=f0.apply(this,arguments);try{dglLocSync(null,1)}catch(e){}return r}}   /* 換頁就放／收地點頁的兩條 */
@@ -21701,6 +21727,205 @@ if(DGL_ON&&typeof window!=="undefined"){
   document.addEventListener("visibilitychange",()=>{const now=Date.now();if(document.hidden){DGL.hid=now;dglKeep()}else{if(DGL.hid&&dglLive()){const ev=dglStep(DGL.s,now-DGL.hid,"ship");if(ev.includes("back"))toast(`✨ 定軌力回到 ${dglU(DGL_BACK,dglMx())}，可以下船了。`)}DGL.hid=0;dglKeep();try{dglPaint()}catch(e){}}DGL.last=now});
   addEventListener("pagehide",()=>{dglKeep()});
   (typeof bgpEvery==="function"?bgpEvery:setInterval)(dglTick,2000)}
+/* ================= 🌗 觀星臺：今日異象＋自由擺陣（11/16 開發者；前綴 gxd／GXD，全域先 grep 過沒撞名）=================
+   入口：觀星臺（07gxt）圭表上的「今日異象」、石棋桌上的「自由擺陣」，各先播一段短過場（07gxt gxtFx "omen"／"free"），播完開這裡的全螢幕畫面。
+   定案（story/新手體驗定案_141_兩輪討論.md）：
+     今日異象＝每天一個「所有人同一題」的超展開陣容（同一天同一套、隔天換），可以無限重玩；
+     自由擺陣＝16 子用點數預算自己擺（一定有帥、己方半場、仕在仕位、相在相位、開局不能將軍、將帥不能照面），電腦同規則按風格擺一陣跟你下。
+     11/16 開發者選單「開局前先看到」：按難度鍵＝先抽電腦這盤的陣、整盤預覽（陣名、紅黑各有什麼子），可以「換一種」重抽（一定換風格），按「確定開戰」才開局。
+   規則一律問變體引擎 Magellan（xiangqi-lab/src/varengine.js＝XQVar）：主執行緒沒有載 varengine.js，這裡自己開一個 Worker("varengine-worker.js")
+     （跟 src/local.js 下棋用的那個分開），postMessage {id,cmd,args} → {id,ok,result}；用 dailySetup（臺灣日期當種子）、validateSetup（規則與錯誤訊息）、
+     genSetup（照風格擺）、setupsToFen。畫面關掉就把 worker 收掉。測試（xiangqi-lab/tools/test-gxd-daily-1116.js）把 XQVar 直接放進 vm，gxdCall 就不開 worker。
+   對局：石桌往事 jStart，journey＝"gxd:<臺灣日期>"（今日異象）或 "gxd:f<陣容雜湊>"（自由擺陣：同一陣沒下完可以接著下；換一陣＝不同 journey，jStart 會先問那一盤要不要放棄）。
+     lv.fen 只留棋盤那一段（local.js 的 parseFen 不認後面的 " w"，帶著會變成 92 格、整個退回標準開局）。
+     電腦用 Pikafish 還是 Magellan 由 local.js 自己判斷（子數超過 Pikafish 收的就換 Magellan），這裡不管引擎。
+   難度：照幻譜星門 GX_MODES（輕鬆 −2／標準 0／挑戰 +2），基準＝玩家實力 bhLevel()，夾在 1～18。今日異象一律標準（所有人同一題，比成績才公平）。
+   接點：07-legend journeyGameEnd（包一層：記成績、給修為）、jName（包一層：對局頁標題）、jBack／jPlace（是 const，07-legend 直接加一段 "gxd:" → 觀星臺）；
+     08b 結果視窗（加一行叫 gxdResultModal）；07gx gxParkEx（包一層：3D 星空背景）、gxParkInfo（包一層：點遠方＝這一盤的說明，不是朝代遠景）。
+   修為（量級照幻譜星門）：幻譜星門一盤贏拿的是 journeyGameEnd 一般對局的 40（07gx 自己不另給），所以今日異象每天第一次贏「另給 40」
+     （addXP 的 key "gxd:<日期>" 擋重複）＝那一盤共 80；自由擺陣只拿一般的 40／15。
+   存檔鍵（05b JOURNEY_KEYS 另一行 push）：gxdOmen＝{d 日期, n 盤數, w 贏, best 最快幾回合贏}（只留最新那一天）、
+     gxdFree＝{lay 上次擺的陣, m 難度, n 盤數, w 贏, opp 上一盤電腦的陣名}、gxdDone＝結算過的那一盤（同一盤只算一次）。
+   點數一律寫「預算」（記憶「開發者視角跟玩家一樣」：畫面上不寫最高額度那類字眼）。 */
+const GXD_XP=40;   /* 今日異象每天第一次贏另給的修為（＝幻譜星門一盤贏的量） */
+const GXD_NM={r:{K:"帥",A:"仕",B:"相",N:"傌",R:"俥",C:"炮",P:"兵"},b:{K:"將",A:"士",B:"象",N:"馬",R:"車",C:"砲",P:"卒"}};
+const GXD_COST={K:0,A:1,B:2,N:3.5,R:10,C:6,P:.5};   /* 只用來在選子鍵上標分數（照 varengine COST10，11/13 定案）；真正算分、驗證一律問 worker validateSetup（含同類大子超過 4 顆的加價） */
+const GXD_OK={K:["d0","e0","f0","d1","e1","f1","d2","e2","f2"],A:["d0","f0","e1","d2","f2"],B:["c0","g0","a2","e2","i2","c4","g4"]};   /* 帥、仕、相能放的格（紅方觀點，跟 varengine A_PTS／B_PTS 一樣）：點選時先擋、標綠點；最後仍以 validateSetup 為準 */
+const GXD_STD={a0:"R",b0:"N",c0:"B",d0:"A",e0:"K",f0:"A",g0:"B",h0:"N",i0:"R",b2:"C",h2:"C",a3:"P",c3:"P",e3:"P",g3:"P",i3:"P"};
+const GXD_STY=[["standard","標準陣"],["balanced","平衡陣"],["cavalry","騎兵陣"],["cannon","炮陣"],["wall","鐵壁"],["rook","俥陣"],["pawnsea","兵海"],["random","隨機陣"]];   /* 照 varengine STYLES */
+const GXD_OPP=["cavalry","cannon","wall","rook","pawnsea","balanced","random"];   /* 電腦每盤抽一種風格（照 varengine STYLE_LIST，定案「電腦同規則按風格擺」） */
+const GXD_GND=["taisu","tianyuan","yuxiu","quanxing","gouchen","beichen","ziyuan","yaoguang","kaiyang"];   /* 3D 對戰地面：借幻譜星門的星系地貌（data/gxground），照 journey 雜湊挑一張 */
+const GXD_TXT={omen:"圭影所指，今天眾人同下這一局。",free:"黑洞把棋子吸散了，親手把它們排回來。",win:"異象退散，星軌記下了你這一步。",lose:"影子還在圭上，再看一次。",
+  hiO:"今天的星象，所有人都下這一盤。",hiF:"你擺你的陣，我照星象回你一陣。"};
+const GXD_MEM={};   /* 這次開 App 算過的今日陣容（日期 → dailySetup 結果） */
+/* ---------- 純計算（不碰 DOM；測試用 vm 跑）---------- */
+const gxdDate=t=>new Date((t==null?Date.now():+t)+8*3600e3).toISOString().slice(0,10);   /* 臺灣日期（跟 varengine taiwanDate 同一個算法，全世界同一天同一題） */
+const gxdKind=j=>{const s=String(j||"");return/^gxd:\d{4}-\d\d-\d\d$/.test(s)?"omen":/^gxd:f/.test(s)?"free":null};
+const gxdIs=st=>!!st&&!!gxdKind(st.journey);
+const gxdFen=f=>String(f||"").trim().split(/\s+/)[0];
+function gxdHash(s){let h=2166136261;s=String(s);for(let i=0;i<s.length;i++){h^=s.charCodeAt(i);h=Math.imul(h,16777619)}return h>>>0}
+const gxdFreeId=fen=>"gxd:f"+gxdHash(gxdFen(fen)).toString(36);
+const gxdModes=()=>typeof GX_MODES!=="undefined"&&Array.isArray(GX_MODES)?GX_MODES:[["easy","輕鬆",-2],["std","標準",0],["hard","挑戰",2]];
+const gxdModeName=m=>(gxdModes().find(x=>x[0]===m)||gxdModes()[1])[1];
+function gxdLx(m,base){if(base==null){try{base=typeof bhLevel==="function"?bhLevel():8}catch(e){base=8}}const d=(gxdModes().find(x=>x[0]===m)||[0,0,0])[2]||0;return Math.max(1,Math.min(18,Math.round((+base||8)+d)))}
+/* jStart 的參數：玩家執紅、紅先；lx＝細分 1～18 級 */
+const gxdArgs=(fen,lx,j)=>({human:"r",lx,journey:j,lv:{fen:gxdFen(fen),turn:"r"}});
+const gxdPcs=s=>{const p=s&&s.pieces?s.pieces:s||{};if(Array.isArray(p)){const o={};for(const x of p)if(typeof x==="string")o[x.slice(1)]=x[0];return o}return p};
+function gxdCompTxt(s,side){const P=gxdPcs(s),c={};for(const k in P)c[P[k]]=(c[P[k]]||0)+1;return["R","N","C","A","B","P"].filter(t=>c[t]).map(t=>GXD_NM[side][t]+" "+c[t]).join("・")}
+/* 擺陣點一格：tool＝K A B N R C P 或 x（拿掉）。回 {L 新的陣, msg 擋下來的原因} */
+function gxdTap(L0,sq,tool){const L=Object.assign({},L0),cur=L[sq];
+  if(tool==="x"){if(cur==="K")return{L:L0,msg:"帥不能拿掉；選「帥」再點別格可以搬動它"};delete L[sq];return{L}}
+  if(tool==="K"){if(!GXD_OK.K.includes(sq))return{L:L0,msg:"帥要擺在九宮內"};if(cur==="K")return{L};for(const k in L)if(L[k]==="K")delete L[k];L[sq]="K";return{L}}
+  if(cur==="K")return{L:L0,msg:"這格是帥；要搬動帥，先選「帥」"};
+  if(cur===tool){delete L[sq];return{L}}
+  if(GXD_OK[tool]&&!GXD_OK[tool].includes(sq))return{L:L0,msg:tool==="A"?"仕只能擺在九宮的五個仕位（綠點）":"相只能擺在己方七個相位（綠點）"};
+  if(!cur&&Object.keys(L).length>=16)return{L:L0,msg:"已經 16 子了，先拿掉一顆"};
+  L[sq]=tool;return{L}}
+/* 今日成績：只留最新那一天 */
+function gxdOmenRec(date){const R=store.get("gxdOmen",null);return R&&R.d===date?R:{d:date,n:0,w:0,best:0}}
+const gxdRecTxt=R=>!R||!R.n?"今天還沒下過這一盤":`今天下了 ${R.n} 盤、贏 ${R.w} 盤${R.best?`；最快 ${R.best} 回合破解`:""}`;
+const gxdXpGot=date=>{try{return!!(store.get("xpKeys",{})||{})["gxd:"+date]}catch(e){return false}};
+function gxdFreeGet(){const F=store.get("gxdFree",null);return F&&typeof F==="object"?F:{}}
+/* ---------- 規則引擎（Magellan）：自己的 worker ---------- */
+let GXD_W=null,GXD_SEQ=0;const GXD_CB=new Map();
+function gxdWorker(){if(GXD_W)return GXD_W;const w=new Worker("varengine-worker.js");
+  w.onmessage=e=>{const d=e.data||{},cb=GXD_CB.get(d.id);if(cb){GXD_CB.delete(d.id);cb(d)}};
+  w.onerror=()=>{for(const[,cb]of GXD_CB)cb({ok:false,error:"規則引擎載入失敗"});GXD_CB.clear();if(GXD_W===w)GXD_W=null};GXD_W=w;return w}
+function gxdCall(cmd,...a){
+  if(typeof XQVar!=="undefined"&&XQVar&&typeof XQVar[cmd]==="function"){try{return Promise.resolve(XQVar[cmd](...a))}catch(e){return Promise.reject(e)}}   /* 主執行緒有 XQVar（測試）就直接算 */
+  return new Promise((res,rej)=>{let w;try{w=gxdWorker()}catch(e){rej(e);return}const id=++GXD_SEQ,tm=setTimeout(()=>{if(GXD_CB.delete(id))rej(new Error("規則引擎沒有回應"))},15000);
+    GXD_CB.set(id,d=>{clearTimeout(tm);if(d.ok)res(d.result);else rej(new Error(d.error||"規則引擎出錯"))});w.postMessage({id,cmd,args:a})})}
+function gxdWorkerEnd(){try{if(GXD_W)GXD_W.terminate()}catch(e){}GXD_W=null;for(const[,cb]of GXD_CB)cb({ok:false,error:"已關閉"});GXD_CB.clear()}
+const gxdDaily=date=>GXD_MEM[date]?Promise.resolve(GXD_MEM[date]):gxdCall("dailySetup",date).then(D=>{if(D&&D.fen)GXD_MEM[date]=D;return D});
+/* 電腦照風格擺黑方（避開將軍、照面），雙方一起再驗一次；回 {black, fen, sty} 或 null。avoid＝這次不要抽到的風格（「換一種」用：一定換一種風格） */
+async function gxdOppSetup(L,rnd,avoid){rnd=rnd||Math.random;const red={side:"r",pieces:L},S=GXD_OPP.filter(s=>s!==avoid);
+  for(let i=0;i<4;i++){const sty=S[Math.floor(rnd()*S.length)];try{const b=await gxdCall("genSetup",sty,{side:"b",against:red}),v=await gxdCall("validateSetup",{red,black:b});
+      if(v&&v.ok){const fen=await gxdCall("setupsToFen",red,b,"r");if(fen)return{black:b,fen,sty}}}catch(e){}}
+  return null}
+/* ---------- 開局 ---------- */
+function gxdOmenGo(D){const j="gxd:"+D.date,b=gxdArgs(D.fen,gxdLx("std"),j),nm=String(D.title||"").replace(/^今日異象：/,"");try{store.set("park3d",true)}catch(e){}
+  jStart(j,b,()=>{location.hash="#/journey/play";setTimeout(()=>toast("🌗 今日異象："+nm),600)},false)}
+/* 11/16 開發者選單「開局前先看到」：按開戰＝先抽電腦這盤的陣（gxdFreePick）給玩家看，可以「換一種」重抽，按「確定開戰」才開局（gxdFreeStart） */
+async function gxdFreePick(L,avoid){const v=await gxdCall("validateSetup",{side:"r",pieces:L});if(!v||!v.ok){toast((v&&v.errors&&v.errors[0])||"陣還沒擺好");return null}
+  const O=await gxdOppSetup(L,null,avoid);if(!O)toast("電腦這次擺不出陣，再按一次");return O}
+function gxdFreeStart(L,m,O,close){if(!O||!O.fen)return false;
+  const F=gxdFreeGet();F.lay=Object.assign({},L);F.m=m;F.opp=O.black.name||"";store.set("gxdFree",F);
+  const j=gxdFreeId(O.fen),b=gxdArgs(O.fen,gxdLx(m),j);if(close)close();try{store.set("park3d",true)}catch(e){}
+  jStart(j,b,()=>{location.hash="#/journey/play";setTimeout(()=>toast("🀄 電腦擺了「"+(O.black.name||"一陣")+"」"),600)},false);return true}
+/* 結果視窗的「再一盤」：同一個局面（st.start）、同一級（st.level 已是細分 1～18 級）；今日異象跨過午夜＝換今天的題 */
+function gxdAgain(st){const k=gxdKind(st.journey);
+  if(k==="omen"&&String(st.journey).slice(4)!==gxdDate()){toast("🌗 今天的異象換了");location.hash="#/guanxing";setTimeout(()=>gxdOmen(),400);return}
+  if(!st.start){location.hash="#/guanxing";setTimeout(()=>k==="free"?gxdFree():gxdOmen(),400);return}
+  jStart(st.journey,{human:"r",lx:st.level,journey:st.journey,lv:{fen:gxdFen(st.start),turn:"r"}},()=>{location.hash="#/journey/play"},true)}
+/* ---------- 結算（同一盤只算一次）---------- */
+function gxdSettle(st,forced){if(!gxdIs(st)||!st.id)return null;const D=store.get("gxdDone",null)||{};if(D.id===st.id)return D.r;
+  const res=st.result;if(!res&&!forced)return null;const me=st.human||"r",k=gxdKind(st.journey),won=forced?forced==="win":!!(res&&res.w===me),lost=forced?forced==="lose":!!(res&&res.w&&res.w!==me);
+  const r={k,won,lost,draw:!won&&!lost,rounds:Math.ceil((st.moves||[]).length/2)};
+  if(k==="omen"){const date=String(st.journey).slice(4),S=store.get("gxdOmen",null);
+    if(won){r.first=!gxdXpGot(date);try{if(typeof addXP==="function")addXP(GXD_XP,"今日異象","gxd:"+date)}catch(e){}}
+    if(!(S&&S.d>date)){const R=gxdOmenRec(date);R.n++;if(won){R.w++;R.best=R.best?Math.min(R.best,r.rounds):r.rounds}store.set("gxdOmen",R)}}   /* 午夜前開、午夜後才下完的舊題：修為照給，成績不蓋掉今天的 */
+  else{const F=gxdFreeGet();F.n=(F.n||0)+1;if(won)F.w=(F.w||0)+1;store.set("gxdFree",F)}
+  store.set("gxdDone",{id:st.id,r});return r}
+/* 08b 結果視窗（石桌往事分支叫） */
+function gxdResultModal(st,win,draw0,XPR){const r=gxdSettle(st)||{won:win,k:gxdKind(st.journey)},k=r.k||gxdKind(st.journey),why=esc((st.result&&st.result.why)||""),home=["回觀星臺",()=>{location.hash="#/guanxing"},true];
+  if(k==="omen"){const R=gxdOmenRec(String(st.journey).slice(4));
+    modal(`<div class="em">${win?"✨":draw0?"🤝":"🌗"}</div><h2>${win?"異象已破":draw0?"和局":"異象未解"}</h2><p class="muted">${why}・🌗 今日異象（不計積分、不扣分）</p>`+
+      `<p class="pl-say">✦ ${esc(win?GXD_TXT.win:GXD_TXT.lose)}</p>`+(r.first?`<p style="font-weight:900;margin:6px 0 0">🎁 今天第一次破解：另得 ${GXD_XP} 修為</p>`:"")+`<p class="muted" style="margin:6px 0 0">${esc(gxdRecTxt(R))}</p>`+(XPR||""),
+      [[win?"再玩一次":"再挑戰一次",()=>gxdAgain(st)],home],"res");return}
+  const F=gxdFreeGet();
+  modal(`<div class="em">${win?"🏆":draw0?"🤝":"💪"}</div><h2>${win?"陣成而勝":draw0?"和局":"這一陣輸了"}</h2><p class="muted">${why}・🀄 自由擺陣・${esc(gxdModeName(F.m))}（不計積分、不扣分）</p>`+
+    (F.opp?`<p style="margin:6px 0 0">電腦這盤擺的是「${esc(F.opp)}」。</p>`:"")+`<p class="muted" style="margin:6px 0 0">自由擺陣一共下了 ${F.n||0} 盤、贏 ${F.w||0} 盤</p>`+(XPR||""),
+    [["同一陣再下",()=>gxdAgain(st)],["重新擺陣",()=>{location.hash="#/guanxing";setTimeout(()=>gxdFree(),400)}],home],"res")}
+/* ---------- 3D：星空背景、點遠方的說明 ---------- */
+function gxdParkEx(st){if(!gxdIs(st))return null;const k=gxdKind(st.journey),om=k==="omen",nm=om?"今日異象":"自由擺陣";
+  return{bg:"data/park/blackhole_360.webp",ground:"data/gxground/"+GXD_GND[gxdHash(st.journey)%GXD_GND.length]+".webp",indoor:true,era:"classic",bgName:"🔭 觀星臺・"+nm,gxd:{k},oppHello:om?GXD_TXT.hiO:GXD_TXT.hiF,quietMate:true,watchers:[],crowd:null,
+    gate:{img:["data/guanxing/gx_tai_w.webp"],icon:om?"🌗":"🀄",title:nm,sub:om?GXD_TXT.omen:GXD_TXT.free,bg:"#05060d",quiet:true}}}
+function gxdParkInfo(k){let x=null;try{x=typeof PARK!=="undefined"&&PARK&&PARK.last&&PARK.last.ex&&PARK.last.ex.gxd||null}catch(e){}
+  if(!x||!(k==="bg"||/^(pano|map):/.test(String(k))))return false;const om=x.k==="omen";
+  sheet(om?"🌗 今日異象":"🀄 自由擺陣",b=>{b.innerHTML=`<div class="muted" style="margin:-4px 0 8px">觀星臺・天頂黑洞後面的星空</div><p style="line-height:1.8;margin:0;font-size:16px">${esc(om?"今天的異象所有人同一盤：陣容照圭表上的星象排好，隔天換一套。走法跟一般象棋一樣，將死對方就贏，可以一直重來。":"你親手擺的陣，電腦也照同樣的點數預算、按一種風格擺一陣。走法跟一般象棋一樣，將死對方就贏。")}</p>`});return true}
+/* ---------- 畫面 ---------- */
+function gxdCss(){if(document.getElementById("gxdCss"))return;const s=document.createElement("style");s.id="gxdCss";s.textContent=`
+.gxd-ov{position:fixed;inset:0;z-index:9500;background:radial-gradient(ellipse at 50% 0,#1b1838,#05060d 70%) #05060d;color:#f1e7cf;display:flex;flex-direction:column;overflow:auto;-webkit-overflow-scrolling:touch}
+.gxd-top{display:flex;align-items:center;gap:8px;padding:max(10px,env(safe-area-inset-top)) 12px 6px}.gxd-top b{flex:1;font:900 18px/1.3 var(--serif,serif);color:#ffe08a}
+.gxd-x{border:1.5px solid #6b5a33;background:rgba(20,16,12,.6);color:#f1e7cf;border-radius:999px;padding:0;min-width:44px;min-height:44px;display:inline-flex;align-items:center;justify-content:center;font:800 20px/1 inherit}
+.gxd-say{margin:0 14px 8px;font:700 14px/1.5 var(--serif,serif);color:#d9cfb6}
+.gxd-bd{display:grid;grid-template-columns:repeat(9,1fr);width:min(calc(100vw - 32px),430px);margin:0 auto;box-sizing:border-box;background:#d9c08a;border:2px solid #6b5a33;border-radius:8px;padding:3px}
+.gxd-c{position:relative;aspect-ratio:1;border:0;padding:0;margin:0;color:inherit;font:inherit;background:linear-gradient(#7a6338,#7a6338) center/1.2px 100% no-repeat,linear-gradient(#7a6338,#7a6338) center/100% 1.2px no-repeat}
+button.gxd-c{cursor:pointer;-webkit-tap-highlight-color:transparent}
+.gxd-c.ok::after{content:"";position:absolute;left:50%;top:50%;width:28%;height:28%;transform:translate(-50%,-50%);border-radius:50%;background:rgba(40,150,90,.6)}
+.gxd-p{position:absolute;inset:6%;border-radius:50%;display:flex;align-items:center;justify-content:center;font:900 clamp(14px,4.8vw,22px)/1 var(--serif,serif);background:#f6e7c4;border:2px solid currentColor;box-shadow:0 1px 2px rgba(0,0,0,.45)}
+.gxd-p.r{color:#b3261e}.gxd-p.b{color:#1f2b46}
+.gxd-rv{grid-column:1/-1;text-align:center;font:800 12px/1.8 var(--serif,serif);color:#6b5a33;letter-spacing:.4em}
+.gxd-card{margin:10px 12px max(14px,env(safe-area-inset-bottom));padding:12px 14px;border-radius:14px;background:rgba(30,26,40,.92);border:1.5px solid #4b3f6b}
+.gxd-card h3{margin:0 0 4px;font:900 18px/1.3 var(--serif,serif);color:#ffe08a}.gxd-card p{margin:4px 0;font-size:14.5px;line-height:1.6}
+.gxd-mut{color:#a99f88!important;font-size:13px!important}.gxd-sum{font:800 15px/1.5 var(--serif,serif)!important;color:#ffe08a}
+.gxd-btns{display:flex;flex-wrap:wrap;gap:8px;margin-top:10px}.gxd-btns button{flex:1 1 28%;min-width:84px;min-height:44px;padding:9px 0;border-radius:11px;font:900 16px/1.1 var(--serif,serif);border:1.5px solid #b58cff;background:#7a2bb5;color:#fff}
+.gxd-btns button[disabled]{opacity:.45}.gxd-btns button.alt{background:transparent;color:#f1e7cf;border-color:#6b5a33}.gxd-btns small{display:block;font-size:11px;opacity:.8;font-weight:700}
+.gxd-pal{display:flex;flex-wrap:wrap;gap:6px;margin:8px 0}.gxd-pal button{min-width:44px;min-height:44px;padding:4px 8px;border-radius:10px;border:1.5px solid #6b5a33;background:rgba(20,16,12,.6);color:#f1e7cf;font:800 16px/1.15 var(--serif,serif)}
+.gxd-pal button small{display:block;font-size:11px;opacity:.8}.gxd-pal button.on{border-color:#ffe08a;box-shadow:0 0 0 2px rgba(255,224,138,.6);color:#ffe08a}
+.gxd-chips{display:flex;flex-wrap:wrap;gap:6px;margin:4px 0 6px}.gxd-chips button{min-height:36px;padding:4px 11px;border-radius:999px;border:1.5px solid #4b3f6b;background:transparent;color:#d9cfb6;font:700 13.5px/1 var(--serif,serif)}
+.gxd-err{color:#ffb4a8;font-size:13px;line-height:1.55;margin:4px 0;padding-left:1.2em}`;document.head.append(s)}
+/* 棋盤：full＝十排（今日陣容預覽）；half＝紅方半場五排（擺陣）；edit＝每格是按鈕；ok＝標綠點的格 */
+function gxdBoard(red,black,o){o=o||{};const R=gxdPcs(red),B=gxdPcs(black),ranks=o.half?[4,3,2,1,0]:[9,8,7,6,5,4,3,2,1,0],rv=`<div class="gxd-rv" aria-hidden="true">楚河　漢界</div>`;let h=o.half?rv:"";
+  for(const k of ranks){if(!o.half&&k===4)h+=rv;
+    for(let f=0;f<9;f++){const sq="abcdefghi"[f]+k,t=R[sq],u=B[sq],sd=t?"r":u?"b":"",nm=sd?GXD_NM[sd][t||u]:"",ok=o.ok&&!t&&o.ok.includes(sq)?" ok":"",inner=sd?`<span class="gxd-p ${sd}">${nm}</span>`:"";
+      h+=o.edit?`<button type="button" class="gxd-c${ok}" data-sq="${sq}" aria-label="${sq}${nm?"，"+nm:"，空"}">${inner}</button>`:`<div class="gxd-c">${inner}</div>`}}
+  return`<div class="gxd-bd"${o.edit?"":` role="img" aria-label="${esc(o.label||"陣容")}"`}>${h}</div>`}
+/* 全螢幕外框（照幻譜星門的星空樣式）：右上 ✕、換頁就收掉、收掉時一起關 worker */
+function gxdOv(title,label){gxdCss();vibrate(8);const old=document.querySelector(".gxd-ov");if(old&&old._close)old._close();
+  const ov=document.createElement("div");ov.className="gxd-ov";ov.setAttribute("role","dialog");ov.setAttribute("aria-label",label);
+  ov.innerHTML=`<div class="gxd-top"><b>${esc(title)}</b><button class="gxd-x" type="button" aria-label="${esc("離開"+label)}">✕</button></div><div class="gxd-body"></div>`;
+  const h0=location.hash,onH=()=>{if(location.hash!==h0)close()},close=()=>{removeEventListener("hashchange",onH);ov.remove();gxdWorkerEnd()};
+  ov._close=close;addEventListener("hashchange",onH);ov.querySelector(".gxd-x").onclick=()=>{vibrate(5);close()};document.body.append(ov);return{ov,body:ov.querySelector(".gxd-body"),close}}
+/* 今日異象：當天陣容卡（陣名、紅黑各是什麼、今天的成績）＋「開始」 */
+async function gxdOmen(){const date=gxdDate(),{ov,body,close}=gxdOv("🌗 今日異象","今日異象");
+  body.innerHTML=`<p class="gxd-say">✦ ${esc(GXD_TXT.omen)}</p><p class="gxd-say">星象推演中…</p>`;
+  let D=null;try{D=await gxdDaily(date)}catch(e){}if(!ov.isConnected)return;
+  if(!D||!D.fen){body.innerHTML=`<p class="gxd-say">✦ 今天的星象還看不清楚，稍後再來。</p>`;return}
+  const R=gxdOmenRec(date),nm=String(D.title||"").replace(/^今日異象：/,"");
+  body.innerHTML=`<p class="gxd-say">✦ ${esc(GXD_TXT.omen)}</p>`+gxdBoard(D.red,D.black,{label:"今日陣容："+nm})+
+    `<div class="gxd-card"><h3>${esc(nm)}</h3><p>你執紅・${esc(D.red.name||"")}：${esc(gxdCompTxt(D.red,"r"))}</p><p>電腦執黑・${esc(D.black.name||"")}：${esc(gxdCompTxt(D.black,"b"))}</p>`+
+    `<p class="gxd-mut">${esc(gxdRecTxt(R))}</p><p class="gxd-mut">${gxdXpGot(date)?"今天的破解獎勵拿過了，可以繼續練":`今天第一次贏，另得 ${GXD_XP} 修為`}・不計積分、不扣分・明天換一套</p>`+
+    `<div class="gxd-btns"><button type="button" class="gxd-go">開始</button></div></div>`;
+  body.querySelector(".gxd-go").onclick=()=>{vibrate(5);close();gxdOmenGo(D)}}
+/* 自由擺陣：紅方半場點選擺子、點數預算、照風格一鍵擺、三檔難度 */
+function gxdFree(){const{ov,body,close}=gxdOv("🀄 自由擺陣","自由擺陣"),F0=gxdFreeGet();
+  let L=Object.assign({},F0.lay&&typeof F0.lay==="object"&&Object.keys(F0.lay).length?F0.lay:GXD_STD),tool="P",seq=0,V=null,busy=false;
+  body.innerHTML=`<div class="gxd-ed"><p class="gxd-say">✦ ${esc(GXD_TXT.free)}</p><div class="gxd-bw"></div><div class="gxd-card"><p class="gxd-sum" aria-live="polite"></p>`+
+    `<div class="gxd-pal" role="group" aria-label="選一種棋子，再點棋盤">${["K","A","B","N","R","C","P"].map(t=>`<button type="button" data-t="${t}" aria-label="${GXD_NM.r[t]}${t==="K"?"，搬動":"，"+GXD_COST[t]+" 分"}">${GXD_NM.r[t]}<small>${t==="K"?"搬動":GXD_COST[t]+" 分"}</small></button>`).join("")}<button type="button" data-t="x" aria-label="拿掉">✕<small>拿掉</small></button></div>`+
+    `<ul class="gxd-err"></ul><p class="gxd-mut">一鍵照風格擺（擺完還能自己改）：</p><div class="gxd-chips">${GXD_STY.map(([k,n])=>`<button type="button" data-s="${k}">${esc(n)}</button>`).join("")}<button type="button" data-s="clear">清空</button></div>`+
+    `<p class="gxd-mut">16 子、一定有帥；仕、相只能放綠點。電腦用同樣的點數預算，每盤抽一種風格擺陣。不計積分、不扣分。</p>`+
+    `<div class="gxd-btns">${gxdModes().map(([k,l,d])=>`<button type="button" data-m="${k}" aria-label="${esc(l)}：電腦${d?(d>0?"強":"弱")+Math.abs(d)+"級":"跟你差不多"}">${esc(l)}<small>${d?(d>0?"電腦強 ":"電腦弱 ")+Math.abs(d)+" 級":"跟你差不多"}</small></button>`).join("")}</div></div></div><div class="gxd-pv" hidden></div>`;   /* gxd-ed＝擺陣；gxd-pv＝開局前先看電腦這盤的陣（11/16 開發者選單） */
+  const bw=body.querySelector(".gxd-bw"),sum=body.querySelector(".gxd-sum"),err=body.querySelector(".gxd-err"),mb=[...body.querySelectorAll("[data-m]")];
+  const save=()=>{const F=gxdFreeGet();F.lay=Object.assign({},L);store.set("gxdFree",F)};
+  const drawB=()=>{bw.innerHTML=gxdBoard({pieces:L},null,{half:true,edit:true,ok:GXD_OK[tool]});body.querySelectorAll("[data-t]").forEach(b=>{b.classList.toggle("on",b.dataset.t===tool);b.setAttribute("aria-pressed",b.dataset.t===tool?"true":"false")})};
+  const check=()=>{const my=++seq,n=Object.keys(L).length;V=null;mb.forEach(b=>b.disabled=true);sum.textContent=`已擺 ${n}／16 子・點數計算中…`;
+    gxdCall("validateSetup",{side:"r",pieces:L}).then(v=>{if(my!==seq||!ov.isConnected)return;V=v;
+      sum.textContent=`已擺 ${n}／16 子・用了 ${v.cost&&v.cost.r!=null?v.cost.r:"?"} 分（預算 ${v.budget} 分）${v.ok?"・可以開戰":""}`;
+      err.innerHTML=(v.errors||[]).slice(0,4).map(e=>`<li>${esc(e)}</li>`).join("");mb.forEach(b=>b.disabled=!v.ok||busy)}).catch(()=>{if(my!==seq||!ov.isConnected)return;sum.textContent="規則引擎載入失敗，稍後再試"})};
+  bw.onclick=e=>{const c=e.target.closest("[data-sq]");if(!c)return;const r=gxdTap(L,c.dataset.sq,tool);if(r.msg){toast(r.msg);return}vibrate(5);L=r.L;save();drawB();check()};
+  body.querySelectorAll("[data-t]").forEach(b=>b.onclick=()=>{vibrate(5);tool=b.dataset.t;drawB()});
+  body.querySelectorAll("[data-s]").forEach(b=>b.onclick=()=>{vibrate(5);const s=b.dataset.s;if(s==="clear"){L={e0:"K"};save();drawB();check();return}
+    gxdCall("genSetup",s,{side:"r"}).then(x=>{if(!ov.isConnected)return;L=Object.assign({},gxdPcs(x));save();drawB();check();toast("照「"+(x.name||"")+"」擺好了，可以再自己改")}).catch(()=>toast("這種風格這次擺不出來，換一種試試"))});
+  mb.forEach(b=>b.onclick=async()=>{if(b.disabled||busy)return;if(!V||!V.ok){toast((V&&V.errors&&V.errors[0])||"陣還沒擺好");return}vibrate(5);busy=true;mb.forEach(x=>x.disabled=true);sum.textContent="電腦擺陣中…";
+    let O=null;try{O=await gxdFreePick(L)}catch(e){toast("規則引擎載入失敗，稍後再試")}busy=false;if(!ov.isConnected)return;if(O)showPv(b.dataset.m,O);else check()});
+  /* 開局前先看到：陣名、紅黑各有什麼子、整盤預覽；「換一種」一定換一種風格重抽，「回去改陣」回擺陣畫面，「確定開戰」才 jStart */
+  const ed=body.querySelector(".gxd-ed"),pv=body.querySelector(".gxd-pv");
+  const showPv=(m,O)=>{ed.hidden=true;pv.hidden=false;const nm=O.black.name||"一陣";
+    pv.innerHTML=`<p class="gxd-say">✦ 電腦照星象回了一陣，先看清楚再開戰。</p>`+gxdBoard({pieces:L},O.black,{label:"這一盤：你的陣對電腦的"+nm})+
+      `<div class="gxd-card"><h3>電腦擺「${esc(nm)}」</h3><p>你執紅：${esc(gxdCompTxt({pieces:L},"r"))}</p><p>電腦執黑・${esc(nm)}：${esc(gxdCompTxt(O.black,"b"))}</p><p class="gxd-mut">難度：${esc(gxdModeName(m))}・不計積分、不扣分</p>`+
+      `<div class="gxd-btns"><button type="button" data-pv="go">確定開戰</button><button type="button" class="alt" data-pv="re">換一種</button><button type="button" class="alt" data-pv="bk">回去改陣</button></div></div>`;
+    try{ov.scrollTop=0}catch(e){}const pb=[...pv.querySelectorAll("[data-pv]")];
+    pv.querySelector('[data-pv="go"]').onclick=()=>{if(busy)return;vibrate(5);gxdFreeStart(L,m,O,close)};
+    pv.querySelector('[data-pv="bk"]').onclick=()=>{if(busy)return;vibrate(5);pv.hidden=true;pv.innerHTML="";ed.hidden=false;check()};
+    pv.querySelector('[data-pv="re"]').onclick=async()=>{if(busy)return;vibrate(5);busy=true;pb.forEach(x=>x.disabled=true);let O2=null;try{O2=await gxdFreePick(L,O.sty)}catch(e){toast("規則引擎載入失敗，稍後再試")}
+      busy=false;if(!ov.isConnected)return;if(O2)showPv(m,O2);else pb.forEach(x=>x.disabled=false)}};
+  drawB();check()}
+/* ---------- 接到既有流程 ---------- */
+if(typeof journeyGameEnd==="function"){const f0=journeyGameEnd;journeyGameEnd=function(st){const r=f0.apply(this,arguments);try{if(st&&st.result&&gxdIs(st))gxdSettle(st)}catch(e){}return r}}   /* 07-legend：一般修為照給，這裡記成績、今日異象第一次贏另給 */
+if(typeof jName==="function"){const f1=jName;jName=function(j){const k=gxdKind(j);if(k)return k==="omen"?"觀星臺・今日異象":"觀星臺・自由擺陣";return f1.apply(this,arguments)}}
+if(typeof gxParkEx==="function"){const f2=gxParkEx;gxParkEx=function(st){const r=f2.apply(this,arguments);if(r)return r;try{return gxdParkEx(st)}catch(e){return null}}}
+if(typeof gxParkInfo==="function"){const f3=gxParkInfo;gxParkInfo=function(k){try{if(gxdParkInfo(k))return true}catch(e){}return f3.apply(this,arguments)}}
 /* ================= 🏮 西市：首頁橋左邊的生活場景（開發者 11/13；文案照 story/西市文案定稿草案_1113.md，第五節 18 項全照推薦；前綴 xsm／XSM，11/13 grep 過沒撞名：xm 已被 01-board 的混音器用掉）=================
    路由 #/ximarket（西市外景）、#/ximarket/tea（聽雨茶坊內景）、#/ximarket/dark（茶坊的臺灣暗棋，07xsd）（02-shell）。
    入口：首頁橋左邊一個「🏮 西市」場景標籤（#hmXsm；跟 07gxt 觀星臺一樣包 07z 的 Home／hmwSet，不改 HM_SPOTS、不動 07y；原圖、iPad 直版 p34、橫版 l1610 各一組座標 XSM_HOME，避開左岸告示牌）。
@@ -21716,21 +21941,68 @@ if(DGL_ON&&typeof window!=="undefined"){
    走路角色：外景接 07w shwPage（座標表 XSM_WALK，量 park/ximarket/xm_day.png）；茶坊內景不放走路角色。
    存檔鍵 xsmSeen（05b JOURNEY_KEYS）。平日體力 07dgl：#/ximarket 不在星槎、也不在「不算」那組，照預設算人間。
    純計算 xsmGot／xsmDay／xsmPickDay／xsmSrc／xsmSpots 不碰 DOM，測試 xiangqi-lab/tools/test-ximarket.js 用 vm 跑。
-   還沒做：配樂（第 13 項：「西市燈影」「聽雨暗棋」還沒有檔）、各攤玩法、考究說明卡（出處待史學顧問核）。 */
+   還沒做：考究說明卡（出處待史學顧問核）。
+   11/16 開發者：其他四攤開張（文案照定稿草案第一節第 5、6 項；第五節第 7、8、9、17 項照推薦），標籤不再帶鎖：
+     領禮物（雲河櫃坊）：列出 07mnq 的大禮包——還沒領的（授印禮、破局錦囊、停靠過的每一朝的遠征補給）點了就領（mnqGift 儀式，發的東西照 07mnq），領過的點了再看一次。不另外發新東西、不加新貨幣。
+     七星來訪（老槐樹下）：每天保證有一位，只挑已加入的夥伴（07pty ptyHas），不挑陪在身邊的那位（首頁小人 myChar，跟 07j 一樣）；同一天固定同一位（存 xsmStall.v）。
+       說一句西市招呼（XSM_V7，主句／備用照日期輪；雷借花主句分日夜）；他手上有 07j 的請託就接 07j 的任務卡（v7Sheet，謝禮照 07j 15 修為），沒有就送一份小禮（每天一次 +10 修為）。
+       見到了也記進 07j 的 visit7（算進每天 3 位、來過幾次）。只有自己一個人（還沒有別的夥伴）＝「今天很清靜」。
+     找棋子（棋具攤）：每天 1 顆，七顆一副（俥傌帥仕相兵炮，照 07pty 加入順序）；藏點每天從 XSM_HIDE 13 處挑一處（照日期算，同一天同一處、跟前一天不同）；
+       外景圖上畫一顆小棋子，點到它 28px 內就算找到（07q bdNear 的做法，量的是畫面上的 px）；+10 修為，湊齊七顆再 +50 修為和一次蓋印。修為紀錄用 xsmf:<日期>、xsmf7:<第幾副> 當鍵，同一顆不會給兩次。
+     聽曲（西市樂棚）：停靠過的朝代（shipDockList＋青石園），那一朝 7 首全收（data/bgm/index.json）；點了用 01-board 的背景音樂播（bgmForce「朝代/檔名」），再點一下停＝換回西市的背景配樂。
+     西市背景配樂（第 13 項的「西市燈影」「聽雨暗棋」還沒有檔，先借三首；茶坊、暗棋同一組）：白天＝漢 han/paixiao_6（排簫）、唐 tang/pipa_1（琵琶）輪流（漢唐長安的西市）；
+       夜裡＝宋 song/qin_3（古琴）、唐 tang/pipa_1 輪流（說明卡寫的「借宋代夜市和唐代上元燈會」）。離開 #/ximarket 就還給朝代配樂（bgmForce(null)）；背景音樂關著就不放。
+     首頁「🏮 西市」、外景的「領禮物」「七星來訪」：有禮可領、有人來訪還沒見到時發亮（.hot，第 17 項 A，不加數字）。存檔鍵 xsmStall（05b JOURNEY_KEYS）。 */
 const XSM_ON=true,XSM_IMGV="1113";   /* 圖的版本：同檔名換圖時改掉，手機才會重抓 */
 const XSM_OFF="還沒開張，敬請期待。";
 const XSM_TX={pos:"各朝的貨色，都在這裡湊成一市。",intro:"西市，原本是城西那座市集的名字。漢朝、唐朝的長安城都有。千秋時光之苑不屬於任何朝代，各朝的貨色就都擺到這裡來了。"};
 /* [id, 大字, 左%, 上%, 還沒開張？]（量 xm_day 768×1376；標籤放在攤位上方，不擋主體） */
 const XSM_SPOTS=[
-  ["xsmGift","領禮物",17,39,1],   /* 左邊櫃坊：櫃台上的布簾 */
-  ["xsmMusic","聽曲",64,47.5,1],   /* 樂棚：掛琵琶、拍板的木架上方 */
+  ["xsmGift","領禮物",17,39,0],   /* 左邊櫃坊：櫃台上的布簾（11/16 開張） */
+  ["xsmMusic","聽曲",64,47.5,0],   /* 樂棚：掛琵琶、拍板的木架上方（11/16 開張） */
   ["xsmTea","暗棋",86,44,0],   /* 右邊聽雨茶坊：竹簾 */
-  ["xsmChess","找棋子",38,61,1],   /* 左下棋具攤：棋盒、棋子袋那張桌子上方的簷下 */
-  ["xsmVisit","七星來訪",81,74,1]];   /* 市門右邊的老槐樹：樹下石墩、木凳上方 */
+  ["xsmChess","找棋子",38,61,0],   /* 左下棋具攤：棋盒、棋子袋那張桌子上方的簷下（11/16 開張） */
+  ["xsmVisit","七星來訪",81,74,0]];   /* 市門右邊的老槐樹：樹下石墩、木凳上方（11/16 開張） */
 const XSM_TEA_SPOTS=[["xsmDark","暗棋",50,44,0]];   /* 茶坊中間那張暗棋桌（量 xm_tea 768×1376）；11/14 開張：點了開一盤臺灣暗棋（07xsd-xsmdark.js） */
 const XSM_HOME={"":[16,59],p34:[16,60],l1610:[19,71]};   /* 首頁橋左邊（跟觀星臺 GXT_HOME 左右對稱，再往下挪開左岸告示牌；原圖量 home_classic 768×1376，p34 量 1536×2048，l1610 量 2560×1600） */
 const XSM_RAIN=[[53,12,60,31],[69.5,14,82,36]];   /* 茶坊窗外看得到雨的兩塊（左、上、右、下 %） */
 const XSM_BAD={};   /* 這次開 App 載不到的圖（d＝白天、n＝夜景），換另一張不再試 */
+/* ---------- 11/16 四攤的資料 ---------- */
+Object.assign(XSM_TX,{
+  gift:"櫃坊，是古時替人寄放財物的店。旅途中送到的禮，都先收在這裡，想看、想領，隨時可以來。",g1:"{你}的禮，櫃上都收好了，一樣不少。",g0:"禮都領了。下回有新的，再來櫃上看看。",
+  v1:"老槐樹下有人停下腳步，像是在等{你}。",v0:"老槐樹下今天很清靜，還沒有人來。",vGot:"今天的小禮收下了。",
+  c0:"攤上的棋子散了一地。七種棋子各少一顆，藏在西市的角落裡，幫攤主找回來吧。",c1:"哎呀，少了好幾顆！少一顆，這副棋就下不成了。",c2:"找到了，就是這顆。",c3:"一副棋，一顆都不能少。多謝{你}。",cDone:"今天這顆找到了，明天再來幫我看看。",
+  mu:"旅途中聽過的曲子，都收在這裡。想再聽一遍，就來樂棚坐坐。",mu2:"唐朝有一年長安大旱，東市、西市搭樓比賽彈奏求雨。東市請來第一名的琵琶手，西市樓上卻有人彈得更好。",
+  muMore:"星槎停靠新的朝代，那一朝的曲子就會收進樂棚。",muOff:"背景音樂關著：到設定 → 聲音打開，才聽得到。"});
+/* 七星到西市的招呼（定稿草案第一節第 6 項）：[主句, 備用]；雷借花主句分 [夜, 白天]。{名}、{你} 照 07j v7Txt 換 */
+const XSM_V7={x_swordboy:["這裡的街橫平豎直，像車轍。好走。","字我認不多。{名}，這價錢，{你}幫我看。"],
+  x_miaogirl:["前頭擠？那我從旁邊繞過去，一樣到！","嘿嘿，我聞到燒餅香了！{名}，走嘛！"],
+  x_shuai:["{名}，勞{你}稍候。這攤的秤，我想多看一眼。","難得這樣逛市集。原來市集的聲音，這麼熱鬧。"],
+  x_shi:["人多。{你}走前頭，我在後面。","方庭在看秤。……沒事。"],
+  x_spiritgirl:["人多，{名}，走近些，別走散了。","我想買些鹽，家裡的罐子快空了。"],
+  x_bing:["問價、跑腿，我最快！{名}，要問哪一攤？","我不賭錢。翻暗棋就翻暗棋，誰輸了，再來一局！"],
+  x_martialgirl:[["{名}！這邊這邊！好多燈，跟臨安的夜市一樣亮！","{名}！這邊攤子好多，我一攤都不想漏！"],"那聲鼓……不是打雷吧？不是就好！"]};
+const XSM_VISIT_XP=10,XSM_FIND_XP=10,XSM_SET_XP=50,XSM_TOL=28;   /* 修為：小禮、找到一顆、湊齊一副（照 07j 請託 15、07q 找東西的量級）；點到藏點幾 px 內算找到 */
+const XSM_PCS=["俥","傌","帥","仕","相","兵","炮"];   /* 一副七顆，照 07pty 加入順序（俥齊轍、傌駱躍梅、帥沈方庭、仕鐵連城、相田飛燕、兵步越溪、炮雷借花） */
+/* 找棋子的藏點 [左%, 上%]（量 park/ximarket/xm_day.png 768×1376，日夜同位置；離五個攤位標籤、出口、市門都遠一點） */
+const XSM_HIDE=[[10,20.5],   /* 池邊柳樹根 */
+  [26,19.5],   /* 池裡的蘆葦邊 */
+  [54,39.8],   /* 中間鋪子桌上的木箱旁 */
+  [71,38.5],   /* 市樓的木柱腳 */
+  [4.5,53],   /* 櫃坊旁的盆栽 */
+  [77.5,56.5],   /* 茶坊門口的石階 */
+  [66,58.5],   /* 樂棚木架的腳 */
+  [27.5,69],   /* 棋具攤的小鼓凳 */
+  [52.5,71],   /* 側放的木棋盤 */
+  [15.5,79.5],   /* 棋具攤前的石階 */
+  [34,87.5],   /* 夯土牆邊的矮樹叢 */
+  [68,82],   /* 市門裡的木桶 */
+  [92,91.5]];   /* 老槐樹下的石墩 */
+/* 西市背景配樂（借三首；白天漢唐、夜裡宋夜市＋唐上元燈會，見最上面說明）。同一個陣列物件傳給 bgmForce，才認得出是西市放的 */
+const XSM_BGM_D=["han/paixiao_6.mp3","tang/pipa_1.mp3"],XSM_BGM_N=["song/qin_3.mp3","tang/pipa_1.mp3"];
+const XSM_MU={f:null};   /* 樂棚正在放的那首（朝代/檔名）；null＝放西市背景配樂 */
+const XSM_INS={zheng:"古箏",bianzhong:"編鐘",paixiao:"排簫",xun:"塤",ruan:"阮",konghou:"箜篌",dizi:"笛子",pipa:"琵琶",xiao:"洞簫",qin:"古琴",morinkhuur:"馬頭琴",sanxian:"三弦",erhu:"二胡"};   /* 同 01-board bgmNow */
+const XSM_ERAS=["classic","qin","han","sanguo","weijin","nanbei","sui","tang","wudai","song","yuan","ming","qing"];   /* 沒有 shipOrder 時的朝代順序 */
 /* ---------- 走路角色（外景）：N＝腳踩的青石路面，E＝走的路（避開櫃坊、中間鋪子、左下棋具攤的屋子和桌子、樂棚木架、茶坊、市門兩根柱子的腳、木桶、老槐樹、石墩木凳）。
    home＝市門裡面；市門外的石板路通到老槐樹下（七星來訪）。身高照茶坊門高約圖高 14% 換算 ---------- */
 const XSM_WALK={W:768,H:1376,el:38,home:"home",look0:[50,95],h:[.09,60,.0006],
@@ -21751,6 +22023,37 @@ const xsmPickDay=day=>day?!XSM_BAD.d:(!!XSM_BAD.n&&!XSM_BAD.d);
 const xsmSrc=(day,tea)=>tea?`data/ximarket/xm_tea.webp?v=${XSM_IMGV}`:`data/ximarket/xm_${xsmPickDay(day)?"day":"night"}.webp?v=${XSM_IMGV}`;
 /* 標籤 [id,左,上,大字,還沒開張] */
 const xsmSpots=L=>(L||XSM_SPOTS).map(s=>[s[0],s[2],s[3],s[1],!!s[4]]);
+/* ---------- 11/16 四攤的純計算（不碰 DOM；test-xsm-stalls-1116.js 用 vm 跑） ---------- */
+/* 字串雜湊（FNV-1a）：照日期挑人、挑藏點、挑句子，同一天算出來都一樣 */
+function xsmHash(s){let h=2166136261;s=String(s);for(let i=0;i<s.length;i++){h^=s.charCodeAt(i);h=Math.imul(h,16777619)>>>0}return h>>>0}
+/* 前一天（"YYYY-MM-DD"） */
+function xsmPrevDay(day){const m=/^(\d+)-(\d+)-(\d+)$/.exec(String(day||""));if(!m)return"";const d=new Date(+m[1],+m[2]-1,+m[3]-1);return d.getFullYear()+"-"+String(d.getMonth()+1).padStart(2,"0")+"-"+String(d.getDate()).padStart(2,"0")}
+/* 這一天藏在哪一處（XSM_HIDE 的序號）：照日期算；跟前一天同一處就往下挪一格 */
+function xsmHideIdx(day){const n=XSM_HIDE.length,raw=d=>xsmHash("hide"+d)%n,i=raw(day),p=xsmPrevDay(day);return p&&raw(p)===i?(i+1)%n:i}
+const xsmHideOf=day=>XSM_HIDE[xsmHideIdx(day)];
+/* 點到的位置 p（圖上 %）離藏點 s（%）在 tol px 以內？w、h＝圖在畫面上的寬高（px） */
+const xsmNear=(s,p,w,h,tol)=>!!(s&&p)&&Math.hypot((p[0]-s[0])*w/100,(p[1]-s[1])*h/100)<=(tol==null?XSM_TOL:tol);
+/* 找棋子的進度：n＝這一副找到幾顆、sets＝湊齊幾副、day＝最後一次找到的日期、tot＝總共找到幾顆 */
+const xsmFindNorm=F=>{F=F&&typeof F==="object"?F:{};return{n:Math.max(0,Math.min(6,F.n|0)),sets:Math.max(0,F.sets|0),day:typeof F.day==="string"?F.day:"",tot:Math.max(0,F.tot|0)}};
+const xsmPieceOf=F=>XSM_PCS[xsmFindNorm(F).n];
+/* 這一天找到一顆：同一天找過＝null（不再給）；回 {F 新進度, pc 找到哪顆, full 湊齊了沒, xp 這次總共給多少} */
+function xsmFindGo(F,day){F=xsmFindNorm(F);if(!day||F.day===day)return null;const pc=XSM_PCS[F.n],n=F.n+1,full=n>=XSM_PCS.length;
+  return{F:{n:full?0:n,sets:F.sets+(full?1:0),day,tot:F.tot+1},pc,full,xp:XSM_FIND_XP+(full?XSM_SET_XP:0)}}
+/* 今天誰來老槐樹下：mem＝已加入的夥伴、look＝陪在身邊的那位（不來）；prev＝存檔裡今天已經挑好的 {d,c}（還在名單裡就照舊，同一天不換人） */
+function xsmVisitPick(day,mem,look,prev){const L=(mem||[]).filter(c=>c!==look&&XSM_V7[c]);if(!L.length)return null;
+  if(prev&&prev.d===day&&L.includes(prev.c))return prev.c;return L[xsmHash("visit"+day)%L.length]}
+/* 招呼哪一句：照日期在主句、備用之間輪；雷借花主句分日夜 */
+function xsmVisitLine(c,day,isDay){const A=XSM_V7[c];if(!A)return"";let s=A[xsmHash(c+day)%2];if(Array.isArray(s))s=s[isDay?1:0];return s}
+/* 樂棚收了哪幾朝：O＝航線順序、D＝停靠過的站（shipDockList；沒有旅程＝null）；青石園一開始就在 */
+const xsmMuEras=(O,D)=>(O||XSM_ERAS).filter((e,i,a)=>a.indexOf(e)===i&&(e==="classic"||(Array.isArray(D)&&D.includes(e))));
+/* 樂棚的曲目：IX＝data/bgm/index.json；每朝 7 首全收 → ["朝代/檔名"] */
+const xsmMuList=(eras,IX)=>(eras||[]).flatMap(e=>((IX||{})[e]||[]).map(f=>e+"/"+f));
+/* 櫃坊的禮：S＝07mnq 存檔、E＝mnqEnv()、D＝停靠過的站。還沒領的排前面；授印禮要有角色、破局錦囊要贏過，遠征補給是停靠過的每一朝（青石園沒有） */
+function xsmGifts(S,E,D){S=S||{};E=E||{};const G=S.gift||{},A6=G.a6||{},o=[];
+  if(G.a1||E.hasChar)o.push({k:"a1",got:!!G.a1});if(G.a2||E.firstWin)o.push({k:"a2",got:!!G.a2});
+  const eras=(Array.isArray(D)?D:[]).filter(e=>e!=="classic");for(const e of Object.keys(A6))if(A6[e]&&!eras.includes(e))eras.push(e);
+  for(const e of eras)o.push({k:"a6",era:e,got:!!A6[e]});
+  return o.filter(g=>!g.got).concat(o.filter(g=>g.got))}
 /* ---------- 畫面 ---------- */
 function xsmCss(){if(document.getElementById("xsmCss"))return;const s=document.createElement("style");s.id="xsmCss";s.textContent=`
 .xsm-page{margin:0 0 6px}.xsm-page .shp-spot{max-width:46%;padding:4px 11px;z-index:3}.xsm-page .shp-spot b{white-space:nowrap;font-size:15px;letter-spacing:.06em}
@@ -21758,11 +22061,28 @@ function xsmCss(){if(document.getElementById("xsmCss"))return;const s=document.c
 .xsm-tea .xsm-rain{position:absolute;z-index:1;pointer-events:none;overflow:hidden;opacity:.6;background-image:repeating-linear-gradient(100deg,rgba(255,255,255,0) 0 9px,rgba(232,240,250,.6) 9px 10px,rgba(255,255,255,0) 10px 23px);background-size:46px 58px;animation:xsmRain .55s linear infinite}
 @keyframes xsmRain{to{background-position:-10px 58px}}
 .xsm-tea::after{content:"";position:absolute;inset:0;z-index:1;pointer-events:none;background:rgba(16,24,58,.4);mix-blend-mode:multiply;opacity:0;transition:opacity .6s}.xsm-tea[data-day=""]::after{opacity:1}
-@media (prefers-reduced-motion:reduce){.xsm-tea .xsm-rain{animation:none}}`;document.head.append(s)}
+@media (prefers-reduced-motion:reduce){.xsm-tea .xsm-rain{animation:none}}
+.xsm-pc{position:absolute;z-index:2;width:22px;height:22px;margin:-11px 0 0 -11px;box-sizing:border-box;border-radius:50%;background:radial-gradient(circle at 40% 35%,#f6e7c4,#d4b072);border:1.5px solid #7a4a1f;color:#a3271d;font:900 13px/19px var(--serif,serif);text-align:center;pointer-events:none;opacity:.85;transform:rotate(-14deg);box-shadow:0 1px 2px rgba(0,0,0,.4)}
+.xsm-pc.glow{animation:xsmGlow 1s ease-in-out 3}.xsm-pc.got{animation:xsmGot .9s ease-out forwards}
+@keyframes xsmGlow{50%{opacity:1;box-shadow:0 0 0 6px rgba(242,201,76,.75),0 0 16px rgba(242,201,76,.95)}}@keyframes xsmGot{to{opacity:0;transform:translateY(-26px) scale(1.7)}}
+.xsm-ban{position:absolute;left:8px;right:8px;top:8px;z-index:6;display:flex;align-items:center;gap:8px;padding:6px 8px 6px 12px;border-radius:12px;background:rgba(28,22,16,.84);color:#fff3d6;font:700 15px/1.4 var(--serif,serif);box-shadow:0 3px 10px rgba(0,0,0,.3)}
+.xsm-ban b{flex:1;min-width:0}.xsm-ban button{flex:none;min-height:36px;padding:0 10px;border-radius:99px;border:1px solid rgba(232,199,122,.6);background:rgba(0,0,0,.3);color:#f2e4c4;font:700 14px var(--sans,sans-serif)}
+.xsm-nar{margin:0 0 8px;color:var(--muted);font:15px/1.75 var(--serif,serif)}.xsm-say{margin:0 0 10px;font:16px/1.8 var(--serif,serif)}
+.xsm-v{display:flex;gap:12px;align-items:center;margin:4px 0 8px}.xsm-v img{width:84px;height:112px;object-fit:contain;flex:none}.xsm-v .xsm-say{margin:0}
+#sheet .xsm-v~.btn,#sheet .xsm-say~.btn{width:100%;margin-top:8px}
+.xsm-li{display:flex;align-items:center;gap:10px;width:100%;min-height:50px;padding:8px 12px;margin:0 0 8px;border-radius:12px;border:1px solid rgba(138,90,43,.35);background:rgba(246,238,220,.55);color:inherit;font:700 17px/1.3 var(--serif,serif);text-align:left;cursor:pointer}
+.xsm-li span{font-size:20px;flex:none}.xsm-li b{flex:1;min-width:0}.xsm-li em{flex:none;font:700 14px var(--sans,sans-serif);font-style:normal;color:#8a5a2b}.xsm-li.new{border:1.5px solid #B5452B}.xsm-li.new em{color:#B5452B}
+.xsm-row{display:flex;gap:6px;justify-content:center;margin:10px 0}.xsm-row span{width:36px;height:36px;box-sizing:border-box;border-radius:50%;display:flex;align-items:center;justify-content:center;font:900 18px var(--serif,serif);border:2px dashed #b9a684;color:#b9a684}
+.xsm-row span.on{border:2px solid #7a4a1f;background:#f3e2bd;color:#a3271d}
+.xsm-mu{display:flex;align-items:center;gap:8px;width:100%;min-height:46px;padding:6px 12px;margin:0 0 6px;border-radius:12px;border:1px solid rgba(138,90,43,.3);background:rgba(246,238,220,.5);font:700 17px var(--serif,serif);color:inherit;text-align:left;cursor:pointer}
+.xsm-mu b{flex:1;min-width:0;font-weight:700}.xsm-mu small{flex:none;font:13px var(--sans,sans-serif);color:var(--muted)}.xsm-mu.on{border:1.5px solid #B5452B;background:rgba(242,201,76,.18)}
+.xsm-seal{width:104px;height:104px;margin:4px auto 12px;box-sizing:border-box;border:6px solid #c0392b;border-radius:12px;background:rgba(246,236,214,.9);color:#b3261e;display:flex;align-items:center;justify-content:center;font:900 58px/1 var(--serif,serif);transform:rotate(-6deg)}
+@media (prefers-reduced-motion:reduce){.xsm-pc.glow{animation:none;opacity:1;box-shadow:0 0 0 6px rgba(242,201,76,.75)}.xsm-pc.got{animation:none;opacity:0}}`;document.head.append(s)}
 /* 標籤按鈕（旁白、Tab 順序＝由上到下、同一列由左到右：07z hmFocusOrder） */
 function xsmBtns(L){const S=xsmSpots(L),O=typeof hmFocusOrder==="function"?hmFocusOrder(S):S;
   return O.map(([id,x,y,t,off])=>`<button type="button" class="shp-spot${off?" lock":""}" id="${id}" style="left:${x}%;top:${y}%" aria-label="${esc(t+(off?"，還沒開張":""))}"><b>${off?"🔒 ":""}${esc(t)}</b></button>`).join("")}
-const XSM_ACT={xsmTea:()=>{location.hash="#/ximarket/tea"},xsmDark:()=>{location.hash="#/ximarket/dark"}};
+const XSM_ACT={xsmTea:()=>{location.hash="#/ximarket/tea"},xsmDark:()=>{location.hash="#/ximarket/dark"},
+  xsmGift:()=>xsmGiftSheet(),xsmMusic:()=>xsmMusicSheet(),xsmChess:()=>xsmChessSheet(),xsmVisit:()=>xsmVisitSheet()};   /* 11/16 四攤開張 */
 function xsmBind(P,L){for(const s of L){const b=P.querySelector("#"+s[0]);if(!b)continue;b.onclick=e=>{e.stopPropagation();vibrate(5);if(s[4]){toast("🏮 "+XSM_OFF);return}const f=XSM_ACT[s[0]];if(f)f()}}}
 /* 圖載好以後：07t3 補滿高度、07sp 標籤推回畫面內、R07 點選範圍；兩指縮放 */
 function xsmAfter(v,P){const im=P.querySelector(":scope>img");
@@ -21773,19 +22093,22 @@ function xsmSwap(P,day){const im=P.querySelector(":scope>img");if(!im)return;con
   const pre=new Image();pre.onload=()=>{if(!P.isConnected)return;P.dataset.day=nd?"1":"";im.src=src};pre.onerror=()=>{XSM_BAD[nd?"d":"n"]=1};pre.src=src}
 function xsmIntro(){modal(`<h3>🏮 西市</h3><p><b>${esc(XSM_TX.pos)}</b></p><p>${esc(XSM_TX.intro)}</p>`,[["逛逛西市",null]])}
 function xsmWalk(v){if(typeof shwPage!=="function"||typeof SHIP_WALK_ON==="undefined"||!SHIP_WALK_ON)return;try{shwPage(v,xsmWalkCfg(),"xsm")}catch(e){}}
-function XsmPage(v,sub){if(sub==="tea")return xsmTea(v);if(sub==="dark"&&typeof xsdPage==="function")return xsdPage(v);
+function XsmPage(v,sub){try{if(xsmOpen())xsmBgmOn()}catch(e){}   /* 11/16 西市背景配樂（外景、茶坊、暗棋都是這一組） */
+  if(sub==="tea")return xsmTea(v);if(sub==="dark"&&typeof xsdPage==="function")return xsdPage(v);
   setTop("🏮 西市","#/");setTabs(true,"#/");v.className="view";
   if(!xsmOpen()){toast("🏮 西市還沒開市");navReplace("#/");return{}}
   xsmCss();let first=false;try{first=!store.get("xsmSeen",0);store.set("xsmSeen",1)}catch(e){}
   const day=xsmDay(),nd=xsmPickDay(day),P=document.createElement("div");P.className="shp-page cq xsm-page";P.dataset.day=nd?"1":"";
   P.innerHTML=`<img src="${xsmSrc(nd)}" alt="西市：市門、夯土市牆、青石路，十字路口四角是櫃坊、棋具攤、樂棚和茶坊，遠處有市樓、水池和柳樹">`+xsmBtns(XSM_SPOTS);
   v.append(P);xsmBind(P,XSM_SPOTS);
+  try{xsmMark(P)}catch(e){}try{xsmHuntInit(v,P)}catch(e){}   /* 11/16：有禮、有人來的標籤發亮；今天那顆棋子藏到圖上 */
   const im=P.querySelector(":scope>img");
   im.onerror=()=>{const sh=P.dataset.day==="1";XSM_BAD[sh?"d":"n"]=1;const n2=xsmPickDay(sh);if(n2!==sh){P.dataset.day=n2?"1":"";im.src=xsmSrc(n2)}};
   /* 07w9 的出口晚一點才放進來：補 id（走路角色的入口代號 HS.xsmExit） */
   try{const mo=new MutationObserver(()=>{if(!P.isConnected){mo.disconnect();return}const s=P.querySelector(".ex-spot");if(s&&!s.id)s.id="xsmExit"});mo.observe(P,{childList:true})}catch(e){}
   /* 每分鐘看一次時辰，跨過卯時、酉時就換日夜 */
-  {const tm=setInterval(()=>{if(!P.isConnected){clearInterval(tm);return}const d=xsmPickDay(xsmDay());if(d!==(P.dataset.day==="1"))xsmSwap(P,d)},60000)}
+  {const tm=setInterval(()=>{if(!P.isConnected){clearInterval(tm);return}const d=xsmPickDay(xsmDay());if(d!==(P.dataset.day==="1"))xsmSwap(P,d);
+    try{const w=xsmDay()?XSM_BGM_D:XSM_BGM_N;if(typeof BGM!=="undefined"&&(BGM.force===XSM_BGM_D||BGM.force===XSM_BGM_N)&&BGM.force!==w)bgmForce(w)}catch(e){}},60000)}   /* 11/16 配樂也跟著換日夜（樂棚正在放的不動） */
   xsmAfter(v,P);
   xsmWalk(v);   /* 走路角色（3D 載不到、減少動態時 07w 不攔點選，入口照舊直接開） */
   if(first)setTimeout(()=>{if(P.isConnected)xsmIntro()},450);
@@ -21799,10 +22122,114 @@ function xsmTea(v){setTop("🍵 聽雨茶坊","#/ximarket");setTabs(true,"#/");v
   {const tm=setInterval(()=>{if(!P.isConnected){clearInterval(tm);return}const d=xsmDay()?"1":"";if(d!==P.dataset.day)P.dataset.day=d},60000)}
   xsmAfter(v,P);
   return{}}
+/* ---------- 11/16 四攤：存檔 ---------- */
+/* xsmStall＝{f:找棋子進度（xsmFindNorm）, v:{d 哪天, c 那天誰來, met 哪天見過, gift 哪天收過小禮}} */
+function xsmSt(){let S=null;try{S=store.get("xsmStall",null)}catch(e){}S=S&&typeof S==="object"?S:{};S.f=xsmFindNorm(S.f);if(!S.v||typeof S.v!=="object")S.v={};return S}
+const xsmSave=S=>{try{store.set("xsmStall",S)}catch(e){}};
+function xsmToday(){if(typeof localDay==="function")return localDay();const d=new Date();return d.getFullYear()+"-"+String(d.getMonth()+1).padStart(2,"0")+"-"+String(d.getDate()).padStart(2,"0")}
+/* {名}、{你}：有 07j 就照它（怎麼叫玩家、玩家是女生換「妳」） */
+function xsmYou(s,c){try{if(typeof v7Txt==="function")return v7Txt(s,c||"")}catch(e){}return String(s).replace(/\{名\}/g,"").replace(/\{你\}/g,"你")}
+/* 今天誰來（只挑已加入的：07pty ptyHas；沒有 07pty、沒有旅程＝沒人）；挑好就記下來，同一天不換人 */
+function xsmVisitWho(){if(typeof ptyHas!=="function")return null;const O=typeof PTY!=="undefined"&&PTY.ORDER?PTY.ORDER:Object.keys(XSM_V7);
+  const mem=O.filter(c=>{try{return!!ptyHas(c)}catch(e){return false}});let look="";try{look=(typeof myChar==="function"&&myChar())||(typeof ptyLook==="function"&&ptyLook())||""}catch(e){}
+  const day=xsmToday(),S=xsmSt(),c=xsmVisitPick(day,mem,look,S.v);if(c&&(S.v.d!==day||S.v.c!==c)){S.v.d=day;S.v.c=c;xsmSave(S)}return c}
+/* 見到了：記今天見過；也記進 07j 的 visit7（來過幾次＋1、今天來過＝算進每天 3 位；07j 今天已經帶他來過就不重算） */
+function xsmVisitMet(c,day){const S=xsmSt();if(S.v.met===day)return;S.v.met=day;xsmSave(S);
+  try{const V=typeof v7St==="function"?v7St():(store.get("visit7",null)||{});if(!V.n||typeof V.n!=="object")V.n={};if(!V.day||typeof V.day!=="object")V.day={};
+    if(V.day[c]!==day){V.n[c]=(V.n[c]||0)+1;V.day[c]=day;store.set("visit7",V)}}catch(e){}}
+/* 櫃坊現在的禮（沒有 07mnq＝空） */
+function xsmGiftsNow(){try{if(typeof mnqSt!=="function"||typeof mnqEnv!=="function")return[];let D=null;try{D=typeof shipDockList==="function"?shipDockList():null}catch(e){}return xsmGifts(mnqSt(),mnqEnv(),D)}catch(e){return[]}}
+/* 發亮：有禮可領、或今天有人來還沒見到（第 17 項 A） */
+const xsmHotGift=()=>xsmGiftsNow().some(g=>!g.got);
+function xsmHotVisit(){try{return xsmSt().v.met!==xsmToday()&&!!xsmVisitWho()}catch(e){return false}}
+function xsmHot(){try{return xsmHotGift()||xsmHotVisit()}catch(e){return false}}
+/* 外景兩個標籤跟著亮／不亮 */
+function xsmMark(P){P=P||document.querySelector(".xsm-page:not(.xsm-tea)");if(!P)return;const g=P.querySelector("#xsmGift"),v=P.querySelector("#xsmVisit");
+  if(g)g.classList.toggle("hot",xsmHotGift());if(v)v.classList.toggle("hot",xsmHotVisit())}
+/* ---------- 11/16 領禮物：雲河櫃坊 ---------- */
+function xsmGiftNm(g){const G=typeof MNQ_GIFT!=="undefined"&&MNQ_GIFT[g.k]||{},el=g.era&&typeof eraLabel==="function"?eraLabel(g.era):(g.era||"");return(G.nm||g.k)+(g.k==="a6"&&el?"・"+el:"")}
+function xsmGiftSheet(){xsmCss();const L=xsmGiftsNow(),pend=L.some(g=>!g.got);
+  sheet("雲河櫃坊",b=>{b.innerHTML=`<p class="xsm-nar">${esc(XSM_TX.gift)}</p><p class="xsm-say">掌櫃：「${esc(xsmYou(pend?XSM_TX.g1:XSM_TX.g0))}」</p>`+
+    L.map((g,i)=>`<button type="button" class="xsm-li${g.got?"":" new"}" data-i="${i}"><span aria-hidden="true">${g.got?"📜":"🎁"}</span><b>${esc(xsmGiftNm(g))}</b><em>${g.got?"再看一次":"領取"}</em></button>`).join("");
+    b.querySelectorAll(".xsm-li").forEach(x=>x.onclick=()=>{vibrate(5);const g=L[+x.dataset.i];if(!g||typeof mnqGift!=="function")return;closeSheet();
+      setTimeout(()=>{try{mnqGift(g.k,g.era)}catch(e){}try{xsmMark()}catch(e){}},260)})})}
+/* ---------- 11/16 七星來訪：老槐樹下 ---------- */
+function xsmVisitSheet(){xsmCss();const c=xsmVisitWho();
+  if(!c){sheet("老槐樹下",b=>{b.innerHTML=`<p class="xsm-say">${esc(xsmYou(XSM_TX.v0))}</p>`});return}
+  const day=xsmToday(),C=(typeof WX_CHARS!=="undefined"&&WX_CHARS[c])||{},nm=C.nk||C.n||"",line=xsmYou(xsmVisitLine(c,day,xsmDay()),c);xsmVisitMet(c,day);try{xsmMark()}catch(e){}
+  sheet("老槐樹下",b=>{const paint=()=>{const S=xsmSt();let task=false;
+      try{if(typeof v7St==="function"&&typeof v7QNext==="function"&&typeof v7Sheet==="function"){const V=v7St();task=!!((V.q&&V.q.c===c)||(!V.q&&v7QNext(c,V)))}}catch(e){}
+      b.innerHTML=`<p class="xsm-nar">${esc(xsmYou(XSM_TX.v1))}</p><div class="xsm-v"><img src="data/xs/prev_${c}.webp" alt="" onerror="this.remove()"><p class="xsm-say">${esc(nm)}：「${esc(line)}」</p></div>`+
+        (task?`<button type="button" class="btn" id="xsmVq">🤝 聽${esc(nm)}說說</button>`:S.v.gift===day?`<p class="muted">${esc(XSM_TX.vGot)}</p>`:`<button type="button" class="btn" id="xsmVg">🎁 收下小禮（+${XSM_VISIT_XP} 修為）</button>`)+
+        `<button type="button" class="btn ghost" id="xsmVb">👋 待會兒見</button>`;
+      const on=(id,fn)=>{const e=b.querySelector(id);if(e)e.onclick=()=>{vibrate(5);fn()}};
+      on("#xsmVb",()=>closeSheet());
+      on("#xsmVq",()=>{closeSheet();setTimeout(()=>{try{v7Sheet(c,line,false)}catch(e){}},260)});
+      on("#xsmVg",()=>{const S2=xsmSt();if(S2.v.gift===day)return;S2.v.gift=day;xsmSave(S2);try{addXP(XSM_VISIT_XP,"羈絆","xsmv:"+day)}catch(e){}try{saveNow(true)}catch(e){}paint()})};
+    paint()})}
+/* ---------- 11/16 找棋子：棋具攤 ---------- */
+const xsmPcRow=n=>`<div class="xsm-row" aria-label="${esc("這一副找到 "+n+" 顆")}">${XSM_PCS.map((p,i)=>`<span class="${i<n?"on":""}" aria-hidden="true">${p}</span>`).join("")}</div>`;
+function xsmChessSheet(){xsmCss();const day=xsmToday(),S=xsmSt(),F=S.f,done=F.day===day,pc=xsmPieceOf(F);
+  sheet("棋具攤",b=>{b.innerHTML=`<p class="xsm-nar">${esc(XSM_TX.c0)}</p><p class="xsm-say">攤主：「${esc(xsmYou(done?XSM_TX.cDone:XSM_TX.c1))}」</p>${xsmPcRow(F.n)}`+
+    `<p class="muted" style="text-align:center">這一副找到 ${F.n} 顆，湊齊 7 顆就是一副${F.sets?`・已經湊齊 ${F.sets} 副`:""}<br>找到一顆 +${XSM_FIND_XP} 修為，湊齊一副再 +${XSM_SET_XP} 修為</p>`+
+    (done?"":`<button type="button" class="btn" id="xsmCg">🔎 去找今天這顆「${esc(pc)}」</button>`)+(done||!xsmAxOn()?"":`<button type="button" class="btn" id="xsmCt">直接收下今天這顆「${esc(pc)}」</button>`)+`<button type="button" class="btn ghost" id="xsmCb">${done?"明天再來":"先逛逛"}</button>`;
+    const g=b.querySelector("#xsmCg");if(g)g.onclick=()=>{vibrate(5);closeSheet();setTimeout(()=>xsmHuntBan(),260)};
+    const tk=b.querySelector("#xsmCt");if(tk)tk.onclick=()=>{vibrate(5);closeSheet();setTimeout(()=>xsmTakePc(),260)};
+    b.querySelector("#xsmCb").onclick=()=>{vibrate(5);closeSheet()}})}
+/* 外景畫上今天那顆（今天還沒找到才畫）；在 v 上用捕獲先看一眼（比 07w 走路、07w6 物件說明早）：點到它 28px 內就攔下來算找到，點別處照常 */
+function xsmHuntInit(v,P){const day=xsmToday(),S=xsmSt();if(S.f.day===day||!v||!P)return;const sp=xsmHideOf(day),I=P.querySelector(":scope>img");if(!I)return;
+  const t=document.createElement("i");t.className="xsm-pc";t.setAttribute("aria-hidden","true");t.textContent=xsmPieceOf(S.f);t.style.left=sp[0]+"%";t.style.top=sp[1]+"%";P.append(t);
+  let miss=0;const on=e=>{if(!P.isConnected||!t.isConnected){v.removeEventListener("click",on,true);return}const tg=e.target;if(!tg||!P.contains(tg))return;
+    const bn=tg.closest(".xsm-ban");if(bn){e.stopPropagation();e.preventDefault();const b=tg.closest("button");if(b&&b.hasAttribute("data-h"))xsmGlow(t);else if(b&&b.hasAttribute("data-x"))bn.remove();return}
+    if(tg.closest("button,a,input,select,textarea,label,[role=button]"))return;
+    const r=I.getBoundingClientRect();if(!r.width||!r.height)return;const p=[(e.clientX-r.left)/r.width*100,(e.clientY-r.top)/r.height*100];
+    if(xsmNear(sp,p,r.width,r.height)){e.stopPropagation();e.preventDefault();v.removeEventListener("click",on,true);xsmGotPc(P,t);return}
+    if(P.querySelector(".xsm-ban")&&++miss===2)xsmGlow(t)};
+  v.addEventListener("click",on,true)}
+function xsmGlow(t){if(!t||!t.isConnected)return;t.classList.remove("glow");void t.offsetWidth;t.classList.add("glow")}
+/* 「去找」：圖上方一條提示（💡 讓那顆亮一下、✕ 收起來） */
+function xsmHuntBan(){const P=document.querySelector(".xsm-page:not(.xsm-tea)"),t=P&&P.querySelector(".xsm-pc");if(!P||!t){toast("🔎 "+XSM_TX.cDone);return}
+  P.querySelectorAll(".xsm-ban").forEach(x=>x.remove());const ban=document.createElement("div");ban.className="xsm-ban";ban.setAttribute("role","status");
+  ban.innerHTML=`<b>🔎 找一顆「${esc(t.textContent)}」</b><button type="button" data-h>💡 提示</button><button type="button" data-x aria-label="先不找了">✕</button>`;P.append(ban);
+  try{P.scrollIntoView({behavior:"smooth",block:"start"})}catch(e){}}
+/* 找到了：存進度、給修為（xsmf:<日期>；湊齊再 xsmf7:<第幾副>）、湊齊跳蓋印 */
+function xsmGotPc(P,t){const day=xsmToday(),r=xsmPcAward(day);if(!r)return;
+  try{vibrate([10,30,10])}catch(e){}t.classList.add("got");setTimeout(()=>t.remove(),900);
+  const ban=P.querySelector(".xsm-ban");if(ban){ban.querySelector("b").textContent="攤主：「"+XSM_TX.c2+"」";ban.querySelectorAll("button").forEach(x=>x.remove());setTimeout(()=>ban.remove(),1900)}else toast("🔎 "+XSM_TX.c2);
+  if(r.full)setTimeout(()=>{if(P.isConnected)xsmSetRite()},1100)}
+/* 找到一顆的結算（圖上找到、讀螢幕直接收下共用）：存進度、給修為（xsmf:<日期>；湊齊再 xsmf7:<第幾副>）；同一天第二次＝null */
+function xsmPcAward(day){const S=xsmSt(),r=xsmFindGo(S.f,day);if(!r)return null;S.f=r.F;xsmSave(S);
+  try{addXP(XSM_FIND_XP,"找棋子","xsmf:"+day)}catch(e){}
+  if(r.full){try{addXP(XSM_SET_XP,"找棋子","xsmf7:"+r.F.sets)}catch(e){}}
+  try{saveNow(true)}catch(e){}return r}
+/* 11/16 開發者選單「照現在＋讀螢幕可直接收」：只在 ♿ 螢幕報讀與鍵盤模式（11b axmOn）棋具攤卡片多一顆「直接收下」，效果跟圖上找到一樣；一般模式不出現 */
+const xsmAxOn=()=>{try{return typeof axmOn==="function"&&!!axmOn()}catch(e){return false}};
+function xsmTakePc(){const day=xsmToday(),r=xsmPcAward(day);if(!r)return null;
+  try{const t=document.querySelector(".xsm-page:not(.xsm-tea)>.xsm-pc");if(t)t.remove();document.querySelectorAll(".xsm-ban").forEach(x=>x.remove())}catch(e){}
+  try{toast("🔎 "+XSM_TX.c2)}catch(e){}if(r.full)setTimeout(()=>xsmSetRite(),400);return r}
+function xsmSetRite(){xsmCss();modal(`<div class="xsm-seal" aria-hidden="true">齊</div><h3>一副棋湊齊了</h3>${xsmPcRow(7)}<p>攤主：「${esc(xsmYou(XSM_TX.c3))}」</p><p class="muted">+${XSM_SET_XP} 修為</p>`,[["收下",null]])}
+/* ---------- 11/16 聽曲：西市樂棚 ＋ 西市背景配樂（都走 01-board 的 BGM，不另開播放器） ---------- */
+const xsmBgmOk=()=>{try{return!!store.get("bgm",true)&&(typeof sxmGain!=="function"||sxmGain("bgm")>0)}catch(e){return false}};
+const xsmBgmMine=f=>!!f&&(f===XSM_BGM_D||f===XSM_BGM_N||f===XSM_MU.f);
+/* 進西市（外景、茶坊、暗棋）：樂棚正在放就不動；不然照日夜放那一組 */
+function xsmBgmOn(){if(typeof bgmForce!=="function"||typeof BGM==="undefined")return;if(XSM_MU.f&&BGM.force===XSM_MU.f)return;XSM_MU.f=null;try{bgmForce(xsmDay()?XSM_BGM_D:XSM_BGM_N)}catch(e){}}
+function xsmMuToggle(rel){if(typeof bgmForce!=="function")return;if(!xsmBgmOk()){toast("♪ "+XSM_TX.muOff);return}
+  if(XSM_MU.f===rel){XSM_MU.f=null;bgmForce(xsmDay()?XSM_BGM_D:XSM_BGM_N)}else{XSM_MU.f=rel;bgmForce(rel)}}
+function xsmMusicSheet(){xsmCss();let D=null,O=null;try{D=typeof shipDockList==="function"?shipDockList():null}catch(e){}try{O=typeof shipOrder==="function"?shipOrder():null}catch(e){}const E=xsmMuEras(O,D);
+  sheet("西市樂棚",b=>{let IX={},T={};const paint=()=>{const n=xsmMuList(E,IX).length;
+      b.innerHTML=`<p class="xsm-nar">${esc(XSM_TX.mu)}</p><p class="xsm-say">${esc(XSM_TX.mu2)}</p>`+(xsmBgmOk()?"":`<p class="muted">${esc(XSM_TX.muOff)}</p>`)+(n?`<p class="muted">收了 ${n} 首</p>`:"")+
+        E.map(e=>{const L=xsmMuList([e],IX);return L.length?`<div class="sec-t">${esc(typeof eraLabel==="function"?eraLabel(e):e)}</div>`+L.map(rel=>{const f=rel.split("/").pop(),on=XSM_MU.f===rel,tt=T[rel];
+          return`<button type="button" class="xsm-mu${on?" on":""}" data-m="${esc(rel)}" aria-pressed="${on}"><span aria-hidden="true">${on?"⏸":"▶"}</span><b>${tt?"《"+esc(tt)+"》":esc(f)}</b><small>${esc(XSM_INS[f.replace(/_\d+\.\w+$/,"")]||"")}</small></button>`}).join(""):""}).join("")+
+        `<p class="muted">${esc(XSM_TX.muMore)}</p>`;
+      b.querySelectorAll(".xsm-mu").forEach(x=>x.onclick=()=>{vibrate(5);xsmMuToggle(x.dataset.m);paint()})};
+    paint();
+    Promise.all([typeof bgmList==="function"?bgmList():{},typeof bgmTitles==="function"?bgmTitles():{}]).then(([a,c])=>{IX=a||{};T=c||{};if(b.isConnected)paint()}).catch(()=>{})})}
+/* 離開西市（網址不是 #/ximarket…）：西市放的配樂還給朝代配樂 */
+if(typeof addEventListener==="function")addEventListener("hashchange",()=>{try{if(/^#\/ximarket(\/|$)/.test(location.hash))return;if(typeof BGM!=="undefined"&&xsmBgmMine(BGM.force)&&typeof bgmForce==="function"){XSM_MU.f=null;bgmForce(null)}else XSM_MU.f=null}catch(e){}});
 /* ---------- 首頁橋左邊「🏮 西市」 ---------- */
 function xsmHomePos(P){const b=P&&P.querySelector("#hmXsm");if(!b)return;const c=XSM_HOME[P.dataset.hmw||""]||XSM_HOME[""];b.style.left=c[0]+"%";b.style.top=c[1]+"%";delete b.dataset.ttL;b.style.marginLeft=""}
 function xsmHomeSpot(v){if(!xsmOpen()||!(typeof hbIsCl==="function"&&hbIsCl()))return;const P=v.querySelector(".home-page");if(!P||P.querySelector("#hmXsm"))return;
-  const k=P.dataset.hmw||"",c=XSM_HOME[k]||XSM_HOME[""],b=document.createElement("button");b.type="button";b.id="hmXsm";b.className="shp-spot"+(store.get("xsmSeen",0)?"":" hot");
+  const k=P.dataset.hmw||"",c=XSM_HOME[k]||XSM_HOME[""],b=document.createElement("button");b.type="button";b.id="hmXsm";b.className="shp-spot"+(store.get("xsmSeen",0)&&!xsmHot()?"":" hot");   /* 11/16 第 17 項 A：第一次去以前、有禮可領、有人來訪還沒見到都發亮 */
   b.style.left=c[0]+"%";b.style.top=c[1]+"%";b.setAttribute("aria-label","西市");b.innerHTML="<b>🏮 西市</b>";
   b.onclick=e=>{e.stopPropagation();vibrate(5);location.hash="#/ximarket"};
   /* 焦點順序：照 hmFocusOrder 插在對的位置（觀星臺已經放好就一起算；底部那一條永遠最後） */
@@ -22206,7 +22633,7 @@ function hmpNavUpd(P){const C=hmpBox(P);if(!C)return;const on=hmpOn(P),i=P._hmpI
     const q=P.querySelector(l?":scope>#hmXsm":":scope>#hmGxt"),dup=on&&i===0&&!!q&&!q.hidden;if(dup){b.setAttribute("aria-hidden","true");b.tabIndex=-1}else{b.removeAttribute("aria-hidden");b.removeAttribute("tabindex")}}}
 /* 左右兩屏的入口、中間那屏的箭頭（照 07xsm／07gxt 的解鎖條件；長卷關掉時還原） */
 const hmpOpen=id=>{try{return id==="hmpXsm"?typeof xsmOpen==="function"&&xsmOpen():typeof gxtOpen==="function"&&gxtOpen()}catch(e){return false}};
-const hmpSeen=id=>{try{return!!store.get(id==="hmpXsm"?"xsmSeen":"gxtSeen",0)}catch(e){return true}};
+const hmpSeen=id=>{try{return!!store.get(id==="hmpXsm"?"xsmSeen":"gxtSeen",0)&&!(id==="hmpXsm"&&typeof xsmHot==="function"&&xsmHot())}catch(e){return true}};   /* 11/16 西市四攤：有禮可領、有人來訪還沒見到也發亮（07xsm xsmHot） */
 function hmpLabels(P){const on=hmpOn(P);
   for(const[id,t,al,d]of HMP_ARROW){const b=P.querySelector("#"+id);if(!b)continue;
     /* 11/14 開發者：中間橋頭這兩顆「← 西市」「觀星臺 →」太佔版面，長卷開著時藏起來，只靠兩側 ‹ › 小箭頭指引左右還有路 */
@@ -28176,7 +28603,7 @@ function CpuGame(v,practicePage,mode){
       if(MODE==="journey"){const j=st.journey,s0=jFindStage(j);
         if(String(j||"").startsWith("bt:")&&typeof battleResultModal==="function"){battleResultModal(st,win,draw0,XPR);return}
         if(String(j||"").startsWith("bh:")&&typeof bhResultModal==="function"){bhResultModal(st,win,draw0,XPR);return}
-        if(String(j||"").startsWith("gx:")&&typeof gxResultModal==="function"){gxResultModal(st,win,draw0,XPR);return}   /* 幻譜星門：星印、玉宿下一局、北辰第二盤、回星圖 */   /* hspx（開發者 11/12）：黑洞星樞棋局——下完一律「星槎回航」，回到原本要停靠的那一站 */   /* 古戰場的讓子對弈：戰役印、下一場、再下一盤（同樣的讓子） */
+        if(String(j||"").startsWith("gx:")&&typeof gxResultModal==="function"){gxResultModal(st,win,draw0,XPR);return}if(String(j||"").startsWith("gxd:")&&typeof gxdResultModal==="function"){gxdResultModal(st,win,draw0,XPR);return}   /* 11/16 開發者：觀星臺今日異象、自由擺陣（07gxd-daily.js）：成績、再一盤、重新擺陣、回觀星臺 */   /* 幻譜星門：星印、玉宿下一局、北辰第二盤、回星圖 */   /* hspx（開發者 11/12）：黑洞星樞棋局——下完一律「星槎回航」，回到原本要停靠的那一站 */   /* 古戰場的讓子對弈：戰役印、下一場、再下一盤（同樣的讓子） */
         const NR=parkNpcOf(st);
         modal(`<div class="em">${win?"🏆":draw0?"🤝":"💪"}</div><h2 data-i18n="res.${win?"win":draw0?"draw":"lose"}">${win?"你贏了！":draw0?"和局":"這盤輸了"}</h2><p class="muted">${esc(st.result.why)}・🪨 ${esc(jName(j))}${NR?"・"+esc(NR.name)+"（第 "+st.level+" 級）":""}</p>`+(NR?`<p style="font-style:italic">${esc(NR.name)}：「${esc(win?NR.lose:draw0?"和了，改天再下一盤！":NR.win)}」</p>`:"")+XPL,
           (()=>{/* 意見回饋 607：劇情關「回到關卡」、回雲河棋路／驛站／園子都改成退回那一層（goUp），不再往前推一頁；雲河棋路的對弈關贏了，主要按鈕是「📖 下一回 ›」（下一關已經開放才有，做法跟過關畫面的「讀第 N 回」一樣） */
@@ -33364,7 +33791,7 @@ const I18N_EN={
   "說書人學徒":"Storyteller's apprentice","13 站":"13 stops","還沒選角色":"No character chosen yet","看航線":"View route","回星槎頁":"Back to the Star Raft","石桌已補全":"Stone table complete","石桌補全了":"The stone table is complete",
   "傾斜手機看立體":"Tilt phone for 3D","先下這盤棋":"Play this game first","示範棋局":"Demo game","正文載入中":"Loading text","先往下讀":"Read on first","上一章":"Previous chapter","下一章":"Next chapter","跟電腦下一盤":"Play the computer","13 站都走完了":"All 13 stops done",
   "今天打千秋盃":"Qianqiu Cup today","找找靈感":"Find inspiration","再想一下":"Think again","跟幻影練一題":"Practice a puzzle with the Phantom","星槎停靠":"Star Raft docked","解這一局":"Solve this game","點一下跳過":"Tap to skip","雲河驛站":"Cloud River inn",
-  "船艙":"Cabin","🌟 換人":"🌟 Switch","🎭 開始故事":"🎭 Start the story","先逛逛，之後再開始故事":"Look around first, start the story later","⚔ 開新的旅程":"⚔ Start a new journey","↩ 回上一頁":"↩ Back","七星":"Seven Stars","▶ 接著下":"▶ Keep playing","＋ 開新局":"＋ New game","去開頭畫面":"Go to the start screen","三格存檔都有人了":"All three save slots are used","航行難度":"Voyage difficulty","現在":"now","多數人選這個":"most people pick this","看這一站":"See this stop","千秋大百科":"Qianqiu encyclopedia",
+  "船艙":"Cabin","🌟 換人":"🌟 Switch","🎭 開始故事":"🎭 Start the story","先逛逛，之後再開始故事":"Look around first, start the story later","⚔ 開新的旅程":"⚔ Start a new journey","↩ 回上一頁":"↩ Back","七星":"Seven Stars","▶ 接著下":"▶ Keep playing","＋ 開新局":"＋ New game","旅伴與軍師各獻一策，你採用哪一策？":"Your companions and the strategists each offer a plan. Which will you take?","去開頭畫面":"Go to the start screen","三格存檔都有人了":"All three save slots are used","航行難度":"Voyage difficulty","現在":"now","多數人選這個":"most people pick this","看這一站":"See this stop","千秋大百科":"Qianqiu encyclopedia",
   "想多看一題":"One more puzzle","七星同局圖鑑":"Seven Stars puzzle album","熱身":"Warm-up","變化題":"Variation puzzles","選做":"optional","雲河":"Cloud River","秦":"Qin","漢":"Han","三國":"Three Kingdoms","魏晉":"Wei-Jin","南北朝":"Northern and Southern dynasties",
   "隋":"Sui","唐":"Tang","五代":"Five Dynasties","宋":"Song","元":"Yuan","明":"Ming","清":"Qing","我的起手":"My openings","棋力考校":"Strength test","我的勝負簿":"My record","分門習練":"Theme training","錯著重習":"Mistake drills","象戲規則":"Rules of xiangqi",
   "初學講武場":"Boot camp","初學教場":"Boot camp","初學校場":"Boot camp","棋譜石室":"Game library","棋譜祕閣":"Game library","棋譜書樓":"Game library","棋譜閣":"Game library","找真人選「線上對戰」；自己練選「挑戰電腦」":"To play people, choose \"Online play\"; to practice alone, choose \"Play the computer\"",
