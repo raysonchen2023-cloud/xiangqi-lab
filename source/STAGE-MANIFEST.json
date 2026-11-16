@@ -1,7 +1,7 @@
 {
  "ref": "origin/main",
- "commit": "5d1e4f283f4ce9e16708ca8db0166383f6984a30",
- "madeAt": "2026-11-15T23:50:24.795Z",
+ "commit": "f77bf4feaba7521a58e8e8d07ce6baa0d2aef1de",
+ "madeAt": "2026-11-16T01:07:21.476Z",
  "files": {
   "xiangqi-db/m/00-util.js": "local=live",
   "xiangqi-db/m/01-board.js": "local=live",
@@ -23,14 +23,14 @@
   "xiangqi-db/m/07e-garden2.js": "local=live",
   "xiangqi-db/m/07f-ship.js": "local=live",
   "xiangqi-db/m/07o-shipmore.js": "local=live",
-  "xiangqi-db/m/07bh-blackhole.js": "local=live",
+  "xiangqi-db/m/07bh-blackhole.js": "live",
   "xiangqi-db/m/07gx-galaxy.js": "local=live",
   "xiangqi-db/m/07gxp-gatepano.js": "local=live",
-  "xiangqi-db/m/07bht-td.js": "local=live",
-  "xiangqi-db/m/07bhtl-tdlearn.js": "local=live",
+  "xiangqi-db/m/07bht-td.js": "live",
+  "xiangqi-db/m/07bhtl-tdlearn.js": "live",
   "xiangqi-db/m/07bhf-bossfx.js": "local=live",
-  "xiangqi-db/m/07bhg-gatesiege.js": "local=live",
-  "xiangqi-db/m/07bhw-wheel.js": "local=live",
+  "xiangqi-db/m/07bhg-gatesiege.js": "live",
+  "xiangqi-db/m/07bhw-wheel.js": "live",
   "xiangqi-db/m/07dv-devtest.js": "local=live",
   "xiangqi-db/m/07dw-perfhud.js": "local=live",
   "xiangqi-db/m/07g-battle.js": "local=live",
@@ -59,7 +59,7 @@
   "xiangqi-db/m/07x-zoom.js": "local=live",
   "xiangqi-db/m/07y-hubmap.js": "live",
   "xiangqi-db/m/07z-homemap.js": "local=live",
-  "xiangqi-db/m/07gxt-guanxing.js": "local=live",
+  "xiangqi-db/m/07gxt-guanxing.js": "live",
   "xiangqi-db/m/07dgl-stamina.js": "local=live",
   "xiangqi-db/m/07xsm-ximarket.js": "local=live",
   "xiangqi-db/m/07xsd-xsmdark.js": "local=live",
@@ -95,7 +95,7 @@
   "xiangqi-db/m/07w8-shichen.js": "local=live",
   "xiangqi-db/m/07w9-exits.js": "local=live",
   "xiangqi-db/m/08-scene.js": "local=live",
-  "xiangqi-db/m/08b-cpugame.js": "local=live",
+  "xiangqi-db/m/08b-cpugame.js": "live",
   "xiangqi-db/m/08s-simul.js": "local=live",
   "xiangqi-db/m/09-askbot.js": "local=live",
   "xiangqi-db/m/09b-preload.js": "local=live",
@@ -122,7 +122,7 @@
   "xiangqi-db/m/07stq-starter.js": "local=live",
   "xiangqi-db/m/07mnq-mainquest.js": "local=live",
   "xiangqi-db/m/07grw-growth.js": "local=live",
-  "xiangqi-db/m.html": "local",
+  "xiangqi-db/m.html": "local（拿掉線上沒有的 include）",
   "xiangqi-db/m.css": "local",
   "xiangqi-db/m/README.md": "local（各模組說明）",
   "xiangqi-db/tools/mhtml.js": "local",
@@ -204,7 +204,7 @@
   "xiangqi-lab/tools/test-android-oldwebview.js": "local",
   "xiangqi-lab/tools/test-asian-rules.js": "local",
   "xiangqi-lab/tools/test-askbot-city.js": "local",
-  "xiangqi-lab/tools/test-bh-drift-raid-1115.js": "local",
+  "xiangqi-lab/tools/test-bh-drift-raid-1115.js": "live（上一版公開的那份；本機那份跟著還沒發布的工作改過）",
   "xiangqi-lab/tools/test-bhfx.js": "local",
   "xiangqi-lab/tools/test-bhmate.js": "local",
   "xiangqi-lab/tools/test-bhtd-combo.js": "local",
@@ -212,7 +212,7 @@
   "xiangqi-lab/tools/test-bhtd-rules.js": "local",
   "xiangqi-lab/tools/test-bhtd-select-1116.js": "local",
   "xiangqi-lab/tools/test-bhtd-view-1115.js": "local",
-  "xiangqi-lab/tools/test-bhtl.js": "local",
+  "xiangqi-lab/tools/test-bhtl.js": "live（上一版公開的那份；本機那份跟著還沒發布的工作改過）",
   "xiangqi-lab/tools/test-blitz.js": "local",
   "xiangqi-lab/tools/test-clock-pv.js": "local",
   "xiangqi-lab/tools/test-colorblind.js": "local",
@@ -232,7 +232,7 @@
   "xiangqi-lab/tools/test-fdroid-evidence.js": "local",
   "xiangqi-lab/tools/test-figview-ghost-1115.js": "local",
   "xiangqi-lab/tools/test-gate-siege-3d.js": "local",
-  "xiangqi-lab/tools/test-gate-siege.js": "local",
+  "xiangqi-lab/tools/test-gate-siege.js": "live（上一版公開的那份；本機那份跟著還沒發布的工作改過）",
   "xiangqi-lab/tools/test-growth.js": "local",
   "xiangqi-lab/tools/test-gx-gatepano.js": "local",
   "xiangqi-lab/tools/test-gx-parkinfo-1115.js": "local",
@@ -279,9 +279,9 @@
   "xiangqi-lab/tools/test-park3d-power.js": "local",
   "xiangqi-lab/tools/test-park3d-river-1116.js": "local",
   "xiangqi-lab/tools/test-park3d-tap.js": "local",
-  "xiangqi-lab/tools/test-party-battle.js": "local",
+  "xiangqi-lab/tools/test-party-battle.js": "live（上一版公開的那份；本機那份跟著還沒發布的工作改過）",
   "xiangqi-lab/tools/test-party-core.js": "local",
-  "xiangqi-lab/tools/test-party-prologue.js": "local",
+  "xiangqi-lab/tools/test-party-prologue.js": "live（上一版公開的那份；本機那份跟著還沒發布的工作改過）",
   "xiangqi-lab/tools/test-perfhud.js": "local",
   "xiangqi-lab/tools/test-pgn-variations.js": "local",
   "xiangqi-lab/tools/test-preload-bg.js": "local",
@@ -308,7 +308,7 @@
   "xiangqi-lab/tools/test-save-file.js": "local",
   "xiangqi-lab/tools/test-ship-tasklist-1116.js": "local",
   "xiangqi-lab/tools/test-ship-tilt.js": "local",
-  "xiangqi-lab/tools/test-siege-wheel-bench.js": "local",
+  "xiangqi-lab/tools/test-siege-wheel-bench.js": "live（上一版公開的那份；本機那份跟著還沒發布的工作改過）",
   "xiangqi-lab/tools/test-sound-mix.js": "local",
   "xiangqi-lab/tools/test-spotfit.js": "local",
   "xiangqi-lab/tools/test-starter.js": "local",
@@ -327,7 +327,7 @@
   "xiangqi-lab/tools/test-xfer4.js": "local",
   "xiangqi-lab/tools/test-xqs-tb.js": "local",
   "xiangqi-lab/tools/test-xsm-dark.js": "local",
-  "xiangqi-lab/tools/testkinds.js": "local",
+  "xiangqi-lab/tools/testkinds.js": "live（上一版公開的那份；本機那份跟著還沒發布的工作改過）",
   "xiangqi-lab/tools/to_trad.py": "local",
   "xiangqi-lab/tools/verify-all.js": "local",
   "xiangqi-lab/tools/verify-daily.js": "local",
@@ -427,11 +427,21 @@
  },
  "liveDiffers": [
   "m/05-settings.js",
+  "m/07bh-blackhole.js",
+  "m/07bht-td.js",
+  "m/07bhtl-tdlearn.js",
+  "m/07bhg-gatesiege.js",
+  "m/07bhw-wheel.js",
   "m/07y-hubmap.js",
+  "m/07gxt-guanxing.js",
   "m/07s4-passmap.js",
+  "m/08b-cpugame.js",
+  "src/local.js",
   "src/sw.js"
  ],
- "absentModules": [],
+ "absentModules": [
+  "m/07sg2-siege2.js"
+ ],
  "excludedTests": {
   "test-a11y-p16.js": "要讀不公開的開發資料（story/ 規劃稿、tools/review_loop、style_loop 評比資料）",
   "test-ai-levels.js": "要讀不公開的開發資料（story/ 規劃稿、tools/review_loop、style_loop 評比資料）",
@@ -473,10 +483,12 @@
   "test-fb-todo.js": "指令排除：要讀管理頁的 Apps Script 原始碼（tools/feedback-api.gs，營運用、不公開），公開副本沒有這個檔",
   "test-party-hero.js": "指令排除：要讀只在開發者電腦與 CDN 的素材與出圖工具（齊轍的模型、立繪原圖、骨架工具），公開副本沒有這些檔",
   "test-party-novel.js": "指令排除：要讀只在開發者電腦與 CDN 的聽書稿（art/canju/yunhe-novel.json），公開副本沒有這個檔",
-  "test-party-wood.js": "指令排除：要讀只在開發者電腦與 CDN 的木棋靈模型與骨架工具，公開副本沒有這些檔"
+  "test-party-wood.js": "指令排除：要讀只在開發者電腦與 CDN 的木棋靈模型與骨架工具，公開副本沒有這些檔",
+  "test-siege2.js": "指令排除：黑洞重做（只留星門圍城）還在開發者電腦上做，對應的程式還沒發布",
+  "test-siege2-local.js": "指令排除：同上，黑洞重做還沒發布"
  },
- "version": "20261116-0725",
- "indexSha1": "b6e71a5da439",
+ "version": "20261116-0855",
+ "indexSha1": "57cdbf821082",
  "toLF": [
   "xiangqi-lab/tools/build-site.js"
  ],
@@ -505,5 +517,17 @@
     "files": 1
    }
   ]
+ },
+ "pinnedToPrevious": {
+  "xiangqi-lab/tools/test-bh-drift-raid-1115.js": 1,
+  "xiangqi-lab/tools/test-bhtl.js": 1,
+  "xiangqi-lab/tools/test-gate-siege.js": 1,
+  "xiangqi-lab/tools/test-party-battle.js": 1,
+  "xiangqi-lab/tools/test-party-prologue.js": 1,
+  "xiangqi-lab/tools/test-siege-wheel-bench.js": 1,
+  "xiangqi-lab/tools/testkinds.js": 1
+ },
+ "droppedUnreleased": {
+  "xiangqi-lab/tools/siege2-sim.js": "還沒發布的工作新加的檔，這一版不公開"
  }
 }

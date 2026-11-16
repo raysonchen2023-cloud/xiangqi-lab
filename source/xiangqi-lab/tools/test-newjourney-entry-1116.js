@@ -14,8 +14,8 @@ const i0 = SRC.indexOf("function saveList(box,inTitle){"), i1 = SRC.indexOf("fun
 function run(metas, inTitle) {
   const log = { title: [], closed: 0 }, el = {};
   const box = { html: "", set innerHTML(v) { this.html = v }, get innerHTML() { return this.html },
-    querySelector(s) { if (s === "[data-nj]") return this.html.includes('data-nj="1"') ? (el.nj = el.nj || {}) : null; return null }, querySelectorAll() { return [] } };
-  const ctx = { slotMetaAll: () => metas, curSlot: () => 1, journey: () => ({ c: "x_swordboy" }), store: { get: (k, d) => d }, fmtAt: () => "", vibrate() { }, esc: s => String(s),
+    querySelector(s) { if (s === "[data-nj]") return this.html.includes('data-nj="1"') ? (el.nj = el.nj || {}) : null; if (s === "[data-tm]") return this.html.includes('data-tm="1"') ? (el.tm = el.tm || {}) : null; return null }, querySelectorAll() { return [] } };
+  const ctx = { slotMetaAll: () => metas, curSlot: () => 1, journey: () => ({ c: "x_swordboy" }), store: { get: (k, d) => d }, fmtAt: () => "", vibrate() { }, esc: s => String(s), saveNow: () => { log.saved = (log.saved || 0) + 1 },
     slotCardHTML: (n, m, me) => `<div class="slot" data-n="${n}">${m ? m.nm : "空"}${me ? "（使用中）" : ""}</div>`, closeSheet: () => { log.closed++ }, titleScreen: o => log.title.push(o), setTimeout: f => f(), Date };
   vm.createContext(ctx); vm.runInContext(FN + ";this.saveList=saveList", ctx); ctx.saveList(box, !!inTitle); return { html: box.html, el, log };
 }
@@ -25,7 +25,7 @@ test("〔原始碼〕找得到存檔面板那一段", () => { assert.ok(i0 > 0 &
 
 test("〔行為〕三格都有存檔時，面板最下面也有「開始新的旅程」；點了關掉面板、開開頭畫面的選格頁（空格用這格、有存檔的要確認才覆蓋）", () => {
   const R = run({ 1: A, 2: A, 3: A });
-  assert.ok(R.html.includes('<div class="sv-a"><button data-nj="1">⚔ 開始新的旅程（選一格來存）</button></div>'));
+  assert.ok(R.html.includes('<div class="sv-a"><button data-nj="1">⚔ 開始新的旅程（選一格來存）</button><button data-tm="1">↩ 回開頭畫面</button></div>'));
   assert.ok(!R.html.includes('data-sa="new"'), "三格都滿：原本空格上的那顆按鈕一顆都沒有，這就是原本走不到的情況");
   assert.equal(typeof R.el.nj.onclick, "function"); R.el.nj.onclick();
   assert.equal(R.log.closed, 1); assert.deepEqual(JSON.parse(JSON.stringify(R.log.title)), [{ view: "slots", mode: "new" }]);
@@ -39,7 +39,13 @@ test("〔行為〕有空格時兩種入口都在：空格上的「在這格開�
 
 test("〔行為〕開頭畫面裡的存檔面板不放這一顆（那裡本來就有「⚔ 新的旅程」），只有「返回」", () => {
   const R = run({ 1: A, 2: A, 3: A }, true);
-  assert.ok(!R.html.includes("data-nj") && R.html.includes('data-tb="menu">‹ 返回</button>'));
+  assert.ok(!R.html.includes("data-nj") && !R.html.includes("data-tm") && R.html.includes('data-tb="menu">‹ 返回</button>'));
+});
+
+test("〔行為〕11/16 開發者「或是開頭畫面」：存檔面板最下面多一顆「↩ 回開頭畫面」，點了先存一次、關掉面板、開開頭畫面的選單", () => {
+  const R = run({ 1: A });
+  assert.equal(typeof R.el.tm.onclick, "function"); R.el.tm.onclick();
+  assert.equal(R.log.saved, 1, "先存一次"); assert.equal(R.log.closed, 1); assert.deepEqual(JSON.parse(JSON.stringify(R.log.title)), [{}]);
 });
 
 test("〔原始碼〕選格頁照舊：空格「用這格」、有存檔的「覆蓋這格」先問「清掉並開始」；新的旅程一律從開頭的序局來", () => {

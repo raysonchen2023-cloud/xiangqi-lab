@@ -313,11 +313,12 @@ function saveList(box,inTitle){const M=slotMetaAll(),cur=curSlot(),J=journey(),e
     +[1,2,3].map(n=>{const m=M[n],me=n===cur&&!!J;return slotCardHTML(n,m,me)+`<div class="sv-a">${me?`<button data-sa="save" data-n="${n}" class="main">立即存檔</button><button data-sa="exp" data-n="${n}">⬇ 匯出成檔案</button><button data-sa="copy" data-n="${n}">複製到別格</button>`
       :m?`<button data-sa="load" data-n="${n}" class="main">讀取</button><button data-sa="exp" data-n="${n}">⬇ 匯出</button><button data-sa="imp" data-n="${n}">⬆ 讀入檔案</button><button data-sa="del" data-n="${n}" class="warn">刪除</button>`
       :`<button data-sa="new" data-n="${n}">⚔ 在這格開始新的旅程</button><button data-sa="imp" data-n="${n}">⬆ 讀入檔案</button>`}</div>`}).join("")
-    +(inTitle?'<button class="btn ghost xqt-bk" data-tb="menu">‹ 返回</button>':'<div class="sv-a"><button data-nj="1">⚔ 開始新的旅程（選一格來存）</button></div>');
+    +(inTitle?'<button class="btn ghost xqt-bk" data-tb="menu">‹ 返回</button>':'<div class="sv-a"><button data-nj="1">⚔ 開始新的旅程（選一格來存）</button><button data-tm="1">↩ 回開頭畫面</button></div>');
   /* 開發者 11/16「目前已經沒辦法新的旅程了嗎 假設有其他玩家想重玩的話 應該還是要跟存檔讀檔的格子」：新的旅程一直跟三格存檔綁在一起，但 App 裡面的入口只剩空格上的「在這格開始新的旅程」——
      三格都有存檔時就沒有按鈕；原本「我的角色」頁「🔒 旅程」面板的「回開頭畫面」，11/16 七星改版後那顆改開卡冊，也走不到了（只剩把 App 整個關掉重開才看得到開頭畫面）。
      這裡補一顆不管幾格有存檔都在的：開開頭畫面的選格頁（空格「用這格」、有存檔的「覆蓋這格」要再確認），跟開頭畫面的「⚔ 新的旅程」同一條路 */
   {const nj=box.querySelector("[data-nj]");if(nj)nj.onclick=()=>{vibrate(5);try{closeSheet()}catch(e){}setTimeout(()=>titleScreen({view:"slots",mode:"new"}),80)}}
+  {const tm=box.querySelector("[data-tm]");if(tm)tm.onclick=()=>{vibrate(5);try{saveNow(true)}catch(e){}try{closeSheet()}catch(e){}setTimeout(()=>titleScreen({}),80)}}   /* 開發者 11/16「要怎麼回到新的旅程？」「或是開頭畫面」→ 選單「存檔與讀檔最下面加一顆」：原本只能關掉 App 重開才看得到開頭畫面（繼續、新的旅程、存檔與讀檔、轉移）；先存一次再開 */
   box.querySelectorAll("[data-sa]").forEach(x=>x.onclick=async()=>{vibrate(5);const n=+x.dataset.n,a=x.dataset.sa,m=M[n];
     if(a==="save"){x.disabled=true;if(await saveNow(false)){toast("已存檔・"+fmtAt(Date.now()));paint()}else x.disabled=false}
     else if(a==="exp")slotExport(n);
