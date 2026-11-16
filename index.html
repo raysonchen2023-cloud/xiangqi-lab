@@ -1613,7 +1613,7 @@ html[data-lefty] .tskip{right:auto;left:14px}
       if(!window.caches)return go();caches.keys().then(function(ks){return Promise.all(ks.filter(function(k){return k.indexOf("xqlab-app-")===0}).map(function(k){return caches.delete(k)}))})
         .then(function(){return navigator.serviceWorker&&navigator.serviceWorker.getRegistration()}).then(function(r){return r&&r.update()}).catch(function(){}).then(go)}};setTimeout(chk,4000)})();
 </script>
-<script>window.XQ_OFFLINE=true;window.XQ_BUILD="20261116-1222";</script>
+<script>window.XQ_OFFLINE=true;window.XQ_BUILD="20261116-1258";</script>
 <script src="core.js"></script>
 <script src="engine.js"></script>
 <script src="local.js"></script>
@@ -6422,6 +6422,7 @@ function saveBoot(){if(SAVE_OLD!==null){store.set("saveMig1",Date.now());if(SAVE
   try{const J=store.get("journey",null);if(J&&CHAR_ERA[J.c]&&J.era!==2){store.set("era",CHAR_ERA[J.c]);store.set("eraUser",null);store.set("journey",{...J,era:2});setTimeout(()=>{try{applyEra()}catch(e){}},300)}}catch(e){}   /* 意見回饋 669 補：1200 版以前就選好角色的旅程，開 App 時補套一次角色主場的朝代（之後自己換的照自己的） */
   let pro=false,shown=false;try{pro=!!sessionStorage.getItem("xqPrologue");if(pro)sessionStorage.removeItem("xqPrologue");shown=!!sessionStorage.getItem("xqTitleShown")}catch(e){}
   if(pro){if(typeof bhxNeed==="function"&&bhxNeed()&&typeof bhxBack==="function")bhxBack(true);setTimeout(()=>{if(typeof bhxLandNew==="function"&&bhxLandNew())return;prologue()},1500)}   /* 有舊旅程的人在開頭選好角色：換格會重新載入，載入後一樣降落經典星槎 */   /* 換格開新旅程會重新載入：等序幕的 1.5 秒先蓋黑洞底，不露出首頁 */
+  if(!pro&&typeof bhxResume==="function"&&bhxResume())return;   /* 11/16 P0：開新旅程到一半被重新載入＝接回序局邀局卡（07bh bhxResume），不掉回舊旅程 */
   if(shown||navigator.webdriver||!/^(#\/?)?$/.test(location.hash||""))return;titleScreen({})}
 setTimeout(()=>{try{saveBoot()}catch(e){console.warn("saveBoot",e)}},0);
 document.addEventListener("visibilitychange",()=>{if(document.visibilityState==="hidden")saveNow(true)});
@@ -10920,7 +10921,7 @@ function bhxGuard(st,f,t){if(!st||st.journey!==BHX_ID||st.result)return null;
 /* 序局下完（bhGameEnd、bhResultModal 轉過來）：星樞一句 → 第 2～4 頁 → 新旅程接原本的序幕；舊玩家回首頁 */
 function bhxEnd(){store.set("bhXuDone",Date.now())}
 function bhxAfter(){bhxEnd();if(!(MODAL_HOLD>Date.now()))opVol(.25,1.2);   /* 新絕殺動畫在播：音量由 bhMateSnd 處理 */   /* 將死：第 2 首淡下來 */
-  modal(`<div class="em">✨</div><h2>星盤暫合</h2><p class="pl-say">✦ 星樞：「${esc(BHX_TXT.win)}」</p>`,[["循著茶香",()=>{const old=+store.get("bhXuOld",0)===1;store.set("bhXuOld",0);{const p3=store.get("bhxP3",null);if(p3){store.set("park3d",p3.v==null?null:!!p3.v);store.set("bhxP3",null)}}   /* 11/16 P0：序局把 3D 打開，離開時還原（新手預設平面，11/12 決定） */if(!old&&store.get("bhxFresh",0)&&!store.get("bhxPick",null))store.set("bhxPick","x_swordboy");   /* 11/16 P0：略過序章電影（或減少動態）也要建新旅程——bhxPick 原本只在電影流星裡才記 */
+  modal(`<div class="em">✨</div><h2>星盤暫合</h2><p class="pl-say">✦ 星樞：「${esc(BHX_TXT.win)}」</p>`,[["循著茶香",()=>{const old=+store.get("bhXuOld",0)===1;store.set("bhXuOld",0);{const p3=store.get("bhxP3",null);if(p3){store.set("park3d",p3.v==null?null:!!p3.v);store.set("bhxP3",null)}}   /* 11/16 P0：序局把 3D 打開，離開時還原（新手預設平面，11/12 決定） */if(!old&&(store.get("bhxFresh",0)||!journey())&&!store.get("bhxPick",null))store.set("bhxPick","x_swordboy");   /* 11/16 P0：略過序章電影（或減少動態）也要建新旅程——bhxPick 原本只在電影流星裡才記 */
     opPlay(3,{fade:.8});   /* 第 3 首〈七星歸槎〉：按「循著茶香」那一下開始 */
     if(!old&&journey()&&!store.get("bhxFresh",0)){try{if(typeof shipEra==="function")shipEra("classic");else{store.set("era","classic");store.set("eraUser",null);applyEra()}}catch(e){}store.set("bhxLand",Date.now())}   /* hspx 開發者 11/12「每個角色打完黑洞的第一站，要統一降落到經典首頁，而不是每個人的主場」：首頁朝代設回經典（停靠紀錄照舊有主場；舊玩家只看序章不動） */
     bhxBack(true);   /* hspx 開發者 11/12「黑洞絕殺後會先跳到一個不該出現的頁面」：換頁前先蓋上黑洞底幕，星槎頁不會在電影淡入前閃出來；電影播完才拿掉 */
@@ -10954,6 +10955,12 @@ async function bhxFig(m,k){const C=WX_CHARS[k];let n=0;while(typeof TRIPO!=="und
   const res=await fig3d(host,{p:C.pc,e:"classic",g:9,glb:`data/tripo_app/${k}.glb`,ring:TRIPO[k]},{tight:true,spin:true});if(!res){host.remove();return}
   const show=()=>{host.style.opacity=1;const im=f.querySelector("img");if(im)im.style.opacity=0};if(res.B&&res.B.glbP)res.B.glbP.then(show,()=>host.remove());else show()}
 /* 05b journeyStart 叫：先下序局、在流星裡選角的新玩家，建好旅程後降落經典星槎（停靠經典站、星槎頁），再出說書人序幕 */
+/* 11/16 P0（開發者「開新的旅程按跳過也會一樣跑到後園，而不是開頭黑洞對戰」）：開新旅程到一半網頁被重新載入（iPhone 下載 3D 吃記憶體、Safari 自己重開分頁，或背景更新重載），開機就掉回舊旅程首頁。
+   開機時（05b saveBoot，不是 xqPrologue＝journeyStart 重開那條路）這一趟還沒落地（bhxFresh＝1、bhxLand 空）就蓋黑洞底接回：
+   桌上那盤是序局而且還沒下完＝不動（對局頁自己接）；序局下完、還沒建旅程＝接「星盤暫合」卡；其他（電影途中、邀局卡）＝接邀局卡（不重播電影）。回傳 true＝接回了 */
+function bhxResume(){try{if(!store.get("bhxFresh",0)||store.get("bhxLand",null))return false;let P=null;try{P=JSON.parse(localStorage.getItem("xq_play")||"null")}catch(e){}
+  const xu=!!(P&&P.journey===BHX_ID);if(xu&&!P.result)return false;bhxBack(true);
+  if(xu)setTimeout(bhxAfter,300);else{try{opPre()}catch(e){}setTimeout(bhxIntro,300)}return true}catch(e){return false}}
 function bhxLandNew(){try{if(!store.get("bhXuDone",null)||store.get("bhxLand",null)||!store.get("bhxPick",null))return false}catch(e){return false}
   store.set("bhxLand",Date.now());store.set("bhxFresh",0);try{opStop(2)}catch(e){}try{if(typeof bgmForce==="function")setTimeout(()=>bgmForce("bh_2.mp3"),2300)}catch(e){}try{if(typeof shipEra==="function")shipEra("classic")}catch(e){}   /* 降落：第 3 首淡出，接〈星盤初醒〉（開發者選沿用） */if(typeof titleClose==="function")titleClose();location.hash="#/adventure";setTimeout(()=>{try{prologue()}catch(e){}},700);return true}
 /* ===== 序章配樂與開場電影（開發者 11/12：三首定稿〈天河初裂〉〈星樞試局〉〈七星歸槎〉；「音樂飽和感夠，切曲會降低震撼，希望增加動畫篇幅」「這是遊戲最一開頭，要讓玩家馬上進入體驗、感受全新的魅力」；
@@ -11020,18 +11027,18 @@ function opSfx(k,big){if(typeof withAudio!=="function")return;withAudio(()=>{con
    say＝這個鏡頭的大字 [[秒,字]]；nar＝說書人 [秒,字]；bp＝星線棋盤放在圖上哪裡 [中心 y,寬]（圖上像素）；title＝開場標題 */
 /* 開發者 11/12「這三頁停頓太久、敘述太短」：旁白加長（ChatGPT 139 號，每句 ≤15 字、每個鏡頭 3～4 句，照秒數出現） */
 const OP_FILM1={n:1,end:89.5,shots:[
-  {at:0,img:null,fx:"dark",sfx:[[0,"vortex"]],say:[[1.5,"第〇章"],[2.8,"天裂星盤沉雲河"],[4.1,"黑洞殘局啟千秋"]]},
+  {at:0,img:null,fx:"dark",sfx:[[0,"vortex"]],say:[[1.4,"第〇章"],[2.4,"天裂星盤沉雲河"],[3.4,"黑洞殘局啟千秋"]]},
   {at:5.4,img:"p10",ly:[[10.4,"p11",.55,"r"],[12.4,"p12",.3,"r"],[17.6,"p1",.7]],rc:[390,545],kb:[[1.0,50,42],[1.1,50,40]],fx:"tear",crack:12.4,shk:[[10.4,.3,4],[12.4,.4,9]],sfx:[[12.4,"crack"]],say:[[5.5,"千秋之前，"],[8.8,"天上有張星盤。"],[12.4,"一聲巨響，天裂了。"],[16.2,"星光從縫中落。"]]},
   {at:20,img:"p6",kb:[[1.2,50,22],[1.0,50,62]],fx:"fall",say:[[20.5,"裂口灑下星光。"],[24.0,"像細雨入山河。"],[27.8,"大河先被點亮。"],[31.6,"村燈跟著醒來。"]]},
   {at:35,img:"p1",kb:[[1.4,50,68],[1.05,50,62]],fx:"river",board:36,bp:[1000,560],rvy:1000,sfx:[[36,"lines"]],say:[[35.5,"星河橫過天心。"],[39.0,"星線交成棋路。"],[42.8,"那道河，後來叫界。"],[46.5,"兩岸從此相望。"]]},
-  {at:50,img:"p7",kb:[[1.0,50,48],[1.12,50,47]],fx:"stars",board:51,bp:[657,440],sfx:[[51,"lines"]],say:[[50.5,"河畔有塊青石。"],[54.0,"沉睡不知幾年。"],[57.8,"星光落在石面。"],[61.5,"棋盤慢慢醒來。"]],nar:[58.8,"棋路，先於棋名。"]},
-  {at:65,img:"p8",kb:[[1.0,50,45],[1.22,62,56]],fx:"whirl",say:[[65.4,"天上星盤傾斜。"],[68.8,"一角滑入暗彎。"],[72.0,"墨色漩渦初開。"],[74.6,"誰也望不到底。"]]},
-  {at:75,img:"p5",kb:[[1,50,32],[1.4,50,26]],fx:"whirl",sfx:[[76,"suck"]],say:[[75.4,"黑洞張開無聲。"],[79.0,"星槎被河牽去。"],[82.8,"棋聲在深處響。"],[86.6,"一步一步未停。"]],nar:[88.6,"黑非惡，只是深。"]}]};
+  {at:50,img:"p7",kb:[[1.0,50,48],[1.12,50,47]],fx:"stars",board:51,bp:[657,440],sfx:[[51,"lines"]],say:[[50.5,"河畔有塊青石。"],[53.5,"沉睡不知幾年。"],[56.5,"星光落在石面。"],[59.5,"棋盤慢慢醒來。"]],nar:[62.0,"棋路，先於棋名。"]},
+  {at:65,img:"p8",kb:[[1.0,50,45],[1.22,62,56]],fx:"whirl",say:[[65.4,"天上星盤傾斜。"],[67.8,"一角滑入暗彎。"],[70.2,"墨色漩渦初開。"],[72.4,"誰也望不到底。"]]},
+  {at:75,img:"p5",kb:[[1,50,32],[1.4,50,26]],fx:"whirl",sfx:[[76,"suck"]],say:[[75.4,"黑洞張開無聲。"],[78.2,"星槎被河牽去。"],[81.0,"棋聲在深處響。"],[83.8,"一步一步未停。"]],nar:[86.4,"黑非惡，只是深。"]}]};
 const OP_FILM2={n:3,end:60,shots:[
-  {at:0,img:"p2",ly:[[8.6,"p15",1.4]],grow:1,kb:[[1.12,52,40],[1.0,50,52]],fx:"stone",splash:9.4,say:[[0.6,"五色石曾補天。"],[3.8,"另有一角青石。"],[7.0,"一枚界石相隨。"],[10.2,"同落雲河深處。"]],nar:[11.5,"它記住萬年棋聲。"]},
-  {at:12.5,img:"p15",ly:[[12.6,"p16",2.2],[16.6,"p3",1.4]],grow:1,kb:[[1.0,50,52],[1.22,44,60]],fx:"steam",say:[[12.8,"青石後來成桌。"],[15.8,"桌上仍有星河。"],[18.9,"河邊少了界石。"],[21.6,"七碗茶正等候。"]]},
-  {at:23,img:"p9",kb:[[1.25,50,70],[1.0,50,35]],fx:"steam",say:[[23.3,"茶氣飄出船外。"],[25.9,"在河上織小路。"],[28.3,"七點紅光在前。"]],nar:[29.2,"茶未入口，緣已同船。"]},
-  {at:30,img:"p4",fx:"dark",say:[[30.0,"七段歲月在岸。"],[33.0,"七個孩子將醒。"],[35.8,"本命棋子先亮。"]],meteor:36}]};
+  {at:0,img:"p2",ly:[[8.6,"p15",1.4]],grow:1,kb:[[1.12,52,40],[1.0,50,52]],fx:"stone",splash:9.4,say:[[0.6,"五色石曾補天。"],[3.2,"另有一角青石。"],[5.8,"一枚界石相隨。"],[8.4,"同落雲河深處。"]],nar:[9.9,"它記住萬年棋聲。"]},
+  {at:12.5,img:"p15",ly:[[12.6,"p16",2.2],[16.6,"p3",1.4]],grow:1,kb:[[1.0,50,52],[1.22,44,60]],fx:"steam",say:[[12.8,"青石後來成桌。"],[15.4,"桌上仍有星河。"],[18.0,"河邊少了界石。"],[20.6,"七碗茶正等候。"]]},
+  {at:23,img:"p9",kb:[[1.25,50,70],[1.0,50,35]],fx:"steam",say:[[23.3,"茶氣飄出船外。"],[25.4,"在河上織小路。"],[27.4,"七點紅光在前。"]],nar:[28.0,"茶未入口，緣已同船。"]},
+  {at:30,img:"p4",fx:"dark",say:[[30.0,"七段歲月在岸。"],[32.2,"七個孩子將醒。"],[34.2,"本命棋子先亮。"]],meteor:36}]};
 /* hspx 開發者 11/12「想製作從沒有裂縫到破洞的動畫」「要有漸漸裂掉變成棋桌的過程畫面」：
    第 1 首天裂鏡頭＝完整青瓷天（p10，天幕被頂起）→ 10.4 秒裂紋從中心爆開（p11，縫裡透光）→ 12.4 秒「天裂了」崩成破洞（p12）→ 17.6 秒淡到天河全景（p1）；
    第 3 首開頭＝圓青石與界石從破洞墜落（p2）→ 落進雲河（p15），冰裂紋依圓板透視一條條長成棋盤線（9 直 10 橫、楚河漢界、九宮），河帶通到缺口（界石的位置）
