@@ -1613,7 +1613,7 @@ html[data-lefty] .tskip{right:auto;left:14px}
       if(!window.caches)return go();caches.keys().then(function(ks){return Promise.all(ks.filter(function(k){return k.indexOf("xqlab-app-")===0}).map(function(k){return caches.delete(k)}))})
         .then(function(){return navigator.serviceWorker&&navigator.serviceWorker.getRegistration()}).then(function(r){return r&&r.update()}).catch(function(){}).then(go)}};setTimeout(chk,4000)})();
 </script>
-<script>window.XQ_OFFLINE=true;window.XQ_BUILD="20261116-1830";</script>
+<script>window.XQ_OFFLINE=true;window.XQ_BUILD="20261116-1832";</script>
 <script src="core.js"></script>
 <script src="engine.js"></script>
 <script src="local.js"></script>
@@ -22086,6 +22086,9 @@ if(typeof gxParkInfo==="function"){const f3=gxParkInfo;gxParkInfo=function(k){tr
    還沒做：考究說明卡（出處待史學顧問核）。
    11/16 開發者：其他四攤開張（文案照定稿草案第一節第 5、6 項；第五節第 7、8、9、17 項照推薦），標籤不再帶鎖：
      領禮物（雲河櫃坊）：列出 07mnq 的大禮包——還沒領的（授印禮、破局錦囊、停靠過的每一朝的遠征補給）點了就領（mnqGift 儀式，發的東西照 07mnq），領過的點了再看一次。不另外發新東西、不加新貨幣。
+       11/16 晚開發者「領禮物的實用性和樂趣太低」→ 提案 story/gemini_app/173，選單定「開櫃取帖＋飛錢寄櫃的見面禮、遠征補給、每週平安信」（純計算與存檔見 xsmTieDraw 那一段）：
+       每天兩張明牌＋一張蓋牌挑一張（星輝 30、星塵 3～5、悔棋符 1、提示棋 1、修為 20；蓋牌 5% 是積灰的小木匣＝將令或珍品），節氣當天多一張節禮帖；沒來的日子替你收三天；
+       寄來的包裹點了先合券（xsmQj）再開；07mnq 的舊禮收進「收過的禮」。只用現有資源，不加新貨幣、不加存檔鍵（都在 xsmStall 的 g、p）。
      七星來訪（老槐樹下）：每天保證有一位，只挑已加入的夥伴（07pty ptyHas），不挑陪在身邊的那位（首頁小人 myChar，跟 07j 一樣）；同一天固定同一位（存 xsmStall.v）。
        說一句西市招呼（XSM_V7，主句／備用照日期輪；雷借花主句分日夜）；他手上有 07j 的請託就接 07j 的任務卡（v7Sheet，謝禮照 07j 15 修為），沒有就送一份小禮（每天一次 +10 修為）。
        見到了也記進 07j 的 visit7（算進每天 3 位、來過幾次）。只有自己一個人（還沒有別的夥伴）＝「今天很清靜」。
@@ -22111,7 +22114,7 @@ const XSM_RAIN=[[53,12,60,31],[69.5,14,82,36]];   /* 茶坊窗外看得到雨的
 const XSM_BAD={};   /* 這次開 App 載不到的圖（d＝白天、n＝夜景），換另一張不再試 */
 /* ---------- 11/16 四攤的資料 ---------- */
 Object.assign(XSM_TX,{
-  gift:"櫃坊，是古時替人寄放財物的店。旅途中送到的禮，都先收在這裡，想看、想領，隨時可以來。",g1:"{你}的禮，櫃上都收好了，一樣不少。",g0:"禮都領了。下回有新的，再來櫃上看看。",
+  gift:"櫃坊，是唐朝長安西市替人保管錢財的店。存的人拿著帖來，櫃上認了帖，才把東西交出去。",
   v1:"老槐樹下有人停下腳步，像是在等{你}。",v0:"老槐樹下今天很清靜，還沒有人來。",vGot:"今天的小禮收下了。",
   c0:"攤上的棋子散了一地。七種棋子各少一顆，藏在西市的角落裡，幫攤主找回來吧。",c1:"哎呀，少了好幾顆！少一顆，這副棋就下不成了。",c2:"找到了，就是這顆。",c3:"一副棋，一顆都不能少。多謝{你}。",cDone:"今天這顆找到了，明天再來幫我看看。",
   mu:"旅途中聽過的曲子，都收在這裡。想再聽一遍，就來樂棚坐坐。",mu2:"唐朝有一年長安大旱，東市、西市搭樓比賽彈奏求雨。東市請來第一名的琵琶手，西市樓上卻有人彈得更好。",
@@ -22124,6 +22127,40 @@ const XSM_V7={x_swordboy:["這裡的街橫平豎直，像車轍。好走。","�
   x_spiritgirl:["人多，{名}，走近些，別走散了。","我想買些鹽，家裡的罐子快空了。"],
   x_bing:["問價、跑腿，我最快！{名}，要問哪一攤？","我不賭錢。翻暗棋就翻暗棋，誰輸了，再來一局！"],
   x_martialgirl:[["{名}！這邊這邊！好多燈，跟臨安的夜市一樣亮！","{名}！這邊攤子好多，我一攤都不想漏！"],"那聲鼓……不是打雷吧？不是就好！"]};
+/* ---------- 11/16 櫃坊改版（開發者選單：開櫃取帖＋飛錢寄櫃的見面禮、遠征補給、每週平安信；提案 story/gemini_app/173）的文字 ----------
+   掌櫃照唐代櫃坊說話：憑帖取物、合券；不用當鋪、當票、絕當這些明清的詞。{你}、{名} 照 xsmYou（07j v7Txt） */
+Object.assign(XSM_TX,{
+  gDay:"{你}來啦。今天的帖寫好了：兩張攤開，一張蓋著，挑一張帶走吧。",gNight:"鉦聲響過，市早散了。櫃上還留著一盞燈，今天的帖在這裡，挑一張吧。",
+  gMany:"這幾天{你}沒來，帖都替{你}收著。一天一張，慢慢挑。",gDone:"今天的帖收過了。明天再來，櫃上會寫好新的。",
+  gPick:"帖收好了。憑這張帖，東西就是{你}的。",gHid:"蓋著的那張，也是{你}自己挑的。打開看看。",gBox:"這只小木匣，是有人託櫃上轉交給{你}的。在櫃底擱久了，積了一層灰。",
+  tieHow:"每天櫃上寫一份帖，挑一張帶走。沒來的日子，櫃上替{你}收著三天。",wk0:"這一週，櫃上一切平安。這一份，是櫃上給{你}的一點心意。",
+  pkNar:"唐朝的商人出遠門，不扛一箱箱銅錢，先把錢交給各地設在京城的官署，或是富商人家，換一張券；到了地方，兩半券一合，就能取錢，叫作「飛錢」。夥伴從各朝寄來的東西，也照這個法子收在櫃上。",
+  qj:"券的一半在櫃上，一半跟著東西寄來。兩半合得上，朱印對齊了，才能開封。",meetNote:"星輝可以在「雲河七星」卡冊分給新夥伴，幫忙追上大家。"});
+/* 新夥伴加入的見面禮（齊轍一開始就在，沒有） */
+const XSM_MEET_L={x_miaogirl:"嘿嘿，我上船啦！見面禮寄在櫃上了。{名}，等我追上大家，再一起去甲板看星星！",
+  x_shuai:"{名}，勞{你}收下這份見面禮。我才剛走出九宮，許多事還不懂，往後還要請{你}指點。",
+  x_shi:"見面禮，在櫃上。……收著就好。",
+  x_spiritgirl:"剛上船，沒什麼好送的。見面禮寄在櫃上了，{名}記得去拿。路還長，慢慢走。",
+  x_bing:"跑腿我最快，這回倒是託櫃坊寄的！{你}幫過我一回，我記著。見面禮，{名}收下啦！",
+  x_martialgirl:"{名}！見面禮寄到櫃上啦！記住，我是雷借花——不是打雷的雷，是姓雷！"};
+/* 每週平安信：「陪你走」那位寫，兩句照週輪 */
+const XSM_WK_L={x_swordboy:["{名}，這七天的路，走得穩。鞋帶繫緊了，{你}也是。","我又認得兩個字了。寫歪了，就再寫一次。這一週，平安。"],
+  x_miaogirl:["這一週我跑了好多地方，每次都先回頭喊一聲喔！{名}，{你}也要平平安安！","阿娘說，帽頂的紅珠子，跑多遠都看得見。{名}，我很好，{你}看得見嗎？"],
+  x_shuai:["這一週，我問了許多問題，也記下許多答案。{名}，{你}那邊可還安好？","勞{你}掛心。我很好，城子也很好……雖然他不說。"],
+  x_shi:["平安。……{你}也是。","方庭很好。我也是。別擔心。"],
+  x_spiritgirl:["這一週，我給大家沏了茶，也替{你}留了一碗。{名}，趕路前記得喝口熱的。","累了就坐一下。星槎不會丟下誰，我也不會。這一週，平安。"],
+  x_bing:["這一週我跑了七趟腿，一趟都沒迷路！{名}，下回換我替{你}送信啦！","小梅說，坐下來等一等也不會怎樣。我試了……還是好想跑！{名}，平安喔！"],
+  x_martialgirl:["{名}！這一週沒打雷！……我是說，我很好！","我這一週都有小聲說話喔！……好啦，大部分的時候。{名}也要平安！"]};
+/* 節禮帖：節氣當天掌櫃說的一句（節氣日照 07y5 TD_TERMS）。立春春盤見杜甫〈立春〉；清明掃墓見唐玄宗開元二十年許寒食上墓；鉦聲散市見《唐六典》兩京諸市署（待史學顧問核） */
+const XSM_TERM_L={"小寒":"小寒到了，一年裡最冷的日子就要來了。手凍了，就揣在袖子裡想棋。","大寒":"大寒，是二十四節氣的最後一個。冷過這幾天，春天就不遠了。",
+  "立春":"今天立春。長安人家要吃春盤，生菜切得細細的，咬一口，春天就來了。","雨水":"雨水，天暖了，下的不再是雪，是雨。","驚蟄":"驚蟄，春雷一響，躲在土裡過冬的蟲子都醒了。",
+  "春分":"春分這天，白天和夜晚一樣長，像棋盤上的楚河漢界，兩邊剛好對半。","清明":"清明，人們去給先人掃墓，順路到郊外踏青。","穀雨":"穀雨，雨水多了，田裡的穀子喝飽了水，長得最快。",
+  "立夏":"立夏了，天一天比一天熱。下棋找個樹蔭坐吧。","小滿":"小滿，麥粒一天天飽滿起來，還沒全滿，所以叫小滿。","芒種":"芒種，麥子帶著尖尖的芒，正好收割；稻子也要趕緊種下。",
+  "夏至":"夏至這天，白天最長。太陽下山得晚，可以多下一盤再回家。","小暑":"小暑，熱起來了。櫃上備了涼水，喝一口再走。","大暑":"大暑，一年裡最熱的時候。慢慢想棋，別急出一身汗。",
+  "立秋":"今天立秋。早晚吹起涼風，暑氣要慢慢退了。","處暑":"處暑的「處」，是停下來的意思。熱了一整個夏天，到這裡差不多停了。","白露":"白露，清早的草葉上掛著一顆顆露水，白白亮亮的。",
+  "秋分":"秋分，白天和黑夜又一樣長了。從今天起，夜一天比一天長。","寒露":"寒露，露水摸起來涼涼的。出門記得多加件衣裳。","霜降":"霜降，清早的屋瓦上結了一層白霜。",
+  "立冬":"今天立冬。秋天收的東西都收進倉裡，櫃上也替{你}收好一份。","小雪":"小雪，天冷了，開始飄起小小的雪。","大雪":"大雪，雪下得更大了。外頭冷，進來下盤棋暖暖身子。",
+  "冬至":"冬至這天，白天最短、夜最長。過了今天，白天就一天天長回來了。"};
 const XSM_VISIT_XP=10,XSM_FIND_XP=10,XSM_SET_XP=50,XSM_TOL=28;   /* 修為：小禮、找到一顆、湊齊一副（照 07j 請託 15、07q 找東西的量級）；點到藏點幾 px 內算找到 */
 const XSM_PCS=["俥","傌","帥","仕","相","兵","炮"];   /* 一副七顆，照 07pty 加入順序（俥齊轍、傌駱躍梅、帥沈方庭、仕鐵連城、相田飛燕、兵步越溪、炮雷借花） */
 /* 找棋子的藏點 [左%, 上%]（量 park/ximarket/xm_day.png 768×1376，日夜同位置；離五個攤位標籤、出口、市門都遠一點） */
@@ -22196,6 +22233,46 @@ function xsmGifts(S,E,D){S=S||{};E=E||{};const G=S.gift||{},A6=G.a6||{},o=[];
   const eras=(Array.isArray(D)?D:[]).filter(e=>e!=="classic");for(const e of Object.keys(A6))if(A6[e]&&!eras.includes(e))eras.push(e);
   for(const e of eras)o.push({k:"a6",era:e,got:!!A6[e]});
   return o.filter(g=>!g.got).concat(o.filter(g=>g.got))}
+/* ---------- 11/16 櫃坊改版：純計算（test-xsm-counter-1116.js 用 vm 跑）----------
+   開櫃取帖：每天一份帖＝兩張明牌（不重複、至少一張星輝或星塵）＋一張蓋牌（剩下三種挑一種；5% 是積灰的小木匣＝將令 1 或一件還沒收的珍品），照日期算，同一天固定、不能重抽；
+     節氣當天（07y5 TD_TERMS 的日子）多一張不用選的節禮帖（星輝 60 或星塵 10），跟那天挑的帖一起收下；
+     沒來的日子櫃上替你收著：今天往前三天內、還沒收的都還能挑（從第一次收帖那天起算，第一次來只有今天）。
+   飛錢寄櫃：見面禮（齊轍以外每位夥伴一份，星輝 80）、遠征補給（07mnq a6，西市開了以後改到這裡領）、每週一封平安信（陪你走那位寫，星輝 30；週一起算，沒拿的那週不補）。
+   存檔都在 xsmStall：g＝{s 第一次收帖那天, c 收過的日子, h 最近 30 筆}，p＝{m:{夥伴:收見面禮那天}, w 收過平安信的那一週（週一的日期）} */
+const XSM_TIE={hui:["✨","星輝",30],dust:["🌌","星塵",3],undo:["↶","悔棋符",1],hint:["💡","提示棋",1],xp:["🀄","修為",20],ling:["🪙","將令",1],relic:["🏺","珍品",1]};   /* [圖示, 名稱, 份量]；星塵照日期 3～5 */
+const XSM_TIE_K=["hui","dust","undo","hint","xp"],XSM_BOX_P=5,XSM_KEEP=3,XSM_TERM={hui:60,dust:10},XSM_MEET=80,XSM_WK=30;
+/* 雜湊再打散一次（murmur3 的 fmix32）：FNV-1a 的低位元很不亂，%2、%3 會整排同一邊；櫃坊的抽法都用這個 */
+function xsmMix(s){let h=xsmHash(s);h^=h>>>16;h=Math.imul(h,0x85ebca6b);h^=h>>>13;h=Math.imul(h,0xc2b2ae35);h^=h>>>16;return h>>>0}
+/* 往後（n 正）或往前（n 負）幾天（"YYYY-MM-DD"） */
+function xsmDayAdd(day,n){const m=/^(\d+)-(\d+)-(\d+)$/.exec(String(day||""));if(!m)return"";const d=new Date(+m[1],+m[2]-1,+m[3]+(n|0));return d.getFullYear()+"-"+String(d.getMonth()+1).padStart(2,"0")+"-"+String(d.getDate()).padStart(2,"0")}
+/* 這一天的帖：{day, open:[{k,n},{k,n}], hid:{k,n} 或 {k:"box", b:"ling"|"relic", n:1}} */
+function xsmTieDraw(day){const h=k=>xsmMix("tie"+k+day),K=XSM_TIE_K,a=["hui","dust"][h(1)%2],R=K.filter(k=>k!==a),b=R[h(2)%R.length],open=h(3)%2?[a,b]:[b,a],L=K.filter(k=>!open.includes(k));
+  const amt=k=>k==="dust"?XSM_TIE.dust[2]+h(5)%3:XSM_TIE[k][2],box=h(4)%100<XSM_BOX_P;
+  return{day,open:open.map(k=>({k,n:amt(k)})),hid:box?{k:"box",b:h(6)%2?"relic":"ling",n:1}:(k=>({k,n:amt(k)}))(L[h(7)%L.length])}}
+/* 這一天是不是節氣：T＝[[月,日,名]]（預設 07y5 TD_TERMS）；是＝節氣名，不是＝"" */
+function xsmTermOf(day,T){T=T||(typeof TD_TERMS!=="undefined"?TD_TERMS:null);const m=/^\d+-(\d+)-(\d+)$/.exec(String(day||""));if(!m||!Array.isArray(T))return"";const x=T.find(t=>t[0]===+m[1]&&t[1]===+m[2]);return x?x[2]:""}
+/* 節禮帖：星輝 60 或星塵 10（照日期） */
+const xsmTermGift=(day,t)=>t?(xsmMix("term"+day)%2?{k:"dust",n:XSM_TERM.dust}:{k:"hui",n:XSM_TERM.hui}):null;
+const xsmTieNorm=G=>{G=G&&typeof G==="object"?G:{};return{s:typeof G.s==="string"?G.s:"",c:Array.isArray(G.c)?G.c.filter(x=>typeof x==="string").slice(-12):[],h:Array.isArray(G.h)?G.h.slice(-30):[]}};
+/* 還能挑的日子（舊的在前）：今天，加上第一次收帖以後、往前兩天內還沒收的 */
+function xsmTieDays(G,today){G=xsmTieNorm(G);const o=[];if(!xsmDayAdd(today,0))return o;
+  for(let i=XSM_KEEP-1;i>=0;i--){const d=xsmDayAdd(today,-i);if(d!==today&&(!G.s||d<G.s))continue;if(!G.c.includes(d))o.push(d)}return o}
+/* 挑一張：i＝0、1 明牌，2 蓋牌。那天不能挑（收過、太舊）＝null；回 {G 新的存檔, card, term 節禮或 null, draw} */
+function xsmTieTake(G,day,i,today,T){G=xsmTieNorm(G);if(!xsmTieDays(G,today).includes(day))return null;const D=xsmTieDraw(day),card=i===2?D.hid:D.open[i];if(!card)return null;
+  const term=xsmTermGift(day,xsmTermOf(day,T));G.s=G.s||today;G.c=G.c.concat(day).slice(-12);G.h=G.h.concat([{d:day,k:card.k,b:card.b||"",n:card.n,t:term?term.k:""}]).slice(-30);return{G,card,term,draw:D}}
+/* 這一週（週一的日期） */
+function xsmWeekOf(day){const m=/^(\d+)-(\d+)-(\d+)$/.exec(String(day||""));if(!m)return"";return xsmDayAdd(day,-((new Date(+m[1],+m[2]-1,+m[3]).getDay()+6)%7))}
+const xsmPkNorm=p=>{p=p&&typeof p==="object"?p:{};return{m:p.m&&typeof p.m==="object"?Object.assign({},p.m):{},w:typeof p.w==="string"?p.w:""}};
+/* 寄來的包裹：mem＝已加入的夥伴、look＝陪你走那位、a6＝還沒領遠征補給的朝代、p＝xsmStall.p、day＝今天 */
+function xsmParcels(mem,look,a6,p,day){p=xsmPkNorm(p);mem=(mem||[]).filter(c=>XSM_V7[c]);const o=[];
+  for(const c of mem)if(c!=="x_swordboy"&&!p.m[c])o.push({k:"meet",c,n:XSM_MEET});   /* 齊轍一開始就在（07pty PTY.START） */
+  for(const e of a6||[])o.push({k:"a6",era:e});
+  /* 平安信：玩家就是「陪你走」那位（07j 的 {名} 照 myChar 叫人），信由別的夥伴寫、照週輪；只有自己一個人＝掌櫃寫一張平安帖（c 空字串） */
+  const w=xsmWeekOf(day),L=mem.filter(c=>c!==look),c=L.length?L[xsmMix("wkc"+w)%L.length]:"";if(w&&p.w!==w)o.push({k:"wk",c,w,n:XSM_WK});return o}
+/* 平安信寫哪一句（照週輪；掌櫃的平安帖只有一句） */
+const xsmWkLine=(c,w)=>{if(!c)return XSM_TX.wk0;const A=XSM_WK_L[c];return A?A[xsmMix("wk"+c+w)%A.length]:""};
+/* 信裡的 {名}：寫信的人剛好是陪你走那位（之後換人陪你走），就不叫自己的名字 */
+const xsmLetter=(s,c,look)=>xsmYou(c&&c===look?String(s||"").replace(/\{名\}[，！]?/g,""):s,c);
 /* ---------- 畫面 ---------- */
 function xsmCss(){if(document.getElementById("xsmCss"))return;const s=document.createElement("style");s.id="xsmCss";s.textContent=`
 .xsm-page{margin:0 0 6px}.xsm-page .shp-spot{max-width:46%;padding:4px 11px;z-index:3}.xsm-page .shp-spot b{white-space:nowrap;font-size:15px;letter-spacing:.06em}
@@ -22218,6 +22295,28 @@ function xsmCss(){if(document.getElementById("xsmCss"))return;const s=document.c
 .xsm-row span.on{border:2px solid #7a4a1f;background:#f3e2bd;color:#a3271d}
 .xsm-mu{display:flex;align-items:center;gap:8px;width:100%;min-height:46px;padding:6px 12px;margin:0 0 6px;border-radius:12px;border:1px solid rgba(138,90,43,.3);background:rgba(246,238,220,.5);font:700 17px var(--serif,serif);color:inherit;text-align:left;cursor:pointer}
 .xsm-mu b{flex:1;min-width:0;font-weight:700}.xsm-mu small{flex:none;font:13px var(--sans,sans-serif);color:var(--muted)}.xsm-mu.on{border:1.5px solid #B5452B;background:rgba(242,201,76,.18)}
+.xsm-ties{display:flex;gap:8px;margin:4px 0 10px}
+.xsm-tie{position:relative;flex:1;min-width:0;display:flex;flex-direction:column;align-items:center;gap:4px;padding:14px 4px 10px;border-radius:12px;border:1.5px solid #8a5a2b;background:linear-gradient(#fbf3df,#efdcb2);color:#3b2a1a;font:700 15px/1.25 var(--serif,serif);text-align:center;box-shadow:0 2px 6px rgba(0,0,0,.18)}
+button.xsm-tie{cursor:pointer}.xsm-tie>span{font-size:26px;line-height:1}.xsm-tie b{font-size:16px}.xsm-tie em{font:800 15px var(--sans,sans-serif);font-style:normal;color:#B5452B}
+.xsm-tie::before{content:"";position:absolute;top:6px;right:6px;width:12px;height:12px;border-radius:3px;background:#c0392b;opacity:.8}
+.xsm-tie.hid{background:repeating-linear-gradient(45deg,#7a5530 0 6px,#6b4a29 6px 12px);color:#f3e2bd;border-color:#4a3018}.xsm-tie.hid em{color:#f2c94c}
+.xsm-tie.off{opacity:.45;box-shadow:none}.xsm-tie.on{border:2px solid #B5452B;box-shadow:0 0 0 3px rgba(242,201,76,.5)}
+.xsm-tie.term{flex-direction:row;flex-wrap:wrap;justify-content:center;gap:6px 8px;margin:0 0 8px;padding:10px 12px;border-style:dashed;background:rgba(242,201,76,.16)}.xsm-tie.term small{flex-basis:100%;font:13px/1.4 var(--sans,sans-serif);color:var(--muted)}
+.xsm-got{margin:0 0 10px;padding:8px 12px;border-radius:12px;background:rgba(242,201,76,.18);border:1px solid rgba(181,69,43,.35);font:700 16px/1.7 var(--serif,serif)}.xsm-chip{white-space:nowrap;margin-right:6px}.xsm-chip b{color:#B5452B}
+.xsm-li img{width:30px;height:40px;object-fit:contain;flex:none}
+#xsmQj{position:fixed;inset:0;z-index:9200;display:flex;align-items:center;justify-content:center;padding:max(24px,calc(12px + env(safe-area-inset-top,0px))) 18px calc(24px + env(safe-area-inset-bottom,0px));background:radial-gradient(circle at 50% 40%,rgba(70,36,10,.95),rgba(0,0,0,.97) 72%);color:#fff7e6;text-align:center;opacity:0;transition:opacity .3s;overflow:auto}
+#xsmQj.in{opacity:1}#xsmQj .qj-in{display:flex;flex-direction:column;align-items:center;gap:14px;width:min(360px,92vw)}
+#xsmQj h3{margin:0;font:900 24px/1.3 var(--serif,serif);color:#ffe6a8;letter-spacing:.06em}#xsmQj .qj-n{margin:0;font:15px/1.6 var(--sans,sans-serif);color:#e8d9b8}
+#xsmQj .xsm-say{margin:0;color:#f3e6c8}#xsmQj img{width:96px;height:128px;object-fit:contain}#xsmQj .xsm-got{color:#3b2a1a;background:rgba(255,236,190,.92)}
+#xsmQj button{width:100%;min-height:52px;border-radius:99px;border:2px solid #f2c94c;background:linear-gradient(#b3261e,#7d1611);color:#fff6dc;font:900 20px var(--serif,serif);letter-spacing:.08em}
+#xsmQj button.g{min-height:44px;font-size:16px;background:rgba(0,0,0,.35);border-color:rgba(232,199,122,.6);color:#f2e4c4}#xsmQj button:disabled{opacity:.6}#xsmQj button:focus-visible{outline:3px solid #E8C77A;outline-offset:3px}
+.xsm-qj{position:relative;width:240px;height:130px;flex:none}
+.xsm-qj i{position:absolute;top:0;width:120px;height:130px;box-sizing:border-box;border:2px solid #4a3018;background:repeating-linear-gradient(90deg,#c9a36a 0 9px,#bf9760 9px 18px);transition:transform .75s cubic-bezier(.3,1.35,.5,1)}
+.xsm-qj .l{left:0;border-right:2px dashed #4a3018;border-radius:10px 0 0 10px;transform:translateX(-34px) rotate(-5deg)}.xsm-qj .r{right:0;border-left:2px dashed #4a3018;border-radius:0 10px 10px 0;transform:translateX(34px) rotate(5deg)}
+.xsm-qj .l::after,.xsm-qj .r::after{content:"";position:absolute;top:35px;width:30px;height:60px;background:#b3261e}.xsm-qj .l::after{right:-2px;border-radius:60px 0 0 60px}.xsm-qj .r::after{left:-2px;border-radius:0 60px 60px 0}
+.xsm-qj b{position:absolute;left:50%;top:50%;z-index:1;width:50px;margin:-25px 0 0 -25px;font:900 30px/50px var(--serif,serif);color:#fff3d6;opacity:0;transition:opacity .3s .65s}
+.xsm-qj.on .l,.xsm-qj.on .r{transform:none}.xsm-qj.on b{opacity:1}
+@media (prefers-reduced-motion:reduce){.xsm-qj i,.xsm-qj b{transition:none}#xsmQj{transition:none}}
 .xsm-seal{width:104px;height:104px;margin:4px auto 12px;box-sizing:border-box;border:6px solid #c0392b;border-radius:12px;background:rgba(246,236,214,.9);color:#b3261e;display:flex;align-items:center;justify-content:center;font:900 58px/1 var(--serif,serif);transform:rotate(-6deg)}
 @media (prefers-reduced-motion:reduce){.xsm-pc.glow{animation:none;opacity:1;box-shadow:0 0 0 6px rgba(242,201,76,.75)}.xsm-pc.got{animation:none;opacity:0}}`;document.head.append(s)}
 /* 標籤按鈕（旁白、Tab 順序＝由上到下、同一列由左到右：07z hmFocusOrder） */
@@ -22281,8 +22380,13 @@ function xsmVisitMet(c,day){const S=xsmSt();if(S.v.met===day)return;S.v.met=day;
     if(V.day[c]!==day){V.n[c]=(V.n[c]||0)+1;V.day[c]=day;store.set("visit7",V)}}catch(e){}}
 /* 櫃坊現在的禮（沒有 07mnq＝空） */
 function xsmGiftsNow(){try{if(typeof mnqSt!=="function"||typeof mnqEnv!=="function")return[];let D=null;try{D=typeof shipDockList==="function"?shipDockList():null}catch(e){}return xsmGifts(mnqSt(),mnqEnv(),D)}catch(e){return[]}}
-/* 發亮：有禮可領、或今天有人來還沒見到（第 17 項 A） */
-const xsmHotGift=()=>xsmGiftsNow().some(g=>!g.got);
+/* 11/16 櫃坊改版：已加入的夥伴（照 07pty 加入順序）、陪你走那位、還能挑的帖、寄來的包裹 */
+function xsmMem(){if(typeof ptyHas!=="function")return[];const O=typeof PTY!=="undefined"&&PTY.ORDER?PTY.ORDER:Object.keys(XSM_V7);return O.filter(c=>{try{return!!ptyHas(c)}catch(e){return false}})}
+function xsmLook(){try{return(typeof ptyLook==="function"&&ptyLook())||(typeof myChar==="function"&&myChar())||""}catch(e){return""}}
+function xsmTieNow(){try{return xsmTieDays(xsmSt().g,xsmToday())}catch(e){return[]}}
+function xsmParcelsNow(){try{const a6=xsmGiftsNow().filter(g=>g.k==="a6"&&!g.got).map(g=>g.era);return xsmParcels(xsmMem(),xsmLook(),a6,xsmSt().p,xsmToday())}catch(e){return[]}}
+/* 發亮：有禮可領、或今天有人來還沒見到（第 17 項 A）；11/16 改版：西市開著時，還有帖可挑、有包裹沒開也亮 */
+const xsmHotGift=()=>xsmGiftsNow().some(g=>!g.got)||(xsmOpen()&&(xsmTieNow().length>0||xsmParcelsNow().length>0));
 function xsmHotVisit(){try{return xsmSt().v.met!==xsmToday()&&!!xsmVisitWho()}catch(e){return false}}
 function xsmHot(){try{return xsmHotGift()||xsmHotVisit()}catch(e){return false}}
 /* 外景兩個標籤跟著亮／不亮 */
@@ -22290,11 +22394,82 @@ function xsmMark(P){P=P||document.querySelector(".xsm-page:not(.xsm-tea)");if(!P
   if(g)g.classList.toggle("hot",xsmHotGift());if(v)v.classList.toggle("hot",xsmHotVisit())}
 /* ---------- 11/16 領禮物：雲河櫃坊 ---------- */
 function xsmGiftNm(g){const G=typeof MNQ_GIFT!=="undefined"&&MNQ_GIFT[g.k]||{},el=g.era&&typeof eraLabel==="function"?eraLabel(g.era):(g.era||"");return(G.nm||g.k)+(g.k==="a6"&&el?"・"+el:"")}
-function xsmGiftSheet(){xsmCss();const L=xsmGiftsNow(),pend=L.some(g=>!g.got);
-  sheet("雲河櫃坊",b=>{b.innerHTML=`<p class="xsm-nar">${esc(XSM_TX.gift)}</p><p class="xsm-say">掌櫃：「${esc(xsmYou(pend?XSM_TX.g1:XSM_TX.g0))}」</p>`+
-    L.map((g,i)=>`<button type="button" class="xsm-li${g.got?"":" new"}" data-i="${i}"><span aria-hidden="true">${g.got?"📜":"🎁"}</span><b>${esc(xsmGiftNm(g))}</b><em>${g.got?"再看一次":"領取"}</em></button>`).join("");
-    b.querySelectorAll(".xsm-li").forEach(x=>x.onclick=()=>{vibrate(5);const g=L[+x.dataset.i];if(!g||typeof mnqGift!=="function")return;closeSheet();
-      setTimeout(()=>{try{mnqGift(g.k,g.era)}catch(e){}try{xsmMark()}catch(e){}},260)})})}
+/* 11/16 改版：發東西。k＝帖的種類、n＝份量、key＝修為的紀錄鍵（擋重複）；回畫面上那一格 [圖示, 名稱, 份量]。
+   星輝進 07pty 的星輝池、星塵進 07sg2（sg2DustAdd）、提示棋和悔棋符進庫存、將令照 07-legend lingAdd；那個系統不在（沒有旅程）就改成修為 20 */
+function xsmGive(k,n,key){const T=XSM_TIE[k]||XSM_TIE.xp,r=[T[0],T[1],n],xp=()=>xsmGive("xp",XSM_TIE.xp[2],key);
+  try{if(k==="hui"){const P=typeof ptyGet==="function"?ptyGet():null;if(!P)return xp();P.pool=(Math.round(+P.pool)||0)+n;ptySave(P);return r}
+    if(k==="dust"){if(typeof sg2DustAdd!=="function")return xp();sg2DustAdd(n);return r}
+    if(k==="hint"){store.set("hintBonus",(Math.round(+store.get("hintBonus",0))||0)+n);return r}
+    if(k==="undo"){store.set("undoBonus",(Math.round(+store.get("undoBonus",0))||0)+n);return r}
+    if(k==="ling"){if(typeof lingAdd!=="function")return xsmGive("hint",1,key);if(typeof lingN==="function")lingN();lingAdd(n);return r}
+    if(typeof addXP==="function")addXP(n,"雲河櫃坊",key)}catch(e){}return r}
+/* 積灰的小木匣開出珍品：停靠過的朝代（加上古風）裡還沒收的，先挑普通的；一件都沒有＝false（改給將令）。開箱照 07i relicFx */
+async function xsmRelic(day){try{if(typeof relicsData!=="function"||typeof relicsMine!=="function")return false;const R=await relicsData(),mine=relicsMine();let D=null;try{D=typeof shipDockList==="function"?shipDockList():null}catch(e){}
+  const L=[];for(const e of["classic"].concat(Array.isArray(D)?D:[]).filter((e,i,a)=>a.indexOf(e)===i))for(const it of(R&&R[e])||[])if(it&&it.id&&!(mine[e]||[]).includes(it.id))L.push([e,it]);
+  const C=L.filter(x=>x[1].rarity==="common"),P=C.length?C:L;if(!P.length)return false;const[e,it]=P[xsmMix("relic"+day)%P.length];
+  mine[e]=(mine[e]||[]).concat(it.id);store.set("relics",mine);store.set("relicAt",Date.now());const en=typeof relicEra==="function"?relicEra(e):e;
+  if(typeof relicFx==="function")await relicFx(e,it,{from:"雲河櫃坊的小木匣・"+en+"的珍品",cnt:en+"的珍品 "+mine[e].length+"／"+((R[e]||[]).length)});else toast("🏺 得到一件珍品："+it.name);return true}catch(x){return false}}
+/* 挑一張帖（i：0、1 明牌，2 蓋牌）：存檔、發東西（節氣當天連節禮一起）；那天不能挑＝null */
+function xsmTieGo(day,i){const S=xsmSt(),r=xsmTieTake(S.g,day,i,xsmToday());if(!r)return null;S.g=r.G;xsmSave(S);const got=[],c=r.card;
+  if(c.k==="box"){if(c.b==="relic")xsmRelic(day).then(ok=>{if(!ok){const g=xsmGive("ling",1);try{toast(g[0]+" "+g[1]+" +"+g[2])}catch(e){}}try{saveNow(true)}catch(e){}});else got.push(xsmGive("ling",1))}
+  else got.push(xsmGive(c.k,c.n,"xsmg:"+day));
+  if(r.term)got.push(xsmGive(r.term.k,r.term.n,"xsmt:"+day));
+  try{vibrate([10,30,10])}catch(e){}try{saveNow(true)}catch(e){}try{xsmMark()}catch(e){}
+  return{day,i,got,box:c.k==="box"?c.b:"",draw:r.draw,term:r.term}}
+/* 開包裹（見面禮、平安信）：先記下來再發，同一份不會給兩次；回 [圖示, 名稱, 份量] 或 null（遠征補給走 07mnq mnqGift） */
+function xsmPkTake(pk){if(!pk||(pk.k!=="meet"&&pk.k!=="wk"))return null;const S=xsmSt(),p=xsmPkNorm(S.p);
+  if(pk.k==="meet"){if(!XSM_MEET_L[pk.c]||p.m[pk.c])return null;p.m[pk.c]=xsmToday()}else{if(!pk.w||p.w===pk.w||pk.w!==xsmWeekOf(xsmToday()))return null;p.w=pk.w}
+  S.p=p;xsmSave(S);const g=xsmGive("hui",pk.k==="meet"?XSM_MEET:XSM_WK,pk.k==="meet"?"xsmp:m:"+pk.c:"xsmp:w:"+pk.w);try{saveNow(true)}catch(e){}try{xsmMark()}catch(e){}return g}
+/* 畫面小零件 */
+const xsmChip=g=>`<span class="xsm-chip"><span aria-hidden="true">${g[0]}</span> <span>${esc(g[1])}</span> <b>+${g[2]}</b></span>`;
+const xsmCkNm=c=>{try{const C=WX_CHARS[c]||{};return C.nk||C.n||""}catch(e){return""}};
+function xsmPkNm(p){if(p.k==="a6")return(typeof eraLabel==="function"?eraLabel(p.era):p.era)+"渡口的遠征補給";if(p.k==="wk"&&!p.c)return"櫃上的平安帖";return xsmCkNm(p.c)+(p.k==="meet"?"寄來的見面禮":"寄來的平安信")}
+const xsmPkIc=p=>p.k==="a6"?`<span aria-hidden="true">⛵</span>`:!p.c?`<span aria-hidden="true">🏮</span>`:`<img src="data/xs/prev_${p.c}.webp" alt="" onerror="this.remove()">`;
+function xsmTieCard(c,i,hid){if(hid)return`<button type="button" class="xsm-tie hid" data-i="${i}"><span aria-hidden="true">？</span><b>蓋著的帖</b><em>翻開看看</em></button>`;
+  const T=XSM_TIE[c.k];return`<button type="button" class="xsm-tie" data-i="${i}"><span aria-hidden="true">${T[0]}</span><b>${esc(T[1])}</b><em>+${c.n}</em></button>`}
+/* 挑完以後三張都翻開：挑中的亮著，另外兩張淡掉 */
+function xsmTieShow(D,i){const one=(c,j)=>{const box=c.k==="box",T=box?["📦","積灰的小木匣"]:XSM_TIE[c.k];return`<div class="xsm-tie${j===i?" on":" off"}"><span aria-hidden="true">${T[0]}</span><b>${esc(T[1])}</b>${box?"":`<em>+${c.n}</em>`}</div>`};
+  return`<div class="xsm-ties">${D.open.map(one).join("")}${one(D.hid,2)}</div>`}
+function xsmTermCard(day){const t=xsmTermOf(day),g=xsmTermGift(day,t);if(!g)return"";const T=XSM_TIE[g.k];
+  return`<div class="xsm-tie term"><span aria-hidden="true">${T[0]}</span><b>${esc(T[1])}</b><em>+${g.n}</em><small><span>節禮</span>・<span>${esc(t)}</span>・<span>不用選，一起收下</span></small></div>`}
+function xsmGiftSheet(){xsmCss();let res=null;
+  sheet("雲河櫃坊",b=>{const paint=()=>{const L=xsmGiftsNow(),old=L.filter(g=>!g.got&&g.k!=="a6"),done=L.filter(g=>g.got),days=xsmTieNow(),pk=xsmParcelsNow(),today=xsmToday(),day=days[0]||"",term=day?xsmTermOf(day):"";
+      const say=res?(res.i===2?(res.box?XSM_TX.gBox:XSM_TX.gHid):XSM_TX.gPick):days.length>1?XSM_TX.gMany:day?(term&&XSM_TERM_L[term]?XSM_TERM_L[term]:xsmDay()?XSM_TX.gDay:XSM_TX.gNight):XSM_TX.gDone;
+      let h=`<p class="xsm-nar">${esc(XSM_TX.gift)}</p><p class="xsm-say">掌櫃：「${esc(xsmYou(say))}」</p>`;
+      if(res)h+=xsmTieShow(res.draw,res.i)+`<div class="xsm-got"><span>收下了</span> ${res.got.map(xsmChip).join(" ")}${res.box==="relic"?`<span>打開小木匣看看</span>`:""}</div>`;
+      if(day){const D=xsmTieDraw(day),md=(+day.slice(5,7))+"/"+(+day.slice(8,10));
+        h+=`<div class="sec-t">櫃上的帖</div>`+(day!==today?`<p class="muted"><span>帖上的日子</span> <b>${esc(md)}</b></p>`:"")+`<div class="xsm-ties">${D.open.map((c,i)=>xsmTieCard(c,i)).join("")}${xsmTieCard(D.hid,2,1)}</div>`+xsmTermCard(day)+`<p class="muted">${esc(xsmYou(XSM_TX.tieHow))}</p>`}
+      if(pk.length)h+=`<div class="sec-t">寄來的包裹</div>`+pk.map((p,i)=>`<button type="button" class="xsm-li new" data-p="${i}">${xsmPkIc(p)}<b>${esc(xsmPkNm(p))}</b><em>合券</em></button>`).join("")+`<p class="muted">${esc(XSM_TX.pkNar)}</p>`;
+      h+=old.map((g,i)=>`<button type="button" class="xsm-li new" data-g="${i}"><span aria-hidden="true">🎁</span><b>${esc(xsmGiftNm(g))}</b><em>領取</em></button>`).join("");
+      if(done.length)h+=`<button type="button" class="xsm-li" data-old="1"><span aria-hidden="true">📜</span><b>收過的禮</b><em>再看一次</em></button>`;
+      b.innerHTML=h;
+      b.querySelectorAll(".xsm-tie[data-i]").forEach(x=>x.onclick=()=>{vibrate(5);const r=xsmTieGo(day,+x.dataset.i);if(!r)return;res=r;paint();try{b.scrollTop=0}catch(e){}});
+      b.querySelectorAll("[data-p]").forEach(x=>x.onclick=()=>{vibrate(5);const p=pk[+x.dataset.p];if(!p)return;closeSheet();setTimeout(()=>xsmQj(p),260)});
+      b.querySelectorAll("[data-g]").forEach(x=>x.onclick=()=>{vibrate(5);const g=old[+x.dataset.g];if(!g||typeof mnqGift!=="function")return;closeSheet();
+        setTimeout(()=>{try{mnqGift(g.k,g.era)}catch(e){}try{xsmMark()}catch(e){}},260)});
+      const o=b.querySelector("[data-old]");if(o)o.onclick=()=>{vibrate(5);closeSheet();setTimeout(()=>xsmOldSheet(),260)}};
+    paint()})}
+/* 收過的禮（07mnq 的授印禮、破局錦囊、遠征補給）：照舊可以再看一次儀式 */
+function xsmOldSheet(){xsmCss();const L=xsmGiftsNow().filter(g=>g.got);
+  sheet("收過的禮",b=>{b.innerHTML=L.map((g,i)=>`<button type="button" class="xsm-li" data-i="${i}"><span aria-hidden="true">📜</span><b>${esc(xsmGiftNm(g))}</b><em>再看一次</em></button>`).join("")+`<button type="button" class="btn ghost" id="xsmOb">‹ 回櫃上</button>`;
+    b.querySelectorAll(".xsm-li").forEach(x=>x.onclick=()=>{vibrate(5);const g=L[+x.dataset.i];if(!g||typeof mnqGift!=="function")return;closeSheet();setTimeout(()=>{try{mnqGift(g.k,g.era)}catch(e){}},260)});
+    b.querySelector("#xsmOb").onclick=()=>{vibrate(5);closeSheet();setTimeout(()=>xsmGiftSheet(),260)}})}
+/* 合券：兩半木券分在左右，點「合券」兩半自己合起來、朱印對齊（約 0.9 秒；減少動態時直接合上），才開封。遠征補給接 07mnq 的儀式；見面禮、平安信在這裡打開信 */
+function xsmQj(pk){if(!pk||typeof document==="undefined")return;xsmCss();const old=document.getElementById("xsmQj");if(old)old.remove();
+  const o=document.createElement("div");o.id="xsmQj";o.setAttribute("role","dialog");o.setAttribute("aria-modal","true");o.setAttribute("aria-label",xsmPkNm(pk));
+  o.innerHTML=`<div class="qj-in"><h3>${esc(xsmPkNm(pk))}</h3><div class="xsm-qj" aria-hidden="true"><i class="l"></i><i class="r"></i><b data-noi18n>合</b></div><p class="qj-n">${esc(XSM_TX.qj)}</p><button type="button" data-go>合券</button><button type="button" class="g" data-x>待會兒再開</button></div>`;
+  document.body.append(o);requestAnimationFrame(()=>o.classList.add("in"));
+  const close=f=>{o.classList.remove("in");setTimeout(()=>o.remove(),320);try{xsmMark()}catch(e){}if(f)setTimeout(f,200)};
+  const go=o.querySelector("[data-go]");try{go.focus({preventScroll:true})}catch(e){}
+  o.querySelector("[data-x]").onclick=()=>close(()=>xsmGiftSheet());
+  go.onclick=()=>{go.disabled=true;try{vibrate(8)}catch(e){}o.querySelector(".xsm-qj").classList.add("on");let rm=false;try{rm=matchMedia("(prefers-reduced-motion: reduce)").matches}catch(e){}
+    setTimeout(()=>{if(!o.isConnected)return;try{vibrate([10,30,10])}catch(e){}
+      if(pk.k==="a6"){close(()=>{try{if(typeof mnqGift==="function")mnqGift("a6",pk.era,()=>xsmGiftSheet())}catch(e){}});return}
+      const g=xsmPkTake(pk);if(!g){close(()=>xsmGiftSheet());return}
+      const line=xsmLetter(pk.k==="meet"?XSM_MEET_L[pk.c]:xsmWkLine(pk.c,pk.w),pk.c,xsmLook()),who=pk.c?xsmCkNm(pk.c):"掌櫃";
+      o.querySelector(".qj-in").innerHTML=`<h3>${esc(xsmPkNm(pk))}</h3>${pk.c?`<img src="data/xs/prev_${pk.c}.webp" alt="" onerror="this.remove()">`:""}<p class="xsm-say">${esc(who)}：「${esc(line)}」</p><div class="xsm-got">${xsmChip(g)}</div>`+
+        (pk.k==="meet"?`<p class="qj-n">${esc(XSM_TX.meetNote)}</p>`:"")+`<button type="button" data-ok>收下</button>`;
+      const ok=o.querySelector("[data-ok]");try{ok.focus({preventScroll:true})}catch(e){}ok.onclick=()=>close(()=>xsmGiftSheet())},rm?60:950)}}
 /* ---------- 11/16 七星來訪：老槐樹下 ---------- */
 function xsmVisitSheet(){xsmCss();const c=xsmVisitWho();
   if(!c){sheet("老槐樹下",b=>{b.innerHTML=`<p class="xsm-say">${esc(xsmYou(XSM_TX.v0))}</p>`});return}
@@ -36283,7 +36458,8 @@ const mnqSave=s=>{try{store.set("mnq",s)}catch(e){}};
 function mnqWins(){try{const R=JSON.parse(localStorage.getItem("xq_record")||"null")||{};return Object.values(R).reduce((a,v)=>a+((v&&v.w)|0),0)}catch(e){return 0}}
 function mnqEnv(){const E={hasChar:false,firstWin:false,home:"",at:"",homeLabel:""};
   try{const c=typeof myChar==="function"?myChar():"";E.hasChar=!!c;const J=typeof journey==="function"?journey():null;E.home=(J&&(J.home||(typeof CHAR_ERA!=="undefined"&&CHAR_ERA[J.c])))||""}catch(e){}
-  E.firstWin=mnqWins()>0;try{E.at=store.get("shipAt",null)||""}catch(e){}try{E.homeLabel=E.home&&typeof eraLabel==="function"?eraLabel(E.home):""}catch(e){}return E}
+  E.firstWin=mnqWins()>0;try{E.at=store.get("shipAt",null)||""}catch(e){}try{E.homeLabel=E.home&&typeof eraLabel==="function"?eraLabel(E.home):""}catch(e){}
+  try{E.xsm=typeof xsmOpen==="function"&&!!xsmOpen();if(E.xsm&&typeof shipDockList==="function")E.dock=shipDockList()||[]}catch(e){}return E}   /* 11/16 櫃坊改版：西市開了（07xsm xsmOpen），遠征補給改到雲河櫃坊領；dock＝停靠過的站 */
 /* ---------- 純計算：章的進度、下一步 ---------- */
 function mnqDone(S,era){const L=MNQ_SEGS[era],seg=(S&&S.seg)||{};return!!L&&L.every(id=>seg[id])}
 /* 這一章開放了沒：要有資料；open:"start" 一開始就開；"reach" 要前面有資料的章都看完，而且星槎停到過這一朝（S.reach／領過那一朝的遠征補給／現在就停在那一朝） */
@@ -36294,11 +36470,11 @@ function mnqNextOf(S,E){S=S||{seg:{},gift:{a6:{}},lamp:{}};E=E||{};const G=S.gif
   if(E.hasChar&&!G.a1)return{k:"gift",g:"a1",t:"七星授印"};
   for(const id of MNQ_SEGS.classic)if(!seg[id])return{k:"film",era:"classic",id,t:MNQ_SEG_NM[id]};
   if(E.firstWin&&!G.a2)return{k:"gift",g:"a2",t:"破局錦囊"};
-  if(E.at&&E.at!=="classic"&&MNQ_CH.some(c=>c[0]===E.at)&&!A6[E.at])return{k:"gift",g:"a6",era:E.at,t:"遠征補給"};
+  if(E.at&&E.at!=="classic"&&MNQ_CH.some(c=>c[0]===E.at)&&!A6[E.at]&&!E.xsm)return{k:"gift",g:"a6",era:E.at,t:"遠征補給"};   /* 11/16：西市開了就不在首頁、星槎自動跳，改到西市雲河櫃坊合券領（07xsm xsmParcels） */
   /* 第二章起：照章序找第一個還沒看完的章；開放了就接著看（看到哪段接哪段），還沒開放就停下來（後面再看要不要叫玩家開船過去） */
   for(const[e]of MNQ_CH){if(e==="classic"||!MNQ_CHAP[e]||mnqDone(S,e))continue;if(!mnqOpen(S,E,e))break;const id=MNQ_SEGS[e].find(x=>!seg[x]);return{k:"film",era:e,id,t:MNQ_SEG_NM[id]}}
   if(!E.firstWin)return{k:"cpu",t:"贏第一盤"};
-  if(E.home&&E.at!==E.home&&!A6[E.home])return{k:"home",era:E.home,t:"回"+(E.homeLabel||"家鄉")};
+  if(E.home&&E.at!==E.home&&!A6[E.home]&&!(E.xsm&&Array.isArray(E.dock)&&E.dock.includes(E.home)))return{k:"home",era:E.home,t:"回"+(E.homeLabel||"家鄉")};
   const nx=MNQ_CH.find(([e])=>MNQ_CHAP[e]&&!mnqDone(S,e));
   if(nx)return{k:"ship",era:nx[0],t:"開往"+mnqShort(nx[0])+"・第"+MNQ_CN[mnqChN(nx[0])-1]+"章"};   /* 下一章有資料、還沒停到那一朝：帶去星槎開船 */
   if(!MNQ_PANEL_ON)return{k:"more",t:"更多玩法"};   /* 11/15 遠征令拿掉：主線做完就帶去「更多玩法」，不再說第幾章即將開放 */
