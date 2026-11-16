@@ -605,7 +605,7 @@ var XQ=(function(){
     if(!nb)return{id:"wait",red:"等待中…",black:"等待中…",board:parseFen(START),turn:"r",moves:[],result:null,draw:null,tcKey:"none",clocks:null,running:false,legal:[],check:-1,eval:null,
       engine:true,online:{r:false,b:false},who:{r:"",b:""},emotes:[],net:true,mySide:sd||"w",watchers:XQNet.watchers(),waiting:true,link:XQNet.status()};
     const{S,g}=nb;
-    return{rules:C.REP_RULES,rc:S.rc,repetition:g.rules===C.REP_RULES.id?(S.repetition||null):{pending:true,why:"這盤使用舊版棋規，保留棋譜供閱讀；請雙方更新後回大廳另開新局，不以新版改判舊局。"},id:g.id,red:g.red.name,black:g.black.name,board:S.board,turn:S.turn,moves:S.moves.map(moveOut),result:g.result,draw:g.draw,tcKey:g.tc?"net"+g.tc:"none",tc:g.tc||null,clocks:XQNet.clocks?XQNet.clocks():null,running:!!g.clk&&!g.result,
+    return{rules:C.REP_RULES,rc:S.rc,repetition:g.rules===C.REP_RULES.id?(S.repetition||null):{pending:true,why:"這盤使用舊版棋規，保留棋譜供閱讀；請雙方更新後回大廳另開新局，不以新版改判舊局。"},id:g.id,red:g.red.name,black:g.black.name,board:S.board,turn:S.turn,moves:S.moves.map(moveOut),result:g.result,draw:g.draw,tcKey:g.tc?"net"+g.tc:"none",tc:g.tc||null,clocks:XQNet.clocks?XQNet.clocks():null,running:!!g.clk&&!g.result&&!(XQNet.ghost&&XQNet.ghost()),ghost:!!(XQNet.ghost&&XQNet.ghost()),
       legal:g.result||g.rules!==C.REP_RULES.id?[]:legal(S.board,S.turn),check:!g.result&&inCheck(S.board,S.turn)?kingSq(S.board,S.turn):-1,eval:null,engine:true,
       online:{r:XQNet.isOn(g.red.id),b:XQNet.isOn(g.black.id)},who:{r:g.red.name,b:g.black.name},emotes:XQNet.emotes(),net:true,mySide:sd||"w",watchers:XQNet.watchers(),link:XQNet.status(),unsent:XQNet.pendingSend()}}
   async function netPvp(p,b){if(p==="/pvp/state")return netState();
