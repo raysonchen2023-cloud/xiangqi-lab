@@ -1613,7 +1613,7 @@ html[data-lefty] .tskip{right:auto;left:14px}
       if(!window.caches)return go();caches.keys().then(function(ks){return Promise.all(ks.filter(function(k){return k.indexOf("xqlab-app-")===0}).map(function(k){return caches.delete(k)}))})
         .then(function(){return navigator.serviceWorker&&navigator.serviceWorker.getRegistration()}).then(function(r){return r&&r.update()}).catch(function(){}).then(go)}};setTimeout(chk,4000)})();
 </script>
-<script>window.XQ_OFFLINE=true;window.XQ_BUILD="20261116-1337";</script>
+<script>window.XQ_OFFLINE=true;window.XQ_BUILD="20261116-1343";</script>
 <script src="core.js"></script>
 <script src="engine.js"></script>
 <script src="local.js"></script>
@@ -3166,7 +3166,7 @@ if(OFF&&"serviceWorker" in navigator){
     updT.innerHTML='<div class="ut">⬇ 正在下載新版…</div><div style="margin-top:6px;height:5px;border-radius:3px;background:#fff3;overflow:hidden"><i style="display:block;height:100%;width:3%;background:#E9C46A;transition:width .25s"></i></div>';document.body.append(updT);return updT};
   const updSay=(t,p)=>{const b=updBox();b.querySelector(".ut").textContent=t;if(p!=null)b.querySelector("i").style.width=Math.max(3,Math.min(100,p))+"%"};
   navigator.serviceWorker.addEventListener("message",e=>{const m=e.data&&e.data.xqUpd;if(!m||!updating)return;const[g,n]=m;updSay(`⬇ 正在下載新版　${g}／${n}`,g/n*95)});
-  const markDone=()=>{try{localStorage.setItem("xqUpdDone",String(Date.now()))}catch(e){}};
+  const markDone=()=>{try{localStorage.setItem("xqUpdDone",String(Date.now()))}catch(e){}try{localStorage.setItem("xqUpdBack",JSON.stringify({t:Date.now(),h:location.hash||""}));sessionStorage.setItem("xqTitleShown","1")}catch(e){}};   /* 11/16 開發者「App 更新的時候，不要跳到 App 關掉後開啟的第一個畫面」（選單「只管更新」）：記下這是更新重載＋當下頁面，05b saveBoot 看到就不出開頭畫面、回原頁（iPhone 主畫面 App 重載時 sessionStorage 有時會被清，所以另存 localStorage） */
   try{const d=+(localStorage.getItem("xqUpdDone")||0);if(d){localStorage.removeItem("xqUpdDone");if(Date.now()-d<120000){let w=0;const sh=async()=>{if(document.querySelector("#preov")&&++w<200)return setTimeout(sh,300);const v=fmtV(await appVer());
     const t=document.createElement("div");t.className="toast";t.style.zIndex="310";t.textContent="✓ 已更新到新版"+(v?"（"+v+"）":"")+"，可以繼續用了";document.body.append(t);setTimeout(()=>t.remove(),5000)};setTimeout(sh,600)}}}catch(e){}
   async function doUpdate(){updating=true;updSay("⬇ 正在檢查新版…",3);const tt=updT;let slow=null;
@@ -6422,6 +6422,7 @@ function saveMigrateOld(){const c=myChar()||(mySex()==="f"?"f":"m");store.set("j
 function saveBoot(){if(SAVE_OLD!==null){store.set("saveMig1",Date.now());if(SAVE_OLD)saveMigrateOld()}lockFix();
   try{const J=store.get("journey",null);if(J&&CHAR_ERA[J.c]&&J.era!==2){store.set("era",CHAR_ERA[J.c]);store.set("eraUser",null);store.set("journey",{...J,era:2});setTimeout(()=>{try{applyEra()}catch(e){}},300)}}catch(e){}   /* 意見回饋 669 補：1200 版以前就選好角色的旅程，開 App 時補套一次角色主場的朝代（之後自己換的照自己的） */
   let pro=false,shown=false;try{pro=!!sessionStorage.getItem("xqPrologue");if(pro)sessionStorage.removeItem("xqPrologue");shown=!!sessionStorage.getItem("xqTitleShown")}catch(e){}
+  try{const u=JSON.parse(localStorage.getItem("xqUpdBack")||"null");localStorage.removeItem("xqUpdBack");if(u&&Date.now()-(+u.t||0)<180000){shown=true;sessionStorage.setItem("xqTitleShown","1");if(u.h&&/^#\//.test(u.h)&&!/^#\/./.test(location.hash||""))location.hash=u.h}}catch(e){}   /* 11/16 開發者選單「只管更新」：3 分鐘內的更新重載（02-shell markDone 記的）＝不出開頭畫面，網址沒帶頁面就回到原本那一頁；真的關掉 App 再開照舊出開頭畫面 */
   if(pro){if(typeof bhxNeed==="function"&&bhxNeed()&&typeof bhxBack==="function")bhxBack(true);setTimeout(()=>{if(typeof bhxLandNew==="function"&&bhxLandNew())return;prologue()},1500)}   /* 有舊旅程的人在開頭選好角色：換格會重新載入，載入後一樣降落經典星槎 */   /* 換格開新旅程會重新載入：等序幕的 1.5 秒先蓋黑洞底，不露出首頁 */
   if(!pro&&typeof bhxResume==="function"&&bhxResume())return;   /* 11/16 P0：開新旅程到一半被重新載入＝接回序局邀局卡（07bh bhxResume），不掉回舊旅程 */
   if(shown||navigator.webdriver||!/^(#\/?)?$/.test(location.hash||""))return;titleScreen({})}
