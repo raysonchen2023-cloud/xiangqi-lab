@@ -12,7 +12,7 @@ function dvtSheet(){if(!dvtOn())return toast("要先打開開發者模式");
     const un=!!store.get("dvtUnlock",false),tl=!!store.get("dvtTools",false),LG=(()=>{const L=store.get("devLog",[]);return Array.isArray(L)?L.slice().reverse():[]})();
     b.innerHTML=`<p class="muted" style="margin:0 0 8px">只有開發者看得到。不計分；要恢復一般狀態按最下面「重設黑洞篇進度」。</p>
       <div class="sec-t">👁 開發者視角</div><p class="muted" style="margin:0 0 6px;font-size:13px">兩個都關＝你看到的跟玩家一模一樣（意見回饋管理照舊）。</p><div class="items" style="padding:0">
-        ${row("dvU",un?"✅":"🔓","全部解鎖試玩："+(un?"開":"關"),"觀星臺、西市、第二集、星門圍城全部關卡、故事預覽全文、下架的章都打開（測完記得關）")}
+        ${row("dvU",un?"✅":"🔓","全部解鎖試玩："+(un?"開":"關"),"星門圍城全部關卡、第二集、故事預覽全文、下架的章都打開；觀星臺、西市入口照玩家進度（測完記得關）")}
         ${row("dvW",tl?"✅":"🛠","頁面上顯示開發者小工具："+(tl?"開":"關"),"消寒圖日期預覽、渡口與船艙動態切換、手機空間明細、程式語言清單、背景音樂診斷、新版更新說明等")}
         ${row("dvL","🧪","自我檢查紀錄（"+LG.length+" 筆）","3D、動態效果自我檢查沒過時記在這裡，不再跳出提示")}
       </div>

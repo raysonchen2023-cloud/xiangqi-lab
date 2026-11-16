@@ -26,7 +26,7 @@ test("只輸過、和過、什麼都沒打，觀星臺都不出現；舊的解�
   assert.equal(load({ bhWin: 1 }).gxtOpen(), true, "舊玩家 bhWin 照舊");
   assert.equal(load({ bhtd: { c: { 2: 1 } } }).gxtOpen(), true, "舊玩家塔防破關照舊");
   assert.equal(load({}, { DEVMODE: () => true }).gxtOpen(), false, "開發者模式不再一律看得到");
-  assert.equal(load({}, { DEVUNLOCK: () => true }).gxtOpen(), true, "測試台「全部解鎖試玩」");
+  assert.equal(load({}, { DEVUNLOCK: () => true }).gxtOpen(), false, "全部解鎖試玩也照玩家進度（11/16 選單）");
 });
 
 test("〔原始碼〕sg2End 把勝場寫進 gsv 的 c／h（易、中進 c，難進 h）和 v2，存檔鍵是 gsv", () => {

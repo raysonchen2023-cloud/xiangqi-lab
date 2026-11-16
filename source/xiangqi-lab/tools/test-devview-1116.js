@@ -27,8 +27,6 @@ test("〔行為〕兩個開關預設關＝跟玩家一樣；開發者模式關�
 test("〔原始碼〕會改變畫面的特例都不再直接看 DEVMODE：解鎖類看 DEVUNLOCK、小工具看 DEVTOOLS、自我檢查用 devNote", () => {
   const U = '(typeof DEVUNLOCK==="function"&&DEVUNLOCK())', T = '(typeof DEVTOOLS==="function"&&DEVTOOLS())';
   const want = {
-    "07gxt-guanxing.js": ["function gxtOpen(){if(!GXT_ON)return false;try{if(" + U + ")return true}"],
-    "07xsm-ximarket.js": ["function xsmOpen(){if(!XSM_ON)return false;try{if(" + U + ")return true}"],
     "07bhg-gatesiege.js": ["function gsvDevAll(){if(GSV_ALL!=null)return GSV_ALL;try{return!!" + U + "}"],
     "07mnq-mainquest.js": ["function mnqPeekOk(){try{return!!" + U + "}"],
     "07stq-starter.js": ["function stqPeekOk(){try{return!!" + U + "}"],
