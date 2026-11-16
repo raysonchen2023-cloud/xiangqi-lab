@@ -1613,7 +1613,7 @@ html[data-lefty] .tskip{right:auto;left:14px}
       if(!window.caches)return go();caches.keys().then(function(ks){return Promise.all(ks.filter(function(k){return k.indexOf("xqlab-app-")===0}).map(function(k){return caches.delete(k)}))})
         .then(function(){return navigator.serviceWorker&&navigator.serviceWorker.getRegistration()}).then(function(r){return r&&r.update()}).catch(function(){}).then(go)}};setTimeout(chk,4000)})();
 </script>
-<script>window.XQ_OFFLINE=true;window.XQ_BUILD="20261116-1024";</script>
+<script>window.XQ_OFFLINE=true;window.XQ_BUILD="20261116-1043";</script>
 <script src="core.js"></script>
 <script src="engine.js"></script>
 <script src="local.js"></script>
@@ -8666,6 +8666,15 @@ function ptyCss(){if(document.getElementById("ptyCss"))return;const s=document.c
 .pty-st{grid-column:1/-1;display:grid;grid-template-columns:repeat(3,1fr);gap:6px;margin-top:4px}
 .pty-st>span{display:flex;flex-direction:column;align-items:center;gap:1px;padding:5px 2px;border-radius:8px;background:rgba(128,110,80,.12)}
 .pty-st small{font-size:12px;color:var(--muted,#6b6257);white-space:nowrap}.pty-st b{font-size:16px;line-height:1.2}
+.pty-sv{grid-column:1/-1;margin-top:6px;padding:8px 2px 0;border-top:1px solid var(--line,#d8cfbf)}
+.pty-bar{display:flex;align-items:center;gap:10px;min-height:26px}
+.pty-bar>span{flex:none;width:3.4em;font-size:13.5px;color:var(--muted,#6b6257);letter-spacing:.06em;white-space:nowrap}
+.pty-bar>i{flex:1;height:9px;border-radius:5px;background:rgba(128,110,80,.18);overflow:hidden;box-shadow:inset 0 1px 1px rgba(0,0,0,.12)}
+.pty-bar>i>b{display:block;height:100%;border-radius:5px}
+.pty-bar.hp>i>b{background:linear-gradient(90deg,#9e2a20,#d0574b)}.pty-bar.sp>i>b{background:linear-gradient(90deg,#2a4f93,#5a8bd6)}
+.pty-bar.atk>i>b{background:linear-gradient(90deg,#a8650f,#e2a63b)}.pty-bar.def>i>b{background:linear-gradient(90deg,#1f6f5c,#4ea88c)}
+.pty-bar>em{flex:none;min-width:2.2em;text-align:right;font-style:normal;font-weight:800;font-size:17px;font-variant-numeric:tabular-nums}
+.pty-ad{margin-top:5px;padding-top:5px;border-top:1px dashed var(--line,#d8cfbf)}
 .pty-row{display:flex;align-items:center;gap:8px;width:100%;min-height:44px;margin:0;padding:8px 12px;border:1px solid var(--line,#d8cfbf);border-radius:10px;background:var(--card,#fffaf0);color:inherit;font-size:14px;text-align:left}
 .pty-row>span:first-child{font-weight:700}.pty-row small{color:var(--muted,#6b6257);font-size:12.5px}.pty-row b{margin-left:auto;font-weight:700}.pty-row i{font-style:normal;color:var(--muted,#6b6257)}
 .pty-c .pty-row{grid-column:1/-1;margin-top:2px}.pty-row.top{margin:0 0 10px}
@@ -8674,8 +8683,15 @@ function ptyCss(){if(document.getElementById("ptyCss"))return;const s=document.c
    每張卡多一排四格（體力＝黑洞裡的元氣、靈力＝靈力上限、攻擊力、防禦力，BHTD.stats 照這位的等級；跟我的角色頁「黑洞裡的你」同一組數字）、一列「招式 n／N ›」（點開這位的招式清單）；
    卡冊最上面一列「天賦（全隊共用）已點亮 n／N ›」開星塵天賦樹，看完回卡冊。黑洞模組沒載入就不畫。 */
 /* 11/16 黑洞新規則第三期：每位顯示本命棋子在新規則的體力／攻擊／防禦（m/07sg2-siege2.js SG2.unit，照這位的等級；同一種的兩顆子一樣），加上這位自己的靈力上限（SG2G.spMaxOf） */
-function ptyStatHTML(c,lv){try{if(typeof SG2!=="undefined"&&typeof SG2G!=="undefined"&&SG2G.PC_OF[c]){const pc=SG2G.PC_OF[c],u=SG2.unit(pc,lv,1),nm=typeof GSV!=="undefined"&&GSV.PCN?GSV.PCN[pc]:pc,g=(t,v)=>`<span><small>${t}</small><b>${v}</b></span>`;
-    return`<div class="pty-st">${g(nm+"・體力",u.hp)}${g("攻擊力",u.atk)}${g("防禦力",u.def)}${g("靈力上限",SG2G.spMaxOf(lv))}</div>`}}catch(e){}
+/* 11/16 開發者（卡冊截圖圈數值區）「找rpg參考煙雨江湖的排版然後優化」「靈力隨著等級上升，顯示當前等級的靈力」，選單選「資源條＋攻防一行」：
+   資源（體力、靈力）各一條長條、能力（攻擊力、防禦力）一行大字，細線分隔、不用灰色方塊；名稱前不再加「俥・」（上一行已寫）。
+   體力條長＝這位的體力 ÷ 同等級七種棋子裡最高的（一眼看出誰耐打）；靈力寫這一級的值（SG2G.spMaxOf 隨等級長），條長＝÷ Lv100 的靈力，升級看得到條在長。
+   同日開發者「攻擊力和防禦力也有bar表示 顏色幫我設計」：攻擊、防禦也各一條，條長同樣 ÷ 同等級七種棋子裡最高的；資源（體力、靈力）一組、能力（攻擊、防禦）一組，中間虛線隔開。
+   四色取傳統色、彼此分得開：體力＝朱紅、靈力＝靛藍、攻擊＝琥珀金、防禦＝松石綠（色弱看不出顏色也有字和數字） */
+function ptyStatHTML(c,lv){try{if(typeof SG2!=="undefined"&&typeof SG2G!=="undefined"&&SG2G.PC_OF[c]){const pc=SG2G.PC_OF[c],u=SG2.unit(pc,lv,1),sp=SG2G.spMaxOf(lv),
+      U=Object.values(SG2G.PC_OF).map(p=>SG2.unit(p,lv,1)),top=k=>Math.max(...U.map(x=>x[k])),pct=(a,b)=>Math.max(4,Math.min(100,Math.round(a*100/Math.max(1,b)))),
+      bar=(k,t,v,p)=>`<div class="pty-bar ${k}" role="img" aria-label="${t} ${v}"><span aria-hidden="true">${t}</span><i aria-hidden="true"><b style="width:${p}%"></b></i><em aria-hidden="true">${v}</em></div>`;
+    return`<div class="pty-sv">${bar("hp","體力",u.hp,pct(u.hp,top("hp")))}${bar("sp","靈力",sp,pct(sp,SG2G.spMaxOf(100)))}<div class="pty-ad">${bar("atk","攻擊力",u.atk,pct(u.atk,top("atk")))}${bar("def","防禦力",u.def,pct(u.def,top("def")))}</div></div>`}}catch(e){}
   return ptyStatHTMLOld(c,lv)}
 function ptyStatHTMLOld(c,lv){try{if(typeof BHTD==="undefined"||!BHTD.stats||!BHTD.CH||!BHTD.CH[c])return"";const S=BHTD.stats(c,lv),g=(t,v)=>`<span><small>${t}</small><b>${v}</b></span>`;
   return`<div class="pty-st">${g("靈力上限",S.sp)}${g("攻擊力",BHTD.atkPt(S.atk))}${g("防禦力",BHTD.defPt(S.def))}</div>`}catch(e){return""}}   /* 11/16 體力統一：「體力」＝這位的體力上限，陪你走的那一位就是角色卡上「體力 n／這個數」的上限（07dgl dglMx）；黑洞的靈力是上限，改叫「靈力上限」，跟人間存著的「靈力 n／20」分開 */
@@ -20821,9 +20837,12 @@ function gxtWalk(P,k){if(typeof shwPage!=="function"||typeof SHIP_WALK_ON==="und
   if(P.dataset.shw){if((P._gxtW||"")===k)return;P.querySelectorAll(":scope>.shw,:scope>.shw-me,:scope>.shw-hint,:scope>.shw-say,:scope>.shw-menu").forEach(e=>e.remove());delete P.dataset.shw;P.classList.remove("shw-iso")}
   P._gxtW=k;try{shwPage(V,gxtWalkCfg(k),"gxt")}catch(e){}}
 /* 解鎖：打贏過黑洞（w＝bhWin 次數；P＝塔防進度 bhtd，c＝破過的關） */
-const gxtWon=(w,P)=>(+w||0)>0||!!(P&&P.c&&typeof P.c==="object"&&Object.keys(P.c).length);
+const gxtWon=(w,P,G)=>(+w||0)>0||!!(P&&P.c&&typeof P.c==="object"&&Object.keys(P.c).length)||gxtGsvWon(G);
+/* 11/16 出入口盤查：黑洞只剩星門圍城以後，打贏只寫進存檔 gsv（07sg2 sg2End：c／h＝各關勝敗、v2＝各關各難度），不記 bhWin、bhtd；新玩家觀星臺永遠不出現。G＝gsv 存檔，任何一關贏過就算 */
+function gxtGsvWon(G){if(!G||typeof G!=="object")return false;const won=T=>!!T&&typeof T==="object"&&Object.values(T).some(r=>r&&(+r.w||0)>0);
+  if(won(G.c)||won(G.h))return true;return!!G.v2&&typeof G.v2==="object"&&Object.values(G.v2).some(won)}
 function gxtOpen(){if(!GXT_ON)return false;try{if(typeof DEVMODE==="function"&&DEVMODE())return true}catch(e){}
-  try{return gxtWon(store.get("bhWin",0),typeof bhtdProg==="function"?bhtdProg():store.get("bhtd",null))}catch(e){return false}}
+  try{return gxtWon(store.get("bhWin",0),typeof bhtdProg==="function"?bhtdProg():store.get("bhtd",null),store.get("gsv",null))}catch(e){return false}}
 /* 直幅 "" 或寬版 "w"：W 可用寬、av 可用高、vw／vh 畫面寬高 */
 function gxtKind(W,av,vw,vh){if(!(W>0&&av>=120))return"";return W/av>=GXT_LAND&&Math.min(vw,vh)>=GXT_LMIN?"w":""}
 /* 白天？卯（05–07）～申（15–17）；時辰序號照 07w8 clkIdx（子＝0：23–01） */

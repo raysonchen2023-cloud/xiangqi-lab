@@ -1,8 +1,8 @@
 {
- "version": "20261116-1024",
- "checkedAt": "2026-11-16T02:24:24.233Z",
- "html": "4882fafecd86",
- "sw": "a22e9cd06e86",
+ "version": "20261116-1043",
+ "checkedAt": "2026-11-16T02:46:02.629Z",
+ "html": "153f93415403",
+ "sw": "9f0a2027dfcb",
  "scripts": 4,
  "modules": {
   "00-util.js": "8c2b1d4f725f",
@@ -19,13 +19,13 @@
   "06-cpu.js": "dd3b6b939545",
   "06c-cup.js": "edc2e989a25e",
   "07-legend.js": "348c58c92f8b",
-  "07pty-party.js": "746a68d79a3d",
+  "07pty-party.js": "c6b5c656b4c4",
   "07c-canju.js": "1a57b36ca4e3",
   "07d-garden.js": "cc746ff05fc7",
   "07e-garden2.js": "23fcaecb532a",
   "07f-ship.js": "7cd1988c85fe",
   "07o-shipmore.js": "3e3ebb9d732b",
-  "07bh-blackhole.js": "587869033b51",
+  "07bh-blackhole.js": "b96f181191bc",
   "07gx-galaxy.js": "c63e653cf14c",
   "07gxp-gatepano.js": "77bc897060cb",
   "07bht-td.js": "c097c2946509",
@@ -62,7 +62,7 @@
   "07x-zoom.js": "719656ee2360",
   "07y-hubmap.js": "aab3b113c3f7",
   "07z-homemap.js": "197a9b09b681",
-  "07gxt-guanxing.js": "13e8c296a860",
+  "07gxt-guanxing.js": "b8ef1fa0f695",
   "07dgl-stamina.js": "054b3a58d23c",
   "07xsm-ximarket.js": "1efd4cc82cf4",
   "07xsd-xsmdark.js": "14cf67001b41",
@@ -98,7 +98,7 @@
   "07w8-shichen.js": "7e3e39d9d44f",
   "07w9-exits.js": "bd206ffef683",
   "08-scene.js": "86969cd488ba",
-  "08b-cpugame.js": "bf1c6400d1eb",
+  "08b-cpugame.js": "ca1b372ec11a",
   "08s-simul.js": "2126db3ab684",
   "09-askbot.js": "4e6983c50d4c",
   "09b-preload.js": "321324d3e7bd",
@@ -133,6 +133,11 @@
    "sourceModified": "2026-11-15T05:38:18.553Z"
   },
   {
+   "module": "07bh-blackhole.js",
+   "lines": 3,
+   "sourceModified": "2026-11-16T02:41:56.827Z"
+  },
+  {
    "module": "07y-hubmap.js",
    "lines": 6,
    "sourceModified": "2026-11-15T12:49:16.045Z"
@@ -141,6 +146,11 @@
    "module": "07s4-passmap.js",
    "lines": 1,
    "sourceModified": "2026-11-13T03:19:39.481Z"
+  },
+  {
+   "module": "08b-cpugame.js",
+   "lines": 5,
+   "sourceModified": "2026-11-16T02:42:51.960Z"
   }
  ]
 }
