@@ -1,10 +1,10 @@
-# 驗證紀錄（版本 20261116-1830）
+# 驗證紀錄（版本 20261116-1832）
 
 這一頁讓任何人核對：這一版的程式跑過下面這些自動測試，以及每一項測試到底驗了什麼。
 
-- 產生時間：2026/11/16 18:41:24（臺灣時間）
-- 結果（四欄分開，不要只看總數）：共 1838 項＝**通過 1821**、**失敗 0**、**略過 17**（這個環境跑不了、沒有執行，不算通過；逐項原因見〈略過〉）；另有**預期失敗 0**
-- 測試對象：公開倉庫的 `source/`（切自 commit `8f64fc847367`），對應的發布版：`20261116-1830`。開發者電腦上還沒發布的修改不在這份測試裡。
+- 產生時間：2026/11/16 18:53:48（臺灣時間）
+- 結果（四欄分開，不要只看總數）：共 1849 項＝**通過 1832**、**失敗 0**、**略過 17**（這個環境跑不了、沒有執行，不算通過；逐項原因見〈略過〉）；另有**預期失敗 0**
+- 測試對象：公開倉庫的 `source/`（切自 commit `df8e0154061d`），對應的發布版：`20261116-1832`。開發者電腦上還沒發布的修改不在這份測試裡。
 - `source/` 沒放的測試檔（和少數只給它們用的工具）有43 個（要讀不公開的資料、要接不公開的營運程式，或指令排除），原因逐檔寫在 `source/STAGE-MANIFEST.json` 的 excludedTests。
 
 ## 略過（沒有執行，不算通過）
@@ -36,7 +36,7 @@
 | 行為 | 1212 項（通過 1207、略過 5） | 真的把 App 的程式跑起來（載入網站上的模組、抽出函式呼叫、用假的畫面／計時器／伺服器走一遍流程），再檢查結果對不對。 |
 | 混合 | 75 項（通過 74、略過 1） | 一半真的執行程式，一半只是檢查原始碼裡有沒有某段字。 |
 | 原始碼比對 | 202 項（通過 197、略過 5） | 只檢查原始碼裡有沒有某段字（例如某個按鈕的程式碼、某條樣式規則）。**只證明程式碼存在，不證明功能會動。** |
-| 待分類 | 349 項（通過 343、略過 6） | `test-bh-sg-bgm-1116.js`、`test-bhfx.js`、`test-bhtd-combo.js`、`test-bhtd-r2.js`、`test-bhtd-rules.js`、`test-bhtl.js`、`test-bhx-allstars-1116.js`、`test-bhx-hold-1116.js`、`test-bhx-resume-1116.js`、`test-bhx-skip-1116.js`、`test-dgl.js`、`test-eng-over-1116.js`、`test-ghost-game-1116.js`、`test-gxd-daily-1116.js`、`test-home-pano.js`、`test-i18n-story.js`、`test-noscore.js`、`test-park3d-capbase.js`、`test-park3d-ghostptr-1116.js`、`test-pjc-joincut-1116.js`、`test-port-yz-color-1116.js`、`test-pty-events-1116.js`、`test-r17-qa.js`、`test-siege2-local.js`、`test-siege2.js`、`test-sitemap-places-1116.js`、`test-upd-notitle-1116.js`、`test-xsm-dark.js`、`test-xsm-stalls-1116.js` 這幾個檔還沒逐項分類，暫不算進上面三類。 |
+| 待分類 | 360 項（通過 354、略過 6） | `test-bh-sg-bgm-1116.js`、`test-bhfx.js`、`test-bhtd-combo.js`、`test-bhtd-r2.js`、`test-bhtd-rules.js`、`test-bhtl.js`、`test-bhx-allstars-1116.js`、`test-bhx-hold-1116.js`、`test-bhx-resume-1116.js`、`test-bhx-skip-1116.js`、`test-dgl.js`、`test-eng-over-1116.js`、`test-ghost-game-1116.js`、`test-gxd-daily-1116.js`、`test-home-pano.js`、`test-i18n-story.js`、`test-noscore.js`、`test-park3d-capbase.js`、`test-park3d-ghostptr-1116.js`、`test-pjc-joincut-1116.js`、`test-port-yz-color-1116.js`、`test-pty-events-1116.js`、`test-r17-qa.js`、`test-siege2-local.js`、`test-siege2.js`、`test-sitemap-places-1116.js`、`test-upd-notitle-1116.js`、`test-xsm-counter-1116.js`、`test-xsm-dark.js`、`test-xsm-stalls-1116.js` 這幾個檔還沒逐項分類，暫不算進上面三類。 |
 
 - 測試名稱開頭有〔原始碼〕〔混合〕就是那一類；沒有標籤的是行為類（下面的索引另外標〔行為〕）。
 - **測試由開發用的 AI 撰寫，不等於第三方驗證；原始碼比對只證明程式碼存在。**
@@ -675,6 +675,7 @@
 | test-xfer4.js | — | 10 | 0 | 1 |  | 11／11 |
 | test-xiu-scene-1116.js | — | 2 | 0 | 1 |  | 3／3 |
 | test-xqs-tb.js | — | 0 | 4 | 2 |  | 6／6 |
+| test-xsm-counter-1116.js | — | 0 | 0 | 0 | 11 | 11／11 |
 | test-xsm-dark.js | — | 0 | 0 | 0 | 15 | 15／15 |
 | test-xsm-stalls-1116.js | — | 0 | 0 | 0 | 11 | 11／11 |
 
@@ -2953,6 +2954,20 @@
 - ✔ 〔混合〕頂欄沒有 📜：什麼都不做、不出錯
 - ✔ 〔原始碼〕畫面一換（#view 子元素變動、換頁）就先檢查
 - ✔ 〔原始碼〕按 📜 時面板不在就收掉按鈕，不去開不存在的面板
+
+### test-xsm-counter-1116.js
+
+- ✔ 〔待分類〕每天的帖：兩張明牌不重複、至少一張星輝或星塵；蓋牌是剩下三種之一或小木匣；份量照定案；同一天固定
+- ✔ 〔待分類〕沒來的日子：第一次只有今天；收過帖以後，今天往前三天內沒收的都還能挑；收過的、太舊的不能
+- ✔ 〔待分類〕節禮帖：24 節氣當天多一張（星輝 60 或星塵 10），跟挑的那張一起收；每個節氣都有一句掌櫃的話；不是節氣沒有
+- ✔ 〔待分類〕挑帖發東西：星輝進星輝池、星塵進 07sg2、提示棋和悔棋符進庫存、修為帶鍵；節禮一起發；同一天點兩次不給
+- ✔ 〔待分類〕積灰的小木匣：將令 1；珍品挑停靠過的朝代裡還沒收的（先挑普通的），一件都沒有就改給將令
+- ✔ 〔待分類〕見面禮、每週平安信：齊轍以外每位一份見面禮（星輝 80，只一次）；平安信每週一封（星輝 30），別的夥伴照週輪著寫，只有自己一個人＝掌櫃的平安帖
+- ✔ 〔待分類〕開包裹：見面禮、平安信先記再發（星輝進星輝池），同一份不給兩次；上週的信過期不收
+- ✔ 〔待分類〕發亮：西市開著時，有帖可挑、有包裹沒開就亮；都收了就不亮；西市沒開照舊只看 07mnq 的禮
+- ✔ 〔待分類〕文字規矩：掌櫃不用明清當鋪的詞；畫面不寫「上限」；整支沒有 // 註解；不加新存檔鍵
+- ✔ 〔待分類〕07mnq：西市開了，遠征補給不在首頁、星槎自動跳（下一步跳過它），回過家鄉也不再一直帶你回家；西市沒開照舊
+- ✔ 〔待分類〕英文：櫃坊新字串併進外掛字典後都翻得出（掌櫃、七星的信照 {你}／{名} 換過的樣子）
 
 ### test-xsm-dark.js
 

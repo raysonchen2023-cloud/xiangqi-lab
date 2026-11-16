@@ -182,8 +182,8 @@ test("存檔：新鍵 xsmStall 在 JOURNEY_KEYS（另外 push、不動清單字�
   const cx = vm.createContext({}); vm.runInContext(SV.slice(a, b) + "\nthis.K=JOURNEY_KEYS;", cx);
   assert.ok(cx.K.includes("m_xsmStall") && cx.K.includes("m_xsmSeen") && cx.K.includes("m_bhDrift1"));
   const keys = new Set([...SRC.matchAll(/store\.(?:get|set)\("([^"]+)"/g)].map(m => m[1]));
-  assert.deepEqual([...keys].sort(), ["bgm", "bhtd", "gsv", "visit7", "xsmSeen", "xsmStall"].sort(), "西市讀寫的存檔鍵（bgm 只讀；bhtd、gsv 是開放條件；visit7 是 07j 的、本來就在 JOURNEY_KEYS）");
-  for (const k of ["visit7", "xsmSeen", "bhtd", "gsv"]) assert.ok(cx.K.includes("m_" + k));
+  assert.deepEqual([...keys].sort(), ["bgm", "bhtd", "gsv", "visit7", "xsmSeen", "xsmStall", "hintBonus", "undoBonus", "relics", "relicAt"].sort(), "西市讀寫的存檔鍵（bgm 只讀；bhtd、gsv 是開放條件；visit7 是 07j 的；11/16 櫃坊改版發提示棋、悔棋符、珍品，都是原本就在 JOURNEY_KEYS 的鍵）");
+  for (const k of ["visit7", "xsmSeen", "bhtd", "gsv", "hintBonus", "undoBonus", "relics", "relicAt"]) assert.ok(cx.K.includes("m_" + k));
   const c = load({ st: { xsmStall: { f: { n: "x" }, v: 3 } } }); assert.deepEqual(J(c.xsmSt()), { f: { n: 0, sets: 0, day: "", tot: 0 }, v: {} }, "壞掉的存檔整理成固定形狀");
 });
 

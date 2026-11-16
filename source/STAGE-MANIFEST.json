@@ -1,7 +1,7 @@
 {
  "ref": "origin/main",
- "commit": "8f64fc847367409cdc72a4db49b6b8c66f49401d",
- "madeAt": "2026-11-16T10:36:13.019Z",
+ "commit": "df8e0154061d1b8527d352f53ec3785c7fc3325f",
+ "madeAt": "2026-11-16T10:48:38.350Z",
  "files": {
   "xiangqi-db/m/00-util.js": "local=live",
   "xiangqi-db/m/01-board.js": "local=live",
@@ -64,7 +64,7 @@
   "xiangqi-db/m/07gxt-guanxing.js": "local=live",
   "xiangqi-db/m/07dgl-stamina.js": "local=live",
   "xiangqi-db/m/07gxd-daily.js": "local=live",
-  "xiangqi-db/m/07xsm-ximarket.js": "live",
+  "xiangqi-db/m/07xsm-ximarket.js": "local=live",
   "xiangqi-db/m/07xsd-xsmdark.js": "local=live",
   "xiangqi-db/m/07hmp-pano.js": "local=live",
   "xiangqi-db/m/07ulk-unlockfx.js": "local=live",
@@ -124,7 +124,7 @@
   "xiangqi-db/m/07mnf-mainfilm.js": "local=live",
   "xiangqi-db/m/07mnv-mainvn.js": "local=live",
   "xiangqi-db/m/07stq-starter.js": "local=live",
-  "xiangqi-db/m/07mnq-mainquest.js": "live",
+  "xiangqi-db/m/07mnq-mainquest.js": "local=live",
   "xiangqi-db/m/07grw-growth.js": "local=live",
   "xiangqi-db/m.html": "local",
   "xiangqi-db/m.css": "local",
@@ -356,8 +356,9 @@
   "xiangqi-lab/tools/test-xfer4.js": "local",
   "xiangqi-lab/tools/test-xiu-scene-1116.js": "local",
   "xiangqi-lab/tools/test-xqs-tb.js": "local",
+  "xiangqi-lab/tools/test-xsm-counter-1116.js": "local",
   "xiangqi-lab/tools/test-xsm-dark.js": "local",
-  "xiangqi-lab/tools/test-xsm-stalls-1116.js": "live（上一版公開的那份；本機那份跟著還沒發布的工作改過）",
+  "xiangqi-lab/tools/test-xsm-stalls-1116.js": "local",
   "xiangqi-lab/tools/testkinds.js": "local",
   "xiangqi-lab/tools/to_trad.py": "local",
   "xiangqi-lab/tools/verify-all.js": "local",
@@ -459,9 +460,7 @@
  "liveDiffers": [
   "m/05-settings.js",
   "m/07y-hubmap.js",
-  "m/07xsm-ximarket.js",
   "m/07s4-passmap.js",
-  "m/07mnq-mainquest.js",
   "src/sw.js"
  ],
  "absentModules": [],
@@ -510,8 +509,8 @@
   "test-unlock-fx-1116.js": "指令排除：要讀只在開發者電腦與 CDN 的場景圖（data/guanxing、homemap 等），公開副本沒有這些圖",
   "test-i18n-ext-1116.js": "指令排除：要讀英文外掛字典 xiangqi-db/i18n-en.json（只放在 CDN 的 data/i18n-en.json，公開副本沒有）"
  },
- "version": "20261116-1830",
- "indexSha1": "81f27b6ab6b5",
+ "version": "20261116-1832",
+ "indexSha1": "849fd65d9967",
  "toLF": [],
  "scrubbed": [
   "xiangqi-lab/tools/qa/colorblind-scan.js（1 處）",
@@ -538,11 +537,5 @@
     "files": 1
    }
   ]
- },
- "pinnedToPrevious": {
-  "xiangqi-lab/tools/test-xsm-stalls-1116.js": 1
- },
- "droppedUnreleased": {
-  "xiangqi-lab/tools/test-xsm-counter-1116.js": "還沒發布的工作新加的檔，這一版不公開"
  }
 }

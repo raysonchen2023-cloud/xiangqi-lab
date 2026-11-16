@@ -51,7 +51,8 @@ const mnqSave=s=>{try{store.set("mnq",s)}catch(e){}};
 function mnqWins(){try{const R=JSON.parse(localStorage.getItem("xq_record")||"null")||{};return Object.values(R).reduce((a,v)=>a+((v&&v.w)|0),0)}catch(e){return 0}}
 function mnqEnv(){const E={hasChar:false,firstWin:false,home:"",at:"",homeLabel:""};
   try{const c=typeof myChar==="function"?myChar():"";E.hasChar=!!c;const J=typeof journey==="function"?journey():null;E.home=(J&&(J.home||(typeof CHAR_ERA!=="undefined"&&CHAR_ERA[J.c])))||""}catch(e){}
-  E.firstWin=mnqWins()>0;try{E.at=store.get("shipAt",null)||""}catch(e){}try{E.homeLabel=E.home&&typeof eraLabel==="function"?eraLabel(E.home):""}catch(e){}return E}
+  E.firstWin=mnqWins()>0;try{E.at=store.get("shipAt",null)||""}catch(e){}try{E.homeLabel=E.home&&typeof eraLabel==="function"?eraLabel(E.home):""}catch(e){}
+  try{E.xsm=typeof xsmOpen==="function"&&!!xsmOpen();if(E.xsm&&typeof shipDockList==="function")E.dock=shipDockList()||[]}catch(e){}return E}   /* 11/16 櫃坊改版：西市開了（07xsm xsmOpen），遠征補給改到雲河櫃坊領；dock＝停靠過的站 */
 /* ---------- 純計算：章的進度、下一步 ---------- */
 function mnqDone(S,era){const L=MNQ_SEGS[era],seg=(S&&S.seg)||{};return!!L&&L.every(id=>seg[id])}
 /* 這一章開放了沒：要有資料；open:"start" 一開始就開；"reach" 要前面有資料的章都看完，而且星槎停到過這一朝（S.reach／領過那一朝的遠征補給／現在就停在那一朝） */
@@ -62,11 +63,11 @@ function mnqNextOf(S,E){S=S||{seg:{},gift:{a6:{}},lamp:{}};E=E||{};const G=S.gif
   if(E.hasChar&&!G.a1)return{k:"gift",g:"a1",t:"七星授印"};
   for(const id of MNQ_SEGS.classic)if(!seg[id])return{k:"film",era:"classic",id,t:MNQ_SEG_NM[id]};
   if(E.firstWin&&!G.a2)return{k:"gift",g:"a2",t:"破局錦囊"};
-  if(E.at&&E.at!=="classic"&&MNQ_CH.some(c=>c[0]===E.at)&&!A6[E.at])return{k:"gift",g:"a6",era:E.at,t:"遠征補給"};
+  if(E.at&&E.at!=="classic"&&MNQ_CH.some(c=>c[0]===E.at)&&!A6[E.at]&&!E.xsm)return{k:"gift",g:"a6",era:E.at,t:"遠征補給"};   /* 11/16：西市開了就不在首頁、星槎自動跳，改到西市雲河櫃坊合券領（07xsm xsmParcels） */
   /* 第二章起：照章序找第一個還沒看完的章；開放了就接著看（看到哪段接哪段），還沒開放就停下來（後面再看要不要叫玩家開船過去） */
   for(const[e]of MNQ_CH){if(e==="classic"||!MNQ_CHAP[e]||mnqDone(S,e))continue;if(!mnqOpen(S,E,e))break;const id=MNQ_SEGS[e].find(x=>!seg[x]);return{k:"film",era:e,id,t:MNQ_SEG_NM[id]}}
   if(!E.firstWin)return{k:"cpu",t:"贏第一盤"};
-  if(E.home&&E.at!==E.home&&!A6[E.home])return{k:"home",era:E.home,t:"回"+(E.homeLabel||"家鄉")};
+  if(E.home&&E.at!==E.home&&!A6[E.home]&&!(E.xsm&&Array.isArray(E.dock)&&E.dock.includes(E.home)))return{k:"home",era:E.home,t:"回"+(E.homeLabel||"家鄉")};
   const nx=MNQ_CH.find(([e])=>MNQ_CHAP[e]&&!mnqDone(S,e));
   if(nx)return{k:"ship",era:nx[0],t:"開往"+mnqShort(nx[0])+"・第"+MNQ_CN[mnqChN(nx[0])-1]+"章"};   /* 下一章有資料、還沒停到那一朝：帶去星槎開船 */
   if(!MNQ_PANEL_ON)return{k:"more",t:"更多玩法"};   /* 11/15 遠征令拿掉：主線做完就帶去「更多玩法」，不再說第幾章即將開放 */
