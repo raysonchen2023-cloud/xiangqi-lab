@@ -654,16 +654,42 @@ const sg2Dust=()=>{try{return typeof bhtdDust==="function"?bhtdDust().d:0}catch(
 function sg2DustAdd(n){try{const D=store.get("bhtdDust",null)||{};D.d=Math.max(0,(Math.round(+D.d)||0)+n);store.set("bhtdDust",D)}catch(e){}}
 function sg2TalMembers(){const L=[];try{for(const ck in SG2G.TALC){const has=typeof ptyHas==="function"?ptyHas(ck):true;if(has)L.push({ck,L:typeof ptyLv==="function"?ptyLv(ck):1,nm:typeof ptyNm==="function"?ptyNm(ck):(GSV.CH[ck]?GSV.CH[ck].n:ck)})}}catch(e){}return L}
 const sg2TalCount=()=>{const o=sg2TalGet();let n=0;for(const ck in o)n+=o[ck].length;return n};
-/* 天賦頁：back＝關掉後回哪裡（選關、卡冊），backL＝返回鈕的字 */
-function sg2TalSheet(back,backL){gsvCss();const H=()=>{const o=sg2TalGet(),d=sg2Dust(),ms=sg2TalMembers();
-    return`<p style="font-size:13px;text-align:center">🌌 星塵 <b>${d}</b>（全隊共用）・每位最多點亮 ${SG2G.TAL_MAX} 個・五招都學會才能點</p>`+
-      (ms.length?ms.map(m=>{const lit=o[m.ck]||[],need=SG2G.talNeedL(m.ck),ok=m.L>=need,spent=lit.reduce((a,id)=>a+SG2G.TALM[id].cost,0);
-        return`<div class="sg2-talc"><p class="gsv-skg">${esc(m.nm)} <small>Lv ${m.L}${ok?"":`・Lv ${need} 學會五招才能點`}</small>${lit.length?`<button type="button" class="sg2-talr" data-r="${m.ck}">重置（退 ${spent}）</button>`:""}</p>`+
+/* 天賦頁：back＝關掉後回哪裡（選關、卡冊、角色卡），backL＝返回鈕的字
+   11/16 開發者（天賦頁截圖）「這一頁的排版你重新設計，有夠亂七八糟」：原本是彈窗裡置中的一串字（深紫按鈕的樣式被彈窗的按鈕樣式蓋掉）。
+   改成跟雲河七星卡冊一樣的底部面板：最上面一張摘要（星塵大字＋兩行規則）；每位夥伴一張卡＝小頭像、名字、Lv，右邊狀態（🔒 Lv N 解鎖／已點亮 n／2）、重置；
+   only＝只看這一位（11/16 開發者「點某個角色的天賦 只會出現那個角色的天賦描述 不是顯示所有的」：角色卡、卡冊每張卡的「天賦」傳這位；卡冊最上面、選關的天賦照舊看全隊）；
+   天賦一列一個：左邊名稱＋效果（靠左，效果小一號淡一點），右邊價錢膠囊或「★ 已點亮」；還沒解鎖、星塵不夠的整列淡掉，點了說原因。點亮前的確認照舊 */
+function sg2tCss(){if(document.getElementById("sg2tCss"))return;const s=document.createElement("style");s.id="sg2tCss";s.textContent=`
+.sg2t-sum{display:flex;align-items:center;gap:12px;padding:10px 12px;margin:0 0 12px;border:1px solid var(--line,#d8cfbf);border-radius:12px;background:var(--card,#fffaf0)}
+.sg2t-sum .d{display:flex;flex-direction:column;align-items:center;min-width:64px;flex:none}.sg2t-sum .d b{font-size:26px;line-height:1.1;font-variant-numeric:tabular-nums}.sg2t-sum .d small{font-size:12px;color:var(--muted,#6b6257)}
+.sg2t-sum ul{margin:0;padding:0 0 0 12px;border-left:1px solid var(--line,#d8cfbf);list-style:none;font-size:13px;line-height:1.65;color:var(--muted,#6b6257)}
+.sg2t-c{margin:0 0 12px;border:1px solid var(--line,#d8cfbf);border-radius:12px;background:var(--card,#fffaf0);overflow:hidden}
+.sg2t-h{display:flex;align-items:center;gap:10px;padding:10px 12px}
+.sg2t-h img{width:40px;height:40px;border-radius:8px;object-fit:cover;object-position:top;background:rgba(128,110,80,.12);flex:none}
+.sg2t-h .n{flex:1;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.sg2t-h .n b{font-size:16px}.sg2t-h .n small{margin-left:6px;font-size:13px;color:var(--muted,#6b6257)}
+.sg2t-tag{flex:none;font-size:12.5px;padding:2px 9px;border-radius:99px;background:rgba(128,110,80,.14);color:var(--muted,#6b6257);white-space:nowrap}.sg2t-tag.ok{background:#f3e3b5;color:#5a4300}
+.sg2t-r{flex:none;min-height:32px;font:inherit;font-size:12.5px;padding:2px 10px;border-radius:99px;border:1px solid var(--line,#d8cfbf);background:none;color:inherit;cursor:pointer}
+.sg2t-t{display:flex;align-items:center;gap:10px;width:100%;min-height:56px;margin:0;padding:9px 12px;border:0;border-top:1px solid var(--line,#d8cfbf);border-radius:0;background:none;box-shadow:none;color:inherit;font:inherit;text-align:left;cursor:pointer}
+.sg2t-t .x{flex:1;min-width:0}.sg2t-t .x b{display:block;font-size:15px;line-height:1.35}.sg2t-t .x span{display:block;margin-top:1px;font-size:13px;line-height:1.5;color:var(--muted,#6b6257)}
+.sg2t-t .p{flex:none;font-size:12.5px;padding:3px 10px;border-radius:99px;border:1px solid #c9a24a;color:#7a5a12;white-space:nowrap;font-variant-numeric:tabular-nums}
+.sg2t-t.on .p{background:#f3e3b5;border-color:#f3e3b5;color:#5a4300}.sg2t-t.on .x b{color:#a06a00}
+.sg2t-t.off .x,.sg2t-t.off .p{opacity:.5}.sg2t-t:focus-visible{outline:3px solid #E8C77A;outline-offset:-3px}
+.sg2t-back{width:100%;margin-top:2px}`;document.head.append(s)}
+function sg2TalSheet(back,backL,only){gsvCss();sg2tCss();const H=()=>{const o=sg2TalGet(),d=sg2Dust(),ms=sg2TalMembers().filter(m=>!only||m.ck===only);
+    return`<div class="sg2t-sum"><div class="d"><b>${d}</b><small>星塵</small></div><ul><li>全隊共用；每位最多點亮 ${SG2G.TAL_MAX} 個</li><li>五招都學會才能點；關卡外可以免費重置</li></ul></div>`+
+      (ms.length?ms.map(m=>{const lit=o[m.ck]||[],need=SG2G.talNeedL(m.ck),ok=m.L>=need;
+        const tag=ok?`<span class="sg2t-tag ok">已點亮 ${lit.length}／${SG2G.TAL_MAX}</span>`:`<span class="sg2t-tag">🔒 Lv ${need} 解鎖</span>`;
+        return`<section class="sg2t-c"><div class="sg2t-h"><img src="data/xs/prev_${m.ck}.webp" alt="" onerror="this.remove()"><span class="n"><b>${esc(m.nm)}</b><small>Lv ${m.L}</small></span>${tag}${lit.length?`<button type="button" class="sg2t-r" data-r="${m.ck}">重置</button>`:""}</div>`+
           SG2G.TALC[m.ck].map(t=>{const on=lit.includes(t.id),w=on?"":SG2G.talWhy(o,t.id,d,m.L);
-            return`<button type="button" class="sg2-tal${on?" on":w?" off":""}" data-t="${t.id}"${w?` data-w="${esc(w)}"`:""} aria-label="${esc(t.nm+"："+t.d+"，"+(on?"已點亮":w||t.cost+" 星塵"))}"><b>${on?"★ ":""}${esc(t.nm)}</b><small>${on?"已點亮":t.cost+" 星塵"}</small><span>${esc(t.d)}</span></button>`}).join("")+`</div>`}).join(""):`<p class="muted">還沒有夥伴加入</p>`)};
-  const m=modal(`<div class="em">🌌</div><h2>天賦</h2><div class="sg2-talw">${H()}</div>`,[[backL||"‹ 返回",()=>{if(back)back()}]],"prolog gsv-sel");if(!m)return;
-  m.addEventListener("click",e=>{const r=e.target.closest("[data-r]");if(r){const o=sg2TalGet(),L=o[r.dataset.r]||[],n=L.reduce((a,id)=>a+SG2G.TALM[id].cost,0);delete o[r.dataset.r];store.set("sg2Tal",o);sg2DustAdd(n);try{vibrate(5)}catch(z){}toast("🌌 退回星塵 "+n);m.querySelector(".sg2-talw").innerHTML=H();return}
-    const b=e.target.closest("[data-t]");if(!b)return;if(b.classList.contains("on"))return;if(b.dataset.w){toast("✦ "+b.dataset.w);return}
-    const id=b.dataset.t,t=SG2G.TALM[id],ck=SG2G.TAL_CK[id],o=sg2TalGet(),mm=sg2TalMembers().find(x=>x.ck===ck),w=SG2G.talWhy(o,id,sg2Dust(),mm?mm.L:0);if(w){toast("✦ "+w);return}
-    modal(`<h2 style="font-size:19px">點亮「${esc(t.nm)}」？</h2><p>${esc(t.d)}</p><p class="muted">花 ${t.cost} 星塵（現在 ${sg2Dust()}）。關卡外可以免費重置、星塵全數退回。</p>`,
-      [["點亮",()=>{const o2=sg2TalGet();if(SG2G.talWhy(o2,id,sg2Dust(),mm?mm.L:0))return;o2[ck]=(o2[ck]||[]).concat([id]);store.set("sg2Tal",o2);sg2DustAdd(-t.cost);try{vibrate([10,30,10])}catch(z){}toast("🌌 點亮「"+t.nm+"」");sg2TalSheet(back,backL)}],["先不要",()=>sg2TalSheet(back,backL),true]])})}
+            return`<button type="button" class="sg2t-t${on?" on":w?" off":""}" data-t="${t.id}"${w?` data-w="${esc(w)}"`:""} aria-label="${esc(t.nm+"："+t.d+"，"+(on?"已點亮":w||t.cost+" 星塵"))}"><span class="x"><b>${esc(t.nm)}</b><span>${esc(t.d)}</span></span><span class="p">${on?"★ 已點亮":t.cost+" 星塵"}</span></button>`}).join("")+`</section>`}).join(""):`<p class="muted">還沒有夥伴加入</p>`)+
+      `<button type="button" class="btn sg2t-back" data-back="1">${esc(backL||"‹ 返回")}</button>`};
+  const again=()=>sg2TalSheet(back,backL,only),one=only&&sg2TalMembers().find(m=>m.ck===only);
+  sheet(one?"🌌 "+one.nm+"的天賦":"🌌 天賦",b=>{b.innerHTML=H();
+    b.addEventListener("click",e=>{
+      if(e.target.closest("[data-back]")){closeSheet();if(back)setTimeout(back,60);return}
+      const r=e.target.closest("[data-r]");if(r){const o=sg2TalGet(),L=o[r.dataset.r]||[],n=L.reduce((a,id)=>a+SG2G.TALM[id].cost,0);delete o[r.dataset.r];store.set("sg2Tal",o);sg2DustAdd(n);try{vibrate(5)}catch(z){}toast("🌌 退回星塵 "+n);b.innerHTML=H();return}
+      const bt=e.target.closest("[data-t]");if(!bt)return;if(bt.classList.contains("on"))return;if(bt.dataset.w){toast("✦ "+bt.dataset.w);return}
+      const id=bt.dataset.t,t=SG2G.TALM[id],ck=SG2G.TAL_CK[id],o=sg2TalGet(),mm=sg2TalMembers().find(x=>x.ck===ck),w=SG2G.talWhy(o,id,sg2Dust(),mm?mm.L:0);if(w){toast("✦ "+w);return}
+      closeSheet();
+      setTimeout(()=>modal(`<h2 style="font-size:19px">點亮「${esc(t.nm)}」？</h2><p>${esc(t.d)}</p><p class="muted">花 ${t.cost} 星塵（現在 ${sg2Dust()}）。關卡外可以免費重置、星塵全數退回。</p>`,
+        [["點亮",()=>{const o2=sg2TalGet();if(SG2G.talWhy(o2,id,sg2Dust(),mm?mm.L:0))return again();o2[ck]=(o2[ck]||[]).concat([id]);store.set("sg2Tal",o2);sg2DustAdd(-t.cost);try{vibrate([10,30,10])}catch(z){}toast("🌌 點亮「"+t.nm+"」");again()}],["先不要",again,true]]),200)})})}

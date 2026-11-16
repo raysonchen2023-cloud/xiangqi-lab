@@ -44,7 +44,7 @@ test("〔原始碼〕角色卡、黑洞裡的你：有黑洞新規則就用卡�
   assert.ok(card.includes('const NEW=typeof SG2G!=="undefined"&&typeof ptyStatHTML==="function",ad=NEW?dglCardSV():dglCardAD(lv);'));
   assert.ok(card.includes("const ts=NEW?dglCardTS2():dglCardTS(lv);"));
   assert.ok(card.includes('if(!DGL_HUMAN){}else if(off)red=') && card.includes('const xs=!DGL_HUMAN?"":'), "人間兩條不畫");
-  assert.ok(card.includes('sg2TalSheet(()=>dglCard(),"‹ 回我的角色")') && card.includes("ptySkills(dglWho())"));
+  assert.ok(card.includes('sg2TalSheet(()=>dglCard(),"‹ 回我的角色",dglWho())') && card.includes("ptySkills(dglWho())"));
   const off = card.slice(card.indexOf("if(!DGL_HUMAN)more="), card.indexOf("const ts=NEW")).replace(/\/\*[^]*?\*\//g, "");   /* 註解不算畫面上的字 */
   assert.ok(off.length > 0 && !off.includes("上限") && !off.includes("星芒") && !off.includes("定軌力"), "細則不寫上限、星芒、定軌力");
   const me = SRC.slice(SRC.indexOf("function dglMeCard(){"), SRC.indexOf("  try{const c=dglName();", SRC.indexOf("function dglMeCard(){"))).replace(/\/\*[^]*?\*\//g, "");

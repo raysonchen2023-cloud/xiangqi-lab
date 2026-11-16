@@ -171,7 +171,7 @@ function ptyCardHTML(P,c,L){const C=(typeof WX_CHARS!=="undefined"&&WX_CHARS[c])
   const tg=P.look===c?`<span class="pty-tag look">陪你走</span>`:"";
   return`<div class="pty-c" data-c="${c}">${img}<div><div class="pty-n">${esc(C.n)}<small>${esc(C.nk||"")}</small>${tg}</div>
     <div class="pty-m">${esc(C.pc||"")}・${esc(era)}・Lv ${lv}${top?(L>=100?"（練滿了）":"（練滿了，等你升級）"):""}</div><div class="pty-xp" aria-hidden="true"><b style="width:${pct.toFixed(1)}%"></b></div></div>
-    ${ptyStatHTML(c,lv)}${skP.length?`<button type="button" class="pty-row" data-a="sk"><span>招式</span><b>${skN}／${skP.length}</b><i aria-hidden="true">›</i></button>`:""}
+    ${ptyStatHTML(c,lv)}${skP.length?`<button type="button" class="pty-row" data-a="sk"><span>招式</span><b>${skN}／${skP.length}</b><i aria-hidden="true">›</i></button>`:""}${typeof SG2G!=="undefined"&&typeof sg2TalSheet==="function"&&typeof sg2TalGet==="function"?`<button type="button" class="pty-row" data-a="tal"><span>天賦</span><b>${(sg2TalGet()[c]||[]).length}／${SG2G.TAL_MAX}</b><i aria-hidden="true">›</i></button>`:""}
     ${(a=>a?`<div class="pty-a">${a}</div>`:"")(`${top?"":`<button type="button" class="btn" data-a="give"${P.pool>0?"":" disabled"}>＋星輝</button>`}${P.look===c?"":`<button type="button" class="btn ghost" data-a="look">帶${ptyTa(c)}出門</button>`}`)}</div>`}   /* 兩顆都不用出現時（練滿了又正陪你走）不留一條空白 */
 function ptySheet(){if(typeof sheet!=="function")return;const P0=ptyGet();if(!P0){try{toast("還沒有開始旅程")}catch(e){}return}ptyCss();
   sheet("🌟 雲河七星",b=>{const draw=()=>{const P=ptyGet(),L=ptyL(),sy=b.scrollTop;
@@ -180,6 +180,7 @@ function ptySheet(){if(typeof sheet!=="function")return;const P0=ptyGet();if(!P0
     {const t=b.querySelector('[data-top="tal"]');if(t)t.onclick=()=>{try{vibrate(5)}catch(e){}closeSheet();setTimeout(()=>{if(typeof sg2TalSheet==="function"&&typeof SG2G!=="undefined")sg2TalSheet(()=>ptySheet(),"‹ 回雲河七星");else bhtdTal(()=>ptySheet(),"‹ 回雲河七星")},60)}}   /* 07bht bhtdTal 第二個參數＝返回鈕的字（沒給照舊「回選關」） */
     b.querySelectorAll(".pty-c[data-c]").forEach(el=>{const c=el.dataset.c;el.querySelectorAll("[data-a]").forEach(btn=>btn.onclick=()=>{try{vibrate(5)}catch(e){}const a=btn.dataset.a;
       if(a==="sk"){closeSheet();setTimeout(()=>ptySkills(c),60);return}
+      if(a==="tal"){closeSheet();setTimeout(()=>sg2TalSheet(()=>ptySheet(),"‹ 回雲河七星",c),60);return}   /* 11/16 開發者「點某個角色的天賦 只會出現那個角色的天賦描述」：每張卡的天賦只看這一位 */
       if(a==="give"){const P2=ptyGet(),L2=ptyL(),lv=PTY.lv(P2,c,L2),want=PTY.base(Math.min(L2,lv+1))-P2.m[c].xp;const g=ptyGive(c,want>0?want:P2.pool);try{toast(g?`✨ 給了 ${g} 星輝`:"已經跟你一樣高了，等你升級再練")}catch(e){}}
 
       else if(a==="look"){if(ptySetLook(c)){try{toast(WX_CHARS[c].n+"陪你走")}catch(e){}try{closeSheet()}catch(e){}setTimeout(()=>{try{if(typeof route==="function")route()}catch(e){}},260);return}}   /* 換人後關卡冊、重畫首頁，右上頭像和小人馬上換 */
