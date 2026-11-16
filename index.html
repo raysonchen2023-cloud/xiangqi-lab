@@ -1613,7 +1613,7 @@ html[data-lefty] .tskip{right:auto;left:14px}
       if(!window.caches)return go();caches.keys().then(function(ks){return Promise.all(ks.filter(function(k){return k.indexOf("xqlab-app-")===0}).map(function(k){return caches.delete(k)}))})
         .then(function(){return navigator.serviceWorker&&navigator.serviceWorker.getRegistration()}).then(function(r){return r&&r.update()}).catch(function(){}).then(go)}};setTimeout(chk,4000)})();
 </script>
-<script>window.XQ_OFFLINE=true;window.XQ_BUILD="20261116-1832";</script>
+<script>window.XQ_OFFLINE=true;window.XQ_BUILD="20261116-1938";</script>
 <script src="core.js"></script>
 <script src="engine.js"></script>
 <script src="local.js"></script>
@@ -8822,7 +8822,10 @@ const PJC_SC={
   /* 漢・西域大漠驛站（駱躍梅）：j1 驛站門外三名驛卒、下方中央空地；j2 驛舍矮案，案面四角約 遠左 300,457／遠右 666,600／近右 520,692／近左 152,528（中心 409,569）；j3 星槎船尾甲板 */
   han:{c:"x_miaogirl",img:["han_j1","han_j2","han_j3"],say1:"沙暴快來了，驛卒卻把她扣了下來。",bd:[410,440,270],tb:[409,569],   /* 11/16 本機看過：bd 原本 [410,372,300] 棋盤上緣壓到上方字幕，下移縮小 */
     
-    lay:[[[356,1265,370]],[[180,1305,365],[590,1305,365]],[[270,1275,345],[515,1275,345]]]}};
+    lay:[[[356,1265,370]],[[180,1305,365],[590,1305,365]],[[270,1275,345],[515,1275,345]]]},
+  /* 三國・赤壁江上（沈方庭＋鐵連城，L＝[x_shuai,x_shi]）：開發者選單「兩位新夥伴主導」——j1 鐵連城擋在沈方庭前面（竹篷小船船頭）；j2 兩人在篷下棋枰兩側（棋枰盤面中心 384,545）；j3 兩人＋陪你走的人三人並肩（星槎甲板，下方赤壁） */
+  sanguo:{c:"x_shuai",img:["sg_j1","sg_j2","sg_j3"],say1:"赤壁火光連天，軍漢把他們當成了北邊的探子。",bd:[384,420,250],tb:[384,545],who:[["L1","L0"],["L1","L0"],["L1","L0","mate"]],
+    lay:[[[415,1150,307],[585,1150,307]],[[160,1310,347],[600,1310,347]],[[190,1266,267],[390,1266,267],[590,1266,267]]]}};
 const pjcUrl=n=>"data/ptyjoin/"+n+".webp";
 const pjcTr=s=>{try{return typeof i18nStoryText==="function"?i18nStoryText(s):s}catch(e){return s}};
 const pjcEn=()=>{try{return typeof i18nLang==="function"&&i18nLang()==="en"}catch(e){return false}};
@@ -8833,6 +8836,10 @@ function pjcMeet(k){const S=PJC_SC[k]||{};if(S.say1)return S.say1;let t="";try{t
 /* 第 3 張字幕 */
 function pjcSay(c){let s="";try{s=(typeof PTY_SAY!=="undefined"&&PTY_SAY[c])||""}catch(e){}if(!s)return"";const nm=pjcNm(c);
   return pjcEn()?pjcTr(nm)+": “"+pjcTr(s)+"”":nm+"：「"+s+"」"}
+/* 11/16 開發者選單「三國：兩位新夥伴主導」：PJC_SC 每站可寫 who＝每張站誰（"L0" 第一位、"L1" 第二位、"mate" 陪你走的人），沒寫照舊；第 3 張字幕也照 who 把新加入的每一位那句都放上 */
+function pjcLook(L){L=L||[];let m="";try{m=typeof ptyLook==="function"?ptyLook():""}catch(e){}for(const x of[m,"x_swordboy","x_miaogirl","x_spiritgirl"])if(x&&!L.includes(x))return x;return""}
+function pjcWho(S,i,c,L){const W=S.who&&S.who[i];if(!Array.isArray(W))return null;const lk=pjcLook(L);return W.map(w=>w==="mate"?lk:w==="L0"?c:w==="L1"?((L&&L[1])||lk):w).filter(Boolean)}
+const pjcSays=L=>(L||[]).map(pjcSay).filter(Boolean).join("\n");
 /* 陪你走的人：ptyLook；沒有、或就是加入的那位，用齊轍（齊轍自己加入時用駱躍梅） */
 function pjcMate(c,L){if(L&&L[1]&&L[1]!==c)return L[1];let m="";try{m=typeof ptyLook==="function"?ptyLook():""}catch(e){}if(!m||m===c)m="x_swordboy";if(m===c)m="x_miaogirl";return m}
 /* 那一題的起始局面：Promise → {fen,side} 或 null（拿不到不報錯） */
@@ -8854,7 +8861,7 @@ function pjcCss(){if(document.getElementById("pjcCss"))return;const s=document.c
 #pjcPg .pjc-who{position:absolute;background:center bottom/contain no-repeat;filter:drop-shadow(0 6px 12px rgba(0,0,0,.55));opacity:0;transform:translateY(22%);transition:opacity .7s,transform .9s cubic-bezier(.2,1,.3,1);pointer-events:none}
 #pjcPg .pjc-who.on{opacity:1;transform:none}
 #pjcPg .pjc-lb{position:absolute;left:0;right:0;top:0;height:22%;background:linear-gradient(rgba(4,4,10,.62),rgba(4,4,10,0));pointer-events:none}
-#pjcPg .pjc-sub{position:absolute;left:0;right:0;top:calc(66px + env(safe-area-inset-top,0px));padding:.3em 22px;text-align:center;text-wrap:balance;font:800 var(--pjcs,24px)/1.45 var(--serif,serif);letter-spacing:.08em;color:#fff7e6;text-shadow:0 0 2px #000,0 0 3px #000,0 2px 10px #000;opacity:0;transform:translateY(-6px);transition:opacity .5s,transform .7s;pointer-events:none}
+#pjcPg .pjc-sub{position:absolute;left:0;right:0;top:calc(66px + env(safe-area-inset-top,0px));padding:.3em 22px;text-align:center;text-wrap:balance;white-space:pre-line;font:800 var(--pjcs,24px)/1.45 var(--serif,serif);letter-spacing:.08em;color:#fff7e6;text-shadow:0 0 2px #000,0 0 3px #000,0 2px 10px #000;opacity:0;transform:translateY(-6px);transition:opacity .5s,transform .7s;pointer-events:none}
 #pjcPg .pjc-sub.on{opacity:1;transform:none}
 #pjcPg .pjc-k{position:absolute;right:14px;top:calc(12px + env(safe-area-inset-top,0px));z-index:3;min-width:72px;min-height:44px;padding:10px 18px;border-radius:99px;font:700 16px var(--serif,serif);color:#f2e4c4;background:rgba(0,0,0,.45);border:1px solid rgba(232,199,122,.6)}
 #pjcPg .pjc-k:focus-visible{outline:3px solid #E8C77A;outline-offset:3px}
@@ -8873,9 +8880,9 @@ function pjcPlay(k,L,onDone){let ended=false;const end=r=>{if(ended)return;ended
   const raf=f=>{if(typeof requestAnimationFrame==="function")requestAnimationFrame(()=>requestAnimationFrame(f));else setTimeout(f,30)};
   raf(()=>o.classList.add("on"));try{kb.focus({preventScroll:true})}catch(e){}
   const mate=pjcMate(c,L),LY=S.lay||PJC_LAY,tb=S.tb||[384,600],bd=S.bd||[tb[0],tb[1]-200,300];
-  const shots=[{img:S.img[0],kb:[[1,50,72],[1.08,50,72]],who:[c],ly:LY[0],say:pjcTr(pjcMeet(k)),wd:.25},
-    {img:S.img[1],kb:[[1,tb[0]*100/PJC_W,tb[1]*100/PJC_H],[1.22,tb[0]*100/PJC_W,tb[1]*100/PJC_H]],who:[c,mate],ly:LY[1],say:pjcTr("一起解開了這盤棋。"),board:1.3,wd:.1},
-    {img:S.img[2],kb:[[1.1,50,66],[1,50,66]],who:[c,mate],ly:LY[2],say:pjcSay(c),wd:.15}].filter(x=>x.img);
+  const shots=[{img:S.img[0],kb:[[1,50,72],[1.08,50,72]],who:pjcWho(S,0,c,L)||[c],ly:LY[0],say:pjcTr(pjcMeet(k)),wd:.25},
+    {img:S.img[1],kb:[[1,tb[0]*100/PJC_W,tb[1]*100/PJC_H],[1.22,tb[0]*100/PJC_W,tb[1]*100/PJC_H]],who:pjcWho(S,1,c,L)||[c,mate],ly:LY[1],say:pjcTr("一起解開了這盤棋。"),board:1.3,wd:.1},
+    {img:S.img[2],kb:[[1.1,50,66],[1,50,66]],who:pjcWho(S,2,c,L)||[c,mate],ly:LY[2],say:S.who?pjcSays(L):pjcSay(c),wd:.15}].filter(x=>x.img);
   /* 字級：最長那句一行放 15 字左右，再長就換行 */
   let W=0,H=0;const fit=()=>{W=fr.clientWidth||o.clientWidth||(typeof innerWidth==="number"?innerWidth:0)||390;H=fr.clientHeight||o.clientHeight||(typeof innerHeight==="number"?innerHeight:0)||844;const n=Math.max(8,...shots.map(x=>Math.min(15,String(x.say||"").length)));
     try{o.style.setProperty("--pjcs",Math.max(18,Math.min(28,Math.floor((W-44)/(n*1.1))))+"px")}catch(e){}if(cur)place(cur)};
@@ -22068,6 +22075,11 @@ if(typeof journeyGameEnd==="function"){const f0=journeyGameEnd;journeyGameEnd=fu
 if(typeof jName==="function"){const f1=jName;jName=function(j){const k=gxdKind(j);if(k)return k==="omen"?"觀星臺・今日異象":"觀星臺・自由擺陣";return f1.apply(this,arguments)}}
 if(typeof gxParkEx==="function"){const f2=gxParkEx;gxParkEx=function(st){const r=f2.apply(this,arguments);if(r)return r;try{return gxdParkEx(st)}catch(e){return null}}}
 if(typeof gxParkInfo==="function"){const f3=gxParkInfo;gxParkInfo=function(k){try{if(gxdParkInfo(k))return true}catch(e){}return f3.apply(this,arguments)}}
+/* 11/16 開發者「Claude 還沒做的三項開始做」：今日異象專屬配樂〈渾天異象〉（tools/extra_bgm_gen.py yixiang，Lyria 作曲，開發者聽過說可以）。
+   今日異象、自由擺陣的局（journey gxd:）每步由 08b 叫 gxdTick 放這首；離開對局頁還給原本的配樂 */
+const GXD_BGM="guanxing/yixiang_1.mp3";
+function gxdTick(st){try{if(!st||!/^gxd:/.test(String(st.journey||""))||typeof bgmForce!=="function"||typeof BGM==="undefined")return;if(BGM.force!==GXD_BGM)bgmForce(GXD_BGM)}catch(e){}}
+if(typeof addEventListener==="function")addEventListener("hashchange",()=>{try{if(!/^#\/journey\/play/.test(location.hash)&&typeof BGM!=="undefined"&&BGM.force===GXD_BGM&&typeof bgmForce==="function")bgmForce(null)}catch(e){}});
 /* ================= 🏮 西市：首頁橋左邊的生活場景（開發者 11/13；文案照 story/西市文案定稿草案_1113.md，第五節 18 項全照推薦；前綴 xsm／XSM，11/13 grep 過沒撞名：xm 已被 01-board 的混音器用掉）=================
    路由 #/ximarket（西市外景）、#/ximarket/tea（聽雨茶坊內景）、#/ximarket/dark（茶坊的臺灣暗棋，07xsd）（02-shell）。
    入口：首頁橋左邊一個「🏮 西市」場景標籤（#hmXsm；跟 07gxt 觀星臺一樣包 07z 的 Home／hmwSet，不改 HM_SPOTS、不動 07y；原圖、iPad 直版 p34、橫版 l1610 各一組座標 XSM_HOME，避開左岸告示牌）。
@@ -22114,7 +22126,7 @@ const XSM_RAIN=[[53,12,60,31],[69.5,14,82,36]];   /* 茶坊窗外看得到雨的
 const XSM_BAD={};   /* 這次開 App 載不到的圖（d＝白天、n＝夜景），換另一張不再試 */
 /* ---------- 11/16 四攤的資料 ---------- */
 Object.assign(XSM_TX,{
-  gift:"櫃坊，是唐朝長安西市替人保管錢財的店。存的人拿著帖來，櫃上認了帖，才把東西交出去。",
+  gift:"櫃坊，是唐朝長安西市替人保管錢財的店。存的人憑著約好的憑據來取，櫃上認得了，才把東西交出去。櫃上每天寫的帖，就是這樣的憑據。",
   v1:"老槐樹下有人停下腳步，像是在等{你}。",v0:"老槐樹下今天很清靜，還沒有人來。",vGot:"今天的小禮收下了。",
   c0:"攤上的棋子散了一地。七種棋子各少一顆，藏在西市的角落裡，幫攤主找回來吧。",c1:"哎呀，少了好幾顆！少一顆，這副棋就下不成了。",c2:"找到了，就是這顆。",c3:"一副棋，一顆都不能少。多謝{你}。",cDone:"今天這顆找到了，明天再來幫我看看。",
   mu:"旅途中聽過的曲子，都收在這裡。想再聽一遍，就來樂棚坐坐。",mu2:"唐朝有一年長安大旱，東市、西市搭樓比賽彈奏求雨。東市請來第一名的琵琶手，西市樓上卻有人彈得更好。",
@@ -22154,7 +22166,7 @@ const XSM_WK_L={x_swordboy:["{名}，這七天的路，走得穩。鞋帶繫緊�
 /* 節禮帖：節氣當天掌櫃說的一句（節氣日照 07y5 TD_TERMS）。立春春盤見杜甫〈立春〉；清明掃墓見唐玄宗開元二十年許寒食上墓；鉦聲散市見《唐六典》兩京諸市署（待史學顧問核） */
 const XSM_TERM_L={"小寒":"小寒到了，一年裡最冷的日子就要來了。手凍了，就揣在袖子裡想棋。","大寒":"大寒，是二十四節氣的最後一個。冷過這幾天，春天就不遠了。",
   "立春":"今天立春。長安人家要吃春盤，生菜切得細細的，咬一口，春天就來了。","雨水":"雨水，天暖了，下的不再是雪，是雨。","驚蟄":"驚蟄，春雷一響，躲在土裡過冬的蟲子都醒了。",
-  "春分":"春分這天，白天和夜晚一樣長，像棋盤上的楚河漢界，兩邊剛好對半。","清明":"清明，人們去給先人掃墓，順路到郊外踏青。","穀雨":"穀雨，雨水多了，田裡的穀子喝飽了水，長得最快。",
+  "春分":"春分這天，白天和夜晚一樣長，像棋盤上的楚河漢界，兩邊剛好對半。","清明":"寒食、清明這幾天，人們去給先人掃墓，順路到郊外踏青。","穀雨":"穀雨，雨水多了，田裡的穀子喝飽了水，長得最快。",
   "立夏":"立夏了，天一天比一天熱。下棋找個樹蔭坐吧。","小滿":"小滿，麥粒一天天飽滿起來，還沒全滿，所以叫小滿。","芒種":"芒種，麥子帶著尖尖的芒，正好收割；稻子也要趕緊種下。",
   "夏至":"夏至這天，白天最長。太陽下山得晚，可以多下一盤再回家。","小暑":"小暑，熱起來了。櫃上備了涼水，喝一口再走。","大暑":"大暑，一年裡最熱的時候。慢慢想棋，別急出一身汗。",
   "立秋":"今天立秋。早晚吹起涼風，暑氣要慢慢退了。","處暑":"處暑的「處」，是停下來的意思。熱了一整個夏天，到這裡差不多停了。","白露":"白露，清早的草葉上掛著一顆顆露水，白白亮亮的。",
@@ -22334,7 +22346,7 @@ function xsmSwap(P,day){const im=P.querySelector(":scope>img");if(!im)return;con
   const pre=new Image();pre.onload=()=>{if(!P.isConnected)return;P.dataset.day=nd?"1":"";im.src=src};pre.onerror=()=>{XSM_BAD[nd?"d":"n"]=1};pre.src=src}
 function xsmIntro(){modal(`<h3>🏮 西市</h3><p><b>${esc(XSM_TX.pos)}</b></p><p>${esc(XSM_TX.intro)}</p>`,[["逛逛西市",null]])}
 function xsmWalk(v){if(typeof shwPage!=="function"||typeof SHIP_WALK_ON==="undefined"||!SHIP_WALK_ON)return;try{shwPage(v,xsmWalkCfg(),"xsm")}catch(e){}}
-function XsmPage(v,sub){try{if(xsmOpen())xsmBgmOn()}catch(e){}   /* 11/16 西市背景配樂（外景、茶坊、暗棋都是這一組） */
+function XsmPage(v,sub){try{if(xsmOpen()){if(sub==="dark"&&typeof xsdBgmOn==="function")xsdBgmOn();else xsmBgmOn()}}catch(e){}   /* 11/16 西市背景配樂（外景、茶坊、暗棋都是這一組） */
   if(sub==="tea")return xsmTea(v);if(sub==="dark"&&typeof xsdPage==="function")return xsdPage(v);
   setTop("🏮 西市","#/");setTabs(true,"#/");v.className="view";
   if(!xsmOpen()){toast("🏮 西市還沒開市");navReplace("#/");return{}}
@@ -22527,7 +22539,7 @@ function xsmTakePc(){const day=xsmToday(),r=xsmPcAward(day);if(!r)return null;
 function xsmSetRite(){xsmCss();modal(`<div class="xsm-seal" aria-hidden="true">齊</div><h3>一副棋湊齊了</h3>${xsmPcRow(7)}<p>攤主：「${esc(xsmYou(XSM_TX.c3))}」</p><p class="muted">+${XSM_SET_XP} 修為</p>`,[["收下",null]])}
 /* ---------- 11/16 聽曲：西市樂棚 ＋ 西市背景配樂（都走 01-board 的 BGM，不另開播放器） ---------- */
 const xsmBgmOk=()=>{try{return!!store.get("bgm",true)&&(typeof sxmGain!=="function"||sxmGain("bgm")>0)}catch(e){return false}};
-const xsmBgmMine=f=>!!f&&(f===XSM_BGM_D||f===XSM_BGM_N||f===XSM_MU.f);
+const xsmBgmMine=f=>!!f&&(f===XSM_BGM_D||f===XSM_BGM_N||f===XSM_MU.f||(typeof XSD_BGM!=="undefined"&&f===XSD_BGM));
 /* 進西市（外景、茶坊、暗棋）：樂棚正在放就不動；不然照日夜放那一組 */
 function xsmBgmOn(){if(typeof bgmForce!=="function"||typeof BGM==="undefined")return;if(XSM_MU.f&&BGM.force===XSM_MU.f)return;XSM_MU.f=null;try{bgmForce(xsmDay()?XSM_BGM_D:XSM_BGM_N)}catch(e){}}
 function xsmMuToggle(rel){if(typeof bgmForce!=="function")return;if(!xsmBgmOk()){toast("♪ "+XSM_TX.muOff);return}
@@ -22842,6 +22854,10 @@ function xsdTap(i){const X=XSD;if(!X||X.busy||X.S.over||X.S.cur!==0)return;const
   if(p&&S.col&&((p>>3)&1)!==S.col[0]&&X.sel<0){xsdStatus("那是電腦的棋。先點你自己的棋，再點要去的地方。");return}
   X.sel=-1;xsdDraw()}
 function xsdResign(){const X=XSD;if(!X||X.S.over)return;modal(`<h3>認輸？</h3><p>認輸的話，這局算輸。</p>`,[["繼續下",null],["認輸",()=>{if(XSD!==X||X.S.over)return;X.tm.forEach(clearTimeout);X.busy=false;X.S=Object.assign({},X.S,{over:{w:1,why:"resign"}});xsdDraw();xsdEnd()},true]])}
+/* 11/16 開發者「Claude 還沒做的三項開始做」：聽雨茶坊暗棋專屬配樂〈聽雨翻子〉（tools/extra_bgm_gen.py anqi，Lyria 作曲，開發者聽過說可以）。
+   進暗棋頁（07xsm XsmPage 的 dark）放這首；樂棚正在放的不動；回茶坊、外景由 07xsm 換回西市配樂，離開西市一起停（xsmBgmMine 認得這首） */
+const XSD_BGM="xsm/anqi_1.mp3";
+function xsdBgmOn(){try{if(typeof bgmForce!=="function"||typeof BGM==="undefined")return;if(typeof XSM_MU!=="undefined"){if(XSM_MU.f&&BGM.force===XSM_MU.f)return;XSM_MU.f=null}bgmForce(XSD_BGM)}catch(e){}}
 function xsdPage(v){setTop("🀄 暗棋","#/ximarket/tea");try{setTabs(true,"#/")}catch(e){}v.className="view";
   if(!XSD_ON||(typeof xsmOpen==="function"&&!xsmOpen())){toast("🏮 西市還沒開市");navReplace("#/");return{}}
   xsdCss();const P=document.createElement("div");P.className="xsd-page";
@@ -28768,7 +28784,7 @@ function CpuGame(v,practicePage,mode){
     const OT=oppTalk(st,JOPP,N);   /* 意見回饋 826 追加：對面的人開口、贏、輸、和棋各說自己的話（07m3-opptalk.js） */
     parkDraw(v.querySelector("#bbox"),bd,st.board,o,{tap,gid:st.id?"cpu:"+st.id:null,start:st.start||null,   /* 11/13：被吃的子照這盤的開局算（park3d CAPBASE；十三星系、黑洞塔防、石桌往事自訂局面） */...(BRG?{bridge:true,ground:BRG.ground}:{}),bg:JS0?`data/park/j${JR[JS0.r].k}_360.webp`:BRG?BRG.bg:null,bgName:JS0?"雲河鎮・"+JR[JS0.r].name:innAnyAct(st.journey)?"🏮 "+innName(store.get("era","classic")):!st.journey&&!st.arena&&!st.practice&&typeof hbYardName==="function"?hbYardName():null,   /* 11/10：挑戰電腦在茶坊後園下 */   /* 意見回饋 530：在驛站下棋，標籤寫驛站，不是朝代園林 */arena:st.arena||null,gate:st.journey&&!st.arena?(k=>innAnyAct(st.journey)?{img:["data/inn/"+k+"_ink.webp","data/parkgate/"+k+"_ink.webp","data/inn/"+k+".webp"],icon:"🏮",title:"走進"+innName(k),sub:"旅人在燈下擺好棋盤了",bg:"#2b2a22",qk:k}:{img:["data/parkgate/"+k+"_ink.webp","data/parkgate/"+k+".webp","data/park/"+k+"_360.webp"],icon:"🍃",title:"走進"+parkName(k),sub:"石桌就在前面",bg:"#2b2a22",qk:k})(store.get("era","classic"))   /* 意見回饋 697：驛站旅人的對局，載入畫面和標籤都寫「〇〇的驛站」 */:(!st.journey&&!st.arena&&!st.practice&&!st.net?(typeof hbYardGate==="function"?hbYardGate("cpu"):typeof hbGate==="function"?hbGate("🤖","挑戰電腦","對手擺好棋盤了"):null):null),watchers:legendVisit(st),thinking:!!st.thinking||(!st.result&&st.turn!==st.human),botSide:st.human==="r"?"b":"r",result:st.result?(st.result.w||"draw"):null,hint:o.hint&&o.hint.length===1?[o.hint[0],o.hint[0]]:o.hint,   /* 意見回饋 607：只提示一顆子（錯棋重練提示一、二、提示棋）時傳同一格兩次，園子 3D 才畫得出黃圈（park3d 只畫兩格的提示） */
       opp:(JOPP&&JCHAR_LOOK(JOPP,st.human==="r"?"b":"r"))||(innAnyAct(st.journey)?innLook(innAnyAct(st.journey),st.human==="r"?"b":"r"):null)||(st.arena&&CHAMP_LOOK(st.arena,st.human==="r"?"b":"r"))||(N?NPC_LOOK(N,st.human==="r"?"b":"r"):zgIs(st)?ZG_LOOK(st.human==="r"?"b":"r"):PIKA_LOOK(st.human==="r"?"b":"r")),oppHello:OT.hi,oppWin:OT.win,oppLose:OT.lose,...(typeof bhParkEx==="function"?bhParkEx(st):null),...(typeof bhOrbEx==="function"&&!(typeof bhIs==="function"&&bhIs(st))?bhOrbEx(st):null),...(typeof gxParkEx==="function"?gxParkEx(st):null)});   /* hspx（開發者 11/12）：黑洞星樞棋局換成巨盤模式、黑洞環景（07bh-blackhole.js） */
-    if(typeof bhTick==="function")bhTick(st);if(typeof gxTick==="function")gxTick(st);
+    if(typeof bhTick==="function")bhTick(st);if(typeof gxTick==="function")gxTick(st);if(typeof gxdTick==="function")gxdTick(st);
     if(typeof meGameTalk==="function")meGameTalk(st);   /* 意見回饋 668：你扮演的雲河七星開局、吃子時說一句 */
     if(NPC_HI!==st.id){NPC_HI=st.id;if(pk0&&!st.moves.length&&!st.result)setTimeout(()=>{try{if(PARK&&PARK.host===hb)PARK.v.oppSay(meHi((N&&typeof npcHello==="function"&&npcHello(N))||OT.hi),2.6)}catch(e){}},900);if(N&&typeof npcAskMaybe==="function")npcAskMaybe(N,st,hb)}}   /* 826 追加：園子 3D 已經開著、換一盤新棋時，不只園子路人，每一位對手都開口打招呼 */   /* 意見回饋 658：有羈絆的女棋手打招呼換成新台詞；開局偶爾來委託（小卡，不打斷對局） */
   let lastN=null;   // 上一次畫的步數：步數剛好多一步才秀開局名（重新整理、開新局不秀）
@@ -34732,6 +34748,7 @@ const I18N_STORY_EN={
   "說書人：「燈芯結了一朵燈花——老一輩說，這是好兆頭。」": "Storyteller: \"The wick has flowered. The old folk say it's a good omen.\"",
   /* 11/16 七星加入過場（m/07pjc-joincut.js）：三張的字幕、加入那句（PTY_SAY）、過場標籤 */
   "七星加入過場": "A companion joins",
+  "赤壁火光連天，軍漢把他們當成了北邊的探子。": "The fires of Red Cliff light up the sky, and the soldiers take them for spies from the north.",
   "沙暴快來了，驛卒卻把她扣了下來。": "A sandstorm is coming, and the post guards are holding her.",
   "一起解開了這盤棋。": "Together, you solved the puzzle.",
   "我找不到回去的路……星槎真的會停靠元朝？那我跟你們走。": "I can't find my way back… Will the Star Raft really stop at the Yuan? Then I'll come with you.",
