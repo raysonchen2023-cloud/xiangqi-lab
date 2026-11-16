@@ -70,8 +70,8 @@ test("〔行為〕定軌力用完：兩邊都不開，星槎照航線停靠；�
 
 test("〔原始碼〕偏航視窗：急襲已開時說明與按鈕換成急襲、按了直接開打（不再多一張星樞棋局說明）；還沒開的人文案照舊", () => {
   assert.ok(BH.includes('const bhDriftRaid=()=>{if(typeof sg2DriftOk==="function")return sg2DriftOk();try{return typeof bhtdRdOpen==="function"&&typeof bhtdProg==="function"&&typeof bhtdRaidDrift==="function"&&!(typeof bhtlNeed==="function"&&bhtlNeed())&&bhtdRdOpen(bhtdProg())}catch(e){return false}};'));
-  assert.ok(BH.includes('function bhOffer(k,next,cover){const n=store.get("bhCount",0)||0,rd=bhDriftRaid();'));
-  assert.ok(BH.includes('[[rd?"⚡ 接受急襲":"🌀 接受棋局",()=>rd?bhStart(k,cover):bhIntro(k,cover)],["先回航線",'));
+  assert.ok(BH.includes('function bhOffer(k,next,cover,f1){const n=store.get("bhCount",0)||0,rd=bhDriftRaid();'));
+  assert.ok(BH.includes('[[rd?"⚡ 接受急襲":"🌀 接受棋局",()=>{if(f1)try{store.set("bhDrift1",1)}catch(e){}rd?bhStart(k,cover):bhIntro(k,cover)}]].concat(f1?[]:[["先回航線",'));   /* 11/16 開發者「第一次的偏航發生，必須強制過去」：第一次偏航沒有先回航線 */
   assert.ok(BH.includes("這是一場星淵急襲，三到五分鐘分勝負，打贏有星塵。要接嗎？不接也不扣任何東西，星槎照原本的航線停靠。"));
   assert.ok(BH.includes("墨色星渦的中心，浮著一張巨大的棋盤。要下這一盤嗎？不下也不扣任何東西，星槎照原本的航線停靠。"), "原本的文案還在");
   assert.ok(BH.includes('<h2>${n||rd?"星槎偏航":esc(BHX_FD.title)}</h2>') && BH.includes('${n?bhSay(BH_TXT.again):rd?"":BHX_FD.desc.map('), "急襲時不放「星樞未醒、棋力低一階、不計積分」那幾句（那是第一次下星樞棋局的說明，急襲有星塵、強度固定）");

@@ -57,7 +57,7 @@ function gxt(o) {
 }
 
 test("〔行為〕觀星臺的黑洞車輪戰不再是「星軌未通」：點了直接開車輪戰；定軌力用完先擋；還沒做的兩個照舊未通", () => {
-  const A = gxt(); assert.deepEqual(Array.from(A.GXT_SPOTS).filter(s => s[6]).map(s => s[1]), ["今日異象", "自由擺陣"]);
+  const A = gxt(); assert.deepEqual(Array.from(A.GXT_SPOTS).filter(s => s[6]).map(s => s[1]), [], "11/16 開發者：今日異象、自由擺陣也開張（07gxd-daily.js），原本期望這兩個照舊未通");
   A.GXT_ACT.gxtSimul(); assert.equal(A.log.whl, 1); assert.equal(A.log.toast.length, 0);
   const B = gxt({ lock: 1 }); B.GXT_ACT.gxtSimul(); assert.equal(B.log.whl, 0); assert.match(B.log.toast[0], /定軌力用完了/);
   const C = gxt({ noWhl: 1 }); C.GXT_ACT.gxtSimul(); assert.equal(C.log.toast[0], "🌌 " + C.GXT_OFF, "沒有車輪戰模組時不會壞");

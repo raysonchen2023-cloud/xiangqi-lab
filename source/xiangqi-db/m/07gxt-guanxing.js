@@ -7,7 +7,7 @@
      日夜照人間時辰（07w8 clkIdx，頂欄時辰鐘同一個判斷）：卯時～申時（約 05:00～17:00）白天版，酉時～寅時夜景；頁面開著跨過時辰會自己換；白天圖載不到退回夜景（GXT_BAD）。
      直幅／寬版：可用寬 ÷ 可用高 ≥ GXT_LAND 而且畫面短邊 ≥ 600 用寬版（跟首頁寬版同一個短邊門檻；手機橫放照舊直幅＋07t3 側欄選單）；轉向、改視窗大小時原地換圖、換座標。
    標籤只放大字（記憶「場景標籤只放大字」），跟圖上器物對應：
-     天頂墨色黑洞＝黑洞車輪戰（11/16 開張：07bhw whlOpen）、星圖石碑＝十三星系（07gx gxMap）、青銅渾儀＝星淵遠征（07bht bhtdOpen 關卡卡片）、圭表＝今日異象（星軌未通）、石棋桌＝自由擺陣（星軌未通）、
+     天頂墨色黑洞＝黑洞車輪戰（11/16 開張：07bhw whlOpen）、星圖石碑＝十三星系（07gx gxMap）、青銅渾儀＝星淵遠征（07bht bhtdOpen 關卡卡片）、圭表＝今日異象、石棋桌＝自由擺陣（11/16 開發者：兩個都開張，07gxd-daily.js gxdOmen／gxdFree）、
      右側星空＝二十八宿（11/13 晚：花星芒點亮星圖，07dgl-stamina.js dglXiuSheet）。
      星軌未通＝標籤看得到但灰、帶鎖，點了跳一行「星軌未通，敬請期待」。
    出口照場景頁慣例走 07w9 圖上出口（EXITS "/guanxing"，右下石階）：從首頁來寫「🏘 回棋鎮」、從星槎來 07w9 exFix 自動改「↩ 回星槎」；寬版時這裡把出口挪到寬版圖的石階。
@@ -21,8 +21,8 @@ const GXT_SPOTS=[
   ["gxtSimul","天頂黑洞",50,19,50,24,0],   /* 11/16 黑洞新規則：車輪戰拿掉，天頂黑洞改通往星門圍城 */   /* 天頂黑洞下方的光柱；11/16 開發者「車輪戰和星門圍城也都能上線」（選單：解鎖，點了直接開車輪戰 07bhw whlOpen） */
   ["gxtGx","十三星系",18,32.5,39.5,32,0],   /* 星圖石碑頂上 */
   /* 11/16 開發者（觀星臺截圖圈天頂黑洞與渾儀）「紅圈入口內容一樣 請修正和優化」，選單「只留天頂黑洞」：渾儀上的「星門圍城」標籤拿掉（gxtTd 留著，舊連結叫得到） */
-  ["gxtOmen","今日異象",76,42,62,50,1],   /* 圭表石柱頂上（寬版在石柱右邊、圭面上方） */
-  ["gxtFree","自由擺陣",31,70,44,71,1],   /* 石棋桌上方 */
+  ["gxtOmen","今日異象",76,42,62,50,0],   /* 圭表石柱頂上（寬版在石柱右邊、圭面上方）；11/16 開發者：開張（07gxd gxdOmen，每天所有人同一盤變體陣容） */
+  ["gxtFree","自由擺陣",31,70,44,71,0],   /* 石棋桌上方；11/16 開發者：開張（07gxd gxdFree，點數預算自己擺 16 子跟電腦下） */
   ["gxtSky","二十八宿",80,26,80,15,0]];   /* 開發者 11/13 晚：星芒點亮二十八宿星圖（07dgl dglXiuSheet）；直幅在右側山頭上方的星空、寬版在右上星空 */
 const GXT_EXIT={p:[86,90],w:[68,86]};   /* 出口（右下石階）：直幅跟 07w9 EXITS 同一組 */
 const GXT_HOME={"":[84,56],p34:[82,57],l1610:[75,69]};   /* 首頁橋右側（home 768×1376、home_p34、home_l1610 各量一次；經典世界、季節圖跟原圖同構圖） */
@@ -135,9 +135,12 @@ function gxtGate(){if(typeof gxMap!=="function"){toast("🌌 "+GXT_OFF);return}
      右側星空＝二十八宿：星空裡幾顆星亮起、連成一線，「引星連脈，喚醒四方真靈。」（不蓋黑，星圖面板直接滑上來）
    這次開 App 每件器物第一次約 2.7 秒，之後約 1.7 秒（同一段演出快轉）；系統設「減少動態」只淡入那一句（約 1.1 秒）。點一下跳過；離開這一頁就收掉。
    回來站在器物前：走路角色的位置 07w 本來就記著（SHW_MEM "gxt"），從玩法回到觀星臺時人還站在那件器物前。
-   時間表 gxtFxPlan 是純計算；今日異象、自由擺陣做好時在 GXT_FXT／GXT_FXP 各加一項 */
-const GXT_FXT={td:"撥轉渾儀，定軌星淵之途。",simul:"仰觀天頂，身入萬劫星漩。",sky:"引星連脈，喚醒四方真靈。"};
-const GXT_FXP={p:{td:[50,52,15],sky:[80,17,9]},w:{td:[50.5,51.5,5],sky:[80,11,5]}};   /* 場景圖上的位置：[左%, 上%, 半徑佔圖寬 %]（渾儀的球心、右側星空） */
+   時間表 gxtFxPlan 是純計算。
+   11/16 開發者（今日異象、自由擺陣開張）再加兩段：
+     圭表＝今日異象：石柱頂亮起一團星光，金色的「圭影」沿著地上的石圭畫過去，墨色蓋上來，「圭影移轉，今日異象現形。」
+     石棋桌＝自由擺陣：十六顆星點（金八、藍八）從桌心散開，再落回桌上排成兩列，墨色蓋上來，「拂開石桌，親手重排星陣。」 */
+const GXT_FXT={td:"撥轉渾儀，定軌星淵之途。",simul:"仰觀天頂，身入萬劫星漩。",sky:"引星連脈，喚醒四方真靈。",omen:"圭影移轉，今日異象現形。",free:"拂開石桌，親手重排星陣。"};
+const GXT_FXP={p:{td:[50,52,15],sky:[80,17,9],omen:[73,46,4],gui:[74,57,95,59.5],free:[31,75,13]},w:{td:[50.5,51.5,5],sky:[80,11,5],omen:[57.4,47,2],gui:[58,58.6,65.4,62.2],free:[44,77,4.4]}};   /* 場景圖上的位置：[左%, 上%, 半徑佔圖寬 %]（渾儀的球心、右側星空、圭表石柱頂、石棋桌桌心）；gui＝石圭（地上的刻度石）從柱腳到尾端 [左,上,左,上]（11/16 量 gx_tai 768×1376、gx_tai_w 1376×768） */
 const gxtFxPlan=(rm,seen)=>rm?{kind:"min",say:120,open:750,end:1150}:seen?{kind:"lite",say:600,open:1250,end:1700}:{kind:"full",say:1150,open:2150,end:2750};   /* 各段開始的時間（毫秒）：那一句話、開畫面、收掉 */
 function gxtFx(id,open){let P=null,im=null,ok=false;try{P=document.querySelector(".gxt-page");im=P&&P.querySelector(":scope>img");ok=!!(P&&im&&GXT_FXT[id]&&!gxtFx.busy&&!gxtGate.busy&&typeof document.body.animate==="function")}catch(e){}
   if(!ok){open();return}
@@ -148,7 +151,10 @@ function gxtFx(id,open){let P=null,im=null,ok=false;try{P=document.querySelector
     if(id==="td"){const c=GXT_FXP[k].td,p=pt(c),r=R.width*c[2]/100;for(let i=0;i<3;i++)h+=`<i class="gxt-fx-r" style="left:${p[0]}px;top:${p[1]}px;width:${r*2}px;height:${r*2}px"></i>`;h+=`<i class="gxt-fx-g" style="left:${p[0]}px;top:${p[1]}px;width:${r*.7}px;height:${r*.7}px"></i>`}
     else if(id==="simul")h+=`<div class="gxt-fx-s" style="left:${R.left}px;top:${R.top}px;width:${R.width}px;height:${R.height}px;background-image:url('${im.currentSrc||im.src}');transform-origin:${GXT_GATE[k].bh[0]}% ${GXT_GATE[k].bh[1]}%"></div>`;
     else if(id==="sky"){const c=GXT_FXP[k].sky,p=pt(c),r=R.width*c[2]/100,S=[[-1,-.3],[-.45,.35],[.05,-.15],[.5,.4],[1,-.2],[.55,-.75],[.05,-.15]].map(q=>[p[0]+q[0]*r,p[1]+q[1]*r]);
-      h+=`<svg><polyline points="${S.map(q=>q[0].toFixed(1)+","+q[1].toFixed(1)).join(" ")}" pathLength="1" fill="none" stroke="#ffe08a" stroke-width="2.2" stroke-linejoin="round" stroke-dasharray="1" stroke-dashoffset="1" style="filter:drop-shadow(0 0 4px rgba(255,206,96,.9))"/></svg>`+S.slice(0,6).map(q=>`<i class="gxt-fx-d" style="left:${q[0]}px;top:${q[1]}px"></i>`).join("")}}
+      h+=`<svg><polyline points="${S.map(q=>q[0].toFixed(1)+","+q[1].toFixed(1)).join(" ")}" pathLength="1" fill="none" stroke="#ffe08a" stroke-width="2.2" stroke-linejoin="round" stroke-dasharray="1" stroke-dashoffset="1" style="filter:drop-shadow(0 0 4px rgba(255,206,96,.9))"/></svg>`+S.slice(0,6).map(q=>`<i class="gxt-fx-d" style="left:${q[0]}px;top:${q[1]}px"></i>`).join("")}
+    else if(id==="omen"){const c=GXT_FXP[k].omen,g=GXT_FXP[k].gui,p=pt(c),r=R.width*c[2]/100,a=pt([g[0],g[1]]),z=pt([g[2],g[3]]);   /* 11/16：圭表石柱頂一團星光＋石圭上一道金色圭影 */
+      h+=`<i class="gxt-fx-g" style="left:${p[0]}px;top:${p[1]}px;width:${r*2}px;height:${r*2}px"></i><svg><path d="M${a[0].toFixed(1)} ${a[1].toFixed(1)} L${z[0].toFixed(1)} ${z[1].toFixed(1)}" pathLength="1" fill="none" stroke="#ffe08a" stroke-width="4" stroke-linecap="round" stroke-dasharray="1" stroke-dashoffset="1" style="filter:drop-shadow(0 0 6px rgba(255,206,96,.95))"/></svg>`}
+    else if(id==="free"){const p=pt(GXT_FXP[k].free);for(let i=0;i<16;i++)h+=`<i class="gxt-fx-d" style="left:${p[0]}px;top:${p[1]}px${i>7?";background:#cfe0ff;box-shadow:0 0 8px 3px rgba(140,180,255,.9)":""}"></i>`}}   /* 11/16：石棋桌桌心十六顆星點（前八金＝紅方、後八藍＝黑方） */
   fx.innerHTML=(id==="simul"?"":`<div class="gxt-fx-m"></div>`)+h+(id==="sky"?"":`<div class="gxt-fx-b"></div>`)+`<div class="gxt-fx-t${id==="sky"?" sky":""}">${esc(GXT_FXT[id])}</div>`;document.body.append(fx);   /* 渾儀、星空兩段先把場景壓暗一半（.gxt-fx-m 墊在金環、星線底下）：觀星臺白天是淺色的圖，不壓暗金色看不見；星空那一段不全黑，就停在這個暗度 */
   const q=s=>fx.querySelector(s),qa=s=>[...fx.querySelectorAll(s)],A=(el,kf,o)=>{try{return el.animate(kf,Object.assign({fill:"forwards",easing:"ease"},o))}catch(e){return null}};
   const at=(ms,f)=>tm.push(setTimeout(()=>{if(!done)try{f()}catch(e){}},ms));
@@ -161,14 +167,19 @@ function gxtFx(id,open){let P=null,im=null,ok=false;try{P=document.querySelector
     if(id==="td"){qa(".gxt-fx-r").forEach((r,i)=>A(r,[{opacity:0,transform:`translate(-50%,-50%) rotate(${i*60}deg) scaleY(.35)`},{opacity:1,offset:.1,transform:`translate(-50%,-50%) rotate(${i*60+20}deg) scaleY(.35)`},{opacity:1,transform:`translate(-50%,-50%) rotate(${i*60+220}deg) scaleY(.35)`}],{duration:T.open,easing:"ease-in"}));
       A(q(".gxt-fx-g"),[{opacity:0,transform:"translate(-50%,-50%) scale(.4)"},{opacity:1,offset:.5,transform:"translate(-50%,-50%) scale(1)"},{opacity:1,transform:"translate(-50%,-50%) scale(9)"}],{duration:T.say+250,easing:"ease-in"})}
     else if(id==="simul"){const s=q(".gxt-fx-s");A(s,[{opacity:0},{opacity:1}],{duration:120});A(s,[{transform:"scale(1)"},{transform:"scale(6)"}],{duration:T.say+200,easing:"cubic-bezier(.5,0,.8,.6)"})}
-    else if(id==="sky"){qa(".gxt-fx-d").forEach((d,i)=>A(d,[{opacity:0,transform:"scale(.3)"},{opacity:1,transform:"scale(1.25)"},{opacity:.9,transform:"scale(1)"}],{duration:300,delay:i*T.say/8}));A(q("polyline"),[{strokeDashoffset:1},{strokeDashoffset:0}],{duration:T.say,easing:"ease-in-out"})}}
+    else if(id==="sky"){qa(".gxt-fx-d").forEach((d,i)=>A(d,[{opacity:0,transform:"scale(.3)"},{opacity:1,transform:"scale(1.25)"},{opacity:.9,transform:"scale(1)"}],{duration:300,delay:i*T.say/8}));A(q("polyline"),[{strokeDashoffset:1},{strokeDashoffset:0}],{duration:T.say,easing:"ease-in-out"})}
+    else if(id==="omen"){A(q(".gxt-fx-g"),[{opacity:0,transform:"translate(-50%,-50%) scale(.3)"},{opacity:1,offset:.35,transform:"translate(-50%,-50%) scale(1.25)"},{opacity:.9,transform:"translate(-50%,-50%) scale(1)"}],{duration:T.say});
+      A(q("path"),[{strokeDashoffset:1},{strokeDashoffset:0}],{duration:Math.round(T.say*.75),delay:Math.round(T.say*.2),easing:"ease-in-out"})}
+    else if(id==="free"){const r=R.width*GXT_FXP[k].free[2]/100;qa(".gxt-fx-d").forEach((d,i)=>{const a=i/16*Math.PI*2,ox=Math.cos(a)*r*1.6,oy=Math.sin(a)*r*.9,gx=((i%8)-3.5)*r*.24,gy=(i>7?1:-1)*r*.16;   /* 先散成一圈，再落回桌面排成兩列（桌面是斜看的，上下壓扁） */
+      A(d,[{opacity:0,transform:"translate(0,0) scale(.4)"},{opacity:1,offset:.4,transform:`translate(${ox.toFixed(1)}px,${oy.toFixed(1)}px) scale(1.2)`},{opacity:1,transform:`translate(${gx.toFixed(1)}px,${gy.toFixed(1)}px) scale(1)`}],{duration:T.say,easing:"ease-in-out"})})}}
   if(id!=="sky")at(Math.max(0,T.say-380),()=>A(q(".gxt-fx-b"),[{opacity:0},{opacity:1}],{duration:340}));
   if(id!=="simul")A(q(".gxt-fx-m"),[{opacity:0},{opacity:.55}],{duration:260});
   at(T.say,()=>A(q(".gxt-fx-t"),[{opacity:0,transform:"translateY(6px)"},{opacity:1,transform:"none"}],{duration:300}));
   at(T.open,()=>{doOpen();finish(id==="sky")})}   /* 星圖面板是從底下滑上來的，過場層要收得快，那句話才不會壓在面板上 */
 /* 天頂黑洞＝黑洞車輪戰：跟渾儀一樣，定軌力用完時黑洞入口關著 */
 function gxtWheel(){if(gxtBhLock()){toast("🌫 "+gxtBhMsg());return}if(typeof gsvOpen==="function"&&typeof SG2G!=="undefined"){gxtFx("simul",()=>gsvOpen());return}if(typeof whlOpen!=="function"){toast("🌌 "+GXT_OFF);return}gxtFx("simul",()=>whlOpen())}   /* 11/16：天頂黑洞也開星門圍城選關 */
-const GXT_ACT={gxtTd:gxtTd,gxtSimul:()=>{try{sessionStorage.setItem("gxtFrom","1")}catch(e){}gxtWheel()},gxtGx:()=>gxtGate(),gxtSky:()=>{if(typeof dglXiuSheet!=="function"){toast("🌌 "+GXT_OFF);return}gxtFx("sky",()=>dglXiuSheet())}};
+const GXT_ACT={gxtTd:gxtTd,gxtSimul:()=>{try{sessionStorage.setItem("gxtFrom","1")}catch(e){}gxtWheel()},gxtGx:()=>gxtGate(),gxtSky:()=>{if(typeof dglXiuSheet!=="function"){toast("🌌 "+GXT_OFF);return}gxtFx("sky",()=>dglXiuSheet())},
+  gxtOmen:()=>{if(typeof gxdOmen!=="function"){toast("🌌 "+GXT_OFF);return}gxtFx("omen",()=>gxdOmen())},gxtFree:()=>{if(typeof gxdFree!=="function"){toast("🌌 "+GXT_OFF);return}gxtFx("free",()=>gxdFree())}};   /* 11/16 開發者：今日異象、自由擺陣（07gxd-daily.js）；不是黑洞入口，定軌力用完也照開 */
 function GxtPage(v){setTop("🔭 觀星臺","#/");setTabs(true,"#/");v.className="view";
   if(!gxtOpen()){toast("🔭 觀星臺還沒出現");navReplace("#/");return{}}
   gxtCss();try{store.set("gxtSeen",1)}catch(e){}

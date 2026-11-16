@@ -227,11 +227,11 @@ function bgmList(){return BGM.list||(BGM.list=fetch("data/bgm/index.json").then(
 const BGM_BASE=/\.github\.io$/.test(location.hostname)?XQ_CDN:"";
 function bgmBlob(rel){const U=BGM.u||(BGM.u={});if(U[rel])return Promise.resolve(U[rel]);
   return U[rel]=fetch(BGM_BASE+rel,BGM_BASE?{mode:"cors",credentials:"omit"}:undefined).then(r=>{if(!r.ok)throw new Error("http"+r.status);return r.blob()}).then(b=>U[rel]=URL.createObjectURL(b)).catch(e=>{delete U[rel];BGM.err="下載"+((e&&e.message)||"");return null})}
-function bgmPick(era,L,next){if(!next&&BGM.era===era&&BGM.src)return;BGM.era=era;let n=Math.floor(Math.random()*L.length);if(L.length>1&&n===BGM.last)n=(n+1)%L.length;BGM.last=n;BGM.src=`data/bgm/${era}/${L[n]}`;
+function bgmPick(era,L,next){if(!next&&BGM.era===era&&BGM.src)return;BGM.era=era;let n=Math.floor(Math.random()*L.length);if(L.length>1&&n===BGM.last)n=(n+1)%L.length;BGM.last=n;BGM.src=/\//.test(L[n])?`data/bgm/${L[n]}`:`data/bgm/${era}/${L[n]}`;   /* 11/16 開發者（西市四攤）：bgmForce 也收「朝代/檔名」（例如 han/paixiao_6.mp3），也收一組陣列（輪流放）；黑洞照舊只寫檔名＝blackhole 資料夾 */
   const U=BGM.u||{};for(const k of Object.keys(U))if(k!==BGM.src&&typeof U[k]==="string"&&U[k]!==BGM.cur){try{URL.revokeObjectURL(U[k])}catch(e){}delete U[k]}bgmBlob(BGM.src)}
 async function bgmSync(next){if(typeof OP!=="undefined"&&OP.on){if(BGM.a)BGM.a.pause();return}   /* 開場配樂（07bh OP）播的時候一般配樂暫停 */
   const on=!!store.get("bgm",true)&&!document.hidden&&sxmGain("bgm")>0,era=BGM.force?"blackhole":store.get("era","classic");   /* 第 6 輪 F3：背景音樂音量 0、靜音、全部靜音＝暫停 */
-  if(!on){if(BGM.a)BGM.a.pause();return}const L=BGM.force?[BGM.force]:((BGM.L||await bgmList())||{})[era]||[];if(!L.length){if(BGM.a)BGM.a.pause();return}
+  if(!on){if(BGM.a)BGM.a.pause();return}const L=BGM.force?[].concat(BGM.force):((BGM.L||await bgmList())||{})[era]||[];if(!L.length){if(BGM.a)BGM.a.pause();return}
   if(!BGM.a){BGM.a=new Audio();BGM.a.volume=sxmBgmVol(sxmMix());BGM.a.preload="auto";BGM.cur="";BGM.a.onended=()=>bgmSync(true);BGM.a.onplay=BGM.a.onpause=()=>bgmNow();BGM.a.onerror=()=>{const x=BGM.a&&BGM.a.error;BGM.err="media"+(x?x.code:"")}}
   bgmPick(era,L,next);const u=(BGM.u||{})[BGM.src];
   if(typeof u!=="string"){const want=BGM.src;bgmBlob(want).then(x=>{if(x&&BGM.src===want&&store.get("bgm",true))bgmSync()});return}

@@ -252,7 +252,7 @@ function CpuGame(v,practicePage,mode){
       if(MODE==="journey"){const j=st.journey,s0=jFindStage(j);
         if(String(j||"").startsWith("bt:")&&typeof battleResultModal==="function"){battleResultModal(st,win,draw0,XPR);return}
         if(String(j||"").startsWith("bh:")&&typeof bhResultModal==="function"){bhResultModal(st,win,draw0,XPR);return}
-        if(String(j||"").startsWith("gx:")&&typeof gxResultModal==="function"){gxResultModal(st,win,draw0,XPR);return}   /* 幻譜星門：星印、玉宿下一局、北辰第二盤、回星圖 */   /* hspx（開發者 11/12）：黑洞星樞棋局——下完一律「星槎回航」，回到原本要停靠的那一站 */   /* 古戰場的讓子對弈：戰役印、下一場、再下一盤（同樣的讓子） */
+        if(String(j||"").startsWith("gx:")&&typeof gxResultModal==="function"){gxResultModal(st,win,draw0,XPR);return}if(String(j||"").startsWith("gxd:")&&typeof gxdResultModal==="function"){gxdResultModal(st,win,draw0,XPR);return}   /* 11/16 開發者：觀星臺今日異象、自由擺陣（07gxd-daily.js）：成績、再一盤、重新擺陣、回觀星臺 */   /* 幻譜星門：星印、玉宿下一局、北辰第二盤、回星圖 */   /* hspx（開發者 11/12）：黑洞星樞棋局——下完一律「星槎回航」，回到原本要停靠的那一站 */   /* 古戰場的讓子對弈：戰役印、下一場、再下一盤（同樣的讓子） */
         const NR=parkNpcOf(st);
         modal(`<div class="em">${win?"🏆":draw0?"🤝":"💪"}</div><h2 data-i18n="res.${win?"win":draw0?"draw":"lose"}">${win?"你贏了！":draw0?"和局":"這盤輸了"}</h2><p class="muted">${esc(st.result.why)}・🪨 ${esc(jName(j))}${NR?"・"+esc(NR.name)+"（第 "+st.level+" 級）":""}</p>`+(NR?`<p style="font-style:italic">${esc(NR.name)}：「${esc(win?NR.lose:draw0?"和了，改天再下一盤！":NR.win)}」</p>`:"")+XPL,
           (()=>{/* 意見回饋 607：劇情關「回到關卡」、回雲河棋路／驛站／園子都改成退回那一層（goUp），不再往前推一頁；雲河棋路的對弈關贏了，主要按鈕是「📖 下一回 ›」（下一關已經開放才有，做法跟過關畫面的「讀第 N 回」一樣） */

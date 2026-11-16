@@ -91,7 +91,7 @@ function hmpNavUpd(P){const C=hmpBox(P);if(!C)return;const on=hmpOn(P),i=P._hmpI
     const q=P.querySelector(l?":scope>#hmXsm":":scope>#hmGxt"),dup=on&&i===0&&!!q&&!q.hidden;if(dup){b.setAttribute("aria-hidden","true");b.tabIndex=-1}else{b.removeAttribute("aria-hidden");b.removeAttribute("tabindex")}}}
 /* 左右兩屏的入口、中間那屏的箭頭（照 07xsm／07gxt 的解鎖條件；長卷關掉時還原） */
 const hmpOpen=id=>{try{return id==="hmpXsm"?typeof xsmOpen==="function"&&xsmOpen():typeof gxtOpen==="function"&&gxtOpen()}catch(e){return false}};
-const hmpSeen=id=>{try{return!!store.get(id==="hmpXsm"?"xsmSeen":"gxtSeen",0)}catch(e){return true}};
+const hmpSeen=id=>{try{return!!store.get(id==="hmpXsm"?"xsmSeen":"gxtSeen",0)&&!(id==="hmpXsm"&&typeof xsmHot==="function"&&xsmHot())}catch(e){return true}};   /* 11/16 西市四攤：有禮可領、有人來訪還沒見到也發亮（07xsm xsmHot） */
 function hmpLabels(P){const on=hmpOn(P);
   for(const[id,t,al,d]of HMP_ARROW){const b=P.querySelector("#"+id);if(!b)continue;
     /* 11/14 開發者：中間橋頭這兩顆「← 西市」「觀星臺 →」太佔版面，長卷開著時藏起來，只靠兩側 ‹ › 小箭頭指引左右還有路 */

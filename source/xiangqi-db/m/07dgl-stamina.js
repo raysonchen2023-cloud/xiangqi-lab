@@ -102,7 +102,7 @@ function dglLocOn(h,o){o=o||{};if(o.off)return false;return dglZone(h,o)==="land
 /* 二十八宿星圖（開發者 11/13 晚：星芒在人間也有用，觀星臺「二十八宿」入口）。每宿 [宿名, 四象序號, 大致所在的今星座, 補充一句]，順序照傳統：
    東方蒼龍角→箕、北方玄武斗→壁、西方白虎奎→參、南方朱雀井→軫。星座對照與補充句都待史學顧問核。
    點亮紀錄放 store "dgl"（跟存檔走）：t＝28 位元遮罩（第 i 位＝第 i 宿）、tw＝拿過的獎（0～3 位＝四象點齊、第 4 位＝全亮＋稱號），不另開存檔鍵 */
-const DGL_XIU_COST=2,DGL_XIANG_XP=10,DGL_XIU_ALL_XP=30,DGL_XIU_TITLE="觀星客";
+const DGL_XIU_COST=2,DGL_XIU_STAR_XP=10,DGL_XIANG_XP=30,DGL_XIU_ALL_XP=100,DGL_XIU_TITLE="觀星客";   /* 11/16 開發者「5項還沒做的請開始做」（Gemini 158 號、開發者選「照這組做」）：每點亮一宿修為 +10、一方七宿點齊 +30、全亮 +100＋稱號；原本只有點齊 +10、全亮 +30，已點亮的人在 dglXiuSync 補差額 */
 const DGL_XIANG=[["東方蒼龍","東方"],["北方玄武","北方"],["西方白虎","西方"],["南方朱雀","南方"]];
 const DGL_XIU=[["角",0,"室女座","角宿一是室女座最亮的星。"],["亢",0,"室女座",""],["氐",0,"天秤座",""],["房",0,"天蠍座","房宿古稱「天駟」。"],
   ["心",0,"天蠍座","心宿二是天蠍座最亮的星，古稱「大火」；《詩經》「七月流火」說的就是它。"],["尾",0,"天蠍座",""],["箕",0,"人馬座","名字取自簸箕。"],
@@ -527,7 +527,15 @@ function dglXsCss(){if(document.getElementById("dglXsCss"))return;const s=docume
 #dglXs .xs-pan p{margin:4px 0 0}#dglXs .xs-pan .go{width:100%;margin-top:8px}
 @media (prefers-reduced-motion:reduce){#dglXs svg .on circle{filter:none}}`;document.head.append(s)}
 /* 二十八宿星圖（觀星臺「二十八宿」07gxt gxtSky 開這裡） */
-function dglXiuSheet(){if(typeof document==="undefined")return;dglCss();dglXsCss();const old=document.getElementById("dglXs");if(old)old.remove();
+/* 11/16 開發者選單：四象七宿點齊的黑洞（星門圍城）永久效果——東方蒼龍每回合靈力 +1、北方玄武開局靈力 +10、西方白虎過關星塵 +1、南方朱雀帥的體力 +10（07sg2 開局、roundEnd、結算讀這裡） */
+const DGL_XIANG_FX=[{rg:1},{sp0:10},{dust:1},{kHp:10}],DGL_XIANG_FXT=["每回合靈力 +1","開局靈力 +10","過關星塵 +1","帥的體力 +10"];
+function dglXiangFx(){const F={rg:0,sp0:0,dust:0,kHp:0};try{const tw=Math.round(+dglSt().tw)||0;DGL_XIANG_FX.forEach((x,k)=>{if(tw&(1<<k))for(const n in x)F[n]+=x[n]})}catch(e){}return F}
+/* 二十八宿修為：照現在點亮的狀態把該給的都給（addXP 的 key 只給一次）。每宿 dglxs:i；點齊、全亮用 dglxt3:（舊版用 dglxt: 給過 10／30 的，只補差額） */
+function dglXiuSync(){try{if(typeof addXP!=="function")return;const o=dglSt(),t=dglXiuMask(o.t),tw=Math.round(+o.tw)||0,K=store.get("xpKeys",{})||{};
+  for(let i=0;i<DGL_XIU.length;i++)if(dglXiuHas(t,i))addXP(DGL_XIU_STAR_XP,"星圖","dglxs:"+i);
+  for(let k=0;k<4;k++)if(tw&(1<<k)&&!K["dglxt3:"+k])addXP(K["dglxt:"+k]?DGL_XIANG_XP-10:DGL_XIANG_XP,"星圖","dglxt3:"+k);
+  if(tw&16&&!K["dglxt3:all"])addXP(K["dglxt:all"]?DGL_XIU_ALL_XP-30:DGL_XIU_ALL_XP,"星圖","dglxt3:all")}catch(e){}}
+function dglXiuSheet(){if(typeof document==="undefined")return;dglXiuSync();dglCss();dglXsCss();const old=document.getElementById("dglXs");if(old)old.remove();
   const A=dglXsAngles(),o=document.createElement("div");o.id="dglXs";o.setAttribute("role","dialog");o.setAttribute("aria-modal","true");o.setAttribute("aria-label","二十八宿星圖");let sel=-1;
   const draw=()=>{const S=dglSt(),t=dglXiuMask(S.t),n=dglXiuN(t),H=DGL_HUMAN;let G=null;try{G=store.get("gsv",null)}catch(e){}const lf=H?Math.floor(dglXm()/DGL_XIU_COST):dglXiuLeft(S,G),ttl=(Math.round(+S.tw)||0)&16;
     const on=sel>=0&&dglXiuHas(t,sel),info=sel<0?(lf?"點一宿看說明，再按「點亮」。":"打贏星門圍城的一關，就能再點亮一宿。"):on?dglXiuLine(sel):`${DGL_XIU[sel][0]}宿：${DGL_XIANG[DGL_XIU[sel][1]][0]}的一宿。${lf?"可以點亮。":"打贏星門圍城的一關，就能點亮它。"}`;
@@ -546,7 +554,7 @@ function dglXiuList(){dglCss();sheet("🌌 二十八宿星圖",b=>{
   const draw=sel=>{const o=dglSt(),t=dglXiuMask(o.t),x=dglXm(),n=dglXiuN(t),ttl=(Math.round(+o.tw)||0)&16,H=DGL_HUMAN;let G=null;try{G=store.get("gsv",null)}catch(e){}const lf=dglXiuLeft(o,G);
     const info=sel>=0&&dglXiuHas(t,sel)?esc(dglXiuLine(sel)):H?"點一顆星：已點亮的看說明，還沒點亮的花星芒點亮。":"點一顆星：已點亮的看說明；打贏星門圍城的一關，就能再點亮一宿。";
     b.innerHTML=`<div class="dgl-cd dgl-xt">${H?`<div class="dgl-cd-h"><b>星芒（藍）</b><span data-dgl="x">${x}／${DGL_XM_MAX}</span></div><div class="dgl-cd-bar dgl-b"><b></b></div>`:`<div class="dgl-cd-h"><b>可以點亮</b><span>${lf} <span>宿</span></span></div>`}
-      <p class="muted" style="font-size:13px;margin:4px 2px 0;line-height:1.55">${H?`每點亮一宿花 ${DGL_XIU_COST} 點星芒。`:"星門圍城每第一次打贏一關，就能點亮一宿。"}一方七宿點齊，修為 +${DGL_XIANG_XP}；二十八宿全亮，修為 +${DGL_XIU_ALL_XP}，得到稱號「${DGL_XIU_TITLE}」。<br>已點亮 ${n}／${DGL_XIU.length}${ttl?`・🏅 ${DGL_XIU_TITLE}`:""}</p>
+      <p class="muted" style="font-size:13px;margin:4px 2px 0;line-height:1.55">${H?`每點亮一宿花 ${DGL_XIU_COST} 點星芒。`:"星門圍城每第一次打贏一關，就能點亮一宿。"}每點亮一宿，修為 +${DGL_XIU_STAR_XP}；一方七宿點齊，修為 +${DGL_XIANG_XP}，星門圍城再多一項永久效果（${DGL_XIANG.map((x,k)=>x[0]+"："+DGL_XIANG_FXT[k]).join("、")}）；二十八宿全亮，修為 +${DGL_XIU_ALL_XP}，得到稱號「${DGL_XIU_TITLE}」。<br>已點亮 ${n}／${DGL_XIU.length}${ttl?`・🏅 ${DGL_XIU_TITLE}`:""}</p>
       <p class="dgl-xt-info" aria-live="polite">${info}</p>
       ${DGL_XIANG.map((X,k)=>{const L=DGL_XIU.map((s,i)=>[s,i]).filter(([s])=>s[1]===k),m=L.filter(([,i])=>dglXiuHas(t,i)).length;
         return`<div class="dgl-xt-g"><div class="dgl-xt-h"><b>${X[0]}</b><span>${m}／7${m===7?" ✓":""}</span></div><div class="dgl-xt-row">${L.map(([s,i])=>{const on=dglXiuHas(t,i);
@@ -557,8 +565,7 @@ function dglXiuList(){dglCss();sheet("🌌 二十八宿星圖",b=>{
 function dglXiuBuy(i,draw){const o=dglSt();let G=null;try{G=store.get("gsv",null)}catch(e){}const R=dglXiuLight(o,i,DGL_HUMAN?null:dglXiuLeft(o,G));
   if(!R.ok){if(R.why==="poor")toast(`✧ 星芒不夠：還差 ${R.need} 點（解殘局、主線過關可以得到）`);else if(R.why==="win")toast("✧ 先去打贏星門圍城的一關，就能點亮這一宿");return}
   store.set("dgl",o);try{vibrate([10,40,10])}catch(e){}draw(i);
-  try{if(R.xiang>=0)addXP(DGL_XIANG_XP,"星圖","dglxt:"+R.xiang)}catch(e){}
-  try{if(R.all)addXP(DGL_XIU_ALL_XP,"星圖","dglxt:all")}catch(e){}
+  dglXiuSync();
   toast(R.all?`🏅 二十八宿全部點亮！得到稱號「${DGL_XIU_TITLE}」`:R.xiang>=0?`✨ ${DGL_XIANG[R.xiang][0]}七宿點齊了！`:`✦ 點亮${DGL_XIU[i][0]}宿`)}
 
 if(typeof setTop==="function"){const f0=setTop;setTop=function(){const r=f0.apply(this,arguments);try{dglLocSync(null,1)}catch(e){}return r}}   /* 換頁就放／收地點頁的兩條 */

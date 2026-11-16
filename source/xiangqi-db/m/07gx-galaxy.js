@@ -6,11 +6,11 @@
    解鎖：第一次從黑洞回來開第 1 個（紫淵），贏一位開下一位；第 4、7、9 位分別要星槎停靠過 3、6、9 站。贏了留一枚星印（store gxSeal），之後挑戰電腦時幻影棋客偶爾提起。
    九個全破：星圖中央出現無名空軌——「第十四顆」＝鏡像的自己：你執黑，電腦執紅、先照你自己最常贏的開局走前兩步，再交給引擎。 */
 const GX_LIST=[
-  {id:"ziyuan",off:1,n:"紫淵",t:"紫淵・破軍幻影",c:"#9B5CFF",rule:"重炮陣：他的兩個象換成炮，一共四門炮",goal:"將死他",say:"這般殺陣，我已演練過萬次。",seal:"紫淵的炮火，你還記得嗎？",fen:"rncakacnr/9/1c5c1/p1p1p1p1p/9/9/P1P1P1P1P/1C5C1/9/RNBAKABNR",p:[17.9,20.9,18.5,31.3]},
+  {id:"ziyuan",n:"紫淵",t:"紫淵・破軍幻影",c:"#9B5CFF",rule:"重炮陣：他的兩個象換成炮，一共四門炮",goal:"將死他",say:"這般殺陣，我已演練過萬次。",seal:"紫淵的炮火，你還記得嗎？",fen:"rncakacnr/9/1c5c1/p1p1p1p1p/9/9/P1P1P1P1P/1C5C1/9/RNBAKABNR",p:[17.9,20.9,18.5,31.3]},
   {id:"taisu",n:"太素",t:"太素・無生幻影",c:"#E8EEF8",rule:"生存戰：撐過 40 步不輸",goal:"你走滿 40 步沒輸，或將死他",say:"守得此局，便是守住輪迴。",seal:"太素的霧，還在你的棋裡。",survive:40,p:[33.8,15.7,33.8,24.6]},
   {id:"tianyuan",n:"天垣",t:"天垣・奪衡幻影",c:"#F2C14E",rule:"奪子計：先吃掉他 3 顆車、馬、炮",goal:"先吃掉他 3 顆車馬炮，或將死他；他先吃掉你 3 顆車馬炮就算輸",say:"得失之間，皆是早定之數。",seal:"天垣記得你吃過的每一顆子。",grab:3,p:[50.8,15.7,51,25.1]},
-  {id:"yaoguang",off:1,n:"搖光",t:"搖光・萬炮幻影",c:"#FF4A2E",rule:"全炮局：他的車、馬全換成炮，一共六門炮",goal:"將死他",say:"炮聲再起時，昨日又重現。",seal:"搖光的炮聲，偶爾還會回來。",fen:"ccbakabcc/9/1c5c1/p1p1p1p1p/9/9/P1P1P1P1P/1C5C1/9/RNBAKABNR",p:[40.2,39.1,40.4,45.1]},
-  {id:"kaiyang",off:1,n:"開陽",t:"開陽・八駿幻影",c:"#FFD9A0",c2:"#2A3A8A",rule:"八駿圖：他沒有車、炮，卒全換成馬，一共八匹馬",goal:"將死他",say:"八面威風，亦走不出這方寸。",seal:"開陽的馬蹄聲，我算過。",fen:"1nbakabn1/9/1n7/n1n1n1n1n/9/9/P1P1P1P1P/1C5C1/9/RNBAKABNR",p:[59.6,30.6,62.1,38.5]},
+  {id:"yaoguang",n:"搖光",t:"搖光・萬炮幻影",c:"#FF4A2E",rule:"全炮局：他的車、馬全換成炮，一共六門炮",goal:"將死他",say:"炮聲再起時，昨日又重現。",seal:"搖光的炮聲，偶爾還會回來。",fen:"ccbakabcc/9/1c5c1/p1p1p1p1p/9/9/P1P1P1P1P/1C5C1/9/RNBAKABNR",p:[40.2,39.1,40.4,45.1]},
+  {id:"kaiyang",n:"開陽",t:"開陽・八駿幻影",c:"#FFD9A0",c2:"#2A3A8A",rule:"八駿圖：他沒有車、炮，卒全換成馬，一共八匹馬",goal:"將死他",say:"八面威風，亦走不出這方寸。",seal:"開陽的馬蹄聲，我算過。",fen:"1nbakabn1/9/1n7/n1n1n1n1n/9/9/P1P1P1P1P/1C5C1/9/RNBAKABNR",p:[59.6,30.6,62.1,38.5]},
   {id:"yuxiu",n:"玉宿",t:"玉宿・殘星幻影",c:"#3FD08A",rule:"殘星局：連解 3 個殘局",goal:"三個殘局都要贏（輸一盤就從第一局重來）",say:"萬物走到盡頭，皆是這步棋。",seal:"玉宿的殘局，你解得比我快。",canju:3,p:[70.4,38.8,72.9,46.3]},
   {id:"quanxing",n:"權星",t:"權星・讓命幻影",c:"#9AA3AE",rule:"讓子局：他讓你雙車，但用第 18 級全力",goal:"將死他",say:"讓你雙車，結局亦無更改。",seal:"權星讓過的車，後來都回來了。",remove:["a9","i9"],lx:18,p:[61.7,48.1,63.3,55.5]},
   {id:"jiyue",n:"璣月",t:"璣月・暗流幻影",c:"#4D7CFF",rule:"暗流局：他的棋子藏在霧裡",off:1,p:[59.3,63.4,59.3,70.1]},
@@ -19,9 +19,8 @@ const GX_LIST=[
   {id:"gouchen",n:"勾陳",t:"勾陳・亂序幻影",c:"#7A2BB5",rule:"亂陣局：雙方的車、馬、炮位置一起打亂（兩邊一樣）",goal:"將死他",say:"偏門左道？不過是另一條舊路。",seal:"勾陳打亂的陣，你排回來了。",shuffle:1,p:[51.3,83.3,51.3,92.4]},
   {id:"tengshe",n:"騰蛇",t:"騰蛇・陷星幻影",c:"#2E9E5B",rule:"陷阱局：棋盤上藏著陷阱",off:1,p:[42.9,62.7,42.8,69.6]},
   {id:"beichen",n:"北辰",t:"北辰・不滅幻影",c:"#F7D774",c2:"#05040A",rule:"不滅局：要將死他兩次——第一次只破了星核，他會帶著全新的一軍、強一級重來",goal:"連贏兩盤",say:"十三億次推演，你終於來了。",seal:"北辰的星核，還在跳。",twice:1,p:[49.8,48.5,50.4,61.6]}];
-/* 11/16 開發者（紫淵卡在「思考中」）選單「先關成星軌未通」：Pikafish 不收棋子數超過正規的局面（每方最多 2 炮、2 馬…），紫淵（四炮）、搖光（六炮）、開陽（八馬）先標 off、從解鎖順序拿掉；
-   原本第 4、7、9 位要停靠 3、6、9 站：玉宿接搖光的 3 站，權星、北辰照舊 6、9 站。之後有能下變體的引擎再放回來 */
-const GX_ORD=["taisu","tianyuan","yuxiu","quanxing","gouchen","beichen"],GX_DOCK={2:3,3:6,5:9};
+/* 11/16 開發者：紫淵、搖光、開陽一度關成星軌未通（1337，Pikafish 不收四炮、六炮、八馬）；1502 起子數超過的局面改由 Magellan（XQVar）下，選單「放回並照模擬調級」放回來，解鎖順序還原 */
+const GX_ORD=["ziyuan","taisu","tianyuan","yaoguang","kaiyang","yuxiu","quanxing","gouchen","beichen"],GX_DOCK={3:3,6:6,8:9};
 const GX_TXT={gate:"裂痕剝落，十三點微光在深淵中重組。",invite:"這門，我好像替你開過。",open:"十三點星光，排成未完棋譜。",pick:"選一顆吧，別選我算過的。",go:"落子入門",stay:"先走此局",enter:"星槎折返，卻抵達更遠處。",win:"這一敗，竟不在舊譜。",lose:"無妨，你會回到這步。",all:"第十四顆，尚未落子。",ship:"黑洞歸來，星槎多了一道無名星門。",mirror:"這一局，是你自己算出來的。",
   /* 11/15 星碑共鳴（story/gemini_app/157 Gemini 規劃、開發者選定）：觀星臺的星圖石碑是人間的「錨」——幻影棋客開了門、星槎駛出了路，石碑把星軌定在碑前 */
   stele:"觸碑生墨，神識已渡星河。",orbit:"十三殘局，皆在星軌之中。",off:"星軌未明，此局尚不可解。",lock:"前陣未破，暗星仍隱深淵。",allp:"諸陣已破，深淵明鏡始現。"};
@@ -31,7 +30,7 @@ const gxIs=st=>!!st&&String(st.journey||"").startsWith("gx:");
    電腦級數＝玩家實力 P（bhLevel）＋規則修正 R＋模式修正 M（輕鬆 −2／標準 0／挑戰 +2），夾在 1～18；北辰第二盤再 +1；權星固定 18（他的身分就是讓雙車的全力 AI）。
    R 先用 ChatGPT 的表（四炮少象、生存戰偏易；八馬、亂陣、陷阱偏難），之後用電腦自我對弈量勝率再調。星印分銀（輕鬆）／星（標準）／金（挑戰），取最高。
    輸了：結果視窗給一句這一關的訣竅；連輸 3 次以上多一顆「改用輕鬆再來」（不自動偷偷降級，讓玩家自己選） */
-const GX_R={ziyuan:-1,taisu:-1,tianyuan:0,yaoguang:0,kaiyang:1,yuxiu:0,gouchen:1,beichen:2,xuanbing:0,shuchen:1,jiyue:1,tengshe:2,mirror:0};
+const GX_R={ziyuan:-1,taisu:-1,tianyuan:0,yaoguang:2,kaiyang:3,yuxiu:0,gouchen:1,beichen:2,xuanbing:0,shuchen:1,jiyue:1,tengshe:2,mirror:0};   /* 11/16 Magellan 雙方同級自己對下各 16 盤（scratchpad vartrain/sim.js）：玩家那方得分 紫淵 38%、搖光 81%、開陽 91%（標準 50%）→ 搖光 0→+2、開陽 +1→+3、紫淵維持 −1 */
 const GX_MODES=[["easy","輕鬆",-2,"銀印"],["std","標準",0,"星印"],["hard","挑戰",2,"金印"]];
 const GX_HINT={ziyuan:"四門炮要有炮架才兇：先兌掉中路的子，少給他架炮；他沒有象，底線是弱點。",taisu:"生存戰不用贏：多兌子、少冒險，車守兩翼，撐滿 40 步就算過。",
   tianyuan:"奪子計比的是車馬炮：先把自己的大子連起來互相保護，再找他沒人保護的子。",yaoguang:"六門炮沒有車馬，近身就弱：用馬和兵靠近，同一條線上別放兩顆子讓他架炮。",
@@ -64,7 +63,7 @@ async function gxCanjuPick(lv){let A=[];try{A=(((await (await fetch("data/canju/
   const out=[];while(out.length<3&&C.length){const i=Math.floor(Math.random()*C.length);out.push({fen:C[i].fen,t:C[i].t||"殘局",id:C[i].id});C.splice(i,1)}return out}
 /* 開一關。run＝這一關的進度（玉宿第幾局、北辰第幾盤） */
 async function gxStart(id,again,mode){const g=id==="mirror"?{id:"mirror",n:"第十四顆",t:"第十四顆・鏡像",say:GX_TXT.mirror}:gxGet(id);if(!g)return;
-  if(id!=="mirror"){const no=gxLock(id);if(no){toast("🌌 "+no);return}}else if(!gxAllDone()){toast("🌌 開放的星系都打完，第十四顆才會出現");return}
+  if(id!=="mirror"){const no=gxLock(id);if(no){toast("🌌 "+no);return}}else if(!gxAllDone()){toast("🌌 九個星系都打完，第十四顆才會出現");return}
   const base=typeof bhLevel==="function"?bhLevel():8;let R=store.get("gxRun",null);if(!R||R.id!==id||!again)R={id,k:0,ph:1};
   if(mode&&GX_MODES.some(m=>m[0]===mode))R.m=mode;if(!R.m)R.m=store.get("gxMode","std");store.set("gxMode",R.m);   /* 三檔：重試沿用同一檔 */
   const b={human:"r",lx:gxLx(g,R,base),journey:"gx:"+id};

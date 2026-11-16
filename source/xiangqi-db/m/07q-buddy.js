@@ -296,9 +296,11 @@ function bdPlanCard(c){if(!BUDDY_ON||!c||!c.flag||!Array.isArray(c.flag.opts)||!
   const opts=c.flag.opts.map((o,j)=>{const d=D.o[j];if(!d||D.w[j]!==o.who||d[0]===me||!WX_CHARS[d[0]]||!bdJoined(d[0]))return o;n++;   /* 獻策的人還沒加入：這一策退回原本的史實軍師 */
     const re=o.ok?`${o.re}　📜 歷史上提這一策的是${o.who}：${String(o.say||"")}`:/^一位/.test(o.who)?o.re:`${o.re}　📜 當時這樣主張的是${o.who}。`;
     return{...o,who:bdNk(d[0])+"・"+d[1],say:bdTx(d[2],d[0]),re}});
-  return n?{...c,flag:{...c.flag,opts}}:null}
+  BD_PLAN_N=n;BD_PLAN_T=opts.length;return n?{...c,flag:{...c.flag,opts}}:null}
+/* 11/16 開發者選單「照人數改字」：三策都是旅伴才寫「三位旅伴…」；有史實軍師混在裡面（獻策的人還沒加入）就寫「旅伴與軍師各獻一策」 */
+let BD_PLAN_N=0,BD_PLAN_T=0;
 function bdPlanDom(v){try{setTop("⭐ 七星獻策","^#/battle")}catch(e){}let n=0;const fix=()=>{if(!v.isConnected)return;const h=v.querySelector(".bt-cn .lvh b"),p=[...v.querySelectorAll(".bt-cn p b")].find(b=>/三位軍師/.test(b.textContent));
-  if(h)h.textContent=h.textContent.replace("軍師獻策","七星獻策");if(p){p.textContent="三位旅伴照自己本命子的脾氣各獻一策，你採用哪一策？";return}if(++n<40)setTimeout(fix,150)};fix()}
+  if(h)h.textContent=h.textContent.replace("軍師獻策","七星獻策");if(p){p.textContent=BD_PLAN_N>=BD_PLAN_T?"三位旅伴照自己本命子的脾氣各獻一策，你採用哪一策？":"旅伴與軍師各獻一策，你採用哪一策？";return}if(++n<40)setTimeout(fix,150)};fix()}
 
 /* ---------- 掛勾（都是包一層，不改原函式） ---------- */
 if(typeof portWind==="function"){const bdPw0=portWind;portWind=function(v,k){const r=bdPw0.apply(this,arguments);try{bdPort(v,k)}catch(e){console.warn(e)}return r}}

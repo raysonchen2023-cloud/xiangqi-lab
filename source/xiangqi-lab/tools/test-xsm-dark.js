@@ -211,7 +211,8 @@ test("接線：茶坊暗棋桌開張、外景暗棋攤照舊進茶坊、其他�
   assert.ok(X.includes('xsmDark:()=>{location.hash="#/ximarket/dark"}'), "點暗棋桌開一盤");
   assert.ok(X.includes('if(sub==="dark"&&typeof xsdPage==="function")return xsdPage(v);'), "#/ximarket/dark 路由");
   assert.ok(X.includes('["xsmTea","暗棋",86,44,0]'), "外景暗棋攤照舊進茶坊");
-  for (const id of ["xsmGift", "xsmMusic", "xsmChess", "xsmVisit"]) assert.ok(new RegExp(`\\["${id}","[^"]+",[\\d.]+,[\\d.]+,1\\]`).test(X), id + " 照舊鎖著");
+  // 11/16 開發者：其他四攤也開張了（領禮物、聽曲、找棋子、七星來訪，細節見 test-xsm-stalls-1116.js），原本「照舊鎖著」改成「不再上鎖」
+  for (const id of ["xsmGift", "xsmMusic", "xsmChess", "xsmVisit"]) assert.ok(new RegExp(`\\["${id}","[^"]+",[\\d.]+,[\\d.]+,0\\]`).test(X), id + " 11/16 開張、不再上鎖");
   const ix = html.indexOf("//#include m/07xsm-ximarket.js"), id = html.indexOf("//#include m/07xsd-xsmdark.js");
   assert.ok(ix > 0 && id > ix, "07xsd 接在 07xsm 後面");
   const m = SV.match(/const JOURNEY_KEYS=\[([^\]]*)\]/); assert.ok(m && /"xsdRec"/.test(m[1]) && /"xsdRun"/.test(m[1]) && /"xsdLv"/.test(m[1]), "JOURNEY_KEYS 有 xsdRec、xsdRun、xsdLv");

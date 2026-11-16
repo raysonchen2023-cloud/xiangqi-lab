@@ -27,7 +27,7 @@ function bhForced(){try{return localStorage.getItem("xq_bhForce")==="1"}catch(e)
 /* 星槎起航（shipSailGo、shipGoTo）播完千秋穿梭時叫：沒偏航就照原流程 next() */
 /* 11/16 開發者選單「第一次起航必定偏航」：觀星臺還沒開（07gxt gxtOpen）、也還沒用過這一次＝這一趟起航必定偏航；用過就記 bhDrift1（不管接不接、贏不贏，之後照 10%） */
 function bhFirstDrift(){try{return!store.get("bhDrift1",0)&&!(typeof gxtOpen==="function"&&gxtOpen())}catch(e){return false}}
-function bhMaybe(k,next,cover){let hit=false;try{const f1=!!k&&bhFirstDrift();if(f1)store.set("bhDrift1",1);hit=bhForced()||f1||Math.random()<BH_P}catch(e){}   /* 11/16：小黑洞拿掉，bhMark「下一次起航必定偏航」不再用（舊存檔的 bhMark 留著不讀） */   /* bhMark：點過幻影棋客頭上的小黑洞，下一次起航必定偏航 */if(!hit||!k)return next();bhOffer(k,next,cover)}
+function bhMaybe(k,next,cover){let hit=false,f1=false;try{f1=!!k&&bhFirstDrift();hit=bhForced()||f1||Math.random()<BH_P}catch(e){}   /* 11/16 開發者「第一次的偏航發生，必須強制過去」：第一次偏航（f1）傳給 bhOffer，視窗只留接受；按下接受才記 bhDrift1 */   /* 11/16：小黑洞拿掉，bhMark「下一次起航必定偏航」不再用（舊存檔的 bhMark 留著不讀） */   /* bhMark：點過幻影棋客頭上的小黑洞，下一次起航必定偏航 */if(!hit||!k)return next();bhOffer(k,next,cover,f1)}
 /* 11/12 hspx「進黑洞要等 6～7 秒」：偏航視窗一跳出來就在背景先載 3D（three、園子程式）、14 個角色模型（一個接一個解析，不卡畫面）和黑洞的圖，
    玩家讀文字、按「入局」的時間拿來載入；不下這盤也只是先放進快取。一次 App 只做一次 */
 let BH_PRE=null;const BH_GLB=["x_shuai","x_shi","x_spiritgirl","x_miaogirl","x_swordboy","x_martialgirl","x_bing","xs_jiang","xs_shi","xs_xiang","xs_ma","xs_che","xs_pao","xs_zu"];
@@ -39,9 +39,9 @@ function bhPreload(){if(BH_PRE||typeof document==="undefined")return BH_PRE;
    觀星臺照進度打關卡；偏航不再開同一張選關視窗，直接進一場三到五分鐘的急襲殘陣（07bht-td.js bhtdRaidDrift，星塵照表現給、可以不接）。
    急襲要破過第 1 關才有：還沒破的人（多半是第一次偏航）照舊走原本的說明與選關 */
 const bhDriftRaid=()=>{if(typeof sg2DriftOk==="function")return sg2DriftOk();try{return typeof bhtdRdOpen==="function"&&typeof bhtdProg==="function"&&typeof bhtdRaidDrift==="function"&&!(typeof bhtlNeed==="function"&&bhtlNeed())&&bhtdRdOpen(bhtdProg())}catch(e){return false}};
-function bhOffer(k,next,cover){const n=store.get("bhCount",0)||0,rd=bhDriftRaid();bhMus("fall");vibrate([20,60,20]);try{bhPreload()}catch(e){}
-  modal(`<div class="em">🌀</div><h2>${n||rd?"星槎偏航":esc(BHX_FD.title)}</h2><p>${esc(BH_TXT.fall)}</p>${n?bhSay(BH_TXT.again):rd?"":BHX_FD.desc.map(t=>`<p class="muted" style="font-size:13px">${esc(t)}</p>`).join("")}<p class="muted" style="font-size:13px">${rd?(typeof SG2G!=="undefined"?"星渦裡浮著一盤星門圍城：打贏有星塵"+(typeof gxtOpen==="function"&&!gxtOpen()?"，棋鎮右邊的觀星臺也會開":"")+"。要接嗎？不接也不扣任何東西，星槎照原本的航線停靠。":"星渦裡浮著一盤下到一半的殘陣：這是一場星淵急襲，三到五分鐘分勝負，打贏有星塵。要接嗎？不接也不扣任何東西，星槎照原本的航線停靠。"):"墨色星渦的中心，浮著一張巨大的棋盤。要下這一盤嗎？不下也不扣任何東西，星槎照原本的航線停靠。"}</p>`,
-    [[rd?"⚡ 接受急襲":"🌀 接受棋局",()=>rd?bhStart(k,cover):bhIntro(k,cover)],["先回航線",()=>{bhMus(null);if(next)next()},true]],"prolog")}
+function bhOffer(k,next,cover,f1){const n=store.get("bhCount",0)||0,rd=bhDriftRaid();bhMus("fall");vibrate([20,60,20]);try{bhPreload()}catch(e){}
+  modal(`<div class="em">🌀</div><h2>${n||rd?"星槎偏航":esc(BHX_FD.title)}</h2><p>${esc(BH_TXT.fall)}</p>${n?bhSay(BH_TXT.again):rd?"":BHX_FD.desc.map(t=>`<p class="muted" style="font-size:13px">${esc(t)}</p>`).join("")}<p class="muted" style="font-size:13px">${rd?(typeof SG2G!=="undefined"?"星渦裡浮著一盤星門圍城：打贏有星塵"+(typeof gxtOpen==="function"&&!gxtOpen()?"，棋鎮右邊的觀星臺也會開":"")+(f1?"。星槎被星渦牽住，得先下完這一盤，才會照原本的航線停靠。":"。要接嗎？不接也不扣任何東西，星槎照原本的航線停靠。"):"星渦裡浮著一盤下到一半的殘陣：這是一場星淵急襲，三到五分鐘分勝負，打贏有星塵。要接嗎？不接也不扣任何東西，星槎照原本的航線停靠。"):(f1?"墨色星渦的中心，浮著一張巨大的棋盤。星槎被星渦牽住，得先下完這一盤，才會照原本的航線停靠。":"墨色星渦的中心，浮著一張巨大的棋盤。要下這一盤嗎？不下也不扣任何東西，星槎照原本的航線停靠。")}</p>`,
+    [[rd?"⚡ 接受急襲":"🌀 接受棋局",()=>{if(f1)try{store.set("bhDrift1",1)}catch(e){}rd?bhStart(k,cover):bhIntro(k,cover)}]].concat(f1?[]:[["先回航線",()=>{bhMus(null);if(next)next()},true]]),"prolog")}
 function bhIntro(k,cover){try{bhPreload()}catch(e){}modal(`<div class="em">♟</div><h2>星樞棋局</h2>${bhSay(BH_TXT.wake)}<p class="pl-say">✦ ${esc(BH_TXT.voice[0])}：「${esc(BH_TXT.voice[1])}」</p><p class="muted" style="font-size:13px">${esc(BH_TXT.rule)}<br>不計積分、不扣分。可以用＋／－或兩指縮放：拉遠看整盤，放大到最近就站在棋盤上。</p>`,
   [["入局",()=>bhStart(k,cover)]],"prolog")}
 /* 難度見 bhLevel（實力＋1）；bhAdj 只是記錄輸贏，不再調難度 */
@@ -101,6 +101,10 @@ function bhResultModal(st,win,draw0,XPR){if(st&&st.journey===BHX_ID){bhxAfter();
   modal(`<div class="em">${win?"✨":draw0?"🤝":"🌀"}</div><h2>${win?"星光開門":draw0?"不分勝負":"星渦退去"}</h2><p class="muted">${esc(st.result.why||"")}・🌀 黑洞・星樞棋局（不計積分、不扣分）</p>${bhSay(L)}${win&&fst?`<p class="pl-say">✦ 星樞：「${esc(BHX_FD.win)}」</p>`:""}${XPR||""}`,
     [["⛵ 星槎回航",bhReturn],["再看一下星盤",null,true]],"res")}
 /* 回航：回到星槎，原本是起航就照常出那一站的停靠封面 */
+/* 11/16 開發者「到了漢之後，要怎麼找到駱角？」：偏航打完星門圍城，結果視窗只有再打一次／返回選關，用左上角回星槎不會跑到站（shipDockCover → 07pty ptyArrive），
+   那一站要加入的人（漢朝驛站的駱躍梅）下船場景就沒出來。星槎頁（07f Voyage）打開時叫這裡：偏航留下的回航記號還在＝補跑一次到站。剛進黑洞的 15 秒內不動（bhRet.at，同 07dgl） */
+function bhDockLate(){try{const R=store.get("bhRet",null);if(!R||!R.cover||!R.k||typeof shipDockCover!=="function")return false;if(Date.now()-(+R.at||0)<15e3)return false;
+  store.set("bhRet",null);setTimeout(()=>{try{shipDockCover(R.k,()=>{})}catch(e){}},400);return true}catch(e){return false}}
 function bhReturn(){const R=store.get("bhRet",null);store.set("bhRet",null);location.hash="#/adventure";if(R&&R.first)setTimeout(()=>toast(BHX_FD.back),1200);
   if(R&&R.cover&&R.k&&typeof shipDockCover==="function")setTimeout(()=>{try{shipDockCover(R.k,()=>{})}catch(e){}},400)}
 /* ---------- 11/16 開發者（主要工作階段轉告）：幻影棋客頭上的小黑洞「在目前最新的遊戲設計好像變得沒有用處」→ 整個拿掉 ----------

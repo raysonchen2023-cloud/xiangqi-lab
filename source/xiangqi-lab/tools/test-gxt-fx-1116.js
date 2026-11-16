@@ -28,11 +28,14 @@ test("〔行為〕時間表：第一次約 2.7 秒、之後約 1.7 秒、減少�
 });
 
 test("〔行為〕三件器物各一句話（14 個字以內、互不相同），位置都在場景圖裡", () => {
-  const K = load(), ids = Object.keys(K.GXT_FXT); assert.deepEqual(ids.sort(), ["simul", "sky", "td"]);
-  const lines = ids.map(i => K.GXT_FXT[i]); assert.equal(new Set(lines).size, 3);
+  /* 11/16 開發者：今日異象（圭表）、自由擺陣（石棋桌）開張，各加一段（原本期望只有三段） */
+  const K = load(), ids = Object.keys(K.GXT_FXT); assert.deepEqual(ids.sort(), ["free", "omen", "simul", "sky", "td"]);
+  const lines = ids.map(i => K.GXT_FXT[i]); assert.equal(new Set(lines).size, 5);
   for (const s of lines) assert.ok(s.length <= 14 && /。$/.test(s), s);
-  assert.ok(/渾儀/.test(K.GXT_FXT.td) && /天頂/.test(K.GXT_FXT.simul) && /星/.test(K.GXT_FXT.sky), "一看就知道是哪件器物");
-  for (const k of ["p", "w"]) for (const n of ["td", "sky"]) { const [x, y, r] = K.GXT_FXP[k][n]; assert.ok(x > 0 && x < 100 && y > 0 && y < 100 && r > 0 && r < 20, k + "." + n) }
+  assert.ok(/渾儀/.test(K.GXT_FXT.td) && /天頂/.test(K.GXT_FXT.simul) && /星/.test(K.GXT_FXT.sky) && /圭/.test(K.GXT_FXT.omen) && /石桌/.test(K.GXT_FXT.free), "一看就知道是哪件器物");
+  for (const k of ["p", "w"]) for (const n of ["td", "sky", "omen", "free"]) { const [x, y, r] = K.GXT_FXP[k][n]; assert.ok(x > 0 && x < 100 && y > 0 && y < 100 && r > 0 && r < 20, k + "." + n) }
+  for (const k of ["p", "w"]) { const g = K.GXT_FXP[k].gui; assert.ok(g.length === 4 && g.every(v => v > 0 && v < 100) && g[2] > g[0], k + ".gui 石圭從柱腳往右延伸") }
+  assert.ok(K.GXT_FXP.p.omen[0] > 60 && K.GXT_FXP.p.free[0] < 40 && K.GXT_FXP.p.free[1] > 65, "圭表在右、石棋桌在左下");
   assert.ok(K.GXT_FXP.p.sky[0] > 60 && K.GXT_FXP.p.sky[1] < 30, "星空在右上"); assert.ok(Math.abs(K.GXT_FXP.p.td[0] - 50) < 2, "渾儀在中間");
 });
 

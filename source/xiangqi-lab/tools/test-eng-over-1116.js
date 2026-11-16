@@ -24,6 +24,16 @@ test("〔行為〕數子：正規開局、殘局不算超過；四炮、六炮�
   assert.equal(over("rnbakabnr/9/1c5c1/p1p1p1p1p/9/P8/P1P1P1P1P/1C5C1/9/RNBAKABNR w"), true, "紅方六兵");
 });
 
+test("〔行為〕11/16 兵擺在不可能的位置也算（自由擺陣）：紅兵在底三排、或還沒過河卻在 b、d、f、h 路；黑兵對稱；只看真的 90 格盤面", () => {
+  const over = load(), B = (ps) => { const b = Array(90).fill(null); for (const [i, p] of ps) b[i] = p; return b };
+  assert.equal(over(B([[6 * 9 + 0, "P"], [3 * 9 + 2, "p"]])), false, "兵在原位（a、c 路）");
+  assert.equal(over(B([[2 * 9 + 1, "P"], [7 * 9 + 5, "p"]])), false, "過河的兵哪一路都行");
+  assert.equal(over(B([[8 * 9 + 0, "P"]])), true, "紅兵在底三排");
+  assert.equal(over(B([[6 * 9 + 1, "P"]])), true, "紅兵沒過河卻在 b 路");
+  assert.equal(over(B([[1 * 9 + 4, "p"]])), true, "黑兵在底三排");
+  assert.equal(over(B([[4 * 9 + 3, "p"]])), true, "黑兵沒過河卻在 d 路");
+});
+
 test("〔原始碼〕電腦走棋超過就停下說明、不送 Pikafish、不重試；分析直接說算不了", () => {
   assert.ok(SRC.includes("if(engOver(P.board,P.turn)){const vm=await varMove(P,lv);"), "playEngine 先數子；超過就改請 Magellan（XQVar）算");
   assert.ok(SRC.includes('if(!vm||!legal(P.board,P.turn).some(([a,b])=>a===vf&&b===vt)){P.engOver=1;playMsg="⚠ "+ENG_OVER_MSG;return}'), "算不出來或不合法才停下說明");

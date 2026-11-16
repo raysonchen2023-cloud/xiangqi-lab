@@ -19,7 +19,7 @@ const liveFile = f => { try { return git("show", REF + ":" + f) } catch (e) { re
 
 /* 自寫的 src 檔（三方函式庫 three.min.js、opencc、jsQR、qrcode、GLTFLoader 等和圖示，倉庫根目錄已經有原檔，不重複放） */
 const SRC_OWN = ["bot3d.js", "engine.js", "local.js", "map3d.js", "net.js", "park3d.js", "sw.js", "zh.js", "manifest.json",
-  "bossfx3d.js", "three-shim.mjs"];   /* 11/14 1209 同版發布補：太虛星尊 3D 特效（11/14 上線，test-bhfx.js 要讀）、GLTFLoader 用的 three 轉接層（自寫） */
+  "bossfx3d.js", "three-shim.mjs", "varengine.js", "varengine-worker.js"];   /* 11/16 1703 補：Magellan（XQVar）規則引擎與 Worker（1502 上線，test-varengine、test-gxd-daily 要讀） */   /* 11/14 1209 同版發布補：太虛星尊 3D 特效（11/14 上線，test-bhfx.js 要讀）、GLTFLoader 用的 three 轉接層（自寫） */
 /* 建置、驗證、測試需要的工具（照 build-site.js、verify-release.js、testkinds.js、test-*.js 的 require 與讀檔整理）。
    不放：mqtt-config.json（密碼）、.last-version.json（本機狀態）、lobby-bots.js／qa-players.js／ban.js（營運用連線程式）、
    cdn-deploy.js／announce-version.js／watch-feedback.js／feedback-api.gs（發布、通知、回饋表單營運）、MQTT 申請與搬家筆記 */

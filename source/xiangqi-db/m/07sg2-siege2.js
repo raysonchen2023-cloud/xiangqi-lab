@@ -237,6 +237,7 @@ const SG2G=(()=>{
       ctl:{frz:[],lock:[],noCap:[],noTake:[],trap:null,imm:{}},buf:{},hurt:{r:0,b:0},hurt0:{r:0,b:0},last:{r:null,b:null},kmax:k>=0?S.x[k]:1,r3:r3Of(n,diff),rlim:SG2.RND_MAX,sq:sq||null};
     td.esp=ESP0;td.ecd={};td.elast=-99;td.ecR=-1;
     td.tal=talOf(cfg);talApply(td);if(k>=0)td.kmax=S.x[k];if(+V.sp0>0)for(const c in td.sp)td.sp[c]=Math.min(td.spMax[c],+V.sp0);td.pro=V.pro?1:0;
+    {const F=typeof dglXiangFx==="function"?dglXiangFx():null;if(F){if(F.kHp>0&&k>=0){S.x[k]+=F.kHp;td.kmax=S.x[k]}if(F.sp0>0)for(const c in td.sp)td.sp[c]=Math.min(td.spMax[c],td.sp[c]+F.sp0);td.xf=F}}   /* 11/16 二十八宿四象點齊的永久效果（07dgl dglXiangFx）：帥體力、開局靈力；每回合靈力在 roundEnd、過關星塵在結算 */
     ev(td,{k:"start",nm:V.nm,diff});return td}
   /* ===== 合法步（招式的限制：定身的不能動、不能攻擊的不攻擊、受保護的不能打）；全部濾光就照規則全部（不會因為招式變成困斃） ===== */
   function legal(P,C,side){const td=P.td,S=td.s;side=side||P.turn;const L=SG2.legal(S,side);if(side!=="b")return L;const R=td.rnd,c=td.ctl;
@@ -284,7 +285,7 @@ const SG2G=(()=>{
     if(!end){const nx=P.turn;if(!SG2.legal(S,nx).length)end={w:opp(nx),why:SG2.inCheck(S,nx)?"將死":"困斃"}}
     if(end){td.over=end;ev(td,{k:"end",w:end.w,why:end.why})}return{m,end}}
   /* ===== 回合結束（黑方走完）：回靈、到期、九宮守心、星門落子、回合上限 ===== */
-  function roundEnd(P,C){const td=P.td,S=td.s;td.rnd++;const R=td.rnd;for(const ck in td.sp)spAdd(td,ck,RG);espAdd(td,ERG);td.hurt0=td.hurt;td.hurt={r:0,b:0};
+  function roundEnd(P,C){const td=P.td,S=td.s;td.rnd++;const R=td.rnd;for(const ck in td.sp)spAdd(td,ck,RG+((td.xf&&td.xf.rg)||0));espAdd(td,ERG);td.hurt0=td.hurt;td.hurt={r:0,b:0};
     for(let q=0;q<90;q++)if(S.g[q]&&S.ge[q]<R){S.g[q]=0;S.ge[q]=0}
     for(const k of["frz","lock","noCap","noTake"])td.ctl[k]=act(td.ctl[k],R);if(td.ctl.trap&&td.ctl.trap.until<R)td.ctl.trap=null;
     for(const k in td.ctl.imm)if(td.ctl.imm[k]<R)delete td.ctl.imm[k];
@@ -580,7 +581,7 @@ const SG2_XP=[0,20,40,60],SG2_DUST=[0,3,4,6];
 /* 這一盤的獎勵（sg2End、sg2Result 都叫；同一盤只發一次，記在 bhtdDust.la／g 跟 07bht 同一套）：回 {xp, dust, total} */
 function sg2Award(st){const td=st&&st.td;if(!sg2On(st)||!st.result)return null;let D=null;try{D=typeof bhtdDust==="function"?bhtdDust():null}catch(e){}if(!D)return null;
   if(D.la&&D.la.id===st.id)return D.la;const win=st.result.w===st.human,ns=win?SG2G.stars(td).filter(Boolean).length:0,P=gsvProg(),R=((P.v2||{})[td.lv]||{})[td.diff]||{};
-  const first=win&&!(R.w>(D.g.includes(st.id)?1:0)),xp=first?SG2_XP[td.diff]||0:0,dust=win?SG2_DUST[ns]||0:0,done=D.g.includes(st.id);
+  const first=win&&!(R.w>(D.g.includes(st.id)?1:0)),xp=first?SG2_XP[td.diff]||0:0,dust=win?(SG2_DUST[ns]||0)+((typeof dglXiangFx==="function"&&dglXiangFx().dust)||0):0,done=D.g.includes(st.id);
   if(!done){D.d+=dust;D.g=D.g.concat([st.id]).slice(-20);try{if(xp&&typeof addXP==="function")addXP(xp,"星門圍城","gs2:"+td.lv+":"+td.diff)}catch(e){}}
   const A={id:st.id,win,xp,dust,total:D.d,first};D.la=A;try{store.set("bhtdDust",D)}catch(e){}return A}
 function sg2End(st){if(!sg2On(st)||!st.result)return;try{sg2Award(st)}catch(e){console.warn("[sg2]",e)}const P=gsvProg();if(P.g.includes(st.id))return;const td=st.td,n=td.lv,d=td.diff;P.v2=Object.assign({},P.v2);P.v2[n]=Object.assign({},P.v2[n]);

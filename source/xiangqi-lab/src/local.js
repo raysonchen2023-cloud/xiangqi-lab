@@ -33,7 +33,9 @@ var XQ=(function(){
   /* 11/16 開發者（紫淵卡在「思考中」）：Pikafish 不收棋子數超過正規的局面（「Unsupported position. BLACK has more than 2 cannons.」），引擎收到就整個停掉，逾時重開後又送同一盤、永遠卡住。
      送引擎前先數子：每方最多 帥1 仕2 相2 傌2 俥2 炮2 兵5；超過就不送（playEngine 停下來說明、分析直接說算不了） */
   const PCMAX={k:1,a:2,b:2,n:2,r:2,c:2,p:5};
-  function engOver(b,s){try{const f=String(fen(b,s)).split(" ")[0],n={};for(const ch of f)if(/[a-zA-Z]/.test(ch))n[ch]=(n[ch]||0)+1;for(const ch in n){const m=PCMAX[ch.toLowerCase()];if(m!=null&&n[ch]>m)return true}}catch(e){}return false}
+  /* 11/16（自由擺陣）：兵不可能出現的位置 Pikafish 也不收——紅兵在自己第 7～9 列（底三排），或還沒過河（第 5、6 列）卻在 b、d、f、h 路；黑兵對稱。盤面索引＝列×9＋行，第 0 列在黑方 */
+  function pawnBad(b){try{if(!Array.isArray(b)||b.length!==90)return false;for(let i=0;i<90;i++){const p=b[i];if(p!=="P"&&p!=="p")continue;const r=Math.floor(i/9),c=i%9,odd=c%2===1;if(p==="P"&&(r>=7||((r===5||r===6)&&odd)))return true;if(p==="p"&&(r<=2||((r===3||r===4)&&odd)))return true}}catch(e){}return false}
+  function engOver(b,s){try{if(pawnBad(b))return true;const f=String(fen(b,s)).split(" ")[0],n={};for(const ch of f)if(/[a-zA-Z]/.test(ch))n[ch]=(n[ch]||0)+1;for(const ch in n){const m=PCMAX[ch.toLowerCase()];if(m!=null&&n[ch]>m)return true}}catch(e){}return false}
   /* Magellan（變體引擎 XQVar）：同源 Web Worker varengine-worker.js（裡面 importScripts varengine.js，自己讀 data/varengine/weights.json，讀不到用內建權重）。
      級數：App 的 1～18 級照比例換成 XQVar 的 1～8 級；20 秒沒回來當作算不出來 */
   let VW=null,VW_ID=0;const VW_CB=new Map();
