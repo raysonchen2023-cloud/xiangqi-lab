@@ -526,7 +526,7 @@ function sg2RulesHTML(){return`<ul class="gsv-rules">
   <li><b>士相護線</b>（雙方都有）：站在自己的仕、相走得到的格子上，防禦力 +${SG2.LINE_X}。</li>
   <li><b>將軍</b>：照一般象棋，被將軍一定要應；應不了（將死）或沒步可走（困斃）就輸。</li>
   <li><b>一回合</b>＝你走一步＋最多放一招（先後自選），星樞走完回合結束。體力、被降的防禦不會自己回，只靠招式。</li>
-  <li><b>靈力</b>：每位夥伴各自一份（上限照等級），放招扣放招那位的；每回合每位 +${SG2G.RG}，吃掉子的那位 +${SG2G.KILL_SP}。部署後備花那顆子所屬夥伴的 ${SG2G.DEP_COST}。</li>
+  <li><b>靈力</b>：每位夥伴各自一份（多少照等級），放招扣放招那位的；每回合每位 +${SG2G.RG}，吃掉子的那位 +${SG2G.KILL_SP}。部署後備花那顆子所屬夥伴的 ${SG2G.DEP_COST}。</li>
   <li><b>星樞的招</b>：中、難的星樞也會放招——回氣（回 15 體力）、星落（打你一顆子）、星樞護盾（防禦 +10）；易不放。</li>
   <li><b>星門</b>：敵方會從星門分波補子；你的子站在門格上就擋掉那一顆（截援，站門那位 +${SG2G.CUT_SP} 靈）。</li></ul>`}
 function sg2Click(e){const st=GSV_ST;if(!st)return;const C=gsvC(),x=e.target.closest("[data-x]");if(x){const k=x.dataset.x;try{vibrate(5)}catch(z){}

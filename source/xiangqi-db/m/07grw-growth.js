@@ -11,7 +11,7 @@
    動態：數字從舊值跳到新值（GRW_MS）、一列一列淡入、升的那列綠色 ▲ 跳兩下；系統開了減少動態（prefers-reduced-motion）＝不跳，直接顯示新值。
    前綴 grw／GRW（11/15 grep 整個 m/ 確認沒人用）。純函式在 #GRW-PURE 區段，測試 xiangqi-lab/tools/test-growth.js */
 /* #GRW-PURE-BEGIN：到 #GRW-PURE-END 是不碰畫面的常數與純函式，test-growth.js 用 vm 直接載入 */
-const GRW_ON=true,GRW_V=1,GRW_TTL=45000,GRW_MS=700;
+const GRW_ON=true,GRW_V=2,GRW_TTL=45000,GRW_MS=700;
 /* 六項：順序、名稱、圖示跟角色卡一樣（07dgl DGL_ICO） */
 const GRW_ROWS=[["tal","🌌","天賦"],["r","🔴","體力"],["x","🔵","靈力"],["atk","⚔️","攻擊力"],["def","🛡️","防禦力"],["sk","📜","技能"]];
 const grwNum=v=>typeof v==="number"&&isFinite(v);
@@ -36,6 +36,10 @@ function grwSave(o){try{store.set("grw",o)}catch(e){}}
 function grwNow(){const o={v:GRW_V,sid:GRW.sid,at:Date.now(),c:"",lv:1};
   try{o.c=typeof dglName==="function"?dglName()||"":""}catch(e){}
   try{o.lv=xpInfo().L}catch(e){}
+  /* 11/16 開發者「先直接拿掉人間的體力靈力設定」（07dgl DGL_HUMAN）、角色卡改成卡冊四條：有黑洞新規則時六項照卡冊算（陪你走那一位 ptyLook、照他自己的等級；
+     體力、攻擊力、防禦力＝07sg2 SG2.unit，靈力＝SG2G.spMaxOf，招式＝已學會幾招，天賦＝sg2TalCount）；GRW_V 換 2，舊快照（舊塔防的數字）不拿來比 */
+  if(typeof SG2!=="undefined"&&typeof SG2G!=="undefined"){try{const c=typeof ptyLook==="function"?ptyLook()||o.c:o.c,pc=SG2G.PC_OF[c];o.c=c;if(pc){const L=typeof ptyLv==="function"?ptyLv(c):o.lv,u=SG2.unit(pc,L,1);
+    o.r=u.hp;o.x=SG2G.spMaxOf(L);o.atk=u.atk;o.def=u.def;try{if(typeof ptySkPool==="function")o.sk=ptySkPool(c).filter(s=>s.lv<=L).length}catch(e){}try{if(typeof sg2TalCount==="function")o.tal=sg2TalCount()}catch(e){}}}catch(e){}return o}
   try{if(typeof dglLive==="function"&&dglLive()&&typeof DGL!=="undefined"&&DGL.s)o.r=dglShow(DGL.s.r)}catch(e){}
   try{if(typeof dglXm==="function")o.x=dglXm()}catch(e){}
   try{const c=o.c;if(typeof BHTD!=="undefined"&&BHTD.CH&&BHTD.CH[c]){const S=BHTD.stats(c,o.lv);o.atk=BHTD.atkPt(S.atk);o.def=BHTD.defPt(S.def);

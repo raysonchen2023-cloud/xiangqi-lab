@@ -10,7 +10,9 @@
 const assert = require("node:assert/strict"), test = require("node:test"), fs = require("fs"), path = require("path"), vm = require("vm");
 const ROOT = path.join(__dirname, "../.."), M = path.join(ROOT, "xiangqi-db/m");
 const rd = f => fs.readFileSync(f, "utf8").replace(/\r\n/g, "\n");
-const SRC = rd(path.join(M, "07dgl-stamina.js"));
+/* 11/16 開發者「先直接拿掉人間的體力靈力設定」：07dgl 用 DGL_HUMAN=false 關掉並藏起來（程式、存檔留著）。這支測的是人間體力本身的規則，載入時把開關打開照舊測；關掉以後的行為在 test-dgl-off-1116.js */
+const SRC0 = rd(path.join(M, "07dgl-stamina.js")), SRC = SRC0.replace("const DGL_HUMAN=false;", "const DGL_HUMAN=true;");
+if (SRC === SRC0) throw new Error("07dgl 找不到 const DGL_HUMAN=false;");
 
 function loadPure() {
   const i = SRC.indexOf("#DGL-PURE-BEGIN"), j = SRC.indexOf("/* #DGL-PURE-END */");

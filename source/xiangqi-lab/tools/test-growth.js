@@ -19,7 +19,7 @@ function pure() {
   const ctx = {}; vm.createContext(ctx);
   return vm.runInContext(cut(GRW, "/* #GRW-PURE-BEGIN", "/* #GRW-PURE-END") + "\n;({GRW_V,GRW_ROWS,grwDiff,grwHtml,grwBootOf,grwSign})", ctx);
 }
-const SNAP = (x) => Object.assign({ v: 1, sid: "s1", c: "x_swordboy", lv: 3, r: 20, x: 5, atk: 108, def: 100, tal: 2, sk: 1 }, x || {});
+const SNAP = (x) => Object.assign({ v: 2, sid: "s1", c: "x_swordboy", lv: 3, r: 20, x: 5, atk: 108, def: 100, tal: 2, sk: 1 }, x || {});
 
 test("快照比對：只列有變化的項目（一列「⚔️ 攻擊力 108 → 110（+2）▲」），沒變化的不顯示；什麼都沒變＝不插", () => {
   const P = pure();
