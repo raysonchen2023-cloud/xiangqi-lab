@@ -1,6 +1,6 @@
 # 連線與資料架構
 
-最後核對：2026 年 11 月 11 日（逐項對照 App 程式：`xiangqi-lab/src/net.js`、`site/sw.js`、`m/05-settings.js`、`m/05b-save.js`、`m/07x4-lobbysafe.js`、`tools/mqtt-prune.js`）。
+最後核對：2026 年 11 月 17 日（對應版本 20261117-0542）。連線、同步、簽名、換手機各節是 11/11～11/13 逐項對照 App 程式寫的（`xiangqi-lab/src/net.js`、`site/sw.js`、`m/05-settings.js`、`m/05b-save.js`、`m/07x4-lobbysafe.js`、`tools/mqtt-prune.js`），這次沒有改；11/17 補了「App 玩法模組」「電腦引擎的分工」「只放 CDN 的資料」三節（對照 `m/07sg2-siege2.js`、`m/07pty-party.js`、`m/07gxt-guanxing.js`、`m/07gxd-daily.js`、`m/07xsm-ximarket.js`、`src/local.js`、`src/varengine.js` 等）。
 
 這份說明《象棋千秋》哪些東西在手機、哪些經過網路、斷線或伺服器出事時各功能會怎樣，以及**哪些事目前不保證**。隱私面（送什麼、留多久、怎麼刪）請看「🔒 隱私與資料使用」。
 
@@ -15,9 +15,9 @@
 
 （由上往下：手機 → 網路上的服務 → 開發者電腦）
 
-- 📱 **手機裡的 App**：頁面和程式（service worker 快取）＋ Pikafish 引擎（WebAssembly，下載後存在手機）＋ 資料（localStorage、IndexedDB：xqlab 棋譜、xqlab-save 進度備份、xqlab-slots 三格存檔）
+- 📱 **手機裡的 App**：頁面和程式（service worker 快取）＋ Pikafish 引擎（WebAssembly，下載後存在手機）＋ Magellan 變體引擎（JavaScript，背景執行緒）＋ 資料（localStorage、IndexedDB：xqlab 棋譜、xqlab-save 進度備份、xqlab-slots 三格存檔）
 - 📱 ⇄ 🐙 **GitHub Pages**：App 本體、版本檔、停權名單 `data/banlist.json`、內容指紋 `data/preload.json`（只讀，HTTPS）
-- 📱 ⇄ ☁️ **Cloudflare CDN**：圖片、音效、古譜、大師對局、引擎神經網路檔（只讀；拿不到就自動改抓 GitHub）
+- 📱 ⇄ ☁️ **Cloudflare CDN**：圖片、音效、古譜、大師對局、引擎神經網路檔（只讀；拿不到就自動改抓 GitHub）；另有一批只放 CDN 的檔（配樂、過場圖、場景圖、英文字典、Magellan 權重），見下面「只放 CDN 的資料」
 - 📱 ⇄ 📨 **MQTT 訊息伺服器**（wss:// 加密連線、公開的小權限帳號）：上線狀態、邀請、對局狀態、表情和快捷語、觀戰、千秋盃、殘篇閣、轉移碼暫存、匿名資料、新版通知
 - 📱 → 📝 **Google 表單**：意見回饋、檢舉、玩家登記、刪除請求（沒網路先排隊，之後補送）
 - 📨 ⇄ 💻 **開發者電腦**（不是一直開著）：千秋盃裁判台（簽名發布賽程和結果）、匿名資料收集程式、保留訊息清理工具
@@ -33,6 +33,23 @@
 - 棋譜庫（人機對局、真人對局、我的研究、看過的對局）：IndexedDB xqlab。
 - 線上積分和最近 100 盤線上戰績（每盤帶棋步）：localStorage。**積分是自己手機算的**，別人看到的是你手機公開出去的數字。
 - 下載過的圖片、引擎、古譜：瀏覽器快取。
+- 11/13～11/16 新玩法的進度也都是 localStorage，而且跟著存檔格走（`m/05b-save.js` 的 `JOURNEY_KEYS`，換存檔格、開新旅程會一起換）：`party`（雲河七星隊伍、各自經驗、星輝）、`gsv`（星門圍城各關各難度的勝和敗、星數）、`sg2Tal`（點亮的天賦）、`bhtdDust`（星塵）、`dgl`（二十八宿點亮紀錄；人間體力已關閉、資料保留）、`gxtSeen`、`xsmSeen`、`xsmStall`（西市各攤、櫃坊的帖與包裹）、`gxdOmen`／`gxdFree`／`gxdDone`（今日異象、自由擺陣）、`xsdRec`／`xsdRun`／`xsdLv`（暗棋）、`bhDrift1`（這一趟第一次起航的必定偏航用過沒）。舊黑洞玩法的 `bhtd`、`bhtl` 留著讀舊存檔。都不經過網路。
+
+### 只放 CDN 的資料
+
+下面這些只放在 Cloudflare CDN（xiangqi-cdn.pages.dev），不在 GitHub 上的公開倉庫；用到時才下載，存進瀏覽器快取：
+
+| 路徑 | 內容 | 用在哪 |
+|---|---|---|
+| `data/bgm/blackhole/bh_6.mp3`～`bh_10.mp3` | 星門圍城五首對戰配樂（11/16） | `m/07bh-blackhole.js` 的 `BH_SG` |
+| `data/bgm/guanxing/yixiang_1.mp3`、`data/bgm/xsm/anqi_1.mp3` | 今日異象與自由擺陣、暗棋的配樂 | `07gxd-daily.js`、`07xsd-xsmdark.js` |
+| `data/ptyjoin/*.webp` | 七星加入過場（五站各三張） | `07pjc-joincut.js` |
+| `data/guanxing/`（`gx_tai`、`gx_tai_w`、白天版、`xiu_sky`）、`data/ximarket/`（`xm_day`、`xm_night`、`xm_tea`） | 觀星臺、二十八宿星圖、西市與茶坊的場景圖 | `07gxt-guanxing.js`、`07dgl-stamina.js`、`07xsm-ximarket.js`、`07ulk-unlockfx.js` |
+| `data/i18n-en.json` | 英文外掛字典（正本 `xiangqi-db/i18n-en.json`；選 English 才下載） | `07i18n.js` |
+| `data/varengine/weights.json` | Magellan 的評估權重（讀不到就用引擎內建的預設權重） | `src/varengine-worker.js` |
+
+- 公開副本沒有這些檔，相關測試會跳過那部分檢查（有幾支是直接算通過）；外人只能在正式站上看。
+- CDN 掛掉時改抓 GitHub 的退路，對這些檔沒有用（GitHub 上沒有），會缺圖或沒有配樂；過場圖載不到會跳過那張，Magellan 改用內建權重。
 
 ### 經過 MQTT 伺服器
 
@@ -52,6 +69,44 @@
 ### 到 Google 表單
 
 - 意見回饋、檢舉、玩家登記、刪除請求。走 HTTPS，存進開發者的 Google 試算表。沒網路時先存在手機，有網路自動補送。
+
+## App 玩法模組（11/17 補）
+
+主程式拆成 `xiangqi-db/m/*.js`，建置時照 `m.html` 的 include 順序逐字組回一個頁面（`tools/mhtml.js`），所有檔共用同一個全域範圍，所以每支檔用自己的名稱前綴。完整清單在 `m/README.md`；下面只列 11/12～11/16 新增、跟這一輪規則有關的。這些模組都只在手機上跑，不經過網路（線上大廳、對局那一套見前後各節）。
+
+| 模組 | 職責 |
+|---|---|
+| `07sg2-siege2.js` | **黑洞星門圍城新規則（11/16）**。`SG2`：單盤規則（每顆子體力、攻防，攻擊、降防、集火、士相護線、護帥、應將、勝負）和星樞的搜尋；`SG2G`：對局（開局、回合、靈力、星門援軍、35 招、星樞 3 招、三星、解鎖、天賦）；後半是選關、天賦頁、結算畫面。純規則不碰畫面，node 測試直接載入。`src/local.js` 透過 `window.XQ_TD` 把這種盤的走子、合法步、電腦出步、重建都交給它 |
+| `07bhg-gatesiege.js` | 星門圍城的關卡資料 `GSV.LV`（24 關＋序章 9 關的擺法、星門波次、後備）和對局頁容器；看到新規則的盤就交給 `07sg2` |
+| `07bh-blackhole.js` | 星槎起航時的偏航（每次 10%、每趟旅程第一次必定）、開新旅程的序局、黑洞配樂（含星門圍城五首與危急切換） |
+| `07bht-td.js`、`07bhtl-tdlearn.js`、`07bhw-wheel.js` | 11/16 以前的黑洞玩法（星淵遠征塔防、練習賽、車輪戰）。玩家已經進不去，入口都轉到星門圍城；留著是為了讀舊存檔、星塵沿用 `bhtdDust` |
+| `07bhf-bossfx.js` | 黑洞頭目「太虛星尊」招式的 3D 特效接點（特效本體 `src/bossfx3d.js`） |
+| `07pty-party.js` | **雲河七星陸續加入（11/16）**：齊轍開局、其他六位在停靠站加入、各自經驗與星輝、木棋靈、卡冊（四條長條、招式、天賦入口）、起航閘門、修為提醒、舊存檔轉換。`PTY` 是純規則 |
+| `07pjc-joincut.js` | 夥伴加入時的三張圖過場（約 8 秒、可略過；圖載不到就跳過） |
+| `07grw-growth.js` | 對局結束後的結果視窗插入角色數值有變化的項目與升級提示 |
+| `07dgl-stamina.js` | 人間體力（定軌力、星芒）——11/16 起 `DGL_HUMAN=false` 關閉，程式與存檔保留；同一支還有二十八宿星圖（點亮、四象點齊的星門圍城永久加成） |
+| `07gxt-guanxing.js` | **觀星臺** `#/guanxing`：開放條件 `gxtOpen`（這一趟旅程打贏一盤星門圍城）、場景圖日夜與直幅寬版、五個入口、短過場、走路角色 |
+| `07gxd-daily.js` | 觀星臺的**今日異象**與**自由擺陣**；擺陣規則自己開一個 Magellan Worker 問（`validateSetup`、`dailySetup`、`genSetup`），對局本身交給 `src/local.js` |
+| `07gx-galaxy.js`、`07gxp-gatepano.js` | 幻譜星門・十三星系（觀星臺星圖石碑、星槎「🌌 幻譜星門」進）與它的滿版環景選星頁 |
+| `07xsm-ximarket.js` | **西市** `#/ximarket`：開放條件同觀星臺；五個攤位（雲河櫃坊的帖與包裹、七星來訪、找棋子、樂棚聽曲、茶坊入口）、日夜場景、西市配樂 |
+| `07xsd-xsmdark.js` | 聽雨茶坊的**臺灣暗棋**（4×8 半盤、翻子），規則與電腦都自己寫（看得到的子＋蓋著的子還剩哪些，alpha-beta 3 層＋翻子期望值），不用 Pikafish 或 Magellan |
+| `07hmp-pano.js`、`07ulk-unlockfx.js` | 首頁三屏長卷（左西市、右觀星臺）；新地點開放後第一次回首頁的約 4.5 秒風景過場 |
+| `07stq-starter.js`、`07mnf-mainfilm.js`、`07mnq-mainquest.js`、`07mnv-mainvn.js` | 新手練習「先走再學」、主線電影播放器、主線任務與首頁「下一步／📖 第一章」、主線對話場景 |
+| `07dv-devtest.js` | 開發者測試台（只在開發者模式）。11/16 起開發者模式不再一律解鎖，觀星臺、西市照玩家進度開 |
+| `02r-reloadguard.js` | 對局剛結束、結果視窗或殺棋特效還開著時，先不套用新版重新載入；真的要重新載入前把對局頁換成那個模式的選單頁，免得重開又直接開一盤 |
+| `07i18n.js` | 英文介面；11/16 起內建翻不出的字改查外掛字典 `data/i18n-en.json`（選 English 才下載） |
+
+## 電腦引擎的分工（11/17 補）
+
+| 引擎 | 在哪裡跑 | 負責 |
+|---|---|---|
+| **Pikafish** | WebAssembly 多執行緒（下載後存在手機） | 一般對局、殘局、複盤分析，只要子數在一般象棋範圍內 |
+| **Magellan**（`src/varengine.js`＝XQVar，包在 `src/varengine-worker.js` 的 Web Worker） | JavaScript，背景執行緒 | ① 子數超過 Pikafish 收的範圍（一方超過帥 1、仕 2、相 2、傌 2、俥 2、炮 2、兵 5）或兵在不可能位置的那一步：`src/local.js` 的 `engOver` 送引擎前先數子，超過就改問 Magellan（App 1～18 級換成它的 1～8 級），吃回正常子數後下一步自動換回 Pikafish；20 秒沒回來或回不合法的步就停下說明。② 自由擺陣、今日異象的擺陣規則與電腦擺陣 |
+| **星樞**（`m/07sg2-siege2.js` 的 `SG2.decide`） | 主程式（不是背景執行緒），每步最多 4 萬個節點或 0.9 秒 | 星門圍城的電腦。新規則的攻擊不一定吃掉子，Pikafish 和 Magellan 都不懂，所以自己寫 alpha-beta（易 1 步、中 2 步、難 3 步） |
+| 暗棋的小搜尋（`m/07xsd-xsmdark.js`） | 主程式 | 西市茶坊的暗棋 |
+
+- Pikafish 收到不支援的局面會整個停掉，所以一定要在送之前擋（11/16 以前幻譜星門紫淵等星系會一直卡在「思考中」）。測試：`test-eng-over-1116.js`。
+- Magellan 的單元測試 `test-varengine.js` 與權重訓練工具在公開副本的排除清單裡；權重檔只放 CDN。
 
 ## 一般流量有多大
 
@@ -224,6 +279,7 @@
 ### Cloudflare CDN 掛掉
 
 - 圖片和大檔改從 GitHub 抓：10 秒內沒回應、網路錯或伺服器錯誤就退回 GitHub，接下來 2 分鐘直接走 GitHub；傳到一半 30 秒沒動靜也改抓 GitHub。只是比較慢。已經存在手機裡的不受影響。
+- 例外是上面「只放 CDN 的資料」那幾類（星門圍城等配樂、加入過場圖、觀星臺與西市場景圖、英文字典、Magellan 權重）：GitHub 上沒有，還沒下載過的就拿不到——沒有配樂、場景缺圖、英文只剩內建的字、Magellan 用內建權重。
 
 ### GitHub 掛掉
 
