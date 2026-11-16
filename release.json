@@ -1,11 +1,11 @@
 {
- "version": "20261117-0005",
- "checkedAt": "2026-11-16T16:05:10.413Z",
- "html": "f71e9a558c58",
- "sw": "9f8809799873",
+ "version": "20261117-0025",
+ "checkedAt": "2026-11-16T16:25:36.082Z",
+ "html": "9d99843d7c60",
+ "sw": "c11b373721c0",
  "scripts": 4,
  "modules": {
-  "00-util.js": "8c2b1d4f725f",
+  "00-util.js": "8d67b6cea621",
   "01-board.js": "b482e28aa284",
   "02-shell.js": "4a2705d6e660",
   "02r-reloadguard.js": "1bf8587b9a55",
@@ -133,17 +133,20 @@
   {
    "module": "05-settings.js",
    "lines": 1,
-   "sourceModified": "2026-11-16T15:52:55.734Z"
+   "sourceModified": "2026-11-16T15:52:55.734Z",
+   "why": "發布版的下載大小表 XQ_SIZES 由建置填入實際數字（build-site.js、fill-sizes.js）；原始碼裡是佔位 /*__SIZES__*/null"
   },
   {
    "module": "07y-hubmap.js",
    "lines": 6,
-   "sourceModified": "2026-11-15T12:49:16.045Z"
+   "sourceModified": "2026-11-15T12:49:16.045Z",
+   "why": "原始碼裡有一段開發中的首頁地圖程式（hbBridge），刻意不發布"
   },
   {
    "module": "07s4-passmap.js",
    "lines": 1,
-   "sourceModified": "2026-11-13T03:19:39.481Z"
+   "sourceModified": "2026-11-13T03:19:39.481Z",
+   "why": "原始碼裡有一行開發中的修改，刻意不發布"
   }
  ]
 }
