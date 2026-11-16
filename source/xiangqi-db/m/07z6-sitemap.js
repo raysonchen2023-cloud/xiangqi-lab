@@ -14,7 +14,7 @@ const STM_AREAS=[
   ["yard","🏡","個人小院","角色、戰績、收藏",[["我的角色","#/me","角色 頭像 官階 修為"],["我的戰績","#/stats","戰績 勝率 成長"],["學習週報","#/weekly","週報 一週"],["行囊","#/ship/bag","行囊 寶物 收藏"],["珍品冊","#/me/relics","珍品 收藏"],["千秋大百科","#/codex","百科 文化 圖鑑"],["九九消寒圖","#/xiaohan","消寒 節氣 冬天"]]],
   ["svc","⚙️","服務亭","設定、回首頁",[["回首頁","#/","首頁 回家"],["今日推薦（首頁告示牌）","#/today","推薦 今天 每日 告示 榜文"],["設定","#/settings","設定 家長 回饋 存檔 字級 隱私 音樂"]]]];
 /* 11/16 觀星臺、西市（首頁棋鎮兩側的新地點）：還沒開放就灰掉、寫怎麼開；開放條件照 07gxt gxtOpen、07xsm xsmOpen（模組沒載到＝當作開著） */
-const STM_LOCK={gxt:()=>typeof gxtOpen==="function"&&!gxtOpen()?"搭星槎起航會偏航進黑洞，打贏一盤就開放":"",xsm:()=>typeof xsmOpen==="function"&&!xsmOpen()?"領過七星授印禮後開放":""};
+const STM_LOCK={gxt:()=>typeof gxtOpen==="function"&&!gxtOpen()?"搭星槎起航會偏航進黑洞，打贏一盤就開放":"",xsm:()=>typeof xsmOpen==="function"&&!xsmOpen()?"搭星槎起航會偏航進黑洞，打贏一盤就開放":""};
 const stmLockWhy=e=>{try{const f=e[3]&&STM_LOCK[e[3]];return f?f():""}catch(x){return""}};
 /* hspx 11/11「地圖底圖請找 gemini 繪製」：data/sitemap/sitemap.webp（768×1376，park/sitemap/sitemap_a.png）。
    hit＝點得到的範圍、card＝圖上那張空白直條紙籤（地名直書貼在上面），單位都是圖寬／圖高的 %，照圖量的；paper＝圖上沒有紙籤（修圖時被燈籠杆取代），標籤自己帶宣紙底。

@@ -14,7 +14,7 @@ test("觀星臺在雲河渡口、西市在對弈茶樓；網址、搜尋字、�
 test("還沒開放：寫怎麼開；開了＝空字串；模組沒載到當作開著",()=>{
   const lock=load({gxtOpen:()=>false,xsmOpen:()=>false}),open=load({gxtOpen:()=>true,xsmOpen:()=>true}),none=load();
   const g=["🔭 觀星臺","#/guanxing","","gxt"],x=["🏮 西市","#/ximarket","","xsm"];
-  assert.equal(lock.why(g),"搭星槎起航會偏航進黑洞，打贏一盤就開放");assert.equal(lock.why(x),"領過七星授印禮後開放");
+  assert.equal(lock.why(g),"搭星槎起航會偏航進黑洞，打贏一盤就開放");assert.equal(lock.why(x),"搭星槎起航會偏航進黑洞，打贏一盤就開放","11/16 hspx P1：西市跟觀星臺同一條件");
   assert.equal(open.why(g),"");assert.equal(open.why(x),"");assert.equal(none.why(g),"");assert.equal(lock.why(["棋譜庫","#/db",""]),"","沒有條件的入口一直開著");
   assert.ok(SRC.includes('${lk?"🔒 ":""}${esc(nm)}${lk?"（"+esc(lk)+"）":off?"（要連網路）":""}'),"灰掉的按鈕寫 🔒 和怎麼開");
 });

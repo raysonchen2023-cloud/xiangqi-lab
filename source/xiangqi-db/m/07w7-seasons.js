@@ -119,8 +119,8 @@ const SW7_PAGES=[
   {k:"terms",re:/data\/termsmap\//,m:"semi",rg:"s",sky:[[[0,0],[768,0],[768,1376],[0,1376]]]},
   {k:"redo",re:/data\/redomap\/redo_/,m:"semi",rg:"s",sky:[[[77,53],[731,144],[731,920],[80,813]]],fg:[[[60,633],[731,853],[731,891],[60,667]],[[80,713],[731,920],[731,945],[80,740]],[[60,640],[95,640],[95,811],[60,811]],[[296,700],[320,700],[320,793],[296,793]],[[516,760],[540,760],[540,860],[516,860]],[[0,53],[731,127],[731,153],[0,80]]],tr:[[[80,140],[149,100],[260,105],[360,100],[409,160],[400,300],[300,300],[149,305],[80,289]],[[425,140],[529,140],[529,189],[425,189]]]},
   {k:"theme",re:/data\/thememap\//,m:"semi",rg:"s",sky:[[[0,267],[80,333],[213,467],[300,560],[300,747],[213,773],[120,853],[53,907],[0,920]],[[768,267],[688,333],[555,467],[468,560],[468,747],[555,773],[648,853],[715,907],[768,920]]],fg:[[[44,400],[73,173],[127,173],[133,447],[133,867],[127,1053],[80,1053],[44,907]],[[197,333],[247,333],[247,880],[197,880]],[[267,440],[301,440],[301,800],[267,800]],[[637,173],[696,173],[731,400],[731,907],[696,1053],[651,1053],[637,873]],[[523,333],[573,333],[573,880],[523,880]],[[469,440],[501,440],[501,800],[469,800]]]},
-  {k:"shipMap",re:/data\/shipmap\/ship_map/,m:"out",rg:"cl",W:896,H:1200},
-  {k:"shipDeck",re:/data\/shipmap\/page_(sail|lesson)/,m:"out",rg:"cl"},
+  {k:"shipMap",re:/data\/shipmap\/ship_map/,m:"out",rg:"cl",W:896,H:1200,fix:1},   /* fix＝固定顏色（11/16 開發者「只有星槎沒有歲月都是固定顏色」，選單「只有星槎固定」）：星槎頁、甲板不套節氣天氣、霧、時辰色調；船艙等照首頁天氣 */
+  {k:"shipDeck",re:/data\/shipmap\/page_(sail|lesson)/,m:"out",rg:"cl",fix:1},
   {k:"portClassic",re:/data\/shipmap\/port_classic/,m:"out",rg:"cl"},
   {k:"port_qin",re:/data\/shipmap\/port_qin(_c|_f)?\.webp/,m:"out",rg:"n"},
   {k:"port_han",re:/data\/shipmap\/port_han(_c|_f)?\.webp/,m:"out",rg:"nw"},
@@ -156,7 +156,7 @@ function sw7TermFor(P,o){return P&&P.dataset&&P.dataset.sw7Term||sw7Term()}   /*
 const SW7_TOWN=/^(home|homeAlt|today|todayN|learn|battle|lobby|canju|terms|redo|theme|shipMap|shipDeck)$/;   /* 回饋 858（開發者 11/10）「兩邊場景的天氣不同」：星槎航線圖、甲板也跟著停靠那一朝渡口的天氣（停在船艙＝雲河自己的天氣） */
 function sw7Rg(o){if(!o||!o.rg)return"";if(o.rg==="cl"){const h=SW7_PAGES.find(x=>x.k==="home");if(h&&h!==o)return sw7Rg(h)}   /* 11/16 開發者（船艙截圖）「這邊的天氣錯了，要跟首頁對齊天氣」：雲河自己的地方（船艙渡口、船艙驛站、航線圖、甲板，rg "cl"）一律跟首頁同一個地區，同一時間同一種天氣 */
 if(!SW7_TOWN.test(o.k||""))return o.rg;let e="";try{e=typeof hbDockEra==="function"?hbDockEra():""}catch(x){}const q=e&&SW7_PAGES.find(x=>x.k==="port_"+e);return q&&q.rg||o.rg}
-function sw7WxFor(P,o){if(!o||o.m==="in"||!o.rg)return null;return sw7Precip(sw7TermFor(P,o),sw7Rg(o))}
+function sw7WxFor(P,o){if(!o||o.m==="in"||!o.rg||o.fix)return null;return sw7Precip(sw7TermFor(P,o),sw7Rg(o))}
 /* 首頁換底圖（07z-homemap.js 問這裡）：大雪節氣那幾天、或小雪～大寒正在下雪＝積雪版 snow；正在下雨＝雨景版 rain；其他＝""（原圖）；設定關掉也是 "" */
 const SW7_SNOWY=new Set(["小雪","大雪","冬至","小寒","大寒"]);
 /* 開發者 11/9「首頁變秋天的時候還是綠色的葉子，冬天也不會變，要符合天氣和大自然」：首頁照季節換整張圖（同一張原圖改的，構圖、入口、走路的路都不變）——
@@ -346,7 +346,7 @@ function sw7Leaf(R,o,src){const t=sw7TermFor(R.P,o),par=o&&o.tr&&o.tr.length&&(s
 /* 照現在的設定、節氣、天氣、時辰把這一頁的疊層排好；沒變就只更新晨昏色的濃淡 */
 /* 11/9 開發者截圖：圖還沒下載完（剛換版要重抓）時，月夜層會把空白頁塗成一片藍；圖載好才蓋，載好再補畫一次 */
 function sw7ImgOk(R){const im=R.img;if(im.complete&&im.naturalWidth>0)return true;if(!R.wl){R.wl=1;im.addEventListener("load",()=>{R.wl=0;R.sig="";try{sw7Fill(R)}catch(e){}},{once:true})}return false}
-function sw7Fill(R){const P=R.P,box=R.box,on=sw7On(),img=R.img,src=img.getAttribute("src")||"",o=sw7Page(src),hn=o&&/^(home|homeAlt|learn|battle|lobby)$/.test(o.k)&&!/_(dawn|dusk|night)\./.test(src)&&sw7ImgOk(R)?sw7HomeNightA(null,SW7_HSEA[sw7TermFor(P,o)]||""):0,night=/night/i.test(src)||P.classList.contains("td-night")||hn>0,
+function sw7Fill(R){const P=R.P,box=R.box,on=sw7On()&&!(sw7Page(R.img.getAttribute("src")||"")||{}).fix,img=R.img,src=img.getAttribute("src")||"",o=sw7Page(src),hn=o&&/^(home|homeAlt|learn|battle|lobby)$/.test(o.k)&&!/_(dawn|dusk|night)\./.test(src)&&sw7ImgOk(R)?sw7HomeNightA(null,SW7_HSEA[sw7TermFor(P,o)]||""):0,night=/night/i.test(src)||P.classList.contains("td-night")||hn>0,
     td=P.classList.contains("td-page"),ov=P.dataset.sw7Term||"",out=on&&o&&o.m!=="in",term=sw7TermFor(P,o),rm=sw7RM(),
     pw=out?(ov?(term==="冬至"?{t:"snow",a:.8}:null):sw7WxFor(P,o)):null,A0=out&&!pw?SW7_AMB[term]||null:null,tone=ov?sw7SeaOf(term):"";
   let k=pw?pw.t:A0?A0[0]:"";if(td&&!pw&&sw7TdHas(term))k="";

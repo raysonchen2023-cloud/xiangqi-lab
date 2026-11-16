@@ -29,3 +29,14 @@ test("〔行為〕別朝自己的渡口照舊用自己的地區", () => {
   assert.equal(X.sw7Rg(P(X, "port_han")), "nw", "漢渡口照舊西北");
   assert.ok(SRC.includes('if(o.rg==="cl"){const h=SW7_PAGES.find(x=>x.k==="home");if(h&&h!==o)return sw7Rg(h)}'));
 });
+
+test("〔行為〕11/16 開發者「只有星槎沒有歲月都是固定顏色」（選單「只有星槎固定」）：星槎頁、甲板標 fix，不下雨雪；船艙照首頁天氣", () => {
+  const a = SRC.indexOf("const SW7_PAGES="), b = SRC.indexOf("/* 首頁換底圖", SRC.indexOf("function sw7WxFor("));
+  assert.ok(a > 0 && b > a);
+  const ctx = { hbDockEra: () => "qin", sw7Term: () => "大雪", sw7Precip: () => ({ t: "snow", a: 1 }) }; vm.createContext(ctx);
+  vm.runInContext(SRC.slice(a, b) + "\n;this.__X={SW7_PAGES,sw7WxFor};", ctx);
+  const X = ctx.__X, pg = k => X.SW7_PAGES.find(x => x.k === k);
+  for (const k of ["shipMap", "shipDeck"]) { assert.equal(pg(k).fix, 1, k + " 標 fix"); assert.equal(X.sw7WxFor(null, pg(k)), null, k + " 不下雨雪") }
+  for (const k of ["portClassic", "yz_classic", "home"]) { assert.ok(!pg(k).fix, k + " 不固定"); assert.equal(X.sw7WxFor(null, pg(k)).t, "snow", k + " 照天氣") }
+  assert.ok(SRC.includes('function sw7Fill(R){const P=R.P,box=R.box,on=sw7On()&&!(sw7Page(R.img.getAttribute("src")||"")||{}).fix,'), "〔原始碼〕sw7Fill 遇到 fix 頁＝當作天氣關掉（不霧、不換時辰色調）");
+});

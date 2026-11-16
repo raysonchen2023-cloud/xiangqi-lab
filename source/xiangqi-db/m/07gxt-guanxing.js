@@ -51,7 +51,8 @@ const gxtWon=(w,P,G)=>(+w||0)>0||!!(P&&P.c&&typeof P.c==="object"&&Object.keys(P
 function gxtGsvWon(G){if(!G||typeof G!=="object")return false;const won=T=>!!T&&typeof T==="object"&&Object.values(T).some(r=>r&&(+r.w||0)>0);
   if(won(G.c)||won(G.h))return true;return!!G.v2&&typeof G.v2==="object"&&Object.values(G.v2).some(won)}
 function gxtOpen(){if(!GXT_ON)return false;   /* 11/16 開發者「我把開發者試玩打開，但我還沒啟航掉入黑洞，就可以看到觀星臺」，選單「場景入口照玩家進度」：全部解鎖試玩也不打開觀星臺入口 */
-  try{return gxtWon(store.get("bhWin",0),typeof bhtdProg==="function"?bhtdProg():store.get("bhtd",null),store.get("gsv",null))}catch(e){return false}}
+  /* 11/16 hspx P1（開發者「我剛剛才到星槎上……還沒起航偏離軌道就馬上跳出觀星臺和西市的過場動畫」），選單「打贏星門圍城才開」：只算這一趟旅程的勝場——舊黑洞的 bhWin 是整支手機共用（不在存檔清單），舊旅程贏過、新旅程一降落就開，不再算 */
+  try{return gxtWon(0,typeof bhtdProg==="function"?bhtdProg():store.get("bhtd",null),store.get("gsv",null))}catch(e){return false}}
 /* 直幅 "" 或寬版 "w"：W 可用寬、av 可用高、vw／vh 畫面寬高 */
 function gxtKind(W,av,vw,vh){if(!(W>0&&av>=120))return"";return W/av>=GXT_LAND&&Math.min(vw,vh)>=GXT_LMIN?"w":""}
 /* 白天？卯（05–07）～申（15–17）；時辰序號照 07w8 clkIdx（子＝0：23–01） */

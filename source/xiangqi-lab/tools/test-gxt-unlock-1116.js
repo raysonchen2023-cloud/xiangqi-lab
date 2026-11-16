@@ -23,7 +23,7 @@ test("只輸過、和過、什麼都沒打，觀星臺都不出現；舊的解�
   assert.equal(load({ gsv: null }).gxtOpen(), false);
   assert.equal(load({ gsv: "壞掉的存檔" }).gxtOpen(), false);
   assert.equal(load({}).gxtOpen(), false);
-  assert.equal(load({ bhWin: 1 }).gxtOpen(), true, "舊玩家 bhWin 照舊");
+  assert.equal(load({ bhWin: 1 }).gxtOpen(), false, "11/16 hspx P1 選單「打贏星門圍城才開」：舊黑洞 bhWin 整支手機共用，舊旅程贏過、新旅程不算");
   assert.equal(load({ bhtd: { c: { 2: 1 } } }).gxtOpen(), true, "舊玩家塔防破關照舊");
   assert.equal(load({}, { DEVMODE: () => true }).gxtOpen(), false, "開發者模式不再一律看得到");
   assert.equal(load({}, { DEVUNLOCK: () => true }).gxtOpen(), false, "全部解鎖試玩也照玩家進度（11/16 選單）");
@@ -36,4 +36,13 @@ test("〔原始碼〕sg2End 把勝場寫進 gsv 的 c／h（易、中進 c，難
   assert.match(body, /O\.w\+\+/, "贏了 w 加一");
   assert.match(body, /P\.v2\[n\]\[d\]/, "v2 記各關各難度");
   assert.match(body, /store\.set\("gsv",P\)/, "存檔鍵 gsv");
+});
+
+test("11/16 hspx P1：第一次起航必定偏航的記號 bhDrift1 跟著存檔走（開新旅程清掉，舊旅程用過不影響新旅程）", () => {
+  const SV = fs.readFileSync(path.join(__dirname, "../../xiangqi-db/m/05b-save.js"), "utf8");
+  const a = SV.indexOf("const JOURNEY_KEYS=["), b = SV.indexOf("const JK=new Set(JOURNEY_KEYS)", a);
+  assert.ok(a >= 0 && b > a, "找得到 JOURNEY_KEYS 和 JK");
+  assert.ok(SV.slice(a, b).includes('JOURNEY_KEYS.push("m_bhDrift1")'), "建 JK 之前把 m_bhDrift1 加進 JOURNEY_KEYS");
+  const BH = fs.readFileSync(path.join(__dirname, "../../xiangqi-db/m/07bh-blackhole.js"), "utf8");
+  assert.match(BH, /function bhFirstDrift\(\)\{try\{return!store\.get\("bhDrift1",0\)&&!\(typeof gxtOpen==="function"&&gxtOpen\(\)\)/, "第一次偏航看 bhDrift1 和觀星臺開了沒");
 });
