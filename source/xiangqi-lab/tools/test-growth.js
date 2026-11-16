@@ -95,9 +95,9 @@ const C0 = () => ({ c: "x_swordboy", lv: 3, x: 5, t: [1], live: true, rm: false 
 test("對局結束 grwArm 後，第一個結果視窗（cls 有 res）才插成長那一塊；別的視窗、沒結束對局、第二個視窗都不插；顯示完更新快照", () => {
   const T = full(C0());
   T.ctx.grwBoot(); assert.equal(T.mem.grw.lv, 3, "開 App 記下快照"); assert.equal(T.mem.grw.atk, 106); assert.equal(T.mem.grw.sk, 1);
-  T.C.lv = 4; T.ctx.DGL.s.r = 22; T.C.x = 6;
+  T.ctx.DGL.s.r = 22; T.C.x = 6;
   T.ctx.modal("<h2>你贏了！</h2>", [], "res"); assert.equal(T.INS.length, 0, "沒 grwArm（不是對局結束）不插");
-  T.ctx.grwArm("cpu");
+  T.ctx.grwArm("cpu"); T.C.lv = 4;   /* 11/17 B-8：修為是 grwArm 之後（journeyGameEnd）才發的，升級要發生在這盤結算才算 */
   T.ctx.modal("<p>確定？</p>", [], ""); assert.equal(T.INS.length, 0, "不是結果視窗不插");
   T.ctx.modal("<h2>你贏了！</h2>", [], "res bt-res"); assert.equal(T.INS.length, 1, "結果視窗插一次");
   const h = T.INS[0];
@@ -114,12 +114,12 @@ test("對局結束 grwArm 後，第一個結果視窗（cls 有 res）才插成�
 
 test("殺棋動畫延後的結果視窗（modal 回傳 null）等真的畫出來才插；過了 GRW_TTL 沒有結果視窗＝不插、快照不動（下一盤一起算）", () => {
   const T = full(C0()); T.ctx.grwBoot();
-  T.C.lv = 5; T.setHold(true); T.ctx.grwArm("cpu");
+  T.setHold(true); T.ctx.grwArm("cpu"); T.C.lv = 5;
   assert.equal(T.ctx.modal("x", [], "res"), null); assert.equal(T.INS.length, 0); assert.equal(T.mem.grw.lv, 3, "還沒畫出來，快照不動");
   T.setHold(false); T.ctx.modal("x", [], "res"); assert.equal(T.INS.length, 1); assert.match(T.INS[0], /Lv 5/);
   T.C.lv = 6; T.ctx.grwArm("bh:x"); T.run("GRW.arm=Date.now()-GRW_TTL-1");
   T.ctx.modal("x", [], "res"); assert.equal(T.INS.length, 1, "逾時不插"); assert.equal(T.mem.grw.lv, 5, "快照不動");
-  T.ctx.grwArm("cpu"); T.ctx.modal("x", [], "res"); assert.match(T.INS[1], /修為升到 Lv 6！/, "下一盤一起算");
+  T.ctx.grwArm("cpu"); T.ctx.modal("x", [], "res"); assert.ok(!/修為升到/.test(T.INS[1] || ""), "11/17 B-8：上一盤（沒結果視窗）升的級不算在這一盤頭上"); if (T.INS[1]) assert.match(T.INS[1], /攻擊力/, "數值照舊一起算（a → b）");
 });
 
 test("減少動態：不跳數字（不排 requestAnimationFrame），直接是新值；一般情況數字從舊值跳到新值", () => {

@@ -51,7 +51,7 @@ const mnqSave=s=>{try{store.set("mnq",s)}catch(e){}};
 function mnqWins(){try{const R=JSON.parse(localStorage.getItem("xq_record")||"null")||{};return Object.values(R).reduce((a,v)=>a+((v&&v.w)|0),0)}catch(e){return 0}}
 function mnqEnv(){const E={hasChar:false,firstWin:false,home:"",at:"",homeLabel:""};
   try{const c=typeof myChar==="function"?myChar():"";E.hasChar=!!c;const J=typeof journey==="function"?journey():null;E.home=(J&&(J.home||(typeof CHAR_ERA!=="undefined"&&CHAR_ERA[J.c])))||""}catch(e){}
-  E.firstWin=mnqWins()>0;try{E.at=store.get("shipAt",null)||""}catch(e){}try{E.homeLabel=E.home&&typeof eraLabel==="function"?eraLabel(E.home):""}catch(e){}
+  E.firstWin=mnqWins()>0;try{E.at=store.get("shipAt",null)||(typeof hbDockEra==="function"?hbDockEra():"")||""}catch(e){}   /* 11/17 iPhone 模擬器測試「第一章看完＝遠征補給、按略過＝贏第一盤」：存檔的 shipAt 只在走進星槎頁等地方（07f shipHere）才寫，新手練習建的旅程（07stq stqJourney）一開始是空的，下一步就看玩家碰巧逛過哪幾頁；還沒寫時改問首頁同一套的停靠朝代（07y hbDockEra＝07f shipAt()，只讀不寫） */try{E.homeLabel=E.home&&typeof eraLabel==="function"?eraLabel(E.home):""}catch(e){}
   try{E.xsm=typeof xsmOpen==="function"&&!!xsmOpen();if(E.xsm&&typeof shipDockList==="function")E.dock=shipDockList()||[]}catch(e){}return E}   /* 11/16 櫃坊改版：西市開了（07xsm xsmOpen），遠征補給改到雲河櫃坊領；dock＝停靠過的站 */
 /* ---------- 純計算：章的進度、下一步 ---------- */
 function mnqDone(S,era){const L=MNQ_SEGS[era],seg=(S&&S.seg)||{};return!!L&&L.every(id=>seg[id])}
@@ -172,12 +172,16 @@ function mnqSolved(era,P,r,go){const C=MNQ_CHAP[era]||MNQ_CHAP.classic,S=mnqSt()
 function mnqChapter(era){era=era||"classic";const C=MNQ_CHAP[era],segs=C&&C.segs;if(!segs)return toast("這一章即將開放");if(C.vn)return mnqVn(era);const S=mnqSt();
   let i=segs.findIndex(id=>!S.seg[id]);if(i<0)i=0;try{mnfMusic(MNF_FILMS[segs[i]].mus)}catch(e){}   /* 點選當下先開配樂（iPhone） */
   const P=Object.assign({},MNF_QTE[C.qte]);mnqQteFor(era).then(x=>Object.assign(P,x)).catch(()=>{});segs.forEach(id=>mnfPre(id,C.set));
-  const N="第"+MNQ_CN[mnqChN(era)-1]+"章・";let rite=null;
+  const N="第"+MNQ_CN[mnqChN(era)-1]+"章・";let rite=null,all=false;
+  /* 11/17 iMac 模擬器第 14 項：「略過」以前只跳當前一段（第一章三段要按 3 次略過、2 次出發）。現在任何一段按了略過（那段的任務卡按下去）＝整章略過（all）：
+     後面沒有危機題的段落不播、直接記看過；有危機題的段落（第一章的破局題在 c1m 開頭）用 jump 直接從題目開始，解完（含儀式）就結束；整章最後出「下一步」任務卡（跟看完一樣）。破局題照樣要解 */
+  const hasQ=id=>{try{return mnfQteIn(MNF_FILMS[id]).length>0}catch(e){return false}},fin=()=>{mnfMusicStop(1);mnqTaskCard(mnqNextOf(mnqSt(),mnqEnv()))};
   const play=j=>{const id=segs[j],lastSeg=j===segs.length-1;
-    mnfPlay(id,{label:N+MNQ_SEG_NM[id],keepMusic:!lastSeg,qte:{[C.qte]:P},onQte:(q,r,go)=>{const R=mnqSolved(era,P,r,go);if(C.rite==="end")rite=R},card:lastSeg?()=>{mnqMark(id,era);return mnqNextCard()}:null,
-      onDone:res=>{mnqMark(id,era);
+    if(all&&!hasQ(id)){mnqMark(id,era);return lastSeg?fin():play(j+1)}
+    mnfPlay(id,{label:N+MNQ_SEG_NM[id],keepMusic:all?segs.slice(j+1).some(hasQ):!lastSeg,jump:all,qte:{[C.qte]:P},onQte:(q,r,go)=>{const R=mnqSolved(era,P,r,go);if(C.rite==="end")rite=R},card:lastSeg&&!all?()=>{mnqMark(id,era);return mnqNextCard()}:null,
+      onDone:res=>{mnqMark(id,era);if(res.skipped&&!lastSeg)all=true;
         if(rite&&!lastSeg){const R=rite;rite=null;try{mnfVol(.45,1)}catch(e){}mnfSolveRite(Object.assign(R,{onDone:()=>play(j+1)}));return}   /* rite:"end"：危機那段播完才演儀式，儀式淡出時章末在底下溶進來 */
-        if(!lastSeg)return play(j+1);mnfMusicStop(1);const n=mnqNextOf(mnqSt(),mnqEnv());
+        if(!lastSeg)return play(j+1);if(all)return fin();mnfMusicStop(1);const n=mnqNextOf(mnqSt(),mnqEnv());
         if(res.skipped){if(res.card===1)mnqGo(n);else if(!/^#?\/?$/.test(location.hash||""))location.hash="#/";mnqHomeSync();return}mnqTaskCard(n)}})};
   play(i)}
 /* 對話場景的章（07mnv）：從第一場還沒看完的接著看；每看完一場記一次（S.seg）、每場花幾秒（S.vn[朝代].tm，開發者看節奏用）、選了哪個選項（S.vn[朝代].ch） */

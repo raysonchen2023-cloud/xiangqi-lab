@@ -20,6 +20,7 @@ function chdCss(){if(typeof document==="undefined"||document.getElementById("chd
 .chd-bm{display:inline-block;padding:0 6px;margin-left:4px;border-radius:99px;background:#C8962E;color:#fff;font-size:11.5px;font-weight:700;vertical-align:1px}
 .chd-letter{padding:12px 14px;border-radius:10px;background:#FBF4E4;color:#2a2018;border:1px solid #D9C59A;font-family:var(--serif);font-size:15.5px;line-height:1.9}.chd-letter p{margin:0 0 8px}.chd-letter p:last-child{text-align:right;margin:0}
 .chd-home{position:absolute;right:10px;top:10px;z-index:4;padding:4px 10px;border-radius:99px;background:rgba(200,150,46,.92);color:#fff;font:700 13px/1.3 var(--serif,serif);box-shadow:0 2px 6px rgba(0,0,0,.3);pointer-events:none}
+.chd-home.in-cap{position:static;align-self:flex-start;margin-top:4px}
 .chd-chal{display:flex;gap:10px;align-items:flex-start;margin:0 0 10px;padding:10px 12px;border-radius:12px;border:1.5px dashed #C8962E;background:rgba(200,150,46,.08);cursor:pointer}
 .chd-chal input{width:22px;height:22px;flex:none;margin:2px 0 0;accent-color:#C8962E}.chd-chal b{display:block;font-size:14.5px}.chd-chal small{display:block;font-size:12.5px;line-height:1.55;color:var(--muted)}
 .chd-shine .seal-st{position:relative;overflow:hidden;box-shadow:0 0 0 2px #E8C462,0 0 12px rgba(232,196,98,.85)}
@@ -137,8 +138,11 @@ function chdHomeXM(k,id){const c=chdMe(),e=chdHomeOpen(c);if(!e||k!==e||chdHome(
     done:(o,ans)=>ans||!o?`<p class="muted">看了答案，這題先不算解開；之後不看答案再解一次就算。</p>`:(chdCss(),`<div class="chd-say">${chdFace(c)}<span><b>${esc(chdNk(c))}・故國舊夢</b>「${esc(chdOne(T.bm,id+"home"))}」</span></div>`),
     next:()=>"#/adventure",nextL:()=>"⛵ 回星槎"}}
 /* 星槎頁的「🏠 故鄉」小標記；第一次停在家鄉提醒一聲信箱 */
+/* 11/17 Windows 測試員 B-11：小標記原本疊在星槎圖右上角（right:10px top:10px），手機上左上角的站名條（.shp-cap：站名＋停靠幾站那一行）是整條寬的，被它擋住。
+   改成放進站名條最後一行（站名條本來就是一欄往下排，07x／07sp 量站名條高度推開熱點，也會連它一起讓開）；沒有站名條才照舊貼右上角 */
+function chdHomePut(m,d){const cap=m.querySelector(":scope>.shp-cap");if(cap){d.classList.add("in-cap");cap.append(d)}else m.append(d)}
 function chdHomeMark(v,k){const c=chdMe(),e=chdHomeOpen(c);if(!e||k!==e||!v)return;chdCss();const m=v.querySelector(".shp-map.full");if(!m||m.querySelector(".chd-home"))return;
-  const d=document.createElement("div");d.className="chd-home";d.textContent="🏠 "+chdNk(c)+"的故鄉";m.append(d);
+  const d=document.createElement("div");d.className="chd-home";d.textContent="🏠 "+chdNk(c)+"的故鄉";chdHomePut(m,d);
   if(!chdHome(e).seen){chdSet(S=>{S.home=S.home||{};S.home[e]=Object.assign(S.home[e]||{},{seen:Date.now()})});setTimeout(()=>{try{toast("🏠 這裡是"+chdNk(c)+"的故鄉。下船到驛站，信箱裡好像多了一封信。")}catch(x){}},900)}}
 
 /* ---------- 對局重播（7、8 共用）----------

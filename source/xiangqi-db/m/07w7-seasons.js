@@ -176,6 +176,14 @@ const SW7_SEA_TXT={spring:{e:"🌸",n:"春天來了",q:"竹外桃花三兩枝，
   autumn:{e:"🍂",n:"秋天到了",q:"見一葉落，而知歲之將暮。",s:"《淮南子・說山訓》",w:"看到一片葉子落下來，就知道這一年快要過完了。",say:"哇，換季了！柳樹都變黃了，葉子掉到河裡了！",p:["#d9a441","#c8642c","#e8c25a","#a8462a"]},
   winter:{e:"❄",n:"冬天到了",q:"歲寒，然後知松柏之後彫也。",s:"《論語・子罕》",w:"天氣最冷的時候，才看得出松樹柏樹最晚凋零。",say:"哇，冬天了！柳樹的葉子都掉光了，只有松樹還是綠的。",p:["#ffffff","#eef3f8","#dfe8f1"]}};
 function sw7SeaNow(){try{const o=SW7_PAGES.find(x=>x.k==="home");return SW7_HSEA[sw7TermFor(null,o)]||"spring"}catch(e){return""}}
+/* 11/17 iPhone 模擬器測試：首頁上方寫「立冬」，卻跳「🍂 秋天到了」——換季小籤的季節照節氣算（立春、立夏、立秋、立冬起算，跟頂端的節氣同一套 tdTerm）；
+   首頁換哪一張季節圖（SW7_HSEA：立秋、處暑柳樹還綠，立冬才轉黃）、飄的東西、小帥那句（講的是圖上看到的）照舊跟著圖 */
+function sw7CardSea(t){return SW7_SPRING.has(t)?"spring":SW7_SUMMER.has(t)?"summer":SW7_WINTER.has(t)?"winter":t?"autumn":""}
+/* 11/17 Windows 測試員 D P3-1，開發者選單「小帥那句兼顧節氣」：立冬那幾天小籤寫「❄ 冬天到了」（照節氣），首頁圖照 11/9 的分界還是黃柳秋景（不動），
+   小帥卻說「柳樹都變黃了，葉子掉到河裡了！」像還在秋天。小籤的季節（照節氣）跟圖的季節不一樣的那幾天（立冬：冬／秋景；立秋、處暑：秋／夏景），
+   小帥改說兼顧兩邊的那句（節氣名＋圖上看到的）；兩邊一樣就照舊 SW7_SEA_TXT 的 say。圖、飄的東西不動。t＝頂端節氣、sea＝圖的季節（純函式） */
+const SW7_SEA_MIX={"winter>autumn":t=>"哇，"+t+"了！柳葉才剛轉黃，一片一片飄到河裡了！","autumn>summer":t=>"哇，"+t+"了！柳樹還綠綠的，橋下的荷花也還開著喔！"};
+function sw7SeaSay(t,sea){const T=SW7_SEA_TXT[sea],cs=sw7CardSea(t),f=cs&&cs!==sea?SW7_SEA_MIX[cs+">"+sea]:null;return f?f(t):T?T.say:""}
 function sw7SeaCss(){if(document.getElementById("sw7SeaCss"))return;const s=document.createElement("style");s.id="sw7SeaCss";s.textContent=`
 .sw7-turn{position:absolute;left:0;top:0;width:100%;height:auto;display:block;pointer-events:none;z-index:2}
 .sw7-pt{position:absolute;top:-4%;pointer-events:none;z-index:3;opacity:0;animation:sw7Fall var(--d,3.6s) ease-in var(--dl,0s) forwards}
@@ -196,7 +204,10 @@ function sw7SeaTurn(P,im0,newSrc){const sea=sw7SeaNow();if(!sea)return false;let
   ov.onload=go;ov.onerror=()=>{ov.src=im0.src};setTimeout(go,1500);ov.src=oldSrc;return true}
 /* 等開頭畫面（body.xqt-on）、載入畫面（#preov）關掉，畫面在前景才播；等太久（2 分鐘）就直接拿掉舊圖 */
 function sw7SeaWait(P,f){const t0=Date.now();const k=()=>{if(!P.isConnected)return;const busy=document.body.classList.contains("xqt-on")||document.getElementById("preov")||document.hidden;
-  if(!busy){setTimeout(f,350);return}if(Date.now()-t0>12e4){const o=P.querySelector(".sw7-turn");if(o)o.remove();return}setTimeout(k,400)};k()}
+  if(!busy&&!sw7SeaQ()){setTimeout(f,350);return}if(busy&&Date.now()-t0>12e4){const o=P.querySelector(".sw7-turn");if(o)o.remove();return}setTimeout(k,400)};k()}
+/* 11/17 iMac 模擬器（第 7 項追加）：換季小籤跟「把象棋千秋加到主畫面？」同時跳會互相蓋——排隊，一次一個：視窗、卡片、新手練習、主線電影、黑洞序章開著時小籤先等（不算進 2 分鐘），
+   02-shell 自動問加到主畫面那邊也會等小籤（.sw7-slip）收掉 */
+const sw7SeaQ=()=>{try{return!!document.querySelector(".modal,#sheet,#stqPg,#mnfPg,#bhxPg")}catch(e){return false}};
 function sw7SeaPlay(P,ov,sea){const T=SW7_SEA_TXT[sea],rm=sw7RM(),D=rm?900:2800,t0=performance.now();
   const step=now=>{if(!ov.isConnected)return;const u=Math.min(1,(now-t0)/D);
     if(rm)ov.style.opacity=String(1-u);else{const e=u<.5?2*u*u:1-Math.pow(-2*u+2,2)/2,r=(e*150).toFixed(1),m=`radial-gradient(circle at 50% 46%,transparent ${r}%,rgba(0,0,0,.55) calc(${r}% + 6%),#000 calc(${r}% + 16%))`;ov.style.webkitMaskImage=m;ov.style.maskImage=m}
@@ -204,9 +215,11 @@ function sw7SeaPlay(P,ov,sea){const T=SW7_SEA_TXT[sea],rm=sw7RM(),D=rm?900:2800,
   if(!rm){const kind=sea==="autumn"?"leaf":sea==="winter"?"frost":"petal";for(let i=0;i<26;i++){const d=document.createElement("i");d.className="sw7-pt "+kind;
     d.style.left=(Math.random()*100).toFixed(1)+"%";d.style.background=T.p[i%T.p.length];d.style.setProperty("--d",(3+Math.random()*2.2).toFixed(2)+"s");d.style.setProperty("--dl",(Math.random()*1.6).toFixed(2)+"s");
     d.style.setProperty("--dx",((Math.random()-.5)*120).toFixed(0)+"px");d.style.setProperty("--dy",(40+Math.random()*45).toFixed(0)+"vh");d.style.setProperty("--rt",((Math.random()-.5)*720).toFixed(0)+"deg");P.append(d);setTimeout(()=>d.remove(),7600)}}
-  const sl=document.createElement("div");sl.className="sw7-slip";sl.setAttribute("role","status");sl.innerHTML=`<b>${T.e} ${esc(T.n)}</b><q>${esc(T.q)}</q><small>${esc(T.s)}</small>`;   /* 開發者 11/9「拿掉底下的白話文，味道整個變調」：小籤只留古詩文和出處 */
+  let C=T;try{C=SW7_SEA_TXT[sw7CardSea(sw7TermFor(null,SW7_PAGES.find(x=>x.k==="home")))]||T}catch(e){}   /* 11/17：小籤的季節照節氣（sw7CardSea） */
+  let say=T.say;try{say=sw7SeaSay(sw7TermFor(null,SW7_PAGES.find(x=>x.k==="home")),sea)||T.say}catch(e){}   /* 11/17 D P3-1：小帥那句兼顧節氣（sw7SeaSay） */
+  const sl=document.createElement("div");sl.className="sw7-slip";sl.setAttribute("role","status");sl.innerHTML=`<b>${C.e} ${esc(C.n)}</b><q>${esc(C.q)}</q><small>${esc(C.s)}</small>`;   /* 開發者 11/9「拿掉底下的白話文，味道整個變調」：小籤只留古詩文和出處 */
   const off=()=>{sl.classList.remove("on");setTimeout(()=>sl.remove(),800)};sl.onclick=off;P.append(sl);setTimeout(()=>sl.classList.add("on"),rm?100:900);setTimeout(off,rm?6500:8000);
-  setTimeout(()=>{try{if(typeof BOT!=="undefined"&&BOT&&BOT.say)BOT.say(T.say,5);else window.dispatchEvent(new CustomEvent("xq-bot-said",{detail:T.say}))}catch(e){}},rm?400:2600)}
+  setTimeout(()=>{try{if(typeof BOT!=="undefined"&&BOT&&BOT.say)BOT.say(say,5);else window.dispatchEvent(new CustomEvent("xq-bot-said",{detail:say}))}catch(e){}},rm?400:2600)}
 /* 開發者 11/9「除了白天和晚上，也會有傍晚的夕陽和日出」：首頁有畫好的季節就換日出、夕陽圖（home_<季>_dawn／_dusk，跟季節圖同構圖）。
    日出 5:00～7:30（卯時）、夕陽 16:30～18:30（酉時前後）；還沒畫的季節照舊用季節圖＋淡淡的晨昏色。換圖時不再疊 ② 的晨昏色（圖本身已經是晨昏） */
 /* 有畫好晨昏圖的「朝代_季節」（宋＝只寫季節）。11/9 開發者「繼續做其他朝代春夏冬日出夕陽」：12 朝 × 四季陸續補齊，審過的才加進來 */

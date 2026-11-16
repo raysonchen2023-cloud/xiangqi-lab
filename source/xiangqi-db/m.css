@@ -484,7 +484,7 @@ html[data-era=ming] .topbar,html[data-era=qing] .topbar{border-bottom-width:4px}
 .rp-ph{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:10px}.rp-ph>div{background:var(--bg);border:1px solid var(--line);border-radius:12px;padding:8px 10px;display:flex;flex-direction:column;gap:2px}.rp-ph b{font-size:22px}.rp-ph i{display:block;height:5px;border-radius:3px}
 .rp-q{display:flex;flex-wrap:wrap;gap:6px 12px;font-size:13px;margin-bottom:6px}.rp-q b{font-size:17px;margin-right:2px}
 .rp-t{padding:9px 12px;border-radius:12px;background:var(--bg);margin:6px 0;border-left:4px solid var(--line);font-size:14px}.rp-t b{margin-right:6px}.rp-t.bad{border-left-color:#C0392B}.rp-t.good{border-left-color:#C27C0E}.rp-t .go{float:right;color:var(--accent);font-size:13px}.rp-t[data-p]{cursor:pointer}
-.toast{position:fixed;left:50%;bottom:calc(90px + var(--safeB));transform:translateX(-50%);background:#000d;color:#fff;padding:9px 16px;border-radius:999px;font-size:14px;z-index:70;max-width:90vw;text-align:center;box-sizing:border-box;word-break:keep-all;overflow-wrap:anywhere;text-wrap:balance}   /* 11/13 換行規矩（00-util toastFit）：要換行時只在標點、空白處斷，兩行拉平均 */
+.toast{position:fixed;left:50%;bottom:calc(90px + var(--safeB));transform:translateX(-50%);background:#000d;color:#fff;padding:9px 16px;border-radius:999px;font-size:14px;z-index:70;max-width:90vw;text-align:center;box-sizing:border-box;word-break:keep-all;overflow-wrap:anywhere;text-wrap:balance;pointer-events:none}   /* 11/13 換行規矩（00-util toastFit）：要換行時只在標點、空白處斷，兩行拉平均 */
 /* 清單 */
 .search{display:flex;gap:8px;padding:10px 12px 6px}
 .search input{flex:1;min-width:0;padding:10px 14px;border-radius:999px;border:1px solid var(--line);background:var(--card)}

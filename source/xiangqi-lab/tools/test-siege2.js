@@ -188,7 +188,7 @@ test("第二期入口：觀星臺渾儀、天頂黑洞、星槎偏航、舊選�
   assert.ok(X("07bht-td.js").includes('st.td.mode!=="gate-siege-v2"'),"舊塔防畫面不畫 v2 的盤");assert.ok(X("07bht-td.js").includes("sg2Retired(st)"));
   assert.ok(X("07bhw-wheel.js").includes('function whlOpen(){if(typeof SG2G!=="undefined"&&typeof gsvSelect==="function"){gsvSelect('));
   assert.ok(X("07bhtl-tdlearn.js").includes('function bhtlNeed(){if(typeof SG2G!=="undefined")return false;'));
-  assert.ok(X("07bh-blackhole.js").includes('sg2Drift(k,cover))return;gsvSelect(k,cover);return}'));
+  assert.ok(X("07bh-blackhole.js").includes('if(sg2Drift(k,cover)){const R=store.get("bhRet",null);if(!R||!(+R.at>=t0))bhLdOff();return}bhLdOff()}gsvSelect(k,cover);return}'));   /* 11/17：偏航開局前先蓋載入畫面（bhLd），沒開成就收掉；見 test-bh-loading-1117.js */
   assert.ok(X("07bhg-gatesiege.js").includes('if(typeof sg2Select==="function"&&typeof SG2G!=="undefined")return sg2Select(k,cover);'))});
 
 test("招式（11/16 開發者）：每位學會的招全部都能用、不限 4 招；那位的棋子在盤上都倒了就不能放（選單），回營復活後又能用",()=>{

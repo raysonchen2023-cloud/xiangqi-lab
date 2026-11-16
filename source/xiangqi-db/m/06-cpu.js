@@ -426,6 +426,10 @@ function parkDraw(host,bd,board,o,ex){
     const pv=XQPark3D.create(host,{giant:!!ex.giant,   /* hspx（開發者 11/12）：黑洞星樞棋局的巨盤模式（07bh-blackhole.js） */view:ex.giant?null:store.get("parkView","")||null,intro:store.get("parkView","")||ex.quietMate?null:pkIntroKey(ex),   /* 11/11：玩家存過的視角一開始就用；沒存過的手機直式 park3d 用 topfit（俯視＋拉近） */arena:ex.arena||null,gate:ex.gate||null,bg:ex.bg||null,bridge:!!ex.bridge,ground:ex.ground||null,era:ex.era||null,indoor:!!ex.indoor,   /* 11/11：車輪戰棋館＝明朝家具、室內（不放園子的樹和道具） */   /* 11/11：首頁橋上石桌（07y hbBridge）＝橋上家具＋橋面地面；換場景靠 bg 不同就會重建 */onTap:i=>{if(!pkGateEat())pkSwTap(ex,i)},onInfo:k=>{if(!pkGateEat())parkInfo(k)},onDestroy:()=>{if(PARK&&PARK.v===pv){PARK=null;botVis(true)}}});
     if(!pv){toast("這台裝置沒辦法顯示 3D，先用棋盤模式");store.set("park3d",false);return}PARK={host,v:pv,era:store.get("era","classic"),bg:ex.bg||null,ground:ex.ground||null,ik:pkIntroKey(ex)};try{pkGateWatch(pv)}catch(e){}parkUi(host,pv);setTimeout(()=>{try{if(!ex.quietMate)pv.say(`我是${BOTN()}，幫你加油！`,2.6);if(ex.oppHello)setTimeout(()=>pv.oppSay(ex.oppHello,2.6),1400)}catch(e){}},700)}
   /* 意見回饋 417：園子上方標出朝代和那個朝代對園子的叫法（例如「唐朝・園林」「漢朝・苑囿」） */
+  /* 11/17 測試員 D（英文、手機直式 376 寬）：「🔭 Star Terrace · Omen of the Day」「🌌 Phantom star gate · Ziyuan」場名置中又不換行（m.css .pkname nowrap、字距 .14em），寬約 324px，壓住右上「👁 Eye level」視角鈕（.pkview，約 96px 寬）。
+     只在英文介面：場名中心往左挪 52px、寬度上限讓出右邊鈕的位置（100% - 124px），字縮一點、字距收小，太長就換行；中文版面不動。橫向（m.css 1375 把場名移到左邊 top:56px）照舊靠左 */
+  if(typeof document.getElementById==="function"&&!document.getElementById("pkEnCss")){const s=document.createElement("style");s.id="pkEnCss";s.textContent=`html[lang^=en] .pkname{left:calc(50% - 52px);width:max-content;max-width:calc(100% - 124px);box-sizing:border-box;white-space:normal;text-align:center;letter-spacing:.02em;font-size:12.5px;line-height:1.35;padding:3px 12px;border-radius:14px}
+@media (orientation:landscape) and (max-height:600px){html[lang^=en] .pkname{left:10px;max-width:calc(100% - 20px)}}`;document.head.append(s)}
   {let tg=host.querySelector(".pkname");if(!tg){tg=document.createElement("div");tg.className="pkname";if(getComputedStyle(host).position==="static")host.style.position="relative";host.append(tg)}const k=store.get("era","classic");tg.textContent=ex.bgName||((k==="classic"?"經典":eraLabel(k))+"・"+(PW[k]||"園子"));tg.hidden=false}
   /* 回饋 847（讀螢幕盲棋）：3D 園子沒辦法逐格讀；給讀螢幕的人一顆看不見的按鈕，按了跟頂欄「回棋盤模式」一樣，換回可以逐格點選的平面棋盤 */
   if(!host.querySelector(".ax-park")){const ab=document.createElement("button");ab.type="button";ab.className="ax-sr ax-park";ab.textContent="改用平面棋盤，讀螢幕可以逐格點選";
@@ -455,7 +459,7 @@ function pkSwTap(ex,i){const L0=PARK&&PARK.last,s0=L0&&L0.o&&L0.o.sel>=0?L0.o.se
   try{const L1=PARK&&PARK.last;if(!L1||L1===L0||i===s0||(L1.o&&(L1.o.sel>=0||L1.o.pre))||(L0&&L0.o&&L0.o.pre))return;   /* 第 13 輪 F4：排好預走、或點一下取消預走，都不算點偏（不冒「先點你的棋子」） */
     const n=+store.get("pkSwMiss",0)||0,host=PARK.host,b=host&&host.querySelector(".pk2d");if(n>=3||Date.now()-PKSW_T<8000||!b||b.hidden)return;
     PKSW_T=Date.now();store.set("pkSwMiss",n+1);let tp=host.querySelector(".pk2d-tip");if(tp)tp.remove();
-    tp=document.createElement("div");tp.className="pk2d-tip";tp.setAttribute("role","status");tp.innerHTML="先點<b>你的棋子</b>，再點<b>綠點</b>走過去。<br>看不清楚？按下面「▦ 平面棋盤」，棋子比較大。";host.append(tp);
+    tp=document.createElement("div");tp.className="pk2d-tip";tp.setAttribute("role","status");tp.innerHTML=(/^en/.test((document.documentElement||{}).lang||"")?"先點你的棋子，再點綠點走過去。":"先點<b>你的棋子</b>，再點<b>綠點</b>走過去。")+"<br>看不清楚？按下面「▦ 平面棋盤」，棋子比較大。";host.append(tp);   /* 11/17 測試員 D 第 7 輪 P2-3：英文時第一句不拆成 <b> 好幾段（翻譯器一段一段查，拆開就翻不出來），整句交給字典；中文照舊粗體 */
     b.classList.remove("pulse");void b.offsetWidth;b.classList.add("pulse");setTimeout(()=>{tp.classList.add("out");b.classList.remove("pulse");setTimeout(()=>tp.remove(),450)},5000)}catch(e){}}
 // 意見回饋 241：在公園裡按鈕換成「▦」（回棋盤模式），在棋盤模式是「🌳」（去公園）
 const parkIcon=()=>parkOn()?"▦":"🌳",parkLabel=()=>parkOn()?"回棋盤模式":"去園子下棋（3D）";

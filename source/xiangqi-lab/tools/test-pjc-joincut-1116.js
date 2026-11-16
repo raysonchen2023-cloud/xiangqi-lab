@@ -86,7 +86,7 @@ test("有過場資料的站（漢）：解開那一題 → 先播過場（三張
   E.clk.tick(200); assert.ok(E.pg(), "2.5 秒後開始播過場"); assert.equal(E.modals.length, 0, "過場播的時候還沒出加入卡");
   await flush();
   const seen = new Set(), subs = [];
-  for (let t = 0; t < 12000; t += 100) { E.clk.tick(100); await flush(); const p = E.pg(); if (!p) break;
+  for (let t = 0; t < 16000; t += 100) { E.clk.tick(100); await flush(); const p = E.pg(); if (!p) break;
     for (const e of p.walk()) if (e._cls.has("pjc-im")) seen.add(e.style.backgroundImage);
     const s = E.sub(); if (s && s.textContent && subs[subs.length - 1] !== s.textContent) subs.push(s.textContent);
     if (E.modals.length && p.classList.contains("on")) assert.fail("過場還在播就出了加入卡（淡出時才可以）") }
@@ -95,7 +95,7 @@ test("有過場資料的站（漢）：解開那一題 → 先播過場（三張
   E.clk.tick(3000); await flush();
   assert.equal(E.pg(), null, "播完拿掉");
   assert.equal(E.modals.length, 1, "加入卡出一次"); assert.ok(E.modals[0].html.includes("駱躍梅加入了"), "是原本的加入卡");
-  assert.ok(E.modals[0].at >= 2500 + 8000 && E.modals[0].at <= 2500 + 9500, "全長約 8 秒（加入卡在 " + E.modals[0].at + "ms）");
+  assert.ok(E.modals[0].at >= 2500 + 12000 && E.modals[0].at <= 2500 + 13500, "全長約 12 秒（11/17 每張拉長到 3.8～4.3 秒；加入卡在 " + E.modals[0].at + "ms）");
   E.clk.tick(30000); await flush(); assert.equal(E.modals.length, 1, "不會再出第二張");
 });
 
@@ -144,7 +144,7 @@ test("直接叫 pjcPlay：onDone 只呼叫一次；點畫面跳下一張；最�
 test("圖 404：那一張跳過；三張都 404 直接結束，加入卡照出、不卡住", async () => {
   let E = env({ img: { han_j2: "404" } }); const seen = new Set(); let n = 0;
   E.X.pjcPlay("han", ["x_miaogirl"], () => n++);
-  for (let t = 0; t < 12000 && E.pg(); t += 100) { E.clk.tick(100); await flush(); const p = E.pg(); if (p) for (const e of p.walk()) if (e._cls.has("pjc-im")) seen.add(e.style.backgroundImage) }
+  for (let t = 0; t < 16000 && E.pg(); t += 100) { E.clk.tick(100); await flush(); const p = E.pg(); if (p) for (const e of p.walk()) if (e._cls.has("pjc-im")) seen.add(e.style.backgroundImage) }
   assert.ok(!seen.has("url(data/ptyjoin/han_j2.webp)"), "第 2 張 404 不顯示"); assert.ok(seen.has("url(data/ptyjoin/han_j3.webp)"), "接著播第 3 張"); assert.equal(n, 1);
 
   E = env({ img: { han_j1: "404", han_j2: "404", han_j3: "404" } });
@@ -158,7 +158,7 @@ test("圖 404：那一張跳過；三張都 404 直接結束，加入卡照出�
 
 test("第 2 張：推近案面後浮出那一題（xs-han-0）起始局面的棋盤；拿不到題目就只推鏡、不壞", async () => {
   let E = env(); E.X.pjcPlay("han", ["x_miaogirl"], () => { }); await flush();
-  E.clk.tick(2600 + 900); await flush(); assert.equal(E.doc.byCls("pjc-bd").length, 0, "推鏡頭的時候棋盤還沒出來");
+  E.clk.tick(3800 + 900); await flush(); assert.equal(E.doc.byCls("pjc-bd").length, 0, "推鏡頭的時候棋盤還沒出來（11/17：第 1 張 3.8 秒）");
   E.clk.tick(800); await flush();
   assert.equal(E.doc.byCls("pjc-bd").length, 1, "推近後浮出棋盤"); assert.equal(E.boards.length, 1);
   const b = E.boards[0]; assert.equal(b[4], "k"); assert.equal(b[5], "a"); assert.equal(b[13], "a"); assert.equal(b[29], "N"); assert.equal(b[38], "N"); assert.equal(b[62], "p"); assert.equal(b[85], "K");
@@ -169,21 +169,21 @@ test("第 2 張：推近案面後浮出那一題（xs-han-0）起始局面的棋
   for (const pz of [null, "throw"]) {
     E = env({ pz }); let n = 0; E.X.pjcPlay("han", ["x_miaogirl"], () => n++); await flush();
     E.clk.tick(4500); await flush(); assert.equal(E.doc.byCls("pjc-bd").length, 0, "沒有題目：不畫棋盤"); assert.ok(E.pg(), "照樣在播");
-    E.clk.tick(8000); await flush(); assert.equal(n, 1, "照樣播完");
+    E.clk.tick(10000); await flush(); assert.equal(n, 1, "照樣播完");
   }
 });
 
 test("陪你走的人：ptyLook；就是加入的那位時改用齊轍", async () => {
   let E = env({ look: "x_spiritgirl" }); E.db.party.m.x_spiritgirl = { xp: 0, at: 0, how: "old" };
-  E.X.pjcPlay("han", ["x_miaogirl"], () => { }); E.clk.tick(2700); await flush();
+  E.X.pjcPlay("han", ["x_miaogirl"], () => { }); E.clk.tick(3900); await flush();
   assert.ok(E.doc.byCls("pjc-who").some(e => e.style.backgroundImage.includes("x_spiritgirl")), "陪你走的是田飛燕");
-  E = env(); E.X.pjcPlay("han", ["x_miaogirl"], () => { }); E.clk.tick(2700); await flush();
+  E = env(); E.X.pjcPlay("han", ["x_miaogirl"], () => { }); E.clk.tick(3900); await flush();
   assert.ok(E.doc.byCls("pjc-who").some(e => e.style.backgroundImage.includes("x_swordboy")));
 });
 
 test("減少動態：不推鏡頭（不設 transform），照樣播完", async () => {
   const E = env({ rm: true }); let n = 0; E.X.pjcPlay("han", ["x_miaogirl"], () => n++);
-  for (let t = 0; t < 12000 && E.pg(); t += 100) { E.clk.tick(100); await flush(); for (const e of E.doc.byCls("pjc-im")) assert.ok(!e.style.transform, "沒有推拉") }
+  for (let t = 0; t < 16000 && E.pg(); t += 100) { E.clk.tick(100); await flush(); for (const e of E.doc.byCls("pjc-im")) assert.ok(!e.style.transform, "沒有推拉") }
   assert.equal(n, 1);
 });
 

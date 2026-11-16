@@ -48,6 +48,10 @@ const SG2=(()=>{
   function atkAt(S,f){const p=S.b[f];if(!p)return 0;const B=bxOf(S,p),P=up(p);return S.a[f]+(P==="P"&&crossed(f,sd(p))?(B&&B.pawn||PAWN_X):0)+(B&&B.a&&B.a[P]||0)+(S.ax&&S.ax[f]||0)}
   function defAt(S,q){const p=S.b[q];if(!p)return 0;const side=sd(p),B=bxOf(S,p),P=up(p),ln=lined(S,q),base=Math.max(0,S.d[q])+(S.g[q]||0)+(ln?LINE_X+(ln==="B"&&B&&B.lineB||0):0)+(B&&B.d&&B.d[P]||0)+(B&&B.pal&&P!=="K"&&inPal(q,side)?B.pal:0);if(P==="K")return base;
     const k=kingOf(S.b,side),near=inPal(q,side)||(k>=0&&nb4(k).includes(q));return near?Math.round(base*GUARD_K):base}
+  /* 11/17 iMac 第 17、18 項：防禦力現值換成 d 時的實際防禦（含護線、護帥、天賦、招式加防；同 defAt）。攻擊預覽「防 31→13」、資料卡「原本」、打不動的跳字都用它，不改狀態 */
+  function defWith(S,q,d){const o=S.d[q];S.d[q]=d;try{return defAt(S,q)}finally{S.d[q]=o}}
+  /* 有沒有吃到護帥 ×1.2（資料卡說明用；跟 defAt 同一個判斷） */
+  function guarded(S,q){const p=S.b[q];if(!p||up(p)==="K")return false;const side=sd(p),k=kingOf(S.b,side);return inPal(q,side)||(k>=0&&nb4(k).includes(q))}
   /* 試算一次攻擊（不改狀態）：ok＝打得動；dmg＝目標扣多少；share＝{q,dmg} 護帥分擔；kill＝目標會死；down＝打不動時對方防禦降多少；by＝合力的幫手（集火）。solo＝招式打的，不算集火 */
   function calc(S,f,t,solo){const by=solo?[]:support(S,f,t),A=atkAt(S,f)+by.reduce((s,q)=>s+atkAt(S,q),0),D=defAt(S,t);if(A<D)return{ok:false,down:Math.floor(A/2),A,D,kill:false,by};
     let dmg=Math.max(1,Math.round(A-D/2)),share=null;const v=S.b[t];
@@ -118,7 +122,7 @@ const SG2=(()=>{
     let best=sc1[0][1];if(depth<=1)return best;NODES=0;T_END=Date.now()+TIME_MAX;
     for(let d=2;d<=depth;d++){try{const r=search(S,side,d,-Infinity,Infinity,L);if(r.m)best=r.m;if(r.v>=WIN-20)break}catch(e){if(e===STOP)break;throw e}}
     return best}
-  return{LINE_X,FOCUS_N,lined,support,KEYS,sqOf,pseudo,legal,safe,threats,inCheck,setChk,get CHK(){return CHK},facing,BASE,GROW,DIFF,RND_MAX,PAWN_X,GUARD_K,G,unit,mkState,put,clear,clone,calc,play,stays,atkAt,defAt,inPal,nb4,kingOf,evalS,decide,search,get NODES(){return NODES}}})();
+  return{defWith,guarded,LINE_X,FOCUS_N,lined,support,KEYS,sqOf,pseudo,legal,safe,threats,inCheck,setChk,get CHK(){return CHK},facing,BASE,GROW,DIFF,RND_MAX,PAWN_X,GUARD_K,G,unit,mkState,put,clear,clone,calc,play,stays,atkAt,defAt,inPal,nb4,kingOf,evalS,decide,search,get NODES(){return NODES}}})();
 /* ---------- 星門圍城 v2 對局（mode "gate-siege-v2"）：開局、走子、回合結算、星門援軍、38 招、電腦出步 ----------
    關卡擺法、波次、後備、補給點照 07bhg-gatesiege.js 的 GSV（GSV.lvOf／plan）；這裡不碰畫面，node 測試用 vm 把兩支一起載。
    td.s＝SG2 的狀態（跟 P.board 同步，存檔就靠它：local.js 重建盤面時直接照 td.s，不重放棋譜）。
@@ -206,7 +210,7 @@ const SG2G=(()=>{
   const TALC={
     x_swordboy:[{id:"q_tl",nm:"鐵輪",cost:600,d:"俥的攻擊力 +4"},{id:"q_cq",nm:"長驅",cost:800,d:"俥直走 3 格以上去攻擊，這一下攻擊力 +6"},{id:"q_lz",nm:"輪轉不息",cost:600,d:"俥打死敵子，齊轍再回 6 靈"},{id:"q_sr",nm:"雙刃破甲",cost:800,d:"一劍破甲每局可以用 2 次"}],
     /* 11/16 開發者「寫現在的就好」：天賦說明只寫點亮後的效果，不寫「改…（原本…）」 */
-    x_miaogirl:[{id:"l_tx",nm:"踏雪",cost:600,d:"傌的體力 +6"},{id:"l_hm",nm:"回馬槍",cost:800,d:"傌攻擊沒打死時，對方防禦再降 3"},{id:"l_cy",nm:"草原之風",cost:600,d:"駱躍梅每回合多回 2 靈"},{id:"l_sy",nm:"雙影",cost:800,d:"紅馬跳影攻擊力八折"}],
+    x_miaogirl:[{id:"l_tx",nm:"踏雪",cost:600,d:"傌的體力 +6"},{id:"l_hm",nm:"回馬槍",cost:800,d:"傌攻擊沒打死時，對方防禦再降 3"},{id:"l_cy",nm:"草原之風",cost:600,d:"駱躍梅每回合多回 2 靈"},{id:"l_sy",nm:"雙影",cost:800,d:"紅馬跳影的攻擊力從六折提高到八折"}],   /* 11/17 測試員 D（P3-4）：「八折」看不出是加成還是懲罰 → 寫出前後（luo2：沒點 .6、點亮 .8） */
     x_shuai:[{id:"s_zz",nm:"坐鎮",cost:600,d:"帥的體力 +15"},{id:"s_dx",nm:"定心",cost:600,d:"上一步被將軍，這一回合帥防禦 +6"},{id:"s_dd",nm:"典當有道",cost:800,d:"沈方庭回體力的招多回 4"},{id:"s_jg",nm:"九宮令",cost:800,d:"九宮裡的其他己子防禦再 +4"}],
     x_shi:[{id:"t_tw",nm:"鐵衛",cost:600,d:"仕的防禦 +5"},{id:"t_hz",nm:"以身護主",cost:800,d:"仕替帥擋傷害時擋三分之二"},{id:"t_sj",nm:"銅鎖加固",cost:600,d:"銅鎖止步的定身多 1 回合"},{id:"t_dz",nm:"盾陣回靈",cost:600,d:"盾陣回靈 10"}],
     x_spiritgirl:[{id:"n_qy",nm:"青玉",cost:600,d:"相的防禦 +5"},{id:"n_sh",nm:"雙燕護線",cost:800,d:"相護到的子（士相護線）防禦再 +5"},{id:"n_dk",nm:"渡口茶香",cost:600,d:"渡口清茶多回 6"},{id:"n_yg",nm:"燕歸",cost:800,d:"飛燕還巢回到底線的子再回 8 體力"}],
@@ -255,7 +259,7 @@ const SG2G=(()=>{
   function spAdd(td,ck,n){if(!ck||!td.sp||td.sp[ck]==null)return 0;const a=Math.max(0,Math.min(n,td.spMax[ck]-td.sp[ck]));td.sp[ck]+=a;return a}
   /* 招式打一下（攻擊者不移動）：mul＝攻擊力倍率。回 calc 的結果 */
   function hit(td,f,t,mul){const S=td.s,A=SG2.atkAt(S,f);S.ax={[f]:Math.round(A*(mul||1))-A};const c=SG2.calc(S,f,t,true);S.ax=null;const v=S.b[t];
-    if(!c.ok){S.d[t]=Math.max(0,S.d[t]-c.down);ev(td,{k:"att",f,t,ok:0,down:c.down,sk:1});return c}
+    if(!c.ok){S.d[t]=Math.max(0,S.d[t]-c.down);ev(td,{k:"att",f,t,ok:0,down:c.down,sk:1,D0:c.D,D1:SG2.defAt(S,t),A:c.A});return c}
     if(c.share){S.h[c.share.q]-=c.share.dmg;if(S.h[c.share.q]<=0)gone(td,c.share.q)}
     S.h[t]-=c.dmg;ev(td,{k:"att",f,t,ok:1,dmg:c.dmg,sh:c.share,sk:1});if(S.h[t]<=0){const by=S.b[f];gone(td,t);if(sd(v)==="b"){spAdd(td,ckOf(td,by),KILL_SP);if(up(by)==="C"&&hasT(td,"r_jl"))spAdd(td,"x_martialgirl",8)}}return c}
   /* 一顆子被打死：紅方的記到 lost（回營用），從盤上拿掉 */
@@ -273,7 +277,7 @@ const SG2G=(()=>{
     if(by==="r"&&o.kill&&up(p)==="C"&&hasT(td,"r_jl"))spAdd(td,"x_martialgirl",8);
     if(by==="r"&&o.att&&!o.kill&&up(p)==="N"&&hasT(td,"l_hm")&&S.b[t]){S.d[t]=Math.max(0,S.d[t]-3);ev(td,{k:"tal",id:"l_hm",sq:t})}
     const m={f,t,by,cn,cap:o.kill?v:null,ck:false,st:o.att&&!o.moved?1:0};if(o.att){m.dmg=o.dmg||0;m.down=o.down||0;if(o.share)m.sh=o.share}
-    ev(td,o.att?{k:"att",f,t,by,ok:o.ok?1:0,dmg:o.dmg,down:o.down,sh:o.share,kill:o.kill?1:0,p:v}:{k:"mv",f,t,by});
+    ev(td,o.att?Object.assign({k:"att",f,t,by,ok:o.ok?1:0,dmg:o.dmg,down:o.down,sh:o.share,kill:o.kill?1:0,p:v},o.ok||!S.b[t]?{}:{D0:pre.D,D1:SG2.defAt(S,t),A:pre.A}):{k:"mv",f,t,by});   /* 11/17 iMac 18：打不動時記下對方實際防禦的前後（D0→D1，含護線、護帥）跟這一下的攻擊力，畫面跳字、資料卡、提示都用同一個數 */
     const at=o.moved?t:f;
     if(by==="r"&&td.buf.bu3&&td.buf.bu3.n>0&&td.buf.bu3.until>=R&&up(p)==="P"&&o.moved&&RW(t)<RW(f)){td.buf.bu3.n--;heal(td,t,4,"跑腿賺錢")}
     if(by==="b"){const c=td.ctl;if(o.moved&&c.trap&&c.trap.until>=R&&c.trap.sqs.includes(t)){c.frz.push({id:mid,until:R+1});ev(td,{k:"trap",sq:t})}
@@ -421,7 +425,11 @@ const SG2G=(()=>{
   /* 攻擊預覽（畫面：選了己子後，每個打得到的敵子上標「−扣多少／擊破／打不動」）：跟 play 同一套加攻（直路衝鋒） */
   function pv(P,f,t){const td=P.td,S=td.s,R=td.rnd,p=S.b[f],v=S.b[t];if(!p||!v)return null;const ax={};
     if(sd(p)==="r"){if(td.buf.qi2&&td.buf.qi2.until>=R&&up(p)==="R")ax[f]=(ax[f]||0)+Math.min(10,2*straight(f,t))}
-    S.ax=ax;const c=SG2.calc(S,f,t);S.ax=null;return c}
+    S.ax=ax;const c=SG2.calc(S,f,t);S.ax=null;
+    if(!c.ok){let d=Math.max(0,S.d[t]-c.down);if(sd(p)==="r"&&up(p)==="N"&&hasT(td,"l_hm"))d=Math.max(0,d-3);c.D1=SG2.defWith(S,t,d)}   /* 11/17 iMac 17：打不動的預覽寫「防 現在→打完」，現在＝c.D＝資料卡的防禦（同一個 defAt），打完＝實際會降到多少（含回馬槍） */
+    return c}
+  /* 這顆子開局（部署、援軍、回營）時的防禦力現值：紅方照那種棋子所屬角色的等級、黑方照關卡等級和難度倍率（同 boot／spawn／put）。資料卡看「被打降了多少」用 */
+  function defBase(td,q){const S=td.s,p=S.b[q];if(!p)return 0;return sd(p)==="r"?SG2.unit(p,lvSq(td.sq,up(p)),1).def:SG2.unit(p,td.elv,(SG2.DIFF[td.diff]||SG2.DIFF[2]).mul).def}
   /* ===== 星樞的 3 招（story/169，開發者照准）：一池靈力（開局 20、每回合 +4、吃子 +6、上限 100）；易不放、中最多每 3 回合一招、難每回合可放（照冷卻、靈力）。
      電腦出步之前先看值不值得放，依序：回氣（車馬炮體力不到一半）→ 星落（打得死你一顆子，或扣得到你的俥傌炮）→ 星樞護盾（你下一步打得死它一顆子，或打得到將旁邊的子） ===== */
   const ESP0=20,ERG=4,ESP_MAX=100;
@@ -448,7 +456,7 @@ const SG2G=(()=>{
   const LOST2=2;
   function stars(td){const w=td.over&&td.over.w==="r";return[w?1:0,w&&(td.lostN||0)<=LOST2?1:0,w&&td.rnd<td.r3?1:0]}
   const goals=td=>[{t:"打倒敵方將帥（體力歸零或將死）"},{t:"被吃不超過 "+LOST2+" 顆子"},{t:td.r3+" 回合內贏"}];
-  return{ESK,ESP0,ERG,enemySkill,TALC,TALM,TAL_CK,TAL_MAX,talNorm,talSpent,talWhy,talNeedL,PC_OF,GRP,ORD,ELVM,r3Of,nameOf,lockWhy,MODE,MV,SK,SKM,SP0,RG,KILL_SP,CUT_SP,spMaxOf,spOf,ckOf,DEP_COST,DEP_MAX,ELV,R3,skOfSq,skPick,boot,legal,play,roundEnd,spawn,fore,cast,why,targets,costOf,decide,rebuild,check,stars,goals,pv,hit,horseFoes,lineFoes,canT,horseT,legBlocked,legSpot,guardedBy,dirSq}})();
+  return{defBase,ESK,ESP0,ERG,enemySkill,TALC,TALM,TAL_CK,TAL_MAX,talNorm,talSpent,talWhy,talNeedL,PC_OF,GRP,ORD,ELVM,r3Of,nameOf,lockWhy,MODE,MV,SK,SKM,SP0,RG,KILL_SP,CUT_SP,spMaxOf,spOf,ckOf,DEP_COST,DEP_MAX,ELV,R3,skOfSq,skPick,boot,legal,play,roundEnd,spawn,fore,cast,why,targets,costOf,decide,rebuild,check,stars,goals,pv,hit,horseFoes,lineFoes,canT,horseT,legBlocked,legSpot,guardedBy,dirSq}})();
 /* 接線：local.js 只認 window.XQ_TD。v2 的盤由 SG2G 全權處理（own＝這盤歸 v2 管：local.js 走子、合法步、電腦出步、重建都改問這裡） */
 if(typeof window!=="undefined"&&window.XQ_TD&&!window.XQ_TD.sg2){const O=window.XQ_TD,isV=td=>!!(td&&td.mode===SG2G.MODE);
   window.XQ_TD=Object.assign({},O,{sg2:1,own:P=>!!(P&&isV(P.td)),
@@ -461,11 +469,13 @@ if(typeof window!=="undefined"&&window.XQ_TD&&!window.XQ_TD.sg2){const O=window.
    SG2_SEL＝現在選中的己子（照 08b-cpugame.js tap 的同一套規則跟著算，所以平面、3D 都對得上）；SG2_PICK＝最後點的那顆（看攻防） */
 let SG2_SEL=-1,SG2_PICK=-1,SG2_SEEN={};
 function sg2Css(){if(typeof document==="undefined"||document.getElementById("sg2Css"))return;const s=document.createElement("style");s.id="sg2Css";s.textContent=`
+html[lang^=en] .sg2-ex{margin-left:.3em}
+html[lang^=en] .gsv-ln button[data-x="fore"]{white-space:normal;line-height:1.25;padding:4px}
 .gsv-mk.hp{width:calc(var(--c)*.74);height:max(3px,calc(var(--c)*.09));margin-top:calc(var(--c)*.5);border-radius:3px;background:rgba(0,0,0,.55);border:1px solid rgba(255,255,255,.55);overflow:hidden;justify-content:flex-start}
 .gsv-mk.hp i{display:block;height:100%;background:#3ccf6e}
 .gsv-mk.hp.en i{background:#ff5a4a}
 .gsv-mk.hp.lo i{background:#ffb000}
-.gsv-mk.pv{font-size:11px;line-height:1.3;padding:0 4px;border-radius:6px;color:#fff;margin:calc(var(--c)*-.42) 0 0 calc(var(--c)*.46);white-space:nowrap;z-index:2;box-shadow:0 1px 3px rgba(0,0,0,.6)}
+.gsv-mk.pv{font-size:11px;line-height:1.3;padding:0 4px;border-radius:6px;color:#fff;margin:0;white-space:nowrap;z-index:2;box-shadow:0 1px 3px rgba(0,0,0,.6)}
 .sg2-inf{font-size:12px;line-height:1.35;margin:2px 0 1px;color:#f1e7cf;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;min-height:1.35em}.sg2-inf b{color:#FFE08A}
 .sg2-skw{overflow-y:auto;max-height:calc(var(--gsvMeH,190px) - 100px);margin-top:3px;-webkit-overflow-scrolling:touch}
 .sg2-skr{display:flex;align-items:stretch;gap:4px;margin-top:3px}.sg2-skr>span{flex:0 0 2.7em;font-size:11px;display:flex;align-items:center;color:#cfc4ee;line-height:1.1}
@@ -474,7 +484,37 @@ function sg2Css(){if(typeof document==="undefined"||document.getElementById("sg2
 .sg2-talc{margin:6px 0 10px}.sg2-tal{display:block;width:100%;text-align:left;font:inherit;color:#f6eedd;background:linear-gradient(180deg,#2c2450,#171433);border:1.5px solid #8f7bd8;border-radius:11px;padding:6px 9px;margin:4px 0;cursor:pointer}
 .sg2-tal b{font-size:13.5px}.sg2-tal small{float:right;color:#9fd0ff;font-size:11.5px}.sg2-tal span{display:block;font-size:12px;color:#d9d0ef;margin-top:2px}.sg2-tal.on{border-color:#FFE08A;box-shadow:0 0 0 2px #FFE08A}.sg2-tal.off{opacity:.5}
 .sg2-talr{float:right;font:inherit;font-size:11.5px;color:#f1e7cf;background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.3);border-radius:99px;padding:1px 9px;cursor:pointer}
-.gsv-mk.pv.ok{background:#c0281e}.gsv-mk.pv.kill{background:#ff3b30;box-shadow:0 0 8px #ff3b30}.gsv-mk.pv.no{background:#45506a}`;document.head.append(s)}
+.gsv-mk.pv.ok{background:#c0281e}.gsv-mk.pv.kill{background:#ff3b30;box-shadow:0 0 8px #ff3b30}.gsv-mk.pv.no{background:#45506a}
+/* 11/17 測試員 B（B-6）：直式招式區只露兩列（約 80px），四位夥伴要在小框裡捲 → 下方面板照招式列數長高（sg2MeSync 寫 --sg2MeH，最多畫面的四成） */
+@media (orientation:portrait){html body.gsv-on{--gsvMeH:var(--sg2MeH,190px)}}
+/* B-12：「下一波：…」星門預告的點擊區原本只有 18px 高 → 整行 40px（上面那條面板跟著加高） */
+.gsv-ln button[data-x="fore"]{display:block;width:100%;min-height:40px;line-height:36px;box-sizing:border-box;padding:2px 4px;text-align:left;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;touch-action:manipulation}
+@media (orientation:portrait){html body.gsv-on{--gsvEnH:80px}}
+/* B-7：開局「✦ 星樞：…」、放招的提示（toast）原本在畫面下方，壓住帥的體力、回合數、「規則」和招式 → 對局中不接點選。
+   11/17 第二批 N-4：上一批放在棋盤上緣，會疊在敵方底排（象、士、將）→ 改到棋盤外：直式疊在頂欄下方那條敵方資訊（星樞體力、下一波）上，不碰棋盤；
+   橫式放在左邊敵方欄下半的空白（左欄只有上面兩三行字）。開局名稱橫幅（01-board openFx 的 .opfx，位置寫在行內）也搬到同樣的地方 */
+body.gsv-on .toast{bottom:auto;top:calc(var(--gsvTop,var(--bhTop,44px)) + 4px);left:8px;right:8px;transform:none;width:fit-content;margin:0 auto;max-width:calc(100vw - 16px);font-size:13px;padding:6px 12px;pointer-events:none}
+@media (orientation:landscape){body.gsv-on .toast{top:auto;bottom:calc(10px + env(safe-area-inset-bottom,0px));left:calc(6px + env(safe-area-inset-left,0px));right:auto;max-width:188px;margin:0;border-radius:12px}}
+body.gsv-on .opfx{top:calc(var(--gsvTop,var(--bhTop,44px)) + var(--gsvEnH,62px) / 2)!important;left:50%!important;font-size:24px!important}
+@media (orientation:landscape){body.gsv-on .opfx{top:calc(var(--gsvTop,var(--bhTop,44px)) + (100dvh - var(--gsvTop,var(--bhTop,44px))) * .55)!important;left:calc(100px + env(safe-area-inset-left,0px))!important;font-size:16px!important}}
+/* N-5：選放招目標時「點盤上發光的目標／取消」原本浮在下方面板上緣外（top:-34px），正好蓋住我方底排（鐵壁銅牆的目標常是相仕帥仕相）→ 直式平面改成下方面板裡的第一行（不蓋棋盤），招式框跟著讓出位置；橫式本來就在右欄裡、直式 3D 照舊在上方 */
+@media (orientation:portrait){body.gsv-on:not(.gsv-3d) #gsvMe .gsv-tip{position:static;margin:0 0 3px;border-radius:10px}body.gsv-on:not(.gsv-3d) #gsvMe .gsv-tip~.sg2-skw{max-height:calc(var(--gsvMeH,190px) - 140px)}}
+/* N-6：「規則」鈕原本約 40×20 → 點擊區至少 44×32；上下用負邊界抵掉，那一行不會變高（下方面板的高度照舊） */
+#gsvMe .gsv-fx[data-x="rules"]{min-width:44px;min-height:32px;margin:-5px 0;padding:0 9px;box-sizing:border-box;touch-action:manipulation}
+/* iMac 18：打不動的跳字大一號、淡藍（原本 14px 淡紫一閃就過） */
+.bt-fl.sg2no{font-size:17px;color:#bfe0ff}
+/* 第 3 輪 P3（測試員 D，English 375×812）：頂欄標題「Star Gate Siege · Prologue A1」被左邊「‹ Back to Star Terrace」、右邊「👁 Flat board」擠到只剩「Star」。
+   對局中標題可以換兩行、字小一點（中文一行放得下時照舊一行）；英文窄螢幕（480px 以下）返回鈕只留「‹」、視角鈕只留 👁（文字還在 aria-label／title），讓出位置給關名 */
+html body.gsv-on #title{white-space:normal;display:-webkit-box;-webkit-box-orient:vertical;-webkit-line-clamp:2;overflow:hidden;text-overflow:clip;min-width:0;font-size:calc(16px * min(var(--fz,1),1.3));line-height:1.15;letter-spacing:.02em;overflow-wrap:break-word}
+@media (max-width:480px){html[lang=en] body.gsv-on #back{font-size:0;padding:0 6px}html[lang=en] body.gsv-on #back b{font-size:28px}html[lang=en] body.gsv-on #gsvView small{display:none}html[lang=en] body.gsv-on #gsvView{min-width:44px;padding:0!important;justify-content:center}}`;document.head.append(s)}
+/* 11/17 B-5：棋盤、兩側欄的上緣＝頂欄真正的下緣（頂欄長高、轉向都跟著；07bhg gsvCss 用 --gsvTop） */
+let SG2_TOPRO=null;
+function sg2TopSync(){if(typeof document==="undefined")return;try{const tb=document.getElementById("topbar");if(!tb)return;const b=Math.round(tb.getBoundingClientRect().bottom),R=document.documentElement;
+  if(b>0&&R.style.getPropertyValue("--gsvTop")!==b+"px")R.style.setProperty("--gsvTop",b+"px");if(!SG2_TOPRO&&typeof ResizeObserver==="function"){SG2_TOPRO=new ResizeObserver(()=>sg2TopSync());SG2_TOPRO.observe(tb)}}catch(e){}}
+/* B-6：直式下方面板要多高＝上面三行約 104px＋每一列招式 42px；至少原本的 190（矮螢幕 176），最多畫面的四成 */
+const sg2MeH=(rows,H)=>{const base=H<=700?176:190;return Math.max(base,Math.min(Math.round(H*.4),104+rows*42))};
+function sg2MeSync(me){try{const n=me.querySelectorAll(".sg2-skr").length,v=sg2MeH(n,innerHeight)+"px",B=document.body;if(B.style.getPropertyValue("--sg2MeH")!==v)B.style.setProperty("--sg2MeH",v)}catch(e){}}
+if(typeof window!=="undefined"&&typeof addEventListener==="function")addEventListener("resize",()=>{try{if(document.body&&document.body.classList.contains("gsv-on")){sg2TopSync();const me=document.getElementById("gsvMe");if(me)sg2MeSync(me)}}catch(e){}});
 const sg2On=st=>!!(st&&st.td&&typeof SG2G!=="undefined"&&st.td.mode===SG2G.MODE);
 /* 08b-cpugame.js 的 tap(i) 一開頭叫（不攔截，只記選了哪顆、點了哪顆） */
 function sg2Tap(st,i,sel){if(!sg2On(st))return;if(st.td.s.b[i])SG2_PICK=i;
@@ -484,23 +524,32 @@ const sg2Nm=p=>p?(p===p.toUpperCase()?GSV.PCN:GSV.PBN)[p.toUpperCase()]:"";
 const sg2Pct=(a,b)=>Math.max(0,Math.min(100,Math.round(a/Math.max(1,b)*100)));
 function sg2Foe(td){const F=SG2G.fore(td);if(!F.length)return`<span>星門沒有援軍了</span>`;const at=F[0].at,g=F.filter(w=>w.at===at),cnt={};
   for(const w of g){const k=GSV.gateNm(w.sq)+"・"+GSV.PBN[w.p.toUpperCase()];cnt[k]=(cnt[k]||0)+1}const n=Math.max(1,at-td.rnd);
-  return`<button type="button" data-x="fore"><span>下一波</span>：${Object.keys(cnt).map(k=>esc(k)+"×"+cnt[k]).join("、")}・<b>${n}</b> <span>回合後</span></button>`}
+  return`<button type="button" data-x="fore"><span>下一波</span>：${Object.keys(cnt).map(k=>esc(k)+"×"+cnt[k]).join("、")}・<b>${n} 回合後</b></button>`}
 /* 點到的那顆：體力、攻擊、防禦（含護帥加成、招式加防） */
 /* 下方那一行的角色數值（開發者 11/16：選子要走、選招要放的時候都看得到攻防）：
    選招時＝放招那位（名字、本命子的體力／攻擊／防禦、自己的靈力）；選了子或點了子＝那一顆（屬於哪位、體力／攻擊／防禦含加成；己方再寫那位的靈力）；都沒有＝提示 */
 function sg2Who(td,pc){const ck=SG2G.ckOf(td,pc);if(!ck)return{ck:null,nm:"木棋靈"};let nm="";try{nm=typeof ptyNm==="function"?ptyNm(ck):""}catch(e){}return{ck,nm:nm||(GSV.CH[ck]?GSV.CH[ck].n:"")}}
-function sg2PieceInfo(td,q){const S=td.s,p=S.b[q];if(!p)return"";const red=p===p.toUpperCase(),D=SG2.defAt(S,q),base=S.d[q]+(SG2.lined(S,q)?SG2.LINE_X:0),ex=[];
-  if(S.g[q])ex.push("招式 +"+S.g[q]);if(SG2.lined(S,q))ex.push("士相護線 +"+SG2.LINE_X);if(D>base+(S.g[q]||0))ex.push("護帥 ×1.2");if(S.d[q]<SG2.unit(p,1,1).def&&S.d[q]===0)ex.push("防禦被打到 0");
+/* 11/17 iMac 第 17 項：防禦一律寫 SG2.defAt（＝攻擊預覽、實際扣血用的那個數）；被打降過的寫「原本 N、被打降 M」（原本＝開局防禦換回去算的實際防禦），
+   護帥照 SG2.guarded 判斷（原本用「比基礎大」猜，紅方有天賦加防時會誤寫護帥），紅方天賦加的防另外寫 */
+function sg2PieceInfo(td,q){const S=td.s,p=S.b[q];if(!p)return"";const red=p===p.toUpperCase(),D=SG2.defAt(S,q),P=p.toUpperCase(),ln=SG2.lined(S,q),ex=[];
+  {const d0=typeof SG2G.defBase==="function"?SG2G.defBase(td,q):S.d[q];if(S.d[q]<d0){const full=SG2.defWith(S,q,d0);if(full>D)ex.push("原本 "+full,"被打降 "+(full-D))}}
+  if(S.g[q])ex.push("招式 +"+S.g[q]);if(ln)ex.push("士相護線 +"+SG2.LINE_X);
+  {const B=red&&S.bx,n=B?(B.d&&B.d[P]||0)+(B.pal&&P!=="K"&&SG2.inPal(q,"r")?B.pal:0)+(ln==="B"&&B.lineB||0):0;if(n)ex.push("天賦 +"+n)}
+  if(SG2.guarded(S,q))ex.push("護帥 ×"+SG2.GUARD_K);
   if(p.toUpperCase()==="P"&&SG2.atkAt(S,q)>S.a[q])ex.push("過河 +"+SG2.PAWN_X);
   const W=red?sg2Who(td,p.toUpperCase()):null,sp=W&&W.ck&&td.sp[W.ck]!=null?`・<span>靈</span> <b>${td.sp[W.ck]}</b>／${td.spMax[W.ck]}`:"";
-  return`<b>${red?esc(W.nm)+"・":"敵・"}${esc(sg2Nm(p))}</b> <span>體力</span> <b>${Math.max(0,S.h[q])}</b>／${S.x[q]}・<span>攻</span> <b>${SG2.atkAt(S,q)}</b>・<span>防</span> <b>${D}</b>${sp}${ex.length?`（${esc(ex.join("、"))}）`:""}`}
+  return`<b>${red?esc(W.nm)+"・":"敵・"}${esc(sg2Nm(p))}</b> <span>體力</span> <b>${Math.max(0,S.h[q])}</b>／${S.x[q]}・<span>攻</span> <b>${SG2.atkAt(S,q)}</b>・<span>防</span> <b>${D}</b>${sp}${ex.length?`<span class="sg2-ex">（${esc(ex.join("、"))}）</span>`:""}`}
 function sg2Info(st){const td=st.td,S=td.s;
   if(GSV_TG){const s=SG2G.SKM[GSV_TG.id];if(GSV_TG.id==="dep"&&GSV_TG.p){const W=sg2Who(td,GSV_TG.p),u=SG2.unit(GSV_TG.p,td.sq&&td.sq[GSV_TG.p]?td.sq[GSV_TG.p].L:1,1);
       return`<b>部署 ${esc(W.nm)}・${esc(GSV.PCN[GSV_TG.p])}</b> <span>體力</span> <b>${u.hp}</b>・<span>攻</span> <b>${u.atk}</b>・<span>防</span> <b>${u.def}</b>${W.ck?`・<span>靈</span> <b>${td.sp[W.ck]}</b>／${td.spMax[W.ck]}`:""}`}
     if(s){const pc=SG2G.PC_OF[s.ch],qs=[];for(let q=0;q<90;q++)if(S.b[q]===pc)qs.push(q);const nm=sg2Who(td,pc).nm;
       return`<b>${esc(s.nm)}</b>（${esc(nm)}，${SG2G.costOf(td,s.id)} 靈）：`+(qs.length?qs.map(q=>sg2PieceInfo(td,q)).join("；"):`<span>${esc(GSV.PCN[pc])}都倒了</span>`)}}
   const q=SG2_SEL>=0&&S.b[SG2_SEL]?SG2_SEL:SG2_PICK;if(q<0||!S.b[q])return`<span>點棋子看攻防；選了己子，打得到的敵子會標出這一下扣多少</span>`;return sg2PieceInfo(td,q)}
-function sg2Paint(){sg2Css();const st=GSV_ST,en=document.getElementById("gsvEn"),me=document.getElementById("gsvMe");if(!st||!en||!me)return;const td=st.td,S=td.s,C=gsvC(),my=gsvMy(st);
+/* 11/17 測試員 D（P3-C）：選關、開局提示、結算都寫「星門圍城・序章 A1」，對局頁頂端卻是 08b 照 07-legend jName 寫的「黑洞・星樞棋局」（bh: 開頭一律這樣）。
+   星門圍城 v2 的盤（含偏航來的那盤）頂端改寫「星門圍城・關名」（SG2G.nameOf：序章 A1、易 3…）；08b 每次重畫 setTop 會蓋回去，這裡每次畫都補（同 07bht bhtdTitle 的做法），內容一樣就不動 */
+function sg2Title(st){if(typeof document==="undefined"||!sg2On(st))return;const t=document.getElementById("title");if(!t)return;const s="星門圍城・"+SG2G.nameOf(st.td.lv);let sp=t.querySelector(".sg2-tt");
+  if(!sp||t.childNodes.length!==1||t.firstChild!==sp){t.textContent="";sp=document.createElement("span");sp.className="sg2-tt";t.append(sp)}if(sp.dataset.s!==s){sp.dataset.s=s;sp.textContent=s}}
+function sg2Paint(){sg2Css();const st=GSV_ST,en=document.getElementById("gsvEn"),me=document.getElementById("gsvMe");if(!st||!en||!me)return;const td=st.td,S=td.s,C=gsvC(),my=gsvMy(st);sg2TopSync();try{sg2Title(st)}catch(e){}
   const hk=JSON.stringify([td.seq,st.turn,!!st.result,GSV_TG&&[GSV_TG.id,GSV_TG.pk,GSV_TG.p],GSV_BUSY,SG2_PICK,SG2_SEL]);if(hk===GSV_HK)return;GSV_HK=hk;
   const kb=SG2.kingOf(S.b,"b"),kr=SG2.kingOf(S.b,"r"),bar=(q,cls,nm)=>q<0?`<div class="gsv-bar ${cls}"><i style="width:0"></i><b>${nm} 倒下</b></div>`:`<div class="gsv-bar ${cls}"><i style="width:${sg2Pct(S.h[q],S.x[q])}%"></i><b>${nm} <span>體力</span> ${Math.max(0,S.h[q])}／${S.x[q]}</b></div>`;
   en.innerHTML=`<div class="gsv-r"><span class="gsv-nm en">星樞</span>${bar(kb,"en","將")}<span class="gsv-st">${esc(td.dnm)}・Lv <b>${td.elv}</b>${td.diff>1?`・<span>靈</span> <b>${td.esp||0}</b>`:""}</span></div>
@@ -511,9 +560,9 @@ function sg2Paint(){sg2Css();const st=GSV_ST,en=document.getElementById("gsvEn")
   const tip=GSV_TG?`<div class="gsv-tip"><span>${GSV_TG.arm?"再點一次同一顆招就放出":GSV_TG.id==="dep"?"點盤上發光的補給點":"點盤上發光的目標"}</span><button type="button" data-x="cancel">取消</button></div>`:"";
   me.innerHTML=`${tip}<div class="gsv-r"><span class="gsv-nm">我方</span>${bar(kr,"","帥")}</div>
     <div class="sg2-inf" aria-live="polite">${sg2Info(st)}</div>
-    <div class="gsv-r"><span class="gsv-st"><span>第</span> <b>${td.rnd+1}</b>／${td.rlim} <span>回合</span></span>
+    <div class="gsv-r"><span class="gsv-st"><b>第 ${td.rnd+1}／${td.rlim} 回合</b></span>
       <button type="button" class="gsv-fx" data-x="rules" style="background:rgba(255,255,255,.1);border-color:rgba(255,255,255,.3);color:#f1e7cf">規則</button></div>
-    <div class="sg2-skw">${sg2SkRows(td.sk,sk,td)}${td.res.length?`<div class="sg2-skr"><span>後備</span>${sk("dep")}</div>`:""}</div>`}
+    <div class="sg2-skw">${sg2SkRows(td.sk,sk,td)}${td.res.length?`<div class="sg2-skr"><span>後備</span>${sk("dep")}</div>`:""}</div>`;sg2MeSync(me)}
 /* 招式按角色分行（07pty 的名字；沒有就用 GSV.CH） */
 function sg2SkRows(ids,btn,td){const by={};for(const id of ids){const s=SG2G.SKM[id];if(s)(by[s.ch]=by[s.ch]||[]).push(id)}
   const nm=c=>{try{if(typeof ptyNm==="function")return ptyNm(c)}catch(e){}return GSV.CH[c]?GSV.CH[c].n:""};
@@ -533,9 +582,9 @@ function sg2RulesHTML(){return`<ul class="gsv-rules">
   <li><b>星門</b>：敵方會從星門分波補子；你的子站在門格上就擋掉那一顆（截援，站門那位 +${SG2G.CUT_SP} 靈）。</li></ul>`}
 function sg2Click(e){const st=GSV_ST;if(!st)return;const C=gsvC(),x=e.target.closest("[data-x]");if(x){const k=x.dataset.x;try{vibrate(5)}catch(z){}
     if(k==="cancel"){GSV_TG=null;GSV_MK="";GSV_HK="";sg2Paint();return}
-    if(k==="rules"){modal(`<h2 style="font-size:19px">星門圍城規則</h2>${sg2RulesHTML()}`,[["知道了",null]]);return}
+    if(k==="rules"){gsvInfo(`<h2 style="font-size:19px">星門圍城規則</h2>${sg2RulesHTML()}`);return}   /* 11/17：規則太長時可以捲、點外面會關（07bhg gsvInfo） */
     if(k==="fore"){const F=SG2G.fore(st.td),by={};for(const w of F)(by[w.at]=by[w.at]||[]).push(w);
-      modal(`<h2 style="font-size:19px">星門預告</h2>${Object.keys(by).map(at=>`<p><b>${Math.max(1,at-st.td.rnd)} 回合後</b>：${by[at].map(w=>esc(GSV.gateNm(w.sq)+"・"+GSV.PBN[w.p.toUpperCase()]+(w.dl?"（延遲過）":""))).join("、")}</p>`).join("")||"<p>星門沒有援軍了</p>"}<p class="muted" style="font-size:12.5px">你的子站在門格上，那一顆就來不了（截援）。</p>`,[["知道了",null]]);return}
+      gsvInfo(`<h2 style="font-size:19px">星門預告</h2>${Object.keys(by).map(at=>`<p><b>${Math.max(1,at-st.td.rnd)} 回合後</b>：${by[at].map(w=>esc(GSV.gateNm(w.sq)+"・"+GSV.PBN[w.p.toUpperCase()]+(w.dl?"（延遲過）":""))).join("、")}</p>`).join("")||"<p>星門沒有援軍了</p>"}<p class="muted" style="font-size:12.5px">你的子站在門格上，那一顆就來不了（截援）。</p>`);return}
     return}
   const b=e.target.closest(".gsv-sk");if(!b)return;const id=b.dataset.k,S=SG2G.SKM[id];
   if(S&&S.info){GSV_INFO=!GSV_INFO;GSV_MK="";GSV_HK="";sg2Paint();return}
@@ -545,6 +594,24 @@ function sg2Click(e){const st=GSV_ST;if(!st)return;const C=gsvC(),x=e.target.clo
     modal(`<h2 style="font-size:19px">部署後備</h2><p class="muted">花那顆子所屬夥伴的 ${SG2G.DEP_COST} 靈力、用掉這一步，選一顆後備子：</p>`,ok.map(p=>[GSV.PCN[p],()=>{GSV_TG={id:"dep",p,pk:[]};GSV_MK="";GSV_HK="";sg2Paint()}]).concat([["取消",null,true]]));return}
   if(!S.tg){GSV_TG={id,pk:[],arm:1};GSV_MK="";GSV_HK="";sg2Paint();toast("✦ "+S.nm+"："+S.d);return}
   GSV_TG={id,pk:[]};GSV_MK="";GSV_HK="";sg2Paint();toast("🎯 "+S.nm+"："+S.d)}
+/* 第 3 輪 N3-1（測試員 B，390×844 難 1）：攻擊預覽「防19→13」貼最右一路時是 x 353～410（畫面到 390），跳字「打不動・防 19→13」也貼右緣、蓋住旁邊的炮。
+   原因：預覽一律掛在棋子右上（CSS margin 往右 .46 格），跳字以棋子正中為中心（07bht bhtdFloat 只照整個畫面收邊）。
+   改法：預覽掛在「往棋盤中間那一側」的上方（右半邊的子掛左上），再收進棋盤框（平面＝棋盤外框、3D＝#bbox）與畫面之內；跳字改用 sg2Float：浮在那顆子上方半格
+   （3D 用頭頂位置；太靠上就改到下方），同樣收進棋盤框。07bhg gsvFrame 平面、3D 兩套位置都走 sg2PvXY */
+function sg2Box(g3){const W=typeof innerWidth==="number"?innerWidth:0,H=typeof innerHeight==="number"?innerHeight:0;let B={l:0,r:W,t:0,b:H};
+  try{const bb=document.getElementById("bbox"),r=bb&&bb.getBoundingClientRect();if(r&&r.width)B={l:Math.max(0,r.left),r:Math.min(W,r.right),t:Math.max(0,r.top),b:Math.min(H,r.bottom)}}catch(e){}
+  if(!g3&&typeof bhtdXY==="function"){const a=bhtdXY(0),z=bhtdXY(89),c=bhtdXY(1);if(a&&z&&c){const m=Math.abs(c.x-a.x)*.67;B={l:Math.max(B.l,a.x-m),r:Math.min(B.r,z.x+m),t:Math.max(B.t,a.y-m),b:Math.min(B.b,z.y+m)}}}
+  return B}
+/* 中心 (x,y)、半寬 hw、半高 hh 的方塊收進 B；B 比方塊還窄就置中 */
+const sg2Fit=(x,y,hw,hh,B)=>({x:B.r-B.l<2*hw?(B.l+B.r)/2:Math.max(B.l+hw,Math.min(B.r-hw,x)),y:B.b-B.t<2*hh?(B.t+B.b)/2:Math.max(B.t+hh,Math.min(B.b-hh,y))});
+/* 預覽標籤的中心：p＝那一格（平面）／腳下（3D）的螢幕座標；在棋盤右半邊掛左上、左半邊掛右上（往中間），再收進 B */
+function sg2PvXY(p,cell,w,h,B){const s=p.x>(B.l+B.r)/2?-1:1;return sg2Fit(p.x+s*cell*.46,p.y-cell*.42,w/2+1,h/2+1,B)}
+/* 跳字：浮在那顆子上方（不蓋左右相鄰的子），收進棋盤框；動畫照 07bht 的 .bt-fl（往上飄、放大到 1.15 倍） */
+function sg2Float(t,q,cls){if(typeof document==="undefined"||q==null||typeof bhtdXY!=="function")return false;let g3=false,p=null,cell=36;
+  try{g3=typeof gsv3d==="function"&&gsv3d();const a=bhtdXY(40),c=bhtdXY(41);if(a&&c)cell=Math.max(18,Math.min(90,Math.hypot(c.x-a.x,c.y-a.y)));if(g3&&PARK&&PARK.v&&PARK.v.headOf)p=PARK.v.headOf(q)}catch(e){}if(!p)p=bhtdXY(q);if(!p)return false;
+  const d=document.createElement("div");d.className="bt-fl "+(cls||"");d.textContent=t;d.style.left=p.x+"px";d.style.top=p.y+"px";document.body.append(d);
+  try{const w=d.offsetWidth*1.15,h=d.offsetHeight*1.15,B=sg2Box(g3);let y=p.y-cell*(g3?.3:.58);if(y-h<B.t)y=p.y+cell*.58;const P=sg2Fit(p.x,y,w/2+2,h/2,B);d.style.left=P.x+"px";d.style.top=P.y+"px"}catch(e){}
+  setTimeout(()=>d.remove(),1400);return true}
 /* 盤上記號：每顆子的小血條、星門倒數、定身／鎖／迷煙／煙幕、守門點、集火、選目標的發光格、補給點、選了己子時的攻擊預覽 */
 function sg2Marks(st){const td=st.td,S=td.s,L=[],C=gsvC(),my=gsvMy(st),R=td.rnd;
   for(let q=0;q<90;q++){const p=S.b[q];if(!p)continue;const red=p===p.toUpperCase(),pc=sg2Pct(S.h[q],S.x[q]);L.push({sq:q,k:"hp "+(red?"me":"en")+(pc<34?" lo":""),t:`<i style="width:${pc}%"></i>`})}
@@ -558,18 +625,26 @@ function sg2Marks(st){const td=st.td,S=td.s,L=[],C=gsvC(),my=gsvMy(st),R=td.rnd;
   }
   else if(my){if(td.res.length)for(const d of td.dp)if(!S.b[d.sq])L.push({sq:d.sq,k:"dp",t:"補"});
     if(SG2_SEL>=0&&S.b[SG2_SEL]&&S.b[SG2_SEL]===S.b[SG2_SEL].toUpperCase())for(const[f,t]of st.legal||[]){if(f!==SG2_SEL||!S.b[t])continue;const c=SG2G.pv(st,f,t);if(!c)continue;
-      L.push({sq:t,k:"pv "+(c.kill?"kill":c.ok?"ok":"no"),t:(c.by&&c.by.length?"合力":"")+(c.kill?"擊破":c.ok?"−"+c.dmg:"防−"+c.down)})}}
+      L.push({sq:t,k:"pv "+(c.kill?"kill":c.ok?"ok":"no"),t:(c.by&&c.by.length?"合力":"")+(c.kill?"擊破":c.ok?"−"+c.dmg:"防"+c.D+"→"+(c.D1!=null?c.D1:Math.max(0,c.D-c.down)))})}}   /* 11/17 iMac 17：打不動寫「防 現在→打完」（現在＝資料卡的防禦），不再只寫「防−攻擊力的一半」 */
   return L}
 /* 跳字：td.ev 新增的事件 */
 function sg2Events(st){const td=st.td,id=st.id;if(SG2_SEEN[id]==null){SG2_SEEN[id]=td.seq;return}const s0=SG2_SEEN[id];if(td.seq<=s0)return;SG2_SEEN[id]=td.seq;
-  td.ev.filter(e=>e.s>s0).forEach((e,i)=>setTimeout(()=>{try{sg2Ev(e)}catch(x){}},i*220))}
+  const N=td.ev.filter(e=>e.s>s0);N.forEach((e,i)=>setTimeout(()=>{try{sg2Ev(e)}catch(x){}},i*220));
+  {const a=N.filter(e=>e.k==="att"&&e.by==="r"&&!e.kill&&e.p&&td.s.b[e.t]===e.p).pop();if(a&&SG2_SEL<0&&SG2_PICK!==a.t){SG2_PICK=a.t;GSV_HK="";try{sg2Paint()}catch(x){}}}}   /* 11/17 iMac 18：攻擊沒打死（打不動、扣了血）就把下方資料卡換成被打的那顆，防禦、體力的新數字馬上看得到 */
 /* 序章：第一次攻擊沒打死、第一次打不動時，跳一句說明（每一盤各一次） */
 let SG2_HINT={};
-function sg2ProHint(e){const st=GSV_ST;if(!st||!st.td||!st.td.pro||e.k!=="att"||e.by!=="r")return;const H=SG2_HINT[st.id]=SG2_HINT[st.id]||{};
-  if(!e.ok&&!H.down){H.down=1;setTimeout(()=>toast("🛡 打不動：對方防禦比你的攻擊力高，所以它的防禦降了 "+e.down+"。再打一次就打得穿"),600)}
+/* 11/17 iMac 18：打不動也跳一句短提示：哪一顆、防禦從多少降到多少、這一手用掉了；數字跟跳字、資料卡同一個（e.D0→e.D1）。
+   每盤只跳前 SG2_DOWN_N 次（序章第一次是教學句，也算一次）；之後只有跳字「打不動・防 D0→D1」和資料卡更新，不再跳提示（太吵） */
+const SG2_DOWN_N=2;
+function sg2DownMsg(e){const nm=sg2Nm(e.p);return e.D0!=null?"打不動："+(nm?"敵・"+nm+" ":"")+"防禦 "+e.D0+"→"+e.D1+"，這一手用掉了":"打不動：對方防禦降 "+e.down+"，這一手用掉了"}
+function sg2ProHint(e){const st=GSV_ST;if(!st||!st.td||e.k!=="att"||e.by!=="r")return;const H=SG2_HINT[st.id]=SG2_HINT[st.id]||{};
+  if(!e.ok){if((H.dn||0)>=SG2_DOWN_N)return;H.dn=(H.dn||0)+1}
+  if(!e.ok&&!st.td.pro){setTimeout(()=>toast(sg2DownMsg(e)),400);return}if(!st.td.pro)return;
+  if(!e.ok&&!H.down){H.down=1;setTimeout(()=>toast(e.D0!=null?"🛡 打不動：對方防禦 "+e.D0+" 比你的攻擊力 "+e.A+" 高，打不進去，它的防禦降到 "+e.D1+"。"+(e.A>=e.D1?"再打一次就打得穿":"多打幾次就打得穿"):"🛡 打不動：對方防禦比你的攻擊力高，所以它的防禦降了 "+e.down+"。再打一次就打得穿"),600)}
+  else if(!e.ok){setTimeout(()=>toast(sg2DownMsg(e)),400)}
   else if(e.ok&&!e.kill&&!H.stay){H.stay=1;setTimeout(()=>toast("⚔ 扣了 "+e.dmg+" 體力，但沒打死：攻擊的子停在原地，不會移進去"),600)}}
-function sg2Ev(e){try{sg2ProHint(e)}catch(x){}if(typeof bhtdFloat!=="function")return;const F=(t,p,c)=>bhtdFloat(t,p,c),at=q=>q!=null&&typeof bhtdXY==="function"?bhtdXY(q):null;
-  if(e.k==="att"){const mine=e.by?e.by==="r":true;if(!e.ok)return F(`打不動・防 −${e.down}`,at(e.t),"info");F(e.kill?"擊破！":`−${e.dmg}`,at(e.t),mine?"dmg":"hurt");if(e.sh&&e.sh.dmg)F(`護帥 −${e.sh.dmg}`,at(e.sh.q),mine?"dmg":"hurt");return}
+function sg2Ev(e){try{sg2ProHint(e)}catch(x){}if(typeof bhtdFloat!=="function")return;const at=q=>q!=null&&typeof bhtdXY==="function"&&bhtdXY(q)?{q}:null,F=(t,p,c)=>p&&p.q!=null?(sg2Float(t,p.q,c)||bhtdFloat(t,bhtdXY(p.q),c)):bhtdFloat(t,p,c);   /* 第 3 輪 N3-1：落在棋子上的跳字都走 sg2Float（浮在子上方、收進棋盤框） */
+  if(e.k==="att"){const mine=e.by?e.by==="r":true;if(!e.ok){try{if(typeof bhtdFx==="function")bhtdFx("ring",e.t)}catch(x){}const tx=e.D0!=null?`打不動・防 ${e.D0}→${e.D1}`:`打不動・防 −${e.down}`;return F(tx,at(e.t),"info sg2no")}   /* 11/17 iMac 18：打不動也要看得到——被打的子閃一圈、跳字大一號寫防禦前後（同資料卡） */F(e.kill?"擊破！":`−${e.dmg}`,at(e.t),mine?"dmg":"hurt");if(e.sh&&e.sh.dmg)F(`護帥 −${e.sh.dmg}`,at(e.sh.q),mine?"dmg":"hurt");return}
   if(e.k==="spawn")return F("援軍",at(e.sq),"info");if(e.k==="cut")return F("截援！+"+SG2G.CUT_SP+" 靈",at(e.sq),"sp");
   if(e.k==="dep")return F(`部署${GSV.PCN[e.p]}`,at(e.sq),"info");if(e.k==="heal"&&e.n)return F(`+${e.n}`,at(e.sq)||gsvBarXY("gsvMe"),"heal");
   if(e.k==="skill")return F(e.nm,gsvBarXY("gsvMe"),"info");if(e.k==="esk")return F("⚠ 星樞："+e.nm,at(e.sq)||gsvBarXY("gsvEn"),"hurt");if(e.k==="trap")return F("守門：定身一回合",at(e.sq),"info");if(e.k==="lock")return F("銅鎖：定身兩回合",at(e.sq),"info")}
@@ -598,10 +673,19 @@ function sg2Result(st,win,draw0,XPR){gsvCss();const td=st.td,n=td.lv,V=GSV.LV[n]
   let AW=null;try{AW=sg2Award(st)}catch(e){}const awH=AW&&(AW.xp||AW.dust)?`<p style="font-size:13.5px;text-align:center">${AW.xp?`✨ 第一次破這一關（${esc(td.dnm)}）：修為 +${AW.xp}　`:""}${AW.dust?`🌌 星塵 +${AW.dust}（共 ${AW.total}）`:""}</p>`:"";
   modal(`<div class="em">${win?"✨":draw0?"🤝":"🌀"}</div><h2>${win?"破陣":draw0?"不分勝負":"星門失守"}</h2><p class="muted">${esc(why)}・🌠 星門圍城・${esc(SG2G.nameOf(n))}・${esc(V.nm||td.nm)}（${esc(td.dnm)}）</p>
     <p class="gsv-gl">${G}</p>${awH}
-    <p style="font-size:13.5px;text-align:center">打了 <b>${td.rnd}</b> 回合・帥 ${hp(kr)}・敵將 ${hp(kb)}</p>
+    <p style="font-size:13.5px;text-align:center"><b>打了 ${sg2Rnds(st)} 回合</b><span class="sg2-ex">・帥 ${hp(kr)}・敵將 ${hp(kb)}</span></p>
     <p style="font-size:13px;text-align:center">部署 ${td.dep} 次・用過的招：${esc(used)}</p>${!win&&V.tip?`<p class="muted" style="font-size:13px">💡 ${esc(V.tip)}</p>`:""}
 ${XPR||""}`,
-    [["↻ 再打一次",()=>gsvStart(n,k,cv,td.sk,true,0,td.diff)],["返回選關",()=>gsvSelect(k,cv),true],["再看一下星盤",null,true]],"res")}
+    sg2ResDrift(k,cv)?[["⛵ 星槎回航",sg2ResHome],["↻ 再打一次",()=>gsvStart(n,k,cv,td.sk,true,0,td.diff),true],["再看一下星盤",null,true]]
+      :[["↻ 再打一次",()=>gsvStart(n,k,cv,td.sk,true,0,td.diff)],["返回選關",()=>gsvSelect(k,cv),true],["再看一下星盤",null,true]],"res")}
+/* 11/17 iPhone 模擬器測試（全新玩家第一次偏航打完序章 A1）：結果視窗只有「再打一次／返回選關」，按返回選關打開序章 A1～C3 的關卡列表，主線下一步（回星槎去漢朝）反而找不到。
+   起航途中偏航來的這一盤（sessionStorage bhDrift，07sg2 sg2Drift 設、選關出戰清掉；有目的站 bhRet.k、要補停靠 bhRet.cover）：主按鈕改「⛵ 星槎回航」＝07bh bhReturn
+   （回星槎頁、補跑那一站的停靠封面和加入夥伴），「再打一次」留著當次要鈕；從觀星臺選關進來的照舊「再打一次／返回選關」 */
+/* 11/17 iPhone 模擬器第 11 項：結算寫「打了 2 回合」，對局時頂端已經是「第 3 回合」——td.rnd 是「走完的回合」（黑方走完才 +1），紅方這一手就分勝負（將死、打倒將）時那一回合還沒算進去。
+   結算顯示「分勝負那一回合是第幾回合」＝對局時頂端最後看到的數字；黑方走完、回合結束後才判的（打滿回合、紅方沒步可走）td.rnd 已經 +1，照舊。只改顯示，星星、最佳紀錄照舊用 td.rnd */
+function sg2Rnds(st){const td=st&&st.td;if(!td)return 0;const L=st.moves||[],m=L[L.length-1],R=+td.rnd||0;if(!m)return R;const mid=m.by==="r"||(m.by==="b"&&td.over&&td.over.why==="將帥體力歸零");return mid?Math.min(R+1,+td.rlim||R+1):R}
+function sg2ResDrift(k,cv){let d=false;try{d=sessionStorage.getItem("bhDrift")==="1"}catch(e){}return d&&!!k&&!!cv}
+function sg2ResHome(){try{sessionStorage.removeItem("bhDrift")}catch(e){}if(typeof bhReturn==="function")bhReturn();else location.hash="#/adventure"}
 
 /* ---------- 第二期：選關（序章／易／中／難四組，每一關再選易中難）、解鎖、偏航、舊玩法的盤 ----------
    07bhg 的 gsvSelect 看到 SG2G 就交給 sg2Select；gsvStart 的鎖改問 SG2G.lockWhy。存檔照舊是 gsv（v2＝{關:{難度:{w,l,d,st,best}}}）。 */
@@ -622,22 +706,25 @@ const sg2Rec=(P,n,d)=>((P.v2||{})[n]||{})[d]||{};
 function sg2CardHTML(P,n,d,sel,o){const V=GSV.LV[n],R=sg2Rec(P,n,d),lk=SG2G.lockWhy(P,n,o.all,o.has),LN=SG2G.nameOf(n),st=R.st||[0,0,0],rec=R.w||R.l||R.d?`勝 ${R.w||0}・和 ${R.d||0}・敗 ${R.l||0}`:"";
   if(lk)return`<button type="button" class="gsv-card lk" data-n="${n}" data-lk="${esc(lk)}" aria-disabled="true" aria-label="${esc(`${LN} ${V.nm}，還沒開放：${lk}`)}"><b>🔒 ${esc(LN)}・${esc(V.nm)}</b><small aria-hidden="true">${esc(lk)}</small></button>`;
   return`<button type="button" class="gsv-card${n===sel?" on":""}" data-n="${n}" aria-label="${esc(`${LN} ${V.nm}（${V.th||""}），${SG2.DIFF[d].nm}：${st.filter(Boolean).length} 顆星${rec?"，"+rec:""}。${V.say||""}`)}"><b>${esc(LN)}・${esc(V.nm)}</b><span class="gsv-s3" aria-hidden="true">${st.map(x=>x?"★":"☆").join("")}</span>${rec?`<small aria-hidden="true">${R.w?"✓ ":""}${rec}</small>`:""}</button>`}
+/* 11/17 測試員 B（B-2）：序章一律打「易」（出戰本來就照這樣開），選關卡片的紀錄、星星、目標列卻照上次選的難度（預設中）查，打過的序章關還是 ☆☆☆、目標寫「（中）14 回合內」。
+   選關畫面每一關都用「這一關實際會開的難度」：序章＝易，其他照玩家選的 */
+const sg2DOf=(n,d)=>GSV.LV[n]&&GSV.LV[n].pro?1:d;
 function sg2Select(k,cover){gsvCss();const P=gsvProg(),all=gsvDevAll(),has=gsvHas(),o={all,has};
   let sel=P.last&&GSV.LV[P.last]?P.last:SG2G.GRP[0].lv[0];if(SG2G.lockWhy(P,sel,all,has))sel=SG2G.GRP.flatMap(g=>g.lv).find(n=>!SG2G.lockWhy(P,n,all,has))||SG2G.GRP[0].lv[0];
   let d=[1,2,3].includes(+P.lastD)?+P.lastD:2,grp=(SG2G.GRP.find(g=>g.lv.includes(sel))||SG2G.GRP[0]).id;
   const pool=typeof ptyGroups==="function"?ptyGroups(SG2G.SK):[];
   const G=()=>SG2G.GRP.find(g=>g.id===grp)||SG2G.GRP[0];
-  const chH=()=>{const g=G(),V=GSV.LV[sel]||{},R=sg2Rec(P,sel,d);
+  const chH=()=>{const g=G(),V=GSV.LV[sel]||{},ds=sg2DOf(sel,d),R=sg2Rec(P,sel,ds);
     return`<div class="gsv-chs" role="tablist">${SG2G.GRP.map(x=>`<button type="button" class="gsv-chb${x.id===grp?" on":""}" role="tab" aria-selected="${x.id===grp}" data-g="${x.id}">${esc(x.nm)}</button>`).join("")}</div>
-<div class="gsv-cards">${g.lv.map(n=>sg2CardHTML(P,n,d,sel,o)).join("")}</div>
+<div class="gsv-cards">${g.lv.map(n=>sg2CardHTML(P,n,sg2DOf(n,d),sel,o)).join("")}</div>
 <div class="gsv-chs gsv-mds"${GSV.LV[sel]&&GSV.LV[sel].pro?' style="display:none"':""}>${[1,2,3].map(v=>`<button type="button" class="gsv-chb gsv-mdb${v===d?" on":""}" data-d="${v}" aria-pressed="${v===d}">${SG2.DIFF[v].nm}</button>`).join("")}</div>
-<p class="gsv-gl">${esc(SG2G.nameOf(sel))}・${esc(V.nm||"")}（${SG2.DIFF[d].nm}）：${SG2G.goals({r3:SG2G.r3Of(sel,d)}).map((x,i)=>(R.st&&R.st[i]?"★ ":"☆ ")+`<span>${esc(x.t)}</span>`).join("　")}</p>
-<p class="muted" style="font-size:12.5px;margin:2px 0">${esc(SG2.DIFF[d].nm==="易"?"易：對方數值 ×0.9、電腦只看 1 步":SG2.DIFF[d].nm==="中"?"中：對方數值照關卡、電腦看 2 步":"難：對方數值 ×1.25、電腦看 3 步，星門多一波")}</p>`};
+<p class="gsv-gl">${esc(SG2G.nameOf(sel))}・${esc(V.nm||"")}（${SG2.DIFF[ds].nm}）：${SG2G.goals({r3:SG2G.r3Of(sel,ds)}).map((x,i)=>(R.st&&R.st[i]?"★ ":"☆ ")+`<span>${esc(x.t)}</span>`).join("　")}</p>
+<p class="muted" style="font-size:12.5px;margin:2px 0">${esc(SG2.DIFF[ds].nm==="易"?"易：對方數值 ×0.9、電腦只看 1 步":SG2.DIFF[ds].nm==="中"?"中：對方數值照關卡、電腦看 2 步":"難：對方數值 ×1.25、電腦看 3 步，星門多一波")}</p>`};
   const skH=()=>pool.length?pool.map(g=>`<p class="gsv-skg">${esc(g.nm)} <small>Lv ${g.L}</small></p>`+g.sk.map(s=>`<label class="${s.lv>g.L?"lk":"on"}" data-id="${s.id}" title="${esc(s.d)}">${s.lv>g.L?"🔒 Lv"+s.lv+" ":""}${esc(s.nm)}・${s.cost} 靈</label>`).join("")).join(""):`<p class="muted">還沒有夥伴學會招式</p>`;
   const m=modal(`<div class="em">🌠</div><h2>星門圍城</h2><div class="gsv-chap">${chH()}</div><p style="font-size:13px;margin-bottom:2px">招式（每位夥伴學會的都能用，一回合放一招；那位的棋子都倒了就不能放）</p><div class="gsv-skl">${skH()}</div>
     <button type="button" class="gsv-chb" data-tal="1" style="margin:6px 0">🌌 天賦（已點亮 ${sg2TalCount()}）</button>
     <details><summary>星門圍城規則</summary>${sg2RulesHTML()}</details>`,
-    [["⚔ 出戰",()=>{try{sessionStorage.removeItem("bhDrift")}catch(e){}const Q=gsvProg();Q.lastD=d;store.set("gsv",Q);gsvStart(sel,k,cover,null,false,0,GSV.LV[sel]&&GSV.LV[sel].pro?1:d)}],[typeof gxtBackLb==="function"?gxtBackLb():"⛵ 星槎回航",null,true]],"prolog gsv-sel");
+    [["⚔ 出戰",()=>{try{sessionStorage.removeItem("bhDrift")}catch(e){}const Q=gsvProg();Q.lastD=d;store.set("gsv",Q);gsvStart(sel,k,cover,null,false,0,sg2DOf(sel,d))}],[typeof gxtBackLb==="function"?gxtBackLb():"⛵ 星槎回航",null,true]],"prolog gsv-sel");
   if(!m)return;m.addEventListener("click",e=>{if(e.target.closest("[data-tal]")){try{vibrate(5)}catch(z){}m.remove();sg2TalSheet(()=>sg2Select(k,cover),"‹ 回選關");return}
     const c=e.target.closest(".gsv-card"),dd=e.target.closest("[data-d]"),t=dd?null:e.target.closest("[data-g]");
     if(dd)d=+dd.dataset.d;

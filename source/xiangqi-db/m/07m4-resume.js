@@ -44,7 +44,7 @@ function rsWho(g){const j=String(g.journey||"");try{
   return{title:typeof jName==="function"?jName(j):"石桌往事"}}catch(e){return{title:"這盤棋"}}}
 function rsCardHTML(g){const W=rsWho(g),n=g.moves.length,st0=g.startTurn||"r",turn=n%2?(st0==="r"?"b":"r"):st0,mine=turn===g.human,d=Math.floor((Date.now()-rsLast(g))/864e5);
   return`<div class="em">⏳</div><h2 style="font-size:19px;line-height:1.5">${W.who?`上次和${esc(W.who)}${W.tag?`（${esc(W.tag)}）`:""}的棋還沒下完，要繼續嗎？`:`上次「${esc(W.title)}」那盤棋還沒下完，要繼續嗎？`}</h2>
-    <p class="muted" style="margin:4px 0 0">下到第 ${Math.ceil(n/2)} 回合・${mine?"輪到你走":"輪到對方"}${d>=1?`・${d} 天前`:""}</p>
+    <p class="muted" style="margin:4px 0 0">下到第 ${Math.floor((n+(st0==="b"?1:0))/2)+1} 回合・${mine?"輪到你走":"輪到對方"}${d>=1?`・${d} 天前`:""}</p>
     <p class="muted" style="font-size:13px;margin:6px 0 0">${g.ranked?"晉級賽中途放棄會算輸，這盤先幫你留著。":"放棄這盤不算輸，也不會扣任何東西。"}</p>`}
 /* 繼續：不是桌上那盤就先換過來，再進那一種的對局頁 */
 async function rsGo(g){rsAsk(g.id);if(!g.cur)try{await api("/play/switch",{kind:g.k})}catch(e){}if(g.k==="journey"&&g.journey==="park")store.set("park3d",true);

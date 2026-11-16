@@ -10,7 +10,7 @@
      天頂墨色黑洞＝黑洞車輪戰（11/16 開張：07bhw whlOpen）、星圖石碑＝十三星系（07gx gxMap）、青銅渾儀＝星淵遠征（07bht bhtdOpen 關卡卡片）、圭表＝今日異象、石棋桌＝自由擺陣（11/16 開發者：兩個都開張，07gxd-daily.js gxdOmen／gxdFree）、
      右側星空＝二十八宿（11/13 晚：花星芒點亮星圖，07dgl-stamina.js dglXiuSheet）。
      星軌未通＝標籤看得到但灰、帶鎖，點了跳一行「星軌未通，敬請期待」。
-   出口照場景頁慣例走 07w9 圖上出口（EXITS "/guanxing"，右下石階）：從首頁來寫「🏘 回棋鎮」、從星槎來 07w9 exFix 自動改「↩ 回星槎」；寬版時這裡把出口挪到寬版圖的石階。
+   出口照場景頁慣例走 07w9 圖上出口（EXITS "/guanxing"，右下石階）：寫「🏘 回棋鎮」（時光之苑寫「回時光之苑」），11/17 起一律回首頁（E[3]＝"#/"，B-4：從對局回來不再寫「回園子對局」）；寬版時這裡把出口挪到寬版圖的石階。
    從觀星臺開的塔防：sessionStorage gxtFrom，打完結果視窗的回航鍵改成「🔭 回觀星臺」（07bht bhtdResult 問 gxtBackLb、這裡包 bhReturn）；星槎偏航進黑洞（bhStart）會清掉記號。
    存檔鍵 gxtSeen（第一次進來以前首頁標籤是 .hot；05b JOURNEY_KEYS）。純計算 gxtWon／gxtKind／gxtDay／gxtSrc／gxtSpots 不碰 DOM，測試 xiangqi-lab/tools/test-guanxing.js 用 vm 跑 */
 const GXT_ON=true,GXT_IMGV="1113";   /* 圖的版本：同檔名換圖時改掉，手機才會重抓 */

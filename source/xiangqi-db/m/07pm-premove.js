@@ -71,7 +71,7 @@ function pmvSay(t){try{if(typeof axSay==="function")axSay(t)}catch(e){}}
 function pmvVib(x){try{if(typeof vibrate==="function")vibrate(x)}catch(e){}}
 function pmvClear(){const S=pmvSt();S.q=null;S.sel=null;S.tries=0}
 /* 08b tap 在「還沒輪到你」時先問這個；回傳 true＝當成預走處理掉了。ex＝{flat:平面棋盤嗎, redraw:重畫} */
-function pmvTap(st,me,i,ex){ex=ex||{};if(typeof bhtdPmv==="function"){const r=bhtdPmv(st,me,i,ex);if(r!=null)return r}   /* 11/14 黑洞塔防：電腦思考時只預選下一手的子（高亮、不排預走；07bht-td.js） */if(!pmvOn()||ex.flat===false||!st||st.result||!Array.isArray(st.moves)||!st.board)return false;
+function pmvTap(st,me,i,ex){ex=ex||{};if(typeof bhtdPmv==="function"){const r=bhtdPmv(st,me,i,ex);if(r!=null)return r}   /* 11/14 黑洞塔防：電腦思考時只預選下一手的子（高亮、不排預走；07bht-td.js） */if(typeof sg2On==="function"&&sg2On(st)){const S0=pmvSt();S0.q=null;S0.sel=null;return false}   /* 11/17 iPhone 模擬器第 11 項：星門圍城 v2（07sg2）不排預走。07bht bhtdIs 11/16 改成不收 v2 之後，v2 掉回一般預走：電腦想的時候點「俥→士」會排成預走，對方一走（士移位、護帥加防）就自動打出去，打不動只降防、回合照算，看起來像「點了沒反應卻多走一回合」；攻擊結果跟著對方那一手變，要看完預覽（擊破／扣血／防−）再自己點 */if(!pmvOn()||ex.flat===false||!st||st.result||!Array.isArray(st.moves)||!st.board)return false;
   const S=pmvSt(),b=st.board,n=st.moves.length,re=()=>{try{if(ex.redraw)ex.redraw()}catch(e){}};
   if(S.q&&S.q.gid===st.id){const q=S.q;S.q=null;S.sel=pmvMine(b[i],me)&&i!==q.f?{gid:st.id,n,sq:i}:null;pmvVib(5);pmvSay("已取消預走");re();return true}
   S.q=null;

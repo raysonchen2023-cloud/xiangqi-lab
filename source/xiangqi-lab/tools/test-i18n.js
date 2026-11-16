@@ -236,7 +236,7 @@ test("動態句子（句型）：段位、分數、局面評估、結果副標�
   const cases = {
     "第 3 級": "Level 3", "開始第 7 級": "Start level 7", "216 分": "216 pts", "🏅 業餘2級": "🏅 Amateur 2", "業2": "Amateur 2", "入門3": "Beginner 3", "專1-2": "Expert 1-2", "專3・全力": "Expert 3 · Full strength",
     "紅方・再 16 分升 業3": "Red · 16 pts to Amateur 3", "積分 +16 → 216 分": "Rating +16 → 216 pts", "🎉 升為 業3": "🎉 Promoted to Amateur 3", "3 勝 2 負 1 和": "3W 2L 1D",
-    "往後算 3 步，會漏子": "looks 3 moves ahead, sometimes hangs pieces", "每步想 6 秒，人類幾乎贏不了": "thinks 6 s per move, nearly unbeatable for humans",
+    "往後算 3 步，會漏子": "Looks 3 moves ahead, sometimes hangs pieces", "每步想 6 秒，人類幾乎贏不了": "thinks 6 s per move, nearly unbeatable for humans",
     "👉 輪到你・紅方稍好，約領先 1.5 個兵": "👉 Your move · Red slightly better, ahead by about 1.5 pawns", "均勢，雙方差不多": "Even, roughly equal", "黑方約領先半個兵": "Black ahead by about half a pawn",
     "💡 提示：炮二平五": "💡 Hint: C2.5", "將死・對手幻影棋客・第 3 級「入門3」": "Checkmate · Opponent: Phantom Player · Level 3 \"Beginner 3\"", "你認輸・晉級賽（業餘2級）": "You resigned · Ranked (Amateur 2)",
     "用 1 張悔棋符，退回你的上一步？（現在有 3 張）": "Use 1 undo token to take back your last move? (You have 3)", "免費悔棋：退回你的上一步？（這盤還有 2 次）": "Free undo: take back your last move? (2 left this game)",
@@ -271,7 +271,7 @@ test("還原只動自己換過的：程式之後自己改的字不被蓋回去",
 });
 test("英文模式：MutationObserver 監看整頁；新加的節點、改過的字、改過的 aria-label 都會換", () => {
   const { MO, doc } = loadFull("en"); assert.ok(MO.cb, "英文模式要裝 MutationObserver");
-  assert.equal(MO.target, doc.body); assert.ok(MO.opts.subtree && MO.opts.characterData && MO.opts.childList); assert.deepEqual([...MO.opts.attributeFilter], ["aria-label", "title", "placeholder"]);
+  assert.equal(MO.target, doc.body); assert.ok(MO.opts.subtree && MO.opts.characterData && MO.opts.childList); assert.deepEqual([...MO.opts.attributeFilter], ["aria-label", "title", "placeholder", "label"]);   /* 11/17 加 label：下拉選單分組標題 */
   const t = doc.createElement("div"); t.innerHTML = `<b>確定認輸？</b><button aria-label="認輸">🏳</button>`; doc.body.appendChild(t);
   MO.cb([{ type: "childList", addedNodes: [t] }]); assert.equal(t.textContent, "Resign this game?🏳"); assert.equal(t.querySelector("button").getAttribute("aria-label"), "Resign");
   const n = t.querySelector("b").firstChild; n.nodeValue = "和局"; MO.cb([{ type: "characterData", target: n }]); assert.equal(n.nodeValue, "Draw");
@@ -492,7 +492,7 @@ test("〔混合〕底欄照 data-go 標鍵（m.html 的字改了也一樣）；�
   assert.deepEqual(doc.body.querySelectorAll("#tabbar [data-go]").map(b => b.getAttribute("data-i18n")), ["tab.home", "tab.online", "tab.library", "tab.settings"]);
   assert.deepEqual(seen(doc.body).filter(s => /[A-Za-z]/.test(s)), ["Home", "Online", "Library", "Settings"]);
   const en = loadFull("en"), st = en.doc.head.querySelector("#i18nCss");
-  assert.ok(st, "英文模式有樣式"); for (const r of st.textContent.split("\n")) assert.match(r, /^html\[lang=en\] /, "每一條都只在英文生效：" + r);
+  assert.ok(st, "英文模式有樣式"); for (const r of st.textContent.split("\n")) assert.match(r, /^(@media [^{]+\{)?html\[lang=en\] /, "每一條都只在英文生效：" + r);   /* 11/17 N6-3：窄螢幕標題換行那條包在 @media 裡，裡面照樣只對 html[lang=en] */
   assert.match(st.textContent, /\.tabbar button\{font-size:10\.5px/); assert.match(st.textContent, /#acts button\{[^}]*white-space:normal/);
   assert.equal(loadFull(null).doc.head.querySelector("#i18nCss"), null, "繁中不注入");
   assert.ok(!/i18n|lang=en/.test(rd(path.join(DB, "m.css"))), "m.css 沒有英文模式的規則（都在 07i18n）");

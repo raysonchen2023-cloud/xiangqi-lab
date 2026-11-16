@@ -312,10 +312,10 @@ test("3D 不能用時退回平面：選了 3D 先把 park3d 打開；裝置開�
 /* ====================== 版面、字典 ====================== */
 test("〔原始碼〕版面：3D 區夾在上下兩條 HUD 中間（#bbox 固定定位，park3d 照它的高度排、TDPAD 留邊）；黑洞自由鏡頭的鈕和場名收起來；橫向蓋過黑洞滿版那條規則；過場時記號先藏", ()=>{
   const css=GS.slice(GS.indexOf("function gsvCss(){"),GS.indexOf("function gsvCard(){"));
-  assert.match(css,/body\.gsv-on \.view\.fixed>#bbox\{position:fixed!important;left:0!important;right:0!important;top:calc\(var\(--bhTop,44px\) \+ var\(--gsvEnH\)\)!important;bottom:calc\(var\(--gsvMeH\) \+ env\(safe-area-inset-bottom,0px\)\)!important/);
+  assert.match(css,/body\.gsv-on \.view\.fixed>#bbox\{position:fixed!important;left:0!important;right:0!important;top:calc\(var\(--gsvTop,var\(--bhTop,44px\)\) \+ var\(--gsvEnH\)\)!important;bottom:calc\(var\(--gsvMeH\) \+ env\(safe-area-inset-bottom,0px\)\)!important/);
   for(const k of[".gs-ui",".gs-pop",".un-ui",".tele-ui","#bbox .pkname",".pzoom",".gpad",".pkview",".pk2d"])assert.ok(css.includes("body.gsv-on "+k),"要收起來："+k);
-  assert.match(css,/@media \(orientation:landscape\)\{body\.bh-full\.gsv-on \.view\.fixed:has\(>#bbox\):has\(>#acts\)>#bbox\{top:var\(--bhTop,44px\)!important;bottom:0!important;left:calc\(200px/);
-  assert.match(css,/@media \(orientation:portrait\)\{body\.gsv-3d \.gsv-tip\{position:fixed;top:calc\(var\(--bhTop,44px\) \+ var\(--gsvEnH,62px\) - 32px\)/,"3D 直拿：選目標的提示條不蓋棋盤底線");
+  assert.match(css,/@media \(orientation:landscape\)\{body\.bh-full\.gsv-on \.view\.fixed:has\(>#bbox\):has\(>#acts\)>#bbox\{top:var\(--gsvTop,var\(--bhTop,44px\)\)!important;bottom:env\(safe-area-inset-bottom,0px\)!important;left:calc\(200px/);   /* 11/17 B-5：上緣用量到的頂欄下緣、底下讓出安全區（test-sg2-hud-1117.js） */
+  assert.match(css,/@media \(orientation:portrait\)\{body\.gsv-3d \.gsv-tip\{position:fixed;top:calc\(var\(--gsvTop,var\(--bhTop,44px\)\) \+ var\(--gsvEnH,62px\) - 32px\)/,"3D 直拿：選目標的提示條不蓋棋盤底線");
   assert.match(css,/#gsvView\{display:inline-flex!important/);assert.match(css,/#gsvViewM\{position:fixed;z-index:9300/);
   assert.match(TD,/\.pk-veil #bhtdOv,\.pk-veil #gsvOv\{visibility:hidden\}/);
   const P3=rd("xiangqi-lab/src/park3d.js");assert.match(P3,/TDPAD=\[16,2,4,2\]/);assert.match(P3,/if\(box&&\/\^\(sticky\|fixed\)\$\/\.test\(getComputedStyle\(box\)\.position\)\)/,"park3d 照固定定位的 #bbox 高度排版");

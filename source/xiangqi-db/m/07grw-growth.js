@@ -26,6 +26,10 @@ function grwHtml(D){if(!D||(!(D.rows||[]).length&&!D.lv))return"";
   return`<div class="grw" role="status" aria-label="角色成長">${D.lv?`<p class="grw-lv"><span aria-hidden="true">✨</span> 修為升到 Lv ${D.lv}！</p>`:""}${D.rows.map((r,i)=>`<div class="grw-l ${r.d>0?"up":"dn"}" style="--i:${i}"><i aria-hidden="true">${r.ic}</i><span class="grw-nm">${r.nm}</span><span class="grw-v">${r.a} → <b data-a="${r.a}" data-b="${r.b}">${r.b}</b></span><em>（${grwSign(r.d)}）</em><span class="grw-ar" aria-hidden="true">${r.d>0?"▲":"▼"}</span></div>`).join("")}</div>`}
 /* 開 App 時：沒有快照＝記現在的；有快照但不是這次開 App 記的＝只把體力換成現在的（體力不存檔） */
 function grwBootOf(o,n){if(!o||o.v!==GRW_V)return n;if(o.sid===n.sid)return o;const z=Object.assign({},o,{sid:n.sid});if(grwNum(n.r))z.r=n.r;else delete z.r;return z}
+/* 11/17 測試員 B（B-8）：A1 結果視窗寫「修為升到 Lv 2！」，其實是新手練習時升的（新手練習沒有結果視窗，快照還停在練習前）。
+   「修為升到 Lv N！」只算這一盤升的：grwArm（08b 結算一開始、發這盤修為之前）記下當時的等級 pre；o＝上次給玩家看過的快照。
+   六項數值照舊跟上次的快照比（兩盤之間點的天賦、練的等級照樣在下一盤告訴玩家「a → b」），只有升級那句改用 pre 當起點 */
+function grwBase(o,p){if(!o||o.v!==GRW_V||!grwNum(p))return o;return Object.assign({},o,{lv:p})}
 /* #GRW-PURE-END */
 
 const GRW={arm:0,k:"",sid:Date.now().toString(36)+Math.random().toString(36).slice(2,7)};
@@ -46,7 +50,7 @@ function grwNow(){const o={v:GRW_V,sid:GRW.sid,at:Date.now(),c:"",lv:1};
     if(typeof bhtdTal==="function"){o.sk=BHTD.SK.filter(s=>s.ch===S.ck&&s.lv<=o.lv).length;try{o.tal=((bhtdDust()||{}).t||[]).length}catch(e){}}}}catch(e){}
   return o}
 /* 對局結束時呼叫（08b 結算、07bhw 車輪戰）：接下來第一個結果視窗插成長那一塊 */
-function grwArm(k){if(!GRW_ON)return;GRW.arm=Date.now();GRW.k=String(k||"")}
+function grwArm(k){if(!GRW_ON)return;GRW.arm=Date.now();GRW.k=String(k||"");GRW.pre=null;try{GRW.pre=xpInfo().L}catch(e){}}   /* 11/17 B-8：記下發這盤修為之前的等級（grwBase） */
 const grwArmed=()=>!!GRW.arm&&Date.now()-GRW.arm<GRW_TTL;
 function grwCss(){try{if(typeof document==="undefined"||document.getElementById("grwCss"))return;const s=document.createElement("style");s.id="grwCss";s.textContent=`
 .grw{width:100%;max-width:300px;box-sizing:border-box;margin:8px auto 2px;padding:8px 12px;border:1px solid var(--line);border-radius:12px;font-size:14.5px;line-height:1.7;text-align:left}
@@ -65,8 +69,8 @@ function grwAnim(box){if(grwRM()||typeof requestAnimationFrame!=="function"||!bo
     const step=t=>{if(!b.isConnected)return;const p=Math.max(0,Math.min(1,(t-t0)/GRW_MS)),e=1-Math.pow(1-p,3);b.textContent=String(Math.round(a+(z-a)*e));
       if(p<1)requestAnimationFrame(step);else{b.textContent=String(z);b.classList.add("pop")}};requestAnimationFrame(step)});return true}
 /* 結果視窗出來了：比快照 → 有變化就插在按鈕上面 → 更新快照 */
-function grwShow(m){GRW.arm=0;const now=grwNow(),old=grwLoad();grwSave(now);if(!old||!m||!m.querySelector)return"";
-  const h=grwHtml(grwDiff(old,now));if(!h)return"";grwCss();const mb=m.querySelector(".mb");if(mb)mb.insertAdjacentHTML("beforebegin",h);else{const bx=m.querySelector(".box");if(bx)bx.insertAdjacentHTML("beforeend",h)}
+function grwShow(m){GRW.arm=0;const now=grwNow(),old=grwLoad(),pre=GRW.pre;GRW.pre=null;grwSave(now);if(!old||!m||!m.querySelector)return"";
+  const h=grwHtml(grwDiff(grwBase(old,pre),now));if(!h)return"";grwCss();const mb=m.querySelector(".mb");if(mb)mb.insertAdjacentHTML("beforebegin",h);else{const bx=m.querySelector(".box");if(bx)bx.insertAdjacentHTML("beforeend",h)}
   try{grwAnim(m.querySelector(".grw"))}catch(e){}return h}
 /* 包一層 00-util modal：GRW_TTL 內第一個結果視窗（cls 有 res）插成長那一塊；殺棋動畫延後的視窗（回傳 null）等真的畫出來那一次 */
 if(GRW_ON&&typeof modal==="function"){const f0=modal;modal=function(html,buttons,cls){const m=f0.apply(this,arguments);try{if(m&&grwArmed()&&/(^|\s)res(\s|$)/.test(String(cls||"")))grwShow(m)}catch(e){}return m}}

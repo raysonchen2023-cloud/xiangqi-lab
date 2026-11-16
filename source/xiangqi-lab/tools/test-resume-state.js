@@ -85,7 +85,7 @@ test("模擬玩家情境：沒選角色、晉級賽下到一半，新分頁打�
 test("cont 的字：有下到一半的棋＝▶ 接著下＋和誰、第幾回合；殘局＝題名；都沒有＝▶ 繼續",()=>{
   const {T}=phone({},{rsWho:g=>g.k==="cpu"?{who:"冷面國手",tag:"晉級賽"}:{title:"石桌往事"}});
   assert.deepEqual(T.tsmContTxt({g:{...G(7),k:"cpu"}}),{t:"▶ 接著下",s:"和冷面國手（晉級賽）的棋・第 4 回合"});
-  assert.deepEqual(T.tsmContTxt({g:{...G(2),k:"journey"}}),{t:"▶ 接著下",s:"「石桌往事」・第 1 回合"});
+  assert.deepEqual(T.tsmContTxt({g:{...G(2),k:"journey"}}),{t:"▶ 接著下",s:"「石桌往事」・第 2 回合"});
   assert.deepEqual(T.tsmContTxt({cj:{t:"cj",nm:"🍵 一盞茶第 3 題",n:2}}),{t:"▶ 接著下",s:"「一盞茶第 3 題」還沒解完"});
   assert.deepEqual(T.tsmContTxt({cj:{t:"lv",nm:"守城第二關"}}),{t:"▶ 接著下",s:"「守城第二關」還沒過完"});
   assert.deepEqual(T.tsmContTxt({cj:{t:"qz"}}),{t:"▶ 接著下",s:"棋力測驗還沒做完"});

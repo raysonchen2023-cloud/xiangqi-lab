@@ -43,6 +43,7 @@ function ttCss(){if(document.getElementById("ttCss"))return;const s=document.cre
 .tabbar.tb-ink.tt-mist.tt-bright:not(.tt-night):not(.tb-dark) button .ic img{filter:drop-shadow(0 0 2px rgba(255,246,226,.7)) drop-shadow(0 0 4px rgba(255,246,226,.4))}
 body.tt-on.tt-mode-mist #view{padding-bottom:var(--ttH,0px)}
 #view.tt-fillx{overflow-x:hidden}
+#view.tt-fillx .shp-page>.shp-cap{left:var(--ttCx,0px);right:var(--ttCx,0px)}
 .tt-tube{position:fixed;right:calc(6px + env(safe-area-inset-right,0px));bottom:calc(8px + var(--safeB,0px) + var(--ttUp,0px));z-index:940;width:46px;height:100px;border:0;padding:0;margin:0;
   background:url("data/tabtube/tube.webp?v=${TT_IMGV}") center bottom/contain no-repeat;cursor:pointer;-webkit-tap-highlight-color:transparent;transform-origin:50% 92%;
   filter:drop-shadow(0 2px 3px rgba(40,26,14,.35));transition:bottom .25s ease,transform .15s}
@@ -106,11 +107,14 @@ function ttFan(open,quiet){const fan=document.getElementById("ttFan"),sc=documen
   else if(TT_UN){const u=TT_UN;TT_UN=null;if(!quiet)u()}}
 /* 滿版到底：沒有底欄後，圖（照寬度放）比畫面矮時，整張圖等比放大到剛好碰到畫面底（左右各裁掉一點，最多放大 25%），入口標籤若被裁到邊就往內推；
    圖比畫面高（小手機、iPad）照舊照寬度放、可以往下捲。座標都是圖的百分比，走路、出口、桌面跳躍、面板都跟著圖，不會錯位 */
+/* 11/17 Windows 測試員 B-11：手機補滿高度時圖比畫面寬、左右各裁掉一截（marginLeft 是負的），圖上的標籤 .shp-spot 會推回來，
+   左上角的站名條 .shp-cap 卻還貼著圖的左緣，「現在停靠：秦」的「現」被切掉。站名條左右各縮回裁掉的那一截（--ttCx），對齊看得到的範圍。W＝看得到的寬、w＝圖寬 */
+const ttCapX=(W,w)=>Math.max(0,-Math.round((W-w)/2));   /* 跟 marginLeft 同一個取整，左緣剛好對齊 */
 function ttFill(){const V=document.getElementById("view");if(!V)return;const P=V.querySelector(".shp-page.cq");if(!P){V.classList.remove("tt-fillx");try{r07Off(V)}catch(e){}return}const im=P.querySelector(":scope>img");if(!im)return;
-  const go=()=>{if(!P.isConnected)return;P.style.width="";P.style.marginLeft="";P.style.maxWidth="";V.classList.remove("tt-fillx");P.querySelectorAll(".shp-spot,.po-sight").forEach(b=>{if(b.dataset.ttL!=null)b.style.left=b.dataset.ttL});
+  const go=()=>{if(!P.isConnected)return;P.style.width="";P.style.marginLeft="";P.style.maxWidth="";P.style.removeProperty("--ttCx");V.classList.remove("tt-fillx");P.querySelectorAll(".shp-spot,.po-sight").forEach(b=>{if(b.dataset.ttL!=null)b.style.left=b.dataset.ttL});
     if(!TABTUBE_ON)return;const vr=V.getBoundingClientRect(),pr=P.getBoundingClientRect(),av=vr.top+V.clientHeight-(parseFloat(getComputedStyle(V).paddingBottom)||0)-pr.top,nw=im.naturalWidth||768,nh=im.naturalHeight||1376,W=pr.width,H=W*nh/nw;
     try{if(r07Wide(V,P,vr,pr,nw,nh))return}catch(e){}   /* v5 改善單 R07：寬螢幕、橫放的矮螢幕另外排（見 r07Wide）；手機直向不會進去 */
-    if(!W||av-H<2||av>H*1.25)return;const set=h=>{const w=Math.round(h*nw/nh);Object.assign(P.style,{maxWidth:"none",width:w+"px",marginLeft:Math.round((W-w)/2)+"px"})};V.classList.add("tt-fillx");set(av);
+    if(!W||av-H<2||av>H*1.25)return;const set=h=>{const w=Math.round(h*nw/nh);Object.assign(P.style,{maxWidth:"none",width:w+"px",marginLeft:Math.round((W-w)/2)+"px"});P.style.setProperty("--ttCx",ttCapX(W,w)+"px")};V.classList.add("tt-fillx");set(av);
     {const ex=V.scrollHeight-V.clientHeight;if(ex>0&&ex<40)set(av-ex)}   /* 圖下還有一點邊距（.pad 之類）就扣掉，免得多出幾 px 可以捲 */
     requestAnimationFrame(()=>{const ox=parseFloat(P.style.left)||0;P.querySelectorAll(".shp-spot,.po-sight").forEach(b=>{if(b.classList.contains("hmp-side"))return;if(b.dataset.ttL==null)b.dataset.ttL=b.style.left;const q=b.getBoundingClientRect(),m=6,ql=q.left-ox,qr=q.right-ox;let d=0;if(ql<vr.left+m)d=vr.left+m-ql;else if(qr>vr.right-m)d=vr.right-m-qr;if(d)b.style.left="calc("+b.dataset.ttL+" + "+Math.round(d)+"px)"})})};   /* 11/14 首頁三屏長卷（07hmp）：鏡頭是 P 的 style.left，量的時候扣掉；左右兩屏的標籤（.hmp-side）不推 */
   if(im.complete&&im.naturalWidth)go();else im.addEventListener("load",go,{once:true})}

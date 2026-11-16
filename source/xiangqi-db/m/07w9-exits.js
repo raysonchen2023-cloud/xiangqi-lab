@@ -20,10 +20,14 @@ function exSafeB(){try{const d=document.createElement("div");d.style.cssText="po
 function exInY(s,V,P){if(s.dataset.exT!=null)s.style.top=s.dataset.exT;const q=s.getBoundingClientRect();if(!q.height)return;const vr=V.getBoundingClientRect(),pr=P.getBoundingClientRect(),hb=Math.max(0,(44-q.height)/2);
   const B=Math.min(vr.bottom,pr.bottom,innerHeight-Math.max(12,exSafeB()))-hb,T=Math.max(vr.top,pr.top)+hb+4;if(q.bottom<=B||B-T<q.height)return;
   if(s.dataset.exT==null)s.dataset.exT=s.style.top;s.style.top="calc("+s.dataset.exT+" - "+Math.round(q.bottom-B)+"px)"}
+/* 11/17 Windows 測試員 B-4／D P3-3：觀星臺的出口原本不寫死去處，照返回鍵記的上一頁改字；從今日異象、星門圍城的結果視窗按「回觀星臺」是往前推一頁，
+   上一頁變成那盤棋（#/journey/play），出口就寫成「↩ 回園子對局」（05 USE_NAME 的叫法），按了還會退回下完的那盤。
+   11/17 第 4 輪 D P2-4：西市（首頁橋左邊進來）同一招回首頁，書架、行囊（星槎上的熱點）回星槎，從對局頁直接跳過來也不寫「回園子對局」。
+   觀星臺只從首頁（時光之苑橋右邊）或「找地方」進來（星槎的熱點 11/13 晚拿掉了），出口一律回首頁（E[3]＝"#/"，goHome），字照舊「回棋鎮」（時光之苑換「回時光之苑」） */
 const EXITS={"/hub/learn":[52,86,"‹ 回棋鎮","#/"],"/hub/battle":[78,87,"‹ 回棋鎮","#/"],
   "/camp":[50,87,"↩ 回書院"],"/theme":[50,87,"↩ 走回書院"],"/canju":[22,87,"↩ 回書院"],"/terms":[50,87,"↩ 回書院","#/hub/learn"],
-  "/cup":[50,87,"↩ 下樓・回茶坊","#/hub/battle"],"/cpuroom":[50,96,"↩ 掀簾・回茶坊","#/hub/battle"],"/guanxing":[86,90,"🏘 回棋鎮"],"/ximarket":[64,91,"🏘 回棋鎮"],"/ximarket/tea":[24,95,"↩ 回西市","#/ximarket"],"/redo":[24,87,"↩ 回書院","#/hub/learn"],"/stats":[50,87,"↩ 回書院","#/hub/learn"],"/openings":[50,87,"↩ 回書院","#/hub/learn"],
-  "/journey/inn":[18,86,"⛵ 回渡口"],"/ship/lesson":[16,90,"⛵ 回星槎"],"/ship/pz":[16,90,"⛵ 回星槎"],"/ship/shelf":[16,90,"⛵ 回星槎"],"/ship/bag":[16,90,"⛵ 回星槎"],
+  "/cup":[50,87,"↩ 下樓・回茶坊","#/hub/battle"],"/cpuroom":[50,96,"↩ 掀簾・回茶坊","#/hub/battle"],"/guanxing":[86,90,"🏘 回棋鎮","#/"],"/ximarket":[64,91,"🏘 回棋鎮","#/"],"/ximarket/tea":[24,95,"↩ 回西市","#/ximarket"],"/redo":[24,87,"↩ 回書院","#/hub/learn"],"/stats":[50,87,"↩ 回書院","#/hub/learn"],"/openings":[50,87,"↩ 回書院","#/hub/learn"],
+  "/journey/inn":[18,86,"⛵ 回渡口"],"/ship/lesson":[16,90,"⛵ 回星槎"],"/ship/pz":[16,90,"⛵ 回星槎"],"/ship/shelf":[16,90,"⛵ 回星槎","#/adventure"],"/ship/bag":[16,90,"⛵ 回星槎","#/adventure"],
   "/feedback":[20,74,"⛵ 回星槎","#/adventure"],"/me":[50,87,"🏘 回棋鎮"],"/today":[30,87,"🏘 回棋鎮"],"/gm":[50,87,"↩ 回棋譜庫"],"/quiz":[50,87,"↩ 回書院","#/hub/learn"],
   "/lobby":[18,88,"↩ 回對戰茶樓"],"/db":[20,88,"↩ 回學習書院"],"/settings":[14,90,"↩ 回上一頁"]};
 /* 開發者 11/9「拿掉頁面右下角的設定，以後統一到星槎裡面開啟設定」「移除頁面底下的首頁／線上／棋譜入口，整頁滿版」「進到 App 只會看到首頁的樣子」：

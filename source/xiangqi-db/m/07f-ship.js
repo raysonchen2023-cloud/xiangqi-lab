@@ -401,10 +401,12 @@ function ShipShelf(v){setTop("📚 書架","#/adventure");setTabs(false);v.class
   v.innerHTML=shpPage("page_shelf","📚 船艙書架","說書人講的故事",[
     ["sb1",SHELF_SPOT[0][0],SHELF_SPOT[0][1],"🪨 第一集・石桌往事","讀到第"+CNUM(L.n)+"回・"+esc(ROAD_NAME)+" "+p1+"／"+J.length+" 關"],
     ["sb2",SHELF_SPOT[1][0],SHELF_SPOT[1][1],(b1?"📜":"🔒")+" 第二集・紙譜新局",b1?"明朝隆慶・過了 "+p2+"／"+J2.length+" 關":"第一集 "+J.length+" 關都過了才會打開",b1?"":"lk"],
-    ["sb3",SHELF_SPOT[2][0],SHELF_SPOT[2][1],"🌌 雲河七星・合集","第 1～14 章・全書"]]);
+    ["sb3",SHELF_SPOT[2][0],SHELF_SPOT[2][1],"🌌 雲河七星・合集","第 1～14 章・全書"]],SHELF_EN_CSS);
   shpOn(v,"#sb1",()=>{location.hash="#/shelf/1"});shpOn(v,"#sb2",()=>{if(!book1Done()&&!(typeof DEVUNLOCK==="function"&&DEVUNLOCK()))return toast("🔒 讀完第一集、36 關都過了，第二集就會打開");location.hash="#/shelf/2"});
-  shpOn(v,"#sb3",()=>{SHIP_RD_BACK="#/ship/shelf";location.hash="#/ship/read"});shpFit(v);return{}}
+  shpOn(v,"#sb3",()=>{SHIP_RD_BACK="#/ship/shelf";location.hash="#/ship/read"});shpFit(v);setTimeout(()=>{if(v.isConnected)shpFit(v)},700);return{}}
 const SHELF_SPOT=[[31,36],[66,57],[31,80]];
+/* 11/17 第 4 輪 D P2-5：英文書名比中文長一倍，標籤不換行（.shp-spot nowrap）就超出畫面、副標被刪節號切掉；英文時三本書的標籤可換行（最寬 62%），翻譯完（約半秒後）再貼邊一次 */
+const SHELF_EN_CSS=`<style>html[lang^=en] :is(#sb1,#sb2,#sb3){white-space:normal;max-width:62%;width:max-content;text-align:center}html[lang^=en] :is(#sb1,#sb2,#sb3) :is(b,small){white-space:normal;line-height:1.25}</style>`;
 /* 行囊 #/ship/bag：羅盤＝航行難度、包袱＝棋童資料、木箱＝存檔與讀檔（意見回饋 735：人物與年表只留在《石桌往事》書末附錄，卷軸不再是入口；BAG_SPOT[1] 現在放 📚 千秋大百科 #/codex，07i-codex.js） */
 function ShipBag(v){setTop("🎒 行囊","#/adventure");setTabs(false);v.className="view";const B=BAG_SPOT;
   v.innerHTML=shpPage("page_bag","🎒 行囊","旅途帶著走的東西",[["bgDiff",B[0][0],B[0][1],"🎚 航行難度",esc(diffOf().n)+"・隨時可換"],["bgMe",B[2][0],B[2][1],"🎒 棋童資料","棋盤・棋譜・棋友"],...(typeof Codex==="function"?[["bgCx",B[1][0],B[1][1],"📚 千秋大百科","所有收藏的總目錄"]]:[]),["bgSave",B[3][0],B[3][1],"💾 存檔與讀檔",curSlot()?"第 "+curSlot()+" 格":"3 格存檔"],...(typeof qqPending==="function"&&qqPending().length?[["bgQq",50,60,"🌀 雲河怪事",qqPending().length+" 件還沒了結","hot"]]:[])]);

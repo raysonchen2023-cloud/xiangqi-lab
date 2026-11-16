@@ -357,7 +357,7 @@ function tsmMenu(o){if(o.J)return["go","new","save"];const L=o.prog?["cont","sto
 /* 「先試一手」：沒看過（firstWin）、沒旅程、沒存檔格、不是舊玩家、不是開發者模式、不是剛從雙份存檔還原、棋盤程式在、而且沒有任何進度 */
 function tsmFirst(o){return!(o.fw||o.J||o.slots||o.old||o.dev||o.restored||o.noBoard||o.played||o.prog)}
 /* cont 那顆按鈕的字：有下到一半的棋＝▶ 接著下（和誰、第幾回合）；殘局、關卡做到一半＝▶ 接著下（題名）；都沒有＝▶ 繼續（回首頁）。L＝07m4 rsLatest() */
-function tsmContTxt(L){try{if(L&&L.g){const g=L.g,W=typeof rsWho==="function"?rsWho(g):{},n=Math.ceil(((g.moves||[]).length)/2);return{t:"▶ 接著下",s:(W.who?`和${W.who}${W.tag?"（"+W.tag+"）":""}的棋`:`「${W.title||"這盤棋"}」`)+`・第 ${n} 回合`}}
+function tsmContTxt(L){try{if(L&&L.g){const g=L.g,W=typeof rsWho==="function"?rsWho(g):{},n=Math.floor(((g.moves||[]).length+(g.startTurn==="b"?1:0))/2)+1;   /* 11/17 D P3-2：正要下的那一步在第幾回合（紅黑各走一步＝第 2 回合），跟 07-legend jRnd 同一套 */return{t:"▶ 接著下",s:(W.who?`和${W.who}${W.tag?"（"+W.tag+"）":""}的棋`:`「${W.title||"這盤棋"}」`)+`・第 ${n} 回合`}}
   if(L&&L.cj){const r=L.cj,nm=r.t==="cj"?String(r.nm||"").replace(/^\S*\s/,""):String(r.nm||"");return{t:"▶ 接著下",s:r.t==="qz"?"棋力測驗還沒做完":`「${nm||"上次那題"}」還沒${r.t==="lv"?"過完":r.t==="tm"?"做完":"解完"}`}}}catch(e){}
   return{t:"▶ 繼續",s:"回到首頁・戰績和進度都還在"}}
 function tsmLatest(){try{return typeof rsLatest==="function"?rsLatest():null}catch(e){return null}}

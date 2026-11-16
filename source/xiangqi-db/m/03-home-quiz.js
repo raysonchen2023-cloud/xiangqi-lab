@@ -83,7 +83,7 @@ ${OFF?(()=>{const n=Object.keys(arenaStamps()).length,t=arenaTitle();return`<but
     const cur=!st.result&&st.moves&&st.moves.length?{kind:st.practice?"practice":st.journey?"journey":st.arena?"arena":"cpu",journey:st.journey,arena:st.arena,ranked:st.ranked,level:st.level,practice:st.practice,n:st.moves.length,me:st.turn===st.human}:null,
       O=(st.others||(st.other?[st.other]:[])).map(z=>({...z,me:(z.n%2?"b":"r")===z.human})),pick=k=>cur&&cur.kind===k?cur:O.find(z=>z.kind===k)||null,
       G={cpu:pick("cpu"),arena:pick("arena"),journey:pick("journey")},
-      line=g=>`⏳ ${g.kind==="arena"?(typeof ARENA!=="undefined"&&ARENA[g.arena]?ARENA[g.arena].name:"擂台"):g.practice?"錯棋重練":g.ranked?"晉級賽":`第 ${g.level} 級`}下到第 ${Math.ceil(g.n/2)} 回合・${g.me?"輪到你走":"輪到電腦"}`,
+      line=g=>`⏳ ${g.kind==="arena"?(typeof ARENA!=="undefined"&&ARENA[g.arena]?ARENA[g.arena].name:"擂台"):g.practice?"錯棋重練":g.ranked?"晉級賽":`第 ${g.level} 級`}下到第 ${Math.floor(g.n/2)+1} 回合・${g.me?"輪到你走":"輪到電腦"}`,
       go=kind=>{vibrate(5);if(kind==="arena")store.set("park3d",true);location.hash=kind==="arena"?"#/arena":"#/cpu"};   /* 意見回饋 319：朝代擂台在公園 3D 裡 */
     if(e&&G.cpu){const tile=e.closest(".tile");e.innerHTML=`${esc(e.textContent)}<span class="rsm">${esc(line(G.cpu))}</span>`;
       if(tile){tile.classList.add("resume");const g=tile.querySelector(".go");if(g)g.textContent="繼續下 ›";tile.onclick=()=>go("cpu")}}

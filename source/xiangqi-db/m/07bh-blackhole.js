@@ -39,8 +39,11 @@ function bhPreload(){if(BH_PRE||typeof document==="undefined")return BH_PRE;
    觀星臺照進度打關卡；偏航不再開同一張選關視窗，直接進一場三到五分鐘的急襲殘陣（07bht-td.js bhtdRaidDrift，星塵照表現給、可以不接）。
    急襲要破過第 1 關才有：還沒破的人（多半是第一次偏航）照舊走原本的說明與選關 */
 const bhDriftRaid=()=>{if(typeof sg2DriftOk==="function")return sg2DriftOk();try{return typeof bhtdRdOpen==="function"&&typeof bhtdProg==="function"&&typeof bhtdRaidDrift==="function"&&!(typeof bhtlNeed==="function"&&bhtlNeed())&&bhtdRdOpen(bhtdProg())}catch(e){return false}};
+/* 11/17 Windows 測試員 B-3：原本寫「棋鎮右邊的觀星臺也會開」，可是觀星臺入口只放在千秋時光之苑首頁（07gxt gxtHomeSpot，開發者 11/13 定），
+   各朝代棋鎮、星槎上都沒有（11/13 晚拿掉星槎熱點）；改成指向真的找得到的地方：時光之苑橋右邊，或頂欄的 🗺 地圖（07z6 觀星臺那一格） */
+const BH_GXT_AT="，觀星臺也會開（點頂欄右上的地圖鈕就找得到；入口在千秋時光之苑的橋右邊）";
 function bhOffer(k,next,cover,f1){const n=store.get("bhCount",0)||0,rd=bhDriftRaid();bhMus("fall");vibrate([20,60,20]);try{bhPreload()}catch(e){}
-  modal(`<div class="em">🌀</div><h2>${n||rd?"星槎偏航":esc(BHX_FD.title)}</h2><p>${esc(BH_TXT.fall)}</p>${n?bhSay(BH_TXT.again):rd?"":BHX_FD.desc.map(t=>`<p class="muted" style="font-size:13px">${esc(t)}</p>`).join("")}<p class="muted" style="font-size:13px">${rd?(typeof SG2G!=="undefined"?"星渦裡浮著一盤星門圍城：打贏有星塵"+(typeof gxtOpen==="function"&&!gxtOpen()?"，棋鎮右邊的觀星臺也會開":"")+(f1?"。星槎被星渦牽住，得先下完這一盤，才會照原本的航線停靠。":"。要接嗎？不接也不扣任何東西，星槎照原本的航線停靠。"):"星渦裡浮著一盤下到一半的殘陣：這是一場星淵急襲，三到五分鐘分勝負，打贏有星塵。要接嗎？不接也不扣任何東西，星槎照原本的航線停靠。"):(f1?"墨色星渦的中心，浮著一張巨大的棋盤。星槎被星渦牽住，得先下完這一盤，才會照原本的航線停靠。":"墨色星渦的中心，浮著一張巨大的棋盤。要下這一盤嗎？不下也不扣任何東西，星槎照原本的航線停靠。")}</p>`,
+  modal(`<div class="em">🌀</div><h2>${n||rd?"星槎偏航":esc(BHX_FD.title)}</h2><p>${esc(BH_TXT.fall)}</p>${n?bhSay(BH_TXT.again):rd?"":BHX_FD.desc.map(t=>`<p class="muted" style="font-size:13px">${esc(t)}</p>`).join("")}<p class="muted" style="font-size:13px">${rd?(typeof SG2G!=="undefined"?"星渦裡浮著一盤星門圍城：打贏有星塵"+(typeof gxtOpen==="function"&&!gxtOpen()?BH_GXT_AT:"")+(f1?"。星槎被星渦牽住，得先下完這一盤，才會照原本的航線停靠。":"。要接嗎？不接也不扣任何東西，星槎照原本的航線停靠。"):"星渦裡浮著一盤下到一半的殘陣：這是一場星淵急襲，三到五分鐘分勝負，打贏有星塵。要接嗎？不接也不扣任何東西，星槎照原本的航線停靠。"):(f1?"墨色星渦的中心，浮著一張巨大的棋盤。星槎被星渦牽住，得先下完這一盤，才會照原本的航線停靠。":"墨色星渦的中心，浮著一張巨大的棋盤。要下這一盤嗎？不下也不扣任何東西，星槎照原本的航線停靠。")}</p>`,
     [[rd?"⚡ 接受急襲":"🌀 接受棋局",()=>{if(f1)try{store.set("bhDrift1",1)}catch(e){}rd?bhStart(k,cover):bhIntro(k,cover)}]].concat(f1?[]:[["先回航線",()=>{bhMus(null);if(next)next()},true]]),"prolog")}
 function bhIntro(k,cover){try{bhPreload()}catch(e){}modal(`<div class="em">♟</div><h2>星樞棋局</h2>${bhSay(BH_TXT.wake)}<p class="pl-say">✦ ${esc(BH_TXT.voice[0])}：「${esc(BH_TXT.voice[1])}」</p><p class="muted" style="font-size:13px">${esc(BH_TXT.rule)}<br>不計積分、不扣分。可以用＋／－或兩指縮放：拉遠看整盤，放大到最近就站在棋盤上。</p>`,
   [["入局",()=>bhStart(k,cover)]],"prolog")}
@@ -53,8 +56,24 @@ function bhLevel(){let s=0;const J=k=>{try{return JSON.parse(localStorage.getIte
   const rec=J("xq_record")||{};for(const k in rec)if(rec[k]&&rec[k].w>0)s=Math.max(s,+k||0);
   const cl=store.get("cpuLevel",null);if(cl!=null)s=Math.max(s,+cl||0);if(!s)s=2;
   const fst=!((+store.get("bhCount",0)||0)>0);return Math.max(1,Math.min(18,s+(fst?-1:1)))}   /* 開發者 11/12 選：第一次真正偏航「星樞未醒」＝實力 −1，第二次起才 ＋1（序局不算次數） */
+/* 11/17 iPhone 模擬器測試（全新玩家）：按「⚡ 接受急襲」後整頁米白色約 8 秒（開局、載 3D 程式和模型），沒有任何提示，之後才出現「黑洞・星樞棋局」。
+   偏航直接開局時先蓋一層載入畫面（樣式照 09b 走進新頁的等待畫面 #pgate：米色底、墨點一圈圈暈開、一行大字），等對局頁的棋盤出來（3D 星盤建好，或這盤用平面棋盤）就淡掉。
+   其他情況也收：跳出新的視窗（例如「還有一盤沒下完」）、換到別頁、25 秒到了；3 秒後點一下也能先收。bhLdDone 是純判斷（測試直接傳 o） */
+const BH_LD_MAX=25000;
+function bhLdDone(o){if(o.ms>=BH_LD_MAX||o.newModal)return true;const play=/^#\/journey\/play/.test(o.hash||"");if(play)return!!o.board&&(!!o.p3d||!o.park);return o.hash!==o.h0}
+function bhLdOff(){if(typeof document==="undefined")return;const o=document.getElementById("bhLd");if(!o||o.classList.contains("out"))return;o.classList.add("out");setTimeout(()=>o.remove(),400)}
+function bhLd(){if(typeof document==="undefined"||!document.body)return null;{const x=document.getElementById("bhLd");if(x)x.remove()}
+  if(!document.getElementById("bhLdCss")){const s=document.createElement("style");s.id="bhLdCss";s.textContent=`#bhLd{position:fixed;inset:0;z-index:9990;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:14px;background:#F3ECDD;transition:opacity .35s}#bhLd.out{opacity:0;pointer-events:none}
+#bhLd .bl-ink{position:relative;width:150px;height:150px}#bhLd .bl-ink i{position:absolute;inset:0;border-radius:50%;background:radial-gradient(circle,rgba(42,31,21,.78) 0,rgba(42,31,21,.45) 32%,rgba(42,31,21,.12) 58%,rgba(42,31,21,0) 72%);filter:blur(5px);transform:scale(.15);animation:bhLdInk 2.6s ease-out infinite}
+#bhLd .bl-ink i:nth-child(2){animation-delay:.85s}#bhLd .bl-ink i:nth-child(3){animation-delay:1.7s}#bhLd .bl-t{font-family:var(--serif,serif);font-size:17px;color:#2A1F15;letter-spacing:.2em}
+@keyframes bhLdInk{0%{transform:scale(.15);opacity:.95}70%{opacity:.35}100%{transform:scale(1.45);opacity:0}}@media (prefers-reduced-motion:reduce){#bhLd .bl-ink i{animation:none;transform:scale(.8);opacity:.5}}`;document.head.append(s)}
+  const o=document.createElement("div");o.id="bhLd";o.setAttribute("role","status");o.setAttribute("aria-live","polite");o.innerHTML=`<div class="bl-ink" aria-hidden="true"><i></i><i></i><i></i></div><div class="bl-t">正在進入星渦…</div>`;
+  const t0=Date.now(),h0=location.hash,M0=new Set(document.querySelectorAll(".modal"));o.onclick=()=>{if(Date.now()-t0>3000)bhLdOff()};document.body.append(o);
+  const tick=()=>{if(!o.isConnected||o.classList.contains("out"))return;let pk=true;try{pk=typeof parkOn==="function"?!!parkOn():true}catch(e){}
+    const st={ms:Date.now()-t0,hash:location.hash,h0,board:!!document.getElementById("bbox"),p3d:!!document.querySelector("#bbox .park3d"),park:pk,newModal:[...document.querySelectorAll(".modal")].some(m=>!M0.has(m))};
+    if(bhLdDone(st)){bhLdOff();return}setTimeout(tick,250)};setTimeout(tick,250);return o}
 function bhStart(k,cover){{const lk=typeof bhtdLock==="function"?bhtdLock():"";if(lk){toast("🌫 "+lk);try{bhMus(null);if(cover!==false&&k&&typeof shipDockCover==="function")shipDockCover(k,()=>{})}catch(e){}return}}   /* 11/14：定軌力用完＝黑洞入口關著（07bht bhtdLock → 07dgl dglBhLock） */
-  if(typeof SG2G!=="undefined"&&typeof gsvSelect==="function"){if(cover!==false&&k&&typeof sg2Drift==="function"&&sg2Drift(k,cover))return;gsvSelect(k,cover);return}   /* 11/16 黑洞新規則：偏航（有目的站）直接打一場星門圍城，不然開選關 */
+  if(typeof SG2G!=="undefined"&&typeof gsvSelect==="function"){if(cover!==false&&k&&typeof sg2Drift==="function"){const t0=Date.now();bhLd();if(sg2Drift(k,cover)){const R=store.get("bhRet",null);if(!R||!(+R.at>=t0))bhLdOff();return}bhLdOff()}gsvSelect(k,cover);return}   /* 11/16 黑洞新規則：偏航（有目的站）直接打一場星門圍城，不然開選關 */   /* 11/17 iPhone 模擬器測試：按「接受急襲」到星盤出來約 8 秒整頁空白 → 先蓋載入畫面（bhLd）；gsvStart 被鎖擋下（沒寫新的 bhRet＝沒開局）就馬上收掉 */
   if(typeof BHTD_ON!=="undefined"&&BHTD_ON&&typeof bhtdSelect==="function"){if(cover!==false&&k&&typeof bhtdRaidDrift==="function"&&bhtdRaidDrift(k,cover))return;bhtdSelect(k,cover);return}   /* 開發者 11/13：黑洞對戰改成陣地塔防，先選關卡（m/07bht-td.js）；11/15：星槎偏航（cover 不是 false、有目的站）而且急襲已開＝直接進一場星淵急襲，不開選關 */
   try{bhPreload()}catch(e){}store.set("bhRet",{k,cover:cover!==false,at:Date.now(),first:!((+store.get("bhCount",0)||0)>0)});store.set("park3d",true);
   jStart("bh:"+k,{human:"r",lx:bhLevel(),journey:"bh:"+k},()=>{location.hash="#/journey/play";setTimeout(()=>toast("✦ 星樞："+BH_TXT.voice[1]),900)})}
@@ -175,8 +194,9 @@ const BH_SG={pro:"bh_6.mp3",e:"bh_6.mp3",m:"bh_7.mp3",h:"bh_9.mp3",raid:["bh_8.m
 function bhSgBase(td){let dr=false;try{dr=sessionStorage.getItem("bhDrift")==="1"}catch(e){}if(dr)return BH_SG.raid;if(+td.diff===3)return BH_SG.h;const g=SG2G.GRP.find(x=>x.lv.includes(td.lv));return BH_SG[g?g.id:"m"]||BH_SG.m}
 function bhSgMus(st,now){const td=st&&st.td;if(!td||typeof SG2G==="undefined"||td.mode!==SG2G.MODE)return false;now=now||Date.now();
   if(st.result){BH_CR=null;bhMus("end");bhChordOff();return true}
-  const S=td.s,k=S&&S.b?S.b.indexOf("K"):-1,hp=k>=0&&S.x?+S.x[k]:null,km=+td.kmax||0,chk=st.check!=null&&st.check>=0&&st.turn===st.human,danger=chk||(hp!=null&&km>0&&hp<km*.3);
-  if(danger){if(!BH_CR)BH_CR={on:now,off:0};else BH_CR.off=0}else if(BH_CR){if(!BH_CR.off)BH_CR.off=now;if(now-BH_CR.on>=BH_SG.hold&&now-BH_CR.off>=BH_SG.back)BH_CR=null}
+  const S=td.s,k=S&&S.b?S.b.indexOf("K"):-1,hp=k>=0&&S.h?+S.h[k]:null,km=+td.kmax||0,   /* 11/17：帥的現在體力是 S.h（S.x 是最大值）；1830 誤讀 S.x，體力掉到三成也不切危急曲，只有被將軍會切（說明文件核對時發現） */chk=st.check!=null&&st.check>=0&&st.turn===st.human,danger=chk||(hp!=null&&km>0&&hp<km*.3);
+  if(BH_CR&&BH_CR.id!==st.id)BH_CR=null;   /* 11/17 第二批 N-3：上一盤切到危急曲、回觀星臺開另一盤，新盤開場還在放將星懸命（35 秒保留沒到）→ 換了一盤（st.id 不同）就清掉，新的一盤從關卡曲開始 */
+  if(danger){if(!BH_CR)BH_CR={on:now,off:0,id:st.id};else BH_CR.off=0}else if(BH_CR){if(!BH_CR.off)BH_CR.off=now;if(now-BH_CR.on>=BH_SG.hold&&now-BH_CR.off>=BH_SG.back)BH_CR=null}
   try{if(typeof bgmForce==="function")bgmForce(BH_CR?BH_SG.crisis:bhSgBase(td))}catch(e){}bhChord(st);return true}
 function bhMusTick(st){if(st&&st.journey===BHX_ID)return;   /* 序局放第 2 首（開場配樂），不跟著局面切 bh_1～5 */
   if(bhSgMus(st))return;

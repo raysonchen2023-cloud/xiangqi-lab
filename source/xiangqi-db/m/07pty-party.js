@@ -220,13 +220,16 @@ function ptyOnSolve(k,id){let P=null;try{P=ptyGet()}catch(e){}if(!P)return;const
   if(typeof pjcPlay==="function"&&typeof PJC_SC!=="undefined"&&PJC_SC[k]){ptyJoinCutLater(k,L,0);return}   /* 11/16 開發者 hspx「新角色夥伴加入時做一個過場動畫」：這一站有過場（m/07pjc-joincut.js）就先播，播完或略過再出加入卡 */
   ptyJoinCardLater(L,0)}
 /* 過場跟加入卡一樣，先等解題結果視窗、主線電影儀式（mnfBusy）收掉再播；播完那一刻還有視窗開著，加入卡照舊排隊。加入卡只出一次 */
-function ptyJoinCutLater(k,L,n){setTimeout(()=>{const busy=document.querySelector(".modal")||(typeof mnfBusy==="function"&&mnfBusy());if(busy&&n<20)return ptyJoinCutLater(k,L,n+1);
+/* 11/17 iMac 模擬器第 12 項：殘局解開的「完美解開」結算是 07c 的卡片（#sheet），不是 .modal，以前不算在「等」裡，2.5 秒一到過場就蓋上去。
+   結算卡（或任何卡片）開著就一直等、不算進 20 次，玩家按了按鈕或關掉卡片才播過場、出加入卡 */
+const ptyResOpen=()=>{try{return typeof document!=="undefined"&&!!document.getElementById("sheet")}catch(e){return false}};
+function ptyJoinCutLater(k,L,n){setTimeout(()=>{if(ptyResOpen())return ptyJoinCutLater(k,L,Math.max(1,n));const busy=document.querySelector(".modal")||(typeof mnfBusy==="function"&&mnfBusy());if(busy&&n<20)return ptyJoinCutLater(k,L,n+1);
   let d=0;const go=()=>{if(d)return;d=1;if(document.querySelector(".modal"))ptyJoinCardLater(L,1);else ptyJoinCard(L)};try{pjcPlay(k,L,go)}catch(e){go()}},n?1500:2500)}
-function ptyJoinCardLater(L,n){setTimeout(()=>{if(document.querySelector(".modal")&&n<20)return ptyJoinCardLater(L,n+1);ptyJoinCard(L)},n?1500:2500)}
+function ptyJoinCardLater(L,n){setTimeout(()=>{if(ptyResOpen())return ptyJoinCardLater(L,Math.max(1,n));if(document.querySelector(".modal")&&n<20)return ptyJoinCardLater(L,n+1);ptyJoinCard(L)},n?1500:2500)}
 function ptyJoinCard(L){if(typeof modal!=="function"||!L||!L.length)return;const P=ptyGet();if(!P)return;
   const nm=L.map(ptyNm).join("、"),c=L[0];
   modal(`<img src="data/xs/prev_${c}.webp" alt="" onerror="this.remove()"><h2>${esc(nm)}加入了！</h2>${L.map(x=>PTY_SAY[x]?`<p class="pl-say">${esc(ptyNm(x))}：「${esc(PTY_SAY[x])}」</p>`:"").join("")}<p class="muted">${ptyTa(L)}的招式黑洞裡就能帶；在「雲河七星」卡冊可以換陪你走的人，也可以分星輝給${ptyTa(L)}。</p>`,
-    [["帶"+ptyTa(L)+"出門",()=>{ptySetLook(c)}],["好",null,true]],"prolog");
+    [["帶"+ptyTa(L)+"出門",()=>{if(ptySetLook(c))try{toast("🚶 "+ptyNm(c)+"陪你走了")}catch(e){}}],["好",null,true]],"prolog");   /* 11/17 iMac 模擬器第 15 項：按了沒有任何提示（要到「我的角色」才看得到換人）→ 換好就說一聲；英文在 07i18n I18N_PAT */
   const P2=ptyGet();for(const x of L)P2.seen[x]=1;ptySave(P2)}
 /* ③ 起航閘門：回 null＝不擋 */
 function ptySailBlock(){let P=null;try{P=ptyGet()}catch(e){}if(!P||typeof shipFront!=="function")return null;const k=shipFront();if(!k)return null;const L=PTY.pendingAt(P,k);if(!L.length)return null;
@@ -236,7 +239,13 @@ function ptyGateSay(N){if(typeof modal!=="function")return;const nm=N.n>1?PTY.pe
   modal(`<img src="data/xs/prev_${N.pty}.webp" alt="" onerror="this.remove()"><h2>還有人困在這裡</h2><p>${esc(PTY_MEET[N.k]||"")}</p><p class="muted">先幫${esc(nm)}，星槎再起航。</p>`,[["去幫忙",()=>ptyHelpGo(N.k,N.pty)],["好",null,true]],"prolog")}
 /* ④ 修為提醒 */
 function ptyHintCheck(){let P=null;try{P=ptyGet()}catch(e){}if(!P)return;const L=PTY.hints(P,ptyL());if(!L.length)return;for(const c of L)P.hint[c]=1;ptySave(P);ptyHintLater(L[0],0)}
-function ptyHintLater(c,n){setTimeout(()=>{if(document.querySelector(".modal")&&n<20)return ptyHintLater(c,n+1);ptyHintShow(c)},n?2000:4000)}
+/* 11/17 Windows 測試員 D P2-4：在西市的雲河櫃坊（#/ximarket 上開的卡片）合券拿到修為，說書人「《千秋棋話》亮了一下」就蓋在櫃坊上，第一次點「合券」被擋。
+   改成等玩家回到首頁或星槎主畫面（PTY_HINT_AT），而且沒有視窗、卡片、過場開著才跳；在別的頁（西市、櫃坊、對局、題目…）就一直等，不算進 20 次。
+   ptyHintOk 是純判斷：h＝現在的網址 hash、busy＝有沒有東西蓋著 */
+const PTY_HINT_AT=["#/","#","","#/adventure"];
+function ptyHintOk(h,busy){return PTY_HINT_AT.includes(String(h==null?"":h))&&!busy}
+const ptyHintBusy=()=>{try{return!!document.querySelector("#sheet,.sheet-bg,#stmOv,.mnf-ov,.bhx-ov,.dgl-o,#ulkOv,.sw7-slip,#stqPg,#mnfPg,#bhxPg")}catch(e){return false}};
+function ptyHintLater(c,n){setTimeout(()=>{if(!ptyHintOk(location.hash||"",ptyHintBusy()))return ptyHintLater(c,Math.max(1,n));if(document.querySelector(".modal")&&n<20)return ptyHintLater(c,n+1);ptyHintShow(c)},n?2000:4000)}
 function ptyHintShow(c){if(typeof modal!=="function"||ptyHas(c))return;const j=PTY.JOIN[c],at=j&&typeof eraLabel==="function"?eraLabel(j.st):"";
   modal(`<img src="data/actors/teller.webp" alt="" onerror="this.remove()"><h2>《千秋棋話》亮了一下</h2><p class="pl-say">說書人：「${esc(PTY_HINT[c]||"")}」</p><p class="muted">星槎停靠${esc(at)}，就能找到${PTY.JOIN[c].st==="sanguo"?"他們":"那孩子"}。</p>`,
     [["去星槎",()=>{location.hash="#/adventure"}],["之後再說",null,true]],"prolog")}

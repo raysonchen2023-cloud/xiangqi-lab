@@ -86,9 +86,20 @@ const boardTheme=k=>{k=k||store.get("boardTheme","wood3d");if(k==="auto"&&boardE
 let boardN=0;
 /* 回饋 847（讀螢幕盲棋）：讀螢幕的播報區（aria-live）。每句話各自一行加進去（只留最後 4 行），連著兩句（自己走、對手馬上回）才不會互相蓋掉 */
 const AX_CN=["","一","二","三","四","五","六","七","八","九","十"];
+/* 11/17 測試員 D 第 7 輪 P3-3：「加到主畫面」視窗按「No thanks」關掉後，播報區還留著那段字，而且同一句被寫了好幾次（可能重複念）。
+   ① 同一句 3 秒內只寫一次（AX_LAST；同一句連著進來＝重複，不再加一行）；② 回傳實際寫進去的那句（英文時是翻好的），00-util modal 記著，視窗關掉時 axUnsay 把那一行拿掉 */
+/* 11/17 測試員 D 第 9 輪（P3-3 沒修好）：英文時播報區的那一行被英文翻譯器（07i18n 的觀察器）在原地又改寫一次（圖示被拿掉），跟視窗記的那句對不上，關視窗時就清不掉，看起來像寫了兩次。
+   ③ #axLive 標 data-noi18n（念的字在 axSay 之前就翻好了，07i18n 包一層 i18nSay），翻譯器不再進來改；④ 比對一律用 axKey（拿掉圖示、空白收成一格）：同一句去掉圖示後一樣也算重複，關視窗時也照這個清 */
+const axKey=s=>String(s==null?"":s).replace(/[\p{Extended_Pictographic}\u{FE0F}\u{200D}\u{20E3}]/gu,"").replace(/\s+/g," ").trim();
+let AX_LAST={t:"",at:0};
 function axSay(t){if(!t||!document.body)return;let r=document.getElementById("axLive");
-  if(!r){r=document.createElement("div");r.id="axLive";r.className="ax-sr";r.setAttribute("role","status");r.setAttribute("aria-live","polite");r.setAttribute("aria-atomic","false");document.body.append(r)}
-  setTimeout(()=>{const d=document.createElement("div");d.textContent=t;r.append(d);while(r.children.length>4)r.firstChild.remove()},50)}
+  if(!r){r=document.createElement("div");r.id="axLive";r.className="ax-sr";r.setAttribute("role","status");r.setAttribute("aria-live","polite");r.setAttribute("aria-atomic","false");r.setAttribute("data-noi18n","");document.body.append(r)}
+  const now=Date.now();if(axKey(t)===axKey(AX_LAST.t)&&now-AX_LAST.at<3000)return t;const me=AX_LAST={t,at:now};
+  setTimeout(()=>{if(me.gone)return;const d=document.createElement("div");d.textContent=t;d._at=Date.now();r.append(d);while(r.children.length>4)r.firstChild.remove()},50);return t}
+/* 11/17 測試員 B 第 8 輪 N8-2：視窗不是按按鈕關的（換頁、程式自己收掉）時，播報區的舊句子會一直留著（換頁、進對局後還在）→ 換頁時把 1.5 秒以前寫的行清掉（剛念的、換頁後才念的頁名不動） */
+function axGc(){try{const r=document.getElementById("axLive");if(r)for(const d of[...r.children])if(Date.now()-(d._at||0)>1500)d.remove()}catch(e){}}
+if(typeof addEventListener==="function")addEventListener("hashchange",axGc);
+function axUnsay(t){if(!t)return;try{const k=axKey(t);if(axKey(AX_LAST.t)===k){AX_LAST.gone=true;AX_LAST={t:"",at:0}}const r=document.getElementById("axLive");if(r)for(const d of[...r.children])if(axKey(d.textContent)===k)d.remove()}catch(e){}}
 // 走棋音效：用 WebAudio 合成木頭棋子的「叩」聲（吃子比較重），設定裡可以關
 let AC=null;
 // iPhone 主畫面 App 的聲音（rootcause：切到背景／鎖螢幕回來後，AudioContext 常常顯示 running 但其實已經不出聲，resume 也救不回來）
@@ -215,7 +226,7 @@ async function bgmNow(){const el=document.getElementById("bgmNow");if(!el)return
   const k=BGM.src.replace(/^data\/bgm\//,""),T=(await bgmTitles())||{},t=T[k];el.style.display="flex";
   /* 意見回饋 623（開發者）：曲名後面加樂器名稱（檔名就是樂器，例如 classic/zheng_1.mp3＝古箏） */
   const ins={zheng:"古箏",bianzhong:"編鐘",paixiao:"排簫",xun:"塤",ruan:"阮",konghou:"箜篌",dizi:"笛子",pipa:"琵琶",xiao:"洞簫",qin:"古琴",morinkhuur:"馬頭琴",sanxian:"三弦",erhu:"二胡"}[(k.split("/").pop()||"").replace(/_\d+\.\w+$/,"")]||"";
-  el.innerHTML=`<span style="flex:1;min-width:0"><span>♪ 正在播放</span>${t?`<span data-noi18n>《${esc(t)}》</span>`:""}${ins?`・<span>${ins}</span>`:""}</span><button class="btn ghost" id="bgmNext" style="flex:none;width:auto;margin:0;padding:4px 12px;font-size:13px;white-space:nowrap">換一首</button>`;
+  el.innerHTML=`<span style="flex:1;min-width:0"><span>♪ 正在播放</span>${t?`<span style="margin-left:.3em">《${esc(t)}》</span>`:""}${ins?`<span style="margin:0 .25em">·</span><span>${ins}</span>`:""}</span><button class="btn ghost" id="bgmNext" style="flex:none;width:auto;margin:0;padding:4px 12px;font-size:13px;white-space:nowrap">換一首</button>`;   /* 11/17：曲名拿掉 data-noi18n（英文外掛字典已有 103 首曲名，翻不出照原文）；測試員 D：英文「Now playing"…"」黏在一起，曲名與分隔號改用間距隔開（中英文都適用） */
   el.querySelector("#bgmNext").onclick=()=>{vibrate(5);bgmSync(true)}}
 /* hspx（開發者 11/12 黑洞篇 5 首主題曲，story/118）：指定曲目（data/bgm/blackhole/bh_N.mp3），黑洞對局依局面換；null＝回到朝代配樂輪播 */
 function bgmForce(file){file=file||null;if((BGM.force||null)===file)return;BGM.force=file;try{bgmSync(true)}catch(e){}}

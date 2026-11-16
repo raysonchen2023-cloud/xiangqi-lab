@@ -34,7 +34,7 @@ test("解鎖：A1 一開始就開；B1 要駱躍梅加入、C1 要沈方庭和�
   assert.deepEqual(J(open({c:{}},has(["x_swordboy"]))),[31],"新玩家只開 A1");
   assert.equal(G.lockWhy({c:{}},34,0,0,has(["x_swordboy"])),"駱躍梅加入後開放");assert.equal(G.lockWhy({c:{}},37,0,0,has(["x_swordboy","x_miaogirl"])),"沈方庭、鐵連城加入後開放");
   assert.equal(G.lockWhy({c:{}},37,0,0,has(["x_swordboy","x_miaogirl","x_shuai"])),"沈方庭、鐵連城加入後開放","兩位都要");
-  assert.equal(G.lockWhy({c:{}},32),"破序章 A1開放");
+  assert.equal(G.lockWhy({c:{}},32),"破序章 A1 開放");   /* 11/17 B-9：補空格（test-sg2-select-1117.js） */
   assert.deepEqual(J(open(W(31,32,33),has(["x_swordboy","x_miaogirl"]))),[31,32,33,34],"駱躍梅加入：B1 開，不用等 A3（快的玩家不被卡）");
   assert.deepEqual(J(open({c:{}},has(["x_swordboy","x_miaogirl"]))),[31,34]);
   assert.equal(G.lockWhy({c:{}},1),"破序章 C1 開放");assert.equal(G.lockWhy(W(37),1),"");assert.equal(G.lockWhy({c:{5:{w:0,l:2,d:0}}},1),"","改版前打過主線（輸也算）");

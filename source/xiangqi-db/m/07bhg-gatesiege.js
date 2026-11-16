@@ -194,7 +194,7 @@ const GSV=(()=>{
   const lvName=n=>LV[n]&&LV[n].code?"序章 "+LV[n].code:"第 "+n+" 關";
   function lockWhy(P,n,hard,all,has){n=+n;if(all||!LVN.includes(n))return"";const won=k=>!!(P&&P.c&&P.c[k]&&P.c[k].w>0);
     if(hard)return won(n)?"":"先破普通版";if(won(n))return"";
-    if(LV[n].pro){const st=n-(n-31)%3;if(has&&(PRO_NEED[st]||[]).some(c=>!has(c)))return PRO_WHY[st];return n===st||won(n-1)?"":`破${lvName(n-1)}開放`}
+    if(LV[n].pro){const st=n-(n-31)%3;if(has&&(PRO_NEED[st]||[]).some(c=>!has(c)))return PRO_WHY[st];return n===st||won(n-1)?"":`破${lvName(n-1)} 開放`}   /* 11/17 測試員 B（B-9）：「破序章 A1開放」少一個空格，跟「破序章 C1 開放」「破易 1 開放」寫法一致 */
     if(n===1){const old=!!(P&&P.c)&&Object.keys(P.c).some(k=>+k>=1&&+k<=12&&P.c[k]&&(P.c[k].w||P.c[k].l||P.c[k].d));return old||won(37)?"":"破序章 C1 開放"}
     return won(n-1)?"":`破第 ${n-1} 關開放`}
   /* 三星：第 1 星＝過關；第 2、3 星每關各一個條件（STG），跟那一關的學習點有關。各自累積：某一局過關、而且那一局達成那個條件，那顆星就亮，不用同一局全拿（對新手友善，也多一個回來重打的理由）。
@@ -647,9 +647,12 @@ function gsvCss(){if(document.getElementById("gsvCss"))return;try{if(typeof bhtd
 body.gsv-on #acts button[aria-label="悔棋"],body.gsv-on #acts button[aria-label="寶物"],body.gsv-on .xqbot,body.gsv-on .pzoom,body.gsv-on .gpad,body.gsv-on .pkview,body.gsv-on .pk2d,body.gsv-on .pk2d-tip,body.gsv-on .pk3d-back,body.gsv-on #topRight .stm-btn,body.gsv-on #fcmBtn{display:none!important}
 body.gsv-on .view.fixed>#pTop,body.gsv-on .view.fixed>#pBot,body.gsv-on .view.fixed>#stat,body.gsv-on .view.fixed>.rule-note,body.gsv-on .view.fixed>.evline,body.gsv-on .view.fixed>#strip,body.gsv-on .view.fixed>#acts{display:none!important}
 #gsvEn,#gsvMe{position:fixed;z-index:43;left:0;right:0;font-family:var(--serif);color:#f1e7cf;background:rgba(8,8,24,.95);box-sizing:border-box;padding:4px 8px;user-select:none;-webkit-user-select:none}
-#gsvEn{top:var(--bhTop,44px);height:var(--gsvEnH,62px)}#gsvMe{bottom:0;height:calc(var(--gsvMeH,190px) + env(safe-area-inset-bottom,0px));padding-bottom:calc(4px + env(safe-area-inset-bottom,0px))}
-body.gsv-on{--gsvEnH:62px;--gsvMeH:190px}
-body.gsv-on .view.fixed>#bbox{position:fixed!important;left:0!important;right:0!important;top:calc(var(--bhTop,44px) + var(--gsvEnH))!important;bottom:calc(var(--gsvMeH) + env(safe-area-inset-bottom,0px))!important;width:auto!important;height:auto!important;max-height:none!important;min-height:0!important;margin:0!important;padding:0!important;z-index:40;background:#05060d;overflow:hidden}
+#gsvEn{top:var(--gsvTop,var(--bhTop,44px));height:var(--gsvEnH,62px)}#gsvMe{bottom:0;height:calc(var(--gsvMeH,190px) + env(safe-area-inset-bottom,0px));padding-bottom:calc(4px + env(safe-area-inset-bottom,0px))}
+body.gsv-on{--gsvEnH:62px;--gsvMeH:190px}   /* 11/17 第二批 N-1（844×390 我方底排在畫面外）真正的原因：05-settings.js 手機橫放（#glLand，高度不到 600px）那條 .view.fixed:has(>#bbox):has(>#acts)>#bbox 寫了 align-self:start；
+   Chrome／Safari 新版對 position:fixed 也照 align-self 排——不是 stretch 就不撐滿 top～bottom，高度改照內容（svg 照 560×620 比例＝434 寬→481 高），比畫面還高又被推到 y=0，蓋住頂欄、第 8、9 排掉出畫面。
+   下面 #bbox 加 align-self／justify-self:stretch!important，照 top／bottom 撐滿（實測 844×390：0156 是 y=0、高 481；改後 y=59、高 331、帥在 y≈369） */
+   /* 11/17 測試員 B（B-5）：上緣改量頂欄真正的下緣（07sg2 sg2TopSync 寫 --gsvTop，量不到才用 07bh 的 --bhTop）；橫式棋盤、兩側欄都從那裡排起，底下讓出安全區 */
+body.gsv-on .view.fixed>#bbox{position:fixed!important;left:0!important;right:0!important;top:calc(var(--gsvTop,var(--bhTop,44px)) + var(--gsvEnH))!important;bottom:calc(var(--gsvMeH) + env(safe-area-inset-bottom,0px))!important;width:auto!important;height:auto!important;max-height:none!important;min-height:0!important;margin:0!important;padding:0!important;z-index:40;background:#05060d;overflow:hidden;align-self:stretch!important;justify-self:stretch!important}
 body.gsv-on .view.fixed>#bbox>svg{width:100%!important;height:100%!important;max-width:none!important;max-height:none!important;margin:0!important}
 .gsv-r{display:flex;align-items:center;gap:6px;min-width:0;min-height:22px;font-size:12px;white-space:nowrap}.gsv-r+.gsv-r{margin-top:3px}
 .gsv-nm{flex:none;font-weight:800;color:#FFE08A;font-size:12.5px}.gsv-nm.en{color:#d9b8ff}
@@ -677,7 +680,8 @@ body.gsv-on .view.fixed>#bbox>svg{width:100%!important;height:100%!important;max
 .gsv-mk.tg{pointer-events:auto;width:calc(var(--c)*.92);height:calc(var(--c)*.92);border-radius:50%;border:3px solid #FFE08A;background:rgba(255,224,138,.2);cursor:pointer;padding:0;animation:gsvTg 1s ease-in-out infinite}
 @keyframes gsvTg{50%{box-shadow:0 0 16px 6px rgba(255,224,138,.65)}}
 .gsv-rules{font-size:13.5px;line-height:1.7;text-align:left}.gsv-rules li{margin:2px 0}
-.modal.gsv-sel{max-height:100dvh;overflow-y:auto;overscroll-behavior:contain;scrollbar-width:none}.modal.gsv-sel::-webkit-scrollbar{display:none}.gsv-card.lk small{display:none}
+.modal.gsv-rd{overflow-y:auto;align-items:flex-start;overscroll-behavior:contain;-webkit-overflow-scrolling:touch}.modal.gsv-rd>.box{margin:auto 0}.modal.gsv-rd .mb{position:sticky;bottom:0;margin:10px -20px -24px;padding:8px 20px 14px;background:var(--card,#fff);border-radius:0 0 22px 22px;box-shadow:0 -6px 10px rgba(0,0,0,.08)}.modal.gsv-rd .mb .btn{margin-top:0}
+.modal.gsv-sel{max-height:100dvh;overflow-y:auto;overscroll-behavior:contain;scrollbar-width:none;align-items:flex-start}.modal.gsv-sel>.box{margin:auto 0}.modal.gsv-sel::-webkit-scrollbar{display:none}   /* 11/17 測試員 B（390×844、844×390）：選關約 1353px 比畫面高，置中後方塊頂端在 −255px（橫式 −491），分頁「序章／易／中／難」捲不到 → 從頂端排起、可以往下捲，放得下時照樣置中 */.gsv-card.lk small{display:none}
 .gsv-sel .mb{display:contents}.gsv-sel .mb>.btn:first-child{position:sticky;bottom:calc(6px + env(safe-area-inset-bottom,0px));z-index:2;box-shadow:0 -8px 14px rgba(0,0,0,.45);margin-top:10px}
 .gsv-sel .box{max-width:min(96vw,560px)}.gsv-cards{display:grid;gap:6px;margin:8px 0}.gsv-card{display:block;width:100%;text-align:left;font:inherit;color:inherit;background:var(--card,#fff);border:2px solid var(--line,#ddd);border-radius:12px;padding:7px 10px;cursor:pointer;min-height:44px}
 .gsv-card.on{border-color:#7a3fb0;box-shadow:0 0 0 2px rgba(122,63,176,.25)}.gsv-card small{display:block;font-size:12px;color:var(--muted,#777)}
@@ -687,11 +691,11 @@ body.gsv-on .view.fixed>#bbox>svg{width:100%!important;height:100%!important;max
 .bt-sel .bt-card.bt-gsvc{border-style:double;border-width:3px;border-color:#b46bff}
 @media (orientation:portrait) and (max-height:700px){body.gsv-on{--gsvMeH:176px}.gsv-sk{min-height:40px}.gsv-sks.gen .gsv-sk{min-height:36px}}
 @media (orientation:landscape){body.gsv-on{--gsvEnH:0px;--gsvMeH:0px}
- #gsvEn{top:var(--bhTop,44px);bottom:0;height:auto;width:calc(200px + env(safe-area-inset-left,0px));right:auto;padding-left:calc(8px + env(safe-area-inset-left,0px))}
- #gsvMe{top:var(--bhTop,44px);left:auto;right:0;width:calc(210px + env(safe-area-inset-right,0px));height:auto;padding-right:calc(8px + env(safe-area-inset-right,0px))}
+ #gsvEn{top:var(--gsvTop,var(--bhTop,44px));bottom:0;height:auto;width:calc(200px + env(safe-area-inset-left,0px));right:auto;padding-left:calc(8px + env(safe-area-inset-left,0px))}
+ #gsvMe{top:var(--gsvTop,var(--bhTop,44px));left:auto;right:0;width:calc(210px + env(safe-area-inset-right,0px));height:auto;padding-right:calc(8px + env(safe-area-inset-right,0px))}
  #gsvEn .gsv-r,#gsvMe .gsv-r{flex-wrap:wrap;white-space:normal}.gsv-ln{flex:1 1 100%}
  .gsv-sks{grid-template-columns:repeat(2,minmax(0,1fr))}.gsv-tip{position:static;margin-bottom:6px;flex-wrap:wrap;border-radius:10px}
- body.gsv-on .view.fixed>#bbox{top:var(--bhTop,44px)!important;bottom:0!important;left:calc(200px + env(safe-area-inset-left,0px))!important;right:calc(210px + env(safe-area-inset-right,0px))!important}}
+ body.gsv-on .view.fixed>#bbox{top:var(--gsvTop,var(--bhTop,44px))!important;bottom:env(safe-area-inset-bottom,0px)!important;left:calc(200px + env(safe-area-inset-left,0px))!important;right:calc(210px + env(safe-area-inset-right,0px))!important}}
 /* 11/15 星門圍城也能切 3D 星盤：頂欄「👁」視角鈕與小選單（樣式照舊版塔防 #bhtdView／#bhtdViewM）；3D 區裡黑洞自由鏡頭用的鈕（棋距、望遠鏡…）和場名收起來；
    頂欄上「回棋盤模式／去園子下棋（3D）」那顆收起來（有「👁」了；手機「⋯ 更多」裡那顆照樣能按，06-cpu parkBtn→gsvParkBtn）。
    3D 記號：貼地的加 g3（transform-origin 要 0 0，矩陣由 07bht bhtdGnd 算）；lb＝貼地記號的直立文字標籤；tg.hit＝選目標時角色身上的透明點擊區 */
@@ -704,11 +708,11 @@ body.gsv-on .view.fixed>#bbox .park3d{border-radius:0!important}
 #gsvViewM p{font-size:12px;color:#c9bfe8;margin:4px 6px 2px;line-height:1.5}
 .gsv-mk.g3{transform-origin:0 0}
 .gsv-mk.bd.g3h{margin:0;z-index:2;box-shadow:0 1px 3px rgba(0,0,0,.6)}
-#gsvOv .bt-mk.gt{font-size:clamp(8px,calc(var(--c)*.34),11px);line-height:1.08;padding:1px 3px;width:1.7em;box-sizing:content-box;white-space:normal;text-align:center;border-radius:6px}
+#gsvOv .bt-mk.gt{font-size:clamp(8px,calc(var(--c)*.34),11px);line-height:1.08;padding:1px 3px;width:1.7em;box-sizing:content-box;white-space:normal;text-align:center;border-radius:6px}html[lang^=en] #gsvOv .bt-mk.gt{width:min-content;min-width:1.7em}
 .gsv-mk.lb{font-size:11px;line-height:1.4;padding:0 5px;border-radius:99px;color:#f1e7cf;background:rgba(10,10,30,.82);border:1px solid rgba(255,255,255,.4);white-space:nowrap}.gsv-mk.lb.lbdp{color:#7fe0ff;border-color:rgba(127,224,255,.7)}
 .gsv-mk.tg.hit{border:0;background:transparent;animation:none;border-radius:10px}
-@media (orientation:portrait){body.gsv-3d .gsv-tip{position:fixed;top:calc(var(--bhTop,44px) + var(--gsvEnH,62px) - 32px);left:8px;right:8px}}
-@media (orientation:landscape){body.bh-full.gsv-on .view.fixed:has(>#bbox):has(>#acts)>#bbox{top:var(--bhTop,44px)!important;bottom:0!important;left:calc(200px + env(safe-area-inset-left,0px))!important;right:calc(210px + env(safe-area-inset-right,0px))!important;width:auto!important;height:auto!important}}
+@media (orientation:portrait){body.gsv-3d .gsv-tip{position:fixed;top:calc(var(--gsvTop,var(--bhTop,44px)) + var(--gsvEnH,62px) - 32px);left:8px;right:8px}}
+@media (orientation:landscape){body.bh-full.gsv-on .view.fixed:has(>#bbox):has(>#acts)>#bbox{top:var(--gsvTop,var(--bhTop,44px))!important;bottom:env(safe-area-inset-bottom,0px)!important;left:calc(200px + env(safe-area-inset-left,0px))!important;right:calc(210px + env(safe-area-inset-right,0px))!important;width:auto!important;height:auto!important}}
 @media (prefers-reduced-motion:reduce){.gsv-mk.tg{animation:none}}`;document.head.append(s)}
 /* ---------- 選關卡片（黑洞關卡卡片的「🌠 星門圍城」、主控台 gsvOpen()） ---------- */
 function gsvCard(){   /* 11/15 開發者試玩後「有挑戰性、沒有那麼無腦獲勝了，可以上線」：開給所有玩家（原本只給開發者） */
@@ -772,7 +776,7 @@ function gsvStart(n,k,cover,sk,force,hard,diff){const C=gsvC();if(!C)return toas
   jStart(J,{human:"r",lx:V.depth,journey:J,lv:{fen:GSV.startFen(n,C),turn:"r",noPerpetual:true},td:{mode:typeof SG2G!=="undefined"?SG2G.MODE:GSV.MODE,lv:n,diff,sk:P.sk["*"]}},()=>{const was=/^#\/journey\/play/.test(location.hash);location.hash="#/journey/play";
     if(was)try{window.dispatchEvent(new Event("xq-play"))}catch(e){}setTimeout(()=>toast(`🌠 星門圍城・${typeof SG2G!=="undefined"?SG2G.nameOf(n):GSV.lvName(n)}・${V.nm}（${["","易","中","難"][diff]}）`),700);{const ws=typeof ptyWoodSay==="function"?ptyWoodSay(GSV.plan(n).red.map(x=>String(x[0]).toUpperCase())):"";if(ws)setTimeout(()=>toast(ws),5200)}setTimeout(()=>toast("✦ 星樞："+V.say),3200)},!!force)}
 /* ---------- 對局中（07bh bhTick 叫） ---------- */
-function gsvHide(){if(typeof document==="undefined")return;document.body&&document.body.classList.remove("gsv-on","gsv-3d");for(const id of["gsvEn","gsvMe","gsvOv","gsvView"]){const e=document.getElementById(id);if(e)e.remove()}GSV_TG=null;GSV_MK="";GSV_HK="";GSV_P3=0;try{gsvViewMenu(false)}catch(e){}}   /* 11/15：頂欄「👁」視角鈕、視角小選單一起收 */
+function gsvHide(){if(typeof document==="undefined")return;document.body&&document.body.classList.remove("gsv-on","gsv-3d");for(const id of["gsvEn","gsvMe","gsvOv","gsvView"]){const e=document.getElementById(id);if(e)e.remove()}GSV_TG=null;GSV_MK="";GSV_HK="";GSV_P3=0;GSV_VB=null;try{gsvViewMenu(false)}catch(e){}}   /* 11/15：頂欄「👁」視角鈕、視角小選單一起收；11/17 第 8 輪：留著重用的那顆也放掉 */
 function gsvTick(st){if(typeof document==="undefined")return;if(!gsvIs(st)||!/^#\/journey\/play/.test(location.hash||"")){if(GSV_ST||document.getElementById("gsvMe"))gsvHide();GSV_ST=null;return}
   const fresh=!GSV_ST||GSV_ST.id!==st.id;GSV_ST=st;gsvCss();document.body.classList.add("gsv-on");if(fresh){GSV_TG=null;GSV_INFO=false;GSV_HK=""}
   const bb=document.getElementById("bbox");if(!bb||!bb.parentNode)return;
@@ -785,7 +789,7 @@ function gsvTick(st){if(typeof document==="undefined")return;if(!gsvIs(st)||!/^#
   gsvPaint();gsvEvents(st);try{gsvViewUi()}catch(e){console.warn("[gsv]",e)}if(!GSV_RAF)GSV_RAF=requestAnimationFrame(gsvFrame)}   /* 11/15：頂欄右上「👁」視角鈕（全局俯視／臨陣斜角／純淨平面） */
 const gsvPct=(a,b)=>Math.max(0,Math.min(100,Math.round(a/Math.max(1,b)*100)));
 function gsvFoeLine(td,b){const F=GSV.fore(td),wn=GSV.winNow(td,b),W=wn?`<span class="gsv-win">${esc(wn)}</span>`:"";if(!F.length)return W||`<span>援軍都下來了</span>`;   /* 11/16 序章另外的過關條件：進度放最前面 */const g=F[0],cnt={};for(const w of g.ws){const k=GSV.gateNm(w.sq)+"・"+GSV.PBN[w.p.toUpperCase()];cnt[k]=(cnt[k]||0)+1}
-  return W+(W?"・":"")+`<button type="button" data-x="fore"><span>下一波</span>：${Object.keys(cnt).map(k=>esc(k)+"×"+cnt[k]).join("、")}・<b>${g.inR}</b> <span>回合後</span></button>`}
+  return W+(W?"・":"")+`<button type="button" data-x="fore"><span>下一波</span>：${Object.keys(cnt).map(k=>esc(k)+"×"+cnt[k]).join("、")}・<b>${g.inR} 回合後</b></button>`}
 function gsvPaint(){if(gsvV2(GSV_ST))return sg2Paint();const st=GSV_ST,en=document.getElementById("gsvEn"),me=document.getElementById("gsvMe");if(!st||!en||!me)return;const td=st.td,C=gsvC(),M=td.me,E=td.en,my=gsvMy(st);
   const pv=GSV.preview(td,st.board,C),thr=C&&my?GSV.threats(st.board,C).length:0,def=GSV.defOf(td,"b"),g=GSV.guards(td);
   const fx=td.fx?`<button type="button" class="gsv-fx" data-x="fx">⚠ ${esc(GSV.ESK[td.fx.id].nm)}</button>`:"";
@@ -799,13 +803,16 @@ function gsvPaint(){if(gsvV2(GSV_ST))return sg2Paint();const st=GSV_ST,en=docume
   const tip=GSV_TG?`<div class="gsv-tip"><span>${GSV_TG.arm?"再點一次同一顆招就放出":GSV_TG.id==="dep"?"點盤上發光的補給點":"點盤上發光的目標"}</span><button type="button" data-x="cancel">取消</button></div>`:"";
   me.innerHTML=`${tip}<div class="gsv-r"><span class="gsv-nm">${esc(td.cn)}</span><div class="gsv-bar"><i style="width:${gsvPct(M.hp,M.max)}%"></i><b>HP ${Math.max(0,M.hp)}／${M.max}</b></div>
       <div class="gsv-bar sp"><i style="width:${gsvPct(M.sp,M.spMax)}%"></i><b>靈 ${M.sp}／${M.spMax}</b></div>${M.sh.v?`<span class="gsv-sh">🛡${M.sh.v}</span>`:""}<span class="gsv-st">ATK <b>${M.atk}</b>・DEF <b>${M.def}</b></span></div>
-    <div class="gsv-r"><span class="gsv-st"><span>第</span> <b>${td.rnd+1}</b> <span>回合</span></span><span class="gsv-ln${pv.loss?" hot":""}">${pv.raw?`<span>本輪若不處理</span>：${pv.L.map(x=>(x.k==="inv"?"入侵":(GSV.ESK[x.id]||{}).sn||"大招")+" −"+x.raw).join("、")}${pv.abs?`（<span>盾吸收</span> ${pv.abs}／<span>損血</span> ${pv.loss}）`:""}`:`<span>本輪沒有確定的扣血</span>`}${thr?`・<span>可能擒子</span> ${thr} <span>處</span>`:""}</span>
+    <div class="gsv-r"><span class="gsv-st"><b>第 ${td.rnd+1} 回合</b></span><span class="gsv-ln${pv.loss?" hot":""}">${pv.raw?`<span>本輪若不處理</span>：${pv.L.map(x=>(x.k==="inv"?"入侵":(GSV.ESK[x.id]||{}).sn||"大招")+" −"+x.raw).join("、")}${pv.abs?`（<span>盾吸收</span> ${pv.abs}／<span>損血</span> ${pv.loss}）`:""}`:`<span>本輪沒有確定的扣血</span>`}${thr?`・<span>可能擒子</span> ${thr} <span>處</span>`:""}</span>
       <button type="button" class="gsv-fx" data-x="rules" style="background:rgba(255,255,255,.1);border-color:rgba(255,255,255,.3);color:#f1e7cf">規則</button></div>
     <div class="gsv-sks">${td.sk.map(sk).join("")}</div><div class="gsv-sks gen">${GSV.GEN.map(sk).join("")}${sk("dep")}</div>`}
+/* 11/17 iPhone 模擬器測試（黑洞對局「規則」關不掉）：規則有十幾條，一般 .modal 不能捲（只有 html[data-fz] 換過字級才捲）、方塊置中後上下都超出畫面，「知道了」在畫面外、點旁邊也不會關。
+   對局中的說明視窗（規則、星門預告）改用這個：可以上下捲（gsv-rd，放得下時照樣置中）、「知道了」黏在畫面底、點視窗外面也會關 */
+function gsvInfo(html){try{gsvCss()}catch(e){}const m=modal(html,[["知道了",null]],"gsv-rd");if(m)m.addEventListener("click",ev=>{if(ev.target===m)m.remove()});return m}
 function gsvClick(e){const st=GSV_ST;if(!st)return;if(gsvV2(st))return sg2Click(e);const x=e.target.closest("[data-x]");if(x){const k=x.dataset.x;try{vibrate(5)}catch(z){}
     if(k==="cancel"){GSV_TG=null;GSV_MK="";GSV_HK="";gsvPaint();return}
-    if(k==="rules"){modal(`<h2 style="font-size:19px">星門圍城規則</h2>${gsvRulesHTML()}`,[["知道了",null]]);return}
-    if(k==="fore"){const F=GSV.fore(st.td);modal(`<h2 style="font-size:19px">星門預告</h2>${F.map(g=>`<p><b>${g.inR} 回合後</b>（第 ${g.at} 回合結束）：${g.ws.map(w=>esc(GSV.gateNm(w.sq)+"・"+GSV.PBN[w.p.toUpperCase()]+(w.tag==="inv"?"（入侵）":"")+(w.dl?"（已延遲一次）":""))).join("、")}</p>`).join("")||"<p>援軍都下來了</p>"}<p class="muted" style="font-size:12.5px">站上門格可以擋住：擋一次延遲，延遲後又擋住就取消（截援）。</p>`,[["知道了",null]]);return}
+    if(k==="rules"){gsvInfo(`<h2 style="font-size:19px">星門圍城規則</h2>${gsvRulesHTML()}`);return}
+    if(k==="fore"){const F=GSV.fore(st.td);gsvInfo(`<h2 style="font-size:19px">星門預告</h2>${F.map(g=>`<p><b>${g.inR} 回合後</b>（第 ${g.at} 回合結束）：${g.ws.map(w=>esc(GSV.gateNm(w.sq)+"・"+GSV.PBN[w.p.toUpperCase()]+(w.tag==="inv"?"（入侵）":"")+(w.dl?"（已延遲一次）":""))).join("、")}</p>`).join("")||"<p>援軍都下來了</p>"}<p class="muted" style="font-size:12.5px">站上門格可以擋住：擋一次延遲，延遲後又擋住就取消（截援）。</p>`);return}
     if(k==="fx"){const F=st.td.fx,S=F&&GSV.ESK[F.id];if(S)toast(`⚠ 星樞「${S.nm}」：${S.d}`);return}return}
   const b=e.target.closest(".gsv-sk");if(!b)return;const id=b.dataset.k,S=GSV.SKM[id];
   if(S&&S.info){GSV_INFO=!GSV_INFO;GSV_MK="";GSV_HK="";gsvPaint();return}
@@ -846,7 +853,9 @@ function gsvFrame(){GSV_RAF=0;const st=GSV_ST,o=document.getElementById("gsvOv")
   const key=(g3?"3":"")+JSON.stringify(L),box=o.querySelector(".mks");
   if(key!==GSV_MK){GSV_MK=key;box.innerHTML=L.map(m=>{const c=(m.c==="bt"?"bt-mk ":"gsv-mk ")+m.k;return m.b?`<button type="button" class="${c}" data-sq="${m.sq}"${m.h?` tabindex="-1" aria-hidden="true"`:` aria-label="目標 ${m.sq}"`}></button>`:`<div class="${c}" data-sq="${m.sq}">${m.t||""}</div>`}).join("")}
   const a=xy(40),c=xy(41),cell=a&&c?Math.max(18,Math.min(90,Math.hypot(c.x-a.x,c.y-a.y))):36;o.style.setProperty("--c",cell+"px");
+  let PB=null;   /* 第 3 輪 N3-1：v2 攻擊預覽（.pv）掛在往棋盤中間那一側、收進棋盤框（07sg2 sg2PvXY／sg2Box），平面、3D 都一樣；寬高建元素時量一次 */
   for(const el of box.children){const q=+el.dataset.sq,kd=g3?gsvMkKind(el.className):"",p=kd==="head"?pv.headOf(q):xy(q);if(!p){el.style.display="none";continue}el.style.display="";
+    if(el.classList.contains("pv")&&typeof sg2PvXY==="function"){if(!PB)PB=sg2Box(g3);const w=el._sw||(el._sw=el.offsetWidth),h=el._sh||(el._sh=el.offsetHeight),P=sg2PvXY(p,cell,w,h,PB);el.style.transform=`translate(${P.x}px,${P.y}px) translate(-50%,-50%)`;continue}
     if(!g3){el.style.transform=`translate(${p.x}px,${p.y}px) translate(-50%,-50%)`;continue}
     const M=kd==="gnd"&&typeof bhtdGnd==="function"?bhtdGnd(q,p,cell):null,P3=gsvPos3(kd,el.className,p,cell,M,pv.headOf&&(el.classList.contains("hit")||el.classList.contains("bd")&&st.board[q])?pv.headOf(q):null);
     el.classList.toggle("g3",!!P3.m);el.classList.toggle("g3h",!!P3.hd);if(P3.w){el.style.width=P3.w+"px";el.style.height=P3.h+"px"}
@@ -921,14 +930,23 @@ function gsvParkBtn(){const st=GSV_ST;if(!st||!gsvIs(st)||typeof document==="und
   /* 11/15 實機：從「⋯ 更多」那張卡片按的時候，卡片在瀏覽器歷史多墊了一層（00-util sheet 的 xqSheet），當下就重畫頂欄會把返回鍵算成「回這一頁自己」（字變成「回園子對局」、按了不動）——等卡片關掉、那一層退掉再切 */
   let inSheet=false;try{inSheet=!!(history.state&&history.state.xqSheet)}catch(e){}if(inSheet)setTimeout(go,320);else go();return true}
 function gsvViewUi(){if(typeof document==="undefined"||typeof BHTD_VW==="undefined")return;const tr=document.getElementById("topRight");if(!tr)return;let b=document.getElementById("gsvView");
-  if(!b){b=document.createElement("button");b.type="button";b.id="gsvView";b.className="ib";b.addEventListener("click",e=>{e.stopPropagation();try{vibrate(5)}catch(z){}gsvSetView(gsvVwNext(gsvVw()));gsvViewMenu(true)});tr.prepend(b)}
-  const v=gsvVw();if(b.dataset.v!==v){b.dataset.v=v;b.innerHTML=`<span aria-hidden="true">👁</span><small>${BHTD_VW[v]}</small>`;b.setAttribute("aria-label","視角："+BHTD_VW[v]+"（點一下換下一種）");b.title="視角："+BHTD_VW[v]}}
+  /* 11/17 測試員 D 第 8 輪（P3-2 沒修好）：每切一次視角，08b 重畫頂欄（setTop 清空 #topRight），這顆就被丟掉、gsvTick 再做一顆新的——
+     讀螢幕／鍵盤的焦點還停在被丟掉的那顆，念的永遠是舊名字（連按三次一直是「View: Battle angle」）。改成同一顆按鈕留著用（GSV_VB）：被清掉就把原本那顆放回去、名字照新視角重寫；剛按過的話焦點也還給它 */
+  if(!b&&GSV_VB&&GSV_VB.id==="gsvView"){b=GSV_VB;tr.prepend(b);if(Date.now()-GSV_VBF<3000)try{b.focus({preventScroll:true})}catch(z){}}
+  if(!b){b=document.createElement("button");b.type="button";b.id="gsvView";b.className="ib";b.addEventListener("click",e=>{e.stopPropagation();GSV_VBF=Date.now();try{vibrate(5)}catch(z){}gsvSetView(gsvVwNext(gsvVw()));gsvViewMenu(true)});tr.prepend(b)}
+  GSV_VB=b;const v=gsvVw();if(b.dataset.v!==v){b.dataset.v=v;b.innerHTML=`<span aria-hidden="true">👁</span><small>${BHTD_VW[v]}</small>`}
+  /* 11/17 測試員 D 第 7 輪 P3-2：切到 3D 總覽後選單是 Overview，頂欄這顆的 aria-label 卻還是「View: Flat board」。原本名稱只在 dataset.v 換了的那一次寫、英文靠翻譯觀察器事後換；
+     改成每次都對一次（gsvVwLb：中文照舊、英文直接給英文），跟現在的視角不一樣就重寫——不靠觀察器、也不怕按鈕被重畫過 */
+  const L=gsvVwLb(v);if(b.getAttribute("aria-label")!==L[0])b.setAttribute("aria-label",L[0]);if(b.title!==L[1])b.title=L[1]}
+let GSV_VB=null,GSV_VBF=0;   /* VB＝頂欄「👁」那一顆（重畫頂欄後放回去同一顆）；VBF＝上次按它的時間 */
+function gsvVwLb(v){const a="視角："+BHTD_VW[v]+"（點一下換下一種）",t="視角："+BHTD_VW[v];let en=false;try{en=/^en/.test(document.documentElement.lang||"")&&typeof i18nText==="function"}catch(e){}
+  if(!en)return[a,t];const tr=s=>{try{const r=i18nText(s);return r==null?s:r}catch(e){return s}};return[tr(a),tr(t)]}
 function gsvViewOut(e){const t=e.target;if(t&&t.closest&&(t.closest("#gsvViewM")||t.closest("#gsvView")))return;gsvViewMenu(false)}
 function gsvViewMenu(show){if(typeof document==="undefined")return;let m=document.getElementById("gsvViewM");clearTimeout(GSV_VMT);if(!show){if(m)m.remove();removeEventListener("pointerdown",gsvViewOut,true);return}
   if(!m){m=document.createElement("div");m.id="gsvViewM";m.setAttribute("role","menu");m.setAttribute("aria-label","視角");document.body.append(m);
     m.addEventListener("click",e=>{const b=e.target.closest("[data-v]");if(!b)return;e.stopPropagation();try{vibrate(5)}catch(z){}gsvSetView(b.dataset.v);gsvViewMenu(false)});setTimeout(()=>addEventListener("pointerdown",gsvViewOut,true),0)}
-  const v=gsvVw();let port=false;try{port=matchMedia("(orientation:portrait)").matches}catch(e){}
-  m.innerHTML=Object.keys(BHTD_VW).map(k=>`<button type="button" role="menuitemradio" aria-checked="${k===v}" data-v="${k}" class="${k===v?"on":""}">${k===v?"●":"○"} ${BHTD_VW[k]}<small>${BHTD_VWD[k]}</small></button>`).join("")+(port?"<p>📱 手機轉成橫向，星盤會更大</p>":"");
+  const v=gsvVw();
+  m.innerHTML=Object.keys(BHTD_VW).map(k=>`<button type="button" role="menuitemradio" aria-checked="${k===v}" data-v="${k}" class="${k===v?"on":""}">${k===v?"●":"○"} ${BHTD_VW[k]}<small>${BHTD_VWD[k]}</small></button>`).join("");   /* 11/17 N-1：星門圍城橫式左右各讓出兩側欄（200＋210），手機橫向的星盤反而比直式小，拿掉建議轉橫向的那句 */
   GSV_VMT=setTimeout(()=>gsvViewMenu(false),6000)}
 /* 3D 星盤上的記號（純函式，node 測試 test-gate-siege-3d.js）。gsvMkKind(類名)：head＝棋子頭頂（漢字牌 pnm）；up＝直立（徽章 bd、文字標籤 lb／gt、選目標的直立點擊區 hit）；
    gnd＝貼平在盤面（星門 gate、紅圈 ring、守門點 trap、補給點 dp、可點的目標 tg，還有舊版塔防的選中底光 selg、落點 ink、準星 aim）。
@@ -944,7 +962,7 @@ function gsvMk3(L,b,o){o=o||{};b=b||[];const G=[],H=[],B=[],U=[],P=[];
   if(o.sel>=0){G.push({sq:o.sel,k:"selg",c:"bt"});for(const t of o.targets||[])G.push({sq:t,k:b[t]?"aim":"ink",c:"bt"})}
   for(const m of L||[]){const kd=gsvMkKind(m.k);if(kd!=="gnd"){(kd==="head"?P:U).push(m);continue}
     if(m.b){B.push(m);if(b[m.sq])H.push({sq:m.sq,k:"tg hit",b:1,h:1});continue}
-    const t=gsvMkTx(m.t);G.push(t?Object.assign({},m,{t:""}):m);if(t)U.push(/\bgate\b/.test(m.k)?{sq:m.sq,k:"gt",c:"bt",t}:{sq:m.sq,k:"lb lb"+String(m.k).split(" ")[0],t})}
+    const t=gsvMkTx(m.t);G.push(t?Object.assign({},m,{t:""}):m);if(t)U.push(/\bgate\b/.test(m.k)?{sq:m.sq,k:"gt",c:"bt",t:typeof document!=="undefined"&&document.documentElement&&/^en/.test(document.documentElement.lang||"")?t.replace(/^門(?=\s|$)/,"Gate"):t}:{sq:m.sq,k:"lb lb"+String(m.k).split(" ")[0],t})}   /* 11/17 測試員 B 第 6 輪 N6-4：英文時 3D 盤上的「門 N」寫 Gate N（平面盤的「門」字另成一個節點，翻譯器會換成 Gate；這塊是「門 N」一整段，翻譯器翻不到） */
   if(o.pnm)for(let q=0;q<90;q++){const p=b[q];if(!p)continue;const r=p===p.toUpperCase();P.push({sq:q,k:"pnm "+(r?"r":"b"),c:"bt",t:(r?GSV.PCN[p]:GSV.PBN[p.toUpperCase()])||""})}
   return G.concat(H,B,U,P)}
 /* 一個記號在 3D 星盤上放哪（純函式）：kd＝gsvMkKind；p＝那一格（腳下）的螢幕座標；M＝bhtdGnd 算的貼地矩陣（算不出來就直立）；head＝頭頂的螢幕座標（只有 hit 用）。

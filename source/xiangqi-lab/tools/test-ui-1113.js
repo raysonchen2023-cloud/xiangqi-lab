@@ -23,7 +23,7 @@ test("② toast 換行規矩：放得下就一行；放不下先縮字（最小 
   const c = fakeToast("這是一句非常非常長、怎麼縮都放不進一行的提示訊息，只好換行", 200); fit(c);
   assert.equal(c.style.fontSize, "12px", "先縮到最小 12px"); assert.equal(c.style.whiteSpace, "normal", "還是放不下才換行");
   assert.match(UTIL, /function toast\(msg\)\{[^\n]*t\.hidden=false;toastFit\(t\);/, "每次顯示都套規矩");
-  assert.match(CSS, /\.toast\{[^}]*word-break:keep-all;overflow-wrap:anywhere;text-wrap:balance\}/, "換行時只在標點、空白處斷，兩行拉平均");
+  assert.match(CSS, /\.toast\{[^}]*word-break:keep-all;overflow-wrap:anywhere;text-wrap:balance[;}]/, "換行時只在標點、空白處斷，兩行拉平均");   /* 11/17 後面多了 pointer-events:none（test-toast-pass-1117.js） */
 });
 test("① P0 看我的棋力：全域點擊委派（不靠事後綁定）；結果視窗還沒出來時 tick 繼續等", () => {
   assert.match(GAME, /document\.addEventListener\("click",e=>\{const g=e\.target&&e\.target\.closest&&e\.target\.closest\("\.modal \.rg-go"\);/);

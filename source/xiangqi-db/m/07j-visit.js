@@ -130,6 +130,7 @@ function v7Css(){if(document.getElementById("v7css"))return;const s=document.cre
 .v7x{position:absolute;right:2px;top:2px;width:24px;height:24px;border:0;border-radius:50%;background:none;color:var(--muted);font-size:15px;line-height:24px;padding:0}
 .v7.inl{position:relative;z-index:auto;max-width:none;margin:6px 0 2px}.v7.inl .v7b{flex:1}
 .v7.out{opacity:0;transform:translateY(-6px);transition:opacity .4s,transform .4s;pointer-events:none}
+.v7.v7-thru{pointer-events:none}.v7.v7-thru>img,.v7.v7-thru .v7x{pointer-events:auto}
 @keyframes v7in{from{opacity:0;transform:translateY(-8px) scale(.96)}to{opacity:1;transform:none}}
 @media (prefers-reduced-motion:reduce){.v7{animation:none}}
 .v7s{display:flex;gap:12px;align-items:center}.v7s img{width:84px;height:112px;object-fit:contain;flex:none}.v7q{font:16px/1.8 var(--serif);margin:0 0 4px}
@@ -151,13 +152,23 @@ function v7Show(v,where,c,line,back){v7Css();const C=WX_CHARS[c],nm=C.nk||C.n,el
   else{el.style.visibility="hidden";v.append(el);v7Place(v,el);el.style.visibility="";setTimeout(()=>{if(el.isConnected)bye()},15000)}
   vibrate(8)}
 /* 星槎頁：找一個不蓋住圖上入口（.shp-hs）和站名（.shp-cap）的角落：站名下面、畫面左下、右下、左上，都蓋到就挑蓋得最少的 */
-function v7Place(v,el){const R=v.getBoundingClientRect(),W=el.offsetWidth,H=el.offsetHeight,cap=v.querySelector(".shp-cap"),cb=cap?cap.getBoundingClientRect().bottom:R.top,
-    top=Math.max(R.top,Math.min(cb,R.top+R.height*.3))+6,bot=Math.min(R.bottom,innerHeight)-H-14,
-    C=[[R.left+8,top],[R.left+8,bot],[R.right-W-8,bot],[R.right-W-8,top],[R.left+8,R.top+8]],
-    B=[...v.querySelectorAll(".shp-hs,.shp-cap,.shp-gy,#mdone"),...document.querySelectorAll(".xqbot,#sndPill")].map(e=>e.getBoundingClientRect()).filter(b=>b.width&&b.bottom>R.top&&b.top<R.bottom);
-  const cost=([x,y])=>B.reduce((s,b)=>s+Math.max(0,Math.min(x+W,b.right)-Math.max(x,b.left))*Math.max(0,Math.min(y+H,b.bottom)-Math.max(y,b.top)),0);
-  let best=C[0],bc=Infinity;for(const p of C){const c=cost(p);if(c<bc){bc=c;best=p}if(!c)break}
-  el.style.left=Math.round(best[0])+"px";el.style.top=Math.round(best[1])+"px"}
+/* 11/17 Windows 測試員 D P2-C（英文、中文都一樣）：星槎頁「方庭來串門子」泡泡蓋住「棋話一頁」入口的一半。原本只試 5 個角落、泡泡寬度固定，
+   五個都碰到入口時挑蓋得最少的那個——站名下面那一角只蓋到右上「棋話一頁」左邊一截，代價最小，就被選了。改成：
+   ① 除了原本 5 個角落（照舊優先），再沿左右兩邊每 16px 往下找（v7Spot）；② 都找不到不蓋的，泡泡縮窄一點再找（V7_SHRINK，最窄 V7_MINW），
+   左上那一角縮窄後就讓得開右上的入口；③ 真的怎樣都會碰到：泡泡本身點擊穿透（.v7-thru），只留頭像、✕ 能按，底下的入口照樣點得到；
+   ④ 放好後 0.7、2 秒各看一次（換英文字、07sp／07x 推標籤以後入口會挪位置），又蓋到了就重放。v7Cost／v7Spot 是純計算（node 測試用 vm 跑） */
+const V7_SHRINK=[0,40,80,120],V7_MINW=150;
+function v7Cost(x,y,W,H,B){let s=0;for(const b of B)s+=Math.max(0,Math.min(x+W,b.right)-Math.max(x,b.left))*Math.max(0,Math.min(y+H,b.bottom)-Math.max(y,b.top));return s}
+function v7Spot(R,W,H,top,bot,B){const L=R.left+8,Rt=R.right-W-8,C=[[L,top],[L,bot],[Rt,bot],[Rt,top],[L,R.top+8]];for(let y=top;y<=bot;y+=16)C.push([L,y],[Rt,y]);
+  let best=C[0],bc=Infinity;for(const p of C){const c=v7Cost(p[0],p[1],W,H,B);if(c<bc){bc=c;best=p}if(!c)break}return{p:best,c:bc}}
+function v7Boxes(v){return[...v.querySelectorAll(".shp-hs,.shp-cap,.shp-gy,#mdone"),...document.querySelectorAll(".xqbot,#sndPill")].map(e=>e.getBoundingClientRect()).filter(b=>b.width&&b.bottom>v.getBoundingClientRect().top&&b.top<v.getBoundingClientRect().bottom)}
+function v7Place(v,el){const R=v.getBoundingClientRect(),cap=v.querySelector(".shp-cap"),cb=cap?cap.getBoundingClientRect().bottom:R.top,B=v7Boxes(v);
+  el.classList.remove("v7-thru");el.style.maxWidth="";const W0=el.offsetWidth;let pick=null;
+  for(let i=0;i<V7_SHRINK.length;i++){if(i){const w=Math.max(V7_MINW,W0-V7_SHRINK[i]);if(w>=W0)break;el.style.maxWidth=w+"px"}
+    const W=el.offsetWidth,H=el.offsetHeight,top=Math.max(R.top,Math.min(cb,R.top+R.height*.3))+6,bot=Math.min(R.bottom,innerHeight)-H-14,r=v7Spot(R,W,H,top,bot,B);
+    if(!pick||r.c<pick.c)pick={p:r.p,c:r.c,mw:el.style.maxWidth};if(!r.c)break}
+  el.style.maxWidth=pick.mw;el.style.left=Math.round(pick.p[0])+"px";el.style.top=Math.round(pick.p[1])+"px";el.classList.toggle("v7-thru",pick.c>0);
+  if(!el.dataset.v7r){el.dataset.v7r="1";for(const t of[700,2000])setTimeout(()=>{try{if(!el.isConnected||el.classList.contains("out"))return;const q=el.getBoundingClientRect();if(v7Cost(q.left,q.top,q.width,q.height,v7Boxes(v))>0)v7Place(v,el)}catch(e){}},t)}}
 function v7Go(q){if(q.t==="read"){try{SHIP_RD_BACK=location.hash}catch(e){}location.hash="#/ship/read/"+q.k}else location.hash=q.t==="play"?"#/cpu":"#/canju"}
 function v7Desc(q){if(q.t==="play")return"♟ 下完一盤棋（挑戰電腦、園子都算，雙方各走 5 步以上）";if(q.t==="pz")return"🍵 解開一題殘局（一盞茶或千秋殘局都算，看答案不算）";
   const n=SHIP_ROUTE.indexOf(q.k)+1;return`📖 讀《雲河七星》第${CNUM(n)}章（${shipShort(q.k)}）`}

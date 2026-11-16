@@ -61,8 +61,8 @@ const I18N_EN={
   "問":"Ask",
   "問題":"a question",
   "目前的官階":"Current official rank",
-  "到「挑戰電腦 → 🥇 晉級賽」贏棋升段，":"Win ranked computer games to advance your chess rank.",
-  "就跟著升官（九品官 → 一品官），官服、頂戴、腰帶都會換":"Your official rank rises from Grade 9 to Grade 1, changing your robe, hat and belt.",
+  "到「挑戰電腦 → 🥇 晉級賽」贏棋升段，":"Win ranked computer games to advance your chess rank. ",
+  "就跟著升官（九品官 → 一品官），官服、頂戴、腰帶都會換":" rises in rank along with you (Grade 9 → Grade 1), and the robe, hat and belt change too",
   "背景音樂與鼓聲":"Music and drums",
   "朝代古風曲、過場鼓聲":"Dynasty music and transition drums",
   "換一首":"Next track",
@@ -277,7 +277,7 @@ const I18N_EN={
   "關閉":"Close","取消":"Cancel","確定":"OK","繼續":"Continue","結束":"End","下一步":"Next","上一步":"Previous","自動播放":"Autoplay","分享給朋友":"Share with friends",
   "開啟螢幕報讀與鍵盤模式":"Turn on screen reader & keyboard mode","螢幕報讀與鍵盤模式：開著（按一下關掉）":"Screen reader & keyboard mode: on (tap to turn off)",   /* 0540 驗收：英文讀屏第一個碰到的按鈕 */
   "回報問題":"Report a problem","意見回饋":"Feedback","我的角色":"My character","加到主畫面":"Add to Home Screen","線上大廳":"Online lobby","走回雅間":"Back to the private room",
-  "雅間":"Private room","星槎":"Star Raft","渡口":"Ferry","主題訓練":"Theme training","訓練營":"Boot camp","千秋盃":"Qianqiu Cup","車輪戰":"Simul","棋理體驗":"Lessons",
+  "雅間":"Private room","星槎":"Star Raft","⛵ 星槎回航":"⛵ Back to the Star Raft","正在進入星渦…":"Entering the star vortex…","渡口":"Ferry","主題訓練":"Theme training","訓練營":"Boot camp","千秋盃":"Qianqiu Cup","車輪戰":"Simul","棋理體驗":"Lessons",
   "小實驗":"Lab","今日推薦":"Today's picks","百科":"Codex","週報":"Weekly report","信房":"Mailroom","棋譜庫":"Game library","🔇 點任意處喚醒聲音":"🔇 Tap anywhere to enable sound",
   /* 首頁滿版圖、學習／對戰入口（名字跟著朝代換，英文統一成一個叫法） */
   "雲河星槎":"Star Raft","對戰":"Play","學習":"Learn","同桌對弈":"Pass and play","同桌對弈：兩人共用這台裝置":"Pass and play: two players share this device","快速對局":"Quick game",
@@ -801,7 +801,7 @@ const I18N_EN={
   "把黑將困住，讓它無路可走！":"Trap the black General so it has nowhere to go!","紅俥一路衝到底線，將軍！":"Run the red Chariot all the way to the back rank: check!",
   "全部下載好了":"All downloaded","常用的都下載好了；其他朝代、西市、觀星臺第一次去時才下載":"Everyday files are ready; other eras, the West Market and the Star Terrace download the first time you visit","準備好了":"Ready","下載開局要用的棋盤和棋子…":"Downloading the boards and pieces you need to start…","背景下載":"Background download","先進去逛（背景繼續下載）":"Go in now (keeps downloading)","準備好就能下棋；其他朝代、西市、觀星臺的圖第一次去時才下載，其餘之後慢慢補，進度在「設定 → 關於」。":"You can play as soon as this is ready. Other eras, the West Market and the Star Terrace download the first time you visit; the rest fills in later. Progress is under Settings → About.",
   /* 11/15 黑洞・星門圍城試玩（07bhg-gatesiege.js）：選關卡片、對局 HUD、結果視窗的固定字；帶數字的句子不翻（整句有中文就不換） */
-  "星門圍城・試玩":"Gate Siege (trial)","新玩法候選・第 1、3、6 關":"New mode candidate: stages 1, 3, 6","星門圍城規則":"Gate Siege rules","星門預告":"Gate forecast","下一波":"Next wave","回合後":"rounds away",
+  "星門圍城・試玩":"Gate Siege (trial)","新玩法候選・第 1、3、6 關":"New mode candidate: stages 1, 3, 6","星門圍城規則":"Star Gate Siege rules","星門預告":"Gate forecast","下一波":"Next wave","回合後":"rounds away",
   "援軍都下來了":"All reinforcements have arrived","護陣":"Guard","本輪若不處理":"If ignored this round","盾吸收":"Shield absorbs","損血":"HP lost","本輪沒有確定的扣血":"No certain damage this round",
   "可能擒子":"Possible captures","部署":"Deploy","部署後備":"Deploy a reserve","集火":"Focus Fire","士相護線":"Guard Line","緊急回復":"Emergency Heal","出戰":"Battle","回黑洞關卡":"Back to Black Hole stages",
   "再點一次同一顆招就放出":"Tap the same skill again to cast","點盤上發光的補給點":"Tap a glowing supply point","點盤上發光的目標":"Tap a glowing target","再打一次":"Play again","返回選關":"Back to stages",
@@ -845,7 +845,7 @@ const I18N_EN={
   "我方":"Us","倒下":"down","星門沒有援軍了":"No more reinforcements from the gates","每顆子":"Every piece",
   "走到敵子上＝攻擊":"Moving onto an enemy = an attack","防禦力比較大":"If defense is higher","護帥":"Guard the General","怎麼贏":"How to win",
   "一回合":"One round","星門":"Star gates","招式（每位夥伴學會的都能用，一回合放一招；那位的棋子都倒了就不能放）":"Skills (every companion's learned skills are available; one skill per round; a companion whose pieces are all down can't cast)","還沒有夥伴學會招式":"No companion has learned a skill yet",
-  "打倒敵方將帥（體力歸零或將死）":"Defeat the enemy general (HP to 0 or checkmate)","被吃不超過 2 顆子":"Lose no more than 2 pieces","易：對方數值 ×0.9、電腦只看 1 步":"Easy: enemy stats ×0.9, AI looks 1 move ahead","中：對方數值照關卡、電腦看 2 步":"Normal: enemy stats as listed, AI looks 2 moves ahead",
+  "打倒敵方將帥（體力歸零或將死）":"Defeat the enemy general (HP to 0 or checkmate)","被吃不超過 2 顆子":"Lose no more than 2 pieces","易：對方數值 ×0.9、電腦只看 1 步":"Easy: enemy stats ×0.9, AI looks 1 move ahead","中：對方數值照關卡、電腦看 2 步":"Medium: enemy stats as listed, AI looks 2 moves ahead",
   "難：對方數值 ×1.25、電腦看 3 步，星門多一波":"Hard: enemy stats ×1.25, AI looks 3 moves ahead, one extra gate wave","黑洞改版了：現在只有星門圍城，每顆子都有自己的體力、攻防。這一盤是舊玩法，沒辦法接著下。":"The Black Hole has been redesigned: only Star Gate Siege remains, and every piece has its own HP, attack and defense. This game uses the old rules and can't be continued.","去星門圍城":"Go to Star Gate Siege","黑洞規則改版了（每顆子有自己的體力、攻防），這一盤沒辦法接著下。":"The Black Hole rules changed (every piece now has its own HP, attack and defense); this game can't be continued.",
   "還沒有夥伴加入":"No companions have joined yet","中局急襲":"Midgame raid","殘局子少：集火（幾顆一起吃得到同一顆）能一下打穿，也要防對方集火你":"Few pieces left: focus fire (several pieces that can all capture the same target) can break through in one blow; watch for the enemy doing the same to you","星樞愛架砲：小心炮後面藏著的那一擊。":"The Star Pivot loves cannon screens: beware the shot hiding behind a piece.",
   "星樞的子急著過河——先擋住河口。":"The Star Pivot's pieces rush across the river — block the crossing first.","星樞見子就吃——別把子白白送進它的射程。":"The Star Pivot captures whatever it sees — don't hand it free pieces.","星樞縮著保將——要多顆子合力才打得開。":"The Star Pivot huddles around its general — it takes several pieces together to break in.","截援！":"Gate blocked!",
@@ -881,7 +881,7 @@ const I18N_EN={
   "九宮裡、帥旁邊的己子防禦 ×1.2；帥被打時旁邊防禦最高的子替它擋一半；站在自己仕、相走得到的格子上防禦 +10。":"Your pieces in the palace or next to the general get ×1.2 defense; when the general is hit, the toughest neighbor takes half; standing where your advisor or elephant can move gives +10 defense.","先讓仕守住九宮，俥再繞出去反擊":"Let the advisors hold the palace first, then swing the chariot around to counterattack","補給點":"Supply points","花那顆後備子所屬夥伴的 20 靈，把後備放到補給點；這一步就用掉了。":"Spend 20 of the matching companion's spirit to place a reserve piece on a supply point; that uses up your move.",
   "先部署傌，俥傌一起逼將":"Deploy the horse first, then hunt the general with chariot and horse","結業：小星門圍城":"Graduation: Mini Siege","接上第一章":"Bridge to chapter 1","這是第一章之前的最後一關：攻對防、降防、集火、放招、截援、護帥，全部一起用。":"This is the last stage before chapter 1: attack vs defense, wearing down, focus fire, skills, gate blocks, guarding — use them all.",
   "先擋住第一波援軍，再集火打開九宮":"Hold off the first wave, then focus fire to open up the palace",
-  "回氣":"Recover","星落":"Starfall","星樞護盾":"Pivot Shield","星樞的招":"The Star Pivot's skills","中、難的星樞也會放招——回氣（回 15 體力）、星落（打你一顆子）、星樞護盾（防禦 +10）；易不放。":"On Normal and Hard the Star Pivot casts skills too — Recover (heal 15 HP), Starfall (hits one of your pieces), Pivot Shield (+10 defense); on Easy it doesn't.",
+  "回氣":"Recover","星落":"Starfall","星樞護盾":"Pivot Shield","星樞的招":"The Star Pivot's skills","中、難的星樞也會放招——回氣（回 15 體力）、星落（打你一顆子）、星樞護盾（防禦 +10）；易不放。":"On Medium and Hard the Star Pivot casts skills too — Recover (heal 15 HP), Starfall (hits one of your pieces), Pivot Shield (+10 defense); on Easy it doesn't.",
   "打贏一次黑洞後開放":"Opens after you win once in the Black Hole","領過七星授印禮後開放":"Opens after you receive the Seven Stars seal gift",
   "搭星槎起航會偏航進黑洞，打贏一盤就開放":"Sail the Star Raft and you'll drift into the Black Hole — win one game there to open it",
   "新地點開放":"New place unlocked","點一下繼續":"Tap to continue","雲河的盡頭，星斗垂得最低。青銅渾儀還在轉，天頂的黑洞在等你。":"At the end of the Cloud River the stars hang lowest. The bronze armillary still turns, and the black hole at the zenith is waiting for you.","西市開市了。胡商與棋客擠在同一條街上，聽雨茶坊的簾子後頭，有人在擺暗棋。":"The West Market is open. Foreign merchants and chess players crowd the same street, and behind the curtain of the Rain-Listening Teahouse someone is setting up a game of dark chess.",
@@ -959,12 +959,13 @@ const I18N_PAT=[
   [/^第\s*(\d+)\s*列第\s*(\d+)\s*格，(.*)$/,(m,t)=>"Row "+m[1]+", square "+m[2]+", "+m[3].split("，").filter(Boolean).map(x=>{const q=x.match(/^(紅|黑)(.)$/);return q?i18nXsdPc(q[1],q[2]):x==="可以走到這裡"?"you can move here":x==="可以吃"?"you can capture":x==="選好了"?"selected":t(x)}).join(", ")],   /* 11/14 暗棋（07xsd）動態句 */
   [/^第\s*(\d+)\s*級$/,m=>"Level "+m[1]],
   [/^第\s*(\d+)\s*(手|步)$/,m=>"move "+m[1]],
-  [/^(\d+)\s*分$/,m=>m[1]+" pts"],
+  [/^(\d+)\s*分$/,m=>m[1]+(m[1]==="1"?" pt":" pts")],
   [/^開始第\s*(\d+)\s*級$/,m=>"Start level "+m[1]],
   [/^入門(\d)$/,m=>"Beginner "+m[1]],
   [/^業(?:餘)?(\d)(?:級)?$/,m=>"Amateur "+m[1]],
   [/^專(\d)(?:-(\d))?$/,m=>"Expert "+m[1]+(m[2]?"-"+m[2]:"")],
   [/^往後算\s*(\d+)\s*步$/,m=>"looks "+m[1]+" moves ahead"],
+  [/^往後算\s*(\d+)\s*步，(.+)$/,(m,T)=>{const r=T(m[2]);return r==null?null:"Looks "+m[1]+" moves ahead, "+r}],
   [/^每步想\s*([\d.]+)\s*秒$/,m=>"thinks "+m[1]+" s per move"],
   [/^積分\s*([+\-−±]?\d+)\s*→\s*(\d+)\s*分$/,m=>"Rating "+m[1].replace("−","-")+" → "+m[2]+" pts"],
   [/^再\s*(\d+)\s*分升\s*「?(.+?)」?$/,(m,T)=>{const r=T(m[2]);return r==null?null:m[1]+" pts to "+r}],
@@ -1055,6 +1056,7 @@ const I18N_PAT=[
   [/^第([一二三四五六七八九十]{1,3})章$/,m=>{const n=i18nCnNum(m[1]);return n?"Chapter "+n:null}],
   [/^第([一二三四五六七八九十]{1,3})章即將開放$/,m=>{const n=i18nCnNum(m[1]);return n?"Chapter "+n+" coming soon":null}],
   [/^開往(.+)$/,(m,T)=>{const r=T(m[1]);return r==null?null:"Heading to "+r}],
+  [/^(.+?)陪你走了$/,(m,T)=>{const r=T(m[1]);return r==null?null:r+" is traveling with you now"}],   /* 11/17 07pty 加入卡按「帶她出門」的提示（駱躍梅陪你走了） */
   [/^停靠(.+?)後開放$/,(m,T)=>{const r=T(m[1]);return r==null?null:"Opens after docking at "+r}],
   [/^星槎停靠(.+?)，這一章就開放$/,(m,T)=>{const r=T(m[1]);return r==null?null:"This chapter opens once the Star Raft docks at "+r}],
   [/^星槎停到(.+?)，收下遠征補給$/,(m,T)=>{const r=T(m[1]);return r==null?null:"The Star Raft reached "+r+"; received expedition supplies"}],
@@ -1111,7 +1113,7 @@ const I18N_STORY_EN={
   "花兒": "Hua'er",
   "小梅": "Xiaomei",
   "庭哥": "Ting",
-  "城子": "Cheng",
+  "城子": "Chengzi",
   "溪兒": "Xi'er",
   "老伯": "Old man",
   "軍爺": "Guard",
@@ -1169,7 +1171,7 @@ const I18N_STORY_EN={
   "阿轍腰上的腰牌，輪紋裡卡著泥。他沒去擦。": "Mud is caught in the wheel pattern on A-Zhe's token. He leaves it there.",
   "請老伯看看裂軸。阿轍腰上的腰牌也可以看。": "Ask the old man to check the axle. You can also look at A-Zhe's waist token.",
   "大家各做一點": "Everyone Lends a Hand",
-  "城子先用肩膀抵住車輪，車身不再往下滑。": "Cheng braces the wheel with his shoulder. The cart stops sliding.",
+  "城子先用肩膀抵住車輪，車身不再往下滑。": "Chengzi braces the wheel with his shoulder. The cart stops sliding.",
   "我抵著，你們慢慢來。": "I've got it. Take your time.",
   "先商量怎麼移車：照你想的順序點三件事，再按「開始」。": "Plan the move: tap the three tasks in order, then tap Start.",
   "合力移車": "Move the cart together",
@@ -1196,7 +1198,7 @@ const I18N_STORY_EN={
   "阿轍手上的木楔，有一邊削偏了。": "One side of A-Zhe's wooden wedge is uneven.",
   "木楔削平，敲進軸頭。": "The wedge is trimmed smooth and tapped into the axle.",
   "阿轍把繩子繞了三圈，打了個結。": "A-Zhe winds the rope three times and ties a knot.",
-  "城子抵住輪子，大家合力一推——": "Cheng braces the wheel. Everyone pushes together...",
+  "城子抵住輪子，大家合力一推——": "Chengzi braces the wheel. Everyone pushes together...",
   "車輪壓上木板，停到了乾地上。": "The wheel rolls onto the boards. The cart comes to rest on dry ground.",
   "你爹也是做這個的？": "Does your dad do this too?",
   "趕糧車。": "He drives a grain cart.",
@@ -1235,7 +1237,7 @@ const I18N_STORY_EN={
   "那題好難對不對？我也解不出來！先玩點別的嘛！": "That puzzle's hard, right? I can't solve it either! Let's try something else!",
   "嘿嘿，我也還醒著！星星好亮，來玩個小的嘛。": "Hehe, I'm still up too! Look at all those stars. Let's play something quick.",
   "前面堵住了？那就先拐個彎，玩點別的呀！": "Road blocked? Take a little detour. Let's play something else!",
-  "{名}也還沒睡？城子說夜裡不該熬著……那，只玩一會兒。": "You're still awake too, {名}? Cheng says we shouldn't stay up... Well, just for a little while.",
+  "{名}也還沒睡？城子說夜裡不該熬著……那，只玩一會兒。": "You're still awake too, {名}? Chengzi says we shouldn't stay up... Well, just for a little while.",
   "我想了幾天也沒想通。不如先換個題目，讓眼睛歇一歇。": "I've thought about it for days and still don't understand. Let's try another puzzle and rest our eyes.",
   "……一會兒。然後去睡。": "...A little while. Then bed.",
   "……卡住了。先歇。": "...Stuck. Take a break.",
@@ -1249,7 +1251,7 @@ const I18N_STORY_EN={
   "好啦，玩夠了！那題明天一定解得開！": "All right, that's enough for now! We'll solve that puzzle tomorrow!",
   "星星也要睡覺啦，{名}也去睡嘛。": "Even the stars need sleep. You too, {名}.",
   "繞一圈回來，說不定就看見路了呀。": "After a little detour, you might spot the way through.",
-  "城子說得對，夜深了。明日再見。": "Cheng's right. It's late. See you tomorrow.",
+  "城子說得對，夜深了。明日再見。": "Chengzi's right. It's late. See you tomorrow.",
   "換個時候再看，也許就懂了。不必急。": "Try again another time. You may understand it then. No hurry.",
   "去睡。": "Go to sleep.",
   "……先歇。明天再看。": "...Rest first. Look again tomorrow.",
@@ -1395,10 +1397,10 @@ function i18nSheet(){const cur=i18nCur(),L=[["tw","繁體中文","zh-Hant"],["cn
       <button type="button" class="lk" data-xqdoc="i18n" style="margin-top:8px">🌐 About the English UI / 英文介面說明</button>`;
     b.querySelectorAll("[data-lang]").forEach(x=>x.onclick=()=>{try{vibrate(5)}catch(e){}closeSheet();i18nPick(x.dataset.lang)})})}
 /* ================= 畫面：掃描文字節點、屬性，換成英文；原文記起來可以還原 ================= */
-const I18N_ATTR=["aria-label","title","placeholder"];
+const I18N_ATTR=["aria-label","title","placeholder","label"];   /* 11/17：加 label（下拉選單分組 optgroup 的標題，例如棋子聲音的分類） */
 const I18N_ORIG=new WeakMap(),I18N_AORIG=new WeakMap();
 /* 不翻的地方：程式、輸入框、棋盤（SVG 上的棋子字）、畫布、頭像圓章（.av 只放得下一個字）、語言選項（data-nocc）、特別標 data-noi18n 的 */
-function i18nIsSkip(el){if(!el||el.nodeType!==1)return false;if(/^(SCRIPT|STYLE|TEXTAREA|INPUT|SELECT|CODE|PRE|SVG|CANVAS)$/i.test(el.nodeName))return true;
+function i18nIsSkip(el){if(!el||el.nodeType!==1)return false;if(/^(SCRIPT|STYLE|TEXTAREA|INPUT|CODE|PRE|SVG|CANVAS)$/i.test(el.nodeName))return true;if(/^OPTION$/i.test(el.nodeName)&&!el.hasAttribute("value"))return true;   /* 11/17 測試員 D：下拉選單以前整個不翻（SELECT 在跳過名單），棋子聲音、大廳城市一直是中文；選項有寫 value 的只換顯示的字、值不變，沒寫 value 的照舊不翻（value 預設就是那段字，換了會壞）；語言選單照舊靠 data-nocc 跳過 */
   if(el.hasAttribute&&(el.hasAttribute("data-nocc")||el.hasAttribute("data-noi18n")))return true;return!!(el.classList&&el.classList.contains("av"))}
 function i18nInSkip(n){for(let e=n&&n.nodeType===1?n:n&&n.parentNode;e&&e.nodeType===1;e=e.parentNode)if(i18nIsSkip(e))return true;return false}
 /* data-i18n="鍵"：換掉這個元素「自己的」最後一段字（子元素裡的圖示不動，前後空白照留）；data-i18n-n 是 {n}；原文記在 I18N_ORIG，一樣可以還原。字典沒有這個鍵就回 false，照一般字典替換 */
@@ -1428,8 +1430,8 @@ function i18nWatch(){if(I18N_MO||typeof MutationObserver==="undefined"||!documen
   I18N_MO.observe(document.body,{childList:true,subtree:true,characterData:true,attributes:true,attributeFilter:I18N_ATTR})}
 /* 讀螢幕播報：先翻再念。結果視窗跳出來時 00-util modal 會當場念視窗裡的字（那時還沒換成英文）：念之前先把那個視窗換好，改念英文 */
 function i18nSay(t){const s=String(t==null?"":t);if(!I18N_CJK.test(s))return s;const r=i18nText(s);if(r!=null)return r;
-  try{const L=document.querySelectorAll(".modal .box"),bx=L[L.length-1],sp=x=>String(x||"").replace(/\s+/g," ").trim().slice(0,160);
-    if(bx&&sp(bx.innerText)===s.trim()){i18nApply(bx);return sp(bx.innerText)}}catch(e){}return s}
+  try{const L=document.querySelectorAll(".modal .box"),bx=L[L.length-1],sp=x=>String(x||"").replace(/\s+/g," ").trim().slice(0,160).trim(),a=bx?sp(bx.innerText):"",b=sp(s);   /* 11/17 測試員 B 第 6 輪 N6-6：modal 念的是切到 160 字的一段，第 160 字剛好是空白時尾巴多一格，跟 s.trim() 對不上 → 播報區留中文全文（星門圍城選關）；兩邊都切完再修尾，長句也接受開頭相同 */
+    if(bx&&b&&(a===b||b.length>=40&&a.startsWith(b))){i18nApply(bx);return sp(bx.innerText)}}catch(e){}return s}
 /* 英文模式開機：html lang、標題、讀螢幕念法、掃全頁、之後的變化 */
 function i18nBoot(){try{document.documentElement.lang=i18nHtmlLang()}catch(e){}
   if(i18nLang()!=="en"){i18nHintOnce();return}
@@ -1437,7 +1439,11 @@ function i18nBoot(){try{document.documentElement.lang=i18nHtmlLang()}catch(e){}
   try{if(typeof axmMoveLine==="function")axmMoveLine=i18nMoveLine;if(typeof axmCellLabel==="function")axmCellLabel=i18nCellLabel;if(typeof axmPcName==="function")axmPcName=i18nPcName}catch(e){}
   try{if(typeof axSay==="function"){const o=axSay;axSay=function(t){return o.call(this,i18nSay(t))}}}catch(e){}
   try{if(typeof axsAlert==="function"){const o=axsAlert;axsAlert=function(t){return o.call(this,i18nSay(t))}}}catch(e){}
+  /* 11/17 測試員 B 第 6 輪 N6-5：短訊息（00-util toast）先翻再量寬度。原本照中文量（一行放得下就 nowrap），翻成英文變長後被切掉（星門圍城開局「Star Gate Siege · Easy 1 · Trade for the Key Lane (Ea…」） */
+  try{if(typeof toast==="function"){const o=toast;toast=function(m){return o.call(this,typeof m==="string"?i18nSay(m):m)}}}catch(e){}
   i18nCss();i18nTabKeys();
+  /* 11/17 測試員 B 第 8 輪 N8-2：開機前就開著的視窗（序局邀局），播報區念的中文等外掛字典載完換成英文（00-util mdSayEn；它自己叫 i18nExtLoad，下一行再叫拿到的是同一個） */
+  try{document.querySelectorAll(".modal").forEach(m=>{if(m._ax&&typeof mdSayEn==="function")mdSayEn(m)})}catch(e){}
   try{i18nApply(document.body)}catch(e){}i18nWatch();i18nExtLoad()}
 /* 外掛字典（介面補字）：抓到就併進字典，整頁沒翻到的再翻一次；抓不到就只用內建的 */
 let I18N_EXT=null;
@@ -1452,6 +1458,27 @@ const I18N_CSS=["html[lang=en] .tabbar button{font-size:10.5px;letter-spacing:-.
   "html[lang=en] #tbb{flex-wrap:wrap}html[lang=en] #tbb button{flex:1 1 calc(50% - 8px);min-width:0;white-space:normal;padding:8px 6px;font-size:13px}",
   "html[lang=en] .st-tabs button{font-size:12.5px;padding-left:2px;padding-right:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}",
   "html[lang=en] #title{white-space:nowrap;overflow:hidden;text-overflow:ellipsis;min-width:0}",
+  /* 11/17 測試員 B 第 6 輪 N6-3：英文窄螢幕（480px 以下）頂欄標題被左邊「‹ Back to Ferry」擠成「Quic…」→ 跟星門圍城頁（07sg2 sg2Css）一樣可以換兩行、字小一點；兩行高度還在 44px 返回鈕之內，頂欄不長高；返回鈕的字照留（玩家要知道回哪裡） */
+  "@media (max-width:480px){html[lang=en] #title{white-space:normal;display:-webkit-box;-webkit-box-orient:vertical;-webkit-line-clamp:2;font-size:calc(16px * min(var(--fz,1),1.3));line-height:1.15;letter-spacing:.02em;overflow-wrap:break-word}}",
+  /* 11/17 測試員 B 第 7 輪 N7-1：返回鈕太長（「‹ Back to the private room」）會把標題擠到 18px、整個看不到 → 英文窄螢幕返回鈕最多佔頂欄 40%，放不下就刪節號（按鈕的字還在，讀螢幕照念全文），標題至少留得下位置。
+     返回鈕本來是 flex（刪節號不作用），這裡改成一行的 block；「‹」照舊大字。星門圍城頁（07sg2 sg2Css：body.gsv-on 只留「‹」）的規則比這條具體，照它的 */
+  "@media (max-width:480px){html[lang=en] #back{display:block;max-width:40%;min-width:44px;flex:0 1 auto;overflow:hidden;white-space:nowrap;text-overflow:ellipsis;line-height:44px;text-align:left}html[lang=en] #back b{display:inline-block;vertical-align:top;line-height:40px}html[lang=en] body.gsv-on #back{text-align:center}}",
+  /* 11/17 測試員 D 第 7 輪 P2-1：快速對局頂欄的「🥇 Ranked／📚 Practice room」切換鈕（08b-cpugame.js .cpu-seg，放在標題位置）被截成「Ran…」「Pra…」；
+     英文窄螢幕這一頁返回鈕只留「‹」（跟星門圍城頁一樣，文字還在按鈕裡、讀螢幕照念），切換鈕的字可以換兩行、小一點，不再截斷 */
+  "@media (max-width:480px){html[lang=en] .topbar:has(.cpu-seg) #back{font-size:0;padding:0 6px;max-width:none;text-align:center}html[lang=en] .topbar:has(.cpu-seg) #back b{font-size:28px}html[lang=en] .cpu-seg button{white-space:normal;text-overflow:clip;font-size:12.5px;line-height:1.1;padding:0 3px;letter-spacing:-.1px}}",
+  /* 11/17 測試員 D 第 7 輪 P3-1：3D 園子縮放提示泡泡（park3d.js .mh-note，右下角「－」左邊）英文多一行，最後一行被左下「▦ 2D board」鈕（06-cpu .pk2d，底下 48px）蓋住 → 英文時整個泡泡抬到那顆鈕上面、字小一點 */
+  "html[lang=en] .mh-note{bottom:56px;font-size:12.5px;line-height:1.35}",
+  /* 11/17 測試員 D 第 7 輪：快速對局平面棋盤底部「📜 Rules this game: Asian rules (direct capture)」（00-util 棋規徽章 .rule-note）跟右邊「🧊 3D scene」鈕（06-cpu .pk3d-back，m.css 用負邊界疊在同一行）擠在一起，尾巴被蓋住
+     → 英文窄螢幕那顆鈕改放下一行靠右（跟 m.css 橫向手機的做法一樣），棋規徽章整句看得到 */
+  "@media (max-width:600px){html[lang=en] .rule-note+.pk3d-back{margin-top:2px}}",
+  /* 11/17 測試員 D 第 8 輪 P3-2：我的角色頁書齋牆（07z4-studymap.js .mz-lb，m.css 外的模組樣式一行不換行）英文標籤太長：「35 days until Winter Solstice」右邊被切、「Qianqiu seal album」跟「Garden players」貼在一起
+     → 英文時標籤可以換行（寬度照字、最多約螢幕 26%）、字小一點；往上長的標籤（.a）底邊不動，不會往下壓到「回棋鎮」出口 */
+  "html[lang=en] .mz-lb{white-space:normal;width:max-content;max-width:min(26vw,124px);text-align:center;padding:2px 4px 3px}html[lang=en] .mz-lb b{font-size:11.5px;line-height:1.15;letter-spacing:0}html[lang=en] .mz-lb small{font-size:11px;line-height:1.15}",
+  /* 11/17 測試員 D 第 9 輪：書齋牆下方那排（修為、千秋大百科、提示棋、棋罐；07z4 MZ_SPOTS 的 x 只差畫面寬 15～18%）英文還是疊在一起 → 這四個更窄、字再小一點，大百科往下錯開一層；
+     07w9 圖上的出口「↩ 回…」（.ex-spot，原本放在 50%／87%，正好壓住千秋印譜、園子棋友那排）英文時搬到左下角走道（走路角色出門也是走那裡，下面沒有標籤） */
+  "html[lang=en] :is(#mzXp,#mzCodex,#mzBox,#mzJar) .mz-lb{max-width:min(19vw,82px)}html[lang=en] :is(#mzXp,#mzCodex,#mzBox,#mzJar) .mz-lb :is(b,small){font-size:10.5px}html[lang=en] #mzCodex .mz-lb{margin-top:30px}html[lang=en] .mz-wall>.ex-spot{left:19%!important;top:94%!important;max-width:36%}",
+  /* 11/17 測試員 D 第 8 輪 P3-3：3D 封面大標（park3d.js .gt-t，行內 26px、字距 .2em）英文換成兩行後第二行貼到副標 → 英文時大標小一點、字距收、行高拉開，副標再往下一點 */
+  "html[lang=en] .gt-t{font-size:22px!important;letter-spacing:.03em!important;line-height:1.2!important;padding:0 18px;text-wrap:balance}html[lang=en] .gt-s{margin-top:10px!important}",
   "html[lang=en] .modal .row button,html[lang=en] .modal .btn,html[lang=en] .opt button,html[lang=en] .pill,html[lang=en] .btn{white-space:normal;line-height:1.25;overflow-wrap:break-word}",
   "html[lang=en] .lvl button span,html[lang=en] .cpu-chip small{font-size:10px;letter-spacing:-.2px}",
   "html[lang=en] .muted,html[lang=en] .sec-t,html[lang=en] .card,html[lang=en] .item .tx span,html[lang=en] .cpu-lb{overflow-wrap:break-word;hyphens:auto}",

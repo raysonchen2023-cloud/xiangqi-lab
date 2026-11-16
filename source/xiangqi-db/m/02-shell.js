@@ -8,7 +8,12 @@ const navKey=h=>(h||"").replace(/^#/,"")||"/";
    首頁功能、底部分頁、冒險入口用「要去哪一頁」對應，右上角按鈕用原本的 emoji 對應；圖還沒到或缺圖時維持原本的 emoji */
 const ICO_GO={"#/cpu":"cpu","#/lobby":"online","#/stats":"stats","#/openings":"openings","#/redo":"redo","#/quiz":"quiz","#/guess":"guess","#/db":"db","#/terms":"rules","#/adventure":"adventure","#/":"home","#/settings":"settings","#/journey":"journey","#/journey/inn":"inn","#/journey/park":"park"},
   ICO_EMO={"📤":"share","👥":"friends","🏠":"home","🏯":"arena","⚙️":"settings","⚙":"settings","💬":"feedback","🌳":"park","🏮":"inn","🌐":"online","💡":"f_idea","🗺":"journey","🪨":"adventure"};   /* 552：補上沒有 FE0F 的「⚙」（新局設定一直對不到）和頂欄常用的幾個 */
-const icoSrc=n=>`data/icons/${store.get("era","classic")}/${n}.webp`;
+/* 11/17 Windows 測試員 B-10：主控台一直有 404（data/icons/han/e_cheer.webp、classic/e_cheer.webp、han/e_phone.webp）——幾個圖示不是每一朝都有畫，
+   以前先要當朝那張、404 了才在 onerror 依序借別朝的（借的第一站 classic 也可能沒有，又一個 404）。改成照下面這張「哪幾朝沒畫」的表，直接要有畫的那一朝；
+   表是照 xiangqi-lab/site/data/icons 現有的檔整理的（測試 test-icon-gap-1117.js 會逐一對檔，補了圖要把那朝從表裡拿掉）。不畫新圖 */
+const ICO_GAP={e_cheer:"classic han song sui",e_link:"han qin qing song sui wudai",e_mic:"qing",e_next:"classic wudai",e_phone:"han nanbei qing tang wudai"},ICO_ALT=["classic","ming","qin","tang","yuan","sanguo","weijin"];
+function icoAt(n,e){const g=ICO_GAP[n];if(!g)return e;const no=g.split(" ");if(!no.includes(e))return e;return ICO_ALT.find(x=>!no.includes(x))||e}
+const icoSrc=n=>`data/icons/${icoAt(n,store.get("era","classic"))}/${n}.webp`;
 function icoImg(el,n){const em=el.textContent;const im=document.createElement("img");im.className="eic";im.alt="";im.dataset.ico=n;im.onerror=()=>{const c=+(im.dataset.c||0),A=["classic","ming","qin","tang","yuan"];if(c<A.length){im.dataset.c=c+1;im.src="data/icons/"+A[c]+"/"+n+".webp";return}const sp=document.createElement("span");sp.className="noico";sp.textContent=em;im.replaceWith(sp)};im.src=icoSrc(n);el.textContent="";el.append(im)}   /* 552：這個朝代缺圖就先用經典那套 */
 /* 意見回饋 433、435、466：首頁三張大卡、設定的分頁、棋童資料的圓鈕也換成朝代圖示（第二張總表，tools/gen_round2.py --icons2） */
 const ICO_HUB={"#/cpu":"cpu","#/db":"db","#/hub/battle":"h_battle","#/adventure":"h_adventure","#/hub/learn":"h_learn"};
@@ -176,7 +181,8 @@ if(OFF&&"serviceWorker" in navigator){
   /* 11/13 Android 舊 WebView：原生 App（UA 帶 XQQianqiuApp/）的隔離靠 App 原生碼、不靠 sw.js，重整不會好，所以不自動重整（改跳下面的降級提示） */
   navigator.serviceWorker.register("sw.js").then(()=>navigator.serviceWorker.ready).then(()=>{
     const n=+(sessionStorage.getItem("xqReload")||0);if(self.crossOriginIsolated||n>=2||/XQQianqiuApp\//.test(navigator.userAgent))return;
-    const go=()=>{if(typeof rlgHold==="function"&&rlgHold())return setTimeout(go,3000);sessionStorage.setItem("xqReload",String(n+1));if(typeof rlgPrep==="function")rlgPrep("coi");location.reload()};   /* 11/13 開發者 P1：對局剛結束、結果視窗開著、殺棋特效中不重整（02r-reloadguard.js） */
+    const go=()=>{if(typeof rlgHold==="function"&&rlgHold())return setTimeout(go,3000);sessionStorage.setItem("xqReload",String(n+1));try{if((typeof TITLE!=="undefined"&&TITLE)||(typeof journey==="function"&&!journey()))sessionStorage.removeItem("xqTitleShown")}catch(e){}   /* 11/17 第 8 輪 B N8-1：新玩家第一次開網頁，隔離重整前開頭畫面已記 xqTitleShown，重整後就略過開頭畫面和新手練習；開頭畫面還開著或還沒有旅程就拿掉記號 */
+    if(typeof rlgPrep==="function")rlgPrep("coi");location.reload()};   /* 11/13 開發者 P1：對局剛結束、結果視窗開著、殺棋特效中不重整（02r-reloadguard.js） */
     if(navigator.serviceWorker.controller)setTimeout(go,n?800:0);else navigator.serviceWorker.addEventListener("controllerchange",go,{once:true})}).catch(()=>{});
   // 自動更新：打開 App、切回 App、以及開著的時候每 5 分鐘，都去問一次有沒有新版。
   // 新版下載好就跳出視窗「有新版本」；下棋或測驗中只在上方顯示一條提示，不打斷。
@@ -477,7 +483,7 @@ function a2hsArrow(ua){if(!/iPhone|iPad/.test(MY_KIND)||/FxiOS|EdgiOS|Ddg/.test(
   a.onclick=()=>a.remove();document.body.append(a);setTimeout(()=>a.remove(),15000)}
 // 用瀏覽器打開時自動問一次（手機才問；說過不用就不再問；按「稍後」7 天後再問）
 /* 開發者 11/6：開頭畫面、序幕或別的視窗開著時先不問，等它們關了再問（最多等 3 分鐘），免得兩個視窗疊在一起 */
-if(OFF&&!isStandalone()&&/iPhone|iPad|Android/.test(MY_KIND)){let instTry=0;const instAsk=()=>{const a=store.get("instAsk",null);if(a&&(a.no||Date.now()-a.at<7*864e5))return;if(document.querySelector(".modal")||document.body.classList.contains("xqt-on")||document.getElementById("sheet")){if(++instTry<45)setTimeout(instAsk,4000);return}installGuide(false)};setTimeout(instAsk,2500)}
+if(OFF&&!isStandalone()&&/iPhone|iPad|Android/.test(MY_KIND)){let instTry=0;const instAsk=()=>{const a=store.get("instAsk",null);if(a&&(a.no||Date.now()-a.at<7*864e5))return;if((typeof stqHold==="function"&&stqHold())||document.getElementById("stqPg")){setTimeout(instAsk,4000);return}   /* 11/17 iPhone 模擬器測試：新手練習（07stq）還沒畢業、也還沒按「我會下棋」就先不問（不算進 3 分鐘），練習頁關了才照原本的規矩等視窗 */if(document.querySelector(".modal,.sw7-slip")||document.body.classList.contains("xqt-on")||document.getElementById("sheet")){if(++instTry<45)setTimeout(instAsk,4000);return}installGuide(false)};   /* 11/17：首頁換季小籤（07w7 .sw7-slip）還在也先等，兩個不疊在一起 */setTimeout(instAsk,2500)}
 // 網址上的 ?openExternalBrowser=1 只是給 LINE 看的，打開後拿掉
 if(/[?&]openExternalBrowser=1/.test(location.search))try{history.replaceState(history.state,"",location.pathname+location.hash)}catch(e){}
 async function shareSheet(){

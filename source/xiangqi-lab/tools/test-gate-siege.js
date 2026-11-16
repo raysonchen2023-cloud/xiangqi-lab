@@ -579,7 +579,7 @@ test("〔原始碼〕接線：m.html include、XQ_TD 包一層只轉星門圍城
 
 test("〔原始碼〕11/15 實機驗收：選關視窗加了難度列、三星條件、鎖關之後比螢幕高，「出戰」掉到畫面外又不能捲——視窗可以捲、出戰鈕黏在底部、鎖住的卡片只留一行", () => {
   const GSRC = require("fs").readFileSync(require("path").join(__dirname, "..", "..", "xiangqi-db", "m", "07bhg-gatesiege.js"), "utf8");
-  assert.ok(GSRC.includes(".modal.gsv-sel{max-height:100dvh;overflow-y:auto;overscroll-behavior:contain;scrollbar-width:none}"), "選關視窗可以上下捲");
+  assert.ok(GSRC.includes(".modal.gsv-sel{max-height:100dvh;overflow-y:auto;overscroll-behavior:contain;scrollbar-width:none;align-items:flex-start}.modal.gsv-sel>.box{margin:auto 0}"), "選關視窗可以上下捲（11/17 B-1：從頂端排起，test-sg2-select-1117.js）");
   assert.ok(GSRC.includes(".gsv-sel .mb{display:contents}.gsv-sel .mb>.btn:first-child{position:sticky;bottom:calc(6px + env(safe-area-inset-bottom,0px));"), "出戰鈕黏在視窗底部");
   assert.ok(GSRC.includes(".gsv-card.lk small{display:none}"), "鎖住的卡片不顯示第二行小字（點了才跳原因）");
 });

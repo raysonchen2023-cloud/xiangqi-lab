@@ -504,6 +504,15 @@ function jName(j){if(!j)return"石桌往事";if(j==="park")return"園子";if(Str
   const s=jFindStage(j);return s?(s.book===2?"紙譜新局・":ROAD_NAME+"・")+s.name:ROAD_NAME}
 const jBack=j=>String(j||"").startsWith("gx:")?"#/adventure":String(j||"").startsWith("gxd:")?"#/guanxing":String(j||"").startsWith("bh:")?(typeof gxtBhBack==="function"?gxtBhBack(j):"#/adventure"):String(j||"").startsWith("bt:")?"#/battle":String(j||"").startsWith("char:")?"#/lobby":j==="park"?"#/port":String(j||"").startsWith("inn:")?"#/journey/inn":(()=>{const R=jRunGet(j);if(R&&!R.done)return"#/journey/"+j;const s=jFindStage(j);return s?jChapterHref(s):"#/shelf/1"})();   /* 11/16 開發者：gxd:＝觀星臺的今日異象、自由擺陣（07gxd-daily.js），返回鈕回觀星臺（jPlace 叫「觀星臺」） */
 const jPlace=j=>String(j||"").startsWith("gx:")?"幻譜星門":String(j||"").startsWith("gxd:")?"觀星臺":String(j||"").startsWith("bh:")?"星槎":String(j||"").startsWith("bt:")?"古戰場":j==="park"?"渡口":String(j||"").startsWith("inn:")?"驛站":String(j||"").startsWith("char:")?"大廳":(()=>{const s=jFindStage(j);return s?"第"+CNUM(s.n)+"回":"石桌往事"})();   /* 意見回饋 735：章回棋路併進書的目錄，回到書 */
+/* 11/17 Windows 測試員 D P3-2：開新局時「石桌往事還有一盤沒下完」也用在觀星臺（今日異象、自由擺陣 gxd:）、星門圍城／黑洞（bh:）、幻譜星門（gx:）、古戰場（bt:）的局——
+   這些局跟石桌往事共用同一格（/play 的 journey），一次只留一盤是真的，但不是石桌往事的局就不要寫石桌往事。字照「手上那一盤」是哪一類換。
+   回合數：原本 Math.ceil(手數/2)，紅黑各走一步（2 手）還寫「第 1 回合」；改成「正要下的那一步在第幾回合」＝Math.floor(手數/2)+1（紅先），
+   跟對局頁教練（10d「第 N 步（第 M 回合）」）、攔路棋客（07h）、星淵（07bht td.rnd+1）同一套。jRnd／jSlotMsg 是純函式（node 測試用 vm 跑） */
+const jRnd=(n,st0)=>Math.floor(((Math.max(0,+n||0))+(st0==="b"?1:0))/2)+1;
+function jSlotMsg(j,n,nm){j=String(j||"");const r=jRnd(n),q="「"+(nm||"這盤棋")+"」下到第 "+r+" 回合。";
+  const k=/^gxd:/.test(j)?"觀星臺":/^bh:gs/.test(j)?"星門圍城":/^bh:/.test(j)?"黑洞":/^gx:/.test(j)?"幻譜星門":/^bt:/.test(j)?"古戰場":"";
+  if(!k)return{em:"🪨",h:"石桌往事還有一盤沒下完",p:q+"石桌往事一次只留一盤，開新的，那一盤就不留了。"};
+  return{em:/^bt:/.test(j)?"⚔":"🌌",h:k+"還有一盤沒下完",p:q+"這一盤跟新的這一局用同一張棋桌，一次只留一盤；開新的，那一盤就不留了。"}}
 /* 意見回饋 413：石桌往事只留一盤（雲河棋路、驛站、園子、守關共用一格）。要開的跟手上那盤不是同一個對手時先問，不會悄悄蓋掉；同一個對手就接著下；force＝重下這一盤 */
 async function jStart(id,b,go,force){let st;try{st=await api("/play/state")}catch(e){toast(e.message);return}
   const cur=st.journey&&!st.result&&st.moves&&st.moves.length?{journey:st.journey,n:st.moves.length}:null,o=(st.others||[]).find(z=>z.kind==="journey");let g=cur||(o?{journey:o.journey,n:o.n}:null);
@@ -511,8 +520,8 @@ async function jStart(id,b,go,force){let st;try{st=await api("/play/state")}catc
   const fresh=async()=>{try{store.set("cpuRanked",false);const ez=id==="park"&&typeof qqParkEasy==="function"?qqParkEasy():null;   /* 贖回攔路棋客押走的東西：那一盤低一級（07h-qqev.js） */const s=await api("/play/new",{...b,dx:typeof diffDx==="function"?diffDx():0,...(ez||{})});if(id==="park")parkNpcNew(s.id,ez?ez.level:b.level);   /* 意見回饋 675：照航行難度加減幾段（園子、驛站、秘境棋友、章回棋路對弈關都從這裡開） */store.set("jPending",id==="park"?null:{id,game:s.id});go(true)}catch(e){toast(e.message)}};
   if(force||!g)return fresh();
   if(g.journey===id)return go(false);
-  modal(`<div class="em">🪨</div><h2>石桌往事還有一盤沒下完</h2><p class="muted">「${esc(jName(g.journey))}」下到第 ${Math.ceil(g.n/2)} 回合。石桌往事一次只留一盤，開新的，那一盤就不留了。</p>`,
-    [["⏳ 繼續那一盤",()=>{location.hash="#/journey/play"}],["放棄，開新的",fresh],["取消",null,true]])}
+  {const M=jSlotMsg(g.journey,g.n,jName(g.journey));modal(`<div class="em">${M.em}</div><h2>${esc(M.h)}</h2><p class="muted">${esc(M.p)}</p>`,
+    [["⏳ 繼續那一盤",()=>{location.hash="#/journey/play"}],["放棄，開新的",fresh],["取消",null,true]])}}
 /* 結果視窗、新局：跟同一位對手（園子、驛站）再下一盤 */
 function jAgain(st){if(String(st.journey||"").startsWith("bt:")&&typeof battleOddsAgain==="function")return battleOddsAgain(st);   /* 古戰場的讓子對弈：再下一盤要同樣的讓子 */
   const j=st.journey,n0=j==="park"?parkNpcOf(st):null,ix=String(j||"").startsWith("inn:")?INN.find(z=>"inn:"+z.id===j):null,rl=ix?innRlv(ix):null;if(ix)store.set("innCur",{id:ix.id,rl});   /* 意見回饋 548：驛站旅人再下一盤用調整後的強度 */
@@ -523,7 +532,7 @@ async function jResume(box,only){if(!box)return;let st;try{st=await api("/play/s
     o=(st.others||[]).find(z=>z.kind==="journey"),g=cur||(o?{journey:o.journey,n:o.n,me:(o.n%2?"b":"r")===o.human}:null);
   if(g&&typeof rsFinGame==="function"&&rsFinGame(rsJId(st)))return;   /* 回饋 838（開發者 11/9 選：全模式中斷接續）：「撐過 N 步」已經過關的那盤不出「繼續下」 */
   if(!g||!box.isConnected||(only&&!only(g.journey)))return;   /* only：書頁只看這本書的對局 */
-  box.innerHTML=`<button class="card row" style="width:100%;margin-top:10px;justify-content:space-between;border:2px solid var(--red);font:inherit;color:inherit;text-align:left"><span>⏳ <b>${esc(jName(g.journey))}</b><br><span class="muted" style="font-size:12.5px">下到第 ${Math.ceil(g.n/2)} 回合・${g.me?"輪到你走":"輪到電腦"}</span></span><b>繼續下 ›</b></button>`;
+  box.innerHTML=`<button class="card row" style="width:100%;margin-top:10px;justify-content:space-between;border:2px solid var(--red);font:inherit;color:inherit;text-align:left"><span>⏳ <b>${esc(jName(g.journey))}</b><br><span class="muted" style="font-size:12.5px">下到第 ${jRnd(g.n)} 回合・${g.me?"輪到你走":"輪到電腦"}</span></span><b>繼續下 ›</b></button>`;
   box.querySelector("button").onclick=async()=>{vibrate(5);if(!cur)try{await api("/play/switch",{kind:"journey"})}catch(e){}if(g.journey==="park")store.set("park3d",true);location.hash="#/journey/play"}}
 /* 意見回饋 711（開發者 11/6）：13 顆石頭都擺出來，還沒停靠的朝代變灰、點了跳提示（不再藏起來，只剩一半不好看） */
 function ParkGate(v){setTop("🪨 千秋石枰","#/adventure");setTabs(false);v.className="view";const cur=typeof shipHere==="function"?shipHere():store.get("era","classic");

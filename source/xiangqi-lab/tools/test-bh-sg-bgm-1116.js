@@ -23,7 +23,7 @@ function kit() {
   const o = new Function(...names, BH.slice(a, b) + ";return{BH_SG,bhSgMus,bhSgBase}")(...names.map(k => env[k]));
   return Object.assign(o, { log, ss });
 }
-const st = (lv, o) => Object.assign({ td: { mode: "gate-siege-v2", lv, diff: 1, kmax: 30, s: { b: ["K", "R"], x: [30, 20] } }, check: -1, turn: "r", human: "r" }, o || {});
+const st = (lv, o) => Object.assign({ td: { mode: "gate-siege-v2", lv, diff: 1, kmax: 30, s: { b: ["K", "R"], h: [30, 20], x: [30, 20] } }, check: -1, turn: "r", human: "r" }, o || {});   /* h＝現在體力、x＝最大體力（同 07sg2 的 S.h／S.x） */
 
 test("〔行為〕照關卡分：序章與易＝星門微瀾、中＝雲河圍陣、難組或難度「難」＝樞影逼城", () => {
   const K = kit();
@@ -40,14 +40,14 @@ test("〔行為〕偏航急襲（sessionStorage bhDrift）：墨潮湧兵與雲�
 });
 
 test("〔行為〕危急切將星懸命：被將軍或帥的體力不到三成；至少放 35 秒、解除後再等 10 秒才切回", () => {
-  const K = kit(), safe = st(3), chk = st(3, { check: 4, turn: "r" }), low = st(3); low.td.s.x[0] = 8;
+  const K = kit(), safe = st(3), chk = st(3, { check: 4, turn: "r" }), low = st(3); low.td.s.h[0] = 8;   /* 11/17：扣的是現在體力 h，最大體力 x 不變（以前假資料改 x，沒抓到程式讀錯欄位） */
   K.bhSgMus(safe, 0); assert.equal(K.log.force[K.log.force.length - 1], "bh_7.mp3");
   K.bhSgMus(chk, 1000); assert.equal(K.log.force[K.log.force.length - 1], "bh_10.mp3", "被將軍");
   K.bhSgMus(chk, 20000); K.bhSgMus(safe, 30000); assert.equal(K.log.force[K.log.force.length - 1], "bh_10.mp3", "30 秒解除：還沒滿 35 秒");
   K.bhSgMus(safe, 37000); assert.equal(K.log.force[K.log.force.length - 1], "bh_10.mp3", "滿 35 秒但解除才 7 秒");
   K.bhSgMus(safe, 41000); assert.equal(K.log.force[K.log.force.length - 1], "bh_7.mp3", "切回關卡曲");
   K.bhSgMus(low, 50000); assert.equal(K.log.force[K.log.force.length - 1], "bh_10.mp3", "帥體力 8／30 不到三成");
-  const ok = st(3); ok.td.s.x[0] = 12; const K2 = kit(); K2.bhSgMus(ok, 0); assert.equal(K2.log.force[0], "bh_7.mp3", "12／30 不算危急");
+  const ok = st(3); ok.td.s.h[0] = 12; const K2 = kit(); K2.bhSgMus(ok, 0); assert.equal(K2.log.force[0], "bh_7.mp3", "12／30 不算危急");
 });
 
 test("〔行為〕結算放舊的 bh_5（end）；不是星門圍城的局交回原本的規則", () => {

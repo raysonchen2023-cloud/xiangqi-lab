@@ -9,6 +9,8 @@
    fx：mist 晨霧、glow 金光上升、stars 星點、whirl 墨色漩渦、river 河光流動、ink 墨石暈開、burst 一次炸開、gates 十三道星門、frz 定格（只剩霧在動）、dust 塵土貼地騰起、rain 斜雨線。
    字幕（開發者定）：每個畫面最多一行、8～16 字，像電影台詞；同一個鏡頭的兩句至少隔 2 秒，後一句換掉前一句。
    跳過：右上角常駐「略過」，電影隨時可以跳；危機解題不能跳（解題時「略過」藏起來）。跳過後一定先顯示一張任務卡（大字寫現在要做什麼），按了才往下。
+   11/17 iMac 模擬器第 14 項（以前一章三段要按 3 次略過、2 次出發）：略過＝整章略過——危機題解完就結束這一段（jEnd）；07mnq mnqChapter 後面的段落沒有危機題就不播、
+     有就用 opt.jump 直接從危機題開始、解完就結束；整章最後出「下一步」任務卡。破局題照樣要解（不能跳）。
    危機解題 mnfQte：畫面定格、棋盤從場景浮出（沿用 01-board.js 的 Board 畫棋盤、XQCore 判合法與勝負，不另寫規則）；只放 4～6 顆子、一開始就選起要動的那顆、合法落點發光；
      上方大字「破局！」；走錯不算失敗，畫面倒帶重來；錯 2 次給提示（一句話＋藍框）；錯 3 次出現「看軍師演示」，看完也算通過（demo）。解對＝棋子化光，接回電影。
      勝負照殘局頁的判法：對方一步都不能走（將死或困斃）就算解開，所以多解的題（例如仕、相讓開一步，四個方向都行）也照樣算對。
@@ -311,7 +313,7 @@ function mnfPlay(id,opt){opt=opt||{};const sourceFilm=opt.film||MNF_FILMS[id],F=
   if(F.mus)mnfMusic(F.mus,opt.vol==null?1:opt.vol);
   const cover=([ix,iy])=>{const s=Math.max(W/MNF_W,H/MNF_H);return[(W-MNF_W*s)/2+ix*s,(H-MNF_H*s)/2+iy*s]};let kbNow=[1,50,50];
   const onScr=pt=>{const[s,fx,fy]=kbNow,ox=W*fx/100,oy=H*fy/100;return[ox+(pt[0]-ox)*s,oy+(pt[1]-oy)*s]};
-  let si=-1,S=null,fin=false,raf=0,fired={},qDone={},P=[],res={skipped:false,qte:{}};
+  let si=-1,S=null,fin=false,raf=0,fired={},qDone={},P=[],res={skipped:false,qte:{}};let jEnd=!!opt.jump;   /* 11/17 iMac 模擬器第 14 項：jEnd＝按過略過，危機題解完就結束這一段（不再接著播）；opt.jump＝整章略過後接著來的這一段，一開始就直接到危機題 */
   const add=(x,y,vx,vy,life,r,col,k)=>{if(P.length<(low?120:260))P.push({x,y,vx,vy,l:0,m:life,r,col,k})};
   const nextAt=i=>i+1<F.shots.length?F.shots[i+1].at:F.end;
   /* ---- 轉場（開發者 11/13「切換畫面不順」）----
@@ -347,12 +349,12 @@ function mnfPlay(id,opt){opt=opt||{};const sourceFilm=opt.film||MNF_FILMS[id],F=
     const[b1,b2]=d.querySelectorAll("button");try{b1.focus({preventScroll:true})}catch(e){}
     b1.onclick=e=>{e.stopPropagation();if(typeof vibrate==="function")vibrate(8);d.remove();resume("card");go(1)};if(b2)b2.onclick=e=>{e.stopPropagation();d.remove();resume("card");go(2)}};
   const skip=()=>{if(fin||o.classList.contains("qt")||o.querySelector(".mnf-card"))return;if(typeof vibrate==="function")vibrate(5);const t=clock(),Q=F.shots.find(x=>x.qte&&!qDone[x.at]&&x.at>=t-.01);
-    if(Q){card({t:(MNF_QTE[Q.qte]||{}).big||F.card.t,b:"出發"},()=>{seek(Q.at);});return}
+    if(Q){card({t:(MNF_QTE[Q.qte]||{}).big||F.card.t,b:"出發"},()=>{jEnd=true;seek(Q.at);});return}
     const c=(typeof opt.card==="function"?opt.card(F):opt.card)||F.card;card(c,k=>{res.card=k;finish(true)})};
   o.querySelector(".mnf-k").onclick=e=>{e.stopPropagation();skip()};
   const qte=Q=>{pause("qte");o.classList.add("qt");const PZL=(opt.qte&&opt.qte[Q.qte])||MNF_QTE[Q.qte];if(opt.vol!==0)mnfVol(.4,.6);
     mnfQte(o,PZL,r=>{qDone[Q.at]=1;res.qte[Q.qte]=r;o.classList.remove("qt");big.classList.remove("on");st.classList.remove("frz");if(opt.vol!==0)mnfVol(1,1.2);
-      const go=()=>{seek(Q.at+.06);resume("qte")};if(typeof opt.onQte==="function"){try{opt.onQte(Q.qte,r,go)}catch(e){go()}}else go()})};
+      const go=()=>{if(jEnd){finish(true);return}seek(Q.at+.06);resume("qte")};if(typeof opt.onQte==="function"){try{opt.onQte(Q.qte,r,go)}catch(e){go()}}else go()})};
   const frame=()=>{if(fin)return;const t=clock();let i=F.shots.length-1;while(i>0&&F.shots[i].at>t)i--;if(i!==si)setShot(i);
     if(S.qte&&!qDone[S.at]&&!fired.q){fired.q=1;if(S.big==null){big.textContent=((opt.qte&&opt.qte[S.qte])||MNF_QTE[S.qte]||{}).big||"";big.classList.add("on")}mnfSfx("gong");qte(S)}
     if(t>=F.end){finish(false);return}
@@ -370,6 +372,7 @@ function mnfPlay(id,opt){opt=opt||{};const sourceFilm=opt.film||MNF_FILMS[id],F=
     if(S.seal&&t>=S.seal[0]&&!fired.seal){fired.seal=1;const d=document.createElement("div");d.className="mnf-seal";d.setAttribute("data-noi18n","");const c=cover(S.src||[384,720]);d.style.left=c[0]+"px";d.style.top=c[1]+"px";d.innerHTML=esc(S.seal[1])+"<br>之印";st.append(d);requestAnimationFrame(()=>d.classList.add("on"))}
     g.clearRect(0,0,W,H);if(!rm)mnfFx(g,S,t,W,H,P,add,onScr,cover,fired);
     raf=requestAnimationFrame(frame)};
+  if(opt.jump){const J=F.shots.find(x=>x.qte);if(J)seek(J.at)}   /* 11/17：整章略過＝這一段直接從危機題那一格開始 */
   setShot(0);raf=requestAnimationFrame(frame);MNF.cur={finish,skip,clock};return MNF.cur}
 /* 粒子：每格依鏡頭 fx 生、畫 */
 function mnfFx(g,S,t,W,H,P,add,onScr,cover,fired){const src=onScr(cover(S.src||[384,688])),R=Math.random,fx=S.fx;
