@@ -1613,7 +1613,7 @@ html[data-lefty] .tskip{right:auto;left:14px}
       if(!window.caches)return go();caches.keys().then(function(ks){return Promise.all(ks.filter(function(k){return k.indexOf("xqlab-app-")===0}).map(function(k){return caches.delete(k)}))})
         .then(function(){return navigator.serviceWorker&&navigator.serviceWorker.getRegistration()}).then(function(r){return r&&r.update()}).catch(function(){}).then(go)}};setTimeout(chk,4000)})();
 </script>
-<script>window.XQ_OFFLINE=true;window.XQ_BUILD="20261116-1703";</script>
+<script>window.XQ_OFFLINE=true;window.XQ_BUILD="20261116-1743";</script>
 <script src="core.js"></script>
 <script src="engine.js"></script>
 <script src="local.js"></script>
@@ -8666,7 +8666,7 @@ const PTY_GOAL={x_miaogirl:"去大漠驛站，救出戴笠帽的孩子",x_shuai:
   x_spiritgirl:"去竹林溪邊，找那個一直在等人的孩子",x_bing:"去運河工地，找半塊布的主人",x_martialgirl:"去逃荒路上，找那個怕打雷的孩子"};
 function ptyCss(){if(document.getElementById("ptyCss"))return;const s=document.createElement("style");s.id="ptyCss";s.textContent=`
 .pty-top{display:flex;gap:10px;justify-content:space-between;align-items:center;margin:0 0 10px;font-size:14px}
-.pty-top b{font-size:16px}.pty-pool{color:#2b6cb0}.pty-top{margin-bottom:4px}.pty-cap{margin:0 0 10px}
+.pty-top b{font-size:16px}.pty-pool{color:#2b6cb0}.pty-top{margin-bottom:4px}.pty-cap{margin:0 0 10px}.pty-how{margin:-4px 0 6px}.pty-xpgo{display:block;width:100%;margin:0 0 12px}
 .pty-c{display:grid;grid-template-columns:64px 1fr;gap:4px 10px;align-items:start;padding:10px;border:1px solid var(--line,#d8cfbf);border-radius:12px;margin:0 0 10px;background:var(--card,#fffaf0)}
 .pty-c img{width:64px;height:85px;object-fit:cover;object-position:top;border-radius:8px;background:#efe6d6}
 .pty-c.lk img{filter:brightness(0) opacity(.55)}.pty-c.lk{opacity:.85}
@@ -8721,7 +8721,11 @@ function ptySkills(c){if(typeof sheet!=="function")return;const lv=ptyLv(c),pool
     b.querySelector("#ptySkB").onclick=()=>{closeSheet();setTimeout(ptySheet,60)}})}
 /* 開發者 11/16「角色等級不能超過修為，這句話玩家看不懂」（選單選「直接講結果」）：不解釋規則，直接說夥伴現在最高能練到幾級、怎樣才會再往上。
    同一條規則的另外兩處一起改：卡片上練滿的註記「（到修為上限）」→「（練滿了，等你升級）」；練滿還按＋星輝的提示 →「已經跟你一樣高了，等你升級再練」 */
-const ptyCapSay=L=>L>=100?"夥伴最高練到 Lv 100":`夥伴最高練到 Lv ${L}，你升級才會再往上`;
+const ptyCapSay=(L,nd)=>L>=100?"夥伴最高練到 Lv 100":nd>0?`夥伴最高練到 Lv ${L}，你的修為再 ${nd} 點升 Lv ${L+1}，才會再往上`:`夥伴最高練到 Lv ${L}，你升級才會再往上`;
+/* 11/16 開發者「要怎麼升級？」（截圖圈「練滿了，等你升級」）→ 選單「寫還差幾點＋去哪裡賺」：最上面那行寫還差幾點；有夥伴練滿時，下面多一行去哪裡賺修為＋「去下一盤」（點數同 addXP：對局贏 40 輸 15、千秋殘局 15） */
+const ptyXpNd=()=>{try{const X=xpInfo();return X.L<100?Math.max(1,X.need-X.rest):0}catch(e){return 0}};
+function ptyXpHow(P,L){if(L>=100||!PTY.ORDER.some(c=>PTY.has(P,c)&&PTY.lv(P,c,L)>=L))return"";
+  return`<p class="pty-m pty-how">下一盤電腦（贏 +40、輸 +15）、解千秋殘局（+15）、打星門圍城，都會加修為。</p><button type="button" class="btn ghost pty-xpgo" id="ptyXpGo">♟ 去下一盤</button>`}
 function ptyCardHTML(P,c,L){const C=(typeof WX_CHARS!=="undefined"&&WX_CHARS[c])||{n:c},era=typeof eraLabel==="function"&&typeof CHAR_ERA!=="undefined"?eraLabel(CHAR_ERA[c]):"";
   const img=`<img src="data/xs/prev_${c}.webp" alt="">`;
   if(!PTY.has(P,c)){const j=PTY.JOIN[c],at=j&&typeof eraLabel==="function"?eraLabel(j.st):"";const goal=P.hint&&P.hint[c]&&PTY_GOAL[c];
@@ -8735,8 +8739,9 @@ function ptyCardHTML(P,c,L){const C=(typeof WX_CHARS!=="undefined"&&WX_CHARS[c])
     ${(a=>a?`<div class="pty-a">${a}</div>`:"")(`${top?"":`<button type="button" class="btn" data-a="give"${P.pool>0?"":" disabled"}>＋星輝</button>`}${P.look===c?"":`<button type="button" class="btn ghost" data-a="look">帶${ptyTa(c)}出門</button>`}`)}</div>`}   /* 兩顆都不用出現時（練滿了又正陪你走）不留一條空白 */
 function ptySheet(){if(typeof sheet!=="function")return;const P0=ptyGet();if(!P0){try{toast("還沒有開始旅程")}catch(e){}return}ptyCss();
   sheet("🌟 雲河七星",b=>{const draw=()=>{const P=ptyGet(),L=ptyL(),sy=b.scrollTop;
-    b.innerHTML=`<div class="pty-top"><span><span>你的修為</span> <b>Lv ${L}</b></span><span class="pty-pool">✨ <span>星輝</span> <b>${P.pool|0}</b></span></div><p class="pty-m pty-cap">${ptyCapSay(L)}</p>`+ptyTeamHTML()+ptyTalHTML()+PTY.ORDER.map(c=>ptyCardHTML(P,c,L)).join("")+
+    b.innerHTML=`<div class="pty-top"><span><span>你的修為</span> <b>Lv ${L}</b></span><span class="pty-pool">✨ <span>星輝</span> <b>${P.pool|0}</b></span></div><p class="pty-m pty-cap">${ptyCapSay(L,ptyXpNd())}</p>`+ptyXpHow(P,L)+ptyTeamHTML()+ptyTalHTML()+PTY.ORDER.map(c=>ptyCardHTML(P,c,L)).join("")+
       `<p class="pty-m">下棋、解題、黑洞過關得到的修為，一半自動分給隊上每一位，另一半變成星輝，由你分給想練的人。黑洞裡全隊已學會的招都會帶上場；「陪你走」是首頁上跟著你的那一位。</p>`;
+    {const g=b.querySelector("#ptyXpGo");if(g)g.onclick=()=>{try{vibrate(5)}catch(e){}closeSheet();location.hash="#/cpu"}}
     {const t=b.querySelector('[data-top="tal"]');if(t)t.onclick=()=>{try{vibrate(5)}catch(e){}closeSheet();setTimeout(()=>{if(typeof sg2TalSheet==="function"&&typeof SG2G!=="undefined")sg2TalSheet(()=>ptySheet(),"‹ 回雲河七星");else bhtdTal(()=>ptySheet(),"‹ 回雲河七星")},60)}}   /* 07bht bhtdTal 第二個參數＝返回鈕的字（沒給照舊「回選關」） */
     b.querySelectorAll(".pty-c[data-c]").forEach(el=>{const c=el.dataset.c;el.querySelectorAll("[data-a]").forEach(btn=>btn.onclick=()=>{try{vibrate(5)}catch(e){}const a=btn.dataset.a;
       if(a==="sk"){closeSheet();setTimeout(()=>ptySkills(c),60);return}
@@ -11054,8 +11059,8 @@ const OP_FILM1={n:1,end:89.5,shots:[
   {at:65,img:"p8",kb:[[1.0,50,45],[1.22,62,56]],fx:"whirl",say:[[65.4,"天上星盤傾斜。"],[67.8,"一角滑入暗彎。"],[70.2,"墨色漩渦初開。"],[72.4,"誰也望不到底。"]]},
   {at:75,img:"p5",kb:[[1,50,32],[1.4,50,26]],fx:"whirl",sfx:[[76,"suck"]],say:[[75.4,"黑洞張開無聲。"],[78.2,"星槎被河牽去。"],[81.0,"棋聲在深處響。"],[83.8,"一步一步未停。"]],nar:[86.4,"黑非惡，只是深。"]}]};
 const OP_FILM2={n:3,end:60,shots:[
-  {at:0,img:"p2",ly:[[8.6,"p15",1.4]],grow:1,kb:[[1.12,52,40],[1.0,50,52]],fx:"stone",splash:9.4,say:[[0.6,"五色石曾補天。"],[3.2,"另有一角青石。"],[5.8,"一枚界石相隨。"],[8.4,"同落雲河深處。"]],nar:[9.9,"它記住萬年棋聲。"]},
-  {at:12.5,img:"p15",ly:[[12.6,"p16",2.2],[16.6,"p3",1.4]],grow:1,kb:[[1.0,50,52],[1.22,44,60]],fx:"steam",say:[[12.8,"青石後來成桌。"],[15.4,"桌上仍有星河。"],[18.0,"河邊少了界石。"],[20.6,"七碗茶正等候。"]]},
+  {at:0,img:"p2",ly:[[8.6,"p15",1.4]],kb:[[1.12,52,40],[1.0,50,52]],fx:"stone",splash:9.4,say:[[0.6,"五色石曾補天。"],[3.2,"另有一角青石。"],[5.8,"一枚界石相隨。"],[8.4,"同落雲河深處。"]],nar:[9.9,"它記住萬年棋聲。"]},
+  {at:12.5,img:"p15",ly:[[12.6,"p16",2.2],[16.6,"p3",1.4]],kb:[[1.0,50,52],[1.22,44,60]],fx:"steam",say:[[12.8,"青石後來成桌。"],[15.4,"桌上仍有星河。"],[18.0,"河邊少了界石。"],[20.6,"七碗茶正等候。"]]},
   {at:23,img:"p9",kb:[[1.25,50,70],[1.0,50,35]],fx:"steam",say:[[23.3,"茶氣飄出船外。"],[25.4,"在河上織小路。"],[27.4,"七點紅光在前。"]],nar:[28.0,"茶未入口，緣已同船。"]},
   {at:30,img:"p4",fx:"dark",say:[[30.0,"七段歲月在岸。"],[32.2,"七個孩子將醒。"],[34.2,"本命棋子先亮。"]],meteor:36}]};
 /* hspx 開發者 11/12「想製作從沒有裂縫到破洞的動畫」「要有漸漸裂掉變成棋桌的過程畫面」：
@@ -11064,13 +11069,15 @@ const OP_FILM2={n:3,end:60,shots:[
    → 青瓷洗成灰白青石（p16）→ 線沉回石裡、只留河 → 星槎上的青石桌（p3，河光接到缺口）。圖都是 Gemini 畫的（開發者逐張看過）；棋盤線由程式畫（Gemini 畫的線數不對） */
 const BHX_DUST={p11:{c:[392,560]},p12:{c:[390,560],rad:[190,245],tip:[402,808]},p1:{c:[390,360],rad:[105,125],tip:[396,515],band:1000}};   /* 落塵：裂口中心、破洞半徑、下緣出口、銀河高度（圖上像素） */
 const BHX_BD3={cx:388,cy:750,rx:262,ry:118,th:52.7*Math.PI/180,S:.17,g0:10.0,f0:15.4,f1:16.6};   /* 雲河上那塊圓青石的頂面橢圓（p15／p16 同一個位置）、河帶指向缺口的角度、棋盤大小；g0 開始長線、f0～f1 線沉回石裡 */
+/* 11/16 開發者「第一章的動畫裡面不要再做用線畫成棋盤的樣子 前面有出現過 看了很膩」：p2、p15 兩幕拿掉 grow（不再長棋盤線）；bhxGrowSvg／bhxGrowTick 留著沒人叫 */
 function bhxGrowSvg(st){const B=BHX_BD3,ex=[Math.cos(B.th),Math.sin(B.th)],ey=[-Math.sin(B.th),Math.cos(B.th)],P=(a,b)=>{const u=(a*ex[0]+b*ey[0])*B.S,v=(a*ex[1]+b*ey[1])*B.S;return[B.cx+u*B.rx,B.cy+v*B.ry]};
   const L=[],seg=(a0,b0,a1,b1,s,d,keep)=>L.push({p:P(a0,b0),q:P(a1,b1),s,d,keep:!!keep}),g=B.g0,rk=i=>-4.5+i;
-  const ext=r=>{let a=4;while(a<8){const u=(a*ex[0]+r*ey[0])*B.S,v=(a*ex[1]+r*ey[1])*B.S;if(u*u+v*v>.95)break;a+=.1}return a};
-  for(const r of[rk(4),rk(5)]){const e=ext(r);seg(-e,r,e,r,g,1.4,1)}   /* 河帶兩邊先亮，一路延伸到桌緣（流向缺口） */
+  for(const r of[rk(4),rk(5)])seg(-4,r,4,r,g,1.4,1);   /* 河帶兩邊先亮（11/16 開發者「棋盤的線有錯 超出去」：不再延伸到桌緣，跟其他橫線一樣只到棋盤邊） */
   [[3,6],[2,7],[1,8],[0,9]].forEach(([a,b],i)=>{seg(-4,rk(a),4,rk(a),g+.6+i*.6,1.2);seg(-4,rk(b),4,rk(b),g+.6+i*.6,1.2)});   /* 其餘橫線由河往外一條條長 */
   for(let f=-4;f<=4;f++){const s=g+.8+Math.abs(f)*.15;seg(f,rk(4),f,rk(0),s,2.2);seg(f,rk(5),f,rk(9),s,2.2);if(f===-4||f===4)seg(f,rk(4),f,rk(5),s,.5)}   /* 9 條直線從河邊往兩岸長，邊線跨河 */
   for(const[b0,b1]of[[rk(0),rk(2)],[rk(7),rk(9)]]){seg(-1,b0,1,b1,g+3.2,.8);seg(1,b0,-1,b1,g+3.2,.8)}   /* 兩個九宮 X */
+  {const D=.11,K=.24,mk=(f,r)=>{for(const sx of[-1,1]){if(Math.abs(f+sx*D)>4)continue;for(const sy of[-1,1]){const ax=f+sx*D,ay=r+sy*D;seg(ax+sx*K,ay,ax,ay,g+3.6,.5);seg(ax,ay,ax,ay+sy*K,g+3.6,.5)}}};
+    for(const r of[2,7])for(const f of[-3,3])mk(f,rk(r));for(const r of[3,6])for(const f of[-4,-2,0,2,4])mk(f,rk(r))}   /* 11/16 開發者「少了L線」：炮位、兵卒位四角的 L 形記號（同 bhxBoardSvg 的大小；靠邊的只畫朝內那一側） */
   const ns="http://www.w3.org/2000/svg",svg=document.createElementNS(ns,"svg");svg.setAttribute("class","fm-gr");svg.setAttribute("viewBox","0 0 768 1376");svg.setAttribute("preserveAspectRatio","xMidYMid slice");svg.setAttribute("aria-hidden","true");
   svg.style.cssText="position:absolute;inset:0;width:100%;height:100%;pointer-events:none";
   svg.innerHTML=`<defs><filter id="fmGlw" x="-20%" y="-20%" width="140%" height="140%"><feGaussianBlur stdDeviation="2.4" result="b"/><feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge></filter><clipPath id="fmClp"><ellipse cx="${B.cx}" cy="${B.cy}" rx="${(B.rx*.99).toFixed(1)}" ry="${(B.ry*.99).toFixed(1)}"/></clipPath></defs><g clip-path="url(#fmClp)"${bhxLowDevice()?"":' filter="url(#fmGlw)"'} stroke="#fff3cf" stroke-width="2.2" stroke-linecap="round" fill="none"></g>`;
@@ -14543,12 +14550,13 @@ const SG2G=(()=>{
      效果只作用在那位自己；那位還沒加入（木棋靈）就不算 ===== */
   const TALC={
     x_swordboy:[{id:"q_tl",nm:"鐵輪",cost:600,d:"俥的攻擊力 +4"},{id:"q_cq",nm:"長驅",cost:800,d:"俥直走 3 格以上去攻擊，這一下攻擊力 +6"},{id:"q_lz",nm:"輪轉不息",cost:600,d:"俥打死敵子，齊轍再回 6 靈"},{id:"q_sr",nm:"雙刃破甲",cost:800,d:"一劍破甲每局可以用 2 次"}],
-    x_miaogirl:[{id:"l_tx",nm:"踏雪",cost:600,d:"傌的體力 +6"},{id:"l_hm",nm:"回馬槍",cost:800,d:"傌攻擊沒打死時，對方防禦再降 3"},{id:"l_cy",nm:"草原之風",cost:600,d:"駱躍梅每回合多回 2 靈"},{id:"l_sy",nm:"雙影",cost:800,d:"紅馬跳影攻擊力改八折（原本六折）"}],
+    /* 11/16 開發者「寫現在的就好」：天賦說明只寫點亮後的效果，不寫「改…（原本…）」 */
+    x_miaogirl:[{id:"l_tx",nm:"踏雪",cost:600,d:"傌的體力 +6"},{id:"l_hm",nm:"回馬槍",cost:800,d:"傌攻擊沒打死時，對方防禦再降 3"},{id:"l_cy",nm:"草原之風",cost:600,d:"駱躍梅每回合多回 2 靈"},{id:"l_sy",nm:"雙影",cost:800,d:"紅馬跳影攻擊力八折"}],
     x_shuai:[{id:"s_zz",nm:"坐鎮",cost:600,d:"帥的體力 +15"},{id:"s_dx",nm:"定心",cost:600,d:"上一步被將軍，這一回合帥防禦 +6"},{id:"s_dd",nm:"典當有道",cost:800,d:"沈方庭回體力的招多回 4"},{id:"s_jg",nm:"九宮令",cost:800,d:"九宮裡的其他己子防禦再 +4"}],
-    x_shi:[{id:"t_tw",nm:"鐵衛",cost:600,d:"仕的防禦 +5"},{id:"t_hz",nm:"以身護主",cost:800,d:"仕替帥擋傷害時擋三分之二（原本一半）"},{id:"t_sj",nm:"銅鎖加固",cost:600,d:"銅鎖止步的定身多 1 回合"},{id:"t_dz",nm:"盾陣回靈",cost:600,d:"盾陣回靈改回 10（原本 6）"}],
+    x_shi:[{id:"t_tw",nm:"鐵衛",cost:600,d:"仕的防禦 +5"},{id:"t_hz",nm:"以身護主",cost:800,d:"仕替帥擋傷害時擋三分之二"},{id:"t_sj",nm:"銅鎖加固",cost:600,d:"銅鎖止步的定身多 1 回合"},{id:"t_dz",nm:"盾陣回靈",cost:600,d:"盾陣回靈 10"}],
     x_spiritgirl:[{id:"n_qy",nm:"青玉",cost:600,d:"相的防禦 +5"},{id:"n_sh",nm:"雙燕護線",cost:800,d:"相護到的子（士相護線）防禦再 +5"},{id:"n_dk",nm:"渡口茶香",cost:600,d:"渡口清茶多回 6"},{id:"n_yg",nm:"燕歸",cost:800,d:"飛燕還巢回到底線的子再回 8 體力"}],
     x_martialgirl:[{id:"r_hy",nm:"火藥",cost:600,d:"炮的攻擊力 +4"},{id:"r_cy",nm:"赤焰火網",cost:800,d:"花火連環降防從 6 變 9"},{id:"r_lf",nm:"連發",cost:600,d:"隔子星花冷卻少 1 回合"},{id:"r_jl",nm:"驚雷",cost:800,d:"炮打死敵子，雷借花再回 8 靈"}],
-    x_bing:[{id:"b_kt",nm:"快腿",cost:800,d:"兵過河的攻擊加成從 +6 變 +10"},{id:"b_yg",nm:"硬骨",cost:600,d:"兵的體力 +4"},{id:"b_pt",nm:"跑腿賺錢",cost:600,d:"勇往直前改回 10 靈（原本 6）"},{id:"b_xh",nm:"星火燎原",cost:800,d:"每有一顆過河的兵，回合結束步越溪回 1 靈（最多 3）"}]};
+    x_bing:[{id:"b_kt",nm:"快腿",cost:800,d:"兵過河的攻擊加成從 +6 變 +10"},{id:"b_yg",nm:"硬骨",cost:600,d:"兵的體力 +4"},{id:"b_pt",nm:"跑腿賺錢",cost:600,d:"勇往直前回 10 靈"},{id:"b_xh",nm:"星火燎原",cost:800,d:"每有一顆過河的兵，回合結束步越溪回 1 靈（最多 3）"}]};
   const TALM={},TAL_CK={};for(const ck in TALC)for(const t of TALC[ck]){TALM[t.id]=t;TAL_CK[t.id]=ck}
   const TAL_MAX=2;
   /* 整理點亮清單：認得、屬於那位、不重複、每位最多 TAL_MAX 個 */
@@ -33791,7 +33799,7 @@ const I18N_EN={
   "說書人學徒":"Storyteller's apprentice","13 站":"13 stops","還沒選角色":"No character chosen yet","看航線":"View route","回星槎頁":"Back to the Star Raft","石桌已補全":"Stone table complete","石桌補全了":"The stone table is complete",
   "傾斜手機看立體":"Tilt phone for 3D","先下這盤棋":"Play this game first","示範棋局":"Demo game","正文載入中":"Loading text","先往下讀":"Read on first","上一章":"Previous chapter","下一章":"Next chapter","跟電腦下一盤":"Play the computer","13 站都走完了":"All 13 stops done",
   "今天打千秋盃":"Qianqiu Cup today","找找靈感":"Find inspiration","再想一下":"Think again","跟幻影練一題":"Practice a puzzle with the Phantom","星槎停靠":"Star Raft docked","解這一局":"Solve this game","點一下跳過":"Tap to skip","雲河驛站":"Cloud River inn",
-  "船艙":"Cabin","🌟 換人":"🌟 Switch","🎭 開始故事":"🎭 Start the story","先逛逛，之後再開始故事":"Look around first, start the story later","⚔ 開新的旅程":"⚔ Start a new journey","↩ 回上一頁":"↩ Back","七星":"Seven Stars","▶ 接著下":"▶ Keep playing","＋ 開新局":"＋ New game","旅伴與軍師各獻一策，你採用哪一策？":"Your companions and the strategists each offer a plan. Which will you take?","去開頭畫面":"Go to the start screen","三格存檔都有人了":"All three save slots are used","航行難度":"Voyage difficulty","現在":"now","多數人選這個":"most people pick this","看這一站":"See this stop","千秋大百科":"Qianqiu encyclopedia",
+  "船艙":"Cabin","🌟 換人":"🌟 Switch","🎭 開始故事":"🎭 Start the story","先逛逛，之後再開始故事":"Look around first, start the story later","📖 第一章":"📖 Chapter 1","📖 接著看第一章":"📖 Continue Chapter 1","⚔ 開新的旅程":"⚔ Start a new journey","↩ 回上一頁":"↩ Back","七星":"Seven Stars","▶ 接著下":"▶ Keep playing","＋ 開新局":"＋ New game","旅伴與軍師各獻一策，你採用哪一策？":"Your companions and the strategists each offer a plan. Which will you take?","去開頭畫面":"Go to the start screen","三格存檔都有人了":"All three save slots are used","航行難度":"Voyage difficulty","現在":"now","多數人選這個":"most people pick this","看這一站":"See this stop","千秋大百科":"Qianqiu encyclopedia",
   "想多看一題":"One more puzzle","七星同局圖鑑":"Seven Stars puzzle album","熱身":"Warm-up","變化題":"Variation puzzles","選做":"optional","雲河":"Cloud River","秦":"Qin","漢":"Han","三國":"Three Kingdoms","魏晉":"Wei-Jin","南北朝":"Northern and Southern dynasties",
   "隋":"Sui","唐":"Tang","五代":"Five Dynasties","宋":"Song","元":"Yuan","明":"Ming","清":"Qing","我的起手":"My openings","棋力考校":"Strength test","我的勝負簿":"My record","分門習練":"Theme training","錯著重習":"Mistake drills","象戲規則":"Rules of xiangqi",
   "初學講武場":"Boot camp","初學教場":"Boot camp","初學校場":"Boot camp","棋譜石室":"Game library","棋譜祕閣":"Game library","棋譜書樓":"Game library","棋譜閣":"Game library","找真人選「線上對戰」；自己練選「挑戰電腦」":"To play people, choose \"Online play\"; to practice alone, choose \"Play the computer\"",
@@ -33985,16 +33993,16 @@ const I18N_EN={
   "鐵輪":"Iron Wheel","俥的攻擊力 +4":"Chariot attack +4","長驅":"Long Drive","俥直走 3 格以上去攻擊，這一下攻擊力 +6":"When the chariot moves 3+ squares straight to attack, that strike gets +6 attack",
   "輪轉不息":"Endless Wheel","俥打死敵子，齊轍再回 6 靈":"When a chariot destroys an enemy, Qi Zhe regains 6 more spirit","雙刃破甲":"Twin Blade","一劍破甲每局可以用 2 次":"Sword Breaks Armor can be used twice per game",
   "踏雪":"Snow Step","傌的體力 +6":"Horse HP +6","回馬槍":"Turnback Spear","傌攻擊沒打死時，對方防禦再降 3":"When a horse attack doesn't kill, the target loses 3 more defense",
-  "草原之風":"Prairie Wind","駱躍梅每回合多回 2 靈":"Luo Yuemei regains 2 more spirit each round","雙影":"Twin Shadow","紅馬跳影攻擊力改八折（原本六折）":"Red Horse Shadow uses 80% attack (was 60%)",
+  "草原之風":"Prairie Wind","駱躍梅每回合多回 2 靈":"Luo Yuemei regains 2 more spirit each round","雙影":"Twin Shadow","紅馬跳影攻擊力八折":"Red Horse Shadow uses 80% attack",
   "坐鎮":"Hold the Seat","帥的體力 +15":"General HP +15","定心":"Steady Heart","上一步被將軍，這一回合帥防禦 +6":"If you were checked last move, your general gets +6 defense this round",
   "典當有道":"Pawnbroker's Way","沈方庭回體力的招多回 4":"Shen Fangting's healing skills heal 4 more","九宮令":"Palace Decree","九宮裡的其他己子防禦再 +4":"Your other pieces inside the palace get +4 more defense",
-  "鐵衛":"Iron Guard","仕的防禦 +5":"Advisor defense +5","以身護主":"Body Shield","仕替帥擋傷害時擋三分之二（原本一半）":"An advisor shielding the general takes two thirds of the damage (was half)",
-  "銅鎖加固":"Reinforced Lock","銅鎖止步的定身多 1 回合":"Bronze Lock freezes for 1 more round","盾陣回靈改回 10（原本 6）":"Shield Spirit regains 10 (was 6)","青玉":"Green Jade",
+  "鐵衛":"Iron Guard","仕的防禦 +5":"Advisor defense +5","以身護主":"Body Shield","仕替帥擋傷害時擋三分之二":"An advisor shielding the general takes two thirds of the damage",
+  "銅鎖加固":"Reinforced Lock","銅鎖止步的定身多 1 回合":"Bronze Lock freezes for 1 more round","盾陣回靈 10":"Shield Spirit regains 10","青玉":"Green Jade",
   "相的防禦 +5":"Elephant defense +5","雙燕護線":"Twin Swallow Cover","相護到的子（士相護線）防禦再 +5":"Pieces covered by your elephants get +5 more defense","渡口茶香":"Ferry Tea Aroma",
   "渡口清茶多回 6":"Ferry Tea heals 6 more","燕歸":"Swallow's Return","飛燕還巢回到底線的子再回 8 體力":"A piece sent home by Swallow Home heals 8 HP","火藥":"Gunpowder",
   "炮的攻擊力 +4":"Cannon attack +4","花火連環降防從 6 變 9":"Fire Chain lowers defense by 9 (was 6)","連發":"Rapid Fire","隔子星花冷卻少 1 回合":"Starburst Over cooldown −1 round",
   "驚雷":"Thunderclap","炮打死敵子，雷借花再回 8 靈":"When a cannon destroys an enemy, Lei Jiehua regains 8 more spirit","快腿":"Quick Legs","兵過河的攻擊加成從 +6 變 +10":"Soldier bonus after crossing the river: +10 attack (was +6)",
-  "硬骨":"Hard Bones","兵的體力 +4":"Soldier HP +4","勇往直前改回 10 靈（原本 6）":"Forward March regains 10 (was 6)","星火燎原":"Prairie Fire",
+  "硬骨":"Hard Bones","兵的體力 +4":"Soldier HP +4","勇往直前回 10 靈":"Forward March regains 10","星火燎原":"Prairie Fire",
   "每有一顆過河的兵，回合結束步越溪回 1 靈（最多 3）":"Each soldier across the river gives Bu Yuexi 1 spirit at round end (max 3)","攻擊不是吃子":"Attack Isn't Capture","攻擊與停原地":"Attacking and staying put","走到敵子上是攻擊：攻擊力比對方防禦高就扣血，沒打死就停在原地，打死才移進去。":"Moving onto an enemy is an attack: if your attack beats its defense it loses HP; if it doesn't die, your piece stays where it was — it only moves in on a kill.",
   "點一下自己的子，打得到的敵子上會標出這一下扣多少、會不會擊破":"Tap your piece: enemies it can reach show how much damage the hit would do and whether it would destroy them","打不動就降防":"Wear Down Defense","防比攻高":"Defense higher than attack","防禦比攻擊力高就打不動：對方的防禦會降你攻擊力的一半，下一下就打得穿。":"If the defense is higher than your attack, you can't hurt it: its defense drops by half your attack, so the next hit gets through.",
   "兵先去磨九宮裡那顆象的防禦，俥再一下打穿":"Let the soldier wear down the elephant's defense in the palace, then the chariot breaks through","將軍一定要應":"Answer the Check","應將與照面":"Answering checks; facing generals","被將軍一定要應；將帥不能在同一條直線上照面。":"A check must always be answered; the two generals may never face each other on an open file.",
@@ -36063,8 +36071,10 @@ function stqPick(c){const U=STQ_UI;
     const S=stqSt();if(S.st==="done"){S.c=c;S.pick=Date.now();stqSave(S)}try{if(typeof fnStep==="function")fnStep("pick")}catch(e){}try{saveNow(true)}catch(e){}try{window.dispatchEvent(new Event("xq-look"))}catch(e){}}
   stqClose();try{if(/^(#\/?)?$/.test(location.hash||""))route();else goHome()}catch(e){}}
 /* ---------- 首頁按鈕（07mnq mnqHomeSync／按鈕先問這裡）：{t:字}；null＝照 07mnq 原本的「下一步」 ---------- */
-function stqHome(){if(!STQ_ON)return null;const S=stqSt0();if(S&&S.st==="run")return{k:"run",t:"🔰 繼續新手練習"};return{k:"more",t:"更多玩法"}}
-function stqHomeGo(){const h=stqHome();if(!h)return false;if(h.k==="run"){if(stqCan())stqOpen();return true}stqMore();return true}
+/* 11/16 開發者「如果一開始沒選第一章 這邊要顯示第一章讓玩家知道」：第一章還沒看完（07mnq lamp.classic＝看完）首頁這顆寫「📖 第一章」（看過一部分寫「接著看」），按了直接開；看完才回「更多玩法」 */
+function stqC1(){try{if(typeof mnqChapter!=="function"||typeof mnqSt!=="function"||typeof MNQ_SEGS==="undefined"||!MNQ_SEGS.classic)return null;const S=mnqSt(),seg=S.seg||{};if((S.lamp||{}).classic||MNQ_SEGS.classic.every(id=>seg[id]))return null;return MNQ_SEGS.classic.some(id=>seg[id])?"📖 接著看第一章":"📖 第一章"}catch(e){return null}}
+function stqHome(){if(!STQ_ON)return null;const S=stqSt0();if(S&&S.st==="run")return{k:"run",t:"🔰 繼續新手練習"};const c1=stqC1();if(c1)return{k:"c1",t:c1};return{k:"more",t:"更多玩法"}}
+function stqHomeGo(){const h=stqHome();if(!h)return false;if(h.k==="run"){if(stqCan())stqOpen();return true}if(h.k==="c1"){try{mnqChapter("classic")}catch(e){}return true}stqMore();return true}
 function stqMore(){stqCss();let mq=false;if(typeof MNQ_PANEL_ON!=="undefined"&&MNQ_PANEL_ON)try{const M=mnqSt();mq=!!(M.gift.a1||Object.keys(M.seg).length)}catch(e){}   /* 11/15 遠征令拿掉（07mnq MNQ_PANEL_ON＝false）：不放「⛵ 星槎遠征令」那顆 */
   const L=[["🤖","對弈電腦",typeof CpuRoom==="function"?"#/cpuroom":"#/cpu"],["🍵","一盞茶殘局","#/canju"],["📝","棋力測驗","#/quiz"],["🔰","新手訓練營","#/camp"]];
   /* 11/15 第一章入口原本只在「設定 → 氛圍」（07mnq mnqSndRow）：首頁「下一步」打開的這張清單也放一顆（有角色或看過任何一段才放；看完＝「再看第一章」） */

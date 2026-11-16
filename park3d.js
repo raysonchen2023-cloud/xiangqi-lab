@@ -2546,7 +2546,10 @@
       if(P.drag){TDP={drag:P.drag};const i=pick(e.clientX,e.clientY-TDUP),ok=i>=0&&selI>=0&&SNAP.t.includes(i);if(ok){tdDragEnd(true);if(opt.onTap)opt.onTap(i)}else{tdDragEnd(false);if(i===-2&&tapAmb)showAmb(tapAmb)}TDP=null;return}
       if(P.moved)return;const i=pick(e.clientX,e.clientY);if(i===-2){if(tapAmb)showAmb(tapAmb);return}if(i>=0){if(opt.onTap)opt.onTap(i);return}
       if(selI>=0&&opt.onTap)opt.onTap(selI)};   /* 點棋盤外＝取消選取 */
-    cvs.addEventListener("pointerdown",e=>{if(TDC){tdDown(e);return}ptrs.set(e.pointerId,{x:e.clientX,y:e.clientY});try{cvs.setPointerCapture(e.pointerId)}catch(_){}
+    /* 11/16 hspx P0（開發者「不知道滑到那個地方 導致轉動旋轉會壞掉失常」「會無法兩指放大或是正常旋轉畫面」）：手指滑出畫面、碰到按鈕或被系統手勢搶走時，iPhone 有時不送 pointerup／pointercancel，
+       ptrs（塔防是 TDPT）留下一根看不見的手指，之後一根手指按下去就被當成兩指捏合。第一根手指（isPrimary＝這時沒有別的手指在螢幕上）按下時先清掉殘留的；失去追蹤（lostpointercapture）也當放開 */
+    const ptrGhost=e=>{if(!e.isPrimary)return;if(ptrs.size){ptrs.clear();pinch=null;down=null}if(TDPT.size){TDPT.clear();if(TDOR.pin){TDOR.pin=null;TDOR.hold=0}}};
+    cvs.addEventListener("pointerdown",e=>{ptrGhost(e);if(TDC){tdDown(e);return}ptrs.set(e.pointerId,{x:e.clientX,y:e.clientY});try{cvs.setPointerCapture(e.pointerId)}catch(_){}
       if(ptrs.size>=2){inEnd(false);if(!pinch){pinch={d:spread(),z:tzoom};if(GIANT&&!TELE)try{const a=[...ptrs.values()];gntFocus((a[0].x+a[1].x)/2,(a[0].y+a[1].y)/2,1e9)}catch(_){}}down=null;lastTap=0;return}   /* 黑洞：兩指中間最靠近的角色＝放大的中心 */
       if(IN.ph==="hold"||IN.ph==="run")IN.ph="held";   /* 入座運鏡中按下去：鏡頭先停在玩家看到的位置 */
       down={x:e.clientX,y:e.clientY,t:performance.now(),y0:tyaw,p0:tpitch,moved:false}});
@@ -2561,7 +2564,8 @@
       try{const now=performance.now();
       if(now-lastTap<320&&(tyaw||tpitch!==HOME.p||tzoom!==HOME.z)){reset();lastTap=0;return}lastTap=now;let fg=null;if(GIANT)try{fg=gntFocus(e.clientX,e.clientY,70)}catch(_){}const i=pick(e.clientX,e.clientY);if(i===-2){if(tapAmb)showAmb(tapAmb);return}if(i>=0){if(opt.onTap)opt.onTap(i);return}if(fg)return;   /* 黑洞：點到角色＝鎖定放大中心，不開旁邊物件的介紹 */
       if(opt.onInfo){const k=infoPick();if(k)opt.onInfo(k)}}finally{if(inH)inEnd(true)}};
-    cvs.addEventListener("pointerup",up);cvs.addEventListener("pointercancel",e=>{if(TDC){tdDragEnd(true);TDP=null;TDPT.delete(e.pointerId);TDOR.pin=null;if(TDOR.hold){TDOR.hold=0;TDOR.rel=performance.now();pwPoke(1700)}return}ptrs.delete(e.pointerId);if(ptrs.size<2)pinch=null;down=null;if(IN.ph==="held")inEnd(true)});
+    cvs.addEventListener("pointerup",up);cvs.addEventListener("lostpointercapture",e=>{if(!ptrs.has(e.pointerId)&&!TDPT.has(e.pointerId))return;if(TDC){TDPT.delete(e.pointerId);if(TDPT.size<2&&TDOR.pin){TDOR.pin=null;TDOR.hold=0;TDOR.rel=performance.now();pwPoke(1700)}return}ptrs.delete(e.pointerId);if(ptrs.size<2)pinch=null;if(!ptrs.size)down=null});   /* 11/16 P0：沒送 pointerup 就失去追蹤＝當放開（正常放開時 up 已經刪掉，這裡什麼都不做） */
+    cvs.addEventListener("pointercancel",e=>{if(TDC){tdDragEnd(true);TDP=null;TDPT.delete(e.pointerId);TDOR.pin=null;if(TDOR.hold){TDOR.hold=0;TDOR.rel=performance.now();pwPoke(1700)}return}ptrs.delete(e.pointerId);if(ptrs.size<2)pinch=null;down=null;if(IN.ph==="held")inEnd(true)});
     // 觸控板捏合（瀏覽器送 ctrl＋滾輪）也能縮放；iOS Safari 的 gesture 事件擋掉，免得整頁被放大
     cvs.addEventListener("wheel",e=>{if(!e.ctrlKey||TDC)return;e.preventDefault();inEnd(false);userZ=true;tzoom=clamp(tzoom*Math.exp(e.deltaY*.01),ZMIN,ZMAX)},{passive:false});
     for(const ev of["gesturestart","gesturechange"])el.addEventListener(ev,e=>e.preventDefault(),{passive:false});
