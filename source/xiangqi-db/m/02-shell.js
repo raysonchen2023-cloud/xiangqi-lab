@@ -191,7 +191,7 @@ if(OFF&&"serviceWorker" in navigator){
     updT.innerHTML='<div class="ut">⬇ 正在下載新版…</div><div style="margin-top:6px;height:5px;border-radius:3px;background:#fff3;overflow:hidden"><i style="display:block;height:100%;width:3%;background:#E9C46A;transition:width .25s"></i></div>';document.body.append(updT);return updT};
   const updSay=(t,p)=>{const b=updBox();b.querySelector(".ut").textContent=t;if(p!=null)b.querySelector("i").style.width=Math.max(3,Math.min(100,p))+"%"};
   navigator.serviceWorker.addEventListener("message",e=>{const m=e.data&&e.data.xqUpd;if(!m||!updating)return;const[g,n]=m;updSay(`⬇ 正在下載新版　${g}／${n}`,g/n*95)});
-  const markDone=()=>{try{localStorage.setItem("xqUpdDone",String(Date.now()))}catch(e){}};
+  const markDone=()=>{try{localStorage.setItem("xqUpdDone",String(Date.now()))}catch(e){}try{localStorage.setItem("xqUpdBack",JSON.stringify({t:Date.now(),h:location.hash||""}));sessionStorage.setItem("xqTitleShown","1")}catch(e){}};   /* 11/16 開發者「App 更新的時候，不要跳到 App 關掉後開啟的第一個畫面」（選單「只管更新」）：記下這是更新重載＋當下頁面，05b saveBoot 看到就不出開頭畫面、回原頁（iPhone 主畫面 App 重載時 sessionStorage 有時會被清，所以另存 localStorage） */
   try{const d=+(localStorage.getItem("xqUpdDone")||0);if(d){localStorage.removeItem("xqUpdDone");if(Date.now()-d<120000){let w=0;const sh=async()=>{if(document.querySelector("#preov")&&++w<200)return setTimeout(sh,300);const v=fmtV(await appVer());
     const t=document.createElement("div");t.className="toast";t.style.zIndex="310";t.textContent="✓ 已更新到新版"+(v?"（"+v+"）":"")+"，可以繼續用了";document.body.append(t);setTimeout(()=>t.remove(),5000)};setTimeout(sh,600)}}}catch(e){}
   async function doUpdate(){updating=true;updSay("⬇ 正在檢查新版…",3);const tt=updT;let slow=null;

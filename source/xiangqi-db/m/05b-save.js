@@ -520,6 +520,7 @@ function saveMigrateOld(){const c=myChar()||(mySex()==="f"?"f":"m");store.set("j
 function saveBoot(){if(SAVE_OLD!==null){store.set("saveMig1",Date.now());if(SAVE_OLD)saveMigrateOld()}lockFix();
   try{const J=store.get("journey",null);if(J&&CHAR_ERA[J.c]&&J.era!==2){store.set("era",CHAR_ERA[J.c]);store.set("eraUser",null);store.set("journey",{...J,era:2});setTimeout(()=>{try{applyEra()}catch(e){}},300)}}catch(e){}   /* 意見回饋 669 補：1200 版以前就選好角色的旅程，開 App 時補套一次角色主場的朝代（之後自己換的照自己的） */
   let pro=false,shown=false;try{pro=!!sessionStorage.getItem("xqPrologue");if(pro)sessionStorage.removeItem("xqPrologue");shown=!!sessionStorage.getItem("xqTitleShown")}catch(e){}
+  try{const u=JSON.parse(localStorage.getItem("xqUpdBack")||"null");localStorage.removeItem("xqUpdBack");if(u&&Date.now()-(+u.t||0)<180000){shown=true;sessionStorage.setItem("xqTitleShown","1");if(u.h&&/^#\//.test(u.h)&&!/^#\/./.test(location.hash||""))location.hash=u.h}}catch(e){}   /* 11/16 開發者選單「只管更新」：3 分鐘內的更新重載（02-shell markDone 記的）＝不出開頭畫面，網址沒帶頁面就回到原本那一頁；真的關掉 App 再開照舊出開頭畫面 */
   if(pro){if(typeof bhxNeed==="function"&&bhxNeed()&&typeof bhxBack==="function")bhxBack(true);setTimeout(()=>{if(typeof bhxLandNew==="function"&&bhxLandNew())return;prologue()},1500)}   /* 有舊旅程的人在開頭選好角色：換格會重新載入，載入後一樣降落經典星槎 */   /* 換格開新旅程會重新載入：等序幕的 1.5 秒先蓋黑洞底，不露出首頁 */
   if(!pro&&typeof bhxResume==="function"&&bhxResume())return;   /* 11/16 P0：開新旅程到一半被重新載入＝接回序局邀局卡（07bh bhxResume），不掉回舊旅程 */
   if(shown||navigator.webdriver||!/^(#\/?)?$/.test(location.hash||""))return;titleScreen({})}
