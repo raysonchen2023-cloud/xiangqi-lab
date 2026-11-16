@@ -1,8 +1,8 @@
 {
- "version": "20261116-1318",
- "checkedAt": "2026-11-16T05:18:08.963Z",
- "html": "5a26fece437a",
- "sw": "79ba49da804a",
+ "version": "20261116-1337",
+ "checkedAt": "2026-11-16T05:37:43.179Z",
+ "html": "1a04b5ebf7dc",
+ "sw": "b5b620214f5f",
  "scripts": 4,
  "modules": {
   "00-util.js": "8c2b1d4f725f",
@@ -26,15 +26,15 @@
   "07f-ship.js": "22079862126f",
   "07o-shipmore.js": "3e3ebb9d732b",
   "07bh-blackhole.js": "3b35b97d5d15",
-  "07gx-galaxy.js": "c63e653cf14c",
+  "07gx-galaxy.js": "a13149836e0f",
   "07gxp-gatepano.js": "77bc897060cb",
   "07bht-td.js": "a7d7802119c5",
   "07bhtl-tdlearn.js": "723bfc6032fc",
   "07bhf-bossfx.js": "8516daf7973e",
-  "07bhg-gatesiege.js": "05c71b1eb4a5",
-  "07bhw-wheel.js": "78eb10078013",
+  "07bhg-gatesiege.js": "f0be6d8570ec",
+  "07bhw-wheel.js": "c5d308befb82",
   "07sg2-siege2.js": "321f6aa47750",
-  "07dv-devtest.js": "b201f3be6972",
+  "07dv-devtest.js": "765e1daa2cb3",
   "07dw-perfhud.js": "a3755bd4af6c",
   "07g-battle.js": "6c2de94250f9",
   "07h-qqev.js": "f9dedcd5f07b",
@@ -150,13 +150,13 @@
   },
   {
    "module": "07bhg-gatesiege.js",
-   "lines": 7,
-   "sourceModified": "2026-11-16T05:16:16.071Z"
+   "lines": 8,
+   "sourceModified": "2026-11-16T05:21:01.592Z"
   },
   {
    "module": "07bhw-wheel.js",
-   "lines": 2,
-   "sourceModified": "2026-11-16T05:15:37.868Z"
+   "lines": 3,
+   "sourceModified": "2026-11-16T05:21:01.591Z"
   },
   {
    "module": "07y-hubmap.js",
