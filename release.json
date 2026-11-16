@@ -1,8 +1,8 @@
 {
- "version": "20261116-1801",
- "checkedAt": "2026-11-16T10:01:56.574Z",
- "html": "4d00d39c6330",
- "sw": "f2783043f7f8",
+ "version": "20261116-1830",
+ "checkedAt": "2026-11-16T10:30:19.947Z",
+ "html": "81f27b6ab6b5",
+ "sw": "6d855cf44b7b",
  "scripts": 4,
  "modules": {
   "00-util.js": "8c2b1d4f725f",
@@ -26,7 +26,7 @@
   "07e-garden2.js": "06a2203be497",
   "07f-ship.js": "ac3f70eff236",
   "07o-shipmore.js": "3e3ebb9d732b",
-  "07bh-blackhole.js": "c46d86b1ccd0",
+  "07bh-blackhole.js": "1f441411f6f6",
   "07gx-galaxy.js": "bb520983714c",
   "07gxp-gatepano.js": "77bc897060cb",
   "07bht-td.js": "a7d7802119c5",
@@ -34,7 +34,7 @@
   "07bhf-bossfx.js": "8516daf7973e",
   "07bhg-gatesiege.js": "f0be6d8570ec",
   "07bhw-wheel.js": "c5d308befb82",
-  "07sg2-siege2.js": "341948e85f4e",
+  "07sg2-siege2.js": "bf529038ce0a",
   "07dv-devtest.js": "b201f3be6972",
   "07dw-perfhud.js": "a3755bd4af6c",
   "07g-battle.js": "6c2de94250f9",
@@ -66,7 +66,7 @@
   "07gxt-guanxing.js": "6748a3a827f3",
   "07dgl-stamina.js": "454a9ae806e2",
   "07gxd-daily.js": "90b5f68818f5",
-  "07xsm-ximarket.js": "7c7a905ad9b6",
+  "07xsm-ximarket.js": "4fd23f75ecc6",
   "07xsd-xsmdark.js": "14cf67001b41",
   "07hmp-pano.js": "4c045da62c2e",
   "07ulk-unlockfx.js": "a4b5bf371969",
@@ -126,7 +126,7 @@
   "07mnf-mainfilm.js": "59f288419ad1",
   "07mnv-mainvn.js": "348063327d1e",
   "07stq-starter.js": "2d44be254758",
-  "07mnq-mainquest.js": "6ff93318507a",
+  "07mnq-mainquest.js": "7f1030b26e6c",
   "07grw-growth.js": "b4abadc89987"
  },
  "differsFromSource": [
@@ -141,9 +141,19 @@
    "sourceModified": "2026-11-15T12:49:16.045Z"
   },
   {
+   "module": "07xsm-ximarket.js",
+   "lines": 181,
+   "sourceModified": "2026-11-16T10:27:15.354Z"
+  },
+  {
    "module": "07s4-passmap.js",
    "lines": 1,
    "sourceModified": "2026-11-13T03:19:39.481Z"
+  },
+  {
+   "module": "07mnq-mainquest.js",
+   "lines": 3,
+   "sourceModified": "2026-11-16T10:23:03.806Z"
   }
  ]
 }
