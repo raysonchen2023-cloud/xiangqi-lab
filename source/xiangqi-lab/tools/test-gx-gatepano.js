@@ -53,8 +53,10 @@ test("〔行為〕順序：從黑洞往右繞一圈就是解鎖順序，第十�
   for (let i = 1; i < ord.length; i++) assert.ok(right(ord[i]) > right(ord[i - 1]), ord[i - 1] + " → " + ord[i]);
   assert.equal(K.GX_ORD[K.GX_ORD.length - 1], "beichen");
   assert.ok(right("mirror") > right("yaoguang") && right("mirror") < right("kaiyang")); assert.ok(Math.abs(right("mirror") - K.GXP_W / 2) < K.GXP_W * .08, "差不多在正對面");
-  for (const g of K.GX_LIST.filter(g => g.off)) assert.ok(K.GXP_P[g.id][1] > 700, g.n + "（星軌未通）在下排");
-  assert.deepEqual(K.gxpIds(false), [...K.GX_ORD, "jiyue", "xuanbing", "shuchen", "tengshe"]); assert.equal(K.gxpIds(true).pop(), "mirror");
+  for (const id of ["jiyue", "xuanbing", "shuchen", "tengshe"]) assert.ok(K.GXP_P[id][1] > 700, id + "（星軌未通）在下排");
+  /* 11/16 Pikafish 不收超過正規子數的局面：紫淵、搖光、開陽暫時標 off、從解鎖順序拿掉，留在原位灰掉（之後放回不用動座標） */
+  for (const id of ["ziyuan", "yaoguang", "kaiyang"]) { assert.equal(K.GX_LIST.find(g => g.id === id).off, 1, id + " 暫時關"); assert.ok(!K.GX_ORD.includes(id)) }
+  assert.deepEqual(K.gxpIds(false), [...K.GX_ORD, "ziyuan", "yaoguang", "kaiyang", "jiyue", "xuanbing", "shuchen", "tengshe"]); assert.equal(K.gxpIds(true).pop(), "mirror");
 });
 
 test("〔行為〕每顆星都夠好點：手機上按鈕不小於 56×56（最小的球也超過 44）", () => {
@@ -74,9 +76,10 @@ test("〔行為〕拖曳的位置換算：置中、繞一圈回到原位、一�
 
 test("〔行為〕一開頁對準下一顆要打的：沒星印是紫淵，一路往下，九個全破是第十四顆", () => {
   const nx = (S, all, opt) => withSeal(S, opt).gxpNext(S, all);
-  assert.equal(nx({}, false), "ziyuan"); assert.equal(nx({ ziyuan: { t: 1 } }, false), "taisu"); assert.equal(nx({ ziyuan: { t: 1 }, taisu: { t: 0 }, tianyuan: { t: 2 } }, false), "yaoguang");
+  /* 11/16 紫淵、搖光、開陽暫時關：第一顆是太素 */
+  assert.equal(nx({}, false), "taisu"); assert.equal(nx({ taisu: { t: 1 } }, false), "tianyuan"); assert.equal(nx({ taisu: { t: 0 }, tianyuan: { t: 2 } }, false), "yuxiu");
   const S = {}; for (const id of K.GX_ORD) S[id] = { t: 1 }; assert.equal(nx(S, true), "mirror"); assert.equal(nx(S, false), "beichen");
-  assert.equal(nx({ ziyuan: { t: 1 }, taisu: { t: 1 }, tianyuan: { t: 1 } }, false, { docked: 0 }), "beichen", "下一顆被星槎進度鎖住：先停在黑洞");
+  assert.equal(nx({ taisu: { t: 1 }, tianyuan: { t: 1 } }, false, { docked: 0 }), "beichen", "下一顆（玉宿，要停靠 3 站）被星槎進度鎖住：先停在黑洞");
   assert.equal(kit().gxpNext({}, false), "beichen", "還沒去過黑洞：每一顆都鎖著");
 });
 
@@ -90,10 +93,11 @@ test("〔行為〕星球按鈕的狀態：已得星印、下一顆、鎖住、�
 });
 
 test("〔行為〕說明卡（兩版共用）：未通的星、還沒輪到的星引言換成批註；輪到的、打過的照舊是主宰的話；鎖住時三顆鍵不能按", () => {
-  const S2 = { ziyuan: { t: 2 } }, off = K.gxCardHtml("jiyue", {}), lock = K.gxCardHtml("taisu", {}), open = K.gxCardHtml("ziyuan", {}), done = withSeal(S2).gxCardHtml("ziyuan", S2), mir = K.gxCardHtml("mirror", {});
+  const S2 = { taisu: { t: 2 } }, off = K.gxCardHtml("jiyue", {}), lock = K.gxCardHtml("tianyuan", {}), open = K.gxCardHtml("taisu", {}), done = withSeal(S2).gxCardHtml("taisu", S2), mir = K.gxCardHtml("mirror", {});
   assert.ok(off.includes("「" + K.GX_TXT.off + "」") && off.includes("🔒 ")); assert.equal((off.match(/ disabled/g) || []).length, 3);
-  assert.ok(lock.includes("「" + K.GX_TXT.lock + "」") && !lock.includes("守得此局")); assert.equal((lock.match(/ disabled/g) || []).length, 3);
-  assert.ok(open.includes("「這般殺陣，我已演練過萬次。」") && open.includes("不計積分、不扣分") && !/ disabled/.test(open)); assert.equal((open.match(/class="gx-go"/g) || []).length, 3);
+  {const z = K.gxCardHtml("ziyuan", {}); assert.ok(z.includes("「" + K.GX_TXT.off + "」"), "11/16 紫淵暫時關＝星軌未通"); assert.equal((z.match(/ disabled/g) || []).length, 3)}
+  assert.ok(lock.includes("「" + K.GX_TXT.lock + "」") && !lock.includes("得失之間")); assert.equal((lock.match(/ disabled/g) || []).length, 3);
+  assert.ok(open.includes("「守得此局，便是守住輪迴。」") && open.includes("不計積分、不扣分") && !/ disabled/.test(open)); assert.equal((open.match(/class="gx-go"/g) || []).length, 3);
   assert.ok(done.includes("✦ 已得" + K.GX_MODES[2][3])); assert.ok(mir.includes("第十四顆・鏡像") && mir.includes(K.GX_TXT.go));
   for (const k of ["stele", "orbit", "off", "lock", "allp"]) assert.ok(K.GX_TXT[k] && K.GX_TXT[k].length <= 14, "文案 " + k + " 不超過 14 個字");
 });

@@ -30,7 +30,12 @@ var XQ=(function(){
         for(const k of ks){const r=s.get(k);r.onsuccess=()=>{if(r.result!==undefined)out[k]=r.result}}t.oncomplete=()=>res(out)})}}})();
 
   // ---------- Pikafish（網頁版）與評等 ----------
-  window.evalPos=async(b,s,ms,multipv)=>{if(!legal(b,s).length)return{lines:[],dead:true};
+  /* 11/16 開發者（紫淵卡在「思考中」）：Pikafish 不收棋子數超過正規的局面（「Unsupported position. BLACK has more than 2 cannons.」），引擎收到就整個停掉，逾時重開後又送同一盤、永遠卡住。
+     送引擎前先數子：每方最多 帥1 仕2 相2 傌2 俥2 炮2 兵5；超過就不送（playEngine 停下來說明、分析直接說算不了） */
+  const PCMAX={k:1,a:2,b:2,n:2,r:2,c:2,p:5};
+  function engOver(b,s){try{const f=String(fen(b,s)).split(" ")[0],n={};for(const ch of f)if(/[a-zA-Z]/.test(ch))n[ch]=(n[ch]||0)+1;for(const ch in n){const m=PCMAX[ch.toLowerCase()];if(m!=null&&n[ch]>m)return true}}catch(e){}return false}
+  const ENG_OVER_MSG="這個局面的棋子數超出電腦棋手能算的範圍（例如一方超過兩門炮），電腦沒辦法接著下。按「新局」或回觀星臺換一局";
+  window.evalPos=async(b,s,ms,multipv)=>{if(!legal(b,s).length)return{lines:[],dead:true};if(engOver(b,s))throw new Error(ENG_OVER_MSG);
     return XQEngine.search({fen:fen(b,s)},{movetime:ms||ANALYZE_MS},multipv||1)};
   /* 開發者 11/6（第二裁判）：評語分界線放寬、妙著排除應將和回吃——新評等用新的快取鑰匙 g2（回吃要看對方上一步落在哪：lt）；舊快取 g: 有「少幾分」就照新分界線重算評語，不用讓引擎重跑 */
   /* ChatGPT 數值盤查 11/11 P1 引擎空結果（舊快取）：舊版第二次查詢缺 PV 時把「不是最佳著、loss＝0」寫成正著，這種快取分不出真假，
@@ -474,6 +479,7 @@ var XQ=(function(){
           const f=parseSq(u.slice(0,2)),t=parseSq(u.slice(2,4));if(legal(P.board,P.turn).some(([a,b])=>a===f&&b===t)){playApply(f,t);playMsg="";engFail=0;return}}}
       if(tdOwn(P)){await new Promise(z=>setTimeout(z,30));if(!P||P.id!==id||P.moves.length!==n||P.result)return;const mv=window.XQ_TD.decide(P,C);   /* 11/16 黑洞新規則：星樞照新規則自己算（易 1 步／中 2 步／難 3 步），不叫 Pikafish */
         {const w=900-(Date.now()-t0);if(w>0)await new Promise(z=>setTimeout(z,w))}if(!P||P.id!==id||P.moves.length!==n||P.result)return;if(!mv)return;playApply(mv[0],mv[1]);playMsg="";engFail=0;return}
+      if(engOver(P.board,P.turn)){P.engOver=1;playMsg="⚠ "+ENG_OVER_MSG;return}   /* 不送 Pikafish、不重試（finally 看 P.engOver） */
       if(P.td&&window.XQ_TD){const TD=window.XQ_TD.engine(P,C),r=await engRace(XQEngine.search(engPos(),{depth:TD.depth,searchmoves:TD.sm},TD.mpv),engTmo()),mv=window.XQ_TD.pick(r,TD,Math.random);   /* 黑洞陣地塔防：星樞推算 N 步＋失誤率；被定身的子不走（敵方沒別步可走時照常走） */
         {const w=1100-(Date.now()-t0);if(w>0)await new Promise(z=>setTimeout(z,w))}if(!P||P.id!==id||P.moves.length!==n||P.result)return;
         const f=parseSq(mv.slice(0,2)),t=parseSq(mv.slice(2,4));if(!legal(P.board,P.turn).some(([a,b])=>a===f&&b===t))throw new Error("引擎給出不合法著法 "+mv);playApply(f,t);playMsg="";engFail=0;return}
@@ -491,7 +497,7 @@ var XQ=(function(){
       if(e&&e.tmo)try{if(XQEngine.abort)XQEngine.abort()}catch(x){}
       playMsg=off&&noEng?"⚠ 沒有網路，電腦棋手還沒下載到這支手機。連上網路會自動接著下，也可以先去同桌對弈。":e&&e.tmo?"⏳ 電腦棋手卡住了，正在重新啟動；等不及可以按「新局」重新開一盤":"⏳ 電腦棋手一時沒想好，幾秒後會自動再想一次";try{const em=String(e&&e.message||e).slice(0,160);if(P)P.engErr=em;console.warn("[engine]",em)}catch(x){}   /* 11/13 開發者「這是什麼，對玩家來說會看不懂」：畫面上不放技術訊息（不合法著法 g3g4 之類），細節只留在 P.engErr 和主控台給除錯 */
       if(off&&noEng&&!engWait){engWait=true;addEventListener("online",()=>{engWait=false;engFail=0;setTimeout(playEngine,800)},{once:true})}}
-    finally{playBusy=false;if(!engFail)setTimeout(playEngine,0);else if(!engWait)setTimeout(playEngine,Math.min(60000,1500*2**Math.min(engFail,6)))}}
+    finally{playBusy=false;if(P&&P.engOver)return;if(!engFail)setTimeout(playEngine,0);else if(!engWait)setTimeout(playEngine,Math.min(60000,1500*2**Math.min(engFail,6)))}}
   function playState(){ensureP();
     const CR=cpuRate(),ci=heldIdx(CR),nx=RANKS[ci+1];
     const SA=stashAll(),others=Object.values(SA).filter(g=>kindOf(g)!==kindOf(P)).map(g=>({kind:kindOf(g),opp:zgOn(g)?"zhanggui":null,arena:g.arena||null,journey:g.journey||null,ranked:!!g.ranked,reward:!!g.reward,level:g.level,n:g.moves.length,human:g.human}));

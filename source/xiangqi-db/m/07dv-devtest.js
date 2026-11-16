@@ -54,7 +54,7 @@ function dvtSheet(){if(!dvtOn())return toast("要先打開開發者模式");
     q("#dvD").onclick=()=>{store.set("dvtGxAll",all?0:1);toast(all?"全部星系解鎖：關":"全部星系解鎖：開");re()};
     q("#dvE").onclick=()=>{closeSheet();if(typeof gxMap==="function")gxMap({})};
     b.querySelectorAll("[data-gx]").forEach(x=>x.onclick=()=>{if(!store.get("dvtGxAll",0))return toast("先打開「全部星系解鎖」");closeSheet();if(typeof gxStart==="function")gxStart(x.dataset.gx)});
-    q("#dvF").onclick=()=>{if(typeof GX_ORD==="undefined")return;const S2={};for(const k of GX_ORD)S2[k]=Date.now();store.set("gxSeal",S2);toast("⭐ 九枚星印都拿到了");re()};
+    q("#dvF").onclick=()=>{if(typeof GX_ORD==="undefined")return;const S2={};for(const k of GX_ORD)S2[k]=Date.now();store.set("gxSeal",S2);toast("⭐ 開放星系的星印都拿到了");re()};
     q("#dvH").onclick=()=>{closeSheet();if(typeof simIntro==="function"&&typeof parseFen==="function")setTimeout(()=>simIntro({id:"dvt-demo",n:10,tb:Array.from({length:10},()=>({board:parseFen(START)}))},()=>{}),300)};
     q("#dvP").onclick=()=>{const on=typeof phudToggle==="function"&&phudToggle();toast(on?"📈 效能浮標：開":"📈 效能浮標：關");re()};   /* 第 9 輪 Gemini：效能浮標（07dw-perfhud.js） */
     q("#dvR").onclick=()=>confirmBox("清掉黑洞篇和十三星系的全部進度？（只影響這支手機）",()=>{for(const k of DVT_KEYS)store.set(k,null);dvtForce(false);toast("🧹 黑洞篇進度清掉了");re()},"清掉")})}

@@ -1,10 +1,10 @@
-# 驗證紀錄（版本 20261116-1318）
+# 驗證紀錄（版本 20261116-1337）
 
 這一頁讓任何人核對：這一版的程式跑過下面這些自動測試，以及每一項測試到底驗了什麼。
 
-- 產生時間：2026/11/16 13:31:39（臺灣時間）
-- 結果（四欄分開，不要只看總數）：共 1777 項＝**通過 1760**、**失敗 0**、**略過 17**（這個環境跑不了、沒有執行，不算通過；逐項原因見〈略過〉）；另有**預期失敗 0**
-- 測試對象：公開倉庫的 `source/`（切自 commit `8590cf4e67ea`），對應的發布版：`20261116-1318`。開發者電腦上還沒發布的修改不在這份測試裡。
+- 產生時間：2026/11/16 13:44:28（臺灣時間）
+- 結果（四欄分開，不要只看總數）：共 1779 項＝**通過 1762**、**失敗 0**、**略過 17**（這個環境跑不了、沒有執行，不算通過；逐項原因見〈略過〉）；另有**預期失敗 0**
+- 測試對象：公開倉庫的 `source/`（切自 commit `7a553a19f5f6`），對應的發布版：`20261116-1337`。開發者電腦上還沒發布的修改不在這份測試裡。
 - `source/` 沒放的測試檔（和少數只給它們用的工具）有43 個（要讀不公開的資料、要接不公開的營運程式，或指令排除），原因逐檔寫在 `source/STAGE-MANIFEST.json` 的 excludedTests。
 
 ## 略過（沒有執行，不算通過）
@@ -36,7 +36,7 @@
 | 行為 | 1211 項（通過 1206、略過 5） | 真的把 App 的程式跑起來（載入網站上的模組、抽出函式呼叫、用假的畫面／計時器／伺服器走一遍流程），再檢查結果對不對。 |
 | 混合 | 74 項（通過 73、略過 1） | 一半真的執行程式，一半只是檢查原始碼裡有沒有某段字。 |
 | 原始碼比對 | 202 項（通過 197、略過 5） | 只檢查原始碼裡有沒有某段字（例如某個按鈕的程式碼、某條樣式規則）。**只證明程式碼存在，不證明功能會動。** |
-| 待分類 | 290 項（通過 284、略過 6） | `test-bhfx.js`、`test-bhtd-combo.js`、`test-bhtd-r2.js`、`test-bhtd-rules.js`、`test-bhtl.js`、`test-bhx-allstars-1116.js`、`test-bhx-hold-1116.js`、`test-bhx-resume-1116.js`、`test-bhx-skip-1116.js`、`test-dgl.js`、`test-ghost-game-1116.js`、`test-home-pano.js`、`test-i18n-story.js`、`test-noscore.js`、`test-park3d-capbase.js`、`test-r17-qa.js`、`test-siege2-local.js`、`test-siege2.js`、`test-sitemap-places-1116.js`、`test-xsm-dark.js` 這幾個檔還沒逐項分類，暫不算進上面三類。 |
+| 待分類 | 292 項（通過 286、略過 6） | `test-bhfx.js`、`test-bhtd-combo.js`、`test-bhtd-r2.js`、`test-bhtd-rules.js`、`test-bhtl.js`、`test-bhx-allstars-1116.js`、`test-bhx-hold-1116.js`、`test-bhx-resume-1116.js`、`test-bhx-skip-1116.js`、`test-dgl.js`、`test-eng-over-1116.js`、`test-ghost-game-1116.js`、`test-home-pano.js`、`test-i18n-story.js`、`test-noscore.js`、`test-park3d-capbase.js`、`test-r17-qa.js`、`test-siege2-local.js`、`test-siege2.js`、`test-sitemap-places-1116.js`、`test-xsm-dark.js` 這幾個檔還沒逐項分類，暫不算進上面三類。 |
 
 - 測試名稱開頭有〔原始碼〕〔混合〕就是那一類；沒有標籤的是行為類（下面的索引另外標〔行為〕）。
 - **測試由開發用的 AI 撰寫，不等於第三方驗證；原始碼比對只證明程式碼存在。**
@@ -552,6 +552,7 @@
 | test-dgl.js | — | 0 | 0 | 0 | 45 | 45／45 |
 | test-docbtns.js | — | 1 | 0 | 1 |  | 2／2 |
 | test-docs-md.js | — | 2 | 1 | 0 |  | 3／3 |
+| test-eng-over-1116.js | — | 0 | 0 | 0 | 2 | 2／2 |
 | test-engine-budget-pgn.js | — | 8 | 0 | 1 |  | 9／9 |
 | test-engine-start.js | — | 3 | 0 | 1 |  | 4／4 |
 | test-engine-timeout.js | — | 7 | 0 | 2 |  | 9／9 |
@@ -1222,6 +1223,11 @@
 - ✔ 〔混合〕全部說明文件：沒有原樣的方括號連結、沒有三個反引號的程式碼框
 - ✔ 〔行為〕〔規則〕相對連結：別份說明在 App 內打開、截圖變圖片、路徑不安全就只留字
 - ✔ 〔行為〕〔規則〕程式碼區塊原樣等寬、HTML 不會被執行；--- 畫成分隔線
+
+### test-eng-over-1116.js
+
+- ✔ 〔待分類〕〔行為〕數子：正規開局、殘局不算超過；四炮、六炮、八馬、三車、六兵都算超過
+- ✔ 〔待分類〕〔原始碼〕電腦走棋超過就停下說明、不送 Pikafish、不重試；分析直接說算不了
 
 ### test-engine-budget-pgn.js
 
