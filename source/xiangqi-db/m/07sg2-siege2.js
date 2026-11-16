@@ -615,7 +615,7 @@ function sg2Retired(st){if(typeof document==="undefined"||!st||!st.td||sg2On(st)
 function sg2ProNext(P){const has=gsvHas(),won=n=>!!((P.c&&P.c[n]&&P.c[n].w>0)||(P.v2&&P.v2[n]&&[1,2,3].some(d=>P.v2[n][d]&&P.v2[n][d].w>0)));
   return SG2G.GRP[0].lv.find(n=>!won(n)&&!SG2G.lockWhy(P,n,false,has))}
 function sg2DriftOk(){try{const P=gsvProg();return SG2G.ORD.some(n=>!SG2G.lockWhy(P,n,false,null))||sg2ProNext(P)!=null}catch(e){return false}}
-function sg2Drift(k,cover){if(!sg2DriftOk())return false;const P=gsvProg(),L=SG2G.ORD.filter(n=>!SG2G.lockWhy(P,n,false,null));
+function sg2Drift(k,cover){if(!sg2DriftOk())return false;try{sessionStorage.setItem("bhDrift","1")}catch(e){}   /* 11/16 偏航急襲記號：07bh bhSgBase 放墨潮湧兵；從選關出戰清掉 */const P=gsvProg(),L=SG2G.ORD.filter(n=>!SG2G.lockWhy(P,n,false,null));
   if(!L.length){const n=sg2ProNext(P);if(n==null)return false;gsvStart(n,k,cover,null,true,0,1);return true}
   const n=L[Math.floor(Math.random()*L.length)];gsvStart(n,k,cover,(P.sk&&P.sk["*"])||null,true,0,2);return true}
 const sg2Rec=(P,n,d)=>((P.v2||{})[n]||{})[d]||{};
@@ -637,7 +637,7 @@ function sg2Select(k,cover){gsvCss();const P=gsvProg(),all=gsvDevAll(),has=gsvHa
   const m=modal(`<div class="em">🌠</div><h2>星門圍城</h2><div class="gsv-chap">${chH()}</div><p style="font-size:13px;margin-bottom:2px">招式（每位夥伴學會的都能用，一回合放一招；那位的棋子都倒了就不能放）</p><div class="gsv-skl">${skH()}</div>
     <button type="button" class="gsv-chb" data-tal="1" style="margin:6px 0">🌌 天賦（已點亮 ${sg2TalCount()}）</button>
     <details><summary>星門圍城規則</summary>${sg2RulesHTML()}</details>`,
-    [["⚔ 出戰",()=>{const Q=gsvProg();Q.lastD=d;store.set("gsv",Q);gsvStart(sel,k,cover,null,false,0,GSV.LV[sel]&&GSV.LV[sel].pro?1:d)}],[typeof gxtBackLb==="function"?gxtBackLb():"⛵ 星槎回航",null,true]],"prolog gsv-sel");
+    [["⚔ 出戰",()=>{try{sessionStorage.removeItem("bhDrift")}catch(e){}const Q=gsvProg();Q.lastD=d;store.set("gsv",Q);gsvStart(sel,k,cover,null,false,0,GSV.LV[sel]&&GSV.LV[sel].pro?1:d)}],[typeof gxtBackLb==="function"?gxtBackLb():"⛵ 星槎回航",null,true]],"prolog gsv-sel");
   if(!m)return;m.addEventListener("click",e=>{if(e.target.closest("[data-tal]")){try{vibrate(5)}catch(z){}m.remove();sg2TalSheet(()=>sg2Select(k,cover),"‹ 回選關");return}
     const c=e.target.closest(".gsv-card"),dd=e.target.closest("[data-d]"),t=dd?null:e.target.closest("[data-g]");
     if(dd)d=+dd.dataset.d;

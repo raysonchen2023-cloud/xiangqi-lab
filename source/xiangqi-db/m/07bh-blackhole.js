@@ -168,7 +168,18 @@ function bhChord(st){if(typeof AC==="undefined"||!AC||typeof sxmDst!=="function"
     for(const k in F){const o=AC.createOscillator(),g=AC.createGain(),lp=AC.createBiquadFilter();o.type=i++%2?"triangle":"sine";o.frequency.value=F[k];lp.type="lowpass";lp.frequency.value=1400;g.gain.value=0;o.connect(lp);lp.connect(g);g.connect(sxmDst("bgm"));o.start();BH_CH[k]={o,g}}}
   const t=AC.currentTime;for(const k in BH_CH)BH_CH[k].g.gain.setTargetAtTime(has[k]?.011:0,t,.8)}
 function bhChordOff(){if(!BH_CH)return;const C=BH_CH;BH_CH=null;try{const t=AC.currentTime;for(const k in C){C[k].g.gain.setTargetAtTime(0,t,.4);C[k].o.stop(t+2)}}catch(e){}}
+/* 11/16 開發者「找 OpenAI 設計黑洞玩法的 BGM，制作5首歌」：ChatGPT 設計（story/chatgpt_app/172_黑洞配樂五首_ChatGPT回覆.md）＋Lyria 作曲（tools/bh_bgm_gen.py 6～10，開發者逐首聽過）。
+   星門圍城（td.mode＝SG2G.MODE）照關卡分：序章與易＝星門微瀾、中＝雲河圍陣、難組或難度「難」＝樞影逼城、偏航急襲（sessionStorage bhDrift）＝墨潮湧兵與雲河圍陣輪播；
+   危急（被將軍、帥的體力不到三成）切將星懸命，至少放 35 秒、解除後再等 10 秒才切回。序局 bh:xu、偏航視窗 bh_1、結算 bh_5 照舊 */
+const BH_SG={pro:"bh_6.mp3",e:"bh_6.mp3",m:"bh_7.mp3",h:"bh_9.mp3",raid:["bh_8.mp3","bh_7.mp3"],crisis:"bh_10.mp3",hold:35e3,back:10e3};let BH_CR=null;
+function bhSgBase(td){let dr=false;try{dr=sessionStorage.getItem("bhDrift")==="1"}catch(e){}if(dr)return BH_SG.raid;if(+td.diff===3)return BH_SG.h;const g=SG2G.GRP.find(x=>x.lv.includes(td.lv));return BH_SG[g?g.id:"m"]||BH_SG.m}
+function bhSgMus(st,now){const td=st&&st.td;if(!td||typeof SG2G==="undefined"||td.mode!==SG2G.MODE)return false;now=now||Date.now();
+  if(st.result){BH_CR=null;bhMus("end");bhChordOff();return true}
+  const S=td.s,k=S&&S.b?S.b.indexOf("K"):-1,hp=k>=0&&S.x?+S.x[k]:null,km=+td.kmax||0,chk=st.check!=null&&st.check>=0&&st.turn===st.human,danger=chk||(hp!=null&&km>0&&hp<km*.3);
+  if(danger){if(!BH_CR)BH_CR={on:now,off:0};else BH_CR.off=0}else if(BH_CR){if(!BH_CR.off)BH_CR.off=now;if(now-BH_CR.on>=BH_SG.hold&&now-BH_CR.off>=BH_SG.back)BH_CR=null}
+  try{if(typeof bgmForce==="function")bgmForce(BH_CR?BH_SG.crisis:bhSgBase(td))}catch(e){}bhChord(st);return true}
 function bhMusTick(st){if(st&&st.journey===BHX_ID)return;   /* 序局放第 2 首（開場配樂），不跟著局面切 bh_1～5 */
+  if(bhSgMus(st))return;
   if(st.result){bhMus("end");bhChordOff();return}const n=(st.moves||[]).length,me=st.human==="b"?-1:1,v=st.eval&&st.eval.v!=null?st.eval.v*me:null,chk=st.check!=null&&st.check>=0&&st.turn===st.human;
   bhMus(n<6?"wake":(chk||(v!=null&&v<=-150))?"danger":"play");bhChord(st)}
 if(typeof addEventListener==="function")addEventListener("hashchange",()=>{try{if(!/^#\/journey\/play/.test(location.hash)){bhChordOff();if(typeof BGM!=="undefined"&&BGM.force&&/^bh_/.test(BGM.force))bhMus(null)}}catch(e){}});

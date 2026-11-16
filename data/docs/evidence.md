@@ -1,10 +1,10 @@
-# 驗證紀錄（版本 20261116-1801）
+# 驗證紀錄（版本 20261116-1830）
 
 這一頁讓任何人核對：這一版的程式跑過下面這些自動測試，以及每一項測試到底驗了什麼。
 
-- 產生時間：2026/11/16 18:16:38（臺灣時間）
-- 結果（四欄分開，不要只看總數）：共 1833 項＝**通過 1816**、**失敗 0**、**略過 17**（這個環境跑不了、沒有執行，不算通過；逐項原因見〈略過〉）；另有**預期失敗 0**
-- 測試對象：公開倉庫的 `source/`（切自 commit `97c0d65f58c6`），對應的發布版：`20261116-1801`。開發者電腦上還沒發布的修改不在這份測試裡。
+- 產生時間：2026/11/16 18:41:24（臺灣時間）
+- 結果（四欄分開，不要只看總數）：共 1838 項＝**通過 1821**、**失敗 0**、**略過 17**（這個環境跑不了、沒有執行，不算通過；逐項原因見〈略過〉）；另有**預期失敗 0**
+- 測試對象：公開倉庫的 `source/`（切自 commit `8f64fc847367`），對應的發布版：`20261116-1830`。開發者電腦上還沒發布的修改不在這份測試裡。
 - `source/` 沒放的測試檔（和少數只給它們用的工具）有43 個（要讀不公開的資料、要接不公開的營運程式，或指令排除），原因逐檔寫在 `source/STAGE-MANIFEST.json` 的 excludedTests。
 
 ## 略過（沒有執行，不算通過）
@@ -36,7 +36,7 @@
 | 行為 | 1212 項（通過 1207、略過 5） | 真的把 App 的程式跑起來（載入網站上的模組、抽出函式呼叫、用假的畫面／計時器／伺服器走一遍流程），再檢查結果對不對。 |
 | 混合 | 75 項（通過 74、略過 1） | 一半真的執行程式，一半只是檢查原始碼裡有沒有某段字。 |
 | 原始碼比對 | 202 項（通過 197、略過 5） | 只檢查原始碼裡有沒有某段字（例如某個按鈕的程式碼、某條樣式規則）。**只證明程式碼存在，不證明功能會動。** |
-| 待分類 | 344 項（通過 338、略過 6） | `test-bhfx.js`、`test-bhtd-combo.js`、`test-bhtd-r2.js`、`test-bhtd-rules.js`、`test-bhtl.js`、`test-bhx-allstars-1116.js`、`test-bhx-hold-1116.js`、`test-bhx-resume-1116.js`、`test-bhx-skip-1116.js`、`test-dgl.js`、`test-eng-over-1116.js`、`test-ghost-game-1116.js`、`test-gxd-daily-1116.js`、`test-home-pano.js`、`test-i18n-story.js`、`test-noscore.js`、`test-park3d-capbase.js`、`test-park3d-ghostptr-1116.js`、`test-pjc-joincut-1116.js`、`test-port-yz-color-1116.js`、`test-pty-events-1116.js`、`test-r17-qa.js`、`test-siege2-local.js`、`test-siege2.js`、`test-sitemap-places-1116.js`、`test-upd-notitle-1116.js`、`test-xsm-dark.js`、`test-xsm-stalls-1116.js` 這幾個檔還沒逐項分類，暫不算進上面三類。 |
+| 待分類 | 349 項（通過 343、略過 6） | `test-bh-sg-bgm-1116.js`、`test-bhfx.js`、`test-bhtd-combo.js`、`test-bhtd-r2.js`、`test-bhtd-rules.js`、`test-bhtl.js`、`test-bhx-allstars-1116.js`、`test-bhx-hold-1116.js`、`test-bhx-resume-1116.js`、`test-bhx-skip-1116.js`、`test-dgl.js`、`test-eng-over-1116.js`、`test-ghost-game-1116.js`、`test-gxd-daily-1116.js`、`test-home-pano.js`、`test-i18n-story.js`、`test-noscore.js`、`test-park3d-capbase.js`、`test-park3d-ghostptr-1116.js`、`test-pjc-joincut-1116.js`、`test-port-yz-color-1116.js`、`test-pty-events-1116.js`、`test-r17-qa.js`、`test-siege2-local.js`、`test-siege2.js`、`test-sitemap-places-1116.js`、`test-upd-notitle-1116.js`、`test-xsm-dark.js`、`test-xsm-stalls-1116.js` 這幾個檔還沒逐項分類，暫不算進上面三類。 |
 
 - 測試名稱開頭有〔原始碼〕〔混合〕就是那一類；沒有標籤的是行為類（下面的索引另外標〔行為〕）。
 - **測試由開發用的 AI 撰寫，不等於第三方驗證；原始碼比對只證明程式碼存在。**
@@ -531,6 +531,7 @@
 | test-asian-rules.js | 棋規（長將、長捉、閒著、循環待核、限著、困斃） | 30 | 0 | 0 |  | 30／30 |
 | test-askbot-city.js | — | 3 | 1 | 1 |  | 5／5 |
 | test-bh-drift-raid-1115.js | — | 7 | 0 | 1 |  | 8／8 |
+| test-bh-sg-bgm-1116.js | — | 0 | 0 | 0 | 5 | 5／5 |
 | test-bhfx.js | — | 0 | 0 | 0 | 24 | 23／24（略過 1） |
 | test-bhmate.js | — | 0 | 0 | 8 |  | 8／8 |
 | test-bhtd-combo.js | — | 0 | 0 | 0 | 9 | 9／9 |
@@ -862,6 +863,14 @@
 - ✔ 〔行為〕〔行為〕不是偏航（cover＝false，例如開發者測試入口）或沒有目的站：直接開選關，不問急襲
 - ✔ 〔行為〕〔行為〕定軌力用完：兩邊都不開，星槎照航線停靠；沒有 bhtdRaidDrift 的舊組合照舊開選關
 - ✔ 〔原始碼〕偏航視窗：急襲已開時說明與按鈕換成急襲、按了直接開打（不再多一張星樞棋局說明）；還沒開的人文案照舊
+
+### test-bh-sg-bgm-1116.js
+
+- ✔ 〔待分類〕〔行為〕照關卡分：序章與易＝星門微瀾、中＝雲河圍陣、難組或難度「難」＝樞影逼城
+- ✔ 〔待分類〕〔行為〕偏航急襲（sessionStorage bhDrift）：墨潮湧兵與雲河圍陣輪播（同一個陣列，不會每步重設）
+- ✔ 〔待分類〕〔行為〕危急切將星懸命：被將軍或帥的體力不到三成；至少放 35 秒、解除後再等 10 秒才切回
+- ✔ 〔待分類〕〔行為〕結算放舊的 bh_5（end）；不是星門圍城的局交回原本的規則
+- ✔ 〔待分類〕〔原始碼〕接點：bhMusTick 先跳過序局再問 bhSgMus；偏航視窗 bh_1、序局照舊；偏航記號在 sg2Drift 設、選關出戰清掉；配樂檔與曲名都在
 
 ### test-bhfx.js
 
