@@ -1,8 +1,8 @@
 {
- "version": "20261116-1100",
- "checkedAt": "2026-11-16T03:07:19.005Z",
- "html": "ccc89305da24",
- "sw": "6c1504d435ed",
+ "version": "20261116-1121",
+ "checkedAt": "2026-11-16T03:21:19.031Z",
+ "html": "2cbc49180ac5",
+ "sw": "ffef36150670",
  "scripts": 4,
  "modules": {
   "00-util.js": "8c2b1d4f725f",
@@ -25,7 +25,7 @@
   "07e-garden2.js": "06a2203be497",
   "07f-ship.js": "22079862126f",
   "07o-shipmore.js": "3e3ebb9d732b",
-  "07bh-blackhole.js": "b6953e0ddf07",
+  "07bh-blackhole.js": "f55dbd6bc8bf",
   "07gx-galaxy.js": "c63e653cf14c",
   "07gxp-gatepano.js": "77bc897060cb",
   "07bht-td.js": "c097c2946509",
@@ -33,7 +33,7 @@
   "07bhf-bossfx.js": "8516daf7973e",
   "07bhg-gatesiege.js": "1fee5ad84e1e",
   "07bhw-wheel.js": "7c740dcfa88e",
-  "07sg2-siege2.js": "a2e1ba1618ee",
+  "07sg2-siege2.js": "a79da58e3c83",
   "07dv-devtest.js": "7443f6ca24ea",
   "07dw-perfhud.js": "a3755bd4af6c",
   "07g-battle.js": "6c2de94250f9",
@@ -61,9 +61,9 @@
   "07w5-ouyu.js": "8ee3b1bc19f3",
   "07x-zoom.js": "719656ee2360",
   "07y-hubmap.js": "aab3b113c3f7",
-  "07z-homemap.js": "197a9b09b681",
+  "07z-homemap.js": "169fd8c3dee6",
   "07gxt-guanxing.js": "a9bfd9a2fb2f",
-  "07dgl-stamina.js": "054b3a58d23c",
+  "07dgl-stamina.js": "e6c99dccdb30",
   "07xsm-ximarket.js": "dca70b208836",
   "07xsd-xsmdark.js": "14cf67001b41",
   "07hmp-pano.js": "723e4ffde0dc",
@@ -99,10 +99,10 @@
   "07w8-shichen.js": "7e3e39d9d44f",
   "07w9-exits.js": "3bd35e437b9c",
   "08-scene.js": "86969cd488ba",
-  "08b-cpugame.js": "ca1b372ec11a",
+  "08b-cpugame.js": "2875bbd8d4e6",
   "08s-simul.js": "2126db3ab684",
   "09-askbot.js": "4e6983c50d4c",
-  "09b-preload.js": "13fac7d4690c",
+  "09b-preload.js": "85ff0635be6f",
   "10-db.js": "1fe1ab886257",
   "10b-libmap.js": "3d860dc618ed",
   "10c-deskmap.js": "e4bf62a9e231",
@@ -118,14 +118,14 @@
   "07lh-lefty.js": "a1e6ad13d30d",
   "07pm-premove.js": "52061c9a3011",
   "07dq-daily.js": "c1076bdd0ee8",
-  "07i18n.js": "8745198a8476",
+  "07i18n.js": "e8594c5fed53",
   "07sp-spotfit.js": "f7f205a79901",
   "07fl-fill.js": "a671f9a96f4f",
   "07mnf-mainfilm.js": "59f288419ad1",
   "07mnv-mainvn.js": "348063327d1e",
   "07stq-starter.js": "3c7aa9b51d92",
   "07mnq-mainquest.js": "6ff93318507a",
-  "07grw-growth.js": "117c06a5604a"
+  "07grw-growth.js": "b4abadc89987"
  },
  "differsFromSource": [
   {
@@ -139,9 +139,19 @@
    "sourceModified": "2026-11-16T02:54:49.659Z"
   },
   {
+   "module": "07bh-blackhole.js",
+   "lines": 11,
+   "sourceModified": "2026-11-16T03:12:24.452Z"
+  },
+  {
    "module": "07y-hubmap.js",
    "lines": 6,
    "sourceModified": "2026-11-15T12:49:16.045Z"
+  },
+  {
+   "module": "07z-homemap.js",
+   "lines": 1,
+   "sourceModified": "2026-11-16T03:15:53.972Z"
   },
   {
    "module": "07ulk-unlockfx.js",
@@ -164,9 +174,19 @@
    "sourceModified": "2026-11-16T03:06:33.896Z"
   },
   {
+   "module": "08b-cpugame.js",
+   "lines": 1,
+   "sourceModified": "2026-11-16T03:12:24.453Z"
+  },
+  {
+   "module": "09b-preload.js",
+   "lines": 6,
+   "sourceModified": "2026-11-16T03:15:53.971Z"
+  },
+  {
    "module": "07i18n.js",
-   "lines": 23,
-   "sourceModified": "2026-11-16T03:06:33.898Z"
+   "lines": 26,
+   "sourceModified": "2026-11-16T03:20:22.073Z"
   }
  ]
 }
