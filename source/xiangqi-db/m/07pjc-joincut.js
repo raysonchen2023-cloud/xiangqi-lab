@@ -20,7 +20,10 @@ const PJC_SC={
   /* 漢・西域大漠驛站（駱躍梅）：j1 驛站門外三名驛卒、下方中央空地；j2 驛舍矮案，案面四角約 遠左 300,457／遠右 666,600／近右 520,692／近左 152,528（中心 409,569）；j3 星槎船尾甲板 */
   han:{c:"x_miaogirl",img:["han_j1","han_j2","han_j3"],say1:"沙暴快來了，驛卒卻把她扣了下來。",bd:[410,440,270],tb:[409,569],   /* 11/16 本機看過：bd 原本 [410,372,300] 棋盤上緣壓到上方字幕，下移縮小 */
     
-    lay:[[[356,1265,370]],[[180,1305,365],[590,1305,365]],[[270,1275,345],[515,1275,345]]]}};
+    lay:[[[356,1265,370]],[[180,1305,365],[590,1305,365]],[[270,1275,345],[515,1275,345]]]},
+  /* 三國・赤壁江上（沈方庭＋鐵連城，L＝[x_shuai,x_shi]）：開發者選單「兩位新夥伴主導」——j1 鐵連城擋在沈方庭前面（竹篷小船船頭）；j2 兩人在篷下棋枰兩側（棋枰盤面中心 384,545）；j3 兩人＋陪你走的人三人並肩（星槎甲板，下方赤壁） */
+  sanguo:{c:"x_shuai",img:["sg_j1","sg_j2","sg_j3"],say1:"赤壁火光連天，軍漢把他們當成了北邊的探子。",bd:[384,420,250],tb:[384,545],who:[["L1","L0"],["L1","L0"],["L1","L0","mate"]],
+    lay:[[[415,1150,307],[585,1150,307]],[[160,1310,347],[600,1310,347]],[[190,1266,267],[390,1266,267],[590,1266,267]]]}};
 const pjcUrl=n=>"data/ptyjoin/"+n+".webp";
 const pjcTr=s=>{try{return typeof i18nStoryText==="function"?i18nStoryText(s):s}catch(e){return s}};
 const pjcEn=()=>{try{return typeof i18nLang==="function"&&i18nLang()==="en"}catch(e){return false}};
@@ -31,6 +34,10 @@ function pjcMeet(k){const S=PJC_SC[k]||{};if(S.say1)return S.say1;let t="";try{t
 /* 第 3 張字幕 */
 function pjcSay(c){let s="";try{s=(typeof PTY_SAY!=="undefined"&&PTY_SAY[c])||""}catch(e){}if(!s)return"";const nm=pjcNm(c);
   return pjcEn()?pjcTr(nm)+": “"+pjcTr(s)+"”":nm+"：「"+s+"」"}
+/* 11/16 開發者選單「三國：兩位新夥伴主導」：PJC_SC 每站可寫 who＝每張站誰（"L0" 第一位、"L1" 第二位、"mate" 陪你走的人），沒寫照舊；第 3 張字幕也照 who 把新加入的每一位那句都放上 */
+function pjcLook(L){L=L||[];let m="";try{m=typeof ptyLook==="function"?ptyLook():""}catch(e){}for(const x of[m,"x_swordboy","x_miaogirl","x_spiritgirl"])if(x&&!L.includes(x))return x;return""}
+function pjcWho(S,i,c,L){const W=S.who&&S.who[i];if(!Array.isArray(W))return null;const lk=pjcLook(L);return W.map(w=>w==="mate"?lk:w==="L0"?c:w==="L1"?((L&&L[1])||lk):w).filter(Boolean)}
+const pjcSays=L=>(L||[]).map(pjcSay).filter(Boolean).join("\n");
 /* 陪你走的人：ptyLook；沒有、或就是加入的那位，用齊轍（齊轍自己加入時用駱躍梅） */
 function pjcMate(c,L){if(L&&L[1]&&L[1]!==c)return L[1];let m="";try{m=typeof ptyLook==="function"?ptyLook():""}catch(e){}if(!m||m===c)m="x_swordboy";if(m===c)m="x_miaogirl";return m}
 /* 那一題的起始局面：Promise → {fen,side} 或 null（拿不到不報錯） */
@@ -52,7 +59,7 @@ function pjcCss(){if(document.getElementById("pjcCss"))return;const s=document.c
 #pjcPg .pjc-who{position:absolute;background:center bottom/contain no-repeat;filter:drop-shadow(0 6px 12px rgba(0,0,0,.55));opacity:0;transform:translateY(22%);transition:opacity .7s,transform .9s cubic-bezier(.2,1,.3,1);pointer-events:none}
 #pjcPg .pjc-who.on{opacity:1;transform:none}
 #pjcPg .pjc-lb{position:absolute;left:0;right:0;top:0;height:22%;background:linear-gradient(rgba(4,4,10,.62),rgba(4,4,10,0));pointer-events:none}
-#pjcPg .pjc-sub{position:absolute;left:0;right:0;top:calc(66px + env(safe-area-inset-top,0px));padding:.3em 22px;text-align:center;text-wrap:balance;font:800 var(--pjcs,24px)/1.45 var(--serif,serif);letter-spacing:.08em;color:#fff7e6;text-shadow:0 0 2px #000,0 0 3px #000,0 2px 10px #000;opacity:0;transform:translateY(-6px);transition:opacity .5s,transform .7s;pointer-events:none}
+#pjcPg .pjc-sub{position:absolute;left:0;right:0;top:calc(66px + env(safe-area-inset-top,0px));padding:.3em 22px;text-align:center;text-wrap:balance;white-space:pre-line;font:800 var(--pjcs,24px)/1.45 var(--serif,serif);letter-spacing:.08em;color:#fff7e6;text-shadow:0 0 2px #000,0 0 3px #000,0 2px 10px #000;opacity:0;transform:translateY(-6px);transition:opacity .5s,transform .7s;pointer-events:none}
 #pjcPg .pjc-sub.on{opacity:1;transform:none}
 #pjcPg .pjc-k{position:absolute;right:14px;top:calc(12px + env(safe-area-inset-top,0px));z-index:3;min-width:72px;min-height:44px;padding:10px 18px;border-radius:99px;font:700 16px var(--serif,serif);color:#f2e4c4;background:rgba(0,0,0,.45);border:1px solid rgba(232,199,122,.6)}
 #pjcPg .pjc-k:focus-visible{outline:3px solid #E8C77A;outline-offset:3px}
@@ -71,9 +78,9 @@ function pjcPlay(k,L,onDone){let ended=false;const end=r=>{if(ended)return;ended
   const raf=f=>{if(typeof requestAnimationFrame==="function")requestAnimationFrame(()=>requestAnimationFrame(f));else setTimeout(f,30)};
   raf(()=>o.classList.add("on"));try{kb.focus({preventScroll:true})}catch(e){}
   const mate=pjcMate(c,L),LY=S.lay||PJC_LAY,tb=S.tb||[384,600],bd=S.bd||[tb[0],tb[1]-200,300];
-  const shots=[{img:S.img[0],kb:[[1,50,72],[1.08,50,72]],who:[c],ly:LY[0],say:pjcTr(pjcMeet(k)),wd:.25},
-    {img:S.img[1],kb:[[1,tb[0]*100/PJC_W,tb[1]*100/PJC_H],[1.22,tb[0]*100/PJC_W,tb[1]*100/PJC_H]],who:[c,mate],ly:LY[1],say:pjcTr("一起解開了這盤棋。"),board:1.3,wd:.1},
-    {img:S.img[2],kb:[[1.1,50,66],[1,50,66]],who:[c,mate],ly:LY[2],say:pjcSay(c),wd:.15}].filter(x=>x.img);
+  const shots=[{img:S.img[0],kb:[[1,50,72],[1.08,50,72]],who:pjcWho(S,0,c,L)||[c],ly:LY[0],say:pjcTr(pjcMeet(k)),wd:.25},
+    {img:S.img[1],kb:[[1,tb[0]*100/PJC_W,tb[1]*100/PJC_H],[1.22,tb[0]*100/PJC_W,tb[1]*100/PJC_H]],who:pjcWho(S,1,c,L)||[c,mate],ly:LY[1],say:pjcTr("一起解開了這盤棋。"),board:1.3,wd:.1},
+    {img:S.img[2],kb:[[1.1,50,66],[1,50,66]],who:pjcWho(S,2,c,L)||[c,mate],ly:LY[2],say:S.who?pjcSays(L):pjcSay(c),wd:.15}].filter(x=>x.img);
   /* 字級：最長那句一行放 15 字左右，再長就換行 */
   let W=0,H=0;const fit=()=>{W=fr.clientWidth||o.clientWidth||(typeof innerWidth==="number"?innerWidth:0)||390;H=fr.clientHeight||o.clientHeight||(typeof innerHeight==="number"?innerHeight:0)||844;const n=Math.max(8,...shots.map(x=>Math.min(15,String(x.say||"").length)));
     try{o.style.setProperty("--pjcs",Math.max(18,Math.min(28,Math.floor((W-44)/(n*1.1))))+"px")}catch(e){}if(cur)place(cur)};

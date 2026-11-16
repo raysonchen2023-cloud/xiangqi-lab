@@ -284,6 +284,10 @@ function xsdTap(i){const X=XSD;if(!X||X.busy||X.S.over||X.S.cur!==0)return;const
   if(p&&S.col&&((p>>3)&1)!==S.col[0]&&X.sel<0){xsdStatus("那是電腦的棋。先點你自己的棋，再點要去的地方。");return}
   X.sel=-1;xsdDraw()}
 function xsdResign(){const X=XSD;if(!X||X.S.over)return;modal(`<h3>認輸？</h3><p>認輸的話，這局算輸。</p>`,[["繼續下",null],["認輸",()=>{if(XSD!==X||X.S.over)return;X.tm.forEach(clearTimeout);X.busy=false;X.S=Object.assign({},X.S,{over:{w:1,why:"resign"}});xsdDraw();xsdEnd()},true]])}
+/* 11/16 開發者「Claude 還沒做的三項開始做」：聽雨茶坊暗棋專屬配樂〈聽雨翻子〉（tools/extra_bgm_gen.py anqi，Lyria 作曲，開發者聽過說可以）。
+   進暗棋頁（07xsm XsmPage 的 dark）放這首；樂棚正在放的不動；回茶坊、外景由 07xsm 換回西市配樂，離開西市一起停（xsmBgmMine 認得這首） */
+const XSD_BGM="xsm/anqi_1.mp3";
+function xsdBgmOn(){try{if(typeof bgmForce!=="function"||typeof BGM==="undefined")return;if(typeof XSM_MU!=="undefined"){if(XSM_MU.f&&BGM.force===XSM_MU.f)return;XSM_MU.f=null}bgmForce(XSD_BGM)}catch(e){}}
 function xsdPage(v){setTop("🀄 暗棋","#/ximarket/tea");try{setTabs(true,"#/")}catch(e){}v.className="view";
   if(!XSD_ON||(typeof xsmOpen==="function"&&!xsmOpen())){toast("🏮 西市還沒開市");navReplace("#/");return{}}
   xsdCss();const P=document.createElement("div");P.className="xsd-page";

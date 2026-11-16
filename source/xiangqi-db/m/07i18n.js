@@ -1292,6 +1292,7 @@ const I18N_STORY_EN={
   "說書人：「燈芯結了一朵燈花——老一輩說，這是好兆頭。」": "Storyteller: \"The wick has flowered. The old folk say it's a good omen.\"",
   /* 11/16 七星加入過場（m/07pjc-joincut.js）：三張的字幕、加入那句（PTY_SAY）、過場標籤 */
   "七星加入過場": "A companion joins",
+  "赤壁火光連天，軍漢把他們當成了北邊的探子。": "The fires of Red Cliff light up the sky, and the soldiers take them for spies from the north.",
   "沙暴快來了，驛卒卻把她扣了下來。": "A sandstorm is coming, and the post guards are holding her.",
   "一起解開了這盤棋。": "Together, you solved the puzzle.",
   "我找不到回去的路……星槎真的會停靠元朝？那我跟你們走。": "I can't find my way back… Will the Star Raft really stop at the Yuan? Then I'll come with you.",

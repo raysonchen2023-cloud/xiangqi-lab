@@ -99,13 +99,13 @@ test("有過場資料的站（漢）：解開那一題 → 先播過場（三張
   E.clk.tick(30000); await flush(); assert.equal(E.modals.length, 1, "不會再出第二張");
 });
 
-test("沒有過場資料的站（三國）照舊：2.5 秒後直接出加入卡，不播過場；沒載入過場模組也照舊", async () => {
+test("沒有過場資料的站（魏晉；11/16 三國已有過場）照舊：2.5 秒後直接出加入卡，不播過場；沒載入過場模組也照舊", async () => {
   for (const noPjc of [false, true]) {
     const E = env({ noPjc });
-    E.X.ptyOnSolve("sanguo", "xs-sanguo-0");
-    assert.ok(E.db.party.m.x_shuai && E.db.party.m.x_shi, "帥仕加入");
+    E.X.ptyOnSolve("weijin", "xs-weijin-0");
+    assert.ok(E.db.party.m.x_spiritgirl, "田飛燕加入");
     E.clk.tick(2600); await flush();
-    assert.equal(E.pg(), null, "沒播過場"); assert.equal(E.modals.length, 1); assert.ok(E.modals[0].html.includes("沈方庭、鐵連城加入了"));
+    assert.equal(E.pg(), null, "沒播過場"); assert.equal(E.modals.length, 1); assert.ok(E.modals[0].html.includes("田飛燕加入了"));
   }
   const E = env({ noPjc: true }); E.X.ptyOnSolve("han", "xs-han-0"); E.clk.tick(2600); await flush();
   assert.equal(E.modals.length, 1, "沒載入 07pjc：漢朝也照舊直接出加入卡");
@@ -217,4 +217,20 @@ test("m.html 在 07pty-party 後面 include 07pjc-joincut；規則：不寫 // �
   }
   const I = rd("xiangqi-db/m/07i18n.js");
   for (const s of ["沙暴快來了，驛卒卻把她扣了下來。", "一起解開了這盤棋。", "我找不到回去的路……星槎真的會停靠元朝？那我跟你們走。", "七星加入過場"]) assert.ok(I.includes(JSON.stringify(s) + ":"), "英文字典有：" + s);
+});
+
+test("〔行為〕11/16 開發者選單「三國：兩位新夥伴主導」：PJC_SC.who 決定每張站誰（L0、L1、陪你走的人），沒寫照舊；三國資料齊全", () => {
+  const SRC = fs.readFileSync(path.join(__dirname, "..", "..", "xiangqi-db", "m", "07pjc-joincut.js"), "utf8").replace(/\r\n/g, "\n");
+  const a = SRC.indexOf("function pjcLook("), b = SRC.indexOf("const pjcSays=");
+  const mk = look => new Function("ptyLook", SRC.slice(a, b) + ";return{pjcLook,pjcWho}")(() => look);
+  const S = { who: [["L1", "L0"], ["L1", "L0"], ["L1", "L0", "mate"]] }, L = ["x_shuai", "x_shi"];
+  let o = mk("x_miaogirl");
+  assert.deepEqual(o.pjcWho(S, 0, "x_shuai", L), ["x_shi", "x_shuai"], "第 1 張：鐵連城擋在沈方庭前");
+  assert.deepEqual(o.pjcWho(S, 2, "x_shuai", L), ["x_shi", "x_shuai", "x_miaogirl"], "第 3 張：兩人＋陪你走的人");
+  o = mk("x_shi"); assert.deepEqual(o.pjcWho(S, 2, "x_shuai", L), ["x_shi", "x_shuai", "x_swordboy"], "陪你走的人剛好是新加入的：換齊轍");
+  assert.equal(o.pjcWho({}, 0, "x_miaogirl", ["x_miaogirl"]), null, "沒寫 who 照舊");
+  assert.ok(/sanguo:\{c:"x_shuai",img:\["sg_j1","sg_j2","sg_j3"\],say1:"赤壁火光連天，軍漢把他們當成了北邊的探子。"/.test(SRC));
+  assert.ok(SRC.includes('who:pjcWho(S,2,c,L)||[c,mate],ly:LY[2],say:S.who?pjcSays(L):pjcSay(c)'), "第 3 張字幕：兩位新夥伴各一句");
+  assert.ok(SRC.includes("white-space:pre-line;"), "兩句分行");
+  if (fs.existsSync(path.join(__dirname, "..", "..", "xiangqi-db", "art", "ptyjoin"))) for (const n of ["sg_j1", "sg_j2", "sg_j3"]) assert.ok(fs.existsSync(path.join(__dirname, "..", "..", "xiangqi-db", "art", "ptyjoin", n + ".webp")), n);
 });

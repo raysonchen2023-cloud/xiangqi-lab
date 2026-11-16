@@ -44,7 +44,7 @@ const XSM_RAIN=[[53,12,60,31],[69.5,14,82,36]];   /* 茶坊窗外看得到雨的
 const XSM_BAD={};   /* 這次開 App 載不到的圖（d＝白天、n＝夜景），換另一張不再試 */
 /* ---------- 11/16 四攤的資料 ---------- */
 Object.assign(XSM_TX,{
-  gift:"櫃坊，是唐朝長安西市替人保管錢財的店。存的人拿著帖來，櫃上認了帖，才把東西交出去。",
+  gift:"櫃坊，是唐朝長安西市替人保管錢財的店。存的人憑著約好的憑據來取，櫃上認得了，才把東西交出去。櫃上每天寫的帖，就是這樣的憑據。",
   v1:"老槐樹下有人停下腳步，像是在等{你}。",v0:"老槐樹下今天很清靜，還沒有人來。",vGot:"今天的小禮收下了。",
   c0:"攤上的棋子散了一地。七種棋子各少一顆，藏在西市的角落裡，幫攤主找回來吧。",c1:"哎呀，少了好幾顆！少一顆，這副棋就下不成了。",c2:"找到了，就是這顆。",c3:"一副棋，一顆都不能少。多謝{你}。",cDone:"今天這顆找到了，明天再來幫我看看。",
   mu:"旅途中聽過的曲子，都收在這裡。想再聽一遍，就來樂棚坐坐。",mu2:"唐朝有一年長安大旱，東市、西市搭樓比賽彈奏求雨。東市請來第一名的琵琶手，西市樓上卻有人彈得更好。",
@@ -84,7 +84,7 @@ const XSM_WK_L={x_swordboy:["{名}，這七天的路，走得穩。鞋帶繫緊�
 /* 節禮帖：節氣當天掌櫃說的一句（節氣日照 07y5 TD_TERMS）。立春春盤見杜甫〈立春〉；清明掃墓見唐玄宗開元二十年許寒食上墓；鉦聲散市見《唐六典》兩京諸市署（待史學顧問核） */
 const XSM_TERM_L={"小寒":"小寒到了，一年裡最冷的日子就要來了。手凍了，就揣在袖子裡想棋。","大寒":"大寒，是二十四節氣的最後一個。冷過這幾天，春天就不遠了。",
   "立春":"今天立春。長安人家要吃春盤，生菜切得細細的，咬一口，春天就來了。","雨水":"雨水，天暖了，下的不再是雪，是雨。","驚蟄":"驚蟄，春雷一響，躲在土裡過冬的蟲子都醒了。",
-  "春分":"春分這天，白天和夜晚一樣長，像棋盤上的楚河漢界，兩邊剛好對半。","清明":"清明，人們去給先人掃墓，順路到郊外踏青。","穀雨":"穀雨，雨水多了，田裡的穀子喝飽了水，長得最快。",
+  "春分":"春分這天，白天和夜晚一樣長，像棋盤上的楚河漢界，兩邊剛好對半。","清明":"寒食、清明這幾天，人們去給先人掃墓，順路到郊外踏青。","穀雨":"穀雨，雨水多了，田裡的穀子喝飽了水，長得最快。",
   "立夏":"立夏了，天一天比一天熱。下棋找個樹蔭坐吧。","小滿":"小滿，麥粒一天天飽滿起來，還沒全滿，所以叫小滿。","芒種":"芒種，麥子帶著尖尖的芒，正好收割；稻子也要趕緊種下。",
   "夏至":"夏至這天，白天最長。太陽下山得晚，可以多下一盤再回家。","小暑":"小暑，熱起來了。櫃上備了涼水，喝一口再走。","大暑":"大暑，一年裡最熱的時候。慢慢想棋，別急出一身汗。",
   "立秋":"今天立秋。早晚吹起涼風，暑氣要慢慢退了。","處暑":"處暑的「處」，是停下來的意思。熱了一整個夏天，到這裡差不多停了。","白露":"白露，清早的草葉上掛著一顆顆露水，白白亮亮的。",
@@ -264,7 +264,7 @@ function xsmSwap(P,day){const im=P.querySelector(":scope>img");if(!im)return;con
   const pre=new Image();pre.onload=()=>{if(!P.isConnected)return;P.dataset.day=nd?"1":"";im.src=src};pre.onerror=()=>{XSM_BAD[nd?"d":"n"]=1};pre.src=src}
 function xsmIntro(){modal(`<h3>🏮 西市</h3><p><b>${esc(XSM_TX.pos)}</b></p><p>${esc(XSM_TX.intro)}</p>`,[["逛逛西市",null]])}
 function xsmWalk(v){if(typeof shwPage!=="function"||typeof SHIP_WALK_ON==="undefined"||!SHIP_WALK_ON)return;try{shwPage(v,xsmWalkCfg(),"xsm")}catch(e){}}
-function XsmPage(v,sub){try{if(xsmOpen())xsmBgmOn()}catch(e){}   /* 11/16 西市背景配樂（外景、茶坊、暗棋都是這一組） */
+function XsmPage(v,sub){try{if(xsmOpen()){if(sub==="dark"&&typeof xsdBgmOn==="function")xsdBgmOn();else xsmBgmOn()}}catch(e){}   /* 11/16 西市背景配樂（外景、茶坊、暗棋都是這一組） */
   if(sub==="tea")return xsmTea(v);if(sub==="dark"&&typeof xsdPage==="function")return xsdPage(v);
   setTop("🏮 西市","#/");setTabs(true,"#/");v.className="view";
   if(!xsmOpen()){toast("🏮 西市還沒開市");navReplace("#/");return{}}
@@ -457,7 +457,7 @@ function xsmTakePc(){const day=xsmToday(),r=xsmPcAward(day);if(!r)return null;
 function xsmSetRite(){xsmCss();modal(`<div class="xsm-seal" aria-hidden="true">齊</div><h3>一副棋湊齊了</h3>${xsmPcRow(7)}<p>攤主：「${esc(xsmYou(XSM_TX.c3))}」</p><p class="muted">+${XSM_SET_XP} 修為</p>`,[["收下",null]])}
 /* ---------- 11/16 聽曲：西市樂棚 ＋ 西市背景配樂（都走 01-board 的 BGM，不另開播放器） ---------- */
 const xsmBgmOk=()=>{try{return!!store.get("bgm",true)&&(typeof sxmGain!=="function"||sxmGain("bgm")>0)}catch(e){return false}};
-const xsmBgmMine=f=>!!f&&(f===XSM_BGM_D||f===XSM_BGM_N||f===XSM_MU.f);
+const xsmBgmMine=f=>!!f&&(f===XSM_BGM_D||f===XSM_BGM_N||f===XSM_MU.f||(typeof XSD_BGM!=="undefined"&&f===XSD_BGM));
 /* 進西市（外景、茶坊、暗棋）：樂棚正在放就不動；不然照日夜放那一組 */
 function xsmBgmOn(){if(typeof bgmForce!=="function"||typeof BGM==="undefined")return;if(XSM_MU.f&&BGM.force===XSM_MU.f)return;XSM_MU.f=null;try{bgmForce(xsmDay()?XSM_BGM_D:XSM_BGM_N)}catch(e){}}
 function xsmMuToggle(rel){if(typeof bgmForce!=="function")return;if(!xsmBgmOk()){toast("♪ "+XSM_TX.muOff);return}

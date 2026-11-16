@@ -197,3 +197,8 @@ if(typeof journeyGameEnd==="function"){const f0=journeyGameEnd;journeyGameEnd=fu
 if(typeof jName==="function"){const f1=jName;jName=function(j){const k=gxdKind(j);if(k)return k==="omen"?"觀星臺・今日異象":"觀星臺・自由擺陣";return f1.apply(this,arguments)}}
 if(typeof gxParkEx==="function"){const f2=gxParkEx;gxParkEx=function(st){const r=f2.apply(this,arguments);if(r)return r;try{return gxdParkEx(st)}catch(e){return null}}}
 if(typeof gxParkInfo==="function"){const f3=gxParkInfo;gxParkInfo=function(k){try{if(gxdParkInfo(k))return true}catch(e){}return f3.apply(this,arguments)}}
+/* 11/16 開發者「Claude 還沒做的三項開始做」：今日異象專屬配樂〈渾天異象〉（tools/extra_bgm_gen.py yixiang，Lyria 作曲，開發者聽過說可以）。
+   今日異象、自由擺陣的局（journey gxd:）每步由 08b 叫 gxdTick 放這首；離開對局頁還給原本的配樂 */
+const GXD_BGM="guanxing/yixiang_1.mp3";
+function gxdTick(st){try{if(!st||!/^gxd:/.test(String(st.journey||""))||typeof bgmForce!=="function"||typeof BGM==="undefined")return;if(BGM.force!==GXD_BGM)bgmForce(GXD_BGM)}catch(e){}}
+if(typeof addEventListener==="function")addEventListener("hashchange",()=>{try{if(!/^#\/journey\/play/.test(location.hash)&&typeof BGM!=="undefined"&&BGM.force===GXD_BGM&&typeof bgmForce==="function")bgmForce(null)}catch(e){}});
