@@ -99,9 +99,10 @@ test("有過場資料的站（漢）：解開那一題 → 先播過場（三張
   E.clk.tick(30000); await flush(); assert.equal(E.modals.length, 1, "不會再出第二張");
 });
 
-test("沒有過場資料的站（魏晉；11/16 三國已有過場）照舊：2.5 秒後直接出加入卡，不播過場；沒載入過場模組也照舊", async () => {
+test("沒有過場資料的站照舊（11/16 五個加入站都有過場了：測試時先拿掉魏晉的資料）：2.5 秒後直接出加入卡，不播過場；沒載入過場模組也照舊", async () => {
   for (const noPjc of [false, true]) {
     const E = env({ noPjc });
+    if (E.X.PJC_SC) delete E.X.PJC_SC.weijin;
     E.X.ptyOnSolve("weijin", "xs-weijin-0");
     assert.ok(E.db.party.m.x_spiritgirl, "田飛燕加入");
     E.clk.tick(2600); await flush();
@@ -233,4 +234,15 @@ test("〔行為〕11/16 開發者選單「三國：兩位新夥伴主導」：PJ
   assert.ok(SRC.includes('who:pjcWho(S,2,c,L)||[c,mate],ly:LY[2],say:S.who?pjcSays(L):pjcSay(c)'), "第 3 張字幕：兩位新夥伴各一句");
   assert.ok(SRC.includes("white-space:pre-line;"), "兩句分行");
   if (fs.existsSync(path.join(__dirname, "..", "..", "xiangqi-db", "art", "ptyjoin"))) for (const n of ["sg_j1", "sg_j2", "sg_j3"]) assert.ok(fs.existsSync(path.join(__dirname, "..", "..", "xiangqi-db", "art", "ptyjoin", n + ".webp")), n);
+});
+
+test("〔原始碼〕11/16 五個加入站（漢、三國、魏晉、隋、五代）都有三張過場與第 1 張字幕，英文字幕都在", () => {
+  const SRC = fs.readFileSync(path.join(__dirname, "..", "..", "xiangqi-db", "m", "07pjc-joincut.js"), "utf8");
+  const I18 = fs.readFileSync(path.join(__dirname, "..", "..", "xiangqi-db", "m", "07i18n.js"), "utf8");
+  for (const [k, c, p] of [["han", "x_miaogirl", "han"], ["sanguo", "x_shuai", "sg"], ["weijin", "x_spiritgirl", "wj"], ["sui", "x_bing", "sui"], ["wudai", "x_martialgirl", "wd"]]) {
+    const pre = k + ':{c:"' + c + '",img:["' + p + '_j1","' + p + '_j2","' + p + '_j3"],say1:"', at = SRC.indexOf(pre);
+    const m = at < 0 ? null : [null, SRC.slice(at + pre.length, SRC.indexOf('"', at + pre.length))];
+    assert.ok(m, k + " 三張與字幕"); assert.ok(I18.includes('"' + m[1] + '":'), k + " 第 1 張字幕有英文");
+    if (fs.existsSync(path.join(__dirname, "..", "..", "xiangqi-db", "art", "ptyjoin"))) for (const n of [1, 2, 3]) assert.ok(fs.existsSync(path.join(__dirname, "..", "..", "xiangqi-db", "art", "ptyjoin", p + "_j" + n + ".webp")), p + "_j" + n);
+  }
 });

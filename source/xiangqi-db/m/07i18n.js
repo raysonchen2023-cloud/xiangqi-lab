@@ -1292,6 +1292,9 @@ const I18N_STORY_EN={
   "說書人：「燈芯結了一朵燈花——老一輩說，這是好兆頭。」": "Storyteller: \"The wick has flowered. The old folk say it's a good omen.\"",
   /* 11/16 七星加入過場（m/07pjc-joincut.js）：三張的字幕、加入那句（PTY_SAY）、過場標籤 */
   "七星加入過場": "A companion joins",
+  "雨後溪水漲了，她守著小爐，說什麼也不肯走。": "After the rain the stream has risen; she keeps watch by her little stove and won't leave.",
+  "監工說她是逃役的小工，可是她要把東西送過河。": "The overseer calls her a runaway laborer, but she has something to carry across the river.",
+  "遠處戰鼓像打雷，她捂著耳朵大叫。": "Distant war drums rumble like thunder, and she covers her ears and screams.",
   "赤壁火光連天，軍漢把他們當成了北邊的探子。": "The fires of Red Cliff light up the sky, and the soldiers take them for spies from the north.",
   "沙暴快來了，驛卒卻把她扣了下來。": "A sandstorm is coming, and the post guards are holding her.",
   "一起解開了這盤棋。": "Together, you solved the puzzle.",

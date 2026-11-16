@@ -1,7 +1,7 @@
 {
  "ref": "origin/main",
- "commit": "1c8158623a99cf4eaeb22d912ee34955ba2fae96",
- "madeAt": "2026-11-16T11:42:55.959Z",
+ "commit": "192a5bc09877be6e74c43c370a9f7a9b66a928a7",
+ "madeAt": "2026-11-16T12:12:13.415Z",
  "files": {
   "xiangqi-db/m/00-util.js": "local=live",
   "xiangqi-db/m/01-board.js": "local=live",
@@ -510,8 +510,8 @@
   "test-unlock-fx-1116.js": "指令排除：要讀只在開發者電腦與 CDN 的場景圖（data/guanxing、homemap 等），公開副本沒有這些圖",
   "test-i18n-ext-1116.js": "指令排除：要讀英文外掛字典 xiangqi-db/i18n-en.json（只放在 CDN 的 data/i18n-en.json，公開副本沒有）"
  },
- "version": "20261116-1938",
- "indexSha1": "c490d8f97081",
+ "version": "20261116-2008",
+ "indexSha1": "5369c2ba8168",
  "toLF": [],
  "scrubbed": [
   "xiangqi-lab/tools/qa/colorblind-scan.js（1 處）",

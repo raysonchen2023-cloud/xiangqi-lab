@@ -1,10 +1,10 @@
-# 驗證紀錄（版本 20261116-1938）
+# 驗證紀錄（版本 20261116-2008）
 
 這一頁讓任何人核對：這一版的程式跑過下面這些自動測試，以及每一項測試到底驗了什麼。
 
-- 產生時間：2026/11/16 19:47:29（臺灣時間）
-- 結果（四欄分開，不要只看總數）：共 1853 項＝**通過 1836**、**失敗 0**、**略過 17**（這個環境跑不了、沒有執行，不算通過；逐項原因見〈略過〉）；另有**預期失敗 0**
-- 測試對象：公開倉庫的 `source/`（切自 commit `1c8158623a99`），對應的發布版：`20261116-1938`。開發者電腦上還沒發布的修改不在這份測試裡。
+- 產生時間：2026/11/16 20:16:29（臺灣時間）
+- 結果（四欄分開，不要只看總數）：共 1854 項＝**通過 1837**、**失敗 0**、**略過 17**（這個環境跑不了、沒有執行，不算通過；逐項原因見〈略過〉）；另有**預期失敗 0**
+- 測試對象：公開倉庫的 `source/`（切自 commit `192a5bc09877`），對應的發布版：`20261116-2008`。開發者電腦上還沒發布的修改不在這份測試裡。
 - `source/` 沒放的測試檔（和少數只給它們用的工具）有43 個（要讀不公開的資料、要接不公開的營運程式，或指令排除），原因逐檔寫在 `source/STAGE-MANIFEST.json` 的 excludedTests。
 
 ## 略過（沒有執行，不算通過）
@@ -36,7 +36,7 @@
 | 行為 | 1212 項（通過 1207、略過 5） | 真的把 App 的程式跑起來（載入網站上的模組、抽出函式呼叫、用假的畫面／計時器／伺服器走一遍流程），再檢查結果對不對。 |
 | 混合 | 75 項（通過 74、略過 1） | 一半真的執行程式，一半只是檢查原始碼裡有沒有某段字。 |
 | 原始碼比對 | 202 項（通過 197、略過 5） | 只檢查原始碼裡有沒有某段字（例如某個按鈕的程式碼、某條樣式規則）。**只證明程式碼存在，不證明功能會動。** |
-| 待分類 | 364 項（通過 358、略過 6） | `test-bh-sg-bgm-1116.js`、`test-bhfx.js`、`test-bhtd-combo.js`、`test-bhtd-r2.js`、`test-bhtd-rules.js`、`test-bhtl.js`、`test-bhx-allstars-1116.js`、`test-bhx-hold-1116.js`、`test-bhx-resume-1116.js`、`test-bhx-skip-1116.js`、`test-dgl.js`、`test-eng-over-1116.js`、`test-extra-bgm-1116.js`、`test-ghost-game-1116.js`、`test-gxd-daily-1116.js`、`test-home-pano.js`、`test-i18n-story.js`、`test-noscore.js`、`test-park3d-capbase.js`、`test-park3d-ghostptr-1116.js`、`test-pjc-joincut-1116.js`、`test-port-yz-color-1116.js`、`test-pty-events-1116.js`、`test-r17-qa.js`、`test-siege2-local.js`、`test-siege2.js`、`test-sitemap-places-1116.js`、`test-upd-notitle-1116.js`、`test-xsm-counter-1116.js`、`test-xsm-dark.js`、`test-xsm-stalls-1116.js` 這幾個檔還沒逐項分類，暫不算進上面三類。 |
+| 待分類 | 365 項（通過 359、略過 6） | `test-bh-sg-bgm-1116.js`、`test-bhfx.js`、`test-bhtd-combo.js`、`test-bhtd-r2.js`、`test-bhtd-rules.js`、`test-bhtl.js`、`test-bhx-allstars-1116.js`、`test-bhx-hold-1116.js`、`test-bhx-resume-1116.js`、`test-bhx-skip-1116.js`、`test-dgl.js`、`test-eng-over-1116.js`、`test-extra-bgm-1116.js`、`test-ghost-game-1116.js`、`test-gxd-daily-1116.js`、`test-home-pano.js`、`test-i18n-story.js`、`test-noscore.js`、`test-park3d-capbase.js`、`test-park3d-ghostptr-1116.js`、`test-pjc-joincut-1116.js`、`test-port-yz-color-1116.js`、`test-pty-events-1116.js`、`test-r17-qa.js`、`test-siege2-local.js`、`test-siege2.js`、`test-sitemap-places-1116.js`、`test-upd-notitle-1116.js`、`test-xsm-counter-1116.js`、`test-xsm-dark.js`、`test-xsm-stalls-1116.js` 這幾個檔還沒逐項分類，暫不算進上面三類。 |
 
 - 測試名稱開頭有〔原始碼〕〔混合〕就是那一類；沒有標籤的是行為類（下面的索引另外標〔行為〕）。
 - **測試由開發用的 AI 撰寫，不等於第三方驗證；原始碼比對只證明程式碼存在。**
@@ -623,7 +623,7 @@
 | test-party-prologue.js | — | 7 | 0 | 0 |  | 7／7 |
 | test-perfhud.js | — | 6 | 0 | 2 |  | 8／8 |
 | test-pgn-variations.js | — | 8 | 0 | 1 |  | 9／9 |
-| test-pjc-joincut-1116.js | — | 0 | 0 | 0 | 13 | 13／13 |
+| test-pjc-joincut-1116.js | — | 0 | 0 | 0 | 14 | 14／14 |
 | test-port-yz-color-1116.js | — | 0 | 0 | 0 | 3 | 3／3 |
 | test-preload-bg.js | — | 12 | 1 | 1 |  | 14／14 |
 | test-premove-online3d.js | — | 12 | 0 | 3 |  | 15／15 |
@@ -2217,7 +2217,7 @@
 ### test-pjc-joincut-1116.js
 
 - ✔ 〔待分類〕有過場資料的站（漢）：解開那一題 → 先播過場（三張、有字幕）→ 播完才出加入卡，只出一次
-- ✔ 〔待分類〕沒有過場資料的站（魏晉；11/16 三國已有過場）照舊：2.5 秒後直接出加入卡，不播過場；沒載入過場模組也照舊
+- ✔ 〔待分類〕沒有過場資料的站照舊（11/16 五個加入站都有過場了：測試時先拿掉魏晉的資料）：2.5 秒後直接出加入卡，不播過場；沒載入過場模組也照舊
 - ✔ 〔待分類〕解題結果視窗（.modal）還開著：過場先等，視窗關了才播
 - ✔ 〔待分類〕略過：直接結束，加入卡只叫一次（連按兩下、再點畫面也不重複）
 - ✔ 〔待分類〕直接叫 pjcPlay：onDone 只呼叫一次；點畫面跳下一張；最後一張再點就結束
@@ -2229,6 +2229,7 @@
 - ✔ 〔待分類〕前綴 pjc／PJC 沒撞名：只有 07pjc-joincut.js 用；這支檔的頂層名字都是 pjc／PJC 開頭
 - ✔ 〔待分類〕m.html 在 07pty-party 後面 include 07pjc-joincut；規則：不寫 // 註解、畫面不出現「上限」
 - ✔ 〔待分類〕〔行為〕11/16 開發者選單「三國：兩位新夥伴主導」：PJC_SC.who 決定每張站誰（L0、L1、陪你走的人），沒寫照舊；三國資料齊全
+- ✔ 〔待分類〕〔原始碼〕11/16 五個加入站（漢、三國、魏晉、隋、五代）都有三張過場與第 1 張字幕，英文字幕都在
 
 ### test-port-yz-color-1116.js
 
