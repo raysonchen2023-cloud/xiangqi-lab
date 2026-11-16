@@ -1,7 +1,7 @@
 {
  "ref": "origin/main",
- "commit": "8d2136b2f88f4324f843b258b6ac85268bc1967e",
- "madeAt": "2026-11-16T03:59:32.642Z",
+ "commit": "ed6413d86827a287f2d528832873ececf325cb0b",
+ "madeAt": "2026-11-16T04:10:08.046Z",
  "files": {
   "xiangqi-db/m/00-util.js": "local=live",
   "xiangqi-db/m/01-board.js": "local=live",
@@ -336,6 +336,7 @@
   "xiangqi-lab/tools/test-xfer.js": "local",
   "xiangqi-lab/tools/test-xfer2.js": "local",
   "xiangqi-lab/tools/test-xfer4.js": "local",
+  "xiangqi-lab/tools/test-xiu-scene-1116.js": "local",
   "xiangqi-lab/tools/test-xqs-tb.js": "local",
   "xiangqi-lab/tools/test-xsm-dark.js": "local",
   "xiangqi-lab/tools/testkinds.js": "local",
@@ -498,8 +499,8 @@
   "test-party-novel.js": "指令排除：要讀只在開發者電腦與 CDN 的聽書稿（art/canju/yunhe-novel.json），公開副本沒有這個檔",
   "test-party-wood.js": "指令排除：要讀只在開發者電腦與 CDN 的木棋靈模型與骨架工具，公開副本沒有這些檔"
  },
- "version": "20261116-1154",
- "indexSha1": "5f62bc9ffd5b",
+ "version": "20261116-1203",
+ "indexSha1": "58ca1a38f3da",
  "toLF": [],
  "scrubbed": [
   "xiangqi-lab/tools/qa/colorblind-scan.js（1 處）",
@@ -533,6 +534,7 @@
  },
  "droppedUnreleased": {
   "xiangqi-lab/tools/test-bhx-hold-1116.js": "還沒發布的工作新加的檔，這一版不公開",
+  "xiangqi-lab/tools/test-bhx-skip-1116.js": "還沒發布的工作新加的檔，這一版不公開",
   "xiangqi-lab/tools/test-ghost-game-1116.js": "還沒發布的工作新加的檔，這一版不公開",
   "xiangqi-lab/tools/test-i18n-ext-1116.js": "還沒發布的工作新加的檔，這一版不公開",
   "xiangqi-lab/tools/test-sitemap-places-1116.js": "還沒發布的工作新加的檔，這一版不公開",

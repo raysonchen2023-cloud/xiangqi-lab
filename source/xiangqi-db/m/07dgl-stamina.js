@@ -477,7 +477,72 @@ function dglSetOff(off){off=!!off;if(off){try{dglKeep()}catch(e){}}store.set("dg
   if(typeof document!=="undefined"){try{const v=document.getElementById("dglVig");if(v)v.remove()}catch(e){}try{dglFloatOff()}catch(e){}try{dglPaint();dglLocSync()}catch(e){}}return off}
 
 /* ---------- 二十八宿星圖（觀星臺「二十八宿」入口，07gxt-guanxing.js GXT_ACT 呼叫） ---------- */
-function dglXiuSheet(){dglCss();sheet("🌌 二十八宿星圖",b=>{
+/* ---------- 11/16 開發者「找gemini繪製環景圖 關於這一頁，按照天文專家的判斷」（選單：1 張夜空環景、接進 App）：二十八宿星圖頁改成滿版圖 ----------
+   底圖 data/guanxing/xiu_sky（768×1376，Gemini 依 story/gemini_app/回覆_170 的天文考究畫的：蓋天式圓形星圖的底子、四象淡墨剪影、前景渾儀欄杆，不畫星點）。
+   二十八宿的星點、連線由程式畫在外圈（SVG，跟底圖同一個座標）：圖像模型畫不準星官、按鈕也對不齊，所以星點不放在圖裡。
+   方位照仰觀星圖：東方蒼龍在左、北方玄武在下、西方白虎在右、南方朱雀在上，從左上的角宿起逆時針排（四象跟底圖的剪影同邊）；
+   每宿佔的角度照宿度（古度，DGL_XIU_DU）比例，太窄的（觜、鬼…）放寬到 DGL_XS_MIN 度才點得到。星官形狀照《步天歌》的星數畫成示意（DGL_XS_T），不是精確星圖。
+   點一宿＝選它、下面說明列寫它的說明；還沒點亮又有勝場時多一顆「點亮」。「☰ 清單」打開原本四排按鈕的那一頁（dglXiuList，讀屏與想用清單的人）。 */
+const DGL_XS_IMG="data/guanxing/xiu_sky.webp?v=1116",DGL_XS_C=[384,553],DGL_XS_R=242,DGL_XS_MIN=7;
+const DGL_XIU_DU=[12,9,15,5,5,18,11,26,8,12,10,17,16,9,16,12,14,11,16,2,9,33,4,15,7,18,18,17];   /* 二十八宿古度（角～軫，共 365¼ 度左右；常見數值，各家略有出入） */
+/* 星官示意：[點（x,y 在 -1～1）, 連線："p" 依序連、"c" 連成一圈、"n" 不連、或 [[i,j],…]] */
+const DGL_XS_T={角:[[[-.5,.4],[.5,-.4]],"p"],亢:[[[-.7,.3],[-.25,-.2],[.25,-.25],[.7,.2]],"p"],氐:[[[-.5,-.45],[.5,-.3],[.35,.45],[-.45,.35]],"c"],房:[[[-.15,-.75],[-.05,-.25],[.05,.25],[.15,.75]],"p"],
+  心:[[[-.6,.25],[0,-.15],[.6,.25]],"p"],尾:[[[-.7,-.75],[-.55,-.35],[-.35,0],[-.05,.25],[.3,.45],[.6,.55],[.75,.25],[.65,-.05],[.4,-.15]],"p"],箕:[[[-.6,-.45],[.45,-.55],[.6,.45],[-.45,.35]],"p"],
+  斗:[[[-.75,-.25],[-.35,-.35],[0,-.1],[.1,.35],[.5,.45],[.75,.15]],"p"],牛:[[[0,-.7],[0,-.1],[-.5,.35],[.5,.35],[-.7,.75],[.7,.75]],[[0,1],[1,2],[1,3],[2,4],[3,5]]],女:[[[-.6,0],[0,-.45],[.6,0],[0,.45]],"c"],
+  虛:[[[0,-.55],[0,.55]],"p"],危:[[[-.6,.45],[0,-.55],[.6,.45]],"p"],室:[[[-.1,-.6],[.1,.6]],"p"],壁:[[[.1,-.6],[-.1,.6]],"p"],
+  奎:[Array.from({length:16},(_,i)=>[.85*Math.cos(i*Math.PI/8),.5*Math.sin(i*Math.PI/8)]),"c"],婁:[[[-.55,.4],[0,-.45],[.55,.4]],"c"],胃:[[[-.4,.35],[.1,-.35],[.45,.3]],"c"],
+  昴:[[[-.3,-.3],[.15,-.4],[.4,-.05],[.05,.05],[-.35,.25],[.2,.4],[-.05,-.6]],"n"],畢:[[[-.7,-.6],[-.35,-.15],[0,.2],[.35,-.15],[.7,-.6],[0,.55],[.15,.8],[-.2,.85]],[[0,1],[1,2],[2,3],[3,4],[2,5],[5,6],[5,7]]],
+  觜:[[[-.3,.25],[0,-.3],[.3,.25]],"c"],參:[[[-.55,-.7],[.55,-.7],[-.25,0],[0,0],[.25,0],[-.55,.7],[.55,.7]],[[0,2],[1,4],[2,3],[3,4],[2,5],[4,6]]],
+  井:[[[-.35,-.75],[-.35,-.25],[-.35,.25],[-.35,.75],[.35,-.75],[.35,-.25],[.35,.25],[.35,.75]],[[0,1],[1,2],[2,3],[4,5],[5,6],[6,7]]],鬼:[[[-.45,-.45],[.45,-.45],[.45,.45],[-.45,.45]],"c"],
+  柳:[[[-.75,-.6],[-.45,-.35],[-.2,-.05],[0,.25],[.25,.45],[.5,.55],[.7,.4],[.8,.15]],"p"],星:[[[-.7,0],[-.35,-.3],[0,0],[.35,-.3],[.7,0],[.35,.35],[0,.55]],"p"],
+  張:[[[-.75,.35],[-.45,-.15],[-.1,-.4],[.25,-.4],[.55,-.15],[.75,.3]],"p"],翼:[Array.from({length:22},(_,i)=>{const k=i%11,r=i<11?-1:1;return[(k-5)*.15,r*(.25+.04*Math.abs(k-5))]}),"n"],
+  軫:[[[-.55,-.45],[.5,-.4],[.6,.45],[-.5,.4]],"c"]};
+/* 純計算：每一宿在圖上的中心角（度，數學方向：0＝右、90＝上）與寬度；東方七宿的中心對準左邊 180 度，逆時針排 */
+function dglXsAngles(){const d=DGL_XIU_DU.map(x=>Math.max(x,DGL_XS_MIN)),tot=d.reduce((a,b)=>a+b,0),w=d.map(x=>x*360/tot),east=w.slice(0,7).reduce((a,b)=>a+b,0);
+  let t=180-east/2;return w.map(x=>{const c=t+x/2;t+=x;return{a:((c%360)+360)%360,w:x}})}
+const dglXsPos=(a,r)=>[DGL_XS_C[0]+r*Math.cos(a*Math.PI/180),DGL_XS_C[1]-r*Math.sin(a*Math.PI/180)];
+/* 一宿的 SVG：點、連線、點選範圍（扇形），lit＝已點亮（金色發光） */
+function dglXsLodge(i,A,lit,sel){const s=DGL_XIU[i],T=DGL_XS_T[s[0]]||[[[0,0]],"n"],[cx,cy]=dglXsPos(A.a,DGL_XS_R),half=Math.max(10,Math.min(22,A.w*Math.PI/180*DGL_XS_R*.42)),
+    P=T[0].map(([x,y])=>[cx+x*half,cy+y*half]),L=T[1]==="p"?P.slice(1).map((_,k)=>[k,k+1]):T[1]==="c"?P.map((_,k)=>[k,(k+1)%P.length]):T[1]==="n"?[]:T[1],
+    a0=(A.a-A.w/2)*Math.PI/180,a1=(A.a+A.w/2)*Math.PI/180,r0=DGL_XS_R-46,r1=DGL_XS_R+46,pt=(a,r)=>`${(DGL_XS_C[0]+r*Math.cos(a)).toFixed(1)},${(DGL_XS_C[1]-r*Math.sin(a)).toFixed(1)}`;
+  const hit=`M${pt(a0,r0)}L${pt(a0,r1)}A${r1},${r1} 0 0 0 ${pt(a1,r1)}L${pt(a1,r0)}A${r0},${r0} 0 0 1 ${pt(a0,r0)}Z`;
+  return`<g class="dgl-xs-g${lit?" on":""}${sel?" sel":""}" data-i="${i}" role="button" tabindex="0" aria-label="${esc(s[0])}宿，${lit?"已點亮":"還沒點亮"}"><path class="h" d="${hit}"/>`+
+    L.map(([a,b])=>`<line x1="${P[a][0].toFixed(1)}" y1="${P[a][1].toFixed(1)}" x2="${P[b][0].toFixed(1)}" y2="${P[b][1].toFixed(1)}"/>`).join("")+
+    P.map(([x,y])=>`<circle cx="${x.toFixed(1)}" cy="${y.toFixed(1)}" r="${T[0].length>12?2.6:3.6}"/>`).join("")+`</g>`}
+function dglXsCss(){if(document.getElementById("dglXsCss"))return;const s=document.createElement("style");s.id="dglXsCss";s.textContent=`
+#dglXs{position:fixed;inset:0;z-index:9100;background:#0c1020;display:flex;flex-direction:column;align-items:center;justify-content:center;overflow:hidden}
+#dglXs .xs-top{position:absolute;left:0;right:0;top:0;z-index:3;display:flex;align-items:center;gap:8px;padding:max(10px,env(safe-area-inset-top,0px)) 12px 8px;color:#f4ecd8;background:linear-gradient(rgba(8,10,22,.85),rgba(8,10,22,0))}
+#dglXs .xs-top b{flex:1;font:900 18px var(--serif,serif);letter-spacing:.08em}
+#dglXs .xs-top button{min-width:44px;min-height:44px;border-radius:99px;border:1px solid rgba(244,236,216,.45);background:rgba(0,0,0,.35);color:#f4ecd8;font:700 14px var(--serif,serif);padding:0 12px}
+#dglXs .xs-art{position:relative;width:min(100%,calc(100dvh*768/1376));aspect-ratio:768/1376}
+#dglXs .xs-art img,#dglXs .xs-art svg{position:absolute;inset:0;width:100%;height:100%}
+#dglXs svg .dgl-xs-g{cursor:pointer;outline:none}#dglXs svg .h{fill:transparent}
+#dglXs svg line{stroke:#3a3f52;stroke-width:1.6;stroke-linecap:round}#dglXs svg circle{fill:#2a2f44}
+#dglXs svg .on line{stroke:#c98a12;stroke-width:2.2}#dglXs svg .on circle{fill:#ffcf5a;filter:drop-shadow(0 0 4px rgba(255,190,60,.95))}
+#dglXs svg .sel .h{fill:rgba(255,214,120,.18);stroke:rgba(201,138,18,.7);stroke-width:1.5}
+#dglXs svg .dgl-xs-g:focus-visible .h{stroke:#E8C77A;stroke-width:3}
+#dglXs .xs-pan{position:absolute;left:10px;right:10px;bottom:max(12px,env(safe-area-inset-bottom,0px));z-index:3;padding:10px 12px;border-radius:14px;background:rgba(251,248,241,.94);color:#2b241c;box-shadow:0 4px 18px rgba(0,0,0,.35);font-size:14px;line-height:1.55}
+#dglXs .xs-pan .hd{display:flex;align-items:baseline;justify-content:space-between;gap:8px}#dglXs .xs-pan .hd b{font-size:16px}#dglXs .xs-pan .hd span{color:#6b6257;font-size:13px}
+#dglXs .xs-pan .q{display:flex;gap:6px;margin:6px 0 4px;flex-wrap:wrap}#dglXs .xs-pan .q span{flex:1 1 0;min-width:64px;text-align:center;font-size:12.5px;padding:2px 4px;border-radius:8px;background:rgba(128,110,80,.12)}#dglXs .xs-pan .q span.full{background:#f3e3b5;color:#5a4300}
+#dglXs .xs-pan p{margin:4px 0 0}#dglXs .xs-pan .go{width:100%;margin-top:8px}
+@media (prefers-reduced-motion:reduce){#dglXs svg .on circle{filter:none}}`;document.head.append(s)}
+/* 二十八宿星圖（觀星臺「二十八宿」07gxt gxtSky 開這裡） */
+function dglXiuSheet(){if(typeof document==="undefined")return;dglCss();dglXsCss();const old=document.getElementById("dglXs");if(old)old.remove();
+  const A=dglXsAngles(),o=document.createElement("div");o.id="dglXs";o.setAttribute("role","dialog");o.setAttribute("aria-modal","true");o.setAttribute("aria-label","二十八宿星圖");let sel=-1;
+  const draw=()=>{const S=dglSt(),t=dglXiuMask(S.t),n=dglXiuN(t),H=DGL_HUMAN;let G=null;try{G=store.get("gsv",null)}catch(e){}const lf=H?Math.floor(dglXm()/DGL_XIU_COST):dglXiuLeft(S,G),ttl=(Math.round(+S.tw)||0)&16;
+    const on=sel>=0&&dglXiuHas(t,sel),info=sel<0?(lf?"點一宿看說明，再按「點亮」。":"打贏星門圍城的一關，就能再點亮一宿。"):on?dglXiuLine(sel):`${DGL_XIU[sel][0]}宿：${DGL_XIANG[DGL_XIU[sel][1]][0]}的一宿。${lf?"可以點亮。":"打贏星門圍城的一關，就能點亮它。"}`;
+    o.innerHTML=`<div class="xs-top"><b>🌌 二十八宿星圖</b><button type="button" data-x="list" aria-label="用清單看二十八宿">☰ 清單</button><button type="button" data-x="close" aria-label="關閉">✕</button></div>
+      <div class="xs-art"><img src="${DGL_XS_IMG}" alt="以北極為中心的圓形星圖，東方蒼龍在左、南方朱雀在上、西方白虎在右、北方玄武在下，下方是觀星臺的渾儀與欄杆"><svg viewBox="0 0 768 1376" aria-label="二十八宿">${A.map((a,i)=>dglXsLodge(i,a,dglXiuHas(t,i),i===sel)).join("")}</svg></div>
+      <div class="xs-pan"><div class="hd"><b>已點亮 ${n}／${DGL_XIU.length}${ttl?`・🏅 ${DGL_XIU_TITLE}`:""}</b><span>可以點亮 ${lf} 宿</span></div>
+        <div class="q">${DGL_XIANG.map((X,k)=>{const m=DGL_XIU.filter((s,i)=>s[1]===k&&dglXiuHas(t,i)).length;return`<span class="${m===7?"full":""}">${esc(X[1])} ${m}／7</span>`}).join("")}</div>
+        <p aria-live="polite">${esc(info)}</p>${sel>=0&&!on&&lf>0?`<button type="button" class="btn go" data-x="lit">✦ 點亮${esc(DGL_XIU[sel][0])}宿</button>`:""}</div>`};
+  o.addEventListener("click",e=>{const x=e.target.closest("[data-x]"),g=e.target.closest(".dgl-xs-g");try{vibrate(5)}catch(z){}
+    if(x){const k=x.dataset.x;if(k==="close"){o.remove();return}if(k==="list"){o.remove();dglXiuList();return}if(k==="lit"&&sel>=0){dglXiuBuy(sel,i=>{sel=i;draw()});return}}
+    if(g){sel=+g.dataset.i;draw()}});
+  o.addEventListener("keydown",e=>{if(e.key==="Escape"){o.remove();return}const g=e.target.closest&&e.target.closest(".dgl-xs-g");if(g&&(e.key==="Enter"||e.key===" ")){e.preventDefault();sel=+g.dataset.i;draw();const b=o.querySelector('[data-x="lit"]');if(b)b.focus()}});
+  draw();document.body.append(o);try{o.querySelector('[data-x="close"]').focus({preventScroll:true})}catch(e){}}
+/* 原本四排按鈕的那一頁：11/16 起是滿版星圖頁的「☰ 清單」（讀屏、想用清單的人） */
+function dglXiuList(){dglCss();sheet("🌌 二十八宿星圖",b=>{
   const draw=sel=>{const o=dglSt(),t=dglXiuMask(o.t),x=dglXm(),n=dglXiuN(t),ttl=(Math.round(+o.tw)||0)&16,H=DGL_HUMAN;let G=null;try{G=store.get("gsv",null)}catch(e){}const lf=dglXiuLeft(o,G);
     const info=sel>=0&&dglXiuHas(t,sel)?esc(dglXiuLine(sel)):H?"點一顆星：已點亮的看說明，還沒點亮的花星芒點亮。":"點一顆星：已點亮的看說明；打贏星門圍城的一關，就能再點亮一宿。";
     b.innerHTML=`<div class="dgl-cd dgl-xt">${H?`<div class="dgl-cd-h"><b>星芒（藍）</b><span data-dgl="x">${x}／${DGL_XM_MAX}</span></div><div class="dgl-cd-bar dgl-b"><b></b></div>`:`<div class="dgl-cd-h"><b>可以點亮</b><span>${lf} <span>宿</span></span></div>`}
