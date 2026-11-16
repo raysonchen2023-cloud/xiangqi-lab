@@ -292,7 +292,7 @@ function shipHere(){const e=store.get("era","classic"),k=shipDocked().includes(e
 function shipGoTo(e,after){if(eraLocked(e)){vibrate(8);toast(eraLockMsg(e));return}const k=shipAt();if(e===k){if(after)after();return}shipEra(e);try{saveNow(true)}catch(x){}
   qianqiu(k,e,()=>{const go=()=>{if(after)after();else if(navKey(location.hash)==="/adventure")route()};if(typeof bhMaybe==="function")bhMaybe(e,go,false);else go()},"go")}
 function innName(k){return k==="classic"?"雲河驛站":eraLabel(k)+"的驛站"}   /* 意見回饋 697：船艙那一站的驛站叫「雲河驛站」 */
-function portName(k){return k==="classic"?"船艙":eraLabel(k)+"的渡口"}
+function portName(k){return k==="classic"?"渡口":eraLabel(k)+"的渡口"}   /* 11/16 開發者「左上角的船艙要改成渡口 不然名字不對」：雲河這一站的渡口頁標題、圖上地名、走過去的地名都叫「渡口」（星槎上的船艙、古戰場、金印照舊） */
 function navPrev(){try{for(let i=NAV_D-1;i>=0;i--){const x=NAV_H[i];if(typeof x==="string"&&x[0]!=="~")return x}}catch(e){}return null}   /* 上一頁的網址（跳過卡片那一層） */
 /* ---------- 下船：渡口和三扇門（園子、驛站、擂台）。rep＝同一朝橫著走（園子↔驛站↔擂台），用 replace 不疊上一頁 ---------- */
 const shipNav=(h,rep)=>{if(navKey(h)===navKey(location.hash))route();else if(rep)navReplace(h);else location.hash=h};   /* 已經在那一頁（例如在驛站旅人的對局頁去園子）就重畫 */

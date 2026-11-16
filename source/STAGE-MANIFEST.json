@@ -1,7 +1,7 @@
 {
  "ref": "origin/main",
- "commit": "47abc2081af385b2cc3c588c8b2bc3fac5c9bbd3",
- "madeAt": "2026-11-16T06:02:28.156Z",
+ "commit": "fd5845227d200927aa2eec3ad4e81e751e3df703",
+ "madeAt": "2026-11-16T06:23:17.943Z",
  "files": {
   "xiangqi-db/m/00-util.js": "local=live",
   "xiangqi-db/m/01-board.js": "local=live",
@@ -45,7 +45,7 @@
   "xiangqi-db/m/07m3-opptalk.js": "local=live",
   "xiangqi-db/m/07m4-resume.js": "local=live",
   "xiangqi-db/m/07m5-family.js": "local=live",
-  "xiangqi-db/m/07n-portfx.js": "local=live",
+  "xiangqi-db/m/07n-portfx.js": "live",
   "xiangqi-db/m/07p-portcolor.js": "local=live",
   "xiangqi-db/m/07q-chardiff.js": "local=live",
   "xiangqi-db/m/07r-portwind.js": "local=live",
@@ -296,6 +296,7 @@
   "xiangqi-lab/tools/test-party-prologue.js": "local",
   "xiangqi-lab/tools/test-perfhud.js": "local",
   "xiangqi-lab/tools/test-pgn-variations.js": "local",
+  "xiangqi-lab/tools/test-port-yz-color-1116.js": "local",
   "xiangqi-lab/tools/test-preload-bg.js": "local",
   "xiangqi-lab/tools/test-premove-online3d.js": "local",
   "xiangqi-lab/tools/test-provenance.js": "local",
@@ -447,6 +448,7 @@
  },
  "liveDiffers": [
   "m/05-settings.js",
+  "m/07n-portfx.js",
   "m/07y-hubmap.js",
   "m/07s4-passmap.js",
   "src/sw.js"
@@ -497,8 +499,8 @@
   "test-unlock-fx-1116.js": "指令排除：要讀只在開發者電腦與 CDN 的場景圖（data/guanxing、homemap 等），公開副本沒有這些圖",
   "test-i18n-ext-1116.js": "指令排除：要讀英文外掛字典 xiangqi-db/i18n-en.json（只放在 CDN 的 data/i18n-en.json，公開副本沒有）"
  },
- "version": "20261116-1358",
- "indexSha1": "ccd6fa6d40b7",
+ "version": "20261116-1416",
+ "indexSha1": "bd9c0241e900",
  "toLF": [],
  "scrubbed": [
   "xiangqi-lab/tools/qa/colorblind-scan.js（1 處）",

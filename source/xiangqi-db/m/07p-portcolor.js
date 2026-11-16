@@ -6,12 +6,12 @@
    上色圖載入失敗就留原圖。07k-inkfx 的動態設定照原圖的鍵（shipmap/port_<朝代>）借給 _c 用，旗子飄、燈火晃照常。
    由 07f-ship.js 的 Port 呼叫 portColor(v,k)；shipPort 在這裡包一層記下「剛下船」。開關：常數 PORTC_ON。 */
 const PORTC_ON=true;
-const PORTC_ERAS=["qin","han","sanguo","weijin","nanbei","sui","tang","wudai","song","yuan","ming","qing"];
+const PORTC_ERAS=["qin","han","sanguo","weijin","nanbei","sui","tang","wudai","song","yuan","ming","qing","classic"];   /* 11/16 雲河渡口（classic）也上色：data/shipmap/port_classic_c.webp、_f.webp */
 /* 意見回饋 773（開發者看過 1710 版：「還是沒有抵達當朝代的強烈視覺感，希望漸漸轉為全彩水墨畫風」）：全彩水墨版 data/shipmap/port_<朝代>_f.webp
    （Gemini 重彩上色 → portcolor_merge.py --full：墨線仍是原圖，色塊深淺也跟上色版）。下船時分兩段：先淡彩 _c 從船頭暈開，再整張漸漸轉成全彩 _f，共約 3.5 秒；
    停留與走回來直接顯示 _f。PORTF_ERAS＝已經有 _f 的朝代（11/8 唐宋給開發者看過「濃度可以」，12 朝都做好了）；_f 載入失敗退回 _c、再退回原圖。開關 PORTF_ON。 */
 const PORTF_ON=true;
-const PORTF_ERAS=["qin","han","sanguo","weijin","nanbei","sui","tang","wudai","song","yuan","ming","qing"];
+const PORTF_ERAS=["qin","han","sanguo","weijin","nanbei","sui","tang","wudai","song","yuan","ming","qing","classic"];
 const PC={at:0,k:null,css:false};
 (function(){if(typeof shipPort!=="function")return;const f=shipPort;shipPort=function(k){PC.at=Date.now();PC.k=k;return f.apply(this,arguments)}})();
 function pcCss(){if(PC.css)return;PC.css=true;const s=document.createElement("style");s.id="pcCss";
@@ -39,7 +39,7 @@ function pcRun(P,img,src,orig,full){if(!P.isConnected)return;
   const sup=p=>{try{return CSS.supports(p,"radial-gradient(#000,transparent)")}catch(e){return false}};
   const mk=sup("mask-image")?"maskImage":sup("-webkit-mask-image")?"webkitMaskImage":null;
   let done=false,raf=0;
-  const end=()=>{if(done)return;done=true;cancelAnimationFrame(raf);P.removeEventListener("click",skip,true);
+  const end=()=>{if(done)return;done=true;cancelAnimationFrame(raf);P.removeEventListener("click",skip,true);img.style.filter="";   /* 驛站（yzColor）的底圖是灰階起點，播完拿掉 */
     const fin=()=>{o.remove();if(o2)o2.remove();P.classList.remove("pc-run");P.classList.add("pc-in");setTimeout(()=>P.classList.remove("pc-in"),700)};
     img.addEventListener("load",fin,{once:true});img.addEventListener("error",fin,{once:true});pcSet(img,full?[full,src]:src,orig);if(img.complete&&img.naturalWidth&&img.getAttribute("src")===fin_src)setTimeout(fin,30)};
   const skip=e=>{e.stopPropagation();e.preventDefault();end()};P.addEventListener("click",skip,true);
@@ -50,3 +50,16 @@ function pcRun(P,img,src,orig,full){if(!P.isConnected)return;
     else o.style.filter=`grayscale(${(1-io(t)).toFixed(3)})`;
     if(o2&&e>T1)o2.style.opacity=io(Math.min(1,(e-T1)/T2)).toFixed(3);
     if(e<T1+T2)raf=requestAnimationFrame(step);else end()};raf=requestAnimationFrame(step)}
+/* 11/16 開發者「渡口/驛站都是用最一開始調色的方式漸漸變成有顏色」（選單：雲河渡口＋13 驛站）：驛站進門時也從水墨暈開成全彩。
+   驛站沒有黑白原圖：底下的 img 先用淡彩 _c 加灰階濾鏡當水墨起點，pcRun 從左下暈開淡彩、再轉全彩 _f，播完拿掉濾鏡（pcRun 的 end）。
+   每次開 App、每個驛站第一次進門播一次（sessionStorage yzcSeen），之後直接全彩；減少動態直接全彩；圖 4 秒內沒載好也直接全彩；點一下跳過（pcRun）。
+   由 07m-yizhan.js 的驛站頁插好以後呼叫。開關 YZC_ON */
+const YZC_ON=true;
+function yzColor(P,k){if(!YZC_ON||!P||!P.isConnected||!k)return;const img=P.querySelector(":scope>img");if(!img)return;
+  let seen={},rm=false;try{seen=JSON.parse(sessionStorage.getItem("yzcSeen")||"{}")||{}}catch(e){}try{rm=matchMedia("(prefers-reduced-motion: reduce)").matches}catch(e){}
+  if(seen[k]||rm)return;seen[k]=1;try{sessionStorage.setItem("yzcSeen",JSON.stringify(seen))}catch(e){}
+  const q=k==="classic"&&typeof YZ_CLV!=="undefined"?"?v="+YZ_CLV:"",c="data/yizhan/"+k+"_c.webp"+q,f="data/yizhan/"+k+"_f.webp"+q,orig=img.getAttribute("src");
+  pcCss();P.classList.add("pc-run");img.style.filter="grayscale(1)";img.src=c;
+  let gone=false;const quit=()=>{if(gone)return;gone=true;img.style.filter="";P.classList.remove("pc-run");img.src=orig};
+  const to=setTimeout(quit,4000);const ld=u=>new Promise(r=>{const i=new Image();i.decoding="async";i.onload=()=>r(u);i.onerror=()=>r(null);i.src=u});
+  Promise.all([ld(c),ld(f)]).then(([cc,ff])=>{clearTimeout(to);if(gone||!P.isConnected)return;if(!cc&&!ff){quit();return}gone=true;setTimeout(()=>pcRun(P,img,cc||ff,orig,cc&&ff),250)})}

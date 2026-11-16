@@ -85,7 +85,7 @@ function yzInn(v,k){if(!YZ_ON||!YZ_READY.has(k))return;const S=YZ_SPOT[k],pad=v.
   const sub=k==="classic"?(YZ_ROAD_ON?"旅人歇腳、書信往來；千秋驛路通往各朝驛站":"旅人歇腳、書信往來；要去各朝，從星槎的千秋石枰啟程"):esc((k==="classic"?"":eraLabel(k)+"・")+(T.place||"")),si=YZ_SIGHT[k]&&S.sight;
   const d=document.createElement("div");
   d.innerHTML=`<div class="shp-page cq yz-page"><img src="data/yizhan/${k}${YZ_IMG}.webp${k==="classic"?"?v="+YZ_CLV:""}" alt="${esc(innName(k))}" onerror="if(!this.dataset.fb){this.dataset.fb=1;this.src='data/yizhan/${k}_c.webp'}">${road}<div class="shp-cap"><b>🏮 ${esc(innName(k))}</b><small>${sub}</small></div>${sp.map(([id,p,b,sm,cl])=>`<button class="shp-spot${cl?" "+cl:""}" id="${id}" style="left:${p[0]}%;top:${p[1]}%"><b>${b}</b>${sm?`<small>${sm}</small>`:""}</button>`).join("")}${si?`<button class="po-sight" id="yzSight" style="left:${S.sight[0]}%;top:${S.sight[1]}%">📍 ${esc(YZ_SIGHT[k][0])}</button>`:""}</div>`;
-  const pg=d.firstElementChild;v.insertBefore(pg,pad);const ab=pad.querySelector(".abn");if(ab)ab.remove();
+  const pg=d.firstElementChild;v.insertBefore(pg,pad);if(typeof yzColor==="function")yzColor(pg,k);   /* 11/16 進門從水墨暈開成全彩（07p-portcolor.js） */const ab=pad.querySelector(".abn");if(ab)ab.remove();
   if(YZ_NOLIST_ON){pad.classList.add("yz-nolist");if(YZ_MORE_ON)pg.insertAdjacentHTML("beforeend",'<button class="yz-more" id="yzMore" aria-label="其他入口：羈絆、棋史卡冊、輿圖、消寒圖、點將台、走去園子和擂台">☰ 其他</button>')}
   const on=(q,fn)=>{const e=pg.querySelector(q);if(e)e.onclick=()=>{vibrate(5);fn()}};
   on("#yzTr",()=>yzPick(v,INN.map(x=>x.id).concat(typeof igIds==="function"?igIds(k):[]),"🏮 路過的旅人","驛站裡都是路過的旅人，找誰下都可以、下幾次都可以。"));
