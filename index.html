@@ -1613,7 +1613,7 @@ html[data-lefty] .tskip{right:auto;left:14px}
       if(!window.caches)return go();caches.keys().then(function(ks){return Promise.all(ks.filter(function(k){return k.indexOf("xqlab-app-")===0}).map(function(k){return caches.delete(k)}))})
         .then(function(){return navigator.serviceWorker&&navigator.serviceWorker.getRegistration()}).then(function(r){return r&&r.update()}).catch(function(){}).then(go)}};setTimeout(chk,4000)})();
 </script>
-<script>window.XQ_OFFLINE=true;window.XQ_BUILD="20261116-2008";</script>
+<script>window.XQ_OFFLINE=true;window.XQ_BUILD="20261117-0005";</script>
 <script src="core.js"></script>
 <script src="engine.js"></script>
 <script src="local.js"></script>
@@ -3554,7 +3554,7 @@ function standaloneOnlineWarn(v){if(OFF||!(matchMedia("(display-mode: standalone
   v.prepend(c);c.querySelector("#gh").onclick=async()=>{let u=APP_HOME;try{const r=await api("/remote");u=(r.urls||[]).find(x=>x.includes("#connect="))||u}catch(e){}location.href=u}}
 function Home(v,hub){   /* hub：沒有＝首頁三張大卡；"battle"＝對戰頁；"learn"＝學習頁（開發者看 Gemini UI／UX 審閱後決定） */
   const RI=DEVREMOTE()?XQ.remoteInfo():null;  // 這支手機連過主人的電腦嗎
-  const standalone=matchMedia("(display-mode: standalone)").matches||navigator.standalone;
+  const standalone=isStandalone();   /* 11/16：原生 App（UA 有 XQQianqiuApp）也算已安裝，不顯示加到主畫面卡，同 07z-homemap */
   setTop("象棋千秋",false,OFF?[].concat(RI?[["🔗",connectSheet,"連線到電腦"]]:[]).concat(!hub&&DEVMODE()&&typeof openFbAdmin==="function"?[["📋",openFbAdmin,"意見回饋管理"]]:[])  :[["👥",whoSheet,"誰在線上"]]);   /* 11/10 開發者：首頁只留 📋 圖示，放在頂欄右上角角色頭像左邊 */meChip();   /* 意見回饋 570：📋 移到設定頁 */   /* 意見回饋 536：首頁左上角的頭像，點了進「我的角色」；531：首頁右上角的「分享給朋友」「意見回饋」拿掉（都在 設定 → 系統） */setTabs(true,"#/");   /* 意見回饋 409：意見回饋按鈕放在首頁最右上角 */
   if(hub){setTop(typeof xqHubName==="function"?xqHubName(hub==="battle"?"battle":"learn"):(hub==="battle"?"⚔ 對戰":"📚 學習"),"#/");setTabs(true,"#/")}
   const T=(k,go,ic,t,id,s,x,cta)=>`<button class="tile strip ${k}${x||""}" data-go="${go}"><span class="ic">${ic}</span><span class="tx"><span class="t">${t}</span><span class="s"${id?` id="${id}"`:""}>${s}</span></span><b class="go">${cta||"›"}</b></button>`;
@@ -5188,7 +5188,7 @@ function wipeDb(n,ms){return new Promise(res=>{let done=false,fresh=false;const 
       tx.oncomplete=()=>{try{db.close()}catch(e){}fin("done")};tx.onerror=tx.onabort=()=>{try{db.close()}catch(e){}fin("error",tx.error&&tx.error.name)}}catch(e){try{db.close()}catch(_){}fin("error",e.name)}}}catch(e){fin("error",e.name)}})}
 const WIPE_NAME={"xqlab":"對局紀錄和棋譜","xqlab-save":"目前的進度","xqlab-slots":"存檔格"},WIPE_WHY={error:"刪的時候出錯",blocked:"被另一個開著的 App 分頁擋住",timeout:"手機太久沒回應"};
 async function wipeAllData(){toast("正在刪除這支手機的資料…");
-  try{window.XQNet&&XQNet.forget&&XQNet.forget()}catch(e){}await new Promise(r=>setTimeout(r,500));   /* 伺服器上保留的在線狀態、戰績摘要先清掉 */
+  try{window.XQNet&&XQNet.forget&&XQNet.forget()}catch(e){}try{window.XQNative&&XQNative.daily&&XQNative.daily.disable()}catch(e){}await new Promise(r=>setTimeout(r,500));   /* 伺服器上保留的在線狀態、戰績摘要先清掉 */
   try{Storage.prototype.setItem=function(){}}catch(e){}
   for(const S of[localStorage,sessionStorage])try{Object.keys(S).filter(k=>/^(m_|xq|rsAsked|rsBoot|btAt|pq_)/.test(k)).forEach(k=>S.removeItem(k))}catch(e){}
   const R=[];for(const n of["xqlab","xqlab-save","xqlab-slots"])R.push(await wipeDb(n));
@@ -5198,7 +5198,7 @@ async function wipeAllData(){toast("正在刪除這支手機的資料…");
   try{IDBObjectStore.prototype.put=IDBObjectStore.prototype.add=function(){throw new Error("資料刪除中")}}catch(e){}
   try{history.replaceState(null,"",location.pathname+"#/")}catch(e){}location.reload()}
 /* 意見回饋 531：檢查更新（設定 → 系統 → 關於） */
-async function updCheck(b){b.disabled=true;b.textContent="檢查中…";const r=window.XQ_checkUpdate?await XQ_checkUpdate():{};
+async function updCheck(b){if(window.XQ_NATIVE){b.disabled=true;b.textContent="新版由 App Store 更新";return}b.disabled=true;b.textContent="檢查中…";const r=window.XQ_checkUpdate?await XQ_checkUpdate():{};
   if(!r.n){b.textContent="沒有網路";b.disabled=false;return}if(r.a===r.n){b.textContent="✓ 已是最新版";return}b.textContent="下載新版中…";setTimeout(()=>location.reload(),6000)}
 /* 回饋 846（開發者 11/9 選：字級放大）：App 內字級 小／標準／大／特大＝0.9／1／1.15／1.3 倍。
    html 上掛 data-fz 和 --fz（標準就拿掉 data-fz，畫面跟以前一模一樣）；m.css 照 --fz 放大面板、卡片、對局文字、小說、設定頁、頂欄標題，
@@ -5483,7 +5483,7 @@ function shrinkImage(file){return new Promise((ok,no)=>{const u=URL.createObject
   im.onerror=()=>{URL.revokeObjectURL(u);no(new Error("讀不到這張圖片"))};im.src=u})}
 async function feedbackInfo(){const m=meInfo(),r=window.XQNet&&XQNet.rating?XQNet.rating():null;
   return{id:m.id||"",name:m.name||"",rank:r?`${r.rank} ${r.pts}分（${r.w}勝${r.l}負${r.d}和）`:"",ver:(A=>{const run=window.XQ_BUILD&&!/__/.test(XQ_BUILD)?XQ_BUILD:"";return run&&A&&A!==run?`${run}（已下載 ${A}，換頁後套用）`:(A||run)})(await appVer())||"",
-    dev:(MY_KIND||"其他")+((matchMedia("(display-mode: standalone)").matches||navigator.standalone)?"・主畫面App":"・瀏覽器")+`・${innerWidth}x${innerHeight}`+(DEVMODE()&&typeof bgmDiag==="function"?"・"+bgmDiag():""),page:location.hash||"#/",role:DEVMODE()?"開發者":"玩家"}}
+    dev:(MY_KIND||"其他")+(/XQQianqiuApp\//.test(navigator.userAgent)?"・原生App":(matchMedia("(display-mode: standalone)").matches||navigator.standalone)?"・主畫面App":"・瀏覽器")+`・${innerWidth}x${innerHeight}`+(DEVMODE()&&typeof bgmDiag==="function"?"・"+bgmDiag():""),page:location.hash||"#/",role:DEVMODE()?"開發者":"玩家"}}
 async function postForm(rec){const F=FEEDBACK_FORM;if(!F.action)throw new Error("表單還沒設定");
   const body=new URLSearchParams();for(const k in F.entries)if(F.entries[k]&&rec[k]!=null)body.append(F.entries[k],String(rec[k]).slice(0,k==="img"?31000:k==="text"?45000:2000));
   // 用 sendBeacon「送出就好、不等回覆」：App 為了跑 Pikafish 開了嚴格的跨網域模式，fetch 讀不到 Google 的回覆會被當成失敗（其實已經送到），造成重複送出
@@ -5587,7 +5587,7 @@ const useFmt=ms=>{const m=Math.round(ms/60000);return m>=60?`${Math.floor(m/60)}
 function useSummary(){const S=store.get("useStat",null);if(!S||!S.t)return"";const P={...(S.p||{})};if(P.ship){P["雲河星槎"]=(P["雲河星槎"]||0)+P.ship;delete P.ship}   /* 意見回饋 724：星槎新頁（#/ship/...）以前記成 ship，併進雲河星槎 */
   const top=Object.entries(P).sort((a,b)=>b[1]-a[1]).slice(0,3).map(([k,v])=>`${k} ${useFmt(v)}`);return`總共用了 ${useFmt(S.t)}・最常待：${top.join("、")}`}
 // 線上 ID 登記：名字或段位有變、或超過 7 天，就送一筆「玩家」紀錄到同一個表單（意見回饋 708：多用了 30 分鐘以上、距離上次超過一天也送，時間才跟得上）
-async function reportPlayer(){if(!OFF||!FEEDBACK_FORM.action)return;if(navigator.webdriver)return;if(typeof fnTest==="function"&&fnTest())return;   /* 11/12：Claude 在內建瀏覽器設了測試房（xq_netRoot）拍截圖，還是送出玩家登記「棋友28AB」被當成真人；設了測試房或本機就不送 */   /* 意見回饋 652：自動化測試（Playwright 等）開的 App 不送玩家登記，名單才分得清真人 */if(/^(localhost|127\.|\[::1\])/.test(location.hostname))return;   /* 電腦本機測試不送玩家紀錄（第 502、504 列是測試時誤送的） */if(store.get("repOff",false)||(typeof fmNetOff==="function"&&fmNetOff()))return;   /* 上架隱私整理 11/10：玩家可以在設定關掉登記，家長關掉線上大廳時也不送 */const i=await feedbackInfo();try{const pn=typeof window.XQ_PUBNAME==="function"?window.XQ_PUBNAME(meInfo()):"";if(pn)i.name=pn}catch(e){}i.page="";   /* 登記只送大廳對外的名字（選稱號就是稱號），不送玩家自取的名字，也不送目前在哪一頁 */const key=i.id+"|"+i.name+"|"+i.rank.split(" ")[0]+"|k1",last=store.get("playerRep",null);   /* |k1：11/14 加本人證明，舊版登記過的玩家更新後馬上補送一次（帶驗證碼） */
+async function reportPlayer(){if(!OFF||!FEEDBACK_FORM.action)return;if(navigator.webdriver)return;if(typeof fnTest==="function"&&fnTest())return;   /* 11/12：Claude 在內建瀏覽器設了測試房（xq_netRoot）拍截圖，還是送出玩家登記「棋友28AB」被當成真人；設了測試房或本機就不送 */   /* 意見回饋 652：自動化測試（Playwright 等）開的 App 不送玩家登記，名單才分得清真人 */if(!window.XQ_NATIVE&&/^(localhost|127\.|\[::1\])/.test(location.hostname))return;   /* 電腦本機測試不送玩家紀錄（第 502、504 列是測試時誤送的） */if(store.get("repOff",false)||(typeof fmNetOff==="function"&&fmNetOff()))return;   /* 上架隱私整理 11/10：玩家可以在設定關掉登記，家長關掉線上大廳時也不送 */const i=await feedbackInfo();try{const pn=typeof window.XQ_PUBNAME==="function"?window.XQ_PUBNAME(meInfo()):"";if(pn)i.name=pn}catch(e){}i.page="";   /* 登記只送大廳對外的名字（選稱號就是稱號），不送玩家自取的名字，也不送目前在哪一頁 */const key=i.id+"|"+i.name+"|"+i.rank.split(" ")[0]+"|k1",last=store.get("playerRep",null);   /* |k1：11/14 加本人證明，舊版登記過的玩家更新後馬上補送一次（帶驗證碼） */
   const ut=((store.get("useStat",null)||{}).t)||0;if(last&&last.k===key&&Date.now()-last.at<7*864e5&&!(Date.now()-last.at>864e5&&ut-(last.u||0)>=18e5))return;
   let kv="";try{if(typeof srvKeyV==="function")kv="🔑 "+await srvKeyV(srvKey())}catch(e){}
   if(await sendRecord(Object.assign(i,{type:"👤 玩家",text:[useSummary(),kv].filter(Boolean).join("\n"),contact:""})))store.set("playerRep",{k:key,at:Date.now(),u:ut})}
@@ -6404,7 +6404,7 @@ function fwPaint(box,more){fwCSS();const C=window.XQCore,B0=C.parseFen(more?FW_F
    store "funnel"（整支手機一份，不在存檔清單裡：開新旅程、讀檔都不會重來） */
 let FN=null,FN_T=0,FN_PRE=0,FN_PM=0;
 function fnDev(){const u=navigator.userAgent||"";return/iPad|Tablet/i.test(u)||(/Macintosh/.test(u)&&navigator.maxTouchPoints>1)?"tablet":/Mobi|Android|iPhone|iPod/i.test(u)?"phone":"desktop"}
-function fnTest(){try{return localStorage.getItem("xq_netRoot")!=null||/^(localhost|127\.|\[::1\])|\.localhost$/.test(location.hostname)}catch(e){return false}}
+function fnTest(){try{return localStorage.getItem("xq_netRoot")!=null||(!window.XQ_NATIVE&&/^(localhost|127\.|\[::1\])|\.localhost$/.test(location.hostname))}catch(e){return false}}
 function fnSend(){try{if(!FN||!window.XQNet||!XQNet.shareIRT)return;XQNet.shareIRT({t:"fun",v:1,iid:FN.id,s:{...FN.s},ver:String(window.XQ_BUILD||"").slice(0,20),dev:FN.dev,...(FN.test?{test:1}:{})})}catch(e){}}
 function fnStep(k){try{if(!FN||FN.end||FN.s[k]!=null)return;FN.s[k]=Math.max(0,Math.round((Date.now()-FN.t0)/1000));if(k==="g1e"||Date.now()-FN.t0>14*864e5)FN.end=1;store.set("funnel",FN);fnSend();if(FN.end&&FN_T){clearInterval(FN_T);FN_T=0}}catch(e){}}
 function fnTick(){try{if(!FN||FN.end)return;const pv=document.getElementById("preov");if(pv)FN_PRE=1;
@@ -20989,7 +20989,7 @@ function hmTail(P){const bar=P.querySelector(":scope>.hm-go-bar");if(!bar)return
   const fix=()=>{if(!P.isConnected||bar.parentNode!==P)return;const a=document.activeElement;let n=bar.nextSibling;while(n){const nx=n.nextSibling;if(!(a&&n.contains&&n.contains(a)))P.insertBefore(n,bar);n=nx}};
   fix();let mo=null;try{mo=new MutationObserver(()=>{if(!P.isConnected){mo.disconnect();return}fix()});mo.observe(P,{childList:true})}catch(e){}return mo}
 function homeMap(v){const home=v.querySelector(".home");if(!home||v.querySelector(".home-page"))return;hmCss();
-  const nw=hmNew(),standalone=matchMedia("(display-mode: standalone)").matches||navigator.standalone,inst=OFF&&!standalone&&!(store.get("instAsk",null)||{}).no;
+  const nw=hmNew(),standalone=isStandalone(),inst=OFF&&!standalone&&!(store.get("instAsk",null)||{}).no;   /* 11/16 iMac 實機：原生 App 的 UA 有 XQQianqiuApp，自己判斷 display-mode 會漏掉、首頁出現「📲 加到主畫面」；改用 02-shell 的 isStandalone() */
   /* 開發者 11/11（截圖圈出石桌「著一盤」和底部「立即對局」重複，選「石桌改成同桌對弈」）：石桌旁本來就擺兩張石凳＝兩人面對面下（#/pvp）；
      跟電腦下、接著下、新手第一次都交給底部大按鈕（hmGoBar），石桌不再有新手天光和「第一次下象棋？」 */
   const lab=id=>id==="hmQuick"?HM_PVP_NM:id==="hmLearn"?xqHubName("learn"):id==="hmBattle"?xqHubName("battle"):HM_SPOTS.find(s=>s[0]===id)[3];
@@ -33911,7 +33911,7 @@ const I18N_EN={
   "可以吃":"can capture","可以走到這裡":"can move here","剛走到這裡":"just moved here","預定落點":"planned destination","再按一次落子":"press again to move","空":"empty",
   "還沒有走棋":"No moves yet","還沒有擺棋子":"No pieces on the board","沒有棋子":"no pieces","你的時間到了":"Your time is up","你的時間到了，超時":"Your time is up: time out","頁面":"Page",
   /* 設定頁：開關底下的說明小字、各列、提示（05-settings、11b-a11y、07f、07w7） */
-  "還沒取名字":"No name yet","換一顆棋子":"Change your piece","從主畫面點圖示打開：全螢幕、沒網路也能下棋":"Open it from the home screen icon: full screen, and you can play offline","開發中":"in development","檢查更新":"Check for updates","語言":"Language",
+  "還沒取名字":"No name yet","換一顆棋子":"Change your piece","從主畫面點圖示打開：全螢幕、沒網路也能下棋":"Open it from the home screen icon: full screen, and you can play offline","開發中":"in development","檢查更新":"Check for updates","新版由 App Store 更新":"Updates come from the App Store","語言":"Language",
   "語言 Language":"Language","用在哪裡":"Used for","送出玩家登記給開發者":"Send player registration to the developer","匿名記錄卡住的地方":"Anonymously record where I get stuck","匿名送出對局評分":"Send game scores anonymously","校正分數用":"for score calibration",
   "匿名送出學習進度":"Send learning progress anonymously","新手引導":"onboarding","作答":"answers","成長曲線":"growth curve","大廳顯示我的城市":"Show my city in the lobby","不顯示":"Don't show","申請刪除我在伺服器上的資料":"Request deletion of my data on the server",
   "每天自動送匿名健康摘要":"Send an anonymous health summary daily","預設關。打開後每天最多一次，把錯誤次數、卡頓、啟動時間、App 版本、裝置類型送給開發者；不含名字、裝置代號、棋譜、存檔":"Off by default. When on, at most once a day it sends error counts, stutters, startup time, app version and device type to the developer; no names, device ID, game records or saves",
