@@ -7,7 +7,8 @@ var XQ=(function(){
   const gameId=()=>new Date().toISOString().replace(/[:.]/g,"-").slice(0,19);
   /* 棋規設定（11/11 Gemini 架構報告第一項；註冊表在 xiangqi-referee.js 的 RULESETS）：每次重放都先把這盤的 rc 整理好再交給裁判——
      舊存檔沒有 rc 就補預設（千秋休閒規則＋目前裁判版本）；有 rc 就沿用開局時那份，開局後改設定不影響這盤 */
-  const stateRebuild=S=>{S.rc=C.ruleConfigOf(S);if(!(S.ed&&S.ed.length))return C.stateRebuild(S);return tdRebuild(S)};
+  const tdOwn=S=>!!(S&&S.td&&window.XQ_TD&&window.XQ_TD.own&&window.XQ_TD.own(S));   /* 11/16 黑洞新規則（m/07sg2-siege2.js）：這盤的走子、合法步、電腦出步、重建都歸 XQ_TD 管（沒打死會停原地，core.js 的規則套不上） */
+  const stateRebuild=S=>{S.rc=C.ruleConfigOf(S);if(tdOwn(S))return window.XQ_TD.rebuild(S,C);if(!(S.ed&&S.ed.length))return C.stateRebuild(S);return tdRebuild(S)};
   /* 黑洞陣地塔防（開發者 11/13，m/07bht-td.js）：招式移除敵子、星門落子這類「不是走棋的盤面變化」記在 S.ed＝[{n:第幾手之後,s:{格:子或 null}}]；
      重放時照順序在那一手之後套上，盤面、pos 才跟當時一樣。沒有 ed 的對局完全照舊（C.stateRebuild） */
   /* 11/15 星門圍城（m/07bhg-gatesiege.js）：ed 那一筆帶 ps＝套完換手（部署後備用掉主要行動，沒有走棋） */
@@ -308,7 +309,8 @@ var XQ=(function(){
     {const L=nk==="journey"?lvStart(lv):null;if(L){P.start=L.start;P.startTurn=L.startTurn;if(L.noPerp)P.noPerp=true;if(L.mirror&&L.mirror.length)P.mirror=L.mirror}}
     const rp=rulePref();P.rc=C.ruleConfig(nk==="cpu"&&!reward&&(!ranked||C.RULESETS[rp].rated)?rp:C.RULESET_DEFAULT,ranked?"ranked":pre?"puzzle":"casual");   /* 晉級賽只用可計分的棋規：千秋休閒規則或臺灣棋規正式版（原型不行） */
     stateRebuild(P);if(P.practice&&P.turn!==human)throw new Error("這步不是你走的");savePlay()}
-  function playApply(f,t){stateApply(P,f,t);P.hint=null;let tdE=null;if(P.td&&window.XQ_TD)try{tdE=window.XQ_TD.move(P,P.moves[P.moves.length-1],C)}catch(e){console.warn("[td]",e)}   /* 黑洞陣地塔防：扣元氣、星門落子（可能改盤面），再交給裁判 */
+  function playApply(f,t){if(tdOwn(P)){const r=window.XQ_TD.play(P,f,t,C);P.hint=null;if(r&&r.end)playEnd(r.end.w,r.end.why);savePlay();try{window.dispatchEvent(new Event("xq-play"))}catch(e){}return}   /* 11/16 黑洞新規則：不跑 judgeState（勝負照新規則）、不分析 */
+    stateApply(P,f,t);P.hint=null;let tdE=null;if(P.td&&window.XQ_TD)try{tdE=window.XQ_TD.move(P,P.moves[P.moves.length-1],C)}catch(e){console.warn("[td]",e)}   /* 黑洞陣地塔防：扣元氣、星門落子（可能改盤面），再交給裁判 */
     let r=judgeState(P);if(r&&P.noPerp&&/長將|長捉|長打/.test(r.why))r=null;if(!r&&tdE&&tdE.end)r=tdE.end;if(r)playEnd(r.w,r.why);savePlay();setTimeout(analyzePlay,0);
     try{window.dispatchEvent(new Event("xq-play"))}catch(e){}}   // 通知畫面馬上更新，不用等下一次輪詢
   function playEnd(w,why){P.result={w,why,...(P.repetition&&!P.repetition.pending?{adjudication:P.repetition}:{})};const res=!w?"d":w===P.human?"w":"l";
@@ -318,7 +320,7 @@ var XQ=(function(){
       P.stamp={era:P.arena,first,total:Object.keys(S).length}}
     else if(kindOf(P)==="cpu"&&!/-b$/.test(String(P.id))){const rec=ls.get("record",{}),L=rec[P.level]||(rec[P.level]={w:0,l:0,d:0});L[res]++;ls.set("record",rec)}
     /* 意見回饋 594：石桌往事從中局開始的關也存（記起始局面），我的成長才算得到故事裡下的棋 */
-    if(P.ed&&P.ed.length){savePlay();return}   /* 黑洞陣地塔防：盤面被招式、星門改過的那盤不存進棋譜（棋譜重放沒有這些變化，會走出不合法的步） */
+    if((P.ed&&P.ed.length)||tdOwn(P)){savePlay();return}   /* 黑洞陣地塔防：盤面被招式、星門改過的那盤不存進棋譜（棋譜重放沒有這些變化，會走出不合法的步） */
     pushGame("play",{id:P.id,rc:P.rc||null,date:P.id.slice(0,10),level:P.level,ranked:!!P.ranked,reward:!!P.reward,rk:P.rk,human:P.human,result:P.result,...(P.start?{start:P.start,startTurn:P.startTurn||"r"}:{}),...(P.journey?{journey:P.journey}:{}),...(zgOn(P)?{opp:"zhanggui"}:{}),...assist(P),moves:saveMoves(P.moves)});savePlay()}
   /* 11/13 開發者 P1（iPhone 3D 絕殺後頁面被重新載入）：剛分出勝負、殺棋特效還在播（畫面那邊的 window.XQ_fxBusy，m/02r-reloadguard.js），賽後分析先等特效播完再開始，
      不跟 3D 園子、特效、音效、觸覺擠在同一刻；同一段最多等 20 秒，等完照常分析（不佔「缺 PV 重評」的 3 次） */
@@ -470,6 +472,8 @@ var XQ=(function(){
         if(u){const w=TP.ms(P,u,null,lv,cpuPace())-(Date.now()-t0);if(w>0)await new Promise(z=>setTimeout(z,w));
           if(!P||P.id!==id||P.moves.length!==n||P.result)return;
           const f=parseSq(u.slice(0,2)),t=parseSq(u.slice(2,4));if(legal(P.board,P.turn).some(([a,b])=>a===f&&b===t)){playApply(f,t);playMsg="";engFail=0;return}}}
+      if(tdOwn(P)){await new Promise(z=>setTimeout(z,30));if(!P||P.id!==id||P.moves.length!==n||P.result)return;const mv=window.XQ_TD.decide(P,C);   /* 11/16 黑洞新規則：星樞照新規則自己算（易 1 步／中 2 步／難 3 步），不叫 Pikafish */
+        {const w=900-(Date.now()-t0);if(w>0)await new Promise(z=>setTimeout(z,w))}if(!P||P.id!==id||P.moves.length!==n||P.result)return;if(!mv)return;playApply(mv[0],mv[1]);playMsg="";engFail=0;return}
       if(P.td&&window.XQ_TD){const TD=window.XQ_TD.engine(P,C),r=await engRace(XQEngine.search(engPos(),{depth:TD.depth,searchmoves:TD.sm},TD.mpv),engTmo()),mv=window.XQ_TD.pick(r,TD,Math.random);   /* 黑洞陣地塔防：星樞推算 N 步＋失誤率；被定身的子不走（敵方沒別步可走時照常走） */
         {const w=1100-(Date.now()-t0);if(w>0)await new Promise(z=>setTimeout(z,w))}if(!P||P.id!==id||P.moves.length!==n||P.result)return;
         const f=parseSq(mv.slice(0,2)),t=parseSq(mv.slice(2,4));if(!legal(P.board,P.turn).some(([a,b])=>a===f&&b===t))throw new Error("引擎給出不合法著法 "+mv);playApply(f,t);playMsg="";engFail=0;return}
@@ -495,7 +499,7 @@ var XQ=(function(){
       cpuRate:{pts:CR.pts,rank:RANKS[ci][0],w:CR.w,l:CR.l,d:CR.d,next:nx?nx[0]:null,toNext:nx?nx[1]-CR.pts:0,lo:RANKS[ci][1],hi:nx?nx[1]:null,hist:CR.hist},
       levels:LEVELS.map(l=>({n:l.n,name:l.name,desc:l.desc})),record:ls.get("record",{}),
       moves:P.moves.map(moveOut),result:P.result,practice:P.practice||null,thinking:playBusy&&P.turn!==P.human,msg:playMsg,eval:lastEv(P.moves),hint:P.hint,hintN:P.hintN||0,undoN:P.undoN||0,   /* 開發者 11/11 選 v3 規劃書 B03：這盤用過幾次提示、悔棋，給畫面標示用 */
-      legal:!P.result&&P.turn===P.human?legal(P.board,P.turn):[],check:!P.result&&inCheck(P.board,P.turn)?kingSq(P.board,P.turn):-1,engine:true,td:P.td||null}}
+      legal:!P.result&&P.turn===P.human?(tdOwn(P)?window.XQ_TD.legal(P,C):legal(P.board,P.turn)):[],check:P.result?-1:tdOwn(P)?window.XQ_TD.check(P):inCheck(P.board,P.turn)?kingSq(P.board,P.turn):-1,engine:true,td:P.td||null}}
   /* 評比循環第 3 輪（兩分頁同一瞬間寫入）：會改盤面的動作（PLAY_MUT）用 Web Locks 排隊，同一時間只有一個分頁在改；鎖裡面 ensureP 先重讀最新版，再照版本檢查決定接受或提示「已切換到最新」。不支援 Web Locks 的瀏覽器照舊只靠版本號 */
   function playPost(p,b){try{if(PLAY_MUT.has(p)&&typeof navigator!=="undefined"&&navigator.locks&&navigator.locks.request)return navigator.locks.request("xq-play-write",()=>playPostIn(p,b))}catch(e){}return playPostIn(p,b)}
   async function playPostIn(p,b){if(ensureP()&&PLAY_MUT.has(p)){saveLog("clash",P);try{window.dispatchEvent(new CustomEvent("xq-play-newer",{detail:{id:P.id}}))}catch(e){}return playState()}   /* 評比循環第 2 輪：畫面上那盤已經被另一個分頁下過＝這一下不算，改看最新的 */
@@ -511,7 +515,7 @@ var XQ=(function(){
     else if(p==="/play/switch"||p==="/play/open"){playOpen(b);playMsg="";setTimeout(playEngine,0)}
     else if(p==="/play/restore"){playRestore(b.id);playMsg="";setTimeout(playEngine,0)}   /* 評比循環第 2 輪：保存紀錄的「↩ 回到那一盤」 */
     else if(p==="/play/move"){const f=+b.f,t=+b.t;if(P.result)throw new Error("這局已經結束");if(P.turn!==P.human)throw new Error("還沒輪到你");
-      if(!legal(P.board,P.turn).some(([x,y])=>x===f&&y===t))throw new Error("這步不合法");playApply(f,t);setTimeout(playEngine,0)}
+      if(!(tdOwn(P)?window.XQ_TD.legal(P,C):legal(P.board,P.turn)).some(([x,y])=>x===f&&y===t))throw new Error("這步不合法");playApply(f,t);setTimeout(playEngine,0)}
     else if(p==="/play/td"){if(!P.td||!window.XQ_TD)throw new Error("這盤沒有招式");if(P.result)throw new Error("這局已經結束");if(P.turn!==P.human)throw new Error("還沒輪到你");   /* 黑洞陣地塔防：放招（不佔走棋） */
       const o=window.XQ_TD.cast(P,b,C)||{};if(o.err)throw new Error(o.err);if(o.end)playEnd(o.end.w,o.end.why);savePlay();if(o.pass&&!P.result)setTimeout(playEngine,0);try{window.dispatchEvent(new Event("xq-play"))}catch(e){}}   /* o.pass：星門圍城部署後備＝用掉這一手，換電腦走 */
     else if(p==="/play/undo"){if(P.ranked)throw new Error("積分挑戰不能悔棋");if(P.td)throw new Error("黑洞陣地戰不能悔棋");/* 意見回饋 651：開發者 597 決定擂台也能用悔棋符，這裡原本還擋著（382 的舊規則），App 先扣了悔棋符、悔棋卻失敗——拿掉 *//* 意見回饋 380：電腦（擂主）還在想的時候也能悔棋——引擎算完會發現步數變了、自動丟掉那步 */

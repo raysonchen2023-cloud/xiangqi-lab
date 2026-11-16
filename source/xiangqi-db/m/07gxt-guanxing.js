@@ -18,9 +18,9 @@ const GXT_LAND=1.5,GXT_LMIN=600;   /* 寬版圖 1.79：可用寬高比 1.43 以�
 const GXT_OFF="星軌未通，敬請期待";
 /* [id, 大字, 直幅左%, 上%, 寬版左%, 上%, 未通？]（量 gx_tai 768×1376、gx_tai_w 1376×768；標籤放在器物上方，不擋主體） */
 const GXT_SPOTS=[
-  ["gxtSimul","黑洞車輪戰",50,19,50,24,0],   /* 天頂黑洞下方的光柱；11/16 開發者「車輪戰和星門圍城也都能上線」（選單：解鎖，點了直接開車輪戰 07bhw whlOpen） */
+  ["gxtSimul","天頂黑洞",50,19,50,24,0],   /* 11/16 黑洞新規則：車輪戰拿掉，天頂黑洞改通往星門圍城 */   /* 天頂黑洞下方的光柱；11/16 開發者「車輪戰和星門圍城也都能上線」（選單：解鎖，點了直接開車輪戰 07bhw whlOpen） */
   ["gxtGx","十三星系",18,32.5,39.5,32,0],   /* 星圖石碑頂上 */
-  ["gxtTd","星淵遠征",50,37,50.5,40.5,0],   /* 青銅渾儀頂上 */
+  ["gxtTd","星門圍城",50,37,50.5,40.5,0],   /* 11/16 黑洞新規則：只剩星門圍城 */   /* 青銅渾儀頂上 */
   ["gxtOmen","今日異象",76,42,62,50,1],   /* 圭表石柱頂上（寬版在石柱右邊、圭面上方） */
   ["gxtFree","自由擺陣",31,70,44,71,1],   /* 石棋桌上方 */
   ["gxtSky","二十八宿",80,26,80,15,0]];   /* 開發者 11/13 晚：星芒點亮二十八宿星圖（07dgl dglXiuSheet）；直幅在右側山頭上方的星空、寬版在右上星空 */
@@ -73,7 +73,7 @@ function gxtExPos(P){const s=P.querySelector(".ex-spot");if(!s)return;if(!s.id)s
 /* 11/14：定軌力用完＝黑洞入口關著（07dgl dglBhLock；設定關掉平日體力的人不受影響），渾儀、星槎「星淵」都先問 */
 const gxtBhLock=()=>{try{return typeof dglBhLock==="function"&&dglBhLock()}catch(e){return false}};
 const gxtBhMsg=()=>{try{return typeof dglBhLockMsg==="function"?dglBhLockMsg():"定軌力用完了，黑洞入口先關著"}catch(e){return"定軌力用完了，黑洞入口先關著"}};
-function gxtTd(){if(gxtBhLock()){toast("🌫 "+gxtBhMsg());return}try{sessionStorage.setItem("gxtFrom","1")}catch(e){}if(typeof bhtdOpen!=="function"){toast("🌌 "+GXT_OFF);return}gxtFx("td",()=>bhtdOpen())}   /* 11/16：先播渾儀的短過場（gxtFx，下面） */
+function gxtTd(){if(gxtBhLock()){toast("🌫 "+gxtBhMsg());return}try{sessionStorage.setItem("gxtFrom","1")}catch(e){}if(typeof gsvOpen==="function"&&typeof SG2G!=="undefined"){gxtFx("td",()=>gsvOpen());return}if(typeof bhtdOpen!=="function"){toast("🌌 "+GXT_OFF);return}gxtFx("td",()=>bhtdOpen())}   /* 11/16：先播渾儀的短過場（gxtFx，下面） */
 /* ---------- 星碑共鳴：從星圖石碑進幻譜星門的過場（開發者 11/15）----------
    開發者：「請 gemini 規劃觀星臺有什麼神秘的力量，可以直接通聯或前往 13 星系」→ 規劃 story/gemini_app/157，他選「星碑共鳴」，過場「直接做完整版」。
    設定：幻影棋客開了門、星槎駛出了路，觀星臺的星圖石碑是人間的「錨」；碰了石碑，神識順著天頂黑洞的光柱進幻譜星門，肉身留在臺上。
@@ -163,7 +163,7 @@ function gxtFx(id,open){let P=null,im=null,ok=false;try{P=document.querySelector
   at(T.say,()=>A(q(".gxt-fx-t"),[{opacity:0,transform:"translateY(6px)"},{opacity:1,transform:"none"}],{duration:300}));
   at(T.open,()=>{doOpen();finish(id==="sky")})}   /* 星圖面板是從底下滑上來的，過場層要收得快，那句話才不會壓在面板上 */
 /* 天頂黑洞＝黑洞車輪戰：跟渾儀一樣，定軌力用完時黑洞入口關著 */
-function gxtWheel(){if(gxtBhLock()){toast("🌫 "+gxtBhMsg());return}if(typeof whlOpen!=="function"){toast("🌌 "+GXT_OFF);return}gxtFx("simul",()=>whlOpen())}
+function gxtWheel(){if(gxtBhLock()){toast("🌫 "+gxtBhMsg());return}if(typeof gsvOpen==="function"&&typeof SG2G!=="undefined"){gxtFx("simul",()=>gsvOpen());return}if(typeof whlOpen!=="function"){toast("🌌 "+GXT_OFF);return}gxtFx("simul",()=>whlOpen())}   /* 11/16：天頂黑洞也開星門圍城選關 */
 const GXT_ACT={gxtTd:gxtTd,gxtSimul:gxtWheel,gxtGx:()=>gxtGate(),gxtSky:()=>{if(typeof dglXiuSheet!=="function"){toast("🌌 "+GXT_OFF);return}gxtFx("sky",()=>dglXiuSheet())}};
 function GxtPage(v){setTop("🔭 觀星臺","#/");setTabs(true,"#/");v.className="view";
   if(!gxtOpen()){toast("🔭 觀星臺還沒出現");navReplace("#/");return{}}

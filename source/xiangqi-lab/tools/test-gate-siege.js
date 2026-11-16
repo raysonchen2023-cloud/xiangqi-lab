@@ -44,7 +44,7 @@ test("七星數值（提案一 5.4）＋等級加成：Lv1 原值、Lv100 最多
   for(const k in T){const s=G.stats(k,1),z=G.stats(k,100);assert.deepEqual([s.hp,s.atk,s.def,s.sp],T[k],k);assert.equal(z.hp,Math.round(T[k][0]*1.8));assert.equal(z.atk,T[k][1]+35);assert.equal(z.def,T[k][2]+18);assert.equal(z.sp,T[k][3],"靈力容量不隨修為長");assert.equal(s.sp0,35);assert.equal(s.rg,4)}});
 
 test("關卡：第 1～12 關開局＋星門合法（敵剛好 16 子、紅 8＋後備 8、星門在敵半場、補給點各棋種都有合法點、不照面、沒人被將）", ()=>{
-  assert.deepEqual(J(MAIN),[1,2,3,4,5,6,7,8,9,10,11,12],"11/15 補第 2、4、5 關、第二章第 7～12 關");assert.deepEqual(J(G.LVN.filter(n=>n>12)),[31,32,33,34,35,36,37,38,39],"11/15 七星改版：序章 31～39");
+  assert.deepEqual(J(MAIN),[1,2,3,4,5,6,7,8,9,10,11,12],"11/15 補第 2、4、5 關、第二章第 7～12 關");assert.deepEqual(J(G.LVN.filter(n=>n>12)),[13,14,15,16,17,18,19,20,21,22,23,24,31,32,33,34,35,36,37,38,39],"11/15 七星改版：序章 31～39；11/16 黑洞新規則：急襲殘陣 13～24");
   for(const n of MAIN){assert.deepEqual(J(G.lvCheck(n,C)),[],"第 "+n+" 關");const pl=G.plan(n),b=G.startBoard(n);
     assert.equal(pl.red.length,8);assert.equal(pl.res.length,8);assert.equal(pl.open.length+pl.waves.length,16,"敵方總預算 16");
     assert.equal(b.filter(x=>x&&x===x.toLowerCase()).length,pl.open.length);for(const w of pl.waves)assert.equal(G.spawnOk(b,w.p,w.sq,C),"","開局盤上每顆援軍的門都能落")}
@@ -296,7 +296,7 @@ test("分段（第 5 關）：星樞 HP 降到 60% 解鎖隔山星砲、30% 解�
 
 /* ===== 第二章「俥路調度」第 7～12 關（11/15）===== */
 test("第二章「俥路調度」第 7～12 關：章與關名照提案二第 3 節；數值在提案範圍內；每關的學習點擺得出來；深度不超過 4；星樞不長將（arep）十二關都開（第一章由 GSV.AREP1 一個開關管），第 1～6 關的數值沒動", ()=>{
-  assert.deepEqual(J(G.CHP.map(c=>[c.n,c.t,c.nm,c.lv])),[[0,"序章","星槎序章",[31,32,33,34,35,36,37,38,39]],[1,"第一章","星門入侵",[1,2,3,4,5,6]],[2,"第二章","俥路調度",[7,8,9,10,11,12]]]);
+  assert.deepEqual(J(G.CHP.map(c=>[c.n,c.t,c.nm,c.lv])),[[0,"序章","星槎序章",[31,32,33,34,35,36,37,38,39]],[1,"第一章","星門入侵",[1,2,3,4,5,6]],[2,"第二章","俥路調度",[7,8,9,10,11,12]],[3,"急襲","中局殘陣",[13,14,15,16,17,18,19,20,21,22,23,24]]]);
   assert.deepEqual(J([].concat(...G.CHP.map(c=>c.lv)).sort((a,b)=>a-b)),J(G.LVN),"每一關都在某一章裡、沒有重複");
   /* 關名、星樞 HP／ATK／DEF、開場靈力、會用的招、敵開場子數、援軍回合 */
   const T={7:["直路守口",120,95,25,35,["cqzr"],10,[3,5,7]],8:["橫俥回援",125,100,25,35,["cqzr"],9,[2,4,6]],9:["留一道退路",130,100,25,40,["dll"],9,[2,4,6]],
@@ -410,7 +410,7 @@ function uiOff(){for(const k of["document","store","toast","vibrate","modal","jS
 
 test("〔混合〕選關分章：分頁兩顆（章名照提案二）、每章只列自己的六關、每關只有「第 n 關・關名」加一排星；開打前一行寫這一關的三個目標；新關的獎勵照舊（journey 開頭 bh:gs＝不給修為、不回定軌力）", ()=>{
   const H=ctx.gsvChapHTML,P={c:{3:{w:1,l:2,d:0,best:{rnd:20,hp:30}}}},A={all:true};   /* P＝改版前的舊存檔：沒有 h、勝場沒有 st */
-  const h1=H(P,3,1,A);assert.deepEqual(tabsOf(h1),[[0,"序章","星槎序章",false,"false"],[1,"第一章","星門入侵",true,"true"],[2,"第二章","俥路調度",false,"false"]]);
+  const h1=H(P,3,1,A);assert.deepEqual(tabsOf(h1),[[0,"序章","星槎序章",false,"false"],[1,"第一章","星門入侵",true,"true"],[2,"第二章","俥路調度",false,"false"],[3,"急襲","中局殘陣",false,"false"]]);
   assert.deepEqual(cardsOf(h1).map(x=>x[0]),[1,2,3,4,5,6]);assert.deepEqual(cardsOf(h1).filter(x=>x[2]==="on").map(x=>x[0]),[3],"選中的那一關亮著");assert.equal(cardsOf(h1)[0][1],"第 1 關・星淵初探");
   const h2=H(P,7,2,A);assert.deepEqual(cardsOf(h2).map(x=>x[1]),[7,8,9,10,11,12].map(n=>`第 ${n} 關・${G.LV[n].nm}`));assert.ok(tabsOf(h2)[2][3]&&!tabsOf(h2)[1][3],"第二章那顆分頁亮著");
   assert.deepEqual(cardsOf(H(P,3,2,A)).filter(x=>x[2]==="on"),[],"看別章時，選中的關不在這一章就沒有卡亮著");assert.deepEqual(cardsOf(H(P,1,9,A)).map(x=>x[0]),[31,32,33,34,35,36,37,38,39],"章號不對就回第一個分頁（11/15 七星改版：序章）");
@@ -458,8 +458,8 @@ test("逐關解鎖：第 1 關要先破序章 C1（11/15 七星改版；改版�
     /* 真的 gsvStart：鎖住的關（主控台直接叫也一樣）只跳一句、不開局；開著的照開；困難版 journey 還是 bh:gs 開頭、帶 hard、深度照困難版 */
     REAL_START(5,"classic",false);assert.equal(U.js,null);assert.match(U.toast,/🔒 第 5 關：破第 4 關開放/);REAL_START(1,"classic",false,null,false,1);assert.equal(U.js,null);assert.match(U.toast,/第 1 關困難版：先破普通版/);
     REAL_START(1,"classic",false);assert.equal(U.js,null);assert.match(U.toast,/第 1 關：破序章 C1 開放/,"11/15 七星改版：新存檔要先破序章 C1");U.DB.gsv={mv:G.MODE,c:{37:{w:1}}};
-    REAL_START(1,"classic",false);assert.equal(U.js.id,"bh:gs1");assert.equal(U.js.o.td.hard,0);assert.equal(U.js.o.lx,2);assert.equal(U.DB.gsv.last,1);
-    ctx.gsvAll(true);REAL_START(5,"classic",false,null,false,1);assert.equal(U.js.id,"bh:gs5h");assert.equal(U.js.o.journey,"bh:gs5h");assert.deepEqual(J(U.js.o.td),{mode:G.MODE,lv:5,ch:"x_swordboy",L:1,sk:["qi1"],hard:1});
+    REAL_START(1,"classic",false);assert.equal(U.js.id,"bh:gs1");assert.equal(U.js.o.td.diff,2,"11/16 黑洞新規則：普通版＝中");assert.equal(U.js.o.lx,2);assert.equal(U.DB.gsv.last,1);
+    ctx.gsvAll(true);REAL_START(5,"classic",false,null,false,1);assert.equal(U.js.id,"bh:gs5h");assert.equal(U.js.o.journey,"bh:gs5h");assert.deepEqual(J(U.js.o.td),{mode:G.MODE,lv:5,diff:3,sk:["qi1"]},"11/16 黑洞新規則：開局只帶關、難度、招（困難版＝難；這支測試沒載 07sg2，mode 退回舊值）");
     assert.equal(U.js.o.lx,G.lvOf(5,1).depth);assert.equal(U.js.o.lv.fen,G.startFen(5,C),"困難版同一個開局");assert.equal(U.DB.gsv.lastH,1)}finally{uiOff()}});
 
 test("三星：第 1 星＝過關，另外兩顆每關各一個條件（跟那一關的學習點有關）、各自累積；條件逐種判定；舊存檔有勝場沒有星＝1 星；困難版的星另外記", ()=>{
@@ -508,7 +508,7 @@ test("三星：第 1 星＝過關，另外兩顆每關各一個條件（跟那�
     assert.match(noSpan(U.M.h),/<b>★ 過關<\/b>　<b>★ 入侵卒全部清掉<\/b>　<b>★ 入侵沒扣到血<\/b>/)}finally{uiOff()}});
 
 test("第 2 關第 2 星換成「入侵卒全部清掉」（11/15 開發者決定；原本「部署過後備」太容易）：場上沒有入侵卒、入侵卒的援軍也都落下過或被截掉才算；已經上線過，舊條件下亮過的星不會掉；困難版一起換", ()=>{
-  assert.deepEqual(J(G.STG[2]),[["invClr"],["inv0"]]);assert.deepEqual(J(G.goals(2).map(g=>g.t)),["過關","入侵卒全部清掉","入侵沒扣到血"]);assert.ok(!G.LVN.some(n=>G.STG[n].some(x=>x[0]==="dep")),"沒有哪一關還在用「部署過後備」");
+  assert.deepEqual(J(G.STG[2]),[["invClr"],["inv0"]]);assert.deepEqual(J(G.goals(2).map(g=>g.t)),["過關","入侵卒全部清掉","入侵沒扣到血"]);assert.ok(!G.LVN.some(n=>(G.STG[n]||[]).some(x=>x[0]==="dep")),"沒有哪一關還在用「部署過後備」");
   const ok=P=>G.GOAL.invClr.ok(P.td,P.board),star2=P=>G.stars(P.td,P.board)[1];
   /* 真正的第 2 關開局：開場一顆入侵卒在 c7，還有兩顆沒落下（第 2 回合左門、第 4 回合右門） */
   const P=game(2);assert.equal(P.td.waves.filter(w=>w.tag==="inv").length,2);assert.ok(!ok(P),"開場：場上有、後面還有");

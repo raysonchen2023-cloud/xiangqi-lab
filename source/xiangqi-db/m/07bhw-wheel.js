@@ -147,7 +147,8 @@ function whlSave(){const P=whlProg();P.cur=WHL_M;store.set("whl",P)}
 /* 黑洞關卡卡片（07bht-td.js bhtdSelect，星門圍城那張後面）：只在開發者模式顯示，卡上只寫名稱（開發者 11/15：關卡字要極簡） */
 function whlCard(){   /* 11/15 開發者「可以上線」：開給所有玩家（原本只給開發者） */
   return`<button type="button" class="bt-card bt-whlc" data-whl="1" aria-label="車輪戰"><div class="hd"><b>車輪戰</b></div></button>`}
-function whlOpen(){if(typeof GSV==="undefined")return;const P=whlProg();if(P.cur&&!P.cur.over){WHL_M=P.cur;WHL_Q={run:null,list:[]};const C=whlC();WHL_CUR=C?Math.max(0,WHL.hop(WHL_M,-1,C)):0;WHL_SEL=-1;WHL_TG=null;WHL_EVS={};whlShow();return}whlSetup()}
+function whlOpen(){if(typeof SG2G!=="undefined"&&typeof gsvSelect==="function"){gsvSelect(store.get("era","classic"),false);return}   /* 11/16 黑洞新規則：車輪戰拿掉，入口改開星門圍城 */
+  if(typeof GSV==="undefined")return;const P=whlProg();if(P.cur&&!P.cur.over){WHL_M=P.cur;WHL_Q={run:null,list:[]};const C=whlC();WHL_CUR=C?Math.max(0,WHL.hop(WHL_M,-1,C)):0;WHL_SEL=-1;WHL_TG=null;WHL_EVS={};whlShow();return}whlSetup()}
 if(typeof window!=="undefined")window.whlOpen=whlOpen;
 const whlCk=()=>{let c="";try{c=typeof ptyLook==="function"?ptyLook():((typeof myChar==="function"&&myChar())||store.get("pChar",""))}catch(e){}return GSV.CH[c]?c:"x_swordboy"};   /* 11/16 取消隊長：畫面上的名字、頭像＝首頁小人（07pty-party.js ptyLook）；招式看全隊 */
 const whlL=c=>{try{if(typeof ptyLv==="function")return ptyLv(c||whlCk());return typeof xpInfo==="function"?xpInfo().L:1}catch(e){return 1}};   /* 首頁小人那位的等級（只顯示用） */

@@ -70,7 +70,7 @@ test("〔行為〕招式清單：標題是這位的名字；學會的排前面�
 test("〔原始碼〕接線：卡冊畫天賦列；點招式開清單、點天賦開天賦樹；天賦樹的返回鈕照從哪裡進來的寫", () => {
   assert.ok(SRC.includes('<p class="pty-m pty-cap">${ptyCapSay(L)}</p>`+ptyTeamHTML()+ptyTalHTML()+PTY.ORDER.map(c=>ptyCardHTML(P,c,L)).join("")'));
   assert.ok(SRC.includes('if(a==="sk"){closeSheet();setTimeout(()=>ptySkills(c),60);return}'));
-  assert.ok(SRC.includes('closeSheet();setTimeout(()=>bhtdTal(()=>ptySheet(),"‹ 回雲河七星"),60)'));
+  assert.ok(SRC.includes('closeSheet();setTimeout(()=>{if(typeof sg2TalSheet==="function"&&typeof SG2G!=="undefined")sg2TalSheet(()=>ptySheet(),"‹ 回雲河七星");else bhtdTal(()=>ptySheet(),"‹ 回雲河七星")},60)'),"11/16 每位專屬天賦：有 v2 開 sg2TalSheet，沒有照舊開 bhtdTal");
   assert.ok(TD.includes("function bhtdTal(back,backL){bhtdCss();") && TD.includes('[[backL||"‹ 回選關",()=>{if(back)back()}]') && TD.includes("bhtdTal(back,backL)},true]]"), "沒給第二個參數照舊「回選關」；重置後重畫也帶著");
   assert.ok(DGL.includes('bhtdTal(()=>dglCard(),"‹ 回我的角色")'));
 });

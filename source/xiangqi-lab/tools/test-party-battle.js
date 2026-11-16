@@ -69,7 +69,7 @@ test("〔原始碼〕扣血接點：兩種規則的擒子／被擒／將軍／�
   const GS=rd("xiangqi-db/m/07bhg-gatesiege.js"),TD=rd("xiangqi-db/m/07bht-td.js");
   assert.ok(GS.includes("{vp,cp:pt,fc:fc?1:0,tag:gtag,def:def0,atk:atkR(td,pt)}"));assert.ok(GS.includes('queue(td,"r",CAPB[vp],"cap",{vp,cp:pt,def:defR(td,vp)})'));
   assert.ok(GS.includes('const defOf=(td,side)=>side==="b"?td.en.def+GUARD*guards(td):defR(td,"K");'));
-  assert.ok(GS.includes('squad((cfg.sq!==undefined?cfg.sq:(typeof ptySquad==="function"?ptySquad():null)))'));assert.ok(GS.includes('td:{mode:GSV.MODE,lv:n,ch:ck,L,sk:P.sk["*"],hard}}'),"星門圍城開局呼叫（11/16 全隊招式：招式存在 P.sk[\"*\"]）");
+  assert.ok(GS.includes('squad((cfg.sq!==undefined?cfg.sq:(typeof ptySquad==="function"?ptySquad():null)))'));assert.ok(GS.includes('td:{mode:typeof SG2G!=="undefined"?SG2G.MODE:GSV.MODE,lv:n,diff,sk:P.sk["*"]}}'),"星門圍城開局呼叫（11/16 黑洞新規則：開 v2、帶難度；招式存在 P.sk[\"*\"]）");
   assert.ok(TD.includes("capDmg(m.cap,pc,atkR(td,up(pc)),"));assert.ok(TD.includes("*CAPM[up(pc)])),defR(td,up(m.cap)))"));assert.ok(TD.includes('defDmg(CHK_HIT,defR(td,"K"))'));
   assert.ok(TD.includes('squad((cfg.sq!==undefined?cfg.sq:(typeof ptySquad==="function"?ptySquad():null)),cfg)'));assert.ok(TD.includes("td:{lv:n,ch:ck,L,diff,sk,xm,tal}"),"塔防開局呼叫原樣");
   assert.ok(!/td\.me\.def\),b\.indexOf\("K"\)/.test(TD),"被將軍不再用整隊防禦");

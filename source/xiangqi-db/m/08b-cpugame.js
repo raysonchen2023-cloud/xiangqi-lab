@@ -83,6 +83,7 @@ function CpuGame(v,practicePage,mode){
   const pmFire=()=>{if(typeof pmvFire==="function"&&st)pmvFire(st,st.human,(f,t)=>{if(busy)return false;sel=f;tap(t);return true},pmFire)};
   /* 第 13 輪 F4：3D 園子（含朝代擂台、黑洞巨盤）也排得了預走（park3d 照 o.pre 畫標記），不再只限平面棋盤 */
   function tap(i){if(st&&!st.result&&(st.turn!==st.human||st.thinking)&&typeof pmvTap==="function"&&pmvTap(st,st.human,i,{redraw:()=>{if(st)render(st)}}))return;
+    if(typeof sg2Tap==="function")try{sg2Tap(st,i,sel)}catch(e){}   /* 11/16 黑洞新規則：記下點了哪顆（看攻防、攻擊預覽；m/07sg2-siege2.js） */
     if(!st||st.result||st.turn!==st.human||st.thinking)return;
     if(sel>=0&&st.legal.some(([f,t])=>f===sel&&t===i)){const f=sel;sel=-1;
       {const g=typeof bhxGuard==="function"?bhxGuard(st,f,i):null;if(g){if(g.hint)pHint={n:st.moves.length,f:g.hint[0],t:g.hint[1]};draw();return}}{const g=typeof bhtlGuard==="function"?bhtlGuard(st,f,i):null;if(g){if(g.hint)pHint={n:st.moves.length,f:g.hint[0],t:g.hint[1]};draw();return}}   /* 黑洞序局走錯：不送出，星樞提示（07bh-blackhole.js）；塔防練習賽照劇本走（07bhtl-tdlearn.js bhtlGuard） */

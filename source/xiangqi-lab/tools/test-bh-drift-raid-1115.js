@@ -69,7 +69,7 @@ test("〔行為〕定軌力用完：兩邊都不開，星槎照航線停靠；�
 });
 
 test("〔原始碼〕偏航視窗：急襲已開時說明與按鈕換成急襲、按了直接開打（不再多一張星樞棋局說明）；還沒開的人文案照舊", () => {
-  assert.ok(BH.includes('const bhDriftRaid=()=>{try{return typeof bhtdRdOpen==="function"&&typeof bhtdProg==="function"&&typeof bhtdRaidDrift==="function"&&!(typeof bhtlNeed==="function"&&bhtlNeed())&&bhtdRdOpen(bhtdProg())}catch(e){return false}};'));
+  assert.ok(BH.includes('const bhDriftRaid=()=>{if(typeof sg2DriftOk==="function")return sg2DriftOk();try{return typeof bhtdRdOpen==="function"&&typeof bhtdProg==="function"&&typeof bhtdRaidDrift==="function"&&!(typeof bhtlNeed==="function"&&bhtlNeed())&&bhtdRdOpen(bhtdProg())}catch(e){return false}};'));
   assert.ok(BH.includes('function bhOffer(k,next,cover){const n=store.get("bhCount",0)||0,rd=bhDriftRaid();'));
   assert.ok(BH.includes('[[rd?"⚡ 接受急襲":"🌀 接受棋局",()=>rd?bhStart(k,cover):bhIntro(k,cover)],["先回航線",'));
   assert.ok(BH.includes("這是一場星淵急襲，三到五分鐘分勝負，打贏有星塵。要接嗎？不接也不扣任何東西，星槎照原本的航線停靠。"));

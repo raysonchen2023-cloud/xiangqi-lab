@@ -46,7 +46,7 @@ let BHTL_ST=null,BHTL_RAF=0,BHTL_K="",BHTL_SP="",BHTL_W=0,BHTL_W4=false,BHTL_SKI
 /* ---------- 存檔、判斷 ---------- */
 function bhtlSt(){let S=null;try{S=store.get("bhtl",null)}catch(e){}S=S&&typeof S==="object"?S:{};if(!S.tip||typeof S.tip!=="object")S.tip={};return S}
 function bhtlSave(o){const S=Object.assign(bhtlSt(),o);try{store.set("bhtl",S)}catch(e){}return S}
-function bhtlNeed(){const S=bhtlSt();if(S.done||S.skip)return false;let P={c:{},w:{},l:{}};try{if(typeof bhtdProg==="function")P=bhtdProg()}catch(e){}
+function bhtlNeed(){if(typeof SG2G!=="undefined")return false;   /* 11/16 黑洞新規則：練習賽拿掉，序章是唯一的教學 */const S=bhtlSt();if(S.done||S.skip)return false;let P={c:{},w:{},l:{}};try{if(typeof bhtdProg==="function")P=bhtdProg()}catch(e){}
   return !Object.keys(P.c||{}).length&&!Object.keys(P.w||{}).length&&!Object.keys(P.l||{}).length}   /* 11/13 18:00 以後已經玩過塔防的人不自動邀請 */
 const bhtlIs=st=>!!st&&st.journey===BHTL_ID&&!!st.td;
 /* 11/13 手機實測：3D 全盤遠景相鄰格約 20px，中兵模型擋住卒的腳下點不到 → 練習賽整盤用平面棋盤（08b render 把它當 PARK_OFF，跟錯棋重練同一套，不改玩家的 park3d 設定；下一盤照原本設定） */

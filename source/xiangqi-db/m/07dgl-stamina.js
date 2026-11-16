@@ -140,13 +140,9 @@ const dglBackMin=r=>Math.max(0,Math.ceil((DGL_BACK-(+r||0))/DGL_SHIP-1e-9));
 
 const DGL={s:dglNew(),last:Date.now(),done:0,pz:0,say:0,lastZ:"",fromZ:"",walk:new Set(),wt:0,ft:0,kt:0,hid:0};
 try{if(DGL_ON)DGL.s=dglWake(store.get("dgl",null),Date.now())}catch(e){}   /* 11/16 ③：重開 App 接著上次的體力，離開的時間照星槎上的速度回 */
-/* 這把尺的上限（11/16 ①）：陪你走的那一位（myChar＝pChar，07pty ptySetLook 會同步）在黑洞裡的元氣，照他自己的等級；沒有旅程、黑洞模組沒載入＝DGL_MAX */
-function dglMx(){try{if(typeof BHTD==="undefined"||!BHTD.stats||!BHTD.CH)return DGL_MAX;let h=0;
-    const S=typeof ptySquad==="function"?ptySquad():null,q=S&&BHTD.squad?BHTD.squad(S,{}):null;   /* 11/16 ⑥ 全隊體力：跟 07bht boot 的 hp0 同一個算法（七種棋子所屬角色的平均；沒加入的是木棋靈） */
-    if(q){const P=Object.keys(q);h=Math.round(P.reduce((a,pc)=>a+(+q[pc].hp||0),0)/P.length)}
-    else{const c=dglName();if(c&&BHTD.CH[c]&&typeof ptyLv==="function")h=Math.round(+BHTD.stats(c,ptyLv(c)).hp)}   /* 沒有旅程：黑洞用的是自己那一位 */
-    if(!(h>0))return DGL_MAX;try{if(typeof bhtdDust==="function"&&(bhtdDust().t||[]).includes("htgy"))h+=Math.round(+BHTD.TAL_HP||0)}catch(e){}   /* 天賦厚土固元：黑洞開局會多這幾點，這裡也算進去 */
-    return h}catch(e){}return DGL_MAX}
+/* 11/16 黑洞新規則（story/164、166 第三期，開發者選單）：人間那一條改回「定軌力」、自己的上限 DGL_MAX，不再跟黑洞的體力掛鉤（拆掉上面 ⑥ 的全隊體力）。
+   三分之二／三分之一的加成門檻（⑤）、記住體力（③）照舊；dglDisp／dglU 碰到 mx＝DGL_MAX 就是原樣 */
+function dglMx(){return DGL_MAX}
 /* 記住體力（11/16 ③）：寫進 store "dgl"（讀了再寫，不蓋掉星芒、星圖那些欄位）；設定關了平日體力時不記 */
 function dglKeep(){try{if(!dglLive())return;const o=dglSt();o.r=Math.round(DGL.s.r*100)/100;o.ra=Date.now();o.ro=DGL.s.out||DGL.s.due?1:0;store.set("dgl",o);DGL.kt=o.ra}catch(e){}}
 const dglRM=()=>{try{return matchMedia("(prefers-reduced-motion: reduce)").matches}catch(e){return false}};
@@ -372,7 +368,7 @@ function dglCard(){dglCss();let nm="";try{nm=meName()}catch(e){}const Q=new Set(
     const Sx=dglSt(),xn=dglXiuN(Sx.t),ttl=(Math.round(+Sx.tw)||0)&16,m1=DGL_M1,m2=DGL_M2,mu=dglXpMul(s.r,mx),warn=st==="low"||st==="due"||st==="out";
     /* 11/14 開發者看手機截圖：「對新手玩家這內容還是太複雜」→ 選「所有人都極簡」：每塊只留圖示、名稱、數字、一條、一句話；
        刻度、膠囊、來源→用途、加成徽章都收進「？」；黑洞三個數字搬到我的角色頁（dglMeCard），黑洞選關卡片本來也有 */
-    const t1=dglU(DGL_T1,mx),t2=dglU(DGL_T2,mx),bonus=mu>=m2?`<span>現在體力</span> ${t2} <span>以上，得到的修為</span> ×${m2}`:mu>1?`<span>現在體力</span> ${t1} <span>以上，得到的修為</span> ×${m1}<span>；到</span> ${t2} <span>以上是</span> ×${m2}`:`<span>體力到</span> ${t1} <span>以上，得到的修為</span> ×${m1}<span>；到</span> ${t2} <span>以上是</span> ×${m2}`;   /* 11/16 ⑤：寫出門檻是幾點；盤查第 22 項：加成其實所有修為都乘，不只下棋、解題，字跟著改 */
+    const t1=dglU(DGL_T1,mx),t2=dglU(DGL_T2,mx),bonus=mu>=m2?`<span>現在定軌力</span> ${t2} <span>以上，得到的修為</span> ×${m2}`:mu>1?`<span>現在體力</span> ${t1} <span>以上，得到的修為</span> ×${m1}<span>；到</span> ${t2} <span>以上是</span> ×${m2}`:`<span>體力到</span> ${t1} <span>以上，得到的修為</span> ×${m1}<span>；到</span> ${t2} <span>以上是</span> ×${m2}`;   /* 11/16 ⑤：寫出門檻是幾點；盤查第 22 項：加成其實所有修為都乘，不只下棋、解題，字跟著改 */
     /* 開發者 11/15「體力／靈力／攻擊／防禦的排版照 RPG 遊戲設計師調整」→ 選「經典狀態欄」：
        頭部＝頭像＋名字＋修為 Lv＋經驗條；下面一塊面板＝紅血、藍血兩條緊貼（名稱｜條｜數字），再一排攻擊力、防禦力；
        平常的說明句都收進底下「？ 細則」，卡上只留狀態警告（快用完、這盤下完要歇、化墨退場倒數） */

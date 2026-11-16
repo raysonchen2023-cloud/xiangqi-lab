@@ -16,7 +16,7 @@ const SMALL=["--mode","all","--lv","1","--ver","normal,hard","--players","greedy
 let RUN1=null;const run1=()=>RUN1||(RUN1=cli("a",SMALL));
 
 test("載入的是 App 原檔：GSV 十二關＋車輪戰三盤、window.XQ_TD 是 07bhg 包過的那一層", ()=>{const A=B.loadApp();
-  assert.deepEqual(Object.keys(A.G.LV).map(Number).sort((a,b)=>a-b),[1,2,3,4,5,6,7,8,9,10,11,12,31,32,33,34,35,36,37,38,39,101,102,103],"11/15 七星改版：序章 31～39");
+  assert.deepEqual(Object.keys(A.G.LV).map(Number).sort((a,b)=>a-b),[1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23,24,31,32,33,34,35,36,37,38,39,101,102,103],"11/15 七星改版：序章 31～39");
   assert.equal(A.XQ.gsv,1);assert.equal(typeof A.XQ.engine,"function");assert.equal(typeof A.XQ.pick,"function");assert.equal(typeof A.W.step,"function");
   /* 接線真的把星門圍城的盤交給 GSV：開一盤、叫 XQ_TD.engine，拿到的是 GSV.engine 的設定（gsv:1、深度＝關卡的 depth、MultiPV 8） */
   const P={human:"r",start:A.G.startFen(3,C),startTurn:"r",moves:[]};C.stateRebuild(P);P.td=A.XQ.boot({mode:A.G.MODE,lv:3,ch:"x_swordboy",L:1,hard:0},P,C);P.turn="b";

@@ -502,7 +502,7 @@ const bhtdView=()=>{let v="top";try{if(!store.get("bhtdViewR",0)){store.set("bht
 function bhtdFlat(st){return(typeof gsvFlat==="function"&&gsvFlat(st))||(bhtdIs(st)&&bhtdView()==="flat")}   /* 11/15：星門圍城自己記視角（存檔鍵 gsvView，沒選過＝平面；07bhg-gatesiege.js gsvFlat） */   /* 07bhtl bhtlFlat 問這裡：選了純淨平面＝這盤用平面棋盤 */
 const bhtdRM=()=>{try{return matchMedia("(prefers-reduced-motion: reduce)").matches}catch(e){return false}};
 const bhtdFxLv=()=>bhtdRM()?0:({full:2,lite:1,off:0})[bhtdFxMode()];   /* 2 完整、1 簡化、0 關閉或減少動態 */
-const bhtdIs=st=>!!(st&&st.td&&st.td.mode!=="gate-siege-v1"&&typeof bhIs==="function"&&bhIs(st));   /* 11/15：星門圍城試玩（07bhg-gatesiege.js）的盤不歸這裡畫 */
+const bhtdIs=st=>!!(st&&st.td&&st.td.mode!=="gate-siege-v1"&&st.td.mode!=="gate-siege-v2"&&typeof bhIs==="function"&&bhIs(st));   /* 11/16 黑洞新規則：v2（07sg2-siege2.js）也不歸這裡畫 */   /* 11/15：星門圍城試玩（07bhg-gatesiege.js）的盤不歸這裡畫 */
 /* 11/13 開發者：塔防局黑子還沒全上場，盤面評語「紅方大占上風，約領先 N 個兵」會誤導。00-util 的 evt／evLink 先問這裡：正在下（或剛下完）塔防局、畫面在對局頁＝不講評語。
    用 function 宣告（00-util 用 typeof 檢查，載入順序不影響）；BHTD_ST 是 let，載入前被叫到會丟錯，包 try */
 function bhtdMuteEv(){try{return!!(BHTD_ST&&bhtdIs(BHTD_ST))&&typeof location!=="undefined"&&/^#\/journey\/play/.test(location.hash||"")}catch(e){return false}}
@@ -723,7 +723,8 @@ body.bhtd-on #bbox .pkname{display:none!important}
 .bt-shake{animation:btShake .12s linear 1}@keyframes btShake{25%{transform:translateY(-3px)}75%{transform:translateY(3px)}}
 @media (prefers-reduced-motion:reduce){.bt-mk.eye,.bt-mk.gate,.bt-mk.tg,.bt-mk.thr,.bt-mk.hf,.bt-mk.ht,.bt-think,.bt-sk.arm,.bt-sk.pulse{animation:none}.bt-fl,.bt-fl.big,.bt-fl.cap{animation:btStatic 1s linear forwards}.bt-stamp{animation:btStampOut .4s ease-in 1.3s forwards}.bt-cao,.bt-cao .ink{animation-duration:.01s}.bt-shake{animation:none}}`;   /* 減少動態：跳字不飄不放大，只淡入淡出（原本 .01 秒等於看不到） */document.head.append(s)}
 /* ---------- 關卡卡片（bhStart 叫：接受棋局、按「入局」之後） ---------- */
-function bhtdSelect(k,cover){if(typeof bhtlNeed==="function"&&bhtlNeed()){bhtlOffer(k,cover);return}   /* 第一次進塔防：先問要不要下練習賽（07bhtl-tdlearn.js） */
+function bhtdSelect(k,cover){if(typeof SG2G!=="undefined"&&typeof gsvSelect==="function"){gsvSelect(k,cover);return}   /* 11/16 黑洞新規則第二期：遠征、急襲、練習賽都收起來，黑洞只剩星門圍城（開發者選單） */
+  if(typeof bhtlNeed==="function"&&bhtlNeed()){bhtlOffer(k,cover);return}   /* 第一次進塔防：先問要不要下練習賽（07bhtl-tdlearn.js） */
   const opt=arguments[2]||{},BL=typeof gxtBackLb==="function"?gxtBackLb():"⛵ 星槎回航";   /* opt.after＝從結果視窗「返回星盤」回來：「之後再來」改成回航鍵 */
   bhtdCss();const ck=bhtdChar(),L=bhtdL(),st=BHTD.stats(ck,L),diff=bhtdDiff(),P=bhtdProg(),D=bhtdDust(),pool=typeof ptyGroups==="function"?ptyGroups(BHTD.SK):[{c:st.ck,nm:st.n,L,sk:BHTD.SK.filter(s=>s.ch===st.ck)}],rdOk=bhtdRdOpen(P);   /* 11/16 全隊招式：照夥伴分組 */
   let sel=1;for(let n=1;n<=BHTD.LV.length;n++)if(bhtdOpenLv(P,n))sel=n;if(P.last&&bhtdOpenLv(P,P.last)&&!P.c[P.last])sel=P.last;if(opt.rd&&rdOk)sel="rd";
@@ -768,7 +769,7 @@ function bhtdSelect(k,cover){if(typeof bhtlNeed==="function"&&bhtlNeed()){bhtlOf
       const n=+c.dataset.n;if(!bhtdOpenLv(P,n)){toast("🔒 先破第 "+(n-1)+" 關");return}vibrate(5);sel=n;paint();return}
     const l=e.target.closest(".bt-sklist label");if(l){const id=l.dataset.id,s=BHTD.SKM[id];{const Lc=typeof ptyLv==="function"?ptyLv(s.ch):L;if(s.lv>Lc){toast(`🔒 ${typeof ptyNm==="function"?ptyNm(s.ch):""} Lv ${s.lv} 解鎖「${s.nm}」`);return}}e.preventDefault();vibrate(5);if(pk.includes(id)){if(pk.length>1)pk=pk.filter(x=>x!==id)}else if(pk.length<4)pk.push(id);else toast("一場最多帶 4 招");paint();return}
     const f=e.target.closest("[data-fx]");if(f){store.set("bhtdFx",f.dataset.fx);m.querySelectorAll("[data-fx]").forEach(x=>x.classList.toggle("on",x===f))}})}
-function bhtdOpen(){const lk=bhtdLock();if(lk){toast("🌫 "+lk);return}bhtdSelect(store.get("era","classic"),false)}   /* 本機試玩：主控台 bhtdOpen()；觀星臺渾儀也走這裡（定軌力用完＝黑洞入口關著） */
+function bhtdOpen(){const lk=bhtdLock();if(lk){toast("🌫 "+lk);return}if(typeof SG2G!=="undefined"&&typeof gsvSelect==="function"){gsvSelect(store.get("era","classic"),false);return}bhtdSelect(store.get("era","classic"),false)}   /* 本機試玩：主控台 bhtdOpen()；觀星臺渾儀也走這裡（定軌力用完＝黑洞入口關著） */
 if(typeof window!=="undefined")window.bhtdOpen=bhtdOpen;
 /* 開發者 11/13（實打驗收）：同一關有沒下完的塔防盤，卡片上換了招再按出戰 → 先問「接著下舊盤」還是「開新盤（用新選的招）」；招沒變＝直接接著下。
    how：未給＝先查；"go"＝照常（沒有同關舊盤）；"old"＝接舊盤（不再扣星芒）；"new"＝丟掉舊盤、用新選的招開新盤。q＝結果視窗「再刷一場」：不播關卡開場的長台詞 */
@@ -794,7 +795,7 @@ let BHTD_RDL="";   /* 上一場抽到的模板（再刷不連抽同一組） */
 const bhtdRdOpen=P=>!!(P&&P.c&&P.c[1]);   /* 破第 1 關才開 */
 /* 11/15 開發者選「星槎偏航＝突發的星淵急襲短戰」（07bh-blackhole.js bhStart 問這裡）：急襲已開就直接開一場，招式照選關視窗的預設（上次選的、沒選過就前四招）；
    回傳 true＝這邊接手了（開打，或被定軌力擋下、bhtdRaid 自己提示）；false＝急襲還沒開或要先下練習賽，照舊開選關 */
-function bhtdRaidDrift(k,cover){try{const P=bhtdProg();if(!bhtdRdOpen(P)||(typeof bhtlNeed==="function"&&bhtlNeed()))return false;
+function bhtdRaidDrift(k,cover){if(typeof SG2G!=="undefined")return false;try{const P=bhtdProg();if(!bhtdRdOpen(P)||(typeof bhtlNeed==="function"&&bhtlNeed()))return false;
   bhtdRaid(k,cover,bhtdPick(P));return true}catch(e){return false}}
 function bhtdRaid(k,cover,sk,q){const C=bhtdC();if(!C)return toast("規則程式還沒載好");const lk=bhtdLock();if(lk){toast("🌫 "+lk);return}
   const ck=bhtdChar(),L=bhtdL(),diff=bhtdDiff(),ai=BHTD.depthOf(BHTD.RAID_AI,diff),P=bhtdProg(),tal=bhtdDust().t,pool=BHTD.RAID.filter(T=>T.id!==BHTD_RDL),T=pool[Math.floor(Math.random()*pool.length)]||BHTD.RAID[0],v=Math.floor(Math.random()*4);
@@ -832,6 +833,7 @@ function bhtdTal(back,backL){bhtdCss();
 /* ---------- 對局中（bhTick 叫） ---------- */
 function bhtdHide(){if(typeof document==="undefined")return;document.body&&document.body.classList.remove("bhtd-on","bhtd-tg");for(const id of["bhtdEn","bhtdMe","bhtdOv","bhtdView","bhtdViewM"]){const e=document.getElementById(id);if(e)e.remove()}BHTD_TG=null;BHTD_PRE=null;BHTD_HINT=null;BHTD_MK="";BHTD_HK="";if(BHTD_RAF){cancelAnimationFrame(BHTD_RAF);BHTD_RAF=0}if(typeof bhtlHide==="function")bhtlHide()}
 function bhtdTick(st){if(typeof document==="undefined")return;if(!bhtdIs(st)){if(BHTD_ST||document.getElementById("bhtdMe"))bhtdHide();BHTD_ST=null;return}
+  if(!st.result&&typeof sg2Retired==="function"&&sg2Retired(st)){if(BHTD_ST||document.getElementById("bhtdMe"))bhtdHide();BHTD_ST=null;return}   /* 11/16：舊玩法（遠征、急襲、練習賽）還沒下完的盤接不下去，提示改版 */
   const fresh=!BHTD_ST||BHTD_ST.id!==st.id;BHTD_ST=st;bhtdCss();document.body.classList.add("bhtd-on");if(fresh){BHTD_TG=null;BHTD_HK=""}
   const bb=document.getElementById("bbox");if(!bb||!bb.parentNode)return;
   let en=document.getElementById("bhtdEn");if(!en){en=document.createElement("div");en.id="bhtdEn";const pt=document.getElementById("pTop");(pt||bb).after(en);en.addEventListener("click",bhtdEnClick)}

@@ -126,12 +126,17 @@ function ptyCss(){if(document.getElementById("ptyCss"))return;const s=document.c
 /* 開發者 11/16（卡冊截圖）「讓這頁也能看到角色的體力/靈力/攻擊力/防禦力/天賦/招式」（選單：體力、靈力＝每位自己的黑洞數值；天賦是全隊共用的，放卡冊最上面一列）：
    每張卡多一排四格（體力＝黑洞裡的元氣、靈力＝靈力上限、攻擊力、防禦力，BHTD.stats 照這位的等級；跟我的角色頁「黑洞裡的你」同一組數字）、一列「招式 n／N ›」（點開這位的招式清單）；
    卡冊最上面一列「天賦（全隊共用）已點亮 n／N ›」開星塵天賦樹，看完回卡冊。黑洞模組沒載入就不畫。 */
-function ptyStatHTML(c,lv){try{if(typeof BHTD==="undefined"||!BHTD.stats||!BHTD.CH||!BHTD.CH[c])return"";const S=BHTD.stats(c,lv),g=(t,v)=>`<span><small>${t}</small><b>${v}</b></span>`;
+/* 11/16 黑洞新規則第三期：每位顯示本命棋子在新規則的體力／攻擊／防禦（m/07sg2-siege2.js SG2.unit，照這位的等級；同一種的兩顆子一樣），加上這位自己的靈力上限（SG2G.spMaxOf） */
+function ptyStatHTML(c,lv){try{if(typeof SG2!=="undefined"&&typeof SG2G!=="undefined"&&SG2G.PC_OF[c]){const pc=SG2G.PC_OF[c],u=SG2.unit(pc,lv,1),nm=typeof GSV!=="undefined"&&GSV.PCN?GSV.PCN[pc]:pc,g=(t,v)=>`<span><small>${t}</small><b>${v}</b></span>`;
+    return`<div class="pty-st">${g(nm+"・體力",u.hp)}${g("攻擊力",u.atk)}${g("防禦力",u.def)}${g("靈力上限",SG2G.spMaxOf(lv))}</div>`}}catch(e){}
+  return ptyStatHTMLOld(c,lv)}
+function ptyStatHTMLOld(c,lv){try{if(typeof BHTD==="undefined"||!BHTD.stats||!BHTD.CH||!BHTD.CH[c])return"";const S=BHTD.stats(c,lv),g=(t,v)=>`<span><small>${t}</small><b>${v}</b></span>`;
   return`<div class="pty-st">${g("靈力上限",S.sp)}${g("攻擊力",BHTD.atkPt(S.atk))}${g("防禦力",BHTD.defPt(S.def))}</div>`}catch(e){return""}}   /* 11/16 體力統一：「體力」＝這位的體力上限，陪你走的那一位就是角色卡上「體力 n／這個數」的上限（07dgl dglMx）；黑洞的靈力是上限，改叫「靈力上限」，跟人間存著的「靈力 n／20」分開 */
-const ptySkPool=c=>{try{return typeof BHTD!=="undefined"&&BHTD.SK?BHTD.SK.filter(s=>s.ch===c):[]}catch(e){return[]}};
+const ptySkPool=c=>{try{if(typeof SG2G!=="undefined")return SG2G.SK.filter(s=>s.ch===c);return typeof BHTD!=="undefined"&&BHTD.SK?BHTD.SK.filter(s=>s.ch===c):[]}catch(e){return[]}};   /* 11/16：新規則的 35 招（解鎖 1／4／8／12／16） */
 /* 11/16 全隊體力（RPG 數值盤查第 4 項，開發者選「三處都用全隊體力」）：人間的體力上限、進黑洞開局的體力是同一個數（07dgl dglMx：七種棋子所屬角色的平均），卡冊最上面寫這一個數；每位的卡不再各寫各的體力，只留靈力上限、攻擊力、防禦力 */
-function ptyTeamHTML(){try{const mx=typeof dglMx==="function"&&typeof BHTD!=="undefined"?dglMx():0;if(!(mx>0))return"";return`<div class="pty-row top pty-team"><span>全隊體力</span><small>（人間、黑洞都是這個數）</small><b>${mx}</b></div>`}catch(e){return""}}
-function ptyTalHTML(){try{if(typeof BHTD==="undefined"||!BHTD.TAL||typeof bhtdTal!=="function"||typeof bhtdDust!=="function")return"";const n=(bhtdDust().t||[]).length;
+function ptyTeamHTML(){if(typeof SG2G!=="undefined")return"";try{   /* 11/16 黑洞新規則：全隊體力拿掉（人間是定軌力、黑洞每顆子各自體力） */const mx=typeof dglMx==="function"&&typeof BHTD!=="undefined"?dglMx():0;if(!(mx>0))return"";return`<div class="pty-row top pty-team"><span>全隊體力</span><small>（人間、黑洞都是這個數）</small><b>${mx}</b></div>`}catch(e){return""}}
+function ptyTalHTML(){if(typeof sg2TalCount==="function"&&typeof SG2G!=="undefined"){let n=0;try{n=sg2TalCount()}catch(e){}return`<button type="button" class="pty-row top" data-top="tal"><span>天賦</span><small>（每位最多 ${SG2G.TAL_MAX} 個）</small><b><span>已點亮</span> ${n}</b><i aria-hidden="true">›</i></button>`}   /* 11/16 每位專屬天賦（07sg2 sg2TalSheet） */
+  try{if(typeof BHTD==="undefined"||!BHTD.TAL||typeof bhtdTal!=="function"||typeof bhtdDust!=="function")return"";const n=(bhtdDust().t||[]).length;
   return`<button type="button" class="pty-row top" data-top="tal"><span>天賦</span><small>（全隊共用）</small><b><span>已點亮</span> ${n}／${BHTD.TAL.length}</b><i aria-hidden="true">›</i></button>`}catch(e){return""}}
 /* 這位的招式清單：學會的在前（名稱、靈力、效果），還沒學會的灰著寫幾級學會；看完回卡冊（版面沿用角色卡的技能清單 07dgl dglSkills） */
 function ptySkills(c){if(typeof sheet!=="function")return;const lv=ptyLv(c),pool=ptySkPool(c).slice().sort((a,b)=>(a.lv>lv)-(b.lv>lv)||a.lv-b.lv);if(!pool.length)return;try{if(typeof dglCss==="function")dglCss()}catch(e){}ptyCss();
@@ -156,7 +161,7 @@ function ptySheet(){if(typeof sheet!=="function")return;const P0=ptyGet();if(!P0
   sheet("🌟 雲河七星",b=>{const draw=()=>{const P=ptyGet(),L=ptyL(),sy=b.scrollTop;
     b.innerHTML=`<div class="pty-top"><span><span>你的修為</span> <b>Lv ${L}</b></span><span class="pty-pool">✨ <span>星輝</span> <b>${P.pool|0}</b></span></div><p class="pty-m pty-cap">${ptyCapSay(L)}</p>`+ptyTeamHTML()+ptyTalHTML()+PTY.ORDER.map(c=>ptyCardHTML(P,c,L)).join("")+
       `<p class="pty-m">下棋、解題、黑洞過關得到的修為，一半自動分給隊上每一位，另一半變成星輝，由你分給想練的人。黑洞裡全隊已學會的招都能帶（一場最多 4 招）；「陪你走」是首頁上跟著你的那一位。</p>`;
-    {const t=b.querySelector('[data-top="tal"]');if(t)t.onclick=()=>{try{vibrate(5)}catch(e){}closeSheet();setTimeout(()=>bhtdTal(()=>ptySheet(),"‹ 回雲河七星"),60)}}   /* 07bht bhtdTal 第二個參數＝返回鈕的字（沒給照舊「回選關」） */
+    {const t=b.querySelector('[data-top="tal"]');if(t)t.onclick=()=>{try{vibrate(5)}catch(e){}closeSheet();setTimeout(()=>{if(typeof sg2TalSheet==="function"&&typeof SG2G!=="undefined")sg2TalSheet(()=>ptySheet(),"‹ 回雲河七星");else bhtdTal(()=>ptySheet(),"‹ 回雲河七星")},60)}}   /* 07bht bhtdTal 第二個參數＝返回鈕的字（沒給照舊「回選關」） */
     b.querySelectorAll(".pty-c[data-c]").forEach(el=>{const c=el.dataset.c;el.querySelectorAll("[data-a]").forEach(btn=>btn.onclick=()=>{try{vibrate(5)}catch(e){}const a=btn.dataset.a;
       if(a==="sk"){closeSheet();setTimeout(()=>ptySkills(c),60);return}
       if(a==="give"){const P2=ptyGet(),L2=ptyL(),lv=PTY.lv(P2,c,L2),want=PTY.base(Math.min(L2,lv+1))-P2.m[c].xp;const g=ptyGive(c,want>0?want:P2.pool);try{toast(g?`✨ 給了 ${g} 星輝`:"已經跟你一樣高了，等你升級再練")}catch(e){}}

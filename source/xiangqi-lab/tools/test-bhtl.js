@@ -126,7 +126,7 @@ test("〔原始碼〕接線：include 順序、存檔鍵、黑洞結束、結果
   assert.ok(BH.indexOf('st.journey==="bh:tl"')<BH.indexOf('store.set("bhCount"'),"在記 bhCount 之前就轉走");
   assert.ok(BH.includes('if(st&&st.journey==="bh:tl"&&typeof bhtlResult==="function"){bhtlResult(st,win,draw0,XPR);return}'));
   assert.ok(rd("xiangqi-db/m/08b-cpugame.js").includes('{const g=typeof bhtlGuard==="function"?bhtlGuard(st,f,i):null;if(g){'),"08b tap 問 bhtlGuard");
-  assert.ok(TD.includes('function bhtdSelect(k,cover){if(typeof bhtlNeed==="function"&&bhtlNeed()){bhtlOffer(k,cover);return}'));
+  assert.ok(TD.includes('function bhtdSelect(k,cover){if(typeof SG2G!=="undefined"&&typeof gsvSelect==="function"){gsvSelect(k,cover);return}'),"11/16 黑洞新規則：有 v2 就開星門圍城");assert.ok(TD.includes('  if(typeof bhtlNeed==="function"&&bhtlNeed()){bhtlOffer(k,cover);return}'),"沒有 v2 時照舊");
   assert.ok(TD.includes('typeof bhtlCard==="function"?bhtlCard():""')&&TD.includes('data-tl="1"'),"練習賽卡、再玩一次");
   assert.ok(TD.includes('if(typeof bhtlCastOk==="function"&&!bhtlCastOk(st))return;')&&TD.includes("bhtlTgOk(st,T,q)")&&TD.includes("bhtlTip(e,st)")&&TD.includes("bhtlTick(st)"));
   assert.ok(TD.includes('const bhtdName=td=>td.lv?`第 ${td.lv} 關・${td.nm}`:td.rd?td.nm:"練習賽・"+td.nm;')&&TD.includes("${esc(bhtdName(td))}"),"HUD 標題（11/14 第二批：練習賽、星淵急襲共用 bhtdName）");

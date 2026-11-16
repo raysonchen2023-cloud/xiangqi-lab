@@ -396,7 +396,7 @@ test("角色卡畫面（整個模組＋假的 sheet）：11/14 極簡版——�
   const full = cardHTML();
   /* 11/15 經典狀態欄：平常的說明句收進底下一顆「？ 細則」（一塊 dgl-kmore，紅血、藍血、攻防三組），卡上只留狀態警告 */
   for (const k of ["<li>下船後會慢慢用掉，回星槎就補回來。</li>", "<li>解殘局、過主線章節就會得到。</li>", 'data-k="full:30"', 'data-q="all"', 'aria-controls="dglQ_all"', 'aria-expanded="false"', "width:100.0%",
-    "<span>現在體力</span> 20 <span>以上，得到的修為</span> ×1.5", "<span>已點亮</span> 0／28", '<p class="dgl-kmh">體力・定軌力</p>', '<p class="dgl-kmh">靈力・星芒</p>']) assert.ok(full.includes(k), "滿格少了：" + k);
+    "<span>現在定軌力</span> 20 <span>以上，得到的修為</span> ×1.5", "<span>已點亮</span> 0／28", '<p class="dgl-kmh">體力・定軌力</p>', '<p class="dgl-kmh">靈力・星芒</p>']) assert.ok(full.includes(k), "滿格少了：" + k);
   for (const k of ["dgl-kcp", "dgl-ktk", "dgl-kmk", "dgl-kflow", "dgl-kbd", "黑洞裡的你", "人間黑洞會用", "歸零會化墨退場", '<p class="dgl-kl">']) assert.ok(!full.includes(k), "極簡版不該有：" + k);
   assert.equal((full.match(/class="dgl-kmore"[^>]* hidden/g) || []).length, 1, "細則預設收著（只有一塊）");
   assert.ok(full.includes("<li><span>在人間（下船以後）大約</span> 30 <span>分鐘用完；在星槎上不會少。</span></li>") && !full.includes("黑洞對局裡不扣定軌力。") && full.includes("最多補到靈力上限。"), "細則照實（11/14 刪掉「黑洞對局裡不扣定軌力」；11/16 改寫成大約幾分鐘用完）");
@@ -488,14 +488,12 @@ test("重開 App、切回前景：離開的時間照星槎上的速度回（每�
 });
 
 const withHero = c => { c.BHTD = { CH: { x_a: {} }, stats: () => ({ hp: 57 }), atkPt: () => 100, defPt: () => 100, SK: [], TAL: [] }; c.ptyLv = () => 3; c.myChar = () => "x_a" };
-test("整個模組：有陪你走的角色時，畫面寫「定軌力 n／57」、節奏不變（15 分鐘剩一半）、加成照新倍率；沒有就照舊 30", () => {
-  const st = {}, c = loadFull(st, "#/port"); assert.equal(c.dglMx(), 30, "沒有旅程、黑洞模組沒載入＝30");
-  withHero(c); assert.equal(c.dglMx(), 57);
-  c.dglTick(); assert.match(c.reg.dglLoc["a_aria-label"], /定軌力 57／57，星芒 \d+／20/);
-  c.ticks(15); assert.ok(Math.abs(c.DGL.s.r - 15) < 0.2, "內部照舊每分鐘扣 1：15 分鐘剩一半"); assert.match(c.reg.dglLoc["a_aria-label"], /定軌力 29／57/);
-  c.addXP(10, "殘局"); assert.equal(c.xp[0][0], 12, "一半以上 ×1.2");
-  c.ticks(17); assert.equal(c.DGL.s.out, true, "大約 30 分鐘用完、化墨退場（解題回的那一點多撐兩分鐘）");
-  c.myChar = () => "x_none"; assert.equal(c.dglMx(), 30, "黑洞資料裡沒有這位＝30");
+test("整個模組（11/16 黑洞新規則：人間那一條改回定軌力，上限固定 30，不再跟黑洞的體力掛鉤）：有沒有陪你走的角色都是 30；節奏、加成照舊", () => {
+  const st = {}, c = loadFull(st, "#/port"); assert.equal(c.dglMx(), 30);
+  withHero(c); assert.equal(c.dglMx(), 30, "有陪你走的角色也是 30");
+  c.dglTick(); assert.match(c.reg.dglLoc["a_aria-label"], /定軌力 30／30，星芒 \d+／20/);
+  c.ticks(15); assert.ok(Math.abs(c.DGL.s.r - 15) < 0.2, "每分鐘扣 1：15 分鐘剩一半"); assert.match(c.reg.dglLoc["a_aria-label"], /定軌力 15／30/);
+  c.addXP(10, "殘局"); assert.equal(c.xp[0][0], 12, "三分之一以上 ×1.2");
 });
 
 test("整個模組：體力記在 store \"dgl\"（不蓋掉星芒）；重開接著上次的值、照離開時間回；用完了離開，回來還沒回到一半就還在星槎歇", () => {
@@ -516,17 +514,9 @@ test("整個模組：設定關掉平日體力：關掉前記下體力、關著�
   c.dglSetOff(false); assert.ok(Math.abs(c.DGL.s.r - 28) < 0.3, "關了 1 分鐘再開：25 回到 28，不是 30（" + c.DGL.s.r + "）"); assert.equal(st.dgl.x, 4);
 });
 
-test("全隊體力：上限＝黑洞開局實際的體力（七種棋子所屬角色的平均，沒加入的是木棋靈；點了厚土固元再加），跟真的 BHTD.boot 開出來的一樣", () => {
-  const C = require(path.join(ROOT, "xiangqi-lab/site/core.js")), B = realBHTD(), st = {}, c = loadFull(st, "#/port");
-  const SQ = { R: { ck: "x_swordboy", L: 5 }, N: { ck: "x_miaogirl", L: 3 }, B: { ck: "x_spiritgirl", L: 2, wood: 1 }, A: { ck: "x_shi", L: 2, wood: 1 }, K: { ck: "x_shuai", L: 2, wood: 1 }, C: { ck: "x_martialgirl", L: 2, wood: 1 }, P: { ck: "x_bing", L: 2, wood: 1 } };
-  const boot = tal => { const start = B.startFen(1, C), P = { start, startTurn: "r", board: C.parseFen(start), turn: "r", moves: [], human: "r" }; P.pos = [C.fen(P.board, "r")]; return B.boot({ lv: 1, ch: "x_swordboy", L: 5, diff: 2, sq: SQ, tal }, P, C).me.max };
-  c.BHTD = B; c.ptySquad = () => SQ; c.myChar = () => "x_swordboy"; c.ptyLv = () => 5; let T = [];
-  c.bhtdDust = () => ({ t: T });
-  const own = B.stats("x_swordboy", 5).hp, team = boot([]);
-  assert.equal(c.dglMx(), team, "跟黑洞開局同一個數"); assert.notEqual(team, own, "不是陪你走那一位自己的（" + own + " 對 " + team + "）");
-  T = ["htgy"]; assert.equal(c.dglMx(), boot(["htgy"]), "點了厚土固元"); assert.equal(c.dglMx(), team + B.TAL_HP);
-  T = []; c.ptySquad = () => null; assert.equal(c.dglMx(), own, "沒有旅程：黑洞用的是自己那一位，這裡也是");
-  c.ptySquad = () => SQ; c.dglTick(); assert.match(c.reg.dglLoc["a_aria-label"], new RegExp("定軌力 " + team + "／" + team));
+test("定軌力上限不看隊伍、不看天賦（11/16 黑洞新規則：拆掉全隊體力）", () => {
+  const st = {}, c = loadFull(st, "#/port");c.ptySquad = () => ({ R: { ck: "x_swordboy", L: 20 } }); c.myChar = () => "x_swordboy"; c.bhtdDust = () => ({ t: ["htgy"] });
+  assert.equal(c.dglMx(), 30); c.dglTick(); assert.match(c.reg.dglLoc["a_aria-label"], /定軌力 \d+／30/);
 });
 
 test("重解已經拿過修為的舊題：不回體力、不給靈力（原本可以反覆解同一題一直拿）；第一次解照舊給；主線重打沒有新星也不給靈力", () => {
@@ -547,11 +537,9 @@ test("一開局就結束的那一盤不回體力：進對局頁不到 1 分鐘�
   const c2 = loadFull({}, "#/port"); c2.ticks(5); r = c2.DGL.s.r; c2.dglOnResult(); assert.ok(Math.abs(c2.DGL.s.r - (r + 2)) < 0.01, "沒記到進對局頁的時間（不是從對局頁來的結果）照舊回");
 });
 
-test("角色卡：有陪你走的角色時，紅條寫「n／57」、細則多一句上限跟誰一樣、規則裡的量都換到 57 那把尺；不再寫「關掉 App 再打開就回滿」", () => {
+test("角色卡：有陪你走的角色時紅條照舊是 n／30（11/16 拆掉全隊體力）；不再寫「關掉 App 再打開就回滿」", () => {
   const h = cardHTML(c => { withHero(c); c.DGL.s.r = 20 });
-  for (const k of ['<span class="dgl-kv" data-dgl="r">38／57</span>', "width:66.7%", 'data-k="full:57"', "<li><span>體力上限是全隊的體力，進黑洞開局也是這個數，現在是</span> 57<span>；夥伴加入、升級都會跟著變。</span></li>",
-    "<li><span>下完一盤棋、解完一題，各回</span> 4 <span>點。</span></li>", "<li><span>黑洞過關回</span> 38 <span>點，一天最多回</span> 38 <span>點。</span></li>", "<span>分鐘回到</span> 29 <span>點，就能再下船。</span>", "<span>現在體力</span> 38 <span>以上，得到的修為</span> ×1.5"]) assert.ok(h.includes(k), "少了：" + k);
-  assert.ok(!h.includes("關掉 App 再打開就回滿"));
+  assert.ok(h.includes('<span class="dgl-kv" data-dgl="r">20／30</span>'), "紅條 20／30");assert.ok(!h.includes("體力上限是全隊的體力"));assert.ok(!h.includes("關掉 App 再打開就回滿"));
 });
 
 test("〔原始碼〕體力統一的接線：開 App 接著上次的體力；背景回來補回；每 15 秒與離開時記；修為加成照那把尺；新字有英文", () => {
@@ -559,7 +547,7 @@ test("〔原始碼〕體力統一的接線：開 App 接著上次的體力；背
   assert.ok(SRC.includes('if(document.hidden){DGL.hid=now;dglKeep()}else{if(DGL.hid&&dglLive()){const ev=dglStep(DGL.s,now-DGL.hid,"ship")'), "切到背景記時間，回來把那段時間照星槎上的速度補回");
   assert.ok(SRC.includes('addEventListener("pagehide",()=>{dglKeep()})') && SRC.includes("if(now-DGL.kt>15e3||ev.length||w)dglKeep();"));
   assert.ok(SRC.includes("const B=dglXpBonus(n,DGL.s.r,DGL.fx,dglMx());"));
-  assert.ok(SRC.includes('const S=typeof ptySquad==="function"?ptySquad():null,q=S&&BHTD.squad?BHTD.squad(S,{}):null;'), "上限＝全隊體力（跟 07bht boot 的算法同一個來源 BHTD.squad）");
+  assert.ok(SRC.includes("function dglMx(){return DGL_MAX}"), "11/16 黑洞新規則：上限固定 DGL_MAX，不再算全隊體力");
   assert.ok(SRC.includes('addEventListener("xq-result",dglOnResult);') && SRC.includes("if(busy&&!DGL.wasBusy)DGL.bt=now;DGL.wasBusy=busy;"));
   assert.ok(SRC.includes('let x0=0,gave=true;try{x0=+store.get("xp",0)||0}catch(e){}const r=f0.apply(this,a);try{gave=(+store.get("xp",0)||0)>x0}catch(e){}try{dglXP(why,gave)}catch(e){}return r'), "看累計修為有沒有變多，判斷這一筆有沒有真的給");
   const I = rd(path.join(M, "07i18n.js")), i = I.indexOf("#I18N-PURE-BEGIN"), j = I.indexOf("/* #I18N-PURE-END */"), ctx = {}; vm.createContext(ctx);

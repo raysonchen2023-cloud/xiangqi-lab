@@ -39,7 +39,7 @@ test("① P0 看我的棋力：全域點擊委派（不靠事後綁定）；結�
   assert.equal(sched, 1, "視窗還沒出來：0.7 秒後再等"); assert.equal(api, 0, "還沒出來不去查狀態（以前查完就結束）");
 });
 test("③ 幻影棋客的台詞換掉；④ 經典世界的懸浮畫卷拿掉", () => {
-  assert.ok(!/say:"這道裂，我算過。"/.test(BH)); assert.match(BH, /const BH_ORB=\{say:"天上這道裂痕，通往另一盤棋。",/);
+  assert.ok(!/say:"這道裂，我算過。"/.test(BH)); assert.ok(!BH.includes("const BH_ORB="), "11/16 小黑洞整個拿掉，台詞一起拿掉");
   assert.match(P3, /if\(0\)use\("scroll",im=>/, "懸浮畫卷不再放");
   assert.match(P3, /use\("ghost",im=>/, "淡墨幻影棋客照舊");
 });

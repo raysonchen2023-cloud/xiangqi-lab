@@ -7,9 +7,8 @@ function dvtHere(){try{return typeof shipAt==="function"&&shipAt()||store.get("e
 function dvtForce(on){try{if(on)localStorage.setItem("xq_bhForce","1");else localStorage.removeItem("xq_bhForce")}catch(e){}}
 function dvtForced(){try{return localStorage.getItem("xq_bhForce")==="1"}catch(e){return false}}
 function dvtSheet(){if(!dvtOn())return toast("要先打開開發者模式");
-  sheet("🧪 開發者測試台",b=>{const orb=store.get("dvtOrb",null),all=!!store.get("dvtGxAll",0),S=typeof gxSeals==="function"?gxSeals():{};
+  sheet("🧪 開發者測試台",b=>{const all=!!store.get("dvtGxAll",0),S=typeof gxSeals==="function"?gxSeals():{};
     const row=(id,ic,t,d)=>`<button class="item" id="${id}"><span class="lb">${ic}</span><span class="tx"><b>${esc(t)}</b><span>${esc(d)}</span></span><span class="muted">›</span></button>`;
-    const pill=(k,l)=>`<button class="pill${orb===k?" on":""}" data-orb="${k}" style="margin:2px">${esc(l)}</button>`;
     b.innerHTML=`<p class="muted" style="margin:0 0 8px">只有開發者看得到。不計分；要恢復一般狀態按最下面「重設黑洞篇進度」。</p>
       <div class="sec-t">🌀 黑洞</div><div class="items" style="padding:0">
         ${row("dvA","🌀","馬上掉進黑洞","跳出偏航視窗（接受→七星星盤對局；先回航線→什麼都不發生）")}
@@ -20,8 +19,6 @@ function dvtSheet(){if(!dvtOn())return toast("要先打開開發者模式");
         ${["meteor","lock","river"].map(k=>`<button class="pill" data-tx="${k}" style="margin:2px">${esc((typeof BHFX_K!=="undefined"&&BHFX_K[k])||k)}</button>`).join("")}
         <button class="pill${store.get("dvtTaixu2",0)?" on":""}" id="dvT2" style="margin:2px">第二階段（範圍變大）：${store.get("dvtTaixu2",0)?"開":"關"}</button>
         <button class="pill${store.get("dvtTaixu",0)?" on":""}" id="dvT1" style="margin:2px">魔王在場：${store.get("dvtTaixu",0)?"開":"關"}</button></div>
-      <div class="sec-t">🔮 幻影棋客頭上</div><div class="card"><p class="muted" style="margin:0 0 6px">下一盤「挑戰電腦」對手頭上固定出現（不用等第 6 盤、第 12 手、每天第一盤）：</p>
-        ${pill("ball","有裂痕的小黑洞")}${pill("gate","星門（13 點星光）")}${pill("dust","星塵圈")}${pill("","照一般規則")}</div>
       <div class="sec-t">🌌 幻譜星門・十三星系</div><div class="items" style="padding:0">
         ${row("dvD",all?"✅":"🔓","全部星系解鎖："+(all?"開":"關"),"不用先去黑洞、不用依序打贏、不用星槎站數；第十四顆也打得開")}
         ${row("dvE","🌌","打開星圖","跟從星門、星槎入口打開的同一張")}
@@ -43,7 +40,6 @@ function dvtSheet(){if(!dvtOn())return toast("要先打開開發者模式");
     q("#dvT2").onclick=()=>{store.set("dvtTaixu2",store.get("dvtTaixu2",0)?0:1);re()};
     q("#dvT1").onclick=()=>{const on=!store.get("dvtTaixu",0);store.set("dvtTaixu",on?1:0);toast(on?"👑 魔王在場：開（黑洞局的黑將換成太虛星尊）":"👑 魔王在場：關");re()};
     q("#dvC").onclick=()=>{dvtForce(!dvtForced());toast(dvtForced()?"⛵ 起航必定偏航：開":"⛵ 起航必定偏航：關");re()};
-    b.querySelectorAll("[data-orb]").forEach(x=>x.onclick=()=>{const k=x.dataset.orb||null;store.set("dvtOrb",k);toast(k?"下一盤挑戰電腦，幻影棋客頭上會出現："+x.textContent:"照一般規則");re()});
     q("#dvD").onclick=()=>{store.set("dvtGxAll",all?0:1);toast(all?"全部星系解鎖：關":"全部星系解鎖：開");re()};
     q("#dvE").onclick=()=>{closeSheet();if(typeof gxMap==="function")gxMap({})};
     b.querySelectorAll("[data-gx]").forEach(x=>x.onclick=()=>{if(!store.get("dvtGxAll",0))return toast("先打開「全部星系解鎖」");closeSheet();if(typeof gxStart==="function")gxStart(x.dataset.gx)});

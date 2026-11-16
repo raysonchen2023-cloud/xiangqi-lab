@@ -22,7 +22,7 @@ const BH_FACE={齊轍:"x_swordboy",田飛燕:"x_spiritgirl",雷借花:"x_martial
 const bhSay=([who,t])=>`<p class="pl-say">${BH_FACE[who]?`<img src="data/xs/prev_${BH_FACE[who]}.webp" alt="" onerror="this.remove()" style="width:44px;height:44px;border-radius:50%;object-fit:cover;vertical-align:middle;margin-right:6px">`:""}${esc(who)}：「${esc(t)}」</p>`;
 function bhForced(){try{return localStorage.getItem("xq_bhForce")==="1"}catch(e){return false}}
 /* 星槎起航（shipSailGo、shipGoTo）播完千秋穿梭時叫：沒偏航就照原流程 next() */
-function bhMaybe(k,next,cover){let hit=false;try{const mk=!!store.get("bhMark",0)&&!!k;if(mk)store.set("bhMark",0);hit=bhForced()||mk||Math.random()<BH_P}catch(e){}   /* bhMark：點過幻影棋客頭上的小黑洞，下一次起航必定偏航 */if(!hit||!k)return next();bhOffer(k,next,cover)}
+function bhMaybe(k,next,cover){let hit=false;try{hit=bhForced()||Math.random()<BH_P}catch(e){}   /* 11/16：小黑洞拿掉，bhMark「下一次起航必定偏航」不再用（舊存檔的 bhMark 留著不讀） */   /* bhMark：點過幻影棋客頭上的小黑洞，下一次起航必定偏航 */if(!hit||!k)return next();bhOffer(k,next,cover)}
 /* 11/12 hspx「進黑洞要等 6～7 秒」：偏航視窗一跳出來就在背景先載 3D（three、園子程式）、14 個角色模型（一個接一個解析，不卡畫面）和黑洞的圖，
    玩家讀文字、按「入局」的時間拿來載入；不下這盤也只是先放進快取。一次 App 只做一次 */
 let BH_PRE=null;const BH_GLB=["x_shuai","x_shi","x_spiritgirl","x_miaogirl","x_swordboy","x_martialgirl","x_bing","xs_jiang","xs_shi","xs_xiang","xs_ma","xs_che","xs_pao","xs_zu"];
@@ -33,9 +33,9 @@ function bhPreload(){if(BH_PRE||typeof document==="undefined")return BH_PRE;
 /* 11/15 開發者「星槎啟航會概率遇到黑洞，但已經有觀星臺，這邊要怎麼設計玩法？」→ 選單選：偏航＝突發的星淵急襲短戰。
    觀星臺照進度打關卡；偏航不再開同一張選關視窗，直接進一場三到五分鐘的急襲殘陣（07bht-td.js bhtdRaidDrift，星塵照表現給、可以不接）。
    急襲要破過第 1 關才有：還沒破的人（多半是第一次偏航）照舊走原本的說明與選關 */
-const bhDriftRaid=()=>{try{return typeof bhtdRdOpen==="function"&&typeof bhtdProg==="function"&&typeof bhtdRaidDrift==="function"&&!(typeof bhtlNeed==="function"&&bhtlNeed())&&bhtdRdOpen(bhtdProg())}catch(e){return false}};
+const bhDriftRaid=()=>{if(typeof sg2DriftOk==="function")return sg2DriftOk();try{return typeof bhtdRdOpen==="function"&&typeof bhtdProg==="function"&&typeof bhtdRaidDrift==="function"&&!(typeof bhtlNeed==="function"&&bhtlNeed())&&bhtdRdOpen(bhtdProg())}catch(e){return false}};
 function bhOffer(k,next,cover){const n=store.get("bhCount",0)||0,rd=bhDriftRaid();bhMus("fall");vibrate([20,60,20]);try{bhPreload()}catch(e){}
-  modal(`<div class="em">🌀</div><h2>${n||rd?"星槎偏航":esc(BHX_FD.title)}</h2><p>${esc(BH_TXT.fall)}</p>${n?bhSay(BH_TXT.again):rd?"":BHX_FD.desc.map(t=>`<p class="muted" style="font-size:13px">${esc(t)}</p>`).join("")}<p class="muted" style="font-size:13px">${rd?"星渦裡浮著一盤下到一半的殘陣：這是一場星淵急襲，三到五分鐘分勝負，打贏有星塵。要接嗎？不接也不扣任何東西，星槎照原本的航線停靠。":"墨色星渦的中心，浮著一張巨大的棋盤。要下這一盤嗎？不下也不扣任何東西，星槎照原本的航線停靠。"}</p>`,
+  modal(`<div class="em">🌀</div><h2>${n||rd?"星槎偏航":esc(BHX_FD.title)}</h2><p>${esc(BH_TXT.fall)}</p>${n?bhSay(BH_TXT.again):rd?"":BHX_FD.desc.map(t=>`<p class="muted" style="font-size:13px">${esc(t)}</p>`).join("")}<p class="muted" style="font-size:13px">${rd?(typeof SG2G!=="undefined"?"星渦裡浮著一盤星門圍城：打贏有星塵。要接嗎？不接也不扣任何東西，星槎照原本的航線停靠。":"星渦裡浮著一盤下到一半的殘陣：這是一場星淵急襲，三到五分鐘分勝負，打贏有星塵。要接嗎？不接也不扣任何東西，星槎照原本的航線停靠。"):"墨色星渦的中心，浮著一張巨大的棋盤。要下這一盤嗎？不下也不扣任何東西，星槎照原本的航線停靠。"}</p>`,
     [[rd?"⚡ 接受急襲":"🌀 接受棋局",()=>rd?bhStart(k,cover):bhIntro(k,cover)],["先回航線",()=>{bhMus(null);if(next)next()},true]],"prolog")}
 function bhIntro(k,cover){try{bhPreload()}catch(e){}modal(`<div class="em">♟</div><h2>星樞棋局</h2>${bhSay(BH_TXT.wake)}<p class="pl-say">✦ ${esc(BH_TXT.voice[0])}：「${esc(BH_TXT.voice[1])}」</p><p class="muted" style="font-size:13px">${esc(BH_TXT.rule)}<br>不計積分、不扣分。可以用＋／－或兩指縮放：拉遠看整盤，放大到最近就站在棋盤上。</p>`,
   [["入局",()=>bhStart(k,cover)]],"prolog")}
@@ -49,6 +49,7 @@ function bhLevel(){let s=0;const J=k=>{try{return JSON.parse(localStorage.getIte
   const cl=store.get("cpuLevel",null);if(cl!=null)s=Math.max(s,+cl||0);if(!s)s=2;
   const fst=!((+store.get("bhCount",0)||0)>0);return Math.max(1,Math.min(18,s+(fst?-1:1)))}   /* 開發者 11/12 選：第一次真正偏航「星樞未醒」＝實力 −1，第二次起才 ＋1（序局不算次數） */
 function bhStart(k,cover){{const lk=typeof bhtdLock==="function"?bhtdLock():"";if(lk){toast("🌫 "+lk);try{bhMus(null);if(cover!==false&&k&&typeof shipDockCover==="function")shipDockCover(k,()=>{})}catch(e){}return}}   /* 11/14：定軌力用完＝黑洞入口關著（07bht bhtdLock → 07dgl dglBhLock） */
+  if(typeof SG2G!=="undefined"&&typeof gsvSelect==="function"){if(cover!==false&&k&&typeof sg2Drift==="function"&&sg2Drift(k,cover))return;gsvSelect(k,cover);return}   /* 11/16 黑洞新規則：偏航（有目的站）直接打一場星門圍城，不然開選關 */
   if(typeof BHTD_ON!=="undefined"&&BHTD_ON&&typeof bhtdSelect==="function"){if(cover!==false&&k&&typeof bhtdRaidDrift==="function"&&bhtdRaidDrift(k,cover))return;bhtdSelect(k,cover);return}   /* 開發者 11/13：黑洞對戰改成陣地塔防，先選關卡（m/07bht-td.js）；11/15：星槎偏航（cover 不是 false、有目的站）而且急襲已開＝直接進一場星淵急襲，不開選關 */
   try{bhPreload()}catch(e){}store.set("bhRet",{k,cover:cover!==false,at:Date.now(),first:!((+store.get("bhCount",0)||0)>0)});store.set("park3d",true);
   jStart("bh:"+k,{human:"r",lx:bhLevel(),journey:"bh:"+k},()=>{location.hash="#/journey/play";setTimeout(()=>toast("✦ 星樞："+BH_TXT.voice[1]),900)})}
@@ -97,29 +98,11 @@ function bhResultModal(st,win,draw0,XPR){if(st&&st.journey===BHX_ID){bhxAfter();
 /* 回航：回到星槎，原本是起航就照常出那一站的停靠封面 */
 function bhReturn(){const R=store.get("bhRet",null);store.set("bhRet",null);location.hash="#/adventure";if(R&&R.first)setTimeout(()=>toast(BHX_FD.back),1200);
   if(R&&R.cover&&R.k&&typeof shipDockCover==="function")setTimeout(()=>{try{shipDockCover(R.k,()=>{})}catch(e){}},400)}
-/* ---------- hspx（開發者 11/12，story/116 選「Claude 混搭」）：幻影棋客頭上的小黑洞，引沒搭過星槎的人去碰黑洞 ----------
-   挑戰電腦（對手是幻影棋客、不是掌櫃，不是石桌往事、擂台、練習、線上、盲棋）：沒去過黑洞、這是玩過的第 6 盤以後，每天第一盤下到第 12 手，
-   幻影棋客頭頂浮出一顆有裂痕的小黑洞球（park3d ex.bhOrb="ball"），不跳視窗、不擋棋盤。
-   點它：球化成紫光飛走（park3d）→ 幻影棋客「天上這道裂痕，通往另一盤棋。」→ 提示「去搭星槎，找裂痕的另一端。」；記 bhMark，下一次起航必定偏航（bhMaybe）。
-   去過黑洞以後：點過球的人，幻影棋客頭上只留一圈淡淡星塵（"dust"）；從黑洞回來後的第一盤，他開口說「你竟從那無盡的循環裡，帶回了新棋譜。」 */
-const BH_ORB={say:"天上這道裂痕，通往另一盤棋。",   /* 11/13 開發者「這道裂，我算過，換個說法吧，有點怪」 */go:"去搭星槎，找裂痕的另一端。",back:"你竟從那無盡的循環裡，帶回了新棋譜。"};
-function bhOrbDay(){const d=new Date();return d.getFullYear()+"-"+(d.getMonth()+1)+"-"+d.getDate()}
-function bhOrbKind(st){try{if(!st||!st.id||st.journey||st.arena||st.practice||st.net||st.blind)return null;{const F=store.get("dvtOrb",null);if(F&&typeof DEVMODE==="function"&&DEVMODE())return F}   /* 開發者測試台：固定出現哪一種 */if(typeof zgIs==="function"&&zgIs(st))return null;
-  if((store.get("bhCount",0)||0)>0){if(store.get("bhWin",0)){const today=bhOrbDay(),G=store.get("gxGateDay",null);if(!G||G.d!==today){store.set("gxGateDay",{d:today,id:st.id});return"gate"}if(G.id===st.id)return"gate"}return store.get("bhOrbHit",0)?"dust":null}   /* 戰勝過黑洞：每天第一盤，頭上是幻譜星門（07gx-galaxy.js） */
-  if(store.get("bhMark",0))return null;
-  const L=store.get("bhOrbG",null)||{n:0,ids:[]};if(!L.ids.includes(st.id)){L.n=(L.n|0)+1;L.ids.push(st.id);while(L.ids.length>8)L.ids.shift();store.set("bhOrbG",L)}   /* 數玩過幾盤（不同的局） */
-  if(L.n<6||st.result||(st.moves||[]).length<12)return null;
-  const today=bhOrbDay(),D=store.get("bhOrbDay",null);if(!D||D.d!==today){store.set("bhOrbDay",{d:today,id:st.id});return"ball"}
-  return D.id===st.id?"ball":null}catch(e){return null}}
-/* 08b-cpugame 的 parkDraw 參數疊上：小黑洞／星塵；剛從黑洞回來的第一盤，換成那句開場白 */
-let BH_ORB_K=null;
-function bhOrbEx(st){const k=bhOrbKind(st),o={bhOrb:k};BH_ORB_K=k;if(k==="gate"&&typeof gxLit==="function")o.gxLit=gxLit();const fresh=st&&!st.journey&&!st.arena&&!(typeof zgIs==="function"&&zgIs(st));
-  if(k!==undefined&&store.get("bhBackSay",0)&&fresh){store.set("bhBackSay",0);o.oppHello=BH_ORB.back}else if(fresh&&typeof gxHello==="function"){const h=gxHello(st);if(h)o.oppHello=h}return o}
-/* 06-cpu parkInfo("orb")：點到小黑洞 */
-function bhOrbTap(){if(BH_ORB_K==="gate"&&typeof gxMap==="function"){vibrate([10,40,10]);try{if(PARK&&PARK.v&&PARK.v.oppSay)PARK.v.oppSay("這門，我好像替你開過。",2.6)}catch(e){}setTimeout(()=>gxMap({from:"orb"}),700);return}   /* 幻譜星門：開星圖，不打擾這一盤 */
-  vibrate([10,40,10]);store.set("bhMark",1);store.set("bhOrbHit",1);
-  setTimeout(()=>{try{if(PARK&&PARK.v&&PARK.v.oppSay)PARK.v.oppSay(BH_ORB.say,3)}catch(e){}},500);
-  setTimeout(()=>toast("🌀 "+BH_ORB.go),1900);try{if(typeof route==="function")setTimeout(()=>{if(PARK&&PARK.last)try{PARK.v.draw(PARK.last.board,PARK.last.o,Object.assign({},PARK.last.ex,{bhOrb:null}))}catch(e){}},1400)}catch(e){}}
+/* ---------- 11/16 開發者（主要工作階段轉告）：幻影棋客頭上的小黑洞「在目前最新的遊戲設計好像變得沒有用處」→ 整個拿掉 ----------
+   球（ball）、星塵（dust）、贏過黑洞後每天第一盤的幻譜星門（gate）都不再出現，剛從黑洞回來那句開場白也拿掉；十三星系照舊從觀星臺石碑進。
+   舊存檔的 bhMark、bhOrbHit、bhOrbG、bhOrbDay、gxGateDay、bhBackSay 留著不刪，讀到也不會怎樣。
+   08b-cpugame 的 parkDraw 參數照舊疊 bhOrbEx：只剩幻譜星門的開場白（07gx gxHello） */
+function bhOrbEx(st){const o={};const fresh=st&&!st.journey&&!st.arena&&!(typeof zgIs==="function"&&zgIs(st));if(fresh&&typeof gxHello==="function"){const h=gxHello(st);if(h)o.oppHello=h}return o}
 /* ---------- 黑洞篇配樂（開發者 11/12，story/118 選 Claude 混搭＋三個點子）----------
    5 首 Lyria 主題曲 data/bgm/blackhole/bh_N.mp3：偏航視窗①墨渦墜槎 → 開局前 6 手②星盤初醒 → 平常③七星連枝 → 落後（≤ −150 分）或被將軍④星樞逼將 → 結算⑤幻門留影；
    離開黑洞對局就回朝代配樂。星樞吃掉七星、星樞開口時敲一聲極低的鐘（bhBell）。
