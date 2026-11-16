@@ -34,6 +34,13 @@ var XQ=(function(){
      送引擎前先數子：每方最多 帥1 仕2 相2 傌2 俥2 炮2 兵5；超過就不送（playEngine 停下來說明、分析直接說算不了） */
   const PCMAX={k:1,a:2,b:2,n:2,r:2,c:2,p:5};
   function engOver(b,s){try{const f=String(fen(b,s)).split(" ")[0],n={};for(const ch of f)if(/[a-zA-Z]/.test(ch))n[ch]=(n[ch]||0)+1;for(const ch in n){const m=PCMAX[ch.toLowerCase()];if(m!=null&&n[ch]>m)return true}}catch(e){}return false}
+  /* Magellan（變體引擎 XQVar）：同源 Web Worker varengine-worker.js（裡面 importScripts varengine.js，自己讀 data/varengine/weights.json，讀不到用內建權重）。
+     級數：App 的 1～18 級照比例換成 XQVar 的 1～8 級；20 秒沒回來當作算不出來 */
+  let VW=null,VW_ID=0;const VW_CB=new Map();
+  function varWorker(){if(VW)return VW;try{VW=new Worker("varengine-worker.js");VW.onmessage=e=>{const d=e.data||{},cb=VW_CB.get(d.id);if(cb){VW_CB.delete(d.id);cb(d)}};VW.onerror=()=>{for(const[,cb]of VW_CB)cb({ok:false});VW_CB.clear();VW=null}}catch(e){VW=null}return VW}
+  function varMove(P,lv){return new Promise(res=>{const w=varWorker();if(!w)return res(null);const id=++VW_ID,to=setTimeout(()=>{VW_CB.delete(id);res(null)},20000);
+    VW_CB.set(id,d=>{clearTimeout(to);res(d&&d.ok&&d.result&&typeof d.result.move==="string"?d.result.move:null)});
+    const lx=+P.level||4,level=Math.max(1,Math.min(8,Math.round(lx*8/18)));try{w.postMessage({id,cmd:"bestMove",args:[fen(P.board,P.turn),{level}]})}catch(e){clearTimeout(to);VW_CB.delete(id);res(null)}})}
   const ENG_OVER_MSG="這個局面的棋子數超出電腦棋手能算的範圍（例如一方超過兩門炮），電腦沒辦法接著下。按「新局」或回觀星臺換一局";
   window.evalPos=async(b,s,ms,multipv)=>{if(!legal(b,s).length)return{lines:[],dead:true};if(engOver(b,s))throw new Error(ENG_OVER_MSG);
     return XQEngine.search({fen:fen(b,s)},{movetime:ms||ANALYZE_MS},multipv||1)};
@@ -479,7 +486,9 @@ var XQ=(function(){
           const f=parseSq(u.slice(0,2)),t=parseSq(u.slice(2,4));if(legal(P.board,P.turn).some(([a,b])=>a===f&&b===t)){playApply(f,t);playMsg="";engFail=0;return}}}
       if(tdOwn(P)){await new Promise(z=>setTimeout(z,30));if(!P||P.id!==id||P.moves.length!==n||P.result)return;const mv=window.XQ_TD.decide(P,C);   /* 11/16 黑洞新規則：星樞照新規則自己算（易 1 步／中 2 步／難 3 步），不叫 Pikafish */
         {const w=900-(Date.now()-t0);if(w>0)await new Promise(z=>setTimeout(z,w))}if(!P||P.id!==id||P.moves.length!==n||P.result)return;if(!mv)return;playApply(mv[0],mv[1]);playMsg="";engFail=0;return}
-      if(engOver(P.board,P.turn)){P.engOver=1;playMsg="⚠ "+ENG_OVER_MSG;return}   /* 不送 Pikafish、不重試（finally 看 P.engOver） */
+      if(engOver(P.board,P.turn)){const vm=await varMove(P,lv);if(!P||P.id!==id||P.moves.length!==n||P.result)return;   /* 11/16 開發者選單「接 XQVar＋調權重」：Pikafish 不收的局面改請 Magellan（src/varengine.js＝XQVar，背景執行緒）算；算不出來才停下說明 */
+        const vf=vm?parseSq(vm.slice(0,2)):-1,vt=vm?parseSq(vm.slice(2,4)):-1;if(!vm||!legal(P.board,P.turn).some(([a,b])=>a===vf&&b===vt)){P.engOver=1;playMsg="⚠ "+ENG_OVER_MSG;return}   /* 不送 Pikafish、不重試（finally 看 P.engOver） */
+        {const w=900-(Date.now()-t0);if(w>0)await new Promise(z=>setTimeout(z,w))}if(!P||P.id!==id||P.moves.length!==n||P.result)return;delete P.engOver;playApply(vf,vt);playMsg="";engFail=0;return}
       if(P.td&&window.XQ_TD){const TD=window.XQ_TD.engine(P,C),r=await engRace(XQEngine.search(engPos(),{depth:TD.depth,searchmoves:TD.sm},TD.mpv),engTmo()),mv=window.XQ_TD.pick(r,TD,Math.random);   /* 黑洞陣地塔防：星樞推算 N 步＋失誤率；被定身的子不走（敵方沒別步可走時照常走） */
         {const w=1100-(Date.now()-t0);if(w>0)await new Promise(z=>setTimeout(z,w))}if(!P||P.id!==id||P.moves.length!==n||P.result)return;
         const f=parseSq(mv.slice(0,2)),t=parseSq(mv.slice(2,4));if(!legal(P.board,P.turn).some(([a,b])=>a===f&&b===t))throw new Error("引擎給出不合法著法 "+mv);playApply(f,t);playMsg="";engFail=0;return}

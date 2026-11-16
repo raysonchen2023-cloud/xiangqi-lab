@@ -280,12 +280,14 @@ function chdEndShow(){if(!CHD_END_ON||document.querySelector(".chd-end"))return;
   d.innerHTML=`<div class="chd-ec"><div class="chd-eh">${c?`<img src="data/xs/prev_${c}.webp" alt="" onerror="this.remove()">`:""}<div><small>🏁 雲河星槎・十三站走完了</small><b>${esc(E.t)}</b></div></div>
     <p class="chd-ex">${esc(E.x)}</p>
     <div class="chd-ei">${T?`<img class="chd-sil" src="data/xs/prev_${to}.webp" alt="${esc(T.n)}" onerror="this.remove()">`:""}<p>${esc(E.inv)}</p></div>
-    <div class="chd-eb"><button class="btn" id="chdE1">${esc(E.b1)}</button><button class="btn ghost" id="chdE2">${esc(E.b2)}</button></div></div>`;
+    <div class="chd-eb">${CHD_E1_ON?`<button class="btn" id="chdE1">${esc(E.b1)}</button>`:""}<button class="btn${CHD_E1_ON?" ghost":""}" id="chdE2">${esc(E.b2)}</button></div></div>`;
   document.body.append(d);const close=()=>{d.classList.add("out");setTimeout(()=>d.remove(),220)};
   d.addEventListener("click",e=>{if(e.target===d)close()});d.querySelector("#chdE2").onclick=()=>{try{vibrate(5)}catch(e){}close()};
-  d.querySelector("#chdE1").onclick=()=>{try{vibrate(10)}catch(e){}const s=d.querySelector(".chd-sil"),go=()=>{d.remove();if(typeof shipNewJourney==="function")shipNewJourney(to||"")};
+  const e1=d.querySelector("#chdE1");if(e1)e1.onclick=()=>{try{vibrate(10)}catch(e){}const s=d.querySelector(".chd-sil"),go=()=>{d.remove();if(typeof shipNewJourney==="function")shipNewJourney(to||"")};
     if(s&&!matchMedia("(prefers-reduced-motion: reduce)").matches){s.classList.add("lit");setTimeout(go,950)}else go()}}
 
+/* 11/16 開發者出入口盤查選單「拿掉這顆」：七星改版後新旅程一律齊轍開局、不能換角色，破關卡的「換一位再起航／用某某再走一次」（E.b1，開新旅程）先不放；要放回改 true */
+const CHD_E1_ON=false;
 /* ---------- 文案（CHD_TXT）---------- */
 const CHD_TXT={
 x_swordboy:{

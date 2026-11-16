@@ -53,7 +53,7 @@ const bhtlIs=st=>!!st&&st.journey===BHTL_ID&&!!st.td;
 function bhtlFlat(st){return bhtlIs(st)||(typeof bhtdFlat==="function"&&bhtdFlat(st))}   /* 11/14：正式關卡選了「純淨平面」視角也走這條（07bht-td.js bhtdFlat） */
 /* 練習賽進行中（旁白泡泡在）：01-board 的術語、記譜第一次提示先不跳，免得壓在泡泡上；練完照常出現 */
 function bhtlHush(){return !!BHTL_ST||!!(typeof document!=="undefined"&&document.getElementById("bhtlBox"))}
-function bhtlGuide(){let c="";try{c=bhtdChar()}catch(e){}const k=c==="x_spiritgirl"?"x_shi":"x_spiritgirl";return{k,n:BHTD.CH[k].n}}   /* 田飛燕講；玩家選的是她就換鐵連城 */
+function bhtlGuide(){let c="";try{c=bhtdChar()}catch(e){}const k0=c==="x_spiritgirl"?"x_shi":"x_spiritgirl",k=typeof ptyHas!=="function"||ptyHas(k0)?k0:"x_swordboy";return{k,n:BHTD.CH[k].n}}   /* 11/16 開發者「所有意外事件只有已加入的夥伴角色才能觸發該角的特殊事件」：講的人還沒加入就換齊轍 */   /* 田飛燕講；玩家選的是她就換鐵連城 */
 const bhtlSay=t=>{const G=bhtlGuide();return typeof bhSay==="function"?bhSay([G.n,t]):`<p class="pl-say">${esc(G.n)}：「${esc(t)}」</p>`};
 function bhtlQ(st){const S=bhtlSt();return S.cur&&S.cur.id===st.id?S.cur:{id:st.id}}
 function bhtlMark(st,k){const q=bhtlQ(st);q[k]=1;bhtlSave({cur:q})}

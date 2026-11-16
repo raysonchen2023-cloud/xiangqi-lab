@@ -397,8 +397,8 @@ function titlePaint(view,opt){const o=TITLE;if(!o)return;opt=opt||{};const inn=o
     for(const k of BL){if(k==="go"){const m=saveMetaNow(),n=curSlot();h+=`<button class="xqt-go" id="tGo"><img src="${slotImg(m.c)}" alt="" onerror="this.style.visibility='hidden'"><span><b>▶ 繼續</b><small>${esc(m.pc)}・${esc(m.nm)}　修為 Lv ${m.lv}${m.rk?"・"+esc(m.rk):""}</small><small>故事 ${m.st}／36・遊玩 ${fmtSec(m.sec)}${n?`・第 ${n} 格`:""}</small></span></button>`}
       else if(k==="cont"){const T=tsmContTxt(tsmLatest());h+=`<button class="xqt-go" id="tCont"><img src="${slotImg(myChar()||mySex())}" alt="" onerror="this.style.visibility='hidden'"><span><b>${esc(T.t)}</b><small>${esc(T.s)}</small><small>還沒選角色也能玩；想聽故事時再選</small></span></button>`}
       else if(k==="new")h+=`<button class="btn ${J?"ghost":"xqt-main"}" id="tNew">⚔ 新的旅程</button>`;
-      else if(k==="story")h+=`<button class="btn ghost" id="tNew">🎭 選一位角色，開始故事</button>`;
-      else if(k==="later")h+=`<button class="btn ghost" id="tLater">先逛逛，之後再選角色</button>`;
+      else if(k==="story")h+=`<button class="btn ghost" id="tNew">🎭 開始故事</button>`;
+      else if(k==="later")h+=`<button class="btn ghost" id="tLater">先逛逛，之後再開始故事</button>`;
       else if(k==="save")h+=`<button class="btn ghost" id="tSv">💾 存檔與讀檔</button>`;
       else if(k==="xf")lk.push('<button type="button" id="tXf">📱 從舊手機搬資料</button>');
       else if(k==="im")lk.push('<button type="button" id="tIm">📂 讀入存檔檔案</button>')}
@@ -520,7 +520,7 @@ function saveMigrateOld(){const c=myChar()||(mySex()==="f"?"f":"m");store.set("j
 function saveBoot(){if(SAVE_OLD!==null){store.set("saveMig1",Date.now());if(SAVE_OLD)saveMigrateOld()}lockFix();
   try{const J=store.get("journey",null);if(J&&CHAR_ERA[J.c]&&J.era!==2){store.set("era",CHAR_ERA[J.c]);store.set("eraUser",null);store.set("journey",{...J,era:2});setTimeout(()=>{try{applyEra()}catch(e){}},300)}}catch(e){}   /* 意見回饋 669 補：1200 版以前就選好角色的旅程，開 App 時補套一次角色主場的朝代（之後自己換的照自己的） */
   let pro=false,shown=false;try{pro=!!sessionStorage.getItem("xqPrologue");if(pro)sessionStorage.removeItem("xqPrologue");shown=!!sessionStorage.getItem("xqTitleShown")}catch(e){}
-  try{const u=JSON.parse(localStorage.getItem("xqUpdBack")||"null");localStorage.removeItem("xqUpdBack");if(u&&Date.now()-(+u.t||0)<180000){shown=true;sessionStorage.setItem("xqTitleShown","1");if(u.h&&/^#\//.test(u.h)&&!/^#\/./.test(location.hash||""))location.hash=u.h}}catch(e){}   /* 11/16 開發者選單「只管更新」：3 分鐘內的更新重載（02-shell markDone 記的）＝不出開頭畫面，網址沒帶頁面就回到原本那一頁；真的關掉 App 再開照舊出開頭畫面 */
+  try{const u=JSON.parse(localStorage.getItem("xqUpdBack")||"null");localStorage.removeItem("xqUpdBack");if(u&&Date.now()-(+u.t||0)<180000){shown=true;sessionStorage.setItem("xqTitleShown","1");sessionStorage.setItem("xqUpdBoot",String(Date.now()));if(u.h&&/^#\//.test(u.h)&&!/^#\/./.test(location.hash||""))location.hash=u.h}}catch(e){}   /* 11/16 開發者選單「只管更新」：3 分鐘內的更新重載（02-shell markDone 記的）＝不出開頭畫面，網址沒帶頁面就回到原本那一頁；真的關掉 App 再開照舊出開頭畫面 */
   if(pro){if(typeof bhxNeed==="function"&&bhxNeed()&&typeof bhxBack==="function")bhxBack(true);setTimeout(()=>{if(typeof bhxLandNew==="function"&&bhxLandNew())return;prologue()},1500)}   /* 有舊旅程的人在開頭選好角色：換格會重新載入，載入後一樣降落經典星槎 */   /* 換格開新旅程會重新載入：等序幕的 1.5 秒先蓋黑洞底，不露出首頁 */
   if(!pro&&typeof bhxResume==="function"&&bhxResume())return;   /* 11/16 P0：開新旅程到一半被重新載入＝接回序局邀局卡（07bh bhxResume），不掉回舊旅程 */
   if(shown||navigator.webdriver||!/^(#\/?)?$/.test(location.hash||""))return;titleScreen({})}

@@ -25,7 +25,9 @@ test("〔行為〕數子：正規開局、殘局不算超過；四炮、六炮�
 });
 
 test("〔原始碼〕電腦走棋超過就停下說明、不送 Pikafish、不重試；分析直接說算不了", () => {
-  assert.ok(SRC.includes('if(engOver(P.board,P.turn)){P.engOver=1;playMsg="⚠ "+ENG_OVER_MSG;return}'), "playEngine 先數子");
+  assert.ok(SRC.includes("if(engOver(P.board,P.turn)){const vm=await varMove(P,lv);"), "playEngine 先數子；超過就改請 Magellan（XQVar）算");
+  assert.ok(SRC.includes('if(!vm||!legal(P.board,P.turn).some(([a,b])=>a===vf&&b===vt)){P.engOver=1;playMsg="⚠ "+ENG_OVER_MSG;return}'), "算不出來或不合法才停下說明");
+  assert.ok(SRC.includes('VW=new Worker("varengine-worker.js")') && SRC.includes("Math.max(1,Math.min(8,Math.round(lx*8/18)))") && SRC.includes("},20000)"), "背景執行緒、級數換算、20 秒逾時");
   assert.ok(SRC.indexOf("if(engOver(P.board,P.turn))") < SRC.indexOf("if(P.td&&window.XQ_TD){const TD=window.XQ_TD.engine(P,C)"), "在叫 Pikafish 之前");
   assert.ok(SRC.indexOf("if(tdOwn(P)){") < SRC.indexOf("if(engOver(P.board,P.turn))"), "星門圍城（星樞自己算、不叫 Pikafish）不受影響");
   assert.ok(SRC.includes("finally{playBusy=false;if(P&&P.engOver)return;"), "finally 不再排下一次");

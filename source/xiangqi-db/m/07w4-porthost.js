@@ -25,7 +25,7 @@ function ph4Css(){if(document.getElementById("ph4Css"))return;const s=document.c
 @media (prefers-reduced-motion:reduce){.port-say.ph4-flash{animation:none}}`;document.head.append(s)}
 /* 這一朝渡口小卡上說話的七星主人（說書人、或就是玩家自己的角色時回傳空字串） */
 function ph4Who(k){try{const Ls=SHIP_LESSON[k]||{},T=SHIP_STOP[k]||{};if(shipAppr()||!Ls.open)return"";const by=shipLearned(k)&&Ls.done?Ls.doneBy:Ls.openBy;if(by==="teller")return"";
-  const c=by||(T.who||[])[0]||"";if(!c||!WX_CHARS[c]||c===myChar())return"";return c}catch(e){return""}}
+  const c=by||(T.who||[])[0]||"";if(!c||!WX_CHARS[c]||c===myChar())return"";if(typeof ptyHas==="function"&&!ptyHas(c))return"";return c}catch(e){return""}}   /* 11/16 開發者「所有意外事件只有已加入的夥伴角色才能觸發該角的特殊事件」：主人還沒加入就不站出來（小卡也改說書人，見 07f Port） */
 function ph4Mount(v,k){if(!PORT_HOST3D||shwRM()||!SHW_PORT_ON||!SHW_PORT[k])return false;const P=v&&v.querySelector(".shp-page.cq");if(!P||P.dataset.ph4)return!!(P&&P.dataset.ph4);const c=ph4Who(k);if(!c||typeof TRIPO!=="undefined"&&Object.keys(TRIPO).length&&!TRIPO[c])return false;P.dataset.ph4="1";ph4Css();
   const C=shwCfg(SHW_PORT[k],SHW_PSX[k]);if(Array.isArray(C.h))C.h=[C.h[0]*SHW_PORT_K,C.h[1],C.h[2]*SHW_PORT_K];
   const box=document.createElement("div");box.className="ph4";box.setAttribute("aria-hidden","true");box.innerHTML='<i class="sh"></i>';

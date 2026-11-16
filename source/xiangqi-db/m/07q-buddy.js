@@ -133,6 +133,8 @@ function bdOk(){try{return BUDDY_ON&&!!journey()&&!!myChar()&&!shipAppr()}catch(
 function bdSt(){const S=store.get("buddy",null)||{};for(const k of["ev","ml","kn"])if(!S[k]||typeof S[k]!=="object")S[k]={};return S}
 const bdSave=S=>store.set("buddy",S);
 const bdMe=()=>{try{return myChar()}catch(e){return""}};
+/* 11/16 開發者「所有意外事件只有已加入的夥伴角色才能觸發該角的特殊事件」：寄信、心結、七星獻策、闖禍解題頁都先問這位加入了沒 */
+const bdJoined=c=>typeof ptyHas!=="function"||ptyHas(c);
 const bdDay=()=>{try{return localDay()}catch(e){return new Date().toDateString()}};
 const bdPc=c=>(WX_CHARS[c]||{}).pc||"";
 /* 小名（小梅叫燕子「燕子姊姊」）；by＝誰在說 */
@@ -167,7 +169,7 @@ const bdSay=(c,line)=>`<div class="bd-say">${bdFace(c)}<p><b>${esc(bdNk(c))}</b>
 /* 這一朝渡口的主人（07f shipWho 那一套；說書人＝空字串）。跟 07w4 ph4Who 一樣，只是不排除玩家自己 */
 function bdHost(k){try{const Ls=SHIP_LESSON[k]||{},T=SHIP_STOP[k]||{};const by=shipLearned(k)&&Ls.done?Ls.doneBy:Ls.openBy;if(by==="teller")return"";return by||(T.who||[])[0]||""}catch(e){return""}}
 /* 這一朝誰闖禍：開始過就固定那一位；否則主人（不是玩家自己），再不然代班 */
-function bdEvent(k){const L=BD_EV[k];if(!L)return null;const me=bdMe(),R=bdSt().ev[k];if(R&&R.c){const e=L.find(x=>x.c===R.c);if(e&&e.c!==me)return e}const h=bdHost(k);return L.find(x=>x.c===h&&x.c!==me)||L.find(x=>x.c!==me)||null}
+function bdEvent(k){const L=BD_EV[k];if(!L)return null;const me=bdMe(),R=bdSt().ev[k],ok=c=>c!==me&&(typeof ptyHas!=="function"||ptyHas(c));if(R&&R.c){const e=L.find(x=>x.c===R.c);if(e&&ok(e.c))return e}const h=bdHost(k);return L.find(x=>x.c===h&&ok(x.c))||L.find(x=>ok(x.c))||null}   /* 11/16 開發者「按著主線，這時候還沒開到漢朝 不應該有駱角」：七星改版後夥伴陸續加入，闖禍的只挑已經加入隊伍的（07pty ptyHas；舊存檔照停靠過的朝代補建隊伍）；已記下但那位還沒加入的也不算 */
 /* 秦到五代還沒有今天的象棋：跟 07f 千秋殘局一樣說明這是星槎石桌上的殘局 */
 const bdOldTip=k=>typeof SHIP_OLD!=="undefined"&&SHIP_OLD.has(k)?'<div class="muted" style="font-size:12px;margin-top:2px">這一朝還沒有今天的象棋；這是星槎石桌上的殘局，題目出自後世的棋譜。</div>':"";
 const bdGoPz=k=>{location.hash="#/canju/bd/"+k};
@@ -175,7 +177,7 @@ function bdEvOpen(v,k,E){bdCss();const S=bdSt();if(!S.ev[k]){S.ev[k]={c:E.c,at:D
   sheet("❗ "+nk+"闖禍了",b=>{b.innerHTML=`${bdSay(E.c,E.t)}<p class="muted" style="font-size:13.5px;line-height:1.7;margin:4px 0 8px">♟ ${esc(pc)}：${esc((typeof WX_PC_RULE!=="undefined"&&WX_PC_RULE[pc])||"")}</p>
     ${f?"":`<p style="line-height:1.8;margin:0 0 10px;font-size:14.5px">① 在渡口的畫裡，${esc(bdTx(E.ask,E.c))}。<br>② 用${esc(nk)}的${esc(pc)}，解一題 1～3 步的殘局。</p>`}
     <button class="btn" id="bdGo" style="width:100%">${f?"♟ 繼續幫"+esc(nk)+"解圍":"🔎 好，我來幫忙！"}</button><button class="btn ghost" id="bdNo" style="width:100%;margin-top:8px">等一下再說</button>`;
-    b.querySelector("#bdGo").onclick=()=>{closeSheet();if(f)bdGoPz(k);else setTimeout(()=>bdFind(v,k,E),280)};b.querySelector("#bdNo").onclick=()=>closeSheet()})}
+    b.querySelector("#bdGo").onclick=()=>{closeSheet();if(f)bdGoPz(k);else{try{const x=document.querySelector(".xqs.open");if(x&&x._S&&x._S.close)x._S.close()}catch(e){}setTimeout(()=>bdFind(v,k,E),280)}};   /* 11/16 開發者「點下去沒反應」：從頂欄 📜 清單面板（07w xqSheet）裡點闖禍卡，找東西的提示出在畫面上卻被還開著的面板蓋住；要在畫裡找東西時先收起面板 */b.querySelector("#bdNo").onclick=()=>closeSheet()})}
 /* 點在形狀裡、或離邊不到 tol 像素（原圖座標） */
 function bdIn(s,p){let c=false;for(let i=0,j=s.length-1;i<s.length;j=i++){const[xi,yi]=s[i],[xj,yj]=s[j];if((yi>p[1])!==(yj>p[1])&&p[0]<(xj-xi)*(p[1]-yi)/(yj-yi||1e-9)+xi)c=!c}return c}
 function bdSeg(p,a,b){const dx=b[0]-a[0],dy=b[1]-a[1],L=dx*dx+dy*dy||1,t=Math.max(0,Math.min(1,((p[0]-a[0])*dx+(p[1]-a[1])*dy)/L));return Math.hypot(p[0]-a[0]-t*dx,p[1]-a[1]-t*dy)}
@@ -222,7 +224,7 @@ function bdPort(v,k){if(!bdOk())return;const P=v&&v.querySelector(".shp-page.cq"
   tick()}
 /* 解題頁設定（07c-canju.js CanjuPlay 的 XM） */
 function bdEvXM(k){const back=()=>"#/port";if(!bdOk())return{err:"雲河七星的旅程才有旅伴闖禍。",back};const R=bdSt().ev[k],E=R&&(BD_EV[k]||[]).find(x=>x.c===R.c);
-  if(!E)return{err:"這件事還沒發生：先到渡口點她，聽她說闖了什麼禍。",back};const nk=bdNk(E.c),pc=bdPc(E.c);
+  if(!E||!bdJoined(E.c))return{err:"這件事還沒發生：先到渡口點她，聽她說闖了什麼禍。",back};const nk=bdNk(E.c),pc=bdPc(E.c);
   return{id:E.pz,rk:"cjRunBd",back,top:"❗ 旅伴闖禍",icon:"❗",noXP:true,nudgeN:2,ans:"看答案這一題就不算幫她解圍（也沒有修為），確定？",
     head:P=>`<b>❗ ${esc(nk)}闖的禍・${esc(pc)}當主角</b>・${cjLv(P.d)}　<span class="muted">${cjSrc(P)}</span><div class="shp-psay">${esc(nk)}：「${esc(bdTx(E.say,E.c))}」</div>${bdOldTip(k)}`,
     wrong:(u,step)=>step===0?nk+"："+bdTx(E.oops||bdOops(E.c),E.c):"",
@@ -233,12 +235,12 @@ function bdEvXM(k){const back=()=>"#/port";if(!bdOk())return{err:"雲河七星�
 /* ---------- 2 驛站飛書 ---------- */
 /* 寄到：那一朝停靠過、現在不在那裡、之後又停靠過別站，而且不比現在停的朝代晚；一天最多 BD_ML_DAY 封 */
 function bdArrive(){if(!bdOk())return;const S=bdSt(),me=bdMe(),day=bdDay();let D=[],here="";try{D=shipDockList()||[];here=shipAt()}catch(e){return}if(S.md!==day){S.md=day;S.mn=0}let ch=false;
-  for(const e of SHIP_ROUTE){const L=BD_ML[e];if(!L||L.c===me||S.ml[e])continue;if((S.mn|0)>=BD_ML_DAY)break;const i=D.indexOf(e);if(i<0||e===here||i>=D.length-1||!bdCan(e))continue;S.ml[e]={at:Date.now()};S.mn=(S.mn|0)+1;ch=true}
+  for(const e of SHIP_ROUTE){const L=BD_ML[e];if(!L||L.c===me||!bdJoined(L.c)||S.ml[e])continue;if((S.mn|0)>=BD_ML_DAY)break;const i=D.indexOf(e);if(i<0||e===here||i>=D.length-1||!bdCan(e))continue;S.ml[e]={at:Date.now()};S.mn=(S.mn|0)+1;ch=true}
   if(ch)bdSave(S)}
-const bdMlShown=(S,e)=>!!S.ml[e]&&!!BD_ML[e]&&BD_ML[e].c!==bdMe()&&bdCan(e);
+const bdMlShown=(S,e)=>!!S.ml[e]&&!!BD_ML[e]&&BD_ML[e].c!==bdMe()&&bdJoined(BD_ML[e].c)&&bdCan(e);
 const bdGiftReady=M=>!!M&&!!M.s&&!M.g&&M.sd!==bdDay();
 function bdUnread(){if(!bdOk())return 0;const S=bdSt();let n=0;for(const e in S.ml){if(!bdMlShown(S,e))continue;const M=S.ml[e];if(!M.r||bdGiftReady(M))n++}return n}
-function bdKnReady(c,S){const K=BD_KN[c],R=(S||bdSt()).kn[c];return!!K&&!!R&&R.seen&&!R.done&&c!==bdMe()&&bdCan(K.at)&&bdCan(K.rl[0])}
+function bdKnReady(c,S){const K=BD_KN[c],R=(S||bdSt()).kn[c];return!!K&&!!R&&R.seen&&!R.done&&c!==bdMe()&&bdJoined(c)&&bdCan(K.at)&&bdCan(K.rl[0])}
 function bdHas(e,id){try{return(relicsMine()[e]||[]).includes(id)}catch(e2){return false}}
 /* 驛站信箱最上面一段：旅伴的信、心結 */
 function bdMailInject(){if(!bdOk())return;bdArrive();const b=document.querySelector("#sheet .sh-b");if(!b||b.querySelector(".bd-mail"))return;const S=bdSt();
@@ -291,7 +293,7 @@ async function bdKnOpen(c){const K=BD_KN[c];if(!K||!bdOk())return;bdCss();let R=
 
 /* ---------- 4 七星軍師獻策 ---------- */
 function bdPlanCard(c){if(!BUDDY_ON||!c||!c.flag||!Array.isArray(c.flag.opts)||!BD_PLAN[c.id]||!bdOk())return null;const D=BD_PLAN[c.id],me=bdMe();let n=0;
-  const opts=c.flag.opts.map((o,j)=>{const d=D.o[j];if(!d||D.w[j]!==o.who||d[0]===me||!WX_CHARS[d[0]])return o;n++;
+  const opts=c.flag.opts.map((o,j)=>{const d=D.o[j];if(!d||D.w[j]!==o.who||d[0]===me||!WX_CHARS[d[0]]||!bdJoined(d[0]))return o;n++;   /* 獻策的人還沒加入：這一策退回原本的史實軍師 */
     const re=o.ok?`${o.re}　📜 歷史上提這一策的是${o.who}：${String(o.say||"")}`:/^一位/.test(o.who)?o.re:`${o.re}　📜 當時這樣主張的是${o.who}。`;
     return{...o,who:bdNk(d[0])+"・"+d[1],say:bdTx(d[2],d[0]),re}});
   return n?{...c,flag:{...c.flag,opts}}:null}

@@ -16,7 +16,7 @@ const SHP_IMGV="2300";
    題目只從 shipBuild 挑：一盞茶殘局題庫裡「第一步就是本命子」的題，照難度的 d 範圍（DIFF.band），再優先殺法標籤（SHIP_LESSON.kill）和那一朝的古譜（books）；
      同一個難度裡，同一種本命子的站不重複出題；不夠 3 題的站顯示「題目準備中」（相目前只有 2 題）。
      benming-pool.json 上了網站以後，把 shipBuild 裡收題那一段換成讀它（src＝canju 的題號）就好。
-   小帥、小帥妹的舊旅程：說書人的學徒——13 站全開、主場角色不說話，上面有「選雲河七星開新旅程」（存到別格，不蓋掉舊進度）。
+   小帥、小帥妹的舊旅程：說書人的學徒——13 站全開、主場角色不說話，上面有「⚔ 開新的旅程」（存到別格，不蓋掉舊進度；11/16 選單改字，原本「選雲河七星開新旅程」）。
    意見回饋 684、685（開發者 11/6 同意 story/雲河七星長篇/關卡設計_第1-4章.md）：船艙、秦、漢、三國四站改成固定的「劇情局＋變化題＋古譜」（SHIP_PLAN）；
      手擺題在 data/canju/ship-set.json（tools/canju/6_ship.js 產生，cjData 只併進 byId、不進茶單）；每題前後各一句台詞（題目的 say、SHIP_SAY_ID）；
      國手、千秋＝劇情局＋2 題古譜，變化題當選做的熱身；船艙學會了以後有「七星同局圖鑑」（選做、不計點、不給修為，存 shipGal）；
@@ -102,7 +102,7 @@ const SHIP_PC={"俥":"R","傌":"N","相":"B","仕":"A","帥":"K","炮":"C","兵"
    pre2／pre3＝第 2、3 題前那一句（題目自己有台詞就用題目的） */
 const SHIP_PLAN={
   classic:{ch:1,who:"齊轍",story:pc=>"xs-classic-"+(SHIP_PC[pc]||"R"),byDiff:pc=>[pc==="俥"?"xs-classic-N":"xs-classic-R",pc==="相"||pc==="仕"?"xs-classic-K":null],
-    pre2:pc=>["說書人",pc==="俥"?"同一盤，換小梅的傌來收。":"同一盤，換阿轍的俥來收。"]},
+    pre2:pc=>["說書人",pc==="俥"?(typeof ptyHas!=="function"||ptyHas("x_miaogirl")?"同一盤，換小梅的傌來收。":"同一盤，換一匹傌來收。"):"同一盤，換阿轍的俥來收。"]},   /* 11/16 開發者「所有意外事件只有已加入的夥伴角色才能觸發該角的特殊事件」：小梅還沒加入，說書人不提她 */
   qin:{ch:2,who:"齊轍",story:"xs-qin-0",warm:"zx076",byDiff:{1:["zx076","zx075"],2:["zx076","zx075"],3:["zx075","lk094c5"],4:["sq183c6","sq272"],5:["fx-zx223-15-29","lk083"]}},
   han:{ch:3,who:"小梅",story:"xs-han-0",warm:"xs-han-1",byDiff:{1:["xs-han-1","lk129c7"],2:["xs-han-1","lk107c6"],3:["xs-han-1","lk093c4"],4:["sq276c5","sq252"],5:["sq252","sq400"]},pre3:["老驛騎","沒到以前，不能算自己贏。"]},
   sanguo:{ch:4,who:"方庭",story:"xs-sanguo-0",warm:"xs-sanguo-1",byDiff:{1:["xs-sanguo-1","gm1997-1p394p44K4r"],2:["xs-sanguo-1","gm1997-1p394p44K4r"],3:["xs-sanguo-1","lk204c6"],4:["xw056c8","xw057c8"],5:["lk011c4","sq463c6"]},pre3:["道童","叫我看這裡。"]},
@@ -135,6 +135,8 @@ function shipSay(k,id,P,slot){const Pl=SHIP_PLAN[k];if(!Pl||!Pl.story)return{};c
   if(k==="classic"&&slot===1)S.pre=[Pl.pre2(shipPiece(k))];
   if(!S.pre&&slot!==0)S.pre=[slot===2&&Pl.pre3?Pl.pre3:["說書人",shipSrcLine(P)]];
   if(shipAppr()){const f=a=>(a||[]).filter(x=>x[0]==="說書人"),w={};for(const u in S.wrong||{})if(S.wrong[u][0]==="說書人")w[u]=S.wrong[u];Object.assign(S,{pre:f(S.pre),done:f(S.done),wrong:w})}
+  else{const f=a=>a&&a.filter(x=>shipSpkIn(x[0])),w={};for(const u in S.wrong||{})if(shipSpkIn(S.wrong[u][0]))w[u]=S.wrong[u];const hadPre=!!(S.pre&&S.pre.length);Object.assign(S,{pre:f(S.pre),done:f(S.done),wrong:w});
+    if(hadPre&&!S.pre.length&&slot!==0)S.pre=[["說書人",shipSrcLine(P)]]}   /* 11/16 開發者「所有意外事件只有已加入的夥伴角色才能觸發該角的特殊事件」：還沒加入的人說的句子濾掉（例如秦站 zx076、zx075 小梅的話）；前一句濾光了就換說書人照出處說一句 */
   return S}
 const shipLine=x=>`${esc(x[0])}${x[2]?esc(x[2]):""}：「${esc(x[1])}」`;
 const shipAppr=()=>!!journey()&&!myChar();   /* 有旅程、但不是雲河七星＝說書人的學徒 */
@@ -152,6 +154,10 @@ const shipPages=()=>SHIP_ROUTE.filter(shipLearned).length;
 function shipPiece(k){const T=SHIP_STOP[k];if(!T)return"";if(T.who.length)return WX_CHARS[T.who[0]].pc;const c=myChar();return c?WX_CHARS[c].pc:"俥"}
 /* 誰說這句：主場角色（照 SHIP_LESSON 的 openBy／doneBy）或說書人 */
 function shipWho(k,by){if(by==="teller")return{n:"說書人",img:"data/actors/teller.webp"};const c=by||(SHIP_STOP[k]||{}).who&&SHIP_STOP[k].who[0];const C=c&&WX_CHARS[c];return C?{n:C.nk||C.n,img:"data/xs/prev_"+c+".webp"}:{n:"說書人",img:"data/actors/teller.webp"}}
+/* 11/16 開發者「所有意外事件只有已加入的夥伴角色才能觸發該角的特殊事件」：這句的主人（照 openBy／doneBy，沒寫＝主場第一位）還沒加入就不由他開口。
+   shipByIn＝照 by 判斷（說書人、不是七星的一律算可以）；shipSpkIn＝照台詞上寫的名字（全名、小名、名字兩字，例如「連城」）判斷，shipSay 用來濾掉還沒加入的人說的句子 */
+function shipByIn(k,by){if(by==="teller")return true;const c=by||((SHIP_STOP[k]||{}).who||[])[0];if(!c||!WX_CHARS[c])return true;return typeof ptyHas!=="function"||ptyHas(c)}
+function shipSpkIn(nm){const c=Object.keys(WX_CHARS).find(x=>{const C=WX_CHARS[x]||{};return nm===C.n||nm===C.nk||(C.n&&C.n.length===3&&nm===C.n.slice(1))});return!c||typeof ptyHas!=="function"||ptyHas(c)}
 function shipQuote(){try{if(typeof npcLetters==="function"&&typeof npcBonds==="function"){const M=npcBonds(),n=npcLetters().filter(x=>!(M[x.id]||{}).r).length;if(n)return`驛站信箱裡有 ${n} 封新信，上岸記得去拿。`}}catch(e){}
   return SHIP_SAY[((shipDay()%SHIP_SAY.length)+SHIP_SAY.length)%SHIP_SAY.length]}
 /* 棋史卡（HIST）的第一句 */
@@ -236,7 +242,7 @@ function ShipLv(v,k,id,rd){const T=SHIP_STOP[k],Pl=SHIP_PLAN[k]||{},Ls=SHIP_LESS
     const slot=isX?"熱身・選做（不計點、不給修為）":`第 ${i+1} 題・${String(shipSlotName(k,i,P)).replace(/<[^>]+>/g,"")}`;
     jLevel(v,{id:"ship:"+k+":"+id+":"+diffNow(),name:shipShort(k)+"・"+(G.name||"")},{G,rk:"jRunS",icon:"⛵",back,title:`${shipShort(k)}・${Ls.t||T.place}・${slot}`,
       done:(stars,R)=>{const o={hint:!!(R&&R.hint),perfect:stars>=3};res=isX?shipGalMark(k,id,o):shipMark(k,id,o);
-        if(res&&res.learned&&Ls.done&&k!=="finale")G.outro=(G.outro?G.outro+"　":"")+`✅ 學會了：${Ls.t||""}。${W.n}：「${Ls.done}」`;if(res&&res.learned&&k==="finale")setTimeout(()=>typeof qxPlay==="function"?qxPlay(shipFinaleCard):shipFinaleCard(),900);if(res&&res.learned&&k!=="finale"&&typeof qpPlay==="function")setTimeout(()=>qpPlay(k),900);return stars},
+        if(res&&res.learned&&Ls.done&&k!=="finale")G.outro=(G.outro?G.outro+"　":"")+`✅ 學會了：${Ls.t||""}。${shipByIn(k,Ls.doneBy)?W.n+"：「"+Ls.done+"」":""}`;   /* 11/16 開發者「所有意外事件只有已加入的夥伴角色才能觸發該角的特殊事件」：說這句的主人還沒加入就只寫學會了 */if(res&&res.learned&&k==="finale")setTimeout(()=>typeof qxPlay==="function"?qxPlay(shipFinaleCard):shipFinaleCard(),900);if(res&&res.learned&&k!=="finale"&&typeof qpPlay==="function")setTimeout(()=>qpPlay(k),900);return stars},
       line:()=>!res?"":isX?"🔥 熱身做完了（選做）":k==="finale"?"✅ 千秋歸位・石桌補全了":res.learned?`✅ 學會了：${Ls.t||""}`:`⛵ ${shipShort(k)}・解開 ${res.n}／${res.all}${res.h?"（用過提示，空心點）":""}`,
       get next(){if(rd)return[`📖 回到第${CNUM(Pl.ch||1)}章`,()=>{location.hash="#/ship/read/"+k+"/after"}];if(isX)return["回千秋殘局",()=>goUp("#/ship/pz")];
         if(k==="finale")return["⛵ 回起航頁",()=>goUp("#/ship/sail")];const x=nx();return x?["下一題 ›",()=>{location.hash=shipHref(k,x)}]:shipSailTo(k)?["⛵ 起航去"+shipShort(shipSailTo(k)),()=>goUp("#/ship/sail")]:["回星槎",()=>goUp("#/adventure")]}})}).catch(e=>bad(e&&e.message||"題庫載入失敗"));
@@ -262,7 +268,7 @@ function shipDoneHTML(k,o,ans,id,isX){if(ans||!o)return`<p class="muted">看了�
     return`<div class="card shp-done">${k==="classic"?`🖼 <b>七星同局圖鑑</b>　${n}／${X.length}`:"🔥 <b>熱身・變化題</b>"}<br><span class="muted">選做的題：不計解題點、不給修為。</span>${says}${more}</div>`}
   return`<div class="card shp-done">⛵ <b>${esc(shipShort(k))}・${esc(Ls.t||"")}</b>　${shipDots(k)}　${o.n}／${o.all}<br><span class="muted">${o.h?"這題用了提示（空心點）；不看提示再解一次，點就會變實心。":"自己解開的（實心點）。"}${o.first?"修為 +15。":""}</span>
     ${says}${more}
-    ${o.learned?`<p class="shp-learn">✅ 學會了：${esc(Ls.t||"")}<br><span class="muted">《千秋棋話》補了 ${shipPages()}／13 頁</span></p>${typeof sealLitHTML==="function"?sealLitHTML(k,"li"):""}${Ls.done?`<p class="shp-say">${esc(W.n)}：「${esc(Ls.done)}」</p>`:""}`:""}</div>`}
+    ${o.learned?`<p class="shp-learn">✅ 學會了：${esc(Ls.t||"")}<br><span class="muted">《千秋棋話》補了 ${shipPages()}／13 頁</span></p>${typeof sealLitHTML==="function"?sealLitHTML(k,"li"):""}${Ls.done&&shipByIn(k,Ls.doneBy)?`<p class="shp-say">${esc(W.n)}：「${esc(Ls.done)}」</p>`:""}`:""}</div>`}   /* 11/16 開發者「所有意外事件只有已加入的夥伴角色才能觸發該角的特殊事件」：說這句的主人還沒加入就不畫 */
 
 /* ---------- 免費悔棋（照難度：星槎、擂台的對局每盤幾次；08b-cpugame.js undoAsk 呼叫） ---------- */
 function undoFreeLeft(st){try{const D=diffOf();if(!st||!D.undo||st.ranked||st.practice)return 0;const k=st.kind||(st.journey?"journey":st.arena?"arena":"cpu");if(k!=="journey"&&k!=="arena")return 0;
@@ -312,7 +318,7 @@ const PORT_SIGHT={"qin":[["萬里長城",32,22,"秦始皇統一六國後，派�
 function portSight(k,i){const s=(PORT_SIGHT[k]||[])[i];if(!s)return;vibrate(5);(typeof relicSightDrop==="function"?relicSightDrop("p",k,s[0]):relicDrop(k,.15)).then(got=>{if(got)return;const T=SHIP_STOP[k]||{};sheet("📍 "+s[0],b=>{b.innerHTML=`<div class="muted" style="margin:-4px 0 8px">${esc(eraLabel(k))}・${esc(T.place||"")}</div><p style="line-height:1.8;margin:0;font-size:16px">${esc(s[3])}</p>`})}).catch(()=>{})}
 function Port(v){const k=shipHere(),T=SHIP_STOP[k]||SHIP_STOP.classic,Ls=SHIP_LESSON[k]||{},ap=shipAppr(),AS=typeof arenaStamps==="function"?arenaStamps():{},A=ARENA[k]||{},lrn=shipLearned(k);
   setTop("⚓ "+portName(k),"^#/adventure");   /* hspx 11/11：標題列右上的 ⛵ 拿掉，回星槎走圖上的「⛵ 上星槎／回星槎」（07w4 PH4_PIER） */setTabs(false);v.className="view";
-  const byT=ap||!Ls.open,W=byT?shipWho(k,"teller"):shipWho(k,lrn&&Ls.done?Ls.doneBy:Ls.openBy),say=byT?shipQuote():lrn&&Ls.done?Ls.done:Ls.open;
+  const byT=ap||!Ls.open||!shipByIn(k,lrn&&Ls.done?Ls.doneBy:Ls.openBy),W=byT?shipWho(k,"teller"):shipWho(k,lrn&&Ls.done?Ls.doneBy:Ls.openBy),say=byT?shipQuote():lrn&&Ls.done?Ls.done:Ls.open;   /* 11/16 開發者「所有意外事件只有已加入的夥伴角色才能觸發該角的特殊事件」：渡口主人還沒加入，上方小卡改說書人 */
   const Q=PORT_SPOT[k]||PORT_SPOT._;   /* 意見回饋 709：渡口上方＝那一朝的滿版水墨圖（data/shipmap/port_<朝代>.webp），三扇門是圖上的金色入口 */
   v.innerHTML=shpPage("port_"+k,"⚓ "+esc(portName(k)),(k==="classic"?"雲河星槎":esc(eraLabel(k)))+"・"+esc(T.place),[["poPark",Q[0][0],Q[0][1],"🌳 "+esc(parkName(k)),"路人棋友"],["poInn",Q[1][0],Q[1][1],"🏮 "+esc(innName(k)),"旅人・秘境棋友"],["poArena",Q[2][0],Q[2][1],"🏯 "+esc(A.name||"擂主")+(AS[k]?" ✓":""),"擂台"],...(k==="classic"?[["poPh",47,65,"🀄 千秋石桌","幻影指導局"]]:[["poBattle",Q[2][0],Math.min(90,Q[2][1]+11),"⚔ 古戰場"+((typeof sealSideOn==="function"?sealSideOn(k,"battle"):(store.get("battleTitle",{})||{})[k])?" ✓":""),""]])],   /* 意見回饋 725：擂台旁的「⚔ 古戰場」（07g-battle.js），船艙沒有 */(PORT_SIGHT[k]||[]).map((s,i)=>`<button class="po-sight" data-ps="${i}" style="left:${s[1]}%;top:${s[2]}%">📍 ${esc(s[0])}</button>`).join(""))+`<div class="pad port">
     <div class="card port-say"><img src="${W.img}" alt="" onerror="this.remove()"><p><b>${esc(W.n)}</b>「${esc(say)}」</p></div>
@@ -379,8 +385,8 @@ function ShipLesson(v){setTop("📘 棋話一頁","#/adventure");setTabs(false);
   const board=`<div class="shl-board"><b>${esc(Ls.t||T.img||"")}${lrn?" ✅":""}</b>${(Ls.x||[]).map(x=>`<p>${esc(x)}</p>`).join("")}${Ls.k?`<p class="shl-k">口訣：${esc(Ls.k)}</p>`:""}</div>`;
   const sp=[["slDemo",27,77,"▶ 看示範棋局","同棋理的古譜殘局"]];if(H)sp.push(["slHist",73,77,"📜 這一朝的棋",H.t]);if(ch)sp.push(["slRead",50,88,"📖 讀這一章","《雲河七星》第"+CNUM(ch)+"章"+((store.get("shipRead",{})||{})[k]?"・讀過了":"")]);
   v.innerHTML=shpPage("page_lesson","📘 棋話一頁・"+esc(shipShort(k)),esc(T.place||"")+(lrn?"・✅ 學會了":""),sp,board)+`<div class="pad shl-more">
-    ${!ap&&Ls.open?`<div class="card port-say"><img src="${Wo.img}" alt="" onerror="this.remove()"><p><b>${esc(Wo.n)}</b>「${esc(Ls.open)}」</p></div>`:""}
-    ${lrn&&!ap&&Ls.done?`<div class="card port-say"><img src="${Wd.img}" alt="" onerror="this.remove()"><p><b>${esc(Wd.n)}</b>「${esc(Ls.done)}」</p></div>`:""}
+    ${!ap&&Ls.open&&shipByIn(k,Ls.openBy)?`<div class="card port-say"><img src="${Wo.img}" alt="" onerror="this.remove()"><p><b>${esc(Wo.n)}</b>「${esc(Ls.open)}」</p></div>`:""}
+    ${lrn&&!ap&&Ls.done&&shipByIn(k,Ls.doneBy)?`<div class="card port-say"><img src="${Wd.img}" alt="" onerror="this.remove()"><p><b>${esc(Wd.n)}</b>「${esc(Ls.done)}」</p></div>`:""}
     ${(L=>L?`<div class="card shl-lore"><b>🌌 星槎小知識・${esc(L[0])}</b><p>${esc(L[1])}</p></div>`:"")(SHIP_LORE[Math.max(0,SHIP_ROUTE.indexOf(k))%SHIP_LORE.length])}
     ${SHIP_OLD.has(k)?'<p class="muted shp-old">這一朝還沒有今天的象棋；星槎石桌上的千秋殘局，題目出自明清古譜。</p>':""}
     <p class="muted shp-pzhint">${lrn?"✅ 這站的 3 題千秋殘局都解開了":"千秋殘局 3 題都自己解開，就算學會這一頁棋話"}</p>${typeof shipMoreLesson==="function"?shipMoreLesson(k):""}
@@ -591,7 +597,7 @@ function Voyage(v){setTop("⛵ 雲河星槎","#/");setTabs(true,"#/");v.classNam
   const paint=()=>{const ap=shipAppr(),D=shipDocked(),k=shipHere(),T=SHIP_STOP[k],O=ap?SHIP_ROUTE:shipOrder(),I=xpInfo(),nx=ap?null:shipNextStop();
     v.innerHTML=`<div class="pad shp">
       <div class="shp-map full"><div class="shp-in"><img class="shp-base" src="data/shipmap/ship_map.webp?v=${SHP_IMGV}" alt="雲河星槎">${shpPxHtml()}<div class="px-sw px-hw"><div class="shp-hl"><button class="shp-hs" data-hs="parks" style="left:13%;top:37%">🪨 千秋石枰</button><button class="shp-hs" data-hs="lesson" style="left:80%;top:17%">📘 棋話一頁</button><button class="shp-hs${shipLearned(k)?"":" hot"}" data-hs="pz" style="left:50%;top:43%${typeof shipMoreGold==="function"?shipMoreGold(k):""}">♟ 千秋殘局${shipLearned(k)?(typeof shipMoreHs==="function"?shipMoreHs(k):" ✓"):""}</button><button class="shp-hs" data-hs="shelf" style="left:22%;top:53%">📚 書架</button><button class="shp-hs" data-hs="read" style="left:33%;top:73%">📖 讀這一章</button><button class="shp-hs" data-hs="bag" style="left:52%;top:79%">🎒 行囊</button><button class="shp-hs${shipLearned(k)&&nx?" hot":""}" data-hs="sail" style="left:17%;top:85%">⛵ 起航</button><button class="shp-hs" data-hs="port" style="left:80%;top:73%">⚓ 下船</button></div></div></div><div class="hc shp-cap"><b>⛵ ${esc(shipShort(k))}・${esc(T.place)}</b><small>🀄 Lv ${I.L}・《千秋棋話》${shipPages()}／13 頁・停靠 ${D.length}／13・🎚 ${esc(diffOf().n)}</small></div></div>
-      ${ap?`<div class="card shp-ap"><b>📜 你是說書人的學徒</b><p class="muted">十三站都能去，各站的主場角色不會跟你說話。想用雲河七星的眼睛走一趟？開新的旅程會存到另一格，這段旅程不會被蓋掉。</p><button class="btn" id="spNew" style="width:100%">⛵ 選雲河七星開新旅程</button></div>`:""}
+      ${ap?`<div class="card shp-ap"><b>📜 你是說書人的學徒</b><p class="muted">十三站都能去，各站的主場角色不會跟你說話。想用雲河七星的眼睛走一趟？開新的旅程會存到另一格，這段旅程不會被蓋掉。</p><button class="btn" id="spNew" style="width:100%">⚔ 開新的旅程</button></div>`:""}
       <div class="shp-route-x" hidden>${O.map((e,i)=>{const dk=D.includes(e),on=e===k,ok=shipLearned(e),isN=e===nx;return`<button class="shp-st${dk?" dk":" lk"}${on?" on":""}${ok?" ok":""}${isN?" nx":""}" data-st="${e}"><i>${dk?esc((ARENA[e]||{}).seal||"棋"):isN?"⛵":"🔒"}</i><span>${i+1}・${esc(shipShort(e))}</span></button>`}).join("")}</div>
       ${mainDoneHTML()}<div id="spRes"></div>
     </div>`;

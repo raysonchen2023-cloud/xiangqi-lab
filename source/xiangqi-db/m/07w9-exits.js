@@ -25,7 +25,7 @@ const EXITS={"/hub/learn":[52,86,"‹ 回棋鎮","#/"],"/hub/battle":[78,87,"‹
   "/cup":[50,87,"↩ 下樓・回茶坊","#/hub/battle"],"/cpuroom":[50,96,"↩ 掀簾・回茶坊","#/hub/battle"],"/guanxing":[86,90,"🏘 回棋鎮"],"/ximarket":[64,91,"🏘 回棋鎮"],"/ximarket/tea":[24,95,"↩ 回西市","#/ximarket"],"/redo":[24,87,"↩ 回書院","#/hub/learn"],"/stats":[50,87,"↩ 回書院","#/hub/learn"],"/openings":[50,87,"↩ 回書院","#/hub/learn"],
   "/journey/inn":[18,86,"⛵ 回渡口"],"/ship/lesson":[16,90,"⛵ 回星槎"],"/ship/pz":[16,90,"⛵ 回星槎"],"/ship/shelf":[16,90,"⛵ 回星槎"],"/ship/bag":[16,90,"⛵ 回星槎"],
   "/feedback":[20,74,"⛵ 回星槎","#/adventure"],"/me":[50,87,"🏘 回棋鎮"],"/today":[30,87,"🏘 回棋鎮"],"/gm":[50,87,"↩ 回棋譜庫"],"/quiz":[50,87,"↩ 回書院","#/hub/learn"],
-  "/lobby":[18,88,"↩ 回對戰茶樓"],"/db":[20,88,"↩ 回學習書院"],"/settings":[14,90,"⛵ 回星槎"]};
+  "/lobby":[18,88,"↩ 回對戰茶樓"],"/db":[20,88,"↩ 回學習書院"],"/settings":[14,90,"↩ 回上一頁"]};
 /* 開發者 11/9「拿掉頁面右下角的設定，以後統一到星槎裡面開啟設定」「移除頁面底下的首頁／線上／棋譜入口，整頁滿版」「進到 App 只會看到首頁的樣子」：
    底欄（#tabbar）一律不顯示；原本只靠底欄離開、沒有返回鍵的頁補上回去的路（FIXBACK，跟返回鍵同一套 "^" 回那一層）：
    線上大廳 → 對戰茶樓（茶樓裡有「線上對戰・觀戰」）、棋譜庫（含各部書）→ 學習書院（書院裡有「棋譜庫」）、設定 → 星槎（星槎上的「天字客房」進來）、觀戰 → 線上大廳。
@@ -69,7 +69,8 @@ function exSync(){if(!EXIT_ON)return;clearTimeout(EX_T);const k=exKey(),t0=Date.
       if(hasBack)exCls("add");return}
     if(!E||!hasBack){exCls("remove");return}
     if(!P.querySelector(".ex-spot")){const s=document.createElement("button");s.type="button";s.className="shp-spot ex-spot";s.style.left=E[0]+"%";s.style.top=E[1]+"%";let lb=E[2];try{if(k==="/hub/learn"||k==="/hub/battle")lb=EX_HUB_LB;else if(!DY&&(k==="/lobby"||k==="/db")&&typeof bkName==="function")lb="↩ 回"+bkName(k==="/lobby"?"#/hub/battle":"#/hub/learn");else if(k==="/cup"&&typeof xqHubName==="function")lb="↩ 下樓・回"+xqHubName("battle").split(" ").slice(1).join(" ");else if(k==="/cpuroom"&&typeof xqHubName==="function")lb="↩ 掀簾・回"+xqHubName("battle").split(" ").slice(1).join(" ");else if(/書院/.test(lb)&&typeof bkName==="function")lb=lb.replace(/學習書院|書院/,bkName("#/hub/learn"))}catch(x){}if(typeof hbIsCl==="function"&&hbIsCl())lb=lb.replace("回棋鎮","回時光之苑");if(!DY)lb=exFix(lb,E);   /* 11/11 模擬玩家問題 3：經典世界也換成當地叫法（藏譜石窟、觀星閣），以前只有停靠朝代才換，「回書院」其實回藏譜石窟；字再照真的去處對一次 */s.innerHTML="<b>"+lb+"</b>";   /* 出口跟著朝代叫法：出國子監・回棋鎮 */
-      s.onclick=e=>{e.stopPropagation();try{vibrate(5)}catch(x){}if(E[3]){if(E[3]==="#/"&&typeof goHome==="function"){goHome();return}if(typeof goUp==="function")goUp(E[3]);else location.hash=E[3];return}   /* 11/10 開發者「會跑到象棋規則」：回書院改用 goUp（退回紀錄裡的書院那一層，不多疊一頁），出書院／出茶樓直接回首頁，不再「上一頁」退回剛剛的子頁 */const bb=document.getElementById("back");if(bb&&typeof bb.onclick==="function")bb.onclick()};P.append(s);exIn(s)}   /* E[3]＝直接去那一頁（回饋 849：意見回饋頁回星槎） */
+      s.onclick=e=>{e.stopPropagation();try{vibrate(5)}catch(x){}if(k==="/settings"&&!(typeof NAV_D!=="undefined"&&NAV_D>0)&&typeof goHome==="function"){goHome();return}   /* 11/16 開發者出入口盤查選單「回上一頁」：設定頁的出口原本寫「⛵ 回星槎」，其實是上一頁；沒有上一頁（直接開設定）就回首頁 */
+      if(E[3]){if(E[3]==="#/"&&typeof goHome==="function"){goHome();return}if(typeof goUp==="function")goUp(E[3]);else location.hash=E[3];return}   /* 11/10 開發者「會跑到象棋規則」：回書院改用 goUp（退回紀錄裡的書院那一層，不多疊一頁），出書院／出茶樓直接回首頁，不再「上一頁」退回剛剛的子頁 */const bb=document.getElementById("back");if(bb&&typeof bb.onclick==="function")bb.onclick()};P.append(s);exIn(s)}   /* E[3]＝直接去那一頁（回饋 849：意見回饋頁回星槎） */
     exCls("add")};
   exCls("remove");EX_T=setTimeout(go,60)}
 if(EXIT_ON){addEventListener("hashchange",exSync);if(typeof setTop==="function"){const f0=setTop;setTop=function(t,b){const a=[...arguments];if(NOTAB_ON&&!b){const k=exKey(),m=FIXBACK.find(([re])=>re.test(k));if(m)a[1]=m[1]}const r=f0.apply(this,a);try{exSync()}catch(e){}return r}}

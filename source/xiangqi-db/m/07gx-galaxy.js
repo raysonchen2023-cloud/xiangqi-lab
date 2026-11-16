@@ -108,7 +108,7 @@ function gxResultModal(st,win,draw0,XPR){const r=gxSettle(st)||{ok:win},id=Strin
     (!r.ok&&GX_HINT[id]?`<p style="line-height:1.7;margin:8px 0 0">💡 ${esc(GX_HINT[id])}</p>`:"")+(r.fin&&id!=="mirror"?`<p class="muted" style="margin:6px 0 0">這次用「${esc(gxMode(store.get("gxMode","std"))[1])}」過關：${esc(gxMode(store.get("gxMode","std"))[3])}</p>`:"")+(XPR||""),
     [nx?[nx,()=>gxStart(id,true)]:r.ok?["🌌 回星圖",()=>gxMap()]:["再挑戰一次",()=>gxStart(id,true)],
      ...(!r.ok&&id!=="mirror"&&((store.get("gxLoss",null)||{})[id]||0)>=3&&store.get("gxMode","std")!=="easy"?[["改用輕鬆再來",()=>gxStart(id,false,"easy"),true]]:[]),   /* 連輸 3 次：讓玩家自己選要不要降一檔（銀印，之後可以再挑戰更高檔） */
-     r.ok&&!nx?["回挑戰電腦",()=>{location.hash="#/cpu"},true]:["🌌 回星圖",()=>gxMap(),true]],"res")}
+     r.ok&&!nx?["回觀星臺",()=>{location.hash="#/guanxing"},true]:["🌌 回星圖",()=>gxMap(),true]],"res")}
 /* 3D 場景參數（08b parkDraw 疊上）：星空背景、星系光暈、主宰的開場白
    開發者 11/12：每個星系有自己的地貌當對戰地面（data/gxground/<星系>.webp，Gemini 畫、無縫可重複；規劃 story/星系地面規劃.md）；第十四顆・鏡像沿用北辰的星空黑鏡水面 */
 const gxGround=id=>"data/gxground/"+(id==="mirror"?"beichen":id)+".webp";

@@ -19,7 +19,10 @@ const BH_P=.1,BH_TXT={
   lose:["駱躍梅","這局學到就好，星槎送我們回去。"],
   draw:["鐵連城","不分勝負，也算過了這一關。"]};
 const BH_FACE={齊轍:"x_swordboy",田飛燕:"x_spiritgirl",雷借花:"x_martialgirl",駱躍梅:"x_miaogirl",沈方庭:"x_shuai",鐵連城:"x_shi",步越溪:"x_bing"};
-const bhSay=([who,t])=>`<p class="pl-say">${BH_FACE[who]?`<img src="data/xs/prev_${BH_FACE[who]}.webp" alt="" onerror="this.remove()" style="width:44px;height:44px;border-radius:50%;object-fit:cover;vertical-align:middle;margin-right:6px">`:""}${esc(who)}：「${esc(t)}」</p>`;
+/* 11/16 開發者「所有意外事件只有已加入的夥伴角色才能觸發該角的特殊事件」：BH_TXT（偏航、領先落後、結果窗）寫死某位說，那位還沒加入就換人說——首頁小人（ptyLook），再不然齊轍；星樞等不是七星的不換 */
+function bhWho(who){const c=BH_FACE[who];if(!c||typeof ptyHas!=="function"||ptyHas(c))return who;let k="";try{k=typeof ptyLook==="function"?ptyLook():""}catch(e){}
+  if(k&&k!==c&&ptyHas(k)&&typeof WX_CHARS!=="undefined"&&WX_CHARS[k]&&BH_FACE[WX_CHARS[k].n])return WX_CHARS[k].n;return"齊轍"}
+const bhSay=([w0,t],who=bhWho(w0))=>`<p class="pl-say">${BH_FACE[who]?`<img src="data/xs/prev_${BH_FACE[who]}.webp" alt="" onerror="this.remove()" style="width:44px;height:44px;border-radius:50%;object-fit:cover;vertical-align:middle;margin-right:6px">`:""}${esc(who)}：「${esc(t)}」</p>`;
 function bhForced(){try{return localStorage.getItem("xq_bhForce")==="1"}catch(e){return false}}
 /* 星槎起航（shipSailGo、shipGoTo）播完千秋穿梭時叫：沒偏航就照原流程 next() */
 /* 11/16 開發者選單「第一次起航必定偏航」：觀星臺還沒開（07gxt gxtOpen）、也還沒用過這一次＝這一趟起航必定偏航；用過就記 bhDrift1（不管接不接、贏不贏，之後照 10%） */
@@ -88,7 +91,7 @@ function bhParkEx(st){bhFull(bhIs(st),st);if(!bhIs(st)){if(typeof BGM!=="undefin
 let BH_T={id:null,s:{}};
 function bhTick(st){try{if(typeof bhtdTick==="function")bhtdTick(st)}catch(e){console.warn("[bhtd]",e)}try{if(typeof bhfxSync==="function")bhfxSync(st)}catch(e){console.warn("[bhfx]",e)}try{if(typeof gsvTick==="function")gsvTick(st)}catch(e){console.warn("[gsv]",e)}   /* 11/15 星門圍城・試玩（07bhg-gatesiege.js）：不是那一盤就收起來 */   /* 11/14 太虛星尊魔法 3D：魔王該上場就延遲載入、建特效，不該就收掉（07bhf-bossfx.js） */   /* 陣地塔防：元氣、靈力條、招式鈕、盤上標記（07bht-td.js；不是陣地局就收起來） */
   if(bhIs(st))try{bhMusTick(st)}catch(e){}if(!bhIs(st)||st.result||!st.id)return;if(BH_T.id!==st.id)BH_T={id:st.id,s:{}};const S=BH_T.s,n=(st.moves||[]).length,me=st.human==="b"?-1:1,v=st.eval&&st.eval.v!=null?st.eval.v*me:null;
-  const say=(k,L,ms)=>{if(S[k])return;S[k]=1;setTimeout(()=>{if(L[0]==="星樞")bhBell()},ms||600);setTimeout(()=>toast((L[0]==="星樞"?"✦ ":"")+L[0]+"："+L[1]),ms||600)};
+  const say=(k,L,ms)=>{if(S[k])return;S[k]=1;L=[bhWho(L[0]),L[1]];setTimeout(()=>{if(L[0]==="星樞")bhBell()},ms||600);setTimeout(()=>toast((L[0]==="星樞"?"✦ ":"")+L[0]+"："+L[1]),ms||600)};
   if(st.td){}else if(v!=null&&n>=8&&v>=280)say("lead",BH_TXT.lead);   /* 陣地塔防不看盤面評估（黑子還沒全上場） */else if(v!=null&&n>=8&&v<=-280)say("behind",BH_TXT.behind);
   if(n>=24&&st.turn===st.human)say("hush",BH_TXT.hush,1200)}
 /* 07-legend journeyGameEnd 叫：記次數、照輸贏調下次難度 */

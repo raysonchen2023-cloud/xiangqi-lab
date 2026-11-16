@@ -60,8 +60,9 @@ function igPool(k){const L=[];
   for(const j in IG_J)if(JCHAR[j]&&IG_J[j].e.includes(k))L.push("g.j."+j);
   return L}
 /* 今天的雲河七星客人：要有雲河七星的旅程，自己選的那位不來；六成的日子有一位，挑一站星槎停靠過的站。當天定了就記在存檔，起航多開一站也不會換 */
-function igWxToday(){const day=igDay(),D=igData();if(D.wx&&D.wx.d===day)return D.wx;let w={d:day,e:null,c:null};
-  try{const J=store.get("journey",null),me=J&&WX_CHARS[J.c]?J.c:"";if(me){const r=igRnd(day+"|wx"),ks=Object.keys(IG_XW).filter(c=>c!==me&&WX_CHARS[c]),ok=r()<.6,c=ks[Math.floor(r()*ks.length)],
+/* 11/16 開發者「所有意外事件只有已加入的夥伴角色才能觸發該角的特殊事件」：只挑已加入的；「自己」改用 myChar()（首頁小人）；今天已經定了、卻是還沒加入的人（改版前存的）就重抽 */
+function igWxToday(){const day=igDay(),D=igData();if(D.wx&&D.wx.d===day&&(!D.wx.c||typeof ptyHas!=="function"||ptyHas(D.wx.c)))return D.wx;let w={d:day,e:null,c:null};
+  try{const me=typeof myChar==="function"?myChar():"";if(me){const r=igRnd(day+"|wx"),ks=Object.keys(IG_XW).filter(c=>c!==me&&WX_CHARS[c]&&(typeof ptyHas!=="function"||ptyHas(c))),ok=r()<.6,c=ks[Math.floor(r()*ks.length)],
     st=SHIP_ROUTE.filter(e=>!eraLocked(e)),e=st[Math.floor(r()*st.length)];if(ok&&c&&e)w={d:day,e,c}}}catch(e){}
   store.set("innGuest",{...D,wx:w});return w}
 /* 今天這一站的客人（gid 陣列）：2 或 3 位；雲河七星今天停在這一站就佔一位 */

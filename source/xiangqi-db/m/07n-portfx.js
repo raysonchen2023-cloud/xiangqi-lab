@@ -11,14 +11,15 @@ const pfxOn=()=>{const v=store.get("portGL",-1);return v==-1?PFX_ON:v==1};
 function pfxDev(P){if(!(typeof DEVTOOLS==="function"&&DEVTOOLS())||P.querySelector(".shp-gldev"))return;const on=pfxOn();   /* 只有開發者模式看得到：切換船艙動態（存在 m_portGL），樣式借星槎的 .shp-gldev */
   const b=document.createElement("button");b.type="button";b.className="shp-gldev"+(on?" on":"");b.style.position="absolute";b.textContent=on?"🧪 船艙動態：開":"🧪 船艙動態：關";P.appendChild(b);
   b.onclick=e=>{e.stopPropagation();vibrate(5);store.set("portGL",on?0:1);toast(on?"已關掉船艙動態":"已打開船艙動態");route()}}
-const PFX_SZ=[[768,1376],[384,688],[512,512],[512,512]],PFX_PT=[[439,404],[716,527],[224,705],[457,924],[105,1248],[733,1192],[493,624],[619,155]],PFX_M=9;
+/* 11/16 開發者（全彩擂台台面「有馬賽克」）：星光閃爍原本看貼圖本身哪裡是金色；全彩版擂台台面、木棧橋的赭黃也算金色，被 7px 格子各自明暗閃爍＝馬賽克。改成看原本的水墨圖（Og＝port_classic.webp，只有星光是金色），顯示照樣用全彩 */
+const PFX_SZ=[[768,1376],[384,688],[512,512],[512,512],[768,1376]],PFX_PT=[[439,404],[716,527],[224,705],[457,924],[105,1248],[733,1192],[493,624],[619,155]],PFX_M=9;
 const PFX_VS="attribute vec2 a;varying vec2 v;void main(){v=vec2(a.x*.5+.5,.5-a.y*.5)*vec2(768.,1376.);gl_Position=vec4(a,0.,1.);}";
 const PFX_FS=`#ifdef GL_FRAGMENT_PRECISION_HIGH
 precision highp float;
 #else
 precision mediump float;
 #endif
-uniform sampler2D I,Dp,Mi,Mf;uniform vec2 par;uniform float bob,t,k;varying vec2 v;
+uniform sampler2D I,Dp,Mi,Mf,Og;uniform vec2 par;uniform float bob,t,k;varying vec2 v;
 const vec2 S=vec2(768.,1376.),BC=vec2(140.,1230.);
 vec2 mir(vec2 u){u=abs(u);return 1.-abs(1.-u);}
 vec3 dat(vec2 p){return texture2D(Dp,clamp(p/S,0.,1.)).rgb;}
@@ -33,7 +34,7 @@ void main(){vec2 p=v;vec3 q=dat(p);vec2 o=off(q,p);q=dat(p-o);o=off(q,p);
   o+=k*(lant(p,vec2(495.,590.),vec2(495.,628.),vec2(22.,46.),0.)+lant(p,vec2(663.,660.),vec2(663.,690.),vec2(22.,38.),1.7));
   o*=smoothstep(0.,48.,min(min(p.x,S.x-p.x),min(p.y,S.y-p.y)));
   vec2 sp=p-o;vec3 col=texture2D(I,mir(sp/S)).rgb;
-  float gold=step(.66,col.r)*step(.58,col.g)*step(col.b,.55)*step(.27,col.r-col.b);
+  vec3 og=texture2D(Og,mir(sp/S)).rgb;float gold=step(.66,og.r)*step(.58,og.g)*step(og.b,.55)*step(.27,og.r-og.b);
   vec2 cl=floor(sp/7.);float h=fract(sin(dot(cl,vec2(12.9898,78.233)))*43758.5453);
   col=clamp(col*(1.+k*gold*.35*sin(t*(1.5+h*2.)+h*6.2832)),0.,1.);
   float m=k*(1.-smoothstep(.04,.3,q.g));vec2 r=vec2(p.x+.25*par.x+.12*p.y,p.y+.25*par.y)/1400.;
@@ -66,9 +67,9 @@ function portFx(v,k){const P=v&&v.querySelector(".shp-page.cq");if(!P||k!=="clas
   const fail=()=>{cv.remove();P.classList.remove("pfx-on");base.style.visibility="";spots.forEach(b=>b.style.translate="")};
   if(!document.getElementById("pfxCss")){const s=document.createElement("style");s.id="pfxCss";s.textContent=".shp-page.pfx-on>.ifx{display:none}";document.head.append(s)}   /* WebGL 動態跑起來就不疊 07k-inkfx 的粒子層（兩套一起會重複閃、燈火位置對不上） */
   const ld=s=>new Promise((ok,no)=>{const i=new Image();i.onload=()=>ok(i);i.onerror=no;i.src="data/shipmap/"+s});
-  Promise.all([pfxImg(),"layers/pm1_depth.png","layers/sm_mist_ink.webp","layers/sm_mist_fog.webp"].map(ld)).then(im=>{if(!P.isConnected)return;
+  Promise.all([pfxImg(),"layers/pm1_depth.png","layers/sm_mist_ink.webp","layers/sm_mist_fog.webp","port_classic.webp"].map(ld)).then(im=>{if(!P.isConnected)return;
     if(im.some((m,i)=>m.naturalWidth!==PFX_SZ[i][0]||m.naturalHeight!==PFX_SZ[i][1]))throw 0;
-    const G=pfxGl(cv,PFX_VS,PFX_FS,[["I",im[0]],["Dp",im[1],1],["Mi",im[2],1,1],["Mf",im[3],1,1]]);if(!G)throw 0;
+    const G=pfxGl(cv,PFX_VS,PFX_FS,[["I",im[0]],["Dp",im[1],1],["Mi",im[2],1,1],["Mf",im[3],1,1],["Og",im[4]]]);if(!G)throw 0;
     const{gl,u}=G,U={par:u("par"),bob:u("bob"),t:u("t"),k:u("k")};
     /* 入口按鈕跟著所在位置動：JS 讀同一張深度圖，算按鈕錨點的位移（視差＋浮島起伏） */
     const dc=document.createElement("canvas");dc.width=384;dc.height=688;const dx=dc.getContext("2d");dx.drawImage(im[1],0,0);const DD=dx.getImageData(0,0,384,688).data;

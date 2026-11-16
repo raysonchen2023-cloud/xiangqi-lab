@@ -281,9 +281,11 @@ function CoopPage(v,p){coopCSS();p=p||[];
   if(!COOP_DESK_ON){navReplace("#/");return{}}
   if(p[0]==="d")return cpdPlay(v,p[1]);
   return cpdList(v,p[0]==="w"?coopWhoKey(p[1]):"")}
+/* 11/16 開發者「所有意外事件只有已加入的夥伴角色才能觸發該角的特殊事件」：有雲河七星旅程時，清單只列已加入的旅伴撿到的棋譜；沒有旅程（沒有隊伍，同桌兩人玩）照舊七題都列 */
+function cpdJoined(c){try{if(typeof ptyGet!=="function"||!ptyGet())return true;return ptyHas(c)}catch(e){return true}}
 function cpdList(v,who){setTabs(false);setTop("🤝 合作殘譜","#/hub/battle");
-  const k=who||"x_martialgirl",P0=COOP_DESK.find(x=>x.who===k)||COOP_DESK[0],done=store.get("coopDesk",{})||{},mode=store.get("coopMode","two");
-  const L=[P0].concat(COOP_DESK.filter(x=>x!==P0));
+  const AL=COOP_DESK.filter(x=>cpdJoined(x.who)),k0=typeof ptyLook==="function"?ptyLook():"x_swordboy",k=who&&cpdJoined(who)?who:cpdJoined(k0)?k0:"x_swordboy",P0=AL.find(x=>x.who===k)||AL[0]||COOP_DESK[0],done=store.get("coopDesk",{})||{},mode=store.get("coopMode","two");   /* 沒指定（或指定的人還沒加入）＝首頁小人（ptyLook），原本寫死花兒 */
+  const L=[P0].concat(AL.filter(x=>x!==P0));
   v.innerHTML=`<div class="cpd-pad">
     <div class="cpd-hero"><img src="data/xs/prev_${esc(k)}.webp" alt="" onerror="this.remove()"><div class="bub"><b>${esc(coopNk(k))}撿到半張棋譜</b>${esc(P0.say.intro)}</div></div>
     <div class="muted" style="font-size:13px;margin-bottom:4px">同一支手機：紅方一個人、黑方一個人輪流走。不是比輸贏，要<b>一起</b>達成棋譜上的目標。</div>
@@ -299,7 +301,7 @@ function cpdGhost(svg,list){svg.querySelectorAll(".cpd-ghost").forEach(e=>e.remo
     if(x.ch){const t=document.createElementNS(NS,"text");t.setAttribute("x",cx);t.setAttribute("y",cy+11);t.setAttribute("text-anchor","middle");t.setAttribute("font-size","32");t.setAttribute("font-weight","900");t.setAttribute("fill",x.red?"#B3261E":"#222");t.setAttribute("opacity",x.done?"0":".28");t.textContent=x.ch;g.append(t)}
     const c=document.createElementNS(NS,"circle");c.setAttribute("cx",cx);c.setAttribute("cy",cy);c.setAttribute("r","29");c.setAttribute("fill","none");c.setAttribute("stroke",x.done?"#2E9E4F":x.kill?"#C62828":"#E39B0F");c.setAttribute("stroke-width",x.done?"4":"3.5");if(!x.done)c.setAttribute("stroke-dasharray","6 5");g.append(c)}
   svg.append(g)}
-function cpdPlay(v,id){const P=COOP_DESK.find(x=>x.id===id);if(!P||!COOP_R){navReplace("#/coop");return{}}const R=COOP_R,C=XQCore,mode=store.get("coopMode","two");
+function cpdPlay(v,id){const P=COOP_DESK.find(x=>x.id===id);if(!P||!COOP_R||!cpdJoined(P.who)){navReplace("#/coop");return{}}   /* 還沒加入的旅伴的棋譜：回清單 */const R=COOP_R,C=XQCore,mode=store.get("coopMode","two");
   setTabs(false);gameLayout(v);const bd=Board(i=>tap(i));v.querySelector("#bbox").append(bd.svg);
   let moves=[],sel=-1,hintMv=null,over=false,alive=true;
   const nm=s=>mode==="solo"?(s==="r"?"你（紅方）":"你（黑方）"):(s==="r"?"紅方小夥伴":"黑方小夥伴");
@@ -330,7 +332,7 @@ function cpdPlay(v,id){const P=COOP_DESK.find(x=>x.id===id);if(!P||!COOP_R){navR
     if(!o||s>o.s||n<o.n){D[P.id]={s:Math.max(s,o?o.s:0),n:Math.min(n,o?o.n:99),at:Date.now()};store.set("coopDesk",D)}
     setTimeout(()=>{if(!alive)return;modal(`<div style="text-align:center"><img src="data/xs/prev_${esc(P.who)}.webp" alt="" style="height:110px" onerror="this.remove()"><h2 style="font-size:20px;margin:6px 0">${"⭐".repeat(s)}</h2>
       <p style="font-size:16px"><b>${esc(coopNk(P.who))}：</b>「${esc(P.say.win)}」</p><p class="muted">${mode==="solo"?"一人分飾兩角也做到了！":"你們兩個合作完成！"}用了 ${n} 步（最少 ${P.min} 步）</p><p class="muted" style="font-size:13px">💡 ${esc(P.say.tip)}</p></div>`,
-      [["下一題",()=>{const i=COOP_DESK.indexOf(P),nx=COOP_DESK[(i+1)%COOP_DESK.length];location.hash="#/coop/d/"+nx.id}],["再玩一次",()=>{moves=[];over=false;draw()},true],["回棋譜清單",()=>upTo("#/coop"),true]])},700)}
+      [["下一題",()=>{const AL=COOP_DESK.filter(x=>x===P||cpdJoined(x.who)),i=AL.indexOf(P),nx=AL[(i+1)%AL.length];location.hash="#/coop/d/"+nx.id}],["再玩一次",()=>{moves=[];over=false;draw()},true],["回棋譜清單",()=>upTo("#/coop"),true]])},700)}
   function hint(){if(over)return;const b=board(),sol=R.solOf(P);
     if(R.onPath(P,moves)&&sol[moves.length]){hintMv=sol[moves.length];draw();toast("照藍色箭頭走走看");return}
     const m=R.deskSearch(b,turn(),P.goal,P.max-moves.length,8000);

@@ -3,7 +3,7 @@
 // 2) 多執行緒：幫每個回應加上 COOP/COEP 標頭（WebAssembly 多執行緒需要「跨來源隔離」，GitHub Pages 自己不能設）
 const VERSION="__VERSION__";
 const APP_CACHE="xqlab-app-"+VERSION,ENGINE_CACHE="xqlab-engine";
-const APP_FILES=["./","index.html","core.js","engine.js","local.js","manifest.json","icon.svg","icon-180.png","icon-512.png","icon-512-mask.png","qrcode.min.js","jsQR.min.js","net.js","zh.js","opencc-cn2t.js","opencc-t2cn.js","bot3d.js","park3d.js","engine/pikafish.js","engine/pikafish.wasm",
+const APP_FILES=["./","index.html","core.js","engine.js","local.js","varengine.js","varengine-worker.js","manifest.json","icon.svg","icon-180.png","icon-512.png","icon-512-mask.png","qrcode.min.js","jsQR.min.js","net.js","zh.js","opencc-cn2t.js","opencc-t2cn.js","bot3d.js","park3d.js","engine/pikafish.js","engine/pikafish.wasm",
   "data/books.json","data/shiqingyaqu.json","data/juzhongmi.json","data/meihuapu.json","data/kaiju.json","data/canju.json","data/xuyinchuan.json","data/big-books.json","data/quiz.json","data/terms.json","data/gmbios.json","three.min.js","map3d.js","GLTFLoader.mjs","three-shim.mjs","BufferGeometryUtils.mjs","data/park-legend.json","data/park-novel.json","data/preload.json"];   /* 意見回饋 422：3D 程式和故事也一起先存 */
 /* 回饋 853（開發者 11/9：圖和大檔改由 Cloudflare 提供，網址不變）：
    data/、engine/ 的檔改去 Cloudflare Pages（CDN）拿，快取鍵照舊用原本的同源網址——舊玩家手機裡已經存的檔全部繼續有效，不會重下載。

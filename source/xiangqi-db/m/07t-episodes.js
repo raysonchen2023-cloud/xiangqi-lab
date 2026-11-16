@@ -33,6 +33,8 @@ let EP_DEV=0,EP3_FORCE=false,EP3_ON_NOW=false;
 function epSt(){const S=store.get("ep",null)||{};for(const k of["at","lose","r1","a","m","g","ntr"])if(!S[k]||typeof S[k]!=="object")S[k]={};S.sw=S.sw&&typeof S.sw==="object"?S.sw:{};S.sw.done=S.sw.done||{};S.sw.t=S.sw.t||{};return S}
 const epSave=S=>store.set("ep",S);
 const epMe=()=>{try{return myChar()}catch(e){return""}};
+/* 11/16 開發者「所有意外事件只有已加入的夥伴角色才能觸發該角的特殊事件」：插曲 1、3、4、5 挑人前先問這位加入了沒 */
+const epJoined=c=>typeof ptyHas!=="function"||ptyHas(c);
 function epOk(){try{return!store.get("epOff",false)&&!!journey()&&!!myChar()&&!shipAppr()}catch(e){return false}}
 function epNet(){try{return!!(window.XQNet&&typeof XQNet.playing==="function"&&XQNet.playing())}catch(e){return false}}
 /* 今天還能不能再來一次插曲（一天 2 次、隔 30 分鐘） */
@@ -143,7 +145,7 @@ const EP1_TAG={R:["首俥","車殺","雙車錯"],N:["首傌","馬殺","臥槽馬
 const EP1_FB={K:["以少勝多"],A:["安靜一手"],B:["安靜一手"]};
 const EP1_KILL={R:["車殺","雙車錯"],N:["馬殺","臥槽馬","掛角馬","馬後炮"],C:["炮殺","重炮","悶宮","馬後炮"],P:["小兵擒王"],K:[],A:[],B:[]};
 /* 這一朝現在能吵的那一組（兩位都不是玩家）；k＝第幾組 */
-function ep1Talk(here){const me=epMe(),L=EP1_TALK[here]||[];for(let k=0;k<L.length;k++){const T=L[k];if(EP_K[T.a]!==me&&EP_K[T.b]!==me)return{k,T}}return null}
+function ep1Talk(here){const me=epMe(),L=EP1_TALK[here]||[];for(let k=0;k<L.length;k++){const T=L[k];if(EP_K[T.a]!==me&&EP_K[T.b]!==me&&epJoined(EP_K[T.a])&&epJoined(EP_K[T.b]))return{k,T}}return null}   /* 兩位都已加入才選那一組 */
 /* 替角色 c 挑一題：c 的本命子當主力、對手 o 的本命子在主變裡不動（最好不在盤上）；ex＝不能用的題 */
 function ep1Score(P,p,q,T,band,seed){const C=window.XQCore,s=P.side,mv=epMoves(P);if(!mv.length)return null;const up=x=>s==="r"?x:x.toLowerCase(),b=C.parseFen(P.fen);
   if(mv.includes(q))return null;const hasQ=b.some(x=>x===up(q)),by=mv.filter(x=>x===p).length,tp=T[P.id]||[],d=+P.d||3;
@@ -264,8 +266,8 @@ const EP3_WATCH={x_swordboy:["我來看看。……這一步衝著{你}來的，
   x_shi:["……守。","嗯。守得好。","……下回，先守宮門。"],
   x_bing:["一步一步來，三步就夠啦！","三步就守住啦！","沒守住也不要緊，原來那盤還等著{你}！"]};
 let EP3_CUR=null;
-function ep3Watchers(here){const me=epMe(),L=Object.keys(WX_CHARS).filter(c=>EP_PC[c]&&c!==me),hm=L.filter(c=>CHAR_ERA[c]===here||((SHIP_STOP[here]||{}).who||[]).includes(c));
-  const a=hm.length?epOne(hm):epOne(L),rest=L.filter(c=>c!==a);return Math.random()<.5?[a,epOne(rest)]:[a]}
+function ep3Watchers(here){const me=epMe(),L=Object.keys(WX_CHARS).filter(c=>EP_PC[c]&&c!==me&&epJoined(c));if(!L.length)return[];const hm=L.filter(c=>CHAR_ERA[c]===here||((SHIP_STOP[here]||{}).who||[]).includes(c));
+  const a=hm.length?epOne(hm):epOne(L),rest=L.filter(c=>c!==a);return Math.random()<.5&&rest.length?[a,epOne(rest)]:[a]}   /* 只挑已加入的旁觀者；一位都沒有（只有玩家自己）就沒人在旁邊說話，對手照樣來 */
 /* 對手多走一步：Pikafish 挑一步「真的有威脅、而且守得住」的著法 */
 async function ep3Threat(board,human){const C=window.XQCore,bot=C.opp(human),fs=(b,s)=>({fen:C.fen(b,s)});
   const r1=await XQEngine.search(fs(board,bot),{movetime:900},3);
@@ -335,8 +337,9 @@ const ep4Night=()=>{const h=new Date().getHours();return h>=23||h<4};
 const ep4Key=()=>{const d=new Date(Date.now()-5*36e5);return d.getFullYear()+"-"+(d.getMonth()+1)+"-"+d.getDate()};
 function ep4Due(S,here){if(!EP4_ON&&!EP_DEV)return null;const k=ep4Key();if(S.nt===k||S.ntr[k])return null;if(ep4Night())return"night";
   let lr=false;try{lr=shipLearned(here)}catch(e){}const at=S.at[here];if(!lr&&at&&Date.now()-at>=48*36e5)return"stuck";return null}
-function ep4Show(v,where,why,force){const S=epSt(),k=ep4Key();if(!force){S.ntr[k]=1;const ks=Object.keys(S.ntr);if(ks.length>14)delete S.ntr[ks[0]];if(Math.random()>=EP_P[4]){epSave(S);return false}}
-  S.nt=k;epCount(S);epSave(S);const me=epMe(),L=Object.keys(EP4_OPEN).filter(c=>c!==me),a=epOne(L),b=epOne(L.filter(c=>c!==a));
+function ep4Show(v,where,why,force){const me=epMe(),L=Object.keys(EP4_OPEN).filter(c=>c!==me&&epJoined(c));if(L.length<2)return false;   /* 茶話會要兩位夥伴陪：已加入的（不算玩家自己）不到兩位就不觸發，也不記「今天抽過」，等人到齊再說 */
+  const S=epSt(),k=ep4Key();if(!force){S.ntr[k]=1;const ks=Object.keys(S.ntr);if(ks.length>14)delete S.ntr[ks[0]];if(Math.random()>=EP_P[4]){epSave(S);return false}}
+  S.nt=k;epCount(S);epSave(S);const a=epOne(L),b=epOne(L.filter(c=>c!==a));
   epBubble(v,where,[a,b],why==="night"?"🌙 星夜茶話會":"🍵 石桌邊歇一歇",EP4_OPEN[a][why==="night"?0:1],()=>ep4Sheet([a,b],why));return true}
 function ep4Sheet(cs,why){epCss();const w=why==="night"?0:1;
   sheet(why==="night"?"🌙 星夜茶話會":"🍵 石桌邊歇一歇",bx=>{bx.innerHTML=epSay(cs[0],EP4_OPEN[cs[0]][w])+epSay(cs[1],EP4_OPEN[cs[1]][w])+epSay("teller",why==="night"?"客官，夜深了。老朽點一盞燈，陪你們看一分鐘的棋，看完就去歇著。":"客官，同一題盯久了，眼睛會累。換一分鐘的小題，鬆鬆眼。")
@@ -386,8 +389,8 @@ let EP5_P=null;
 function ep5Data(){return EP5_P||(EP5_P=fetch("data/canju/episode-set.json").then(r=>r.ok?r.json():{items:[]}).catch(()=>{EP5_P=null;return{items:[]}}))}
 /* 起航、千秋穿梭：擲 5%，記下「到站後出現」 */
 function ep5Roll(){if(!EP5_ON||!epOk())return;const S=epSt();if(!epRoom(S)||Math.random()>=EP_P[5])return;S.sw.pend=Date.now();epSave(S)}
-async function ep5Start(force){const D=await ep5Data(),S=epSt(),me=epMe(),Ps=Object.keys(EP5_DROP).filter(p=>EP5_DROP[p][0]!==me);
-  const L=D.items.filter(x=>x.gone&&Ps.includes(x.gone.p)&&!S.sw.done[x.id]);const A=L.length?L:D.items.filter(x=>x.gone&&Ps.includes(x.gone.p));if(!A.length)return null;
+async function ep5Start(force){const D=await ep5Data(),S=epSt(),me=epMe(),Ps=Object.keys(EP5_DROP).filter(p=>EP5_DROP[p][0]!==me&&epJoined(EP5_DROP[p][0]));   /* 闖禍掉子的那位要已加入 */
+  const L=D.items.filter(x=>x.gone&&Ps.includes(x.gone.p)&&!S.sw.done[x.id]);const A=L.length?L:D.items.filter(x=>x.gone&&Ps.includes(x.gone.p));if(!A.length){if(S.sw.pend){S.sw.pend=null;epSave(S)}return null}   /* 沒有可以闖禍的已加入夥伴（例如只有齊轍）：這次大掃除取消，不要佔著 15 分鐘擋住串門子 */
   const fresh=A.filter(x=>!S.sw.t[x.gone.p]),P=epOne(fresh.length?fresh:A);S.sw.cur={id:P.id,p:P.gone.p,c:EP5_DROP[P.gone.p][0],at:Date.now()};S.sw.pend=null;if(!force)epCount(S);epSave(S);return S.sw.cur}
 function ep5Show(v,where){const S=epSt();if(!S.sw.pend||Date.now()-S.sw.pend>15*6e4){if(S.sw.pend){S.sw.pend=null;epSave(S)}return false}
   ep5Start(false).then(cur=>{if(!cur||!v.isConnected)return;epBubble(v,where,[cur.c],"🧹 星槎大掃除",EP5_DROP[cur.p][1],()=>ep5Sheet())}).catch(()=>{});return true}

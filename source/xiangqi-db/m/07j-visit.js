@@ -109,11 +109,13 @@ function v7QOf(c,id){return((V7[c]||{}).q||[]).find(x=>x.id===id)||null}
 function v7QNext(c,S){const R=store.get("shipRead",{})||{};let D=[];try{D=shipDocked()}catch(e){}
   return((V7[c]||{}).q||[]).find(x=>!S.done[c+":"+x.id]&&(x.t!=="read"||(!R[x.k]&&D.includes(x.k))))||null}
 function v7Ok(){try{return!!journey()&&!!myChar()&&!shipAppr()}catch(e){return false}}
+/* 11/16 開發者「所有意外事件只有已加入的夥伴角色才能觸發該角的特殊事件」：來串門子、做完請託回來道謝，都只挑已加入的（沒有旅程時 ptyHas 一律 false＝不來） */
+function v7In(c){return typeof ptyHas!=="function"||ptyHas(c)}
 function v7Pick(S,here,ex){const me=myChar(),now=Date.now(),today=localDay();   /* ex＝畫面上已經在說話的那位（渡口的主場角色），不重複出來 */
-  if(S.q&&V7[S.q.c]&&S.q.c!==me&&S.q.c!==ex&&v7QDone(S.q))return now-(S.last||0)>=V7_BACK?{c:S.q.c,back:1}:null;
+  if(S.q&&V7[S.q.c]&&S.q.c!==me&&S.q.c!==ex&&v7In(S.q.c)&&v7QDone(S.q))return now-(S.last||0)>=V7_BACK?{c:S.q.c,back:1}:null;
   if(now-(S.last||0)<V7_GAP)return null;if(Object.values(S.day).filter(d=>d===today).length>=V7_DAYMAX)return null;
   if(Math.random()>=V7_P)return null;
-  const L=Object.keys(V7).filter(c=>c!==me&&c!==ex&&S.day[c]!==today);if(!L.length)return null;
+  const L=Object.keys(V7).filter(c=>c!==me&&c!==ex&&S.day[c]!==today&&v7In(c));if(!L.length)return null;
   const hm=L.filter(c=>CHAR_ERA[c]===here||((SHIP_STOP[here]||{}).who||[]).includes(c)),P=hm.length&&Math.random()<.6?hm:L;
   return{c:P[Math.floor(Math.random()*P.length)]}}
 /* 挑一句：先這一站的、再全部；沒說過的優先 */

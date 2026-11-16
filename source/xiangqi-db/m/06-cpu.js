@@ -371,7 +371,7 @@ const PARK_VIS={
   x_shuai:{hi:["我出院子透透氣，看你下。"],cheer:["好棋！這一子划算！"],chk:["將軍了……我心都提起來了。"],jiang:["將軍！穩穩的。"],bye:["城子在找我了，先回去。"]},
   x_shi:{hi:["少爺在附近，我順道來看看。"],cheer:["穩紮穩打，吃得好！"],chk:["將軍！九宮要護好！"],jiang:["將軍！守得住才攻得出去。"],bye:["我得回少爺身邊了。"]},
   x_bing:{hi:["送貨路過，看兩步！"],cheer:["衝得好！吃掉了！"],chk:["將軍了！快想辦法！"],jiang:["將軍！一步一步往前衝！"],bye:["貨還沒送完，我跑啦！"]}};
-function parkCrowd(){try{const era=store.get("era","classic"),me=typeof myChar==="function"?myChar():null,C=Object.keys(PARK_VIS).filter(c=>c!==me&&typeof TRIPO!=="undefined"&&TRIPO[c]&&WX_CHARS[c]);if(!C.length)return{};
+function parkCrowd(){try{const era=store.get("era","classic"),me=typeof myChar==="function"?myChar():null,C=Object.keys(PARK_VIS).filter(c=>c!==me&&typeof TRIPO!=="undefined"&&TRIPO[c]&&WX_CHARS[c]&&(typeof ptyHas!=="function"||ptyHas(c)));if(!C.length)return{};   /* 11/16 開發者「所有意外事件只有已加入的夥伴角色才能觸發該角的特殊事件」：來園子打氣的只挑已加入的 */
   const same=C.filter(c=>typeof CHAR_ERA!=="undefined"&&CHAR_ERA[c]===era),c=(same.length?same:C)[Math.random()*(same.length||C.length)|0],W=WX_CHARS[c];
   return{vis:Object.assign({c,nk:W.nk||W.n,look:{p:W.pc||"兵",e:era,g:9,glb:`data/tripo_app/${c}.glb`,ring:TRIPO[c]}},PARK_VIS[c])}}catch(e){return{}}}
 /* 11/11 模擬玩家問題 8（點選穿透）：#/cpu 開局前「移步後園」等過場畫面，點一下會提早進園子；過場收掉的那一下（或緊接著再點的那一下）落到 3D 場景上，

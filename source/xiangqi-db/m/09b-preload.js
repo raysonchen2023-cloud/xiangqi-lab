@@ -152,7 +152,9 @@ async function preloadAll(){if(!OFF||!("caches" in window))return PRE_FIRST_OK()
       <div class="pre-bar"><i></i></div><div class="pre-n" role="status">${preUi({phase:"check"}).sub}</div><div class="pre-h">準備好就能下棋；其他朝代、西市、觀星臺的圖第一次去時才下載，其餘之後慢慢補，進度在「設定 → 關於」。</div><button class="pre-skip" type="button" hidden>先進去逛（背景繼續下載）</button></div>`;
     let dk=false;try{dk=!!sessionStorage.getItem("xqDarkLoad");if(dk)sessionStorage.removeItem("xqDarkLoad")}catch(e){}   /* 11/12 開發者 iPhone 17 Pro Max 實機錄影：舊玩家開新旅程，選角後會重開一次，原本跳出米白載入頁很突兀；改成跟開場電影一樣的星空底 */
     if(dk){ov.classList.add("pv-dark");const s=ov.querySelector(".pre-s");if(s)s.textContent="星槎靠岸中…"}
-    document.body.append(ov);bar=ov.querySelector(".pre-bar i");txt=ov.querySelector(".pre-n");if(!dk)ldShow(ov);
+    let qu=false;try{const u=+(sessionStorage.getItem("xqUpdBoot")||0);if(u)sessionStorage.removeItem("xqUpdBoot");const B=JSON.parse(localStorage.getItem("xqUpdBack")||"null");qu=(u&&Date.now()-u<60000)||!!(B&&Date.now()-(+B.t||0)<180000)}catch(e){}   /* 11/16 開發者「更新還是會跳到這一頁，我希望不要」：套用新版的重新載入（05b 記 xqUpdBoot、02-shell 記 xqUpdBack）照樣在背後檢查與下載，但載入畫面透明、不擋手，直接看到原本那一頁 */
+    if(qu){ov.style.opacity="0";ov.style.pointerEvents="none";ov.classList.add("pv-quiet")}
+    document.body.append(ov);bar=ov.querySelector(".pre-bar i");txt=ov.querySelector(".pre-n");if(!dk&&!qu)ldShow(ov);
     setTimeout(()=>{const k=ov&&ov.querySelector(".pre-skip");if(k){k.hidden=false;k.onclick=()=>{ov.remove();ov=null;PRE_FIRST_OK();preEnd()}}},4000)};ovMake();   /* 開發者 11/11 選 ChatGPT UI 報告 UI-12：「先進去逛」原本 20 秒後才出現，慢網路的人要乾等；改成 4 秒（網路快的人通常已經載完、看不到這顆） */
   const abs=preAbs,H0=location.hash,preEnd=()=>{const h=preBackTo(H0,location.hash);if(h)location.hash=h};
   const PH=store.get("preH",{}),NH={},miss=[];   /* 換過的圖（檔名一樣、內容不同）也要重新下載：秦、漢黑棋換新圖後手機一直是舊的 */
@@ -192,7 +194,7 @@ async function joinLink(other){
   return u?u+"#/join/"+other:null}
 function PvpGame(v){
   setTabs(false);gameLayout(v);
-  let st=null,sel=-1,flipMan=null,shownResult=null,busy=false,autoFlip=store.get("autoFlip",true),clockBase=null,drawAsked=null;
+  let st=null,askD=false,sel=-1,flipMan=null,shownResult=null,busy=false,autoFlip=store.get("autoFlip",true),clockBase=null,drawAsked=null;
   // seat：連線對戰時這支手機坐哪一方（"r"／"b"）；null＝同一支手機輪流下
   // NET：線上大廳的網路對局（不用電腦）；seat="w" 表示在觀戰
   const NET=OFF&&!!window.XQNet&&XQNet.active();let PVP_GHOST=null;
@@ -293,7 +295,7 @@ function PvpGame(v){
     for(const s of["r","b"]){const el=v.querySelector(`#ck_${s}`);if(el){const x=b.c[s]-(b.run&&b.turn===s?Date.now()-b.at:0);el.textContent=fmt(x);el.style.color=x<60000&&!(b.turn===s&&b.run)?"var(--red)":""}}}
   const ckT=setInterval(clocks,250);
   let lastN=null;   // 步數剛好多一步才秀開局名
-  function render(s){const n0=lastN;st=s;lastN=s.moves.length;if(seat!=="w"&&lastN>(n0||0))setTimeout(()=>{if(typeof repWarn==="function")repWarn(st,mySide(),()=>{if(st&&!st.result)post("/pvp/draw",{side:mySide()})})},700);   /* 開發者 11/11 選規劃書方案 01 */
+  function render(s){if(!askD){askD=true;pvpAskResume(s)}const n0=lastN;st=s;lastN=s.moves.length;if(seat!=="w"&&lastN>(n0||0))setTimeout(()=>{if(typeof repWarn==="function")repWarn(st,mySide(),()=>{if(st&&!st.result)post("/pvp/draw",{side:mySide()})})},700);   /* 開發者 11/11 選規劃書方案 01 */
     /* 意見回饋 598：對方的棋一到就輕震一下，狀態列也寫出對方走了哪一步——對方秒回時，才不會以為自己能連走兩步 */
     if(n0!=null&&lastN>n0&&seat&&seat!=="w"){const L=s.moves[s.moves.length-1];if(L&&L.by&&L.by!==seat){vibrate([15,60,15]);if(typeof pmvArrive==="function")pmvArrive()}}   /* 第 13 輪 F3：記下對方落子的時間（pmvStats 量預走反應） */if(NET&&s.mySide&&s.mySide!==seat){seat=s.mySide;flipMan=null;setTitle();flipBtn()}if(!st.legal.some(([f])=>f===sel))sel=-1;draw();
     if(n0!=null&&lastN===n0+1&&view==null){const cue=openingCue(st.moves);if(cue)setTimeout(()=>openFx(bd.svg,cue[1],cue[0]),350)}
@@ -357,6 +359,10 @@ function PvpGame(v){
            📊 檢討＝原本的「賽後報告」＋「檢討這盤」合併，打開時直接附報告 */
         (()=>{const again=()=>post("/pvp/new",{red:st.red,black:st.black,tc:st.tcKey}),sub=[["📊 檢討",()=>{store.set("openReport","pvp/"+st.id);location.hash="#/db/pvp/"+encodeURIComponent(st.id)},true],["🏠 首頁",()=>goHome(),true],["看看棋盤",null,true]];
           return NET&&(seat==="r"||seat==="b")?[["🌐 回大廳 ›",()=>{XQNet.leave();goUp("#/lobby")}],["再來一局",again,"wide"],...sub]:[["再來一局 ›",again],...sub]})(),"res")}}
+  /* 11/16 開發者「同桌對戰初始棋盤有錯」（一進來就是上一盤沒下完的那兩手），選單「先問繼續或新局」：同一支手機輪流下（不是線上、不是觀戰）、有走過、還沒結束，
+     這次開 App 這一盤還沒問過（sessionStorage pvpAsk）就先問；開新局沿用兩方名字與計時 */
+  function pvpAskResume(s){try{let a="";try{a=sessionStorage.getItem("pvpAsk")||""}catch(e){}if(NET||seat||!s||!s.moves||!s.moves.length||s.result||a===String(s.id))return;try{sessionStorage.setItem("pvpAsk",String(s.id))}catch(e){}
+    setTimeout(()=>modal(`<div class="em">👥</div><h2>上一盤還沒下完</h2><p>同桌對弈下到第 ${s.moves.length} 手。要接著下，還是開一盤新的？</p>`,[["▶ 接著下",null],["＋ 開新局",()=>{shownResult=null;sel=-1;flipMan=null;post("/pvp/new",{red:s.red,black:s.black,tc:s.tcKey})},true]]),300)}catch(e){}}
   function newSheet(){let tc=st?st.tcKey:"none",red=st&&st.red!=="紅方"?st.red:"",black=st&&st.black!=="黑方"?st.black:"";
     sheet("開新局",b=>{const TCS=[["none","不計時"],["10+5","10 分＋5 秒"],["20+10","20 分＋10 秒"],["60+30","60 分＋30 秒"]];
       const paint=()=>{b.innerHTML=`<div class="field"><label>紅方</label><input id="nR" maxlength="20" placeholder="紅方名字" value="${esc(red)}"></div>
