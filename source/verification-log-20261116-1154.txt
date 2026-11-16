@@ -1,22 +1,22 @@
 《象棋千秋》可重現驗證紀錄（verify-all.js）
 ========================================
-執行時間：2026-11-16T03:37:30.699Z（UTC）＝ 2026-11-16 11:37:30（臺灣時間）
+執行時間：2026-11-16T03:59:34.597Z（UTC）＝ 2026-11-16 11:59:34（臺灣時間）
 Node.js：v24.20.0；作業系統：win32 10.0.26300 x64
 倉庫資料夾：<倉庫資料夾>
 倉庫 commit：（不是 git 檢出；用下面的雜湊對照）
-release.json：版本 20261116-1130、html 1e4c2fe533de、sw a756d79c0ebd
+release.json：版本 20261116-1154、html 5f62bc9ffd5b、sw 644e55645225
 verify-all.js SHA-256：4204127ad2dd75bb8f95ed79039156af8cc4e52bfabd0ff04890588e4414af2b
 
 成品 SHA-256（SHA-1 前 12 碼）：
-  index.html  a747f0f657b70288bf1c51025d8b64a91a74bdaf24a702eaeb281333e049db97  (1e4c2fe533de)
-  sw.js  8f215d70656c6c6b77f60967c4103b6fe71b494702f3f71aaa86a57308bf9fb0  (a756d79c0ebd)
-  release.json  2ca7bb85fbf07d9aa7e86618b9a0502b973dab1133a3ead5254cb88439b7f44d  (ab3c303359c2)
+  index.html  e508ea90c645f61e7912ee9010ae51c3213bf89ad17dfc5e884dc9ef640fc709  (5f62bc9ffd5b)
+  sw.js  c3690028d6bace5595105474d71a6626835838afd8fabcde237681152d48082a  (644e55645225)
+  release.json  481552d8df914270d9fe38ce2f600c08739f9e3c7f1f4b248bbc31488f9e7073  (3902bfc63776)
   core.js  fdaea59621ff94d664218f14c1a11b9abe0d4566da7d3e45733caf34fa7a50d3  (972b7ec035c7)
   engine.js  e29baeb7161f3eb7e7246a58aba4d4b80c9c296532f820bb5baa1865af251536  (ce8dcc4b84c5)
   engine/pikafish.wasm  7fb6fc805a36ced6a55626a9513b7dda821b0bbb5e830fa17f120f1550a9a331  (d568cded4f5b)
   engine/pikafish.js  dd5498bfb76381598d453a612d74e5e1955835452324c4d0b962a64fb44438f7  (77eca54d3204)
   engine/pikafish.nnue  7d13d73569a9b571ba0eb20cf1596247bc2a42738967e61afef6482b231e900e  (3a043e259a72)
-source/ 資料夾：435 個檔，樹雜湊 SHA-256 3e6d1f52af824199a39cc7ea063fb59e959e3a6fe0c758253e0729553dad8c72
+source/ 資料夾：436 個檔，樹雜湊 SHA-256 ea551711e5ed71a71f320d7016e06d384c2aa543248b45ed81af8504ae0db056
 Pikafish 建置紀錄：<倉庫資料夾>\pikafish-src\build-record.json  SHA-256 489173747f8de4abec4f9dda704538fecb24af4c02f294e57b8f7ead857ad738
 （樹雜湊＝每個檔「相對路徑＋NUL＋SHA-256＋換行」照路徑排序後再算 SHA-256）
 
@@ -32,10 +32,10 @@ Pikafish 建置紀錄：<倉庫資料夾>\pikafish-src\build-record.json  SHA-25
 工具 SHA-256：4874be00c4f2fce8b777204299e23339abf56c472ee57bc2e603a5edaaf00e78
 輸出：
   成品核對：<倉庫資料夾>
-    ✔ release.json：版本 20261116-1130、html 1e4c2fe533de、sw a756d79c0ebd（檢查時間 2026-11-16T03:36:10.085Z）
-    ✔ index.html SHA-1 前 12 碼 1e4c2fe533de，跟 release.json 一致
-    ✔ sw.js SHA-1 前 12 碼 a756d79c0ebd，跟 release.json 一致
-    ✔ 版本號：index.html 20261116-1130、sw.js 20261116-1130、release.json 20261116-1130，三個一樣
+    ✔ release.json：版本 20261116-1154、html 5f62bc9ffd5b、sw 644e55645225（檢查時間 2026-11-16T03:58:32.738Z）
+    ✔ index.html SHA-1 前 12 碼 5f62bc9ffd5b，跟 release.json 一致
+    ✔ sw.js SHA-1 前 12 碼 644e55645225，跟 release.json 一致
+    ✔ 版本號：index.html 20261116-1154、sw.js 20261116-1154、release.json 20261116-1154，三個一樣
     ✔ release.json 自己註明有 12 支模組跟當時的原始碼不同（05-settings.js、05b-save.js、07bh-blackhole.js、07y-hubmap.js、07z-homemap.js、07ulk-unlockfx.js、07s4-passmap.js、07z6-sitemap.js、07w9-exits.js、08b-cpugame.js、09b-preload.js、07i18n.js）；原始模組不公開，外部核對不了這一欄
   
   ✔ index.html、sw.js 跟 release.json 一致
@@ -64,7 +64,7 @@ Pikafish 建置紀錄：<倉庫資料夾>\pikafish-src\build-record.json  SHA-25
   
   ✔ 全部符合（△ 是照實列出的缺口，不算失敗）
 ----------------------------------------
-第 4 步 run-tests：通過（結束代碼 0，148.8 秒）
+第 4 步 run-tests：通過（結束代碼 0，154.0 秒）
 指令（在倉庫資料夾執行）：node source/run-tests.js
 工具 SHA-256：8bb3d8506adec7c119e694a0620858ecf79d366ccc43368454192fce41f824b9
 輸出：
@@ -203,6 +203,7 @@ Pikafish 建置紀錄：<倉庫資料夾>\pikafish-src\build-record.json  SHA-25
   test-ui-1113.js	5/5	0/0	0/0	0/0
   test-verify-daily.js	9/9	0/0	1/1	0/0
   test-watcher-sway-1115.js	0/0	0/0	3/3	0/0
+  test-weather-align-1116.js	2/2	0/0	0/0	0/0
   test-wheel-3d.js	17/17	3/3	4/4	0/0
   test-wheel.js	23/23	0/0	3/3	0/0
   test-xfer.js	8/8	0/0	1/1	0/0
@@ -210,11 +211,11 @@ Pikafish 建置紀錄：<倉庫資料夾>\pikafish-src\build-record.json  SHA-25
   test-xfer4.js	10/10	0/0	1/1	0/0
   test-xqs-tb.js	0/0	4/4	2/2	0/0
   test-xsm-dark.js	0/0	0/0	0/0	15/15
-  合計	1200/1205（略過 5）	73/74（略過 1）	196/201（略過 5）	267/273（略過 6）
+  合計	1202/1207（略過 5）	73/74（略過 1）	196/201（略過 5）	267/273（略過 6）
   
-  交接單引用：行為 1200/1205（略過 5）、混合 73/74（略過 1）、原始碼比對 196/201（略過 5）、待分類 267/273（略過 6），共 1753 項。
+  交接單引用：行為 1202/1207（略過 5）、混合 73/74（略過 1）、原始碼比對 196/201（略過 5）、待分類 267/273（略過 6），共 1755 項。
   待分類的檔：test-bhfx.js、test-bhtd-combo.js、test-bhtd-r2.js、test-bhtd-rules.js、test-bhtl.js、test-bhx-allstars-1116.js、test-dgl.js、test-home-pano.js、test-i18n-story.js、test-noscore.js、test-park3d-capbase.js、test-r17-qa.js、test-siege2-local.js、test-siege2.js、test-xsm-dark.js
-  四欄合計：通過 1736、失敗 0、略過 17、預期失敗 0（其中預期失敗卻通過 0）；三類項數合計 1753（含略過），預期失敗另計。
+  四欄合計：通過 1738、失敗 0、略過 17、預期失敗 0（其中預期失敗卻通過 0）；三類項數合計 1755（含略過），預期失敗另計。
   略過的項目（這個環境跑不了、沒有執行，不算通過）：
     ﹣ test-bhfx.js：④ 載入量：一般首頁不載 bossfx3d.js、不預載 data/bhtd；素材都放在 art/bhtd（build-site 複製到 data/bhtd）（要讀只在開發者電腦的素材 art/bhtd（魔王模型、特效圖只放 CDN；公開副本沒有，開發者電腦上照跑））
     ﹣ test-fdroid-evidence.js：真的公開倉庫（本機 git origin/main，不連網）：成品跟 release.json 一致、Pikafish 跟建置紀錄一致（沒有 site/.git）

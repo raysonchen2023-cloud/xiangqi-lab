@@ -20,7 +20,7 @@ const GXT_OFF="星軌未通，敬請期待";
 const GXT_SPOTS=[
   ["gxtSimul","天頂黑洞",50,19,50,24,0],   /* 11/16 黑洞新規則：車輪戰拿掉，天頂黑洞改通往星門圍城 */   /* 天頂黑洞下方的光柱；11/16 開發者「車輪戰和星門圍城也都能上線」（選單：解鎖，點了直接開車輪戰 07bhw whlOpen） */
   ["gxtGx","十三星系",18,32.5,39.5,32,0],   /* 星圖石碑頂上 */
-  ["gxtTd","星門圍城",50,37,50.5,40.5,0],   /* 11/16 黑洞新規則：只剩星門圍城 */   /* 青銅渾儀頂上 */
+  /* 11/16 開發者（觀星臺截圖圈天頂黑洞與渾儀）「紅圈入口內容一樣 請修正和優化」，選單「只留天頂黑洞」：渾儀上的「星門圍城」標籤拿掉（gxtTd 留著，舊連結叫得到） */
   ["gxtOmen","今日異象",76,42,62,50,1],   /* 圭表石柱頂上（寬版在石柱右邊、圭面上方） */
   ["gxtFree","自由擺陣",31,70,44,71,1],   /* 石棋桌上方 */
   ["gxtSky","二十八宿",80,26,80,15,0]];   /* 開發者 11/13 晚：星芒點亮二十八宿星圖（07dgl dglXiuSheet）；直幅在右側山頭上方的星空、寬版在右上星空 */
@@ -35,11 +35,11 @@ const GXT_BAD={};   /* 這次開 App 載不到的白天圖（p＝直幅、w＝�
 const GXT_WALK_P={W:768,H:1376,el:38,home:"home",look0:[50,95],h:[.085,72,.0012],
   N:{home:[57,73],td:[51,69.5],m1:[38,69.5],simul:[34,66],gx:[19,63],c1:[12,67],free:[10,73],omen:[72,63.5],stair:[67,69.3]},
   E:"home-td home-m1 m1-simul m1-c1 td-simul simul-gx gx-c1 c1-free home-omen omen-stair home-stair",   /* 開發者 11/13 晚截圖：舊的 r1、stair 落在燈桿橫樑和燈籠上，角色像飄在半空；石階口改停在燈桿左邊的平台石板 */
-  HS:{gxtTd:["td",50,50,"bow"],gxtGx:["gx",18,45,"wave"],gxtOmen:["omen",73,50,"bow"],gxtFree:["free",28,75,"wave"],gxtSimul:["simul",50,8,"cheer"],gxtExit:["stair",95,86,"wave"],gxtSky:["omen",80,20,"cheer"]}};
+  HS:{gxtGx:["gx",18,45,"wave"],gxtOmen:["omen",73,50,"bow"],gxtFree:["free",28,75,"wave"],gxtSimul:["simul",50,8,"cheer"],gxtExit:["stair",95,86,"wave"],gxtSky:["omen",80,20,"cheer"]}};
 const GXT_WALK_W={W:1376,H:768,el:38,home:"home",look0:[50,95],h:[.09,72,.0012],
   N:{home:[44,71.5],td:[50.5,72.5],simul:[43,66.5],gx:[38.5,64.5],w1:[36,70],free:[37,76.5],e1:[55.5,69.5],omen:[57,62.5],stair:[54.5,71.5]},
   E:"home-td home-simul home-w1 simul-gx gx-w1 w1-free td-e1 e1-omen e1-stair",
-  HS:{gxtTd:["td",50.5,55,"bow"],gxtGx:["gx",39.5,48,"wave"],gxtOmen:["omen",57,50,"bow"],gxtFree:["free",44,76,"wave"],gxtSimul:["simul",50,12,"cheer"],gxtExit:["stair",68,88,"wave"],gxtSky:["omen",80,12,"cheer"]}};
+  HS:{gxtGx:["gx",39.5,48,"wave"],gxtOmen:["omen",57,50,"bow"],gxtFree:["free",44,76,"wave"],gxtSimul:["simul",50,12,"cheer"],gxtExit:["stair",68,88,"wave"],gxtSky:["omen",80,12,"cheer"]}};
 const gxtWalkCfg=k=>Object.assign({},typeof SHW_PG0!=="undefined"?SHW_PG0:{},k?GXT_WALK_W:GXT_WALK_P);
 /* 掛上走路角色；直幅／寬版換了＝收掉舊的（07w 的框一拿掉，畫面迴圈、3D 畫布自己收）、用新的那組重掛（跟 07z hmwWalk 同一個做法） */
 function gxtWalk(P,k){if(typeof shwPage!=="function"||typeof SHIP_WALK_ON==="undefined"||!SHIP_WALK_ON)return;const V=P.parentNode;if(!V)return;
@@ -167,7 +167,7 @@ function gxtFx(id,open){let P=null,im=null,ok=false;try{P=document.querySelector
   at(T.open,()=>{doOpen();finish(id==="sky")})}   /* 星圖面板是從底下滑上來的，過場層要收得快，那句話才不會壓在面板上 */
 /* 天頂黑洞＝黑洞車輪戰：跟渾儀一樣，定軌力用完時黑洞入口關著 */
 function gxtWheel(){if(gxtBhLock()){toast("🌫 "+gxtBhMsg());return}if(typeof gsvOpen==="function"&&typeof SG2G!=="undefined"){gxtFx("simul",()=>gsvOpen());return}if(typeof whlOpen!=="function"){toast("🌌 "+GXT_OFF);return}gxtFx("simul",()=>whlOpen())}   /* 11/16：天頂黑洞也開星門圍城選關 */
-const GXT_ACT={gxtTd:gxtTd,gxtSimul:gxtWheel,gxtGx:()=>gxtGate(),gxtSky:()=>{if(typeof dglXiuSheet!=="function"){toast("🌌 "+GXT_OFF);return}gxtFx("sky",()=>dglXiuSheet())}};
+const GXT_ACT={gxtTd:gxtTd,gxtSimul:()=>{try{sessionStorage.setItem("gxtFrom","1")}catch(e){}gxtWheel()},gxtGx:()=>gxtGate(),gxtSky:()=>{if(typeof dglXiuSheet!=="function"){toast("🌌 "+GXT_OFF);return}gxtFx("sky",()=>dglXiuSheet())}};
 function GxtPage(v){setTop("🔭 觀星臺","#/");setTabs(true,"#/");v.className="view";
   if(!gxtOpen()){toast("🔭 觀星臺還沒出現");navReplace("#/");return{}}
   gxtCss();try{store.set("gxtSeen",1)}catch(e){}

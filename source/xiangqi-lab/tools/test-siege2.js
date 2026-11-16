@@ -182,7 +182,7 @@ test("第二期解鎖：序章 C1 → 易 1 → … → 難 8；打贏過（任�
 
 test("第二期入口：觀星臺渾儀、天頂黑洞、星槎偏航、舊選關都通往星門圍城；練習賽不再強制；舊玩法的盤提示改版",()=>{
   const X=f=>rd("xiangqi-db/m/"+f);
-  assert.ok(X("07gxt-guanxing.js").includes('["gxtSimul","天頂黑洞"')&&X("07gxt-guanxing.js").includes('["gxtTd","星門圍城"'));
+  assert.ok(X("07gxt-guanxing.js").includes('["gxtSimul","天頂黑洞"')&&!X("07gxt-guanxing.js").includes('["gxtTd","星門圍城"'));   /* 11/16 開發者選單「只留天頂黑洞」：渾儀標籤拿掉，天頂黑洞進星門圍城 */
   assert.ok(X("07gxt-guanxing.js").includes('gxtFx("simul",()=>gsvOpen())')&&X("07gxt-guanxing.js").includes('gxtFx("td",()=>gsvOpen())'));
   assert.ok(X("07bht-td.js").includes('function bhtdSelect(k,cover){if(typeof SG2G!=="undefined"&&typeof gsvSelect==="function"){gsvSelect(k,cover);return}'));
   assert.ok(X("07bht-td.js").includes('st.td.mode!=="gate-siege-v2"'),"舊塔防畫面不畫 v2 的盤");assert.ok(X("07bht-td.js").includes("sg2Retired(st)"));

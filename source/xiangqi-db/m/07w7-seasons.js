@@ -154,7 +154,8 @@ function sw7TermFor(P,o){return P&&P.dataset&&P.dataset.sw7Term||sw7Term()}   /*
 /* 11/10 開發者「同一個朝代某個場景下雨，其他場景也要統一下雨」：棋鎮各頁（首頁、書院、茶坊、天井…）原本固定算南方 "s"，渡口、驛站照那一朝自己的地區算，停在唐、五代時會一邊下一邊晴；
    停靠某一朝時，棋鎮各頁改用那一朝渡口的地區，同一天同一時段的雨雪就一致（沒停靠照舊 "s"） */
 const SW7_TOWN=/^(home|homeAlt|today|todayN|learn|battle|lobby|canju|terms|redo|theme|shipMap|shipDeck)$/;   /* 回饋 858（開發者 11/10）「兩邊場景的天氣不同」：星槎航線圖、甲板也跟著停靠那一朝渡口的天氣（停在船艙＝雲河自己的天氣） */
-function sw7Rg(o){if(!o||!o.rg)return"";if(!SW7_TOWN.test(o.k||""))return o.rg;let e="";try{e=typeof hbDockEra==="function"?hbDockEra():""}catch(x){}const q=e&&SW7_PAGES.find(x=>x.k==="port_"+e);return q&&q.rg||o.rg}
+function sw7Rg(o){if(!o||!o.rg)return"";if(o.rg==="cl"){const h=SW7_PAGES.find(x=>x.k==="home");if(h&&h!==o)return sw7Rg(h)}   /* 11/16 開發者（船艙截圖）「這邊的天氣錯了，要跟首頁對齊天氣」：雲河自己的地方（船艙渡口、船艙驛站、航線圖、甲板，rg "cl"）一律跟首頁同一個地區，同一時間同一種天氣 */
+if(!SW7_TOWN.test(o.k||""))return o.rg;let e="";try{e=typeof hbDockEra==="function"?hbDockEra():""}catch(x){}const q=e&&SW7_PAGES.find(x=>x.k==="port_"+e);return q&&q.rg||o.rg}
 function sw7WxFor(P,o){if(!o||o.m==="in"||!o.rg)return null;return sw7Precip(sw7TermFor(P,o),sw7Rg(o))}
 /* 首頁換底圖（07z-homemap.js 問這裡）：大雪節氣那幾天、或小雪～大寒正在下雪＝積雪版 snow；正在下雨＝雨景版 rain；其他＝""（原圖）；設定關掉也是 "" */
 const SW7_SNOWY=new Set(["小雪","大雪","冬至","小寒","大寒"]);
