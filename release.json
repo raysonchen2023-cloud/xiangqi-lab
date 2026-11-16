@@ -1,8 +1,8 @@
 {
- "version": "20261116-1154",
- "checkedAt": "2026-11-16T03:58:32.738Z",
- "html": "5f62bc9ffd5b",
- "sw": "644e55645225",
+ "version": "20261116-1203",
+ "checkedAt": "2026-11-16T04:09:06.412Z",
+ "html": "58ca1a38f3da",
+ "sw": "2f561c632790",
  "scripts": 4,
  "modules": {
   "00-util.js": "8c2b1d4f725f",
@@ -63,7 +63,7 @@
   "07y-hubmap.js": "aab3b113c3f7",
   "07z-homemap.js": "169fd8c3dee6",
   "07gxt-guanxing.js": "c4f6bc7b665a",
-  "07dgl-stamina.js": "6e323161a533",
+  "07dgl-stamina.js": "c4a177653135",
   "07xsm-ximarket.js": "dca70b208836",
   "07xsd-xsmdark.js": "14cf67001b41",
   "07hmp-pano.js": "723e4ffde0dc",
