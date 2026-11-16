@@ -45,19 +45,25 @@ try { cp.execFileSync(process.execPath, ["--check", path.resolve(SW_F)], { stdio
 fs.rmSync(tmp, { recursive: true, force: true });
 
 // 4. 跟原始碼一致
+/* 第 20 輪評比改善第 2 項：刻意跟原始碼不同的模組寫明原因，外人核對 differsFromSource 時知道為什麼（不在表上的照舊只列行數） */
+const KNOWN = {
+  "05-settings.js": "發布版的下載大小表 XQ_SIZES 由建置填入實際數字（build-site.js、fill-sizes.js）；原始碼裡是佔位 /*__SIZES__*/null",
+  "07y-hubmap.js": "原始碼裡有一段開發中的首頁地圖程式（hbBridge），刻意不發布",
+  "07s4-passmap.js": "原始碼裡有一行開發中的修改，刻意不發布",
+};
 const H = LF(html), mods = {}, diff = [];
 for (const f of parts()) {
   const src = LF(fs.readFileSync(path.join(DB, f), "utf8")).replace(/\n$/, ""), name = path.basename(f);
   mods[name] = sha(src);
   if (!H.includes(src)) {
     const lines = src.split("\n").filter(l => l.trim()), miss = lines.filter(l => !H.includes(l)).length;
-    diff.push({ module: name, lines: miss, sourceModified: fs.statSync(path.join(DB, f)).mtime.toISOString() });
+    diff.push({ module: name, lines: miss, sourceModified: fs.statSync(path.join(DB, f)).mtime.toISOString(), ...(KNOWN[name] ? { why: KNOWN[name] } : {}) });
   }
 }
 
 const man = { version: vH || null, checkedAt: new Date().toISOString(), html: sha(html), sw: sha(sw), scripts: nScript, modules: mods, differsFromSource: diff };
 console.log(`版本 ${vH}（sw.js ${vS}）・HTML ${man.html}・內嵌 script ${nScript} 段・模組 ${Object.keys(mods).length} 支`);
-if (diff.length) { console.log(`跟目前原始碼不一樣的模組 ${diff.length} 支（原始碼有還沒發布的修改，或線上被直接修過）：`); for (const d of diff) console.log(`  ${d.module}：${d.lines} 行不同（原始碼改於 ${d.sourceModified}）`) }
+if (diff.length) { console.log(`跟目前原始碼不一樣的模組 ${diff.length} 支（原始碼有還沒發布的修改，或線上被直接修過）：`); for (const d of diff) console.log(`  ${d.module}：${d.lines} 行不同（原始碼改於 ${d.sourceModified}）${d.why ? "——" + d.why : ""}`) }
 else console.log("每支模組都跟目前原始碼一致");
 if (OUT) { fs.writeFileSync(OUT, JSON.stringify(man, null, 1)); console.log("版本清單寫到 " + OUT) }
 if (errs.length) { console.log(`\n✘ 不准發布（${errs.length} 個問題）：`); for (const e of errs) console.log("  " + e); process.exit(1) }

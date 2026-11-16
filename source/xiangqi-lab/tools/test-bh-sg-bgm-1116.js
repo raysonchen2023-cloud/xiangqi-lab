@@ -55,15 +55,17 @@ test("〔行為〕結算放舊的 bh_5（end）；不是星門圍城的局交回
   assert.equal(K.bhSgMus({ journey: "bh:tang" }, 1), false); assert.equal(K.bhSgMus({ td: { mode: "td" } }, 1), false);
 });
 
-test("〔原始碼〕接點：bhMusTick 先跳過序局再問 bhSgMus；偏航視窗 bh_1、序局照舊；偏航記號在 sg2Drift 設、選關出戰清掉；配樂檔與曲名都在", () => {
+test("〔原始碼〕接點：bhMusTick 先跳過序局再問 bhSgMus；偏航視窗 bh_1、序局照舊；偏航記號在 sg2Drift 設、選關出戰清掉", () => {
   assert.ok(BH.includes('function bhMusTick(st){if(st&&st.journey===BHX_ID)return;   /* 序局放第 2 首（開場配樂），不跟著局面切 bh_1～5 */\n  if(bhSgMus(st))return;'));
   assert.ok(BH.includes('const BH_MUS={fall:"bh_1.mp3",wake:"bh_2.mp3",play:"bh_3.mp3",danger:"bh_4.mp3",end:"bh_5.mp3"};'), "舊的 bh_1～5 照舊");
   assert.ok(SG2.includes('function sg2Drift(k,cover){if(!sg2DriftOk())return false;try{sessionStorage.setItem("bhDrift","1")}catch(e){}'));
   assert.ok(SG2.includes('["⚔ 出戰",()=>{try{sessionStorage.removeItem("bhDrift")}catch(e){}const Q=gsvProg();'));
-  /* 配樂與新曲名只在 CDN（公開副本的 titles.json 是舊的、沒有 mp3）：本機有完整配樂資料才檢查 */
-  const T = path.join(ROOT, "xiangqi-lab", "site", "data", "bgm", "titles.json"), FULL = fs.existsSync(path.join(ROOT, "xiangqi-lab", "site", "data", "bgm", "blackhole", "bh_1.mp3"));
-  if (FULL && fs.existsSync(T)) { const J = JSON.parse(fs.readFileSync(T, "utf8")); for (const [n, t] of [[6, "星門微瀾"], [7, "雲河圍陣"], [8, "墨潮湧兵"], [9, "樞影逼城"], [10, "將星懸命"]]) assert.equal(J["blackhole/bh_" + n + ".mp3"], t) }
-  /* 配樂 mp3 只在 CDN：有資料夾才檢查 */
-  const D = path.join(ROOT, "xiangqi-lab", "site", "data", "bgm", "blackhole");
-  if (fs.existsSync(path.join(D, "bh_1.mp3"))) for (let n = 6; n <= 10; n++) assert.ok(fs.existsSync(path.join(D, "bh_" + n + ".mp3")), "bh_" + n + ".mp3");
+});
+
+/* 第 20 輪評比改善第 2 項：只在 CDN 的資料不在時照實標「略過」，不再靜靜算通過 */
+test("配樂檔 bh_6～10 與新曲名都在（配樂只放 CDN）", t => {
+  const D = path.join(ROOT, "xiangqi-lab", "site", "data", "bgm", "blackhole"), T = path.join(ROOT, "xiangqi-lab", "site", "data", "bgm", "titles.json");
+  if (!fs.existsSync(path.join(D, "bh_1.mp3")) || !fs.existsSync(T)) return t.skip("沒有 data/bgm/blackhole 配樂與新曲名（只放 CDN，公開副本沒有）");
+  for (let n = 6; n <= 10; n++) assert.ok(fs.existsSync(path.join(D, "bh_" + n + ".mp3")), "bh_" + n + ".mp3");
+  const J = JSON.parse(fs.readFileSync(T, "utf8")); for (const [n, s] of [[6, "星門微瀾"], [7, "雲河圍陣"], [8, "墨潮湧兵"], [9, "樞影逼城"], [10, "將星懸命"]]) assert.equal(J["blackhole/bh_" + n + ".mp3"], s);
 });

@@ -40,7 +40,11 @@ test("〔原始碼〕接線：雲河加進上色名單；pcRun 播完拿掉灰�
   assert.ok(PFX.includes('Promise.all([pfxImg(),"layers/pm1_depth.png"'), "07n 貼圖用 pfxImg()");
   assert.ok(PFX.includes('?"port_classic_f.webp":"port_classic.webp"'), "有全彩就用全彩");
   assert.ok(PFX.includes('if(P.querySelector(".pfx-gl"))return;if(P.classList.contains("pc-run"))'), "不重複建畫布、暈開中先等");
-  /* 上色圖只放 CDN：公開副本沒有任何場景圖（沒有原圖 port_classic.webp）就不查 */
+});
+
+/* 第 20 輪評比改善第 2 項：只在 CDN 的資料不在時照實標「略過」，不再靜靜算通過 */
+test("渡口上色圖都在（場景圖只放 CDN）", t => {
   const SM = path.join(ROOT, "xiangqi-lab", "site", "data", "shipmap");
-  if (fs.existsSync(path.join(SM, "port_classic.webp"))) for (const f of ["port_classic_c.webp", "port_classic_f.webp"]) assert.ok(fs.existsSync(path.join(SM, f)), f + " 在 site");
+  if (!fs.existsSync(path.join(SM, "port_classic.webp"))) return t.skip("沒有 data/shipmap 場景圖（只放 CDN，公開副本沒有）");
+  for (const f of ["port_classic_c.webp", "port_classic_f.webp"]) assert.ok(fs.existsSync(path.join(SM, f)), f + " 在 site");
 });

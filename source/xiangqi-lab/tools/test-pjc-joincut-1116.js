@@ -211,13 +211,17 @@ test("m.html 在 07pty-party 後面 include 07pjc-joincut；規則：不寫 // �
   assert.ok(a >= 0 && b > a, "07pjc 在 07pty 之後"); assert.equal(H.split("//#include m/07pjc-joincut.js").length, 2, "只 include 一次");
   assert.ok(!PJC_SRC.includes("//"), "07pjc 沒有 // （一行程式插 // 會吃掉後面）");
   assert.ok(!PJC_SRC.includes("上限"), "畫面上不寫「上限」");
-  /* 公開副本沒有過場圖（只在 CDN）：有 art/ptyjoin 資料夾才檢查圖檔 */
-  if (fs.existsSync(path.join(ROOT, "xiangqi-db", "art", "ptyjoin"))) for (const n of ["han_j1", "han_j2", "han_j3"]) {
+  const I = rd("xiangqi-db/m/07i18n.js");
+  for (const s of ["沙暴快來了，驛卒卻把她扣了下來。", "一起解開了這盤棋。", "我找不到回去的路……星槎真的會停靠元朝？那我跟你們走。", "七星加入過場"]) assert.ok(I.includes(JSON.stringify(s) + ":"), "英文字典有：" + s);
+});
+
+/* 第 20 輪評比改善第 2 項：只在 CDN 的資料不在時照實標「略過」，不再靜靜算通過 */
+test("過場圖檔都在（art 原圖與 site/data 成品；圖只放 CDN）", t => {
+  if (!fs.existsSync(path.join(ROOT, "xiangqi-db", "art", "ptyjoin"))) return t.skip("沒有 art/ptyjoin 過場圖（只放 CDN，公開副本沒有）");
+  for (const n of ["han_j1", "han_j2", "han_j3"]) {
     assert.ok(fs.existsSync(path.join(ROOT, "xiangqi-db", "art", "ptyjoin", n + ".webp")), "art/ptyjoin/" + n + ".webp");
     assert.ok(fs.existsSync(path.join(ROOT, "xiangqi-lab", "site", "data", "ptyjoin", n + ".webp")), "site/data/ptyjoin/" + n + ".webp");
   }
-  const I = rd("xiangqi-db/m/07i18n.js");
-  for (const s of ["沙暴快來了，驛卒卻把她扣了下來。", "一起解開了這盤棋。", "我找不到回去的路……星槎真的會停靠元朝？那我跟你們走。", "七星加入過場"]) assert.ok(I.includes(JSON.stringify(s) + ":"), "英文字典有：" + s);
 });
 
 test("〔行為〕11/16 開發者選單「三國：兩位新夥伴主導」：PJC_SC.who 決定每張站誰（L0、L1、陪你走的人），沒寫照舊；三國資料齊全", () => {

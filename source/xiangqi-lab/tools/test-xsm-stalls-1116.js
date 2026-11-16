@@ -123,8 +123,8 @@ test("找棋子藏點：每處都在圖上、避開攤位標籤和出口；每�
   assert.equal(c.xsmNear(s, px(29), W, Hh), false, "29px 不算"); assert.equal(c.xsmNear(s, [50, 50 + 20 / Hh * 100], W, Hh), true, "上下 20px 也算");
 });
 
-test("聽曲：只收停靠過的朝代（加上青石園），每朝 7 首全收；沒有旅程只有青石園", () => {
-  if (!BGM_IX) return;   /* 配樂清單只在 CDN（公開副本沒有） */
+test("聽曲：只收停靠過的朝代（加上青石園），每朝 7 首全收；沒有旅程只有青石園", t => {
+  if (!BGM_IX) return t.skip("沒有 data/bgm/index.json 配樂清單（只放 CDN，公開副本沒有）");   /* 第 20 輪評比改善第 2 項：照實標略過 */
   const c = load(), O = ["classic", "han", "qin", "sanguo", "weijin", "tang", "song"];
   assert.deepEqual(J(c.xsmMuEras(O, ["han", "tang"])), ["classic", "han", "tang"]);
   assert.deepEqual(J(c.xsmMuEras(O, null)), ["classic"], "沒有旅程（shipDockList＝null）");
@@ -139,8 +139,6 @@ test("聽曲：只收停靠過的朝代（加上青石園），每朝 7 首全�
 });
 
 test("配樂：西市背景配樂借三首、白天夜裡各一組；樂棚點了播、再點停（回背景配樂）；背景音樂關著不放；離開西市還給朝代配樂", () => {
-  const MP3 = fs.existsSync(path.join(ROOT, "xiangqi-lab", "site", "data", "bgm", "han"));   /* 公開副本有配樂清單、沒有 mp3（只在 CDN） */
-  if (MP3) for (const f of ["han/paixiao_6.mp3", "tang/pipa_1.mp3", "song/qin_3.mp3"]) assert.ok(fs.existsSync(path.join(ROOT, "xiangqi-lab", "site", "data", "bgm", f)), "site/data/bgm/" + f);
   const c = load({ bgm: 1, clk: 5 }), D = R(c, "XSM_BGM_D"), N = R(c, "XSM_BGM_N");
   assert.deepEqual(J(D), ["han/paixiao_6.mp3", "tang/pipa_1.mp3"]); assert.deepEqual(J(N), ["song/qin_3.mp3", "tang/pipa_1.mp3"]);
   c.xsmBgmOn(); assert.equal(c.BGM.force, D, "白天（clkIdx 5＝巳時）放漢唐那組");
@@ -223,4 +221,11 @@ test("找棋子（11/16 開發者選單「照現在＋讀螢幕可直接收」�
   for (const d of days(5, "2026-11-03T12:00:00")) { on._day = d; on.xsmChessSheet(); on._ui.btn.xsmCt.onclick() }
   assert.equal(on._log.xp.filter(x => x[0] === 10).length, 7); assert.deepEqual(J(on._log.xp.filter(x => x[0] === 50)), [[50, "找棋子", "xsmf7:1"]], "直接收也能湊齊、+50 一次");
   assert.equal(on._ui.modal.length, 1, "湊齊跳一次蓋印卡"); assert.ok(on._ui.modal[0].includes("一副棋湊齊了"));
+});
+
+/* 第 20 輪評比改善第 2 項：只在 CDN 的資料不在時照實標「略過」，不再靜靜算通過 */
+test("西市借的三首配樂檔都在（mp3 只放 CDN）", t => {
+  const B = path.join(ROOT, "xiangqi-lab", "site", "data", "bgm");
+  if (!fs.existsSync(path.join(B, "han"))) return t.skip("沒有 data/bgm 的 mp3（只放 CDN，公開副本沒有）");
+  for (const f of ["han/paixiao_6.mp3", "tang/pipa_1.mp3", "song/qin_3.mp3"]) assert.ok(fs.existsSync(path.join(B, f)), "site/data/bgm/" + f);
 });

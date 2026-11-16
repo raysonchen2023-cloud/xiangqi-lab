@@ -29,10 +29,12 @@ test("〔原始碼〕接點：08b 每步叫 gxdTick；離開對局頁還原；�
   assert.ok(GXD.includes('if(!/^#\\/journey\\/play/.test(location.hash)&&typeof BGM!=="undefined"&&BGM.force===GXD_BGM&&typeof bgmForce==="function")bgmForce(null)'), "離開對局頁還原");
   assert.ok(XSM.includes('function XsmPage(v,sub){try{if(xsmOpen()){if(sub==="dark"&&typeof xsdBgmOn==="function")xsdBgmOn();else xsmBgmOn()}}catch(e){}'));
   assert.ok(XSM.includes('(typeof XSD_BGM!=="undefined"&&f===XSD_BGM)'), "xsmBgmMine 認得暗棋曲（離開西市一起停）");
-  /* 配樂與新曲名只在 CDN：本機有完整配樂資料才檢查 */
+});
+
+/* 第 20 輪評比改善第 2 項：只在 CDN 的資料不在時照實標「略過」，不再靜靜算通過 */
+test("配樂檔與新曲名都在（配樂只放 CDN）", t => {
   const B = path.join(ROOT, "xiangqi-lab", "site", "data", "bgm");
-  if (fs.existsSync(path.join(B, "blackhole", "bh_1.mp3"))) {
-    for (const f of ["guanxing/yixiang_1.mp3", "xsm/anqi_1.mp3"]) assert.ok(fs.existsSync(path.join(B, f)), f);
-    const J = JSON.parse(fs.readFileSync(path.join(B, "titles.json"), "utf8")); assert.equal(J["guanxing/yixiang_1.mp3"], "渾天異象"); assert.equal(J["xsm/anqi_1.mp3"], "聽雨翻子");
-  }
+  if (!fs.existsSync(path.join(B, "blackhole", "bh_1.mp3"))) return t.skip("沒有 data/bgm 配樂與新曲名（只放 CDN，公開副本沒有）");
+  for (const f of ["guanxing/yixiang_1.mp3", "xsm/anqi_1.mp3"]) assert.ok(fs.existsSync(path.join(B, f)), f);
+  const J = JSON.parse(fs.readFileSync(path.join(B, "titles.json"), "utf8")); assert.equal(J["guanxing/yixiang_1.mp3"], "渾天異象"); assert.equal(J["xsm/anqi_1.mp3"], "聽雨翻子");
 });

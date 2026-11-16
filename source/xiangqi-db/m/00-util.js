@@ -4,7 +4,8 @@
    ①圖片、聲音載入失敗（error 事件，捕獲階段）換成 CDN 網址；②fetch 到 404 再問 CDN。只處理同源的 data/、engine/ 路徑，網址後面的 ?v= 不帶 */
 const XQ_CDN="https://xiangqi-cdn.pages.dev/";
 const xqCdnRel=u=>{try{const x=new URL(u,location.href);if(x.origin!==location.origin)return"";const b=location.pathname.replace(/[^/]*$/,""),p=x.pathname.startsWith(b)?decodeURI(x.pathname.slice(b.length)):"";return/^(data|engine)\//.test(p)?p:""}catch(e){return""}};
-addEventListener("error",e=>{const t=e.target;if(!t||!t.tagName||!/^(IMG|AUDIO|SOURCE|VIDEO)$/.test(t.tagName)||t.dataset.cdnTry)return;const r=xqCdnRel(t.currentSrc||t.src||"");if(!r)return;t.dataset.cdnTry="1";t.src=XQ_CDN+r},true);
+/* 11/17 iMac 模擬器 P0：第一次造訪 service worker 還沒接管時，棋盤的棋子、底圖是 SVG <image>（tagName 小寫 image），以前不在名單裡，全部變成「?」；SVG 的換 href */
+addEventListener("error",e=>{const t=e.target;if(!t||!t.tagName||(t.dataset&&t.dataset.cdnTry))return;const svg=String(t.tagName).toLowerCase()==="image";if(!svg&&!/^(IMG|AUDIO|SOURCE|VIDEO)$/.test(t.tagName))return;const r=xqCdnRel(svg?(t.getAttribute("href")||t.getAttribute("xlink:href")||""):(t.currentSrc||t.src||""));if(!r)return;t.dataset.cdnTry="1";if(svg)t.setAttribute("href",XQ_CDN+r);else t.src=XQ_CDN+r},true);
 {const f0=window.fetch;if(f0)window.fetch=function(i,o){return f0.apply(this,arguments).then(res=>{if(res&&res.status===404){const r=xqCdnRel(typeof i==="string"?i:i&&i.url||"");if(r)return f0.call(window,XQ_CDN+r,{mode:"cors",credentials:"omit"}).then(x=>x.ok?x:res,()=>res)}return res})}}
 /* 評比第 17、18 輪第 5 項（開發者 11/14 選）：App 切到背景（document.hidden、pagehide）時，App 自己能停的計時器、動畫、預載都停下來，回前景再接著。
    bgpHid()＝現在在背景；bgpOn(fn)＝切背景／回前景時叫 fn(在背景?)，回傳取消函式；bgpEvery(fn,ms)＝背景會自動停的 setInterval（回前景重新起算，不補背景期間的拍子），bgpStop(id) 停掉。

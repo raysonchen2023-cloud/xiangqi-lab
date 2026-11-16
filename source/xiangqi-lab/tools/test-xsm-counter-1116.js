@@ -205,8 +205,8 @@ test("07mnq：西市開了，遠征補給不在首頁、星槎自動跳（下一
   assert.ok(MNQ.includes('E.xsm=typeof xsmOpen==="function"&&!!xsmOpen()'), "mnqEnv 問 07xsm xsmOpen");
 });
 
-test("英文：櫃坊新字串併進外掛字典後都翻得出（掌櫃、七星的信照 {你}／{名} 換過的樣子）", () => {
-  if (!fs.existsSync(path.join(ROOT, "xiangqi-db", "i18n-en.json"))) return;   /* 外掛字典只在開發者電腦與 CDN，公開副本沒有 */
+test("英文：櫃坊新字串併進外掛字典後都翻得出（掌櫃、七星的信照 {你}／{名} 換過的樣子）", t => {
+  if (!fs.existsSync(path.join(ROOT, "xiangqi-db", "i18n-en.json"))) return t.skip("沒有 xiangqi-db/i18n-en.json 英文外掛字典（只放 CDN，公開副本沒有）");   /* 第 20 輪評比改善第 2 項：照實標略過 */
   const S = M("m/07i18n.js"), a = S.indexOf("#I18N-PURE-BEGIN"), b = S.indexOf("/* #I18N-PURE-END */"), ctx = {};
   vm.createContext(ctx); vm.runInContext(S.slice(S.indexOf("\n", a) + 1, b) + ";this.R={i18nText,i18nExtMerge}", ctx);
   ctx.R.i18nExtMerge(JSON.parse(M("i18n-en.json")));

@@ -1,17 +1,19 @@
-# 驗證紀錄（版本 20261117-0005）
+# 驗證紀錄（版本 20261117-0025）
 
 這一頁讓任何人核對：這一版的程式跑過下面這些自動測試，以及每一項測試到底驗了什麼。
 
-- 產生時間：2026/11/17 00:12:55（臺灣時間）
-- 結果（四欄分開，不要只看總數）：共 1860 項＝**通過 1843**、**失敗 0**、**略過 17**（這個環境跑不了、沒有執行，不算通過；逐項原因見〈略過〉）；另有**預期失敗 0**
-- 測試對象：公開倉庫的 `source/`（切自 commit `8d9d8938eea2`），對應的發布版：`20261117-0005`。開發者電腦上還沒發布的修改不在這份測試裡。
+- 產生時間：2026/11/17 00:34:05（臺灣時間）
+- 結果（四欄分開，不要只看總數）：共 1869 項＝**通過 1846**、**失敗 0**、**略過 23**（這個環境跑不了、沒有執行，不算通過；逐項原因見〈略過〉）；另有**預期失敗 0**
+- 測試對象：公開倉庫的 `source/`（切自 commit `db1637f22460`），對應的發布版：`20261117-0025`。開發者電腦上還沒發布的修改不在這份測試裡。
 - `source/` 沒放的測試檔（和少數只給它們用的工具）有43 個（要讀不公開的資料、要接不公開的營運程式，或指令排除），原因逐檔寫在 `source/STAGE-MANIFEST.json` 的 excludedTests。
 
 ## 略過（沒有執行，不算通過）
 
 下面這幾項在這份環境裡跑不了（要讀只在開發者電腦的素材、工具或網路），測試自己判斷後略過；不算進通過數，也不算失敗。
 
+- ﹣ 配樂檔 bh_6～10 與新曲名都在（配樂只放 CDN）（test-bh-sg-bgm-1116.js；沒有 data/bgm/blackhole 配樂與新曲名（只放 CDN，公開副本沒有））
 - ﹣ ④ 載入量：一般首頁不載 bossfx3d.js、不預載 data/bhtd；素材都放在 art/bhtd（build-site 複製到 data/bhtd）（test-bhfx.js；要讀只在開發者電腦的素材 art/bhtd（魔王模型、特效圖只放 CDN；公開副本沒有，開發者電腦上照跑））
+- ﹣ 配樂檔與新曲名都在（配樂只放 CDN）（test-extra-bgm-1116.js；沒有 data/bgm 配樂與新曲名（只放 CDN，公開副本沒有））
 - ﹣ 真的公開倉庫（本機 git origin/main，不連網）：成品跟 release.json 一致、Pikafish 跟建置紀錄一致（test-fdroid-evidence.js；沒有 site/.git）
 - ﹣ 〔混合〕去背圖的尺寸跟出圖工具記的一樣（位置表是照這些尺寸排的）（test-gx-gatepano.js；去背圖只在開發者電腦與 CDN，公開副本沒有 art/gxgate）
 - ﹣ 評比循環工具不在這個副本，跳過（test-handoff-facts.js；沒有 handoff-facts.js）
@@ -28,6 +30,10 @@
 - ﹣ 冒充棋客、重放：沒簽名的棋客認輸、用自己的金鑰冒簽、把棋客在別盤的真簽名搬過來、把棋客舊的那步換更大的 rev 重送——真人、觀眾、裁判台都不收，積分和賽果都不變（test-noscore.js；要千秋盃裁判台 cup-host.js 和 lobby-bots.js（營運程式，不公開；開發者電腦上照跑））
 - ﹣ 簽署完成前禁止計分入口：舊裁判台（sv 1）開的盤、棋客座位沒有金鑰——棋客沒簽名的認輸照舊收（相容），但這盤不進正式積分（test-noscore.js；要千秋盃裁判台 cup-host.js 和 lobby-bots.js（營運程式，不公開；開發者電腦上照跑））
 - ﹣ 〔原始碼〕棋客程式交給裁判台代簽；裁判台開局寫 sv 2、棋客金鑰只在記憶體；App 的計分入口有三道門（test-noscore.js；要千秋盃裁判台 cup-host.js 和 lobby-bots.js（營運程式，不公開；開發者電腦上照跑））
+- ﹣ 過場圖檔都在（art 原圖與 site/data 成品；圖只放 CDN）（test-pjc-joincut-1116.js；沒有 art/ptyjoin 過場圖（只放 CDN，公開副本沒有））
+- ﹣ 渡口上色圖都在（場景圖只放 CDN）（test-port-yz-color-1116.js；沒有 data/shipmap 場景圖（只放 CDN，公開副本沒有））
+- ﹣ 英文：櫃坊新字串併進外掛字典後都翻得出（掌櫃、七星的信照 {你}／{名} 換過的樣子）（test-xsm-counter-1116.js；沒有 xiangqi-db/i18n-en.json 英文外掛字典（只放 CDN，公開副本沒有））
+- ﹣ 西市借的三首配樂檔都在（mp3 只放 CDN）（test-xsm-stalls-1116.js；沒有 data/bgm 的 mp3（只放 CDN，公開副本沒有））
 
 ## 先看這三個數字（不要只看總數）
 
@@ -36,7 +42,7 @@
 | 行為 | 1212 項（通過 1207、略過 5） | 真的把 App 的程式跑起來（載入網站上的模組、抽出函式呼叫、用假的畫面／計時器／伺服器走一遍流程），再檢查結果對不對。 |
 | 混合 | 75 項（通過 74、略過 1） | 一半真的執行程式，一半只是檢查原始碼裡有沒有某段字。 |
 | 原始碼比對 | 202 項（通過 197、略過 5） | 只檢查原始碼裡有沒有某段字（例如某個按鈕的程式碼、某條樣式規則）。**只證明程式碼存在，不證明功能會動。** |
-| 待分類 | 371 項（通過 365、略過 6） | `test-bh-sg-bgm-1116.js`、`test-bhfx.js`、`test-bhtd-combo.js`、`test-bhtd-r2.js`、`test-bhtd-rules.js`、`test-bhtl.js`、`test-bhx-allstars-1116.js`、`test-bhx-hold-1116.js`、`test-bhx-resume-1116.js`、`test-bhx-skip-1116.js`、`test-dgl.js`、`test-eng-over-1116.js`、`test-extra-bgm-1116.js`、`test-ghost-game-1116.js`、`test-gxd-daily-1116.js`、`test-home-pano.js`、`test-i18n-story.js`、`test-ios-native-1116.js`、`test-noscore.js`、`test-park3d-capbase.js`、`test-park3d-ghostptr-1116.js`、`test-pjc-joincut-1116.js`、`test-port-yz-color-1116.js`、`test-pty-events-1116.js`、`test-r17-qa.js`、`test-siege2-local.js`、`test-siege2.js`、`test-sitemap-places-1116.js`、`test-upd-notitle-1116.js`、`test-xsm-counter-1116.js`、`test-xsm-dark.js`、`test-xsm-stalls-1116.js` 這幾個檔還沒逐項分類，暫不算進上面三類。 |
+| 待分類 | 380 項（通過 368、略過 12） | `test-bh-sg-bgm-1116.js`、`test-bhfx.js`、`test-bhtd-combo.js`、`test-bhtd-r2.js`、`test-bhtd-rules.js`、`test-bhtl.js`、`test-bhx-allstars-1116.js`、`test-bhx-hold-1116.js`、`test-bhx-resume-1116.js`、`test-bhx-skip-1116.js`、`test-cdn-svg-1117.js`、`test-dgl.js`、`test-eng-over-1116.js`、`test-extra-bgm-1116.js`、`test-ghost-game-1116.js`、`test-gxd-daily-1116.js`、`test-home-pano.js`、`test-i18n-story.js`、`test-ios-native-1116.js`、`test-noscore.js`、`test-park3d-capbase.js`、`test-park3d-ghostptr-1116.js`、`test-pjc-joincut-1116.js`、`test-port-yz-color-1116.js`、`test-pty-events-1116.js`、`test-r17-qa.js`、`test-siege2-local.js`、`test-siege2.js`、`test-sitemap-places-1116.js`、`test-upd-notitle-1116.js`、`test-xsm-counter-1116.js`、`test-xsm-dark.js`、`test-xsm-stalls-1116.js` 這幾個檔還沒逐項分類，暫不算進上面三類。 |
 
 - 測試名稱開頭有〔原始碼〕〔混合〕就是那一類；沒有標籤的是行為類（下面的索引另外標〔行為〕）。
 - **測試由開發用的 AI 撰寫，不等於第三方驗證；原始碼比對只證明程式碼存在。**
@@ -137,8 +143,9 @@
 ### E05 失著說出分析線支持的具體後果
 
 - 從哪一版：2300
-- 自動測試：28 項（行為 25、原始碼比對 3）
+- 自動測試：29 項（行為 25、原始碼比對 3、待分類 1）
   - ✔ 〔行為〕原生 App、有隔離但沒有 SharedArrayBuffer 也算太舊；引擎的 load／search／prefetch 都直接回那句話（不再叫人關掉重開、不抓引擎檔）
+  - ✔ 〔待分類〕監聽在捕獲階段（error 不冒泡，SVG <image> 的錯誤也要抓得到）
   - ✔ 〔原始碼〕挑戰電腦落子、提示都用 engPos；畫面訊息不放 e.message，細節留在 P.engErr
   - ✔ 〔行為〕第 4 項：t 臨界值（Cornish–Fisher）跟精確值對照——df 9 以上差 < 0.005、df 4 差 < 0.08；df 無限大＝常態值；Bonferroni 的常態值 3 組 2.394／2.128、6 組 2.638／2.394
   - ✔ 〔原始碼〕P2：HAC、重抽、區塊重抽只在離線模擬裡；App 的 skillPick 仍然是配對估計＋Bonferroni＋t（這一輪沒有換）
@@ -532,7 +539,7 @@
 | test-asian-rules.js | 棋規（長將、長捉、閒著、循環待核、限著、困斃） | 30 | 0 | 0 |  | 30／30 |
 | test-askbot-city.js | — | 3 | 1 | 1 |  | 5／5 |
 | test-bh-drift-raid-1115.js | — | 7 | 0 | 1 |  | 8／8 |
-| test-bh-sg-bgm-1116.js | — | 0 | 0 | 0 | 5 | 5／5 |
+| test-bh-sg-bgm-1116.js | — | 0 | 0 | 0 | 6 | 5／6（略過 1） |
 | test-bhfx.js | — | 0 | 0 | 0 | 24 | 23／24（略過 1） |
 | test-bhmate.js | — | 0 | 0 | 8 |  | 8／8 |
 | test-bhtd-combo.js | — | 0 | 0 | 0 | 9 | 9／9 |
@@ -546,6 +553,7 @@
 | test-bhx-resume-1116.js | — | 0 | 0 | 0 | 3 | 3／3 |
 | test-bhx-skip-1116.js | — | 0 | 0 | 0 | 4 | 4／4 |
 | test-blitz.js | — | 14 | 1 | 3 |  | 18／18 |
+| test-cdn-svg-1117.js | — | 0 | 0 | 0 | 4 | 4／4 |
 | test-clock-pv.js | 棋鐘邊界（+1／0／−1 ms）、悔棋加秒、重開；引擎缺 PV 保持未評 | 43 | 0 | 0 |  | 43／43 |
 | test-colorblind.js | — | 10 | 0 | 4 |  | 14／14 |
 | test-cpuroom-copy.js | — | 0 | 7 | 2 |  | 9／9 |
@@ -560,7 +568,7 @@
 | test-engine-timeout.js | — | 7 | 0 | 2 |  | 9／9 |
 | test-era-lang.js | — | 15 | 2 | 1 |  | 18／18 |
 | test-evidence-shots.js | — | 16 | 0 | 1 |  | 17／17 |
-| test-extra-bgm-1116.js | — | 0 | 0 | 0 | 3 | 3／3 |
+| test-extra-bgm-1116.js | — | 0 | 0 | 0 | 4 | 3／4（略過 1） |
 | test-family.js | — | 14 | 0 | 4 |  | 18／18 |
 | test-fb871.js | — | 8 | 2 | 2 |  | 12／12 |
 | test-fb888.js | — | 11 | 0 | 3 |  | 14／14 |
@@ -625,8 +633,8 @@
 | test-party-prologue.js | — | 7 | 0 | 0 |  | 7／7 |
 | test-perfhud.js | — | 6 | 0 | 2 |  | 8／8 |
 | test-pgn-variations.js | — | 8 | 0 | 1 |  | 9／9 |
-| test-pjc-joincut-1116.js | — | 0 | 0 | 0 | 14 | 14／14 |
-| test-port-yz-color-1116.js | — | 0 | 0 | 0 | 3 | 3／3 |
+| test-pjc-joincut-1116.js | — | 0 | 0 | 0 | 15 | 14／15（略過 1） |
+| test-port-yz-color-1116.js | — | 0 | 0 | 0 | 4 | 3／4（略過 1） |
 | test-preload-bg.js | — | 12 | 1 | 1 |  | 14／14 |
 | test-premove-online3d.js | — | 12 | 0 | 3 |  | 15／15 |
 | test-provenance.js | — | 4 | 0 | 1 |  | 5／5 |
@@ -678,9 +686,9 @@
 | test-xfer4.js | — | 10 | 0 | 1 |  | 11／11 |
 | test-xiu-scene-1116.js | — | 2 | 0 | 1 |  | 3／3 |
 | test-xqs-tb.js | — | 0 | 4 | 2 |  | 6／6 |
-| test-xsm-counter-1116.js | — | 0 | 0 | 0 | 11 | 11／11 |
+| test-xsm-counter-1116.js | — | 0 | 0 | 0 | 11 | 10／11（略過 1） |
 | test-xsm-dark.js | — | 0 | 0 | 0 | 15 | 15／15 |
-| test-xsm-stalls-1116.js | — | 0 | 0 | 0 | 11 | 11／11 |
+| test-xsm-stalls-1116.js | — | 0 | 0 | 0 | 12 | 11／12（略過 1） |
 
 ## 全部測試名稱
 
@@ -874,7 +882,8 @@
 - ✔ 〔待分類〕〔行為〕偏航急襲（sessionStorage bhDrift）：墨潮湧兵與雲河圍陣輪播（同一個陣列，不會每步重設）
 - ✔ 〔待分類〕〔行為〕危急切將星懸命：被將軍或帥的體力不到三成；至少放 35 秒、解除後再等 10 秒才切回
 - ✔ 〔待分類〕〔行為〕結算放舊的 bh_5（end）；不是星門圍城的局交回原本的規則
-- ✔ 〔待分類〕〔原始碼〕接點：bhMusTick 先跳過序局再問 bhSgMus；偏航視窗 bh_1、序局照舊；偏航記號在 sg2Drift 設、選關出戰清掉；配樂檔與曲名都在
+- ✔ 〔待分類〕〔原始碼〕接點：bhMusTick 先跳過序局再問 bhSgMus；偏航視窗 bh_1、序局照舊；偏航記號在 sg2Drift 設、選關出戰清掉
+- ﹣ 略過 〔待分類〕配樂檔 bh_6～10 與新曲名都在（配樂只放 CDN）（略過原因：沒有 data/bgm/blackhole 配樂與新曲名（只放 CDN，公開副本沒有））
 
 ### test-bhfx.js
 
@@ -1097,6 +1106,13 @@
 - ✔ 〔原始碼〕08b、01-board、local.js、m.html 的掛勾都在，而且都用 typeof 保護
 - ✔ 〔原始碼〕blitz.md 兩份逐字一樣、LF 換行；寫了開關名稱、預走規則、量測數字、限制
 - ✔ 〔原始碼〕設定頁有「⚡ 快棋模式」（預設關）、「⏳ 預走」（預設開）兩個開關，說明清單有 blitz.md
+
+### test-cdn-svg-1117.js
+
+- ✔ 〔待分類〕監聽在捕獲階段（error 不冒泡，SVG <image> 的錯誤也要抓得到）
+- ✔ 〔待分類〕SVG <image> 的棋子、底圖載入失敗 → href 換成 CDN，只試一次
+- ✔ 〔待分類〕SVG 用舊寫法 xlink:href 也接得住；不是 data/、engine/ 的圖不動
+- ✔ 〔待分類〕原本的 <img> 照舊換 src
 
 ### test-clock-pv.js
 
@@ -1327,6 +1343,7 @@
 - ✔ 〔待分類〕〔行為〕今日異象、自由擺陣的局（journey gxd:）放渾天異象；別的局不動；已經在放就不重設
 - ✔ 〔待分類〕〔行為〕暗棋放聽雨翻子；樂棚正在放的不動
 - ✔ 〔待分類〕〔原始碼〕接點：08b 每步叫 gxdTick；離開對局頁還原；暗棋頁走 xsdBgmOn；離開西市也停暗棋曲；配樂檔與曲名
+- ﹣ 略過 〔待分類〕配樂檔與新曲名都在（配樂只放 CDN）（略過原因：沒有 data/bgm 配樂與新曲名（只放 CDN，公開副本沒有））
 
 ### test-family.js
 
@@ -2239,6 +2256,7 @@
 - ✔ 〔待分類〕字幕：第 1 張沒寫 say1 時取 PTY_MEET 最後一句（太長截短）；第 3 張是「名字：「加入那句」」
 - ✔ 〔待分類〕前綴 pjc／PJC 沒撞名：只有 07pjc-joincut.js 用；這支檔的頂層名字都是 pjc／PJC 開頭
 - ✔ 〔待分類〕m.html 在 07pty-party 後面 include 07pjc-joincut；規則：不寫 // 註解、畫面不出現「上限」
+- ﹣ 略過 〔待分類〕過場圖檔都在（art 原圖與 site/data 成品；圖只放 CDN）（略過原因：沒有 art/ptyjoin 過場圖（只放 CDN，公開副本沒有））
 - ✔ 〔待分類〕〔行為〕11/16 開發者選單「三國：兩位新夥伴主導」：PJC_SC.who 決定每張站誰（L0、L1、陪你走的人），沒寫照舊；三國資料齊全
 - ✔ 〔待分類〕〔原始碼〕11/16 五個加入站（漢、三國、魏晉、隋、五代）都有三張過場與第 1 張字幕，英文字幕都在
 
@@ -2247,6 +2265,7 @@
 - ✔ 〔待分類〕〔行為〕雲河那一站的渡口叫「渡口」，其他朝代照舊「某朝的渡口」
 - ✔ 〔待分類〕〔行為〕驛站 yzColor：每次開 App 每個驛站第一次進門才播；減少動態不播；底圖先換成淡彩加灰階、入口先藏
 - ✔ 〔待分類〕〔原始碼〕接線：雲河加進上色名單；pcRun 播完拿掉灰階；驛站頁插好就呼叫；07n 貼圖用全彩、暈開播完才啟動
+- ﹣ 略過 〔待分類〕渡口上色圖都在（場景圖只放 CDN）（略過原因：沒有 data/shipmap 場景圖（只放 CDN，公開副本沒有））
 
 ### test-preload-bg.js
 
@@ -2987,7 +3006,7 @@
 - ✔ 〔待分類〕發亮：西市開著時，有帖可挑、有包裹沒開就亮；都收了就不亮；西市沒開照舊只看 07mnq 的禮
 - ✔ 〔待分類〕文字規矩：掌櫃不用明清當鋪的詞；畫面不寫「上限」；整支沒有 // 註解；不加新存檔鍵
 - ✔ 〔待分類〕07mnq：西市開了，遠征補給不在首頁、星槎自動跳（下一步跳過它），回過家鄉也不再一直帶你回家；西市沒開照舊
-- ✔ 〔待分類〕英文：櫃坊新字串併進外掛字典後都翻得出（掌櫃、七星的信照 {你}／{名} 換過的樣子）
+- ﹣ 略過 〔待分類〕英文：櫃坊新字串併進外掛字典後都翻得出（掌櫃、七星的信照 {你}／{名} 換過的樣子）（略過原因：沒有 xiangqi-db/i18n-en.json 英文外掛字典（只放 CDN，公開副本沒有））
 
 ### test-xsm-dark.js
 
@@ -3020,3 +3039,4 @@
 - ✔ 〔待分類〕存檔：新鍵 xsmStall 在 JOURNEY_KEYS（另外 push、不動清單字面），模組只用這一個新鍵
 - ✔ 〔待分類〕畫面規矩：五攤標籤只放大字、都開張；模組裡沒有「上限」；接線（點標籤開哪張卡、首頁發亮、07hmp 長卷也發亮）
 - ✔ 〔待分類〕找棋子（11/16 開發者選單「照現在＋讀螢幕可直接收」）：只在 ♿ 螢幕報讀與鍵盤模式多一顆「直接收下」，效果跟圖上找到一樣（+10、湊齊 +50、同一天不重複）；一般模式不出現
+- ﹣ 略過 〔待分類〕西市借的三首配樂檔都在（mp3 只放 CDN）（略過原因：沒有 data/bgm 的 mp3（只放 CDN，公開副本沒有））
