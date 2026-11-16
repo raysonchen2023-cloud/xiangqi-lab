@@ -79,9 +79,9 @@ function ptyLv(c){const P=ptyGet(),L=ptyL();if(!P)return L;return PTY.has(P,c)?P
 function ptyLook(){const P=ptyGet();if(P)return P.look;let c="";try{c=(typeof myChar==="function"&&myChar())||""}catch(e){}return c||PTY.START}
 const ptyLead=()=>ptyLook();
 /* 11/16「黑洞裡可以用每個人的招式」：SK＝那個玩法的招式表（每招有 ch、lv）。
-   ptyLearned＝已加入的每一位、照各自等級已學會的招（照加入順序）；ptyPick＝從存的那份挑出還合法的（最多 4 招，空的就帶前 4 招）；ptyGroups＝選關畫面照夥伴分組（沒學會的也列，帶 lv 鎖） */
+   ptyLearned＝已加入的每一位、照各自等級已學會的招（照加入順序）；ptyPick＝已學會的全部（11/16 開發者「已經沒有這個限制 請拿掉」：不再限一場 4 招、不用選）；ptyGroups＝選關畫面照夥伴分組（沒學會的也列，帶 lv 鎖） */
 function ptyLearned(SK){const P=ptyGet();if(!P)return[];const o=[];for(const c of PTY.ORDER){if(!PTY.has(P,c))continue;const L=ptyLv(c);for(const s of SK||[])if(s.ch===c&&s.lv<=L)o.push(s)}return o}
-function ptyPick(SK,saved){const ok=ptyLearned(SK).map(s=>s.id),a=(Array.isArray(saved)?saved:[]).filter((id,i,A)=>ok.includes(id)&&A.indexOf(id)===i).slice(0,4);return a.length?a:ok.slice(0,4)}
+function ptyPick(SK){return ptyLearned(SK).map(s=>s.id)}
 function ptyGroups(SK){const P=ptyGet();if(!P)return[];return PTY.ORDER.filter(c=>PTY.has(P,c)).map(c=>({c,nm:ptyNm(c),L:ptyLv(c),sk:(SK||[]).filter(s=>s.ch===c)})).filter(g=>g.sk.length)}
 /* 首頁小人：跟 pChar 同步（myChar／myLook／bot3d 都讀 pChar），本命棋子 botPiece 跟著換 */
 function ptySetLook(c){const P=ptyGet();if(!P||!PTY.has(P,c)||typeof WX_CHARS==="undefined"||!WX_CHARS[c])return false;const C=WX_CHARS[c];
@@ -157,7 +157,7 @@ function ptyTalHTML(){if(typeof sg2TalCount==="function"&&typeof SG2G!=="undefin
 /* 這位的招式清單：學會的在前（名稱、靈力、效果），還沒學會的灰著寫幾級學會；看完回卡冊（版面沿用角色卡的技能清單 07dgl dglSkills） */
 function ptySkills(c){if(typeof sheet!=="function")return;const lv=ptyLv(c),pool=ptySkPool(c).slice().sort((a,b)=>(a.lv>lv)-(b.lv>lv)||a.lv-b.lv);if(!pool.length)return;try{if(typeof dglCss==="function")dglCss()}catch(e){}ptyCss();
   let nm=c;try{nm=WX_CHARS[c].n}catch(e){}const lock=()=>{try{return typeof dglIc==="function"?dglIc("lock"):"🔒 "}catch(e){return"🔒 "}};
-  sheet(nm+"的招式",b=>{b.innerHTML=`<div class="dgl-cd">${pool.map(s=>{const lk=s.lv>lv;return`<div class="dgl-ski${lk?" lk":""}"><div class="dgl-skh"><b>${lk?lock():""}${esc(s.nm)}</b><span>${lk?`Lv ${s.lv} <span>學會</span>`:`${s.cost} <span>靈</span>`}</span></div><p>${esc(s.d||"")}</p></div>`}).join("")}<p class="dgl-ks"><span>在黑洞裡使用，一場最多帶 4 招</span></p><button type="button" class="btn dgl-kme" id="ptySkB">‹ 回雲河七星</button></div>`;
+  sheet(nm+"的招式",b=>{b.innerHTML=`<div class="dgl-cd">${pool.map(s=>{const lk=s.lv>lv;return`<div class="dgl-ski${lk?" lk":""}"><div class="dgl-skh"><b>${lk?lock():""}${esc(s.nm)}</b><span>${lk?`Lv ${s.lv} <span>學會</span>`:`${s.cost} <span>靈</span>`}</span></div><p>${esc(s.d||"")}</p></div>`}).join("")}<p class="dgl-ks"><span>在黑洞裡使用，學會的都會帶上場</span></p><button type="button" class="btn dgl-kme" id="ptySkB">‹ 回雲河七星</button></div>`;
     b.querySelector("#ptySkB").onclick=()=>{closeSheet();setTimeout(ptySheet,60)}})}
 /* 開發者 11/16「角色等級不能超過修為，這句話玩家看不懂」（選單選「直接講結果」）：不解釋規則，直接說夥伴現在最高能練到幾級、怎樣才會再往上。
    同一條規則的另外兩處一起改：卡片上練滿的註記「（到修為上限）」→「（練滿了，等你升級）」；練滿還按＋星輝的提示 →「已經跟你一樣高了，等你升級再練」 */
@@ -176,7 +176,7 @@ function ptyCardHTML(P,c,L){const C=(typeof WX_CHARS!=="undefined"&&WX_CHARS[c])
 function ptySheet(){if(typeof sheet!=="function")return;const P0=ptyGet();if(!P0){try{toast("還沒有開始旅程")}catch(e){}return}ptyCss();
   sheet("🌟 雲河七星",b=>{const draw=()=>{const P=ptyGet(),L=ptyL(),sy=b.scrollTop;
     b.innerHTML=`<div class="pty-top"><span><span>你的修為</span> <b>Lv ${L}</b></span><span class="pty-pool">✨ <span>星輝</span> <b>${P.pool|0}</b></span></div><p class="pty-m pty-cap">${ptyCapSay(L)}</p>`+ptyTeamHTML()+ptyTalHTML()+PTY.ORDER.map(c=>ptyCardHTML(P,c,L)).join("")+
-      `<p class="pty-m">下棋、解題、黑洞過關得到的修為，一半自動分給隊上每一位，另一半變成星輝，由你分給想練的人。黑洞裡全隊已學會的招都能帶（一場最多 4 招）；「陪你走」是首頁上跟著你的那一位。</p>`;
+      `<p class="pty-m">下棋、解題、黑洞過關得到的修為，一半自動分給隊上每一位，另一半變成星輝，由你分給想練的人。黑洞裡全隊已學會的招都會帶上場；「陪你走」是首頁上跟著你的那一位。</p>`;
     {const t=b.querySelector('[data-top="tal"]');if(t)t.onclick=()=>{try{vibrate(5)}catch(e){}closeSheet();setTimeout(()=>{if(typeof sg2TalSheet==="function"&&typeof SG2G!=="undefined")sg2TalSheet(()=>ptySheet(),"‹ 回雲河七星");else bhtdTal(()=>ptySheet(),"‹ 回雲河七星")},60)}}   /* 07bht bhtdTal 第二個參數＝返回鈕的字（沒給照舊「回選關」） */
     b.querySelectorAll(".pty-c[data-c]").forEach(el=>{const c=el.dataset.c;el.querySelectorAll("[data-a]").forEach(btn=>btn.onclick=()=>{try{vibrate(5)}catch(e){}const a=btn.dataset.a;
       if(a==="sk"){closeSheet();setTimeout(()=>ptySkills(c),60);return}

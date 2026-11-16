@@ -154,10 +154,10 @@ const whlCk=()=>{let c="";try{c=typeof ptyLook==="function"?ptyLook():((typeof m
 const whlL=c=>{try{if(typeof ptyLv==="function")return ptyLv(c||whlCk());return typeof xpInfo==="function"?xpInfo().L:1}catch(e){return 1}};   /* 首頁小人那位的等級（只顯示用） */
 function whlSetup(){whlCss();const ck=whlCk(),L=whlL(),P=whlProg(),pool=typeof ptyGroups==="function"?ptyGroups(GSV.SK.filter(s=>!s.gen)):[{c:ck,nm:(GSV.CH[ck]||{}).n||"",L,sk:GSV.SK.filter(s=>s.ch===ck)}];let pk=typeof ptyPick==="function"?ptyPick(GSV.SK,P.sk["*"]||P.sk[ck]):GSV.skPick(ck,L,P.sk[ck]);   /* 11/16 全隊招式：照夥伴分組 */
   const skH=()=>pool.map(g=>`<p class="whl-skg">${esc(g.nm)} <small>Lv ${g.L}</small></p>`+g.sk.map(s=>`<label class="${pk.includes(s.id)?"on":""}${s.lv>g.L?" lk":""}" data-id="${s.id}" title="${esc(s.d)}">${s.lv>g.L?"🔒 ":""}${esc(s.nm)}</label>`).join("")).join("");
-  const m=modal(`<div class="em">🎡</div><h2>車輪戰</h2><p class="muted">三盤拿兩勝</p><p style="font-size:13px;margin-bottom:2px">招式（全隊已學會的都能帶，最多 4 招）</p><div class="whl-skl">${skH()}</div>`,
+  const m=modal(`<div class="em">🎡</div><h2>車輪戰</h2><p class="muted">三盤拿兩勝</p><p style="font-size:13px;margin-bottom:2px">招式（全隊已學會的都會帶上場）</p><div class="whl-skl">${skH()}</div>`,
     [["開始",()=>whlNew(pk)],["返回",null,true]],"prolog whl-sel");
   if(!m)return;m.addEventListener("click",e=>{const l=e.target.closest(".whl-skl label");if(!l)return;e.preventDefault();const s=GSV.SKM[l.dataset.id];{const Lc=typeof ptyLv==="function"?ptyLv(s.ch):L;if(s.lv>Lc){toast(`🔒 ${typeof ptyNm==="function"?ptyNm(s.ch):""} Lv ${s.lv} 解鎖「${s.nm}」`);return}}
-    if(pk.includes(s.id)){if(pk.length>1)pk=pk.filter(x=>x!==s.id)}else if(pk.length<4)pk=pk.concat([s.id]);else{toast("最多帶 4 招");return}m.querySelector(".whl-skl").innerHTML=skH()})}
+    toast(s.nm+"："+(s.d||""))})}   /* 11/16：學會的都帶，點一下只看說明 */
 function whlNew(sk){const C=whlC();if(!C)return toast("規則程式還沒載好");const ck=whlCk(),L=whlL();
   WHL_M=WHL.newMatch({ch:ck,L,sk,need:WHL.NEED},C);WHL_Q={run:null,list:[]};WHL_CUR=0;WHL_SEL=-1;WHL_TG=null;WHL_EVS={};
   const P=whlProg();P.sk[ck]=WHL_M.sk;P.cur=WHL_M;store.set("whl",P);whlShow();setTimeout(()=>{try{toast("三盤拿兩勝")}catch(e){}},300)}
@@ -203,7 +203,7 @@ function whlCss(){if(document.getElementById("whlCss"))return;const s=document.c
 .whl-al{flex:none;display:inline-flex;align-items:center;gap:5px;font:inherit;font-size:12.5px;font-weight:800;color:#fff;background:#b3261e;border:1.5px solid #ffb4a8;border-radius:99px;padding:0 10px 0 5px;height:30px;cursor:pointer;touch-action:manipulation;animation:whlHot 1.1s ease-in-out infinite}
 .whl-al i{font-style:normal;width:18px;height:18px;border-radius:50%;background:#fff;color:#b3261e;font-size:12px;line-height:18px;text-align:center}
 .whl-fin{font-size:26px;font-weight:900;margin:2px 0;letter-spacing:2px}
-.whl-sks{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:5px;margin-top:4px}
+.whl-sks{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:5px;margin-top:4px;max-height:104px;overflow-y:auto;-webkit-overflow-scrolling:touch}
 .whl-sk{font:inherit;color:#f6eedd;background:linear-gradient(180deg,#2c2450,#171433);border:1.5px solid #8f7bd8;border-radius:10px;padding:2px;min-height:44px;cursor:pointer;line-height:1.15;touch-action:manipulation}
 .whl-sk.gen{background:linear-gradient(180deg,#22304a,#121a2c);border-color:#5f8fc8}.whl-sk b{display:block;font-size:12px}.whl-sk small{font-size:10.5px;color:#9fd0ff}.whl-sk.off{opacity:.45;filter:grayscale(.7)}.whl-sk.on{border-color:#FFE08A;box-shadow:0 0 0 2px #FFE08A}
 .whl-tip{display:flex;gap:8px;justify-content:center;align-items:center;font-size:12.5px;color:#FFE08A}.whl-tip button{font:inherit;font-size:12px;color:#f1e7cf;background:rgba(255,255,255,.12);border:1px solid rgba(255,255,255,.3);border-radius:99px;padding:1px 12px;min-height:30px}

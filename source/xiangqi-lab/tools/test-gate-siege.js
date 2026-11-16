@@ -70,7 +70,7 @@ test("第 2、4、5 關照提案一第七節：數值、開場子數、援軍回
   const P5=game(5);assert.deepEqual(J(P5.td.esk),[]);assert.deepEqual(J(P5.td.phs),[{hp:.6,esk:"pao"},{hp:.3,esk:"zjhl"}]);assert.equal(G.defOf(P5.td,"b"),80)});
 
 test("七角色 × 十二關 × Lv1／Lv23 都能開局：有合法起手、帶得到本命招、通用招與部署都在", ()=>{
-  for(const ch in G.CH)for(const n of MAIN)for(const L of[1,23]){const P=game(n,{ch,L});assert.ok(C.legal(P.board,"r").length>0);assert.ok(P.td.sk.length>=1&&P.td.sk.length<=4);
+  for(const ch in G.CH)for(const n of MAIN)for(const L of[1,23]){const P=game(n,{ch,L});assert.ok(C.legal(P.board,"r").length>0);assert.ok(P.td.sk.length>=1);assert.deepEqual(J(P.td.sk),J(G.skOf(ch,L)),"學會的全部帶（11/16 不限 4 招）");
     assert.equal(G.SKM[P.td.sk[0]].ch,ch);assert.equal(G.why(P,"dep",C),"",`${ch} 第 ${n} 關開局就能部署`);assert.equal(P.td.me.sp,35)}});
 
 test("檢查器抓得到錯：子數超過、門格有子、落出將軍會被擋", ()=>{
@@ -158,13 +158,13 @@ test("集火：要兩顆己子都能合法擒到（蹩腳馬不算），當回�
   castOk(P2,{k:"gfocus",tg:[Q(3,5)]});assert.equal(P2.td.me.sp,5);mv(P2,Q(3,1),Q(3,5));assert.equal(P2.td.q[0].raw,G.dmg(4+8,110,10),"擒子基礎 4＋集火 8");
   const P3=custom(1,[["K",5,1],["k",4,10],["R",1,1],["R",3,1],["N",2,3],["p",3,5]],{waves:false});castOk(P3,{k:"gfocus",tg:[Q(3,5)]});rq(P3);assert.equal(P3.td.me.sp,5,"沒擒也不退費");bq(P3);assert.equal(P3.td.fc,null,"回合結束失效")});
 
-test("35 招都有定義（七位各 5 招、修為 1／6／12／17／23、最多帶 4 招）；費用與冷卻照提案二第 11 節", ()=>{
+test("35 招都有定義（七位各 5 招、修為 1／6／12／17／23、學會的全部帶）；費用與冷卻照提案二第 11 節", ()=>{
   const own=G.SK.filter(s=>s.ch!=="*");assert.equal(own.length,35);for(const k in G.CH){const L=own.filter(s=>s.ch===k);assert.deepEqual(J(L.map(s=>s.lv)),[1,6,12,17,23],k)}
   const T={shen1:[30,4],shen2:[20,3],shen3:[20,2],shen4:[30,4],shen5:[30,5],tie1:[20,3],tie2:[20,3],tie3:[30,4],tie4:[30,4],tie5:[0,4],bu1:[30,4],bu2:[0,3],bu3:[20,5],bu4:[15,3],bu5:[5,4],
     qi1:[40,5],qi2:[20,3],qi3:[20,3],qi4:[0,0],qi5:[35,5],tian1:[30,4],tian2:[20,4],tian3:[20,3],tian4:[20,3],tian5:[30,4],lei1:[20,3],lei2:[20,3],lei3:[30,4],lei4:[20,3],lei5:[20,3],
     luo1:[50,5],luo2:[20,3],luo3:[20,3],luo4:[20,4],luo5:[20,3]};
   for(const id in T)assert.deepEqual([G.SKM[id].cost,G.SKM[id].cd],T[id],id);
-  assert.deepEqual(J(G.skOf("x_bing",1)),["bu1"]);assert.deepEqual(J(G.skPick("x_bing",30,["bu5","bu4","bu3","bu2","bu1"])),["bu5","bu4","bu3","bu2"],"最多 4 招");
+  assert.deepEqual(J(G.skOf("x_bing",1)),["bu1"]);assert.deepEqual(J(G.skPick("x_bing",30,["bu5","bu4"])),J(G.skOf("x_bing",30)),"學會的全部帶、存的那份不管（11/16 不限 4 招）");
   assert.deepEqual(J(G.skPick("x_bing",1,["bu5"])),["bu1"],"沒解鎖的不能帶");
   const P=game(1,{ch:"x_shuai",L:30,sk:["shen3"]});assert.match(G.why(P,"shen3",C),/沒有控制招/);const P2=game(1,{ch:"x_bing",L:30,sk:["bu4"]});P2.td.me.sp=100;assert.match(G.why(P2,"bu4",C),/沒有虛空鎖/)});
 

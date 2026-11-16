@@ -100,7 +100,7 @@ test("〔行為〕存檔層：修為加了就分給全隊與星輝；換首頁�
   assert.equal(W.c.ptySetLook("x_bing"),false,"還沒加入的不能陪你走");assert.equal(W.c.ptyLook(),"x_miaogirl");
   const SK=[{id:"a",ch:"x_swordboy",lv:1},{id:"b",ch:"x_swordboy",lv:99},{id:"c",ch:"x_miaogirl",lv:1},{id:"d",ch:"x_bing",lv:1},{id:"e",ch:"x_miaogirl",lv:2},{id:"f",ch:"x_swordboy",lv:2}];
   assert.deepEqual(J(W.c.ptyLearned(SK).map(s=>s.id)),["a","f","c","e"].filter(id=>{const s=SK.find(x=>x.id===id);return s.lv<=W.c.ptyLv(s.ch)}),"已加入的每一位照自己等級學會的（木棋靈步越溪的不算）");
-  const ok=J(W.c.ptyLearned(SK).map(s=>s.id));assert.deepEqual(J(W.c.ptyPick(SK,["c","d","b","c"])),["c"],"存的那份：沒學會、沒加入、重複的拿掉");assert.deepEqual(J(W.c.ptyPick(SK,[])),ok.slice(0,4),"空的帶前 4 招");
+  const ok=J(W.c.ptyLearned(SK).map(s=>s.id));assert.deepEqual(J(W.c.ptyPick(SK,["c","d","b","c"])),ok,"學會的全部帶、存的那份不管（11/16 不限 4 招）");assert.deepEqual(J(W.c.ptyPick(SK,[])),ok);
   assert.deepEqual(J(W.c.ptyGroups(SK).map(g=>[g.c,g.sk.map(s=>s.id)])),[["x_swordboy",["a","b","f"]],["x_miaogirl",["c","e"]]],"照夥伴分組，沒學會的也列");
   assert.equal(W.S.get("party").lead!==undefined,true,"party.lead 欄位留著讀舊存檔")});
 

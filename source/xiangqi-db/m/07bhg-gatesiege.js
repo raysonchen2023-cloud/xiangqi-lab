@@ -3,7 +3,7 @@
    分三塊：
    ① GSV＝純規則（不碰畫面；node 測試 xiangqi-lab/tools/test-gate-siege.js 用 vm 直接載這支檔；腳本對照 xiangqi-lab/tools/gate-siege-sim.js 也用同一份）：
       雙方同式傷害 dmg、數值盾池、靈力預算（每回合正向收入上限 10）、回復總量 40%、冷卻、每回合至多一招、紅 8 子＋後備部署、敵 16 子波次預算、預告、合法生成、
-      入侵卒、護陣卒、截援、星核同批次結算（雙方同時歸零判和）、八回合無進展判和、七星 35 招（修為 1／6／12／17／23 解鎖、最多帶 4 招）、星樞候選評估 pick。
+      入侵卒、護陣卒、截援、星核同批次結算（雙方同時歸零判和）、八回合無進展判和、七星 35 招（修為 1／6／12／17／23 解鎖、學會的都帶上場）、星樞候選評估 pick。
    ② 畫面（gsv*）：選關卡片 gsvSelect、對局 HUD（#gsvEn、#gsvMe、#gsvOv）、結果視窗；預設平面棋盤，11/15 起可以切 3D 星盤（視角 gsvView、記號的 3D 對位，說明在檔尾 gsvFlat 那一段）。
    ③ 接線：包一層 window.XQ_TD（local.js 只認這個），td.mode 是星門圍城就交給 GSV，其他照舊交給 BHTD。
    入口：黑洞關卡卡片（bhtdSelect）的「🌠 星門圍城」；本機主控台 gsvOpen()。
@@ -280,12 +280,12 @@ const GSV=(()=>{
   const SKM={};for(const s of SK)SKM[s.id]=s;
   const GEN=SK.filter(s=>s.gen).map(s=>s.id);
   const skOf=(ck,L)=>SK.filter(s=>s.ch===ck&&s.lv<=(+L||1)).map(s=>s.id);
-  /* 帶上場的招：只收這位角色已解鎖的，最多 4 招；沒選就帶前 4 招 */
-  /* 11/16 開發者「黑洞裡可以用每個人的招式」「不要有隊長這個設定」：有隊伍（sq）時，本命招池＝已加入（不是木棋靈）的每一位、照各自等級已學會的招（通用招照舊另外有），一場最多 4 招不限誰的 */
+  /* 帶上場的招：已解鎖的全部（11/16 開發者「已經沒有這個限制 請拿掉」：不再限一場 4 招、不用選） */
+  /* 11/16 開發者「黑洞裡可以用每個人的招式」「不要有隊長這個設定」：有隊伍（sq）時，本命招池＝已加入（不是木棋靈）的每一位、照各自等級已學會的招（通用招照舊另外有），全部帶上場（11/16 起不限 4 招） */
   const JOIN_ORD=["x_swordboy","x_miaogirl","x_shuai","x_shi","x_spiritgirl","x_bing","x_martialgirl"];   /* 預設招照七星加入順序（跟 07pty-party.js ptyPick 一致，齊轍的先）；SK 表本身照角色分組，順序不同 */
   const skOfSq=sq=>SK.filter(s=>!s.gen&&PCS.some(pc=>sq[pc]&&sq[pc].ck===s.ch&&!sq[pc].wood&&s.lv<=sq[pc].L)).sort((a,b)=>JOIN_ORD.indexOf(a.ch)-JOIN_ORD.indexOf(b.ch)).map(s=>s.id);
-  function skPickSq(sq,sk){const ok=skOfSq(sq),a=(Array.isArray(sk)?sk:[]).filter((id,i,A)=>ok.includes(id)&&A.indexOf(id)===i).slice(0,4);return a.length?a:ok.slice(0,4)}
-  function skPick(ck,L,sk){const ok=skOf(ck,L),a=(Array.isArray(sk)?sk:[]).filter((id,i,A)=>ok.includes(id)&&A.indexOf(id)===i).slice(0,4);return a.length?a:ok.slice(0,4)}
+  function skPickSq(sq){return skOfSq(sq)}
+  function skPick(ck,L){return skOf(ck,L)}
   /* ===== 盤面工具 ===== */
   const AP=[[7,3],[7,5],[8,4],[9,3],[9,5]],BP=[[9,2],[9,6],[7,0],[7,4],[7,8],[5,2],[5,6]];
   function canStand(p,sq){if(sq<0||sq>89)return false;const s=sd(p),t=up(p),r0=RW(sq),c=CL(sq),r=s==="r"?r0:9-r0;
@@ -659,7 +659,7 @@ body.gsv-on .view.fixed>#bbox>svg{width:100%!important;height:100%!important;max
 .gsv-st{flex:none;font-size:11px;color:#c9bfe8}.gsv-st b{color:#f1e7cf}.gsv-sh{flex:none;font-size:11px;color:#9fd0ff;border:1px solid rgba(111,184,255,.6);border-radius:99px;padding:0 6px}
 .gsv-ln{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;color:#d9b8ff}.gsv-ln.hot{color:#ffb4a8}.gsv-ln button{font:inherit;color:inherit;background:transparent;border:0;padding:0;text-decoration:underline dotted;cursor:pointer}
 .gsv-fx{color:#ffd0c8;background:rgba(160,20,30,.4);border:1px solid rgba(255,90,80,.7);border-radius:99px;padding:0 7px;font:inherit;cursor:pointer}
-.gsv-sks{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:6px;margin-top:4px}.gsv-sks.gen{margin-top:5px}
+.gsv-sks{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:6px;margin-top:4px;max-height:112px;overflow-y:auto;-webkit-overflow-scrolling:touch}.gsv-sks.gen{margin-top:5px}
 .gsv-sk{position:relative;font:inherit;color:#f6eedd;background:linear-gradient(180deg,#2c2450,#171433);border:1.5px solid #8f7bd8;border-radius:11px;padding:3px 2px;min-height:44px;cursor:pointer;line-height:1.15;touch-action:manipulation}
 .gsv-sks.gen .gsv-sk{background:linear-gradient(180deg,#22304a,#121a2c);border-color:#5f8fc8;min-height:40px}
 .gsv-sk b{display:block;font-size:12.5px}.gsv-sk small{font-size:10.5px;color:#9fd0ff}.gsv-sk.off{opacity:.45;filter:grayscale(.7)}.gsv-sk.on{border-color:#FFE08A;box-shadow:0 0 0 2px #FFE08A}
@@ -751,7 +751,7 @@ function gsvSelect(k,cover){if(typeof sg2Select==="function"&&typeof SG2G!=="und
   let pk=typeof ptyPick==="function"?ptyPick(GSV.SK,P.sk["*"]||P.sk[st.ck]):GSV.skPick(st.ck,L,P.sk[st.ck]),chp=(GSV.CHP.find(c=>c.lv.includes(sel))||GSV.CHP[0]).n;   /* 一開始停在上次打的那一關所在的章 */
   const chH=()=>gsvChapHTML(P,sel,chp,{hard,all,has});
   const skH=()=>pool.map(g=>`<p class="gsv-skg">${esc(g.nm)} <small>Lv ${g.L}</small></p>`+g.sk.map(s=>`<label class="${pk.includes(s.id)?"on":""}${s.lv>g.L?" lk":""}" data-id="${s.id}" title="${esc(s.d)}">${s.lv>g.L?"🔒 Lv"+s.lv+" ":""}${esc(s.nm)}・${s.cost} 靈</label>`).join("")).join("");
-  const m=modal(`<div class="em">🌠</div><h2>星門圍城</h2><div class="gsv-chap">${chH()}</div><p style="font-size:13px;margin-bottom:2px">招式（全隊已學會的都能帶，最多 4 招）</p><div class="gsv-skl">${skH()}</div>
+  const m=modal(`<div class="em">🌠</div><h2>星門圍城</h2><div class="gsv-chap">${chH()}</div><p style="font-size:13px;margin-bottom:2px">招式（全隊已學會的都會帶上場）</p><div class="gsv-skl">${skH()}</div>
     <details><summary>星門圍城規則</summary>${gsvRulesHTML()}</details>`,
     [["⚔ 出戰",()=>gsvStart(sel,k,cover,pk,false,hard)],["‹ 回黑洞關卡",()=>{try{if(typeof bhtdSelect==="function")bhtdSelect(k,cover)}catch(e){}},true]],"prolog gsv-sel");
   if(!m)return;m.addEventListener("click",e=>{const c=e.target.closest(".gsv-card"),md=e.target.closest(".gsv-mdb"),t=md?null:e.target.closest(".gsv-chb");
@@ -762,7 +762,7 @@ function gsvSelect(k,cover){if(typeof sg2Select==="function"&&typeof SG2G!=="und
     else if(c){if(c.dataset.lk){toast(`🔒 ${GSV.lvName(+c.dataset.n)}：${c.dataset.lk}`);return}sel=+c.dataset.n}
     if(c||t||md){try{vibrate(5)}catch(z){}m.querySelector(".gsv-chap").innerHTML=chH();return}
     const l=e.target.closest(".gsv-skl label");if(l){e.preventDefault();const s=GSV.SKM[l.dataset.id];{const Lc=typeof ptyLv==="function"?ptyLv(s.ch):L;if(s.lv>Lc){toast(`🔒 ${typeof ptyNm==="function"?ptyNm(s.ch):""} Lv ${s.lv} 解鎖「${s.nm}」`);return}}
-      if(pk.includes(s.id)){if(pk.length>1)pk=pk.filter(x=>x!==s.id)}else if(pk.length<4)pk=pk.concat([s.id]);else{toast("最多帶 4 招");return}m.querySelector(".gsv-skl").innerHTML=skH()}})}
+      toast(s.nm+"："+(s.d||""))}})}   /* 11/16：學會的都帶，點一下只看說明 */
 /* hard＝困難版（第 6 個參數，11/15 加；前五個照舊）。鎖住的關不開（主控台直接叫也一樣，只跳一句原因）；開發者全開時不擋。
    journey 困難版是 "bh:gs<n>h"：還是 bh:gs 開頭，不給修為、不回定軌力那幾處照樣認得 */
 function gsvStart(n,k,cover,sk,force,hard,diff){const C=gsvC();if(!C)return toast("規則程式還沒載好");hard=hard?1:0;diff=[1,2,3].includes(+diff)?+diff:hard?3:2;   /* 11/16 黑洞新規則：一律開 v2（m/07sg2-siege2.js）；diff＝易 1／中 2／難 3，沒給就照舊的困難版開關（困難＝難、普通＝中） */const V=GSV.lvOf(n,hard);if(!V)return toast("沒有這一關");

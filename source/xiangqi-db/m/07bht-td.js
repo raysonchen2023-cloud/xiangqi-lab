@@ -184,10 +184,10 @@ const BHTD=(()=>{
   /* ---------- 開局 ---------- */
   function boot(cfg,P,C){cfg=cfg||{};const tl=cfg.lv==="tl",rd=!tl&&cfg.raid&&RAIDM[cfg.raid.id]?{id:cfg.raid.id,v:(Math.round(+cfg.raid.v)||0)&3}:null,n=tl||rd?0:Math.max(1,Math.min(LV.length,Math.round(+cfg.lv)||1)),L=tl?TL:rd?raidLv(rd.id,rd.v):LV[n-1],st=stats(cfg.ch,cfg.L,cfg),sq=tl?null:squad((cfg.sq!==undefined?cfg.sq:(typeof ptySquad==="function"?ptySquad():null)),cfg),hp0=sq?Math.round(PCS.reduce((a,pc)=>a+sq[pc].hp,0)/PCS.length):st.hp,ai=tl?{depth:1,base:1,err:0,mpv:1,margin:300}:depthOf(rd?RAID_AI:n,cfg.diff),pl=lvPlan(L),E=L.en||{};   /* 練習賽 lv "tl"：td.lv＝0；星淵急襲 cfg.raid＝{id 模板, v 星門變化}：td.lv＝0、td.rd */
     const tal=tl?[]:talValid(cfg.tal),hy=tal.includes("htgy")?TAL_HP:0;   /* 天賦（練習賽照劇本，不帶天賦）：厚土固元＝元氣上限 +8 */
-    /* 11/16 開發者「黑洞裡可以用每個人的招式」「不要有隊長這個設定」：有隊伍（sq）時招式池＝已加入（不是木棋靈）的每一位、照各自等級已學會的招，一場最多 4 招不限誰的；
+    /* 11/16 開發者「黑洞裡可以用每個人的招式」「不要有隊長這個設定」：有隊伍（sq）時招式池＝已加入（不是木棋靈）的每一位、照各自等級已學會的招，全部帶上場（11/16 開發者：不再限 4 招）；
        靈力上限、每回合回靈、我方攻防＝七種平均（跟元氣一樣）；招式傷害在 cast 換成放招那位的攻擊。沒有隊伍（練習賽、舊版、單元測試）照舊看 cfg.ch 那一位 */
     const avgQ=k=>PCS.reduce((a,pc)=>a+(+sq[pc][k]||0),0)/PCS.length,SPM=sq?Math.round(avgQ("sp")):st.sp,SPR=sq?Math.round(avgQ("spRegen")):st.spRegen,ATK=sq?avgQ("atk"):st.atk,DEF=sq?avgQ("def"):st.def;
-    const pool=(sq?SK.filter(s=>PCS.some(pc=>sq[pc].ck===s.ch&&!sq[pc].wood&&s.lv<=sq[pc].L)).sort((a,b)=>JOIN_ORD.indexOf(a.ch)-JOIN_ORD.indexOf(b.ch)):SK.filter(s=>s.ch===st.ck&&s.lv<=st.L)).map(s=>s.id),sk=tl?pool.filter(id=>SKM[id].lv===1).slice(0,1):(Array.isArray(cfg.sk)?cfg.sk:[]).filter((x,i,a)=>pool.includes(x)&&a.indexOf(x)===i).slice(0,4);
+    const pool=(sq?SK.filter(s=>PCS.some(pc=>sq[pc].ck===s.ch&&!sq[pc].wood&&s.lv<=sq[pc].L)).sort((a,b)=>JOIN_ORD.indexOf(a.ch)-JOIN_ORD.indexOf(b.ch)):SK.filter(s=>s.ch===st.ck&&s.lv<=st.L)).map(s=>s.id),sk=tl?pool.filter(id=>SKM[id].lv===1).slice(0,1):pool.slice();
     const td={v:3,spk:SPK,lv:n,nm:L.nm,ch:st.ck,cn:st.n,pc:st.pc,L:st.L,diff:Math.max(1,Math.min(5,+cfg.diff||2)),
       sq,me:{hp:hp0+hy,max:hp0+hy,sp:tl?Math.max(0,st.sp-(L.spGap||0)):Math.min(SPM,(L.sp0||0)+Math.max(0,Math.min(XM_CAP,Math.round(+cfg.xm||0)))+(tal.includes("xhcr")?TAL_SP:0)),spMax:SPM,spRg:SPR,atk:ATK,def:DEF},en:{hp:Math.min(L.hp,E.hp0||L.hp),max:L.hp,sp:L.noEsp?0:Math.min(ESP_MAX,E.sp0||0),spMax:L.noEsp?0:ESP_MAX},rnd:0,sk:sk.length?sk:pool.slice(0,4),castR:-1,
       pid:{},lost:[],pj:[],frz:[],frzR:[],li:[],sh:[],gd:0,ci:[],seal:0,disc:0,fn2:-1,pf:0,rf:{chk:0,hurt:0,dmg:0,cap:0},
@@ -513,7 +513,7 @@ const bhtdChar=()=>{let c="";try{c=typeof ptyLook==="function"?ptyLook():((typeo
 /* 11/16 取消隊長、全隊招式：bhtdLearned＝全隊已學會的招（沒有 07pty 的舊版照舊看 bhtdChar 那一位）；bhtdPick＝要帶的招，存在 P.sk["*"]（舊存檔沿用首頁小人那位的那份）；
    bhtdSpMax＝全隊平均的靈力上限（星芒換開局靈力用，跟 boot 一樣） */
 const bhtdLearned=()=>typeof ptyLearned==="function"?ptyLearned(BHTD.SK):BHTD.SK.filter(s=>s.ch===bhtdChar()&&s.lv<=bhtdL());
-const bhtdPick=P=>{const sv=(P.sk||{})["*"]||(P.sk||{})[bhtdChar()]||[],un=bhtdLearned(),a=sv.filter((id,i,A)=>un.some(s=>s.id===id)&&A.indexOf(id)===i).slice(0,4);return a.length?a:un.slice(0,4).map(s=>s.id)};
+const bhtdPick=()=>bhtdLearned().map(s=>s.id);   /* 11/16 開發者「已經沒有這個限制 請拿掉」：學會的全部帶上場 */
 const bhtdSpMax=()=>{try{const S=typeof ptySquad==="function"?BHTD.squad(ptySquad()):null;if(S){const K=Object.keys(S);return Math.round(K.reduce((a,k)=>a+S[k].sp,0)/K.length)}}catch(e){}return BHTD.stats(bhtdChar(),bhtdL()).sp};
 const bhtdL=c=>{try{if(typeof ptyLv==="function")return ptyLv(c||bhtdChar());return typeof xpInfo==="function"?xpInfo().L:1}catch(e){return 1}};   /* 11/15 七星改版：等級看那位角色自己的（不超過修為），不再整隊共用修為 */
 const bhtdDiff=()=>{try{return typeof diffNow==="function"?diffNow():2}catch(e){return 2}};
@@ -755,9 +755,9 @@ function bhtdSelect(k,cover){if(typeof SG2G!=="undefined"&&typeof gsvSelect==="f
     <p class="bt-sec">關卡</p><div class="bt-cards">${cards()}</div>
     <p class="bt-sec">其他玩法</p><div class="bt-alts">${alts()}</div>
     <details class="bt-set"><summary>出戰設定<small class="bt-sets">${setS()}</small></summary>
-    <p class="bt-me" style="margin-bottom:0">招式（全隊已學會的都能帶，最多 4 招）</p><div class="bt-sklist">${skHTML()}</div>
+    <p class="bt-me" style="margin-bottom:0">招式（全隊已學會的都會帶上場）</p><div class="bt-sklist">${skHTML()}</div>
     <p class="bt-me">戰鬥演出：<span class="bt-seg">${Object.keys(BHTD_FXN).map(x=>`<button type="button" data-fx="${x}" class="${x===fx?"on":""}">${BHTD_FXN[x]}</button>`).join("")}</span></p>
-    <details class="bt-rule"><summary>陣地規則</summary>雙方各有元氣（紅條）。星樞的子過河後，每回合每顆扣你 1 元氣，停進你的九宮再多扣 2；你的子過河也一樣扣星樞。被將軍扣 5。你的子被吃、被將軍，還有星樞招式扣你的元氣，都會被你的防禦力減少（至少扣 1）；過河、九宮、星碎格照原本扣。擒子扣對方元氣（越弱的子吃越強的子扣得越多，一次最多 12），還 +10 靈力；每回合也會自動回靈力（修為越高回越多）。<br>炮隔一子瞄到的敵子會「破甲」，下次打它多扣 1。紫墨星門會在預告的格子落下星樞的援軍，站上去可以堵住。<br>全隊已學會的招都能帶（一場最多 4 招），招式的傷害看放招那位的攻擊。<br>一回合放一招，放招不佔走棋。將死或把星樞元氣打光都算贏；你的元氣歸零就輸，可以重打本關。<br>過關得星塵：三星是過關、被擒不超過 2 顆、在規定回合內過關。星塵拿去點天賦（只在黑洞有用）。${typeof bhtlCard==="function"?`<br><button type="button" class="btn ghost" data-tl="1">▶ 再玩一次練習賽</button>`:""}</details></details>`,
+    <details class="bt-rule"><summary>陣地規則</summary>雙方各有元氣（紅條）。星樞的子過河後，每回合每顆扣你 1 元氣，停進你的九宮再多扣 2；你的子過河也一樣扣星樞。被將軍扣 5。你的子被吃、被將軍，還有星樞招式扣你的元氣，都會被你的防禦力減少（至少扣 1）；過河、九宮、星碎格照原本扣。擒子扣對方元氣（越弱的子吃越強的子扣得越多，一次最多 12），還 +10 靈力；每回合也會自動回靈力（修為越高回越多）。<br>炮隔一子瞄到的敵子會「破甲」，下次打它多扣 1。紫墨星門會在預告的格子落下星樞的援軍，站上去可以堵住。<br>全隊已學會的招都會帶上場，招式的傷害看放招那位的攻擊。<br>一回合放一招，放招不佔走棋。將死或把星樞元氣打光都算贏；你的元氣歸零就輸，可以重打本關。<br>過關得星塵：三星是過關、被擒不超過 2 顆、在規定回合內過關。星塵拿去點天賦（只在黑洞有用）。${typeof bhtlCard==="function"?`<br><button type="button" class="btn ghost" data-tl="1">▶ 再玩一次練習賽</button>`:""}</details></details>`,
     [later],"prolog bt-sel bt-sel2");   /* 出戰鈕搬到最上面的主卡裡（data-go），底下只留「之後再來」 */
   if(!m)return;const paint=()=>{m.querySelector(".bt-next").innerHTML=nextHTML();m.querySelector(".bt-cards").innerHTML=cards();m.querySelector(".bt-alts").innerHTML=alts();m.querySelector(".bt-sklist").innerHTML=skHTML();m.querySelector(".bt-sets").textContent=setS()};
   m.addEventListener("click",e=>{if(e.target.closest("[data-go]")){vibrate(5);m.remove();if(sel==="rd")bhtdRaid(k,cover,pk);else bhtdStart(sel,k,cover,pk);return}
@@ -767,7 +767,7 @@ function bhtdSelect(k,cover){if(typeof SG2G!=="undefined"&&typeof gsvSelect==="f
     if(e.target.closest("[data-tb]")){vibrate(5);m.remove();bhtdTal(()=>bhtdSelect(k,cover,Object.assign({},opt,{rd:sel==="rd"})));return}   /* 🌌 天賦：看完回到這張卡 */
     const c=e.target.closest(".bt-card");if(c){if(c.dataset.n==="rd"){if(!rdOk){toast("🔒 先破第 1 關，才開星淵急襲");return}vibrate(5);sel="rd";paint();try{m.scrollTo({top:0,behavior:bhtdRM()?"auto":"smooth"})}catch(x){}return}   /* 選了急襲：捲回最上面，看得到主卡換成急襲 */
       const n=+c.dataset.n;if(!bhtdOpenLv(P,n)){toast("🔒 先破第 "+(n-1)+" 關");return}vibrate(5);sel=n;paint();return}
-    const l=e.target.closest(".bt-sklist label");if(l){const id=l.dataset.id,s=BHTD.SKM[id];{const Lc=typeof ptyLv==="function"?ptyLv(s.ch):L;if(s.lv>Lc){toast(`🔒 ${typeof ptyNm==="function"?ptyNm(s.ch):""} Lv ${s.lv} 解鎖「${s.nm}」`);return}}e.preventDefault();vibrate(5);if(pk.includes(id)){if(pk.length>1)pk=pk.filter(x=>x!==id)}else if(pk.length<4)pk.push(id);else toast("一場最多帶 4 招");paint();return}
+    const l=e.target.closest(".bt-sklist label");if(l){const id=l.dataset.id,s=BHTD.SKM[id];{const Lc=typeof ptyLv==="function"?ptyLv(s.ch):L;if(s.lv>Lc){toast(`🔒 ${typeof ptyNm==="function"?ptyNm(s.ch):""} Lv ${s.lv} 解鎖「${s.nm}」`);return}}e.preventDefault();toast(s.nm+"："+(s.d||""));return}   /* 11/16：學會的都帶，點一下只看說明 */
     const f=e.target.closest("[data-fx]");if(f){store.set("bhtdFx",f.dataset.fx);m.querySelectorAll("[data-fx]").forEach(x=>x.classList.toggle("on",x===f))}})}
 function bhtdOpen(){const lk=bhtdLock();if(lk){toast("🌫 "+lk);return}if(typeof SG2G!=="undefined"&&typeof gsvSelect==="function"){gsvSelect(store.get("era","classic"),false);return}bhtdSelect(store.get("era","classic"),false)}   /* 本機試玩：主控台 bhtdOpen()；觀星臺渾儀也走這裡（定軌力用完＝黑洞入口關著） */
 if(typeof window!=="undefined")window.bhtdOpen=bhtdOpen;
@@ -793,7 +793,7 @@ function bhtdStart(n,k,cover,sk,how,q){const C=bhtdC();if(!C)return toast("規�
 /* ---------- 11/14 第二批：星淵急襲（3～5 分鐘的中局殘陣；每場從 BHTD.RAID 隨機抽一組＋星門變化；星塵照表現 6～10、不給修為）---------- */
 let BHTD_RDL="";   /* 上一場抽到的模板（再刷不連抽同一組） */
 const bhtdRdOpen=P=>!!(P&&P.c&&P.c[1]);   /* 破第 1 關才開 */
-/* 11/15 開發者選「星槎偏航＝突發的星淵急襲短戰」（07bh-blackhole.js bhStart 問這裡）：急襲已開就直接開一場，招式照選關視窗的預設（上次選的、沒選過就前四招）；
+/* 11/15 開發者選「星槎偏航＝突發的星淵急襲短戰」（07bh-blackhole.js bhStart 問這裡）：急襲已開就直接開一場，招式＝學會的全部（11/16 起不再選）；
    回傳 true＝這邊接手了（開打，或被定軌力擋下、bhtdRaid 自己提示）；false＝急襲還沒開或要先下練習賽，照舊開選關 */
 function bhtdRaidDrift(k,cover){if(typeof SG2G!=="undefined")return false;try{const P=bhtdProg();if(!bhtdRdOpen(P)||(typeof bhtlNeed==="function"&&bhtlNeed()))return false;
   bhtdRaid(k,cover,bhtdPick(P));return true}catch(e){return false}}

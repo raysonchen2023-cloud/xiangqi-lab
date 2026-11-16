@@ -143,7 +143,7 @@ function tab(m){const Q=[],T={ev:[],sm:[],Q};const ls={getItem:k=>m.has(k)?m.get
 test("整合：local.js＋BHTD——開局帶 td、星樞照推算步數回應、第 5 回合星門落子、放招不佔走棋、不能悔棋、重新載入盤面一樣", async ()=>{
   const m=new Map(),T=tab(m);const fen=B.startFen(1,C);
   let s=await T.api("/play/new",{human:"r",lx:1,journey:"bh:td1",lv:{fen,turn:"r"},td:{lv:1,ch:"x_martialgirl",L:20,diff:2,sk:["lei1","lei2"]}});
-  assert.ok(s.td,"playState 帶 td");assert.equal(s.td.lv,1);assert.deepEqual(s.td.sk,["lei1","lei2"]);assert.equal(s.board.filter(p=>p&&p===p.toLowerCase()).length,8);
+  assert.ok(s.td,"playState 帶 td");assert.equal(s.td.lv,1);assert.deepEqual(s.td.sk,["lei1","lei2","lei3","lei4"],"Lv20 學會的全部帶（11/16 不限 4 招，存的那份不管）");assert.equal(s.board.filter(p=>p&&p===p.toLowerCase()).length,8);
   s.td.me.sp=20;await T.pump();
   /* 放招：煙火震懾定住黑馬（1），星樞下一步不能動它 */
   const P0=JSON.parse(m.get("xq_play"));P0.td.me.sp=20;P0.seq+=1;m.set("xq_play",JSON.stringify(P0));

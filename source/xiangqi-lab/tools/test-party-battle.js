@@ -36,8 +36,8 @@ test("星門圍城：有 sq 時元氣上限＝七種棋子的平均；11/16 取�
   assert.equal(td.sq.N.atk,G.stats("x_miaogirl",30).atk);assert.equal(td.sq.C.wood,1);assert.equal(td.sq.N.sp,G.stats("x_miaogirl",30).sp,"squad() 多帶 sp");
   const pool=J(G.skOfSq(td.sq));assert.ok(pool.length>0);for(const id of pool){const s=G.SKM[id];assert.ok(G.PCS.some(pc=>S[pc].ck===s.ch&&!S[pc].wood&&s.lv<=S[pc].L),id+" 是已加入的夥伴照自己等級學會的")}
   assert.ok(!pool.some(id=>["x_spiritgirl","x_martialgirl","x_bing"].includes(G.SKM[id].ch)),"木棋靈（還沒加入）的招不算");assert.ok(pool.some(id=>G.SKM[id].ch==="x_miaogirl")&&pool.some(id=>G.SKM[id].ch==="x_swordboy"),"不只隊長那位");
-  assert.deepEqual(J(td.sk),pool.slice(0,4),"沒選過＝前 4 招");assert.ok(td.sk.length<=4);
-  const mid=pool.filter(id=>G.SKM[id].ch==="x_miaogirl")[0];assert.deepEqual(J(G.skPickSq(td.sq,[mid,"zz",mid])),[mid],"存的招照帶、不認得的與重複的拿掉");
+  assert.deepEqual(J(td.sk),pool,"全隊學會的全部帶（11/16 不限 4 招）");
+  const mid=pool.filter(id=>G.SKM[id].ch==="x_miaogirl")[0];assert.deepEqual(J(G.skPickSq(td.sq,[mid,"zz",mid])),pool,"存的那份不管，學會的全部帶");
   const O=gs([["K",5,1],["k",4,10],["R",1,1]],{});assert.equal(O.td.sq,null);assert.equal(O.td.me.hp,G.stats("x_swordboy",10).hp)});
 
 test("星門圍城：我方擒子用「吃子那顆」的攻擊（傌吃＝小梅 Lv30）；同一盤沒有 sq 時用隊長的攻擊", ()=>{
@@ -60,8 +60,8 @@ test("塔防：有 sq 時元氣上限＝七種的平均（天賦照樣套）；1
   assert.ok(Math.abs(td.me.atk-avgK("atk"))<1e-9,"攻擊＝七種平均（不再是隊長那組）");assert.ok(Math.abs(td.me.def-avgK("def"))<1e-9,"防禦＝七種平均");
   assert.equal(td.me.spMax,Math.round(avgK("sp")),"靈力上限＝七種平均");assert.equal(td.me.spRg,Math.round(avgK("spRegen")),"每回合回靈＝七種平均");assert.equal(td.sq.N.spRegen,B.stats("x_miaogirl",30,{diff:2}).spRegen,"squad() 多帶 spRegen");
   const own=c=>B.SK.filter(s=>s.ch===c).map(s=>s.id),mz=B.SK.find(s=>s.ch==="x_miaogirl"&&s.lv<=30).id,wd=B.SK.find(s=>s.ch==="x_bing"&&s.lv<=1).id;
-  const t2=B.boot({lv:1,ch:"x_swordboy",L:10,diff:2,sq:S,sk:[mz,wd]},{board:C.parseFen(B.startFen(1,C)),turn:"r",moves:[],pos:[]},C);assert.deepEqual(J(t2.sk),[mz],"夥伴（小梅）的招能帶；木棋靈（步越溪）的不能");
-  assert.ok(td.sk.length>0&&td.sk.length<=4&&td.sk.every(id=>!own("x_bing").includes(id)&&!own("x_spiritgirl").includes(id)&&!own("x_martialgirl").includes(id)),"沒選過＝全隊已學會的前 4 招，不含木棋靈的");
+  const t2=B.boot({lv:1,ch:"x_swordboy",L:10,diff:2,sq:S,sk:[mz,wd]},{board:C.parseFen(B.startFen(1,C)),turn:"r",moves:[],pos:[]},C);assert.ok(t2.sk.includes(mz)&&!t2.sk.includes(wd),"夥伴（小梅）的招會帶；木棋靈（步越溪）的不會");
+  assert.ok(td.sk.length>0&&td.sk.every(id=>!own("x_bing").includes(id)&&!own("x_spiritgirl").includes(id)&&!own("x_martialgirl").includes(id)),"全隊已學會的全部帶，不含木棋靈的");
   const tl=B.boot({lv:"tl",ch:"x_swordboy",L:1,sq:S},{board:C.parseFen(B.startFen("tl",C)),turn:"r",moves:[],pos:[]},C);assert.equal(tl.sq,null,"練習賽照劇本");
   const O=B.boot({lv:1,ch:"x_swordboy",L:10,diff:2},{board:C.parseFen(B.startFen(1,C)),turn:"r",moves:[],pos:[]},C);assert.equal(O.sq,null);assert.equal(O.me.max,B.stats("x_swordboy",10,{diff:2}).hp)});
 

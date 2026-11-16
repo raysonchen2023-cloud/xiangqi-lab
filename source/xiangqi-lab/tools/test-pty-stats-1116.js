@@ -48,7 +48,7 @@ test("〔行為〕練滿的又正陪你走：按鈕都不用出現，不留一�
   assert.ok(!A.includes('class="pty-a"')); assert.ok(B.includes('class="pty-a"'));
   for (const a of ["give", "look"]) assert.ok(B.includes(`data-a="${a}"`), a);
   for (const h of [A, B]) { assert.ok(!h.includes('data-a="lead"') && !h.includes("隊長"), "沒有隊長標籤、沒有設為隊長鈕"); assert.ok((h.match(/data-a="(?:give|look|lead)"/g) || []).length <= 2, "最多兩顆鈕") }
-  assert.ok(SRC.includes("黑洞裡全隊已學會的招都能帶（一場最多 4 招）"), "卡冊說明行改成全隊招式");
+  assert.ok(SRC.includes("黑洞裡全隊已學會的招都會帶上場") && !SRC.includes("最多 4 招"), "卡冊說明行：全隊招式全部帶上場（11/16 不限 4 招）");
   assert.ok(SRC.includes('[["帶"+ptyTa(L)+"出門",()=>{ptySetLook(c)}],["好",null,true]],"prolog")'), "加入卡只有「帶…出門」「好」");
   assert.ok(!/function ptySetLead\b/.test(SRC), "ptySetLead 刪掉");
 });
