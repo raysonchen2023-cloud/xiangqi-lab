@@ -1,11 +1,11 @@
-# 驗證紀錄（版本 20261116-1222）
+# 驗證紀錄（版本 20261116-1258）
 
 這一頁讓任何人核對：這一版的程式跑過下面這些自動測試，以及每一項測試到底驗了什麼。
 
-- 產生時間：2026/11/16 12:36:27（臺灣時間）
-- 結果（四欄分開，不要只看總數）：共 1768 項＝**通過 1751**、**失敗 0**、**略過 17**（這個環境跑不了、沒有執行，不算通過；逐項原因見〈略過〉）；另有**預期失敗 0**
-- 測試對象：公開倉庫的 `source/`（切自 commit `e3ed91084c9c`），對應的發布版：`20261116-1222`。開發者電腦上還沒發布的修改不在這份測試裡。
-- `source/` 沒放的測試檔（和少數只給它們用的工具）有44 個（要讀不公開的資料、要接不公開的營運程式，或指令排除），原因逐檔寫在 `source/STAGE-MANIFEST.json` 的 excludedTests。
+- 產生時間：2026/11/16 13:05:21（臺灣時間）
+- 結果（四欄分開，不要只看總數）：共 1775 項＝**通過 1758**、**失敗 0**、**略過 17**（這個環境跑不了、沒有執行，不算通過；逐項原因見〈略過〉）；另有**預期失敗 0**
+- 測試對象：公開倉庫的 `source/`（切自 commit `7dbdd39c968c`），對應的發布版：`20261116-1258`。開發者電腦上還沒發布的修改不在這份測試裡。
+- `source/` 沒放的測試檔（和少數只給它們用的工具）有43 個（要讀不公開的資料、要接不公開的營運程式，或指令排除），原因逐檔寫在 `source/STAGE-MANIFEST.json` 的 excludedTests。
 
 ## 略過（沒有執行，不算通過）
 
@@ -36,7 +36,7 @@
 | 行為 | 1209 項（通過 1204、略過 5） | 真的把 App 的程式跑起來（載入網站上的模組、抽出函式呼叫、用假的畫面／計時器／伺服器走一遍流程），再檢查結果對不對。 |
 | 混合 | 74 項（通過 73、略過 1） | 一半真的執行程式，一半只是檢查原始碼裡有沒有某段字。 |
 | 原始碼比對 | 202 項（通過 197、略過 5） | 只檢查原始碼裡有沒有某段字（例如某個按鈕的程式碼、某條樣式規則）。**只證明程式碼存在，不證明功能會動。** |
-| 待分類 | 283 項（通過 277、略過 6） | `test-bhfx.js`、`test-bhtd-combo.js`、`test-bhtd-r2.js`、`test-bhtd-rules.js`、`test-bhtl.js`、`test-bhx-allstars-1116.js`、`test-bhx-hold-1116.js`、`test-dgl.js`、`test-ghost-game-1116.js`、`test-home-pano.js`、`test-i18n-story.js`、`test-noscore.js`、`test-park3d-capbase.js`、`test-r17-qa.js`、`test-siege2-local.js`、`test-siege2.js`、`test-sitemap-places-1116.js`、`test-xsm-dark.js` 這幾個檔還沒逐項分類，暫不算進上面三類。 |
+| 待分類 | 290 項（通過 284、略過 6） | `test-bhfx.js`、`test-bhtd-combo.js`、`test-bhtd-r2.js`、`test-bhtd-rules.js`、`test-bhtl.js`、`test-bhx-allstars-1116.js`、`test-bhx-hold-1116.js`、`test-bhx-resume-1116.js`、`test-bhx-skip-1116.js`、`test-dgl.js`、`test-ghost-game-1116.js`、`test-home-pano.js`、`test-i18n-story.js`、`test-noscore.js`、`test-park3d-capbase.js`、`test-r17-qa.js`、`test-siege2-local.js`、`test-siege2.js`、`test-sitemap-places-1116.js`、`test-xsm-dark.js` 這幾個檔還沒逐項分類，暫不算進上面三類。 |
 
 - 測試名稱開頭有〔原始碼〕〔混合〕就是那一類；沒有標籤的是行為類（下面的索引另外標〔行為〕）。
 - **測試由開發用的 AI 撰寫，不等於第三方驗證；原始碼比對只證明程式碼存在。**
@@ -199,7 +199,8 @@
 ### E08 沒選角色也能在開頭畫面接著下；選角不清掉進度
 
 - 從哪一版：2345
-- 自動測試：1 項（原始碼比對 1）
+- 自動測試：2 項（原始碼比對 1、待分類 1）
+  - ✔ 〔待分類〕已落地（bhxLand）、沒在開新旅程：不接回；05b saveBoot 只在不是 xqPrologue（journeyStart 重開）的路上問 bhxResume
   - ✔ 〔原始碼〕開頭畫面 menu 照 tsmMenu 排、fwNeed 走 tsmFirst、journeyStart 只在 had 或沒進度時清、local.js 舊分頁不寫回
 - 截圖：[07_沒選角色也能接著下.png](evidence/07_%E6%B2%92%E9%81%B8%E8%A7%92%E8%89%B2%E4%B9%9F%E8%83%BD%E6%8E%A5%E8%91%97%E4%B8%8B.png)
 - 怎麼操作：清掉 m_journey、m_slotMeta，下幾步晉級賽，開新分頁打開。
@@ -540,6 +541,8 @@
 | test-bhtl.js | — | 0 | 0 | 0 | 18 | 18／18 |
 | test-bhx-allstars-1116.js | — | 0 | 0 | 0 | 4 | 4／4 |
 | test-bhx-hold-1116.js | — | 0 | 0 | 0 | 4 | 4／4 |
+| test-bhx-resume-1116.js | — | 0 | 0 | 0 | 3 | 3／3 |
+| test-bhx-skip-1116.js | — | 0 | 0 | 0 | 4 | 4／4 |
 | test-blitz.js | — | 14 | 1 | 3 |  | 18／18 |
 | test-clock-pv.js | 棋鐘邊界（+1／0／−1 ms）、悔棋加秒、重開；引擎缺 PV 保持未評 | 43 | 0 | 0 |  | 43／43 |
 | test-colorblind.js | — | 10 | 0 | 4 |  | 14／14 |
@@ -1039,6 +1042,19 @@
 - ✔ 〔待分類〕卡片疊在上面：返回照樣關卡片、不重墊；別的頁、沒鎖都不墊
 - ✔ 〔待分類〕右上頭像：序局鎖著點了沒反應（#meChip、#dglLoc），其他按鈕不管；打完恢復
 - ✔ 〔待分類〕08b 每次重畫都問 bhxHold(bhxLocked(st))；07bh 不碰 hashchange／02-shell
+
+### test-bhx-resume-1116.js
+
+- ✔ 〔待分類〕開新旅程到一半重新載入（電影途中、邀局卡）：蓋黑洞底、接回邀局卡（不重播電影）
+- ✔ 〔待分類〕正在下序局時重新載入：不接回（對局頁自己接）；序局下完還沒建旅程：接「星盤暫合」
+- ✔ 〔待分類〕已落地（bhxLand）、沒在開新旅程：不接回；05b saveBoot 只在不是 xqPrologue（journeyStart 重開）的路上問 bhxResume
+
+### test-bhx-skip-1116.js
+
+- ✔ 〔待分類〕開新旅程、按「略過」跳過序章電影（bhxPick 沒記）：照樣建新旅程（齊轍、存進選的那一格），不走舊旅程的序幕
+- ✔ 〔待分類〕減少動態（走 bhxPages）一樣建新旅程；空白格（還沒有旅程）也一樣
+- ✔ 〔待分類〕序局把 3D 打開（bhxGo 記下原本的 park3d），循著茶香時還原：沒設過＝回到預設（新手平面）、平面、3D 各回原樣；沒打完再開一次不覆蓋
+- ✔ 〔待分類〕沒略過（電影裡記了 bhxPick）照舊；舊玩家只看序章（bhXuOld）、沒開新旅程都不建、不記角色
 
 ### test-blitz.js
 

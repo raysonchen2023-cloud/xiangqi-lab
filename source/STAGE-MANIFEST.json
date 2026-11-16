@@ -1,7 +1,7 @@
 {
  "ref": "origin/main",
- "commit": "e3ed91084c9c4bd1832febed0aca4ed4ea48da20",
- "madeAt": "2026-11-16T04:31:58.367Z",
+ "commit": "7dbdd39c968ce1bffbb154a5510fc12c3d6d9640",
+ "madeAt": "2026-11-16T05:00:04.780Z",
  "files": {
   "xiangqi-db/m/00-util.js": "local=live",
   "xiangqi-db/m/01-board.js": "local=live",
@@ -23,7 +23,7 @@
   "xiangqi-db/m/07e-garden2.js": "local=live",
   "xiangqi-db/m/07f-ship.js": "local=live",
   "xiangqi-db/m/07o-shipmore.js": "local=live",
-  "xiangqi-db/m/07bh-blackhole.js": "live",
+  "xiangqi-db/m/07bh-blackhole.js": "local=live",
   "xiangqi-db/m/07gx-galaxy.js": "local=live",
   "xiangqi-db/m/07gxp-gatepano.js": "local=live",
   "xiangqi-db/m/07bht-td.js": "local=live",
@@ -218,6 +218,8 @@
   "xiangqi-lab/tools/test-bhtl.js": "local",
   "xiangqi-lab/tools/test-bhx-allstars-1116.js": "local",
   "xiangqi-lab/tools/test-bhx-hold-1116.js": "local",
+  "xiangqi-lab/tools/test-bhx-resume-1116.js": "local",
+  "xiangqi-lab/tools/test-bhx-skip-1116.js": "local",
   "xiangqi-lab/tools/test-blitz.js": "local",
   "xiangqi-lab/tools/test-clock-pv.js": "local",
   "xiangqi-lab/tools/test-colorblind.js": "local",
@@ -443,7 +445,6 @@
  },
  "liveDiffers": [
   "m/05-settings.js",
-  "m/07bh-blackhole.js",
   "m/07y-hubmap.js",
   "m/07s4-passmap.js",
   "src/sw.js"
@@ -492,11 +493,10 @@
   "test-party-novel.js": "指令排除：要讀只在開發者電腦與 CDN 的聽書稿（art/canju/yunhe-novel.json），公開副本沒有這個檔",
   "test-party-wood.js": "指令排除：要讀只在開發者電腦與 CDN 的木棋靈模型與骨架工具，公開副本沒有這些檔",
   "test-unlock-fx-1116.js": "指令排除：要讀只在開發者電腦與 CDN 的場景圖（data/guanxing、homemap 等），公開副本沒有這些圖",
-  "test-i18n-ext-1116.js": "指令排除：要讀英文外掛字典 xiangqi-db/i18n-en.json（只放在 CDN 的 data/i18n-en.json，公開副本沒有）",
-  "test-bhx-skip-1116.js": "指令排除：這支測試已經寫進下一版才上線的一行（全新玩家沒有 bhxFresh 也補建新旅程），1222 不含那一行；下一版帶上那一行後恢復"
+  "test-i18n-ext-1116.js": "指令排除：要讀英文外掛字典 xiangqi-db/i18n-en.json（只放在 CDN 的 data/i18n-en.json，公開副本沒有）"
  },
- "version": "20261116-1222",
- "indexSha1": "019910a5d09a",
+ "version": "20261116-1258",
+ "indexSha1": "27713cd26d3e",
  "toLF": [],
  "scrubbed": [
   "xiangqi-lab/tools/qa/colorblind-scan.js（1 處）",
