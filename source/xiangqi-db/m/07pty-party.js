@@ -216,7 +216,12 @@ function ptyArrive(k,done){let P=null;try{P=ptyGet()}catch(e){}if(!P||typeof mod
     [["去幫"+ptyTa(L),()=>ptyHelpGo(k,c)],["先看看這一站",()=>{if(done)done()},true]],"prolog");return true}
 /* ② 解開那一題 */
 function ptyOnSolve(k,id){let P=null;try{P=ptyGet()}catch(e){}if(!P)return;const L=PTY.pendingAt(P,k).filter(c=>PTY.JOIN[c].help===id);if(!L.length)return;
-  for(const c of L)ptyJoin(c,"ship");ptyJoinCardLater(L,0)}
+  for(const c of L)ptyJoin(c,"ship");
+  if(typeof pjcPlay==="function"&&typeof PJC_SC!=="undefined"&&PJC_SC[k]){ptyJoinCutLater(k,L,0);return}   /* 11/16 開發者 hspx「新角色夥伴加入時做一個過場動畫」：這一站有過場（m/07pjc-joincut.js）就先播，播完或略過再出加入卡 */
+  ptyJoinCardLater(L,0)}
+/* 過場跟加入卡一樣，先等解題結果視窗、主線電影儀式（mnfBusy）收掉再播；播完那一刻還有視窗開著，加入卡照舊排隊。加入卡只出一次 */
+function ptyJoinCutLater(k,L,n){setTimeout(()=>{const busy=document.querySelector(".modal")||(typeof mnfBusy==="function"&&mnfBusy());if(busy&&n<20)return ptyJoinCutLater(k,L,n+1);
+  let d=0;const go=()=>{if(d)return;d=1;if(document.querySelector(".modal"))ptyJoinCardLater(L,1);else ptyJoinCard(L)};try{pjcPlay(k,L,go)}catch(e){go()}},n?1500:2500)}
 function ptyJoinCardLater(L,n){setTimeout(()=>{if(document.querySelector(".modal")&&n<20)return ptyJoinCardLater(L,n+1);ptyJoinCard(L)},n?1500:2500)}
 function ptyJoinCard(L){if(typeof modal!=="function"||!L||!L.length)return;const P=ptyGet();if(!P)return;
   const nm=L.map(ptyNm).join("、"),c=L[0];
