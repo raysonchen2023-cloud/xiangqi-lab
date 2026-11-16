@@ -1613,7 +1613,7 @@ html[data-lefty] .tskip{right:auto;left:14px}
       if(!window.caches)return go();caches.keys().then(function(ks){return Promise.all(ks.filter(function(k){return k.indexOf("xqlab-app-")===0}).map(function(k){return caches.delete(k)}))})
         .then(function(){return navigator.serviceWorker&&navigator.serviceWorker.getRegistration()}).then(function(r){return r&&r.update()}).catch(function(){}).then(go)}};setTimeout(chk,4000)})();
 </script>
-<script>window.XQ_OFFLINE=true;window.XQ_BUILD="20261116-1358";</script>
+<script>window.XQ_OFFLINE=true;window.XQ_BUILD="20261116-1416";</script>
 <script src="core.js"></script>
 <script src="engine.js"></script>
 <script src="local.js"></script>
@@ -9871,7 +9871,7 @@ function shipHere(){const e=store.get("era","classic"),k=shipDocked().includes(e
 function shipGoTo(e,after){if(eraLocked(e)){vibrate(8);toast(eraLockMsg(e));return}const k=shipAt();if(e===k){if(after)after();return}shipEra(e);try{saveNow(true)}catch(x){}
   qianqiu(k,e,()=>{const go=()=>{if(after)after();else if(navKey(location.hash)==="/adventure")route()};if(typeof bhMaybe==="function")bhMaybe(e,go,false);else go()},"go")}
 function innName(k){return k==="classic"?"雲河驛站":eraLabel(k)+"的驛站"}   /* 意見回饋 697：船艙那一站的驛站叫「雲河驛站」 */
-function portName(k){return k==="classic"?"船艙":eraLabel(k)+"的渡口"}
+function portName(k){return k==="classic"?"渡口":eraLabel(k)+"的渡口"}   /* 11/16 開發者「左上角的船艙要改成渡口 不然名字不對」：雲河這一站的渡口頁標題、圖上地名、走過去的地名都叫「渡口」（星槎上的船艙、古戰場、金印照舊） */
 function navPrev(){try{for(let i=NAV_D-1;i>=0;i--){const x=NAV_H[i];if(typeof x==="string"&&x[0]!=="~")return x}}catch(e){}return null}   /* 上一頁的網址（跳過卡片那一層） */
 /* ---------- 下船：渡口和三扇門（園子、驛站、擂台）。rep＝同一朝橫著走（園子↔驛站↔擂台），用 replace 不疊上一頁 ---------- */
 const shipNav=(h,rep)=>{if(navKey(h)===navKey(location.hash))route();else if(rep)navReplace(h);else location.hash=h};   /* 已經在那一頁（例如在驛站旅人的對局頁去園子）就重畫 */
@@ -16586,7 +16586,7 @@ function yzInn(v,k){if(!YZ_ON||!YZ_READY.has(k))return;const S=YZ_SPOT[k],pad=v.
   const sub=k==="classic"?(YZ_ROAD_ON?"旅人歇腳、書信往來；千秋驛路通往各朝驛站":"旅人歇腳、書信往來；要去各朝，從星槎的千秋石枰啟程"):esc((k==="classic"?"":eraLabel(k)+"・")+(T.place||"")),si=YZ_SIGHT[k]&&S.sight;
   const d=document.createElement("div");
   d.innerHTML=`<div class="shp-page cq yz-page"><img src="data/yizhan/${k}${YZ_IMG}.webp${k==="classic"?"?v="+YZ_CLV:""}" alt="${esc(innName(k))}" onerror="if(!this.dataset.fb){this.dataset.fb=1;this.src='data/yizhan/${k}_c.webp'}">${road}<div class="shp-cap"><b>🏮 ${esc(innName(k))}</b><small>${sub}</small></div>${sp.map(([id,p,b,sm,cl])=>`<button class="shp-spot${cl?" "+cl:""}" id="${id}" style="left:${p[0]}%;top:${p[1]}%"><b>${b}</b>${sm?`<small>${sm}</small>`:""}</button>`).join("")}${si?`<button class="po-sight" id="yzSight" style="left:${S.sight[0]}%;top:${S.sight[1]}%">📍 ${esc(YZ_SIGHT[k][0])}</button>`:""}</div>`;
-  const pg=d.firstElementChild;v.insertBefore(pg,pad);const ab=pad.querySelector(".abn");if(ab)ab.remove();
+  const pg=d.firstElementChild;v.insertBefore(pg,pad);if(typeof yzColor==="function")yzColor(pg,k);   /* 11/16 進門從水墨暈開成全彩（07p-portcolor.js） */const ab=pad.querySelector(".abn");if(ab)ab.remove();
   if(YZ_NOLIST_ON){pad.classList.add("yz-nolist");if(YZ_MORE_ON)pg.insertAdjacentHTML("beforeend",'<button class="yz-more" id="yzMore" aria-label="其他入口：羈絆、棋史卡冊、輿圖、消寒圖、點將台、走去園子和擂台">☰ 其他</button>')}
   const on=(q,fn)=>{const e=pg.querySelector(q);if(e)e.onclick=()=>{vibrate(5);fn()}};
   on("#yzTr",()=>yzPick(v,INN.map(x=>x.id).concat(typeof igIds==="function"?igIds(k):[]),"🏮 路過的旅人","驛站裡都是路過的旅人，找誰下都可以、下幾次都可以。"));
@@ -17311,14 +17311,18 @@ function pfxGl(cv,vs,fs,tex){const gl=cv.getContext("webgl",{alpha:false,antiali
 function pfxTest(gl,draw,bw,bh,base,W,H,pts){draw();const c=document.createElement("canvas");c.width=W;c.height=H;const x=c.getContext("2d");x.drawImage(base,0,0,W,H);const px=new Uint8Array(4);let d=0;
   for(const[a,b]of pts){gl.readPixels(Math.min(bw-1,Math.floor((a+.5)*bw/W)),Math.max(0,bh-1-Math.floor((b+.5)*bh/H)),1,1,gl.RGBA,gl.UNSIGNED_BYTE,px);const q=x.getImageData(a,b,1,1).data;d+=(Math.abs(px[0]-q[0])+Math.abs(px[1]-q[1])+Math.abs(px[2]-q[2]))/3}
   return d/pts.length}
+/* 11/16 開發者「渡口/驛站都是用最一開始調色的方式漸漸變成有顏色」：雲河渡口也有淡彩 _c、全彩 _f（07p PORTC_ERAS／PORTF_ERAS 含 classic）。
+   WebGL 畫在畫布上會蓋住底下的 img，所以貼圖改用全彩版；剛下船那段暈開上色（07p 的 .pc-run）播完才啟動，同一頁不重複建畫布 */
+const pfxImg=()=>typeof PORTF_ON!=="undefined"&&PORTF_ON&&typeof PORTF_ERAS!=="undefined"&&PORTF_ERAS.includes("classic")?"port_classic_f.webp":"port_classic.webp";
 function portFx(v,k){const P=v&&v.querySelector(".shp-page.cq");if(!P||k!=="classic"||matchMedia("(prefers-reduced-motion: reduce)").matches)return;
+  if(P.querySelector(".pfx-gl"))return;if(P.classList.contains("pc-run")){let n=0;const w=()=>{if(!P.isConnected)return;if(P.classList.contains("pc-run")&&n++<40)return setTimeout(w,200);portFx(v,k)};setTimeout(w,200);return}
   pfxDev(P);if(!pfxOn())return;
   const base=P.querySelector(":scope>img"),spots=[...P.querySelectorAll(".shp-spot,.po-sight")],cv=document.createElement("canvas");if(!base)return;
   cv.className="pfx-gl";cv.setAttribute("aria-hidden","true");cv.style.cssText="position:absolute;left:0;top:0;width:100%;height:100%;display:block;pointer-events:none";base.after(cv);
   const fail=()=>{cv.remove();P.classList.remove("pfx-on");base.style.visibility="";spots.forEach(b=>b.style.translate="")};
   if(!document.getElementById("pfxCss")){const s=document.createElement("style");s.id="pfxCss";s.textContent=".shp-page.pfx-on>.ifx{display:none}";document.head.append(s)}   /* WebGL 動態跑起來就不疊 07k-inkfx 的粒子層（兩套一起會重複閃、燈火位置對不上） */
   const ld=s=>new Promise((ok,no)=>{const i=new Image();i.onload=()=>ok(i);i.onerror=no;i.src="data/shipmap/"+s});
-  Promise.all(["port_classic.webp","layers/pm1_depth.png","layers/sm_mist_ink.webp","layers/sm_mist_fog.webp"].map(ld)).then(im=>{if(!P.isConnected)return;
+  Promise.all([pfxImg(),"layers/pm1_depth.png","layers/sm_mist_ink.webp","layers/sm_mist_fog.webp"].map(ld)).then(im=>{if(!P.isConnected)return;
     if(im.some((m,i)=>m.naturalWidth!==PFX_SZ[i][0]||m.naturalHeight!==PFX_SZ[i][1]))throw 0;
     const G=pfxGl(cv,PFX_VS,PFX_FS,[["I",im[0]],["Dp",im[1],1],["Mi",im[2],1,1],["Mf",im[3],1,1]]);if(!G)throw 0;
     const{gl,u}=G,U={par:u("par"),bob:u("bob"),t:u("t"),k:u("k")};
@@ -17355,12 +17359,12 @@ function portFx(v,k){const P=v&&v.querySelector(".shp-page.cq");if(!P||k!=="clas
    上色圖載入失敗就留原圖。07k-inkfx 的動態設定照原圖的鍵（shipmap/port_<朝代>）借給 _c 用，旗子飄、燈火晃照常。
    由 07f-ship.js 的 Port 呼叫 portColor(v,k)；shipPort 在這裡包一層記下「剛下船」。開關：常數 PORTC_ON。 */
 const PORTC_ON=true;
-const PORTC_ERAS=["qin","han","sanguo","weijin","nanbei","sui","tang","wudai","song","yuan","ming","qing"];
+const PORTC_ERAS=["qin","han","sanguo","weijin","nanbei","sui","tang","wudai","song","yuan","ming","qing","classic"];   /* 11/16 雲河渡口（classic）也上色：data/shipmap/port_classic_c.webp、_f.webp */
 /* 意見回饋 773（開發者看過 1710 版：「還是沒有抵達當朝代的強烈視覺感，希望漸漸轉為全彩水墨畫風」）：全彩水墨版 data/shipmap/port_<朝代>_f.webp
    （Gemini 重彩上色 → portcolor_merge.py --full：墨線仍是原圖，色塊深淺也跟上色版）。下船時分兩段：先淡彩 _c 從船頭暈開，再整張漸漸轉成全彩 _f，共約 3.5 秒；
    停留與走回來直接顯示 _f。PORTF_ERAS＝已經有 _f 的朝代（11/8 唐宋給開發者看過「濃度可以」，12 朝都做好了）；_f 載入失敗退回 _c、再退回原圖。開關 PORTF_ON。 */
 const PORTF_ON=true;
-const PORTF_ERAS=["qin","han","sanguo","weijin","nanbei","sui","tang","wudai","song","yuan","ming","qing"];
+const PORTF_ERAS=["qin","han","sanguo","weijin","nanbei","sui","tang","wudai","song","yuan","ming","qing","classic"];
 const PC={at:0,k:null,css:false};
 (function(){if(typeof shipPort!=="function")return;const f=shipPort;shipPort=function(k){PC.at=Date.now();PC.k=k;return f.apply(this,arguments)}})();
 function pcCss(){if(PC.css)return;PC.css=true;const s=document.createElement("style");s.id="pcCss";
@@ -17388,7 +17392,7 @@ function pcRun(P,img,src,orig,full){if(!P.isConnected)return;
   const sup=p=>{try{return CSS.supports(p,"radial-gradient(#000,transparent)")}catch(e){return false}};
   const mk=sup("mask-image")?"maskImage":sup("-webkit-mask-image")?"webkitMaskImage":null;
   let done=false,raf=0;
-  const end=()=>{if(done)return;done=true;cancelAnimationFrame(raf);P.removeEventListener("click",skip,true);
+  const end=()=>{if(done)return;done=true;cancelAnimationFrame(raf);P.removeEventListener("click",skip,true);img.style.filter="";   /* 驛站（yzColor）的底圖是灰階起點，播完拿掉 */
     const fin=()=>{o.remove();if(o2)o2.remove();P.classList.remove("pc-run");P.classList.add("pc-in");setTimeout(()=>P.classList.remove("pc-in"),700)};
     img.addEventListener("load",fin,{once:true});img.addEventListener("error",fin,{once:true});pcSet(img,full?[full,src]:src,orig);if(img.complete&&img.naturalWidth&&img.getAttribute("src")===fin_src)setTimeout(fin,30)};
   const skip=e=>{e.stopPropagation();e.preventDefault();end()};P.addEventListener("click",skip,true);
@@ -17399,6 +17403,19 @@ function pcRun(P,img,src,orig,full){if(!P.isConnected)return;
     else o.style.filter=`grayscale(${(1-io(t)).toFixed(3)})`;
     if(o2&&e>T1)o2.style.opacity=io(Math.min(1,(e-T1)/T2)).toFixed(3);
     if(e<T1+T2)raf=requestAnimationFrame(step);else end()};raf=requestAnimationFrame(step)}
+/* 11/16 開發者「渡口/驛站都是用最一開始調色的方式漸漸變成有顏色」（選單：雲河渡口＋13 驛站）：驛站進門時也從水墨暈開成全彩。
+   驛站沒有黑白原圖：底下的 img 先用淡彩 _c 加灰階濾鏡當水墨起點，pcRun 從左下暈開淡彩、再轉全彩 _f，播完拿掉濾鏡（pcRun 的 end）。
+   每次開 App、每個驛站第一次進門播一次（sessionStorage yzcSeen），之後直接全彩；減少動態直接全彩；圖 4 秒內沒載好也直接全彩；點一下跳過（pcRun）。
+   由 07m-yizhan.js 的驛站頁插好以後呼叫。開關 YZC_ON */
+const YZC_ON=true;
+function yzColor(P,k){if(!YZC_ON||!P||!P.isConnected||!k)return;const img=P.querySelector(":scope>img");if(!img)return;
+  let seen={},rm=false;try{seen=JSON.parse(sessionStorage.getItem("yzcSeen")||"{}")||{}}catch(e){}try{rm=matchMedia("(prefers-reduced-motion: reduce)").matches}catch(e){}
+  if(seen[k]||rm)return;seen[k]=1;try{sessionStorage.setItem("yzcSeen",JSON.stringify(seen))}catch(e){}
+  const q=k==="classic"&&typeof YZ_CLV!=="undefined"?"?v="+YZ_CLV:"",c="data/yizhan/"+k+"_c.webp"+q,f="data/yizhan/"+k+"_f.webp"+q,orig=img.getAttribute("src");
+  pcCss();P.classList.add("pc-run");img.style.filter="grayscale(1)";img.src=c;
+  let gone=false;const quit=()=>{if(gone)return;gone=true;img.style.filter="";P.classList.remove("pc-run");img.src=orig};
+  const to=setTimeout(quit,4000);const ld=u=>new Promise(r=>{const i=new Image();i.decoding="async";i.onload=()=>r(u);i.onerror=()=>r(null);i.src=u});
+  Promise.all([ld(c),ld(f)]).then(([cc,ff])=>{clearTimeout(to);if(gone||!P.isConnected)return;if(!cc&&!ff){quit();return}gone=true;setTimeout(()=>pcRun(P,img,cc||ff,orig,cc&&ff),250)})}
 /* ================= 🌟 選角差異化（意見回饋 774，開發者 11/8 從 Gemini 十案選定 1、9、4、7、3、5、8（第 2 案七星論棋開發者看過後刪除）；提問 story/gemini_app/29_選角差異化十案.md）=================
    原則：線上對戰一律公平——這裡的東西只影響單機內容、收藏、故事、本機顯示；不加新貨幣、不做每日登入、不讓角色變強。
    每案一個開關 CHDn_ON；存檔一個鍵 store "chd"（JOURNEY_KEYS 的 m_chd，跟存檔走）：
@@ -26201,7 +26218,7 @@ const SCI_REG=[
    三版是同一張墨線合成的（portcolor_merge.py），比對過位移 0，共用座標，正規式三版一起認；船艙 classic 只有原圖。沒有夜景圖，不寫 tn。
    入口本體（園子石桌、驛站房子、擂台）放 no；📍 景點標籤（PORT_SIGHT）是按鈕，標籤底下的景物本體登記成物件（回饋 850：點隋朝龍舟本身沒說明）。
    左下角 30%×17%（07w9 的 .ex-bow 船頭）和碼頭盡頭（07w4 的 .ph4-pz）是透明按鈕，點不到圖，那裡不登記東西 */
-{re:/data\/shipmap\/port_classic\.webp/,D:{k:"pt_cl",nm:"雲河・船艙渡口",it:[
+{re:/data\/shipmap\/port_classic(_c|_f)?\.webp/,D:{k:"pt_cl",nm:"雲河・渡口",it:[
   {n:"雲河星光",s:[[[0,112],[70,122],[200,200],[290,262],[302,340],[282,398],[200,392],[60,372],[0,360]],[[0,990],[120,975],[260,1000],[330,1060],[340,1200],[290,1250],[270,1090],[160,1060],[0,1085]]],
    t:"這條閃著金點的星河，就是星槎航行的「雲河」。古人說天上的銀河跟大海是相通的，晉朝張華的《博物志》記了一個傳說：有人坐著木筏一路漂到了天河。木筏古時叫「槎」，坐上去就叫「乘槎」。"},
   {n:"雲中老松",s:[[[0,402],[100,396],[200,420],[290,480],[312,560],[262,602],[150,622],[60,642],[0,642]]],
