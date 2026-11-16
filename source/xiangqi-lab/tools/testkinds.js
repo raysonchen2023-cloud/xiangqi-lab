@@ -16,7 +16,9 @@ const SKIP = new Set(["test-home-focus.js", "testkinds.js"]);
 /* 11/12 已逐項分類（開發者稽核 story/102_評比灌水誠實稽核.md 第 3 項） */
 const CLASSIFIED = new Set([
   "test-newjourney-entry-1116.js",   /* 11/16 開發者「目前已經沒辦法新的旅程了嗎 假設有其他玩家想重玩的話 應該還是要跟存檔讀檔的格子」：存檔與讀檔面板最下面補一顆不管幾格有存檔都在的「開始新的旅程」，開選格頁（m/05b-save.js saveList）（行為 4、原始碼 2；11/16 加「回開頭畫面」） */
-  "test-pty-stats-1116.js",   /* 11/16 開發者（雲河七星卡冊截圖）「讓這頁也能看到角色的體力/靈力/攻擊力/防禦力/天賦/招式」：每張卡多一排四格（每位自己的黑洞數值）與可以點的招式列，卡冊最上面一列全隊共用的天賦；天賦樹的返回鈕照從哪裡進來的寫（m/07pty-party.js ptyStatHTML、ptySkills、ptyTalHTML；07bht-td.js bhtdTal；07dgl-stamina.js）（行為 5、原始碼 1） */
+  "test-gxt-unlock-1116.js",   /* 11/16 出入口盤查：黑洞只剩星門圍城後，打贏只寫 gsv，觀星臺解鎖原本只看 bhWin／bhtd，新玩家永遠看不到觀星臺；gxtOpen 加看 gsv 勝場 */
+  "test-pty-stats-1116.js",
+  "test-pty-statbar-1116.js",   /* 11/16 開發者「找rpg參考煙雨江湖的排版然後優化」「靈力隨著等級上升，顯示當前等級的靈力」，選單「資源條＋攻防一行」：卡冊數值區改成體力條、靈力條＋攻防一行 */   /* 11/16 開發者（雲河七星卡冊截圖）「讓這頁也能看到角色的體力/靈力/攻擊力/防禦力/天賦/招式」：每張卡多一排四格（每位自己的黑洞數值）與可以點的招式列，卡冊最上面一列全隊共用的天賦；天賦樹的返回鈕照從哪裡進來的寫（m/07pty-party.js ptyStatHTML、ptySkills、ptyTalHTML；07bht-td.js bhtdTal；07dgl-stamina.js）（行為 5、原始碼 1） */
   "test-ship-tasklist-1116.js",   /* hspx 11/16 開發者（手機截圖「還不能起航」）「修正，然後剛剛我完成兩題千秋殘局 在啟航清單上卻沒有更新 還是顯示0/2」：清單一列兩行、「去」不再佔滿整列；那兩題是在船艙站解的，清單標題和解局那一項寫出站名；看答案走完的題不算，清單會講有幾題（m/07f-ship.js shipTaskList、shipTasks、shipGateSay）（行為 4、混合 1、原始碼 1） */
   "test-gxt-fx-1116.js",   /* 11/16 開發者（觀星臺）「點擊這一頁每一個入口後，可以先有個動畫過場…不然玩家會覺得怎麼進來的」：渾儀、天頂黑洞、右側星空各一段短過場與一句話（m/07gxt-guanxing.js gxtFx、gxtFxPlan）（行為 4、原始碼 1） */
   "test-bhtd-select-1116.js",   /* 11/16 開發者「重新設計排版 太亂了 玩家不知道到底要玩哪個」「車輪戰和星門圍城也都能上線」：星淵遠征選關視窗改成一顆主按鈕（主卡＋關卡小格＋其他玩法＋收起來的出戰設定，m/07bht-td.js bhtdSelect）；觀星臺的黑洞車輪戰解鎖（m/07gxt-guanxing.js gxtWheel）（行為 1、原始碼 5） */

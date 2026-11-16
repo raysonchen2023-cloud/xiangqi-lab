@@ -1,7 +1,7 @@
 {
  "ref": "origin/main",
- "commit": "c76cec823ed627b5af1872834e337bd347ea98cf",
- "madeAt": "2026-11-16T02:26:56.070Z",
+ "commit": "fcde11732ee1b6bafe7e9ddd7c0be9a050942163",
+ "madeAt": "2026-11-16T02:48:16.021Z",
  "files": {
   "xiangqi-db/m/00-util.js": "local=live",
   "xiangqi-db/m/01-board.js": "local=live",
@@ -23,7 +23,7 @@
   "xiangqi-db/m/07e-garden2.js": "local=live",
   "xiangqi-db/m/07f-ship.js": "local=live",
   "xiangqi-db/m/07o-shipmore.js": "local=live",
-  "xiangqi-db/m/07bh-blackhole.js": "local=live",
+  "xiangqi-db/m/07bh-blackhole.js": "live",
   "xiangqi-db/m/07gx-galaxy.js": "local=live",
   "xiangqi-db/m/07gxp-gatepano.js": "local=live",
   "xiangqi-db/m/07bht-td.js": "local=live",
@@ -96,7 +96,7 @@
   "xiangqi-db/m/07w8-shichen.js": "local=live",
   "xiangqi-db/m/07w9-exits.js": "local=live",
   "xiangqi-db/m/08-scene.js": "local=live",
-  "xiangqi-db/m/08b-cpugame.js": "local=live",
+  "xiangqi-db/m/08b-cpugame.js": "live",
   "xiangqi-db/m/08s-simul.js": "local=live",
   "xiangqi-db/m/09-askbot.js": "local=live",
   "xiangqi-db/m/09b-preload.js": "local=live",
@@ -239,6 +239,7 @@
   "xiangqi-lab/tools/test-gx-gatepano.js": "local",
   "xiangqi-lab/tools/test-gx-parkinfo-1115.js": "local",
   "xiangqi-lab/tools/test-gxt-fx-1116.js": "local",
+  "xiangqi-lab/tools/test-gxt-unlock-1116.js": "local",
   "xiangqi-lab/tools/test-handoff-facts.js": "local",
   "xiangqi-lab/tools/test-haptics.js": "local",
   "xiangqi-lab/tools/test-health-funnel.js": "local",
@@ -290,6 +291,7 @@
   "xiangqi-lab/tools/test-premove-online3d.js": "local",
   "xiangqi-lab/tools/test-provenance.js": "local",
   "xiangqi-lab/tools/test-pty-capsay-1116.js": "local",
+  "xiangqi-lab/tools/test-pty-statbar-1116.js": "local",
   "xiangqi-lab/tools/test-pty-stats-1116.js": "local",
   "xiangqi-lab/tools/test-pv-stepper.js": "local",
   "xiangqi-lab/tools/test-qixing.js": "local",
@@ -431,8 +433,11 @@
  },
  "liveDiffers": [
   "m/05-settings.js",
+  "m/07bh-blackhole.js",
   "m/07y-hubmap.js",
   "m/07s4-passmap.js",
+  "m/08b-cpugame.js",
+  "src/park3d.js",
   "src/sw.js"
  ],
  "absentModules": [],
@@ -479,8 +484,8 @@
   "test-party-novel.js": "指令排除：要讀只在開發者電腦與 CDN 的聽書稿（art/canju/yunhe-novel.json），公開副本沒有這個檔",
   "test-party-wood.js": "指令排除：要讀只在開發者電腦與 CDN 的木棋靈模型與骨架工具，公開副本沒有這些檔"
  },
- "version": "20261116-1024",
- "indexSha1": "4882fafecd86",
+ "version": "20261116-1043",
+ "indexSha1": "153f93415403",
  "toLF": [
   "xiangqi-lab/tools/build-site.js"
  ],
@@ -509,5 +514,9 @@
     "files": 1
    }
   ]
+ },
+ "pinnedToPrevious": {},
+ "droppedUnreleased": {
+  "xiangqi-lab/tools/test-bhx-allstars-1116.js": "還沒發布的工作新加的檔，這一版不公開"
  }
 }
