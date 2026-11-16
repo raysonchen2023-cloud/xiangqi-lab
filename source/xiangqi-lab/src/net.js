@@ -915,7 +915,14 @@ var XQNet=(function(){
     arr.t=sh(arr.t);seenAt=sh(seenAt);rxAt=sh(rxAt);syncAt=sh(syncAt);pubAt=sh(pubAt);upAt=sh(upAt);downAt=sh(downAt);lkHeard=sh(lkHeard);lkPingAt=sh(lkPingAt);lkRttAt=sh(lkRttAt);lkOff=sh(lkOff);
     fixAt=sh(fixAt);lastPAt=sh(lastPAt);tcWaitAt=sh(tcWaitAt);pkHealAt=sh(pkHealAt);lkGiveAt=sh(lkGiveAt);lkNdAt=sh(lkNdAt);lkSubAt=sh(lkSubAt);bgAt=sh(bgAt);if(shT)shT.t=sh(shT.t);for(let i=0;i<LKH.length;i++)LKH[i]=sh(LKH[i]);for(const k in FLAGME)FLAGME[k].at=sh(FLAGME[k].at);
     gapQ.forEach(q=>{q.at=sh(q.at)});lkNc.forEach(e=>{e.at=sh(e.at)});emos.forEach(e=>{e.at=sh(e.at)});for(const k in nope)nope[k]=sh(nope[k]);if(lkOffs!=null){lkOffs-=j;lkClkSave()}}catch(e){}}
-  setInterval(()=>{clkJump();frzTick();timeoutCheck();syncRoster();netHeal();lkTick();try{const ol=typeof navigator!=="undefined"&&navigator.onLine!==false;if(ol&&lastOnL===false&&want&&!(cli&&cli.up))netBack();lastOnL=ol}catch(e){}},2000);   /* 回饋 854：順便看要不要訂、收整份名單 */
+  setInterval(()=>{clkJump();frzTick();timeoutCheck();ghTick();syncRoster();netHeal();lkTick();try{const ol=typeof navigator!=="undefined"&&navigator.onLine!==false;if(ol&&lastOnL===false&&want&&!(cli&&cli.up))netBack();lastOnL=ol}catch(e){}},2000);   /* 回饋 854：順便看要不要訂、收整份名單 */
+  /* 開發者 11/16「這邊怎麼有人在下棋」：大廳角色程式關掉時沒下完的盤（保留訊息 g/<gid>/s 一直留著），這支手機以前看過、cur 沒清，從首頁石桌進 #/pvp 又被叫回來，兩邊名牌寫離線、時鐘一直跑。
+     ghost＝我只是觀眾、這盤沒結果、連上超過 15 秒（名單到齊）、兩位棋手都不在這盤，而且最後一步超過 10 分鐘，或我看著兩邊都離線已經 10 分鐘（照 staleCheck 的中止門檻） */
+  let ghAt=0,ghWas=false;
+  function ghost(){if(!cur||!G||G.gid!==cur.gid||G.result||side()||!cli||!cli.up)return false;const now=Date.now();
+    if(now-upAt<15000||onl(G.red.id)||onl(G.black.id)){ghAt=0;return false}if(!ghAt)ghAt=now;
+    const last=typeof G.tk==="number"?G.tk:+G.at||0;return now-last>10*60000||now-ghAt>10*60000}
+  function ghTick(){const g=ghost();if(g!==ghWas){ghWas=g;emit("game")}}
   function staleCheck(){if(!playing()||!cli||!cli.up||G.cup)return;   /* 擂台比賽沒有「中止」：斷線的人時間照走 */const o=oppOf(side()),oid=o==="r"?G.red.id:G.black.id;
     if(!onl(oid)&&Date.now()-seenAt>10*60000)setResult({w:null,abort:true,why:"對方離線太久，對局中止"})}
   // 自己離開一盤還沒下完的棋：對方還在線上就算自己認輸；對方已經離線就直接中止
@@ -1031,6 +1038,7 @@ var XQNet=(function(){
     // 公園 3D 棋盤：正在觀戰這盤棋的人（最多 8 位）和他們的小帥造型
     watcherBots(){if(!cur)return[];const now=Date.now(),i=me().id;return Object.values(people).filter(x=>x.id!==i&&x.gid===cur.gid&&x.st==="watching"&&fresh(x,now)&&!blk(x.id)).slice(0,8).map(x=>({id:x.id,bot:x.bot||null}))},
     watchers(){if(!cur)return 0;const now=Date.now();return Object.values(people).filter(x=>x.gid===cur.gid&&x.st==="watching"&&fresh(x,now)).length},
+    ghost:()=>ghost(),   /* 11/16 鬼局：觀眾看的這盤兩位棋手都離線太久（09b 停錶、跳「這盤已中斷」） */
     isOn(id){const x=people[id];return id===me().id?!!(cli&&cli.up):!!(x&&fresh(x,Date.now()))},
     /* 回饋 854：首頁的「N 人在線上」。收著整份名單就照名單數；沒收名單時用大廳角色程式算的人數（sys/online，扣掉自己）；都沒有就回 null（首頁改寫「線上大廳」） */
     onlineCount(){if(rosterOn)return this.people().length;if(ONL&&BOTS_ST&&BOTS_ST.up)return Math.max(0,ONL.n-(cli&&cli.up&&!selfBan()?1:0));return null},

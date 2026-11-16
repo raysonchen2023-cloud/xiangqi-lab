@@ -57,7 +57,7 @@ function exCls(a){const on=document.body.classList.contains("xq-exit");document.
 function exSync(){if(!EXIT_ON)return;clearTimeout(EX_T);const k=exKey(),t0=Date.now();
   const go=()=>{const b=document.getElementById("back"),P=document.querySelector("#view .shp-page");
     if(exKey()!==k)return;
-    if(k==="/adventure"){const sp=[...document.querySelectorAll("#view .shp-hs,#view .shp-spot")].find(x=>/下船/.test(x.textContent)),box=sp&&sp.parentElement;
+    if(k==="/adventure"){const sp=[...document.querySelectorAll("#view .shp-hs,#view .shp-spot")].find(x=>/下船|Disembark/.test(x.textContent)),box=sp&&sp.parentElement;
       if(!box){if(Date.now()-t0<4000)EX_T=setTimeout(go,150);return}exCss();
       const mk=(cls,x,y,t,fn)=>{if(box.querySelector("."+cls))return;const s=document.createElement("button");s.type="button";s.className=sp.className.split(" ")[0]+" "+cls;s.style.left=x+"%";s.style.top=y+"%";s.textContent=t;s.onclick=e=>{e.stopPropagation();try{vibrate(5)}catch(z){}fn()};box.append(s)};
       mk("ex-set",SHIP_SET[0],SHIP_SET[1],SHIP_SET[2],()=>{location.hash="#/settings"});   /* 星槎中間艙房門口＝天字客房（設定） */
@@ -65,7 +65,7 @@ function exSync(){if(!EXIT_ON)return;clearTimeout(EX_T);const k=exKey(),t0=Date.
       return}
     if(!P){exCls("remove");if(Date.now()-t0<4000)EX_T=setTimeout(go,150);return}
     exCss();const DY=exDyn(k),E=DY||exFind(k),hasBack=b&&!b.hidden&&typeof b.onclick==="function";
-    if(k==="/port"){if(!P.querySelector(".ex-bow")){const sp=[...P.querySelectorAll(".shp-spot")].find(x=>/上星槎/.test(x.textContent));if(sp){const w=document.createElement("button");w.type="button";w.className="ex-bow";w.setAttribute("aria-label","上星槎（船頭）");w.onclick=e=>{e.stopPropagation();try{vibrate(5)}catch(x){}sp.click()};P.append(w)}}
+    if(k==="/port"){if(!P.querySelector(".ex-bow")){const sp=[...P.querySelectorAll(".shp-spot")].find(x=>/上星槎|Board the Star Raft/.test(x.textContent));if(sp){const w=document.createElement("button");w.type="button";w.className="ex-bow";w.setAttribute("aria-label","上星槎（船頭）");w.onclick=e=>{e.stopPropagation();try{vibrate(5)}catch(x){}sp.click()};P.append(w)}}
       if(hasBack)exCls("add");return}
     if(!E||!hasBack){exCls("remove");return}
     if(!P.querySelector(".ex-spot")){const s=document.createElement("button");s.type="button";s.className="shp-spot ex-spot";s.style.left=E[0]+"%";s.style.top=E[1]+"%";let lb=E[2];try{if(k==="/hub/learn"||k==="/hub/battle")lb=EX_HUB_LB;else if(!DY&&(k==="/lobby"||k==="/db")&&typeof bkName==="function")lb="↩ 回"+bkName(k==="/lobby"?"#/hub/battle":"#/hub/learn");else if(k==="/cup"&&typeof xqHubName==="function")lb="↩ 下樓・回"+xqHubName("battle").split(" ").slice(1).join(" ");else if(k==="/cpuroom"&&typeof xqHubName==="function")lb="↩ 掀簾・回"+xqHubName("battle").split(" ").slice(1).join(" ");else if(/書院/.test(lb)&&typeof bkName==="function")lb=lb.replace(/學習書院|書院/,bkName("#/hub/learn"))}catch(x){}if(typeof hbIsCl==="function"&&hbIsCl())lb=lb.replace("回棋鎮","回時光之苑");if(!DY)lb=exFix(lb,E);   /* 11/11 模擬玩家問題 3：經典世界也換成當地叫法（藏譜石窟、觀星閣），以前只有停靠朝代才換，「回書院」其實回藏譜石窟；字再照真的去處對一次 */s.innerHTML="<b>"+lb+"</b>";   /* 出口跟著朝代叫法：出國子監・回棋鎮 */

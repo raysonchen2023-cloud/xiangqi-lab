@@ -8,14 +8,14 @@
      ⑤ 讀螢幕（11b-a11y.js）的每步念法、格子念法換成英文：axmMoveLine／axmCellLabel／axmPcName 在英文時換成這裡的版本（指定，不是重新宣告，不撞名），
         axSay、axsAlert 包一層先翻再念。英文記譜用 WXF（C2.5、H8+7；同一路兩子用 +C.5／-R+1），念法寫成完整英文「Cannon 2 traverses to 5」。
    不翻：棋子與印章上的字、3D 園子畫布裡的字、未收錄的劇情與說明文件。第一、二章現有主線與七星星夜茶話會已有英文，範圍見 art/docs/i18n.md。
-   不要放進字典的字：隱私、官階、進階（07s2／07s4／07m5 用畫面上的字找段落）、下船、上星槎（07w9）、估計棋力（07y9）、正在對戰（07x3）、取代這支手機（07s4）——I18N_GUARD，測試會檢查。
+   不要放進字典的字：隱私、官階、進階（07s2／07s4／07m5 用畫面上的字找段落）（下船、上星槎 11/16 起 07w9 中英都認，已拿掉）、估計棋力（07y9）、正在對戰（07x3）、取代這支手機（07s4）——I18N_GUARD，測試會檢查。
    ⑥ 第 15 輪 X3（評審 P41.1、P41.2、P42.1、P71.2）：字典擴大到設定說明小字、線上大廳與安全、連線狀態小卡、一盞茶、每日同題、棋譜庫、千秋盃、星槎入口；
       核心流程「鍵值化」：I18N_KEY＋i18nT("鍵","中文")／data-i18n="鍵"（08b 對局頁與結果、05-settings 標題、09b 線上結果、底欄），原文改字也不會失效；
       I18N_AGUARD 是別的模組拿來找按鈕的 aria-label／title，英文也不換；英文模式注入 html[lang=en] 的防爆版樣式（I18N_CSS）。
    前綴 i18n／I18N_；測試 xiangqi-lab/tools/test-i18n.js；include 在 m.html 最後（07dq-daily.js 後面）。 */
 /* #I18N-PURE-BEGIN：到 #I18N-PURE-END 是不碰畫面的資料與純函式，test-i18n.js 用 vm 直接載入 */
 const I18N_CJK=/[㐀-鿿豈-﫿]/;
-const I18N_GUARD=["隱私","官階","進階","下船","上星槎","估計棋力","正在對戰","取代這支手機"];
+const I18N_GUARD=["隱私","官階","進階","估計棋力","正在對戰","取代這支手機"];
 /* 象棋術語用通行英文；WXF 字母 K A E H R C P */
 const I18N_PL={"帥":"K","將":"K","仕":"A","士":"A","相":"E","象":"E","傌":"H","馬":"H","俥":"R","車":"R","炮":"C","砲":"C","包":"C","兵":"P","卒":"P"};
 const I18N_PN={K:"General",A:"Advisor",E:"Elephant",H:"Horse",R:"Chariot",C:"Cannon",P:"Soldier"};
@@ -882,7 +882,11 @@ const I18N_EN={
   "先部署傌，俥傌一起逼將":"Deploy the horse first, then hunt the general with chariot and horse","結業：小星門圍城":"Graduation: Mini Siege","接上第一章":"Bridge to chapter 1","這是第一章之前的最後一關：攻對防、降防、集火、放招、截援、護帥，全部一起用。":"This is the last stage before chapter 1: attack vs defense, wearing down, focus fire, skills, gate blocks, guarding — use them all.",
   "先擋住第一波援軍，再集火打開九宮":"Hold off the first wave, then focus fire to open up the palace",
   "回氣":"Recover","星落":"Starfall","星樞護盾":"Pivot Shield","星樞的招":"The Star Pivot's skills","中、難的星樞也會放招——回氣（回 15 體力）、星落（打你一顆子）、星樞護盾（防禦 +10）；易不放。":"On Normal and Hard the Star Pivot casts skills too — Recover (heal 15 HP), Starfall (hits one of your pieces), Pivot Shield (+10 defense); on Easy it doesn't.",
-  "星門圍城":"Star Gate Siege"
+  "打贏一次黑洞後開放":"Opens after you win once in the Black Hole","領過七星授印禮後開放":"Opens after you receive the Seven Stars seal gift",
+  "搭星槎起航會偏航進黑洞，打贏一盤就開放":"Sail the Star Raft and you'll drift into the Black Hole — win one game there to open it",
+  "新地點開放":"New place unlocked","點一下繼續":"Tap to continue","雲河的盡頭，星斗垂得最低。青銅渾儀還在轉，天頂的黑洞在等你。":"At the end of the Cloud River the stars hang lowest. The bronze armillary still turns, and the black hole at the zenith is waiting for you.","西市開市了。胡商與棋客擠在同一條街上，聽雨茶坊的簾子後頭，有人在擺暗棋。":"The West Market is open. Foreign merchants and chess players crowd the same street, and behind the curtain of the Rain-Listening Teahouse someone is setting up a game of dark chess.",
+  "星門圍城":"Star Gate Siege",
+  "下船":"Disembark","上星槎":"Board the Star Raft","上星槎（船頭）":"Board the Star Raft (bow)"
 };
 /* 第 15 輪 X3「鍵值化」：核心流程（對局頁工具列與狀態列、認輸／悔棋確認、結果視窗、挑戰電腦開新局、設定頁標題、底欄）不靠整句比對，
    模組裡寫 i18nT("鍵","中文")（中文時原樣回傳）或在元素上標 data-i18n="鍵"（英文模式換掉那個元素自己的最後一段字；data-i18n-n 是 {n} 的值）。
@@ -971,7 +975,7 @@ const I18N_PAT=[
   [/^([紅黑])方(約領先.+|領先非常多)$/,(m,T)=>{const r=T(m[2]);return r==null?null:(m[1]==="紅"?"Red ":"Black ")+r}],
   [/^約領先\s*(半個兵|([\d.]+)\s*個兵)$/,m=>m[2]?"ahead by about "+m[2]+" pawns":"ahead by about half a pawn"],
   [/^約\s*([\d.]+)\s*個兵$/,m=>"about "+m[1]+" pawns"],
-  [/^對手(.+)$/,(m,T)=>{const r=T(m[1]);return r==null?null:"Opponent: "+r}],
+  [/^對手(.+)$/,(m,T)=>{const r=T(m[1].replace(/^[：:]\s*/,""));return r==null?null:"Opponent: "+r}],   /* 11/16：「對手：第 3 級」原本翻成 Opponent: : Level 3 */
   [/^回(.+)$/,(m,T)=>{const r=T(m[1]);return r==null?null:"Back to "+r}],
   [/^去(.+?)正式上桌$/,(m,T)=>{const r=T(m[1]);return r==null?null:"Go to the "+r+" for rated play"}],
   [/^去(.+?)選難度、打晉級賽$/,(m,T)=>{const r=T(m[1]);return r==null?null:"Go to the "+r+" to pick a level or play ranked"}],
@@ -1308,33 +1312,47 @@ function i18nStoryData(value,lang){
 const I18N_CACHE=new Map();
 /* 翻一句：翻得完整回英文；沒有中文回 null（不用換）；還剩中文也回 null（不換） */
 function i18nText(s){s=String(s==null?"":s);if(!I18N_CJK.test(s)||(s.length>600&&!Object.prototype.hasOwnProperty.call(I18N_EN,s)))return null;if(I18N_CACHE.has(s))return I18N_CACHE.get(s);
-  let r=i18nCore(s.trim(),0);if(r!=null&&I18N_CJK.test(r))r=null;if(I18N_CACHE.size>4000)I18N_CACHE.clear();I18N_CACHE.set(s,r);return r}
-function i18nCore(s,depth){if(!s)return"";if(!I18N_CJK.test(s))return s;if(depth>10)return null;
+  let r=i18nCore(s.trim(),0,false);if((r==null||I18N_CJK.test(r))&&I18N_EXN)r=i18nCore(s.trim(),0,true);if(r!=null&&I18N_CJK.test(r.replace(I18N_NMRE,"")))r=null;else if(r!=null)r=r.replace(/[]/g,"");if(I18N_CACHE.size>4000)I18N_CACHE.clear();I18N_CACHE.set(s,r);return r}
+/* x＝可以用外掛字典（i18nText 第二輪才開）：內建翻得出的一律照內建，外掛只補翻不出的 */
+function i18nCore(s,depth,x){if(!s)return"";if(!I18N_CJK.test(s))return s;if(depth>10)return null;
   if(Object.prototype.hasOwnProperty.call(I18N_STORY_EN,s))return I18N_STORY_EN[s];
-  if(Object.prototype.hasOwnProperty.call(I18N_EN,s))return I18N_EN[s];
-  for(const[re,fn]of I18N_PAT){const m=s.match(re);if(m){const r=fn(m,x=>i18nCore(String(x).trim(),depth+1));if(r!=null)return r}}
+  if(Object.prototype.hasOwnProperty.call(I18N_EN,s))return I18N_EN[s];if(x&&Object.prototype.hasOwnProperty.call(I18N_EX,s))return I18N_EX[s];
+  for(const L of x?[I18N_PAT,I18N_PATX]:[I18N_PAT])for(const[re,fn]of L){const m=s.match(re);if(m){const r=fn(m,y=>i18nCore(String(y).trim(),depth+1,x));if(r!=null)return r}}
   /* 前後的圖示、符號（♟ ⚔ 👉 › ！…）留著，中間那段去翻 */
   const pm=s.match(/^([^\p{L}\p{N}「（(]*)([\s\S]*?)([^\p{L}\p{N}」）)]*)$/u);
-  if(pm&&(pm[1]||pm[3])&&pm[2]){const P=/[！？。，、；：・…～]/g,head=pm[1].replace(P,x=>I18N_SEPEN[x].trim()+" "),k2=pm[2]+pm[3];
-    if(pm[1]&&Object.prototype.hasOwnProperty.call(I18N_EN,k2))return(head+I18N_EN[k2]).trim();   /* 第 15 輪：前面有圖示、字典的鍵帶句尾標點（「📴 目前沒有網路。…影響。」）也查得到 */
-    const c=i18nCore(pm[2],depth+1);if(c==null)return null;const tail=pm[3].replace(P,x=>I18N_SEPEN[x].trimEnd());return(head+c+tail).trim()}
-  const wm=s.match(/^（([^（）]+)）$/);if(wm){const c=i18nCore(wm[1].trim(),depth+1);return c==null?null:"("+c+")"}   /* 整句包在全形括號裡：括號裡整段先查字典，不在頓號處切開 */
+  if(pm&&(pm[1]||pm[3])&&pm[2]){const P=/[！？。，、；：・…～]/g,head=pm[1].replace(P,x=>I18N_SEPEN[x].trim()+" ").replace(/[《〈》〉]/g,"\""),k2=pm[2]+pm[3];
+    if(pm[1]&&Object.prototype.hasOwnProperty.call(I18N_EN,k2))return(head+I18N_EN[k2]).trim();if(pm[1]&&x&&Object.prototype.hasOwnProperty.call(I18N_EX,k2))return(head+I18N_EX[k2]).trim();   /* 第 15 輪：前面有圖示、字典的鍵帶句尾標點（「📴 目前沒有網路。…影響。」）也查得到 */
+    const c=i18nCore(pm[2],depth+1,x);if(c==null)return null;const tail=pm[3].replace(P,x=>I18N_SEPEN[x].trimEnd()).replace(/[《〈》〉]/g,"\"");   /* 11/16：書名號換英文雙引號 */return(head+c+tail).trim()}
+  const wm=s.match(/^（([^（）]+)）$/);if(wm){const c=i18nCore(wm[1].trim(),depth+1,x);return c==null?null:"("+c+")"}   /* 整句包在全形括號裡：括號裡整段先查字典，不在頓號處切開 */
   const mv=i18nMove(s);if(mv)return mv.wxf;
   const parts=s.split(I18N_SEP);if(parts.length<2)return null;let out="";
-  for(const p of parts){if(!p)continue;if(Object.prototype.hasOwnProperty.call(I18N_SEPEN,p)){out+=I18N_SEPEN[p];continue}const c=i18nCore(p.trim(),depth+1);if(c==null)return null;out+=c}
+  for(const p of parts){if(!p)continue;if(Object.prototype.hasOwnProperty.call(I18N_SEPEN,p)){out+=I18N_SEPEN[p];continue}const c=i18nCore(p.trim(),depth+1,x);if(c==null)return null;out+=c}
   return i18nTidy(out)}
 /* 保留前後空白的一行（文字節點用） */
 function i18nLine(v){const m=String(v).match(/^(\s*)([\s\S]*?)(\s*)$/);const t=i18nText(m[2]);return t==null?null:m[1]+t+m[3]}
 /* 讀螢幕：棋子、格子、每一步的英文念法（11b-a11y.js 的 axmPcName／axmCellLabel／axmMoveLine 同樣的參數） */
 function i18nPcName(p){if(!p)return"";const r=p===p.toUpperCase();const L={K:"K",A:"A",B:"E",N:"H",R:"R",C:"C",P:"P"}[p.toUpperCase()];return(r?"Red ":"Black ")+(I18N_PN[L]||"piece")}
 function i18nCellLabel(p,k){const f="file "+(9-k%9),r="rank "+(10-(k/9|0));return p?i18nPcName(p)+", "+f+", "+r:f+", "+r+", empty"}
-function i18nMoveLine(o){o=o||{};const mine=o.me&&o.side===o.me;let who=o.side==="r"?"Red":"Black";if(o.me)who=mine?"You":(o.opp?(i18nCore(String(o.opp),0)||"Opponent"):"Opponent");
+function i18nMoveLine(o){o=o||{};const mine=o.me&&o.side===o.me;let who=o.side==="r"?"Red":"Black";if(o.me)who=mine?"You":(o.opp?(i18nCore(String(o.opp),0,true)||"Opponent"):"Opponent");
   if(I18N_CJK.test(who))who="Opponent";const mv=i18nMove(o.cn);let s=who+": "+(mv?mv.say:(i18nText(o.cn)||String(o.cn||"")));
   if(o.cap)s+=", captures "+i18nPcName(o.cap);if(o.mate)s+=", checkmate";else if(o.check)s+=", check";if(o.me&&!mine&&!o.mate&&!o.over)s+="; your move";return s}
 /* 數字與日期：英文用 en-US，繁中用 zh-Hant-TW（沒有 Intl 時退回原樣） */
 function i18nNum(n,lang){try{return new Intl.NumberFormat(lang==="en"?"en-US":"zh-Hant-TW").format(n)}catch(e){return String(n)}}
 function i18nDate(d,lang){d=d instanceof Date?d:new Date(d);if(isNaN(d))return"";if(lang==="en")return I18N_MON[d.getMonth()]+" "+d.getDate()+", "+d.getFullYear();
   return d.getFullYear()+"/"+String(d.getMonth()+1).padStart(2,"0")+"/"+String(d.getDate()).padStart(2,"0")}
+/* 11/16 開發者「英文版本不齊全」＋選單：介面補字放外掛字典 data/i18n-en.json（正本 xiangqi-db/i18n-en.json），選 English 才下載，中文玩家不多抓。
+   格式 {en:{中文:英文}, pat:[[正規式字串, 英文樣板, 群組型態]]}：樣板裡 $1…$9 代入群組；群組型態第 i 個字元管第 i 組：t＝要翻（翻不出整句不換）、n＝人名、其他＝原樣。
+   人名（選單「角色、機器人翻，真人照原樣」）：字典有就用英文，沒有就留原文；留下的人名用 I18N_NM0／I18N_NM1 包著，i18nText 檢查「還剩中文」時不算它，最後拿掉記號。 */
+const I18N_NM0="",I18N_NM1="",I18N_NMRE=/[^]*/g;
+var I18N_EX={},I18N_PATX=[],I18N_EXN=0;   /* 外掛字典與句型（var：i18nText 第一輪不碰，載入順序不怕） */
+function i18nExtPat(src,tpl,ty){const re=new RegExp(src);ty=String(ty||"");
+  return[re,(m,t)=>{let bad=false;const out=String(tpl).replace(/\$(\d)/g,(x,d)=>{const g=m[+d]==null?"":String(m[+d]),k=ty[d-1];
+    if(k==="t"){const r=t(g);if(r==null){bad=true;return""}return r}
+    if(k==="n"){const r=I18N_CJK.test(g)?t(g):g;if(r!=null&&!I18N_CJK.test(r))return r;if(g.length>12||/[\s，、；：。！？（）「」・…]/.test(g)){bad=true;return""}return I18N_NM0+g+I18N_NM1}return g});   /* 人名留原文只限 12 字內、沒有標點空白（不然整段翻不出的中文會被當人名放過） */return bad?null:out}]}
+function i18nExtMerge(o){if(!o||typeof o!=="object")return 0;let n=0;
+  if(o.en)for(const k of Object.keys(o.en))if(!I18N_GUARD.includes(k)&&!Object.prototype.hasOwnProperty.call(I18N_EN,k)&&typeof o.en[k]==="string"){I18N_EX[k]=o.en[k];n++}
+  if(Array.isArray(o.pat))for(const p of o.pat){try{I18N_PATX.push(i18nExtPat(p[0],p[1],p[2]));n++}catch(e){}}
+  I18N_EXN+=n;I18N_CACHE.clear();return n}
 /* #I18N-PURE-END */
 /* 目前語言：store "lang" 只有 "en" 才是英文；其他（沒設定）＝中文，繁簡照 zh.js。函式宣告會提前，設定頁比這個檔先畫也叫得到（只用 store，不碰這個檔的 const） */
 function i18nLang(){try{return store.get("lang",null)==="en"?"en":"zh"}catch(e){return"zh"}}
@@ -1406,7 +1424,11 @@ function i18nBoot(){try{document.documentElement.lang=i18nHtmlLang()}catch(e){}
   try{if(typeof axSay==="function"){const o=axSay;axSay=function(t){return o.call(this,i18nSay(t))}}}catch(e){}
   try{if(typeof axsAlert==="function"){const o=axsAlert;axsAlert=function(t){return o.call(this,i18nSay(t))}}}catch(e){}
   i18nCss();i18nTabKeys();
-  try{i18nApply(document.body)}catch(e){}i18nWatch()}
+  try{i18nApply(document.body)}catch(e){}i18nWatch();i18nExtLoad()}
+/* 外掛字典（介面補字）：抓到就併進字典，整頁沒翻到的再翻一次；抓不到就只用內建的 */
+let I18N_EXT=null;
+function i18nExtLoad(){if(I18N_EXT)return I18N_EXT;if(typeof fetch!=="function")return I18N_EXT=Promise.resolve(0);
+  I18N_EXT=fetch("data/i18n-en.json").then(r=>r.ok?r.json():null).then(o=>{const n=i18nExtMerge(o);if(n&&document.body)try{i18nApply(document.body)}catch(e){}return n}).catch(()=>0);return I18N_EXT}
 /* 底欄四顆（m.html 寫死的）照 data-go 標上鍵，不靠字 */
 const I18N_TABK={"#/":"tab.home","#/lobby":"tab.online","#/db":"tab.library","#/settings":"tab.settings"};
 function i18nTabKeys(){try{document.querySelectorAll("#tabbar [data-go]").forEach(b=>{const k=I18N_TABK[b.getAttribute("data-go")];if(k&&!b.hasAttribute("data-i18n"))b.setAttribute("data-i18n",k)})}catch(e){}}

@@ -5,14 +5,17 @@
    下棋下到一半（挑戰電腦、擂台、同桌、雲河棋路、殘局、古戰場、線上對局）要換頁，先問一句；線上對局特別提醒可能算輸。
    底圖之後請 Gemini 畫（規劃書第 5 節），現在先用水墨色塊。開關 SITEMAP_ON；前綴 stm */
 const SITEMAP_ON=true;
-/* [區代號, 圖示, 區名, 一句說明, 入口[[名字, 網址, 搜尋關鍵字]]] */
+/* [區代號, 圖示, 區名, 一句說明, 入口[[名字, 網址, 搜尋關鍵字, 開放條件（STM_LOCK 的鍵，沒有＝一直開著）]]] */
 const STM_AREAS=[
-  ["tea","🍵","對弈茶樓","真人、電腦、擂台",[["對戰總覽","#/hub/battle","下棋 對戰"],["挑戰電腦","#/cpu","電腦 AI 人機 練功房 晉級賽"],["車輪戰","#/simul","一對多 車輪 多盤 同時 大師 表演"],["同桌對弈","#/pvp","兩人 雙人 面對面 家人 身邊同桌 石桌"],["線上大廳","#/lobby","真人 網路 連線 觀戰 線上"],["千秋盃","#/cup","比賽 盃賽 週六"],["朝代擂台","#/arena","擂主 擂台"],["同桌合作殘譜","#/coop","合作 一起"]]],
+  ["tea","🍵","對弈茶樓","真人、電腦、擂台",[["對戰總覽","#/hub/battle","下棋 對戰"],["西市","#/ximarket","西市 市集 聽雨茶坊 茶坊 暗棋 攤 逛街","xsm"],["挑戰電腦","#/cpu","電腦 AI 人機 練功房 晉級賽"],["車輪戰","#/simul","一對多 車輪 多盤 同時 大師 表演"],["同桌對弈","#/pvp","兩人 雙人 面對面 家人 身邊同桌 石桌"],["線上大廳","#/lobby","真人 網路 連線 觀戰 線上"],["千秋盃","#/cup","比賽 盃賽 週六"],["朝代擂台","#/arena","擂主 擂台"],["同桌合作殘譜","#/coop","合作 一起"]]],
   ["acad","🎍","練棋書院","新手、殘局、測驗",[["學習總覽","#/hub/learn","學棋 學習"],["新手訓練營","#/camp","新手 入門 教學 第一次 怎麼走"],["棋力測驗","#/quiz","測驗 考試 程度"],["一盞茶殘局","#/canju","每日 殘局 解題"],["千秋殘局","#/ship/pz","殘局 解題 星槎"],["猜著法","#/guess","猜 大師"],["主題訓練","#/theme","主題 殺法 練習"],["錯棋重練","#/redo","錯題 複習 重練"],["象棋規則","#/terms","規則 術語 走法 怎麼下 名詞 碑林 等級 段位 修為"],["這站棋理（目前停靠的站）","#/ship/lesson","棋理 這一站"],["小實驗：棋理體驗・唐站","#/lesson/tang","棋理 體驗 唐 唐站 棄仕 解殺 實驗 小實驗"],["小實驗：先吃子還是先解圍","#/lab/grab","吃子 解圍 威脅 實驗 小實驗 貪吃"]]],
   ["lib","📚","藏書閣","古譜、大師、棋譜",[["棋譜庫","#/db","古譜 大師 棋譜 對局 比賽 研究"],["我的開局","#/openings","開局 布局"]]],
-  ["ship","☁️","雲河渡口","星槎、故事、朝代",[["雲河星槎","#/adventure","星槎 冒險 故事 船"],["雲河棋路","#/journey","棋路 關卡 闖關"],["朝代渡口","#/port","渡口 園子 驛站 下船"],["古戰場","#/battle","戰役 戰場"],["星槎書架","#/ship/shelf","小說 書架 書"],["繼續閱讀","#/ship/read","閱讀 小說 章"],["起航","#/ship/sail","起航 換朝代 開船"]]],
+  ["ship","☁️","雲河渡口","星槎、故事、朝代",[["雲河星槎","#/adventure","星槎 冒險 故事 船"],["觀星臺","#/guanxing","觀星臺 觀景台 黑洞 星門圍城 十三星系 星圖 天賦 二十八宿","gxt"],["雲河棋路","#/journey","棋路 關卡 闖關"],["朝代渡口","#/port","渡口 園子 驛站 下船"],["古戰場","#/battle","戰役 戰場"],["星槎書架","#/ship/shelf","小說 書架 書"],["繼續閱讀","#/ship/read","閱讀 小說 章"],["起航","#/ship/sail","起航 換朝代 開船"]]],
   ["yard","🏡","個人小院","角色、戰績、收藏",[["我的角色","#/me","角色 頭像 官階 修為"],["我的戰績","#/stats","戰績 勝率 成長"],["學習週報","#/weekly","週報 一週"],["行囊","#/ship/bag","行囊 寶物 收藏"],["珍品冊","#/me/relics","珍品 收藏"],["千秋大百科","#/codex","百科 文化 圖鑑"],["九九消寒圖","#/xiaohan","消寒 節氣 冬天"]]],
   ["svc","⚙️","服務亭","設定、回首頁",[["回首頁","#/","首頁 回家"],["今日推薦（首頁告示牌）","#/today","推薦 今天 每日 告示 榜文"],["設定","#/settings","設定 家長 回饋 存檔 字級 隱私 音樂"]]]];
+/* 11/16 觀星臺、西市（首頁棋鎮兩側的新地點）：還沒開放就灰掉、寫怎麼開；開放條件照 07gxt gxtOpen、07xsm xsmOpen（模組沒載到＝當作開著） */
+const STM_LOCK={gxt:()=>typeof gxtOpen==="function"&&!gxtOpen()?"搭星槎起航會偏航進黑洞，打贏一盤就開放":"",xsm:()=>typeof xsmOpen==="function"&&!xsmOpen()?"領過七星授印禮後開放":""};
+const stmLockWhy=e=>{try{const f=e[3]&&STM_LOCK[e[3]];return f?f():""}catch(x){return""}};
 /* hspx 11/11「地圖底圖請找 gemini 繪製」：data/sitemap/sitemap.webp（768×1376，park/sitemap/sitemap_a.png）。
    hit＝點得到的範圍、card＝圖上那張空白直條紙籤（地名直書貼在上面），單位都是圖寬／圖高的 %，照圖量的；paper＝圖上沒有紙籤（修圖時被燈籠杆取代），標籤自己帶宣紙底。
    史學顧問 11/11 必改 4 項修過兩輪：日式石燈籠→木杆紅燈籠、泳池→湖石池、茶樓／書院／小院棋盤照 9 直 10 橫＋河界重畫；書院牆上那面最後用程式貼一面乾淨的象棋盤（park/sitemap/sitemap_a_fix3.png） */
@@ -88,7 +91,7 @@ function stmGo(name,route){const go=()=>{stmClose();if(route==="#/"&&typeof goHo
 function stmOpen(){if(document.getElementById("stmOv"))return;stmCss();stmLast=document.activeElement;
   const here=stmHere(),h=location.hash||"#/",net=navigator.onLine!==false,cur=r=>r!=="#/"&&(h===r||h.startsWith(r+"/"));
   const o=document.createElement("div");o.id="stmOv";o.setAttribute("role","dialog");o.setAttribute("aria-modal","true");o.setAttribute("aria-label","象棋千秋總覽");
-  const entry=e=>{const off=e[1]==="#/lobby"&&!net,nm=stmNm(e);return`<button class="go${cur(e[1])?" cur":""}" data-r="${esc(e[1])}" data-n="${esc(nm)}"${off?" disabled":""}>${esc(nm)}${off?"（要連網路）":""}</button>`};
+  const entry=e=>{const lk=stmLockWhy(e),off=(e[1]==="#/lobby"&&!net)||!!lk,nm=stmNm(e);return`<button class="go${cur(e[1])?" cur":""}" data-r="${esc(e[1])}" data-n="${esc(nm)}"${off?" disabled":""}>${lk?"🔒 ":""}${esc(nm)}${lk?"（"+esc(lk)+"）":off?"（要連網路）":""}</button>`};
   o.innerHTML=`<div class="in"><div class="hd"><button class="x" id="stmX">✕ 關閉地圖</button><h2>象棋千秋總覽</h2><span style="min-width:44px"></span></div>
     <input class="q" id="stmQ" type="search" placeholder="🔍 搜尋入口，例如「規則」「殘局」" aria-label="搜尋入口" enterkeyhint="search">
     <p class="tip">點地圖上的地方，馬上帶你過去！</p>

@@ -210,7 +210,7 @@ function homeMap(v){const home=v.querySelector(".home");if(!home||v.querySelecto
   {const im0=P.querySelector(":scope>img");if(wv&&im0){const pre=new Image();pre.onload=()=>{if(!im0.isConnected)return;P._hmSrc0=pre.src;try{if(typeof sw7SeaTurn==="function"&&sw7SeaTurn(P,im0,pre.src))return}catch(e){}im0.src=pre.src};pre.src="data/homemap/home_"+wv+".webp?v="+HM_IMGV}}   /* 回饋 811：下雪、下雨天換積雪版 home_snow／雨景版 home_rain（07w7-seasons.js 判斷；先載好再換，載不到留原圖） */
   const GO={hmShip:"#/adventure",hmBattle:"#/hub/battle",hmLearn:"#/hub/learn"};
   for(const[id]of HM_SPOTS){const b=P.querySelector("#"+id);if(!b)continue;   /* 寬版只換座標，id 跟點了去哪都一樣 */
-    b.onclick=()=>{vibrate(5);if(GO[id]){location.hash=GO[id];return}if(id==="hmRec"){if(typeof TODAY_MAP_ON!=="undefined"&&TODAY_MAP_ON){location.hash="#/today";return}hmRecSheet();return}if(id==="hmQuick"){try{sessionStorage.setItem("xqFromHome","1")}catch(e){}location.hash="#/pvp"}}}   /* 11/11：記下從首頁進來（07y hbFromHome：回首頁、不走後園） */
+    b.onclick=()=>{vibrate(5);if(GO[id]){location.hash=GO[id];return}if(id==="hmRec"){if(typeof TODAY_MAP_ON!=="undefined"&&TODAY_MAP_ON){location.hash="#/today";return}hmRecSheet();return}if(id==="hmQuick"){try{sessionStorage.setItem("xqFromHome","1")}catch(e){}try{if(window.XQNet&&XQNet.active&&XQNet.active()&&!XQNet.playing())XQNet.leave()}catch(e){}location.hash="#/pvp"}}}   /* 11/11：記下從首頁進來（07y hbFromHome：回首頁、不走後園） */
   {const ib=P.querySelector("#hmInst");if(ib)ib.onclick=e=>{e.stopPropagation();vibrate(5);installGuide(true)}}
   hmGoBar(P,nw);try{hmSlogan(P,nw)}catch(e){}
   /* v5 改善單 R07：轉向／縮放時 07t3 ttFill 要 120ms 後才重排圖的寬度，這裡等 300ms 再推標籤（原本 resize 當下就推，量到的是還沒重排的舊圖） */

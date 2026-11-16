@@ -90,7 +90,7 @@ fs.mkdirSync(path.join(SITE,"data","pieces"),{recursive:true});for(const f of fs
 fs.mkdirSync(path.join(SITE,"data","boards"),{recursive:true});for(const f of fs.readdirSync(path.join(ROOT,"xiangqi-db","boards")))fs.copyFileSync(path.join(ROOT,"xiangqi-db","boards",f),path.join(SITE,"data","boards",f));
 /* 回饋 852：停權名單正本 xiangqi-db/banlist.json 也複製到 site/data/（sw.js 對它一律直接上網、不快取、不轉 CDN） */
 for(const f of["quiz.json","terms.json","gmbios.json","fixes.json","banlist.json"])fs.copyFileSync(path.join(ROOT,"xiangqi-db",f),path.join(SITE,"data",f));
-for(const f of["quiz-calib.json","park-legend.json","park-legend2.json","park-novel.json"])if(fs.existsSync(path.join(ROOT,"xiangqi-db",f)))fs.copyFileSync(path.join(ROOT,"xiangqi-db",f),path.join(SITE,"data",f));   /* 意見回饋 301：題目校正檔（有才複製） */
+for(const f of["quiz-calib.json","park-legend.json","park-legend2.json","park-novel.json","i18n-en.json"])if(fs.existsSync(path.join(ROOT,"xiangqi-db",f)))fs.copyFileSync(path.join(ROOT,"xiangqi-db",f),path.join(SITE,"data",f));   /* 意見回饋 301：題目校正檔（有才複製） */
 
 // ---------- 4. App 本體（由手機版 m.html 轉成離線版） ----------
 // 意見回饋 594（程式拆分）：m.html 的主樣式在 xiangqi-db/m.css、主程式在 xiangqi-db/m/*.js，組回一個完整的頁面（逐字跟拆之前一樣）

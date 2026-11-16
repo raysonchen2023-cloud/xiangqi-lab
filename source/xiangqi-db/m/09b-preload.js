@@ -195,7 +195,7 @@ function PvpGame(v){
   let st=null,sel=-1,flipMan=null,shownResult=null,busy=false,autoFlip=store.get("autoFlip",true),clockBase=null,drawAsked=null;
   // seat：連線對戰時這支手機坐哪一方（"r"／"b"）；null＝同一支手機輪流下
   // NET：線上大廳的網路對局（不用電腦）；seat="w" 表示在觀戰
-  const NET=OFF&&!!window.XQNet&&XQNet.active();
+  const NET=OFF&&!!window.XQNet&&XQNet.active();let PVP_GHOST=null;
   let seat=NET?(XQNet.side()||"w"):store.get("pvpSeat",null);if(!NET&&OFF&&seat&&!XQ.remoteInfo()){seat=null;store.set("pvpSeat",null);XQ.setPvpOnline(false)}
   const bd=Board(i=>tap(i));v.querySelector("#bbox").append(bd.svg);
   const setTitle=()=>NET?setTop(seat==="w"?"👀 觀戰中":`🌐 我是${seat==="r"?"紅":"黑"}方`,"#/lobby",[parkBtn(()=>draw()),...(vcOn()?[["🎤",()=>voiceMove(()=>!st||st.result?{why:"這盤已經結束"}:seat==="w"?{why:"你在觀戰"}:seat&&st.turn!==seat?{why:"還沒輪到你"}:{board:st.board,legal:st.legal,play:(f,t)=>{sel=-1;flipMan=null;post("/pvp/move",{f,t})}}),"聲控走棋"]]:[]),["🌐",()=>netSheet(),"大廳"]])
@@ -303,7 +303,7 @@ function PvpGame(v){
         let said=false;if(pk){try{x.by===tp?PARK.v.oppSay(x.text,4):PARK.v.say(x.text,4);said=true}catch(e){}}if(!said)showChat(x.text,x.by===seat,(NET&&typeof lbnSeat==="function"&&lbnSeat(x.by,x.name)||x.name)||PLAYER[x.by],v.querySelector(x.by===tp?"#pTop":"#pBot"))}else if(seat&&x.by!==seat)showEmote(x.e,false)}
     const fl=isFlip(),top=fl?"r":"b",bot=fl?"b":"r",nm=x=>(NET&&typeof lbnSeat==="function"&&lbnSeat(x,x==="r"?st.red:st.black))||(x==="r"?st.red:st.black);
     // 連線對戰：自己標「這支手機」，對方標在不在線上
-    const sub=x=>!seat?PLAYER[x]:x===seat?PLAYER[x]+(NET?"・我":"・這支手機"):PLAYER[x]+((st.online||{})[x]?"・🟢 "+(NET?"線上":((st.who||{})[x]||"線上")):NET?"・⚪ 對方暫時離線":"・⚪ 對方還沒連上");
+    const sub=x=>!seat?PLAYER[x]:NET&&seat==="w"?PLAYER[x]+((st.online||{})[x]?"・🟢 線上":"・⚪ 離線"):x===seat?PLAYER[x]+(NET?"・我":"・這支手機"):PLAYER[x]+((st.online||{})[x]?"・🟢 "+(NET?"線上":((st.who||{})[x]||"線上")):NET?"・⚪ 對方暫時離線":"・⚪ 對方還沒連上");
     /* 意見回饋 278：線上對戰標出雙方的線上段位（自己用自己的積分，對方用他在大廳最新的積分） */
     const rk=x=>{if(!NET||!window.XQNet||!XQNet.rankOf)return"";try{const G=XQNet.game(),o=G&&(x==="r"?G.red:G.black);if(!o)return"";
       const lp=o.id===meInfo().id?XQNet.rating().pts:(XQNet.people().find(q=>q.id===o.id)||{}).pts,pt=lp!=null?lp:o.pts;return pt==null?"":"・🏅 "+XQNet.rankOf(pt)+" "+pt+" 分"}catch(e){return""}};
@@ -322,9 +322,11 @@ function PvpGame(v){
     ruleNote(v,st);
     const s2=v.querySelector("#stat");s2.classList.toggle("hot",st.check>=0&&!st.result);
     /* Gemini 評估 11/8（介面圖示化）：狀態列短字加圖示（觀戰中寫在標題，這裡不重複） */
-    s2.textContent=!st.result&&st.repetition&&st.repetition.pending?st.repetition.why:st.waiting?"⏳ 等對方進來…":st.result?st.result.why:seat==="w"?`輪到${PLAYER[st.turn]}（${nm(st.turn)}）`+(st.check>=0?"・被將軍！":"")+(st.moves.length&&qTag(st.moves.length-1)?`・上一步${qTag(st.moves.length-1)}`:""):seat?(st.turn===seat?(()=>{const L=st.moves[st.moves.length-1];return L&&L.by&&L.by!==seat&&L.cn?`👉 輪到你（對方：${L.cn}）`:"👉 輪到你"})():"⏳ 等對方走…"+(pmMe()&&typeof pmvLabel==="function"?pmvLabel(st):""))+(st.check>=0&&st.turn===seat?"・⚠ 被將軍！":"")+(st.draw===seat?"・已提和":"")
+    s2.textContent=NET&&st.ghost&&!st.result?"⏸ 這盤已中斷（兩位棋手都離線）":!st.result&&st.repetition&&st.repetition.pending?st.repetition.why:st.waiting?"⏳ 等對方進來…":st.result?st.result.why:seat==="w"?`輪到${PLAYER[st.turn]}（${nm(st.turn)}）`+(st.check>=0?"・被將軍！":"")+(st.moves.length&&qTag(st.moves.length-1)?`・上一步${qTag(st.moves.length-1)}`:""):seat?(st.turn===seat?(()=>{const L=st.moves[st.moves.length-1];return L&&L.by&&L.by!==seat&&L.cn?`👉 輪到你（對方：${L.cn}）`:"👉 輪到你"})():"⏳ 等對方走…"+(pmMe()&&typeof pmvLabel==="function"?pmvLabel(st):""))+(st.check>=0&&st.turn===seat?"・⚠ 被將軍！":"")+(st.draw===seat?"・已提和":"")
       :`輪到${PLAYER[st.turn]}（${nm(st.turn)}）`+(st.check>=0?"・被將軍！":"")+(st.eval?`・${evt(st.eval.v)}`:"");
-    if(NET&&st.watchers)s2.textContent+=`・👀 ${st.watchers} 人看`;
+    if(NET&&st.watchers&&!st.ghost)s2.textContent+=`・👀 ${st.watchers} 人看`;
+    /* 11/16 鬼局（net.js ghost）：觀戰的這盤兩位棋手都離線太久，第一次看到就問要不要回大廳；留著看也行（時鐘已停） */
+    if(NET&&st.ghost&&!st.result&&PVP_GHOST!==st.id){PVP_GHOST=st.id;confirmBox("這盤已中斷（兩位棋手都離線）",()=>{try{XQNet.leave()}catch(e){}location.hash="#/lobby"},"回大廳")}
     // 每步限時 3 分鐘：剩 1 分鐘以內顯示倒數
     if(NET&&!st.result&&!st.waiting&&window.XQNet&&XQNet.turnLeft){const L=XQNet.turnLeft();if(L!=null&&L<60000){s2.textContent+=`・⏱ ${st.turn===seat?"你":"對方"}剩 ${Math.ceil(L/1000)} 秒`;s2.classList.add("hot")}}
     /* 評審 P22 對局簽名（src/net.js SIGN 區段）：對方是舊版 App（或這支不能用 WebCrypto）＝驗不了簽名，這盤照舊規則下但不計積分 */
